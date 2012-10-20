@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 '''
-low-level mel-frequency cepstrum coefficients
+Frame-level mel-frequency cepstrum coefficients
 
 Ported from Ron's Python implementation, which is ported from DPWE's Matlab
 http://www.ee.columbia.edu/~dpwe/resources/matlab/rastamat/
