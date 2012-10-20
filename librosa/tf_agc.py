@@ -79,8 +79,7 @@ def tf_agc(frame_iterator, sample_rate=22050, **kwargs):
                 # initialize the mel filter bank after grabbing the first frame
 
                 f2a = _mfcc.melfb(sample_rate, len(frame), num_frequency_bands, mel_filter_width)
-#                 f2a = f2a[:,:(round(len(frame)/2) + 1)]
-                
+                f2a = f2a[:,:(round(len(frame)/2) + 1)]
 
                 #% map back to FFT grid, flatten bark loop gain
                 #sf2a = sum(f2a);
@@ -96,7 +95,7 @@ def tf_agc(frame_iterator, sample_rate=22050, **kwargs):
 
             # FFT each frame
             D = scipy.fft(frame)
-
+            D = D[:(1+int(len(D)/2))] 
             # multiply by f2a
             audiogram = numpy.dot(f2a, numpy.abs(D))
 
