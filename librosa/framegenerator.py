@@ -12,10 +12,11 @@ import audioread
 
 ##
 # Iterate over frames in a raw audio buffer
-def raw_timeseries(buf, blocksize=512, zero_pad=True):
+#
+def raw_timeseries(buf, blocksize=512, overlap=0, zero_pad=True):
 
     n = len(buf)
-    for i in xrange(0, n, blocksize):
+    for i in xrange(0, n, blocksize-overlap):
         if i+blocksize < n:
             yield buf[i:(i+blocksize)]
         elif zero_pad:
