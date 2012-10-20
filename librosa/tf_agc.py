@@ -14,7 +14,7 @@ import _mfcc
 
 def tf_agc(frame_iterator, sample_rate=22050, **kwargs):
     '''
-    frame_iterator              iterates over audio frames, duhr
+    frame_iterator              librosa.framegenerator
     sample_rate                 sampling rate of the  audio stream
 
     Optional arguments:
@@ -74,8 +74,6 @@ def tf_agc(frame_iterator, sample_rate=22050, **kwargs):
 
         # Iterate over frames
         for frame in frame_iterator:
-            # Brutal PCM buffering hack
-            frame = numpy.frombuffer(frame, 'h') / 32768.0
 
             if f2a is None: 
                 # initialize the mel filter bank after grabbing the first frame
