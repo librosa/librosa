@@ -49,15 +49,7 @@ def melfb(samplerate, nfft, nfilts=20, width=1.0, fmin=0, fmax=None):
         Sampling rate of the incoming signal.
     nfft : int
         FFT length to use.
-    nwin : int
-        Length of each window in samples.  Defaults to `nfft`.
-    nhop : int
-        Number of samples to skip between adjacent frames (hopsize).
-        Defaults to `nwin`.
-    winfun : function of the form fun(winlen), returns array of length winlen
-        Function to generate a window of a given length.  Defaults to
-        numpy.hamming.
-    nmel : int
+    nfilts : int
         Number of Mel bands to use.
     width : float
         The constant width of each band relative to standard Mel. Defaults 1.0.
@@ -76,28 +68,32 @@ def melfb(samplerate, nfft, nfilts=20, width=1.0, fmin=0, fmax=None):
     if fmax is None:
         fmax = samplerate / 2
 
+    # Initialize the weights
 #     wts = numpy.zeros((nfilts, nfft / 2 + 1))
-    wts = numpy.zeros((nfilts, nfft))
+    wts = numpy.zeros( (nfilts, nfft) )
+
     # Center freqs of each FFT bin
 #     fftfreqs = numpy.arange(nfft / 2 + 1, dtype=numpy.double) / nfft * samplerate
-    fftfreqs = numpy.arange(wts.shape[1], dtype=numpy.double) / nfft * samplerate
+    fftfreqs = numpy.arange( wts.shape[1], dtype=numpy.double ) / nfft * samplerate
 
     # 'Center freqs' of mel bands - uniformly spaced between limits
-    minmel = _hz_to_mel(fmin)
-    maxmel = _hz_to_mel(fmax)
-    binfreqs = _mel_to_hz(minmel
-                          + numpy.arange((nfilts+2), dtype=numpy.double) / (nfilts+1)
-                          * (maxmel - minmel))
+    minmel      = _hz_to_mel(fmin)
+    maxmel      = _hz_to_mel(fmax)
+    binfreqs    = _mel_to_hz(minmel + numpy.arange((nfilts+2), dtype=numpy.double) / (nfilts+1) * (maxmel - minmel))
 
     for i in xrange(nfilts):
-        freqs = binfreqs[i + numpy.arange(3)]
+        freqs       = binfreqs[i + numpy.arange(3)]
+        
         # scale by width
-        freqs = freqs[1] + width * (freqs - freqs[1])
+        freqs       = freqs[1] + width * (freqs - freqs[1])
+
         # lower and upper slopes for all bins
-        loslope = (fftfreqs - freqs[0]) / (freqs[1] - freqs[0])
-        hislope = (freqs[2] - fftfreqs) / (freqs[2] - freqs[1])
+        loslope     = (fftfreqs - freqs[0]) / (freqs[1] - freqs[0])
+        hislope     = (freqs[2] - fftfreqs) / (freqs[2] - freqs[1])
+
         # .. then intersect them with each other and zero
-        wts[i,:] = numpy.maximum(0, numpy.minimum(loslope, hislope))
+        wts[i,:]    = numpy.maximum(0, numpy.minimum(loslope, hislope))
+
         pass
 
     # Slaney-style mel is scaled to be approx constant E per channel
@@ -107,16 +103,14 @@ def melfb(samplerate, nfft, nfilts=20, width=1.0, fmin=0, fmax=None):
     return wts
 
 
-def tf_agc(frameIterator, **kwargs):
+def tf_agc(frame_iterator, sample_rate=22050, **kwargs):
     '''
-    frameIterator               iterates over audio frames, duhr
-                                information we need from the audio buffer:
-                                    ???
+    frame_iterator              iterates over audio frames, duhr
+    sample_rate                 sampling rate of the  audio stream
 
     Optional arguments:
         frequency_scale     (f_scale from dpwe)     (default: 1.0)
-        time_scale          (t_scale from dwpe)     (default: 0.5 sec) 
-                                                    XXX redo in terms of frame count
+        alpha                                       (default: 0.95 ) 
         gaussian_smoothing  (type)                  (default: False)
                                                     Use time-symmetric, non-causal Gaussian window smoothing        XXX: not supported
                                                     Otherwise, defaults to infinite-attack, exponential release
@@ -134,13 +128,13 @@ def tf_agc(frameIterator, **kwargs):
         pass
     
 
-    time_scale      = 0.5
-    if 'time_scale'     in kwargs:
-        time_scale      = kwargs['time_scale']
-        if not isinstance(time_scale, float):
-            raise TypeError('Argument time_scale must be of type float')
-        if time_scale <= 0.0:
-            raise ValueError('Argument time_scale must be a non-negative float')
+    alpha      = 0.95
+    if 'alpha'     in kwargs:
+        alpha      = kwargs['alpha']
+        if not isinstance(alpha, float):
+            raise TypeError('Argument alpha must be of type float')
+        if not (0.0 < alpha < 1.0):
+            raise ValueError('Argument alpha must be between 0.0 and 1.0')
         pass
 
     gaussian_smoothing = False
@@ -160,11 +154,59 @@ def tf_agc(frameIterator, **kwargs):
     mel_filter_width    = round(frequency_scale  * num_frequency_bands / 10);
 
 
-    # Iterate over frames
-    for frame in frameIterator:
-        if gaussian_smoothing:
-            pass
-        else:
+    # ftsr = sample_rate / hop_length
+    #       hop_length      = window_length / 2
+    #       window_length   = n_fft
+    #       n_fft           = len(frame)
+
+    # initialize the mel filterbank to None; 
+    # do the real initialization after grabbing the first frame
+    f2a = None
+
+
+    if guassian_smoothing:
+        pass
+    else:
+        # Else, use infinite-attack exp-release
+
+
+        # Iterate over frames
+        for frame in frameIterator:
+
+            if f2a is None: 
+                # initialize the mel filter bank after grabbing the first frame
+                f2a = melfb(sample_rate, len(frame), num_frequency_bands, mel_filter_width)
+                f2a = f2a[:,:(round(len(frame)/2) + 1)]
+
+                n   = f2a.shape[0]
+                
+                # initialze the state vector
+                state   = numpy.zeros( (n, 1) )
+                fbg     = numpy.zeros( (n, 1) )
+
+                pass
+
+            # FFT each frame
+            D = None # fft(frame, ...)
+
+            # multiply by f2a
+            audiogram = numpy.dot(f2a, D)
+
+            ## DPWE
+            #             state = max([alpha*state,audgram(:,i)],[],2);
+            #             fbg(:,i) = state;
+            # ...
+            #
+            #% map back to FFT grid, flatten bark loop gain
+            #sf2a = sum(f2a);
+            #E = diag(1./(sf2a+(sf2a==0))) * f2a' * fbg;
+            #% Remove any zeros in E (shouldn't be any, but who knows?)
+            #E(E(:)<=0) = min(E(E(:)>0));
+            #% invert back to waveform
+            #y = istft(D./E);
+
 
             pass
+        pass
+
     pass
