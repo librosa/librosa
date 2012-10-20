@@ -9,6 +9,17 @@ Well-behaved wrapper to audioread
 import numpy
 import audioread
 
+# Example usages:
+#
+#   1. load all the frames from a wav file
+#       f = audioread.audio_open('file.wav')
+#       x = [frame for frame in librosa.framegenerator.frames_timeseries(f, 512)]
+#
+#   2. process through AGC
+#       y = [frame for frame in librosa.tf_agc.tf_agc(  librosa.framegenerator.frames_timeseries(f, 512),
+#                                                       f.samplerate)]
+#
+
 def frames_timeseries(audio_blob, blocksize=512, zero_pad=True):
     '''
         audio_blob  = object returned from audioread.audio_open(...)
