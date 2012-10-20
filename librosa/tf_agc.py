@@ -98,9 +98,6 @@ def tf_agc(frame_iterator, sample_rate=22050, **kwargs):
             D = scipy.fft(frame)
 
             # multiply by f2a
-            if D.shape[0] != f2a.shape[1]:
-                yield numpy.zeros(1)
-                break
             audiogram = numpy.dot(f2a, numpy.abs(D))
 
             ## DPWE
