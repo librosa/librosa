@@ -9,18 +9,35 @@ Well-behaved wrapper to audioread
 import numpy
 import audioread
 
+
+##
+# Iterate over frames in a raw audio buffer
+def raw_timeseries(buf, blocksize=512, zero_pad=True):
+
+    n = len(buf)
+    for i in xrange(0, n, blocksize):
+        if i+blocksize < n:
+            yield buf[i:(i+blocksize)]
+        elif zero_pad:
+            z = numpy.zeros((blocksize,))
+            z[:(n-i)] = buf[i:(i+blocksize)]
+            yield z
+        pass
+    pass
+
+
 # Example usages:
 #
 #   1. load all the frames from a wav file
 #       f = audioread.audio_open('file.wav')
-#       x = [frame for frame in librosa.framegenerator.frames_timeseries(f, 512)]
+#       x = [frame for frame in librosa.framegenerator.audioread_timeseries(f, 512)]
 #
 #   2. process through AGC
-#       y = [frame for frame in librosa.tf_agc.tf_agc(  librosa.framegenerator.frames_timeseries(f, 512),
+#       y = [frame for frame in librosa.tf_agc.tf_agc(  librosa.framegenerator.audioread_timeseries(f, 512),
 #                                                       f.samplerate)]
 #
 
-def frames_timeseries(audio_blob, blocksize=512, zero_pad=True):
+def audioread_timeseries(audio_blob, blocksize=512, zero_pad=True):
     '''
         audio_blob  = object returned from audioread.audio_open(...)
         blocksize   = size of the frames to return (default 512)
