@@ -11,14 +11,14 @@ def mfcc(framevector, samplerate, winfun=np.hamming, nmel=20, width=1.0, fmin=0,
     '''Given a frame of arbitrary length and sample rate, compute the MFCCs
 
     framevector: 1 * N numpy array
-        The audio frame
+        The audio frame to be used.
     samplerate: int
-        Sampling rate of the incoming signal
+        Sampling rate of the incoming signal.
     winfun: func
         The windowing function applying to the input frame, Hamming window by
-        default
+        default.
     nmel: int
-        The number of mel bins
+        The number of mel bins.
     width : float
         The constant width of each band relative to standard Mel. Defaults 1.0.
     fmin : float
