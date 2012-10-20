@@ -10,98 +10,7 @@ Ported from tf_agc.m by DPWE
 
 import numpy
 import scipy
-
-## Cut-pasted stft code from stackoverflow
-#   http://stackoverflow.com/questions/2459295/stft-and-istft-in-python 
-#
-# Probably redundant
-# def stft(x, fs, framesz, hop):
-#     framesamp = int(framesz*fs)
-#     hopsamp = int(hop*fs)
-#     w = scipy.hamming(framesamp)
-#     X = scipy.array([scipy.fft(w*x[i:i+framesamp]) 
-#                      for i in range(0, len(x)-framesamp, hopsamp)])
-#     return X
-
-# def istft(X, fs, T, hop):
-#     x = scipy.zeros(T*fs)
-#     framesamp = X.shape[1]
-#     hopsamp = int(hop*fs)
-#     for n,i in enumerate(range(0, len(x)-framesamp, hopsamp)):
-#         x[i:i+framesamp] += scipy.real(scipy.ifft(X[n]))
-#     return x
-
-###
-# Stolen from ronw's mfcc.py
-#
-def _hz_to_mel(f):
-    return 2595.0 * numpy.log10(1 + f / 700.0)
-
-def _mel_to_hz(z):
-    return 700.0 * (10.0**(z / 2595.0) - 1.0)
-
-def melfb(samplerate, nfft, nfilts=20, width=1.0, fmin=0, fmax=None):
-    """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins.
-
-    Parameters
-    ----------
-    samplerate : int
-        Sampling rate of the incoming signal.
-    nfft : int
-        FFT length to use.
-    nfilts : int
-        Number of Mel bands to use.
-    width : float
-        The constant width of each band relative to standard Mel. Defaults 1.0.
-    fmin : float
-        Frequency in Hz of the lowest edge of the Mel bands. Defaults to 0.
-    fmax : float
-        Frequency in Hz of the upper edge of the Mel bands. Defaults
-        to `samplerate` / 2.
-
-    See Also
-    --------
-    Filterbank
-    MelSpec
-    """
-
-    if fmax is None:
-        fmax = samplerate / 2
-
-    # Initialize the weights
-#     wts = numpy.zeros((nfilts, nfft / 2 + 1))
-    wts = numpy.zeros( (nfilts, nfft) )
-
-    # Center freqs of each FFT bin
-#     fftfreqs = numpy.arange(nfft / 2 + 1, dtype=numpy.double) / nfft * samplerate
-    fftfreqs = numpy.arange( wts.shape[1], dtype=numpy.double ) / nfft * samplerate
-
-    # 'Center freqs' of mel bands - uniformly spaced between limits
-    minmel      = _hz_to_mel(fmin)
-    maxmel      = _hz_to_mel(fmax)
-    binfreqs    = _mel_to_hz(minmel + numpy.arange((nfilts+2), dtype=numpy.double) / (nfilts+1) * (maxmel - minmel))
-
-    for i in xrange(nfilts):
-        freqs       = binfreqs[i + numpy.arange(3)]
-        
-        # scale by width
-        freqs       = freqs[1] + width * (freqs - freqs[1])
-
-        # lower and upper slopes for all bins
-        loslope     = (fftfreqs - freqs[0]) / (freqs[1] - freqs[0])
-        hislope     = (freqs[2] - fftfreqs) / (freqs[2] - freqs[1])
-
-        # .. then intersect them with each other and zero
-        wts[i,:]    = numpy.maximum(0, numpy.minimum(loslope, hislope))
-
-        pass
-
-    # Slaney-style mel is scaled to be approx constant E per channel
-    enorm   = 2.0 / (binfreqs[2:nfilts+2] - binfreqs[:nfilts])
-    wts     = numpy.dot(numpy.diag(enorm), wts)
-    
-    return wts
-
+import _mfcc
 
 def tf_agc(frame_iterator, sample_rate=22050, **kwargs):
     '''
@@ -170,7 +79,7 @@ def tf_agc(frame_iterator, sample_rate=22050, **kwargs):
             if f2a is None: 
                 # initialize the mel filter bank after grabbing the first frame
 
-                f2a = melfb(sample_rate, len(frame), num_frequency_bands, mel_filter_width)
+                f2a = _mfcc.melfb(sample_rate, len(frame), num_frequency_bands, mel_filter_width)
 #                 f2a = f2a[:,:(round(len(frame)/2) + 1)]
                 
 
