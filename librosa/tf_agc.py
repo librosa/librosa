@@ -74,7 +74,8 @@ def tf_agc(frame_iterator, sample_rate=22050, **kwargs):
 
         # Iterate over frames
         for frame in frame_iterator:
-            frame = numpy.frombuffer(frame, 'h')
+            # Brutal PCM buffering hack
+            frame = numpy.frombuffer(frame, 'h') / 32768.0
 
             if f2a is None: 
                 # initialize the mel filter bank after grabbing the first frame
@@ -100,7 +101,7 @@ def tf_agc(frame_iterator, sample_rate=22050, **kwargs):
 
             # multiply by f2a
             if D.shape[0] != f2a.shape[1]:
-                yield 0.0
+                yield numpy.zeros(1)
                 break
             audiogram = numpy.dot(f2a, numpy.abs(D))
 
