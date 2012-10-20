@@ -150,61 +150,65 @@ def tf_agc(frame_iterator, sample_rate=22050, **kwargs):
     # Setup
 
     # How many frequency bands do we need?
-    num_frequency_bands = max(10, round(20 / frequency_scale))
-    mel_filter_width    = round(frequency_scale  * num_frequency_bands / 10);
-
-
-    # ftsr = sample_rate / hop_length
-    #       hop_length      = window_length / 2
-    #       window_length   = n_fft
-    #       n_fft           = len(frame)
+    num_frequency_bands = max(10, int(20 / frequency_scale))
+    mel_filter_width    = int(frequency_scale  * num_frequency_bands / 10);
 
     # initialize the mel filterbank to None; 
     # do the real initialization after grabbing the first frame
     f2a = None
 
-
-    if guassian_smoothing:
+    if gaussian_smoothing:
         pass
     else:
         # Else, use infinite-attack exp-release
 
 
         # Iterate over frames
-        for frame in frameIterator:
+        for frame in frame_iterator:
+            frame = numpy.frombuffer(frame, 'h')
 
             if f2a is None: 
                 # initialize the mel filter bank after grabbing the first frame
-                f2a = melfb(sample_rate, len(frame), num_frequency_bands, mel_filter_width)
-                f2a = f2a[:,:(round(len(frame)/2) + 1)]
 
-                n   = f2a.shape[0]
+                f2a = melfb(sample_rate, len(frame), num_frequency_bands, mel_filter_width)
+#                 f2a = f2a[:,:(round(len(frame)/2) + 1)]
                 
+
+                #% map back to FFT grid, flatten bark loop gain
+                #sf2a = sum(f2a);
+
+                normalize_f2a                       = numpy.sum(f2a, axis=0)
+                normalize_f2a[normalize_f2a == 0]   = 1.0
+                normalize_f2a                       = 1.0 / normalize_f2a
+
                 # initialze the state vector
-                state   = numpy.zeros( (n, 1) )
-                fbg     = numpy.zeros( (n, 1) )
+                state   = numpy.zeros( (num_frequency_bands, 1) )[0]
 
                 pass
 
             # FFT each frame
-            D = None # fft(frame, ...)
+            D = scipy.fft(frame)
 
             # multiply by f2a
-            audiogram = numpy.dot(f2a, D)
+            audiogram = numpy.dot(f2a, numpy.abs(D))
 
             ## DPWE
             #             state = max([alpha*state,audgram(:,i)],[],2);
             #             fbg(:,i) = state;
             # ...
             #
-            #% map back to FFT grid, flatten bark loop gain
-            #sf2a = sum(f2a);
+            state = numpy.maximum(alpha * state, audiogram)
+
             #E = diag(1./(sf2a+(sf2a==0))) * f2a' * fbg;
+            E   = normalize_f2a * numpy.dot(f2a.T, state);
+
             #% Remove any zeros in E (shouldn't be any, but who knows?)
             #E(E(:)<=0) = min(E(E(:)>0));
+
             #% invert back to waveform
             #y = istft(D./E);
 
+            y = scipy.ifft(D/E)
 
             pass
         pass
