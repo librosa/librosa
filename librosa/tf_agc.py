@@ -116,7 +116,7 @@ def tf_agc(frame_iterator, sample_rate=22050, **kwargs):
 
             #% Remove any zeros in E (shouldn't be any, but who knows?)
             #E(E(:)<=0) = min(E(E(:)>0));
-            E[E<=0] = min(E[E>0.0])
+            E[E<=0.0] = min(E[E>0.0])
 
             #% invert back to waveform
             #y = istft(D./E);
