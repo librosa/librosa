@@ -99,6 +99,9 @@ def tf_agc(frame_iterator, sample_rate=22050, **kwargs):
             D = scipy.fft(frame)
 
             # multiply by f2a
+            if D.shape[0] != f2a.shape[1]:
+                yield 0.0
+                break
             audiogram = numpy.dot(f2a, numpy.abs(D))
 
             ## DPWE
@@ -113,13 +116,13 @@ def tf_agc(frame_iterator, sample_rate=22050, **kwargs):
 
             #% Remove any zeros in E (shouldn't be any, but who knows?)
             #E(E(:)<=0) = min(E(E(:)>0));
+            E[E<=0] = min(E[E>0.0])
 
             #% invert back to waveform
             #y = istft(D./E);
+            y = numpy.real(scipy.ifft(D/E))
 
-            y = scipy.ifft(D/E)
-
-            pass
+            yield y
         pass
 
     pass
