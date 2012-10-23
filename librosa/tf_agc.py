@@ -11,6 +11,7 @@ Ported from tf_agc.m by DPWE
 import numpy
 import scipy
 import _mfcc
+import stft
 
 def tf_agc(frame_iterator, sample_rate=22050, **kwargs):
     '''
@@ -94,8 +95,10 @@ def tf_agc(frame_iterator, sample_rate=22050, **kwargs):
                 pass
 
             # FFT each frame
-            D = scipy.fft(frame)
-            D = D[:(1+int(len(D)/2))] 
+#             D = scipy.fft(frame)
+#             D = scipy.fft(frame)
+#             D = D[:(1+int(len(D)/2))] 
+            D = librosa.stft.stft(frame)
             # multiply by f2a
             audiogram = numpy.dot(f2a, numpy.abs(D))
 
@@ -114,8 +117,8 @@ def tf_agc(frame_iterator, sample_rate=22050, **kwargs):
             E[E<=0.0] = min(E[E>0.0])
 
             #% invert back to waveform
-            #y = istft(D./E);
-            y = numpy.real(scipy.ifft(D/E))
+            y = librosa.stft.istft(D./E);
+#             y = numpy.real(scipy.ifft(D/E))
 
             yield y
         pass

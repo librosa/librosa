@@ -50,7 +50,7 @@ def stft(x, n_fft=256, hann_window=None, hop=None, sample_rate=8000):
     # allocate output array
     D = numpy.zeros( (int(1 + n_fft / 2), 1 + int( ( num_samples - n_fft) / hop) ), dtype=numpy.complex)
 
-    for (i, b) in enumerate(xrange(0, num_samples - n_fft, hop)):
+    for (i, b) in enumerate(xrange(0, 1+num_samples - n_fft, hop)):
         u           = window * x[b:(b+n_fft)]
         t           = scipy.fft(u)
         D[:,i]      = t[:1+n_fft/2]
