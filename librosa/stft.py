@@ -71,7 +71,6 @@ def istft(d, n_fft=None, hann_window=None, hop=None):
         hann_window = n_fft
         pass
 
-
     if hann_window == 0:
         window = numpy.ones((n_fft,))
     else:
@@ -88,9 +87,9 @@ def istft(d, n_fft=None, hann_window=None, hop=None):
     x_length    = n_fft + (num_frames - 1) * hop
     x           = numpy.zeros((x_length,))
 
-    for b in xrange(0, hop * (num_frames - 1), hop):
+    for b in xrange(0, hop * (num_frames), hop):
         ft              = d[:, b/hop]
-        ft              = numpy.concatenate((ft, numpy.conj(ft[n_fft/2:1:-1])), 0)
+        ft              = numpy.concatenate((ft, numpy.conj(ft[(n_fft/2 -1):0:-1])), 0)
         px              = numpy.real(scipy.ifft(ft))
         x[b:(b+n_fft)] += px * window
         pass
