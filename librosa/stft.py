@@ -61,6 +61,7 @@ def stft(x, n_fft=256, hann_window=None, hop=None, sample_rate=8000):
 
 def istft(d, n_fft=None, hann_window=None, hop=None):
     
+
     num_frames = d.shape[1]
 
     if n_fft is None:

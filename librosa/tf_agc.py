@@ -85,20 +85,19 @@ def tf_agc(frame_iterator, sample_rate=22050, **kwargs):
                 #% map back to FFT grid, flatten bark loop gain
                 #sf2a = sum(f2a);
 
-                normalize_f2a                       = numpy.sum(f2a, axis=0)
+                normalize_f2a                       = numpy.zeros( (f2a.shape[1], 1) )
+                normalize_f2a[:,0]                    = numpy.sum(f2a, axis=0)
                 normalize_f2a[normalize_f2a == 0]   = 1.0
                 normalize_f2a                       = 1.0 / normalize_f2a
 
                 # initialze the state vector
-                state   = numpy.zeros( (num_frequency_bands, 1) )[0]
+                state   = numpy.zeros( (num_frequency_bands, 1) )
 
                 pass
 
             # FFT each frame
 #             D = scipy.fft(frame)
-#             D = scipy.fft(frame)
-#             D = D[:(1+int(len(D)/2))] 
-            D = librosa.stft.stft(frame)
+            D = stft.stft(frame, n_fft=len(frame))
             # multiply by f2a
             audiogram = numpy.dot(f2a, numpy.abs(D))
 
@@ -110,14 +109,15 @@ def tf_agc(frame_iterator, sample_rate=22050, **kwargs):
             state = numpy.maximum(alpha * state, audiogram)
 
             #E = diag(1./(sf2a+(sf2a==0))) * f2a' * fbg;
-            E   = normalize_f2a * numpy.dot(f2a.T, state);
+            E   = normalize_f2a * (numpy.dot(f2a.T, state));
+
 
             #% Remove any zeros in E (shouldn't be any, but who knows?)
             #E(E(:)<=0) = min(E(E(:)>0));
             E[E<=0.0] = min(E[E>0.0])
 
             #% invert back to waveform
-            y = librosa.stft.istft(D./E);
+            y = stft.istft(D/E);
 #             y = numpy.real(scipy.ifft(D/E))
 
             yield y
