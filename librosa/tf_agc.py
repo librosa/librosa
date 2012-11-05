@@ -11,7 +11,7 @@ Ported from tf_agc.m by DPWE
 import numpy
 import scipy
 import _mfcc
-import stft
+import librosa
 
 def tf_agc(frame_iterator, sample_rate=22050, **kwargs):
     '''
@@ -79,7 +79,7 @@ def tf_agc(frame_iterator, sample_rate=22050, **kwargs):
             if f2a is None: 
                 # initialize the mel filter bank after grabbing the first frame
 
-                f2a = _mfcc.melfb(sample_rate, len(frame), num_frequency_bands, mel_filter_width)
+                f2a = librosa.melfb(sample_rate, len(frame), num_frequency_bands, mel_filter_width)
                 f2a = f2a[:,:(round(len(frame)/2) + 1)]
 
                 #% map back to FFT grid, flatten bark loop gain
@@ -97,7 +97,7 @@ def tf_agc(frame_iterator, sample_rate=22050, **kwargs):
 
             # FFT each frame
 #             D = scipy.fft(frame)
-            D = stft.stft(frame, n_fft=len(frame))
+            D = librosa.stft(frame, n_fft=len(frame))
             # multiply by f2a
             audiogram = numpy.dot(f2a, numpy.abs(D))
 
@@ -117,7 +117,7 @@ def tf_agc(frame_iterator, sample_rate=22050, **kwargs):
             E[E<=0.0] = min(E[E>0.0])
 
             #% invert back to waveform
-            y = stft.istft(D/E);
+            y = librosa.istft(D/E);
 #             y = numpy.real(scipy.ifft(D/E))
 
             yield y

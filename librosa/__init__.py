@@ -129,3 +129,78 @@ def istft(d, n_fft=None, hann_w=None, hop=None):
         pass
 
     return x
+
+# Dead-simple mel spectrum conversion
+def hz_to_mel(f):
+    return 2595.0 * numpy.log10(1 + f / 700.0)
+
+def mel_to_hz(z):
+    return 700.0 * (10.0**(z / 2595.0) - 1.0)
+
+# Stolen from ronw's mfcc.py
+# https://github.com/ronw/frontend/blob/master/mfcc.py
+
+def melfb(samplerate, nfft, nfilts=20, width=1.0, fmin=0, fmax=None):
+    """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins.
+
+    Parameters
+    ----------
+    samplerate : int
+        Sampling rate of the incoming signal.
+    nfft : int
+        FFT length to use.
+    nfilts : int
+        Number of Mel bands to use.
+    width : float
+        The constant width of each band relative to standard Mel. Defaults 1.0.
+    fmin : float
+        Frequency in Hz of the lowest edge of the Mel bands. Defaults to 0.
+    fmax : float
+        Frequency in Hz of the upper edge of the Mel bands. Defaults
+        to `samplerate` / 2.
+
+    See Also
+    --------
+    Filterbank
+    MelSpec
+    """
+
+    if fmax is None:
+        fmax = samplerate / 2
+        pass
+
+    # Initialize the weights
+#     wts = numpy.zeros((nfilts, nfft / 2 + 1))
+    wts         = numpy.zeros( (nfilts, nfft) )
+
+    # Center freqs of each FFT bin
+#     fftfreqs = numpy.arange(nfft / 2 + 1, dtype=numpy.double) / nfft * samplerate
+    fftfreqs    = numpy.arange( wts.shape[1], dtype=numpy.double ) / nfft * samplerate
+
+    # 'Center freqs' of mel bands - uniformly spaced between limits
+    minmel      = hz_to_mel(fmin)
+    maxmel      = hz_to_mel(fmax)
+    binfreqs    = mel_to_hz(minmel + numpy.arange((nfilts+2), dtype=numpy.double) / (nfilts+1) * (maxmel - minmel))
+
+    for i in xrange(nfilts):
+        freqs       = binfreqs[i + numpy.arange(3)]
+        
+        # scale by width
+        freqs       = freqs[1] + width * (freqs - freqs[1])
+
+        # lower and upper slopes for all bins
+        loslope     = (fftfreqs - freqs[0]) / (freqs[1] - freqs[0])
+        hislope     = (freqs[2] - fftfreqs) / (freqs[2] - freqs[1])
+
+        # .. then intersect them with each other and zero
+        wts[i,:]    = numpy.maximum(0, numpy.minimum(loslope, hislope))
+
+        pass
+
+    # Slaney-style mel is scaled to be approx constant E per channel
+    enorm   = 2.0 / (binfreqs[2:nfilts+2] - binfreqs[:nfilts])
+    wts     = numpy.dot(numpy.diag(enorm), wts)
+    
+    return wts
+
+
