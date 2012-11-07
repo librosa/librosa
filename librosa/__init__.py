@@ -132,7 +132,7 @@ def istft(d, n_fft=None, hann_w=None, hop=None):
 
 # Dead-simple mel spectrum conversion
 def hz_to_mel(f):
-    return 2595.0 * numpy.log10(1 + f / 700.0)
+    return 2595.0 * numpy.log10(1.0 + f / 700.0)
 
 def mel_to_hz(z):
     return 700.0 * (10.0**(z / 2595.0) - 1.0)
