@@ -10,6 +10,8 @@ Includes constants, core utility functions, etc
 
 import numpy, scipy
 
+# TODO:   2012-11-07 10:51:20 by Brian McFee <brm2132@columbia.edu>
+# this is already in scipy, remove and refactor code around scipy's version 
 def hann_window(w, f):
     '''
     Construct a Hann window
@@ -203,4 +205,21 @@ def melfb(samplerate, nfft, nfilts=20, width=1.0, fmin=0, fmax=None):
     
     return wts
 
+def localmax(x):
+    '''
+        Return 1 where there are local maxima in x (column-wise)
+        left edges do not fire, right edges might.
+    '''
 
+    # TODO:   2012-11-07 10:58:19 by Brian McFee <brm2132@columbia.edu>
+    #  this can probably be done quicker with filters
+
+    return numpy.logical_and(x > numpy.hstack([x[0], x[:-1]]), x >= numpy.hstack([x[1:], x[-1]]))
+
+
+def autocorrelate(x, max_size):
+    result = numpy.correlate(x, x, mode='full')
+    result = result[len(result)/2:]
+    if max_size is None:
+        return result
+    return result[:max_size]
