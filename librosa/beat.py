@@ -24,6 +24,7 @@ def beat_track(y, input_rate=8000, start_bpm=120, tightness=0.9):
 
     # Then, estimate bpm
     bpm = _beat_estimate_bpm(onset_strength, start_bpm=start_bpm)
+    print bpm
     
     # Then, run the tracker
     return
@@ -51,9 +52,11 @@ def _beat_estimate_bpm(onset_strength, sampling_rate=8000, hop_length=32, start_
     # Find local maximum in global auto-correlation
     x_corr                  = librosa.autocorrelate(onset_strength[mincol:maxcol+1], ac_max)
 
-    #     TODO:   2012-11-07 11:54:12 by Brian McFee <brm2132@columbia.edu>
     # why the + 0.1 here?  .. stability on 0th point
-    bpms                    = 60.0 * fft_resolution / (numpy.arange(ac_max) + 0.1)
+#     bpms                    = 60.0 * fft_resolution / (numpy.arange(ac_max) + 0.1)
+
+    # why not add 1 instead?  it'll wash out in the logs anyway
+    bpms                    = 60.0 * fft_resolution / (numpy.arange(1, ac_max+1))
     x_corr_weighting        = numpy.exp(-0.5 * ((numpy.log2(bpms) - numpy.log2(start_bpm)) / bpm_std)**2)
 
     # Compute the weighted autocorrelation
@@ -62,8 +65,9 @@ def _beat_estimate_bpm(onset_strength, sampling_rate=8000, hop_length=32, start_
     # Get the local max
     x_peaks                 = librosa.localmax(x_corr)
 
-    # Throw out any peaks in the initial down slope
-    x_peaks[:numpy.min(numpy.nonzero(x_corr < 0))] = False
+    # Zero out all peaks before the first negative
+
+    x_peaks[:numpy.argmax(x_corr < 0)] = False
 
     # Find the largest local max
     start_period            = numpy.argmax(x_peaks * x_corr)
@@ -73,9 +77,9 @@ def _beat_estimate_bpm(onset_strength, sampling_rate=8000, hop_length=32, start_
     candidate_periods       = candidate_periods[candidate_periods < ac_max]
 
     best_period             = numpy.argmax(x_corr[candidate_periods])
-    start_period2           = candidate_periods[best_period]
 
-    start_bpm               = 60.0 * fft_resolution / numpy.minimum(start_period, start_period2)
+    start_bpm               = 60.0 * fft_resolution / numpy.minimum(start_period, candidate_periods[best_period])
+
     return start_bpm
 
 
