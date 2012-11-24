@@ -38,12 +38,13 @@ def raw_timeseries(buf, blocksize=512, overlap=0, zero_pad=True):
 #                                                       f.samplerate)]
 #
 
-def audioread_timeseries(audio_blob, blocksize=512, zero_pad=True):
+def audioread_timeseries(audio_blob, blocksize=512, zero_pad=True, mono=True):
     '''
         audio_blob  = object returned from audioread.audio_open(...)
         blocksize   = size of the frames to return (default 512)
         zero_pad    = if true, last frame is padded out with 0s to blocksize
                         else, last frame is dropped
+        mono        = if true, and audio_blob is stereo, average channels together first
 
         iterates over frames and returns 
     '''
@@ -52,6 +53,12 @@ def audioread_timeseries(audio_blob, blocksize=512, zero_pad=True):
         raise TypeError('blocksize must be a positive integer')
     if blocksize < 0:
         raise ValueError('blocksize must be a positive integer')
+
+    if mono and audio_blob.channels > 1:
+        for frame in audioread_timeseries(audio_blob, blocksize=(2*blocksize), zero_pad=zero_pad, mono=False):
+            yield (frame[::2] + frame[1::2]) / 2.0
+            pass
+        pass
 
     for frame in audio_blob.read_data(blocksize):
 
