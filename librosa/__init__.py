@@ -9,6 +9,7 @@ Includes constants, core utility functions, etc
 '''
 
 import numpy, scipy
+import beat, framegenerator, _chroma, _mfcc, tf_agc
 
 # TODO:   2012-11-07 10:51:20 by Brian McFee <brm2132@columbia.edu>
 # this is already in scipy, remove and refactor code around scipy's version 
@@ -211,14 +212,15 @@ def localmax(x):
         left edges do not fire, right edges might.
     '''
 
-    # TODO:   2012-11-07 10:58:19 by Brian McFee <brm2132@columbia.edu>
-    #  this can probably be done quicker with filters
-
     return numpy.logical_and(x > numpy.hstack([x[0], x[:-1]]), x >= numpy.hstack([x[1:], x[-1]]))
 
 
 def autocorrelate(x, max_size):
-    result = numpy.correlate(x, x, mode='full')
+    #   TODO:   2012-11-07 14:05:42 by Brian McFee <brm2132@columbia.edu>
+    #  maybe could be done faster by directly implementing a clipped correlate
+#     result = numpy.correlate(x, x, mode='full')
+    result = scipy.signal.fftconvolve(x, x[::-1], mode='full')
+
     result = result[len(result)/2:]
     if max_size is None:
         return result
