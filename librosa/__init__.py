@@ -134,16 +134,55 @@ def istft(d, n_fft=None, hann_w=None, hop=None):
     return x
 
 # Dead-simple mel spectrum conversion
-def hz_to_mel(f):
-    return 2595.0 * numpy.log10(1.0 + f / 700.0)
+def hz_to_mel(f, htk=True):
+    if numpy.isscalar(f):
+        f = numpy.array([f],dtype=float)
+        pass
+    if htk:
+        return 2595.0 * numpy.log10(1.0 + f / 700.0)
+    else:
+        # Oppan Slaney style
+        f_0         = 0
+        f_sp        = 200.0 / 3
+        brkfrq      = 1000.0
+        brkpt       = (brkfrq - f_0) / f_sp
+        logstep     = numpy.exp(numpy.log(6.4) / 27.0)
+        linpts      = f < brkfrq
 
-def mel_to_hz(z):
-    return 700.0 * (10.0**(z / 2595.0) - 1.0)
+        nlinpts     = numpy.invert(linpts)
+
+        z           = numpy.zeros_like(f)
+        # Fill in parts separately
+        z[linpts]   = (f[linpts] - f_0) / f_sp
+        z[nlinpts]  = brkpt + numpy.log(f[nlinpts] / brkfrq) / numpy.log(logstep)
+        return z
+    pass
+
+def mel_to_hz(z, htk=True):
+    if numpy.isscalar(z):
+        z = numpy.array([z], dtype=float)
+        pass
+    if htk:
+        return 700.0 * (10.0**(z / 2595.0) - 1.0)
+    else:
+        f_0         = 0.0
+        f_sp        = 200.0 / 3
+        brkfrq      = 1000
+        brkpt       = (brkfrq - f_0) / f_sp
+        logstep     = numpy.exp(numpy.log(6.4) / 27.0)
+        f           = numpy.zeros_like(z)
+        linpts      = z < brkpt
+        nlinpts     = numpy.invert(linpts)
+
+        f[linpts]   = f_0 + f_sp * z[linpts]
+        f[nlinpts]  = brkfrq * numpy.exp(numpy.log(logstep) * (z[nlinpts]-brkpt))
+        return f
+    pass
 
 # Stolen from ronw's mfcc.py
 # https://github.com/ronw/frontend/blob/master/mfcc.py
 
-def melfb(samplerate, nfft, nfilts=20, width=1.0, fmin=0, fmax=None):
+def melfb(samplerate, nfft, nfilts=20, width=3.0, fmin=None, fmax=None, htk=True):
     """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins.
 
     Parameters
@@ -168,21 +207,23 @@ def melfb(samplerate, nfft, nfilts=20, width=1.0, fmin=0, fmax=None):
     MelSpec
     """
 
+    if fmin is None:
+        fmin = 0
+        pass
+
     if fmax is None:
         fmax = samplerate / 2
         pass
 
     # Initialize the weights
-#     wts = numpy.zeros((nfilts, nfft / 2 + 1))
     wts         = numpy.zeros( (nfilts, nfft) )
 
     # Center freqs of each FFT bin
-#     fftfreqs = numpy.arange(nfft / 2 + 1, dtype=numpy.double) / nfft * samplerate
     fftfreqs    = numpy.arange( wts.shape[1], dtype=numpy.double ) / nfft * samplerate
 
     # 'Center freqs' of mel bands - uniformly spaced between limits
-    minmel      = hz_to_mel(fmin)
-    maxmel      = hz_to_mel(fmax)
+    minmel      = hz_to_mel(fmin, htk=htk)
+    maxmel      = hz_to_mel(fmax, htk=htk)
     binfreqs    = mel_to_hz(minmel + numpy.arange((nfilts+2), dtype=numpy.double) / (nfilts+1) * (maxmel - minmel))
 
     for i in xrange(nfilts):

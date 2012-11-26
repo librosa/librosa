@@ -8,6 +8,7 @@ All things rhythmic go here
 
 import librosa
 import numpy, scipy, scipy.signal
+import sklearn, sklearn.cluster
 
 def beat_track(y, input_rate=8000, start_bpm=120, tightness=0.9):
 
@@ -177,6 +178,7 @@ def _beat_strength(y, sampling_rate=8000, window_length=256, hop_length=32, mel_
 
     OUTPUT:
         onset_envelope
+        spectrogram
     '''
 
     gain_threshold  = 80.0
@@ -192,35 +194,43 @@ def _beat_strength(y, sampling_rate=8000, window_length=256, hop_length=32, mel_
     D   = 20.0 * numpy.log10(numpy.maximum(1e-10, D))
 
     ### Only look at top 80 dB
-    D   = numpy.maximum(D, D.max() - gain_threshold)
+    Z   = numpy.maximum(D, D.max() - gain_threshold)
 
     ### Compute first difference
-    D   = numpy.diff(D, 1, 1)
+    Z   = numpy.diff(Z, n=1, axis=1)
 
     ### Discard negatives (decreasing amplitude)
     #   falling edges could also be useful segmentation cues
     #   to catch falling edges, replace max(0,D) with abs(D)
     if rising:
-        D   = numpy.maximum(0.0, D)
+        Z   = numpy.maximum(0.0, Z)
     else:
-        D   = numpy.abs(D)
+#         Z   = numpy.abs(Z)
+        Z = Z**2
         pass
 
     ### Average over mel bands
-    D   = numpy.mean(D, 0)
+    Z   = numpy.mean(Z, axis=0)
 
     ### Filter with a difference operator
-    D   = scipy.signal.lfilter([1.0, -1.0], [1.0, -0.99], D)
+    Z   = scipy.signal.lfilter([1.0, -1.0], [1.0, -0.99], Z)
+
+    ### Threshold at zero
+    Z   = numpy.maximum(0.0, Z)
 
     ### Normalize by the maximum onset strength
-    return D / numpy.max(D)
+    Znorm = numpy.max(Z)
+    if Znorm == 0:
+        Znorm = 1.0
+        pass
+    return (Z / Znorm, D)
 
 def _recursive_beat_decomposition(onset, t_min=16, sigma=16):
 
     n           = len(onset)
 
     if n <= 3 * t_min:
-        return numpy.array([])
+        return numpy.array([], dtype=int)
 
     score       = onset - 1.0 / (2 * sigma**2) * (numpy.arange(len(onset)) - len(onset) / 2.0)**2
 
@@ -233,7 +243,50 @@ def _recursive_beat_decomposition(onset, t_min=16, sigma=16):
     left_beats  = _recursive_beat_decomposition(onset[:(mid_beat-1)], t_min, sigma)
     right_beats = mid_beat + _recursive_beat_decomposition(onset[mid_beat:], t_min, sigma)
 
-    return numpy.concatenate((left_beats, numpy.array([mid_beat]), right_beats), axis=0)
+    return numpy.concatenate((left_beats, numpy.array([mid_beat], dtype=int), right_beats), axis=0)
+
+def _segmentation(X, k):
+    '''
+        Perform bottom-up temporal segmentation
+
+        Input:
+            X:  d-by-t  spectragram (t frames)
+            k:          number of segments to produce
+
+        Output:
+            C:  d-by-k  centroids (ordered temporall)
+            N:          number of frames used by each centroid
+
+    '''
+
+    # Connect the temporal connectivity graph
+    G = sklearn.feature_extraction.image.grid_to_graph(n_x=X.shape[1], n_y=1, n_z=1)
+
+    # Instantiate the clustering object
+    W = sklearn.cluster.Ward(n_clusters=k, connectivity=G)
+
+    # Fit the model
+    W.fit(X.T)
+
+    # Instantiate output objects
+    C = numpy.zeros( (X.shape[0], k) )
+    N = numpy.zeros(k, dtype=int)
+
+    # Find the change points from the labels
+    d = list(numpy.nonzero(numpy.diff(W.labels_))[0].astype(int))
+
+    # tack on the last frame as a change point
+    d.append(X.shape[1])
+
+    s = 0
+    for (i, t) in enumerate(d):
+        N[i]    = t - s
+        C[:,i]  = numpy.mean(X[:,s:t], axis=1)
+        s       = t
+        pass
+
+    return (C, N)
+
 
 def frames_to_time(frames, sr=8000, hop_length=32):
 
