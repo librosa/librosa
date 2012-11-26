@@ -8,7 +8,7 @@ All things rhythmic go here
 
 import librosa
 import numpy, scipy, scipy.signal
-import sklearn, sklearn.cluster
+import sklearn, sklearn.cluster, sklearn.feature_extraction
 
 def beat_track(y, input_rate=8000, start_bpm=120, tightness=0.9):
 
@@ -250,7 +250,7 @@ def _segmentation(X, k):
         Perform bottom-up temporal segmentation
 
         Input:
-            X:  d-by-t  spectragram (t frames)
+            X:  d-by-t  spectrogram (t frames)
             k:          number of segments to produce
 
         Output:
