@@ -101,12 +101,12 @@ def istft(d, n_fft=None, hann_w=None, hop=None):
         hann_w = n_fft
         pass
 
-    if hann_window == 0:
+    if hann_w == 0:
         window = numpy.ones((n_fft,))
     else:
         # FIXME:   2012-10-20 18:58:56 by Brian McFee <brm2132@columbia.edu>
         #      there's a magic number 2/3 in istft.m ... not sure about this one
-        window = pad(scipy.signal.hanning(hann_w), n_fft) * 2.0 / 3
+        window = pad(scipy.signal.hanning(hann_w) * 2.0 / 3, n_fft)
         pass
 
     # Set the default hop, if it's not already specified
