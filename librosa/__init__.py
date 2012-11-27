@@ -67,7 +67,7 @@ def stft(x, n_fft=256, hann_w=None, hop=None, sample_rate=8000):
         pass
 
     # allocate output array
-    D = numpy.zeros( (int(1 + n_fft / 2), 1 + int( ( num_samples - n_fft) / hop) ), dtype=numpy.complex)
+    D = numpy.zeros( (int(1 + n_fft / 2.0), 1 + int( ( num_samples - n_fft) / hop) ), dtype=numpy.complex)
 
     for (i, b) in enumerate(xrange(0, 1+num_samples - n_fft, hop)):
         u           = window * x[b:(b+n_fft)]
@@ -111,7 +111,7 @@ def istft(d, n_fft=None, hann_w=None, hop=None):
 
     # Set the default hop, if it's not already specified
     if hop is None:
-        hop = int(window.shape[0] / 2 )
+        hop = int(window.shape[0] / 2.0 )
         pass
 
     x_length    = n_fft + (num_frames - 1) * hop
@@ -127,15 +127,21 @@ def istft(d, n_fft=None, hann_w=None, hop=None):
     return x
 
 # Dead-simple mel spectrum conversion
-def hz_to_mel(f, htk=True):
+def hz_to_mel(f, htk=False):
+    #     TODO:   2012-11-27 11:28:43 by Brian McFee <brm2132@columbia.edu>
+    #  too many magic numbers in these functions
+    #   redo with informative variable names
+    #   then make them into parameters
+
     if numpy.isscalar(f):
         f = numpy.array([f],dtype=float)
         pass
     if htk:
         return 2595.0 * numpy.log10(1.0 + f / 700.0)
     else:
+        f           = f.astype(float)
         # Oppan Slaney style
-        f_0         = 0
+        f_0         = 0.0
         f_sp        = 200.0 / 3
         brkfrq      = 1000.0
         brkpt       = (brkfrq - f_0) / f_sp
@@ -151,13 +157,14 @@ def hz_to_mel(f, htk=True):
         return z
     pass
 
-def mel_to_hz(z, htk=True):
+def mel_to_hz(z, htk=False):
     if numpy.isscalar(z):
         z = numpy.array([z], dtype=float)
         pass
     if htk:
         return 700.0 * (10.0**(z / 2595.0) - 1.0)
     else:
+        z           = z.astype(float)
         f_0         = 0.0
         f_sp        = 200.0 / 3
         brkfrq      = 1000
@@ -175,7 +182,7 @@ def mel_to_hz(z, htk=True):
 # Stolen from ronw's mfcc.py
 # https://github.com/ronw/frontend/blob/master/mfcc.py
 
-def melfb(samplerate, nfft, nfilts=20, width=3.0, fmin=None, fmax=None, htk=True):
+def melfb(samplerate, nfft, nfilts=40, width=3.0, fmin=None, fmax=None, use_htk=False):
     """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins.
 
     Parameters
@@ -185,14 +192,16 @@ def melfb(samplerate, nfft, nfilts=20, width=3.0, fmin=None, fmax=None, htk=True
     nfft : int
         FFT length to use.
     nfilts : int
-        Number of Mel bands to use.
+        Number of Mel bands to use.  Defaults to 40.
     width : float
-        The constant width of each band relative to standard Mel. Defaults 1.0.
+        The constant width of each band relative to standard Mel. Defaults 3.
     fmin : float
         Frequency in Hz of the lowest edge of the Mel bands. Defaults to 0.
     fmax : float
         Frequency in Hz of the upper edge of the Mel bands. Defaults
         to `samplerate` / 2.
+    use_htk: bool
+        Use HTK mels instead of Slaney's version? Defaults to false.
 
     See Also
     --------
@@ -205,7 +214,7 @@ def melfb(samplerate, nfft, nfilts=20, width=3.0, fmin=None, fmax=None, htk=True
         pass
 
     if fmax is None:
-        fmax = samplerate / 2
+        fmax = samplerate / 2.0
         pass
 
     # Initialize the weights
@@ -215,12 +224,12 @@ def melfb(samplerate, nfft, nfilts=20, width=3.0, fmin=None, fmax=None, htk=True
     fftfreqs    = numpy.arange( wts.shape[1], dtype=numpy.double ) / nfft * samplerate
 
     # 'Center freqs' of mel bands - uniformly spaced between limits
-    minmel      = hz_to_mel(fmin, htk=htk)
-    maxmel      = hz_to_mel(fmax, htk=htk)
-    binfreqs    = mel_to_hz(minmel + numpy.arange((nfilts+2), dtype=numpy.double) / (nfilts+1) * (maxmel - minmel))
+    minmel      = hz_to_mel(fmin, htk=use_htk)
+    maxmel      = hz_to_mel(fmax, htk=use_htk)
+    binfreqs    = mel_to_hz(numpy.arange(minmel, minmel + nfilts+2, dtype=float) / (nfilts+1.0) * (maxmel - minmel), htk=use_htk)
 
     for i in xrange(nfilts):
-        freqs       = binfreqs[i + numpy.arange(3)]
+        freqs       = binfreqs[range(i, i+3)]
         
         # scale by width
         freqs       = freqs[1] + width * (freqs - freqs[1])

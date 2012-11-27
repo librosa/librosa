@@ -161,7 +161,7 @@ def _beat_estimate_bpm(onset_strength, sampling_rate=8000, hop_length=32, start_
     return start_bpm
 
 
-def _beat_strength(y, sampling_rate=8000, window_length=256, hop_length=32, mel_channels=40, rising=True):
+def _beat_strength(y, sampling_rate=8000, window_length=256, hop_length=32, mel_channels=40, rising=True, htk=False):
     '''
     Adapted from McVicar, adapted from Ellis, etc...
     
@@ -174,6 +174,7 @@ def _beat_strength(y, sampling_rate=8000, window_length=256, hop_length=32, mel_
         hop_length      = offset between frames                 | default: 32       | = 40us @ 8KHz
         mel_channels    = number of Mel bins to use             | default: 40
         rising          = detect only rising edges of beats     | default: True
+        htk             = use HTK mels instead of Slaney        | default: False
 
 
     OUTPUT:
@@ -187,7 +188,7 @@ def _beat_strength(y, sampling_rate=8000, window_length=256, hop_length=32, mel_
     D   = librosa.stft(y, window_length, window_length, hop_length)
 
     ### Convert D to mel scale, discard phase
-    M   = librosa.melfb(sampling_rate, window_length/2 + 1, mel_channels)
+    M   = librosa.melfb(sampling_rate, window_length/2 + 1, mel_channels, use_htk=htk)
     D   = numpy.dot(M, numpy.abs(D))
 
     ### Convert to dB (log-amplitude, suppress zeros/infinitessimals)
