@@ -11,35 +11,28 @@ Includes constants, core utility functions, etc
 import numpy, scipy
 import beat, framegenerator, _chroma, _mfcc, tf_agc
 
-# TODO:   2012-11-07 10:51:20 by Brian McFee <brm2132@columbia.edu>
-# this is already in scipy, remove and refactor code around scipy's version 
-def hann_window(w, f):
+def pad(w, d_pad, v=0.0, center=True):
     '''
-    Construct a Hann window
+    Pad a vector w out to d dimensions, using value v
 
-    Inputs:
-        w       = window size
-        f       = frame size
-
-    Output:
-        window  = f-by-1 array containing Hann weights
+    if center is True, w will be centered in the output vector
+    otherwise, w will be at the beginning
     '''
+    # FIXME:  2012-11-27 11:08:54 by Brian McFee <brm2132@columbia.edu>
+    #  This function will be deprecated by numpy 1.7.0    
 
-    # force window length to be odd
-    if w % 2 == 0:
-        w += 1
+    d = len(w)
+    if d > d_pad:
+        raise ValueError('Insufficient pad space')
+
+    q = v * numpy.ones(d_pad)
+    q[:d] = w
+
+    if center:
+        q = numpy.roll(q, numpy.floor((d_pad - d) / 2.0).astype(int), axis=0)
         pass
+    return q
 
-    half_length = (w - 1) / 2
-    half_f      = f/2
-    half_window = 0.5 * (1 + numpy.cos(numpy.pi / half_length * numpy.arange(half_length)))
-
-    window                                  = numpy.zeros((f,))
-    acthalflen                              = numpy.minimum(half_f, half_length)
-    window[half_f:(half_f+acthalflen)]      = half_window[:acthalflen]
-    window[half_f:(half_f-acthalflen):-1]   = half_window[:acthalflen]
-
-    return window
 
 
 def stft(x, n_fft=256, hann_w=None, hop=None, sample_rate=8000):
@@ -65,7 +58,7 @@ def stft(x, n_fft=256, hann_w=None, hop=None, sample_rate=8000):
     if hann_w == 0:
         window = numpy.ones((n_fft,))
     else:
-        window = hann_window(hann_w, n_fft)
+        window = pad(scipy.signal.hanning(hann_w), n_fft)
         pass
 
     # Set the default hop, if it's not already specified
@@ -113,7 +106,7 @@ def istft(d, n_fft=None, hann_w=None, hop=None):
     else:
         # FIXME:   2012-10-20 18:58:56 by Brian McFee <brm2132@columbia.edu>
         #      there's a magic number 2/3 in istft.m ... not sure about this one
-        window = hann_window(hann_w, n_fft) * 2.0 / 3
+        window = pad(scipy.signal.hanning(hann_w), n_fft) * 2.0 / 3
         pass
 
     # Set the default hop, if it's not already specified
