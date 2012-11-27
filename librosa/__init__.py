@@ -276,20 +276,25 @@ def melspectrogram(y, sampling_rate=8000, window_length=256, hop_length=32, mel_
 
     return S
 
-def logamplitude(S, amin=1e-10):
+def logamplitude(S, amin=1e-10, gain_threshold=-80.0):
     '''
     Log-scale an ampltitude spectrogram
 
     Input:
         S                   =   the input spectrogram
         amin                =   minimum allowed amplitude                   | default: 1e-10
-
+        gain_threshold      =   minimum output value                        | default: -80 (None to disable)
     Output:
         D                   =   S in dBs
     '''
 
     SCALE   =   20.0
-    return SCALE * numpy.log10(numpy.maximum(amin, S))
+    D       =   SCALE * numpy.log10(numpy.maximum(amin, S))
+
+    if gain_threshold is not None:
+        D[D < gain_threshold] = gain_threshold
+        pass
+    return D
 
 def localmax(x):
     '''
