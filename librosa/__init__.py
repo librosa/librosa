@@ -63,7 +63,7 @@ def stft(x, n_fft=256, hann_w=None, hop=None, sample_rate=8000):
 
     # Set the default hop, if it's not already specified
     if hop is None:
-        hop = int(window.shape[0] / 2)
+        hop = int(window.shape[0] / 2.0)
         pass
 
     # allocate output array
@@ -182,7 +182,7 @@ def mel_to_hz(z, htk=False):
 # Stolen from ronw's mfcc.py
 # https://github.com/ronw/frontend/blob/master/mfcc.py
 
-def melfb(samplerate, nfft, nfilts=40, width=3.0, fmin=None, fmax=None, use_htk=False):
+def melfb(samplerate, nfft, nfilts=40, width=1.0, fmin=None, fmax=None, use_htk=False):
     """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins.
 
     Parameters
@@ -194,7 +194,7 @@ def melfb(samplerate, nfft, nfilts=40, width=3.0, fmin=None, fmax=None, use_htk=
     nfilts : int
         Number of Mel bands to use.  Defaults to 40.
     width : float
-        The constant width of each band relative to standard Mel. Defaults 3.
+        The constant width of each band relative to standard Mel. Defaults 1.0
     fmin : float
         Frequency in Hz of the lowest edge of the Mel bands. Defaults to 0.
     fmax : float
@@ -226,7 +226,7 @@ def melfb(samplerate, nfft, nfilts=40, width=3.0, fmin=None, fmax=None, use_htk=
     # 'Center freqs' of mel bands - uniformly spaced between limits
     minmel      = hz_to_mel(fmin, htk=use_htk)
     maxmel      = hz_to_mel(fmax, htk=use_htk)
-    binfreqs    = mel_to_hz(numpy.arange(minmel, minmel + nfilts+2, dtype=float) / (nfilts+1.0) * (maxmel - minmel), htk=use_htk)
+    binfreqs    = mel_to_hz(numpy.arange(minmel, minmel + nfilts + 2, dtype=float)  * (maxmel - minmel) / (nfilts+1.0), htk=use_htk)
 
     for i in xrange(nfilts):
         freqs       = binfreqs[range(i, i+3)]
@@ -248,6 +248,48 @@ def melfb(samplerate, nfft, nfilts=40, width=3.0, fmin=None, fmax=None, use_htk=
     wts     = numpy.dot(numpy.diag(enorm), wts)
     
     return wts
+
+def melspectrogram(y, sampling_rate=8000, window_length=256, hop_length=32, mel_channels=40, htk=False, width=3.0):
+    '''
+    Compute a mel spectrogram from a time series
+
+    Input:
+        y                   =   the audio signal
+        sampling_rate       =   the sampling rate of y                      | default: 8000
+        window_length       =   FFT window size                             | default: 256
+        hop_length          =   hop size                                    | default: 32
+        mel_channels        =   number of Mel filters to use                | default: 40
+        htk                 =   use HTK mels instead of Slaney              | default: False
+        width               =   width of mel bins                           | default: 3
+
+    Output:
+        S                   =   Mel amplitude spectrogram
+    '''
+
+    # Compute the STFT
+    S = stft(y, window_length, window_length, hop_length)
+
+    # Build a Mel filter
+    M = melfb(sampling_rate, window_length / 2 + 1, nfilts=mel_channels, width=width, use_htk=htk)
+    
+    S = numpy.dot(M, numpy.abs(S))
+
+    return S
+
+def logamplitude(S, amin=1e-10):
+    '''
+    Log-scale an ampltitude spectrogram
+
+    Input:
+        S                   =   the input spectrogram
+        amin                =   minimum allowed amplitude                   | default: 1e-10
+
+    Output:
+        D                   =   S in dBs
+    '''
+
+    SCALE   =   20.0
+    return SCALE * numpy.log10(numpy.maximum(amin, S))
 
 def localmax(x):
     '''

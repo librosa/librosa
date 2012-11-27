@@ -184,47 +184,42 @@ def _beat_strength(y, sampling_rate=8000, window_length=256, hop_length=32, mel_
 
     gain_threshold  = 80.0
 
-    # STFT
-    D   = librosa.stft(y, window_length, window_length, hop_length)
+    # First, compute mel spectrogram
+    S   = librosa.melspectrogram(y, sampling_rate, window_length, hop_length, mel_channels, htk)
 
-    ### Convert D to mel scale, discard phase
-    M   = librosa.melfb(sampling_rate, window_length/2 + 1, mel_channels, use_htk=htk)
-    D   = numpy.dot(M, numpy.abs(D))
-
-    ### Convert to dB (log-amplitude, suppress zeros/infinitessimals)
-    D   = 20.0 * numpy.log10(numpy.maximum(1e-10, D))
+    # Convert to dBs
+    S   = librosa.logamplitude(S)
 
     ### Only look at top 80 dB
-    Z   = numpy.maximum(D, D.max() - gain_threshold)
+    O   = numpy.maximum(S, S.max() - gain_threshold)
 
     ### Compute first difference
-    Z   = numpy.diff(Z, n=1, axis=1)
+    O   = numpy.diff(O, n=1, axis=1)
 
     ### Discard negatives (decreasing amplitude)
     #   falling edges could also be useful segmentation cues
     #   to catch falling edges, replace max(0,D) with abs(D)
     if rising:
-        Z   = numpy.maximum(0.0, Z)
+        O   = numpy.maximum(0.0, O)
     else:
-#         Z   = numpy.abs(Z)
-        Z = Z**2
+        O = O**2
         pass
 
     ### Average over mel bands
-    Z   = numpy.mean(Z, axis=0)
+    O   = numpy.mean(O, axis=0)
 
     ### Filter with a difference operator
-    Z   = scipy.signal.lfilter([1.0, -1.0], [1.0, -0.99], Z)
+    O   = scipy.signal.lfilter([1.0, -1.0], [1.0, -0.99], O)
 
     ### Threshold at zero
-    Z   = numpy.maximum(0.0, Z)
+    O   = numpy.maximum(0.0, O)
 
     ### Normalize by the maximum onset strength
-    Znorm = numpy.max(Z)
-    if Znorm == 0:
-        Znorm = 1.0
+    Onorm = numpy.max(O)
+    if Onorm == 0:
+        Onorm = 1.0
         pass
-    return (Z / Znorm, D)
+    return (O / Onorm, S)
 
 def _recursive_beat_decomposition(onset, t_min=16, sigma=16):
 
