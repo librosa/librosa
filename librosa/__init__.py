@@ -10,6 +10,27 @@ Includes constants, core utility functions, etc
 
 import numpy, scipy
 import beat, framegenerator, _chroma, _mfcc, tf_agc
+import audioread
+
+def load(path, mono=True, frame_size=1024):
+    '''
+    Load an audio file into a single, long time series
+
+    Input:
+        path:       path to the input file
+        mono:       convert to mono?        | Default: True
+        frame_size: buffer size             | Default: 1024 samples
+    Output:
+        y:          the time series
+        sr:         the sampling rate
+    '''
+
+    with audioread.audio_open(path) as f:
+        sr  = f.samplerate
+        y   = numpy.concatenate([frame for frame in framegenerator.audioread_timeseries(f, frame_size)], axis=0)
+        pass
+
+    return (y, sr)
 
 def pad(w, d_pad, v=0.0, center=True):
     '''
