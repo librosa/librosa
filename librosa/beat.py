@@ -241,7 +241,7 @@ def _recursive_beat_decomposition(onset, t_min=16, sigma=16):
 
     return numpy.concatenate((left_beats, numpy.array([mid_beat], dtype=int), right_beats), axis=0)
 
-def _segmentation(X, k):
+def segment(X, k):
     '''
         Perform bottom-up temporal segmentation
 
