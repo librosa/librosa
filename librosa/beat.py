@@ -269,7 +269,7 @@ def segment(X, k):
     N = numpy.zeros(k, dtype=int)
 
     # Find the change points from the labels
-    d = list(numpy.nonzero(numpy.diff(W.labels_))[0].astype(int))
+    d = list(1 + numpy.nonzero(numpy.diff(W.labels_))[0].astype(int))
 
     # tack on the last frame as a change point
     d.append(X.shape[1])
