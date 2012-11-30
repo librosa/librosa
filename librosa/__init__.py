@@ -200,9 +200,44 @@ def mel_to_hz(z, htk=False):
         return f
     pass
 
+
+def dctfb(nfilts, d):
+    '''
+    Build a discrete cosine transform basis
+
+    Input:
+        nfilts  :       number of output components
+        d       :       number of input components
+
+    Output:
+        D       :       nfilts-by-d DCT matrix
+    '''
+    DCT = numpy.empty((nfilts, d))
+
+    q = numpy.arange(1, 2*d, 2) * numpy.pi / (2.0 * d)
+    DCT[0,:] = 1.0 / numpy.sqrt(d)
+    for i in xrange(1,nfilts):
+        DCT[i,:] = numpy.cos(i*q) * numpy.sqrt(2.0/d)
+        pass
+
+    return DCT 
+
+
+def mfcc(S, d=20):
+    '''
+    Mel-frequency cepstral coefficients
+
+    Input:
+        S   :   k-by-n      log-amplitude spectrogram
+        d   :   number of MFCCs to return               | default: 20
+    Output:
+        M   :   d-by-n      MFCC sequence
+    '''
+
+    return numpy.dot(dctfb(d, S.shape[0]), S)
+
 # Stolen from ronw's mfcc.py
 # https://github.com/ronw/frontend/blob/master/mfcc.py
-
 def melfb(samplerate, nfft, nfilts=40, width=1.0, fmin=None, fmax=None, use_htk=False):
     """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins.
 
