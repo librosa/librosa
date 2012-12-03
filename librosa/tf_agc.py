@@ -10,7 +10,6 @@ Ported from tf_agc.m by DPWE
 
 import numpy
 import scipy
-import _mfcc
 import librosa
 
 def tf_agc(frame_iterator, sample_rate=22050, **kwargs):

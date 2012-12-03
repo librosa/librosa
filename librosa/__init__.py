@@ -9,7 +9,7 @@ Includes constants, core utility functions, etc
 '''
 
 import numpy, scipy
-import beat, framegenerator, _chroma, _mfcc, tf_agc
+import beat, framegenerator, _chroma, tf_agc
 import audioread
 
 def load(path, mono=True, frame_size=1024):
