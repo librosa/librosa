@@ -27,7 +27,7 @@ def load(path, mono=True, frame_size=1024):
 
     with audioread.audio_open(path) as f:
         sr  = f.samplerate
-        y   = numpy.concatenate([frame for frame in framegenerator.audioread_timeseries(f, frame_size)], axis=0)
+        y   = numpy.concatenate([frame for frame in framegenerator.audioread_timeseries(f, frame_size, mono=mono)], axis=0)
         pass
 
     return (y, sr)
