@@ -241,7 +241,7 @@ def _recursive_beat_decomposition(onset, t_min=16, sigma=16):
 
     return numpy.concatenate((left_beats, numpy.array([mid_beat], dtype=int), right_beats), axis=0)
 
-def segment(X, k):
+def segment(X, k, variance=False):
     '''
         Perform bottom-up temporal segmentation
 
@@ -266,6 +266,7 @@ def segment(X, k):
 
     # Instantiate output objects
     C = numpy.zeros( (X.shape[0], k) )
+    V = numpy.zeros( (X.shape[0], k) )
     N = numpy.zeros(k, dtype=int)
 
     # Find the change points from the labels
@@ -278,10 +279,48 @@ def segment(X, k):
     for (i, t) in enumerate(d):
         N[i]    = t - s
         C[:,i]  = numpy.mean(X[:,s:t], axis=1)
+        V[:,i]  = numpy.var(X[:,s:t], axis=1)
         s       = t
         pass
 
+    if variance:
+        return (C, N, V)
+    
     return (C, N)
+
+def segments_to_onsets(C, N):
+    '''
+    Input:
+        C:      d-by-n  set of segment centroids
+        N:      1-by-n  list of frame counts per segment
+    Output:
+        O:      1-by-t  indicator vector of onsets
+
+    An onset is defined as a boundary between segments (t, t+1)
+    where segment C(t+1) is louder (greater in magnitude) than C(t).
+
+    '''
+    # FIXME:  2013-01-09 14:03:46 by Brian McFee <brm2132@columbia.edu>
+    # probably needs some smoothing     
+
+
+    # Convert frame counts into raw frame numbers
+    NT  = numpy.cumsum(N)
+    O   = numpy.zeros(NT[-1], dtype=bool)
+
+    # Shift segment centroids up to 0 baseline
+    C   = C - C.min()
+
+    # Compute RMSE per segment
+    v = numpy.sum(C**2, axis=0)
+
+    for (i, t) in enumerate(NT[1:-1], 1):
+        if v[i] > v[i-1] and v[i] > v[i+1]:
+            O[t]    = True
+            pass
+        pass
+    return (O, v)
+
 
 
 def frames_to_time(frames, sr=8000, hop_length=32):
