@@ -359,7 +359,7 @@ def beatestimate(BeatStrength,sr,hop,startbpm,beat_tightness):
   
   # convolve the window with the BeatStrength
   import scipy.signal
-  localscore = scipy.signal.convolve(templt,BeatStrength);
+  localscore = scipy.signal.fftconvolve(templt,BeatStrength);
   localscore = localscore[np.add(int(round(len(templt)/2.0)),range(BeatStrength.shape[0]))];
 
   ### 2.Initialise ###
