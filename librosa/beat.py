@@ -114,28 +114,24 @@ def _beat_tracker(onset_strength, start_bpm=120.0, sampling_rate=8000, hop_lengt
 def _beat_estimate_bpm(onset_strength, sampling_rate=8000, hop_length=32, start_bpm=120):
 
     auto_correlation_size   = 4.0
-    duration_time           = 90.0
-    upper_time_zone         = 90.0      # Find a better name for this
+    sample_duration         = 90.0
+    sample_end_time         = 90.0
     bpm_std                 = 0.7
 
     fft_resolution          = numpy.float(sampling_rate) / hop_length
 
-    # TODO:   2012-11-07 09:16:26 by Brian McFee <brm2132@columbia.edu>
-    #  profile and optimize this
-
-    # Get lower and upper bounds on beat strength vector?
-    # not sure what these are for yet
-    maxcol                  = min(numpy.round(upper_time_zone * fft_resolution), len(onset_strength)-1)
-    mincol                  = max(0, maxcol - numpy.round(duration_time * fft_resolution))
+    # Chop onsets to X[(upper_limit - duration):upper_limit], or as much as will fit
+    maxcol                  = min(numpy.round(sample_end_time * fft_resolution), len(onset_strength)-1)
+    mincol                  = max(0, maxcol - numpy.round(sample_duration * fft_resolution))
 
     # Use auto-correlation out of 4 seconds (empirically set??)
-    ac_max                  = int(numpy.round(auto_correlation_size * fft_resolution))
+    ac_window               = int(numpy.round(auto_correlation_size * fft_resolution))
 
-    # Find local maximum in global auto-correlation
-    x_corr                  = librosa.autocorrelate(onset_strength[mincol:maxcol+1], ac_max)
+    # Compute the autocorrelation
+    x_corr                  = librosa.autocorrelate(onset_strength[mincol:maxcol], ac_window)
 
     # re-weight the autocorrelation by log-normal prior
-    bpms                    = 60.0 * fft_resolution / (numpy.arange(1, ac_max+1))
+    bpms                    = 60.0 * fft_resolution / (numpy.arange(1, ac_window+1))
     x_corr_weighting        = numpy.exp(-0.5 * ((numpy.log2(bpms) - numpy.log2(start_bpm)) / bpm_std)**2)
 
     # Compute the weighted autocorrelation
@@ -151,12 +147,12 @@ def _beat_estimate_bpm(onset_strength, sampling_rate=8000, hop_length=32, start_
     start_period            = numpy.argmax(x_peaks * x_corr)
 
     # Choose the best peak out of .33, .5, 2, 3 * start_period
-    candidate_periods       = numpy.multiply(start_period, [1.0/3, 1.0/2, 2.0, 3.0]).astype(int)
-    candidate_periods       = candidate_periods[candidate_periods < ac_max]
+    candidate_periods       = numpy.multiply(start_period, [1.0/3, 1.0/2, 1.0, 2.0, 3.0]).astype(int)
+    candidate_periods       = candidate_periods[candidate_periods < ac_window]
 
     best_period             = numpy.argmax(x_corr[candidate_periods])
 
-    start_bpm               = 60.0 * fft_resolution / numpy.minimum(start_period, candidate_periods[best_period])
+    start_bpm               = 60.0 * fft_resolution / candidate_periods[best_period]
 
     return start_bpm
 
