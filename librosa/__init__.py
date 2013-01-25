@@ -153,6 +153,16 @@ def hz_to_mel(f, htk=False):
     #  too many magic numbers in these functions
     #   redo with informative variable names
     #   then make them into parameters
+    '''
+    Convert Hz to Mels
+
+    Input:
+        f:      scalar or array of frequencies
+        htk:    use HTK mel conversion instead of Slaney            | False 
+
+    Output:
+        m:      input frequencies f in Mels
+    '''
 
     if numpy.isscalar(f):
         f = numpy.array([f],dtype=float)
@@ -361,7 +371,17 @@ def localmax(x):
     return numpy.logical_and(x > numpy.hstack([x[0], x[:-1]]), x >= numpy.hstack([x[1:], x[-1]]))
 
 
-def autocorrelate(x, max_size):
+def autocorrelate(x, max_size=None):
+    '''
+        Bounded auto-correlation
+
+        Input:
+            x:          t-by-1  vector
+            max_size:   (optional) maximum lag                  | None
+
+        Output:
+            z:          x's autocorrelation (up to max_size if given)
+    '''
     #   TODO:   2012-11-07 14:05:42 by Brian McFee <brm2132@columbia.edu>
     #  maybe could be done faster by directly implementing a clipped correlate
 #     result = numpy.correlate(x, x, mode='full')
@@ -371,3 +391,18 @@ def autocorrelate(x, max_size):
     if max_size is None:
         return result
     return result[:max_size]
+
+def frames_to_time(frames, sr=8000, hop_length=32):
+    '''
+    Converts frame counts to time (seconds)
+
+    Input:
+        frames:         scalar or n-by-1 vector of frame numbers
+        sr:             sampling rate                               | 8000 Hz
+        hop_length:     hop length of the frames                    | 32 frames
+
+    Output:
+        times:          time (in seconds) of each given frame number
+    '''
+    return frames * float(hop_length) / float(sr)
+

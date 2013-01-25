@@ -4,6 +4,11 @@ CREATED:2012-11-05 14:38:03 by Brian McFee <brm2132@columbia.edu>
 
 All things rhythmic go here
 
+- Onset detection
+- Tempo estimation
+- Beat tracking
+- Segmentation
+
 '''
 
 import librosa
@@ -21,19 +26,19 @@ def beat_track(y, input_rate=8000, start_bpm=120, tightness=0.9):
         pass
 
     # First, get the frame->beat strength profile
-    onset_strength  = _beat_strength(y, sampling_rate)
+    onsets  = onset_strength(y, sampling_rate)
 
     # Then, estimate bpm
-    bpm = _beat_estimate_bpm(onset_strength, start_bpm=start_bpm)
+    bpm     = onset_estimate_bpm(onsets, start_bpm=start_bpm)
     
     # Then, run the tracker
-    beats = _beat_tracker(onset_strength, start_bpm=bpm)
+    beats   = _beat_tracker(onsets, start_bpm=bpm)
 
     return (bpm, beats)
 
 
 
-def _beat_tracker(onset_strength, start_bpm=120.0, sampling_rate=8000, hop_length=32, tightness=0.9, alpha=0.9):
+def _beat_tracker(onsets, start_bpm=120.0, sampling_rate=8000, hop_length=32, tightness=0.9, alpha=0.9):
 
     fft_resolution  = numpy.float(sampling_rate) / hop_length
     start_period    = int(round(60.0 * fft_resolution / start_bpm))
@@ -43,7 +48,7 @@ def _beat_tracker(onset_strength, start_bpm=120.0, sampling_rate=8000, hop_lengt
     template        = numpy.exp(-0.5 * (numpy.arange(-period,(period+1)) / (period / hop_length))**2)
 
     # Convolve 
-    localscore      = scipy.signal.convolve(onset_strength, template, 'same')
+    localscore      = scipy.signal.convolve(onsets, template, 'same')
     max_localscore  = numpy.max(localscore)
 
     ### Initialize DP
@@ -111,7 +116,7 @@ def _beat_tracker(onset_strength, start_bpm=120.0, sampling_rate=8000, hop_lengt
     return []
     pass
 
-def _beat_estimate_bpm(onset_strength, sampling_rate=8000, hop_length=32, start_bpm=120):
+def onset_estimate_bpm(onsets, sampling_rate=8000, hop_length=32, start_bpm=120):
 
     auto_correlation_size   = 4.0
     sample_duration         = 90.0
@@ -121,16 +126,19 @@ def _beat_estimate_bpm(onset_strength, sampling_rate=8000, hop_length=32, start_
     fft_resolution          = numpy.float(sampling_rate) / hop_length
 
     # Chop onsets to X[(upper_limit - duration):upper_limit], or as much as will fit
-    maxcol                  = min(numpy.round(sample_end_time * fft_resolution), len(onset_strength)-1)
+    maxcol                  = min(numpy.round(sample_end_time * fft_resolution), len(onsets)-1)
     mincol                  = max(0, maxcol - numpy.round(sample_duration * fft_resolution))
 
     # Use auto-correlation out of 4 seconds (empirically set??)
     ac_window               = int(numpy.round(auto_correlation_size * fft_resolution))
 
     # Compute the autocorrelation
-    x_corr                  = librosa.autocorrelate(onset_strength[mincol:maxcol], ac_window)
+    x_corr                  = librosa.autocorrelate(onsets[mincol:maxcol], ac_window)
 
     # re-weight the autocorrelation by log-normal prior
+    #   FIXME:  2013-01-25 08:55:40 by Brian McFee <brm2132@columbia.edu>
+    #   this fails if ac_window > length of song   
+
     bpms                    = 60.0 * fft_resolution / (numpy.arange(1, ac_window+1))
     x_corr_weighting        = numpy.exp(-0.5 * ((numpy.log2(bpms) - numpy.log2(start_bpm)) / bpm_std)**2)
 
@@ -157,7 +165,7 @@ def _beat_estimate_bpm(onset_strength, sampling_rate=8000, hop_length=32, start_
     return start_bpm
 
 
-def _beat_strength(y, sampling_rate=8000, window_length=256, hop_length=32, mel_channels=40, rising=True, htk=False):
+def onset_strength(y, sampling_rate=8000, window_length=256, hop_length=32, mel_channels=40, rising=True, htk=False):
     '''
     Adapted from McVicar, adapted from Ellis, etc...
     
@@ -217,26 +225,6 @@ def _beat_strength(y, sampling_rate=8000, window_length=256, hop_length=32, mel_
         pass
     return (O / Onorm, S)
 
-def _recursive_beat_decomposition(onset, t_min=16, sigma=16):
-
-    n           = len(onset)
-
-    if n <= 3 * t_min:
-        return numpy.array([], dtype=int)
-
-    score       = onset - 1.0 / (2 * sigma**2) * (numpy.arange(len(onset)) - len(onset) / 2.0)**2
-
-    # Forbid beats less than t_min long
-    score[:t_min]   = -numpy.inf
-    score[-t_min:]  = -numpy.inf
-
-    # Find the middle beat
-    mid_beat    = numpy.argmax(score)
-    left_beats  = _recursive_beat_decomposition(onset[:(mid_beat-1)], t_min, sigma)
-    right_beats = mid_beat + _recursive_beat_decomposition(onset[mid_beat:], t_min, sigma)
-
-    return numpy.concatenate((left_beats, numpy.array([mid_beat], dtype=int), right_beats), axis=0)
-
 def segment(X, k, variance=False):
     '''
         Perform bottom-up temporal segmentation
@@ -284,41 +272,3 @@ def segment(X, k, variance=False):
     
     return (C, N)
 
-def segments_to_onsets(C, N):
-    '''
-    Input:
-        C:      d-by-n  set of segment centroids
-        N:      1-by-n  list of frame counts per segment
-    Output:
-        O:      1-by-t  indicator vector of onsets
-
-    An onset is defined as a boundary between segments (t, t+1)
-    where segment C(t+1) is louder (greater in magnitude) than C(t).
-
-    '''
-    # FIXME:  2013-01-09 14:03:46 by Brian McFee <brm2132@columbia.edu>
-    # probably needs some smoothing     
-
-
-    # Convert frame counts into raw frame numbers
-    NT  = numpy.cumsum(N)
-    O   = numpy.zeros(NT[-1], dtype=bool)
-
-    # Shift segment centroids up to 0 baseline
-    C   = C - C.min()
-
-    # Compute RMSE per segment
-    v = numpy.sum(C**2, axis=0)
-
-    for (i, t) in enumerate(NT[1:-1], 1):
-        if v[i] > v[i-1] and v[i] > v[i+1]:
-            O[t]    = True
-            pass
-        pass
-    return (O, v)
-
-
-
-def frames_to_time(frames, sr=8000, hop_length=32):
-
-    return frames * float(hop_length) / float(sr)
