@@ -9,8 +9,10 @@ Includes constants, core utility functions, etc
 '''
 
 import numpy, scipy
-import beat, framegenerator, _chroma, tf_agc, output
 import audioread
+
+# And all the librosa sub-modules
+import beat, framegenerator, chroma, tf_agc, output
 
 def load(path, mono=True, frame_size=1024):
     '''
@@ -405,4 +407,20 @@ def frames_to_time(frames, sr=8000, hop_length=32):
         times:          time (in seconds) of each given frame number
     '''
     return frames * float(hop_length) / float(sr)
+
+# Stolen from ronw's chroma.py
+# https://github.com/ronw/frontend/blob/master/chroma.py
+def hz2octs(frequencies, A440):
+    '''
+    Convert frquencies (Hz) to octave numbers
+
+    Input:
+        frequencies:    scalar or vector of frequencies
+        A440:           frequency of A440 (in Hz)
+
+    Output:
+        octaves:        octave number fore each frequency
+    '''
+    return numpy.log2(freq / (A440 / 16.0))
+
 

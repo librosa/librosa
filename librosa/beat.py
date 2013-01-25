@@ -183,7 +183,6 @@ def onset_strength(y, sampling_rate=8000, window_length=256, hop_length=32, mel_
 
     OUTPUT:
         onset_envelope
-        spectrogram
     '''
 
     gain_threshold  = 80.0
@@ -195,35 +194,36 @@ def onset_strength(y, sampling_rate=8000, window_length=256, hop_length=32, mel_
     S   = librosa.logamplitude(S)
 
     ### Only look at top 80 dB
-    O   = numpy.maximum(S, S.max() - gain_threshold)
+    onsets  = numpy.maximum(S, S.max() - gain_threshold)
 
     ### Compute first difference
-    O   = numpy.diff(O, n=1, axis=1)
+    onsets  = numpy.diff(onsets, n=1, axis=1)
 
     ### Discard negatives (decreasing amplitude)
     #   falling edges could also be useful segmentation cues
     #   to catch falling edges, replace max(0,D) with abs(D)
     if rising:
-        O   = numpy.maximum(0.0, O)
+        onsets  = numpy.maximum(0.0, onsets)
     else:
-        O = O**2
+        onsets  = onsets**2
         pass
 
     ### Average over mel bands
-    O   = numpy.mean(O, axis=0)
+    onsets      = numpy.mean(onsets, axis=0)
 
     ### Filter with a difference operator
-    O   = scipy.signal.lfilter([1.0, -1.0], [1.0, -0.99], O)
+    onsets      = scipy.signal.lfilter([1.0, -1.0], [1.0, -0.99], onsets)
 
     ### Threshold at zero
-    O   = numpy.maximum(0.0, O)
+    onsets   = numpy.maximum(0.0, onsets)
 
     ### Normalize by the maximum onset strength
-    Onorm = numpy.max(O)
+    Onorm = numpy.max(onsets)
     if Onorm == 0:
         Onorm = 1.0
         pass
-    return (O / Onorm, S)
+
+    return onsets / Onorm
 
 def segment(X, k, variance=False):
     '''
