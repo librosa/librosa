@@ -20,10 +20,8 @@ def beat_track(y, input_rate=8000, start_bpm=120, tightness=0.9):
     # Zeroeth, resample the signal
     sampling_rate = 8000
 
-    # Resample the audio
-    if sampling_rate != input_rate:
-        y   = scipy.signal.resample(y, len(y) * float(sampling_rate) / input_rate)
-        pass
+    # Resample the audio to 8KHz
+    y       = librosa.resample(y, input_rate, sampling_rate)
 
     # First, get the frame->beat strength profile
     onsets  = onset_strength(y, sampling_rate)
@@ -225,7 +223,7 @@ def onset_strength(y, sampling_rate=8000, window_length=256, hop_length=32, mel_
 
     return onsets / Onorm
 
-def segment(X, k, variance=False):
+def segment(X, k):
     '''
         Perform bottom-up temporal segmentation
 
@@ -236,6 +234,7 @@ def segment(X, k, variance=False):
         Output:
             C:  d-by-k  centroids (ordered temporall)
             N:          number of frames used by each centroid
+            V:  d-by-k  variance (mean distortion) for each segment
 
     '''
 
@@ -267,8 +266,5 @@ def segment(X, k, variance=False):
         s       = t
         pass
 
-    if variance:
-        return (C, N, V)
-    
-    return (C, N)
+    return (C, N, V)
 

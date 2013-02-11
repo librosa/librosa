@@ -59,9 +59,12 @@ def resample(y, orig_sr, target_sr):
         y_hat:      resampled signal
     '''
 
+    if orig_sr == target_sr:
+        return y
+
     axis = y.ndim-1
 
-    n_samples = int(len(y) * target_sr / float(orig_sr))
+    n_samples = len(y) * target_sr / orig_sr
 
     y_hat = scipy.signal.resample(y, n_samples, axis=axis)
 
