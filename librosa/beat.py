@@ -51,19 +51,14 @@ def _beat_tracker(onsets, start_bpm=120.0, sampling_rate=8000, hop_length=32, ti
 
     ### Initialize DP
 
-    backlink        = numpy.zeros_like(localscore)
+    backlink        = numpy.zeros_like(localscore, dtype=int)
     cumscore        = numpy.zeros_like(localscore)
 
 
     # Search range for previous beat: number of samples forward/backward to look
-    search_window   = numpy.round(numpy.arange(-2 * period, -period/2 + 1))
-
-    # TODO:   2012-11-07 15:25:30 by Brian McFee <brm2132@columbia.edu>
-    #  make a better variable name for this
+    search_window   = numpy.arange(-2 * period, -numpy.round(period/2) + 1, dtype=int)
 
     # Make a score window, which begins biased toward start_bpm and skewed 
-    #txwt   = numpy.exp(-0.5 * (tightness * (numpy.log(-search_window) - numpy.log(period)))**2)
-
     txwt    = - tightness * numpy.abs(numpy.log(-search_window) - numpy.log(period))**2
 
     # Are we on the first beat?
@@ -82,7 +77,6 @@ def _beat_tracker(onsets, start_bpm=120.0, sampling_rate=8000, hop_length=32, ti
         #           len(search_window)      (3 * period / 2)
 
         # Search over all possible predecessors and apply transition weighting
-        # txwt + [zeros(1, zpad), cumscore(time_range[zpad:])]
         score_candidates                = txwt.copy()
         score_candidates[z_pad:]        = score_candidates[z_pad:] + cumscore[time_range[z_pad:]]
 
@@ -91,7 +85,6 @@ def _beat_tracker(onsets, start_bpm=120.0, sampling_rate=8000, hop_length=32, ti
         current_score       = score_candidates[beat_location]
 
         # Add the local score
-        #cumscore[i]         = alpha * current_score + (1-alpha) * localscore[i]
         cumscore[i]         = current_score + localscore[i] - alpha
 
         # Special case the first onset.  Stop if the localscore is small
@@ -104,16 +97,11 @@ def _beat_tracker(onsets, start_bpm=120.0, sampling_rate=8000, hop_length=32, ti
             pass
         pass
 
-    #     TODO:   2012-11-07 16:30:23 by Brian McFee <brm2132@columbia.edu>
-    # pick up here 
-
     ### Get the last beat
     maxes                   = librosa.localmax(cumscore)
     max_indices             = numpy.nonzero(maxes)[0]
     peak_scores             = cumscore[max_indices]
 
-    # TODO:   2012-11-07 16:29:29 by Brian McFee <brm2132@columbia.edu>
-    #   what is this sorcery?
     median_score            = numpy.median(peak_scores)
     bestendposs             = numpy.nonzero(cumscore * maxes > 0.5 * median_score)[0]
 
@@ -121,12 +109,13 @@ def _beat_tracker(onsets, start_bpm=120.0, sampling_rate=8000, hop_length=32, ti
     bestendx                = numpy.max(bestendposs)
 
     b                       = [int(bestendx)]
-    backlink = backlink.astype(int)
+
     while backlink[b[-1]] >= 0:
-        b = numpy.concatenate((b, [backlink[b[-1]]]), axis=0)
+        b.append(backlink[b[-1]])
         pass
 
-    return b[::-1]
+    b.reverse()
+    return numpy.array(b)
 
 def onset_estimate_bpm(onsets, sampling_rate=8000, hop_length=32, start_bpm=120):
 
