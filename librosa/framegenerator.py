@@ -38,7 +38,7 @@ def raw_timeseries(buf, blocksize=512, overlap=0, zero_pad=True):
 #                                                       f.samplerate)]
 #
 
-def audioread_timeseries(audio_blob, blocksize=512, zero_pad=True, mono=True):
+def audioread_timeseries(audio_blob, blocksize=1024, zero_pad=True, mono=True):
     '''
         audio_blob  = object returned from audioread.audio_open(...)
         blocksize   = size of the frames to return (default 512)
@@ -60,10 +60,12 @@ def audioread_timeseries(audio_blob, blocksize=512, zero_pad=True, mono=True):
             pass
         pass
 
-    for frame in audio_blob.read_data(blocksize):
+    # audioread kicks out 16-bit, little-endian PCM
+    for frame in audio_blob:
 
-        # convert and renormalize buffer from PCM To real-valued
-        x = numpy.frombuffer(frame, 'h') / 32768.0
+        # convert and renormalize buffer from 16-bit, little-endian PCM
+        # to scaled float
+        x = numpy.frombuffer(frame, '<i2').astype(float) / float(1<<15)
 
         # is it a fractional frame?
         if len(x) < blocksize and zero_pad:

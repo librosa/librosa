@@ -9,29 +9,32 @@ Includes constants, core utility functions, etc
 '''
 
 import numpy, scipy
+import os.path
 import audioread
 
 # And all the librosa sub-modules
 import beat, framegenerator, chroma, tf_agc, output
 
-def load(path, mono=True, frame_size=1024):
+def load(path, mono=True):
     '''
     Load an audio file into a single, long time series
 
     Input:
         path:       path to the input file
         mono:       convert to mono?        | Default: True
-        frame_size: buffer size             | Default: 1024 samples
     Output:
         y:          the time series
         sr:         the sampling rate
     '''
 
-    with audioread.audio_open(path) as f:
-        sr  = f.samplerate
-        y   = numpy.concatenate([frame for frame in framegenerator.audioread_timeseries(f, frame_size, mono=mono)], axis=0)
+    with audioread.audio_open(os.path.realpath(path)) as f:
+        sr = f.samplerate
+        y = [numpy.frombuffer(frame, '<i2').astype(float) / float(1<<15) for frame in f]
+        y = numpy.concatenate(y)
+        if mono and f.channels > 1:
+            y = 0.5 * (y[::2] + y[1::2])
+            pass
         pass
-
     return (y, sr)
 
 def pad(w, d_pad, v=0.0, center=True):
