@@ -31,8 +31,12 @@ def load(path, mono=True):
         sr = f.samplerate
         y = [numpy.frombuffer(frame, '<i2').astype(float) / float(1<<15) for frame in f]
         y = numpy.concatenate(y)
-        if mono and f.channels > 1:
-            y = 0.5 * (y[::2] + y[1::2])
+        if f.channels > 1:
+            if mono:
+                y = 0.5 * (y[::2] + y[1::2])
+            else:
+                y = y.reshape( (-1, 2)).T
+                pass
             pass
         pass
     return (y, sr)
