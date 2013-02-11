@@ -15,28 +15,36 @@ import librosa
 import numpy, scipy, scipy.signal
 import sklearn, sklearn.cluster, sklearn.feature_extraction
 
-def beat_track(y, input_rate=8000, start_bpm=120, tightness=400):
+def beat_track(y, sr=22050, hop_length=64, start_bpm=120.0, tightness=400):
+    '''
+    Ellis-style beat tracker
 
-    # Zeroeth, resample the signal
-    sampling_rate = 8000
+    Input:
+        y:              time-series data
+        sr:             sample rate of y                            | default: 22050
+        hop_length:     hop length (in frames) for onset detection  | default: 64 ~= 2.9ms
+        start_bpm:      initial guess for BPM estimator             | default: 120.0
+        tightness:      tightness parameter for tracker             | default: 400
 
-    # Resample the audio to 8KHz
-    y       = librosa.resample(y, input_rate, sampling_rate)
+    Output:
+        bpm:            estimated global tempo
+        beats:          array of estimated beats by frame number
+    '''
 
     # First, get the frame->beat strength profile
-    onsets  = onset_strength(y, sampling_rate)
+    onsets  = onset_strength(y, sr)
 
     # Then, estimate bpm
-    bpm     = onset_estimate_bpm(onsets, start_bpm=start_bpm)
+    bpm     = onset_estimate_bpm(onsets, start_bpm, sr, hop_length)
     
     # Then, run the tracker
-    beats   = _beat_tracker(onsets, start_bpm=bpm, sampling_rate=sampling_rate, tightness=tightness)
+    beats   = _beat_tracker(onsets, start_bpm, sr, hop_length, tightness)
 
     return (bpm, beats)
 
 
 
-def _beat_tracker(onsets, start_bpm=120.0, sampling_rate=8000, hop_length=32, tightness=400, alpha=0.0):
+def _beat_tracker(onsets, start_bpm, sampling_rate, hop_length, tightness, alpha=0.0):
 
     fft_resolution  = numpy.float(sampling_rate) / hop_length
     start_period    = int(round(60.0 * fft_resolution / start_bpm))
@@ -64,17 +72,12 @@ def _beat_tracker(onsets, start_bpm=120.0, sampling_rate=8000, hop_length=32, ti
     # Are we on the first beat?
     first_beat      = True
 
+    time_range      = search_window
     # Forward step
     for i in xrange(len(localscore)):
-        time_range          = i + search_window
 
         # Are we reaching back before time 0?
         z_pad               = numpy.maximum(0, numpy.minimum(- time_range[0], len(search_window)))
-        # max
-        #       0
-        #       min
-        #           -time_range[0]          (2 * period - i)        # for big enough i, this wins
-        #           len(search_window)      (3 * period / 2)
 
         # Search over all possible predecessors and apply transition weighting
         score_candidates                = txwt.copy()
@@ -88,13 +91,15 @@ def _beat_tracker(onsets, start_bpm=120.0, sampling_rate=8000, hop_length=32, ti
         cumscore[i]         = current_score + localscore[i] - alpha
 
         # Special case the first onset.  Stop if the localscore is small
-
         if first_beat and localscore[i] < 0.01 * max_localscore:
             backlink[i]     = -1
         else:
             backlink[i]     = time_range[beat_location]
             first_beat      = False
             pass
+
+        # Update the time range
+        time_range          = time_range + 1
         pass
 
     ### Get the last beat
@@ -117,7 +122,7 @@ def _beat_tracker(onsets, start_bpm=120.0, sampling_rate=8000, hop_length=32, ti
     b.reverse()
     return numpy.array(b)
 
-def onset_estimate_bpm(onsets, sampling_rate=8000, hop_length=32, start_bpm=120):
+def onset_estimate_bpm(onsets, start_bpm, sampling_rate, hop_length):
 
     auto_correlation_size   = 4.0
     sample_duration         = 90.0
@@ -166,7 +171,7 @@ def onset_estimate_bpm(onsets, sampling_rate=8000, hop_length=32, start_bpm=120)
     return start_bpm
 
 
-def onset_strength(y, sampling_rate=8000, window_length=256, hop_length=32, mel_channels=40, rising=True, htk=False):
+def onset_strength(y, sampling_rate=22050, window_length=512, hop_length=64, mel_channels=40, rising=True, htk=False):
     '''
     Adapted from McVicar, adapted from Ellis, etc...
     
