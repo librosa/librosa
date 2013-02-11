@@ -8,20 +8,21 @@ Includes constants, core utility functions, etc
 
 '''
 
-import numpy, scipy
+import numpy, scipy, scipy.signal
 import os.path
 import audioread
 
 # And all the librosa sub-modules
 import beat, framegenerator, chroma, tf_agc, output
 
-def load(path, mono=True):
+def load(path, mono=True, target_sr=None):
     '''
     Load an audio file into a single, long time series
 
     Input:
         path:       path to the input file
         mono:       convert to mono?        | Default: True
+        target_sr:  target sample rate      | Default: None (original)
     Output:
         y:          the time series
         sr:         the sampling rate
@@ -39,7 +40,32 @@ def load(path, mono=True):
                 pass
             pass
         pass
+
+    if target_sr is not None:
+        return (resample(y, sr, target_sr), target_sr)
+
     return (y, sr)
+
+def resample(y, orig_sr, target_sr):
+    '''
+    Resample a signal from orig_sr to target_sr
+
+    Input:
+        y:          time series (either mono or stereo)
+        orig_sr:    original sample rate of y
+        target_sr:  target sample rate
+    
+    Output:
+        y_hat:      resampled signal
+    '''
+
+    axis = y.ndim-1
+
+    n_samples = int(len(y) * target_sr / float(orig_sr))
+
+    y_hat = scipy.signal.resample(y, n_samples, axis=axis)
+
+    return y_hat
 
 def pad(w, d_pad, v=0.0, center=True):
     '''
