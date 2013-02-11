@@ -15,14 +15,16 @@ import audioread
 # And all the librosa sub-modules
 import beat, framegenerator, chroma, tf_agc, output
 
-def load(path, mono=True, target_sr=None):
+def load(path, target_sr=22050, mono=True):
     '''
     Load an audio file into a single, long time series
 
     Input:
         path:       path to the input file
-        mono:       convert to mono?        | Default: True
-        target_sr:  target sample rate      | Default: None (original)
+        target_sr:  target sample rate      | default: 22050 
+                                            | specify None to use the file's native sampling rate
+        mono:       convert to mono?        | default: True
+
     Output:
         y:          the time series
         sr:         the sampling rate
