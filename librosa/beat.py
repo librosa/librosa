@@ -36,7 +36,7 @@ def beat_track(y, input_rate=8000, start_bpm=120, tightness=400):
 
 
 
-def _beat_tracker(onsets, start_bpm=120.0, sampling_rate=8000, hop_length=32, tightness=0.9, alpha=0.0):
+def _beat_tracker(onsets, start_bpm=120.0, sampling_rate=8000, hop_length=32, tightness=400, alpha=0.0):
 
     fft_resolution  = numpy.float(sampling_rate) / hop_length
     start_period    = int(round(60.0 * fft_resolution / start_bpm))
