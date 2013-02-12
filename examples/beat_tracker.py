@@ -18,8 +18,8 @@ print 'done.'
 
 # 2. extract beats
 
-# Use a default hop size of 64 frames ~= 2.9ms
-hop_length = 64
+# Use a default hop size of 64 frames ~= 11.6ms
+hop_length = 256
 print 'Extracting beats... ',
 (bpm, beats)    = librosa.beat.beat_track(y, sr, hop_length=hop_length)
 print 'done.    Estimated bpm: %.2f' % bpm

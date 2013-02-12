@@ -15,14 +15,14 @@ import librosa
 import numpy, scipy, scipy.signal
 import sklearn, sklearn.cluster, sklearn.feature_extraction
 
-def beat_track(y, sr=22050, hop_length=64, start_bpm=120.0, tightness=400):
+def beat_track(y, sr=22050, hop_length=256, start_bpm=120.0, tightness=400):
     '''
     Ellis-style beat tracker
 
     Input:
         y:              time-series data
         sr:             sample rate of y                            | default: 22050
-        hop_length:     hop length (in frames) for onset detection  | default: 64 ~= 2.9ms
+        hop_length:     hop length (in frames) for onset detection  | default: 256 ~= 11.6ms
         start_bpm:      initial guess for BPM estimator             | default: 120.0
         tightness:      tightness parameter for tracker             | default: 400
 
@@ -169,7 +169,7 @@ def onset_estimate_bpm(onsets, start_bpm, sr, hop_length):
     return start_bpm
 
 
-def onset_strength(y, sr=22050, window_length=512, hop_length=64, mel_channels=40, rising=True, htk=False):
+def onset_strength(y, sr=22050, window_length=2048, hop_length=256, mel_channels=40, rising=True, htk=False):
     '''
     Adapted from McVicar, adapted from Ellis, etc...
     
@@ -178,8 +178,8 @@ def onset_strength(y, sr=22050, window_length=512, hop_length=64, mel_channels=4
     INPUT:
         y               = time-series waveform (t-by-1 vector)
         sr              = sampling rate of the input signal     | default: 22050
-        window_length   = number of samples per frame           | default: 512      | = 23.2ms @ 22KHz
-        hop_length      = offset between frames                 | default: 64       | = 2.9ms @ 22KHz
+        window_length   = number of samples per frame           | default: 2048      | = 92.8ms @ 22KHz
+        hop_length      = offset between frames                 | default: 256       | = 11.6ms @ 22KHz
         mel_channels    = number of Mel bins to use             | default: 40
         rising          = detect only rising edges of beats     | default: True
         htk             = use HTK mels instead of Slaney        | default: False
