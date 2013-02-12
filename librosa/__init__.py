@@ -13,7 +13,7 @@ import os.path
 import audioread
 
 # And all the librosa sub-modules
-import beat, framegenerator, chroma, tf_agc, output
+import beat, framegenerator, chroma, tf_agc, output, hpss
 
 def load(path, target_sr=22050, mono=True):
     '''
