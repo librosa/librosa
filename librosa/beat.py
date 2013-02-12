@@ -15,7 +15,7 @@ import librosa
 import numpy, scipy, scipy.signal
 import sklearn, sklearn.cluster, sklearn.feature_extraction
 
-def beat_track(y, sr=22050, hop_length=256, start_bpm=120.0, tightness=400):
+def beat_track(y, sr=22050, hop_length=256, start_bpm=120.0, tightness=400, onsets=None):
     '''
     Ellis-style beat tracker
 
@@ -25,6 +25,7 @@ def beat_track(y, sr=22050, hop_length=256, start_bpm=120.0, tightness=400):
         hop_length:     hop length (in frames) for onset detection  | default: 256 ~= 11.6ms
         start_bpm:      initial guess for BPM estimator             | default: 120.0
         tightness:      tightness parameter for tracker             | default: 400
+        onsets:         optional pre-computed onset envelope        | default: None
 
     Output:
         bpm:            estimated global tempo
@@ -32,7 +33,9 @@ def beat_track(y, sr=22050, hop_length=256, start_bpm=120.0, tightness=400):
     '''
 
     # First, get the frame->beat strength profile
-    onsets  = onset_strength(y, sr, hop_length=hop_length)
+    if onsets is None:
+        onsets  = onset_strength(y, sr, hop_length=hop_length)
+        pass
 
     # Then, estimate bpm
     bpm     = onset_estimate_bpm(onsets, start_bpm, sr, hop_length)
@@ -169,7 +172,7 @@ def onset_estimate_bpm(onsets, start_bpm, sr, hop_length):
     return start_bpm
 
 
-def onset_strength(y, sr=22050, window_length=2048, hop_length=256, mel_channels=40, rising=True, htk=False):
+def onset_strength(y, sr=22050, window_length=2048, hop_length=256, mel_channels=40, rising=True, htk=False, S=None):
     '''
     Adapted from McVicar, adapted from Ellis, etc...
     
@@ -183,6 +186,7 @@ def onset_strength(y, sr=22050, window_length=2048, hop_length=256, mel_channels
         mel_channels    = number of Mel bins to use             | default: 40
         rising          = detect only rising edges of beats     | default: True
         htk             = use HTK mels instead of Slaney        | default: False
+        S               = (optional) pre-computed spectrogram   | default: None
 
 
     OUTPUT:
@@ -192,11 +196,14 @@ def onset_strength(y, sr=22050, window_length=2048, hop_length=256, mel_channels
     gain_threshold  = 80.0
 
     # First, compute mel spectrogram
-    S   = librosa.melspectrogram(y,     sr=sr, 
-                                        window_length=window_length, 
-                                        hop_length=hop_length, 
-                                        mel_channels=mel_channels, 
-                                        htk=htk)
+    if S is None:
+        S   = librosa.melspectrogram(y,     sr=sr, 
+                                            window_length=window_length, 
+                                            hop_length=hop_length, 
+                                            mel_channels=mel_channels, 
+                                            htk=htk)
+        pass
+
 
     # Convert to dBs
     S   = librosa.logamplitude(S)
