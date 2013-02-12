@@ -52,6 +52,7 @@ def schroma(S, sr, nchroma=12, A440=440.0, ctroct=5.0, octwidth=0, norm='inf'):
         raise ValueError("norm must be one of: 'inf', 1, 2")
 
     # Tile the normalizer to match U's shape
+    Z[Z==0] = 1.0
     Z   = numpy.tile(1.0/Z, (U.shape[0], 1))
 
     return Z * U
