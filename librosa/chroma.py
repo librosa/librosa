@@ -28,9 +28,34 @@ def chroma(framevector, sr, nchroma=12, A440=440.0, ctroct=5.0, octwidth=0, orde
     fft2chmx    = chromafb(sr, nfft, nchroma, A440, ctroct, octwidth)
 
     # this is unnormalized chroma
-    unchroma = numpy.dot(fft2chmx, F[:nfft/2 + 1])
+    unchroma    = numpy.dot(fft2chmx, F[:nfft/2 + 1])
 
     return unchroma / numpy.linalg.norm(unchroma, order)
+
+def schroma(S, sr, nchroma=12, A440=440.0, ctroct=5.0, octwidth=0, norm='inf'):
+
+    nfft        = (S.shape[0] -1 ) * 2.0
+
+    spec2chroma = chromafb(sr, nfft, nchroma, A440=A440, ctroct=ctroct, octwidth=octwidth)
+
+    # Compute raw chroma
+    U           = numpy.dot(spec2chroma, S)
+
+    # Compute normalization factor for each frame
+    if norm == 'inf':
+        Z       = numpy.max(numpy.abs(U), axis=0)
+    elif norm == 1:
+        Z       = numpy.sum(numpy.abs(U), axis=0)
+    elif norm == 2:
+        Z       = numpy.sum( (U**2), axis=0) ** 0.5
+    else:
+        raise ValueError("norm must be one of: 'inf', 1, 2")
+
+    # Tile the normalizer to match U's shape
+    Z   = numpy.tile(1.0/Z, (U.shape[0], 1))
+
+    return Z * U
+
 
 def chromafb(sr, nfft, nchroma, A440=440.0, ctroct=5.0, octwidth=0):
     """Create a Filterbank matrix to convert FFT to Chroma.

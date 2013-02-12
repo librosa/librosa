@@ -19,12 +19,12 @@ print 'done.'
 # 2. extract beats
 
 # Use a default hop size of 64 frames ~= 2.9ms
+hop_length = 64
 print 'Extracting beats... ',
-hop_length      = 64        
 (bpm, beats)    = librosa.beat.beat_track(y, sr, hop_length=hop_length)
-print 'done.'
+print 'done.    Estimated bpm: %.2f' % bpm
 
 # 3. save output
 print 'Saving output... ',
-librosa.output.beat_csv(sys.argv[2], beats, sr, hop_length)
+librosa.output.segment_csv(sys.argv[2], beats, sr, hop_length)
 print 'done.'

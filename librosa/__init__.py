@@ -96,21 +96,21 @@ def pad(w, d_pad, v=0.0, center=True):
 
 
 
-def stft(x, n_fft=256, hann_w=None, hop=None, sample_rate=8000):
+def stft(y, sr=22050, n_fft=256, hann_w=None, hop_length=None):
     '''
     Short-time fourier transform
 
     Inputs:
-        x           = the input signal
+        y           = the input signal
+        sr          = sampling rate of y            | default: 22050
         n_fft       = the number of FFT components  | default: 256
         hann_w      = size of hann window           | default: = n_fft
-        hop         = hop length                    | default: = hann_w / 2
-        sample_rate = sampling rate of x            | default: 8000
+        hop_length  = hop length                    | default: = hann_w / 2
 
     Output:
-        D           = complex-valued STFT matrix of x
+        D           = complex-valued STFT matrix of y
     '''
-    num_samples = len(x)
+    num_samples = len(y)
 
     if hann_w is None:
         hann_w = n_fft
@@ -123,15 +123,15 @@ def stft(x, n_fft=256, hann_w=None, hop=None, sample_rate=8000):
         pass
 
     # Set the default hop, if it's not already specified
-    if hop is None:
-        hop = int(window.shape[0] / 2.0)
+    if hop_length is None:
+        hop_length = int(window.shape[0] / 2.0)
         pass
 
     # allocate output array
-    D = numpy.zeros( (int(1 + n_fft / 2.0), 1 + int( ( num_samples - n_fft) / hop) ), dtype=numpy.complex)
+    D = numpy.zeros( (int(1 + n_fft / 2.0), 1 + int( ( num_samples - n_fft) / hop_length) ), dtype=numpy.complex)
 
-    for (i, b) in enumerate(xrange(0, 1+num_samples - n_fft, hop)):
-        u           = window * x[b:(b+n_fft)]
+    for (i, b) in enumerate(xrange(0, 1+num_samples - n_fft, hop_length)):
+        u           = window * y[b:(b+n_fft)]
         t           = scipy.fft(u)
         D[:,i]      = t[:1+n_fft/2]
         pass
@@ -139,15 +139,15 @@ def stft(x, n_fft=256, hann_w=None, hop=None, sample_rate=8000):
     return D
 
 
-def istft(d, n_fft=None, hann_w=None, hop=None):
+def istft(d, n_fft=None, hann_w=None, hop_length=None):
     '''
     Inverse short-time fourier transform
 
     Inputs:
-        d       = STFT matrix
-        n_fft   = number of FFT components          | default: 2 * (d.shape[0] -1
-        hann_w  = size of hann window               | default: n_fft
-        hop     = hop size                          | default: hann_w / 2
+        d           = STFT matrix
+        n_fft       = number of FFT components          | default: 2 * (d.shape[0] -1
+        hann_w      = size of hann window               | default: n_fft
+        hop_length  = hop length                        | default: hann_w / 2
 
     Outputs:
         y       = time domain signal reconstructed from d
@@ -171,15 +171,15 @@ def istft(d, n_fft=None, hann_w=None, hop=None):
         pass
 
     # Set the default hop, if it's not already specified
-    if hop is None:
-        hop = int(window.shape[0] / 2.0 )
+    if hop_length is None:
+        hop_length = int(window.shape[0] / 2.0 )
         pass
 
-    x_length    = n_fft + (num_frames - 1) * hop
+    x_length    = n_fft + (num_frames - 1) * hop_length
     x           = numpy.zeros((x_length,))
 
-    for b in xrange(0, hop * (num_frames), hop):
-        ft              = d[:, b/hop]
+    for b in xrange(0, hop_length * (num_frames), hop_length):
+        ft              = d[:, b/hop_length]
         ft              = numpy.concatenate((ft, numpy.conj(ft[(n_fft/2 -1):0:-1])), 0)
         px              = numpy.real(scipy.ifft(ft))
         x[b:(b+n_fft)] += px * window
@@ -355,13 +355,13 @@ def melfb(samplerate, nfft, nfilts=40, width=1.0, fmin=None, fmax=None, use_htk=
     
     return wts
 
-def melspectrogram(y, sampling_rate=8000, window_length=256, hop_length=32, mel_channels=40, htk=False, width=3.0):
+def melspectrogram(y, sr=22050, window_length=256, hop_length=32, mel_channels=40, htk=False, width=3.0):
     '''
     Compute a mel spectrogram from a time series
 
     Input:
         y                   =   the audio signal
-        sampling_rate       =   the sampling rate of y                      | default: 8000
+        sr                  =   the sampling rate of y                      | default: 22050
         window_length       =   FFT window size                             | default: 256
         hop_length          =   hop size                                    | default: 32
         mel_channels        =   number of Mel filters to use                | default: 40
@@ -373,10 +373,10 @@ def melspectrogram(y, sampling_rate=8000, window_length=256, hop_length=32, mel_
     '''
 
     # Compute the STFT
-    S = stft(y, window_length, window_length, hop_length)
+    S = stft(y, sr=sr, n_fft=window_length, hann_w=window_length, hop_length=hop_length)
 
     # Build a Mel filter
-    M = melfb(sampling_rate, window_length / 2 + 1, nfilts=mel_channels, width=width, use_htk=htk)
+    M = melfb(sr, window_length / 2 + 1, nfilts=mel_channels, width=width, use_htk=htk)
     
     S = numpy.dot(M, numpy.abs(S))
 
@@ -384,7 +384,7 @@ def melspectrogram(y, sampling_rate=8000, window_length=256, hop_length=32, mel_
 
 def logamplitude(S, amin=1e-10, gain_threshold=-80.0):
     '''
-    Log-scale an ampltitude spectrogram
+    Log-scale the amplitude of a spectrogram
 
     Input:
         S                   =   the input spectrogram
@@ -395,7 +395,7 @@ def logamplitude(S, amin=1e-10, gain_threshold=-80.0):
     '''
 
     SCALE   =   20.0
-    D       =   SCALE * numpy.log10(numpy.maximum(amin, S))
+    D       =   SCALE * numpy.log10(numpy.maximum(amin, numpy.abs(S)))
 
     if gain_threshold is not None:
         D[D < gain_threshold] = gain_threshold
@@ -432,14 +432,14 @@ def autocorrelate(x, max_size=None):
         return result
     return result[:max_size]
 
-def frames_to_time(frames, sr=8000, hop_length=32):
+def frames_to_time(frames, sr=22050, hop_length=64):
     '''
     Converts frame counts to time (seconds)
 
     Input:
         frames:         scalar or n-by-1 vector of frame numbers
-        sr:             sampling rate                               | 8000 Hz
-        hop_length:     hop length of the frames                    | 32 frames
+        sr:             sampling rate                               | 22050 Hz
+        hop_length:     hop length of the frames                    | 64 frames
 
     Output:
         times:          time (in seconds) of each given frame number
@@ -459,6 +459,35 @@ def hz2octs(frequencies, A440):
     Output:
         octaves:        octave number fore each frequency
     '''
-    return numpy.log2(freq / (A440 / 16.0))
+    return numpy.log2(frequencies / (A440 / 16.0))
 
 
+def feature_sync(X, F, agg=numpy.mean):
+    '''
+    Synchronous aggregation of a feature matrix
+
+    Input:
+        X:      d-by-T              | (dense) feature matrix (eg spectrogram, chromagram, etc)
+        F:      t-vector            | (ordered) array of frame numbers
+        agg:    aggregator function | default: numpy.mean
+
+    Output:
+        Y:      d-by-(<=t+1) vector
+        where 
+                Y[:,i] = agg(X[:, F[i-1]:F[i]], axis=1)
+
+        In order to ensure total coverage, boundary points are added to F
+    '''
+
+    F = numpy.unique(numpy.concatenate( ([0], F, [X.shape[1]]) ))
+
+    Y = numpy.zeros( (X.shape[0], len(F)-1) )
+
+    lb = F[0]
+
+    for (i, ub) in enumerate(F[1:]):
+        Y[:,i] = agg(X[:, lb:ub], axis=1)
+        lb = ub
+        pass
+
+    return Y

@@ -32,26 +32,25 @@ def beat_track(y, sr=22050, hop_length=64, start_bpm=120.0, tightness=400):
     '''
 
     # First, get the frame->beat strength profile
-    onsets  = onset_strength(y, sr)
+    onsets  = onset_strength(y, sr, hop_length=hop_length)
 
     # Then, estimate bpm
     bpm     = onset_estimate_bpm(onsets, start_bpm, sr, hop_length)
     
     # Then, run the tracker
-    beats   = _beat_tracker(onsets, start_bpm, sr, hop_length, tightness)
+    beats   = _beat_tracker(onsets, bpm, sr, hop_length, tightness)
 
     return (bpm, beats)
 
 
 
-def _beat_tracker(onsets, start_bpm, sampling_rate, hop_length, tightness, alpha=0.0):
+def _beat_tracker(onsets, start_bpm, sr, hop_length, tightness):
 
-    fft_resolution  = numpy.float(sampling_rate) / hop_length
-    start_period    = int(round(60.0 * fft_resolution / start_bpm))
-    period          = start_period
+    fft_resolution  = numpy.float(sr) / hop_length
+    period          = int(round(60.0 * fft_resolution / start_bpm))
 
     # Smooth beat events with a gaussian window
-    template        = numpy.exp(-0.5 * (numpy.arange(-period,(period+1)) / (period / hop_length))**2)
+    template        = numpy.exp(-0.5 * (numpy.linspace(-32, 32+1, 2*period + 1)**2))
 
     # Convolve 
     localscore      = scipy.signal.convolve(onsets, template, 'same')
@@ -61,7 +60,6 @@ def _beat_tracker(onsets, start_bpm, sampling_rate, hop_length, tightness, alpha
 
     backlink        = numpy.zeros_like(localscore, dtype=int)
     cumscore        = numpy.zeros_like(localscore)
-
 
     # Search range for previous beat: number of samples forward/backward to look
     search_window   = numpy.arange(-2 * period, -numpy.round(period/2) + 1, dtype=int)
@@ -88,7 +86,7 @@ def _beat_tracker(onsets, start_bpm, sampling_rate, hop_length, tightness, alpha
         current_score       = score_candidates[beat_location]
 
         # Add the local score
-        cumscore[i]         = current_score + localscore[i] - alpha
+        cumscore[i]         = current_score + localscore[i]
 
         # Special case the first onset.  Stop if the localscore is small
         if first_beat and localscore[i] < 0.01 * max_localscore:
@@ -122,14 +120,14 @@ def _beat_tracker(onsets, start_bpm, sampling_rate, hop_length, tightness, alpha
     b.reverse()
     return numpy.array(b)
 
-def onset_estimate_bpm(onsets, start_bpm, sampling_rate, hop_length):
+def onset_estimate_bpm(onsets, start_bpm, sr, hop_length):
 
     auto_correlation_size   = 4.0
     sample_duration         = 90.0
     sample_end_time         = 90.0
-    bpm_std                 = 0.7
+    bpm_std                 = 1.0
 
-    fft_resolution          = numpy.float(sampling_rate) / hop_length
+    fft_resolution          = numpy.float(sr) / hop_length
 
     # Chop onsets to X[(upper_limit - duration):upper_limit], or as much as will fit
     maxcol                  = min(numpy.round(sample_end_time * fft_resolution), len(onsets)-1)
@@ -171,7 +169,7 @@ def onset_estimate_bpm(onsets, start_bpm, sampling_rate, hop_length):
     return start_bpm
 
 
-def onset_strength(y, sampling_rate=22050, window_length=512, hop_length=64, mel_channels=40, rising=True, htk=False):
+def onset_strength(y, sr=22050, window_length=512, hop_length=64, mel_channels=40, rising=True, htk=False):
     '''
     Adapted from McVicar, adapted from Ellis, etc...
     
@@ -179,9 +177,9 @@ def onset_strength(y, sampling_rate=22050, window_length=512, hop_length=64, mel
 
     INPUT:
         y               = time-series waveform (t-by-1 vector)
-        sampling_rate   = sampling rate of the input signal     | default: 8000
-        window_length   = number of samples per frame           | default: 256      | = 32ms @ 8KHz
-        hop_length      = offset between frames                 | default: 32       | = 40us @ 8KHz
+        sr              = sampling rate of the input signal     | default: 22050
+        window_length   = number of samples per frame           | default: 512      | = 23.2ms @ 22KHz
+        hop_length      = offset between frames                 | default: 64       | = 2.9ms @ 22KHz
         mel_channels    = number of Mel bins to use             | default: 40
         rising          = detect only rising edges of beats     | default: True
         htk             = use HTK mels instead of Slaney        | default: False
@@ -194,7 +192,11 @@ def onset_strength(y, sampling_rate=22050, window_length=512, hop_length=64, mel
     gain_threshold  = 80.0
 
     # First, compute mel spectrogram
-    S   = librosa.melspectrogram(y, sampling_rate, window_length, hop_length, mel_channels, htk)
+    S   = librosa.melspectrogram(y,     sr=sr, 
+                                        window_length=window_length, 
+                                        hop_length=hop_length, 
+                                        mel_channels=mel_channels, 
+                                        htk=htk)
 
     # Convert to dBs
     S   = librosa.logamplitude(S)
@@ -240,9 +242,9 @@ def segment(X, k):
             k:          number of segments to produce
 
         Output:
-            C:  d-by-k  centroids (ordered temporall)
-            N:          number of frames used by each centroid
-            V:  d-by-k  variance (mean distortion) for each segment
+            s:          segment boundaries (frame numbers)
+            centroid:   d-by-k  centroids (ordered temporall)
+            variance:   d-by-k  variance (mean distortion) for each segment
 
     '''
 
@@ -268,11 +270,11 @@ def segment(X, k):
 
     s = 0
     for (i, t) in enumerate(d):
-        N[i]    = t - s
+        N[i]    = s
         C[:,i]  = numpy.mean(X[:,s:t], axis=1)
         V[:,i]  = numpy.var(X[:,s:t], axis=1)
         s       = t
         pass
 
-    return (C, N, V)
+    return (N, C, V)
 
