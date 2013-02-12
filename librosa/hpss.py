@@ -43,3 +43,38 @@ def hpss(S, alpha=0.5, max_iter=50):
     
     return (H, P)
 
+def hpss_median(S, win_P=9, win_H=9, p=0.0):
+    '''
+    Median-filtering harmonic percussive separation
+
+    Fitzgerald, D. (2010). 
+    Harmonic/percussive separation using median filtering.
+
+    Input:
+        S:      spectrogram
+        win_P:  window size for percussive median filtering     | default: 7
+        win_H:  window size for harmonic median filtering       | default: 7
+        p:      masking exponent                                | default: 0 (hard mask)
+    '''
+
+    # Compute median filters
+    P = scipy.signal.medfilt2d(S, [win_P, 1])
+    H = scipy.signal.medfilt2d(S, [1, win_H])
+
+    if p == 0:
+        Mh = (H > P).astype(float)
+        Mp = 1 - Mh
+    else:
+        z = P == 0
+        P = P ** p
+        P[z] = 0.0
+    
+        z = H == 0
+        H = H ** p
+        H[z] = 0.0
+        # Compute harmonic mask
+        Mh = H / (H + P)
+        Mp = P / (H + P)
+        pass
+
+    return (Mh * S, Mp * S)
