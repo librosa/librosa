@@ -448,7 +448,7 @@ def frames_to_time(frames, sr=22050, hop_length=64):
 
 # Stolen from ronw's chroma.py
 # https://github.com/ronw/frontend/blob/master/chroma.py
-def hz2octs(frequencies, A440):
+def hz_to_octs(frequencies, A440):
     '''
     Convert frquencies (Hz) to octave numbers
 

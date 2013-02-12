@@ -82,7 +82,7 @@ def chromafb(sr, nfft, nchroma, A440=440.0, ctroct=5.0, octwidth=0):
 
     wts = numpy.zeros((nchroma, nfft))
 
-    fftfrqbins = nchroma * librosa.hz2octs(numpy.arange(1, nfft, dtype='d') / nfft
+    fftfrqbins = nchroma * librosa.hz_to_octs(numpy.arange(1, nfft, dtype='d') / nfft
                                     * sr, A440)
 
     # make up a value for the 0 Hz bin = 1.5 octaves below bin 1
