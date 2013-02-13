@@ -65,13 +65,18 @@ def hpss_median(S, win_P=9, win_H=9, p=0.0):
         Mh = (H > P).astype(float)
         Mp = 1 - Mh
     else:
-        z = P == 0
+        zP = P == 0
         P = P ** p
-        P[z] = 0.0
+        P[zP] = 0.0
     
-        z = H == 0
+        zH = H == 0
         H = H ** p
-        H[z] = 0.0
+        H[zH] = 0.0
+
+        # Find points where both are zero, equalize
+        H[zH & zP] = 0.5
+        P[zH & zP] = 0.5
+
         # Compute harmonic mask
         Mh = H / (H + P)
         Mp = P / (H + P)
