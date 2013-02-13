@@ -12,10 +12,11 @@ Usage:
 
 import sys
 import librosa
+import numpy, scipy.ndimage
 
-SR  = 8000
-hop = 128
-FFT = 1024
+SR  = 22050
+HOP = 256
+FFT = 2048
 
 # Load the file
 print 'Loading file ... ',
@@ -24,19 +25,23 @@ print 'done.'
 
 # Construct log-amplitude spectrogram
 print 'Harmonic-percussive separation ... ',
-S = librosa.logamplitude(librosa.melspectrogram(y, sr, FFT, hop_length=hop, mel_channels=128))
+S = librosa.melspectrogram(y, sr, FFT, hop_length=HOP, mel_channels=128)**0.5
 
 # Do HPSS
-(H, P) = librosa.hpss.hpss_median(S, p=2.0)
+(H, P) = librosa.hpss.hpss_median(S, p=4.0)
 print 'done.'
 
 # Construct onset envelope from percussive component
 print 'Beat tracking ... ',
-O = librosa.beat.onset_strength(y, sr, window_length=FFT, hop_length=hop, S=P)
+
+#O = librosa.beat.onset_strength(y, sr, window_length=FFT, hop_length=HOP, S=P)
+
+# Use LoG(P) for the onset profile
+O = numpy.mean(scipy.ndimage.gaussian_laplace(P, [1.0, 0.0]), axis=0)
 
 # Track the beats
-(bpm, beats) = librosa.beat.beat_track(y, sr, hop_length=hop, onsets=O)
+(bpm, beats) = librosa.beat.beat_track(y, sr, hop_length=HOP, onsets=O)
 print 'done.'
 
 # Save the output
-librosa.output.segment_csv(sys.argv[2], beats, sr, hop)
+librosa.output.segment_csv(sys.argv[2], beats, sr, HOP)

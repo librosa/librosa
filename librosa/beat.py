@@ -12,7 +12,7 @@ All things rhythmic go here
 '''
 
 import librosa
-import numpy, scipy, scipy.signal
+import numpy, scipy, scipy.signal, scipy.ndimage
 import sklearn, sklearn.cluster, sklearn.feature_extraction
 
 def beat_track(y, sr=22050, hop_length=256, start_bpm=120.0, tightness=400, onsets=None):
@@ -32,7 +32,7 @@ def beat_track(y, sr=22050, hop_length=256, start_bpm=120.0, tightness=400, onse
         beats:          array of estimated beats by frame number
     '''
 
-    # First, get the frame->beat strength profile
+    # First, get the frame->beat strength profile if we don't already have one
     if onsets is None:
         onsets  = onset_strength(y, sr, hop_length=hop_length)
         pass
@@ -171,6 +171,46 @@ def onset_estimate_bpm(onsets, start_bpm, sr, hop_length):
 
     return start_bpm
 
+def onset_strength_percussive(y, sr=22050, window_length=2048, hop_length=256, mel_channels=128, S=None):
+    '''
+    Onset strength derived from harmonic-percussive source separation
+
+    Input:
+        y:                  time series signal
+        sr:                 sample rate of y                    | default: 22050
+        window_length:      fourier analysis window length      | default: 2048
+        hop_length:         number of frames to hop             | default: 256
+        mel_channels:       number of mel bins to use           | default: 128
+    '''
+
+    # Step 1: compute spectrogram
+    if S is None:
+        S   = librosa.melspectrogram(y,     sr=sr, 
+                                            window_length=window_length, 
+                                            hop_length=hop_length, 
+                                            mel_channels=mel_channels)
+        pass
+
+    # Step 2: harmonic-percussive separation
+    (H, P) = librosa.hpss.hpss_median(S, p=6.0)
+    del H   # We don't need the harmonic component anymore
+
+    # Step 3: horizontal LoG filtering on P
+    P       = scipy.ndimage.gaussian_laplace(P, [1.0, 0.0])
+
+    # Step 4: aggregate across frequency bands
+    O       = numpy.mean(P, axis=0)
+
+    ### remove the DC component
+    O       = scipy.signal.lfilter([1.0, -1.0], [1.0, -0.99], O)
+
+    ### Normalize by the maximum onset strength
+    Onorm = numpy.max(O)
+    if Onorm == 0:
+        Onorm = 1.0
+        pass
+
+    return O / Onorm
 
 def onset_strength(y, sr=22050, window_length=2048, hop_length=256, mel_channels=40, rising=True, htk=False, S=None):
     '''
@@ -226,7 +266,7 @@ def onset_strength(y, sr=22050, window_length=2048, hop_length=256, mel_channels
     ### Average over mel bands
     onsets      = numpy.mean(onsets, axis=0)
 
-    ### Filter with a difference operator
+    ### remove the DC component
     onsets      = scipy.signal.lfilter([1.0, -1.0], [1.0, -0.99], onsets)
 
     ### Threshold at zero
