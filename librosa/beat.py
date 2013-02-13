@@ -198,11 +198,16 @@ def onset_strength_percussive(y, sr=22050, window_length=2048, hop_length=256, m
     # Step 3: horizontal LoG filtering on P
     P       = scipy.ndimage.gaussian_laplace(P, [1.0, 0.0])
 
+
     # Step 4: aggregate across frequency bands
     O       = numpy.mean(P, axis=0)
 
+
     ### remove the DC component
     O       = scipy.signal.lfilter([1.0, -1.0], [1.0, -0.99], O)
+
+    # Threshold at 0
+    O       = numpy.maximum(0.0, O)
 
     ### Normalize by the maximum onset strength
     Onorm = numpy.max(O)
