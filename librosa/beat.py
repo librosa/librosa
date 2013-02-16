@@ -247,11 +247,10 @@ def onset_strength(y, sr=22050, window_length=2048, hop_length=256, mel_channels
                                             hop_length=hop_length, 
                                             mel_channels=mel_channels, 
                                             htk=htk)
+        # Convert to dBs
+        S   = librosa.logamplitude(S)
+
         pass
-
-
-    # Convert to dBs
-    S   = librosa.logamplitude(S)
 
     ### Only look at top 80 dB
     onsets  = numpy.maximum(S, S.max() - gain_threshold)
