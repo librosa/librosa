@@ -355,7 +355,7 @@ def melfb(samplerate, nfft, nfilts=40, width=1.0, fmin=None, fmax=None, use_htk=
     
     return wts
 
-def melspectrogram(y, sr=22050, window_length=256, hop_length=32, mel_channels=40, htk=False, width=3.0):
+def melspectrogram(y, sr=22050, window_length=256, hop_length=128, mel_channels=40, htk=False, width=1):
     '''
     Compute a mel spectrogram from a time series
 
@@ -363,10 +363,10 @@ def melspectrogram(y, sr=22050, window_length=256, hop_length=32, mel_channels=4
         y                   =   the audio signal
         sr                  =   the sampling rate of y                      | default: 22050
         window_length       =   FFT window size                             | default: 256
-        hop_length          =   hop size                                    | default: 32
+        hop_length          =   hop size                                    | default: 128
         mel_channels        =   number of Mel filters to use                | default: 40
         htk                 =   use HTK mels instead of Slaney              | default: False
-        width               =   width of mel bins                           | default: 3
+        width               =   width of mel bins                           | default: 1
 
     Output:
         S                   =   Mel amplitude spectrogram
