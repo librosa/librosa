@@ -376,7 +376,10 @@ def melspectrogram(y, sr=22050, window_length=256, hop_length=128, mel_channels=
     S = stft(y, sr=sr, n_fft=window_length, hann_w=window_length, hop_length=hop_length)
 
     # Build a Mel filter
-    M = melfb(sr, window_length / 2 + 1, nfilts=mel_channels, width=width, use_htk=htk)
+    M = melfb(sr, window_length, nfilts=mel_channels, width=width, use_htk=htk)
+
+    # Remove everything past the nyquist frequency
+    M = M[:, :(window_length / 2  + 1)]
     
     S = numpy.dot(M, numpy.abs(S))
 
