@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # CREATED:2013-03-08 15:25:18 by Brian McFee <brm2132@columbia.edu>
 #  unit tests for librosa core (__init__.py)
+#
+# Run me as follows:
+#   cd tests/
+#   nosetests -v
 
 import librosa
 import os, glob

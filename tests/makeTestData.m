@@ -43,13 +43,15 @@ end
 
 function makeTestHz2Mel(output_path)
 
-    % Parameters to sweep
-    P_FREQUENCIES = {[440], [2.^(1:13)]};
+    % Test with either a scalar argument or a vector
+    P_HZ = {[440], [2.^(1:13)]};
+
+    % Slaney-style or HTK
     P_HTK         = {0, 1};
 
     counter     = 0;
-    for i = 1:length(P_FREQUENCIES)
-        f = P_FREQUENCIES{i};
+    for i = 1:length(P_HZ)
+        f = P_HZ{i};
 
         for j = 1:length(P_HTK)
             htk = P_HTK{j};
@@ -70,8 +72,10 @@ end
 
 function makeTestMel2Hz(output_path)
 
-    % Parameters to sweep
+    % Test with either a scalar argument or a vector
     P_MELS      = {[5], [2.^(-2:9)]};
+
+    % Slaney-style or HTK
     P_HTK       = {0, 1};
 
     counter     = 0;
@@ -97,7 +101,7 @@ end
 
 function makeTestHzToOcts(output_path)
 
-    % Parameters to sweep
+    % Scalar argument or a vector
     P_HZ      = {[5], [2.^(2:14)]};
 
     counter     = 0;
@@ -119,6 +123,9 @@ end
 
 function makeTestLoad(output_path)
 
+    % Test: load a wav file
+    %       get audio stream (floats) and sample rate
+    %       preserve stereo or convert to mono
     infile          = 'data/test1.wav';
     [y, sr]         = wavread(infile);
     mono            = 0;
