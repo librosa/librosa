@@ -10,9 +10,12 @@ function makeTestData(source_path, output_path)
 %       hz_to_mel
 %       mel_to_hz
 %       hz_to_octs
-%       dctfb
+%
+%       dctfb               
 %       melfb
+%
 %       localmax
+%
 %       stft
 %       istft
 %
