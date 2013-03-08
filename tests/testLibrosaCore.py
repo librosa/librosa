@@ -53,4 +53,25 @@ def test_hz_to_octs():
         pass
     pass
 
+def test_load():
+    test_files = glob.glob('data/load*.mat')
+    test_files.sort()
+
+    # Note: this does not test resampling.
+    # That is a separate unit test.
+
+    def __check_load(infile):
+        DATA    = scipy.io.loadmat(infile)
+        (y, sr) = librosa.load(DATA['infile'][0], target_sr=None, mono=DATA['mono'])
+
+        # Verify that the sample rate is correct
+        assert sr == DATA['sr']
+
+        # Transpose here because matlab is row-oriented
+        assert numpy.allclose(y, DATA['y'].T)
+
+    for infile in test_files:
+        yield (__check_load, infile)
+        pass
+    pass
 

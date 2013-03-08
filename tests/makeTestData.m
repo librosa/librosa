@@ -19,18 +19,23 @@ function makeTestData(source_path, output_path)
 %       stft
 %       istft
 %
+%       load
+%
 
     % Make sure we have the path to DPWE code
     addpath(source_path);
 
-    display('Generating hz_to_mel tests');
+    display('hz_to_mel');
     makeTestHz2Mel(output_path);
 
-    display('Generating mel_to_hz tests');
+    display('mel_to_hz');
     makeTestMel2Hz(output_path);
 
-    display('Generating hz_to_octs tests');
+    display('hz_to_octs');
     makeTestHzToOcts(output_path);
+
+    display('load');
+    makeTestLoad(output_path);
 
     %% Done!
     display('Done.');
@@ -110,4 +115,27 @@ function makeTestHzToOcts(output_path)
 
         save(filename, 'f', 'result');
     end
+end
+
+function makeTestLoad(output_path)
+
+    infile          = 'data/test1.wav';
+    [y, sr]         = wavread(infile);
+    mono            = 0;
+
+    % Stereo output
+    counter = 1;
+
+    filename = sprintf('%s/load-%03d.mat', output_path, counter);
+    display(['  `-- saving ', filename]);
+    save(filename, 'infile', 'mono', 'y', 'sr');
+
+    % Mono output
+    counter = 2;
+    mono    = 1;
+    y       = mean(y, 2);
+    filename = sprintf('%s/load-%03d.mat', output_path, counter);
+    display(['  `-- saving ', filename]);
+    save(filename, 'infile', 'mono', 'y', 'sr');
+
 end
