@@ -13,9 +13,8 @@ def test_hz_to_mel():
     def __check_hz_to_mel(infile):
         DATA    = scipy.io.loadmat(infile)
         z       = librosa.hz_to_mel(DATA['f'], DATA['htk'])
-        E       = (z != DATA['result']).sum()
 
-        assert E == 0
+        assert numpy.allclose(z, DATA['result'])
     
     for infile in test_files:
         yield (__check_hz_to_mel, infile)
