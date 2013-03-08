@@ -37,3 +37,20 @@ def test_mel_to_hz():
         yield (__check_mel_to_hz, infile)
         pass
     pass
+
+def test_hz_to_octs():
+    test_files = glob.glob('data/hz_to_octs*.mat')
+    test_files.sort()
+
+    def __check_hz_to_octs(infile):
+        DATA    = scipy.io.loadmat(infile)
+        z       = librosa.hz_to_octs(DATA['f'])
+
+        assert numpy.allclose(z, DATA['result'])
+
+    for infile in test_files:
+        yield (__check_hz_to_octs, infile)
+        pass
+    pass
+
+

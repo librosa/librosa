@@ -20,12 +20,14 @@ function makeTestData(source_path, output_path)
     % Make sure we have the path to DPWE code
     addpath(source_path);
 
-    %% hz_to_mel tests
     display('Generating hz_to_mel tests');
     makeTestHz2Mel(output_path);
 
     display('Generating mel_to_hz tests');
     makeTestMel2Hz(output_path);
+
+    display('Generating hz_to_octs tests');
+    makeTestHzToOcts(output_path);
 
     %% Done!
     display('Done.');
@@ -82,5 +84,27 @@ function makeTestMel2Hz(output_path)
 
             save(filename, 'f', 'htk', 'result');
         end
+    end
+end
+
+function makeTestHzToOcts(output_path)
+
+    % Parameters to sweep
+    P_HZ      = {[5], [2.^(2:14)]};
+
+    counter     = 0;
+    for i = 1:length(P_HZ)
+        f = P_HZ{i};
+
+        % Run the function
+        result = hz2octs(f);
+
+        % save the output
+        counter = counter + 1;
+
+        filename = sprintf('%s/hz_to_octs-%03d.mat', output_path, counter);
+        display(['  `-- saving ', filename]);
+
+        save(filename, 'f', 'result');
     end
 end
