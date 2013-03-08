@@ -24,6 +24,9 @@ function makeTestData(source_path, output_path)
     display('Generating hz_to_mel tests');
     makeTestHz2Mel(output_path);
 
+    display('Generating mel_to_hz tests');
+    makeTestMel2Hz(output_path);
+
     %% Done!
     display('Done.');
 end
@@ -48,6 +51,33 @@ function makeTestHz2Mel(output_path)
             counter = counter + 1;
 
             filename = sprintf('%s/hz_to_mel-%03d.mat', output_path, counter);
+            display(['  `-- saving ', filename]);
+
+            save(filename, 'f', 'htk', 'result');
+        end
+    end
+end
+
+function makeTestMel2Hz(output_path)
+
+    % Parameters to sweep
+    P_MELS      = {[5], [2.^(-2:9)]};
+    P_HTK       = {0, 1};
+
+    counter     = 0;
+    for i = 1:length(P_MELS)
+        f = P_MELS{i};
+
+        for j = 1:length(P_HTK)
+            htk = P_HTK{j};
+        
+            % Run the function
+            result = mel2hz(f, htk);
+
+            % save the output
+            counter = counter + 1;
+
+            filename = sprintf('%s/mel_to_hz-%03d.mat', output_path, counter);
             display(['  `-- saving ', filename]);
 
             save(filename, 'f', 'htk', 'result');

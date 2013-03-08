@@ -6,6 +6,8 @@ import librosa
 import os, glob
 import numpy, scipy.io
 
+from nose.tools import nottest
+
 def test_hz_to_mel():
     test_files = glob.glob('data/hz_to_mel*.mat')
     test_files.sort()
@@ -18,5 +20,20 @@ def test_hz_to_mel():
     
     for infile in test_files:
         yield (__check_hz_to_mel, infile)
+        pass
+    pass
+
+def test_mel_to_hz():
+    test_files = glob.glob('data/mel_to_hz*.mat')
+    test_files.sort()
+
+    def __check_mel_to_hz(infile):
+        DATA    = scipy.io.loadmat(infile)
+        z       = librosa.mel_to_hz(DATA['f'], DATA['htk'])
+
+        assert numpy.allclose(z, DATA['result'])
+    
+    for infile in test_files:
+        yield (__check_mel_to_hz, infile)
         pass
     pass
