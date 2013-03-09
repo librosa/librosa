@@ -121,7 +121,7 @@ def stft(y, sr=22050, n_fft=256, hann_w=None, hop_length=None):
     if hann_w == 0:
         window = numpy.ones((n_fft,))
     else:
-        window = pad(scipy.signal.hanning(hann_w), n_fft)
+        window = pad(scipy.signal.hann(hann_w), n_fft)
         pass
 
     # Set the default hop, if it's not already specified
@@ -129,10 +129,13 @@ def stft(y, sr=22050, n_fft=256, hann_w=None, hop_length=None):
         hop_length = int(n_fft / 2)
         pass
 
-    # allocate output array
-    D = numpy.zeros( (int(1 + n_fft / 2.0), 1 + int( ( num_samples - n_fft) / hop_length) ), dtype=numpy.complex)
+    n_specbins  = 1 + int(n_fft / 2)
+    n_frames    = 1 + int( (num_samples - n_fft) / hop_length)
 
-    for (i, b) in enumerate(xrange(0, 1+num_samples - n_fft, hop_length)):
+    # allocate output array
+    D = numpy.empty( (n_specbins, n_frames), dtype=numpy.complex)
+
+    for (i, b) in enumerate(xrange(0, hop_length * n_frames, hop_length)):
         u           = window * y[b:(b+n_fft)]
         t           = scipy.fft(u)
         D[:,i]      = t[:1+n_fft/2]

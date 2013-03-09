@@ -122,6 +122,9 @@ def test_stft():
                                         hann_w      =   DATA['hann_w'][0].astype(int),
                                         hop_length  =   DATA['hop_length'][0].astype(int))
 
+        # FIXME:  2013-03-09 10:21:49 by Brian McFee <brm2132@columbia.edu>
+        #  WHY SHOULD THIS BE OKAY?!
+
         # We'll accept either phase match or -phase match
         assert numpy.allclose(D, DATA['D']) or numpy.allclose(D.conj(), DATA['D'])
 
