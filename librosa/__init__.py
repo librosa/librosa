@@ -195,6 +195,7 @@ def istft(d, n_fft=None, hann_w=None, hop_length=None):
         ft              = d[:, b/hop_length]
         ft              = numpy.concatenate((ft.conj(), ft[-2:0:-1] ), 0)
 
+        # axis=0 to force numpy.fft to work along the correct axis.
         px              = numpy.fft.ifft(ft, axis=0).real
         x[b:(b+n_fft)]  = x[b:(b+n_fft)] + window * px[:,0]
         pass
