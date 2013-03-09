@@ -334,12 +334,12 @@ def melfb(sr, nfft, nfilts=40, width=1.0, fmin=0.0, fmax=None, use_htk=False):
     wts         = numpy.zeros( (nfilts, nfft) )
 
     # Center freqs of each FFT bin
-    fftfreqs    = numpy.arange( wts.shape[1], dtype=numpy.double ) / nfft * sr
+    fftfreqs    = numpy.arange( 1 + nfft / 2, dtype=numpy.double ) / nfft * sr
 
     # 'Center freqs' of mel bands - uniformly spaced between limits
     minmel      = hz_to_mel(fmin, htk=use_htk)
     maxmel      = hz_to_mel(fmax, htk=use_htk)
-    binfreqs    = mel_to_hz(numpy.arange(minmel, minmel + nfilts + 2, dtype=float)  * (maxmel - minmel) / (nfilts+1.0), htk=use_htk)
+    binfreqs    = mel_to_hz(minmel + numpy.arange(nfilts + 2, dtype=float) * (maxmel - minmel) / (nfilts+1.0), htk=use_htk)
 
     for i in xrange(nfilts):
         freqs       = binfreqs[range(i, i+3)]
@@ -352,7 +352,7 @@ def melfb(sr, nfft, nfilts=40, width=1.0, fmin=0.0, fmax=None, use_htk=False):
         hislope     = (freqs[2] - fftfreqs) / (freqs[2] - freqs[1])
 
         # .. then intersect them with each other and zero
-        wts[i,:]    = numpy.maximum(0, numpy.minimum(loslope, hislope))
+        wts[i,:(1 + nfft/2)]    = numpy.maximum(0, numpy.minimum(loslope, hislope))
 
         pass
 
