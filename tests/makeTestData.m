@@ -44,6 +44,9 @@ function testData(source_path, output_path)
     display('resample');
     testResample(output_path);
 
+    display('melfb');
+    testSTFT(output_path);
+
     %% Done!
     display('Done.');
 end
@@ -220,6 +223,7 @@ function testResample(output_path)
     [y_in, sr_in]   = wavread(wavfile);
     y_in            = mean(y_in, 2);        % Convert to mono
 
+    % Test a downsample, same SR, and upsample
     P_SR            = [8000, 22050, 44100];
 
     counter = 0;
@@ -230,9 +234,7 @@ function testResample(output_path)
 
         counter     = counter + 1;
         filename    = sprintf('%s/resample-%03d.mat', output_path, counter);
-
         display(['  `-- saving ', filename]);
-
         save(filename, 'wavfile', 'y_in', 'sr_in', 'y_out', 'sr_out');
     end
 end
@@ -242,10 +244,35 @@ function testSTFT(output_path)
     wavfile     = 'data/test1_22050.wav';
 
     [y, sr]     = wavread(wavfile);
-    y           = mean(y_in, 2);        % Convert to mono
+    y           = mean(y, 2);        % Convert to mono
 
+    % Test a couple of different FFT window sizes
+    P_NFFT      = [128, 256, 1024];
 
+    % And hop sizes
+    P_HOP       = [64, 128];
 
+    counter     = 0;
 
+    for nfft = P_NFFT
+        for hop_length = P_HOP
+            % Test once with no hann window (rectangular)
+            hann_w = 0;
+            D = stft(y, nfft, hann_w, hop_length, sr);
 
+            counter     = counter + 1;
+            filename    = sprintf('%s/stft-%03d.mat', output_path, counter);
+            display(['  `-- saving ', filename]);
+            save(filename, 'wavfile', 'D', 'sr', 'nfft', 'hann_w', 'hop_length');
+
+            % And again with default hann window (nfft)
+            hann_w      = nfft;
+            D = stft(y, nfft, hann_w, hop_length, sr);
+
+            counter     = counter + 1;
+            filename    = sprintf('%s/stft-%03d.mat', output_path, counter);
+            display(['  `-- saving ', filename]);
+            save(filename, 'wavfile', 'D', 'sr', 'nfft', 'hann_w', 'hop_length');
+        end
+    end
 end
