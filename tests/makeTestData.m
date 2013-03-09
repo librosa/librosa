@@ -251,7 +251,10 @@ function testSTFT(output_path)
     P_NFFT      = [128, 256, 1024];
 
     % And hop sizes
-    P_HOP       = [64, 128];
+    P_HOP       = [64, 128, 256];
+
+    % Note: librosa.stft does not support user-supplied windows,
+    %       so we do not generate tests for this case.
 
     counter     = 0;
 
