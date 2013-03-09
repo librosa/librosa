@@ -24,7 +24,7 @@ def test_hz_to_mel():
 
         assert numpy.allclose(z, DATA['result'])
     
-    for infile in files('data/*hz_to_mel-*.mat'):
+    for infile in files('data/hz_to_mel-*.mat'):
         yield (__test_to_mel, infile)
 
     pass
@@ -37,7 +37,7 @@ def test_mel_to_hz():
 
         assert numpy.allclose(z, DATA['result'])
     
-    for infile in files('data/*mel_to_hz-*.mat'):
+    for infile in files('data/mel_to_hz-*.mat'):
         yield (__test_to_hz, infile)
 
     pass
@@ -49,7 +49,7 @@ def test_hz_to_octs():
 
         assert numpy.allclose(z, DATA['result'])
 
-    for infile in files('data/*hz_to_octs-*.mat'):
+    for infile in files('data/hz_to_octs-*.mat'):
         yield (__test_to_octs, infile)
 
     pass
@@ -68,7 +68,7 @@ def test_load():
         # Transpose here because matlab is row-oriented
         assert numpy.allclose(y, DATA['y'].T)
 
-    for infile in files('data/*load-*.mat'):
+    for infile in files('data/load-*.mat'):
         yield (__test, infile)
     pass
 
@@ -98,7 +98,25 @@ def test_resample():
         pass
 
 
-    for infile in files('data/*resample-*.mat'):
+    for infile in files('data/resample-*.mat'):
+        yield (__test, infile)
+    pass
+
+def test_stft():
+
+    def __test(infile):
+        DATA    = scipy.io.loadmat(infile)
+
+        # Load the file
+        (y, sr) = librosa.load(DATA['wavfile'][0], target_sr=None, mono=True)
+
+        # Compute the STFT
+        D       = librosa.stft(y, sr, n_fft=DATA['nfft'], hann_w=DATA['hann_w'], hop_length=DATA['hop_length'])
+
+        assert numpy.allclose(D, DATA['D'])
+
+
+    for infile in files('data/stft-*.mat'):
         yield (__test, infile)
     pass
 
@@ -118,6 +136,6 @@ def test_melfb():
                                 
         assert numpy.allclose(wts, DATA['wts'])
 
-    for infile in files('data/*melfb-*.mat'):
+    for infile in files('data/melfb-*.mat'):
         yield (__test, infile)
     pass
