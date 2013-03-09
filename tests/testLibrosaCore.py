@@ -122,14 +122,23 @@ def test_stft():
                                         hann_w      =   DATA['hann_w'][0].astype(int),
                                         hop_length  =   DATA['hop_length'][0].astype(int))
 
-        # FIXME:  2013-03-09 10:21:49 by Brian McFee <brm2132@columbia.edu>
-        #  WHY SHOULD THIS BE OKAY?!
-
-        # We'll accept either phase match or -phase match
-        assert numpy.allclose(D, DATA['D']) or numpy.allclose(D.conj(), DATA['D'])
+        assert  numpy.allclose(D, DATA['D'])   
 
 
     for infile in files('data/stft-*.mat'):
+        yield (__test, infile)
+    pass
+
+def test_istft():
+    def __test(infile):
+        DATA    = load(infile)
+
+        Dinv    = librosa.istft(DATA['D'],  n_fft       = DATA['nfft'][0].astype(int),
+                                            hann_w      = DATA['hann_w'][0].astype(int),
+                                            hop_length  = DATA['hop_length'][0].astype(int))
+        assert numpy.allclose(Dinv, DATA['Dinv'])
+
+    for infile in files('data/istft-*.mat'):
         yield (__test, infile)
     pass
 

@@ -8,7 +8,8 @@ Includes constants, core utility functions, etc
 
 '''
 
-import numpy, scipy, scipy.signal
+import numpy, numpy.fft
+import scipy, scipy.signal
 import os.path
 import audioread
 
@@ -135,10 +136,13 @@ def stft(y, sr=22050, n_fft=256, hann_w=None, hop_length=None):
     # allocate output array
     D = numpy.empty( (n_specbins, n_frames), dtype=numpy.complex)
 
-    for (i, b) in enumerate(xrange(0, hop_length * n_frames, hop_length)):
+    for i in xrange(n_frames):
+        b           = i * hop_length
         u           = window * y[b:(b+n_fft)]
-        t           = scipy.fft(u)
-        D[:,i]      = t[:1+n_fft/2]
+        t           = numpy.fft.fft(u)
+
+        # Conjugate here to match phase from DPWE code
+        D[:,i]      = t[:n_specbins].conj()
         pass
 
     return D
@@ -157,7 +161,9 @@ def istft(d, n_fft=None, hann_w=None, hop_length=None):
     Outputs:
         y       = time domain signal reconstructed from d
     '''
-    num_frames = d.shape[1]
+
+    # n = Number of stft frames
+    n = d.shape[1]
 
     if n_fft is None:
         n_fft = 2 * (d.shape[0] - 1)
@@ -168,26 +174,29 @@ def istft(d, n_fft=None, hann_w=None, hop_length=None):
         pass
 
     if hann_w == 0:
-        window = numpy.ones((n_fft,))
+        window = numpy.ones(n_fft)
     else:
-        # FIXME:   2012-10-20 18:58:56 by Brian McFee <brm2132@columbia.edu>
-        #      there's a magic number 2/3 in istft.m ... not sure about this one
-        window = pad(scipy.signal.hanning(hann_w) * 2.0 / 3, n_fft)
+        # XXX:    2013-03-09 12:17:38 by Brian McFee <brm2132@columbia.edu>
+        #   magic number alert!
+        #   2/3 scaling is to make stft(istft(.)) identity for 25% hop
+        
+        window = pad(scipy.signal.hann(hann_w) * 2.0 / 3, n_fft)
         pass
 
     # Set the default hop, if it's not already specified
     if hop_length is None:
-        hop_length = int(window.shape[0] / 2.0 )
+        hop_length = int(n_fft / 2.0 )
         pass
 
-    x_length    = n_fft + (num_frames - 1) * hop_length
-    x           = numpy.zeros((x_length,))
+    x_length    = n_fft + (n - 1) * hop_length
+    x           = numpy.zeros(x_length)
 
-    for b in xrange(0, hop_length * (num_frames), hop_length):
+    for b in xrange(0, hop_length * n, hop_length):
         ft              = d[:, b/hop_length]
-        ft              = numpy.concatenate((ft, numpy.conj(ft[(n_fft/2 -1):0:-1])), 0)
-        px              = numpy.real(scipy.ifft(ft))
-        x[b:(b+n_fft)] += px * window
+        ft              = numpy.concatenate((ft.conj(), ft[-2:0:-1] ), 0)
+
+        px              = numpy.fft.ifft(ft, axis=0).real
+        x[b:(b+n_fft)]  = x[b:(b+n_fft)] + window * px[:,0]
         pass
 
     return x

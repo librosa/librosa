@@ -47,6 +47,9 @@ function testData(source_path, output_path)
     display('stft');
     testSTFT(output_path);
 
+    display('istft');
+    testISTFT(output_path);
+
     %% Done!
     display('Done.');
 end
@@ -277,6 +280,49 @@ function testSTFT(output_path)
             filename    = sprintf('%s/stft-%03d.mat', output_path, counter);
             display(['  `-- saving ', filename]);
             save(filename, 'wavfile', 'D', 'sr', 'nfft', 'hann_w', 'hop_length');
+        end
+    end
+end
+
+function testISTFT(output_path)
+
+    wavfile     = 'data/test1_22050.wav';
+
+    [y_in, sr]     = wavread(wavfile);
+    y_in           = mean(y_in, 2);        % Convert to mono
+
+    % Test a couple of different FFT window sizes
+    P_NFFT      = [128, 256, 1024];
+
+    % And hop sizes
+    P_HOP       = [64, 128, 256];
+
+    % Note: librosa.stft does not support user-supplied windows,
+    %       so we do not generate tests for this case.
+
+    counter     = 0;
+
+    for nfft = P_NFFT
+        for hop_length = P_HOP
+            % Test once with no hann window (rectangular)
+            hann_w  = 0;
+            D       = stft(y_in, nfft, hann_w, hop_length, sr);
+            Dinv    = istft(D, nfft, hann_w, hop_length);
+
+            counter     = counter + 1;
+            filename    = sprintf('%s/istft-%03d.mat', output_path, counter);
+            display(['  `-- saving ', filename]);
+            save(filename, 'D', 'Dinv', 'nfft', 'hann_w', 'hop_length');
+
+            % And again with default hann window (nfft)
+            hann_w      = nfft;
+            D           = stft(y_in, nfft, hann_w, hop_length, sr);
+            Dinv        = istft(D, nfft, hann_w, hop_length);
+
+            counter     = counter + 1;
+            filename    = sprintf('%s/istft-%03d.mat', output_path, counter);
+            display(['  `-- saving ', filename]);
+            save(filename, 'D', 'Dinv', 'nfft', 'hann_w', 'hop_length');
         end
     end
 end
