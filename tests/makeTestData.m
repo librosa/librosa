@@ -11,16 +11,16 @@ function testData(source_path, output_path)
 %       mel_to_hz
 %       hz_to_octs
 %
-%       dctfb               
-%       melfb
-%
-%       localmax
-%
 %       stft
 %       istft
 %
 %       load
 %       resample
+%
+%       dctfb               
+%       melfb
+%
+%       localmax
 %
 
     % Make sure we have the path to DPWE code
@@ -38,17 +38,19 @@ function testData(source_path, output_path)
     display('load');
     testLoad(output_path);
 
-%     display('melfb');
-%     testMelfb(output_path);
-
-    display('resample');
-    testResample(output_path);
-
     display('stft');
     testSTFT(output_path);
 
     display('istft');
     testISTFT(output_path);
+
+
+
+    display('melfb');
+    testMelfb(output_path);
+
+    display('resample');
+    testResample(output_path);
 
     %% Done!
     display('Done.');
@@ -167,7 +169,7 @@ function testMelfb(output_path)
     P_SR        = [8000, 11025, 22050];
 
     % Two FFT lengths
-    P_NFFT      = [256, 516];
+    P_NFFT      = [256, 512];
 
     % Three filter bank sizes
     P_NFILTS    = [20, 40, 120];
@@ -199,7 +201,7 @@ function testMelfb(output_path)
                             for htk = P_HTK
 
             % Run the function
-            [wts, frqs] = fft2melmx(sr, nfft, nfilts, width, fmin, fmax, htk, 0);
+            [wts, frqs] = fft2melmx(nfft, sr, nfilts, width, fmin, fmax, htk, 0);
 
             % save the output
             counter = counter + 1;

@@ -303,12 +303,12 @@ def mfcc(S, d=20):
 
 # Stolen from ronw's mfcc.py
 # https://github.com/ronw/frontend/blob/master/mfcc.py
-def melfb(samplerate, nfft, nfilts=40, width=1.0, fmin=None, fmax=None, use_htk=False):
+def melfb(sr, nfft, nfilts=40, width=1.0, fmin=0.0, fmax=None, use_htk=False):
     """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins.
 
     Parameters
     ----------
-    samplerate : int
+    sr : int
         Sampling rate of the incoming signal.
     nfft : int
         FFT length to use.
@@ -320,29 +320,21 @@ def melfb(samplerate, nfft, nfilts=40, width=1.0, fmin=None, fmax=None, use_htk=
         Frequency in Hz of the lowest edge of the Mel bands. Defaults to 0.
     fmax : float
         Frequency in Hz of the upper edge of the Mel bands. Defaults
-        to `samplerate` / 2.
+        to `sr` / 2.
     use_htk: bool
         Use HTK mels instead of Slaney's version? Defaults to false.
 
-    See Also
-    --------
-    Filterbank
-    MelSpec
     """
 
-    if fmin is None:
-        fmin = 0
-        pass
-
     if fmax is None:
-        fmax = samplerate / 2.0
+        fmax = sr / 2.0
         pass
 
     # Initialize the weights
     wts         = numpy.zeros( (nfilts, nfft) )
 
     # Center freqs of each FFT bin
-    fftfreqs    = numpy.arange( wts.shape[1], dtype=numpy.double ) / nfft * samplerate
+    fftfreqs    = numpy.arange( wts.shape[1], dtype=numpy.double ) / nfft * sr
 
     # 'Center freqs' of mel bands - uniformly spaced between limits
     minmel      = hz_to_mel(fmin, htk=use_htk)

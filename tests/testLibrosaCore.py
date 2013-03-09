@@ -142,20 +142,21 @@ def test_istft():
         yield (__test, infile)
     pass
 
-@nottest
 def test_melfb():
 
     def __test(infile):
         DATA    = load(infile)
 
-        wts = librosa.melfb(    DATA['sr'], 
-                                DATA['nfft'], 
-                                nfilts  =   DATA['nfilts'],
-                                width   =   DATA['width'],
-                                fmin    =   DATA['fmin'],
-                                fmax    =   DATA['fmax'],
-                                use_htk =   DATA['htk'])
+        wts = librosa.melfb(    DATA['sr'][0], 
+                                DATA['nfft'][0], 
+                                nfilts  =   DATA['nfilts'][0],
+                                width   =   DATA['width'][0],
+                                fmin    =   DATA['fmin'][0],
+                                fmax    =   DATA['fmax'][0],
+                                use_htk =   DATA['htk'][0])
                                 
+        assert wts.shape == DATA['wts'].shape
+
         assert numpy.allclose(wts, DATA['wts'])
 
     for infile in files('data/melfb-*.mat'):
