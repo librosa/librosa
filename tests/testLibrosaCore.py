@@ -12,14 +12,21 @@ import numpy, scipy.io
 
 from nose.tools import nottest
 
+#-- utilities --#
 def files(pattern):
     test_files = glob.glob(pattern)
     test_files.sort()
     return test_files
 
+def load(infile):
+    DATA = scipy.io.loadmat(infile, chars_as_strings=True)
+    return DATA
+#--           --#
+
+#-- Tests     --#
 def test_hz_to_mel():
     def __test_to_mel(infile):
-        DATA    = scipy.io.loadmat(infile)
+        DATA    = load(infile)
         z       = librosa.hz_to_mel(DATA['f'], DATA['htk'])
 
         assert numpy.allclose(z, DATA['result'])
@@ -32,7 +39,7 @@ def test_hz_to_mel():
 def test_mel_to_hz():
 
     def __test_to_hz(infile):
-        DATA    = scipy.io.loadmat(infile)
+        DATA    = load(infile)
         z       = librosa.mel_to_hz(DATA['f'], DATA['htk'])
 
         assert numpy.allclose(z, DATA['result'])
@@ -44,7 +51,7 @@ def test_mel_to_hz():
 
 def test_hz_to_octs():
     def __test_to_octs(infile):
-        DATA    = scipy.io.loadmat(infile)
+        DATA    = load(infile)
         z       = librosa.hz_to_octs(DATA['f'])
 
         assert numpy.allclose(z, DATA['result'])
@@ -59,23 +66,23 @@ def test_load():
     # That is a separate unit test.
 
     def __test(infile):
-        DATA    = scipy.io.loadmat(infile)
+        DATA    = load(infile)
         (y, sr) = librosa.load(DATA['wavfile'][0], target_sr=None, mono=DATA['mono'])
 
         # Verify that the sample rate is correct
         assert sr == DATA['sr']
 
-        # Transpose here because matlab is row-oriented
-        assert numpy.allclose(y, DATA['y'].T)
+        assert numpy.allclose(y, DATA['y'])
 
     for infile in files('data/load-*.mat'):
         yield (__test, infile)
     pass
 
+@nottest
 def test_resample():
 
     def __test(infile):
-        DATA    = scipy.io.loadmat(infile)
+        DATA    = load(infile)
         
         # load the wav file
         (y_in, sr_in) = librosa.load(DATA['wavfile'][0], target_sr=None, mono=True)
@@ -86,13 +93,13 @@ def test_resample():
         # Are we the same length?
         if len(y_out) == len(DATA['y_out']):
             # Is the data close?
-            assert numpy.allclose(y_out, DATA['y_out'].T)
+            assert numpy.allclose(y_out, DATA['y_out'])
         elif len(y_out) == len(DATA['y_out']) - 1:
             assert (numpy.allclose(y_out, DATA['y_out'][:-1,0]) or
                     numpy.allclose(y_out, DATA['y_out'][1:,0]))
         elif len(y_out) == len(DATA['y_out']) + 1:
-            assert (numpy.allclose(y_out[1:], DATA['y_out'].T) or
-                    numpy.allclose(y_out[:-2], DATA['y_out'].T))
+            assert (numpy.allclose(y_out[1:], DATA['y_out']) or
+                    numpy.allclose(y_out[:-2], DATA['y_out']))
         else:
             assert False
         pass
@@ -105,15 +112,18 @@ def test_resample():
 def test_stft():
 
     def __test(infile):
-        DATA    = scipy.io.loadmat(infile)
+        DATA    = load(infile)
 
         # Load the file
         (y, sr) = librosa.load(DATA['wavfile'][0], target_sr=None, mono=True)
 
         # Compute the STFT
-        D       = librosa.stft(y, sr, n_fft=DATA['nfft'], hann_w=DATA['hann_w'], hop_length=DATA['hop_length'])
+        D       = librosa.stft(y, sr,   n_fft       =   DATA['nfft'][0].astype(int),
+                                        hann_w      =   DATA['hann_w'][0].astype(int),
+                                        hop_length  =   DATA['hop_length'][0].astype(int))
 
-        assert numpy.allclose(D, DATA['D'])
+        # We'll accept either phase match or -phase match
+        assert numpy.allclose(D, DATA['D']) or numpy.allclose(D.conj(), DATA['D'])
 
 
     for infile in files('data/stft-*.mat'):
@@ -124,7 +134,7 @@ def test_stft():
 def test_melfb():
 
     def __test(infile):
-        DATA    = scipy.io.loadmat(infile)
+        DATA    = load(infile)
 
         wts = librosa.melfb(    DATA['sr'], 
                                 DATA['nfft'], 

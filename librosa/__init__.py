@@ -86,6 +86,8 @@ def pad(w, d_pad, v=0.0, center=True):
     if d > d_pad:
         raise ValueError('Insufficient pad space')
 
+    #     FIXME:  2013-03-09 10:07:56 by Brian McFee <brm2132@columbia.edu>
+    #  slightly quicker via fill
     q = v * numpy.ones(d_pad)
     q[:d] = w
 
@@ -124,7 +126,7 @@ def stft(y, sr=22050, n_fft=256, hann_w=None, hop_length=None):
 
     # Set the default hop, if it's not already specified
     if hop_length is None:
-        hop_length = int(window.shape[0] / 2.0)
+        hop_length = int(n_fft / 2)
         pass
 
     # allocate output array

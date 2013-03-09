@@ -44,7 +44,7 @@ function testData(source_path, output_path)
     display('resample');
     testResample(output_path);
 
-    display('melfb');
+    display('stft');
     testSTFT(output_path);
 
     %% Done!
@@ -136,8 +136,9 @@ function testLoad(output_path)
     % Test: load a wav file
     %       get audio stream (floats) and sample rate
     %       preserve stereo or convert to mono
-    wavfile          = 'data/test1_44100.wav';
+    wavfile         = 'data/test1_44100.wav';
     [y, sr]         = wavread(wavfile);
+    y = y';         % Transpose to make python code easier
     mono            = 0;
 
     % Stereo output
@@ -150,7 +151,7 @@ function testLoad(output_path)
     % Mono output
     counter = 2;
     mono    = 1;
-    y       = mean(y, 2);
+    y       = mean(y, 1);
     filename = sprintf('%s/load-%03d.mat', output_path, counter);
     display(['  `-- saving ', filename]);
     save(filename, 'wavfile', 'mono', 'y', 'sr');
