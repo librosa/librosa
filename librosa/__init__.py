@@ -16,6 +16,8 @@ import audioread
 # And all the librosa sub-modules
 import beat, framegenerator, chroma, tf_agc, output, hpss
 
+
+#-- CORE ROUTINES --#
 def load(path, target_sr=22050, mono=True):
     '''
     Load an audio file into a single, long time series
@@ -72,32 +74,6 @@ def resample(y, orig_sr, target_sr):
     y_hat = scipy.signal.resample(y, n_samples, axis=axis)
 
     return y_hat
-
-def pad(w, d_pad, v=0.0, center=True):
-    '''
-    Pad a vector w out to d dimensions, using value v
-
-    if center is True, w will be centered in the output vector
-    otherwise, w will be at the beginning
-    '''
-    # FIXME:  2012-11-27 11:08:54 by Brian McFee <brm2132@columbia.edu>
-    #  This function will be deprecated by numpy 1.7.0    
-
-    d = len(w)
-    if d > d_pad:
-        raise ValueError('Insufficient pad space')
-
-    #     FIXME:  2013-03-09 10:07:56 by Brian McFee <brm2132@columbia.edu>
-    #  slightly quicker via fill
-    q = v * numpy.ones(d_pad)
-    q[:d] = w
-
-    if center:
-        q = numpy.roll(q, numpy.floor((d_pad - d) / 2.0).astype(int), axis=0)
-        pass
-    return q
-
-
 
 def stft(y, sr=22050, n_fft=256, hann_w=None, hop_length=None):
     '''
@@ -265,6 +241,22 @@ def mel_to_hz(z, htk=False):
         return f
     pass
 
+# Stolen from ronw's chroma.py
+# https://github.com/ronw/frontend/blob/master/chroma.py
+def hz_to_octs(frequencies, A440=440.0):
+    '''
+    Convert frquencies (Hz) to octave numbers
+
+    Input:
+        frequencies:    scalar or vector of frequencies
+        A440:           frequency of A440 (in Hz)                   | 440.0
+
+    Output:
+        octaves:        octave number fore each frequency
+    '''
+    return numpy.log2(frequencies / (A440 / 16.0))
+
+
 
 def dctfb(nfilts, d):
     '''
@@ -293,7 +285,7 @@ def mfcc(S, d=20):
     Mel-frequency cepstral coefficients
 
     Input:
-        S   :   k-by-n      log-amplitude spectrogram
+        S   :   k-by-n      log-amplitude Mel spectrogram
         d   :   number of MFCCs to return               | default: 20
     Output:
         M   :   d-by-n      MFCC sequence
@@ -301,7 +293,7 @@ def mfcc(S, d=20):
 
     return numpy.dot(dctfb(d, S.shape[0]), S)
 
-# Stolen from ronw's mfcc.py
+# Adapted from ronw's mfcc.py
 # https://github.com/ronw/frontend/blob/master/mfcc.py
 def melfb(sr, nfft, nfilts=40, width=1.0, fmin=0.0, fmax=None, use_htk=False):
     """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins.
@@ -412,35 +404,8 @@ def logamplitude(S, amin=1e-10, gain_threshold=-80.0):
         pass
     return D
 
-def localmax(x):
-    '''
-        Return 1 where there are local maxima in x (column-wise)
-        left edges do not fire, right edges might.
-    '''
 
-    return numpy.logical_and(x > numpy.hstack([x[0], x[:-1]]), x >= numpy.hstack([x[1:], x[-1]]))
-
-
-def autocorrelate(x, max_size=None):
-    '''
-        Bounded auto-correlation
-
-        Input:
-            x:          t-by-1  vector
-            max_size:   (optional) maximum lag                  | None
-
-        Output:
-            z:          x's autocorrelation (up to max_size if given)
-    '''
-    #   TODO:   2012-11-07 14:05:42 by Brian McFee <brm2132@columbia.edu>
-    #  maybe could be done faster by directly implementing a clipped correlate
-#     result = numpy.correlate(x, x, mode='full')
-    result = scipy.signal.fftconvolve(x, x[::-1], mode='full')
-
-    result = result[len(result)/2:]
-    if max_size is None:
-        return result
-    return result[:max_size]
+#-- UTILITIES --#
 
 def frames_to_time(frames, sr=22050, hop_length=64):
     '''
@@ -455,22 +420,6 @@ def frames_to_time(frames, sr=22050, hop_length=64):
         times:          time (in seconds) of each given frame number
     '''
     return frames * float(hop_length) / float(sr)
-
-# Stolen from ronw's chroma.py
-# https://github.com/ronw/frontend/blob/master/chroma.py
-def hz_to_octs(frequencies, A440=440.0):
-    '''
-    Convert frquencies (Hz) to octave numbers
-
-    Input:
-        frequencies:    scalar or vector of frequencies
-        A440:           frequency of A440 (in Hz)                   | 440.0
-
-    Output:
-        octaves:        octave number fore each frequency
-    '''
-    return numpy.log2(frequencies / (A440 / 16.0))
-
 
 def feature_sync(X, F, agg=numpy.mean):
     '''
@@ -501,3 +450,57 @@ def feature_sync(X, F, agg=numpy.mean):
         pass
 
     return Y
+
+def pad(w, d_pad, v=0.0, center=True):
+    '''
+    Pad a vector w out to d dimensions, using value v
+
+    if center is True, w will be centered in the output vector
+    otherwise, w will be at the beginning
+    '''
+    # FIXME:  2012-11-27 11:08:54 by Brian McFee <brm2132@columbia.edu>
+    #  This function will be deprecated by numpy 1.7.0    
+
+    d = len(w)
+    if d > d_pad:
+        raise ValueError('Insufficient pad space')
+
+    #     FIXME:  2013-03-09 10:07:56 by Brian McFee <brm2132@columbia.edu>
+    #  slightly quicker via fill
+    q = v * numpy.ones(d_pad)
+    q[:d] = w
+
+    if center:
+        q = numpy.roll(q, numpy.floor((d_pad - d) / 2.0).astype(int), axis=0)
+        pass
+    return q
+
+def autocorrelate(x, max_size=None):
+    '''
+        Bounded auto-correlation
+
+        Input:
+            x:          t-by-1  vector
+            max_size:   (optional) maximum lag                  | None
+
+        Output:
+            z:          x's autocorrelation (up to max_size if given)
+    '''
+    #   TODO:   2012-11-07 14:05:42 by Brian McFee <brm2132@columbia.edu>
+    #  maybe could be done faster by directly implementing a clipped correlate
+#     result = numpy.correlate(x, x, mode='full')
+    result = scipy.signal.fftconvolve(x, x[::-1], mode='full')
+
+    result = result[len(result)/2:]
+    if max_size is None:
+        return result
+    return result[:max_size]
+
+def localmax(x):
+    '''
+        Return 1 where there are local maxima in x (column-wise)
+        left edges do not fire, right edges might.
+    '''
+
+    return numpy.logical_and(x > numpy.hstack([x[0], x[:-1]]), x >= numpy.hstack([x[1:], x[-1]]))
+

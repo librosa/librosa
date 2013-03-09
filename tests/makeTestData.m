@@ -4,9 +4,8 @@ function testData(source_path, output_path)
 %   output_ptah = directory to store generated files
 %
 % CREATED:2013-03-08 14:32:21 by Brian McFee <brm2132@columbia.edu>
-%   Generate the test suite data for librosa comparison.
+%   Generate the test suite data for librosa routines:
 %
-%   Validated methods:
 %       hz_to_mel
 %       mel_to_hz
 %       hz_to_octs
@@ -17,8 +16,8 @@ function testData(source_path, output_path)
 %       load
 %       resample
 %
-%       dctfb               
 %       melfb
+%       dctfb
 %
 %       localmax
 %
