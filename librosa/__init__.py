@@ -14,7 +14,7 @@ import os.path
 import audioread
 
 # And all the librosa sub-modules
-import beat, framegenerator, chroma, tf_agc, output, hpss
+import beat, chroma, hpss, output
 
 
 #-- CORE ROUTINES --#
@@ -248,10 +248,10 @@ def hz_to_octs(frequencies, A440=440.0):
 
     Input:
         frequencies:    scalar or vector of frequencies
-        A440:           frequency of A440 (in Hz)                   | 440.0
+        A440:           frequency of A440 (in Hz)                   | Default: 440.0
 
     Output:
-        octaves:        octave number fore each frequency
+        octaves:        octave number for each frequency
     '''
     return numpy.log2(frequencies / (A440 / 16.0))
 
@@ -316,6 +316,9 @@ def melfb(sr, nfft, nfilts=40, width=1.0, fmin=0.0, fmax=None, use_htk=False):
         Use HTK mels instead of Slaney's version? Defaults to false.
 
     """
+
+    #     TODO:   2013-03-09 19:32:10 by Brian McFee <brm2132@columbia.edu>
+    #  add a switch to return bin frequencies also
 
     if fmax is None:
         fmax = sr / 2.0
