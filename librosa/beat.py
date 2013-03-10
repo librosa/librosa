@@ -48,7 +48,10 @@ def beat_track(y, sr=22050, hop_length=256, start_bpm=120.0, tightness=400, onse
 
 
 def _beat_tracker(onsets, start_bpm, sr, hop_length, tightness):
+    '''
+        Internal function that does beat tracking from a given onset profile.
 
+    '''
     fft_resolution  = numpy.float(sr) / hop_length
     period          = int(round(60.0 * fft_resolution / start_bpm))
 
@@ -124,7 +127,18 @@ def _beat_tracker(onsets, start_bpm, sr, hop_length, tightness):
     return numpy.array(b)
 
 def onset_estimate_bpm(onsets, start_bpm, sr, hop_length):
+    '''
+    Estimate the BPM from an onset envelope.
 
+    Input:
+        onsets:         time-series of onset strengths
+        start_bpm:      initial guess of the BPM
+        sr:             sample rate of the time series
+        hop_length:     hop length of the time series
+
+    Output:
+        estimated BPM
+    '''
     auto_correlation_size   = 4.0
     sample_duration         = 90.0
     sample_end_time         = 90.0
@@ -322,8 +336,8 @@ def segment(X, k):
     s = 0
     for (i, t) in enumerate(d):
         N[i]    = s
-        C[:,i]  = numpy.mean(X[:,s:t], axis=1)
-        V[:,i]  = numpy.var(X[:,s:t], axis=1)
+        C[:, i] = numpy.mean(X[:, s:t], axis=1)
+        V[:, i] = numpy.var(X[:, s:t], axis=1)
         s       = t
         pass
 

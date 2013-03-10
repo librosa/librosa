@@ -14,7 +14,10 @@ import os.path
 import audioread
 
 # And all the librosa sub-modules
-import beat, chroma, hpss, output
+import librosa.beat
+import librosa.chroma
+import librosa.hpss
+import librosa.output
 
 
 #-- CORE ROUTINES --#
@@ -118,7 +121,7 @@ def stft(y, sr=22050, n_fft=256, hann_w=None, hop_length=None):
         t           = numpy.fft.fft(u)
 
         # Conjugate here to match phase from DPWE code
-        D[:,i]      = t[:n_specbins].conj()
+        D[:, i]     = t[:n_specbins].conj()
         pass
 
     return D
@@ -195,7 +198,7 @@ def hz_to_mel(f, htk=False):
     '''
 
     if numpy.isscalar(f):
-        f = numpy.array([f],dtype=float)
+        f = numpy.array([f], dtype=float)
         pass
     if htk:
         return 2595.0 * numpy.log10(1.0 + f / 700.0)
@@ -268,12 +271,13 @@ def dctfb(nfilts, d):
     Output:
         D       :       nfilts-by-d DCT matrix
     '''
-    DCT = numpy.empty((nfilts, d))
+    DCT         = numpy.empty((nfilts, d))
+    DCT[0, :]   = 1.0 / numpy.sqrt(d)
 
-    q = numpy.arange(1, 2*d, 2) * numpy.pi / (2.0 * d)
-    DCT[0,:] = 1.0 / numpy.sqrt(d)
-    for i in xrange(1,nfilts):
-        DCT[i,:] = numpy.cos(i*q) * numpy.sqrt(2.0/d)
+    q           = numpy.arange(1, 2*d, 2) * numpy.pi / (2.0 * d)
+
+    for i in xrange(1, nfilts):
+        DCT[i, :] = numpy.cos(i*q) * numpy.sqrt(2.0/d)
         pass
 
     return DCT 
@@ -346,7 +350,7 @@ def melfb(sr, nfft, nfilts=40, width=1.0, fmin=0.0, fmax=None, use_htk=False):
         hislope     = (freqs[2] - fftfreqs) / (freqs[2] - freqs[1])
 
         # .. then intersect them with each other and zero
-        wts[i,:(1 + nfft/2)]    = numpy.maximum(0, numpy.minimum(loslope, hislope))
+        wts[i, :(1 + nfft/2)]    = numpy.maximum(0, numpy.minimum(loslope, hislope))
 
         pass
 
@@ -435,7 +439,7 @@ def feature_sync(X, F, agg=numpy.mean):
     Output:
         Y:      d-by-(<=t+1) vector
         where 
-                Y[:,i] = agg(X[:, F[i-1]:F[i]], axis=1)
+                Y[:, i] = agg(X[:, F[i-1]:F[i]], axis=1)
 
         In order to ensure total coverage, boundary points are added to F
     '''
@@ -447,7 +451,7 @@ def feature_sync(X, F, agg=numpy.mean):
     lb = F[0]
 
     for (i, ub) in enumerate(F[1:]):
-        Y[:,i] = agg(X[:, lb:ub], axis=1)
+        Y[:, i] = agg(X[:, lb:ub], axis=1)
         lb = ub
         pass
 
