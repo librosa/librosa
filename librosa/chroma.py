@@ -52,7 +52,7 @@ def schroma(S, sr, nchroma=12, A440=440.0, ctroct=5.0, octwidth=0, norm='inf'):
         raise ValueError("norm must be one of: 'inf', 1, 2")
 
     # Tile the normalizer to match U's shape
-    Z[Z==0] = 1.0
+    Z[Z == 0] = 1.0
     Z   = numpy.tile(1.0/Z, (U.shape[0], 1))
 
     return Z * U
@@ -92,7 +92,7 @@ def chromafb(sr, nfft, nchroma, A440=440.0, ctroct=5.0, octwidth=0):
     binwidthbins = numpy.concatenate(
         (numpy.maximum(fftfrqbins[1:] - fftfrqbins[:-1], 1.0), [1]))
 
-    D = numpy.tile(fftfrqbins, (nchroma,1))  \
+    D = numpy.tile(fftfrqbins, (nchroma, 1))  \
         - numpy.tile(numpy.arange(0, nchroma, dtype='d')[:,numpy.newaxis], (1,nfft))
 
     nchroma2 = round(nchroma / 2.0);
@@ -103,10 +103,10 @@ def chromafb(sr, nfft, nchroma, A440=440.0, ctroct=5.0, octwidth=0):
     D = numpy.remainder(D + nchroma2 + 10*nchroma, nchroma) - nchroma2;
 
     # Gaussian bumps - 2*D to make them narrower
-    wts = numpy.exp(-0.5 * (2*D / numpy.tile(binwidthbins, (nchroma,1)))**2)
+    wts = numpy.exp(-0.5 * (2*D / numpy.tile(binwidthbins, (nchroma, 1)))**2)
 
     # normalize each column
-    wts /= numpy.tile(numpy.sqrt(numpy.sum(wts**2, 0)), (nchroma,1))
+    wts /= numpy.tile(numpy.sqrt(numpy.sum(wts**2, 0)), (nchroma, 1))
 
     # Maybe apply scaling for fft bins
     if octwidth > 0:
@@ -115,5 +115,5 @@ def chromafb(sr, nfft, nchroma, A440=440.0, ctroct=5.0, octwidth=0):
             (nchroma, 1))
 
     # remove aliasing columns
-    return wts[:,:nfft/2+1]
+    return wts[:, :(nfft/2+1)]
 
