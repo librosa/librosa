@@ -168,12 +168,11 @@ def istft(d, n_fft=None, hann_w=None, hop_length=None):
     x           = numpy.zeros(x_length)
 
     for b in xrange(0, hop_length * n, hop_length):
-        ft              = d[:, b/hop_length]
+        ft              = d[:, b/hop_length].flatten()
         ft              = numpy.concatenate((ft.conj(), ft[-2:0:-1] ), 0)
 
-        # axis=0 to force numpy.fft to work along the correct axis.
-        px              = numpy.fft.ifft(ft, axis=0).real
-        x[b:(b+n_fft)]  = x[b:(b+n_fft)] + window * px[:,0]
+        px              = numpy.fft.ifft(ft).real
+        x[b:(b+n_fft)]  = x[b:(b+n_fft)] + window * px
         pass
 
     return x
