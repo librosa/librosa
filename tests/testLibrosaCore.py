@@ -49,7 +49,7 @@ def test_hz_to_mel():
 
         assert numpy.allclose(z, DATA['result'])
     
-    for infile in files('data/hz_to_mel-*.mat'):
+    for infile in files('data/core-hz_to_mel-*.mat'):
         yield (__test_to_mel, infile)
 
     pass
@@ -62,7 +62,7 @@ def test_mel_to_hz():
 
         assert numpy.allclose(z, DATA['result'])
     
-    for infile in files('data/mel_to_hz-*.mat'):
+    for infile in files('data/core-mel_to_hz-*.mat'):
         yield (__test_to_hz, infile)
 
     pass
@@ -74,7 +74,7 @@ def test_hz_to_octs():
 
         assert numpy.allclose(z, DATA['result'])
 
-    for infile in files('data/hz_to_octs-*.mat'):
+    for infile in files('data/core-hz_to_octs-*.mat'):
         yield (__test_to_octs, infile)
 
     pass
@@ -92,7 +92,7 @@ def test_load():
 
         assert numpy.allclose(y, DATA['y'])
 
-    for infile in files('data/load-*.mat'):
+    for infile in files('data/core-load-*.mat'):
         yield (__test, infile)
     pass
 
@@ -122,7 +122,7 @@ def test_resample():
             assert False
         pass
 
-    for infile in files('data/resample-*.mat'):
+    for infile in files('data/core-resample-*.mat'):
         yield (__test, infile)
     pass
 
@@ -142,7 +142,7 @@ def test_stft():
         assert  numpy.allclose(D, DATA['D'])   
 
 
-    for infile in files('data/stft-*.mat'):
+    for infile in files('data/core-stft-*.mat'):
         yield (__test, infile)
     pass
 
@@ -155,7 +155,7 @@ def test_istft():
                                             hop_length  = DATA['hop_length'][0].astype(int))
         assert numpy.allclose(Dinv, DATA['Dinv'])
 
-    for infile in files('data/istft-*.mat'):
+    for infile in files('data/core-istft-*.mat'):
         yield (__test, infile)
     pass
 
@@ -176,6 +176,6 @@ def test_melfb():
 
         assert numpy.allclose(wts, DATA['wts'])
 
-    for infile in files('data/melfb-*.mat'):
+    for infile in files('data/core-melfb-*.mat'):
         yield (__test, infile)
     pass
