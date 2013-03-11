@@ -76,7 +76,7 @@ function testHz2Mel(output_path)
             % save the output
             counter = counter + 1;
 
-            filename = sprintf('%s/hz_to_mel-%03d.mat', output_path, counter);
+            filename = sprintf('%s/core-hz_to_mel-%03d.mat', output_path, counter);
             display(['  `-- saving ', filename]);
 
             save(filename, 'f', 'htk', 'result');
@@ -105,7 +105,7 @@ function testMel2Hz(output_path)
             % save the output
             counter = counter + 1;
 
-            filename = sprintf('%s/mel_to_hz-%03d.mat', output_path, counter);
+            filename = sprintf('%s/core-mel_to_hz-%03d.mat', output_path, counter);
             display(['  `-- saving ', filename]);
 
             save(filename, 'f', 'htk', 'result');
@@ -128,7 +128,7 @@ function testHzToOcts(output_path)
         % save the output
         counter = counter + 1;
 
-        filename = sprintf('%s/hz_to_octs-%03d.mat', output_path, counter);
+        filename = sprintf('%s/core-hz_to_octs-%03d.mat', output_path, counter);
         display(['  `-- saving ', filename]);
 
         save(filename, 'f', 'result');
@@ -148,7 +148,7 @@ function testLoad(output_path)
     % Stereo output
     counter = 1;
 
-    filename = sprintf('%s/load-%03d.mat', output_path, counter);
+    filename = sprintf('%s/core-load-%03d.mat', output_path, counter);
     display(['  `-- saving ', filename]);
     save(filename, 'wavfile', 'mono', 'y', 'sr');
 
@@ -156,7 +156,7 @@ function testLoad(output_path)
     counter = 2;
     mono    = 1;
     y       = mean(y, 1);
-    filename = sprintf('%s/load-%03d.mat', output_path, counter);
+    filename = sprintf('%s/core-load-%03d.mat', output_path, counter);
     display(['  `-- saving ', filename]);
     save(filename, 'wavfile', 'mono', 'y', 'sr');
 
@@ -205,7 +205,7 @@ function testMelfb(output_path)
             % save the output
             counter = counter + 1;
 
-            filename = sprintf('%s/melfb-%03d.mat', output_path, counter);
+            filename = sprintf('%s/core-melfb-%03d.mat', output_path, counter);
             display(['  `-- saving ', filename]);
 
             save(filename, ...
@@ -238,7 +238,7 @@ function testResample(output_path)
         y_out       = resample(y_in, sr_out, sr_in);
 
         counter     = counter + 1;
-        filename    = sprintf('%s/resample-%03d.mat', output_path, counter);
+        filename    = sprintf('%s/core-resample-%03d.mat', output_path, counter);
         display(['  `-- saving ', filename]);
         save(filename, 'wavfile', 'y_in', 'sr_in', 'y_out', 'sr_out');
     end
@@ -269,7 +269,7 @@ function testSTFT(output_path)
             D = stft(y, nfft, hann_w, hop_length, sr);
 
             counter     = counter + 1;
-            filename    = sprintf('%s/stft-%03d.mat', output_path, counter);
+            filename    = sprintf('%s/core-stft-%03d.mat', output_path, counter);
             display(['  `-- saving ', filename]);
             save(filename, 'wavfile', 'D', 'sr', 'nfft', 'hann_w', 'hop_length');
 
@@ -278,7 +278,7 @@ function testSTFT(output_path)
             D = stft(y, nfft, hann_w, hop_length, sr);
 
             counter     = counter + 1;
-            filename    = sprintf('%s/stft-%03d.mat', output_path, counter);
+            filename    = sprintf('%s/core-stft-%03d.mat', output_path, counter);
             display(['  `-- saving ', filename]);
             save(filename, 'wavfile', 'D', 'sr', 'nfft', 'hann_w', 'hop_length');
         end
@@ -311,7 +311,7 @@ function testISTFT(output_path)
             Dinv    = istft(D, nfft, hann_w, hop_length);
 
             counter     = counter + 1;
-            filename    = sprintf('%s/istft-%03d.mat', output_path, counter);
+            filename    = sprintf('%s/core-istft-%03d.mat', output_path, counter);
             display(['  `-- saving ', filename]);
             save(filename, 'D', 'Dinv', 'nfft', 'hann_w', 'hop_length');
 
@@ -321,7 +321,7 @@ function testISTFT(output_path)
             Dinv        = istft(D, nfft, hann_w, hop_length);
 
             counter     = counter + 1;
-            filename    = sprintf('%s/istft-%03d.mat', output_path, counter);
+            filename    = sprintf('%s/core-istft-%03d.mat', output_path, counter);
             display(['  `-- saving ', filename]);
             save(filename, 'D', 'Dinv', 'nfft', 'hann_w', 'hop_length');
         end
