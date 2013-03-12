@@ -296,6 +296,25 @@ def mfcc(S, d=20):
 
     return numpy.dot(dctfb(d, S.shape[0]), S)
 
+
+def mel_frequencies(nfilts=40, fmin=0, fmax=11025, use_htk=False):
+    '''
+    Compute the center frequencies of mel bands
+
+    Input:
+        nfilts:     number of Mel bins                  | Default: 40
+        fmin:       minimum frequency (Hz)              | Default: 0
+        fmax:       maximum frequency (Hz)              | Default: 11025
+        use_htk:    use HTK mels instead of  Slaney     | Default: False
+
+    Output:
+        bin_frequencies:    nfilts+1 vector of Mel frequencies
+    '''
+    # 'Center freqs' of mel bands - uniformly spaced between limits
+    minmel      = hz_to_mel(fmin, htk=use_htk)
+    maxmel      = hz_to_mel(fmax, htk=use_htk)
+    return      mel_to_hz(minmel + numpy.arange(nfilts + 2, dtype=float) * (maxmel - minmel) / (nfilts+1.0), htk=use_htk)
+
 # Adapted from ronw's mfcc.py
 # https://github.com/ronw/frontend/blob/master/mfcc.py
 def melfb(sr, nfft, nfilts=40, width=1.0, fmin=0.0, fmax=None, use_htk=False):
@@ -321,9 +340,6 @@ def melfb(sr, nfft, nfilts=40, width=1.0, fmin=0.0, fmax=None, use_htk=False):
 
     """
 
-    #     TODO:   2013-03-09 19:32:10 by Brian McFee <brm2132@columbia.edu>
-    #  add a switch to return bin frequencies also
-
     if fmax is None:
         fmax = sr / 2.0
         pass
@@ -335,9 +351,7 @@ def melfb(sr, nfft, nfilts=40, width=1.0, fmin=0.0, fmax=None, use_htk=False):
     fftfreqs    = numpy.arange( 1 + nfft / 2, dtype=numpy.double ) / nfft * sr
 
     # 'Center freqs' of mel bands - uniformly spaced between limits
-    minmel      = hz_to_mel(fmin, htk=use_htk)
-    maxmel      = hz_to_mel(fmax, htk=use_htk)
-    binfreqs    = mel_to_hz(minmel + numpy.arange(nfilts + 2, dtype=float) * (maxmel - minmel) / (nfilts+1.0), htk=use_htk)
+    binfreqs    = mel_frequencies(nfilts, fmin, fmax, use_htk)
 
     for i in xrange(nfilts):
         freqs       = binfreqs[range(i, i+3)]
