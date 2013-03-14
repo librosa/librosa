@@ -180,6 +180,129 @@ def istft(d, n_fft=None, hann_w=None, hop_length=None):
 
     return x
 
+def logamplitude(S, amin=1e-10, gain_threshold=-80.0):
+    '''
+    Log-scale the amplitude of a spectrogram
+
+    Input:
+        S                   =   the input spectrogram
+        amin                =   minimum allowed amplitude       | default: 1e-10
+        gain_threshold      =   minimum output value            | default: -80 
+    Output:
+        D                   =   S in dBs
+    '''
+
+    SCALE   =   20.0
+    D       =   SCALE * numpy.log10(numpy.maximum(amin, numpy.abs(S)))
+
+    if gain_threshold is not None:
+        D[D < gain_threshold] = gain_threshold
+        pass
+
+    return D
+
+#-- UTILITIES --#
+
+def frames_to_time(frames, sr=22050, hop_length=64):
+    '''
+    Converts frame counts to time (seconds)
+
+    Input:
+        frames:         scalar or n-by-1 vector of frame numbers
+        sr:             sampling rate                               | 22050 Hz
+        hop_length:     hop length of the frames                    | 64 frames
+
+    Output:
+        times:          time (in seconds) of each given frame number
+    '''
+    return frames * float(hop_length) / float(sr)
+
+def feature_sync(X, F, agg=numpy.mean):
+    '''
+    Synchronous aggregation of a feature matrix
+
+    Input:
+        X:      d-by-T              | (dense) feature matrix (eg spectrogram, chromagram, etc)
+        F:      t-vector            | (ordered) array of frame numbers
+        agg:    aggregator function | default: numpy.mean
+
+    Output:
+        Y:      d-by-(<=t+1) vector
+        where 
+                Y[:, i] = agg(X[:, F[i-1]:F[i]], axis=1)
+
+        In order to ensure total coverage, boundary points are added to F
+    '''
+
+    F = numpy.unique(numpy.concatenate( ([0], F, [X.shape[1]]) ))
+
+    Y = numpy.zeros( (X.shape[0], len(F)-1) )
+
+    lb = F[0]
+
+    for (i, ub) in enumerate(F[1:]):
+        Y[:, i] = agg(X[:, lb:ub], axis=1)
+        lb = ub
+        pass
+
+    return Y
+
+def pad(w, d_pad, v=0.0, center=True):
+    '''
+    Pad a vector w out to d dimensions, using value v
+
+    if center is True, w will be centered in the output vector
+    otherwise, w will be at the beginning
+    '''
+    # FIXME:  2012-11-27 11:08:54 by Brian McFee <brm2132@columbia.edu>
+    #  This function will be deprecated by numpy 1.7.0    
+
+    d = len(w)
+    if d > d_pad:
+        raise ValueError('Insufficient pad space')
+
+    #     FIXME:  2013-03-09 10:07:56 by Brian McFee <brm2132@columbia.edu>
+    #  slightly quicker via fill
+    q = v * numpy.ones(d_pad)
+    q[:d] = w
+
+    if center:
+        q = numpy.roll(q, numpy.floor((d_pad - d) / 2.0).astype(int), axis=0)
+        pass
+    return q
+
+def autocorrelate(x, max_size=None):
+    '''
+        Bounded auto-correlation
+
+        Input:
+            x:          t-by-1  vector
+            max_size:   (optional) maximum lag                  | None
+
+        Output:
+            z:          x's autocorrelation (up to max_size if given)
+    '''
+    #   TODO:   2012-11-07 14:05:42 by Brian McFee <brm2132@columbia.edu>
+    #  maybe could be done faster by directly implementing a clipped correlate
+#     result = numpy.correlate(x, x, mode='full')
+    result = scipy.signal.fftconvolve(x, x[::-1], mode='full')
+
+    result = result[len(result)/2:]
+    if max_size is None:
+        return result
+    return result[:max_size]
+
+def localmax(x):
+    '''
+        Return 1 where there are local maxima in x (column-wise)
+        left edges do not fire, right edges might.
+    '''
+
+    return numpy.logical_and(x > numpy.hstack([x[0], x[:-1]]), x >= numpy.hstack([x[1:], x[-1]]))
+
+
+#-- FEATURE EXTRACTION --#
+
 # Dead-simple mel spectrum conversion
 def hz_to_mel(f, htk=False):
     #     TODO:   2012-11-27 11:28:43 by Brian McFee <brm2132@columbia.edu>
@@ -404,123 +527,4 @@ def melspectrogram(y, sr=22050, window_length=256, hop_length=128, mel_channels=
 
     return S
 
-def logamplitude(S, amin=1e-10, gain_threshold=-80.0):
-    '''
-    Log-scale the amplitude of a spectrogram
-
-    Input:
-        S                   =   the input spectrogram
-        amin                =   minimum allowed amplitude                   | default: 1e-10
-        gain_threshold      =   minimum output value                        | default: -80 (None to disable)
-    Output:
-        D                   =   S in dBs
-    '''
-
-    SCALE   =   20.0
-    D       =   SCALE * numpy.log10(numpy.maximum(amin, numpy.abs(S)))
-
-    if gain_threshold is not None:
-        D[D < gain_threshold] = gain_threshold
-        pass
-    return D
-
-
-#-- UTILITIES --#
-
-def frames_to_time(frames, sr=22050, hop_length=64):
-    '''
-    Converts frame counts to time (seconds)
-
-    Input:
-        frames:         scalar or n-by-1 vector of frame numbers
-        sr:             sampling rate                               | 22050 Hz
-        hop_length:     hop length of the frames                    | 64 frames
-
-    Output:
-        times:          time (in seconds) of each given frame number
-    '''
-    return frames * float(hop_length) / float(sr)
-
-def feature_sync(X, F, agg=numpy.mean):
-    '''
-    Synchronous aggregation of a feature matrix
-
-    Input:
-        X:      d-by-T              | (dense) feature matrix (eg spectrogram, chromagram, etc)
-        F:      t-vector            | (ordered) array of frame numbers
-        agg:    aggregator function | default: numpy.mean
-
-    Output:
-        Y:      d-by-(<=t+1) vector
-        where 
-                Y[:, i] = agg(X[:, F[i-1]:F[i]], axis=1)
-
-        In order to ensure total coverage, boundary points are added to F
-    '''
-
-    F = numpy.unique(numpy.concatenate( ([0], F, [X.shape[1]]) ))
-
-    Y = numpy.zeros( (X.shape[0], len(F)-1) )
-
-    lb = F[0]
-
-    for (i, ub) in enumerate(F[1:]):
-        Y[:, i] = agg(X[:, lb:ub], axis=1)
-        lb = ub
-        pass
-
-    return Y
-
-def pad(w, d_pad, v=0.0, center=True):
-    '''
-    Pad a vector w out to d dimensions, using value v
-
-    if center is True, w will be centered in the output vector
-    otherwise, w will be at the beginning
-    '''
-    # FIXME:  2012-11-27 11:08:54 by Brian McFee <brm2132@columbia.edu>
-    #  This function will be deprecated by numpy 1.7.0    
-
-    d = len(w)
-    if d > d_pad:
-        raise ValueError('Insufficient pad space')
-
-    #     FIXME:  2013-03-09 10:07:56 by Brian McFee <brm2132@columbia.edu>
-    #  slightly quicker via fill
-    q = v * numpy.ones(d_pad)
-    q[:d] = w
-
-    if center:
-        q = numpy.roll(q, numpy.floor((d_pad - d) / 2.0).astype(int), axis=0)
-        pass
-    return q
-
-def autocorrelate(x, max_size=None):
-    '''
-        Bounded auto-correlation
-
-        Input:
-            x:          t-by-1  vector
-            max_size:   (optional) maximum lag                  | None
-
-        Output:
-            z:          x's autocorrelation (up to max_size if given)
-    '''
-    #   TODO:   2012-11-07 14:05:42 by Brian McFee <brm2132@columbia.edu>
-    #  maybe could be done faster by directly implementing a clipped correlate
-#     result = numpy.correlate(x, x, mode='full')
-    result = scipy.signal.fftconvolve(x, x[::-1], mode='full')
-
-    result = result[len(result)/2:]
-    if max_size is None:
-        return result
-    return result[:max_size]
-
-def localmax(x):
-    '''
-        Return 1 where there are local maxima in x (column-wise)
-        left edges do not fire, right edges might.
-    '''
-
-    return numpy.logical_and(x > numpy.hstack([x[0], x[:-1]]), x >= numpy.hstack([x[1:], x[-1]]))
 
