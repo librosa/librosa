@@ -3,36 +3,8 @@
 import librosa
 import numpy
 
-# FIXME:  2013-01-25 09:39:26 by Brian McFee <brm2132@columbia.edu>
-# this needs to be much more efficient
-#   framevector should be a frame array, or spectrogram, not a single frame
-#   or just an arbitrary-length audio sample to plug into stft
-def chroma(framevector, sr, nchroma=12, A440=440.0, ctroct=5.0, octwidth=0, order=None):
-    '''
-    Extract chroma from an audio frame
 
-    Input:
-        framevector:    the audio frame
-        sr:             sampling rate
-        nchroma:        chroma dimensionality                       | 12
-        A440:           reference frequency of A440 (Hz)            | 440.0
-        ctroct:         center octave                               | 5.0
-        octwidth:       width of an octave                          | 0
-        order:          order of the normalizer (numpy.linalg.norm) | None, 2
-
-    Output:
-        C:              normalized chroma feature
-    '''
-    nfft        = len(framevector)
-    F           = numpy.abs(numpy.fft.fft(framevector))
-    fft2chmx    = chromafb(sr, nfft, nchroma, A440, ctroct, octwidth)
-
-    # this is unnormalized chroma
-    unchroma    = numpy.dot(fft2chmx, F[:nfft/2 + 1])
-
-    return unchroma / numpy.linalg.norm(unchroma, order)
-
-def schroma(S, sr, nchroma=12, A440=440.0, ctroct=5.0, octwidth=0, norm='inf'):
+def chromagram(S, sr, nchroma=12, A440=440.0, ctroct=5.0, octwidth=0, norm='inf'):
 
     nfft        = (S.shape[0] -1 ) * 2.0
 
