@@ -12,7 +12,91 @@ Feature extraction code:
 import librosa
 import numpy
 
+#-- Frequency conversions --#
+def hz_to_mel(f, htk=False):
+    '''
+    Convert Hz to Mels
 
+    Input:
+        f:      scalar or array of frequencies
+        htk:    use HTK mel conversion instead of Slaney            | False 
+
+    Output:
+        m:      input frequencies f in Mels
+    '''
+
+    #     TODO:   2012-11-27 11:28:43 by Brian McFee <brm2132@columbia.edu>
+    #  too many magic numbers in these functions
+    #   redo with informative variable names
+    #   then make them into parameters
+
+    if numpy.isscalar(f):
+        f = numpy.array([f], dtype=float)
+        pass
+    if htk:
+        return 2595.0 * numpy.log10(1.0 + f / 700.0)
+    else:
+        f           = f.astype(float)
+        # Oppan Slaney style
+        f_0         = 0.0
+        f_sp        = 200.0 / 3
+        brkfrq      = 1000.0
+        brkpt       = (brkfrq - f_0) / f_sp
+        logstep     = numpy.exp(numpy.log(6.4) / 27.0)
+        linpts      = f < brkfrq
+
+        nlinpts     = numpy.invert(linpts)
+
+        z           = numpy.zeros_like(f)
+
+        # Fill in parts separately
+        z[linpts]   = (f[linpts] - f_0) / f_sp
+        z[nlinpts]  = brkpt + numpy.log(f[nlinpts] / brkfrq) / numpy.log(logstep)
+        return z
+    pass
+
+def mel_to_hz(z, htk=False):
+    '''
+    Convert mel numbers to frequencies
+
+    '''
+    if numpy.isscalar(z):
+        z = numpy.array([z], dtype=float)
+        pass
+
+    if htk:
+        return 700.0 * (10.0**(z / 2595.0) - 1.0)
+    else:
+        z           = z.astype(float)
+        f_0         = 0.0
+        f_sp        = 200.0 / 3
+        brkfrq      = 1000
+        brkpt       = (brkfrq - f_0) / f_sp
+        logstep     = numpy.exp(numpy.log(6.4) / 27.0)
+        f           = numpy.zeros_like(z)
+        linpts      = z < brkpt
+        nlinpts     = numpy.invert(linpts)
+
+        f[linpts]   = f_0 + f_sp * z[linpts]
+        f[nlinpts]  = brkfrq * numpy.exp(numpy.log(logstep) * (z[nlinpts] - brkpt))
+        return f
+    pass
+
+def hz_to_octs(frequencies, A440=440.0):
+    '''
+    Convert frquencies (Hz) to octave numbers
+
+    Input:
+        frequencies:    scalar or vector of frequencies
+        A440:           frequency of A440 (in Hz)                   | Default: 440.0
+
+    Output:
+        octaves:        octave number for each frequency
+    '''
+    return numpy.log2(frequencies / (A440 / 16.0))
+
+
+#-- CHROMA --#
 def chromagram(S, sr, nchroma=12, A440=440.0, ctroct=5.0, octwidth=0, norm='inf'):
 
     nfft        = (S.shape[0] -1 ) * 2.0
@@ -97,85 +181,8 @@ def chromafb(sr, nfft, nchroma, A440=440.0, ctroct=5.0, octwidth=0):
     # remove aliasing columns
     return wts[:, :(nfft/2+1)]
 
-def hz_to_mel(f, htk=False):
-    '''
-    Convert Hz to Mels
 
-    Input:
-        f:      scalar or array of frequencies
-        htk:    use HTK mel conversion instead of Slaney            | False 
-
-    Output:
-        m:      input frequencies f in Mels
-    '''
-
-    #     TODO:   2012-11-27 11:28:43 by Brian McFee <brm2132@columbia.edu>
-    #  too many magic numbers in these functions
-    #   redo with informative variable names
-    #   then make them into parameters
-
-    if numpy.isscalar(f):
-        f = numpy.array([f], dtype=float)
-        pass
-    if htk:
-        return 2595.0 * numpy.log10(1.0 + f / 700.0)
-    else:
-        f           = f.astype(float)
-        # Oppan Slaney style
-        f_0         = 0.0
-        f_sp        = 200.0 / 3
-        brkfrq      = 1000.0
-        brkpt       = (brkfrq - f_0) / f_sp
-        logstep     = numpy.exp(numpy.log(6.4) / 27.0)
-        linpts      = f < brkfrq
-
-        nlinpts     = numpy.invert(linpts)
-
-        z           = numpy.zeros_like(f)
-        # Fill in parts separately
-        z[linpts]   = (f[linpts] - f_0) / f_sp
-        z[nlinpts]  = brkpt + numpy.log(f[nlinpts] / brkfrq) / numpy.log(logstep)
-        return z
-    pass
-
-def mel_to_hz(z, htk=False):
-    if numpy.isscalar(z):
-        z = numpy.array([z], dtype=float)
-        pass
-    if htk:
-        return 700.0 * (10.0**(z / 2595.0) - 1.0)
-    else:
-        z           = z.astype(float)
-        f_0         = 0.0
-        f_sp        = 200.0 / 3
-        brkfrq      = 1000
-        brkpt       = (brkfrq - f_0) / f_sp
-        logstep     = numpy.exp(numpy.log(6.4) / 27.0)
-        f           = numpy.zeros_like(z)
-        linpts      = z < brkpt
-        nlinpts     = numpy.invert(linpts)
-
-        f[linpts]   = f_0 + f_sp * z[linpts]
-        f[nlinpts]  = brkfrq * numpy.exp(numpy.log(logstep) * (z[nlinpts]-brkpt))
-        return f
-    pass
-
-# Stolen from ronw's chroma.py
-# https://github.com/ronw/frontend/blob/master/chroma.py
-def hz_to_octs(frequencies, A440=440.0):
-    '''
-    Convert frquencies (Hz) to octave numbers
-
-    Input:
-        frequencies:    scalar or vector of frequencies
-        A440:           frequency of A440 (in Hz)                   | Default: 440.0
-
-    Output:
-        octaves:        octave number for each frequency
-    '''
-    return numpy.log2(frequencies / (A440 / 16.0))
-
-
+#-- Mel spectrogram and MFCCs --#
 
 def dctfb(nfilts, d):
     '''
@@ -232,8 +239,7 @@ def mel_frequencies(nfilts=40, fmin=0, fmax=11025, use_htk=False):
     maxmel      = hz_to_mel(fmax, htk=use_htk)
     return      mel_to_hz(minmel + numpy.arange(nfilts + 2, dtype=float) * (maxmel - minmel) / (nfilts+1.0), htk=use_htk)
 
-# Adapted from ronw's mfcc.py
-# https://github.com/ronw/frontend/blob/master/mfcc.py
+
 def melfb(sr, nfft, nfilts=40, width=1.0, fmin=0.0, fmax=None, use_htk=False):
     """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins.
 
