@@ -9,13 +9,13 @@ Includes constants, core utility functions, etc
 '''
 
 import numpy, numpy.fft
-import scipy, scipy.signal
+import scipy.signal
 import os.path
 import audioread
 
 # And all the librosa sub-modules
 import librosa.beat
-import librosa.chroma
+import librosa.feature
 import librosa.hpss
 import librosa.output
 
@@ -28,7 +28,7 @@ def load(path, target_sr=22050, mono=True):
     Input:
         path:       path to the input file
         target_sr:  target sample rate      | default: 22050 
-                                            | specify None to use the file's native sampling rate
+                                            | specify None to use the native sampling rate
         mono:       convert to mono?        | default: True
 
     Output:
@@ -188,6 +188,7 @@ def logamplitude(S, amin=1e-10, gain_threshold=-80.0):
         S                   =   the input spectrogram
         amin                =   minimum allowed amplitude       | default: 1e-10
         gain_threshold      =   minimum output value            | default: -80 
+
     Output:
         D                   =   S in dBs
     '''
@@ -201,8 +202,8 @@ def logamplitude(S, amin=1e-10, gain_threshold=-80.0):
 
     return D
 
-#-- UTILITIES --#
 
+#-- UTILITIES --#
 def frames_to_time(frames, sr=22050, hop_length=64):
     '''
     Converts frame counts to time (seconds)
@@ -217,12 +218,13 @@ def frames_to_time(frames, sr=22050, hop_length=64):
     '''
     return frames * float(hop_length) / float(sr)
 
+
 def feature_sync(X, F, agg=numpy.mean):
     '''
     Synchronous aggregation of a feature matrix
 
     Input:
-        X:      d-by-T              | (dense) feature matrix (eg spectrogram, chromagram, etc)
+        X:      d-by-T              | feature matrix 
         F:      t-vector            | (ordered) array of frame numbers
         agg:    aggregator function | default: numpy.mean
 
@@ -282,9 +284,7 @@ def autocorrelate(x, max_size=None):
         Output:
             z:          x's autocorrelation (up to max_size if given)
     '''
-    #   TODO:   2012-11-07 14:05:42 by Brian McFee <brm2132@columbia.edu>
-    #  maybe could be done faster by directly implementing a clipped correlate
-#     result = numpy.correlate(x, x, mode='full')
+
     result = scipy.signal.fftconvolve(x, x[::-1], mode='full')
 
     result = result[len(result)/2:]
@@ -299,232 +299,4 @@ def localmax(x):
     '''
 
     return numpy.logical_and(x > numpy.hstack([x[0], x[:-1]]), x >= numpy.hstack([x[1:], x[-1]]))
-
-
-#-- FEATURE EXTRACTION --#
-
-# Dead-simple mel spectrum conversion
-def hz_to_mel(f, htk=False):
-    #     TODO:   2012-11-27 11:28:43 by Brian McFee <brm2132@columbia.edu>
-    #  too many magic numbers in these functions
-    #   redo with informative variable names
-    #   then make them into parameters
-    '''
-    Convert Hz to Mels
-
-    Input:
-        f:      scalar or array of frequencies
-        htk:    use HTK mel conversion instead of Slaney            | False 
-
-    Output:
-        m:      input frequencies f in Mels
-    '''
-
-    if numpy.isscalar(f):
-        f = numpy.array([f], dtype=float)
-        pass
-    if htk:
-        return 2595.0 * numpy.log10(1.0 + f / 700.0)
-    else:
-        f           = f.astype(float)
-        # Oppan Slaney style
-        f_0         = 0.0
-        f_sp        = 200.0 / 3
-        brkfrq      = 1000.0
-        brkpt       = (brkfrq - f_0) / f_sp
-        logstep     = numpy.exp(numpy.log(6.4) / 27.0)
-        linpts      = f < brkfrq
-
-        nlinpts     = numpy.invert(linpts)
-
-        z           = numpy.zeros_like(f)
-        # Fill in parts separately
-        z[linpts]   = (f[linpts] - f_0) / f_sp
-        z[nlinpts]  = brkpt + numpy.log(f[nlinpts] / brkfrq) / numpy.log(logstep)
-        return z
-    pass
-
-def mel_to_hz(z, htk=False):
-    if numpy.isscalar(z):
-        z = numpy.array([z], dtype=float)
-        pass
-    if htk:
-        return 700.0 * (10.0**(z / 2595.0) - 1.0)
-    else:
-        z           = z.astype(float)
-        f_0         = 0.0
-        f_sp        = 200.0 / 3
-        brkfrq      = 1000
-        brkpt       = (brkfrq - f_0) / f_sp
-        logstep     = numpy.exp(numpy.log(6.4) / 27.0)
-        f           = numpy.zeros_like(z)
-        linpts      = z < brkpt
-        nlinpts     = numpy.invert(linpts)
-
-        f[linpts]   = f_0 + f_sp * z[linpts]
-        f[nlinpts]  = brkfrq * numpy.exp(numpy.log(logstep) * (z[nlinpts]-brkpt))
-        return f
-    pass
-
-# Stolen from ronw's chroma.py
-# https://github.com/ronw/frontend/blob/master/chroma.py
-def hz_to_octs(frequencies, A440=440.0):
-    '''
-    Convert frquencies (Hz) to octave numbers
-
-    Input:
-        frequencies:    scalar or vector of frequencies
-        A440:           frequency of A440 (in Hz)                   | Default: 440.0
-
-    Output:
-        octaves:        octave number for each frequency
-    '''
-    return numpy.log2(frequencies / (A440 / 16.0))
-
-
-
-def dctfb(nfilts, d):
-    '''
-    Build a discrete cosine transform basis
-
-    Input:
-        nfilts  :       number of output components
-        d       :       number of input components
-
-    Output:
-        D       :       nfilts-by-d DCT matrix
-    '''
-    DCT         = numpy.empty((nfilts, d))
-    DCT[0, :]   = 1.0 / numpy.sqrt(d)
-
-    q           = numpy.arange(1, 2*d, 2) * numpy.pi / (2.0 * d)
-
-    for i in xrange(1, nfilts):
-        DCT[i, :] = numpy.cos(i*q) * numpy.sqrt(2.0/d)
-        pass
-
-    return DCT 
-
-
-def mfcc(S, d=20):
-    '''
-    Mel-frequency cepstral coefficients
-
-    Input:
-        S   :   k-by-n      log-amplitude Mel spectrogram
-        d   :   number of MFCCs to return               | default: 20
-    Output:
-        M   :   d-by-n      MFCC sequence
-    '''
-
-    return numpy.dot(dctfb(d, S.shape[0]), S)
-
-
-def mel_frequencies(nfilts=40, fmin=0, fmax=11025, use_htk=False):
-    '''
-    Compute the center frequencies of mel bands
-
-    Input:
-        nfilts:     number of Mel bins                  | Default: 40
-        fmin:       minimum frequency (Hz)              | Default: 0
-        fmax:       maximum frequency (Hz)              | Default: 11025
-        use_htk:    use HTK mels instead of  Slaney     | Default: False
-
-    Output:
-        bin_frequencies:    nfilts+1 vector of Mel frequencies
-    '''
-    # 'Center freqs' of mel bands - uniformly spaced between limits
-    minmel      = hz_to_mel(fmin, htk=use_htk)
-    maxmel      = hz_to_mel(fmax, htk=use_htk)
-    return      mel_to_hz(minmel + numpy.arange(nfilts + 2, dtype=float) * (maxmel - minmel) / (nfilts+1.0), htk=use_htk)
-
-# Adapted from ronw's mfcc.py
-# https://github.com/ronw/frontend/blob/master/mfcc.py
-def melfb(sr, nfft, nfilts=40, width=1.0, fmin=0.0, fmax=None, use_htk=False):
-    """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins.
-
-    Parameters
-    ----------
-    sr : int
-        Sampling rate of the incoming signal.
-    nfft : int
-        FFT length to use.
-    nfilts : int
-        Number of Mel bands to use.  Defaults to 40.
-    width : float
-        The constant width of each band relative to standard Mel. Defaults 1.0
-    fmin : float
-        Frequency in Hz of the lowest edge of the Mel bands. Defaults to 0.
-    fmax : float
-        Frequency in Hz of the upper edge of the Mel bands. Defaults
-        to `sr` / 2.
-    use_htk: bool
-        Use HTK mels instead of Slaney's version? Defaults to false.
-
-    """
-
-    if fmax is None:
-        fmax = sr / 2.0
-        pass
-
-    # Initialize the weights
-    wts         = numpy.zeros( (nfilts, nfft) )
-
-    # Center freqs of each FFT bin
-    fftfreqs    = numpy.arange( 1 + nfft / 2, dtype=numpy.double ) / nfft * sr
-
-    # 'Center freqs' of mel bands - uniformly spaced between limits
-    binfreqs    = mel_frequencies(nfilts, fmin, fmax, use_htk)
-
-    for i in xrange(nfilts):
-        freqs       = binfreqs[range(i, i+3)]
-        
-        # scale by width
-        freqs       = freqs[1] + width * (freqs - freqs[1])
-
-        # lower and upper slopes for all bins
-        loslope     = (fftfreqs - freqs[0]) / (freqs[1] - freqs[0])
-        hislope     = (freqs[2] - fftfreqs) / (freqs[2] - freqs[1])
-
-        # .. then intersect them with each other and zero
-        wts[i, :(1 + nfft/2)]    = numpy.maximum(0, numpy.minimum(loslope, hislope))
-
-        pass
-
-    # Slaney-style mel is scaled to be approx constant E per channel
-    enorm   = 2.0 / (binfreqs[2:nfilts+2] - binfreqs[:nfilts])
-    wts     = numpy.dot(numpy.diag(enorm), wts)
-    
-    return wts
-
-def melspectrogram(y, sr=22050, window_length=256, hop_length=128, mel_channels=40, htk=False, width=1):
-    '''
-    Compute a mel spectrogram from a time series
-
-    Input:
-        y                   =   the audio signal
-        sr                  =   the sampling rate of y                      | default: 22050
-        window_length       =   FFT window size                             | default: 256
-        hop_length          =   hop size                                    | default: 128
-        mel_channels        =   number of Mel filters to use                | default: 40
-        htk                 =   use HTK mels instead of Slaney              | default: False
-        width               =   width of mel bins                           | default: 1
-
-    Output:
-        S                   =   Mel amplitude spectrogram
-    '''
-
-    # Compute the STFT
-    S = stft(y, sr=sr, n_fft=window_length, hann_w=window_length, hop_length=hop_length)
-
-    # Build a Mel filter
-    M = melfb(sr, window_length, nfilts=mel_channels, width=width, use_htk=htk)
-
-    # Remove everything past the nyquist frequency
-    M = M[:, :(window_length / 2  + 1)]
-    
-    S = numpy.dot(M, numpy.abs(S))
-
-    return S
-
 

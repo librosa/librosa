@@ -42,43 +42,6 @@ def load(infile):
 #--           --#
 
 #-- Tests     --#
-def test_hz_to_mel():
-    def __test_to_mel(infile):
-        DATA    = load(infile)
-        z       = librosa.hz_to_mel(DATA['f'], DATA['htk'])
-
-        assert numpy.allclose(z, DATA['result'])
-    
-    for infile in files('data/core-hz_to_mel-*.mat'):
-        yield (__test_to_mel, infile)
-
-    pass
-
-def test_mel_to_hz():
-
-    def __test_to_hz(infile):
-        DATA    = load(infile)
-        z       = librosa.mel_to_hz(DATA['f'], DATA['htk'])
-
-        assert numpy.allclose(z, DATA['result'])
-    
-    for infile in files('data/core-mel_to_hz-*.mat'):
-        yield (__test_to_hz, infile)
-
-    pass
-
-def test_hz_to_octs():
-    def __test_to_octs(infile):
-        DATA    = load(infile)
-        z       = librosa.hz_to_octs(DATA['f'])
-
-        assert numpy.allclose(z, DATA['result'])
-
-    for infile in files('data/core-hz_to_octs-*.mat'):
-        yield (__test_to_octs, infile)
-
-    pass
-
 def test_load():
     # Note: this does not test resampling.
     # That is a separate unit test.
@@ -159,23 +122,3 @@ def test_istft():
         yield (__test, infile)
     pass
 
-def test_melfb():
-
-    def __test(infile):
-        DATA    = load(infile)
-
-        wts = librosa.melfb(    DATA['sr'][0], 
-                                DATA['nfft'][0], 
-                                nfilts  =   DATA['nfilts'][0],
-                                width   =   DATA['width'][0],
-                                fmin    =   DATA['fmin'][0],
-                                fmax    =   DATA['fmax'][0],
-                                use_htk =   DATA['htk'][0])
-                                
-        assert wts.shape == DATA['wts'].shape
-
-        assert numpy.allclose(wts, DATA['wts'])
-
-    for infile in files('data/core-melfb-*.mat'):
-        yield (__test, infile)
-    pass

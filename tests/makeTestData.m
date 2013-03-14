@@ -76,7 +76,7 @@ function testHz2Mel(output_path)
             % save the output
             counter = counter + 1;
 
-            filename = sprintf('%s/core-hz_to_mel-%03d.mat', output_path, counter);
+            filename = sprintf('%s/feature-hz_to_mel-%03d.mat', output_path, counter);
             display(['  `-- saving ', filename]);
 
             save(filename, 'f', 'htk', 'result');
@@ -105,7 +105,7 @@ function testMel2Hz(output_path)
             % save the output
             counter = counter + 1;
 
-            filename = sprintf('%s/core-mel_to_hz-%03d.mat', output_path, counter);
+            filename = sprintf('%s/feature-mel_to_hz-%03d.mat', output_path, counter);
             display(['  `-- saving ', filename]);
 
             save(filename, 'f', 'htk', 'result');
@@ -128,7 +128,7 @@ function testHzToOcts(output_path)
         % save the output
         counter = counter + 1;
 
-        filename = sprintf('%s/core-hz_to_octs-%03d.mat', output_path, counter);
+        filename = sprintf('%s/feature-hz_to_octs-%03d.mat', output_path, counter);
         display(['  `-- saving ', filename]);
 
         save(filename, 'f', 'result');
@@ -205,7 +205,7 @@ function testMelfb(output_path)
             % save the output
             counter = counter + 1;
 
-            filename = sprintf('%s/core-melfb-%03d.mat', output_path, counter);
+            filename = sprintf('%s/feature-melfb-%03d.mat', output_path, counter);
             display(['  `-- saving ', filename]);
 
             save(filename, ...

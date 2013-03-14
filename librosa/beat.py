@@ -199,10 +199,10 @@ def onset_strength_percussive(y, sr=22050, window_length=2048, hop_length=256, m
 
     # Step 1: compute spectrogram
     if S is None:
-        S   = librosa.melspectrogram(y,     sr=sr, 
-                                            window_length=window_length, 
-                                            hop_length=hop_length, 
-                                            mel_channels=mel_channels)
+        S   = librosa.feature.melspectrogram(y, sr=sr, 
+                                                window_length=window_length, 
+                                                hop_length=hop_length, 
+                                                mel_channels=mel_channels)
         pass
 
     # Step 2: harmonic-percussive separation
@@ -256,11 +256,11 @@ def onset_strength(y, sr=22050, window_length=2048, hop_length=256, mel_channels
 
     # First, compute mel spectrogram
     if S is None:
-        S   = librosa.melspectrogram(y,     sr=sr, 
-                                            window_length=window_length, 
-                                            hop_length=hop_length, 
-                                            mel_channels=mel_channels, 
-                                            htk=htk)
+        S   = librosa.feature.melspectrogram(y, sr=sr, 
+                                                window_length=window_length, 
+                                                hop_length=hop_length, 
+                                                mel_channels=mel_channels, 
+                                                htk=htk)
         # Convert to dBs
         S   = librosa.logamplitude(S)
 
