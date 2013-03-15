@@ -11,6 +11,7 @@ Utility functions for analysis output, eg:
 
 import librosa
 import numpy, scipy
+import scipy.io.wavfile
 import csv
 
 def segment_csv(outfile, segments, sr, hop_length):
@@ -33,4 +34,20 @@ def segment_csv(outfile, segments, sr, hop_length):
             t = t_new
             pass
         pass
+    pass
+
+
+def write_wav(y, sr, filename):
+    '''
+    Output a time series as a .wav file
+
+    Input:
+        y:          time-series audio data (floating point) (mono)
+        sr:         sample rate of y
+        filename:   path to save the wav file. 
+
+    '''
+
+    w = y / numpy.max(numpy.abs(y))
+    scipy.io.wavfile.write(filename, sr, (w * 32768.0).astype('<i2'))
     pass
