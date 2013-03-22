@@ -272,19 +272,10 @@ def onset_strength(y, sr=22050, window_length=256, hop_length=32, mel_channels=4
     onsets  = numpy.maximum(0.0, onsets)
 
     ### Average over mel bands
-    onsets  = numpy.mean(onsets, axis=0)
+    onsets  = onsets.mean(axis=0)
 
     ### remove the DC component
     onsets  = scipy.signal.lfilter([1.0, -1.0], [1.0, -0.99], onsets)
-
-    ### Threshold at zero
-    onsets   = numpy.maximum(0.0, onsets)
-
-    ### Normalize by the maximum onset strength
-    Onorm = onsets.max()
-    if Onorm > 0:
-        onsets = onsets / Onorm
-        pass
 
     return onsets 
 
