@@ -343,9 +343,9 @@ function testOnset(output_path)
 
     filename    = sprintf('%s/beat-onset-000.mat', output_path);
     display(['  `-- saving ', filename]);
-    save(filename, 'wavfile', 'onsetenv');
+    save(filename, 'wavfile', 'onsetenv', 'D');
 
     filename    = sprintf('%s/beat-tempo-000.mat', output_path);
     display(['  `-- saving ', filename]);
-    save(filename, 'wavfile', 't');
+    save(filename, 'wavfile', 't', 'onsetenv');
 end
