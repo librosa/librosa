@@ -51,6 +51,9 @@ function testData(source_path, output_path)
     display('resample');
     testResample(output_path);
 
+    display('tempo');
+    testOnset(output_path);
+
     %% Done!
     display('Done.');
 end
@@ -326,4 +329,23 @@ function testISTFT(output_path)
             save(filename, 'D', 'Dinv', 'nfft', 'hann_w', 'hop_length');
         end
     end
+end
+
+function testOnset(output_path)
+
+    wavfile     = 'data/test2_8000.wav';
+
+    [y, sr]     = wavread(wavfile);
+    y           = mean(y, 2);               % Convert to mono
+
+    % Generate the onset envelope first
+    [t, xcr, D, onsetenv, oesr] = tempo2(y, sr);
+
+    filename    = sprintf('%s/beat-onset-000.mat', output_path);
+    display(['  `-- saving ', filename]);
+    save(filename, 'wavfile', 'onsetenv');
+
+    filename    = sprintf('%s/beat-tempo-000.mat', output_path);
+    display(['  `-- saving ', filename]);
+    save(filename, 'wavfile', 't');
 end
