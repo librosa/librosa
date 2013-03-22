@@ -51,8 +51,8 @@ function testData(source_path, output_path)
     display('resample');
     testResample(output_path);
 
-    display('tempo');
-    testOnset(output_path);
+    display('beat');
+    testBeat(output_path);
 
     %% Done!
     display('Done.');
@@ -331,7 +331,7 @@ function testISTFT(output_path)
     end
 end
 
-function testOnset(output_path)
+function testBeat(output_path)
 
     wavfile     = 'data/test2_8000.wav';
 
@@ -348,4 +348,10 @@ function testOnset(output_path)
     filename    = sprintf('%s/beat-tempo-000.mat', output_path);
     display(['  `-- saving ', filename]);
     save(filename, 'wavfile', 't', 'onsetenv');
+
+    [beats, onsetenv_out, D, cumscore] = beat2(onsetenv, oesr);
+    filename    = sprintf('%s/beat-beat-000.mat', output_path);
+    display(['  `-- saving ', filename]);
+    save(filename, 'wavfile', 'beats', 'onsetenv');
+
 end

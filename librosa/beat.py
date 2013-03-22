@@ -15,14 +15,14 @@ import librosa
 import numpy, scipy, scipy.signal, scipy.ndimage
 import sklearn, sklearn.cluster, sklearn.feature_extraction
 
-def beat_track(y, sr=22050, hop_length=256, start_bpm=120.0, tightness=400, onsets=None):
+def beat_track(y, sr=22050, hop_length=32, start_bpm=120.0, tightness=400, onsets=None):
     '''
     Ellis-style beat tracker
 
     Input:
         y:              time-series data
         sr:             sample rate of y                            | default: 22050
-        hop_length:     hop length (in frames) for onset detection  | default: 256 ~= 11.6ms
+        hop_length:     hop length (in frames) for onset detection  | default: 32 
         start_bpm:      initial guess for BPM estimator             | default: 120.0
         tightness:      tightness parameter for tracker             | default: 400
         onsets:         optional pre-computed onset envelope        | default: None
@@ -55,8 +55,11 @@ def _beat_tracker(onsets, start_bpm, sr, hop_length, tightness):
     fft_resolution  = numpy.float(sr) / hop_length
     period          = int(round(60.0 * fft_resolution / start_bpm))
 
+    # AGC the onset envelope
+    onsets          = onsets / onsets.std(ddof=1)
+
     # Smooth beat events with a gaussian window
-    template        = numpy.exp(-0.5 * (numpy.linspace(-32, 32+1, 2*period + 1)**2))
+    template        = numpy.exp(-0.5 * ((numpy.arange(-period, period+1) * 32.0 / period )**2))
 
     # Convolve 
     localscore      = scipy.signal.convolve(onsets, template, 'same')
@@ -71,7 +74,7 @@ def _beat_tracker(onsets, start_bpm, sr, hop_length, tightness):
     search_window   = numpy.arange(-2 * period, -numpy.round(period/2) + 1, dtype=int)
 
     # Make a score window, which begins biased toward start_bpm and skewed 
-    txwt    = - tightness * numpy.abs(numpy.log(-search_window) - numpy.log(period))**2
+    txwt            = - tightness * numpy.abs(numpy.log(-search_window) - numpy.log(period))**2
 
     # Are we on the first beat?
     first_beat      = True
@@ -108,23 +111,36 @@ def _beat_tracker(onsets, start_bpm, sr, hop_length, tightness):
 
     ### Get the last beat
     maxes                   = librosa.localmax(cumscore)
-    max_indices             = numpy.nonzero(maxes)[0]
+    max_indices             = maxes.nonzero()[0]
     peak_scores             = cumscore[max_indices]
 
     median_score            = numpy.median(peak_scores)
-    bestendposs             = numpy.nonzero(cumscore * maxes > 0.5 * median_score)[0]
+    bestendposs             = (cumscore * maxes > 0.5 * median_score).nonzero()[0]
 
     # The last of these is the last beat (since score generally increases)
-    bestendx                = numpy.max(bestendposs)
-
-    b                       = [int(bestendx)]
+    b                       = [int(bestendposs.max())]
 
     while backlink[b[-1]] >= 0:
         b.append(backlink[b[-1]])
         pass
 
+    # Put the beats in ascending order
     b.reverse()
-    return numpy.array(b)
+
+    # Convert into an array of frame numbers
+    b = numpy.array(b, dtype=int)
+
+    # Final post-processing: throw out spurious leading/trailing beats
+    boe             = localscore[b]
+    smooth_boe      = scipy.signal.convolve(boe, scipy.signal.hann(5), 'same')
+
+    threshold       = 0.5 * ((smooth_boe**2).mean()**0.5)
+
+    valid           = numpy.argwhere(smooth_boe > threshold)
+    b               = b[valid.min():valid.max()]
+
+    # Add one to account for differencing offset
+    return 1 + b
 
 def onset_estimate_bpm(onsets, start_bpm, sr, hop_length):
     '''
