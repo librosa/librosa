@@ -185,16 +185,16 @@ def onset_estimate_bpm(onsets, start_bpm, sr, hop_length):
 
     return start_bpm
 
-def onset_strength_percussive(y, sr=22050, window_length=2048, hop_length=256, mel_channels=128, S=None):
+def onset_strength_percussive(y, sr=22050, window_length=256, hop_length=32, mel_channels=40, S=None):
     '''
     Onset strength derived from harmonic-percussive source separation
 
     Input:
         y:                  time series signal
         sr:                 sample rate of y                    | default: 22050
-        window_length:      fourier analysis window length      | default: 2048
-        hop_length:         number of frames to hop             | default: 256
-        mel_channels:       number of mel bins to use           | default: 128
+        window_length:      fourier analysis window length      | default: 256
+        hop_length:         number of frames to hop             | default: 32
+        mel_channels:       number of mel bins to use           | default: 40
     '''
 
     # Step 1: compute spectrogram
@@ -231,7 +231,7 @@ def onset_strength_percussive(y, sr=22050, window_length=2048, hop_length=256, m
 
     return O / Onorm
 
-def onset_strength(y, sr=22050, window_length=2048, hop_length=256, mel_channels=40, rising=True, htk=False, S=None):
+def onset_strength(y, sr=22050, window_length=256, hop_length=32, mel_channels=40, htk=False, S=None):
     '''
     Adapted from McVicar, adapted from Ellis, etc...
     
@@ -240,10 +240,9 @@ def onset_strength(y, sr=22050, window_length=2048, hop_length=256, mel_channels
     INPUT:
         y               = time-series waveform (t-by-1 vector)
         sr              = sampling rate of the input signal     | default: 22050
-        window_length   = number of samples per frame           | default: 2048      | = 92.8ms @ 22KHz
-        hop_length      = offset between frames                 | default: 256       | = 11.6ms @ 22KHz
+        window_length   = number of samples per frame           | default: 256
+        hop_length      = offset between frames                 | default: 32
         mel_channels    = number of Mel bins to use             | default: 40
-        rising          = detect only rising edges of beats     | default: True
         htk             = use HTK mels instead of Slaney        | default: False
         S               = (optional) pre-computed spectrogram   | default: None
 
@@ -252,51 +251,42 @@ def onset_strength(y, sr=22050, window_length=2048, hop_length=256, mel_channels
         onset_envelope
     '''
 
-    gain_threshold  = 80.0
-
     # First, compute mel spectrogram
     if S is None:
-        S   = librosa.feature.melspectrogram(y, sr=sr, 
-                                                window_length=window_length, 
-                                                hop_length=hop_length, 
-                                                mel_channels=mel_channels, 
+        S   = librosa.feature.melspectrogram(y, sr              =   sr, 
+                                                window_length   =   window_length, 
+                                                hop_length      =   hop_length, 
+                                                mel_channels    =   mel_channels, 
                                                 htk=htk)
         # Convert to dBs
         S   = librosa.logamplitude(S)
 
         pass
 
-    ### Only look at top 80 dB
-    onsets  = numpy.maximum(S, S.max() - gain_threshold)
-
     ### Compute first difference
-    onsets  = numpy.diff(onsets, n=1, axis=1)
+    onsets  = numpy.diff(S, n=1, axis=1)
 
     ### Discard negatives (decreasing amplitude)
     #   falling edges could also be useful segmentation cues
     #   to catch falling edges, replace max(0,D) with abs(D)
-    if rising:
-        onsets  = numpy.maximum(0.0, onsets)
-    else:
-        onsets  = onsets**2
-        pass
+    onsets  = numpy.maximum(0.0, onsets)
 
     ### Average over mel bands
-    onsets      = numpy.mean(onsets, axis=0)
+    onsets  = numpy.mean(onsets, axis=0)
 
     ### remove the DC component
-    onsets      = scipy.signal.lfilter([1.0, -1.0], [1.0, -0.99], onsets)
+    onsets  = scipy.signal.lfilter([1.0, -1.0], [1.0, -0.99], onsets)
 
     ### Threshold at zero
     onsets   = numpy.maximum(0.0, onsets)
 
     ### Normalize by the maximum onset strength
-    Onorm = numpy.max(onsets)
-    if Onorm == 0:
-        Onorm = 1.0
+    Onorm = onsets.max()
+    if Onorm > 0:
+        onsets = onsets / Onorm
         pass
 
-    return onsets / Onorm
+    return onsets 
 
 def segment(X, k):
     '''

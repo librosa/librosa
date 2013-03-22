@@ -193,11 +193,10 @@ def logamplitude(S, amin=1e-10, gain_threshold=-80.0):
         D                   =   S in dBs
     '''
 
-    SCALE   =   20.0
-    D       =   SCALE * numpy.log10(numpy.maximum(amin, numpy.abs(S)))
+    D       =   20.0 * numpy.log10(numpy.maximum(amin, numpy.abs(S)))
 
     if gain_threshold is not None:
-        D[D < gain_threshold] = gain_threshold
+        D = numpy.maximum(D, D.max() + gain_threshold)
         pass
 
     return D
@@ -218,36 +217,6 @@ def frames_to_time(frames, sr=22050, hop_length=64):
     '''
     return frames * float(hop_length) / float(sr)
 
-
-def feature_sync(X, F, agg=numpy.mean):
-    '''
-    Synchronous aggregation of a feature matrix
-
-    Input:
-        X:      d-by-T              | feature matrix 
-        F:      t-vector            | (ordered) array of frame numbers
-        agg:    aggregator function | default: numpy.mean
-
-    Output:
-        Y:      d-by-(<=t+1) vector
-        where 
-                Y[:, i] = agg(X[:, F[i-1]:F[i]], axis=1)
-
-        In order to ensure total coverage, boundary points are added to F
-    '''
-
-    F = numpy.unique(numpy.concatenate( ([0], F, [X.shape[1]]) ))
-
-    Y = numpy.zeros( (X.shape[0], len(F)-1) )
-
-    lb = F[0]
-
-    for (i, ub) in enumerate(F[1:]):
-        Y[:, i] = agg(X[:, lb:ub], axis=1)
-        lb = ub
-        pass
-
-    return Y
 
 def pad(w, d_pad, v=0.0, center=True):
     '''

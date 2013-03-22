@@ -297,7 +297,7 @@ def melfb(sr, nfft, nfilts=40, width=1.0, fmin=0.0, fmax=None, use_htk=False):
     
     return wts
 
-def melspectrogram(y, sr=22050, window_length=256, hop_length=128, mel_channels=40, htk=False, width=1):
+def melspectrogram(y, sr=22050, window_length=256, hop_length=128, mel_channels=40, htk=False, width=1, fmin=0, fmax=None):
     '''
     Compute a mel spectrogram from a time series
 
@@ -309,6 +309,8 @@ def melspectrogram(y, sr=22050, window_length=256, hop_length=128, mel_channels=
         mel_channels        =   number of Mel filters to use                | default: 40
         htk                 =   use HTK mels instead of Slaney              | default: False
         width               =   width of mel bins                           | default: 1
+        fmin                =   minimum frequency                           | default: 0
+        fmax                =   maximum frequency                           | default: sr/2
 
     Output:
         S                   =   Mel amplitude spectrogram
@@ -318,7 +320,7 @@ def melspectrogram(y, sr=22050, window_length=256, hop_length=128, mel_channels=
     S = librosa.stft(y, sr=sr, n_fft=window_length, hann_w=window_length, hop_length=hop_length)
 
     # Build a Mel filter
-    M = melfb(sr, window_length, nfilts=mel_channels, width=width, use_htk=htk)
+    M = melfb(sr, window_length, nfilts=mel_channels, width=width, use_htk=htk, fmin=fmin, fmax=fmax)
 
     # Remove everything past the nyquist frequency
     M = M[:, :(window_length / 2  + 1)]
@@ -326,4 +328,35 @@ def melspectrogram(y, sr=22050, window_length=256, hop_length=128, mel_channels=
     S = numpy.dot(M, numpy.abs(S))
 
     return S
+
+#-- miscellaneous utilities --#
+def sync(X, F, agg=numpy.mean):
+    '''
+    Synchronous aggregation of a feature matrix
+
+    Input:
+        X:      d-by-T              | feature matrix 
+        F:      t-vector            | (ordered) array of frame numbers
+        agg:    aggregator function | default: numpy.mean
+
+    Output:
+        Y:      d-by-(<=t+1) vector
+        where 
+                Y[:, i] = agg(X[:, F[i-1]:F[i]], axis=1)
+
+        In order to ensure total coverage, boundary points are added to F
+    '''
+
+    F = numpy.unique(numpy.concatenate( ([0], F, [X.shape[1]]) ))
+
+    Y = numpy.zeros( (X.shape[0], len(F)-1) )
+
+    lb = F[0]
+
+    for (i, ub) in enumerate(F[1:]):
+        Y[:, i] = agg(X[:, lb:ub], axis=1)
+        lb = ub
+        pass
+
+    return Y
 
