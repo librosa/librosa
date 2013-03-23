@@ -101,7 +101,10 @@ def stft(y, n_fft=256, hann_w=None, hop_length=None):
     if hann_w == 0:
         window = numpy.ones((n_fft,))
     else:
-        window = pad(scipy.signal.hann(hann_w), n_fft)
+        lpad = (n_fft - hann_w)/2
+        window = numpy.pad( scipy.signal.hann(hann_w), 
+                            (lpad, n_fft - hann_w - lpad), 
+                            mode='constant')
 
     # Set the default hop, if it's not already specified
     if hop_length is None:
@@ -150,11 +153,12 @@ def istft(d, n_fft=None, hann_w=None, hop_length=None):
     if hann_w == 0:
         window = numpy.ones(n_fft)
     else:
-        # XXX:    2013-03-09 12:17:38 by Brian McFee <brm2132@columbia.edu>
         #   magic number alert!
         #   2/3 scaling is to make stft(istft(.)) identity for 25% hop
-        
-        window = pad(scipy.signal.hann(hann_w) * 2.0 / 3, n_fft)
+        lpad = (n_fft - hann_w)/2
+        window = numpy.pad( scipy.signal.hann(hann_w) * 2.0 / 3.0, 
+                            (lpad, n_fft - hann_w - lpad), 
+                            mode='constant')
 
     # Set the default hop, if it's not already specified
     if hop_length is None:
@@ -207,31 +211,6 @@ def frames_to_time(frames, sr=22050, hop_length=64):
         times:          time (in seconds) of each given frame number
     '''
     return frames * float(hop_length) / float(sr)
-
-
-def pad(w, d_pad, v=0.0, center=True):
-    '''
-    Pad a vector w out to d dimensions, using value v
-
-    if center is True, w will be centered in the output vector
-    otherwise, w will be at the beginning
-    '''
-    # FIXME:  2012-11-27 11:08:54 by Brian McFee <brm2132@columbia.edu>
-    #  This function will be deprecated by numpy 1.7.0    
-
-    d = len(w)
-    if d > d_pad:
-        raise ValueError('Insufficient pad space')
-
-    #     FIXME:  2013-03-09 10:07:56 by Brian McFee <brm2132@columbia.edu>
-    #  slightly quicker via fill
-    q = v * numpy.ones(d_pad)
-    q[:d] = w
-
-    if center:
-        q = numpy.roll(q, numpy.floor((d_pad - d) / 2.0).astype(int), axis=0)
-
-    return q
 
 def autocorrelate(x, max_size=None):
     '''

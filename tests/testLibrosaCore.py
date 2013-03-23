@@ -98,9 +98,9 @@ def test_stft():
         (y, sr) = librosa.load(DATA['wavfile'][0], sr=None, mono=True)
 
         # Compute the STFT
-        D       = librosa.stft(y,       n_fft       =   DATA['nfft'][0].astype(int),
-                                        hann_w      =   DATA['hann_w'][0].astype(int),
-                                        hop_length  =   DATA['hop_length'][0].astype(int))
+        D       = librosa.stft(y,       n_fft       =   DATA['nfft'][0,0].astype(int),
+                                        hann_w      =   DATA['hann_w'][0,0].astype(int),
+                                        hop_length  =   DATA['hop_length'][0,0].astype(int))
 
         assert  numpy.allclose(D, DATA['D'])   
 
@@ -113,9 +113,9 @@ def test_istft():
     def __test(infile):
         DATA    = load(infile)
 
-        Dinv    = librosa.istft(DATA['D'],  n_fft       = DATA['nfft'][0].astype(int),
-                                            hann_w      = DATA['hann_w'][0].astype(int),
-                                            hop_length  = DATA['hop_length'][0].astype(int))
+        Dinv    = librosa.istft(DATA['D'],  n_fft       = DATA['nfft'][0,0].astype(int),
+                                            hann_w      = DATA['hann_w'][0,0].astype(int),
+                                            hop_length  = DATA['hop_length'][0,0].astype(int))
         assert numpy.allclose(Dinv, DATA['Dinv'])
 
     for infile in files('data/core-istft-*.mat'):
