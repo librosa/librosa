@@ -40,7 +40,7 @@ O = librosa.beat.onset_strength(S=P)
 # O = numpy.mean(scipy.ndimage.gaussian_laplace(P, [1.0, 0.0]), axis=0)
 
 # Track the beats
-(bpm, beats) = librosa.beat.beat_track(y, sr, hop_length=HOP, onsets=O)
+(bpm, beats) = librosa.beat.beat_track(onsets=O, sr=sr, hop_length=HOP)
 print 'done.'
 
 # Save the output

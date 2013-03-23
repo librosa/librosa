@@ -15,17 +15,18 @@ import librosa
 import numpy, scipy, scipy.signal, scipy.ndimage
 import sklearn, sklearn.cluster, sklearn.feature_extraction
 
-def beat_track(y, sr=22050, hop_length=64, start_bpm=120.0, tightness=400, onsets=None):
+def beat_track(onsets=None, y=None, sr=22050, hop_length=64, start_bpm=120.0):
     '''
     Ellis-style beat tracker
 
     Input:
-        y:              time-series data
+        onsets:         pre-computed onset envelope                 | default: None
+        y:              time-series data                            | default: None
         sr:             sample rate of y                            | default: 22050
         hop_length:     hop length (in frames) for onset detection  | default: 64
         start_bpm:      initial guess for BPM estimator             | default: 120.0
-        tightness:      tightness parameter for tracker             | default: 400
-        onsets:         optional pre-computed onset envelope        | default: None
+
+        Either onsets or y must be provided.
 
     Output:
         bpm:            estimated global tempo
@@ -34,13 +35,16 @@ def beat_track(y, sr=22050, hop_length=64, start_bpm=120.0, tightness=400, onset
 
     # First, get the frame->beat strength profile if we don't already have one
     if onsets is None:
+        if y is None:
+            raise ValueError('Either "y" or "onsets" must be provided')
+
         onsets  = onset_strength(y=y, sr=sr, hop_length=hop_length)
 
     # Then, estimate bpm
     bpm     = onset_estimate_bpm(onsets, start_bpm, sr, hop_length)
     
-    # Then, run the tracker
-    beats   = _beat_tracker(onsets, bpm, sr, hop_length, tightness)
+    # Then, run the tracker: tightness = 400
+    beats   = _beat_tracker(onsets, bpm, sr, hop_length, 400)
 
     return (bpm, beats)
 
@@ -207,6 +211,8 @@ def onset_strength(S=None, y=None, sr=22050, **kwargs):
         y               = time-series waveform (t-by-1 vector)  | default: None
         sr              = sampling rate of the input signal     | default: 22050
 
+        Either S or y,sr must be provided.
+
         **kwargs        = Parameters to mel spectrogram, if S is not provided
                           See librosa.feature.melspectrogram() for details
 
@@ -216,6 +222,9 @@ def onset_strength(S=None, y=None, sr=22050, **kwargs):
 
     # First, compute mel spectrogram
     if S is None:
+        if y is None:
+            raise ValueError('One of "S" or "y" must be provided.')
+
         S   = librosa.feature.melspectrogram(y, sr = sr, **kwargs)
 
         # Convert to dBs
