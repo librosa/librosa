@@ -6,7 +6,8 @@ Harmonic-percussive source separation
 
 '''
 
-import numpy, scipy, scipy.signal
+import numpy as np
+import scipy, scipy.signal
 
 def hpss(S, alpha=0.5, max_iter=50):
     '''
@@ -31,14 +32,14 @@ def hpss(S, alpha=0.5, max_iter=50):
     harmonic    = S * 0.5
     percussive  = harmonic.copy()
     
-    filt    = numpy.array([[0.25, -0.5, 0.25]])
+    filt    = np.array([[0.25, -0.5, 0.25]])
 
     for _ in range(max_iter):
         # Compute delta
         Dh = scipy.signal.convolve2d(harmonic, filt, mode='same')
         Dp = scipy.signal.convolve2d(percussive, filt.T, mode='same')
         D  = alpha * Dh - (1-alpha) * Dp
-        harmonic   = numpy.minimum(numpy.maximum(harmonic + D, 0.0), S)
+        harmonic   = np.minimum(np.maximum(harmonic + D, 0.0), S)
         percussive = S - harmonic
     
     return (harmonic, percussive)

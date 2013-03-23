@@ -10,7 +10,7 @@ Feature extraction code:
 
 
 import librosa
-import numpy
+import numpy as np
 
 #-- Frequency conversions --#
 def hz_to_mel(frequencies, htk=False):
@@ -30,13 +30,13 @@ def hz_to_mel(frequencies, htk=False):
     #   redo with informative variable names
     #   then make them into parameters
 
-    if numpy.isscalar(frequencies):
-        frequencies = numpy.array([frequencies], dtype=float)
+    if np.isscalar(frequencies):
+        frequencies = np.array([frequencies], dtype=float)
     else:
         frequencies = frequencies.astype(float)
 
     if htk:
-        return 2595.0 * numpy.log10(1.0 + frequencies / 700.0)
+        return 2595.0 * np.log10(1.0 + frequencies / 700.0)
     
     # Fill in the linear part
     f_min   = 0.0
@@ -47,10 +47,10 @@ def hz_to_mel(frequencies, htk=False):
     # Fill in the log-scale part
     brkfrq  = 1000.0
     brkpt   = (brkfrq - f_min) / f_sp
-    logstep = numpy.log(6.4) / 27.0
+    logstep = np.log(6.4) / 27.0
     nonlin  = frequencies >= brkfrq
 
-    mels[nonlin]  = brkpt + numpy.log(frequencies[nonlin] / brkfrq) / logstep
+    mels[nonlin]  = brkpt + np.log(frequencies[nonlin] / brkfrq) / logstep
 
     return mels
 
@@ -59,8 +59,8 @@ def mel_to_hz(mels, htk=False):
     Convert mel numbers to frequencies
 
     '''
-    if numpy.isscalar(mels):
-        mels = numpy.array([mels], dtype=float)
+    if np.isscalar(mels):
+        mels = np.array([mels], dtype=float)
     else:
         mels = mels.astype(float)
 
@@ -75,10 +75,10 @@ def mel_to_hz(mels, htk=False):
     # And now the nonlinear scale
     brkfrq      = 1000.0
     brkpt       = (brkfrq - f_min) / f_sp
-    logstep     = numpy.log(6.4) / 27.0
+    logstep     = np.log(6.4) / 27.0
     nonlin      = mels >= brkpt
 
-    frequencies[nonlin] = brkfrq * numpy.exp(logstep * (mels[nonlin] - brkpt))
+    frequencies[nonlin] = brkfrq * np.exp(logstep * (mels[nonlin] - brkpt))
 
     return frequencies
 
@@ -93,7 +93,7 @@ def hz_to_octs(frequencies, A440=440.0):
     Output:
         octaves:        octave number for each frequency
     '''
-    return numpy.log2(frequencies / (A440 / 16.0))
+    return np.log2(frequencies / (A440 / 16.0))
 
 
 #-- CHROMA --#
@@ -119,21 +119,21 @@ def chromagram(S, sr, norm='inf', **kwargs):
     spec2chroma = chromafb( sr, n_fft, **kwargs)
 
     # Compute raw chroma
-    raw_chroma  = numpy.dot(spec2chroma, S)
+    raw_chroma  = np.dot(spec2chroma, S)
 
     # Compute normalization factor for each frame
     if norm == 'inf':
-        chroma_norm = numpy.max(numpy.abs(raw_chroma), axis=0)
+        chroma_norm = np.max(np.abs(raw_chroma), axis=0)
     elif norm == 1:
-        chroma_norm = numpy.sum(numpy.abs(raw_chroma), axis=0)
+        chroma_norm = np.sum(np.abs(raw_chroma), axis=0)
     elif norm == 2:
-        chroma_norm = numpy.sum( (raw_chroma**2), axis=0) ** 0.5
+        chroma_norm = np.sum( (raw_chroma**2), axis=0) ** 0.5
     else:
         raise ValueError("norm must be one of: 'inf', 1, 2")
 
     # Tile the normalizer to match raw_chroma's shape
     chroma_norm[chroma_norm == 0] = 1.0
-    chroma_norm     = numpy.tile(1.0/chroma_norm, (raw_chroma.shape[0], 1))
+    chroma_norm     = np.tile(1.0/chroma_norm, (raw_chroma.shape[0], 1))
 
     return chroma_norm * raw_chroma
 
@@ -160,21 +160,21 @@ def chromafb(sr, n_fft, nchroma, A440=440.0, ctroct=5.0, octwidth=0):
         halfwidth = inf i.e. flat.
     """
 
-    wts         = numpy.zeros((nchroma, n_fft))
+    wts         = np.zeros((nchroma, n_fft))
 
-    frequencies = numpy.arange(float(sr) / n_fft, sr, float(sr) / n_fft)
+    frequencies = np.arange(float(sr) / n_fft, sr, float(sr) / n_fft)
     fftfrqbins  = nchroma * hz_to_octs(frequencies, A440)
 
     # make up a value for the 0 Hz bin = 1.5 octaves below bin 1
     # (so chroma is 50% rotated from bin 1, and bin width is broad)
-    fftfrqbins = numpy.concatenate( (   [fftfrqbins[0] - 1.5 * nchroma],
+    fftfrqbins = np.concatenate( (   [fftfrqbins[0] - 1.5 * nchroma],
                                         fftfrqbins))
 
-    binwidthbins = numpy.concatenate(
-        (numpy.maximum(fftfrqbins[1:] - fftfrqbins[:-1], 1.0), [1]))
+    binwidthbins = np.concatenate(
+        (np.maximum(fftfrqbins[1:] - fftfrqbins[:-1], 1.0), [1]))
 
-    D = numpy.tile(fftfrqbins, (nchroma, 1))  \
-        - numpy.tile(numpy.arange(0, nchroma, dtype='d')[:,numpy.newaxis], 
+    D = np.tile(fftfrqbins, (nchroma, 1))  \
+        - np.tile(np.arange(0, nchroma, dtype='d')[:,np.newaxis], 
         (1,n_fft))
 
     nchroma2 = round(nchroma / 2.0)
@@ -182,18 +182,18 @@ def chromafb(sr, n_fft, nchroma, A440=440.0, ctroct=5.0, octwidth=0):
     # Project into range -nchroma/2 .. nchroma/2
     # add on fixed offset of 10*nchroma to ensure all values passed to
     # rem are +ve
-    D = numpy.remainder(D + nchroma2 + 10*nchroma, nchroma) - nchroma2
+    D = np.remainder(D + nchroma2 + 10*nchroma, nchroma) - nchroma2
 
     # Gaussian bumps - 2*D to make them narrower
-    wts = numpy.exp(-0.5 * (2*D / numpy.tile(binwidthbins, (nchroma, 1)))**2)
+    wts = np.exp(-0.5 * (2*D / np.tile(binwidthbins, (nchroma, 1)))**2)
 
     # normalize each column
-    wts /= numpy.tile(numpy.sqrt(numpy.sum(wts**2, 0)), (nchroma, 1))
+    wts /= np.tile(np.sqrt(np.sum(wts**2, 0)), (nchroma, 1))
 
     # Maybe apply scaling for fft bins
     if octwidth > 0:
-        wts *= numpy.tile(
-            numpy.exp(-0.5 * (((fftfrqbins/nchroma - ctroct)/octwidth)**2)),
+        wts *= np.tile(
+            np.exp(-0.5 * (((fftfrqbins/nchroma - ctroct)/octwidth)**2)),
             (nchroma, 1))
 
     # remove aliasing columns
@@ -214,13 +214,13 @@ def dctfb(n_filts, d):
         D       :       n_filts-by-d DCT basis
     '''
 
-    basis       = numpy.empty((n_filts, d))
-    basis[0, :] = 1.0 / numpy.sqrt(d)
+    basis       = np.empty((n_filts, d))
+    basis[0, :] = 1.0 / np.sqrt(d)
 
-    samples     = numpy.arange(1, 2*d, 2) * numpy.pi / (2.0 * d)
+    samples     = np.arange(1, 2*d, 2) * np.pi / (2.0 * d)
 
     for i in xrange(1, n_filts):
-        basis[i, :] = numpy.cos(i*samples) * numpy.sqrt(2.0/d)
+        basis[i, :] = np.cos(i*samples) * np.sqrt(2.0/d)
 
     return basis
 
@@ -236,7 +236,7 @@ def mfcc(S, d=20):
         M   :   d-by-n      MFCC sequence
     '''
 
-    return numpy.dot(dctfb(d, S.shape[0]), S)
+    return np.dot(dctfb(d, S.shape[0]), S)
 
 
 def mel_frequencies(n_filts=40, fmin=0, fmax=11025, htk=False):
@@ -257,7 +257,7 @@ def mel_frequencies(n_filts=40, fmin=0, fmax=11025, htk=False):
     minmel      = hz_to_mel(fmin, htk=htk)
     maxmel      = hz_to_mel(fmax, htk=htk)
 
-    mels        = numpy.arange( minmel,     
+    mels        = np.arange( minmel,     
                                 maxmel + 1, 
                                 (maxmel - minmel) / (n_filts + 1))
     
@@ -291,10 +291,10 @@ def melfb(sr, n_fft, n_filts=40, width=1.0, fmin=0.0, fmax=None, htk=False):
         fmax = sr / 2.0
 
     # Initialize the weights
-    wts         = numpy.zeros( (n_filts, n_fft) )
+    wts         = np.zeros( (n_filts, n_fft) )
 
     # Center freqs of each FFT bin
-    fftfreqs    = numpy.arange( 1 + n_fft / 2, dtype=numpy.double ) / n_fft * sr
+    fftfreqs    = np.arange( 1 + n_fft / 2, dtype=np.double ) / n_fft * sr
 
     # 'Center freqs' of mel bands - uniformly spaced between limits
     binfreqs    = mel_frequencies(n_filts, fmin, fmax, htk)
@@ -310,13 +310,13 @@ def melfb(sr, n_fft, n_filts=40, width=1.0, fmin=0.0, fmax=None, htk=False):
         hislope     = (freqs[2] - fftfreqs) / (freqs[2] - freqs[1])
 
         # .. then intersect them with each other and zero
-        wts[i, :(1 + n_fft/2)]    = numpy.maximum(0, 
-                                            numpy.minimum(loslope, hislope))
+        wts[i, :(1 + n_fft/2)]    = np.maximum(0, 
+                                            np.minimum(loslope, hislope))
 
 
     # Slaney-style mel is scaled to be approx constant E per channel
     enorm   = 2.0 / (binfreqs[2:n_filts+2] - binfreqs[:n_filts])
-    wts     = numpy.dot(numpy.diag(enorm), wts)
+    wts     = np.dot(np.diag(enorm), wts)
     
     return wts
 
@@ -347,18 +347,18 @@ def melspectrogram(y, sr=22050, n_fft=256, hop_length=128, **kwargs):
     # Remove everything past the nyquist frequency
     mel_basis   = mel_basis[:, :(n_fft/ 2  + 1)]
     
-    return numpy.dot(mel_basis, numpy.abs(S))
+    return np.dot(mel_basis, np.abs(S))
 
 
 #-- miscellaneous utilities --#
-def sync(data, frames, aggregate=numpy.mean):
+def sync(data, frames, aggregate=np.mean):
     '''
     Synchronous aggregation of a feature matrix
 
     Input:
         data:       d-by-T              | feature matrix 
         frames:     t-vector            | (ordered) array of frame numbers
-        aggregate:  aggregator function | default: numpy.mean
+        aggregate:  aggregator function | default: np.mean
 
     Output:
         Y:      d-by-(<=t+1) vector
@@ -370,9 +370,9 @@ def sync(data, frames, aggregate=numpy.mean):
 
     (dimension, n_frames) = data.shape
 
-    frames      = numpy.unique(numpy.concatenate( ([0], frames, [n_frames]) ))
+    frames      = np.unique(np.concatenate( ([0], frames, [n_frames]) ))
 
-    data_agg    = numpy.empty( (dimension, len(frames)-1) )
+    data_agg    = np.empty( (dimension, len(frames)-1) )
 
     start       = frames[0]
 

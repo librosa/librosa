@@ -10,7 +10,8 @@ Utility functions for analysis output, eg:
 '''
 
 import librosa
-import numpy, scipy
+import numpy as np
+import scipy
 import scipy.io.wavfile
 import csv
 
@@ -46,6 +47,6 @@ def write_wav(path, y, sr):
 
     '''
 
-    wav = y / numpy.max(numpy.abs(y))
+    wav = y / np.max(np.abs(y))
     scipy.io.wavfile.write(path, sr, (wav * 32768.0).astype('<i2'))
 #-- --#
