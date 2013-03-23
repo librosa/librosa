@@ -25,7 +25,7 @@ print 'done.'
 
 # Construct log-amplitude spectrogram
 print 'Harmonic-percussive separation ... ',
-S = librosa.feature.melspectrogram(y, sr, FFT, hop_length=HOP, nfilts=128)**0.5
+S = librosa.feature.melspectrogram(y, sr, FFT, hop_length=HOP, n_filts=128)**0.5
 
 # Do HPSS
 (H, P) = librosa.hpss.hpss_median(S, p=4.0)
