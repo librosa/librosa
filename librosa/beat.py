@@ -15,14 +15,14 @@ import librosa
 import numpy, scipy, scipy.signal, scipy.ndimage
 import sklearn, sklearn.cluster, sklearn.feature_extraction
 
-def beat_track(y, sr=22050, hop_length=32, start_bpm=120.0, tightness=400, onsets=None):
+def beat_track(y, sr=22050, hop_length=64, start_bpm=120.0, tightness=400, onsets=None):
     '''
     Ellis-style beat tracker
 
     Input:
         y:              time-series data
         sr:             sample rate of y                            | default: 22050
-        hop_length:     hop length (in frames) for onset detection  | default: 32 
+        hop_length:     hop length (in frames) for onset detection  | default: 64
         start_bpm:      initial guess for BPM estimator             | default: 120.0
         tightness:      tightness parameter for tracker             | default: 400
         onsets:         optional pre-computed onset envelope        | default: None
@@ -34,8 +34,7 @@ def beat_track(y, sr=22050, hop_length=32, start_bpm=120.0, tightness=400, onset
 
     # First, get the frame->beat strength profile if we don't already have one
     if onsets is None:
-        onsets  = onset_strength(y, sr, hop_length=hop_length)
-        pass
+        onsets  = onset_strength(y=y, sr=sr, hop_length=hop_length)
 
     # Then, estimate bpm
     bpm     = onset_estimate_bpm(onsets, start_bpm, sr, hop_length)
@@ -103,11 +102,9 @@ def _beat_tracker(onsets, start_bpm, sr, hop_length, tightness):
         else:
             backlink[i]     = time_range[beat_location]
             first_beat      = False
-            pass
 
         # Update the time range
         time_range          = time_range + 1
-        pass
 
     ### Get the last beat
     maxes                   = librosa.localmax(cumscore)
@@ -122,7 +119,6 @@ def _beat_tracker(onsets, start_bpm, sr, hop_length, tightness):
 
     while backlink[b[-1]] >= 0:
         b.append(backlink[b[-1]])
-        pass
 
     # Put the beats in ascending order
     b.reverse()
@@ -197,71 +193,22 @@ def onset_estimate_bpm(onsets, start_bpm, sr, hop_length):
 
     best_period             = numpy.argmax(x_corr[candidate_periods])
 
-    start_bpm               = 60.0 * fft_resolution / candidate_periods[best_period]
-
-    return start_bpm
-
-def onset_strength_percussive(y, sr=22050, window_length=256, hop_length=32, mel_channels=40, S=None):
-    '''
-    Onset strength derived from harmonic-percussive source separation
-
-    Input:
-        y:                  time series signal
-        sr:                 sample rate of y                    | default: 22050
-        window_length:      fourier analysis window length      | default: 256
-        hop_length:         number of frames to hop             | default: 32
-        mel_channels:       number of mel bins to use           | default: 40
-    '''
-
-    # Step 1: compute spectrogram
-    if S is None:
-        S   = librosa.feature.melspectrogram(y, sr=sr, 
-                                                window_length=window_length, 
-                                                hop_length=hop_length, 
-                                                mel_channels=mel_channels)
-        pass
-
-    # Step 2: harmonic-percussive separation
-    (H, P) = librosa.hpss.hpss_median(S, p=6.0)
-    del H   # We don't need the harmonic component anymore
-
-    # Step 3: horizontal LoG filtering on P
-    P       = scipy.ndimage.gaussian_laplace(P, [1.0, 0.0])
+    return 60.0 * fft_resolution / candidate_periods[best_period]
 
 
-    # Step 4: aggregate across frequency bands
-    O       = numpy.mean(P, axis=0)
-
-
-    ### remove the DC component
-    O       = scipy.signal.lfilter([1.0, -1.0], [1.0, -0.99], O)
-
-    # Threshold at 0
-    O       = numpy.maximum(0.0, O)
-
-    ### Normalize by the maximum onset strength
-    Onorm = numpy.max(O)
-    if Onorm == 0:
-        Onorm = 1.0
-        pass
-
-    return O / Onorm
-
-def onset_strength(y, sr=22050, window_length=256, hop_length=32, mel_channels=40, htk=False, S=None):
+def onset_strength(S=None, y=None, sr=22050, **kwargs):
     '''
     Adapted from McVicar, adapted from Ellis, etc...
     
     Extract onsets
 
     INPUT:
-        y               = time-series waveform (t-by-1 vector)
+        S               = pre-computed spectrogram              | default: None
+        y               = time-series waveform (t-by-1 vector)  | default: None
         sr              = sampling rate of the input signal     | default: 22050
-        window_length   = number of samples per frame           | default: 256
-        hop_length      = offset between frames                 | default: 32
-        mel_channels    = number of Mel bins to use             | default: 40
-        htk             = use HTK mels instead of Slaney        | default: False
-        S               = (optional) pre-computed spectrogram   | default: None
 
+        **kwargs        = Parameters to mel spectrogram, if S is not provided
+                          See librosa.feature.melspectrogram() for details
 
     OUTPUT:
         onset_envelope
@@ -269,15 +216,11 @@ def onset_strength(y, sr=22050, window_length=256, hop_length=32, mel_channels=4
 
     # First, compute mel spectrogram
     if S is None:
-        S   = librosa.feature.melspectrogram(y, sr              =   sr, 
-                                                window_length   =   window_length, 
-                                                hop_length      =   hop_length, 
-                                                mel_channels    =   mel_channels, 
-                                                htk=htk)
+        S   = librosa.feature.melspectrogram(y, sr = sr, **kwargs)
+
         # Convert to dBs
         S   = librosa.logamplitude(S)
 
-        pass
 
     ### Compute first difference
     onsets  = numpy.diff(S, n=1, axis=1)
@@ -336,7 +279,6 @@ def segment(X, k):
         C[:, i] = numpy.mean(X[:, s:t], axis=1)
         V[:, i] = numpy.var(X[:, s:t], axis=1)
         s       = t
-        pass
 
     return (N, C, V)
 
