@@ -110,9 +110,9 @@ def chromagram(S, sr, norm='inf', **kwargs):
     Output:
         C:      chromagram
     '''
-    n_fft        = (S.shape[0] -1 ) * 2
+    n_fft       = (S.shape[0] -1 ) * 2
 
-    spec2chroma = chromafb( sr, n_fft, **kwargs)
+    spec2chroma = chromafb( sr, n_fft, **kwargs)[:, :S.shape[0]]
 
     # Compute raw chroma
     raw_chroma  = np.dot(spec2chroma, S)
