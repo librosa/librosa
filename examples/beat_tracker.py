@@ -13,7 +13,7 @@ import sys, librosa
 
 # 1. load the wav file and resample to 22.050 KHz
 print 'Loading ', sys.argv[1], '... ',
-(y, sr)         = librosa.load(sys.argv[1], target_sr=22050)
+(y, sr)         = librosa.load(sys.argv[1], sr=22050)
 print 'done.'
 
 # 2. extract beats
