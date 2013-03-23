@@ -134,7 +134,7 @@ def chromagram(S, sr, norm='inf', **kwargs):
     return chroma_norm * raw_chroma
 
 
-def chromafb(sr, n_fft, nchroma, A440=440.0, ctroct=5.0, octwidth=0):
+def chromafb(sr, n_fft, nchroma, A440=440.0, ctroct=5.0, octwidth=None):
     """Create a Filterbank matrix to convert FFT to Chroma.
 
     Based on Dan Ellis's fft2chromamx.m
@@ -158,7 +158,10 @@ def chromafb(sr, n_fft, nchroma, A440=440.0, ctroct=5.0, octwidth=0):
 
     wts         = np.zeros((nchroma, n_fft))
 
-    frequencies = np.arange(float(sr) / n_fft, sr, float(sr) / n_fft)
+    fft_res     = float(sr) / n_fft
+
+    frequencies = np.arange(fft_res, sr, fft_res)
+
     fftfrqbins  = nchroma * hz_to_octs(frequencies, A440)
 
     # make up a value for the 0 Hz bin = 1.5 octaves below bin 1
@@ -187,13 +190,14 @@ def chromafb(sr, n_fft, nchroma, A440=440.0, ctroct=5.0, octwidth=0):
     wts /= np.tile(np.sqrt(np.sum(wts**2, 0)), (nchroma, 1))
 
     # Maybe apply scaling for fft bins
-    if octwidth > 0:
+    if octwidth is not None:
         wts *= np.tile(
             np.exp(-0.5 * (((fftfrqbins/nchroma - ctroct)/octwidth)**2)),
             (nchroma, 1))
 
     # remove aliasing columns
-    return wts[:, :(n_fft/2+1)]
+    wts[:, (1 + n_fft/2):] = 0.0
+    return wts
 
 
 #-- Mel spectrogram and MFCCs --#
