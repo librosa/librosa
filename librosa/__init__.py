@@ -114,25 +114,24 @@ def stft(y, n_fft=256, hann_w=None, hop_length=None):
     n_frames    = 1 + int( (num_samples - n_fft) / hop_length)
 
     # allocate output array
-    D = numpy.empty( (n_specbins, n_frames), dtype=numpy.complex)
+    stft_matrix = numpy.empty( (n_specbins, n_frames), dtype=numpy.complex)
 
     for i in xrange(n_frames):
-        b           = i * hop_length
-        u           = window * y[b:(b+n_fft)]
-        t           = numpy.fft.fft(u)
+        sample  = i * hop_length
+        frame   = numpy.fft.fft(window * y[sample:(sample+n_fft)])
 
         # Conjugate here to match phase from DPWE code
-        D[:, i]     = t[:n_specbins].conj()
+        stft_matrix[:, i]  = frame[:n_specbins].conj()
 
-    return D
+    return stft_matrix
 
 
-def istft(d, n_fft=None, hann_w=None, hop_length=None):
+def istft(stft_matrix, n_fft=None, hann_w=None, hop_length=None):
     '''
     Inverse short-time fourier transform
 
     Inputs:
-        d           = STFT matrix
+        stft_matrix = STFT matrix
         n_fft       = number of FFT components          | default: 2 * (d.shape[0] -1
         hann_w      = size of hann window               | default: n_fft
         hop_length  = hop length                        | default: hann_w / 2
@@ -142,10 +141,10 @@ def istft(d, n_fft=None, hann_w=None, hop_length=None):
     '''
 
     # n = Number of stft frames
-    n = d.shape[1]
+    n_frames    = stft_matrix.shape[1]
 
     if n_fft is None:
-        n_fft = 2 * (d.shape[0] - 1)
+        n_fft = 2 * (stft_matrix.shape[0] - 1)
 
     if hann_w is None:
         hann_w = n_fft
@@ -162,39 +161,39 @@ def istft(d, n_fft=None, hann_w=None, hop_length=None):
 
     # Set the default hop, if it's not already specified
     if hop_length is None:
-        hop_length = int(n_fft / 2.0 )
+        hop_length = n_fft / 2
 
-    x_length    = n_fft + (n - 1) * hop_length
-    x           = numpy.zeros(x_length)
+    y           = numpy.zeros(n_fft + hop_length * (n_frames - 1))
 
-    for b in xrange(0, hop_length * n, hop_length):
-        ft              = d[:, b/hop_length].flatten()
-        ft              = numpy.concatenate((ft.conj(), ft[-2:0:-1] ), 0)
+    for i in xrange(n_frames):
+        sample  = i * hop_length
+        spec    = stft_matrix[:, i].flatten()
+        spec    = numpy.concatenate((spec.conj(), spec[-2:0:-1] ), 0)
 
-        px              = numpy.fft.ifft(ft).real
-        x[b:(b+n_fft)]  = x[b:(b+n_fft)] + window * px
+        y[sample:(sample+n_fft)]    = (y[sample:(sample+n_fft)] 
+                                    + window * numpy.fft.ifft(spec).real)
 
-    return x
+    return y
 
-def logamplitude(S, amin=1e-10, gain_threshold=-80.0):
+def logamplitude(S, amin=1e-10, top_db=80.0):
     '''
     Log-scale the amplitude of a spectrogram
 
     Input:
-        S                   =   the input spectrogram
-        amin                =   minimum allowed amplitude       | default: 1e-10
-        gain_threshold      =   minimum output value            | default: -80 
+        S       =   spectrogram
+        amin    =   amplitude threshold                     | default: 1e-10
+        top_db  =   threshold below max(log(S)) - top_db    | default: 80 
 
     Output:
-        D                   =   S in dBs
+        log_S   =   S in dBs
     '''
 
-    D       =   20.0 * numpy.log10(numpy.maximum(amin, numpy.abs(S)))
+    log_S   =   20.0 * numpy.log10(numpy.maximum(amin, numpy.abs(S)))
 
-    if gain_threshold is not None:
-        D = numpy.maximum(D, D.max() + gain_threshold)
+    if top_db is not None:
+        log_S = numpy.maximum(log_S, log_S.max() - top_db)
 
-    return D
+    return log_S
 
 
 #-- UTILITIES --#
@@ -212,23 +211,25 @@ def frames_to_time(frames, sr=22050, hop_length=64):
     '''
     return frames * float(hop_length) / float(sr)
 
-def autocorrelate(x, max_size=None):
+def autocorrelate(y, max_size=None):
     '''
         Bounded auto-correlation
 
         Input:
-            x:          t-by-1  vector
+            y:          t-by-1  vector
             max_size:   (optional) maximum lag                  | None
 
         Output:
-            z:          x's autocorrelation (up to max_size if given)
+            z:          y's autocorrelation (up to max_size if given)
     '''
 
-    result = scipy.signal.fftconvolve(x, x[::-1], mode='full')
+    result = scipy.signal.fftconvolve(y, y[::-1], mode='full')
 
     result = result[len(result)/2:]
+
     if max_size is None:
         return result
+    
     return result[:max_size]
 
 def localmax(x):

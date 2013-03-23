@@ -55,43 +55,46 @@ def _beat_tracker(onsets, start_bpm, sr, hop_length, tightness):
         Internal function that does beat tracking from a given onset profile.
 
     '''
-    fft_resolution  = numpy.float(sr) / hop_length
-    period          = int(round(60.0 * fft_resolution / start_bpm))
+    fft_res     = numpy.float(sr) / hop_length
+    period      = round(60.0 * fft_res / start_bpm)
 
     # AGC the onset envelope
-    onsets          = onsets / onsets.std(ddof=1)
+    onsets      = onsets / onsets.std(ddof=1)
 
     # Smooth beat events with a gaussian window
-    template        = numpy.exp(-0.5 * ((numpy.arange(-period, period+1) * 32.0 / period )**2))
+    # FIXME:  2013-03-23 09:31:04 by Brian McFee <brm2132@columbia.edu>
+    # this is uglified to match matlab implementation     
+    template    = numpy.exp(-0.5 * ((numpy.arange(-period, period+1) * 32.0 / period )**2))
 
     # Convolve 
-    localscore      = scipy.signal.convolve(onsets, template, 'same')
-    max_localscore  = numpy.max(localscore)
+    localscore  = scipy.signal.convolve(onsets, template, 'same')
+    max_score   = numpy.max(localscore)
 
     ### Initialize DP
 
-    backlink        = numpy.zeros_like(localscore, dtype=int)
-    cumscore        = numpy.zeros_like(localscore)
+    backlink    = numpy.zeros_like(localscore, dtype=int)
+    cumscore    = numpy.zeros_like(localscore)
 
     # Search range for previous beat: number of samples forward/backward to look
-    search_window   = numpy.arange(-2 * period, -numpy.round(period/2) + 1, dtype=int)
+    window      = numpy.arange(-2*period, -numpy.round(period/2) + 1, dtype=int)
 
     # Make a score window, which begins biased toward start_bpm and skewed 
-    txwt            = - tightness * numpy.abs(numpy.log(-search_window) - numpy.log(period))**2
+    txwt        = - tightness * numpy.abs(numpy.log(-window /period))**2
 
     # Are we on the first beat?
     first_beat      = True
 
-    time_range      = search_window
+    time_range      = window
     # Forward step
     for i in xrange(len(localscore)):
 
         # Are we reaching back before time 0?
-        z_pad               = numpy.maximum(0, numpy.minimum(- time_range[0], len(search_window)))
+        z_pad = numpy.maximum(0, min(- time_range[0], len(window)))
 
         # Search over all possible predecessors and apply transition weighting
         score_candidates                = txwt.copy()
-        score_candidates[z_pad:]        = score_candidates[z_pad:] + cumscore[time_range[z_pad:]]
+        score_candidates[z_pad:]        = score_candidates[z_pad:] \
+                                        + cumscore[time_range[z_pad:]]
 
         # Find the best predecessor beat
         beat_location       = numpy.argmax(score_candidates)
@@ -101,7 +104,7 @@ def _beat_tracker(onsets, start_bpm, sr, hop_length, tightness):
         cumscore[i]         = current_score + localscore[i]
 
         # Special case the first onset.  Stop if the localscore is small
-        if first_beat and localscore[i] < 0.01 * max_localscore:
+        if first_beat and localscore[i] < 0.01 * max_score:
             backlink[i]     = -1
         else:
             backlink[i]     = time_range[beat_location]
@@ -111,15 +114,15 @@ def _beat_tracker(onsets, start_bpm, sr, hop_length, tightness):
         time_range          = time_range + 1
 
     ### Get the last beat
-    maxes                   = librosa.localmax(cumscore)
-    max_indices             = maxes.nonzero()[0]
-    peak_scores             = cumscore[max_indices]
+    maxes           = librosa.localmax(cumscore)
+    max_indices     = maxes.nonzero()[0]
+    peak_scores     = cumscore[max_indices]
 
-    median_score            = numpy.median(peak_scores)
-    bestendposs             = (cumscore * maxes > 0.5 * median_score).nonzero()[0]
+    median_score    = numpy.median(peak_scores)
+    bestendposs     = (cumscore * maxes * 2 > median_score).nonzero()[0]
 
     # The last of these is the last beat (since score generally increases)
-    b                       = [int(bestendposs.max())]
+    b               = [int(bestendposs.max())]
 
     while backlink[b[-1]] >= 0:
         b.append(backlink[b[-1]])
@@ -155,49 +158,50 @@ def onset_estimate_bpm(onsets, start_bpm, sr, hop_length):
     Output:
         estimated BPM
     '''
-    auto_correlation_size   = 4.0
-    sample_duration         = 90.0
-    sample_end_time         = 90.0
-    bpm_std                 = 1.0
+    AC_SIZE     = 4.0
+    DURATION    = 90.0
+    END_TIME    = 90.0
+    BPM_STD     = 1.0
 
-    fft_resolution          = numpy.float(sr) / hop_length
+    fft_res     = numpy.float(sr) / hop_length
 
-    # Chop onsets to X[(upper_limit - duration):upper_limit], or as much as will fit
-    maxcol                  = min(numpy.round(sample_end_time * fft_resolution), len(onsets)-1)
-    mincol                  = max(0, maxcol - numpy.round(sample_duration * fft_resolution))
+    # Chop onsets to X[(upper_limit - duration):upper_limit]
+    # or as much as will fit
+    maxcol      = min(len(onsets)-1, numpy.round(END_TIME * fft_res))
+    mincol      = max(0,    maxcol - numpy.round(DURATION * fft_res))
 
     # Use auto-correlation out of 4 seconds (empirically set??)
-    ac_window               = int(numpy.round(auto_correlation_size * fft_resolution))
+    ac_window   = numpy.round(AC_SIZE * fft_res)
 
     # Compute the autocorrelation
-    x_corr                  = librosa.autocorrelate(onsets[mincol:maxcol], ac_window)
+    x_corr      = librosa.autocorrelate(onsets[mincol:maxcol], ac_window)
 
-    # re-weight the autocorrelation by log-normal prior
+
     #   FIXME:  2013-01-25 08:55:40 by Brian McFee <brm2132@columbia.edu>
     #   this fails if ac_window > length of song   
+    # re-weight the autocorrelation by log-normal prior
+    bpms    = 60.0 * fft_res / (numpy.arange(1, ac_window+1))
 
-    bpms                    = 60.0 * fft_resolution / (numpy.arange(1, ac_window+1))
-    x_corr_weighting        = numpy.exp(-0.5 * ((numpy.log2(bpms) - numpy.log2(start_bpm)) / bpm_std)**2)
-
-    # Compute the weighted autocorrelation
-    x_corr                  = x_corr * x_corr_weighting
+    # Smooth the autocorrelation by a log-normal distribution
+    x_corr  = x_corr * numpy.exp(-0.5 * ((numpy.log2(bpms / start_bpm)) / BPM_STD)**2)
 
     # Get the local maximum of weighted correlation
-    x_peaks                 = librosa.localmax(x_corr)
+    x_peaks = librosa.localmax(x_corr)
 
     # Zero out all peaks before the first negative
     x_peaks[:numpy.argmax(x_corr < 0)] = False
 
     # Find the largest (local) max
-    start_period            = numpy.argmax(x_peaks * x_corr)
+    start_period    = numpy.argmax(x_peaks * x_corr)
 
     # Choose the best peak out of .33, .5, 2, 3 * start_period
-    candidate_periods       = numpy.multiply(start_period, [1.0/3, 1.0/2, 1.0, 2.0, 3.0]).astype(int)
-    candidate_periods       = candidate_periods[candidate_periods < ac_window]
+    candidates      = numpy.multiply(start_period, [1.0/3, 1.0/2, 1.0, 2.0, 3.0])
+    candidates      = candidates.astype(int)
+    candidates      = candidates[candidates < ac_window]
 
-    best_period             = numpy.argmax(x_corr[candidate_periods])
+    best_period     = numpy.argmax(x_corr[candidates])
 
-    return 60.0 * fft_resolution / candidate_periods[best_period]
+    return 60.0 * fft_res / candidates[best_period]
 
 
 def onset_strength(S=None, y=None, sr=22050, **kwargs):
@@ -263,7 +267,9 @@ def segment(X, k):
     '''
 
     # Connect the temporal connectivity graph
-    G = sklearn.feature_extraction.image.grid_to_graph(n_x=X.shape[1], n_y=1, n_z=1)
+    G = sklearn.feature_extraction.image.grid_to_graph( n_x=X.shape[1], 
+                                                        n_y=1, 
+                                                        n_z=1)
 
     # Instantiate the clustering object
     W = sklearn.cluster.Ward(n_clusters=k, connectivity=G)
