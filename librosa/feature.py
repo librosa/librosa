@@ -46,10 +46,9 @@ def hz_to_mel(frequencies, htk=False):
 
     # Fill in the log-scale part
     brkfrq  = 1000.0
-    nonlin  = frequencies >= brkfrq
-
     brkpt   = (brkfrq - f_min) / f_sp
     logstep = numpy.log(6.4) / 27.0
+    nonlin  = frequencies >= brkfrq
 
     mels[nonlin]  = brkpt + numpy.log(frequencies[nonlin] / brkfrq) / logstep
 
@@ -99,29 +98,44 @@ def hz_to_octs(frequencies, A440=440.0):
 
 #-- CHROMA --#
 def chromagram(S, sr, norm='inf', **kwargs):
+    '''
+    Compute a chromagram from a spectrogram
 
+    Input:
+        S:      spectrogram
+        sr:     sampling rate of S
+        norm:   column-wise chroma normalization
+                'inf':  l_infinity norm (max)       | default
+                1:      l_1 norm (sum)
+                2:      l_2 norm
+
+        **kwargs:   Parameters to build the chroma filterbank
+                    See chromafb() for details.
+    Output:
+        C:      chromagram
+    '''
     n_fft        = (S.shape[0] -1 ) * 2
 
     spec2chroma = chromafb( sr, n_fft, **kwargs)
 
     # Compute raw chroma
-    U           = numpy.dot(spec2chroma, S)
+    raw_chroma  = numpy.dot(spec2chroma, S)
 
     # Compute normalization factor for each frame
     if norm == 'inf':
-        Z       = numpy.max(numpy.abs(U), axis=0)
+        chroma_norm = numpy.max(numpy.abs(raw_chroma), axis=0)
     elif norm == 1:
-        Z       = numpy.sum(numpy.abs(U), axis=0)
+        chroma_norm = numpy.sum(numpy.abs(raw_chroma), axis=0)
     elif norm == 2:
-        Z       = numpy.sum( (U**2), axis=0) ** 0.5
+        chroma_norm = numpy.sum( (raw_chroma**2), axis=0) ** 0.5
     else:
         raise ValueError("norm must be one of: 'inf', 1, 2")
 
-    # Tile the normalizer to match U's shape
-    Z[Z == 0] = 1.0
-    Z   = numpy.tile(1.0/Z, (U.shape[0], 1))
+    # Tile the normalizer to match raw_chroma's shape
+    chroma_norm[chroma_norm == 0] = 1.0
+    chroma_norm     = numpy.tile(1.0/chroma_norm, (raw_chroma.shape[0], 1))
 
-    return Z * U
+    return chroma_norm * raw_chroma
 
 
 def chromafb(sr, n_fft, nchroma, A440=440.0, ctroct=5.0, octwidth=0):
@@ -188,26 +202,27 @@ def chromafb(sr, n_fft, nchroma, A440=440.0, ctroct=5.0, octwidth=0):
 
 #-- Mel spectrogram and MFCCs --#
 
-def dctfb(nfilts, d):
+def dctfb(n_filts, d):
     '''
     Build a discrete cosine transform basis
 
     Input:
-        nfilts  :       number of output components
+        n_filts :       number of output components
         d       :       number of input components
 
     Output:
-        D       :       nfilts-by-d DCT matrix
+        D       :       n_filts-by-d DCT basis
     '''
-    DCT         = numpy.empty((nfilts, d))
-    DCT[0, :]   = 1.0 / numpy.sqrt(d)
 
-    q           = numpy.arange(1, 2*d, 2) * numpy.pi / (2.0 * d)
+    basis       = numpy.empty((n_filts, d))
+    basis[0, :] = 1.0 / numpy.sqrt(d)
 
-    for i in xrange(1, nfilts):
-        DCT[i, :] = numpy.cos(i*q) * numpy.sqrt(2.0/d)
+    samples     = numpy.arange(1, 2*d, 2) * numpy.pi / (2.0 * d)
 
-    return DCT 
+    for i in xrange(1, n_filts):
+        basis[i, :] = numpy.cos(i*samples) * numpy.sqrt(2.0/d)
+
+    return basis
 
 
 def mfcc(S, d=20):
@@ -224,18 +239,18 @@ def mfcc(S, d=20):
     return numpy.dot(dctfb(d, S.shape[0]), S)
 
 
-def mel_frequencies(nfilts=40, fmin=0, fmax=11025, htk=False):
+def mel_frequencies(n_filts=40, fmin=0, fmax=11025, htk=False):
     '''
     Compute the center frequencies of mel bands
 
     Input:
-        nfilts:     number of Mel bins                  | Default: 40
+        n_filts:     number of Mel bins                  | Default: 40
         fmin:       minimum frequency (Hz)              | Default: 0
         fmax:       maximum frequency (Hz)              | Default: 11025
         htk:    use HTK mels instead of  Slaney     | Default: False
 
     Output:
-        bin_frequencies:    nfilts+1 vector of Mel frequencies
+        bin_frequencies:    n_filts+1 vector of Mel frequencies
     '''
 
     # 'Center freqs' of mel bands - uniformly spaced between limits
@@ -244,12 +259,12 @@ def mel_frequencies(nfilts=40, fmin=0, fmax=11025, htk=False):
 
     mels        = numpy.arange( minmel,     
                                 maxmel + 1, 
-                                (maxmel - minmel) / (nfilts + 1))
+                                (maxmel - minmel) / (n_filts + 1))
     
     return      mel_to_hz(mels, htk=htk)
 
 
-def melfb(sr, n_fft, nfilts=40, width=1.0, fmin=0.0, fmax=None, htk=False):
+def melfb(sr, n_fft, n_filts=40, width=1.0, fmin=0.0, fmax=None, htk=False):
     """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins.
 
     Parameters
@@ -258,7 +273,7 @@ def melfb(sr, n_fft, nfilts=40, width=1.0, fmin=0.0, fmax=None, htk=False):
         Sampling rate of the incoming signal.
     n_fft : int
         FFT length to use.
-    nfilts : int
+    n_filts : int
         Number of Mel bands to use.  Defaults to 40.
     width : float
         The constant width of each band relative to standard Mel. Defaults 1.0
@@ -276,15 +291,15 @@ def melfb(sr, n_fft, nfilts=40, width=1.0, fmin=0.0, fmax=None, htk=False):
         fmax = sr / 2.0
 
     # Initialize the weights
-    wts         = numpy.zeros( (nfilts, n_fft) )
+    wts         = numpy.zeros( (n_filts, n_fft) )
 
     # Center freqs of each FFT bin
     fftfreqs    = numpy.arange( 1 + n_fft / 2, dtype=numpy.double ) / n_fft * sr
 
     # 'Center freqs' of mel bands - uniformly spaced between limits
-    binfreqs    = mel_frequencies(nfilts, fmin, fmax, htk)
+    binfreqs    = mel_frequencies(n_filts, fmin, fmax, htk)
 
-    for i in xrange(nfilts):
+    for i in xrange(n_filts):
         freqs       = binfreqs[range(i, i+3)]
         
         # scale by width
@@ -300,7 +315,7 @@ def melfb(sr, n_fft, nfilts=40, width=1.0, fmin=0.0, fmax=None, htk=False):
 
 
     # Slaney-style mel is scaled to be approx constant E per channel
-    enorm   = 2.0 / (binfreqs[2:nfilts+2] - binfreqs[:nfilts])
+    enorm   = 2.0 / (binfreqs[2:n_filts+2] - binfreqs[:n_filts])
     wts     = numpy.dot(numpy.diag(enorm), wts)
     
     return wts
@@ -327,42 +342,43 @@ def melspectrogram(y, sr=22050, n_fft=256, hop_length=128, **kwargs):
     S = librosa.stft(y, n_fft=n_fft, hann_w=n_fft, hop_length=hop_length)
 
     # Build a Mel filter
-    M = melfb(sr, n_fft, **kwargs)
+    mel_basis   = melfb(sr, n_fft, **kwargs)
 
     # Remove everything past the nyquist frequency
-    M = M[:, :(n_fft/ 2  + 1)]
+    mel_basis   = mel_basis[:, :(n_fft/ 2  + 1)]
     
-    S = numpy.dot(M, numpy.abs(S))
+    return numpy.dot(mel_basis, numpy.abs(S))
 
-    return S
 
 #-- miscellaneous utilities --#
-def sync(X, F, agg=numpy.mean):
+def sync(data, frames, aggregate=numpy.mean):
     '''
     Synchronous aggregation of a feature matrix
 
     Input:
-        X:      d-by-T              | feature matrix 
-        F:      t-vector            | (ordered) array of frame numbers
-        agg:    aggregator function | default: numpy.mean
+        data:       d-by-T              | feature matrix 
+        frames:     t-vector            | (ordered) array of frame numbers
+        aggregate:  aggregator function | default: numpy.mean
 
     Output:
         Y:      d-by-(<=t+1) vector
         where 
-                Y[:, i] = agg(X[:, F[i-1]:F[i]], axis=1)
+                Y[:, i] = aggregate(data[:, F[i-1]:F[i]], axis=1)
 
-        In order to ensure total coverage, boundary points are added to F
+        In order to ensure total coverage, boundary points are added to frames
     '''
 
-    F = numpy.unique(numpy.concatenate( ([0], F, [X.shape[1]]) ))
+    (dimension, n_frames) = data.shape
 
-    Y = numpy.zeros( (X.shape[0], len(F)-1) )
+    frames      = numpy.unique(numpy.concatenate( ([0], frames, [n_frames]) ))
 
-    lb = F[0]
+    data_agg    = numpy.empty( (dimension, len(frames)-1) )
 
-    for (i, ub) in enumerate(F[1:]):
-        Y[:, i] = agg(X[:, lb:ub], axis=1)
-        lb = ub
+    start       = frames[0]
 
-    return Y
+    for (i, end) in enumerate(frames[1:]):
+        data_agg[:, i] = aggregate(data[:, start:end], axis=1)
+        start = end
+
+    return data_agg
 
