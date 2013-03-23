@@ -7,7 +7,6 @@ Harmonic-percussive source separation
 '''
 
 import numpy, scipy, scipy.signal
-import librosa
 
 def hpss(S, alpha=0.5, max_iter=50):
     '''
@@ -29,19 +28,20 @@ def hpss(S, alpha=0.5, max_iter=50):
         Note: S = H + P
     '''
     # Initialize H/P iterates
-    H = S * 0.5
-    P = H.copy()
+    harmonic    = S * 0.5
+    percussive  = harmonic.copy()
     
-    for t in range(max_iter):
+    filt    = numpy.array([[0.25, -0.5, 0.25]])
+
+    for _ in range(max_iter):
         # Compute delta
-        Dh = scipy.signal.convolve2d(H, numpy.array([[0.25, -.5, 0.25]]), mode='same')
-        Dp = scipy.signal.convolve2d(P, numpy.array([[0.25], [-.5], [0.25]]), mode='same')
+        Dh = scipy.signal.convolve2d(harmonic, filt, mode='same')
+        Dp = scipy.signal.convolve2d(percussive, filt.T, mode='same')
         D  = alpha * Dh - (1-alpha) * Dp
-        H  = numpy.minimum(numpy.maximum(H + D, 0.0), S)
-        P  = S - H
-        pass
+        harmonic   = numpy.minimum(numpy.maximum(harmonic + D, 0.0), S)
+        percussive = S - harmonic
     
-    return (H, P)
+    return (harmonic, percussive)
 
 def hpss_median(S, win_P=9, win_H=9, p=0.0):
     '''
@@ -80,6 +80,5 @@ def hpss_median(S, win_P=9, win_H=9, p=0.0):
         # Compute harmonic mask
         Mh = H / (H + P)
         Mp = P / (H + P)
-        pass
 
     return (Mh * S, Mp * S)
