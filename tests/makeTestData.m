@@ -176,8 +176,8 @@ function testMelfb(output_path)
     % Three filter bank sizes
     P_NFILTS    = [20, 40, 120];
 
-    % Two widths
-    P_WIDTH     = [1.0, 3.0];
+    % One width
+    P_WIDTH     = [1.0];
 
     % F_min
     P_FMIN      = [0, 512];

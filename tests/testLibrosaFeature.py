@@ -84,7 +84,6 @@ def test_melfb():
         wts = librosa.feature.melfb( DATA['sr'][0], 
                                     DATA['nfft'][0], 
                                     n_filts =   DATA['nfilts'][0],
-                                    width   =   DATA['width'][0],
                                     fmin    =   DATA['fmin'][0],
                                     fmax    =   DATA['fmax'][0],
                                     htk     =   DATA['htk'][0])

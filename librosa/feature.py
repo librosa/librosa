@@ -25,11 +25,6 @@ def hz_to_mel(frequencies, htk=False):
         mels:           input frequencies in Mels
     '''
 
-    #     TODO:   2012-11-27 11:28:43 by Brian McFee <brm2132@columbia.edu>
-    #  too many magic numbers in these functions
-    #   redo with informative variable names
-    #   then make them into parameters
-
     if np.isscalar(frequencies):
         frequencies = np.array([frequencies], dtype=float)
     else:
@@ -45,12 +40,13 @@ def hz_to_mel(frequencies, htk=False):
     mels    = (frequencies - f_min) / f_sp
 
     # Fill in the log-scale part
-    brkfrq  = 1000.0
-    brkpt   = (brkfrq - f_min) / f_sp
-    logstep = np.log(6.4) / 27.0
-    nonlin  = frequencies >= brkfrq
+    
+    min_log_hz  = 1000.0                        # beginning of log region (Hz)
+    min_log_mel = (min_log_hz - f_min) / f_sp   # same (Mels)
+    logstep     = np.log(6.4) / 27.0            # step size for log region
 
-    mels[nonlin]  = brkpt + np.log(frequencies[nonlin] / brkfrq) / logstep
+    log_t       = (frequencies >= min_log_hz)
+    mels[log_t] = min_log_mel + np.log(frequencies[log_t]/min_log_hz) / logstep
 
     return mels
 
@@ -70,17 +66,17 @@ def mel_to_hz(mels, htk=False):
     # Fill in the linear scale
     f_min       = 0.0
     f_sp        = 200.0 / 3
-    frequencies = f_min + f_sp * mels
+    freqs       = f_min + f_sp * mels
 
     # And now the nonlinear scale
-    brkfrq      = 1000.0
-    brkpt       = (brkfrq - f_min) / f_sp
-    logstep     = np.log(6.4) / 27.0
-    nonlin      = mels >= brkpt
+    min_log_hz  = 1000.0                        # beginning of log region (Hz)
+    min_log_mel = (min_log_hz - f_min) / f_sp   # same (Mels)
+    logstep     = np.log(6.4) / 27.0            # step size for log region
+    log_t       = (mels >= min_log_mel)
 
-    frequencies[nonlin] = brkfrq * np.exp(logstep * (mels[nonlin] - brkpt))
+    freqs[log_t] = min_log_hz * np.exp(logstep * (mels[log_t] - min_log_mel))
 
-    return frequencies
+    return freqs
 
 def hz_to_octs(frequencies, A440=440.0):
     '''
@@ -244,81 +240,67 @@ def mel_frequencies(n_filts=40, fmin=0, fmax=11025, htk=False):
     Compute the center frequencies of mel bands
 
     Input:
-        n_filts:     number of Mel bins                  | Default: 40
+        n_filts:    number of Mel bins                  | Default: 40
         fmin:       minimum frequency (Hz)              | Default: 0
         fmax:       maximum frequency (Hz)              | Default: 11025
-        htk:    use HTK mels instead of  Slaney     | Default: False
+        htk:        use HTK mels instead of  Slaney     | Default: False
 
     Output:
         bin_frequencies:    n_filts+1 vector of Mel frequencies
     '''
 
     # 'Center freqs' of mel bands - uniformly spaced between limits
-    minmel      = hz_to_mel(fmin, htk=htk)
-    maxmel      = hz_to_mel(fmax, htk=htk)
+    minmel  = hz_to_mel(fmin, htk=htk)
+    maxmel  = hz_to_mel(fmax, htk=htk)
 
-    mels        = np.arange( minmel,     
-                                maxmel + 1, 
-                                (maxmel - minmel) / (n_filts + 1))
+    mels    = np.arange(minmel, maxmel + 1, (maxmel - minmel)/(n_filts + 1.0))
     
-    return      mel_to_hz(mels, htk=htk)
+    return  mel_to_hz(mels, htk=htk)
 
 
-def melfb(sr, n_fft, n_filts=40, width=1.0, fmin=0.0, fmax=None, htk=False):
-    """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins.
+def melfb(sr, n_fft, n_filts=40, fmin=0.0, fmax=None, htk=False):
+    '''
+    Create a Filterbank matrix to combine FFT bins into Mel-frequency bins.
 
-    Parameters
-    ----------
-    sr : int
-        Sampling rate of the incoming signal.
-    n_fft : int
-        FFT length to use.
-    n_filts : int
-        Number of Mel bands to use.  Defaults to 40.
-    width : float
-        The constant width of each band relative to standard Mel. Defaults 1.0
-    fmin : float
-        Frequency in Hz of the lowest edge of the Mel bands. Defaults to 0.
-    fmax : float
-        Frequency in Hz of the upper edge of the Mel bands. Defaults
-        to `sr` / 2.
-    htk: bool
-        Use HTK mels instead of Slaney's version? Defaults to false.
+    Input:
+        sr:         Sampling rate of the incoming signal.
+        n_fft:      FFT length to use.
+        n_filts:    Number of Mel bands to use.             | default:  40
+        fmin:       lowest edge of the Mel bands (in Hz)    | default:  0.0
+        fmax:       upper edge of the Mel bands (in Hz)     | default:  sr / 2
+        htk:        Use HTK mels instead of Slaney's        | default:  False
 
-    """
+    Output:
+        M:          (n_filts * n_fft)   Mel transform matrix
+                    Note: coefficients above 1+n_fft/2 are 0.
+
+    '''
 
     if fmax is None:
         fmax = sr / 2.0
 
     # Initialize the weights
-    wts         = np.zeros( (n_filts, n_fft) )
+    weights     = np.zeros( (n_filts, n_fft) )
 
     # Center freqs of each FFT bin
-    fftfreqs    = np.arange( 1 + n_fft / 2, dtype=np.double ) / n_fft * sr
+    size        = 1 + n_fft / 2
+    fftfreqs    = np.arange( size, dtype=float ) * sr / n_fft
 
     # 'Center freqs' of mel bands - uniformly spaced between limits
-    binfreqs    = mel_frequencies(n_filts, fmin, fmax, htk)
-
-    for i in xrange(n_filts):
-        freqs       = binfreqs[range(i, i+3)]
-        
-        # scale by width
-        freqs       = freqs[1] + width * (freqs - freqs[1])
-
-        # lower and upper slopes for all bins
-        loslope     = (fftfreqs - freqs[0]) / (freqs[1] - freqs[0])
-        hislope     = (freqs[2] - fftfreqs) / (freqs[2] - freqs[1])
-
-        # .. then intersect them with each other and zero
-        wts[i, :(1 + n_fft/2)]    = np.maximum(0, 
-                                            np.minimum(loslope, hislope))
-
+    freqs       = mel_frequencies(n_filts, fmin, fmax, htk)
 
     # Slaney-style mel is scaled to be approx constant E per channel
-    enorm   = 2.0 / (binfreqs[2:n_filts+2] - binfreqs[:n_filts])
-    wts     = np.dot(np.diag(enorm), wts)
-    
-    return wts
+    enorm       = 2.0 / (freqs[2:n_filts+2] - freqs[:n_filts])
+
+    for i in xrange(n_filts):
+        # lower and upper slopes for all bins
+        lower   = (fftfreqs - freqs[i])     / (freqs[i+1] - freqs[i])
+        upper   = (freqs[i+2] - fftfreqs)   / (freqs[i+2] - freqs[i+1])
+
+        # .. then intersect them with each other and zero
+        weights[i, :size]   = np.maximum(0, np.minimum(lower, upper)) * enorm[i]
+   
+    return weights
 
 def melspectrogram(y, sr=22050, n_fft=256, hop_length=128, **kwargs):
     '''
@@ -326,12 +308,11 @@ def melspectrogram(y, sr=22050, n_fft=256, hop_length=128, **kwargs):
 
     Input:
         y                   =   the audio signal
-        sr                  =   the sampling rate of y                      | default: 22050
-        n_fft               =   FFT window size                             | default: 256
-        hop_length          =   hop size                                    | default: 128
+        sr                  =   the sampling rate of        | default: 22050
+        n_fft               =   FFT window size             | default: 256
+        hop_length          =   hop size                    | default: 128
 
         **kwargs:           =   Mel filterbank parameters
-
                                 See melfb() documentation for details.
 
     Output:
@@ -339,7 +320,9 @@ def melspectrogram(y, sr=22050, n_fft=256, hop_length=128, **kwargs):
     '''
 
     # Compute the STFT
-    S = librosa.stft(y, n_fft=n_fft, hann_w=n_fft, hop_length=hop_length)
+    specgram    = librosa.stft(y,   n_fft       =   n_fft, 
+                                    hann_w      =   n_fft, 
+                                    hop_length  =   hop_length)
 
     # Build a Mel filter
     mel_basis   = melfb(sr, n_fft, **kwargs)
@@ -347,7 +330,7 @@ def melspectrogram(y, sr=22050, n_fft=256, hop_length=128, **kwargs):
     # Remove everything past the nyquist frequency
     mel_basis   = mel_basis[:, :(n_fft/ 2  + 1)]
     
-    return np.dot(mel_basis, np.abs(S))
+    return np.dot(mel_basis, np.abs(specgram))
 
 
 #-- miscellaneous utilities --#

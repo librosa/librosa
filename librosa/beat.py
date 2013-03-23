@@ -124,11 +124,10 @@ def _beat_tracker(onsets, bpm, fft_res, tightness):
     ###### Backtrack
     ### Get the last beat
     maxes           = librosa.localmax(cumscore)
-    max_indices     = maxes.nonzero()[0]
-    peak_scores     = cumscore[max_indices]
+    peak_scores     = cumscore[np.argwhere(maxes)]
 
     median_score    = np.median(peak_scores)
-    bestendposs     = (cumscore * maxes * 2 > median_score).nonzero()[0]
+    bestendposs     = np.argwhere((cumscore * maxes * 2 > median_score))
 
     # The last of these is the last beat (since score generally increases)
     beats           = [int(bestendposs.max())]
