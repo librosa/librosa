@@ -317,7 +317,7 @@ def melspectrogram(y, sr=22050, window_length=256, hop_length=128, mel_channels=
     '''
 
     # Compute the STFT
-    S = librosa.stft(y, sr=sr, n_fft=window_length, hann_w=window_length, hop_length=hop_length)
+    S = librosa.stft(y, n_fft=window_length, hann_w=window_length, hop_length=hop_length)
 
     # Build a Mel filter
     M = melfb(sr, window_length, nfilts=mel_channels, width=width, use_htk=htk, fmin=fmin, fmax=fmax)

@@ -37,7 +37,7 @@ def load(path, sr=22050, mono=True):
     '''
 
     with audioread.audio_open(os.path.realpath(path)) as input_file:
-        sr_out = input_file.samplerate
+        sr_native = input_file.samplerate
 
         y = [numpy.frombuffer(frame, '<i2').astype(float) / float(1<<15) 
                 for frame in input_file]
@@ -48,13 +48,13 @@ def load(path, sr=22050, mono=True):
                 y = 0.5 * (y[::2] + y[1::2])
             else:
                 y = y.reshape( (-1, 2)).T
-            pass
-        pass
 
     if sr is not None:
-        return (resample(y, sr_out, sr), sr)
+        y = resample(y, sr_native, sr)
+    else:
+        sr = sr_native
 
-    return (y, sr_out)
+    return (y, sr)
 
 def resample(y, orig_sr, target_sr):
     '''
@@ -80,13 +80,12 @@ def resample(y, orig_sr, target_sr):
 
     return y_hat
 
-def stft(y, sr=22050, n_fft=256, hann_w=None, hop_length=None):
+def stft(y, n_fft=256, hann_w=None, hop_length=None):
     '''
     Short-time fourier transform
 
     Inputs:
         y           = the input signal
-        sr          = sampling rate of y            | default: 22050
         n_fft       = the number of FFT components  | default: 256
         hann_w      = size of hann window           | default: = n_fft
         hop_length  = hop length                    | default: = hann_w / 2
@@ -98,18 +97,15 @@ def stft(y, sr=22050, n_fft=256, hann_w=None, hop_length=None):
 
     if hann_w is None:
         hann_w = n_fft
-        pass
 
     if hann_w == 0:
         window = numpy.ones((n_fft,))
     else:
         window = pad(scipy.signal.hann(hann_w), n_fft)
-        pass
 
     # Set the default hop, if it's not already specified
     if hop_length is None:
         hop_length = int(n_fft / 2)
-        pass
 
     n_specbins  = 1 + int(n_fft / 2)
     n_frames    = 1 + int( (num_samples - n_fft) / hop_length)
@@ -124,7 +120,6 @@ def stft(y, sr=22050, n_fft=256, hann_w=None, hop_length=None):
 
         # Conjugate here to match phase from DPWE code
         D[:, i]     = t[:n_specbins].conj()
-        pass
 
     return D
 
@@ -148,11 +143,9 @@ def istft(d, n_fft=None, hann_w=None, hop_length=None):
 
     if n_fft is None:
         n_fft = 2 * (d.shape[0] - 1)
-        pass
 
     if hann_w is None:
         hann_w = n_fft
-        pass
 
     if hann_w == 0:
         window = numpy.ones(n_fft)
@@ -162,12 +155,10 @@ def istft(d, n_fft=None, hann_w=None, hop_length=None):
         #   2/3 scaling is to make stft(istft(.)) identity for 25% hop
         
         window = pad(scipy.signal.hann(hann_w) * 2.0 / 3, n_fft)
-        pass
 
     # Set the default hop, if it's not already specified
     if hop_length is None:
         hop_length = int(n_fft / 2.0 )
-        pass
 
     x_length    = n_fft + (n - 1) * hop_length
     x           = numpy.zeros(x_length)
@@ -178,7 +169,6 @@ def istft(d, n_fft=None, hann_w=None, hop_length=None):
 
         px              = numpy.fft.ifft(ft).real
         x[b:(b+n_fft)]  = x[b:(b+n_fft)] + window * px
-        pass
 
     return x
 
@@ -199,7 +189,6 @@ def logamplitude(S, amin=1e-10, gain_threshold=-80.0):
 
     if gain_threshold is not None:
         D = numpy.maximum(D, D.max() + gain_threshold)
-        pass
 
     return D
 
@@ -241,7 +230,7 @@ def pad(w, d_pad, v=0.0, center=True):
 
     if center:
         q = numpy.roll(q, numpy.floor((d_pad - d) / 2.0).astype(int), axis=0)
-        pass
+
     return q
 
 def autocorrelate(x, max_size=None):

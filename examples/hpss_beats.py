@@ -20,7 +20,7 @@ FFT = 2048
 
 # Load the file
 print 'Loading file ... ',
-(y, sr) = librosa.load(sys.argv[1], target_sr=SR)
+(y, sr) = librosa.load(sys.argv[1], sr=SR)
 print 'done.'
 
 # Construct log-amplitude spectrogram
