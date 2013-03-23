@@ -87,7 +87,7 @@ def test_melfb():
                                     width   =   DATA['width'][0],
                                     fmin    =   DATA['fmin'][0],
                                     fmax    =   DATA['fmax'][0],
-                                    use_htk =   DATA['htk'][0])
+                                    htk     =   DATA['htk'][0])
                                 
         assert wts.shape == DATA['wts'].shape
 
