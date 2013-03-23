@@ -13,16 +13,16 @@ import librosa
 import numpy
 
 #-- Frequency conversions --#
-def hz_to_mel(f, htk=False):
+def hz_to_mel(frequencies, htk=False):
     '''
     Convert Hz to Mels
 
     Input:
-        f:      scalar or array of frequencies
-        htk:    use HTK mel conversion instead of Slaney            | False 
+        frequencies:    scalar or array of frequencies
+        htk:            use HTK mel conversion          | default: False 
 
     Output:
-        m:      input frequencies f in Mels
+        mels:           input frequencies in Mels
     '''
 
     #     TODO:   2012-11-27 11:28:43 by Brian McFee <brm2132@columbia.edu>
@@ -30,56 +30,58 @@ def hz_to_mel(f, htk=False):
     #   redo with informative variable names
     #   then make them into parameters
 
-    if numpy.isscalar(f):
-        f = numpy.array([f], dtype=float)
+    if numpy.isscalar(frequencies):
+        frequencies = numpy.array([frequencies], dtype=float)
+    else:
+        frequencies = frequencies.astype(float)
 
     if htk:
-        return 2595.0 * numpy.log10(1.0 + f / 700.0)
+        return 2595.0 * numpy.log10(1.0 + frequencies / 700.0)
     
-    f           = f.astype(float)
+    # Fill in the linear part
+    f_min   = 0.0
+    f_sp    = 200.0 / 3
 
-    f_0         = 0.0
-    f_sp        = 200.0 / 3
-    brkfrq      = 1000.0
-    brkpt       = (brkfrq - f_0) / f_sp
-    logstep     = numpy.exp(numpy.log(6.4) / 27.0)
-    linpts      = f < brkfrq
+    mels    = (frequencies - f_min) / f_sp
 
-    nlinpts     = numpy.invert(linpts)
+    # Fill in the log-scale part
+    brkfrq  = 1000.0
+    nonlin  = frequencies >= brkfrq
 
-    z           = numpy.zeros_like(f)
+    brkpt   = (brkfrq - f_min) / f_sp
+    logstep = numpy.log(6.4) / 27.0
 
-    # Fill in parts separately
-    z[linpts]   = (f[linpts] - f_0) / f_sp
-    z[nlinpts]  = brkpt + numpy.log(f[nlinpts] / brkfrq) / numpy.log(logstep)
+    mels[nonlin]  = brkpt + numpy.log(frequencies[nonlin] / brkfrq) / logstep
 
-    return z
+    return mels
 
-def mel_to_hz(z, htk=False):
+def mel_to_hz(mels, htk=False):
     '''
     Convert mel numbers to frequencies
 
     '''
-    if numpy.isscalar(z):
-        z = numpy.array([z], dtype=float)
+    if numpy.isscalar(mels):
+        mels = numpy.array([mels], dtype=float)
+    else:
+        mels = mels.astype(float)
 
     if htk:
-        return 700.0 * (10.0**(z / 2595.0) - 1.0)
+        return 700.0 * (10.0**(mels / 2595.0) - 1.0)
 
-    z           = z.astype(float)
-    f_0         = 0.0
+    # Fill in the linear scale
+    f_min       = 0.0
     f_sp        = 200.0 / 3
-    brkfrq      = 1000
-    brkpt       = (brkfrq - f_0) / f_sp
-    logstep     = numpy.exp(numpy.log(6.4) / 27.0)
-    f           = numpy.zeros_like(z)
-    linpts      = z < brkpt
-    nlinpts     = numpy.invert(linpts)
+    frequencies = f_min + f_sp * mels
 
-    f[linpts]   = f_0 + f_sp * z[linpts]
-    f[nlinpts]  = brkfrq * numpy.exp(numpy.log(logstep) * (z[nlinpts] - brkpt))
+    # And now the nonlinear scale
+    brkfrq      = 1000.0
+    brkpt       = (brkfrq - f_min) / f_sp
+    logstep     = numpy.log(6.4) / 27.0
+    nonlin      = mels >= brkpt
 
-    return f
+    frequencies[nonlin] = brkfrq * numpy.exp(logstep * (mels[nonlin] - brkpt))
+
+    return frequencies
 
 def hz_to_octs(frequencies, A440=440.0):
     '''
