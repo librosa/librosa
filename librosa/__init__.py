@@ -28,7 +28,7 @@ def load(path, sr=22050, mono=True):
 
     Input:
         path:       path to the input file
-        target_sr:  target sample rate                      | default: 22050 
+        sr:         target sample rate                      | default: 22050 
                     'None' uses the native sampling rate
 
         mono:       convert to mono?                        | default: True
