@@ -47,13 +47,13 @@ def beat_track(onsets=None, y=None, sr=22050, hop_length=64, start_bpm=120.0):
     bpm     = onset_estimate_bpm(onsets, start_bpm, fft_res)
     
     # Then, run the tracker: tightness = 400
-    beats   = _beat_tracker(onsets, bpm, fft_res, 400)
+    beats   = __beat_tracker(onsets, bpm, fft_res, 400)
 
     return (bpm, beats)
 
 
 
-def _beat_tracker(onsets, bpm, fft_res, tightness):
+def __beat_tracker(onsets, bpm, fft_res, tightness):
     '''
         Internal function that does beat tracking from a given onset profile.
 
@@ -66,89 +66,107 @@ def _beat_tracker(onsets, bpm, fft_res, tightness):
         Output:
             frame numbers of beat events
     '''
+
+    #--- First, some helper functions ---#
+    def rbf(points):
+        '''
+        Makes a smoothing filter for onsets
+        '''
+        return np.exp(-0.5 * (points**2))
+
+    def beat_track_dp(localscore):  
+        '''
+        Core dynamic program for beat tracking
+        '''
+        backlink    = np.zeros_like(localscore, dtype=int)
+        cumscore    = np.zeros_like(localscore)
+
+        # Search range for previous beat
+        window      = np.arange(-2*period, -np.round(period/2) + 1, dtype=int)
+
+        # Make a score window, which begins biased toward start_bpm and skewed 
+        txwt        = - tightness * np.log(-window /period)**2
+
+        # Are we on the first beat?
+        first_beat  = True
+        for i in xrange(len(localscore)):
+
+            # Are we reaching back before time 0?
+            z_pad = np.maximum(0, min(- window[0], len(window)))
+
+            # Search over all possible predecessors 
+            candidates          = txwt.copy()
+            candidates[z_pad:]  = candidates[z_pad:] + cumscore[window[z_pad:]]
+
+            # Find the best preceding beat
+            beat_location       = np.argmax(candidates)
+
+            # Add the local score
+            cumscore[i]         = localscore[i] + candidates[beat_location]
+
+            # Special case the first onset.  Stop if the localscore is small
+            if first_beat and localscore[i] < 0.01 * localscore.max():
+                backlink[i]     = -1
+            else:
+                backlink[i]     = window[beat_location]
+                first_beat      = False
+
+            # Update the time range
+            window  = window + 1
+
+        return (backlink, cumscore)
+
+    def get_last_beat(cumscore):
+        '''
+        Get the last beat from the cumulative score array
+        '''
+        maxes       = librosa.localmax(cumscore)
+        med_score   = np.median(cumscore[np.argwhere(maxes)])
+
+        # The last of these is the last beat (since score generally increases)
+        return np.argwhere((cumscore * maxes * 2 > med_score)).max()
+
+    def smooth_beats(beats):
+        '''
+        Final post-processing: throw out spurious leading/trailing beats
+        '''
+        
+        smooth_boe  = scipy.signal.convolve(localscore[beats], 
+                                            scipy.signal.hann(5), 'same')
+
+        threshold   = 0.5 * ((smooth_boe**2).mean()**0.5)
+        valid       = np.argwhere(smooth_boe > threshold)
+
+        return  beats[valid.min():valid.max()]
+    #--- End of helper functions ---#
+
+    # convert bpm to a sample period for searching
     period      = round(60.0 * fft_res / bpm)
 
-    # AGC the onset envelope
-    onsets      = onsets / onsets.std(ddof=1)
+    # localscore is a smoothed version of AGC'd onset envelope
+    localscore  = scipy.signal.convolve(
+                        onsets / onsets.std(ddof=1), 
+                        rbf(np.arange(-period, period+1)*32.0/period), 
+                        'same')
 
-    # Smooth beat events with a gaussian window
-    # FIXME:  2013-03-23 09:31:04 by Brian McFee <brm2132@columbia.edu>
-    # this is uglified to match matlab implementation     
-    template    = np.exp(-0.5*((np.arange(-period, period+1)*32.0/period)**2))
+    ### run the DP
+    (backlink, cumscore) = beat_track_dp(localscore)
 
-    # Convolve 
-    localscore  = scipy.signal.convolve(onsets, template, 'same')
-    max_score   = np.max(localscore)
+    ### get the position of the last beat
+    beats   = [get_last_beat(cumscore)]
 
-    ### Initialize DP
-
-    backlink    = np.zeros_like(localscore, dtype=int)
-    cumscore    = np.zeros_like(localscore)
-
-    # Search range for previous beat: number of samples forward/backward to look
-    window      = np.arange(-2*period, -np.round(period/2) + 1, dtype=int)
-
-    # Make a score window, which begins biased toward start_bpm and skewed 
-    txwt        = - tightness * np.abs(np.log(-window /period))**2
-
-    time_range  = window
-
-    # Are we on the first beat?
-    first_beat  = True
-    for i in xrange(len(localscore)):
-
-        # Are we reaching back before time 0?
-        z_pad = np.maximum(0, min(- time_range[0], len(window)))
-
-        # Search over all possible predecessors and apply transition weighting
-        candidates          = txwt.copy()
-        candidates[z_pad:]  = candidates[z_pad:] + cumscore[time_range[z_pad:]]
-
-        # Find the best preceding beat
-        beat_location       = np.argmax(candidates)
-
-        # Add the local score
-        cumscore[i]         = localscore[i] + candidates[beat_location]
-
-        # Special case the first onset.  Stop if the localscore is small
-        if first_beat and localscore[i] < 0.01 * max_score:
-            backlink[i]     = -1
-        else:
-            backlink[i]     = time_range[beat_location]
-            first_beat      = False
-
-        # Update the time range
-        time_range          = time_range + 1
-
-
-    ###### Backtrack
-    ### Get the last beat
-    maxes           = librosa.localmax(cumscore)
-    peak_scores     = cumscore[np.argwhere(maxes)]
-
-    median_score    = np.median(peak_scores)
-    bestendposs     = np.argwhere((cumscore * maxes * 2 > median_score))
-
-    # The last of these is the last beat (since score generally increases)
-    beats           = [int(bestendposs.max())]
-
+    ### Reconstruct the beat path from backlinks
     while backlink[beats[-1]] >= 0:
         beats.append(backlink[beats[-1]])
 
-    # Put the beats in ascending order
+    ### Put the beats in ascending order
     beats.reverse()
 
-    # Convert into an array of frame numbers
+    ### Convert into an array of frame numbers
     beats = np.array(beats, dtype=int)
 
-    # Final post-processing: throw out spurious leading/trailing beats
-    boe             = localscore[beats]
-    smooth_boe      = scipy.signal.convolve(boe, scipy.signal.hann(5), 'same')
-
-    threshold       = 0.5 * ((smooth_boe**2).mean()**0.5)
-
-    valid           = np.argwhere(smooth_boe > threshold)
-    beats           = beats[valid.min():valid.max()]
+    ### Discard spurious trailing beats
+    beats = smooth_beats(beats)
 
     # Add one to account for differencing offset
     return 1 + beats
