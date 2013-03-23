@@ -48,6 +48,9 @@ function testData(source_path, output_path)
     display('melfb');
     testMelfb(output_path);
 
+    display('chromafb');
+    testChromafb(output_path);
+
     display('resample');
     testResample(output_path);
 
@@ -354,4 +357,54 @@ function testBeat(output_path)
     display(['  `-- saving ', filename]);
     save(filename, 'wavfile', 'beats', 'onsetenv');
 
+end
+
+function testChromafb(output_path)
+
+    % Test three sample rates
+    P_SR        = [8000, 11025, 22050];
+
+    % Two FFT lengths
+    P_NFFT      = [256, 512];
+
+    % Two filter bank sizes
+    P_NCHROMA   = [12, 24];
+
+    % Two A440s
+    P_A440      = [435.0, 440.0];
+
+    % Two center octaves
+    P_CTROCT    = [4.0, 5.0];
+
+    % Two octave widths
+    P_OCTWIDTH  = [0, 2.0];
+
+    % Generate tests
+    counter = 0;
+
+    for sr = P_SR
+        for nfft = P_NFFT
+            for nchroma = P_NCHROMA
+                for a440 = P_A440
+                    for ctroct = P_CTROCT
+                        for octwidth = P_OCTWIDTH
+
+                            % Run the function
+                            wts = fft2chromamx(nfft, nchroma, sr, a440, ctroct, octwidth);
+
+                            % save the output
+                            counter = counter + 1;
+
+                            filename = sprintf('%s/feature-chromafb-%03d.mat', output_path, counter);
+                            display(['  `-- saving ', filename]);
+
+                            save(filename, ...
+                                    'sr', 'nfft', 'nchroma', 'a440', ...
+                                    'ctroct', 'octwidth', 'wts');
+                        end
+                    end
+                end
+            end
+        end
+    end
 end

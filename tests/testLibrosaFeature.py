@@ -95,3 +95,27 @@ def test_melfb():
     for infile in files('data/feature-melfb-*.mat'):
         yield (__test, infile)
     pass
+
+def test_chromafb():
+
+    def __test(infile):
+        DATA    = load(infile)
+
+        octwidth = DATA['octwidth'][0,0]
+        if octwidth == 0:
+            octwidth = None
+
+        wts = librosa.feature.chromafb( DATA['sr'][0,0], 
+                                        DATA['nfft'][0,0], 
+                                        DATA['nchroma'][0,0],
+                                        A440    =   DATA['a440'][0,0],
+                                        ctroct  =   DATA['ctroct'][0,0],
+                                        octwidth=   octwidth)
+                                
+        assert wts.shape == DATA['wts'].shape
+
+        assert numpy.allclose(wts, DATA['wts'])
+
+    for infile in files('data/feature-chromafb-*.mat'):
+        yield (__test, infile)
+    pass
