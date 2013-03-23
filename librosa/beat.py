@@ -41,11 +41,13 @@ def beat_track(onsets=None, y=None, sr=22050, hop_length=64, start_bpm=120.0):
 
         onsets  = onset_strength(y=y, sr=sr, hop_length=hop_length)
 
+    fft_res = float(sr) / hop_length
+
     # Then, estimate bpm
-    bpm     = onset_estimate_bpm(onsets, start_bpm, sr, hop_length)
+    bpm     = onset_estimate_bpm(onsets, start_bpm, fft_res)
     
     # Then, run the tracker: tightness = 400
-    beats   = _beat_tracker(onsets, bpm, float(sr)/hop_length, 400)
+    beats   = _beat_tracker(onsets, bpm, fft_res, 400)
 
     return (bpm, beats)
 
@@ -89,27 +91,24 @@ def _beat_tracker(onsets, bpm, fft_res, tightness):
     # Make a score window, which begins biased toward start_bpm and skewed 
     txwt        = - tightness * np.abs(np.log(-window /period))**2
 
+    time_range  = window
+
     # Are we on the first beat?
     first_beat  = True
-
-    time_range  = window
-    # Forward step
     for i in xrange(len(localscore)):
 
         # Are we reaching back before time 0?
         z_pad = np.maximum(0, min(- time_range[0], len(window)))
 
         # Search over all possible predecessors and apply transition weighting
-        score_candidates                = txwt.copy()
-        score_candidates[z_pad:]        = score_candidates[z_pad:] \
-                                        + cumscore[time_range[z_pad:]]
+        candidates          = txwt.copy()
+        candidates[z_pad:]  = candidates[z_pad:] + cumscore[time_range[z_pad:]]
 
-        # Find the best predecessor beat
-        beat_location       = np.argmax(score_candidates)
-        current_score       = score_candidates[beat_location]
+        # Find the best preceding beat
+        beat_location       = np.argmax(candidates)
 
         # Add the local score
-        cumscore[i]         = current_score + localscore[i]
+        cumscore[i]         = localscore[i] + candidates[beat_location]
 
         # Special case the first onset.  Stop if the localscore is small
         if first_beat and localscore[i] < 0.01 * max_score:
@@ -155,33 +154,30 @@ def _beat_tracker(onsets, bpm, fft_res, tightness):
     # Add one to account for differencing offset
     return 1 + beats
 
-def onset_estimate_bpm(onsets, start_bpm, sr, hop_length):
+def onset_estimate_bpm(onsets, start_bpm, fft_res):
     '''
     Estimate the BPM from an onset envelope.
 
     Input:
         onsets:         time-series of onset strengths
         start_bpm:      initial guess of the BPM
-        sr:             sample rate of the time series
-        hop_length:     hop length of the time series
+        fft_res:        resolution of FFT (sample rate / hop length)
 
     Output:
         estimated BPM
     '''
-    AC_SIZE     = 4.0
-    DURATION    = 90.0
-    END_TIME    = 90.0
-    BPM_STD     = 1.0
-
-    fft_res     = np.float(sr) / hop_length
+    ac_size     = 4.0
+    duration    = 90.0
+    end_time    = 90.0
+    bpm_std     = 1.0
 
     # Chop onsets to X[(upper_limit - duration):upper_limit]
     # or as much as will fit
-    maxcol      = min(len(onsets)-1, np.round(END_TIME * fft_res))
-    mincol      = max(0,    maxcol - np.round(DURATION * fft_res))
+    maxcol      = min(len(onsets)-1, np.round(end_time * fft_res))
+    mincol      = max(0,    maxcol - np.round(duration * fft_res))
 
     # Use auto-correlation out of 4 seconds (empirically set??)
-    ac_window   = np.round(AC_SIZE * fft_res)
+    ac_window   = np.round(ac_size * fft_res)
 
     # Compute the autocorrelation
     x_corr      = librosa.autocorrelate(onsets[mincol:maxcol], ac_window)
@@ -193,7 +189,7 @@ def onset_estimate_bpm(onsets, start_bpm, sr, hop_length):
     bpms    = 60.0 * fft_res / (np.arange(1, ac_window+1))
 
     # Smooth the autocorrelation by a log-normal distribution
-    x_corr  = x_corr * np.exp(-0.5 * ((np.log2(bpms / start_bpm)) / BPM_STD)**2)
+    x_corr  = x_corr * np.exp(-0.5 * ((np.log2(bpms / start_bpm)) / bpm_std)**2)
 
     # Get the local maximum of weighted correlation
     x_peaks = librosa.localmax(x_corr)
@@ -201,11 +197,11 @@ def onset_estimate_bpm(onsets, start_bpm, sr, hop_length):
     # Zero out all peaks before the first negative
     x_peaks[:np.argmax(x_corr < 0)] = False
 
-    # Find the largest (local) max
-    start_period    = np.argmax(x_peaks * x_corr)
 
     # Choose the best peak out of .33, .5, 2, 3 * start_period
-    candidates      = np.multiply(start_period, [1.0/3, 1.0/2, 1.0, 2.0, 3.0])
+    candidates      = np.multiply(  np.argmax(x_peaks * x_corr), 
+                                    [1.0/3, 1.0/2, 1.0, 2.0, 3.0])
+
     candidates      = candidates.astype(int)
     candidates      = candidates[candidates < ac_window]
 
