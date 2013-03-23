@@ -21,7 +21,7 @@ import librosa.output
 
 
 #-- CORE ROUTINES --#
-def load(path, target_sr=22050, mono=True):
+def load(path, sr=22050, mono=True):
     '''
     Load an audio file into a single, long time series
 
@@ -36,23 +36,25 @@ def load(path, target_sr=22050, mono=True):
         sr:         the sampling rate
     '''
 
-    with audioread.audio_open(os.path.realpath(path)) as f:
-        sr = f.samplerate
-        y = [numpy.frombuffer(frame, '<i2').astype(float) / float(1<<15) for frame in f]
+    with audioread.audio_open(os.path.realpath(path)) as input_file:
+        sr_out = input_file.samplerate
+
+        y = [numpy.frombuffer(frame, '<i2').astype(float) / float(1<<15) 
+                for frame in input_file]
+
         y = numpy.concatenate(y)
-        if f.channels > 1:
+        if input_file.channels > 1:
             if mono:
                 y = 0.5 * (y[::2] + y[1::2])
             else:
                 y = y.reshape( (-1, 2)).T
-                pass
             pass
         pass
 
-    if target_sr is not None:
-        return (resample(y, sr, target_sr), target_sr)
+    if sr is not None:
+        return (resample(y, sr_out, sr), sr)
 
-    return (y, sr)
+    return (y, sr_out)
 
 def resample(y, orig_sr, target_sr):
     '''
@@ -267,5 +269,6 @@ def localmax(x):
         left edges do not fire, right edges might.
     '''
 
-    return numpy.logical_and(x > numpy.hstack([x[0], x[:-1]]), x >= numpy.hstack([x[1:], x[-1]]))
+    return numpy.logical_and(x > numpy.hstack([x[0], x[:-1]]), 
+                             x >= numpy.hstack([x[1:], x[-1]]))
 
