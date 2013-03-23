@@ -12,7 +12,8 @@ All things rhythmic go here
 '''
 
 import librosa
-import numpy, scipy, scipy.signal, scipy.ndimage
+import numpy as np
+import scipy, scipy.signal, scipy.ndimage
 import sklearn, sklearn.cluster, sklearn.feature_extraction
 
 def beat_track(onsets=None, y=None, sr=22050, hop_length=64, start_bpm=120.0):
@@ -44,19 +45,26 @@ def beat_track(onsets=None, y=None, sr=22050, hop_length=64, start_bpm=120.0):
     bpm     = onset_estimate_bpm(onsets, start_bpm, sr, hop_length)
     
     # Then, run the tracker: tightness = 400
-    beats   = _beat_tracker(onsets, bpm, sr, hop_length, 400)
+    beats   = _beat_tracker(onsets, bpm, float(sr)/hop_length, 400)
 
     return (bpm, beats)
 
 
 
-def _beat_tracker(onsets, start_bpm, sr, hop_length, tightness):
+def _beat_tracker(onsets, bpm, fft_res, tightness):
     '''
         Internal function that does beat tracking from a given onset profile.
 
+        Input:
+            onsets:     the onset envelope
+            bpm:        the tempo estimate
+            fft_res:    resolution of the fft (sr / hop_length)
+            tightness:  tight
+
+        Output:
+            frame numbers of beat events
     '''
-    fft_res     = numpy.float(sr) / hop_length
-    period      = round(60.0 * fft_res / start_bpm)
+    period      = round(60.0 * fft_res / bpm)
 
     # AGC the onset envelope
     onsets      = onsets / onsets.std(ddof=1)
@@ -64,32 +72,32 @@ def _beat_tracker(onsets, start_bpm, sr, hop_length, tightness):
     # Smooth beat events with a gaussian window
     # FIXME:  2013-03-23 09:31:04 by Brian McFee <brm2132@columbia.edu>
     # this is uglified to match matlab implementation     
-    template    = numpy.exp(-0.5 * ((numpy.arange(-period, period+1) * 32.0 / period )**2))
+    template    = np.exp(-0.5*((np.arange(-period, period+1)*32.0/period)**2))
 
     # Convolve 
     localscore  = scipy.signal.convolve(onsets, template, 'same')
-    max_score   = numpy.max(localscore)
+    max_score   = np.max(localscore)
 
     ### Initialize DP
 
-    backlink    = numpy.zeros_like(localscore, dtype=int)
-    cumscore    = numpy.zeros_like(localscore)
+    backlink    = np.zeros_like(localscore, dtype=int)
+    cumscore    = np.zeros_like(localscore)
 
     # Search range for previous beat: number of samples forward/backward to look
-    window      = numpy.arange(-2*period, -numpy.round(period/2) + 1, dtype=int)
+    window      = np.arange(-2*period, -np.round(period/2) + 1, dtype=int)
 
     # Make a score window, which begins biased toward start_bpm and skewed 
-    txwt        = - tightness * numpy.abs(numpy.log(-window /period))**2
+    txwt        = - tightness * np.abs(np.log(-window /period))**2
 
     # Are we on the first beat?
-    first_beat      = True
+    first_beat  = True
 
-    time_range      = window
+    time_range  = window
     # Forward step
     for i in xrange(len(localscore)):
 
         # Are we reaching back before time 0?
-        z_pad = numpy.maximum(0, min(- time_range[0], len(window)))
+        z_pad = np.maximum(0, min(- time_range[0], len(window)))
 
         # Search over all possible predecessors and apply transition weighting
         score_candidates                = txwt.copy()
@@ -97,7 +105,7 @@ def _beat_tracker(onsets, start_bpm, sr, hop_length, tightness):
                                         + cumscore[time_range[z_pad:]]
 
         # Find the best predecessor beat
-        beat_location       = numpy.argmax(score_candidates)
+        beat_location       = np.argmax(score_candidates)
         current_score       = score_candidates[beat_location]
 
         # Add the local score
@@ -113,37 +121,39 @@ def _beat_tracker(onsets, start_bpm, sr, hop_length, tightness):
         # Update the time range
         time_range          = time_range + 1
 
+
+    ###### Backtrack
     ### Get the last beat
     maxes           = librosa.localmax(cumscore)
     max_indices     = maxes.nonzero()[0]
     peak_scores     = cumscore[max_indices]
 
-    median_score    = numpy.median(peak_scores)
+    median_score    = np.median(peak_scores)
     bestendposs     = (cumscore * maxes * 2 > median_score).nonzero()[0]
 
     # The last of these is the last beat (since score generally increases)
-    b               = [int(bestendposs.max())]
+    beats           = [int(bestendposs.max())]
 
-    while backlink[b[-1]] >= 0:
-        b.append(backlink[b[-1]])
+    while backlink[beats[-1]] >= 0:
+        beats.append(backlink[beats[-1]])
 
     # Put the beats in ascending order
-    b.reverse()
+    beats.reverse()
 
     # Convert into an array of frame numbers
-    b = numpy.array(b, dtype=int)
+    beats = np.array(beats, dtype=int)
 
     # Final post-processing: throw out spurious leading/trailing beats
-    boe             = localscore[b]
+    boe             = localscore[beats]
     smooth_boe      = scipy.signal.convolve(boe, scipy.signal.hann(5), 'same')
 
     threshold       = 0.5 * ((smooth_boe**2).mean()**0.5)
 
-    valid           = numpy.argwhere(smooth_boe > threshold)
-    b               = b[valid.min():valid.max()]
+    valid           = np.argwhere(smooth_boe > threshold)
+    beats           = beats[valid.min():valid.max()]
 
     # Add one to account for differencing offset
-    return 1 + b
+    return 1 + beats
 
 def onset_estimate_bpm(onsets, start_bpm, sr, hop_length):
     '''
@@ -163,15 +173,15 @@ def onset_estimate_bpm(onsets, start_bpm, sr, hop_length):
     END_TIME    = 90.0
     BPM_STD     = 1.0
 
-    fft_res     = numpy.float(sr) / hop_length
+    fft_res     = np.float(sr) / hop_length
 
     # Chop onsets to X[(upper_limit - duration):upper_limit]
     # or as much as will fit
-    maxcol      = min(len(onsets)-1, numpy.round(END_TIME * fft_res))
-    mincol      = max(0,    maxcol - numpy.round(DURATION * fft_res))
+    maxcol      = min(len(onsets)-1, np.round(END_TIME * fft_res))
+    mincol      = max(0,    maxcol - np.round(DURATION * fft_res))
 
     # Use auto-correlation out of 4 seconds (empirically set??)
-    ac_window   = numpy.round(AC_SIZE * fft_res)
+    ac_window   = np.round(AC_SIZE * fft_res)
 
     # Compute the autocorrelation
     x_corr      = librosa.autocorrelate(onsets[mincol:maxcol], ac_window)
@@ -180,26 +190,26 @@ def onset_estimate_bpm(onsets, start_bpm, sr, hop_length):
     #   FIXME:  2013-01-25 08:55:40 by Brian McFee <brm2132@columbia.edu>
     #   this fails if ac_window > length of song   
     # re-weight the autocorrelation by log-normal prior
-    bpms    = 60.0 * fft_res / (numpy.arange(1, ac_window+1))
+    bpms    = 60.0 * fft_res / (np.arange(1, ac_window+1))
 
     # Smooth the autocorrelation by a log-normal distribution
-    x_corr  = x_corr * numpy.exp(-0.5 * ((numpy.log2(bpms / start_bpm)) / BPM_STD)**2)
+    x_corr  = x_corr * np.exp(-0.5 * ((np.log2(bpms / start_bpm)) / BPM_STD)**2)
 
     # Get the local maximum of weighted correlation
     x_peaks = librosa.localmax(x_corr)
 
     # Zero out all peaks before the first negative
-    x_peaks[:numpy.argmax(x_corr < 0)] = False
+    x_peaks[:np.argmax(x_corr < 0)] = False
 
     # Find the largest (local) max
-    start_period    = numpy.argmax(x_peaks * x_corr)
+    start_period    = np.argmax(x_peaks * x_corr)
 
     # Choose the best peak out of .33, .5, 2, 3 * start_period
-    candidates      = numpy.multiply(start_period, [1.0/3, 1.0/2, 1.0, 2.0, 3.0])
+    candidates      = np.multiply(start_period, [1.0/3, 1.0/2, 1.0, 2.0, 3.0])
     candidates      = candidates.astype(int)
     candidates      = candidates[candidates < ac_window]
 
-    best_period     = numpy.argmax(x_corr[candidates])
+    best_period     = np.argmax(x_corr[candidates])
 
     return 60.0 * fft_res / candidates[best_period]
 
@@ -236,12 +246,12 @@ def onset_strength(S=None, y=None, sr=22050, **kwargs):
 
 
     ### Compute first difference
-    onsets  = numpy.diff(S, n=1, axis=1)
+    onsets  = np.diff(S, n=1, axis=1)
 
     ### Discard negatives (decreasing amplitude)
     #   falling edges could also be useful segmentation cues
     #   to catch falling edges, replace max(0,D) with abs(D)
-    onsets  = numpy.maximum(0.0, onsets)
+    onsets  = np.maximum(0.0, onsets)
 
     ### Average over mel bands
     onsets  = onsets.mean(axis=0)
@@ -251,13 +261,13 @@ def onset_strength(S=None, y=None, sr=22050, **kwargs):
 
     return onsets 
 
-def segment(X, k):
+def segment(data, k):
     '''
         Perform bottom-up temporal segmentation
 
         Input:
-            X:  d-by-t  spectrogram (t frames)
-            k:          number of segments to produce
+            data:   d-by-t  spectrogram (t frames)
+            k:      number of segments to produce
 
         Output:
             s:          segment boundaries (frame numbers)
@@ -267,33 +277,33 @@ def segment(X, k):
     '''
 
     # Connect the temporal connectivity graph
-    G = sklearn.feature_extraction.image.grid_to_graph( n_x=X.shape[1], 
-                                                        n_y=1, 
-                                                        n_z=1)
+    grid = sklearn.feature_extraction.image.grid_to_graph(  n_x=data.shape[1], 
+                                                            n_y=1, 
+                                                            n_z=1)
 
     # Instantiate the clustering object
-    W = sklearn.cluster.Ward(n_clusters=k, connectivity=G)
+    ward = sklearn.cluster.Ward(n_clusters=k, connectivity=grid)
 
     # Fit the model
-    W.fit(X.T)
+    ward.fit(data.T)
 
     # Instantiate output objects
-    C = numpy.zeros( (X.shape[0], k) )
-    V = numpy.zeros( (X.shape[0], k) )
-    N = numpy.zeros(k, dtype=int)
+    centers     = np.empty( (data.shape[0], k) )
+    variances   = np.empty( (data.shape[0], k) )
+    starts      = np.empty(k, dtype=int)
 
     # Find the change points from the labels
-    d = list(1 + numpy.nonzero(numpy.diff(W.labels_))[0].astype(int))
+    deltas  = list(1 + np.nonzero(np.diff(ward.labels_))[0].astype(int))
 
     # tack on the last frame as a change point
-    d.append(X.shape[1])
+    deltas.append(data.shape[1])
 
-    s = 0
-    for (i, t) in enumerate(d):
-        N[i]    = s
-        C[:, i] = numpy.mean(X[:, s:t], axis=1)
-        V[:, i] = numpy.var(X[:, s:t], axis=1)
-        s       = t
+    start = 0
+    for (i, end) in enumerate(deltas):
+        starts[i]       = start
+        centers[:, i]   = np.mean(data[:, start:end], axis=1)
+        variances[:, i] = np.var( data[:, start:end], axis=1)
+        start           = end
 
-    return (N, C, V)
+    return (starts, centers, variances)
 
