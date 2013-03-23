@@ -15,7 +15,7 @@ import librosa
 import numpy, scipy.ndimage
 
 SR  = 22050
-HOP = 256
+HOP = 64
 FFT = 2048
 
 # Load the file
@@ -25,7 +25,7 @@ print 'done.'
 
 # Construct log-amplitude spectrogram
 print 'Harmonic-percussive separation ... ',
-S = librosa.melspectrogram(y, sr, FFT, hop_length=HOP, mel_channels=128)**0.5
+S = librosa.feature.melspectrogram(y, sr, FFT, hop_length=HOP, mel_channels=128)**0.5
 
 # Do HPSS
 (H, P) = librosa.hpss.hpss_median(S, p=4.0)
@@ -34,10 +34,10 @@ print 'done.'
 # Construct onset envelope from percussive component
 print 'Beat tracking ... ',
 
-#O = librosa.beat.onset_strength(y, sr, window_length=FFT, hop_length=HOP, S=P)
+O = librosa.beat.onset_strength(y, sr, window_length=FFT, hop_length=HOP, S=P)
 
 # Use LoG(P) for the onset profile
-O = numpy.mean(scipy.ndimage.gaussian_laplace(P, [1.0, 0.0]), axis=0)
+# O = numpy.mean(scipy.ndimage.gaussian_laplace(P, [1.0, 0.0]), axis=0)
 
 # Track the beats
 (bpm, beats) = librosa.beat.beat_track(y, sr, hop_length=HOP, onsets=O)

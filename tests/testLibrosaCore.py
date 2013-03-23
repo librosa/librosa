@@ -48,7 +48,7 @@ def test_load():
 
     def __test(infile):
         DATA    = load(infile)
-        (y, sr) = librosa.load(DATA['wavfile'][0], target_sr=None, mono=DATA['mono'])
+        (y, sr) = librosa.load(DATA['wavfile'][0], sr=None, mono=DATA['mono'])
 
         # Verify that the sample rate is correct
         assert sr == DATA['sr']
@@ -66,7 +66,7 @@ def test_resample():
         DATA    = load(infile)
         
         # load the wav file
-        (y_in, sr_in) = librosa.load(DATA['wavfile'][0], target_sr=None, mono=True)
+        (y_in, sr_in) = librosa.load(DATA['wavfile'][0], sr=None, mono=True)
 
         # Resample it to the target rate
         y_out = librosa.resample(y_in, DATA['sr_in'], DATA['sr_out'])
@@ -95,7 +95,7 @@ def test_stft():
         DATA    = load(infile)
 
         # Load the file
-        (y, sr) = librosa.load(DATA['wavfile'][0], target_sr=None, mono=True)
+        (y, sr) = librosa.load(DATA['wavfile'][0], sr=None, mono=True)
 
         # Compute the STFT
         D       = librosa.stft(y, sr,   n_fft       =   DATA['nfft'][0].astype(int),
