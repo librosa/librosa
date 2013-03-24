@@ -134,66 +134,65 @@ def chromagram(S, sr, norm='inf', **kwargs):
     return chroma_norm * raw_chroma
 
 
-def chromafb(sr, n_fft, nchroma, A440=440.0, ctroct=5.0, octwidth=None):
-    """Create a Filterbank matrix to convert FFT to Chroma.
+def chromafb(sr, n_fft, n_chroma, A440=440.0, ctroct=5.0, octwidth=None):
+    '''
+    Create a Filterbank matrix to convert FFT to Chroma.
 
-    Based on Dan Ellis's fft2chromamx.m
+    Input:
+        sr:         Sampling rate of the incoming signal
+        n_fft:      FFT length to use
+        n_chroma:   Number of chroma dimensions
+        A440:       Reference frequency in Hz for A         | default: 440.0
+        ctroct:                                             | default: 5.0
+        octwidth:                                           | default: None
+                    These parameters specify a dominance window - Gaussian
+                    weighting centered on ctroct (in octs, re A0 = 27.5Hz) and
+                    with a gaussian half-width of octwidth.  
+                    Defaults to halfwidth = inf i.e. flat.
 
-    Parameters
-    ----------
-    sr: int
-        Sampling rate of the incoming signal.
-    n_fft : int
-        FFT length to use.
-    nchroma : int
-        Number of chroma dimensions to return (number of bins per octave).
-    A440 : float
-        Reference frequency in Hz for A.  Defaults to 440.
-    ctroct, octwidth : float
-        These parameters specify a dominance window - Gaussian
-        weighting centered on ctroct (in octs, re A0 = 27.5Hz) and
-        with a gaussian half-width of octwidth.  Defaults to
-        halfwidth = inf i.e. flat.
-    """
+    Output:
+        wts:    n_chroma-by-n_fft chroma filter matrix
 
-    wts         = np.zeros((nchroma, n_fft))
+    '''
+
+    wts         = np.zeros((n_chroma, n_fft))
 
     fft_res     = float(sr) / n_fft
 
     frequencies = np.arange(fft_res, sr, fft_res)
 
-    fftfrqbins  = nchroma * hz_to_octs(frequencies, A440)
+    fftfrqbins  = n_chroma * hz_to_octs(frequencies, A440)
 
     # make up a value for the 0 Hz bin = 1.5 octaves below bin 1
     # (so chroma is 50% rotated from bin 1, and bin width is broad)
-    fftfrqbins = np.concatenate( (   [fftfrqbins[0] - 1.5 * nchroma],
+    fftfrqbins = np.concatenate( (   [fftfrqbins[0] - 1.5 * n_chroma],
                                         fftfrqbins))
 
     binwidthbins = np.concatenate(
         (np.maximum(fftfrqbins[1:] - fftfrqbins[:-1], 1.0), [1]))
 
-    D = np.tile(fftfrqbins, (nchroma, 1))  \
-        - np.tile(np.arange(0, nchroma, dtype='d')[:,np.newaxis], 
+    D = np.tile(fftfrqbins, (n_chroma, 1))  \
+        - np.tile(np.arange(0, n_chroma, dtype='d')[:,np.newaxis], 
         (1,n_fft))
 
-    nchroma2 = round(nchroma / 2.0)
+    n_chroma2 = round(n_chroma / 2.0)
 
-    # Project into range -nchroma/2 .. nchroma/2
-    # add on fixed offset of 10*nchroma to ensure all values passed to
+    # Project into range -n_chroma/2 .. n_chroma/2
+    # add on fixed offset of 10*n_chroma to ensure all values passed to
     # rem are +ve
-    D = np.remainder(D + nchroma2 + 10*nchroma, nchroma) - nchroma2
+    D = np.remainder(D + n_chroma2 + 10*n_chroma, n_chroma) - n_chroma2
 
     # Gaussian bumps - 2*D to make them narrower
-    wts = np.exp(-0.5 * (2*D / np.tile(binwidthbins, (nchroma, 1)))**2)
+    wts = np.exp(-0.5 * (2*D / np.tile(binwidthbins, (n_chroma, 1)))**2)
 
     # normalize each column
-    wts /= np.tile(np.sqrt(np.sum(wts**2, 0)), (nchroma, 1))
+    wts /= np.tile(np.sqrt(np.sum(wts**2, 0)), (n_chroma, 1))
 
     # Maybe apply scaling for fft bins
     if octwidth is not None:
         wts *= np.tile(
-            np.exp(-0.5 * (((fftfrqbins/nchroma - ctroct)/octwidth)**2)),
-            (nchroma, 1))
+            np.exp(-0.5 * (((fftfrqbins/n_chroma - ctroct)/octwidth)**2)),
+            (n_chroma, 1))
 
     # remove aliasing columns
     wts[:, (1 + n_fft/2):] = 0.0
