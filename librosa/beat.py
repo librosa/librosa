@@ -16,14 +16,14 @@ import numpy as np
 import scipy, scipy.signal, scipy.ndimage
 import sklearn, sklearn.cluster, sklearn.feature_extraction
 
-def beat_track(onsets=None, y=None, sr=22050, hop_length=64, start_bpm=120.0):
+def beat_track(y=None, sr=22050, onsets=None, hop_length=64, start_bpm=120.0):
     '''
     Ellis-style beat tracker
 
     Input:
-        onsets:         pre-computed onset envelope                 | default: None
         y:              time-series data                            | default: None
         sr:             sample rate of y                            | default: 22050
+        onsets:         pre-computed onset envelope                 | default: None
         hop_length:     hop length (in frames) for onset detection  | default: 64
         start_bpm:      initial guess for BPM estimator             | default: 120.0
 
@@ -227,16 +227,16 @@ def onset_estimate_bpm(onsets, start_bpm, fft_res):
     return 60.0 * fft_res / candidates[best_period]
 
 
-def onset_strength(S=None, y=None, sr=22050, **kwargs):
+def onset_strength(y=None, sr=22050, S=None, **kwargs):
     '''
     Adapted from McVicar, adapted from Ellis, etc...
     
     Extract onsets
 
     INPUT:
-        S               = pre-computed spectrogram              | default: None
         y               = time-series waveform (t-by-1 vector)  | default: None
         sr              = sampling rate of the input signal     | default: 22050
+        S               = pre-computed spectrogram              | default: None
 
         Either S or y,sr must be provided.
 
