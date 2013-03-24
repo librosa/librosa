@@ -239,43 +239,43 @@ def mfcc(S, d=20):
     return np.dot(dctfb(d, S.shape[0]), S)
 
 
-def mel_frequencies(n_filts=40, fmin=0, fmax=11025, htk=False):
+def mel_frequencies(n_mels=40, fmin=0, fmax=11025, htk=False):
     '''
     Compute the center frequencies of mel bands
 
     Input:
-        n_filts:    number of Mel bins                  | Default: 40
+        n_mels:     number of Mel bins                  | Default: 40
         fmin:       minimum frequency (Hz)              | Default: 0
         fmax:       maximum frequency (Hz)              | Default: 11025
         htk:        use HTK mels instead of  Slaney     | Default: False
 
     Output:
-        bin_frequencies:    n_filts+1 vector of Mel frequencies
+        bin_frequencies:    n_mels+1 vector of Mel frequencies
     '''
 
     # 'Center freqs' of mel bands - uniformly spaced between limits
     minmel  = hz_to_mel(fmin, htk=htk)
     maxmel  = hz_to_mel(fmax, htk=htk)
 
-    mels    = np.arange(minmel, maxmel + 1, (maxmel - minmel)/(n_filts + 1.0))
+    mels    = np.arange(minmel, maxmel + 1, (maxmel - minmel)/(n_mels + 1.0))
     
     return  mel_to_hz(mels, htk=htk)
 
 
-def melfb(sr, n_fft, n_filts=40, fmin=0.0, fmax=None, htk=False):
+def melfb(sr, n_fft, n_mels=40, fmin=0.0, fmax=None, htk=False):
     '''
     Create a Filterbank matrix to combine FFT bins into Mel-frequency bins.
 
     Input:
         sr:         Sampling rate of the incoming signal.
         n_fft:      FFT length to use.
-        n_filts:    Number of Mel bands to use.             | default:  40
+        n_mels:     Number of Mel bands to use.             | default:  40
         fmin:       lowest edge of the Mel bands (in Hz)    | default:  0.0
         fmax:       upper edge of the Mel bands (in Hz)     | default:  sr / 2
         htk:        Use HTK mels instead of Slaney's        | default:  False
 
     Output:
-        M:          (n_filts * n_fft)   Mel transform matrix
+        M:          (n_mels * n_fft)   Mel transform matrix
                     Note: coefficients above 1+n_fft/2 are 0.
 
     '''
@@ -284,19 +284,19 @@ def melfb(sr, n_fft, n_filts=40, fmin=0.0, fmax=None, htk=False):
         fmax = sr / 2.0
 
     # Initialize the weights
-    weights     = np.zeros( (n_filts, n_fft) )
+    weights     = np.zeros( (n_mels, n_fft) )
 
     # Center freqs of each FFT bin
     size        = 1 + n_fft / 2
     fftfreqs    = np.arange( size, dtype=float ) * sr / n_fft
 
     # 'Center freqs' of mel bands - uniformly spaced between limits
-    freqs       = mel_frequencies(n_filts, fmin, fmax, htk)
+    freqs       = mel_frequencies(n_mels, fmin, fmax, htk)
 
     # Slaney-style mel is scaled to be approx constant E per channel
-    enorm       = 2.0 / (freqs[2:n_filts+2] - freqs[:n_filts])
+    enorm       = 2.0 / (freqs[2:n_mels+2] - freqs[:n_mels])
 
-    for i in xrange(n_filts):
+    for i in xrange(n_mels):
         # lower and upper slopes for all bins
         lower   = (fftfreqs - freqs[i])     / (freqs[i+1] - freqs[i])
         upper   = (freqs[i+2] - fftfreqs)   / (freqs[i+2] - freqs[i+1])
