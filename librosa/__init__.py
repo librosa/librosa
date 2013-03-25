@@ -15,11 +15,7 @@ import os.path
 import audioread
 
 # And all the librosa sub-modules
-import librosa.beat
-import librosa.feature
-import librosa.hpss
-import librosa.output
-
+from . import beat, feature, hpss, output
 
 #-- CORE ROUTINES --#
 def load(path, sr=22050, mono=True):
