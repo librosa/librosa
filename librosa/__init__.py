@@ -186,7 +186,7 @@ def logamplitude(S, amin=1e-10, top_db=80.0):
         log_S   =   S in dBs
     '''
 
-    log_S   =   20.0 * np.log10(np.maximum(amin, np.abs(S)))
+    log_S   =   10.0 * np.log10(np.maximum(amin, np.abs(S)))
 
     if top_db is not None:
         log_S = np.maximum(log_S, log_S.max() - top_db)
