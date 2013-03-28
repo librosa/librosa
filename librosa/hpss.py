@@ -22,7 +22,7 @@ def hpss(S, alpha=0.5, max_iter=50):
       alpha       -- (float)    balance parameter           | default: 0.5
       max_iter    -- (int)      maximum iteration bound     | default: 50
 
-    Returns:
+    Returns (harmonic, percussive):
       harmonic    -- (ndarray)  harmonic component
       percussive  -- (ndarray)  percussive component
 
@@ -59,7 +59,7 @@ def hpss_median(S, win_P=9, win_H=9, p=0.0):
       win_H -- (int)        window size for harmonic filter     | default: 9
       p     -- (float)      masking exponent                    | default: 0.0
 
-    Returns:
+    Returns (harmonic, percussive):
       harmonic    -- (ndarray)    harmonic component
       percussive  -- (ndarray)    percussive component
 
