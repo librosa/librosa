@@ -1,13 +1,13 @@
 #!/usr/bin/env python
-"""
-CREATED:2013-02-12 13:49:08 by Brian McFee <brm2132@columbia.edu>
+"""Harmonic-percussive source separation
 
-Harmonic-percussive source separation
+CREATED:2013-02-12 13:49:08 by Brian McFee <brm2132@columbia.edu>
 
 """
 
 import numpy as np
-import scipy, scipy.signal
+import scipy
+import scipy.signal
 
 def hpss(S, alpha=0.5, max_iter=50):
     """Harmonic-percussive source separation

@@ -1,30 +1,30 @@
 #!/usr/bin/env python
-'''
+"""Utility functions for analysis output, eg:
+
+  - sonic visualizer output for clustering/beat tracking
+  - wav file output
+
 CREATED:2013-01-23 09:26:25 by Brian McFee <brm2132@columbia.edu>
+"""
 
-Utility functions for analysis output, eg:
+import csv
 
-    - sonic visualizer output for clustering/beat tracking
-    - wav file output
-
-'''
-
-import librosa
 import numpy as np
 import scipy
 import scipy.io.wavfile
-import csv
+
+import librosa
 
 def segment_csv(path, segments, sr, hop_length):
-    '''
-    Save beat tracker or segmentation output in CSV format
+    """Save beat tracker or segmentation output in CSV format
 
-    Input:
-        path:               path to the output file
-        segments:           1-by-n list of frame numbers for beat events
-        sr:                 sample rate of the beat detector (eg 8000)
-        hop_length:         hop length of the beat detector (32)
-    '''
+    Arguments:
+      path          -- (string)  path to the output CSV file
+      segments      -- (list)    list of frame numbers for beat events
+      sr            -- (int)     sample rate
+      hop_length    -- (int)     hop length
+
+    """
 
     with open(path, 'w') as output_file:
         writer = csv.writer(output_file)
@@ -37,15 +37,14 @@ def segment_csv(path, segments, sr, hop_length):
 #-- --#
 
 def write_wav(path, y, sr):
-    '''
-    Output a time series as a .wav file
+    """Output a time series as a .wav file
 
-    Input:
-        path:       path to save the wav file. 
-        y:          time-series audio data (floating point) (mono)
-        sr:         sample rate of y
+    Arguments:
+      path  -- (string)     path to output the wav file
+      y     -- (ndarray)    time-series audio data (float)
+      sr    -- (int)        sample rate
 
-    '''
+    """
 
     wav = y / np.max(np.abs(y))
     scipy.io.wavfile.write(path, sr, (wav * 32768.0).astype('<i2'))
