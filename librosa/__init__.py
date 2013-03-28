@@ -8,11 +8,12 @@ Includes constants, core utility functions, etc
 
 """
 
+import os.path
+import audioread
+
 import numpy as np
 import numpy.fft as fft
 import scipy.signal
-import os.path
-import audioread
 
 # And all the librosa sub-modules
 from . import beat, feature, hpss, output
@@ -22,7 +23,6 @@ def load(path, sr=22050, mono=True):
     """Load an audio file into a single, long time series
 
     Arguments:
-
       path -- (string)    path to the input file
       sr   -- (int > 0)   target sample rate              | default: 22050 
                           'None' uses the native sampling rate
@@ -30,7 +30,6 @@ def load(path, sr=22050, mono=True):
 
 
     Returns (y, sr):
-
       y    -- (ndarray)   audio time series
       sr   -- (int)       sampling rate of y
 
@@ -60,14 +59,11 @@ def resample(y, orig_sr, target_sr):
     """Resample a signal from orig_sr to target_sr
 
     Arguments:
-
       y           -- (ndarray)    audio time series 
       orig_sr     -- (int)        original sample rate of y
       target_sr   -- (int)        target sample rate
     
-
     Returns y_hat:
-
       y_hat       -- (ndarray)    y resampled from orig_sr to target_sr
 
     """
@@ -87,7 +83,6 @@ def stft(y, n_fft=256, hann_w=None, hop_length=None):
     """Short-time fourier transform
 
     Arguments:
-
       y           -- (ndarray)  the input signal
       n_fft       -- (int)      number of FFT components  | default: 256
       hann_w      -- (int)      size of Hann window       | default: n_fft
@@ -95,7 +90,6 @@ def stft(y, n_fft=256, hann_w=None, hop_length=None):
                                 between STFT columns      | default: hann_w / 2
 
     Returns D:
-
       D           -- (ndarray)  complex-valued STFT matrix
 
     """
@@ -137,7 +131,6 @@ def istft(stft_matrix, n_fft=None, hann_w=None, hop_length=None):
     Inverse short-time fourier transform
 
     Arguments:
-
       stft_matrix -- (ndarray)  STFT matrix from stft()
       n_fft       -- (int)      number of FFT components   | default: inferred
       hann_w      -- (int)      size of Hann window        | default: n_fft
@@ -145,7 +138,6 @@ def istft(stft_matrix, n_fft=None, hann_w=None, hop_length=None):
                                 columns                    | default: hann_w / 2
 
     Returns y:
-
       y           -- (ndarray)  time domain signal reconstructed from d
 
     """
@@ -213,14 +205,12 @@ def frames_to_time(frames, sr=22050, hop_length=64):
     """Converts frame counts to time (seconds)
 
     Arguments:
-
       frames     -- (ndarray) vector of frame numbers
       sr         -- (int)     sampling rate             | default: 22050
       hop_length -- (int)     hop length                | default: 64
 
 
     Returns times:
-
       times      -- time (in seconds) of each given frame number
                     times[i] = frames[i] * hop_length / sr
     """
@@ -230,13 +220,11 @@ def autocorrelate(y, max_size=None):
     """Bounded auto-correlation
 
     Arguments:
-
       y         -- (ndarray) vector to autocorrelate
       max_size  -- (int)     maximum correlation lag    | default: len(y)
 
 
     Returns z:
-
       z         -- (ndarray) truncated autocorrelation y*y
 
     """
@@ -255,12 +243,10 @@ def localmax(x):
        left edges do not fire, right edges might.
 
     Arguments:
-
       x     -- (ndarray)    input vector
 
 
     Returns m:
-
       m     -- (ndarray)    boolean indicator vector
                             m[i] <=> x[i] is a local maximum
     """
