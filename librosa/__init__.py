@@ -1,10 +1,15 @@
 #!/usr/bin/env python
-"""
+"""Top-level class for librosa
+
+Includes constants, core utility functions, etc.
+
+See also:
+  - librosa.beat
+  - librosa.feature
+  - librosa.hpss
+  - librosa.output
+
 CREATED:2012-10-20 11:09:30 by Brian McFee <brm2132@columbia.edu>
-
-Top-level class for librosa
-
-Includes constants, core utility functions, etc
 
 """
 

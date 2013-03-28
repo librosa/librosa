@@ -1,20 +1,24 @@
 #!/usr/bin/env python
-"""
+"""All things rhythmic go here
+
+  - Onset detection
+  - Tempo estimation
+  - Beat tracking
+  - Segmentation
+
 CREATED:2012-11-05 14:38:03 by Brian McFee <brm2132@columbia.edu>
 
-All things rhythmic go here
-
-- Onset detection
-- Tempo estimation
-- Beat tracking
-- Segmentation
-
 """
 
-import librosa
 import numpy as np
-import scipy, scipy.signal, scipy.ndimage
-import sklearn, sklearn.cluster, sklearn.feature_extraction
+import scipy
+import scipy.signal
+import scipy.ndimage
+import sklearn
+import sklearn.cluster
+import sklearn.feature_extraction
+
+import librosa
 
 def beat_track(y=None, sr=22050, onsets=None, hop_length=64, start_bpm=120.0):
     """Ellis-style beat tracker
