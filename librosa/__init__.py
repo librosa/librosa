@@ -21,7 +21,7 @@ import numpy.fft as fft
 import scipy.signal
 
 # And all the librosa sub-modules
-from . import beat, feature, hpss, output
+import librosa.beat, librosa.feature, librosa.hpss, librosa.output
 
 #-- CORE ROUTINES --#
 def load(path, sr=22050, mono=True):
@@ -170,15 +170,15 @@ def istft(stft_matrix, n_fft=None, hann_w=None, hop_length=None):
     if hop_length is None:
         hop_length = n_fft / 2
 
-    y           = np.zeros(n_fft + hop_length * (n_frames - 1))
+    y = np.zeros(n_fft + hop_length * (n_frames - 1))
 
     for i in xrange(n_frames):
         sample  = i * hop_length
         spec    = stft_matrix[:, i].flatten()
         spec    = np.concatenate((spec.conj(), spec[-2:0:-1] ), 0)
+        ytmp    = window * fft.ifft(spec).real
 
-        y[sample:(sample+n_fft)]    = (y[sample:(sample+n_fft)] 
-                                    + window * fft.ifft(spec).real)
+        y[sample:(sample+n_fft)] = y[sample:(sample+n_fft)] + ytmp
 
     return y
 

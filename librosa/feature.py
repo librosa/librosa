@@ -152,13 +152,13 @@ def chromagram(S, sr, norm='inf', **kwargs):
     return chroma_norm * raw_chroma
 
 
-def chromafb(sr, n_fft, n_chroma, A440=440.0, ctroct=5.0, octwidth=None):
+def chromafb(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=None):
     """Create a Filterbank matrix to convert STFT to chroma
 
     Arguments:
       sr        -- (int)    sampling rate
       n_fft     -- (int)    number of FFT components
-      n_chroma  -- (int)    number of chroma dimensions
+      n_chroma  -- (int)    number of chroma dimensions   | default: 12
       A440      -- (float)  Reference frequency for A     | default: 440.0
       ctroct    -- (float)                                | default: 5.0
       octwidth  -- (float)                                | default: None
