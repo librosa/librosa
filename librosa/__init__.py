@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-'''
+"""
 CREATED:2012-10-20 11:09:30 by Brian McFee <brm2132@columbia.edu>
 
 Top-level class for librosa
 
 Includes constants, core utility functions, etc
 
-'''
+"""
 
 import numpy as np
 import numpy.fft as fft
@@ -19,20 +19,22 @@ from . import beat, feature, hpss, output
 
 #-- CORE ROUTINES --#
 def load(path, sr=22050, mono=True):
-    '''
-    Load an audio file into a single, long time series
+    """Load an audio file into a single, long time series
 
-    Input:
-        path:       path to the input file
-        sr:         target sample rate                      | default: 22050 
-                    'None' uses the native sampling rate
+    Arguments:
 
-        mono:       convert to mono?                        | default: True
+      path -- (string)    path to the input file
+      sr   -- (int > 0)   target sample rate              | default: 22050 
+                          'None' uses the native sampling rate
+      mono -- (boolean)   convert to mono                 | default: True
 
-    Output:
-        y:          the time series
-        sr:         the sampling rate
-    '''
+
+    Returns (y, sr):
+
+      y    -- (ndarray)   audio time series
+      sr   -- (int)       sampling rate of y
+
+    """
 
     with audioread.audio_open(os.path.realpath(path)) as input_file:
         sr_native = input_file.samplerate
@@ -55,17 +57,20 @@ def load(path, sr=22050, mono=True):
     return (y, sr)
 
 def resample(y, orig_sr, target_sr):
-    '''
-    Resample a signal from orig_sr to target_sr
+    """Resample a signal from orig_sr to target_sr
 
-    Input:
-        y:          time series (either mono or stereo)
-        orig_sr:    original sample rate of y
-        target_sr:  target sample rate
+    Arguments:
+
+      y           -- (ndarray)    audio time series 
+      orig_sr     -- (int)        original sample rate of y
+      target_sr   -- (int)        target sample rate
     
-    Output:
-        y_hat:      resampled signal
-    '''
+
+    Returns y_hat:
+
+      y_hat       -- (ndarray)    y resampled from orig_sr to target_sr
+
+    """
 
     if orig_sr == target_sr:
         return y
@@ -79,18 +84,21 @@ def resample(y, orig_sr, target_sr):
     return y_hat
 
 def stft(y, n_fft=256, hann_w=None, hop_length=None):
-    '''
-    Short-time fourier transform
+    """Short-time fourier transform
 
-    Inputs:
-        y           = the input signal
-        n_fft       = the number of FFT components  | default: 256
-        hann_w      = size of hann window           | default: = n_fft
-        hop_length  = hop length                    | default: = hann_w / 2
+    Arguments:
 
-    Output:
-        D           = complex-valued STFT matrix of y
-    '''
+      y           -- (ndarray)  the input signal
+      n_fft       -- (int)      number of FFT components  | default: 256
+      hann_w      -- (int)      size of Hann window       | default: n_fft
+      hop_length  -- (int)      number audio of frames 
+                                between STFT columns      | default: hann_w / 2
+
+    Returns D:
+
+      D           -- (ndarray)  complex-valued STFT matrix
+
+    """
     num_samples = len(y)
 
     if hann_w is None:
@@ -125,18 +133,22 @@ def stft(y, n_fft=256, hann_w=None, hop_length=None):
 
 
 def istft(stft_matrix, n_fft=None, hann_w=None, hop_length=None):
-    '''
+    """
     Inverse short-time fourier transform
 
-    Inputs:
-        stft_matrix = STFT matrix
-        n_fft       = number of FFT components          | default: 2 * (d.shape[0] -1
-        hann_w      = size of hann window               | default: n_fft
-        hop_length  = hop length                        | default: hann_w / 2
+    Arguments:
 
-    Outputs:
-        y       = time domain signal reconstructed from d
-    '''
+      stft_matrix -- (ndarray)  STFT matrix from stft()
+      n_fft       -- (int)      number of FFT components   | default: inferred
+      hann_w      -- (int)      size of Hann window        | default: n_fft
+      hop_length  -- (int)      audio frames between STFT                       
+                                columns                    | default: hann_w / 2
+
+    Returns y:
+
+      y           -- (ndarray)  time domain signal reconstructed from d
+
+    """
 
     # n = Number of stft frames
     n_frames    = stft_matrix.shape[1]
@@ -174,17 +186,19 @@ def istft(stft_matrix, n_fft=None, hann_w=None, hop_length=None):
     return y
 
 def logamplitude(S, amin=1e-10, top_db=80.0):
-    '''
-    Log-scale the amplitude of a spectrogram
+    """Log-scale the amplitude of a spectrogram
 
-    Input:
-        S       =   spectrogram
-        amin    =   amplitude threshold                     | default: 1e-10
-        top_db  =   threshold below max(log(S)) - top_db    | default: 80 
+    Arguments:
+      S       -- (ndarray)  spectrogram
+      amin    -- (float)    minimum amplitude threshold     | default: 1e-10
+      top_db  -- (float)    threshold max(log(S)) - top_db  | default: 80.0
 
-    Output:
-        log_S   =   S in dBs
-    '''
+
+    Returns log_S:
+
+      log_S   -- (ndarray)   S in dBs, ~= 10 * log10(S)
+
+    """
 
     log_S   =   10.0 * np.log10(np.maximum(amin, np.abs(S)))
 
@@ -196,30 +210,36 @@ def logamplitude(S, amin=1e-10, top_db=80.0):
 
 #-- UTILITIES --#
 def frames_to_time(frames, sr=22050, hop_length=64):
-    '''
-    Converts frame counts to time (seconds)
+    """Converts frame counts to time (seconds)
 
-    Input:
-        frames:         scalar or n-by-1 vector of frame numbers
-        sr:             sampling rate                               | 22050 Hz
-        hop_length:     hop length of the frames                    | 64 frames
+    Arguments:
 
-    Output:
-        times:          time (in seconds) of each given frame number
-    '''
+      frames     -- (ndarray) vector of frame numbers
+      sr         -- (int)     sampling rate             | default: 22050
+      hop_length -- (int)     hop length                | default: 64
+
+
+    Returns times:
+
+      times      -- time (in seconds) of each given frame number
+                    times[i] = frames[i] * hop_length / sr
+    """
     return frames * float(hop_length) / float(sr)
 
 def autocorrelate(y, max_size=None):
-    '''
-        Bounded auto-correlation
+    """Bounded auto-correlation
 
-        Input:
-            y:          t-by-1  vector
-            max_size:   (optional) maximum lag                  | None
+    Arguments:
 
-        Output:
-            z:          y's autocorrelation (up to max_size if given)
-    '''
+      y         -- (ndarray) vector to autocorrelate
+      max_size  -- (int)     maximum correlation lag    | default: len(y)
+
+
+    Returns z:
+
+      z         -- (ndarray) truncated autocorrelation y*y
+
+    """
 
     result = scipy.signal.fftconvolve(y, y[::-1], mode='full')
 
@@ -231,10 +251,19 @@ def autocorrelate(y, max_size=None):
     return result[:max_size]
 
 def localmax(x):
-    '''
-        Return 1 where there are local maxima in x (column-wise)
-        left edges do not fire, right edges might.
-    '''
+    """Return 1 where there are local maxima in x (column-wise)
+       left edges do not fire, right edges might.
+
+    Arguments:
+
+      x     -- (ndarray)    input vector
+
+
+    Returns m:
+
+      m     -- (ndarray)    boolean indicator vector
+                            m[i] <=> x[i] is a local maximum
+    """
 
     return np.logical_and(x > np.hstack([x[0], x[:-1]]), 
                              x >= np.hstack([x[1:], x[-1]]))
