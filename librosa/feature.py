@@ -333,7 +333,7 @@ def melspectrogram(y, sr=22050, n_fft=256, hop_length=128, **kwargs):
     # Remove everything past the nyquist frequency
     mel_basis   = mel_basis[:, :(n_fft/ 2  + 1)]
     
-    return np.dot(mel_basis, np.abs(specgram))
+    return np.dot(mel_basis, np.abs(specgram)**2)
 
 
 #-- miscellaneous utilities --#
