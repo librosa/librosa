@@ -54,11 +54,16 @@ def hz_to_mel(frequencies, htk=False):
 
 
 def mel_to_hz(mels, htk=False):
-    """Convert mel numbers to frequencies
+    """Convert mel bin numbers to frequencies
+
+    Arguments:
+      mels          -- (ndarray, float) mel bins to convert
+      htk           -- (boolean)        use HTK formula     | default: False
+
+    Returns frequencies:
+      frequencies   -- (ndarray)    input mels in Hz
 
     """
-#     TODO:   2013-03-28 14:49:28 by Brian McFee <brm2132@columbia.edu>
-# write this docstring     
 
     if np.isscalar(mels):
         mels = np.array([mels], dtype=float)
