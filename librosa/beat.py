@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-'''
+"""
 CREATED:2012-11-05 14:38:03 by Brian McFee <brm2132@columbia.edu>
 
 All things rhythmic go here
@@ -9,7 +9,7 @@ All things rhythmic go here
 - Beat tracking
 - Segmentation
 
-'''
+"""
 
 import librosa
 import numpy as np
@@ -17,22 +17,33 @@ import scipy, scipy.signal, scipy.ndimage
 import sklearn, sklearn.cluster, sklearn.feature_extraction
 
 def beat_track(y=None, sr=22050, onsets=None, hop_length=64, start_bpm=120.0):
-    '''
-    Ellis-style beat tracker
+    """Ellis-style beat tracker
 
-    Input:
-        y:              time-series data                            | default: None
-        sr:             sample rate of y                            | default: 22050
-        onsets:         pre-computed onset envelope                 | default: None
-        hop_length:     hop length (in frames) for onset detection  | default: 64
-        start_bpm:      initial guess for BPM estimator             | default: 120.0
+    See: 
+      - http://labrosa.ee.columbia.edu/projects/beattrack/
+      - D. Ellis (2007)
+        Beat Tracking by Dynamic Programming
+        Journal of New Music Research
+        Special Issue on Beat and Tempo Extraction
+        vol. 36 no. 1, March 2007, pp. 51-60. 
 
-        Either onsets or y must be provided.
+    Arguments:
+      y           -- (ndarray) audio time series                  | default: None
+      sr          -- (int)     sample rate                        | default: 22050
+      onsets      -- (ndarray) pre-computed onset envelope        | default: None
+      hop_length  -- (int)     hop length (in frames)             | default: 64
+      start_bpm   -- (float)   initial guess for BPM estimator    | default: 120.0
 
-    Output:
-        bpm:            estimated global tempo
-        beats:          array of estimated beats by frame number
-    '''
+      Either onsets or y must be provided.
+
+    Returns (bpm, beats):
+      bpm         -- (float)   estimated global tempo
+      beats       -- (ndarray) estimated frame numbers of beats
+
+    Raises:
+      ValueError  -- if neither y nor onsets are provided
+
+    """
 
     # First, get the frame->beat strength profile if we don't already have one
     if onsets is None:
@@ -52,32 +63,30 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64, start_bpm=120.0):
     return (bpm, beats)
 
 
-
 def __beat_tracker(onsets, bpm, fft_res, tightness):
-    '''
-        Internal function that does beat tracking from a given onset profile.
+    """Internal function that does beat tracking from a given onset profile.
 
-        Input:
-            onsets:     the onset envelope
-            bpm:        the tempo estimate
-            fft_res:    resolution of the fft (sr / hop_length)
-            tightness:  tight
+    Arguments:
+      onsets    -- (ndarray)  onset envelope
+      bpm       -- (float)    tempo estimate
+      fft_res   -- (float)    resolution of the fft (sr / hop_length)
+      tightness -- (float)    how closely do we adhere to bpm?
 
-        Output:
-            frame numbers of beat events
-    '''
+
+    Returns beats:
+      beats     -- (ndarray)  frame numbers of beat events
+
+    """
 
     #--- First, some helper functions ---#
     def rbf(points):
-        '''
-        Makes a smoothing filter for onsets
-        '''
+        """Makes a smoothing filter for onsets"""
+        
         return np.exp(-0.5 * (points**2))
 
     def beat_track_dp(localscore):  
-        '''
-        Core dynamic program for beat tracking
-        '''
+        """Core dynamic program for beat tracking"""
+
         backlink    = np.zeros_like(localscore, dtype=int)
         cumscore    = np.zeros_like(localscore)
 
@@ -117,9 +126,8 @@ def __beat_tracker(onsets, bpm, fft_res, tightness):
         return (backlink, cumscore)
 
     def get_last_beat(cumscore):
-        '''
-        Get the last beat from the cumulative score array
-        '''
+        """Get the last beat from the cumulative score array"""
+
         maxes       = librosa.localmax(cumscore)
         med_score   = np.median(cumscore[np.argwhere(maxes)])
 
@@ -127,9 +135,7 @@ def __beat_tracker(onsets, bpm, fft_res, tightness):
         return np.argwhere((cumscore * maxes * 2 > med_score)).max()
 
     def smooth_beats(beats):
-        '''
-        Final post-processing: throw out spurious leading/trailing beats
-        '''
+        """Final post-processing: throw out spurious leading/trailing beats"""
         
         smooth_boe  = scipy.signal.convolve(localscore[beats], 
                                             scipy.signal.hann(5), 'same')
@@ -171,18 +177,21 @@ def __beat_tracker(onsets, bpm, fft_res, tightness):
     # Add one to account for differencing offset
     return 1 + beats
 
+
 def onset_estimate_bpm(onsets, start_bpm, fft_res):
-    '''
-    Estimate the BPM from an onset envelope.
+    """Estimate the BPM from an onset envelope
 
-    Input:
-        onsets:         time-series of onset strengths
-        start_bpm:      initial guess of the BPM
-        fft_res:        resolution of FFT (sample rate / hop length)
+    Arguments:
+      onsets     -- (ndarray)   time-series of onset strengths
+      start_bpm  -- (float)     initial guess of the BPM
+      fft_res    -- (float)     resolution of FFT (sample rate / hop length)
 
-    Output:
-        estimated BPM
-    '''
+
+    Returns bpm:
+      bpm       -- (float)  estimated BPM
+
+    """
+
     ac_size     = 4.0
     duration    = 90.0
     end_time    = 90.0
@@ -228,24 +237,26 @@ def onset_estimate_bpm(onsets, start_bpm, fft_res):
 
 
 def onset_strength(y=None, sr=22050, S=None, **kwargs):
-    '''
-    Adapted from McVicar, adapted from Ellis, etc...
-    
-    Extract onsets
+    """Extract onsets from an audio time series or spectrogram
 
-    INPUT:
-        y               = time-series waveform (t-by-1 vector)  | default: None
-        sr              = sampling rate of the input signal     | default: 22050
-        S               = pre-computed spectrogram              | default: None
+    Arguments:
+      y         -- (ndarray) audio time-series          | default: None
+      sr        -- (int)     sampling rate of y         | default: 22050
+      S         -- (ndarray) pre-computed spectrogram   | default: None
 
-        Either S or y,sr must be provided.
+    **kwargs    -- Parameters to mel spectrogram, if S is not provided
 
-        **kwargs        = Parameters to mel spectrogram, if S is not provided
-                          See librosa.feature.melspectrogram() for details
+                   See librosa.feature.melspectrogram() for details
 
-    OUTPUT:
-        onset_envelope
-    '''
+    Note: if S is provided, then (y, sr) are optional.
+
+    Returns onsets:
+      onsets    -- (ndarray) vector of onset strength
+
+    Raises:
+      ValueError -- if neither (y, sr) nor S are provided
+
+    """
 
     # First, compute mel spectrogram
     if S is None:
@@ -274,20 +285,20 @@ def onset_strength(y=None, sr=22050, S=None, **kwargs):
 
     return onsets 
 
+
 def segment(data, k):
-    '''
-        Perform bottom-up temporal segmentation
+    """Bottom-up temporal segmentation
 
-        Input:
-            data:   d-by-t  spectrogram (t frames)
-            k:      number of segments to produce
+    Arguments:
+      data      -- (ndarray)    d-by-t  spectrogram
+      k         -- (int)        number of segments to produce
 
-        Output:
-            s:          segment boundaries (frame numbers)
-            centroid:   d-by-k  centroids (ordered temporall)
-            variance:   d-by-k  variance (mean distortion) for each segment
+    Returns (start, centroid, variance):
+      start     -- (ndarray)    k-by-1  segment boundaries (frame numbers)
+      centroid  -- (ndarray)    d-by-k  centroid for each segment
+      variance  -- (ndarray)    d-by-k  variance for each segment
 
-    '''
+    """
 
     # Connect the temporal connectivity graph
     grid = sklearn.feature_extraction.image.grid_to_graph(  n_x=data.shape[1], 

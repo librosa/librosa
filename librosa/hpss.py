@@ -1,33 +1,34 @@
 #!/usr/bin/env python
-'''
+"""
 CREATED:2013-02-12 13:49:08 by Brian McFee <brm2132@columbia.edu>
 
 Harmonic-percussive source separation
 
-'''
+"""
 
 import numpy as np
 import scipy, scipy.signal
 
 def hpss(S, alpha=0.5, max_iter=50):
-    '''
-    Harmonic-percussive source separation
+    """Harmonic-percussive source separation
 
-    Ono, N., Miyamoto, K., Kameoka, H., & Sagayama, S. (2008, September). 
-    A real-time equalizer of harmonic and percussive components in music signals. 
-    In Proc. ISMIR (pp. 139-144).
+    See:
+      - Ono, N., Miyamoto, K., Kameoka, H., & Sagayama, S.
+        A real-time equalizer of harmonic and percussive components in music signals. 
+        In ISMIR 2008 (pp. 139-144).
 
-    Input:
-        S:          spectrogram
-        alpha:      balance parameter           | default: 0.5
-        max_iter:   maximum iteration bound     | default: 50
+    Arguments:
+      S           -- (ndarray)  spectrogram
+      alpha       -- (float)    balance parameter           | default: 0.5
+      max_iter    -- (int)      maximum iteration bound     | default: 50
 
-    Output:
-        H:      harmonic component of S
-        P:      percussive component of S
+    Returns:
+      harmonic    -- (ndarray)  harmonic component
+      percussive  -- (ndarray)  percussive component
 
-        Note: S = H + P
-    '''
+    Note: S = harmonic + percussive
+
+    """
     # Initialize H/P iterates
     harmonic    = S * 0.5
     percussive  = harmonic.copy()
@@ -44,19 +45,26 @@ def hpss(S, alpha=0.5, max_iter=50):
     
     return (harmonic, percussive)
 
+
 def hpss_median(S, win_P=9, win_H=9, p=0.0):
-    '''
-    Median-filtering harmonic percussive separation
+    """Median-filtering harmonic percussive separation
 
-    Fitzgerald, D. (2010). 
-    Harmonic/percussive separation using median filtering.
+    See:
+      - Fitzgerald, D. (2010). 
+        Harmonic/percussive separation using median filtering.
 
-    Input:
-        S:      spectrogram
-        win_P:  window size for percussive median filtering     | default: 7
-        win_H:  window size for harmonic median filtering       | default: 7
-        p:      masking exponent                                | default: 0 (hard mask)
-    '''
+    Arguments:
+      S     -- (ndarray)    spectrogram
+      win_P -- (int)        window size for percussive filter   | default: 9
+      win_H -- (int)        window size for harmonic filter     | default: 9
+      p     -- (float)      masking exponent                    | default: 0.0
+
+    Returns:
+      harmonic    -- (ndarray)    harmonic component
+      percussive  -- (ndarray)    percussive component
+
+    Note: S = harmonic + percussive
+    """
 
     # Compute median filters
     P = scipy.signal.medfilt2d(S, [win_P, 1])
@@ -83,3 +91,4 @@ def hpss_median(S, win_P=9, win_H=9, p=0.0):
         Mp = P / (H + P)
 
     return (Mh * S, Mp * S)
+
