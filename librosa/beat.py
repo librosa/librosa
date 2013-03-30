@@ -190,7 +190,6 @@ def onset_estimate_bpm(onsets, start_bpm, fft_res):
       start_bpm  -- (float)     initial guess of the BPM
       fft_res    -- (float)     resolution of FFT (sample rate / hop length)
 
-
     Returns bpm:
       bpm       -- (float)  estimated BPM
 
