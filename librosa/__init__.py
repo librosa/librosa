@@ -33,7 +33,6 @@ def load(path, sr=22050, mono=True):
                           'None' uses the native sampling rate
       mono -- (boolean)   convert to mono                 | default: True
 
-
     Returns (y, sr):
       y    -- (ndarray)   audio time series
       sr   -- (int)       sampling rate of y
@@ -190,9 +189,7 @@ def logamplitude(S, amin=1e-10, top_db=80.0):
       amin    -- (float)    minimum amplitude threshold     | default: 1e-10
       top_db  -- (float)    threshold max(log(S)) - top_db  | default: 80.0
 
-
     Returns log_S:
-
       log_S   -- (ndarray)   S in dBs, ~= 10 * log10(S)
 
     """
@@ -214,7 +211,6 @@ def frames_to_time(frames, sr=22050, hop_length=64):
       sr         -- (int)     sampling rate             | default: 22050
       hop_length -- (int)     hop length                | default: 64
 
-
     Returns times:
       times      -- time (in seconds) of each given frame number
                     times[i] = frames[i] * hop_length / sr
@@ -227,7 +223,6 @@ def autocorrelate(y, max_size=None):
     Arguments:
       y         -- (ndarray) vector to autocorrelate
       max_size  -- (int)     maximum correlation lag    | default: len(y)
-
 
     Returns z:
       z         -- (ndarray) truncated autocorrelation y*y
@@ -249,7 +244,6 @@ def localmax(x):
 
     Arguments:
       x     -- (ndarray)    input vector
-
 
     Returns m:
       m     -- (ndarray)    boolean indicator vector

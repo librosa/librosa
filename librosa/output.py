@@ -15,7 +15,7 @@ import scipy.io.wavfile
 
 import librosa
 
-def segment_csv(path, segments, sr, hop_length):
+def segment_csv(path, segments, sr, hop_length, save_bpm=False):
     """Save beat tracker or segmentation output in CSV format
 
     Arguments:
@@ -23,6 +23,7 @@ def segment_csv(path, segments, sr, hop_length):
       segments      -- (list)    list of frame numbers for beat events
       sr            -- (int)     sample rate
       hop_length    -- (int)     hop length
+      save_bpm      -- (boolean) add a BPM annotation column  | default: False
 
     """
 
@@ -32,7 +33,11 @@ def segment_csv(path, segments, sr, hop_length):
         time = 0.0
         for t_new in librosa.frames_to_time(segments,
                                             sr=sr, hop_length=hop_length):
-            writer.writerow([t_new, '%.2f BPM' % (60.0 / (t_new - time))])
+            if save_bpm:
+                writer.writerow([t_new, '%.2f BPM' % (60.0 / (t_new - time))])
+            else:
+                writer.writerow([t_new])
+
             time = t_new
 #-- --#
 
