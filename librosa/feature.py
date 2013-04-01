@@ -342,9 +342,10 @@ def melspectrogram(y, sr=22050, n_fft=256, hop_length=128, **kwargs):
     """
 
     # Compute the STFT
-    specgram    = librosa.stft(y,   n_fft       =   n_fft, 
-                                    hann_w      =   n_fft, 
-                                    hop_length  =   hop_length)
+    powspec     = np.abs(librosa.stft(y,   
+                                      n_fft       =   n_fft, 
+                                      hann_w      =   n_fft, 
+                                      hop_length  =   hop_length))**2
 
     # Build a Mel filter
     mel_basis   = melfb(sr, n_fft, **kwargs)
@@ -352,7 +353,7 @@ def melspectrogram(y, sr=22050, n_fft=256, hop_length=128, **kwargs):
     # Remove everything past the nyquist frequency
     mel_basis   = mel_basis[:, :(n_fft/ 2  + 1)]
     
-    return np.dot(mel_basis, np.abs(specgram)**2)
+    return np.dot(mel_basis, powspec)
 
 
 #-- miscellaneous utilities --#
