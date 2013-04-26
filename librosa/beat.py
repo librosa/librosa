@@ -20,7 +20,7 @@ import sklearn.feature_extraction
 
 import librosa
 
-def beat_track(y=None, sr=22050, onsets=None, hop_length=64, start_bpm=120.0):
+def beat_track(y=None, sr=22050, onsets=None, hop_length=64, start_bpm=120.0, n_fft=256):
     """Ellis-style beat tracker
 
     See: 
@@ -37,8 +37,11 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64, start_bpm=120.0):
       onsets      -- (ndarray) pre-computed onset envelope        | default: None
       hop_length  -- (int)     hop length (in frames)             | default: 64
       start_bpm   -- (float)   initial guess for BPM estimator    | default: 120.0
+      n_fft       -- (int)     window size (centers beat times)   | default: 256
 
       Either onsets or y must be provided.
+
+      Set n_fft = None to disable beat frame-centering
 
     Returns (bpm, beats):
       bpm         -- (float)   estimated global tempo
@@ -62,12 +65,15 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64, start_bpm=120.0):
     bpm     = onset_estimate_bpm(onsets, start_bpm, fft_res)
     
     # Then, run the tracker: tightness = 400
-    beats   = __beat_tracker(onsets, bpm, fft_res, 400)
+    if n_fft is None:
+        n_fft = hop_length
+
+    beats   = __beat_tracker(onsets, bpm, fft_res, 400, n_fft / hop_length)
 
     return (bpm, beats)
 
 
-def __beat_tracker(onsets, bpm, fft_res, tightness):
+def __beat_tracker(onsets, bpm, fft_res, tightness, offset):
     """Internal function that does beat tracking from a given onset profile.
 
     Arguments:
@@ -75,6 +81,7 @@ def __beat_tracker(onsets, bpm, fft_res, tightness):
       bpm       -- (float)    tempo estimate
       fft_res   -- (float)    resolution of the fft (sr / hop_length)
       tightness -- (float)    how closely do we adhere to bpm?
+      offset    -- (int)      frame offset for detected beats
 
 
     Returns beats:
@@ -178,8 +185,8 @@ def __beat_tracker(onsets, bpm, fft_res, tightness):
     ### Discard spurious trailing beats
     beats = smooth_beats(beats)
 
-    # Add one to account for differencing offset
-    return 1 + beats
+    # Add one to account for window centering offset
+    return offset + beats
 
 
 def onset_estimate_bpm(onsets, start_bpm, fft_res):
