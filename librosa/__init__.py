@@ -203,19 +203,25 @@ def logamplitude(S, amin=1e-10, top_db=80.0):
 
 
 #-- UTILITIES --#
-def frames_to_time(frames, sr=22050, hop_length=64):
+def frames_to_time(frames, sr=22050, hop_length=64, window=0):
     """Converts frame counts to time (seconds)
 
     Arguments:
       frames     -- (ndarray) vector of frame numbers
       sr         -- (int)     sampling rate             | default: 22050
       hop_length -- (int)     hop length                | default: 64
+      window     -- (int)     window length             | default: 0
 
     Returns times:
       times      -- time (in seconds) of each given frame number
                     times[i] = frames[i] * hop_length / sr
+
+    Note:
+      If 'window' is non-zero, then the times will correspond to the center
+      of each length-window frame, rather than the onset time:
+                    times[i] = (frames[i] + window / 2) / sr
     """
-    return frames * float(hop_length) / float(sr)
+    return float(frames * hop_length + window / 2) / sr
 
 def autocorrelate(y, max_size=None):
     """Bounded auto-correlation
