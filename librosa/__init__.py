@@ -221,7 +221,7 @@ def frames_to_time(frames, sr=22050, hop_length=64, window=0):
       of each length-window frame, rather than the onset time:
                     times[i] = (frames[i] + window / 2) / sr
     """
-    return float(frames * hop_length + window / 2) / sr
+    return (frames * hop_length + window / 2) / float(sr)
 
 def autocorrelate(y, max_size=None):
     """Bounded auto-correlation
