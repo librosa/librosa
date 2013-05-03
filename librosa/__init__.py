@@ -20,8 +20,17 @@ import numpy as np
 import numpy.fft as fft
 import scipy.signal
 
+# Do we have scikits.samplerate?
+try:
+    import scikits.samplerate
+    _HAS_SAMPLERATE = True
+except ImportError:
+    _HAS_SAMPLERATE = False
+    pass
+
 # And all the librosa sub-modules
 import librosa.beat, librosa.feature, librosa.hpss, librosa.output
+
 
 #-- CORE ROUTINES --#
 def load(path, sr=22050, mono=True):
@@ -59,27 +68,31 @@ def load(path, sr=22050, mono=True):
 
     return (y, sr)
 
-def resample(y, orig_sr, target_sr):
+def resample(y, orig_sr, target_sr, res_type='sinc_fastest'):
     """Resample a signal from orig_sr to target_sr
 
     Arguments:
       y           -- (ndarray)    audio time series 
       orig_sr     -- (int)        original sample rate of y
       target_sr   -- (int)        target sample rate
+      res_type    -- (str)        resample type (see below)
     
     Returns y_hat:
       y_hat       -- (ndarray)    y resampled from orig_sr to target_sr
 
+    Notes:
+        if scikits.samplerate is installed, resample will use res_type
+        otherwise, it will fall back on scip.signal.resample
     """
 
     if orig_sr == target_sr:
         return y
 
-    axis = y.ndim-1
-
-    n_samples = len(y) * target_sr / orig_sr
-
-    y_hat = scipy.signal.resample(y, n_samples, axis=axis)
+    if _HAS_SAMPLERATE:
+        y_hat = scikits.samplerate.resample(y, float(target_sr) / orig_sr, res_type)
+    else:
+        n_samples = len(y) * target_sr / orig_sr
+        y_hat = scipy.signal.resample(y, n_samples, axis=-1)
 
     return y_hat
 

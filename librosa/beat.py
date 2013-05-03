@@ -65,15 +65,19 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64, start_bpm=120.0, n_
     bpm     = onset_estimate_bpm(onsets, start_bpm, fft_res)
     
     # Then, run the tracker: tightness = 400
+
+    beats   = __beat_tracker(onsets, bpm, fft_res, 400)
+
+    # Framing correction
     if n_fft is None:
         n_fft = hop_length
-
-    beats   = __beat_tracker(onsets, bpm, fft_res, 400, n_fft / hop_length)
+    
+    beats = beats + n_fft / (hop_length)
 
     return (bpm, beats)
 
 
-def __beat_tracker(onsets, bpm, fft_res, tightness, offset):
+def __beat_tracker(onsets, bpm, fft_res, tightness):
     """Internal function that does beat tracking from a given onset profile.
 
     Arguments:
@@ -81,7 +85,6 @@ def __beat_tracker(onsets, bpm, fft_res, tightness, offset):
       bpm       -- (float)    tempo estimate
       fft_res   -- (float)    resolution of the fft (sr / hop_length)
       tightness -- (float)    how closely do we adhere to bpm?
-      offset    -- (int)      frame offset for detected beats
 
 
     Returns beats:
@@ -186,7 +189,7 @@ def __beat_tracker(onsets, bpm, fft_res, tightness, offset):
     beats = smooth_beats(beats)
 
     # Add one to account for window centering offset
-    return offset + beats
+    return beats
 
 
 def onset_estimate_bpm(onsets, start_bpm, fft_res):
