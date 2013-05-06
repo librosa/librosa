@@ -15,6 +15,31 @@ import numpy as np
 import librosa
 
 #-- Frequency conversions --#
+def midi_to_hz( notes ):
+    """Get the frequency (Hz) of MIDI note(s)
+
+    Arguments:
+      note_num      -- (int, ndarray)    number of the note(s)
+
+    Returns:
+      frequency     -- (float, ndarray)  frequency of the note in Hz
+    """
+
+    return 440.0 * (2.0 ** ((notes - 69)/12.0))
+
+def hz_to_midi( frequency ):
+    """Get the closest MIDI note number(s) for given frequencies
+
+    Arguments:
+      frequencies   -- (float, ndarray) target frequencies
+
+    Returns:
+      note_nums     -- (int, ndarray) closest MIDI notes
+    """
+
+    return (np.floor(12 * (np.log2(frequency) - np.log2(440.0))) + 69).astype(int)
+
+
 def hz_to_mel(frequencies, htk=False):
     """Convert Hz to Mels
 
