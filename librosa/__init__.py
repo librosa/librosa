@@ -101,11 +101,12 @@ def stft(y, n_fft=256, hann_w=None, hop_length=None):
     """Short-time fourier transform
 
     Arguments:
-      y           -- (ndarray)  the input signal
-      n_fft       -- (int)      number of FFT components  | default: 256
-      hann_w      -- (int/ndarray)     (int) size of Hann window or (ndarray) the window provided by user    | default: n_fft
-      hop_length  -- (int)      number audio of frames 
-                                between STFT columns      | default: hann_w / 2
+      y           -- (ndarray)          the input signal
+      n_fft       -- (int)              number of FFT components  | default: 256
+      hann_w      -- (int/ndarray)      (int) size of Hann window or (ndarray) the window 
+                                        provided by user    | default: n_fft
+      hop_length  -- (int)              number audio of frames 
+                                        between STFT columns      | default: hann_w / 2
 
     Returns D:
       D           -- (ndarray)  complex-valued STFT matrix
@@ -153,11 +154,12 @@ def istft(stft_matrix, n_fft=None, hann_w=None, hop_length=None):
     Inverse short-time fourier transform
 
     Arguments:
-      stft_matrix -- (ndarray)  STFT matrix from stft()
-      n_fft       -- (int)      number of FFT components   | default: inferred
-      hann_w      -- (int/ndarray)      (int) size of Hann window or (ndarray) the window provided by user        | default: n_fft
-      hop_length  -- (int)      audio frames between STFT                       
-                                columns                    | default: hann_w / 2
+      stft_matrix -- (ndarray)          STFT matrix from stft()
+      n_fft       -- (int)              number of FFT components   | default: inferred
+      hann_w      -- (int/ndarray)      (int) size of Hann window or (ndarray) the window 
+                                        provided by user        | default: n_fft
+      hop_length  -- (int)              audio frames between STFT                       
+                                        columns                    | default: hann_w / 2
 
     Returns y:
       y           -- (ndarray)  time domain signal reconstructed from d
