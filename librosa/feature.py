@@ -37,7 +37,7 @@ def hz_to_midi( frequency ):
       note_nums     -- (int, ndarray) closest MIDI notes
     """
 
-    return (np.floor(12 * (np.log2(frequency) - np.log2(440.0))) + 69).astype(int)
+    return 12 * (np.log2(frequency) - np.log2(440.0)) + 69
 
 
 def hz_to_mel(frequencies, htk=False):
