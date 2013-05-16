@@ -50,6 +50,9 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64, start_bpm=120.0, n_
     Raises:
       ValueError  -- if neither y nor onsets are provided
 
+    Note:
+      If no onset strength could be detected, beat_tracker estimates 0 BPM and returns
+      an empty list.
     """
 
     # First, get the frame->beat strength profile if we don't already have one
@@ -58,6 +61,10 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64, start_bpm=120.0, n_
             raise ValueError('Either "y" or "onsets" must be provided')
 
         onsets  = onset_strength(y=y, sr=sr, hop_length=hop_length)
+
+    # Do we have any onsets to grab?
+    if not onsets.any():
+        return (0, [])
 
     fft_res = float(sr) / hop_length
 

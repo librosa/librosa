@@ -20,6 +20,9 @@ import numpy as np
 import numpy.fft as fft
 import scipy.signal
 
+# And all the librosa sub-modules
+from . import beat, feature, hpss, output
+
 # Do we have scikits.samplerate?
 try:
     import scikits.samplerate
@@ -28,8 +31,6 @@ except ImportError:
     _HAS_SAMPLERATE = False
     pass
 
-# And all the librosa sub-modules
-import librosa.beat, librosa.feature, librosa.hpss, librosa.output
 
 
 #-- CORE ROUTINES --#
