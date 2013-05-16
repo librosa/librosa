@@ -102,7 +102,7 @@ def stft(y, n_fft=256, hann_w=None, hop_length=None):
     Arguments:
       y           -- (ndarray)  the input signal
       n_fft       -- (int)      number of FFT components  | default: 256
-      hann_w      -- (int)      size of Hann window       | default: n_fft
+      hann_w      -- (int/ndarray)     (int) size of Hann window or (ndarray) the window provided by user    | default: n_fft
       hop_length  -- (int)      number audio of frames 
                                 between STFT columns      | default: hann_w / 2
 
@@ -115,13 +115,17 @@ def stft(y, n_fft=256, hann_w=None, hop_length=None):
     if hann_w is None:
         hann_w = n_fft
 
-    if hann_w == 0:
-        window = np.ones((n_fft,))
+    if len(np.shape(hann_w)) == 0: 
+        if hann_w == 0:
+            window = np.ones((n_fft,))
+        else:
+            lpad = (n_fft - hann_w)/2
+            window = np.pad( scipy.signal.hann(hann_w), 
+                                (lpad, n_fft - hann_w - lpad), 
+                                mode='constant')
     else:
-        lpad = (n_fft - hann_w)/2
-        window = np.pad( scipy.signal.hann(hann_w), 
-                            (lpad, n_fft - hann_w - lpad), 
-                            mode='constant')
+        # user-provided window, just use it
+        window = hann_w
 
     # Set the default hop, if it's not already specified
     if hop_length is None:
@@ -150,7 +154,7 @@ def istft(stft_matrix, n_fft=None, hann_w=None, hop_length=None):
     Arguments:
       stft_matrix -- (ndarray)  STFT matrix from stft()
       n_fft       -- (int)      number of FFT components   | default: inferred
-      hann_w      -- (int)      size of Hann window        | default: n_fft
+      hann_w      -- (int/ndarray)      (int) size of Hann window or (ndarray) the window provided by user        | default: n_fft
       hop_length  -- (int)      audio frames between STFT                       
                                 columns                    | default: hann_w / 2
 
@@ -168,15 +172,19 @@ def istft(stft_matrix, n_fft=None, hann_w=None, hop_length=None):
     if hann_w is None:
         hann_w = n_fft
 
-    if hann_w == 0:
-        window = np.ones(n_fft)
+    if len(np.shape(hann_w)) == 0:
+        if hann_w == 0:
+            window = np.ones(n_fft)
+        else:
+            #   magic number alert!
+            #   2/3 scaling is to make stft(istft(.)) identity for 25% hop
+            lpad = (n_fft - hann_w)/2
+            window = np.pad( scipy.signal.hann(hann_w) * 2.0 / 3.0, 
+                                (lpad, n_fft - hann_w - lpad), 
+                                mode='constant')
     else:
-        #   magic number alert!
-        #   2/3 scaling is to make stft(istft(.)) identity for 25% hop
-        lpad = (n_fft - hann_w)/2
-        window = np.pad( scipy.signal.hann(hann_w) * 2.0 / 3.0, 
-                            (lpad, n_fft - hann_w - lpad), 
-                            mode='constant')
+        # user-provided window, just use it
+        window = hann_w
 
     # Set the default hop, if it's not already specified
     if hop_length is None:
