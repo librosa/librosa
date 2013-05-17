@@ -64,7 +64,7 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64, start_bpm=120.0, n_
 
     # Do we have any onsets to grab?
     if not onsets.any():
-        return (0, [])
+        return (0, np.array([], dtype=int))
 
     fft_res = float(sr) / hop_length
 
