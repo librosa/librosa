@@ -19,6 +19,18 @@ import librosa
 HOP = 128
 SR  = 22050
 
+def self_similarity(X, k=5):
+
+    d, n = X.shape
+
+    # build the segment-level self-similarity matrix
+    D = scipy.spatial.distance.squareform(scipy.spatial.distance.pdist(X, metric='seuclidean'))
+
+    # get the k nearest neighbors of each point
+    links       = np.argsort(D, axis=1)[:,1:k+1]
+
+    return links
+
 def analyze_file(infile):
     '''Analyze an input audio file
 
@@ -39,10 +51,12 @@ def analyze_file(infile):
     y, sr = librosa.load(infile, sr=SR)
     
     # First, get the track duration
-    A['duration'] = len(y) / sr
+    A['duration'] = float(len(y)) / sr
 
     # Then, get the beats
     tempo, beats = librosa.beat.beat_track(y, sr, hop_length=HOP)
+
+    # Push the last frame as a phantom beat
     A['tempo'] = tempo
     A['beats'] = librosa.frames_to_time(beats, sr, hop_length=HOP).tolist()
 
@@ -87,6 +101,8 @@ def analyze_file(infile):
 
     # Subsample the signal for vis purposes
     A['signal'] = scipy.signal.decimate(y, len(y) / 1024, ftype='fir').tolist()
+
+    A['links'] = self_similarity(np.vstack([np.array(A['chroma']).T, np.array(A['timbres']).T])).tolist()
 
     return A
 
