@@ -313,10 +313,9 @@ def segment(data, k):
       data      -- (ndarray)    d-by-t  spectrogram
       k         -- (int)        number of segments to produce
 
-    Returns (start, centroid, variance):
-      start     -- (ndarray)    k-by-1  segment boundaries (frame numbers)
-      centroid  -- (ndarray)    d-by-k  centroid for each segment
-      variance  -- (ndarray)    d-by-k  variance for each segment
+    Returns:
+      boundaries-- (ndarray)    k-by-1  left-boundaries (frame numbers)
+                                        of detected segments
 
     """
 
@@ -331,23 +330,8 @@ def segment(data, k):
     # Fit the model
     ward.fit(data.T)
 
-    # Instantiate output objects
-    centers     = np.empty( (data.shape[0], k) )
-    variances   = np.empty( (data.shape[0], k) )
-    starts      = np.empty(k, dtype=int)
-
     # Find the change points from the labels
-    deltas  = list(1 + np.nonzero(np.diff(ward.labels_))[0].astype(int))
-
-    # tack on the last frame as a change point
-    deltas.append(data.shape[1])
-
-    start = 0
-    for (i, end) in enumerate(deltas):
-        starts[i]       = start
-        centers[:, i]   = np.mean(data[:, start:end], axis=1)
-        variances[:, i] = np.var( data[:, start:end], axis=1)
-        start           = end
-
-    return (starts, centers, variances)
+    boundaries = [0]
+    boundaries.extend(list(1 + np.nonzero(np.diff(ward.labels_))[0].astype(int)))
+    return boundaries
 
