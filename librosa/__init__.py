@@ -122,7 +122,7 @@ def stft(y, n_fft=256, hann_w=None, hop_length=None, window=None):
             window = np.ones((n_fft,))
         else:
             lpad = (n_fft - hann_w)/2
-            window = np.pad( scipy.signal.hann(hann_w), 
+            window = np.pad( scipy.signal.hann(hann_w, sym=False), 
                                 (lpad, n_fft - hann_w - lpad), 
                                 mode='constant')
 
@@ -180,7 +180,7 @@ def istft(stft_matrix, n_fft=None, hann_w=None, hop_length=None, window=None):
             #   magic number alert!
             #   2/3 scaling is to make stft(istft(.)) identity for 25% hop
             lpad = (n_fft - hann_w)/2
-            window = np.pad( scipy.signal.hann(hann_w) * 2.0 / 3.0, 
+            window = np.pad( scipy.signal.hann(hann_w, sym=False) * 2.0 / 3.0, 
                                 (lpad, n_fft - hann_w - lpad), 
                                 mode='constant')
 
