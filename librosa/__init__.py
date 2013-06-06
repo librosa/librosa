@@ -125,6 +125,10 @@ def stft(y, n_fft=256, hann_w=None, hop_length=None, window=None):
             window = np.pad( scipy.signal.hann(hann_w, sym=False), 
                                 (lpad, n_fft - hann_w - lpad), 
                                 mode='constant')
+    else:
+        window = np.asarray(window)
+        if window.shape != n_fft:
+            raise ValueError('Size mismatch between n_fft and window shape')
 
     # Set the default hop, if it's not already specified
     if hop_length is None:

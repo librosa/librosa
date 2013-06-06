@@ -172,9 +172,9 @@ def chromagram(S, sr, norm='inf', **kwargs):
 
     # Tile the normalizer to match raw_chroma's shape
     chroma_norm[chroma_norm == 0] = 1.0
-    chroma_norm     = np.tile(1.0/chroma_norm, (raw_chroma.shape[0], 1))
+#     chroma_norm     = np.tile(1.0/chroma_norm, (raw_chroma.shape[0], 1))
 
-    return chroma_norm * raw_chroma
+    return raw_chroma / chroma_norm
 
 
 def chromafb(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=None):
@@ -402,6 +402,11 @@ def sync(data, frames, aggregate=np.mean):
     (dimension, n_frames) = data.shape
 
     frames      = np.unique(np.concatenate( ([0], frames, [n_frames]) ))
+
+    if frames.min() < 0:
+        raise ValueError('Negative frame index!')
+    elif frames.max() > n_frames:
+        raise ValueError('Frame index exceeds data. Check your sample rate and hop size!')
 
     data_agg    = np.empty( (dimension, len(frames)-1) )
 
