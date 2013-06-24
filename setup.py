@@ -24,6 +24,6 @@ setup(
         'audioread',
         'numpy >= 1.7.0',
         'scipy',
-        'sklearn',
+        'scikit-learn',
     ],
 )
