@@ -11,6 +11,15 @@ Mostly ports and reimplementations of DPWE's matlab code.
 
 * tests/      nose unit tests to validate against original dpwe implementations
 
+
+Installation
+============
+
+To build librosa, say `python setup.py build`.
+Then, to install librosa, say `python setup.py install`.
+If all went well, you should be able to execute the demo scripts under `examples/`.
+
+
 dependencies
 ============
 
