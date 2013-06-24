@@ -20,6 +20,8 @@ import numpy as np
 import numpy.fft as fft
 import scipy.signal
 
+VERSION = '0.1.0'
+
 # Do we have scikits.samplerate?
 try:
     import scikits.samplerate
