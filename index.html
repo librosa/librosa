@@ -1,0 +1,1610 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Core methods &mdash; librosa 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="librosa 0.1.0 documentation" href="#" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="#">librosa 0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="toctree-wrapper compound">
+<ul class="simple">
+</ul>
+</div>
+<div class="section" id="module-librosa.core">
+<span id="core-methods"></span><h1>Core methods<a class="headerlink" href="#module-librosa.core" title="Permalink to this headline">¶</a></h1>
+<p>Core IO, DSP and utility functions.</p>
+<dl class="function">
+<dt id="librosa.core.autocorrelate">
+<tt class="descclassname">librosa.core.</tt><tt class="descname">autocorrelate</tt><big>(</big><em>y</em>, <em>max_size=None</em><big>)</big><a class="headerlink" href="#librosa.core.autocorrelate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bounded auto-correlation</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first">
+<li><dl class="first docutils">
+<dt>y <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last">vector to autocorrelate</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>max_size <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">maximum correlation lag.
+If unspecified, defaults to <tt class="docutils literal"><span class="pre">len(y)</span></tt></p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul>
+<li><dl class="first docutils">
+<dt>z <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last">truncated autocorrelation <tt class="docutils literal"><span class="pre">y*y</span></tt></p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="librosa.core.frames_to_time">
+<tt class="descclassname">librosa.core.</tt><tt class="descname">frames_to_time</tt><big>(</big><em>frames</em>, <em>sr=22050</em>, <em>hop_length=64</em><big>)</big><a class="headerlink" href="#librosa.core.frames_to_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts frame counts to time (seconds)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first">
+<li><dl class="first docutils">
+<dt>frames <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last">vector of frame numbers</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>sr <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">audio sampling rate</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>hop_length <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">hop length</p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul>
+<li><dl class="first docutils">
+<dt>times <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray </span></dt>
+<dd><p class="first last">time (in seconds) of each given frame number:
+<tt class="docutils literal"><span class="pre">times[i]</span> <span class="pre">=</span> <span class="pre">frames[i]</span> <span class="pre">*</span> <span class="pre">hop_length</span> <span class="pre">/</span> <span class="pre">sr</span></tt></p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="librosa.core.istft">
+<tt class="descclassname">librosa.core.</tt><tt class="descname">istft</tt><big>(</big><em>stft_matrix</em>, <em>n_fft=None</em>, <em>hann_w=None</em>, <em>hop_length=None</em>, <em>window=None</em><big>)</big><a class="headerlink" href="#librosa.core.istft" title="Permalink to this definition">¶</a></dt>
+<dd><p>Inverse short-time fourier transform</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first">
+<li><dl class="first docutils">
+<dt>stft_matrix <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last">STFT matrix from stft()</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>n_fft <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">number of FFT components.
+If unspecified, n_fft is inferred from the shape of stft_matrix.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>hann_w <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">size of Hann window
+If unspecified, defaults to the value of n_fft.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>hop_length <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Number of audio frames between STFT columns.
+If unspecified, defaults to hann_w / 2.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>window <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last">(optional) user-specified window</p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul>
+<li><dl class="first docutils">
+<dt>y <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last">time domain signal reconstructed from stft_matrix</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="librosa.core.load">
+<tt class="descclassname">librosa.core.</tt><tt class="descname">load</tt><big>(</big><em>path</em>, <em>sr=22050</em>, <em>mono=True</em><big>)</big><a class="headerlink" href="#librosa.core.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load an audio file as a floating point time series.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first">
+<li><dl class="first docutils">
+<dt>path <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">path to the input file</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>sr <span class="classifier-delimiter">:</span> <span class="classifier">int &gt; 0</span></dt>
+<dd><p class="first last">target sample rate.
+&#8216;None&#8217; uses the native sampling rate</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>mono <span class="classifier-delimiter">:</span> <span class="classifier">boolean</span></dt>
+<dd><p class="first last">convert signal to mono</p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul>
+<li><dl class="first docutils">
+<dt>y <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last">audio time series</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>sr <span class="classifier-delimiter">:</span> <span class="classifier">int  </span></dt>
+<dd><p class="first last">sampling rate of y</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="librosa.core.localmax">
+<tt class="descclassname">librosa.core.</tt><tt class="descname">localmax</tt><big>(</big><em>x</em><big>)</big><a class="headerlink" href="#librosa.core.localmax" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return 1 where there are local maxima in x (column-wise)
+left edges do not fire, right edges might.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first">
+<li><dl class="first docutils">
+<dt>x <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last">input vector</p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul>
+<li><dl class="first docutils">
+<dt>m <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray, dtype=boolean</span></dt>
+<dd><p class="first last">boolean indicator vector of local maxima:
+m[i] &lt;=&gt; x[i] is a local maximum</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="librosa.core.logamplitude">
+<tt class="descclassname">librosa.core.</tt><tt class="descname">logamplitude</tt><big>(</big><em>S</em>, <em>amin=1e-10</em>, <em>top_db=80.0</em><big>)</big><a class="headerlink" href="#librosa.core.logamplitude" title="Permalink to this definition">¶</a></dt>
+<dd><p>Log-scale the amplitude of a spectrogram</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first">
+<li><dl class="first docutils">
+<dt>S <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last">input spectrogram</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>amin <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">minimum amplitude threshold</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>top_db <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">threshold <tt class="docutils literal"><span class="pre">max(log(S))</span> <span class="pre">-</span> <span class="pre">top_db</span></tt></p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><dl class="docutils">
+<dt>log_S <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last"><tt class="docutils literal"><span class="pre">log_S</span> <span class="pre">~=</span> <span class="pre">10</span> <span class="pre">*</span> <span class="pre">log10(S)</span></tt></p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="librosa.core.resample">
+<tt class="descclassname">librosa.core.</tt><tt class="descname">resample</tt><big>(</big><em>y</em>, <em>orig_sr</em>, <em>target_sr</em>, <em>res_type='sinc_fastest'</em><big>)</big><a class="headerlink" href="#librosa.core.resample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resample a signal from orig_sr to target_sr</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first">
+<li><dl class="first docutils">
+<dt>y <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last">audio time series</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>orig_sr <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">original sample rate of y</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>target_sr <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">target sample rate</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>res_type <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">resample type (see note)</p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul>
+<li><dl class="first docutils">
+<dt>y_hat <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last">y resampled from orig_sr to target_sr</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If scikits.samplerate is installed, resample will use res_type
+otherwise, it will fall back on scipy.signal.resample</p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="librosa.core.stft">
+<tt class="descclassname">librosa.core.</tt><tt class="descname">stft</tt><big>(</big><em>y</em>, <em>n_fft=256</em>, <em>hann_w=None</em>, <em>hop_length=None</em>, <em>window=None</em><big>)</big><a class="headerlink" href="#librosa.core.stft" title="Permalink to this definition">¶</a></dt>
+<dd><p>Short-time fourier transform</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first">
+<li><dl class="first docutils">
+<dt>y <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last">the input signal</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>n_fft <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">number of FFT components</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>hann_w <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">The size of Hann window. 
+If unspecified, defaults to n_fft</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>hop_length <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">number audio of frames between STFT columns.
+If unspecified, defaults hann_w / 2.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>window <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last">(optional) user-specified window</p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul>
+<li><dl class="first docutils">
+<dt>D <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray, dtype=complex</span></dt>
+<dd><p class="first last">STFT matrix</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-librosa.beat">
+<span id="beat-tracking"></span><h1>Beat tracking<a class="headerlink" href="#module-librosa.beat" title="Permalink to this headline">¶</a></h1>
+<p>Onsets, tempo, beats and segmentation.</p>
+<dl class="function">
+<dt id="librosa.beat.beat_track">
+<tt class="descclassname">librosa.beat.</tt><tt class="descname">beat_track</tt><big>(</big><em>y=None</em>, <em>sr=22050</em>, <em>onsets=None</em>, <em>hop_length=64</em>, <em>start_bpm=120.0</em>, <em>n_fft=256</em>, <em>tightness=400</em>, <em>trim=True</em><big>)</big><a class="headerlink" href="#librosa.beat.beat_track" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ellis-style beat tracker</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first">
+<li><dl class="first docutils">
+<dt>y <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray </span></dt>
+<dd><p class="first last">audio time series</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>sr <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">audio sample rate</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>onsets <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray </span></dt>
+<dd><p class="first last">(optional) pre-computed onset envelope</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>hop_length <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">hop length (in frames)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>start_bpm <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">initial guess for BPM estimator</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>n_fft <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">window size (centers beat times).
+Set <tt class="docutils literal"><span class="pre">n_fft=None</span></tt> to disable frame centering.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>tightness <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">tightness of beat distribution around tempo</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>trim <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">trim leading/trailing beats with weak onsets?</p>
+</dd>
+</dl>
+</li>
+</ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">One of either <tt class="docutils literal"><span class="pre">onsets</span></tt> or <tt class="docutils literal"><span class="pre">y</span></tt> must be provided.</p>
+</div>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><ul>
+<li><dl class="first docutils">
+<dt>bpm <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">estimated global tempo</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>beats <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last">estimated frame numbers of beats</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises :</th><td class="field-body"><ul class="first last">
+<li><dl class="first docutils">
+<dt>ValueError  </dt>
+<dd><p class="first last">if neither y nor onsets are provided</p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If no onset strength could be detected, beat_tracker estimates 0 BPM and returns
+an empty list.</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<ul class="last simple">
+<li><a class="reference external" href="http://labrosa.ee.columbia.edu/projects/beattrack/">http://labrosa.ee.columbia.edu/projects/beattrack/</a></li>
+<li>D. Ellis (2007)
+Beat Tracking by Dynamic Programming
+Journal of New Music Research
+Special Issue on Beat and Tempo Extraction
+vol. 36 no. 1, March 2007, pp. 51-60.</li>
+</ul>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="librosa.beat.onset_estimate_bpm">
+<tt class="descclassname">librosa.beat.</tt><tt class="descname">onset_estimate_bpm</tt><big>(</big><em>onsets</em>, <em>start_bpm</em>, <em>fft_res</em><big>)</big><a class="headerlink" href="#librosa.beat.onset_estimate_bpm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Estimate the BPM from an onset envelope</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first">
+<li><dl class="first docutils">
+<dt>onsets <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray   </span></dt>
+<dd><p class="first last">time-series of onset strengths</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>start_bpm <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">initial guess of the BPM</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>fft_res <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">resolution of FFT (sample rate / hop length)</p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul>
+<li><dl class="first docutils">
+<dt>bpm <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">estimated BPM</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="librosa.beat.onset_strength">
+<tt class="descclassname">librosa.beat.</tt><tt class="descname">onset_strength</tt><big>(</big><em>y=None</em>, <em>sr=22050</em>, <em>S=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#librosa.beat.onset_strength" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract onsets from an audio time series or spectrogram</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parametrs :</th><td class="field-body"><ul class="first last">
+<li><dl class="first docutils">
+<dt>y <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last">audio time-series</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>sr <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">audio sampling rate of y</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>S <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray </span></dt>
+<dd><p class="first last">pre-computed spectrogram</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>kwargs  </dt>
+<dd><p class="first">Parameters to mel spectrogram, if S is not provided.</p>
+<p class="last">See librosa.feature.melspectrogram() for details</p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">if S is provided, then (y, sr) are optional.</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><ul>
+<li><dl class="first docutils">
+<dt>onsets <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray </span></dt>
+<dd><p class="first last">vector of onset strength</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises :</th><td class="field-body"><ul class="first last">
+<li><dl class="first docutils">
+<dt>ValueError </dt>
+<dd><p class="first last">if neither (y, sr) nor S are provided</p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="librosa.beat.segment">
+<tt class="descclassname">librosa.beat.</tt><tt class="descname">segment</tt><big>(</big><em>data</em>, <em>k</em><big>)</big><a class="headerlink" href="#librosa.beat.segment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bottom-up temporal segmentation</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first">
+<li><dl class="first docutils">
+<dt>data <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray    </span></dt>
+<dd><p class="first last">feature matrix (d-by-t)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>k <span class="classifier-delimiter">:</span> <span class="classifier">int &gt; 0</span></dt>
+<dd><p class="first last">number of segments to produce</p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul>
+<li><dl class="first docutils">
+<dt>boundaries <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray, shape=(k,1)  </span></dt>
+<dd><p class="first last">left-boundaries (frame numbers) of detected segments</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-librosa.feature">
+<span id="feature-extraction"></span><h1>Feature extraction<a class="headerlink" href="#module-librosa.feature" title="Permalink to this headline">¶</a></h1>
+<p>Feature extraction routines.</p>
+<dl class="function">
+<dt id="librosa.feature.chromafb">
+<tt class="descclassname">librosa.feature.</tt><tt class="descname">chromafb</tt><big>(</big><em>sr</em>, <em>n_fft</em>, <em>n_chroma=12</em>, <em>A440=440.0</em>, <em>ctroct=5.0</em>, <em>octwidth=None</em><big>)</big><a class="headerlink" href="#librosa.feature.chromafb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a Filterbank matrix to convert STFT to chroma</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first">
+<li><dl class="first docutils">
+<dt>sr <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">sampling rate</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>n_fft <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">number of FFT components</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>n_chroma <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">number of chroma dimensions</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>A440 <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Reference frequency for A</p>
+</dd>
+</dl>
+</li>
+<li><p class="first">ctroct    : float</p>
+</li>
+<li><dl class="first docutils">
+<dt>octwidth <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">These parameters specify a dominance window - Gaussian
+weighting centered on ctroct (in octs, re A0 = 27.5Hz) and
+with a gaussian half-width of octwidth.  
+Defaults to halfwidth = inf, i.e. flat.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><dl class="docutils">
+<dt>wts <span class="classifier-delimiter">:</span> <span class="classifier">ndarray, shape=(n_chroma, n_fft) </span></dt>
+<dd><p class="first last">Chroma filter matrix</p>
+</dd>
+</dl>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="librosa.feature.chromagram">
+<tt class="descclassname">librosa.feature.</tt><tt class="descname">chromagram</tt><big>(</big><em>S</em>, <em>sr</em>, <em>norm='inf'</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#librosa.feature.chromagram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute a chromagram from a spectrogram</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first">
+<li><dl class="first docutils">
+<dt>S <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last">spectrogram</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>sr <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">audio sampling rate of S</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>norm <span class="classifier-delimiter">:</span> <span class="classifier">{&#8216;inf&#8217;, 1, 2, None}</span></dt>
+<dd><p class="first">column-wise normalization:</p>
+<blockquote class="last">
+<div><p>&#8216;inf&#8217; :  max norm</p>
+<p>1 :  l_1 norm</p>
+<p>2 :  l_2 norm</p>
+<p>None :  do not normalize</p>
+</div></blockquote>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>kwargs</dt>
+<dd><p class="first last">Parameters to build the chroma filterbank
+See chromafb() for details.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><ul>
+<li><dl class="first docutils">
+<dt>chromagram <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last">Normalized energy for each chroma bin at each frame.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises :</th><td class="field-body"><ul class="first last">
+<li><dl class="first docutils">
+<dt>ValueError </dt>
+<dd><p class="first last">if an improper value is supplied for norm</p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="librosa.feature.dctfb">
+<tt class="descclassname">librosa.feature.</tt><tt class="descname">dctfb</tt><big>(</big><em>n_filts</em>, <em>d</em><big>)</big><a class="headerlink" href="#librosa.feature.dctfb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Discrete cosine transform basis</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first">
+<li><dl class="first docutils">
+<dt>n_filts <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">number of output components</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>d <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">number of input components</p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul>
+<li><dl class="first docutils">
+<dt>D <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray, shape=(n_filts, d)</span></dt>
+<dd><p class="first last">DCT basis vectors</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="librosa.feature.hz_to_mel">
+<tt class="descclassname">librosa.feature.</tt><tt class="descname">hz_to_mel</tt><big>(</big><em>frequencies</em>, <em>htk=False</em><big>)</big><a class="headerlink" href="#librosa.feature.hz_to_mel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert Hz to Mels</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first">
+<li><dl class="first docutils">
+<dt>frequencies <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray, float</span></dt>
+<dd><p class="first last">scalar or array of frequencies</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>htk <span class="classifier-delimiter">:</span> <span class="classifier">boolean</span></dt>
+<dd><p class="first last">use HTK formula instead of Slaney</p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul>
+<li><dl class="first docutils">
+<dt>mels <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last">input frequencies in Mels</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="librosa.feature.hz_to_midi">
+<tt class="descclassname">librosa.feature.</tt><tt class="descname">hz_to_midi</tt><big>(</big><em>frequency</em><big>)</big><a class="headerlink" href="#librosa.feature.hz_to_midi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the closest MIDI note number(s) for given frequencies</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first">
+<li><dl class="first docutils">
+<dt>frequencies <span class="classifier-delimiter">:</span> <span class="classifier">float, np.ndarray</span></dt>
+<dd><p class="first last">target frequencies</p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul>
+<li><dl class="first docutils">
+<dt>note_nums <span class="classifier-delimiter">:</span> <span class="classifier">int, np.ndarray</span></dt>
+<dd><p class="first last">closest MIDI notes</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="librosa.feature.hz_to_octs">
+<tt class="descclassname">librosa.feature.</tt><tt class="descname">hz_to_octs</tt><big>(</big><em>frequencies</em>, <em>A440=440.0</em><big>)</big><a class="headerlink" href="#librosa.feature.hz_to_octs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert frquencies (Hz) to octave numbers</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first">
+<li><dl class="first docutils">
+<dt>frequencies <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray, float</span></dt>
+<dd><p class="first last">scalar or vector of frequencies</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>A440 <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">frequency of A440</p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul>
+<li><dl class="first docutils">
+<dt>octaves <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last">octave number for each frequency</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="librosa.feature.mel_frequencies">
+<tt class="descclassname">librosa.feature.</tt><tt class="descname">mel_frequencies</tt><big>(</big><em>n_mels=40</em>, <em>fmin=0.0</em>, <em>fmax=11025.0</em>, <em>htk=False</em><big>)</big><a class="headerlink" href="#librosa.feature.mel_frequencies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the center frequencies of mel bands</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first">
+<li><dl class="first docutils">
+<dt>n_mels <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">number of Mel bins</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>fmin <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">minimum frequency (Hz)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>fmax <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">maximum frequency (Hz)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>htk <span class="classifier-delimiter">:</span> <span class="classifier">boolean</span></dt>
+<dd><p class="first last">use HTK formula instead of Slaney</p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul>
+<li><dl class="first docutils">
+<dt>bin_frequencies <span class="classifier-delimiter">:</span> <span class="classifier">ndarray</span></dt>
+<dd><p class="first last"><tt class="docutils literal"><span class="pre">n_mels+1</span></tt>-dimensional vector of Mel frequencies</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="librosa.feature.mel_to_hz">
+<tt class="descclassname">librosa.feature.</tt><tt class="descname">mel_to_hz</tt><big>(</big><em>mels</em>, <em>htk=False</em><big>)</big><a class="headerlink" href="#librosa.feature.mel_to_hz" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert mel bin numbers to frequencies</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first">
+<li><dl class="first docutils">
+<dt>mels <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray, float</span></dt>
+<dd><p class="first last">mel bins to convert</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>htk <span class="classifier-delimiter">:</span> <span class="classifier">boolean</span></dt>
+<dd><p class="first last">use HTK formula instead of Slaney</p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul>
+<li><dl class="first docutils">
+<dt>frequencies <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last">input mels in Hz</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="librosa.feature.melfb">
+<tt class="descclassname">librosa.feature.</tt><tt class="descname">melfb</tt><big>(</big><em>sr</em>, <em>n_fft</em>, <em>n_mels=40</em>, <em>fmin=0.0</em>, <em>fmax=None</em>, <em>htk=False</em><big>)</big><a class="headerlink" href="#librosa.feature.melfb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a Filterbank matrix to combine FFT bins into Mel-frequency bins</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first">
+<li><dl class="first docutils">
+<dt>sr <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">sampling rate of the incoming signal</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>n_fft <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">number of FFT components</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>n_mels <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">number of Mel bands</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>fmin <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">lowest frequency (in Hz)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>fmax <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">highest frequency (in Hz)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>htk <span class="classifier-delimiter">:</span> <span class="classifier">boolean</span></dt>
+<dd><p class="first last">use HTK formula instead of Slaney</p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul>
+<li><dl class="first docutils">
+<dt>M <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray, shape=(n_mels, n_fft)</span></dt>
+<dd><p class="first last">Mel transform matrix</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">coefficients above 1 + n_fft/2 are set to 0.</p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="librosa.feature.melspectrogram">
+<tt class="descclassname">librosa.feature.</tt><tt class="descname">melspectrogram</tt><big>(</big><em>y</em>, <em>sr=22050</em>, <em>n_fft=256</em>, <em>hop_length=128</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#librosa.feature.melspectrogram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute a mel spectrogram from a time series</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first">
+<li><dl class="first docutils">
+<dt>y <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last">audio time-series</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>sr <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">audio sampling rate of y</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>n_fft <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">number of FFT components</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>hop_length <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">frames to hop</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>kwargs</dt>
+<dd><p class="first last">Mel filterbank parameters
+See melfb() documentation for details.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul>
+<li><dl class="first docutils">
+<dt>S <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last">Mel spectrogram</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="librosa.feature.mfcc">
+<tt class="descclassname">librosa.feature.</tt><tt class="descname">mfcc</tt><big>(</big><em>S</em>, <em>d=20</em><big>)</big><a class="headerlink" href="#librosa.feature.mfcc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mel-frequency cepstral coefficients</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first">
+<li><dl class="first docutils">
+<dt>S <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last">log-power Mel spectrogram</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>d <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">number of MFCCs to return</p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul>
+<li><dl class="first docutils">
+<dt>M <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last">MFCC sequence</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="librosa.feature.midi_to_hz">
+<tt class="descclassname">librosa.feature.</tt><tt class="descname">midi_to_hz</tt><big>(</big><em>notes</em><big>)</big><a class="headerlink" href="#librosa.feature.midi_to_hz" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the frequency (Hz) of MIDI note(s)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first">
+<li><dl class="first docutils">
+<dt>note_num <span class="classifier-delimiter">:</span> <span class="classifier">int, np.ndarray</span></dt>
+<dd><p class="first last">number of the note(s)</p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul>
+<li><dl class="first docutils">
+<dt>frequency <span class="classifier-delimiter">:</span> <span class="classifier">float, np.ndarray</span></dt>
+<dd><p class="first last">frequency of the note in Hz</p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="librosa.feature.sync">
+<tt class="descclassname">librosa.feature.</tt><tt class="descname">sync</tt><big>(</big><em>data</em>, <em>frames</em>, <em>aggregate=&lt;function mean at 0x337d938&gt;</em><big>)</big><a class="headerlink" href="#librosa.feature.sync" title="Permalink to this definition">¶</a></dt>
+<dd><p>Synchronous aggregation of a feature matrix</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first">
+<li><dl class="first docutils">
+<dt>data <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray, shape=(d, T)</span></dt>
+<dd><p class="first last">matrix of features</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>frames <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last">(ordered) array of frame segment boundaries</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>aggregate <span class="classifier-delimiter">:</span> <span class="classifier">function</span></dt>
+<dd><p class="first last">aggregation function (defualt: mean)</p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul>
+<li><dl class="first docutils">
+<dt>Y <span class="classifier-delimiter">:</span> <span class="classifier">ndarray </span></dt>
+<dd><p class="first last"><tt class="docutils literal"><span class="pre">Y[:,</span> <span class="pre">i]</span> <span class="pre">=</span> <span class="pre">aggregate(data[:,</span> <span class="pre">F[i-1]:F[i]],</span> <span class="pre">axis=1)</span></tt></p>
+</dd>
+</dl>
+</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">In order to ensure total coverage, boundary points are added to frames</p>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="module-librosa.hpss">
+<span id="harmonic-percussive-source-separation"></span><h1>Harmonic-percussive source separation<a class="headerlink" href="#module-librosa.hpss" title="Permalink to this headline">¶</a></h1>
+<p>Harmonic-percussive source separation</p>
+<dl class="function">
+<dt id="librosa.hpss.hpss">
+<tt class="descclassname">librosa.hpss.</tt><tt class="descname">hpss</tt><big>(</big><em>S</em>, <em>alpha=0.5</em>, <em>max_iter=50</em><big>)</big><a class="headerlink" href="#librosa.hpss.hpss" title="Permalink to this definition">¶</a></dt>
+<dd><p>Harmonic-percussive source separation</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first">
+<li><dl class="first docutils">
+<dt>S <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last">input spectrogram</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>alpha <span class="classifier-delimiter">:</span> <span class="classifier">float &gt; 0</span></dt>
+<dd><p class="first last">balance parameter</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>max_iter <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">maximum iteration bound</p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul>
+<li><dl class="first docutils">
+<dt>harmonic <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last">harmonic component</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>percussive <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last">percussive component</p>
+</dd>
+</dl>
+</li>
+</ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">harmonic + percussive = S</p>
+</div>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<ul class="last simple">
+<li>Ono, N., Miyamoto, K., Kameoka, H., &amp; Sagayama, S.
+A real-time equalizer of harmonic and percussive components in music signals. 
+In ISMIR 2008 (pp. 139-144).</li>
+</ul>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="librosa.hpss.hpss_median">
+<tt class="descclassname">librosa.hpss.</tt><tt class="descname">hpss_median</tt><big>(</big><em>S</em>, <em>win_P=9</em>, <em>win_H=9</em>, <em>p=0.0</em><big>)</big><a class="headerlink" href="#librosa.hpss.hpss_median" title="Permalink to this definition">¶</a></dt>
+<dd><p>Median-filtering harmonic percussive separation</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first">
+<li><dl class="first docutils">
+<dt>S <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last">input spectrogram</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>win_P <span class="classifier-delimiter">:</span> <span class="classifier">int        </span></dt>
+<dd><p class="first last">window size for percussive filter</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>win_H <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">window size for harmonic filter</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>p <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">masking exponent</p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul>
+<li><dl class="first docutils">
+<dt>harmonic <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last">harmonic component</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>percussive <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray</span></dt>
+<dd><p class="first last">percussive component</p>
+</dd>
+</dl>
+</li>
+</ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">harmonic + percussive = S</p>
+</div>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<ul class="last simple">
+<li>Fitzgerald, D. (2010). 
+Harmonic/percussive separation using median filtering.</li>
+</ul>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="module-librosa.output">
+<span id="output-methods"></span><h1>Output methods<a class="headerlink" href="#module-librosa.output" title="Permalink to this headline">¶</a></h1>
+<p>Output routines for audio and analysis</p>
+<dl class="function">
+<dt id="librosa.output.segment_csv">
+<tt class="descclassname">librosa.output.</tt><tt class="descname">segment_csv</tt><big>(</big><em>path</em>, <em>segments</em>, <em>sr</em>, <em>hop_length</em>, <em>save_bpm=False</em><big>)</big><a class="headerlink" href="#librosa.output.segment_csv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save beat tracker or segmentation output in CSV format.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first last">
+<li><dl class="first docutils">
+<dt>path <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">path to save the output CSV file</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>segments <span class="classifier-delimiter">:</span> <span class="classifier">list of ints</span></dt>
+<dd><p class="first last">list of frame numbers for beat events</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>sr <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">audio sample rate</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>hop_length <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">hop length</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>save_bpm <span class="classifier-delimiter">:</span> <span class="classifier">boolean</span></dt>
+<dd><p class="first last">add a BPM annotation column</p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="librosa.output.write_wav">
+<tt class="descclassname">librosa.output.</tt><tt class="descname">write_wav</tt><big>(</big><em>path</em>, <em>y</em>, <em>sr</em><big>)</big><a class="headerlink" href="#librosa.output.write_wav" title="Permalink to this definition">¶</a></dt>
+<dd><p>Output a time series as a .wav file</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><ul class="first last">
+<li><dl class="first docutils">
+<dt>path <span class="classifier-delimiter">:</span> <span class="classifier">str </span></dt>
+<dd><p class="first last">path to save the output wav file</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>y <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray    </span></dt>
+<dd><p class="first last">time-series audio data</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>sr <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">audio sample rate</p>
+</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Core methods</a></li>
+<li><a class="reference internal" href="#module-librosa.beat">Beat tracking</a></li>
+<li><a class="reference internal" href="#module-librosa.feature">Feature extraction</a></li>
+<li><a class="reference internal" href="#module-librosa.hpss">Harmonic-percussive source separation</a></li>
+<li><a class="reference internal" href="#module-librosa.output">Output methods</a></li>
+</ul>
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/index.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="#">librosa 0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Dawen Liang, Brian McFee, Matt McVicar, Colin Raffel.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
