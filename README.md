@@ -1,11 +1,11 @@
 librosa
 =======
 
-A python module for music and audio processing.
+A python package for music and audio processing.
 
 Mostly ports and reimplementations of DPWE's matlab code.
 
-* librosa/    The librosa module
+* librosa/    The librosa package
 
 * examples/   Some basic examples of audio processing with librosa
 
@@ -28,3 +28,4 @@ dependencies
 * sklearn
 * audioread
 * (optional) scikits.samplerate
+* (recommended) pygst
