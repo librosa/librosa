@@ -9,11 +9,13 @@ import librosa.core
 def midi_to_hz( notes ):
     """Get the frequency (Hz) of MIDI note(s)
 
-    Arguments:
-      note_num      -- (int, ndarray)    number of the note(s)
+    :parameters:
+      - note_num      : int, np.ndarray
+          number of the note(s)
 
-    Returns:
-      frequency     -- (float, ndarray)  frequency of the note in Hz
+    :returns:
+      - frequency     : float, np.ndarray
+          frequency of the note in Hz
     """
 
     return 440.0 * (2.0 ** ((notes - 69)/12.0))
@@ -21,11 +23,14 @@ def midi_to_hz( notes ):
 def hz_to_midi( frequency ):
     """Get the closest MIDI note number(s) for given frequencies
 
-    Arguments:
-      frequencies   -- (float, ndarray) target frequencies
+    :parameters:
+      - frequencies   : float, np.ndarray
+          target frequencies
 
-    Returns:
-      note_nums     -- (int, ndarray) closest MIDI notes
+    :returns:
+      - note_nums     : int, np.ndarray
+          closest MIDI notes
+
     """
 
     return 12 * (np.log2(frequency) - np.log2(440.0)) + 69
@@ -34,12 +39,15 @@ def hz_to_midi( frequency ):
 def hz_to_mel(frequencies, htk=False):
     """Convert Hz to Mels
 
-    Arguments:
-      frequencies   -- (ndarray, float) scalar or array of frequencies
-      htk           -- (boolean)        use HTK formula     
+    :parameters:
+      - frequencies   : np.ndarray, float
+          scalar or array of frequencies
+      - htk           : boolean
+          use HTK formula instead of Slaney
 
-    Returns mels:
-        mels        -- (ndarray)        input frequencies in Mels
+    :returns:
+      - mels        : np.ndarray
+          input frequencies in Mels
 
     """
 
@@ -72,12 +80,15 @@ def hz_to_mel(frequencies, htk=False):
 def mel_to_hz(mels, htk=False):
     """Convert mel bin numbers to frequencies
 
-    Arguments:
-      mels          -- (ndarray, float) mel bins to convert
-      htk           -- (boolean)        use HTK formula     
+    :parameters:
+      - mels          : np.ndarray, float
+          mel bins to convert
+      - htk           : boolean
+          use HTK formula instead of Slaney
 
-    Returns frequencies:
-      frequencies   -- (ndarray)    input mels in Hz
+    :returns:
+      - frequencies   : np.ndarray
+          input mels in Hz
 
     """
 
@@ -108,12 +119,15 @@ def mel_to_hz(mels, htk=False):
 def hz_to_octs(frequencies, A440=440.0):
     """Convert frquencies (Hz) to octave numbers
 
-    Arguments:
-      frequencies   -- (ndarray, float) scalar or vector of frequencies
-      A440          -- (float)          frequency of A440   | Default: 440.0
+    :parameters:
+      - frequencies   : np.ndarray, float
+          scalar or vector of frequencies
+      - A440          : float
+          frequency of A440
 
-    Returns octaves:
-      octaves       -- (ndarray)        octave number for each frequency
+    :returns:
+      - octaves       : np.ndarray
+          octave number for each frequency
 
     """
     return np.log2(frequencies / (A440 / 16.0))
@@ -123,23 +137,33 @@ def hz_to_octs(frequencies, A440=440.0):
 def chromagram(S, sr, norm='inf', **kwargs):
     """Compute a chromagram from a spectrogram
 
-    Arguments:
-      S          -- (ndarray)  spectrogram
-      sr         -- (int)      sampling rate of S
-      norm       -- (mixed)    column-wise normalization    |default: 'inf'
-                               'inf' --  max norm
-                               1     --  l_1 norm 
-                               2     --  l_2 norm
-                               None  --  do not normalize
+    :parameters:
+      - S          : np.ndarray
+          spectrogram
+      - sr         : int
+          audio sampling rate of S
+      - norm       : {'inf', 1, 2, None}
+          column-wise normalization:
 
-      **kwargs   --  Parameters to build the chroma filterbank
-                     See chromafb() for details.
+             'inf' :  max norm
 
-    Returns C:
-      C          -- (ndarray) chromagram
+             1 :  l_1 norm 
+             
+             2 :  l_2 norm
+             
+             None :  do not normalize
 
-    Raises:
-      ValueError -- if an improper value is supplied for norm
+      - kwargs
+          Parameters to build the chroma filterbank
+          See chromafb() for details.
+
+    :returns:
+      - chromagram  : np.ndarray
+          Normalized energy for each chroma bin at each frame.
+
+    :raises:
+      - ValueError 
+          if an improper value is supplied for norm
 
     """
     n_fft       = (S.shape[0] -1 ) * 2
@@ -163,7 +187,6 @@ def chromagram(S, sr, norm='inf', **kwargs):
 
     # Tile the normalizer to match raw_chroma's shape
     chroma_norm[chroma_norm == 0] = 1.0
-#     chroma_norm     = np.tile(1.0/chroma_norm, (raw_chroma.shape[0], 1))
 
     return raw_chroma / chroma_norm
 
@@ -171,20 +194,25 @@ def chromagram(S, sr, norm='inf', **kwargs):
 def chromafb(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=None):
     """Create a Filterbank matrix to convert STFT to chroma
 
-    Arguments:
-      sr        -- (int)    sampling rate
-      n_fft     -- (int)    number of FFT components
-      n_chroma  -- (int)    number of chroma dimensions   
-      A440      -- (float)  Reference frequency for A
-      ctroct    -- (float)                                
-      octwidth  -- (float)                                
-                  These parameters specify a dominance window - Gaussian
-                  weighting centered on ctroct (in octs, re A0 = 27.5Hz) and
-                  with a gaussian half-width of octwidth.  
-                  Defaults to halfwidth = inf i.e. flat.
+    :parameters:
+      - sr        : int
+          sampling rate
+      - n_fft     : int
+          number of FFT components
+      - n_chroma  : int
+          number of chroma dimensions   
+      - A440      : float
+          Reference frequency for A
+      - ctroct    : float
+      - octwidth  : float
+          These parameters specify a dominance window - Gaussian
+          weighting centered on ctroct (in octs, re A0 = 27.5Hz) and
+          with a gaussian half-width of octwidth.  
+          Defaults to halfwidth = inf, i.e. flat.
 
-    Returns wts:
-      wts       -- (ndarray) n_chroma-by-n_fft filter matrix
+    :returns:
+      wts       : ndarray, shape=(n_chroma, n_fft) 
+          Chroma filter matrix
 
     """
 
@@ -235,14 +263,17 @@ def chromafb(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=None):
 #-- Mel spectrogram and MFCCs --#
 
 def dctfb(n_filts, d):
-    """Build a discrete cosine transform basis
+    """Discrete cosine transform basis
 
-    Arguments:
-      n_filts   -- (int)        number of output components
-      d         -- (int)        number of input components
+    :parameters:
+      - n_filts   : int
+          number of output components
+      - d         : int
+          number of input components
 
-    Returns D:
-      D         -- (ndarray)    n_filts-by-d DCT basis
+    :returns:
+      - D         : np.ndarray, shape=(n_filts, d)
+          DCT basis vectors
 
     """
 
@@ -260,12 +291,15 @@ def dctfb(n_filts, d):
 def mfcc(S, d=20):
     """Mel-frequency cepstral coefficients
 
-    Arguments:
-      S     -- (ndarray)    log-amplitude Mel spectrogram
-      d     -- (int)        number of MFCCs to return
+    :parameters:
+      - S     : np.ndarray
+          log-power Mel spectrogram
+      - d     : int
+          number of MFCCs to return
 
-    Returns M:
-      M     -- (ndarray)    MFCC sequence
+    :returns:
+      - M     : np.ndarray
+          MFCC sequence
 
     """
 
@@ -275,14 +309,19 @@ def mfcc(S, d=20):
 def mel_frequencies(n_mels=40, fmin=0.0, fmax=11025.0, htk=False):
     """Compute the center frequencies of mel bands
 
-    Arguments:
-      n_mels    -- (int)        number of Mel bins  
-      fmin      -- (float)      minimum frequency (Hz)
-      fmax      -- (float)      maximum frequency (Hz)
-      htk       -- (boolean)    use HTK formula 
+    :parameters:
+      - n_mels    : int
+          number of Mel bins  
+      - fmin      : float
+          minimum frequency (Hz)
+      - fmax      : float
+          maximum frequency (Hz)
+      - htk       : boolean
+          use HTK formula instead of Slaney
 
-    Returns bin_frequencies:
-        bin_frequencies -- (ndarray)    n_mels+1 vector of Mel frequencies
+    :returns:
+      - bin_frequencies : ndarray
+          ``n_mels+1``-dimensional vector of Mel frequencies
 
     """
 
@@ -298,18 +337,25 @@ def mel_frequencies(n_mels=40, fmin=0.0, fmax=11025.0, htk=False):
 def melfb(sr, n_fft, n_mels=40, fmin=0.0, fmax=None, htk=False):
     """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins
 
-    Arguments:
-      sr        -- (int)        sampling rate of the incoming signal
-      n_fft     -- (int)        number of FFT components
-      n_mels    -- (int)        number of Mel bands 
-      fmin      -- (float)      lowest frequency (in Hz) 
-      fmax      -- (float)      highest frequency (in Hz)
-      htk       -- (boolean)    use HTK formula 
+    :parameters:
+      - sr        : int
+          sampling rate of the incoming signal
+      - n_fft     : int
+          number of FFT components
+      - n_mels    : int
+          number of Mel bands 
+      - fmin      : float
+          lowest frequency (in Hz) 
+      - fmax      : float
+          highest frequency (in Hz)
+      - htk       : boolean
+          use HTK formula instead of Slaney
 
-    Returns M:
-      M         -- (ndarray)    n_mels-by-n_fft   Mel transform matrix
+    :returns:
+      - M         : np.ndarray, shape=(n_mels, n_fft)
+          Mel transform matrix
 
-    Note: coefficients above 1 + n_fft/2 are set to 0.
+    .. note:: coefficients above 1 + n_fft/2 are set to 0.
 
     """
 
@@ -343,17 +389,23 @@ def melfb(sr, n_fft, n_mels=40, fmin=0.0, fmax=None, htk=False):
 def melspectrogram(y, sr=22050, n_fft=256, hop_length=128, **kwargs):
     """Compute a mel spectrogram from a time series
 
-    Arguments:
-      y             --  (ndarray)   audio time-series
-      sr            --  (int)       sampling rate of y  
-      n_fft         --  (int)       number of FFT components
-      hop_length    --  (int)       frames to hop
+    :parameters:
+      - y : np.ndarray
+          audio time-series
+      - sr : int
+          audio sampling rate of y  
+      - n_fft : int
+          number of FFT components
+      - hop_length : int
+          frames to hop
 
-      **kwargs      --  Mel filterbank parameters
-                        See melfb() documentation for details.
+      - kwargs
+          Mel filterbank parameters
+          See melfb() documentation for details.
 
-    Returns S:
-      S             -- (ndarray)   Mel spectrogram
+    :returns:
+      - S : np.ndarray
+          Mel spectrogram
 
     """
 
@@ -376,17 +428,19 @@ def melspectrogram(y, sr=22050, n_fft=256, hop_length=128, **kwargs):
 def sync(data, frames, aggregate=np.mean):
     """Synchronous aggregation of a feature matrix
 
-    Arguments:
-      data      -- (ndarray)    d-by-T  matrix of features
-      frames    -- (ndarray)    (ordered) array of frame segment boundaries
-      aggregate -- (function)   aggregation function
+    :parameters:
+      - data      : np.ndarray, shape=(d, T)
+          matrix of features
+      - frames    : np.ndarray
+          (ordered) array of frame segment boundaries
+      - aggregate : function
+          aggregation function (defualt: mean)
 
-    Returns Y:
-      Y         -- (ndarray)    d-by-(<=t+1) vector
+    :returns:
+      - Y         : ndarray 
+          ``Y[:, i] = aggregate(data[:, F[i-1]:F[i]], axis=1)``
 
-      where Y[:, i] = aggregate(data[:, F[i-1]:F[i]], axis=1)
-
-    Note: In order to ensure total coverage, boundary points are added to frames
+    .. note:: In order to ensure total coverage, boundary points are added to frames
 
     """
 
