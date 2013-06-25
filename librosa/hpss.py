@@ -19,8 +19,8 @@ def hpss(S, alpha=0.5, max_iter=50):
 
     Arguments:
       S           -- (ndarray)  spectrogram
-      alpha       -- (float)    balance parameter           | default: 0.5
-      max_iter    -- (int)      maximum iteration bound     | default: 50
+      alpha       -- (float)    balance parameter
+      max_iter    -- (int)      maximum iteration bound
 
     Returns (harmonic, percussive):
       harmonic    -- (ndarray)  harmonic component
@@ -55,9 +55,9 @@ def hpss_median(S, win_P=9, win_H=9, p=0.0):
 
     Arguments:
       S     -- (ndarray)    spectrogram
-      win_P -- (int)        window size for percussive filter   | default: 9
-      win_H -- (int)        window size for harmonic filter     | default: 9
-      p     -- (float)      masking exponent                    | default: 0.0
+      win_P -- (int)        window size for percussive filter
+      win_H -- (int)        window size for harmonic filter 
+      p     -- (float)      masking exponent
 
     Returns (harmonic, percussive):
       harmonic    -- (ndarray)    harmonic component

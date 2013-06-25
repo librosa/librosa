@@ -23,7 +23,7 @@ def segment_csv(path, segments, sr, hop_length, save_bpm=False):
       segments      -- (list)    list of frame numbers for beat events
       sr            -- (int)     sample rate
       hop_length    -- (int)     hop length
-      save_bpm      -- (boolean) add a BPM annotation column  | default: False
+      save_bpm      -- (boolean) add a BPM annotation column
 
     """
 
