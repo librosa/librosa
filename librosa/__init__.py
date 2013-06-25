@@ -20,7 +20,8 @@ import numpy as np
 import numpy.fft as fft
 import scipy.signal
 
-__version__ = '0.1.0'
+# And all the librosa sub-modules
+from . import beat, feature, hpss, output
 
 # Do we have scikits.samplerate?
 try:
@@ -30,8 +31,8 @@ except ImportError:
     _HAS_SAMPLERATE = False
 
 
-# And all the librosa sub-modules
-from . import beat, feature, hpss, output
+__version__ = '0.1.0'
+
 
 #-- CORE ROUTINES --#
 def load(path, sr=22050, mono=True):
@@ -241,10 +242,6 @@ def frames_to_time(frames, sr=22050, hop_length=64):
       times      -- time (in seconds) of each given frame number
                     times[i] = frames[i] * hop_length / sr
 
-    Note:
-      If 'window' is non-zero, then the times will correspond to the center
-      of each length-window frame, rather than the onset time:
-                    times[i] = (frames[i] + window / 2) / sr
     """
     return (frames * hop_length) / float(sr)
 
