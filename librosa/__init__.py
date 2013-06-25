@@ -20,19 +20,18 @@ import numpy as np
 import numpy.fft as fft
 import scipy.signal
 
-VERSION = '0.1.0'
+__version__ = '0.1.0'
 
 # Do we have scikits.samplerate?
 try:
-    import scikits.samplerate
+    import scikits.samplerate as samplerate
     _HAS_SAMPLERATE = True
 except ImportError:
     _HAS_SAMPLERATE = False
 
 
 # And all the librosa sub-modules
-import librosa.beat, librosa.feature, librosa.hpss, librosa.output
-
+from . import beat, feature, hpss, output
 
 #-- CORE ROUTINES --#
 def load(path, sr=22050, mono=True):
@@ -91,7 +90,7 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest'):
         return y
 
     if _HAS_SAMPLERATE:
-        y_hat = scikits.samplerate.resample(y, 
+        y_hat = samplerate.resample(y, 
                                             float(target_sr) / orig_sr, 
                                             res_type)
     else:
