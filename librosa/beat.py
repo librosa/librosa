@@ -153,7 +153,7 @@ def __beat_tracker(onsets, bpm, fft_res, tightness, trim):
     def get_last_beat(cumscore):
         """Get the last beat from the cumulative score array"""
 
-        maxes       = librosa.localmax(cumscore)
+        maxes       = librosa.core.localmax(cumscore)
         med_score   = np.median(cumscore[np.argwhere(maxes)])
 
         # The last of these is the last beat (since score generally increases)
@@ -230,7 +230,7 @@ def onset_estimate_bpm(onsets, start_bpm, fft_res):
     ac_window   = np.round(ac_size * fft_res)
 
     # Compute the autocorrelation
-    x_corr      = librosa.autocorrelate(onsets[mincol:maxcol], ac_window)
+    x_corr      = librosa.core.autocorrelate(onsets[mincol:maxcol], ac_window)
 
 
     #   FIXME:  2013-01-25 08:55:40 by Brian McFee <brm2132@columbia.edu>
@@ -242,7 +242,7 @@ def onset_estimate_bpm(onsets, start_bpm, fft_res):
     x_corr  = x_corr * np.exp(-0.5 * ((np.log2(bpms / start_bpm)) / bpm_std)**2)
 
     # Get the local maximum of weighted correlation
-    x_peaks = librosa.localmax(x_corr)
+    x_peaks = librosa.core.localmax(x_corr)
 
     # Zero out all peaks before the first negative
     x_peaks[:np.argmax(x_corr < 0)] = False
@@ -290,7 +290,7 @@ def onset_strength(y=None, sr=22050, S=None, **kwargs):
         S   = librosa.feature.melspectrogram(y, sr = sr, **kwargs)
 
         # Convert to dBs
-        S   = librosa.logamplitude(S)
+        S   = librosa.core.logamplitude(S)
 
 
     ### Compute first difference
