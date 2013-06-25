@@ -28,7 +28,7 @@ try:
     _HAS_SAMPLERATE = True
 except ImportError:
     _HAS_SAMPLERATE = False
-    pass
+
 
 # And all the librosa sub-modules
 import librosa.beat, librosa.feature, librosa.hpss, librosa.output
@@ -91,7 +91,9 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest'):
         return y
 
     if _HAS_SAMPLERATE:
-        y_hat = scikits.samplerate.resample(y, float(target_sr) / orig_sr, res_type)
+        y_hat = scikits.samplerate.resample(y, 
+                                            float(target_sr) / orig_sr, 
+                                            res_type)
     else:
         n_samples = len(y) * target_sr / orig_sr
         y_hat = scipy.signal.resample(y, n_samples, axis=-1)
