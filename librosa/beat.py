@@ -20,7 +20,8 @@ import sklearn.feature_extraction
 
 import librosa
 
-def beat_track(y=None, sr=22050, onsets=None, hop_length=64, start_bpm=120.0, n_fft=256, tightness=400, trim=True):
+def beat_track(y=None, sr=22050, onsets=None, hop_length=64, 
+               start_bpm=120.0, n_fft=256, tightness=400, trim=True):
     """Ellis-style beat tracker
 
     See: 
@@ -334,6 +335,7 @@ def segment(data, k):
 
     # Find the change points from the labels
     boundaries = [0]
-    boundaries.extend(list(1 + np.nonzero(np.diff(ward.labels_))[0].astype(int)))
+    boundaries.extend(
+        list(1 + np.nonzero(np.diff(ward.labels_))[0].astype(int)))
     return boundaries
 
