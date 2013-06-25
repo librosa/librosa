@@ -20,7 +20,7 @@ import sklearn.feature_extraction
 
 import librosa
 
-def beat_track(y=None, sr=22050, onsets=None, hop_length=64, start_bpm=120.0, n_fft=256):
+def beat_track(y=None, sr=22050, onsets=None, hop_length=64, start_bpm=120.0, n_fft=256, tightness=400, trim=True):
     """Ellis-style beat tracker
 
     See: 
@@ -32,12 +32,14 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64, start_bpm=120.0, n_
         vol. 36 no. 1, March 2007, pp. 51-60. 
 
     Arguments:
-      y           -- (ndarray) audio time series                  | default: None
-      sr          -- (int)     sample rate                        | default: 22050
-      onsets      -- (ndarray) pre-computed onset envelope        | default: None
-      hop_length  -- (int)     hop length (in frames)             | default: 64
-      start_bpm   -- (float)   initial guess for BPM estimator    | default: 120.0
-      n_fft       -- (int)     window size (centers beat times)   | default: 256
+      y           -- (ndarray) audio time series
+      sr          -- (int)     sample rate
+      onsets      -- (ndarray) pre-computed onset envelope
+      hop_length  -- (int)     hop length (in frames)
+      start_bpm   -- (float)   initial guess for BPM estimator
+      n_fft       -- (int)     window size (centers beat times)
+      tightness   -- (float)   tightness of beat distribution around tempo
+      trim        -- (bool)    trim leading/trailing beats with weak onsets?
 
       Either onsets or y must be provided.
 
@@ -73,7 +75,7 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64, start_bpm=120.0, n_
     
     # Then, run the tracker: tightness = 400
 
-    beats   = __beat_tracker(onsets, bpm, fft_res, 400)
+    beats   = __beat_tracker(onsets, bpm, fft_res, tightness, trim)
 
     # Framing correction
     if n_fft is None:
@@ -84,7 +86,7 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64, start_bpm=120.0, n_
     return (bpm, beats)
 
 
-def __beat_tracker(onsets, bpm, fft_res, tightness):
+def __beat_tracker(onsets, bpm, fft_res, tightness, trim):
     """Internal function that does beat tracking from a given onset profile.
 
     Arguments:
@@ -92,7 +94,7 @@ def __beat_tracker(onsets, bpm, fft_res, tightness):
       bpm       -- (float)    tempo estimate
       fft_res   -- (float)    resolution of the fft (sr / hop_length)
       tightness -- (float)    how closely do we adhere to bpm?
-
+      trim      -- (bool)     trim leading/trailing beats with weak onsets?
 
     Returns beats:
       beats     -- (ndarray)  frame numbers of beat events
@@ -193,9 +195,9 @@ def __beat_tracker(onsets, bpm, fft_res, tightness):
     beats = np.array(beats, dtype=int)
 
     ### Discard spurious trailing beats
-    beats = smooth_beats(beats)
+    if trim:
+        beats = smooth_beats(beats)
 
-    # Add one to account for window centering offset
     return beats
 
 
