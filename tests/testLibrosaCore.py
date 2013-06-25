@@ -15,17 +15,13 @@
 # against the desired output, typically via numpy.allclose().
 #
 # CAVEATS:
-#   The DPWE versions of STFT/ISTFT use a custom Hann window implementation, which does
-#   not quite numerically match either the Matlab or scipy.signal implementations.
-#   These tests should pass if [i]stft.m are modified to use Matlab's builtin hann().
-#
 #   Currently, not all tests are exhaustive in parameter space.  This is typically due
 #   restricted functionality of the librosa implementations.  Similarly, there is no
 #   fuzz-testing here, so behavior on invalid inputs is not yet well-defined.
 #
 
 import librosa
-import os, glob
+import glob
 import numpy, scipy.io
 
 from nose.tools import nottest
