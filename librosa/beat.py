@@ -18,7 +18,8 @@ import sklearn
 import sklearn.cluster
 import sklearn.feature_extraction
 
-import librosa
+import librosa.core
+import librosa.feature
 
 def beat_track(y=None, sr=22050, onsets=None, hop_length=64, 
                start_bpm=120.0, n_fft=256, tightness=400, trim=True):

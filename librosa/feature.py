@@ -12,7 +12,7 @@ CREATED:2013-03-13 21:34:58 by Brian McFee <brm2132@columbia.edu>
 
 import numpy as np
 
-import librosa
+import librosa.core
 
 #-- Frequency conversions --#
 def midi_to_hz( notes ):
@@ -367,7 +367,7 @@ def melspectrogram(y, sr=22050, n_fft=256, hop_length=128, **kwargs):
     """
 
     # Compute the STFT
-    powspec     = np.abs(librosa.stft(y,   
+    powspec     = np.abs(librosa.core.stft(y,   
                                       n_fft       =   n_fft, 
                                       hann_w      =   n_fft, 
                                       hop_length  =   hop_length))**2
