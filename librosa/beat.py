@@ -16,38 +16,58 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
                start_bpm=120.0, n_fft=256, tightness=400, trim=True):
     """Ellis-style beat tracker
 
-    See: 
+    :parameters:
+      - y          : np.ndarray 
+          audio time series
+
+      - sr         : int
+          audio sample rate
+
+      - onsets     : np.ndarray 
+          (optional) pre-computed onset envelope
+
+      - hop_length : int
+          hop length (in frames)
+
+      - start_bpm  : float
+          initial guess for BPM estimator
+
+      - n_fft      : int
+          window size (centers beat times).
+          Set ``n_fft=None`` to disable frame centering.
+
+      - tightness  : float
+          tightness of beat distribution around tempo
+
+      - trim       : bool
+          trim leading/trailing beats with weak onsets?
+
+      .. note:: One of either ``onsets`` or ``y`` must be provided.
+
+
+    :returns: 
+      - bpm : float
+          estimated global tempo
+
+      - beats : np.ndarray
+          estimated frame numbers of beats
+
+    :raises:
+      - ValueError  
+          if neither y nor onsets are provided
+
+    .. note::
+      If no onset strength could be detected, beat_tracker estimates 0 BPM and returns
+      an empty list.
+
+    .. note:: 
+
       - http://labrosa.ee.columbia.edu/projects/beattrack/
       - D. Ellis (2007)
         Beat Tracking by Dynamic Programming
         Journal of New Music Research
         Special Issue on Beat and Tempo Extraction
         vol. 36 no. 1, March 2007, pp. 51-60. 
-
-    Arguments:
-      y           -- (ndarray) audio time series
-      sr          -- (int)     sample rate
-      onsets      -- (ndarray) pre-computed onset envelope
-      hop_length  -- (int)     hop length (in frames)
-      start_bpm   -- (float)   initial guess for BPM estimator
-      n_fft       -- (int)     window size (centers beat times)
-      tightness   -- (float)   tightness of beat distribution around tempo
-      trim        -- (bool)    trim leading/trailing beats with weak onsets?
-
-      Either onsets or y must be provided.
-
-      Set n_fft = None to disable beat frame-centering
-
-    Returns (bpm, beats):
-      bpm         -- (float)   estimated global tempo
-      beats       -- (ndarray) estimated frame numbers of beats
-
-    Raises:
-      ValueError  -- if neither y nor onsets are provided
-
-    Note:
-      If no onset strength could be detected, beat_tracker estimates 0 BPM and returns
-      an empty list.
 
     """
 
@@ -83,15 +103,21 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
 def __beat_tracker(onsets, bpm, fft_res, tightness, trim):
     """Internal function that does beat tracking from a given onset profile.
 
-    Arguments:
-      onsets    -- (ndarray)  onset envelope
-      bpm       -- (float)    tempo estimate
-      fft_res   -- (float)    resolution of the fft (sr / hop_length)
-      tightness -- (float)    how closely do we adhere to bpm?
-      trim      -- (bool)     trim leading/trailing beats with weak onsets?
+    :parameters:
+      - onsets   : np.ndarray
+          onset envelope
+      - bpm      : float
+          tempo estimate
+      - fft_res  : float
+          resolution of the fft (sr / hop_length)
+      - tightness: float
+          how closely do we adhere to bpm?
+      - trim     : boolean
+          trim leading/trailing beats with weak onsets?
 
-    Returns beats:
-      beats     -- (ndarray)  frame numbers of beat events
+    :returns:
+      - beats    : np.ndarray
+          frame numbers of beat events
 
     """
 
@@ -198,13 +224,17 @@ def __beat_tracker(onsets, bpm, fft_res, tightness, trim):
 def onset_estimate_bpm(onsets, start_bpm, fft_res):
     """Estimate the BPM from an onset envelope
 
-    Arguments:
-      onsets     -- (ndarray)   time-series of onset strengths
-      start_bpm  -- (float)     initial guess of the BPM
-      fft_res    -- (float)     resolution of FFT (sample rate / hop length)
+    :parameters:
+      - onsets    : np.ndarray   
+          time-series of onset strengths
+      - start_bpm : float
+          initial guess of the BPM
+      - fft_res   : float
+          resolution of FFT (sample rate / hop length)
 
-    Returns bpm:
-      bpm       -- (float)  estimated BPM
+    :returns:
+      - bpm      : float
+          estimated BPM
 
     """
 
@@ -255,22 +285,28 @@ def onset_estimate_bpm(onsets, start_bpm, fft_res):
 def onset_strength(y=None, sr=22050, S=None, **kwargs):
     """Extract onsets from an audio time series or spectrogram
 
-    Arguments:
-      y         -- (ndarray) audio time-series
-      sr        -- (int)     sampling rate of y
-      S         -- (ndarray) pre-computed spectrogram
+    :parametrs:
+      - y        : np.ndarray
+          audio time-series
+      - sr       : int
+          audio sampling rate of y
+      - S        : np.ndarray 
+          pre-computed spectrogram
 
-    **kwargs    -- Parameters to mel spectrogram, if S is not provided
+      - kwargs  
+          Parameters to mel spectrogram, if S is not provided.
 
-                   See librosa.feature.melspectrogram() for details
+          See librosa.feature.melspectrogram() for details
 
-    Note: if S is provided, then (y, sr) are optional.
+    .. note:: if S is provided, then (y, sr) are optional.
 
-    Returns onsets:
-      onsets    -- (ndarray) vector of onset strength
+    :returns:
+      - onsets   : np.ndarray 
+          vector of onset strength
 
-    Raises:
-      ValueError -- if neither (y, sr) nor S are provided
+    :raises:
+      - ValueError 
+          if neither (y, sr) nor S are provided
 
     """
 
@@ -305,13 +341,16 @@ def onset_strength(y=None, sr=22050, S=None, **kwargs):
 def segment(data, k):
     """Bottom-up temporal segmentation
 
-    Arguments:
-      data      -- (ndarray)    d-by-t  spectrogram
-      k         -- (int)        number of segments to produce
+    :parameters:
+      - data     : np.ndarray    
+          feature matrix (d-by-t)
 
-    Returns:
-      boundaries-- (ndarray)    k-by-1  left-boundaries (frame numbers)
-                                        of detected segments
+      - k        : int > 0
+          number of segments to produce
+
+    :returns:
+      - boundaries : np.ndarray, shape=(k,1)  
+          left-boundaries (frame numbers) of detected segments
 
     """
 

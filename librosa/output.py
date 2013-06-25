@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Analysis and audio output routines."""
+"""Output routines for audio and analysis"""
 
 import csv
 
@@ -10,14 +10,23 @@ import scipy.io.wavfile
 import librosa.core
 
 def segment_csv(path, segments, sr, hop_length, save_bpm=False):
-    """Save beat tracker or segmentation output in CSV format
+    """Save beat tracker or segmentation output in CSV format.
 
-    Arguments:
-      path          -- (string)  path to the output CSV file
-      segments      -- (list)    list of frame numbers for beat events
-      sr            -- (int)     sample rate
-      hop_length    -- (int)     hop length
-      save_bpm      -- (boolean) add a BPM annotation column
+    :parameters:
+      - path : string
+          path to save the output CSV file
+
+      - segments : list of ints
+          list of frame numbers for beat events
+      
+      - sr : int
+          audio sample rate
+    
+      - hop_length : int
+          hop length
+      
+      - save_bpm : boolean
+          add a BPM annotation column
 
     """
 
@@ -38,10 +47,15 @@ def segment_csv(path, segments, sr, hop_length, save_bpm=False):
 def write_wav(path, y, sr):
     """Output a time series as a .wav file
 
-    Arguments:
-      path  -- (string)     path to output the wav file
-      y     -- (ndarray)    time-series audio data (float)
-      sr    -- (int)        sample rate
+    :parameters:
+      - path : str 
+          path to save the output wav file
+
+      - y : np.ndarray    
+          time-series audio data
+
+      - sr : int
+          audio sample rate
 
     """
 
