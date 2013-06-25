@@ -262,9 +262,9 @@ def onset_strength(y=None, sr=22050, S=None, **kwargs):
     """Extract onsets from an audio time series or spectrogram
 
     Arguments:
-      y         -- (ndarray) audio time-series          | default: None
-      sr        -- (int)     sampling rate of y         | default: 22050
-      S         -- (ndarray) pre-computed spectrogram   | default: None
+      y         -- (ndarray) audio time-series
+      sr        -- (int)     sampling rate of y
+      S         -- (ndarray) pre-computed spectrogram
 
     **kwargs    -- Parameters to mel spectrogram, if S is not provided
 

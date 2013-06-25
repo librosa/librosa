@@ -45,7 +45,7 @@ def hz_to_mel(frequencies, htk=False):
 
     Arguments:
       frequencies   -- (ndarray, float) scalar or array of frequencies
-      htk           -- (boolean)        use HTK formula     | default: False 
+      htk           -- (boolean)        use HTK formula     
 
     Returns mels:
         mels        -- (ndarray)        input frequencies in Mels
@@ -83,7 +83,7 @@ def mel_to_hz(mels, htk=False):
 
     Arguments:
       mels          -- (ndarray, float) mel bins to convert
-      htk           -- (boolean)        use HTK formula     | default: False
+      htk           -- (boolean)        use HTK formula     
 
     Returns frequencies:
       frequencies   -- (ndarray)    input mels in Hz
@@ -183,10 +183,10 @@ def chromafb(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=None):
     Arguments:
       sr        -- (int)    sampling rate
       n_fft     -- (int)    number of FFT components
-      n_chroma  -- (int)    number of chroma dimensions   | default: 12
-      A440      -- (float)  Reference frequency for A     | default: 440.0
-      ctroct    -- (float)                                | default: 5.0
-      octwidth  -- (float)                                | default: None
+      n_chroma  -- (int)    number of chroma dimensions   
+      A440      -- (float)  Reference frequency for A
+      ctroct    -- (float)                                
+      octwidth  -- (float)                                
                   These parameters specify a dominance window - Gaussian
                   weighting centered on ctroct (in octs, re A0 = 27.5Hz) and
                   with a gaussian half-width of octwidth.  
@@ -271,7 +271,7 @@ def mfcc(S, d=20):
 
     Arguments:
       S     -- (ndarray)    log-amplitude Mel spectrogram
-      d     -- (int)        number of MFCCs to return       | default: 20
+      d     -- (int)        number of MFCCs to return
 
     Returns M:
       M     -- (ndarray)    MFCC sequence
@@ -285,10 +285,10 @@ def mel_frequencies(n_mels=40, fmin=0.0, fmax=11025.0, htk=False):
     """Compute the center frequencies of mel bands
 
     Arguments:
-      n_mels    -- (int)        number of Mel bins      | default: 40
-      fmin      -- (float)      minimum frequency (Hz)  | default: 0.0
-      fmax      -- (float)      maximum frequency (Hz)  | default: 11025.0
-      htk       -- (boolean)    use HTK formula         | default: False
+      n_mels    -- (int)        number of Mel bins  
+      fmin      -- (float)      minimum frequency (Hz)
+      fmax      -- (float)      maximum frequency (Hz)
+      htk       -- (boolean)    use HTK formula 
 
     Returns bin_frequencies:
         bin_frequencies -- (ndarray)    n_mels+1 vector of Mel frequencies
@@ -310,10 +310,10 @@ def melfb(sr, n_fft, n_mels=40, fmin=0.0, fmax=None, htk=False):
     Arguments:
       sr        -- (int)        sampling rate of the incoming signal
       n_fft     -- (int)        number of FFT components
-      n_mels    -- (int)        number of Mel bands         | default:  40
-      fmin      -- (float)      lowest edge (in Hz)         | default:  0.0
-      fmax      -- (float)      upper edge (in Hz)          | default:  sr / 2.0
-      htk       -- (boolean)    use HTK formula             | default:  False
+      n_mels    -- (int)        number of Mel bands 
+      fmin      -- (float)      lowest frequency (in Hz) 
+      fmax      -- (float)      highest frequency (in Hz)
+      htk       -- (boolean)    use HTK formula 
 
     Returns M:
       M         -- (ndarray)    n_mels-by-n_fft   Mel transform matrix
@@ -354,9 +354,9 @@ def melspectrogram(y, sr=22050, n_fft=256, hop_length=128, **kwargs):
 
     Arguments:
       y             --  (ndarray)   audio time-series
-      sr            --  (int)       sampling rate of y        | default: 22050
-      n_fft         --  (int)       number of FFT components  | default: 256
-      hop_length    --  (int)       frames to hop             | default: 128
+      sr            --  (int)       sampling rate of y  
+      n_fft         --  (int)       number of FFT components
+      hop_length    --  (int)       frames to hop
 
       **kwargs      --  Mel filterbank parameters
                         See melfb() documentation for details.
@@ -388,7 +388,7 @@ def sync(data, frames, aggregate=np.mean):
     Arguments:
       data      -- (ndarray)    d-by-T  matrix of features
       frames    -- (ndarray)    (ordered) array of frame segment boundaries
-      aggregate -- (function)   aggregation function        | default: np.mean
+      aggregate -- (function)   aggregation function
 
     Returns Y:
       Y         -- (ndarray)    d-by-(<=t+1) vector

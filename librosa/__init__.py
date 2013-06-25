@@ -40,9 +40,9 @@ def load(path, sr=22050, mono=True):
 
     Arguments:
       path -- (string)    path to the input file
-      sr   -- (int > 0)   target sample rate              | default: 22050 
+      sr   -- (int > 0)   target sample rate
                           'None' uses the native sampling rate
-      mono -- (boolean)   convert to mono                 | default: True
+      mono -- (boolean)   convert to mono
 
     Returns (y, sr):
       y    -- (ndarray)   audio time series
@@ -103,11 +103,11 @@ def stft(y, n_fft=256, hann_w=None, hop_length=None, window=None):
 
     Arguments:
       y           -- (ndarray)  the input signal
-      n_fft       -- (int)      number of FFT components  | default: 256
+      n_fft       -- (int)      number of FFT components
       hann_w      -- (int)      size of Hann window       | default: n_fft
       hop_length  -- (int)      number audio of frames 
                                 between STFT columns      | default: hann_w / 2
-      window      -- (ndarray)  user-specified window     | default: None
+      window      -- (ndarray)  optional user-specified window
 
     Returns D:
       D           -- (ndarray)  complex-valued STFT matrix
@@ -162,7 +162,7 @@ def istft(stft_matrix, n_fft=None, hann_w=None, hop_length=None, window=None):
       hann_w      -- (int)      size of Hann window        | default: n_fft
       hop_length  -- (int)      audio frames between STFT                       
                                 columns                    | default: hann_w / 2
-      window      -- (ndarray)  user-specified window      | default: None
+      window      -- (ndarray)  optional user-specified window
 
     Returns y:
       y           -- (ndarray)  time domain signal reconstructed from d
@@ -211,8 +211,8 @@ def logamplitude(S, amin=1e-10, top_db=80.0):
 
     Arguments:
       S       -- (ndarray)  spectrogram
-      amin    -- (float)    minimum amplitude threshold     | default: 1e-10
-      top_db  -- (float)    threshold max(log(S)) - top_db  | default: 80.0
+      amin    -- (float)    minimum amplitude threshold 
+      top_db  -- (float)    threshold max(log(S)) - top_db
 
     Returns log_S:
       log_S   -- (ndarray)   S in dBs, ~= 10 * log10(S)
@@ -233,8 +233,8 @@ def frames_to_time(frames, sr=22050, hop_length=64):
 
     Arguments:
       frames     -- (ndarray) vector of frame numbers
-      sr         -- (int)     sampling rate             | default: 22050
-      hop_length -- (int)     hop length                | default: 64
+      sr         -- (int)     sampling rate 
+      hop_length -- (int)     hop length
 
     Returns times:
       times      -- time (in seconds) of each given frame number
