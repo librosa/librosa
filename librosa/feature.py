@@ -404,9 +404,9 @@ def sync(data, frames, aggregate=np.mean):
     frames      = np.unique(np.concatenate( ([0], frames, [n_frames]) ))
 
     if min(frames) < 0:
-        raise ValueError('Negative frame index!')
+        raise ValueError('Negative frame index.')
     elif max(frames) > n_frames:
-        raise ValueError('Frame index exceeds data. Check your sample rate and hop size!')
+        raise ValueError('Frame index exceeds data length.')
 
     data_agg    = np.empty( (dimension, len(frames)-1) )
 
