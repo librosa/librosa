@@ -1,11 +1,5 @@
 #!/usr/bin/env python
-"""Utility functions for analysis output, eg:
-
-  - sonic visualizer output for clustering/beat tracking
-  - wav file output
-
-CREATED:2013-01-23 09:26:25 by Brian McFee <brm2132@columbia.edu>
-"""
+"""Analysis and audio output routines."""
 
 import csv
 

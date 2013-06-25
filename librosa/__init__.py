@@ -1,15 +1,5 @@
 #!/usr/bin/env python
-"""Top-level module for librosa. 
-
-See also:
-  - librosa.beat
-  - librosa.core
-  - librosa.feature
-  - librosa.hpss
-  - librosa.output
-
-CREATED:2012-10-20 11:09:30 by Brian McFee <brm2132@columbia.edu>
-"""
+"""Top-level module for librosa."""
 
 
 # And all the librosa sub-modules

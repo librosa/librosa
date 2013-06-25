@@ -1,14 +1,5 @@
 #!/usr/bin/env python
-"""All things rhythmic go here
-
-  - Onset detection
-  - Tempo estimation
-  - Beat tracking
-  - Segmentation
-
-CREATED:2012-11-05 14:38:03 by Brian McFee <brm2132@columbia.edu>
-
-"""
+"""Onsets, tempo, beats and segmentation."""
 
 import numpy as np
 import scipy
@@ -57,6 +48,7 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
     Note:
       If no onset strength could be detected, beat_tracker estimates 0 BPM and returns
       an empty list.
+
     """
 
     # First, get the frame->beat strength profile if we don't already have one

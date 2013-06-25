@@ -1,9 +1,5 @@
 #!/usr/bin/env python
-"""Harmonic-percussive source separation
-
-CREATED:2013-02-12 13:49:08 by Brian McFee <brm2132@columbia.edu>
-
-"""
+"""Harmonic-percussive source separation"""
 
 import numpy as np
 import scipy
