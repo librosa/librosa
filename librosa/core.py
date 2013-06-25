@@ -1,9 +1,5 @@
 #!/usr/bin/env python
-"""Core utilities for librosa.
-
-CREATED:2013-06-25 12:15:23 by Brian McFee <brm2132@columbia.edu> 
-
-"""
+"""Core IO, DSP and utility functions."""
 
 import os.path
 import audioread
@@ -78,9 +74,7 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest'):
         return y
 
     if _HAS_SAMPLERATE:
-        y_hat = samplerate.resample(y, 
-                                            float(target_sr) / orig_sr, 
-                                            res_type)
+        y_hat = samplerate.resample(y, float(target_sr) / orig_sr, res_type)
     else:
         n_samples = len(y) * target_sr / orig_sr
         y_hat = scipy.signal.resample(y, n_samples, axis=-1)

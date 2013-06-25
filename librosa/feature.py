@@ -1,14 +1,5 @@
 #!/usr/bin/env python
-"""Feature extraction code
-
-  - Mel spectrogram
-  - chromagram
-  - MFCCs
-  - helper utilities
-
-CREATED:2013-03-13 21:34:58 by Brian McFee <brm2132@columbia.edu>
-
-"""
+"""Feature extraction routines."""
 
 import numpy as np
 
