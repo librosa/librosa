@@ -11,6 +11,9 @@ Mostly ports and reimplementations of DPWE's matlab code.
 
 * tests/      nose unit tests to validate against original dpwe implementations
 
+Documentation
+=============
+See http://bmcfee.github.io/librosa/
 
 Installation
 ============
