@@ -257,7 +257,7 @@ def logamplitude(S, amin=1e-10, top_db=80.0):
 
 
 #-- UTILITIES --#
-def frames_to_time(frames, sr=22050, hop_length=64):
+def frames_to_time(frames, sr=22050, hop_length=128):
     """Converts frame counts to time (seconds)
 
     :parameters:

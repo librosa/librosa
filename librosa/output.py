@@ -9,7 +9,7 @@ import scipy.io.wavfile
 
 import librosa.core
 
-def segment_csv(path, segments, sr, hop_length, save_bpm=False):
+def segment_csv(path, segments, sr=22050, hop_length=128, save_bpm=False):
     """Save beat tracker or segmentation output in CSV format.
 
     :parameters:
