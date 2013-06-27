@@ -14,7 +14,8 @@ import librosa.core
 def stack_memory(X, m=2, delay=1):
     """Short-term history embedding.
 
-    Each column `xi = X[:, i]` is mapped to
+    Each column `X[:, i]` is mapped to
+
     ```
     X[:,i] =>   [   X[:, i]
                     X[:, i - delay]
@@ -48,6 +49,64 @@ def stack_memory(X, m=2, delay=1):
         Xhat = np.vstack([Xhat, np.roll(X, i * delay, axis=1)])
 
     return Xhat[:, :t]
+
+
+def recurrence_matrix(X, k=5, width=1):
+    '''Compute the binary recurrence matrix from a time-series.
+
+    R[i,j] == True <=> (X[:,i], X[:,j]) are k-nearest-neighbors
+                        and |i-j| >= width
+
+    :parameters:
+      - X : np.ndarray
+          feature matrix (d-by-t)
+      - k : int > 0, float in (0, 1)
+          if integer, the number of nearest-neighbors.
+          if floating point (eg, 0.05), neighbors = ceil(k * t)
+      - width : int > 0
+          no not link columns within `width` of each-other
+
+    :returns:
+      - R : np.ndarray, shape=(t,t), dtype=bool
+          Binary recurrence matrix
+    :raises:
+      - ValueError
+          if k is a float outside the range (0,1)
+    '''
+
+    d, t = X.shape
+
+    if isinstance(k, float):
+        if 0 < k < 1:
+            k = np.ceil(k * t)
+        else:
+            raise ValueError('Valid values of k are strictly between 0 and 1.')
+
+    def _band_infinite():
+        A       = np.empty( (t, t) )
+        A[:]    = np.inf
+        A[np.triu_indices_from(A, width)] = 0
+        A[np.tril_indices_from(A, -width)] = 0
+
+        return A
+
+    # Build the distance matrix
+    D = scipy.spatial.distance.squareform(scipy.spatial.distance.pdist(X.T))
+
+    # Max out the diagonal band
+    D = D + _band_infinite()
+
+    # build the recurrence plot
+    R = np.zeros( (t, t), dtype=bool)
+
+    # get the k nearest neighbors for each point
+    for i in range(t):
+        for j in np.argsort(D[i])[:k]:
+            R[i,j] = True
+
+    # symmetrize
+    return R * R.T
+
 
 
 def segment(data, k):
