@@ -2,10 +2,52 @@
 """Temporal segmentation"""
 
 import numpy as np
-import sklearn, sklearn.cluster, sklearn.feature_extratcion
+import scipy
+import scipy.signal
+
+import sklearn
+import sklearn.cluster
+import sklearn.feature_extraction
 
 import librosa.core
 
+def stack_memory(X, m=2, delay=1):
+    """Short-term history embedding.
+
+    Each column `xi = X[:, i]` is mapped to
+    ```
+    X[:,i] =>   [   X[:, i]
+                    X[:, i - delay]
+                    ...
+                    X[:, i - (m-1)*delay]
+                ]```
+
+    :parameters:
+      - X : np.ndarray
+          feature matrix (d-by-t)
+      - m : int > 0
+          embedding dimension
+      - delay : int > 0
+          the number of columns to step
+
+    :returns:
+      - Xhat : np.ndarray, shape=(d*m, t)
+          X augmented with lagged copies of itself.
+          
+      .. note:: zeros are padded for the initial columns
+    """
+
+    d, t = X.shape
+
+    # Pad the end with zeros, which will roll to the front below
+    X = np.hstack([X, np.zeros((d, m * delay))])
+
+    Xhat = X
+
+    for i in range(1, m):
+        Xhat = np.vstack([Xhat, np.roll(X, i * delay, axis=1)])
+
+    return Xhat[:, :t]
 
 
 def segment(data, k):
