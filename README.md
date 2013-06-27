@@ -15,6 +15,10 @@ Documentation
 =============
 See http://bmcfee.github.io/librosa/
 
+Demonstration
+=============
+See http://nbviewer.ipython.org/5878337
+
 Installation
 ============
 
