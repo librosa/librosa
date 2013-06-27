@@ -87,8 +87,7 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=128,
     # Then, estimate bpm
     bpm     = onset_estimate_bpm(onsets, start_bpm, fft_res)
     
-    # Then, run the tracker: tightness = 400
-
+    # Then, run the tracker
     beats   = __beat_tracker(onsets, bpm, fft_res, tightness, trim)
 
     # Framing correction
