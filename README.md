@@ -26,6 +26,18 @@ To build librosa, say `python setup.py build`.
 Then, to install librosa, say `python setup.py install`.
 If all went well, you should be able to execute the demo scripts under `examples/`.
 
+Alternatively, you can download or clone the repository and use `easy_install` to handle dependencies:
+
+```
+unzip librosa.zip
+easy_install librosa
+```
+or
+```
+git clone https://github.com/bmcfee/librosa.git
+easy_install librosa
+```
+
 
 dependencies
 ============
