@@ -95,7 +95,7 @@ If unspecified, defaults to <tt class="docutils literal"><span class="pre">len(y
 
 <dl class="function">
 <dt id="librosa.core.frames_to_time">
-<tt class="descclassname">librosa.core.</tt><tt class="descname">frames_to_time</tt><big>(</big><em>frames</em>, <em>sr=22050</em>, <em>hop_length=64</em><big>)</big><a class="headerlink" href="#librosa.core.frames_to_time" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">librosa.core.</tt><tt class="descname">frames_to_time</tt><big>(</big><em>frames</em>, <em>sr=22050</em>, <em>hop_length=128</em><big>)</big><a class="headerlink" href="#librosa.core.frames_to_time" title="Permalink to this definition">¶</a></dt>
 <dd><p>Converts frame counts to time (seconds)</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -449,7 +449,7 @@ If unspecified, defaults hann_w / 2.</p>
 <p>Onsets, tempo, beats and segmentation.</p>
 <dl class="function">
 <dt id="librosa.beat.beat_track">
-<tt class="descclassname">librosa.beat.</tt><tt class="descname">beat_track</tt><big>(</big><em>y=None</em>, <em>sr=22050</em>, <em>onsets=None</em>, <em>hop_length=64</em>, <em>start_bpm=120.0</em>, <em>n_fft=256</em>, <em>tightness=400</em>, <em>trim=True</em><big>)</big><a class="headerlink" href="#librosa.beat.beat_track" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">librosa.beat.</tt><tt class="descname">beat_track</tt><big>(</big><em>y=None</em>, <em>sr=22050</em>, <em>onsets=None</em>, <em>hop_length=128</em>, <em>start_bpm=120.0</em>, <em>n_fft=256</em>, <em>tightness=400</em>, <em>trim=True</em><big>)</big><a class="headerlink" href="#librosa.beat.beat_track" title="Permalink to this definition">¶</a></dt>
 <dd><p>Ellis-style beat tracker</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1285,7 +1285,7 @@ See melfb() documentation for details.</p>
 
 <dl class="function">
 <dt id="librosa.feature.sync">
-<tt class="descclassname">librosa.feature.</tt><tt class="descname">sync</tt><big>(</big><em>data</em>, <em>frames</em>, <em>aggregate=&lt;function mean at 0x337d938&gt;</em><big>)</big><a class="headerlink" href="#librosa.feature.sync" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">librosa.feature.</tt><tt class="descname">sync</tt><big>(</big><em>data</em>, <em>frames</em>, <em>aggregate=&lt;function mean at 0x3c73938&gt;</em><big>)</big><a class="headerlink" href="#librosa.feature.sync" title="Permalink to this definition">¶</a></dt>
 <dd><p>Synchronous aggregation of a feature matrix</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1473,7 +1473,7 @@ Harmonic/percussive separation using median filtering.</li>
 <p>Output routines for audio and analysis</p>
 <dl class="function">
 <dt id="librosa.output.segment_csv">
-<tt class="descclassname">librosa.output.</tt><tt class="descname">segment_csv</tt><big>(</big><em>path</em>, <em>segments</em>, <em>sr</em>, <em>hop_length</em>, <em>save_bpm=False</em><big>)</big><a class="headerlink" href="#librosa.output.segment_csv" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">librosa.output.</tt><tt class="descname">segment_csv</tt><big>(</big><em>path</em>, <em>segments</em>, <em>sr=22050</em>, <em>hop_length=128</em>, <em>save_bpm=False</em><big>)</big><a class="headerlink" href="#librosa.output.segment_csv" title="Permalink to this definition">¶</a></dt>
 <dd><p>Save beat tracker or segmentation output in CSV format.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
