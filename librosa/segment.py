@@ -9,8 +9,6 @@ import sklearn
 import sklearn.cluster
 import sklearn.feature_extraction
 
-import librosa.core
-
 def stack_memory(X, m=2, delay=1):
     """Short-term history embedding.
 
@@ -51,7 +49,7 @@ def stack_memory(X, m=2, delay=1):
     return Xhat[:, :t]
 
 
-def recurrence_matrix(X, k=5, width=1):
+def recurrence_matrix(X, k=5, width=1, symmetric=True):
     '''Compute the binary recurrence matrix from a time-series.
 
     R[i,j] == True <=> (X[:,i], X[:,j]) are k-nearest-neighbors
@@ -65,6 +63,9 @@ def recurrence_matrix(X, k=5, width=1):
           if floating point (eg, 0.05), neighbors = ceil(k * t)
       - width : int > 0
           no not link columns within `width` of each-other
+      - symmetric : bool
+          Symmetrize the recurrence matrix.
+          If true, links will only be formed if (i,j) are mutual neighbors.
 
     :returns:
       - R : np.ndarray, shape=(t,t), dtype=bool
@@ -105,7 +106,10 @@ def recurrence_matrix(X, k=5, width=1):
             R[i, j] = True
 
     # symmetrize
-    return R * R.T
+    if symmetric:
+        R = R * R.T
+
+    return R 
 
 def structure_feature(R):
     '''Compute the structure feature from a recurrence matrix.
@@ -139,7 +143,7 @@ def structure_feature(R):
 
     return L
 
-def segment(data, k):
+def agglomerative(data, k):
     """Bottom-up temporal segmentation
 
     :parameters:
