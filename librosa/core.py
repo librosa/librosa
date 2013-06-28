@@ -91,9 +91,9 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest'):
         return y
 
     if _HAS_SAMPLERATE:
-        y_hat = samplerate.resample(y, float(target_sr) / orig_sr, res_type)
+        y_hat = samplerate.resample(y.T, float(target_sr) / orig_sr, res_type).T
     else:
-        n_samples = len(y) * target_sr / orig_sr
+        n_samples = y.shape[-1] * target_sr / orig_sr
         y_hat = scipy.signal.resample(y, n_samples, axis=-1)
 
     return y_hat
