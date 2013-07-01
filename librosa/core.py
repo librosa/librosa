@@ -256,6 +256,28 @@ def logamplitude(S, amin=1e-10, top_db=80.0):
     return log_S
 
 
+def magphase(D):
+    """Separate a complex-valued spectrogram D into its magnitude (S)
+    and phase (P) components, so that D = S * P.
+
+    :parameters:
+      - D       : np.ndarray, dtype=complex
+          input complex-valued spectrogram
+
+    :returns:
+      - S       : np.ndarray, dtype=real
+          magnitude of D
+      - P       : np.ndarray, dtype=complex
+          exp(1.j * phi) where phi is the phase of D
+
+    """
+
+    S = np.abs(D)
+    P = np.exp(1.j * np.angle(D))
+
+    return S, P
+
+
 #-- UTILITIES --#
 def frames_to_time(frames, sr=22050, hop_length=128):
     """Converts frame counts to time (seconds)
