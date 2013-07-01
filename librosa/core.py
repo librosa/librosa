@@ -18,7 +18,7 @@ except ImportError:
 
 
 #-- CORE ROUTINES --#
-def load(path, sr=22050, mono=True):
+def load(path, sr=22050, mono=True, offset=0.0, duration=None):
     """Load an audio file as a floating point time series.
 
     :parameters:
@@ -32,6 +32,12 @@ def load(path, sr=22050, mono=True):
       - mono : boolean
           convert signal to mono
 
+      - offset : float
+          start reading after this time (in seconds)
+
+      - duration : float
+          only load up to this much audio (in seconds)
+
     :returns:
       - y    : np.ndarray
           audio time series
@@ -44,10 +50,45 @@ def load(path, sr=22050, mono=True):
     with audioread.audio_open(os.path.realpath(path)) as input_file:
         sr_native = input_file.samplerate
 
-        y = [np.frombuffer(frame, '<i2').astype(float) / float(1<<15) 
-                for frame in input_file]
+        s_start = np.floor(sr_native * offset) * input_file.channels
+        if duration is None:
+            s_end = np.inf
+        else:
+            s_end = s_start + np.ceil(sr_native * duration) * input_file.channels
 
-        y = np.concatenate(y)
+
+        Z = float(1<<15)
+
+        y = []
+        n = 0
+
+        for frame in input_file:
+            frame   = np.frombuffer(frame, '<i2').astype(float)
+            n_prev  = n
+            n       = n + len(frame)
+
+            if n < s_start:
+                # offset is after the current frame
+                # keep reading
+                continue
+            
+            if s_end < n_prev:
+                # we're off the end.  stop reading
+                break
+
+            if s_end < n:
+                # the end is in this frame.  crop.
+                frame = frame[:s_end - n_prev]
+
+            if n_prev <= s_start < n:
+                # beginning is in this frame
+                frame = frame[s_start - n_prev : ]
+
+            # tack on the current frame
+            y.append(frame)
+
+
+        y = np.concatenate(y) / Z
         if input_file.channels > 1:
             if mono:
                 y = 0.5 * (y[::2] + y[1::2])
