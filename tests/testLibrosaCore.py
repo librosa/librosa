@@ -105,6 +105,16 @@ def test_stft():
         yield (__test, infile)
     pass
 
+def test_magphase():
+
+    (y, sr) = librosa.load('data/test1_22050.wav')
+
+    D = librosa.stft(y)
+
+    S, P = librosa.magphase(D)
+
+    assert numpy.allclose(S * P, D)
+
 def test_istft():
     def __test(infile):
         DATA    = load(infile)
