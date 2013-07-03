@@ -49,7 +49,7 @@ def stack_memory(X, m=2, delay=1):
     return Xhat[:, :t]
 
 
-def recurrence_matrix(X, k=5, width=1, metric='cosine', symmetric=True):
+def recurrence_matrix(X, mode='knn', k=5, width=1, metric='sqeuclidean'):
     '''Compute the binary recurrence matrix from a time-series.
 
     R[i,j] == True <=> (X[:,i], X[:,j]) are k-nearest-neighbors
@@ -58,6 +58,9 @@ def recurrence_matrix(X, k=5, width=1, metric='cosine', symmetric=True):
     :parameters:
       - X : np.ndarray
           feature matrix (d-by-t)
+      - mode : {'knn', 'gaussian'}
+          if knn, builds a symmetric k-nearest-neighbor linkage graph.
+          if gaussian, builds a radial basis function kernel (exp(-distance))
       - k : int > 0, float in (0, 1)
           if integer, the number of nearest-neighbors.
           if floating point (eg, 0.05), neighbors = ceil(k * t)
@@ -65,9 +68,6 @@ def recurrence_matrix(X, k=5, width=1, metric='cosine', symmetric=True):
           no not link columns within `width` of each-other
       - metric : see scipy.spatial.distance.pdist()
           distance metric to use for nearest-neighbor calculation
-      - symmetric : bool
-          Symmetrize the recurrence matrix.
-          If true, links will only be formed if (i,j) are mutual neighbors.
 
     :returns:
       - R : np.ndarray, shape=(t,t), dtype=bool
@@ -75,11 +75,12 @@ def recurrence_matrix(X, k=5, width=1, metric='cosine', symmetric=True):
     :raises:
       - ValueError
           if k is a float outside the range (0,1)
+          or if mode is not one of {'knn', 'gaussian'}
     '''
 
     d, t = X.shape
 
-    if isinstance(k, float):
+    if mode == 'knn' and isinstance(k, float):
         if 0 < k < 1:
             k = np.ceil(k * t)
         else:
@@ -100,16 +101,19 @@ def recurrence_matrix(X, k=5, width=1, metric='cosine', symmetric=True):
     D = D + _band_infinite()
 
     # build the recurrence plot
-    R = np.zeros( (t, t), dtype=bool)
 
-    # get the k nearest neighbors for each point
-    for i in range(t):
-        for j in np.argsort(D[i])[:k]:
-            R[i, j] = True
+    if mode == 'knn':
+        R = np.zeros( (t, t), dtype=bool)
 
-    # symmetrize
-    if symmetric:
+        # get the k nearest neighbors for each point
+        for i in range(t):
+            for j in np.argsort(D[i])[:k]:
+                R[i, j] = True
+
+        # symmetrize
         R = R * R.T
+    elif mode == 'gaussian':
+        R = np.exp( -0.5 * D / k)
 
     return R 
 
