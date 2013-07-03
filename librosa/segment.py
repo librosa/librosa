@@ -49,7 +49,7 @@ def stack_memory(X, m=2, delay=1):
     return Xhat[:, :t]
 
 
-def recurrence_matrix(X, k=5, width=1, symmetric=True):
+def recurrence_matrix(X, k=5, width=1, metric='cosine', symmetric=True):
     '''Compute the binary recurrence matrix from a time-series.
 
     R[i,j] == True <=> (X[:,i], X[:,j]) are k-nearest-neighbors
@@ -63,6 +63,8 @@ def recurrence_matrix(X, k=5, width=1, symmetric=True):
           if floating point (eg, 0.05), neighbors = ceil(k * t)
       - width : int > 0
           no not link columns within `width` of each-other
+      - metric : see scipy.spatial.distance.pdist()
+          distance metric to use for nearest-neighbor calculation
       - symmetric : bool
           Symmetrize the recurrence matrix.
           If true, links will only be formed if (i,j) are mutual neighbors.
@@ -92,7 +94,7 @@ def recurrence_matrix(X, k=5, width=1, symmetric=True):
         return A
 
     # Build the distance matrix
-    D = scipy.spatial.distance.squareform(scipy.spatial.distance.pdist(X.T))
+    D = scipy.spatial.distance.squareform(scipy.spatial.distance.pdist(X.T, metric=metric))
 
     # Max out the diagonal band
     D = D + _band_infinite()
