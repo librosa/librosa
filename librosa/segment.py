@@ -111,7 +111,7 @@ def recurrence_matrix(X, k=5, width=1, symmetric=True):
 
     return R 
 
-def structure_feature(R):
+def structure_feature(R, pad=True):
     '''Compute the structure feature from a recurrence matrix.
 
     The i'th column of the recurrence matrix is shifted up by i.
@@ -121,9 +121,11 @@ def structure_feature(R):
     :parameters:
       - R   : np.ndarray, shape=(t,t)
           recurrence matrix (see `librosa.segment.recurrence_matrix`)
-    
+      
+      - pad : boolean
+
     :returns:
-      - L : np.ndarray, shape=(2*t, t)
+      - L : np.ndarray
           L[i, t] = the recurrence at time `t` with lag `i`.
       .. note:: negative lag values are supported by wrapping to the end of the array.
 
@@ -136,7 +138,10 @@ def structure_feature(R):
     if t != R.shape[1]:
         raise ValueError('R must be a square matrix')
 
-    L = np.vstack( ( R, np.zeros_like(R) ) )
+    if pad:
+        L = np.vstack( ( R, np.zeros_like(R) ) )
+    else:
+        L = R.copy()
 
     for i in range(1, t):
         L[:, i] = np.roll(L[:,i], -i, axis=-1)
