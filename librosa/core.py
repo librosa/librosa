@@ -181,8 +181,8 @@ def stft(y, n_fft=256, hann_w=None, hop_length=None, window=None):
                                 mode='constant')
     else:
         window = np.asarray(window)
-        if window.shape != n_fft:
-            raise ValueError('Size mismatch between n_fft and window shape')
+        if window.size != n_fft:
+            raise ValueError('Size mismatch between n_fft and window size')
 
     # Set the default hop, if it's not already specified
     if hop_length is None:
