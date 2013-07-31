@@ -395,9 +395,9 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
           number of samples before n over which max is computed
       - post_max  : int
           number of samples after n over which max is computed
-      - pre_avg  : int
+      - pre_avg   : int
           number of samples before n over which mean is computed
-      - post_avg : int
+      - post_avg  : int
           number of samples after n over which mean is computed
       - delta     : float
           threshold offset for mean
