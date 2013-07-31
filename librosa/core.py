@@ -7,6 +7,7 @@ import audioread
 import numpy as np
 import numpy.fft as fft
 import scipy.signal
+import scipy.ndimage
 
 # Do we have scikits.samplerate?
 try:
@@ -383,4 +384,69 @@ def localmax(x):
 
     return np.logical_and(x > np.hstack([x[0], x[:-1]]), 
                              x >= np.hstack([x[1:], x[-1]]))
+
+def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
+    """Uses a flexible heuristic to pick peaks in a signal.
+    
+    :parameters:
+      - x         : np.ndarray
+          input signal to peak picks from
+      - pre_max   : int
+          number of samples before n over which max is computed
+      - post_max  : int
+          number of samples after n over which max is computed
+      - pre_avg  : int
+          number of samples before n over which mean is computed
+      - post_avg : int
+          number of samples after n over which mean is computed
+      - delta     : float
+          threshold offset for mean
+      - wait      : int
+          number of samples to wait after picking a peak
+
+    :returns:
+      - peaks     : np.ndarray, dtype=int
+          indices of peaks in x
+    
+    .. note::
+      A sample n is selected as an peak if the corresponding x[n]
+      fulﬁlls the following three conditions:
+      1. x[n] = max(x[n - pre_max:n + post_max])
+      2. x[n] \ge mean(x[n - pre_avg:n + post_avg]) + delta
+      3. n - previous_n > wait
+      where previous_n is the last sample n picked as a peak (greedily).
+    
+    .. note::
+      S. Bock, F. Krebs and M. Schedl (2012)
+      Evaluating the Online Capabilities of Onset Detection Methods
+      13th International Society for Music Information Retrieval Conference
+    
+    .. note::
+      Implementation based on 
+      https://github.com/CPJKU/onset_detection/blob/master/onset_program.py
+    """
+
+    # Get the maximum of the signal over a sliding window
+    max_length = pre_max + post_max + 1
+    max_origin = int(np.floor((pre_max - post_max)/2))
+    mov_max = scipy.ndimage.filters.maximum_filter1d(x, max_length, mode='constant', origin=max_origin)
+    # Get the mean of the signal over a sliding window
+    avg_length = pre_avg + post_avg + 1
+    avg_origin = int(np.floor((pre_avg - post_avg)/2))
+    mov_avg = scipy.ndimage.filters.uniform_filter1d(x, avg_length, mode='constant', origin=avg_origin)
+    # First mask out all entries not equal to the local max
+    detections = x*(x == mov_max)
+    # Then mask out all entries less than the thresholded average
+    detections = detections*(detections >= mov_avg + delta)
+    # Initialize peaks array, to be filled greedily
+    peaks = []
+    # Remove onsets which are close together in time
+    last_onset = -np.inf
+    for i in np.nonzero(detections)[0]:
+        # Only report an onset if the "wait" samples was reported
+        if i > last_onset + wait:
+            peaks.append(i)
+            # Save last reported onset
+            last_onset = i
+    return np.array( peaks )
 
