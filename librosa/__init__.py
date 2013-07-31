@@ -3,7 +3,7 @@
 
 
 # And all the librosa sub-modules
-from . import core, beat, feature, hpss, segment, output
+from . import core, beat, feature, hpss, segment, output, onset
 from librosa.core import *
 
 __version__ = '0.2.0dev'
