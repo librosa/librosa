@@ -7,6 +7,7 @@ import scipy.signal
 
 import librosa.core
 import librosa.feature
+import librosa.onset
 
 def beat_track(y=None, sr=22050, onsets=None, hop_length=128, 
                start_bpm=120.0, n_fft=256, tightness=400, trim=True):
@@ -72,7 +73,7 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=128,
         if y is None:
             raise ValueError('Either "y" or "onsets" must be provided')
 
-        onsets  = onset_strength(y=y, sr=sr, hop_length=hop_length)
+        onsets  = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
 
     # Do we have any onsets to grab?
     if not onsets.any():
@@ -275,60 +276,4 @@ def onset_estimate_bpm(onsets, start_bpm, fft_res):
     best_period     = np.argmax(x_corr[candidates])
 
     return 60.0 * fft_res / candidates[best_period]
-
-
-def onset_strength(y=None, sr=22050, S=None, **kwargs):
-    """Extract onsets from an audio time series or spectrogram
-
-    :parametrs:
-      - y        : np.ndarray
-          audio time-series
-      - sr       : int
-          audio sampling rate of y
-      - S        : np.ndarray 
-          pre-computed spectrogram
-
-      - kwargs  
-          Parameters to mel spectrogram, if S is not provided.
-
-          See librosa.feature.melspectrogram() for details
-
-    .. note:: if S is provided, then (y, sr) are optional.
-
-    :returns:
-      - onsets   : np.ndarray 
-          vector of onset strength
-
-    :raises:
-      - ValueError 
-          if neither (y, sr) nor S are provided
-
-    """
-
-    # First, compute mel spectrogram
-    if S is None:
-        if y is None:
-            raise ValueError('One of "S" or "y" must be provided.')
-
-        S   = librosa.feature.melspectrogram(y, sr = sr, **kwargs)
-
-        # Convert to dBs
-        S   = librosa.core.logamplitude(S)
-
-
-    ### Compute first difference
-    onsets  = np.diff(S, n=1, axis=1)
-
-    ### Discard negatives (decreasing amplitude)
-    #   falling edges could also be useful segmentation cues
-    #   to catch falling edges, replace max(0,D) with abs(D)
-    onsets  = np.maximum(0.0, onsets)
-
-    ### Average over mel bands
-    onsets  = onsets.mean(axis=0)
-
-    ### remove the DC component
-    onsets  = scipy.signal.lfilter([1.0, -1.0], [1.0, -0.99], onsets)
-
-    return onsets 
 
