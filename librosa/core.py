@@ -410,7 +410,7 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     
     .. note::
       A sample n is selected as an peak if the corresponding x[n]
-      fulﬁlls the following three conditions:
+      fulfills the following three conditions:
       1. x[n] = max(x[n - pre_max:n + post_max])
       2. x[n] \ge mean(x[n - pre_avg:n + post_avg]) + delta
       3. n - previous_n > wait
