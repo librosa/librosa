@@ -49,7 +49,7 @@ def stack_memory(X, m=2, delay=1):
     return Xhat[:, :t]
 
 
-def recurrence_matrix(X, mode='knn', k=5, width=1, metric='sqeuclidean'):
+def recurrence_matrix(X, mode='knn', k=5, width=1, metric='sqeuclidean', sym=True):
     '''Compute the binary recurrence matrix from a time-series.
 
     R[i,j] == True <=> (X[:,i], X[:,j]) are k-nearest-neighbors
@@ -68,6 +68,8 @@ def recurrence_matrix(X, mode='knn', k=5, width=1, metric='sqeuclidean'):
           no not link columns within `width` of each-other
       - metric : see scipy.spatial.distance.pdist()
           distance metric to use for nearest-neighbor calculation
+      - sym : bool
+          if using mode='knn', should we symmetrize the linkages?
 
     :returns:
       - R : np.ndarray, shape=(t,t), dtype=bool
@@ -111,7 +113,8 @@ def recurrence_matrix(X, mode='knn', k=5, width=1, metric='sqeuclidean'):
                 R[i, j] = True
 
         # symmetrize
-        R = R * R.T
+        if sym:
+            R = R * R.T
     elif mode == 'gaussian':
         R = np.exp( -0.5 * D / k)
 
