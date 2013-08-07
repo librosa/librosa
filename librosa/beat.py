@@ -173,13 +173,17 @@ def __beat_tracker(onsets, bpm, fft_res, tightness, trim):
         # The last of these is the last beat (since score generally increases)
         return np.argwhere((cumscore * maxes * 2 > med_score)).max()
 
-    def smooth_beats(beats):
+    def smooth_beats(beats, trim):
         """Final post-processing: throw out spurious leading/trailing beats"""
         
         smooth_boe  = scipy.signal.convolve(localscore[beats], 
                                             scipy.signal.hann(5), 'same')
 
-        threshold   = 0.5 * ((smooth_boe**2).mean()**0.5)
+        if trim:
+            threshold   = 0.5 * ((smooth_boe**2).mean()**0.5)
+        else:
+            threshold   = 0.0
+
         valid       = np.argwhere(smooth_boe > threshold)
 
         return  beats[valid.min():valid.max()]
@@ -211,8 +215,7 @@ def __beat_tracker(onsets, bpm, fft_res, tightness, trim):
     beats = np.array(beats, dtype=int)
 
     ### Discard spurious trailing beats
-    if trim:
-        beats = smooth_beats(beats)
+    beats = smooth_beats(beats, trim)
 
     return beats
 
