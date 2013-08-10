@@ -337,6 +337,16 @@ def phase_vocoder(D, rate, hop_length=None):
     :returns:
       - D_stretched  : np.ndarray, dtype=complex
         time-stretched STFT
+
+    .. note::
+      - This implementation was ported from the following:
+      - @misc{Ellis02-pvoc
+            author = {D. P. W. Ellis},
+            year = {2002},
+            title = {A Phase Vocoder in {M}atlab},
+            note = {Web resource},
+            url = {http://www.ee.columbia.edu/~dpwe/resources/matlab/pvoc/},
+        }
     """
     
     rows, cols = D.shape
