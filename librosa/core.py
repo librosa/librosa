@@ -320,6 +320,72 @@ def magphase(D):
     return S, P
 
 
+def phase_vocoder(D, rate, hop_length=None):
+    """Phase vocoder.  Given an STFT matrix D, time-stretch by a 
+    factor of rate.
+
+    :parameters:
+      - D       : np.ndarray, dtype=complex
+          STFT matrix
+
+      - rate    :  float, positive
+          time-stretch factor
+
+      - hop_length : int or None
+        hop length of D.  If None, defaults to 2*(D.shape[0]-1)/4
+
+    :returns:
+      - D_stretched  : np.ndarray, dtype=complex
+        time-stretched STFT
+    """
+    
+    rows, cols = D.shape
+    
+    N_FFT = 2 * ( rows - 1 )
+    
+    if hop_length is None:
+        hop_length = N_FFT / 4
+    
+    time_steps = np.arange(0, cols, rate, dtype=np.float)
+    
+    # Create an empty output array
+    D_r = np.zeros((rows, len(time_steps)), D.dtype)
+    
+    # Expected phase advance in each bin
+    dphi = (2 * np.pi * hop_length) * np.arange(rows, dtype=np.float) / N_FFT
+    
+    # Phase accumulator; initialize to the first sample
+    phase_acc = np.angle(D[:,0])
+    
+    # Pad an extra 0 column to simplify boundary logic
+    D = np.hstack( (D, np.zeros((rows, 1), dtype=D.dtype)))
+
+    idx = np.array([0,1], dtype=np.int)
+    for (t, step) in enumerate(time_steps):
+        
+        i_step = int(step)
+        D_cols = D[:, i_step + idx]
+        
+        # Weighting for magnitude interpolation
+        tf     = step - i_step
+        D_mag  = (1.0-tf) * np.abs(D_cols[:,0]) + tf * np.abs(D_cols[:,1])
+        
+        # Compute phase advance
+        dp     = np.angle(D_cols[:,1]) - np.angle(D_cols[:,0]) - dphi
+        
+        # Wrap to -pi:pi range
+        dp     = dp - 2*np.pi * np.round(dp / (2*np.pi))
+        
+        # Store to output array
+        D_r[:,t] = D_mag * np.exp(1.j * phase_acc)
+        
+        # Accumulate phase
+        phase_acc = phase_acc + dphi + dp
+    
+    return D_r
+
+
+
 #-- UTILITIES --#
 def frames_to_time(frames, sr=22050, hop_length=128):
     """Converts frame counts to time (seconds)
