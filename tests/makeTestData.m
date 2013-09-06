@@ -1,7 +1,7 @@
 function testData(source_path, output_path)
 % testData(source_path, audio_file, output_path)
 %   source_path = path to DPWE code
-%   output_ptah = directory to store generated files
+%   output_path = directory to store generated files
 %
 % CREATED:2013-03-08 14:32:21 by Brian McFee <brm2132@columbia.edu>
 %   Generate the test suite data for librosa routines:
