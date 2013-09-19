@@ -10,4 +10,4 @@ Some feature extraction code was based on <https://github.com/ronw/frontend> by 
 
 Large portions of LibROSA were ported from MATLAB code by Dan Ellis <http://www.ee.columbia.edu/~dpwe/resources/matlab/>.
 
-Additional thanks to Emanuele Coviello, Douglas Repetto, and Emanuele Coviello for testing, bug reports and fixes.
+Additional thanks to Emanuele Coviello and Douglas Repetto for testing, bug reports and fixes.
