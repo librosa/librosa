@@ -129,20 +129,21 @@ def hz_to_octs(frequencies, A440=440.0):
     """
     return np.log2(frequencies / (A440 / 16.0))
 
-def octs2hz(octs, A = 440.0):
+def octs_to_hz(octs, A440=440.0):
     """Convert octaves numbers to frequencies
 
     :parameters:
       - octaves       : np.ndarray
           octave number for each frequency
+      - A440          : float
+          frequency of A440
 
     :returns:
       - frequencies   : np.ndarray, float
           scalar or vector of frequencies
 
     """
-    hz = (A/16)*(2**octs)
-    return hz
+    return (A440/16)*(2**octs)
 
 #-- Chroma --#
 def chromagram(S, sr, method='Ellis', norm='inf', beat_times=None, tuning=0.0, **kwargs):
@@ -368,7 +369,6 @@ def cal_hamming_window(SR, minFreq=55.0, maxFreq=1661.0, resolution_fact=5.0,tun
       """
 
     # 1. Configuration
-    import numpy as np
     bins=12
     pitchClass=12
     pitchInterval = int(np.true_divide(bins,pitchClass))
@@ -450,7 +450,6 @@ def cal_CQ_chroma_loudness(x,SR, beat_times, hammingK, half_winLenK, freqK, refL
       """
  
     # 1. configuration. Pad x to be a power of 2, get length parameters
-    import numpy as np
     bins = 12
     Nxorig = len(x)
     x = np.hstack([x,np.zeros(2.0**np.ceil(np.log2(Nxorig))-Nxorig)]) # add the end to make the length to be 2^N 
@@ -614,10 +613,10 @@ def estimate_tuning(d,sr):
     f_sd = 1.0
 
     # Get minimum/maximum frequencies
-    fminl = octs2hz(hz_to_octs(f_ctr)-2*f_sd)
-    fminu = octs2hz(hz_to_octs(f_ctr)-f_sd)
-    fmaxl = octs2hz(hz_to_octs(f_ctr)+f_sd)
-    fmaxu = octs2hz(hz_to_octs(f_ctr)+2*f_sd)
+    fminl = octs_to_hz(hz_to_octs(f_ctr)-2*f_sd)
+    fminu = octs_to_hz(hz_to_octs(f_ctr)-f_sd)
+    fmaxl = octs_to_hz(hz_to_octs(f_ctr)+f_sd)
+    fmaxu = octs_to_hz(hz_to_octs(f_ctr)+2*f_sd)
 
     # Estimte pitches
     [p,m,S] = isp_ifptrack(d,fftlen,sr,fminl,fminu,fmaxl,fmaxu)
@@ -626,7 +625,6 @@ def estimate_tuning(d,sr):
     nzp = p.flatten(1)>0
   
     # Find significantly large magnitudes
-    import numpy as np
     mflat = m.flatten(1)
     gmm = mflat > np.median(mflat[nzp])
   
@@ -700,7 +698,6 @@ def isp_ifptrack(d,w,sr,fminl = 150.0, fminu = 300.0, fmaxl = 2000.0, fmaxu = 40
     [I,S] = isp_ifgram(d,w,w/2,w/4,sr, maxbin)
   
     # Find plateaus in ifgram - stretches where delta IF is < thr
-    import numpy as np
     ddif = I[np.hstack([range(1,maxbin),maxbin-1]),:]-I[np.hstack([0,range(0,maxbin-1)]),:]
 
     # expected increment per bin = sr/w, threshold at 3/4 that
@@ -802,7 +799,6 @@ def isp_ifgram(X, N=256, W=256, H=256.0/2.0, SR=1, maxbin=1.0+256.0/2.0):
     s = X.size
 
     # Make a Hanning window 
-    import numpy as np
     win = 0.5*(1-np.cos(np.true_divide(np.arange(W)*2*np.pi,W)))
 
     # Window for discrete differentiation
@@ -813,13 +809,12 @@ def isp_ifgram(X, N=256, W=256, H=256.0/2.0, SR=1, maxbin=1.0+256.0/2.0):
     norm = 2/sum(win)
 
     # How many complete windows?
-    import math
-    nhops = 1 + int(math.floor((s - W)/H))
+    nhops = 1 + int(np.floor((s - W)/H))
   
     F = np.zeros((Flen, nhops))
     D = np.zeros((Flen, nhops),dtype=complex)
 
-    nmw1 = int(math.floor((N-W)/2))
+    nmw1 = int(np.floor((N-W)/2))
 
     ww = 2*np.pi*np.arange(Flen)*SR/N
 
@@ -845,7 +840,7 @@ def isp_ifgram(X, N=256, W=256, H=256.0/2.0, SR=1, maxbin=1.0+256.0/2.0):
       # Replaced call to fftshift with inline version. Jesper Hjvang Jensen, Aug 2007
       # t1 = fft(fftshift(du));
       # t2 = fft(fftshift(wu));
-      split = int(math.ceil(du.size/2.0) + 1)
+      split = int(np.ceil(du.size/2.0) + 1)
       
       # Need to reverse front and last parts of du and wu      
       temp_du = np.hstack([du[split-1:],du[0:split-1]])
