@@ -146,7 +146,8 @@ def octs_to_hz(octs, A440=440.0):
     return (A440/16)*(2**octs)
 
 #-- Chroma --#
-def chromagram(S, sr, method='Ellis', norm='inf', beat_times=None, tuning=0.0, **kwargs):
+def chromagram(S, sr, method='Ellis', norm='inf', beat_times=None, tuning=0.0, 
+                **kwargs):
     """Compute a chromagram from a spectrogram or waveform
 
     :parameters:
@@ -193,32 +194,38 @@ def chromagram(S, sr, method='Ellis', norm='inf', beat_times=None, tuning=0.0, *
     # Main rouine switch
     if method == 'Ellis':
                 
-      n_fft       = (S.shape[0] -1 ) * 2
-      spec2chroma = chromafb( sr, n_fft, **kwargs)[:, :S.shape[0]]
+        n_fft       = (S.shape[0] -1 ) * 2
+        spec2chroma = chromafb( sr, n_fft, **kwargs)[:, :S.shape[0]]
 
-      # Compute raw chroma
-      raw_chroma  = np.dot(spec2chroma, S)
+        # Compute raw chroma
+        raw_chroma  = np.dot(spec2chroma, S)
 
-      # Compute normalization factor for each frame
-      if norm == 'inf':
-          chroma_norm = np.max(np.abs(raw_chroma), axis=0)
-      elif norm == 1:
-          chroma_norm = np.sum(np.abs(raw_chroma), axis=0)
-      elif norm == 2:
-          chroma_norm = np.sum( (raw_chroma**2), axis=0) ** 0.5
-      elif norm is None:
-          return raw_chroma
-      else:
-          raise ValueError("norm must be one of: 'inf', 1, 2, None")
+        # Compute normalization factor for each frame
+        if norm == 'inf':
+            chroma_norm = np.max(np.abs(raw_chroma), axis=0)
+        elif norm == 1:
+            chroma_norm = np.sum(np.abs(raw_chroma), axis=0)
+        elif norm == 2:
+            chroma_norm = np.sum( (raw_chroma**2), axis=0) ** 0.5
+        elif norm is None:
+            return raw_chroma
+        else:
+            raise ValueError("norm must be one of: 'inf', 1, 2, None")
 
-      # Tile the normalizer to match raw_chroma's shape
-      chroma_norm[chroma_norm == 0] = 1.0
-      normal_chroma = raw_chroma / chroma_norm
+        # Tile the normalizer to match raw_chroma's shape
+        chroma_norm[chroma_norm == 0] = 1.0
+        normal_chroma = raw_chroma / chroma_norm
+
     else:
-    
-      # Extract loudness-based chroma
-      raw_chroma, normal_chroma, sample_times, tuning = loudness_chroma(S, sr, beat_times, tuning, 
-           minFreq=55, maxFreq=1660, resolution_fact=5)
+        # Extract loudness-based chroma
+        # FIXME:  2013-09-25 17:25:12 by Brian McFee <brm2132@columbia.edu>
+        # too many magic numbers here
+        r_chroma, normal_chroma, s_times, tuning = loudness_chroma(S, sr, 
+                                                        beat_times, 
+                                                        tuning, 
+                                                        minFreq=55, 
+                                                        maxFreq=1660, 
+                                                        resolution_fact=5)
            
     return normal_chroma
 
@@ -290,8 +297,8 @@ def chromafb(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=None):
     wts[:, (1 + n_fft/2):] = 0.0
     return wts
 
-def loudness_chroma(x, sr, beat_times, tuning, minFreq=55.0, maxFreq=1661.0, resolution_fact=5):
-
+def loudness_chroma(x, sr, beat_times, tuning, minFreq=55.0, maxFreq=1661.0, 
+                    resolution_fact=5):
     """Compute a loudness-based chromagram, for use in chord estimation 
 
     :parameters:
@@ -336,12 +343,15 @@ def loudness_chroma(x, sr, beat_times, tuning, minFreq=55.0, maxFreq=1661.0, res
 
     return raw_chroma, normal_chroma, sample_times, tuning   
 
-def cal_hamming_window(SR, minFreq=55.0, maxFreq=1661.0, resolution_fact=5.0,tuning=0.0):
 
+# FIXME:  2013-09-25 17:28:54 by Brian McFee <brm2132@columbia.edu>
+#  this docstring does not describe what the function does
+def cal_hamming_window(sr, minFreq=55.0, maxFreq=1661.0, 
+                        resolution_fact=5.0, tuning=0.0):
     """Compute hamming windows for use in loudness chroma
 
     :parameters:
-      - SR : int
+      - sr : int
            audio sample rate of x
       - beat_times: np.ndarray
         estimated beat locations (in seconds). 
@@ -369,31 +379,34 @@ def cal_hamming_window(SR, minFreq=55.0, maxFreq=1661.0, resolution_fact=5.0,tun
       """
 
     # 1. Configuration
-    bins=12
-    pitchClass=12
-    pitchInterval = int(np.true_divide(bins,pitchClass))
-    pitchIntervalMap = np.zeros(bins)
+    bins                =   12
+    pitch_class         =   12
+    pitch_interval      = int(np.true_divide(bins,pitch_class))
+    pitch_interval_map  = np.zeros(bins)
 
     # Map each frequency to a pitch class 
-    for i in range(pitchClass):
-      pitchIntervalMap[(i-1)*pitchInterval+1:i*pitchInterval+1] = int(i+1)
+    for i in range(pitch_class):
+        pitch_interval_map[(i-1)*pitch_interval+1:i*pitch_interval+1] = int(i+1)
    
     # 2. Frequency bins
     K = int(np.ceil(np.log2(maxFreq/minFreq))*bins) #The number of bins
     freqBins = np.zeros(K)
 
-    for i in range(0,K-pitchInterval+1,pitchInterval):
-      octaveIndex = np.floor(np.true_divide(i,bins))
-      binIndex = np.mod(i,bins)
-      val = minFreq*2.0**(octaveIndex+(pitchIntervalMap[binIndex]-1.0)/pitchClass)
-      freqBins[i:i+pitchInterval+1] = val 
+    for i in range(0, K - pitch_interval + 1, pitch_interval):
+        octaveIndex = np.floor(np.true_divide(i, bins))
+        binIndex    = np.mod(i,bins)
+        val         = minFreq * 2.0**(octaveIndex + 
+                                        (pitch_interval_map[binIndex] - 1.0)
+                                        / pitch_class)
+
+        freqBins[i:i+pitch_interval+1] = val 
 
     # Augment using tuning factor
     freqBins = freqBins*2.0**(tuning/bins)
 
     # 3. Constant Q factor and window size
     Q = 1.0/(2.0**(1.0/bins)-1)*resolution_fact
-    winLenK = np.ceil(SR*np.true_divide(Q,freqBins))
+    winLenK = np.ceil(sr*np.true_divide(Q,freqBins))
 
     # 4. Construct the hamming window
     half_winLenK = winLenK
@@ -402,20 +415,20 @@ def cal_hamming_window(SR, minFreq=55.0, maxFreq=1661.0, resolution_fact=5.0,tun
     expFactor = np.conj(expFactor)
     hamming_k = list()
     for k in range(K):
-      N = int(winLenK[k])
-      half_winLenK[k] = int(np.ceil(N/2.0))
-      hamming_k.append(np.hamming(N)* np.true_divide(np.exp(np.true_divide(expFactor[range(N)],N)),N))
+        N = int(winLenK[k])
+        half_winLenK[k] = int(np.ceil(N/2.0))
+        hamming_k.append(np.hamming(N)* np.true_divide(np.exp(np.true_divide(expFactor[range(N)],N)),N))
 
     return hamming_k, half_winLenK, freqBins
 
-def cal_CQ_chroma_loudness(x,SR, beat_times, hammingK, half_winLenK, freqK, refLabel='s', A_weightLabel=1,q_value=0):
+def cal_CQ_chroma_loudness(x,sr, beat_times, hammingK, half_winLenK, freqK, refLabel='s', A_weightLabel=1,q_value=0):
 
     """Compute a loudness-based chromagram
 
     :parameters:
       - x : np.ndarray
            audio time-series
-      - SR : int
+      - sr : int
         audio sampling rate of x
       - beat_times: np.ndarray
         estimated beat locations (in seconds). 
@@ -460,132 +473,132 @@ def cal_CQ_chroma_loudness(x,SR, beat_times, hammingK, half_winLenK, freqK, refL
     # check whether hamming window length is > length(xf) and issue a warning
     warningFlag = np.zeros(K)
     for k in range(K):
-      if (len(hammingK[k])>Nx):
-        print('Warning: signalskye is shorter than one of the analysis windows')
-        warningFlag[k]=1
+        if len(hammingK[k]) > Nx:
+            print('Warning: signalskye is shorter than one of the analysis windows')
+            warningFlag[k]=1
 
     # Beat-time interval
-    beatSR = np.ceil(np.multiply(beat_times,SR));                     # Get the beat time (transform it into sample indices)
-    beatSR = np.delete(beatSR, np.nonzero(beatSR>=Nxorig))            # delete those samples that have exceeded the end of the song
+    beatsr = np.ceil(np.multiply(beat_times,sr))                     # Get the beat time (transform it into sample indices)
+    beatsr = np.delete(beatsr, np.nonzero(beatsr>=Nxorig))            # delete those samples that have exceeded the end of the song
  
     # Pad 0 to start, length of song to end
-    if beatSR[0] is 0:
-      beatSR = np.hstack([beatSR, Nxorig])
+    if beatsr[0] is 0:
+        beatsr = np.hstack([beatsr, Nxorig])
     else:
-      beatSR = np.hstack([0.0, beatSR, Nxorig])
+        beatsr = np.hstack([0.0, beatsr, Nxorig])
 
-    numF = len(beatSR)-1
+    numF = len(beatsr)-1
  
     # Process reference powers. Create storage if needed
     if refLabel is 'n':
-     refPower          = 1
+        refPower          = 1
     elif refLabel is 's':
-      refPower=10.0**(-12.0)
+        refPower=10.0**(-12.0)
     elif refLabel is 'mean':
-      meanPowerK       = np.zeros(K)
+        meanPowerK       = np.zeros(K)
     elif refLabel is 'median':
-      medianPowerK     = np.zeros(K)
+        medianPowerK     = np.zeros(K)
     elif refLabel is 'q':
-      # Need to store the average power of each frame
-      quantile_matrix  = np.zeros(Nxorig)
-      if (q_value<0.0 or q_value>1.0):
-        raise ValueError("Quantile must be in range [0.1,1.0]")
+        # Need to store the average power of each frame
+        quantile_matrix  = np.zeros(Nxorig)
+        if (q_value<0.0 or q_value>1.0):
+            raise ValueError("Quantile must be in range [0.1,1.0]")
     else:
-      raise ValueError("Reference power must be one of: ['n', 's', 'mean', 'median', 'q']")
+        raise ValueError("Reference power must be one of: ['n', 's', 'mean', 'median', 'q']")
 
     # A-weight parameters
     if A_weightLabel is 1:
-      Ap1 = 12200.0**2.0
-      Ap2 = 20.6**2.0
-      Ap3 = 107.7**2.0
-      Ap4 = 737.9**2.0
+        Ap1 = 12200.0   ** 2.0
+        Ap2 = 20.6      ** 2.0
+        Ap3 = 107.7     ** 2.0
+        Ap4 = 737.9     ** 2.0
 
     # Compute the CQ matrix for each point (row) and each frequency bin (column)
-    A_offsets = np.zeros(K);
-    CQ = np.zeros([K,numF]);
+    A_offsets = np.zeros(K)
+    CQ = np.zeros([K, numF])
  
     for k in range(K):
-       # Get the constant Q tranformation efficiently via convolution. 
-       # First create hamming window for this frequency
-       half_len = int(half_winLenK[k])
-       w = np.hstack([hammingK[k][half_len-1:], np.zeros(Nx-len(hammingK[k])), hammingK[k][:half_len-1]])
+        # Get the constant Q tranformation efficiently via convolution. 
+        # First create hamming window for this frequency
+        half_len = int(half_winLenK[k])
+        w = np.hstack([hammingK[k][half_len-1:], np.zeros(Nx-len(hammingK[k])), hammingK[k][:half_len-1]])
 
-       # Take fft of window and convolve, then invert
-       wf = np.fft.fft(w)
-       convolf = xf*wf
-       convol = np.fft.ifft(convolf)
+        # Take fft of window and convolve, then invert
+        wf = np.fft.fft(w)
+        convolf = xf*wf
+        convol = np.fft.ifft(convolf)
         
-       # add A-weighting value for this frequency?
-       if A_weightLabel is 1:
-         frequency_k2 = freqK[k]**2.0;
-         A_scale = Ap1*frequency_k2**2.0/((frequency_k2+Ap2)*np.sqrt((frequency_k2+Ap3)*(frequency_k2+Ap4))*(frequency_k2+Ap1))
-         A_offsets[k] = 2.0+20.0*np.log10(A_scale)
+        # add A-weighting value for this frequency?
+        if A_weightLabel is 1:
+            frequency_k2 = freqK[k]**2.0
+            A_scale = Ap1*frequency_k2**2.0/((frequency_k2+Ap2)*np.sqrt((frequency_k2+Ap3)*(frequency_k2+Ap4))*(frequency_k2+Ap1))
+            A_offsets[k] = 2.0+20.0*np.log10(A_scale)
         
-       # Reference power and A weighting.
-       # Compute abs(X)**2 and calculate offsets if needed
-       if refLabel is 'mean':
-         convol = np.abs(convol[:Nxorig])**2.0
-         meanPowerK[k] = np.mean(convol)
-       elif refLabel is 'median':
-         convol = np.abs(convol[:Nxorig])**2.0
-         medianPowerK[k] = np.median(convol)
-       elif refLabel is 'q':
-         convol = np.abs(convol[:Nxorig])**2.0
-         quantile_matrix = np.add(quantile_matrix,convol)
-       else:
-         convol = (np.abs(convol[:Nxorig]))**2.0
+        # Reference power and A weighting.
+        # Compute abs(X)**2 and calculate offsets if needed
+        if refLabel is 'mean':
+            convol = np.abs(convol[:Nxorig])**2.0
+            meanPowerK[k] = np.mean(convol)
+        elif refLabel is 'median':
+            convol = np.abs(convol[:Nxorig])**2.0
+            medianPowerK[k] = np.median(convol)
+        elif refLabel is 'q':
+            convol = np.abs(convol[:Nxorig])**2.0
+            quantile_matrix = np.add(quantile_matrix,convol)
+        else:
+            convol = (np.abs(convol[:Nxorig]))**2.0
         
-       # Get the beat interval (median)
-       for t in range(numF):
-         t1 = int(beatSR[t])+1
-         t2 = int(beatSR[t+1])
-         CQ[k,t] = np.median(convol[t1-1:t2])   
+        # Get the beat interval (median)
+        for t in range(numF):
+            t1 = int(beatsr[t])+1
+            t2 = int(beatsr[t+1])
+            CQ[k,t] = np.median(convol[t1-1:t2])   
           
     # Add the reference power (for mean/median/q-quantiles)
     if refLabel is 'mean':
-      refPower = np.mean(meanPowerK);
-      CQ = np.add(10.0*np.log10(CQ),-10.0*np.log10(refPower))
-      CQ = np.add(CQ,np.transpose(np.tile(A_offsets,(numF,1))))
+        refPower = np.mean(meanPowerK)
+        CQ = np.add(10.0*np.log10(CQ),-10.0*np.log10(refPower))
+        CQ = np.add(CQ,np.transpose(np.tile(A_offsets,(numF,1))))
     elif refLabel is 'median':
-      refPower = np.median(medianPowerK)
-      CQ = np.add(10.0*np.log10(CQ),-10.0*np.log10(refPower))
-      CQ = np.add(CQ,np.transpose(np.tile(A_offsets,(numF,1))))
+        refPower = np.median(medianPowerK)
+        CQ = np.add(10.0*np.log10(CQ),-10.0*np.log10(refPower))
+        CQ = np.add(CQ,np.transpose(np.tile(A_offsets,(numF,1))))
     elif refLabel is 'q':
-      # sort the values, set reference as the value that falls in the qth quantile
-      quantile_value = np.sort(quantile_matrix) 
-      refPower = quantile_value[int(np.floor(q_value*Nxorig))-1]/K
-      CQ = np.add(10.0*np.log10(CQ),-10*np.log10(refPower))
-      CQ = np.add(CQ,np.transpose(np.tile(A_offsets,(numF,1))))
+        # sort the values, set reference as the value that falls in the qth quantile
+        quantile_value = np.sort(quantile_matrix) 
+        refPower = quantile_value[int(np.floor(q_value*Nxorig))-1]/K
+        CQ = np.add(10.0*np.log10(CQ),-10*np.log10(refPower))
+        CQ = np.add(CQ,np.transpose(np.tile(A_offsets,(numF,1))))
     else:
-      CQ = np.add(10.0*np.log10(CQ),-10.0*np.log10(refPower))
-      CQ = np.add(CQ,np.transpose(np.tile(A_offsets,(numF,1))))
+        CQ = np.add(10.0*np.log10(CQ),-10.0*np.log10(refPower))
+        CQ = np.add(CQ,np.transpose(np.tile(A_offsets,(numF,1))))
   
     # Beat synchronise
     chromagram = np.zeros((bins,numF))
     normal_chromagram = np.zeros((bins,numF))
     
     for i in range(bins):
-      chromagram[i,:] = np.sum(CQ[i::bins,:],0)
+        chromagram[i,:] = np.sum(CQ[i::bins,:],0)
      
     # Normalise
     for i in range(chromagram.shape[1]):
-      maxCol = np.max(chromagram[:,i])
-      minCol = np.min(chromagram[:,i])
-      if (maxCol>minCol):
-        normal_chromagram[:,i] = np.true_divide((chromagram[:,i]-minCol),(maxCol-minCol))
-      else:
-        normal_chromagram[:,i] = 0.0   
+        maxCol = np.max(chromagram[:,i])
+        minCol = np.min(chromagram[:,i])
+        if (maxCol>minCol):
+            normal_chromagram[:,i] = np.true_divide((chromagram[:,i]-minCol),(maxCol-minCol))
+        else:
+            normal_chromagram[:,i] = 0.0   
 
     # Shift to be C-based
     shift_pos = round(12.0*np.log2(freqK[0]/27.5)) # The relative position to A0
     shift_pos = int(np.mod(shift_pos,12)-3)        # since A0 should shift -3
     if not (shift_pos is 0):
-      chromagram = np.roll(chromagram,shift_pos,0)
-      normal_chromagram = np.roll(normal_chromagram,shift_pos,0)
+        chromagram = np.roll(chromagram,shift_pos,0)
+        normal_chromagram = np.roll(normal_chromagram,shift_pos,0)
 
     # 5. return the sample times
-    beatSR = beatSR/SR
-    sample_times = np.vstack([beatSR[:-1], beatSR[1:]])
+    beatsr = beatsr/sr
+    sample_times = np.vstack([beatsr[:-1], beatsr[1:]])
 
     return chromagram, normal_chromagram, sample_times
 
@@ -640,7 +653,7 @@ def estimate_tuning(d,sr):
     # I didn't bother vectorising hz2octs....do it in a loop
     temp_hz = pflat[nzp]
     for i in range(len(temp_hz)):
-      temp_hz[i] = hz_to_octs(temp_hz[i])
+        temp_hz[i] = hz_to_octs(temp_hz[i])
       
     Poctsflat = p.flatten(1)  
     Poctsflat[nzp] = temp_hz
@@ -650,6 +663,9 @@ def estimate_tuning(d,sr):
     nchr = 12   # size of feature
 
     # make histogram, resolution is 0.01, from -0.5 to 0.5
+    # FIXME:  2013-09-25 17:35:08 by Brian McFee <brm2132@columbia.edu>
+    #   wtf? why is there a pyplot import here?
+
     import matplotlib.pyplot as plt
     term_one = nchr*to_count
     term_two = np.array(np.round(nchr*to_count),dtype=np.int)
@@ -703,7 +719,7 @@ def isp_ifptrack(d,w,sr,fminl = 150.0, fminu = 300.0, fmaxl = 2000.0, fmaxu = 40
     # expected increment per bin = sr/w, threshold at 3/4 that
     dgood = abs(ddif) < .75*float(sr)/float(w)
 
-    # delete any single bins (both above and below are zero);
+    # delete any single bins (both above and below are zero)
     logic_one = dgood[np.hstack([range(1,maxbin),maxbin-1]),:] > 0
     logic_two = dgood[np.hstack([0,range(0,maxbin-1)]),:] > 0
     dgood = dgood * np.logical_or(logic_one,logic_two)
@@ -714,25 +730,25 @@ def isp_ifptrack(d,w,sr,fminl = 150.0, fminu = 300.0, fmaxl = 2000.0, fmaxu = 40
     # For each frame, extract all harmonic freqs & magnitudes
     lds = np.size(dgood,0)
     for t in range(I.shape[1]):
-      ds = dgood[:,t]
+        ds = dgood[:,t]
             
-      # find nonzero regions in this vector
-      logic_one = np.hstack([0,ds[range(0,lds-1)]])==0
-      logic_two = ds > 0
-      logic_oneandtwo = np.logical_and(logic_one,logic_two)
-      st = np.nonzero(logic_oneandtwo)[0]
+        # find nonzero regions in this vector
+        logic_one = np.hstack([0,ds[range(0,lds-1)]])==0
+        logic_two = ds > 0
+        logic_oneandtwo = np.logical_and(logic_one,logic_two)
+        st = np.nonzero(logic_oneandtwo)[0]
     
-      logic_three = np.hstack([ds[range(1,lds)],0])==0
-      logic_twoandthree = np.logical_and(logic_two,logic_three)
-      en = np.nonzero(logic_twoandthree)[0]
+        logic_three = np.hstack([ds[range(1,lds)],0])==0
+        logic_twoandthree = np.logical_and(logic_two,logic_three)
+        en = np.nonzero(logic_twoandthree)[0]
 
-      # Set up inner loop    
-      npks = len(st)
-      frqs = np.zeros(npks)
-      mags = np.zeros(npks)
-      for i in range(len(st)):
-        bump = np.abs(S[range(st[i],en[i]+1),t])
-        mags[i] = sum(bump)
+        # Set up inner loop    
+        npks = len(st)
+        frqs = np.zeros(npks)
+        mags = np.zeros(npks)
+        for i in range(len(st)):
+            bump = np.abs(S[range(st[i],en[i]+1),t])
+            mags[i] = sum(bump)
       
         # another long division, split it up
         numer = np.dot(bump,I[range(st[i],en[i]+1),t])
@@ -741,31 +757,31 @@ def isp_ifptrack(d,w,sr,fminl = 150.0, fminu = 300.0, fmaxl = 2000.0, fmaxu = 40
         frqs[i] = numer/denom
                                     
         if frqs[i] > fmaxu:
-          mags[i] = 0
-          frqs[i] = 0
+            mags[i] = 0
+            frqs[i] = 0
         elif frqs[i] > fmaxl:
-          mags[i] = mags[i] * max(0, (fmaxu - frqs[i])/(fmaxu-fmaxl))
+            mags[i] = mags[i] * max(0, (fmaxu - frqs[i])/(fmaxu-fmaxl))
 
         # downweight magnitudes below? 200 Hz
         if frqs[i] < fminl:
-          mags[i] = 0
-          frqs[i] = 0
+            mags[i] = 0
+            frqs[i] = 0
         elif frqs[i] < fminu:
-          # 1 octave fade-out
-          mags[i] = mags[i] * (frqs[i] - fminl)/(fminu-fminl)
+            # 1 octave fade-out
+            mags[i] = mags[i] * (frqs[i] - fminl)/(fminu-fminl)
 
         if frqs[i] < 0: 
-          mags[i] = 0
-          frqs[i] = 0
+            mags[i] = 0
+            frqs[i] = 0
           
-      # Collect into bins      
-      bin = np.round((st+en)/2.0)
-      p[bin.astype(int),t] = frqs
-      m[bin.astype(int),t] = mags
+        # Collect into bins      
+        bin = np.round((st+en)/2.0)
+        p[bin.astype(int),t] = frqs
+        m[bin.astype(int),t] = mags
 
-    return p,m,S
+    return p, m, S
   
-def isp_ifgram(X, N=256, W=256, H=256.0/2.0, SR=1, maxbin=1.0+256.0/2.0):
+def isp_ifgram(X, N=256, W=256, H=256.0/2.0, sr=1, maxbin=1.0+256.0/2.0):
   
     """   Compute the instantaneous frequency (as a proportion of the sampling
     rate) obtained as the time-derivative of the phase of the complex
@@ -802,7 +818,7 @@ def isp_ifgram(X, N=256, W=256, H=256.0/2.0, SR=1, maxbin=1.0+256.0/2.0):
     win = 0.5*(1-np.cos(np.true_divide(np.arange(W)*2*np.pi,W)))
 
     # Window for discrete differentiation
-    T = float(W)/float(SR)
+    T = float(W)/float(sr)
     dwin = (-np.pi/T)*np.sin(np.true_divide(np.arange(W)*2*np.pi,W))
 
     # sum(win) takes out integration due to window, 2 compensates for neg frq
@@ -816,60 +832,60 @@ def isp_ifgram(X, N=256, W=256, H=256.0/2.0, SR=1, maxbin=1.0+256.0/2.0):
 
     nmw1 = int(np.floor((N-W)/2))
 
-    ww = 2*np.pi*np.arange(Flen)*SR/N
+    ww = 2*np.pi*np.arange(Flen)*sr/N
 
     wu = np.zeros(N)
     du = np.zeros(N)
   
     # Main loop
     for h in range(nhops):
-      u = X[h*H:(W+h*H)]
+        u = X[h*H:(W+h*H)]
 
-      # Pad or truncate samples if N != W
-      # Apply windows now, while the length is right
-      if N >= W:
-        wu[nmw1:(nmw1+W)] = win*u
-        du[nmw1:(nmw1+W)] = dwin*u
-      elif N < W:
-        # Can't make sense of Dan's code here:
-        #wu = win[1-nmw1:N-nmw1]*u[1-nmw1:N-nmw1];
-        #du = dwin[1-nmw1:N-nmw1]*u[1-nmw1:N-nmw1];
-        print 'Error, N must be at least window size'
+        # Pad or truncate samples if N != W
+        # Apply windows now, while the length is right
+        if N >= W:
+            wu[nmw1:(nmw1+W)] = win*u
+            du[nmw1:(nmw1+W)] = dwin*u
+        elif N < W:
+            # Can't make sense of Dan's code here:
+            #wu = win[1-nmw1:N-nmw1]*u[1-nmw1:N-nmw1]
+            #du = dwin[1-nmw1:N-nmw1]*u[1-nmw1:N-nmw1]
+            print 'Error, N must be at least window size'
 
-      # FFTs of straight samples plus differential-weighted ones
-      # Replaced call to fftshift with inline version. Jesper Hjvang Jensen, Aug 2007
-      # t1 = fft(fftshift(du));
-      # t2 = fft(fftshift(wu));
-      split = int(np.ceil(du.size/2.0) + 1)
+        # FFTs of straight samples plus differential-weighted ones
+        # Replaced call to fftshift with inline version. Jesper Hjvang Jensen, Aug 2007
+        # t1 = fft(fftshift(du))
+        # t2 = fft(fftshift(wu))
+        split = int(np.ceil(du.size/2.0) + 1)
       
-      # Need to reverse front and last parts of du and wu      
-      temp_du = np.hstack([du[split-1:],du[0:split-1]])
-      temp_wu = np.hstack([wu[split-1:],wu[0:split-1]])
+        # Need to reverse front and last parts of du and wu      
+        temp_du = np.hstack([du[split-1:],du[0:split-1]])
+        temp_wu = np.hstack([wu[split-1:],wu[0:split-1]])
       
-      t1 = np.fft.fft(temp_du)
-      t2 = np.fft.fft(temp_wu)
+        t1 = np.fft.fft(temp_du)
+        t2 = np.fft.fft(temp_wu)
       
-      t1 = t1[0:Flen]
-      t2 = t2[0:Flen]
+        t1 = t1[0:Flen]
+        t2 = t2[0:Flen]
       
-      # Scale down to factor out length & window effects
-      D[:,h] = t2*norm
+        # Scale down to factor out length & window effects
+        D[:,h] = t2*norm
       
-      # Calculate instantaneous frequency from phase of differential spectrum
-      t = t1 + 1j*(ww*t2)
-      a = t2.real
-      b = t2.imag
-      da = t.real
-      db = t.imag
+        # Calculate instantaneous frequency from phase of differential spectrum
+        t = t1 + 1j*(ww*t2)
+        a = t2.real
+        b = t2.imag
+        da = t.real
+        db = t.imag
       
-      # split this confusing divsion into chunks!
-      # instf = (1/(2*pi))*(a.*db - b.*da)./((a.*a + b.*b)+(t2==0));
-      num_one = 1.0/(2*np.pi)
-      num_two = (a*db - b*da)
-      denom_one = (a*a + b*b)
-      isz = (t2==0)
-      instf = np.true_divide(num_one*num_two,denom_one+isz.astype(int))
-      F[:,h] = instf
+        # split this confusing divsion into chunks!
+        # instf = (1/(2*pi))*(a.*db - b.*da)./((a.*a + b.*b)+(t2==0))
+        num_one = 1.0/(2*np.pi)
+        num_two = (a*db - b*da)
+        denom_one = (a*a + b*b)
+        isz = (t2==0)
+        instf = np.true_divide(num_one*num_two,denom_one+isz.astype(int))
+        F[:,h] = instf
  
     return F, D
 
