@@ -174,7 +174,7 @@ def chromagram(S, sr, method='Ellis', norm='inf', beat_times=None, tuning=0.0,
              None :  do not normalize
      - beat_times : np.ndarray, McVicar only
           estimated beat times (seconds)
-     - tuning     : float in [-0.5,0.5], McVicar Only
+     - tuning     : float in [-0.5, 0.5], McVicar Only
           estimated tuning in cents             
 
       - kwargs
@@ -223,8 +223,8 @@ def chromagram(S, sr, method='Ellis', norm='inf', beat_times=None, tuning=0.0,
         r_chroma, normal_chroma, s_times, tuning = loudness_chroma(S, sr, 
                                                         beat_times, 
                                                         tuning, 
-                                                        minFreq=55, 
-                                                        maxFreq=1660, 
+                                                        fmin=55, 
+                                                        fmax=1660, 
                                                         resolution_fact=5)
            
     return normal_chroma
@@ -271,8 +271,8 @@ def chromafb(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=None):
         (np.maximum(fftfrqbins[1:] - fftfrqbins[:-1], 1.0), [1]))
 
     D = np.tile(fftfrqbins, (n_chroma, 1))  \
-        - np.tile(np.arange(0, n_chroma, dtype='d')[:,np.newaxis], 
-        (1,n_fft))
+        - np.tile(np.arange(0, n_chroma, dtype='d')[:, np.newaxis], 
+        (1, n_fft))
 
     n_chroma2 = round(n_chroma / 2.0)
 
@@ -297,7 +297,7 @@ def chromafb(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=None):
     wts[:, (1 + n_fft/2):] = 0.0
     return wts
 
-def loudness_chroma(x, sr, beat_times, tuning, minFreq=55.0, maxFreq=1661.0, 
+def loudness_chroma(x, sr, beat_times, tuning, fmin=55.0, fmax=1661.0, 
                     resolution_fact=5):
     """Compute a loudness-based chromagram, for use in chord estimation 
 
@@ -308,15 +308,15 @@ def loudness_chroma(x, sr, beat_times, tuning, minFreq=55.0, maxFreq=1661.0,
         audio sampling rate of x
       - beat_times: np.ndarray
         estimated beat locations (in seconds). 
-      - tuning: float in [-0.5,0.5]
+      - tuning: float in [-0.5, 0.5]
         estimated tuning in cents. 
-      - minFreq: float
+      - fmin: float
           minimum frequency of spectrum to consider. Will be rounded to
           Closest pitch frequency in Hz (accounting for tuning)
-        maxFreq: float
+        fmax: float
           maximum frequency of spectrum to consider. For balanced results,
-          make this one pitch less than an octave multiple of minFreq
-          (for example, default value is 4 octaves + 11 pitches above minFreq = 55)
+          make this one pitch less than an octave multiple of fmin
+          (for example, default value is 4 octaves + 11 pitches above fmin = 55)
       - resolution_fact: int
           multiplying factor of power in window (see PhD thesis "A Machine Learning approach
           to automatic chord extraction", Matt McVicar, University of Bristol 2013)
@@ -325,28 +325,28 @@ def loudness_chroma(x, sr, beat_times, tuning, minFreq=55.0, maxFreq=1661.0,
       - raw_chroma : np.ndarray 12 x T
         Loudness-based chromagram, 12 pitches by number of beats + 1
       - normal_chroma: np.ndarray 12 x T
-        Normalised chromagram, each row normalised to range [0,1]
+        Normalised chromagram, each row normalised to range [0, 1]
       - sample_times: np.ndarray
         start and end points of chroma windows (in seconds)
-      - tuning: float in [-0.5,0.5]
+      - tuning: float in [-0.5, 0.5]
         estimated tuning of piece, returned in case None was supplied
                   
       """
       
     # Get hamming windows for convolution
-    [hamming_k, half_winLenK, freqBins] = cal_hamming_window(sr,
-                   minFreq, maxFreq, resolution_fact,tuning)
+    [hamming_k, half_winLenK, freq_bins] = cal_hamming_window(sr,
+                   fmin, fmax, resolution_fact, tuning)
       
     # Extract chroma
     raw_chroma, normal_chroma, sample_times = cal_CQ_chroma_loudness(x, 
-                   sr, beat_times, hamming_k, half_winLenK, freqBins)
+                   sr, beat_times, hamming_k, half_winLenK, freq_bins)
 
     return raw_chroma, normal_chroma, sample_times, tuning   
 
 
 # FIXME:  2013-09-25 17:28:54 by Brian McFee <brm2132@columbia.edu>
 #  this docstring does not describe what the function does
-def cal_hamming_window(sr, minFreq=55.0, maxFreq=1661.0, 
+def cal_hamming_window(sr, fmin=55.0, fmax=1661.0, 
                         resolution_fact=5.0, tuning=0.0):
     """Compute hamming windows for use in loudness chroma
 
@@ -355,17 +355,17 @@ def cal_hamming_window(sr, minFreq=55.0, maxFreq=1661.0,
            audio sample rate of x
       - beat_times: np.ndarray
         estimated beat locations (in seconds). 
-      - minFreq: int
+      - fmin: int
           minimum frequency of spectrum to consider. Will be rounded to
           Closest pitch frequency in Hz (accounting for tuning)
-        maxFreq: int
+        fmax: int
           maximum frequency of spectrum to consider. For balanced results,
-          make this one pitch less than an octave multiple of minFreq
-          (for example, default value is 4 octaves + 11 pitches above minFreq = 55)
+          make this one pitch less than an octave multiple of fmin
+          (for example, default value is 4 octaves + 11 pitches above fmin = 55)
       - resolution_fact: int
           multiplying factor of power in window (see PhD thesis "A Machine Learning approach
           to automatic chord extraction", Matt McVicar, University of Bristol 2013)
-      - tuning: float in [-0.5,0.5]
+      - tuning: float in [-0.5, 0.5]
         estimated tuning in cents. 
 
     :returns:
@@ -373,7 +373,7 @@ def cal_hamming_window(sr, minFreq=55.0, maxFreq=1661.0,
         hamming windows for each of the k frequencies
       - half_winLenK:
         half of the above
-      - freqBins: np.array
+      - freq_bins: np.array
         frequency of each window
                   
       """
@@ -381,7 +381,7 @@ def cal_hamming_window(sr, minFreq=55.0, maxFreq=1661.0,
     # 1. Configuration
     bins                =   12
     pitch_class         =   12
-    pitch_interval      = int(np.true_divide(bins,pitch_class))
+    pitch_interval      = int(np.true_divide(bins, pitch_class))
     pitch_interval_map  = np.zeros(bins)
 
     # Map each frequency to a pitch class 
@@ -389,120 +389,150 @@ def cal_hamming_window(sr, minFreq=55.0, maxFreq=1661.0,
         pitch_interval_map[(i-1)*pitch_interval+1:i*pitch_interval+1] = int(i+1)
    
     # 2. Frequency bins
-    K = int(np.ceil(np.log2(maxFreq/minFreq))*bins) #The number of bins
-    freqBins = np.zeros(K)
+    K = int(np.ceil(np.log2(fmax/fmin))*bins) #The number of bins
+    freq_bins = np.zeros(K)
 
     for i in range(0, K - pitch_interval + 1, pitch_interval):
-        octaveIndex = np.floor(np.true_divide(i, bins))
-        binIndex    = np.mod(i,bins)
-        val         = minFreq * 2.0**(octaveIndex + 
-                                        (pitch_interval_map[binIndex] - 1.0)
+        octave_index = np.floor(np.true_divide(i, bins))
+        bin_index    = np.mod(i, bins)
+        val          = fmin * 2.0**(octave_index + 
+                                        (pitch_interval_map[bin_index] - 1.0)
                                         / pitch_class)
 
-        freqBins[i:i+pitch_interval+1] = val 
+        freq_bins[i:i+pitch_interval+1] = val 
 
     # Augment using tuning factor
-    freqBins = freqBins*2.0**(tuning/bins)
+    freq_bins = freq_bins*2.0**(tuning/bins)
 
     # 3. Constant Q factor and window size
     Q = 1.0/(2.0**(1.0/bins)-1)*resolution_fact
-    winLenK = np.ceil(sr*np.true_divide(Q,freqBins))
+    winLenK = np.ceil(sr * np.true_divide(Q, freq_bins))
 
     # 4. Construct the hamming window
+    # FIXME:   2013-09-25 17:49:19 by Brian McFee <brm2132@columbia.edu>
+    # these variables names are not descriptive     
     half_winLenK = winLenK
-    const = 1j*-2.0*np.pi*Q
-    expFactor = np.multiply(const,range(int(winLenK[0])+1))
-    expFactor = np.conj(expFactor)
-    hamming_k = list()
+    const       = 1j*-2.0*np.pi*Q
+    exp_factor  = np.multiply(const, range(int(winLenK[0])+1))
+    exp_factor  = np.conj(exp_factor)
+    hamming_k   = list()
     for k in range(K):
         N = int(winLenK[k])
         half_winLenK[k] = int(np.ceil(N/2.0))
-        hamming_k.append(np.hamming(N)* np.true_divide(np.exp(np.true_divide(expFactor[range(N)],N)),N))
 
-    return hamming_k, half_winLenK, freqBins
+        # FIXME:  2013-09-25 17:53:06 by Brian McFee <brm2132@columbia.edu>
+        # this is unreadable         
+        hamming_k.append(np.hamming(N)* np.true_divide(np.exp(np.true_divide(exp_factor[range(N)], N)), N))
 
-def cal_CQ_chroma_loudness(x,sr, beat_times, hammingK, half_winLenK, freqK, refLabel='s', A_weightLabel=1,q_value=0):
+    return hamming_k, half_winLenK, freq_bins
 
+def cal_CQ_chroma_loudness(x, sr, beat_times, hammingK, half_winLenK, freqK, 
+                            refLabel='s', A_weightLabel=1, q_value=0):
     """Compute a loudness-based chromagram
 
     :parameters:
       - x : np.ndarray
-           audio time-series
+            audio time-series
+
       - sr : int
-        audio sampling rate of x
+            audio sampling rate of x
+
       - beat_times: np.ndarray
-        estimated beat locations (in seconds). 
+            estimated beat locations (in seconds). 
+
       - hammingK: complex array
-        hamming window to use in convolution, generated by cal_hamming_window
+            hamming window to use in convolution, generated by cal_hamming_window
+
       - half_winLenK: complex array
-        half the length of the above windows, generated by cal_hamming_window
+            half the length of the above windows, generated by cal_hamming_window
+
       - freqK: np.ndarray
-        Frequency of the kth window
+            Frequency of the kth window
+
       - refLabel: {'n','s','mean','median','q'}
-        reference power level.
-        'n'       - no reference, i.e. 1
-        's'       - standard human reference power of 10**-12
-        'mean'    - reference of each frequency is the mean of this
-                    frequency over the song
-        'median'  - as above with median
-        'q'       - regard the qth quantile of the signal to be silence
-                    (see q_value argument)
-      - q_value: float in [0.0,1.0]
-        quantile to consider silence if refLabel = 'q'
+            reference power level.
+            'n'       - no reference, i.e. 1
+            's'       - standard human reference power of 10**-12
+            'mean'    - reference of each frequency is the mean of this
+                        frequency over the song
+            'median'  - as above with median
+            'q'       - regard the qth quantile of the signal to be silence
+                        (see q_value argument)
+      - q_value: float in [0.0, 1.0]
+            quantile to consider silence if refLabel = 'q'
 
     :returns:
       - raw_chroma : np.ndarray 12 x T
         Loudness-based chromagram, 12 pitches by number of beats + 1
+
       - normal_chroma: np.ndarray 12 x T
-        Normalised chromagram, each row normalised to range [0,1]
+        Normalised chromagram, each row normalised to range [0, 1]
+
       - sample_times: np.ndarray
         start and end points of chroma windows (in seconds)
-      - tuning: float in [-0.5,0.5]
+
+      - tuning: float in [-0.5, 0.5]
         estimated tuning of piece, returned in case None was supplied
                   
       """
  
     # 1. configuration. Pad x to be a power of 2, get length parameters
-    bins = 12
-    Nxorig = len(x)
-    x = np.hstack([x,np.zeros(2.0**np.ceil(np.log2(Nxorig))-Nxorig)]) # add the end to make the length to be 2^N 
-    Nx = len(x)                                                       # length of x
-    K = len(hammingK)                                                 # number of frequency bins
-    xf = np.fft.fft(x)                                                # full fft of signal
+    bins    = 12
+    Nxorig  = len(x)
+    
+    # add the end to make the length to be 2^N 
+    #     TODO:   2013-09-25 17:51:57 by Brian McFee <brm2132@columbia.edu>
+    # this should be done with np.pad     
+    x   = np.hstack([x, np.zeros(2.0**np.ceil(np.log2(Nxorig))-Nxorig)]) 
+    Nx  = len(x)                                                       
+    
+    # number of frequency bins
+    K = len(hammingK)                                                 
+
+    # full fft of signal
+    xf = np.fft.fft(x)                                                
 
     # check whether hamming window length is > length(xf) and issue a warning
-    warningFlag = np.zeros(K)
+    warning_flag = np.zeros(K)
     for k in range(K):
         if len(hammingK[k]) > Nx:
             print('Warning: signalskye is shorter than one of the analysis windows')
-            warningFlag[k]=1
+            warning_flag[k] = 1
 
     # Beat-time interval
-    beatsr = np.ceil(np.multiply(beat_times,sr))                     # Get the beat time (transform it into sample indices)
-    beatsr = np.delete(beatsr, np.nonzero(beatsr>=Nxorig))            # delete those samples that have exceeded the end of the song
+
+    # Get the beat time (transform it into sample indices)
+    beat_sr = np.ceil(np.multiply(beat_times, sr))                     
+
+    # delete those samples that have exceeded the end of the song
+    beat_sr = np.delete(beat_sr, np.nonzero(beat_sr>=Nxorig))            
  
     # Pad 0 to start, length of song to end
-    if beatsr[0] is 0:
-        beatsr = np.hstack([beatsr, Nxorig])
+    if beat_sr[0] is 0:
+        beat_sr = np.hstack([beat_sr, Nxorig])
     else:
-        beatsr = np.hstack([0.0, beatsr, Nxorig])
+        beat_sr = np.hstack([0.0, beat_sr, Nxorig])
 
-    numF = len(beatsr)-1
+    num_F = len(beat_sr)-1
  
     # Process reference powers. Create storage if needed
     if refLabel is 'n':
-        refPower          = 1
+        ref_power       = 1
+
     elif refLabel is 's':
-        refPower=10.0**(-12.0)
+        ref_power       = 10.0**(-12.0)
+
     elif refLabel is 'mean':
-        meanPowerK       = np.zeros(K)
+        meanPowerK      = np.zeros(K)
+
     elif refLabel is 'median':
-        medianPowerK     = np.zeros(K)
+        medianPowerK    = np.zeros(K)
+
     elif refLabel is 'q':
         # Need to store the average power of each frame
         quantile_matrix  = np.zeros(Nxorig)
-        if (q_value<0.0 or q_value>1.0):
-            raise ValueError("Quantile must be in range [0.1,1.0]")
+        if q_value < 0.0 or q_value > 1.0:
+            raise ValueError("Quantile must be in range [0.1, 1.0]")
     else:
         raise ValueError("Reference power must be one of: ['n', 's', 'mean', 'median', 'q']")
 
@@ -515,7 +545,7 @@ def cal_CQ_chroma_loudness(x,sr, beat_times, hammingK, half_winLenK, freqK, refL
 
     # Compute the CQ matrix for each point (row) and each frequency bin (column)
     A_offsets = np.zeros(K)
-    CQ = np.zeros([K, numF])
+    CQ = np.zeros([K, num_F])
  
     for k in range(K):
         # Get the constant Q tranformation efficiently via convolution. 
@@ -539,73 +569,83 @@ def cal_CQ_chroma_loudness(x,sr, beat_times, hammingK, half_winLenK, freqK, refL
         if refLabel is 'mean':
             convol = np.abs(convol[:Nxorig])**2.0
             meanPowerK[k] = np.mean(convol)
+
         elif refLabel is 'median':
             convol = np.abs(convol[:Nxorig])**2.0
             medianPowerK[k] = np.median(convol)
+
         elif refLabel is 'q':
             convol = np.abs(convol[:Nxorig])**2.0
-            quantile_matrix = np.add(quantile_matrix,convol)
+            quantile_matrix = np.add(quantile_matrix, convol)
+
         else:
             convol = (np.abs(convol[:Nxorig]))**2.0
         
         # Get the beat interval (median)
-        for t in range(numF):
-            t1 = int(beatsr[t])+1
-            t2 = int(beatsr[t+1])
-            CQ[k,t] = np.median(convol[t1-1:t2])   
+        for t in range(num_F):
+            t1 = int(beat_sr[t])+1
+            t2 = int(beat_sr[t+1])
+            CQ[k, t] = np.median(convol[t1-1:t2])   
           
     # Add the reference power (for mean/median/q-quantiles)
+    # FIXME:  2013-09-25 18:00:20 by Brian McFee <brm2132@columbia.edu>
+    # unreadable     
     if refLabel is 'mean':
-        refPower = np.mean(meanPowerK)
-        CQ = np.add(10.0*np.log10(CQ),-10.0*np.log10(refPower))
-        CQ = np.add(CQ,np.transpose(np.tile(A_offsets,(numF,1))))
+        ref_power = np.mean(meanPowerK)
+        CQ = np.add(10.0*np.log10(CQ), -10.0*np.log10(ref_power))
+        CQ = np.add(CQ, np.transpose(np.tile(A_offsets, (num_F, 1))))
     elif refLabel is 'median':
-        refPower = np.median(medianPowerK)
-        CQ = np.add(10.0*np.log10(CQ),-10.0*np.log10(refPower))
-        CQ = np.add(CQ,np.transpose(np.tile(A_offsets,(numF,1))))
+        ref_power = np.median(medianPowerK)
+        CQ = np.add(10.0*np.log10(CQ), -10.0*np.log10(ref_power))
+        CQ = np.add(CQ, np.transpose(np.tile(A_offsets, (num_F, 1))))
     elif refLabel is 'q':
         # sort the values, set reference as the value that falls in the qth quantile
         quantile_value = np.sort(quantile_matrix) 
-        refPower = quantile_value[int(np.floor(q_value*Nxorig))-1]/K
-        CQ = np.add(10.0*np.log10(CQ),-10*np.log10(refPower))
-        CQ = np.add(CQ,np.transpose(np.tile(A_offsets,(numF,1))))
+        ref_power = quantile_value[int(np.floor(q_value*Nxorig))-1]/K
+
+        # FIXME:  2013-09-25 17:57:39 by Brian McFee <brm2132@columbia.edu>
+        # these should use librosa.logamplitude         
+        CQ = np.add(10.0*np.log10(CQ), -10*np.log10(ref_power))
+        CQ = np.add(CQ, np.transpose(np.tile(A_offsets, (num_F, 1))))
     else:
-        CQ = np.add(10.0*np.log10(CQ),-10.0*np.log10(refPower))
-        CQ = np.add(CQ,np.transpose(np.tile(A_offsets,(numF,1))))
+        CQ = np.add(10.0*np.log10(CQ), -10.0*np.log10(ref_power))
+        CQ = np.add(CQ, np.transpose(np.tile(A_offsets, (num_F, 1))))
   
     # Beat synchronise
-    chromagram = np.zeros((bins,numF))
-    normal_chromagram = np.zeros((bins,numF))
+    # FIXME:  2013-09-25 18:01:39 by Brian McFee <brm2132@columbia.edu>
+    # do not use chromagram as a variable: it is a function in this module     
+
+    _chromagram = np.zeros((bins, num_F))
+    normal_chromagram = np.zeros((bins, num_F))
     
     for i in range(bins):
-        chromagram[i,:] = np.sum(CQ[i::bins,:],0)
+        _chromagram[i, :] = np.sum(CQ[i::bins, :], 0)
      
     # Normalise
-    for i in range(chromagram.shape[1]):
-        maxCol = np.max(chromagram[:,i])
-        minCol = np.min(chromagram[:,i])
+    for i in range(_chromagram.shape[1]):
+        maxCol = np.max(_chromagram[:, i])
+        minCol = np.min(_chromagram[:, i])
         if (maxCol>minCol):
-            normal_chromagram[:,i] = np.true_divide((chromagram[:,i]-minCol),(maxCol-minCol))
+            normal_chromagram[:, i] = np.true_divide(_chromagram[:, i] - minCol, maxCol - minCol)
         else:
-            normal_chromagram[:,i] = 0.0   
+            normal_chromagram[:, i] = 0.0   
 
     # Shift to be C-based
     shift_pos = round(12.0*np.log2(freqK[0]/27.5)) # The relative position to A0
-    shift_pos = int(np.mod(shift_pos,12)-3)        # since A0 should shift -3
+    shift_pos = int(np.mod(shift_pos, 12)-3)        # since A0 should shift -3
     if not (shift_pos is 0):
-        chromagram = np.roll(chromagram,shift_pos,0)
-        normal_chromagram = np.roll(normal_chromagram,shift_pos,0)
+        _chromagram = np.roll(_chromagram, shift_pos, 0)
+        normal_chromagram = np.roll(normal_chromagram, shift_pos, 0)
 
     # 5. return the sample times
-    beatsr = beatsr/sr
-    sample_times = np.vstack([beatsr[:-1], beatsr[1:]])
+    beat_sr = beat_sr/sr
+    sample_times = np.vstack([beat_sr[:-1], beat_sr[1:]])
 
-    return chromagram, normal_chromagram, sample_times
+    return _chromagram, normal_chromagram, sample_times
 
 #-- Tuning --#
-def estimate_tuning(d,sr):
-
-    """Estimate tuning of a signal. Create an instantaneous pitch track
+def estimate_tuning(d, sr):
+    '''Estimate tuning of a signal. Create an instantaneous pitch track
        spectrogram, pick peak relative to standard pitch
 
     :parameters:
@@ -615,12 +655,14 @@ def estimate_tuning(d,sr):
            audio sample rate of x
 
     :returns:
-      - semisoff: float in [-0.5,0.5]
+      - semisoff: float in [-0.5, 0.5]
         estimated tuning of piece in cents
                   
-      """
+    '''
 
     # Tuning parameters
+    # FIXME:  2013-09-25 18:02:16 by Brian McFee <brm2132@columbia.edu>
+    # these should be parameters
     fftlen = 4096
     f_ctr = 400
     f_sd = 1.0
@@ -632,7 +674,7 @@ def estimate_tuning(d,sr):
     fmaxu = octs_to_hz(hz_to_octs(f_ctr)+2*f_sd)
 
     # Estimte pitches
-    [p,m,S] = isp_ifptrack(d,fftlen,sr,fminl,fminu,fmaxl,fmaxu)
+    [p, m, S] = isp_ifptrack(d, fftlen, sr, fminl, fminu, fmaxl, fmaxu)
     
     # nzp = linear index of non-zero sinusoids found.
     nzp = p.flatten(1)>0
@@ -668,27 +710,28 @@ def estimate_tuning(d,sr):
 
     import matplotlib.pyplot as plt
     term_one = nchr*to_count
-    term_two = np.array(np.round(nchr*to_count),dtype=np.int)
+    term_two = np.array(np.round(nchr*to_count), dtype=np.int)
     bins = [xxx * 0.01 for xxx in range(-50, 51)]
   
     # python uses edges, matlab uses centers so subtract half a bin size
-    z = plt.hist(term_one-term_two-0.005,bins)
+    z = plt.hist(term_one-term_two-0.005, bins)
 
     hn = z[0]
     hx = z[1]
 
     # prepend things less than min
     nless = [sum(term_one-term_two-0.005 < -0.5)]
-    hn = np.hstack([nless,hn])
+    hn = np.hstack([nless, hn])
 
     # find peaks
     semisoff = hx[np.argmax(hn)]
 
     return semisoff
 
-def isp_ifptrack(d,w,sr,fminl = 150.0, fminu = 300.0, fmaxl = 2000.0, fmaxu = 4000.0):
-    
-    """ Instantaneous pitch frequency tracking spectrogram
+# FIXME:   2013-09-25 18:04:06 by Brian McFee <brm2132@columbia.edu>
+#  rename parameters to follow librosa conventions
+def isp_ifptrack(d, w, sr, fminl = 150.0, fminu = 300.0, fmaxl = 2000.0, fmaxu = 4000.0):
+    '''Instantaneous pitch frequency tracking spectrogram
 
     :parameters:
       - d: np.ndarray
@@ -702,44 +745,44 @@ def isp_ifptrack(d,w,sr,fminl = 150.0, fminu = 300.0, fmaxl = 2000.0, fmaxu = 40
         ramps at the edge of sensitivity      
 
     :returns:
-      - semisoff: float in [-0.5,0.5]
+      - semisoff: float in [-0.5, 0.5]
         estimated tuning of piece in cents
                   
-      """  
+    '''
   
     # Only look at bins up to 2 kHz
     maxbin = int(round(fmaxu*float(w)/float(sr)))
   
     # Calculate the inst freq gram
-    [I,S] = isp_ifgram(d,w,w/2,w/4,sr, maxbin)
+    [I, S] = isp_ifgram(d, w, w/2, w/4, sr, maxbin)
   
     # Find plateaus in ifgram - stretches where delta IF is < thr
-    ddif = I[np.hstack([range(1,maxbin),maxbin-1]),:]-I[np.hstack([0,range(0,maxbin-1)]),:]
+    ddif = I[np.hstack([range(1, maxbin), maxbin-1]), :]-I[np.hstack([0, range(0, maxbin-1)]), :]
 
     # expected increment per bin = sr/w, threshold at 3/4 that
     dgood = abs(ddif) < .75*float(sr)/float(w)
 
     # delete any single bins (both above and below are zero)
-    logic_one = dgood[np.hstack([range(1,maxbin),maxbin-1]),:] > 0
-    logic_two = dgood[np.hstack([0,range(0,maxbin-1)]),:] > 0
-    dgood = dgood * np.logical_or(logic_one,logic_two)
+    logic_one = dgood[np.hstack([range(1, maxbin), maxbin-1]), :] > 0
+    logic_two = dgood[np.hstack([0, range(0, maxbin-1)]), :] > 0
+    dgood = dgood * np.logical_or(logic_one, logic_two)
     
     p = np.zeros(dgood.shape)
     m = np.zeros(dgood.shape)
 
     # For each frame, extract all harmonic freqs & magnitudes
-    lds = np.size(dgood,0)
+    lds = np.size(dgood, 0)
     for t in range(I.shape[1]):
-        ds = dgood[:,t]
+        ds = dgood[:, t]
             
         # find nonzero regions in this vector
-        logic_one = np.hstack([0,ds[range(0,lds-1)]])==0
+        logic_one = np.hstack([0, ds[range(0, lds-1)]])==0
         logic_two = ds > 0
-        logic_oneandtwo = np.logical_and(logic_one,logic_two)
+        logic_oneandtwo = np.logical_and(logic_one, logic_two)
         st = np.nonzero(logic_oneandtwo)[0]
     
-        logic_three = np.hstack([ds[range(1,lds)],0])==0
-        logic_twoandthree = np.logical_and(logic_two,logic_three)
+        logic_three = np.hstack([ds[range(1, lds)], 0])==0
+        logic_twoandthree = np.logical_and(logic_two, logic_three)
         en = np.nonzero(logic_twoandthree)[0]
 
         # Set up inner loop    
@@ -747,43 +790,42 @@ def isp_ifptrack(d,w,sr,fminl = 150.0, fminu = 300.0, fmaxl = 2000.0, fmaxu = 40
         frqs = np.zeros(npks)
         mags = np.zeros(npks)
         for i in range(len(st)):
-            bump = np.abs(S[range(st[i],en[i]+1),t])
+            bump = np.abs(S[range(st[i], en[i]+1), t])
             mags[i] = sum(bump)
       
-        # another long division, split it up
-        numer = np.dot(bump,I[range(st[i],en[i]+1),t])
-        isz = (mags[i]==0)
-        denom = mags[i]+isz.astype(int)
-        frqs[i] = numer/denom
+            # another long division, split it up
+            numer = np.dot(bump, I[range(st[i], en[i]+1), t])
+            isz = (mags[i]==0)
+            denom = mags[i]+isz.astype(int)
+            frqs[i] = numer/denom
                                     
-        if frqs[i] > fmaxu:
-            mags[i] = 0
-            frqs[i] = 0
-        elif frqs[i] > fmaxl:
-            mags[i] = mags[i] * max(0, (fmaxu - frqs[i])/(fmaxu-fmaxl))
+            if frqs[i] > fmaxu:
+                mags[i] = 0
+                frqs[i] = 0
+            elif frqs[i] > fmaxl:
+                mags[i] = mags[i] * max(0, (fmaxu - frqs[i])/(fmaxu-fmaxl))
 
-        # downweight magnitudes below? 200 Hz
-        if frqs[i] < fminl:
-            mags[i] = 0
-            frqs[i] = 0
-        elif frqs[i] < fminu:
-            # 1 octave fade-out
-            mags[i] = mags[i] * (frqs[i] - fminl)/(fminu-fminl)
+            # downweight magnitudes below? 200 Hz
+            if frqs[i] < fminl:
+                mags[i] = 0
+                frqs[i] = 0
+            elif frqs[i] < fminu:
+                # 1 octave fade-out
+                mags[i] = mags[i] * (frqs[i] - fminl)/(fminu-fminl)
 
-        if frqs[i] < 0: 
-            mags[i] = 0
-            frqs[i] = 0
+            if frqs[i] < 0: 
+                mags[i] = 0
+                frqs[i] = 0
           
         # Collect into bins      
-        bin = np.round((st+en)/2.0)
-        p[bin.astype(int),t] = frqs
-        m[bin.astype(int),t] = mags
+        bins = np.round((st+en)/2.0)
+        p[bins.astype(int), t] = frqs
+        m[bins.astype(int), t] = mags
 
     return p, m, S
   
 def isp_ifgram(X, N=256, W=256, H=256.0/2.0, sr=1, maxbin=1.0+256.0/2.0):
-  
-    """   Compute the instantaneous frequency (as a proportion of the sampling
+    '''Compute the instantaneous frequency (as a proportion of the sampling
     rate) obtained as the time-derivative of the phase of the complex
     spectrum as described by Toshihiro Abe et al in ICASSP'95,
     Eurospeech'97. Calculates regular STFT as side effect.
@@ -809,17 +851,17 @@ def isp_ifgram(X, N=256, W=256, H=256.0/2.0, sr=1, maxbin=1.0+256.0/2.0):
         Instantaneous frequency spectrogram
        - D: np.ndarray
         Short time Fourier transform spectrogram               
-      """   
+    '''
 
     Flen = maxbin
     s = X.size
 
     # Make a Hanning window 
-    win = 0.5*(1-np.cos(np.true_divide(np.arange(W)*2*np.pi,W)))
+    win = 0.5*(1-np.cos(np.true_divide(np.arange(W)*2*np.pi, W)))
 
     # Window for discrete differentiation
     T = float(W)/float(sr)
-    dwin = (-np.pi/T)*np.sin(np.true_divide(np.arange(W)*2*np.pi,W))
+    dwin = (-np.pi/T)*np.sin(np.true_divide(np.arange(W)*2*np.pi, W))
 
     # sum(win) takes out integration due to window, 2 compensates for neg frq
     norm = 2/sum(win)
@@ -828,7 +870,7 @@ def isp_ifgram(X, N=256, W=256, H=256.0/2.0, sr=1, maxbin=1.0+256.0/2.0):
     nhops = 1 + int(np.floor((s - W)/H))
   
     F = np.zeros((Flen, nhops))
-    D = np.zeros((Flen, nhops),dtype=complex)
+    D = np.zeros((Flen, nhops), dtype=complex)
 
     nmw1 = int(np.floor((N-W)/2))
 
@@ -859,8 +901,8 @@ def isp_ifgram(X, N=256, W=256, H=256.0/2.0, sr=1, maxbin=1.0+256.0/2.0):
         split = int(np.ceil(du.size/2.0) + 1)
       
         # Need to reverse front and last parts of du and wu      
-        temp_du = np.hstack([du[split-1:],du[0:split-1]])
-        temp_wu = np.hstack([wu[split-1:],wu[0:split-1]])
+        temp_du = np.hstack([du[split-1:], du[0:split-1]])
+        temp_wu = np.hstack([wu[split-1:], wu[0:split-1]])
       
         t1 = np.fft.fft(temp_du)
         t2 = np.fft.fft(temp_wu)
@@ -869,7 +911,7 @@ def isp_ifgram(X, N=256, W=256, H=256.0/2.0, sr=1, maxbin=1.0+256.0/2.0):
         t2 = t2[0:Flen]
       
         # Scale down to factor out length & window effects
-        D[:,h] = t2*norm
+        D[:, h] = t2*norm
       
         # Calculate instantaneous frequency from phase of differential spectrum
         t = t1 + 1j*(ww*t2)
@@ -884,8 +926,8 @@ def isp_ifgram(X, N=256, W=256, H=256.0/2.0, sr=1, maxbin=1.0+256.0/2.0):
         num_two = (a*db - b*da)
         denom_one = (a*a + b*b)
         isz = (t2==0)
-        instf = np.true_divide(num_one*num_two,denom_one+isz.astype(int))
-        F[:,h] = instf
+        instf = np.true_divide(num_one*num_two, denom_one+isz.astype(int))
+        F[:, h] = instf
  
     return F, D
 
