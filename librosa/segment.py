@@ -49,7 +49,7 @@ def stack_memory(X, m=2, delay=1):
     return Xhat[:, :t]
 
 
-def recurrence_matrix(X, mode='knn', k=5, width=1, metric='sqeuclidean', sym=True):
+def recurrence_matrix(X, k=5, width=1, metric='sqeuclidean', sym=True):
     '''Compute the binary recurrence matrix from a time-series.
 
     R[i,j] == True <=> (X[:,i], X[:,j]) are k-nearest-neighbors
@@ -58,9 +58,6 @@ def recurrence_matrix(X, mode='knn', k=5, width=1, metric='sqeuclidean', sym=Tru
     :parameters:
       - X : np.ndarray
           feature matrix (d-by-t)
-      - mode : {'knn', 'gaussian'}
-          if knn, builds a symmetric k-nearest-neighbor linkage graph.
-          if gaussian, builds a radial basis function kernel (exp(-distance))
       - k : int > 0, float in (0, 1)
           if integer, the number of nearest-neighbors.
           if floating point (eg, 0.05), neighbors = ceil(k * t)
@@ -80,15 +77,16 @@ def recurrence_matrix(X, mode='knn', k=5, width=1, metric='sqeuclidean', sym=Tru
           or if mode is not one of {'knn', 'gaussian'}
     '''
 
-    d, t = X.shape
+    t = X.shape[1]
 
-    if mode == 'knn' and isinstance(k, float):
+    if isinstance(k, float):
         if 0 < k < 1:
             k = np.ceil(k * t)
         else:
             raise ValueError('Valid values of k are strictly between 0 and 1.')
 
     def _band_infinite():
+        '''Suppress the diagonal+- of a distance matrix'''
         A       = np.empty( (t, t) )
         A[:]    = np.inf
         A[np.triu_indices_from(A, width)] = 0
@@ -97,26 +95,24 @@ def recurrence_matrix(X, mode='knn', k=5, width=1, metric='sqeuclidean', sym=Tru
         return A
 
     # Build the distance matrix
-    D = scipy.spatial.distance.squareform(scipy.spatial.distance.pdist(X.T, metric=metric))
+    D = scipy.spatial.distance.squareform(
+            scipy.spatial.distance.pdist(X.T, metric=metric))
 
     # Max out the diagonal band
     D = D + _band_infinite()
 
     # build the recurrence plot
 
-    if mode == 'knn':
-        R = np.zeros( (t, t), dtype=bool)
+    R = np.zeros( (t, t), dtype=bool)
 
-        # get the k nearest neighbors for each point
-        for i in range(t):
-            for j in np.argsort(D[i])[:k]:
-                R[i, j] = True
+    # get the k nearest neighbors for each point
+    for i in range(t):
+        for j in np.argsort(D[i])[:k]:
+            R[i, j] = True
 
-        # symmetrize
-        if sym:
-            R = R * R.T
-    elif mode == 'gaussian':
-        R = np.exp( -0.5 * D / k)
+    # symmetrize
+    if sym:
+        R = R * R.T
 
     return R 
 
@@ -153,7 +149,7 @@ def structure_feature(R, pad=True):
         L = R.copy()
 
     for i in range(1, t):
-        L[:, i] = np.roll(L[:,i], -i, axis=-1)
+        L[:, i] = np.roll(L[:, i], -i, axis=-1)
 
     return L
 
