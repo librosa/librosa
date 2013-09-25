@@ -73,7 +73,8 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=128,
         if y is None:
             raise ValueError('Either "y" or "onsets" must be provided')
 
-        onsets  = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
+        onsets  = librosa.onset.onset_strength( y=y, 
+                                                sr=sr, hop_length=hop_length)
 
     # Do we have any onsets to grab?
     if not onsets.any():
@@ -248,14 +249,11 @@ def onset_estimate_bpm(onsets, start_bpm, fft_res):
     mincol      = max(0,    maxcol - np.round(duration * fft_res))
 
     # Use auto-correlation out of 4 seconds (empirically set??)
-    ac_window   = np.round(ac_size * fft_res)
+    ac_window   = min(maxcol, np.round(ac_size * fft_res))
 
     # Compute the autocorrelation
     x_corr      = librosa.core.autocorrelate(onsets[mincol:maxcol], ac_window)
 
-
-    #   FIXME:  2013-01-25 08:55:40 by Brian McFee <brm2132@columbia.edu>
-    #   this fails if ac_window > length of song   
     # re-weight the autocorrelation by log-normal prior
     bpms    = 60.0 * fft_res / (np.arange(1, ac_window+1))
 
