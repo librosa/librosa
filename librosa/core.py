@@ -55,7 +55,8 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None):
         if duration is None:
             s_end = np.inf
         else:
-            s_end = s_start + np.ceil(sr_native * duration) * input_file.channels
+            s_end = s_start + (np.ceil(sr_native * duration) 
+                                * input_file.channels)
 
 
         Z = float(1<<15)
@@ -349,28 +350,27 @@ def phase_vocoder(D, rate, hop_length=None):
         }
     """
     
-    rows, cols = D.shape
-    
-    N_FFT = 2 * ( rows - 1 )
+    n_fft = 2 * ( D.shape[0] - 1 )
     
     if hop_length is None:
-        hop_length = N_FFT / 4
+        hop_length = n_fft / 4
     
-    time_steps = np.arange(0, cols, rate, dtype=np.float)
+    time_steps = np.arange(0, D.shape[1], rate, dtype=np.float)
     
     # Create an empty output array
-    D_r = np.zeros((rows, len(time_steps)), D.dtype)
+    D_r = np.zeros((D.shape[0], len(time_steps)), D.dtype)
     
     # Expected phase advance in each bin
-    dphi = (2 * np.pi * hop_length) * np.arange(rows, dtype=np.float) / N_FFT
+    dphi = (2 * np.pi * hop_length * 
+                np.arange(D.shape[0], dtype=np.float) / n_fft)
     
     # Phase accumulator; initialize to the first sample
-    phase_acc = np.angle(D[:,0])
+    phase_acc = np.angle(D[:, 0])
     
     # Pad an extra 0 column to simplify boundary logic
-    D = np.hstack( (D, np.zeros((rows, 2), dtype=D.dtype)))
+    D = np.hstack( (D, np.zeros((D.shape[0], 2), dtype=D.dtype)))
 
-    idx = np.array([0,1], dtype=np.int)
+    idx = np.array([0, 1], dtype=np.int)
     for (t, step) in enumerate(time_steps):
         
         i_step = int(step)
@@ -378,16 +378,16 @@ def phase_vocoder(D, rate, hop_length=None):
         
         # Weighting for magnitude interpolation
         tf     = step - i_step
-        D_mag  = (1.0-tf) * np.abs(D_cols[:,0]) + tf * np.abs(D_cols[:,1])
+        D_mag  = (1.0-tf) * np.abs(D_cols[:, 0]) + tf * np.abs(D_cols[:, 1])
         
         # Compute phase advance
-        dp     = np.angle(D_cols[:,1]) - np.angle(D_cols[:,0]) - dphi
+        dp     = np.angle(D_cols[:, 1]) - np.angle(D_cols[:, 0]) - dphi
         
         # Wrap to -pi:pi range
         dp     = dp - 2*np.pi * np.round(dp / (2*np.pi))
         
         # Store to output array
-        D_r[:,t] = D_mag * np.exp(1.j * phase_acc)
+        D_r[:, t] = D_mag * np.exp(1.j * phase_acc)
         
         # Accumulate phase
         phase_acc = phase_acc + dphi + dp
@@ -462,7 +462,7 @@ def localmax(x):
                              x >= np.hstack([x[1:], x[-1]]))
 
 def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
-    """Uses a flexible heuristic to pick peaks in a signal.
+    '''Uses a flexible heuristic to pick peaks in a signal.
     
     :parameters:
       - x         : np.ndarray
@@ -488,7 +488,7 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
       A sample n is selected as an peak if the corresponding x[n]
       fulfills the following three conditions:
       1. x[n] = max(x[n - pre_max:n + post_max])
-      2. x[n] \ge mean(x[n - pre_avg:n + post_avg]) + delta
+      2. x[n] >= mean(x[n - pre_avg:n + post_avg]) + delta
       3. n - previous_n > wait
       where previous_n is the last sample n picked as a peak (greedily).
     
@@ -500,29 +500,40 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     .. note::
       Implementation based on 
       https://github.com/CPJKU/onset_detection/blob/master/onset_program.py
-    """
+    '''
 
     # Get the maximum of the signal over a sliding window
-    max_length = pre_max + post_max + 1
-    max_origin = int(np.floor((pre_max - post_max)/2))
-    mov_max = scipy.ndimage.filters.maximum_filter1d(x, max_length, mode='constant', origin=max_origin)
+    max_length  = pre_max + post_max + 1
+    max_origin  = np.floor((pre_max - post_max)/2)
+    mov_max     = scipy.ndimage.filters.maximum_filter1d(x, max_length, 
+                                                            mode='constant', 
+                                                            origin=max_origin)
+
     # Get the mean of the signal over a sliding window
-    avg_length = pre_avg + post_avg + 1
-    avg_origin = int(np.floor((pre_avg - post_avg)/2))
-    mov_avg = scipy.ndimage.filters.uniform_filter1d(x, avg_length, mode='constant', origin=avg_origin)
+    avg_length  = pre_avg + post_avg + 1
+    avg_origin  = int(np.floor((pre_avg - post_avg)/2))
+    mov_avg     = scipy.ndimage.filters.uniform_filter1d(x, avg_length, 
+                                                            mode='constant', 
+                                                            origin=avg_origin)
+
     # First mask out all entries not equal to the local max
     detections = x*(x == mov_max)
+
     # Then mask out all entries less than the thresholded average
     detections = detections*(detections >= mov_avg + delta)
+    
     # Initialize peaks array, to be filled greedily
     peaks = []
+    
     # Remove onsets which are close together in time
     last_onset = -np.inf
+    
     for i in np.nonzero(detections)[0]:
         # Only report an onset if the "wait" samples was reported
         if i > last_onset + wait:
             peaks.append(i)
             # Save last reported onset
             last_onset = i
+    
     return np.array( peaks )
 
