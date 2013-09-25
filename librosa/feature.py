@@ -1055,6 +1055,10 @@ def sync(data, frames, aggregate=np.mean):
     .. note:: In order to ensure total coverage, boundary points are added to frames
 
     """
+    if data.ndim < 2:
+        data = np.asarray([data])
+    elif data.ndim > 2:
+        raise ValueError('Synchronized data has ndim=%d, must be 1 or 2.' % data.ndim)
 
     (dimension, n_frames) = data.shape
 
