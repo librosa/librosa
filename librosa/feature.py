@@ -426,6 +426,9 @@ def cal_hamming_window(sr, fmin=55.0, fmax=1661.0,
 
     return hamming_k, half_winLenK, freq_bins
 
+
+# FIXME:  2013-09-25 18:08:53 by Brian McFee <brm2132@columbia.edu>
+# why is this "cal_"? 
 def cal_CQ_chroma_loudness(x, sr, beat_times, hammingK, half_winLenK, freqK, 
                             refLabel='s', A_weightLabel=1, q_value=0):
     """Compute a loudness-based chromagram
@@ -482,7 +485,7 @@ def cal_CQ_chroma_loudness(x, sr, beat_times, hammingK, half_winLenK, freqK,
     
     # add the end to make the length to be 2^N 
     #     TODO:   2013-09-25 17:51:57 by Brian McFee <brm2132@columbia.edu>
-    # this should be done with np.pad     
+    # this should be done with np.pad, not hstack
     x   = np.hstack([x, np.zeros(2.0**np.ceil(np.log2(Nxorig))-Nxorig)]) 
     Nx  = len(x)                                                       
     
