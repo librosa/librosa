@@ -3,7 +3,7 @@
 #  unit tests for librosa.beat
 
 
-import librosa, numpy, scipy.io
+import librosa, numpy
 
 from testLibrosaCore import files, load
 
@@ -13,7 +13,7 @@ def test_onset_strength():
         DATA    = load(infile)
 
         # Compute onset envelope using the same spectrogram
-        onsets  = librosa.beat.onset_strength(y=None, sr=8000, S=DATA['D'])
+        onsets  = librosa.onset.onset_strength(y=None, sr=8000, S=DATA['D'])
 
         assert numpy.allclose(onsets, DATA['onsetenv'][0])
 
