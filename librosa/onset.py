@@ -5,11 +5,11 @@ import numpy as np
 import scipy
 import scipy.signal
 
-#import librosa.core
-import core
+import librosa.core
 import librosa.feature
 
-def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=128, **kwargs):
+def onset_detect(y=None, sr=22050, onset_envelope=None, 
+                            hop_length=128, **kwargs):
     """Basic onset detector
         
     :parameters:
@@ -72,7 +72,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=128, **kwargs
     kwargs['wait']     = int( kwargs.get( 'wait', .03*sr/hop_length ) )
     
     # Peak pick the onset envelope
-    return core.peak_pick( onset_envelope, **kwargs )
+    return librosa.core.peak_pick( onset_envelope, **kwargs )
 
 def onset_strength(y=None, sr=22050, S=None, **kwargs):
     """Extract onsets from an audio time series or spectrogram
