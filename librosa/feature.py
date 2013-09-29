@@ -783,17 +783,16 @@ def estimate_tuning(d, sr,fftlen=4096,f_ctr=400,f_sd=1.0):
     # make histogram, resolution is 0.01, from -0.5 to 0.5
     # FIXME:  2013-09-25 17:35:08 by Brian McFee <brm2132@columbia.edu>
     #   wtf? why is there a pyplot import here?
+    # FIXED: madness! I was using the pyplot version of histogram
+    # instead of np.histogram
 
-    import matplotlib.pyplot as plt
+    #import matplotlib.pyplot as plt
     term_one = nchr*to_count
     term_two = np.array(np.round(nchr*to_count), dtype=np.int)
     bins = [xxx * 0.01 for xxx in range(-50, 51)]
   
     # python uses edges, matlab uses centers so subtract half a bin size
-    z = plt.hist(term_one-term_two-0.005, bins)
-
-    hn = z[0]
-    hx = z[1]
+    hn,hx = np.histogram(term_one-term_two-0.005, bins)
 
     # prepend things less than min
     nless = [sum(term_one-term_two-0.005 < -0.5)]
