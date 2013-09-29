@@ -632,13 +632,28 @@ def CQ_chroma_loudness(x, sr, beat_times, hammingK, half_winLenK, freqK,
     # FIXME:  2013-09-25 18:00:20 by Brian McFee <brm2132@columbia.edu>
     # unreadable     
     if refLabel is 'mean':
+
+        # Compute mean power
         ref_power = np.mean(meanPowerK)
+
+        # convert to dB, minus the reference power
         CQ = np.add(10.0*np.log10(CQ), -10.0*np.log10(ref_power))
-        CQ = np.add(CQ, np.transpose(np.tile(A_offsets, (num_F, 1))))
+
+        # Add offsets according to A-weighting
+        Aweights = np.transpose(np.tile(A_offsets, (num_F, 1)))
+        CQ = np.add(CQ, Aweights)
     elif refLabel is 'median':
+
+        # Compute median power
         ref_power = np.median(medianPowerK)
+
+        # convert to dB, minus the reference power
         CQ = np.add(10.0*np.log10(CQ), -10.0*np.log10(ref_power))
-        CQ = np.add(CQ, np.transpose(np.tile(A_offsets, (num_F, 1))))
+
+        # Add offsets according to A-weighting
+        Aweights  = np.transpose(np.tile(A_offsets, (num_F, 1)))
+        CQ = np.add(CQ, Aweights)
+
     elif refLabel is 'q':
         # sort the values, set reference as the value that falls in the qth quantile
         quantile_value = np.sort(quantile_matrix) 
@@ -647,6 +662,9 @@ def CQ_chroma_loudness(x, sr, beat_times, hammingK, half_winLenK, freqK,
         # FIXME:  2013-09-25 17:57:39 by Brian McFee <brm2132@columbia.edu>
         # these should use librosa.logamplitude         
         CQ = np.add(10.0*np.log10(CQ), -10*np.log10(ref_power))
+
+        # Add offsets accoring to A-weighting
+        Aweights = np.transpose(np.tile(A_offsets, (num_F, 1)))
         CQ = np.add(CQ, np.transpose(np.tile(A_offsets, (num_F, 1))))
     else:
         CQ = np.add(10.0*np.log10(CQ), -10.0*np.log10(ref_power))
