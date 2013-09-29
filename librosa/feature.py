@@ -631,6 +631,8 @@ def CQ_chroma_loudness(x, sr, beat_times, hammingK, half_winLenK, freqK,
     # Add the reference power (for mean/median/q-quantiles)
     # FIXME:  2013-09-25 18:00:20 by Brian McFee <brm2132@columbia.edu>
     # unreadable     
+    # FIXED: 2013-09-29 by Matt
+    # Expanded/broken up with comments
     if refLabel is 'mean':
 
         # Compute mean power
@@ -660,7 +662,14 @@ def CQ_chroma_loudness(x, sr, beat_times, hammingK, half_winLenK, freqK,
         ref_power = quantile_value[int(np.floor(q_value*Nxorig))-1]/K
 
         # FIXME:  2013-09-25 17:57:39 by Brian McFee <brm2132@columbia.edu>
-        # these should use librosa.logamplitude         
+        # these should use librosa.logamplitude        
+        # Matt: I'm not sure it should. I don't want to throw anything
+        # away, so would have to call
+        #
+        # librosa.core.logamplitude(S, amin=1e-10, top_db=None) 
+        #
+        # twice in each line. Think it would make the code pretty dense. 
+        # Happy to change it if you like though.
         CQ = np.add(10.0*np.log10(CQ), -10*np.log10(ref_power))
 
         # Add offsets accoring to A-weighting
