@@ -681,20 +681,21 @@ def CQ_chroma_loudness(x, sr, beat_times, hammingK, half_winLenK, freqK,
   
     # Beat synchronise
     # FIXME:  2013-09-25 18:01:39 by Brian McFee <brm2132@columbia.edu>
-    # do not use chromagram as a variable: it is a function in this module     
-
-    _chromagram = np.zeros((bins, num_F))
+    # do not use chromagram as a variable: it is a function in this module  
+    # FIXED 2013-09-29 by Matt
+    # Renamed to output_chromagram   
+    output_chromagram = np.zeros((bins, num_F))
     normal_chromagram = np.zeros((bins, num_F))
     
     for i in range(bins):
-        _chromagram[i, :] = np.sum(CQ[i::bins, :], 0)
+        output_chromagram[i, :] = np.sum(CQ[i::bins, :], 0)
      
     # Normalise
     for i in range(_chromagram.shape[1]):
-        maxCol = np.max(_chromagram[:, i])
-        minCol = np.min(_chromagram[:, i])
+        maxCol = np.max(output_chromagram[:, i])
+        minCol = np.min(output_chromagram[:, i])
         if (maxCol>minCol):
-            normal_chromagram[:, i] = np.true_divide(_chromagram[:, i] - minCol, maxCol - minCol)
+            normal_chromagram[:, i] = np.true_divide(output_chromagram[:, i] - minCol, maxCol - minCol)
         else:
             normal_chromagram[:, i] = 0.0   
 
@@ -702,14 +703,14 @@ def CQ_chroma_loudness(x, sr, beat_times, hammingK, half_winLenK, freqK,
     shift_pos = round(12.0*np.log2(freqK[0]/27.5)) # The relative position to A0
     shift_pos = int(np.mod(shift_pos, 12)-3)        # since A0 should shift -3
     if not (shift_pos is 0):
-        _chromagram = np.roll(_chromagram, shift_pos, 0)
+        output_chromagram = np.roll(output_chromagram, shift_pos, 0)
         normal_chromagram = np.roll(normal_chromagram, shift_pos, 0)
 
     # 5. return the sample times
     beat_sr = beat_sr/sr
     sample_times = np.vstack([beat_sr[:-1], beat_sr[1:]])
 
-    return _chromagram, normal_chromagram, sample_times
+    return output_chromagram, normal_chromagram, sample_times
 
 #-- Tuning --#
 def estimate_tuning(d, sr):
