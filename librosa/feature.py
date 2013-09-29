@@ -713,7 +713,7 @@ def CQ_chroma_loudness(x, sr, beat_times, hammingK, half_winLenK, freqK,
     return output_chromagram, normal_chromagram, sample_times
 
 #-- Tuning --#
-def estimate_tuning(d, sr):
+def estimate_tuning(d, sr,fftlen=4096,f_ctr=400,f_sd=1.0):
     '''Estimate tuning of a signal. Create an instantaneous pitch track
        spectrogram, pick peak relative to standard pitch
 
@@ -721,7 +721,12 @@ def estimate_tuning(d, sr):
       - d: np.ndarray
         audio signal
       - sr : int
-           audio sample rate of x
+        audio sample rate of x
+      - fftlen: int
+        length of fft to use, in samples  
+      - f_ctr,f_sd: int, float
+        weight with center frequency f_ctr (in Hz) and gaussian SD f_sd 
+        (in octaves)
 
     :returns:
       - semisoff: float in [-0.5, 0.5]
@@ -732,9 +737,11 @@ def estimate_tuning(d, sr):
     # Tuning parameters
     # FIXME:  2013-09-25 18:02:16 by Brian McFee <brm2132@columbia.edu>
     # these should be parameters
-    fftlen = 4096
-    f_ctr = 400
-    f_sd = 1.0
+    # FIXED: 2013-09-29 by Matt
+    # Added as parameters with defaults
+    #fftlen = 4096
+    #f_ctr = 400
+    #f_sd = 1.0
 
     # Get minimum/maximum frequencies
     fminl = octs_to_hz(hz_to_octs(f_ctr)-2*f_sd)
