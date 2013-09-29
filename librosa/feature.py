@@ -220,6 +220,14 @@ def chromagram(S, sr, method='Ellis', norm='inf', beat_times=None, tuning=0.0,
         # Extract loudness-based chroma
         # FIXME:  2013-09-25 17:25:12 by Brian McFee <brm2132@columbia.edu>
         # too many magic numbers here
+        # FIXED: 2013-09-29 11:56 by Matt
+        # Added comments regarding frequencies and resolution
+
+        # extract regular chroma, normalised chroma, sample
+        # times and tuning estimation. Default and suggested 
+        # frequncy range is from A1 (55Hz) to the G# below
+        # A6 (1760Hz). Default resolution factor for the 
+        # constant-Q implimentation is 5.
         r_chroma, normal_chroma, s_times, tuning = loudness_chroma(S, sr, 
                                                         beat_times, 
                                                         tuning, 
