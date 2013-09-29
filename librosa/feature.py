@@ -354,15 +354,22 @@ def loudness_chroma(x, sr, beat_times, tuning, fmin=55.0, fmax=1661.0,
 
 # FIXME:  2013-09-25 17:28:54 by Brian McFee <brm2132@columbia.edu>
 #  this docstring does not describe what the function does
+# FIXED: 2013-09-29 by Matt McVicar. Expanded docstring.
 def cal_hamming_window(sr, fmin=55.0, fmax=1661.0, 
                         resolution_fact=5.0, tuning=0.0):
-    """Compute hamming windows for use in loudness chroma
+    """Compute hamming windows for use in loudness chroma.
+
+    The constant-Q implimentation used in cCQ_chroma_loudness 
+    is based in convolution space for efficiency. This means
+    that one also needs to compute hamming windows (for
+    each frequency the CQT looks for) in the convolution space. 
+    This function computes such hamming windows, based on 
+    a sampling rate, minimum and maximum frequency, resoltion
+    factor, and tuning estimate.
 
     :parameters:
       - sr : int
            audio sample rate of x
-      - beat_times: np.ndarray
-        estimated beat locations (in seconds). 
       - fmin: int
           minimum frequency of spectrum to consider. Will be rounded to
           Closest pitch frequency in Hz (accounting for tuning)
