@@ -426,9 +426,13 @@ def cal_hamming_window(sr, fmin=55.0, fmax=1661.0,
     # 4. Construct the hamming window
     # FIXME:   2013-09-25 17:49:19 by Brian McFee <brm2132@columbia.edu>
     # these variables names are not descriptive     
+    # FIXED: 2013-09-29 by Matt
+    # renamed and commented
     half_winLenK = winLenK
-    const       = 1j*-2.0*np.pi*Q
-    exp_factor  = np.multiply(const, range(int(winLenK[0])+1))
+    i2piQ        = 1j*-2.0*np.pi*Q
+
+    # multiply the window by -2ipiQ
+    exp_factor  = np.multiply(i2piQ, range(int(winLenK[0])+1))
     exp_factor  = np.conj(exp_factor)
     hamming_k   = list()
     for k in range(K):
@@ -436,8 +440,21 @@ def cal_hamming_window(sr, fmin=55.0, fmax=1661.0,
         half_winLenK[k] = int(np.ceil(N/2.0))
 
         # FIXME:  2013-09-25 17:53:06 by Brian McFee <brm2132@columbia.edu>
-        # this is unreadable         
-        hamming_k.append(np.hamming(N)* np.true_divide(np.exp(np.true_divide(exp_factor[range(N)], N)), N))
+        # this is unreadable 
+        # FIXED 2013-09-27 by Matt
+        # broke up into smaller chunks with explanation
+
+        # Take the exponential factor up to N, divide by N
+        exp_factor_by_N = np.true_divide(exp_factor[range(N)], N) 
+
+        # exponentiate the exp_factor   
+        exp_of_exp_factor_by_N = np.exp(exp_factor_by_N)
+
+        # element-wise multiply and divide by N for resulting window
+        resulting_window = np.hamming(N)* np.true_divide(exp_of_exp_factor_by_N, N)
+
+        # Store
+        hamming_k.append(resulting_window)
 
     return hamming_k, half_winLenK, freq_bins
 
