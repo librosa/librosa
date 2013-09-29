@@ -520,7 +520,11 @@ def CQ_chroma_loudness(x, sr, beat_times, hammingK, half_winLenK, freqK,
     # add the end to make the length to be 2^N 
     #     TODO:   2013-09-25 17:51:57 by Brian McFee <brm2132@columbia.edu>
     # this should be done with np.pad, not hstack
-    x   = np.hstack([x, np.zeros(2.0**np.ceil(np.log2(Nxorig))-Nxorig)]) 
+    # FIXED: 2013-09-29 by Matt
+    # amended to use np.pad
+    n_pad = 2.0**np.ceil(np.log2(Nxorig))-Nxorig)
+    x = np.lib.pad(x, (0,n_pad), 'constant', constant_values=(0.0,0.0))
+    #x   = np.hstack([x, np.zeros(2.0**np.ceil(np.log2(Nxorig))-Nxorig)]) 
     Nx  = len(x)                                                       
     
     # number of frequency bins
