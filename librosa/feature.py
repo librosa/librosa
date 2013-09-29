@@ -346,7 +346,7 @@ def loudness_chroma(x, sr, beat_times, tuning, fmin=55.0, fmax=1661.0,
                    fmin, fmax, resolution_fact, tuning)
       
     # Extract chroma
-    raw_chroma, normal_chroma, sample_times = cal_CQ_chroma_loudness(x, 
+    raw_chroma, normal_chroma, sample_times = CQ_chroma_loudness(x, 
                    sr, beat_times, hamming_k, half_winLenK, freq_bins)
 
     return raw_chroma, normal_chroma, sample_times, tuning   
@@ -461,7 +461,9 @@ def cal_hamming_window(sr, fmin=55.0, fmax=1661.0,
 
 # FIXME:  2013-09-25 18:08:53 by Brian McFee <brm2132@columbia.edu>
 # why is this "cal_"? 
-def cal_CQ_chroma_loudness(x, sr, beat_times, hammingK, half_winLenK, freqK, 
+# FIXED: 2013-09-29 by Matt.
+# It was short for 'calculate' ;-) removed here and wherever it's called
+def CQ_chroma_loudness(x, sr, beat_times, hammingK, half_winLenK, freqK, 
                             refLabel='s', A_weightLabel=1, q_value=0):
     """Compute a loudness-based chromagram
 
