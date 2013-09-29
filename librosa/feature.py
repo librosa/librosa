@@ -805,17 +805,19 @@ def estimate_tuning(d, sr,fftlen=4096,f_ctr=400,f_sd=1.0):
 
 # FIXME:   2013-09-25 18:04:06 by Brian McFee <brm2132@columbia.edu>
 #  rename parameters to follow librosa conventions
-def isp_ifptrack(d, w, sr, fminl = 150.0, fminu = 300.0, fmaxl = 2000.0, fmaxu = 4000.0):
+# FIXED: 2013-09-29 by Matt
+# I take it you mean d -> y? 
+def isp_ifptrack(y, w, sr, fminl = 150.0, fminu = 300.0, fmaxl = 2000.0, fmaxu = 4000.0):
     '''Instantaneous pitch frequency tracking spectrogram
 
     :parameters:
-      - d: np.ndarray
+      - y: np.ndarray
         audio signal
       - w: int
         DFT length. FFT length will be half this,
         hop length 1/4
       - sr : int
-        audio sample rate of x
+        audio sample rate of y
       - fminl, fminu, fmaxu, fmaxl: floats
         ramps at the edge of sensitivity      
 
@@ -829,7 +831,7 @@ def isp_ifptrack(d, w, sr, fminl = 150.0, fminu = 300.0, fmaxl = 2000.0, fmaxu =
     maxbin = int(round(fmaxu*float(w)/float(sr)))
   
     # Calculate the inst freq gram
-    [I, S] = isp_ifgram(d, w, w/2, w/4, sr, maxbin)
+    [I, S] = isp_ifgram(y, w, w/2, w/4, sr, maxbin)
   
     # Find plateaus in ifgram - stretches where delta IF is < thr
     ddif = I[np.hstack([range(1, maxbin), maxbin-1]), :]-I[np.hstack([0, range(0, maxbin-1)]), :]
