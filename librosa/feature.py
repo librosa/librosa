@@ -522,7 +522,10 @@ def CQ_chroma_loudness(x, sr, beat_times, hammingK, half_winLenK, freqK,
     # this should be done with np.pad, not hstack
     # FIXED: 2013-09-29 by Matt
     # amended to use np.pad
-    n_pad = 2.0**np.ceil(np.log2(Nxorig))-Nxorig)
+    # FIXED: 2013-10-06 by Dawen
+    # Apparently there was a parentheses mismatch, fixed by looking back at 
+    # previous version
+    n_pad = 2.0**np.ceil(np.log2(Nxorig))-Nxorig
     x = np.lib.pad(x, (0,n_pad), 'constant', constant_values=(0.0,0.0))
     #x   = np.hstack([x, np.zeros(2.0**np.ceil(np.log2(Nxorig))-Nxorig)]) 
     Nx  = len(x)                                                       
