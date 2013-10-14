@@ -285,7 +285,8 @@ def onset_estimate_bpm(onsets, start_bpm, fft_res):
 
     best_period     = np.argmax(x_corr[candidates])
 
-    # FIXME:  2013-10-14 15:31:38 by Brian McFee <brm2132@columbia.edu>
-    #  div-by-0
-    return 60.0 * fft_res / candidates[best_period]
+    if candidates[best_period] > 0:
+        return 60.0 * fft_res / candidates[best_period]
+
+    return start_bpm
 
