@@ -5,12 +5,14 @@ import numpy as np
 import scipy
 import scipy.signal
 
+import librosa.core
+
 def hpss(S, alpha=0.5, max_iter=50):
     """Harmonic-percussive source separation
 
     :parameters:
       - S : np.ndarray
-            input spectrogram
+            input spectrogram. May be real (magnitude) or complex.
 
       - alpha : float > 0
             balance parameter
@@ -35,6 +37,10 @@ def hpss(S, alpha=0.5, max_iter=50):
         In ISMIR 2008 (pp. 139-144).
 
     """
+
+    # separate the phase component, if it exists
+    S, phase = librosa.core.magphase(S)
+
     # Initialize H/P iterates
     harmonic    = S * 0.5
     percussive  = harmonic.copy()
@@ -49,15 +55,15 @@ def hpss(S, alpha=0.5, max_iter=50):
         harmonic   = np.minimum(np.maximum(harmonic + D, 0.0), S)
         percussive = S - harmonic
     
-    return (harmonic, percussive)
+    return (harmonic * phase, percussive * phase)
 
 
-def hpss_median(S, win_P=9, win_H=9, p=0.0):
+def hpss_median(S, win_P=19, win_H=19, p=0.0):
     """Median-filtering harmonic percussive separation
 
     :parameters:
       - S : np.ndarray
-          input spectrogram
+          input spectrogram. May be real (magnitude) or complex.
 
       - win_P : int        
           window size for percussive filter
@@ -83,6 +89,8 @@ def hpss_median(S, win_P=9, win_H=9, p=0.0):
 
     """
 
+    S, phase = librosa.core.magphase(S)
+
     # Compute median filters
     P = scipy.signal.medfilt2d(S, [win_P, 1])
     H = scipy.signal.medfilt2d(S, [1, win_H])
@@ -107,5 +115,5 @@ def hpss_median(S, win_P=9, win_H=9, p=0.0):
         Mh = H / (H + P)
         Mp = P / (H + P)
 
-    return (Mh * S, Mp * S)
+    return (Mh * S * phase, Mp * S * phase)
 
