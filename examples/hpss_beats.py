@@ -47,4 +47,4 @@ O = librosa.onset.onset_strength(S=librosa.logamplitude(S))
 print 'done.'
 
 # Save the output
-librosa.output.segment_csv(sys.argv[2], beats, sr, HOP)
+librosa.output.frames_csv(sys.argv[2], beats, sr=sr, hop_length=HOP)
