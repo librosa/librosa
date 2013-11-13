@@ -394,7 +394,7 @@ def phase_vocoder(D, rate, hop_length=None):
     return D_r
 
 
-#-- FREQUENCY CONVERSIONS --#
+#-- FREQUENCY UTILITIES AND CONVERTERS--#
 def midi_to_hz( notes ):
     """Get the frequency (Hz) of MIDI note(s)
 
@@ -533,6 +533,33 @@ def octs_to_hz(octs, A440=440.0):
 
     """
     return (A440/16)*(2**octs)
+
+def mel_frequencies(n_mels=40, fmin=0.0, fmax=11025.0, htk=False):
+    """Compute the center frequencies of mel bands
+
+    :parameters:
+      - n_mels    : int
+          number of Mel bins  
+      - fmin      : float
+          minimum frequency (Hz)
+      - fmax      : float
+          maximum frequency (Hz)
+      - htk       : boolean
+          use HTK formula instead of Slaney
+
+    :returns:
+      - bin_frequencies : ndarray
+          ``n_mels+1``-dimensional vector of Mel frequencies
+
+    """
+
+    # 'Center freqs' of mel bands - uniformly spaced between limits
+    minmel  = hz_to_mel(fmin, htk=htk)
+    maxmel  = hz_to_mel(fmax, htk=htk)
+
+    mels    = np.arange(minmel, maxmel + 1, (maxmel - minmel)/(n_mels + 1.0))
+    
+    return  mel_to_hz(mels, htk=htk)
 
 #-- UTILITIES --#
 def frames_to_time(frames, sr=22050, hop_length=128):
