@@ -1132,7 +1132,7 @@ def melfb(sr, n_fft, n_mels=40, fmin=0.0, fmax=None, htk=False):
    
     return weights
 
-def melspectrogram(y, sr=22050, n_fft=256, hop_length=128, **kwargs):
+def melspectrogram(y=None, sr=22050, S=None, n_fft=256, hop_length=128, **kwargs):
     """Compute a mel spectrogram from a time series
 
     :parameters:
@@ -1140,6 +1140,8 @@ def melspectrogram(y, sr=22050, n_fft=256, hop_length=128, **kwargs):
           audio time-series
       - sr : int
           audio sampling rate of y  
+      - S : np.ndarray
+          magnitude or power spectrogram
       - n_fft : int
           number of FFT components
       - hop_length : int
@@ -1149,6 +1151,11 @@ def melspectrogram(y, sr=22050, n_fft=256, hop_length=128, **kwargs):
           Mel filterbank parameters
           See melfb() documentation for details.
 
+    .. note:: One of either ``S`` or ``y, sr`` must be provided.
+        If the pair y, sr is provided, the power spectrogram is computed.
+        If S is provided, it is used as the spectrogram, and the parameters ``y, n_fft,
+        hop_length`` are ignored.
+
     :returns:
       - S : np.ndarray
           Mel spectrogram
@@ -1156,10 +1163,13 @@ def melspectrogram(y, sr=22050, n_fft=256, hop_length=128, **kwargs):
     """
 
     # Compute the STFT
-    powspec     = np.abs(librosa.core.stft(y,   
-                                      n_fft       =   n_fft, 
-                                      hann_w      =   n_fft, 
-                                      hop_length  =   hop_length))**2
+    if S is None:
+        S       = np.abs(librosa.core.stft(y,   
+                                            n_fft       =   n_fft, 
+                                            hann_w      =   n_fft, 
+                                            hop_length  =   hop_length))**2
+    else:
+        n_fft = (S.shape[0] - 1) * 2
 
     # Build a Mel filter
     mel_basis   = melfb(sr, n_fft, **kwargs)
@@ -1167,7 +1177,7 @@ def melspectrogram(y, sr=22050, n_fft=256, hop_length=128, **kwargs):
     # Remove everything past the nyquist frequency
     mel_basis   = mel_basis[:, :(n_fft/ 2  + 1)]
     
-    return np.dot(mel_basis, powspec)
+    return np.dot(mel_basis, S)
 
 #-- miscellaneous utilities --#
 def sync(data, frames, aggregate=np.mean):
