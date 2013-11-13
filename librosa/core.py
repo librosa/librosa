@@ -394,6 +394,145 @@ def phase_vocoder(D, rate, hop_length=None):
     return D_r
 
 
+#-- FREQUENCY CONVERSIONS --#
+def midi_to_hz( notes ):
+    """Get the frequency (Hz) of MIDI note(s)
+
+    :parameters:
+      - note_num      : int, np.ndarray
+          number of the note(s)
+
+    :returns:
+      - frequency     : float, np.ndarray
+          frequency of the note in Hz
+    """
+
+    return 440.0 * (2.0 ** ((notes - 69)/12.0))
+
+def hz_to_midi( frequency ):
+    """Get the closest MIDI note number(s) for given frequencies
+
+    :parameters:
+      - frequencies   : float, np.ndarray
+          target frequencies
+
+    :returns:
+      - note_nums     : int, np.ndarray
+          closest MIDI notes
+
+    """
+
+    return 12 * (np.log2(frequency) - np.log2(440.0)) + 69
+
+def hz_to_mel(frequencies, htk=False):
+    """Convert Hz to Mels
+
+    :parameters:
+      - frequencies   : np.ndarray, float
+          scalar or array of frequencies
+      - htk           : boolean
+          use HTK formula instead of Slaney
+
+    :returns:
+      - mels        : np.ndarray
+          input frequencies in Mels
+
+    """
+
+    if np.isscalar(frequencies):
+        frequencies = np.array([frequencies], dtype=float)
+    else:
+        frequencies = frequencies.astype(float)
+
+    if htk:
+        return 2595.0 * np.log10(1.0 + frequencies / 700.0)
+    
+    # Fill in the linear part
+    f_min   = 0.0
+    f_sp    = 200.0 / 3
+
+    mels    = (frequencies - f_min) / f_sp
+
+    # Fill in the log-scale part
+    
+    min_log_hz  = 1000.0                        # beginning of log region (Hz)
+    min_log_mel = (min_log_hz - f_min) / f_sp   # same (Mels)
+    logstep     = np.log(6.4) / 27.0            # step size for log region
+
+    log_t       = (frequencies >= min_log_hz)
+    mels[log_t] = min_log_mel + np.log(frequencies[log_t]/min_log_hz) / logstep
+
+    return mels
+
+def mel_to_hz(mels, htk=False):
+    """Convert mel bin numbers to frequencies
+
+    :parameters:
+      - mels          : np.ndarray, float
+          mel bins to convert
+      - htk           : boolean
+          use HTK formula instead of Slaney
+
+    :returns:
+      - frequencies   : np.ndarray
+          input mels in Hz
+
+    """
+
+    if np.isscalar(mels):
+        mels = np.array([mels], dtype=float)
+    else:
+        mels = mels.astype(float)
+
+    if htk:
+        return 700.0 * (10.0**(mels / 2595.0) - 1.0)
+
+    # Fill in the linear scale
+    f_min       = 0.0
+    f_sp        = 200.0 / 3
+    freqs       = f_min + f_sp * mels
+
+    # And now the nonlinear scale
+    min_log_hz  = 1000.0                        # beginning of log region (Hz)
+    min_log_mel = (min_log_hz - f_min) / f_sp   # same (Mels)
+    logstep     = np.log(6.4) / 27.0            # step size for log region
+    log_t       = (mels >= min_log_mel)
+
+    freqs[log_t] = min_log_hz * np.exp(logstep * (mels[log_t] - min_log_mel))
+
+    return freqs
+
+def hz_to_octs(frequencies, A440=440.0):
+    """Convert frquencies (Hz) to octave numbers
+
+    :parameters:
+      - frequencies   : np.ndarray, float
+          scalar or vector of frequencies
+      - A440          : float
+          frequency of A440
+
+    :returns:
+      - octaves       : np.ndarray
+          octave number for each frequency
+
+    """
+    return np.log2(frequencies / (A440 / 16.0))
+
+def octs_to_hz(octs, A440=440.0):
+    """Convert octaves numbers to frequencies
+
+    :parameters:
+      - octaves       : np.ndarray
+          octave number for each frequency
+      - A440          : float
+          frequency of A440
+
+    :returns:
+      - frequencies   : np.ndarray, float
+          scalar or vector of frequencies
+
+    """
+    return (A440/16)*(2**octs)
 
 #-- UTILITIES --#
 def frames_to_time(frames, sr=22050, hop_length=128):
