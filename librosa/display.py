@@ -11,34 +11,34 @@ def specshow(X, sr=22050, hop_length=64, x_axis=None, y_axis=None, fmin=None, fm
     
     :parameters:
       - X : np.ndarray
-        Matrix to display (eg, spectrogram)
+          Matrix to display (eg, spectrogram)
 
       - sr : int > 0
-        Sample rate. Used to determine time scale in x-axis
+          Sample rate. Used to determine time scale in x-axis
 
       - hop_length : int > 0
-        Hop length. Also used to determine time scale in x-axis
+          Hop length. Also used to determine time scale in x-axis
 
       - x_axis : None or {'time', 'frames', 'off'}
-        If None or 'off', no x axis is displayed.
-        If 'time', markers are shown as seconds, minutes, or hours.
-        If 'frames', markers are shown as frame counts.
+          If None or 'off', no x axis is displayed.
+          If 'time', markers are shown as seconds, minutes, or hours.
+          If 'frames', markers are shown as frame counts.
 
       - y_axis : None or {'linear', 'mel', 'chroma', 'off'}
-        If None or 'off', no y axis is displayed.
-        If 'linear', frequency range is determined by the FFT window and sample rate.
-        If 'mel', frequencies are determined by the mel scale.
-        If 'chroma', pitches are determined by the chroma filters.
+          If None or 'off', no y axis is displayed.
+          If 'linear', frequency range is determined by the FFT window and sample rate.
+          If 'mel', frequencies are determined by the mel scale.
+          If 'chroma', pitches are determined by the chroma filters.
 
      - fmin, fmax : float > 0 or None
-        Used for setting the Mel frequency scale
+          Used for setting the Mel frequency scale
 
      - **kwargs : dict
-        Additional arguments passed through to `~matplotlib.pyplot.imshow`.
+          Additional arguments passed through to `~matplotlib.pyplot.imshow`.
 
     :returns:
      - image : `~matplotlib.image.AxesImage`
-        As returned from `~matplotlib.pyplot.imshow`.
+          As returned from `~matplotlib.pyplot.imshow`.
     """
 
     kwargs['aspect']        = kwargs.get('aspect',          'auto')
