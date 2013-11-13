@@ -42,7 +42,7 @@ def load(infile):
 def test_hz_to_mel():
     def __test_to_mel(infile):
         DATA    = load(infile)
-        z       = librosa.feature.hz_to_mel(DATA['f'], DATA['htk'])
+        z       = librosa.hz_to_mel(DATA['f'], DATA['htk'])
 
         assert numpy.allclose(z, DATA['result'])
     
@@ -55,7 +55,7 @@ def test_mel_to_hz():
 
     def __test_to_hz(infile):
         DATA    = load(infile)
-        z       = librosa.feature.mel_to_hz(DATA['f'], DATA['htk'])
+        z       = librosa.mel_to_hz(DATA['f'], DATA['htk'])
 
         assert numpy.allclose(z, DATA['result'])
     
@@ -67,7 +67,7 @@ def test_mel_to_hz():
 def test_hz_to_octs():
     def __test_to_octs(infile):
         DATA    = load(infile)
-        z       = librosa.feature.hz_to_octs(DATA['f'])
+        z       = librosa.hz_to_octs(DATA['f'])
 
         assert numpy.allclose(z, DATA['result'])
 
