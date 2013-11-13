@@ -26,5 +26,5 @@ print 'done.    Estimated bpm: %.2f' % bpm
 
 # 3. save output
 print 'Saving output... ',
-librosa.output.segment_csv(sys.argv[2], beats, sr, hop_length)
+librosa.output.frames_csv(sys.argv[2], beats, sr=sr, hop_length=hop_length)
 print 'done.'

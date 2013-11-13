@@ -9,14 +9,14 @@ import scipy.io.wavfile
 
 import librosa.core
 
-def segment_csv(path, segments, sr=22050, hop_length=128, save_bpm=False):
+def frames_csv(path, frames, sr=22050, hop_length=64):
     """Save beat tracker or segmentation output in CSV format.
 
     :parameters:
       - path : string
           path to save the output CSV file
 
-      - segments : list of ints
+      - frames : list of ints
           list of frame numbers for beat events
       
       - sr : int
@@ -33,15 +33,9 @@ def segment_csv(path, segments, sr=22050, hop_length=128, save_bpm=False):
     with open(path, 'w') as output_file:
         writer = csv.writer(output_file)
 
-        time = 0.0
-        for t_new in librosa.core.frames_to_time(segments,
+        for t_new in librosa.core.frames_to_time(frames,
                                             sr=sr, hop_length=hop_length):
-            if save_bpm:
-                writer.writerow([t_new, '%.2f BPM' % (60.0 / (t_new - time))])
-            else:
-                writer.writerow([t_new])
-
-            time = t_new
+            writer.writerow([t_new])
 
 def write_wav(path, y, sr):
     """Output a time series as a .wav file
