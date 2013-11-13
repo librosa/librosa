@@ -48,7 +48,6 @@ def stack_memory(X, m=2, delay=1):
 
     return Xhat[:, :t]
 
-
 def recurrence_matrix(X, k=5, width=1, metric='sqeuclidean', sym=True):
     '''Compute the binary recurrence matrix from a time-series.
 
