@@ -14,12 +14,11 @@ def stack_memory(X, m=2, delay=1):
 
     Each column `X[:, i]` is mapped to
 
-    ```
     X[:,i] =>   [   X[:, i]
                     X[:, i - delay]
                     ...
                     X[:, i - (m-1)*delay]
-                ]```
+                ]
 
     :parameters:
       - X : np.ndarray

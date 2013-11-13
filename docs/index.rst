@@ -17,14 +17,34 @@ Beat tracking
 .. automodule:: librosa.beat
    :members:
 
+Display
+=======
+.. automodule:: librosa.display
+   :members:
+
+Filter banks
+============
+.. automodule:: librosa.filters
+   :members:
+
+Onset detection
+===============
+.. automodule:: librosa.onset
+   :members:
+
+Segmentation
+============
+.. automodule:: librosa.segment
+   :members:
+
 Feature extraction
 ==================
 .. automodule:: librosa.feature
    :members:
 
-Harmonic-percussive source separation
-=====================================
-.. automodule:: librosa.hpss
+Spectrogram decomposition
+=========================
+.. automodule:: librosa.decompose
    :members:
    
 Output methods
