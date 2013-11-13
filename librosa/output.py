@@ -42,7 +42,6 @@ def segment_csv(path, segments, sr=22050, hop_length=128, save_bpm=False):
                 writer.writerow([t_new])
 
             time = t_new
-#-- --#
 
 def write_wav(path, y, sr):
     """Output a time series as a .wav file
@@ -61,4 +60,3 @@ def write_wav(path, y, sr):
 
     wav = y / np.max(np.abs(y))
     scipy.io.wavfile.write(path, sr, (wav * 32768.0).astype('<i2'))
-#-- --#

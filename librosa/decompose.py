@@ -40,7 +40,6 @@ def decompose(X, n_components=None, NMF=None):
     X_new = NMF.fit_transform(X.T)
     return (NMF.components_.T, X_new.T)
 
-
 def hpss(S, win_P=19, win_H=19, p=0.0):
     """Median-filtering harmonic percussive separation
 
