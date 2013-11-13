@@ -11,12 +11,14 @@ Usage:
 '''
 
 import sys
+import numpy as np
+
 import librosa
-import numpy, scipy.ndimage
+
 
 SR  = 22050
 HOP = 64
-FFT = 2048
+N_FFT = 2048
 
 # Load the file
 print 'Loading file ... ',
@@ -24,23 +26,24 @@ print 'Loading file ... ',
 print 'done.'
 
 # Construct log-amplitude spectrogram
-print 'Harmonic-percussive separation ... ',
-S = librosa.feature.melspectrogram(y, sr, FFT, hop_length=HOP, n_mels=128)**0.5
+print 'Generating STFT ... ', 
+D = np.abs(librosa.stft(y, n_fft=N_FFT, hop_length=HOP)).astype(np.float32)
+print 'done.'
 
 # Do HPSS
-(H, P) = librosa.hpss.hpss_median(S, p=4.0)
+print 'Harmonic-percussive separation ... ',
+(H, P) = librosa.decompose.hpss(D, p=2.0)
 print 'done.'
 
 # Construct onset envelope from percussive component
 print 'Beat tracking ... ',
 
-O = librosa.beat.onset_strength(S=P)
+S = librosa.feature.melspectrogram(S=P, sr=sr, n_mels=128)
 
-# Use LoG(P) for the onset profile
-# O = numpy.mean(scipy.ndimage.gaussian_laplace(P, [1.0, 0.0]), axis=0)
+O = librosa.onset.onset_strength(S=librosa.logamplitude(S))
 
 # Track the beats
-(bpm, beats) = librosa.beat.beat_track(onsets=O, sr=sr, hop_length=HOP, n_fft=FFT)
+(bpm, beats) = librosa.beat.beat_track(onsets=O, sr=sr, hop_length=HOP, n_fft=N_FFT)
 print 'done.'
 
 # Save the output

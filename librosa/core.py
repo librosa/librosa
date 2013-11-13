@@ -205,7 +205,6 @@ def stft(y, n_fft=256, hann_w=None, hop_length=None, window=None):
 
     return stft_matrix
 
-
 def istft(stft_matrix, n_fft=None, hann_w=None, hop_length=None, window=None):
     """
     Inverse short-time fourier transform
@@ -298,7 +297,6 @@ def logamplitude(S, amin=1e-10, top_db=80.0):
 
     return log_S
 
-
 def magphase(D):
     """Separate a complex-valued spectrogram D into its magnitude (S)
     and phase (P) components, so that D = S * P.
@@ -319,7 +317,6 @@ def magphase(D):
     P = np.exp(1.j * np.angle(D))
 
     return S, P
-
 
 def phase_vocoder(D, rate, hop_length=None):
     """Phase vocoder.  Given an STFT matrix D, time-stretch by a 
@@ -392,7 +389,6 @@ def phase_vocoder(D, rate, hop_length=None):
         phase_acc = phase_acc + dphi + dp
     
     return D_r
-
 
 #-- FREQUENCY UTILITIES AND CONVERTERS--#
 def midi_to_hz( notes ):

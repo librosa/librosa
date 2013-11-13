@@ -96,7 +96,6 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=128,
 
     return (bpm, beats)
 
-
 def __beat_tracker(onsets, bpm, fft_res, tightness, trim):
     """Internal function that does beat tracking from a given onset profile.
 
@@ -230,7 +229,6 @@ def __beat_tracker(onsets, bpm, fft_res, tightness, trim):
     beats = smooth_beats(beats, trim)
 
     return beats
-
 
 def onset_estimate_bpm(onsets, start_bpm, fft_res):
     """Estimate the BPM from an onset envelope
