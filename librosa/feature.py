@@ -179,7 +179,7 @@ def chromagram(S, sr, method='Ellis', norm='inf', beat_times=None, tuning=0.0,
 
       - kwargs
           Parameters to build the chroma filterbank and spectrogram
-          See chromafb() or stft for details, Ellis Only
+          See librosa.filters.chroma() or stft for details, Ellis Only
 
     :returns:
       - chromagram  : np.ndarray
@@ -195,7 +195,7 @@ def chromagram(S, sr, method='Ellis', norm='inf', beat_times=None, tuning=0.0,
     if method == 'Ellis':
                 
         n_fft       = (S.shape[0] -1 ) * 2
-        spec2chroma = chromafb( sr, n_fft, **kwargs)[:, :S.shape[0]]
+        spec2chroma = librosa.filters.chroma( sr, n_fft, **kwargs)[:, :S.shape[0]]
 
         # Compute raw chroma
         raw_chroma  = np.dot(spec2chroma, S)
@@ -237,73 +237,6 @@ def chromagram(S, sr, method='Ellis', norm='inf', beat_times=None, tuning=0.0,
            
     return normal_chroma
 
-def chromafb(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=None):
-    """Create a Filterbank matrix to convert STFT to chroma
-
-    :parameters:
-      - sr        : int
-          sampling rate
-      - n_fft     : int
-          number of FFT components
-      - n_chroma  : int
-          number of chroma dimensions   
-      - A440      : float
-          Reference frequency for A
-      - ctroct    : float
-      - octwidth  : float
-          These parameters specify a dominance window - Gaussian
-          weighting centered on ctroct (in octs, re A0 = 27.5Hz) and
-          with a gaussian half-width of octwidth.  
-          Defaults to halfwidth = inf, i.e. flat.
-
-    :returns:
-      wts       : ndarray, shape=(n_chroma, n_fft) 
-          Chroma filter matrix
-
-    """
-
-    wts         = np.zeros((n_chroma, n_fft))
-
-    fft_res     = float(sr) / n_fft
-
-    frequencies = np.arange(fft_res, sr, fft_res)
-
-    fftfrqbins  = n_chroma * hz_to_octs(frequencies, A440)
-
-    # make up a value for the 0 Hz bin = 1.5 octaves below bin 1
-    # (so chroma is 50% rotated from bin 1, and bin width is broad)
-    fftfrqbins = np.concatenate( (   [fftfrqbins[0] - 1.5 * n_chroma],
-                                        fftfrqbins))
-
-    binwidthbins = np.concatenate(
-        (np.maximum(fftfrqbins[1:] - fftfrqbins[:-1], 1.0), [1]))
-
-    D = np.tile(fftfrqbins, (n_chroma, 1))  \
-        - np.tile(np.arange(0, n_chroma, dtype='d')[:, np.newaxis], 
-        (1, n_fft))
-
-    n_chroma2 = round(n_chroma / 2.0)
-
-    # Project into range -n_chroma/2 .. n_chroma/2
-    # add on fixed offset of 10*n_chroma to ensure all values passed to
-    # rem are +ve
-    D = np.remainder(D + n_chroma2 + 10*n_chroma, n_chroma) - n_chroma2
-
-    # Gaussian bumps - 2*D to make them narrower
-    wts = np.exp(-0.5 * (2*D / np.tile(binwidthbins, (n_chroma, 1)))**2)
-
-    # normalize each column
-    wts /= np.tile(np.sqrt(np.sum(wts**2, 0)), (n_chroma, 1))
-
-    # Maybe apply scaling for fft bins
-    if octwidth is not None:
-        wts *= np.tile(
-            np.exp(-0.5 * (((fftfrqbins/n_chroma - ctroct)/octwidth)**2)),
-            (n_chroma, 1))
-
-    # remove aliasing columns
-    wts[:, (1 + n_fft/2):] = 0.0
-    return wts
 
 def loudness_chroma(x, sr, beat_times, tuning, fmin=55.0, fmax=1661.0, 
                     resolution_fact=5):
@@ -1012,31 +945,6 @@ def isp_ifgram(X, N=256, W=256, H=256.0/2.0, sr=1, maxbin=1.0+256.0/2.0):
     return F, D
 
 #-- Mel spectrogram and MFCCs --#
-def dctfb(n_filts, d):
-    """Discrete cosine transform basis
-
-    :parameters:
-      - n_filts   : int
-          number of output components
-      - d         : int
-          number of input components
-
-    :returns:
-      - D         : np.ndarray, shape=(n_filts, d)
-          DCT basis vectors
-
-    """
-
-    basis       = np.empty((n_filts, d))
-    basis[0, :] = 1.0 / np.sqrt(d)
-
-    samples     = np.arange(1, 2*d, 2) * np.pi / (2.0 * d)
-
-    for i in xrange(1, n_filts):
-        basis[i, :] = np.cos(i*samples) * np.sqrt(2.0/d)
-
-    return basis
-
 def mfcc(S, d=20):
     """Mel-frequency cepstral coefficients
 
@@ -1052,7 +960,7 @@ def mfcc(S, d=20):
 
     """
 
-    return np.dot(dctfb(d, S.shape[0]), S)
+    return np.dot(librosa.filters.dct(d, S.shape[0]), S)
 
 def mel_frequencies(n_mels=40, fmin=0.0, fmax=11025.0, htk=False):
     """Compute the center frequencies of mel bands
@@ -1081,56 +989,6 @@ def mel_frequencies(n_mels=40, fmin=0.0, fmax=11025.0, htk=False):
     
     return  mel_to_hz(mels, htk=htk)
 
-def melfb(sr, n_fft, n_mels=40, fmin=0.0, fmax=None, htk=False):
-    """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins
-
-    :parameters:
-      - sr        : int
-          sampling rate of the incoming signal
-      - n_fft     : int
-          number of FFT components
-      - n_mels    : int
-          number of Mel bands 
-      - fmin      : float
-          lowest frequency (in Hz) 
-      - fmax      : float
-          highest frequency (in Hz)
-      - htk       : boolean
-          use HTK formula instead of Slaney
-
-    :returns:
-      - M         : np.ndarray, shape=(n_mels, n_fft)
-          Mel transform matrix
-
-    .. note:: coefficients above 1 + n_fft/2 are set to 0.
-
-    """
-
-    if fmax is None:
-        fmax = sr / 2.0
-
-    # Initialize the weights
-    weights     = np.zeros( (n_mels, n_fft) )
-
-    # Center freqs of each FFT bin
-    size        = 1 + n_fft / 2
-    fftfreqs    = np.arange( size, dtype=float ) * sr / n_fft
-
-    # 'Center freqs' of mel bands - uniformly spaced between limits
-    freqs       = mel_frequencies(n_mels, fmin, fmax, htk)
-
-    # Slaney-style mel is scaled to be approx constant E per channel
-    enorm       = 2.0 / (freqs[2:n_mels+2] - freqs[:n_mels])
-
-    for i in xrange(n_mels):
-        # lower and upper slopes for all bins
-        lower   = (fftfreqs - freqs[i])     / (freqs[i+1] - freqs[i])
-        upper   = (freqs[i+2] - fftfreqs)   / (freqs[i+2] - freqs[i+1])
-
-        # .. then intersect them with each other and zero
-        weights[i, :size]   = np.maximum(0, np.minimum(lower, upper)) * enorm[i]
-   
-    return weights
 
 def melspectrogram(y=None, sr=22050, S=None, n_fft=256, hop_length=128, **kwargs):
     """Compute a mel spectrogram from a time series
@@ -1149,7 +1007,7 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=256, hop_length=128, **kwargs
 
       - kwargs
           Mel filterbank parameters
-          See melfb() documentation for details.
+          See librosa.filters.mel() documentation for details.
 
     .. note:: One of either ``S`` or ``y, sr`` must be provided.
         If the pair y, sr is provided, the power spectrogram is computed.
@@ -1172,7 +1030,7 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=256, hop_length=128, **kwargs
         n_fft = (S.shape[0] - 1) * 2
 
     # Build a Mel filter
-    mel_basis   = melfb(sr, n_fft, **kwargs)
+    mel_basis   = librosa.filters.mel(sr, n_fft, **kwargs)
 
     # Remove everything past the nyquist frequency
     mel_basis   = mel_basis[:, :(n_fft/ 2  + 1)]
