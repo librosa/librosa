@@ -81,7 +81,7 @@ def test_melfb():
     def __test(infile):
         DATA    = load(infile)
 
-        wts = librosa.feature.melfb( DATA['sr'][0], 
+        wts = librosa.filters.mel( DATA['sr'][0], 
                                     DATA['nfft'][0], 
                                     n_mels  =   DATA['nfilts'][0],
                                     fmin    =   DATA['fmin'][0],
@@ -105,7 +105,7 @@ def test_chromafb():
         if octwidth == 0:
             octwidth = None
 
-        wts = librosa.feature.chromafb( DATA['sr'][0,0], 
+        wts = librosa.filters.chroma( DATA['sr'][0,0], 
                                         DATA['nfft'][0,0], 
                                         DATA['nchroma'][0,0],
                                         A440    =   DATA['a440'][0,0],
