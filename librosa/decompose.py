@@ -1,7 +1,13 @@
 #!/usr/bin/env python
-""" Decomposition """
+"""Spectrogram decomposition"""
+
+import numpy as np
+import scipy
+import scipy.signal
 
 import sklearn.decomposition
+
+import librosa.core
 
 
 def decompose(X, n_components=None, NMF=None):
@@ -33,3 +39,67 @@ def decompose(X, n_components=None, NMF=None):
         NMF = sklearn.decomposition.NMF(n_components=n_components)
     X_new = NMF.fit_transform(X.T)
     return (NMF.components_.T, X_new.T)
+
+
+def hpss(S, win_P=19, win_H=19, p=0.0):
+    """Median-filtering harmonic percussive separation
+
+    :parameters:
+      - S : np.ndarray
+          input spectrogram. May be real (magnitude) or complex.
+
+      - win_P : int        
+          window size for percussive filter
+
+      - win_H : int
+          window size for harmonic filter 
+
+      - p : float
+          masking exponent
+
+    :returns:
+      - harmonic : np.ndarray
+          harmonic component
+
+      - percussive : np.ndarray
+          percussive component
+
+      .. note:: harmonic + percussive = S
+
+    .. note::
+      - Fitzgerald, D. (2010). 
+        Harmonic/percussive separation using median filtering.
+
+    """
+
+    if np.iscomplex(S).any():
+        S, phase = librosa.core.magphase(S)
+    else:
+        phase = 1
+
+    # Compute median filters
+    P = scipy.signal.medfilt2d(S, [win_P, 1])
+    H = scipy.signal.medfilt2d(S, [1, win_H])
+
+    if p == 0:
+        Mh = (H > P).astype(float)
+        Mp = 1 - Mh
+    else:
+        zP = P == 0
+        P = P ** p
+        P[zP] = 0.0
+    
+        zH = H == 0
+        H = H ** p
+        H[zH] = 0.0
+
+        # Find points where both are zero, equalize
+        H[zH & zP] = 0.5
+        P[zH & zP] = 0.5
+
+        # Compute harmonic mask
+        Mh = H / (H + P)
+        Mp = P / (H + P)
+
+    return (Mh * S * phase, Mp * S * phase)
+
