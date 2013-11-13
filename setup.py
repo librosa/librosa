@@ -22,8 +22,10 @@ setup(
     license='GPL',
     install_requires=[
         'audioread',
+        'csv',
         'numpy >= 1.7.0',
         'scipy',
         'scikit-learn',
+        'matplotlib',
     ],
 )
