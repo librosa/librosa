@@ -822,7 +822,7 @@ def mfcc(S, d=20):
     return np.dot(librosa.filters.dct(d, S.shape[0]), S)
 
 def melspectrogram(y=None, sr=22050, S=None, n_fft=256, hop_length=128, **kwargs):
-    """Compute a mel spectrogram from a time series
+    """Compute a Mel-scaled power spectrogram.
 
     :parameters:
       - y : np.ndarray
