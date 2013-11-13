@@ -373,11 +373,10 @@ def phase_vocoder(D, rate, hop_length=None):
     idx = np.array([0, 1], dtype=np.int)
     for (t, step) in enumerate(time_steps):
         
-        i_step = int(step)
-        D_cols = D[:, i_step + idx]
+        D_cols = D[:, int(step) + idx]
         
         # Weighting for magnitude interpolation
-        tf     = step - i_step
+        tf     = step - int(step)
         D_mag  = (1.0-tf) * np.abs(D_cols[:, 0]) + tf * np.abs(D_cols[:, 1])
         
         # Compute phase advance
