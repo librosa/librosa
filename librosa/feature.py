@@ -6,22 +6,14 @@ import numpy as np
 import librosa.core
 
 #-- Chroma --#
-def chromagram(S, sr, method='Ellis', norm='inf', beat_times=None, tuning=0.0, 
-                **kwargs):
+def chromagram(S, sr=22050, norm='inf', **kwargs):
     """Compute a chromagram from a spectrogram or waveform
 
     :parameters:
       - S          : np.ndarray
           spectrogram if method='Ellis' 
-      OR    
-      - S          : np.array
-          waveform (1-D) if method='McVicar'   
       - sr         : int
           audio sampling rate of S
-      - method     : {'Ellis', 'McVicar'}
-          method for computing chromagram. 
-          Ellis: http://labrosa.ee.columbia.edu/matlab/chroma-ansyn/
-          McVicar: https://patterns.enm.bris.ac.uk/hpa-software-package
       - norm       : {'inf', 1, 2, None}, Ellis Only
           column-wise normalization:
 
@@ -32,14 +24,13 @@ def chromagram(S, sr, method='Ellis', norm='inf', beat_times=None, tuning=0.0,
              2 :  l_2 norm
              
              None :  do not normalize
-     - beat_times : np.ndarray, McVicar only
-          estimated beat times (seconds)
+
      - tuning     : float in [-0.5, 0.5], McVicar Only
           estimated tuning in cents             
 
       - kwargs
           Parameters to build the chroma filterbank and spectrogram
-          See librosa.filters.chroma() or stft for details, Ellis Only
+          See librosa.filters.chroma() or stft for details.
 
     :returns:
       - chromagram  : np.ndarray
@@ -51,50 +42,55 @@ def chromagram(S, sr, method='Ellis', norm='inf', beat_times=None, tuning=0.0,
 
     """
     
-    # Main rouine switch
-    if method == 'Ellis':
-                
-        n_fft       = (S.shape[0] -1 ) * 2
-        spec2chroma = librosa.filters.chroma( sr, n_fft, **kwargs)[:, :S.shape[0]]
+    # Build the chroma filterbank
+    n_fft       = (S.shape[0] -1 ) * 2
+    chromafb = librosa.filters.chroma( sr, n_fft, **kwargs)[:, :S.shape[0]]
 
-        # Compute raw chroma
-        raw_chroma  = np.dot(spec2chroma, S)
+    # Compute raw chroma
+    raw_chroma  = np.dot(chromafb, S)
 
-        # Compute normalization factor for each frame
-        if norm == 'inf':
-            chroma_norm = np.max(np.abs(raw_chroma), axis=0)
-        elif norm == 1:
-            chroma_norm = np.sum(np.abs(raw_chroma), axis=0)
-        elif norm == 2:
-            chroma_norm = np.sum( (raw_chroma**2), axis=0) ** 0.5
-        elif norm is None:
-            return raw_chroma
-        else:
-            raise ValueError("norm must be one of: 'inf', 1, 2, None")
+    # Compute normalization factor for each frame
+    if norm == 'inf':
+        chroma_norm = np.max(np.abs(raw_chroma), axis=0)
 
-        # Tile the normalizer to match raw_chroma's shape
-        chroma_norm[chroma_norm == 0] = 1.0
-        normal_chroma = raw_chroma / chroma_norm
-
+    elif norm == 1:
+        chroma_norm = np.sum(np.abs(raw_chroma), axis=0)
+    
+    elif norm == 2:
+        chroma_norm = np.sum( (raw_chroma**2), axis=0) ** 0.5
+    
+    elif norm is None:
+        return raw_chroma
+    
     else:
-        # Extract loudness-based chroma
-        # FIXME:  2013-09-25 17:25:12 by Brian McFee <brm2132@columbia.edu>
-        # too many magic numbers here
-        # FIXED: 2013-09-29 11:56 by Matt
-        # Added comments regarding frequencies and resolution
+        raise ValueError("norm must be one of: 'inf', 1, 2, None")
 
-        # extract regular chroma, normalised chroma, sample
-        # times and tuning estimation. Default and suggested 
-        # frequncy range is from A1 (55Hz) to the G# below
-        # A6 (1760Hz). Default resolution factor for the 
-        # constant-Q implimentation is 5.
-        r_chroma, normal_chroma, s_times, tuning = loudness_chroma(S, sr, 
-                                                        beat_times, 
-                                                        tuning, 
-                                                        fmin=55, 
-                                                        fmax=1660, 
-                                                        resolution_fact=5)
-           
+    # Tile the normalizer to match raw_chroma's shape
+    chroma_norm[chroma_norm == 0] = 1.0
+
+    return raw_chroma / chroma_norm
+
+
+def chromagram_mcvicar(S, sr, beat_times=None, tuning=0.0):
+    # Extract loudness-based chroma
+    # FIXME:  2013-09-25 17:25:12 by Brian McFee <brm2132@columbia.edu>
+    # too many magic numbers here
+    # FIXED: 2013-09-29 11:56 by Matt
+    # Added comments regarding frequencies and resolution
+
+    # extract regular chroma, normalised chroma, sample
+    # times and tuning estimation. Default and suggested 
+    # frequncy range is from A1 (55Hz) to the G# below
+    # A6 (1760Hz). Default resolution factor for the 
+    # constant-Q implementation is 5.
+
+    r_chroma, normal_chroma, s_times, tuning = loudness_chroma(S, sr, 
+                                                    beat_times, 
+                                                    tuning, 
+                                                    fmin=55, 
+                                                    fmax=1660, 
+                                                    resolution_fact=5)
+        
     return normal_chroma
 
 def loudness_chroma(x, sr, beat_times, tuning, fmin=55.0, fmax=1661.0, 

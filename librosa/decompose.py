@@ -10,7 +10,7 @@ import sklearn.decomposition
 import librosa.core
 
 
-def decompose(X, n_components=None, NMF=None):
+def decompose(X, n_components=None, transformer=None):
     """Decompose the feature matrix with non-negative matrix factorization
 
     :parameters:
@@ -18,14 +18,14 @@ def decompose(X, n_components=None, NMF=None):
             feature matrix (d-by-t)
         - n_components : int > 0 or None
             number of components, if None then all d components are used
-        - NMF : any instance which implements fit_transform()
+        - transformer : any instance which implements fit_transform()
             If None, use sklearn.decomposition.NMF by default
             Otherwise, because of scikit-learn convention where the input data
             is (n_samples, n_features), NMF.fit_transform() should take X.T as
             input, and returns transformed X_new, where:
-                X.T ~= X_new.dot(NMF.components_)
+                X.T ~= X_new.dot(transformer.components_)
             or equivalently:
-                X ~= NMF.components_.T.dot(X_new.T)
+                X ~= transformer.components_.T.dot(X_new.T)
 
     :returns:
         - components: np.ndarray
@@ -35,10 +35,10 @@ def decompose(X, n_components=None, NMF=None):
 
     """
 
-    if NMF is None:
-        NMF = sklearn.decomposition.NMF(n_components=n_components)
-    X_new = NMF.fit_transform(X.T)
-    return (NMF.components_.T, X_new.T)
+    if transformer is None:
+        transformer = sklearn.decomposition.NMF(n_components=n_components)
+    X_new = transformer.fit_transform(X.T)
+    return (transformer.components_.T, X_new.T)
 
 def hpss(S, win_P=19, win_H=19, p=0.0):
     """Median-filtering harmonic percussive separation
