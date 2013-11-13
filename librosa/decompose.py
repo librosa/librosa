@@ -14,8 +14,12 @@ def decompose(X, n_components=None, NMF=None):
             number of components, if None then all d components are used
         - NMF : any instance which implements fit_transform()
             If None, use sklearn.decomposition.NMF by default
-            Otherwise, NMF.fit_transform() should take X as input, and returns
-            transformed X_new, where X ~= NMF.components_.dot(X_new)
+            Otherwise, because of scikit-learn convention where the input data
+            is (n_samples, n_features), NMF.fit_transform() should take X.T as
+            input, and returns transformed X_new, where:
+                X.T ~= X_new.dot(NMF.components_)
+            or equivalently:
+                X ~= NMF.components_.T.dot(X_new.T)
 
     :returns:
         - components: np.ndarray
@@ -27,8 +31,5 @@ def decompose(X, n_components=None, NMF=None):
 
     if NMF is None:
         NMF = sklearn.decomposition.NMF(n_components=n_components)
-        H = NMF.fit_transform(X.T)
-        return (NMF.components_.T, H.T)
-
-    H = NMF.fit_transform(X)
-    return (NMF.components_, H)
+    X_new = NMF.fit_transform(X.T)
+    return (NMF.components_.T, X_new.T)
