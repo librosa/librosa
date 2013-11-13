@@ -7,7 +7,7 @@ import scipy.signal
 
 import librosa.core
 
-def hpss(S, alpha=0.5, max_iter=50):
+def hpss_ono(S, alpha=0.5, max_iter=50):
     """Harmonic-percussive source separation
 
     :parameters:
@@ -39,7 +39,10 @@ def hpss(S, alpha=0.5, max_iter=50):
     """
 
     # separate the phase component, if it exists
-    S, phase = librosa.core.magphase(S)
+    if np.iscomplex(S).any():
+        S, phase = librosa.core.magphase(S)
+    else:
+        phase = 1
 
     # Initialize H/P iterates
     harmonic    = S * 0.5
@@ -89,7 +92,10 @@ def hpss_median(S, win_P=19, win_H=19, p=0.0):
 
     """
 
-    S, phase = librosa.core.magphase(S)
+    if np.iscomplex(S).any():
+        S, phase = librosa.core.magphase(S)
+    else:
+        phase = 1
 
     # Compute median filters
     P = scipy.signal.medfilt2d(S, [win_P, 1])
@@ -117,3 +123,5 @@ def hpss_median(S, win_P=19, win_H=19, p=0.0):
 
     return (Mh * S * phase, Mp * S * phase)
 
+# By default, use hpss_median
+hpss = hpss_median
