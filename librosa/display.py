@@ -46,7 +46,7 @@ def specshow(X, sr=22050, hop_length=64, x_axis=None, y_axis=None, fmin=None, fm
     kwargs['origin']        = kwargs.get('origin',          'lower')
     kwargs['interpolation'] = kwargs.get('interpolation',   'nearest')
 
-    kwargs['cmap']          = kwargs.get('cmap',            'Purples')
+    kwargs['cmap']          = kwargs.get('cmap',            'OrRd')
 
     axes = plt.imshow(X, **kwargs)
 
