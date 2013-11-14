@@ -64,9 +64,13 @@ def specshow(X, sr=22050, hop_length=64, x_axis=None, y_axis=None, nx_ticks=5, n
         # Non-uniform imshow doesn't like aspect
         del kwargs['aspect']
         im   = img.NonUniformImage(ax, **kwargs)
-        im.set_data( np.arange(0, X.shape[1]), 
-                    (X.shape[0] - np.logspace( 0, np.log2( X.shape[0] ), X.shape[0], base=2.0))[::-1],
-                    X)
+
+        y_log = (X.shape[0] - np.logspace( 0, np.log2( X.shape[0] ), X.shape[0], base=2.0))[::-1]
+        y_inv = np.arange(len(y_log)+1)
+        for i in range(len(y_log)-1):
+            y_inv[y_log[i]:y_log[i+1]] = i
+
+        im.set_data( np.arange(0, X.shape[1]), y_log, X)
         ax.images.append(im)
         ax.set_ylim(0, X.shape[0])
         ax.set_xlim(0, X.shape[1])
@@ -81,9 +85,10 @@ def specshow(X, sr=22050, hop_length=64, x_axis=None, y_axis=None, nx_ticks=5, n
         plt.ylabel('Hz')
     
     elif y_axis is 'log':
-        y_val       = 0.5 * sr * (2.0**np.arange(0, -len(y_pos), -1)[::-1])
-        y_val[0]    = 0.0
-        plt.yticks(y_pos, y_val.astype(int))
+    
+        y_val = np.linspace(0, 0.5 * sr,  X.shape[0] + 1).astype(int)
+        plt.yticks(y_pos, y_val[y_inv[y_pos]])
+    
         plt.ylabel('Hz')
     
     elif y_axis is 'mel':
