@@ -23,9 +23,9 @@ def decompose(X, n_components=None, transformer=None):
             Otherwise, because of scikit-learn convention where the input data
             is (n_samples, n_features), NMF.fit_transform() should take X.T as
             input, and returns transformed X_new, where:
-                X.T ~= X_new.dot(transformer.components_)
+            ``X.T ~= X_new.dot(transformer.components_)``
             or equivalently:
-                X ~= transformer.components_.T.dot(X_new.T)
+            ``X ~= transformer.components_.T.dot(X_new.T)``
 
     :returns:
         - components: np.ndarray

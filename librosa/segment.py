@@ -12,13 +12,14 @@ import sklearn.feature_extraction
 def stack_memory(X, m=2, delay=1):
     """Short-term history embedding.
 
-    Each column `X[:, i]` is mapped to
+    Each column ``X[:, i]`` is mapped to
 
     X[:,i] =>   [   X[:, i]
                     X[:, i - delay]
                     ...
                     X[:, i - (m-1)*delay]
                 ]
+
 
     :parameters:
       - X : np.ndarray
@@ -33,6 +34,7 @@ def stack_memory(X, m=2, delay=1):
           X augmented with lagged copies of itself.
           
       .. note:: zeros are padded for the initial columns
+
     """
 
     d, t = X.shape
@@ -50,8 +52,7 @@ def stack_memory(X, m=2, delay=1):
 def recurrence_matrix(X, k=5, width=1, metric='sqeuclidean', sym=True):
     '''Compute the binary recurrence matrix from a time-series.
 
-    R[i,j] == True <=> (X[:,i], X[:,j]) are k-nearest-neighbors
-                        and |i-j| >= width
+    R[i,j] == True <=> (X[:,i], X[:,j]) are k-nearest-neighbors and \|i-j\| >= width
 
     :parameters:
       - X : np.ndarray
