@@ -116,7 +116,7 @@ def specshow(X, sr=22050, hop_length=64, x_axis=None, y_axis=None, n_xticks=5, n
         raise ValueError('Unknown y_axis parameter: %s' % y_axis)
 
     # Set up the x ticks
-    x_pos = np.arange(0, X.shape[1]+1, max(1, X.shape[1] / (n_yticks-1)))
+    x_pos = np.linspace(0, X.shape[1], n_xticks).astype(int)
 
     if x_axis is 'time':
         # Reformat into seconds, or minutes:seconds
