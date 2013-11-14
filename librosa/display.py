@@ -59,7 +59,7 @@ def specshow(X, sr=22050, hop_length=64, x_axis=None, y_axis=None, nx_ticks=5, n
     axes = plt.imshow(X, **kwargs)
 
     if y_axis is 'log':
-        ax = plt.axes()
+        ax = plt.gca()
 
         # Non-uniform imshow doesn't like aspect
         del kwargs['aspect']
