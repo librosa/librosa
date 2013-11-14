@@ -6,14 +6,18 @@ import numpy as np
 import librosa.core
 
 #-- Chroma --#
-def chromagram(S, sr=22050, norm='inf', **kwargs):
+def chromagram(y=None, sr=22050, S=None, norm='inf', n_fft=2048, hop_length=512, **kwargs):
     """Compute a chromagram from a spectrogram or waveform
 
     :parameters:
-      - S          : np.ndarray
-          spectrogram if method='Ellis' 
+
+      - y          : np.ndarray or None
+          audio time series
       - sr         : int
           audio sampling rate of S
+      - S          : np.ndarray or None
+          spectrogram (STFT magnitude)
+
       - norm       : {'inf', 1, 2, None}, Ellis Only
           column-wise normalization:
 
@@ -25,13 +29,19 @@ def chromagram(S, sr=22050, norm='inf', **kwargs):
              
              None :  do not normalize
 
-     - tuning     : float in [-0.5, 0.5], McVicar Only
+      - tuning     : float in [-0.5, 0.5], McVicar Only
           estimated tuning in cents             
 
       - kwargs
           Parameters to build the chroma filterbank and spectrogram
           See librosa.filters.chroma() or stft for details.
 
+    .. note:: One of either ``S`` or ``y`` must be provided.
+          If y is provided, the magnitude spectrogram is computed automatically given
+          the parameters ``n_fft`` and ``hop_length``.
+          If S is provided, it is used as the input spectrogram, and n_fft is inferred
+          from its shape.
+      
     :returns:
       - chromagram  : np.ndarray
           Normalized energy for each chroma bin at each frame.
@@ -43,7 +53,11 @@ def chromagram(S, sr=22050, norm='inf', **kwargs):
     """
     
     # Build the chroma filterbank
-    n_fft       = (S.shape[0] -1 ) * 2
+    if S is None:
+        S = np.abs(librosa.core.stft(y, n_fft=n_fft, hop_length=hop_length))
+    else:
+        n_fft       = (S.shape[0] -1 ) * 2
+
     chromafb = librosa.filters.chroma( sr, n_fft, **kwargs)[:, :S.shape[0]]
 
     # Compute raw chroma
@@ -800,14 +814,23 @@ def isp_ifgram(X, N=256, W=256, H=256.0/2.0, sr=1, maxbin=1.0+256.0/2.0):
     return F, D
 
 #-- Mel spectrogram and MFCCs --#
-def mfcc(S, d=20):
+def mfcc(S=None, y=None, sr=22050, d=20):
     """Mel-frequency cepstral coefficients
 
     :parameters:
-      - S     : np.ndarray
+      - S     : np.ndarray or None
           log-power Mel spectrogram
+      - y     : np.ndarray or None
+          audio time series
+      - sr    : int > 0
+          audio sampling rate of y
       - d     : int
           number of MFCCs to return
+
+    .. note::
+        One of ``S`` or ``y, sr`` must be provided.
+        If ``S`` is not given, it is computed from ``y, sr`` using
+        the default parameters of ``melspectrogram``.
 
     :returns:
       - M     : np.ndarray
@@ -815,9 +838,12 @@ def mfcc(S, d=20):
 
     """
 
+    if S is None:
+        S = librosa.logamplitude(melspectrogram(y=y, sr=sr))
+    
     return np.dot(librosa.filters.dct(d, S.shape[0]), S)
 
-def melspectrogram(y=None, sr=22050, S=None, n_fft=256, hop_length=128, **kwargs):
+def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512, **kwargs):
     """Compute a Mel-scaled power spectrogram.
 
     :parameters:
