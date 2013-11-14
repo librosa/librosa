@@ -33,12 +33,13 @@ def specshow(X, sr=22050, hop_length=64, x_axis=None, y_axis=None, fmin=None, fm
      - fmin, fmax : float > 0 or None
           Used for setting the Mel frequency scale
 
-     - **kwargs : dict
-          Additional arguments passed through to `~matplotlib.pyplot.imshow`.
+     - kwargs : dict
+          Additional arguments passed through to ``matplotlib.pyplot.imshow``.
 
     :returns:
-     - image : `~matplotlib.image.AxesImage`
-          As returned from `~matplotlib.pyplot.imshow`.
+     - image : ``matplotlib.image.AxesImage``
+          As returned from ``matplotlib.pyplot.imshow``.
+
     """
 
     kwargs['aspect']        = kwargs.get('aspect',          'auto')

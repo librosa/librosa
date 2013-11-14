@@ -325,10 +325,8 @@ def phase_vocoder(D, rate, hop_length=None):
     :parameters:
       - D       : np.ndarray, dtype=complex
           STFT matrix
-
       - rate    :  float, positive
           time-stretch factor
-
       - hop_length : int or None
         hop length of D.  If None, defaults to 2*(D.shape[0]-1)/4
 
@@ -343,8 +341,8 @@ def phase_vocoder(D, rate, hop_length=None):
             year = {2002},
             title = {A Phase Vocoder in {M}atlab},
             note = {Web resource},
-            url = {http://www.ee.columbia.edu/~dpwe/resources/matlab/pvoc/},
-        }
+            url = {http://www.ee.columbia.edu/~dpwe/resources/matlab/pvoc/},}
+            
     """
     
     n_fft = 2 * ( D.shape[0] - 1 )
