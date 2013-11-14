@@ -7,7 +7,8 @@ import matplotlib.pyplot as plt
 
 import librosa.core
 
-def specshow(X, sr=22050, hop_length=64, x_axis=None, y_axis=None, nx_ticks=5, ny_ticks=5, fmin=None, fmax=None, **kwargs):
+def specshow(X, sr=22050, hop_length=64, x_axis=None, y_axis=None, nx_ticks=5, ny_ticks=5, 
+    fmin=None, fmax=None, **kwargs):
     """Display a spectrogram. Wraps to `~matplotlib.pyplot.imshow` with some handy defaults.
     
     :parameters:
@@ -50,19 +51,25 @@ def specshow(X, sr=22050, hop_length=64, x_axis=None, y_axis=None, nx_ticks=5, n
 
     kwargs['cmap']          = kwargs.get('cmap',            'OrRd')
 
-    if y_axis is not 'log':
-        axes = plt.imshow(X, **kwargs)
-    else:
-        axes = plt.axes()
+    # FIXME:  2013-11-14 16:15:33 by Brian McFee <brm2132@columbia.edu>
+    #  We draw the image twice here. This is a hack to get around NonUniformImage
+    #  not properly setting hooks for color: drawing twice enables things like
+    #  colorbar() to work properly.
+
+    axes = plt.imshow(X, **kwargs)
+
+    if y_axis is 'log':
+        ax = plt.axes()
+
+        # Non-uniform imshow doesn't like aspect
         del kwargs['aspect']
-        im   = img.NonUniformImage(axes, **kwargs)
+        im   = img.NonUniformImage(ax, **kwargs)
         im.set_data( np.arange(0, X.shape[1]), 
                     (X.shape[0] - np.logspace( 0, np.log2( X.shape[0] ), X.shape[0], base=2.0))[::-1],
                     X)
-        axes.images.append(im)
-        axes.set_ylim(0, X.shape[0])
-        axes.set_xlim(0, X.shape[1])
-
+        ax.images.append(im)
+        ax.set_ylim(0, X.shape[0])
+        ax.set_xlim(0, X.shape[1])
 
     # Set up the y ticks
     y_pos = np.arange(0, X.shape[0], max(1, X.shape[0] / (ny_ticks-1)))
@@ -73,8 +80,8 @@ def specshow(X, sr=22050, hop_length=64, x_axis=None, y_axis=None, nx_ticks=5, n
         plt.ylabel('Hz')
     
     elif y_axis is 'log':
-        y_val = 0.5 * sr * (2.0**np.arange(0, -len(y_pos), -1)[::-1])
-        y_val[0] = 0.0
+        y_val       = 0.5 * sr * (2.0**np.arange(0, -len(y_pos), -1)[::-1])
+        y_val[0]    = 0.0
         plt.yticks(y_pos, y_val.astype(int))
         plt.ylabel('Hz')
     
@@ -126,11 +133,9 @@ def specshow(X, sr=22050, hop_length=64, x_axis=None, y_axis=None, nx_ticks=5, n
         # Nothing to do here, plot is in frames
         plt.xticks(x_pos, x_pos)
         plt.xlabel('Frames')
-        pass
     elif x_axis is None or x_axis is 'off':
         plt.xticks([])
         plt.xlabel('')
-        pass
     else:
         raise ValueError('Unknown x_axis parameter: %s' % x_axis)
     
