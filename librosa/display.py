@@ -72,11 +72,12 @@ def specshow(X, sr=22050, hop_length=64, x_axis=None, y_axis=None, nx_ticks=5, n
         ax.set_xlim(0, X.shape[1])
 
     # Set up the y ticks
-    y_pos = np.arange(0, X.shape[0], max(1, X.shape[0] / (ny_ticks-1)))
+    y_pos = np.linspace(0, X.shape[0], ny_ticks).astype(int)
 
     if y_axis is 'linear':
-        y_val = np.abs(np.fft.fftfreq( (X.shape[0] -1) * 2, 1./sr)[y_pos]).astype(np.int)
-        plt.yticks(y_pos, y_val)
+        y_val = np.linspace(0, 0.5 * sr,  X.shape[0] + 1).astype(int)
+
+        plt.yticks(y_pos, y_val[y_pos])
         plt.ylabel('Hz')
     
     elif y_axis is 'log':
