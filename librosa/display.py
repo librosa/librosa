@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 import librosa.core
 
-def specshow(X, sr=22050, hop_length=64, x_axis=None, y_axis=None, nx_ticks=5, ny_ticks=5, 
+def specshow(X, sr=22050, hop_length=64, x_axis=None, y_axis=None, n_xticks=5, n_yticks=5, 
     fmin=None, fmax=None, **kwargs):
     """Display a spectrogram. Wraps to `~matplotlib.pyplot.imshow` with some handy defaults.
     
@@ -76,7 +76,7 @@ def specshow(X, sr=22050, hop_length=64, x_axis=None, y_axis=None, nx_ticks=5, n
         ax.set_xlim(0, X.shape[1])
 
     # Set up the y ticks
-    y_pos = np.linspace(0, X.shape[0], ny_ticks).astype(int)
+    y_pos = np.linspace(0, X.shape[0], n_yticks).astype(int)
 
     if y_axis is 'linear':
         y_val = np.linspace(0, 0.5 * sr,  X.shape[0] + 1).astype(int)
@@ -116,7 +116,7 @@ def specshow(X, sr=22050, hop_length=64, x_axis=None, y_axis=None, nx_ticks=5, n
         raise ValueError('Unknown y_axis parameter: %s' % y_axis)
 
     # Set up the x ticks
-    x_pos = np.arange(0, X.shape[1]+1, max(1, X.shape[1] / (nx_ticks-1)))
+    x_pos = np.arange(0, X.shape[1]+1, max(1, X.shape[1] / (n_yticks-1)))
 
     if x_axis is 'time':
         # Reformat into seconds, or minutes:seconds
