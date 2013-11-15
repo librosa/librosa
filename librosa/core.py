@@ -274,7 +274,7 @@ def istft(stft_matrix, n_fft=None, hop_length=None, hann_w=None, window=None):
 def ifgram(y, sr=22050, n_fft=256, hop_length=None, win_length=None):
     '''Compute the instantaneous frequency (as a proportion of the sampling rate)
     obtained as the time-derivative of the phase of the complex spectrum as 
-    described by Toshihir Abe et al. in ICASSP'95, Eurospeech'97. Calculates regular
+    described by Toshihiro Abe et al. in ICASSP'95, Eurospeech'97. Calculates regular
     STFT as a side effect.
 
     :parameters:
@@ -314,9 +314,7 @@ def ifgram(y, sr=22050, n_fft=256, hop_length=None, win_length=None):
     dwin = -np.pi * sr / n_fft * np.sin( np.linspace(0, 2 * np.pi, n_fft, endpoint=False))
 
     # Construct output arrays
-    n_specbins = 1 + n_fft / 2
-
-    F = np.zeros((n_specbins, 1 + (num_samples - n_fft) / hop_length))
+    F = np.zeros((1 + n_fft / 2, 1 + (num_samples - n_fft) / hop_length))
     D = np.zeros_like(F, dtype=np.complex)
 
     # FIXME:  2013-11-15 08:20:12 by Brian McFee <brm2132@columbia.edu>
@@ -329,12 +327,12 @@ def ifgram(y, sr=22050, n_fft=256, hop_length=None, win_length=None):
         sample = y[i * hop_length : i * hop_length + n_fft]
 
         # Store the STFT. Conjugate here to match DWPE's matlab code.
-        D[:, i] = fft.fft(window * sample)[:n_specbins].conj()
+        D[:, i] = fft.fft(window * sample)[:D.shape[0]].conj()
 
         # Calculate the instantaneous frequency from phase of differential spectrum
 
         # Compute the fft. Conjugate here is to match DPWE
-        t       = fft.fft(dwin * sample)[:n_specbins].conj()
+        t       = fft.fft(dwin * sample)[:F.shape[0]].conj()
         t       = t - 1.j * ww * D[:, i]
 
         z_t2    = np.abs(D[:, i])**2
