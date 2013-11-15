@@ -316,9 +316,9 @@ function testIFGRAM(output_path)
     for nfft = P_NFFT
         for hop_ratio = P_HOP
             % Test once with no hann window (rectangular)
-            hop_length = round(hop_ratio * nfft);
+            hop_length  = round(hop_ratio * nfft);
+            hann_w      = nfft;
 
-            hann_w = nfft;
             [F, D] = ifgram(y, nfft, hann_w, hop_length, sr);
 
             counter     = counter + 1;
