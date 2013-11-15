@@ -274,8 +274,9 @@ def istft(stft_matrix, n_fft=None, hop_length=None, hann_w=None, window=None):
 def ifgram(y, sr=22050, n_fft=256, hop_length=None, win_length=None):
     '''Compute the instantaneous frequency (as a proportion of the sampling rate)
     obtained as the time-derivative of the phase of the complex spectrum as 
-    described by Toshihiro Abe et al. in ICASSP'95, Eurospeech'97. Calculates regular
-    STFT as a side effect.
+    described by Toshihiro Abe et al. in ICASSP'95, Eurospeech'97. 
+    
+    Calculates regular STFT as a side effect.
 
     :parameters:
       - y       : np.ndarray
@@ -294,6 +295,19 @@ def ifgram(y, sr=22050, n_fft=256, hop_length=None, win_length=None):
           Instantaneous frequency spectrogram
       - D : np.ndarray, dtype=complex
           Short-time fourier transform
+
+    .. note:: The normalization of D differs from that of ``stft`` by a factor of ``n_fft/4``
+
+    .. note::
+        @inproceedings{abe1995harmonics,
+            title={Harmonics tracking and pitch extraction based on instantaneous frequency},
+            author={Abe, Toshihiko and Kobayashi, Takao and Imai, Satoshi},
+            booktitle={Acoustics, Speech, and Signal Processing, 1995. ICASSP-95., 1995 International Conference on},
+            volume={1},
+            pages={756--759},
+            year={1995},
+            organization={IEEE}
+        }
     '''
 
     num_samples = len(y)
@@ -348,7 +362,7 @@ def ifgram(y, sr=22050, n_fft=256, hop_length=None, win_length=None):
 
     # FIXME:  2013-11-15 09:01:22 by Brian McFee <brm2132@columbia.edu>
     # This guy is n_fft/4 smaller than that returned by stft()
-    # does this need to be normalized?  or should we normalize in STFT?
+    # does this need to be normalized?  Or should we normalize in STFT?
 
     # Compensate for windowing effects, store STFT
     # sum(window) takes out integration due to window, 2 compensates for negative
