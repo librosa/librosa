@@ -105,6 +105,26 @@ def test_stft():
         yield (__test, infile)
     pass
 
+def test_ifgram():
+
+    def __test(infile):
+        DATA    = load(infile)
+
+        y, sr   = librosa.load(DATA['wavfile'][0], sr=None, mono=True)
+
+        # Compute the IFgram
+        F, D    = librosa.ifgram(y, n_fft       =   DATA['nfft'][0,0].astype(int),
+                                    hop_length  =   DATA['hop_length'][0,0].astype(int),
+                                    win_length  =   DATA['hann_w'][0,0].astype(int),
+                                    sr          =   DATA['sr'][0,0].astype(int))
+
+        assert numpy.allclose(D, DATA['D'])
+        assert numpy.allclose(F, DATA['F'])
+
+    for infile in files('data/core-ifgram-*.mat'):
+        yield (__test, infile)
+
+    pass
 def test_magphase():
 
     (y, sr) = librosa.load('data/test1_22050.wav')
