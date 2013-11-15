@@ -310,6 +310,8 @@ def ifgram(y, sr=22050, n_fft=256, hop_length=None, win_length=None):
                         (lpad, n_fft - win_length- lpad), 
                         mode='constant')
 
+    window_norm = 2.0 / window.sum()
+
     # Window for discrete differentiation
     dwin = -np.pi * sr / n_fft * np.sin( np.linspace(0, 2 * np.pi, n_fft, endpoint=False))
 
@@ -320,27 +322,29 @@ def ifgram(y, sr=22050, n_fft=256, hop_length=None, win_length=None):
     # FIXME:  2013-11-15 08:20:12 by Brian McFee <brm2132@columbia.edu>
     # rename this variable. looks like angular frequency?
 
-    ww = np.linspace(0, 2 * np.pi * F.shape[0] * sr / n_fft, F.shape[0], endpoint=False)
+    ww = 2 * np.pi * np.arange(n_fft) * sr / n_fft
 
     # Main loop: fill in F and D
     for i in xrange(F.shape[1]):
         sample = y[i * hop_length : i * hop_length + n_fft]
 
+        t1      = fft.fft(fft.fftshift(dwin * sample)).conj()
+        t2      = fft.fft(fft.fftshift(window * sample)).conj()
+
         # Store the STFT. Conjugate here to match DWPE's matlab code.
-        D[:, i] = fft.fft(window * sample)[:D.shape[0]].conj()
+        D[:, i] = t2[:D.shape[0]] * window_norm 
 
         # Calculate the instantaneous frequency from phase of differential spectrum
 
         # Compute the fft. Conjugate here is to match DPWE
-        t       = fft.fft(dwin * sample)[:F.shape[0]].conj()
-        t       = t - 1.j * ww * D[:, i]
+        t       = t1 - 1.j * ww * t2 
 
-        z_t2    = np.abs(D[:, i])**2
+        z_t2    = np.abs(t2)**2
 
         # Compensate for zeros
         z_t2[z_t2 == 0] = 1.0
 
-        F[:, i] = (t.conj() * D[:, i]).imag / (2 * np.pi * z_t2)
+        F[:, i] = ((t.conj() * t2).imag / (2 * np.pi * z_t2))[:F.shape[0]]
 
     # FIXME:  2013-11-15 09:01:22 by Brian McFee <brm2132@columbia.edu>
     # This guy is n_fft/4 smaller than that returned by stft()
@@ -349,7 +353,6 @@ def ifgram(y, sr=22050, n_fft=256, hop_length=None, win_length=None):
     # Compensate for windowing effects, store STFT
     # sum(window) takes out integration due to window, 2 compensates for negative
     # frequency
-    D = D * 2.0 / window.sum()
 
     return F, D
 
