@@ -636,8 +636,10 @@ def isp_ifptrack(y, w, sr, fminl = 150.0, fminu = 300.0, fmaxl = 2000.0, fmaxu =
     maxbin = int(round(fmaxu*float(w)/float(sr)))
   
     # Calculate the inst freq gram
-    [I, S] = isp_ifgram(y, w, w/2, w/4, sr, maxbin)
-  
+#def isp_ifgram(X, N=256, W=256, H=256.0/2.0, sr=1, maxbin=1.0+256.0/2.0):
+#     [I, S] = isp_ifgram(y, w, w/2, w/4, sr, maxbin)
+    [I, S] = librosa.core.ifgram(y, sr=sr, n_fft=w, win_length=w/2, hop_length=w/4)
+
     # Find plateaus in ifgram - stretches where delta IF is < thr
     ddif = I[np.hstack([range(1, maxbin), maxbin-1]), :]-I[np.hstack([0, range(0, maxbin-1)]), :]
 
@@ -706,113 +708,6 @@ def isp_ifptrack(y, w, sr, fminl = 150.0, fminu = 300.0, fmaxl = 2000.0, fmaxu =
 
     return p, m, S
   
-def isp_ifgram(X, N=256, W=256, H=256.0/2.0, sr=1, maxbin=1.0+256.0/2.0):
-    '''Compute the instantaneous frequency (as a proportion of the sampling
-    rate) obtained as the time-derivative of the phase of the complex
-    spectrum as described by Toshihiro Abe et al in ICASSP'95,
-    Eurospeech'97. Calculates regular STFT as side effect.
-
-    :parameters:
-      - X: np.ndarray
-        audio signal
-      - N: int
-        FFT length
-      - W: int
-        window length
-      - H: hop length    
-      - sr : int
-        sampling rate?
-      - fminl, fminu, fmaxu, fmaxl: floats
-        ramps at the edge of sensitivity
-      - maxbin: float
-        The index of the maximum bin needed. If specified, unnecessary
-        computations are skipped.        
-
-    :returns:
-      - F: np.ndarray
-        Instantaneous frequency spectrogram
-       - D: np.ndarray
-        Short time Fourier transform spectrogram               
-    '''
-
-    Flen = maxbin
-    s = X.size
-
-    # Make a Hanning window 
-    win = 0.5*(1-np.cos(np.true_divide(np.arange(W)*2*np.pi, W)))
-
-    # Window for discrete differentiation
-    T = float(W)/float(sr)
-    dwin = (-np.pi/T)*np.sin(np.true_divide(np.arange(W)*2*np.pi, W))
-
-    # sum(win) takes out integration due to window, 2 compensates for neg frq
-    norm = 2/sum(win)
-
-    # How many complete windows?
-    nhops = 1 + int(np.floor((s - W)/H))
-  
-    F = np.zeros((Flen, nhops))
-    D = np.zeros((Flen, nhops), dtype=complex)
-
-    nmw1 = int(np.floor((N-W)/2))
-
-    ww = 2*np.pi*np.arange(Flen)*sr/N
-
-    wu = np.zeros(N)
-    du = np.zeros(N)
-  
-    # Main loop
-    for h in range(nhops):
-        u = X[h*H:(W+h*H)]
-
-        # Pad or truncate samples if N != W
-        # Apply windows now, while the length is right
-        if N >= W:
-            wu[nmw1:(nmw1+W)] = win*u
-            du[nmw1:(nmw1+W)] = dwin*u
-        elif N < W:
-            # Can't make sense of Dan's code here:
-            #wu = win[1-nmw1:N-nmw1]*u[1-nmw1:N-nmw1]
-            #du = dwin[1-nmw1:N-nmw1]*u[1-nmw1:N-nmw1]
-            print 'Error, N must be at least window size'
-
-        # FFTs of straight samples plus differential-weighted ones
-        # Replaced call to fftshift with inline version. Jesper Hjvang Jensen, Aug 2007
-        # t1 = fft(fftshift(du))
-        # t2 = fft(fftshift(wu))
-        split = int(np.ceil(du.size/2.0) + 1)
-      
-        # Need to reverse front and last parts of du and wu      
-        temp_du = np.hstack([du[split-1:], du[0:split-1]])
-        temp_wu = np.hstack([wu[split-1:], wu[0:split-1]])
-      
-        t1 = np.fft.fft(temp_du)
-        t2 = np.fft.fft(temp_wu)
-      
-        t1 = t1[0:Flen]
-        t2 = t2[0:Flen]
-      
-        # Scale down to factor out length & window effects
-        D[:, h] = t2*norm
-      
-        # Calculate instantaneous frequency from phase of differential spectrum
-        t = t1 + 1j*(ww*t2)
-        a = t2.real
-        b = t2.imag
-        da = t.real
-        db = t.imag
-      
-        # split this confusing divsion into chunks!
-        # instf = (1/(2*pi))*(a.*db - b.*da)./((a.*a + b.*b)+(t2==0))
-        num_one = 1.0/(2*np.pi)
-        num_two = (a*db - b*da)
-        denom_one = (a*a + b*b)
-        isz = (t2==0)
-        instf = np.true_divide(num_one*num_two, denom_one+isz.astype(int))
-        F[:, h] = instf
- 
-    return F, D
-
 #-- Mel spectrogram and MFCCs --#
 def mfcc(S=None, y=None, sr=22050, d=20):
     """Mel-frequency cepstral coefficients

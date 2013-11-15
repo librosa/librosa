@@ -271,6 +271,90 @@ def istft(stft_matrix, n_fft=None, hop_length=None, hann_w=None, window=None):
 
     return y
 
+def ifgram(y, sr=22050, n_fft=256, hop_length=None, win_length=None):
+    '''Compute the instantaneous frequency (as a proportion of the sampling rate)
+    obtained as the time-derivative of the phase of the complex spectrum as 
+    described by Toshihir Abe et al. in ICASSP'95, Eurospeech'97. Calculates regular
+    STFT as a side effect.
+
+    :parameters:
+      - y       : np.ndarray
+          audio time series
+      - sr      : int > 0
+          sampling rate
+      - n_fft   : int > 0
+          FFT window size
+      - hop_length : int > 0
+          hop length. If not supplied, defaults to n_fft / 4
+      - win_length : int > 0, <= n_fft
+          hann window length. Defaults to n_fft.
+
+    :returns:
+      - F : np.ndarray, dtype=real
+          Instantaneous frequency spectrogram
+      - D : np.ndarray, dtype=complex
+          Short-time fourier transform
+    '''
+
+    num_samples = len(y)
+
+    if hop_length is None:
+        hop_length = n_fft / 4
+
+    if win_length is None:
+        win_length = n_fft
+
+    # Construct a padded hann window
+    lpad = (n_fft - win_length)/2
+    window = np.pad( scipy.signal.hann(win_length, sym=False), 
+                        (lpad, n_fft - win_length- lpad), 
+                        mode='constant')
+
+    # Window for discrete differentiation
+    dwin = -np.pi * sr / n_fft * np.sin( np.linspace(0, 2 * np.pi, n_fft, endpoint=False))
+
+    # Construct output arrays
+    n_specbins = 1 + n_fft / 2
+
+    F = np.zeros((n_specbins, 1 + (num_samples - n_fft) / hop_length))
+    D = np.zeros_like(F, dtype=np.complex)
+
+    # FIXME:  2013-11-15 08:20:12 by Brian McFee <brm2132@columbia.edu>
+    # rename this variable. looks like angular frequency?
+
+    ww = np.linspace(0, 2 * np.pi * F.shape[0] * sr / n_fft, F.shape[0], endpoint=False)
+
+    # Main loop: fill in F and D
+    for i in xrange(F.shape[1]):
+        sample = y[i * hop_length : i * hop_length + n_fft]
+
+        # Store the STFT. Conjugate here to match DWPE's matlab code.
+        D[:, i] = fft.fft(window * sample)[:n_specbins].conj()
+
+        # Calculate the instantaneous frequency from phase of differential spectrum
+
+        # Compute the fft. Conjugate here is to match DPWE
+        t       = fft.fft(dwin * sample)[:n_specbins].conj()
+        t       = t - 1.j * ww * D[:, i]
+
+        z_t2    = np.abs(D[:, i])**2
+
+        # Compensate for zeros
+        z_t2[z_t2 == 0] = 1.0
+
+        F[:, i] = (t.conj() * D[:, i]).imag / (2 * np.pi * z_t2)
+
+    # FIXME:  2013-11-15 09:01:22 by Brian McFee <brm2132@columbia.edu>
+    # This guy is n_fft/4 smaller than that returned by stft()
+    # does this need to be normalized?  or should we normalize in STFT?
+
+    # Compensate for windowing effects, store STFT
+    # sum(window) takes out integration due to window, 2 compensates for negative
+    # frequency
+    D = D * 2.0 / window.sum()
+
+    return F, D
+
 def logamplitude(S, amin=1e-10, top_db=80.0):
     """Log-scale the amplitude of a spectrogram
 
