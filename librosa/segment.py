@@ -14,11 +14,7 @@ def stack_memory(X, m=2, delay=1):
 
     Each column ``X[:, i]`` is mapped to
 
-    X[:,i] =>   [   X[:, i]
-                    X[:, i - delay]
-                    ...
-                    X[:, i - (m-1)*delay]
-                ]
+    ``X[:,i] ->  [   X[:, i].T, X[:, i - delay].T ...  X[:, i - (m-1)*delay].T ].T``
 
 
     :parameters:
@@ -52,7 +48,7 @@ def stack_memory(X, m=2, delay=1):
 def recurrence_matrix(X, k=5, width=1, metric='sqeuclidean', sym=True):
     '''Compute the binary recurrence matrix from a time-series.
 
-    R[i,j] == True <=> (X[:,i], X[:,j]) are k-nearest-neighbors and \|i-j\| >= width
+    R[i,j] == True <=> (X[:,i], X[:,j]) are k-nearest-neighbors and ||i-j|| >= width
 
     :parameters:
       - X : np.ndarray
@@ -130,7 +126,8 @@ def structure_feature(R, pad=True):
 
     :returns:
       - L : np.ndarray
-          L[i, t] = the recurrence at time `t` with lag `i`.
+          ``L[i, t]`` = the recurrence at time ``t`` with lag ``i``.
+
       .. note:: negative lag values are supported by wrapping to the end of the array.
 
     :raises:
