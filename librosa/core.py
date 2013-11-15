@@ -141,7 +141,7 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest'):
 
     return y_hat
 
-def stft(y, n_fft=256, hann_w=None, hop_length=None, window=None):
+def stft(y, n_fft=256, hop_length=None, hann_w=None, window=None):
     """Short-time fourier transform
 
     :parameters:
@@ -151,13 +151,13 @@ def stft(y, n_fft=256, hann_w=None, hop_length=None, window=None):
       - n_fft       : int
           number of FFT components
 
-      - hann_w      : int
-          The size of Hann window. 
-          If unspecified, defaults to n_fft
-
       - hop_length  : int
           number audio of frames between STFT columns.
           If unspecified, defaults hann_w / 2.
+
+      - hann_w      : int
+          The size of Hann window. 
+          If unspecified, defaults to n_fft
 
       - window      : np.ndarray
           (optional) user-specified window
@@ -205,7 +205,7 @@ def stft(y, n_fft=256, hann_w=None, hop_length=None, window=None):
 
     return stft_matrix
 
-def istft(stft_matrix, n_fft=None, hann_w=None, hop_length=None, window=None):
+def istft(stft_matrix, n_fft=None, hop_length=None, hann_w=None, window=None):
     """
     Inverse short-time fourier transform
 
@@ -217,13 +217,13 @@ def istft(stft_matrix, n_fft=None, hann_w=None, hop_length=None, window=None):
           number of FFT components.
           If unspecified, n_fft is inferred from the shape of stft_matrix.
 
-      - hann_w      : int
-          size of Hann window
-          If unspecified, defaults to the value of n_fft.
-
       - hop_length  : int
           Number of audio frames between STFT columns.
           If unspecified, defaults to hann_w / 2.
+
+      - hann_w      : int
+          size of Hann window
+          If unspecified, defaults to the value of n_fft.
 
       - window      : np.ndarray
           (optional) user-specified window
