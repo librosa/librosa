@@ -14,11 +14,10 @@ def chromagram(y=None, sr=22050, S=None, norm='inf', n_fft=2048, hop_length=512,
       - y          : np.ndarray or None
           audio time series
       - sr         : int
-          audio sampling rate of S
+          audio sampling rate 
       - S          : np.ndarray or None
           spectrogram (STFT magnitude)
-
-      - norm       : {'inf', 1, 2, None}, Ellis Only
+      - norm       : {'inf', 1, 2, None}
           column-wise normalization:
 
              'inf' :  max norm
@@ -28,13 +27,14 @@ def chromagram(y=None, sr=22050, S=None, norm='inf', n_fft=2048, hop_length=512,
              2 :  l_2 norm
              
              None :  do not normalize
-
-      - tuning     : float in [-0.5, 0.5], McVicar Only
-          estimated tuning in cents             
+      - n_fft      : int  > 0
+          FFT window size if working with waveform data
+      - hop_length : int > 0
+          hop length if working with waveform data
 
       - kwargs
-          Parameters to build the chroma filterbank and spectrogram
-          See librosa.filters.chroma() or stft for details.
+          Parameters to build the chroma filterbank.
+          See librosa.filters.chroma() for details.
 
     .. note:: One of either ``S`` or ``y`` must be provided.
           If y is provided, the magnitude spectrogram is computed automatically given
