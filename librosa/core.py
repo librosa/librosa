@@ -205,7 +205,7 @@ def stft(y, n_fft=256, hop_length=None, hann_w=None, window=None):
 
     return stft_matrix
 
-def istft(stft_matrix, n_fft=None, hop_length=None, hann_w=None, window=None):
+def istft(stft_matrix, n_fft=None, hop_length=None, hann_w=None, window=None):  
     """
     Inverse short-time fourier transform
 

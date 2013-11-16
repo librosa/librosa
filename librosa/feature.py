@@ -84,29 +84,6 @@ def chromagram(y=None, sr=22050, S=None, norm='inf', n_fft=2048, hop_length=512,
 
     return raw_chroma / chroma_norm
 
-
-def chromagram_mcvicar(S, sr, beat_times=None, tuning=0.0):
-    # Extract loudness-based chroma
-    # FIXME:  2013-09-25 17:25:12 by Brian McFee <brm2132@columbia.edu>
-    # too many magic numbers here
-    # FIXED: 2013-09-29 11:56 by Matt
-    # Added comments regarding frequencies and resolution
-
-    # extract regular chroma, normalised chroma, sample
-    # times and tuning estimation. Default and suggested 
-    # frequncy range is from A1 (55Hz) to the G# below
-    # A6 (1760Hz). Default resolution factor for the 
-    # constant-Q implementation is 5.
-
-    r_chroma, normal_chroma, s_times, tuning = loudness_chroma(S, sr, 
-                                                    beat_times, 
-                                                    tuning, 
-                                                    fmin=55, 
-                                                    fmax=1660, 
-                                                    resolution_fact=5)
-        
-    return normal_chroma
-
 def loudness_chroma(x, sr, beat_times, tuning, fmin=55.0, fmax=1661.0, 
                     resolution_fact=5):
     """Compute a loudness-based chromagram, for use in chord estimation 
@@ -153,7 +130,6 @@ def loudness_chroma(x, sr, beat_times, tuning, fmin=55.0, fmax=1661.0,
 
     return raw_chroma, normal_chroma, sample_times, tuning   
 
-
 # FIXME:  2013-09-25 17:28:54 by Brian McFee <brm2132@columbia.edu>
 #  this docstring does not describe what the function does
 # FIXED: 2013-09-29 by Matt McVicar. Expanded docstring.
@@ -161,7 +137,7 @@ def cal_hamming_window(sr, fmin=55.0, fmax=1661.0,
                         resolution_fact=5.0, tuning=0.0):
     """Compute hamming windows for use in loudness chroma.
 
-    The constant-Q implimentation used in cCQ_chroma_loudness 
+    The constant-Q implementation used in CQ_chroma_loudness 
     is based in convolution space for efficiency. This means
     that one also needs to compute hamming windows (for
     each frequency the CQT looks for) in the convolution space. 
@@ -558,10 +534,10 @@ def estimate_tuning(d, sr,fftlen=4096,f_ctr=400,f_sd=1.0):
     [p, m, S] = isp_ifptrack(d, fftlen, sr, fminl, fminu, fmaxl, fmaxu)
     
     # nzp = linear index of non-zero sinusoids found.
-    nzp = p.flatten(1)>0
+    nzp = p.flatten(order='f')>0
   
     # Find significantly large magnitudes
-    mflat = m.flatten(1)
+    mflat = m.flatten(order='f')
     gmm = mflat > np.median(mflat[nzp])
   
     # 2. element-multiply large magnitudes with frequencies.
@@ -571,14 +547,14 @@ def estimate_tuning(d, sr,fftlen=4096,f_ctr=400,f_sd=1.0):
     nzp = np.nonzero(nzp)[0]
   
     # 3. convert to octaves
-    pflat = p.flatten(1)
+    pflat = p.flatten(order='f')
   
     # I didn't bother vectorising hz2octs....do it in a loop
     temp_hz = pflat[nzp]
     for i in range(len(temp_hz)):
         temp_hz[i] = librosa.core.hz_to_octs(temp_hz[i])
       
-    Poctsflat = p.flatten(1)  
+    Poctsflat = p.flatten(order='f')  
     Poctsflat[nzp] = temp_hz
     to_count = Poctsflat[nzp]
   

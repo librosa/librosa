@@ -148,3 +148,56 @@ def mel(sr, n_fft, n_mels=40, fmin=0.0, fmax=None, htk=False):
    
     return weights
 
+
+def constantq(sr, n_fft, n_bins=12, fmin=None, fmax=None):
+    """Create a Filterbank matrix to combine FFT bins to form the constant Q
+    transform.
+
+    Based on B. Blankertz, "The Constant Q Transform"
+    http://doc.ml.tu-berlin.de/bbci/material/publications/Bla_constQ.pdf
+
+    :parameters:
+        - sr    : int
+            Sampling rate of the incoming signal.
+        - n_fft : int
+            FFT length to use.
+        - n_bins : int
+            Number of bins per octave.
+        - fmin : float
+            Frequency in Hz of the lowest edge. Defaults to minimum resolution
+            available with sr, n_fft and n_bins.
+        - fmax : float
+            Frequency in Hz of the upper edge. Defaults to ``sr / 2``.
+
+    :returns:
+        - Q : np.ndarray, dtype=complex
+            Complex-valued filter bank for CQT.
+    """
+
+    # Set the upper frequency limit
+    if fmax is None:
+        fmax = sr / 2.0
+
+    # Bin-spacing
+    Q = (2 ** (1.0 / n_bins) - 1)**-1
+
+    # Compute minimum feasible fmin from input parameters
+    if fmin is None:
+        fmin = Q * sr / n_fft
+
+    fmin        = max(fmin, Q * sr / n_fft)
+    n_filters   = np.ceil(n_bins * np.log2(float(fmax) / fmin))
+    
+    CQT         = np.zeros((n_filters, n_fft), dtype=np.complex)
+
+    for k in np.arange(n_filters - 1, -1, -1, dtype=np.float):
+        ilen = np.ceil(Q * sr / (fmin * 2.0**(k / n_bins)))
+
+        # calculate offsets so that kernels are centered 
+        start = (n_fft - ilen - np.mod(ilen, 2)) / 2
+
+        CQT[k, start:start+len] = (np.hamming(ilen) / ilen
+                                        * np.exp(2 * np.pi * 1j * Q * np.linspace(0, 1.0, ilen, endpoint=False)))
+
+    CQT = np.fft.rfft2(CQT, axis=1) / n_fft
+    return CQT 
