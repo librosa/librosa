@@ -155,7 +155,7 @@ def stft(y, n_fft=256, hop_length=None, hann_w=None, window=None):
 
       - hop_length  : int
           number audio of frames between STFT columns.
-          If unspecified, defaults hann_w / 2.
+          If unspecified, defaults hann_w / 4.
 
       - hann_w      : int
           The size of Hann window. 
@@ -190,7 +190,7 @@ def stft(y, n_fft=256, hop_length=None, hann_w=None, window=None):
 
     # Set the default hop, if it's not already specified
     if hop_length is None:
-        hop_length = int(n_fft / 2)
+        hop_length = int(n_fft / 4)
 
     n_specbins  = 1 + int(n_fft / 2)
     n_frames    = 1 + int( (num_samples - n_fft) / hop_length)
@@ -221,7 +221,7 @@ def istft(stft_matrix, n_fft=None, hop_length=None, hann_w=None, window=None):
 
       - hop_length  : int
           Number of audio frames between STFT columns.
-          If unspecified, defaults to hann_w / 2.
+          If unspecified, defaults to hann_w / 4.
 
       - hann_w      : int
           size of Hann window
@@ -259,7 +259,7 @@ def istft(stft_matrix, n_fft=None, hop_length=None, hann_w=None, window=None):
 
     # Set the default hop, if it's not already specified
     if hop_length is None:
-        hop_length = n_fft / 2
+        hop_length = n_fft / 4
 
     y = np.zeros(n_fft + hop_length * (n_frames - 1))
 
