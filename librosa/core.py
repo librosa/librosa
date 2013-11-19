@@ -4,6 +4,8 @@
 import os.path
 import audioread
 
+import re
+
 import numpy as np
 import numpy.fft as fft
 import scipy.signal
@@ -488,6 +490,74 @@ def phase_vocoder(D, rate, hop_length=None):
     return D_r
 
 #-- FREQUENCY UTILITIES AND CONVERTERS--#
+def note_to_midi(note):
+    '''Convert one or more spelled notes to MIDI number(s).
+    
+    Notes may be spelled out with optional accidentals or octave numbers.
+
+    The leading note name is case-insensitive.
+
+    Sharps are indicated with ``#``, flats may be indicated with ``!`` or ``b``.
+
+    For example:
+
+    - ``note_to_midi('C') == 0``
+    - ``note_to_midi('C#3') == 37``
+    - ``note_to_midi('f4') == 53``
+    - ``note_to_midi('Bb-1') == -2``
+    - ``note_to_midi('A!8') == 104``
+
+    :parameters:
+      - note : str or iterable of str
+        One or more note names.
+
+    :returns:
+      - midi : int or list of int
+        Midi note numbers corresponding to inputs.
+    '''
+
+    if not isinstance(note, str):
+        return map(note_to_midi, note)
+    
+    Pmap = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
+    Omap = {'#': 1, '': 0, 'b': -1, '!': -1}
+    
+    try:
+        match = re.match('^(?P<note>[A-Ga-g])(?P<offset>[#b!]?)(?P<octave>[+-]?\d+)$', note)
+        
+        pitch = match.group('note').upper()
+        offset = Omap[match.group('offset')]
+        octave = int(match.group('octave'))
+    except:
+        raise ValueError('Improper note format: %s' % note)
+    
+    return 12 * octave + Pmap[pitch] + offset
+
+def midi_to_note(midi):
+    '''Convert one or more MIDI numbers to note strings.
+
+    MIDI numbers must be integrable.
+
+    Notes will be of the format 'C0', 'C#0', 'D0', ...
+
+    :parameters:
+      - midi : int or iterable of int
+        Midi numbers to convert.
+
+    :returns:
+      - notes : str or iterable of str
+        Strings describing each midi note.
+    '''
+
+    if not isinstance(midi, int):
+        return map(midi_to_note, midi)
+    
+    midi = int(midi)
+    
+    Mmap = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+    
+    return '%s%0d' % (Mmap[midi % 12], midi / 12)
+
 def midi_to_hz( notes ):
     """Get the frequency (Hz) of MIDI note(s)
 
