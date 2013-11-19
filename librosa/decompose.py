@@ -40,7 +40,7 @@ def decompose(X, n_components=None, transformer=None):
     X_new = transformer.fit_transform(X.T)
     return (transformer.components_.T, X_new.T)
 
-def hpss(S, win_P=19, win_H=19, p=0.0):
+def hpss(S, win_P=19, win_H=19, p=1.0):
     """Median-filtering harmonic percussive separation
 
     :parameters:

@@ -84,8 +84,7 @@ def chromagram(y=None, sr=22050, S=None, norm='inf', n_fft=2048, hop_length=512,
 
     return raw_chroma / chroma_norm
 
-def loudness_chroma(x, sr, beat_times, tuning, fmin=55.0, fmax=1661.0, 
-                    resolution_fact=5):
+def loudness_chroma(x, sr, beat_times, tuning, fmin=55.0, fmax=1661.0, resolution_fact=5):
     """Compute a loudness-based chromagram, for use in chord estimation 
 
     :parameters:
@@ -133,8 +132,7 @@ def loudness_chroma(x, sr, beat_times, tuning, fmin=55.0, fmax=1661.0,
 # FIXME:  2013-09-25 17:28:54 by Brian McFee <brm2132@columbia.edu>
 #  this docstring does not describe what the function does
 # FIXED: 2013-09-29 by Matt McVicar. Expanded docstring.
-def cal_hamming_window(sr, fmin=55.0, fmax=1661.0, 
-                        resolution_fact=5.0, tuning=0.0):
+def cal_hamming_window(sr, fmin=55.0, fmax=1661.0, resolution_fact=5.0, tuning=0.0):
     """Compute hamming windows for use in loudness chroma.
 
     The constant-Q implementation used in CQ_chroma_loudness 
@@ -241,8 +239,7 @@ def cal_hamming_window(sr, fmin=55.0, fmax=1661.0,
 # why is this "cal_"? 
 # FIXED: 2013-09-29 by Matt.
 # It was short for 'calculate' ;-) removed here and wherever it's called
-def CQ_chroma_loudness(x, sr, beat_times, hammingK, half_winLenK, freqK, 
-                            refLabel='s', A_weightLabel=1, q_value=0):
+def CQ_chroma_loudness(x, sr, beat_times, hammingK, half_winLenK, freqK, refLabel='s', A_weightLabel=1, q_value=0):
     """Compute a loudness-based chromagram
 
     :parameters:
@@ -472,7 +469,7 @@ def CQ_chroma_loudness(x, sr, beat_times, hammingK, half_winLenK, freqK,
         output_chromagram[i, :] = np.sum(CQ[i::bins, :], 0)
      
     # Normalise
-    for i in range(_chromagram.shape[1]):
+    for i in range(output_chromagram.shape[1]):
         maxCol = np.max(output_chromagram[:, i])
         minCol = np.min(output_chromagram[:, i])
         if (maxCol>minCol):
