@@ -533,7 +533,7 @@ def note_to_midi(note):
     
     return 12 * octave + Pmap[pitch] + offset
 
-def midi_to_note(midi):
+def midi_to_note(midi, octave=True):
     '''Convert one or more MIDI numbers to note strings.
 
     MIDI numbers must be integrable.
@@ -543,6 +543,8 @@ def midi_to_note(midi):
     :parameters:
       - midi : int or iterable of int
         Midi numbers to convert.
+      - octave: boolean
+        If true, include the octave number
 
     :returns:
       - notes : str or iterable of str
@@ -550,13 +552,16 @@ def midi_to_note(midi):
     '''
 
     if not isinstance(midi, int):
-        return map(midi_to_note, midi)
+        return map(lambda x: midi_to_note(x, octave=octave), midi)
     
     midi = int(midi)
     
     Mmap = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
     
-    return '%s%0d' % (Mmap[midi % 12], midi / 12)
+    if octave:
+        return '%s%0d' % (Mmap[midi % 12], midi / 12)
+    else:
+        return Mmap[midi % 12]
 
 def midi_to_hz( notes ):
     """Get the frequency (Hz) of MIDI note(s)
