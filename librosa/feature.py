@@ -58,7 +58,7 @@ def chromagram(y=None, sr=22050, S=None, norm='inf', n_fft=2048, hop_length=512,
     else:
         n_fft       = (S.shape[0] -1 ) * 2
 
-    chromafb = librosa.filters.chroma( sr, n_fft, **kwargs)[:, :S.shape[0]]
+    chromafb = librosa.filters.chroma( sr, n_fft, **kwargs)
 
     # Compute raw chroma
     raw_chroma  = np.dot(chromafb, S)
