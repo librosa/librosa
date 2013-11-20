@@ -104,7 +104,8 @@ def specshow(X, sr=22050, hop_length=64, x_axis=None, y_axis=None, n_xticks=5, n
     
     elif y_axis is 'chroma':
         y_pos = np.arange(0, X.shape[0], max(1, X.shape[0] / 12))
-        y_val = ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#']
+        # Labels start at 9 here because chroma starts at A.
+        y_val = librosa.core.midi_to_note(range(9, 9+12), octave=False)
         plt.yticks(y_pos, y_val)
         plt.ylabel('Note')
     
