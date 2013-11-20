@@ -115,6 +115,10 @@ def test_chromafb():
                                         A440    =   DATA['a440'][0,0],
                                         ctroct  =   DATA['ctroct'][0,0],
                                         octwidth=   octwidth)
+
+        # Our version only returns the real-valued part.
+        # Pad out.
+        wts = numpy.pad(wts, [ (0, 0), (0, DATA['nfft'][0,0]/2 - 1)], mode='constant')
                                 
         assert wts.shape == DATA['wts'].shape
 
