@@ -87,6 +87,10 @@ def test_melfb():
                                     fmin    =   DATA['fmin'][0],
                                     fmax    =   DATA['fmax'][0],
                                     htk     =   DATA['htk'][0])
+
+        # Our version only returns the real-valued part.
+        # Pad out.
+        wts = numpy.pad(wts, [ (0, 0), (0, DATA['nfft'][0]/2 - 1)], mode='constant')
                                 
         assert wts.shape == DATA['wts'].shape
 

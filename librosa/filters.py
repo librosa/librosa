@@ -115,10 +115,8 @@ def mel(sr, n_fft, n_mels=40, fmin=0.0, fmax=None, htk=False):
           use HTK formula instead of Slaney
 
     :returns:
-      - M         : np.ndarray, shape=(n_mels, n_fft)
+      - M         : np.ndarray, shape=(n_mels, 1+ n_fft/2)
           Mel transform matrix
-
-    .. note:: coefficients above 1 + n_fft/2 are set to 0.
 
     """
 
@@ -126,10 +124,10 @@ def mel(sr, n_fft, n_mels=40, fmin=0.0, fmax=None, htk=False):
         fmax = sr / 2.0
 
     # Initialize the weights
-    weights     = np.zeros( (n_mels, n_fft) )
+    size        = 1 + n_fft / 2
+    weights     = np.zeros( (n_mels, size) )
 
     # Center freqs of each FFT bin
-    size        = 1 + n_fft / 2
     fftfreqs    = np.arange( size, dtype=float ) * sr / n_fft
 
     # 'Center freqs' of mel bands - uniformly spaced between limits
@@ -144,6 +142,6 @@ def mel(sr, n_fft, n_mels=40, fmin=0.0, fmax=None, htk=False):
         upper   = (freqs[i+2] - fftfreqs)   / (freqs[i+2] - freqs[i+1])
 
         # .. then intersect them with each other and zero
-        weights[i, :size]   = np.maximum(0, np.minimum(lower, upper)) * enorm[i]
+        weights[i]   = np.maximum(0, np.minimum(lower, upper)) * enorm[i]
    
     return weights
