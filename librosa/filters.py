@@ -56,9 +56,8 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=None):
 
     wts         = np.zeros((n_chroma, n_fft))
 
-    fft_res     = float(sr) / n_fft
-
-    frequencies = np.arange(fft_res, sr, fft_res)
+    # Get the FFT bins, not counting the DC component
+    frequencies = np.linspace(0, sr, n_fft, endpoint=False)[1:]
 
     fftfrqbins  = n_chroma * librosa.core.hz_to_octs(frequencies, A440)
 
