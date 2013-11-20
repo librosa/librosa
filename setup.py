@@ -27,5 +27,6 @@ setup(
         'scipy',
         'scikit-learn',
         'matplotlib',
+        're'
     ],
 )
