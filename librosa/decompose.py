@@ -84,11 +84,11 @@ def hpss(S, win_P=19, win_H=19, p=1.0):
         Mh = (H > P).astype(float)
         Mp = 1 - Mh
     else:
-        zP = P == 0
+        zP = (P == 0)
         P = P ** p
         P[zP] = 0.0
     
-        zH = H == 0
+        zH = (H == 0)
         H = H ** p
         H[zH] = 0.0
 
