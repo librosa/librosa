@@ -49,7 +49,7 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=None):
           Defaults to halfwidth = inf, i.e. flat.
 
     :returns:
-      wts       : ndarray, shape=(n_chroma, n_fft) 
+      wts       : ndarray, shape=(n_chroma, 1 + n_fft / 2) 
           Chroma filter matrix
 
     """
@@ -94,8 +94,7 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=None):
             (n_chroma, 1))
 
     # remove aliasing columns
-    wts[:, (1 + n_fft/2):] = 0.0
-    return wts
+    return wts[:, :(1 + n_fft/2)]
 
 def mel(sr, n_fft, n_mels=40, fmin=0.0, fmax=None, htk=False):
     """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins
