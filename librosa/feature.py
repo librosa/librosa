@@ -753,9 +753,6 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512, **kwarg
     # Build a Mel filter
     mel_basis   = librosa.filters.mel(sr, n_fft, **kwargs)
 
-    # Remove everything past the nyquist frequency
-    mel_basis   = mel_basis[:, :(n_fft/ 2  + 1)]
-    
     return np.dot(mel_basis, S)
 
 #-- miscellaneous utilities --#
