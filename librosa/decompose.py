@@ -10,51 +10,51 @@ import sklearn.decomposition
 import librosa.core
 
 
-def decompose(X, n_components=None, transformer=None):
+def decompose(S, n_components=None, transformer=None):
     """Decompose the feature matrix with non-negative matrix factorization
 
     :parameters:
-        - X : np.ndarray
+        - S : np.ndarray
             feature matrix (d-by-t)
         - n_components : int > 0 or None
             number of components, if None then all d components are used
         - transformer : any instance which implements fit_transform()
             If None, use sklearn.decomposition.NMF by default
             Otherwise, because of scikit-learn convention where the input data
-            is (n_samples, n_features), NMF.fit_transform() should take X.T as
-            input, and returns transformed X_new, where:
-            ``X.T ~= X_new.dot(transformer.components_)``
+            is (n_samples, n_features), NMF.fit_transform() should take S.T as
+            input, and returns transformed S_new, where:
+            ``S.T ~= S_new.dot(transformer.components_)``
             or equivalently:
-            ``X ~= transformer.components_.T.dot(X_new.T)``
+            ``S ~= transformer.components_.T.dot(S_new.T)``
 
     :returns:
         - components: np.ndarray
             dictionary matrix (d-by-n_components)
-        - X_new: np.ndarray
+        - activations: np.ndarray
             transformed matrix/activation matrix (n_components-by-t)
 
     """
 
     if transformer is None:
         transformer = sklearn.decomposition.NMF(n_components=n_components)
-    X_new = transformer.fit_transform(X.T)
-    return (transformer.components_.T, X_new.T)
+    activations = transformer.fit_transform(S.T)
+    return (transformer.components_.T, activations.T)
 
-def hpss(S, win_P=19, win_H=19, p=1.0):
+def hpss(S, kernel_size=19, power=1.0):
     """Median-filtering harmonic percussive separation
 
     :parameters:
       - S : np.ndarray
           input spectrogram. May be real (magnitude) or complex.
 
-      - win_P : int        
-          window size for percussive filter
+      - kernel_size : int or array_like (kernel_harmonic, kernel_percussive)
+          kernel size for the median filters.
+          If scalar, the same size is used for both harmonic and percussive.
+          If array_like, the first value specifies the width of the harmonic filter,
+          and the second value specifies the width of the percussive filter.
 
-      - win_H : int
-          window size for harmonic filter 
-
-      - p : float
-          masking exponent
+      - power : float
+          Exponent for the Wiener filter
 
     :returns:
       - harmonic : np.ndarray
@@ -76,29 +76,36 @@ def hpss(S, win_P=19, win_H=19, p=1.0):
     else:
         phase = 1
 
-    # Compute median filters
-    P = scipy.signal.medfilt2d(S, [win_P, 1])
-    H = scipy.signal.medfilt2d(S, [1, win_H])
-
-    if p == 0:
-        Mh = (H > P).astype(float)
-        Mp = 1 - Mh
+    if np.isscalar(kernel_size):
+        win_harm = kernel_size
+        win_perc = kernel_size
     else:
-        zP = (P == 0)
-        P = P ** p
-        P[zP] = 0.0
+        win_harm = kernel_size[0]
+        win_perc = kernel_size[1]
+
+    # Compute median filters
+    harm = scipy.signal.medfilt2d(S, [1, win_harm])
+    perc = scipy.signal.medfilt2d(S, [win_perc, 1])
+
+    if power == 0:
+        mask_harm = (harm > perc).astype(float)
+        mask_perc = 1 - mask_harm
+    else:
+        zero_perc = (perc == 0)
+        perc = perc ** power
+        perc[zero_perc] = 0.0
     
-        zH = (H == 0)
-        H = H ** p
-        H[zH] = 0.0
+        zero_harm = (harm == 0)
+        harm = harm ** power
+        harm[zero_harm] = 0.0
 
         # Find points where both are zero, equalize
-        H[zH & zP] = 0.5
-        P[zH & zP] = 0.5
+        harm[zero_harm & zero_perc] = 0.5
+        perc[zero_harm & zero_perc] = 0.5
 
         # Compute harmonic mask
-        Mh = H / (H + P)
-        Mp = P / (H + P)
+        mask_harm = harm / (harm + perc)
+        mask_perc = perc / (harm + perc)
 
-    return (Mh * S * phase, Mp * S * phase)
+    return (mask_harm * S * phase, mask_perc * S * phase)
 
