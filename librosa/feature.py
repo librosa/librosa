@@ -682,7 +682,7 @@ def isp_ifptrack(y, w, sr, fminl = 150.0, fminu = 300.0, fmaxl = 2000.0, fmaxu =
     return p, m, S
   
 #-- Mel spectrogram and MFCCs --#
-def mfcc(S=None, y=None, sr=22050, d=20):
+def mfcc(S=None, y=None, sr=22050, n_mfcc=20):
     """Mel-frequency cepstral coefficients
 
     :parameters:
@@ -692,7 +692,7 @@ def mfcc(S=None, y=None, sr=22050, d=20):
           audio time series
       - sr    : int > 0
           audio sampling rate of y
-      - d     : int
+      - n_mfcc: int
           number of MFCCs to return
 
     .. note::
@@ -701,7 +701,7 @@ def mfcc(S=None, y=None, sr=22050, d=20):
         the default parameters of ``melspectrogram``.
 
     :returns:
-      - M     : np.ndarray
+      - M     : np.ndarray 
           MFCC sequence
 
     """
@@ -709,7 +709,7 @@ def mfcc(S=None, y=None, sr=22050, d=20):
     if S is None:
         S = librosa.logamplitude(melspectrogram(y=y, sr=sr))
     
-    return np.dot(librosa.filters.dct(d, S.shape[0]), S)
+    return np.dot(librosa.filters.dct(n_mfcc, S.shape[0]), S)
 
 def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512, **kwargs):
     """Compute a Mel-scaled power spectrogram.
