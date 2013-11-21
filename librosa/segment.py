@@ -9,62 +9,61 @@ import sklearn
 import sklearn.cluster
 import sklearn.feature_extraction
 
-def stack_memory(X, m=2, delay=1):
+def stack_memory(data, n_steps=2, delay=1):
     """Short-term history embedding.
 
-    Each column ``X[:, i]`` is mapped to
+    Each column ``data[:, i]`` is mapped to
 
-    ``X[:,i] ->  [   X[:, i].T, X[:, i - delay].T ...  X[:, i - (m-1)*delay].T ].T``
+    ``data[:,i] ->  [   data[:, i].T, data[:, i - delay].T ...  data[:, i - (n_steps-1)*delay].T ].T``
 
 
     :parameters:
-      - X : np.ndarray
+      - data : np.ndarray
           feature matrix (d-by-t)
-      - m : int > 0
-          embedding dimension
+      - n_steps : int > 0
+          embedding dimension, the number of steps back in time to stack
       - delay : int > 0
           the number of columns to step
 
     :returns:
-      - Xhat : np.ndarray, shape=(d*m, t)
-          X augmented with lagged copies of itself.
+      - data_history : np.ndarray, shape=(d*m, t)
+          data augmented with lagged copies of itself.
           
       .. note:: zeros are padded for the initial columns
 
     """
 
-    d, t = X.shape
-
     # Pad the end with zeros, which will roll to the front below
-    X = np.hstack([X, np.zeros((d, m * delay))])
+    data = np.pad(data, [(0, 0), (0, n_steps * delay)])
 
-    Xhat = X
+    history = data
 
-    for i in range(1, m):
-        Xhat = np.vstack([Xhat, np.roll(X, i * delay, axis=1)])
+    for i in range(1, n_steps):
+        history = np.vstack([history, np.roll(data, i * delay, axis=1)])
 
-    return Xhat[:, :t]
+    # Trim to original width
+    return history[:, :data.shape[1]]
 
-def recurrence_matrix(X, k=5, width=1, metric='sqeuclidean', sym=True):
+def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
     '''Compute the binary recurrence matrix from a time-series.
 
-    R[i,j] == True <=> (X[:,i], X[:,j]) are k-nearest-neighbors and ||i-j|| >= width
+    rec[i,j] == True <=> (data[:,i], data[:,j]) are k-nearest-neighbors and ||i-j|| >= width
 
     :parameters:
-      - X : np.ndarray
+      - data : np.ndarray
           feature matrix (d-by-t)
       - k : int > 0, float in (0, 1)
           if integer, the number of nearest-neighbors.
-          if floating point (eg, 0.05), neighbors = ceil(k * t)
+          Default: ceil(sqrt(t))
       - width : int > 0
-          no not link columns within `width` of each-other
+          do not link columns within `width` of each-other
       - metric : see scipy.spatial.distance.pdist()
           distance metric to use for nearest-neighbor calculation
       - sym : bool
-          if using mode='knn', should we symmetrize the linkages?
+          set sym=True to only link mutual nearest-neighbors
 
     :returns:
-      - R : np.ndarray, shape=(t,t), dtype=bool
+      - rec : np.ndarray, shape=(t,t), dtype=bool
           Binary recurrence matrix
     :raises:
       - ValueError
@@ -72,46 +71,43 @@ def recurrence_matrix(X, k=5, width=1, metric='sqeuclidean', sym=True):
           or if mode is not one of {'knn', 'gaussian'}
     '''
 
-    t = X.shape[1]
+    t = data.shape[1]
 
-    if isinstance(k, float):
-        if 0 < k < 1:
-            k = np.ceil(k * t)
-        else:
-            raise ValueError('Valid values of k are strictly between 0 and 1.')
+    if k is None:
+        k = np.ceil(np.sqrt(t))
 
     def _band_infinite():
         '''Suppress the diagonal+- of a distance matrix'''
-        A       = np.empty( (t, t) )
-        A[:]    = np.inf
-        A[np.triu_indices_from(A, width)] = 0
-        A[np.tril_indices_from(A, -width)] = 0
+        band       = np.empty( (t, t) )
+        band[:]    = np.inf
+        band[np.triu_indices_from(band, width)] = 0
+        band[np.tril_indices_from(band, -width)] = 0
 
-        return A
+        return band
 
     # Build the distance matrix
     D = scipy.spatial.distance.squareform(
-            scipy.spatial.distance.pdist(X.T, metric=metric))
+            scipy.spatial.distance.pdist(data.T, metric=metric))
 
     # Max out the diagonal band
     D = D + _band_infinite()
 
     # build the recurrence plot
 
-    R = np.zeros( (t, t), dtype=bool)
+    rec = np.zeros( (t, t), dtype=bool)
 
     # get the k nearest neighbors for each point
     for i in range(t):
         for j in np.argsort(D[i])[:k]:
-            R[i, j] = True
+            rec[i, j] = True
 
     # symmetrize
     if sym:
-        R = R * R.T
+        rec = rec * rec.T
 
-    return R 
+    return rec
 
-def structure_feature(R, pad=True):
+def structure_feature(rec, pad=True):
     '''Compute the structure feature from a recurrence matrix.
 
     The i'th column of the recurrence matrix is shifted up by i.
@@ -119,35 +115,37 @@ def structure_feature(R, pad=True):
     and vertically by lag.
 
     :parameters:
-      - R   : np.ndarray, shape=(t,t)
+      - rec   : np.ndarray, shape=(t,t)
           recurrence matrix (see `librosa.segment.recurrence_matrix`)
       
       - pad : boolean
 
     :returns:
-      - L : np.ndarray
-          ``L[i, t]`` = the recurrence at time ``t`` with lag ``i``.
+      - struct : np.ndarray
+          ``struct[i, t]`` = the recurrence at time ``t`` with lag ``i``.
 
       .. note:: negative lag values are supported by wrapping to the end of the array.
 
     :raises:
       - ValueError
-          if R is not square
+          if rec is not square
     '''
 
-    t = R.shape[0]
-    if t != R.shape[1]:
-        raise ValueError('R must be a square matrix')
+    t = rec.shape[0]
+    if t != rec.shape[1]:
+        raise ValueError('rec must be a square matrix')
 
     if pad:
-        L = np.vstack( ( R, np.zeros_like(R) ) )
+        # If we don't assume that the signal loops,
+        # stack zeros underneath in the recurrence plot.
+        struct = np.pad(rec, [(0, t), (0, 0)])
     else:
-        L = R.copy()
+        struct = rec.copy()
 
     for i in range(1, t):
-        L[:, i] = np.roll(L[:, i], -i, axis=-1)
+        struct[:, i] = np.roll(struct[:, i], -i, axis=-1)
 
-    return L
+    return struct
 
 def agglomerative(data, k):
     """Bottom-up temporal segmentation
