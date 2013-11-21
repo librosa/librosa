@@ -61,7 +61,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None):
                                 * input_file.channels)
 
 
-        Z = float(1<<15)
+        scale = float(1<<15)
 
         y = []
         n = 0
@@ -92,7 +92,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None):
             y.append(frame)
 
 
-        y = np.concatenate(y) / Z
+        y = np.concatenate(y) / scale
         if input_file.channels > 1:
             if mono:
                 y = 0.5 * (y[::2] + y[1::2])
@@ -169,7 +169,6 @@ def stft(y, n_fft=2048, hop_length=None, hann_w=None, window=None):
           STFT matrix
 
     """
-    num_samples = len(y)
 
     # if there is no user-specified window, construct it
     if window is None:
@@ -193,7 +192,7 @@ def stft(y, n_fft=2048, hop_length=None, hann_w=None, window=None):
         hop_length = int(n_fft / 4)
 
     n_specbins  = 1 + int(n_fft / 2)
-    n_frames    = 1 + int( (num_samples - n_fft) / hop_length)
+    n_frames    = 1 + int( (len(y) - n_fft) / hop_length)
 
     # allocate output array
     stft_matrix = np.empty( (n_specbins, n_frames), dtype=np.complex)
@@ -273,7 +272,7 @@ def istft(stft_matrix, n_fft=None, hop_length=None, hann_w=None, window=None):
 
     return y
 
-def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None):
+def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=True):
     '''Compute the instantaneous frequency (as a proportion of the sampling rate)
     obtained as the time-derivative of the phase of the complex spectrum as 
     described by Toshihiro Abe et al. in ICASSP'95, Eurospeech'97. 
@@ -291,9 +290,11 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None):
           hop length. If not supplied, defaults to n_fft / 4
       - win_length : int > 0, <= n_fft
           hann window length. Defaults to n_fft.
+      - norm : bool
+          Normalize the STFT. 
 
     :returns:
-      - F : np.ndarray, dtype=real
+      - if_gram : np.ndarray, dtype=real
           Instantaneous frequency spectrogram
       - D : np.ndarray, dtype=complex
           Short-time fourier transform
@@ -312,8 +313,6 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None):
         }
     '''
 
-    num_samples = len(y)
-
     if hop_length is None:
         hop_length = n_fft / 4
 
@@ -326,51 +325,44 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None):
                         (lpad, n_fft - win_length - lpad), 
                         mode='constant')
 
-    window_norm = 2.0 / window.sum()
-
     # Window for discrete differentiation
-    dwin = -np.pi * sr / n_fft * np.sin( np.linspace(0, 2 * np.pi, n_fft, endpoint=False))
+    freq_angular    = np.linspace(0, 2 * np.pi, n_fft, endpoint=False)
+    d_window        = -np.pi * np.sin( freq_angular ) / n_fft
 
     # Construct output arrays
-    F = np.zeros((1 + n_fft / 2, 1 + (num_samples - n_fft) / hop_length))
-    D = np.zeros_like(F, dtype=np.complex)
+    if_gram = np.zeros((1 + n_fft / 2, 1 + (len(y) - n_fft) / hop_length))
+    D       = np.zeros_like(if_gram, dtype=np.complex)
 
-    # FIXME:  2013-11-15 08:20:12 by Brian McFee <brm2132@columbia.edu>
-    # rename this variable. looks like angular frequency?
+    # Main loop: fill in if_gram and D
+    for i in xrange(D.shape[1]):
+        sample = i * hop_length
 
-    ww = 2 * np.pi * np.arange(n_fft) * sr / n_fft
+        #-- Store the STFT
+        # Conjugate here to match DWPE's matlab code.
+        # Aside from the shifting, this should match against stft()
+        frame   = fft.fft(fft.fftshift(window * y[sample:(sample + n_fft)])).conj()
+        D[:, i] = frame[:D.shape[0]]
 
-    # Main loop: fill in F and D
-    for i in xrange(F.shape[1]):
-        sample = y[i * hop_length : i * hop_length + n_fft]
+        
+        #-- Calculate the instantaneous frequency 
+        # phase of differential spectrum
+        d_frame = fft.fft(fft.fftshift(d_window * y[sample:(sample + n_fft)])).conj()
 
-        t1      = fft.fft(fft.fftshift(dwin * sample)).conj()
-        t2      = fft.fft(fft.fftshift(window * sample)).conj()
+        t       = d_frame - 1.j * freq_angular * frame 
 
-        # Store the STFT. Conjugate here to match DWPE's matlab code.
-        D[:, i] = t2[:D.shape[0]] * window_norm 
+        # Compute power per bin
+        power               = np.abs(frame)**2
+        power[power == 0]   = 1.0
 
-        # Calculate the instantaneous frequency from phase of differential spectrum
-
-        # Compute the fft. Conjugate here is to match DPWE
-        t       = t1 - 1.j * ww * t2 
-
-        z_t2    = np.abs(t2)**2
-
-        # Compensate for zeros
-        z_t2[z_t2 == 0] = 1.0
-
-        F[:, i] = ((t.conj() * t2).imag / (2 * np.pi * z_t2))[:F.shape[0]]
-
-    # FIXME:  2013-11-15 09:01:22 by Brian McFee <brm2132@columbia.edu>
-    # This guy is n_fft/4 smaller than that returned by stft()
-    # does this need to be normalized?  Or should we normalize in STFT?
+        if_gram[:, i] = (sr * (t.conj() * frame).imag / (2 * np.pi * power))[:if_gram.shape[0]]
 
     # Compensate for windowing effects, store STFT
     # sum(window) takes out integration due to window, 2 compensates for negative
     # frequency
+    if norm:
+        D = D * 2.0 / window.sum()
 
-    return F, D
+    return if_gram, D
 
 def logamplitude(S, amin=1e-10, top_db=80.0):
     """Log-scale the amplitude of a spectrogram
@@ -391,12 +383,12 @@ def logamplitude(S, amin=1e-10, top_db=80.0):
 
     """
 
-    log_S   =   10.0 * np.log10(np.maximum(amin, np.abs(S)))
+    log_spec   =   10.0 * np.log10(np.maximum(amin, np.abs(S)))
 
     if top_db is not None:
-        log_S = np.maximum(log_S, log_S.max() - top_db)
+        log_spec = np.maximum(log_spec, log_spec.max() - top_db)
 
-    return log_S
+    return log_spec
 
 def magphase(D):
     """Separate a complex-valued spectrogram D into its magnitude (S)
@@ -407,17 +399,17 @@ def magphase(D):
           input complex-valued spectrogram
 
     :returns:
-      - S       : np.ndarray, dtype=real
+      - D_mag   : np.ndarray, dtype=real
           magnitude of D
-      - P       : np.ndarray, dtype=complex
+      - D_phase : np.ndarray, dtype=complex
           exp(1.j * phi) where phi is the phase of D
 
     """
 
-    S = np.abs(D)
-    P = np.exp(1.j * np.angle(D))
+    mag   = np.abs(D)
+    phase = np.exp(1.j * np.angle(D))
 
-    return S, P
+    return mag, phase
 
 def phase_vocoder(D, rate, hop_length=None):
     """Phase vocoder.  Given an STFT matrix D, time-stretch by a 
@@ -429,7 +421,7 @@ def phase_vocoder(D, rate, hop_length=None):
       - rate    :  float, positive
           time-stretch factor
       - hop_length : int or None
-        hop length of D.  If None, defaults to 2*(D.shape[0]-1)/4
+        hop length of D.  If None, defaults to n_fft/4 = (D.shape[0]-1)/2
 
     :returns:
       - D_stretched  : np.ndarray, dtype=complex
@@ -454,40 +446,38 @@ def phase_vocoder(D, rate, hop_length=None):
     time_steps = np.arange(0, D.shape[1], rate, dtype=np.float)
     
     # Create an empty output array
-    D_r = np.zeros((D.shape[0], len(time_steps)), D.dtype)
+    d_stretch = np.zeros((D.shape[0], len(time_steps)), D.dtype)
     
     # Expected phase advance in each bin
-    dphi = (2 * np.pi * hop_length * 
-                np.arange(D.shape[0], dtype=np.float) / n_fft)
-    
+    phi_advance = np.linspace(0, np.pi * hop_length, D.shape[0])
+
     # Phase accumulator; initialize to the first sample
     phase_acc = np.angle(D[:, 0])
     
-    # Pad an extra 0 column to simplify boundary logic
-    D = np.hstack( (D, np.zeros((D.shape[0], 2), dtype=D.dtype)))
+    # Pad 0 columns to simplify boundary logic
+    D = np.pad(D, [(0, 0), (0, 2)])
 
-    idx = np.array([0, 1], dtype=np.int)
     for (t, step) in enumerate(time_steps):
         
-        D_cols = D[:, int(step) + idx]
+        columns  = D[:, int(step):int(step + 2)]
         
-        # Weighting for magnitude interpolation
-        tf     = step - int(step)
-        D_mag  = (1.0-tf) * np.abs(D_cols[:, 0]) + tf * np.abs(D_cols[:, 1])
-        
-        # Compute phase advance
-        dp     = np.angle(D_cols[:, 1]) - np.angle(D_cols[:, 0]) - dphi
-        
-        # Wrap to -pi:pi range
-        dp     = dp - 2*np.pi * np.round(dp / (2*np.pi))
+        # Weighting for linear magnitude interpolation
+        alpha   = np.mod(step, 1.0)
+        mag   = (1.0 - alpha) * np.abs(columns[:, 0]) + alpha * np.abs(columns[:, 1])
         
         # Store to output array
-        D_r[:, t] = D_mag * np.exp(1.j * phase_acc)
+        d_stretch[:, t] = mag * np.exp(1.j * phase_acc)
+
+        # Compute phase advance
+        dphase  = np.angle(columns[:, 1]) - np.angle(columns[:, 0]) - phi_advance
+        
+        # Wrap to -pi:pi range
+        dphase  = dphase - 2*np.pi * np.round(dphase / (2*np.pi))
         
         # Accumulate phase
-        phase_acc = phase_acc + dphi + dp
+        phase_acc += phi_advance + dphase
     
-    return D_r
+    return d_stretch
 
 #-- FREQUENCY UTILITIES AND CONVERTERS--#
 def note_to_midi(note):
@@ -519,19 +509,19 @@ def note_to_midi(note):
     if not isinstance(note, str):
         return np.array(map(note_to_midi, note))
     
-    Pmap = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
-    Omap = {'#': 1, '': 0, 'b': -1, '!': -1}
+    pitch_map   = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
+    acc_map     = {'#': 1, '': 0, 'b': -1, '!': -1}
     
     try:
         match = re.match(r'^(?P<note>[A-Ga-g])(?P<offset>[#b!]?)(?P<octave>[+-]?\d+)$', note)
         
         pitch = match.group('note').upper()
-        offset = Omap[match.group('offset')]
+        offset = acc_map[match.group('offset')]
         octave = int(match.group('octave'))
     except:
         raise ValueError('Improper note format: %s' % note)
     
-    return 12 * octave + Pmap[pitch] + offset
+    return 12 * octave + pitch_map[pitch] + offset
 
 def midi_to_note(midi, octave=True, cents=False):
     '''Convert one or more MIDI numbers to note strings.
@@ -557,12 +547,12 @@ def midi_to_note(midi, octave=True, cents=False):
     if not np.isscalar(midi):
         return map(lambda x: midi_to_note(x, octave=octave, cents=cents), midi)
     
+    note_map    = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+
     note_num    = int(np.round(midi))
     note_cents  = int(100 * np.around(midi - note_num, 2))
 
-    Mmap = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
-    
-    note = Mmap[note_num % 12]
+    note        = note_map[note_num % 12]
 
     if octave:
         note = '%s%0d' % (note, note_num / 12)
