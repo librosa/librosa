@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 import librosa.core
 
-def specshow(X, sr=22050, hop_length=64, x_axis=None, y_axis=None, n_xticks=5, n_yticks=5, 
+def specshow(X, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=5, n_yticks=5, 
     fmin=None, fmax=None, **kwargs):
     """Display a spectrogram. Wraps to `~matplotlib.pyplot.imshow` with some handy defaults.
     
