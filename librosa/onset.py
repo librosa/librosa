@@ -107,7 +107,7 @@ def onset_strength(y=None, sr=22050, S=None, **kwargs):
         if y is None:
             raise ValueError('One of "S" or "y" must be provided.')
 
-        S   = librosa.feature.melspectrogram(y, sr=sr, **kwargs)
+        S   = librosa.feature.melspectrogram(y=y, sr=sr, **kwargs)
 
         # Convert to dBs
         S   = librosa.core.logamplitude(S)
