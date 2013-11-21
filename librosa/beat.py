@@ -191,9 +191,9 @@ def __beat_tracker(onsets, bpm, fft_res, tightness, trim):
     def normalize_onsets(onsets):
         '''Maps onset strength function into the range [0, 1]'''
 
-        z = onsets.std(ddof=1)
-        if z > 0:
-            onsets = onsets / z
+        norm = onsets.std(ddof=1)
+        if norm > 0:
+            onsets = onsets / norm
         return onsets
 
     #--- End of helper functions ---#
