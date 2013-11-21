@@ -7,12 +7,12 @@ import matplotlib.pyplot as plt
 
 import librosa.core
 
-def specshow(X, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=5, n_yticks=5, 
+def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=5, n_yticks=5, 
     fmin=None, fmax=None, **kwargs):
     """Display a spectrogram. Wraps to `~matplotlib.pyplot.imshow` with some handy defaults.
     
     :parameters:
-      - X : np.ndarray
+      - data : np.ndarray
           Matrix to display (eg, spectrogram)
 
       - sr : int > 0
@@ -56,37 +56,37 @@ def specshow(X, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=5, 
     #  not properly setting hooks for color: drawing twice enables things like
     #  colorbar() to work properly.
 
-    axes = plt.imshow(X, **kwargs)
+    axes = plt.imshow(data, **kwargs)
 
     if y_axis is 'log':
-        ax = plt.gca()
+        axes_phantom = plt.gca()
 
         # Non-uniform imshow doesn't like aspect
         del kwargs['aspect']
-        im   = img.NonUniformImage(ax, **kwargs)
+        im_phantom   = img.NonUniformImage(axes_phantom, **kwargs)
 
-        y_log = (X.shape[0] - np.logspace( 0, np.log2( X.shape[0] ), X.shape[0], base=2.0))[::-1]
+        y_log = (data.shape[0] - np.logspace( 0, np.log2( data.shape[0] ), data.shape[0], base=2.0))[::-1]
         y_inv = np.arange(len(y_log)+1)
         for i in range(len(y_log)-1):
             y_inv[y_log[i]:y_log[i+1]] = i
 
-        im.set_data( np.arange(0, X.shape[1]), y_log, X)
-        ax.images.append(im)
-        ax.set_ylim(0, X.shape[0])
-        ax.set_xlim(0, X.shape[1])
+        im_phantom.set_data( np.arange(0, data.shape[1]), y_log, data)
+        axes_phantom.images.append(im_phantom)
+        axes_phantom.set_ylim(0, data.shape[0])
+        axes_phantom.set_xlim(0, data.shape[1])
 
     # Set up the y ticks
-    y_pos = np.asarray(np.linspace(0, X.shape[0], n_yticks), dtype=int)
+    y_pos = np.asarray(np.linspace(0, data.shape[0], n_yticks), dtype=int)
 
     if y_axis is 'linear':
-        y_val = np.asarray(np.linspace(0, 0.5 * sr,  X.shape[0] + 1), dtype=int)
+        y_val = np.asarray(np.linspace(0, 0.5 * sr,  data.shape[0] + 1), dtype=int)
 
         plt.yticks(y_pos, y_val[y_pos])
         plt.ylabel('Hz')
     
     elif y_axis is 'log':
     
-        y_val = np.asarray(np.linspace(0, 0.5 * sr,  X.shape[0] + 1), dtype=int)
+        y_val = np.asarray(np.linspace(0, 0.5 * sr,  data.shape[0] + 1), dtype=int)
         plt.yticks(y_pos, y_val[y_inv[y_pos]])
     
         plt.ylabel('Hz')
@@ -98,12 +98,12 @@ def specshow(X, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=5, 
         if fmax is not None:
             m_args['fmax'] = fmax
 
-        y_val = librosa.core.mel_frequencies(X.shape[0], **m_args)[y_pos].astype(np.int)
+        y_val = librosa.core.mel_frequencies(data.shape[0], **m_args)[y_pos].astype(np.int)
         plt.yticks(y_pos, y_val)
         plt.ylabel('Hz')
     
     elif y_axis is 'chroma':
-        y_pos = np.arange(0, X.shape[0], max(1, X.shape[0] / 12))
+        y_pos = np.arange(0, data.shape[0], max(1, data.shape[0] / 12))
         # Labels start at 9 here because chroma starts at A.
         y_val = librosa.core.midi_to_note(range(9, 9+12), octave=False)
         plt.yticks(y_pos, y_val)
@@ -117,7 +117,7 @@ def specshow(X, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=5, 
         raise ValueError('Unknown y_axis parameter: %s' % y_axis)
 
     # Set up the x ticks
-    x_pos = np.asarray(np.linspace(0, X.shape[1], n_xticks), dtype=int)
+    x_pos = np.asarray(np.linspace(0, data.shape[1], n_xticks), dtype=int)
 
     if x_axis is 'time':
         # Reformat into seconds, or minutes:seconds
