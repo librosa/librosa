@@ -759,6 +759,26 @@ def frames_to_time(frames, sr=22050, hop_length=128):
     """
     return (frames * hop_length) / float(sr)
 
+def time_to_frames(times, sr=22050, hop_length=128):
+    """Converts time stamps into STFT frames.
+
+    :parameters:
+      - times : np.ndarray
+          vector of time stamps
+
+      - sr : int > 0
+          Audio sampling rate
+
+      - hop_length : int > 0
+          Hop length of FFT.
+
+    :returns:
+      - frames : np.ndarray, dtype=int
+          Frame numbers corresponding to the given times:
+          ``frames[i] = floor( times[i] * sr / hop_length )``
+    """
+    return np.floor(times * np.float(sr) / hop_length).astype(int)
+
 def autocorrelate(y, max_size=None):
     """Bounded auto-correlation
 
