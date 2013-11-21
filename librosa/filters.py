@@ -4,28 +4,28 @@
 import numpy as np
 import librosa.core
 
-def dct(n_filts, d):
+def dct(n_filts, n_input):
     """Discrete cosine transform basis
 
     :parameters:
       - n_filts   : int
           number of output components
-      - d         : int
+      - n_input   : int
           number of input components
 
     :returns:
-      - D         : np.ndarray, shape=(n_filts, d)
+      - D         : np.ndarray, shape=(n_filts, n_input)
           DCT basis vectors
 
     """
 
-    basis       = np.empty((n_filts, d))
-    basis[0, :] = 1.0 / np.sqrt(d)
+    basis       = np.empty((n_filts, n_input))
+    basis[0, :] = 1.0 / np.sqrt(n_input)
 
-    samples     = np.arange(1, 2*d, 2) * np.pi / (2.0 * d)
+    samples     = np.arange(1, 2*n_input, 2) * np.pi / (2.0 * n_input)
 
     for i in xrange(1, n_filts):
-        basis[i, :] = np.cos(i*samples) * np.sqrt(2.0/d)
+        basis[i, :] = np.cos(i*samples) * np.sqrt(2.0/n_input)
 
     return basis
 
