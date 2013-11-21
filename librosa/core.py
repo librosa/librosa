@@ -143,7 +143,7 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest'):
 
     return y_hat
 
-def stft(y, n_fft=256, hop_length=None, hann_w=None, window=None):
+def stft(y, n_fft=2048, hop_length=None, hann_w=None, window=None):
     """Short-time fourier transform
 
     :parameters:
@@ -273,7 +273,7 @@ def istft(stft_matrix, n_fft=None, hop_length=None, hann_w=None, window=None):
 
     return y
 
-def ifgram(y, sr=22050, n_fft=256, hop_length=None, win_length=None):
+def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None):
     '''Compute the instantaneous frequency (as a proportion of the sampling rate)
     obtained as the time-derivative of the phase of the complex spectrum as 
     described by Toshihiro Abe et al. in ICASSP'95, Eurospeech'97. 
@@ -323,7 +323,7 @@ def ifgram(y, sr=22050, n_fft=256, hop_length=None, win_length=None):
     # Construct a padded hann window
     lpad = (n_fft - win_length)/2
     window = np.pad( scipy.signal.hann(win_length, sym=False), 
-                        (lpad, n_fft - win_length- lpad), 
+                        (lpad, n_fft - win_length - lpad), 
                         mode='constant')
 
     window_norm = 2.0 / window.sum()
@@ -738,7 +738,7 @@ def mel_frequencies(n_mels=40, fmin=0.0, fmax=11025.0, htk=False):
     return  mel_to_hz(mels, htk=htk)
 
 #-- UTILITIES --#
-def frames_to_time(frames, sr=22050, hop_length=128):
+def frames_to_time(frames, sr=22050, hop_length=512):
     """Converts frame counts to time (seconds)
 
     :parameters:
@@ -759,7 +759,7 @@ def frames_to_time(frames, sr=22050, hop_length=128):
     """
     return (frames * hop_length) / float(sr)
 
-def time_to_frames(times, sr=22050, hop_length=128):
+def time_to_frames(times, sr=22050, hop_length=512):
     """Converts time stamps into STFT frames.
 
     :parameters:
