@@ -523,7 +523,7 @@ def note_to_midi(note):
     Omap = {'#': 1, '': 0, 'b': -1, '!': -1}
     
     try:
-        match = re.match('^(?P<note>[A-Ga-g])(?P<offset>[#b!]?)(?P<octave>[+-]?\d+)$', note)
+        match = re.match(r'^(?P<note>[A-Ga-g])(?P<offset>[#b!]?)(?P<octave>[+-]?\d+)$', note)
         
         pitch = match.group('note').upper()
         offset = Omap[match.group('offset')]
