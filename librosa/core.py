@@ -282,27 +282,32 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=True)
     :parameters:
       - y       : np.ndarray
           audio time series
+
       - sr      : int > 0
           sampling rate
+
       - n_fft   : int > 0
           FFT window size
+
       - hop_length : int > 0
           hop length. If not supplied, defaults to n_fft / 4
+
       - win_length : int > 0, <= n_fft
           hann window length. Defaults to n_fft.
+
       - norm : bool
           Normalize the STFT. 
 
     :returns:
       - if_gram : np.ndarray, dtype=real
           Instantaneous frequency spectrogram
+
       - D : np.ndarray, dtype=complex
           Short-time fourier transform
 
-    .. note:: The normalization of D differs from that of ``stft`` by a factor of ``n_fft/4``
-
     .. note::
-        @inproceedings{abe1995harmonics,
+
+      @inproceedings{abe1995harmonics,
             title={Harmonics tracking and pitch extraction based on instantaneous frequency},
             author={Abe, Toshihiko and Kobayashi, Takao and Imai, Satoshi},
             booktitle={Acoustics, Speech, and Signal Processing, 1995. ICASSP-95., 1995 International Conference on},
@@ -310,7 +315,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=True)
             pages={756--759},
             year={1995},
             organization={IEEE}
-        }
+            }
     '''
 
     if hop_length is None:
