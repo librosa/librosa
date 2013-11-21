@@ -512,12 +512,12 @@ def note_to_midi(note):
         One or more note names.
 
     :returns:
-      - midi : int or list of int
+      - midi : int or np.array
         Midi note numbers corresponding to inputs.
     '''
 
     if not isinstance(note, str):
-        return map(note_to_midi, note)
+        return np.array(map(note_to_midi, note))
     
     Pmap = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
     Omap = {'#': 1, '': 0, 'b': -1, '!': -1}
@@ -533,10 +533,10 @@ def note_to_midi(note):
     
     return 12 * octave + Pmap[pitch] + offset
 
-def midi_to_note(midi, octave=True):
+def midi_to_note(midi, octave=True, cents=False):
     '''Convert one or more MIDI numbers to note strings.
 
-    MIDI numbers must be integrable.
+    MIDI numbers will be rounded to the nearest integer.
 
     Notes will be of the format 'C0', 'C#0', 'D0', ...
 
@@ -545,23 +545,31 @@ def midi_to_note(midi, octave=True):
         Midi numbers to convert.
       - octave: boolean
         If true, include the octave number
+      - cents: boolean
+        If true, cent markers will be appended for fractional notes.
+        Eg, ``midi_to_note(69.3, cents=True)`` == ``A5+03``
 
     :returns:
       - notes : str or iterable of str
         Strings describing each midi note.
     '''
 
-    if not isinstance(midi, int):
-        return map(lambda x: midi_to_note(x, octave=octave), midi)
+    if not np.isscalar(midi):
+        return map(lambda x: midi_to_note(x, octave=octave, cents=cents), midi)
     
-    midi = int(midi)
-    
+    note_num    = int(np.round(midi))
+    note_cents  = int(100 * np.around(midi - note_num, 2))
+
     Mmap = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
     
+    note = Mmap[note_num % 12]
+
     if octave:
-        return '%s%0d' % (Mmap[midi % 12], midi / 12)
-    else:
-        return Mmap[midi % 12]
+        note = '%s%0d' % (note, note_num / 12)
+    if cents:
+        note = '%s%+02d' % (note, note_cents)
+
+    return note
 
 def midi_to_hz( notes ):
     """Get the frequency (Hz) of MIDI note(s)
