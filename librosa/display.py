@@ -51,7 +51,7 @@ def specshow(X, sr=22050, hop_length=64, x_axis=None, y_axis=None, n_xticks=5, n
 
     kwargs['cmap']          = kwargs.get('cmap',            'OrRd')
 
-    # FIXME:  2013-11-14 16:15:33 by Brian McFee <brm2132@columbia.edu>
+    # NOTE:  2013-11-14 16:15:33 by Brian McFee <brm2132@columbia.edu>
     #  We draw the image twice here. This is a hack to get around NonUniformImage
     #  not properly setting hooks for color: drawing twice enables things like
     #  colorbar() to work properly.
@@ -76,17 +76,17 @@ def specshow(X, sr=22050, hop_length=64, x_axis=None, y_axis=None, n_xticks=5, n
         ax.set_xlim(0, X.shape[1])
 
     # Set up the y ticks
-    y_pos = np.linspace(0, X.shape[0], n_yticks).astype(int)
+    y_pos = np.asarray(np.linspace(0, X.shape[0], n_yticks), dtype=int)
 
     if y_axis is 'linear':
-        y_val = np.linspace(0, 0.5 * sr,  X.shape[0] + 1).astype(int)
+        y_val = np.asarray(np.linspace(0, 0.5 * sr,  X.shape[0] + 1), dtype=int)
 
         plt.yticks(y_pos, y_val[y_pos])
         plt.ylabel('Hz')
     
     elif y_axis is 'log':
     
-        y_val = np.linspace(0, 0.5 * sr,  X.shape[0] + 1).astype(int)
+        y_val = np.asarray(np.linspace(0, 0.5 * sr,  X.shape[0] + 1), dtype=int)
         plt.yticks(y_pos, y_val[y_inv[y_pos]])
     
         plt.ylabel('Hz')
@@ -117,18 +117,23 @@ def specshow(X, sr=22050, hop_length=64, x_axis=None, y_axis=None, n_xticks=5, n
         raise ValueError('Unknown y_axis parameter: %s' % y_axis)
 
     # Set up the x ticks
-    x_pos = np.linspace(0, X.shape[1], n_xticks).astype(int)
+    x_pos = np.asarray(np.linspace(0, X.shape[1], n_xticks), dtype=int)
 
     if x_axis is 'time':
         # Reformat into seconds, or minutes:seconds
-        x_val = x_pos * (hop_length / np.float(sr))
+        x_val = librosa.core.frames_to_time(x_pos, sr=sr, hop_length=hop_length)
 
         if max(x_val) > 3600.0:
             # reformat into hours:minutes:seconds
-            x_val = map(lambda y: '%d:%02d:%02d' % (int(y / 3600), int(np.mod(y, 3600)), int(np.mod(y, 60))), x_val)
+            x_val = map(lambda y: '%d:%02d:%02d' % (int(y / 3600), 
+                                                    int(np.mod(y, 3600)), 
+                                                    int(np.mod(y, 60))), 
+                                                    x_val)
         elif max(x_val) > 60.0:
             # reformat into minutes:seconds
-            x_val = map(lambda y: '%d:%02d' % (int(y / 60), int(np.mod(y, 60))), x_val)
+            x_val = map(lambda y: '%d:%02d' % ( int(y / 60), 
+                                                int(np.mod(y, 60))), 
+                                                x_val)
         else:
             # reformat into seconds, down to the millisecond
             x_val = np.around(x_val, 3)
