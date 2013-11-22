@@ -34,7 +34,7 @@ def stack_memory(data, n_steps=2, delay=1):
     """
 
     # Pad the end with zeros, which will roll to the front below
-    data = np.pad(data, [(0, 0), (0, n_steps * delay)])
+    data = np.pad(data, [(0, 0), (0, n_steps * delay)], mode='constant')
 
     history = data
 
@@ -138,7 +138,7 @@ def structure_feature(rec, pad=True):
     if pad:
         # If we don't assume that the signal loops,
         # stack zeros underneath in the recurrence plot.
-        struct = np.pad(rec, [(0, t), (0, 0)])
+        struct = np.pad(rec, [(0, t), (0, 0)], mode='constant')
     else:
         struct = rec.copy()
 
