@@ -49,7 +49,11 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
     kwargs['origin']        = kwargs.get('origin',          'lower')
     kwargs['interpolation'] = kwargs.get('interpolation',   'nearest')
 
-    kwargs['cmap']          = kwargs.get('cmap',            'OrRd')
+    # Determine the colormap automatically
+    if (data < 0).any() and (data > 0).any():
+        kwargs['cmap']          = kwargs.get('cmap',            'RdGy_r')
+    else:
+        kwargs['cmap']          = kwargs.get('cmap',            'OrRd')
 
     # NOTE:  2013-11-14 16:15:33 by Brian McFee <brm2132@columbia.edu>
     #  We draw the image twice here. This is a hack to get around NonUniformImage
