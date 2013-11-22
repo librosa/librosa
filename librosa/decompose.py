@@ -40,7 +40,7 @@ def decompose(S, n_components=None, transformer=None):
     activations = transformer.fit_transform(S.T)
     return (transformer.components_.T, activations.T)
 
-def hpss(S, kernel_size=19, power=1.0):
+def hpss(S, kernel_size=19, power=1.0, mask=False):
     """Median-filtering harmonic percussive separation
 
     :parameters:
@@ -56,12 +56,15 @@ def hpss(S, kernel_size=19, power=1.0):
       - power : float
           Exponent for the Wiener filter
 
+      - mask : boolean
+          Return the masking matrices instead of components
+
     :returns:
       - harmonic : np.ndarray
-          harmonic component
+          harmonic component (or mask)
 
       - percussive : np.ndarray
-          percussive component
+          percussive component (or mask)
 
       .. note:: harmonic + percussive = S
 
@@ -87,9 +90,11 @@ def hpss(S, kernel_size=19, power=1.0):
     harm = scipy.signal.medfilt2d(S, [1, win_harm])
     perc = scipy.signal.medfilt2d(S, [win_perc, 1])
 
-    if power == 0:
+    if mask or power == 0:
         mask_harm = (harm > perc).astype(float)
         mask_perc = 1 - mask_harm
+        if mask: 
+            return mask_harm, mask_perc
     else:
         zero_perc = (perc == 0)
         perc = perc ** power

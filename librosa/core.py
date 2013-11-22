@@ -306,7 +306,8 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=True)
 
     :returns:
       - if_gram : np.ndarray, dtype=real
-          Instantaneous frequency spectrogram
+          Instantaneous frequency spectrogram:
+          if_gram[f, t] is the frequency at bin f, time t
 
       - D : np.ndarray, dtype=complex
           Short-time fourier transform
