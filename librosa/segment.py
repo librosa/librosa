@@ -74,7 +74,7 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
     t = data.shape[1]
 
     if k is None:
-        k = np.ceil(np.sqrt(t))
+        k = np.ceil(np.sqrt(t - 2 * width + 1))
 
     def _band_infinite():
         '''Suppress the diagonal+- of a distance matrix'''
