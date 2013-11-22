@@ -21,7 +21,7 @@ except ImportError:
 
 
 #-- CORE ROUTINES --#
-def load(path, sr=22050, mono=True, offset=0.0, duration=None):
+def load(path, sr=22050, mono=True, offset=0.0, duration=None, double=False):
     """Load an audio file as a floating point time series.
 
     :parameters:
@@ -40,6 +40,9 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None):
 
       - duration : float
           only load up to this much audio (in seconds)
+
+      - double : boolean
+          return time-series in double precision (float64)
 
     :returns:
       - y    : np.ndarray
@@ -103,6 +106,9 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None):
         y = resample(y, sr_native, sr)
     else:
         sr = sr_native
+
+    if not double:
+        y = y.astype(np.float32)
 
     return (y, sr)
 
@@ -332,7 +338,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=True)
 
     # Window for discrete differentiation
     freq_angular    = np.linspace(0, 2 * np.pi, n_fft, endpoint=False)
-    d_window        = -np.pi * np.sin( freq_angular ) / n_fft
+    d_window        = np.sin( - freq_angular ) * np.pi / n_fft
 
     # Construct output arrays
     if_gram = np.zeros((1 + n_fft / 2, 1 + (len(y) - n_fft) / hop_length))
@@ -348,18 +354,17 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=True)
         frame   = fft.fft(fft.fftshift(window * y[sample:(sample + n_fft)])).conj()
         D[:, i] = frame[:D.shape[0]]
 
+        # Compute power per bin in this frame
+        power               = np.abs(frame)**2
+        power[power == 0]   = 1.0
         
         #-- Calculate the instantaneous frequency 
         # phase of differential spectrum
-        d_frame = fft.fft(fft.fftshift(d_window * y[sample:(sample + n_fft)])).conj()
+        d_frame = fft.fft(fft.fftshift(d_window * y[sample:(sample + n_fft)]))
 
-        t       = d_frame - 1.j * freq_angular * frame 
+        t = freq_angular + (d_frame * frame).imag / power
 
-        # Compute power per bin
-        power               = np.abs(frame)**2
-        power[power == 0]   = 1.0
-
-        if_gram[:, i] = (sr * (t.conj() * frame).imag / (2 * np.pi * power))[:if_gram.shape[0]]
+        if_gram[:, i] = t[:if_gram.shape[0]] * sr / (2 * np.pi)
 
     # Compensate for windowing effects, store STFT
     # sum(window) takes out integration due to window, 2 compensates for negative
