@@ -47,9 +47,10 @@ def test_beat():
         (bpm, beats) = librosa.beat.beat_track(y=None, sr=8000, hop_length=32,
                                                onsets=DATA['onsetenv'][0], n_fft=None)
 
-        print beats
+        beat_times = librosa.frames_to_time(beats, sr=8000, hop_length=32)
+        print beat_times
         print DATA['beats']
-        assert numpy.allclose(librosa.frames_to_time(beats, sr=8000, hop_length=32), DATA['beats'])
+        assert numpy.allclose(beat_times, DATA['beats'])
         pass
     for infile in files('data/beat-beat-*.mat'):
         yield (__test, infile)
