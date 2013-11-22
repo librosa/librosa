@@ -107,7 +107,7 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
 
     return rec
 
-def structure_feature(rec, pad=True):
+def structure_feature(rec, pad=True, reverse=False):
     '''Compute the structure feature from a recurrence matrix.
 
     The i'th column of the recurrence matrix is shifted up by i.
@@ -119,6 +119,13 @@ def structure_feature(rec, pad=True):
           recurrence matrix (see `librosa.segment.recurrence_matrix`)
       
       - pad : boolean
+          Pad the matrix with t rows of zeros to avoid looping.
+
+      - reverse : boolean
+          Unroll the opposite direction. This is useful for converting
+          structure features back into recurrence plots.
+
+          .. note: Reversing with ``pad==True`` will truncate the inferred padding.
 
     :returns:
       - struct : np.ndarray
@@ -131,19 +138,25 @@ def structure_feature(rec, pad=True):
           if rec is not square
     '''
 
-    t = rec.shape[0]
-    if t != rec.shape[1]:
-        raise ValueError('rec must be a square matrix')
+    t = rec.shape[1]
 
-    if pad:
+    if pad and not reverse:
         # If we don't assume that the signal loops,
         # stack zeros underneath in the recurrence plot.
         struct = np.pad(rec, [(0, t), (0, 0)], mode='constant')
     else:
         struct = rec.copy()
 
+    if reverse:
+        direction = +1
+    else:
+        direction = -1
+
     for i in range(1, t):
-        struct[:, i] = np.roll(struct[:, i], -i, axis=-1)
+        struct[:, i] = np.roll(struct[:, i], direction * i, axis=-1)
+
+    if reverse and pad:
+        struct = struct[:t]
 
     return struct
 
