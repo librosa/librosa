@@ -792,6 +792,31 @@ def octs_to_hz(octs, A440=440.0):
     """
     return (A440/16)*(2**octs)
 
+def cqt_frequencies(n_bins, fmin, bins_per_octave=12, tuning=0.0):
+    """Compute the center frequencies of Constant-Q bins.
+
+    :parameters:
+      - n_bins  : int > 0
+        Number of constant-Q bins
+
+      - fmin    : float >0
+        Minimum frequency
+
+      - bins_per_octave : int > 0
+        Number of bins per octave
+
+      - tuning : float in [-0.5, +0.5)
+        Deviation from A440 tuning in fractional bins (cents)
+
+    :returns:
+      - frequencies : np.ndarray, shape=(n_bins,)
+        Center frequency for each CQT bin
+    """
+
+    correction = 2.0**(float(tuning) / bins_per_octave)
+
+    return correction * fmin * 2.0**(np.arange(0, n_bins, dtype=float)/bins_per_octave)
+
 def mel_frequencies(n_mels=40, fmin=0.0, fmax=11025.0, htk=False):
     """Compute the center frequencies of mel bands
 
