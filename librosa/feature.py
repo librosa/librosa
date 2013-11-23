@@ -170,120 +170,20 @@ def loudness_chroma(x, sr, beat_times, tuning, fmin=55.0, fmax=1661.0, resolutio
       """
       
     # Get hamming windows for convolution
-    [hamming_k, half_winLenK, freq_bins] = cal_hamming_window(sr,
-                   fmin, fmax, resolution_fact, tuning)
-      
+    hamming_k = librosa.filters.constant_q(sr, 
+                                         fmin=fmin, fmax=fmax, 
+                                         bins_per_octave=12,
+                                         tuning=tuning,
+                                         resolution=resolution_fact)
+
+    half_winLenK = map(lambda x: np.ceil(0.5 * len(x)), hamming_k)
+    freq_bins = librosa.cqt_frequencies(len(hamming_k), fmin, tuning=tuning)
+
     # Extract chroma
     raw_chroma, normal_chroma, sample_times = CQ_chroma_loudness(x, 
                    sr, beat_times, hamming_k, half_winLenK, freq_bins)
 
     return raw_chroma, normal_chroma, sample_times, tuning   
-
-# FIXME:  2013-09-25 17:28:54 by Brian McFee <brm2132@columbia.edu>
-#  this docstring does not describe what the function does
-# FIXED: 2013-09-29 by Matt McVicar. Expanded docstring.
-def cal_hamming_window(sr, fmin=55.0, fmax=1661.0, resolution_fact=5.0, tuning=0.0):
-    """Compute hamming windows for use in loudness chroma.
-
-    The constant-Q implementation used in CQ_chroma_loudness 
-    is based in convolution space for efficiency. This means
-    that one also needs to compute hamming windows (for
-    each frequency the CQT looks for) in the convolution space. 
-    This function computes such hamming windows, based on 
-    a sampling rate, minimum and maximum frequency, resoltion
-    factor, and tuning estimate.
-
-    :parameters:
-      - sr : int
-           audio sample rate of x
-      - fmin: int
-          minimum frequency of spectrum to consider. Will be rounded to
-          Closest pitch frequency in Hz (accounting for tuning)
-        fmax: int
-          maximum frequency of spectrum to consider. For balanced results,
-          make this one pitch less than an octave multiple of fmin
-          (for example, default value is 4 octaves + 11 pitches above fmin = 55)
-      - resolution_fact: int
-          multiplying factor of power in window (see PhD thesis "A Machine Learning approach
-          to automatic chord extraction", Matt McVicar, University of Bristol 2013)
-      - tuning: float in [-0.5, 0.5]
-        estimated tuning in cents. 
-
-    :returns:
-      - hamming_k: complex array
-        hamming windows for each of the k frequencies
-      - half_winLenK:
-        half of the above
-      - freq_bins: np.array
-        frequency of each window
-                  
-      """
-
-    # 1. Configuration
-    bins                =   12
-    pitch_class         =   12
-    pitch_interval      = int(np.true_divide(bins, pitch_class))
-    pitch_interval_map  = np.zeros(bins)
-
-    # Map each frequency to a pitch class 
-    for i in range(pitch_class):
-        pitch_interval_map[(i-1)*pitch_interval+1:i*pitch_interval+1] = int(i+1)
-   
-    # 2. Frequency bins
-    K = int(np.ceil(np.log2(fmax/fmin))*bins) #The number of bins
-    freq_bins = np.zeros(K)
-
-    for i in range(0, K - pitch_interval + 1, pitch_interval):
-        octave_index = np.floor(np.true_divide(i, bins))
-        bin_index    = np.mod(i, bins)
-        val          = fmin * 2.0**(octave_index + 
-                                        (pitch_interval_map[bin_index] - 1.0)
-                                        / pitch_class)
-
-        freq_bins[i:i+pitch_interval+1] = val 
-
-    # Augment using tuning factor
-    freq_bins = freq_bins*2.0**(tuning/bins)
-
-    # 3. Constant Q factor and window size
-    Q = 1.0/(2.0**(1.0/bins)-1)*resolution_fact
-    winLenK = np.ceil(sr * np.true_divide(Q, freq_bins))
-
-    # 4. Construct the hamming window
-    # FIXME:   2013-09-25 17:49:19 by Brian McFee <brm2132@columbia.edu>
-    # these variables names are not descriptive     
-    # FIXED: 2013-09-29 by Matt
-    # renamed and commented
-    half_winLenK = winLenK
-    i2piQ        = 1j*-2.0*np.pi*Q
-
-    # multiply the window by -2ipiQ
-    exp_factor  = np.multiply(i2piQ, range(int(winLenK[0])+1))
-    exp_factor  = np.conj(exp_factor)
-    hamming_k   = list()
-    for k in range(K):
-        N = int(winLenK[k])
-        half_winLenK[k] = int(np.ceil(N/2.0))
-
-        # FIXME:  2013-09-25 17:53:06 by Brian McFee <brm2132@columbia.edu>
-        # this is unreadable 
-        # FIXED 2013-09-27 by Matt
-        # broke up into smaller chunks with explanation
-
-        # Take the exponential factor up to N, divide by N
-        exp_factor_by_N = np.true_divide(exp_factor[range(N)], N) 
-
-        # exponentiate the exp_factor   
-        exp_of_exp_factor_by_N = np.exp(exp_factor_by_N)
-
-        # element-wise multiply and divide by N for resulting window
-        resulting_window = np.hamming(N)* np.true_divide(exp_of_exp_factor_by_N, N)
-
-        # Store
-        hamming_k.append(resulting_window)
-
-    return hamming_k, half_winLenK, freq_bins
-
 
 # FIXME:  2013-09-25 18:08:53 by Brian McFee <brm2132@columbia.edu>
 # why is this "cal_"? 
