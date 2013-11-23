@@ -491,18 +491,27 @@ def CQ_chroma_loudness(x, sr, beat_times, hammingK, half_winLenK, freqK, refLabe
     return output_chromagram, normal_chromagram, sample_times
 
 #-- Tuning --#
-def estimate_tuning(d, sr, fftlen=4096, f_ctr=400, f_sd=1.0):
+def estimate_tuning(y, sr=22050, n_fft=4096, resolution=0.01, bins_per_octave=12, f_ctr=400, f_sd=1.0):
     '''Estimate tuning of a signal. Create an instantaneous pitch track
        spectrogram, pick peak relative to standard pitch
 
     :parameters:
-      - d: np.ndarray
+      - y: np.ndarray
         audio signal
-      - sr : int
-        audio sample rate of x
-      - fftlen: int
+        
+      - sr : int >0
+        audio sample rate of y
+        
+      - n_fft: int > 0
         length of fft to use, in samples  
-      - f_ctr,f_sd: int, float
+        
+      - bins_per_octave : int > 0
+        How many bins per octave?
+        
+      - resolution : float in (0, 1)
+        Resolution of the tuning
+        
+      - f_ctr, f_sd: int, float
         weight with center frequency f_ctr (in Hz) and gaussian SD f_sd 
         (in octaves)
 
@@ -512,74 +521,40 @@ def estimate_tuning(d, sr, fftlen=4096, f_ctr=400, f_sd=1.0):
                   
     '''
 
-    # Tuning parameters
-    # FIXME:  2013-09-25 18:02:16 by Brian McFee <brm2132@columbia.edu>
-    # these should be parameters
-    # FIXED: 2013-09-29 by Matt
-    # Added as parameters with defaults
-    #fftlen = 4096
-    #f_ctr = 400
-    #f_sd = 1.0
-
     # Get minimum/maximum frequencies
     fminl = librosa.core.octs_to_hz(librosa.core.hz_to_octs(f_ctr)-2*f_sd)
     fminu = librosa.core.octs_to_hz(librosa.core.hz_to_octs(f_ctr)-f_sd)
     fmaxl = librosa.core.octs_to_hz(librosa.core.hz_to_octs(f_ctr)+f_sd)
     fmaxu = librosa.core.octs_to_hz(librosa.core.hz_to_octs(f_ctr)+2*f_sd)
-
-    # Estimte pitches
-    [p, m, S] = ifptrack(d, sr=sr, n_fft=fftlen, fmin=(fminl, fminu), fmax=(fmaxl, fmaxu))
     
-    # nzp = linear index of non-zero sinusoids found.
-    nzp = p.flatten(order='f')>0
+    # Estimte pitches
+    pitches, magnitudes = librosa.feature.ifptrack(y, sr=sr, 
+                                                      n_fft=n_fft, 
+                                                      fmin=(fminl, fminu), 
+                                                      fmax=(fmaxl, fmaxu))[:2]
+    
   
-    # Find significantly large magnitudes
-    mflat = m.flatten(order='f')
-    gmm = mflat > np.median(mflat[nzp])
+    # Empty track, no tuning
+    if not magnitudes.any():
+        return 0.0
+    
+    # Get the pitches with large magnitude
+    threshold = np.median(magnitudes)
+    log_frequencies = librosa.core.hz_to_octs(pitches[magnitudes > threshold].flatten())
   
-    # 2. element-multiply large magnitudes with frequencies.
-    nzp = nzp * gmm
-  
-    # get non-zero again.
-    nzp = np.nonzero(nzp)[0]
-  
-    # 3. convert to octaves
-    pflat = p.flatten(order='f')
-  
-    # I didn't bother vectorising hz2octs....do it in a loop
-    temp_hz = pflat[nzp]
-    for i in range(len(temp_hz)):
-        temp_hz[i] = librosa.core.hz_to_octs(temp_hz[i])
-      
-    Poctsflat = p.flatten(order='f')  
-    Poctsflat[nzp] = temp_hz
-    to_count = Poctsflat[nzp]
-  
-    # 4. get tuning
-    nchr = 12   # size of feature
+    # Compute the residual relative to the number of bins
+    residual = np.mod(bins_per_octave * log_frequencies, 1.0)
 
-    # make histogram, resolution is 0.01, from -0.5 to 0.5
-    # FIXME:  2013-09-25 17:35:08 by Brian McFee <brm2132@columbia.edu>
-    #   wtf? why is there a pyplot import here?
-    # FIXED: madness! I was using the pyplot version of histogram
-    # instead of np.histogram
-
-    #import matplotlib.pyplot as plt
-    term_one = nchr*to_count
-    term_two = np.array(np.round(nchr*to_count), dtype=np.int)
-    bins = [xxx * 0.01 for xxx in range(-50, 51)]
+    # Are we on the wrong side of the semitone?
+    residual[residual > 0.5] -= 1.0
+    
+    bins     = np.linspace(-0.5, 0.5, np.ceil(1./resolution), endpoint=False)
   
     # python uses edges, matlab uses centers so subtract half a bin size
-    hn,hx = np.histogram(term_one-term_two-0.005, bins)
-
-    # prepend things less than min
-    nless = [sum(term_one-term_two-0.005 < -0.5)]
-    hn = np.hstack([nless, hn])
-
-    # find peaks
-    semisoff = hx[np.argmax(hn)]
-
-    return semisoff
+    counts, cents = np.histogram(residual, bins)
+    
+    # return the histogram peak
+    return cents[np.argmax(counts)]
 
 def ifptrack(y, sr=22050, n_fft=4096, fmin=(150.0, 300.0), fmax=(2000.0, 4000.0), threshold=0.75):
     '''Instantaneous pitch frequency tracking.
