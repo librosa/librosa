@@ -11,17 +11,20 @@ def cqgram(y=None, sr=22050, n_fft=4096, hop_length=512, **kwargs):
     
     '''
     
-    # First, get the spectrogram
-    # Estimate tuning
-    # Build the CQ basis
+    # First, get the spectrogram and track pitches
+    pitches, magnitudes, D = ifptrack(y, sr, n_fft=n_fft)
 
-    D = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length))
+    # Normalize, retain magnitude
+    D = np.abs(D / D.max())
 
+    # If the user didn't specify tuning, do it ourselves
     if 'tuning' not in kwargs:
         bins_per_octave = kwargs.get('bins_per_octave', 12)
-        tuning = estimate_tuning(y, sr, n_fft=n_fft, 
-                                        bins_per_octave=bins_per_octave)
+        tuning = estimate_tuning(pitches[magnitudes > np.median(magnitudes)], 
+                                 bins_per_octave=bins_per_octave)
 
+
+    # Build the CQ basis
     cq_basis = librosa.filters.constantq(sr, n_fft=n_fft, tuning=tuning, **kwargs)
     
     return cq_basis.dot(D)
@@ -511,58 +514,30 @@ def CQ_chroma_loudness(x, sr, beat_times, hammingK, half_winLenK, freqK, refLabe
     return output_chromagram, normal_chromagram, sample_times
 
 #-- Pitch and tuning --#
-def estimate_tuning(y, sr=22050, n_fft=4096, resolution=0.01, bins_per_octave=12, f_ctr=400, f_sd=1.0):
-    '''Estimate tuning of a signal. 
+def estimate_tuning(pitches=None, resolution=0.01, bins_per_octave=12):
+    '''Given a collection of pitches, estimate its tuning offset
+    (in fractions of a bin) relative to A440=440.0Hz.
     
-       Create an instantaneous frequency spectrogram, and build a histogram over tuning
-       deviations relative to A440.
-
     :parameters:
-      - y: np.ndarray
-        audio signal
-        
-      - sr : int >0
-        audio sample rate of y
-        
-      - n_fft: int > 0
-        length of fft to use, in samples  
+      - pitches : array-like, float
+        Detected pitches in the signal
+
+      - resolution : float in (0, 1)
+        Resolution of the tuning
         
       - bins_per_octave : int > 0
         How many bins per octave?
         
-      - resolution : float in (0, 1)
-        Resolution of the tuning
-        
-      - f_ctr, f_sd: int, float
-        weight with center frequency f_ctr (in Hz) and gaussian SD f_sd 
-        (in octaves)
-
     :returns:
       - semisoff: float in [-0.5, 0.5]
-        estimated tuning of piece in cents
+        estimated tuning in cents (fractions of a bin)
                   
     '''
 
-    # Get minimum/maximum frequencies
-    fminl = librosa.core.octs_to_hz(librosa.core.hz_to_octs(f_ctr)-2*f_sd)
-    fminu = librosa.core.octs_to_hz(librosa.core.hz_to_octs(f_ctr)-f_sd)
-    fmaxl = librosa.core.octs_to_hz(librosa.core.hz_to_octs(f_ctr)+f_sd)
-    fmaxu = librosa.core.octs_to_hz(librosa.core.hz_to_octs(f_ctr)+2*f_sd)
-    
-    # Estimte pitches
-    pitches, magnitudes = librosa.feature.ifptrack(y, sr=sr, 
-                                                      n_fft=n_fft, 
-                                                      fmin=(fminl, fminu), 
-                                                      fmax=(fmaxl, fmaxu))[:2]
-    
-  
-    # Empty track, no tuning
-    if not magnitudes.any():
-        return 0.0
-    
+    pitches = np.asarray([pitches]).flatten()
+
     # Get the pitches with large magnitude
-    threshold = np.median(magnitudes)
-    log_frequencies = librosa.core.hz_to_octs(pitches[magnitudes > threshold].flatten())
+    log_frequencies = librosa.core.hz_to_octs(pitches.flatten())
   
     # Compute the residual relative to the number of bins
     residual = np.mod(bins_per_octave * log_frequencies, 1.0)
