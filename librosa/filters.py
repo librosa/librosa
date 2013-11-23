@@ -144,7 +144,7 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=None):
     # remove aliasing columns
     return wts[:, :(1 + n_fft/2)]
 
-def constantq(sr, n_fft, bins_per_octave=12, tuning=0.0, fmin=None, fmax=None, spread=0.125):
+def logfrequency(sr, n_fft, bins_per_octave=12, tuning=0.0, fmin=None, fmax=None, spread=0.125):
     '''Approximate a constant-Q filterbank for a fixed-window STFT.
     
     Each filter is a log-normal window centered at the corresponding pitch frequency.
