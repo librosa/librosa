@@ -6,6 +6,26 @@ import numpy as np
 import librosa.core
 
 #-- Chroma --#
+def cqgram(y=None, sr=22050, n_fft=4096, hop_length=512, **kwargs):
+    '''Compute an approximate constant-Q spectrogram (piano roll).
+    
+    '''
+    
+    # First, get the spectrogram
+    # Estimate tuning
+    # Build the CQ basis
+
+    D = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length))
+
+    if 'tuning' not in kwargs:
+        bins_per_octave = kwargs.get('bins_per_octave', 12)
+        tuning = estimate_tuning(y, sr, n_fft=n_fft, 
+                                        bins_per_octave=bins_per_octave)
+
+    cq_basis = librosa.filters.constantq(sr, n_fft=n_fft, tuning=tuning, **kwargs)
+    
+    return cq_basis.dot(D)
+
 def chromagram(y=None, sr=22050, S=None, norm='inf', n_fft=2048, hop_length=512, **kwargs):
     """Compute a chromagram from a spectrogram or waveform
 
@@ -491,7 +511,7 @@ def CQ_chroma_loudness(x, sr, beat_times, hammingK, half_winLenK, freqK, refLabe
     return output_chromagram, normal_chromagram, sample_times
 
 #-- Pitch and tuning --#
-def tuning(y, sr=22050, n_fft=4096, resolution=0.01, bins_per_octave=12, f_ctr=400, f_sd=1.0):
+def estimate_tuning(y, sr=22050, n_fft=4096, resolution=0.01, bins_per_octave=12, f_ctr=400, f_sd=1.0):
     '''Estimate tuning of a signal. 
     
        Create an instantaneous frequency spectrogram, and build a histogram over tuning
