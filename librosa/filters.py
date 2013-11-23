@@ -2,7 +2,7 @@
 """Commonly used filter banks: DCT, Chroma, Mel, CQT"""
 
 import numpy as np
-import librosa.core
+import librosa
 
 def dct(n_filts, n_input):
     """Discrete cosine transform basis
@@ -63,7 +63,7 @@ def mel(sr, n_fft, n_mels=40, fmin=0.0, fmax=None, htk=False):
     fftfreqs    = np.arange( size, dtype=float ) * sr / n_fft
 
     # 'Center freqs' of mel bands - uniformly spaced between limits
-    freqs       = librosa.core.mel_frequencies(n_mels, fmin, fmax, htk)
+    freqs       = librosa.mel_frequencies(n_mels, fmin, fmax, htk)
 
     # Slaney-style mel is scaled to be approx constant E per channel
     enorm       = 2.0 / (freqs[2:n_mels+2] - freqs[:n_mels])
@@ -108,7 +108,7 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=None):
     # Get the FFT bins, not counting the DC component
     frequencies = np.linspace(0, sr, n_fft, endpoint=False)[1:]
 
-    fftfrqbins  = n_chroma * librosa.core.hz_to_octs(frequencies, A440)
+    fftfrqbins  = n_chroma * librosa.hz_to_octs(frequencies, A440)
 
     # make up a value for the 0 Hz bin = 1.5 octaves below bin 1
     # (so chroma is 50% rotated from bin 1, and bin width is broad)
@@ -177,10 +177,10 @@ def logfrequency(sr, n_fft, bins_per_octave=12, tuning=0.0, fmin=None, fmax=None
     '''
     
     if fmin is None:
-        fmin = librosa.core.midi_to_hz(librosa.note_to_midi('C1'))
+        fmin = librosa.midi_to_hz(librosa.note_to_midi('C1'))
         
     if fmax is None:
-        fmax = librosa.core.midi_to_hz(librosa.note_to_midi('C9'))
+        fmax = librosa.midi_to_hz(librosa.note_to_midi('C9'))
     
     # Apply tuning correction
     correction = 2.0**(float(tuning) / bins_per_octave)
@@ -247,10 +247,10 @@ def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, resolut
     '''
     
     if fmin is None:
-        fmin = librosa.core.midi_to_hz(librosa.note_to_midi('C1'))
+        fmin = librosa.midi_to_hz(librosa.note_to_midi('C1'))
         
     if fmax is None:
-        fmax = librosa.core.midi_to_hz(librosa.note_to_midi('C9'))
+        fmax = librosa.midi_to_hz(librosa.note_to_midi('C9'))
 
     correction = 2.0**(float(tuning) / bins_per_octave)
 
