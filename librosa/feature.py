@@ -12,7 +12,7 @@ def cqgram(y=None, sr=22050, n_fft=4096, hop_length=512, **kwargs):
     '''
     
     # First, get the spectrogram and track pitches
-    pitches, magnitudes, D = ifptrack(y, sr, n_fft=n_fft)
+    pitches, magnitudes, D = ifptrack(y, sr, n_fft=n_fft, hop_length=hop_length)
 
     # Normalize, retain magnitude
     D = np.abs(D / D.max())
@@ -553,7 +553,7 @@ def estimate_tuning(pitches=None, resolution=0.01, bins_per_octave=12):
     # return the histogram peak
     return cents[np.argmax(counts)]
 
-def ifptrack(y, sr=22050, n_fft=4096, fmin=(150.0, 300.0), fmax=(2000.0, 4000.0), threshold=0.75):
+def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=(150.0, 300.0), fmax=(2000.0, 4000.0), threshold=0.75):
     '''Instantaneous pitch frequency tracking.
 
     :parameters:
@@ -605,11 +605,14 @@ def ifptrack(y, sr=22050, n_fft=4096, fmin=(150.0, 300.0), fmax=(2000.0, 4000.0)
     # Only look at bins up to 2 kHz
     max_bin = int(round(fmax[-1] / fft_res))
   
+    if hop_length is None:
+        hop_length = n_fft / 4
+
     # Calculate the inst freq gram
     if_gram, D = librosa.core.ifgram(y, sr=sr, 
                                      n_fft=n_fft, 
                                      win_length=n_fft/2, 
-                                     hop_length=n_fft/4)
+                                     hop_length=hop_length)
 
     # Find plateaus in ifgram - stretches where delta IF is < thr:
     # ie, places where the same frequency is spread across adjacent bins
