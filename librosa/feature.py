@@ -609,8 +609,6 @@ def isp_ifptrack(y, w, sr, fminl = 150.0, fminu = 300.0, fmaxl = 2000.0, fmaxu =
     maxbin = int(round(fmaxu*float(w)/float(sr)))
   
     # Calculate the inst freq gram
-#def isp_ifgram(X, N=256, W=256, H=256.0/2.0, sr=1, maxbin=1.0+256.0/2.0):
-#     [I, S] = isp_ifgram(y, w, w/2, w/4, sr, maxbin)
     [I, S] = librosa.core.ifgram(y, sr=sr, n_fft=w, win_length=w/2, hop_length=w/4)
 
     # Find plateaus in ifgram - stretches where delta IF is < thr
