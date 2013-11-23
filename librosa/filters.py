@@ -29,6 +29,55 @@ def dct(n_filts, n_input):
 
     return basis
 
+def mel(sr, n_fft, n_mels=40, fmin=0.0, fmax=None, htk=False):
+    """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins
+
+    :parameters:
+      - sr        : int
+          sampling rate of the incoming signal
+      - n_fft     : int
+          number of FFT components
+      - n_mels    : int
+          number of Mel bands 
+      - fmin      : float
+          lowest frequency (in Hz) 
+      - fmax      : float
+          highest frequency (in Hz)
+      - htk       : boolean
+          use HTK formula instead of Slaney
+
+    :returns:
+      - M         : np.ndarray, shape=(n_mels, 1+ n_fft/2)
+          Mel transform matrix
+
+    """
+
+    if fmax is None:
+        fmax = sr / 2.0
+
+    # Initialize the weights
+    size        = 1 + n_fft / 2
+    weights     = np.zeros( (n_mels, size) )
+
+    # Center freqs of each FFT bin
+    fftfreqs    = np.arange( size, dtype=float ) * sr / n_fft
+
+    # 'Center freqs' of mel bands - uniformly spaced between limits
+    freqs       = librosa.core.mel_frequencies(n_mels, fmin, fmax, htk)
+
+    # Slaney-style mel is scaled to be approx constant E per channel
+    enorm       = 2.0 / (freqs[2:n_mels+2] - freqs[:n_mels])
+
+    for i in xrange(n_mels):
+        # lower and upper slopes for all bins
+        lower   = (fftfreqs - freqs[i])     / (freqs[i+1] - freqs[i])
+        upper   = (freqs[i+2] - fftfreqs)   / (freqs[i+2] - freqs[i+1])
+
+        # .. then intersect them with each other and zero
+        weights[i]   = np.maximum(0, np.minimum(lower, upper)) * enorm[i]
+   
+    return weights
+
 def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=None):
     """Create a Filterbank matrix to convert STFT to chroma
 
@@ -161,51 +210,46 @@ def constantq(sr, n_fft, bins_per_octave=12, tuning=0.0, fmin=None, fmax=None, s
         
     return C
 
-def mel(sr, n_fft, n_mels=40, fmin=0.0, fmax=None, htk=False):
-    """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins
+
+def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12, roll=0):
+    '''Convert a Constant-Q basis to Chroma.
 
     :parameters:
-      - sr        : int
-          sampling rate of the incoming signal
-      - n_fft     : int
-          number of FFT components
-      - n_mels    : int
-          number of Mel bands 
-      - fmin      : float
-          lowest frequency (in Hz) 
-      - fmax      : float
-          highest frequency (in Hz)
-      - htk       : boolean
-          use HTK formula instead of Slaney
+      - n_input : int > 0
+        Number of input components (CQT bins)
+
+      - bins_per_octave : int > 0
+        How many bins per octave in the CQT
+
+      - n_chroma : int > 0
+        Number of output bins (per octave) in the chroma
+
+      - roll : int
+        Number of bins to offset the output by.
+        For example, if the 0-bin of the CQT is C, and
+        the desired 0-bin for the chroma is A, then roll=-3.
 
     :returns:
-      - M         : np.ndarray, shape=(n_mels, 1+ n_fft/2)
-          Mel transform matrix
+      - cq_to_chroma : np.ndarray, shape=(n_chroma, n_input)
+        
+    '''
 
-    """
+    # How many fractional bins are we merging?
+    n_merge = float(bins_per_octave) / n_chroma
 
-    if fmax is None:
-        fmax = sr / 2.0
+    if np.mod(n_merge, 1) != 0:
+        raise ValueError('Incompatible CQ merge: input bins must be an integer multiple of output bins.')
 
-    # Initialize the weights
-    size        = 1 + n_fft / 2
-    weights     = np.zeros( (n_mels, size) )
+    # Tile the identity to merge fractional bins
+    cq_to_chroma = np.repeat(np.eye(n_chroma), n_merge, axis=1)
 
-    # Center freqs of each FFT bin
-    fftfreqs    = np.arange( size, dtype=float ) * sr / n_fft
+    # How many octaves are we repeating?
+    n_octaves = np.ceil(np.float(n_input) / bins_per_octave)
 
-    # 'Center freqs' of mel bands - uniformly spaced between limits
-    freqs       = librosa.core.mel_frequencies(n_mels, fmin, fmax, htk)
+    # Repeat and trim
+    cq_to_chroma = np.tile(cq_to_chroma, n_octaves)[:, :n_input]
 
-    # Slaney-style mel is scaled to be approx constant E per channel
-    enorm       = 2.0 / (freqs[2:n_mels+2] - freqs[:n_mels])
+    # Apply the roll
+    cq_to_chroma = np.roll(cq_to_chroma, -roll, axis=0)
 
-    for i in xrange(n_mels):
-        # lower and upper slopes for all bins
-        lower   = (fftfreqs - freqs[i])     / (freqs[i+1] - freqs[i])
-        upper   = (freqs[i+2] - fftfreqs)   / (freqs[i+2] - freqs[i+1])
-
-        # .. then intersect them with each other and zero
-        weights[i]   = np.maximum(0, np.minimum(lower, upper)) * enorm[i]
-   
-    return weights
+    return cq_to_chroma
