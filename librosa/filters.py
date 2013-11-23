@@ -269,8 +269,8 @@ def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, resolut
         ilen = np.ceil(Q * sr / (fmin * 2.0**(i / bins_per_octave)))
 
         # Build the filter and normalize
-        window = np.hamming(ilen) * np.exp(Q * 1j * np.linspace(0, 2 * np.pi, ilen, 
-                                                                endpoint=False))
+        window = np.hamming(ilen) 
+        window = window * np.exp(Q * 1j * np.linspace(0, 2 * np.pi, ilen, endpoint=False))
         window /= np.sqrt(np.sum(np.abs(window)**2))
         
         filters.append(window)
