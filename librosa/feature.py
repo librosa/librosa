@@ -491,7 +491,7 @@ def CQ_chroma_loudness(x, sr, beat_times, hammingK, half_winLenK, freqK, refLabe
     return output_chromagram, normal_chromagram, sample_times
 
 #-- Tuning --#
-def estimate_tuning(d, sr,fftlen=4096,f_ctr=400,f_sd=1.0):
+def estimate_tuning(d, sr, fftlen=4096, f_ctr=400, f_sd=1.0):
     '''Estimate tuning of a signal. Create an instantaneous pitch track
        spectrogram, pick peak relative to standard pitch
 
@@ -528,7 +528,7 @@ def estimate_tuning(d, sr,fftlen=4096,f_ctr=400,f_sd=1.0):
     fmaxu = librosa.core.octs_to_hz(librosa.core.hz_to_octs(f_ctr)+2*f_sd)
 
     # Estimte pitches
-    [p, m, S] = isp_ifptrack(d, fftlen, sr, fminl, fminu, fmaxl, fmaxu)
+    [p, m, S] = ifptrack(d, sr=sr, n_fft=fftlen, fmin=(fminl, fminu), fmax=(fmaxl, fmaxu))
     
     # nzp = linear index of non-zero sinusoids found.
     nzp = p.flatten(order='f')>0
@@ -581,103 +581,124 @@ def estimate_tuning(d, sr,fftlen=4096,f_ctr=400,f_sd=1.0):
 
     return semisoff
 
-# FIXME:   2013-09-25 18:04:06 by Brian McFee <brm2132@columbia.edu>
-#  rename parameters to follow librosa conventions
-# FIXED: 2013-09-29 by Matt
-# I take it you mean d -> y? 
-def isp_ifptrack(y, w, sr, fminl = 150.0, fminu = 300.0, fmaxl = 2000.0, fmaxu = 4000.0):
-    '''Instantaneous pitch frequency tracking spectrogram
+def ifptrack(y, sr=22050, n_fft=4096, fmin=(150.0, 300.0), fmax=(2000.0, 4000.0), threshold=0.75):
+    '''Instantaneous pitch frequency tracking.
 
     :parameters:
       - y: np.ndarray
         audio signal
-      - w: int
-        DFT length. FFT length will be half this,
-        hop length 1/4
+      
       - sr : int
         audio sample rate of y
-      - fminl, fminu, fmaxu, fmaxl: floats
-        ramps at the edge of sensitivity      
-
+        
+      - n_fft: int
+        DFT length.
+        
+      - threshold : float in (0, 1)
+        Maximum fraction of expected frequency increment to tolerate
+      
+      - fmin : float or tuple of float
+        Ramp parameter for lower frequency cutoff
+        If scalar, the ramp has 0 width.
+        If tuple, a linear ramp is applied from fmin[0] to fmin[1]
+        
+      - fmax : float or tuple of float
+        Ramp parameter for upper frequency cutoff
+        If scalar, the ramp has 0 width.
+        If tuple, a linear ramp is applied from fmax[0] to fmax[1]
+        
     :returns:
-      - semisoff: float in [-0.5, 0.5]
-        estimated tuning of piece in cents
-                  
+      - pitches : np.ndarray, shape=(d,t)
+      - magnitudes : np.ndarray, shape=(d,t)
+        Where 'd' is the subset of FFT bins within fmin and fmax.
+        
+        pitches[i, t] contains instantaneous frequencies at time t
+        magnitudes[i, t] contains their magnitudes.
+        
+      - D : np.ndarray, dtype=complex
+        STFT matrix
     '''
-  
+
+    
+    fmin = np.asarray([fmin]).squeeze()
+    fmax = np.asarray([fmax]).squeeze()
+    
+    # Truncate to feasible region
+    fmin = np.maximum(0, fmin)
+    fmax = np.minimum(fmax, sr / 2)
+    
+    # What's our DFT bin resolution?
+    fft_res = float(sr) / n_fft
+    
     # Only look at bins up to 2 kHz
-    maxbin = int(round(fmaxu*float(w)/float(sr)))
+    max_bin = int(round(fmax[-1] / fft_res))
   
     # Calculate the inst freq gram
-    [I, S] = librosa.core.ifgram(y, sr=sr, n_fft=w, win_length=w/2, hop_length=w/4)
+    if_gram, D = librosa.core.ifgram(y, sr=sr, 
+                                     n_fft=n_fft, 
+                                     win_length=n_fft/2, 
+                                     hop_length=n_fft/4)
 
-    # Find plateaus in ifgram - stretches where delta IF is < thr
-    ddif = I[np.hstack([range(1, maxbin), maxbin-1]), :]-I[np.hstack([0, range(0, maxbin-1)]), :]
-
-    # expected increment per bin = sr/w, threshold at 3/4 that
-    dgood = abs(ddif) < .75*float(sr)/float(w)
-
-    # delete any single bins (both above and below are zero)
-    logic_one = dgood[np.hstack([range(1, maxbin), maxbin-1]), :] > 0
-    logic_two = dgood[np.hstack([0, range(0, maxbin-1)]), :] > 0
-    dgood = dgood * np.logical_or(logic_one, logic_two)
+    # Find plateaus in ifgram - stretches where delta IF is < thr:
+    # ie, places where the same frequency is spread across adjacent bins
+    idx_above  = range(1, max_bin) + [max_bin - 1]
+    idx_below  = [0] + range(0, max_bin - 1)
     
-    p = np.zeros(dgood.shape)
-    m = np.zeros(dgood.shape)
+    # expected increment per bin = sr/w, threshold at 3/4 that
+    matches    = abs(if_gram[idx_above] - if_gram[idx_below]) < threshold * fft_res
+  
+    # mask out any singleton bins (where both above and below are zero)
+    matches    = matches * ((matches[idx_above] > 0) | (matches[idx_below] > 0))
+
+    pitches    = np.zeros_like(matches, dtype=float)
+    magnitudes = np.zeros_like(matches, dtype=float)
 
     # For each frame, extract all harmonic freqs & magnitudes
-    lds = np.size(dgood, 0)
-    for t in range(I.shape[1]):
-        ds = dgood[:, t]
-            
+    for t in range(matches.shape[1]):
+        
         # find nonzero regions in this vector
-        logic_one = np.hstack([0, ds[range(0, lds-1)]])==0
-        logic_two = ds > 0
-        logic_oneandtwo = np.logical_and(logic_one, logic_two)
-        st = np.nonzero(logic_oneandtwo)[0]
-    
-        logic_three = np.hstack([ds[range(1, lds)], 0])==0
-        logic_twoandthree = np.logical_and(logic_two, logic_three)
-        en = np.nonzero(logic_twoandthree)[0]
-
+        # The mask selects out constant regions + active borders
+        mask   = ~np.pad(matches[:, t], 1, mode='constant')
+        
+        starts = np.argwhere(matches[:, t] & mask[:-2]).squeeze()
+        ends   = np.argwhere(matches[:, t] & mask[2:]).squeeze()
+        
         # Set up inner loop    
-        npks = len(st)
-        frqs = np.zeros(npks)
-        mags = np.zeros(npks)
-        for i in range(len(st)):
-            bump = np.abs(S[range(st[i], en[i]+1), t])
-            mags[i] = sum(bump)
-      
-            # another long division, split it up
-            numer = np.dot(bump, I[range(st[i], en[i]+1), t])
-            isz = (mags[i]==0)
-            denom = mags[i]+isz.astype(int)
-            frqs[i] = numer/denom
-                                    
-            if frqs[i] > fmaxu:
-                mags[i] = 0
-                frqs[i] = 0
-            elif frqs[i] > fmaxl:
-                mags[i] = mags[i] * max(0, (fmaxu - frqs[i])/(fmaxu-fmaxl))
+        frqs = np.zeros_like(starts, dtype=float)
+        mags = np.zeros_like(starts, dtype=float)
+        
+        for i, (u, v) in enumerate(zip(starts, ends)):
+            # Weight frequencies by energy
+            weights = np.abs(D[u:v+1, t])
+            mags[i] = weights.sum()
+            
+            # Compute the weighted average frequency.
+            # FIXME: is this the right thing to do? 
+            # These are frquencies... shouldn't be a 
+            # weighted geometric average?
+            frqs[i] = weights.dot(if_gram[u:v+1, t])
+            if mags[i] > 0:
+                frqs[i] /= mags[i]
+            
+        # Clip outside the ramp zones
+        idx        = (fmax[-1] < frqs) | (frqs < fmin[0])
+        mags[idx]  = 0
+        frqs[idx]  = 0
+        
+        # Ramp down at the high end
+        idx        = (fmax[-1] > frqs) & (frqs > fmax[0])
+        mags[idx] *= (fmax[-1] - frqs[idx]) / (fmax[-1] - fmax[0])
+        
+        # Ramp up from the bottom end
+        idx        = (fmin[-1] > frqs) & (frqs > fmin[0])
+        mags[idx] *= (frqs[idx] - fmin[0]) / (fmin[-1] - fmin[0])
+        
+        # Assign pitch and magnitude to their center bin
+        bins                = np.round(0.5 * (starts+ends)).astype(int)
+        pitches[bins, t]    = frqs
+        magnitudes[bins, t] = mags
 
-            # downweight magnitudes below? 200 Hz
-            if frqs[i] < fminl:
-                mags[i] = 0
-                frqs[i] = 0
-            elif frqs[i] < fminu:
-                # 1 octave fade-out
-                mags[i] = mags[i] * (frqs[i] - fminl)/(fminu-fminl)
-
-            if frqs[i] < 0: 
-                mags[i] = 0
-                frqs[i] = 0
-          
-        # Collect into bins      
-        bins = np.round((st+en)/2.0)
-        p[bins.astype(int), t] = frqs
-        m[bins.astype(int), t] = mags
-
-    return p, m, S
+    return pitches, magnitudes, D
   
 #-- Mel spectrogram and MFCCs --#
 def mfcc(S=None, y=None, sr=22050, n_mfcc=20):
