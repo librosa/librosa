@@ -212,6 +212,71 @@ def logfrequency(sr, n_fft, bins_per_octave=12, tuning=0.0, fmin=None, fmax=None
         
     return basis
 
+def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, resolution=1):
+    '''Construct a constant-Q basis.
+
+    :parameters:
+      - sr : int > 0
+        Audio sampling rate
+
+      - fmin : float > 0
+        Minimum frequency bin. Defaults to ``C1 ~= 16.35``
+        
+      - fmax : float > 0
+        Maximum frequency bin. Defaults to ``C9 = 4816.01``
+
+      - bins_per_octave : int > 0
+        Number of bins per octave
+
+      - tuning : float in [-0.5, +0.5)
+        Tuning deviation from A440 in fractions of a bin
+
+      - resolution : float > 0
+        Resolution of filter windows. Larger values use longer windows.
+
+        .. note:
+          @phdthesis{mcvicar2013,
+            title  = {A machine learning approach to automatic chord extraction},
+            author = {McVicar, M.},
+            year   = {2013},
+            school = {University of Bristol}}
+
+    :returns:
+      - filters : list of np.ndarray
+        filters[i] is the time-domain representation of the i'th CQT basis.
+    '''
+    
+    if fmin is None:
+        fmin = librosa.core.midi_to_hz(librosa.note_to_midi('C1'))
+        
+    if fmax is None:
+        fmax = librosa.core.midi_to_hz(librosa.note_to_midi('C9'))
+
+    correction = 2.0**(float(tuning) / bins_per_octave)
+
+    fmin       = correction * fmin
+    fmax       = correction * fmax
+    
+    Q = float(resolution) / (2.0**(1./bins_per_octave) - 1)
+    
+    # How many bins can we get?
+    n_filters = int(np.ceil(bins_per_octave * np.log2(float(fmax) / fmin)))
+
+    filters = []
+    for i in np.arange(n_filters, dtype=float):
+        
+        # Length of this filter
+        ilen = np.ceil(Q * sr / (fmin * 2.0**(i / bins_per_octave)))
+
+        # Build the filter and normalize
+        window = np.hamming(ilen) * np.exp(Q * 1j * np.linspace(0, 2 * np.pi, ilen, 
+                                                                endpoint=False))
+        window /= np.sqrt(np.sum(np.abs(window)**2))
+        
+        filters.append(window)
+    
+    return filters
+
 def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12, roll=0):
     '''Convert a Constant-Q basis to Chroma.
 
