@@ -192,7 +192,7 @@ def constantq(sr, n_fft, bins_per_octave=12, tuning=0.0, fmin=None, fmax=None, s
     sigma = float(spread) / bins_per_octave
     
     # Construct the output matrix
-    C = np.zeros( (n_filters, n_fft /2  + 1) )
+    basis = np.zeros( (n_filters, n_fft /2  + 1) )
     
     # Get log frequencies of bins
     log_freqs = np.log2(librosa.fft_freq(sr, n_fft)[1:])
@@ -203,14 +203,14 @@ def constantq(sr, n_fft, bins_per_octave=12, tuning=0.0, fmin=None, fmax=None, s
         
         # Place a log-normal window around center_freq
         # We skip the sqrt(2*pi) normalization because it will wash out below anyway
-        C[i, 1:] = np.exp(-0.5 * ((log_freqs - np.log2(center_freq)) /sigma)**2 - np.log2(sigma) - log_freqs)
+        basis[i, 1:] = np.exp(-0.5 * ((log_freqs - np.log2(center_freq)) /sigma)**2 - np.log2(sigma) - log_freqs)
                                   
         # Normalize each filter
-        c_norm = np.sqrt(np.sum(C[i]**2))
+        c_norm = np.sqrt(np.sum(basis[i]**2))
         if c_norm > 0:
-            C[i] = C[i] / c_norm
+            basis[i] = basis[i] / c_norm
         
-    return C
+    return basis
 
 def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12, roll=0):
     '''Convert a Constant-Q basis to Chroma.
@@ -242,15 +242,15 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12, roll=0):
         raise ValueError('Incompatible CQ merge: input bins must be an integer multiple of output bins.')
 
     # Tile the identity to merge fractional bins
-    cq_to_chroma = np.repeat(np.eye(n_chroma), n_merge, axis=1)
+    cq_to_ch = np.repeat(np.eye(n_chroma), n_merge, axis=1)
 
     # How many octaves are we repeating?
     n_octaves = np.ceil(np.float(n_input) / bins_per_octave)
 
     # Repeat and trim
-    cq_to_chroma = np.tile(cq_to_chroma, n_octaves)[:, :n_input]
+    cq_to_ch = np.tile(cq_to_ch, n_octaves)[:, :n_input]
 
     # Apply the roll
-    cq_to_chroma = np.roll(cq_to_chroma, -roll, axis=0)
+    cq_to_ch = np.roll(cq_to_ch, -roll, axis=0)
 
-    return cq_to_chroma
+    return cq_to_ch
