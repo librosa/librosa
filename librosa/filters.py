@@ -205,11 +205,12 @@ def constantq(sr, n_fft, bins_per_octave=12, tuning=0.0, fmin=None, fmax=None, s
         # We skip the sigma*sqrt(2*pi) normalization because it will wash out below anyway
         C[i, 1:] = np.exp(-0.5 * ((np.log2(fftfreqs[1:]) - np.log2(center_freq)) /sigma)**2) / fftfreqs[1:]
                                   
+        c_norm = np.sqrt(np.sum(C[i]**2))
         # Normalize each filter
-        C[i] = C[i] / np.sqrt(np.sum(C[i]**2))
+        if c_norm > 0:
+            C[i] = C[i] / c_norm
         
     return C
-
 
 def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12, roll=0):
     '''Convert a Constant-Q basis to Chroma.
