@@ -491,7 +491,7 @@ def CQ_chroma_loudness(x, sr, beat_times, hammingK, half_winLenK, freqK, refLabe
     return output_chromagram, normal_chromagram, sample_times
 
 #-- Tuning --#
-def estimate_tuning(y, sr=22050, n_fft=4096, resolution=0.01, bins_per_octave=12, f_ctr=400, f_sd=1.0):
+def tuning(y, sr=22050, n_fft=4096, resolution=0.01, bins_per_octave=12, f_ctr=400, f_sd=1.0):
     '''Estimate tuning of a signal. Create an instantaneous pitch track
        spectrogram, pick peak relative to standard pitch
 
