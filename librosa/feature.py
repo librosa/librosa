@@ -490,10 +490,12 @@ def CQ_chroma_loudness(x, sr, beat_times, hammingK, half_winLenK, freqK, refLabe
 
     return output_chromagram, normal_chromagram, sample_times
 
-#-- Tuning --#
+#-- Pitch and tuning --#
 def tuning(y, sr=22050, n_fft=4096, resolution=0.01, bins_per_octave=12, f_ctr=400, f_sd=1.0):
-    '''Estimate tuning of a signal. Create an instantaneous pitch track
-       spectrogram, pick peak relative to standard pitch
+    '''Estimate tuning of a signal. 
+    
+       Create an instantaneous frequency spectrogram, and build a histogram over tuning
+       deviations relative to A440.
 
     :parameters:
       - y: np.ndarray
@@ -546,7 +548,7 @@ def tuning(y, sr=22050, n_fft=4096, resolution=0.01, bins_per_octave=12, f_ctr=4
     residual = np.mod(bins_per_octave * log_frequencies, 1.0)
 
     # Are we on the wrong side of the semitone?
-    residual[residual > 0.5] -= 1.0
+    residual[residual >= 0.5] -= 1.0
     
     bins     = np.linspace(-0.5, 0.5, np.ceil(1./resolution), endpoint=False)
   
@@ -649,7 +651,7 @@ def ifptrack(y, sr=22050, n_fft=4096, fmin=(150.0, 300.0), fmax=(2000.0, 4000.0)
             
             # Compute the weighted average frequency.
             # FIXME: is this the right thing to do? 
-            # These are frquencies... shouldn't be a 
+            # These are frequencies... shouldn't this be a 
             # weighted geometric average?
             frqs[i] = weights.dot(if_gram[u:v+1, t])
             if mags[i] > 0:
@@ -739,7 +741,6 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512, **kwarg
     if S is None:
         S       = np.abs(librosa.core.stft(y,   
                                             n_fft       =   n_fft, 
-                                            hann_w      =   n_fft, 
                                             hop_length  =   hop_length))**2
     else:
         n_fft = (S.shape[0] - 1) * 2
