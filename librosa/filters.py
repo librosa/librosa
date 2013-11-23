@@ -194,19 +194,19 @@ def constantq(sr, n_fft, bins_per_octave=12, tuning=0.0, fmin=None, fmax=None, s
     # Construct the output matrix
     C = np.zeros( (n_filters, n_fft /2  + 1) )
     
-    # Get bin frequencies
-    fftfreqs = librosa.fft_freq(sr, n_fft)
+    # Get log frequencies of bins
+    log_freqs = np.log2(librosa.fft_freq(sr, n_fft)[1:])
                                 
     for i in range(n_filters):
         # What's the center (median) frequency of this filter?
         center_freq = correction * fmin * (2.0**(float(i)/bins_per_octave))
         
         # Place a log-normal window around center_freq
-        # We skip the sigma*sqrt(2*pi) normalization because it will wash out below anyway
-        C[i, 1:] = np.exp(-0.5 * ((np.log2(fftfreqs[1:]) - np.log2(center_freq)) /sigma)**2) / fftfreqs[1:]
+        # We skip the sqrt(2*pi) normalization because it will wash out below anyway
+        C[i, 1:] = np.exp(-0.5 * ((log_freqs - np.log2(center_freq)) /sigma)**2 - np.log2(sigma) - log_freqs)
                                   
-        c_norm = np.sqrt(np.sum(C[i]**2))
         # Normalize each filter
+        c_norm = np.sqrt(np.sum(C[i]**2))
         if c_norm > 0:
             C[i] = C[i] / c_norm
         
