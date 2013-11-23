@@ -149,6 +149,22 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest'):
 
     return y_hat
 
+def fft_freq(sr=22050, n_fft=2048):
+    '''Alternative implementation of ``np.fft.fftfreqs``
+
+    :parameters:
+      - sr : int > 0
+        Audio sampling rate
+      - n_fft : int > 0
+        FFT window size
+
+    :returns:
+      - freqs : np.ndarray, shape = (1 + n_fft/2,)
+        Frequencies (0, sr/n_fft, 2*sr/n_fft, ..., sr/2)
+    '''
+
+    return np.linspace(0, sr/2, 1 + n_fft/2, endpoint=True)
+
 def stft(y, n_fft=2048, hop_length=None, hann_w=None, window=None):
     """Short-time fourier transform
 
