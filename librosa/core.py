@@ -4,6 +4,8 @@
 import os.path
 import audioread
 
+from . import filters, feature
+
 import re
 
 import numpy as np
@@ -390,6 +392,69 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=True)
         D = D * 2.0 / window.sum()
 
     return if_gram, D
+
+def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, resolution=1, aggregate=np.mean, samples=None):
+    '''Compute the constant-Q transform of an audio signal.
+    
+    :parameters:
+      - y : np.ndarray
+        audio time series
+    
+      - sr : int > 0
+        sampling rate of y
+        
+      - hop_length : int > 0
+        hop length 
+    
+      - fmin : float > 0
+        Minimum frequency. Defaults to C1 ~= 16.35 Hz
+        
+      - fmax : float > 0
+        Maximum frequency. Defaults to C9 ~= 4816.01 Hz
+        
+      - bins_per_octave : int > 0
+        Number of bins per octave
+        
+      - tuning : float in [-0.5, 0.5)
+        Tuning offset in fractions of a bin (cents)
+        
+      - resolution : float > 0
+        Filter resolution factor. Larger values use longer windows.
+        
+      - aggregate : function
+        Aggregator function to merge filter response power within frames.
+        
+      - samples : None or array-like
+        Aggregate power at times ``y[samples[i]:samples[i+1]]``, 
+        instead of ``y[i * hop_length : (i+1)*hop_length]``
+        
+        Note that boundary sample times (0, len(y)) will be automatically added.
+        
+    :returns:
+      - CQT : np.ndarray
+        Constant-Q power for each frequency at each time.
+        
+    '''
+    
+    # Generate the CQT filters
+    basis = filters.constant_q(sr, 
+                        fmin=fmin, 
+                        fmax=fmax, 
+                        bins_per_octave=bins_per_octave, 
+                        tuning=tuning, 
+                        resolution=resolution)
+    
+    if samples is None:
+        samples    = np.arange(0, len(y), hop_length)
+    else:
+        samples    = np.asarray([samples]).flatten()
+    
+    cqt_power = []
+    for filt in basis:
+        r_power  = np.abs(scipy.signal.fftconvolve(y, filt, mode='same'))**2
+        cqt_power.append(feature.sync(r_power, samples, aggregate=aggregate))
+    
+    return np.asarray(cqt_power).squeeze()
 
 def logamplitude(S, amin=1e-10, top_db=80.0):
     """Log-scale the amplitude of a spectrogram
