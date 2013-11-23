@@ -30,7 +30,7 @@ def logfsgram(y, sr, n_fft=4096, hop_length=512, **kwargs):
         If not provided, it will be automatically estimated from ``y``.
 
       - kwargs : additional arguments
-        See ``librosa.filters.constantq()`` 
+        See ``librosa.filters.logfrequency()`` 
 
     :returns:
       - P : np.ndarray, shape = (n_pitches, t)
@@ -52,7 +52,7 @@ def logfsgram(y, sr, n_fft=4096, hop_length=512, **kwargs):
 
 
     # Build the CQ basis
-    cq_basis = librosa.filters.constantq(sr, n_fft=n_fft, tuning=tuning, **kwargs)
+    cq_basis = librosa.filters.logfrequency(sr, n_fft=n_fft, tuning=tuning, **kwargs)
     
     return cq_basis.dot(D)
 
