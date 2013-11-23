@@ -95,6 +95,72 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=None):
     # remove aliasing columns
     return wts[:, :(1 + n_fft/2)]
 
+def constantq(sr, n_fft, bins_per_octave=12, tuning=0.0, fmin=None, fmax=None, spread=0.125):
+    '''Approximate a constant-Q filterbank for a fixed-window STFT.
+    
+    Each filter is a log-normal window centered at the corresponding pitch frequency.
+    
+    :parameters:
+      - sr : int > 0
+        audio sampling rate
+        
+      - n_fft : int > 0
+        FFT window size
+        
+      - bins_per_octave : int > 0
+        Number of bins per octave. Defaults to 12 (semitones).
+        
+      - tuning : None or float in [-0.5, +0.5]
+        Tuning correction parameter, in fractions of a bin.
+        
+      - fmin : float > 0
+        Minimum frequency bin. Defaults to ``C1 ~= 16.35``
+        
+      - fmax : float > 0
+        Maximum frequency bin. Defaults to ``C9 = 4816.01``
+        
+      - spread : float > 0
+        Spread of each filter, as a fraction of a bin.
+        
+    :returns:
+      - C : np.ndarray, shape=(ceil(log(fmax/fmin)) * bins_per_octave, 1 + n_fft/2)
+        CQT filter bank.
+    '''
+    
+    if fmin is None:
+        fmin = librosa.core.midi_to_hz(librosa.note_to_midi('C1'))
+        
+    if fmax is None:
+        fmax = librosa.core.midi_to_hz(librosa.note_to_midi('C9'))
+    
+    # Apply tuning correction
+    correction = 2.0**(float(tuning) / bins_per_octave)
+    
+    # How many bins can we get?
+    n_filters = int(np.ceil(bins_per_octave * np.log2(float(fmax) / fmin)))
+    
+    # What's the shape parameter for our log-normal filters?
+    sigma = float(spread) / bins_per_octave
+    
+    # Construct the output matrix
+    C = np.zeros( (n_filters, n_fft /2  + 1) )
+    
+    # Get bin frequencies
+    fftfreqs = librosa.fft_freq(sr, n_fft)
+                                
+    for i in range(n_filters):
+        # What's the center (median) frequency of this filter?
+        center_freq = correction * fmin * (2.0**(float(i)/bins_per_octave))
+        
+        # Place a log-normal window around center_freq
+        # We skip the sigma*sqrt(2*pi) normalization because it will wash out below anyway
+        C[i, 1:] = np.exp(-0.5 * ((np.log2(fftfreqs[1:]) - np.log2(center_freq)) /sigma)**2) / fftfreqs[1:]
+                                  
+        # Normalize each filter
+        C[i] = C[i] / np.sqrt(np.sum(C[i]**2))
+        
+    return C
+
 def mel(sr, n_fft, n_mels=40, fmin=0.0, fmax=None, htk=False):
     """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins
 
