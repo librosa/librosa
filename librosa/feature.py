@@ -6,9 +6,36 @@ import numpy as np
 import librosa.core
 
 #-- Chroma --#
-def cqgram(y=None, sr=22050, n_fft=4096, hop_length=512, **kwargs):
-    '''Compute an approximate constant-Q spectrogram (piano roll).
-    
+def logfsgram(y, sr, n_fft=4096, hop_length=512, **kwargs):
+    '''Compute a log-frequency spectrogram (piano roll) using a fixed-window STFT.
+
+    :parameters:
+      - y : np.ndarray
+        audio time series
+
+      - sr : int > 0
+        sampling rate of ``y``
+
+      - n_fft : int > 0
+        FFT window size
+
+      - hop_length : int > 0
+        hop length for STFT
+
+      - bins_per_octave : int > 0
+        Number of bins per octave. Defaults to 12.
+
+      - tuning : float in [-0.5,  0.5)
+        Deviation (in fractions of a bin) from A440 tuning.
+        If not provided, it will be automatically estimated from ``y``.
+
+      - kwargs : additional arguments
+        See ``librosa.filters.constantq()`` 
+
+    :returns:
+      - P : np.ndarray, shape = (n_pitches, t)
+        P(f, t) contains the energy at pitch bin f, frame t.
+
     '''
     
     # First, get the spectrogram and track pitches
@@ -514,13 +541,13 @@ def CQ_chroma_loudness(x, sr, beat_times, hammingK, half_winLenK, freqK, refLabe
     return output_chromagram, normal_chromagram, sample_times
 
 #-- Pitch and tuning --#
-def estimate_tuning(pitches=None, resolution=0.01, bins_per_octave=12):
+def estimate_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     '''Given a collection of pitches, estimate its tuning offset
     (in fractions of a bin) relative to A440=440.0Hz.
     
     :parameters:
-      - pitches : array-like, float
-        Detected pitches in the signal
+      - frequencies : array-like, float
+        Detected frequencies in the signal
 
       - resolution : float in (0, 1)
         Resolution of the tuning
@@ -534,20 +561,18 @@ def estimate_tuning(pitches=None, resolution=0.01, bins_per_octave=12):
                   
     '''
 
-    pitches = np.asarray([pitches]).flatten()
+    frequencies = np.asarray([frequencies], dtype=float).flatten()
 
-    # Get the pitches with large magnitude
-    log_frequencies = librosa.core.hz_to_octs(pitches.flatten())
-  
     # Compute the residual relative to the number of bins
-    residual = np.mod(bins_per_octave * log_frequencies, 1.0)
+    residual = np.mod(bins_per_octave * librosa.core.hz_to_octs(frequencies) , 1.0)
 
     # Are we on the wrong side of the semitone?
+    # A residual of 0.95 is more likely to be a deviation of -0.05
+    # from the next tone up.
     residual[residual >= 0.5] -= 1.0
     
     bins     = np.linspace(-0.5, 0.5, np.ceil(1./resolution), endpoint=False)
   
-    # python uses edges, matlab uses centers so subtract half a bin size
     counts, cents = np.histogram(residual, bins)
     
     # return the histogram peak
