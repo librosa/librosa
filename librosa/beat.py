@@ -9,8 +9,8 @@ import librosa.core
 import librosa.feature
 import librosa.onset
 
-def beat_track(y=None, sr=22050, onsets=None, hop_length=128, 
-               start_bpm=120.0, n_fft=256, tightness=400, trim=True):
+def beat_track(y=None, sr=22050, onsets=None, hop_length=64, 
+               start_bpm=120.0, n_fft=2048, tightness=400, trim=True):
     """Ellis-style beat tracker
 
     :parameters:
