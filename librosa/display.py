@@ -30,15 +30,23 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
           If 'time', markers are shown as seconds, minutes, or hours.
           If 'frames', markers are shown as frame counts.
 
-      - y_axis : None or {'linear', 'mel', 'chroma', 'off'}
+      - y_axis : None or {'linear', 'mel', 'cqt_hz', 'cqt_note', 'chroma', 'off'}
           If None or 'off', no y axis is displayed.
           If 'linear', frequency range is determined by the FFT window and sample rate.
           If 'log', the image is displayed on a vertical log scale.
           If 'mel', frequencies are determined by the mel scale.
+          If 'cqt_hz', frequencies are determined by the fmin and fmax values.
+          If 'cqt_note', pitches are determined by the fmin and fmax values.
           If 'chroma', pitches are determined by the chroma filters.
 
+     - n_xticks : int > 0
+          If x_axis is drawn, the number of ticks to show
+
+     - n_yticks : int > 0
+          If y_axis is drawn, the number of ticks to show
+
      - fmin, fmax : float > 0 or None
-          Used for setting the Mel frequency scale
+          Used for setting the Mel or constantq frequency scales
 
      - kwargs : dict
           Additional arguments passed through to ``matplotlib.pyplot.imshow``.
@@ -62,7 +70,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
     else:
         kwargs['cmap']          = kwargs.get('cmap',            'OrRd')
 
-    # NOTE:  2013-11-14 16:15:33 by Brian McFee <brm2132@columbia.edu>
+    # NOTE:  2013-11-14 16:15:33 by Brian McFee <brm2132@columbia.edu>pitch 
     #  We draw the image twice here. This is a hack to get around NonUniformImage
     #  not properly setting hooks for color: drawing twice enables things like
     #  colorbar() to work properly.
@@ -102,6 +110,32 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
     
         plt.ylabel('Hz')
     
+    elif y_axis is 'cqt_hz':
+        y_pos = np.arange(0, data.shape[0], 
+                             np.ceil(data.shape[0] / float(n_yticks)), 
+                             dtype=int)
+
+        # Get frequencies
+        y_val = librosa.core.cqt_frequencies(data.shape[0], 
+                                             fmin=fmin, 
+                                             bins_per_octave=int(data.shape[0] / np.ceil(np.log2(fmax) - 
+                                                        np.log2(fmin))))
+        plt.yticks(y_pos, y_val[y_pos].astype(int))
+        plt.ylabel('Hz')
+
+    elif y_axis is 'cqt_note':
+        y_pos = np.arange(0, data.shape[0], 
+                             np.ceil(data.shape[0] / float(n_yticks)), 
+                             dtype=int)
+
+        # Get frequencies
+        y_val = librosa.core.cqt_frequencies(data.shape[0], 
+                                             fmin=fmin, 
+                                             bins_per_octave=int(data.shape[0] / np.ceil(np.log2(fmax) - 
+                                                        np.log2(fmin))))
+        y_val = librosa.core.midi_to_note(librosa.core.hz_to_midi(y_val[y_pos]))
+        plt.yticks(y_pos, y_val)
+
     elif y_axis is 'mel':
         m_args = {}
         if fmin is not None:
