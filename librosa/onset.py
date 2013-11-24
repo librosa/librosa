@@ -74,21 +74,33 @@ def onset_detect(y=None, sr=22050, onset_envelope=None,
     # Peak pick the onset envelope
     return librosa.core.peak_pick( onset_envelope, **kwargs )
 
-def onset_strength(y=None, sr=22050, S=None, **kwargs):
-    """Extract onsets from an audio time series or spectrogram
+def onset_strength(y=None, sr=22050, S=None, aggregate=np.mean, **kwargs):
+    """Extract onset strength from an audio time series or magnitude spectrogram.
+
+    Onset strength at time t is determined by:
+
+    mean_f max(0, S[f, t+1] - S[f, t])
+
+    By default, if a time series is provided, S will be the log-power Mel spectrogram.
 
     :parametrs:
       - y        : np.ndarray
           audio time-series
+
       - sr       : int
           audio sampling rate of y
+
       - S        : np.ndarray 
-          pre-computed spectrogram
+          pre-computed (log-power) spectrogram
+      
+      - aggregate : function
+          Aggregation function to use when combining onsets
+          at different frequency bins.
 
       - kwargs  
           Parameters to mel spectrogram, if S is not provided.
 
-          See librosa.feature.melspectrogram() for details
+          See ``librosa.feature.melspectrogram()`` for details
 
     .. note:: if S is provided, then (y, sr) are optional.
 
@@ -113,18 +125,16 @@ def onset_strength(y=None, sr=22050, S=None, **kwargs):
         S   = librosa.core.logamplitude(S)
 
 
-    ### Compute first difference
+    # Compute first difference
     onsets  = np.diff(S, n=1, axis=1)
 
-    ### Discard negatives (decreasing amplitude)
-    #   falling edges could also be useful segmentation cues
-    #   to catch falling edges, replace max(0,D) with abs(D)
+    # Discard negatives (decreasing amplitude)
     onsets  = np.maximum(0.0, onsets)
 
-    ### Average over mel bands
-    onsets  = onsets.mean(axis=0)
+    # Average over mel bands
+    onsets  = aggregate(onsets, axis=0)
 
-    ### remove the DC component
+    # remove the DC component
     onsets  = scipy.signal.lfilter([1.0, -1.0], [1.0, -0.99], onsets)
 
     return onsets
