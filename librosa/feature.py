@@ -108,18 +108,17 @@ def chromagram(y=None, sr=22050, S=None, norm='inf', n_fft=2048, hop_length=512,
     
     n_chroma = kwargs.get('n_chroma', 12)
 
-    # Build the chroma filterbank, estimate tuning
+    # Build the spectrogram, estimate tuning
     if S is None:
-        S = np.abs(librosa.core.stft(y, n_fft=n_fft, hop_length=hop_length))
-        pitches, magnitudes, S = ifptrack(y, sr, n_fft)
-        S = np.abs(S / S.max())
-        
+        pitches, magnitudes, S = ifptrack(y, sr=sr, n_fft=n_fft, hop_length=hop_length)
         tuning = estimate_tuning(pitches[magnitudes > np.median(magnitudes)], 
                                  bins_per_octave=n_chroma)
 
+        S = np.abs(S / S.max())
     else:
         n_fft       = (S.shape[0] -1 ) * 2
 
+    # Get the filter bank
     if 'A440' not in kwargs:
         kwargs['A440'] = 440.0 * 2.0**(tuning/n_chroma)
 
