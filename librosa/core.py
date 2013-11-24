@@ -296,7 +296,7 @@ def istft(stft_matrix, n_fft=None, hop_length=None, hann_w=None, window=None):
 
     return y
 
-def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=True):
+def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=False):
     '''Compute the instantaneous frequency (as a proportion of the sampling rate)
     obtained as the time-derivative of the phase of the complex spectrum as 
     described by Toshihiro Abe et al. in ICASSP'95, Eurospeech'97. 
@@ -369,8 +369,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=True)
 
         #-- Store the STFT
         # Conjugate here to match DWPE's matlab code.
-        # Aside from the shifting, this should match against stft()
-        frame   = fft.fft(fft.fftshift(window * y[sample:(sample + n_fft)])).conj()
+        frame   = fft.fft(window * y[sample:(sample + n_fft)]).conj()
         D[:, i] = frame[:D.shape[0]]
 
         # Compute power per bin in this frame
@@ -379,7 +378,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=True)
         
         #-- Calculate the instantaneous frequency 
         # phase of differential spectrum
-        d_frame = fft.fft(fft.fftshift(d_window * y[sample:(sample + n_fft)]))
+        d_frame = fft.fft(d_window * y[sample:(sample + n_fft)])
 
         t = freq_angular + (d_frame * frame).imag / power
 
