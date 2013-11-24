@@ -5,6 +5,8 @@ import numpy as np
 import matplotlib.image as img
 import matplotlib.pyplot as plt
 
+import warnings
+
 import librosa.core
 
 # TODO:   2013-11-24 11:15:36 by Brian McFeea <brm2132@columbia.edu>
@@ -143,6 +145,10 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
     kwargs['aspect']        = kwargs.get('aspect',          'auto')
     kwargs['origin']        = kwargs.get('origin',          'lower')
     kwargs['interpolation'] = kwargs.get('interpolation',   'nearest')
+
+    if np.issubdtype(data.dtype, np.complex):
+        warnings.warn('Trying to display complex-valued input. Showing magnitude instead.')
+        data = np.abs(data)
 
     # Determine the colormap automatically
     # If the data has both positive and negative values, use a diverging colormap.
