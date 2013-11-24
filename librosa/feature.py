@@ -56,7 +56,7 @@ def logfsgram(y, sr, n_fft=4096, hop_length=512, **kwargs):
     
     return cq_basis.dot(D)
 
-def chromagram(y=None, sr=22050, S=None, norm='inf', n_fft=2048, hop_length=512, **kwargs):
+def chromagram(y=None, sr=22050, S=None, norm='inf', n_fft=2048, hop_length=512, tuning=0.0, **kwargs):
     """Compute a chromagram from a spectrogram or waveform
 
     :parameters:
@@ -79,8 +79,12 @@ def chromagram(y=None, sr=22050, S=None, norm='inf', n_fft=2048, hop_length=512,
              None :  do not normalize
       - n_fft      : int  > 0
           FFT window size if working with waveform data
+
       - hop_length : int > 0
           hop length if working with waveform data
+
+      - tuning : float in [-0.5, 0.5)
+          Deviation from A440 tuning in fractional bins (cents)
 
       - kwargs
           Parameters to build the chroma filterbank.
@@ -102,11 +106,22 @@ def chromagram(y=None, sr=22050, S=None, norm='inf', n_fft=2048, hop_length=512,
 
     """
     
-    # Build the chroma filterbank
+    n_chroma = kwargs.get('n_chroma', 12)
+
+    # Build the chroma filterbank, estimate tuning
     if S is None:
         S = np.abs(librosa.core.stft(y, n_fft=n_fft, hop_length=hop_length))
+        pitches, magnitudes, S = ifptrack(y, sr, n_fft)
+        S = np.abs(S / S.max())
+        
+        tuning = estimate_tuning(pitches[magnitudes > np.median(magnitudes)], 
+                                 bins_per_octave=n_chroma)
+
     else:
         n_fft       = (S.shape[0] -1 ) * 2
+
+    if 'A440' not in kwargs:
+        kwargs['A440'] = 440.0 * 2.0**(tuning/n_chroma)
 
     chromafb = librosa.filters.chroma( sr, n_fft, **kwargs)
 
@@ -439,6 +454,8 @@ def CQ_chroma_loudness(x, sr, beat_times, hammingK, half_winLenK, freqK, refLabe
     sample_times = np.vstack([beat_sr[:-1], beat_sr[1:]])
 
     return output_chromagram, normal_chromagram, sample_times
+
+
 
 #-- Pitch and tuning --#
 def estimate_tuning(frequencies, resolution=0.01, bins_per_octave=12):
