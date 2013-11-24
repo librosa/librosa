@@ -438,14 +438,14 @@ def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=
     '''
     
     # Do we have tuning?
-    def get_tuning():
+    def __get_tuning():
         pitches, mags = feature.ifptrack(y, sr=sr)[:2]
         threshold = np.median(mags)
         return feature.estimate_tuning( pitches[mags>threshold], 
                                         bins_per_octave=bins_per_octave)
 
     if tuning is None:
-        tuning = get_tuning()
+        tuning = __get_tuning()
 
     # Generate the CQT filters
     basis = filters.constant_q(sr, 
