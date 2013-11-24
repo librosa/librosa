@@ -7,6 +7,10 @@ import matplotlib.pyplot as plt
 
 import librosa.core
 
+# TODO:   2013-11-24 11:15:36 by Brian McFeea <brm2132@columbia.edu>
+# time-ticks: factor out xtick logic from specshow
+# extend to support a mapping array, eg, beat times
+
 def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=5, n_yticks=5, 
     fmin=None, fmax=None, **kwargs):
     """Display a spectrogram. Wraps to `~matplotlib.pyplot.imshow` with some handy defaults.
@@ -50,8 +54,11 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
     kwargs['interpolation'] = kwargs.get('interpolation',   'nearest')
 
     # Determine the colormap automatically
+    # If the data has both positive and negative values, use a diverging colormap.
+    # Otherwise, use a sequential map.
+    # PuOr and OrRd are chosen to optimize visibility for color-blind people.
     if (data < 0).any() and (data > 0).any():
-        kwargs['cmap']          = kwargs.get('cmap',            'RdGy_r')
+        kwargs['cmap']          = kwargs.get('cmap',            'PuOr_r')
     else:
         kwargs['cmap']          = kwargs.get('cmap',            'OrRd')
 
