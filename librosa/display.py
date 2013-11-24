@@ -9,8 +9,87 @@ import librosa.core
 
 # TODO:   2013-11-24 11:15:36 by Brian McFeea <brm2132@columbia.edu>
 # freq-ticks: factor out ytick logic from specshow
-# time-ticks: factor out xtick logic from specshow
-# extend to support a mapping array, eg, beat times
+
+def time_ticks(locs, *args, **kwargs): 
+    '''Plot time-formatted axis ticks.
+
+    Example usage:
+
+        time_ticks(beat_times, ...)
+
+        time_ticks(locations, timestamps, ...)
+
+
+    :parameters:
+       - times : array of time stamps
+
+       - n_ticks : int or None
+         Show this number of ticks (evenly spaced).
+         If none, all ticks are displayed.
+
+       - axis : 'x' or 'y'
+         Which axis should the ticks be plotted on?
+
+       - fmt : None or {'ms', 's', 'm', 'h'}
+         ms: milliseconds   (eg, 241ms)
+         s: seconds         (eg, 1.023s)
+         m: minutes         (eg, 1:02)
+         h: hours           (eg, 1:02:03)
+         
+         If none, formatted is automatically selected by the 
+         range of the times data.
+
+       - **kwargs : additional keyword arguments
+         See `matplotlib.pyplot.xticks` or `yticks` for details.
+
+    :returns:
+      - See `matplotlib.pyplot.xticks` or `yticks` for details.
+    '''
+
+    n_ticks = kwargs.pop('n_ticks', 5)
+    axis    = kwargs.pop('axis', 'x')
+    fmt     = kwargs.pop('fmt', None)
+
+    if axis == 'x':
+        ticker = plt.xticks
+    elif axis == 'y':
+        ticker = plt.yticks
+    else:
+        raise ValueError("axis must be either 'x' or 'y'.")
+
+    if len(args) > 0:
+        times = args[0]
+    else:
+        times = locs
+        locs  = range(len(times))
+
+    if n_ticks is not None:
+        # Slice the locations and labels
+        locs    = locs[::max(1, len(locs)/n_ticks)]
+        times   = times[::max(1, len(times)/n_ticks)]
+
+    # Format the labels by time
+    formatters = {'ms': lambda t: '%dms' % (100 * t),
+                  's':  lambda t: '%0.3fs' % t,
+                  'm':  lambda t: '%d:%02d' % ( t / 60, np.mod(t, 60)),
+                  'h':  lambda t: '%d:%02d:%02d' % (t / 3600, t / 60, np.mod(t, 60))}
+
+    if fmt is None:
+        if max(times) > 3600.0:
+            fmt = 'h'
+        elif max(times) > 60.0:
+            fmt = 'm'
+        elif max(times) > 1.0:
+            fmt = 's'
+        else:
+            fmt = 'ms'
+
+    elif fmt not in formatters:
+        raise ValueError('Invalid format: %s' % fmt)
+
+    times = map(formatters[fmt], times)
+
+    return ticker(locs, times, **kwargs)
 
 def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=5, n_yticks=5, 
     fmin=None, fmax=None, **kwargs):
@@ -169,34 +248,21 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
     x_pos = np.asarray(np.linspace(0, data.shape[1], n_xticks), dtype=int)
 
     if x_axis is 'time':
-        # Reformat into seconds, or minutes:seconds
-        x_val = librosa.core.frames_to_time(x_pos, sr=sr, hop_length=hop_length)
+        time_ticks( x_pos, 
+                    librosa.core.frames_to_time(x_pos, sr=sr, hop_length=hop_length),
+                    n_ticks=None, axis='x')
 
-        if max(x_val) > 3600.0:
-            # reformat into hours:minutes:seconds
-            x_val = map(lambda y: '%d:%02d:%02d' % (int(y / 3600), 
-                                                    int(np.mod(y, 3600)), 
-                                                    int(np.mod(y, 60))), 
-                                                    x_val)
-        elif max(x_val) > 60.0:
-            # reformat into minutes:seconds
-            x_val = map(lambda y: '%d:%02d' % ( int(y / 60), 
-                                                int(np.mod(y, 60))), 
-                                                x_val)
-        else:
-            # reformat into seconds, down to the millisecond
-            x_val = np.around(x_val, 3)
-
-        plt.xticks(x_pos, x_val)
         plt.xlabel('Time')
 
     elif x_axis is 'frames':
         # Nothing to do here, plot is in frames
         plt.xticks(x_pos, x_pos)
         plt.xlabel('Frames')
+
     elif x_axis is None or x_axis is 'off':
         plt.xticks([])
         plt.xlabel('')
+
     else:
         raise ValueError('Unknown x_axis parameter: %s' % x_axis)
     
