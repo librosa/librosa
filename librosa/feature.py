@@ -169,9 +169,9 @@ def perceptual_weighting(S, frequencies, ref_power=1e-12):
         perceptually weighted version of S, in dB.
     '''
     
-    A_weighting = librosa.A_weighting(frequencies).reshape((-1, 1))
+    offset = librosa.A_weighting(frequencies).reshape((-1, 1))
     
-    return A_weighting + librosa.logamplitude(S) - 10.0 * np.log10(ref_power)
+    return librosa.logamplitude(S) - 10.0 * np.log10(ref_power) + offset
 
 #-- Pitch and tuning --#
 def estimate_tuning(frequencies, resolution=0.01, bins_per_octave=12):
@@ -294,22 +294,22 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=(150.0, 300.0), fmax
         mask   = ~np.pad(matches[:, t], 1, mode='constant')
         
         starts = np.argwhere(matches[:, t] & mask[:-2])
-        ends   = np.argwhere(matches[:, t] & mask[2:])
+        ends   = 1 + np.argwhere(matches[:, t] & mask[2:])
         
         # Set up inner loop    
         frqs = np.zeros_like(starts, dtype=float)
         mags = np.zeros_like(starts, dtype=float)
         
-        for i, (u, v) in enumerate(zip(starts, ends)):
+        for i in range(len(starts)):
             # Weight frequencies by energy
-            weights = np.abs(D[u:v+1, t])
+            weights = np.abs(D[starts[i]:ends[i], t])
             mags[i] = weights.sum()
             
             # Compute the weighted average frequency.
             # FIXME: is this the right thing to do? 
             # These are frequencies... shouldn't this be a 
             # weighted geometric average?
-            frqs[i] = weights.dot(if_gram[u:v+1, t])
+            frqs[i] = weights.dot(if_gram[starts[i]:ends[i], t])
             if mags[i] > 0:
                 frqs[i] /= mags[i]
             
@@ -327,7 +327,7 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=(150.0, 300.0), fmax
         mags[idx] *= (frqs[idx] - fmin[0]) / (fmin[-1] - fmin[0])
         
         # Assign pitch and magnitude to their center bin
-        bins                = np.round(0.5 * (starts+ends)).astype(int)
+        bins                = (starts + ends) / 2
         pitches[bins, t]    = frqs
         magnitudes[bins, t] = mags
 
