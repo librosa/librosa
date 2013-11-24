@@ -393,7 +393,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=True)
 
     return if_gram, D
 
-def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, resolution=1, aggregate=np.mean, samples=None):
+def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=None, resolution=1, aggregate=np.mean, samples=None):
     '''Compute the constant-Q transform of an audio signal.
     
     :parameters:
@@ -415,8 +415,9 @@ def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=
       - bins_per_octave : int > 0
         Number of bins per octave
         
-      - tuning : float in [-0.5, 0.5)
+      - tuning : None or float in [-0.5, 0.5)
         Tuning offset in fractions of a bin (cents)
+        If None, tuning will be automatically estimated.
         
       - resolution : float > 0
         Filter resolution factor. Larger values use longer windows.
@@ -436,6 +437,16 @@ def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=
         
     '''
     
+    # Do we have tuning?
+    def get_tuning():
+        pitches, mags = feature.ifptrack(y, sr=sr)[:2]
+        threshold = np.median(mags)
+        return feature.estimate_tuning( pitches[mags>threshold], 
+                                        bins_per_octave=bins_per_octave)
+
+    if tuning is None:
+        tuning = get_tuning()
+
     # Generate the CQT filters
     basis = filters.constant_q(sr, 
                         fmin=fmin, 
@@ -665,9 +676,10 @@ def midi_to_hz( notes ):
           frequency of the note in Hz
     """
 
+    notes = np.asarray([notes]).flatten()
     return 440.0 * (2.0 ** ((notes - 69)/12.0))
 
-def hz_to_midi( frequency ):
+def hz_to_midi( frequencies ):
     """Get the closest MIDI note number(s) for given frequencies
 
     :parameters:
@@ -680,7 +692,8 @@ def hz_to_midi( frequency ):
 
     """
 
-    return 12 * (np.log2(frequency) - np.log2(440.0)) + 69
+    frequencies = np.asarray([frequencies]).flatten()
+    return 12 * (np.log2(frequencies) - np.log2(440.0)) + 69
 
 def hz_to_mel(frequencies, htk=False):
     """Convert Hz to Mels
@@ -697,6 +710,7 @@ def hz_to_mel(frequencies, htk=False):
 
     """
 
+    frequencies = np.asarray([frequencies]).flatten()
     if np.isscalar(frequencies):
         frequencies = np.array([frequencies], dtype=float)
     else:
@@ -737,10 +751,7 @@ def mel_to_hz(mels, htk=False):
 
     """
 
-    if np.isscalar(mels):
-        mels = np.array([mels], dtype=float)
-    else:
-        mels = mels.astype(float)
+    mels = np.asarray([mels], dtype=float).flatten()
 
     if htk:
         return 700.0 * (10.0**(mels / 2595.0) - 1.0)
@@ -774,6 +785,7 @@ def hz_to_octs(frequencies, A440=440.0):
           octave number for each frequency
 
     """
+    frequencies = np.asarray([frequencies]).flatten()
     return np.log2(frequencies / (A440 / 16.0))
 
 def octs_to_hz(octs, A440=440.0):
@@ -790,6 +802,7 @@ def octs_to_hz(octs, A440=440.0):
           scalar or vector of frequencies
 
     """
+    octs = np.asarray([octs]).flatten()
     return (A440/16)*(2**octs)
 
 def cqt_frequencies(n_bins, fmin, bins_per_octave=12, tuning=0.0):
@@ -843,6 +856,32 @@ def mel_frequencies(n_mels=40, fmin=0.0, fmax=11025.0, htk=False):
     mels    = np.arange(minmel, maxmel + 1, (maxmel - minmel)/(n_mels + 1.0))
     
     return  mel_to_hz(mels, htk=htk)
+
+def A_weighting(frequencies):
+    '''Compute the A-weighting of a set of frequencies.
+
+    :parameters:
+      - frequencies : scalar or np.ndarray
+        One or more frequencies (in Hz)
+
+    :returns:
+      - A_weighting : scalar or np.ndarray
+        A[i] is the A-weighting of frequencies[i]
+    '''
+
+    # Vectorize to make our lives easier
+    frequencies = np.asarray([frequencies]).flatten()
+
+    # Pre-compute squared frequeny
+    f_sq    = frequencies**2.0
+
+    const   = np.array([12200, 20.6, 107.7, 737.9])**2.0
+
+    r_a     = const[0] * f_sq**2
+    r_a     /= (f_sq + const[0]) * (f_sq + const[1])
+    r_a     /= np.sqrt((f_sq + const[2]) * (f_sq + const[3]))
+
+    return 2.0 + 20 * np.log10(r_a)
 
 #-- UTILITIES --#
 def frames_to_time(frames, sr=22050, hop_length=512):
