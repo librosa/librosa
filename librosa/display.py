@@ -8,13 +8,16 @@ import matplotlib.pyplot as plt
 import librosa.core
 
 # TODO:   2013-11-24 11:15:36 by Brian McFeea <brm2132@columbia.edu>
+# freq-ticks: factor out ytick logic from specshow
 # time-ticks: factor out xtick logic from specshow
 # extend to support a mapping array, eg, beat times
 
 def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=5, n_yticks=5, 
     fmin=None, fmax=None, **kwargs):
-    """Display a spectrogram. Wraps to `~matplotlib.pyplot.imshow` with some handy defaults.
-    
+    """Display a spectrogram/chromagram/cqt/etc.
+
+    Functions as a drop-in replacement for `~matplotlib.pyplot.imshow`, but with useful defaults.
+
     :parameters:
       - data : np.ndarray
           Matrix to display (eg, spectrogram)
@@ -135,6 +138,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
                                                         np.log2(fmin))))
         y_val = librosa.core.midi_to_note(librosa.core.hz_to_midi(y_val[y_pos]))
         plt.yticks(y_pos, y_val)
+        plt.ylabel('Note')
 
     elif y_axis is 'mel':
         m_args = {}
