@@ -23,7 +23,7 @@ except ImportError:
 
 
 #-- CORE ROUTINES --#
-def load(path, sr=22050, mono=True, offset=0.0, duration=None, double=False):
+def load(path, sr=22050, mono=True, offset=0.0, duration=None, dtype=np.float32):
     """Load an audio file as a floating point time series.
 
     :parameters:
@@ -43,8 +43,8 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None, double=False):
       - duration : float
           only load up to this much audio (in seconds)
 
-      - double : boolean
-          return time-series in double precision (float64)
+      - dtype : numeric type
+          data type of y
 
     :returns:
       - y    : np.ndarray
@@ -72,7 +72,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None, double=False):
         n = 0
 
         for frame in input_file:
-            frame   = np.frombuffer(frame, '<i2').astype(float)
+            frame   = np.frombuffer(frame, '<i2').astype(dtype)
             n_prev  = n
             n       = n + len(frame)
 
@@ -108,9 +108,6 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None, double=False):
         y = resample(y, sr_native, sr)
     else:
         sr = sr_native
-
-    if not double:
-        y = y.astype(np.float32)
 
     return (y, sr)
 
@@ -392,7 +389,8 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=False
 
     return if_gram, D
 
-def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=None, resolution=1, aggregate=np.mean, samples=None):
+def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=None, 
+        resolution=1, aggregate=np.mean, samples=None):
     '''Compute the constant-Q transform of an audio signal.
     
     :parameters:
@@ -438,6 +436,7 @@ def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=
     
     # Do we have tuning?
     def __get_tuning():
+        '''Helper function to compute tuning from y,sr'''
         pitches, mags = feature.ifptrack(y, sr=sr)[:2]
         threshold = np.median(mags)
         return feature.estimate_tuning( pitches[mags>threshold], 

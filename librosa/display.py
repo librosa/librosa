@@ -9,8 +9,26 @@ import warnings
 
 import librosa.core
 
-# TODO:   2013-11-24 11:15:36 by Brian McFeea <brm2132@columbia.edu>
-# freq-ticks: factor out ytick logic from specshow
+def _log_scale(n):
+    '''Return a log-scale mapping of bins 0..n, and its inverse.
+
+    :parameters:
+      - n : int > 0
+        Number of bins
+
+    :returns:
+      - y   : np.ndarray, shape=(n,)
+      - y_inv   : np.ndarray, shape=(n,)
+    '''
+
+    ln = np.log2(n)
+    y = n * (1 - 2.0**np.linspace(-ln, 0, n, endpoint=True))[::-1]
+
+    y_inv = np.arange(len(y)+1)
+    for i in range(len(y)-1):
+        y_inv[y[i]:y[i+1]] = i
+
+    return y, y_inv
 
 def time_ticks(locs, *args, **kwargs): 
     '''Plot time-formatted axis ticks.
@@ -28,9 +46,11 @@ def time_ticks(locs, *args, **kwargs):
        - n_ticks : int or None
          Show this number of ticks (evenly spaced).
          If none, all ticks are displayed.
+         Default: 5
 
        - axis : 'x' or 'y'
          Which axis should the ticks be plotted on?
+         Default: 'x'
 
        - fmt : None or {'ms', 's', 'm', 'h'}
          ms: milliseconds   (eg, 241ms)
@@ -40,6 +60,8 @@ def time_ticks(locs, *args, **kwargs):
          
          If none, formatted is automatically selected by the 
          range of the times data.
+
+         Default: None
 
        - **kwargs : additional keyword arguments
          See `matplotlib.pyplot.xticks` or `yticks` for details.
@@ -142,9 +164,9 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
 
     """
 
-    kwargs['aspect']        = kwargs.get('aspect',          'auto')
-    kwargs['origin']        = kwargs.get('origin',          'lower')
-    kwargs['interpolation'] = kwargs.get('interpolation',   'nearest')
+    kwargs.setdefault('aspect',          'auto')
+    kwargs.setdefault('origin',          'lower')
+    kwargs.setdefault('interpolation',   'nearest')
 
     if np.issubdtype(data.dtype, np.complex):
         warnings.warn('Trying to display complex-valued input. Showing magnitude instead.')
@@ -155,9 +177,9 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
     # Otherwise, use a sequential map.
     # PuOr and OrRd are chosen to optimize visibility for color-blind people.
     if (data < 0).any() and (data > 0).any():
-        kwargs['cmap']          = kwargs.get('cmap',            'PuOr_r')
+        kwargs.setdefault('cmap',            'PuOr_r')
     else:
-        kwargs['cmap']          = kwargs.get('cmap',            'OrRd')
+        kwargs.setdefault('cmap',            'OrRd')
 
     # NOTE:  2013-11-14 16:15:33 by Brian McFee <brm2132@columbia.edu>pitch 
     #  We draw the image twice here. This is a hack to get around NonUniformImage
@@ -173,10 +195,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
         del kwargs['aspect']
         im_phantom   = img.NonUniformImage(axes_phantom, **kwargs)
 
-        y_log = (data.shape[0] - np.logspace( 0, np.log2( data.shape[0] ), data.shape[0], base=2.0))[::-1]
-        y_inv = np.arange(len(y_log)+1)
-        for i in range(len(y_log)-1):
-            y_inv[y_log[i]:y_log[i+1]] = i
+        y_log, y_inv = _log_scale(data.shape[0])
 
         im_phantom.set_data( np.arange(0, data.shape[1]), y_log, data)
         axes_phantom.images.append(im_phantom)
@@ -203,6 +222,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
         y_pos = np.arange(0, data.shape[0], 
                              np.ceil(data.shape[0] / float(n_yticks)), 
                              dtype=int)
+
 
         # Get frequencies
         y_val = librosa.core.cqt_frequencies(data.shape[0], 
