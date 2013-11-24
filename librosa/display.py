@@ -32,7 +32,7 @@ def time_ticks(locs, *args, **kwargs):
 
        - fmt : None or {'ms', 's', 'm', 'h'}
          ms: milliseconds   (eg, 241ms)
-         s: seconds         (eg, 1.023s)
+         s: seconds         (eg, 1.43s)
          m: minutes         (eg, 1:02)
          h: hours           (eg, 1:02:03)
          
@@ -69,8 +69,8 @@ def time_ticks(locs, *args, **kwargs):
         times   = times[::max(1, len(times)/n_ticks)]
 
     # Format the labels by time
-    formatters = {'ms': lambda t: '%dms' % (100 * t),
-                  's':  lambda t: '%0.3fs' % t,
+    formatters = {'ms': lambda t: '%dms' % (1e3 * t),
+                  's':  lambda t: '%0.2fs' % t,
                   'm':  lambda t: '%d:%02d' % ( t / 60, np.mod(t, 60)),
                   'h':  lambda t: '%d:%02d:%02d' % (t / 3600, t / 60, np.mod(t, 60))}
 
@@ -109,7 +109,8 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
 
       - x_axis : None or {'time', 'frames', 'off'}
           If None or 'off', no x axis is displayed.
-          If 'time', markers are shown as seconds, minutes, or hours.
+          If 'time', markers are shown as milliseconds, seconds, minutes, or hours.
+          (see ``time_ticks()`` for details)
           If 'frames', markers are shown as frame counts.
 
       - y_axis : None or {'linear', 'mel', 'cqt_hz', 'cqt_note', 'chroma', 'off'}
