@@ -45,7 +45,9 @@ def logfsgram(y, sr, n_fft=4096, hop_length=512, **kwargs):
         del magnitudes
 
         bins_per_octave = kwargs.get('bins_per_octave', 12)
-        tuning = estimate_tuning(pitches, bins_per_octave=bins_per_octave)
+        kwargs['tuning'] = estimate_tuning(pitches, bins_per_octave=bins_per_octave)
+
+        del pitches
     else:
         D = librosa.stft(y, n_fft=n_fft, hop_length=hop_length)
 
@@ -53,7 +55,7 @@ def logfsgram(y, sr, n_fft=4096, hop_length=512, **kwargs):
     D = np.abs(D / D.max())
 
     # Build the CQ basis
-    cq_basis = librosa.filters.logfrequency(sr, n_fft=n_fft, tuning=tuning, **kwargs)
+    cq_basis = librosa.filters.logfrequency(sr, n_fft=n_fft, **kwargs)
     
     return cq_basis.dot(D)
 
