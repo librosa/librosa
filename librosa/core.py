@@ -216,7 +216,7 @@ def stft(y, n_fft=2048, hop_length=None, hann_w=None, window=None):
     n_frames    = 1 + int( (len(y) - n_fft) / hop_length)
 
     # allocate output array
-    stft_matrix = np.empty( (n_specbins, n_frames), dtype=np.complex)
+    stft_matrix = np.empty( (n_specbins, n_frames), dtype=np.complex64)
 
     for i in xrange(n_frames):
         sample  = i * hop_length
@@ -357,8 +357,8 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=False
     d_window        = np.sin( - freq_angular ) * np.pi / n_fft
 
     # Construct output arrays
-    if_gram = np.zeros((1 + n_fft / 2, 1 + (len(y) - n_fft) / hop_length))
-    D       = np.zeros_like(if_gram, dtype=np.complex)
+    if_gram = np.zeros((1 + n_fft / 2, 1 + (len(y) - n_fft) / hop_length), dtype=np.float32)
+    D       = np.zeros_like(if_gram, dtype=np.complex64)
 
     # Main loop: fill in if_gram and D
     for i in xrange(D.shape[1]):
