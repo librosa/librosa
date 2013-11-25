@@ -38,18 +38,19 @@ def logfsgram(y, sr, n_fft=4096, hop_length=512, **kwargs):
 
     '''
     
-    # First, get the spectrogram and track pitches
-    pitches, magnitudes, D = ifptrack(y, sr, n_fft=n_fft, hop_length=hop_length)
+    # If the user didn't specify tuning, do it ourselves
+    if 'tuning' not in kwargs:
+        pitches, magnitudes, D = ifptrack(y, sr, n_fft=n_fft, hop_length=hop_length)
+        pitches = pitches[magnitudes > np.median(magnitudes)]
+        del magnitudes
+
+        bins_per_octave = kwargs.get('bins_per_octave', 12)
+        tuning = estimate_tuning(pitches, bins_per_octave=bins_per_octave)
+    else:
+        D = librosa.stft(y, n_fft=n_fft, hop_length=hop_length)
 
     # Normalize, retain magnitude
     D = np.abs(D / D.max())
-
-    # If the user didn't specify tuning, do it ourselves
-    if 'tuning' not in kwargs:
-        bins_per_octave = kwargs.get('bins_per_octave', 12)
-        tuning = estimate_tuning(pitches[magnitudes > np.median(magnitudes)], 
-                                 bins_per_octave=bins_per_octave)
-
 
     # Build the CQ basis
     cq_basis = librosa.filters.logfrequency(sr, n_fft=n_fft, tuning=tuning, **kwargs)
