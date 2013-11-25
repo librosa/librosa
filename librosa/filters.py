@@ -195,7 +195,7 @@ def logfrequency(sr, n_fft, bins_per_octave=12, tuning=0.0, fmin=None, fmax=None
     basis = np.zeros( (n_filters, n_fft /2  + 1) )
     
     # Get log frequencies of bins
-    log_freqs = np.log2(librosa.fft_freq(sr, n_fft)[1:])
+    log_freqs = np.log2(librosa.fft_frequencies(sr, n_fft)[1:])
                                 
     for i in range(n_filters):
         # What's the center (median) frequency of this filter?
