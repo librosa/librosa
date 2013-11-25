@@ -21,8 +21,8 @@ def _log_scale(n):
       - y_inv   : np.ndarray, shape=(n,)
     '''
 
-    ln = np.log2(n)
-    y = n * (1 - 2.0**np.linspace(-ln, 0, n, endpoint=True))[::-1]
+    logn = np.log2(n)
+    y = n * (1 - 2.0**np.linspace(-logn, 0, n, endpoint=True))[::-1]
 
     y_inv = np.arange(len(y)+1)
     for i in range(len(y)-1):
@@ -41,7 +41,7 @@ def time_ticks(locs, *args, **kwargs):
 
 
     :parameters:
-       - times : array of time stamps
+       - locations : array of time stamps
 
        - n_ticks : int or None
          Show this number of ticks (evenly spaced).
@@ -217,34 +217,6 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
         plt.yticks(y_pos, y_val[y_inv[y_pos]])
     
         plt.ylabel('Hz')
-    
-    elif y_axis is 'cqt_hz':
-        y_pos = np.arange(0, data.shape[0], 
-                             np.ceil(data.shape[0] / float(n_yticks)), 
-                             dtype=int)
-
-
-        # Get frequencies
-        y_val = librosa.core.cqt_frequencies(data.shape[0], 
-                                             fmin=fmin, 
-                                             bins_per_octave=int(data.shape[0] / np.ceil(np.log2(fmax) - 
-                                                        np.log2(fmin))))
-        plt.yticks(y_pos, y_val[y_pos].astype(int))
-        plt.ylabel('Hz')
-
-    elif y_axis is 'cqt_note':
-        y_pos = np.arange(0, data.shape[0], 
-                             np.ceil(data.shape[0] / float(n_yticks)), 
-                             dtype=int)
-
-        # Get frequencies
-        y_val = librosa.core.cqt_frequencies(data.shape[0], 
-                                             fmin=fmin, 
-                                             bins_per_octave=int(data.shape[0] / np.ceil(np.log2(fmax) - 
-                                                        np.log2(fmin))))
-        y_val = librosa.core.midi_to_note(librosa.core.hz_to_midi(y_val[y_pos]))
-        plt.yticks(y_pos, y_val)
-        plt.ylabel('Note')
 
     elif y_axis is 'mel':
         m_args = {}
@@ -257,6 +229,32 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
         plt.yticks(y_pos, y_val)
         plt.ylabel('Hz')
     
+    elif y_axis is 'cqt_hz':
+        y_pos = np.arange(0, data.shape[0], 
+                             np.ceil(data.shape[0] / float(n_yticks)), 
+                             dtype=int)
+
+
+        # Get frequencies
+        y_val = librosa.core.cqt_frequencies(data.shape[0], 
+                                             fmin=fmin, 
+                                             bins_per_octave=int(data.shape[0] / np.ceil(np.log2(fmax) - np.log2(fmin))))
+        plt.yticks(y_pos, y_val[y_pos].astype(int))
+        plt.ylabel('Hz')
+
+    elif y_axis is 'cqt_note':
+        y_pos = np.arange(0, data.shape[0], 
+                             np.ceil(data.shape[0] / float(n_yticks)), 
+                             dtype=int)
+
+        # Get frequencies
+        y_val = librosa.core.cqt_frequencies(data.shape[0], 
+                                             fmin=fmin, 
+                                             bins_per_octave=int(data.shape[0] / np.ceil(np.log2(fmax) - np.log2(fmin))))
+        y_val = librosa.core.midi_to_note(librosa.core.hz_to_midi(y_val[y_pos]))
+        plt.yticks(y_pos, y_val)
+        plt.ylabel('Note')
+
     elif y_axis is 'chroma':
         y_pos = np.arange(0, data.shape[0], max(1, data.shape[0] / 12))
         # Labels start at 9 here because chroma starts at A.

@@ -74,8 +74,8 @@ def onset_detect(y=None, sr=22050, onset_envelope=None,
     # Peak pick the onset envelope
     return librosa.core.peak_pick( onset_envelope, **kwargs )
 
-def onset_strength(y=None, sr=22050, S=None, aggregate=np.mean, **kwargs):
-    """Extract onset strength from an audio time series or magnitude spectrogram.
+def onset_strength(y=None, sr=22050, S=None, feature=librosa.feature.melspectrogram, aggregate=np.mean, **kwargs):
+    """Spectral flux onset strength.
 
     Onset strength at time t is determined by:
 
@@ -93,14 +93,16 @@ def onset_strength(y=None, sr=22050, S=None, aggregate=np.mean, **kwargs):
       - S        : np.ndarray 
           pre-computed (log-power) spectrogram
       
+      - feature : function
+          Function for computing time-series features, eg, scaled spectrograms.
+          By default, uses ``librosa.feature.melspectrogram``
+
       - aggregate : function
           Aggregation function to use when combining onsets
           at different frequency bins.
 
       - kwargs  
-          Parameters to mel spectrogram, if S is not provided.
-
-          See ``librosa.feature.melspectrogram()`` for details
+          Parameters to ``feature()``, if S is not provided.
 
     .. note:: if S is provided, then (y, sr) are optional.
 
@@ -119,7 +121,7 @@ def onset_strength(y=None, sr=22050, S=None, aggregate=np.mean, **kwargs):
         if y is None:
             raise ValueError('One of "S" or "y" must be provided.')
 
-        S   = librosa.feature.melspectrogram(y=y, sr=sr, **kwargs)
+        S   = np.abs(feature(y=y, sr=sr, **kwargs))
 
         # Convert to dBs
         S   = librosa.core.logamplitude(S)
