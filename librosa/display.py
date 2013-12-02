@@ -63,7 +63,7 @@ def time_ticks(locs, *args, **kwargs):
 
          Default: None
 
-       - **kwargs : additional keyword arguments
+       - kwargs : additional keyword arguments
          See `matplotlib.pyplot.xticks` or `yticks` for details.
 
     :returns:
