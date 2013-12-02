@@ -9,7 +9,7 @@ import sklearn
 import sklearn.cluster
 import sklearn.feature_extraction
 
-def stack_memory(data, n_steps=2, delay=1):
+def stack_memory(data, n_steps=2, delay=1, trim=True):
     """Short-term history embedding.
 
     Each column ``data[:, i]`` is mapped to
@@ -24,6 +24,8 @@ def stack_memory(data, n_steps=2, delay=1):
           embedding dimension, the number of steps back in time to stack
       - delay : int > 0
           the number of columns to step
+      - trim : boolean
+          Crop dimension to original number of columns
 
     :returns:
       - data_history : np.ndarray, shape=(d*m, t)
@@ -33,8 +35,9 @@ def stack_memory(data, n_steps=2, delay=1):
 
     """
 
+    t = data.shape[1]
     # Pad the end with zeros, which will roll to the front below
-    data = np.pad(data, [(0, 0), (0, n_steps * delay)], mode='constant')
+    data = np.pad(data, [(0, 0), (0, (n_steps-1) * delay)], mode='constant')
 
     history = data
 
@@ -42,7 +45,10 @@ def stack_memory(data, n_steps=2, delay=1):
         history = np.vstack([history, np.roll(data, i * delay, axis=1)])
 
     # Trim to original width
-    return history[:, :data.shape[1]]
+    if trim:
+        history = history[:, :t]
+
+    return history
 
 def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
     '''Compute the binary recurrence matrix from a time-series.
@@ -52,9 +58,9 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
     :parameters:
       - data : np.ndarray
           feature matrix (d-by-t)
-      - k : int > 0, float in (0, 1)
-          if integer, the number of nearest-neighbors.
-          Default: ceil(sqrt(t))
+      - k : int > 0 or None
+          the number of nearest-neighbors for each sample
+          Default: ceil(sqrt(t - 2 * width + 1))
       - width : int > 0
           do not link columns within `width` of each-other
       - metric : see scipy.spatial.distance.pdist()
