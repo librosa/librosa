@@ -74,7 +74,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None,
     # Peak pick the onset envelope
     return librosa.core.peak_pick( onset_envelope, **kwargs )
 
-def onset_strength(y=None, sr=22050, S=None, feature=librosa.feature.melspectrogram, aggregate=np.mean, **kwargs):
+def onset_strength(y=None, sr=22050, S=None, detrend=False, feature=librosa.feature.melspectrogram, aggregate=np.mean, **kwargs):
     """Spectral flux onset strength.
 
     Onset strength at time t is determined by:
@@ -93,6 +93,9 @@ def onset_strength(y=None, sr=22050, S=None, feature=librosa.feature.melspectrog
       - S        : np.ndarray 
           pre-computed (log-power) spectrogram
       
+      - detrend : boolean
+          Filter the onset strength to remove 
+
       - feature : function
           Function for computing time-series features, eg, scaled spectrograms.
           By default, uses ``librosa.feature.melspectrogram``
@@ -137,7 +140,8 @@ def onset_strength(y=None, sr=22050, S=None, feature=librosa.feature.melspectrog
     onsets  = aggregate(onsets, axis=0)
 
     # remove the DC component
-    onsets  = scipy.signal.lfilter([1.0, -1.0], [1.0, -0.99], onsets)
+    if detrend:
+        onsets  = scipy.signal.lfilter([1.0, -1.0], [1.0, -0.99], onsets)
 
     return onsets
 
