@@ -7,19 +7,24 @@
    :maxdepth: 2
    :numbered:
 
-Core methods
-============
-.. automodule:: librosa.core
-   :members:
-
 Beat tracking
 =============
 .. automodule:: librosa.beat
    :members:
 
+Core methods
+============
+.. automodule:: librosa.core
+   :members:
+
 Display
 =======
 .. automodule:: librosa.display
+   :members:
+
+Feature extraction
+==================
+.. automodule:: librosa.feature
    :members:
 
 Filter banks
@@ -32,23 +37,18 @@ Onset detection
 .. automodule:: librosa.onset
    :members:
 
+Output methods
+==============
+.. automodule:: librosa.output
+   :members:
+   
 Segmentation
 ============
 .. automodule:: librosa.segment
    :members:
 
-Feature extraction
-==================
-.. automodule:: librosa.feature
-   :members:
-
 Spectrogram decomposition
 =========================
 .. automodule:: librosa.decompose
-   :members:
-   
-Output methods
-==============
-.. automodule:: librosa.output
    :members:
    
