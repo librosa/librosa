@@ -32,7 +32,7 @@ print 'done.'
 
 # Do HPSS
 print 'Harmonic-percussive separation ... ',
-(H, P) = librosa.decompose.hpss(D, p=2.0)
+(H, P) = librosa.decompose.hpss(D)
 print 'done.'
 
 # Construct onset envelope from percussive component
