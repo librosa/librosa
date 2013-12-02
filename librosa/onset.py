@@ -74,7 +74,8 @@ def onset_detect(y=None, sr=22050, onset_envelope=None,
     # Peak pick the onset envelope
     return librosa.core.peak_pick( onset_envelope, **kwargs )
 
-def onset_strength(y=None, sr=22050, S=None, detrend=False, feature=librosa.feature.melspectrogram, aggregate=np.mean, **kwargs):
+def onset_strength(y=None, sr=22050, S=None, detrend=False, feature=librosa.feature.melspectrogram, 
+                    aggregate=np.mean, **kwargs):
     """Spectral flux onset strength.
 
     Onset strength at time t is determined by:
