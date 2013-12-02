@@ -13,7 +13,7 @@ def test_onset_strength():
         DATA    = load(infile)
 
         # Compute onset envelope using the same spectrogram
-        onsets  = librosa.onset.onset_strength(y=None, sr=8000, S=DATA['D'])
+        onsets  = librosa.onset.onset_strength(y=None, sr=8000, S=DATA['D'], detrend=True)
 
         assert numpy.allclose(onsets, DATA['onsetenv'][0])
 
