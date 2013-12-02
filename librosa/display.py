@@ -115,6 +115,34 @@ def time_ticks(locs, *args, **kwargs):
 
     return ticker(locs, times, **kwargs)
 
+def default_colors(data):
+    '''Get a default colormap from the given data.
+
+    If the data has both positive and negative values, use a diverging colormap.
+    Otherwise, use a sequential map.
+    PuOr and OrRd are chosen to optimize visibility for color-blind people.
+
+    :parameters:
+      - data : np.ndarray
+        Input data
+
+    :returns:
+      - cmap
+        If data has only positive values, cmap is 'OrRd'
+        If data has only negative values, cmap is 'PuBu_r'
+        If data has both positive and negatives, cmap is 'PuOr_r'
+    '''
+
+    positives = (data > 0).any()
+    negatives = (data < 0).any()
+
+    if positives and not negatives:
+        return 'OrRd'
+    elif negatives and not positives:
+        return 'BuPu_r'
+    
+    return 'PuOr_r'
+
 def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=5, n_yticks=5, 
     fmin=None, fmax=None, **kwargs):
     """Display a spectrogram/chromagram/cqt/etc.
@@ -172,14 +200,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
         warnings.warn('Trying to display complex-valued input. Showing magnitude instead.')
         data = np.abs(data)
 
-    # Determine the colormap automatically
-    # If the data has both positive and negative values, use a diverging colormap.
-    # Otherwise, use a sequential map.
-    # PuOr and OrRd are chosen to optimize visibility for color-blind people.
-    if (data < 0).any() and (data > 0).any():
-        kwargs.setdefault('cmap',            'PuOr_r')
-    else:
-        kwargs.setdefault('cmap',            'OrRd')
+    kwargs.setdefault('cmap', default_colors(data))
 
     # NOTE:  2013-11-14 16:15:33 by Brian McFee <brm2132@columbia.edu>pitch 
     #  We draw the image twice here. This is a hack to get around NonUniformImage
@@ -203,18 +224,18 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
         axes_phantom.set_xlim(0, data.shape[1])
 
     # Set up the y ticks
-    y_pos = np.asarray(np.linspace(0, data.shape[0], n_yticks), dtype=int)
+    positions = np.asarray(np.linspace(0, data.shape[0], n_yticks), dtype=int)
 
     if y_axis is 'linear':
-        y_val = np.asarray(np.linspace(0, 0.5 * sr,  data.shape[0] + 1), dtype=int)
+        values = np.asarray(np.linspace(0, 0.5 * sr,  data.shape[0] + 1), dtype=int)
 
-        plt.yticks(y_pos, y_val[y_pos])
+        plt.yticks(positions, values[positions])
         plt.ylabel('Hz')
     
     elif y_axis is 'log':
     
-        y_val = np.asarray(np.linspace(0, 0.5 * sr,  data.shape[0] + 1), dtype=int)
-        plt.yticks(y_pos, y_val[y_inv[y_pos]])
+        values = np.asarray(np.linspace(0, 0.5 * sr,  data.shape[0] + 1), dtype=int)
+        plt.yticks(positions, values[y_inv[positions]])
     
         plt.ylabel('Hz')
 
@@ -225,41 +246,39 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
         if fmax is not None:
             m_args['fmax'] = fmax
 
-        y_val = librosa.core.mel_frequencies(data.shape[0], **m_args)[y_pos].astype(np.int)
-        plt.yticks(y_pos, y_val)
+        values = librosa.core.mel_frequencies(data.shape[0], **m_args)[positions].astype(np.int)
+        plt.yticks(positions, values)
         plt.ylabel('Hz')
     
     elif y_axis is 'cqt_hz':
-        y_pos = np.arange(0, data.shape[0], 
+        positions = np.arange(0, data.shape[0], 
                              np.ceil(data.shape[0] / float(n_yticks)), 
                              dtype=int)
 
 
         # Get frequencies
-        y_val = librosa.core.cqt_frequencies(data.shape[0], 
-                                             fmin=fmin, 
-                                             bins_per_octave=int(data.shape[0] / np.ceil(np.log2(fmax) - np.log2(fmin))))
-        plt.yticks(y_pos, y_val[y_pos].astype(int))
+        values = librosa.core.cqt_frequencies(data.shape[0], fmin=fmin, 
+                                    bins_per_octave=int(data.shape[0] / np.ceil(np.log2(fmax) - np.log2(fmin))))
+        plt.yticks(positions, values[positions].astype(int))
         plt.ylabel('Hz')
 
     elif y_axis is 'cqt_note':
-        y_pos = np.arange(0, data.shape[0], 
+        positions = np.arange(0, data.shape[0], 
                              np.ceil(data.shape[0] / float(n_yticks)), 
                              dtype=int)
 
         # Get frequencies
-        y_val = librosa.core.cqt_frequencies(data.shape[0], 
-                                             fmin=fmin, 
-                                             bins_per_octave=int(data.shape[0] / np.ceil(np.log2(fmax) - np.log2(fmin))))
-        y_val = librosa.core.midi_to_note(librosa.core.hz_to_midi(y_val[y_pos]))
-        plt.yticks(y_pos, y_val)
+        values = librosa.core.cqt_frequencies(data.shape[0], fmin=fmin, 
+                                    bins_per_octave=int(data.shape[0] / np.ceil(np.log2(fmax) - np.log2(fmin))))
+        values = librosa.core.midi_to_note(librosa.core.hz_to_midi(values[positions]))
+        plt.yticks(positions, values)
         plt.ylabel('Note')
 
     elif y_axis is 'chroma':
-        y_pos = np.arange(0, data.shape[0], max(1, data.shape[0] / 12))
+        positions = np.arange(0, data.shape[0], max(1, data.shape[0] / 12))
         # Labels start at 9 here because chroma starts at A.
-        y_val = librosa.core.midi_to_note(range(9, 9+12), octave=False)
-        plt.yticks(y_pos, y_val)
+        values = librosa.core.midi_to_note(range(9, 9+12), octave=False)
+        plt.yticks(positions, values)
         plt.ylabel('Note')
     
     elif y_axis is None or y_axis is 'off':
@@ -270,18 +289,18 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
         raise ValueError('Unknown y_axis parameter: %s' % y_axis)
 
     # Set up the x ticks
-    x_pos = np.asarray(np.linspace(0, data.shape[1], n_xticks), dtype=int)
+    positions = np.asarray(np.linspace(0, data.shape[1], n_xticks), dtype=int)
 
     if x_axis is 'time':
-        time_ticks( x_pos, 
-                    librosa.core.frames_to_time(x_pos, sr=sr, hop_length=hop_length),
+        time_ticks( positions, 
+                    librosa.core.frames_to_time(positions, sr=sr, hop_length=hop_length),
                     n_ticks=None, axis='x')
 
         plt.xlabel('Time')
 
     elif x_axis is 'frames':
         # Nothing to do here, plot is in frames
-        plt.xticks(x_pos, x_pos)
+        plt.xticks(positions, positions)
         plt.xlabel('Frames')
 
     elif x_axis is None or x_axis is 'off':
