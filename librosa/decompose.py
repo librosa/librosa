@@ -69,9 +69,12 @@ def hpss(S, kernel_size=19, power=1.0, mask=False):
       .. note:: harmonic + percussive = S
 
     .. note::
-      - Fitzgerald, D. (2010). 
-        Harmonic/percussive separation using median filtering.
-
+      @article{fitzgerald2010harmonic,
+        title={Harmonic/percussive separation using median filtering},
+        author={Fitzgerald, Derry},
+        year={2010},
+        publisher={Dublin Institute of Technology}}
+    
     """
 
     if np.iscomplex(S).any():
