@@ -14,10 +14,11 @@ def _log_scale(n):
 
     :parameters:
       - n : int > 0
-        Number of bins
+          Number of bins
 
     :returns:
       - y   : np.ndarray, shape=(n,)
+
       - y_inv   : np.ndarray, shape=(n,)
     '''
 
@@ -41,33 +42,34 @@ def time_ticks(locs, *args, **kwargs):
 
 
     :parameters:
-       - locations : array of time stamps
+       - locations : array 
+           Time-stamps for tick marks
 
        - n_ticks : int or None
-         Show this number of ticks (evenly spaced).
-         If none, all ticks are displayed.
-         Default: 5
+           Show this number of ticks (evenly spaced).
+           If none, all ticks are displayed.
+           Default: 5
 
        - axis : 'x' or 'y'
-         Which axis should the ticks be plotted on?
-         Default: 'x'
+           Which axis should the ticks be plotted on?
+           Default: 'x'
 
        - fmt : None or {'ms', 's', 'm', 'h'}
-         ms: milliseconds   (eg, 241ms)
-         s: seconds         (eg, 1.43s)
-         m: minutes         (eg, 1:02)
-         h: hours           (eg, 1:02:03)
+           ms: milliseconds   (eg, 241ms)
+           s: seconds         (eg, 1.43s)
+           m: minutes         (eg, 1:02)
+           h: hours           (eg, 1:02:03)
          
-         If none, formatted is automatically selected by the 
-         range of the times data.
+           If none, formatted is automatically selected by the 
+           range of the times data.
 
-         Default: None
+           Default: None
 
        - kwargs : additional keyword arguments
-         See `matplotlib.pyplot.xticks` or `yticks` for details.
+           See `matplotlib.pyplot.xticks` or `yticks` for details.
 
     :returns:
-      - See `matplotlib.pyplot.xticks` or `yticks` for details.
+       - See `matplotlib.pyplot.xticks` or `yticks` for details.
     '''
 
     n_ticks = kwargs.pop('n_ticks', 5)
@@ -124,13 +126,13 @@ def default_colors(data):
 
     :parameters:
       - data : np.ndarray
-        Input data
+          Input data
 
     :returns:
       - cmap
-        If data has only positive values, cmap is 'OrRd'
-        If data has only negative values, cmap is 'PuBu_r'
-        If data has both positive and negatives, cmap is 'PuOr_r'
+          If data has only positive values, cmap is 'OrRd'
+          If data has only negative values, cmap is 'PuBu_r'
+          If data has both positive and negatives, cmap is 'PuOr_r'
     '''
 
     positives = (data > 0).any()
@@ -145,9 +147,9 @@ def default_colors(data):
 
 def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=5, n_yticks=5, 
     fmin=None, fmax=None, **kwargs):
-    """Display a spectrogram/chromagram/cqt/etc.
+    '''Display a spectrogram/chromagram/cqt/etc.
 
-    Functions as a drop-in replacement for `~matplotlib.pyplot.imshow`, but with useful defaults.
+    Functions as a drop-in replacement for ``matplotlib.pyplot.imshow``, but with useful defaults.
 
     :parameters:
       - data : np.ndarray
@@ -162,35 +164,36 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
       - x_axis : None or {'time', 'frames', 'off'}
           If None or 'off', no x axis is displayed.
           If 'time', markers are shown as milliseconds, seconds, minutes, or hours.
-          (see ``time_ticks()`` for details)
+          (See ``time_ticks()`` for details.)
           If 'frames', markers are shown as frame counts.
 
       - y_axis : None or {'linear', 'mel', 'cqt_hz', 'cqt_note', 'chroma', 'off'}
-          If None or 'off', no y axis is displayed.
-          If 'linear', frequency range is determined by the FFT window and sample rate.
-          If 'log', the image is displayed on a vertical log scale.
-          If 'mel', frequencies are determined by the mel scale.
-          If 'cqt_hz', frequencies are determined by the fmin and fmax values.
-          If 'cqt_note', pitches are determined by the fmin and fmax values.
-          If 'chroma', pitches are determined by the chroma filters.
+          - None or 'off': no y axis is displayed.
+          - 'linear': frequency range is determined by the FFT window and sample rate.
+          - 'log': the image is displayed on a vertical log scale.
+          - 'mel': frequencies are determined by the mel scale.
+          - 'cqt_hz': frequencies are determined by the fmin and fmax values.
+          - 'cqt_note': pitches are determined by the fmin and fmax values.
+          - 'chroma': pitches are determined by the chroma filters.
 
-     - n_xticks : int > 0
+      - n_xticks : int > 0
           If x_axis is drawn, the number of ticks to show
 
-     - n_yticks : int > 0
+      - n_yticks : int > 0
           If y_axis is drawn, the number of ticks to show
 
-     - fmin, fmax : float > 0 or None
+      - fmin : float > 0 or None
+
+      - fmax : float > 0 or None
           Used for setting the Mel or constantq frequency scales
 
-     - kwargs : dict
-          Additional arguments passed through to ``matplotlib.pyplot.imshow``.
+      - kwargs 
+          Additional keyword arguments passed through to ``matplotlib.pyplot.imshow``.
 
     :returns:
-     - image : ``matplotlib.image.AxesImage``
+      - image : ``matplotlib.image.AxesImage``
           As returned from ``matplotlib.pyplot.imshow``.
-
-    """
+    '''
 
     kwargs.setdefault('aspect',          'auto')
     kwargs.setdefault('origin',          'lower')
