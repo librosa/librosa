@@ -11,31 +11,30 @@ def logfsgram(y, sr, n_fft=4096, hop_length=512, **kwargs):
 
     :parameters:
       - y : np.ndarray
-        audio time series
+          audio time series
 
       - sr : int > 0
-        sampling rate of ``y``
+          sampling rate of ``y``
 
       - n_fft : int > 0
-        FFT window size
+          FFT window size
 
       - hop_length : int > 0
-        hop length for STFT
+          hop length for STFT
 
       - bins_per_octave : int > 0
-        Number of bins per octave. Defaults to 12.
+          Number of bins per octave. Defaults to 12.
 
       - tuning : float in [-0.5,  0.5)
-        Deviation (in fractions of a bin) from A440 tuning.
-        If not provided, it will be automatically estimated from ``y``.
+          Deviation (in fractions of a bin) from A440 tuning.
+          If not provided, it will be automatically estimated from ``y``.
 
       - kwargs : additional arguments
-        See ``librosa.filters.logfrequency()`` 
+          See ``librosa.filters.logfrequency()`` 
 
     :returns:
       - P : np.ndarray, shape = (n_pitches, t)
-        P(f, t) contains the energy at pitch bin f, frame t.
-
+          P(f, t) contains the energy at pitch bin f, frame t.
     '''
     
     # If the user didn't specify tuning, do it ourselves
@@ -73,13 +72,11 @@ def chromagram(y=None, sr=22050, S=None, norm='inf', n_fft=2048, hop_length=512,
       - norm       : {'inf', 1, 2, None}
           column-wise normalization:
 
-             'inf' :  max norm
+          - 'inf':  max norm
+          - 1:  l_1 norm 
+          - 2:  l_2 norm
+          - None:  do not normalize
 
-             1 :  l_1 norm 
-             
-             2 :  l_2 norm
-             
-             None :  do not normalize
       - n_fft      : int  > 0
           FFT window size if working with waveform data
 
@@ -91,7 +88,7 @@ def chromagram(y=None, sr=22050, S=None, norm='inf', n_fft=2048, hop_length=512,
 
       - kwargs
           Parameters to build the chroma filterbank.
-          See librosa.filters.chroma() for details.
+          See ``librosa.filters.chroma()`` for details.
 
     .. note:: One of either ``S`` or ``y`` must be provided.
           If y is provided, the magnitude spectrogram is computed automatically given
@@ -154,21 +151,21 @@ def chromagram(y=None, sr=22050, S=None, norm='inf', n_fft=2048, hop_length=512,
 def perceptual_weighting(S, frequencies, ref_power=1e-12):
     '''Perceptual weighting of a power spectrogram:
     
-    S_p[f] = A_weighting(f) + 10*log(S[f] / ref_power)
+    ``S_p[f] = A_weighting(f) + 10*log(S[f] / ref_power)``
     
     :parameters:
       - S : np.ndarray, shape=(d,t)
-        Power spectrogram
+          Power spectrogram
         
       - frequencies : np.ndarray, shape=(d,)
-        Center frequency for each row of S
+          Center frequency for each row of S
         
       - ref_power : float > 0
-        Reference power
+          Reference power
         
     :returns:
       - S_p : np.ndarray, shape=(d,t)
-        perceptually weighted version of S, in dB.
+          perceptually weighted version of S, in dB.
     '''
     
     offset = librosa.A_weighting(frequencies).reshape((-1, 1))
@@ -182,18 +179,17 @@ def estimate_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     
     :parameters:
       - frequencies : array-like, float
-        Detected frequencies in the signal
+          Detected frequencies in the signal
 
       - resolution : float in (0, 1)
-        Resolution of the tuning
+          Resolution of the tuning
         
       - bins_per_octave : int > 0
-        How many bins per octave?
+          How many bins per octave?
         
     :returns:
       - semisoff: float in [-0.5, 0.5]
-        estimated tuning in cents (fractions of a bin)
-                  
+          estimated tuning in cents (fractions of a bin)                
     '''
 
     frequencies = np.asarray([frequencies], dtype=float).flatten()
@@ -218,37 +214,37 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=(150.0, 300.0), fmax
 
     :parameters:
       - y: np.ndarray
-        audio signal
+          audio signal
       
       - sr : int
-        audio sample rate of y
+          audio sample rate of y
         
       - n_fft: int
-        DFT length.
+          DFT length.
         
       - threshold : float in (0, 1)
-        Maximum fraction of expected frequency increment to tolerate
+          Maximum fraction of expected frequency increment to tolerate
       
       - fmin : float or tuple of float
-        Ramp parameter for lower frequency cutoff
-        If scalar, the ramp has 0 width.
-        If tuple, a linear ramp is applied from fmin[0] to fmin[1]
+          Ramp parameter for lower frequency cutoff.
+          If scalar, the ramp has 0 width.
+          If tuple, a linear ramp is applied from fmin[0] to fmin[1]
         
       - fmax : float or tuple of float
-        Ramp parameter for upper frequency cutoff
-        If scalar, the ramp has 0 width.
-        If tuple, a linear ramp is applied from fmax[0] to fmax[1]
+          Ramp parameter for upper frequency cutoff.
+          If scalar, the ramp has 0 width.
+          If tuple, a linear ramp is applied from fmax[0] to fmax[1]
         
     :returns:
       - pitches : np.ndarray, shape=(d,t)
       - magnitudes : np.ndarray, shape=(d,t)
-        Where 'd' is the subset of FFT bins within fmin and fmax.
+          Where 'd' is the subset of FFT bins within fmin and fmax.
         
-        pitches[i, t] contains instantaneous frequencies at time t
-        magnitudes[i, t] contains their magnitudes.
+          pitches[i, t] contains instantaneous frequencies at time t
+          magnitudes[i, t] contains their magnitudes.
         
       - D : np.ndarray, dtype=complex
-        STFT matrix
+          STFT matrix
     '''
 
     

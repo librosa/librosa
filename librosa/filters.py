@@ -98,7 +98,7 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=None):
           Defaults to halfwidth = inf, i.e. flat.
 
     :returns:
-      wts       : ndarray, shape=(n_chroma, 1 + n_fft / 2) 
+      - wts       : ndarray, shape=(n_chroma, 1 + n_fft / 2) 
           Chroma filter matrix
 
     """
@@ -151,29 +151,29 @@ def logfrequency(sr, n_fft, bins_per_octave=12, tuning=0.0, fmin=None, fmax=None
     
     :parameters:
       - sr : int > 0
-        audio sampling rate
+          audio sampling rate
         
       - n_fft : int > 0
-        FFT window size
+          FFT window size
         
       - bins_per_octave : int > 0
-        Number of bins per octave. Defaults to 12 (semitones).
+          Number of bins per octave. Defaults to 12 (semitones).
         
       - tuning : None or float in [-0.5, +0.5]
-        Tuning correction parameter, in fractions of a bin.
+          Tuning correction parameter, in fractions of a bin.
         
       - fmin : float > 0
-        Minimum frequency bin. Defaults to ``C1 ~= 16.35``
+          Minimum frequency bin. Defaults to ``C1 ~= 16.35``
         
       - fmax : float > 0
-        Maximum frequency bin. Defaults to ``C9 = 4816.01``
+          Maximum frequency bin. Defaults to ``C9 = 4816.01``
         
       - spread : float > 0
-        Spread of each filter, as a fraction of a bin.
+          Spread of each filter, as a fraction of a bin.
         
     :returns:
       - C : np.ndarray, shape=(ceil(log(fmax/fmin)) * bins_per_octave, 1 + n_fft/2)
-        CQT filter bank.
+          CQT filter bank.
     '''
     
     if fmin is None:
@@ -217,33 +217,33 @@ def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, resolut
 
     :parameters:
       - sr : int > 0
-        Audio sampling rate
+          Audio sampling rate
 
       - fmin : float > 0
-        Minimum frequency bin. Defaults to ``C1 ~= 16.35``
+          Minimum frequency bin. Defaults to ``C1 ~= 16.35``
         
       - fmax : float > 0
-        Maximum frequency bin. Defaults to ``C9 = 4816.01``
+          Maximum frequency bin. Defaults to ``C9 = 4816.01``
 
       - bins_per_octave : int > 0
-        Number of bins per octave
+          Number of bins per octave
 
       - tuning : float in [-0.5, +0.5)
-        Tuning deviation from A440 in fractions of a bin
+          Tuning deviation from A440 in fractions of a bin
 
       - resolution : float > 0
-        Resolution of filter windows. Larger values use longer windows.
+          Resolution of filter windows. Larger values use longer windows.
 
-        .. note:
-          @phdthesis{mcvicar2013,
-            title  = {A machine learning approach to automatic chord extraction},
-            author = {McVicar, M.},
-            year   = {2013},
-            school = {University of Bristol}}
+      .. note::
+            @phdthesis{mcvicar2013,
+              title  = {A machine learning approach to automatic chord extraction},
+              author = {McVicar, M.},
+              year   = {2013},
+              school = {University of Bristol}}
 
     :returns:
       - filters : list of np.ndarray
-        filters[i] is the time-domain representation of the i'th CQT basis.
+          filters[i] is the time-domain representation of the i'th CQT basis.
     '''
     
     if fmin is None:
@@ -282,22 +282,26 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12, roll=0):
 
     :parameters:
       - n_input : int > 0
-        Number of input components (CQT bins)
+          Number of input components (CQT bins)
 
       - bins_per_octave : int > 0
-        How many bins per octave in the CQT
+          How many bins per octave in the CQT
 
       - n_chroma : int > 0
-        Number of output bins (per octave) in the chroma
+          Number of output bins (per octave) in the chroma
 
       - roll : int
-        Number of bins to offset the output by.
-        For example, if the 0-bin of the CQT is C, and
-        the desired 0-bin for the chroma is A, then roll=-3.
+          Number of bins to offset the output by.
+          For example, if the 0-bin of the CQT is C, and
+          the desired 0-bin for the chroma is A, then roll=-3.
 
     :returns:
       - cq_to_chroma : np.ndarray, shape=(n_chroma, n_input)
+          Transformation matrix: ``Chroma = np.dot(cq_to_chroma, CQT)``      
         
+    :raises:
+      - ValueError
+          If n_input is not an integer multiple of n_chroma
     '''
 
     # How many fractional bins are we merging?

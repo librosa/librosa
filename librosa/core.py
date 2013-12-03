@@ -379,43 +379,42 @@ def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=
     
     :parameters:
       - y : np.ndarray
-        audio time series
+          audio time series
     
       - sr : int > 0
-        sampling rate of y
+          sampling rate of y
         
       - hop_length : int > 0
-        hop length 
+          hop length 
     
       - fmin : float > 0
-        Minimum frequency. Defaults to C1 ~= 16.35 Hz
+          Minimum frequency. Defaults to C1 ~= 16.35 Hz
         
       - fmax : float > 0
-        Maximum frequency. Defaults to C9 ~= 4816.01 Hz
+          Maximum frequency. Defaults to C9 ~= 4816.01 Hz
         
       - bins_per_octave : int > 0
-        Number of bins per octave
+          Number of bins per octave
         
       - tuning : None or float in [-0.5, 0.5)
-        Tuning offset in fractions of a bin (cents)
-        If None, tuning will be automatically estimated.
+          Tuning offset in fractions of a bin (cents)
+          If None, tuning will be automatically estimated.
         
       - resolution : float > 0
-        Filter resolution factor. Larger values use longer windows.
+          Filter resolution factor. Larger values use longer windows.
         
       - aggregate : function
-        Aggregator function to merge filter response power within frames.
+          Aggregator function to merge filter response power within frames.
         
       - samples : None or array-like
-        Aggregate power at times ``y[samples[i]:samples[i+1]]``, 
-        instead of ``y[i * hop_length : (i+1)*hop_length]``
+          Aggregate power at times ``y[samples[i]:samples[i+1]]``, 
+          instead of ``y[i * hop_length : (i+1)*hop_length]``
         
-        Note that boundary sample times (0, len(y)) will be automatically added.
+          Note that boundary sample times (0, len(y)) will be automatically added.
         
     :returns:
       - CQT : np.ndarray
-        Constant-Q power for each frequency at each time.
-        
+          Constant-Q power for each frequency at each time.    
     '''
     
     # Do we have tuning?
@@ -503,14 +502,16 @@ def phase_vocoder(D, rate, hop_length=None):
     :parameters:
       - D       : np.ndarray, dtype=complex
           STFT matrix
+
       - rate    :  float, positive
           time-stretch factor
+
       - hop_length : int or None
-        hop length of D.  If None, defaults to n_fft/4 = (D.shape[0]-1)/2
+          hop length of D.  If None, defaults to n_fft/4 = (D.shape[0]-1)/2
 
     :returns:
       - D_stretched  : np.ndarray, dtype=complex
-        time-stretched STFT
+          time-stretched STFT
 
     .. note::
       - This implementation was ported from the following:
@@ -617,16 +618,18 @@ def midi_to_note(midi, octave=True, cents=False):
 
     :parameters:
       - midi : int or iterable of int
-        Midi numbers to convert.
+          Midi numbers to convert.
+
       - octave: boolean
-        If true, include the octave number
+          If true, include the octave number
+
       - cents: boolean
-        If true, cent markers will be appended for fractional notes.
-        Eg, ``midi_to_note(69.3, cents=True)`` == ``A5+03``
+          If true, cent markers will be appended for fractional notes.
+          Eg, ``midi_to_note(69.3, cents=True)`` == ``A5+03``
 
     :returns:
       - notes : str or iterable of str
-        Strings describing each midi note.
+          Strings describing each midi note.
     '''
 
     if not np.isscalar(midi):
@@ -792,13 +795,14 @@ def fft_frequencies(sr=22050, n_fft=2048):
 
     :parameters:
       - sr : int > 0
-        Audio sampling rate
+          Audio sampling rate
+
       - n_fft : int > 0
-        FFT window size
+          FFT window size
 
     :returns:
       - freqs : np.ndarray, shape = (1 + n_fft/2,)
-        Frequencies (0, sr/n_fft, 2*sr/n_fft, ..., sr/2)
+          Frequencies (0, sr/n_fft, 2*sr/n_fft, ..., sr/2)
     '''
 
     return np.linspace(0, sr/2, 1 + n_fft/2, endpoint=True)
@@ -808,20 +812,20 @@ def cqt_frequencies(n_bins, fmin, bins_per_octave=12, tuning=0.0):
 
     :parameters:
       - n_bins  : int > 0
-        Number of constant-Q bins
+          Number of constant-Q bins
 
       - fmin    : float >0
-        Minimum frequency
+          Minimum frequency
 
       - bins_per_octave : int > 0
-        Number of bins per octave
+          Number of bins per octave
 
       - tuning : float in [-0.5, +0.5)
-        Deviation from A440 tuning in fractional bins (cents)
+          Deviation from A440 tuning in fractional bins (cents)
 
     :returns:
       - frequencies : np.ndarray, shape=(n_bins,)
-        Center frequency for each CQT bin
+          Center frequency for each CQT bin
     """
 
     correction = 2.0**(float(tuning) / bins_per_octave)
@@ -860,11 +864,11 @@ def A_weighting(frequencies):
 
     :parameters:
       - frequencies : scalar or np.ndarray
-        One or more frequencies (in Hz)
+          One or more frequencies (in Hz)
 
     :returns:
       - A_weighting : scalar or np.ndarray
-        A[i] is the A-weighting of frequencies[i]
+          A[i] is the A-weighting of frequencies[i]
     '''
 
     # Vectorize to make our lives easier
