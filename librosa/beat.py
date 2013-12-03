@@ -11,25 +11,30 @@ import librosa.onset
 
 def beat_track(y=None, sr=22050, onsets=None, hop_length=64, 
                start_bpm=120.0, n_fft=2048, tightness=400, trim=True):
-    """Ellis-style beat tracker
+    """Dynamic programming beat tracker.
+
+    Beats are detected in three stages:
+    - Measure onset strength
+    - Estimate tempo
+    - Pick peaks in onset strength approximately consistent with estimated tempo
 
     :parameters:
-      - y          : np.ndarray 
+      - y          : np.ndarray or None
           audio time series
 
-      - sr         : int
+      - sr         : int > 0
           audio sample rate
 
-      - onsets     : np.ndarray 
+      - onsets     : np.ndarray or None
           (optional) pre-computed onset envelope
 
-      - hop_length : int
+      - hop_length : int > 0
           hop length (in frames)
 
-      - start_bpm  : float
+      - start_bpm  : float > 0
           initial guess for BPM estimator
 
-      - n_fft      : int
+      - n_fft      : int > 0
           window size (centers beat times).
           Set ``n_fft=None`` to disable frame centering.
 
@@ -40,7 +45,6 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
           trim leading/trailing beats with weak onsets?
 
       .. note:: One of either ``onsets`` or ``y`` must be provided.
-
 
     :returns: 
       - bpm : float
@@ -58,13 +62,16 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
       an empty list.
 
     .. note:: 
-
       - http://labrosa.ee.columbia.edu/projects/beattrack/
-      - D. Ellis (2007)
-        Beat Tracking by Dynamic Programming
-        Journal of New Music Research
-        Special Issue on Beat and Tempo Extraction
-        vol. 36 no. 1, March 2007, pp. 51-60. 
+      - @article{ellis2007beat,
+            title={Beat tracking by dynamic programming},
+            author={Ellis, Daniel PW},
+            journal={Journal of New Music Research},
+            volume={36},
+            number={1},
+            pages={51--60},
+            year={2007},
+            publisher={Taylor \& Francis} }
 
     """
 
@@ -231,20 +238,21 @@ def __beat_tracker(onsets, bpm, fft_res, tightness, trim):
     return beats
 
 def onset_estimate_bpm(onsets, start_bpm, fft_res):
-    """Estimate the BPM from an onset envelope
+    """Estimate the tempo (beats per minute) from an onset envelope
 
     :parameters:
       - onsets    : np.ndarray   
           time-series of onset strengths
+
       - start_bpm : float
           initial guess of the BPM
+
       - fft_res   : float
           resolution of FFT (sample rate / hop length)
 
     :returns:
       - bpm      : float
           estimated BPM
-
     """
 
     ac_size     = 4.0

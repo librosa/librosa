@@ -8,8 +8,7 @@ import scipy.signal
 import librosa.core
 import librosa.feature
 
-def onset_detect(y=None, sr=22050, onset_envelope=None, 
-                            hop_length=64, **kwargs):
+def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64, **kwargs):
     """Basic onset detector
         
     :parameters:
