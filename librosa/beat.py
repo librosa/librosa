@@ -11,7 +11,7 @@ import librosa.onset
 
 def beat_track(y=None, sr=22050, onsets=None, hop_length=64, 
                start_bpm=120.0, n_fft=2048, tightness=400, trim=True):
-    """Dynamic programming beat tracker.
+    r'''Dynamic programming beat tracker.
 
     Beats are detected in three stages:
     - Measure onset strength
@@ -72,8 +72,7 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
             pages={51--60},
             year={2007},
             publisher={Taylor \& Francis} }
-
-    """
+    '''
 
     # First, get the frame->beat strength profile if we don't already have one
     if onsets is None:
