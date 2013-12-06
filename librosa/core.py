@@ -1013,17 +1013,17 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
 
     # Get the maximum of the signal over a sliding window
     max_length  = pre_max + post_max + 1
-    max_origin  = int(np.floor((pre_max - post_max)/2))
-    mov_max     = scipy.ndimage.filters.maximum_filter1d(x, max_length, 
+    max_origin  = 0.5 * (pre_max - post_max)
+    mov_max     = scipy.ndimage.filters.maximum_filter1d(x, int(max_length), 
                                                             mode='constant', 
-                                                            origin=max_origin)
+                                                            origin=int(max_origin))
 
     # Get the mean of the signal over a sliding window
     avg_length  = pre_avg + post_avg + 1
-    avg_origin  = int(np.floor((pre_avg - post_avg)/2))
-    mov_avg     = scipy.ndimage.filters.uniform_filter1d(x, avg_length, 
+    avg_origin  = 0.5 * (pre_avg - post_avg)
+    mov_avg     = scipy.ndimage.filters.uniform_filter1d(x, int(avg_length), 
                                                             mode='constant', 
-                                                            origin=avg_origin)
+                                                            origin=int(avg_origin))
 
     # First mask out all entries not equal to the local max
     detections = x*(x == mov_max)
