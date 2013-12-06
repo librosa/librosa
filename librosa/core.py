@@ -1013,7 +1013,7 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
 
     # Get the maximum of the signal over a sliding window
     max_length  = pre_max + post_max + 1
-    max_origin  = np.floor((pre_max - post_max)/2)
+    max_origin  = int(np.floor((pre_max - post_max)/2))
     mov_max     = scipy.ndimage.filters.maximum_filter1d(x, max_length, 
                                                             mode='constant', 
                                                             origin=max_origin)
