@@ -193,6 +193,10 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
     :returns:
       - image : ``matplotlib.image.AxesImage``
           As returned from ``matplotlib.pyplot.imshow``.
+
+    :raises:
+      - ValueError 
+          If y_axis is 'cqt_hz' or 'cqt_note' and fmin and fmax are not supplied.
     '''
 
     kwargs.setdefault('aspect',          'auto')
@@ -254,6 +258,9 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
         plt.ylabel('Hz')
     
     elif y_axis is 'cqt_hz':
+        if fmax is None and fmin is None:
+            raise ValueError('fmin and fmax must be supplied for CQT axis display')
+
         positions = np.arange(0, data.shape[0], 
                              np.ceil(data.shape[0] / float(n_yticks)), 
                              dtype=int)
@@ -266,6 +273,9 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
         plt.ylabel('Hz')
 
     elif y_axis is 'cqt_note':
+        if fmax is None and fmin is None:
+            raise ValueError('fmin and fmax must be supplied for CQT axis display')
+
         positions = np.arange(0, data.shape[0], 
                              np.ceil(data.shape[0] / float(n_yticks)), 
                              dtype=int)
