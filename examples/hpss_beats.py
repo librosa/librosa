@@ -61,7 +61,7 @@ def hpss_beats(input_file, output_csv):
 def process_arguments():
     '''Argparse function to get the program parameters'''
 
-    parser = argparse.ArgumentParser(description='librosa beat-tracking example')
+    parser = argparse.ArgumentParser(description='librosa HPSS beat-tracking example')
 
     parser.add_argument(    'input_file',
                             action      =   'store',

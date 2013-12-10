@@ -222,6 +222,9 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=(150.0, 300.0), fmax
       - n_fft: int
           DFT length.
         
+      - hop_length : int
+          Hop size for STFT.  Defaults to n_fft / 4.
+
       - threshold : float in (0, 1)
           Maximum fraction of expected frequency increment to tolerate
       
