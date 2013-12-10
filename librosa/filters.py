@@ -212,7 +212,7 @@ def logfrequency(sr, n_fft, bins_per_octave=12, tuning=0.0, fmin=None, fmax=None
         
     return basis
 
-def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, resolution=1):
+def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, window=np.hamming, resolution=1):
     '''Construct a constant-Q basis.
 
     :parameters:
@@ -230,6 +230,11 @@ def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, resolut
 
       - tuning : float in [-0.5, +0.5)
           Tuning deviation from A440 in fractions of a bin
+      
+      - window : function or None
+          Windowing function to apply to filters. 
+          If None, no window is applied.
+          Default is to use a hanning window.
 
       - resolution : float > 0
           Resolution of filter windows. Larger values use longer windows.
@@ -269,11 +274,15 @@ def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, resolut
         ilen = np.ceil(Q * sr / (fmin * 2.0**(i / bins_per_octave)))
 
         # Build the filter and normalize
-        window = np.hamming(ilen) 
-        window = window * np.exp(Q * 1j * np.linspace(0, 2 * np.pi, ilen, endpoint=False))
-        window /= np.sqrt(np.sum(np.abs(window)**2))
+        if window is not None:
+            win = window(ilen) 
+        else:
+            win = 1.0
+
+        win = win * np.exp(Q * 1j * np.linspace(0, 2 * np.pi, ilen, endpoint=False))
+        win /= np.sqrt(np.sum(np.abs(win)**2))
         
-        filters.append(window)
+        filters.append(win)
     
     return filters
 
