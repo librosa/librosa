@@ -2,29 +2,64 @@
 '''
 CREATED:2013-02-11 18:37:30 by Brian McFee <brm2132@columbia.edu>
 
-Do beat tracking on an audio file
+Track beat events in an audio file
 
-Usage:
-
-./beat_tracker.py   input_file.mp3    output_beats.csv
+Usage:   ./beat_tracker.py [-h] input_file.mp3    output_beats.csv
 '''
 
-import sys, librosa
+import sys, librosa, argparse
 
 # 1. load the wav file and resample to 22.050 KHz
-print 'Loading ', sys.argv[1], '... ',
-(y, sr)         = librosa.load(sys.argv[1], sr=22050)
-print 'done.'
+def beat_track(input_file, output_csv):
+    '''Beat tracking function
+    
+    :parameters:
+      - input_file : str
+          Path to input audio file (wav, mp3, m4a, flac, etc.)
 
-# 2. extract beats
+      - output_file : str
+          Path to save beat event timestamps as a CSV file
+    '''
 
-# Use a default hop size of 64 frames ~= 11.6ms
-hop_length = 64
-print 'Extracting beats... ',
-(bpm, beats)    = librosa.beat.beat_track(y=y, sr=sr, hop_length=hop_length)
-print 'done.    Estimated bpm: %.2f' % bpm
+    print 'Loading ', input_file
+    y, sr         = librosa.load(input_file, sr=22050)
 
-# 3. save output
-print 'Saving output... ',
-librosa.output.frames_csv(sys.argv[2], beats, sr=sr, hop_length=hop_length)
-print 'done.'
+    # Use a default hop size of 64 frames @ 22KHz ~= 11.6ms
+    HOP_LENGTH = 64
+
+    print 'Tracking beats'
+    tempo, beats    = librosa.beat.beat_track(y=y, sr=sr, hop_length=HOP_LENGTH)
+
+    print 'Estimated tempo: %0.2f beats per minute' % tempo
+
+    # 3. save output
+    # 'beats' will contain the frame numbers of beat events.
+    # frames_csv() converts this into timestamps automatically 
+
+    print 'Saving output to ', output_csv
+    librosa.output.frames_csv(output_csv, beats, sr=sr, hop_length=HOP_LENGTH)
+    print 'done!'
+
+
+def process_arguments():
+    '''Argparse function to get the program parameters'''
+
+    parser = argparse.ArgumentParser(description='librosa beat-tracking example')
+
+    parser.add_argument(    'input_file',
+                            action      =   'store',
+                            help        =   'path to the input file (wav, mp3, etc)')
+
+    parser.add_argument(    'output_file',
+                            action      =   'store',
+                            help        =   'path to the output file (csv of beat times)')
+
+    return vars(parser.parse_args(sys.argv[1:]))
+
+
+if __name__ == '__main__':
+    # Get the parameters
+    parameters = process_arguments()
+
+    # Run the beat tracker
+    beat_track(parameters['input_file'], parameters['output_file'])
