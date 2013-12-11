@@ -4,9 +4,7 @@ CREATED:2013-12-08 14:28:34 by Brian McFee <brm2132@columbia.edu>
  
 Demonstration of harmonic-percussive source separation
 
-Usage:
-
-./hpss.py  input_file.mp3  output_harmonic.wav  output_percussive.wav
+Usage: ./hpss.py [-h] input_file.mp3  output_harmonic.wav  output_percussive.wav
 
 '''
 
