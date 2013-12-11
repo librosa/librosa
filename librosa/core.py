@@ -541,7 +541,7 @@ def phase_vocoder(D, rate, hop_length=None):
     phase_acc = np.angle(D[:, 0])
     
     # Pad 0 columns to simplify boundary logic
-    D = np.pad(D, [(0, 0), (0, 2)])
+    D = np.pad(D, [(0, 0), (0, 2)], mode='constant')
 
     for (t, step) in enumerate(time_steps):
         
