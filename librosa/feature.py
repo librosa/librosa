@@ -431,12 +431,10 @@ def delta(X, axis=-1, order=1, pad=True):
           delta matrix of X.
     '''
 
-    d, T = X.shape
-
     delta_X = np.diff(X, n=order, axis=axis)
 
     if pad:
-        padding = [(0,0)]  * X.ndim
+        padding = [(0, 0)]  * X.ndim
         padding[axis] = (order, 0)
         delta_X = np.pad(delta_X, padding, mode='constant')
 
