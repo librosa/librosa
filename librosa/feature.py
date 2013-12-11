@@ -390,7 +390,7 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512, **kwarg
 
     :returns:
       - S : np.ndarray
-          Mel spectrogram
+          Mel power spectrogram
 
     """
 
@@ -408,6 +408,40 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512, **kwarg
     return np.dot(mel_basis, S)
 
 #-- miscellaneous utilities --#
+def delta(X, axis=-1, order=1, pad=True):
+    '''Compute delta features.
+
+    :parameters:
+      - X         : np.ndarray, shape=(d, T)
+          the input data matrix (eg, spectrogram)
+
+      - axis      : int
+          the axis along which to compute deltas.
+          Default is -1 (columns).
+
+      - order     : int
+          the order of the difference operator.
+          1 for first derivative, 2 for second, etc.
+
+      - pad       : bool
+          set to True to pad the output matrix to the original size.
+
+    :returns:
+      - delta_X   : np.ndarray
+          delta matrix of X.
+    '''
+
+    d, T = X.shape
+
+    delta_X = np.diff(X, n=order, axis=axis)
+
+    if pad:
+        padding = [(0,0)]  * X.ndim
+        padding[axis] = (order, 0)
+        delta_X = np.pad(delta_X, padding, mode='constant')
+
+    return delta_X
+
 def sync(data, frames, aggregate=np.mean):
     """Synchronous aggregation of a feature matrix
 
