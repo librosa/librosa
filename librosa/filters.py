@@ -63,7 +63,7 @@ def mel(sr, n_fft, n_mels=40, fmin=0.0, fmax=None, htk=False):
     fftfreqs    = np.arange( size, dtype=float ) * sr / n_fft
 
     # 'Center freqs' of mel bands - uniformly spaced between limits
-    freqs       = librosa.mel_frequencies(n_mels, fmin, fmax, htk)
+    freqs       = librosa.mel_frequencies(n_mels, fmin=fmin, fmax=fmax, htk=htk, extra=True)
 
     # Slaney-style mel is scaled to be approx constant E per channel
     enorm       = 2.0 / (freqs[2:n_mels+2] - freqs[:n_mels])
