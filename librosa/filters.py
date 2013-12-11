@@ -234,7 +234,7 @@ def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, window=
       - window : function or None
           Windowing function to apply to filters. 
           If None, no window is applied.
-          Default is to use a hanning window.
+          Default is to use a hamming window.
 
       - resolution : float > 0
           Resolution of filter windows. Larger values use longer windows.
