@@ -2,7 +2,7 @@
 '''
 CREATED:2013-12-08 14:28:34 by Brian McFee <brm2132@columbia.edu>
  
-Demonstration of harmonic-percussive source separation
+Demonstration of phase vocoder time stretching 
 
 Usage: ./time_stretch.py [-h] [-s STRETCH_FACTOR] input_file.mp3  output_harmonic.wav
 
@@ -47,7 +47,7 @@ def stretch_demo(input_file, output_file, speed):
 def process_arguments():
     '''Argparse function to get the program parameters'''
 
-    parser = argparse.ArgumentParser(description='librosa harmonic-percussive source separation example')
+    parser = argparse.ArgumentParser(description='librosa phase vocoder time stretching')
 
     parser.add_argument(    'input_file',
                             action      =   'store',
