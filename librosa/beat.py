@@ -23,7 +23,7 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
           audio time series
 
       - sr         : int > 0
-          audio sample rate
+          sample rate of y
 
       - onsets     : np.ndarray or None
           (optional) pre-computed onset strength envelope
