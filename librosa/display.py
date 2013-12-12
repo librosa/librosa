@@ -253,7 +253,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
         if fmax is not None:
             m_args['fmax'] = fmax
 
-        values = librosa.core.mel_frequencies(data.shape[0], **m_args)[positions].astype(np.int)
+        values = librosa.core.mel_frequencies(n_mels=data.shape[0], extra=True, **m_args)[positions].astype(np.int)
         plt.yticks(positions, values)
         plt.ylabel('Hz')
     
