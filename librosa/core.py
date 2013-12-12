@@ -171,9 +171,9 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None):
           The length of the (Hann) window. 
           If unspecified, defaults to n_fft.
 
-      - window      : np.ndarray, function, or None
+      - window      : None, np.ndarray, function
           - None (default): use an asymmetric Hann window
-          - a user-specified window vector of length ``n_fft``
+          - a vector or array of length ``n_fft``
           - a window function, such as ``scipy.signal.hanning``
 
     :returns:
@@ -194,14 +194,17 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None):
     n_frames    = 1 + int( (len(y) - n_fft) / hop_length)
 
     if window is None:
-        # if there is no user-specified window, construct it
+        # Default is an asymmetric Hann window
         fft_window = scipy.signal.hann(win_length, sym=False)
 
     elif hasattr(window, '__call__'):
-        # User supplied a window function, use that instead
+        # User supplied a window function
         fft_window = window(win_length)
+
     else:
-        # User supplied a window vector. Make sure it's an array:
+        # User supplied a window vector
+
+        # Make sure it's an array:
         fft_window = np.asarray(window)
 
         # validate length compatibility
