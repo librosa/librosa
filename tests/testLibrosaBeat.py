@@ -28,7 +28,7 @@ def test_tempo():
         DATA    = load(infile)
 
         # Estimate tempo from the given onset envelope
-        tempo   = librosa.beat.onset_estimate_bpm(  DATA['onsetenv'][0], 
+        tempo   = librosa.beat.estimate_tempo(  DATA['onsetenv'][0], 
                                                     120.0,  # starting bpm
                                                     8000 / 32)
 
