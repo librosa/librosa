@@ -1237,9 +1237,12 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
       where ``previous_n`` is the last sample picked as a peak (greedily).
     
     .. note::
-      S. Bock, F. Krebs and M. Schedl (2012)
-      Evaluating the Online Capabilities of Onset Detection Methods
-      13th International Society for Music Information Retrieval Conference
+        @inproceedings{bock2012evaluating,
+            title={Evaluating the Online Capabilities of Onset Detection Methods.},
+            author={B{\"o}ck, Sebastian and Krebs, Florian and Schedl, Markus},
+            booktitle={ISMIR},
+            pages={49--54},
+            year={2012}}
     
     .. note::
       Implementation based on 
