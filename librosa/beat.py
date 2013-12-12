@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Onsets, tempo, beats and segmentation."""
+"""Beat tracking and tempo estimation"""
 
 import numpy as np
 import scipy
