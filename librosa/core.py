@@ -448,26 +448,31 @@ def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=
     
     return np.asarray(cqt_power).squeeze()
 
-def logamplitude(S, amin=1e-10, top_db=80.0):
-    """Log-scale the amplitude of a spectrogram
+def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
+    """Log-scale the amplitude of a spectrogram.
 
     :parameters:
       - S       : np.ndarray
           input spectrogram
 
+      - ref_power : float
+          reference power against which S is compared
+
       - amin    : float
           minimum amplitude threshold 
 
       - top_db  : float
-          threshold ``max(log(S)) - top_db``
+          threshold log amplitude at top_db below the peak:
+          ``max(log(S)) - top_db``
 
     :returns:
       log_S   : np.ndarray
-          ``log_S ~= 10 * log10(S)``
+          ``log_S ~= 10 * log10(S) - 10 * log10(ref_power)``
 
     """
 
-    log_spec   =   10.0 * np.log10(np.maximum(amin, np.abs(S)))
+    log_spec    =   10.0 * np.log10(np.maximum(amin, np.abs(S))) 
+    log_spec    -=  10.0 * np.log10(ref_power)
 
     if top_db is not None:
         log_spec = np.maximum(log_spec, log_spec.max() - top_db)
