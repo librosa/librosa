@@ -1205,6 +1205,13 @@ def localmax(x):
 
 def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     '''Uses a flexible heuristic to pick peaks in a signal.
+
+    Example usage:
+        >>> # Look +-3 steps
+        >>> # compute the moving average over +-5 steps
+        >>> # peaks must be > avg + 0.5
+        >>> # skip 10 steps before taking another peak
+        >>> librosa.peak_pick(x, 3, 3, 5, 5, 0.5, 10)
     
     :parameters:
       - x         : np.ndarray
