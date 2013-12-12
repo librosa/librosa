@@ -7,6 +7,12 @@ import librosa
 def dct(n_filts, n_input):
     """Discrete cosine transform basis
 
+    Example usage:
+        >>> # Compute MFCCs
+        >>> S           = librosa.melspectrogram(y, sr)
+        >>> dct_filters = librosa.filters.dct(13, S.shape[0])
+        >>> mfcc        = dct_filters.dot(librosa.logamplitude(S))
+
     :parameters:
       - n_filts   : int
           number of output components
@@ -31,6 +37,12 @@ def dct(n_filts, n_input):
 
 def mel(sr, n_fft, n_mels=40, fmin=0.0, fmax=None, htk=False):
     """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins
+
+    Example usage:
+        >>> mel_fb = librosa.filters.mel(22050, 2048)
+
+        >>> # Or clip the maximum frequency to 8KHz
+        >>> mel_fb = librosa.filters.mel(22050, 2048, fmax=8000)
 
     :parameters:
       - sr        : int
@@ -80,6 +92,16 @@ def mel(sr, n_fft, n_mels=40, fmin=0.0, fmax=None, htk=False):
 
 def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=None):
     """Create a Filterbank matrix to convert STFT to chroma
+
+    Example usage:
+        >>> # Build a simple chroma filter bank
+        >>> chroma_fb   = librosa.filters.chroma(22050, 4096)
+
+        >>> # Use quarter-tones instead of semitones
+        >>> chroma_fbq  = librosa.filters.chroma(22050, 4096, n_chroma=24)
+
+        >>> # Down-weight the high and low frequencies
+        >>> chroma_fb   = librosa.filters.chroma(22050, 4096, ctroct=5, octwidth=2)
 
     :parameters:
       - sr        : int
@@ -149,6 +171,18 @@ def logfrequency(sr, n_fft, bins_per_octave=12, tuning=0.0, fmin=None, fmax=None
     
     Each filter is a log-normal window centered at the corresponding pitch frequency.
     
+    Example usage:
+        >>> # Simple log frequency filters
+        >>> logfs_fb = librosa.filters.logfrequency(22050, 4096)
+
+        >>> # Use a narrower frequency range
+        >>> logfs_fb = librosa.filters.logfrequency(22050, 4096, fmin=110, fmax=880)
+
+        >>> # Use narrower filters for sparser response: 5% of a semitone
+        >>> logfs_fb = librosa.filters.logfrequency(22050, 4096, spread=0.05)
+        >>> # Or wider: 50% of a semitone
+        >>> logfs_fb = librosa.filters.logfrequency(22050, 4096, spread=0.5)
+
     :parameters:
       - sr : int > 0
           audio sampling rate
@@ -214,6 +248,17 @@ def logfrequency(sr, n_fft, bins_per_octave=12, tuning=0.0, fmin=None, fmax=None
 
 def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, window=np.hamming, resolution=1):
     '''Construct a constant-Q basis.
+
+    Example usage:
+        >>> # Get the CQT basis for C1 to C9, standard tuning
+        >>> basis   = librosa.filters.constant_q(22050)
+        >>> CQT     = librosa.cqt(y, sr, basis=basis)
+        
+        >>> # Change the windowing function to Hanning instead of Hamming
+        >>> basis   = librosa.filters.constant_q(22050, window=np.hanning)
+
+        >>> # Use a longer window for each filter
+        >>> basis   = librosa.filters.constant_q(22050, resolution=2)
 
     :parameters:
       - sr : int > 0
@@ -288,6 +333,12 @@ def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, window=
 
 def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12, roll=0):
     '''Convert a Constant-Q basis to Chroma.
+
+    Example usage:
+        >>> # Get a CQT, and wrap bins to chroma
+        >>> CQT         = librosa.cqt(y, sr)
+        >>> chroma_map  = librosa.filters.cq_to_chroma(CQT.shape[0])
+        >>> chromagram  = chroma_map.dot(CQT)
 
     :parameters:
       - n_input : int > 0
