@@ -167,9 +167,12 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None):
           number audio of frames between STFT columns.
           If unspecified, defaults win_length / 4.
 
-      - win_length  : int
-          The length of the (Hann) window. 
-          If unspecified, defaults to n_fft.
+      - win_length  : int <= n_fft
+          Each frame of audio is windowed by the ``window`` function (see below).
+          The window will be of length ``win_length`` and then padded with zeros
+          to match ``n_fft``.
+
+          If unspecified, defaults to ``win_length = n_fft``.
 
       - window      : None, np.ndarray, function
           - None (default): use an asymmetric Hann window
@@ -202,14 +205,13 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None):
         fft_window = window(win_length)
 
     else:
-        # User supplied a window vector
-
+        # User supplied a window vector.
         # Make sure it's an array:
         fft_window = np.asarray(window)
 
         # validate length compatibility
         if fft_window.size != n_fft:
-            raise ValueError('Size mismatch between n_fft and window size')
+            raise ValueError('Size mismatch between n_fft and len(window)')
 
     # Pad the window out to n_fft size
     lpad        = (n_fft - win_length)/2
@@ -255,43 +257,46 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None):
 
     """
 
-    n_frames    = stft_matrix.shape[1]
     n_fft       = 2 * (stft_matrix.shape[0] - 1)
 
-    # if there is no user-specified window, construct it
-    if window is None: 
-        if win_length is None:
-            win_length = n_fft
-
-        if win_length == 0:
-            window = np.ones(n_fft)
-        else:
-            #   magic number alert!
-            #   2/3 scaling is to make stft(istft(.)) identity for 25% hop
-            lpad = (n_fft - win_length)/2
-            window = np.pad( scipy.signal.hann(win_length, sym=False) * 2.0 / 3.0, 
-                                (lpad, n_fft - win_length - lpad), 
-                                mode='constant')
-    else: 
-        if hasattr(window, '__call__'):
-            window = window(n_fft)
-        else:
-            window = np.asarray(window)
-    
-        if window.size != n_fft:
-            raise ValueError('Size mismatch between n_fft and window size')
+    # By default, use the entire frame
+    if win_length is None:
+        win_length = n_fft
 
     # Set the default hop, if it's not already specified
     if hop_length is None:
         hop_length = n_fft / 4
 
-    y = np.zeros(n_fft + hop_length * (n_frames - 1))
+    if window is None: 
+        # Default is an asymmetric Hann window.
+        # 2/3 scaling is to make stft(istft(.)) identity for 25% hop
+        ifft_window =  scipy.signal.hann(win_length, sym=False) * (2.0 / 3)
+
+    elif hasattr(window, '__call__'):
+        # User supplied a windowing function
+        ifft_window = window(win_length)
+
+    else:
+        # User supplied a window vector.
+        # Make it into an array
+        ifft_window = np.asarray(window)
+
+        # Verify that the shape matches
+        if ifft_window.size != n_fft:
+            raise ValueError('Size mismatch between n_fft and window size')
+
+    # Pad out to match n_fft
+    lpad = (n_fft - win_length)/2
+    ifft_window = np.pad( ifft_window, (lpad, n_fft - win_length - lpad), mode='constant')
+
+    n_frames    = stft_matrix.shape[1]
+    y           = np.zeros(n_fft + hop_length * (n_frames - 1))
 
     for i in xrange(n_frames):
         sample  = i * hop_length
         spec    = stft_matrix[:, i].flatten()
         spec    = np.concatenate((spec.conj(), spec[-2:0:-1] ), 0)
-        ytmp    = window * fft.ifft(spec).real
+        ytmp    = ifft_window * fft.ifft(spec).real
 
         y[sample:(sample+n_fft)] = y[sample:(sample+n_fft)] + ytmp
 

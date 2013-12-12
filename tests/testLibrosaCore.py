@@ -138,6 +138,7 @@ def test_ifgram():
         yield (__test, infile)
 
     pass
+
 def test_magphase():
 
     (y, sr) = librosa.load('data/test1_22050.wav')
@@ -152,8 +153,17 @@ def test_istft():
     def __test(infile):
         DATA    = load(infile)
 
-        Dinv    = librosa.istft(DATA['D'],  win_length  = DATA['hann_w'][0,0].astype(int),
-                                            hop_length  = DATA['hop_length'][0,0].astype(int))
+        if DATA['hann_w'][0,0] == 0:
+            window      = np.ones
+            win_length  = 2 * (DATA['D'].shape[0] - 1)
+        else:
+            window      = None
+            win_length  = DATA['hann_w'][0,0]
+            
+        Dinv    = librosa.istft(DATA['D'],  hop_length  = DATA['hop_length'][0,0].astype(int),
+                                            win_length  = win_length,
+                                            window      = window)
+
         assert np.allclose(Dinv, DATA['Dinv'])
 
     for infile in files('data/core-istft-*.mat'):
