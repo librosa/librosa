@@ -238,8 +238,11 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None):
           size of Hann window
           If unspecified, defaults to the value of n_fft.
 
-      - window      : np.ndarray
-          (optional) user-specified window
+      - window      : np.ndarray, function, or None
+          - None (default): use an asymmetric Hann window * 2./3
+          - a user-specified window vector of length ``n_fft``
+          - a window function, such as ``scipy.signal.hanning``
+
 
     :returns:
       - y           : np.ndarray
@@ -264,6 +267,14 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None):
             window = np.pad( scipy.signal.hann(win_length, sym=False) * 2.0 / 3.0, 
                                 (lpad, n_fft - win_length - lpad), 
                                 mode='constant')
+    else: 
+        if hasattr(window, '__call__'):
+            window = window(n_fft)
+        else:
+            window = np.asarray(window)
+    
+        if window.size != n_fft:
+            raise ValueError('Size mismatch between n_fft and window size')
 
     # Set the default hop, if it's not already specified
     if hop_length is None:
