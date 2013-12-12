@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Onsets, tempo, beats and segmentation."""
+"""Onset detection"""
 
 import numpy as np
 import scipy
@@ -16,18 +16,18 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64, **kwargs)
           audio time series
     
       - sr         : int
-          audio sample rate
+          sampling rate of y
     
       - onset_envelope     : np.ndarray
-          (optional) pre-computed onset envelope
+          (optional) pre-computed onset stength envelope
     
       - hop_length : int
-          hop length (in frames)
+          hop length (in samples)
       
       - kwargs  
           Parameters for peak picking
           
-          See librosa.core.peak_pick() for details
+          See ``librosa.core.peak_pick()`` for details
  
       .. note:: One of either ``onset_envelope`` or ``y`` must be provided.
     
@@ -88,7 +88,7 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, feature=librosa.feat
           audio time-series
 
       - sr       : int
-          audio sampling rate of y
+          sampling rate of y
 
       - S        : np.ndarray 
           pre-computed (log-power) spectrogram

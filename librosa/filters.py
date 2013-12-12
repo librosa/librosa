@@ -83,7 +83,7 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=None):
 
     :parameters:
       - sr        : int
-          sampling rate
+          audio sampling rate
       - n_fft     : int
           FFT window size
       - n_chroma  : int
