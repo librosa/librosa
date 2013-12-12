@@ -94,7 +94,11 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
     # Then, run the tracker
     beats   = __beat_tracker(onsets, bpm, float(sr) / hop_length, tightness, trim)
 
-    # Framing correction
+    # Using a windowed STFT, most of the energy in a frame comes from its center
+    # samples.  This can bias the detected beat events (frames).
+    #
+    # We apply the following frame correction to resolve this bias.
+    #
     if n_fft is None:
         n_fft = hop_length
     
