@@ -9,6 +9,13 @@ import librosa.core
 def logfsgram(y, sr, n_fft=4096, hop_length=512, **kwargs):
     '''Compute a log-frequency spectrogram (piano roll) using a fixed-window STFT.
 
+    Example usage:
+        >>> S           = librosa.logfsgram(y, sr)
+
+        >>> # Convert to chroma
+        >>> chroma_map  = librosa.filters.cq_to_chroma(S.shape[0])
+        >>> C           = chroma_map.dot(S)
+
     :parameters:
       - y : np.ndarray
           audio time series
@@ -62,8 +69,15 @@ def logfsgram(y, sr, n_fft=4096, hop_length=512, **kwargs):
 def chromagram(y=None, sr=22050, S=None, norm='inf', n_fft=2048, hop_length=512, tuning=0.0, **kwargs):
     """Compute a chromagram from a spectrogram or waveform
 
-    :parameters:
+    Example usage:
+        >>> C = librosa.chromagram(y, sr)
 
+        >>> # Use a pre-computed spectrogram
+        >>> S = np.abs(librosa.stft(y, n_fft=4096))
+        >>> C = librosa.chromagram(S=S)
+
+
+    :parameters:
       - y          : np.ndarray or None
           audio time series
       - sr         : int
@@ -154,19 +168,26 @@ def perceptual_weighting(S, frequencies, ref_power=1e-12):
     
     ``S_p[f] = A_weighting(f) + 10*log(S[f] / ref_power)``
     
+    Example usage:
+        >>> # Re-weight a CQT representation, using peak power as reference
+        >>> CQT             = librosa.cqt(y, sr, fmin=55, fmax=440)
+        >>> freqs           = librosa.cqt_frequencies(CQT.shape[0], fmin=55)
+        >>> percept_CQT     = librosa.feature.perceptual_weighting(CQT, freqs, 
+                                                                    ref_power=CQT.max())
+
     :parameters:
       - S : np.ndarray, shape=(d,t)
           Power spectrogram
         
       - frequencies : np.ndarray, shape=(d,)
-          Center frequency for each row of S
+          Center frequency for each row of ``S``
         
       - ref_power : float > 0
           Reference power
         
     :returns:
       - S_p : np.ndarray, shape=(d,t)
-          perceptually weighted version of S, in dB.
+          perceptually weighted version of ``S``, in dB relative to ``ref_power``
     '''
     
     offset = librosa.A_weighting(frequencies).reshape((-1, 1))
@@ -178,6 +199,18 @@ def estimate_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     '''Given a collection of pitches, estimate its tuning offset
     (in fractions of a bin) relative to A440=440.0Hz.
     
+    Example usage:
+        >>> # Generate notes at +25 cents
+        >>> freqs = librosa.cqt_frequencies(24, 55, tuning=0.25)
+        >>> librosa.feature.estimate_tuning(freqs)
+        0.25
+
+        >>> # Track frequencies from a real spectrogram
+        >>> pitches, magnitudes, stft = librosa.feature.ifptrack(y, sr)
+        >>> # Select out pitches with high energy
+        >>> pitches = pitches[magnitudes > np.median(magnitudes)]
+        >>> librosa.feature.estimate_tuning(pitches)
+
     :parameters:
       - frequencies : array-like, float
           A collection of frequencies detected in the signal.
@@ -214,6 +247,9 @@ def estimate_tuning(frequencies, resolution=0.01, bins_per_octave=12):
 
 def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=(150.0, 300.0), fmax=(2000.0, 4000.0), threshold=0.75):
     '''Instantaneous pitch frequency tracking.
+
+    Example usage:
+        >>> pitches, magnitudes, D = librosa.feature.ifptrack(y, sr)
 
     :parameters:
       - y: np.ndarray
@@ -342,6 +378,17 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=(150.0, 300.0), fmax
 def mfcc(S=None, y=None, sr=22050, n_mfcc=20):
     """Mel-frequency cepstral coefficients
 
+    Example usage:
+        >>> # Generate mfccs from a time series
+        >>> mfccs = librosa.feature.mfcc(y=y, sr=sr)
+
+        >>> # Use a pre-computed log-power Mel spectrogram
+        >>> S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128, fmax=8000)
+        >>> mfccs = librosa.feature.mfcc(S=librosa.logamplitude(S))
+
+        >>> # Get more components
+        >>> mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=40)
+
     :parameters:
       - S     : np.ndarray or None
           log-power Mel spectrogram
@@ -370,6 +417,16 @@ def mfcc(S=None, y=None, sr=22050, n_mfcc=20):
 
 def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512, **kwargs):
     """Compute a Mel-scaled power spectrogram.
+
+    Example usage:
+        >>> S = librosa.feature.melspectrogram(y=y, sr=sr)
+
+        >>> # Using a pre-computed power spectrogram
+        >>> D = np.abs(librosa.stft(y))**2
+        >>> S = librosa.feature.melspectrogram(S=D)
+
+        >>> # Passing through arguments to the Mel filters
+        >>> S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128, fmax=8000)
 
     :parameters:
       - y : np.ndarray
@@ -416,6 +473,12 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512, **kwarg
 def delta(X, axis=-1, order=1, pad=True):
     '''Compute delta features.
 
+    Example usage:
+        >>> # Compute MFCC deltas, delta-deltas
+        >>> mfccs       = librosa.feature.mfcc(y=y, sr=sr)
+        >>> delta_mfcc  = librosa.feature.delta(mfccs)
+        >>> delta2_mfcc = librosa.feature.delta(mfccs, order=2)
+
     :parameters:
       - X         : np.ndarray, shape=(d, T)
           the input data matrix (eg, spectrogram)
@@ -448,11 +511,23 @@ def delta(X, axis=-1, order=1, pad=True):
 def sync(data, frames, aggregate=np.mean):
     """Synchronous aggregation of a feature matrix
 
+    Example usage:
+        >>> # Beat-synchronous MFCCs
+        >>> tempo, beats    = librosa.beat.beat_track(y, sr)
+        >>> S               = librosa.feature.melspectrogram(y, sr, hop_length=64)
+        >>> mfcc            = librosa.feature.mfcc(S=S)
+        >>> mfcc_sync       = librosa.feature.sync(mfcc, beats)
+
+        >>> # Use median-aggregation instead of mean
+        >>> mfcc_sync       = librosa.feature.sync(mfcc, beats, aggregate=np.median)
+        >>> # Or max aggregation
+        >>> mfcc_sync       = librosa.feature.sync(mfcc, beats, aggregate=np.max)
+
     :parameters:
       - data      : np.ndarray, shape=(d, T)
           matrix of features
       - frames    : np.ndarray
-          (ordered) array of frame segment boundaries
+          ordered array of frame segment boundaries
       - aggregate : function
           aggregation function (defualt: mean)
 
@@ -461,6 +536,9 @@ def sync(data, frames, aggregate=np.mean):
           ``Y[:, i] = aggregate(data[:, F[i-1]:F[i]], axis=1)``
 
     .. note:: In order to ensure total coverage, boundary points are added to frames
+
+    .. note:: If synchronizing a feature matrix against beat tracker output, ensure
+              that the frame numbers are properly aligned and use the same hop_length.
 
     """
     if data.ndim < 2:
