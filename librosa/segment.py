@@ -17,6 +17,10 @@ def stack_memory(data, n_steps=2, delay=1, trim=True):
     ``data[:,i] ->  [   data[:, i].T, data[:, i - delay].T ...  data[:, i - (n_steps-1)*delay].T ].T``
 
 
+    Example usage:
+        >>> mfccs       = librosa.feature.mfcc(y, sr)
+        >>> mfcc_stack  = librosa.segment.stack_memory(mfccs)
+
     :parameters:
       - data : np.ndarray
           feature matrix (d-by-t)
@@ -53,7 +57,23 @@ def stack_memory(data, n_steps=2, delay=1, trim=True):
 def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
     '''Compute the binary recurrence matrix from a time-series.
 
-    rec[i,j] == True <=> (data[:,i], data[:,j]) are k-nearest-neighbors and ||i-j|| >= width
+    ``rec[i,j] == True`` <=> (``data[:,i]``, ``data[:,j]``) are k-nearest-neighbors and ``|i-j| >= width``
+
+    Example usage:
+        >>> mfcc    = librosa.feature.mfcc(y, sr)
+        >>> R       = librosa.segment.recurrence_matrix(mfcc)
+
+        >>> # Or fix the number of nearest neighbors to 5
+        >>> R       = librosa.segment.recurrence_matrix(mfcc, k=5)
+
+        >>> # Suppress neighbors within +- 7 samples
+        >>> R       = librosa.segment.recurrence_matrix(mfcc, width=7)
+
+        >>> # Use cosine similarity instead of Euclidean distance
+        >>> R       = librosa.segment.recurrence_matrix(mfcc, metric='cosine')
+
+        >>> # Require mutual nearest neighbors
+        >>> R       = librosa.segment.recurrence_matrix(mfcc, sym=True)
 
     :parameters:
       - data : np.ndarray
@@ -113,12 +133,21 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
 
     return rec
 
-def structure_feature(rec, pad=True, reverse=False):
+def structure_feature(rec, pad=True, inverse=False):
     '''Compute the structure feature from a recurrence matrix.
 
     The i'th column of the recurrence matrix is shifted up by i.
     The resulting matrix is indexed horizontally by time,
     and vertically by lag.
+
+    Example usage:
+        >>> # Build the structure feature over mfcc similarity
+        >>> mfccs   = librosa.feature.mfcc(y, sr)
+        >>> R       = librosa.feature.recurrence_matrix(mfccs)
+        >>> S       = librosa.feature.structure_feature(R)
+
+        >>> # Invert the structure feature to get a recurrence matrix
+        >>> R_hat   = librosa.feature.structure_feature(S, inverse=True)
 
     :parameters:
       - rec   : np.ndarray, shape=(t,t)
@@ -127,7 +156,7 @@ def structure_feature(rec, pad=True, reverse=False):
       - pad : boolean
           Pad the matrix with t rows of zeros to avoid looping.
 
-      - reverse : boolean
+      - inverse : boolean
           Unroll the opposite direction. This is useful for converting
           structure features back into recurrence plots.
 
@@ -146,14 +175,14 @@ def structure_feature(rec, pad=True, reverse=False):
 
     t = rec.shape[1]
 
-    if pad and not reverse:
+    if pad and not inverse:
         # If we don't assume that the signal loops,
         # stack zeros underneath in the recurrence plot.
         struct = np.pad(rec, [(0, t), (0, 0)], mode='constant')
     else:
         struct = rec.copy()
 
-    if reverse:
+    if inverse:
         direction = +1
     else:
         direction = -1
@@ -161,7 +190,7 @@ def structure_feature(rec, pad=True, reverse=False):
     for i in range(1, t):
         struct[:, i] = np.roll(struct[:, i], direction * i, axis=-1)
 
-    if reverse and pad:
+    if inverse and pad:
         struct = struct[:t]
 
     return struct
@@ -171,6 +200,13 @@ def agglomerative(data, k):
 
     Use a temporally-constrained agglomerative clustering routine to partition
     ``data`` into ``k`` contiguous segments.
+
+    Example usage:
+        >>> # Cluster by Mel spectrogram similarity
+        >>> # Break into 32 segments
+        >>> S                   = librosa.feature.melspectrogram(y, sr, n_fft=2048, hop_length=512)
+        >>> boundary_frames     = librosa.segment.agglomerative(S, 32)
+        >>> boundary_times      = librosa.frames_to_time(boundary_frames, sr=sr, hop_length=512)
 
     :parameters:
       - data     : np.ndarray    
