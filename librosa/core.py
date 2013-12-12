@@ -174,10 +174,10 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None):
 
           If unspecified, defaults to ``win_length = n_fft``.
 
-      - window      : None, np.ndarray, function
+      - window      : None, function, np.ndarray
           - None (default): use an asymmetric Hann window
-          - a vector or array of length ``n_fft``
           - a window function, such as ``scipy.signal.hanning``
+          - a vector or array of length ``n_fft``
 
     :returns:
       - D           : np.ndarray, dtype=complex
@@ -231,7 +231,9 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None):
 
 def istft(stft_matrix, hop_length=None, win_length=None, window=None):  
     """
-    Inverse short-time Fourier transform
+    Inverse short-time Fourier transform.
+
+    Converts a complex-valued spectrogram ``stft_matrix`` to time-series ``y``.
 
     :parameters:
       - stft_matrix : np.ndarray, shape=(1 + n_fft/2, t)
@@ -241,15 +243,16 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None):
           Number of audio frames between STFT columns.
           If unspecified, defaults to win_length / 4.
 
-      - win_length  : int
-          size of Hann window
-          If unspecified, defaults to the value of n_fft.
+      - win_length  : int <= n_fft = 2 * (stft_matrix.shape[0] - 1)
+          When reconstructing the time series, each frame is windowed
+          according to the ``window`` function (see below).
+          
+          If unspecified, defaults to ``n_fft``.
 
-      - window      : np.ndarray, function, or None
-          - None (default): use an asymmetric Hann window * 2./3
-          - a user-specified window vector of length ``n_fft``
+      - window      : None, function, np.ndarray
+          - None (default): use an asymmetric Hann window * 2/3
           - a window function, such as ``scipy.signal.hanning``
-
+          - a user-specified window vector of length ``n_fft``
 
     :returns:
       - y           : np.ndarray
