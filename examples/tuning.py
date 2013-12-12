@@ -17,10 +17,10 @@ def estimate_tuning(input_file):
     y, sr = librosa.load(input_file)
 
     # Get the instantaneous-frequency pitch track
-    print 'Tracking pitches... ',
+    print 'Tracking pitches... '
     pitches, magnitudes, D = librosa.feature.ifptrack(  y, sr )
 
-    print 'Estimating tuning ... ',
+    print 'Estimating tuning ... '
     # Just track the pitches associated with high magnitude
     pitches = pitches[magnitudes > np.median(magnitudes)]
 
