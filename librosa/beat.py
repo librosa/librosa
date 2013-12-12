@@ -89,7 +89,7 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
     fft_res = float(sr) / hop_length
 
     # Then, estimate bpm
-    bpm     = onset_estimate_bpm(onsets, start_bpm, fft_res)
+    bpm     = estimate_tempo(onsets, start_bpm, fft_res)
     
     # Then, run the tracker
     beats   = __beat_tracker(onsets, bpm, fft_res, tightness, trim)
@@ -101,6 +101,67 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
     beats = beats + n_fft / (hop_length)
 
     return (bpm, beats)
+
+def estimate_tempo(onsets, start_bpm, fft_res):
+    """Estimate the tempo (beats per minute) from an onset envelope
+
+    :parameters:
+      - onsets    : np.ndarray   
+          time-series of onset strengths
+
+      - start_bpm : float
+          initial guess of the BPM
+
+      - fft_res   : float
+          resolution of FFT (sample rate / hop length)
+
+    :returns:
+      - bpm      : float
+          estimated BPM
+    """
+
+    ac_size     = 4.0
+    duration    = 90.0
+    end_time    = 90.0
+    bpm_std     = 1.0
+
+    # Chop onsets to X[(upper_limit - duration):upper_limit]
+    # or as much as will fit
+    maxcol      = min(len(onsets)-1, np.round(end_time * fft_res))
+    mincol      = max(0,    maxcol - np.round(duration * fft_res))
+
+    # Use auto-correlation out of 4 seconds (empirically set??)
+    ac_window   = min(maxcol, np.round(ac_size * fft_res))
+
+    # Compute the autocorrelation
+    x_corr      = librosa.core.autocorrelate(onsets[mincol:maxcol], ac_window)
+
+    # re-weight the autocorrelation by log-normal prior
+    bpms    = 60.0 * fft_res / (np.arange(1, ac_window+1))
+
+    # Smooth the autocorrelation by a log-normal distribution
+    x_corr  = x_corr * np.exp(-0.5 * ((np.log2(bpms / start_bpm)) / bpm_std)**2)
+
+    # Get the local maximum of weighted correlation
+    x_peaks = librosa.core.localmax(x_corr)
+
+    # Zero out all peaks before the first negative
+    x_peaks[:np.argmax(x_corr < 0)] = False
+
+
+    # Choose the best peak out of .33, .5, 2, 3 * start_period
+    candidates      = np.multiply(  np.argmax(x_peaks * x_corr), 
+                                    [1.0/3, 1.0/2, 1.0, 2.0, 3.0])
+
+    candidates      = candidates.astype(int)
+    candidates      = candidates[candidates < ac_window]
+
+    best_period     = np.argmax(x_corr[candidates])
+
+    if candidates[best_period] > 0:
+        return 60.0 * fft_res / candidates[best_period]
+
+    return start_bpm
 
 def __beat_tracker(onsets, bpm, fft_res, tightness, trim):
     """Internal function that does beat tracking from a given onset profile.
@@ -235,65 +296,3 @@ def __beat_tracker(onsets, bpm, fft_res, tightness, trim):
     beats = smooth_beats(beats, trim)
 
     return beats
-
-def onset_estimate_bpm(onsets, start_bpm, fft_res):
-    """Estimate the tempo (beats per minute) from an onset envelope
-
-    :parameters:
-      - onsets    : np.ndarray   
-          time-series of onset strengths
-
-      - start_bpm : float
-          initial guess of the BPM
-
-      - fft_res   : float
-          resolution of FFT (sample rate / hop length)
-
-    :returns:
-      - bpm      : float
-          estimated BPM
-    """
-
-    ac_size     = 4.0
-    duration    = 90.0
-    end_time    = 90.0
-    bpm_std     = 1.0
-
-    # Chop onsets to X[(upper_limit - duration):upper_limit]
-    # or as much as will fit
-    maxcol      = min(len(onsets)-1, np.round(end_time * fft_res))
-    mincol      = max(0,    maxcol - np.round(duration * fft_res))
-
-    # Use auto-correlation out of 4 seconds (empirically set??)
-    ac_window   = min(maxcol, np.round(ac_size * fft_res))
-
-    # Compute the autocorrelation
-    x_corr      = librosa.core.autocorrelate(onsets[mincol:maxcol], ac_window)
-
-    # re-weight the autocorrelation by log-normal prior
-    bpms    = 60.0 * fft_res / (np.arange(1, ac_window+1))
-
-    # Smooth the autocorrelation by a log-normal distribution
-    x_corr  = x_corr * np.exp(-0.5 * ((np.log2(bpms / start_bpm)) / bpm_std)**2)
-
-    # Get the local maximum of weighted correlation
-    x_peaks = librosa.core.localmax(x_corr)
-
-    # Zero out all peaks before the first negative
-    x_peaks[:np.argmax(x_corr < 0)] = False
-
-
-    # Choose the best peak out of .33, .5, 2, 3 * start_period
-    candidates      = np.multiply(  np.argmax(x_peaks * x_corr), 
-                                    [1.0/3, 1.0/2, 1.0, 2.0, 3.0])
-
-    candidates      = candidates.astype(int)
-    candidates      = candidates[candidates < ac_window]
-
-    best_period     = np.argmax(x_corr[candidates])
-
-    if candidates[best_period] > 0:
-        return 60.0 * fft_res / candidates[best_period]
-
-    return start_bpm
-
