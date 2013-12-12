@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Temporal segmentation"""
+"""Temporal segmentation utilities"""
 
 import numpy as np
 import scipy
@@ -63,7 +63,7 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
           Default: ceil(sqrt(t - 2 * width + 1))
       - width : int > 0
           do not link columns within `width` of each-other
-      - metric : see scipy.spatial.distance.pdist()
+      - metric : see ``scipy.spatial.distance.pdist()``
           distance metric to use for nearest-neighbor calculation
       - sym : bool
           set sym=True to only link mutual nearest-neighbors
@@ -167,7 +167,10 @@ def structure_feature(rec, pad=True, reverse=False):
     return struct
 
 def agglomerative(data, k):
-    """Bottom-up temporal segmentation
+    """Bottom-up temporal segmentation.
+
+    Use a temporally-constrained agglomerative clustering routine to partition
+    ``data`` into ``k`` contiguous segments.
 
     :parameters:
       - data     : np.ndarray    

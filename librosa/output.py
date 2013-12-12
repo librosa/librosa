@@ -23,11 +23,8 @@ def frames_csv(path, frames, sr=22050, hop_length=512):
           audio sample rate
     
       - hop_length : int
-          hop length
+          Number of samples between success frames
       
-      - save_bpm : boolean
-          add a BPM annotation column
-
     """
 
     with open(path, 'w') as output_file:
@@ -45,10 +42,10 @@ def write_wav(path, y, sr):
           path to save the output wav file
 
       - y : np.ndarray    
-          time-series audio data
+          audio time series
 
       - sr : int
-          audio sample rate
+          sampling rate of y
 
     """
 
