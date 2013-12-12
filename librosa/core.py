@@ -510,7 +510,7 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
 
 def magphase(D):
     """Separate a complex-valued spectrogram D into its magnitude (S)
-    and phase (P) components, so that D = S * P.
+    and phase (P) components, so that ``D = S * P``.
 
     :parameters:
       - D       : np.ndarray, dtype=complex
@@ -538,7 +538,8 @@ def phase_vocoder(D, rate, hop_length=None):
           STFT matrix
 
       - rate    :  float, positive
-          time-stretch factor
+          speed-up factor.  
+          rate > 1 is faster, rate < 1 is slower.
 
       - hop_length : int or None
           hop length of D.  If None, defaults to n_fft/4 = (D.shape[0]-1)/2
@@ -730,6 +731,7 @@ def hz_to_mel(frequencies, htk=False):
     """
 
     frequencies = np.asarray([frequencies]).flatten()
+
     if np.isscalar(frequencies):
         frequencies = np.array([frequencies], dtype=float)
     else:
