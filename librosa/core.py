@@ -240,7 +240,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None):
           STFT matrix from ``stft()``
 
       - hop_length  : int
-          Number of audio frames between STFT columns.
+          Number of frames between STFT columns.
           If unspecified, defaults to win_length / 4.
 
       - win_length  : int <= n_fft = 2 * (stft_matrix.shape[0] - 1)
@@ -317,16 +317,18 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=False
           audio time series
 
       - sr      : int > 0
-          sampling rate
+          sampling rate of y
 
       - n_fft   : int > 0
           FFT window size
 
       - hop_length : int > 0
-          hop length. If not supplied, defaults to win_length / 4
+          hop length, number samples between subsequent frames.
+          If not supplied, defaults to win_length / 4.
 
       - win_length : int > 0, <= n_fft
-          hann window length. Defaults to n_fft.
+          Window length. Defaults to n_fft.
+          See ``stft()`` for details.
 
       - norm : bool
           Normalize the STFT. 
@@ -414,7 +416,7 @@ def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=
           sampling rate of y
         
       - hop_length : int > 0
-          hop length 
+          number of samples between successive CQT columns.
     
       - fmin : float > 0
           Minimum frequency. Defaults to C1 ~= 16.35 Hz
@@ -485,7 +487,7 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
           input spectrogram
 
       - ref_power : float
-          reference power against which S is compared
+          reference against which S is compared.
 
       - amin    : float
           minimum amplitude threshold 
@@ -538,11 +540,11 @@ def phase_vocoder(D, rate, hop_length=None):
           STFT matrix
 
       - rate    :  float, positive
-          speed-up factor.  
-          rate > 1 is faster, rate < 1 is slower.
+          Speed-up factor: rate > 1 is faster, rate < 1 is slower.
 
       - hop_length : int or None
-          hop length of D.  If None, defaults to n_fft/4 = (D.shape[0]-1)/2
+          The number of samples between successive columns of D.
+          If None, defaults to n_fft/4 = (D.shape[0]-1)/2
 
     :returns:
       - D_stretched  : np.ndarray, dtype=complex
@@ -934,11 +936,11 @@ def frames_to_time(frames, sr=22050, hop_length=512):
       - frames     : np.ndarray
           vector of frame numbers
 
-      - sr         : int
+      - sr         : int > 0
           audio sampling rate 
 
       - hop_length : int
-          hop length
+          number of samples between successive frames
 
     :returns:
       - times : np.ndarray 
@@ -956,10 +958,10 @@ def time_to_frames(times, sr=22050, hop_length=512):
           vector of time stamps
 
       - sr : int > 0
-          Audio sampling rate
+          audio sampling rate
 
       - hop_length : int > 0
-          Hop length of FFT.
+          number of samples between successive frames
 
     :returns:
       - frames : np.ndarray, dtype=int
@@ -977,7 +979,7 @@ def autocorrelate(y, max_size=None):
 
       - max_size  : int
           maximum correlation lag.
-          If unspecified, defaults to ``len(y)``
+          If unspecified, defaults to ``len(y)`` (unbounded)
 
     :returns:
       - z         : np.ndarray
