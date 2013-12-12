@@ -102,7 +102,7 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
 
     return (bpm, beats)
 
-def estimate_tempo(onsets, sr=22050, hop_length=64, start_bpm=120):
+def estimate_tempo(onsets, sr=22050, hop_length=64, start_bpm=120, std_bpm=1.0, ac_size=4.0, duration=90.0, offset=0.0):
     """Estimate the tempo (beats per minute) from an onset envelope
 
     :parameters:
@@ -119,21 +119,29 @@ def estimate_tempo(onsets, sr=22050, hop_length=64, start_bpm=120):
       - start_bpm : float
           initial guess of the BPM
 
+      - std_bpm : float > 0
+          standard deviation of tempo distribution
+
+      - ac_size : float > 0
+          length (in seconds) of the auto-correlation window
+
+      - duration : float > 0
+          length of signal (in seconds) to use in estimating tempo
+
+      - offset : float > 0
+          offset (in seconds) of signal sample to use in estimating tempo
+
     :returns:
       - bpm      : float
           estimated BPM
     """
 
-    ac_size     = 4.0
-    duration    = 90.0
-    end_time    = 90.0
-    bpm_std     = 1.0
     
     fft_res     = float(sr) / hop_length
 
     # Chop onsets to X[(upper_limit - duration):upper_limit]
     # or as much as will fit
-    maxcol      = min(len(onsets)-1, np.round(end_time * fft_res))
+    maxcol      = min(len(onsets)-1, np.round((offset + duration) * fft_res))
     mincol      = max(0,    maxcol - np.round(duration * fft_res))
 
     # Use auto-correlation out of 4 seconds (empirically set??)
@@ -146,7 +154,7 @@ def estimate_tempo(onsets, sr=22050, hop_length=64, start_bpm=120):
     bpms    = 60.0 * fft_res / (np.arange(1, ac_window+1))
 
     # Smooth the autocorrelation by a log-normal distribution
-    x_corr  = x_corr * np.exp(-0.5 * ((np.log2(bpms / start_bpm)) / bpm_std)**2)
+    x_corr  = x_corr * np.exp(-0.5 * ((np.log2(bpms / start_bpm)) / std_bpm)**2)
 
     # Get the local maximum of weighted correlation
     x_peaks = librosa.core.localmax(x_corr)
