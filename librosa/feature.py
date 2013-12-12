@@ -170,7 +170,7 @@ def perceptual_weighting(S, frequencies, ref_power=1e-12):
     
     offset = librosa.A_weighting(frequencies).reshape((-1, 1))
     
-    return librosa.logamplitude(S) - 10.0 * np.log10(ref_power) + offset
+    return offset + librosa.logamplitude(S, ref_power=ref_power)
 
 #-- Pitch and tuning --#
 def estimate_tuning(frequencies, resolution=0.01, bins_per_octave=12):
