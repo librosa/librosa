@@ -60,11 +60,15 @@ def decompose(S, n_components=None, transformer=None):
 def hpss(S, kernel_size=19, power=1.0, mask=False):
     """Median-filtering harmonic percussive separation
 
+    Decomposes an input spectrogram ``S = H + P``
+    where ``H`` contains the harmonic components, 
+    and ``P`` contains the percussive components.
+
     :parameters:
       - S : np.ndarray
           input spectrogram. May be real (magnitude) or complex.
 
-      - kernel_size : int or array_like (kernel_harmonic, kernel_percussive)
+      - kernel_size : int or tuple (kernel_harmonic, kernel_percussive)
           kernel size for the median filters.
           If scalar, the same size is used for both harmonic and percussive.
           If array_like, the first value specifies the width of the harmonic filter,
