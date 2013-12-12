@@ -431,14 +431,14 @@ def delta(X, axis=-1, order=1, pad=True):
           delta matrix of X.
     '''
 
-    delta_X = np.diff(X, n=order, axis=axis)
+    dx  = np.diff(X, n=order, axis=axis)
 
     if pad:
-        padding = [(0, 0)]  * X.ndim
-        padding[axis] = (order, 0)
-        delta_X = np.pad(delta_X, padding, mode='constant')
+        padding         = [(0, 0)]  * X.ndim
+        padding[axis]   = (order, 0)
+        dx              = np.pad(dx, padding, mode='constant')
 
-    return delta_X
+    return dx
 
 def sync(data, frames, aggregate=np.mean):
     """Synchronous aggregation of a feature matrix

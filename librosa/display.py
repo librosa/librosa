@@ -9,7 +9,7 @@ import warnings
 
 import librosa.core
 
-def _log_scale(n):
+def __log_scale(n):
     '''Return a log-scale mapping of bins 0..n, and its inverse.
 
     :parameters:
@@ -117,7 +117,7 @@ def time_ticks(locs, *args, **kwargs):
 
     return ticker(locs, times, **kwargs)
 
-def default_colors(data):
+def cmap(data):
     '''Get a default colormap from the given data.
 
     If the data has both positive and negative values, use a diverging colormap.
@@ -129,10 +129,10 @@ def default_colors(data):
           Input data
 
     :returns:
-      - cmap
-          If data has only positive values, cmap is 'OrRd'
-          If data has only negative values, cmap is 'PuBu_r'
-          If data has both positive and negatives, cmap is 'PuOr_r'
+      - cmap_str
+          If data has only positive values, cmap_str is 'OrRd'
+          If data has only negative values, cmap_str is 'PuBu_r'
+          If data has both positive and negatives, cmap_str is 'PuOr_r'
     '''
 
     positives = (data > 0).any()
@@ -207,7 +207,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
         warnings.warn('Trying to display complex-valued input. Showing magnitude instead.')
         data = np.abs(data)
 
-    kwargs.setdefault('cmap', default_colors(data))
+    kwargs.setdefault('cmap', cmap(data))
 
     # NOTE:  2013-11-14 16:15:33 by Brian McFee <brm2132@columbia.edu>pitch 
     #  We draw the image twice here. This is a hack to get around NonUniformImage
@@ -223,7 +223,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
         del kwargs['aspect']
         im_phantom   = img.NonUniformImage(axes_phantom, **kwargs)
 
-        y_log, y_inv = _log_scale(data.shape[0])
+        y_log, y_inv = __log_scale(data.shape[0])
 
         im_phantom.set_data( np.arange(0, data.shape[1]), y_log, data)
         axes_phantom.images.append(im_phantom)
