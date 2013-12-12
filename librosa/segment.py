@@ -18,7 +18,7 @@ def stack_memory(data, n_steps=2, delay=1, trim=True):
 
 
     Example usage:
-        >>> mfccs       = librosa.feature.mfcc(y, sr)
+        >>> mfccs       = librosa.feature.mfcc(y=y, sr=sr)
         >>> mfcc_stack  = librosa.segment.stack_memory(mfccs)
 
     :parameters:
@@ -60,7 +60,7 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
     ``rec[i,j] == True`` <=> (``data[:,i]``, ``data[:,j]``) are k-nearest-neighbors and ``|i-j| >= width``
 
     Example usage:
-        >>> mfcc    = librosa.feature.mfcc(y, sr)
+        >>> mfcc    = librosa.feature.mfcc(y=y, sr=sr)
         >>> R       = librosa.segment.recurrence_matrix(mfcc)
 
         >>> # Or fix the number of nearest neighbors to 5
@@ -80,21 +80,17 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
           feature matrix (d-by-t)
       - k : int > 0 or None
           the number of nearest-neighbors for each sample
-          Default: ceil(sqrt(t - 2 * width + 1))
+          Default: ``k = ceil(sqrt(t - 2 * width + 1))``
       - width : int > 0
-          do not link columns within `width` of each-other
+          only link neighbors ``(data[:, i], data[:, j])`` if ``|i-j| >= width`` 
       - metric : see ``scipy.spatial.distance.pdist()``
           distance metric to use for nearest-neighbor calculation
       - sym : bool
-          set sym=True to only link mutual nearest-neighbors
+          set ``sym=True`` to only link mutual nearest-neighbors
 
     :returns:
       - rec : np.ndarray, shape=(t,t), dtype=bool
           Binary recurrence matrix
-    :raises:
-      - ValueError
-          if k is a float outside the range (0,1)
-          or if mode is not one of {'knn', 'gaussian'}
     '''
 
     t = data.shape[1]
@@ -142,7 +138,7 @@ def structure_feature(rec, pad=True, inverse=False):
 
     Example usage:
         >>> # Build the structure feature over mfcc similarity
-        >>> mfccs   = librosa.feature.mfcc(y, sr)
+        >>> mfccs   = librosa.feature.mfcc(y=y, sr=sr)
         >>> R       = librosa.feature.recurrence_matrix(mfccs)
         >>> S       = librosa.feature.structure_feature(R)
 
@@ -204,7 +200,7 @@ def agglomerative(data, k):
     Example usage:
         >>> # Cluster by Mel spectrogram similarity
         >>> # Break into 32 segments
-        >>> S                   = librosa.feature.melspectrogram(y, sr, n_fft=2048, hop_length=512)
+        >>> S                   = librosa.feature.melspectrogram(y=y, sr=sr, n_fft=2048, hop_length=512)
         >>> boundary_frames     = librosa.segment.agglomerative(S, 32)
         >>> boundary_times      = librosa.frames_to_time(boundary_frames, sr=sr, hop_length=512)
 
