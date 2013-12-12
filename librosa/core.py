@@ -182,26 +182,9 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None):
 
     """
 
-    # if there is no user-specified window, construct it
-    if window is None:
-        if win_length is None:
-            win_length = n_fft
-
-        if win_length == 0:
-            window = np.ones((n_fft,))
-        else:
-            lpad = (n_fft - win_length)/2
-            window = np.pad( scipy.signal.hann(win_length, sym=False), 
-                                (lpad, n_fft - win_length - lpad), 
-                                mode='constant')
-    else:
-        if hasattr(window, '__call__'):
-            window = window(n_fft)
-        else:
-            window = np.asarray(window)
-
-        if window.size != n_fft:
-            raise ValueError('Size mismatch between n_fft and window size')
+    # By default, use the entire frame
+    if win_length is None:
+        win_length = n_fft
 
     # Set the default hop, if it's not already specified
     if hop_length is None:
@@ -210,12 +193,31 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None):
     n_specbins  = 1 + int(n_fft / 2)
     n_frames    = 1 + int( (len(y) - n_fft) / hop_length)
 
+    if window is None:
+        # if there is no user-specified window, construct it
+        fft_window = scipy.signal.hann(win_length, sym=False)
+
+    elif hasattr(window, '__call__'):
+        # User supplied a window function, use that instead
+        fft_window = window(win_length)
+    else:
+        # User supplied a window vector. Make sure it's an array:
+        fft_window = np.asarray(window)
+
+        # validate length compatibility
+        if fft_window.size != n_fft:
+            raise ValueError('Size mismatch between n_fft and window size')
+
+    # Pad the window out to n_fft size
+    lpad        = (n_fft - win_length)/2
+    fft_window  = np.pad(fft_window, (lpad, n_fft - win_length - lpad), mode='constant')
+
     # allocate output array
     stft_matrix = np.empty( (n_specbins, n_frames), dtype=np.complex64)
 
     for i in xrange(n_frames):
         sample  = i * hop_length
-        frame   = fft.fft(window * y[sample:(sample+n_fft)])
+        frame   = fft.fft(fft_window * y[sample:(sample+n_fft)])
 
         # Conjugate here to match phase from DPWE code
         stft_matrix[:, i]  = frame[:n_specbins].conj()
