@@ -268,7 +268,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None):
 
     # Set the default hop, if it's not already specified
     if hop_length is None:
-        hop_length = n_fft / 4
+        hop_length = win_length / 4
 
     if window is None: 
         # Default is an asymmetric Hann window.
@@ -323,7 +323,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=False
           FFT window size
 
       - hop_length : int > 0
-          hop length. If not supplied, defaults to n_fft / 4
+          hop length. If not supplied, defaults to win_length / 4
 
       - win_length : int > 0, <= n_fft
           hann window length. Defaults to n_fft.
@@ -352,11 +352,12 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=False
             }
     '''
 
-    if hop_length is None:
-        hop_length = n_fft / 4
 
     if win_length is None:
         win_length = n_fft
+
+    if hop_length is None:
+        hop_length = win_length / 4
 
     # Construct a padded hann window
     lpad = (n_fft - win_length)/2
