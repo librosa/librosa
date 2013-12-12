@@ -85,11 +85,11 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=None):
       - sr        : int
           sampling rate
       - n_fft     : int
-          number of FFT components
+          FFT window size
       - n_chroma  : int
-          number of chroma dimensions   
+          number of chroma bins
       - A440      : float
-          Reference frequency for A
+          Reference frequency for A440
       - ctroct    : float
       - octwidth  : float
           These parameters specify a dominance window - Gaussian
