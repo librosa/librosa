@@ -26,7 +26,8 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
           audio sample rate
 
       - onsets     : np.ndarray or None
-          (optional) pre-computed onset envelope
+          (optional) pre-computed onset strength envelope
+          See ``librosa.onset.onset_strength``
 
       - hop_length : int > 0
           hop length (in frames)
@@ -80,19 +81,18 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
             raise ValueError('Either "y" or "onsets" must be provided')
 
         onsets  = librosa.onset.onset_strength( y=y, 
-                                                sr=sr, hop_length=hop_length)
+                                                sr=sr, 
+                                                hop_length=hop_length)
 
     # Do we have any onsets to grab?
     if not onsets.any():
         return (0, np.array([], dtype=int))
 
-    fft_res = float(sr) / hop_length
-
     # Then, estimate bpm
-    bpm     = estimate_tempo(onsets, start_bpm, fft_res)
+    bpm     = estimate_tempo(onsets, sr=sr, hop_length=hop_length, start_bpm=start_bpm)
     
     # Then, run the tracker
-    beats   = __beat_tracker(onsets, bpm, fft_res, tightness, trim)
+    beats   = __beat_tracker(onsets, bpm, float(sr) / hop_length, tightness, trim)
 
     # Framing correction
     if n_fft is None:
@@ -102,18 +102,22 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
 
     return (bpm, beats)
 
-def estimate_tempo(onsets, start_bpm, fft_res):
+def estimate_tempo(onsets, sr=22050, hop_length=64, start_bpm=120):
     """Estimate the tempo (beats per minute) from an onset envelope
 
     :parameters:
       - onsets    : np.ndarray   
-          time-series of onset strengths
+          onset strength envelope.
+          See ``librosa.onset.onset_strength()`` for details.
+
+      - sr:       : int > 0
+          sample rate of the time series
+
+      - hop_length : int > 0
+          hop length of the time series
 
       - start_bpm : float
           initial guess of the BPM
-
-      - fft_res   : float
-          resolution of FFT (sample rate / hop length)
 
     :returns:
       - bpm      : float
@@ -124,6 +128,8 @@ def estimate_tempo(onsets, start_bpm, fft_res):
     duration    = 90.0
     end_time    = 90.0
     bpm_std     = 1.0
+    
+    fft_res     = float(sr) / hop_length
 
     # Chop onsets to X[(upper_limit - duration):upper_limit]
     # or as much as will fit
