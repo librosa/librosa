@@ -405,7 +405,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=False
     return if_gram, D
 
 def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=None, 
-        resolution=1, aggregate=np.mean, samples=None):
+        resolution=1, aggregate=np.mean, samples=None, basis=None):
     '''Compute the constant-Q transform of an audio signal.
     
     :parameters:
@@ -442,7 +442,11 @@ def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=
           instead of ``y[i * hop_length : (i+1)*hop_length]``
         
           Note that boundary sample times (0, len(y)) will be automatically added.
-        
+
+      - basis : None or list of arrays
+          (optinal) alternate set of CQT basis filters.
+          See ``librosa.filters.constant_q`` for details.
+
     :returns:
       - CQT : np.ndarray
           Constant-Q power for each frequency at each time.    
@@ -460,12 +464,13 @@ def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=
         tuning = __get_tuning()
 
     # Generate the CQT filters
-    basis = filters.constant_q(sr, 
-                        fmin=fmin, 
-                        fmax=fmax, 
-                        bins_per_octave=bins_per_octave, 
-                        tuning=tuning, 
-                        resolution=resolution)
+    if basis is None:
+        basis = filters.constant_q(sr, 
+                            fmin=fmin, 
+                            fmax=fmax, 
+                            bins_per_octave=bins_per_octave, 
+                            tuning=tuning, 
+                            resolution=resolution)
     
     if samples is None:
         samples    = np.arange(0, len(y), hop_length)
