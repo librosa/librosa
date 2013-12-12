@@ -28,7 +28,8 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None, dtype=np.float32)
 
     :parameters:
       - path : string
-          path to the input file
+          path to the input file.  
+          Any format supported by ``audioread'' will work.
 
       - sr   : int > 0
           target sample rate.
@@ -148,26 +149,32 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest'):
 
     return y_hat
 
-def stft(y, n_fft=2048, hop_length=None, hann_w=None, window=None):
-    """Short-time fourier transform
+def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None):
+    """Short-time Fourier transform.
+
+    Returns a complex-valued matrix D such that
+      - np.abs(D[f, t]) is the magnitude of frequency bin f at time t
+      - np.angle(D[f, t]) is the phase of frequency bin f at time t
 
     :parameters:
       - y           : np.ndarray
-          the input signal
+          the input signal (audio time series)
 
       - n_fft       : int
-          number of FFT components
+          size of the FFT window
 
       - hop_length  : int
           number audio of frames between STFT columns.
-          If unspecified, defaults hann_w / 4.
+          If unspecified, defaults win_length / 4.
 
-      - hann_w      : int
-          The size of Hann window. 
-          If unspecified, defaults to n_fft
+      - win_length  : int
+          The length of the (Hann) window. 
+          If unspecified, defaults to n_fft.
 
-      - window      : np.ndarray
-          (optional) user-specified window
+      - window      : np.ndarray, function, or None
+          - None (default): use an asymmetric Hann window
+          - a user-specified window vector of length ``n_fft``
+          - a window function, such as ``scipy.signal.hanning``
 
     :returns:
       - D           : np.ndarray, dtype=complex
@@ -177,24 +184,28 @@ def stft(y, n_fft=2048, hop_length=None, hann_w=None, window=None):
 
     # if there is no user-specified window, construct it
     if window is None:
-        if hann_w is None:
-            hann_w = n_fft
+        if win_length is None:
+            win_length = n_fft
 
-        if hann_w == 0:
+        if win_length == 0:
             window = np.ones((n_fft,))
         else:
-            lpad = (n_fft - hann_w)/2
-            window = np.pad( scipy.signal.hann(hann_w, sym=False), 
-                                (lpad, n_fft - hann_w - lpad), 
+            lpad = (n_fft - win_length)/2
+            window = np.pad( scipy.signal.hann(win_length, sym=False), 
+                                (lpad, n_fft - win_length - lpad), 
                                 mode='constant')
     else:
-        window = np.asarray(window)
+        if hasattr(window, '__call__'):
+            window = window(n_fft)
+        else:
+            window = np.asarray(window)
+
         if window.size != n_fft:
             raise ValueError('Size mismatch between n_fft and window size')
 
     # Set the default hop, if it's not already specified
     if hop_length is None:
-        hop_length = int(n_fft / 4)
+        hop_length = int(win_length / 4)
 
     n_specbins  = 1 + int(n_fft / 2)
     n_frames    = 1 + int( (len(y) - n_fft) / hop_length)
@@ -211,7 +222,7 @@ def stft(y, n_fft=2048, hop_length=None, hann_w=None, window=None):
 
     return stft_matrix
 
-def istft(stft_matrix, n_fft=None, hop_length=None, hann_w=None, window=None):  
+def istft(stft_matrix, n_fft=None, hop_length=None, win_length=None, window=None):  
     """
     Inverse short-time fourier transform
 
@@ -225,9 +236,9 @@ def istft(stft_matrix, n_fft=None, hop_length=None, hann_w=None, window=None):
 
       - hop_length  : int
           Number of audio frames between STFT columns.
-          If unspecified, defaults to hann_w / 4.
+          If unspecified, defaults to win_length / 4.
 
-      - hann_w      : int
+      - win_length  : int
           size of Hann window
           If unspecified, defaults to the value of n_fft.
 
@@ -248,17 +259,17 @@ def istft(stft_matrix, n_fft=None, hop_length=None, hann_w=None, window=None):
 
     # if there is no user-specified window, construct it
     if window is None: 
-        if hann_w is None:
-            hann_w = n_fft
+        if win_length is None:
+            win_length = n_fft
 
-        if hann_w == 0:
+        if win_length == 0:
             window = np.ones(n_fft)
         else:
             #   magic number alert!
             #   2/3 scaling is to make stft(istft(.)) identity for 25% hop
-            lpad = (n_fft - hann_w)/2
-            window = np.pad( scipy.signal.hann(hann_w, sym=False) * 2.0 / 3.0, 
-                                (lpad, n_fft - hann_w - lpad), 
+            lpad = (n_fft - win_length)/2
+            window = np.pad( scipy.signal.hann(win_length, sym=False) * 2.0 / 3.0, 
+                                (lpad, n_fft - win_length - lpad), 
                                 mode='constant')
 
     # Set the default hop, if it's not already specified

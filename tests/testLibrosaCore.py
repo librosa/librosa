@@ -95,7 +95,7 @@ def test_stft():
 
         # Compute the STFT
         D       = librosa.stft(y,       n_fft       =   DATA['nfft'][0,0].astype(int),
-                                        hann_w      =   DATA['hann_w'][0,0].astype(int),
+                                        win_length  =   DATA['hann_w'][0,0].astype(int),
                                         hop_length  =   DATA['hop_length'][0,0].astype(int))
 
         assert  numpy.allclose(D, DATA['D'])   
@@ -141,7 +141,7 @@ def test_istft():
         DATA    = load(infile)
 
         Dinv    = librosa.istft(DATA['D'],  n_fft       = DATA['nfft'][0,0].astype(int),
-                                            hann_w      = DATA['hann_w'][0,0].astype(int),
+                                            win_length  = DATA['hann_w'][0,0].astype(int),
                                             hop_length  = DATA['hop_length'][0,0].astype(int))
         assert numpy.allclose(Dinv, DATA['Dinv'])
 
