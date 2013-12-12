@@ -66,7 +66,7 @@ def decompose(S, n_components=None, transformer=None):
 
     return (transformer.components_.T, activations.T)
 
-def hpss(S, kernel_size=19, power=1.0, mask=False):
+def hpss(S, kernel_size=31, power=1.0, mask=False):
     """Median-filtering harmonic percussive separation
 
     Decomposes an input spectrogram ``S = H + P``
@@ -78,7 +78,7 @@ def hpss(S, kernel_size=19, power=1.0, mask=False):
         >>> H, P = librosa.decompose.hpss(D)
         >>> y_harmonic = librosa.istft(H)
 
-        >>> # Or with a taller, narrower filter
+        >>> # Or with a narrower horizontal filter
         >>> H, P = librosa.decompose.hpss(D, kernel_size=(13, 31))
 
     :parameters:
