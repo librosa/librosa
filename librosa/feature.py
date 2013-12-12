@@ -20,10 +20,11 @@ def logfsgram(y, sr, n_fft=4096, hop_length=512, **kwargs):
           FFT window size
 
       - hop_length : int > 0
-          hop length for STFT
+          hop length for STFT. See ``librosa.stft`` for details.
 
       - bins_per_octave : int > 0
-          Number of bins per octave. Defaults to 12.
+          Number of bins per octave. 
+          Defaults to 12.
 
       - tuning : float in [-0.5,  0.5)
           Deviation (in fractions of a bin) from A440 tuning.
@@ -66,7 +67,7 @@ def chromagram(y=None, sr=22050, S=None, norm='inf', n_fft=2048, hop_length=512,
       - y          : np.ndarray or None
           audio time series
       - sr         : int
-          audio sampling rate 
+          sampling rate of y
       - S          : np.ndarray or None
           spectrogram (STFT magnitude)
       - norm       : {'inf', 1, 2, None}
@@ -78,10 +79,10 @@ def chromagram(y=None, sr=22050, S=None, norm='inf', n_fft=2048, hop_length=512,
           - None:  do not normalize
 
       - n_fft      : int  > 0
-          FFT window size if working with waveform data
+          FFT window size if provided ``y, sr`` instead of ``S`` 
 
       - hop_length : int > 0
-          hop length if working with waveform data
+          hop length if provided ``y, sr`` instead of ``S``
 
       - tuning : float in [-0.5, 0.5)
           Deviation from A440 tuning in fractional bins (cents)
@@ -179,17 +180,19 @@ def estimate_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     
     :parameters:
       - frequencies : array-like, float
-          Detected frequencies in the signal
+          A collection of frequencies detected in the signal.
+          See ``ifptrack``.
 
       - resolution : float in (0, 1)
-          Resolution of the tuning
+          Resolution of the tuning as a fraction of a bin.
+          0.01 corresponds to cents.
         
       - bins_per_octave : int > 0
-          How many bins per octave?
+          How many frequency bins per octave
         
     :returns:
-      - semisoff: float in [-0.5, 0.5]
-          estimated tuning in cents (fractions of a bin)                
+      - tuning: float in [-0.5, 0.5]
+          estimated tuning deviation (fractions of a bin)                
     '''
 
     frequencies = np.asarray([frequencies], dtype=float).flatten()
@@ -204,10 +207,10 @@ def estimate_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     
     bins     = np.linspace(-0.5, 0.5, np.ceil(1./resolution), endpoint=False)
   
-    counts, cents = np.histogram(residual, bins)
+    counts, tuning = np.histogram(residual, bins)
     
     # return the histogram peak
-    return cents[np.argmax(counts)]
+    return tuning[np.argmax(counts)]
 
 def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=(150.0, 300.0), fmax=(2000.0, 4000.0), threshold=0.75):
     '''Instantaneous pitch frequency tracking.
@@ -217,13 +220,14 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=(150.0, 300.0), fmax
           audio signal
       
       - sr : int
-          audio sample rate of y
+          audio sampling rate of y
         
       - n_fft: int
-          DFT length.
+          length of the FFT window
         
       - hop_length : int
           Hop size for STFT.  Defaults to n_fft / 4.
+          See ``librosa.stft()`` for details.
 
       - threshold : float in (0, 1)
           Maximum fraction of expected frequency increment to tolerate
@@ -344,7 +348,7 @@ def mfcc(S=None, y=None, sr=22050, n_mfcc=20):
       - y     : np.ndarray or None
           audio time series
       - sr    : int > 0
-          audio sampling rate of y
+          sampling rate of y
       - n_mfcc: int
           number of MFCCs to return
 
@@ -354,7 +358,7 @@ def mfcc(S=None, y=None, sr=22050, n_mfcc=20):
         the default parameters of ``melspectrogram``.
 
     :returns:
-      - M     : np.ndarray 
+      - M     : np.ndarray, shape=(n_mfcc, S.shape[1])
           MFCC sequence
 
     """
@@ -371,13 +375,14 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512, **kwarg
       - y : np.ndarray
           audio time-series
       - sr : int
-          audio sampling rate of y  
+          sampling rate of y  
       - S : np.ndarray
           magnitude or power spectrogram
       - n_fft : int
-          number of FFT components
+          length of the FFT window
       - hop_length : int
-          frames to hop
+          number of samples between successive frames.
+          See ``librosa.stft()``
 
       - kwargs
           Mel filterbank parameters
@@ -400,7 +405,7 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512, **kwarg
                                             n_fft       =   n_fft, 
                                             hop_length  =   hop_length))**2
     else:
-        n_fft = (S.shape[0] - 1) * 2
+        n_fft = 2 * (S.shape[0] - 1)
 
     # Build a Mel filter
     mel_basis   = librosa.filters.mel(sr, n_fft, **kwargs)
