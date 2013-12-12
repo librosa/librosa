@@ -222,17 +222,13 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None):
 
     return stft_matrix
 
-def istft(stft_matrix, n_fft=None, hop_length=None, win_length=None, window=None):  
+def istft(stft_matrix, hop_length=None, win_length=None, window=None):  
     """
-    Inverse short-time fourier transform
+    Inverse short-time Fourier transform
 
     :parameters:
-      - stft_matrix : np.ndarray
-          STFT matrix from stft()
-
-      - n_fft       : int
-          number of FFT components.
-          If unspecified, n_fft is inferred from the shape of stft_matrix.
+      - stft_matrix : np.ndarray, shape=(1 + n_fft/2, t)
+          STFT matrix from ``stft()``
 
       - hop_length  : int
           Number of audio frames between STFT columns.
@@ -251,11 +247,8 @@ def istft(stft_matrix, n_fft=None, hop_length=None, win_length=None, window=None
 
     """
 
-    # n = Number of stft frames
     n_frames    = stft_matrix.shape[1]
-
-    if n_fft is None:
-        n_fft = 2 * (stft_matrix.shape[0] - 1)
+    n_fft       = 2 * (stft_matrix.shape[0] - 1)
 
     # if there is no user-specified window, construct it
     if window is None: 

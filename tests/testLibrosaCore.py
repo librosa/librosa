@@ -140,8 +140,7 @@ def test_istft():
     def __test(infile):
         DATA    = load(infile)
 
-        Dinv    = librosa.istft(DATA['D'],  n_fft       = DATA['nfft'][0,0].astype(int),
-                                            win_length  = DATA['hann_w'][0,0].astype(int),
+        Dinv    = librosa.istft(DATA['D'],  win_length  = DATA['hann_w'][0,0].astype(int),
                                             hop_length  = DATA['hop_length'][0,0].astype(int))
         assert numpy.allclose(Dinv, DATA['Dinv'])
 
