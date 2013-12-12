@@ -11,33 +11,50 @@ import librosa.core
 
 
 def decompose(S, n_components=None, transformer=None):
-    """Decompose the feature matrix with non-negative matrix factorization
+    """Decompose a feature matrix.
+    
+    By default, this is done with with non-negative matrix factorization,
+    but any ``sklearn.decomposition``-type object will work.
 
     :parameters:
-        - S : np.ndarray
-            feature matrix (d-by-t)
+        - S : np.ndarray, shape=(n_features, n_samples)
+            feature matrix
+
         - n_components : int > 0 or None
-            number of components, if None then all d components are used
-        - transformer : any instance which implements fit_transform()
-            If None, use sklearn.decomposition.NMF by default
-            Otherwise, because of scikit-learn convention where the input data
-            is (n_samples, n_features), NMF.fit_transform() should take S.T as
-            input, and returns transformed S_new, where:
-            ``S.T ~= S_new.dot(transformer.components_)``
+            number of desired components
+            if None, then ``n_features`` components are used
+
+        - transformer : None or object
+            If None, use ``sklearn.decomposition.NMF``
+
+            Otherwise, any object with a similar interface to NMF should work.
+            ``transformer`` must follow the scikit-learn convention, where input data
+            is (n_samples, n_features). 
+
+            ``transformer.fit_transform()`` will be run on ``S.T`` (not ``S``),
+            the return value of which is stored (transposed) as ``activations``.
+
+            The components will be retrieved as ``transformer.components_.T``
+
+            ``S ~= np.dot(activations, transformer.components_).T``
+            
             or equivalently:
-            ``S ~= transformer.components_.T.dot(S_new.T)``
+            ``S ~= np.dot(transformer.components_.T, activations.T)``
 
     :returns:
-        - components: np.ndarray
-            dictionary matrix (d-by-n_components)
-        - activations: np.ndarray
-            transformed matrix/activation matrix (n_components-by-t)
+        - components: np.ndarray, shape=(n_features, n_components)
+            dictionary matrix
+
+        - activations: np.ndarray, shape=(n_components, n_samples)
+            transformed matrix/activation matrix
 
     """
 
     if transformer is None:
         transformer = sklearn.decomposition.NMF(n_components=n_components)
+
     activations = transformer.fit_transform(S.T)
+
     return (transformer.components_.T, activations.T)
 
 def hpss(S, kernel_size=19, power=1.0, mask=False):
