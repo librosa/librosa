@@ -14,16 +14,26 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
     r'''Dynamic programming beat tracker.
 
     Beats are detected in three stages:
-    - Measure onset strength
-    - Estimate tempo
-    - Pick peaks in onset strength approximately consistent with estimated tempo
+      - Measure onset strength
+      - Estimate tempo
+      - Pick peaks in onset strength approximately consistent with estimated tempo
+
+    Example usage:
+        >>> # Track beats using time series input
+        >>> tempo, beats = librosa.beat.beat_track( y, sr )
+
+        >>> # Track beats using a pre-computed onset envelope
+        >>> tempo, beats = librosa.beat.beat_track( onsets=onset_envelope, 
+                                                    sr=sr, 
+                                                    hop_length=hop_length, 
+                                                    n_fft=n_fft )
 
     :parameters:
       - y          : np.ndarray or None
           audio time series
 
       - sr         : int > 0
-          sample rate of y
+          sample rate of ``y``
 
       - onsets     : np.ndarray or None
           (optional) pre-computed onset strength envelope
@@ -33,7 +43,7 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
           hop length (in frames)
 
       - start_bpm  : float > 0
-          initial guess for BPM estimator
+          initial guess for the tempo estimator
 
       - n_fft      : int > 0
           window size (centers beat times).
@@ -48,7 +58,7 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
       .. note:: One of either ``onsets`` or ``y`` must be provided.
 
     :returns: 
-      - bpm : float
+      - tempo : float
           estimated global tempo
 
       - beats : np.ndarray
@@ -109,6 +119,9 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
 def estimate_tempo(onsets, sr=22050, hop_length=64, start_bpm=120, std_bpm=1.0, ac_size=4.0, duration=90.0, offset=0.0):
     """Estimate the tempo (beats per minute) from an onset envelope
 
+    Example usage:
+        >>> tempo = librosa.beat.estimate_tempo(onset_strength, sr=sr, hop_length)
+
     :parameters:
       - onsets    : np.ndarray   
           onset strength envelope.
@@ -136,8 +149,8 @@ def estimate_tempo(onsets, sr=22050, hop_length=64, start_bpm=120, std_bpm=1.0, 
           offset (in seconds) of signal sample to use in estimating tempo
 
     :returns:
-      - bpm      : float
-          estimated BPM
+      - tempo      : float
+          estimated tempo (beats per minute)
     """
 
     
