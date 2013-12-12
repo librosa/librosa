@@ -54,7 +54,7 @@ def write_wav(path, y, sr):
           audio time series
 
       - sr : int
-          sampling rate of ''y''
+          sampling rate of ``y``
 
     """
 
