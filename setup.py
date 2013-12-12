@@ -7,6 +7,7 @@ setup(
     author='Brian McFee',
     author_email='brm2132@columbia.edu',
     url='http://github.com/bmcfee/librosa',
+    download_url='http://github.com/bmcfee/librosa/releases',
     packages=['librosa'],
     long_description="""\
         Python module for audio and music processing.
