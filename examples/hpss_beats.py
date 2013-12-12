@@ -41,7 +41,7 @@ def hpss_beats(input_file, output_csv):
     harmonic, percussive = librosa.decompose.hpss(D)
 
     # Construct onset envelope from percussive component
-    print 'Tracking beats on percussive spectrogram',
+    print 'Tracking beats on percussive spectrogram'
 
     S = librosa.feature.melspectrogram(S=percussive, sr=sr, n_mels=128)
 
