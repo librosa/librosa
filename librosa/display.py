@@ -9,37 +9,22 @@ import warnings
 
 import librosa.core
 
-def __log_scale(n):
-    '''Return a log-scale mapping of bins 0..n, and its inverse.
-
-    :parameters:
-      - n : int > 0
-          Number of bins
-
-    :returns:
-      - y   : np.ndarray, shape=(n,)
-
-      - y_inv   : np.ndarray, shape=(n,)
-    '''
-
-    logn = np.log2(n)
-    y = n * (1 - 2.0**np.linspace(-logn, 0, n, endpoint=True))[::-1]
-
-    y_inv = np.arange(len(y)+1)
-    for i in range(len(y)-1):
-        y_inv[y[i]:y[i+1]] = i
-
-    return y, y_inv
-
 def time_ticks(locs, *args, **kwargs): 
     '''Plot time-formatted axis ticks.
 
     Example usage:
+        >>> # Tick at pre-computed beat times
+        >>> librosa.display.specshow(S)
+        >>> librosa.display.time_ticks(beat_times)
 
-        time_ticks(beat_times, ...)
+        >>> # Set the locations of the time stamps
+        >>> librosa.display.time_ticks(locations, timestamps)
 
-        time_ticks(locations, timestamps, ...)
+        >>> # Format in seconds
+        >>> librosa.display.time_ticks(beat_times, fmt='s')
 
+        >>> # Tick along the y axis
+        >>> librosa.display.time_ticks(beat_times, axis='y')
 
     :parameters:
        - locations : array 
@@ -124,6 +109,14 @@ def cmap(data):
     Otherwise, use a sequential map.
     PuOr and OrRd are chosen to optimize visibility for color-blind people.
 
+    Example usage:
+        >>> librosa.display.cmap([0, 1, 2])
+        'OrRd'
+        >>> librosa.display.cmap(np.arange(-10, -5))
+        'BuPu_r'
+        >>> librosa.display.cmap(np.arange(-10, 10))
+        'PuOr_r'
+
     :parameters:
       - data : np.ndarray
           Input data
@@ -131,9 +124,11 @@ def cmap(data):
     :returns:
       - cmap_str
           If data has only positive values, cmap_str is 'OrRd'
-          If data has only negative values, cmap_str is 'PuBu_r'
+          If data has only negative values, cmap_str is 'BuPu_r'
           If data has both positive and negatives, cmap_str is 'PuOr_r'
     '''
+
+    data = np.asarray(data)
 
     positives = (data > 0).any()
     negatives = (data < 0).any()
@@ -150,6 +145,28 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
     '''Display a spectrogram/chromagram/cqt/etc.
 
     Functions as a drop-in replacement for ``matplotlib.pyplot.imshow``, but with useful defaults.
+
+    Example usage:
+        >>> # Visualize an STFT with linear frequency scaling
+        >>> D = np.abs(librosa.stft(y))
+        >>> librosa.display.specshow(D, sr=sr, y_axis='linear')
+
+        >>> # Or with logarithmic frequency scaling
+        >>> librosa.display.specshow(D, sr=sr, y_axis='log')
+
+        >>> # Visualize a CQT with note markers
+        >>> CQT = librosa.cqt(y, sr, fmin=55, fmax=880)
+        >>> librosa.display.specshow(CQT, sr=sr, y_axis='cqt_note', fmin=55, fmax=880)
+
+        >>> # Draw time markers automatically
+        >>> librosa.display.specshow(D, sr=sr, hop_length=hop_length, x_axis='time')
+
+        >>> # Draw a chromagram with pitch classes
+        >>> C = librosa.feature.chromagram(y, sr)
+        >>> librosa.display.specshow(C, y_axis='chroma')
+
+        >>> # Force a grayscale colormap (white -> black)
+        >>> librosa.display.specshow(librosa.logamplitude(D), cmap='gray_r')
 
     :parameters:
       - data : np.ndarray
@@ -324,4 +341,26 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
         raise ValueError('Unknown x_axis parameter: %s' % x_axis)
     
     return axes
+
+def __log_scale(n):
+    '''Return a log-scale mapping of bins 0..n, and its inverse.
+
+    :parameters:
+      - n : int > 0
+          Number of bins
+
+    :returns:
+      - y   : np.ndarray, shape=(n,)
+
+      - y_inv   : np.ndarray, shape=(n,)
+    '''
+
+    logn = np.log2(n)
+    y = n * (1 - 2.0**np.linspace(-logn, 0, n, endpoint=True))[::-1]
+
+    y_inv = np.arange(len(y)+1)
+    for i in range(len(y)-1):
+        y_inv[y[i]:y[i+1]] = i
+
+    return y, y_inv
 
