@@ -40,7 +40,7 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
           See ``librosa.onset.onset_strength``
 
       - hop_length : int > 0
-          hop length (in frames)
+          number of audio samples between successive ``onsets`` values (FFT frames)
 
       - start_bpm  : float > 0
           initial guess for the tempo estimator
