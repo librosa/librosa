@@ -9,7 +9,10 @@ import librosa.core
 import librosa.feature
 
 def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64, **kwargs):
-    """Basic onset detector
+    """Basic onset detector.  Locate note onset events by picking peaks in an
+    onset strength envelope.
+
+    See also: ``librosa.onset.onset_strength()``
         
     :usage:
         >>> # Get onset times from a signal
@@ -88,7 +91,7 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, feature=librosa.feat
 
     Onset strength at time t is determined by:
 
-    mean_f max(0, S[f, t+1] - S[f, t])
+    ``mean_f max(0, S[f, t+1] - S[f, t])``
 
     By default, if a time series is provided, S will be the log-power Mel spectrogram.
 
