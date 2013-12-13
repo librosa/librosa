@@ -163,10 +163,6 @@ def structure_feature(rec, pad=True, inverse=False):
           ``struct[i, t]`` = the recurrence at time ``t`` with lag ``i``.
 
       .. note:: negative lag values are supported by wrapping to the end of the array.
-
-    :raises:
-      - ValueError
-          if rec is not square
     '''
 
     t = rec.shape[1]
