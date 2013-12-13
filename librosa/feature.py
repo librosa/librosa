@@ -9,7 +9,7 @@ import librosa.core
 def logfsgram(y, sr, n_fft=4096, hop_length=512, **kwargs):
     '''Compute a log-frequency spectrogram (piano roll) using a fixed-window STFT.
 
-    Example usage:
+    :usage:
         >>> S           = librosa.logfsgram(y, sr)
 
         >>> # Convert to chroma
@@ -69,7 +69,7 @@ def logfsgram(y, sr, n_fft=4096, hop_length=512, **kwargs):
 def chromagram(y=None, sr=22050, S=None, norm='inf', n_fft=2048, hop_length=512, tuning=0.0, **kwargs):
     """Compute a chromagram from a spectrogram or waveform
 
-    Example usage:
+    :usage:
         >>> C = librosa.chromagram(y, sr)
 
         >>> # Use a pre-computed spectrogram
@@ -168,7 +168,7 @@ def perceptual_weighting(S, frequencies, ref_power=1e-12):
     
     ``S_p[f] = A_weighting(f) + 10*log(S[f] / ref_power)``
     
-    Example usage:
+    :usage:
         >>> # Re-weight a CQT representation, using peak power as reference
         >>> CQT             = librosa.cqt(y, sr, fmin=55, fmax=440)
         >>> freqs           = librosa.cqt_frequencies(CQT.shape[0], fmin=55)
@@ -199,7 +199,7 @@ def estimate_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     '''Given a collection of pitches, estimate its tuning offset
     (in fractions of a bin) relative to A440=440.0Hz.
     
-    Example usage:
+    :usage:
         >>> # Generate notes at +25 cents
         >>> freqs = librosa.cqt_frequencies(24, 55, tuning=0.25)
         >>> librosa.feature.estimate_tuning(freqs)
@@ -248,7 +248,7 @@ def estimate_tuning(frequencies, resolution=0.01, bins_per_octave=12):
 def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=(150.0, 300.0), fmax=(2000.0, 4000.0), threshold=0.75):
     '''Instantaneous pitch frequency tracking.
 
-    Example usage:
+    :usage:
         >>> pitches, magnitudes, D = librosa.feature.ifptrack(y, sr)
 
     :parameters:
@@ -378,7 +378,7 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=(150.0, 300.0), fmax
 def mfcc(S=None, y=None, sr=22050, n_mfcc=20):
     """Mel-frequency cepstral coefficients
 
-    Example usage:
+    :usage:
         >>> # Generate mfccs from a time series
         >>> mfccs = librosa.feature.mfcc(y=y, sr=sr)
 
@@ -418,7 +418,7 @@ def mfcc(S=None, y=None, sr=22050, n_mfcc=20):
 def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512, **kwargs):
     """Compute a Mel-scaled power spectrogram.
 
-    Example usage:
+    :usage:
         >>> S = librosa.feature.melspectrogram(y=y, sr=sr)
 
         >>> # Using a pre-computed power spectrogram
@@ -473,7 +473,7 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512, **kwarg
 def delta(X, axis=-1, order=1, pad=True):
     '''Compute delta features.
 
-    Example usage:
+    :usage:
         >>> # Compute MFCC deltas, delta-deltas
         >>> mfccs       = librosa.feature.mfcc(y=y, sr=sr)
         >>> delta_mfcc  = librosa.feature.delta(mfccs)
@@ -511,7 +511,7 @@ def delta(X, axis=-1, order=1, pad=True):
 def sync(data, frames, aggregate=np.mean):
     """Synchronous aggregation of a feature matrix
 
-    Example usage:
+    :usage:
         >>> # Beat-synchronous MFCCs
         >>> tempo, beats    = librosa.beat.beat_track(y, sr)
         >>> S               = librosa.feature.melspectrogram(y, sr, hop_length=64)

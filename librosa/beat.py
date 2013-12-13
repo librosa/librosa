@@ -18,7 +18,7 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
       - Estimate tempo
       - Pick peaks in onset strength approximately consistent with estimated tempo
 
-    Example usage:
+    :usage:
         >>> # Track beats using time series input
         >>> tempo, beats = librosa.beat.beat_track( y, sr )
 
@@ -119,7 +119,7 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
 def estimate_tempo(onsets, sr=22050, hop_length=64, start_bpm=120, std_bpm=1.0, ac_size=4.0, duration=90.0, offset=0.0):
     """Estimate the tempo (beats per minute) from an onset envelope
 
-    Example usage:
+    :usage:
         >>> tempo = librosa.beat.estimate_tempo(onset_strength, sr=sr, hop_length)
 
     :parameters:

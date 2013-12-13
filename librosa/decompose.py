@@ -16,7 +16,7 @@ def decompose(S, n_components=None, transformer=None):
     By default, this is done with with non-negative matrix factorization,
     but any ``sklearn.decomposition``-type object will work.
 
-    Example usage:
+    :usage:
         >>> # Decompose a magnitude spectrogram into 32 components with NMF
         >>> S = np.abs(librosa.stft(y))
         >>> components, activations = librosa.decompose.decompose(S, n_components=32)
@@ -73,7 +73,7 @@ def hpss(S, kernel_size=31, power=1.0, mask=False):
     where ``H`` contains the harmonic components, 
     and ``P`` contains the percussive components.
 
-    Example usage:
+    :usage:
         >>> D = librosa.stft(y)
         >>> H, P = librosa.decompose.hpss(D)
         >>> y_harmonic = librosa.istft(H)
