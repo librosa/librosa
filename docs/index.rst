@@ -4,18 +4,15 @@
    contain the root `toctree` directive.
 
 .. toctree::
-   :maxdepth: 2
-   :numbered:
+    :maxdepth: 2
+    :numbered:
 
-Beat tracking
-=============
-.. automodule:: librosa.beat
-   :members:
+:ref:`modindex`
 
 Core methods
 ============
 .. automodule:: librosa.core
-   :members:
+    :members:
 
 Display
 =======
@@ -27,14 +24,14 @@ Feature extraction
 .. automodule:: librosa.feature
    :members:
 
-Filter banks
-============
-.. automodule:: librosa.filters
-   :members:
+Beat tracking
+=============
+.. automodule:: librosa.beat
+    :members:
 
-Onset detection
-===============
-.. automodule:: librosa.onset
+Segmentation
+============
+.. automodule:: librosa.segment
    :members:
 
 Output methods
@@ -42,13 +39,19 @@ Output methods
 .. automodule:: librosa.output
    :members:
    
-Segmentation
-============
-.. automodule:: librosa.segment
-   :members:
-
 Spectrogram decomposition
 =========================
 .. automodule:: librosa.decompose
    :members:
+
+Onset detection
+===============
+.. automodule:: librosa.onset
+   :members:
+
+Filter banks
+============
+.. automodule:: librosa.filters
+   :members:
+
    
