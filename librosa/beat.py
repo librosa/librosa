@@ -14,9 +14,9 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
     r'''Dynamic programming beat tracker.
 
     Beats are detected in three stages:
-      - Measure onset strength
-      - Estimate tempo
-      - Pick peaks in onset strength approximately consistent with estimated tempo
+      1. Measure onset strength
+      2. Estimate tempo from onset correlation
+      3. Pick peaks in onset strength approximately consistent with estimated tempo
 
     :usage:
         >>> # Track beats using time series input
