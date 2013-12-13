@@ -12,7 +12,7 @@ import librosa.core
 def time_ticks(locs, *args, **kwargs): 
     '''Plot time-formatted axis ticks.
 
-    Example usage:
+    :usage:
         >>> # Tick at pre-computed beat times
         >>> librosa.display.specshow(S)
         >>> librosa.display.time_ticks(beat_times)
@@ -109,7 +109,7 @@ def cmap(data):
     Otherwise, use a sequential map.
     PuOr and OrRd are chosen to optimize visibility for color-blind people.
 
-    Example usage:
+    :usage:
         >>> librosa.display.cmap([0, 1, 2])
         'OrRd'
         >>> librosa.display.cmap(np.arange(-10, -5))
@@ -146,7 +146,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
 
     Functions as a drop-in replacement for ``matplotlib.pyplot.imshow``, but with useful defaults.
 
-    Example usage:
+    :usage:
         >>> # Visualize an STFT with linear frequency scaling
         >>> D = np.abs(librosa.stft(y))
         >>> librosa.display.specshow(D, sr=sr, y_axis='linear')

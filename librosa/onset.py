@@ -11,7 +11,7 @@ import librosa.feature
 def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64, **kwargs):
     """Basic onset detector
         
-    Example usage:
+    :usage:
         >>> # Get onset times from a signal
         >>> onset_frames    = librosa.onset.onset_detect(y=y, sr=sr, hop_length=64)
         >>> onset_times     = librosa.frames_to_time(onset_frames, sr, hop_length=64)
@@ -92,7 +92,7 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, feature=librosa.feat
 
     By default, if a time series is provided, S will be the log-power Mel spectrogram.
 
-    Example usage:
+    :usage:
         >>> # Mean aggregation with Mel-scaled spectrogram
         >>> onsets = librosa.onset.onset_strength(y, sr)
 
