@@ -12,7 +12,7 @@ import librosa.core
 def frames_csv(path, frames, sr=22050, hop_length=512):
     """Save beat tracker or segmentation output in CSV format.
 
-    Example usage:
+    :usage:
         >>> tempo, beats = librosa.beat.beat_track(y, sr=sr, hop_length=64)
         >>> librosa.output.frames_csv('beat_times.csv', frames, sr=sr, hop_length=64)
 
@@ -41,7 +41,7 @@ def frames_csv(path, frames, sr=22050, hop_length=512):
 def write_wav(path, y, sr):
     """Output a time series as a .wav file
 
-    Example usage:
+    :usage:
         >>> # Trim a signal to 5 seconds and save it back
         >>> y, sr = librosa.load('file.wav', duration=5)
         >>> librosa.output.write_wav('file_trim_5s.wav', y, sr)

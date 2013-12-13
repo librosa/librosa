@@ -17,7 +17,7 @@ def stack_memory(data, n_steps=2, delay=1, trim=True):
     ``data[:,i] ->  [   data[:, i].T, data[:, i - delay].T ...  data[:, i - (n_steps-1)*delay].T ].T``
 
 
-    Example usage:
+    :usage:
         >>> mfccs       = librosa.feature.mfcc(y=y, sr=sr)
         >>> mfcc_stack  = librosa.segment.stack_memory(mfccs)
 
@@ -59,7 +59,7 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
 
     ``rec[i,j] == True`` <=> (``data[:,i]``, ``data[:,j]``) are k-nearest-neighbors and ``|i-j| >= width``
 
-    Example usage:
+    :usage:
         >>> mfcc    = librosa.feature.mfcc(y=y, sr=sr)
         >>> R       = librosa.segment.recurrence_matrix(mfcc)
 
@@ -136,7 +136,7 @@ def structure_feature(rec, pad=True, inverse=False):
     The resulting matrix is indexed horizontally by time,
     and vertically by lag.
 
-    Example usage:
+    :usage:
         >>> # Build the structure feature over mfcc similarity
         >>> mfccs   = librosa.feature.mfcc(y=y, sr=sr)
         >>> R       = librosa.feature.recurrence_matrix(mfccs)
@@ -197,7 +197,7 @@ def agglomerative(data, k):
     Use a temporally-constrained agglomerative clustering routine to partition
     ``data`` into ``k`` contiguous segments.
 
-    Example usage:
+    :usage:
         >>> # Cluster by Mel spectrogram similarity
         >>> # Break into 32 segments
         >>> S                   = librosa.feature.melspectrogram(y=y, sr=sr, n_fft=2048, hop_length=512)
