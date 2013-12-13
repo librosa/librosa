@@ -3,8 +3,6 @@ librosa
 
 A python package for music and audio processing.
 
-Mostly ports and reimplementations of DPWE's matlab code.
-
 * librosa/    The librosa package
 
 * examples/   Some basic examples of audio processing with librosa
@@ -42,9 +40,9 @@ easy_install librosa
 dependencies
 ============
 
+* audioread
 * numpy >= 1.7.0
 * scipy
 * sklearn
-* audioread
-* (optional) scikits.samplerate
-* (recommended) pygst
+* matplotlib
+* (optional) scikits.samplerate >= 0.3
