@@ -66,7 +66,7 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
 
     :raises:
       - ValueError  
-          if neither y nor onsets are provided
+          if neither ``y`` nor ``onsets`` are provided
 
     .. note::
       If no onset strength could be detected, beat_tracker estimates 0 BPM and returns
