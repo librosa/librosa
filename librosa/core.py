@@ -180,7 +180,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None):
           the input signal (audio time series)
 
       - n_fft       : int
-          size of the FFT window
+          FFT window size
 
       - hop_length  : int
           number audio of frames between STFT columns.
