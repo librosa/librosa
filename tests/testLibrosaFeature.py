@@ -42,7 +42,7 @@ def load(infile):
 def test_hz_to_mel():
     def __test_to_mel(infile):
         DATA    = load(infile)
-        z       = librosa.feature.hz_to_mel(DATA['f'], DATA['htk'])
+        z       = librosa.hz_to_mel(DATA['f'], DATA['htk'])
 
         assert numpy.allclose(z, DATA['result'])
     
@@ -55,7 +55,7 @@ def test_mel_to_hz():
 
     def __test_to_hz(infile):
         DATA    = load(infile)
-        z       = librosa.feature.mel_to_hz(DATA['f'], DATA['htk'])
+        z       = librosa.mel_to_hz(DATA['f'], DATA['htk'])
 
         assert numpy.allclose(z, DATA['result'])
     
@@ -67,7 +67,7 @@ def test_mel_to_hz():
 def test_hz_to_octs():
     def __test_to_octs(infile):
         DATA    = load(infile)
-        z       = librosa.feature.hz_to_octs(DATA['f'])
+        z       = librosa.hz_to_octs(DATA['f'])
 
         assert numpy.allclose(z, DATA['result'])
 
@@ -81,12 +81,16 @@ def test_melfb():
     def __test(infile):
         DATA    = load(infile)
 
-        wts = librosa.feature.melfb( DATA['sr'][0], 
+        wts = librosa.filters.mel( DATA['sr'][0], 
                                     DATA['nfft'][0], 
                                     n_mels  =   DATA['nfilts'][0],
                                     fmin    =   DATA['fmin'][0],
                                     fmax    =   DATA['fmax'][0],
                                     htk     =   DATA['htk'][0])
+
+        # Our version only returns the real-valued part.
+        # Pad out.
+        wts = numpy.pad(wts, [ (0, 0), (0, DATA['nfft'][0]/2 - 1)], mode='constant')
                                 
         assert wts.shape == DATA['wts'].shape
 
@@ -105,12 +109,16 @@ def test_chromafb():
         if octwidth == 0:
             octwidth = None
 
-        wts = librosa.feature.chromafb( DATA['sr'][0,0], 
+        wts = librosa.filters.chroma( DATA['sr'][0,0], 
                                         DATA['nfft'][0,0], 
                                         DATA['nchroma'][0,0],
                                         A440    =   DATA['a440'][0,0],
                                         ctroct  =   DATA['ctroct'][0,0],
                                         octwidth=   octwidth)
+
+        # Our version only returns the real-valued part.
+        # Pad out.
+        wts = numpy.pad(wts, [ (0, 0), (0, DATA['nfft'][0,0]/2 - 1)], mode='constant')
                                 
         assert wts.shape == DATA['wts'].shape
 

@@ -1,38 +1,51 @@
 #!/usr/bin/env python
-"""Onsets, tempo, beats and segmentation."""
+"""Beat tracking and tempo estimation"""
 
 import numpy as np
 import scipy
 import scipy.signal
-import scipy.ndimage
-import sklearn
-import sklearn.cluster
-import sklearn.feature_extraction
 
 import librosa.core
 import librosa.feature
+import librosa.onset
 
-def beat_track(y=None, sr=22050, onsets=None, hop_length=128, 
-               start_bpm=120.0, n_fft=256, tightness=400, trim=True):
-    """Ellis-style beat tracker
+def beat_track(y=None, sr=22050, onsets=None, hop_length=64, 
+               start_bpm=120.0, n_fft=2048, tightness=400, trim=True):
+    r'''Dynamic programming beat tracker.
+
+    Beats are detected in three stages:
+      1. Measure onset strength
+      2. Estimate tempo from onset correlation
+      3. Pick peaks in onset strength approximately consistent with estimated tempo
+
+    :usage:
+        >>> # Track beats using time series input
+        >>> tempo, beats = librosa.beat.beat_track( y, sr )
+
+        >>> # Track beats using a pre-computed onset envelope
+        >>> tempo, beats = librosa.beat.beat_track( onsets=onset_envelope, 
+                                                    sr=sr, 
+                                                    hop_length=hop_length, 
+                                                    n_fft=n_fft )
 
     :parameters:
-      - y          : np.ndarray 
+      - y          : np.ndarray or None
           audio time series
 
-      - sr         : int
-          audio sample rate
+      - sr         : int > 0
+          sampling rate of ``y``
 
-      - onsets     : np.ndarray 
-          (optional) pre-computed onset envelope
+      - onsets     : np.ndarray or None
+          (optional) pre-computed onset strength envelope
+          See ``librosa.onset.onset_strength``
 
-      - hop_length : int
-          hop length (in frames)
+      - hop_length : int > 0
+          number of audio samples between successive ``onsets`` values (FFT frames)
 
-      - start_bpm  : float
-          initial guess for BPM estimator
+      - start_bpm  : float > 0
+          initial guess for the tempo estimator
 
-      - n_fft      : int
+      - n_fft      : int > 0
           window size (centers beat times).
           Set ``n_fft=None`` to disable frame centering.
 
@@ -44,9 +57,8 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=128,
 
       .. note:: One of either ``onsets`` or ``y`` must be provided.
 
-
     :returns: 
-      - bpm : float
+      - tempo : float
           estimated global tempo
 
       - beats : np.ndarray
@@ -54,43 +66,49 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=128,
 
     :raises:
       - ValueError  
-          if neither y nor onsets are provided
+          if neither ``y`` nor ``onsets`` are provided
 
     .. note::
       If no onset strength could be detected, beat_tracker estimates 0 BPM and returns
       an empty list.
 
     .. note:: 
-
       - http://labrosa.ee.columbia.edu/projects/beattrack/
-      - D. Ellis (2007)
-        Beat Tracking by Dynamic Programming
-        Journal of New Music Research
-        Special Issue on Beat and Tempo Extraction
-        vol. 36 no. 1, March 2007, pp. 51-60. 
-
-    """
+      - @article{ellis2007beat,
+            title={Beat tracking by dynamic programming},
+            author={Ellis, Daniel PW},
+            journal={Journal of New Music Research},
+            volume={36},
+            number={1},
+            pages={51--60},
+            year={2007},
+            publisher={Taylor \& Francis} }
+    '''
 
     # First, get the frame->beat strength profile if we don't already have one
     if onsets is None:
         if y is None:
             raise ValueError('Either "y" or "onsets" must be provided')
 
-        onsets  = onset_strength(y=y, sr=sr, hop_length=hop_length)
+        onsets  = librosa.onset.onset_strength( y=y, 
+                                                sr=sr, 
+                                                hop_length=hop_length)
 
     # Do we have any onsets to grab?
     if not onsets.any():
         return (0, np.array([], dtype=int))
 
-    fft_res = float(sr) / hop_length
-
     # Then, estimate bpm
-    bpm     = onset_estimate_bpm(onsets, start_bpm, fft_res)
+    bpm     = estimate_tempo(onsets, sr=sr, hop_length=hop_length, start_bpm=start_bpm)
     
     # Then, run the tracker
-    beats   = __beat_tracker(onsets, bpm, fft_res, tightness, trim)
+    beats   = __beat_tracker(onsets, bpm, float(sr) / hop_length, tightness, trim)
 
-    # Framing correction
+    # Using a windowed STFT, most of the energy in a frame comes from its center
+    # samples.  This can bias the detected beat events (frames).
+    #
+    # We apply the following frame correction to resolve this bias.
+    #
     if n_fft is None:
         n_fft = hop_length
     
@@ -98,6 +116,83 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=128,
 
     return (bpm, beats)
 
+def estimate_tempo(onsets, sr=22050, hop_length=64, start_bpm=120, std_bpm=1.0, ac_size=4.0, duration=90.0, offset=0.0):
+    """Estimate the tempo (beats per minute) from an onset envelope
+
+    :usage:
+        >>> tempo = librosa.beat.estimate_tempo(onset_strength, sr=sr, hop_length)
+
+    :parameters:
+      - onsets    : np.ndarray   
+          onset strength envelope.
+          See ``librosa.onset.onset_strength()`` for details.
+
+      - sr:       : int > 0
+          sampling rate of the time series
+
+      - hop_length : int > 0
+          hop length of the time series
+
+      - start_bpm : float
+          initial guess of the BPM
+
+      - std_bpm : float > 0
+          standard deviation of tempo distribution
+
+      - ac_size : float > 0
+          length (in seconds) of the auto-correlation window
+
+      - duration : float > 0
+          length of signal (in seconds) to use in estimating tempo
+
+      - offset : float > 0
+          offset (in seconds) of signal sample to use in estimating tempo
+
+    :returns:
+      - tempo      : float
+          estimated tempo (beats per minute)
+    """
+
+    
+    fft_res     = float(sr) / hop_length
+
+    # Chop onsets to X[(upper_limit - duration):upper_limit]
+    # or as much as will fit
+    maxcol      = min(len(onsets)-1, np.round((offset + duration) * fft_res))
+    mincol      = max(0,    maxcol - np.round(duration * fft_res))
+
+    # Use auto-correlation out of 4 seconds (empirically set??)
+    ac_window   = min(maxcol, np.round(ac_size * fft_res))
+
+    # Compute the autocorrelation
+    x_corr      = librosa.core.autocorrelate(onsets[mincol:maxcol], ac_window)
+
+    # re-weight the autocorrelation by log-normal prior
+    bpms    = 60.0 * fft_res / (np.arange(1, ac_window+1))
+
+    # Smooth the autocorrelation by a log-normal distribution
+    x_corr  = x_corr * np.exp(-0.5 * ((np.log2(bpms / start_bpm)) / std_bpm)**2)
+
+    # Get the local maximum of weighted correlation
+    x_peaks = librosa.core.localmax(x_corr)
+
+    # Zero out all peaks before the first negative
+    x_peaks[:np.argmax(x_corr < 0)] = False
+
+
+    # Choose the best peak out of .33, .5, 2, 3 * start_period
+    candidates      = np.multiply(  np.argmax(x_peaks * x_corr), 
+                                    [1.0/3, 1.0/2, 1.0, 2.0, 3.0])
+
+    candidates      = candidates.astype(int)
+    candidates      = candidates[candidates < ac_window]
+
+    best_period     = np.argmax(x_corr[candidates])
+
+    if candidates[best_period] > 0:
+        return 60.0 * fft_res / candidates[best_period]
+
+    return start_bpm
 
 def __beat_tracker(onsets, bpm, fft_res, tightness, trim):
     """Internal function that does beat tracking from a given onset profile.
@@ -111,7 +206,7 @@ def __beat_tracker(onsets, bpm, fft_res, tightness, trim):
           resolution of the fft (sr / hop_length)
       - tightness: float
           how closely do we adhere to bpm?
-      - trim     : boolean
+      - trim     : bool
           trim leading/trailing beats with weak onsets?
 
     :returns:
@@ -176,24 +271,39 @@ def __beat_tracker(onsets, bpm, fft_res, tightness, trim):
         # The last of these is the last beat (since score generally increases)
         return np.argwhere((cumscore * maxes * 2 > med_score)).max()
 
-    def smooth_beats(beats):
+    def smooth_beats(beats, trim):
         """Final post-processing: throw out spurious leading/trailing beats"""
         
         smooth_boe  = scipy.signal.convolve(localscore[beats], 
                                             scipy.signal.hann(5), 'same')
 
-        threshold   = 0.5 * ((smooth_boe**2).mean()**0.5)
+        if trim:
+            threshold   = 0.5 * ((smooth_boe**2).mean()**0.5)
+        else:
+            threshold   = 0.0
+
         valid       = np.argwhere(smooth_boe > threshold)
 
         return  beats[valid.min():valid.max()]
+    
+    def normalize_onsets(onsets):
+        '''Maps onset strength function into the range [0, 1]'''
+
+        norm = onsets.std(ddof=1)
+        if norm > 0:
+            onsets = onsets / norm
+        return onsets
+
     #--- End of helper functions ---#
 
     # convert bpm to a sample period for searching
     period      = round(60.0 * fft_res / bpm)
 
     # localscore is a smoothed version of AGC'd onset envelope
+
+
     localscore  = scipy.signal.convolve(
-                        onsets / onsets.std(ddof=1), 
+                        normalize_onsets(onsets), 
                         rbf(np.arange(-period, period+1)*32.0/period), 
                         'same')
 
@@ -214,159 +324,6 @@ def __beat_tracker(onsets, bpm, fft_res, tightness, trim):
     beats = np.array(beats, dtype=int)
 
     ### Discard spurious trailing beats
-    if trim:
-        beats = smooth_beats(beats)
+    beats = smooth_beats(beats, trim)
 
     return beats
-
-
-def onset_estimate_bpm(onsets, start_bpm, fft_res):
-    """Estimate the BPM from an onset envelope
-
-    :parameters:
-      - onsets    : np.ndarray   
-          time-series of onset strengths
-      - start_bpm : float
-          initial guess of the BPM
-      - fft_res   : float
-          resolution of FFT (sample rate / hop length)
-
-    :returns:
-      - bpm      : float
-          estimated BPM
-
-    """
-
-    ac_size     = 4.0
-    duration    = 90.0
-    end_time    = 90.0
-    bpm_std     = 1.0
-
-    # Chop onsets to X[(upper_limit - duration):upper_limit]
-    # or as much as will fit
-    maxcol      = min(len(onsets)-1, np.round(end_time * fft_res))
-    mincol      = max(0,    maxcol - np.round(duration * fft_res))
-
-    # Use auto-correlation out of 4 seconds (empirically set??)
-    ac_window   = np.round(ac_size * fft_res)
-
-    # Compute the autocorrelation
-    x_corr      = librosa.core.autocorrelate(onsets[mincol:maxcol], ac_window)
-
-
-    #   FIXME:  2013-01-25 08:55:40 by Brian McFee <brm2132@columbia.edu>
-    #   this fails if ac_window > length of song   
-    # re-weight the autocorrelation by log-normal prior
-    bpms    = 60.0 * fft_res / (np.arange(1, ac_window+1))
-
-    # Smooth the autocorrelation by a log-normal distribution
-    x_corr  = x_corr * np.exp(-0.5 * ((np.log2(bpms / start_bpm)) / bpm_std)**2)
-
-    # Get the local maximum of weighted correlation
-    x_peaks = librosa.core.localmax(x_corr)
-
-    # Zero out all peaks before the first negative
-    x_peaks[:np.argmax(x_corr < 0)] = False
-
-
-    # Choose the best peak out of .33, .5, 2, 3 * start_period
-    candidates      = np.multiply(  np.argmax(x_peaks * x_corr), 
-                                    [1.0/3, 1.0/2, 1.0, 2.0, 3.0])
-
-    candidates      = candidates.astype(int)
-    candidates      = candidates[candidates < ac_window]
-
-    best_period     = np.argmax(x_corr[candidates])
-
-    return 60.0 * fft_res / candidates[best_period]
-
-
-def onset_strength(y=None, sr=22050, S=None, **kwargs):
-    """Extract onsets from an audio time series or spectrogram
-
-    :parametrs:
-      - y        : np.ndarray
-          audio time-series
-      - sr       : int
-          audio sampling rate of y
-      - S        : np.ndarray 
-          pre-computed spectrogram
-
-      - kwargs  
-          Parameters to mel spectrogram, if S is not provided.
-
-          See librosa.feature.melspectrogram() for details
-
-    .. note:: if S is provided, then (y, sr) are optional.
-
-    :returns:
-      - onsets   : np.ndarray 
-          vector of onset strength
-
-    :raises:
-      - ValueError 
-          if neither (y, sr) nor S are provided
-
-    """
-
-    # First, compute mel spectrogram
-    if S is None:
-        if y is None:
-            raise ValueError('One of "S" or "y" must be provided.')
-
-        S   = librosa.feature.melspectrogram(y, sr = sr, **kwargs)
-
-        # Convert to dBs
-        S   = librosa.core.logamplitude(S)
-
-
-    ### Compute first difference
-    onsets  = np.diff(S, n=1, axis=1)
-
-    ### Discard negatives (decreasing amplitude)
-    #   falling edges could also be useful segmentation cues
-    #   to catch falling edges, replace max(0,D) with abs(D)
-    onsets  = np.maximum(0.0, onsets)
-
-    ### Average over mel bands
-    onsets  = onsets.mean(axis=0)
-
-    ### remove the DC component
-    onsets  = scipy.signal.lfilter([1.0, -1.0], [1.0, -0.99], onsets)
-
-    return onsets 
-
-
-def segment(data, k):
-    """Bottom-up temporal segmentation
-
-    :parameters:
-      - data     : np.ndarray    
-          feature matrix (d-by-t)
-
-      - k        : int > 0
-          number of segments to produce
-
-    :returns:
-      - boundaries : np.ndarray, shape=(k,1)  
-          left-boundaries (frame numbers) of detected segments
-
-    """
-
-    # Connect the temporal connectivity graph
-    grid = sklearn.feature_extraction.image.grid_to_graph(  n_x=data.shape[1], 
-                                                            n_y=1, 
-                                                            n_z=1)
-
-    # Instantiate the clustering object
-    ward = sklearn.cluster.Ward(n_clusters=k, connectivity=grid)
-
-    # Fit the model
-    ward.fit(data.T)
-
-    # Find the change points from the labels
-    boundaries = [0]
-    boundaries.extend(
-        list(1 + np.nonzero(np.diff(ward.labels_))[0].astype(int)))
-    return boundaries
-

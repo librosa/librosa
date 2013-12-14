@@ -2,11 +2,12 @@ from setuptools import setup
 
 setup(
     name='librosa',
-    version='0.1.0',
+    version='0.2.0',
     description='Python module for audio and music processing',
     author='Brian McFee',
     author_email='brm2132@columbia.edu',
     url='http://github.com/bmcfee/librosa',
+    download_url='http://github.com/bmcfee/librosa/releases',
     packages=['librosa'],
     long_description="""\
         Python module for audio and music processing.
@@ -25,5 +26,9 @@ setup(
         'numpy >= 1.7.0',
         'scipy',
         'scikit-learn',
+        'matplotlib',
     ],
+    extras_require = {
+        'resample': 'scikits.samplerate >= 0.3'
+    }
 )
