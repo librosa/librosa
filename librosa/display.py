@@ -186,7 +186,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
 
       - y_axis : None or {'linear', 'mel', 'cqt_hz', 'cqt_note', 'chroma', 'off'}
           - None or 'off': no y axis is displayed.
-          - 'linear': frequency range is determined by the FFT window and sample rate.
+          - 'linear': frequency range is determined by the FFT window and sampling rate.
           - 'log': the image is displayed on a vertical log scale.
           - 'mel': frequencies are determined by the mel scale.
           - 'cqt_hz': frequencies are determined by the fmin and fmax values.

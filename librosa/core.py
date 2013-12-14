@@ -135,10 +135,10 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest'):
           audio time series 
 
       - orig_sr     : int
-          original sample rate of ``y``
+          original sampling rate of ``y``
 
       - target_sr   : int
-          target sample rate
+          target sampling rate
 
       - res_type    : str
           resample type (see note)
