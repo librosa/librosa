@@ -206,7 +206,7 @@ def __beat_tracker(onsets, bpm, fft_res, tightness, trim):
           resolution of the fft (sr / hop_length)
       - tightness: float
           how closely do we adhere to bpm?
-      - trim     : boolean
+      - trim     : bool
           trim leading/trailing beats with weak onsets?
 
     :returns:

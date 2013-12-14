@@ -118,7 +118,7 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, feature=librosa.feat
       - S        : np.ndarray 
           pre-computed (log-power) spectrogram
       
-      - detrend : boolean
+      - detrend : bool
           Filter the onset strength to remove 
 
       - feature : function

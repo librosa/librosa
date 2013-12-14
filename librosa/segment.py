@@ -28,7 +28,7 @@ def stack_memory(data, n_steps=2, delay=1, trim=True):
           embedding dimension, the number of steps back in time to stack
       - delay : int > 0
           the number of columns to step
-      - trim : boolean
+      - trim : bool
           Crop dimension to original number of columns
 
     :returns:
@@ -149,10 +149,10 @@ def structure_feature(rec, pad=True, inverse=False):
       - rec   : np.ndarray, shape=(t,t)
           recurrence matrix (see `librosa.segment.recurrence_matrix`)
       
-      - pad : boolean
+      - pad : bool
           Pad the matrix with t rows of zeros to avoid looping.
 
-      - inverse : boolean
+      - inverse : bool
           Unroll the opposite direction. This is useful for converting
           structure features back into recurrence plots.
 
