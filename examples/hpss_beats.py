@@ -4,44 +4,78 @@ CREATED:2013-02-12 16:33:40 by Brian McFee <brm2132@columbia.edu>
 
 Beat tracking with HPSS filtering
 
-Usage:
-
-./hpss_beats.py input_audio.mp3 output_beats.csv
-
+Usage: ./hpss_beats.py [-h] input_audio.mp3 output_beats.csv
 '''
 
-import sys
+import sys, argparse
 import librosa
-import numpy, scipy.ndimage
 
-SR  = 22050
-HOP = 64
-FFT = 2048
+# Some magic number defaults, FFT window and hop length
+N_FFT       = 2048
 
-# Load the file
-print 'Loading file ... ',
-(y, sr) = librosa.load(sys.argv[1], sr=SR)
-print 'done.'
+# We use a hop of 64 here so that the HPSS spectrogram input
+# matches the default beat tracker parameters
+HOP_LENGTH  = 64
 
-# Construct log-amplitude spectrogram
-print 'Harmonic-percussive separation ... ',
-S = librosa.feature.melspectrogram(y, sr, FFT, hop_length=HOP, n_mels=128)**0.5
+def hpss_beats(input_file, output_csv):
+    '''HPSS beat tracking
+    
+    :parameters:
+      - input_file : str
+          Path to input audio file (wav, mp3, m4a, flac, etc.)
 
-# Do HPSS
-(H, P) = librosa.hpss.hpss_median(S, p=4.0)
-print 'done.'
+      - output_file : str
+          Path to save beat event timestamps as a CSV file
+    '''
 
-# Construct onset envelope from percussive component
-print 'Beat tracking ... ',
+    # Load the file
+    print 'Loading  ', input_file
+    y, sr = librosa.load(input_file)
 
-O = librosa.beat.onset_strength(S=P)
+    # Get the spectrogram
+    print 'Generating STFT ... '
+    D = librosa.stft(y, n_fft=N_FFT, hop_length=HOP_LENGTH)
 
-# Use LoG(P) for the onset profile
-# O = numpy.mean(scipy.ndimage.gaussian_laplace(P, [1.0, 0.0]), axis=0)
+    # Do HPSS
+    print 'Harmonic-percussive separation ... '
+    harmonic, percussive = librosa.decompose.hpss(D)
 
-# Track the beats
-(bpm, beats) = librosa.beat.beat_track(onsets=O, sr=sr, hop_length=HOP, n_fft=FFT)
-print 'done.'
+    # Construct onset envelope from percussive component
+    print 'Tracking beats on percussive spectrogram'
 
-# Save the output
-librosa.output.segment_csv(sys.argv[2], beats, sr, HOP)
+    S = librosa.feature.melspectrogram(S=percussive, sr=sr, n_mels=128)
+
+    onsets = librosa.onset.onset_strength(S=librosa.logamplitude(S))
+
+    # Track the beats
+    tempo, beats = librosa.beat.beat_track( onsets=onsets, 
+                                            sr=sr, 
+                                            hop_length=HOP_LENGTH, 
+                                            n_fft=N_FFT)
+
+    # Save the output
+    print 'Saving beats to ', output_csv
+    librosa.output.frames_csv(output_csv, beats, sr=sr, hop_length=HOP_LENGTH)
+
+
+def process_arguments():
+    '''Argparse function to get the program parameters'''
+
+    parser = argparse.ArgumentParser(description='librosa HPSS beat-tracking example')
+
+    parser.add_argument(    'input_file',
+                            action      =   'store',
+                            help        =   'path to the input file (wav, mp3, etc)')
+
+    parser.add_argument(    'output_file',
+                            action      =   'store',
+                            help        =   'path to the output file (csv of beat times)')
+
+    return vars(parser.parse_args(sys.argv[1:]))
+
+if __name__ == '__main__':
+    # Get the parameters
+    parameters = process_arguments()
+
+    # Run the beat tracker
+    hpss_beats(parameters['input_file'], parameters['output_file'])

@@ -9,56 +9,54 @@ import scipy.io.wavfile
 
 import librosa.core
 
-def segment_csv(path, segments, sr=22050, hop_length=128, save_bpm=False):
+def frames_csv(path, frames, sr=22050, hop_length=512):
     """Save beat tracker or segmentation output in CSV format.
+
+    :usage:
+        >>> tempo, beats = librosa.beat.beat_track(y, sr=sr, hop_length=64)
+        >>> librosa.output.frames_csv('beat_times.csv', frames, sr=sr, hop_length=64)
 
     :parameters:
       - path : string
           path to save the output CSV file
 
-      - segments : list of ints
+      - frames : list of ints
           list of frame numbers for beat events
       
       - sr : int
-          audio sample rate
+          audio sampling rate
     
       - hop_length : int
-          hop length
+          Number of samples between success frames
       
-      - save_bpm : boolean
-          add a BPM annotation column
-
     """
 
     with open(path, 'w') as output_file:
         writer = csv.writer(output_file)
 
-        time = 0.0
-        for t_new in librosa.core.frames_to_time(segments,
+        for t_new in librosa.core.frames_to_time(frames,
                                             sr=sr, hop_length=hop_length):
-            if save_bpm:
-                writer.writerow([t_new, '%.2f BPM' % (60.0 / (t_new - time))])
-            else:
-                writer.writerow([t_new])
-
-            time = t_new
-#-- --#
+            writer.writerow([t_new])
 
 def write_wav(path, y, sr):
     """Output a time series as a .wav file
+
+    :usage:
+        >>> # Trim a signal to 5 seconds and save it back
+        >>> y, sr = librosa.load('file.wav', duration=5)
+        >>> librosa.output.write_wav('file_trim_5s.wav', y, sr)
 
     :parameters:
       - path : str 
           path to save the output wav file
 
       - y : np.ndarray    
-          time-series audio data
+          audio time series
 
       - sr : int
-          audio sample rate
+          sampling rate of ``y``
 
     """
 
     wav = y / np.max(np.abs(y))
     scipy.io.wavfile.write(path, sr, (wav * 32768.0).astype('<i2'))
-#-- --#
