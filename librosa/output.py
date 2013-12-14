@@ -24,7 +24,7 @@ def frames_csv(path, frames, sr=22050, hop_length=512):
           list of frame numbers for beat events
       
       - sr : int
-          audio sample rate
+          audio sampling rate
     
       - hop_length : int
           Number of samples between success frames
