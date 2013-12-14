@@ -55,7 +55,7 @@ def mel(sr, n_fft, n_mels=40, fmin=0.0, fmax=None, htk=False):
           lowest frequency (in Hz) 
       - fmax      : float
           highest frequency (in Hz)
-      - htk       : boolean
+      - htk       : bool
           use HTK formula instead of Slaney
 
     :returns:

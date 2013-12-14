@@ -45,7 +45,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None, dtype=np.float32)
           target sampling rate
           'None' uses the native sampling rate
 
-      - mono : boolean
+      - mono : bool
           convert signal to mono
 
       - offset : float
@@ -738,10 +738,10 @@ def midi_to_note(midi, octave=True, cents=False):
       - midi : int or iterable of int
           Midi numbers to convert.
 
-      - octave: boolean
+      - octave: bool
           If True, include the octave number
 
-      - cents: boolean
+      - cents: bool
           If true, cent markers will be appended for fractional notes.
           Eg, ``midi_to_note(69.3, cents=True)`` == ``A5+03``
 
@@ -824,7 +824,7 @@ def hz_to_mel(frequencies, htk=False):
     :parameters:
       - frequencies   : np.ndarray, float
           scalar or array of frequencies
-      - htk           : boolean
+      - htk           : bool
           use HTK formula instead of Slaney
 
     :returns:
@@ -873,7 +873,7 @@ def mel_to_hz(mels, htk=False):
     :parameters:
       - mels          : np.ndarray, float
           mel bins to convert
-      - htk           : boolean
+      - htk           : bool
           use HTK formula instead of Slaney
 
     :returns:
@@ -1028,9 +1028,9 @@ def mel_frequencies(n_mels=40, fmin=0.0, fmax=11025.0, htk=False, extra=False):
           minimum frequency (Hz)
       - fmax      : float
           maximum frequency (Hz)
-      - htk       : boolean
+      - htk       : bool
           use HTK formula instead of Slaney
-      - extra     : boolean
+      - extra     : bool
           include extra frequencies necessary for building Mel filters
 
     :returns:
@@ -1195,8 +1195,8 @@ def localmax(x):
           input vector
 
     :returns:
-      - m     : np.ndarray, dtype=boolean
-          boolean indicator vector of local maxima:
+      - m     : np.ndarray, dtype=bool
+          indicator vector of local maxima:
           ``m[i] == True`` if ``x[i]`` is a local maximum
     """
 
