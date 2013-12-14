@@ -33,7 +33,7 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
           audio time series
 
       - sr         : int > 0
-          sample rate of ``y``
+          sampling rate of ``y``
 
       - onsets     : np.ndarray or None
           (optional) pre-computed onset strength envelope
@@ -128,7 +128,7 @@ def estimate_tempo(onsets, sr=22050, hop_length=64, start_bpm=120, std_bpm=1.0, 
           See ``librosa.onset.onset_strength()`` for details.
 
       - sr:       : int > 0
-          sample rate of the time series
+          sampling rate of the time series
 
       - hop_length : int > 0
           hop length of the time series
