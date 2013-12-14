@@ -97,7 +97,13 @@ html_theme = 'bootstrap'
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-html_theme_options = {'bootswatch_theme': 'flatly', 'bootstrap_version': "3"}
+html_theme_options = {
+    'bootswatch_theme':     'flatly', 
+    'bootstrap_version':    '3',
+    'navbar_title':         'LibROSA',
+    'source_link_position': None,
+
+}
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
