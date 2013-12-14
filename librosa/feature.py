@@ -5,158 +5,112 @@ import numpy as np
 
 import librosa.core
 
-#-- Frequency conversions --#
-def midi_to_hz( notes ):
-    """Get the frequency (Hz) of MIDI note(s)
+#-- Chroma --#
+def logfsgram(y, sr, n_fft=4096, hop_length=512, **kwargs):
+    '''Compute a log-frequency spectrogram (piano roll) using a fixed-window STFT.
+
+    :usage:
+        >>> S           = librosa.logfsgram(y, sr)
+
+        >>> # Convert to chroma
+        >>> chroma_map  = librosa.filters.cq_to_chroma(S.shape[0])
+        >>> C           = chroma_map.dot(S)
 
     :parameters:
-      - note_num      : int, np.ndarray
-          number of the note(s)
+      - y : np.ndarray
+          audio time series
+
+      - sr : int > 0
+          sampling rate of ``y``
+
+      - n_fft : int > 0
+          FFT window size
+
+      - hop_length : int > 0
+          hop length for STFT. See ``librosa.stft`` for details.
+
+      - bins_per_octave : int > 0
+          Number of bins per octave. 
+          Defaults to 12.
+
+      - tuning : float in [-0.5,  0.5)
+          Deviation (in fractions of a bin) from A440 tuning.
+          If not provided, it will be automatically estimated from ``y``.
+
+      - kwargs : additional arguments
+          See ``librosa.filters.logfrequency()`` 
 
     :returns:
-      - frequency     : float, np.ndarray
-          frequency of the note in Hz
-    """
-
-    return 440.0 * (2.0 ** ((notes - 69)/12.0))
-
-def hz_to_midi( frequency ):
-    """Get the closest MIDI note number(s) for given frequencies
-
-    :parameters:
-      - frequencies   : float, np.ndarray
-          target frequencies
-
-    :returns:
-      - note_nums     : int, np.ndarray
-          closest MIDI notes
-
-    """
-
-    return 12 * (np.log2(frequency) - np.log2(440.0)) + 69
-
-
-def hz_to_mel(frequencies, htk=False):
-    """Convert Hz to Mels
-
-    :parameters:
-      - frequencies   : np.ndarray, float
-          scalar or array of frequencies
-      - htk           : boolean
-          use HTK formula instead of Slaney
-
-    :returns:
-      - mels        : np.ndarray
-          input frequencies in Mels
-
-    """
-
-    if np.isscalar(frequencies):
-        frequencies = np.array([frequencies], dtype=float)
-    else:
-        frequencies = frequencies.astype(float)
-
-    if htk:
-        return 2595.0 * np.log10(1.0 + frequencies / 700.0)
+      - P : np.ndarray, shape = (n_pitches, t)
+          P(f, t) contains the energy at pitch bin f, frame t.
+    '''
     
-    # Fill in the linear part
-    f_min   = 0.0
-    f_sp    = 200.0 / 3
+    # If the user didn't specify tuning, do it ourselves
+    if 'tuning' not in kwargs:
+        pitches, magnitudes, D = ifptrack(y, sr, n_fft=n_fft, hop_length=hop_length)
+        pitches = pitches[magnitudes > np.median(magnitudes)]
+        del magnitudes
 
-    mels    = (frequencies - f_min) / f_sp
+        bins_per_octave = kwargs.get('bins_per_octave', 12)
+        kwargs['tuning'] = estimate_tuning(pitches, bins_per_octave=bins_per_octave)
 
-    # Fill in the log-scale part
-    
-    min_log_hz  = 1000.0                        # beginning of log region (Hz)
-    min_log_mel = (min_log_hz - f_min) / f_sp   # same (Mels)
-    logstep     = np.log(6.4) / 27.0            # step size for log region
-
-    log_t       = (frequencies >= min_log_hz)
-    mels[log_t] = min_log_mel + np.log(frequencies[log_t]/min_log_hz) / logstep
-
-    return mels
-
-
-def mel_to_hz(mels, htk=False):
-    """Convert mel bin numbers to frequencies
-
-    :parameters:
-      - mels          : np.ndarray, float
-          mel bins to convert
-      - htk           : boolean
-          use HTK formula instead of Slaney
-
-    :returns:
-      - frequencies   : np.ndarray
-          input mels in Hz
-
-    """
-
-    if np.isscalar(mels):
-        mels = np.array([mels], dtype=float)
+        del pitches
     else:
-        mels = mels.astype(float)
+        D = librosa.stft(y, n_fft=n_fft, hop_length=hop_length)
 
-    if htk:
-        return 700.0 * (10.0**(mels / 2595.0) - 1.0)
+    # Normalize, retain magnitude
+    D = np.abs(D / D.max())
 
-    # Fill in the linear scale
-    f_min       = 0.0
-    f_sp        = 200.0 / 3
-    freqs       = f_min + f_sp * mels
+    # Build the CQ basis
+    cq_basis = librosa.filters.logfrequency(sr, n_fft=n_fft, **kwargs)
+    
+    return cq_basis.dot(D)
 
-    # And now the nonlinear scale
-    min_log_hz  = 1000.0                        # beginning of log region (Hz)
-    min_log_mel = (min_log_hz - f_min) / f_sp   # same (Mels)
-    logstep     = np.log(6.4) / 27.0            # step size for log region
-    log_t       = (mels >= min_log_mel)
+def chromagram(y=None, sr=22050, S=None, norm='inf', n_fft=2048, hop_length=512, tuning=0.0, **kwargs):
+    """Compute a chromagram from a spectrogram or waveform
 
-    freqs[log_t] = min_log_hz * np.exp(logstep * (mels[log_t] - min_log_mel))
+    :usage:
+        >>> C = librosa.chromagram(y, sr)
 
-    return freqs
+        >>> # Use a pre-computed spectrogram
+        >>> S = np.abs(librosa.stft(y, n_fft=4096))
+        >>> C = librosa.chromagram(S=S)
 
-
-def hz_to_octs(frequencies, A440=440.0):
-    """Convert frquencies (Hz) to octave numbers
 
     :parameters:
-      - frequencies   : np.ndarray, float
-          scalar or vector of frequencies
-      - A440          : float
-          frequency of A440
-
-    :returns:
-      - octaves       : np.ndarray
-          octave number for each frequency
-
-    """
-    return np.log2(frequencies / (A440 / 16.0))
-
-
-#-- CHROMA --#
-def chromagram(S, sr, norm='inf', **kwargs):
-    """Compute a chromagram from a spectrogram
-
-    :parameters:
-      - S          : np.ndarray
-          spectrogram
+      - y          : np.ndarray or None
+          audio time series
       - sr         : int
-          audio sampling rate of S
+          sampling rate of y
+      - S          : np.ndarray or None
+          spectrogram (STFT magnitude)
       - norm       : {'inf', 1, 2, None}
           column-wise normalization:
 
-             'inf' :  max norm
+          - 'inf':  max norm
+          - 1:  l_1 norm 
+          - 2:  l_2 norm
+          - None:  do not normalize
 
-             1 :  l_1 norm 
-             
-             2 :  l_2 norm
-             
-             None :  do not normalize
+      - n_fft      : int  > 0
+          FFT window size if provided ``y, sr`` instead of ``S`` 
+
+      - hop_length : int > 0
+          hop length if provided ``y, sr`` instead of ``S``
+
+      - tuning : float in [-0.5, 0.5)
+          Deviation from A440 tuning in fractional bins (cents)
 
       - kwargs
-          Parameters to build the chroma filterbank
-          See chromafb() for details.
+          Parameters to build the chroma filterbank.
+          See ``librosa.filters.chroma()`` for details.
 
+    .. note:: One of either ``S`` or ``y`` must be provided.
+          If y is provided, the magnitude spectrogram is computed automatically given
+          the parameters ``n_fft`` and ``hop_length``.
+          If S is provided, it is used as the input spectrogram, and n_fft is inferred
+          from its shape.
+      
     :returns:
       - chromagram  : np.ndarray
           Normalized energy for each chroma bin at each frame.
@@ -166,22 +120,41 @@ def chromagram(S, sr, norm='inf', **kwargs):
           if an improper value is supplied for norm
 
     """
-    n_fft       = (S.shape[0] -1 ) * 2
+    
+    n_chroma = kwargs.get('n_chroma', 12)
 
-    spec2chroma = chromafb( sr, n_fft, **kwargs)[:, :S.shape[0]]
+    # Build the spectrogram, estimate tuning
+    if S is None:
+        pitches, magnitudes, S = ifptrack(y, sr=sr, n_fft=n_fft, hop_length=hop_length)
+        tuning = estimate_tuning(pitches[magnitudes > np.median(magnitudes)], 
+                                 bins_per_octave=n_chroma)
+
+        S = np.abs(S / S.max())
+    else:
+        n_fft       = (S.shape[0] -1 ) * 2
+
+    # Get the filter bank
+    if 'A440' not in kwargs:
+        kwargs['A440'] = 440.0 * 2.0**(tuning/n_chroma)
+
+    chromafb = librosa.filters.chroma( sr, n_fft, **kwargs)
 
     # Compute raw chroma
-    raw_chroma  = np.dot(spec2chroma, S)
+    raw_chroma  = np.dot(chromafb, S)
 
     # Compute normalization factor for each frame
     if norm == 'inf':
         chroma_norm = np.max(np.abs(raw_chroma), axis=0)
+
     elif norm == 1:
         chroma_norm = np.sum(np.abs(raw_chroma), axis=0)
+    
     elif norm == 2:
         chroma_norm = np.sum( (raw_chroma**2), axis=0) ** 0.5
+    
     elif norm is None:
         return raw_chroma
+    
     else:
         raise ValueError("norm must be one of: 'inf', 1, 2, None")
 
@@ -190,249 +163,371 @@ def chromagram(S, sr, norm='inf', **kwargs):
 
     return raw_chroma / chroma_norm
 
-
-def chromafb(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=None):
-    """Create a Filterbank matrix to convert STFT to chroma
+def perceptual_weighting(S, frequencies, ref_power=1e-12):
+    '''Perceptual weighting of a power spectrogram:
+    
+    ``S_p[f] = A_weighting(f) + 10*log(S[f] / ref_power)``
+    
+    :usage:
+        >>> # Re-weight a CQT representation, using peak power as reference
+        >>> CQT             = librosa.cqt(y, sr, fmin=55, fmax=440)
+        >>> freqs           = librosa.cqt_frequencies(CQT.shape[0], fmin=55)
+        >>> percept_CQT     = librosa.feature.perceptual_weighting(CQT, freqs, 
+                                                                    ref_power=CQT.max())
 
     :parameters:
-      - sr        : int
-          sampling rate
-      - n_fft     : int
-          number of FFT components
-      - n_chroma  : int
-          number of chroma dimensions   
-      - A440      : float
-          Reference frequency for A
-      - ctroct    : float
-      - octwidth  : float
-          These parameters specify a dominance window - Gaussian
-          weighting centered on ctroct (in octs, re A0 = 27.5Hz) and
-          with a gaussian half-width of octwidth.  
-          Defaults to halfwidth = inf, i.e. flat.
-
+      - S : np.ndarray, shape=(d,t)
+          Power spectrogram
+        
+      - frequencies : np.ndarray, shape=(d,)
+          Center frequency for each row of ``S``
+        
+      - ref_power : float > 0
+          Reference power
+        
     :returns:
-      wts       : ndarray, shape=(n_chroma, n_fft) 
-          Chroma filter matrix
+      - S_p : np.ndarray, shape=(d,t)
+          perceptually weighted version of ``S``, in dB relative to ``ref_power``
+    '''
+    
+    offset = librosa.A_weighting(frequencies).reshape((-1, 1))
+    
+    return offset + librosa.logamplitude(S, ref_power=ref_power)
 
-    """
+#-- Pitch and tuning --#
+def estimate_tuning(frequencies, resolution=0.01, bins_per_octave=12):
+    '''Given a collection of pitches, estimate its tuning offset
+    (in fractions of a bin) relative to A440=440.0Hz.
+    
+    :usage:
+        >>> # Generate notes at +25 cents
+        >>> freqs = librosa.cqt_frequencies(24, 55, tuning=0.25)
+        >>> librosa.feature.estimate_tuning(freqs)
+        0.25
 
-    wts         = np.zeros((n_chroma, n_fft))
+        >>> # Track frequencies from a real spectrogram
+        >>> pitches, magnitudes, stft = librosa.feature.ifptrack(y, sr)
+        >>> # Select out pitches with high energy
+        >>> pitches = pitches[magnitudes > np.median(magnitudes)]
+        >>> librosa.feature.estimate_tuning(pitches)
 
-    fft_res     = float(sr) / n_fft
+    :parameters:
+      - frequencies : array-like, float
+          A collection of frequencies detected in the signal.
+          See ``ifptrack``.
 
-    frequencies = np.arange(fft_res, sr, fft_res)
+      - resolution : float in (0, 1)
+          Resolution of the tuning as a fraction of a bin.
+          0.01 corresponds to cents.
+        
+      - bins_per_octave : int > 0
+          How many frequency bins per octave
+        
+    :returns:
+      - tuning: float in [-0.5, 0.5]
+          estimated tuning deviation (fractions of a bin)                
+    '''
 
-    fftfrqbins  = n_chroma * hz_to_octs(frequencies, A440)
+    frequencies = np.asarray([frequencies], dtype=float).flatten()
 
-    # make up a value for the 0 Hz bin = 1.5 octaves below bin 1
-    # (so chroma is 50% rotated from bin 1, and bin width is broad)
-    fftfrqbins = np.concatenate( (   [fftfrqbins[0] - 1.5 * n_chroma],
-                                        fftfrqbins))
+    # Compute the residual relative to the number of bins
+    residual = np.mod(bins_per_octave * librosa.core.hz_to_octs(frequencies) , 1.0)
 
-    binwidthbins = np.concatenate(
-        (np.maximum(fftfrqbins[1:] - fftfrqbins[:-1], 1.0), [1]))
+    # Are we on the wrong side of the semitone?
+    # A residual of 0.95 is more likely to be a deviation of -0.05
+    # from the next tone up.
+    residual[residual >= 0.5] -= 1.0
+    
+    bins     = np.linspace(-0.5, 0.5, np.ceil(1./resolution), endpoint=False)
+  
+    counts, tuning = np.histogram(residual, bins)
+    
+    # return the histogram peak
+    return tuning[np.argmax(counts)]
 
-    D = np.tile(fftfrqbins, (n_chroma, 1))  \
-        - np.tile(np.arange(0, n_chroma, dtype='d')[:,np.newaxis], 
-        (1,n_fft))
+def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=(150.0, 300.0), fmax=(2000.0, 4000.0), threshold=0.75):
+    '''Instantaneous pitch frequency tracking.
 
-    n_chroma2 = round(n_chroma / 2.0)
+    :usage:
+        >>> pitches, magnitudes, D = librosa.feature.ifptrack(y, sr)
 
-    # Project into range -n_chroma/2 .. n_chroma/2
-    # add on fixed offset of 10*n_chroma to ensure all values passed to
-    # rem are +ve
-    D = np.remainder(D + n_chroma2 + 10*n_chroma, n_chroma) - n_chroma2
+    :parameters:
+      - y: np.ndarray
+          audio signal
+      
+      - sr : int
+          audio sampling rate of ``y``
+        
+      - n_fft: int
+          FFT window size
+        
+      - hop_length : int
+          Hop size for STFT.  Defaults to ``n_fft / 4``.
+          See ``librosa.stft()`` for details.
 
-    # Gaussian bumps - 2*D to make them narrower
-    wts = np.exp(-0.5 * (2*D / np.tile(binwidthbins, (n_chroma, 1)))**2)
+      - threshold : float in (0, 1)
+          Maximum fraction of expected frequency increment to tolerate
+      
+      - fmin : float or tuple of float
+          Ramp parameter for lower frequency cutoff.
+          If scalar, the ramp has 0 width.
+          If tuple, a linear ramp is applied from ``fmin[0]`` to ``fmin[1]``
+        
+      - fmax : float or tuple of float
+          Ramp parameter for upper frequency cutoff.
+          If scalar, the ramp has 0 width.
+          If tuple, a linear ramp is applied from ``fmax[0]`` to ``fmax[1]``
+        
+    :returns:
+      - pitches : np.ndarray, shape=(d,t)
+      - magnitudes : np.ndarray, shape=(d,t)
+          Where ``d`` is the subset of FFT bins within ``fmin`` and ``fmax``.
+        
+          ``pitches[i, t]`` contains instantaneous frequencies at time ``t``
+          ``magnitudes[i, t]`` contains their magnitudes.
+        
+      - D : np.ndarray, dtype=complex
+          STFT matrix
+    '''
 
-    # normalize each column
-    wts /= np.tile(np.sqrt(np.sum(wts**2, 0)), (n_chroma, 1))
+    
+    fmin = np.asarray([fmin]).squeeze()
+    fmax = np.asarray([fmax]).squeeze()
+    
+    # Truncate to feasible region
+    fmin = np.maximum(0, fmin)
+    fmax = np.minimum(fmax, sr / 2)
+    
+    # What's our DFT bin resolution?
+    fft_res = float(sr) / n_fft
+    
+    # Only look at bins up to 2 kHz
+    max_bin = int(round(fmax[-1] / fft_res))
+  
+    if hop_length is None:
+        hop_length = n_fft / 4
 
-    # Maybe apply scaling for fft bins
-    if octwidth is not None:
-        wts *= np.tile(
-            np.exp(-0.5 * (((fftfrqbins/n_chroma - ctroct)/octwidth)**2)),
-            (n_chroma, 1))
+    # Calculate the inst freq gram
+    if_gram, D = librosa.core.ifgram(y, sr=sr, 
+                                     n_fft=n_fft, 
+                                     win_length=n_fft/2, 
+                                     hop_length=hop_length)
 
-    # remove aliasing columns
-    wts[:, (1 + n_fft/2):] = 0.0
-    return wts
+    # Find plateaus in ifgram - stretches where delta IF is < thr:
+    # ie, places where the same frequency is spread across adjacent bins
+    idx_above  = range(1, max_bin) + [max_bin - 1]
+    idx_below  = [0] + range(0, max_bin - 1)
+    
+    # expected increment per bin = sr/w, threshold at 3/4 that
+    matches    = abs(if_gram[idx_above] - if_gram[idx_below]) < threshold * fft_res
+  
+    # mask out any singleton bins (where both above and below are zero)
+    matches    = matches * ((matches[idx_above] > 0) | (matches[idx_below] > 0))
 
+    pitches    = np.zeros_like(matches, dtype=float)
+    magnitudes = np.zeros_like(matches, dtype=float)
 
+    # For each frame, extract all harmonic freqs & magnitudes
+    for t in range(matches.shape[1]):
+        
+        # find nonzero regions in this vector
+        # The mask selects out constant regions + active borders
+        mask   = ~np.pad(matches[:, t], 1, mode='constant')
+        
+        starts = np.argwhere(matches[:, t] & mask[:-2])
+        ends   = 1 + np.argwhere(matches[:, t] & mask[2:])
+        
+        # Set up inner loop    
+        frqs = np.zeros_like(starts, dtype=float)
+        mags = np.zeros_like(starts, dtype=float)
+        
+        for i in range(len(starts)):
+            # Weight frequencies by energy
+            weights = np.abs(D[starts[i]:ends[i], t])
+            mags[i] = weights.sum()
+            
+            # Compute the weighted average frequency.
+            # FIXME: is this the right thing to do? 
+            # These are frequencies... shouldn't this be a 
+            # weighted geometric average?
+            frqs[i] = weights.dot(if_gram[starts[i]:ends[i], t])
+            if mags[i] > 0:
+                frqs[i] /= mags[i]
+            
+        # Clip outside the ramp zones
+        idx        = (fmax[-1] < frqs) | (frqs < fmin[0])
+        mags[idx]  = 0
+        frqs[idx]  = 0
+        
+        # Ramp down at the high end
+        idx        = (fmax[-1] > frqs) & (frqs > fmax[0])
+        mags[idx] *= (fmax[-1] - frqs[idx]) / (fmax[-1] - fmax[0])
+        
+        # Ramp up from the bottom end
+        idx        = (fmin[-1] > frqs) & (frqs > fmin[0])
+        mags[idx] *= (frqs[idx] - fmin[0]) / (fmin[-1] - fmin[0])
+        
+        # Assign pitch and magnitude to their center bin
+        bins                = (starts + ends) / 2
+        pitches[bins, t]    = frqs
+        magnitudes[bins, t] = mags
+
+    return pitches, magnitudes, D
+  
 #-- Mel spectrogram and MFCCs --#
-
-def dctfb(n_filts, d):
-    """Discrete cosine transform basis
-
-    :parameters:
-      - n_filts   : int
-          number of output components
-      - d         : int
-          number of input components
-
-    :returns:
-      - D         : np.ndarray, shape=(n_filts, d)
-          DCT basis vectors
-
-    """
-
-    basis       = np.empty((n_filts, d))
-    basis[0, :] = 1.0 / np.sqrt(d)
-
-    samples     = np.arange(1, 2*d, 2) * np.pi / (2.0 * d)
-
-    for i in xrange(1, n_filts):
-        basis[i, :] = np.cos(i*samples) * np.sqrt(2.0/d)
-
-    return basis
-
-
-def mfcc(S, d=20):
+def mfcc(S=None, y=None, sr=22050, n_mfcc=20):
     """Mel-frequency cepstral coefficients
 
+    :usage:
+        >>> # Generate mfccs from a time series
+        >>> mfccs = librosa.feature.mfcc(y=y, sr=sr)
+
+        >>> # Use a pre-computed log-power Mel spectrogram
+        >>> S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128, fmax=8000)
+        >>> mfccs = librosa.feature.mfcc(S=librosa.logamplitude(S))
+
+        >>> # Get more components
+        >>> mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=40)
+
     :parameters:
-      - S     : np.ndarray
+      - S     : np.ndarray or None
           log-power Mel spectrogram
-      - d     : int
+      - y     : np.ndarray or None
+          audio time series
+      - sr    : int > 0
+          sampling rate of y
+      - n_mfcc: int
           number of MFCCs to return
 
+    .. note::
+        One of ``S`` or ``y, sr`` must be provided.
+        If ``S`` is not given, it is computed from ``y, sr`` using
+        the default parameters of ``melspectrogram``.
+
     :returns:
-      - M     : np.ndarray
+      - M     : np.ndarray, shape=(n_mfcc, S.shape[1])
           MFCC sequence
 
     """
 
-    return np.dot(dctfb(d, S.shape[0]), S)
-
-
-def mel_frequencies(n_mels=40, fmin=0.0, fmax=11025.0, htk=False):
-    """Compute the center frequencies of mel bands
-
-    :parameters:
-      - n_mels    : int
-          number of Mel bins  
-      - fmin      : float
-          minimum frequency (Hz)
-      - fmax      : float
-          maximum frequency (Hz)
-      - htk       : boolean
-          use HTK formula instead of Slaney
-
-    :returns:
-      - bin_frequencies : ndarray
-          ``n_mels+1``-dimensional vector of Mel frequencies
-
-    """
-
-    # 'Center freqs' of mel bands - uniformly spaced between limits
-    minmel  = hz_to_mel(fmin, htk=htk)
-    maxmel  = hz_to_mel(fmax, htk=htk)
-
-    mels    = np.arange(minmel, maxmel + 1, (maxmel - minmel)/(n_mels + 1.0))
+    if S is None:
+        S = librosa.logamplitude(melspectrogram(y=y, sr=sr))
     
-    return  mel_to_hz(mels, htk=htk)
+    return np.dot(librosa.filters.dct(n_mfcc, S.shape[0]), S)
 
+def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512, **kwargs):
+    """Compute a Mel-scaled power spectrogram.
 
-def melfb(sr, n_fft, n_mels=40, fmin=0.0, fmax=None, htk=False):
-    """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins
+    :usage:
+        >>> S = librosa.feature.melspectrogram(y=y, sr=sr)
 
-    :parameters:
-      - sr        : int
-          sampling rate of the incoming signal
-      - n_fft     : int
-          number of FFT components
-      - n_mels    : int
-          number of Mel bands 
-      - fmin      : float
-          lowest frequency (in Hz) 
-      - fmax      : float
-          highest frequency (in Hz)
-      - htk       : boolean
-          use HTK formula instead of Slaney
+        >>> # Using a pre-computed power spectrogram
+        >>> D = np.abs(librosa.stft(y))**2
+        >>> S = librosa.feature.melspectrogram(S=D)
 
-    :returns:
-      - M         : np.ndarray, shape=(n_mels, n_fft)
-          Mel transform matrix
-
-    .. note:: coefficients above 1 + n_fft/2 are set to 0.
-
-    """
-
-    if fmax is None:
-        fmax = sr / 2.0
-
-    # Initialize the weights
-    weights     = np.zeros( (n_mels, n_fft) )
-
-    # Center freqs of each FFT bin
-    size        = 1 + n_fft / 2
-    fftfreqs    = np.arange( size, dtype=float ) * sr / n_fft
-
-    # 'Center freqs' of mel bands - uniformly spaced between limits
-    freqs       = mel_frequencies(n_mels, fmin, fmax, htk)
-
-    # Slaney-style mel is scaled to be approx constant E per channel
-    enorm       = 2.0 / (freqs[2:n_mels+2] - freqs[:n_mels])
-
-    for i in xrange(n_mels):
-        # lower and upper slopes for all bins
-        lower   = (fftfreqs - freqs[i])     / (freqs[i+1] - freqs[i])
-        upper   = (freqs[i+2] - fftfreqs)   / (freqs[i+2] - freqs[i+1])
-
-        # .. then intersect them with each other and zero
-        weights[i, :size]   = np.maximum(0, np.minimum(lower, upper)) * enorm[i]
-   
-    return weights
-
-
-def melspectrogram(y, sr=22050, n_fft=256, hop_length=128, **kwargs):
-    """Compute a mel spectrogram from a time series
+        >>> # Passing through arguments to the Mel filters
+        >>> S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128, fmax=8000)
 
     :parameters:
       - y : np.ndarray
           audio time-series
       - sr : int
-          audio sampling rate of y  
+          sampling rate of y  
+      - S : np.ndarray
+          magnitude or power spectrogram
       - n_fft : int
-          number of FFT components
+          length of the FFT window
       - hop_length : int
-          frames to hop
+          number of samples between successive frames.
+          See ``librosa.stft()``
 
       - kwargs
           Mel filterbank parameters
-          See melfb() documentation for details.
+          See librosa.filters.mel() documentation for details.
+
+    .. note:: One of either ``S`` or ``y, sr`` must be provided.
+        If the pair y, sr is provided, the power spectrogram is computed.
+        If S is provided, it is used as the spectrogram, and the parameters ``y, n_fft,
+        hop_length`` are ignored.
 
     :returns:
       - S : np.ndarray
-          Mel spectrogram
+          Mel power spectrogram
 
     """
 
     # Compute the STFT
-    powspec     = np.abs(librosa.core.stft(y,   
-                                      n_fft       =   n_fft, 
-                                      hann_w      =   n_fft, 
-                                      hop_length  =   hop_length))**2
+    if S is None:
+        S       = np.abs(librosa.core.stft(y,   
+                                            n_fft       =   n_fft, 
+                                            hop_length  =   hop_length))**2
+    else:
+        n_fft = 2 * (S.shape[0] - 1)
 
     # Build a Mel filter
-    mel_basis   = melfb(sr, n_fft, **kwargs)
+    mel_basis   = librosa.filters.mel(sr, n_fft, **kwargs)
 
-    # Remove everything past the nyquist frequency
-    mel_basis   = mel_basis[:, :(n_fft/ 2  + 1)]
-    
-    return np.dot(mel_basis, powspec)
-
+    return np.dot(mel_basis, S)
 
 #-- miscellaneous utilities --#
+def delta(X, axis=-1, order=1, pad=True):
+    '''Compute delta features.
+
+    :usage:
+        >>> # Compute MFCC deltas, delta-deltas
+        >>> mfccs       = librosa.feature.mfcc(y=y, sr=sr)
+        >>> delta_mfcc  = librosa.feature.delta(mfccs)
+        >>> delta2_mfcc = librosa.feature.delta(mfccs, order=2)
+
+    :parameters:
+      - X         : np.ndarray, shape=(d, T)
+          the input data matrix (eg, spectrogram)
+
+      - axis      : int
+          the axis along which to compute deltas.
+          Default is -1 (columns).
+
+      - order     : int
+          the order of the difference operator.
+          1 for first derivative, 2 for second, etc.
+
+      - pad       : bool
+          set to True to pad the output matrix to the original size.
+
+    :returns:
+      - delta_X   : np.ndarray
+          delta matrix of X.
+    '''
+
+    dx  = np.diff(X, n=order, axis=axis)
+
+    if pad:
+        padding         = [(0, 0)]  * X.ndim
+        padding[axis]   = (order, 0)
+        dx              = np.pad(dx, padding, mode='constant')
+
+    return dx
+
 def sync(data, frames, aggregate=np.mean):
     """Synchronous aggregation of a feature matrix
+
+    :usage:
+        >>> # Beat-synchronous MFCCs
+        >>> tempo, beats    = librosa.beat.beat_track(y, sr)
+        >>> S               = librosa.feature.melspectrogram(y, sr, hop_length=64)
+        >>> mfcc            = librosa.feature.mfcc(S=S)
+        >>> mfcc_sync       = librosa.feature.sync(mfcc, beats)
+
+        >>> # Use median-aggregation instead of mean
+        >>> mfcc_sync       = librosa.feature.sync(mfcc, beats, aggregate=np.median)
+        >>> # Or max aggregation
+        >>> mfcc_sync       = librosa.feature.sync(mfcc, beats, aggregate=np.max)
 
     :parameters:
       - data      : np.ndarray, shape=(d, T)
           matrix of features
       - frames    : np.ndarray
-          (ordered) array of frame segment boundaries
+          ordered array of frame segment boundaries
       - aggregate : function
           aggregation function (defualt: mean)
 
@@ -442,7 +537,14 @@ def sync(data, frames, aggregate=np.mean):
 
     .. note:: In order to ensure total coverage, boundary points are added to frames
 
+    .. note:: If synchronizing a feature matrix against beat tracker output, ensure
+              that the frame numbers are properly aligned and use the same hop_length.
+
     """
+    if data.ndim < 2:
+        data = np.asarray([data])
+    elif data.ndim > 2:
+        raise ValueError('Synchronized data has ndim=%d, must be 1 or 2.' % data.ndim)
 
     (dimension, n_frames) = data.shape
 
@@ -462,4 +564,3 @@ def sync(data, frames, aggregate=np.mean):
         start = end
 
     return data_agg
-

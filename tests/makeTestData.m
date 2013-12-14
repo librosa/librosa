@@ -1,7 +1,7 @@
 function testData(source_path, output_path)
 % testData(source_path, audio_file, output_path)
 %   source_path = path to DPWE code
-%   output_ptah = directory to store generated files
+%   output_path = directory to store generated files
 %
 % CREATED:2013-03-08 14:32:21 by Brian McFee <brm2132@columbia.edu>
 %   Generate the test suite data for librosa routines:
@@ -12,6 +12,8 @@ function testData(source_path, output_path)
 %
 %       stft
 %       istft
+%
+%       ifgram
 %
 %       load
 %       resample
@@ -44,6 +46,8 @@ function testData(source_path, output_path)
     testISTFT(output_path);
 
 
+    display('ifgram');
+    testIFGRAM(output_path);
 
     display('melfb');
     testMelfb(output_path);
@@ -287,6 +291,46 @@ function testSTFT(output_path)
             filename    = sprintf('%s/core-stft-%03d.mat', output_path, counter);
             display(['  `-- saving ', filename]);
             save(filename, 'wavfile', 'D', 'sr', 'nfft', 'hann_w', 'hop_length');
+        end
+    end
+end
+
+function testIFGRAM(output_path)
+
+    wavfile     = 'data/test1_22050.wav';
+
+    [y, sr]     = wavread(wavfile);
+    y           = mean(y, 2);        % Convert to mono
+
+    % Test a couple of different FFT window sizes
+    P_NFFT      = [128, 256, 1024];
+
+    % And window sizes
+%     P_WIN       = [0.25, 0.5, 1.0];
+    P_WIN       = [1.0];
+
+    % And hop sizes
+    P_HOP       = [0.25, 0.5, 1.0];
+
+    % Note: librosa.stft does not support user-supplied windows,
+    %       so we do not generate tests for this case.
+
+    counter     = 0;
+
+    for nfft = P_NFFT
+        for win_ratio = P_WIN
+            for hop_ratio = P_HOP
+                % Test once with no hann window (rectangular)
+                hop_length  = round(hop_ratio * nfft);
+                hann_w      = round(win_ratio * nfft);
+            
+                [F, D] = ifgram(y, nfft, hann_w, hop_length, sr);
+    
+                counter     = counter + 1;
+                filename    = sprintf('%s/core-ifgram-%03d.mat', output_path, counter);
+                display(['  `-- saving ', filename]);
+                save(filename, 'wavfile', 'F', 'D', 'sr', 'nfft', 'hann_w', 'hop_length');
+            end
         end
     end
 end
