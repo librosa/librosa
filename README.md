@@ -15,7 +15,7 @@ See http://bmcfee.github.io/librosa/
 
 Demonstration
 =============
-See http://nbviewer.ipython.org/5878337
+See http://nbviewer.ipython.org/github/bmcfee/librosa/blob/master/examples/LibROSA%20demo.ipynb
 
 Installation
 ============
