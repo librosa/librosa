@@ -256,13 +256,13 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=(150.0, 300.0), fmax
           audio signal
       
       - sr : int
-          audio sampling rate of y
+          audio sampling rate of ``y``
         
       - n_fft: int
-          length of the FFT window
+          FFT window size
         
       - hop_length : int
-          Hop size for STFT.  Defaults to n_fft / 4.
+          Hop size for STFT.  Defaults to ``n_fft / 4``.
           See ``librosa.stft()`` for details.
 
       - threshold : float in (0, 1)
@@ -271,20 +271,20 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=(150.0, 300.0), fmax
       - fmin : float or tuple of float
           Ramp parameter for lower frequency cutoff.
           If scalar, the ramp has 0 width.
-          If tuple, a linear ramp is applied from fmin[0] to fmin[1]
+          If tuple, a linear ramp is applied from ``fmin[0]`` to ``fmin[1]``
         
       - fmax : float or tuple of float
           Ramp parameter for upper frequency cutoff.
           If scalar, the ramp has 0 width.
-          If tuple, a linear ramp is applied from fmax[0] to fmax[1]
+          If tuple, a linear ramp is applied from ``fmax[0]`` to ``fmax[1]``
         
     :returns:
       - pitches : np.ndarray, shape=(d,t)
       - magnitudes : np.ndarray, shape=(d,t)
-          Where 'd' is the subset of FFT bins within fmin and fmax.
+          Where ``d`` is the subset of FFT bins within ``fmin`` and ``fmax``.
         
-          pitches[i, t] contains instantaneous frequencies at time t
-          magnitudes[i, t] contains their magnitudes.
+          ``pitches[i, t]`` contains instantaneous frequencies at time ``t``
+          ``magnitudes[i, t]`` contains their magnitudes.
         
       - D : np.ndarray, dtype=complex
           STFT matrix
