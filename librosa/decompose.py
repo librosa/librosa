@@ -91,10 +91,10 @@ def hpss(S, kernel_size=31, power=1.0, mask=False):
           If array_like, the first value specifies the width of the harmonic filter,
           and the second value specifies the width of the percussive filter.
 
-      - power : float
+      - power : float > 0
           Exponent for the Wiener filter
 
-      - mask : boolean
+      - mask : bool
           Return the masking matrices instead of components
 
     :returns:
