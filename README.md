@@ -48,3 +48,7 @@ dependencies
 * sklearn
 * matplotlib
 * (optional) scikits.samplerate >= 0.3
+
+Build Status
+============
+[![Build Status](https://travis-ci.org/bmcfee/librosa.png)](http://travis-ci.org/bmcfee/librosa)
