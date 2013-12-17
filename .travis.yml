@@ -4,7 +4,7 @@ python:
     - "2.7"
 
 before_install:
-    - sudo apt-get install liblapack-dev
+    - sudo apt-get install liblapack-dev gfortran
     - pip install -r requirements.txt
     - pip install pytest
 
