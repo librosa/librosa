@@ -5,7 +5,7 @@ python:
 
 before_install:
     - sudo apt-get update
-    - sudo apt-get install python-numpy python-scipy cython libatlas-dev liblapack-dev gfortran
+    - sudo apt-get install python-numpy python-scipy cython libatlas-dev liblapack-dev gfortran ffmpeg
     - pip install -r requirements.txt
     - pip install pytest
 
