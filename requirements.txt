@@ -1,0 +1,3 @@
+audioread
+matplotlib
+scikit-learn
