@@ -12,4 +12,4 @@ install:
     - python setup.py install
 
 script:
-    - py.test tests/test*.py
+    - (cd tests && py.test test*.py)
