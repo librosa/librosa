@@ -105,8 +105,12 @@ def time_ticks(locs, *args, **kwargs):
 def cmap(data):
     '''Get a default colormap from the given data.
 
+    If the data is boolean, use a black and white colormap.
+
     If the data has both positive and negative values, use a diverging colormap.
+
     Otherwise, use a sequential map.
+
     PuOr and OrRd are chosen to optimize visibility for color-blind people.
 
     :usage:
@@ -123,10 +127,14 @@ def cmap(data):
 
     :returns:
       - cmap_str
-          If data has only positive values, cmap_str is 'OrRd'
-          If data has only negative values, cmap_str is 'BuPu_r'
-          If data has both positive and negatives, cmap_str is 'PuOr_r'
+          - If data is type=boolean, cmap_Str is 'gray_r'
+          - If data has only positive values, cmap_str is 'OrRd'
+          - If data has only negative values, cmap_str is 'BuPu_r'
+          - If data has both positive and negatives, cmap_str is 'PuOr_r'
     '''
+
+    if data.dtype == 'bool':
+        return 'gray_r'
 
     data = np.asarray(data)
 
