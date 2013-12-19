@@ -550,11 +550,11 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
 
     :returns:
       log_S   : np.ndarray
-          ``log_S ~= 10 * log10(S) - 10 * log10(ref_power)``
+          ``log_S ~= 10 * log10(S) - 10 * log10(abs(ref_power))``
     """
 
     log_spec    =   10.0 * np.log10(np.maximum(amin, np.abs(S))) 
-    log_spec    -=  10.0 * np.log10(ref_power)
+    log_spec    -=  10.0 * np.log10(np.abs(ref_power))
 
     if top_db is not None:
         log_spec = np.maximum(log_spec, log_spec.max() - top_db)
