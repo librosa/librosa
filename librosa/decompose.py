@@ -66,7 +66,7 @@ def decompose(S, n_components=None, transformer=None):
 
     return (transformer.components_.T, activations.T)
 
-def hpss(S, kernel_size=31, power=1.0, mask=False):
+def hpss(S, kernel_size=31, power=2.0, mask=False):
     """Median-filtering harmonic percussive separation
 
     Decomposes an input spectrogram ``S = H + P``
