@@ -433,7 +433,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=False
     return if_gram, D
 
 def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=None, 
-        resolution=1, aggregate=np.mean, samples=None, basis=None):
+        resolution=2, aggregate=np.mean, samples=None, basis=None):
     '''Compute the constant-Q transform of an audio signal.
     
     :usage:
