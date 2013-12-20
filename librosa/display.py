@@ -138,14 +138,12 @@ def cmap(data):
 
     data = np.asarray(data)
 
-    positives = (data > 0).any()
-    negatives = (data < 0).any()
-
-    if positives and not negatives:
+    if data.min() >= 0:
         return 'OrRd'
-    elif negatives and not positives:
+
+    if data.max() <= 0:
         return 'BuPu_r'
-    
+
     return 'PuOr_r'
 
 def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=5, n_yticks=5, 
