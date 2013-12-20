@@ -246,7 +246,7 @@ def logfrequency(sr, n_fft, bins_per_octave=12, tuning=0.0, fmin=None, fmax=None
         
     return basis
 
-def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, window=np.hamming, resolution=1):
+def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, window=np.hamming, resolution=2):
     '''Construct a constant-Q basis.
 
     :usage:
