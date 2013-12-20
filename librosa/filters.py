@@ -90,7 +90,7 @@ def mel(sr, n_fft, n_mels=40, fmin=0.0, fmax=None, htk=False):
    
     return weights
 
-def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=None):
+def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=2):
     """Create a Filterbank matrix to convert STFT to chroma
 
     :usage:
@@ -100,8 +100,8 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=None):
         >>> # Use quarter-tones instead of semitones
         >>> chroma_fbq  = librosa.filters.chroma(22050, 4096, n_chroma=24)
 
-        >>> # Down-weight the high and low frequencies
-        >>> chroma_fb   = librosa.filters.chroma(22050, 4096, ctroct=5, octwidth=2)
+        >>> # Equally weight all octaves
+        >>> chroma_fb   = librosa.filters.chroma(22050, 4096, octwidth=None)
 
     :parameters:
       - sr        : int
@@ -113,11 +113,11 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=None):
       - A440      : float
           Reference frequency for A440
       - ctroct    : float
-      - octwidth  : float
+      - octwidth  : float or None
           These parameters specify a dominance window - Gaussian
-          weighting centered on ctroct (in octs, re A0 = 27.5Hz) and
-          with a gaussian half-width of octwidth.  
-          Defaults to halfwidth = inf, i.e. flat.
+          weighting centered on `ctroct` (in octs, re A0 = 27.5Hz) and
+          with a gaussian half-width of `octwidth`.  
+          Set `octwidth` to `None` to use a flat weighting.
 
     :returns:
       - wts       : ndarray, shape=(n_chroma, 1 + n_fft / 2) 
