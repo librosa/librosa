@@ -246,7 +246,7 @@ def logfrequency(sr, n_fft, bins_per_octave=12, tuning=0.0, fmin=None, fmax=None
         
     return basis
 
-def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, window=np.hamming, resolution=2):
+def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, window=np.hamming, resolution=2, pad=False):
     '''Construct a constant-Q basis.
 
     :usage:
@@ -283,6 +283,9 @@ def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, window=
 
       - resolution : float > 0
           Resolution of filter windows. Larger values use longer windows.
+
+      - pad : boolean
+          Zero-pad all filters to have a constant width (equal to the longest filter).
 
       .. note::
             @phdthesis{mcvicar2013,
@@ -329,6 +332,14 @@ def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, window=
         
         filters.append(win)
     
+    if pad:
+        max_len = max(map(len, filters))
+        
+        for i in range(len(filters)):
+            f_len = len(filters[i])
+            lpad = (max_len - f_len) / 2
+            filters[i] = np.pad(filters[i], (lpad, max_len - f_len - lpad), mode='constant')
+
     return filters
 
 def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12, roll=0):
