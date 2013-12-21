@@ -515,14 +515,16 @@ def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=
         samples    = np.arange(0, len(y), hop_length)
     else:
         samples    = np.asarray([samples]).flatten()
-    
-    cqt_power = []
-    for filt in basis:
-        r_power  = np.abs(scipy.signal.fftconvolve(y, filt, mode='same'))**2
-        cqt_power.append(feature.sync(r_power, samples, aggregate=aggregate))
-    
-    return np.asarray(cqt_power).squeeze()
 
+    cqt_power = np.empty((len(basis), len(y)), dtype=np.float32)
+    
+    for i, filt in enumerate(basis):
+        cqt_power[i]  = np.abs(scipy.signal.fftconvolve(y, filt, mode='same'))**2
+    
+    cqt_power = feature.sync(cqt_power, samples, aggregate=aggregate)
+    
+    return cqt_power
+    
 def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     """Log-scale the amplitude of a spectrogram.
 
