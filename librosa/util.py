@@ -68,6 +68,53 @@ def axis_sort(S, axis=-1, index=False, value=np.argmax):
     else:
         return S[:, idx]
 
+def axis_norm(S, norm=np.inf, axis=0):
+    '''Normalize the columns or rows of a matrix
+    
+    :parameters:
+    - S : np.ndarray
+      The matrix to normalize
+      
+    - norm : {inf, -inf, 0, float > 0}
+      - `inf`  : maximum absolute value
+      - `-inf` : mininum absolute value
+      - `0`    : number of non-zeros
+      - float  : corresponding l_p norm. See `scipy.linalg.norm` for details.
+    
+    - axis : int
+      Axis along which to compute the norm.
+      `axis=0` will normalize columns, `axis=1` will normalize rows.
+      
+    :returns: 
+    - S_norm : np.ndarray
+      Normalized matrix
+      
+    .. note::
+        Columns/rows with length 0 will be left as zeros.
+    '''
+    
+    # All norms only depend on magnitude, let's do that first
+    mag = np.abs(S)
+    
+    if norm == np.inf:
+        length = np.max(mag, axis=axis, keepdims=True)
+        
+    elif norm == -np.inf:
+        length = np.min(mag, axis=axis, keepdims=True)
+        
+    elif norm == 0:
+        length = np.sum(mag > 0, axis=axis, keepdims=True)
+        
+    elif np.issubdtype(type(norm), np.number) and norm > 0:
+        length = np.sum(mag ** norm, axis=axis, keepdims=True)**(1./norm)
+    else:
+        raise ValueError('Unsupported norm value: ' + repr(norm))
+        
+    # Avoid div-by-zero
+    length[length == 0] = 1.0
+    
+    return S / length
+
 def get_audio_files(directory, ext=None, recurse=True, case_sensitive=False, limit=None, offset=0):
     '''Get a sorted list of audio files in a directory or directory sub-tree.
     
