@@ -31,8 +31,8 @@ def axis_sort(S, axis=-1, index=False, value=np.argmax):
       - axis : int
         The axis along which to sort.  
         
-        - `axis=0` to sort rows by peak column index
-        - `axis=1` to sort columns by peak row index
+        - ``axis=0`` to sort rows by peak column index
+        - ``axis=1`` to sort columns by peak row index
 
       - index : boolean    
         If true, returns the index array as well as the permuted data.
@@ -40,18 +40,18 @@ def axis_sort(S, axis=-1, index=False, value=np.argmax):
 
       - value : function
         function to return the index corresponding to the sort order.
-        Default: `np.argmax`.
+        Default: ``np.argmax``.
 
     :returns:
       - S_sort : np.ndarray
-        `S` with the columns or rows permuted in sorting order
+        ``S`` with the columns or rows permuted in sorting order
      
       - idx : np.ndarray (optional)
-        If `index==True`, the sorting index used to permute `S`.
+        If ``index == True``, the sorting index used to permute ``S``.
 
     :raises:
       - ValueError
-        If `S` does not have 2 dimensions.
+        If ``S`` does not have 2 dimensions.
     '''
     
     if S.ndim != 2:
@@ -76,14 +76,14 @@ def axis_norm(S, norm=np.inf, axis=0):
       The matrix to normalize
       
     - norm : {inf, -inf, 0, float > 0}
-      - `inf`  : maximum absolute value
-      - `-inf` : mininum absolute value
-      - `0`    : number of non-zeros
-      - float  : corresponding l_p norm. See `scipy.linalg.norm` for details.
+      - ``inf``  : maximum absolute value
+      - ``-inf`` : mininum absolute value
+      - ``0``    : number of non-zeros
+      - float  : corresponding l_p norm. See ``scipy.linalg.norm`` for details.
     
     - axis : int
       Axis along which to compute the norm.
-      `axis=0` will normalize columns, `axis=1` will normalize rows.
+      ``axis=0`` will normalize columns, ``axis=1`` will normalize rows.
       
     :returns: 
     - S_norm : np.ndarray
@@ -143,20 +143,20 @@ def get_audio_files(directory, ext=None, recurse=True, case_sensitive=False, lim
         
       - ext : str or list of str
         A file extension or list of file extensions to include in the search.
-        Default: `['aac', 'au', 'flac', 'm4a', 'mp3', 'ogg', 'wav']`
+        Default: ``['aac', 'au', 'flac', 'm4a', 'mp3', 'ogg', 'wav']``
         
       - recurse : boolean
-        If `True`, then all subfolders of `directory` will be searched.
+        If ``True``, then all subfolders of ``directory`` will be searched.
         Otherwise, only `directory` will be searched.
         
       - case_sensitive : boolean
-        If `False`, files matching upper-case version of extensions will be included.
+        If ``False``, files matching upper-case version of extensions will be included.
         
       - limit : int >0 or None
-        Return at most `limit` files. If `None`, all files are returned.
+        Return at most ``limit`` files. If ``None``, all files are returned.
         
       - offset : int
-        Return files starting at `offset` within the list.
+        Return files starting at ``offset`` within the list.
         Use negative values to offset from the end of the list.
         
     :returns:
