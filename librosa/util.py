@@ -4,7 +4,7 @@
 import numpy as np
 import os, glob
 
-def axis_sort(S, axis=-1, value=np.argmax): 
+def axis_sort(S, axis=-1, index=False, value=np.argmax): 
     '''Sort an array along its rows or columns.
     
     :usage:
@@ -19,6 +19,11 @@ def axis_sort(S, axis=-1, value=np.argmax):
         >>> # Or sort the rows instead of the columns
         >>> W_sort_rows = librosa.util.axis_sort(W, axis=0)
 
+        >>> # Get the sorting index also, and use it to permute the rows of H
+        >>> W_sort, idx = librosa.util.axis_sort(W, index=True)
+        >>> H_sort = H[index, :]
+        >>> # np.dot(W_sort, H_sort) == np.dot(W, H)
+
     :parameters:
       - S : np.ndarray, ndim=2
         Matrix to sort
@@ -28,10 +33,21 @@ def axis_sort(S, axis=-1, value=np.argmax):
         
         - `axis=0` to sort rows by peak column index
         - `axis=1` to sort columns by peak row index
+
+      - index : boolean    
+        If true, returns the index array as well as the permuted data.
         
+
       - value : function
         function to return the index corresponding to the sort order.
         Default: `np.argmax`.
+
+    :returns:
+      - S_sort : np.ndarray
+        `S` with the columns or rows permuted in sorting order
+     
+      - idx : np.ndarray (optional)
+        If `index==True`, the sorting index used to permute `S`.
 
     :raises:
       - ValueError
@@ -47,7 +63,10 @@ def axis_sort(S, axis=-1, value=np.argmax):
     if axis == 0:
         return S[idx, :]
     
-    return S[:, idx]
+    if index:
+        return S[:, idx], idx
+    else:
+        return S[:, idx]
 
 def get_audio_files(directory, ext=None, recurse=True, case_sensitive=False, limit=None, offset=0):
     '''Get a sorted list of audio files in a directory or directory sub-tree.
