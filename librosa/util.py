@@ -2,10 +2,9 @@
 """Utility functions"""
 
 import numpy as np
-
 import os, glob
 
-def axis_sort(X, axis=-1, value=np.argmax): 
+def axis_sort(S, axis=-1, value=np.argmax): 
     '''Sort an array along its rows or columns.
     
     :usage:
@@ -21,7 +20,7 @@ def axis_sort(X, axis=-1, value=np.argmax):
         >>> W_sort_rows = librosa.util.axis_sort(W, axis=0)
 
     :parameters:
-      - X : np.ndarray, ndim=2
+      - S : np.ndarray, ndim=2
         Matrix to sort
         
       - axis : int
@@ -36,19 +35,19 @@ def axis_sort(X, axis=-1, value=np.argmax):
 
     :raises:
       - ValueError
-        If `X` does not have 2 dimensions.
+        If `S` does not have 2 dimensions.
     '''
     
-    if X.ndim != 2:
+    if S.ndim != 2:
         raise ValueError('axis_sort is only defined for 2-dimensional arrays.')
         
-    bin_idx = value(X, axis=np.mod(1-axis, X.ndim))
+    bin_idx = value(S, axis=np.mod(1-axis, S.ndim))
     idx     = np.argsort(bin_idx)
     
     if axis == 0:
-        return X[idx,:]
+        return S[idx, :]
     
-    return X[:, idx]
+    return S[:, idx]
 
 def get_audio_files(directory, ext=None, recurse=True, case_sensitive=False, limit=None, offset=0):
     '''Get a sorted list of audio files in a directory or directory sub-tree.
@@ -99,12 +98,14 @@ def get_audio_files(directory, ext=None, recurse=True, case_sensitive=False, lim
         The list of audio files.
     '''
     
-    def _get_files(D, E):
+    def _get_files(D, extensions):
+        '''Helper function to get files in a single directory'''
+
         # Expand out the directory
         D = os.path.abspath(os.path.expanduser(D))
         
         myfiles = []
-        for sub_ext in E:
+        for sub_ext in extensions:
             globstr = os.path.join(D, '*' + os.path.extsep + sub_ext)
             myfiles.extend(glob.glob(globstr))
         
@@ -126,8 +127,8 @@ def get_audio_files(directory, ext=None, recurse=True, case_sensitive=False, lim
     files = []
     
     if recurse:
-        for root, ldirs, lfiles in os.walk(directory):
-            files.extend(_get_files(root, ext))
+        for walk in os.walk(directory):
+            files.extend(_get_files(walk[0], ext))
     else:
         files = _get_files(directory, ext)
     
