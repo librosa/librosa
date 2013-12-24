@@ -85,7 +85,8 @@ def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048, hop_length=512
       - S          : np.ndarray or None
           spectrogram (STFT magnitude)
       - norm       : float or None
-          column-wise normalization. See ``librosa.util.axis_norm`` for details.
+          column-wise normalization. See
+          ``librosa.util.normalize`` for details.
           If `None`, no normalization is performed.
 
       - n_fft      : int  > 0
@@ -142,7 +143,7 @@ def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048, hop_length=512
     if norm is None:
         return raw_chroma
     
-    return librosa.util.axis_norm(raw_chroma, norm=norm, axis=0)
+    return librosa.util.normalize(raw_chroma, norm=norm, axis=0)
 
 def perceptual_weighting(S, frequencies, ref_power=1e-12):
     '''Perceptual weighting of a power spectrogram:
