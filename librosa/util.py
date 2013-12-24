@@ -61,12 +61,15 @@ def axis_sort(S, axis=-1, index=False, value=np.argmax):
     idx     = np.argsort(bin_idx)
     
     if axis == 0:
-        return S[idx, :]
-    
-    if index:
-        return S[:, idx], idx
+        if index:
+            return S[idx, :], idx
+        else:
+            return S[idx, :]
     else:
-        return S[:, idx]
+        if index:
+            return S[:, idx], idx
+        else:
+            return S[:, idx]
 
 def normalize(S, norm=np.inf, axis=0):
     '''Normalize the columns or rows of a matrix
