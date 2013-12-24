@@ -155,7 +155,7 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=2):
     wts = np.exp(-0.5 * (2*D / np.tile(binwidthbins, (n_chroma, 1)))**2)
 
     # normalize each column
-    wts /= np.tile(np.sqrt(np.sum(wts**2, 0)), (n_chroma, 1))
+    wts = librosa.util.normalize(wts, norm=2, axis=0)
 
     # Maybe apply scaling for fft bins
     if octwidth is not None:
