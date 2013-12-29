@@ -90,7 +90,7 @@ def mel(sr, n_fft, n_mels=40, fmin=0.0, fmax=None, htk=False):
    
     return weights
 
-def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=None):
+def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=2):
     """Create a Filterbank matrix to convert STFT to chroma
 
     :usage:
@@ -100,8 +100,8 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=None):
         >>> # Use quarter-tones instead of semitones
         >>> chroma_fbq  = librosa.filters.chroma(22050, 4096, n_chroma=24)
 
-        >>> # Down-weight the high and low frequencies
-        >>> chroma_fb   = librosa.filters.chroma(22050, 4096, ctroct=5, octwidth=2)
+        >>> # Equally weight all octaves
+        >>> chroma_fb   = librosa.filters.chroma(22050, 4096, octwidth=None)
 
     :parameters:
       - sr        : int
@@ -113,11 +113,11 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=None):
       - A440      : float
           Reference frequency for A440
       - ctroct    : float
-      - octwidth  : float
+      - octwidth  : float or None
           These parameters specify a dominance window - Gaussian
-          weighting centered on ctroct (in octs, re A0 = 27.5Hz) and
-          with a gaussian half-width of octwidth.  
-          Defaults to halfwidth = inf, i.e. flat.
+          weighting centered on `ctroct` (in octs, re A0 = 27.5Hz) and
+          with a gaussian half-width of `octwidth`.  
+          Set `octwidth` to `None` to use a flat weighting.
 
     :returns:
       - wts       : ndarray, shape=(n_chroma, 1 + n_fft / 2) 
@@ -155,7 +155,7 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=None):
     wts = np.exp(-0.5 * (2*D / np.tile(binwidthbins, (n_chroma, 1)))**2)
 
     # normalize each column
-    wts /= np.tile(np.sqrt(np.sum(wts**2, 0)), (n_chroma, 1))
+    wts = librosa.util.normalize(wts, norm=2, axis=0)
 
     # Maybe apply scaling for fft bins
     if octwidth is not None:
@@ -246,7 +246,7 @@ def logfrequency(sr, n_fft, bins_per_octave=12, tuning=0.0, fmin=None, fmax=None
         
     return basis
 
-def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, window=np.hamming, resolution=1):
+def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, window=np.hamming, resolution=2, pad=False):
     '''Construct a constant-Q basis.
 
     :usage:
@@ -283,6 +283,9 @@ def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, window=
 
       - resolution : float > 0
           Resolution of filter windows. Larger values use longer windows.
+
+      - pad : boolean
+          Zero-pad all filters to have a constant width (equal to the longest filter).
 
       .. note::
             @phdthesis{mcvicar2013,
@@ -329,6 +332,14 @@ def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, window=
         
         filters.append(win)
     
+    if pad:
+        max_len = max(map(len, filters))
+        
+        for i in range(len(filters)):
+            f_len = len(filters[i])
+            lpad = (max_len - f_len) / 2
+            filters[i] = np.pad(filters[i], (lpad, max_len - f_len - lpad), mode='constant')
+
     return filters
 
 def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12, roll=0):

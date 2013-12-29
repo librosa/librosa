@@ -15,12 +15,14 @@ See http://bmcfee.github.io/librosa/
 
 Demonstration
 =============
-See http://nbviewer.ipython.org/5878337
+See http://nbviewer.ipython.org/github/bmcfee/librosa/blob/master/examples/LibROSA%20demo.ipynb
 
 Installation
 ============
 
-To build librosa, say `python setup.py build`.
+The latest stable release is available on PyPI, and you can install it by saying `pip install librosa`.
+
+To build librosa from source, say `python setup.py build`.
 Then, to install librosa, say `python setup.py install`.
 If all went well, you should be able to execute the demo scripts under `examples/`.
 

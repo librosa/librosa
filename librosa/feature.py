@@ -3,7 +3,7 @@
 
 import numpy as np
 
-import librosa.core
+import librosa.core, librosa.util
 
 #-- Chroma --#
 def logfsgram(y, sr, n_fft=4096, hop_length=512, **kwargs):
@@ -66,7 +66,7 @@ def logfsgram(y, sr, n_fft=4096, hop_length=512, **kwargs):
     
     return cq_basis.dot(D)
 
-def chromagram(y=None, sr=22050, S=None, norm='inf', n_fft=2048, hop_length=512, tuning=0.0, **kwargs):
+def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048, hop_length=512, tuning=0.0, **kwargs):
     """Compute a chromagram from a spectrogram or waveform
 
     :usage:
@@ -84,13 +84,10 @@ def chromagram(y=None, sr=22050, S=None, norm='inf', n_fft=2048, hop_length=512,
           sampling rate of y
       - S          : np.ndarray or None
           spectrogram (STFT magnitude)
-      - norm       : {'inf', 1, 2, None}
-          column-wise normalization:
-
-          - 'inf':  max norm
-          - 1:  l_1 norm 
-          - 2:  l_2 norm
-          - None:  do not normalize
+      - norm       : float or None
+          column-wise normalization. See
+          ``librosa.util.normalize`` for details.
+          If `None`, no normalization is performed.
 
       - n_fft      : int  > 0
           FFT window size if provided ``y, sr`` instead of ``S`` 
@@ -143,25 +140,10 @@ def chromagram(y=None, sr=22050, S=None, norm='inf', n_fft=2048, hop_length=512,
     raw_chroma  = np.dot(chromafb, S)
 
     # Compute normalization factor for each frame
-    if norm == 'inf':
-        chroma_norm = np.max(np.abs(raw_chroma), axis=0)
-
-    elif norm == 1:
-        chroma_norm = np.sum(np.abs(raw_chroma), axis=0)
-    
-    elif norm == 2:
-        chroma_norm = np.sum( (raw_chroma**2), axis=0) ** 0.5
-    
-    elif norm is None:
+    if norm is None:
         return raw_chroma
     
-    else:
-        raise ValueError("norm must be one of: 'inf', 1, 2, None")
-
-    # Tile the normalizer to match raw_chroma's shape
-    chroma_norm[chroma_norm == 0] = 1.0
-
-    return raw_chroma / chroma_norm
+    return librosa.util.normalize(raw_chroma, norm=norm, axis=0)
 
 def perceptual_weighting(S, frequencies, ref_power=1e-12):
     '''Perceptual weighting of a power spectrogram:
