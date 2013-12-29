@@ -7,4 +7,4 @@ from . import core, beat, decompose, display, feature
 from . import filters, onset, output, segment, util
 from librosa.core import *
 
-__version__ = '0.2.1-dev'
+__version__ = '0.3.0-dev'
