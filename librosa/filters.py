@@ -310,7 +310,7 @@ def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, window=
     fmin       = correction * fmin
     fmax       = correction * fmax
     
-    Q = float(resolution) / (2.0**(1./bins_per_octave) - 1)
+    Q = float(resolution) / (2.0**(1./bins_per_octave) - 1) # pylint: disable=invalid-name
     
     # How many bins can we get?
     n_filters = int(np.ceil(bins_per_octave * np.log2(float(fmax) / fmin)))

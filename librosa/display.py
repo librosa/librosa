@@ -9,7 +9,7 @@ import warnings
 
 import librosa.core
 
-def time_ticks(locs, *args, **kwargs): 
+def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
     '''Plot time-formatted axis ticks.
 
     :usage:
@@ -147,7 +147,7 @@ def cmap(data):
     return 'PuOr_r'
 
 def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=5, n_yticks=5, 
-    fmin=None, fmax=None, **kwargs):
+    fmin=None, fmax=None, **kwargs):        # pylint: disable=star-args
     '''Display a spectrogram/chromagram/cqt/etc.
 
     Functions as a drop-in replacement for ``matplotlib.pyplot.imshow``, but with useful defaults.
