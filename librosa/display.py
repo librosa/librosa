@@ -315,7 +315,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
         # Labels start at 9 here because chroma starts at A.
         values = librosa.core.midi_to_note(range(9, 9+12), octave=False)
         plt.yticks(positions, values)
-        plt.ylabel('Note')
+        plt.ylabel('Pitch class')
     
     elif y_axis is None or y_axis is 'off':
         plt.yticks([])
