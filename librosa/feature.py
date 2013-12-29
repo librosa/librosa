@@ -452,7 +452,7 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512, **kwarg
     return np.dot(mel_basis, S)
 
 #-- miscellaneous utilities --#
-def delta(X, axis=-1, order=1, pad=True):
+def delta(data, axis=-1, order=1, pad=True):
     '''Compute delta features.
 
     :usage:
@@ -462,7 +462,7 @@ def delta(X, axis=-1, order=1, pad=True):
         >>> delta2_mfcc = librosa.feature.delta(mfccs, order=2)
 
     :parameters:
-      - X         : np.ndarray, shape=(d, T)
+      - data      : np.ndarray, shape=(d, T)
           the input data matrix (eg, spectrogram)
 
       - axis      : int
@@ -477,18 +477,18 @@ def delta(X, axis=-1, order=1, pad=True):
           set to True to pad the output matrix to the original size.
 
     :returns:
-      - delta_X   : np.ndarray
-          delta matrix of X.
+      - delta_data   : np.ndarray
+          delta matrix of ``data``.
     '''
 
-    dx  = np.diff(X, n=order, axis=axis)
+    delta_x  = np.diff(data, n=order, axis=axis)
 
     if pad:
-        padding         = [(0, 0)]  * X.ndim
+        padding         = [(0, 0)]  * data.ndim
         padding[axis]   = (order, 0)
-        dx              = np.pad(dx, padding, mode='constant')
+        delta_x              = np.pad(delta_x, padding, mode='constant')
 
-    return dx
+    return delta_x
 
 def sync(data, frames, aggregate=np.mean):
     """Synchronous aggregation of a feature matrix
