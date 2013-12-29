@@ -433,7 +433,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=False
     return if_gram, D
 
 def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=None, 
-        resolution=1, aggregate=np.mean, samples=None, basis=None):
+        resolution=2, aggregate=np.mean, samples=None, basis=None):
     '''Compute the constant-Q transform of an audio signal.
     
     :usage:
@@ -515,14 +515,16 @@ def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=
         samples    = np.arange(0, len(y), hop_length)
     else:
         samples    = np.asarray([samples]).flatten()
-    
-    cqt_power = []
-    for filt in basis:
-        r_power  = np.abs(scipy.signal.fftconvolve(y, filt, mode='same'))**2
-        cqt_power.append(feature.sync(r_power, samples, aggregate=aggregate))
-    
-    return np.asarray(cqt_power).squeeze()
 
+    cqt_power = np.empty((len(basis), len(y)), dtype=np.float32)
+    
+    for i, filt in enumerate(basis):
+        cqt_power[i]  = np.abs(scipy.signal.fftconvolve(y, filt, mode='same'))**2
+    
+    cqt_power = feature.sync(cqt_power, samples, aggregate=aggregate)
+    
+    return cqt_power
+    
 def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     """Log-scale the amplitude of a spectrogram.
 
@@ -550,11 +552,11 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
 
     :returns:
       log_S   : np.ndarray
-          ``log_S ~= 10 * log10(S) - 10 * log10(ref_power)``
+          ``log_S ~= 10 * log10(S) - 10 * log10(abs(ref_power))``
     """
 
     log_spec    =   10.0 * np.log10(np.maximum(amin, np.abs(S))) 
-    log_spec    -=  10.0 * np.log10(ref_power)
+    log_spec    -=  10.0 * np.log10(np.abs(ref_power))
 
     if top_db is not None:
         log_spec = np.maximum(log_spec, log_spec.max() - top_db)

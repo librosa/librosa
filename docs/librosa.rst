@@ -73,3 +73,11 @@ librosa Package
     :undoc-members:
     :show-inheritance:
 
+:mod:`Utilities`
+----------------
+
+.. automodule:: librosa.util
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
