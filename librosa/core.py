@@ -15,6 +15,7 @@ import scipy.ndimage
 
 # Do we have scikits.samplerate?
 try:
+    # Pylint won't handle dynamic imports, so we suppress this warning
     import scikits.samplerate as samplerate     # pylint: disable=import-error
     _HAS_SAMPLERATE = True
 except ImportError:
@@ -1052,6 +1053,7 @@ def mel_frequencies(n_mels=40, fmin=0.0, fmax=11025.0, htk=False, extra=False):
 
     return  mel_to_hz(mels, htk=htk)
 
+# A-weighting should be capitalized: suppress the naming warning
 def A_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
     '''Compute the A-weighting of a set of frequencies.
 

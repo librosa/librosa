@@ -5,6 +5,8 @@
 # And all the librosa sub-modules
 from . import core, beat, decompose, display, feature
 from . import filters, onset, output, segment, util
+
+# Exporting all core functions is okay here: suppress the import warning
 from librosa.core import *  # pylint: disable=wildcard-import
 
 __version__ = '0.2.1-dev'

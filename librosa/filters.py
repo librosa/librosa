@@ -310,6 +310,7 @@ def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, window=
     fmin       = correction * fmin
     fmax       = correction * fmax
     
+    # Q should be capitalized here, so we suppress the name warning
     Q = float(resolution) / (2.0**(1./bins_per_octave) - 1) # pylint: disable=invalid-name
     
     # How many bins can we get?
