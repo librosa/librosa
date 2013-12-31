@@ -2,14 +2,10 @@
 """Chord estimation"""
 
 # Add paths
-import os, sys
-import matplotlib.pylab as plt
-import numpy as np
 import cPickle as pickle
 from sklearn.hmm import GaussianHMM
 
 def load_model(model):
-
     r'''Loads an HMM-based chord estimation model from file
 
     :usage:
@@ -36,7 +32,8 @@ def load_model(model):
     '''	
 
     # Un-pickle the saved parameters
-    Chord_Parameters = pickle.load( open( model, 'r') )
+    with open(model, 'r') as f:
+        Chord_Parameters = pickle.load(f)
 
     # Set up in sklearn's framework
     Chord_symbols = Chord_Parameters[ 'chord_names' ]
@@ -59,7 +56,6 @@ def load_model(model):
     return HMM 
 
 def predict_chords( chromagram, HMM ):   
-
     r'''Predicts chords from a chromagram and HMM
 
     :usage:
@@ -104,7 +100,6 @@ def predict_chords( chromagram, HMM ):
     return chords, likelihood 
 
 def write_chords( chords, start_times, end_times, outfile ):
-
     r'''Writes chord prediction to file
 
     :usage:
@@ -129,17 +124,13 @@ def write_chords( chords, start_times, end_times, outfile ):
     t = 0.0
 
     with open(outfile, 'w') as f:
-
-      for chord, start, end in zip( chords, start_times, end_times ):
-
-      	if chord != current_chord:
-
-          # chord has changed
-      	  f.write( ' '.join( [ str( t ), str ( end ), str( current_chord ), '\n' ]) )
-      	  current_chord = chord
-      	  t = end
-
-      # write last chord
-      f.write( ' '.join( [ str( t ), str ( end ), str( current_chord )]) )
+        for chord, start, end in zip( chords, start_times, end_times ):
+            if chord != current_chord:
+                # chord has changed
+                f.write( ' '.join( [ str( t ), str ( end ), str( current_chord ), '\n' ]) )
+                current_chord = chord
+                t = end
+        # write last chord
+        f.write( ' '.join( [ str( t ), str ( end ), str( current_chord )]) )
 
     
