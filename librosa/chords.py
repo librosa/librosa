@@ -113,11 +113,10 @@ def write_chords( chords, start_times, end_times, outfile ):
     :parameters:
       - chords              : list
         chord symbol list of length t_max
-
-      - times               : np.ndarray
-          array of chord times in seconds. (2, t_max) array
-          of start times and end times for each chord
-
+      - start_times         : np.ndarray or list
+          array of chord start times in seconds
+      - end_times         : np.ndarray or list
+          array of chord end times in seconds
       - outfile             : string
           path of file to write to (including extension)
 
@@ -135,8 +134,12 @@ def write_chords( chords, start_times, end_times, outfile ):
 
       	if chord != current_chord:
 
+          # chord has changed
       	  f.write( ' '.join( [ str( t ), str ( end ), str( current_chord ), '\n' ]) )
       	  current_chord = chord
       	  t = end
+
+      # write last chord
+      f.write( ' '.join( [ str( t ), str ( end ), str( current_chord )]) )
 
     
