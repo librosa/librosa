@@ -3,11 +3,11 @@ librosa
 
 A python package for music and audio processing.
 
-* librosa/    The librosa package
+* `librosa/`    The librosa package
 
-* examples/   Some basic examples of audio processing with librosa
+* `examples/`   Some basic examples of audio processing and feature extraction with librosa
 
-* tests/      nose unit tests to validate against original dpwe implementations
+* `tests/`      nosetests for numerical compatibility against reference implementations
 
 Documentation
 =============
@@ -15,7 +15,7 @@ See http://bmcfee.github.io/librosa/
 
 Demonstration
 =============
-See http://nbviewer.ipython.org/github/bmcfee/librosa/blob/master/examples/LibROSA%20demo.ipynb
+See http://nbviewer.ipython.org/github/bmcfee/librosa/blob/master/examples/LibROSA%20demo.ipynb for a brief introduction to some commonly used features.
 
 Installation
 ============
@@ -37,14 +37,3 @@ or
 git clone https://github.com/bmcfee/librosa.git
 easy_install librosa
 ```
-
-
-dependencies
-============
-
-* audioread
-* numpy >= 1.7.0
-* scipy
-* sklearn
-* matplotlib
-* (optional) scikits.samplerate >= 0.3
