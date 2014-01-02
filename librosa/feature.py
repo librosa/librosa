@@ -56,14 +56,11 @@ def logfsgram(y, sr, n_fft=4096, hop_length=512, **kwargs):
 
         del pitches
 
-        # Convert to power
-        D = np.abs(D)**2
     else:
-        # Convert to power
-        D = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length)) ** 2
+        D = librosa.stft(y, n_fft=n_fft, hop_length=hop_length)
 
-    # Normalize, retain magnitude
-    D = np.abs(D / D.max())
+    # Normalize, retain power
+    D = np.abs(D / D.max())**2
 
     # Build the CQ basis
     cq_basis = librosa.filters.logfrequency(sr, n_fft=n_fft, **kwargs)
@@ -87,7 +84,7 @@ def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048, hop_length=512
       - sr         : int
           sampling rate of y
       - S          : np.ndarray or None
-          spectrogram (STFT magnitude)
+          spectrogram (STFT power)
       - norm       : float or None
           column-wise normalization. See
           ``librosa.util.normalize`` for details.
