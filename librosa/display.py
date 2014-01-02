@@ -9,7 +9,8 @@ import warnings
 
 import librosa.core
 
-def time_ticks(locs, *args, **kwargs): 
+# This function wraps xticks or yticks: star-args is okay
+def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
     '''Plot time-formatted axis ticks.
 
     :usage:
@@ -146,8 +147,9 @@ def cmap(data):
 
     return 'PuOr_r'
 
+# This function wraps imshow: star-args is okay
 def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=5, n_yticks=5, 
-    fmin=None, fmax=None, **kwargs):
+        fmin=None, fmax=None, **kwargs):        # pylint: disable=star-args
     '''Display a spectrogram/chromagram/cqt/etc.
 
     Functions as a drop-in replacement for ``matplotlib.pyplot.imshow``, but with useful defaults.
@@ -315,7 +317,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
         # Labels start at 9 here because chroma starts at A.
         values = librosa.core.midi_to_note(range(9, 9+12), octave=False)
         plt.yticks(positions, values)
-        plt.ylabel('Note')
+        plt.ylabel('Pitch class')
     
     elif y_axis is None or y_axis is 'off':
         plt.yticks([])
