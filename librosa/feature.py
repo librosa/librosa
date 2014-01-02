@@ -55,8 +55,12 @@ def logfsgram(y, sr, n_fft=4096, hop_length=512, **kwargs):
         kwargs['tuning'] = estimate_tuning(pitches, bins_per_octave=bins_per_octave)
 
         del pitches
+
+        # Convert to power
+        D = np.abs(D)**2
     else:
-        D = librosa.stft(y, n_fft=n_fft, hop_length=hop_length)
+        # Convert to power
+        D = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length)) ** 2
 
     # Normalize, retain magnitude
     D = np.abs(D / D.max())
@@ -126,7 +130,7 @@ def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048, hop_length=512
         tuning = estimate_tuning(pitches[magnitudes > np.median(magnitudes)], 
                                  bins_per_octave=n_chroma)
 
-        S = np.abs(S / S.max())
+        S = np.abs(S / S.max())**2
     else:
         n_fft       = (S.shape[0] -1 ) * 2
 
