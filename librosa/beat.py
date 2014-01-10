@@ -10,7 +10,7 @@ import librosa.feature
 import librosa.onset
 
 def beat_track(y=None, sr=22050, onsets=None, hop_length=64, 
-               start_bpm=120.0, n_fft=2048, tightness=400, trim=True):
+               start_bpm=120.0, n_fft=2048, tightness=400, trim=True, bpm=None):
     r'''Dynamic programming beat tracker.
 
     Beats are detected in three stages:
@@ -55,6 +55,9 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
       - trim       : bool
           trim leading/trailing beats with weak onsets?
 
+      - bpm        : float
+          (optional) If provided, use this BPM instead of estimating it
+
       .. note:: One of either ``onsets`` or ``y`` must be provided.
 
     :returns: 
@@ -98,8 +101,9 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
     if not onsets.any():
         return (0, np.array([], dtype=int))
 
-    # Then, estimate bpm
-    bpm     = estimate_tempo(onsets, sr=sr, hop_length=hop_length, start_bpm=start_bpm)
+    # Estimate BPM if one was not provided
+    if bpm is None:
+        bpm = estimate_tempo(onsets, sr=sr, hop_length=hop_length, start_bpm=start_bpm)
     
     # Then, run the tracker
     beats   = __beat_tracker(onsets, bpm, float(sr) / hop_length, tightness, trim)
