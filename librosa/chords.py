@@ -6,6 +6,7 @@ import cPickle as pickle
 from sklearn.hmm import GaussianHMM
 import os
 import librosa
+import numpy as np
 
 def load_model(model):
     r'''Loads an HMM-based chord estimation model from file
@@ -194,11 +195,44 @@ def extract_training_chroma( audio_file, beat_nfft=4096, beat_hop=64, chroma_nff
   y_harmonic = librosa.istft(Harmonic)
 
   # Logspectrum
-  
+  Raw_chroma = librosa.feature.logfsgram( y_harmonic, sr, 
+             n_fft=chroma_nfft, hop_length=chroma_hop, 
+              normalise_D=False, tuning=0.0)
+
   # beat-synch
+  # if last chroma_beat_frame is the length of Raw_chroma, 
+  # librosa.feature.sync will not append a 'last' frame, meaning
+  # that there won't be n+1 frames for n beats.
+  #
+  # To counteract this, append a single empty chroma frame
+  if chroma_beat_frames[ - 1 ] == Raw_chroma.shape[ 1 ]:
+
+    Raw_chroma = np.hstack( (Raw_chroma, np.zeros( ( Raw_chroma.shape[0], 1 )  ) ) ) 
+
+  # analagously if chroma_beat_frame[ 0 ] == 0 
+  if chroma_beat_frames[ 0 ] == 0:
+
+    Raw_chroma = np.hstack( ( np.zeros( ( Raw_chroma.shape[0], 1 ), Raw_chroma ) ) ) 
+
+  # also, rounding errors mean that sometimes the last chroma 
+  # beat frame is *longer than* the chromagram itself  
+  keep_frames = chroma_beat_frames < Raw_chroma.shape[ 1 ]
+  
+  chroma_beat_frames = chroma_beat_frames[ keep_frames ]
+  beat_times = beat_times[ keep_frames ]
+
+  # Beat-sych
+  BS_chroma = librosa.feature.sync(Raw_chroma, chroma_beat_frames, aggregate=np.median)
+
   # Loudness
   # Fold pitches
   # Range normalise
+
+  import matplotlib.pylab as plt
+  plt.imshow( BS_chroma, aspect='auto',interpolation='nearest' )
+  plt.colorbar()
+  plt.show()
+  dsdfs  
 
   return None
 
