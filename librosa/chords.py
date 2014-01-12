@@ -162,7 +162,7 @@ def train_model( audio_dir, GT_dir, output_model_name ):
     # extract training chroma
     full_audio_path = os.path.join( audio_dir, f )
 
-    print '  Extracting chroma for ' + full_audio_path
+    print '  Extracting chroma and chords for ' + full_audio_path
 
     chroma, beat_times = extract_training_chroma( full_audio_path )
 
@@ -182,6 +182,7 @@ def train_model( audio_dir, GT_dir, output_model_name ):
   states, state_labels, n_states = process_chords( Beat_synch_chords )
 
   # Train hidden
+  print '  Training model'
   Init, Trans = train_hidden( states, n_states )
 
   # Train observed
@@ -195,6 +196,7 @@ def train_model( audio_dir, GT_dir, output_model_name ):
          'Sigma': Sigma
          }
 
+  print '  Saving model'
   pickle.dump( HMM, open( output_model_name, 'w' ) )      
 
   return Init, Trans, Mu, Sigma, state_labels
@@ -202,7 +204,7 @@ def train_model( audio_dir, GT_dir, output_model_name ):
 def extract_training_chroma( audio_file, beat_nfft=4096, beat_hop=64, chroma_nfft=8192, chroma_hop=2048 ):
 
   # load audio
-  y, sr = librosa.load( audio_file, duration=15.0 )
+  y, sr = librosa.load( audio_file )
 
   # track beats
   bpm, beat_frames = librosa.beat.beat_track(y=y, sr=sr, n_fft=beat_nfft, 
@@ -277,6 +279,7 @@ def extract_training_chroma( audio_file, beat_nfft=4096, beat_hop=64, chroma_nff
       Chroma[ :, t ] = 0
 
   # Roll to be consistent with librosa chroma
+  Chroma = np.roll( Chroma, 3, axis=0 )
 
   return Chroma, beat_times
 
@@ -320,7 +323,7 @@ def sample_chords_beat(annotations, annotation_sample_times, sample_times, no_ch
   # chord
   while ( sample_times[ t_sample - 1 ] < annotation_sample_times[ 0, 0 ] ):
 
-    sampled[ t_sample - 1 ] = numStates
+    sampled[ t_sample - 1 ] = no_chord
 
     t_sample = t_sample + 1
 
@@ -384,7 +387,7 @@ def sample_chords_beat(annotations, annotation_sample_times, sample_times, no_ch
          
   # 3. if there are still samples left, assign no chord
   if t_sample <= number_windows:
-    sampled[ t_sample-1 : ] = [ numStates ] * ( len( sampled ) - t_sample + 1 )
+    sampled[ t_sample-1 : ] = [ no_chord ] * ( len( sampled ) - t_sample + 1 )
       
   if (t_anns == number_samples): # The last chord after final beats
 
@@ -449,14 +452,14 @@ def process_chords( chords ):
 
         state_labels.append( chord )
 
-  # sort ot make pretty
+  # sort to make pretty
   state_labels.sort()
 
   # n_states
   n_states = len( state_labels )
 
   # don't count 'X' as a state
-  if 'X' in state_labels:
+  if state_labels[ -1 ] == 'X':
 
     n_states = n_states - 1
 
@@ -491,7 +494,7 @@ def train_hidden( chords, n_states, no_chord='N' ):
       
       chord1 = ann[ ichord - 1 ]
 
-      if chord1 == no_chord or chord2 == no_chord:
+      if chord1 == n_states or chord2 == n_states:
 
         pass
 

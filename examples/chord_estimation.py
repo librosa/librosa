@@ -18,9 +18,12 @@ GT_dir = '/Users/mattmcvicar/Desktop/Work/LibROSA_chords/small_GT'
 model_output_dir = './examples/models/majmin.p'
 
 # train model
+print ''
+print '  Training model'
+print '  --------------'
 Init, Trans, Mu, Sigma, state_labels = librosa.chords.train_model( audio_dir, GT_dir, model_output_dir )
 
-n_states = len( state_labels )
+n_states = len( state_labels ) - 1
 
 # Check out the parameters
 import matplotlib.pylab as plt
@@ -28,14 +31,19 @@ plt.imshow(Trans, aspect='auto', interpolation='nearest')
 plt.xticks(range(n_states), state_labels, rotation=45)
 plt.yticks(range(n_states), state_labels)
 plt.colorbar()
+plt.title('Transition Matrix')
 plt.show()
 
 plt.imshow(Mu.T, aspect='auto', interpolation='nearest')
 plt.xticks(range(n_states), state_labels, rotation=45)
 plt.yticks(range(12),['A','','B','C','','D','','E','F','','G',''])
 plt.colorbar()
+plt.title('Mean vectors')
 plt.show()
 
 plt.imshow(Sigma[1,:,:], aspect='auto', interpolation='nearest')
 plt.colorbar()
+plt.title('Covariance Matrix for ' + state_labels[1])
+plt.yticks(range(12),['A','','B','C','','D','','E','F','','G',''])
+plt.xticks(range(12),['A','','B','C','','D','','E','F','','G',''])
 plt.show()
