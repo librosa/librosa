@@ -608,22 +608,62 @@ def sample_chords_beat( annotations, annotation_sample_times, sample_times, no_c
 
 def process_chords( chords ):
 
+  """
+
+  Converts a collection of chord symbols to state indices, 
+  accounting for enharmonic equivalence. 
+
+    :parameters:
+
+      - chords              : list
+
+        list of songs, each of which is a list of chord symbols
+        (strings)
+
+    :outputs
+    
+      - states              : list
+
+        list of songs, each of which is a list of chord indices,
+        indexed by...
+
+      - state_labels        : list
+      
+        list of state labels, including 'X'
+
+      - n_states            : int
+      
+        number of 'real' states in the model, excluding 'X'. 
+        This parameter can be used to easily skip over 'X' in
+        training      
+
+  """
   n_songs = len( chords )
 
-  # Make an enharmonic map
+  # Make an enharmonic map. I've chose flats over sharps arbitrarily
   enharmonics = {'A#': 'Bb', 'B#': 'C', 'C#':'Db','D#':'Eb','E#':'F','F#':'Gb','G#':'Ab',  # Sharps to flats
                  'A':'A','B':'B','C':'C','D':'D','E':'E','F':'F','G':'G',                  # naturals
                  'Ab':'Ab','Bb':'Bb','Cb':'B','Db':'Db','Eb':'Eb','Fb':'E','Gb':'Gb',      # flats to flats
-                 'N':'N', 'X':'X'} 
+                 'N':'N', 'X':'X'}                                                         # others
 
+  # Store output
   processed_chords = []
+
+  # for each song
   for song_chords in chords:
 
+    # temporary storage
     song_processed_chords = []
+
+    # for each chord in this song
     for chord in song_chords:
 
+      # find rootnote and chord type, by
+      # splitting by ':'
       if ':' in chord:
+
         rootnote, chord_type = chord.split( ':' )
+
         chord_type = ':' + chord_type 
 
       else:
@@ -631,8 +671,10 @@ def process_chords( chords ):
         rootnote = chord
         chord_type = ''
       
+      # now, ensure no sharps in the rootnote
       song_processed_chords.append( enharmonics[ rootnote ] + chord_type )  
     
+    # store this song
     processed_chords.append( song_processed_chords )
      
   # Get unique states
@@ -645,7 +687,8 @@ def process_chords( chords ):
 
         state_labels.append( chord )
 
-  # sort to make pretty
+  # sort to make pretty, and also ensure 'X'
+  # is at the end, if present at all
   state_labels.sort()
 
   # n_states
@@ -656,6 +699,7 @@ def process_chords( chords ):
 
     n_states = n_states - 1
 
+  # Now map chord strings to chord indices
   states = []
   for song in chords:
 
@@ -665,17 +709,44 @@ def process_chords( chords ):
 
 def train_hidden( chords, n_states, no_chord='N' ):
 
-  # Init 
+  """
+
+  Trains the hidden chain of an HMM from a list of 
+  chord indices
+
+    :parameters:
+
+      - chords              : list
+
+        list of songs, each of which is a list of chord indices
+
+      - n_states            : int
+      
+        number of 'real' states in the model. Any state index 
+        equal to or larger than n_states will be ignored in
+        traininig 
+
+    :returns:
+    
+      - Init                : (n_states,) tuple
+
+        Initial distribution of chords
+
+      - Trans               : ( n_states, n_states ) np.ndarray
+        
+        State transition probabilities         
+
+  """
+
+  # Initialise...Init
   Init = np.zeros( n_states )
 
   for ann in chords:
 
-     if ann[ 0 ] == n_states:
-
-       pass
-       
-     else:
+    # skip if equal or larger than n_states 
+     if ann[ 0 ] < n_states:
         
+       # increase count  
        Init[ ann[ 0 ] ] = Init[ ann[ 0 ] ] + 1
     
   # Initialise Trans
@@ -683,15 +754,14 @@ def train_hidden( chords, n_states, no_chord='N' ):
 
   for ann in chords: 
 
+    # start at second state
     for ichord, chord2 in enumerate( ann[ 1 : ] ):
       
+      # retrieve previous state
       chord1 = ann[ ichord - 1 ]
 
-      if chord1 == n_states or chord2 == n_states:
-
-        pass
-
-      else:
+      # skip if equal or larger than n_states 
+      if chord1 < n_states and chord2 < n_states:
           
         Trans[ chord1, chord2 ] = Trans[ chord1, chord2 ] + 1.0
     
@@ -711,26 +781,67 @@ def train_hidden( chords, n_states, no_chord='N' ):
     sum_trans = sum( Trans[ i, : ] )
 
     if sum_trans > 0:
+
       Trans[ i, : ] = Trans[ i, : ] / sum_trans  
 
-
-  # sklearn
+  # Reshape for sklearn
   Init = Init.reshape((n_states,))
 
   return Init, Trans      
 
 def train_obs( chroma, chords, n_states ):
 
-  # initialise empty all chroma and anns
+  """
+
+  Trains the observed chain of an HMM from a list of chroma
+  and associated chords
+
+    :parameters:
+
+      - chroma              : list 
+
+        list of chromagram feature matrices
+
+      - chords              : list
+
+        list of songs, each of which is a list of chord indices
+
+      - n_states            : int
+      
+        number of 'real' states in the model. Any state index 
+        equal to or larger than n_states will be ignored in
+        traininig 
+
+    :returns:
+    
+      - Mu                  : ( n_states, 12 ) np.ndarray of mean
+                              pitch class energy for each chord 
+                              and pitch class
+
+      - Sigma               : ( n_states, 12, 12 ) np.ndarray of 
+                              covariance matrices for each chord                        
+
+    all probabilities are in normal (non-log) form   
+
+  """
+  
+  # First, collect all chroma and chord indices 
+  # into two big matrices
+
+  # Find total number of frames. Is there a more
+  # pythonic way of doing this?
   tmax = 0
-  for ann, chrom in zip( chords, chroma):
 
-    tmax = tmax + len(ann)
+  for ann, chrom in zip( chords, chroma ):
 
-  all_anns = [None] * tmax
-  all_chroma = np.zeros((12, tmax ))
+    tmax = tmax + len( ann )
 
-  # fill all anns and chroma
+  # Initialise big matrices
+  all_anns = [ None ] * tmax
+  all_chroma = np.zeros( ( 12, tmax ) )
+
+  # fill these with all the chroma
+  # and annotations
   t = 0
 
   for c, a in zip( chroma, chords ):
@@ -740,31 +851,34 @@ def train_obs( chroma, chords, n_states ):
 
     t = t + len(a)
 
-
-  n_frames = len(all_anns)
+  # OK.
+  n_frames = len( all_anns )
   n_dims = all_chroma.shape[ 0 ]   
         
   # initialse Mu, Sigma      
   Mu = np.zeros( ( n_dims, n_states ) ) 
+
   Sigma = np.zeros( ( n_states, n_dims, n_dims ) )   
         
+  # Note we go to range( n_states ), meaning that
+  # we'll not train a model for 'X' if it is in the 
+  # data      
   for chord in range( n_states ):
 
     # Collect the chroma for this chord
     chord_indices = [ ichord for ichord,ann in enumerate( all_anns ) if ann == chord ]  
     chord_chroma = all_chroma[ :, chord_indices ]
 
-    # Mean
+    # Take mean
     Mu[ :, chord ] = np.mean( chord_chroma, 1 )
        
     # Variance   
     sigma_prior = 0.01 * np.identity( n_dims )
-    chord_chroma = np.dot(chord_chroma , chord_chroma.T) / len( chord_indices )
+    chord_chroma = np.dot( chord_chroma , chord_chroma.T ) / len( chord_indices )
     
     Sigma[chord, :] = chord_chroma -  np.dot( Mu[ :, chord ].reshape( n_dims, 1 ), Mu[ :, chord ].reshape( 1, n_dims ) ) + sigma_prior
 
-
-  # sklearn
+  # Reshape for sklearn
   Mu = Mu.T
 
   return Mu, Sigma
