@@ -136,7 +136,7 @@ def write_chords( chords, start_times, end_times, outfile ):
         # write last chord
         f.write( ' '.join( [ str( t ), str ( end ), str( current_chord )]) )
 
-def train_model( audio_dir, GT_dir, output_feature_dir, output_model_dir ):
+def train_model( audio_dir, GT_dir, output_model_name ):
 
   # Get filenames, checking for MacOSX BS
   audio_files = os.listdir( audio_dir )
@@ -185,15 +185,19 @@ def train_model( audio_dir, GT_dir, output_feature_dir, output_model_dir ):
   Init, Trans = train_hidden( states, n_states )
 
   # Train observed
+  Mu, Sigma = train_obs( Chromagrams, states, n_states )
 
-  import matplotlib.pylab as plt
-  plt.imshow( Trans, aspect='auto', interpolation='nearest')
-  plt.show()
-  gdffgd
+  # pickle model
+  HMM = {
+        'Init':  Init,
+         'Trans': Trans,
+         'Mu':    Mu,
+         'Sigma': Sigma
+         }
 
-  # pickle output
+  pickle.dump( HMM, open( output_model_name, 'w' ) )      
 
-  return None
+  return Init, Trans, Mu, Sigma, state_labels
 
 def extract_training_chroma( audio_file, beat_nfft=4096, beat_hop=64, chroma_nfft=8192, chroma_hop=2048 ):
 
@@ -519,7 +523,7 @@ def train_hidden( chords, n_states, no_chord='N' ):
 
   return Init, Trans      
 
-def train_obs( chroma, chords, n_chords ):
+def train_obs( chroma, chords, n_states ):
 
   # initialise empty all chroma and anns
   tmax = 0
@@ -533,7 +537,7 @@ def train_obs( chroma, chords, n_chords ):
   # fill all anns and chroma
   t = 0
 
-  for c, a in zip( chroma, anns ):
+  for c, a in zip( chroma, chords ):
 
     all_anns[ t : t + len( a ) ] = a
     all_chroma[ :, t : t + len( a ) ] = c
