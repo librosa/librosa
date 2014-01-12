@@ -241,7 +241,7 @@ def train_model( audio_dir, GT_dir, output_model_name='./chord_model.p' ):
   # beat-synched anns
   Chromagrams = []
   Beat_synch_chords = []
-  for f, gt in zip( audio_files[:1], GT_files[:1] ):  
+  for f, gt in zip( audio_files, GT_files ):  
 
     # extract training chroma
     full_audio_path = os.path.join( audio_dir, f )
@@ -372,7 +372,7 @@ def extract_training_chroma( audio_file, beat_nfft=4096, beat_hop=64, chroma_nff
   # Loudness
   # I can't work out how to get the logfsgram frequencies to use
   # the perceptual weighting...just do the log10 myself
-  BS_chroma = 10 * np.log10( ( BS_chroma + 10 ** ( -12 ) ) / ( 10 ** ( -6 ) ) )
+  BS_chroma = 10 * np.log10( ( BS_chroma + 10 ** ( -10 ) ) / ( 10 ** ( -6 ) ) )
 
   # Fold pitches
   Chroma = np.zeros( ( 12, BS_chroma.shape[ 1 ] ) )
@@ -396,7 +396,7 @@ def extract_training_chroma( audio_file, beat_nfft=4096, beat_hop=64, chroma_nff
       Chroma[ :, t ] = 0
 
   # Roll to be consistent with librosa chroma
-  Chroma = np.roll( Chroma, 3, axis=0 )
+  #Chroma = np.roll( Chroma, 3, axis=0 )
 
   return Chroma, beat_times
 
@@ -675,7 +675,7 @@ def process_chords( chords ):
     
     # store this song
     processed_chords.append( song_processed_chords )
-     
+
   # Get unique states
   state_labels = []
   for song in chords:
@@ -694,6 +694,7 @@ def process_chords( chords ):
   n_states = len( state_labels )
 
   # don't count 'X' as a state
+
   if state_labels[ -1 ] == 'X':
 
     n_states = n_states - 1
@@ -742,25 +743,28 @@ def train_hidden( chords, n_states, no_chord='N' ):
 
   for ann in chords:
 
-    # skip if equal or larger than n_states 
-     if ann[ 0 ] < n_states:
+    if ann[ 0 ] == n_states:
+
+      pass
+       
+    else:
         
-       # increase count  
-       Init[ ann[ 0 ] ] = Init[ ann[ 0 ] ] + 1
+      Init[ ann[ 0 ] ] = Init[ ann[ 0 ] ] + 1
     
   # Initialise Trans
   Trans = np.zeros( ( n_states, n_states ) )
 
   for ann in chords: 
 
-    # start at second state
     for ichord, chord2 in enumerate( ann[ 1 : ] ):
       
-      # retrieve previous state
       chord1 = ann[ ichord - 1 ]
 
-      # skip if equal or larger than n_states 
-      if chord1 < n_states and chord2 < n_states:
+      if chord1 == n_states or chord2 == n_states:
+
+        pass
+
+      else:
           
         Trans[ chord1, chord2 ] = Trans[ chord1, chord2 ] + 1.0
     
@@ -874,7 +878,7 @@ def train_obs( chroma, chords, n_states ):
     # Variance   
     sigma_prior = 0.01 * np.identity( n_dims )
     chord_chroma = np.dot( chord_chroma , chord_chroma.T ) / len( chord_indices )
-    
+
     Sigma[chord, :] = chord_chroma -  np.dot( Mu[ :, chord ].reshape( n_dims, 1 ), Mu[ :, chord ].reshape( 1, n_dims ) ) + sigma_prior
 
   # Reshape for sklearn
