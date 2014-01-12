@@ -6,6 +6,8 @@ This script is to demo chords.py
 
 import sys
 sys.path.append(sys.path.append("/Users/mattmcvicar/Desktop/Work/audioread"))
+sys.path.append(sys.path.append("/Users/mattmcvicar/Desktop/librosa"))
+
 import librosa
 
 # Set audio and GT directories
