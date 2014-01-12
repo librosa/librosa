@@ -136,11 +136,27 @@ def write_chords( chords, start_times, end_times, outfile ):
 
 def train_model( audio_dir, GT_dir, output_feature_dir, output_model_dir ):
 
-  # Get filenames
+  # Get filenames, checking for MacOSX BS
+  audio_files = os.listdir( audio_dir )
+  audio_files = [f for f in audio_files if f != '.DS_Store' ]
 
-  print audio_dir
-  print GT_dir
+  GT_files = os.listdir( GT_dir )
+  GT_files = [ f for f in GT_files if f != '.DS_Store' ]
+
   # check for consistencey
+  n_audio = len( audio_files )
+  n_GT = len( GT_files )
+
+  if n_audio != n_GT:
+
+    raise ValueError( 'different number of audio (' + str(n_audio) + ')' + ' and ground truth (' + str(n_GT) + ') files.')
+  
+  # Loop through zipped files
+  for f, gt in zip( audio_files, GT_files ):
+
+    # extract training chroma
+    extract_training_chroma( f )
+    
   # For each audio/GT pair:
   #   extract beats
   #   extract chroma
