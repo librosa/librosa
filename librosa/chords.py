@@ -185,9 +185,16 @@ def extract_training_chroma( audio_file, beat_nfft=4096, beat_hop=64, chroma_nff
   chroma_beat_frames = librosa.core.time_to_frames(beat_times, sr=sr, hop_length=chroma_hop)  
 
   # compute spectrum
+  S = librosa.stft(y, n_fft=chroma_nfft, hop_length=chroma_hop)
+
   # HPSS
+  Harmonic, Percussive = librosa.decompose.hpss(S)
+
   # invert
+  y_harmonic = librosa.istft(Harmonic)
+
   # Logspectrum
+  
   # beat-synch
   # Loudness
   # Fold pitches
