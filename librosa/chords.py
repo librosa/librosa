@@ -133,4 +133,6 @@ def write_chords( chords, start_times, end_times, outfile ):
         # write last chord
         f.write( ' '.join( [ str( t ), str ( end ), str( current_chord )]) )
 
-    
+def train_model( audio_dir, GT_dir ):
+
+  return None    
