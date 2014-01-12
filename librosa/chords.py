@@ -138,7 +138,7 @@ def write_chords( chords, start_times, end_times, outfile ):
 
 def train_model( audio_dir, GT_dir, output_model_name='./chord_model.p' ):
 
-    r'''Top-level function for training an HMM-based chord_chroma
+  r'''Top-level function for training an HMM-based chord_chroma
         recognition system
 
     :usage:
@@ -241,8 +241,7 @@ def train_model( audio_dir, GT_dir, output_model_name='./chord_model.p' ):
   # beat-synched anns
   Chromagrams = []
   Beat_synch_chords = []
-  #for f, gt in zip( audio_files, GT_files ):
-  for f, gt in zip( audio_files[:5], GT_files[:5] ):  
+  for f, gt in zip( audio_files[:1], GT_files[:1] ):  
 
     # extract training chroma
     full_audio_path = os.path.join( audio_dir, f )

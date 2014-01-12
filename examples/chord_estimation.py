@@ -74,7 +74,7 @@ import matplotlib.pylab as plt
 import numpy as np
 
 # -----------
-# train model
+# Train model
 # -----------
 
 print ''
@@ -114,8 +114,8 @@ if show_params:
 # ----------
 
 print ''
-print '  Training model'
-print '  --------------'
+print '  Testing model'
+print '  -------------'
 
 # Get filenames, checking for MacOSX BS
 audio_files = os.listdir( audio_dir )
@@ -124,7 +124,8 @@ audio_files = [f for f in audio_files if f != '.DS_Store' ]
 GT_files = os.listdir( GT_dir )
 GT_files = [ f for f in GT_files if f != '.DS_Store' ]
 
-for f, gt in zip( audio_files[:3], GT_files[:3] ):
+performances = []
+for f, gt in zip( audio_files, GT_files ):
 
   # extract training chroma
   full_audio_path = os.path.join( audio_dir, f )
@@ -145,6 +146,8 @@ for f, gt in zip( audio_files[:3], GT_files[:3] ):
   # Accuracy
   p = 100 * np.mean( [p == gt for p, gt in zip( prediction, sampled_chords ) ])
 
+  performances.append( p )
+
   if show_chords:
 
     # convert back to indices, so we can plot
@@ -158,4 +161,7 @@ for f, gt in zip( audio_files[:3], GT_files[:3] ):
 
   print '  performance = ' + str(p) + '%'
 
+print ''
+print '  Total mean performance = ' + str( np.mean( performances ) ) + '%'
+print '  --------------------------------------'
 
