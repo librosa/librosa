@@ -11,8 +11,8 @@ sys.path.append(sys.path.append("/Users/mattmcvicar/Desktop/librosa"))
 import librosa
 
 # Set audio and GT directories
-audio_dir = '/Users/mattmcvicar/Desktop/Work/LibROSA_chords/small_GT'
-GT_dir = '/Users/mattmcvicar/Desktop/Work/LibROSA_chords/small_audio'
+audio_dir = '/Users/mattmcvicar/Desktop/Work/LibROSA_chords/small_audio'
+GT_dir = '/Users/mattmcvicar/Desktop/Work/LibROSA_chords/small_GT'
 
 # Set chroma/beat time output dir
 chroma_output_dir = './chroma_beat_output'

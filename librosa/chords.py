@@ -5,6 +5,7 @@
 import cPickle as pickle
 from sklearn.hmm import GaussianHMM
 import os
+import librosa
 
 def load_model(model):
     r'''Loads an HMM-based chord estimation model from file
@@ -155,8 +156,12 @@ def train_model( audio_dir, GT_dir, output_feature_dir, output_model_dir ):
   for f, gt in zip( audio_files, GT_files ):
 
     # extract training chroma
-    extract_training_chroma( f )
-    
+    full_audio_path = os.path.join( audio_dir, f )
+
+    print '  Extracting chroma for ' + full_audio_path
+
+    extract_training_chroma( full_audio_path )
+
   # For each audio/GT pair:
   #   extract beats
   #   extract chroma
@@ -166,11 +171,19 @@ def train_model( audio_dir, GT_dir, output_feature_dir, output_model_dir ):
 
   return None
 
-def extract_training_chroma( audio_file ):
+def extract_training_chroma( audio_file, beat_nfft=4096, beat_hop=64, chroma_nfft=8192, chroma_hop=2048 ):
 
   # load audio
+  y, sr = librosa.load( audio_file )
+
   # track beats
+  bpm, beat_frames = librosa.beat.beat_track(y=y, sr=sr, n_fft=beat_nfft, 
+                          hop_length=beat_hop, trim=False)
+
   # beat_frames -> beat_times -> chroma_frames
+  beat_times = librosa.core.frames_to_time(beat_frames, sr=sr, hop_length=beat_hop)
+  chroma_beat_frames = librosa.core.time_to_frames(beat_times, sr=sr, hop_length=chroma_hop)  
+
   # compute spectrum
   # HPSS
   # invert
