@@ -157,7 +157,7 @@ def train_model( audio_dir, GT_dir, output_model_name ):
   # beat-synched anns
   Chromagrams = []
   Beat_synch_chords = []
-  for f, gt in zip( audio_files[:2], GT_files[:2] ):
+  for f, gt in zip( audio_files[:3], GT_files[:3] ):
 
     # extract training chroma
     full_audio_path = os.path.join( audio_dir, f )
@@ -188,18 +188,26 @@ def train_model( audio_dir, GT_dir, output_model_name ):
   # Train observed
   Mu, Sigma = train_obs( Chromagrams, states, n_states )
 
-  # pickle model
-  HMM = {
-        'Init':  Init,
-         'Trans': Trans,
-         'Mu':    Mu,
-         'Sigma': Sigma
-         }
+  # Set up in sklearn's framework
+  # -----------------------------
+
+  # assume full covariance
+  HMM = GaussianHMM(n_components     = n_states,
+                  covariance_type  = 'full')
+
+  # set trans, init, mu, sigma
+  HMM.transmat_  = Trans
+  HMM.startprob_ = Init
+  HMM.means_     = Mu
+  HMM.covars_    = Sigma
+
+  HMM.state_labels = state_labels
+  HMM.n_states = n_states
 
   print '  Saving model'
   pickle.dump( HMM, open( output_model_name, 'w' ) )      
 
-  return Init, Trans, Mu, Sigma, state_labels
+  return HMM
 
 def extract_training_chroma( audio_file, beat_nfft=4096, beat_hop=64, chroma_nfft=8192, chroma_hop=2048 ):
 
@@ -477,7 +485,7 @@ def train_hidden( chords, n_states, no_chord='N' ):
 
   for ann in chords:
 
-     if ann[ 0 ] == no_chord:
+     if ann[ 0 ] == n_states:
 
        pass
        
