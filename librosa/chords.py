@@ -153,8 +153,11 @@ def train_model( audio_dir, GT_dir, output_feature_dir, output_model_dir ):
 
     raise ValueError( 'different number of audio (' + str(n_audio) + ')' + ' and ground truth (' + str(n_GT) + ') files.')
   
-  # Loop through zipped files
-  for f, gt in zip( audio_files, GT_files ):
+  # Loop through zipped files, storing chroma and 
+  # beat-synched anns
+  Chromagrams = []
+  Beat_synch_chords = []
+  for f, gt in zip( audio_files[:2], GT_files[:2] ):
 
     # extract training chroma
     full_audio_path = os.path.join( audio_dir, f )
@@ -169,7 +172,22 @@ def train_model( audio_dir, GT_dir, output_feature_dir, output_model_dir ):
     # beat-synch the chroma and chords
     sampled_chords = sample_chords_beat( chords, chord_start_end, beat_times, no_chord='N' )
 
-  # Train model
+    # append
+    Chromagrams.append( chroma )
+    Beat_synch_chords.append( sampled_chords )
+
+  # Post-process the chord labels:
+  # they need to be enharmonically mapped (Eb = D#)
+  # and converted to ints
+  states, state_labels = process_chords( Beat_synch_chords )
+
+  # Train hidden
+  Init, Trans = train_hidden( Beat_synch_chords )
+
+  import matplotlib.pylab as plt
+  plt.imshow( Trans, aspect='auto', interpolation='nearest')
+  plt.show()
+  gdffgd
   # pickle output
 
   return None
@@ -385,10 +403,118 @@ def sample_chords_beat(annotations, annotation_sample_times, sample_times, no_ch
   # 4. return the annotation samples
   return sampled
 
-def train_hidden( chords, n_chords ):
+def process_chords( chords ):
 
-  # copy
-  return None
+  n_songs = len( chords )
+
+  # Make an enharmonic map
+  enharmonics = {'A#': 'Bb', 'B#': 'C', 'C#':'Db','D#':'Eb','E#':'F','F#':'Gb','G#':'Ab',  # Sharps to flats
+                 'A':'A','B':'B','C':'C','D':'D','E':'E','F':'F','G':'G',                  # naturals
+                 'Ab':'Ab','Bb':'Bb','Cb':'B','Db':'Db','Eb':'Eb','Fb':'E','Gb':'Gb',      # flats to flats
+                 'N':'N', 'X':'X'} 
+
+  processed_chords = []
+  for song_chords in chords:
+
+    song_processed_chords = []
+    for chord in song_chords:
+
+      if ':' in chord:
+        rootnote, chord_type = chord.split( ':' )
+        chord_type = ':' + chord_type 
+
+      else:
+
+        rootnote = chord
+        chord_type = ''
+      
+      song_processed_chords.append( enharmonics[ rootnote ] + chord_type )  
+    
+    processed_chords.append( song_processed_chords )
+     
+  # Get unique states
+  state_labels = []
+  for song in chords:
+
+    for chord in song:
+
+      if chord not in state_labels:
+
+        state_labels.append( chord )
+
+  # sort ot make pretty
+  state_labels.sort()
+
+  # n_states
+  n_states = len( state_labels )
+
+  # don't count 'X' as a state
+  if 'X' in state_labels:
+
+    n_states = n_states - 1
+
+  states = []
+  for song in chords:
+
+    states.append( [ state_labels.index( chord ) for chord in song ] )
+
+  return states, state_labels
+
+def train_hidden( chords, no_chord='N' ):
+
+  # Init 
+  Init = np.zeros( n_states )
+
+  for ann in anns:
+
+     if ann[ 0 ] == no_chord:
+
+       pass
+       
+     else:
+        
+       Init[ ann[ 0 ] ] = Init[ ann[ 0 ] ] + 1
+    
+  # Initialise Trans
+  Trans = np.zeros( ( n_states, n_states ) )
+
+  for ann in anns: 
+
+    for ichord, chord2 in enumerate( ann[ 1 : ] ):
+      
+      chord1 = ann[ ichord - 1 ]
+
+      if chord1 == no_chord or chord2 == no_chord:
+
+        pass
+
+      else:
+          
+        Trans[ chord1, chord2 ] = Trans[ chord1, chord2 ] + 1.0
+    
+  # Pseudocounts
+  Init = Init + 10 ** ( -6 )
+  Trans = Trans + 10 ** ( -6 )
+
+  # Normalise
+  sum_init = sum( Init )
+
+  if sum_init > 0:
+
+    Init = Init / sum( Init )
+    
+  for i in range( n_states ):
+
+    sum_trans = sum( Trans[ i, : ] )
+
+    if sum_trans > 0:
+      Trans[ i, : ] = Trans[ i, : ] / sum_trans  
+
+
+  # sklearn
+  Init = Init.reshape((n_states,))
+
+  return Init, Trans      
 
 def train_obs( chroma, chords, n_chords ):
 
