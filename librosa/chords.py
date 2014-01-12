@@ -225,6 +225,10 @@ def extract_training_chroma( audio_file, beat_nfft=4096, beat_hop=64, chroma_nff
   BS_chroma = librosa.feature.sync(Raw_chroma, chroma_beat_frames, aggregate=np.median)
 
   # Loudness
+  # I can't work out how to get the logfsgram frequencies to use
+  # the perceptual weighting...just do the log10 myself
+  BS_chroma = 10 * np.log10( ( BS_chroma + 10 ** ( -12 ) ) / ( 10 ** ( -6 ) ) )
+
   # Fold pitches
   # Range normalise
 
