@@ -92,21 +92,21 @@ if show_params:
 	plt.xticks( range( HMM.n_states ), HMM.state_labels, rotation=45 )
 	plt.yticks( range( HMM.n_states ), HMM.state_labels )
 	plt.colorbar()
-	plt.title( 'Transition Matrix' )
+	plt.title( 'Transition Matrix LibROSA' )
 	plt.show()
 
 	plt.imshow( HMM.means_.T , aspect='auto', interpolation='nearest' )
 	plt.xticks( range( HMM.n_states ), HMM.state_labels, rotation=45 )
-	plt.yticks( range( 12 ), ['A','','B','C','','D','','E','F','','G',''] )
+	plt.yticks( range( 12 ), ['C','','D','','E','F','','G','','A','','B'] )
 	plt.colorbar()
-	plt.title( 'Mean vectors' )
+	plt.title( 'Mean vectors LibROSA' )
 	plt.show()
 
-	plt.imshow(HMM.covars_[ 1, :, : ], aspect='auto', interpolation='nearest')
+	plt.imshow(HMM.covars_[ 0, :, : ], aspect='auto', interpolation='nearest')
 	plt.colorbar()
-	plt.title( 'Covariance Matrix for ' + HMM.state_labels[ 1 ] )
-	plt.yticks( range( 12 ), ['A','','B','C','','D','','E','F','','G',''] )
-	plt.xticks( range( 12 ), ['A','','B','C','','D','','E','F','','G',''] )
+	plt.title( 'Covariance Matrix LibROSA for ' + HMM.state_labels[ 1 ] )
+	plt.yticks( range( 12 ), ['C','','D','','E','F','','G','','A','','B'] )
+	plt.xticks( range( 12 ), ['C','','D','','E','F','','G','','A','','B'] )
 	plt.show()
 
 # ----------
