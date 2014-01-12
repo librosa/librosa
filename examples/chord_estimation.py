@@ -16,19 +16,36 @@ makes a prediction, showing a visualisation of the predicted
 and actual chords, and the performance (%  beat frames 
 	correctly identified )
 
+Inputs (set below) audio_dir: directory of audio files, in any format
+                              librosa can read
+
+                   GT_dir   : directory of ground truth files, in Chris
+                              Harte's format:
+
+                                  start end chord
+
+                              with any kind of whitespace delimitation,
+                              chord labels in the form root:chord_type
+                              (or 'N' or 'X')
+
+                              For each audio example in audio_dir, there
+                              must be exactly one GT in GT_dir with the 
+                              same 'basename' (filename with no extension)
+
+          model_output_dir  : where to save the pickled model
+
+               show_params  : whether to show the trained HMM parameters 
+                              ( True ) or not ( False )
+
+               show_chords  : whether to show the predicted chords against
+                              the ground truth ( True ) or not ( False )                             
+
+
 """
 
-# -----
-# Setup
-# -----
-import sys
-import os
-sys.path.append(sys.path.append("/Users/mattmcvicar/Desktop/Work/audioread"))
-sys.path.append(sys.path.append("/Users/mattmcvicar/Desktop/librosa"))
-
-import librosa
-import matplotlib.pylab as plt
-import numpy as np
+# ----------
+# Parameters 
+# ----------
 
 # Set audio and GT directories
 audio_dir = '/Users/mattmcvicar/Desktop/Work/LibROSA_chords/small_audio'
@@ -43,6 +60,19 @@ show_params = True
 # show chord predictions vs actual chords?
 show_chords = True
 
+# -----
+# Setup
+# -----
+
+import sys
+import os
+sys.path.append(sys.path.append("/Users/mattmcvicar/Desktop/Work/audioread"))
+sys.path.append(sys.path.append("/Users/mattmcvicar/Desktop/librosa"))
+
+import librosa
+import matplotlib.pylab as plt
+import numpy as np
+
 # -----------
 # train model
 # -----------
@@ -50,6 +80,7 @@ show_chords = True
 print ''
 print '  Training model'
 print '  --------------'
+
 HMM = librosa.chords.train_model( audio_dir, GT_dir, model_output_dir )
 
 # ------------------------

@@ -136,7 +136,91 @@ def write_chords( chords, start_times, end_times, outfile ):
         # write last chord
         f.write( ' '.join( [ str( t ), str ( end ), str( current_chord )]) )
 
-def train_model( audio_dir, GT_dir, output_model_name ):
+def train_model( audio_dir, GT_dir, output_model_name='./chord_model.p' ):
+
+    r'''Top-level function for training an HMM-based chord_chroma
+        recognition system
+
+    :usage:
+        >>> librosa.chords.train_model( audio_dir, GT_dir, output_model_name )
+
+    :parameters:
+
+      - audio_dir              : string
+
+        path to a directory of audio files
+
+      - GT_dir                 : string
+
+        path to a directory of chord files in Chris Harte's
+        format:
+
+              start end chord
+
+        start and end are onset/offset times in seconds,
+        chord is a chord label in the form rootnote:chordtype,
+        with the possible exceptions 'N' (no chord, silence or noise)
+        or 'X' (unknown chord)
+
+      - output_model_name      : string
+
+        where to pickle the model to (including extension)
+
+      - outfile                : string
+
+          path of file to write to (including extension). Defaults
+          to './chord_model.p'
+
+    :returns: 
+
+      - HMM                    : sklearn.GaussianHMM
+
+        A sklearn object,with fields:
+
+           HMM.state_labels    - list of names of chords in GT,
+                                 including 'N' and 'X'
+
+           HMM.n_states        - number of actual chords in the 
+                                 model, excluding 'X'. If 'X' appears
+                                 in the ground truth, it will be stored
+                                 as the last index:
+
+                                 ( HMM.state_labels[-1] = 'X' )
+
+                                 meaning that the variable HMM can be 
+                                 used to quickly skip over 'X's in training
+
+           HMM.Init            - (n_states,) tuple of initial distribution
+                                 probabilities. Indexed by HMM.state_labels
+
+           HMM.Trans           - (n_states, n_states) np.ndarray of state
+                                 to state probabilities, indexed by 
+                                 HMM.state_labels   
+
+           HMM.Mu              - (12, n_states) np.ndarray 12-dimensional 
+                                 mean vector for each chord, with columns 
+                                 indexed by HMM.state_labels
+
+           HMM.Sigma           - (n_states, 12, 12) np.ndarray of covariance
+                                 matrices for each chord. First dimension is
+                                 indexed by HMM.state_labels
+
+         NOTE! All probabilities are in regular (non-log) form, as expected
+         by sklearn.                          
+
+    ''' 
+
+  # Basic plan:
+  #
+  # 1) Get filenames and check consistency
+  # 2) For each audio/GT pair
+  #    compute chroma
+  #    extract GT
+  #    synchonrise chroma and GT
+  # 3) Post-process chord labels
+  # 4) Train model  
+  # 5) Save in sklearn format
+  # 6) save as pickle
 
   # Get filenames, checking for MacOSX BS
   audio_files = os.listdir( audio_dir )
@@ -157,7 +241,8 @@ def train_model( audio_dir, GT_dir, output_model_name ):
   # beat-synched anns
   Chromagrams = []
   Beat_synch_chords = []
-  for f, gt in zip( audio_files[:3], GT_files[:3] ):
+  #for f, gt in zip( audio_files, GT_files ):
+  for f, gt in zip( audio_files[:5], GT_files[:5] ):  
 
     # extract training chroma
     full_audio_path = os.path.join( audio_dir, f )
@@ -172,16 +257,16 @@ def train_model( audio_dir, GT_dir, output_model_name ):
     # beat-synch the chroma and chords
     sampled_chords = sample_chords_beat( chords, chord_start_end, beat_times, no_chord='N' )
 
-    # append
+    # store
     Chromagrams.append( chroma )
     Beat_synch_chords.append( sampled_chords )
 
   # Post-process the chord labels:
-  # they need to be enharmonically mapped (Eb = D#)
-  # and converted to ints
+  # they need to be enharmonically mapped (D# -> Eb)
+  # and converted to ints for sklearn
   states, state_labels, n_states = process_chords( Beat_synch_chords )
 
-  # Train hidden
+  # Train hidden chain
   print '  Training model'
   Init, Trans = train_hidden( states, n_states )
 
@@ -189,11 +274,10 @@ def train_model( audio_dir, GT_dir, output_model_name ):
   Mu, Sigma = train_obs( Chromagrams, states, n_states )
 
   # Set up in sklearn's framework
-  # -----------------------------
 
-  # assume full covariance
+  # Full covariance Gaussian emission HMM
   HMM = GaussianHMM(n_components     = n_states,
-                  covariance_type  = 'full')
+                    covariance_type  = 'full')
 
   # set trans, init, mu, sigma
   HMM.transmat_  = Trans
@@ -201,9 +285,11 @@ def train_model( audio_dir, GT_dir, output_model_name ):
   HMM.means_     = Mu
   HMM.covars_    = Sigma
 
+  # Additional state info
   HMM.state_labels = state_labels
   HMM.n_states = n_states
 
+  # Save model
   print '  Saving model'
   pickle.dump( HMM, open( output_model_name, 'w' ) )      
 
