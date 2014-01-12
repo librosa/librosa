@@ -297,27 +297,50 @@ def train_model( audio_dir, GT_dir, output_model_name='./chord_model.p' ):
 
 def extract_training_chroma( audio_file, beat_nfft=4096, beat_hop=64, chroma_nfft=8192, chroma_hop=2048 ):
 
+  """
+
+  Extracts chroma for use in chords.train_model
+
+  """
+
+  # Basic steps:
+  #
+  # Beat track
+  # HPSS
+  # Loudness calculation
+  # beat-synchronisation
+  # Pitch summation
+  # Range-normalisation
+
   # load audio
   y, sr = librosa.load( audio_file )
 
   # track beats
-  bpm, beat_frames = librosa.beat.beat_track(y=y, sr=sr, n_fft=beat_nfft, 
-                          hop_length=beat_hop, trim=False)
+  bpm, beat_frames = librosa.beat.beat_track( y=y, sr=sr, n_fft=beat_nfft, 
+                          hop_length=beat_hop, trim=False )
 
-  # beat_frames -> beat_times -> chroma_frames
-  beat_times = librosa.core.frames_to_time(beat_frames, sr=sr, hop_length=beat_hop)
+  # Need to beat-synchronise chroma, but not necessarily that case that
+  # beat_nfft == chroma_nfft, beat_hop == chroma_hop
+  # and in fact they definitely shouldn't be, since in the first case
+  # we want good time resolution, in the second case we want good
+  # frequency resolution
+  # so, need to do beat_frames -> beat_times -> chroma_frames
+  beat_times = librosa.core.frames_to_time( beat_frames, sr=sr, hop_length=beat_hop )
+
   chroma_beat_frames = librosa.core.time_to_frames(beat_times, sr=sr, hop_length=chroma_hop)  
 
   # compute spectrum
-  S = librosa.stft(y, n_fft=chroma_nfft, hop_length=chroma_hop)
+  S = librosa.stft( y, n_fft=chroma_nfft, hop_length=chroma_hop )
 
   # HPSS
-  Harmonic, Percussive = librosa.decompose.hpss(S)
+  Harmonic, Percussive = librosa.decompose.hpss( S )
 
   # invert
-  y_harmonic = librosa.istft(Harmonic)
+  y_harmonic = librosa.istft( Harmonic )
 
   # Logspectrum
+  # FIXME: libROSA's tuning module is currently not to be
+  # trusted, set to 0.0
   Raw_chroma = librosa.feature.logfsgram( y_harmonic, sr, 
              n_fft=chroma_nfft, hop_length=chroma_hop, 
               normalise_D=False, tuning=0.0)
@@ -354,15 +377,16 @@ def extract_training_chroma( audio_file, beat_nfft=4096, beat_hop=64, chroma_nff
 
   # Fold pitches
   Chroma = np.zeros( ( 12, BS_chroma.shape[ 1 ] ) )
+
   for i in range( 12 ):
 
-    Chroma[ i, : ] = np.sum( BS_chroma[ i::12,: ], axis=0 )  
+    Chroma[ i, : ] = np.sum( BS_chroma[ i : : 12, : ], axis=0 )  
 
   # Range normalise
   for t in range( Chroma.shape[ 1 ] ):
 
-    mi = min( Chroma[ :,t ] )
-    ma = max( Chroma[ :, t] )
+    mi = min( Chroma[ :, t ] )
+    ma = max( Chroma[ :, t ] )
 
     if ( ma > mi ):
 
@@ -379,14 +403,24 @@ def extract_training_chroma( audio_file, beat_nfft=4096, beat_hop=64, chroma_nff
 
 def read_chords( chord_file ):
 
+
+  """
+
+  reads a chord file, returning the chord labels
+  and the chord start/end times
+ 
+  """
+
+  # open, read
   chord_data = open( chord_file ).readlines()
 
   # sometimes reads an empty line
   chord_data = [c for c in chord_data if c != '\n']
 
+  # Need 
   n_samples = len( chord_data )
 
-  # Prepare annotations
+  # Prepare annotations in a n_samples, 2 matrix
   annotation_sample_times = np.zeros( ( n_samples, 2 ) )
   annotations = []
 
@@ -395,41 +429,97 @@ def read_chords( chord_file ):
     line_data = line.strip().split()
 
     annotations.append( line_data[ 2 ] )
+
     annotation_sample_times[ iline, 0 ] = float( line_data[ 0 ] )
+
     annotation_sample_times[ iline, 1 ] = float( line_data[ 1 ] )
    
   return annotations, annotation_sample_times
 
-def sample_chords_beat(annotations, annotation_sample_times, sample_times, no_chord='N'):
+def sample_chords_beat( annotations, annotation_sample_times, sample_times, no_chord='N' ):
 
-  # 1. Initialisation 
+  """
+
+  Beat-synchronises chord annotations. 
+
+    :parameters:
+
+      - annotations              : list
+
+        list of chord symbols from chords.read_chords
+
+      - annotation_sample_times  : (number_samples, 2) np.ndarray
+        
+        matrix of chord start (first column) and end (second column)
+        times in seconds from chords.read_chords
+
+      - sample_times             : iterable of length number_windows
+      
+        times, in seconds when beats were detected. The resulting
+        sampled chords will be of length number_windows + 1, since 
+        we are tracking the most prevelant chord _between_ beats 
+        ( number_windows - 1), but also will have the chord before
+        the first and after the last beat ( + 2 )
+
+      - no_chord                 : string
+      
+        symbol to use when no chord can be assigned. This can happen
+        if the first beat is before the first chord symbol, or if 
+        the audio is longer than the ground truth specifies. Defaults
+        to 'N'
+
+    :returns:
+    
+      - sampled                  : list
+
+        list of length number_windows + 1 with the most prevelant 
+        chord between each beat (or before first, after last beat)      
+
+  """
+
+  # plan:
+  # 
+  # 1) Initialse
+  # 2) Fill the time before the first beat with no_chord
+  # 3) Loop through annotation_sample_times and sample_times,
+  #    assigning the current_chord whilst the beat window contains
+  #    a single chord, or taking a majority vote if the beat window
+  #    covers two or more chords
+  # 4) Fill the time after the last beat with no_chord
+
+  # 1) Initialise
   number_samples = annotation_sample_times.shape[ 0 ]
 
-  number_windows = len(sample_times)
+  number_windows = len( sample_times )
 
-  sampled = [ None ] * ( number_windows + 1 ) # Store the annotations of a song
+  # Initialise output list
+  sampled = [ None ] * ( number_windows + 1 ) 
 
-  t_anns = 1           # which label we're at in the unsampled anns
-  t_prev_anns = 1      # 
-  t_sample = 1         # which sampled window (ie the output) we're in
+  # which row in the annotation we're in
+  t_anns = 1           
 
-  # 1.1 For the first frame, if it is less than the start time, then no
-  # chord
+  # the previous time
+  t_prev_anns = 1     
+
+  # which beat window we're in 
+  t_sample = 1        
+
+  # 2) until we reach the first chord symbol, store no_chord
   while ( sample_times[ t_sample - 1 ] < annotation_sample_times[ 0, 0 ] ):
 
     sampled[ t_sample - 1 ] = no_chord
 
     t_sample = t_sample + 1
 
-  # 1.2 Assure that t_sample falls in a chord region
+  # Assure that t_sample falls in a chord region
   while ( annotation_sample_times[ t_anns - 1, 1 ] < sample_times[ t_sample - 1 ] ):
 
         t_anns = t_anns + 1
      
-  # 2. go though all time grid
+  # 3) go though all annotation rows and beat windows
   while ( t_sample <= number_windows and t_anns <= number_samples ):
 
-    # 2.1 If TS(ts)<TA(ta), then this frame falls in this chord region
+    # Case 1: current beat is within current annotation start/end
     if ( sample_times[ t_sample - 1 ] <= annotation_sample_times[ t_anns - 1, 1 ] ):
 
       # A. if the interval between two beats has more than 1 chord
@@ -452,38 +542,44 @@ def sample_chords_beat(annotations, annotation_sample_times, sample_times, no_ch
         countInterval = countInterval + 1
                 
         # Between intervals
-        for j in range(t_prev_anns+1,t_anns):                      
-          intervalC[countInterval - 1] = annotation_sample_times[ j - 1, 1 ] - annotation_sample_times[ j - 1, 0 ]                        
+        for j in range( t_prev_anns + 1 , t_anns ): 
+
+          intervalC[ countInterval - 1 ] = annotation_sample_times[ j - 1, 1 ] - annotation_sample_times[ j - 1, 0 ] 
+
           countInterval = countInterval + 1                   
                 
         # Last interval
-        intervalC[countInterval - 1] = sample_times[t_sample - 1] - annotation_sample_times[ t_anns - 1, 0 ]     
+        intervalC[ countInterval - 1 ] = sample_times[ t_sample - 1 ] - annotation_sample_times[ t_anns - 1, 0 ]     
                 
         # Majority vote
         maxIndex = np.argmax( intervalC )
 
-        #sampled[ t_sample - 1 ] = annotations[ t_prev_anns - 1 - 1 + maxIndex ]
+        # Store
         sampled[ t_sample - 1 ] = annotations[ t_prev_anns - 1 + maxIndex ]
 
+        # update
         t_prev_anns = t_anns
         
-      # B. if the interval between two beats falls in 1 chord
+      # B. This beat falls entirely within one chord label
       else:
 
-        sampled[t_sample - 1] = annotations[t_anns - 1]
+        sampled[ t_sample - 1 ] = annotations[ t_anns - 1 ]
 
-      t_sample=t_sample + 1
+      # increase beat index
+      t_sample = t_sample + 1
         
-    # 2.2 Else, find the chord interval this beat falls in
+    # Case 2: increase annotation row 
     else:
-      while (t_anns <= number_samples and annotation_sample_times[ t_anns - 1, 1] < sample_times[t_sample - 1]):
+      while ( t_anns <= number_samples ) and  ( annotation_sample_times[ t_anns - 1, 1 ] < sample_times[ t_sample - 1 ] ):
         t_anns = t_anns + 1
          
-  # 3. if there are still samples left, assign no chord
+  # 4) If there are still samples left, assign no chord
   if t_sample <= number_windows:
-    sampled[ t_sample-1 : ] = [ no_chord ] * ( len( sampled ) - t_sample + 1 )
+
+    sampled[ t_sample - 1 : ] = [ no_chord ] * ( len( sampled ) - t_sample + 1 )
       
-  if (t_anns == number_samples): # The last chord after final beats
+  # The last chord after final beat    
+  if ( t_anns == number_samples ): 
 
     sampled[number_windows] = annotations[t_anns - 1]
   
@@ -496,13 +592,16 @@ def sample_chords_beat(annotations, annotation_sample_times, sample_times, no_ch
     intervalC[ countInterval - 1 ] = annotation_sample_times[ t_anns - 1, 1 ] - sample_times[ number_windows - 1 ]
     countInterval = countInterval + 1
     
-    for j in range(t_anns + 1, number_samples + 1):
+    for j in range( t_anns + 1, number_samples + 1 ):
 
-      intervalC[countInterval - 1] = annotation_sample_times[j - 1, 1] - annotation_sample_times[j - 1, 0]
+      intervalC[ countInterval - 1 ] = annotation_sample_times[ j - 1, 1 ] - annotation_sample_times[ j - 1, 0 ]
       countInterval = countInterval + 1
 
-    maxIndex = np.argmax(intervalC)
-    sampled[number_windows] = annotations[t_anns - 1 + maxIndex]
+    # get max
+    maxIndex = np.argmax( intervalC )
+
+    # and assign
+    sampled[ number_windows ] = annotations[ t_anns - 1 + maxIndex ]
 
   # 4. return the annotation samples
   return sampled
