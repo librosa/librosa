@@ -161,7 +161,10 @@ def train_model( audio_dir, GT_dir, output_feature_dir, output_model_dir ):
 
     print '  Extracting chroma for ' + full_audio_path
 
-    extract_training_chroma( full_audio_path )
+    chroma, beat_times = extract_training_chroma( full_audio_path )
+    print chroma.shape
+    print len(beat_times)
+    dfsfsd
 
   # For each audio/GT pair:
   #   extract beats
@@ -230,15 +233,28 @@ def extract_training_chroma( audio_file, beat_nfft=4096, beat_hop=64, chroma_nff
   BS_chroma = 10 * np.log10( ( BS_chroma + 10 ** ( -12 ) ) / ( 10 ** ( -6 ) ) )
 
   # Fold pitches
+  Chroma = np.zeros( ( 12, BS_chroma.shape[ 1 ] ) )
+  for i in range( 12 ):
+
+    Chroma[ i, : ] = np.sum( BS_chroma[ i::12,: ], axis=0 )  
+
   # Range normalise
+  for t in range( Chroma.shape[ 1 ] ):
 
-  import matplotlib.pylab as plt
-  plt.imshow( BS_chroma, aspect='auto',interpolation='nearest' )
-  plt.colorbar()
-  plt.show()
-  dsdfs  
+    mi = min( Chroma[ :,t ] )
+    ma = max( Chroma[ :, t] )
 
-  return None
+    if ( ma > mi ):
+
+      Chroma[ :,t ] = ( Chroma[ :, t ] - mi ) / ( ma - mi )
+
+    else:
+    
+      Chroma[ :, t ] = 0
+
+  # Roll to be consistent with librosa chroma
+
+  return Chroma, beat_times
 
 def sample_chords_beat( chords, chord_times, beat_times, no_chord ):
 
