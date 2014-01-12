@@ -4,6 +4,7 @@
 # Add paths
 import cPickle as pickle
 from sklearn.hmm import GaussianHMM
+import os
 
 def load_model(model):
     r'''Loads an HMM-based chord estimation model from file
@@ -133,6 +134,53 @@ def write_chords( chords, start_times, end_times, outfile ):
         # write last chord
         f.write( ' '.join( [ str( t ), str ( end ), str( current_chord )]) )
 
-def train_model( audio_dir, GT_dir ):
+def train_model( audio_dir, GT_dir, output_feature_dir, output_model_dir ):
 
-  return None    
+  # Get filenames
+
+  print audio_dir
+  print GT_dir
+  # check for consistencey
+  # For each audio/GT pair:
+  #   extract beats
+  #   extract chroma
+  #   assign a chord label to each chroma frame
+  # Train model
+  # pickle output
+
+  return None
+
+def extract_training_chroma( audio_file ):
+
+  # load audio
+  # track beats
+  # beat_frames -> beat_times -> chroma_frames
+  # compute spectrum
+  # HPSS
+  # invert
+  # Logspectrum
+  # beat-synch
+  # Loudness
+  # Fold pitches
+  # Range normalise
+
+  return None
+
+def sample_chords_beat( chords, chord_times, beat_times, no_chord ):
+
+  # copy
+  return None  
+
+def train_hidden( chords, n_chords ):
+
+  # copy
+  return None
+
+def train_obs( chroma, chords, n_chords ):
+
+  # copy
+  return None
+
+
+
+
