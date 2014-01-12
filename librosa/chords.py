@@ -179,15 +179,18 @@ def train_model( audio_dir, GT_dir, output_feature_dir, output_model_dir ):
   # Post-process the chord labels:
   # they need to be enharmonically mapped (Eb = D#)
   # and converted to ints
-  states, state_labels = process_chords( Beat_synch_chords )
+  states, state_labels, n_states = process_chords( Beat_synch_chords )
 
   # Train hidden
-  Init, Trans = train_hidden( Beat_synch_chords )
+  Init, Trans = train_hidden( states, n_states )
+
+  # Train observed
 
   import matplotlib.pylab as plt
   plt.imshow( Trans, aspect='auto', interpolation='nearest')
   plt.show()
   gdffgd
+
   # pickle output
 
   return None
@@ -458,14 +461,14 @@ def process_chords( chords ):
 
     states.append( [ state_labels.index( chord ) for chord in song ] )
 
-  return states, state_labels
+  return states, state_labels, n_states
 
-def train_hidden( chords, no_chord='N' ):
+def train_hidden( chords, n_states, no_chord='N' ):
 
   # Init 
   Init = np.zeros( n_states )
 
-  for ann in anns:
+  for ann in chords:
 
      if ann[ 0 ] == no_chord:
 
@@ -478,7 +481,7 @@ def train_hidden( chords, no_chord='N' ):
   # Initialise Trans
   Trans = np.zeros( ( n_states, n_states ) )
 
-  for ann in anns: 
+  for ann in chords: 
 
     for ichord, chord2 in enumerate( ann[ 1 : ] ):
       
@@ -518,9 +521,53 @@ def train_hidden( chords, no_chord='N' ):
 
 def train_obs( chroma, chords, n_chords ):
 
-  # copy
-  return None
+  # initialise empty all chroma and anns
+  tmax = 0
+  for ann, chrom in zip( chords, chroma):
 
+    tmax = tmax + len(ann)
+
+  all_anns = [None] * tmax
+  all_chroma = np.zeros((12, tmax ))
+
+  # fill all anns and chroma
+  t = 0
+
+  for c, a in zip( chroma, anns ):
+
+    all_anns[ t : t + len( a ) ] = a
+    all_chroma[ :, t : t + len( a ) ] = c
+
+    t = t + len(a)
+
+
+  n_frames = len(all_anns)
+  n_dims = all_chroma.shape[ 0 ]   
+        
+  # initialse Mu, Sigma      
+  Mu = np.zeros( ( n_dims, n_states ) ) 
+  Sigma = np.zeros( ( n_states, n_dims, n_dims ) )   
+        
+  for chord in range( n_states ):
+
+    # Collect the chroma for this chord
+    chord_indices = [ ichord for ichord,ann in enumerate( all_anns ) if ann == chord ]  
+    chord_chroma = all_chroma[ :, chord_indices ]
+
+    # Mean
+    Mu[ :, chord ] = np.mean( chord_chroma, 1 )
+       
+    # Variance   
+    sigma_prior = 0.01 * np.identity( n_dims )
+    chord_chroma = np.dot(chord_chroma , chord_chroma.T) / len( chord_indices )
+    
+    Sigma[chord, :] = chord_chroma -  np.dot( Mu[ :, chord ].reshape( n_dims, 1 ), Mu[ :, chord ].reshape( 1, n_dims ) ) + sigma_prior
+
+
+  # sklearn
+  Mu = Mu.T
+
+  return Mu, Sigma
 
 
 
