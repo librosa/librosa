@@ -341,8 +341,8 @@ def extract_training_chroma( audio_file, beat_nfft=4096, beat_hop=64, chroma_nff
   # FIXME: libROSA's tuning module is currently not to be
   # trusted, set to 0.0
   Raw_chroma = librosa.feature.logfsgram( y_harmonic, sr, 
-             n_fft=chroma_nfft, hop_length=chroma_hop, 
-              normalise_D=False, tuning=0.0)
+                n_fft=chroma_nfft, hop_length=chroma_hop, 
+                tuning=0.0)
 
   # beat-synch
   # if last chroma_beat_frame is the length of Raw_chroma, 
