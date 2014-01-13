@@ -59,8 +59,8 @@ def logfsgram(y, sr, n_fft=4096, hop_length=512, **kwargs):
     else:
         D = librosa.stft(y, n_fft=n_fft, hop_length=hop_length)
 
-    # Normalize, retain power
-    D = np.abs(D / D.max())**2
+    # Retain power
+    D = np.abs(D)**2
 
     # Build the CQ basis
     cq_basis = librosa.filters.logfrequency(sr, n_fft=n_fft, **kwargs)
