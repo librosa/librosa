@@ -6,7 +6,7 @@ import numpy as np
 import librosa.core, librosa.util
 
 #-- Chroma --#
-def logfsgram(y, sr, n_fft=4096, hop_length=512, normalise_D=True, **kwargs):
+def logfsgram(y, sr, n_fft=4096, hop_length=512, **kwargs):
     '''Compute a log-frequency spectrogram (piano roll) using a fixed-window STFT.
 
     :usage:
@@ -59,12 +59,8 @@ def logfsgram(y, sr, n_fft=4096, hop_length=512, normalise_D=True, **kwargs):
     else:
         D = librosa.stft(y, n_fft=n_fft, hop_length=hop_length)
 
-    # Normalize, retain power
-    if normalise_D:
-      D = np.abs(D / D.max())**2
-      
-    else:
-      D = np.abs( D )**2
+    # Retain power
+    D = np.abs( D )**2
 
     # Build the CQ basis
     cq_basis = librosa.filters.logfrequency(sr, n_fft=n_fft, **kwargs)
