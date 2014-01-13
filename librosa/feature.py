@@ -356,7 +356,91 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=(150.0, 300.0), fmax
         magnitudes[bins, t] = mags
 
     return pitches, magnitudes, D
-  
+
+def piptrack(S=None, y=None, sr=22050, fmin=150.0, fmax=4000.0, threshold=.1):
+    '''Pitch tracking on thresholded parabolically-interpolated STFT
+
+    :usage:
+        >>> pitches, magnitudes = librosa.feature.piptrack(y, sr)
+
+    :parameters:
+      - S: np.ndarray or None
+          magnitude or power spectrogram
+          
+      - y: np.ndarray or None
+          audio signal
+      
+      - sr : int
+          audio sampling rate of the audio signal
+      
+      - threshold : float
+          A bin in spectrum X is considered a pitch when it is greater than threshold*X.max()
+      
+      - fmin : float
+          lower frequency cutoff.
+        
+      - fmax : float
+          upper frequency cutoff.
+          
+    .. note::
+        One of ``S`` or ``y`` must be provided.
+        If ``S`` is not given, it is computed from ``y`` using
+        the default parameters of ``stft``.
+    
+    :returns:
+      - pitches : np.ndarray, shape=(d,t)
+      - magnitudes : np.ndarray, shape=(d,t)
+          Where ``d`` is the subset of FFT bins within ``fmin`` and ``fmax``.
+        
+          ``pitches[i, t]`` contains instantaneous frequencies at time ``t``
+          ``magnitudes[i, t]`` contains their magnitudes.
+          
+    .. note::
+    
+      See https://ccrma.stanford.edu/~jos/sasp/Sinusoidal_Peak_Interpolation.html for details.
+
+    '''
+    
+    # Check that we received an audio time series or STFT
+    if S is None:
+        if y is None:
+            raise ValueError('Either "y" or "S" must be provided')
+        S = np.abs(librosa.core.stft(y))
+
+    # Truncate to feasible region
+    fmin = np.maximum(0, fmin)
+    fmax = np.minimum(fmax, sr / 2)
+
+    # Pre-allocate output
+    pitches = np.zeros(S.shape)
+    magnitudes = np.zeros(S.shape)
+
+    # Pre-compute FFT frequencies
+    fft_freqs = librosa.core.fft_frequencies(sr=sr, n_fft=(S.shape[0] - 1)*2)
+
+    for n, X in enumerate(S.T):
+        # Remove entries below the threshold
+        Xc = X*(X > threshold*X.max())
+        # Find local maxima
+        local_maxima = np.flatnonzero(librosa.core.localmax(Xc))
+        # Remove any local maxima outside of the specified range
+        local_maxima = local_maxima[fft_freqs[local_maxima] > fmin]
+        local_maxima = local_maxima[fft_freqs[local_maxima] < fmax]
+        # Parabolic interpolation
+        ym1 = X[local_maxima - 1]
+        y0 = X[local_maxima]
+        yp1 = X[local_maxima + 1]
+        shift = (yp1 - ym1)/(2*(2*y0 - yp1 - ym1))
+        local_max_interp = local_maxima + shift
+        local_max_magnitudes = y0 - .25*(ym1 - yp1)*shift
+        # Convert to frequencies
+        local_max_freqs = local_max_interp*sr/(2.0*(S.shape[0] - 1))
+        # Store pitch and magnitude
+        pitches[local_maxima, n] = local_max_freqs
+        magnitudes[local_maxima, n] = local_max_magnitudes
+
+    return pitches, magnitudes
+
 #-- Mel spectrogram and MFCCs --#
 def mfcc(S=None, y=None, sr=22050, n_mfcc=20):
     """Mel-frequency cepstral coefficients
