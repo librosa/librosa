@@ -357,11 +357,11 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=(150.0, 300.0), fmax
 
     return pitches, magnitudes, D
 
-def piptrack(S=None, y=None, sr=22050, fmin=150.0, fmax=4000.0, threshold=.1):
+def piptrack(y=None, sr=22050, S=None, fmin=150.0, fmax=4000.0, threshold=.1):
     '''Pitch tracking on thresholded parabolically-interpolated STFT
 
     :usage:
-        >>> pitches, magnitudes = librosa.feature.piptrack(y, sr)
+        >>> pitches, magnitudes = librosa.feature.piptrack(y=y, sr=sr)
 
     :parameters:
       - S: np.ndarray or None
