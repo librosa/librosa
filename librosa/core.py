@@ -70,7 +70,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None, dtype=np.float32)
     with audioread.audio_open(os.path.realpath(path)) as input_file:
         sr_native = input_file.samplerate
 
-        s_start = np.floor(sr_native * offset) * input_file.channels
+        s_start = int(np.floor(sr_native * offset) * input_file.channels)
         if duration is None:
             s_end = np.inf
         else:
@@ -1182,6 +1182,8 @@ def autocorrelate(y, max_size=None):
 
     if max_size is None:
         return result
+    else:
+        max_size = int(max_size)
     
     return result[:max_size]
 
