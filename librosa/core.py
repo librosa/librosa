@@ -177,7 +177,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None):
         >>> D = librosa.stft(y)
 
     :parameters:
-      - y           : np.ndarray
+      - y           : np.ndarray, real-valued
           the input signal (audio time series)
 
       - n_fft       : int
@@ -213,9 +213,6 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None):
     if hop_length is None:
         hop_length = int(win_length / 4)
 
-    n_specbins  = 1 + int(n_fft / 2)
-    n_frames    = 1 + int( (len(y) - n_fft) / hop_length)
-
     if window is None:
         # Default is an asymmetric Hann window
         fft_window = scipy.signal.hann(win_length, sym=False)
@@ -238,9 +235,13 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None):
     fft_window  = np.pad(fft_window, (lpad, n_fft - win_length - lpad), mode='constant')
     
     # Reshape so that the window can be broadcast
-    fft_window  = fft_window.reshape((1,-1))
+    fft_window  = fft_window.reshape((1, -1))
 
-    # Window the time series
+    # Window the time series. 
+    # This uses low-level stride manipulation to avoid doing multiple 
+    # overlapping copies of the audio data
+    n_frames    = 1 + int( (len(y) - n_fft) / hop_length)
+
     data_matrix = np.resize(y, (n_frames, n_fft) )
     data_matrix.strides = (hop_length * y.itemsize, y.itemsize)
     
