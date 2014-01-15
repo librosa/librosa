@@ -236,18 +236,21 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None):
     # Pad the window out to n_fft size
     lpad        = (n_fft - win_length)/2
     fft_window  = np.pad(fft_window, (lpad, n_fft - win_length - lpad), mode='constant')
+    
+    # Reshape so that the window can be broadcast
+    fft_window  = fft_window.reshape((1,-1))
 
-    # allocate output array
-    stft_matrix = np.empty( (n_specbins, n_frames), dtype=np.complex64)
-
+    # window up the time series
+    data_matrix = np.empty( (n_frames, n_fft), dtype=y.dtype)
+    
     for i in xrange(n_frames):
         sample  = i * hop_length
-        frame   = fft.fft(fft_window * y[sample:(sample+n_fft)])
+        data_matrix[i] = y[sample:(sample+n_fft)]
+    
+    # Conjugate here to match phase from DPWE code
+    stft_matrix = fft.rfft(fft_window * data_matrix, axis=-1).conj().astype(np.complex64)
 
-        # Conjugate here to match phase from DPWE code
-        stft_matrix[:, i]  = frame[:n_specbins].conj()
-
-    return stft_matrix
+    return stft_matrix.T
 
 def istft(stft_matrix, hop_length=None, win_length=None, window=None):  
     """
