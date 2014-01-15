@@ -20,7 +20,7 @@ def frame(y, frame_length=2048, hop_length=64):
       - y : np.ndarray, ndim=1
         Time series to frame
 
-      - win_length : int > 0
+      - frame_length : int > 0
         Length of the frame in samples
 
       - hop_length : int > 0
