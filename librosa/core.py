@@ -4,7 +4,7 @@
 import os.path
 import audioread
 
-from . import filters, feature
+from . import filters, feature, util
 
 import re
 
@@ -235,20 +235,15 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None):
     fft_window  = np.pad(fft_window, (lpad, n_fft - win_length - lpad), mode='constant')
     
     # Reshape so that the window can be broadcast
-    fft_window  = fft_window.reshape((1, -1))
+    fft_window  = fft_window.reshape((-1, 1))
 
     # Window the time series. 
-    # This uses low-level stride manipulation to avoid doing multiple 
-    # overlapping copies of the audio data
-    n_frames    = 1 + int( (len(y) - n_fft) / hop_length)
+    y_frames    = util.frame(y, frame_length=n_fft, hop_length=hop_length)
 
-    data_matrix = np.resize(y, (n_frames, n_fft) )
-    data_matrix.strides = (hop_length * y.itemsize, y.itemsize)
-    
     # RFFT and Conjugate here to match phase from DPWE code
-    stft_matrix = fft.rfft(fft_window * data_matrix, axis=-1).conj().astype(np.complex64)
+    stft_matrix = fft.rfft(fft_window * y_frames, axis=0).conj().astype(np.complex64)
 
-    return stft_matrix.T
+    return stft_matrix
 
 def istft(stft_matrix, hop_length=None, win_length=None, window=None):  
     """

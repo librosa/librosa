@@ -4,6 +4,43 @@
 import numpy as np
 import os, glob
 
+def frame(y, frame_length=2048, hop_length=64):
+    '''Slice a time series into overlapping frames.
+    
+    This implementation uses low-level stride manipulation to avoid
+    redundant copies of the time series data.
+
+    :usage:
+        >>> # Load a file
+        >>> y, sr = librosa.load('file.mp3')
+        >>> # Extract 2048-sample frames from y with a hop of 64
+        >>> y_frames = librosa.util.frame(y, frame_length=2048, hop_length=64)
+
+    :parameters:
+      - y : np.ndarray, ndim=1
+        Time series to frame
+
+      - win_length : int > 0
+        Length of the frame in samples
+
+      - hop_length : int > 0
+        Number of samples to hop between frames
+
+    :returns:
+      - y_frames : np.ndarray, shape=(frame_length, N_FRAMES)
+        An array of frames sampled from ``y``:
+        ``y_frames[i, j] == y[j * hop_length + i]``
+    '''
+
+    # This uses low-level stride manipulation to avoid doing multiple 
+    # overlapping copies of the audio data
+    
+    n_frames = 1 + int( (len(y) - frame_length) / hop_length)
+    y_frames = np.resize(y, (frame_length, n_frames))
+    y_frames.strides = (y.itemsize, hop_length * y.itemsize)
+
+    return y_frames
+
 def axis_sort(S, axis=-1, index=False, value=np.argmax): 
     '''Sort an array along its rows or columns.
     
@@ -36,7 +73,6 @@ def axis_sort(S, axis=-1, index=False, value=np.argmax):
 
       - index : boolean    
         If true, returns the index array as well as the permuted data.
-        
 
       - value : function
         function to return the index corresponding to the sort order.
