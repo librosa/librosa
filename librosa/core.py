@@ -240,14 +240,11 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None):
     # Reshape so that the window can be broadcast
     fft_window  = fft_window.reshape((1,-1))
 
-    # window up the time series
-    data_matrix = np.empty( (n_frames, n_fft), dtype=y.dtype)
+    # Window the time series
+    data_matrix = np.resize(y, (n_frames, n_fft) )
+    data_matrix.strides = (hop_length * y.itemsize, y.itemsize)
     
-    for i in xrange(n_frames):
-        sample  = i * hop_length
-        data_matrix[i] = y[sample:(sample+n_fft)]
-    
-    # Conjugate here to match phase from DPWE code
+    # RFFT and Conjugate here to match phase from DPWE code
     stft_matrix = fft.rfft(fft_window * data_matrix, axis=-1).conj().astype(np.complex64)
 
     return stft_matrix.T
