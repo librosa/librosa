@@ -85,8 +85,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64, **kwargs)
     # Peak pick the onset envelope
     return librosa.core.peak_pick( onset_envelope, **kwargs )
 
-def onset_strength(y=None, sr=22050, S=None, detrend=False, feature=librosa.feature.melspectrogram, 
-                    aggregate=np.mean, **kwargs):
+def onset_strength(y=None, sr=22050, S=None, detrend=False, feature=None, aggregate=None, **kwargs):
     """Spectral flux onset strength.
 
     Onset strength at time t is determined by:
@@ -128,6 +127,7 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, feature=librosa.feat
       - aggregate : function
           Aggregation function to use when combining onsets
           at different frequency bins.
+          Default: ``np.mean``
 
       - kwargs  
           Parameters to ``feature()``, if ``S`` is not provided.
@@ -143,6 +143,12 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, feature=librosa.feat
           if neither ``(y, sr)`` nor ``S`` are provided
 
     """
+
+    if feature is None:
+        feature = librosa.feature.melspectrogram
+
+    if aggregate is None:
+        aggregate = np.mean
 
     # First, compute mel spectrogram
     if S is None:

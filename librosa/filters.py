@@ -247,7 +247,7 @@ def logfrequency(sr, n_fft, bins_per_octave=12, tuning=0.0, fmin=None, fmax=None
         
     return basis
 
-def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, window=np.hamming, resolution=2, pad=False):
+def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, window=None, resolution=2, pad=False):
     '''Construct a constant-Q basis.
 
     :usage:
@@ -280,7 +280,7 @@ def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, window=
       - window : function or None
           Windowing function to apply to filters. 
           If None, no window is applied.
-          Default is to use a hamming window.
+          Default: np.hamming
 
       - resolution : float > 0
           Resolution of filter windows. Larger values use longer windows.
@@ -300,11 +300,15 @@ def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, window=
           filters[i] is the time-domain representation of the i'th CQT basis.
     '''
     
+
     if fmin is None:
         fmin = librosa.midi_to_hz(librosa.note_to_midi('C1'))
         
     if fmax is None:
         fmax = librosa.midi_to_hz(librosa.note_to_midi('C9'))
+
+    if window is None:
+        window = np.hamming
 
     correction = 2.0**(float(tuning) / bins_per_octave)
 

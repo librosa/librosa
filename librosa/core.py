@@ -423,7 +423,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=False
     return if_gram, stft_matrix
 
 def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=None, 
-        resolution=2, aggregate=np.mean, samples=None, basis=None):
+        resolution=2, aggregate=None, samples=None, basis=None):
     '''Compute the constant-Q transform of an audio signal.
     
     :usage:
@@ -465,6 +465,7 @@ def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=
         
       - aggregate : function
           Aggregator function to merge filter response power within frames.
+          Default: np.mean
         
       - samples : None or array-like
           Aggregate power at times ``y[samples[i]:samples[i+1]]``, 
@@ -480,7 +481,10 @@ def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=
       - CQT : np.ndarray
           Constant-Q power for each frequency at each time.    
     '''
-    
+
+    if aggregate is None:
+        aggregate = np.mean
+
     # Do we have tuning?
     def __get_tuning():
         '''Helper function to compute tuning from y,sr'''
