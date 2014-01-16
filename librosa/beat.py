@@ -162,8 +162,8 @@ def estimate_tempo(onsets, sr=22050, hop_length=64, start_bpm=120, std_bpm=1.0, 
 
     # Chop onsets to X[(upper_limit - duration):upper_limit]
     # or as much as will fit
-    maxcol      = min(len(onsets)-1, np.round((offset + duration) * fft_res))
-    mincol      = max(0,    maxcol - np.round(duration * fft_res))
+    maxcol      = int(min(len(onsets)-1, np.round((offset + duration) * fft_res)))
+    mincol      = int(max(0,    maxcol - np.round(duration * fft_res)))
 
     # Use auto-correlation out of 4 seconds (empirically set??)
     ac_window   = min(maxcol, np.round(ac_size * fft_res))
