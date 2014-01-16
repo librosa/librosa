@@ -9,7 +9,7 @@ import scipy.io.wavfile
 
 import librosa.core
 
-def frames_csv(path, frames, sr=22050, hop_length=512):
+def frames_csv(path, frames, annotations=None, sr=22050, hop_length=512):
     """Save beat tracker or segmentation output in CSV format.
 
     :usage:
@@ -20,9 +20,12 @@ def frames_csv(path, frames, sr=22050, hop_length=512):
       - path : string
           path to save the output CSV file
 
-      - frames : list of ints
+      - frames : list-like of ints
           list of frame numbers for beat events
       
+      - annotations: None or list-like
+          optional annotation for each frame marker
+
       - sr : int
           audio sampling rate
     
@@ -31,12 +34,46 @@ def frames_csv(path, frames, sr=22050, hop_length=512):
       
     """
 
+    times = librosa.frames_to_time(frames, sr=sr, hop_length=hop_length)
+
+    times_csv(path, times, annotations=annotations)
+
+
+def times_csv(path, times, annotations=None):
+    """Save time steps as in CSV format.
+
+    :usage:
+        >>> tempo, beats = librosa.beat.beat_track(y, sr=sr, hop_length=64)
+        >>> times = librosa.frames_to_time(beats,sr=sr, hop_length=64)
+        >>> librosa.output.times_csv('beat_times.csv', times)
+
+    :parameters:
+      - path : string
+          path to save the output CSV file
+
+      - times : list-like of floats
+          list of frame numbers for beat events
+      
+      - annotations : None or list-like
+          optional annotations for each time step
+
+    :raises:
+      - ValueError
+          if annotations is not None and length does not match `times`
+    """
+
+    if annotations is not None and len(annotations) != len(times):
+        raise ValueError('len(annotations) != len(times)')
+
     with open(path, 'w') as output_file:
         writer = csv.writer(output_file)
 
-        for t_new in librosa.core.frames_to_time(frames,
-                                            sr=sr, hop_length=hop_length):
-            writer.writerow([t_new])
+        if annotations is None:
+            for t in times: 
+                writer.writerow([t])
+        else:
+            for t, lab in zip(times, annotations):
+                writer.writerow([t, lab])
 
 def write_wav(path, y, sr):
     """Output a time series as a .wav file
