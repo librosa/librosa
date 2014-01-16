@@ -324,16 +324,17 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=(150.0, 300.0), fmax
         frqs = np.zeros_like(starts, dtype=float)
         mags = np.zeros_like(starts, dtype=float)
         
-        for i in range(len(starts)):
+#         for i in range(len(starts)):
+        for i, (start_i, end_i) in enumerate(zip(starts, ends)):
             # Weight frequencies by energy
-            weights = np.abs(D[starts[i]:ends[i], t])
+            weights = np.abs(D[start_i:end_i, t])
             mags[i] = weights.sum()
             
             # Compute the weighted average frequency.
             # FIXME: is this the right thing to do? 
             # These are frequencies... shouldn't this be a 
             # weighted geometric average?
-            frqs[i] = weights.dot(if_gram[starts[i]:ends[i], t])
+            frqs[i] = weights.dot(if_gram[start_i:end_i, t])
             if mags[i] > 0:
                 frqs[i] /= mags[i]
             
