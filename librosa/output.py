@@ -55,6 +55,12 @@ def times_csv(path, times, annotations=None, delimiter=',', fmt='%0.3f'):
       - annotations : None or list-like
           optional annotations for each time step
 
+      - delimiter : str
+          character to separate fields
+
+      - fmt : str
+          format-string for rendering time
+
     :raises:
       - ValueError
           if annotations is not None and length does not match `times`
