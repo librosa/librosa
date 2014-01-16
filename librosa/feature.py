@@ -228,7 +228,7 @@ def estimate_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     # return the histogram peak
     return tuning[np.argmax(counts)]
 
-def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=(150.0, 300.0), fmax=(2000.0, 4000.0), threshold=0.75):
+def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=None, fmax=None, threshold=0.75):
     '''Instantaneous pitch frequency tracking.
 
     :usage:
@@ -255,12 +255,14 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=(150.0, 300.0), fmax
           Ramp parameter for lower frequency cutoff.
           If scalar, the ramp has 0 width.
           If tuple, a linear ramp is applied from ``fmin[0]`` to ``fmin[1]``
+          Default: (150.0, 300.0)
         
       - fmax : float or tuple of float
           Ramp parameter for upper frequency cutoff.
           If scalar, the ramp has 0 width.
           If tuple, a linear ramp is applied from ``fmax[0]`` to ``fmax[1]``
-        
+          Default: (2000.0, 4000.0)
+
     :returns:
       - pitches : np.ndarray, shape=(d,t)
       - magnitudes : np.ndarray, shape=(d,t)
@@ -273,7 +275,12 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=(150.0, 300.0), fmax
           STFT matrix
     '''
 
-    
+    if fmin is None:
+        fmin    = (150.0, 300.0)
+
+    if fmax is None:
+        fmax    = (2000.0, 4000.0)
+
     fmin = np.asarray([fmin]).squeeze()
     fmax = np.asarray([fmax]).squeeze()
     
@@ -495,7 +502,7 @@ def delta(data, axis=-1, order=1, pad=True):
 
     return delta_x
 
-def sync(data, frames, aggregate=np.mean):
+def sync(data, frames, aggregate=None):
     """Synchronous aggregation of a feature matrix
 
     :usage:
@@ -516,7 +523,7 @@ def sync(data, frames, aggregate=np.mean):
       - frames    : np.ndarray
           ordered array of frame segment boundaries
       - aggregate : function
-          aggregation function (defualt: mean)
+          aggregation function (defualt: np.mean)
 
     :returns:
       - Y         : ndarray 
@@ -532,6 +539,9 @@ def sync(data, frames, aggregate=np.mean):
         data = np.asarray([data])
     elif data.ndim > 2:
         raise ValueError('Synchronized data has ndim=%d, must be 1 or 2.' % data.ndim)
+
+    if aggregate is None:
+        aggregate = np.mean
 
     (dimension, n_frames) = data.shape
 
