@@ -394,40 +394,33 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=False
 
     # Window for discrete differentiation
     freq_angular    = np.linspace(0, 2 * np.pi, n_fft, endpoint=False)
+
     d_window        = np.sin( - freq_angular ) * np.pi / n_fft
 
-    # Construct output arrays
-    if_gram = np.zeros((1 + n_fft / 2, 1 + (len(y) - n_fft) / hop_length), dtype=np.float32)
-    D       = np.zeros_like(if_gram, dtype=np.complex64)
+    # Reshape windows for broadcast
+    window          = window.reshape((-1, 1))
+    d_window        = d_window.reshape((-1, 1))
 
-    # Main loop: fill in if_gram and D
-    for i in xrange(D.shape[1]):
-        sample = i * hop_length
-
-        #-- Store the STFT
-        # Conjugate here to match DWPE's matlab code.
-        frame   = fft.fft(window * y[sample:(sample + n_fft)]).conj()
-        D[:, i] = frame[:D.shape[0]]
-
-        # Compute power per bin in this frame
-        power               = np.abs(frame)**2
-        power[power == 0]   = 1.0
-        
-        #-- Calculate the instantaneous frequency 
-        # phase of differential spectrum
-        d_frame = fft.fft(d_window * y[sample:(sample + n_fft)])
-
-        t = freq_angular + (d_frame * frame).imag / power
-
-        if_gram[:, i] = t[:if_gram.shape[0]] * sr / (2 * np.pi)
-
-    # Compensate for windowing effects, store STFT
-    # sum(window) takes out integration due to window, 2 compensates for negative
-    # frequency
+    # Pylint does not correctly infer the type here, but it's correct.
+    freq_angular    = freq_angular.reshape((-1, 1)) # pylint: disable=maybe-no-member
+    
+    # Frame up the audio
+    y_frame         = util.frame(y, frame_length=n_fft, hop_length=hop_length)
+    
+    # compute STFT and differential spectrogram
+    stft_matrix     = fft.rfft(window   * y_frame, axis=0).conj()
+    diff_stft       = fft.rfft(d_window * y_frame, axis=0)
+    
+    # Compute power normalization. Suppress zeros.
+    power               = np.abs(stft_matrix)**2
+    power[power == 0]   = 1.0
+    
+    if_gram = (freq_angular[:n_fft/2 + 1] + (stft_matrix * diff_stft).imag / power) * sr / (2 * np.pi)
+    
     if norm:
-        D = D * 2.0 / window.sum()
+        stft_matrix = stft_matrix * 2.0 / window.sum()
 
-    return if_gram, D
+    return if_gram, stft_matrix
 
 def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=None, 
         resolution=2, aggregate=np.mean, samples=None, basis=None):
