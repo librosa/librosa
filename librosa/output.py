@@ -9,7 +9,7 @@ import scipy.io.wavfile
 
 import librosa.core
 
-def frames_csv(path, frames, annotations=None, sr=22050, hop_length=512):
+def frames_csv(path, frames, sr=22050, hop_length=512, **kwargs):
     """Save beat tracker or segmentation output in CSV format.
 
     :usage:
@@ -23,23 +23,21 @@ def frames_csv(path, frames, annotations=None, sr=22050, hop_length=512):
       - frames : list-like of ints
           list of frame numbers for beat events
       
-      - annotations: None or list-like
-          optional annotation for each frame marker
-
       - sr : int
           audio sampling rate
     
       - hop_length : int
-          Number of samples between success frames
-      
+          number of samples between success frames
+
+      - kwargs 
+          additional keyword arguments.  See ``librosa.output.times_csv``
     """
 
     times = librosa.frames_to_time(frames, sr=sr, hop_length=hop_length)
 
-    times_csv(path, times, annotations=annotations)
+    times_csv(path, times, **kwargs)
 
-
-def times_csv(path, times, annotations=None):
+def times_csv(path, times, annotations=None, delimiter=',', fmt='%0.3f'):
     """Save time steps as in CSV format.
 
     :usage:
@@ -66,14 +64,14 @@ def times_csv(path, times, annotations=None):
         raise ValueError('len(annotations) != len(times)')
 
     with open(path, 'w') as output_file:
-        writer = csv.writer(output_file)
+        writer = csv.writer(output_file, delimiter=delimiter)
 
         if annotations is None:
             for t in times: 
-                writer.writerow([t])
+                writer.writerow([fmt % t])
         else:
             for t, lab in zip(times, annotations):
-                writer.writerow([t, lab])
+                writer.writerow([(fmt % t), lab])
 
 def write_wav(path, y, sr):
     """Output a time series as a .wav file
