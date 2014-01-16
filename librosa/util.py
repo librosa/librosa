@@ -111,22 +111,22 @@ def normalize(S, norm=np.inf, axis=0):
     '''Normalize the columns or rows of a matrix
     
     :parameters:
-    - S : np.ndarray
-      The matrix to normalize
+      - S : np.ndarray
+        The matrix to normalize
       
-    - norm : {inf, -inf, 0, float > 0}
-      - ``inf``  : maximum absolute value
-      - ``-inf`` : mininum absolute value
-      - ``0``    : number of non-zeros
-      - float  : corresponding l_p norm. See ``scipy.linalg.norm`` for details.
+      - norm : {inf, -inf, 0, float > 0}
+        - ``inf``  : maximum absolute value
+        - ``-inf`` : mininum absolute value
+        - ``0``    : number of non-zeros
+        - float  : corresponding l_p norm. See ``scipy.linalg.norm`` for details.
     
-    - axis : int
-      Axis along which to compute the norm.
-      ``axis=0`` will normalize columns, ``axis=1`` will normalize rows.
+      - axis : int
+        Axis along which to compute the norm.
+        ``axis=0`` will normalize columns, ``axis=1`` will normalize rows.
       
     :returns: 
-    - S_norm : np.ndarray
-      Normalized matrix
+      - S_norm : np.ndarray
+        Normalized matrix
       
     .. note::
         Columns/rows with length 0 will be left as zeros.
