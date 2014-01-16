@@ -317,8 +317,8 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=(150.0, 300.0), fmax
         # The mask selects out constant regions + active borders
         mask   = ~np.pad(matches[:, t], 1, mode='constant')
         
-        starts = np.argwhere(matches[:, t] & mask[:-2])
-        ends   = 1 + np.argwhere(matches[:, t] & mask[2:])
+        starts = np.argwhere(matches[:, t] & mask[:-2]).astype(int)
+        ends   = 1 + np.argwhere(matches[:, t] & mask[2:]).astype(int)
         
         # Set up inner loop    
         frqs = np.zeros_like(starts, dtype=float)
