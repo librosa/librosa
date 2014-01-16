@@ -41,7 +41,7 @@ def frame(y, frame_length=2048, hop_length=64):
 
     return y_frames
 
-def axis_sort(S, axis=-1, index=False, value=np.argmax): 
+def axis_sort(S, axis=-1, index=False, value=None): 
     '''Sort an array along its rows or columns.
     
     :usage:
@@ -90,6 +90,9 @@ def axis_sort(S, axis=-1, index=False, value=np.argmax):
         If ``S`` does not have 2 dimensions.
     '''
     
+    if value is None:
+        value = np.argmax
+
     if S.ndim != 2:
         raise ValueError('axis_sort is only defined for 2-dimensional arrays.')
         
