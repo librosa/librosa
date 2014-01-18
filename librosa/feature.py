@@ -6,22 +6,28 @@ import numpy as np
 import librosa.core, librosa.util
 
 #-- Chroma --#
-def logfsgram(y, sr, n_fft=4096, hop_length=512, **kwargs):
+def logfsgram(y=None, sr=22050, S=None, n_fft=4096, hop_length=512, **kwargs):
     '''Compute a log-frequency spectrogram (piano roll) using a fixed-window STFT.
 
     :usage:
-        >>> S           = librosa.logfsgram(y, sr)
-
+        >>> From time-series input
+        >>> S_log       = librosa.logfsgram(y=y, sr=sr)
+        >>> Or from spectrogram input
+        >>> S           = np.abs(librosa.stft(y))**2
+        >>> S_log       = librosa.logfsgram(S=S, sr=sr)
         >>> # Convert to chroma
-        >>> chroma_map  = librosa.filters.cq_to_chroma(S.shape[0])
-        >>> C           = chroma_map.dot(S)
+        >>> chroma_map  = librosa.filters.cq_to_chroma(S_log.shape[0])
+        >>> C           = chroma_map.dot(S_log)
 
     :parameters:
-      - y : np.ndarray
+      - y : np.ndarray or None
           audio time series
 
       - sr : int > 0
-          sampling rate of ``y``
+          audio sampling rate of ``y``
+
+      - S : np.ndarray or None
+          optional power spectrogram 
 
       - n_fft : int > 0
           FFT window size
@@ -43,29 +49,40 @@ def logfsgram(y, sr, n_fft=4096, hop_length=512, **kwargs):
     :returns:
       - P : np.ndarray, shape = (n_pitches, t)
           P(f, t) contains the energy at pitch bin f, frame t.
+
+    .. note:: One of either ``S`` or ``y`` must be provided.
+          If ``y`` is provided, the power spectrogram is computed automatically given
+          the parameters ``n_fft`` and ``hop_length``.
+          If ``S`` is provided, it is used as the input spectrogram, and ``n_fft`` is inferred
+          from its shape.
     '''
     
-    # If the user didn't specify tuning, do it ourselves
-    if 'tuning' not in kwargs:
-        pitches, magnitudes, D = ifptrack(y, sr, n_fft=n_fft, hop_length=hop_length)
-        pitches = pitches[magnitudes > np.median(magnitudes)]
-        del magnitudes
+    # If we don't have a spectrogram, build one
+    if S is None:
+        # If the user didn't specify tuning, do it ourselves
+        if 'tuning' not in kwargs:
+            pitches, magnitudes, S = ifptrack(y, sr, n_fft=n_fft, hop_length=hop_length)
+            pitches = pitches[magnitudes > np.median(magnitudes)]
+            del magnitudes
 
-        bins_per_octave = kwargs.get('bins_per_octave', 12)
-        kwargs['tuning'] = estimate_tuning(pitches, bins_per_octave=bins_per_octave)
+            bins_per_octave = kwargs.get('bins_per_octave', 12)
+            kwargs['tuning'] = estimate_tuning(pitches, bins_per_octave=bins_per_octave)
 
-        del pitches
+            del pitches
+
+        else:
+            S = librosa.stft(y, n_fft=n_fft, hop_length=hop_length)
+
+        # Retain power
+        S = np.abs(S)**2
 
     else:
-        D = librosa.stft(y, n_fft=n_fft, hop_length=hop_length)
-
-    # Retain power
-    D = np.abs(D)**2
+        n_fft       = (S.shape[0] -1 ) * 2
 
     # Build the CQ basis
     cq_basis = librosa.filters.logfrequency(sr, n_fft=n_fft, **kwargs)
     
-    return cq_basis.dot(D)
+    return cq_basis.dot(S)
 
 def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048, hop_length=512, tuning=0.0, **kwargs):
     """Compute a chromagram from a spectrogram or waveform
