@@ -33,11 +33,14 @@ def frame(y, frame_length=2048, hop_length=64):
         ``y_frames[i, j] == y[j * hop_length + i]``
     '''
 
-    # This uses low-level stride manipulation to avoid doing multiple 
-    # overlapping copies of the audio data
-    
+    # Compute the number of frames that will fit. The end may get truncated.
     n_frames = 1 + int( (len(y) - frame_length) / hop_length)
+
+    # Copy y into an appropriately-sized buffer
     y_frames = np.resize(y, (frame_length, n_frames))
+
+    # Vertical stride is one sample
+    # Horizontal stride is ``hop_length`` samples
     y_frames.strides = (y.itemsize, hop_length * y.itemsize)
 
     return y_frames
