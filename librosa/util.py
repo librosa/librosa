@@ -5,7 +5,9 @@ import numpy as np
 import os
 import glob
 
-def frame(y, frame_length=2048, hop_length=64):
+from numpy.lib.stride_tricks import as_strided
+
+def frame(y, frame_length=2048, hop_length=512):
     '''Slice a time series into overlapping frames.
     
     This implementation uses low-level stride manipulation to avoid
@@ -36,13 +38,11 @@ def frame(y, frame_length=2048, hop_length=64):
     # Compute the number of frames that will fit. The end may get truncated.
     n_frames = 1 + int( (len(y) - frame_length) / hop_length)
 
-    # Copy y into an appropriately-sized buffer
-    y_frames = np.resize(y, (frame_length, n_frames))
-
     # Vertical stride is one sample
     # Horizontal stride is ``hop_length`` samples
-    y_frames.strides = (y.itemsize, hop_length * y.itemsize)
-
+    y_frames = as_strided(  y, 
+                            shape=(frame_length, n_frames), 
+                            strides=(y.itemsize, hop_length * y.itemsize))
     return y_frames
 
 def axis_sort(S, axis=-1, index=False, value=None): 
