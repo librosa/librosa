@@ -277,7 +277,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
         if fmax is not None:
             m_args['fmax'] = fmax
 
-        # This function wraps imshow: star-args is okay
+        # only two star-args here, defined immediately above
         values = librosa.core.mel_frequencies(n_mels=data.shape[0], # pylint: disable=star-args
                                               extra=True, 
                                               **m_args)[positions].astype(np.int) 
