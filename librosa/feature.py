@@ -153,7 +153,7 @@ def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048, hop_length=512
     if 'A440' not in kwargs:
         kwargs['A440'] = 440.0 * 2.0**(tuning/n_chroma)
 
-    chromafb = filters.chroma( sr, n_fft, **kwargs)
+    chromafb = librosa.filters.chroma( sr, n_fft, **kwargs)
 
     # Compute raw chroma
     raw_chroma  = np.dot(chromafb, S)
