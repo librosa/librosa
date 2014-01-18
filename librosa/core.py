@@ -1,17 +1,18 @@
 #!/usr/bin/env python
 """Core IO, DSP and utility functions."""
 
-import os.path
+import os
 import audioread
-
-from . import filters, feature, util
-
 import re
 
 import numpy as np
 import numpy.fft as fft
 import scipy.signal
 import scipy.ndimage
+
+from . import filters
+from . import feature
+from . import util
 
 # Do we have scikits.samplerate?
 try:
