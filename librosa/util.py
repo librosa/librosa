@@ -2,7 +2,8 @@
 """Utility functions"""
 
 import numpy as np
-import os, glob
+import os
+import glob
 
 def frame(y, frame_length=2048, hop_length=64):
     '''Slice a time series into overlapping frames.
