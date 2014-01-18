@@ -569,7 +569,7 @@ def sync(data, frames, aggregate=None):
     elif max(frames) > n_frames:
         raise ValueError('Frame index exceeds data length.')
 
-    data_agg    = np.empty( (dimension, len(frames)-1) )
+    data_agg    = np.empty( (dimension, len(frames)-1), order='F')
 
     start       = frames[0]
 
