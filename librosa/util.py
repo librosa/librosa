@@ -158,27 +158,27 @@ def normalize(S, norm=np.inf, axis=0):
     
     return S / length
 
-def get_audio_files(directory, ext=None, recurse=True, case_sensitive=False, limit=None, offset=0):
-    '''Get a sorted list of audio files in a directory or directory sub-tree.
+def find_files(directory, ext=None, recurse=True, case_sensitive=False, limit=None, offset=0):
+    '''Get a sorted list of (audio) files in a directory or directory sub-tree.
     
     :usage:
        >>> # Get all audio files in a directory sub-tree
-       >>> files = librosa.util.get_audio_files('~/Music')
+       >>> files = librosa.util.find_files('~/Music')
        
        >>> # Look only within a specific directory, not the sub-tree
-       >>> files = librosa.util.get_audio_files('~/Music', recurse=False)
+       >>> files = librosa.util.find_files('~/Music', recurse=False)
        
        >>> # Only look for mp3 files
-       >>> files = librosa.util.get_audio_files('~/Music', ext='mp3')
+       >>> files = librosa.util.find_files('~/Music', ext='mp3')
        
        >>> # Or just mp3 and ogg
-       >>> files = librosa.util.get_audio_files('~/Music', ext=['mp3', 'ogg'])
+       >>> files = librosa.util.find_files('~/Music', ext=['mp3', 'ogg'])
        
        >>> # Only get the first 10 files
-       >>> files = librosa.util.get_audio_files('~/Music', limit=10)
+       >>> files = librosa.util.find_files('~/Music', limit=10)
        
        >>> # Or last 10 files
-       >>> files = librosa.util.get_audio_files('~/Music', offset=-10)
+       >>> files = librosa.util.find_files('~/Music', offset=-10)
        
     :parameters:
       - directory : str
