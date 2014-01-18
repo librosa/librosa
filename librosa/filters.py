@@ -342,9 +342,7 @@ def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, window=
         max_len = max(map(len, filters))
         
         for i in range(len(filters)):
-            f_len = len(filters[i])
-            lpad = (max_len - f_len) / 2
-            filters[i] = np.pad(filters[i], (lpad, max_len - f_len - lpad), mode='constant')
+            filters[i] = librosa.util.pad_center(filters[i], max_len)
 
     return filters
 

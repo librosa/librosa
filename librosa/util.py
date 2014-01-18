@@ -45,6 +45,35 @@ def frame(y, frame_length=2048, hop_length=512):
                             strides=(y.itemsize, hop_length * y.itemsize))
     return y_frames
 
+def pad_center(data, size, **kwargs):
+    '''Wrapper for np.pad to automatically center a vector prior to padding.
+    This is analogous to ``str.center()``
+
+    :usage:
+        >>> # Generate a window vector
+        >>> window = scipy.signal.hann(256)
+        >>> # Center and pad it out to length 1024
+        >>> window = librosa.util.pad_center(window, 1024, mode='constant')
+
+    :parameters:
+        - data : np.ndarray, ndim=1
+          Vector to be padded and centered 
+
+        - size : int >= len(data)
+          Length to pad ``data``
+
+        - kwargs
+          Additional keyword arguments passed to ``numpy.pad()``
+    
+    :returns:
+        - data_padded : np.ndarray, ndim=1
+          ``data`` centered and padded to length ``size``
+    '''
+
+    kwargs.setdefault('mode', 'constant')
+    lpad = (size - len(data))/2
+    return np.pad( data, (lpad, size - len(data) - lpad), **kwargs) 
+
 def axis_sort(S, axis=-1, index=False, value=None): 
     '''Sort an array along its rows or columns.
     

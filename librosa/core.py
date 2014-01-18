@@ -232,9 +232,8 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None):
             raise ValueError('Size mismatch between n_fft and len(window)')
 
     # Pad the window out to n_fft size
-    lpad        = (n_fft - win_length)/2
-    fft_window  = np.pad(fft_window, (lpad, n_fft - win_length - lpad), mode='constant')
-    
+    fft_window = util.pad_center(fft_window, n_fft)
+
     # Reshape so that the window can be broadcast
     fft_window  = fft_window.reshape((-1, 1))
 
@@ -311,8 +310,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None):
             raise ValueError('Size mismatch between n_fft and window size')
 
     # Pad out to match n_fft
-    lpad = (n_fft - win_length)/2
-    ifft_window = np.pad( ifft_window, (lpad, n_fft - win_length - lpad), mode='constant')
+    ifft_window = util.pad_center(ifft_window, n_fft)
 
     n_frames    = stft_matrix.shape[1]
     y           = np.zeros(n_fft + hop_length * (n_frames - 1))
@@ -388,10 +386,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=False
         hop_length = win_length / 4
 
     # Construct a padded hann window
-    lpad = (n_fft - win_length)/2
-    window = np.pad( scipy.signal.hann(win_length, sym=False), 
-                        (lpad, n_fft - win_length - lpad), 
-                        mode='constant')
+    window = util.pad_center(scipy.signal.hann(win_length, sym=False), n_fft)
 
     # Window for discrete differentiation
     freq_angular    = np.linspace(0, 2 * np.pi, n_fft, endpoint=False)
