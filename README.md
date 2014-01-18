@@ -20,7 +20,10 @@ See http://nbviewer.ipython.org/github/bmcfee/librosa/blob/master/examples/LibRO
 Installation
 ============
 
-The latest stable release is available on PyPI, and you can install it by saying `pip install librosa`.
+The latest stable release is available on PyPI, and you can install it by saying 
+```
+pip install librosa
+```
 
 To build librosa from source, say `python setup.py build`.
 Then, to install librosa, say `python setup.py install`.
