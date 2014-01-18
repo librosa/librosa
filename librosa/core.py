@@ -510,7 +510,7 @@ def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=
     else:
         samples    = np.asarray([samples]).flatten()
 
-    cqt_power = np.empty((len(basis), len(y)), dtype=np.float32)
+    cqt_power = np.empty((len(basis), len(y)), dtype=np.float32, order='F')
     
     for i, filt in enumerate(basis):
         cqt_power[i]  = np.abs(scipy.signal.fftconvolve(y, filt, mode='same'))**2
