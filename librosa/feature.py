@@ -10,9 +10,9 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096, hop_length=512, **kwargs):
     '''Compute a log-frequency spectrogram (piano roll) using a fixed-window STFT.
 
     :usage:
-        >>> From time-series input
+        >>> # From time-series input
         >>> S_log       = librosa.logfsgram(y=y, sr=sr)
-        >>> Or from spectrogram input
+        >>> # Or from spectrogram input
         >>> S           = np.abs(librosa.stft(y))**2
         >>> S_log       = librosa.logfsgram(S=S, sr=sr)
         >>> # Convert to chroma

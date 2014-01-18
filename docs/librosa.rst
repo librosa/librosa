@@ -8,6 +8,7 @@ librosa Package
     :members:
     :undoc-members:
     :show-inheritance:
+    :member-order: bysource
 
 :mod:`Core utilities` 
 ---------------------
@@ -16,6 +17,7 @@ librosa Package
     :members:
     :undoc-members:
     :show-inheritance:
+    :member-order: bysource
 
 :mod:`Spectrogram decomposition` 
 --------------------------------
@@ -24,6 +26,7 @@ librosa Package
     :members:
     :undoc-members:
     :show-inheritance:
+    :member-order: bysource
 
 :mod:`Display`
 --------------
@@ -32,6 +35,7 @@ librosa Package
     :members:
     :undoc-members:
     :show-inheritance:
+    :member-order: bysource
 
 :mod:`Feature extraction` 
 -------------------------
@@ -40,6 +44,7 @@ librosa Package
     :members:
     :undoc-members:
     :show-inheritance:
+    :member-order: bysource
 
 :mod:`Filter banks`
 -------------------
@@ -48,6 +53,7 @@ librosa Package
     :members:
     :undoc-members:
     :show-inheritance:
+    :member-order: bysource
 
 :mod:`Onset detection`
 ----------------------
@@ -56,6 +62,7 @@ librosa Package
     :members:
     :undoc-members:
     :show-inheritance:
+    :member-order: bysource
 
 :mod:`Output` 
 -------------
@@ -64,6 +71,7 @@ librosa Package
     :members:
     :undoc-members:
     :show-inheritance:
+    :member-order: bysource
 
 :mod:`Segmentation` 
 -------------------
@@ -72,6 +80,7 @@ librosa Package
     :members:
     :undoc-members:
     :show-inheritance:
+    :member-order: bysource
 
 :mod:`Utilities`
 ----------------
@@ -80,4 +89,5 @@ librosa Package
     :members:
     :undoc-members:
     :show-inheritance:
+    :member-order: bysource
 
