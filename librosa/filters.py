@@ -35,7 +35,7 @@ def dct(n_filts, n_input):
 
     return basis
 
-def mel(sr, n_fft, n_mels=40, fmin=0.0, fmax=None, htk=False):
+def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
     """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins
 
     :usage:
