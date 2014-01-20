@@ -997,7 +997,7 @@ def cqt_frequencies(n_bins, fmin, bins_per_octave=12, tuning=0.0):
 
     return correction * fmin * 2.0**(np.arange(0, n_bins, dtype=float)/bins_per_octave)
 
-def mel_frequencies(n_mels=40, fmin=0.0, fmax=11025.0, htk=False, extra=False):
+def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False, extra=False):
     """Compute the center frequencies of mel bands
 
     :usage:
