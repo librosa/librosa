@@ -5,11 +5,14 @@ Changes
 
 Bug fixes
 
+  - fixed an off-by-one error in ``librosa.onset.onset_strength()``
   - fixed a sign-flip error in ``librosa.output.write_wav()``
   - removed all mutable object default parameters
 
 Features
 
+  - added option ``centering`` to ``librosa.onset.onset_strength()`` to resolve frame-centering issues with sliding window STFT
+  - added frame-center correction to ``librosa.core.frames_to_time()`` and ``librosa.core.time_to_frames()``
   - added ``librosa.util.pad_center()``
   - added ``librosa.output.annotation()``
   - added ``librosa.output.times_csv()``
@@ -26,6 +29,7 @@ Features
 
 Other changes
 
+  - optimized default parameters for ``librosa.onset.onset_detect``
   - set ``librosa.filters.mel`` parameter ``n_mels=128`` by default
   - ``librosa.feature.chromagram()`` and ``logfsgram()`` now use power instead of energy
   - ``librosa.display.specshow()`` with ``y_axis='chroma'`` now labels as ``pitch class``
