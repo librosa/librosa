@@ -2,9 +2,79 @@
 """Utility functions"""
 
 import numpy as np
-import os, glob
+import os
+import glob
 
-def axis_sort(S, axis=-1, index=False, value=np.argmax): 
+from numpy.lib.stride_tricks import as_strided
+
+def frame(y, frame_length=2048, hop_length=512):
+    '''Slice a time series into overlapping frames.
+    
+    This implementation uses low-level stride manipulation to avoid
+    redundant copies of the time series data.
+
+    :usage:
+        >>> # Load a file
+        >>> y, sr = librosa.load('file.mp3')
+        >>> # Extract 2048-sample frames from y with a hop of 64
+        >>> y_frames = librosa.util.frame(y, frame_length=2048, hop_length=64)
+
+    :parameters:
+      - y : np.ndarray, ndim=1
+        Time series to frame
+
+      - frame_length : int > 0
+        Length of the frame in samples
+
+      - hop_length : int > 0
+        Number of samples to hop between frames
+
+    :returns:
+      - y_frames : np.ndarray, shape=(frame_length, N_FRAMES)
+        An array of frames sampled from ``y``:
+        ``y_frames[i, j] == y[j * hop_length + i]``
+    '''
+
+    # Compute the number of frames that will fit. The end may get truncated.
+    n_frames = 1 + int( (len(y) - frame_length) / hop_length)
+
+    # Vertical stride is one sample
+    # Horizontal stride is ``hop_length`` samples
+    y_frames = as_strided(  y, 
+                            shape=(frame_length, n_frames), 
+                            strides=(y.itemsize, hop_length * y.itemsize))
+    return y_frames
+
+def pad_center(data, size, **kwargs):
+    '''Wrapper for np.pad to automatically center a vector prior to padding.
+    This is analogous to ``str.center()``
+
+    :usage:
+        >>> # Generate a window vector
+        >>> window = scipy.signal.hann(256)
+        >>> # Center and pad it out to length 1024
+        >>> window = librosa.util.pad_center(window, 1024, mode='constant')
+
+    :parameters:
+        - data : np.ndarray, ndim=1
+          Vector to be padded and centered 
+
+        - size : int >= len(data)
+          Length to pad ``data``
+
+        - kwargs
+          Additional keyword arguments passed to ``numpy.pad()``
+    
+    :returns:
+        - data_padded : np.ndarray, ndim=1
+          ``data`` centered and padded to length ``size``
+    '''
+
+    kwargs.setdefault('mode', 'constant')
+    lpad = (size - len(data))/2
+    return np.pad( data, (lpad, size - len(data) - lpad), **kwargs) 
+
+def axis_sort(S, axis=-1, index=False, value=None): 
     '''Sort an array along its rows or columns.
     
     :usage:
@@ -36,7 +106,6 @@ def axis_sort(S, axis=-1, index=False, value=np.argmax):
 
       - index : boolean    
         If true, returns the index array as well as the permuted data.
-        
 
       - value : function
         function to return the index corresponding to the sort order.
@@ -54,6 +123,9 @@ def axis_sort(S, axis=-1, index=False, value=np.argmax):
         If ``S`` does not have 2 dimensions.
     '''
     
+    if value is None:
+        value = np.argmax
+
     if S.ndim != 2:
         raise ValueError('axis_sort is only defined for 2-dimensional arrays.')
         
@@ -75,22 +147,22 @@ def normalize(S, norm=np.inf, axis=0):
     '''Normalize the columns or rows of a matrix
     
     :parameters:
-    - S : np.ndarray
-      The matrix to normalize
+      - S : np.ndarray
+        The matrix to normalize
       
-    - norm : {inf, -inf, 0, float > 0}
-      - ``inf``  : maximum absolute value
-      - ``-inf`` : mininum absolute value
-      - ``0``    : number of non-zeros
-      - float  : corresponding l_p norm. See ``scipy.linalg.norm`` for details.
+      - norm : {inf, -inf, 0, float > 0}
+        - ``inf``  : maximum absolute value
+        - ``-inf`` : mininum absolute value
+        - ``0``    : number of non-zeros
+        - float  : corresponding l_p norm. See ``scipy.linalg.norm`` for details.
     
-    - axis : int
-      Axis along which to compute the norm.
-      ``axis=0`` will normalize columns, ``axis=1`` will normalize rows.
+      - axis : int
+        Axis along which to compute the norm.
+        ``axis=0`` will normalize columns, ``axis=1`` will normalize rows.
       
     :returns: 
-    - S_norm : np.ndarray
-      Normalized matrix
+      - S_norm : np.ndarray
+        Normalized matrix
       
     .. note::
         Columns/rows with length 0 will be left as zeros.
@@ -118,27 +190,27 @@ def normalize(S, norm=np.inf, axis=0):
     
     return S / length
 
-def get_audio_files(directory, ext=None, recurse=True, case_sensitive=False, limit=None, offset=0):
-    '''Get a sorted list of audio files in a directory or directory sub-tree.
+def find_files(directory, ext=None, recurse=True, case_sensitive=False, limit=None, offset=0):
+    '''Get a sorted list of (audio) files in a directory or directory sub-tree.
     
     :usage:
        >>> # Get all audio files in a directory sub-tree
-       >>> files = librosa.util.get_audio_files('~/Music')
+       >>> files = librosa.util.find_files('~/Music')
        
        >>> # Look only within a specific directory, not the sub-tree
-       >>> files = librosa.util.get_audio_files('~/Music', recurse=False)
+       >>> files = librosa.util.find_files('~/Music', recurse=False)
        
        >>> # Only look for mp3 files
-       >>> files = librosa.util.get_audio_files('~/Music', ext='mp3')
+       >>> files = librosa.util.find_files('~/Music', ext='mp3')
        
        >>> # Or just mp3 and ogg
-       >>> files = librosa.util.get_audio_files('~/Music', ext=['mp3', 'ogg'])
+       >>> files = librosa.util.find_files('~/Music', ext=['mp3', 'ogg'])
        
        >>> # Only get the first 10 files
-       >>> files = librosa.util.get_audio_files('~/Music', limit=10)
+       >>> files = librosa.util.find_files('~/Music', limit=10)
        
        >>> # Or last 10 files
-       >>> files = librosa.util.get_audio_files('~/Music', offset=-10)
+       >>> files = librosa.util.find_files('~/Music', offset=-10)
        
     :parameters:
       - directory : str
