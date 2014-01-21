@@ -327,14 +327,15 @@ def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, window=
         # Length of this filter
         ilen = np.ceil(Q * sr / (fmin * 2.0**(i / bins_per_octave)))
 
-        # Build the filter and normalize
-        if window is not None:
-            win = window(ilen) 
-        else:
-            win = 1.0
+        # Build the filter 
+        win = np.exp(Q * 1j * np.linspace(0, 2 * np.pi, ilen, endpoint=False))
 
-        win = win * np.exp(Q * 1j * np.linspace(0, 2 * np.pi, ilen, endpoint=False))
-        win /= np.sqrt(np.sum(np.abs(win)**2))
+        # Apply the windowing function
+        if window is not None:
+            win = win * window(ilen) 
+
+        # Normalize
+        win = librosa.util.normalize(win, norm=2)
         
         filters.append(win)
     
