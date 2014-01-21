@@ -7,7 +7,9 @@ Beat tracking with HPSS filtering
 Usage: ./hpss_beats.py [-h] input_audio.mp3 output_beats.csv
 '''
 
-import sys, argparse
+import argparse
+import numpy as np
+import sys
 import librosa
 
 # Some magic number defaults, FFT window and hop length
@@ -43,19 +45,22 @@ def hpss_beats(input_file, output_csv):
     # Construct onset envelope from percussive component
     print 'Tracking beats on percussive spectrogram'
 
-    S = librosa.feature.melspectrogram(S=percussive, sr=sr, n_mels=128)
+    S = librosa.feature.melspectrogram(S=percussive, sr=sr)
 
-    onsets = librosa.onset.onset_strength(S=librosa.logamplitude(S))
+    onsets = librosa.onset.onset_strength(S=librosa.logamplitude(S), aggregate=np.median)
 
     # Track the beats
     tempo, beats = librosa.beat.beat_track( onsets=onsets, 
                                             sr=sr, 
-                                            hop_length=HOP_LENGTH, 
-                                            n_fft=N_FFT)
+                                            hop_length=HOP_LENGTH)
 
+    beat_times  = librosa.frames_to_time(beats, 
+                                         sr=sr, 
+                                         hop_length=HOP_LENGTH,
+                                         n_fft=N_FFT)
     # Save the output
     print 'Saving beats to ', output_csv
-    librosa.output.frames_csv(output_csv, beats, sr=sr, hop_length=HOP_LENGTH)
+    librosa.output.times_csv(output_csv, beat_times)
 
 
 def process_arguments():

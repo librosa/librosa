@@ -10,7 +10,7 @@ import librosa.feature
 import librosa.onset
 
 def beat_track(y=None, sr=22050, onsets=None, hop_length=64, 
-               start_bpm=120.0, n_fft=2048, tightness=400, trim=True, bpm=None):
+               start_bpm=120.0, tightness=400, trim=True, bpm=None):
     r'''Dynamic programming beat tracker.
 
     Beats are detected in three stages:
@@ -25,8 +25,7 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
         >>> # Track beats using a pre-computed onset envelope
         >>> tempo, beats = librosa.beat.beat_track( onsets=onset_envelope, 
                                                     sr=sr, 
-                                                    hop_length=hop_length, 
-                                                    n_fft=n_fft )
+                                                    hop_length=hop_length)
 
     :parameters:
       - y          : np.ndarray or None
@@ -44,10 +43,6 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
 
       - start_bpm  : float > 0
           initial guess for the tempo estimator
-
-      - n_fft      : int > 0
-          window size (centers beat times).
-          Set ``n_fft=None`` to disable frame centering.
 
       - tightness  : float
           tightness of beat distribution around tempo
@@ -108,16 +103,6 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
     # Then, run the tracker
     beats   = __beat_tracker(onsets, bpm, float(sr) / hop_length, tightness, trim)
 
-    # Using a windowed STFT, most of the energy in a frame comes from its center
-    # samples.  This can bias the detected beat events (frames).
-    #
-    # We apply the following frame correction to resolve this bias.
-    #
-    if n_fft is None:
-        n_fft = hop_length
-    
-    beats = beats + n_fft / (hop_length)
-
     return (bpm, beats)
 
 def estimate_tempo(onsets, sr=22050, hop_length=64, start_bpm=120, std_bpm=1.0, ac_size=4.0, duration=90.0, offset=0.0):
@@ -162,8 +147,8 @@ def estimate_tempo(onsets, sr=22050, hop_length=64, start_bpm=120, std_bpm=1.0, 
 
     # Chop onsets to X[(upper_limit - duration):upper_limit]
     # or as much as will fit
-    maxcol      = min(len(onsets)-1, np.round((offset + duration) * fft_res))
-    mincol      = max(0,    maxcol - np.round(duration * fft_res))
+    maxcol      = int(min(len(onsets)-1, np.round((offset + duration) * fft_res)))
+    mincol      = int(max(0,    maxcol - np.round(duration * fft_res)))
 
     # Use auto-correlation out of 4 seconds (empirically set??)
     ac_window   = min(maxcol, np.round(ac_size * fft_res))

@@ -3,25 +3,32 @@
 
 import numpy as np
 
-import librosa.core, librosa.util
+import librosa.core
+import librosa.util
 
 #-- Chroma --#
-def logfsgram(y, sr, n_fft=4096, hop_length=512, **kwargs):
+def logfsgram(y=None, sr=22050, S=None, n_fft=4096, hop_length=512, **kwargs):
     '''Compute a log-frequency spectrogram (piano roll) using a fixed-window STFT.
 
     :usage:
-        >>> S           = librosa.logfsgram(y, sr)
-
+        >>> # From time-series input
+        >>> S_log       = librosa.logfsgram(y=y, sr=sr)
+        >>> # Or from spectrogram input
+        >>> S           = np.abs(librosa.stft(y))**2
+        >>> S_log       = librosa.logfsgram(S=S, sr=sr)
         >>> # Convert to chroma
-        >>> chroma_map  = librosa.filters.cq_to_chroma(S.shape[0])
-        >>> C           = chroma_map.dot(S)
+        >>> chroma_map  = librosa.filters.cq_to_chroma(S_log.shape[0])
+        >>> C           = chroma_map.dot(S_log)
 
     :parameters:
-      - y : np.ndarray
+      - y : np.ndarray or None
           audio time series
 
       - sr : int > 0
-          sampling rate of ``y``
+          audio sampling rate of ``y``
+
+      - S : np.ndarray or None
+          optional power spectrogram 
 
       - n_fft : int > 0
           FFT window size
@@ -43,29 +50,40 @@ def logfsgram(y, sr, n_fft=4096, hop_length=512, **kwargs):
     :returns:
       - P : np.ndarray, shape = (n_pitches, t)
           P(f, t) contains the energy at pitch bin f, frame t.
+
+    .. note:: One of either ``S`` or ``y`` must be provided.
+          If ``y`` is provided, the power spectrogram is computed automatically given
+          the parameters ``n_fft`` and ``hop_length``.
+          If ``S`` is provided, it is used as the input spectrogram, and ``n_fft`` is inferred
+          from its shape.
     '''
     
-    # If the user didn't specify tuning, do it ourselves
-    if 'tuning' not in kwargs:
-        pitches, magnitudes, D = ifptrack(y, sr, n_fft=n_fft, hop_length=hop_length)
-        pitches = pitches[magnitudes > np.median(magnitudes)]
-        del magnitudes
+    # If we don't have a spectrogram, build one
+    if S is None:
+        # If the user didn't specify tuning, do it ourselves
+        if 'tuning' not in kwargs:
+            pitches, magnitudes, S = ifptrack(y, sr, n_fft=n_fft, hop_length=hop_length)
+            pitches = pitches[magnitudes > np.median(magnitudes)]
+            del magnitudes
 
-        bins_per_octave = kwargs.get('bins_per_octave', 12)
-        kwargs['tuning'] = estimate_tuning(pitches, bins_per_octave=bins_per_octave)
+            bins_per_octave = kwargs.get('bins_per_octave', 12)
+            kwargs['tuning'] = estimate_tuning(pitches, bins_per_octave=bins_per_octave)
 
-        del pitches
+            del pitches
+
+        else:
+            S = librosa.stft(y, n_fft=n_fft, hop_length=hop_length)
+
+        # Retain power
+        S = np.abs(S)**2
 
     else:
-        D = librosa.stft(y, n_fft=n_fft, hop_length=hop_length)
-
-    # Retain power
-    D = np.abs( D )**2
+        n_fft       = (S.shape[0] -1 ) * 2
 
     # Build the CQ basis
     cq_basis = librosa.filters.logfrequency(sr, n_fft=n_fft, **kwargs)
     
-    return cq_basis.dot(D)
+    return cq_basis.dot(S)
 
 def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048, hop_length=512, tuning=0.0, **kwargs):
     """Compute a chromagram from a spectrogram or waveform
@@ -228,7 +246,7 @@ def estimate_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     # return the histogram peak
     return tuning[np.argmax(counts)]
 
-def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=(150.0, 300.0), fmax=(2000.0, 4000.0), threshold=0.75):
+def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=None, fmax=None, threshold=0.75):
     '''Instantaneous pitch frequency tracking.
 
     :usage:
@@ -255,12 +273,14 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=(150.0, 300.0), fmax
           Ramp parameter for lower frequency cutoff.
           If scalar, the ramp has 0 width.
           If tuple, a linear ramp is applied from ``fmin[0]`` to ``fmin[1]``
+          Default: (150.0, 300.0)
         
       - fmax : float or tuple of float
           Ramp parameter for upper frequency cutoff.
           If scalar, the ramp has 0 width.
           If tuple, a linear ramp is applied from ``fmax[0]`` to ``fmax[1]``
-        
+          Default: (2000.0, 4000.0)
+
     :returns:
       - pitches : np.ndarray, shape=(d,t)
       - magnitudes : np.ndarray, shape=(d,t)
@@ -273,7 +293,12 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=(150.0, 300.0), fmax
           STFT matrix
     '''
 
-    
+    if fmin is None:
+        fmin    = (150.0, 300.0)
+
+    if fmax is None:
+        fmax    = (2000.0, 4000.0)
+
     fmin = np.asarray([fmin]).squeeze()
     fmax = np.asarray([fmax]).squeeze()
     
@@ -317,23 +342,27 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=(150.0, 300.0), fmax
         # The mask selects out constant regions + active borders
         mask   = ~np.pad(matches[:, t], 1, mode='constant')
         
-        starts = np.argwhere(matches[:, t] & mask[:-2])
-        ends   = 1 + np.argwhere(matches[:, t] & mask[2:])
+        starts = np.argwhere(matches[:, t] & mask[:-2]).astype(int)
+        ends   = 1 + np.argwhere(matches[:, t] & mask[2:]).astype(int)
         
         # Set up inner loop    
         frqs = np.zeros_like(starts, dtype=float)
         mags = np.zeros_like(starts, dtype=float)
         
-        for i in range(len(starts)):
+        for i, (start_i, end_i) in enumerate(zip(starts, ends)):
+
+            start_i = np.asscalar(start_i)
+            end_i   = np.asscalar(end_i)
+
             # Weight frequencies by energy
-            weights = np.abs(D[starts[i]:ends[i], t])
+            weights = np.abs(D[start_i:end_i, t])
             mags[i] = weights.sum()
             
             # Compute the weighted average frequency.
             # FIXME: is this the right thing to do? 
             # These are frequencies... shouldn't this be a 
             # weighted geometric average?
-            frqs[i] = weights.dot(if_gram[starts[i]:ends[i], t])
+            frqs[i] = weights.dot(if_gram[start_i:end_i, t])
             if mags[i] > 0:
                 frqs[i] /= mags[i]
             
@@ -575,7 +604,7 @@ def delta(data, axis=-1, order=1, pad=True):
 
     return delta_x
 
-def sync(data, frames, aggregate=np.mean):
+def sync(data, frames, aggregate=None):
     """Synchronous aggregation of a feature matrix
 
     :usage:
@@ -596,7 +625,7 @@ def sync(data, frames, aggregate=np.mean):
       - frames    : np.ndarray
           ordered array of frame segment boundaries
       - aggregate : function
-          aggregation function (defualt: mean)
+          aggregation function (defualt: np.mean)
 
     :returns:
       - Y         : ndarray 
@@ -613,6 +642,9 @@ def sync(data, frames, aggregate=np.mean):
     elif data.ndim > 2:
         raise ValueError('Synchronized data has ndim=%d, must be 1 or 2.' % data.ndim)
 
+    if aggregate is None:
+        aggregate = np.mean
+
     (dimension, n_frames) = data.shape
 
     frames      = np.unique(np.concatenate( ([0], frames, [n_frames]) ))
@@ -622,7 +654,7 @@ def sync(data, frames, aggregate=np.mean):
     elif max(frames) > n_frames:
         raise ValueError('Frame index exceeds data length.')
 
-    data_agg    = np.empty( (dimension, len(frames)-1) )
+    data_agg    = np.empty( (dimension, len(frames)-1), order='F')
 
     start       = frames[0]
 
