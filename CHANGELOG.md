@@ -7,14 +7,23 @@ Changes
 
 Bug fixes
     - fixed default ``librosa.core.stft, istft, ifgram`` to match specification
+
     - fixed a float->int bug in peak_pick
+    
     - better memory efficiency
+    
     - ``librosa.segment.recurrence_matrix`` corrects for width suppression
+    
     - fixed a divide-by-0 error in the beat tracker
+    
     - fixed a bug in tempo estimation with short windows
+    
     - ``librosa.feature.sync`` now supports 1d arrays
+    
     - fixed a bug in beat trimming
+    
     - fixed a bug in ``librosa.core.stft`` when calculating window size
+    
     - fixed ``librosa.core.resample`` to support stereo signals
 
 Features
