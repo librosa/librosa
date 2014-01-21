@@ -55,6 +55,10 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64, **kwargs)
     
     .. note::
       If no onset strength could be detected, onset_detect returns an empty list.
+    
+    .. note::
+      The peak_pick parameters were chosen by large-scale hyperparameter optimization over this dataset:
+      https://github.com/CPJKU/onset_db
                 
     """
     
@@ -68,18 +72,17 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64, **kwargs)
     if not onset_envelope.any():
         return np.array([], dtype=np.int)
     
-    # Remove mean and normalize by std. dev.
+    # Normalize onset strength function to [0, 1] range
     # (a common normalization step to make the threshold more consistent)
-    onset_envelope -= onset_envelope.mean()
-    onset_envelope /= onset_envelope.std()
+    onset_envelope -= onset_envelope.min()
+    onset_envelope /= onset_envelope.max()
     
-    # Default values for peak picking
-    # Taken from "MAXIMUM FILTER VIBRATO SUPPRESSION FOR ONSET DETECTION"
+    # These parameter settings found by large-scale search
     kwargs.setdefault('pre_max',    0.03*sr/hop_length )    # 30ms
-    kwargs.setdefault('post_max',   0.03*sr/hop_length )    # 30ms
-    kwargs.setdefault('pre_avg',    0.10*sr/hop_length )    # 100ms
-    kwargs.setdefault('post_avg',   0.07*sr/hop_length )    # 70ms
-    kwargs.setdefault('delta',      2 )
+    kwargs.setdefault('post_max',   0.0*sr/hop_length )     # 0ms
+    kwargs.setdefault('pre_avg',    0.1*sr/hop_length )     # 100ms
+    kwargs.setdefault('post_avg',   0.1*sr/hop_length )     # 100ms
+    kwargs.setdefault('delta',      .06 )
     kwargs.setdefault('wait',       0.03*sr/hop_length )    # 30ms
     
     # Peak pick the onset envelope
