@@ -2,8 +2,10 @@
 # CREATED:2013-03-11 18:14:30 by Brian McFee <brm2132@columbia.edu>
 #  unit tests for librosa.beat
 
+from nose.tools import nottest
 
-import librosa, numpy
+import numpy
+import librosa
 
 from testLibrosaCore import files, load
 
@@ -13,9 +15,9 @@ def test_onset_strength():
         DATA    = load(infile)
 
         # Compute onset envelope using the same spectrogram
-        onsets  = librosa.onset.onset_strength(y=None, sr=8000, S=DATA['D'], detrend=True)
+        onsets  = librosa.onset.onset_strength(y=None, sr=8000, S=DATA['D'], centering=False, detrend=True)
 
-        assert numpy.allclose(onsets, DATA['onsetenv'][0])
+        assert numpy.allclose(onsets[1:], DATA['onsetenv'][0])
 
         pass
 
@@ -41,12 +43,14 @@ def test_tempo():
         yield (__test, infile)
     pass
 
+# Beat tracking test is no longer enabled due to librosa's various corrections
+@nottest
 def test_beat():
     def __test(infile):
         DATA    = load(infile)
         
         (bpm, beats) = librosa.beat.beat_track(y=None, sr=8000, hop_length=32,
-                                               onsets=DATA['onsetenv'][0], n_fft=None)
+                                               onsets=DATA['onsetenv'][0])
 
         beat_times = librosa.frames_to_time(beats, sr=8000, hop_length=32)
         print beat_times

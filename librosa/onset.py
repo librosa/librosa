@@ -88,7 +88,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64, **kwargs)
     # Peak pick the onset envelope
     return librosa.core.peak_pick( onset_envelope, **kwargs )
 
-def onset_strength(y=None, sr=22050, S=None, detrend=False, feature=None, aggregate=None, **kwargs):
+def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True, feature=None, aggregate=None, **kwargs):
     """Spectral flux onset strength.
 
     Onset strength at time t is determined by:
@@ -122,6 +122,9 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, feature=None, aggreg
       
       - detrend : bool
           Filter the onset strength to remove 
+    
+      - centering : bool
+          Shift the onset function by ``n_fft / (2 * hop_length)`` frames
 
       - feature : function
           Function for computing time-series features, eg, scaled spectrograms.
@@ -163,15 +166,23 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, feature=None, aggreg
         # Convert to dBs
         S   = librosa.core.logamplitude(S)
 
+    # Retrieve the n_fft and hop_length, 
+    # or default values for onsets if not provided
+    n_fft       = kwargs.get('n_fft', 2048)
+    hop_length  = kwargs.get('hop_length', 64)
 
-    # Compute first difference
-    onsets  = np.diff(S, n=1, axis=1)
+    # Compute first difference, include padding
+    onsets  = librosa.feature.delta(S, order=1, axis=1)
 
     # Discard negatives (decreasing amplitude)
     onsets  = np.maximum(0.0, onsets)
 
     # Average over mel bands
     onsets  = aggregate(onsets, axis=0)
+
+    # Counter-act framing effects. Shift the onsets by n_fft / hop_length
+    if centering:
+        onsets  = np.pad(onsets, (n_fft / (2 * hop_length), 0), mode='constant')
 
     # remove the DC component
     if detrend:
