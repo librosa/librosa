@@ -1,17 +1,18 @@
 #!/usr/bin/env python
 """Core IO, DSP and utility functions."""
 
-import os.path
+import os
 import audioread
-
-from . import filters, feature
-
 import re
 
 import numpy as np
 import numpy.fft as fft
 import scipy.signal
 import scipy.ndimage
+
+from . import filters
+from . import feature
+from . import util
 
 # Do we have scikits.samplerate?
 try:
@@ -70,11 +71,12 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None, dtype=np.float32)
     with audioread.audio_open(os.path.realpath(path)) as input_file:
         sr_native = input_file.samplerate
 
-        s_start = np.floor(sr_native * offset) * input_file.channels
+        s_start = int(np.floor(sr_native * offset) * input_file.channels)
+
         if duration is None:
             s_end = np.inf
         else:
-            s_end = s_start + (np.ceil(sr_native * duration) 
+            s_end = s_start + int(np.ceil(sr_native * duration) 
                                 * input_file.channels)
 
 
@@ -177,7 +179,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None):
         >>> D = librosa.stft(y)
 
     :parameters:
-      - y           : np.ndarray
+      - y           : np.ndarray, real-valued
           the input signal (audio time series)
 
       - n_fft       : int
@@ -213,9 +215,6 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None):
     if hop_length is None:
         hop_length = int(win_length / 4)
 
-    n_specbins  = 1 + int(n_fft / 2)
-    n_frames    = 1 + int( (len(y) - n_fft) / hop_length)
-
     if window is None:
         # Default is an asymmetric Hann window
         fft_window = scipy.signal.hann(win_length, sym=False)
@@ -234,18 +233,16 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None):
             raise ValueError('Size mismatch between n_fft and len(window)')
 
     # Pad the window out to n_fft size
-    lpad        = (n_fft - win_length)/2
-    fft_window  = np.pad(fft_window, (lpad, n_fft - win_length - lpad), mode='constant')
+    fft_window = util.pad_center(fft_window, n_fft)
 
-    # allocate output array
-    stft_matrix = np.empty( (n_specbins, n_frames), dtype=np.complex64)
+    # Reshape so that the window can be broadcast
+    fft_window  = fft_window.reshape((-1, 1))
 
-    for i in xrange(n_frames):
-        sample  = i * hop_length
-        frame   = fft.fft(fft_window * y[sample:(sample+n_fft)])
+    # Window the time series. 
+    y_frames    = util.frame(y, frame_length=n_fft, hop_length=hop_length)
 
-        # Conjugate here to match phase from DPWE code
-        stft_matrix[:, i]  = frame[:n_specbins].conj()
+    # RFFT and Conjugate here to match phase from DPWE code
+    stft_matrix = fft.rfft(fft_window * y_frames, axis=0).conj().astype(np.complex64)
 
     return stft_matrix
 
@@ -314,8 +311,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None):
             raise ValueError('Size mismatch between n_fft and window size')
 
     # Pad out to match n_fft
-    lpad = (n_fft - win_length)/2
-    ifft_window = np.pad( ifft_window, (lpad, n_fft - win_length - lpad), mode='constant')
+    ifft_window = util.pad_center(ifft_window, n_fft)
 
     n_frames    = stft_matrix.shape[1]
     y           = np.zeros(n_fft + hop_length * (n_frames - 1))
@@ -391,50 +387,40 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=False
         hop_length = win_length / 4
 
     # Construct a padded hann window
-    lpad = (n_fft - win_length)/2
-    window = np.pad( scipy.signal.hann(win_length, sym=False), 
-                        (lpad, n_fft - win_length - lpad), 
-                        mode='constant')
+    window = util.pad_center(scipy.signal.hann(win_length, sym=False), n_fft)
 
     # Window for discrete differentiation
     freq_angular    = np.linspace(0, 2 * np.pi, n_fft, endpoint=False)
+
     d_window        = np.sin( - freq_angular ) * np.pi / n_fft
 
-    # Construct output arrays
-    if_gram = np.zeros((1 + n_fft / 2, 1 + (len(y) - n_fft) / hop_length), dtype=np.float32)
-    D       = np.zeros_like(if_gram, dtype=np.complex64)
+    # Reshape windows for broadcast
+    window          = window.reshape((-1, 1))
+    d_window        = d_window.reshape((-1, 1))
 
-    # Main loop: fill in if_gram and D
-    for i in xrange(D.shape[1]):
-        sample = i * hop_length
-
-        #-- Store the STFT
-        # Conjugate here to match DWPE's matlab code.
-        frame   = fft.fft(window * y[sample:(sample + n_fft)]).conj()
-        D[:, i] = frame[:D.shape[0]]
-
-        # Compute power per bin in this frame
-        power               = np.abs(frame)**2
-        power[power == 0]   = 1.0
-        
-        #-- Calculate the instantaneous frequency 
-        # phase of differential spectrum
-        d_frame = fft.fft(d_window * y[sample:(sample + n_fft)])
-
-        t = freq_angular + (d_frame * frame).imag / power
-
-        if_gram[:, i] = t[:if_gram.shape[0]] * sr / (2 * np.pi)
-
-    # Compensate for windowing effects, store STFT
-    # sum(window) takes out integration due to window, 2 compensates for negative
-    # frequency
+    # Pylint does not correctly infer the type here, but it's correct.
+    freq_angular    = freq_angular.reshape((-1, 1)) # pylint: disable=maybe-no-member
+    
+    # Frame up the audio
+    y_frame         = util.frame(y, frame_length=n_fft, hop_length=hop_length)
+    
+    # compute STFT and differential spectrogram
+    stft_matrix     = fft.rfft(window   * y_frame, axis=0).conj()
+    diff_stft       = fft.rfft(d_window * y_frame, axis=0)
+    
+    # Compute power normalization. Suppress zeros.
+    power               = np.abs(stft_matrix)**2
+    power[power == 0]   = 1.0
+    
+    if_gram = (freq_angular[:n_fft/2 + 1] + (stft_matrix * diff_stft).imag / power) * sr / (2 * np.pi)
+    
     if norm:
-        D = D * 2.0 / window.sum()
+        stft_matrix = stft_matrix * 2.0 / window.sum()
 
-    return if_gram, D
+    return if_gram, stft_matrix
 
 def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=None, 
-        resolution=2, aggregate=np.mean, samples=None, basis=None):
+        resolution=2, aggregate=None, samples=None, basis=None):
     '''Compute the constant-Q transform of an audio signal.
     
     :usage:
@@ -476,6 +462,7 @@ def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=
         
       - aggregate : function
           Aggregator function to merge filter response power within frames.
+          Default: np.mean
         
       - samples : None or array-like
           Aggregate power at times ``y[samples[i]:samples[i+1]]``, 
@@ -491,7 +478,10 @@ def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=
       - CQT : np.ndarray
           Constant-Q power for each frequency at each time.    
     '''
-    
+
+    if aggregate is None:
+        aggregate = np.mean
+
     # Do we have tuning?
     def __get_tuning():
         '''Helper function to compute tuning from y,sr'''
@@ -517,7 +507,7 @@ def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=
     else:
         samples    = np.asarray([samples]).flatten()
 
-    cqt_power = np.empty((len(basis), len(y)), dtype=np.float32)
+    cqt_power = np.empty((len(basis), len(y)), dtype=np.float32, order='F')
     
     for i, filt in enumerate(basis):
         cqt_power[i]  = np.abs(scipy.signal.fftconvolve(y, filt, mode='same'))**2
@@ -1008,7 +998,7 @@ def cqt_frequencies(n_bins, fmin, bins_per_octave=12, tuning=0.0):
 
     return correction * fmin * 2.0**(np.arange(0, n_bins, dtype=float)/bins_per_octave)
 
-def mel_frequencies(n_mels=40, fmin=0.0, fmax=11025.0, htk=False, extra=False):
+def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False, extra=False):
     """Compute the center frequencies of mel bands
 
     :usage:
@@ -1100,13 +1090,22 @@ def A_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
     return weights
 
 #-- UTILITIES --#
-def frames_to_time(frames, sr=22050, hop_length=512):
+def frames_to_time(frames, sr=22050, hop_length=512, n_fft=None):
     """Converts frame counts to time (seconds)
 
     :usage:
         >>> y, sr = librosa.load('file.wav')
         >>> tempo, beats = librosa.beat.beat_track(y, sr, hop_length=64)
         >>> beat_times   = librosa.frames_to_time(beats, sr, hop_length=64)
+
+        >>> # Time conversion with a framing correction
+        >>> onset_env    = librosa.onset.onset_strength(y=y, sr=sr, n_fft=1024)
+        >>> onsets       = librosa.onset.onset_detect(onset_envelope=onset_env, sr=sr)
+        >>> onset_times  = librosa.frames_to_time(onsets, 
+                                                  sr=sr, 
+                                                  hop_length=64,
+                                                  n_fft=1024)
+
 
     :parameters:
       - frames     : np.ndarray
@@ -1118,15 +1117,25 @@ def frames_to_time(frames, sr=22050, hop_length=512):
       - hop_length : int
           number of samples between successive frames
 
+      - n_fft : None or int > 0
+          Optional: length of the FFT window.  
+          If given, time conversion will include an offset of ``n_fft / 2``
+          to counteract windowing effects in STFT.
+
     :returns:
       - times : np.ndarray 
           time (in seconds) of each given frame number:
           ``times[i] = frames[i] * hop_length / sr``
 
     """
-    return (frames * hop_length) / float(sr)
 
-def time_to_frames(times, sr=22050, hop_length=512):
+    offset = 0
+    if n_fft is not None:
+        offset = n_fft / 2
+
+    return (frames * hop_length + offset) / float(sr)
+
+def time_to_frames(times, sr=22050, hop_length=512, n_fft=None):
     """Converts time stamps into STFT frames.
 
     :usage:
@@ -1144,12 +1153,23 @@ def time_to_frames(times, sr=22050, hop_length=512):
       - hop_length : int > 0
           number of samples between successive frames
 
+      - n_fft : None or int > 0
+          Optional: length of the FFT window.  
+          If given, time conversion will include an offset of ``- n_fft / 2``
+          to counteract windowing effects in STFT.
+
+          .. note:: This may result in negative frame indices. 
+
     :returns:
       - frames : np.ndarray, dtype=int
           Frame numbers corresponding to the given times:
           ``frames[i] = floor( times[i] * sr / hop_length )``
     """
-    return np.floor(times * np.float(sr) / hop_length).astype(int)
+    offset = 0
+    if n_fft is not None:
+        offset = n_fft / 2
+
+    return np.floor((times * np.float(sr) - offset) / hop_length).astype(int)
 
 def autocorrelate(y, max_size=None):
     """Bounded auto-correlation
@@ -1182,6 +1202,8 @@ def autocorrelate(y, max_size=None):
 
     if max_size is None:
         return result
+    else:
+        max_size = int(max_size)
     
     return result[:max_size]
 

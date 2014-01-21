@@ -55,6 +55,10 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64, **kwargs)
     
     .. note::
       If no onset strength could be detected, onset_detect returns an empty list.
+    
+    .. note::
+      The peak_pick parameters were chosen by large-scale hyperparameter optimization over this dataset:
+      https://github.com/CPJKU/onset_db
                 
     """
     
@@ -68,25 +72,23 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64, **kwargs)
     if not onset_envelope.any():
         return np.array([], dtype=np.int)
     
-    # Remove mean and normalize by std. dev.
+    # Normalize onset strength function to [0, 1] range
     # (a common normalization step to make the threshold more consistent)
-    onset_envelope -= onset_envelope.mean()
-    onset_envelope /= onset_envelope.std()
+    onset_envelope -= onset_envelope.min()
+    onset_envelope /= onset_envelope.max()
     
-    # Default values for peak picking
-    # Taken from "MAXIMUM FILTER VIBRATO SUPPRESSION FOR ONSET DETECTION"
+    # These parameter settings found by large-scale search
     kwargs.setdefault('pre_max',    0.03*sr/hop_length )    # 30ms
-    kwargs.setdefault('post_max',   0.03*sr/hop_length )    # 30ms
-    kwargs.setdefault('pre_avg',    0.10*sr/hop_length )    # 100ms
-    kwargs.setdefault('post_avg',   0.07*sr/hop_length )    # 70ms
-    kwargs.setdefault('delta',      2 )
+    kwargs.setdefault('post_max',   0.0*sr/hop_length )     # 0ms
+    kwargs.setdefault('pre_avg',    0.1*sr/hop_length )     # 100ms
+    kwargs.setdefault('post_avg',   0.1*sr/hop_length )     # 100ms
+    kwargs.setdefault('delta',      .06 )
     kwargs.setdefault('wait',       0.03*sr/hop_length )    # 30ms
     
     # Peak pick the onset envelope
     return librosa.core.peak_pick( onset_envelope, **kwargs )
 
-def onset_strength(y=None, sr=22050, S=None, detrend=False, feature=librosa.feature.melspectrogram, 
-                    aggregate=np.mean, **kwargs):
+def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True, feature=None, aggregate=None, **kwargs):
     """Spectral flux onset strength.
 
     Onset strength at time t is determined by:
@@ -120,6 +122,9 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, feature=librosa.feat
       
       - detrend : bool
           Filter the onset strength to remove 
+    
+      - centering : bool
+          Shift the onset function by ``n_fft / (2 * hop_length)`` frames
 
       - feature : function
           Function for computing time-series features, eg, scaled spectrograms.
@@ -128,6 +133,7 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, feature=librosa.feat
       - aggregate : function
           Aggregation function to use when combining onsets
           at different frequency bins.
+          Default: ``np.mean``
 
       - kwargs  
           Parameters to ``feature()``, if ``S`` is not provided.
@@ -144,6 +150,12 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, feature=librosa.feat
 
     """
 
+    if feature is None:
+        feature = librosa.feature.melspectrogram
+
+    if aggregate is None:
+        aggregate = np.mean
+
     # First, compute mel spectrogram
     if S is None:
         if y is None:
@@ -154,15 +166,23 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, feature=librosa.feat
         # Convert to dBs
         S   = librosa.core.logamplitude(S)
 
+    # Retrieve the n_fft and hop_length, 
+    # or default values for onsets if not provided
+    n_fft       = kwargs.get('n_fft', 2048)
+    hop_length  = kwargs.get('hop_length', 64)
 
-    # Compute first difference
-    onsets  = np.diff(S, n=1, axis=1)
+    # Compute first difference, include padding
+    onsets  = librosa.feature.delta(S, order=1, axis=1)
 
     # Discard negatives (decreasing amplitude)
     onsets  = np.maximum(0.0, onsets)
 
     # Average over mel bands
     onsets  = aggregate(onsets, axis=0)
+
+    # Counter-act framing effects. Shift the onsets by n_fft / hop_length
+    if centering:
+        onsets  = np.pad(onsets, (n_fft / (2 * hop_length), 0), mode='constant')
 
     # remove the DC component
     if detrend:
