@@ -3,6 +3,35 @@ Changes
 
 ##v0.2.1
 
+Bug fixes
+
+  - fixed a sign-flip error in ``librosa.output.write_wav()``
+  - removed all mutable object default parameters
+
+Features
+
+  - added ``librosa.util.pad_center()``
+  - added ``librosa.output.annotation()``
+  - added ``librosa.output.times_csv()``
+  - accelerated ``librosa.core.stft()`` and ``ifgram()``
+  - added ``librosa.util.frame`` for in-place signal framing
+  - ``librosa.beat.beat_track`` now supports user-supplied tempo
+  - added ``librosa.util.normalize()``
+  - added ``librosa.util.find_files()``
+  - added ``librosa.util.axis_sort()``
+  - new module: ``librosa.util()``
+  - ``librosa.filters.constant_q`` now support padding
+  - added boolean input support for ``librosa.display.cmap()``
+  - speedup in ``librosa.core.cqt()``
+
+Other changes
+
+  - set ``librosa.filters.mel`` parameter ``n_mels=128`` by default
+  - ``librosa.feature.chromagram()`` and ``logfsgram()`` now use power instead of energy
+  - ``librosa.display.specshow()`` with ``y_axis='chroma'`` now labels as ``pitch class``
+  - set ``librosa.core.cqt`` parameter ``resolution=2`` by default
+  - set ``librosa.feature.chromagram`` parameter ``octwidth=2`` by default
+
 ## v0.2.0
 
 Bug fixes
