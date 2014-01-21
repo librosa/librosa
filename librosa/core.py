@@ -72,10 +72,11 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None, dtype=np.float32)
         sr_native = input_file.samplerate
 
         s_start = int(np.floor(sr_native * offset) * input_file.channels)
+
         if duration is None:
             s_end = np.inf
         else:
-            s_end = s_start + (np.ceil(sr_native * duration) 
+            s_end = s_start + int(np.ceil(sr_native * duration) 
                                 * input_file.channels)
 
 
