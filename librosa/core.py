@@ -1089,13 +1089,22 @@ def A_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
     return weights
 
 #-- UTILITIES --#
-def frames_to_time(frames, sr=22050, hop_length=512):
+def frames_to_time(frames, sr=22050, hop_length=512, n_fft=None):
     """Converts frame counts to time (seconds)
 
     :usage:
         >>> y, sr = librosa.load('file.wav')
         >>> tempo, beats = librosa.beat.beat_track(y, sr, hop_length=64)
         >>> beat_times   = librosa.frames_to_time(beats, sr, hop_length=64)
+
+        >>> # Time conversion with a framing correction
+        >>> onset_env    = librosa.onset.onset_strength(y=y, sr=sr, n_fft=1024)
+        >>> onsets       = librosa.onset.onset_detect(onset_envelope=onset_env, sr=sr)
+        >>> onset_times  = librosa.frames_to_time(onsets, 
+                                                  sr=sr, 
+                                                  hop_length=64,
+                                                  n_fft=1024)
+
 
     :parameters:
       - frames     : np.ndarray
@@ -1107,13 +1116,23 @@ def frames_to_time(frames, sr=22050, hop_length=512):
       - hop_length : int
           number of samples between successive frames
 
+      - n_fft : None or int > 0
+          Optional: length of the FFT window.  
+          If given, time conversion will include an offset of ``n_fft / 2``
+          to counteract windowing effects in STFT.
+
     :returns:
       - times : np.ndarray 
           time (in seconds) of each given frame number:
           ``times[i] = frames[i] * hop_length / sr``
 
     """
-    return (frames * hop_length) / float(sr)
+
+    offset = 0
+    if n_fft is not None:
+        offset = n_fft / 2
+
+    return (frames * hop_length + offset) / float(sr)
 
 def time_to_frames(times, sr=22050, hop_length=512):
     """Converts time stamps into STFT frames.
