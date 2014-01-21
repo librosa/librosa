@@ -17,4 +17,4 @@ from . import util
 # Exporting all core functions is okay here: suppress the import warning
 from librosa.core import *  # pylint: disable=wildcard-import
 
-__version__ = '0.2.1-dev'
+__version__ = '0.2.1'
