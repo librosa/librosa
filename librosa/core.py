@@ -1134,7 +1134,7 @@ def frames_to_time(frames, sr=22050, hop_length=512, n_fft=None):
 
     return (frames * hop_length + offset) / float(sr)
 
-def time_to_frames(times, sr=22050, hop_length=512):
+def time_to_frames(times, sr=22050, hop_length=512, n_fft=None):
     """Converts time stamps into STFT frames.
 
     :usage:
@@ -1152,12 +1152,23 @@ def time_to_frames(times, sr=22050, hop_length=512):
       - hop_length : int > 0
           number of samples between successive frames
 
+      - n_fft : None or int > 0
+          Optional: length of the FFT window.  
+          If given, time conversion will include an offset of ``- n_fft / 2``
+          to counteract windowing effects in STFT.
+
+          .. note:: This may result in negative frame indices. 
+
     :returns:
       - frames : np.ndarray, dtype=int
           Frame numbers corresponding to the given times:
           ``frames[i] = floor( times[i] * sr / hop_length )``
     """
-    return np.floor(times * np.float(sr) / hop_length).astype(int)
+    offset = 0
+    if n_fft is not None:
+        offset = n_fft / 2
+
+    return np.floor((times * np.float(sr) - offset) / hop_length).astype(int)
 
 def autocorrelate(y, max_size=None):
     """Bounded auto-correlation
