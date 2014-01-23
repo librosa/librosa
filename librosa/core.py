@@ -167,6 +167,9 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest'):
 
     return y_hat
 
+# Make the maximum fft block 512MB
+__MAX_MEM_BLOCK = 2**9 * 2**20
+
 def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None):
     """Short-time Fourier transform.
 
@@ -241,9 +244,22 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None):
     # Window the time series. 
     y_frames    = util.frame(y, frame_length=n_fft, hop_length=hop_length)
 
-    # RFFT and Conjugate here to match phase from DPWE code
-    stft_matrix = fft.rfft(fft_window * y_frames, axis=0).conj().astype(np.complex64)
-
+    # Pre-allocate the STFT matrix
+    stft_matrix = np.empty((n_fft / 2 + 1, y_frames.shape[1]), 
+                           dtype=np.complex64, 
+                           order='F')
+    
+    # how many columns can we fit within MAX_MEM_BLOCK?
+    n_columns = int(__MAX_MEM_BLOCK / (stft_matrix.shape[0] * stft_matrix.itemsize))
+    
+    for block_start in xrange(0, stft_matrix.shape[1], n_columns):
+        block_end = min(block_start + n_columns, 
+                        stft_matrix.shape[1])
+        
+        # RFFT and Conjugate here to match phase from DPWE code
+        stft_matrix[:, block_start:block_end] = fft.rfft(fft_window * y_frames[:, block_start:block_end], 
+                                                   axis=0).conj()
+    
     return stft_matrix
 
 def istft(stft_matrix, hop_length=None, win_length=None, window=None):  
