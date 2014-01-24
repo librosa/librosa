@@ -19,6 +19,14 @@ N_FFT       = 2048
 # matches the default beat tracker parameters
 HOP_LENGTH  = 64
 
+def percussive(y):
+    '''Extract the percussive component of an audio time series'''
+
+    D = librosa.stft(y)
+    P = librosa.decompose.hpss(D)[1]
+    
+    return librosa.istft(P)
+
 def hpss_beats(input_file, output_csv):
     '''HPSS beat tracking
     
@@ -34,20 +42,13 @@ def hpss_beats(input_file, output_csv):
     print 'Loading  ', input_file
     y, sr = librosa.load(input_file)
 
-    # Get the spectrogram
-    print 'Generating STFT ... '
-    D = librosa.stft(y, n_fft=N_FFT, hop_length=HOP_LENGTH)
-
     # Do HPSS
     print 'Harmonic-percussive separation ... '
-    harmonic, percussive = librosa.decompose.hpss(D)
+    y = percussive(y)
 
     # Construct onset envelope from percussive component
-    print 'Tracking beats on percussive spectrogram'
-
-    S = librosa.feature.melspectrogram(S=percussive, sr=sr)
-
-    onsets = librosa.onset.onset_strength(S=librosa.logamplitude(S), aggregate=np.median)
+    print 'Tracking beats on percussive component'
+    onsets = librosa.onset.onset_strength(y=y, sr=sr, hop_length=HOP_LENGTH, n_fft=N_FFT, aggregate=np.median)
 
     # Track the beats
     tempo, beats = librosa.beat.beat_track( onsets=onsets, 
