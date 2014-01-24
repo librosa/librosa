@@ -22,8 +22,8 @@ try:
 except ImportError:
     _HAS_SAMPLERATE = False
 
-# Constrain STFT block sizes to 512 MB
-_MAX_MEM_BLOCK = 2**9 * 2**20
+# Constrain STFT block sizes to 128 MB
+_MAX_MEM_BLOCK = 2**7 * 2**20
 
 #-- CORE ROUTINES --#
 def load(path, sr=22050, mono=True, offset=0.0, duration=None, dtype=np.float32):
