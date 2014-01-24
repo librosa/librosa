@@ -22,7 +22,8 @@ try:
 except ImportError:
     _HAS_SAMPLERATE = False
 
-
+# Constrain STFT block sizes to 128 MB
+_MAX_MEM_BLOCK = 2**7 * 2**20
 
 #-- CORE ROUTINES --#
 def load(path, sr=22050, mono=True, offset=0.0, duration=None, dtype=np.float32):
@@ -241,9 +242,22 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None):
     # Window the time series. 
     y_frames    = util.frame(y, frame_length=n_fft, hop_length=hop_length)
 
-    # RFFT and Conjugate here to match phase from DPWE code
-    stft_matrix = fft.rfft(fft_window * y_frames, axis=0).conj().astype(np.complex64)
-
+    # Pre-allocate the STFT matrix
+    stft_matrix = np.empty((1 + n_fft / 2, y_frames.shape[1]), 
+                           dtype=np.complex64, 
+                           order='F')
+    
+    # how many columns can we fit within MAX_MEM_BLOCK?
+    n_columns = int(_MAX_MEM_BLOCK / (stft_matrix.shape[0] * stft_matrix.itemsize))
+    
+    for block_start in xrange(0, stft_matrix.shape[1], n_columns):
+        block_end = min(block_start + n_columns, 
+                        stft_matrix.shape[1])
+        
+        # RFFT and Conjugate here to match phase from DPWE code
+        stft_matrix[:, block_start:block_end] = fft.rfft(fft_window * y_frames[:, block_start:block_end], 
+                                                   axis=0).conj()
+    
     return stft_matrix
 
 def istft(stft_matrix, hop_length=None, win_length=None, window=None):  
@@ -387,30 +401,22 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=False
         hop_length = win_length / 4
 
     # Construct a padded hann window
-    window = util.pad_center(scipy.signal.hann(win_length, sym=False), n_fft)
+    window          = util.pad_center(scipy.signal.hann(win_length, sym=False), n_fft)
 
     # Window for discrete differentiation
     freq_angular    = np.linspace(0, 2 * np.pi, n_fft, endpoint=False)
 
     d_window        = np.sin( - freq_angular ) * np.pi / n_fft
 
-    # Reshape windows for broadcast
-    window          = window.reshape((-1, 1))
-    d_window        = d_window.reshape((-1, 1))
+    stft_matrix     = stft(y, n_fft=n_fft, hop_length=hop_length, window=window)
+    diff_stft       = stft(y, n_fft=n_fft, hop_length=hop_length, window=d_window).conj()
 
-    # Pylint does not correctly infer the type here, but it's correct.
-    freq_angular    = freq_angular.reshape((-1, 1)) # pylint: disable=maybe-no-member
-    
-    # Frame up the audio
-    y_frame         = util.frame(y, frame_length=n_fft, hop_length=hop_length)
-    
-    # compute STFT and differential spectrogram
-    stft_matrix     = fft.rfft(window   * y_frame, axis=0).conj()
-    diff_stft       = fft.rfft(d_window * y_frame, axis=0)
-    
     # Compute power normalization. Suppress zeros.
     power               = np.abs(stft_matrix)**2
     power[power == 0]   = 1.0
+    
+    # Pylint does not correctly infer the type here, but it's correct.
+    freq_angular    = freq_angular.reshape((-1, 1)) # pylint: disable=maybe-no-member
     
     if_gram = (freq_angular[:n_fft/2 + 1] + (stft_matrix * diff_stft).imag / power) * sr / (2 * np.pi)
     

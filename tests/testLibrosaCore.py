@@ -131,8 +131,8 @@ def test_ifgram():
                                     sr          =   DATA['sr'][0,0].astype(int))
 
         # D fails to match here because of fftshift()
-        # assert np.allclose(D, DATA['D'])
-        assert np.allclose(F, DATA['F'])
+#         assert np.allclose(D, DATA['D'])
+        assert np.allclose(F, DATA['F'], atol=1e-3)
 
     for infile in files('data/core-ifgram-*.mat'):
         yield (__test, infile)
