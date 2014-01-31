@@ -527,7 +527,8 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=108, bins_per_octave=12, 
                                pad=True))
     
     # FFT the filters
-    n_fft = 4 * hop_length
+    max_filter_length = basis.shape[1]
+    n_fft = int(2.0**(np.ceil(np.log2(max_filter_length))))
 
     # Conjugate-transpose the basis
     fft_basis = np.fft.fft(basis, n=n_fft, axis=1).conj()
