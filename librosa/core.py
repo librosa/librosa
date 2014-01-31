@@ -527,9 +527,8 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=108, bins_per_octave=12, 
                                pad=True))
     
     # FFT the filters
-    max_filter_length = basis.shape[1]
-    n_fft = int(2.0**(np.ceil(np.log2(max_filter_length))))
-    
+    n_fft = 4 * hop_length
+
     # Conjugate-transpose the basis
     fft_basis = np.fft.fft(basis, n=n_fft, axis=1).conj()
     
@@ -542,7 +541,8 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=108, bins_per_octave=12, 
     
     my_y, my_sr, my_hop   = y, sr, hop_length
     
-    for octave in range(n_octaves):
+    # Iterate down the octaves
+    for _ in range(n_octaves):
         # STFT the signal
         D = stft(my_y, n_fft=n_fft, hop_length=my_hop)
         
@@ -560,7 +560,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=108, bins_per_octave=12, 
     # cleanup any framing errors at the boundaries
     max_col = min([x.shape[1] for x in cqt_resp])
     
-    cqt_resp = np.vstack([x[:,:max_col] for x in cqt_resp][::-1])
+    cqt_resp = np.vstack([x[:, :max_col] for x in cqt_resp][::-1])
     
     # Finally, clip out any bottom frequencies that we don't really want
     return cqt_resp[-n_bins:]
