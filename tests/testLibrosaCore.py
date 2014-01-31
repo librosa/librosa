@@ -108,7 +108,8 @@ def test_stft():
         D       = librosa.stft(y,       n_fft       =   DATA['nfft'][0,0].astype(int),
                                         hop_length  =   DATA['hop_length'][0,0].astype(int),
                                         win_length  =   win_length,
-                                        window      =   window)
+                                        window      =   window,
+                                        center      =   False)
 
         assert  np.allclose(D, DATA['D'])   
 
@@ -128,7 +129,8 @@ def test_ifgram():
         F, D    = librosa.ifgram(y, n_fft       =   DATA['nfft'][0,0].astype(int),
                                     hop_length  =   DATA['hop_length'][0,0].astype(int),
                                     win_length  =   DATA['hann_w'][0,0].astype(int),
-                                    sr          =   DATA['sr'][0,0].astype(int))
+                                    sr          =   DATA['sr'][0,0].astype(int),
+                                    center      =   False)
 
         # D fails to match here because of fftshift()
 #         assert np.allclose(D, DATA['D'])
@@ -162,7 +164,8 @@ def test_istft():
             
         Dinv    = librosa.istft(DATA['D'],  hop_length  = DATA['hop_length'][0,0].astype(int),
                                             win_length  = win_length,
-                                            window      = window)
+                                            window      = window,
+                                            center      = False)
 
         assert np.allclose(Dinv, DATA['Dinv'])
 
