@@ -28,8 +28,6 @@ def beat_track(input_file, output_csv):
     HOP_LENGTH  = 64
 
     # This is the window length used by default in stft
-    N_FFT       = 2048
-
     print 'Tracking beats'
     tempo, beats    = librosa.beat.beat_track(y=y, sr=sr, hop_length=HOP_LENGTH)
 
@@ -38,7 +36,7 @@ def beat_track(input_file, output_csv):
     # 3. save output
     # 'beats' will contain the frame numbers of beat events.
 
-    beat_times = librosa.frames_to_time(beats, sr=sr, hop_length=HOP_LENGTH, n_fft=N_FFT)
+    beat_times = librosa.frames_to_time(beats, sr=sr, hop_length=HOP_LENGTH)
 
     print 'Saving output to ', output_csv
     librosa.output.times_csv(output_csv, beat_times)
