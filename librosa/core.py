@@ -445,8 +445,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=False
 
     return if_gram, stft_matrix
 
-def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=None, 
-        resolution=2, aggregate=None, samples=None, basis=None):
+def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=108, bins_per_octave=12, tuning=None, resolution=2):
     '''Compute the constant-Q transform of an audio signal.
     
     :usage:
@@ -454,11 +453,10 @@ def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=
         >>> C = librosa.cqt(y, sr)
 
         >>> # Limit the frequency range
-        >>> C = librosa.cqt(y, sr, fmin=librosa.midi_to_hz(36), fmax=librosa.midi_to_hz(96))
+        >>> C = librosa.cqt(y, sr, fmin=librosa.midi_to_hz(36), n_bins=96)
 
-        >>> # Use a pre-computed CQT basis
-        >>> basis = librosa.filters.constant_q(sr, ...)
-        >>> C = librosa.cqt(y, sr, basis=basis)
+        >>> # Use higher resolution
+        >>> C = librosa.cqt(y, sr, fmin=librosa.midi_to_hz(36), n_bins=96 * 2, bins_per_octave=12 * 2)
 
     :parameters:
       - y : np.ndarray
@@ -469,13 +467,15 @@ def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=
         
       - hop_length : int > 0
           number of samples between successive CQT columns.
+
+          .. note:: `hop_length` must be at least `2**(n_bins / bins_per_octave)`
     
       - fmin : float > 0
           Minimum frequency. Defaults to C1 ~= 16.35 Hz
         
-      - fmax : float > 0
-          Maximum frequency. Defaults to C9 ~= 4816.01 Hz
-        
+      - n_bins : int > 0
+          Number of frequency bins, starting at `fmin`
+
       - bins_per_octave : int > 0
           Number of bins per octave
         
@@ -486,29 +486,22 @@ def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=
       - resolution : float > 0
           Filter resolution factor. Larger values use longer windows.
         
-      - aggregate : function
-          Aggregator function to merge filter response power within frames.
-          Default: np.mean
-        
-      - samples : None or array-like
-          Aggregate power at times ``y[samples[i]:samples[i+1]]``, 
-          instead of ``y[i * hop_length : (i+1)*hop_length]``
-        
-          Note that boundary sample times ``(0, len(y))`` will be automatically added.
-
-      - basis : None or list of arrays
-          (optinal) alternate set of CQT basis filters.
-          See ``librosa.filters.constant_q`` for details.
-
     :returns:
-      - CQT : np.ndarray
-          Constant-Q power for each frequency at each time.    
+      - CQT : np.ndarray, dtype=np.complex
+          Constant-Q for each frequency at each time.    
+
+
+    .. note:: This implementation is based on the recursive sub-sampling method 
+    described by Schoerkhuber and Klapuri, 2010.
+
+    - Schoerkhuber, Christian, and Anssi Klapuri. 
+      "Constant-Q transform toolbox for music processing." 
+      7th Sound and Music Computing Conference, Barcelona, Spain. 2010.
     '''
 
-    if aggregate is None:
-        aggregate = np.mean
-
-    # Do we have tuning?
+    if fmin is None:
+        fmin = midi_to_hz(12)
+    
     def __get_tuning():
         '''Helper function to compute tuning from y,sr'''
         pitches, mags = feature.ifptrack(y, sr=sr)[:2]
@@ -518,30 +511,60 @@ def cqt(y, sr, hop_length=512, fmin=None, fmax=None, bins_per_octave=12, tuning=
 
     if tuning is None:
         tuning = __get_tuning()
+        
+    # First thing, get the fmin of the top octave
+    freqs    = cqt_frequencies(n_bins + 1, fmin, bins_per_octave=bins_per_octave)
+    fmin_top = freqs[-bins_per_octave-1]
+    fmax     = freqs[-1]    
+    
+    # Generate the basis filters
+    basis = np.asarray(filters.constant_q(sr, 
+                               fmin=fmin_top, 
+                               fmax=fmax, 
+                               bins_per_octave=bins_per_octave, 
+                               tuning=tuning, 
+                               resolution=resolution,
+                               pad=True))
+    
+    # FFT the filters
+    max_filter_length = basis.shape[1]
+    n_fft = int(2.0**(np.ceil(np.log2(max_filter_length))))
+    
+    # Conjugate-transpose the basis
+    fft_basis = np.fft.fft(basis, n=n_fft, axis=1).conj()
+    
+    n_octaves = int(np.ceil(n_bins / float(bins_per_octave)))
+    
+    # Make sure our hop is long enough to support the bottom octave
+    assert(hop_length >= 2**n_octaves)
+    
+    cqt_resp = []
+    
+    my_y, my_sr, my_hop   = y, sr, hop_length
+    
+    for octave in range(n_octaves):
+        # STFT the signal
+        D = stft(my_y, n_fft=n_fft, hop_length=my_hop)
+        
+        # Rebuild the full spectrum
+        D = np.vstack([D.conj(), D[-2:0:-1]])
+        
+        # Convolve
+        cqt_resp.append(fft_basis.dot(D))
+        
+        # Resample
+        my_y    = resample(my_y, my_sr, my_sr/2.0)
+        my_sr   = my_sr  / 2.0
+        my_hop  = my_hop / 2.0
+    
+    # cleanup any framing errors at the boundaries
+    max_col = min([x.shape[1] for x in cqt_resp])
+    
+    cqt_resp = np.vstack([x[:,:max_col] for x in cqt_resp][::-1])
+    
+    # Finally, clip out any bottom frequencies that we don't really want
+    return cqt_resp[-n_bins:]
 
-    # Generate the CQT filters
-    if basis is None:
-        basis = filters.constant_q(sr, 
-                            fmin=fmin, 
-                            fmax=fmax, 
-                            bins_per_octave=bins_per_octave, 
-                            tuning=tuning, 
-                            resolution=resolution)
-    
-    if samples is None:
-        samples    = np.arange(0, len(y), hop_length)
-    else:
-        samples    = np.asarray([samples]).flatten()
-
-    cqt_power = np.empty((len(basis), len(y)), dtype=np.float32, order='F')
-    
-    for i, filt in enumerate(basis):
-        cqt_power[i]  = np.abs(scipy.signal.fftconvolve(y, filt, mode='same'))**2
-    
-    cqt_power = feature.sync(cqt_power, samples, aggregate=aggregate)
-    
-    return cqt_power
-    
 def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     """Log-scale the amplitude of a spectrogram.
 
