@@ -168,12 +168,12 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest'):
 
     return y_hat
 
-def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None):
+def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None, center=True):
     """Short-time Fourier transform.
 
     Returns a complex-valued matrix D such that
-      - ``np.abs(D[f, t])`` is the magnitude of frequency bin ``f`` at time ``t``
-      - ``np.angle(D[f, t])`` is the phase of frequency bin ``f`` at time ``t``
+      - ``np.abs(D[f, t])`` is the magnitude of frequency bin ``f`` at frame ``t``
+      - ``np.angle(D[f, t])`` is the phase of frequency bin ``f`` at frame ``t``
 
     :usage:
         >>> y, sr = librosa.load('file.wav')
@@ -201,6 +201,11 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None):
           - None (default): use an asymmetric Hann window
           - a window function, such as ``scipy.signal.hanning``
           - a vector or array of length ``n_fft``
+
+      - center      : boolean
+          - If `True`, the signal `y` is padded so that the frame `D[f, t]` is centered at `y[t * hop_length]`.
+          - If `False`, then `D[f, t]` *begins* at `y[t * hop_length]`
+
 
     :returns:
       - D           : np.ndarray, dtype=complex
@@ -239,6 +244,10 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None):
     # Reshape so that the window can be broadcast
     fft_window  = fft_window.reshape((-1, 1))
 
+    # Pad the time series so that frames are centered
+    if center:
+        y = np.pad(y, n_fft / 2, mode='reflect')
+
     # Window the time series. 
     y_frames    = util.frame(y, frame_length=n_fft, hop_length=hop_length)
 
@@ -260,7 +269,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None):
     
     return stft_matrix
 
-def istft(stft_matrix, hop_length=None, win_length=None, window=None):  
+def istft(stft_matrix, hop_length=None, win_length=None, window=None, center=True):  
     """
     Inverse short-time Fourier transform.
 
@@ -289,6 +298,10 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None):
           - None (default): use an asymmetric Hann window * 2/3
           - a window function, such as ``scipy.signal.hanning``
           - a user-specified window vector of length ``n_fft``
+
+      - center      : boolean
+          - If `True`, `D` is assumed to have centered frames.
+          - If `False`, `D` is assumed to have left-aligned frames.
 
     :returns:
       - y           : np.ndarray
@@ -338,9 +351,12 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None):
 
         y[sample:(sample+n_fft)] = y[sample:(sample+n_fft)] + ytmp
 
+    if center:
+        y = y[n_fft/2:-n_fft/2]
+
     return y
 
-def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=False):
+def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=False, center=True):
     '''Compute the instantaneous frequency (as a proportion of the sampling rate)
     obtained as the time-derivative of the phase of the complex spectrum as 
     described by Toshihiro Abe et al. in ICASSP'95, Eurospeech'97. 
@@ -371,6 +387,10 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=False
 
       - norm : bool
           Normalize the STFT. 
+
+      - center      : boolean
+          - If `True`, the signal `y` is padded so that the frame `D[f, t]` is centered at `y[t * hop_length]`.
+          - If `False`, then `D[f, t]` *begins* at `y[t * hop_length]`
 
     :returns:
       - if_gram : np.ndarray, dtype=real
@@ -408,8 +428,8 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=False
 
     d_window        = np.sin( - freq_angular ) * np.pi / n_fft
 
-    stft_matrix     = stft(y, n_fft=n_fft, hop_length=hop_length, window=window)
-    diff_stft       = stft(y, n_fft=n_fft, hop_length=hop_length, window=d_window).conj()
+    stft_matrix     = stft(y, n_fft=n_fft, hop_length=hop_length, window=window, center=center)
+    diff_stft       = stft(y, n_fft=n_fft, hop_length=hop_length, window=d_window, center=center).conj()
 
     # Compute power normalization. Suppress zeros.
     power               = np.abs(stft_matrix)**2
