@@ -57,12 +57,11 @@ def hpss_beats(input_file, output_csv):
 
     beat_times  = librosa.frames_to_time(beats, 
                                          sr=sr, 
-                                         hop_length=HOP_LENGTH,
-                                         n_fft=N_FFT)
+                                         hop_length=HOP_LENGTH)
+
     # Save the output
     print 'Saving beats to ', output_csv
     librosa.output.times_csv(output_csv, beat_times)
-
 
 def process_arguments():
     '''Argparse function to get the program parameters'''
