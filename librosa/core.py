@@ -677,7 +677,7 @@ def phase_vocoder(D, rate, hop_length=None):
     time_steps = np.arange(0, D.shape[1], rate, dtype=np.float)
     
     # Create an empty output array
-    d_stretch = np.zeros((D.shape[0], len(time_steps)), D.dtype)
+    d_stretch = np.zeros((D.shape[0], len(time_steps)), D.dtype, order='F')
     
     # Expected phase advance in each bin
     phi_advance = np.linspace(0, np.pi * hop_length, D.shape[0])
