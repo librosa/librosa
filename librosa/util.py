@@ -35,6 +35,8 @@ def frame(y, frame_length=2048, hop_length=512):
         ``y_frames[i, j] == y[j * hop_length + i]``
     '''
 
+    assert(hop_length > 0)
+
     # Compute the number of frames that will fit. The end may get truncated.
     n_frames = 1 + int( (len(y) - frame_length) / hop_length)
 
