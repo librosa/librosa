@@ -556,7 +556,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=108, bins_per_octave=12, 
         # Resample
         my_y    = resample(my_y, my_sr, my_sr/2.0)
         my_sr   = my_sr  / 2.0
-        my_hop  = my_hop / 2.0
+        my_hop  = int(my_hop / 2.0)
     
     # cleanup any framing errors at the boundaries
     max_col = min([x.shape[1] for x in cqt_resp])
