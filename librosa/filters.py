@@ -393,7 +393,7 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12, roll=0):
     n_octaves = np.ceil(np.float(n_input) / bins_per_octave)
 
     # Repeat and trim
-    cq_to_ch = np.tile(cq_to_ch, n_octaves)[:, :n_input]
+    cq_to_ch = np.tile(cq_to_ch, int(n_octaves))[:, :n_input]
 
     # Apply the roll
     cq_to_ch = np.roll(cq_to_ch, -roll, axis=0)
