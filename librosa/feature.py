@@ -231,6 +231,9 @@ def estimate_tuning(frequencies, resolution=0.01, bins_per_octave=12):
 
     frequencies = np.asarray([frequencies], dtype=float).flatten()
 
+    # Trim out any DC components
+    frequencies = frequencies[frequencies > 0]
+
     # Compute the residual relative to the number of bins
     residual = np.mod(bins_per_octave * librosa.core.hz_to_octs(frequencies) , 1.0)
 
