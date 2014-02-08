@@ -496,9 +496,10 @@ def piptrack(y=None, sr=22050, S=None, n_fft=4096, fmin=150.0, fmax=4000.0, thre
     # then restrict to the feasible range (fmin:fmax)
     avg   = 0.5 * (S[2:] - S[:-2])
 
-    #XXX: this gets a div-by-0, but we clean it up later
-    # Find a way to suppress the warning
-    shift = avg / (2 * S[1:-1] - S[2:] - S[:-2])
+    shift = 2 * S[1:-1] - S[2:] - S[:-2]
+    # Suppress divide-by-zeros. 
+    # Points where shift == 0 will never be selected by localmax anyway
+    shift = avg / (shift + (shift == 0))
     
     # Pad back up to the same shape as S
     avg   = np.pad(avg,   ([1, 1], [0, 0]), mode='constant')
