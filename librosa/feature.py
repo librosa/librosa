@@ -42,7 +42,7 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096, hop_length=512, **kwargs):
 
       - tuning : float in [-0.5,  0.5)
           Deviation (in fractions of a bin) from A440 tuning.
-          If not provided, it will be automatically estimated from ``y``.
+          If not provided, it will be automatically estimated.
 
       - kwargs : additional arguments
           See ``librosa.filters.logfrequency()`` 
@@ -60,32 +60,24 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096, hop_length=512, **kwargs):
     
     # If we don't have a spectrogram, build one
     if S is None:
-        # If the user didn't specify tuning, do it ourselves
-        if 'tuning' not in kwargs:
-            pitches, magnitudes, S = ifptrack(y, sr, n_fft=n_fft, hop_length=hop_length)
-            pitches = pitches[magnitudes > np.median(magnitudes)]
-            del magnitudes
-
-            bins_per_octave = kwargs.get('bins_per_octave', 12)
-            kwargs['tuning'] = estimate_tuning(pitches, bins_per_octave=bins_per_octave)
-
-            del pitches
-
-        else:
-            S = librosa.stft(y, n_fft=n_fft, hop_length=hop_length)
-
-        # Retain power
-        S = np.abs(S)**2
+        # By default, use a power spectrogram
+        S = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length))**2
 
     else:
         n_fft       = (S.shape[0] -1 ) * 2
+
+    # If we don't have tuning already, grab it from S
+    if 'tuning' not in kwargs:
+        kwargs['tuning'] = estimate_tuning(S=S,
+                                           sr=sr, 
+                                           bins_per_octave=kwargs.get('bins_per_octave', 12))
 
     # Build the CQ basis
     cq_basis = librosa.filters.logfrequency(sr, n_fft=n_fft, **kwargs)
     
     return cq_basis.dot(S)
 
-def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048, hop_length=512, tuning=0.0, **kwargs):
+def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048, hop_length=512, tuning=None, **kwargs):
     """Compute a chromagram from a spectrogram or waveform
 
     :usage:
@@ -114,17 +106,18 @@ def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048, hop_length=512
       - hop_length : int > 0
           hop length if provided ``y, sr`` instead of ``S``
 
-      - tuning : float in [-0.5, 0.5)
-          Deviation from A440 tuning in fractional bins (cents)
+      - tuning : float in [-0.5, 0.5) or None.
+          Deviation from A440 tuning in fractional bins (cents).
+          If ``None``, it is automatically estimated.
 
       - kwargs
           Parameters to build the chroma filterbank.
           See ``librosa.filters.chroma()`` for details.
 
     .. note:: One of either ``S`` or ``y`` must be provided.
-          If y is provided, the magnitude spectrogram is computed automatically given
+          If ``y`` is provided, the magnitude spectrogram is computed automatically given
           the parameters ``n_fft`` and ``hop_length``.
-          If S is provided, it is used as the input spectrogram, and n_fft is inferred
+          If ``S`` is provided, it is used as the input spectrogram, and ``n_fft`` is inferred
           from its shape.
       
     :returns:
@@ -139,15 +132,14 @@ def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048, hop_length=512
     
     n_chroma = kwargs.get('n_chroma', 12)
 
-    # Build the spectrogram, estimate tuning
+    # Build the power spectrogram if unspecified
     if S is None:
-        pitches, magnitudes, S = ifptrack(y, sr=sr, n_fft=n_fft, hop_length=hop_length)
-        tuning = estimate_tuning(pitches[magnitudes > np.median(magnitudes)], 
-                                 bins_per_octave=n_chroma)
-
-        S = np.abs(S / S.max())**2
+        S  = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length))**2
     else:
         n_fft       = (S.shape[0] -1 ) * 2
+
+    if tuning is None:
+        tuning = estimate_tuning(S=S, sr=sr, bins_per_octave=n_chroma)
 
     # Get the filter bank
     if 'A440' not in kwargs:
@@ -196,22 +188,22 @@ def perceptual_weighting(S, frequencies, ref_power=1e-12):
     return offset + librosa.logamplitude(S, ref_power=ref_power)
 
 #-- Pitch and tuning --#
-def tuning(resolution=0.01, bins_per_octave=12, **kwargs):
+def estimate_tuning(resolution=0.01, bins_per_octave=12, **kwargs):
     '''Estimate the tuning of an audio time series or spectrogram input.
 
     :usage:
        >>> # With time-series input
-       >>> print tuning(y=y, sr=sr)
+       >>> print estimate_tuning(y=y, sr=sr)
 
        >>> # In tenths of a cent
-       >>> print tuning(y=y, sr=sr, resolution=1e-3)
+       >>> print estimate_tuning(y=y, sr=sr, resolution=1e-3)
 
        >>> # Using spectrogram input
        >>> S = np.abs(librosa.stft(y))
-       >>> print tuning(S=S, sr=sr)
+       >>> print estimate_tuning(S=S, sr=sr)
 
        >>> # Using pass-through arguments to ``librosa.feature.piptrack``
-       >>> print tuning(y=y, sr=sr, n_fft=8192, fmax=librosa.midi_to_hz(128))
+       >>> print estimate_tuning(y=y, sr=sr, n_fft=8192, fmax=librosa.midi_to_hz(128))
 
     :parameters:
       - resolution : float in (0, 1)
@@ -236,25 +228,25 @@ def tuning(resolution=0.01, bins_per_octave=12, **kwargs):
     
     threshold = np.median(mag[pitch_mask])
     
-    return librosa.feature.estimate_tuning( pitch[(mag > threshold) & pitch_mask], 
+    return librosa.feature.pitch_tuning( pitch[(mag > threshold) & pitch_mask], 
                                             resolution=resolution, 
                                             bins_per_octave=bins_per_octave)
 
-def estimate_tuning(frequencies, resolution=0.01, bins_per_octave=12):
+def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     '''Given a collection of pitches, estimate its tuning offset
     (in fractions of a bin) relative to A440=440.0Hz.
     
     :usage:
         >>> # Generate notes at +25 cents
         >>> freqs = librosa.cqt_frequencies(24, 55, tuning=0.25)
-        >>> librosa.feature.estimate_tuning(freqs)
+        >>> librosa.feature.pitch_tuning(freqs)
         0.25
 
         >>> # Track frequencies from a real spectrogram
         >>> pitches, magnitudes, stft = librosa.feature.ifptrack(y, sr)
         >>> # Select out pitches with high energy
         >>> pitches = pitches[magnitudes > np.median(magnitudes)]
-        >>> librosa.feature.estimate_tuning(pitches)
+        >>> librosa.feature.pitch_tuning(pitches)
 
     :parameters:
       - frequencies : array-like, float
@@ -273,7 +265,7 @@ def estimate_tuning(frequencies, resolution=0.01, bins_per_octave=12):
           estimated tuning deviation (fractions of a bin)
 
     .. seealso::
-      - ``librosa.feature.tuning`` For estimating tuning from time-series or spectrogram input
+      - ``librosa.feature.estimate_tuning`` For estimating tuning from time-series or spectrogram input
     '''
 
     frequencies = np.asarray([frequencies], dtype=float).flatten()
@@ -516,17 +508,15 @@ def piptrack(y=None, sr=22050, S=None, n_fft=4096, fmin=150.0, fmax=4000.0, thre
     mags       = np.zeros_like(S)
     
     # Clip to the viable frequency range
-    freq_mask = ((fmin <= fft_freqs) & ( fft_freqs < fmax)).reshape((-1,1))
+    freq_mask = ((fmin <= fft_freqs) & ( fft_freqs < fmax)).reshape((-1, 1))
     
     # Compute the column-wise local max of S after thresholding
-    mask = freq_mask & librosa.core.localmax( S * (S > threshold * S.max(axis=0)), axis=0 )
-    
     # Find the argmax coordinates
-    idx = np.argwhere(mask)
+    idx = np.argwhere(freq_mask & librosa.core.localmax(S * (S > threshold * S.max(axis=0)), 
+                                                        axis=0 ))
                                    
     # Store pitch and magnitude
-    pitches[idx[:,0], idx[:, 1]] = (idx[:, 0] + shift[idx[:, 0], idx[:, 1]]) * float(sr) / n_fft
-    
+    pitches[idx[:, 0], idx[:, 1]] = (idx[:, 0] + shift[idx[:, 0], idx[:, 1]]) * float(sr) / n_fft
     mags[idx[:, 0], idx[:, 1]]   = (S[idx[:, 0], idx[:, 1]] + dskew[idx[:, 0], idx[:, 1]])
     
     return pitches, mags

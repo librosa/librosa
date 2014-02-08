@@ -502,15 +502,8 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=108, bins_per_octave=12, 
     if fmin is None:
         fmin = midi_to_hz(12)
     
-    def __get_tuning():
-        '''Helper function to compute tuning from y,sr'''
-        pitches, mags = feature.ifptrack(y, sr=sr)[:2]
-        threshold = np.median(mags)
-        return feature.estimate_tuning( pitches[mags>threshold], 
-                                        bins_per_octave=bins_per_octave)
-
     if tuning is None:
-        tuning = __get_tuning()
+        tuning = feature.estimate_tuning(y=y, sr=sr)
         
     # First thing, get the fmin of the top octave
     freqs    = cqt_frequencies(n_bins + 1, fmin, bins_per_octave=bins_per_octave)
