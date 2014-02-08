@@ -389,22 +389,25 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=None, fmax=None, thr
 
     return pitches, magnitudes, D
 
-def piptrack(y=None, sr=22050, S=None, fmin=150.0, fmax=4000.0, threshold=.1):
+def piptrack(y=None, sr=22050, S=None, n_fft=4096, fmin=150.0, fmax=4000.0, threshold=.1):
     '''Pitch tracking on thresholded parabolically-interpolated STFT
 
     :usage:
         >>> pitches, magnitudes = librosa.feature.piptrack(y=y, sr=sr)
 
     :parameters:
-      - S: np.ndarray or None
-          magnitude or power spectrogram
-          
       - y: np.ndarray or None
           audio signal
       
       - sr : int
           audio sampling rate of the audio signal
       
+      - S: np.ndarray or None
+          magnitude or power spectrogram
+          
+      - n_fft : int or None
+          number of fft bins to use, if ``y`` is provided.
+          
       - threshold : float
           A bin in spectrum X is considered a pitch when it is greater than threshold*X.max()
       
@@ -424,8 +427,10 @@ def piptrack(y=None, sr=22050, S=None, fmin=150.0, fmax=4000.0, threshold=.1):
       - magnitudes : np.ndarray, shape=(d,t)
           Where ``d`` is the subset of FFT bins within ``fmin`` and ``fmax``.
         
-          ``pitches[i, t]`` contains instantaneous frequencies at time ``t``
-          ``magnitudes[i, t]`` contains their magnitudes.
+          ``pitches[f, t]`` contains instantaneous frequency at bin ``f``, time ``t``
+          ``magnitudes[f, t]`` contains the corresponding magnitudes.
+          
+          .. note:: Both ``pitches`` and ``magnitudes`` take value 0 at bins of non-maximal magnitude.
           
     .. note::
     
@@ -437,41 +442,47 @@ def piptrack(y=None, sr=22050, S=None, fmin=150.0, fmax=4000.0, threshold=.1):
     if S is None:
         if y is None:
             raise ValueError('Either "y" or "S" must be provided')
-        S = np.abs(librosa.core.stft(y))
+        S = np.abs(librosa.core.stft(y, n_fft=n_fft))
 
     # Truncate to feasible region
-    fmin = np.maximum(0, fmin)
+    fmin = np.maximum(fmin, 0)
     fmax = np.minimum(fmax, sr / 2)
 
-    # Pre-allocate output
-    pitches = np.zeros(S.shape)
-    magnitudes = np.zeros(S.shape)
-
     # Pre-compute FFT frequencies
-    fft_freqs = librosa.core.fft_frequencies(sr=sr, n_fft=(S.shape[0] - 1)*2)
-
-    for n, X in enumerate(S.T):
-        # Remove entries below the threshold
-        Xc = X*(X > threshold*X.max())
-        # Find local maxima
-        local_maxima = np.flatnonzero(librosa.core.localmax(Xc))
-        # Remove any local maxima outside of the specified range
-        local_maxima = local_maxima[fft_freqs[local_maxima] > fmin]
-        local_maxima = local_maxima[fft_freqs[local_maxima] < fmax]
-        # Parabolic interpolation
-        ym1 = X[local_maxima - 1]
-        y0 = X[local_maxima]
-        yp1 = X[local_maxima + 1]
-        shift = (yp1 - ym1)/(2*(2*y0 - yp1 - ym1))
-        local_max_interp = local_maxima + shift
-        local_max_magnitudes = y0 - .25*(ym1 - yp1)*shift
-        # Convert to frequencies
-        local_max_freqs = local_max_interp*sr/(2.0*(S.shape[0] - 1))
-        # Store pitch and magnitude
-        pitches[local_maxima, n] = local_max_freqs
-        magnitudes[local_maxima, n] = local_max_magnitudes
-
-    return pitches, magnitudes
+    n_fft = 2 * (S.shape[0] - 1)
+    fft_freqs = librosa.core.fft_frequencies(sr=sr, n_fft=n_fft)
+    
+    # Do the parabolic interpolation everywhere,
+    # then figure out where the peaks are
+    # then restrict to the feasible range (fmin:fmax)
+    avg   = 0.5 * (S[2:] - S[:-2])
+    shift = avg / (2 * S[1:-1] - S[2:] - S[:-2])
+    
+    # Pad back up to the same shape as S
+    avg   = np.pad(avg,   ([1, 1], [0, 0]), mode='constant')
+    shift = np.pad(shift, ([1, 1], [0, 0]), mode='constant')
+    
+    dskew = 0.5 * avg * shift
+    
+    # Pre-allocate output
+    pitches    = np.zeros_like(S)
+    mags       = np.zeros_like(S)
+    
+    # Clip to the viable frequency range
+    freq_mask = ((fmin <= fft_freqs) & ( fft_freqs < fmax)).reshape((-1,1))
+    
+    # Compute the column-wise local max of S after thresholding
+    mask = freq_mask & librosa.core.localmax( S * (S > threshold * S.max(axis=0)), axis=0 )
+    
+    # Find the argmax coordinates
+    idx = np.argwhere(mask)
+                                   
+    # Store pitch and magnitude
+    pitches[idx[:,0], idx[:, 1]] = (idx[:, 0] + shift[idx[:, 0], idx[:, 1]]) * float(sr) / n_fft
+    
+    mags[idx[:, 0], idx[:, 1]]   = (S[idx[:, 0], idx[:, 1]] + dskew[idx[:, 0], idx[:, 1]])
+    
+    return pitches, mags
 
 #-- Mel spectrogram and MFCCs --#
 def mfcc(S=None, y=None, sr=22050, n_mfcc=20):
