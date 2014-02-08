@@ -19,6 +19,7 @@ def estimate_tuning(input_file):
     print 'Loading ', input_file
     y, sr = librosa.load(input_file)
 
+    print 'Separating harmonic component ... '
     y = harmonic(y)
 
     print 'Estimating tuning ... '
