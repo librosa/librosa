@@ -7,9 +7,8 @@ Estimate the tuning (deviation from A440) of a recording.
 Usage: ./tuning.py [-h] input_file
 '''
 
-import sys, argparse
-import numpy as np
-
+import argparse
+import sys
 import librosa
 
 def harmonic(y):
@@ -27,7 +26,6 @@ def estimate_tuning(input_file):
     tuning = librosa.feature.estimate_tuning(y=y, sr=sr)
 
     print '%+0.2f cents' % (100 * tuning)
-
 
 def process_arguments():
     '''Argparse function to get the program parameters'''
