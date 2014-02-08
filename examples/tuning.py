@@ -12,9 +12,14 @@ import numpy as np
 
 import librosa
 
+def harmonic(y):
+    return librosa.istft(librosa.decompose.hpss(librosa.stft(y))[0])
+
 def estimate_tuning(input_file):
     print 'Loading ', input_file
     y, sr = librosa.load(input_file)
+
+    y = harmonic(y)
 
     # Get the instantaneous-frequency pitch track
     print 'Tracking pitches... '
@@ -22,7 +27,10 @@ def estimate_tuning(input_file):
 
     print 'Estimating tuning ... '
     # Just track the pitches associated with high magnitude
-    pitches = pitches[magnitudes > np.median(magnitudes)]
+    pmask = pitches > 0
+    thresh = np.median(magnitudes[pmask])
+
+    pitches = pitches[pmask & (magnitudes > thresh)]
 
     tuning = librosa.feature.estimate_tuning(pitches)
     print '%+0.2f cents' % (100 * tuning)
