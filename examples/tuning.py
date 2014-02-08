@@ -21,18 +21,10 @@ def estimate_tuning(input_file):
 
     y = harmonic(y)
 
-    # Get the instantaneous-frequency pitch track
-    print 'Tracking pitches... '
-    pitches, magnitudes, D = librosa.feature.ifptrack(  y, sr )
-
     print 'Estimating tuning ... '
     # Just track the pitches associated with high magnitude
-    pmask = pitches > 0
-    thresh = np.median(magnitudes[pmask])
+    tuning = librosa.feature.estimate_tuning(y=y, sr=sr)
 
-    pitches = pitches[pmask & (magnitudes > thresh)]
-
-    tuning = librosa.feature.estimate_tuning(pitches)
     print '%+0.2f cents' % (100 * tuning)
 
 

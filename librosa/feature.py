@@ -495,6 +495,9 @@ def piptrack(y=None, sr=22050, S=None, n_fft=4096, fmin=150.0, fmax=4000.0, thre
     # then figure out where the peaks are
     # then restrict to the feasible range (fmin:fmax)
     avg   = 0.5 * (S[2:] - S[:-2])
+
+    #XXX: this gets a div-by-0, but we clean it up later
+    # Find a way to suppress the warning
     shift = avg / (2 * S[1:-1] - S[2:] - S[:-2])
     
     # Pad back up to the same shape as S
