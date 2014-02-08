@@ -196,6 +196,50 @@ def perceptual_weighting(S, frequencies, ref_power=1e-12):
     return offset + librosa.logamplitude(S, ref_power=ref_power)
 
 #-- Pitch and tuning --#
+def tuning(resolution=0.01, bins_per_octave=12, **kwargs):
+    '''Estimate the tuning of an audio time series or spectrogram input.
+
+    :usage:
+       >>> # With time-series input
+       >>> print tuning(y=y, sr=sr)
+
+       >>> # In tenths of a cent
+       >>> print tuning(y=y, sr=sr, resolution=1e-3)
+
+       >>> # Using spectrogram input
+       >>> S = np.abs(librosa.stft(y))
+       >>> print tuning(S=S, sr=sr)
+
+       >>> # Using pass-through arguments to ``librosa.feature.piptrack``
+       >>> print tuning(y=y, sr=sr, n_fft=8192, fmax=librosa.midi_to_hz(128))
+
+    :parameters:
+      - resolution : float in (0, 1)
+          Resolution of the tuning as a fraction of a bin.
+          0.01 corresponds to cents.
+        
+      - bins_per_octave : int > 0
+          How many frequency bins per octave
+
+      - kwargs : additional keyword arguments
+          See ``librosa.feature.piptrack``
+
+    :returns:
+      - tuning: float in [-0.5, 0.5]
+          estimated tuning deviation (fractions of a bin)                
+    '''
+
+    pitch, mag = librosa.feature.piptrack(**kwargs)
+    
+    # Only count magnitude where frequency is > 0
+    pitch_mask = pitch > 0
+    
+    threshold = np.median(mag[pitch_mask])
+    
+    return librosa.feature.estimate_tuning( pitch[(mag > threshold) & pitch_mask], 
+                                            resolution=resolution, 
+                                            bins_per_octave=bins_per_octave)
+
 def estimate_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     '''Given a collection of pitches, estimate its tuning offset
     (in fractions of a bin) relative to A440=440.0Hz.
@@ -215,7 +259,7 @@ def estimate_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     :parameters:
       - frequencies : array-like, float
           A collection of frequencies detected in the signal.
-          See ``ifptrack``.
+          See ``librosa.feature.piptrack``
 
       - resolution : float in (0, 1)
           Resolution of the tuning as a fraction of a bin.
@@ -226,7 +270,10 @@ def estimate_tuning(frequencies, resolution=0.01, bins_per_octave=12):
         
     :returns:
       - tuning: float in [-0.5, 0.5]
-          estimated tuning deviation (fractions of a bin)                
+          estimated tuning deviation (fractions of a bin)
+
+    .. seealso::
+      - ``librosa.feature.tuning`` For estimating tuning from time-series or spectrogram input
     '''
 
     frequencies = np.asarray([frequencies], dtype=float).flatten()
