@@ -80,7 +80,7 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
           feature matrix (d-by-t)
       - k : int > 0 or None
           the number of nearest-neighbors for each sample
-          Default: ``k = ceil(sqrt(t - 2 * width + 1))``
+          Default: ``k = 2 * ceil(sqrt(t - 2 * width + 1))``
       - width : int > 0
           only link neighbors ``(data[:, i], data[:, j])`` if ``|i-j| >= width`` 
       - metric : see ``scipy.spatial.distance.pdist()``
@@ -96,7 +96,7 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
     t = data.shape[1]
 
     if k is None:
-        k = np.ceil(np.sqrt(t - 2 * width + 1))
+        k = 2 * np.ceil(np.sqrt(t - 2 * width + 1))
 
     k = int(k)
 
