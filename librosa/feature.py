@@ -702,7 +702,7 @@ def sync(data, frames, aggregate=None):
 
     (dimension, n_frames) = data.shape
 
-    frames      = np.unique(np.concatenate( ([0], frames, [n_frames]) ))
+    frames      = np.unique(np.concatenate( ([0], frames, [n_frames]) )).astype(int)
 
     if min(frames) < 0:
         raise ValueError('Negative frame index.')
