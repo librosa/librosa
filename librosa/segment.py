@@ -107,7 +107,7 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
     def _band_infinite():
         '''Suppress the diagonal+- of a distance matrix'''
         band       = np.empty( (t, t) )
-        band[:]    = np.inf
+        band.fill(np.inf)
         band[np.triu_indices_from(band, width)] = 0
         band[np.tril_indices_from(band, -width)] = 0
 
