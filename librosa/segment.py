@@ -84,7 +84,7 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
           or ``k = 2`` if ``t <= 2 * width + 1``
       - width : int > 0
           only link neighbors ``(data[:, i], data[:, j])`` if ``|i-j| >= width`` 
-      - metric : see ``scipy.spatial.distance.pdist()``
+      - metric : see ``scipy.spatial.distance.cdist()``
           distance metric to use for nearest-neighbor calculation
       - sym : bool
           set ``sym=True`` to only link mutual nearest-neighbors
@@ -114,8 +114,7 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
         return band
 
     # Build the distance matrix
-    D = scipy.spatial.distance.squareform(
-            scipy.spatial.distance.pdist(data.T, metric=metric))
+    D = scipy.spatial.distance.cdist(data.T, data.T, metric=metric)
 
     # Max out the diagonal band
     D = D + _band_infinite()
