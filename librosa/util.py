@@ -192,6 +192,36 @@ def normalize(S, norm=np.inf, axis=0):
     
     return S / length
 
+def match_intervals(intervals_from, intervals_to):
+    '''Match one set of intervals to another.
+
+    This is primarily useful for mapping beat timings to segments.
+              
+    :parameters:
+      - intervals_from : ndarray, shape=(n, 2)
+          The time range for source intervals.
+          The `i`th interval spans time `intervals_from[i, 0]` to `intervals_from[i, 1]`.
+          `intervals_from[0, 0]` should be 0, `intervals_from[-1, 1]` should be the track duration.
+          
+      - intervals_to : ndarray, shape=(m, 2)
+          Analogous to ``intervals_from``.
+          
+    :returns:
+      - interval_mapping : ndarray, shape=(n,)
+          For each interval in ``intervals_from``, the corresponding interval in
+          ``intervals_to``.
+    '''
+    
+    # The overlap score of a beat with a segment is defined as
+    #   max(0, min(beat_end, segment_end) - max(beat_start, segment_start))
+    
+    ends   = np.minimum.outer(intervals_from[:, 1], intervals_to[:, 1])
+    starts = np.maximum.outer(intervals_from[:, 0], intervals_to[:, 0])
+    
+    score  = np.maximum(0, ends - starts)
+    
+    return np.argmax(score, axis=1)
+
 def find_files(directory, ext=None, recurse=True, case_sensitive=False, limit=None, offset=0):
     '''Get a sorted list of (audio) files in a directory or directory sub-tree.
     
