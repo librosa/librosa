@@ -12,20 +12,20 @@ def beats_to_chords(beat_times, chord_times, chord_labels):
     '''Propagate lab-style annotations to a list of beat timings.
               
     :parameters:
-      - beat_times : ndarray, shape=(m, 2)
+      - beat_times : ndarray, shape=(n, 2)
           The time range for beat intervals.
           The `i`th beat spans time `beat_times[i, 0]` to `beat_times[i, 1]`.
           `beat_times[0, 0]` should be 0, `beat_times[-1, 1]` should be the track duration.
           
-      - chord_times : ndarray, shape=(n, 2)
+      - chord_times : ndarray, shape=(m, 2)
           The time range for the `i`th annotation is `chord_times[i,0]` to `chord_times[i, 1]`.
           `chord_times[0, 0]` should be 0, `chord_times[-1, 1]` should be the track duration.
           
-      - chord_labels : list of str, shape=(n,)
+      - chord_labels : list of str, shape=(m,)
           List of annotation strings associated with `chord_times`
           
     :returns:
-      - beat_labels : list of str, shape=(len(beat_times)-1,)
+      - beat_labels : list of str, shape=(n,)
           Chord annotations at the beat level.
     '''
     
