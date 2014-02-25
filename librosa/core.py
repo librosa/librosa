@@ -570,12 +570,17 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
         >>> # Compute dB relative to peak power
         >>> log_S   = librosa.logamplitude(S, ref_power=S.max())
 
+        >>> # Alternate method of dB relative to peak power
+        >>> log_S   = librosa.logamplitude(S, ref_power=np.max)
+
     :parameters:
       - S       : np.ndarray
           input spectrogram
 
-      - ref_power : float
-          reference against which ``S`` is compared.
+      - ref_power : scalar or function
+          If float, ``log(abs(S))`` is compared to ``log(ref_power)``.
+          If a function, ``log(abs(S))`` is compared to ``log(ref_power(abs(S)))``.
+          This is primarily useful for comparing to the maximum value of `S`
 
       - amin    : float
           minimum amplitude threshold 
@@ -589,8 +594,16 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
           ``log_S ~= 10 * log10(S) - 10 * log10(abs(ref_power))``
     """
 
-    log_spec    =   10.0 * np.log10(np.maximum(amin, np.abs(S))) 
-    log_spec    -=  10.0 * np.log10(np.abs(ref_power))
+    abs_S = np.abs(S)
+
+    if hasattr(ref_power, '__call__'):
+        # User supplied a window function
+        __ref = ref_power(abs_S)
+    else:
+        __ref = np.abs(ref_power)
+
+    log_spec    =   10.0 * np.log10(np.maximum(amin, abs_S)) 
+    log_spec    -=  10.0 * np.log10(np.maximum(amin, __ref))
 
     if top_db is not None:
         log_spec = np.maximum(log_spec, log_spec.max() - top_db)
