@@ -1311,7 +1311,6 @@ def localmax(x, axis=0):
     
     return (x > x_pad[inds1]) & (x >= x_pad[inds2])
     
-
 def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     '''Uses a flexible heuristic to pick peaks in a signal.
 
