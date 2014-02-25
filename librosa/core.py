@@ -578,12 +578,12 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
           input spectrogram
 
       - ref_power : scalar or function
-          If float, ``log(abs(S))`` is compared to ``log(ref_power)``.
+          If scalar, ``log(abs(S))`` is compared to ``log(ref_power)``.
           If a function, ``log(abs(S))`` is compared to ``log(ref_power(abs(S)))``.
           This is primarily useful for comparing to the maximum value of `S`
 
       - amin    : float
-          minimum amplitude threshold 
+          minimum amplitude threshold for `abs(S)` and `ref_power`
 
       - top_db  : float
           threshold log amplitude at top_db below the peak:
