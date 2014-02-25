@@ -6,6 +6,7 @@ import os
 import glob
 
 from numpy.lib.stride_tricks import as_strided
+from sklearn.base import BaseEstimator, TransformerMixin
 
 def frame(y, frame_length=2048, hop_length=512):
     '''Slice a time series into overlapping frames.
@@ -311,3 +312,108 @@ def find_files(directory, ext=None, recurse=True, case_sensitive=False, limit=No
         files = files[:limit]
     
     return files
+
+
+
+class FeatureExtractor(BaseEstimator, TransformerMixin):
+    """Sci-kit learn wrapper class for feature extraction methods.
+
+    This class acts as a bridge between feature extraction functions 
+    and scikit-learn pipelines.
+
+    :usage:
+        >>> import librosa
+        >>> import sklearn.pipeline
+        
+        >>> # Build a mel-spectrogram extractor
+        >>> MelSpec = librosa.util.FeatureExtractor(librosa.feature.melspectrogram, 
+                                                    sr=22050, 
+                                                    n_fft=2048, 
+                                                    n_mels=128, 
+                                                    fmax=8000)
+        
+        >>> # And a log-amplitude extractor
+        >>> LogAmp = librosa.util.FeatureExtractor(librosa.logamplitude, ref_power=np.max)
+        
+        >>> # Chain them into a pipeline
+        >>> FeaturePipeline = sklearn.pipeline.Pipeline([('MelSpectrogram', MelSpec), ('LogAmplitude', LogAmp)])
+
+        >>> # Load an audio file
+        >>> y, sr = librosa.load('file.mp3', sr=22050)
+
+        >>> # Apply the transformation to y
+        >>> F = FeaturePipeline.transform([y])
+
+    :parameters:
+      - function : function
+        The feature extraction function to wrap.
+        Example: `librosa.feature.melspectrogram`
+
+      - target : str or None
+        If `None`, then `function` is called with the input data as the first positional argument.
+        If `str`, then `function` is called with the input data as a keyword argument with key `target`
+
+      - kwargs : additional keyword arguments
+        Parameters to be passed through to `function`
+    """
+
+    def __init__(self, function, target=None, **kwargs):
+        self.function = function
+        self.target   = target
+        self.kwargs   = {}
+        
+        self.set_params(**kwargs)
+        
+    # Clobber _get_param_names here for transparency
+    def _get_param_names(self):
+        """Returns the parameters of the feature extractor as a dictionary."""
+        P = {'function': self.function, 
+             'target':   self.target}
+        P.update(self.kwargs)
+        return P
+    
+    # Wrap set_params to catch updates
+    def set_params(self, **kwargs):
+        """Update the parameters of the feature extractor."""
+
+        # We don't want non-functional arguments polluting kwargs
+        params = kwargs.copy()
+        for k in ['function', 'target']:
+            params.pop(k, None)
+                
+        self.kwargs.update(params)
+        BaseEstimator.set_params(self, **kwargs)
+    
+    def fit(self, *args, **kwargs):
+        """This function does nothing, and is provided for interface compatibility.
+
+        .. note:: Since most `TransformerMixin` classes implement some statistical
+        modeling (e.g., PCA), the `fit` method is necessary.  
+
+        For the `FeatureExtraction` class, all parameters are fixed ahead of time,
+        and no statistical estimation takes place.
+        """
+        return self
+    
+    def transform(self, X):
+        """Applies the feature transformation to an array of input data.
+
+        :parameters:
+          - X : iterable
+            Array or list of input data
+
+        :returns:
+          - X_transform : list
+            In positional argument mode (target=None), then
+            `X_transform[i] = function(X[i], [feature extractor parameters])` 
+
+            If the `target` parameter was given, then
+            `X_transform[i] = function(target=X[i], [feature extractor parameters])` 
+        """
+        if self.target is not None:
+            # If we have a target, each element of X takes the keyword argument
+            return [self.function(**dict(self.kwargs.items() + {self.target: item}.items() )) for item in X]
+        else:
+            # Each element of X takes first position in function()
+            return [self.function(item, **self.kwargs) for item in X]
+            
