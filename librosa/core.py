@@ -567,11 +567,14 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
         >>> S       = np.abs(librosa.stft(y)) ** 2
         >>> log_S   = librosa.logamplitude(S)
 
-        >>> # Compute dB relative to peak power
-        >>> log_S   = librosa.logamplitude(S, ref_power=S.max())
+        >>> # Compute dB relative to a standard reference of 1.0
+        >>> log_S   = librosa.logamplitude(S, ref_power=1.0)
 
-        >>> # Alternate method of dB relative to peak power
+        >>> # Compute dB relative to peak power
         >>> log_S   = librosa.logamplitude(S, ref_power=np.max)
+
+        >>> # Or compare to median power
+        >>> log_S   = librosa.logamplitude(S, ref_power=np.median)
 
     :parameters:
       - S       : np.ndarray
