@@ -78,43 +78,42 @@ class ChordHMM(sklearn.hmm.GaussianHMM):
         self.chord_to_id_ = {}
         self.id_to_chord_ = []
         
-        for i, v in enumerate(chord_names):
-            self.chord_to_id_[v] = i
-            self.id_to_chord_.append(v)
+        for index, value in enumerate(chord_names):
+            self.chord_to_id_[value] = index
+            self.id_to_chord_.append(value)
     
-    def predict_chords(self, X):
+    def predict_chords(self, obs):
         '''Predict chords from an observation sequence
         
         :parameters:
-          - X : np.ndarray, shape=(n, d)
+          - obs : np.ndarray, shape=(n, d)
             Observation sequence, e.g., transposed beat-synchronous chromagram.
 
         :returns:
-          - Y : list of str, shape=(n,)
-            For each row of ``X``, the most likely chord label.
+          - labels : list of str, shape=(n,)
+            For each row of ``obs``, the most likely chord label.
 
         '''
         
-        return [self.id_to_chord_[s] for s in self.decode(X)[1]]
+        return [self.id_to_chord_[s] for s in self.decode(obs)[1]]
     
-    def fit(self, X, Y):
+    def fit(self, obs, labels):
         '''Supervised training
         
-        - X : list-like (n_songs) | X[i] : ndarray (n_beats, n_features)
-          A collection of feature observations, 
-          e.g., chromagrams for a collection of songs
+        - obs : list-like (n_songs) | obs[i] : ndarray (n_beats, n_features)
+          A collection of observation sequences, e.g., `obs[i]` is a chromagram
           
-        - Y : list-like (n_songs) | Y[i] list-like, (n_beats) | Y[i][t] str
-          labels for each observation
+        - labels : list-like (n_songs) | labels[i] list-like, (n_beats) | labels[i][t] str
+          labels for each observation, e.g.,
         '''
         
         
-        self.n_features = X[0].shape[1]
+        self.n_features = obs[0].shape[1]
 
-        sklearn.hmm.GaussianHMM._init(self, X, 'stmc')
+        sklearn.hmm.GaussianHMM._init(self, obs, 'stmc')
         stats     = sklearn.hmm.GaussianHMM._initialize_sufficient_statistics(self)
         
-        for obs_i, chords_i in itertools.izip(X, Y):
+        for obs_i, chords_i in itertools.izip(obs, labels):
             # Synthesize a deterministic frame log-probability 
             framelogprob = np.empty( (obs_i.shape[0], self.n_components) )
             posteriors   = np.empty_like(framelogprob)
@@ -122,13 +121,13 @@ class ChordHMM(sklearn.hmm.GaussianHMM):
             framelogprob.fill(-np.log(sklearn.hmm.EPS))
             posteriors.fill(sklearn.hmm.EPS)
             
-            for t, c in enumerate(chords_i):
-                state = self.chord_to_id_[c]
+            for t, chord in enumerate(chords_i):
+                state = self.chord_to_id_[chord]
                 
                 framelogprob[t, state] = -sklearn.hmm.EPS
                 posteriors[t, state]   = 1.0
                 
-            lpr, fwdlattice = self._do_forward_pass(framelogprob)
+            _, fwdlattice = self._do_forward_pass(framelogprob)
             bwdlattice      = self._do_backward_pass(framelogprob)
             
             self._accumulate_sufficient_statistics(stats, 
