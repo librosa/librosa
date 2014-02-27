@@ -2,6 +2,7 @@
 """Feature extraction routines."""
 
 import numpy as np
+import scipy.signal
 
 import librosa.core
 import librosa.util
@@ -621,7 +622,7 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512, **kwarg
     return np.dot(mel_basis, S)
 
 #-- miscellaneous utilities --#
-def delta(data, axis=-1, order=1, pad=True):
+def delta(data, width=9, order=1, axis=-1, trim=True):
     '''Compute delta features.
 
     :usage:
@@ -634,29 +635,41 @@ def delta(data, axis=-1, order=1, pad=True):
       - data      : np.ndarray, shape=(d, T)
           the input data matrix (eg, spectrogram)
 
-      - axis      : int
-          the axis along which to compute deltas.
-          Default is -1 (columns).
-
+      - width     : int, odd
+          Number of frames over which to compute the delta feature
+          
       - order     : int
           the order of the difference operator.
           1 for first derivative, 2 for second, etc.
 
-      - pad       : bool
-          set to True to pad the output matrix to the original size.
+      - axis      : int
+          the axis along which to compute deltas.
+          Default is -1 (columns).
+          
+      - trim      : bool
+          set to True to trim the output matrix to the original size.
 
     :returns:
       - delta_data   : np.ndarray
           delta matrix of ``data``.
     '''
 
-    delta_x  = np.diff(data, n=order, axis=axis)
+    half_length     = 1 + int(np.floor(width / 2))
+    window          = np.arange(half_length - 1, -half_length, -1)
+    
+    # Pad out the data by repeating the border values (delta=0)
+    padding         = [(0, 0)]  * data.ndim
+    padding[axis]   = (half_length, half_length)
+    delta_x         = np.pad(data, padding, mode='edge')
 
-    if pad:
-        padding         = [(0, 0)]  * data.ndim
-        padding[axis]   = (order, 0)
-        delta_x              = np.pad(delta_x, padding, mode='constant')
-
+    for _ in range(order):
+        delta_x     = scipy.signal.lfilter(window, 1, delta_x, axis=axis)
+    
+    if trim:
+        idx         = [Ellipsis] * delta_x.ndim
+        idx[axis]   = slice(half_length, -half_length)
+        delta_x     = delta_x[idx]
+    
     return delta_x
 
 def sync(data, frames, aggregate=None):
