@@ -171,8 +171,9 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True, feat
     n_fft       = kwargs.get('n_fft', 2048)
     hop_length  = kwargs.get('hop_length', 64)
 
-    # Compute first difference, include padding
-    onsets  = librosa.feature.delta(S, order=1, axis=1)
+    # Compute first difference, include padding for alignment purposes
+    onsets  = np.diff(S, axis=1)
+    onsets  = np.pad(onsets, ([0, 0], [1, 0]), mode='constant')
 
     # Discard negatives (decreasing amplitude)
     onsets  = np.maximum(0.0, onsets)
