@@ -367,10 +367,10 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
     # Clobber _get_param_names here for transparency
     def _get_param_names(self):
         """Returns the parameters of the feature extractor as a dictionary."""
-        P = {'function': self.function, 
-             'target':   self.target}
-        P.update(self.kwargs)
-        return P
+        temp_params = { 'function': self.function, 
+                        'target':   self.target}
+        temp_params.update(self.kwargs)
+        return temp_params
     
     # Wrap set_params to catch updates
     def set_params(self, **kwargs):
@@ -384,7 +384,8 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
         self.kwargs.update(params)
         BaseEstimator.set_params(self, **kwargs)
     
-    def fit(self, *args, **kwargs):
+    # We keep these arguments for compatibility, but don't use them.
+    def fit(self, *args, **kwargs): #pylint: disable=unused-argument
         """This function does nothing, and is provided for interface compatibility.
 
         .. note:: Since most `TransformerMixin` classes implement some statistical
@@ -395,7 +396,8 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
         """
         return self
     
-    def transform(self, X):
+    # Variable name 'X' is for consistency with sklearn
+    def transform(self, X): #pylint: disable=invalid-name
         """Applies the feature transformation to an array of input data.
 
         :parameters:
