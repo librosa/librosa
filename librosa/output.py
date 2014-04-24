@@ -187,7 +187,8 @@ def write_wav(path, y, sr):
     wav = y / np.max(np.abs(y))
     
     # Scale up to pcm range
-    wav = (wav - wav.min()) * (1<<15) - (1<<15)
+    #wav = (wav - wav.min()) * (1<<15) - (1<<15)
+    wav = wav * 32767
 
     # Convert to 16bit int
     wav = wav.astype('<i2')
