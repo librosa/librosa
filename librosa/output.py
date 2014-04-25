@@ -189,6 +189,8 @@ def write_wav(path, y, sr, normalize=True):
     # normalize
     if normalize:
         wav = y / np.max(np.abs(y))
+    else:
+        wav = y
     
     # Scale up to pcm range
     #wav = (wav - wav.min()) * (1<<15) - (1<<15)
