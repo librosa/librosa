@@ -163,7 +163,7 @@ def times_csv(path, times, annotations=None, delimiter=',', fmt='%0.3f'):
             for t, lab in zip(times, annotations):
                 writer.writerow([(fmt % t), lab])
 
-def write_wav(path, y, sr):
+def write_wav(path, y, sr, normalize=True):
     """Output a time series as a .wav file
 
     :usage:
@@ -181,10 +181,14 @@ def write_wav(path, y, sr):
       - sr : int
           sampling rate of ``y``
 
+      - normalize : boolean
+          turn normalization on or off
+          
     """
 
     # normalize
-    wav = y / np.max(np.abs(y))
+    if normalize:
+        wav = y / np.max(np.abs(y))
     
     # Scale up to pcm range
     #wav = (wav - wav.min()) * (1<<15) - (1<<15)
