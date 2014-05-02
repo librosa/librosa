@@ -9,7 +9,7 @@ import sklearn
 import sklearn.cluster
 import sklearn.feature_extraction
 
-def stack_memory(data, n_steps=2, delay=1, trim=True):
+def stack_memory(data, n_steps=2, delay=1, trim=True, **kwargs):
     """Short-term history embedding.
 
     Each column ``data[:, i]`` is mapped to
@@ -30,6 +30,8 @@ def stack_memory(data, n_steps=2, delay=1, trim=True):
           the number of columns to step
       - trim : bool
           Crop dimension to original number of columns
+      - **kwargs : dict
+          Additional arguments to pass to ``np.pad``
 
     :returns:
       - data_history : np.ndarray, shape=(d*m, t)
@@ -40,8 +42,13 @@ def stack_memory(data, n_steps=2, delay=1, trim=True):
     """
 
     t = data.shape[1]
+    kwargs.setdefault('mode', 'constant')
+
+    if kwargs['mode'] == 'constant':
+        kwargs.setdefault('constant_values', [0.0])
+
     # Pad the end with zeros, which will roll to the front below
-    data = np.pad(data, [(0, 0), (0, (n_steps-1) * delay)], mode='constant')
+    data = np.pad(data, [(0, 0), (0, (n_steps-1) * delay)], **kwargs)
 
     history = data
 
