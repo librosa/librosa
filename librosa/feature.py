@@ -6,6 +6,23 @@ import numpy as np
 import librosa.core
 import librosa.util
 
+# - BRYCE CODE
+def getCentroid(spectrum, fs):
+	
+	
+	N,K = np.shape(spectrum)
+	freq = np.transpose(np.linspace(0,fs/2,N))
+	freq = np.transpose(np.tile(freq,(K,1)))
+	
+	if np.sum(spectrum) == 0:
+		cent = np.zeros((K,1))
+	else:
+		cent = np.sum(np.multiply(freq,spectrum),axis=0)/(np.sum(spectrum,axis=0) + np.spacing(1))
+
+	return cent
+
+# - END BRYCE CODE
+
 #-- Chroma --#
 def logfsgram(y=None, sr=22050, S=None, n_fft=4096, hop_length=512, **kwargs):
     '''Compute a log-frequency spectrogram (piano roll) using a fixed-window STFT.
