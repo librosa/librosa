@@ -124,6 +124,9 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None, dtype=np.float32)
     else:
         sr = sr_native
 
+    # Final cleanup for dtype and contiguity
+    y = np.ascontiguousarray(y, dtype=dtype)
+
     return (y, sr)
 
 def resample(y, orig_sr, target_sr, res_type='sinc_fastest'):
@@ -166,7 +169,7 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest'):
         n_samples = y.shape[-1] * target_sr / orig_sr
         y_hat = scipy.signal.resample(y, n_samples, axis=-1)
 
-    return y_hat
+    return np.ascontiguousarray(y_hat)
 
 def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None, center=True):
     """Short-time Fourier transform.
