@@ -24,22 +24,15 @@ def stretch_demo(input_file, output_file, speed):
           speed up by this factor
     '''
 
-    N_FFT       = 2048
-    HOP_LENGTH  = N_FFT /4
-
     # 1. Load the wav file, resample
     print 'Loading ', input_file
 
     y, sr = librosa.load(input_file)
 
-    # 2. generate STFT @ 2048 samples
-    print 'Computing short-time fourier transform... '
-    D = librosa.stft(y, n_fft=N_FFT, hop_length=HOP_LENGTH)
-
+    # 2. Time-stretch through effects module
     print 'Playing back at %3.f%% speed' % (speed * 100)
-    D_stretch = librosa.phase_vocoder(D, speed, hop_length=HOP_LENGTH)
 
-    y_stretch = librosa.istft(D_stretch, hop_length=HOP_LENGTH)
+    y_stretch = librosa.effects.time_stretch(y, speed)
 
     print 'Saving stretched audio to: ', output_file
     librosa.output.write_wav(output_file, y_stretch, sr)

@@ -11,19 +11,16 @@ import argparse
 import sys
 import librosa
 
-def harmonic(y):
-    return librosa.istft(librosa.decompose.hpss(librosa.stft(y))[0])
-
 def estimate_tuning(input_file):
     print 'Loading ', input_file
     y, sr = librosa.load(input_file)
 
     print 'Separating harmonic component ... '
-    y = harmonic(y)
+    y_harm = librosa.effects.harmonic(y)
 
     print 'Estimating tuning ... '
     # Just track the pitches associated with high magnitude
-    tuning = librosa.feature.estimate_tuning(y=y, sr=sr)
+    tuning = librosa.feature.estimate_tuning(y=y_harm, sr=sr)
 
     print '%+0.2f cents' % (100 * tuning)
 
@@ -38,7 +35,6 @@ def process_arguments():
 
     return vars(parser.parse_args(sys.argv[1:]))
    
-
 if __name__ == '__main__':
     # Get the parameters
     parameters = process_arguments()
