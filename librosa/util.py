@@ -89,6 +89,37 @@ def pad_center(data, size, **kwargs):
     lpad = (size - len(data))/2
     return np.pad( data, (lpad, size - len(data) - lpad), **kwargs) 
 
+def fix_length(y, n, **kwargs):
+    '''Fix the length of a one-dimensional array ``y`` to exactly ``n``.
+
+    If ``len(y) < n``, pad according to the provided kwargs.  
+    By default, ``y`` is padded with trailing zeros.
+
+    :parameters:
+      - y : np.ndarray, shape=(m,)
+        one-dimensional array
+
+      - n : int >= 0
+        desired length of the array
+
+      - kwargs: keyword-arguments
+        See: ``numpy.pad()``
+
+    :returns:
+      - y : np.ndarray, shape=(n, 1)
+        ``y`` either trimmed or padded to length ``n``
+    '''
+
+    kwargs.setdefault('mode', 'constant')
+
+    if len(y) > n:
+        return y[:n]
+
+    if len(y) < n:
+        return np.pad(y, (0, n - len(y)), **kwargs)
+
+    return y
+
 def axis_sort(S, axis=-1, index=False, value=None): 
     '''Sort an array along its rows or columns.
     
