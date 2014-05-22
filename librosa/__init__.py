@@ -8,6 +8,7 @@ from . import chord
 from . import beat
 from . import decompose
 from . import display
+from . import effects
 from . import feature
 from . import filters
 from . import onset
