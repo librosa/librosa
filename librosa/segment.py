@@ -59,7 +59,7 @@ def stack_memory(data, n_steps=2, delay=1, trim=True, **kwargs):
     if trim:
         history = history[:, :t]
 
-    return history
+    return np.ascontiguousarray(history.T).T
 
 def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
     '''Compute the binary recurrence matrix from a time-series.
@@ -197,7 +197,8 @@ def structure_feature(rec, pad=True, inverse=False):
     if inverse and pad:
         struct = struct[:t]
 
-    return struct
+    # Make column-contiguous
+    return np.ascontiguousarray(struct.T).T
 
 def agglomerative(data, k):
     """Bottom-up temporal segmentation.
