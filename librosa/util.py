@@ -398,6 +398,7 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
 
       - kwargs : additional keyword arguments
         Parameters to be passed through to `function`
+
     """
 
     def __init__(self, function, target=None, **kwargs):

@@ -502,6 +502,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=108, bins_per_octave=12, 
     - Schoerkhuber, Christian, and Anssi Klapuri. 
       "Constant-Q transform toolbox for music processing." 
       7th Sound and Music Computing Conference, Barcelona, Spain. 2010.
+
     '''
 
     if fmin is None:
