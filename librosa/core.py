@@ -2,9 +2,10 @@
 """Core IO, DSP and utility functions."""
 
 import os
-import audioread
 import re
+import warnings
 
+import audioread
 import numpy as np
 import numpy.fft as fft
 import scipy.signal
@@ -20,6 +21,7 @@ try:
     import scikits.samplerate as samplerate     # pylint: disable=import-error
     _HAS_SAMPLERATE = True
 except ImportError:
+    warnings.warn("Importing scikits.samplerate failed. Falling back to scipy.signal.resample.")
     _HAS_SAMPLERATE = False
 
 # Constrain STFT block sizes to 128 MB
