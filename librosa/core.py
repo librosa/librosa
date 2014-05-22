@@ -566,7 +566,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=108, bins_per_octave=12, 
     cqt_resp = cqt_resp[-n_bins:]
 
     # Transpose magic here to ensure column-contiguity
-    return cqt_resp.T.copy().T
+    return np.ascontiguousarray(cqt_resp.T).T
 
 def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     """Log-scale the amplitude of a spectrogram.
