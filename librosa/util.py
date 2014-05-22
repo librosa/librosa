@@ -22,7 +22,7 @@ def frame(y, frame_length=2048, hop_length=512):
 
     :parameters:
       - y : np.ndarray, ndim=1
-        Time series to frame
+        Time series to frame. Must be contiguous in memory
 
       - frame_length : int > 0
         Length of the frame in samples
@@ -34,9 +34,21 @@ def frame(y, frame_length=2048, hop_length=512):
       - y_frames : np.ndarray, shape=(frame_length, N_FRAMES)
         An array of frames sampled from ``y``:
         ``y_frames[i, j] == y[j * hop_length + i]``
+
+    :raises:
+      - ValueError
+        If ``y`` is not contiguous in memory, framing is invalid.  
+        See ``numpy.ascontiguous()`` for details.
+
+        If ``hop_length < 1``, frames cannot advance.
+
     '''
 
-    assert(hop_length > 0)
+    if hop_length < 1:
+        raise ValueError('Invalid hop_length: %d' % hop_length)
+
+    if not y.flags['C_CONTIGUOUS']:
+        raise ValueError('Input buffer must be contiguous.')
 
     # Compute the number of frames that will fit. The end may get truncated.
     n_frames = 1 + int( (len(y) - frame_length) / hop_length)
