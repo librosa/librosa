@@ -26,19 +26,19 @@ def getCentroid(S=None, sr=22050):
     '''
   
   
-  N,K = np.shape(S)
-  freq = np.transpose(np.linspace(0,sr/2,N))
-  freq = np.transpose(np.tile(freq,(K,1)))
+    N,K = np.shape(S)
+    freq = np.transpose(np.linspace(0,sr/2,N))
+    freq = np.transpose(np.tile(freq,(K,1)))
   
-  if np.sum(S) == 0:
-    cent = np.zeros((K,1))
-  else:
-    cent = np.sum(np.multiply(freq,S),axis=0)/(np.sum(S,axis=0) + np.spacing(1))
+    if np.sum(S) == 0:
+      cent = np.zeros((K,1))
+    else:
+      cent = np.sum(np.multiply(freq,S),axis=0)/(np.sum(S,axis=0) + np.spacing(1))
 
-  return cent
+    return cent
 
 def getBandwidth(S=None,centroid=None,sr=22050):
-  '''Compute spectral bandwidth
+    '''Compute spectral bandwidth
 
  
     :parameters:
@@ -57,19 +57,19 @@ def getBandwidth(S=None,centroid=None,sr=22050):
           bandwidth frequencies
     '''
   
-  N,K = np.shape(S)
-  freq = np.transpose(np.linspace(0,sr/2,N))
-  freq = np.transpose(np.tile(freq,(K,1)))
+    N,K = np.shape(S)
+    freq = np.transpose(np.linspace(0,sr/2,N))
+    freq = np.transpose(np.tile(freq,(K,1)))
 
-  centroid = np.tile(np.transpose(centroid),(N,1))
+    centroid = np.tile(np.transpose(centroid),(N,1))
 
-  band = np.sum(np.multiply(S,np.absolute(freq-centroid)),axis=0)/N
-  
-  return band
+    band = np.sum(np.multiply(S,np.absolute(freq-centroid)),axis=0)/N
+    
+    return band
   
 
 def getRolloff(S=None,sr=22050,roll_percent=0.85):
-  '''Compute rolloff frequency
+    '''Compute rolloff frequency
 
  
     :parameters:
@@ -87,24 +87,24 @@ def getRolloff(S=None,sr=22050,roll_percent=0.85):
           rolloff frequencies
     '''
 
-  N,K = np.shape(S)
-  freq = np.transpose(np.linspace(0,sr/2,N))
-  freq = np.transpose(np.tile(freq,(K,1)))
+    N,K = np.shape(S)
+    freq = np.transpose(np.linspace(0,sr/2,N))
+    freq = np.transpose(np.tile(freq,(K,1)))
 
-  total_energy = np.cumsum(S,axis=0)
+    total_energy = np.cumsum(S,axis=0)
 
-  threshold = roll_percent*total_energy[-1,:]
-  threshold = np.tile(threshold,(N,1))
+    threshold = roll_percent*total_energy[-1,:]
+    threshold = np.tile(threshold,(N,1))
 
-  ind = np.where(total_energy < threshold,np.nan,1)
-  freq = ind*freq
-  roll = np.nanmin(freq,axis=0)
+    ind = np.where(total_energy < threshold,np.nan,1)
+    freq = ind*freq
+    roll = np.nanmin(freq,axis=0)
 
-  return roll
+    return roll
 
 
 def getFlux(S=None):
-  '''Compute spectral flux
+    '''Compute spectral flux
 
  
     :parameters:
@@ -117,16 +117,16 @@ def getFlux(S=None):
           spectral flux
     '''
   
-  N,K = np.shape(S)
+    N,K = np.shape(S)
 
-  delayed_spectrogram = np.concatenate((np.zeros((N,1)), S[:,0:-1]),1)
-  flux = S-delayed_spectrogram
-  fluxVals = np.sum(np.power(flux,2),axis=0)
+    delayed_spectrogram = np.concatenate((np.zeros((N,1)), S[:,0:-1]),1)
+    flux = S-delayed_spectrogram
+    fluxVals = np.sum(np.power(flux,2),axis=0)
 
-  return fluxVals
+    return fluxVals
 
 def getSpectralContrast(S=None,sr=22050):
-  '''Compute spectral contrast
+    '''Compute spectral contrast
 
  
     :parameters:
@@ -142,45 +142,45 @@ def getSpectralContrast(S=None,sr=22050):
           each row of spectral contrast values corresponds to a given octave based frequency
     '''
 
-  K, numFrames = np.shape(S)
+    K, numFrames = np.shape(S)
 
-  numBands = 6
-  octa = 200*2**np.arange(0,numBands+1)
-  octa = np.concatenate(([0],octa),1)
+    numBands = 6
+    octa = 200*2**np.arange(0,numBands+1)
+    octa = np.concatenate(([0],octa),1)
 
-  valley = np.zeros((numBands + 1,numFrames))
-  peak = np.zeros((numBands + 1,numFrames))
-  cont = np.zeros((numBands + 1,numFrames))
-  col = 1
+    valley = np.zeros((numBands + 1,numFrames))
+    peak = np.zeros((numBands + 1,numFrames))
+    cont = np.zeros((numBands + 1,numFrames))
+    col = 1
 
-  freq = np.linspace(0,sr/2,K)
+   freq = np.linspace(0,sr/2,K)
 
-  for k in range(1,np.size(octa)):
-    current_band = 1*np.logical_and(np.where(freq >= octa[k-1],1,0), np.where(freq <= octa[k],1,0))
+    for k in range(1,np.size(octa)):
+      current_band = 1*np.logical_and(np.where(freq >= octa[k-1],1,0), np.where(freq <= octa[k],1,0))
 
-    if k > 1:
-      idx = np.nonzero(current_band == 1)[0]
-      idx = idx[0] + 1
-      current_band[idx-2] = 1
+      if k > 1:
+        idx = np.nonzero(current_band == 1)[0]
+        idx = idx[0] + 1
+        current_band[idx-2] = 1
+
+        
+
+      if k == np.size(octa) - 1:
+        idx = np.nonzero(current_band == 1)
+        idx = idx[-1]
+        idx = idx[-1] + 1
+        current_band[idx:np.size(current_band)+1] = 1
 
       
+      subBand = S[np.where(current_band==1)]
 
-    if k == np.size(octa) - 1:
-      idx = np.nonzero(current_band == 1)
-      idx = idx[-1]
-      idx = idx[-1] + 1
-      current_band[idx:np.size(current_band)+1] = 1
+      if k < np.size(octa - 1) - 1:
+        subBand = subBand[0:-1][:]
 
-    
-    subBand = S[np.where(current_band==1)]
-
-    if k < np.size(octa - 1) - 1:
-      subBand = subBand[0:-1][:]
-
-    if np.sum(current_band) < 50:
-      alph = 1
-    else:
-      alph = np.rint(0.02*np.sum(current_band))
+      if np.sum(current_band) < 50:
+        alph = 1
+      else:
+        alph = np.rint(0.02*np.sum(current_band))
 
 
     
@@ -191,13 +191,13 @@ def getSpectralContrast(S=None,sr=22050):
     sortedr = sortedr[::-1]
     peak[k-1] = (1/alph)*np.sum(sortedr[0:alph],axis=0)
 
-  peak = np.transpose(peak)
-  valley = np.transpose(valley)
-  cont = peak - valley
-  return cont
+    peak = np.transpose(peak)
+    valley = np.transpose(valley)
+    cont = peak - valley
+    return cont
 
 def getRMS(S=None):
-  '''Compute rms
+    '''Compute rms
 
  
     :parameters:
@@ -208,14 +208,14 @@ def getRMS(S=None):
       - rms : np.ndarray
           RMS values
     '''
-  N,K = np.shape(S)
+    N,K = np.shape(S)
 
-  rms = np.sqrt(np.sum(S*S,axis = 0)/N)
-  return rms
+    rms = np.sqrt(np.sum(S*S,axis = 0)/N)
+    return rms
 
 
 def getLineFeatures(S,order=1,sr=22050):
-  '''Get coefficients of fitting an nth order polynomial to the data
+   '''Get coefficients of fitting an nth order polynomial to the data
 
  
     :parameters:
@@ -232,18 +232,18 @@ def getLineFeatures(S,order=1,sr=22050):
     :returns:
       - 
     '''
-  N,K = np.shape(S)
-  freq = np.transpose(np.linspace(0,sr/2,N))
+    N,K = np.shape(S)
+    freq = np.transpose(np.linspace(0,sr/2,N))
 
-  slope = np.zeros((1,K))
-  intercept = np.zeros((1,K))
+    slope = np.zeros((1,K))
+    intercept = np.zeros((1,K))
 
-  for k in range(0,K):
-    p = np.polyfit(freq,S[:,k],order)
-    slope[:,k] = p[0]
-    intercept[:,k] = p[1]
+    for k in range(0,K):
+      p = np.polyfit(freq,S[:,k],order)
+      slope[:,k] = p[0]
+      intercept[:,k] = p[1]
 
-  return (slope, intercept)
+    return (slope, intercept)
 
 # - End Features added by BWalburn
 
