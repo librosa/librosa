@@ -174,12 +174,12 @@ def getSpectralContrast(S=None,sr=22050):
 
 
   
-  sortedr = np.sort(subBand,axis=0)
+    sortedr = np.sort(subBand,axis=0)
   
-  valley[k-1] = (1/alph)*np.sum(sortedr[0:alph],axis=0)
+    valley[k-1] = (1/alph)*np.sum(sortedr[0:alph],axis=0)
 
-  sortedr = sortedr[::-1]
-  peak[k-1] = (1/alph)*np.sum(sortedr[0:alph],axis=0)
+    sortedr = sortedr[::-1]
+    peak[k-1] = (1/alph)*np.sum(sortedr[0:alph],axis=0)
 
   peak = np.transpose(peak)
   valley = np.transpose(valley)
