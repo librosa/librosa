@@ -65,7 +65,7 @@ def getBandwidth(S=None,centroid=None,sr=22050):
   
 
 def getRolloff(S=None,sr=22050,roll_percent=0.85):
-   '''Compute rolloff frequency
+  '''Compute rolloff frequency
 
   :parameters:
   - S : np.ndarray or None
@@ -143,7 +143,7 @@ def getSpectralContrast(S=None,sr=22050):
   cont = np.zeros((numBands + 1,numFrames))
   col = 1
 
- freq = np.linspace(0,sr/2,K)
+  freq = np.linspace(0,sr/2,K)
 
   for k in range(1,np.size(octa)):
     current_band = 1*np.logical_and(np.where(freq >= octa[k-1],1,0), np.where(freq <= octa[k],1,0))
@@ -187,7 +187,7 @@ def getSpectralContrast(S=None,sr=22050):
   return cont
 
 def getRMS(S=None):
-   '''Compute rms
+  '''Compute rms
 
   :parameters:
   - S : np.ndarray or None
