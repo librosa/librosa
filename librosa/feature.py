@@ -8,7 +8,7 @@ import librosa.util
 
 # - Features added by BWalburn
 
-def getCentroid(S=None, sr=22050):
+def centroid(S=None, sr=22050):
   '''Compute spectral centroid
 
   :parameters:
@@ -35,7 +35,7 @@ def getCentroid(S=None, sr=22050):
 
   return cent
 
-def getBandwidth(S=None,centroid=None,sr=22050):
+def bandwidth(S=None,centroid=None,sr=22050):
   '''Compute spectral bandwidth
 
   :parameters:
@@ -64,7 +64,7 @@ def getBandwidth(S=None,centroid=None,sr=22050):
   return band
   
 
-def getRolloff(S=None,sr=22050,roll_percent=0.85):
+def rolloff(S=None,sr=22050,roll_percent=0.85):
   '''Compute rolloff frequency
 
   :parameters:
@@ -97,7 +97,7 @@ def getRolloff(S=None,sr=22050,roll_percent=0.85):
   return roll
 
 
-def getFlux(S=None):
+def flux(S=None):
   '''Compute spectral flux
 
   :parameters:
@@ -117,7 +117,7 @@ def getFlux(S=None):
 
   return fluxVals
 
-def getSpectralContrast(S=None,sr=22050):
+def spectral_contrast(S=None,sr=22050):
   '''Compute spectral contrast
 
   :parameters:
@@ -186,7 +186,7 @@ def getSpectralContrast(S=None,sr=22050):
   cont = peak - valley
   return cont
 
-def getRMS(S=None):
+def rms(S=None):
   '''Compute rms
 
   :parameters:
@@ -202,7 +202,7 @@ def getRMS(S=None):
   return rms
 
 
-def getLineFeatures(S,order=1,sr=22050):
+def line_features(S,order=1,sr=22050):
   '''Get coefficients of fitting an nth order polynomial to the data
 
   :parameters:
@@ -216,7 +216,7 @@ def getLineFeatures(S,order=1,sr=22050):
   audio sampling rate of ``y``
 
   :returns:
-  -
+  - 
   '''
   N,K = np.shape(S)
   freq = np.transpose(np.linspace(0,sr/2,N))
@@ -232,6 +232,7 @@ def getLineFeatures(S,order=1,sr=22050):
   return (slope, intercept)
 
 # - End Features added by BWalburn
+
 
 
 #-- Chroma --#
