@@ -277,9 +277,9 @@ def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, window=
       - tuning : float in [-0.5, +0.5)
           Tuning deviation from A440 in fractions of a bin
       
-      - window : function or None
+      - window : function or ``None``
           Windowing function to apply to filters. 
-          If None, no window is applied.
+          If ``None``, no window is applied.
           Default: np.hamming
 
       - resolution : float > 0
