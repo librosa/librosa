@@ -450,7 +450,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=False
 
     return if_gram, stft_matrix
 
-def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=108, bins_per_octave=12, tuning=None, resolution=2):
+def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=96, bins_per_octave=12, tuning=None, resolution=2):
     '''Compute the constant-Q transform of an audio signal.
     
     :usage:
@@ -458,10 +458,10 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=108, bins_per_octave=12, 
         >>> C = librosa.cqt(y, sr)
 
         >>> # Limit the frequency range
-        >>> C = librosa.cqt(y, sr, fmin=librosa.midi_to_hz(36), n_bins=96)
+        >>> C = librosa.cqt(y, sr, fmin=librosa.midi_to_hz(36), n_bins=60)
 
         >>> # Use higher resolution
-        >>> C = librosa.cqt(y, sr, fmin=librosa.midi_to_hz(36), n_bins=96 * 2, bins_per_octave=12 * 2)
+        >>> C = librosa.cqt(y, sr, fmin=librosa.midi_to_hz(36), n_bins=60 * 2, bins_per_octave=12 * 2)
 
     :parameters:
       - y : np.ndarray
@@ -506,6 +506,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=108, bins_per_octave=12, 
     '''
 
     if fmin is None:
+        # C1 by default
         fmin = midi_to_hz(12)
     
     if tuning is None:
@@ -514,12 +515,11 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=108, bins_per_octave=12, 
     # First thing, get the fmin of the top octave
     freqs    = cqt_frequencies(n_bins + 1, fmin, bins_per_octave=bins_per_octave)
     fmin_top = freqs[-bins_per_octave-1]
-    fmax     = freqs[-1]    
     
     # Generate the basis filters
     basis = np.asarray(filters.constant_q(sr, 
                                fmin=fmin_top, 
-                               fmax=fmax, 
+                               n_bins=n_bins,
                                bins_per_octave=bins_per_octave, 
                                tuning=tuning, 
                                resolution=resolution,
