@@ -167,7 +167,7 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=2):
     # remove aliasing columns, copy to ensure row-contiguity
     return np.ascontiguousarray(wts[:, :(1 + n_fft/2)])
 
-def logfrequency(sr, n_fft, bins_per_octave=12, tuning=0.0, fmin=None, fmax=None, spread=0.125):
+def logfrequency(sr, n_fft, n_bins=96, bins_per_octave=12, tuning=0.0, fmin=None, spread=0.125):
     '''Approximate a constant-Q filterbank for a fixed-window STFT.
     
     Each filter is a log-normal window centered at the corresponding pitch frequency.
@@ -177,7 +177,7 @@ def logfrequency(sr, n_fft, bins_per_octave=12, tuning=0.0, fmin=None, fmax=None
         >>> logfs_fb = librosa.filters.logfrequency(22050, 4096)
 
         >>> # Use a narrower frequency range
-        >>> logfs_fb = librosa.filters.logfrequency(22050, 4096, fmin=110, fmax=880)
+        >>> logfs_fb = librosa.filters.logfrequency(22050, 4096, n_bins=48, fmin=110)
 
         >>> # Use narrower filters for sparser response: 5% of a semitone
         >>> logfs_fb = librosa.filters.logfrequency(22050, 4096, spread=0.05)
@@ -190,7 +190,10 @@ def logfrequency(sr, n_fft, bins_per_octave=12, tuning=0.0, fmin=None, fmax=None
         
       - n_fft : int > 0
           FFT window size
-        
+      
+      - n_bins : int > 0
+          Number of bins.  Defaults to 96 (8 octaves).
+
       - bins_per_octave : int > 0
           Number of bins per octave. Defaults to 12 (semitones).
         
@@ -200,39 +203,30 @@ def logfrequency(sr, n_fft, bins_per_octave=12, tuning=0.0, fmin=None, fmax=None
       - fmin : float > 0
           Minimum frequency bin. Defaults to ``C1 ~= 16.35``
         
-      - fmax : float > 0
-          Maximum frequency bin. Defaults to ``C9 = 4816.01``
-        
       - spread : float > 0
           Spread of each filter, as a fraction of a bin.
         
     :returns:
-      - C : np.ndarray, shape=(ceil(log(fmax/fmin)) * bins_per_octave, 1 + n_fft/2)
+      - C : np.ndarray, shape=(n_bins, 1 + n_fft/2)
           CQT filter bank.
     '''
     
     if fmin is None:
         fmin = librosa.midi_to_hz(librosa.note_to_midi('C1'))
         
-    if fmax is None:
-        fmax = librosa.midi_to_hz(librosa.note_to_midi('C9'))
-    
     # Apply tuning correction
     correction = 2.0**(float(tuning) / bins_per_octave)
-    
-    # How many bins can we get?
-    n_filters = int(np.ceil(bins_per_octave * np.log2(float(fmax) / fmin)))
     
     # What's the shape parameter for our log-normal filters?
     sigma = float(spread) / bins_per_octave
     
     # Construct the output matrix
-    basis = np.zeros( (n_filters, n_fft /2  + 1) )
+    basis = np.zeros( (n_bins, n_fft /2  + 1) )
     
     # Get log frequencies of bins
     log_freqs = np.log2(librosa.fft_frequencies(sr, n_fft)[1:])
                                 
-    for i in range(n_filters):
+    for i in range(n_bins):
         # What's the center (median) frequency of this filter?
         center_freq = correction * fmin * (2.0**(float(i)/bins_per_octave))
         
@@ -247,7 +241,7 @@ def logfrequency(sr, n_fft, bins_per_octave=12, tuning=0.0, fmin=None, fmax=None
         
     return basis
 
-def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, window=None, resolution=2, pad=False):
+def constant_q(sr, fmin=None, n_bins=96, bins_per_octave=12, tuning=0.0, window=None, resolution=2, pad=False):
     '''Construct a constant-Q basis.
 
     :usage:
@@ -268,8 +262,8 @@ def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, window=
       - fmin : float > 0
           Minimum frequency bin. Defaults to ``C1 ~= 16.35``
         
-      - fmax : float > 0
-          Maximum frequency bin. Defaults to ``C9 = 4816.01``
+      - n_bins : int > 0
+          Number of frequencies.  Defaults to 8 octaves (96 bins).
 
       - bins_per_octave : int > 0
           Number of bins per octave
@@ -296,7 +290,7 @@ def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, window=
               school = {University of Bristol}}
 
     :returns:
-      - filters : list of np.ndarray
+      - filters : list of np.ndarray, ``len(filters) == n_bins``
           filters[i] is the time-domain representation of the i'th CQT basis.
     '''
     
@@ -304,25 +298,18 @@ def constant_q(sr, fmin=None, fmax=None, bins_per_octave=12, tuning=0.0, window=
     if fmin is None:
         fmin = librosa.midi_to_hz(librosa.note_to_midi('C1'))
         
-    if fmax is None:
-        fmax = librosa.midi_to_hz(librosa.note_to_midi('C9'))
-
     if window is None:
         window = np.hamming
 
     correction = 2.0**(float(tuning) / bins_per_octave)
 
     fmin       = correction * fmin
-    fmax       = correction * fmax
     
     # Q should be capitalized here, so we suppress the name warning
     Q = float(resolution) / (2.0**(1./bins_per_octave) - 1) # pylint: disable=invalid-name
     
-    # How many bins can we get?
-    n_filters = int(np.ceil(bins_per_octave * np.log2(float(fmax) / fmin)))
-
     filters = []
-    for i in np.arange(n_filters, dtype=float):
+    for i in np.arange(n_bins, dtype=float):
         
         # Length of this filter
         ilen = np.ceil(Q * sr / (fmin * 2.0**(i / bins_per_octave)))
