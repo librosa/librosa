@@ -2,6 +2,7 @@
 """Feature extraction routines."""
 
 import numpy as np
+import scipy.signal
 
 import librosa.core
 import librosa.util
@@ -42,7 +43,7 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096, hop_length=512, **kwargs):
 
       - tuning : float in [-0.5,  0.5)
           Deviation (in fractions of a bin) from A440 tuning.
-          If not provided, it will be automatically estimated from ``y``.
+          If not provided, it will be automatically estimated.
 
       - kwargs : additional arguments
           See ``librosa.filters.logfrequency()`` 
@@ -60,32 +61,24 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096, hop_length=512, **kwargs):
     
     # If we don't have a spectrogram, build one
     if S is None:
-        # If the user didn't specify tuning, do it ourselves
-        if 'tuning' not in kwargs:
-            pitches, magnitudes, S = ifptrack(y, sr, n_fft=n_fft, hop_length=hop_length)
-            pitches = pitches[magnitudes > np.median(magnitudes)]
-            del magnitudes
-
-            bins_per_octave = kwargs.get('bins_per_octave', 12)
-            kwargs['tuning'] = estimate_tuning(pitches, bins_per_octave=bins_per_octave)
-
-            del pitches
-
-        else:
-            S = librosa.stft(y, n_fft=n_fft, hop_length=hop_length)
-
-        # Retain power
-        S = np.abs(S)**2
+        # By default, use a power spectrogram
+        S = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length))**2
 
     else:
         n_fft       = (S.shape[0] -1 ) * 2
+
+    # If we don't have tuning already, grab it from S
+    if 'tuning' not in kwargs:
+        kwargs['tuning'] = estimate_tuning(S=S,
+                                           sr=sr, 
+                                           bins_per_octave=kwargs.get('bins_per_octave', 12))
 
     # Build the CQ basis
     cq_basis = librosa.filters.logfrequency(sr, n_fft=n_fft, **kwargs)
     
     return cq_basis.dot(S)
 
-def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048, hop_length=512, tuning=0.0, **kwargs):
+def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048, hop_length=512, tuning=None, **kwargs):
     """Compute a chromagram from a spectrogram or waveform
 
     :usage:
@@ -114,17 +107,18 @@ def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048, hop_length=512
       - hop_length : int > 0
           hop length if provided ``y, sr`` instead of ``S``
 
-      - tuning : float in [-0.5, 0.5)
-          Deviation from A440 tuning in fractional bins (cents)
+      - tuning : float in [-0.5, 0.5) or None.
+          Deviation from A440 tuning in fractional bins (cents).
+          If ``None``, it is automatically estimated.
 
       - kwargs
           Parameters to build the chroma filterbank.
           See ``librosa.filters.chroma()`` for details.
 
     .. note:: One of either ``S`` or ``y`` must be provided.
-          If y is provided, the magnitude spectrogram is computed automatically given
+          If ``y`` is provided, the magnitude spectrogram is computed automatically given
           the parameters ``n_fft`` and ``hop_length``.
-          If S is provided, it is used as the input spectrogram, and n_fft is inferred
+          If ``S`` is provided, it is used as the input spectrogram, and ``n_fft`` is inferred
           from its shape.
       
     :returns:
@@ -139,15 +133,14 @@ def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048, hop_length=512
     
     n_chroma = kwargs.get('n_chroma', 12)
 
-    # Build the spectrogram, estimate tuning
+    # Build the power spectrogram if unspecified
     if S is None:
-        pitches, magnitudes, S = ifptrack(y, sr=sr, n_fft=n_fft, hop_length=hop_length)
-        tuning = estimate_tuning(pitches[magnitudes > np.median(magnitudes)], 
-                                 bins_per_octave=n_chroma)
-
-        S = np.abs(S / S.max())**2
+        S  = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length))**2
     else:
         n_fft       = (S.shape[0] -1 ) * 2
+
+    if tuning is None:
+        tuning = estimate_tuning(S=S, sr=sr, bins_per_octave=n_chroma)
 
     # Get the filter bank
     if 'A440' not in kwargs:
@@ -196,26 +189,70 @@ def perceptual_weighting(S, frequencies, ref_power=1e-12):
     return offset + librosa.logamplitude(S, ref_power=ref_power)
 
 #-- Pitch and tuning --#
-def estimate_tuning(frequencies, resolution=0.01, bins_per_octave=12):
+def estimate_tuning(resolution=0.01, bins_per_octave=12, **kwargs):
+    '''Estimate the tuning of an audio time series or spectrogram input.
+
+    :usage:
+       >>> # With time-series input
+       >>> print estimate_tuning(y=y, sr=sr)
+
+       >>> # In tenths of a cent
+       >>> print estimate_tuning(y=y, sr=sr, resolution=1e-3)
+
+       >>> # Using spectrogram input
+       >>> S = np.abs(librosa.stft(y))
+       >>> print estimate_tuning(S=S, sr=sr)
+
+       >>> # Using pass-through arguments to ``librosa.feature.piptrack``
+       >>> print estimate_tuning(y=y, sr=sr, n_fft=8192, fmax=librosa.midi_to_hz(128))
+
+    :parameters:
+      - resolution : float in (0, 1)
+          Resolution of the tuning as a fraction of a bin.
+          0.01 corresponds to cents.
+        
+      - bins_per_octave : int > 0
+          How many frequency bins per octave
+
+      - kwargs : additional keyword arguments
+          See ``librosa.feature.piptrack``
+
+    :returns:
+      - tuning: float in [-0.5, 0.5]
+          estimated tuning deviation (fractions of a bin)                
+    '''
+
+    pitch, mag = librosa.feature.piptrack(**kwargs)
+    
+    # Only count magnitude where frequency is > 0
+    pitch_mask = pitch > 0
+    
+    threshold = np.median(mag[pitch_mask])
+    
+    return librosa.feature.pitch_tuning( pitch[(mag > threshold) & pitch_mask], 
+                                            resolution=resolution, 
+                                            bins_per_octave=bins_per_octave)
+
+def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     '''Given a collection of pitches, estimate its tuning offset
     (in fractions of a bin) relative to A440=440.0Hz.
     
     :usage:
         >>> # Generate notes at +25 cents
         >>> freqs = librosa.cqt_frequencies(24, 55, tuning=0.25)
-        >>> librosa.feature.estimate_tuning(freqs)
+        >>> librosa.feature.pitch_tuning(freqs)
         0.25
 
         >>> # Track frequencies from a real spectrogram
         >>> pitches, magnitudes, stft = librosa.feature.ifptrack(y, sr)
         >>> # Select out pitches with high energy
         >>> pitches = pitches[magnitudes > np.median(magnitudes)]
-        >>> librosa.feature.estimate_tuning(pitches)
+        >>> librosa.feature.pitch_tuning(pitches)
 
     :parameters:
       - frequencies : array-like, float
           A collection of frequencies detected in the signal.
-          See ``ifptrack``.
+          See ``librosa.feature.piptrack``
 
       - resolution : float in (0, 1)
           Resolution of the tuning as a fraction of a bin.
@@ -226,7 +263,10 @@ def estimate_tuning(frequencies, resolution=0.01, bins_per_octave=12):
         
     :returns:
       - tuning: float in [-0.5, 0.5]
-          estimated tuning deviation (fractions of a bin)                
+          estimated tuning deviation (fractions of a bin)
+
+    .. seealso::
+      - ``librosa.feature.estimate_tuning`` For estimating tuning from time-series or spectrogram input
     '''
 
     frequencies = np.asarray([frequencies], dtype=float).flatten()
@@ -388,7 +428,104 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=None, fmax=None, thr
         magnitudes[bins, t] = mags
 
     return pitches, magnitudes, D
-  
+
+def piptrack(y=None, sr=22050, S=None, n_fft=4096, fmin=150.0, fmax=4000.0, threshold=.1):
+    '''Pitch tracking on thresholded parabolically-interpolated STFT
+
+    :usage:
+        >>> pitches, magnitudes = librosa.feature.piptrack(y=y, sr=sr)
+
+    :parameters:
+      - y: np.ndarray or None
+          audio signal
+      
+      - sr : int
+          audio sampling rate of the audio signal
+      
+      - S: np.ndarray or None
+          magnitude or power spectrogram
+          
+      - n_fft : int or None
+          number of fft bins to use, if ``y`` is provided.
+          
+      - threshold : float
+          A bin in spectrum X is considered a pitch when it is greater than threshold*X.max()
+      
+      - fmin : float
+          lower frequency cutoff.
+        
+      - fmax : float
+          upper frequency cutoff.
+          
+    .. note::
+        One of ``S`` or ``y`` must be provided.
+        If ``S`` is not given, it is computed from ``y`` using
+        the default parameters of ``stft``.
+    
+    :returns:
+      - pitches : np.ndarray, shape=(d,t)
+      - magnitudes : np.ndarray, shape=(d,t)
+          Where ``d`` is the subset of FFT bins within ``fmin`` and ``fmax``.
+        
+          ``pitches[f, t]`` contains instantaneous frequency at bin ``f``, time ``t``
+          ``magnitudes[f, t]`` contains the corresponding magnitudes.
+          
+          .. note:: Both ``pitches`` and ``magnitudes`` take value 0 at bins of non-maximal magnitude.
+          
+    .. note::
+    
+      See https://ccrma.stanford.edu/~jos/sasp/Sinusoidal_Peak_Interpolation.html for details.
+
+    '''
+    
+    # Check that we received an audio time series or STFT
+    if S is None:
+        if y is None:
+            raise ValueError('Either "y" or "S" must be provided')
+        S = np.abs(librosa.core.stft(y, n_fft=n_fft))
+
+    # Truncate to feasible region
+    fmin = np.maximum(fmin, 0)
+    fmax = np.minimum(fmax, sr / 2)
+
+    # Pre-compute FFT frequencies
+    n_fft = 2 * (S.shape[0] - 1)
+    fft_freqs = librosa.core.fft_frequencies(sr=sr, n_fft=n_fft)
+    
+    # Do the parabolic interpolation everywhere,
+    # then figure out where the peaks are
+    # then restrict to the feasible range (fmin:fmax)
+    avg   = 0.5 * (S[2:] - S[:-2])
+
+    shift = 2 * S[1:-1] - S[2:] - S[:-2]
+    # Suppress divide-by-zeros. 
+    # Points where shift == 0 will never be selected by localmax anyway
+    shift = avg / (shift + (shift == 0))
+    
+    # Pad back up to the same shape as S
+    avg   = np.pad(avg,   ([1, 1], [0, 0]), mode='constant')
+    shift = np.pad(shift, ([1, 1], [0, 0]), mode='constant')
+    
+    dskew = 0.5 * avg * shift
+    
+    # Pre-allocate output
+    pitches    = np.zeros_like(S)
+    mags       = np.zeros_like(S)
+    
+    # Clip to the viable frequency range
+    freq_mask = ((fmin <= fft_freqs) & ( fft_freqs < fmax)).reshape((-1, 1))
+    
+    # Compute the column-wise local max of S after thresholding
+    # Find the argmax coordinates
+    idx = np.argwhere(freq_mask & librosa.core.localmax(S * (S > threshold * S.max(axis=0)), 
+                                                        axis=0 ))
+                                   
+    # Store pitch and magnitude
+    pitches[idx[:, 0], idx[:, 1]] = (idx[:, 0] + shift[idx[:, 0], idx[:, 1]]) * float(sr) / n_fft
+    mags[idx[:, 0], idx[:, 1]]   = (S[idx[:, 0], idx[:, 1]] + dskew[idx[:, 0], idx[:, 1]])
+    
+    return pitches, mags
+
 #-- Mel spectrogram and MFCCs --#
 def mfcc(S=None, y=None, sr=22050, n_mfcc=20):
     """Mel-frequency cepstral coefficients
@@ -485,7 +622,7 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512, **kwarg
     return np.dot(mel_basis, S)
 
 #-- miscellaneous utilities --#
-def delta(data, axis=-1, order=1, pad=True):
+def delta(data, width=9, order=1, axis=-1, trim=True):
     '''Compute delta features.
 
     :usage:
@@ -498,29 +635,41 @@ def delta(data, axis=-1, order=1, pad=True):
       - data      : np.ndarray, shape=(d, T)
           the input data matrix (eg, spectrogram)
 
-      - axis      : int
-          the axis along which to compute deltas.
-          Default is -1 (columns).
-
+      - width     : int, odd
+          Number of frames over which to compute the delta feature
+          
       - order     : int
           the order of the difference operator.
           1 for first derivative, 2 for second, etc.
 
-      - pad       : bool
-          set to True to pad the output matrix to the original size.
+      - axis      : int
+          the axis along which to compute deltas.
+          Default is -1 (columns).
+          
+      - trim      : bool
+          set to True to trim the output matrix to the original size.
 
     :returns:
       - delta_data   : np.ndarray
           delta matrix of ``data``.
     '''
 
-    delta_x  = np.diff(data, n=order, axis=axis)
+    half_length     = 1 + int(np.floor(width / 2))
+    window          = np.arange(half_length - 1, -half_length, -1)
+    
+    # Pad out the data by repeating the border values (delta=0)
+    padding         = [(0, 0)]  * data.ndim
+    padding[axis]   = (half_length, half_length)
+    delta_x         = np.pad(data, padding, mode='edge')
 
-    if pad:
-        padding         = [(0, 0)]  * data.ndim
-        padding[axis]   = (order, 0)
-        delta_x              = np.pad(delta_x, padding, mode='constant')
-
+    for _ in range(order):
+        delta_x     = scipy.signal.lfilter(window, 1, delta_x, axis=axis)
+    
+    if trim:
+        idx         = [Ellipsis] * delta_x.ndim
+        idx[axis]   = slice(half_length, -half_length)
+        delta_x     = delta_x[idx]
+    
     return delta_x
 
 def sync(data, frames, aggregate=None):
@@ -566,7 +715,7 @@ def sync(data, frames, aggregate=None):
 
     (dimension, n_frames) = data.shape
 
-    frames      = np.unique(np.concatenate( ([0], frames, [n_frames]) ))
+    frames      = np.unique(np.concatenate( ([0], frames, [n_frames]) )).astype(int)
 
     if min(frames) < 0:
         raise ValueError('Negative frame index.')

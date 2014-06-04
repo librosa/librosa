@@ -10,7 +10,7 @@ import sklearn.decomposition
 import librosa.core
 
 
-def decompose(S, n_components=None, transformer=None):
+def decompose(S, n_components=None, transformer=None, sort=True):
     """Decompose a feature matrix.
     
     By default, this is done with with non-negative matrix factorization,
@@ -50,6 +50,9 @@ def decompose(S, n_components=None, transformer=None):
             or equivalently:
             ``S ~= np.dot(transformer.components_.T, activations.T)``
 
+        - sort : bool
+            If ``True``, components are sorted by ascending peak frequency.
+
     :returns:
         - components: np.ndarray, shape=(n_features, n_components)
             dictionary matrix
@@ -62,9 +65,16 @@ def decompose(S, n_components=None, transformer=None):
     if transformer is None:
         transformer = sklearn.decomposition.NMF(n_components=n_components)
 
-    activations = transformer.fit_transform(S.T)
+    activations = transformer.fit_transform(S.T).T
 
-    return (transformer.components_.T, activations.T)
+    components = transformer.components_.T
+
+    if sort:
+        components, idx = librosa.util.axis_sort(components, index=True)
+        activations = activations[idx]
+
+    return components, activations
+
 
 def hpss(S, kernel_size=31, power=2.0, mask=False):
     """Median-filtering harmonic percussive separation

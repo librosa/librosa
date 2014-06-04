@@ -369,6 +369,7 @@ def __log_scale(n):
 
     logn = np.log2(n)
     y = n * (1 - 2.0**np.linspace(-logn, 0, n, endpoint=True))[::-1]
+    y = y.astype(int)
 
     y_inv = np.arange(len(y)+1)
     for i in range(len(y)-1):

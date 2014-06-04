@@ -24,26 +24,14 @@ def hpss_demo(input_file, output_harmonic, output_percussive):
           path to save output harmonic (wav)
     '''
 
-    N_FFT       = 2048
-    HOP_LENGTH  = N_FFT /4
-
     # 1. Load the wav file, resample
     print 'Loading ', input_file
 
     y, sr = librosa.load(input_file)
 
-    # 2. generate STFT @ 2048 samples
-    print 'Computing short-time fourier transform... '
-    D = librosa.stft(y, n_fft=N_FFT, hop_length=HOP_LENGTH)
-
-    # 3. HPSS.  The default kernel size isn't necessarily optimal, but works okay enough
+    # Separate components with the effects module
     print 'Separating harmonics and percussives... '
-    harmonic, percussive = librosa.decompose.hpss(D)
-
-    # 4. Invert STFT
-    print 'Inverting harmonics and percussives... '
-    y_harmonic   = librosa.istft(harmonic, hop_length=HOP_LENGTH)
-    y_percussive = librosa.istft(percussive, hop_length=HOP_LENGTH)
+    y_harmonic, y_percussive = librosa.effects.hpss(y)
 
     # 5. Save the results
     print 'Saving harmonic audio to: ', output_harmonic
