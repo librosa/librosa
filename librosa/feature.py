@@ -2,6 +2,7 @@
 """Feature extraction routines."""
 
 import numpy as np
+import scipy.signal
 
 import librosa.core
 import librosa.util
@@ -136,7 +137,7 @@ def spectral_contrast(S=None,sr=22050):
 
   numBands = 6
   octa = 200*2**np.arange(0,numBands+1)
-  octa = np.concatenate(([0],octa),1)
+  octa = np.insert(octa,0,0)
 
   valley = np.zeros((numBands + 1,numFrames))
   peak = np.zeros((numBands + 1,numFrames))
@@ -173,7 +174,7 @@ def spectral_contrast(S=None,sr=22050):
       alph = np.rint(0.02*np.sum(current_band))
 
 
-  
+    alph = int(alph)
     sortedr = np.sort(subBand,axis=0)
   
     valley[k-1] = (1/alph)*np.sum(sortedr[0:alph],axis=0)
@@ -232,6 +233,7 @@ def line_features(S,order=1,sr=22050):
   return (slope, intercept)
 
 # - End Features added by BWalburn
+
 
 
 
