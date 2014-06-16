@@ -507,7 +507,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=96, bins_per_octave=12, t
 
     if fmin is None:
         # C1 by default
-        fmin = midi_to_hz(12)
+        fmin = midi_to_hz(note_to_midi('C1'))
     
     if tuning is None:
         tuning = feature.estimate_tuning(y=y, sr=sr)
@@ -519,7 +519,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=96, bins_per_octave=12, t
     # Generate the basis filters
     basis = np.asarray(filters.constant_q(sr, 
                                fmin=fmin_top, 
-                               n_bins=n_bins,
+                               n_bins=bins_per_octave,
                                bins_per_octave=bins_per_octave, 
                                tuning=tuning, 
                                resolution=resolution,
