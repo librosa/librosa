@@ -75,7 +75,6 @@ def decompose(S, n_components=None, transformer=None, sort=True):
 
     return components, activations
 
-
 def hpss(S, kernel_size=31, power=2.0, mask=False):
     """Median-filtering harmonic percussive separation
 
