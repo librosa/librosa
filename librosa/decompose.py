@@ -69,7 +69,6 @@ def decompose(S, n_components=None, transformer=None, sort=False):
 
         - activations: np.ndarray, shape=(n_components, n_samples)
             transformed matrix/activation matrix
-
     """
 
     if transformer is None:
