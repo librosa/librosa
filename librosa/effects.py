@@ -6,7 +6,7 @@ import librosa.decompose
 import librosa.util
 
 def hpss(y):
-    '''Decompose an audio waveform into harmonic and percussive components.
+    '''Decompose an audio time series into harmonic and percussive components.
 
     This function automates the STFT->HPSS->ISTFT pipeline, and ensures that
     the output waveforms have equal length to the input waveform ``y``.
@@ -22,12 +22,12 @@ def hpss(y):
 
     :returns:
       - y_harmonic : np.ndarray, shape=``y.shape``
-        audio time series of just the harmonic portion
+        audio time series of the harmonic elements
 
       - y_percussive : np.ndarray, shape=``y.shape``
-        audio time series of just the percussive portion
+        audio time series of the percussive elements
 
-    .. seealso:: `librosa.decompose.hpss`
+    .. seealso:: ``librosa.decompose.hpss``
     '''
 
     # Compute the STFT matrix
@@ -43,7 +43,7 @@ def hpss(y):
     return y_harm, y_perc
 
 def harmonic(y):
-    '''Remove percussive elements from an audio time-series.
+    '''Extract harmonic elements from an audio time-series.
 
     :usage:
         >>> # Load a waveform
@@ -58,7 +58,8 @@ def harmonic(y):
       - y_harmonic : np.ndarray, shape=``y.shape``
         audio time series of just the harmonic portion
 
-    .. seealso:: `librosa.decompose.hpss`, `librosa.effects.hpss`, `librosa.effects.percussive`
+    .. seealso:: ``librosa.decompose.hpss``, ``librosa.effects.hpss``,
+    ``librosa.effects.percussive``
     '''
 
     # Compute the STFT matrix
@@ -73,7 +74,7 @@ def harmonic(y):
     return y_harm
 
 def percussive(y):
-    '''Remove harmonic elements from an audio time-series.
+    '''Extract percussive elements from an audio time-series.
 
     :usage:
         >>> # Load a waveform
@@ -88,8 +89,8 @@ def percussive(y):
       - y_percussive : np.ndarray, shape=``y.shape``
         audio time series of just the percussive portion
 
-    .. seealso:: `librosa.decompose.hpss`, `librosa.effects.hpss`,
-      `librosa.effects.percussive`
+    .. seealso:: ``librosa.decompose.hpss``, ``librosa.effects.hpss``,
+      ``librosa.effects.percussive``
     '''
 
     # Compute the STFT matrix
