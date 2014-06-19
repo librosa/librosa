@@ -30,8 +30,8 @@ def stack_memory(data, n_steps=2, delay=1, trim=True, **kwargs):
           the number of columns to step
       - trim : bool
           Crop dimension to original number of columns
-      - **kwargs : dict
-          Additional arguments to pass to ``np.pad``
+      - kwargs : 
+          Additional arguments to pass to ``np.pad``.
 
     :returns:
       - data_history : np.ndarray, shape=(d*m, t)

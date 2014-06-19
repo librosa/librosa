@@ -433,10 +433,10 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
         """This function does nothing, and is provided for interface compatibility.
 
         .. note:: Since most `TransformerMixin` classes implement some statistical
-        modeling (e.g., PCA), the `fit` method is necessary.  
+            modeling (e.g., PCA), the `fit` method is necessary.  
 
-        For the `FeatureExtraction` class, all parameters are fixed ahead of time,
-        and no statistical estimation takes place.
+            For the `FeatureExtraction` class, all parameters are fixed ahead of time,
+            and no statistical estimation takes place.
         """
         return self
     
