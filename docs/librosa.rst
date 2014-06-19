@@ -10,6 +10,15 @@ librosa Package
     :show-inheritance:
     :member-order: bysource
 
+:mod:`Chord modeling` 
+---------------------
+
+.. automodule:: librosa.chord
+    :members:
+    :undoc-members:
+    :show-inheritance:
+    :member-order: bysource
+
 :mod:`Core utilities` 
 ---------------------
 
