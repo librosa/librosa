@@ -6,7 +6,10 @@ import librosa.decompose
 import librosa.util
 
 def hpss(y):
-    '''Decompose an audio buffer into harmonic and percussive components.
+    '''Decompose an audio waveform into harmonic and percussive components.
+
+    This function automates the STFT->HPSS->ISTFT pipeline, and ensures that
+    the output waveforms have equal length to the input waveform ``y``.
 
     :usage:
         >>> # Load a waveform
@@ -23,17 +26,19 @@ def hpss(y):
 
       - y_percussive : np.ndarray, shape=``y.shape``
         audio time series of just the percussive portion
+
+    .. seealso:: `librosa.decompose.hpss`
     '''
 
     # Compute the STFT matrix
-    D               = librosa.core.stft(y)
+    D = librosa.core.stft(y)
 
     # Decompose into harmonic and percussives
-    D_harm, D_perc  = librosa.decompose.hpss(D)
+    D_harm, D_perc = librosa.decompose.hpss(D)
 
     # Invert the STFTs.  Adjust length to match the input.
-    y_harm          = librosa.util.fix_length(librosa.istft(D_harm), len(y))
-    y_perc          = librosa.util.fix_length(librosa.istft(D_perc), len(y))
+    y_harm = librosa.util.fix_length(librosa.istft(D_harm), len(y))
+    y_perc = librosa.util.fix_length(librosa.istft(D_perc), len(y))
 
     return y_harm, y_perc
 
@@ -53,16 +58,17 @@ def harmonic(y):
       - y_harmonic : np.ndarray, shape=``y.shape``
         audio time series of just the harmonic portion
 
+    .. seealso:: `librosa.decompose.hpss`, `librosa.effects.hpss`, `librosa.effects.percussive`
     '''
 
     # Compute the STFT matrix
-    D       = librosa.core.stft(y)
+    D = librosa.core.stft(y)
 
     # Remove percussives
-    D_harm  = librosa.decompose.hpss(D)[0]
+    D_harm = librosa.decompose.hpss(D)[0]
 
     # Invert the STFTs
-    y_harm  = librosa.util.fix_length(librosa.istft(D_harm), len(y))
+    y_harm = librosa.util.fix_length(librosa.istft(D_harm), len(y))
 
     return y_harm
 
@@ -82,16 +88,18 @@ def percussive(y):
       - y_percussive : np.ndarray, shape=``y.shape``
         audio time series of just the percussive portion
 
+    .. seealso:: `librosa.decompose.hpss`, `librosa.effects.hpss`,
+      `librosa.effects.percussive`
     '''
 
     # Compute the STFT matrix
-    D       = librosa.core.stft(y)
+    D = librosa.core.stft(y)
 
-    # Remove harmonics 
-    D_perc  = librosa.decompose.hpss(D)[1]
+    # Remove harmonics
+    D_perc = librosa.decompose.hpss(D)[1]
 
     # Invert the STFT
-    y_perc  = librosa.util.fix_length(librosa.istft(D_perc), len(y))
+    y_perc = librosa.util.fix_length(librosa.istft(D_perc), len(y))
 
     return y_perc
 
@@ -118,8 +126,9 @@ def time_stretch(y, rate):
       - y_stretch : np.ndarray
         audio time series stretched by the specified rate
 
+    .. seealso:: ``librosa.core.phase_vocoder``, ``librosa.effects.pitch_shift``
     '''
-    
+
     # Construct the stft
     D = librosa.stft(y)
 
@@ -128,7 +137,7 @@ def time_stretch(y, rate):
 
     # Invert the stft
     y_stretch = librosa.istft(D_stretch)
-    
+
     return y_stretch
 
 def pitch_shift(y, sr, n_steps, bins_per_octave=12):
@@ -161,15 +170,16 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12):
     :returns:
       - y_shift : np.ndarray, shape=``y.shape``
         The pitch-shifted audio time-series
-        
+
+    .. seealso:: ``librosa.core.phase_vocoder``, ``librosa.effects.time_stretch``
     '''
-    
+
     rate = 2.0 ** (-float(n_steps) / bins_per_octave)
-    
+
     # Stretch in time, then resample
-    y_shift = librosa.resample(time_stretch(y, rate), 
-                               sr / rate, 
+    y_shift = librosa.resample(time_stretch(y, rate),
+                               sr / rate,
                                sr)
-    
+
     # Crop to the same dimension as the input
     return librosa.util.fix_length(y_shift, len(y))
