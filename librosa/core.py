@@ -497,12 +497,11 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=96, bins_per_octave=12, t
 
 
     .. note:: This implementation is based on the recursive sub-sampling method 
-    described by Schoerkhuber and Klapuri, 2010.
+        described by Schoerkhuber and Klapuri, 2010.
 
-    - Schoerkhuber, Christian, and Anssi Klapuri. 
-      "Constant-Q transform toolbox for music processing." 
-      7th Sound and Music Computing Conference, Barcelona, Spain. 2010.
-
+        - Schoerkhuber, Christian, and Anssi Klapuri. 
+            "Constant-Q transform toolbox for music processing." 
+            7th Sound and Music Computing Conference, Barcelona, Spain. 2010.
     '''
 
     if fmin is None:
