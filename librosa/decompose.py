@@ -32,8 +32,8 @@ def decompose(S, n_components=None, transformer=None, sort=False):
         >>> components, activations = librosa.decompose.decompose(S, transformer=T)
 
     :parameters:
-        - S : np.ndarray, shape=(n_features, n_samples)
-            feature matrix
+        - S : np.ndarray, shape=(n_features, n_samples), dtype=float
+            The input feature matrix (e.g., magnitude spectrogram)
 
         - n_components : int > 0 or None
             number of desired components
@@ -59,14 +59,13 @@ def decompose(S, n_components=None, transformer=None, sort=False):
         - sort : bool
             If ``True``, components are sorted by ascending peak frequency.
 
-            .. note::
-            If used with ``transformer``, sorting is applied to copies of the
-            decomposition parameters, and not to ``transformer``'s internal parameters.
+          .. note:: If used with ``transformer``, sorting is applied to copies of the
+                decomposition parameters, and not to ``transformer``'s internal parameters.
+
 
     :returns:
         - components: np.ndarray, shape=(n_features, n_components)
             matrix of components (basis elements).
-            ``components[i]`` contains the ``i``th component.
 
         - activations: np.ndarray, shape=(n_components, n_samples)
             transformed matrix/activation matrix
