@@ -4,8 +4,8 @@
 import numpy as np
 import librosa
 
-def dct(n_filts, n_input):
-    """Discrete cosine transform basis
+def dct(n_filters, n_input):
+    """Discrete cosine transform (DCT) basis
 
     :usage:
         >>> # Compute MFCCs
@@ -14,23 +14,24 @@ def dct(n_filts, n_input):
         >>> mfcc        = dct_filters.dot(librosa.logamplitude(S))
 
     :parameters:
-      - n_filts   : int
-          number of output components
-      - n_input   : int
-          number of input components
+      - n_filters : int > 0
+          number of output components (DCT filters)
+
+      - n_input : int > 0
+          number of input components (frequency bins)
 
     :returns:
-      - D         : np.ndarray, shape=(n_filts, n_input)
+      - dct_basis: np.ndarray, shape=(n_filters, n_input)
           DCT basis vectors
 
     """
 
-    basis = np.empty((n_filts, n_input))
+    basis = np.empty((n_filters, n_input))
     basis[0, :] = 1.0 / np.sqrt(n_input)
 
     samples = np.arange(1, 2*n_input, 2) * np.pi / (2.0 * n_input)
 
-    for i in xrange(1, n_filts):
+    for i in xrange(1, n_filters):
         basis[i, :] = np.cos(i*samples) * np.sqrt(2.0/n_input)
 
     return basis
@@ -45,16 +46,22 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
         >>> mel_fb = librosa.filters.mel(22050, 2048, fmax=8000)
 
     :parameters:
-      - sr        : int
+      - sr        : int > 0
           sampling rate of the incoming signal
-      - n_fft     : int
+
+      - n_fft     : int > 0
           number of FFT components
-      - n_mels    : int
-          number of Mel bands
-      - fmin      : float
+
+      - n_mels    : int > 0
+          number of Mel bands to generate
+
+      - fmin      : float >= 0
           lowest frequency (in Hz)
-      - fmax      : float
-          highest frequency (in Hz)
+
+      - fmax      : float >= 0
+          highest frequency (in Hz).
+          If ``None``, use ``fmax = sr / 2.0``
+
       - htk       : bool
           use HTK formula instead of Slaney
 
@@ -104,18 +111,23 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=2):
         >>> chroma_fb   = librosa.filters.chroma(22050, 4096, octwidth=None)
 
     :parameters:
-      - sr        : int
+      - sr        : int > 0
           audio sampling rate
-      - n_fft     : int
-          FFT window size
-      - n_chroma  : int
+
+      - n_fft     : int > 0
+          number of FFT bins
+
+      - n_chroma  : int > 0
           number of chroma bins
+
       - A440      : float
           Reference frequency for A440
-      - ctroct    : float
+
+      - ctroct    : float > 0
+
       - octwidth  : float or None
-          These parameters specify a dominance window - Gaussian
-          weighting centered on ``ctroct`` (in octs, A0 = 27.5Hz) and
+          ``ctroct`` and ``octwidth`` specify a dominance window -
+          a Gaussian weighting centered on ``ctroct`` (in octs, A0 = 27.5Hz) and
           with a gaussian half-width of ``octwidth``.
           Set ``octwidth`` to ``None`` to use a flat weighting.
 
@@ -285,7 +297,7 @@ def constant_q(sr, fmin=None, n_bins=96, bins_per_octave=12, tuning=0.0, window=
 
     :returns:
       - filters : list of np.ndarray, ``len(filters) == n_bins``
-          filters[i] is the time-domain representation of the i'th CQT basis.
+          ``filters[i]`` is the time-domain representation of the ``i``\ th CQT basis.
     '''
 
     if fmin is None:
