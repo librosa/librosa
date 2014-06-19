@@ -248,7 +248,7 @@ def logfrequency(sr, n_fft, n_bins=96, bins_per_octave=12, tuning=0.0, fmin=None
     return basis
 
 def constant_q(sr, fmin=None, n_bins=96, bins_per_octave=12, tuning=0.0, window=None, resolution=2, pad=False):
-    '''Construct a constant-Q basis.
+    r'''Construct a constant-Q basis.
 
     :usage:
         >>> # Get the CQT basis for C1 to C9, standard tuning
