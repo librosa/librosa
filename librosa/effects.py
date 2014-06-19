@@ -59,7 +59,7 @@ def harmonic(y):
         audio time series of just the harmonic portion
 
     .. seealso:: ``librosa.decompose.hpss``, ``librosa.effects.hpss``,
-    ``librosa.effects.percussive``
+        ``librosa.effects.percussive``
     '''
 
     # Compute the STFT matrix
