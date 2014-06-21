@@ -37,7 +37,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64, **kwargs)
       - hop_length : int
           hop length (in samples)
 
-      - kwargs
+      - *kwargs*
           Additional parameters for peak picking
 
           See ``librosa.core.peak_pick()`` for details
@@ -132,7 +132,7 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True, feat
           at different frequency bins.
           Default: ``np.mean``
 
-      - kwargs
+      - *kwargs*
           Additional parameters to ``feature()``, if ``S`` is not provided.
 
     .. note:: if ``S`` is provided, then ``(y, sr)`` are optional.
