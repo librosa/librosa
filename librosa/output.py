@@ -35,17 +35,17 @@ def annotation(path, time_start, time_end, annotations=None, delimiter=',', fmt=
 
     :parameters:
       - path : str
-        path to save the output CSV file
+          path to save the output CSV file
 
       - time_start : list-like
-        array of starting times for annotations
+          array of starting times for annotations
 
       - time_end : list-like
-        array of ending times for annotations
+          array of ending times for annotations
 
       - annotations : None or list-like
-        optional list of annotation strings. ``annotations[i]`` applies to the time
-        range ``time_start[i]`` to ``time_end[i]``
+          optional list of annotation strings. ``annotations[i]`` applies to the time
+          range ``time_start[i]`` to ``time_end[i]``
 
       - delimiter : str
           character to separate fields
