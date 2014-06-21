@@ -96,7 +96,7 @@ def frames_csv(path, frames, sr=22050, hop_length=512, **kwargs):
       - hop_length : int > 0
           number of samples between success frames
 
-      - kwargs
+      - *kwargs*
           additional keyword arguments.  See ``librosa.output.times_csv``
     """
 
