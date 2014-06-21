@@ -242,8 +242,8 @@ def match_intervals(intervals_from, intervals_to):
     :parameters:
       - intervals_from : ndarray, shape=(n, 2)
           The time range for source intervals.
-          The `i`th interval spans time `intervals_from[i, 0]` to `intervals_from[i, 1]`.
-          `intervals_from[0, 0]` should be 0, `intervals_from[-1, 1]` should be the track duration.
+          The ``i``th interval spans time ``intervals_from[i, 0]`` to ``intervals_from[i, 1]``.
+          ``intervals_from[0, 0]`` should be 0, ``intervals_from[-1, 1]`` should be the track duration.
 
       - intervals_to : ndarray, shape=(m, 2)
           Analogous to ``intervals_from``.
@@ -297,7 +297,7 @@ def find_files(directory, ext=None, recurse=True, case_sensitive=False, limit=No
       - recurse : boolean
           If ``True``, then all subfolders of ``directory`` will be searched.
 
-          Otherwise, only `directory` will be searched.
+          Otherwise, only ``directory`` will be searched.
 
       - case_sensitive : boolean
           If ``False``, files matching upper-case version of extensions will be included.
@@ -389,15 +389,17 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
       - function : function
           The feature extraction function to wrap.
 
-          Example: `librosa.feature.melspectrogram`
+          Example: ``librosa.feature.melspectrogram``
 
       - target : str or None
-          If `None`, then `function` is called with the input data as the first positional argument.
+          If ``None``, then ``function`` is called with the input data as the first 
+          positional argument.
 
-          If `str`, then `function` is called with the input data as a keyword argument with key `target`
+          If ``str``, then ``function`` is called with the input data as a keyword
+          argument with key ``target``
 
       - *kwargs*
-          Parameters to be passed through to `function`
+          Parameters to be passed through to ``function``
     """
 
     def __init__(self, function, target=None, **kwargs):
@@ -436,10 +438,10 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
     def fit(self, *args, **kwargs): #pylint: disable=unused-argument
         """This function does nothing, and is provided for interface compatibility.
 
-        .. note:: Since most `TransformerMixin` classes implement some statistical
-            modeling (e.g., PCA), the `fit` method is necessary.
+        .. note:: Since most ``TransformerMixin`` classes implement some statistical
+            modeling (e.g., PCA), the ``fit()`` method is necessary.
 
-            For the `FeatureExtraction` class, all parameters are fixed ahead of time,
+            For the ``FeatureExtraction`` class, all parameters are fixed ahead of time,
             and no statistical estimation takes place.
         """
 
@@ -457,10 +459,10 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
         :returns:
           - X_transform : list
               In positional argument mode (target=None), then
-              `X_transform[i] = function(X[i], [feature extractor parameters])`
+              ``X_transform[i] = function(X[i], [feature extractor parameters])``
 
-              If the `target` parameter was given, then
-              `X_transform[i] = function(target=X[i], [feature extractor parameters])`
+              If the ``target`` parameter was given, then
+              ``X_transform[i] = function(target=X[i], [feature extractor parameters])``
         """
 
         if self.target is not None:

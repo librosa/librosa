@@ -10,7 +10,7 @@ librosa package reference
     :show-inheritance:
     :member-order: bysource
 
-:mod:`Chord modeling` 
+:mod:`Chord models` 
 ---------------------
 
 .. automodule:: librosa.chord
@@ -19,8 +19,8 @@ librosa package reference
     :show-inheritance:
     :member-order: bysource
 
-:mod:`Core utilities` 
----------------------
+:mod:`Core functionality` 
+-------------------------
 
 .. automodule:: librosa.core
     :members:

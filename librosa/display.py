@@ -52,10 +52,12 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
            Default: None
 
        - *kwargs*
-          Additional keyword arguments.  See `matplotlib.pyplot.xticks` or `yticks` for details.
+          Additional keyword arguments.  
+          
+          See ``matplotlib.pyplot.xticks`` or ``yticks`` for details.
 
     :returns:
-       - See `matplotlib.pyplot.xticks` or `yticks` for details.
+       - See ``matplotlib.pyplot.xticks`` or ``yticks`` for details.
     '''
 
     n_ticks = kwargs.pop('n_ticks', 5)
