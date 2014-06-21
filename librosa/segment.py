@@ -12,10 +12,13 @@ import sklearn.feature_extraction
 def stack_memory(data, n_steps=2, delay=1, trim=True, **kwargs):
     """Short-term history embedding.
 
-    Each column ``data[:, i]`` is mapped to
+    Each column ``data[:, i]`` is mapped to::
 
-    ``data[:,i] ->  [   data[:, i].T, data[:, i - delay].T ...  data[:, i - (n_steps-1)*delay].T ].T``
-
+        data[:, i] ->  [ data[:, i],                        ...
+                         data[:, i - delay],                ...
+                         ...
+                         data[:, i - (n_steps-1)*delay],    ...
+                       ]
 
     :usage:
         >>> mfccs       = librosa.feature.mfcc(y=y, sr=sr)
@@ -24,21 +27,24 @@ def stack_memory(data, n_steps=2, delay=1, trim=True, **kwargs):
     :parameters:
       - data : np.ndarray
           feature matrix (d-by-t)
+
       - n_steps : int > 0
           embedding dimension, the number of steps back in time to stack
+
       - delay : int > 0
           the number of columns to step
+
       - trim : bool
           Crop dimension to original number of columns
-      - kwargs : 
+
+      - *kwargs*
           Additional arguments to pass to ``np.pad``.
 
     :returns:
       - data_history : np.ndarray, shape=(d*m, t)
           data augmented with lagged copies of itself.
-          
-      .. note:: zeros are padded for the initial columns
 
+      .. note:: zeros are padded for the initial columns
     """
 
     t = data.shape[1]
@@ -85,14 +91,21 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
     :parameters:
       - data : np.ndarray
           feature matrix (d-by-t)
+
       - k : int > 0 or None
           the number of nearest-neighbors for each sample
-          Default: ``k = 2 * ceil(sqrt(t - 2 * width + 1))``, 
+
+          Default: ``k = 2 * ceil(sqrt(t - 2 * width + 1))``,
           or ``k = 2`` if ``t <= 2 * width + 1``
+
       - width : int > 0
-          only link neighbors ``(data[:, i], data[:, j])`` if ``|i-j| >= width`` 
-      - metric : see ``scipy.spatial.distance.cdist()``
-          distance metric to use for nearest-neighbor calculation
+          only link neighbors ``(data[:, i], data[:, j])`` if ``|i-j| >= width``
+
+      - metric : str
+          Distance metric to use for nearest-neighbor calculation.
+
+          See ``scipy.spatial.distance.cdist()`` for details.
+
       - sym : bool
           set ``sym=True`` to only link mutual nearest-neighbors
 
@@ -113,7 +126,8 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
 
     def _band_infinite():
         '''Suppress the diagonal+- of a distance matrix'''
-        band       = np.empty( (t, t) )
+
+        band = np.empty((t, t))
         band.fill(np.inf)
         band[np.triu_indices_from(band, width)] = 0
         band[np.tril_indices_from(band, -width)] = 0
@@ -127,8 +141,7 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
     D = D + _band_infinite()
 
     # build the recurrence plot
-
-    rec = np.zeros( (t, t), dtype=bool)
+    rec = np.zeros((t, t), dtype=bool)
 
     # get the k nearest neighbors for each point
     for i in range(t):
@@ -160,9 +173,9 @@ def structure_feature(rec, pad=True, inverse=False):
     :parameters:
       - rec   : np.ndarray, shape=(t,t)
           recurrence matrix (see `librosa.segment.recurrence_matrix`)
-      
+
       - pad : bool
-          Pad the matrix with t rows of zeros to avoid looping.
+          Pad the matrix with ``t`` rows of zeros to avoid looping.
 
       - inverse : bool
           Unroll the opposite direction. This is useful for converting
@@ -214,22 +227,21 @@ def agglomerative(data, k):
         >>> boundary_times      = librosa.frames_to_time(boundary_frames, sr=sr, hop_length=512)
 
     :parameters:
-      - data     : np.ndarray    
+      - data     : np.ndarray
           feature matrix (d-by-t)
 
       - k        : int > 0
           number of segments to produce
 
     :returns:
-      - boundaries : np.ndarray, shape=(k,1)  
+      - boundaries : np.ndarray, shape=(k,)
           left-boundaries (frame numbers) of detected segments
 
     """
 
     # Connect the temporal connectivity graph
-    grid = sklearn.feature_extraction.image.grid_to_graph(  n_x=data.shape[1], 
-                                                            n_y=1, 
-                                                            n_z=1)
+    grid = sklearn.feature_extraction.image.grid_to_graph(n_x=data.shape[1],
+                                                          n_y=1, n_z=1)
 
     # Instantiate the clustering object
     ward = sklearn.cluster.Ward(n_clusters=k, connectivity=grid)
