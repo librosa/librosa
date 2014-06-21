@@ -11,19 +11,21 @@ import librosa.core
 
 def annotation(path, time_start, time_end, annotations=None, delimiter=',', fmt='%0.3f'):
     '''Save annotations in a 3-column format:
+
     ``
     time_start[0], time_end[0], annotations[0]\n
     time_start[1], time_end[1], annotations[0]\n
     time_start[2], time_end[2], annotations[0]\n
     ...
     ''
+
     This can be used for segment or chord annotations.
 
     :usage:
         >>> # Detect segment boundaries
         >>> boundaries = librosa.segment.agglomerative(data, k=10)
         >>> # Convert to time
-        >>> boundary_times = librosa.frames_to_time(boundaries, sr=sr, 
+        >>> boundary_times = librosa.frames_to_time(boundaries, sr=sr,
                                                     hop_length=hop_length)
         >>> # Convert boundaries to start-ends
         >>> time_start, time_end = boundaries[:-1], boundaries[1:]
@@ -37,7 +39,7 @@ def annotation(path, time_start, time_end, annotations=None, delimiter=',', fmt=
       - path : str
         path to save the output CSV file
 
-      - time_start : list-like 
+      - time_start : list-like
         array of starting times for annotations
 
       - time_end : list-like
@@ -51,7 +53,7 @@ def annotation(path, time_start, time_end, annotations=None, delimiter=',', fmt=
           character to separate fields
 
       - fmt : str
-          format-string for rendering time
+          format-string for rendering time data
 
     :raises:
       - ValueError
@@ -70,10 +72,10 @@ def annotation(path, time_start, time_end, annotations=None, delimiter=',', fmt=
         writer = csv.writer(output_file, delimiter=delimiter)
 
         if annotations is None:
-            for t_s, t_e in zip(time_start, time_end): 
+            for t_s, t_e in zip(time_start, time_end):
                 writer.writerow([fmt % t_s, fmt % t_e])
         else:
-            for t_s, t_e, lab in zip(time_start, time_end, annotations): 
+            for t_s, t_e, lab in zip(time_start, time_end, annotations):
                 writer.writerow([fmt % t_s, fmt % t_e, lab])
 
 def frames_csv(path, frames, sr=22050, hop_length=512, **kwargs):
@@ -89,14 +91,14 @@ def frames_csv(path, frames, sr=22050, hop_length=512, **kwargs):
 
       - frames : list-like of ints
           list of frame numbers for beat events
-      
-      - sr : int
+
+      - sr : int > 0
           audio sampling rate
-    
-      - hop_length : int
+
+      - hop_length : int > 0
           number of samples between success frames
 
-      - kwargs 
+      - kwargs
           additional keyword arguments.  See ``librosa.output.times_csv``
     """
 
@@ -135,7 +137,7 @@ def times_csv(path, times, annotations=None, delimiter=',', fmt='%0.3f'):
 
       - times : list-like of floats
           list of frame numbers for beat events
-      
+
       - annotations : None or list-like
           optional annotations for each time step
 
@@ -157,7 +159,7 @@ def times_csv(path, times, annotations=None, delimiter=',', fmt='%0.3f'):
         writer = csv.writer(output_file, delimiter=delimiter)
 
         if annotations is None:
-            for t in times: 
+            for t in times:
                 writer.writerow([fmt % t])
         else:
             for t, lab in zip(times, annotations):
@@ -172,18 +174,17 @@ def write_wav(path, y, sr, normalize=True):
         >>> librosa.output.write_wav('file_trim_5s.wav', y, sr)
 
     :parameters:
-      - path : str 
+      - path : str
           path to save the output wav file
 
-      - y : np.ndarray    
+      - y : np.ndarray
           audio time series
 
-      - sr : int
+      - sr : int > 0
           sampling rate of ``y``
 
       - normalize : boolean
-          turn normalization on or off
-          
+          enable amplitude normalization
     """
 
     # normalize
@@ -191,7 +192,7 @@ def write_wav(path, y, sr, normalize=True):
         wav = y / np.max(np.abs(y))
     else:
         wav = y
-    
+
     # Scale up to pcm range
     #wav = (wav - wav.min()) * (1<<15) - (1<<15)
     wav = wav * 32767
@@ -201,3 +202,4 @@ def write_wav(path, y, sr, normalize=True):
 
     # Save
     scipy.io.wavfile.write(path, sr, wav)
+
