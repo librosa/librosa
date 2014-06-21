@@ -9,7 +9,7 @@ import librosa.core
 import librosa.feature
 import librosa.onset
 
-def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
+def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=64,
                start_bpm=120.0, tightness=400, trim=True, bpm=None):
     r'''Dynamic programming beat tracker.
 
@@ -23,7 +23,8 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
         >>> tempo, beats = librosa.beat.beat_track( y, sr )
 
         >>> # Track beats using a pre-computed onset envelope
-        >>> tempo, beats = librosa.beat.beat_track( onsets=onset_envelope,
+        >>> onset_env    = librosa.onset.onset_strength(y, sr=sr, hop_length=hop_length)
+        >>> tempo, beats = librosa.beat.beat_track( onset_envelope=onset_env,
                                                     sr=sr,
                                                     hop_length=hop_length)
 
@@ -34,12 +35,12 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
       - sr         : int > 0
           sampling rate of ``y``
 
-      - onsets     : np.ndarray or None
+      - onset_envelope : np.ndarray or None
           (optional) pre-computed onset strength envelope
           See ``librosa.onset.onset_strength``
 
       - hop_length : int > 0
-          number of audio samples between successive ``onsets`` values
+          number of audio samples between successive ``onset_envelope`` values
 
       - start_bpm  : float > 0
           initial guess for the tempo estimator (in beats per minute)
@@ -48,7 +49,7 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
           tightness of beat distribution around tempo
 
       - trim       : bool
-          trim leading/trailing beats with weak onsets?
+          trim leading/trailing beats with weak onsets
 
       - bpm        : float
           (optional) If provided, use ``bpm`` as the tempo instead of
@@ -63,7 +64,7 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
 
     :raises:
       - ValueError
-          if neither ``y`` nor ``onsets`` are provided
+          if neither ``y`` nor ``onset_envelope`` are provided
 
     .. note::
       If no onset strength could be detected, beat_tracker estimates 0 BPM and returns
@@ -82,33 +83,34 @@ def beat_track(y=None, sr=22050, onsets=None, hop_length=64,
     '''
 
     # First, get the frame->beat strength profile if we don't already have one
-    if onsets is None:
+    if onset_envelope is None:
         if y is None:
             raise ValueError('Either "y" or "onsets" must be provided')
 
-        onsets = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
+        onset_envelope = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
 
     # Do we have any onsets to grab?
-    if not onsets.any():
+    if not onset_envelope.any():
         return (0, np.array([], dtype=int))
 
     # Estimate BPM if one was not provided
     if bpm is None:
-        bpm = estimate_tempo(onsets, sr=sr, hop_length=hop_length, start_bpm=start_bpm)
+        bpm = estimate_tempo(onset_envelope, sr=sr, hop_length=hop_length, start_bpm=start_bpm)
 
     # Then, run the tracker
-    beats = __beat_tracker(onsets, bpm, float(sr) / hop_length, tightness, trim)
+    beats = __beat_tracker(onset_envelope, bpm, float(sr) / hop_length, tightness, trim)
 
     return (bpm, beats)
 
-def estimate_tempo(onsets, sr=22050, hop_length=64, start_bpm=120, std_bpm=1.0, ac_size=4.0, duration=90.0, offset=0.0):
+def estimate_tempo(onset_envelope, sr=22050, hop_length=64, start_bpm=120, std_bpm=1.0,
+                    ac_size=4.0, duration=90.0, offset=0.0):
     """Estimate the tempo (beats per minute) from an onset envelope
 
     :usage:
         >>> tempo = librosa.beat.estimate_tempo(onset_strength, sr=sr, hop_length)
 
     :parameters:
-      - onsets    : np.ndarray
+      - onset_envelope    : np.ndarray
           onset strength envelope
           See ``librosa.onset.onset_strength()`` for details.
 
@@ -142,14 +144,14 @@ def estimate_tempo(onsets, sr=22050, hop_length=64, start_bpm=120, std_bpm=1.0, 
 
     # Chop onsets to X[(upper_limit - duration):upper_limit]
     # or as much as will fit
-    maxcol = int(min(len(onsets)-1, np.round((offset + duration) * fft_res)))
+    maxcol = int(min(len(onset_envelope)-1, np.round((offset + duration) * fft_res)))
     mincol = int(max(0, maxcol - np.round(duration * fft_res)))
 
     # Use auto-correlation out of 4 seconds (empirically set??)
     ac_window = min(maxcol, np.round(ac_size * fft_res))
 
     # Compute the autocorrelation
-    x_corr = librosa.core.autocorrelate(onsets[mincol:maxcol], ac_window)
+    x_corr = librosa.core.autocorrelate(onset_envelope[mincol:maxcol], ac_window)
 
     # re-weight the autocorrelation by log-normal prior
     bpms = 60.0 * fft_res / (np.arange(1, ac_window+1))
@@ -176,12 +178,12 @@ def estimate_tempo(onsets, sr=22050, hop_length=64, start_bpm=120, std_bpm=1.0, 
 
     return start_bpm
 
-def __beat_tracker(onsets, bpm, fft_res, tightness, trim):
+def __beat_tracker(onset_envelope, bpm, fft_res, tightness, trim):
     """Internal function that does beat tracking from a given onset strength envelope.
 
     :parameters:
-      - onsets   : np.ndarray
-          onset envelope
+      - onset_envelope   : np.ndarray
+          onset strength envelope
       - bpm      : float
           tempo estimate
       - fft_res  : float
@@ -281,7 +283,7 @@ def __beat_tracker(onsets, bpm, fft_res, tightness, trim):
 
     # localscore is a smoothed version of AGC'd onset envelope
     localscore = scipy.signal.convolve(
-                        normalize_onsets(onsets),
+                        normalize_onsets(onset_envelope),
                         rbf(np.arange(-period, period+1)*32.0/period),
                         'same')
 
