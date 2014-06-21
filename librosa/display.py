@@ -51,16 +51,16 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
 
            Default: None
 
-       - kwargs : additional keyword arguments
-           See `matplotlib.pyplot.xticks` or `yticks` for details.
+       - *kwargs*
+          Additional keyword arguments.  See `matplotlib.pyplot.xticks` or `yticks` for details.
 
     :returns:
        - See `matplotlib.pyplot.xticks` or `yticks` for details.
     '''
 
     n_ticks = kwargs.pop('n_ticks', 5)
-    axis    = kwargs.pop('axis', 'x')
-    fmt     = kwargs.pop('fmt', None)
+    axis = kwargs.pop('axis', 'x')
+    fmt = kwargs.pop('fmt', None)
 
     if axis == 'x':
         ticker = plt.xticks
@@ -73,17 +73,17 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
         times = args[0]
     else:
         times = locs
-        locs  = range(len(times))
+        locs = range(len(times))
 
     if n_ticks is not None:
         # Slice the locations and labels
-        locs    = locs[::max(1, len(locs)/n_ticks)]
-        times   = times[::max(1, len(times)/n_ticks)]
+        locs = locs[::max(1, len(locs)/n_ticks)]
+        times = times[::max(1, len(times)/n_ticks)]
 
     # Format the labels by time
     formatters = {'ms': lambda t: '%dms' % (1e3 * t),
                   's':  lambda t: '%0.2fs' % t,
-                  'm':  lambda t: '%d:%02d' % ( t / 60, np.mod(t, 60)),
+                  'm':  lambda t: '%d:%02d' % (t / 60, np.mod(t, 60)),
                   'h':  lambda t: '%d:%02d:%02d' % (t / 3600,
                                                     np.mod(t / 60, 60),
                                                     np.mod(t, 60))}
@@ -179,18 +179,20 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
 
     :parameters:
       - data : np.ndarray
-          Matrix to display (eg, spectrogram)
+          Matrix to display (e.g., spectrogram)
 
       - sr : int > 0
-          Sample rate. Used to determine time scale in x-axis
+          Sample rate used to determine time scale in x-axis.
 
       - hop_length : int > 0
-          Hop length. Also used to determine time scale in x-axis
+          Hop length, also used to determine time scale in x-axis
 
       - x_axis : None or {'time', 'frames', 'off'}
           If None or 'off', no x axis is displayed.
+
           If 'time', markers are shown as milliseconds, seconds, minutes, or hours.
           (See ``time_ticks()`` for details.)
+
           If 'frames', markers are shown as frame counts.
 
       - y_axis : None or {'linear', 'mel', 'cqt_hz', 'cqt_note', 'chroma', 'off'}
@@ -213,7 +215,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
       - fmax : float > 0 or None
           Used for setting the Mel or constantq frequency scales
 
-      - kwargs
+      - *kwargs*
           Additional keyword arguments passed through to ``matplotlib.pyplot.imshow``.
 
     :returns:
@@ -225,9 +227,9 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
           If y_axis is 'cqt_hz' or 'cqt_note' and fmin and fmax are not supplied.
     '''
 
-    kwargs.setdefault('aspect',          'auto')
-    kwargs.setdefault('origin',          'lower')
-    kwargs.setdefault('interpolation',   'nearest')
+    kwargs.setdefault('aspect', 'auto')
+    kwargs.setdefault('origin', 'lower')
+    kwargs.setdefault('interpolation', 'nearest')
 
     if np.issubdtype(data.dtype, np.complex):
         warnings.warn('Trying to display complex-valued input. Showing magnitude instead.')
@@ -247,11 +249,11 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
 
         # Non-uniform imshow doesn't like aspect
         del kwargs['aspect']
-        im_phantom   = img.NonUniformImage(axes_phantom, **kwargs)
+        im_phantom = img.NonUniformImage(axes_phantom, **kwargs)
 
         y_log, y_inv = __log_scale(data.shape[0])
 
-        im_phantom.set_data( np.arange(0, data.shape[1]), y_log, data)
+        im_phantom.set_data(np.arange(0, data.shape[1]), y_log, data)
         axes_phantom.images.append(im_phantom)
         axes_phantom.set_ylim(0, data.shape[0])
         axes_phantom.set_xlim(0, data.shape[1])
@@ -260,14 +262,14 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
     positions = np.asarray(np.linspace(0, data.shape[0], n_yticks), dtype=int)
 
     if y_axis is 'linear':
-        values = np.asarray(np.linspace(0, 0.5 * sr,  data.shape[0] + 1), dtype=int)
+        values = np.asarray(np.linspace(0, 0.5 * sr, data.shape[0] + 1), dtype=int)
 
         plt.yticks(positions, values[positions])
         plt.ylabel('Hz')
 
     elif y_axis is 'log':
 
-        values = np.asarray(np.linspace(0, 0.5 * sr,  data.shape[0] + 1), dtype=int)
+        values = np.asarray(np.linspace(0, 0.5 * sr, data.shape[0] + 1), dtype=int)
         plt.yticks(positions, values[y_inv[positions]])
 
         plt.ylabel('Hz')
@@ -334,9 +336,9 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
     positions = np.asarray(np.linspace(0, data.shape[1], n_xticks), dtype=int)
 
     if x_axis is 'time':
-        time_ticks( positions,
-                    librosa.core.frames_to_time(positions, sr=sr, hop_length=hop_length),
-                    n_ticks=None, axis='x')
+        time_ticks(positions,
+                   librosa.core.frames_to_time(positions, sr=sr, hop_length=hop_length),
+                   n_ticks=None, axis='x')
 
         plt.xlabel('Time')
 
