@@ -10,14 +10,12 @@ import scipy.io.wavfile
 import librosa.core
 
 def annotation(path, time_start, time_end, annotations=None, delimiter=',', fmt='%0.3f'):
-    '''Save annotations in a 3-column format:
+    r'''Save annotations in a 3-column format::
 
-    ``
-    time_start[0], time_end[0], annotations[0]\n
-    time_start[1], time_end[1], annotations[0]\n
-    time_start[2], time_end[2], annotations[0]\n
-    ...
-    ''
+        time_start[0],time_end[0],annotations[0]\n
+        time_start[1],time_end[1],annotations[1]\n
+        time_start[2],time_end[2],annotations[2]\n
+        ...
 
     This can be used for segment or chord annotations.
 
@@ -107,24 +105,23 @@ def frames_csv(path, frames, sr=22050, hop_length=512, **kwargs):
     times_csv(path, times, **kwargs)
 
 def times_csv(path, times, annotations=None, delimiter=',', fmt='%0.3f'):
-    """Save time steps as in CSV format.  This can be used to store the output
+    r"""Save time steps as in CSV format.  This can be used to store the output
     of a beat-tracker or segmentation algorihtm.
 
-    If only ``times`` are provided, the file will contain each value of ``times`` on a row:
-      ``
-      times[0]\n
-      times[1]\n
-      times[2]\n
-      ...
-      ``
+    If only ``times`` are provided, the file will contain each value of ``times`` on a row::
 
-    If ``annotations`` are also provided, the file will contain delimiter-separated values:
-      ``
-      times[0],annotations[0]\n
-      times[1],annotations[1]\n
-      times[2],annotations[2]\n
-      ...
-      ``
+        times[0]\n
+        times[1]\n
+        times[2]\n
+        ...
+
+    If ``annotations`` are also provided, the file will contain delimiter-separated values::
+
+        times[0],annotations[0]\n
+        times[1],annotations[1]\n
+        times[2],annotations[2]\n
+        ...
+
 
     :usage:
         >>> tempo, beats = librosa.beat.beat_track(y, sr=sr, hop_length=64)
