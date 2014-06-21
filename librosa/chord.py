@@ -22,7 +22,7 @@ def beats_to_chords(beat_times, chord_times, chord_labels):
           ``chord_times[0, 0]`` should be 0, ``chord_times[-1, 1]`` should be the track duration.
 
       - chord_labels : list of str, shape=(m,)
-          List of annotation strings associated with `chord_times`
+          List of annotation strings associated with ``chord_times``
 
     :returns:
       - beat_labels : list of str, shape=(n,)
@@ -99,7 +99,7 @@ class ChordHMM(sklearn.hmm.GaussianHMM):
         '''Supervised training.
 
         - obs : list-like (n_songs) | obs[i] : ndarray (n_beats, n_features)
-            A collection of observation sequences, e.g., `obs[i]` is a chromagram
+            A collection of observation sequences, e.g., ``obs[i]`` is a chromagram
 
         - labels : list-like (n_songs) | labels[i] list-like, (n_beats) | labels[i][t] str
             list or array of labels for the observations

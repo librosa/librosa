@@ -172,7 +172,7 @@ def structure_feature(rec, pad=True, inverse=False):
 
     :parameters:
       - rec   : np.ndarray, shape=(t,t)
-          recurrence matrix (see `librosa.segment.recurrence_matrix`)
+          recurrence matrix (see ``librosa.segment.recurrence_matrix``)
 
       - pad : bool
           Pad the matrix with ``t`` rows of zeros to avoid looping.
