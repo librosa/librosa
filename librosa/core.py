@@ -621,6 +621,37 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
 
     return log_spec
 
+def perceptual_weighting(S, frequencies, **kwargs):
+    '''Perceptual weighting of a power spectrogram:
+
+    ``S_p[f] = A_weighting(f) + 10*log(S[f] / ref_power)``
+
+    :usage:
+        >>> # Re-weight a CQT representation, using peak power as reference
+        >>> CQT             = librosa.cqt(y, sr, fmin=55, fmax=440)
+        >>> freqs           = librosa.cqt_frequencies(CQT.shape[0], fmin=55)
+        >>> percept_CQT     = librosa.perceptual_weighting(CQT, freqs,
+                                                            ref_power=np.max)
+
+    :parameters:
+      - S : np.ndarray, shape=(d,t)
+          Power spectrogram
+
+      - frequencies : np.ndarray, shape=(d,)
+          Center frequency for each row of ``S``
+
+      - *kwargs*
+          Additional keyword arguments to pass to ``librosa.logamplitude``.
+
+    :returns:
+      - S_p : np.ndarray, shape=(d,t)
+          perceptually weighted version of ``S``
+    '''
+
+    offset = A_weighting(frequencies).reshape((-1, 1))
+
+    return offset + logamplitude(S, **kwargs)
+
 def magphase(D):
     """Separate a complex-valued spectrogram D into its magnitude (S)
     and phase (P) components, so that ``D = S * P``.
