@@ -538,7 +538,7 @@ def piptrack(y=None, sr=22050, S=None, n_fft=4096, fmin=150.0, fmax=4000.0, thre
     return pitches, mags
 
 #-- Mel spectrogram and MFCCs --#
-def mfcc(S=None, y=None, sr=22050, n_mfcc=20):
+def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
     """Mel-frequency cepstral coefficients
 
     :usage:
@@ -553,17 +553,21 @@ def mfcc(S=None, y=None, sr=22050, n_mfcc=20):
         >>> mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=40)
 
     :parameters:
-      - S     : np.ndarray or None
-          log-power Mel spectrogram
-
       - y     : np.ndarray or None
           audio time series
 
       - sr    : int > 0
           sampling rate of ``y``
 
+      - S     : np.ndarray or None
+          log-power Mel spectrogram
+
       - n_mfcc: int > 0
           number of MFCCs to return
+
+      - *kwargs*
+          Additional keyword arguments for ``librosa.feature.melspectrogram``, if
+          operating on time series data
 
     .. note::
         One of ``S`` or ``y, sr`` must be provided.
@@ -577,7 +581,7 @@ def mfcc(S=None, y=None, sr=22050, n_mfcc=20):
     """
 
     if S is None:
-        S = librosa.logamplitude(melspectrogram(y=y, sr=sr))
+        S = librosa.logamplitude(melspectrogram(y=y, sr=sr, **kwargs))
 
     return np.dot(librosa.filters.dct(n_mfcc, S.shape[0]), S)
 
