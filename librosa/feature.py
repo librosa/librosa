@@ -693,6 +693,70 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
 
     return delta_x
 
+def stack_memory(data, n_steps=2, delay=1, trim=True, **kwargs):
+    """Short-term history embedding.
+
+    Each column ``data[:, i]`` is mapped to::
+
+        data[:, i] ->  [ data[:, i],                        ...
+                         data[:, i - delay],                ...
+                         ...
+                         data[:, i - (n_steps-1)*delay],    ...
+                       ]
+
+    For columns ``i < (n_steps - 1) * delay`` , the data will be padded.
+    By default, the data is padded with zeros, but this behavior can be
+    overridden by supplying additional keyword arguments which are passed
+    to ``np.pad()``.
+
+    :usage:
+        >>> mfccs       = librosa.feature.mfcc(y=y, sr=sr)
+        >>> mfcc_stack  = librosa.segment.stack_memory(mfccs)
+
+        >>> # Pad with reflection instead of zeroing
+        >>> mfcc_reflect = librosa.segment.stack_memory(mfccs, mode='reflect')
+
+    :parameters:
+      - data : np.ndarray
+          feature matrix (d-by-t)
+
+      - n_steps : int > 0
+          embedding dimension, the number of steps back in time to stack
+
+      - delay : int > 0
+          the number of columns to step
+
+      - trim : bool
+          Crop dimension to original number of columns
+
+      - *kwargs*
+          Additional arguments to pass to ``np.pad``.
+
+    :returns:
+      - data_history : np.ndarray, shape=(d*m, t)
+          data augmented with lagged copies of itself.
+    """
+
+    t = data.shape[1]
+    kwargs.setdefault('mode', 'constant')
+
+    if kwargs['mode'] == 'constant':
+        kwargs.setdefault('constant_values', [0])
+
+    # Pad the end with zeros, which will roll to the front below
+    data = np.pad(data, [(0, 0), (0, (n_steps-1) * delay)], **kwargs)
+
+    history = data
+
+    for i in range(1, n_steps):
+        history = np.vstack([history, np.roll(data, i * delay, axis=1)])
+
+    # Trim to original width
+    if trim:
+        history = history[:, :t]
+
+    return np.ascontiguousarray(history.T).T
+
 def sync(data, frames, aggregate=None):
     """Synchronous aggregation of a feature matrix
 

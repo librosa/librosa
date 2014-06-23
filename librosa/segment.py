@@ -9,64 +9,6 @@ import sklearn
 import sklearn.cluster
 import sklearn.feature_extraction
 
-def stack_memory(data, n_steps=2, delay=1, trim=True, **kwargs):
-    """Short-term history embedding.
-
-    Each column ``data[:, i]`` is mapped to::
-
-        data[:, i] ->  [ data[:, i],                        ...
-                         data[:, i - delay],                ...
-                         ...
-                         data[:, i - (n_steps-1)*delay],    ...
-                       ]
-
-    :usage:
-        >>> mfccs       = librosa.feature.mfcc(y=y, sr=sr)
-        >>> mfcc_stack  = librosa.segment.stack_memory(mfccs)
-
-    :parameters:
-      - data : np.ndarray
-          feature matrix (d-by-t)
-
-      - n_steps : int > 0
-          embedding dimension, the number of steps back in time to stack
-
-      - delay : int > 0
-          the number of columns to step
-
-      - trim : bool
-          Crop dimension to original number of columns
-
-      - *kwargs*
-          Additional arguments to pass to ``np.pad``.
-
-    :returns:
-      - data_history : np.ndarray, shape=(d*m, t)
-          data augmented with lagged copies of itself.
-
-      .. note:: zeros are padded for the initial columns
-    """
-
-    t = data.shape[1]
-    kwargs.setdefault('mode', 'constant')
-
-    if kwargs['mode'] == 'constant':
-        kwargs.setdefault('constant_values', [0.0])
-
-    # Pad the end with zeros, which will roll to the front below
-    data = np.pad(data, [(0, 0), (0, (n_steps-1) * delay)], **kwargs)
-
-    history = data
-
-    for i in range(1, n_steps):
-        history = np.vstack([history, np.roll(data, i * delay, axis=1)])
-
-    # Trim to original width
-    if trim:
-        history = history[:, :t]
-
-    return np.ascontiguousarray(history.T).T
-
 def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
     '''Compute the binary recurrence matrix from a time-series.
 
