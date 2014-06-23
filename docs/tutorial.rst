@@ -7,8 +7,8 @@ Quickstart
 Advanced usage
 --------------
 
-sklearn integration
--------------------
+SciKit-learn integration
+------------------------
 
 External references
 -------------------
