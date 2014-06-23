@@ -9,12 +9,12 @@ import scipy.io.wavfile
 
 import librosa.core
 
-def annotation(path, time_start, time_end, annotations=None, delimiter=',', fmt='%0.3f'):
+def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
     r'''Save annotations in a 3-column format::
 
-        time_start[0],time_end[0],annotations[0]\n
-        time_start[1],time_end[1],annotations[1]\n
-        time_start[2],time_end[2],annotations[2]\n
+        intervals[0, 0],intervals[0, 1],annotations[0]\n
+        intervals[1, 0],intervals[1, 1],annotations[1]\n
+        intervals[2, 0],intervals[2, 1],annotations[2]\n
         ...
 
     This can be used for segment or chord annotations.
@@ -25,27 +25,26 @@ def annotation(path, time_start, time_end, annotations=None, delimiter=',', fmt=
         >>> # Convert to time
         >>> boundary_times = librosa.frames_to_time(boundaries, sr=sr,
                                                     hop_length=hop_length)
-        >>> # Convert boundaries to start-ends
-        >>> time_start, time_end = boundaries[:-1], boundaries[1:]
         >>> # Make some fake annotations
         >>> labels = ['Segment #%03d' % i for i in range(len(time_start))]
         >>> # Save the output
-        >>> librosa.output.annotation('segments.csv', time_start, time_end,
+        >>> librosa.output.annotation('segments.csv', boundary_times,
                                       annotations=annotations)
 
     :parameters:
       - path : str
           path to save the output CSV file
 
-      - time_start : list-like
-          array of starting times for annotations
+      - intervals : np.ndarray, shape=(n, 2)
+          array of interval start and end-times.
 
-      - time_end : list-like
-          array of ending times for annotations
+          - ``intervals[i, 0]`` marks the start time of interval ``i``
+
+          - ``intervals[i, 1]`` marks the endtime of interval ``i``
 
       - annotations : None or list-like
           optional list of annotation strings. ``annotations[i]`` applies to the time
-          range ``time_start[i]`` to ``time_end[i]``
+          range ``intervals[i, 0]`` to ``intervals[i, 1]``
 
       - delimiter : str
           character to separate fields
@@ -55,26 +54,22 @@ def annotation(path, time_start, time_end, annotations=None, delimiter=',', fmt=
 
     :raises:
       - ValueError
-          if ``time_start`` and ``time_end`` have different length
-      - ValueError
-          if ``annotations`` is not ``None`` and length does not match ``time_start``
+          if ``annotations`` is not ``None`` and length does not match ``intervals``
     '''
 
-    if len(time_start) != len(time_end):
-        raise ValueError('len(time_start) != len(time_end)')
 
-    if annotations is not None and len(annotations) != len(time_start):
-        raise ValueError('len(annotations) != len(time_start)')
+    if annotations is not None and len(annotations) != len(intervals):
+        raise ValueError('len(annotations) != len(intervals)')
 
     with open(path, 'w') as output_file:
         writer = csv.writer(output_file, delimiter=delimiter)
 
         if annotations is None:
-            for t_s, t_e in zip(time_start, time_end):
-                writer.writerow([fmt % t_s, fmt % t_e])
+            for t_int in intervals:
+                writer.writerow([fmt % t_int[0], fmt % t_int[1]])
         else:
-            for t_s, t_e, lab in zip(time_start, time_end, annotations):
-                writer.writerow([fmt % t_s, fmt % t_e, lab])
+            for t_int, lab in zip(intervals, annotations):
+                writer.writerow([fmt % t_int[0], fmt % t_int[1], lab])
 
 def frames_csv(path, frames, sr=22050, hop_length=512, **kwargs):
     """Convert frames to time and store the output in CSV format.
