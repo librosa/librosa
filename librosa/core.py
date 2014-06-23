@@ -450,6 +450,31 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=False
 
     return if_gram, stft_matrix
 
+def magphase(D):
+    """Separate a complex-valued spectrogram D into its magnitude (S)
+    and phase (P) components, so that ``D = S * P``.
+
+    :usage:
+        >>> D = librosa.stft(y)
+        >>> S, P = librosa.magphase(D)
+        >>> D == S * P
+
+    :parameters:
+      - D       : np.ndarray, dtype=complex
+          complex-valued spectrogram
+
+    :returns:
+      - D_mag   : np.ndarray, dtype=real
+          magnitude of ``D``
+      - D_phase : np.ndarray, dtype=complex
+          ``exp(1.j * phi)`` where ``phi`` is the phase of ``D``
+    """
+
+    mag   = np.abs(D)
+    phase = np.exp(1.j * np.angle(D))
+
+    return mag, phase
+
 def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=96, bins_per_octave=12, tuning=None, resolution=2):
     '''Compute the constant-Q transform of an audio signal.
     
@@ -566,116 +591,6 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=96, bins_per_octave=12, t
 
     # Transpose magic here to ensure column-contiguity
     return np.ascontiguousarray(cqt_resp.T).T
-
-def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
-    """Log-scale the amplitude of a spectrogram.
-
-    :usage:
-        >>> # Get a power spectrogram from a waveform y
-        >>> S       = np.abs(librosa.stft(y)) ** 2
-        >>> log_S   = librosa.logamplitude(S)
-
-        >>> # Compute dB relative to a standard reference of 1.0
-        >>> log_S   = librosa.logamplitude(S, ref_power=1.0)
-
-        >>> # Compute dB relative to peak power
-        >>> log_S   = librosa.logamplitude(S, ref_power=np.max)
-
-        >>> # Or compare to median power
-        >>> log_S   = librosa.logamplitude(S, ref_power=np.median)
-
-    :parameters:
-      - S       : np.ndarray
-          input spectrogram
-
-      - ref_power : scalar or function
-          If scalar, ``log(abs(S))`` is compared to ``log(ref_power)``.
-          If a function, ``log(abs(S))`` is compared to ``log(ref_power(abs(S)))``.
-          This is primarily useful for comparing to the maximum value of `S`
-
-      - amin    : float
-          minimum amplitude threshold for `abs(S)` and `ref_power`
-
-      - top_db  : float
-          threshold log amplitude at top_db below the peak:
-          ``max(log(S)) - top_db``
-
-    :returns:
-      log_S   : np.ndarray
-          ``log_S ~= 10 * log10(S) - 10 * log10(abs(ref_power))``
-    """
-
-    abs_S = np.abs(S)
-
-    if hasattr(ref_power, '__call__'):
-        # User supplied a window function
-        __ref = ref_power(abs_S)
-    else:
-        __ref = np.abs(ref_power)
-
-    log_spec    =   10.0 * np.log10(np.maximum(amin, abs_S)) 
-    log_spec    -=  10.0 * np.log10(np.maximum(amin, __ref))
-
-    if top_db is not None:
-        log_spec = np.maximum(log_spec, log_spec.max() - top_db)
-
-    return log_spec
-
-def perceptual_weighting(S, frequencies, **kwargs):
-    '''Perceptual weighting of a power spectrogram:
-
-    ``S_p[f] = A_weighting(f) + 10*log(S[f] / ref_power)``
-
-    :usage:
-        >>> # Re-weight a CQT representation, using peak power as reference
-        >>> CQT             = librosa.cqt(y, sr, fmin=55, fmax=440)
-        >>> freqs           = librosa.cqt_frequencies(CQT.shape[0], fmin=55)
-        >>> percept_CQT     = librosa.perceptual_weighting(CQT, freqs,
-                                                            ref_power=np.max)
-
-    :parameters:
-      - S : np.ndarray, shape=(d,t)
-          Power spectrogram
-
-      - frequencies : np.ndarray, shape=(d,)
-          Center frequency for each row of ``S``
-
-      - *kwargs*
-          Additional keyword arguments to pass to ``librosa.logamplitude``.
-
-    :returns:
-      - S_p : np.ndarray, shape=(d,t)
-          perceptually weighted version of ``S``
-    '''
-
-    offset = A_weighting(frequencies).reshape((-1, 1))
-
-    return offset + logamplitude(S, **kwargs)
-
-def magphase(D):
-    """Separate a complex-valued spectrogram D into its magnitude (S)
-    and phase (P) components, so that ``D = S * P``.
-
-    :usage:
-        >>> D = librosa.stft(y)
-        >>> S, P = librosa.magphase(D)
-        >>> D == S * P
-
-    :parameters:
-      - D       : np.ndarray, dtype=complex
-          complex-valued spectrogram
-
-    :returns:
-      - D_mag   : np.ndarray, dtype=real
-          magnitude of ``D``
-      - D_phase : np.ndarray, dtype=complex
-          ``exp(1.j * phi)`` where ``phi`` is the phase of ``D``
-    """
-
-    mag   = np.abs(D)
-    phase = np.exp(1.j * np.angle(D))
-
-    return mag, phase
 
 def phase_vocoder(D, rate, hop_length=None):
     """Phase vocoder.  Given an STFT matrix D, speed up by a factor of ``rate``
@@ -1186,6 +1101,92 @@ def A_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
         weights = np.maximum(min_db, weights)
 
     return weights
+
+#-- Magnitude scaling --#
+def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
+    """Log-scale the amplitude of a spectrogram.
+
+    :usage:
+        >>> # Get a power spectrogram from a waveform y
+        >>> S       = np.abs(librosa.stft(y)) ** 2
+        >>> log_S   = librosa.logamplitude(S)
+
+        >>> # Compute dB relative to a standard reference of 1.0
+        >>> log_S   = librosa.logamplitude(S, ref_power=1.0)
+
+        >>> # Compute dB relative to peak power
+        >>> log_S   = librosa.logamplitude(S, ref_power=np.max)
+
+        >>> # Or compare to median power
+        >>> log_S   = librosa.logamplitude(S, ref_power=np.median)
+
+    :parameters:
+      - S       : np.ndarray
+          input spectrogram
+
+      - ref_power : scalar or function
+          If scalar, ``log(abs(S))`` is compared to ``log(ref_power)``.
+          If a function, ``log(abs(S))`` is compared to ``log(ref_power(abs(S)))``.
+          This is primarily useful for comparing to the maximum value of `S`
+
+      - amin    : float
+          minimum amplitude threshold for `abs(S)` and `ref_power`
+
+      - top_db  : float
+          threshold log amplitude at top_db below the peak:
+          ``max(log(S)) - top_db``
+
+    :returns:
+      log_S   : np.ndarray
+          ``log_S ~= 10 * log10(S) - 10 * log10(abs(ref_power))``
+    """
+
+    abs_S = np.abs(S)
+
+    if hasattr(ref_power, '__call__'):
+        # User supplied a window function
+        __ref = ref_power(abs_S)
+    else:
+        __ref = np.abs(ref_power)
+
+    log_spec    =   10.0 * np.log10(np.maximum(amin, abs_S)) 
+    log_spec    -=  10.0 * np.log10(np.maximum(amin, __ref))
+
+    if top_db is not None:
+        log_spec = np.maximum(log_spec, log_spec.max() - top_db)
+
+    return log_spec
+
+def perceptual_weighting(S, frequencies, **kwargs):
+    '''Perceptual weighting of a power spectrogram:
+
+    ``S_p[f] = A_weighting(f) + 10*log(S[f] / ref_power)``
+
+    :usage:
+        >>> # Re-weight a CQT representation, using peak power as reference
+        >>> CQT             = librosa.cqt(y, sr, fmin=55, fmax=440)
+        >>> freqs           = librosa.cqt_frequencies(CQT.shape[0], fmin=55)
+        >>> percept_CQT     = librosa.perceptual_weighting(CQT, freqs,
+                                                            ref_power=np.max)
+
+    :parameters:
+      - S : np.ndarray, shape=(d,t)
+          Power spectrogram
+
+      - frequencies : np.ndarray, shape=(d,)
+          Center frequency for each row of ``S``
+
+      - *kwargs*
+          Additional keyword arguments to pass to ``librosa.logamplitude``.
+
+    :returns:
+      - S_p : np.ndarray, shape=(d,t)
+          perceptually weighted version of ``S``
+    '''
+
+    offset = A_weighting(frequencies).reshape((-1, 1))
+
+    return offset + logamplitude(S, **kwargs)
 
 #-- UTILITIES --#
 def frames_to_time(frames, sr=22050, hop_length=512, n_fft=None):

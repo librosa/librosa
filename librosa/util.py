@@ -242,7 +242,7 @@ def match_intervals(intervals_from, intervals_to):
     :parameters:
       - intervals_from : ndarray, shape=(n, 2)
           The time range for source intervals.
-          The ``i``th interval spans time ``intervals_from[i, 0]`` to ``intervals_from[i, 1]``.
+          The ``i`` th interval spans time ``intervals_from[i, 0]`` to ``intervals_from[i, 1]``.
           ``intervals_from[0, 0]`` should be 0, ``intervals_from[-1, 1]`` should be the track duration.
 
       - intervals_to : ndarray, shape=(m, 2)
