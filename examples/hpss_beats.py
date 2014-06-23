@@ -40,12 +40,16 @@ def hpss_beats(input_file, output_csv):
 
     # Construct onset envelope from percussive component
     print 'Tracking beats on percussive component'
-    onsets = librosa.onset.onset_strength(y=y, sr=sr, hop_length=HOP_LENGTH, n_fft=N_FFT, aggregate=np.median)
+    onset_env = librosa.onset.onset_strength(y=y, 
+                                             sr=sr, 
+                                             hop_length=HOP_LENGTH, 
+                                             n_fft=N_FFT, 
+                                             aggregate=np.median)
 
     # Track the beats
-    tempo, beats = librosa.beat.beat_track( onsets=onsets, 
-                                            sr=sr, 
-                                            hop_length=HOP_LENGTH)
+    tempo, beats = librosa.beat.beat_track(onset_envelope=onset_env, 
+                                           sr=sr, 
+                                           hop_length=HOP_LENGTH)
 
     beat_times  = librosa.frames_to_time(beats, 
                                          sr=sr, 
