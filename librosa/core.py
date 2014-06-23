@@ -43,7 +43,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None, dtype=np.float32)
 
     :parameters:
       - path : string
-          path to the input file.  
+          path to the input file.
           Any format supported by ``audioread`` will work.
 
       - sr   : int > 0
@@ -66,9 +66,8 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None, dtype=np.float32)
       - y    : np.ndarray
           audio time series
 
-      - sr   : int  
+      - sr   : int
           sampling rate of ``y``
-
     """
 
     with audioread.audio_open(os.path.realpath(path)) as input_file:
@@ -79,9 +78,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None, dtype=np.float32)
         if duration is None:
             s_end = np.inf
         else:
-            s_end = s_start + int(np.ceil(sr_native * duration) 
-                                * input_file.channels)
-
+            s_end = s_start + int(np.ceil(sr_native * duration) * input_file.channels)
 
         scale = float(1<<15)
 
@@ -89,15 +86,15 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None, dtype=np.float32)
         n = 0
 
         for frame in input_file:
-            frame   = np.frombuffer(frame, '<i2').astype(dtype)
-            n_prev  = n
-            n       = n + len(frame)
+            frame = np.frombuffer(frame, '<i2').astype(dtype)
+            n_prev = n
+            n = n + len(frame)
 
             if n < s_start:
                 # offset is after the current frame
                 # keep reading
                 continue
-            
+
             if s_end < n_prev:
                 # we're off the end.  stop reading
                 break
@@ -108,7 +105,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None, dtype=np.float32)
 
             if n_prev <= s_start < n:
                 # beginning is in this frame
-                frame = frame[s_start - n_prev : ]
+                frame = frame[(s_start - n_prev):]
 
             # tack on the current frame
             y.append(frame)
@@ -119,7 +116,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None, dtype=np.float32)
             if mono:
                 y = 0.5 * (y[::2] + y[1::2])
             else:
-                y = y.reshape( (-1, 2)).T
+                y = y.reshape((-1, 2)).T
 
     if sr is not None:
         y = resample(y, sr_native, sr)
@@ -132,7 +129,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None, dtype=np.float32)
     return (y, sr)
 
 def resample(y, orig_sr, target_sr, res_type='sinc_fastest'):
-    """Resample a signal from orig_sr to target_sr
+    """Resample a time series from orig_sr to target_sr
 
     :usage:
         >>> # Downsample from 22 KHz to 8 KHz
@@ -141,7 +138,7 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest'):
 
     :parameters:
       - y           : np.ndarray
-          audio time series 
+          audio time series
 
       - orig_sr     : int
           original sampling rate of ``y``
@@ -151,7 +148,7 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest'):
 
       - res_type    : str
           resample type (see note)
-    
+
     :returns:
       - y_hat       : np.ndarray
           ``y`` resampled from ``orig_sr`` to ``target_sr``
@@ -174,7 +171,7 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest'):
     return np.ascontiguousarray(y_hat)
 
 def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None, center=True):
-    """Short-time Fourier transform.
+    """Short-time Fourier transform (STFT)
 
     Returns a complex-valued matrix D such that
       - ``np.abs(D[f, t])`` is the magnitude of frequency bin ``f`` at frame ``t``
@@ -183,6 +180,13 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None, center=Tr
     :usage:
         >>> y, sr = librosa.load('file.wav')
         >>> D = librosa.stft(y)
+
+        >>> # Use left-aligned frames
+        >>> D_left = librosa.stft(y, center=False)
+
+        >>> # Use a shorter hop length
+        >>> D_short = librosa.stft(y, hop_length=64)
+
 
     :parameters:
       - y           : np.ndarray, real-valued
@@ -215,7 +219,6 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None, center=Tr
     :returns:
       - D           : np.ndarray, dtype=complex
           STFT matrix
-
     """
 
     # By default, use the entire frame
@@ -247,43 +250,43 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None, center=Tr
     fft_window = util.pad_center(fft_window, n_fft)
 
     # Reshape so that the window can be broadcast
-    fft_window  = fft_window.reshape((-1, 1))
+    fft_window = fft_window.reshape((-1, 1))
 
     # Pad the time series so that frames are centered
     if center:
         y = np.pad(y, n_fft / 2, mode='reflect')
 
-    # Window the time series. 
-    y_frames    = util.frame(y, frame_length=n_fft, hop_length=hop_length)
+    # Window the time series.
+    y_frames = util.frame(y, frame_length=n_fft, hop_length=hop_length)
 
     # Pre-allocate the STFT matrix
-    stft_matrix = np.empty((1 + n_fft / 2, y_frames.shape[1]), 
-                           dtype=np.complex64, 
+    stft_matrix = np.empty((1 + n_fft / 2, y_frames.shape[1]),
+                           dtype=np.complex64,
                            order='F')
-    
+
     # how many columns can we fit within MAX_MEM_BLOCK?
     n_columns = int(_MAX_MEM_BLOCK / (stft_matrix.shape[0] * stft_matrix.itemsize))
-    
+
     for block_start in xrange(0, stft_matrix.shape[1], n_columns):
-        block_end = min(block_start + n_columns, 
+        block_end = min(block_start + n_columns,
                         stft_matrix.shape[1])
-        
+
         # RFFT and Conjugate here to match phase from DPWE code
-        stft_matrix[:, block_start:block_end] = fft.rfft(fft_window * y_frames[:, block_start:block_end], 
+        stft_matrix[:, block_start:block_end] = fft.rfft(fft_window * y_frames[:, block_start:block_end],
                                                    axis=0).conj()
-    
+
     return stft_matrix
 
-def istft(stft_matrix, hop_length=None, win_length=None, window=None, center=True):  
+def istft(stft_matrix, hop_length=None, win_length=None, window=None, center=True):
     """
     Inverse short-time Fourier transform.
 
     Converts a complex-valued spectrogram ``stft_matrix`` to time-series ``y``.
 
     :usage:
-        >>> y, sr   = librosa.load('file.wav')
-        >>> D       = librosa.stft(y)
-        >>> y_hat   = librosa.istft(D)
+        >>> y, sr       = librosa.load('file.wav')
+        >>> stft_matrix = librosa.stft(y)
+        >>> y_hat       = librosa.istft(stft_matrix)
 
     :parameters:
       - stft_matrix : np.ndarray, shape=(1 + n_fft/2, t)
@@ -296,7 +299,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None, center=Tru
       - win_length  : int <= n_fft = 2 * (stft_matrix.shape[0] - 1)
           When reconstructing the time series, each frame is windowed
           according to the ``window`` function (see below).
-          
+
           If unspecified, defaults to ``n_fft``.
 
       - window      : None, function, np.ndarray
@@ -311,10 +314,9 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None, center=Tru
     :returns:
       - y           : np.ndarray
           time domain signal reconstructed from ``stft_matrix``
-
     """
 
-    n_fft       = 2 * (stft_matrix.shape[0] - 1)
+    n_fft = 2 * (stft_matrix.shape[0] - 1)
 
     # By default, use the entire frame
     if win_length is None:
@@ -324,10 +326,10 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None, center=Tru
     if hop_length is None:
         hop_length = win_length / 4
 
-    if window is None: 
+    if window is None:
         # Default is an asymmetric Hann window.
         # 2/3 scaling is to make stft(istft(.)) identity for 25% hop
-        ifft_window =  scipy.signal.hann(win_length, sym=False) * (2.0 / 3)
+        ifft_window = scipy.signal.hann(win_length, sym=False) * (2.0 / 3)
 
     elif hasattr(window, '__call__'):
         # User supplied a windowing function
@@ -345,14 +347,14 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None, center=Tru
     # Pad out to match n_fft
     ifft_window = util.pad_center(ifft_window, n_fft)
 
-    n_frames    = stft_matrix.shape[1]
-    y           = np.zeros(n_fft + hop_length * (n_frames - 1))
+    n_frames = stft_matrix.shape[1]
+    y = np.zeros(n_fft + hop_length * (n_frames - 1))
 
     for i in xrange(n_frames):
-        sample  = i * hop_length
-        spec    = stft_matrix[:, i].flatten()
-        spec    = np.concatenate((spec.conj(), spec[-2:0:-1] ), 0)
-        ytmp    = ifft_window * fft.ifft(spec).real
+        sample = i * hop_length
+        spec = stft_matrix[:, i].flatten()
+        spec = np.concatenate((spec.conj(), spec[-2:0:-1]), 0)
+        ytmp = ifft_window * fft.ifft(spec).real
 
         y[sample:(sample+n_fft)] = y[sample:(sample+n_fft)] + ytmp
 
@@ -363,9 +365,9 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None, center=Tru
 
 def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=False, center=True):
     '''Compute the instantaneous frequency (as a proportion of the sampling rate)
-    obtained as the time-derivative of the phase of the complex spectrum as 
-    described by Toshihiro Abe et al. in ICASSP'95, Eurospeech'97. 
-    
+    obtained as the time-derivative of the phase of the complex spectrum as
+    described by Toshihiro Abe et al. in ICASSP'95, Eurospeech'97.
+
     Calculates regular STFT as a side effect.
 
     :usage:
@@ -391,7 +393,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=False
           See ``stft()`` for details.
 
       - norm : bool
-          Normalize the STFT. 
+          Normalize the STFT.
 
       - center      : boolean
           - If `True`, the signal `y` is padded so that the frame `D[f, t]` is centered at `y[t * hop_length]`.
@@ -426,25 +428,25 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None, norm=False
         hop_length = win_length / 4
 
     # Construct a padded hann window
-    window          = util.pad_center(scipy.signal.hann(win_length, sym=False), n_fft)
+    window = util.pad_center(scipy.signal.hann(win_length, sym=False), n_fft)
 
     # Window for discrete differentiation
-    freq_angular    = np.linspace(0, 2 * np.pi, n_fft, endpoint=False)
+    freq_angular = np.linspace(0, 2 * np.pi, n_fft, endpoint=False)
 
-    d_window        = np.sin( - freq_angular ) * np.pi / n_fft
+    d_window = np.sin(-freq_angular) * np.pi / n_fft
 
-    stft_matrix     = stft(y, n_fft=n_fft, hop_length=hop_length, window=window, center=center)
-    diff_stft       = stft(y, n_fft=n_fft, hop_length=hop_length, window=d_window, center=center).conj()
+    stft_matrix = stft(y, n_fft=n_fft, hop_length=hop_length, window=window, center=center)
+    diff_stft = stft(y, n_fft=n_fft, hop_length=hop_length, window=d_window, center=center).conj()
 
     # Compute power normalization. Suppress zeros.
-    power               = np.abs(stft_matrix)**2
-    power[power == 0]   = 1.0
-    
+    power = np.abs(stft_matrix)**2
+    power[power == 0] = 1.0
+
     # Pylint does not correctly infer the type here, but it's correct.
-    freq_angular    = freq_angular.reshape((-1, 1)) # pylint: disable=maybe-no-member
-    
+    freq_angular = freq_angular.reshape((-1, 1)) # pylint: disable=maybe-no-member
+
     if_gram = (freq_angular[:n_fft/2 + 1] + (stft_matrix * diff_stft).imag / power) * sr / (2 * np.pi)
-    
+
     if norm:
         stft_matrix = stft_matrix * 2.0 / window.sum()
 
@@ -470,122 +472,121 @@ def magphase(D):
           ``exp(1.j * phi)`` where ``phi`` is the phase of ``D``
     """
 
-    mag   = np.abs(D)
+    mag = np.abs(D)
     phase = np.exp(1.j * np.angle(D))
 
     return mag, phase
 
 def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=96, bins_per_octave=12, tuning=None, resolution=2):
     '''Compute the constant-Q transform of an audio signal.
-    
+
     :usage:
         >>> y, sr = librosa.load('file.wav')
-        >>> C = librosa.cqt(y, sr)
+        >>> C = librosa.cqt(y, sr=sr)
 
         >>> # Limit the frequency range
-        >>> C = librosa.cqt(y, sr, fmin=librosa.midi_to_hz(36), n_bins=60)
+        >>> C = librosa.cqt(y, sr=sr, fmin=librosa.midi_to_hz(36), n_bins=60)
 
         >>> # Use higher resolution
-        >>> C = librosa.cqt(y, sr, fmin=librosa.midi_to_hz(36), n_bins=60 * 2, bins_per_octave=12 * 2)
+        >>> C = librosa.cqt(y, sr=sr, fmin=librosa.midi_to_hz(36), n_bins=60 * 2, bins_per_octave=12 * 2)
 
     :parameters:
       - y : np.ndarray
           audio time series
-    
+
       - sr : int > 0
           sampling rate of ``y``
-        
+
       - hop_length : int > 0
           number of samples between successive CQT columns.
 
           .. note:: `hop_length` must be at least `2**(n_bins / bins_per_octave)`
-    
+
       - fmin : float > 0
           Minimum frequency. Defaults to C1 ~= 16.35 Hz
-        
+
       - n_bins : int > 0
           Number of frequency bins, starting at `fmin`
 
       - bins_per_octave : int > 0
           Number of bins per octave
-        
+
       - tuning : None or float in [-0.5, 0.5)
           Tuning offset in fractions of a bin (cents)
-          If None, tuning will be automatically estimated.
-        
+          If ``None``, tuning will be automatically estimated.
+
       - resolution : float > 0
           Filter resolution factor. Larger values use longer windows.
-        
+
     :returns:
       - CQT : np.ndarray, dtype=np.complex
-          Constant-Q for each frequency at each time.    
+          Constant-Q for each frequency at each time.
 
-
-    .. note:: This implementation is based on the recursive sub-sampling method 
+    .. note:: This implementation is based on the recursive sub-sampling method
         described by Schoerkhuber and Klapuri, 2010.
 
-        - Schoerkhuber, Christian, and Anssi Klapuri. 
-            "Constant-Q transform toolbox for music processing." 
+        - Schoerkhuber, Christian, and Anssi Klapuri.
+            "Constant-Q transform toolbox for music processing."
             7th Sound and Music Computing Conference, Barcelona, Spain. 2010.
     '''
 
     if fmin is None:
         # C1 by default
         fmin = midi_to_hz(note_to_midi('C1'))
-    
+
     if tuning is None:
         tuning = feature.estimate_tuning(y=y, sr=sr)
-        
+
     # First thing, get the fmin of the top octave
-    freqs    = cqt_frequencies(n_bins + 1, fmin, bins_per_octave=bins_per_octave)
+    freqs = cqt_frequencies(n_bins + 1, fmin, bins_per_octave=bins_per_octave)
     fmin_top = freqs[-bins_per_octave-1]
-    
+
     # Generate the basis filters
-    basis = np.asarray(filters.constant_q(sr, 
-                               fmin=fmin_top, 
-                               n_bins=bins_per_octave,
-                               bins_per_octave=bins_per_octave, 
-                               tuning=tuning, 
-                               resolution=resolution,
-                               pad=True))
-    
+    basis = np.asarray(filters.constant_q(sr,
+                                          fmin=fmin_top,
+                                          n_bins=bins_per_octave,
+                                          bins_per_octave=bins_per_octave,
+                                          tuning=tuning,
+                                          resolution=resolution,
+                                          pad=True))
+
     # FFT the filters
     max_filter_length = basis.shape[1]
     n_fft = int(2.0**(np.ceil(np.log2(max_filter_length))))
 
     # Conjugate-transpose the basis
     fft_basis = np.fft.fft(basis, n=n_fft, axis=1).conj()
-    
+
     n_octaves = int(np.ceil(n_bins / float(bins_per_octave)))
-    
+
     # Make sure our hop is long enough to support the bottom octave
-    assert(hop_length >= 2**n_octaves)
-    
+    assert hop_length >= 2**n_octaves
+
     cqt_resp = []
-    
-    my_y, my_sr, my_hop   = y, sr, hop_length
-    
+
+    my_y, my_sr, my_hop = y, sr, hop_length
+
     # Iterate down the octaves
     for _ in range(n_octaves):
         # STFT the signal
         D = stft(my_y, n_fft=n_fft, hop_length=my_hop)
-        
+
         # Rebuild the full spectrum
         D = np.vstack([D.conj(), D[-2:0:-1]])
-        
+
         # Convolve
         cqt_resp.append(fft_basis.dot(D))
-        
+
         # Resample
-        my_y    = resample(my_y, my_sr, my_sr/2.0)
-        my_sr   = my_sr  / 2.0
-        my_hop  = int(my_hop / 2.0)
-    
+        my_y = resample(my_y, my_sr, my_sr/2.0)
+        my_sr = my_sr / 2.0
+        my_hop = int(my_hop / 2.0)
+
     # cleanup any framing errors at the boundaries
     max_col = min([x.shape[1] for x in cqt_resp])
-    
+
     cqt_resp = np.vstack([x[:, :max_col] for x in cqt_resp][::-1])
-    
+
     # Finally, clip out any bottom frequencies that we don't really want
     cqt_resp = cqt_resp[-n_bins:]
 
@@ -629,54 +630,53 @@ def phase_vocoder(D, rate, hop_length=None):
             title = {A Phase Vocoder in {M}atlab},
             note = {Web resource},
             url = {http://www.ee.columbia.edu/~dpwe/resources/matlab/pvoc/},}
-            
     """
-    
-    n_fft = 2 * ( D.shape[0] - 1 )
-    
+
+    n_fft = 2 * (D.shape[0] - 1)
+
     if hop_length is None:
         hop_length = n_fft / 4
-    
+
     time_steps = np.arange(0, D.shape[1], rate, dtype=np.float)
-    
+
     # Create an empty output array
     d_stretch = np.zeros((D.shape[0], len(time_steps)), D.dtype, order='F')
-    
+
     # Expected phase advance in each bin
     phi_advance = np.linspace(0, np.pi * hop_length, D.shape[0])
 
     # Phase accumulator; initialize to the first sample
     phase_acc = np.angle(D[:, 0])
-    
+
     # Pad 0 columns to simplify boundary logic
     D = np.pad(D, [(0, 0), (0, 2)], mode='constant')
 
     for (t, step) in enumerate(time_steps):
-        
-        columns  = D[:, int(step):int(step + 2)]
-        
+
+        columns = D[:, int(step):int(step + 2)]
+
         # Weighting for linear magnitude interpolation
-        alpha   = np.mod(step, 1.0)
-        mag   = (1.0 - alpha) * np.abs(columns[:, 0]) + alpha * np.abs(columns[:, 1])
-        
+        alpha = np.mod(step, 1.0)
+        mag = (1.0 - alpha) * np.abs(columns[:, 0]) + alpha * np.abs(columns[:, 1])
+
         # Store to output array
         d_stretch[:, t] = mag * np.exp(1.j * phase_acc)
 
         # Compute phase advance
-        dphase  = np.angle(columns[:, 1]) - np.angle(columns[:, 0]) - phi_advance
-        
+        dphase = np.angle(columns[:, 1]) - np.angle(columns[:, 0]) - phi_advance
+
         # Wrap to -pi:pi range
-        dphase  = dphase - 2*np.pi * np.round(dphase / (2*np.pi))
-        
+        dphase = dphase - 2*np.pi * np.round(dphase / (2*np.pi))
+
         # Accumulate phase
         phase_acc += phi_advance + dphase
-    
+
     return d_stretch
 
 #-- FREQUENCY UTILITIES AND CONVERTERS--#
 def note_to_midi(note):
     '''Convert one or more spelled notes to MIDI number(s).
-    
+
     Notes may be spelled out with optional accidentals or octave numbers.
 
     The leading note name is case-insensitive.
@@ -692,7 +692,7 @@ def note_to_midi(note):
         53
         >>> librosa.note_to_midi('Bb-1')
         -2
-        >>> librosa.note_to_midi('A!8') 
+        >>> librosa.note_to_midi('A!8')
         104
 
     :parameters:
@@ -706,19 +706,19 @@ def note_to_midi(note):
 
     if not isinstance(note, str):
         return np.array(map(note_to_midi, note))
-    
-    pitch_map   = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
-    acc_map     = {'#': 1, '': 0, 'b': -1, '!': -1}
-    
+
+    pitch_map = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
+    acc_map = {'#': 1, '': 0, 'b': -1, '!': -1}
+
     try:
         match = re.match(r'^(?P<note>[A-Ga-g])(?P<offset>[#b!]?)(?P<octave>[+-]?\d+)$', note)
-        
+
         pitch = match.group('note').upper()
         offset = acc_map[match.group('offset')]
         octave = int(match.group('octave'))
     except:
         raise ValueError('Improper note format: %s' % note)
-    
+
     return 12 * octave + pitch_map[pitch] + offset
 
 def midi_to_note(midi, octave=True, cents=False):
@@ -757,14 +757,14 @@ def midi_to_note(midi, octave=True, cents=False):
     '''
 
     if not np.isscalar(midi):
-        return map(lambda x: midi_to_note(x, octave=octave, cents=cents), midi)
-    
-    note_map    = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+        return [midi_to_note(x, octave=octave, cents=cents) for x in midi]
 
-    note_num    = int(np.round(midi))
-    note_cents  = int(100 * np.around(midi - note_num, 2))
+    note_map = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 
-    note        = note_map[note_num % 12]
+    note_num = int(np.round(midi))
+    note_cents = int(100 * np.around(midi - note_num, 2))
+
+    note = note_map[note_num % 12]
 
     if octave:
         note = '%s%0d' % (note, note_num / 12)
@@ -773,7 +773,7 @@ def midi_to_note(midi, octave=True, cents=False):
 
     return note
 
-def midi_to_hz( notes ):
+def midi_to_hz(notes):
     """Get the frequency (Hz) of MIDI note(s)
 
     :usage:
@@ -797,7 +797,7 @@ def midi_to_hz( notes ):
     notes = np.asarray([notes]).flatten()
     return 440.0 * (2.0 ** ((notes - 69)/12.0))
 
-def hz_to_midi( frequencies ):
+def hz_to_midi(frequencies):
     """Get the closest MIDI note number(s) for given frequencies
 
     :usage:
@@ -847,20 +847,20 @@ def hz_to_mel(frequencies, htk=False):
 
     if htk:
         return 2595.0 * np.log10(1.0 + frequencies / 700.0)
-    
-    # Fill in the linear part
-    f_min   = 0.0
-    f_sp    = 200.0 / 3
 
-    mels    = (frequencies - f_min) / f_sp
+    # Fill in the linear part
+    f_min = 0.0
+    f_sp = 200.0 / 3
+
+    mels = (frequencies - f_min) / f_sp
 
     # Fill in the log-scale part
-    
-    min_log_hz  = 1000.0                        # beginning of log region (Hz)
-    min_log_mel = (min_log_hz - f_min) / f_sp   # same (Mels)
-    logstep     = np.log(6.4) / 27.0            # step size for log region
 
-    log_t       = (frequencies >= min_log_hz)
+    min_log_hz = 1000.0                         # beginning of log region (Hz)
+    min_log_mel = (min_log_hz - f_min) / f_sp   # same (Mels)
+    logstep = np.log(6.4) / 27.0                # step size for log region
+
+    log_t = (frequencies >= min_log_hz)
     mels[log_t] = min_log_mel + np.log(frequencies[log_t]/min_log_hz) / logstep
 
     return mels
@@ -893,15 +893,15 @@ def mel_to_hz(mels, htk=False):
         return 700.0 * (10.0**(mels / 2595.0) - 1.0)
 
     # Fill in the linear scale
-    f_min       = 0.0
-    f_sp        = 200.0 / 3
-    freqs       = f_min + f_sp * mels
+    f_min = 0.0
+    f_sp = 200.0 / 3
+    freqs = f_min + f_sp * mels
 
     # And now the nonlinear scale
-    min_log_hz  = 1000.0                        # beginning of log region (Hz)
+    min_log_hz = 1000.0                         # beginning of log region (Hz)
     min_log_mel = (min_log_hz - f_min) / f_sp   # same (Mels)
-    logstep     = np.log(6.4) / 27.0            # step size for log region
-    log_t       = (mels >= min_log_mel)
+    logstep = np.log(6.4) / 27.0                # step size for log region
+    log_t = (mels >= min_log_mel)
 
     freqs[log_t] = min_log_hz * np.exp(logstep * (mels[log_t] - min_log_mel))
 
@@ -1029,27 +1029,30 @@ def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False, extra=False):
 
     :parameters:
       - n_mels    : int
-          number of Mel bins  
+          number of Mel bins
+
       - fmin      : float
           minimum frequency (Hz)
+
       - fmax      : float
           maximum frequency (Hz)
+
       - htk       : bool
           use HTK formula instead of Slaney
+
       - extra     : bool
           include extra frequencies necessary for building Mel filters
 
     :returns:
       - bin_frequencies : ndarray
           vector of Mel frequencies
-
     """
 
     # 'Center freqs' of mel bands - uniformly spaced between limits
-    minmel  = hz_to_mel(fmin, htk=htk)
-    maxmel  = hz_to_mel(fmax, htk=htk)
+    minmel = hz_to_mel(fmin, htk=htk)
+    maxmel = hz_to_mel(fmax, htk=htk)
 
-    mels    = np.arange(minmel, maxmel + 1, (maxmel - minmel)/(n_mels + 1.0))
+    mels = np.arange(minmel, maxmel + 1, (maxmel - minmel) / (n_mels + 1.0))
 
     if not extra:
         mels = mels[:n_mels]
@@ -1087,16 +1090,16 @@ def A_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
     frequencies = np.asarray([frequencies]).flatten()
 
     # Pre-compute squared frequeny
-    f_sq    = frequencies**2.0
+    f_sq = frequencies**2.0
 
-    const   = np.array([12200, 20.6, 107.7, 737.9])**2.0
+    const = np.array([12200, 20.6, 107.7, 737.9])**2.0
 
-    r_a     = const[0] * f_sq**2
-    r_a     /= (f_sq + const[0]) * (f_sq + const[1])
-    r_a     /= np.sqrt((f_sq + const[2]) * (f_sq + const[3]))
+    r_a = const[0] * f_sq**2
+    r_a /= (f_sq + const[0]) * (f_sq + const[1])
+    r_a /= np.sqrt((f_sq + const[2]) * (f_sq + const[3]))
 
     weights = 2.0 + 20 * np.log10(r_a)
-    
+
     if min_db is not None:
         weights = np.maximum(min_db, weights)
 
@@ -1141,16 +1144,16 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
           ``log_S ~= 10 * log10(S) - 10 * log10(abs(ref_power))``
     """
 
-    abs_S = np.abs(S)
+    magnitude = np.abs(S)
 
     if hasattr(ref_power, '__call__'):
         # User supplied a window function
-        __ref = ref_power(abs_S)
+        __ref = ref_power(magnitude)
     else:
         __ref = np.abs(ref_power)
 
-    log_spec    =   10.0 * np.log10(np.maximum(amin, abs_S)) 
-    log_spec    -=  10.0 * np.log10(np.maximum(amin, __ref))
+    log_spec = 10.0 * np.log10(np.maximum(amin, magnitude))
+    log_spec -= 10.0 * np.log10(np.maximum(amin, __ref))
 
     if top_db is not None:
         log_spec = np.maximum(log_spec, log_spec.max() - top_db)
@@ -1200,32 +1203,30 @@ def frames_to_time(frames, sr=22050, hop_length=512, n_fft=None):
         >>> # Time conversion with a framing correction
         >>> onset_env    = librosa.onset.onset_strength(y=y, sr=sr, n_fft=1024)
         >>> onsets       = librosa.onset.onset_detect(onset_envelope=onset_env, sr=sr)
-        >>> onset_times  = librosa.frames_to_time(onsets, 
-                                                  sr=sr, 
+        >>> onset_times  = librosa.frames_to_time(onsets,
+                                                  sr=sr,
                                                   hop_length=64,
                                                   n_fft=1024)
-
 
     :parameters:
       - frames     : np.ndarray
           vector of frame numbers
 
       - sr         : int > 0
-          audio sampling rate 
+          audio sampling rate
 
       - hop_length : int
           number of samples between successive frames
 
       - n_fft : None or int > 0
-          Optional: length of the FFT window.  
+          Optional: length of the FFT window.
           If given, time conversion will include an offset of ``n_fft / 2``
           to counteract windowing effects in STFT.
 
     :returns:
-      - times : np.ndarray 
+      - times : np.ndarray
           time (in seconds) of each given frame number:
           ``times[i] = frames[i] * hop_length / sr``
-
     """
 
     offset = 0
@@ -1253,17 +1254,18 @@ def time_to_frames(times, sr=22050, hop_length=512, n_fft=None):
           number of samples between successive frames
 
       - n_fft : None or int > 0
-          Optional: length of the FFT window.  
+          Optional: length of the FFT window.
           If given, time conversion will include an offset of ``- n_fft / 2``
           to counteract windowing effects in STFT.
 
-          .. note:: This may result in negative frame indices. 
+          .. note:: This may result in negative frame indices.
 
     :returns:
       - frames : np.ndarray, dtype=int
           Frame numbers corresponding to the given times:
           ``frames[i] = floor( times[i] * sr / hop_length )``
     """
+
     offset = 0
     if n_fft is not None:
         offset = n_fft / 2
@@ -1292,7 +1294,6 @@ def autocorrelate(y, max_size=None):
     :returns:
       - z         : np.ndarray
           truncated autocorrelation ``y*y``
-
     """
 
     result = scipy.signal.fftconvolve(y, y[::-1], mode='full')
@@ -1303,12 +1304,12 @@ def autocorrelate(y, max_size=None):
         return result
     else:
         max_size = int(max_size)
-    
+
     return result[:max_size]
 
 def localmax(x, axis=0):
-    """Find local maxima in an array `x`. 
-       
+    """Find local maxima in an array ``x``.
+
     :usage:
         >>> x = np.array([1, 0, 1, 2, -1, 0, -2, 1])
         >>> librosa.localmax(x)
@@ -1324,14 +1325,14 @@ def localmax(x, axis=0):
         array([[False, False,  True],
                [False, False,  True],
                [False, False,  True]], dtype=bool)
-               
+
     :parameters:
       - x     : np.ndarray
           input vector or array
 
       - axis : int
           axis along which to compute local maximality
-          
+
     :returns:
       - m     : np.ndarray, dtype=bool, shape=x.shape
           indicator vector of local maxima:
@@ -1340,17 +1341,17 @@ def localmax(x, axis=0):
 
     paddings = [(0, 0)] * x.ndim
     paddings[axis] = (1, 1)
-    
+
     x_pad = np.pad(x, paddings, mode='edge')
-    
+
     inds1 = [Ellipsis] * x.ndim
     inds1[axis] = slice(0, -2)
-    
+
     inds2 = [Ellipsis] * x.ndim
     inds2[axis] = slice(2, x_pad.shape[axis])
-    
+
     return (x > x_pad[inds1]) & (x >= x_pad[inds2])
-    
+
 def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     '''Uses a flexible heuristic to pick peaks in a signal.
 
@@ -1360,27 +1361,33 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
         >>> # peaks must be > avg + 0.5
         >>> # skip 10 steps before taking another peak
         >>> librosa.peak_pick(x, 3, 3, 5, 5, 0.5, 10)
-    
+
     :parameters:
       - x         : np.ndarray
           input signal to peak picks from
+
       - pre_max   : int
           number of samples before n over which max is computed
+
       - post_max  : int
           number of samples after n over which max is computed
+
       - pre_avg   : int
           number of samples before n over which mean is computed
+
       - post_avg  : int
           number of samples after n over which mean is computed
+
       - delta     : float
           threshold offset for mean
+
       - wait      : int
           number of samples to wait after picking a peak
 
     :returns:
       - peaks     : np.ndarray, dtype=int
           indices of peaks in x
-    
+
     .. note::
       A sample n is selected as an peak if the corresponding x[n]
       fulfills the following three conditions:
@@ -1390,7 +1397,7 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
         3. ``n - previous_n > wait``
 
       where ``previous_n`` is the last sample picked as a peak (greedily).
-    
+
     .. note::
         @inproceedings{bock2012evaluating,
             title={Evaluating the Online Capabilities of Onset Detection Methods.},
@@ -1398,44 +1405,44 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
             booktitle={ISMIR},
             pages={49--54},
             year={2012}}
-    
+
     .. note::
-      Implementation based on 
+      Implementation based on
       https://github.com/CPJKU/onset_detection/blob/master/onset_program.py
     '''
 
     # Get the maximum of the signal over a sliding window
-    max_length  = pre_max + post_max + 1
-    max_origin  = 0.5 * (pre_max - post_max)
-    mov_max     = scipy.ndimage.filters.maximum_filter1d(x, int(max_length), 
-                                                            mode='constant', 
-                                                            origin=int(max_origin))
+    max_length = pre_max + post_max + 1
+    max_origin = 0.5 * (pre_max - post_max)
+    mov_max = scipy.ndimage.filters.maximum_filter1d(x, int(max_length),
+                                                        mode='constant',
+                                                        origin=int(max_origin))
 
     # Get the mean of the signal over a sliding window
-    avg_length  = pre_avg + post_avg + 1
-    avg_origin  = 0.5 * (pre_avg - post_avg)
-    mov_avg     = scipy.ndimage.filters.uniform_filter1d(x, int(avg_length), 
-                                                            mode='constant', 
-                                                            origin=int(avg_origin))
+    avg_length = pre_avg + post_avg + 1
+    avg_origin = 0.5 * (pre_avg - post_avg)
+    mov_avg = scipy.ndimage.filters.uniform_filter1d(x, int(avg_length),
+                                                        mode='constant',
+                                                        origin=int(avg_origin))
 
     # First mask out all entries not equal to the local max
     detections = x*(x == mov_max)
 
     # Then mask out all entries less than the thresholded average
     detections = detections*(detections >= mov_avg + delta)
-    
+
     # Initialize peaks array, to be filled greedily
     peaks = []
-    
+
     # Remove onsets which are close together in time
     last_onset = -np.inf
-    
+
     for i in np.nonzero(detections)[0]:
         # Only report an onset if the "wait" samples was reported
         if i > last_onset + wait:
             peaks.append(i)
             # Save last reported onset
             last_onset = i
-    
-    return np.array( peaks )
+
+    return np.array(peaks)
 
