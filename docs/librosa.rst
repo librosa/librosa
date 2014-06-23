@@ -1,5 +1,5 @@
-librosa package reference
-=========================
+Package reference
+=================
 
 :mod:`Beat tracking`
 --------------------
