@@ -693,8 +693,9 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
 
     return delta_x
 
-def stack_memory(data, n_steps=2, delay=1, trim=True, **kwargs):
-    """Short-term history embedding.
+def stack_memory(data, n_steps=2, delay=1, **kwargs):
+    """Short-term history embedding: vertically concatenate a data
+    vector or matrix with delayed copies of itself.
 
     Each column ``data[:, i]`` is mapped to::
 
@@ -710,15 +711,35 @@ def stack_memory(data, n_steps=2, delay=1, trim=True, **kwargs):
     to ``np.pad()``.
 
     :usage:
-        >>> mfccs       = librosa.feature.mfcc(y=y, sr=sr)
-        >>> mfcc_stack  = librosa.segment.stack_memory(mfccs)
+        >>> # Generate a data vector
+        >>> data = np.arange(-3, 3)
+        >>> # Keep two steps (current and previous)
+        >>> librosa.feature.stack_memory(data)
+        array([[-3, -2, -1,  0,  1,  2],
+               [ 0, -3, -2, -1,  0,  1]])
 
-        >>> # Pad with reflection instead of zeroing
-        >>> mfcc_reflect = librosa.segment.stack_memory(mfccs, mode='reflect')
+        >>> # Or three steps
+        >>> librosa.feature.stack_memory(data, n_steps=3)
+        array([[-3, -2, -1,  0,  1,  2],
+               [ 0, -3, -2, -1,  0,  1],
+               [ 0,  0, -3, -2, -1,  0]])
+
+        >>> # Use reflection padding instead of zero-padding
+        >>> librosa.feature.stack_memory(data, n_steps=3, mode='reflect')
+        array([[-3, -2, -1,  0,  1,  2],
+               [-2, -3, -2, -1,  0,  1],
+               [-1, -2, -3, -2, -1,  0]])
+
+        >>> # Or pad with edge-values, and delay by 2
+        >>> librosa.feature.stack_memory(data, n_steps=3, delay=2, mode='edge')
+        array([[-3, -2, -1,  0,  1,  2],
+               [-3, -3, -3, -2, -1,  0],
+               [-3, -3, -3, -3, -3, -2]])
 
     :parameters:
-      - data : np.ndarray
-          feature matrix (d-by-t)
+      - data : np.ndarray, shape=(t,) or (d, t)
+          Input data matrix.  If ``data`` is a vector (``data.ndim == 1``), it will be interpreted as a 
+          row matrix and reshaped to ``(1, t)``.
 
       - n_steps : int > 0
           embedding dimension, the number of steps back in time to stack
@@ -726,16 +747,17 @@ def stack_memory(data, n_steps=2, delay=1, trim=True, **kwargs):
       - delay : int > 0
           the number of columns to step
 
-      - trim : bool
-          Crop dimension to original number of columns
-
       - *kwargs*
           Additional arguments to pass to ``np.pad``.
 
     :returns:
       - data_history : np.ndarray, shape=(d*m, t)
-          data augmented with lagged copies of itself.
+          data augmented with lagged copies of itself, where ``m == n_steps - 1``.
     """
+
+    # If we're given a vector, interpret as a matrix
+    if data.ndim == 1:
+        data = data.reshape((1, -1))
 
     t = data.shape[1]
     kwargs.setdefault('mode', 'constant')
@@ -755,7 +777,7 @@ def stack_memory(data, n_steps=2, delay=1, trim=True, **kwargs):
     history = history[:, :t]
 
     # Make contiguous
-    return np.ascontiguousarray(history[:, :t].T).T
+    return np.ascontiguousarray(history.T).T
 
 def sync(data, frames, aggregate=None):
     """Synchronous aggregation of a feature matrix
