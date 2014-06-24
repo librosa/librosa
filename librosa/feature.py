@@ -744,18 +744,18 @@ def stack_memory(data, n_steps=2, delay=1, trim=True, **kwargs):
         kwargs.setdefault('constant_values', [0])
 
     # Pad the end with zeros, which will roll to the front below
-    data = np.pad(data, [(0, 0), (0, (n_steps-1) * delay)], **kwargs)
+    data = np.pad(data, [(0, 0), ((n_steps - 1) * delay, 0)], **kwargs)
 
     history = data
 
     for i in range(1, n_steps):
-        history = np.vstack([history, np.roll(data, i * delay, axis=1)])
+        history = np.vstack([np.roll(data, -i * delay, axis=1), history])
 
     # Trim to original width
-    if trim:
-        history = history[:, :t]
+    history = history[:, :t]
 
-    return np.ascontiguousarray(history.T).T
+    # Make contiguous
+    return np.ascontiguousarray(history[:, :t].T).T
 
 def sync(data, frames, aggregate=None):
     """Synchronous aggregation of a feature matrix
