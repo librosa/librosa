@@ -13,8 +13,8 @@ import librosa.core
 def decompose(S, n_components=None, transformer=None, sort=False):
     """Decompose a feature matrix.
 
-    Given a spectrogram ``S``, produce a decomposition into ``components`` and ``activations``
-    such that ``S ~= components.dot(activations)``.
+    Given a spectrogram ``S``, produce a decomposition into ``components``
+    and ``activations`` such that ``S ~= components.dot(activations)``.
 
     By default, this is done with with non-negative matrix factorization (NMF),
     but any ``sklearn.decomposition``-type object will work.
@@ -22,14 +22,15 @@ def decompose(S, n_components=None, transformer=None, sort=False):
     :usage:
         >>> # Decompose a magnitude spectrogram into 32 components with NMF
         >>> S = np.abs(librosa.stft(y))
-        >>> components, activations = librosa.decompose.decompose(S, n_components=32)
+        >>> comps, acts = librosa.decompose.decompose(S, n_components=32)
 
         >>> # Sort components by ascending peak frequency
-        >>> components, activations = librosa.decompose.decompose(S, n_components=32, sort=True)
+        >>> comps, acts = librosa.decompose.decompose(S, n_components=32,
+                                                      sort=True)
 
         >>> # Or with sparse dictionary learning
         >>> T = sklearn.decomposition.DictionaryLearning(n_components=32)
-        >>> components, activations = librosa.decompose.decompose(S, transformer=T)
+        >>> comps, acts = librosa.decompose.decompose(S, transformer=T)
 
     :parameters:
         - S : np.ndarray, shape=(n_features, n_samples), dtype=float
@@ -43,11 +44,11 @@ def decompose(S, n_components=None, transformer=None, sort=False):
             If None, use ``sklearn.decomposition.NMF``
 
             Otherwise, any object with a similar interface to NMF should work.
-            ``transformer`` must follow the scikit-learn convention, where input data
-            is ``(n_samples, n_features)``.
+            ``transformer`` must follow the scikit-learn convention, where
+            input data is ``(n_samples, n_features)``.
 
             ``transformer.fit_transform()`` will be run on ``S.T`` (not ``S``),
-            the return value of which is stored (transposed) as ``activations``.
+            the return value of which is stored (transposed) as ``activations``
 
             The components will be retrieved as ``transformer.components_.T``
 
@@ -59,8 +60,9 @@ def decompose(S, n_components=None, transformer=None, sort=False):
         - sort : bool
             If ``True``, components are sorted by ascending peak frequency.
 
-          .. note:: If used with ``transformer``, sorting is applied to copies of the
-                decomposition parameters, and not to ``transformer``'s internal parameters.
+          .. note:: If used with ``transformer``, sorting is applied to copies
+            of the decomposition parameters, and not to ``transformer``'s
+            internal parameters.
 
 
     :returns:
@@ -83,6 +85,7 @@ def decompose(S, n_components=None, transformer=None, sort=False):
         activations = activations[idx]
 
     return components, activations
+
 
 def hpss(S, kernel_size=31, power=2.0, mask=False):
     """Median-filtering harmonic percussive source separation (HPSS).
@@ -111,13 +114,16 @@ def hpss(S, kernel_size=31, power=2.0, mask=False):
       - kernel_size : int or tuple (kernel_harmonic, kernel_percussive)
           kernel size(s) for the median filters.
           If scalar, the same size is used for both harmonic and percussive.
-          If array_like, the first value specifies the width of the harmonic filter,
-          and the second value specifies the width of the percussive filter.
+          If array_like, the first value specifies the width of the
+          harmonic filter, and the second value specifies the width of the
+          percussive filter.
 
       - power : float >= 0
           Exponent for the Wiener filter when constructing mask matrices.
-          Mask matrices are defined by ``mask_H = (r_H ** power) / (r_H ** power + r_P ** power)``
-          where ``r_H`` and ``r_P`` are the median-filter responses for harmonic and percussive components.
+          Mask matrices are defined by
+          ``mask_H = (r_H ** power) / (r_H ** power + r_P ** power)``
+          where ``r_H`` and ``r_P`` are the median-filter responses for
+          harmonic and percussive components.
 
       - mask : bool
           Return the masking matrices instead of components
@@ -177,4 +183,3 @@ def hpss(S, kernel_size=31, power=2.0, mask=False):
         mask_perc = perc / (harm + perc)
 
     return (mask_harm * S * phase, mask_perc * S * phase)
-
