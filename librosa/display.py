@@ -206,6 +206,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
 
       - y_axis : None or str
           Range for the y-axis.  Valid types are:
+
           - None or 'off': no y axis is displayed.
           - 'linear': frequency range is determined by the FFT window
             and sampling rate.
