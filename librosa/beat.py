@@ -9,6 +9,7 @@ import librosa.core
 import librosa.feature
 import librosa.onset
 
+
 def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=64,
                start_bpm=120.0, tightness=400, trim=True, bpm=None):
     r'''Dynamic programming beat tracker.
@@ -16,17 +17,20 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=64,
     Beats are detected in three stages:
       1. Measure onset strength
       2. Estimate tempo from onset correlation
-      3. Pick peaks in onset strength approximately consistent with estimated tempo
+      3. Pick peaks in onset strength approximately consistent with estimated
+         tempo
 
     :usage:
         >>> # Track beats using time series input
         >>> tempo, beats = librosa.beat.beat_track( y, sr )
 
         >>> # Track beats using a pre-computed onset envelope
-        >>> onset_env    = librosa.onset.onset_strength(y, sr=sr, hop_length=hop_length)
-        >>> tempo, beats = librosa.beat.beat_track( onset_envelope=onset_env,
-                                                    sr=sr,
-                                                    hop_length=hop_length)
+        >>> onset_env    = librosa.onset.onset_strength(y,
+                                                        sr=sr,
+                                                        hop_length=hop_length)
+        >>> tempo, beats = librosa.beat.beat_track(onset_envelope=onset_env,
+                                                   sr=sr,
+                                                   hop_length=hop_length)
 
     :parameters:
       - y          : np.ndarray or None
@@ -67,8 +71,8 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=64,
           if neither ``y`` nor ``onset_envelope`` are provided
 
     .. note::
-      If no onset strength could be detected, beat_tracker estimates 0 BPM and returns
-      an empty list.
+      If no onset strength could be detected, beat_tracker estimates 0 BPM
+      and returns an empty list.
 
       - http://labrosa.ee.columbia.edu/projects/beattrack/
       - @article{ellis2007beat,
@@ -87,7 +91,9 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=64,
         if y is None:
             raise ValueError('Either "y" or "onsets" must be provided')
 
-        onset_envelope = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
+        onset_envelope = librosa.onset.onset_strength(y=y,
+                                                      sr=sr,
+                                                      hop_length=hop_length)
 
     # Do we have any onsets to grab?
     if not onset_envelope.any():
@@ -95,19 +101,29 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=64,
 
     # Estimate BPM if one was not provided
     if bpm is None:
-        bpm = estimate_tempo(onset_envelope, sr=sr, hop_length=hop_length, start_bpm=start_bpm)
+        bpm = estimate_tempo(onset_envelope,
+                             sr=sr,
+                             hop_length=hop_length,
+                             start_bpm=start_bpm)
 
     # Then, run the tracker
-    beats = __beat_tracker(onset_envelope, bpm, float(sr) / hop_length, tightness, trim)
+    beats = __beat_tracker(onset_envelope,
+                           bpm,
+                           float(sr) / hop_length,
+                           tightness,
+                           trim)
 
     return (bpm, beats)
 
-def estimate_tempo(onset_envelope, sr=22050, hop_length=64, start_bpm=120, std_bpm=1.0,
-                    ac_size=4.0, duration=90.0, offset=0.0):
+
+def estimate_tempo(onset_envelope, sr=22050, hop_length=64, start_bpm=120,
+                   std_bpm=1.0, ac_size=4.0, duration=90.0, offset=0.0):
     """Estimate the tempo (beats per minute) from an onset envelope
 
     :usage:
-        >>> tempo = librosa.beat.estimate_tempo(onset_strength, sr=sr, hop_length)
+        >>> tempo = librosa.beat.estimate_tempo(onset_envelope,
+                                                sr=sr,
+                                                hop_length=hop_length)
 
     :parameters:
       - onset_envelope    : np.ndarray
@@ -144,14 +160,17 @@ def estimate_tempo(onset_envelope, sr=22050, hop_length=64, start_bpm=120, std_b
 
     # Chop onsets to X[(upper_limit - duration):upper_limit]
     # or as much as will fit
-    maxcol = int(min(len(onset_envelope)-1, np.round((offset + duration) * fft_res)))
+    maxcol = int(min(len(onset_envelope)-1,
+                     np.round((offset + duration) * fft_res)))
+
     mincol = int(max(0, maxcol - np.round(duration * fft_res)))
 
     # Use auto-correlation out of 4 seconds (empirically set??)
     ac_window = min(maxcol, np.round(ac_size * fft_res))
 
     # Compute the autocorrelation
-    x_corr = librosa.core.autocorrelate(onset_envelope[mincol:maxcol], ac_window)
+    x_corr = librosa.core.autocorrelate(onset_envelope[mincol:maxcol],
+                                        ac_window)
 
     # re-weight the autocorrelation by log-normal prior
     bpms = 60.0 * fft_res / (np.arange(1, ac_window+1))
@@ -165,9 +184,8 @@ def estimate_tempo(onset_envelope, sr=22050, hop_length=64, start_bpm=120, std_b
     # Zero out all peaks before the first negative
     x_peaks[:np.argmax(x_corr < 0)] = False
 
-
     # Choose the best peak out of .33, .5, 2, 3 * start_period
-    candidates = np.argmax(x_peaks * x_corr) * np.asarray([1.0/3, 0.5, 1, 2, 3])
+    candidates = np.argmax(x_peaks * x_corr) * np.asarray([1./3, 0.5, 1, 2, 3])
 
     candidates = candidates[candidates < ac_window].astype(int)
 
@@ -178,8 +196,9 @@ def estimate_tempo(onset_envelope, sr=22050, hop_length=64, start_bpm=120, std_b
 
     return start_bpm
 
+
 def __beat_tracker(onset_envelope, bpm, fft_res, tightness, trim):
-    """Internal function that does beat tracking from a given onset strength envelope.
+    """Internal function that tracks beats in an onset strength envelope.
 
     :parameters:
       - onset_envelope   : np.ndarray
@@ -199,7 +218,7 @@ def __beat_tracker(onset_envelope, bpm, fft_res, tightness, trim):
 
     """
 
-    #--- First, some helper functions ---#
+    # --- First, some helper functions ---#
     def rbf(points):
         """Makes a smoothing filter for onsets"""
         return np.exp(-0.5 * (points**2))
@@ -214,7 +233,7 @@ def __beat_tracker(onset_envelope, bpm, fft_res, tightness, trim):
         window = np.arange(-2*period, -np.round(period/2) + 1, dtype=int)
 
         # Make a score window, which begins biased toward start_bpm and skewed
-        txwt = - tightness * np.log(-window /period)**2
+        txwt = -tightness * (np.log(-window / period) ** 2)
 
         # Are we on the first beat?
         first_beat = True
@@ -257,7 +276,9 @@ def __beat_tracker(onset_envelope, bpm, fft_res, tightness, trim):
     def smooth_beats(beats, trim):
         """Final post-processing: throw out spurious leading/trailing beats"""
 
-        smooth_boe = scipy.signal.convolve(localscore[beats], scipy.signal.hann(5), 'same')
+        smooth_boe = scipy.signal.convolve(localscore[beats],
+                                           scipy.signal.hann(5),
+                                           'same')
 
         if trim:
             threshold = 0.5 * ((smooth_boe**2).mean()**0.5)
@@ -276,34 +297,34 @@ def __beat_tracker(onset_envelope, bpm, fft_res, tightness, trim):
             onsets = onsets / norm
         return onsets
 
-    #--- End of helper functions ---#
+    # --- End of helper functions --- #
 
     # convert bpm to a sample period for searching
     period = round(60.0 * fft_res / bpm)
 
     # localscore is a smoothed version of AGC'd onset envelope
-    localscore = scipy.signal.convolve(
-                        normalize_onsets(onset_envelope),
-                        rbf(np.arange(-period, period+1)*32.0/period),
-                        'same')
+    window = rbf(np.arange(-period, period+1)*32.0/period)
+    localscore = scipy.signal.convolve(normalize_onsets(onset_envelope),
+                                       window,
+                                       'same')
 
-    ### run the DP
+    # run the DP
     (backlink, cumscore) = beat_track_dp(localscore)
 
-    ### get the position of the last beat
+    # get the position of the last beat
     beats = [get_last_beat(cumscore)]
 
-    ### Reconstruct the beat path from backlinks
+    # Reconstruct the beat path from backlinks
     while backlink[beats[-1]] >= 0:
         beats.append(backlink[beats[-1]])
 
-    ### Put the beats in ascending order
+    # Put the beats in ascending order
     beats.reverse()
 
-    ### Convert into an array of frame numbers
+    # Convert into an array of frame numbers
     beats = np.array(beats, dtype=int)
 
-    ### Discard spurious trailing beats
+    # Discard spurious trailing beats
     beats = smooth_beats(beats, trim)
 
     return beats
