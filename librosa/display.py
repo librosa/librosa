@@ -9,6 +9,7 @@ import warnings
 
 import librosa.core
 
+
 # This function wraps xticks or yticks: star-args is okay
 def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
     '''Plot time-formatted axis ticks.
@@ -52,8 +53,7 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
            Default: None
 
        - *kwargs*
-          Additional keyword arguments.  
-          
+          Additional keyword arguments.
           See ``matplotlib.pyplot.xticks`` or ``yticks`` for details.
 
     :returns:
@@ -84,11 +84,11 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
 
     # Format the labels by time
     formatters = {'ms': lambda t: '%dms' % (1e3 * t),
-                  's':  lambda t: '%0.2fs' % t,
-                  'm':  lambda t: '%d:%02d' % (t / 60, np.mod(t, 60)),
-                  'h':  lambda t: '%d:%02d:%02d' % (t / 3600,
-                                                    np.mod(t / 60, 60),
-                                                    np.mod(t, 60))}
+                  's': lambda t: '%0.2fs' % t,
+                  'm': lambda t: '%d:%02d' % (t / 60, np.mod(t, 60)),
+                  'h': lambda t: '%d:%02d:%02d' % (t / 3600,
+                                                   np.mod(t / 60, 60),
+                                                   np.mod(t, 60))}
 
     if fmt is None:
         if max(times) > 3600.0:
@@ -107,12 +107,14 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
 
     return ticker(locs, times, **kwargs)
 
+
 def cmap(data):
     '''Get a default colormap from the given data.
 
     If the data is boolean, use a black and white colormap.
 
-    If the data has both positive and negative values, use a diverging colormap.
+    If the data has both positive and negative values,
+    use a diverging colormap.
 
     Otherwise, use a sequential map.
 
@@ -151,11 +153,13 @@ def cmap(data):
 
     return 'PuOr_r'
 
-def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=5, n_yticks=5,
-        fmin=None, fmax=None, **kwargs):
+
+def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
+             n_xticks=5, n_yticks=5, fmin=None, fmax=None, **kwargs):
     '''Display a spectrogram/chromagram/cqt/etc.
 
-    Functions as a drop-in replacement for ``matplotlib.pyplot.imshow``, but with useful defaults.
+    Functions as a drop-in replacement for ``matplotlib.pyplot.imshow``,
+    but with useful defaults.
 
     :usage:
         >>> # Visualize an STFT with linear frequency scaling
@@ -167,17 +171,20 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
 
         >>> # Visualize a CQT with note markers
         >>> CQT = librosa.cqt(y, sr, fmin=55, fmax=880)
-        >>> librosa.display.specshow(CQT, sr=sr, y_axis='cqt_note', fmin=55, fmax=880)
+        >>> librosa.display.specshow(CQT, sr=sr, y_axis='cqt_note',
+                                     fmin=55, fmax=880)
 
         >>> # Draw time markers automatically
-        >>> librosa.display.specshow(D, sr=sr, hop_length=hop_length, x_axis='time')
+        >>> librosa.display.specshow(D, sr=sr, hop_length=hop_length,
+                                     x_axis='time')
 
         >>> # Draw a chromagram with pitch classes
         >>> C = librosa.feature.chromagram(y, sr)
         >>> librosa.display.specshow(C, y_axis='chroma')
 
         >>> # Force a grayscale colormap (white -> black)
-        >>> librosa.display.specshow(librosa.logamplitude(D), cmap='gray_r')
+        >>> librosa.display.specshow(librosa.logamplitude(D),
+                                     cmap='gray_r')
 
     :parameters:
       - data : np.ndarray
@@ -192,14 +199,16 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
       - x_axis : None or {'time', 'frames', 'off'}
           If None or 'off', no x axis is displayed.
 
-          If 'time', markers are shown as milliseconds, seconds, minutes, or hours.
-          (See ``time_ticks()`` for details.)
+          If 'time', markers are shown as milliseconds, seconds,
+          minutes, or hours.  (See ``time_ticks()`` for details.)
 
           If 'frames', markers are shown as frame counts.
 
-      - y_axis : None or {'linear', 'mel', 'cqt_hz', 'cqt_note', 'chroma', 'off'}
+      - y_axis : None or str
+          Range for the y-axis.  Valid types are:
           - None or 'off': no y axis is displayed.
-          - 'linear': frequency range is determined by the FFT window and sampling rate.
+          - 'linear': frequency range is determined by the FFT window
+            and sampling rate.
           - 'log': the image is displayed on a vertical log scale.
           - 'mel': frequencies are determined by the mel scale.
           - 'cqt_hz': frequencies are determined by the fmin and fmax values.
@@ -218,7 +227,8 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
           Used for setting the Mel or constantq frequency scales
 
       - *kwargs*
-          Additional keyword arguments passed through to ``matplotlib.pyplot.imshow``.
+          Additional keyword arguments passed through to
+          ``matplotlib.pyplot.imshow``.
 
     :returns:
       - image : ``matplotlib.image.AxesImage``
@@ -226,7 +236,8 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
 
     :raises:
       - ValueError
-          If y_axis is 'cqt_hz' or 'cqt_note' and fmin and fmax are not supplied.
+          If y_axis is 'cqt_hz' or 'cqt_note' and ``fmin`` and
+          ``fmax`` are not supplied.
     '''
 
     kwargs.setdefault('aspect', 'auto')
@@ -234,15 +245,16 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
     kwargs.setdefault('interpolation', 'nearest')
 
     if np.issubdtype(data.dtype, np.complex):
-        warnings.warn('Trying to display complex-valued input. Showing magnitude instead.')
+        warnings.warn('Trying to display complex-valued input. ' +
+                      'Showing magnitude instead.')
         data = np.abs(data)
 
     kwargs.setdefault('cmap', cmap(data))
 
-    # NOTE:  2013-11-14 16:15:33 by Brian McFee <brm2132@columbia.edu>pitch
-    #  We draw the image twice here. This is a hack to get around NonUniformImage
-    #  not properly setting hooks for color: drawing twice enables things like
-    #  colorbar() to work properly.
+    # NOTE:  2013-11-14 16:15:33 by Brian McFee <brm2132@columbia.edu>
+    #  We draw the image twice here. This is a hack to get around
+    #  NonUniformImage not properly setting hooks for color.
+    #  Drawing twice enables things like colorbar() to work properly.
 
     axes = plt.imshow(data, **kwargs)
 
@@ -264,14 +276,15 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
     positions = np.asarray(np.linspace(0, data.shape[0], n_yticks), dtype=int)
 
     if y_axis is 'linear':
-        values = np.asarray(np.linspace(0, 0.5 * sr, data.shape[0] + 1), dtype=int)
+        values = np.asarray(np.linspace(0, 0.5 * sr, data.shape[0] + 1),
+                            dtype=int)
 
         plt.yticks(positions, values[positions])
         plt.ylabel('Hz')
 
     elif y_axis is 'log':
-
-        values = np.asarray(np.linspace(0, 0.5 * sr, data.shape[0] + 1), dtype=int)
+        values = np.asarray(np.linspace(0, 0.5 * sr, data.shape[0] + 1),
+                            dtype=int)
         plt.yticks(positions, values[y_inv[positions]])
 
         plt.ylabel('Hz')
@@ -284,39 +297,44 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
             m_args['fmax'] = fmax
 
         # only two star-args here, defined immediately above
-        values = librosa.core.mel_frequencies(n_mels=data.shape[0], # pylint: disable=star-args
-                                              extra=True,
-                                              **m_args)[positions].astype(np.int)
+        # pylint: disable=star-args
+        values = librosa.core.mel_frequencies(n_mels=data.shape[0], extra=True,
+                                              **m_args)[positions].astype(int)
         plt.yticks(positions, values)
         plt.ylabel('Hz')
 
     elif y_axis is 'cqt_hz':
         if fmax is None and fmin is None:
-            raise ValueError('fmin and fmax must be supplied for CQT axis display')
+            raise ValueError('fmin and fmax must be supplied for CQT display')
 
         positions = np.arange(0, data.shape[0],
-                             np.ceil(data.shape[0] / float(n_yticks)),
-                             dtype=int)
+                              np.ceil(data.shape[0] / float(n_yticks)),
+                              dtype=int)
 
+        bins_per_oct = data.shape[0] / np.ceil(np.log2(fmax) - np.log2(fmin))
 
         # Get frequencies
         values = librosa.core.cqt_frequencies(data.shape[0], fmin=fmin,
-                                    bins_per_octave=int(data.shape[0] / np.ceil(np.log2(fmax) - np.log2(fmin))))
+                                              bins_per_octave=bins_per_oct)
         plt.yticks(positions, values[positions].astype(int))
         plt.ylabel('Hz')
 
     elif y_axis is 'cqt_note':
         if fmax is None and fmin is None:
-            raise ValueError('fmin and fmax must be supplied for CQT axis display')
+            raise ValueError('CQT display requires fmin and fmax')
 
         positions = np.arange(0, data.shape[0],
-                             np.ceil(data.shape[0] / float(n_yticks)),
-                             dtype=int)
+                              np.ceil(data.shape[0] / float(n_yticks)),
+                              dtype=int)
+
+        bins_per_oct = data.shape[0] / np.ceil(np.log2(fmax) - np.log2(fmin))
 
         # Get frequencies
         values = librosa.core.cqt_frequencies(data.shape[0], fmin=fmin,
-                                    bins_per_octave=int(data.shape[0] / np.ceil(np.log2(fmax) - np.log2(fmin))))
-        values = librosa.core.midi_to_note(librosa.core.hz_to_midi(values[positions]))
+                                              bins_per_octave=bins_per_oct)
+        values = values[positions]
+        values = librosa.core.midi_to_note(librosa.core.hz_to_midi(values))
+
         plt.yticks(positions, values)
         plt.ylabel('Note')
 
@@ -339,7 +357,8 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
 
     if x_axis is 'time':
         time_ticks(positions,
-                   librosa.core.frames_to_time(positions, sr=sr, hop_length=hop_length),
+                   librosa.core.frames_to_time(positions, sr=sr,
+                                               hop_length=hop_length),
                    n_ticks=None, axis='x')
 
         plt.xlabel('Time')
@@ -357,6 +376,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None, n_xticks=
         raise ValueError('Unknown x_axis parameter: %s' % x_axis)
 
     return axes
+
 
 def __log_scale(n):
     '''Return a log-scale mapping of bins 0..n, and its inverse.
@@ -380,4 +400,3 @@ def __log_scale(n):
         y_inv[y[i]:y[i+1]] = i
 
     return y, y_inv
-
