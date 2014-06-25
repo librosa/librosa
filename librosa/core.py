@@ -425,16 +425,11 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
           Short-time Fourier transform
 
     .. note::
-        @inproceedings{abe1995harmonics,
-        title={Harmonics tracking and pitch extraction based
-        on instantaneous frequency},
-        author={Abe, Toshihiko and Kobayashi, Takao and Imai, Satoshi},
-        booktitle={Acoustics, Speech, and Signal Processing, 1995. ICASSP-95.,
-        1995 International Conference on},
-        volume={1},
-        pages={756--759},
-        year={1995},
-        organization={IEEE}}
+        - Abe, Toshihiko, Takao Kobayashi, and Satoshi Imai.
+          "Harmonics tracking and pitch extraction based on
+          instantaneous frequency."
+          Acoustics, Speech, and Signal Processing, 1995. ICASSP-95.,
+          1995 International Conference on. Vol. 1. IEEE, 1995.
     '''
 
     if win_length is None:
@@ -651,13 +646,8 @@ def phase_vocoder(D, rate, hop_length=None):
           time-stretched STFT
 
     .. note::
-      - This implementation was ported from the following:
-      - @misc{Ellis02-pvoc
-            author = {D. P. W. Ellis},
-            year = {2002},
-            title = {A Phase Vocoder in {M}atlab},
-            note = {Web resource},
-            url = {http://www.ee.columbia.edu/~dpwe/resources/matlab/pvoc/},}
+      - Ellis, D. P. W. "A phase vocoder in Matlab." Columbia University
+        (http://www.ee.columbia.edu/dpwe/resources/matlab/pvoc/) (2002).
     """
 
     n_fft = 2 * (D.shape[0] - 1)
