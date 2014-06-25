@@ -9,10 +9,12 @@ import sklearn
 import sklearn.cluster
 import sklearn.feature_extraction
 
+
 def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
     '''Compute the binary recurrence matrix from a time-series.
 
-    ``rec[i,j] == True`` <=> (``data[:,i]``, ``data[:,j]``) are k-nearest-neighbors and ``|i-j| >= width``
+    ``rec[i,j] == True`` <=> (``data[:,i]``, ``data[:,j]``) are
+    k-nearest-neighbors and ``|i-j| >= width``
 
     :usage:
         >>> mfcc    = librosa.feature.mfcc(y=y, sr=sr)
@@ -41,7 +43,8 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
           or ``k = 2`` if ``t <= 2 * width + 1``
 
       - width : int > 0
-          only link neighbors ``(data[:, i], data[:, j])`` if ``|i-j| >= width``
+          only link neighbors ``(data[:, i], data[:, j])``
+          if ``|i-j| >= width``
 
       - metric : str
           Distance metric to use for nearest-neighbor calculation.
@@ -96,6 +99,7 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
 
     return rec
 
+
 def structure_feature(rec, pad=True, inverse=False):
     '''Compute the structure feature from a recurrence matrix.
 
@@ -123,13 +127,15 @@ def structure_feature(rec, pad=True, inverse=False):
           Unroll the opposite direction. This is useful for converting
           structure features back into recurrence plots.
 
-          .. note: Reversing with ``pad==True`` will truncate the inferred padding.
+          .. note: Reversing with ``pad==True`` will truncate the
+            inferred padding.
 
     :returns:
       - struct : np.ndarray
           ``struct[i, t]`` = the recurrence at time ``t`` with lag ``i``.
 
-      .. note:: negative lag values are supported by wrapping to the end of the array.
+      .. note:: negative lag values are supported by wrapping to the
+        end of the array.
     '''
 
     t = rec.shape[1]
@@ -155,6 +161,7 @@ def structure_feature(rec, pad=True, inverse=False):
     # Make column-contiguous
     return np.ascontiguousarray(struct.T).T
 
+
 def agglomerative(data, k):
     """Bottom-up temporal segmentation.
 
@@ -164,9 +171,11 @@ def agglomerative(data, k):
     :usage:
         >>> # Cluster by Mel spectrogram similarity
         >>> # Break into 32 segments
-        >>> S                   = librosa.feature.melspectrogram(y=y, sr=sr, n_fft=2048, hop_length=512)
-        >>> boundary_frames     = librosa.segment.agglomerative(S, 32)
-        >>> boundary_times      = librosa.frames_to_time(boundary_frames, sr=sr, hop_length=512)
+        >>> S = librosa.feature.melspectrogram(y=y, sr=sr, n_fft=2048,
+                                               hop_length=512)
+        >>> boundary_frames = librosa.segment.agglomerative(S, 32)
+        >>> boundary_times = librosa.frames_to_time(boundary_frames, sr=sr,
+                                                    hop_length=512)
 
     :parameters:
       - data     : np.ndarray
@@ -196,4 +205,3 @@ def agglomerative(data, k):
     boundaries.extend(
         list(1 + np.nonzero(np.diff(ward.labels_))[0].astype(int)))
     return boundaries
-
