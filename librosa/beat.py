@@ -75,15 +75,8 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=64,
       and returns an empty list.
 
       - http://labrosa.ee.columbia.edu/projects/beattrack/
-      - @article{ellis2007beat,
-            title={Beat tracking by dynamic programming},
-            author={Ellis, Daniel PW},
-            journal={Journal of New Music Research},
-            volume={36},
-            number={1},
-            pages={51--60},
-            year={2007},
-            publisher={Taylor \& Francis} }
+      - Ellis, Daniel PW. "Beat tracking by dynamic programming."
+        Journal of New Music Research 36.1 (2007): 51-60.
     '''
 
     # First, get the frame->beat strength profile if we don't already have one

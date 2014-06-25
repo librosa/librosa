@@ -302,11 +302,8 @@ def constant_q(sr, fmin=None, n_bins=96, bins_per_octave=12, tuning=0.0,
           longest filter).
 
       .. note::
-        @phdthesis{mcvicar2013,
-          title = {A machine learning approach to automatic chord extraction},
-          author = {McVicar, M.},
-          year = {2013},
-          school = {University of Bristol}}
+        - McVicar, Matthew. "A machine learning approach to automatic chord
+          extraction." Dissertation, University of Bristol. 2013.
 
     :returns:
       - filters : list of np.ndarray, ``len(filters) == n_bins``
