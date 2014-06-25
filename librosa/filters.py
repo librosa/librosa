@@ -74,9 +74,8 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
         fmax = sr / 2.0
 
     # Initialize the weights
-    size = int(1 + n_fft / 2)
     n_mels = int(n_mels)
-    weights = np.zeros((n_mels, size))
+    weights = np.zeros((n_mels, int(1 + n_fft / 2)))
 
     # Center freqs of each FFT bin
     fftfreqs = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
