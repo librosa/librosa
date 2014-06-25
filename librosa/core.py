@@ -954,6 +954,9 @@ def octs_to_hz(octs, A440=440.0):
     octs = np.asarray([octs]).flatten()
     return (A440/16)*(2.0**octs)
 
+# FIXME:  2014-06-24 16:38:02 by Brian McFee <brm2132@columbia.edu>
+#  
+
 def fft_frequencies(sr=22050, n_fft=2048):
     '''Alternative implementation of ``np.fft.fftfreqs``
 
