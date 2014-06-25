@@ -8,7 +8,9 @@ import scipy.signal
 import librosa.core
 import librosa.feature
 
-def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64, **kwargs):
+
+def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64,
+                 **kwargs):
     """Basic onset detector.  Locate note onset events by picking peaks in an
     onset strength envelope.
 
@@ -16,13 +18,17 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64, **kwargs)
 
     :usage:
         >>> # Get onset times from a signal
-        >>> onset_frames    = librosa.onset.onset_detect(y=y, sr=sr, hop_length=64)
-        >>> onset_times     = librosa.frames_to_time(onset_frames, sr, hop_length=64)
+        >>> onset_frames = librosa.onset.onset_detect(y=y,
+                                                      sr=sr, hop_length=64)
+        >>> onset_times = librosa.frames_to_time(onset_frames,
+                                                 sr, hop_length=64)
 
         >>> # Or use a pre-computed onset envelope
-        >>> onset_env       = librosa.onset.onset_strength(y, sr=sr)
-        >>> onset_frames    = librosa.onset.onset_detect(onset_envelope=onset_env, sr=sr)
-        >>> onset_times     = librosa.frames_to_time(onset_frames, sr, hop_length=64)
+        >>> o_env = librosa.onset.onset_strength(y, sr=sr)
+        >>> onset_frames = librosa.onset.onset_detect(onset_envelope=o_env,
+                                                      sr=sr)
+        >>> onset_times = librosa.frames_to_time(onset_frames,
+                                                 sr, hop_length=64)
 
     :parameters:
       - y          : np.ndarray
@@ -52,9 +58,11 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64, **kwargs)
           if neither ``y`` nor ``onsets`` are provided
 
     .. note::
-      If no onset strength could be detected, onset_detect returns an empty list.
+      If no onset strength could be detected, onset_detect returns
+      an empty list.
 
-      The peak_pick parameters were chosen by large-scale hyperparameter optimization over this dataset:
+      The peak_pick parameters were chosen by large-scale hyper-parameter
+      optimization over this dataset:
       https://github.com/CPJKU/onset_db
     """
 
@@ -85,27 +93,35 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64, **kwargs)
     # Peak pick the onset envelope
     return librosa.core.peak_pick(onset_envelope, **kwargs)
 
-def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True, feature=None, aggregate=None, **kwargs):
+
+def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
+                   feature=None, aggregate=None, **kwargs):
     """Compute a spectral flux onset strength envelope.
 
     Onset strength at time t is determined by:
 
     ``mean_f max(0, S[f, t+1] - S[f, t])``
 
-    By default, if a time series ``y`` is provided, S will be the log-power Mel spectrogram.
+    By default, if a time series ``y`` is provided, S will be the
+    log-power Mel spectrogram.
 
     :usage:
         >>> # Mean aggregation with Mel-scaled spectrogram
-        >>> onset_env = librosa.onset.onset_strength(y, sr)
+        >>> o_env = librosa.onset.onset_strength(y, sr)
 
         >>> # Median aggregation
-        >>> onset_env = librosa.onset.onset_strength(y, sr, aggregate=np.median)
+        >>> o_env = librosa.onset.onset_strength(y, sr,
+                                                 aggregate=np.median)
 
         >>> # Log-frequency spectrogram instead of Mel
-        >>> onset_env = librosa.onset.onset_strength(y, sr, feature=librosa.feature.logfsgram)
+        >>> o_env = librosa.onset.onset_strength(y, sr,
+                                                 feature=librosa.feature.logfsgram)
 
         >>> # Or Mel spectrogram with customized options
-        >>> onset_env = librosa.onset.onset_strength(y, sr, n_mels=128, fmin=32, fmax=8000)
+        >>> o_env = librosa.onset.onset_strength(y, sr,
+                                                 n_mels=128,
+                                                 fmin=32,
+                                                 fmax=8000)
 
     :parameters:
       - y        : np.ndarray
@@ -118,7 +134,7 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True, feat
           pre-computed (log-power) spectrogram
 
       - detrend : bool
-          Filter the onset strength to remove ***FIXME
+          Filter the onset strength to remove the DC component
 
       - centering : bool
           Shift the onset function by ``n_fft / (2 * hop_length)`` frames
@@ -179,11 +195,12 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True, feat
 
     # Counter-act framing effects. Shift the onsets by n_fft / hop_length
     if centering:
-        onset_env = np.pad(onset_env, (n_fft / (2 * hop_length), 0), mode='constant')
+        onset_env = np.pad(onset_env,
+                           (n_fft / (2 * hop_length), 0),
+                           mode='constant')
 
     # remove the DC component
     if detrend:
         onset_env = scipy.signal.lfilter([1.0, -1.0], [1.0, -0.99], onset_env)
 
     return onset_env
-
