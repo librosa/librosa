@@ -4,6 +4,7 @@
 import numpy as np
 import librosa
 
+
 def dct(n_filters, n_input):
     """Discrete cosine transform (DCT) basis
 
@@ -35,6 +36,7 @@ def dct(n_filters, n_input):
         basis[i, :] = np.cos(i*samples) * np.sqrt(2.0/n_input)
 
     return basis
+
 
 def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
     """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins
@@ -81,7 +83,11 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
     fftfreqs = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
 
     # 'Center freqs' of mel bands - uniformly spaced between limits
-    freqs = librosa.mel_frequencies(n_mels, fmin=fmin, fmax=fmax, htk=htk, extra=True)
+    freqs = librosa.mel_frequencies(n_mels,
+                                    fmin=fmin,
+                                    fmax=fmax,
+                                    htk=htk,
+                                    extra=True)
 
     # Slaney-style mel is scaled to be approx constant energy per channel
     enorm = 2.0 / (freqs[2:n_mels+2] - freqs[:n_mels])
@@ -95,6 +101,7 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
         weights[i] = np.maximum(0, np.minimum(lower, upper)) * enorm[i]
 
     return weights
+
 
 def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=2):
     """Create a Filterbank matrix to convert STFT to chroma
@@ -126,8 +133,8 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=2):
 
       - octwidth  : float or None
           ``ctroct`` and ``octwidth`` specify a dominance window -
-          a Gaussian weighting centered on ``ctroct`` (in octs, A0 = 27.5Hz) and
-          with a gaussian half-width of ``octwidth``.
+          a Gaussian weighting centered on ``ctroct`` (in octs, A0 = 27.5Hz)
+          and with a gaussian half-width of ``octwidth``.
           Set ``octwidth`` to ``None`` to use a flat weighting.
 
     :returns:
@@ -140,15 +147,16 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=2):
     # Get the FFT bins, not counting the DC component
     frequencies = np.linspace(0, sr, n_fft, endpoint=False)[1:]
 
-    fftfrqbins = n_chroma * librosa.hz_to_octs(frequencies, A440)
+    frqbins = n_chroma * librosa.hz_to_octs(frequencies, A440)
 
     # make up a value for the 0 Hz bin = 1.5 octaves below bin 1
     # (so chroma is 50% rotated from bin 1, and bin width is broad)
-    fftfrqbins = np.concatenate(([fftfrqbins[0] - 1.5 * n_chroma], fftfrqbins))
+    frqbins = np.concatenate(([frqbins[0] - 1.5 * n_chroma], frqbins))
 
-    binwidthbins = np.concatenate((np.maximum(fftfrqbins[1:] - fftfrqbins[:-1], 1.0), [1]))
+    binwidthbins = np.concatenate((np.maximum(frqbins[1:] - frqbins[:-1],
+                                              1.0), [1]))
 
-    D = np.tile(fftfrqbins, (n_chroma, 1)) - np.tile(np.arange(0, n_chroma, dtype='d')[:, np.newaxis], (1, n_fft))
+    D = np.subtract.outer(frqbins, np.arange(0, n_chroma, dtype='d')).T
 
     n_chroma2 = np.round(n_chroma / 2.0)
 
@@ -166,23 +174,26 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=2):
     # Maybe apply scaling for fft bins
     if octwidth is not None:
         wts *= np.tile(
-            np.exp(-0.5 * (((fftfrqbins/n_chroma - ctroct)/octwidth)**2)),
+            np.exp(-0.5 * (((frqbins/n_chroma - ctroct)/octwidth)**2)),
             (n_chroma, 1))
 
     # remove aliasing columns, copy to ensure row-contiguity
     return np.ascontiguousarray(wts[:, :(1 + n_fft/2)])
 
-def logfrequency(sr, n_fft, n_bins=96, bins_per_octave=12, tuning=0.0, fmin=None, spread=0.125):
+
+def logfrequency(sr, n_fft, n_bins=96, bins_per_octave=12, tuning=0.0,
+                 fmin=None, spread=0.125):
     '''Approximate a constant-Q filterbank for a fixed-window STFT.
 
-    Each filter is a log-normal window centered at the corresponding pitch frequency.
+    Each filter is a log-normal window centered at the corresponding frequency.
 
     :usage:
         >>> # Simple log frequency filters
         >>> logfs_fb = librosa.filters.logfrequency(22050, 4096)
 
         >>> # Use a narrower frequency range
-        >>> logfs_fb = librosa.filters.logfrequency(22050, 4096, n_bins=48, fmin=110)
+        >>> logfs_fb = librosa.filters.logfrequency(22050, 4096,
+                                                    n_bins=48, fmin=110)
 
         >>> # Use narrower filters for sparser response: 5% of a semitone
         >>> logfs_fb = librosa.filters.logfrequency(22050, 4096, spread=0.05)
@@ -233,11 +244,11 @@ def logfrequency(sr, n_fft, n_bins=96, bins_per_octave=12, tuning=0.0, fmin=None
 
     for i in range(n_bins):
         # What's the center (median) frequency of this filter?
-        center_freq = correction * fmin * (2.0**(float(i)/bins_per_octave))
+        c_freq = correction * fmin * (2.0**(float(i)/bins_per_octave))
 
-        # Place a log-normal window around center_freq
-        # We skip the sqrt(2*pi) normalization because it will wash out below anyway
-        basis[i, 1:] = np.exp(-0.5 * ((log_freqs - np.log2(center_freq)) /sigma)**2 - np.log2(sigma) - log_freqs)
+        # Place a log-normal window around c_freq
+        basis[i, 1:] = np.exp(-0.5 * ((log_freqs - np.log2(c_freq)) / sigma)**2
+                              - np.log2(sigma) - log_freqs)
 
         # Normalize each filter
         c_norm = np.sqrt(np.sum(basis[i]**2))
@@ -246,7 +257,9 @@ def logfrequency(sr, n_fft, n_bins=96, bins_per_octave=12, tuning=0.0, fmin=None
 
     return basis
 
-def constant_q(sr, fmin=None, n_bins=96, bins_per_octave=12, tuning=0.0, window=None, resolution=2, pad=False):
+
+def constant_q(sr, fmin=None, n_bins=96, bins_per_octave=12, tuning=0.0,
+               window=None, resolution=2, pad=False):
     r'''Construct a constant-Q basis.
 
     :usage:
@@ -285,18 +298,20 @@ def constant_q(sr, fmin=None, n_bins=96, bins_per_octave=12, tuning=0.0, window=
           Resolution of filter windows. Larger values use longer windows.
 
       - pad : boolean
-          Zero-pad all filters to have a constant width (equal to the longest filter).
+          Zero-pad all filters to have a constant width (equal to the
+          longest filter).
 
       .. note::
             @phdthesis{mcvicar2013,
-              title  = {A machine learning approach to automatic chord extraction},
+              title  = {A machine learning approach to automatic
+                        chord extraction},
               author = {McVicar, M.},
               year   = {2013},
               school = {University of Bristol}}
 
     :returns:
       - filters : list of np.ndarray, ``len(filters) == n_bins``
-          ``filters[i]`` is the time-domain representation of the ``i``\ th CQT basis.
+          ``filters[i]`` is ``i``\ th CQT basis filter (in the time-domain)
     '''
 
     if fmin is None:
@@ -310,7 +325,8 @@ def constant_q(sr, fmin=None, n_bins=96, bins_per_octave=12, tuning=0.0, window=
     fmin = correction * fmin
 
     # Q should be capitalized here, so we suppress the name warning
-    Q = float(resolution) / (2.0**(1./bins_per_octave) - 1) # pylint: disable=invalid-name
+    # pylint: disable=invalid-name
+    Q = float(resolution) / (2.0**(1. / bins_per_octave) - 1)
 
     filters = []
     for i in np.arange(n_bins, dtype=float):
@@ -336,6 +352,7 @@ def constant_q(sr, fmin=None, n_bins=96, bins_per_octave=12, tuning=0.0, window=
             filters[i] = librosa.util.pad_center(filters[i], max_len)
 
     return filters
+
 
 def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12, roll=0):
     '''Convert a Constant-Q basis to Chroma.
@@ -374,7 +391,8 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12, roll=0):
     n_merge = float(bins_per_octave) / n_chroma
 
     if np.mod(n_merge, 1) != 0:
-        raise ValueError('Incompatible CQ merge: input bins must be an integer multiple of output bins.')
+        raise ValueError('Incompatible CQ merge: input bins \
+        must be an integer multiple of output bins.')
 
     # Tile the identity to merge fractional bins
     cq_to_ch = np.repeat(np.eye(n_chroma), n_merge, axis=1)
