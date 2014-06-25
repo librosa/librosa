@@ -79,7 +79,7 @@ def percussive(y):
     :usage:
         >>> # Load a waveform
         >>> y, sr = librosa.load('file.mp3')
-        >>> y_percussive = librosa.effects.y_percussive(y)
+        >>> y_percussive = librosa.effects.percussive(y)
 
     :parameters:
       - y : np.ndarray
