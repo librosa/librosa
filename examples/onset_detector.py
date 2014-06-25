@@ -25,19 +25,19 @@ def onset_detect(input_file, output_csv):
 
     # 1. load the wav file and resample to 22.050 KHz
     print 'Loading ', input_file
-    y, sr         = librosa.load(input_file, sr=22050)
+    y, sr = librosa.load(input_file, sr=22050)
 
     # Use a default hop size of 64 frames @ 22KHz ~= 11.6ms
-    HOP_LENGTH  = 64
+    hop_length = 64
 
     # This is the window length used by default in stft
-    N_FFT       = 2048
+    n_fft = 2048
 
     # 2. run onset detection
     print 'Detecting onsets...'
-    onsets      = librosa.onset.onset_detect(y=y,
-                                             sr=sr,
-                                             hop_length=HOP_LENGTH)
+    onsets = librosa.onset.onset_detect(y=y,
+                                        sr=sr,
+                                        hop_length=hop_length)
 
     print "Found {} onsets.".format(onsets.shape[0])
 
@@ -46,8 +46,8 @@ def onset_detect(input_file, output_csv):
 
     onset_times = librosa.frames_to_time(onsets,
                                          sr=sr,
-                                         hop_length=HOP_LENGTH,
-                                         n_fft=N_FFT)
+                                         hop_length=hop_length,
+                                         n_fft=n_fft)
 
     print 'Saving output to ', output_csv
     librosa.output.times_csv(output_csv, onset_times)
