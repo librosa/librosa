@@ -136,11 +136,8 @@ def hpss(S, kernel_size=31, power=2.0, mask=False):
           percussive component (or mask)
 
     .. note::
-      @article{fitzgerald2010harmonic,
-        title={Harmonic/percussive separation using median filtering},
-        author={Fitzgerald, Derry},
-        year={2010},
-        publisher={Dublin Institute of Technology}}
+      - Fitzgerald, Derry.
+        "Harmonic/percussive separation using median filtering." (2010).
 
     """
 
