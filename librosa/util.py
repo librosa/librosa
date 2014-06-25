@@ -8,6 +8,7 @@ import glob
 from numpy.lib.stride_tricks import as_strided
 from sklearn.base import BaseEstimator, TransformerMixin
 
+
 def frame(y, frame_length=2048, hop_length=512):
     '''Slice a time series into overlapping frames.
 
@@ -55,8 +56,9 @@ def frame(y, frame_length=2048, hop_length=512):
     # Vertical stride is one sample
     # Horizontal stride is ``hop_length`` samples
     y_frames = as_strided(y, shape=(frame_length, n_frames),
-                             strides=(y.itemsize, hop_length * y.itemsize))
+                          strides=(y.itemsize, hop_length * y.itemsize))
     return y_frames
+
 
 def pad_center(data, size, **kwargs):
     '''Wrapper for np.pad to automatically center a vector prior to padding.
@@ -86,6 +88,7 @@ def pad_center(data, size, **kwargs):
     kwargs.setdefault('mode', 'constant')
     lpad = (size - len(data))/2
     return np.pad(data, (lpad, size - len(data) - lpad), **kwargs)
+
 
 def fix_length(y, n, **kwargs):
     '''Fix the length of a one-dimensional array ``y`` to exactly ``n``.
@@ -117,6 +120,7 @@ def fix_length(y, n, **kwargs):
         return np.pad(y, (0, n - len(y)), **kwargs)
 
     return y
+
 
 def axis_sort(S, axis=-1, index=False, value=None):
     '''Sort an array along its rows or columns.
@@ -187,6 +191,7 @@ def axis_sort(S, axis=-1, index=False, value=None):
         else:
             return S[:, idx]
 
+
 def normalize(S, norm=np.inf, axis=0):
     '''Normalize the columns or rows of a matrix
 
@@ -198,7 +203,8 @@ def normalize(S, norm=np.inf, axis=0):
           - ``inf``  : maximum absolute value
           - ``-inf`` : mininum absolute value
           - ``0``    : number of non-zeros
-          - float  : corresponding l_p norm. See ``scipy.linalg.norm`` for details.
+          - float  : corresponding l_p norm.
+            See ``scipy.linalg.norm`` for details.
 
       - axis : int
           Axis along which to compute the norm.
@@ -234,6 +240,7 @@ def normalize(S, norm=np.inf, axis=0):
 
     return S / length
 
+
 def match_intervals(intervals_from, intervals_to):
     '''Match one set of time intervals to another.
 
@@ -242,16 +249,18 @@ def match_intervals(intervals_from, intervals_to):
     :parameters:
       - intervals_from : ndarray, shape=(n, 2)
           The time range for source intervals.
-          The ``i`` th interval spans time ``intervals_from[i, 0]`` to ``intervals_from[i, 1]``.
-          ``intervals_from[0, 0]`` should be 0, ``intervals_from[-1, 1]`` should be the track duration.
+          The ``i`` th interval spans time ``intervals_from[i, 0]``
+          to ``intervals_from[i, 1]``.
+          ``intervals_from[0, 0]`` should be 0, ``intervals_from[-1, 1]``
+          should be the track duration.
 
       - intervals_to : ndarray, shape=(m, 2)
           Analogous to ``intervals_from``.
 
     :returns:
       - interval_mapping : ndarray, shape=(n,)
-          For each interval in ``intervals_from``, the corresponding interval in
-          ``intervals_to``.
+          For each interval in ``intervals_from``, the
+          corresponding interval in ``intervals_to``.
     '''
 
     # The overlap score of a beat with a segment is defined as
@@ -263,7 +272,9 @@ def match_intervals(intervals_from, intervals_to):
 
     return np.argmax(score, axis=1)
 
-def find_files(directory, ext=None, recurse=True, case_sensitive=False, limit=None, offset=0):
+
+def find_files(directory, ext=None, recurse=True, case_sensitive=False,
+               limit=None, offset=0):
     '''Get a sorted list of (audio) files in a directory or directory sub-tree.
 
     :usage:
@@ -300,7 +311,8 @@ def find_files(directory, ext=None, recurse=True, case_sensitive=False, limit=No
           Otherwise, only ``directory`` will be searched.
 
       - case_sensitive : boolean
-          If ``False``, files matching upper-case version of extensions will be included.
+          If ``False``, files matching upper-case version of
+          extensions will be included.
 
       - limit : int > 0 or None
           Return at most ``limit`` files. If ``None``, all files are returned.
@@ -356,6 +368,7 @@ def find_files(directory, ext=None, recurse=True, case_sensitive=False, limit=No
 
     return files
 
+
 class FeatureExtractor(BaseEstimator, TransformerMixin):
     """Sci-kit learn wrapper class for feature extraction methods.
 
@@ -367,23 +380,23 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
         >>> import sklearn.pipeline
 
         >>> # Build a mel-spectrogram extractor
-        >>> MelSpec = librosa.util.FeatureExtractor(librosa.feature.melspectrogram,
-                                                    sr=22050,
-                                                    n_fft=2048,
-                                                    n_mels=128,
-                                                    fmax=8000)
+        >>> MS = librosa.util.FeatureExtractor(librosa.feature.melspectrogram,
+                                               sr=22050, n_fft=2048,
+                                               n_mels=128, fmax=8000)
 
         >>> # And a log-amplitude extractor
-        >>> LogAmp = librosa.util.FeatureExtractor(librosa.logamplitude, ref_power=np.max)
+        >>> LA = librosa.util.FeatureExtractor(librosa.logamplitude,
+                                               ref_power=np.max)
 
         >>> # Chain them into a pipeline
-        >>> FeaturePipeline = sklearn.pipeline.Pipeline([('MelSpectrogram', MelSpec), ('LogAmplitude', LogAmp)])
+        >>> Features = sklearn.pipeline.Pipeline([('MelSpectrogram', MS),
+                                                  ('LogAmplitude', LA)])
 
         >>> # Load an audio file
         >>> y, sr = librosa.load('file.mp3', sr=22050)
 
         >>> # Apply the transformation to y
-        >>> F = FeaturePipeline.transform([y])
+        >>> F = Features.transform([y])
 
     :parameters:
       - function : function
@@ -392,11 +405,11 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
           Example: ``librosa.feature.melspectrogram``
 
       - target : str or None
-          If ``None``, then ``function`` is called with the input data as the first 
-          positional argument.
+          If ``None``, then ``function`` is called with the input
+          data as the first positional argument.
 
-          If ``str``, then ``function`` is called with the input data as a keyword
-          argument with key ``target``
+          If ``str``, then ``function`` is called with the input
+          data as a keyword argument with key ``target``.
 
       - *kwargs*
           Parameters to be passed through to ``function``
@@ -409,17 +422,14 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
 
         self.set_params(**kwargs)
 
-
     # Clobber _get_param_names here for transparency
     def _get_param_names(self):
         """Returns the parameters of the feature extractor as a dictionary."""
-        temp_params = {'function': self.function,
-                         'target': self.target}
+        temp_params = {'function': self.function, 'target': self.target}
 
         temp_params.update(self.kwargs)
 
         return temp_params
-
 
     # Wrap set_params to catch updates
     def set_params(self, **kwargs):
@@ -433,23 +443,22 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
         self.kwargs.update(params)
         BaseEstimator.set_params(self, **kwargs)
 
-
     # We keep these arguments for compatibility, but don't use them.
-    def fit(self, *args, **kwargs): #pylint: disable=unused-argument
+    def fit(self, *args, **kwargs):  # pylint: disable=unused-argument
         """This function does nothing, and is provided for interface compatibility.
 
-        .. note:: Since most ``TransformerMixin`` classes implement some statistical
-            modeling (e.g., PCA), the ``fit()`` method is necessary.
+        .. note:: Since most ``TransformerMixin`` classes implement some
+            statistical modeling (e.g., PCA), the ``fit()`` method is
+            required.
 
-            For the ``FeatureExtraction`` class, all parameters are fixed ahead of time,
-            and no statistical estimation takes place.
+            For the ``FeatureExtraction`` class, all parameters are fixed
+            ahead of time, and no statistical estimation takes place.
         """
 
         return self
 
-
     # Variable name 'X' is for consistency with sklearn
-    def transform(self, X): #pylint: disable=invalid-name
+    def transform(self, X):  # pylint: disable=invalid-name
         """Applies the feature transformation to an array of input data.
 
         :parameters:
@@ -459,16 +468,17 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
         :returns:
           - X_transform : list
               In positional argument mode (target=None), then
-              ``X_transform[i] = function(X[i], [feature extractor parameters])``
+              ``X_transform[i] = function(X[i], [feature parameters])``
 
               If the ``target`` parameter was given, then
-              ``X_transform[i] = function(target=X[i], [feature extractor parameters])``
+              ``X_transform[i] = function(target=X[i], [feature parameters])``
         """
 
         if self.target is not None:
             # If we have a target, each element of X takes the keyword argument
-            return [self.function(**dict(self.kwargs.items() + {self.target: item}.items())) for item in X]
+            return [self.function(**dict(self.kwargs.items()
+                                         + {self.target: item}.items()))
+                    for item in X]
         else:
             # Each element of X takes first position in function()
             return [self.function(item, **self.kwargs) for item in X]
-
