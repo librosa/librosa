@@ -5,6 +5,7 @@ import librosa.core
 import librosa.decompose
 import librosa.util
 
+
 def hpss(y):
     '''Decompose an audio time series into harmonic and percussive components.
 
@@ -42,6 +43,7 @@ def hpss(y):
 
     return y_harm, y_perc
 
+
 def harmonic(y):
     '''Extract harmonic elements from an audio time-series.
 
@@ -72,6 +74,7 @@ def harmonic(y):
     y_harm = librosa.util.fix_length(librosa.istft(D_harm), len(y))
 
     return y_harm
+
 
 def percussive(y):
     '''Extract percussive elements from an audio time-series.
@@ -104,6 +107,7 @@ def percussive(y):
 
     return y_perc
 
+
 def time_stretch(y, rate):
     '''Time-stretch an audio series by a fixed rate.
 
@@ -127,7 +131,8 @@ def time_stretch(y, rate):
       - y_stretch : np.ndarray
         audio time series stretched by the specified rate
 
-    .. seealso:: ``librosa.core.phase_vocoder``, ``librosa.effects.pitch_shift``
+    .. seealso:: ``librosa.core.phase_vocoder``,
+      ``librosa.effects.pitch_shift``
     '''
 
     # Construct the stft
@@ -141,6 +146,7 @@ def time_stretch(y, rate):
 
     return y_stretch
 
+
 def pitch_shift(y, sr, n_steps, bins_per_octave=12):
     '''Pitch-shift the waveform by ``n_steps`` half-steps.
 
@@ -152,7 +158,8 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12):
         >>> # Shift down by a tritone (six half-steps)
         >>> y_tritone = librosa.effects.pitch_shift(y, sr, n_steps=-6)
         >>> # Shift up by 3 quarter-tones
-        >>> y_three_qt = librosa.effects.pitch_shift(y, sr, n_steps=3, bins_per_octave=24)
+        >>> y_three_qt = librosa.effects.pitch_shift(y, sr, n_steps=3,
+                                                     bins_per_octave=24)
 
 
     :parameters:
@@ -172,7 +179,8 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12):
       - y_shift : np.ndarray, shape=``y.shape``
         The pitch-shifted audio time-series
 
-    .. seealso:: ``librosa.core.phase_vocoder``, ``librosa.effects.time_stretch``
+    .. seealso:: ``librosa.core.phase_vocoder``,
+      ``librosa.effects.time_stretch``
     '''
 
     rate = 2.0 ** (-float(n_steps) / bins_per_octave)
