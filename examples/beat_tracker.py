@@ -7,12 +7,14 @@ Track beat events in an audio file
 Usage:   ./beat_tracker.py [-h] input_file.mp3    output_beats.csv
 '''
 
-import sys, librosa, argparse
+import argparse
+import sys
+import librosa
 
-# 1. load the wav file and resample to 22.050 KHz
+
 def beat_track(input_file, output_csv):
     '''Beat tracking function
-    
+
     :parameters:
       - input_file : str
           Path to input audio file (wav, mp3, m4a, flac, etc.)
@@ -22,21 +24,20 @@ def beat_track(input_file, output_csv):
     '''
 
     print 'Loading ', input_file
-    y, sr         = librosa.load(input_file, sr=22050)
+    y, sr = librosa.load(input_file, sr=22050)
 
     # Use a default hop size of 64 frames @ 22KHz ~= 11.6ms
-    HOP_LENGTH  = 64
+    hop_length = 64
 
     # This is the window length used by default in stft
     print 'Tracking beats'
-    tempo, beats    = librosa.beat.beat_track(y=y, sr=sr, hop_length=HOP_LENGTH)
+    tempo, beats = librosa.beat.beat_track(y=y, sr=sr, hop_length=hop_length)
 
     print 'Estimated tempo: %0.2f beats per minute' % tempo
 
-    # 3. save output
+    # save output
     # 'beats' will contain the frame numbers of beat events.
-
-    beat_times = librosa.frames_to_time(beats, sr=sr, hop_length=HOP_LENGTH)
+    beat_times = librosa.frames_to_time(beats, sr=sr, hop_length=hop_length)
 
     print 'Saving output to ', output_csv
     librosa.output.times_csv(output_csv, beat_times)
@@ -46,15 +47,15 @@ def beat_track(input_file, output_csv):
 def process_arguments():
     '''Argparse function to get the program parameters'''
 
-    parser = argparse.ArgumentParser(description='librosa beat-tracking example')
+    parser = argparse.ArgumentParser(description='Beat tracking example')
 
-    parser.add_argument(    'input_file',
-                            action      =   'store',
-                            help        =   'path to the input file (wav, mp3, etc)')
+    parser.add_argument('input_file',
+                        action='store',
+                        help='path to the input file (wav, mp3, etc)')
 
-    parser.add_argument(    'output_file',
-                            action      =   'store',
-                            help        =   'path to the output file (csv of beat times)')
+    parser.add_argument('output_file',
+                        action='store',
+                        help='path to the output file (csv of beat times)')
 
     return vars(parser.parse_args(sys.argv[1:]))
 
