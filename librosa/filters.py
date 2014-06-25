@@ -79,7 +79,7 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
     weights = np.zeros((n_mels, size))
 
     # Center freqs of each FFT bin
-    fftfreqs = np.arange(size, dtype=float) * sr / n_fft
+    fftfreqs = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
 
     # 'Center freqs' of mel bands - uniformly spaced between limits
     freqs = librosa.mel_frequencies(n_mels, fmin=fmin, fmax=fmax, htk=htk, extra=True)
