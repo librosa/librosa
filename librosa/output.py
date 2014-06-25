@@ -9,6 +9,7 @@ import scipy.io.wavfile
 
 import librosa.core
 
+
 def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
     r'''Save annotations in a 3-column format::
 
@@ -43,8 +44,8 @@ def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
           - ``intervals[i, 1]`` marks the endtime of interval ``i``
 
       - annotations : None or list-like
-          optional list of annotation strings. ``annotations[i]`` applies to the time
-          range ``intervals[i, 0]`` to ``intervals[i, 1]``
+          optional list of annotation strings. ``annotations[i]`` applies
+          to the time range ``intervals[i, 0]`` to ``intervals[i, 1]``
 
       - delimiter : str
           character to separate fields
@@ -54,9 +55,9 @@ def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
 
     :raises:
       - ValueError
-          if ``annotations`` is not ``None`` and length does not match ``intervals``
+          if ``annotations`` is not ``None`` and length does
+          not match ``intervals``
     '''
-
 
     if annotations is not None and len(annotations) != len(intervals):
         raise ValueError('len(annotations) != len(intervals)')
@@ -71,12 +72,14 @@ def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
             for t_int, lab in zip(intervals, annotations):
                 writer.writerow([fmt % t_int[0], fmt % t_int[1], lab])
 
+
 def frames_csv(path, frames, sr=22050, hop_length=512, **kwargs):
     """Convert frames to time and store the output in CSV format.
 
     :usage:
         >>> tempo, beats = librosa.beat.beat_track(y, sr=sr, hop_length=64)
-        >>> librosa.output.frames_csv('beat_times.csv', frames, sr=sr, hop_length=64)
+        >>> librosa.output.frames_csv('beat_times.csv', frames,
+                                      sr=sr, hop_length=64)
 
     :parameters:
       - path : string
@@ -99,18 +102,21 @@ def frames_csv(path, frames, sr=22050, hop_length=512, **kwargs):
 
     times_csv(path, times, **kwargs)
 
+
 def times_csv(path, times, annotations=None, delimiter=',', fmt='%0.3f'):
     r"""Save time steps as in CSV format.  This can be used to store the output
     of a beat-tracker or segmentation algorihtm.
 
-    If only ``times`` are provided, the file will contain each value of ``times`` on a row::
+    If only ``times`` are provided, the file will contain each value
+    of ``times`` on a row::
 
         times[0]\n
         times[1]\n
         times[2]\n
         ...
 
-    If ``annotations`` are also provided, the file will contain delimiter-separated values::
+    If ``annotations`` are also provided, the file will contain
+    delimiter-separated values::
 
         times[0],annotations[0]\n
         times[1],annotations[1]\n
@@ -141,7 +147,8 @@ def times_csv(path, times, annotations=None, delimiter=',', fmt='%0.3f'):
 
     :raises:
       - ValueError
-          if ``annotations`` is not ``None`` and length does not match ``times``
+          if ``annotations`` is not ``None`` and length does not
+          match ``times``
     """
 
     if annotations is not None and len(annotations) != len(times):
@@ -156,6 +163,7 @@ def times_csv(path, times, annotations=None, delimiter=',', fmt='%0.3f'):
         else:
             for t, lab in zip(times, annotations):
                 writer.writerow([(fmt % t), lab])
+
 
 def write_wav(path, y, sr, normalize=True):
     """Output a time series as a .wav file
@@ -186,7 +194,6 @@ def write_wav(path, y, sr, normalize=True):
         wav = y
 
     # Scale up to pcm range
-    #wav = (wav - wav.min()) * (1<<15) - (1<<15)
     wav = wav * 32767
 
     # Convert to 16bit int
@@ -194,4 +201,3 @@ def write_wav(path, y, sr, normalize=True):
 
     # Save
     scipy.io.wavfile.write(path, sr, wav)
-
