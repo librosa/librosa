@@ -21,13 +21,14 @@ try:
     import scikits.samplerate as samplerate     # pylint: disable=import-error
     _HAS_SAMPLERATE = True
 except ImportError:
-    warnings.warn("Importing scikits.samplerate failed. Falling back to scipy.signal.resample.")
+    warnings.warn('Could not import scikits.samplerate. ' +
+                  'Falling back to scipy.signal')
     _HAS_SAMPLERATE = False
 
 # Constrain STFT block sizes to 128 MB
 _MAX_MEM_BLOCK = 2**7 * 2**20
 
-#-- CORE ROUTINES --#
+# -- CORE ROUTINES --#
 def load(path, sr=22050, mono=True, offset=0.0, duration=None, dtype=np.float32):
     """Load an audio file as a floating point time series.
 
@@ -977,7 +978,7 @@ def fft_frequencies(sr=22050, n_fft=2048):
           Frequencies (0, sr/n_fft, 2*sr/n_fft, ..., sr/2)
     '''
 
-    return np.linspace(0, sr/2, 1 + n_fft/2, endpoint=True)
+    return np.linspace(0, sr/2.0, 1 + n_fft/2, endpoint=True)
 
 def cqt_frequencies(n_bins, fmin, bins_per_octave=12, tuning=0.0):
     """Compute the center frequencies of Constant-Q bins.
