@@ -1,14 +1,11 @@
 #!/usr/bin/env python
-'''
-CREATED:2013-12-08 14:28:34 by Brian McFee <brm2132@columbia.edu>
- 
+'''CREATED:2013-12-08 14:28:34 by Brian McFee <brm2132@columbia.edu>
+
 Demonstration of harmonic-percussive source separation
-
-Usage: ./hpss.py [-h] input_file.mp3  output_harmonic.wav  output_percussive.wav
-
 '''
 
-import sys, argparse
+import argparse
+import sys
 import librosa
 
 
@@ -40,30 +37,32 @@ def hpss_demo(input_file, output_harmonic, output_percussive):
     print 'Saving percussive audio to: ', output_percussive
     librosa.output.write_wav(output_percussive, y_percussive, sr)
 
+
 def process_arguments():
     '''Argparse function to get the program parameters'''
 
-    parser = argparse.ArgumentParser(description='librosa harmonic-percussive source separation example')
+    parser = argparse.ArgumentParser(description='harmonic-percussive example')
 
-    parser.add_argument(    'input_file',
-                            action      =   'store',
-                            help        =   'path to the input file (wav, mp3, etc)')
+    parser.add_argument('input_file',
+                        action='store',
+                        help='path to the input file (wav, mp3, etc)')
 
-    parser.add_argument(    'output_harmonic',
-                            action      =   'store',
-                            help        =   'path to the harmonic output (wav)')
+    parser.add_argument('output_harmonic',
+                        action='store',
+                        help='path to the harmonic output (wav)')
 
-    parser.add_argument(    'output_percussive',
-                            action      =   'store',
-                            help        =   'path to the percussive output (wav)')
+    parser.add_argument('output_percussive',
+                        action='store',
+                        help='path to the percussive output (wav)')
 
     return vars(parser.parse_args(sys.argv[1:]))
+
 
 if __name__ == '__main__':
     # get the parameters
     parameters = process_arguments()
 
     # Run the HPSS code
-    hpss_demo(  parameters['input_file'], 
-                parameters['output_harmonic'],
-                parameters['output_percussive'])
+    hpss_demo(parameters['input_file'],
+              parameters['output_harmonic'],
+              parameters['output_percussive'])

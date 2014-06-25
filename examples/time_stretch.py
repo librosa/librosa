@@ -1,14 +1,11 @@
 #!/usr/bin/env python
-'''
-CREATED:2013-12-08 14:28:34 by Brian McFee <brm2132@columbia.edu>
- 
-Demonstration of phase vocoder time stretching 
+'''CREATED:2013-12-08 14:28:34 by Brian McFee <brm2132@columbia.edu>
 
-Usage: ./time_stretch.py [-h] [-s STRETCH_FACTOR] input_file.mp3  output_harmonic.wav
-
+Demonstration of phase vocoder time stretching.
 '''
 
-import sys, argparse
+import argparse
+import sys
 import librosa
 
 
@@ -37,34 +34,35 @@ def stretch_demo(input_file, output_file, speed):
     print 'Saving stretched audio to: ', output_file
     librosa.output.write_wav(output_file, y_stretch, sr)
 
+
 def process_arguments():
     '''Argparse function to get the program parameters'''
 
-    parser = argparse.ArgumentParser(description='librosa phase vocoder time stretching')
+    parser = argparse.ArgumentParser(description='Time stretching example')
 
-    parser.add_argument(    'input_file',
-                            action      =   'store',
-                            help        =   'path to the input file (wav, mp3, etc)')
+    parser.add_argument('input_file',
+                        action='store',
+                        help='path to the input file (wav, mp3, etc)')
 
-    parser.add_argument(    'output_file',
-                            action      =   'store',
-                            help        =   'path to the stretched output (wav)')
+    parser.add_argument('output_file',
+                        action='store',
+                        help='path to the stretched output (wav)')
 
-    parser.add_argument(    '-s',
-                            '--speed',
-                            action      =   'store',
-                            type        =   float,
-                            default     =   2.0,
-                            required    =   False,
-                            help        =   'speed')
+    parser.add_argument('-s', '--speed',
+                        action='store',
+                        type=float,
+                        default=2.0,
+                        required=False,
+                        help='speed')
 
     return vars(parser.parse_args(sys.argv[1:]))
+
 
 if __name__ == '__main__':
     # get the parameters
     parameters = process_arguments()
 
     # Run the HPSS code
-    stretch_demo(   parameters['input_file'], 
-                    parameters['output_file'],
-                    parameters['speed'])
+    stretch_demo(parameters['input_file'],
+                 parameters['output_file'],
+                 parameters['speed'])
