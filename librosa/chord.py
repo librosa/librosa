@@ -8,18 +8,23 @@ import sklearn.hmm
 
 import numpy as np
 
+
 def beats_to_chords(beat_times, chord_times, chord_labels):
     r'''Propagate lab-style annotations to a list of beat timings.
 
     :parameters:
       - beat_times : ndarray, shape=(n, 2)
           The time range (in seconds) for beat intervals.
-          The ``i`` th beat spans time ``beat_times[i, 0]`` to ``beat_times[i, 1]``.
-          ``beat_times[0, 0]`` should be 0, ``beat_times[-1, 1]`` should be the track duration.
+          The ``i`` th beat spans time ``beat_times[i, 0]``
+          to ``beat_times[i, 1]``.
+          ``beat_times[0, 0]`` should be 0, ``beat_times[-1, 1]`` should
+          be the track duration.
 
       - chord_times : ndarray, shape=(m, 2)
-          The time range (in seconds) for the ``i`` th annotation is ``chord_times[i, 0]`` to ``chord_times[i, 1]``.
-          ``chord_times[0, 0]`` should be 0, ``chord_times[-1, 1]`` should be the track duration.
+          The time range (in seconds) for the ``i`` th annotation is
+          ``chord_times[i, 0]`` to ``chord_times[i, 1]``.
+          ``chord_times[0, 0]`` should be 0, ``chord_times[-1, 1]`` should
+          be the track duration.
 
       - chord_labels : list of str, shape=(m,)
           List of annotation strings associated with ``chord_times``
@@ -32,6 +37,7 @@ def beats_to_chords(beat_times, chord_times, chord_labels):
     interval_map = librosa.util.match_intervals(beat_times, chord_times)
 
     return [chord_labels[c] for c in interval_map]
+
 
 class ChordHMM(sklearn.hmm.GaussianHMM):
     '''Gaussian-HMM chord model'''
@@ -87,7 +93,8 @@ class ChordHMM(sklearn.hmm.GaussianHMM):
 
         :parameters:
           - obs : np.ndarray, shape=(n, d)
-              Observation sequence, e.g., transposed beat-synchronous chromagram.
+              Observation sequence, e.g., transposed beat-synchronous
+              chromagram.
 
         :returns:
           - labels : list of str, shape=(n,)
@@ -99,9 +106,13 @@ class ChordHMM(sklearn.hmm.GaussianHMM):
         '''Supervised training.
 
         - obs : list-like (n_songs) | obs[i] : ndarray (n_beats, n_features)
-            A collection of observation sequences, e.g., ``obs[i]`` is a chromagram
+            A collection of observation sequences, e.g., ``obs[i]`` is a
+            chromagram
 
-        - labels : list-like (n_songs) | labels[i] list-like, (n_beats) | labels[i][t] str
+        - labels : list-like (n_songs)
+            - ``labels[i]`` is list-like, (n_beats)
+            - ``labels[i][t]`` is a str
+
             list or array of labels for the observations
         '''
 
@@ -136,4 +147,3 @@ class ChordHMM(sklearn.hmm.GaussianHMM):
                                                    'stmc')
 
         self._do_mstep(stats, params='stmc')
-
