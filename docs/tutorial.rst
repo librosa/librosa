@@ -296,3 +296,6 @@ resulting in a feature matrix ``beat_features`` of dimension
 
 More examples
 -------------
+
+More example scripts are provided in the `examples
+<https://github.com/bmcfee/librosa/tree/master/examples>`_ folder.
