@@ -10,7 +10,7 @@ from numpy.lib.stride_tricks import as_strided
 from sklearn.base import BaseEstimator, TransformerMixin
 
 
-EXAMPLE_AUDIO = 'example_data/Kevin_McCleod_-_Vibe_Ace.mp3'
+EXAMPLE_AUDIO = 'example_data/Kevin_MacLeod_-_Vibe_Ace.mp3'
 
 
 def example_audio_file():
