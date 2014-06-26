@@ -433,13 +433,22 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
           If ``str``, then ``function`` is called with the input
           data as a keyword argument with key ``target``.
 
+      - iterate : bool
+          If ``True``, then ``function`` is applied iteratively to each
+          item of the input.
+
+          If ``False``, then ``function`` is applied to the entire data
+          stream simultaneously.  This is useful for things like aggregation
+          and stacking.
+
       - *kwargs*
           Parameters to be passed through to ``function``
     """
 
-    def __init__(self, function, target=None, **kwargs):
+    def __init__(self, function, target=None, iterate=True, **kwargs):
         self.function = function
         self.target = target
+        self.iterate = iterate
         self.kwargs = {}
 
         self.set_params(**kwargs)
@@ -498,9 +507,16 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
 
         if self.target is not None:
             # If we have a target, each element of X takes the keyword argument
-            return [self.function(**dict(self.kwargs.items()
-                                         + {self.target: item}.items()))
-                    for item in X]
+            if self.iterate:
+                return [self.function(**dict(self.kwargs.items()
+                                             + {self.target: item}.items()))
+                        for item in X]
+            else:
+                return self.function(**dict(self.kwargs.items()
+                                            + {self.target: X}.items()))
         else:
             # Each element of X takes first position in function()
-            return [self.function(item, **self.kwargs) for item in X]
+            if self.iterate:
+                return [self.function(item, **self.kwargs) for item in X]
+            else:
+                return self.function(X, **self.kwargs)
