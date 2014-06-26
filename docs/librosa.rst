@@ -1,23 +1,27 @@
 Package reference
 =================
 
+.. _beat:
+
 :mod:`Beat tracking`
 --------------------
-
 .. automodule:: librosa.beat
     :members:
     :undoc-members:
     :show-inheritance:
     :member-order: bysource
 
+.. _chord:
+
 :mod:`Chord models` 
 ---------------------
-
 .. automodule:: librosa.chord
     :members:
     :undoc-members:
     :show-inheritance:
     :member-order: bysource
+
+.. _core:
 
 :mod:`Core functionality` 
 -------------------------
@@ -28,6 +32,8 @@ Package reference
     :show-inheritance:
     :member-order: bysource
 
+.. _decompose:
+
 :mod:`Spectrogram decomposition` 
 --------------------------------
 
@@ -36,6 +42,8 @@ Package reference
     :undoc-members:
     :show-inheritance:
     :member-order: bysource
+
+.. _display:
 
 :mod:`Display`
 --------------
@@ -46,6 +54,8 @@ Package reference
     :show-inheritance:
     :member-order: bysource
 
+.. _effects:
+
 :mod:`Effects`
 --------------
 
@@ -54,6 +64,8 @@ Package reference
     :undoc-members:
     :show-inheritance:
     :member-order: bysource
+
+.. _feature:
 
 :mod:`Feature extraction` 
 -------------------------
@@ -64,6 +76,8 @@ Package reference
     :show-inheritance:
     :member-order: bysource
 
+.. _filters:
+
 :mod:`Filter banks`
 -------------------
 
@@ -72,6 +86,8 @@ Package reference
     :undoc-members:
     :show-inheritance:
     :member-order: bysource
+
+.. _onset:
 
 :mod:`Onset detection`
 ----------------------
@@ -82,6 +98,8 @@ Package reference
     :show-inheritance:
     :member-order: bysource
 
+.. _output:
+
 :mod:`Output` 
 -------------
 
@@ -91,6 +109,8 @@ Package reference
     :show-inheritance:
     :member-order: bysource
 
+.. _segment:
+
 :mod:`Segmentation` 
 -------------------
 
@@ -99,6 +119,8 @@ Package reference
     :undoc-members:
     :show-inheritance:
     :member-order: bysource
+
+.. _util:
 
 :mod:`Utilities`
 ----------------

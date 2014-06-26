@@ -1266,7 +1266,7 @@ def frames_to_time(frames, sr=22050, hop_length=512, n_fft=None):
       - n_fft : None or int > 0
           Optional: length of the FFT window.
           If given, time conversion will include an offset of ``n_fft / 2``
-          to counteract windowing effects in STFT.
+          to counteract windowing effects when using a non-centered STFT.
 
     :returns:
       - times : np.ndarray
