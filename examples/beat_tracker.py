@@ -26,7 +26,7 @@ def beat_track(input_file, output_csv):
     print 'Loading ', input_file
     y, sr = librosa.load(input_file, sr=22050)
 
-    # Use a default hop size of 64 frames @ 22KHz ~= 11.6ms
+    # Use a default hop size of 64 samples @ 22KHz ~= 3ms
     hop_length = 64
 
     # This is the window length used by default in stft

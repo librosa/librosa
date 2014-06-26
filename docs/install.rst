@@ -35,8 +35,8 @@ Windows
 -------
 
 
-Notes
------
+Additional notes
+----------------
 
 By default, *librosa* will use `scipy.signal` to resample audio signals, which can 
 be slow in practice.  It is highly recommended to install `librsamplerate
