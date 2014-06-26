@@ -66,6 +66,7 @@ The *librosa* package is structured as collection of submodules:
         Helper utilities (normalization, padding, centering, etc.)
 
 
+.. _quickstart:
 
 Quickstart
 ----------
@@ -75,6 +76,7 @@ Before diving into the details, we'll walk through a brief example program
     :linenos:
 
     # Beat tracking example
+    import librosa
 
     # 1. Get the file path to the included audio example
     filename = librosa.util.example_audio_file()
@@ -91,7 +93,7 @@ Before diving into the details, we'll walk through a brief example program
     print 'Estimated tempo: %0.2f beats per minute' % tempo
 
     # 4. Convert the frame indices of beat events into timestamps
-    beat_times = librosa.frames_to_time(beats, sr=sr, hop_length=hop_length)
+    beat_times = librosa.frames_to_time(beat_frames, sr=sr, hop_length=hop_length)
 
     print 'Saving output to beat_times.csv'
     librosa.output.times_csv('beat_times.csv', beat_times)
@@ -135,7 +137,7 @@ that the *k*\ th frame is centered around sample ``k * hop_length``.
 
 The next operation converts the frame numbers ``beat_frames`` into timings::
 
-    beat_times = librosa.frames_to_time(beats, sr=sr, hop_length=hop_length)
+    beat_times = librosa.frames_to_time(beat_frames, sr=sr, hop_length=hop_length)
 
 Now, ``beat_times`` will be an array of timestamps (in seconds) corresponding to
 detected beat events.
@@ -158,8 +160,138 @@ This is primarily useful for visualization purposes (e.g., using
 `Sonic Visualiser <http://www.sonicvisualiser.org>`_) or evaluation (e.g., using
 `mir_eval <https://github.com/craffel/mir_eval>`_).
 
+
 Advanced usage
 --------------
+
+Here we'll cover a more advanced example, integrating harmonic-percussive separation,
+multiple spectral features, and beat-synchronous feature aggregation.
+
+.. code-block:: python
+    :linenos:
+
+    # Feature extraction example
+
+    import numpy as np
+    import librosa
+
+    # Load the example clip
+    y, sr = librosa.load(librosa.util.example_audio_file())
+
+    # Separate harmonics and percussives into two waveforms
+    y_harmonic, y_percussive = librosa.effects.hpss(y)
+
+    # Set the hop length
+    hop_length = 64
+
+    # Beat track on the percussive signal
+    tempo, beat_frames = librosa.beat.beat_track(y=y_percussive, 
+                                                 sr=sr,
+                                                 hop_length=hop_length)
+
+    # Compute MFCC features from the raw signal
+    mfcc = librosa.feature.mfcc(y=y, sr=sr, hop_length=hop_length, n_mfcc=13)
+
+    # And the first-order differences (delta features)
+    mfcc_delta = librosa.feature.delta(mfcc)
+
+    # Stack and synchronize between beat events
+    # This time, we'll use the mean value (default) instead of median
+    beat_mfcc_delta = librosa.feature.sync(np.vstack([mfcc, mfcc_delta]),
+                                           beat_frames)
+
+    # Compute chroma features from the harmonic signal
+    chromagram = librosa.feature.chromagram(y=y_harmonic, 
+                                            sr=sr,
+                                            hop_length=hop_length)
+
+    # Aggregate chroma features between beat events
+    # We'll use the median value of each feature between beat frames
+    beat_chroma = librosa.feature.sync(chromagram, 
+                                       beat_frames,
+                                       aggregate=np.median)
+
+    # Finally, stack all beat-synchronous features together
+    beat_features = np.vstack([beat_chroma, beat_mfcc_delta])
+
+
+This example builds on tools we've already covered in the :ref:`quickstart example
+<quickstart>`, so here we'll focus just on the new parts.
+
+The first difference is the use of the :ref:`effects module <effects>` for time-series
+harmonic-percussive separation::
+
+    y_harmonic, y_percussive = librosa.effects.hpss(y)
+
+The result of this line is that the time series ``y`` has been separated into two time
+series, containing the harmonic (tonal) and percussive (transient) portions of the
+signal.  Each of ``y_harmonic`` and ``y_percussive`` have the same shape and duration 
+as ``y``.
+
+The motivation for this kind of operation is two-fold: first, percussive elements
+tend to be stronger indicators of rhythmic content, and can help provide more stable
+beat tracking results; second, percussive elements can pollute tonal feature
+representations (such as chroma) by contributing energy across all frequency bands, so
+we'd be better off without them.
+
+Next, we introduce the :ref:`feature module <feature>` and extract the Mel-frequency
+cepstral coefficients from the raw signal ``y``::
+
+    mfcc = librosa.feature.mfcc(y=y, sr=sr, hop_length=hop_length, n_mfcc=13)
+
+The output of this function is the matrix ``mfcc``, which is an *numpy.ndarray* of
+size ``(n_mfcc, T)`` (where ``T`` denotes the track duration in frames).  Note that we 
+use the same ``hop_length`` here as in the beat tracker, so the detected ``beat_frames`` 
+values correspond to columns of ``mfcc``.
+
+The first type of feature manipulation we introduce is ``delta``, which computes
+(smoothed) first-order differences among columns of its input::
+
+    mfcc_delta = librosa.feature.delta(mfcc)
+
+The resulting matrix ``mfcc_delta`` has the same shape as the input ``mfcc``.
+
+The second type of feature manipulation is ``sync``, which aggregates columns of its
+input between sample indices (e.g., beat frames)::
+
+    beat_mfcc_delta = librosa.feature.sync(np.vstack([mfcc, mfcc_delta]),
+                                           beat_frames)
+
+Here, we've vertically stacked the ``mfcc`` and ``mfcc_delta`` matrices together.  The
+result of this operation is a matrix ``beat_mfcc_delta`` with the same number of rows
+as its input, but the number of columns depends on ``beat_frames``.  Each column 
+``beat_mfcc_delta[:, k]`` will be the *average* of input columns between
+``beat_frames[k]`` and ``beat_frames[k+1]``.  (``beat_frames`` will be expanded to
+span the full range ``[0, T]`` so that all data is accounted for.)
+
+Next, we compute a chromagram using just the harmonic component::
+
+    chromagram = librosa.feature.chromagram(y=y_harmonic, 
+                                            sr=sr,
+                                            hop_length=hop_length)
+
+After this line, ``chromagram`` will be a *numpy.ndarray* of size ``(12, T)``, and 
+each row corresponds to a pitch class (e.g., *C*, *C#*, etc.).  Each column of 
+``chromagram`` is normalized by its peak value, though this behavior can be overridden 
+by setting the ``norm`` parameter.
+
+Once we have the chromagram and list of beat frames, we again synchronize the chroma 
+between beat events::
+
+    beat_chroma = librosa.feature.sync(chromagram, 
+                                       beat_frames,
+                                       aggregate=np.median)
+
+This time, we've replaced the default aggregate operation (*average*, as used above
+for MFCCs) with the *median*.  In general, any statistical summarization function can
+be supplied here, including `np.max()`, `np.min()`, `np.std()`, etc.
+
+Finally, the all features are vertically stacked again::
+
+    beat_features = np.vstack([beat_chroma, beat_mfcc_delta])
+
+resulting in a feature matrix ``beat_features`` of dimension 
+``(12 + 13 + 13, # beat intervals)``.
 
 
 More examples
