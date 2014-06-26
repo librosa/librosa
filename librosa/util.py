@@ -4,9 +4,31 @@
 import numpy as np
 import os
 import glob
+import pkg_resources
 
 from numpy.lib.stride_tricks import as_strided
 from sklearn.base import BaseEstimator, TransformerMixin
+
+
+EXAMPLE_AUDIO = 'example_data/Kevin_McCleod_-_Vibe_Ace.mp3'
+
+
+def example_audio_file():
+    '''Get the path to an included audio example file.
+
+    :usage:
+        >>> # Load the waveform from the example track
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+
+    :parameters:
+        - None
+
+    :returns:
+        - filename : str
+            Path to the audio example file included with librosa
+    '''
+
+    return pkg_resources.resource_filename(__name__, EXAMPLE_AUDIO)
 
 
 def frame(y, frame_length=2048, hop_length=512):
