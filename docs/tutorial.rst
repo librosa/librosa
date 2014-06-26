@@ -13,56 +13,56 @@ The *librosa* package is structured as collection of submodules:
 
   - librosa
 
-    - :ref:`beat`
+    - :ref:`librosa.beat <beat>`
         Functions for estimating tempo and detecting beat events.
 
-    - :ref:`chord`
+    - :ref:`librosa.chord <chord>`
         This submodule contains a generic class which implements supervised training
         of Gaussian-emission Hidden Markov Models (HMM) commonly used in chord
         recognition. 
 
-    - :ref:`core`
+    - :ref:`librosa.core <core>`
         Core functionality includes functions to load audio from disk, compute various
         spectrogram representations, and a variety of commonly used tools for
         music analysis.  For convenience, all functionality in this submodule is
         directly accessible from the top-level ``librosa.*`` namespace.
         
-    - :ref:`decompose`
+    - :ref:`librosa.decompose <decompose>`
         Functions for harmonic-percussive source separation (HPSS) and generic
         spectrogram decomposition using matrix decomposition methods implemented in
         *scikit-learn*.
 
-    - :ref:`display`
+    - :ref:`librosa.display <display>`
         Visualization and display routines using `matplotlib`.  
 
-    - :ref:`effects`
+    - :ref:`librosa.effects <effects>`
         Time-domain audio processing, such as pitch shifting and time stretching.
         This submodule also provides time-domain wrappers for the `decompose`
         submodule.
 
-    - :ref:`feature`
+    - :ref:`librosa.feature <feature>`
         Feature extraction and manipulation.  This includes low-level feature
         extraction, such as chromagrams, pseudo-constant-Q (log-frequency) transforms,
         Mel spectrogram, MFCC, and tuning estimation.  Also provided are feature
         manipulation methods, such as delta features, memory embedding, and
         event-synchronous feature alignment.
 
-    - :ref:`filters`
+    - :ref:`librosa.filters <filters>`
         Filter-bank generation (chroma, pseudo-CQT, CQT, etc.).  These are primarily
         internal functions used by other parts of *librosa*.
 
-    - :ref:`onset`
+    - :ref:`librosa.onset <onset>`
         Onset detection and onset strength computation.
 
-    - :ref:`output`
+    - :ref:`librosa.output <output>`
         Text- and wav-file output.
 
-    - :ref:`segment`
+    - :ref:`librosa.segment <segment>`
         Functions useful for structural segmentation, such as recurrence matrix
         construction, time-lag representation, and sequentially constrained
         clustering.
 
-    - :ref:`util`
+    - :ref:`librosa.util <util>`
         Helper utilities (normalization, padding, centering, etc.)
 
 
@@ -145,7 +145,7 @@ file::
 
     librosa.output.times_csv('beat_times.csv', beat_times)
 
-The contents of ``beat_times.csv`` will look something like this::
+The contents of ``beat_times.csv`` should look like this::
 
     0.067
     0.514
@@ -162,9 +162,5 @@ Advanced usage
 --------------
 
 
-SciKit-learn integration
-------------------------
-
-
-External references
--------------------
+More examples
+-------------
