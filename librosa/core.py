@@ -1450,17 +1450,12 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
       where ``previous_n`` is the last sample picked as a peak (greedily).
 
     .. note::
-        @inproceedings{bock2012evaluating,
-          title={Evaluating the Online Capabilities of
-          Onset Detection Methods},
-          author={B{\"o}ck, Sebastian and Krebs, Florian and Schedl, Markus},
-          booktitle={ISMIR},
-          pages={49--54},
-          year={2012}}
-
-    .. note::
       Implementation based on
       https://github.com/CPJKU/onset_detection/blob/master/onset_program.py
+
+      - Boeck, Sebastian, Florian Krebs, and Markus Schedl.
+        "Evaluating the Online Capabilities of Onset Detection Methods." ISMIR.
+        2012.
     '''
 
     # Get the maximum of the signal over a sliding window

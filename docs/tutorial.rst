@@ -108,8 +108,8 @@ The second step::
 
     y, sr = librosa.load(filename)
     
-loads and decodes the audio as a time series ``y``, represented as a one-dimensional
-NumPy floating point array.  The variable ``sr`` contains the *sampling rate* of
+loads and decodes the audio as a :term:`time series` ``y``, represented as a one-dimensional
+NumPy floating point array.  The variable ``sr`` contains the :term:`sampling rate` of
 ``y``, that is, the number of samples per second of audio.  By default, all audio is
 mixed to mono and resampled to 22050 Hz at load time.  This behavior can be overridden
 by supplying additional arguments to ``librosa.load()``.
@@ -118,7 +118,7 @@ The next line::
 
     hop_length = 64
 
-sets the *hop length* for the subsequent analysis.  This is number of samples to
+sets the :term:`hop length` for the subsequent analysis.  This is number of samples to
 advance between subsequent audio frames.  Here, we've set the hop length to 64
 samples, which at 22KHz, comes to ``64.0 / 22050 ~= 2.9ms``.  
 
@@ -129,9 +129,9 @@ Next, we run the beat tracker using the specified hop length::
 The output of the beat tracker is an estimate of the tempo (in beats per minute), 
 and an array of frame numbers corresponding to detected beat events.
 
-*Frames* here correspond to short windows of the signal (``y``), each separated by 
-``hop_length`` samples.  Since v0.3, *librosa* uses centered frames, so that the
-*k*\ th frame is centered around sample ``k * hop_length``.
+:term:`Frames <frame>` here correspond to short windows of the signal (``y``), each 
+separated by ``hop_length`` samples.  Since v0.3, *librosa* uses centered frames, so 
+that the *k*\ th frame is centered around sample ``k * hop_length``.
 
 The next operation converts the frame numbers ``beat_frames`` into timings::
 
