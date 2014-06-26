@@ -495,7 +495,7 @@ def magphase(D):
     return mag, phase
 
 
-def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=96,
+def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         bins_per_octave=12, tuning=None, resolution=2):
     '''Compute the constant-Q transform of an audio signal.
 
@@ -525,7 +525,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=96,
             ``2**(n_bins / bins_per_octave)``
 
       - fmin : float > 0
-          Minimum frequency. Defaults to C1 ~= 16.35 Hz
+          Minimum frequency. Defaults to C2 ~= 32.70 Hz
 
       - n_bins : int > 0
           Number of frequency bins, starting at `fmin`
@@ -554,7 +554,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=96,
 
     if fmin is None:
         # C1 by default
-        fmin = midi_to_hz(note_to_midi('C1'))
+        fmin = midi_to_hz(note_to_midi('C2'))
 
     if tuning is None:
         tuning = feature.estimate_tuning(y=y, sr=sr)
