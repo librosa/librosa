@@ -2,16 +2,15 @@ from setuptools import setup
 
 setup(
     name='librosa',
-    version='0.3.0-dev',
+    version='0.3.0',
     description='Python module for audio and music processing',
     author='Brian McFee',
     author_email='brm2132@columbia.edu',
     url='http://github.com/bmcfee/librosa',
     download_url='http://github.com/bmcfee/librosa/releases',
     packages=['librosa'],
-    long_description="""\
-        Python module for audio and music processing.
-    """,
+    package_data={'': ['example_data/*']},
+    long_description="""A python module for audio and music processing.""",
     classifiers=[
           "License :: OSI Approved :: GNU General Public License (GPL)",
           "Programming Language :: Python",
@@ -29,6 +28,6 @@ setup(
         'matplotlib',
     ],
     extras_require = {
-        'resample': 'scikits.samplerate >= 0.3'
+        'resample': 'scikits.samplerate>=0.3'
     }
 )
