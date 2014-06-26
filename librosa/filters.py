@@ -181,7 +181,7 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=2):
     return np.ascontiguousarray(wts[:, :(1 + n_fft/2)])
 
 
-def logfrequency(sr, n_fft, n_bins=96, bins_per_octave=12, tuning=0.0,
+def logfrequency(sr, n_fft, n_bins=84, bins_per_octave=12, tuning=0.0,
                  fmin=None, spread=0.125):
     '''Approximate a constant-Q filterbank for a fixed-window STFT.
 
@@ -208,7 +208,7 @@ def logfrequency(sr, n_fft, n_bins=96, bins_per_octave=12, tuning=0.0,
           FFT window size
 
       - n_bins : int > 0
-          Number of bins.  Defaults to 96 (8 octaves).
+          Number of bins.  Defaults to 84 (7 octaves).
 
       - bins_per_octave : int > 0
           Number of bins per octave. Defaults to 12 (semitones).
@@ -217,7 +217,7 @@ def logfrequency(sr, n_fft, n_bins=96, bins_per_octave=12, tuning=0.0,
           Tuning correction parameter, in fractions of a bin.
 
       - fmin : float > 0
-          Minimum frequency bin. Defaults to ``C1 ~= 16.35``
+          Minimum frequency bin. Defaults to ``C2 ~= 32.70``
 
       - spread : float > 0
           Spread of each filter, as a fraction of a bin.
@@ -228,7 +228,7 @@ def logfrequency(sr, n_fft, n_bins=96, bins_per_octave=12, tuning=0.0,
     '''
 
     if fmin is None:
-        fmin = librosa.midi_to_hz(librosa.note_to_midi('C1'))
+        fmin = librosa.midi_to_hz(librosa.note_to_midi('C2'))
 
     # Apply tuning correction
     correction = 2.0**(float(tuning) / bins_per_octave)
@@ -258,12 +258,12 @@ def logfrequency(sr, n_fft, n_bins=96, bins_per_octave=12, tuning=0.0,
     return basis
 
 
-def constant_q(sr, fmin=None, n_bins=96, bins_per_octave=12, tuning=0.0,
+def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
                window=None, resolution=2, pad=False):
     r'''Construct a constant-Q basis.
 
     :usage:
-        >>> # Get the CQT basis for C1 to C9, standard tuning
+        >>> # Get the CQT basis for C2 to C9, standard tuning
         >>> basis   = librosa.filters.constant_q(22050)
         >>> CQT     = librosa.cqt(y, sr, basis=basis)
 
@@ -278,10 +278,10 @@ def constant_q(sr, fmin=None, n_bins=96, bins_per_octave=12, tuning=0.0,
           Audio sampling rate
 
       - fmin : float > 0
-          Minimum frequency bin. Defaults to ``C1 ~= 16.35``
+          Minimum frequency bin. Defaults to ``C2 ~= 32.70``
 
       - n_bins : int > 0
-          Number of frequencies.  Defaults to 8 octaves (96 bins).
+          Number of frequencies.  Defaults to 7 octaves (84 bins).
 
       - bins_per_octave : int > 0
           Number of bins per octave
@@ -311,7 +311,7 @@ def constant_q(sr, fmin=None, n_bins=96, bins_per_octave=12, tuning=0.0,
     '''
 
     if fmin is None:
-        fmin = librosa.midi_to_hz(librosa.note_to_midi('C1'))
+        fmin = librosa.midi_to_hz(librosa.note_to_midi('C2'))
 
     if window is None:
         window = np.hamming
