@@ -2,7 +2,9 @@
 """Commonly used filter banks: DCT, Chroma, Mel, CQT"""
 
 import numpy as np
+import scipy.signal
 import librosa
+
 
 
 def dct(n_filters, n_input):
@@ -263,8 +265,8 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     r'''Construct a constant-Q basis.
 
     :usage:
-        >>> # Change the windowing function to Hanning instead of Hamming
-        >>> basis   = librosa.filters.constant_q(22050, window=np.hanning)
+        >>> # Change the windowing function to Hamming instead of Hann
+        >>> basis   = librosa.filters.constant_q(22050, window=np.hamming)
 
         >>> # Use a longer window for each filter
         >>> basis   = librosa.filters.constant_q(22050, resolution=3)
@@ -291,7 +293,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
       - window : function or ``None``
           Windowing function to apply to filters.
           If ``None``, no window is applied.
-          Default: np.hamming
+          Default: scipy.signal.hann
 
       - resolution : float > 0
           Resolution of filter windows. Larger values use longer windows.
@@ -317,7 +319,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
         fmin = librosa.midi_to_hz(librosa.note_to_midi('C2'))
 
     if window is None:
-        window = np.hamming
+        window = scipy.signal.hann
 
     correction = 2.0**(float(tuning) / bins_per_octave)
 
