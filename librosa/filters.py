@@ -298,7 +298,8 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 
       - pad : boolean
           Pad all filters to have a constant width (equal to the longest filter).
-          By default, padding is done by reflection.
+          By default, padding is done with zeros, but this can be overridden
+          by setting the ``mode=`` field in *kwargs*.
 
       - *kwargs*
           Additional keyword arguments to ``np.pad()`` when ``pad==True``.
@@ -347,8 +348,6 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
         max_len = max(map(len, filters))
 
         # Use reflection padding, unless otherwise specified
-        kwargs.setdefault('mode', 'reflect')
-
         for i in range(len(filters)):
             filters[i] = librosa.util.pad_center(filters[i], max_len, **kwargs)
 
