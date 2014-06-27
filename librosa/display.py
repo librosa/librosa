@@ -213,8 +213,8 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
             and sampling rate.
           - 'log': the image is displayed on a vertical log scale.
           - 'mel': frequencies are determined by the mel scale.
-          - 'cqt_hz': frequencies are determined by the fmin and fmax values.
-          - 'cqt_note': pitches are determined by the fmin and fmax values.
+          - 'cqt_hz': frequencies are determined by the CQT scale.
+          - 'cqt_note': pitches are determined by the CQT scale.
           - 'chroma': pitches are determined by the chroma filters.
 
       - n_xticks : int > 0
@@ -243,8 +243,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
 
     :raises:
       - ValueError
-          If y_axis is 'cqt_hz' or 'cqt_note' and ``fmin`` and
-          ``fmax`` are not supplied.
+          If y_axis is 'cqt_hz' or 'cqt_note' and ``fmin`` is not supplied.
     '''
 
     kwargs.setdefault('aspect', 'auto')
@@ -326,7 +325,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
 
     elif y_axis is 'cqt_note':
         if fmin is None:
-            raise ValueError('CQT display requires fmin and fmax')
+            raise ValueError('fmin must be supplied for CQT display')
 
         positions = np.arange(0, data.shape[0],
                               np.ceil(data.shape[0] / float(n_yticks)),
