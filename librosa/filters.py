@@ -259,19 +259,18 @@ def logfrequency(sr, n_fft, n_bins=84, bins_per_octave=12, tuning=0.0,
 
 
 def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
-               window=None, resolution=2, pad=False):
+               window=None, resolution=2, pad=False, **kwargs):
     r'''Construct a constant-Q basis.
 
     :usage:
-        >>> # Get the CQT basis for C2 to C9, standard tuning
-        >>> basis   = librosa.filters.constant_q(22050)
-        >>> CQT     = librosa.cqt(y, sr, basis=basis)
-
         >>> # Change the windowing function to Hanning instead of Hamming
         >>> basis   = librosa.filters.constant_q(22050, window=np.hanning)
 
         >>> # Use a longer window for each filter
-        >>> basis   = librosa.filters.constant_q(22050, resolution=2)
+        >>> basis   = librosa.filters.constant_q(22050, resolution=3)
+
+        >>> # Pad the basis to fixed length
+        >>> basis   = librosa.filters.constant_q(22050, pad=True)
 
     :parameters:
       - sr : int > 0
@@ -298,8 +297,11 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
           Resolution of filter windows. Larger values use longer windows.
 
       - pad : boolean
-          Zero-pad all filters to have a constant width (equal to the
-          longest filter).
+          Pad all filters to have a constant width (equal to the longest filter).
+          By default, padding is done by reflection.
+
+      - *kwargs*
+          Additional keyword arguments to ``np.pad()`` when ``pad==True``.
 
       .. note::
         - McVicar, Matthew. "A machine learning approach to automatic chord
@@ -344,8 +346,11 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     if pad:
         max_len = max(map(len, filters))
 
+        # Use reflection padding, unless otherwise specified
+        kwargs.setdefault('mode', 'reflect')
+
         for i in range(len(filters)):
-            filters[i] = librosa.util.pad_center(filters[i], max_len)
+            filters[i] = librosa.util.pad_center(filters[i], max_len, **kwargs)
 
     return filters
 
