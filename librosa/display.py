@@ -155,7 +155,8 @@ def cmap(data):
 
 
 def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
-             n_xticks=5, n_yticks=5, fmin=None, fmax=None, **kwargs):
+             n_xticks=5, n_yticks=5, fmin=None, fmax=None, bins_per_octave=12,
+             **kwargs):
     '''Display a spectrogram/chromagram/cqt/etc.
 
     Functions as a drop-in replacement for ``matplotlib.pyplot.imshow``,
@@ -170,9 +171,9 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
         >>> librosa.display.specshow(D, sr=sr, y_axis='log')
 
         >>> # Visualize a CQT with note markers
-        >>> CQT = librosa.cqt(y, sr, fmin=55, fmax=880)
+        >>> CQT = librosa.cqt(y, sr=sr)
         >>> librosa.display.specshow(CQT, sr=sr, y_axis='cqt_note',
-                                     fmin=55, fmax=880)
+                                     fmin=librosa.midi_to_hz(24))
 
         >>> # Draw time markers automatically
         >>> librosa.display.specshow(D, sr=sr, hop_length=hop_length,
@@ -223,9 +224,14 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
           If y_axis is drawn, the number of ticks to show
 
       - fmin : float > 0 or None
+          Frequency of the lowest spectrogram bin.  Used for Mel and CQT
+          scales.
 
       - fmax : float > 0 or None
-          Used for setting the Mel or constantq frequency scales
+          Used for setting the Mel frequency scales
+
+      - bins_per_octave : int > 0
+          Number of bins per octave.  Used for CQT frequency scale.
 
       - *kwargs*
           Additional keyword arguments passed through to
@@ -305,34 +311,30 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
         plt.ylabel('Hz')
 
     elif y_axis is 'cqt_hz':
-        if fmax is None and fmin is None:
-            raise ValueError('fmin and fmax must be supplied for CQT display')
+        if fmin is None:
+            raise ValueError('fmin must be supplied for CQT display')
 
         positions = np.arange(0, data.shape[0],
                               np.ceil(data.shape[0] / float(n_yticks)),
                               dtype=int)
 
-        bins_per_oct = data.shape[0] / np.ceil(np.log2(fmax) - np.log2(fmin))
-
         # Get frequencies
         values = librosa.core.cqt_frequencies(data.shape[0], fmin=fmin,
-                                              bins_per_octave=bins_per_oct)
+                                              bins_per_octave=bins_per_octave)
         plt.yticks(positions, values[positions].astype(int))
         plt.ylabel('Hz')
 
     elif y_axis is 'cqt_note':
-        if fmax is None and fmin is None:
+        if fmin is None:
             raise ValueError('CQT display requires fmin and fmax')
 
         positions = np.arange(0, data.shape[0],
                               np.ceil(data.shape[0] / float(n_yticks)),
                               dtype=int)
 
-        bins_per_oct = data.shape[0] / np.ceil(np.log2(fmax) - np.log2(fmin))
-
         # Get frequencies
         values = librosa.core.cqt_frequencies(data.shape[0], fmin=fmin,
-                                              bins_per_octave=bins_per_oct)
+                                              bins_per_octave=bins_per_octave)
         values = values[positions]
         values = librosa.core.midi_to_note(librosa.core.hz_to_midi(values))
 
