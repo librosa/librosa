@@ -496,7 +496,7 @@ def magphase(D):
 
 
 def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
-        bins_per_octave=12, tuning=None, resolution=2):
+        bins_per_octave=12, tuning=None, resolution=2, aggregate=None):
     '''Compute the constant-Q transform of an audio signal.
 
     :usage:
@@ -540,9 +540,13 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
       - resolution : float > 0
           Filter resolution factor. Larger values use longer windows.
 
+      - aggregate : None or function
+          Aggregation function for time-oversampling energy aggregation.
+          By default, ``np.mean``.  See ``librosa.feature.sync()`` for details.
+
     :returns:
-      - CQT : np.ndarray, dtype=np.complex
-          Constant-Q for each frequency at each time.
+      - CQT : np.ndarray, dtype=np.float
+          Constant-Q energy for each frequency at each time.
 
     .. note:: This implementation is based on the recursive sub-sampling method
         described by Schoerkhuber and Klapuri, 2010.
@@ -553,7 +557,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     '''
 
     if fmin is None:
-        # C1 by default
+        # C2 by default
         fmin = midi_to_hz(note_to_midi('C2'))
 
     if tuning is None:
@@ -584,20 +588,53 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     # Make sure our hop is long enough to support the bottom octave
     assert hop_length >= 2**n_octaves
 
+    def __variable_hop_response(my_y, target_hop):
+        '''Compute the filter response with a target STFT hop.
+        If the hop is too large (more than half the frame length),
+        then over-sample at a smaller hop, and aggregate the results
+        to the desired resolution.
+        '''
+
+        # If target_hop <= n_fft / 2:
+        #   my_hop = target_hop
+        # else:
+        #   my_hop = target_hop * 2**(-k)
+
+        zoom_factor = int(np.maximum(0,
+                                     1 + np.ceil(np.log2(target_hop)
+                                                 - np.log2(n_fft))))
+
+        my_hop = int(target_hop / (2**(zoom_factor)))
+
+        assert my_hop > 0
+
+        # Compute the STFT matrix
+        D = stft(my_y, n_fft=n_fft, hop_length=my_hop)
+
+        D = np.vstack([D.conj(), D[-2:0:-1]])
+
+        # And filter response energy
+        my_cqt = np.abs(fft_basis.dot(D))
+
+        if zoom_factor > 0:
+            # We need to aggregate.  Generate the boundary frames
+            bounds = range(0, my_cqt.shape[1], 2**(zoom_factor))
+            my_cqt = feature.sync(my_cqt, bounds,
+                                  aggregate=aggregate)
+
+        return my_cqt
+
     cqt_resp = []
 
     my_y, my_sr, my_hop = y, sr, hop_length
 
     # Iterate down the octaves
     for _ in range(n_octaves):
-        # STFT the signal
-        D = stft(my_y, n_fft=n_fft, hop_length=my_hop)
-
-        # Rebuild the full spectrum
-        D = np.vstack([D.conj(), D[-2:0:-1]])
+        # Compute a dynamic hop based on n_fft
+        my_cqt = __variable_hop_response(my_y, my_hop)
 
         # Convolve
-        cqt_resp.append(fft_basis.dot(D))
+        cqt_resp.append(my_cqt)
 
         # Resample
         my_y = resample(my_y, my_sr, my_sr/2.0)
