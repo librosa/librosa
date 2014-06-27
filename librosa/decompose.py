@@ -153,9 +153,12 @@ def hpss(S, kernel_size=31, power=2.0, mask=False):
         win_harm = kernel_size[0]
         win_perc = kernel_size[1]
 
-    # Compute median filters
-    harm = scipy.signal.medfilt2d(S, [1, win_harm])
-    perc = scipy.signal.medfilt2d(S, [win_perc, 1])
+    # Compute median filters. Pre-allocation here preserves memory layout.
+    harm = np.empty_like(S)
+    harm[:] = scipy.signal.medfilt(S, kernel_size=(1, win_harm))
+
+    perc = np.empty_like(S)
+    perc[:] = scipy.signal.medfilt(S, kernel_size=(win_perc, 1))
 
     if mask or power == 0:
         mask_harm = (harm > perc).astype(float)
@@ -179,4 +182,4 @@ def hpss(S, kernel_size=31, power=2.0, mask=False):
         mask_harm = harm / (harm + perc)
         mask_perc = perc / (harm + perc)
 
-    return (mask_harm * S * phase, mask_perc * S * phase)
+    return ((S * mask_harm) * phase, (S * mask_perc) * phase)
