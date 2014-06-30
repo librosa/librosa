@@ -14,16 +14,18 @@
 }
 
 
-body {
+  
+  body {
+  
+    padding-top: 60px;
+  
+  }
+  .page-top {
+  
+    top: 60px;
+  
+  }
 
-  padding-top: 50px;
-
-}
-.page-top {
-
-  top: 50px;
-
-}
 
 .navbar-inner {
   padding-left:  12px !important;
@@ -46,6 +48,23 @@ table {
 
 div.highlight {
   background: none;
+}
+
+a.footnote-reference {
+  vertical-align: super;
+  font-size: 75%;
+}
+
+table.footnote td.label {
+  font-size: 100%;
+  display: block;
+  line-height: normal;
+  background: inherit;
+}
+
+table.footnote {
+  width: auto;
+  margin-bottom: 0px;
 }
 
 table.field-list {

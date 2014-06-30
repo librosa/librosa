@@ -1,12 +1,3 @@
-
-
-  
-  
- 
-  
- 
-
-
 <!DOCTYPE html>
 
 
@@ -14,17 +5,17 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Project Modules &mdash; librosa 0.2.1 documentation</title>
+    <title>Project Modules &mdash; librosa 0.3.0 documentation</title>
     
     <link rel="stylesheet" href="_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootswatch/3.0.0/flatly/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="_static/bootswatch-3.1.0/yeti/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="_static/bootstrap-sphinx.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '',
-        VERSION:     '0.2.1',
+        URL_ROOT:    './',
+        VERSION:     '0.3.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -33,12 +24,12 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/js/jquery-1.9.1.min.js"></script>
+    <script type="text/javascript" src="_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="_static/bootstrap-3.0.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="_static/bootstrap-3.1.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="librosa 0.2.1 documentation" href="#" />
-    <link rel="next" title="librosa Package" href="librosa.html" />
+    <link rel="top" title="librosa 0.3.0 documentation" href="#" />
+    <link rel="next" title="Installation instructions" href="install.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
@@ -56,8 +47,9 @@
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
         </button>
-        <a class="navbar-brand" href="#">LibROSA</a>
-        <span class="navbar-text navbar-version pull-left"><b>0.2</b></span>
+        <a class="navbar-brand" href="#">
+          LibROSA</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.3</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -66,22 +58,32 @@
             
             
               <li class="dropdown globaltoc-container">
-  <a href="#"
-     class="dropdown-toggle"
-     data-toggle="dropdown">Site <b class="caret"></b></a>
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Site <b class="caret"></b></a>
   <ul class="dropdown-menu globaltoc"
-    ><ul>
-<li class="toctree-l1"><a class="reference internal" href="librosa.html">librosa Package</a></li>
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="librosa.html">Package reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">Glossary</a></li>
 </ul>
 </ul>
 </li>
               
                 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown">Page <b class="caret"></b></a>
-  <ul class="dropdown-menu localtoc"><ul>
-<li><a class="reference internal" href="#">Project Modules</a><ul>
-</ul>
-</li>
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">Project Modules</a></li>
 </ul>
 </ul>
 </li>
@@ -89,8 +91,12 @@
             
             
               
-  <li><a href="librosa.html"
-         title="Next Chapter: librosa Package">librosa Package &raquo;</a></li>
+                
+  <li>
+    <a href="install.html" title="Next Chapter: Installation instructions"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm">Installation ins... &raquo;</span>
+    </a>
+  </li>
+              
             
             
             
@@ -119,19 +125,33 @@
 <h1>Project Modules<a class="headerlink" href="#project-modules" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="librosa.html">librosa Package</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation instructions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="install.html#additional-notes">Additional notes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#quickstart">Quickstart</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#advanced-usage">Advanced usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#more-examples">More examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="librosa.html">Package reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="librosa.html#module-librosa.beat"><tt class="docutils literal"><span class="pre">Beat</span> <span class="pre">tracking</span></tt></a></li>
-<li class="toctree-l2"><a class="reference internal" href="librosa.html#module-librosa.core"><tt class="docutils literal"><span class="pre">Core</span> <span class="pre">utilities</span></tt></a></li>
+<li class="toctree-l2"><a class="reference internal" href="librosa.html#module-librosa.chord"><tt class="docutils literal"><span class="pre">Chord</span> <span class="pre">models</span></tt></a></li>
+<li class="toctree-l2"><a class="reference internal" href="librosa.html#module-librosa.core"><tt class="docutils literal"><span class="pre">Core</span> <span class="pre">functionality</span></tt></a></li>
 <li class="toctree-l2"><a class="reference internal" href="librosa.html#module-librosa.decompose"><tt class="docutils literal"><span class="pre">Spectrogram</span> <span class="pre">decomposition</span></tt></a></li>
-<li class="toctree-l2"><a class="reference internal" href="librosa.html#module-librosa.display"><tt class="docutils literal"><span class="pre">Display</span></tt></a></li>
+<li class="toctree-l2"><a class="reference internal" href="librosa.html#display"><tt class="docutils literal"><span class="pre">Display</span></tt></a></li>
+<li class="toctree-l2"><a class="reference internal" href="librosa.html#effects"><tt class="docutils literal"><span class="pre">Effects</span></tt></a></li>
 <li class="toctree-l2"><a class="reference internal" href="librosa.html#module-librosa.feature"><tt class="docutils literal"><span class="pre">Feature</span> <span class="pre">extraction</span></tt></a></li>
 <li class="toctree-l2"><a class="reference internal" href="librosa.html#module-librosa.filters"><tt class="docutils literal"><span class="pre">Filter</span> <span class="pre">banks</span></tt></a></li>
 <li class="toctree-l2"><a class="reference internal" href="librosa.html#module-librosa.onset"><tt class="docutils literal"><span class="pre">Onset</span> <span class="pre">detection</span></tt></a></li>
-<li class="toctree-l2"><a class="reference internal" href="librosa.html#module-librosa.output"><tt class="docutils literal"><span class="pre">Output</span></tt></a></li>
+<li class="toctree-l2"><a class="reference internal" href="librosa.html#output"><tt class="docutils literal"><span class="pre">Output</span></tt></a></li>
 <li class="toctree-l2"><a class="reference internal" href="librosa.html#module-librosa.segment"><tt class="docutils literal"><span class="pre">Segmentation</span></tt></a></li>
 <li class="toctree-l2"><a class="reference internal" href="librosa.html#module-librosa.util"><tt class="docutils literal"><span class="pre">Utilities</span></tt></a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">Glossary</a></li>
 </ul>
 </div>
 <ul class="simple">
@@ -152,7 +172,7 @@
     </p>
     <p>
         &copy; Copyright 2014, Dawen Liang, Brian McFee, Matt McVicar, Colin Raffel.<br/>
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.2.2.<br/>
     </p>
   </div>
 </footer>
