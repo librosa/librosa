@@ -1,6 +1,49 @@
 Changes
 =======
 
+##v0.3.0
+
+Bug fixes
+
+    - Fixed numpy array indices to force integer values
+    - ``librosa.util.frame`` now warns if the input data is non-contiguous
+    - Fixed a formatting error in ``librosa.display.time_ticks()``
+    - Added a warning if ``scikits.samplerate`` is not detected
+
+Features
+
+    - New module ``librosa.chord`` for training chord recognition models
+    - Parabolic interpolation piptracking ``librosa.feature.piptrack()``
+    - ``librosa.localmax()`` now supports multi-dimensional slicing
+    - New example scripts
+    - Improved documentation
+    - Added the ``librosa.util.FeatureExtractor`` class, which allows librosa functions
+      to act as feature extraction stages in `sklearn`
+    - New module ``librosa.effects`` for time-domain audio processing
+    - Added demo notebooks for the ``librosa.effects`` and ``librosa.util.FeatureExtractor``
+    - Added a full-track audio example, ``librosa.util.example_audio_file()``
+    - Added peak-frequency sorting of basis elements in ``librosa.decompose.decompose()``
+
+Other changes
+
+    - Spectrogram frames are now centered, rather than left-aligned.  This removes the
+      need for window correction in ``librosa.frames_to_time()``
+    - Accelerated constant-Q transform ``librosa.cqt()``
+    - PEP8 compliance
+    - Removed normalization from ``librosa.feature.logfsgram()``
+    - Efficiency improvements by ensuring memory contiguity 
+    - ``librosa.logamplitude()`` now supports functional reference power, in addition
+      to scalar values
+    - Improved ``librosa.feature.delta()``
+    - Additional padding options to ``librosa.feature.stack_memory()``
+    - ``librosa.cqt`` and ``librosa.feature.logfsgram`` now use the same parameter
+      formats ``(fmin, n_bins, bins_per_octave)``.
+    - Updated demo notebook(s) to IPython 2.0
+    - Moved ``perceptual_weighting()`` from ``librosa.feature`` into ``librosa.core``
+    - Moved ``stack_memory()`` from ``librosa.segment`` into ``librosa.feature``
+    - Standardized ``librosa.output.annotation`` input format to match ``mir_eval``
+    - Standardized variable names (e.g., ``onset_envelope``).
+
 ##v0.2.1
 
 Bug fixes
