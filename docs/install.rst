@@ -1,10 +1,6 @@
 Installation instructions
 =========================
 
-
-Linux/unix
-----------
-
 The simplest way to install *librosa* is through the Python Package Index (PyPI).  This
 will ensure that all required dependencies are fulfilled.  This can be achieved by
 executing the following command::
@@ -24,16 +20,6 @@ If you've downloaded the archive manually from the `releases
     tar xzf librosa-0.3.tar.gz
     cd librosa-0.3/
     python setup.py install
-
-
-
-Mac OSX
--------
-
-
-Windows
--------
-
 
 Additional notes
 ----------------
