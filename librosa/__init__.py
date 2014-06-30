@@ -4,9 +4,11 @@
 
 # And all the librosa sub-modules
 from . import core
+from . import chord
 from . import beat
 from . import decompose
 from . import display
+from . import effects
 from . import feature
 from . import filters
 from . import onset
@@ -17,4 +19,4 @@ from . import util
 # Exporting all core functions is okay here: suppress the import warning
 from librosa.core import *  # pylint: disable=wildcard-import
 
-__version__ = '0.2.2-dev'
+__version__ = '0.3.0'
