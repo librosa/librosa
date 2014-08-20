@@ -22,7 +22,7 @@ setup(
     license='GPL',
     install_requires=[
         'audioread',
-        'numpy >= 1.7.0',
+        'numpy >= 1.8.0',
         'scipy',
         'scikit-learn',
         'matplotlib',
