@@ -141,7 +141,7 @@ def hpss(S, kernel_size=31, power=2.0, mask=False):
 
     """
 
-    if np.iscomplex(S).any():
+    if np.iscomplexobj(S):
         S, phase = librosa.core.magphase(S)
     else:
         phase = 1
