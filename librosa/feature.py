@@ -207,7 +207,10 @@ def estimate_tuning(resolution=0.01, bins_per_octave=12, **kwargs):
     # Only count magnitude where frequency is > 0
     pitch_mask = pitch > 0
 
-    threshold = np.median(mag[pitch_mask])
+    if pitch_mask.any():
+        threshold = np.median(mag[pitch_mask])
+    else:
+        threshold = 0.0
 
     return librosa.feature.pitch_tuning(pitch[(mag > threshold) & pitch_mask],
                                         resolution=resolution,
