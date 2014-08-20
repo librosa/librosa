@@ -496,7 +496,8 @@ def magphase(D):
 
 
 def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
-        bins_per_octave=12, tuning=None, resolution=2, aggregate=None):
+        bins_per_octave=12, tuning=None, resolution=2, res_type='sinc_best',
+        aggregate=None):
     '''Compute the constant-Q transform of an audio signal.
 
     :usage:
@@ -539,6 +540,9 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
       - resolution : float > 0
           Filter resolution factor. Larger values use longer windows.
+
+      - res_type : str
+          Resampling type, see ``librosa.core.resample()`` for details.
 
       - aggregate : None or function
           Aggregation function for time-oversampling energy aggregation.
@@ -637,7 +641,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         cqt_resp.append(my_cqt)
 
         # Resample
-        my_y = resample(my_y, my_sr, my_sr/2.0)
+        my_y = resample(my_y, my_sr, my_sr/2.0, res_type=res_type)
         my_sr = my_sr / 2.0
         my_hop = int(my_hop / 2.0)
 
