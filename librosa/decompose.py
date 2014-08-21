@@ -166,12 +166,12 @@ def hpss(S, kernel_size=31, power=2.0, mask=False):
         if mask:
             return mask_harm, mask_perc
     else:
-        zero_perc = (perc == 0)
         perc = perc ** power
+        zero_perc = (perc == 0)
         perc[zero_perc] = 0.0
 
-        zero_harm = (harm == 0)
         harm = harm ** power
+        zero_harm = (harm == 0)
         harm[zero_harm] = 0.0
 
         # Find points where both are zero, equalize
