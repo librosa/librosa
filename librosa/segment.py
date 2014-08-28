@@ -162,7 +162,7 @@ def structure_feature(rec, pad=True, inverse=False):
     return np.ascontiguousarray(struct.T).T
 
 
-def agglomerative(data, k):
+def agglomerative(data, k, clusterer=None):
     """Bottom-up temporal segmentation.
 
     Use a temporally-constrained agglomerative clustering routine to partition
@@ -184,24 +184,30 @@ def agglomerative(data, k):
       - k        : int > 0
           number of segments to produce
 
+      - clusterer : sklearn.cluster.AgglomerativeClustering or ``None``
+          An optional agglomerativeclustering object.  
+          If ``None``, a constrained Ward object is instantiated.
+
     :returns:
       - boundaries : np.ndarray, shape=(k,)
           left-boundaries (frame numbers) of detected segments
 
     """
 
-    # Connect the temporal connectivity graph
-    grid = sklearn.feature_extraction.image.grid_to_graph(n_x=data.shape[1],
-                                                          n_y=1, n_z=1)
+    if clusterer is None:
+        # Connect the temporal connectivity graph
+        grid = sklearn.feature_extraction.image.grid_to_graph(n_x=data.shape[1],
+                                                            n_y=1, n_z=1)
 
-    # Instantiate the clustering object
-    ward = sklearn.cluster.Ward(n_clusters=k, connectivity=grid)
+        # Instantiate the clustering object
+        clusterer = sklearn.cluster.AgglomerativeClustering(n_clusters=k, 
+                                                            connectivity=grid)
 
     # Fit the model
-    ward.fit(data.T)
+    clusterer.fit(data.T)
 
     # Find the change points from the labels
     boundaries = [0]
     boundaries.extend(
-        list(1 + np.nonzero(np.diff(ward.labels_))[0].astype(int)))
+        list(1 + np.nonzero(np.diff(clusterer.labels_))[0].astype(int)))
     return boundaries
