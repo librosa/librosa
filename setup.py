@@ -24,7 +24,7 @@ setup(
         'audioread',
         'numpy >= 1.8.0',
         'scipy',
-        'scikit-learn',
+        'scikit-learn >= 0.14.0',
         'matplotlib',
     ],
     extras_require = {
