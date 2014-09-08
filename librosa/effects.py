@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """Effects and filters for audio buffer data"""
 
 import librosa.core

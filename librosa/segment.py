@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """Temporal segmentation utilities"""
 
 import numpy as np
