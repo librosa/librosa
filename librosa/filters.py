@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """Commonly used filter banks: DCT, Chroma, Mel, CQT"""
 
 import numpy as np

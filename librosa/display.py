@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """Display module for interacting with matplotlib"""
 
 import numpy as np

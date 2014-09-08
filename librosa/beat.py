@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """Beat tracking and tempo estimation"""
 
 import numpy as np
