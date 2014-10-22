@@ -198,7 +198,7 @@ def agglomerative(data, k, clusterer=None):
     if clusterer is None:
         # Connect the temporal connectivity graph
         grid = sklearn.feature_extraction.image.grid_to_graph(n_x=data.shape[1],
-                                                            n_y=1, n_z=1)
+                                                              n_y=1, n_z=1)
 
         # Instantiate the clustering object
         clusterer = sklearn.cluster.AgglomerativeClustering(n_clusters=k, 
