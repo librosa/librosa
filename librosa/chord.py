@@ -81,6 +81,8 @@ class ChordHMM(sklearn.hmm.GaussianHMM):
                                          covars_weight=covars_weight,
                                          random_state=random_state)
 
+        self.n_features = None
+
         # Build the chord mappings
         self.chord_to_id_ = {}
         self.id_to_chord_ = []
