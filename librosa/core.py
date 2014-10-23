@@ -133,7 +133,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
     return (y, sr)
 
 
-def resample(y, orig_sr, target_sr, res_type='sinc_fastest'):
+def resample(y, orig_sr, target_sr, res_type='sinc_fastest', fix=True, **kwargs):
     """Resample a time series from orig_sr to target_sr
 
     :usage:
@@ -154,6 +154,14 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest'):
       - res_type    : str
           resample type (see note)
 
+      - fix         : bool
+          adjust the length of the resampled signal to be of size exactly
+          ``ceil(target_sr * len(y) / orig_sr)``
+
+      - *kwargs*
+          If ``fix==True``, additional keyword arguments to pass to 
+          ``librosa.util.fix_length()``.
+
     :returns:
       - y_hat       : np.ndarray
           ``y`` resampled from ``orig_sr`` to ``target_sr``
@@ -167,13 +175,17 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest'):
     if orig_sr == target_sr:
         return y
 
+    n_samples = int(np.ceil(y.shape[-1] * float(target_sr) / orig_sr))
+
     if _HAS_SAMPLERATE:
         y_hat = samplerate.resample(y.T,
                                     float(target_sr) / orig_sr,
                                     res_type).T
     else:
-        n_samples = y.shape[-1] * target_sr / orig_sr
         y_hat = scipy.signal.resample(y, n_samples, axis=-1)
+
+    if fix:
+        y_hat = util.fix_length(y_hat, n_samples, **kwargs)
 
     return np.ascontiguousarray(y_hat)
 
