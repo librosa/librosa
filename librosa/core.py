@@ -84,11 +84,17 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
         else:
             s_end = s_start + int(np.ceil(sr_native * duration)
                                   * input_file.channels)
+            if sr is not None:
+                # Add some extra frames to avoid problems in resampling.
+                # Any excess is trimmed off below after resampling.
+                s_end += input_file.channels * int(np.ceil(float(sr_native)/sr))
 
         scale = float(1 << 15)
 
         y = []
         n = 0
+
+        output_chans = 1 if mono else input_file.channels
 
         for frame in input_file:
             frame = np.frombuffer(frame, '<i2').astype(dtype)
@@ -124,6 +130,11 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
 
     if sr is not None:
         y = resample(y, sr_native, sr)
+        s_end = s_start + int(np.ceil(sr_native * duration)
+                                  * input_file.channels)
+        # Trim off any extra frames resulting from pre-padding above.
+        expected_len = int(round(sr * duration)) * output_chans
+        y = y[:expected_len]
     else:
         sr = sr_native
 
