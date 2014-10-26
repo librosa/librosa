@@ -19,7 +19,7 @@ def hpss(y):
         >>> y_harmonic, y_percussive = librosa.effects.hpss(y)
 
     :parameters:
-      - y : np.ndarray
+      - y : np.ndarray [shape=(n,)]
         audio time series
 
     :returns:

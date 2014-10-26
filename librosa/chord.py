@@ -14,24 +14,24 @@ def beats_to_chords(beat_times, chord_times, chord_labels):
     r'''Propagate lab-style annotations to a list of beat timings.
 
     :parameters:
-      - beat_times : ndarray, shape=(n, 2)
+      - beat_times : np.ndarray [shape=(n, 2)]
           The time range (in seconds) for beat intervals.
           The ``i`` th beat spans time ``beat_times[i, 0]``
           to ``beat_times[i, 1]``.
           ``beat_times[0, 0]`` should be 0, ``beat_times[-1, 1]`` should
           be the track duration.
 
-      - chord_times : ndarray, shape=(m, 2)
+      - chord_times : np.ndarray [shape=(m, 2)]
           The time range (in seconds) for the ``i`` th annotation is
           ``chord_times[i, 0]`` to ``chord_times[i, 1]``.
           ``chord_times[0, 0]`` should be 0, ``chord_times[-1, 1]`` should
           be the track duration.
 
-      - chord_labels : list of str, shape=(m,)
+      - chord_labels : list of str [shape=(m,)]
           List of annotation strings associated with ``chord_times``
 
     :returns:
-      - beat_labels : list of str, shape=(n,)
+      - beat_labels : list of str [shape=(n,)]
           Chord annotations at the beat level.
     '''
 
@@ -95,12 +95,12 @@ class ChordHMM(sklearn.hmm.GaussianHMM):
         '''Predict chords from an observation sequence
 
         :parameters:
-          - obs : np.ndarray, shape=(n, d)
+          - obs : np.ndarray [shape=(n, d)]
               Observation sequence, e.g., transposed beat-synchronous
               chromagram.
 
         :returns:
-          - labels : list of str, shape=(n,)
+          - labels : list of str [shape=(n,)]
               For each row of ``obs``, the most likely chord label.
         '''
         return [self.id_to_chord_[s] for s in self.decode(obs)[1]]
@@ -108,7 +108,7 @@ class ChordHMM(sklearn.hmm.GaussianHMM):
     def fit(self, obs, labels):
         '''Supervised training.
 
-        - obs : list-like (n_songs) | obs[i] : ndarray (n_beats, n_features)
+        - obs : list-like (n_songs) | obs[i] : np.ndarray [shape=(n_beats, n_features)]
             A collection of observation sequences, e.g., ``obs[i]`` is a
             chromagram
 
