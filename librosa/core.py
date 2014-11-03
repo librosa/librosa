@@ -133,7 +133,8 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
     return (y, sr)
 
 
-def resample(y, orig_sr, target_sr, res_type='sinc_fastest', fix=True, **kwargs):
+def resample(y, orig_sr, target_sr, res_type='sinc_fastest', fix=True,
+             **kwargs):
     """Resample a time series from orig_sr to target_sr
 
     :usage:
@@ -159,7 +160,7 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest', fix=True, **kwargs)
           ``ceil(target_sr * len(y) / orig_sr)``
 
       - *kwargs*
-          If ``fix==True``, additional keyword arguments to pass to 
+          If ``fix==True``, additional keyword arguments to pass to
           ``librosa.util.fix_length()``.
 
     :returns:
@@ -188,6 +189,68 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest', fix=True, **kwargs)
         y_hat = util.fix_length(y_hat, n_samples, **kwargs)
 
     return np.ascontiguousarray(y_hat)
+
+
+def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
+                 center=True):
+    """Compute the duration (in seconds) of an audio time series or STFT matrix.
+
+    :usage:
+        >>> # Load the example audio file
+        >>> y, sr = librosa.load(librosa.util.example_audio())
+        >>> d = librosa.get_duration(y=y, sr=sr)
+        >>> d
+        61.38775510204081
+
+        >>> # Or compute duration from an STFT matrix
+        >>> S = librosa.stft(y)
+        >>> d = librosa.get_duration(S=S, sr=sr)
+
+        >>> # Or a non-centered STFT matrix
+        >>> S_left = librosa.stft(y, center=False)
+        >>> d = librosa.get_duration(S=S_left, sr=sr)
+
+    :parameters:
+      - y : np.ndarray [shape=(n,)] or None
+        Audio time series
+
+      - sr : int > 0
+        Audio sampling rate
+
+      - S : np.ndarray [shape=(d, n)] or None
+        STFT matrix, or any STFT-derived matrix (e.g., chromagram
+        or mel spectrogram).
+
+      - n_fft       : int
+          FFT window size for ``S``
+
+      - hop_length  : int
+          number of audio samples between columns of ``S``
+
+      - center      : boolean
+          - If ``True``, ``S[:, t]`` is centered at ``y[t * hop_length]``.
+          - If ``False``, then ``S[f, t]`` *begins* at ``y[t * hop_length]``
+
+    :returns:
+      - d : float >= 0
+        Duration (in seconds) of the input time series or spectrogram.
+
+    """
+
+    if y is None:
+        assert S is not None
+
+        n_frames = S.shape[1]
+        n_samples = n_fft + hop_length * (n_frames - 1)
+
+        # If centered, we lose half a window from each end of S
+        if center:
+            n_samples = n_samples - 2 * (n_fft / 2)
+
+    else:
+        n_samples = len(y)
+
+    return float(n_samples) / sr
 
 
 def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
