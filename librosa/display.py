@@ -30,10 +30,10 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
         >>> librosa.display.time_ticks(beat_times, axis='y')
 
     :parameters:
-       - locations : array
+       - locations : list or np.ndarray
            Time-stamps for tick marks
 
-       - n_ticks : int or None
+       - n_ticks : int > 0 or None
            Show this number of ticks (evenly spaced).
            If none, all ticks are displayed.
            Default: 5
@@ -189,20 +189,20 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
                                      cmap='gray_r')
 
     :parameters:
-      - data : np.ndarray
+      - data : np.ndarray [shape=(d, n)]
           Matrix to display (e.g., spectrogram)
 
-      - sr : int > 0
+      - sr : int > 0 [scalar]
           Sample rate used to determine time scale in x-axis.
 
-      - hop_length : int > 0
+      - hop_length : int > 0 [scalar]
           Hop length, also used to determine time scale in x-axis
 
       - x_axis : None or {'time', 'frames', 'off'}
           If None or 'off', no x axis is displayed.
 
           If 'time', markers are shown as milliseconds, seconds,
-          minutes, or hours.  (See ``time_ticks()`` for details.)
+          minutes, or hours.  (See :func:`time_ticks()` for details.)
 
           If 'frames', markers are shown as frame counts.
 
@@ -218,20 +218,20 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
           - 'cqt_note': pitches are determined by the CQT scale.
           - 'chroma': pitches are determined by the chroma filters.
 
-      - n_xticks : int > 0
+      - n_xticks : int > 0 [scalar]
           If x_axis is drawn, the number of ticks to show
 
-      - n_yticks : int > 0
+      - n_yticks : int > 0 [scalar]
           If y_axis is drawn, the number of ticks to show
 
-      - fmin : float > 0 or None
+      - fmin : float > 0 [scalar] or None
           Frequency of the lowest spectrogram bin.  Used for Mel and CQT
           scales.
 
-      - fmax : float > 0 or None
+      - fmax : float > 0 [scalar] or None
           Used for setting the Mel frequency scales
 
-      - bins_per_octave : int > 0
+      - bins_per_octave : int > 0 [scalar]
           Number of bins per octave.  Used for CQT frequency scale.
 
       - *kwargs*
