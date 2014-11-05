@@ -62,7 +62,7 @@ class ChordHMM(sklearn.hmm.GaussianHMM):
               List of the names of chords in the model
 
           - remaining parameters:
-              See ``sklearn.hmm.GaussianHMM``
+              See :class:`sklearn.hmm.GaussianHMM`
         '''
 
         n_components = len(chord_names)
