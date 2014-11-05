@@ -179,14 +179,14 @@ def agglomerative(data, k, clusterer=None):
                                                     hop_length=512)
 
     :parameters:
-      - data     : np.ndarray
-          feature matrix (d-by-t)
+      - data     : np.ndarray [shape=(d, t)]
+          feature matrix
 
       - k        : int > 0
           number of segments to produce
 
       - clusterer : sklearn.cluster.AgglomerativeClustering or ``None``
-          An optional agglomerativeclustering object.  
+          An optional agglomerativeclustering object.
           If ``None``, a constrained Ward object is instantiated.
 
     :returns:
@@ -211,4 +211,4 @@ def agglomerative(data, k, clusterer=None):
     boundaries = [0]
     boundaries.extend(
         list(1 + np.nonzero(np.diff(clusterer.labels_))[0].astype(int)))
-    return boundaries
+    return np.asarray(boundaries)
