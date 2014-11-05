@@ -189,7 +189,7 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest', fix=True,
     if fix:
         y_hat = util.fix_length(y_hat, n_samples, **kwargs)
 
-    return np.ascontiguousarray(y_hat)
+    return np.ascontiguousarray(y_hat, dtype=y.dtype)
 
 
 def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
@@ -254,7 +254,7 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
 
 def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
-         center=True):
+         center=True, dtype=np.complex64):
     """Short-time Fourier transform (STFT)
 
     Returns a complex-valued matrix D such that
@@ -302,9 +302,11 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
             ``D[f, t]`` is centered at ``y[t * hop_length]``.
           - If ``False``, then ``D[f, t]`` *begins* at ``y[t * hop_length]``
 
+      - dtype       : numeric type
+          Complex numeric type for ``D``.  Default is 64-bit complex.
 
     :returns:
-      - D           : np.ndarray [shape=(1 + n_fft/2, t), dtype=complex]
+      - D           : np.ndarray [shape=(1 + n_fft/2, t), dtype=dtype]
           STFT matrix
     """
 
@@ -348,7 +350,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
 
     # Pre-allocate the STFT matrix
     stft_matrix = np.empty((1 + n_fft / 2, y_frames.shape[1]),
-                           dtype=np.complex64,
+                           dtype=dtype,
                            order='F')
 
     # how many columns can we fit within MAX_MEM_BLOCK?
@@ -367,7 +369,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
 
 
 def istft(stft_matrix, hop_length=None, win_length=None, window=None,
-          center=True):
+          center=True, dtype=np.float32):
     """
     Inverse short-time Fourier transform.
 
@@ -400,6 +402,9 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
       - center      : boolean
           - If `True`, `D` is assumed to have centered frames.
           - If `False`, `D` is assumed to have left-aligned frames.
+
+      - dtype       : numeric type
+          Real numeric type for ``y``.  Default is 32-bit float.
 
     :returns:
       - y           : np.ndarray [shape=(n,)]
@@ -438,7 +443,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
     ifft_window = util.pad_center(ifft_window, n_fft)
 
     n_frames = stft_matrix.shape[1]
-    y = np.zeros(n_fft + hop_length * (n_frames - 1))
+    y = np.zeros(n_fft + hop_length * (n_frames - 1), dtype=dtype)
 
     for i in xrange(n_frames):
         sample = i * hop_length
@@ -455,7 +460,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
 
 
 def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
-           norm=False, center=True):
+           norm=False, center=True, dtype=np.complex64):
     '''Compute the instantaneous frequency (as a proportion of the sampling rate)
     obtained as the time-derivative of the phase of the complex spectrum as
     described by Toshihiro Abe et al. in ICASSP'95, Eurospeech'97.
@@ -492,6 +497,9 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
             ``D[f, t]`` is centered at ``y[t * hop_length]``.
           - If ``False``, then ``D[f, t]`` *begins* at ``y[t * hop_length]``
 
+      - dtype       : numeric type
+          Complex numeric type for ``D``.  Default is 64-bit complex.
+
     :returns:
       - if_gram : np.ndarray [shape=(1 + n_fft/2, t), dtype=real]
           Instantaneous frequency spectrogram:
@@ -523,10 +531,10 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     d_window = np.sin(-freq_angular) * np.pi / n_fft
 
     stft_matrix = stft(y, n_fft=n_fft, hop_length=hop_length,
-                       window=window, center=center)
+                       window=window, center=center, dtype=dtype)
 
     diff_stft = stft(y, n_fft=n_fft, hop_length=hop_length,
-                     window=d_window, center=center).conj()
+                     window=d_window, center=center, dtype=dtype).conj()
 
     # Compute power normalization. Suppress zeros.
     power = np.abs(stft_matrix)**2

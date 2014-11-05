@@ -41,10 +41,10 @@ def hpss(y):
     D_harm, D_perc = librosa.decompose.hpss(D)
 
     # Invert the STFTs.  Adjust length to match the input.
-    y_harm = np.empty_like(y)
-    y_harm[:] = librosa.util.fix_length(librosa.istft(D_harm), len(y))
-    y_perc = np.empty_like(y)
-    y_perc[:] = librosa.util.fix_length(librosa.istft(D_perc), len(y))
+    y_harm = librosa.util.fix_length(librosa.istft(D_harm, dtype=y.dtype),
+                                     len(y))
+    y_perc = librosa.util.fix_length(librosa.istft(D_perc, dtype=y.dtype),
+                                     len(y))
 
     return y_harm, y_perc
 
@@ -76,8 +76,8 @@ def harmonic(y):
     D_harm = librosa.decompose.hpss(D)[0]
 
     # Invert the STFTs
-    y_harm = np.empty_like(y)
-    y_harm[:] = librosa.util.fix_length(librosa.istft(D_harm), len(y))
+    y_harm = librosa.util.fix_length(librosa.istft(D_harm, dtype=y.dtype),
+                                     len(y))
 
     return y_harm
 
@@ -109,8 +109,8 @@ def percussive(y):
     D_perc = librosa.decompose.hpss(D)[1]
 
     # Invert the STFT
-    y_perc = np.empty_like(y)
-    y_perc[:] = librosa.util.fix_length(librosa.istft(D_perc), len(y))
+    y_perc = librosa.util.fix_length(librosa.istft(D_perc, dtype=y.dtype),
+                                     len(y))
 
     return y_perc
 
@@ -149,7 +149,7 @@ def time_stretch(y, rate):
     D_stretch = librosa.phase_vocoder(D, rate)
 
     # Invert the stft
-    y_stretch = librosa.istft(D_stretch).astype(y.dtype)
+    y_stretch = librosa.istft(D_stretch, dtype=y.dtype)
 
     return y_stretch
 
