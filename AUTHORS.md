@@ -1,10 +1,11 @@
 Authors
 =======
 
-* Dawen Liang <http://github.com/dawenl>
-* Brian McFee <http://github.com/bmcfee>
-* Matt McVicar <http://github.com/mattmcvicar>
-* Colin Raffel <http://github.com/craffel>
+* Brian McFee <https://github.com/bmcfee>
+* Matt McVicar <https://github.com/mattmcvicar>
+* Dawen Liang <https://github.com/dawenl>
+* Colin Raffel <https://github.com/craffel>
+* Dan Ellis <https://github.com/dpwe>
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
 
