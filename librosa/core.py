@@ -50,7 +50,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
           path to the input file.
           Any format supported by ``audioread`` will work.
 
-      - sr   : int > 0
+      - sr   : int > 0 [scalar]
           target sampling rate
           'None' uses the native sampling rate
 
@@ -64,13 +64,13 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
           only load up to this much audio (in seconds)
 
       - dtype : numeric type
-          data type of y
+          data type of ``y``
 
     :returns:
-      - y    : np.ndarray
+      - y    : np.ndarray [shape=(n,) or (n, 2)]
           audio time series
 
-      - sr   : int
+      - sr   : int > 0 [scalar]
           sampling rate of ``y``
     """
 
@@ -143,13 +143,13 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest', fix=True,
         >>> y_8k    = librosa.resample(y, sr, 8000)
 
     :parameters:
-      - y           : np.ndarray
+      - y           : np.ndarray [shape=(n,)]
           audio time series
 
-      - orig_sr     : int
+      - orig_sr     : int > 0 [scalar]
           original sampling rate of ``y``
 
-      - target_sr   : int
+      - target_sr   : int > 0 [scalar]
           target sampling rate
 
       - res_type    : str
@@ -161,15 +161,16 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest', fix=True,
 
       - *kwargs*
           If ``fix==True``, additional keyword arguments to pass to
-          ``librosa.util.fix_length()``.
+          :func:`librosa.util.fix_length()`.
 
     :returns:
-      - y_hat       : np.ndarray
+      - y_hat       : np.ndarray [shape=(n * target_sr / orig_sr,)]
           ``y`` resampled from ``orig_sr`` to ``target_sr``
 
     .. note::
-        If scikits.samplerate is installed, resample will use res_type
-        otherwise, it will fall back on scipy.signal.resample
+        If `scikits.samplerate` is installed, :func:`librosa.core.resample` 
+        will use ``res_type``.
+        Otherwise, it will fall back on `scipy.signal.resample`
 
     """
 
@@ -212,19 +213,19 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     :parameters:
       - y : np.ndarray [shape=(n,)] or None
-        Audio time series
+          Audio time series
 
-      - sr : int > 0
-        Audio sampling rate
+      - sr : int > 0 [scalar]
+          Audio sampling rate
 
-      - S : np.ndarray [shape=(d, n)] or None
-        STFT matrix, or any STFT-derived matrix (e.g., chromagram
-        or mel spectrogram).
+      - S : np.ndarray [shape=(d, t)] or None
+          STFT matrix, or any STFT-derived matrix (e.g., chromagram
+          or mel spectrogram).
 
-      - n_fft       : int
+      - n_fft       : int > 0 [scalar]
           FFT window size for ``S``
 
-      - hop_length  : int
+      - hop_length  : int > 0 [ scalar]
           number of audio samples between columns of ``S``
 
       - center      : boolean
@@ -233,8 +234,7 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     :returns:
       - d : float >= 0
-        Duration (in seconds) of the input time series or spectrogram.
-
+          Duration (in seconds) of the input time series or spectrogram.
     """
 
     if y is None:
@@ -275,24 +275,24 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
 
 
     :parameters:
-      - y           : np.ndarray, real-valued
+      - y           : np.ndarray [shape=(n,)], real-valued
           the input signal (audio time series)
 
-      - n_fft       : int
+      - n_fft       : int > 0 [scalar]
           FFT window size
 
-      - hop_length  : int
+      - hop_length  : int > 0 [scalar]
           number audio of frames between STFT columns.
           If unspecified, defaults ``win_length / 4``.
 
-      - win_length  : int <= n_fft
+      - win_length  : int <= n_fft [scalar]
           Each frame of audio is windowed by ``window()``.
           The window will be of length ``win_length`` and then padded
           with zeros to match ``n_fft``.
 
           If unspecified, defaults to ``win_length = n_fft``.
 
-      - window      : None, function, np.ndarray
+      - window      : None, function, np.ndarray [shape=(n_fft,)]
           - None (default): use an asymmetric Hann window
           - a window function, such as ``scipy.signal.hanning``
           - a vector or array of length ``n_fft``
@@ -304,7 +304,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
 
 
     :returns:
-      - D           : np.ndarray, dtype=complex
+      - D           : np.ndarray [shape=(1 + n_fft/2, t), dtype=complex]
           STFT matrix
     """
 
@@ -379,10 +379,10 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
         >>> y_hat       = librosa.istft(stft_matrix)
 
     :parameters:
-      - stft_matrix : np.ndarray, shape=(1 + n_fft/2, t)
-          STFT matrix from ``stft()``
+      - stft_matrix : np.ndarray [shape=(1 + n_fft/2, t)]
+          STFT matrix from :func:`librosa.core.stft()`
 
-      - hop_length  : int
+      - hop_length  : int > 0 [scalar]
           Number of frames between STFT columns.
           If unspecified, defaults to ``win_length / 4``.
 
@@ -392,7 +392,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
 
           If unspecified, defaults to ``n_fft``.
 
-      - window      : None, function, np.ndarray
+      - window      : None, function, np.ndarray [shape=(n_fft,)]
           - None (default): use an asymmetric Hann window * 2/3
           - a window function, such as ``scipy.signal.hanning``
           - a user-specified window vector of length ``n_fft``
@@ -402,7 +402,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
           - If `False`, `D` is assumed to have left-aligned frames.
 
     :returns:
-      - y           : np.ndarray
+      - y           : np.ndarray [shape=(n,)]
           time domain signal reconstructed from ``stft_matrix``
     """
 
@@ -467,22 +467,22 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
         >>> frequencies, D = librosa.ifgram(y, sr=sr)
 
     :parameters:
-      - y       : np.ndarray
+      - y       : np.ndarray [shape=(n,)]
           audio time series
 
-      - sr      : int > 0
+      - sr      : int > 0 [scalar]
           sampling rate of ``y``
 
-      - n_fft   : int > 0
+      - n_fft   : int > 0 [scalar]
           FFT window size
 
-      - hop_length : int > 0
+      - hop_length : int > 0 [scalar]
           hop length, number samples between subsequent frames.
           If not supplied, defaults to ``win_length / 4``.
 
       - win_length : int > 0, <= n_fft
-          Window length. Defaults to n_fft.
-          See ``stft()`` for details.
+          Window length. Defaults to ``n_fft``.
+          See :func:`librosa.core.stft()` for details.
 
       - norm : bool
           Normalize the STFT.
@@ -493,11 +493,11 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
           - If ``False``, then ``D[f, t]`` *begins* at ``y[t * hop_length]``
 
     :returns:
-      - if_gram : np.ndarray, dtype=real
+      - if_gram : np.ndarray [shape=(1 + n_fft/2, t), dtype=real]
           Instantaneous frequency spectrogram:
           ``if_gram[f, t]`` is the frequency at bin ``f``, time ``t``
 
-      - D : np.ndarray, dtype=complex
+      - D : np.ndarray [shape=(1 + n_fft/2, t), dtype=complex]
           Short-time Fourier transform
 
     .. note::
@@ -555,13 +555,13 @@ def magphase(D):
         >>> D == S * P
 
     :parameters:
-      - D       : np.ndarray, dtype=complex
+      - D       : np.ndarray [shape=(d, t), dtype=complex]
           complex-valued spectrogram
 
     :returns:
-      - D_mag   : np.ndarray, dtype=real
+      - D_mag   : np.ndarray [shape=(d, t), dtype=real]
           magnitude of ``D``
-      - D_phase : np.ndarray, dtype=complex
+      - D_phase : np.ndarray [shape=(d, t), dtype=complex]
           ``exp(1.j * phi)`` where ``phi`` is the phase of ``D``
     """
 
@@ -589,28 +589,28 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                             n_bins=60 * 2, bins_per_octave=12 * 2)
 
     :parameters:
-      - y : np.ndarray
+      - y : np.ndarray [shape=(n,)]
           audio time series
 
-      - sr : int > 0
+      - sr : int > 0 [scalar]
           sampling rate of ``y``
 
-      - hop_length : int > 0
+      - hop_length : int > 0 [scalar]
           number of samples between successive CQT columns.
 
           .. note:: ``hop_length`` must be at least
             ``2**(n_bins / bins_per_octave)``
 
-      - fmin : float > 0
+      - fmin : float > 0 [scalar]
           Minimum frequency. Defaults to C2 ~= 32.70 Hz
 
-      - n_bins : int > 0
+      - n_bins : int > 0 [scalar]
           Number of frequency bins, starting at `fmin`
 
-      - bins_per_octave : int > 0
+      - bins_per_octave : int > 0 [scalar]
           Number of bins per octave
 
-      - tuning : None or float in [-0.5, 0.5)
+      - tuning : None or float in ``[-0.5, 0.5)``
           Tuning offset in fractions of a bin (cents)
           If ``None``, tuning will be automatically estimated.
 
@@ -618,14 +618,14 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
           Filter resolution factor. Larger values use longer windows.
 
       - res_type : str
-          Resampling type, see ``librosa.core.resample()`` for details.
+          Resampling type, see :func:`librosa.core.resample()` for details.
 
       - aggregate : None or function
           Aggregation function for time-oversampling energy aggregation.
-          By default, ``np.mean``.  See ``librosa.feature.sync()`` for details.
+          By default, ``np.mean``.  See :func:`librosa.feature.sync()`.
 
     :returns:
-      - CQT : np.ndarray, dtype=np.float
+      - CQT : np.ndarray [shape=(d, t), dtype=np.float]
           Constant-Q energy for each frequency at each time.
 
     .. note:: This implementation is based on the recursive sub-sampling method
@@ -748,18 +748,18 @@ def phase_vocoder(D, rate, hop_length=None):
         >>> y_slow  = librosa.istft(D_slow, hop_length=512)
 
     :parameters:
-      - D       : np.ndarray, dtype=complex
+      - D       : np.ndarray [shape=(d, t), dtype=complex]
           STFT matrix
 
-      - rate    :  float, positive
+      - rate    :  float > 0 [scalar]
           Speed-up factor: ``rate > 1`` is faster, ``rate < 1`` is slower.
 
-      - hop_length : int or None
+      - hop_length : int > 0 [scalar] or None
           The number of samples between successive columns of ``D``.
           If None, defaults to ``n_fft/4 = (D.shape[0]-1)/2``
 
     :returns:
-      - D_stretched  : np.ndarray, dtype=complex
+      - D_stretched  : np.ndarray [shape=(d, t / rate), dtype=complex]
           time-stretched STFT
 
     .. note::
@@ -930,11 +930,11 @@ def midi_to_hz(notes):
                 103.82617439,  110.        ,  116.54094038,  123.47082531])
 
     :parameters:
-      - notes       : int, np.ndarray
+      - notes       : int or np.ndarray [shape=(n,), dtype=int]
           midi number(s) of the note(s)
 
     :returns:
-      - frequency   : float, np.ndarray
+      - frequency   : np.ndarray [shape=(n,), dtype=float]
           frequency (frequencies) of ``notes`` in Hz
     """
 
@@ -952,11 +952,11 @@ def hz_to_midi(frequencies):
         array([ 45.,  57.,  69.])
 
     :parameters:
-      - frequencies   : float, np.ndarray
+      - frequencies   : float or np.ndarray [shape=(n,), dtype=float]
           frequencies to convert
 
     :returns:
-      - note_nums     : int, np.ndarray
+      - note_nums     : np.ndarray [shape=(n,), dtype=int]
           closest MIDI notes to ``frequencies``
     """
 
@@ -974,13 +974,13 @@ def hz_to_mel(frequencies, htk=False):
         array([ 1.65,  3.3 ,  6.6 ])
 
     :parameters:
-      - frequencies   : np.ndarray, float
+      - frequencies   : np.ndarray [shape=(n,)] , float
           scalar or array of frequencies
       - htk           : bool
           use HTK formula instead of Slaney
 
     :returns:
-      - mels        : np.ndarray
+      - mels        : np.ndarray [shape=(n,)]
           input frequencies in Mels
     """
 
@@ -1024,13 +1024,13 @@ def mel_to_hz(mels, htk=False):
                 333.33333333])
 
     :parameters:
-      - mels          : np.ndarray, float
+      - mels          : np.ndarray [shape=(n,)], float
           mel bins to convert
       - htk           : bool
           use HTK formula instead of Slaney
 
     :returns:
-      - frequencies   : np.ndarray
+      - frequencies   : np.ndarray [shape=(n,)]
           input mels in Hz
     """
 
@@ -1065,13 +1065,13 @@ def hz_to_octs(frequencies, A440=440.0):
         array([ 0.21864029,  1.21864029,  2.21864029,  3.21864029])
 
     :parameters:
-      - frequencies   : np.ndarray, float
+      - frequencies   : np.ndarray [shape=(n,)] or float
           scalar or vector of frequencies
       - A440          : float
           frequency of A440
 
     :returns:
-      - octaves       : np.ndarray
+      - octaves       : np.ndarray [shape=(n,)]
           octave number for each frequency
 
     """
@@ -1091,13 +1091,13 @@ def octs_to_hz(octs, A440=440.0):
         array([   6.875,   13.75 ,   27.5  ,   55.   ,  110.   ])
 
     :parameters:
-      - octaves       : np.ndarray
+      - octaves       : np.ndarray [shape=(n,)] or float
           octave number for each frequency
       - A440          : float
           frequency of A440
 
     :returns:
-      - frequencies   : np.ndarray, float
+      - frequencies   : np.ndarray [shape=(n,)]
           scalar or vector of frequencies
     """
     octs = np.asarray([octs]).flatten()
@@ -1113,14 +1113,14 @@ def fft_frequencies(sr=22050, n_fft=2048):
                  6890.625,   8268.75 ,   9646.875,  11025.   ])
 
     :parameters:
-      - sr : int > 0
+      - sr : int > 0 [scalar]
           Audio sampling rate
 
-      - n_fft : int > 0
+      - n_fft : int > 0 [scalar]
           FFT window size
 
     :returns:
-      - freqs : np.ndarray, shape = (1 + n_fft/2,)
+      - freqs : np.ndarray [shape=(1 + n_fft/2,)]
           Frequencies (0, sr/n_fft, 2*sr/n_fft, ..., sr/2)
     '''
 
@@ -1142,20 +1142,20 @@ def cqt_frequencies(n_bins, fmin, bins_per_octave=12, tuning=0.0):
                 103.82617439,  110.        ,  116.54094038,  123.47082531])
 
     :parameters:
-      - n_bins  : int > 0
+      - n_bins  : int > 0 [scalar]
           Number of constant-Q bins
 
-      - fmin    : float >0
+      - fmin    : float > 0 [scalar]
           Minimum frequency
 
-      - bins_per_octave : int > 0
+      - bins_per_octave : int > 0 [scalar]
           Number of bins per octave
 
-      - tuning : float in [-0.5, +0.5)
+      - tuning : float in ``[-0.5, +0.5)``
           Deviation from A440 tuning in fractional bins (cents)
 
     :returns:
-      - frequencies : np.ndarray, shape=(n_bins,)
+      - frequencies : np.ndarray [shape=(n_bins,)]
           Center frequency for each CQT bin
     """
 
@@ -1183,13 +1183,13 @@ def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False,
                 7255.04344548,  7888.37837041,  8577.0007833 ,  9325.73705043])
 
     :parameters:
-      - n_mels    : int
+      - n_mels    : int > 0 [scalar]
           number of Mel bins
 
-      - fmin      : float
+      - fmin      : float >= 0 [scalar]
           minimum frequency (Hz)
 
-      - fmax      : float
+      - fmax      : float >= 0 [scalar]
           maximum frequency (Hz)
 
       - htk       : bool
@@ -1199,7 +1199,7 @@ def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False,
           include extra frequencies necessary for building Mel filters
 
     :returns:
-      - bin_frequencies : ndarray
+      - bin_frequencies : ndarray [shape=(n_mels,)]
           vector of Mel frequencies
     """
 
@@ -1230,16 +1230,16 @@ def A_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
                 0.6147545 ,   0.1929889 ,  -0.37407714,  -1.11314196])
 
     :parameters:
-      - frequencies : scalar or np.ndarray
+      - frequencies : scalar or np.ndarray [shape=(n,)]
           One or more frequencies (in Hz)
 
-      - min_db : float or None
+      - min_db : float [scalar] or None
           Clip weights below this threshold.
           If ``None``, no clipping is performed.
 
     :returns:
-      - A_weighting : scalar or np.ndarray
-          A[i] is the A-weighting of frequencies[i]
+      - A_weighting : scalar or np.ndarray [shape=(n,)]
+          ``A_weighting[i]`` is the A-weighting of ``frequencies[i]``
     '''
 
     # Vectorize to make our lives easier
@@ -1281,7 +1281,7 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
         >>> log_S   = librosa.logamplitude(S, ref_power=np.median)
 
     :parameters:
-      - S       : np.ndarray
+      - S       : np.ndarray [shape=(d, t)]
           input spectrogram
 
       - ref_power : scalar or function
@@ -1291,15 +1291,15 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
 
           This is primarily useful for comparing to the maximum value of ``S``.
 
-      - amin    : float
+      - amin    : float [scalar]
           minimum amplitude threshold for ``abs(S)`` and ``ref_power``
 
-      - top_db  : float
+      - top_db  : float [scalar]
           threshold log amplitude at top_db below the peak:
           ``max(log(S)) - top_db``
 
     :returns:
-      log_S   : np.ndarray
+      log_S   : np.ndarray [shape=(d, t)]
           ``log_S ~= 10 * log10(S) - 10 * log10(abs(ref_power))``
     """
 
@@ -1330,20 +1330,20 @@ def perceptual_weighting(S, frequencies, **kwargs):
         >>> CQT             = librosa.cqt(y, sr, fmin=55, fmax=440)
         >>> freqs           = librosa.cqt_frequencies(CQT.shape[0], fmin=55)
         >>> percept_CQT     = librosa.perceptual_weighting(CQT, freqs,
-                                                            ref_power=np.max)
+                                                           ref_power=np.max)
 
     :parameters:
-      - S : np.ndarray, shape=(d,t)
+      - S : np.ndarray [shape=(d, t)]
           Power spectrogram
 
-      - frequencies : np.ndarray, shape=(d,)
+      - frequencies : np.ndarray [shape=(d,)]
           Center frequency for each row of ``S``
 
       - *kwargs*
-          Additional keyword arguments to pass to ``librosa.logamplitude``.
+          Additional keyword arguments to pass to :func:`librosa.core.logamplitude`.
 
     :returns:
-      - S_p : np.ndarray, shape=(d,t)
+      - S_p : np.ndarray [shape=(d, t)]
           perceptually weighted version of ``S``
     '''
 
@@ -1371,22 +1371,22 @@ def frames_to_time(frames, sr=22050, hop_length=512, n_fft=None):
                                                  n_fft=1024)
 
     :parameters:
-      - frames     : np.ndarray
+      - frames     : np.ndarray [shape=(n,)]
           vector of frame numbers
 
-      - sr         : int > 0
+      - sr         : int > 0 [scalar]
           audio sampling rate
 
-      - hop_length : int
+      - hop_length : int > 0 [scalar]
           number of samples between successive frames
 
-      - n_fft : None or int > 0
+      - n_fft : None or int > 0 [scalar]
           Optional: length of the FFT window.
           If given, time conversion will include an offset of ``n_fft / 2``
           to counteract windowing effects when using a non-centered STFT.
 
     :returns:
-      - times : np.ndarray
+      - times : np.ndarray [shape=(n,)]
           time (in seconds) of each given frame number:
           ``times[i] = frames[i] * hop_length / sr``
     """
@@ -1408,16 +1408,16 @@ def time_to_frames(times, sr=22050, hop_length=512, n_fft=None):
         array([ 0,  4,  8, 12, 17, 21, 25, 30, 34, 38])
 
     :parameters:
-      - times : np.ndarray
+      - times : np.ndarray [shape=(n,)]
           vector of time stamps
 
-      - sr : int > 0
+      - sr : int > 0 [scalar]
           audio sampling rate
 
-      - hop_length : int > 0
+      - hop_length : int > 0 [scalar]
           number of samples between successive frames
 
-      - n_fft : None or int > 0
+      - n_fft : None or int > 0 [scalar]
           Optional: length of the FFT window.
           If given, time conversion will include an offset of ``- n_fft / 2``
           to counteract windowing effects in STFT.
@@ -1425,7 +1425,7 @@ def time_to_frames(times, sr=22050, hop_length=512, n_fft=None):
           .. note:: This may result in negative frame indices.
 
     :returns:
-      - frames : np.ndarray, dtype=int
+      - frames : np.ndarray [shape=(n,), dtype=int]
           Frame numbers corresponding to the given times:
           ``frames[i] = floor( times[i] * sr / hop_length )``
     """
@@ -1449,15 +1449,15 @@ def autocorrelate(y, max_size=None):
         >>> y_ac_4  = librosa.autocorrelate(y, 4 * sr)
 
     :parameters:
-      - y         : np.ndarray
+      - y         : np.ndarray [shape=(n,)]
           vector to autocorrelate
 
-      - max_size  : int
+      - max_size  : int > 0 or None
           maximum correlation lag.
           If unspecified, defaults to ``len(y)`` (unbounded)
 
     :returns:
-      - z         : np.ndarray
+      - z         : np.ndarray [shape=(n,) or (max_size,)]
           truncated autocorrelation ``y*y``
     """
 
@@ -1494,14 +1494,14 @@ def localmax(x, axis=0):
                [False, False,  True]], dtype=bool)
 
     :parameters:
-      - x     : np.ndarray
+      - x     : np.ndarray [shape=(d1,d2,...)]
           input vector or array
 
       - axis : int
           axis along which to compute local maximality
 
     :returns:
-      - m     : np.ndarray, dtype=bool, shape=x.shape
+      - m     : np.ndarray [shape=x.shape, dtype=bool]
           indicator vector of local maxima:
           ``m[i] == True`` if ``x[i]`` is a local maximum
     """
@@ -1531,29 +1531,29 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
         >>> librosa.peak_pick(x, 3, 3, 5, 5, 0.5, 10)
 
     :parameters:
-      - x         : np.ndarray
+      - x         : np.ndarray [shape=(n,)]
           input signal to peak picks from
 
-      - pre_max   : int
+      - pre_max   : int >= 0 [scalar]
           number of samples before n over which max is computed
 
-      - post_max  : int
+      - post_max  : int >= 0 [scalar]
           number of samples after n over which max is computed
 
-      - pre_avg   : int
+      - pre_avg   : int >= 0 [scalar]
           number of samples before n over which mean is computed
 
-      - post_avg  : int
+      - post_avg  : int >= 0 [scalar]
           number of samples after n over which mean is computed
 
-      - delta     : float
+      - delta     : float >= 0 [scalar]
           threshold offset for mean
 
-      - wait      : int
+      - wait      : int >= 0 [scalar]
           number of samples to wait after picking a peak
 
     :returns:
-      - peaks     : np.ndarray, dtype=int
+      - peaks     : np.ndarray [shape=(n_peaks,), dtype=int]
           indices of peaks in x
 
     .. note::
