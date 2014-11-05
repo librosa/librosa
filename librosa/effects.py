@@ -198,4 +198,4 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12):
                                sr)
 
     # Crop to the same dimension as the input
-    return librosa.util.fix_length(y_shift, len(y)).astype(y.dtype)
+    return librosa.util.fix_length(y_shift, len(y))
