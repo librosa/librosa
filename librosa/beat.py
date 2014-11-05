@@ -42,7 +42,7 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=64,
 
       - onset_envelope : np.ndarray [shape=(n,)] or None
           (optional) pre-computed onset strength envelope
-          See ``librosa.onset.onset_strength``
+          See :func:`librosa.onset.onset_strength`
 
       - hop_length : int > 0 [scalar]
           number of audio samples between successive ``onset_envelope`` values
@@ -122,7 +122,7 @@ def estimate_tempo(onset_envelope, sr=22050, hop_length=64, start_bpm=120,
     :parameters:
       - onset_envelope    : np.ndarray [shape=(n,)]
           onset strength envelope
-          See ``librosa.onset.onset_strength()`` for details.
+          See :func:`librosa.onset.onset_strength` for details.
 
       - sr:       : int > 0 [scalar]
           sampling rate of the time series
