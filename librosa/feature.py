@@ -26,34 +26,35 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096, hop_length=512, **kwargs):
         >>> C           = chroma_map.dot(S_log)
 
     :parameters:
-      - y : np.ndarray or None
+      - y : np.ndarray [shape=(n,)] or None
           audio time series
 
-      - sr : int > 0
+      - sr : int > 0 [scalar]
           audio sampling rate of ``y``
 
-      - S : np.ndarray or None
+      - S : np.ndarray [shape=(d, t)] or None
           (optional) power spectrogram
 
-      - n_fft : int > 0
+      - n_fft : int > 0 [scalar]
           FFT window size
 
-      - hop_length : int > 0
-          hop length for STFT. See ``librosa.stft`` for details.
+      - hop_length : int > 0 [scalar]
+          hop length for STFT. See :func:`librosa.core.stft` for details.
 
-      - bins_per_octave : int > 0
+      - bins_per_octave : int > 0 [scalar]
           Number of bins per octave. Defaults to 12.
 
-      - tuning : float in [-0.5,  0.5)
+      - tuning : float in ``[-0.5,  0.5)`` [scalar]
           Deviation (in fractions of a bin) from A440 tuning.
 
           If not provided, it will be automatically estimated.
 
       - *kwargs*
-          Additional keyword arguments.  See ``librosa.filters.logfrequency()``
+          Additional keyword arguments.
+          See :func:`librosa.filters.logfrequency()`
 
     :returns:
-      - P : np.ndarray, shape = (n_pitches, t)
+      - P : np.ndarray [shape=(n_pitches, t)]
           P(f, t) contains the energy at pitch bin f, frame t.
 
     .. note:: One of either ``S`` or ``y`` must be provided.
@@ -97,34 +98,34 @@ def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
 
 
     :parameters:
-      - y          : np.ndarray or None
+      - y          : np.ndarray [shape=(n,)] or None
           audio time series
 
-      - sr         : int > 0
+      - sr         : int > 0 [scalar]
           sampling rate of ``y``
 
-      - S          : np.ndarray or None
+      - S          : np.ndarray [shape=(d, t)] or None
           power spectrogram
 
       - norm       : float or None
           Column-wise normalization.
-          See ``librosa.util.normalize`` for details.
+          See :func:`librosa.util.normalize` for details.
 
           If ``None``, no normalization is performed.
 
-      - n_fft      : int  > 0
+      - n_fft      : int  > 0 [scalar]
           FFT window size if provided ``y, sr`` instead of ``S``
 
-      - hop_length : int > 0
+      - hop_length : int > 0 [scalar]
           hop length if provided ``y, sr`` instead of ``S``
 
-      - tuning : float in [-0.5, 0.5) or None.
+      - tuning : float in ``[-0.5, 0.5)`` [scalar] or None.
           Deviation from A440 tuning in fractional bins (cents).
           If ``None``, it is automatically estimated.
 
       - *kwargs*
           Additional keyword arguments to parameterize chroma filters.
-          See ``librosa.filters.chroma()`` for details.
+          See :func:`librosa.filters.chroma()` for details.
 
     .. note:: One of either ``S`` or ``y`` must be provided.
           If ``y`` is provided, the magnitude spectrogram is computed
@@ -133,7 +134,7 @@ def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
           ``n_fft`` is inferred from its shape.
 
     :returns:
-      - chromagram  : np.ndarray
+      - chromagram  : np.ndarray [shape=(n_chroma, t)]
           Normalized energy for each chroma bin at each frame.
 
     :raises:
@@ -188,18 +189,18 @@ def estimate_tuning(resolution=0.01, bins_per_octave=12, **kwargs):
                                  fmax=librosa.midi_to_hz(128))
 
     :parameters:
-      - resolution : float in (0, 1)
+      - resolution : float in ``(0, 1)``
           Resolution of the tuning as a fraction of a bin.
           0.01 corresponds to cents.
 
-      - bins_per_octave : int > 0
+      - bins_per_octave : int > 0 [scalar]
           How many frequency bins per octave
 
       - *kwargs*
-          Additional keyword arguments.  See ``librosa.feature.piptrack``
+          Additional keyword arguments.  See :func:`librosa.feature.piptrack`
 
     :returns:
-      - tuning: float in [-0.5, 0.5]
+      - tuning: float in ``[-0.5, 0.5)``
           estimated tuning deviation (fractions of a bin)
     '''
 
@@ -237,21 +238,21 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     :parameters:
       - frequencies : array-like, float
           A collection of frequencies detected in the signal.
-          See ``librosa.feature.piptrack``
+          See :func:`librosa.feature.piptrack`
 
-      - resolution : float in (0, 1)
+      - resolution : float in ``(0, 1)``
           Resolution of the tuning as a fraction of a bin.
           0.01 corresponds to cents.
 
-      - bins_per_octave : int > 0
+      - bins_per_octave : int > 0 [scalar]
           How many frequency bins per octave
 
     :returns:
-      - tuning: float in [-0.5, 0.5]
+      - tuning: float in ``[-0.5, 0.5)``
           estimated tuning deviation (fractions of a bin)
 
     .. seealso::
-      - ``librosa.feature.estimate_tuning``
+      - :func:`librosa.feature.estimate_tuning`
         For estimating tuning from time-series or spectrogram input
     '''
 
@@ -285,20 +286,20 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=None,
         >>> pitches, magnitudes, D = librosa.feature.ifptrack(y, sr)
 
     :parameters:
-      - y: np.ndarray
+      - y: np.ndarray [shape=(n,)]
           audio signal
 
-      - sr : int > 0
+      - sr : int > 0 [scalar]
           audio sampling rate of ``y``
 
-      - n_fft: int > 0
+      - n_fft: int > 0 [scalar]
           FFT window size
 
-      - hop_length : int > 0 or None
+      - hop_length : int > 0 [scalar] or None
           Hop size for STFT.  Defaults to ``n_fft / 4``.
-          See ``librosa.stft()`` for details.
+          See :func:`librosa.core.stft()` for details.
 
-      - threshold : float in (0, 1)
+      - threshold : float in ``(0, 1)``
           Maximum fraction of expected frequency increment to tolerate
 
       - fmin : float or tuple of float
@@ -320,15 +321,15 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=None,
           Default: (2000.0, 4000.0)
 
     :returns:
-      - pitches : np.ndarray, shape=(d,t)
-      - magnitudes : np.ndarray, shape=(d,t)
+      - pitches : np.ndarray [shape=(d, t)]
+      - magnitudes : np.ndarray [shape=(d, t)]
           Where ``d`` is the subset of FFT bins within ``fmin`` and ``fmax``.
 
           ``pitches[i, t]`` contains instantaneous frequencies at time ``t``
 
           ``magnitudes[i, t]`` contains their magnitudes.
 
-      - D : np.ndarray, dtype=complex
+      - D : np.ndarray [shape=(d, t), dtype=complex]
           STFT matrix
     '''
 
@@ -435,26 +436,26 @@ def piptrack(y=None, sr=22050, S=None, n_fft=4096, fmin=150.0,
         >>> pitches, magnitudes = librosa.feature.piptrack(y=y, sr=sr)
 
     :parameters:
-      - y: np.ndarray or None
+      - y: np.ndarray [shape=(n,)] or None
           audio signal
 
-      - sr : int > 0
+      - sr : int > 0 [scalar]
           audio sampling rate of ``y``
 
-      - S: np.ndarray or None
+      - S: np.ndarray [shape=(d, t)] or None
           magnitude or power spectrogram
 
-      - n_fft : int > 0 or None
+      - n_fft : int > 0 [scalar] or None
           number of fft bins to use, if ``y`` is provided.
 
-      - threshold : float in (0, 1)
+      - threshold : float in ``(0, 1)``
           A bin in spectrum X is considered a pitch when it is greater than
           ``threshold*X.max()``
 
-      - fmin : float > 0
+      - fmin : float > 0 [scalar]
           lower frequency cutoff.
 
-      - fmax : float > 0
+      - fmax : float > 0 [scalar]
           upper frequency cutoff.
 
     .. note::
@@ -464,8 +465,8 @@ def piptrack(y=None, sr=22050, S=None, n_fft=4096, fmin=150.0,
         the default parameters of ``stft``.
 
     :returns:
-      - pitches : np.ndarray, shape=(d,t)
-      - magnitudes : np.ndarray, shape=(d,t)
+      - pitches : np.ndarray [shape=(d, t)]
+      - magnitudes : np.ndarray [shape=(d,t)]
           Where ``d`` is the subset of FFT bins within ``fmin`` and ``fmax``.
 
           ``pitches[f, t]`` contains instantaneous frequency at bin
@@ -550,21 +551,21 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
         >>> mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=40)
 
     :parameters:
-      - y     : np.ndarray or None
+      - y     : np.ndarray [shape=(n,)] or None
           audio time series
 
-      - sr    : int > 0
+      - sr    : int > 0 [scalar]
           sampling rate of ``y``
 
-      - S     : np.ndarray or None
+      - S     : np.ndarray [shape=(d, t)] or None
           log-power Mel spectrogram
 
-      - n_mfcc: int > 0
+      - n_mfcc: int > 0 [scalar]
           number of MFCCs to return
 
       - *kwargs*
-          Additional keyword arguments for ``librosa.feature.melspectrogram``,
-          if operating on time series data
+          Additional keyword arguments for
+          :func:`librosa.feature.melspectrogram`, if operating on time series
 
     .. note::
         One of ``S`` or ``y, sr`` must be provided.
@@ -573,7 +574,7 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
         the default parameters of ``melspectrogram``.
 
     :returns:
-      - M     : np.ndarray, shape=(n_mfcc, S.shape[1])
+      - M     : np.ndarray [shape=(n_mfcc, t)]
           MFCC sequence
     """
 
@@ -599,26 +600,26 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                                                fmax=8000)
 
     :parameters:
-      - y : np.ndarray
+      - y : np.ndarray [shape=(n,)] or None
           audio time-series
 
-      - sr : int > 0
+      - sr : int > 0 [scalar]
           sampling rate of ``y``
 
-      - S : np.ndarray
+      - S : np.ndarray [shape=(d, t)]
           magnitude or power spectrogram
 
-      - n_fft : int > 0
+      - n_fft : int > 0 [scalar]
           length of the FFT window
 
-      - hop_length : int > 0
+      - hop_length : int > 0 [scalar]
           number of samples between successive frames.
 
-          See ``librosa.stft()``
+          See :func:`librosa.core.stft()`
 
       - *kwargs*
           Additional keyword arguments for mel filterbank parameters.
-          See ``librosa.filters.mel()`` documentation for details.
+          See :func:`librosa.filters.mel()` for details.
 
     .. note:: One of either ``S`` or ``y, sr`` must be provided.
         If the pair ``y, sr`` is provided, the power spectrogram is computed.
@@ -627,7 +628,7 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         parameters ``y, n_fft, hop_length`` are ignored.
 
     :returns:
-      - S : np.ndarray
+      - S : np.ndarray [shape=(n_mels, t)]
           Mel power spectrogram
     """
 
@@ -654,17 +655,17 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
         >>> delta2_mfcc = librosa.feature.delta(mfccs, order=2)
 
     :parameters:
-      - data      : np.ndarray, shape=(d, T)
+      - data      : np.ndarray [shape=(d, T)]
           the input data matrix (eg, spectrogram)
 
-      - width     : int, odd
+      - width     : int > 0, odd [scalar]
           Number of frames over which to compute the delta feature
 
-      - order     : int
+      - order     : int > 0 [scalar]
           the order of the difference operator.
           1 for first derivative, 2 for second, etc.
 
-      - axis      : int
+      - axis      : int [scalar]
           the axis along which to compute deltas.
           Default is -1 (columns).
 
@@ -672,7 +673,7 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
           set to True to trim the output matrix to the original size.
 
     :returns:
-      - delta_data   : np.ndarray
+      - delta_data   : np.ndarray [shape=(d, t) or (d, t + window)]
           delta matrix of ``data``.
     '''
 
@@ -739,21 +740,21 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
                [-3, -3, -3, -3, -3, -2]])
 
     :parameters:
-      - data : np.ndarray, shape=(t,) or (d, t)
+      - data : np.ndarray [shape=(t,) or (d, t)]
           Input data matrix.  If ``data`` is a vector (``data.ndim == 1``),
           it will be interpreted as a row matrix and reshaped to ``(1, t)``.
 
-      - n_steps : int > 0
+      - n_steps : int > 0 [scalar]
           embedding dimension, the number of steps back in time to stack
 
-      - delay : int > 0
+      - delay : int > 0 [scalar]
           the number of columns to step
 
       - *kwargs*
           Additional arguments to pass to ``np.pad``.
 
     :returns:
-      - data_history : np.ndarray, shape=(d*m, t)
+      - data_history : np.ndarray [shape=(m * d, t)]
           data augmented with lagged copies of itself,
           where ``m == n_steps - 1``.
     """
@@ -802,21 +803,22 @@ def sync(data, frames, aggregate=None):
                                                    aggregate=np.max)
 
     :parameters:
-      - data      : np.ndarray, shape=(d, T)
+      - data      : np.ndarray [shape=(d, T)]
           matrix of features
 
-      - frames    : np.ndarray
+      - frames    : np.ndarray [shape=(m,)]
           ordered array of frame segment boundaries
 
       - aggregate : function
           aggregation function (defualt: ``np.mean``)
 
     :returns:
-      - Y         : ndarray
+      - Y         : ndarray [shape=(d, M)]
           ``Y[:, i] = aggregate(data[:, F[i-1]:F[i]], axis=1)``
 
     .. note::
-        In order to ensure total coverage, boundary points are added to frames
+        In order to ensure total coverage, boundary points may be added
+        to ``frames``.
 
         If synchronizing a feature matrix against beat tracker output, ensure
         that frame numbers are properly aligned and use the same hop length.
