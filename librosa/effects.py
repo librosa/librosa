@@ -20,16 +20,16 @@ def hpss(y):
 
     :parameters:
       - y : np.ndarray [shape=(n,)]
-        audio time series
+          audio time series
 
     :returns:
-      - y_harmonic : np.ndarray, shape=``y.shape``
-        audio time series of the harmonic elements
+      - y_harmonic : np.ndarray [shape=(n,)]
+          audio time series of the harmonic elements
 
-      - y_percussive : np.ndarray, shape=``y.shape``
-        audio time series of the percussive elements
+      - y_percussive : np.ndarray [shape=(n,)]
+          audio time series of the percussive elements
 
-    .. seealso:: ``librosa.decompose.hpss``
+    .. seealso:: :func:`librosa.decompose.hpss`
     '''
 
     # Compute the STFT matrix
@@ -54,15 +54,15 @@ def harmonic(y):
         >>> y_harmonic = librosa.effects.harmonic(y)
 
     :parameters:
-      - y : np.ndarray
-        audio time series
+      - y : np.ndarray [shape=(n,)]
+          audio time series
 
     :returns:
-      - y_harmonic : np.ndarray, shape=``y.shape``
-        audio time series of just the harmonic portion
+      - y_harmonic : np.ndarray [shape=(n,)]
+          audio time series of just the harmonic portion
 
-    .. seealso:: ``librosa.decompose.hpss``, ``librosa.effects.hpss``,
-        ``librosa.effects.percussive``
+    .. seealso:: :func:`librosa.decompose.hpss`, :func:`librosa.effects.hpss`,
+        :func:`librosa.effects.percussive`
     '''
 
     # Compute the STFT matrix
@@ -86,15 +86,15 @@ def percussive(y):
         >>> y_percussive = librosa.effects.percussive(y)
 
     :parameters:
-      - y : np.ndarray
-        audio time series
+      - y : np.ndarray [shape=(n,)]
+          audio time series
 
     :returns:
-      - y_percussive : np.ndarray, shape=``y.shape``
-        audio time series of just the percussive portion
+      - y_percussive : np.ndarray [shape=(n,)]
+          audio time series of just the percussive portion
 
-    .. seealso:: ``librosa.decompose.hpss``, ``librosa.effects.hpss``,
-      ``librosa.effects.percussive``
+    .. seealso:: :func:`librosa.decompose.hpss`, :func:`librosa.effects.hpss`,
+        :func:`librosa.effects.percussive`
     '''
 
     # Compute the STFT matrix
@@ -121,19 +121,19 @@ def time_stretch(y, rate):
         >>> y_slow = librosa.effects.time_stretch(y, 0.5)
 
     :parameters:
-      - y : np.ndarray
-        audio time series
+      - y : np.ndarray [shape=(n,)]
+          audio time series
 
-      - rate : float > 0
-        Stretch factor.  If ``rate > 1``, then the signal is sped up.
-        If ``rate < 1``, then the signal is slowed down.
+      - rate : float > 0 [scalar]
+          Stretch factor.  If ``rate > 1``, then the signal is sped up.
+          If ``rate < 1``, then the signal is slowed down.
 
     :returns:
-      - y_stretch : np.ndarray
-        audio time series stretched by the specified rate
+      - y_stretch : np.ndarray [shape=(rate * n,)]
+          audio time series stretched by the specified rate
 
-    .. seealso:: ``librosa.core.phase_vocoder``,
-      ``librosa.effects.pitch_shift``
+    .. seealso:: :func:`librosa.core.phase_vocoder`,
+      :func:`librosa.effects.pitch_shift`
     '''
 
     # Construct the stft
@@ -164,24 +164,24 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12):
 
 
     :parameters:
-      - y : np.ndarray
-        audio time-series
+      - y : np.ndarray [shape=(n,)]
+          audio time-series
 
-      - sr : int > 0
-        audio sampling rate of ``y``
+      - sr : int > 0 [scalar]
+          audio sampling rate of ``y``
 
-      - n_steps : float
-        how many (fractional) half-steps tp shift ``y``
+      - n_steps : float [scalar]
+          how many (fractional) half-steps to shift ``y``
 
-      - bins_per_octave : float > 0
-        how many steps per octave
+      - bins_per_octave : float > 0 [scalar]
+          how many steps per octave
 
     :returns:
-      - y_shift : np.ndarray, shape=``y.shape``
-        The pitch-shifted audio time-series
+      - y_shift : np.ndarray [shape=(n,)]
+          The pitch-shifted audio time-series
 
-    .. seealso:: ``librosa.core.phase_vocoder``,
-      ``librosa.effects.time_stretch``
+    .. seealso:: :func:`librosa.core.phase_vocoder`,
+      :func:`librosa.effects.time_stretch`
     '''
 
     rate = 2.0 ** (-float(n_steps) / bins_per_octave)
