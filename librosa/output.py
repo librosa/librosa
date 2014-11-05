@@ -37,14 +37,14 @@ def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
       - path : str
           path to save the output CSV file
 
-      - intervals : np.ndarray, shape=(n, 2)
+      - intervals : np.ndarray [shape=(n, 2)]
           array of interval start and end-times.
 
           - ``intervals[i, 0]`` marks the start time of interval ``i``
 
           - ``intervals[i, 1]`` marks the endtime of interval ``i``
 
-      - annotations : None or list-like
+      - annotations : None or list-like [shape=(n,)]
           optional list of annotation strings. ``annotations[i]`` applies
           to the time range ``intervals[i, 0]`` to ``intervals[i, 1]``
 
@@ -89,14 +89,14 @@ def frames_csv(path, frames, sr=22050, hop_length=512, **kwargs):
       - frames : list-like of ints
           list of frame numbers for beat events
 
-      - sr : int > 0
+      - sr : int > 0 [scalar]
           audio sampling rate
 
-      - hop_length : int > 0
+      - hop_length : int > 0 [scalar]
           number of samples between success frames
 
       - *kwargs*
-          additional keyword arguments.  See ``librosa.output.times_csv``
+          additional keyword arguments.  See :func:`librosa.output.times_csv`
     """
 
     times = librosa.frames_to_time(frames, sr=sr, hop_length=hop_length)
@@ -178,13 +178,13 @@ def write_wav(path, y, sr, normalize=True):
       - path : str
           path to save the output wav file
 
-      - y : np.ndarray
+      - y : np.ndarray [shape=(n,)]
           audio time series
 
-      - sr : int > 0
+      - sr : int > 0 [scalar]
           sampling rate of ``y``
 
-      - normalize : boolean
+      - normalize : boolean [scalar]
           enable amplitude normalization
     """
 
