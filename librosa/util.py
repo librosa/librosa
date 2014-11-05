@@ -45,17 +45,17 @@ def frame(y, frame_length=2048, hop_length=512):
         >>> y_frames = librosa.util.frame(y, frame_length=2048, hop_length=64)
 
     :parameters:
-      - y : np.ndarray, ndim=1
+      - y : np.ndarray [shape=(n,)]
           Time series to frame. Must be contiguous in memory
 
-      - frame_length : int > 0
+      - frame_length : int > 0 [scalar]
           Length of the frame in samples
 
-      - hop_length : int > 0
+      - hop_length : int > 0 [scalar]
           Number of samples to hop between frames
 
     :returns:
-      - y_frames : np.ndarray, shape=(frame_length, N_FRAMES)
+      - y_frames : np.ndarray [shape=(frame_length, N_FRAMES)]
           An array of frames sampled from ``y``:
           ``y_frames[i, j] == y[j * hop_length + i]``
 
@@ -94,17 +94,17 @@ def pad_center(data, size, **kwargs):
         >>> window = librosa.util.pad_center(window, 1024, mode='constant')
 
     :parameters:
-        - data : np.ndarray, ndim=1
+        - data : np.ndarray [shape=(n,)]
             Vector to be padded and centered
 
-        - size : int >= len(data)
+        - size : int >= len(data) [scalar]
             Length to pad ``data``
 
         - *kwargs*
             Additional keyword arguments passed to ``numpy.pad()``
 
     :returns:
-        - data_padded : np.ndarray, ndim=1
+        - data_padded : np.ndarray [shape=(size,)]
             ``data`` centered and padded to length ``size``
     '''
 
@@ -120,17 +120,17 @@ def fix_length(y, n, **kwargs):
     By default, ``y`` is padded with trailing zeros.
 
     :parameters:
-      - y : np.ndarray, shape=(m,)
+      - y : np.ndarray [shape=(m,)]
           one-dimensional array
 
-      - n : int >= 0
+      - n : int >= 0 [scalar]
           desired length of the array
 
       - *kwargs*
           Additional keyword arguments.  See ``numpy.pad()``
 
     :returns:
-      - y : np.ndarray, shape=(n, 1)
+      - y : np.ndarray [shape=(n,)]
           ``y`` either trimmed or padded to length ``n``
     '''
 
@@ -166,16 +166,16 @@ def axis_sort(S, axis=-1, index=False, value=None):
         >>> # np.dot(W_sort, H_sort) == np.dot(W, H)
 
     :parameters:
-      - S : np.ndarray, ndim=2
+      - S : np.ndarray [shape=(d, n)]
           Array to be sorted
 
-      - axis : int
+      - axis : int [scalar]
           The axis along which to sort.
 
           - ``axis=0`` to sort rows by peak column index
           - ``axis=1`` to sort columns by peak row index
 
-      - index : boolean
+      - index : boolean [scalar]
           If true, returns the index array as well as the permuted data.
 
       - value : function
@@ -183,11 +183,12 @@ def axis_sort(S, axis=-1, index=False, value=None):
           Default: ``np.argmax``.
 
     :returns:
-      - S_sort : np.ndarray
+      - S_sort : np.ndarray [shape=(d, n)]
           ``S`` with the columns or rows permuted in sorting order
 
-      - idx : np.ndarray (optional)
+      - idx : np.ndarray (optional) [shape=(d,) or (n,)]
         If ``index == True``, the sorting index used to permute ``S``.
+        Length of ``idx`` corresponds to the selected ``axis``.
 
     :raises:
       - ValueError
@@ -219,7 +220,7 @@ def normalize(S, norm=np.inf, axis=0):
     '''Normalize the columns or rows of a matrix
 
     :parameters:
-      - S : np.ndarray
+      - S : np.ndarray [shape=(d, n)]
           The matrix to normalize
 
       - norm : {inf, -inf, 0, float > 0}
@@ -229,12 +230,12 @@ def normalize(S, norm=np.inf, axis=0):
           - float  : corresponding l_p norm.
             See ``scipy.linalg.norm`` for details.
 
-      - axis : int
+      - axis : int [scalar]
           Axis along which to compute the norm.
           ``axis=0`` will normalize columns, ``axis=1`` will normalize rows.
 
     :returns:
-      - S_norm : np.ndarray
+      - S_norm : np.ndarray [shape=S.shape]
           Normalized matrix
 
     .. note::
@@ -270,18 +271,18 @@ def match_intervals(intervals_from, intervals_to):
     This can be useful for mapping beat timings to segments.
 
     :parameters:
-      - intervals_from : ndarray, shape=(n, 2)
+      - intervals_from : ndarray [shape=(n, 2)]
           The time range for source intervals.
           The ``i`` th interval spans time ``intervals_from[i, 0]``
           to ``intervals_from[i, 1]``.
           ``intervals_from[0, 0]`` should be 0, ``intervals_from[-1, 1]``
           should be the track duration.
 
-      - intervals_to : ndarray, shape=(m, 2)
+      - intervals_to : ndarray [shape=(m, 2)]
           Analogous to ``intervals_from``.
 
     :returns:
-      - interval_mapping : ndarray, shape=(n,)
+      - interval_mapping : ndarray [shape=(n,)]
           For each interval in ``intervals_from``, the
           corresponding interval in ``intervals_to``.
     '''
