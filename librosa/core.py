@@ -85,13 +85,11 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
             s_end = s_start + int(np.ceil(sr_native * duration)
                                   * input_file.channels)
 
-        scale = float(1 << 15)
-
         y = []
         n = 0
 
         for frame in input_file:
-            frame = np.frombuffer(frame, '<i2').astype(dtype) / scale
+            frame = util.buf_to_float(frame, dtype=dtype)
             n_prev = n
             n = n + len(frame)
 
@@ -168,7 +166,7 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest', fix=True,
           ``y`` resampled from ``orig_sr`` to ``target_sr``
 
     .. note::
-        If `scikits.samplerate` is installed, :func:`librosa.core.resample` 
+        If `scikits.samplerate` is installed, :func:`librosa.core.resample`
         will use ``res_type``.
         Otherwise, it will fall back on `scipy.signal.resample`
 
@@ -1348,7 +1346,7 @@ def perceptual_weighting(S, frequencies, **kwargs):
           Center frequency for each row of ``S``
 
       - *kwargs*
-          Additional keyword arguments to pass to :func:`librosa.core.logamplitude`.
+          Additional keyword arguments to :func:`librosa.core.logamplitude`.
 
     :returns:
       - S_p : np.ndarray [shape=(d, t)]
