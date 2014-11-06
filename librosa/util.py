@@ -83,7 +83,7 @@ def frame(y, frame_length=2048, hop_length=512):
     return y_frames
 
 
-def pad_center(data, size, **kwargs):
+def pad_center(data, size, axis=-1, **kwargs):
     '''Wrapper for np.pad to automatically center a vector prior to padding.
     This is analogous to ``str.center()``
 
@@ -94,23 +94,42 @@ def pad_center(data, size, **kwargs):
         >>> window = librosa.util.pad_center(window, 1024, mode='constant')
 
     :parameters:
-        - data : np.ndarray [shape=(n,)]
+        - data : np.ndarray
             Vector to be padded and centered
 
         - size : int >= len(data) [scalar]
             Length to pad ``data``
 
+        - axis : int
+            Axis along which to pad and center the data
+
         - *kwargs*
             Additional keyword arguments passed to ``numpy.pad()``
 
     :returns:
-        - data_padded : np.ndarray [shape=(size,)]
-            ``data`` centered and padded to length ``size``
+        - data_padded : np.ndarray
+            ``data`` centered and padded to length ``size`` along the
+            specified axis
+
+    :raises:
+        - ValueError
+            If ``size < data.shape[axis]``
     '''
 
     kwargs.setdefault('mode', 'constant')
-    lpad = (size - len(data))/2
-    return np.pad(data, (lpad, size - len(data) - lpad), **kwargs)
+
+    n = data.shape[axis]
+    d = data.ndim
+
+    lpad = (size - n)/2
+
+    lengths = [(0, 0)] * d
+    lengths[axis] = (lpad, size - n - lpad)
+
+    if lpad < 0:
+        raise ValueError('Target size {:d} is smaller than input {:d}'.format(size, n))
+
+    return np.pad(data, lengths, **kwargs)
 
 
 def fix_length(y, n, **kwargs):
