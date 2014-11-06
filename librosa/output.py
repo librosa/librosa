@@ -9,6 +9,7 @@ import scipy
 import scipy.io.wavfile
 
 import librosa.core
+import librosa.util
 
 
 def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
@@ -194,11 +195,8 @@ def write_wav(path, y, sr, normalize=True):
     else:
         wav = y
 
-    # Scale up to pcm range
-    wav = wav * 32767
-
     # Convert to 16bit int
-    wav = wav.astype('<i2')
+    wav = librosa.util.buf_to_int(wav)
 
     # Save
     scipy.io.wavfile.write(path, sr, wav)

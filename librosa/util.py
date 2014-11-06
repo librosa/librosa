@@ -545,3 +545,63 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
                 return [self.function(item, **self.kwargs) for item in X]
             else:
                 return self.function(X, **self.kwargs)
+
+
+def buf_to_int(x, n_bytes=2):
+    """Convert a floating point buffer into integer values.
+    This is primarily useful as an intermediate step in wav output.
+
+    .. seealso:: :func:`librosa.util.buf_to_float`
+
+    :parameters:
+        - x : np.ndarray [dtype=float]
+            Floating point data buffer
+
+        - n_bytes : int [1, 2, 4]
+            Number of bytes per output sample
+
+    :returns:
+        - x_int : np.ndarray [dtype=int]
+            The original buffer cast to integer type.
+    """
+
+    # What is the scale of the input data?
+    scale = float(1 << ((8 * n_bytes) - 1))
+
+    # Construct a format string
+    fmt = '<i{:d}'.format(n_bytes)
+
+    # Rescale and cast the data
+    return (x * scale).astype(fmt)
+
+
+def buf_to_float(x, n_bytes=2, dtype=np.float32):
+    """Convert an integer buffer to floating point values.
+    This is primarily useful when loading integer-valued wav data
+    into numpy arrays.
+
+    .. seealso:: :func:`librosa.util.buf_to_float`
+
+    :parameters:
+        - x : np.ndarray [dtype=int]
+            The integer-valued data buffer
+
+        - n_bytes : int [1, 2, 4]
+            The number of bytes per sample in ``x``
+
+        - dtype : numeric type
+            The target output type (default: 32-bit float)
+
+    :return:
+        - x_float : np.ndarray [dtype=float]
+            The input data buffer cast to floating point
+    """
+
+    # Invert the scale of the data
+    scale = 1./float(1 << ((8 * n_bytes) - 1))
+
+    # Construct the format string
+    fmt = '<i{:d}'.format(n_bytes)
+
+    # Rescale and format the data buffer
+    return scale * np.frombuffer(x, fmt).astype(dtype)
