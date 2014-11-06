@@ -304,7 +304,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
           by setting the ``mode=`` field in *kwargs*.
 
       - *kwargs*
-          Additional keyword arguments to ``numpy.pad()`` when ``pad==True``.
+          Additional keyword arguments to ``np.pad()`` when ``pad==True``.
 
       .. note::
         - McVicar, Matthew. "A machine learning approach to automatic chord

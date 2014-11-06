@@ -62,7 +62,7 @@ def frame(y, frame_length=2048, hop_length=512):
     :raises:
       - ValueError
           If ``y`` is not contiguous in memory, framing is invalid.
-          See ``numpy.ascontiguous()`` for details.
+          See ``np.ascontiguous()`` for details.
 
           If ``hop_length < 1``, frames cannot advance.
     '''
@@ -109,7 +109,7 @@ def pad_center(data, size, axis=-1, **kwargs):
             Axis along which to pad and center the data
 
         - *kwargs*
-            Additional keyword arguments passed to ``numpy.pad()``
+            Additional keyword arguments passed to ``np.pad()``
 
     :returns:
         - data_padded : np.ndarray
@@ -150,7 +150,7 @@ def fix_length(y, n, **kwargs):
           desired length of the array
 
       - *kwargs*
-          Additional keyword arguments.  See ``numpy.pad()``
+          Additional keyword arguments.  See ``np.pad()``
 
     :returns:
       - y : np.ndarray [shape=(n,)]
