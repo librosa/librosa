@@ -92,6 +92,11 @@ def pad_center(data, size, axis=-1, **kwargs):
         >>> window = scipy.signal.hann(256)
         >>> # Center and pad it out to length 1024
         >>> window = librosa.util.pad_center(window, 1024, mode='constant')
+        >>> # Pad a matrix along its first dimension
+        >>> A = np.ones((3, 5))
+        >>> Apad = librosa.util.pad_center(A, 7, axis=0)
+        >>> # Or its second dimension
+        >>> Apad = librosa.util.pad_center(A, 7, axis=1)
 
     :parameters:
         - data : np.ndarray
@@ -119,15 +124,14 @@ def pad_center(data, size, axis=-1, **kwargs):
     kwargs.setdefault('mode', 'constant')
 
     n = data.shape[axis]
-    d = data.ndim
 
     lpad = (size - n)/2
 
-    lengths = [(0, 0)] * d
+    lengths = [(0, 0)] * data.ndim
     lengths[axis] = (lpad, size - n - lpad)
 
     if lpad < 0:
-        raise ValueError('Target size {:d} is smaller than input {:d}'.format(size, n))
+        raise ValueError('Target size {:d} < input size {:d}'.format(size, n))
 
     return np.pad(data, lengths, **kwargs)
 
