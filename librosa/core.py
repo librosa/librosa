@@ -91,7 +91,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
         n = 0
 
         for frame in input_file:
-            frame = np.frombuffer(frame, '<i2').astype(dtype)
+            frame = np.frombuffer(frame, '<i2').astype(dtype) / scale
             n_prev = n
             n = n + len(frame)
 
@@ -115,7 +115,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
             # tack on the current frame
             y.append(frame)
 
-        y = np.concatenate(y) / scale
+        y = np.concatenate(y)
         if input_file.channels > 1:
             if mono:
                 y = 0.5 * (y[::2] + y[1::2])
