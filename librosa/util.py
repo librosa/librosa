@@ -84,7 +84,7 @@ def frame(y, frame_length=2048, hop_length=512):
 
 
 def pad_center(data, size, axis=-1, **kwargs):
-    '''Wrapper for np.pad to automatically center a vector prior to padding.
+    '''Wrapper for np.pad to automatically center an array prior to padding.
     This is analogous to ``str.center()``
 
     :usage:
