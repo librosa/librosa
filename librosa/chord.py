@@ -108,7 +108,7 @@ class ChordHMM(sklearn.hmm.GaussianHMM):
     def fit(self, obs, labels):
         '''Supervised training.
 
-        - obs : list-like (n_songs) | obs[i] : np.ndarray [shape=(n_beats, n_features)]
+        - obs : list, obs[i] : np.ndarray [shape=(n_beats, n_features)]
             A collection of observation sequences, e.g., ``obs[i]`` is a
             chromagram
 
