@@ -155,7 +155,7 @@ def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
 
     # Get the filter bank
     if 'A440' not in kwargs:
-        kwargs['A440'] = 440.0 * 2.0**(tuning/n_chroma)
+        kwargs['A440'] = 440.0 * 2.0**(float(tuning) / n_chroma)
 
     chromafb = librosa.filters.chroma(sr, n_fft, **kwargs)
 
@@ -175,18 +175,18 @@ def estimate_tuning(resolution=0.01, bins_per_octave=12, **kwargs):
 
     :usage:
        >>> # With time-series input
-       >>> print estimate_tuning(y=y, sr=sr)
+       >>> print(estimate_tuning(y=y, sr=sr))
 
        >>> # In tenths of a cent
-       >>> print estimate_tuning(y=y, sr=sr, resolution=1e-3)
+       >>> print(estimate_tuning(y=y, sr=sr, resolution=1e-3))
 
        >>> # Using spectrogram input
        >>> S = np.abs(librosa.stft(y))
-       >>> print estimate_tuning(S=S, sr=sr)
+       >>> print(estimate_tuning(S=S, sr=sr))
 
        >>> # Using pass-through arguments to ``librosa.feature.piptrack``
-       >>> print estimate_tuning(y=y, sr=sr, n_fft=8192,
-                                 fmax=librosa.midi_to_hz(128))
+       >>> print(estimate_tuning(y=y, sr=sr, n_fft=8192,
+                                 fmax=librosa.midi_to_hz(128)))
 
     :parameters:
       - resolution : float in ``(0, 1)``
@@ -344,7 +344,7 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=None,
 
     # Truncate to feasible region
     fmin = np.maximum(0, fmin)
-    fmax = np.minimum(fmax, sr / 2)
+    fmax = np.minimum(fmax, float(sr) / 2)
 
     # What's our DFT bin resolution?
     fft_res = float(sr) / n_fft
@@ -353,18 +353,18 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=None,
     max_bin = int(round(fmax[-1] / fft_res))
 
     if hop_length is None:
-        hop_length = n_fft / 4
+        hop_length = int(n_fft / 4)
 
     # Calculate the inst freq gram
     if_gram, D = librosa.core.ifgram(y, sr=sr,
                                      n_fft=n_fft,
-                                     win_length=n_fft/2,
+                                     win_length=int(n_fft/2),
                                      hop_length=hop_length)
 
     # Find plateaus in ifgram - stretches where delta IF is < thr:
     # ie, places where the same frequency is spread across adjacent bins
-    idx_above = range(1, max_bin) + [max_bin - 1]
-    idx_below = [0] + range(0, max_bin - 1)
+    idx_above = list(range(1, max_bin)) + [max_bin - 1]
+    idx_below = [0] + list(range(0, max_bin - 1))
 
     # expected increment per bin = sr/w, threshold at 3/4 that
     matches = (abs(if_gram[idx_above] - if_gram[idx_below])
@@ -489,7 +489,7 @@ def piptrack(y=None, sr=22050, S=None, n_fft=4096, fmin=150.0,
 
     # Truncate to feasible region
     fmin = np.maximum(fmin, 0)
-    fmax = np.minimum(fmax, sr / 2)
+    fmax = np.minimum(fmax, float(sr) / 2)
 
     # Pre-compute FFT frequencies
     n_fft = 2 * (S.shape[0] - 1)
@@ -677,7 +677,7 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
           delta matrix of ``data``.
     '''
 
-    half_length = 1 + int(np.floor(width / 2))
+    half_length = 1 + int(np.floor(width / 2.0))
     window = np.arange(half_length - 1, -half_length, -1)
 
     # Pad out the data by repeating the border values (delta=0)
@@ -828,8 +828,8 @@ def sync(data, frames, aggregate=None):
         data = np.asarray([data])
 
     elif data.ndim > 2:
-        raise ValueError('Synchronized data has ndim=%d, must be 1 or 2.'
-                         % data.ndim)
+        raise ValueError('Synchronized data has ndim={:d},'
+                         ' must be 1 or 2.'.format(data.ndim))
 
     if aggregate is None:
         aggregate = np.mean

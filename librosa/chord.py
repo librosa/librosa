@@ -3,7 +3,6 @@
 """Chord model and helper utilities"""
 
 import librosa
-import itertools
 import sklearn
 import sklearn.hmm
 
@@ -124,7 +123,7 @@ class ChordHMM(sklearn.hmm.GaussianHMM):
         sklearn.hmm.GaussianHMM._init(self, obs, 'stmc')
         stats = sklearn.hmm.GaussianHMM._initialize_sufficient_statistics(self)
 
-        for obs_i, chords_i in itertools.izip(obs, labels):
+        for obs_i, chords_i in zip(obs, labels):
             # Synthesize a deterministic frame log-probability
             framelogprob = np.empty((obs_i.shape[0], self.n_components))
             posteriors = np.empty_like(framelogprob)

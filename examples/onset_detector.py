@@ -6,6 +6,7 @@ Detect onsets in an audio file
 
 Usage:   ./onset_detector.py [-h] input_file.mp3    output_onsets.csv
 '''
+from __future__ import print_function
 
 import sys
 import librosa
@@ -24,7 +25,7 @@ def onset_detect(input_file, output_csv):
     '''
 
     # 1. load the wav file and resample to 22.050 KHz
-    print 'Loading ', input_file
+    print('Loading ', input_file)
     y, sr = librosa.load(input_file, sr=22050)
 
     # Use a default hop size of 64 frames @ 22KHz ~= 11.6ms
@@ -34,12 +35,12 @@ def onset_detect(input_file, output_csv):
     n_fft = 2048
 
     # 2. run onset detection
-    print 'Detecting onsets...'
+    print('Detecting onsets...')
     onsets = librosa.onset.onset_detect(y=y,
                                         sr=sr,
                                         hop_length=hop_length)
 
-    print "Found {} onsets.".format(onsets.shape[0])
+    print("Found {:d} onsets.".format(onsets.shape[0]))
 
     # 3. save output
     # 'beats' will contain the frame numbers of beat events.
@@ -49,12 +50,12 @@ def onset_detect(input_file, output_csv):
                                          hop_length=hop_length,
                                          n_fft=n_fft)
 
-    print 'Saving output to ', output_csv
+    print('Saving output to ', output_csv)
     librosa.output.times_csv(output_csv, onset_times)
-    print 'done!'
+    print('done!')
 
 
-def process_arguments():
+def process_arguments(args):
     '''Argparse function to get the program parameters'''
 
     parser = argparse.ArgumentParser(
@@ -68,12 +69,12 @@ def process_arguments():
                         action='store',
                         help='path to the output file (csv of onset times)')
 
-    return vars(parser.parse_args(sys.argv[1:]))
+    return vars(parser.parse_args(args))
 
 
 if __name__ == '__main__':
     # Get the parameters
-    parameters = process_arguments()
+    parameters = process_arguments(sys.argv[1:])
 
     # Run the beat tracker
     onset_detect(parameters['input_file'], parameters['output_file'])
