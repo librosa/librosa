@@ -194,7 +194,7 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12):
 
     # Stretch in time, then resample
     y_shift = librosa.resample(time_stretch(y, rate),
-                               sr / rate,
+                               float(sr) / rate,
                                sr)
 
     # Crop to the same dimension as the input
