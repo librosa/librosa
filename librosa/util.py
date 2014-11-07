@@ -68,7 +68,7 @@ def frame(y, frame_length=2048, hop_length=512):
     '''
 
     if hop_length < 1:
-        raise ValueError('Invalid hop_length: %d' % hop_length)
+        raise ValueError('Invalid hop_length: {:d}'.format(hop_length))
 
     if not y.flags['C_CONTIGUOUS']:
         raise ValueError('Input buffer must be contiguous.')
@@ -125,7 +125,7 @@ def pad_center(data, size, axis=-1, **kwargs):
 
     n = data.shape[axis]
 
-    lpad = (size - n)/2
+    lpad = int((size - n) / 2)
 
     lengths = [(0, 0)] * data.ndim
     lengths[axis] = (lpad, size - n - lpad)
@@ -533,16 +533,16 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
         if self.target is not None:
             # If we have a target, each element of X takes the keyword argument
             if self.iterate:
-                return [self.function(**dict(self.kwargs.items()
-                                             + {self.target: item}.items()))
-                        for item in X]
+                return [self.function(**dict(list(self.kwargs.items())
+                                             + list({self.target: i}.items())))
+                        for i in X]
             else:
-                return self.function(**dict(self.kwargs.items()
-                                            + {self.target: X}.items()))
+                return self.function(**dict(list(self.kwargs.items())
+                                            + list({self.target: X}.items())))
         else:
             # Each element of X takes first position in function()
             if self.iterate:
-                return [self.function(item, **self.kwargs) for item in X]
+                return [self.function(i, **self.kwargs) for i in X]
             else:
                 return self.function(X, **self.kwargs)
 

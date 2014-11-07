@@ -3,6 +3,7 @@
 
 Demonstration of harmonic-percussive source separation
 '''
+from __future__ import print_function
 
 import argparse
 import sys
@@ -22,23 +23,23 @@ def hpss_demo(input_file, output_harmonic, output_percussive):
     '''
 
     # 1. Load the wav file, resample
-    print 'Loading ', input_file
+    print('Loading ', input_file)
 
     y, sr = librosa.load(input_file)
 
     # Separate components with the effects module
-    print 'Separating harmonics and percussives... '
+    print('Separating harmonics and percussives... ')
     y_harmonic, y_percussive = librosa.effects.hpss(y)
 
     # 5. Save the results
-    print 'Saving harmonic audio to: ', output_harmonic
+    print('Saving harmonic audio to: ', output_harmonic)
     librosa.output.write_wav(output_harmonic, y_harmonic, sr)
 
-    print 'Saving percussive audio to: ', output_percussive
+    print('Saving percussive audio to: ', output_percussive)
     librosa.output.write_wav(output_percussive, y_percussive, sr)
 
 
-def process_arguments():
+def process_arguments(args):
     '''Argparse function to get the program parameters'''
 
     parser = argparse.ArgumentParser(description='harmonic-percussive example')
@@ -55,12 +56,12 @@ def process_arguments():
                         action='store',
                         help='path to the percussive output (wav)')
 
-    return vars(parser.parse_args(sys.argv[1:]))
+    return vars(parser.parse_args(args))
 
 
 if __name__ == '__main__':
     # get the parameters
-    parameters = process_arguments()
+    parameters = process_arguments(sys.argv[1:])
 
     # Run the HPSS code
     hpss_demo(parameters['input_file'],
