@@ -1,6 +1,29 @@
 Changes
 =======
 
+##v0.3.1
+
+Bug fixes
+
+    
+    - Fixed bug #117: ``librosa.segment.agglomerative`` now returns a numpy.ndarray instead of a list
+    - Fixed bug #115: off-by-one error in ``librosa.core.load`` with fixed duration
+    - Fixed numerical underflow errors in ``librosa.decompose.hpss``
+    - Fixed bug #104: ``librosa.decompose.hpss`` failed with silent, complex-valued input
+    - Fixed bug #103: ``librosa.feature.estimate_tuning`` fails when no bins exceed the threshold
+
+Features
+
+    - New function ``librosa.core.get_duration()`` computes the duration of an audio signal 
+      or spectrogram-like input matrix
+    - ``librosa.util.pad_center`` now accepts multi-dimensional input
+
+Other changes
+    - Fixed issue #102: segment.agglomerative no longer depends on the deprecated 
+      Ward module of sklearn; it now depends on the newer Agglomerative module.
+    - Issue #108: set character encoding on all source files
+    - Added dtype persistence for resample, stft, istft, and effects functions
+
 ##v0.3.0
 
 Bug fixes
