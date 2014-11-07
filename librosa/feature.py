@@ -828,8 +828,8 @@ def sync(data, frames, aggregate=None):
         data = np.asarray([data])
 
     elif data.ndim > 2:
-        raise ValueError('Synchronized data has ndim=%d, must be 1 or 2.'
-                         % data.ndim)
+        raise ValueError('Synchronized data has ndim={:d},'
+                         ' must be 1 or 2.'.format(data.ndim))
 
     if aggregate is None:
         aggregate = np.mean
