@@ -197,7 +197,7 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
     # Counter-act framing effects. Shift the onsets by n_fft / hop_length
     if centering:
         onset_env = np.pad(onset_env,
-                           (n_fft / (2 * hop_length), 0),
+                           (int(n_fft / (2 * hop_length)), 0),
                            mode='constant')
 
     # remove the DC component
