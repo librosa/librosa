@@ -243,7 +243,7 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
         # If centered, we lose half a window from each end of S
         if center:
-            n_samples = n_samples - 2 * (n_fft / 2)
+            n_samples = n_samples - 2 * int(n_fft / 2)
 
     else:
         n_samples = len(y)
@@ -341,13 +341,13 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
 
     # Pad the time series so that frames are centered
     if center:
-        y = np.pad(y, n_fft / 2, mode='reflect')
+        y = np.pad(y, int(n_fft / 2), mode='reflect')
 
     # Window the time series.
     y_frames = util.frame(y, frame_length=n_fft, hop_length=hop_length)
 
     # Pre-allocate the STFT matrix
-    stft_matrix = np.empty((1 + n_fft / 2, y_frames.shape[1]),
+    stft_matrix = np.empty((int(1 + n_fft / 2), y_frames.shape[1]),
                            dtype=dtype,
                            order='F')
 
@@ -417,7 +417,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
 
     # Set the default hop, if it's not already specified
     if hop_length is None:
-        hop_length = win_length / 4
+        hop_length = int(win_length / 4)
 
     if window is None:
         # Default is an asymmetric Hann window.
@@ -443,7 +443,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
     n_frames = stft_matrix.shape[1]
     y = np.zeros(n_fft + hop_length * (n_frames - 1), dtype=dtype)
 
-    for i in xrange(n_frames):
+    for i in range(n_frames):
         sample = i * hop_length
         spec = stft_matrix[:, i].flatten()
         spec = np.concatenate((spec.conj(), spec[-2:0:-1]), 0)
@@ -452,7 +452,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
         y[sample:(sample+n_fft)] = y[sample:(sample+n_fft)] + ytmp
 
     if center:
-        y = y[n_fft/2:-n_fft/2]
+        y = y[int(n_fft / 2):-int(n_fft / 2)]
 
     return y
 
@@ -518,7 +518,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
         win_length = n_fft
 
     if hop_length is None:
-        hop_length = win_length / 4
+        hop_length = int(win_length / 4)
 
     # Construct a padded hann window
     window = util.pad_center(scipy.signal.hann(win_length, sym=False), n_fft)
@@ -543,7 +543,8 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     freq_angular = freq_angular.reshape((-1, 1))
 
     if_gram = ((freq_angular[:n_fft/2 + 1]
-                + (stft_matrix * diff_stft).imag / power) * sr / (2 * np.pi))
+                + (stft_matrix * diff_stft).imag / power)
+               * float(sr) / (2.0 * np.pi))
 
     if norm:
         stft_matrix = stft_matrix * 2.0 / window.sum()
@@ -669,7 +670,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     # Conjugate-transpose the basis
     fft_basis = np.fft.fft(basis, n=n_fft, axis=1).conj()
 
-    n_octaves = int(np.ceil(n_bins / float(bins_per_octave)))
+    n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
 
     # Make sure our hop is long enough to support the bottom octave
     assert hop_length >= 2**n_octaves
@@ -704,7 +705,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
         if zoom_factor > 0:
             # We need to aggregate.  Generate the boundary frames
-            bounds = range(0, my_cqt.shape[1], 2**(zoom_factor))
+            bounds = list(range(0, my_cqt.shape[1], 2**(zoom_factor)))
             my_cqt = feature.sync(my_cqt, bounds,
                                   aggregate=aggregate)
 
@@ -776,7 +777,7 @@ def phase_vocoder(D, rate, hop_length=None):
     n_fft = 2 * (D.shape[0] - 1)
 
     if hop_length is None:
-        hop_length = n_fft / 4
+        hop_length = int(n_fft / 4)
 
     time_steps = np.arange(0, D.shape[1], rate, dtype=np.float)
 
@@ -810,7 +811,7 @@ def phase_vocoder(D, rate, hop_length=None):
                   - phi_advance)
 
         # Wrap to -pi:pi range
-        dphase = dphase - 2*np.pi * np.round(dphase / (2*np.pi))
+        dphase = dphase - 2.0 * np.pi * np.round(dphase / (2.0 * np.pi))
 
         # Accumulate phase
         phase_acc += phi_advance + dphase
@@ -920,7 +921,7 @@ def midi_to_note(midi, octave=True, cents=False):
     note = note_map[note_num % 12]
 
     if octave:
-        note = '{:s}{:0d}'.format(note, note_num / 12)
+        note = '{:s}{:0d}'.format(note, int(note_num / 12))
     if cents:
         note = '{:s}{:+02d}'.format(note, note_cents)
 
@@ -949,7 +950,7 @@ def midi_to_hz(notes):
     """
 
     notes = np.asarray([notes]).flatten()
-    return 440.0 * (2.0 ** ((notes - 69)/12.0))
+    return 440.0 * (2.0 ** ((notes - 69.0)/12.0))
 
 
 def hz_to_midi(frequencies):
@@ -1086,7 +1087,7 @@ def hz_to_octs(frequencies, A440=440.0):
 
     """
     frequencies = np.asarray([frequencies]).flatten()
-    return np.log2(frequencies / (A440 / 16.0))
+    return np.log2(frequencies / (float(A440) / 16))
 
 
 def octs_to_hz(octs, A440=440.0):
@@ -1111,7 +1112,7 @@ def octs_to_hz(octs, A440=440.0):
           scalar or vector of frequencies
     """
     octs = np.asarray([octs]).flatten()
-    return (A440/16)*(2.0**octs)
+    return (float(A440) / 16)*(2.0**octs)
 
 
 def fft_frequencies(sr=22050, n_fft=2048):
@@ -1134,7 +1135,10 @@ def fft_frequencies(sr=22050, n_fft=2048):
           Frequencies (0, sr/n_fft, 2*sr/n_fft, ..., sr/2)
     '''
 
-    return np.linspace(0, sr/2.0, 1 + n_fft/2, endpoint=True)
+    return np.linspace(0,
+                       float(sr) / 2,
+                       int(1 + n_fft/2),
+                       endpoint=True)
 
 
 def cqt_frequencies(n_bins, fmin, bins_per_octave=12, tuning=0.0):
@@ -1403,7 +1407,7 @@ def frames_to_time(frames, sr=22050, hop_length=512, n_fft=None):
 
     offset = 0
     if n_fft is not None:
-        offset = n_fft / 2
+        offset = int(n_fft / 2)
 
     return (frames * hop_length + offset) / float(sr)
 
@@ -1442,7 +1446,7 @@ def time_to_frames(times, sr=22050, hop_length=512, n_fft=None):
 
     offset = 0
     if n_fft is not None:
-        offset = n_fft / 2
+        offset = int(n_fft / 2)
 
     return np.floor((times * np.float(sr) - offset) / hop_length).astype(int)
 
@@ -1473,7 +1477,7 @@ def autocorrelate(y, max_size=None):
 
     result = scipy.signal.fftconvolve(y, y[::-1], mode='full')
 
-    result = result[len(result)/2:]
+    result = result[int(len(result)/2):]
 
     if max_size is None:
         return result
