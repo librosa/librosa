@@ -84,12 +84,12 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
         times = times[::max(1, len(times)/n_ticks)]
 
     # Format the labels by time
-    formatters = {'ms': lambda t: '%dms' % (1e3 * t),
-                  's': lambda t: '%0.2fs' % t,
-                  'm': lambda t: '%d:%02d' % (t / 60, np.mod(t, 60)),
-                  'h': lambda t: '%d:%02d:%02d' % (t / 3600,
-                                                   np.mod(t / 60, 60),
-                                                   np.mod(t, 60))}
+    formats = {'ms': lambda t: '{:d}ms'.format(1e3 * t),
+               's': lambda t: '{:0.2f}s'.format(t),
+               'm': lambda t: '{:d}:{:02d}'.format(t / 60, np.mod(t, 60)),
+               'h': lambda t: '{:d}:{:02d}:{:02d}'.format(t / 3600,
+                                                          np.mod(t / 60, 60),
+                                                          np.mod(t, 60))}
 
     if fmt is None:
         if max(times) > 3600.0:
@@ -101,10 +101,10 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
         else:
             fmt = 'ms'
 
-    elif fmt not in formatters:
-        raise ValueError('Invalid format: %s' % fmt)
+    elif fmt not in formats:
+        raise ValueError('Invalid format: {:s}'.format(fmt))
 
-    times = map(formatters[fmt], times)
+    times = [formats[fmt](t) for t in times]
 
     return ticker(locs, times, **kwargs)
 
@@ -353,7 +353,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
         plt.ylabel('')
 
     else:
-        raise ValueError('Unknown y_axis parameter: %s' % y_axis)
+        raise ValueError('Unknown y_axis parameter: {:s}'.format(y_axis))
 
     # Set up the x ticks
     positions = np.asarray(np.linspace(0, data.shape[1], n_xticks), dtype=int)
@@ -376,7 +376,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
         plt.xlabel('')
 
     else:
-        raise ValueError('Unknown x_axis parameter: %s' % x_axis)
+        raise ValueError('Unknown x_axis parameter: {:s}'.format(x_axis))
 
     return axes
 

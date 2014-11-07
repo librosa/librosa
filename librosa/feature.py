@@ -175,18 +175,18 @@ def estimate_tuning(resolution=0.01, bins_per_octave=12, **kwargs):
 
     :usage:
        >>> # With time-series input
-       >>> print estimate_tuning(y=y, sr=sr)
+       >>> print(estimate_tuning(y=y, sr=sr))
 
        >>> # In tenths of a cent
-       >>> print estimate_tuning(y=y, sr=sr, resolution=1e-3)
+       >>> print(estimate_tuning(y=y, sr=sr, resolution=1e-3))
 
        >>> # Using spectrogram input
        >>> S = np.abs(librosa.stft(y))
-       >>> print estimate_tuning(S=S, sr=sr)
+       >>> print(estimate_tuning(S=S, sr=sr))
 
        >>> # Using pass-through arguments to ``librosa.feature.piptrack``
-       >>> print estimate_tuning(y=y, sr=sr, n_fft=8192,
-                                 fmax=librosa.midi_to_hz(128))
+       >>> print(estimate_tuning(y=y, sr=sr, n_fft=8192,
+                                 fmax=librosa.midi_to_hz(128)))
 
     :parameters:
       - resolution : float in ``(0, 1)``
