@@ -84,12 +84,14 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
         times = times[::max(1, len(times)/n_ticks)]
 
     # Format the labels by time
-    formats = {'ms': lambda t: '{:d}ms'.format(1e3 * t),
+    formats = {'ms': lambda t: '{:d}ms'.format(int(1e3 * t)),
                's': lambda t: '{:0.2f}s'.format(t),
-               'm': lambda t: '{:d}:{:02d}'.format(t / 60, np.mod(t, 60)),
-               'h': lambda t: '{:d}:{:02d}:{:02d}'.format(t / 3600,
-                                                          np.mod(t / 60, 60),
-                                                          np.mod(t, 60))}
+               'm': lambda t: '{:d}:{:02d}'.format(int(t / 60),
+                                                   int(np.mod(t, 60))),
+               'h': lambda t: '{:d}:{:02d}:{:02d}'.format(int(t / 3600),
+                                                          int(np.mod(t / 60,
+                                                                     60)),
+                                                          int(np.mod(t, 60)))}
 
     if fmt is None:
         if max(times) > 3600.0:
