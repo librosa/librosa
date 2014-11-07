@@ -68,7 +68,7 @@ def frame(y, frame_length=2048, hop_length=512):
     '''
 
     if hop_length < 1:
-        raise ValueError('Invalid hop_length: %d' % hop_length)
+        raise ValueError('Invalid hop_length: {:d}'.format(hop_length))
 
     if not y.flags['C_CONTIGUOUS']:
         raise ValueError('Input buffer must be contiguous.')
