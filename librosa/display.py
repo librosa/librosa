@@ -76,7 +76,7 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
         times = args[0]
     else:
         times = locs
-        locs = range(len(times))
+        locs = np.arange(len(times))
 
     if n_ticks is not None:
         # Slice the locations and labels
@@ -344,7 +344,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
     elif y_axis is 'chroma':
         positions = np.arange(0, data.shape[0], max(1, data.shape[0] / 12))
         # Labels start at 9 here because chroma starts at A.
-        values = librosa.core.midi_to_note(range(9, 9+12), octave=False)
+        values = librosa.core.midi_to_note(np.arange(9, 9+12), octave=False)
         plt.yticks(positions, values)
         plt.ylabel('Pitch class')
 
