@@ -80,23 +80,23 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
 
     if n_ticks is not None:
         # Slice the locations and labels
-        locs = locs[::max(1, len(locs)/n_ticks)]
-        times = times[::max(1, len(times)/n_ticks)]
+        locs = locs[::max(1, int(len(locs) / n_ticks))]
+        times = times[::max(1, int(len(times) / n_ticks))]
 
     # Format the labels by time
     formats = {'ms': lambda t: '{:d}ms'.format(int(1e3 * t)),
                's': lambda t: '{:0.2f}s'.format(t),
-               'm': lambda t: '{:d}:{:02d}'.format(int(t / 60),
-                                                   int(np.mod(t, 60))),
-               'h': lambda t: '{:d}:{:02d}:{:02d}'.format(int(t / 3600),
-                                                          int(np.mod(t / 60,
-                                                                     60)),
-                                                          int(np.mod(t, 60)))}
+               'm': lambda t: '{:d}:{:02d}'.format(int(t / 6e1),
+                                                   int(np.mod(t, 6e1))),
+               'h': lambda t: '{:d}:{:02d}:{:02d}'.format(int(t / 3.6e3),
+                                                          int(np.mod(t / 6e1,
+                                                                     6e1)),
+                                                          int(np.mod(t, 6e1)))}
 
     if fmt is None:
-        if max(times) > 3600.0:
+        if max(times) > 3.6e3:
             fmt = 'h'
-        elif max(times) > 60.0:
+        elif max(times) > 6e1:
             fmt = 'm'
         elif max(times) > 1.0:
             fmt = 's'
@@ -317,7 +317,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
             raise ValueError('fmin must be supplied for CQT display')
 
         positions = np.arange(0, data.shape[0],
-                              np.ceil(data.shape[0] / float(n_yticks)),
+                              np.ceil(float(data.shape[0]) / n_yticks),
                               dtype=int)
 
         # Get frequencies
@@ -331,7 +331,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
             raise ValueError('fmin must be supplied for CQT display')
 
         positions = np.arange(0, data.shape[0],
-                              np.ceil(data.shape[0] / float(n_yticks)),
+                              np.ceil(float(data.shape[0]) / n_yticks),
                               dtype=int)
 
         # Get frequencies
@@ -344,7 +344,10 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
         plt.ylabel('Note')
 
     elif y_axis is 'chroma':
-        positions = np.arange(0, data.shape[0], max(1, data.shape[0] / 12))
+        positions = np.arange(0,
+                              data.shape[0],
+                              max(1, float(data.shape[0]) / 12))
+
         # Labels start at 9 here because chroma starts at A.
         values = librosa.core.midi_to_note(np.arange(9, 9+12), octave=False)
         plt.yticks(positions, values)
