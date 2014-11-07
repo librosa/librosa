@@ -75,7 +75,7 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
     """
 
     if fmax is None:
-        fmax = sr / 2.0
+        fmax = float(sr) / 2
 
     # Initialize the weights
     n_mels = int(n_mels)
@@ -94,7 +94,7 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
     # Slaney-style mel is scaled to be approx constant energy per channel
     enorm = 2.0 / (freqs[2:n_mels+2] - freqs[:n_mels])
 
-    for i in xrange(n_mels):
+    for i in range(n_mels):
         # lower and upper slopes for all bins
         lower = (fftfreqs - freqs[i]) / (freqs[i+1] - freqs[i])
         upper = (freqs[i+2] - fftfreqs) / (freqs[i+2] - freqs[i+1])
@@ -160,7 +160,7 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=2):
 
     D = np.subtract.outer(frqbins, np.arange(0, n_chroma, dtype='d')).T
 
-    n_chroma2 = np.round(n_chroma / 2.0)
+    n_chroma2 = np.round(float(n_chroma) / 2)
 
     # Project into range -n_chroma/2 .. n_chroma/2
     # add on fixed offset of 10*n_chroma to ensure all values passed to
@@ -180,7 +180,7 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=2):
             (n_chroma, 1))
 
     # remove aliasing columns, copy to ensure row-contiguity
-    return np.ascontiguousarray(wts[:, :(1 + n_fft/2)])
+    return np.ascontiguousarray(wts[:, :int(1 + n_fft/2)])
 
 
 def logfrequency(sr, n_fft, n_bins=84, bins_per_octave=12, tuning=0.0,
@@ -239,23 +239,21 @@ def logfrequency(sr, n_fft, n_bins=84, bins_per_octave=12, tuning=0.0,
     sigma = float(spread) / bins_per_octave
 
     # Construct the output matrix
-    basis = np.zeros((n_bins, 1 + n_fft/2))
+    basis = np.zeros((n_bins, int(1 + n_fft/2)))
 
     # Get log frequencies of bins
     log_freqs = np.log2(librosa.fft_frequencies(sr, n_fft)[1:])
 
     for i in range(n_bins):
         # What's the center (median) frequency of this filter?
-        c_freq = correction * fmin * (2.0**(float(i)/bins_per_octave))
+        c_freq = correction * fmin * (2.0**(float(i) / bins_per_octave))
 
         # Place a log-normal window around c_freq
         basis[i, 1:] = np.exp(-0.5 * ((log_freqs - np.log2(c_freq)) / sigma)**2
                               - np.log2(sigma) - log_freqs)
 
-        # Normalize each filter
-        c_norm = np.sqrt(np.sum(basis[i]**2))
-        if c_norm > 0:
-            basis[i] = basis[i] / c_norm
+    # Normalize the filters
+    basis = librosa.util.normalize(basis, norm=2, axis=1)
 
     return basis
 
@@ -347,7 +345,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
         filters.append(win)
 
     if pad:
-        max_len = max(map(len, filters))
+        max_len = max([len(f) for f in filters])
 
         # Use reflection padding, unless otherwise specified
         for i in range(len(filters)):

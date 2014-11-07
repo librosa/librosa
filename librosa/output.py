@@ -29,7 +29,7 @@ def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
         >>> boundary_times = librosa.frames_to_time(boundaries, sr=sr,
                                                     hop_length=hop_length)
         >>> # Make some fake annotations
-        >>> labels = ['Segment #%03d' % i for i in range(len(time_start))]
+        >>> labels = ['Seg #{:03d}'.format(i) for i in range(len(time_start))]
         >>> # Save the output
         >>> librosa.output.annotation('segments.csv', boundary_times,
                                       annotations=annotations)

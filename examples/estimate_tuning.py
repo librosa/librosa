@@ -5,6 +5,7 @@ Estimate the tuning (deviation from A440) of a recording.
 
 Usage: ./tuning.py [-h] input_file
 '''
+from __future__ import print_function
 
 import argparse
 import sys
@@ -14,20 +15,20 @@ import librosa
 def estimate_tuning(input_file):
     '''Load an audio file and estimate tuning (in cents)'''
 
-    print 'Loading ', input_file
+    print('Loading ', input_file)
     y, sr = librosa.load(input_file)
 
-    print 'Separating harmonic component ... '
+    print('Separating harmonic component ... ')
     y_harm = librosa.effects.harmonic(y)
 
-    print 'Estimating tuning ... '
+    print('Estimating tuning ... ')
     # Just track the pitches associated with high magnitude
     tuning = librosa.feature.estimate_tuning(y=y_harm, sr=sr)
 
-    print '%+0.2f cents' % (100 * tuning)
+    print('{:+0.2f} cents'.format(100 * tuning))
 
 
-def process_arguments():
+def process_arguments(args):
     '''Argparse function to get the program parameters'''
 
     parser = argparse.ArgumentParser(description='Tuning estimation example')
@@ -36,12 +37,12 @@ def process_arguments():
                         action='store',
                         help='path to the input file (wav, mp3, etc)')
 
-    return vars(parser.parse_args(sys.argv[1:]))
+    return vars(parser.parse_args(args))
 
 
 if __name__ == '__main__':
     # Get the parameters
-    parameters = process_arguments()
+    parameters = process_arguments(sys.argv[1:])
 
     # Run the beat tracker
     estimate_tuning(parameters['input_file'])

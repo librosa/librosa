@@ -235,7 +235,7 @@ def __beat_tracker(onset_envelope, bpm, fft_res, tightness, trim):
 
         # Are we on the first beat?
         first_beat = True
-        for i in xrange(len(localscore)):
+        for i, score_i in enumerate(localscore):
 
             # Are we reaching back before time 0?
             z_pad = np.maximum(0, min(- window[0], len(window)))
@@ -248,10 +248,10 @@ def __beat_tracker(onset_envelope, bpm, fft_res, tightness, trim):
             beat_location = np.argmax(candidates)
 
             # Add the local score
-            cumscore[i] = localscore[i] + candidates[beat_location]
+            cumscore[i] = score_i + candidates[beat_location]
 
             # Special case the first onset.  Stop if the localscore is small
-            if first_beat and localscore[i] < 0.01 * localscore.max():
+            if first_beat and score_i < 0.01 * localscore.max():
                 backlink[i] = -1
             else:
                 backlink[i] = window[beat_location]
