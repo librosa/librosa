@@ -850,20 +850,24 @@ def note_to_midi(note):
     '''
 
     if not isinstance(note, str):
-        return np.array(map(note_to_midi, note))
+        return np.array([note_to_midi(n) for n in note])
 
     pitch_map = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
     acc_map = {'#': 1, '': 0, 'b': -1, '!': -1}
 
     try:
-        match = re.match(r'^(?P<n>[A-Ga-g])(?P<off>[#b!]?)(?P<oct>[+-]?\d+)$',
+        match = re.match(r'^(?P<n>[A-Ga-g])(?P<off>[#b!]?)(?P<oct>[+-]?\d*)$',
                          note)
 
         pitch = match.group('n').upper()
         offset = acc_map[match.group('off')]
-        octave = int(match.group('oct'))
+        octave = match.group('oct')
+        if not octave:
+            octave = 0
+        else:
+            octave = int(octave)
     except:
-        raise ValueError('Improper note format: %s' % note)
+        raise ValueError('Improper note format: {:s}'.format(note))
 
     return 12 * octave + pitch_map[pitch] + offset
 
@@ -916,9 +920,9 @@ def midi_to_note(midi, octave=True, cents=False):
     note = note_map[note_num % 12]
 
     if octave:
-        note = '%s%0d' % (note, note_num / 12)
+        note = '{:s}{:0d}'.format(note, note_num / 12)
     if cents:
-        note = '%s%+02d' % (note, note_cents)
+        note = '{:s}{:+02d}'.format(note, note_cents)
 
     return note
 
