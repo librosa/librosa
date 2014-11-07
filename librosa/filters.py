@@ -347,7 +347,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
         filters.append(win)
 
     if pad:
-        max_len = max(map(len, filters))
+        max_len = max([len(f) for f in filters])
 
         # Use reflection padding, unless otherwise specified
         for i in range(len(filters)):
