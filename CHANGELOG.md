@@ -4,7 +4,6 @@ Changes
 ##v0.3.1
 
 Bug fixes
-
     
     - Fixed bug #117: ``librosa.segment.agglomerative`` now returns a numpy.ndarray instead of a list
     - Fixed bug #115: off-by-one error in ``librosa.core.load`` with fixed duration
@@ -19,6 +18,8 @@ Features
     - ``librosa.util.pad_center`` now accepts multi-dimensional input
 
 Other changes
+
+    - Python 3 compatibility via futurize
     - Fixed issue #102: segment.agglomerative no longer depends on the deprecated 
       Ward module of sklearn; it now depends on the newer Agglomerative module.
     - Issue #108: set character encoding on all source files
