@@ -12,7 +12,7 @@ setup(
     package_data={'': ['example_data/*']},
     long_description="""A python module for audio and music processing.""",
     classifiers=[
-        "License :: OSI Approved :: GNU General Public License (GPL)",
+        "License :: OSI Approved :: ISC License (ISCL)",
         "Programming Language :: Python",
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
