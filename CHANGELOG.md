@@ -19,6 +19,7 @@ Features
 
 Other changes
 
+  - Adopted the ISC license
   - Python 3 compatibility via futurize
   - Fixed issue #102: segment.agglomerative no longer depends on the deprecated 
     Ward module of sklearn; it now depends on the newer Agglomerative module.
