@@ -42,6 +42,13 @@ easy_install librosa
 ```
 
 
+Discussion
+----------
+
+Please direct non-development questions and discussion topics to our web forum at 
+https://groups.google.com/forum/#!forum/librosa 
+
+
 Citing
 ------
 
