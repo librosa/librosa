@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """Display module for interacting with matplotlib"""
 
 import numpy as np
@@ -29,10 +30,10 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
         >>> librosa.display.time_ticks(beat_times, axis='y')
 
     :parameters:
-       - locations : array
+       - locations : list or np.ndarray
            Time-stamps for tick marks
 
-       - n_ticks : int or None
+       - n_ticks : int > 0 or None
            Show this number of ticks (evenly spaced).
            If none, all ticks are displayed.
            Default: 5
@@ -75,35 +76,37 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
         times = args[0]
     else:
         times = locs
-        locs = range(len(times))
+        locs = np.arange(len(times))
 
     if n_ticks is not None:
         # Slice the locations and labels
-        locs = locs[::max(1, len(locs)/n_ticks)]
-        times = times[::max(1, len(times)/n_ticks)]
+        locs = locs[::max(1, int(len(locs) / n_ticks))]
+        times = times[::max(1, int(len(times) / n_ticks))]
 
     # Format the labels by time
-    formatters = {'ms': lambda t: '%dms' % (1e3 * t),
-                  's': lambda t: '%0.2fs' % t,
-                  'm': lambda t: '%d:%02d' % (t / 60, np.mod(t, 60)),
-                  'h': lambda t: '%d:%02d:%02d' % (t / 3600,
-                                                   np.mod(t / 60, 60),
-                                                   np.mod(t, 60))}
+    formats = {'ms': lambda t: '{:d}ms'.format(int(1e3 * t)),
+               's': lambda t: '{:0.2f}s'.format(t),
+               'm': lambda t: '{:d}:{:02d}'.format(int(t / 6e1),
+                                                   int(np.mod(t, 6e1))),
+               'h': lambda t: '{:d}:{:02d}:{:02d}'.format(int(t / 3.6e3),
+                                                          int(np.mod(t / 6e1,
+                                                                     6e1)),
+                                                          int(np.mod(t, 6e1)))}
 
     if fmt is None:
-        if max(times) > 3600.0:
+        if max(times) > 3.6e3:
             fmt = 'h'
-        elif max(times) > 60.0:
+        elif max(times) > 6e1:
             fmt = 'm'
         elif max(times) > 1.0:
             fmt = 's'
         else:
             fmt = 'ms'
 
-    elif fmt not in formatters:
-        raise ValueError('Invalid format: %s' % fmt)
+    elif fmt not in formats:
+        raise ValueError('Invalid format: {:s}'.format(fmt))
 
-    times = map(formatters[fmt], times)
+    times = [formats[fmt](t) for t in times]
 
     return ticker(locs, times, **kwargs)
 
@@ -188,20 +191,20 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
                                      cmap='gray_r')
 
     :parameters:
-      - data : np.ndarray
+      - data : np.ndarray [shape=(d, n)]
           Matrix to display (e.g., spectrogram)
 
-      - sr : int > 0
+      - sr : int > 0 [scalar]
           Sample rate used to determine time scale in x-axis.
 
-      - hop_length : int > 0
+      - hop_length : int > 0 [scalar]
           Hop length, also used to determine time scale in x-axis
 
       - x_axis : None or {'time', 'frames', 'off'}
           If None or 'off', no x axis is displayed.
 
           If 'time', markers are shown as milliseconds, seconds,
-          minutes, or hours.  (See ``time_ticks()`` for details.)
+          minutes, or hours.  (See :func:`time_ticks()` for details.)
 
           If 'frames', markers are shown as frame counts.
 
@@ -217,20 +220,20 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
           - 'cqt_note': pitches are determined by the CQT scale.
           - 'chroma': pitches are determined by the chroma filters.
 
-      - n_xticks : int > 0
+      - n_xticks : int > 0 [scalar]
           If x_axis is drawn, the number of ticks to show
 
-      - n_yticks : int > 0
+      - n_yticks : int > 0 [scalar]
           If y_axis is drawn, the number of ticks to show
 
-      - fmin : float > 0 or None
+      - fmin : float > 0 [scalar] or None
           Frequency of the lowest spectrogram bin.  Used for Mel and CQT
           scales.
 
-      - fmax : float > 0 or None
+      - fmax : float > 0 [scalar] or None
           Used for setting the Mel frequency scales
 
-      - bins_per_octave : int > 0
+      - bins_per_octave : int > 0 [scalar]
           Number of bins per octave.  Used for CQT frequency scale.
 
       - *kwargs*
@@ -314,7 +317,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
             raise ValueError('fmin must be supplied for CQT display')
 
         positions = np.arange(0, data.shape[0],
-                              np.ceil(data.shape[0] / float(n_yticks)),
+                              np.ceil(float(data.shape[0]) / n_yticks),
                               dtype=int)
 
         # Get frequencies
@@ -328,7 +331,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
             raise ValueError('fmin must be supplied for CQT display')
 
         positions = np.arange(0, data.shape[0],
-                              np.ceil(data.shape[0] / float(n_yticks)),
+                              np.ceil(float(data.shape[0]) / n_yticks),
                               dtype=int)
 
         # Get frequencies
@@ -341,9 +344,12 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
         plt.ylabel('Note')
 
     elif y_axis is 'chroma':
-        positions = np.arange(0, data.shape[0], max(1, data.shape[0] / 12))
+        positions = np.arange(0,
+                              data.shape[0],
+                              max(1, float(data.shape[0]) / 12))
+
         # Labels start at 9 here because chroma starts at A.
-        values = librosa.core.midi_to_note(range(9, 9+12), octave=False)
+        values = librosa.core.midi_to_note(np.arange(9, 9+12), octave=False)
         plt.yticks(positions, values)
         plt.ylabel('Pitch class')
 
@@ -352,7 +358,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
         plt.ylabel('')
 
     else:
-        raise ValueError('Unknown y_axis parameter: %s' % y_axis)
+        raise ValueError('Unknown y_axis parameter: {:s}'.format(y_axis))
 
     # Set up the x ticks
     positions = np.asarray(np.linspace(0, data.shape[1], n_xticks), dtype=int)
@@ -375,7 +381,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
         plt.xlabel('')
 
     else:
-        raise ValueError('Unknown x_axis parameter: %s' % x_axis)
+        raise ValueError('Unknown x_axis parameter: {:s}'.format(x_axis))
 
     return axes
 

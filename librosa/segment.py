@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """Temporal segmentation utilities"""
 
 import numpy as np
@@ -33,16 +34,16 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
         >>> R       = librosa.segment.recurrence_matrix(mfcc, sym=True)
 
     :parameters:
-      - data : np.ndarray
-          feature matrix (d-by-t)
+      - data : np.ndarray [shape=(d, t)]
+          A feature matrix
 
-      - k : int > 0 or None
+      - k : int > 0 [scalar] or None
           the number of nearest-neighbors for each sample
 
           Default: ``k = 2 * ceil(sqrt(t - 2 * width + 1))``,
           or ``k = 2`` if ``t <= 2 * width + 1``
 
-      - width : int > 0
+      - width : int > 0 [scalar]
           only link neighbors ``(data[:, i], data[:, j])``
           if ``|i-j| >= width``
 
@@ -51,11 +52,11 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
 
           See ``scipy.spatial.distance.cdist()`` for details.
 
-      - sym : bool
+      - sym : bool [scalar]
           set ``sym=True`` to only link mutual nearest-neighbors
 
     :returns:
-      - rec : np.ndarray, shape=(t,t), dtype=bool
+      - rec : np.ndarray [shape=(t,t), dtype=bool]
           Binary recurrence matrix
     '''
 
@@ -117,13 +118,13 @@ def structure_feature(rec, pad=True, inverse=False):
         >>> R_hat   = librosa.feature.structure_feature(S, inverse=True)
 
     :parameters:
-      - rec   : np.ndarray, shape=(t,t)
-          recurrence matrix (see ``librosa.segment.recurrence_matrix``)
+      - rec   : np.ndarray [shape=(t,t) or shape=(2*t, t)]
+          recurrence matrix (see :func:`librosa.segment.recurrence_matrix`)
 
-      - pad : bool
+      - pad : bool [scalar]
           Pad the matrix with ``t`` rows of zeros to avoid looping.
 
-      - inverse : bool
+      - inverse : bool [scalar]
           Unroll the opposite direction. This is useful for converting
           structure features back into recurrence plots.
 
@@ -131,7 +132,7 @@ def structure_feature(rec, pad=True, inverse=False):
             inferred padding.
 
     :returns:
-      - struct : np.ndarray
+      - struct : np.ndarray [shape=(2*t, t) or shape=(t, t)]
           ``struct[i, t]`` = the recurrence at time ``t`` with lag ``i``.
 
       .. note:: negative lag values are supported by wrapping to the
@@ -162,7 +163,7 @@ def structure_feature(rec, pad=True, inverse=False):
     return np.ascontiguousarray(struct.T).T
 
 
-def agglomerative(data, k):
+def agglomerative(data, k, clusterer=None):
     """Bottom-up temporal segmentation.
 
     Use a temporally-constrained agglomerative clustering routine to partition
@@ -178,30 +179,38 @@ def agglomerative(data, k):
                                                     hop_length=512)
 
     :parameters:
-      - data     : np.ndarray
-          feature matrix (d-by-t)
+      - data     : np.ndarray [shape=(d, t)]
+          feature matrix
 
-      - k        : int > 0
+      - k        : int > 0 [scalar]
           number of segments to produce
 
+      - clusterer : sklearn.cluster.AgglomerativeClustering or ``None``
+          An optional agglomerativeclustering object.
+          If ``None``, a constrained Ward object is instantiated.
+
     :returns:
-      - boundaries : np.ndarray, shape=(k,)
-          left-boundaries (frame numbers) of detected segments
+      - boundaries : np.ndarray [shape=(k,)]
+          left-boundaries (frame numbers) of detected segments. This
+          will always include ``0`` as the first left-boundary.
 
     """
 
-    # Connect the temporal connectivity graph
-    grid = sklearn.feature_extraction.image.grid_to_graph(n_x=data.shape[1],
-                                                          n_y=1, n_z=1)
+    if clusterer is None:
+        # Connect the temporal connectivity graph
+        n = data.shape[1]
+        grid = sklearn.feature_extraction.image.grid_to_graph(n_x=n,
+                                                              n_y=1, n_z=1)
 
-    # Instantiate the clustering object
-    ward = sklearn.cluster.Ward(n_clusters=k, connectivity=grid)
+        # Instantiate the clustering object
+        clusterer = sklearn.cluster.AgglomerativeClustering(n_clusters=k,
+                                                            connectivity=grid)
 
     # Fit the model
-    ward.fit(data.T)
+    clusterer.fit(data.T)
 
     # Find the change points from the labels
     boundaries = [0]
     boundaries.extend(
-        list(1 + np.nonzero(np.diff(ward.labels_))[0].astype(int)))
-    return boundaries
+        list(1 + np.nonzero(np.diff(clusterer.labels_))[0].astype(int)))
+    return np.asarray(boundaries)

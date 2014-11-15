@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """Spectrogram decomposition"""
 
 import numpy as np
@@ -33,10 +34,10 @@ def decompose(S, n_components=None, transformer=None, sort=False):
         >>> comps, acts = librosa.decompose.decompose(S, transformer=T)
 
     :parameters:
-        - S : np.ndarray, shape=(n_features, n_samples), dtype=float
+        - S : np.ndarray [shape=(n_features, n_samples), dtype=float]
             The input feature matrix (e.g., magnitude spectrogram)
 
-        - n_components : int > 0 or None
+        - n_components : int > 0 [scalar] or None
             number of desired components
             if None, then ``n_features`` components are used
 
@@ -66,10 +67,10 @@ def decompose(S, n_components=None, transformer=None, sort=False):
 
 
     :returns:
-        - components: np.ndarray, shape=(n_features, n_components)
+        - components: np.ndarray [shape=(n_features, n_components)]
             matrix of components (basis elements).
 
-        - activations: np.ndarray, shape=(n_components, n_samples)
+        - activations: np.ndarray [shape=(n_components, n_samples)]
             transformed matrix/activation matrix
     """
 
@@ -108,7 +109,7 @@ def hpss(S, kernel_size=31, power=2.0, mask=False):
         >>> mask_H, mask_P = librosa.decompose.hpss(D, mask=True)
 
     :parameters:
-      - S : np.ndarray
+      - S : np.ndarray [shape=(d, n)]
           input spectrogram. May be real (magnitude) or complex.
 
       - kernel_size : int or tuple (kernel_harmonic, kernel_percussive)
@@ -118,7 +119,7 @@ def hpss(S, kernel_size=31, power=2.0, mask=False):
           harmonic filter, and the second value specifies the width of the
           percussive filter.
 
-      - power : float >= 0
+      - power : float >= 0 [scalar]
           Exponent for the Wiener filter when constructing mask matrices.
           Mask matrices are defined by
           ``mask_H = (r_H ** power) / (r_H ** power + r_P ** power)``
@@ -129,10 +130,10 @@ def hpss(S, kernel_size=31, power=2.0, mask=False):
           Return the masking matrices instead of components
 
     :returns:
-      - harmonic : np.ndarray
+      - harmonic : np.ndarray [shape=(d, n)]
           harmonic component (or mask)
 
-      - percussive : np.ndarray
+      - percussive : np.ndarray [shape=(d, n)]
           percussive component (or mask)
 
     .. note::
@@ -141,7 +142,7 @@ def hpss(S, kernel_size=31, power=2.0, mask=False):
 
     """
 
-    if np.iscomplex(S).any():
+    if np.iscomplexobj(S):
         S, phase = librosa.core.magphase(S)
     else:
         phase = 1
@@ -166,12 +167,12 @@ def hpss(S, kernel_size=31, power=2.0, mask=False):
         if mask:
             return mask_harm, mask_perc
     else:
-        zero_perc = (perc == 0)
         perc = perc ** power
+        zero_perc = (perc == 0)
         perc[zero_perc] = 0.0
 
-        zero_harm = (harm == 0)
         harm = harm ** power
+        zero_harm = (harm == 0)
         harm[zero_harm] = 0.0
 
         # Find points where both are zero, equalize

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """Output routines for audio and analysis"""
 
 import csv
@@ -8,6 +9,7 @@ import scipy
 import scipy.io.wavfile
 
 import librosa.core
+import librosa.util
 
 
 def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
@@ -27,7 +29,7 @@ def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
         >>> boundary_times = librosa.frames_to_time(boundaries, sr=sr,
                                                     hop_length=hop_length)
         >>> # Make some fake annotations
-        >>> labels = ['Segment #%03d' % i for i in range(len(time_start))]
+        >>> labels = ['Seg #{:03d}'.format(i) for i in range(len(time_start))]
         >>> # Save the output
         >>> librosa.output.annotation('segments.csv', boundary_times,
                                       annotations=annotations)
@@ -36,14 +38,14 @@ def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
       - path : str
           path to save the output CSV file
 
-      - intervals : np.ndarray, shape=(n, 2)
+      - intervals : np.ndarray [shape=(n, 2)]
           array of interval start and end-times.
 
           - ``intervals[i, 0]`` marks the start time of interval ``i``
 
           - ``intervals[i, 1]`` marks the endtime of interval ``i``
 
-      - annotations : None or list-like
+      - annotations : None or list-like [shape=(n,)]
           optional list of annotation strings. ``annotations[i]`` applies
           to the time range ``intervals[i, 0]`` to ``intervals[i, 1]``
 
@@ -88,14 +90,14 @@ def frames_csv(path, frames, sr=22050, hop_length=512, **kwargs):
       - frames : list-like of ints
           list of frame numbers for beat events
 
-      - sr : int > 0
+      - sr : int > 0 [scalar]
           audio sampling rate
 
-      - hop_length : int > 0
+      - hop_length : int > 0 [scalar]
           number of samples between success frames
 
       - *kwargs*
-          additional keyword arguments.  See ``librosa.output.times_csv``
+          additional keyword arguments.  See :func:`librosa.output.times_csv`
     """
 
     times = librosa.frames_to_time(frames, sr=sr, hop_length=hop_length)
@@ -177,13 +179,13 @@ def write_wav(path, y, sr, normalize=True):
       - path : str
           path to save the output wav file
 
-      - y : np.ndarray
+      - y : np.ndarray [shape=(n,)]
           audio time series
 
-      - sr : int > 0
+      - sr : int > 0 [scalar]
           sampling rate of ``y``
 
-      - normalize : boolean
+      - normalize : boolean [scalar]
           enable amplitude normalization
     """
 
@@ -193,11 +195,8 @@ def write_wav(path, y, sr, normalize=True):
     else:
         wav = y
 
-    # Scale up to pcm range
-    wav = wav * 32767
-
     # Convert to 16bit int
-    wav = wav.astype('<i2')
+    wav = librosa.util.buf_to_int(wav)
 
     # Save
     scipy.io.wavfile.write(path, sr, wav)
