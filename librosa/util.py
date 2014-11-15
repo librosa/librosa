@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """Utility functions"""
 
 import numpy as np
@@ -44,30 +45,30 @@ def frame(y, frame_length=2048, hop_length=512):
         >>> y_frames = librosa.util.frame(y, frame_length=2048, hop_length=64)
 
     :parameters:
-      - y : np.ndarray, ndim=1
+      - y : np.ndarray [shape=(n,)]
           Time series to frame. Must be contiguous in memory
 
-      - frame_length : int > 0
+      - frame_length : int > 0 [scalar]
           Length of the frame in samples
 
-      - hop_length : int > 0
+      - hop_length : int > 0 [scalar]
           Number of samples to hop between frames
 
     :returns:
-      - y_frames : np.ndarray, shape=(frame_length, N_FRAMES)
+      - y_frames : np.ndarray [shape=(frame_length, N_FRAMES)]
           An array of frames sampled from ``y``:
           ``y_frames[i, j] == y[j * hop_length + i]``
 
     :raises:
       - ValueError
           If ``y`` is not contiguous in memory, framing is invalid.
-          See ``numpy.ascontiguous()`` for details.
+          See ``np.ascontiguous()`` for details.
 
           If ``hop_length < 1``, frames cannot advance.
     '''
 
     if hop_length < 1:
-        raise ValueError('Invalid hop_length: %d' % hop_length)
+        raise ValueError('Invalid hop_length: {:d}'.format(hop_length))
 
     if not y.flags['C_CONTIGUOUS']:
         raise ValueError('Input buffer must be contiguous.')
@@ -82,8 +83,8 @@ def frame(y, frame_length=2048, hop_length=512):
     return y_frames
 
 
-def pad_center(data, size, **kwargs):
-    '''Wrapper for np.pad to automatically center a vector prior to padding.
+def pad_center(data, size, axis=-1, **kwargs):
+    '''Wrapper for np.pad to automatically center an array prior to padding.
     This is analogous to ``str.center()``
 
     :usage:
@@ -91,25 +92,48 @@ def pad_center(data, size, **kwargs):
         >>> window = scipy.signal.hann(256)
         >>> # Center and pad it out to length 1024
         >>> window = librosa.util.pad_center(window, 1024, mode='constant')
+        >>> # Pad a matrix along its first dimension
+        >>> A = np.ones((3, 5))
+        >>> Apad = librosa.util.pad_center(A, 7, axis=0)
+        >>> # Or its second dimension
+        >>> Apad = librosa.util.pad_center(A, 7, axis=1)
 
     :parameters:
-        - data : np.ndarray, ndim=1
+        - data : np.ndarray
             Vector to be padded and centered
 
-        - size : int >= len(data)
+        - size : int >= len(data) [scalar]
             Length to pad ``data``
 
+        - axis : int
+            Axis along which to pad and center the data
+
         - *kwargs*
-            Additional keyword arguments passed to ``numpy.pad()``
+            Additional keyword arguments passed to ``np.pad()``
 
     :returns:
-        - data_padded : np.ndarray, ndim=1
-            ``data`` centered and padded to length ``size``
+        - data_padded : np.ndarray
+            ``data`` centered and padded to length ``size`` along the
+            specified axis
+
+    :raises:
+        - ValueError
+            If ``size < data.shape[axis]``
     '''
 
     kwargs.setdefault('mode', 'constant')
-    lpad = (size - len(data))/2
-    return np.pad(data, (lpad, size - len(data) - lpad), **kwargs)
+
+    n = data.shape[axis]
+
+    lpad = int((size - n) / 2)
+
+    lengths = [(0, 0)] * data.ndim
+    lengths[axis] = (lpad, size - n - lpad)
+
+    if lpad < 0:
+        raise ValueError('Target size {:d} < input size {:d}'.format(size, n))
+
+    return np.pad(data, lengths, **kwargs)
 
 
 def fix_length(y, n, **kwargs):
@@ -119,17 +143,17 @@ def fix_length(y, n, **kwargs):
     By default, ``y`` is padded with trailing zeros.
 
     :parameters:
-      - y : np.ndarray, shape=(m,)
+      - y : np.ndarray [shape=(m,)]
           one-dimensional array
 
-      - n : int >= 0
+      - n : int >= 0 [scalar]
           desired length of the array
 
       - *kwargs*
-          Additional keyword arguments.  See ``numpy.pad()``
+          Additional keyword arguments.  See ``np.pad()``
 
     :returns:
-      - y : np.ndarray, shape=(n, 1)
+      - y : np.ndarray [shape=(n,)]
           ``y`` either trimmed or padded to length ``n``
     '''
 
@@ -165,16 +189,16 @@ def axis_sort(S, axis=-1, index=False, value=None):
         >>> # np.dot(W_sort, H_sort) == np.dot(W, H)
 
     :parameters:
-      - S : np.ndarray, ndim=2
+      - S : np.ndarray [shape=(d, n)]
           Array to be sorted
 
-      - axis : int
+      - axis : int [scalar]
           The axis along which to sort.
 
           - ``axis=0`` to sort rows by peak column index
           - ``axis=1`` to sort columns by peak row index
 
-      - index : boolean
+      - index : boolean [scalar]
           If true, returns the index array as well as the permuted data.
 
       - value : function
@@ -182,11 +206,12 @@ def axis_sort(S, axis=-1, index=False, value=None):
           Default: ``np.argmax``.
 
     :returns:
-      - S_sort : np.ndarray
+      - S_sort : np.ndarray [shape=(d, n)]
           ``S`` with the columns or rows permuted in sorting order
 
-      - idx : np.ndarray (optional)
+      - idx : np.ndarray (optional) [shape=(d,) or (n,)]
         If ``index == True``, the sorting index used to permute ``S``.
+        Length of ``idx`` corresponds to the selected ``axis``.
 
     :raises:
       - ValueError
@@ -218,7 +243,7 @@ def normalize(S, norm=np.inf, axis=0):
     '''Normalize the columns or rows of a matrix
 
     :parameters:
-      - S : np.ndarray
+      - S : np.ndarray [shape=(d, n)]
           The matrix to normalize
 
       - norm : {inf, -inf, 0, float > 0}
@@ -228,12 +253,12 @@ def normalize(S, norm=np.inf, axis=0):
           - float  : corresponding l_p norm.
             See ``scipy.linalg.norm`` for details.
 
-      - axis : int
+      - axis : int [scalar]
           Axis along which to compute the norm.
           ``axis=0`` will normalize columns, ``axis=1`` will normalize rows.
 
     :returns:
-      - S_norm : np.ndarray
+      - S_norm : np.ndarray [shape=S.shape]
           Normalized matrix
 
     .. note::
@@ -269,18 +294,18 @@ def match_intervals(intervals_from, intervals_to):
     This can be useful for mapping beat timings to segments.
 
     :parameters:
-      - intervals_from : ndarray, shape=(n, 2)
+      - intervals_from : ndarray [shape=(n, 2)]
           The time range for source intervals.
           The ``i`` th interval spans time ``intervals_from[i, 0]``
           to ``intervals_from[i, 1]``.
           ``intervals_from[0, 0]`` should be 0, ``intervals_from[-1, 1]``
           should be the track duration.
 
-      - intervals_to : ndarray, shape=(m, 2)
+      - intervals_to : ndarray [shape=(m, 2)]
           Analogous to ``intervals_from``.
 
     :returns:
-      - interval_mapping : ndarray, shape=(n,)
+      - interval_mapping : ndarray [shape=(n,)]
           For each interval in ``intervals_from``, the
           corresponding interval in ``intervals_to``.
     '''
@@ -508,15 +533,75 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
         if self.target is not None:
             # If we have a target, each element of X takes the keyword argument
             if self.iterate:
-                return [self.function(**dict(self.kwargs.items()
-                                             + {self.target: item}.items()))
-                        for item in X]
+                return [self.function(**dict(list(self.kwargs.items())
+                                             + list({self.target: i}.items())))
+                        for i in X]
             else:
-                return self.function(**dict(self.kwargs.items()
-                                            + {self.target: X}.items()))
+                return self.function(**dict(list(self.kwargs.items())
+                                            + list({self.target: X}.items())))
         else:
             # Each element of X takes first position in function()
             if self.iterate:
-                return [self.function(item, **self.kwargs) for item in X]
+                return [self.function(i, **self.kwargs) for i in X]
             else:
                 return self.function(X, **self.kwargs)
+
+
+def buf_to_int(x, n_bytes=2):
+    """Convert a floating point buffer into integer values.
+    This is primarily useful as an intermediate step in wav output.
+
+    .. seealso:: :func:`librosa.util.buf_to_float`
+
+    :parameters:
+        - x : np.ndarray [dtype=float]
+            Floating point data buffer
+
+        - n_bytes : int [1, 2, 4]
+            Number of bytes per output sample
+
+    :returns:
+        - x_int : np.ndarray [dtype=int]
+            The original buffer cast to integer type.
+    """
+
+    # What is the scale of the input data?
+    scale = float(1 << ((8 * n_bytes) - 1))
+
+    # Construct a format string
+    fmt = '<i{:d}'.format(n_bytes)
+
+    # Rescale and cast the data
+    return (x * scale).astype(fmt)
+
+
+def buf_to_float(x, n_bytes=2, dtype=np.float32):
+    """Convert an integer buffer to floating point values.
+    This is primarily useful when loading integer-valued wav data
+    into numpy arrays.
+
+    .. seealso:: :func:`librosa.util.buf_to_float`
+
+    :parameters:
+        - x : np.ndarray [dtype=int]
+            The integer-valued data buffer
+
+        - n_bytes : int [1, 2, 4]
+            The number of bytes per sample in ``x``
+
+        - dtype : numeric type
+            The target output type (default: 32-bit float)
+
+    :return:
+        - x_float : np.ndarray [dtype=float]
+            The input data buffer cast to floating point
+    """
+
+    # Invert the scale of the data
+    scale = 1./float(1 << ((8 * n_bytes) - 1))
+
+    # Construct the format string
+    fmt = '<i{:d}'.format(n_bytes)
+
+    # Rescale and format the data buffer
+    return scale * np.frombuffer(x, fmt).astype(dtype)
