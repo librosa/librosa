@@ -5,6 +5,7 @@
 import numpy as np
 import scipy.signal
 import librosa
+from builtins import range
 
 
 def dct(n_filters, n_input):
@@ -34,7 +35,7 @@ def dct(n_filters, n_input):
 
     samples = np.arange(1, 2*n_input, 2) * np.pi / (2.0 * n_input)
 
-    for i in xrange(1, n_filters):
+    for i in range(1, n_filters):
         basis[i, :] = np.cos(i*samples) * np.sqrt(2.0/n_input)
 
     return basis
