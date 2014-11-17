@@ -121,7 +121,10 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
                 y = y.reshape((-1, 2)).T
 
     if sr is not None:
-        y = resample(y, sr_native, sr)
+        if y.ndim > 1:
+            y = np.vstack([resample(yi, sr_native, sr) for yi in y])
+        else:
+            y = resample(y, sr_native, sr)
     else:
         sr = sr_native
 
