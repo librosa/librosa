@@ -11,6 +11,7 @@ import numpy as np
 import numpy.fft as fft
 import scipy.signal
 import scipy.ndimage
+from builtins import range
 
 from . import filters
 from . import feature
@@ -358,7 +359,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
     n_columns = int(_MAX_MEM_BLOCK / (stft_matrix.shape[0]
                                       * stft_matrix.itemsize))
 
-    for bl_s in xrange(0, stft_matrix.shape[1], n_columns):
+    for bl_s in range(0, stft_matrix.shape[1], n_columns):
         bl_t = min(bl_s + n_columns, stft_matrix.shape[1])
 
         # RFFT and Conjugate here to match phase from DPWE code
