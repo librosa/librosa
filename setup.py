@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='librosa',
-    version='0.3.1',
+    version='0.3.2',
     description='Python module for audio and music processing',
     author='Brian McFee',
     author_email='brian.mcfee@nyu.edu',
