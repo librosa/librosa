@@ -4,6 +4,7 @@
 
 import numpy as np
 import librosa
+from builtins import range
 
 def test_frame():
 
@@ -14,7 +15,7 @@ def test_frame():
         y = np.random.randn(8000)
         y_frame = librosa.util.frame(y, frame_length=frame, hop_length=hop)
 
-        for i in xrange(y_frame.shape[1]):
+        for i in range(y_frame.shape[1]):
             assert np.allclose(y_frame[:, i], y[ i * hop : (i * hop + frame)])
 
     for frame in [256, 1024, 2048]:
