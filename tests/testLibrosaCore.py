@@ -20,6 +20,7 @@
 #   fuzz-testing here, so behavior on invalid inputs is not yet well-defined.
 #
 
+from __future__ import print_function
 import librosa
 import glob
 import numpy as np
@@ -96,7 +97,7 @@ def test_stft():
 
         if DATA['hann_w'][0,0] == 0:
             # Set window to ones, swap back to nfft
-            print 'Got hann_w == 0'
+            print('Got hann_w == 0')
             window = np.ones
             win_length = None
 
