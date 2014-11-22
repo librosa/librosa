@@ -11,7 +11,10 @@ import numpy as np
 import numpy.fft as fft
 import scipy.signal
 import scipy.ndimage
-from builtins import range
+try:
+    from builtins import range
+except ImportError:
+    from __builtin__ import range
 
 from . import filters
 from . import feature
@@ -85,15 +88,9 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
         else:
             s_end = s_start + int(np.ceil(sr_native * duration)
                                   * input_file.channels)
-            if sr is not None:
-                # Add some extra frames to avoid problems in resampling.
-                # Any excess is trimmed off below after resampling.
-                s_end += input_file.channels * int(np.ceil(float(sr_native)/sr))
 
         y = []
         n = 0
-
-        output_chans = 1 if mono else input_file.channels
 
         for frame in input_file:
             frame = util.buf_to_float(frame, dtype=dtype)
@@ -132,14 +129,6 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
             y = np.vstack([resample(yi, sr_native, sr) for yi in y])
         else:
             y = resample(y, sr_native, sr)
-        s_end = s_start + int(np.ceil(sr_native * duration)
-                                  * input_file.channels)
-        # Trim off any extra frames resulting from pre-padding above.
-        expected_len = int(round(sr * duration)) * output_chans
-        if y.ndim > 1:
-            y = y[:,:expected_len]
-        else
-            y = y[:expected_len]
 
     else:
         sr = sr_native
