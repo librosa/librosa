@@ -22,10 +22,10 @@
 #
 
 import librosa
-import os, glob
-import numpy, scipy.io
+import glob
+import numpy
+import scipy.io
 
-from nose.tools import nottest
 
 #-- utilities --#
 def files(pattern):
@@ -38,36 +38,39 @@ def load(infile):
     return DATA
 #--           --#
 
+
 #-- Tests     --#
 def test_hz_to_mel():
     def __test_to_mel(infile):
-        DATA    = load(infile)
-        z       = librosa.hz_to_mel(DATA['f'], DATA['htk'])
+        DATA = load(infile)
+        z = librosa.hz_to_mel(DATA['f'], DATA['htk'])
 
         assert numpy.allclose(z, DATA['result'])
-    
+
     for infile in files('data/feature-hz_to_mel-*.mat'):
         yield (__test_to_mel, infile)
 
     pass
 
+
 def test_mel_to_hz():
 
     def __test_to_hz(infile):
-        DATA    = load(infile)
-        z       = librosa.mel_to_hz(DATA['f'], DATA['htk'])
+        DATA = load(infile)
+        z = librosa.mel_to_hz(DATA['f'], DATA['htk'])
 
         assert numpy.allclose(z, DATA['result'])
-    
+
     for infile in files('data/feature-mel_to_hz-*.mat'):
         yield (__test_to_hz, infile)
 
     pass
 
+
 def test_hz_to_octs():
     def __test_to_octs(infile):
-        DATA    = load(infile)
-        z       = librosa.hz_to_octs(DATA['f'])
+        DATA = load(infile)
+        z = librosa.hz_to_octs(DATA['f'])
 
         assert numpy.allclose(z, DATA['result'])
 
@@ -76,22 +79,25 @@ def test_hz_to_octs():
 
     pass
 
+
 def test_melfb():
 
     def __test(infile):
-        DATA    = load(infile)
+        DATA = load(infile)
 
-        wts = librosa.filters.mel( DATA['sr'][0], 
-                                    DATA['nfft'][0], 
-                                    n_mels  =   DATA['nfilts'][0],
-                                    fmin    =   DATA['fmin'][0],
-                                    fmax    =   DATA['fmax'][0],
-                                    htk     =   DATA['htk'][0])
+        wts = librosa.filters.mel(DATA['sr'][0],
+                                  DATA['nfft'][0],
+                                  n_mels=DATA['nfilts'][0],
+                                  fmin=DATA['fmin'][0],
+                                  fmax=DATA['fmax'][0],
+                                  htk=DATA['htk'][0])
 
         # Our version only returns the real-valued part.
         # Pad out.
-        wts = numpy.pad(wts, [ (0, 0), (0, int(DATA['nfft'][0]/2 - 1))], mode='constant')
-                                
+        wts = numpy.pad(wts, [(0, 0),
+                              (0, int(DATA['nfft'][0]/2 - 1))],
+                        mode='constant')
+
         assert wts.shape == DATA['wts'].shape
 
         assert numpy.allclose(wts, DATA['wts'])
@@ -100,26 +106,29 @@ def test_melfb():
         yield (__test, infile)
     pass
 
+
 def test_chromafb():
 
     def __test(infile):
-        DATA    = load(infile)
+        DATA = load(infile)
 
-        octwidth = DATA['octwidth'][0,0]
+        octwidth = DATA['octwidth'][0, 0]
         if octwidth == 0:
             octwidth = None
 
-        wts = librosa.filters.chroma( DATA['sr'][0,0], 
-                                        DATA['nfft'][0,0], 
-                                        DATA['nchroma'][0,0],
-                                        A440    =   DATA['a440'][0,0],
-                                        ctroct  =   DATA['ctroct'][0,0],
-                                        octwidth=   octwidth)
+        wts = librosa.filters.chroma(DATA['sr'][0, 0],
+                                     DATA['nfft'][0, 0],
+                                     DATA['nchroma'][0, 0],
+                                     A440=DATA['a440'][0, 0],
+                                     ctroct=DATA['ctroct'][0, 0],
+                                     octwidth=octwidth)
 
         # Our version only returns the real-valued part.
         # Pad out.
-        wts = numpy.pad(wts, [ (0, 0), (0, DATA['nfft'][0,0]/2 - 1)], mode='constant')
-                                
+        wts = numpy.pad(wts, [(0, 0),
+                              (0, int(DATA['nfft'][0, 0]/2 - 1))],
+                        mode='constant')
+
         assert wts.shape == DATA['wts'].shape
 
         assert numpy.allclose(wts, DATA['wts'])

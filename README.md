@@ -1,7 +1,5 @@
 librosa
 =======
-[![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.10705.png)](http://dx.doi.org/10.5281/zenodo.10705)
-
 A python package for music and audio analysis.  The primary purpose of librosa is to implement common tools for low- and high-level signal-based music analysis.
 
 
@@ -42,3 +40,20 @@ or
 git clone https://github.com/bmcfee/librosa.git
 easy_install librosa
 ```
+
+
+Discussion
+----------
+
+Please direct non-development questions and discussion topics to our web forum at 
+https://groups.google.com/forum/#!forum/librosa 
+
+
+Citing
+------
+
+Please refer to the Zenodo link below for citation information.
+
+[![DOI](https://zenodo.org/badge/doi/10.5072/zenodo.12714.png)](http://dx.doi.org/10.5072/zenodo.12714)
+
+
