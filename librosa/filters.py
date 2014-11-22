@@ -5,10 +5,7 @@
 import numpy as np
 import scipy.signal
 import librosa
-try:
-    from builtins import range
-except ImportError:
-    from __builtin__ import range
+from builtins import range
 
 
 def dct(n_filters, n_input):
