@@ -11,10 +11,7 @@ import numpy as np
 import numpy.fft as fft
 import scipy.signal
 import scipy.ndimage
-try:
-    from builtins import range
-except ImportError:
-    from __builtin__ import range
+from builtins import range
 
 from . import filters
 from . import feature
@@ -78,6 +75,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
           sampling rate of ``y``
     """
 
+    y = []
     with audioread.audio_open(os.path.realpath(path)) as input_file:
         sr_native = input_file.samplerate
 
@@ -89,7 +87,6 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
             s_end = s_start + int(np.ceil(sr_native * duration)
                                   * input_file.channels)
 
-        y = []
         n = 0
 
         for frame in input_file:
@@ -117,21 +114,27 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
             # tack on the current frame
             y.append(frame)
 
-        y = np.concatenate(y)
-        if input_file.channels > 1:
-            if mono:
-                y = 0.5 * (y[::2] + y[1::2])
-            else:
-                y = y.reshape((-1, 2)).T
+        if not len(y):
+            # Zero-length read
+            y = np.zeros(0, dtype)
 
-    if sr is not None:
-        if y.ndim > 1:
-            y = np.vstack([resample(yi, sr_native, sr) for yi in y])
         else:
-            y = resample(y, sr_native, sr)
+            y = np.concatenate(y)
 
-    else:
-        sr = sr_native
+            if input_file.channels > 1:
+                if mono:
+                    y = 0.5 * (y[::2] + y[1::2])
+                else:
+                    y = y.reshape((-1, 2)).T
+
+            if sr is not None:
+                if y.ndim > 1:
+                    y = np.vstack([resample(yi, sr_native, sr) for yi in y])
+                else:
+                    y = resample(y, sr_native, sr)
+
+            else:
+                sr = sr_native
 
     # Final cleanup for dtype and contiguity
     y = np.ascontiguousarray(y, dtype=dtype)
