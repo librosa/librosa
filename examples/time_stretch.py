@@ -3,6 +3,7 @@
 
 Demonstration of phase vocoder time stretching.
 '''
+from __future__ import print_function
 
 import argparse
 import sys
@@ -22,20 +23,20 @@ def stretch_demo(input_file, output_file, speed):
     '''
 
     # 1. Load the wav file, resample
-    print 'Loading ', input_file
+    print('Loading ', input_file)
 
     y, sr = librosa.load(input_file)
 
     # 2. Time-stretch through effects module
-    print 'Playing back at %3.f%% speed' % (speed * 100)
+    print('Playing back at {:3.0f}% speed'.format(speed * 100))
 
     y_stretch = librosa.effects.time_stretch(y, speed)
 
-    print 'Saving stretched audio to: ', output_file
+    print('Saving stretched audio to: ', output_file)
     librosa.output.write_wav(output_file, y_stretch, sr)
 
 
-def process_arguments():
+def process_arguments(args):
     '''Argparse function to get the program parameters'''
 
     parser = argparse.ArgumentParser(description='Time stretching example')
@@ -55,12 +56,12 @@ def process_arguments():
                         required=False,
                         help='speed')
 
-    return vars(parser.parse_args(sys.argv[1:]))
+    return vars(parser.parse_args(args))
 
 
 if __name__ == '__main__':
     # get the parameters
-    parameters = process_arguments()
+    parameters = process_arguments(sys.argv[1:])
 
     # Run the HPSS code
     stretch_demo(parameters['input_file'],

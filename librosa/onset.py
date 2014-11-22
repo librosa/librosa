@@ -15,7 +15,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64,
     """Basic onset detector.  Locate note onset events by picking peaks in an
     onset strength envelope.
 
-    See also: ``librosa.onset.onset_strength()``
+    See also: :func:`librosa.onset.onset_strength()`
 
     :usage:
         >>> # Get onset times from a signal
@@ -32,26 +32,26 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64,
                                                  sr, hop_length=64)
 
     :parameters:
-      - y          : np.ndarray
+      - y          : np.ndarray [shape=(n,)]
           audio time series
 
-      - sr         : int
+      - sr         : int > 0 [scalar]
           sampling rate of ``y``
 
-      - onset_envelope     : np.ndarray
+      - onset_envelope     : np.ndarray [shape=(m,)]
           (optional) pre-computed onset stength envelope
 
-      - hop_length : int
+      - hop_length : int > 0 [scalar]
           hop length (in samples)
 
       - *kwargs*
           Additional parameters for peak picking
 
-          See ``librosa.core.peak_pick()`` for details
+          See :func:`librosa.core.peak_pick()` for details
 
     :returns:
 
-      - onsets : np.ndarray
+      - onsets : np.ndarray [shape=(n_onsets,)]
           estimated frame numbers of onsets
 
     :raises:
@@ -125,24 +125,24 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
                                                  fmax=8000)
 
     :parameters:
-      - y        : np.ndarray
+      - y        : np.ndarray [shape=(n,)]
           audio time-series
 
-      - sr       : int
+      - sr       : int > 0 [scalar]
           sampling rate of ``y``
 
-      - S        : np.ndarray
+      - S        : np.ndarray [shape=(d, m)]
           pre-computed (log-power) spectrogram
 
-      - detrend : bool
+      - detrend : bool [scalar]
           Filter the onset strength to remove the DC component
 
-      - centering : bool
+      - centering : bool [scalar]
           Shift the onset function by ``n_fft / (2 * hop_length)`` frames
 
       - feature : function
           Function for computing time-series features, eg, scaled spectrograms.
-          By default, uses ``librosa.feature.melspectrogram``
+          By default, uses :func:`librosa.feature.melspectrogram`
 
       - aggregate : function
           Aggregation function to use when combining onsets
@@ -155,7 +155,7 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
     .. note:: if ``S`` is provided, then ``(y, sr)`` are optional.
 
     :returns:
-      - onset_envelope   : np.ndarray
+      - onset_envelope   : np.ndarray [shape=(m,)]
           vector containing the onset strength envelope
 
     :raises:
@@ -197,7 +197,7 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
     # Counter-act framing effects. Shift the onsets by n_fft / hop_length
     if centering:
         onset_env = np.pad(onset_env,
-                           (n_fft / (2 * hop_length), 0),
+                           (int(n_fft / (2 * hop_length)), 0),
                            mode='constant')
 
     # remove the DC component
