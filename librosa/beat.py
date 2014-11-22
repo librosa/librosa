@@ -34,37 +34,37 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=64,
                                                    hop_length=hop_length)
 
     :parameters:
-      - y          : np.ndarray or None
+      - y          : np.ndarray [shape=(n,)] or None
           audio time series
 
-      - sr         : int > 0
+      - sr         : int > 0 [scalar]
           sampling rate of ``y``
 
-      - onset_envelope : np.ndarray or None
+      - onset_envelope : np.ndarray [shape=(n,)] or None
           (optional) pre-computed onset strength envelope
-          See ``librosa.onset.onset_strength``
+          See :func:`librosa.onset.onset_strength`
 
-      - hop_length : int > 0
+      - hop_length : int > 0 [scalar]
           number of audio samples between successive ``onset_envelope`` values
 
-      - start_bpm  : float > 0
+      - start_bpm  : float > 0 [scalar]
           initial guess for the tempo estimator (in beats per minute)
 
-      - tightness  : float
+      - tightness  : float [scalar]
           tightness of beat distribution around tempo
 
-      - trim       : bool
+      - trim       : bool [scalar]
           trim leading/trailing beats with weak onsets
 
-      - bpm        : float
+      - bpm        : float [scalar]
           (optional) If provided, use ``bpm`` as the tempo instead of
           estimating it from ``onsets``.
 
     :returns:
-      - tempo : float
+      - tempo : float [scalar]
           estimated global tempo (in beats per minute)
 
-      - beats : np.ndarray
+      - beats : np.ndarray [shape=(m,)]
           frame numbers of estimated beat events
 
     :raises:
@@ -120,33 +120,33 @@ def estimate_tempo(onset_envelope, sr=22050, hop_length=64, start_bpm=120,
                                                 hop_length=hop_length)
 
     :parameters:
-      - onset_envelope    : np.ndarray
+      - onset_envelope    : np.ndarray [shape=(n,)]
           onset strength envelope
-          See ``librosa.onset.onset_strength()`` for details.
+          See :func:`librosa.onset.onset_strength` for details.
 
-      - sr:       : int > 0
+      - sr:       : int > 0 [scalar]
           sampling rate of the time series
 
-      - hop_length : int > 0
+      - hop_length : int > 0 [scalar]
           hop length of the time series
 
-      - start_bpm : float
+      - start_bpm : float [scalar]
           initial guess of the BPM
 
-      - std_bpm : float > 0
+      - std_bpm : float > 0 [scalar]
           standard deviation of tempo distribution
 
-      - ac_size : float > 0
+      - ac_size : float > 0 [scalar]
           length (in seconds) of the auto-correlation window
 
-      - duration : float > 0
+      - duration : float > 0 [scalar]
           length of signal (in seconds) to use in estimating tempo
 
-      - offset : float > 0
+      - offset : float > 0 [scalar]
           offset (in seconds) of signal sample to use in estimating tempo
 
     :returns:
-      - tempo      : float
+      - tempo      : float [scalar]
           estimated tempo (beats per minute)
     """
 
@@ -195,19 +195,23 @@ def __beat_tracker(onset_envelope, bpm, fft_res, tightness, trim):
     """Internal function that tracks beats in an onset strength envelope.
 
     :parameters:
-      - onset_envelope   : np.ndarray
+      - onset_envelope   : np.ndarray [shape=(n,)]
           onset strength envelope
-      - bpm      : float
+
+      - bpm      : float [scalar]
           tempo estimate
-      - fft_res  : float
+
+      - fft_res  : float [scalar]
           resolution of the fft (sr / hop_length)
-      - tightness: float
+
+      - tightness: float [scalar]
           how closely do we adhere to bpm?
-      - trim     : bool
+
+      - trim     : bool [scalar]
           trim leading/trailing beats with weak onsets?
 
     :returns:
-      - beats    : np.ndarray
+      - beats    : np.ndarray [shape=(n,)]
           frame numbers of beat events
 
     """
@@ -231,7 +235,7 @@ def __beat_tracker(onset_envelope, bpm, fft_res, tightness, trim):
 
         # Are we on the first beat?
         first_beat = True
-        for i in xrange(len(localscore)):
+        for i, score_i in enumerate(localscore):
 
             # Are we reaching back before time 0?
             z_pad = np.maximum(0, min(- window[0], len(window)))
@@ -244,10 +248,10 @@ def __beat_tracker(onset_envelope, bpm, fft_res, tightness, trim):
             beat_location = np.argmax(candidates)
 
             # Add the local score
-            cumscore[i] = localscore[i] + candidates[beat_location]
+            cumscore[i] = score_i + candidates[beat_location]
 
             # Special case the first onset.  Stop if the localscore is small
-            if first_beat and localscore[i] < 0.01 * localscore.max():
+            if first_beat and score_i < 0.01 * localscore.max():
                 backlink[i] = -1
             else:
                 backlink[i] = window[beat_location]

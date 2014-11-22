@@ -6,6 +6,7 @@ Beat tracking with HPSS filtering
 
 Usage: ./hpss_beats.py [-h] input_audio.mp3 output_beats.csv
 '''
+from __future__ import print_function
 
 import argparse
 import numpy as np
@@ -32,15 +33,15 @@ def hpss_beats(input_file, output_csv):
     '''
 
     # Load the file
-    print 'Loading  ', input_file
+    print('Loading  ', input_file)
     y, sr = librosa.load(input_file)
 
     # Do HPSS
-    print 'Harmonic-percussive separation ... '
+    print('Harmonic-percussive separation ... ')
     y = librosa.effects.percussive(y)
 
     # Construct onset envelope from percussive component
-    print 'Tracking beats on percussive component'
+    print('Tracking beats on percussive component')
     onset_env = librosa.onset.onset_strength(y=y,
                                              sr=sr,
                                              hop_length=HOP_LENGTH,
@@ -57,11 +58,11 @@ def hpss_beats(input_file, output_csv):
                                         hop_length=HOP_LENGTH)
 
     # Save the output
-    print 'Saving beats to ', output_csv
+    print('Saving beats to ', output_csv)
     librosa.output.times_csv(output_csv, beat_times)
 
 
-def process_arguments():
+def process_arguments(args):
     '''Argparse function to get the program parameters'''
 
     parser = argparse.ArgumentParser(description='HPSS beat-tracking example')
@@ -74,12 +75,12 @@ def process_arguments():
                         action='store',
                         help='path to the output file (csv of beat times)')
 
-    return vars(parser.parse_args(sys.argv[1:]))
+    return vars(parser.parse_args(args))
 
 
 if __name__ == '__main__':
     # Get the parameters
-    parameters = process_arguments()
+    parameters = process_arguments(sys.argv[1:])
 
     # Run the beat tracker
     hpss_beats(parameters['input_file'], parameters['output_file'])

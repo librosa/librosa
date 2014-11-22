@@ -2,6 +2,7 @@
 # CREATED:2013-03-11 18:14:30 by Brian McFee <brm2132@columbia.edu>
 #  unit tests for librosa.beat
 
+from __future__ import print_function
 from nose.tools import nottest
 
 import numpy
@@ -53,8 +54,8 @@ def test_beat():
                                                onsets=DATA['onsetenv'][0])
 
         beat_times = librosa.frames_to_time(beats, sr=8000, hop_length=32)
-        print beat_times
-        print DATA['beats']
+        print(beat_times)
+        print(DATA['beats'])
         assert numpy.allclose(beat_times, DATA['beats'])
         pass
     for infile in files('data/beat-beat-*.mat'):
