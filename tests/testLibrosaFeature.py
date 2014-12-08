@@ -21,6 +21,13 @@
 #   fuzz-testing here, so behavior on invalid inputs is not yet well-defined.
 #
 
+# Disable cache
+import os
+try:
+    os.environ.pop('LIBROSA_CACHE_DIR')
+except:
+    pass
+
 import librosa
 import glob
 import numpy

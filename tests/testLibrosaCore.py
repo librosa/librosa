@@ -21,6 +21,13 @@
 #
 
 from __future__ import print_function
+# Disable cache
+import os
+try:
+    os.environ.pop('LIBROSA_CACHE_DIR')
+except:
+    pass
+
 import librosa
 import glob
 import numpy as np
