@@ -10,6 +10,7 @@ import pkg_resources
 from numpy.lib.stride_tricks import as_strided
 from sklearn.base import BaseEstimator, TransformerMixin
 
+from . import cache
 
 EXAMPLE_AUDIO = 'example_data/Kevin_MacLeod_-_Vibe_Ace.mp3'
 
@@ -83,6 +84,7 @@ def frame(y, frame_length=2048, hop_length=512):
     return y_frames
 
 
+@cache
 def pad_center(data, size, axis=-1, **kwargs):
     '''Wrapper for np.pad to automatically center an array prior to padding.
     This is analogous to ``str.center()``
@@ -136,6 +138,7 @@ def pad_center(data, size, axis=-1, **kwargs):
     return np.pad(data, lengths, **kwargs)
 
 
+@cache
 def fix_length(y, n, **kwargs):
     '''Fix the length of a one-dimensional array ``y`` to exactly ``n``.
 
@@ -168,6 +171,7 @@ def fix_length(y, n, **kwargs):
     return y
 
 
+@cache
 def axis_sort(S, axis=-1, index=False, value=None):
     '''Sort an array along its rows or columns.
 
@@ -239,6 +243,7 @@ def axis_sort(S, axis=-1, index=False, value=None):
             return S[:, idx]
 
 
+@cache
 def normalize(S, norm=np.inf, axis=0):
     '''Normalize the columns or rows of a matrix
 
@@ -288,6 +293,7 @@ def normalize(S, norm=np.inf, axis=0):
     return S / length
 
 
+@cache
 def match_intervals(intervals_from, intervals_to):
     '''Match one set of time intervals to another.
 
@@ -547,6 +553,7 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
                 return self.function(X, **self.kwargs)
 
 
+@cache
 def buf_to_int(x, n_bytes=2):
     """Convert a floating point buffer into integer values.
     This is primarily useful as an intermediate step in wav output.
@@ -575,6 +582,7 @@ def buf_to_int(x, n_bytes=2):
     return (x * scale).astype(fmt)
 
 
+@cache
 def buf_to_float(x, n_bytes=2, dtype=np.float32):
     """Convert an integer buffer to floating point values.
     This is primarily useful when loading integer-valued wav data

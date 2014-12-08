@@ -8,8 +8,10 @@ import scipy.signal
 
 import librosa.core
 import librosa.feature
+from . import cache
 
 
+@cache
 def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64,
                  **kwargs):
     """Basic onset detector.  Locate note onset events by picking peaks in an
@@ -95,6 +97,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64,
     return librosa.core.peak_pick(onset_envelope, **kwargs)
 
 
+@cache
 def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
                    feature=None, aggregate=None, **kwargs):
     """Compute a spectral flux onset strength envelope.
