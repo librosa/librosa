@@ -2,6 +2,13 @@
 # CREATED:2014-01-18 14:09:05 by Brian McFee <brm2132@columbia.edu>
 # unit tests for util routines 
 
+# Disable cache
+import os
+try:
+    os.environ.pop('LIBROSA_CACHE_DIR')
+except:
+    pass
+
 import numpy as np
 import librosa
 from builtins import range
