@@ -4,6 +4,7 @@
 
 
 # And all the librosa sub-modules
+from . import cache
 from . import core
 from . import chord
 from . import beat

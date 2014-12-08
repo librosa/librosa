@@ -13,6 +13,7 @@ import scipy.signal
 import scipy.ndimage
 from builtins import range
 
+from . import cache
 from . import filters
 from . import feature
 from . import util
@@ -32,6 +33,8 @@ _MAX_MEM_BLOCK = 2**7 * 2**20
 
 
 # -- CORE ROUTINES --#
+# Load should never be cached, since we cannot verify that the contents of
+# 'path' are unchanged across calls.
 def load(path, sr=22050, mono=True, offset=0.0, duration=None,
          dtype=np.float32):
     """Load an audio file as a floating point time series.
@@ -141,7 +144,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
 
     return (y, sr)
 
-
+@cache
 def resample(y, orig_sr, target_sr, res_type='sinc_fastest', fix=True,
              **kwargs):
     """Resample a time series from orig_sr to target_sr
