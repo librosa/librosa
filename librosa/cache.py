@@ -19,10 +19,16 @@ class CacheManager(Memory):
     def __call__(self, function):
         '''Decorator function.  Adds an input/output cache to
         the specified function.'''
-        return self.cache(function)
+        if self.cachedir is not None:
+            return self.cache(function)
+        else:
+            return function
 
 # Instantiate the cache from the environment
-CACHE = CacheManager(os.environ.get('LIBROSA_CACHEDIR', None))
+CACHE = CacheManager(os.environ.get('LIBROSA_CACHE_DIR', None),
+                     mmap_mode=os.environ.get('LIBROSA_CACHE_MMAP', None),
+                     compress=os.environ.get('LIBROSA_CACHE_COMPRESS', False),
+                     verbose=os.environ.get('LIBROSA_CACHE_VERBOSE', 0))
 
 # Override the module's __call__ attribute
 sys.modules[__name__] = CACHE
