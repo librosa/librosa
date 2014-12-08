@@ -11,7 +11,9 @@ from . import cache
 
 @cache
 def dct(n_filters, n_input):
-    """Discrete cosine transform (DCT) basis
+    """Discrete cosine transform (DCT type-III) basis.
+
+    .. seealso:: http://en.wikipedia.org/wiki/Discrete_cosine_transform
 
     :usage:
         >>> # Compute MFCCs
@@ -28,7 +30,7 @@ def dct(n_filters, n_input):
 
     :returns:
       - dct_basis: np.ndarray [shape=(n_filters, n_input)]
-          DCT basis vectors
+          DCT (type-III) basis vectors
 
     """
 
