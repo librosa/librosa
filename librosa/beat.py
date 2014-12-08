@@ -9,8 +9,10 @@ import scipy.signal
 import librosa.core
 import librosa.feature
 import librosa.onset
+from . import cache
 
 
+@cache
 def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=64,
                start_bpm=120.0, tightness=400, trim=True, bpm=None):
     r'''Dynamic programming beat tracker.
@@ -110,6 +112,7 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=64,
     return (bpm, beats)
 
 
+@cache
 def estimate_tempo(onset_envelope, sr=22050, hop_length=64, start_bpm=120,
                    std_bpm=1.0, ac_size=4.0, duration=90.0, offset=0.0):
     """Estimate the tempo (beats per minute) from an onset envelope
@@ -191,6 +194,7 @@ def estimate_tempo(onset_envelope, sr=22050, hop_length=64, start_bpm=120,
     return start_bpm
 
 
+@cache
 def __beat_tracker(onset_envelope, bpm, fft_res, tightness, trim):
     """Internal function that tracks beats in an onset strength envelope.
 

@@ -9,8 +9,10 @@ import scipy.signal
 import sklearn.decomposition
 
 import librosa.core
+from . import cache
 
 
+@cache
 def decompose(S, n_components=None, transformer=None, sort=False):
     """Decompose a feature matrix.
 
@@ -88,6 +90,7 @@ def decompose(S, n_components=None, transformer=None, sort=False):
     return components, activations
 
 
+@cache
 def hpss(S, kernel_size=31, power=2.0, mask=False):
     """Median-filtering harmonic percussive source separation (HPSS).
 

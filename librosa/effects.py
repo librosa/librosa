@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 """Effects and filters for audio buffer data"""
 
-import numpy as np
-
 import librosa.core
 import librosa.decompose
 import librosa.util
+from . import cache
 
 
+@cache
 def hpss(y):
     '''Decompose an audio time series into harmonic and percussive components.
 
@@ -49,6 +49,7 @@ def hpss(y):
     return y_harm, y_perc
 
 
+@cache
 def harmonic(y):
     '''Extract harmonic elements from an audio time-series.
 
@@ -82,6 +83,7 @@ def harmonic(y):
     return y_harm
 
 
+@cache
 def percussive(y):
     '''Extract percussive elements from an audio time-series.
 
@@ -115,6 +117,7 @@ def percussive(y):
     return y_perc
 
 
+@cache
 def time_stretch(y, rate):
     '''Time-stretch an audio series by a fixed rate.
 
@@ -154,6 +157,7 @@ def time_stretch(y, rate):
     return y_stretch
 
 
+@cache
 def pitch_shift(y, sr, n_steps, bins_per_octave=12):
     '''Pitch-shift the waveform by ``n_steps`` half-steps.
 
