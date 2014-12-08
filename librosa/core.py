@@ -119,7 +119,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
 
         if not len(y):
             # Zero-length read
-            y = np.zeros(0, dtype)
+            y = np.zeros(0, dtype=dtype)
 
         else:
             y = np.concatenate(y)
