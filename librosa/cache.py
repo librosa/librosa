@@ -19,8 +19,23 @@ class CacheManager(Memory):
         '''Decorator function.  Adds an input/output cache to
         the specified function.'''
 
+        from decorator import FunctionMaker
+
+        def decorator_apply(dec, func):
+            """Decorate a function by preserving the signature even if dec
+            is not a signature-preserving decorator.
+
+            This recipe is derived from
+            http://micheles.googlecode.com/hg/decorator/documentation.html#id14
+            """
+
+            return FunctionMaker.create(
+                func, 'return decorated(%(signature)s)',
+                dict(decorated=dec(func)), __wrapped__=func)
+
         if self.cachedir is not None:
-            return self.cache(function)
+            return decorator_apply(self.cache, function)
+
         else:
             return function
 
