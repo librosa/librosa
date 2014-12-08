@@ -31,6 +31,8 @@ setup(
         'scikit-learn >= 0.14.0',
         'matplotlib',
         'future',
+        'joblib',
+        'decorator',
     ],
     extras_require={
         'resample': 'scikits.samplerate>=0.3'
