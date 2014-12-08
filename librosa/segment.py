@@ -10,7 +10,10 @@ import sklearn
 import sklearn.cluster
 import sklearn.feature_extraction
 
+from . import cache
 
+
+@cache
 def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
     '''Compute the binary recurrence matrix from a time-series.
 
@@ -101,6 +104,7 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
     return rec
 
 
+@cache
 def structure_feature(rec, pad=True, inverse=False):
     '''Compute the structure feature from a recurrence matrix.
 
@@ -163,6 +167,7 @@ def structure_feature(rec, pad=True, inverse=False):
     return np.ascontiguousarray(struct.T).T
 
 
+@cache
 def agglomerative(data, k, clusterer=None):
     """Bottom-up temporal segmentation.
 
@@ -204,7 +209,8 @@ def agglomerative(data, k, clusterer=None):
 
         # Instantiate the clustering object
         clusterer = sklearn.cluster.AgglomerativeClustering(n_clusters=k,
-                                                            connectivity=grid)
+                                                            connectivity=grid,
+                                                            memory=cache)
 
     # Fit the model
     clusterer.fit(data.T)
