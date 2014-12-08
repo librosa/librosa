@@ -68,7 +68,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
           data type of ``y``
 
     :returns:
-      - y    : np.ndarray [shape=(n,) or (n, 2)]
+      - y    : np.ndarray [shape=(n,) or (2, n)]
           audio time series
 
       - sr   : int > 0 [scalar]
