@@ -125,10 +125,9 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
             y = np.concatenate(y)
 
             if input_file.channels > 1:
+                y = y.reshape((-1, 2)).T
                 if mono:
-                    y = 0.5 * (y[::2] + y[1::2])
-                else:
-                    y = y.reshape((-1, 2)).T
+                    y = to_mono(y)
 
             if sr is not None:
                 if y.ndim > 1:
@@ -143,6 +142,23 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
     y = np.ascontiguousarray(y, dtype=dtype)
 
     return (y, sr)
+
+
+@cache
+def to_mono(y):
+    '''Force an audio signal down to mono.
+
+    :parameters:
+        - y : np.ndarray [shape=(2,n) or shape=(n,)]
+
+    :returns:
+        - y_mono : np.ndarray [shape=(n,)]
+    '''
+
+    if y.ndim > 1:
+        y = np.mean(y, axis=0)
+
+    return y
 
 
 @cache
