@@ -167,7 +167,6 @@ def structure_feature(rec, pad=True, inverse=False):
     return np.ascontiguousarray(struct.T).T
 
 
-@cache
 def agglomerative(data, k, clusterer=None):
     """Bottom-up temporal segmentation.
 
