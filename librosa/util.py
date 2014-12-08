@@ -553,7 +553,6 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
                 return self.function(X, **self.kwargs)
 
 
-@cache
 def buf_to_int(x, n_bytes=2):
     """Convert a floating point buffer into integer values.
     This is primarily useful as an intermediate step in wav output.
@@ -582,7 +581,6 @@ def buf_to_int(x, n_bytes=2):
     return (x * scale).astype(fmt)
 
 
-@cache
 def buf_to_float(x, n_bytes=2, dtype=np.float32):
     """Convert an integer buffer to floating point values.
     This is primarily useful when loading integer-valued wav data
