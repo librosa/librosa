@@ -13,6 +13,12 @@
 
 import sys, os
 
+# If librosa cache is enabled, disable it for now
+try:
+    os.environ.pop('LIBROSA_CACHE_DIR')
+except:
+    pass
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
