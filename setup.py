@@ -32,7 +32,6 @@ setup(
         'matplotlib',
         'future',
         'joblib',
-        'decorator',
     ],
     extras_require={
         'resample': 'scikits.samplerate>=0.3'
