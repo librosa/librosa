@@ -205,7 +205,6 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest', fix=True,
     return np.ascontiguousarray(y_hat, dtype=y.dtype)
 
 
-@cache
 def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                  center=True):
     """Compute the duration (in seconds) of an audio time series or STFT matrix.
@@ -842,7 +841,6 @@ def phase_vocoder(D, rate, hop_length=None):
 
 
 # -- FREQUENCY UTILITIES AND CONVERTERS -- #
-@cache
 def note_to_midi(note):
     '''Convert one or more spelled notes to MIDI number(s).
 
@@ -896,7 +894,6 @@ def note_to_midi(note):
     return 12 * octave + pitch_map[pitch] + offset
 
 
-@cache
 def midi_to_note(midi, octave=True, cents=False):
     '''Convert one or more MIDI numbers to note strings.
 
@@ -952,7 +949,6 @@ def midi_to_note(midi, octave=True, cents=False):
     return note
 
 
-@cache
 def midi_to_hz(notes):
     """Get the frequency (Hz) of MIDI note(s)
 
@@ -978,7 +974,6 @@ def midi_to_hz(notes):
     return 440.0 * (2.0 ** ((notes - 69.0)/12.0))
 
 
-@cache
 def hz_to_midi(frequencies):
     """Get the closest MIDI note number(s) for given frequencies
 
@@ -1001,7 +996,6 @@ def hz_to_midi(frequencies):
     return 12 * (np.log2(frequencies) - np.log2(440.0)) + 69
 
 
-@cache
 def hz_to_mel(frequencies, htk=False):
     """Convert Hz to Mels
 
@@ -1050,7 +1044,6 @@ def hz_to_mel(frequencies, htk=False):
     return mels
 
 
-@cache
 def mel_to_hz(mels, htk=False):
     """Convert mel bin numbers to frequencies
 
@@ -1094,7 +1087,6 @@ def mel_to_hz(mels, htk=False):
     return freqs
 
 
-@cache
 def hz_to_octs(frequencies, A440=440.0):
     """Convert frequencies (Hz) to (fractional) octave numbers.
 
@@ -1119,7 +1111,6 @@ def hz_to_octs(frequencies, A440=440.0):
     return np.log2(frequencies / (float(A440) / 16))
 
 
-@cache
 def octs_to_hz(octs, A440=440.0):
     """Convert octaves numbers to frequencies.
 
@@ -1145,7 +1136,6 @@ def octs_to_hz(octs, A440=440.0):
     return (float(A440) / 16)*(2.0**octs)
 
 
-@cache
 def fft_frequencies(sr=22050, n_fft=2048):
     '''Alternative implementation of ``np.fft.fftfreqs``
 
@@ -1172,7 +1162,6 @@ def fft_frequencies(sr=22050, n_fft=2048):
                        endpoint=True)
 
 
-@cache
 def cqt_frequencies(n_bins, fmin, bins_per_octave=12, tuning=0.0):
     """Compute the center frequencies of Constant-Q bins.
 
@@ -1211,7 +1200,6 @@ def cqt_frequencies(n_bins, fmin, bins_per_octave=12, tuning=0.0):
     return correction * fmin * frequencies
 
 
-@cache
 def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False,
                     extra=False):
     """Compute the center frequencies of mel bands
@@ -1262,7 +1250,6 @@ def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False,
     return mel_to_hz(mels, htk=htk)
 
 
-@cache
 # A-weighting should be capitalized: suppress the naming warning
 def A_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
     '''Compute the A-weighting of a set of frequencies.
@@ -1403,7 +1390,6 @@ def perceptual_weighting(S, frequencies, **kwargs):
 
 
 # -- UTILITIES -- #
-@cache
 def frames_to_time(frames, sr=22050, hop_length=512, n_fft=None):
     """Converts frame counts to time (seconds)
 
@@ -1449,7 +1435,6 @@ def frames_to_time(frames, sr=22050, hop_length=512, n_fft=None):
     return (frames * hop_length + offset) / float(sr)
 
 
-@cache
 def time_to_frames(times, sr=22050, hop_length=512, n_fft=None):
     """Converts time stamps into STFT frames.
 

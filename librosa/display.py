@@ -388,7 +388,6 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
     return axes
 
 
-@cache
 def __log_scale(n):
     '''Return a log-scale mapping of bins 0..n, and its inverse.
 
