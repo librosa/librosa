@@ -9,6 +9,8 @@ Project Modules
 
    librosa
 
+   cache
+
    glossary
 
 * :ref:`genindex`
