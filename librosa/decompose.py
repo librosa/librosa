@@ -12,7 +12,6 @@ import librosa.core
 from . import cache
 
 
-@cache
 def decompose(S, n_components=None, transformer=None, sort=False):
     """Decompose a feature matrix.
 
