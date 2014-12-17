@@ -7,9 +7,11 @@ import scipy.signal
 
 import librosa.core
 import librosa.util
+from . import cache
 
 
 # -- Chroma -- #
+@cache
 def logfsgram(y=None, sr=22050, S=None, n_fft=4096, hop_length=512, **kwargs):
     '''Compute a log-frequency spectrogram (piano roll) using a fixed-window STFT.
 
@@ -85,6 +87,7 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096, hop_length=512, **kwargs):
     return cq_basis.dot(S)
 
 
+@cache
 def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
                hop_length=512, tuning=None, **kwargs):
     """Compute a chromagram from a spectrogram or waveform
@@ -170,6 +173,7 @@ def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
 
 
 # -- Pitch and tuning -- #
+@cache
 def estimate_tuning(resolution=0.01, bins_per_octave=12, **kwargs):
     '''Estimate the tuning of an audio time series or spectrogram input.
 
@@ -219,6 +223,7 @@ def estimate_tuning(resolution=0.01, bins_per_octave=12, **kwargs):
                                         bins_per_octave=bins_per_octave)
 
 
+@cache
 def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     '''Given a collection of pitches, estimate its tuning offset
     (in fractions of a bin) relative to A440=440.0Hz.
@@ -278,6 +283,7 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     return tuning[np.argmax(counts)]
 
 
+@cache
 def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=None,
              fmax=None, threshold=0.75):
     '''Instantaneous pitch frequency tracking.
@@ -428,6 +434,7 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=None,
     return pitches, magnitudes, D
 
 
+@cache
 def piptrack(y=None, sr=22050, S=None, n_fft=4096, fmin=150.0,
              fmax=4000.0, threshold=.1):
     '''Pitch tracking on thresholded parabolically-interpolated STFT
@@ -535,6 +542,7 @@ def piptrack(y=None, sr=22050, S=None, n_fft=4096, fmin=150.0,
 
 
 # -- Mel spectrogram and MFCCs -- #
+@cache
 def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
     """Mel-frequency cepstral coefficients
 
@@ -584,6 +592,7 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
     return np.dot(librosa.filters.dct(n_mfcc, S.shape[0]), S)
 
 
+@cache
 def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                    **kwargs):
     """Compute a Mel-scaled power spectrogram.
@@ -645,6 +654,7 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
 
 # -- miscellaneous utilities -- #
+@cache
 def delta(data, width=9, order=1, axis=-1, trim=True):
     '''Compute delta features.
 
@@ -696,6 +706,7 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
     return delta_x
 
 
+@cache
 def stack_memory(data, n_steps=2, delay=1, **kwargs):
     """Short-term history embedding: vertically concatenate a data
     vector or matrix with delayed copies of itself.
@@ -784,6 +795,7 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
     return np.ascontiguousarray(history.T).T
 
 
+@cache
 def sync(data, frames, aggregate=None):
     """Synchronous aggregation of a feature matrix
 
