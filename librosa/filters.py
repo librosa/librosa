@@ -5,7 +5,6 @@
 import numpy as np
 import scipy.signal
 import librosa
-from builtins import range
 from . import cache
 
 
