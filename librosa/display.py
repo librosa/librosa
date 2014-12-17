@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import warnings
 
 import librosa.core
+from . import cache
 
 
 # This function wraps xticks or yticks: star-args is okay
@@ -111,6 +112,7 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
     return ticker(locs, times, **kwargs)
 
 
+@cache
 def cmap(data):
     '''Get a default colormap from the given data.
 

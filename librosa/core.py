@@ -12,6 +12,7 @@ import numpy.fft as fft
 import scipy.signal
 import scipy.ndimage
 
+from . import cache
 from . import filters
 from . import feature
 from . import util
@@ -31,6 +32,8 @@ _MAX_MEM_BLOCK = 2**7 * 2**20
 
 
 # -- CORE ROUTINES --#
+# Load should never be cached, since we cannot verify that the contents of
+# 'path' are unchanged across calls.
 def load(path, sr=22050, mono=True, offset=0.0, duration=None,
          dtype=np.float32):
     """Load an audio file as a floating point time series.
@@ -74,6 +77,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
           sampling rate of ``y``
     """
 
+    y = []
     with audioread.audio_open(os.path.realpath(path)) as input_file:
         sr_native = input_file.samplerate
 
@@ -85,7 +89,6 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
             s_end = s_start + int(np.ceil(sr_native * duration)
                                   * input_file.channels)
 
-        y = []
         n = 0
 
         for frame in input_file:
@@ -113,20 +116,26 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
             # tack on the current frame
             y.append(frame)
 
-        y = np.concatenate(y)
-        if input_file.channels > 1:
-            if mono:
-                y = 0.5 * (y[::2] + y[1::2])
-            else:
-                y = y.reshape((-1, 2)).T
+        if not len(y):
+            # Zero-length read
+            y = np.zeros(0, dtype=dtype)
 
-    if sr is not None:
-        if y.ndim > 1:
-            y = np.vstack([resample(yi, sr_native, sr) for yi in y])
         else:
-            y = resample(y, sr_native, sr)
-    else:
-        sr = sr_native
+            y = np.concatenate(y)
+
+            if input_file.channels > 1:
+                y = y.reshape((-1, 2)).T
+                if mono:
+                    y = to_mono(y)
+
+            if sr is not None:
+                if y.ndim > 1:
+                    y = np.vstack([resample(yi, sr_native, sr) for yi in y])
+                else:
+                    y = resample(y, sr_native, sr)
+
+            else:
+                sr = sr_native
 
     # Final cleanup for dtype and contiguity
     y = np.ascontiguousarray(y, dtype=dtype)
@@ -134,6 +143,24 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
     return (y, sr)
 
 
+@cache
+def to_mono(y):
+    '''Force an audio signal down to mono.
+
+    :parameters:
+        - y : np.ndarray [shape=(2,n) or shape=(n,)]
+
+    :returns:
+        - y_mono : np.ndarray [shape=(n,)]
+    '''
+
+    if y.ndim > 1:
+        y = np.mean(y, axis=0)
+
+    return y
+
+
+@cache
 def resample(y, orig_sr, target_sr, res_type='sinc_fastest', fix=True,
              **kwargs):
     """Resample a time series from orig_sr to target_sr
@@ -254,6 +281,7 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     return float(n_samples) / sr
 
 
+@cache
 def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
          center=True, dtype=np.complex64):
     """Short-time Fourier transform (STFT)
@@ -369,6 +397,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
     return stft_matrix
 
 
+@cache
 def istft(stft_matrix, hop_length=None, win_length=None, window=None,
           center=True, dtype=np.float32):
     """
@@ -460,6 +489,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
     return y
 
 
+@cache
 def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
            norm=False, center=True, dtype=np.complex64):
     '''Compute the instantaneous frequency (as a proportion of the sampling rate)
@@ -555,6 +585,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     return if_gram, stft_matrix
 
 
+@cache
 def magphase(D):
     """Separate a complex-valued spectrogram D into its magnitude (S)
     and phase (P) components, so that ``D = S * P``.
@@ -581,6 +612,7 @@ def magphase(D):
     return mag, phase
 
 
+@cache
 def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         bins_per_octave=12, tuning=None, resolution=2, res_type='sinc_best',
         aggregate=None):
@@ -743,6 +775,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     return np.ascontiguousarray(cqt_resp.T).T
 
 
+@cache
 def phase_vocoder(D, rate, hop_length=None):
     """Phase vocoder.  Given an STFT matrix D, speed up by a factor of ``rate``
 
@@ -1280,6 +1313,7 @@ def A_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
 
 
 # -- Magnitude scaling -- #
+@cache
 def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     """Log-scale the amplitude of a spectrogram.
 
@@ -1337,6 +1371,7 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     return log_spec
 
 
+@cache
 def perceptual_weighting(S, frequencies, **kwargs):
     '''Perceptual weighting of a power spectrogram:
 
@@ -1454,6 +1489,7 @@ def time_to_frames(times, sr=22050, hop_length=512, n_fft=None):
     return np.floor((times * np.float(sr) - offset) / hop_length).astype(int)
 
 
+@cache
 def autocorrelate(y, max_size=None):
     """Bounded auto-correlation
 
@@ -1490,6 +1526,7 @@ def autocorrelate(y, max_size=None):
     return result[:max_size]
 
 
+@cache
 def localmax(x, axis=0):
     """Find local maxima in an array ``x``.
 
@@ -1537,6 +1574,7 @@ def localmax(x, axis=0):
     return (x > x_pad[inds1]) & (x >= x_pad[inds2])
 
 
+@cache
 def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     '''Uses a flexible heuristic to pick peaks in a signal.
 
