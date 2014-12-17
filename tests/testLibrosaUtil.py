@@ -4,7 +4,6 @@
 
 import numpy as np
 import librosa
-from builtins import range
 
 def test_frame():
 
