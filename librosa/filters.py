@@ -5,8 +5,10 @@
 import numpy as np
 import scipy.signal
 import librosa
+from . import cache
 
 
+@cache
 def dct(n_filters, n_input):
     """Discrete cosine transform (DCT type-III) basis.
 
@@ -42,6 +44,7 @@ def dct(n_filters, n_input):
     return basis
 
 
+@cache
 def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
     """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins
 
@@ -107,6 +110,7 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
     return weights
 
 
+@cache
 def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=2):
     """Create a Filterbank matrix to convert STFT to chroma
 
@@ -185,6 +189,7 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=2):
     return np.ascontiguousarray(wts[:, :int(1 + n_fft/2)])
 
 
+@cache
 def logfrequency(sr, n_fft, n_bins=84, bins_per_octave=12, tuning=0.0,
                  fmin=None, spread=0.125):
     '''Approximate a constant-Q filterbank for a fixed-window STFT.
@@ -260,6 +265,7 @@ def logfrequency(sr, n_fft, n_bins=84, bins_per_octave=12, tuning=0.0,
     return basis
 
 
+@cache
 def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
                window=None, resolution=2, pad=False, **kwargs):
     r'''Construct a constant-Q basis.
@@ -356,6 +362,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     return filters
 
 
+@cache
 def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12, roll=0):
     '''Convert a Constant-Q basis to Chroma.
 
