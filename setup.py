@@ -30,7 +30,6 @@ setup(
         'scipy >= 0.13.0',
         'scikit-learn >= 0.14.0',
         'matplotlib',
-        'future',
     ],
     extras_require={
         'resample': 'scikits.samplerate>=0.3'
