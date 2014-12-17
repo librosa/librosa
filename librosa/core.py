@@ -11,7 +11,6 @@ import numpy as np
 import numpy.fft as fft
 import scipy.signal
 import scipy.ndimage
-from builtins import range
 
 from . import filters
 from . import feature
@@ -709,7 +708,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
         if zoom_factor > 0:
             # We need to aggregate.  Generate the boundary frames
-            bounds = list(range(0, my_cqt.shape[1], 2**(zoom_factor)))
+            bounds = list(np.arange(0, my_cqt.shape[1], 2**(zoom_factor)))
             my_cqt = feature.sync(my_cqt, bounds,
                                   aggregate=aggregate)
 
