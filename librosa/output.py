@@ -9,7 +9,7 @@ import scipy
 import scipy.io.wavfile
 
 import librosa.core
-import librosa.util
+from . import util
 
 
 def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
@@ -179,8 +179,8 @@ def write_wav(path, y, sr, normalize=True):
       - path : str
           path to save the output wav file
 
-      - y : np.ndarray [shape=(n,)]
-          audio time series
+      - y : np.ndarray [shape=(n,) or (2,n)]
+          audio time series (mono or stereo)
 
       - sr : int > 0 [scalar]
           sampling rate of ``y``
@@ -189,6 +189,9 @@ def write_wav(path, y, sr, normalize=True):
           enable amplitude normalization
     """
 
+    # Validate the buffer.  Stereo is okay here.
+    util.valid_audio(y, mono=False)
+
     # normalize
     if normalize:
         wav = y / np.max(np.abs(y))
@@ -196,7 +199,7 @@ def write_wav(path, y, sr, normalize=True):
         wav = y
 
     # Convert to 16bit int
-    wav = librosa.util.buf_to_int(wav)
+    wav = util.buf_to_int(wav)
 
     # Check for stereo
     if wav.ndim > 1 and wav.shape[0] == 2:
