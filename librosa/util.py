@@ -28,6 +28,17 @@ def example_audio_file():
     :returns:
         - filename : str
             Path to the audio example file included with librosa
+
+    .. raw:: html
+
+        <div xmlns:cc="http://creativecommons.org/ns#"
+             xmlns:dct="http://purl.org/dc/terms/"
+             about="http://freemusicarchive.org/music/Kevin_MacLeod/Jazz_Sampler/Vibe_Ace_1278">
+             <span property="dct:title">Vibe Ace</span>
+             (<a rel="cc:attributionURL" property="cc:attributionName"
+                 href="http://freemusicarchive.org/music/Kevin_MacLeod/">Kevin MacLeod</a>)
+             / <a rel="license" href="http://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>
+        </div>
     '''
 
     return pkg_resources.resource_filename(__name__, EXAMPLE_AUDIO)
