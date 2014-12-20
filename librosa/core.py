@@ -154,6 +154,9 @@ def to_mono(y):
         - y_mono : np.ndarray [shape=(n,)]
     '''
 
+    # Validate the buffer.  Stereo is ok here.
+    util.valid_audio(y, mono=False)
+
     if y.ndim > 1:
         y = np.mean(y, axis=0)
 
