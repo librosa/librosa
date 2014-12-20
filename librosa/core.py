@@ -202,6 +202,9 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest', fix=True,
 
     """
 
+    # First, validate the audio buffer
+    util.valid_audio(y)
+
     if orig_sr == target_sr:
         return y
 
@@ -240,7 +243,7 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         >>> d = librosa.get_duration(S=S_left, sr=sr)
 
     :parameters:
-      - y : np.ndarray [shape=(n,)] or None
+      - y : np.ndarray [shape=(n,), (2, n)] or None
           Audio time series
 
       - sr : int > 0 [scalar]
@@ -276,7 +279,12 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
             n_samples = n_samples - 2 * int(n_fft / 2)
 
     else:
-        n_samples = len(y)
+        # Validate the audio buffer.  Stereo is okay here.
+        util.valid_audio(y, mono=False)
+        if y.ndim == 1:
+            n_samples = len(y)
+        else:
+            n_samples = y.shape[-1]
 
     return float(n_samples) / sr
 
@@ -372,6 +380,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
 
     # Pad the time series so that frames are centered
     if center:
+        util.valid_audio(y)
         y = np.pad(y, int(n_fft / 2), mode='reflect')
 
     # Window the time series.

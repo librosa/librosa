@@ -47,7 +47,8 @@ def frame(y, frame_length=2048, hop_length=512):
 
     :parameters:
       - y : np.ndarray [shape=(n,)]
-          Time series to frame. Must be contiguous in memory
+          Time series to frame. Must be one-dimensional and contiguous
+          in memory.
 
       - frame_length : int > 0 [scalar]
           Length of the frame in samples
@@ -74,6 +75,8 @@ def frame(y, frame_length=2048, hop_length=512):
     if not y.flags['C_CONTIGUOUS']:
         raise ValueError('Input buffer must be contiguous.')
 
+    valid_audio(y)
+
     # Compute the number of frames that will fit. The end may get truncated.
     n_frames = 1 + int((len(y) - frame_length) / hop_length)
 
@@ -82,6 +85,40 @@ def frame(y, frame_length=2048, hop_length=512):
     y_frames = as_strided(y, shape=(frame_length, n_frames),
                           strides=(y.itemsize, hop_length * y.itemsize))
     return y_frames
+
+
+@cache
+def valid_audio(y, mono=True):
+    '''Validate whether a variable contains valid, mono audio data.
+
+    :parameters:
+        - y
+          The input data to validate
+
+        - mono : bool
+          Whether or not to force monophonic audio
+
+    :raises:
+        - ValueError
+          If `y` fails to meet the following criteria:
+            - `type(y)` is `np.ndarray`
+            - `mono == True` and `y.ndim` is not 1
+            - `mono == False` and `y.ndim` is not 1 or 2
+            - `np.isfinite(y).all()` is not True
+    '''
+
+    if not isinstance(y, np.ndarray):
+        raise ValueError('Data is not a numpy ndarray audio buffer.')
+
+    if mono and y.ndim != 1:
+        raise ValueError('Invalid shape for monophonic audio: '
+                         'ndim={:d}, shape={:s}'.format(y.ndim, y.shape))
+    elif y.ndim > 2:
+        raise ValueError('Invalid shape for audio: '
+                         'ndim={:d}, shape={:s}'.format(y.ndim, y.shape))
+
+    if not np.isfinite(y).all():
+        raise ValueError('Audio buffer is not finite everywhere.')
 
 
 @cache
@@ -161,6 +198,9 @@ def fix_length(y, n, **kwargs):
     '''
 
     kwargs.setdefault('mode', 'constant')
+
+    # Validate the audio buffer
+    valid_audio(y)
 
     if len(y) > n:
         return y[:n]
