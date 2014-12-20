@@ -31,7 +31,7 @@ sys.path.insert(0, os.path.abspath('../librosa'))
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -97,22 +97,22 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-import sphinx_bootstrap_theme
-html_theme = 'bootstrap'
+# import sphinx_bootstrap_theme
+html_theme = 'nature'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-html_theme_options = {
-    'bootswatch_theme':     'yeti', 
-    'bootstrap_version':    '3',
-    'navbar_title':         'LibROSA',
-    'source_link_position': None,
+# html_theme_options = {
+#     'bootswatch_theme':     'yeti', 
+#     'bootstrap_version':    '3',
+#     'navbar_title':         'LibROSA',
+#     'source_link_position': None,
 
-}
+# }
 
 # Add any paths that contain custom themes here, relative to this directory.
-html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
+# html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".

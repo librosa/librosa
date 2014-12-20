@@ -97,18 +97,18 @@ def valid_audio(y, mono=True):
 
     :parameters:
         - y
-          The input data to validate
+            The input data to validate
 
         - mono : bool
-          Whether or not to force monophonic audio
+            Whether or not to force monophonic audio
 
     :raises:
         - ValueError
-          If `y` fails to meet the following criteria:
-            - `type(y)` is `np.ndarray`
-            - `mono == True` and `y.ndim` is not 1
-            - `mono == False` and `y.ndim` is not 1 or 2
-            - `np.isfinite(y).all()` is not True
+            If `y` fails to meet the following criteria:
+              - `type(y)` is `np.ndarray`
+              - `mono == True` and `y.ndim` is not 1
+              - `mono == False` and `y.ndim` is not 1 or 2
+              - `np.isfinite(y).all()` is not True
     '''
 
     if not isinstance(y, np.ndarray):
