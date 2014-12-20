@@ -17,7 +17,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64,
     """Basic onset detector.  Locate note onset events by picking peaks in an
     onset strength envelope.
 
-    See also: :func:`librosa.onset.onset_strength()`
+    .. seealso:: :func:`librosa.onset.onset_strength()`
 
     :usage:
         >>> # Get onset times from a signal
