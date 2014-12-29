@@ -1370,7 +1370,7 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     magnitude = np.abs(S)
 
     if hasattr(ref_power, '__call__'):
-        # User supplied a window function
+        # User supplied a function to calculate reference power
         __ref = ref_power(magnitude)
     else:
         __ref = np.abs(ref_power)
