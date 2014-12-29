@@ -343,7 +343,7 @@ def normalize(S, norm=np.inf, axis=0):
         raise ValueError('Unsupported norm value: ' + repr(norm))
 
     # Avoid div-by-zero
-    length[length == 0] = 1.0
+    length[length < 1e-20] = 1.0
 
     return S / length
 
