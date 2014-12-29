@@ -581,7 +581,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
 
     # Compute power normalization. Suppress zeros.
     power = np.abs(stft_matrix)**2
-    power[power == 0] = 1.0
+    power[power < 1e-20] = 1.0
 
     # Pylint does not correctly infer the type here, but it's correct.
     # pylint: disable=maybe-no-member
