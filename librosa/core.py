@@ -30,6 +30,7 @@ except ImportError:
 # Constrain STFT block sizes to 128 MB
 _MAX_MEM_BLOCK = 2**7 * 2**20
 
+SMALL_FLOAT = 1e-20
 
 # -- CORE ROUTINES --#
 # Load should never be cached, since we cannot verify that the contents of
@@ -581,7 +582,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
 
     # Compute power normalization. Suppress zeros.
     power = np.abs(stft_matrix)**2
-    power[power < 1e-20] = 1.0
+    power[power < SMALL_FLOAT] = 1.0
 
     # Pylint does not correctly infer the type here, but it's correct.
     # pylint: disable=maybe-no-member
