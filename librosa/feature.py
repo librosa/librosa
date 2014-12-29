@@ -24,13 +24,13 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     :usage:
         >>> # From time-series input
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> librosa.feature.centroid(y=y, sr=sr)
+        >>> librosa.feature.spectral_centroid(y=y, sr=sr)
         array([  545.929,   400.609,   325.021, ...,  1701.903,  1621.184,
                 1591.604])
 
         >>> # From spectrogram input
         >>> S, phase = librosa.magphase(librosa.stft(y=y))
-        >>> librosa.feature.centroid(S=S)
+        >>> librosa.feature.spectral_centroid(S=S)
         array([  545.929,   400.609,   325.021, ...,  1701.903,  1621.184,
                 1591.604])
 
@@ -66,7 +66,7 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
           :func:`librosa.core.ifgram`
 
     :returns:
-      - cent : np.ndarray [shape=(t,)]
+      - centroid : np.ndarray [shape=(t,)]
           centroid frequencies
     '''
 
@@ -103,19 +103,56 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                        centroid=None, freq=None):
     '''Compute spectral bandwidth
 
+    :usage:
+        >>> # From time-series input
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> librosa.feature.spectral_bandwidth(y=y, sr=sr)
+        array([  1.252e+01,   3.854e+01,   5.932e+01, ...,   1.371e-01,
+                7.241e-02,   1.144e-02])
+
+        >>> # From spectrogram input
+        >>> S, phase = librosa.magphase(librosa.stft(y=y))
+        >>> librosa.feature.spectral_bandwidth(S=S)
+        array([  1.252e+01,   3.854e+01,   5.932e+01, ...,   1.371e-01,
+                7.241e-02,   1.144e-02])
+
+        >>> # Using variable bin center frequencies
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> if_gram, D = librosa.ifgram(y)
+        >>> librosa.feature.spectral_bandwidth(S=np.abs(D), freq=if_gram)
+        array([  1.255e+01,   3.853e+01,   5.932e+01, ...,   1.371e-01,
+                7.241e-02,   1.145e-02])
+
+
     :parameters:
-      - S : np.ndarray or None
-        stft spectrogram
+      - y : np.ndarray [shape=(n,)] or None
+          audio time series
 
-      - sr : int > 0
-        audio sampling rate of ``S``
+      - sr : int > 0 [scalar]
+          audio sampling rate of ``y``
 
-      - centroid : np.ndarray or None
-        centroid frequencies
+      - S : np.ndarray [shape=(d, t)] or None
+          (optional) power spectrogram
+
+      - n_fft : int > 0 [scalar]
+          FFT window size
+
+      - hop_length : int > 0 [scalar]
+          hop length for STFT. See :func:`librosa.core.stft` for details.
+
+      - centroid : None or np.ndarray [shape=(t,)]
+          pre-computed centroid frequencies
+
+      - freq : None or np.ndarray [shape=(d,) or shape=(d, t)]
+          Center frequencies for spectrogram bins.
+          If `None`, then FFT bin center frequencies are used.
+          Otherwise, it can be a single array of `d` center frequencies,
+          or a matrix of center frequencies as constructed by
+          :func:`librosa.core.ifgram`
 
     :returns:
-      - band : np.ndarray
-        bandwidth frequencies
+      - bandwidth : np.ndarray [shape=(t,)]
+          bandwidth frequencies
     '''
     # If we don't have a spectrogram, build one
     if S is None:
@@ -126,17 +163,18 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         n_fft = (S.shape[0] - 1) * 2
 
     if not np.isrealobj(S):
-        raise ValueError('Spectral centroid is only defined '
+        raise ValueError('Spectral bandwidth is only defined '
                          'with real-valued input')
     elif np.any(S < 0):
-        raise ValueError('Spectral centroid is only defined '
+        raise ValueError('Spectral bandwidth is only defined '
                          'with non-negative energies')
 
     # Column-normalize S
     S_norm = librosa.util.normalize(S, norm=1, axis=0)
 
     if centroid is None:
-        centroid = spectral_centroid(y=y, sr=sr, S=S, n_fft=n_fft,
+        centroid = spectral_centroid(y=y, sr=sr, S=S,
+                                     n_fft=n_fft,
                                      hop_length=hop_length,
                                      freq=freq)
 
@@ -148,6 +186,11 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         deviation = np.abs(np.subtract.outer(freq, centroid))
     else:
         deviation = np.abs(freq - centroid)
+
+    # TODO:   2014-12-29 18:00:19 by Brian McFee <brian.mcfee@nyu.edu>
+    #  it's not clear if we should use the normalized S here.
+    #  unnormalized means we're returning bandwidth in units of Watts,
+    #  rather than Hz
 
     return np.mean(S * deviation, axis=0)
 
