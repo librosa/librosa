@@ -15,7 +15,7 @@ except:
 import numpy as np
 import librosa
 
-from testLibrosaCore import files, load
+from test_core import files, load
 
 
 def test_onset_strength():
