@@ -194,7 +194,7 @@ def write_wav(path, y, sr, norm=True):
 
     # normalize
     if norm:
-        wav = y / np.max(np.abs(y))
+        wav = util.normalize(y, norm=np.inf, axis=None)
     else:
         wav = y
 
