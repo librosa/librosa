@@ -13,7 +13,8 @@ from . import cache
 
 
 @cache
-def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512):
+def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
+                      freq=None):
     '''Compute the spectral centroid.
 
     Each frame of a magnitude spectrogram is normalized and treated as a
@@ -33,6 +34,13 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512):
         array([  545.929,   400.609,   325.021, ...,  1701.903,  1621.184,
                 1591.604])
 
+        >>> # Using variable bin center frequencies
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> if_gram, D = librosa.ifgram(y)
+        >>> librosa.feature.spectral_centroid(S=np.abs(D), freq=if_gram)
+        array([  545.069,   400.764,   324.906, ...,  1701.78 ,  1621.139,
+                1590.362])
+
 
     :parameters:
       - y : np.ndarray [shape=(n,)] or None
@@ -50,6 +58,12 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512):
       - hop_length : int > 0 [scalar]
           hop length for STFT. See :func:`librosa.core.stft` for details.
 
+      - freq : None or np.ndarray [shape=(d,) or shape=(d, t)]
+          Center frequencies for spectrogram bins.
+          If `None`, then FFT bin center frequencies are used.
+          Otherwise, it can be a single array of `d` center frequencies,
+          or a matrix of center frequencies as constructed by
+          :func:`librosa.core.ifgram`
 
     :returns:
       - cent : np.ndarray [shape=(t,)]
@@ -64,41 +78,54 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512):
         # Infer n_fft from spectrogram shape
         n_fft = (S.shape[0] - 1) * 2
 
-    freq = librosa.core.fft_frequencies(sr=sr, n_fft=n_fft)
+    if not np.isrealobj(S):
+        raise ValueError('Spectral centroid is only defined '
+                         'with real-valued input')
+    elif np.any(S < 0):
+        raise ValueError('Spectral centroid is only defined '
+                         'with non-negative energies')
 
     # Column-normalize S
     S_norm = librosa.util.normalize(S, norm=1, axis=0)
 
-    return np.dot(freq, S_norm)
+    # Compute the center frequencies of each bin
+    if freq is None:
+        freq = librosa.core.fft_frequencies(sr=sr, n_fft=n_fft)
+
+    if freq.ndim == 1:
+        freq = freq.reshape((-1, 1))
+
+    return np.sum(freq * S_norm, axis=0)
 
 
-def bandwidth(S=None,centroid=None,sr=22050):
-  '''Compute spectral bandwidth
+@cache
+def spectral_bandwidth(S=None, centroid=None, sr=22050):
+    '''Compute spectral bandwidth
 
-  :parameters:
-  - S : np.ndarray or None
-  stft spectrogram
+    :parameters:
+      - S : np.ndarray or None
+        stft spectrogram
 
-  - sr : int > 0
-  audio sampling rate of ``S``
+      - sr : int > 0
+        audio sampling rate of ``S``
 
-  - centroid : np.ndarray or None
-  centroid frequencies
+      - centroid : np.ndarray or None
+        centroid frequencies
 
-  :returns:
-  - band : np.ndarray
-  bandwidth frequencies
-  '''
+    :returns:
+      - band : np.ndarray
+        bandwidth frequencies
+    '''
   
-  N,K = np.shape(S)
-  freq = np.transpose(np.linspace(0,sr/2,N))
-  freq = np.transpose(np.tile(freq,(K,1)))
-
-  centroid = np.tile(np.transpose(centroid),(N,1))
-
-  band = np.sum(np.multiply(S,np.absolute(freq-centroid)),axis=0)/N
-  
-  return band
+    N,K = np.shape(S)
+    freq = np.transpose(np.linspace(0,sr/2,N))
+    freq = np.transpose(np.tile(freq,(K,1)))
+    
+    centroid = np.tile(np.transpose(centroid),(N,1))
+    
+    band = np.sum(np.multiply(S,np.absolute(freq-centroid)),axis=0)/N
+    
+    return band
   
 
 def rolloff(S=None,sr=22050,roll_percent=0.85):
@@ -134,7 +161,7 @@ def rolloff(S=None,sr=22050,roll_percent=0.85):
   return roll
 
 
-def flux(S=None):
+def spectral_flux(S=None):
   '''Compute spectral flux
 
   :parameters:
@@ -153,6 +180,7 @@ def flux(S=None):
   fluxVals = np.sum(np.power(flux,2),axis=0)
 
   return fluxVals
+
 
 def spectral_contrast(S=None,sr=22050):
   '''Compute spectral contrast
