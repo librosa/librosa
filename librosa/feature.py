@@ -510,7 +510,7 @@ def piptrack(y=None, sr=22050, S=None, n_fft=4096, fmin=150.0,
     shift = 2 * S[1:-1] - S[2:] - S[:-2]
     # Suppress divide-by-zeros.
     # Points where shift == 0 will never be selected by localmax anyway
-    shift = avg / (shift + (shift == 0))
+    shift = avg / (shift + (shift < librosa.SMALL_FLOAT))
 
     # Pad back up to the same shape as S
     avg = np.pad(avg, ([1, 1], [0, 0]), mode='constant')

@@ -10,6 +10,7 @@ import pkg_resources
 from numpy.lib.stride_tricks import as_strided
 from sklearn.base import BaseEstimator, TransformerMixin
 
+import librosa.core
 from . import cache
 
 EXAMPLE_AUDIO = 'example_data/Kevin_MacLeod_-_Vibe_Ace.mp3'
@@ -344,7 +345,7 @@ def normalize(S, norm=np.inf, axis=0):
         raise ValueError('Unsupported norm value: ' + repr(norm))
 
     # Avoid div-by-zero
-    length[length < 1e-20] = 1.0
+    length[length < librosa.core.SMALL_FLOAT] = 1.0
 
     return S / length
 
