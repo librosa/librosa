@@ -99,7 +99,8 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
 
 @cache
-def spectral_bandwidth(S=None, centroid=None, sr=22050):
+def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
+                       centroid=None, freq=None):
     '''Compute spectral bandwidth
 
     :parameters:
@@ -116,19 +117,43 @@ def spectral_bandwidth(S=None, centroid=None, sr=22050):
       - band : np.ndarray
         bandwidth frequencies
     '''
-  
-    N,K = np.shape(S)
-    freq = np.transpose(np.linspace(0,sr/2,N))
-    freq = np.transpose(np.tile(freq,(K,1)))
-    
-    centroid = np.tile(np.transpose(centroid),(N,1))
-    
-    band = np.sum(np.multiply(S,np.absolute(freq-centroid)),axis=0)/N
-    
-    return band
-  
+    # If we don't have a spectrogram, build one
+    if S is None:
+        # By default, use a magnitude spectrogram
+        S = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length))
+    else:
+        # Infer n_fft from spectrogram shape
+        n_fft = (S.shape[0] - 1) * 2
 
-def rolloff(S=None,sr=22050,roll_percent=0.85):
+    if not np.isrealobj(S):
+        raise ValueError('Spectral centroid is only defined '
+                         'with real-valued input')
+    elif np.any(S < 0):
+        raise ValueError('Spectral centroid is only defined '
+                         'with non-negative energies')
+
+    # Column-normalize S
+    S_norm = librosa.util.normalize(S, norm=1, axis=0)
+
+    if centroid is None:
+        centroid = spectral_centroid(y=y, sr=sr, S=S, n_fft=n_fft,
+                                     hop_length=hop_length,
+                                     freq=freq)
+
+    # Compute the center frequencies of each bin
+    if freq is None:
+        freq = librosa.core.fft_frequencies(sr=sr, n_fft=n_fft)
+
+    if freq.ndim == 1:
+        deviation = np.abs(np.subtract.outer(freq, centroid))
+    else:
+        deviation = np.abs(freq - centroid)
+
+    return np.mean(S * deviation, axis=0)
+
+
+@cache
+def rolloff(S=None, sr=22050, roll_percent=0.85):
   '''Compute rolloff frequency
 
   :parameters:
@@ -161,6 +186,7 @@ def rolloff(S=None,sr=22050,roll_percent=0.85):
   return roll
 
 
+@cache
 def spectral_flux(S=None):
   '''Compute spectral flux
 
@@ -182,7 +208,8 @@ def spectral_flux(S=None):
   return fluxVals
 
 
-def spectral_contrast(S=None,sr=22050):
+@cache
+def spectral_contrast(S=None, sr=22050):
   '''Compute spectral contrast
 
   :parameters:
@@ -251,6 +278,8 @@ def spectral_contrast(S=None,sr=22050):
   cont = peak - valley
   return cont
 
+
+@cache
 def rms(S=None):
   '''Compute rms
 
@@ -267,7 +296,8 @@ def rms(S=None):
   return rms
 
 
-def line_features(S,order=1,sr=22050):
+@cache
+def line_features(S, order=1, sr=22050):
   '''Get coefficients of fitting an nth order polynomial to the data
 
   :parameters:
