@@ -316,6 +316,7 @@ def normalize(S, norm=np.inf, axis=0):
       - axis : int [scalar]
           Axis along which to compute the norm.
           ``axis=0`` will normalize columns, ``axis=1`` will normalize rows.
+          ''axis=None'' will normalize according to the entire matrix.
 
     :returns:
       - S_norm : np.ndarray [shape=S.shape]
