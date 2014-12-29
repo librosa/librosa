@@ -50,7 +50,7 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
           audio sampling rate of ``y``
 
       - S : np.ndarray [shape=(d, t)] or None
-          (optional) power spectrogram
+          (optional) spectrogram magnitude
 
       - n_fft : int > 0 [scalar]
           FFT window size
@@ -132,7 +132,7 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
           audio sampling rate of ``y``
 
       - S : np.ndarray [shape=(d, t)] or None
-          (optional) power spectrogram
+          (optional) spectrogram magnitude
 
       - n_fft : int > 0 [scalar]
           FFT window size
@@ -196,6 +196,72 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
 
 @cache
+def spectral_contrast(S=None, sr=22050):
+    '''Compute spectral contrast
+
+    :parameters:
+      - S : np.ndarray or None
+        stft spectrogram
+
+     - sr : int > 0
+        audio sampling rate of ``S``
+
+    :returns:
+      - cont : 7 np.ndarray's
+        each row of spectral contrast values corresponds to a given
+        octave based frequency
+    '''
+
+    K, numFrames = np.shape(S)
+
+    numBands = 6
+    octa = 200 * (2**np.arange(0, numBands+1))
+    octa = np.insert(octa, 0, 0)
+
+    valley = np.zeros((numBands + 1, numFrames))
+    peak = np.zeros((numBands + 1, numFrames))
+    cont = np.zeros((numBands + 1, numFrames))
+    col = 1
+
+    freq = np.linspace(0, sr/2, K)
+
+    for k in range(1, np.size(octa)):
+        current_band = 1*np.logical_and(np.where(freq >= octa[k-1], 1, 0),
+                                        np.where(freq <= octa[k], 1, 0))
+
+        if k > 1:
+            idx = np.nonzero(current_band == 1)[0]
+            idx = idx[0] + 1
+        current_band[idx-2] = 1
+
+        if k == np.size(octa) - 1:
+            idx = np.nonzero(current_band == 1)
+            idx = idx[-1]
+            idx = idx[-1] + 1
+        current_band[idx:np.size(current_band)+1] = 1
+
+        subBand = S[np.where(current_band == 1)]
+
+        if k < np.size(octa - 1) - 1:
+            subBand = subBand[0:-1][:]
+
+        if np.sum(current_band) < 50:
+            alph = 1
+        else:
+            alph = np.rint(0.02*np.sum(current_band))
+
+        alph = int(alph)
+        sortedr = np.sort(subBand, axis=0)
+
+        valley[k-1] = np.mean(sortedr[:alph], axis=0)
+
+        sortedr = sortedr[::-1]
+        peak[k-1] = np.mean(sortedr[:alph], axis=0)
+
+    return (peak - valley).T
+
+
+@cache
 def rolloff(S=None, sr=22050, roll_percent=0.85):
   '''Compute rolloff frequency
 
@@ -222,7 +288,7 @@ def rolloff(S=None, sr=22050, roll_percent=0.85):
   threshold = roll_percent*total_energy[-1,:]
   threshold = np.tile(threshold,(N,1))
 
-  ind = np.where(total_energy < threshold,np.nan,1)
+  ind = np.where(total_energy < threshold, np.nan, 1)
   freq = ind*freq
   roll = np.nanmin(freq,axis=0)
 
@@ -230,144 +296,68 @@ def rolloff(S=None, sr=22050, roll_percent=0.85):
 
 
 @cache
-def spectral_flux(S=None):
-  '''Compute spectral flux
+def rms(y=None, sr=22050, S=None, n_fft=2048, hop_length=512):
+    '''Compute root-mean-square (RMS) energy for each frame.
 
-  :parameters:
-  - S : np.ndarray or None
-  stft spectrogram
+    :parameters:
+      - y : np.ndarray [shape=(n,)] or None
+          audio time series
 
-  :returns:
-  - fluxVals : np.ndarray
-  spectral flux
-  '''
-  
-  N,K = np.shape(S)
+      - sr : int > 0 [scalar]
+          audio sampling rate of ``y``
 
-  delayed_spectrogram = np.concatenate((np.zeros((N,1)), S[:,0:-1]),1)
-  flux = S-delayed_spectrogram
-  fluxVals = np.sum(np.power(flux,2),axis=0)
+      - S : np.ndarray [shape=(d, t)] or None
+          (optional) spectrogram magnitude
 
-  return fluxVals
+      - n_fft : int > 0 [scalar]
+          FFT window size
 
+      - hop_length : int > 0 [scalar]
+          hop length for STFT. See :func:`librosa.core.stft` for details.
 
-@cache
-def spectral_contrast(S=None, sr=22050):
-  '''Compute spectral contrast
+    :returns:
+      - rms : np.ndarray [shape=(t,)]
+        RMS values
+    '''
 
-  :parameters:
-  - S : np.ndarray or None
-  stft spectrogram
+    # If we don't have a spectrogram, build one
+    if S is None:
+        # By default, use a magnitude spectrogram
+        S = librosa.stft(y, n_fft=n_fft, hop_length=hop_length)
 
-  - sr : int > 0
-  audio sampling rate of ``S``
-
-  :returns:
-  - cont : 7 np.ndarray's
-  each row of spectral contrast values corresponds to a given octave based frequency
-  '''
-
-  K, numFrames = np.shape(S)
-
-  numBands = 6
-  octa = 200*2**np.arange(0,numBands+1)
-  octa = np.insert(octa,0,0)
-
-  valley = np.zeros((numBands + 1,numFrames))
-  peak = np.zeros((numBands + 1,numFrames))
-  cont = np.zeros((numBands + 1,numFrames))
-  col = 1
-
-  freq = np.linspace(0,sr/2,K)
-
-  for k in range(1,np.size(octa)):
-    current_band = 1*np.logical_and(np.where(freq >= octa[k-1],1,0), np.where(freq <= octa[k],1,0))
-
-    if k > 1:
-      idx = np.nonzero(current_band == 1)[0]
-      idx = idx[0] + 1
-      current_band[idx-2] = 1
-
-      
-
-    if k == np.size(octa) - 1:
-      idx = np.nonzero(current_band == 1)
-      idx = idx[-1]
-      idx = idx[-1] + 1
-      current_band[idx:np.size(current_band)+1] = 1
-
-    
-    subBand = S[np.where(current_band==1)]
-
-    if k < np.size(octa - 1) - 1:
-      subBand = subBand[0:-1][:]
-
-    if np.sum(current_band) < 50:
-      alph = 1
-    else:
-      alph = np.rint(0.02*np.sum(current_band))
-
-
-    alph = int(alph)
-    sortedr = np.sort(subBand,axis=0)
-  
-    valley[k-1] = (1/alph)*np.sum(sortedr[0:alph],axis=0)
-
-    sortedr = sortedr[::-1]
-    peak[k-1] = (1/alph)*np.sum(sortedr[0:alph],axis=0)
-
-  peak = np.transpose(peak)
-  valley = np.transpose(valley)
-  cont = peak - valley
-  return cont
-
-
-@cache
-def rms(S=None):
-  '''Compute rms
-
-  :parameters:
-  - S : np.ndarray or None
-  stft spectrogram
-  :returns:
-  - rms : np.ndarray
-  RMS values
-  '''
-  N,K = np.shape(S)
-
-  rms = np.sqrt(np.sum(S*S,axis = 0)/N)
-  return rms
+    return np.sqrt(np.mean(np.abs(S)**2, axis=0))
 
 
 @cache
 def line_features(S, order=1, sr=22050):
-  '''Get coefficients of fitting an nth order polynomial to the data
+    '''Get coefficients of fitting an nth order polynomial to the data
 
-  :parameters:
-  - S : np.ndarray or None
-  stft spectrogram
+    :parameters:
+      - S : np.ndarray or None
+        stft spectrogram
 
-  - order : int > 0
-  order of polynimals to fit the line to
+      - order : int > 0
+        order of polynimals to fit the line to
 
-  - sr : int > 0
-  audio sampling rate of ``y``
+      - sr : int > 0
+        audio sampling rate of ``y``
 
-  :returns:
-  - 
-  '''
-  N,K = np.shape(S)
-  freq = np.transpose(np.linspace(0,sr/2,N))
+    :returns:
+      - 
+    '''
 
-  slope = np.zeros((1,K))
-  intercept = np.zeros((1,K))
+    N, K = np.shape(S)
+    freq = np.transpose(np.linspace(0, sr/2, N))
 
-  for k in range(0,K):
-    p = np.polyfit(freq,S[:,k],order)
-    slope[:,k] = p[0]
-    intercept[:,k] = p[1]
+    slope = np.zeros((1, K))
+    intercept = np.zeros((1, K))
 
-  return (slope, intercept)
+    for k in range(0, K):
+        p = np.polyfit(freq, S[:, k], order)
+        slope[:, k] = p[0]
+        intercept[:, k] = p[1]
+
+    return (slope, intercept)
 
 # - End Features added by BWalburn
 
