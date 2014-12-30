@@ -100,29 +100,28 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
 @cache
 def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
-                       centroid=None, freq=None, norm=True):
-    '''Compute spectral bandwidth
+                       centroid=None, freq=None, norm=True, p=2):
+    '''Compute p'th-order spectral bandwidth
 
     :usage:
         >>> # From time-series input
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> librosa.feature.spectral_bandwidth(y=y, sr=sr)
-        array([  1.252e+01,   3.854e+01,   5.932e+01, ...,   1.371e-01,
-                7.241e-02,   1.144e-02])
+        array([ 1201.067,   920.588,   655.381, ...,  2253.405,  2218.177,
+                2211.325])
 
         >>> # From spectrogram input
         >>> S, phase = librosa.magphase(librosa.stft(y=y))
         >>> librosa.feature.spectral_bandwidth(S=S)
-        array([  1.252e+01,   3.854e+01,   5.932e+01, ...,   1.371e-01,
-                7.241e-02,   1.144e-02])
+        array([ 1201.067,   920.588,   655.381, ...,  2253.405,  2218.177,
+                2211.325])
 
         >>> # Using variable bin center frequencies
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> if_gram, D = librosa.ifgram(y)
         >>> librosa.feature.spectral_bandwidth(S=np.abs(D), freq=if_gram)
-        array([  1.255e+01,   3.853e+01,   5.932e+01, ...,   1.371e-01,
-                7.241e-02,   1.145e-02])
-
+        array([ 1202.514,   920.453,   655.323, ...,  2253.475,  2218.172,
+                2213.157])
 
     :parameters:
       - y : np.ndarray [shape=(n,)] or None
@@ -153,9 +152,12 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
       - norm : bool
           Normalize per-frame spectral energy (sum to one)
 
+      - p : int > 0
+          Power to raise deviation from spectral centroid.
+
     :returns:
       - bandwidth : np.ndarray [shape=(t,)]
-          bandwidth frequencies
+          frequency bandwidth for each frame
     '''
     # If we don't have a spectrogram, build one
     if S is None:
@@ -191,7 +193,7 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     if norm:
         S = librosa.util.normalize(S, norm=1, axis=0)
 
-    return np.mean(S * deviation, axis=0)
+    return np.sum(S * deviation**p, axis=0)**(1./p)
 
 
 @cache
