@@ -263,36 +263,36 @@ def spectral_contrast(S=None, sr=22050):
 
 @cache
 def rolloff(S=None, sr=22050, roll_percent=0.85):
-  '''Compute rolloff frequency
+    '''Compute rolloff frequency
 
-  :parameters:
-  - S : np.ndarray or None
-  stft spectrogram
+    :parameters:
+      - S : np.ndarray or None
+        stft spectrogram
 
-  - sr : int > 0
-  audio sampling rate of ``S``
+      - sr : int > 0
+        audio sampling rate of ``S``
 
-  - roll_percent : 0 < float < 1
+      - roll_percent : 0 < float < 1
 
-  :returns:
-  - roll : np.ndarray
-  rolloff frequencies
-  '''
+    :returns:
+      - roll : np.ndarray
+        rolloff frequencies
+    '''
 
-  N,K = np.shape(S)
-  freq = np.transpose(np.linspace(0,sr/2,N))
-  freq = np.transpose(np.tile(freq,(K,1)))
+    N, K = np.shape(S)
+    freq = np.transpose(np.linspace(0, sr/2, N))
+    freq = np.transpose(np.tile(freq, (K, 1)))
 
-  total_energy = np.cumsum(S,axis=0)
+    total_energy = np.cumsum(S, axis=0)
 
-  threshold = roll_percent*total_energy[-1,:]
-  threshold = np.tile(threshold,(N,1))
+    threshold = roll_percent*total_energy[-1, :]
+    threshold = np.tile(threshold, (N, 1))
 
-  ind = np.where(total_energy < threshold, np.nan, 1)
-  freq = ind*freq
-  roll = np.nanmin(freq,axis=0)
+    ind = np.where(total_energy < threshold, np.nan, 1)
+    freq = ind*freq
+    roll = np.nanmin(freq, axis=0)
 
-  return roll
+    return roll
 
 
 @cache
@@ -317,7 +317,7 @@ def rms(y=None, sr=22050, S=None, n_fft=2048, hop_length=512):
 
     :returns:
       - rms : np.ndarray [shape=(t,)]
-        RMS values
+        RMS value for each frame
     '''
 
     # If we don't have a spectrogram, build one
@@ -329,41 +329,65 @@ def rms(y=None, sr=22050, S=None, n_fft=2048, hop_length=512):
 
 
 @cache
-def line_features(S, order=1, sr=22050):
+def line_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
+                  order=1, freq=None):
     '''Get coefficients of fitting an nth order polynomial to the data
 
     :parameters:
-      - S : np.ndarray or None
-        stft spectrogram
+      - y : np.ndarray [shape=(n,)] or None
+          audio time series
+
+      - sr : int > 0 [scalar]
+          audio sampling rate of ``y``
+
+      - S : np.ndarray [shape=(d, t)] or None
+          (optional) spectrogram magnitude
+
+      - n_fft : int > 0 [scalar]
+          FFT window size
+
+      - hop_length : int > 0 [scalar]
+          hop length for STFT. See :func:`librosa.core.stft` for details.
 
       - order : int > 0
-        order of polynimals to fit the line to
+          order of polynimals to fit the line to
 
-      - sr : int > 0
-        audio sampling rate of ``y``
+      - freq : None or np.ndarray [shape=(d,) or shape=(d, t)]
+          Center frequencies for spectrogram bins.
+          If `None`, then FFT bin center frequencies are used.
+          Otherwise, it can be a single array of `d` center frequencies,
+          or a matrix of center frequencies as constructed by
+          :func:`librosa.core.ifgram`
 
     :returns:
-      - 
+      - coefficients : np.ndarray [shape=(order+1, t)]
+          polynomial coefficients for each frame
     '''
+    # If we don't have a spectrogram, build one
+    if S is None:
+        # By default, use a magnitude spectrogram
+        S = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length))
+    else:
+        # Infer n_fft from spectrogram shape
+        n_fft = (S.shape[0] - 1) * 2
 
-    N, K = np.shape(S)
-    freq = np.transpose(np.linspace(0, sr/2, N))
+    # Compute the center frequencies of each bin
+    if freq is None:
+        freq = librosa.core.fft_frequencies(sr=sr, n_fft=n_fft)
 
-    slope = np.zeros((1, K))
-    intercept = np.zeros((1, K))
+    if freq.ndim == 1:
+        coefficients = np.polyfit(freq, S, order)
+    else:
+        coefficients = np.concatenate([[np.polyfit(freq_t, S_t, order)]
+                                       for (freq_t, S_t) in zip(freq.T, S.T)],
+                                      axis=0).T
 
-    for k in range(0, K):
-        p = np.polyfit(freq, S[:, k], order)
-        slope[:, k] = p[0]
-        intercept[:, k] = p[1]
-
-    return (slope, intercept)
+    return coefficients
 
 # - End Features added by BWalburn
 
 
-
-#-- Chroma --#
+# -- Chroma --#
 @cache
 def logfsgram(y=None, sr=22050, S=None, n_fft=4096, hop_length=512, **kwargs):
     '''Compute a log-frequency spectrogram (piano roll) using a fixed-window STFT.
