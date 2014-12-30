@@ -100,7 +100,7 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
 @cache
 def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
-                       centroid=None, freq=None):
+                       centroid=None, freq=None, norm=True):
     '''Compute spectral bandwidth
 
     :usage:
@@ -150,6 +150,9 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
           or a matrix of center frequencies as constructed by
           :func:`librosa.core.ifgram`
 
+      - norm : bool
+          Normalize per-frame spectral energy (sum to one)
+
     :returns:
       - bandwidth : np.ndarray [shape=(t,)]
           bandwidth frequencies
@@ -169,9 +172,6 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         raise ValueError('Spectral bandwidth is only defined '
                          'with non-negative energies')
 
-    # Column-normalize S
-    S_norm = librosa.util.normalize(S, norm=1, axis=0)
-
     if centroid is None:
         centroid = spectral_centroid(y=y, sr=sr, S=S,
                                      n_fft=n_fft,
@@ -187,10 +187,9 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     else:
         deviation = np.abs(freq - centroid)
 
-    # TODO:   2014-12-29 18:00:19 by Brian McFee <brian.mcfee@nyu.edu>
-    #  it's not clear if we should use the normalized S here.
-    #  unnormalized means we're returning bandwidth in units of Watts,
-    #  rather than Hz
+    # Column-normalize S
+    if norm:
+        S = librosa.util.normalize(S, norm=1, axis=0)
 
     return np.mean(S * deviation, axis=0)
 
@@ -275,8 +274,8 @@ def rolloff(S=None, sr=22050, roll_percent=0.85):
       - roll_percent : 0 < float < 1
 
     :returns:
-      - roll : np.ndarray
-        rolloff frequencies
+      - roll : np.ndarray [shape=(t,)]
+          rolloff frequency for each frame
     '''
 
     N, K = np.shape(S)
@@ -317,7 +316,7 @@ def rms(y=None, sr=22050, S=None, n_fft=2048, hop_length=512):
 
     :returns:
       - rms : np.ndarray [shape=(t,)]
-        RMS value for each frame
+          RMS value for each frame
     '''
 
     # If we don't have a spectrogram, build one
@@ -350,7 +349,7 @@ def line_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
           hop length for STFT. See :func:`librosa.core.stft` for details.
 
       - order : int > 0
-          order of polynimals to fit the line to
+          order of the polynomial to fit
 
       - freq : None or np.ndarray [shape=(d,) or shape=(d, t)]
           Center frequencies for spectrogram bins.
@@ -375,9 +374,11 @@ def line_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     if freq is None:
         freq = librosa.core.fft_frequencies(sr=sr, n_fft=n_fft)
 
+    # If frequencies are constant over frames, then we only need to fit once
     if freq.ndim == 1:
         coefficients = np.polyfit(freq, S, order)
     else:
+        # Else, fit each frame independently and stack the results
         coefficients = np.concatenate([[np.polyfit(freq_t, S_t, order)]
                                        for (freq_t, S_t) in zip(freq.T, S.T)],
                                       axis=0).T
