@@ -101,8 +101,9 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 @cache
 def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                        centroid=None, freq=None, norm=True, p=2):
-    '''Compute p'th-order spectral bandwidth
+    '''Compute p'th-order spectral bandwidth:
 
+        (sum_k S[k] * (freq[k] - centroid)**p)**(1/p)
     :usage:
         >>> # From time-series input
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
