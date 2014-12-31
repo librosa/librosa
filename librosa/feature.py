@@ -226,40 +226,38 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     if freq is None:
         freq = librosa.core.fft_frequencies(sr=sr, n_fft=n_fft)
 
-    n_frames = S.shape[1]
-
     #     TODO:   2014-12-31 12:48:36 by Brian McFee <brian.mcfee@nyu.edu>
     #   shouldn't this be scaled relative to the max frequency?
     octa = np.zeros(n_bands + 2)
     octa[1:] = 200 * (2.0**np.arange(0, n_bands + 1))
 
-    valley = np.zeros((n_bands + 1, n_frames))
-    peak = np.zeros((n_bands + 1, n_frames))
+    valley = np.zeros((n_bands + 1, S.shape[1]))
+    peak = np.zeros_like(valley)
 
-    for k in range(1, len(octa)):
-        current_band = np.logical_and(freq >= octa[k - 1], freq <= octa[k])
+    for k, (f_low, f_high) in enumerate(zip(octa[:-1], octa[1:])):
+        current_band = np.logical_and(freq >= f_low, freq <= f_high)
 
         idx = np.flatnonzero(current_band)
-        if k > 1:
+
+        if k > 0:
             current_band[idx[0] - 1] = True
 
-        if k == n_bands + 1:
-            idx = idx[-1] + 1
-            current_band[idx:] = True
+        if k == n_bands:
+            current_band[idx[-1] + 1:] = True
 
         sub_band = S[current_band]
 
-        if k <= n_bands:
+        if k < n_bands:
             sub_band = sub_band[:-1]
-
-        sortedr = np.sort(sub_band, axis=0)
 
         # FIXME:  2014-12-31 13:06:49 by Brian McFee <brian.mcfee@nyu.edu>
         # why 50?  what is this?
         alph = int(max(1, np.rint(0.02 * np.sum(current_band))))
 
-        valley[k - 1] = np.mean(sortedr[:alph], axis=0)
-        peak[k - 1] = np.mean(sortedr[-alph:], axis=0)
+        sortedr = np.sort(sub_band, axis=0)
+
+        valley[k] = np.mean(sortedr[:alph], axis=0)
+        peak[k] = np.mean(sortedr[-alph:], axis=0)
 
     return peak - valley
 
