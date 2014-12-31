@@ -104,6 +104,7 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     '''Compute p'th-order spectral bandwidth:
 
         (sum_k S[k] * (freq[k] - centroid)**p)**(1/p)
+
     :usage:
         >>> # From time-series input
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
@@ -268,6 +269,19 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                      freq=None, roll_percent=0.85):
     '''Compute roll-off frequency
 
+    :usage:
+        >>> # From time-series input
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> librosa.feature.spectral_rolloff(y=y, sr=sr)
+        array([  936.694,   635.229,   592.163, ...,  4134.375,  3983.643,
+                3886.743])
+
+        >>> # With a higher roll percentage:
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> librosa.feature.spectral_rolloff(y=y, sr=sr, roll_percent=0.95)
+        array([ 2637.817,  1496.558,  1152.026, ...,  7073.657,  6955.225,
+                6933.691])
+
     :parameters:
       - y : np.ndarray [shape=(n,)] or None
           audio time series
@@ -293,7 +307,7 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
           Roll-off percentage.
 
     :returns:
-      - roll : np.ndarray [shape=(t,)]
+      - rolloff : np.ndarray [shape=(t,)]
           roll-off frequency for each frame
     '''
 
