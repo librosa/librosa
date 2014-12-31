@@ -93,14 +93,13 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         freq = freq.reshape((-1, 1))
 
     # Column-normalize S
-    S_norm = librosa.util.normalize(S, norm=1, axis=0)
-
-    return np.sum(freq * S_norm, axis=0)
+    return np.sum(freq * librosa.util.normalize(S, norm=1, axis=0),
+                  axis=0)
 
 
 @cache
 def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
-                       centroid=None, freq=None, norm=True, p=2):
+                       freq=None, centroid=None, norm=True, p=2):
     '''Compute p'th-order spectral bandwidth:
 
         (sum_k S[k] * (freq[k] - centroid)**p)**(1/p)
@@ -141,15 +140,15 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
       - hop_length : int > 0 [scalar]
           hop length for STFT. See :func:`librosa.core.stft` for details.
 
-      - centroid : None or np.ndarray [shape=(t,)]
-          pre-computed centroid frequencies
-
       - freq : None or np.ndarray [shape=(d,) or shape=(d, t)]
           Center frequencies for spectrogram bins.
           If `None`, then FFT bin center frequencies are used.
           Otherwise, it can be a single array of `d` center frequencies,
           or a matrix of center frequencies as constructed by
           :func:`librosa.core.ifgram`
+
+      - centroid : None or np.ndarray [shape=(t,)]
+          pre-computed centroid frequencies
 
       - norm : bool
           Normalize per-frame spectral energy (sum to one)
@@ -199,7 +198,8 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
 
 @cache
-def spectral_contrast(S=None, sr=22050):
+def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
+                      freq=None, n_bands=6):
     '''Compute spectral contrast
 
     :parameters:
@@ -210,58 +210,58 @@ def spectral_contrast(S=None, sr=22050):
         audio sampling rate of ``S``
 
     :returns:
-      - cont : 7 np.ndarray's
-        each row of spectral contrast values corresponds to a given
-        octave based frequency
+      - contrast : np.ndarray [shape=(n_bands+1, t)]
+          each row of spectral contrast values corresponds to a given
+          octave-based frequency
     '''
+    # If we don't have a spectrogram, build one
+    if S is None:
+        # By default, use a magnitude spectrogram
+        S = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length))
+    else:
+        # Infer n_fft from spectrogram shape
+        n_fft = (S.shape[0] - 1) * 2
 
-    K, numFrames = np.shape(S)
+    # Compute the center frequencies of each bin
+    if freq is None:
+        freq = librosa.core.fft_frequencies(sr=sr, n_fft=n_fft)
 
-    numBands = 6
-    octa = 200 * (2**np.arange(0, numBands+1))
-    octa = np.insert(octa, 0, 0)
+    n_frames = S.shape[1]
 
-    valley = np.zeros((numBands + 1, numFrames))
-    peak = np.zeros((numBands + 1, numFrames))
-    cont = np.zeros((numBands + 1, numFrames))
-    col = 1
+    #     TODO:   2014-12-31 12:48:36 by Brian McFee <brian.mcfee@nyu.edu>
+    #   shouldn't this be scaled relative to the max frequency?
+    octa = np.zeros(n_bands + 2)
+    octa[1:] = 200 * (2.0**np.arange(0, n_bands + 1))
 
-    freq = np.linspace(0, sr/2, K)
+    valley = np.zeros((n_bands + 1, n_frames))
+    peak = np.zeros((n_bands + 1, n_frames))
 
-    for k in range(1, np.size(octa)):
-        current_band = 1*np.logical_and(np.where(freq >= octa[k-1], 1, 0),
-                                        np.where(freq <= octa[k], 1, 0))
+    for k in range(1, len(octa)):
+        current_band = np.logical_and(freq >= octa[k - 1], freq <= octa[k])
 
+        idx = np.flatnonzero(current_band)
         if k > 1:
-            idx = np.nonzero(current_band == 1)[0]
-            idx = idx[0] + 1
-        current_band[idx-2] = 1
+            current_band[idx[0] - 1] = True
 
-        if k == np.size(octa) - 1:
-            idx = np.nonzero(current_band == 1)
-            idx = idx[-1]
+        if k == n_bands + 1:
             idx = idx[-1] + 1
-        current_band[idx:np.size(current_band)+1] = 1
+            current_band[idx:] = True
 
-        subBand = S[np.where(current_band == 1)]
+        sub_band = S[current_band]
 
-        if k < np.size(octa - 1) - 1:
-            subBand = subBand[0:-1][:]
+        if k <= n_bands:
+            sub_band = sub_band[:-1]
 
-        if np.sum(current_band) < 50:
-            alph = 1
-        else:
-            alph = np.rint(0.02*np.sum(current_band))
+        sortedr = np.sort(sub_band, axis=0)
 
-        alph = int(alph)
-        sortedr = np.sort(subBand, axis=0)
+        # FIXME:  2014-12-31 13:06:49 by Brian McFee <brian.mcfee@nyu.edu>
+        # why 50?  what is this?
+        alph = int(max(1, np.rint(0.02 * np.sum(current_band))))
 
-        valley[k-1] = np.mean(sortedr[:alph], axis=0)
+        valley[k - 1] = np.mean(sortedr[:alph], axis=0)
+        peak[k - 1] = np.mean(sortedr[-alph:], axis=0)
 
-        sortedr = sortedr[::-1]
-        peak[k-1] = np.mean(sortedr[:alph], axis=0)
-
-    return (peak - valley).T
+    return peak - valley
 
 
 @cache
