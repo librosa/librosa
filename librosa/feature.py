@@ -85,15 +85,15 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         raise ValueError('Spectral centroid is only defined '
                          'with non-negative energies')
 
-    # Column-normalize S
-    S_norm = librosa.util.normalize(S, norm=1, axis=0)
-
     # Compute the center frequencies of each bin
     if freq is None:
         freq = librosa.core.fft_frequencies(sr=sr, n_fft=n_fft)
 
     if freq.ndim == 1:
         freq = freq.reshape((-1, 1))
+
+    # Column-normalize S
+    S_norm = librosa.util.normalize(S, norm=1, axis=0)
 
     return np.sum(freq * S_norm, axis=0)
 
@@ -153,7 +153,7 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
       - norm : bool
           Normalize per-frame spectral energy (sum to one)
 
-      - p : int > 0
+      - p : float > 0
           Power to raise deviation from spectral centroid.
 
     :returns:
@@ -264,37 +264,69 @@ def spectral_contrast(S=None, sr=22050):
 
 
 @cache
-def rolloff(S=None, sr=22050, roll_percent=0.85):
-    '''Compute rolloff frequency
+def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
+                      freq=None, roll_percent=0.85):
+    '''Compute roll-off frequency
 
     :parameters:
-      - S : np.ndarray or None
-        stft spectrogram
+      - y : np.ndarray [shape=(n,)] or None
+          audio time series
 
-      - sr : int > 0
-        audio sampling rate of ``S``
+      - sr : int > 0 [scalar]
+          audio sampling rate of ``y``
 
-      - roll_percent : 0 < float < 1
+      - S : np.ndarray [shape=(d, t)] or None
+          (optional) spectrogram magnitude
+
+      - n_fft : int > 0 [scalar]
+          FFT window size
+
+      - hop_length : int > 0 [scalar]
+          hop length for STFT. See :func:`librosa.core.stft` for details.
+
+      - freq : None or np.ndarray [shape=(d,) or shape=(d, t)]
+          Center frequencies for spectrogram bins.
+          If `None`, then FFT bin center frequencies are used.
+          Otherwise, it can be a single array of `d` center frequencies,
+
+      - roll_percent : float [0 < roll_percent < 1]
+          Roll-off percentage.
 
     :returns:
       - roll : np.ndarray [shape=(t,)]
-          rolloff frequency for each frame
+          roll-off frequency for each frame
     '''
 
-    N, K = np.shape(S)
-    freq = np.transpose(np.linspace(0, sr/2, N))
-    freq = np.transpose(np.tile(freq, (K, 1)))
+    # If we don't have a spectrogram, build one
+    if S is None:
+        # By default, use a magnitude spectrogram
+        S = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length))
+    else:
+        # Infer n_fft from spectrogram shape
+        n_fft = (S.shape[0] - 1) * 2
+
+    if not np.isrealobj(S):
+        raise ValueError('Spectral centroid is only defined '
+                         'with real-valued input')
+    elif np.any(S < 0):
+        raise ValueError('Spectral centroid is only defined '
+                         'with non-negative energies')
+
+    # Compute the center frequencies of each bin
+    if freq is None:
+        freq = librosa.core.fft_frequencies(sr=sr, n_fft=n_fft)
+
+    # Make sure that frequency can be broadcast
+    if freq.ndim == 1:
+        freq = freq.reshape((-1, 1))
 
     total_energy = np.cumsum(S, axis=0)
 
-    threshold = roll_percent*total_energy[-1, :]
-    threshold = np.tile(threshold, (N, 1))
+    threshold = roll_percent * total_energy[-1]
 
     ind = np.where(total_energy < threshold, np.nan, 1)
-    freq = ind*freq
-    roll = np.nanmin(freq, axis=0)
 
-    return roll
+    return np.nanmin(ind * freq, axis=0)
 
 
 @cache
