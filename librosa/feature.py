@@ -265,7 +265,7 @@ def spectral_contrast(S=None, sr=22050):
 
 @cache
 def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
-                      freq=None, roll_percent=0.85):
+                     freq=None, roll_percent=0.85):
     '''Compute roll-off frequency
 
     :parameters:
