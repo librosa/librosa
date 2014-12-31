@@ -203,14 +203,33 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     '''Compute spectral contrast
 
     :parameters:
-      - S : np.ndarray or None
-        stft spectrogram
+      - y : np.ndarray [shape=(n,)] or None
+          audio time series
 
-     - sr : int > 0
-        audio sampling rate of ``S``
+      - sr : int > 0 [scalar]
+          audio sampling rate of ``y``
+
+      - S : np.ndarray [shape=(d, t)] or None
+          (optional) spectrogram magnitude
+
+      - n_fft : int > 0 [scalar]
+          FFT window size
+
+      - hop_length : int > 0 [scalar]
+          hop length for STFT. See :func:`librosa.core.stft` for details.
+
+      - freq : None or np.ndarray [shape=(d,) or shape=(d, t)]
+          Center frequencies for spectrogram bins.
+          If `None`, then FFT bin center frequencies are used.
+          Otherwise, it can be a single array of `d` center frequencies,
+          or a matrix of center frequencies as constructed by
+          :func:`librosa.core.ifgram`
+
+      - n_bands : int > 1
+          number of frequency bands
 
     :returns:
-      - contrast : np.ndarray [shape=(n_bands+1, t)]
+      - contrast : np.ndarray [shape=(n_bands + 1, t)]
           each row of spectral contrast values corresponds to a given
           octave-based frequency
     '''
