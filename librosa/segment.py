@@ -22,16 +22,16 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
 
     :usage:
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> mfcc    = librosa.feature.mfcc(y=y, sr=sr)
-        >>> R       = librosa.segment.recurrence_matrix(mfcc)
+        >>> mfcc = librosa.feature.mfcc(y=y, sr=sr)
+        >>> R = librosa.segment.recurrence_matrix(mfcc)
         >>> # Or fix the number of nearest neighbors to 5
-        >>> R       = librosa.segment.recurrence_matrix(mfcc, k=5)
+        >>> R = librosa.segment.recurrence_matrix(mfcc, k=5)
         >>> # Suppress neighbors within +- 7 samples
-        >>> R       = librosa.segment.recurrence_matrix(mfcc, width=7)
+        >>> R = librosa.segment.recurrence_matrix(mfcc, width=7)
         >>> # Use cosine similarity instead of Euclidean distance
-        >>> R       = librosa.segment.recurrence_matrix(mfcc, metric='cosine')
+        >>> R = librosa.segment.recurrence_matrix(mfcc, metric='cosine')
         >>> # Require mutual nearest neighbors
-        >>> R       = librosa.segment.recurrence_matrix(mfcc, sym=True)
+        >>> R = librosa.segment.recurrence_matrix(mfcc, sym=True)
 
     :parameters:
       - data : np.ndarray [shape=(d, t)]
@@ -112,11 +112,12 @@ def structure_feature(rec, pad=True, inverse=False):
     :usage:
         >>> # Build the structure feature over mfcc similarity
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> mfccs   = librosa.feature.mfcc(y=y, sr=sr)
-        >>> R       = librosa.feature.recurrence_matrix(mfccs)
-        >>> S       = librosa.feature.structure_feature(R)
+        >>> mfccs = librosa.feature.mfcc(y=y, sr=sr)
+        >>> recurrence = librosa.feature.recurrence_matrix(mfccs)
+        >>> struct = librosa.feature.structure_feature(recurrence)
         >>> # Invert the structure feature to get a recurrence matrix
-        >>> R_hat   = librosa.feature.structure_feature(S, inverse=True)
+        >>> recurrence_2 = librosa.feature.structure_feature(struct,
+                                                             inverse=True)
 
     :parameters:
       - rec   : np.ndarray [shape=(t,t) or shape=(2*t, t)]
@@ -174,11 +175,14 @@ def agglomerative(data, k, clusterer=None):
         >>> # Cluster by Mel spectrogram similarity
         >>> # Break into 32 segments
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> S = librosa.feature.melspectrogram(y=y, sr=sr, n_fft=2048,
-                                               hop_length=512)
+        >>> S = librosa.feature.melspectrogram(y=y, sr=sr)
         >>> boundary_frames = librosa.segment.agglomerative(S, 32)
-        >>> boundary_times = librosa.frames_to_time(boundary_frames, sr=sr,
-                                                    hop_length=512)
+        >>> librosa.frames_to_time(boundary_frames, sr=sr)
+        array([  0.   ,  18.297,  18.367,  21.989,  22.059,  23.382,  23.452,
+                25.681,  25.751,  27.074,  27.144,  33.065,  33.135,  34.458,
+                34.528,  36.757,  36.827,  38.22 ,  41.842,  41.912,  44.373,
+                44.536,  47.833,  47.949,  51.525,  51.641,  52.918,  52.988,
+                55.217,  55.287,  56.61 ,  56.68 ])
 
     :parameters:
       - data     : np.ndarray [shape=(d, t)]
