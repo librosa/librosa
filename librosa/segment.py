@@ -21,18 +21,15 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
     k-nearest-neighbors and ``|i-j| >= width``
 
     :usage:
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> mfcc    = librosa.feature.mfcc(y=y, sr=sr)
         >>> R       = librosa.segment.recurrence_matrix(mfcc)
-
         >>> # Or fix the number of nearest neighbors to 5
         >>> R       = librosa.segment.recurrence_matrix(mfcc, k=5)
-
         >>> # Suppress neighbors within +- 7 samples
         >>> R       = librosa.segment.recurrence_matrix(mfcc, width=7)
-
         >>> # Use cosine similarity instead of Euclidean distance
         >>> R       = librosa.segment.recurrence_matrix(mfcc, metric='cosine')
-
         >>> # Require mutual nearest neighbors
         >>> R       = librosa.segment.recurrence_matrix(mfcc, sym=True)
 
@@ -114,10 +111,10 @@ def structure_feature(rec, pad=True, inverse=False):
 
     :usage:
         >>> # Build the structure feature over mfcc similarity
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> mfccs   = librosa.feature.mfcc(y=y, sr=sr)
         >>> R       = librosa.feature.recurrence_matrix(mfccs)
         >>> S       = librosa.feature.structure_feature(R)
-
         >>> # Invert the structure feature to get a recurrence matrix
         >>> R_hat   = librosa.feature.structure_feature(S, inverse=True)
 
@@ -176,6 +173,7 @@ def agglomerative(data, k, clusterer=None):
     :usage:
         >>> # Cluster by Mel spectrogram similarity
         >>> # Break into 32 segments
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> S = librosa.feature.melspectrogram(y=y, sr=sr, n_fft=2048,
                                                hop_length=512)
         >>> boundary_frames = librosa.segment.agglomerative(S, 32)
