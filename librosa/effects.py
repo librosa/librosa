@@ -159,7 +159,7 @@ def time_stretch(y, rate):
 
 @cache
 def pitch_shift(y, sr, n_steps, bins_per_octave=12):
-    '''Pitch-shift the wbryceaveform by ``n_steps`` half-steps.
+    '''Pitch-shift the waveform by ``n_steps`` half-steps.
 
     :usage:
         >>> # Load a waveform
