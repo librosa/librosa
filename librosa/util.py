@@ -53,7 +53,7 @@ def frame(y, frame_length=2048, hop_length=512):
 
     :usage:
         >>> # Load a file
-        >>> y, sr = librosa.load('file.mp3')
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> # Extract 2048-sample frames from y with a hop of 64
         >>> y_frames = librosa.util.frame(y, frame_length=2048, hop_length=64)
 
@@ -107,6 +107,15 @@ def frame(y, frame_length=2048, hop_length=512):
 def valid_audio(y, mono=True):
     '''Validate whether a variable contains valid, mono audio data.
 
+    :usage:
+        >>> # Only allow monophonic signals
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> valid_audio(y)
+
+        >>> # If we want to allow stereo signals
+        >>> y, sr = librosa.load(librosa.util.example_audio_file(), mono=False)
+        >>> valid_audio(y, mono=False)
+
     :parameters:
         - y
             The input data to validate
@@ -117,7 +126,7 @@ def valid_audio(y, mono=True):
     :raises:
         - ValueError
             If `y` fails to meet the following criteria:
-              - `type(y)` is `np.ndarray`
+              - `typebryce(y)` is `np.ndarray`
               - `mono == True` and `y.ndim` is not 1
               - `mono == False` and `y.ndim` is not 1 or 2
               - `np.isfinite(y).all()` is not True
@@ -234,19 +243,17 @@ def axis_sort(S, axis=-1, index=False, value=None):
     :usage:
         >>> # Visualize NMF output for a spectrogram S
         >>> # Sort the columns of W by peak frequency bin
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> S = np.abs(librosa.stft(y))
         >>> W, H = librosa.decompose.decompose(S)
         >>> W_sort = librosa.util.axis_sort(W)
-
         >>> # Or sort by the lowest frequency bin
         >>> W_sort = librosa.util.axis_sort(W, value=np.argmin)
-
         >>> # Or sort the rows instead of the columns
         >>> W_sort_rows = librosa.util.axis_sort(W, axis=0)
-
         >>> # Get the sorting index also, and use it to permute the rows of H
         >>> W_sort, idx = librosa.util.axis_sort(W, index=True)
         >>> H_sort = H[index, :]
-        >>> # np.dot(W_sort, H_sort) == np.dot(W, H)
 
     :parameters:
       - S : np.ndarray [shape=(d, n)]
@@ -488,23 +495,23 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
     :usage:
         >>> import librosa
         >>> import sklearn.pipeline
-
+        >>>
         >>> # Build a mel-spectrogram extractor
         >>> MS = librosa.util.FeatureExtractor(librosa.feature.melspectrogram,
                                                sr=22050, n_fft=2048,
                                                n_mels=128, fmax=8000)
-
+        >>>
         >>> # And a log-amplitude extractor
         >>> LA = librosa.util.FeatureExtractor(librosa.logamplitude,
                                                ref_power=np.max)
-
+        >>>
         >>> # Chain them into a pipeline
         >>> Features = sklearn.pipeline.Pipeline([('MelSpectrogram', MS),
                                                   ('LogAmplitude', LA)])
-
+        >>>
         >>> # Load an audio file
-        >>> y, sr = librosa.load('file.mp3', sr=22050)
-
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>>
         >>> # Apply the transformation to y
         >>> F = Features.transform([y])
 
