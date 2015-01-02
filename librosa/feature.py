@@ -9,8 +9,453 @@ import librosa.core
 import librosa.util
 from . import cache
 
+# - Features added by BWalburn
 
-# -- Chroma -- #
+
+@cache
+def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
+                      freq=None):
+    '''Compute the spectral centroid.
+
+    Each frame of a magnitude spectrogram is normalized and treated as a
+    distribution over frequency bins, from which the mean (centroid) is
+    extracted per frame.
+
+    :usage:
+        >>> # From time-series input
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> librosa.feature.spectral_centroid(y=y, sr=sr)
+        array([  545.929,   400.609,   325.021, ...,  1701.903,  1621.184,
+                1591.604])
+
+        >>> # From spectrogram input
+        >>> S, phase = librosa.magphase(librosa.stft(y=y))
+        >>> librosa.feature.spectral_centroid(S=S)
+        array([  545.929,   400.609,   325.021, ...,  1701.903,  1621.184,
+                1591.604])
+
+        >>> # Using variable bin center frequencies
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> if_gram, D = librosa.ifgram(y)
+        >>> librosa.feature.spectral_centroid(S=np.abs(D), freq=if_gram)
+        array([  545.069,   400.764,   324.906, ...,  1701.78 ,  1621.139,
+                1590.362])
+
+
+    :parameters:
+      - y : np.ndarray [shape=(n,)] or None
+          audio time series
+
+      - sr : int > 0 [scalar]
+          audio sampling rate of ``y``
+
+      - S : np.ndarray [shape=(d, t)] or None
+          (optional) spectrogram magnitude
+
+      - n_fft : int > 0 [scalar]
+          FFT window size
+
+      - hop_length : int > 0 [scalar]
+          hop length for STFT. See :func:`librosa.core.stft` for details.
+
+      - freq : None or np.ndarray [shape=(d,) or shape=(d, t)]
+          Center frequencies for spectrogram bins.
+          If `None`, then FFT bin center frequencies are used.
+          Otherwise, it can be a single array of `d` center frequencies,
+          or a matrix of center frequencies as constructed by
+          :func:`librosa.core.ifgram`
+
+    :returns:
+      - centroid : np.ndarray [shape=(t,)]
+          centroid frequencies
+    '''
+
+    # If we don't have a spectrogram, build one
+    if S is None:
+        # By default, use a magnitude spectrogram
+        S = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length))
+    else:
+        # Infer n_fft from spectrogram shape
+        n_fft = (S.shape[0] - 1) * 2
+
+    if not np.isrealobj(S):
+        raise ValueError('Spectral centroid is only defined '
+                         'with real-valued input')
+    elif np.any(S < 0):
+        raise ValueError('Spectral centroid is only defined '
+                         'with non-negative energies')
+
+    # Compute the center frequencies of each bin
+    if freq is None:
+        freq = librosa.core.fft_frequencies(sr=sr, n_fft=n_fft)
+
+    if freq.ndim == 1:
+        freq = freq.reshape((-1, 1))
+
+    # Column-normalize S
+    return np.sum(freq * librosa.util.normalize(S, norm=1, axis=0),
+                  axis=0)
+
+
+@cache
+def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
+                       freq=None, centroid=None, norm=True, p=2):
+    '''Compute p'th-order spectral bandwidth:
+
+        (sum_k S[k] * (freq[k] - centroid)**p)**(1/p)
+
+    :usage:
+        >>> # From time-series input
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> librosa.feature.spectral_bandwidth(y=y, sr=sr)
+        array([ 1201.067,   920.588,   655.381, ...,  2253.405,  2218.177,
+                2211.325])
+
+        >>> # From spectrogram input
+        >>> S, phase = librosa.magphase(librosa.stft(y=y))
+        >>> librosa.feature.spectral_bandwidth(S=S)
+        array([ 1201.067,   920.588,   655.381, ...,  2253.405,  2218.177,
+                2211.325])
+
+        >>> # Using variable bin center frequencies
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> if_gram, D = librosa.ifgram(y)
+        >>> librosa.feature.spectral_bandwidth(S=np.abs(D), freq=if_gram)
+        array([ 1202.514,   920.453,   655.323, ...,  2253.475,  2218.172,
+                2213.157])
+
+    :parameters:
+      - y : np.ndarray [shape=(n,)] or None
+          audio time series
+
+      - sr : int > 0 [scalar]
+          audio sampling rate of ``y``
+
+      - S : np.ndarray [shape=(d, t)] or None
+          (optional) spectrogram magnitude
+
+      - n_fft : int > 0 [scalar]
+          FFT window size
+
+      - hop_length : int > 0 [scalar]
+          hop length for STFT. See :func:`librosa.core.stft` for details.
+
+      - freq : None or np.ndarray [shape=(d,) or shape=(d, t)]
+          Center frequencies for spectrogram bins.
+          If `None`, then FFT bin center frequencies are used.
+          Otherwise, it can be a single array of `d` center frequencies,
+          or a matrix of center frequencies as constructed by
+          :func:`librosa.core.ifgram`
+
+      - centroid : None or np.ndarray [shape=(t,)]
+          pre-computed centroid frequencies
+
+      - norm : bool
+          Normalize per-frame spectral energy (sum to one)
+
+      - p : float > 0
+          Power to raise deviation from spectral centroid.
+
+    :returns:
+      - bandwidth : np.ndarray [shape=(t,)]
+          frequency bandwidth for each frame
+    '''
+    # If we don't have a spectrogram, build one
+    if S is None:
+        # By default, use a magnitude spectrogram
+        S = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length))
+    else:
+        # Infer n_fft from spectrogram shape
+        n_fft = (S.shape[0] - 1) * 2
+
+    if not np.isrealobj(S):
+        raise ValueError('Spectral bandwidth is only defined '
+                         'with real-valued input')
+    elif np.any(S < 0):
+        raise ValueError('Spectral bandwidth is only defined '
+                         'with non-negative energies')
+
+    if centroid is None:
+        centroid = spectral_centroid(y=y, sr=sr, S=S,
+                                     n_fft=n_fft,
+                                     hop_length=hop_length,
+                                     freq=freq)
+
+    # Compute the center frequencies of each bin
+    if freq is None:
+        freq = librosa.core.fft_frequencies(sr=sr, n_fft=n_fft)
+
+    if freq.ndim == 1:
+        deviation = np.abs(np.subtract.outer(freq, centroid))
+    else:
+        deviation = np.abs(freq - centroid)
+
+    # Column-normalize S
+    if norm:
+        S = librosa.util.normalize(S, norm=1, axis=0)
+
+    return np.sum(S * deviation**p, axis=0)**(1./p)
+
+
+@cache
+def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
+                      freq=None, n_bands=6):
+    '''Compute spectral contrast
+
+    :parameters:
+      - y : np.ndarray [shape=(n,)] or None
+          audio time series
+
+      - sr : int > 0 [scalar]
+          audio sampling rate of ``y``
+
+      - S : np.ndarray [shape=(d, t)] or None
+          (optional) spectrogram magnitude
+
+      - n_fft : int > 0 [scalar]
+          FFT window size
+
+      - hop_length : int > 0 [scalar]
+          hop length for STFT. See :func:`librosa.core.stft` for details.
+
+      - freq : None or np.ndarray [shape=(d,) or shape=(d, t)]
+          Center frequencies for spectrogram bins.
+          If `None`, then FFT bin center frequencies are used.
+          Otherwise, it can be a single array of `d` center frequencies,
+          or a matrix of center frequencies as constructed by
+          :func:`librosa.core.ifgram`
+
+      - n_bands : int > 1
+          number of frequency bands
+
+    :returns:
+      - contrast : np.ndarray [shape=(n_bands + 1, t)]
+          each row of spectral contrast values corresponds to a given
+          octave-based frequency
+    '''
+    # If we don't have a spectrogram, build one
+    if S is None:
+        # By default, use a magnitude spectrogram
+        S = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length))
+    else:
+        # Infer n_fft from spectrogram shape
+        n_fft = (S.shape[0] - 1) * 2
+
+    # Compute the center frequencies of each bin
+    if freq is None:
+        freq = librosa.core.fft_frequencies(sr=sr, n_fft=n_fft)
+
+    #     TODO:   2014-12-31 12:48:36 by Brian McFee <brian.mcfee@nyu.edu>
+    #   shouldn't this be scaled relative to the max frequency?
+    octa = np.zeros(n_bands + 2)
+    octa[1:] = 200 * (2.0**np.arange(0, n_bands + 1))
+
+    valley = np.zeros((n_bands + 1, S.shape[1]))
+    peak = np.zeros_like(valley)
+
+    for k, (f_low, f_high) in enumerate(zip(octa[:-1], octa[1:])):
+        current_band = np.logical_and(freq >= f_low, freq <= f_high)
+
+        idx = np.flatnonzero(current_band)
+
+        if k > 0:
+            current_band[idx[0] - 1] = True
+
+        if k == n_bands:
+            current_band[idx[-1] + 1:] = True
+
+        sub_band = S[current_band]
+
+        if k < n_bands:
+            sub_band = sub_band[:-1]
+
+        # FIXME:  2014-12-31 13:06:49 by Brian McFee <brian.mcfee@nyu.edu>
+        # why 50?  what is this?
+        alph = int(max(1, np.rint(0.02 * np.sum(current_band))))
+
+        sortedr = np.sort(sub_band, axis=0)
+
+        valley[k] = np.mean(sortedr[:alph], axis=0)
+        peak[k] = np.mean(sortedr[-alph:], axis=0)
+
+    return peak - valley
+
+
+@cache
+def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
+                     freq=None, roll_percent=0.85):
+    '''Compute roll-off frequency
+
+    :usage:
+        >>> # From time-series input
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> librosa.feature.spectral_rolloff(y=y, sr=sr)
+        array([  936.694,   635.229,   592.163, ...,  4134.375,  3983.643,
+                3886.743])
+
+        >>> # With a higher roll percentage:
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> librosa.feature.spectral_rolloff(y=y, sr=sr, roll_percent=0.95)
+        array([ 2637.817,  1496.558,  1152.026, ...,  7073.657,  6955.225,
+                6933.691])
+
+    :parameters:
+      - y : np.ndarray [shape=(n,)] or None
+          audio time series
+
+      - sr : int > 0 [scalar]
+          audio sampling rate of ``y``
+
+      - S : np.ndarray [shape=(d, t)] or None
+          (optional) spectrogram magnitude
+
+      - n_fft : int > 0 [scalar]
+          FFT window size
+
+      - hop_length : int > 0 [scalar]
+          hop length for STFT. See :func:`librosa.core.stft` for details.
+
+      - freq : None or np.ndarray [shape=(d,) or shape=(d, t)]
+          Center frequencies for spectrogram bins.
+          If `None`, then FFT bin center frequencies are used.
+          Otherwise, it can be a single array of `d` center frequencies,
+
+      - roll_percent : float [0 < roll_percent < 1]
+          Roll-off percentage.
+
+    :returns:
+      - rolloff : np.ndarray [shape=(t,)]
+          roll-off frequency for each frame
+    '''
+
+    # If we don't have a spectrogram, build one
+    if S is None:
+        # By default, use a magnitude spectrogram
+        S = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length))
+    else:
+        # Infer n_fft from spectrogram shape
+        n_fft = (S.shape[0] - 1) * 2
+
+    if not np.isrealobj(S):
+        raise ValueError('Spectral centroid is only defined '
+                         'with real-valued input')
+    elif np.any(S < 0):
+        raise ValueError('Spectral centroid is only defined '
+                         'with non-negative energies')
+
+    # Compute the center frequencies of each bin
+    if freq is None:
+        freq = librosa.core.fft_frequencies(sr=sr, n_fft=n_fft)
+
+    # Make sure that frequency can be broadcast
+    if freq.ndim == 1:
+        freq = freq.reshape((-1, 1))
+
+    total_energy = np.cumsum(S, axis=0)
+
+    threshold = roll_percent * total_energy[-1]
+
+    ind = np.where(total_energy < threshold, np.nan, 1)
+
+    return np.nanmin(ind * freq, axis=0)
+
+
+@cache
+def rms(y=None, sr=22050, S=None, n_fft=2048, hop_length=512):
+    '''Compute root-mean-square (RMS) energy for each frame.
+
+    :parameters:
+      - y : np.ndarray [shape=(n,)] or None
+          audio time series
+
+      - sr : int > 0 [scalar]
+          audio sampling rate of ``y``
+
+      - S : np.ndarray [shape=(d, t)] or None
+          (optional) spectrogram magnitude
+
+      - n_fft : int > 0 [scalar]
+          FFT window size
+
+      - hop_length : int > 0 [scalar]
+          hop length for STFT. See :func:`librosa.core.stft` for details.
+
+    :returns:
+      - rms : np.ndarray [shape=(t,)]
+          RMS value for each frame
+    '''
+
+    # If we don't have a spectrogram, build one
+    if S is None:
+        # By default, use a magnitude spectrogram
+        S = librosa.stft(y, n_fft=n_fft, hop_length=hop_length)
+
+    return np.sqrt(np.mean(np.abs(S)**2, axis=0))
+
+
+@cache
+def line_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
+                  order=1, freq=None):
+    '''Get coefficients of fitting an nth-order polynomial to the columns
+    of a spectrogram.
+
+    :parameters:
+      - y : np.ndarray [shape=(n,)] or None
+          audio time series
+
+      - sr : int > 0 [scalar]
+          audio sampling rate of ``y``
+
+      - S : np.ndarray [shape=(d, t)] or None
+          (optional) spectrogram magnitude
+
+      - n_fft : int > 0 [scalar]
+          FFT window size
+
+      - hop_length : int > 0 [scalar]
+          hop length for STFT. See :func:`librosa.core.stft` for details.
+
+      - order : int > 0
+          order of the polynomial to fit
+
+      - freq : None or np.ndarray [shape=(d,) or shape=(d, t)]
+          Center frequencies for spectrogram bins.
+          If `None`, then FFT bin center frequencies are used.
+          Otherwise, it can be a single array of `d` center frequencies,
+          or a matrix of center frequencies as constructed by
+          :func:`librosa.core.ifgram`
+
+    :returns:
+      - coefficients : np.ndarray [shape=(order+1, t)]
+          polynomial coefficients for each frame
+    '''
+    # If we don't have a spectrogram, build one
+    if S is None:
+        # By default, use a magnitude spectrogram
+        S = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length))
+    else:
+        # Infer n_fft from spectrogram shape
+        n_fft = (S.shape[0] - 1) * 2
+
+    # Compute the center frequencies of each bin
+    if freq is None:
+        freq = librosa.core.fft_frequencies(sr=sr, n_fft=n_fft)
+
+    # If frequencies are constant over frames, then we only need to fit once
+    if freq.ndim == 1:
+        coefficients = np.polyfit(freq, S, order)
+    else:
+        # Else, fit each frame independently and stack the results
+        coefficients = np.concatenate([[np.polyfit(freq_t, S_t, order)]
+                                       for (freq_t, S_t) in zip(freq.T, S.T)],
+                                      axis=0).T
+
+    return coefficients
+
+# - End Features added by BWalburn
+
+
+# -- Chroma --#
 @cache
 def logfsgram(y=None, sr=22050, S=None, n_fft=4096, hop_length=512, **kwargs):
     '''Compute a log-frequency spectrogram (piano roll) using a fixed-window STFT.
