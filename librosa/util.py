@@ -55,7 +55,13 @@ def frame(y, frame_length=2048, hop_length=512):
         >>> # Load a file
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> # Extract 2048-sample frames from y with a hop of 64
-        >>> y_frames = librosa.util.frame(y, frame_length=2048, hop_length=64)
+        >>> librosa.util.frame(y, frame_length=2048, hop_length=64)
+        array([[  0.000e+00,   0.000e+00, ...,   1.526e-05,   0.000e+00],
+               [  0.000e+00,   0.000e+00, ...,   1.526e-05,   0.000e+00],
+               ...,
+               [ -2.674e-04,   5.065e-03, ...,   0.000e+00,   0.000e+00],
+               [  2.684e-03,   4.817e-03, ...,   0.000e+00,   0.000e+00]],
+              dtype=float32)
 
     :parameters:
       - y : np.ndarray [shape=(n,)]
@@ -152,15 +158,26 @@ def pad_center(data, size, axis=-1, **kwargs):
     This is analogous to ``str.center()``
 
     :usage:
-        >>> # Generate a window vector
-        >>> window = scipy.signal.hann(256)
-        >>> # Center and pad it out to length 1024
-        >>> window = librosa.util.pad_center(window, 1024, mode='constant')
+        >>> # Generate a vector
+        >>> data = np.ones(5)
+        >>> librosa.util.pad_center(data, 10, mode='constant')
+        array([ 0.,  0.,  1.,  1.,  1.,  1.,  1.,  0.,  0.,  0.])
+
         >>> # Pad a matrix along its first dimension
-        >>> A = np.ones((3, 5))
-        >>> Apad = librosa.util.pad_center(A, 7, axis=0)
+        >>> data = np.ones((3, 5))
+        >>> librosa.util.pad_center(data, 7, axis=0)
+        array([[ 0.,  0.,  0.,  0.,  0.],
+               [ 0.,  0.,  0.,  0.,  0.],
+               [ 1.,  1.,  1.,  1.,  1.],
+               [ 1.,  1.,  1.,  1.,  1.],
+               [ 1.,  1.,  1.,  1.,  1.],
+               [ 0.,  0.,  0.,  0.,  0.],
+               [ 0.,  0.,  0.,  0.,  0.]])
         >>> # Or its second dimension
-        >>> Apad = librosa.util.pad_center(A, 7, axis=1)
+        >>> librosa.util.pad_center(data, 7, axis=1)
+        array([[ 0.,  1.,  1.,  1.,  1.,  1.,  0.],
+               [ 0.,  1.,  1.,  1.,  1.,  1.,  0.],
+               [ 0.,  1.,  1.,  1.,  1.,  1.,  0.]])
 
     :parameters:
         - data : np.ndarray
@@ -206,6 +223,18 @@ def fix_length(y, n, **kwargs):
 
     If ``len(y) < n``, pad according to the provided kwargs.
     By default, ``y`` is padded with trailing zeros.
+
+    :usage:
+        >>> y = np.arange(7)
+        >>> # Default: pad with zeros
+        >>> librosa.util.fix_length(y, 10)
+        array([0, 1, 2, 3, 4, 5, 6, 0, 0, 0])
+        >>> # Trim to a desired length
+        >>> librosa.util.fix_length(y, 5)
+        array([0, 1, 2, 3, 4])
+        >>> # Use edge-padding instead of zeros
+        >>> librosa.util.fix_length(y, 10, mode='edge')
+        array([0, 1, 2, 3, 4, 5, 6, 6, 6, 6])
 
     :parameters:
       - y : np.ndarray [shape=(m,)]
@@ -310,6 +339,39 @@ def axis_sort(S, axis=-1, index=False, value=None):
 def normalize(S, norm=np.inf, axis=0):
     '''Normalize the columns or rows of a matrix
 
+    :usage:
+        >>> # Construct an example matrix
+        >>> S = np.vander(np.arange(-2.0, 2.0))
+        >>> S
+        array([[-8.,  4., -2.,  1.],
+               [-1.,  1., -1.,  1.],
+               [ 0.,  0.,  0.,  1.],
+               [ 1.,  1.,  1.,  1.]])
+        >>> # Max (l-infinity)-normalize the columns
+        >>> librosa.util.normalize(S)
+        array([[-1.   ,  1.   , -1.   ,  1.   ],
+               [-0.125,  0.25 , -0.5  ,  1.   ],
+               [ 0.   ,  0.   ,  0.   ,  1.   ],
+               [ 0.125,  0.25 ,  0.5  ,  1.   ]])
+        >>> # Max (l-infinity)-normalize the rows
+        >>> librosa.util.normalize(S, axis=1)
+        array([[-1.   ,  0.5  , -0.25 ,  0.125],
+               [-1.   ,  1.   , -1.   ,  1.   ],
+               [ 0.   ,  0.   ,  0.   ,  1.   ],
+               [ 1.   ,  1.   ,  1.   ,  1.   ]])
+        >>> # l1-normalize the columns
+        >>> librosa.util.normalize(S, norm=1)
+        array([[-0.8  ,  0.667, -0.5  ,  0.25 ],
+               [-0.1  ,  0.167, -0.25 ,  0.25 ],
+               [ 0.   ,  0.   ,  0.   ,  0.25 ],
+               [ 0.1  ,  0.167,  0.25 ,  0.25 ]])
+        >>> # l2-normalize the columns
+        >>> librosa.util.normalize(S, norm=2)
+        array([[-0.985,  0.943, -0.816,  0.5  ],
+               [-0.123,  0.236, -0.408,  0.5  ],
+               [ 0.   ,  0.   ,  0.   ,  0.5  ],
+               [ 0.123,  0.236,  0.408,  0.5  ]])
+
     :parameters:
       - S : np.ndarray [shape=(d, n)]
           The matrix to normalize
@@ -331,7 +393,7 @@ def normalize(S, norm=np.inf, axis=0):
           Normalized matrix
 
     .. note::
-        Columns/rows with length 0 will be left as zeros.
+         Columns/rows with length 0 will be left as zeros.
     '''
 
     # All norms only depend on magnitude, let's do that first
