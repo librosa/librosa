@@ -16,9 +16,11 @@ def dct(n_filters, n_input):
 
     :usage:
         >>> # Compute MFCCs
-        >>> S           = librosa.melspectrogram(y, sr)
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> S = librosa.melspectrogram(y, sr)
         >>> dct_filters = librosa.filters.dct(13, S.shape[0])
-        >>> mfcc        = dct_filters.dot(librosa.logamplitude(S))
+        >>> # Use the filters to make mfccs
+        >>> mfcc = dct_filters.dot(librosa.logamplitude(S))
 
     :parameters:
       - n_filters : int > 0 [scalar]
@@ -368,6 +370,7 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12, roll=0):
 
     :usage:
         >>> # Get a CQT, and wrap bins to chroma
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> CQT         = librosa.cqt(y, sr)
         >>> chroma_map  = librosa.filters.cq_to_chroma(CQT.shape[0])
         >>> chromagram  = chroma_map.dot(CQT)
