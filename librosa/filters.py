@@ -17,8 +17,14 @@ def dct(n_filters, n_input):
     :usage:
         >>> # Compute MFCCs
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> S = librosa.melspectrogram(y, sr)
+        >>> S = librosa.feature.melspectrogram(y=y, sr=sr)
         >>> dct_filters = librosa.filters.dct(13, S.shape[0])
+        >>> dct_filters
+        array([[ 0.088,  0.088, ...,  0.088,  0.088],
+               [ 0.125,  0.125, ..., -0.125, -0.125],
+               ...,
+               [ 0.124,  0.115, ..., -0.115, -0.124],
+               [ 0.124,  0.113, ...,  0.113,  0.124]])
         >>> # Use the filters to make mfccs
         >>> mfcc = dct_filters.dot(librosa.logamplitude(S))
 
@@ -51,10 +57,20 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
     """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins
 
     :usage:
-        >>> mel_fb = librosa.filters.mel(22050, 2048)
+        >>> librosa.filters.mel(22050, 2048)
+        array([[ 0.   ,  0.016, ...,  0.   ,  0.   ],
+               [ 0.   ,  0.   , ...,  0.   ,  0.   ],
+               ...,
+               [ 0.   ,  0.   , ...,  0.   ,  0.   ],
+               [ 0.   ,  0.   , ...,  0.   ,  0.   ]])
 
         >>> # Or clip the maximum frequency to 8KHz
-        >>> mel_fb = librosa.filters.mel(22050, 2048, fmax=8000)
+        >>> librosa.filters.mel(22050, 2048, fmax=8000)
+        array([[ 0.  ,  0.02, ...,  0.  ,  0.  ],
+               [ 0.  ,  0.  , ...,  0.  ,  0.  ],
+               ...,
+               [ 0.  ,  0.  , ...,  0.  ,  0.  ],
+               [ 0.  ,  0.  , ...,  0.  ,  0.  ]])
 
     :parameters:
       - sr        : int > 0 [scalar]
@@ -118,13 +134,28 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=2):
 
     :usage:
         >>> # Build a simple chroma filter bank
-        >>> chroma_fb   = librosa.filters.chroma(22050, 4096)
+        >>> librosa.filters.chroma(22050, 4096)
+        array([[  1.689e-05,   3.024e-04, ...,   4.639e-17,   5.327e-17],
+               [  1.716e-05,   2.652e-04, ...,   2.674e-25,   3.176e-25],
+               ...,
+               [  1.578e-05,   3.619e-04, ...,   8.577e-06,   9.205e-06],
+               [  1.643e-05,   3.355e-04, ...,   1.474e-10,   1.636e-10]])
 
         >>> # Use quarter-tones instead of semitones
-        >>> chroma_fbq  = librosa.filters.chroma(22050, 4096, n_chroma=24)
+        >>> librosa.filters.chroma(22050, 4096, n_chroma=24)
+        array([[  1.194e-05,   2.138e-04, ...,   6.297e-64,   1.115e-63],
+               [  1.206e-05,   2.009e-04, ...,   1.546e-79,   2.929e-79],
+               ...,
+               [  1.162e-05,   2.372e-04, ...,   6.417e-38,   9.923e-38],
+               [  1.180e-05,   2.260e-04, ...,   4.697e-50,   7.772e-50]])
 
         >>> # Equally weight all octaves
-        >>> chroma_fb   = librosa.filters.chroma(22050, 4096, octwidth=None)
+        >>> librosa.filters.chroma(22050, 4096, octwidth=None)
+        array([[  3.036e-01,   2.604e-01, ...,   2.445e-16,   2.809e-16],
+               [  3.084e-01,   2.283e-01, ...,   1.409e-24,   1.675e-24],
+               ...,
+               [  2.836e-01,   3.116e-01, ...,   4.520e-05,   4.854e-05],
+               [  2.953e-01,   2.888e-01, ...,   7.768e-10,   8.629e-10]])
 
     :parameters:
       - sr        : int > 0 [scalar]
@@ -200,16 +231,25 @@ def logfrequency(sr, n_fft, n_bins=84, bins_per_octave=12, tuning=0.0,
 
     :usage:
         >>> # Simple log frequency filters
-        >>> logfs_fb = librosa.filters.logfrequency(22050, 4096)
+        >>> librosa.filters.logfrequency(22050, 4096)
+        array([[ 0.,  0., ...,  0.,  0.],
+               [ 0.,  0., ...,  0.,  0.],
+               ...,
+               [ 0.,  0., ...,  0.,  0.],
+               [ 0.,  0., ...,  0.,  0.]])
 
         >>> # Use a narrower frequency range
-        >>> logfs_fb = librosa.filters.logfrequency(22050, 4096,
-                                                    n_bins=48, fmin=110)
+        >>> librosa.filters.logfrequency(22050, 4096, n_bins=48, fmin=110)
+        array([[ 0.,  0., ...,  0.,  0.],
+               [ 0.,  0., ...,  0.,  0.],
+               ...,
+               [ 0.,  0., ...,  0.,  0.],
+               [ 0.,  0., ...,  0.,  0.]])
 
         >>> # Use narrower filters for sparser response: 5% of a semitone
-        >>> logfs_fb = librosa.filters.logfrequency(22050, 4096, spread=0.05)
+        >>> librosa.filters.logfrequency(22050, 4096, spread=0.05)
         >>> # Or wider: 50% of a semitone
-        >>> logfs_fb = librosa.filters.logfrequency(22050, 4096, spread=0.5)
+        >>> librosa.filters.logfrequency(22050, 4096, spread=0.5)
 
     :parameters:
       - sr : int > 0 [scalar]
@@ -274,13 +314,13 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 
     :usage:
         >>> # Change the windowing function to Hamming instead of Hann
-        >>> basis   = librosa.filters.constant_q(22050, window=np.hamming)
+        >>> basis = librosa.filters.constant_q(22050, window=np.hamming)
 
         >>> # Use a longer window for each filter
-        >>> basis   = librosa.filters.constant_q(22050, resolution=3)
+        >>> basis = librosa.filters.constant_q(22050, resolution=3)
 
         >>> # Pad the basis to fixed length
-        >>> basis   = librosa.filters.constant_q(22050, pad=True)
+        >>> basis = librosa.filters.constant_q(22050, pad=True)
 
     :parameters:
       - sr : int > 0 [scalar]
@@ -371,9 +411,9 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12, roll=0):
     :usage:
         >>> # Get a CQT, and wrap bins to chroma
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> CQT         = librosa.cqt(y, sr)
-        >>> chroma_map  = librosa.filters.cq_to_chroma(CQT.shape[0])
-        >>> chromagram  = chroma_map.dot(CQT)
+        >>> CQT = librosa.cqt(y, sr=sr)
+        >>> chroma_map = librosa.filters.cq_to_chroma(CQT.shape[0])
+        >>> chromagram = chroma_map.dot(CQT)
 
     :parameters:
       - n_input : int > 0 [scalar]

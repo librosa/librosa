@@ -25,18 +25,30 @@ def decompose(S, n_components=None, transformer=None, sort=False):
         >>> # Decompose a magnitude spectrogram into 32 components with NMF
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> S = np.abs(librosa.stft(y))
-        >>> comps, acts = librosa.decompose.decompose(S, n_components=32)
+        >>> comps, acts = librosa.decompose.decompose(S, n_components=8)
+        >>> comps
+        array([[  9.826e-02,   6.439e-02, ...,   1.194e-01,   1.790e-02],
+               [  2.565e-01,   1.600e-01, ...,   2.181e-01,   7.890e-02],
+               ...,
+               [  8.500e-08,   5.685e-08, ...,   3.240e-08,   3.534e-08],
+               [  8.421e-08,   4.543e-08, ...,   2.183e-08,   2.353e-08]])
+        >>> acts
+        array([[  3.629e-02,   1.766e-01, ...,   3.379e-05,   5.473e-06],
+               [  1.225e-02,   1.294e-01, ...,   3.544e-05,   3.386e-06],
+               ...,
+               [  4.268e-02,   4.184e-02, ...,   1.240e-05,   5.790e-06],
+               [  6.748e-03,   1.720e-01, ...,   3.043e-05,  -0.000e+00]])
 
         >>> # Sort components by ascending peak frequency
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> S = np.abs(librosa.stft(y))
-        >>> comps, acts = librosa.decompose.decompose(S, n_components=32,
+        >>> comps, acts = librosa.decompose.decompose(S, n_components=8,
                                                       sort=True)
 
         >>> # Or with sparse dictionary learning
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> S = np.abs(librosa.stft(y))
-        >>> T = sklearn.decomposition.DictionaryLearning(n_components=32)
+        >>> T = sklearn.decomposition.DictionaryLearning(n_components=8)
         >>> comps, acts = librosa.decompose.decompose(S, transformer=T)
 
     :parameters:
@@ -107,8 +119,28 @@ def hpss(S, kernel_size=31, power=2.0, mask=False):
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> D = librosa.stft(y)
         >>> H, P = librosa.decompose.hpss(D)
-        >>> # Resynthesize the harmonic component as a waveform
-        >>> y_harmonic = librosa.istft(H)
+        >>> H
+        array([[  1.103e-02 +0.000e+00j,   2.519e-03 +0.000e+00j, ...,
+                  6.132e-05 +0.000e+00j,   1.439e-04 +0.000e+00j],
+               [  3.373e-03 +1.423e-18j,   1.178e-03 +4.197e-04j, ...,
+                 -4.451e-05 +2.202e-05j,   8.756e-05 -9.594e-07j],
+               ...,
+               [ -2.175e-09 +1.902e-16j,   9.658e-10 +4.394e-10j, ...,
+                  0.000e+00 +0.000e+00j,  -1.984e-11 -2.210e-13j],
+               [ -3.468e-09 +3.032e-16j,  -3.086e-10 +2.698e-17j, ...,
+                 -0.000e+00 +0.000e+00j,  -3.002e-11 +2.624e-18j]],
+              dtype=complex64)
+        >>> P
+        array([[  1.412e-02 +0.000e+00j,   7.064e-02 +0.000e+00j, ...,
+                  1.903e-04 +0.000e+00j,   1.298e-06 +0.000e+00j],
+               [  5.560e-02 +2.346e-17j,   4.777e-02 +1.702e-02j, ...,
+                 -1.669e-04 +8.257e-05j,   4.820e-06 -5.281e-08j],
+               ...,
+               [ -2.175e-09 +1.902e-16j,   1.681e-08 +7.649e-09j, ...,
+                  1.227e-10 +5.685e-11j,  -1.984e-11 -2.210e-13j],
+               [ -1.458e-08 +1.275e-15j,  -1.258e-08 +1.100e-15j, ...,
+                 -1.181e-10 +1.033e-17j,  -3.002e-11 +2.624e-18j]],
+              dtype=complex64)
 
         >>> # Or with a narrower horizontal filter
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
@@ -119,6 +151,18 @@ def hpss(S, kernel_size=31, power=2.0, mask=False):
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> D = librosa.stft(y)
         >>> mask_H, mask_P = librosa.decompose.hpss(D, mask=True)
+        >>> mask_H
+        array([[ 0.,  0., ...,  0.,  1.],
+               [ 0.,  0., ...,  0.,  1.],
+               ...,
+               [ 0.,  0., ...,  0.,  1.],
+               [ 0.,  0., ...,  0.,  1.]])
+        >>> mask_P
+        array([[ 1.,  1., ...,  1.,  0.],
+               [ 1.,  1., ...,  1.,  0.],
+               ...,
+               [ 1.,  1., ...,  1.,  0.],
+               [ 1.,  1., ...,  1.,  0.]])
 
     :parameters:
       - S : np.ndarray [shape=(d, n)]
