@@ -76,9 +76,10 @@ def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
 
 
 def frames_csv(path, frames, sr=22050, hop_length=512, **kwargs):
-    """Convert frames to time and store the output in CSV format.
+    """Convert frames to time and store tbrycehe output in CSV format.
 
     :usage:
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> tempo, beats = librosa.beat.beat_track(y, sr=sr, hop_length=64)
         >>> librosa.output.frames_csv('beat_times.csv', frames,
                                       sr=sr, hop_length=64)
@@ -127,6 +128,7 @@ def times_csv(path, times, annotations=None, delimiter=',', fmt='%0.3f'):
 
 
     :usage:
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> tempo, beats = librosa.beat.beat_track(y, sr=sr, hop_length=64)
         >>> times = librosa.frames_to_time(beats, sr=sr, hop_length=64)
         >>> librosa.output.times_csv('beat_times.csv', times)
@@ -172,7 +174,8 @@ def write_wav(path, y, sr, norm=True):
 
     :usage:
         >>> # Trim a signal to 5 seconds and save it back
-        >>> y, sr = librosa.load('file.wav', duration=5)
+        >>> y, sr = librosa.load(librosa.util.example_audio_file(),
+                                 duration=5.0)
         >>> librosa.output.write_wav('file_trim_5s.wav', y, sr)
 
     :parameters:
