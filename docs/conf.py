@@ -108,7 +108,6 @@ html_theme = 'nature'
 #     'bootstrap_version':    '3',
 #     'navbar_title':         'LibROSA',
 #     'source_link_position': None,
-
 # }
 
 # Add any paths that contain custom themes here, relative to this directory.
