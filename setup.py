@@ -23,7 +23,7 @@ setup(
         "Programming Language :: Python :: 3.3",
     ],
     keywords='audio music sound',
-    license='GPL',
+    license='ISC',
     install_requires=[
         'audioread',
         'numpy >= 1.8.0',
