@@ -23,11 +23,13 @@ def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
     This can be used for segment or chord annotations.
 
     :usage:
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> data = librosa.feature.mfcc(y=y, sr=sr, hop_length=512)
         >>> # Detect segment boundaries
         >>> boundaries = librosa.segment.agglomerative(data, k=10)
         >>> # Convert to time
         >>> boundary_times = librosa.frames_to_time(boundaries, sr=sr,
-                                                    hop_length=hop_length)
+                                                    hop_length=512)
         >>> # Make some fake annotations
         >>> labels = ['Seg #{:03d}'.format(i) for i in range(len(time_start))]
         >>> # Save the output
@@ -81,7 +83,7 @@ def frames_csv(path, frames, sr=22050, hop_length=512, **kwargs):
     :usage:
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> tempo, beats = librosa.beat.beat_track(y, sr=sr, hop_length=64)
-        >>> librosa.output.frames_csv('beat_times.csv', frames,
+        >>> librosa.output.frames_csv('beat_times.csv', beats,
                                       sr=sr, hop_length=64)
 
     :parameters:
