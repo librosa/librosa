@@ -23,14 +23,19 @@ def decompose(S, n_components=None, transformer=None, sort=False):
 
     :usage:
         >>> # Decompose a magnitude spectrogram into 32 components with NMF
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> S = np.abs(librosa.stft(y))
         >>> comps, acts = librosa.decompose.decompose(S, n_components=32)
 
         >>> # Sort components by ascending peak frequency
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> S = np.abs(librosa.stft(y))
         >>> comps, acts = librosa.decompose.decompose(S, n_components=32,
                                                       sort=True)
 
         >>> # Or with sparse dictionary learning
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> S = np.abs(librosa.stft(y))
         >>> T = sklearn.decomposition.DictionaryLearning(n_components=32)
         >>> comps, acts = librosa.decompose.decompose(S, transformer=T)
 
@@ -99,15 +104,20 @@ def hpss(S, kernel_size=31, power=2.0, mask=False):
 
     :usage:
         >>> # Separate into harmonic and percussive
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> D = librosa.stft(y)
         >>> H, P = librosa.decompose.hpss(D)
         >>> # Resynthesize the harmonic component as a waveform
         >>> y_harmonic = librosa.istft(H)
 
         >>> # Or with a narrower horizontal filter
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> D = librosa.stft(y)
         >>> H, P = librosa.decompose.hpss(D, kernel_size=(13, 31))
 
         >>> # Just get harmonic/percussive masks, not the spectra
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> D = librosa.stft(y)
         >>> mask_H, mask_P = librosa.decompose.hpss(D, mask=True)
 
     :parameters:
