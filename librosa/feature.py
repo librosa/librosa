@@ -462,15 +462,14 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096, hop_length=512, **kwargs):
 
     :usage:
         >>> # From time-series input
-        >>> S_log       = librosa.logfsgram(y=y, sr=sr)
-
-        >>> # Or from power spectrogram input
-        >>> S           = np.abs(librosa.stft(y))**2
-        >>> S_log       = librosa.logfsgram(S=S, sr=sr)
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> S_log = librosa.logfsgram(y=y, sr=sr)
 
         >>> # Convert to chroma
-        >>> chroma_map  = librosa.filters.cq_to_chroma(S_log.shape[0])
-        >>> C           = chroma_map.dot(S_log)
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> S_log = librosa.logfsgram(y=y, sr=sr)
+        >>> chroma_map = librosa.filters.cq_to_chroma(S_log.shape[0])
+        >>> chroma = chroma_map.dot(S_log)
 
     :parameters:
       - y : np.ndarray [shape=(n,)] or None
@@ -538,9 +537,11 @@ def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
     """Compute a chromagram from a spectrogram or waveform
 
     :usage:
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> C = librosa.chromagram(y, sr)
 
         >>> # Use a pre-computed spectrogram
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> S = np.abs(librosa.stft(y, n_fft=4096))
         >>> C = librosa.chromagram(S=S)
 
@@ -624,16 +625,20 @@ def estimate_tuning(resolution=0.01, bins_per_octave=12, **kwargs):
 
     :usage:
        >>> # With time-series input
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
        >>> print(estimate_tuning(y=y, sr=sr))
 
        >>> # In tenths of a cent
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
        >>> print(estimate_tuning(y=y, sr=sr, resolution=1e-3))
 
        >>> # Using spectrogram input
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
        >>> S = np.abs(librosa.stft(y))
        >>> print(estimate_tuning(S=S, sr=sr))
 
        >>> # Using pass-through arguments to ``librosa.feature.piptrack``
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
        >>> print(estimate_tuning(y=y, sr=sr, n_fft=8192,
                                  fmax=librosa.midi_to_hz(128)))
 
@@ -680,6 +685,7 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
         0.25
 
         >>> # Track frequencies from a real spectrogram
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> pitches, magnitudes, stft = librosa.feature.ifptrack(y, sr)
         >>> # Select out pitches with high energy
         >>> pitches = pitches[magnitudes > np.median(magnitudes)]
@@ -734,7 +740,8 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=None,
     '''Instantaneous pitch frequency tracking.
 
     :usage:
-        >>> pitches, magnitudes, D = librosa.feature.ifptrack(y, sr)
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> pitches, magnitudes, D = librosa.feature.ifptrack(y, sr=sr)
 
     :parameters:
       - y: np.ndarray [shape=(n,)]
@@ -885,6 +892,7 @@ def piptrack(y=None, sr=22050, S=None, n_fft=4096, fmin=150.0,
     '''Pitch tracking on thresholded parabolically-interpolated STFT
 
     :usage:
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> pitches, magnitudes = librosa.feature.piptrack(y=y, sr=sr)
 
     :parameters:
@@ -993,14 +1001,17 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
 
     :usage:
         >>> # Generate mfccs from a time series
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> mfccs = librosa.feature.mfcc(y=y, sr=sr)
 
         >>> # Use a pre-computed log-power Mel spectrogram
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128,
                                                fmax=8000)
         >>> mfccs = librosa.feature.mfcc(S=librosa.logamplitude(S))
 
         >>> # Get more components
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=40)
 
     :parameters:
@@ -1043,13 +1054,16 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     """Compute a Mel-scaled power spectrogram.
 
     :usage:
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> S = librosa.feature.melspectrogram(y=y, sr=sr)
 
         >>> # Using a pre-computed power spectrogram
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> D = np.abs(librosa.stft(y))**2
         >>> S = librosa.feature.melspectrogram(S=D)
 
         >>> # Passing through arguments to the Mel filters
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128,
                                                fmax=8000)
 
@@ -1105,6 +1119,7 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
 
     :usage:
         >>> # Compute MFCC deltas, delta-deltas
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> mfccs       = librosa.feature.mfcc(y=y, sr=sr)
         >>> delta_mfcc  = librosa.feature.delta(mfccs)
         >>> delta2_mfcc = librosa.feature.delta(mfccs, order=2)
@@ -1246,12 +1261,12 @@ def sync(data, frames, aggregate=None):
 
     :usage:
         >>> # Beat-synchronous MFCCs
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> tempo, beats    = librosa.beat.beat_track(y=y, sr=sr)
         >>> S               = librosa.feature.melspectrogram(y=y, sr=sr,
                                                              hop_length=64)
         >>> mfcc            = librosa.feature.mfcc(S=S)
         >>> mfcc_sync       = librosa.feature.sync(mfcc, beats)
-
         >>> # Use median-aggregation instead of mean
         >>> mfcc_sync       = librosa.feature.sync(mfcc, beats,
                                                    aggregate=np.median)
