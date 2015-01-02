@@ -21,12 +21,14 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64,
 
     :usage:
         >>> # Get onset times from a signal
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> onset_frames = librosa.onset.onset_detect(y=y,
                                                       sr=sr, hop_length=64)
         >>> onset_times = librosa.frames_to_time(onset_frames,
                                                  sr, hop_length=64)
 
         >>> # Or use a pre-computed onset envelope
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> o_env = librosa.onset.onset_strength(y, sr=sr)
         >>> onset_frames = librosa.onset.onset_detect(onset_envelope=o_env,
                                                       sr=sr)
@@ -111,17 +113,21 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
 
     :usage:
         >>> # Mean aggregation with Mel-scaled spectrogram
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> o_env = librosa.onset.onset_strength(y, sr)
 
         >>> # Median aggregation
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> o_env = librosa.onset.onset_strength(y, sr,
                                                  aggregate=np.median)
 
         >>> # Log-frequency spectrogram instead of Mel
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> o_env = librosa.onset.onset_strength(y, sr,
                                                  feature=librosa.feature.logfsgram)
 
         >>> # Or Mel spectrogram with customized options
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> o_env = librosa.onset.onset_strength(y, sr,
                                                  n_mels=128,
                                                  fmin=32,
