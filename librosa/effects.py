@@ -17,7 +17,7 @@ def hpss(y):
 
     :usage:
         >>> # Load a waveform
-        >>> y, sr = librosa.load('file.mp3')
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> y_harmonic, y_percussive = librosa.effects.hpss(y)
 
     :parameters:
@@ -55,7 +55,7 @@ def harmonic(y):
 
     :usage:
         >>> # Load a waveform
-        >>> y, sr = librosa.load('file.mp3')
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> y_harmonic = librosa.effects.harmonic(y)
 
     :parameters:
@@ -89,7 +89,7 @@ def percussive(y):
 
     :usage:
         >>> # Load a waveform
-        >>> y, sr = librosa.load('file.mp3')
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> y_percussive = librosa.effects.percussive(y)
 
     :parameters:
@@ -123,7 +123,7 @@ def time_stretch(y, rate):
 
     :usage:
         >>> # Load a waveform
-        >>> y, sr = librosa.load('file.mp3')
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> # Compress to be twice as fast
         >>> y_fast = librosa.effects.time_stretch(y, 2.0)
         >>> # Or half the original speed
@@ -159,11 +159,11 @@ def time_stretch(y, rate):
 
 @cache
 def pitch_shift(y, sr, n_steps, bins_per_octave=12):
-    '''Pitch-shift the waveform by ``n_steps`` half-steps.
+    '''Pitch-shift the wbryceaveform by ``n_steps`` half-steps.
 
     :usage:
         >>> # Load a waveform
-        >>> y, sr = librosa.load('file.mp3')
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> # Shift up by a major third (four half-steps)
         >>> y_third = librosa.effects.pitch_shift(y, sr, n_steps=4)
         >>> # Shift down by a tritone (six half-steps)
