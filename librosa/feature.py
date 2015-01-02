@@ -364,6 +364,12 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 def rms(y=None, sr=22050, S=None, n_fft=2048, hop_length=512):
     '''Compute root-mean-square (RMS) energy for each frame.
 
+    :usage:
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> librosa.feature.rms(y=y, sr=sr)
+        array([  1.204e-01,   6.263e-01, ...,   1.413e-04,   2.191e-05],
+              dtype=float32)
+
     :parameters:
       - y : np.ndarray [shape=(n,)] or None
           audio time series
@@ -394,10 +400,23 @@ def rms(y=None, sr=22050, S=None, n_fft=2048, hop_length=512):
 
 
 @cache
-def line_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
+def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                   order=1, freq=None):
     '''Get coefficients of fitting an nth-order polynomial to the columns
     of a spectrogram.
+
+
+    :usage:
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> # Line features
+        >>> librosa.feature.poly_features(y=y, sr=sr)
+        array([[ -9.454e-06,  -4.322e-05, ...,  -1.640e-08,  -2.626e-09],
+               [  7.144e-02,   3.241e-01, ...,   1.332e-04,   2.127e-05]])
+        >>> # Quadratic features
+        >>> librosa.feature.poly_features(y=y, sr=sr, order=2)
+        array([[  3.742e-09,   1.753e-08, ...,   5.145e-12,   8.343e-13],
+               [ -5.071e-05,  -2.364e-04, ...,  -7.312e-08,  -1.182e-08],
+               [  1.472e-01,   6.788e-01, ...,   2.373e-04,   3.816e-05]])
 
     :parameters:
       - y : np.ndarray [shape=(n,)] or None
@@ -463,13 +482,23 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096, hop_length=512, **kwargs):
     :usage:
         >>> # From time-series input
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> S_log = librosa.logfsgram(y=y, sr=sr)
+        >>> librosa.feature.logfsgram(y=y, sr=sr)
+        array([[  9.255e-01,   1.649e+00, ...,   9.232e-07,   8.588e-07],
+               [  1.152e-22,   2.052e-22, ...,   1.149e-28,   1.069e-28],
+               ...,
+               [  1.919e-04,   2.465e-04, ...,   1.740e-08,   1.128e-08],
+               [  4.007e-04,   4.216e-04, ...,   4.577e-09,   1.997e-09]])
 
-        >>> # Convert to chroma
+        >>> # Convert to (unnormalized) chroma
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> S_log = librosa.logfsgram(y=y, sr=sr)
+        >>> S_log = librosa.feature.logfsgram(y=y, sr=sr)
         >>> chroma_map = librosa.filters.cq_to_chroma(S_log.shape[0])
-        >>> chroma = chroma_map.dot(S_log)
+        >>> chroma_map.dot(S_log)
+        array([[  2.524e+02,   2.484e+02, ...,   6.902e-06,   7.132e-06],
+               [  3.245e+00,   3.303e+02, ...,   9.670e-06,   4.191e-06],
+               ...,
+               [  4.675e+01,   6.706e+01, ...,   5.044e-06,   3.260e-06],
+               [  2.253e+02,   2.426e+02, ...,   8.244e-06,   6.981e-06]])
 
     :parameters:
       - y : np.ndarray [shape=(n,)] or None
@@ -538,12 +567,22 @@ def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
 
     :usage:
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> C = librosa.chromagram(y, sr)
+        >>> librosa.feature.chromagram(y=y, sr=sr)
+        array([[ 0.548,  0.293, ...,  0.698,  0.677],
+               [ 0.984,  0.369, ...,  0.945,  0.48 ],
+               ...,
+               [ 0.424,  0.466, ...,  0.747,  0.616],
+               [ 0.568,  0.33 , ...,  0.652,  0.565]])
 
-        >>> # Use a pre-computed spectrogram
+        >>> # Use a pre-computed spectrogram with a larger frame
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> S = np.abs(librosa.stft(y, n_fft=4096))
-        >>> C = librosa.chromagram(S=S)
+        >>> librosa.feature.chromagram(S=S, sr=sr)
+        array([[ 0.591,  0.336, ...,  0.821,  0.831],
+               [ 0.677,  0.46 , ...,  0.961,  0.963],
+               ...,
+               [ 0.499,  0.276, ...,  0.914,  0.881],
+               [ 0.593,  0.388, ...,  0.819,  0.764]])
 
 
     :parameters:
@@ -624,23 +663,27 @@ def estimate_tuning(resolution=0.01, bins_per_octave=12, **kwargs):
     '''Estimate the tuning of an audio time series or spectrogram input.
 
     :usage:
-       >>> # With time-series input
+        >>> # With time-series input
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
-       >>> print(estimate_tuning(y=y, sr=sr))
+        >>> librosa.feature.estimate_tuning(y=y, sr=sr)
+        0.070000000000000062
 
-       >>> # In tenths of a cent
+        >>> # In tenths of a cent
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
-       >>> print(estimate_tuning(y=y, sr=sr, resolution=1e-3))
+        >>> librosa.feature.estimate_tuning(y=y, sr=sr, resolution=1e-3))
+        0.071000000000000063
 
-       >>> # Using spectrogram input
+        >>> # Using spectrogram input
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
-       >>> S = np.abs(librosa.stft(y))
-       >>> print(estimate_tuning(S=S, sr=sr))
+        >>> S = np.abs(librosa.stft(y))
+        >>> librosa.feature.estimate_tuning(S=S, sr=sr)
+        0.089999999999999969
 
-       >>> # Using pass-through arguments to ``librosa.feature.piptrack``
+        >>> # Using pass-through arguments to ``librosa.feature.piptrack``
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
-       >>> print(estimate_tuning(y=y, sr=sr, n_fft=8192,
-                                 fmax=librosa.midi_to_hz(128)))
+        >>> librosa.feature.estimate_tuning(y=y, sr=sr, n_fft=8192,
+                                            fmax=librosa.midi_to_hz(128))
+        0.070000000000000062
 
     :parameters:
       - resolution : float in ``(0, 1)``
@@ -690,6 +733,7 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
         >>> # Select out pitches with high energy
         >>> pitches = pitches[magnitudes > np.median(magnitudes)]
         >>> librosa.feature.pitch_tuning(pitches)
+        0.089999999999999969
 
     :parameters:
       - frequencies : array-like, float
@@ -1002,13 +1046,23 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
     :usage:
         >>> # Generate mfccs from a time series
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> mfccs = librosa.feature.mfcc(y=y, sr=sr)
+        >>> librosa.feature.mfcc(y=y, sr=sr)
+        array([[ -4.722e+02,  -4.107e+02, ...,  -5.234e+02,  -5.234e+02],
+               [  6.304e+01,   1.260e+02, ...,   2.753e-14,   2.753e-14],
+               ...,
+               [ -6.652e+00,  -7.556e+00, ...,   1.865e-14,   1.865e-14],
+               [ -3.458e+00,  -4.677e+00, ...,   3.020e-14,   3.020e-14]])
 
         >>> # Use a pre-computed log-power Mel spectrogram
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128,
                                                fmax=8000)
-        >>> mfccs = librosa.feature.mfcc(S=librosa.logamplitude(S))
+        >>> librosa.feature.mfcc(S=librosa.logamplitude(S))
+        array([[ -4.659e+02,  -3.988e+02, ...,  -5.212e+02,  -5.212e+02],
+               [  6.631e+01,   1.305e+02, ...,  -2.842e-14,  -2.842e-14],
+               ...,
+               [ -1.608e+00,  -3.963e+00, ...,   1.421e-14,   1.421e-14],
+               [ -1.480e+00,  -4.348e+00, ...,   2.487e-14,   2.487e-14]])
 
         >>> # Get more components
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
@@ -1055,7 +1109,12 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     :usage:
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> S = librosa.feature.melspectrogram(y=y, sr=sr)
+        >>> librosa.feature.melspectrogram(y=y, sr=sr)
+        array([[  1.223e-02,   2.988e-02, ...,   1.354e-08,   1.497e-09],
+               [  4.341e-02,   2.063e+00, ...,   9.532e-08,   2.233e-09],
+               ...,
+               [  2.473e-11,   1.167e-10, ...,   1.130e-15,   3.280e-17],
+               [  1.477e-13,   6.739e-13, ...,   4.292e-17,   1.718e-18]])
 
         >>> # Using a pre-computed power spectrogram
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
@@ -1120,9 +1179,19 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
     :usage:
         >>> # Compute MFCC deltas, delta-deltas
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> mfccs       = librosa.feature.mfcc(y=y, sr=sr)
-        >>> delta_mfcc  = librosa.feature.delta(mfccs)
-        >>> delta2_mfcc = librosa.feature.delta(mfccs, order=2)
+        >>> mfccs = librosa.feature.mfcc(y=y, sr=sr)
+        >>> librosa.feature.delta(mfccs)
+        array([[ -4.250e+03,  -3.060e+03, ...,  -4.547e-13,  -4.547e-13],
+               [  5.673e+02,   6.931e+02, ...,   0.000e+00,   0.000e+00],
+               ...,
+               [ -5.986e+01,  -5.018e+01, ...,   0.000e+00,   0.000e+00],
+               [ -3.112e+01,  -2.908e+01, ...,   0.000e+00,   0.000e+00]])
+        >>> librosa.feature.delta(mfccs, order=2)
+        array([[ -4.297e+04,  -3.207e+04, ...,  -8.185e-11,  -5.275e-11],
+               [  5.736e+03,   5.420e+03, ...,  -7.390e-12,  -4.547e-12],
+               ...,
+               [ -6.053e+02,  -4.801e+02, ...,   0.000e+00,   0.000e+00],
+               [ -3.146e+02,  -2.615e+02, ...,  -4.619e-13,  -2.842e-13]])
 
     :parameters:
       - data      : np.ndarray [shape=(d, T)]
@@ -1262,17 +1331,16 @@ def sync(data, frames, aggregate=None):
     :usage:
         >>> # Beat-synchronous MFCCs
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> tempo, beats    = librosa.beat.beat_track(y=y, sr=sr)
-        >>> S               = librosa.feature.melspectrogram(y=y, sr=sr,
-                                                             hop_length=64)
-        >>> mfcc            = librosa.feature.mfcc(S=S)
-        >>> mfcc_sync       = librosa.feature.sync(mfcc, beats)
+        >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
+        >>> mfcc = librosa.feature.mfcc(y=y, sr=sr)
+        >>> # By default, use mean aggregation
+        >>> mfcc_avg = librosa.feature.sync(mfcc, beats)
         >>> # Use median-aggregation instead of mean
-        >>> mfcc_sync       = librosa.feature.sync(mfcc, beats,
-                                                   aggregate=np.median)
+        >>> mfcc_med = librosa.feature.sync(mfcc, beats,
+                                            aggregate=np.median)
         >>> # Or max aggregation
-        >>> mfcc_sync       = librosa.feature.sync(mfcc, beats,
-                                                   aggregate=np.max)
+        >>> mfcc_max = librosa.feature.sync(mfcc, beats,
+                                            aggregate=np.max)
 
     :parameters:
       - data      : np.ndarray [shape=(d, T)]
