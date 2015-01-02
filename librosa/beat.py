@@ -25,9 +25,11 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=64,
 
     :usage:
         >>> # Track beats using time series input
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> tempo, beats = librosa.beat.beat_track( y, sr )
 
         >>> # Track beats using a pre-computed onset envelope
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> onset_env    = librosa.onset.onset_strength(y,
                                                         sr=sr,
                                                         hop_length=hop_length)
@@ -118,8 +120,10 @@ def estimate_tempo(onset_envelope, sr=22050, hop_length=64, start_bpm=120,
     """Estimate the tempo (beats per minute) from an onset envelope
 
     :usage:
-        >>> tempo = librosa.beat.estimate_tempo(onset_envelope,
-                                                sr=sr,
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> onset_env = librosa.onset.onset_strength(y, sr=sr,
+                                                     hop_length=hop_length)
+        >>> tempo = librosa.beat.estimate_tempo(onset_env, sr=sr,
                                                 hop_length=hop_length)
 
     :parameters:
