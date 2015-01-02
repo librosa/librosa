@@ -41,13 +41,29 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
 
     :usage:
         >>> # Load a wav file
-        >>> y, sr = librosa.load('file.wav')
+        >>> filename = librosa.util.example_audio_file()
+        >>> y, sr = librosa.load(filename)
+        >>> y
+        array([ 0.,  0.,  0., ...,  0.,  0.,  0.], dtype=float32)
+        >>> sr
+        22050
 
         >>> # Load a wav file and resample to 11 KHz
-        >>> y, sr = librosa.load('file.wav', sr=11025)
+        >>> filename = librosa.util.example_audio_file()
+        >>> y, sr = librosa.load(filename, sr=11025)
+        >>> y
+        array([ 0.,  0.,  0., ...,  0.,  0.,  0.], dtype=float32)
+        >>> sr
+        11025
 
         >>> # Load 5 seconds of a wav file, starting 15 seconds in
-        >>> y, sr = librosa.load('file.wav', offset=15.0, duration=5.0)
+        >>> filename = librosa.util.example_audio_file()
+        >>> y, sr = librosa.load(filename, offset=15.0, duration=5.0)
+        >>> y
+        array([ 0.066,  0.101,  0.089, ..., -0.097, -0.109,  0.   ],
+              dtype=float32)
+        >>> sr
+        22050
 
     :parameters:
       - path : string
@@ -148,6 +164,14 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
 def to_mono(y):
     '''Force an audio signal down to mono.
 
+    :usage:
+        >>> y, sr = librosa.load(librosa.util.example_audio_file(), mono=False)
+        >>> y.shape
+        (2, 1354752)
+        >>> y_mono = librosa.to_mono(y)
+        >>> y_mono.shape
+        (1354752,)
+
     :parameters:
         - y : np.ndarray [shape=(2,n) or shape=(n,)]
 
@@ -171,8 +195,10 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest', fix=True,
 
     :usage:
         >>> # Downsample from 22 KHz to 8 KHz
-        >>> y, sr   = librosa.load('file.wav', sr=22050)
-        >>> y_8k    = librosa.resample(y, sr, 8000)
+        >>> y, sr = librosa.load(librosa.util.example_audio_file(), sr=22050)
+        >>> y_8k = librosa.resample(y, sr, 8000)
+        >>> y.shape, y_8k.shape
+        ((1354752,), (491520,))
 
     :parameters:
       - y           : np.ndarray [shape=(n,)]
@@ -234,17 +260,19 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     :usage:
         >>> # Load the example audio file
         >>> y, sr = librosa.load(librosa.util.example_audio())
-        >>> d = librosa.get_duration(y=y, sr=sr)
-        >>> d
-        61.38775510204081
+        >>> librosa.get_duration(y=y, sr=sr)
+        61.44
 
         >>> # Or compute duration from an STFT matrix
+        >>> y, sr = librosa.load(librosa.util.example_audio())
         >>> S = librosa.stft(y)
-        >>> d = librosa.get_duration(S=S, sr=sr)
+        >>> librosa.get_duration(S=S, sr=sr)
+        61.44
 
         >>> # Or a non-centered STFT matrix
         >>> S_left = librosa.stft(y, center=False)
-        >>> d = librosa.get_duration(S=S_left, sr=sr)
+        >>> librosa.get_duration(S=S_left, sr=sr)
+        61.3471201814059
 
     :parameters:
       - y : np.ndarray [shape=(n,), (2, n)] or None
@@ -305,8 +333,19 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
         at frame ``t``
 
     :usage:
-        >>> y, sr = librosa.load('file.wav')
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> D = librosa.stft(y)
+        >>> D
+        array([[  2.515e-02 -0.000e+00j,   7.316e-02 -0.000e+00j, ...,
+                  2.517e-04 -0.000e+00j,   1.452e-04 -0.000e+00j],
+               [  5.897e-02 +2.488e-17j,   4.895e-02 +1.744e-02j, ...,
+                 -2.114e-04 +1.046e-04j,   9.238e-05 -1.012e-06j],
+               ...,
+               [ -4.351e-09 -2.131e-17j,   1.778e-08 +8.089e-09j, ...,
+                  1.227e-10 +5.685e-11j,  -3.968e-11 -4.419e-13j],
+               [ -1.805e-08 -0.000e+00j,  -1.289e-08 -0.000e+00j, ...,
+                 -1.181e-10 -0.000e+00j,  -6.003e-11 -0.000e+00j]],
+              dtype=complex64)
 
         >>> # Use left-aligned frames
         >>> D_left = librosa.stft(y, center=False)
@@ -419,9 +458,12 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
     Converts a complex-valued spectrogram ``stft_matrix`` to time-series ``y``.
 
     :usage:
-        >>> y, sr       = librosa.load('file.wav')
-        >>> stft_matrix = librosa.stft(y)
-        >>> y_hat       = librosa.istft(stft_matrix)
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> D = librosa.stft(y)
+        >>> y_hat = librosa.istft(D)
+        >>> y_hat
+        array([  1.121e-10,   1.093e-10, ...,   4.644e-14,   3.913e-14],
+              dtype=float32)
 
     :parameters:
       - stft_matrix : np.ndarray [shape=(1 + n_fft/2, t)]
@@ -512,8 +554,14 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     Calculates regular STFT as a side effect.
 
     :usage:
-        >>> y, sr = librosa.load('file.wav')
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> frequencies, D = librosa.ifgram(y, sr=sr)
+        >>> frequencies
+        array([[  0.000e+00,   0.000e+00, ...,   0.000e+00,   0.000e+00],
+               [  2.613e+01,   3.606e+01, ...,   8.199e+00,   3.845e+01],
+               ...,
+               [  1.096e+04,   5.650e+03, ...,   1.101e+04,   1.101e+04],
+               [  1.102e+04,   1.102e+04, ...,   1.102e+04,   1.102e+04]])
 
     :parameters:
       - y       : np.ndarray [shape=(n,)]
@@ -604,9 +652,34 @@ def magphase(D):
     and phase (P) components, so that ``D = S * P``.
 
     :usage:
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> D = librosa.stft(y)
-        >>> S, P = librosa.magphase(D)
-        >>> D == S * P
+        >>> magnitude, phase = librosa.magphase(D)
+        >>> magnitude
+        array([[  2.515e-02,   7.316e-02, ...,   2.517e-04,   1.452e-04],
+               [  5.897e-02,   5.196e-02, ...,   2.359e-04,   9.238e-05],
+               ...,
+               [  4.351e-09,   1.953e-08, ...,   1.352e-10,   3.969e-11],
+               [  1.805e-08,   1.289e-08, ...,   1.181e-10,   6.003e-11]],
+              dtype=float32)
+        >>> phase
+        array([[ 1.000 +0.000e+00j,  1.000 +0.000e+00j, ...,
+                 1.000 +0.000e+00j,  1.000 +0.000e+00j],
+               [ 1.000 +4.220e-16j,  0.942 +3.356e-01j, ...,
+                -0.896 +4.435e-01j,  1.000 -1.096e-02j],
+               ...,
+               [-1.000 +8.742e-08j,  0.910 +4.141e-01j, ...,
+                 0.907 +4.205e-01j, -1.000 -1.114e-02j],
+               [-1.000 +8.742e-08j, -1.000 +8.742e-08j, ...,
+                -1.000 +8.742e-08j, -1.000 +8.742e-08j]], dtype=complex64)
+        >>> # Or get the phase angle (in radians)
+        >>> np.angle(phase)
+        array([[  0.000e+00,   0.000e+00, ...,   0.000e+00,   0.000e+00],
+               [  4.220e-16,   3.422e-01, ...,   2.682e+00,  -1.096e-02],
+               ...,
+               [  3.142e+00,   4.270e-01, ...,   4.339e-01,  -3.130e+00],
+               [  3.142e+00,   3.142e+00, ...,   3.142e+00,   3.142e+00]],
+              dtype=float32)
 
     :parameters:
       - D       : np.ndarray [shape=(d, t), dtype=complex]
@@ -632,16 +705,36 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     '''Compute the constant-Q transform of an audio signal.
 
     :usage:
-        >>> y, sr = librosa.load('file.wav')
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> C = librosa.cqt(y, sr=sr)
+        >>> C
+        array([[  3.985e-01,   4.696e-01, ...,   7.009e-04,   8.497e-04],
+               [  1.135e+00,   1.220e+00, ...,   1.669e-03,   1.691e-03],
+               ...,
+               [  6.036e-04,   3.765e-02, ...,   3.100e-14,   0.000e+00],
+               [  4.690e-04,   8.762e-02, ...,   1.995e-14,   0.000e+00]])
 
         >>> # Limit the frequency range
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> C = librosa.cqt(y, sr=sr, fmin=librosa.midi_to_hz(36),
                             n_bins=60)
+        >>> C
+        array([[  8.936e+01,   9.573e+01, ...,   1.333e-02,   1.443e-02],
+               [  8.181e+01,   8.231e+01, ...,   2.552e-02,   2.147e-02],
+               ...,
+               [  2.791e-03,   2.463e-02, ...,   9.306e-04,   0.000e+00],
+               [  2.687e-03,   1.446e-02, ...,   8.878e-04,   0.000e+00]])
 
         >>> # Use higher resolution
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> C = librosa.cqt(y, sr=sr, fmin=librosa.midi_to_hz(36),
                             n_bins=60 * 2, bins_per_octave=12 * 2)
+        >>> C
+        array([[  1.000e+02,   1.094e+02, ...,   8.701e-02,   8.098e-02],
+               [  2.222e+02,   2.346e+02, ...,   5.625e-02,   4.770e-02],
+               ...,
+               [  5.177e-02,   1.710e-02, ...,   4.670e-03,   7.403e-12],
+               [  1.981e-02,   2.721e-03, ...,   1.943e-03,   7.246e-12]])
 
     :parameters:
       - y : np.ndarray [shape=(n,)]
@@ -680,7 +773,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
           By default, ``np.mean``.  See :func:`librosa.feature.sync()`.
 
     :returns:
-      - CQT : np.ndarray [shape=(d, t), dtype=np.float]
+      - CQT : np.ndarray [shape=(n_bins, t), dtype=np.float]
           Constant-Q energy for each frequency at each time.
 
     .. note:: This implementation is based on the recursive sub-sampling method
@@ -794,12 +887,14 @@ def phase_vocoder(D, rate, hop_length=None):
 
     :usage:
         >>> # Play at double speed
-        >>> y, sr   = librosa.load('file.wav')
+        >>> y, sr   = librosa.load(librosa.util.example_audio_file())
         >>> D       = librosa.stft(y, n_fft=2048, hop_length=512)
         >>> D_fast  = librosa.phase_vocoder(D, 2.0, hop_length=512)
         >>> y_fast  = librosa.istft(D_fast, hop_length=512)
 
         >>> # Or play at 1/3 speed
+        >>> y, sr   = librosa.load(librosa.util.example_audio_file())
+        >>> D       = librosa.stft(y, n_fft=2048, hop_length=512)
         >>> D_slow  = librosa.phase_vocoder(D, 1./3, hop_length=512)
         >>> y_slow  = librosa.istft(D_slow, hop_length=512)
 
@@ -889,14 +984,18 @@ def note_to_midi(note):
         -2
         >>> librosa.note_to_midi('A!8')
         104
+        >>> # Lists of notes also work
+        >>> librosa.note_to_midi(['C', 'E', 'G'])
+        array([0, 4, 7])
+
 
     :parameters:
       - note : str or iterable of str
-        One or more note names.
+          One or more note names.
 
     :returns:
       - midi : int or np.array
-        Midi note numbers corresponding to inputs.
+          Midi note numbers corresponding to inputs.
     '''
 
     if not isinstance(note, str):
@@ -940,6 +1039,9 @@ def midi_to_note(midi, octave=True, cents=False):
         'A8'
         >>> librosa.midi_to_note(104.7, cents=True)
         'A8-30'
+        >>> librosa.midi_to_note(range(12))
+        ['C0', 'C#0', 'D0', 'D#0', 'E0', 'F0',
+         'F#0', 'G0', 'G#0', 'A0', 'A#0', 'B0']
 
     :parameters:
       - midi : int or iterable of int
@@ -982,12 +1084,11 @@ def midi_to_hz(notes):
 
     :usage:
         >>> librosa.midi_to_hz(36)
-        array([ 65.40639133])
+        array([ 65.406])
 
         >>> librosa.midi_to_hz(np.arange(36, 48))
-        array([  65.40639133,   69.29565774,   73.41619198,   77.78174593,
-                 82.40688923,   87.30705786,   92.49860568,   97.998859  ,
-                103.82617439,  110.        ,  116.54094038,  123.47082531])
+        array([  65.406,   69.296,   73.416,   77.782,   82.407,   87.307,
+                 92.499,   97.999,  103.826,  110.   ,  116.541,  123.471])
 
     :parameters:
       - notes       : int or np.ndarray [shape=(n,), dtype=int]
@@ -1007,7 +1108,7 @@ def hz_to_midi(frequencies):
 
     :usage:
         >>> librosa.hz_to_midi(60)
-        array([ 34.50637059])
+        array([ 34.506])
         >>> librosa.hz_to_midi([110, 220, 440])
         array([ 45.,  57.,  69.])
 
@@ -1080,8 +1181,7 @@ def mel_to_hz(mels, htk=False):
         array([ 200.])
 
         >>> librosa.mel_to_hz([1,2,3,4,5])
-        array([  66.66666667,  133.33333333,  200.        ,  266.66666667,
-                333.33333333])
+        array([  66.667,  133.333,  200.   ,  266.667,  333.333])
 
     :parameters:
       - mels          : np.ndarray [shape=(n,)], float
@@ -1122,7 +1222,7 @@ def hz_to_octs(frequencies, A440=440.0):
         >>> librosa.hz_to_octs(440.0)
         array([ 4.])
         >>> librosa.hz_to_octs([32, 64, 128, 256])
-        array([ 0.21864029,  1.21864029,  2.21864029,  3.21864029])
+        array([ 0.219,  1.219,  2.219,  3.219])
 
     :parameters:
       - frequencies   : np.ndarray [shape=(n,)] or float
@@ -1195,14 +1295,12 @@ def cqt_frequencies(n_bins, fmin, bins_per_octave=12, tuning=0.0):
 
     :usage:
         >>> # Get the CQT frequencies for 24 notes, starting at C2
-        >>> fmin=librosa.midi_to_hz(librosa.note_to_midi('C2'))
+        >>> fmin = librosa.midi_to_hz(librosa.note_to_midi('C2'))
         >>> librosa.cqt_frequencies(24, fmin=fmin)
-        array([  32.70319566,   34.64782887,   36.70809599,   38.89087297,
-                 41.20344461,   43.65352893,   46.24930284,   48.9994295 ,
-                 51.9130872 ,   55.        ,   58.27047019,   61.73541266,
-                 65.40639133,   69.29565774,   73.41619198,   77.78174593,
-                 82.40688923,   87.30705786,   92.49860568,   97.998859  ,
-                103.82617439,  110.        ,  116.54094038,  123.47082531])
+        array([  32.703,   34.648,   36.708,   38.891,   41.203,   43.654,
+                 46.249,   48.999,   51.913,   55.   ,   58.27 ,   61.735,
+                 65.406,   69.296,   73.416,   77.782,   82.407,   87.307,
+                 92.499,   97.999,  103.826,  110.   ,  116.541,  123.471])
 
     :parameters:
       - n_bins  : int > 0 [scalar]
@@ -1234,16 +1332,14 @@ def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False,
 
     :usage:
         >>> librosa.mel_frequencies(n_mels=40)
-        array([    0.        ,    81.15543818,   162.31087636,   243.46631454,
-                324.62175272,   405.7771909 ,   486.93262907,   568.08806725,
-                649.24350543,   730.39894361,   811.55438179,   892.70981997,
-                973.86525815,  1058.38224675,  1150.77458676,  1251.23239132,
-                1360.45974173,  1479.22218262,  1608.3520875 ,  1748.75449257,
-                1901.4134399 ,  2067.39887435,  2247.87414245,  2444.10414603,
-                2657.46420754,  2889.44970936,  3141.68657445,  3415.94266206,
-                3714.14015814,  4038.36904745,  4390.90176166,  4774.2091062 ,
-                5190.97757748,  5644.12819182,  6136.83695801,  6672.55713712,
-                7255.04344548,  7888.37837041,  8577.0007833 ,  9325.73705043])
+        array([    0.   ,    81.155,   162.311,   243.466,   324.622,
+                 405.777,   486.933,   568.088,   649.244,   730.399,
+                 811.554,   892.71 ,   973.865,  1058.382,  1150.775,
+                1251.232,  1360.46 ,  1479.222,  1608.352,  1748.754,
+                1901.413,  2067.399,  2247.874,  2444.104,  2657.464,
+                2889.45 ,  3141.687,  3415.943,  3714.14 ,  4038.369,
+                4390.902,  4774.209,  5190.978,  5644.128,  6136.837,
+                6672.557,  7255.043,  7888.378,  8577.001,  9325.737])
 
     :parameters:
       - n_mels    : int > 0 [scalar]
@@ -1284,13 +1380,11 @@ def A_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
 
     :usage:
         >>> # Get the A-weighting for 20 Mel frequencies
-        >>> freqs   = librosa.mel_frequencies(20)
+        >>> freqs = librosa.mel_frequencies(20)
         >>> librosa.A_weighting(freqs)
-        array([-80.        , -13.35467911,  -6.59400464,  -3.57422971,
-                -1.87710933,  -0.83465455,  -0.15991521,   0.3164558 ,
-                0.68372258,   0.95279329,   1.13498903,   1.23933477,
-                1.27124465,   1.23163355,   1.1163366 ,   0.91575476,
-                0.6147545 ,   0.1929889 ,  -0.37407714,  -1.11314196])
+        array([-80.   , -13.355,  -6.594,  -3.574,  -1.877,  -0.835,  -0.16 ,
+                 0.316,   0.684,   0.953,   1.135,   1.239,   1.271,   1.232,
+                 1.116,   0.916,   0.615,   0.193,  -0.374,  -1.113])
 
     :parameters:
       - frequencies : scalar or np.ndarray [shape=(n,)]
@@ -1332,17 +1426,34 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
 
     :usage:
         >>> # Get a power spectrogram from a waveform y
-        >>> S       = np.abs(librosa.stft(y)) ** 2
-        >>> log_S   = librosa.logamplitude(S)
-
-        >>> # Compute dB relative to a standard reference of 1.0
-        >>> log_S   = librosa.logamplitude(S, ref_power=1.0)
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> S = np.abs(librosa.stft(y)) ** 2
+        >>> librosa.logamplitude(S)
+        array([[-31.988, -22.714, ..., -33.325, -33.325],
+               [-24.587, -25.686, ..., -33.325, -33.325],
+               ...,
+               [-33.325, -33.325, ..., -33.325, -33.325],
+               [-33.325, -33.325, ..., -33.325, -33.325]], dtype=float32)
 
         >>> # Compute dB relative to peak power
-        >>> log_S   = librosa.logamplitude(S, ref_power=np.max)
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> S = np.abs(librosa.stft(y)) ** 2
+        >>> librosa.logamplitude(S, ref_power=np.max)
+        array([[-78.663, -69.389, ..., -80.   , -80.   ],
+               [-71.262, -72.361, ..., -80.   , -80.   ],
+               ...,
+               [-80.   , -80.   , ..., -80.   , -80.   ],
+               [-80.   , -80.   , ..., -80.   , -80.   ]], dtype=float32)
 
         >>> # Or compare to median power
-        >>> log_S   = librosa.logamplitude(S, ref_power=np.median)
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> S = np.abs(librosa.stft(y)) ** 2
+        >>> librosa.logamplitude(S, ref_power=np.median)
+        array([[  3.279,  12.552, ...,   1.942,   1.942],
+               [ 10.68 ,   9.581, ...,   1.942,   1.942],
+               ...,
+               [  1.942,   1.942, ...,   1.942,   1.942],
+               [  1.942,   1.942, ...,   1.942,   1.942]], dtype=float32)
 
     :parameters:
       - S       : np.ndarray [shape=(d, t)]
@@ -1392,10 +1503,15 @@ def perceptual_weighting(S, frequencies, **kwargs):
 
     :usage:
         >>> # Re-weight a CQT representation, using peak power as reference
-        >>> CQT             = librosa.cqt(y, sr, fmin=55, fmax=440)
-        >>> freqs           = librosa.cqt_frequencies(CQT.shape[0], fmin=55)
-        >>> percept_CQT     = librosa.perceptual_weighting(CQT, freqs,
-                                                           ref_power=np.max)
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> CQT = librosa.cqt(y, sr=sr, fmin=55)
+        >>> freqs = librosa.cqt_frequencies(CQT.shape[0], fmin=55)
+        >>> librosa.perceptual_weighting(CQT, freqs, ref_power=np.max)
+        array([[-50.206, -50.024, ..., -97.805, -90.37 ],
+               [-48.665, -48.196, ..., -81.633, -81.323],
+               ...,
+               [-55.747, -38.991, ..., -80.098, -80.098],
+               [-55.259, -40.938, ..., -80.311, -80.311]])
 
     :parameters:
       - S : np.ndarray [shape=(d, t)]
@@ -1422,18 +1538,13 @@ def frames_to_time(frames, sr=22050, hop_length=512, n_fft=None):
     """Converts frame counts to time (seconds)
 
     :usage:
-        >>> y, sr = librosa.load('file.wav')
-        >>> tempo, beats = librosa.beat.beat_track(y, sr, hop_length=64)
-        >>> beat_times = librosa.frames_to_time(beats, sr, hop_length=64)
-
-        >>> # Time conversion with a framing correction
-        >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr, n_fft=1024)
-        >>> onsets = librosa.onset.onset_detect(onset_envelope=onset_env,
-                                                sr=sr)
-        >>> onset_times = librosa.frames_to_time(onsets,
-                                                 sr=sr,
-                                                 hop_length=64,
-                                                 n_fft=1024)
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> tempo, beats = librosa.beat.beat_track(y, sr=sr, hop_length=64)
+        >>> beat_times = librosa.frames_to_time(beats, sr=sr, hop_length=64)
+        >>> beat_times[:20]
+        array([ 0.067,  0.514,  0.99 ,  1.454,  1.91 ,  2.366,  2.833,  3.286,
+                3.75 ,  4.2  ,  4.679,  5.146,  5.605,  6.058,  6.525,  6.978,
+                7.433,  7.906,  8.377,  8.853])
 
     :parameters:
       - frames     : np.ndarray [shape=(n,)]
@@ -1508,11 +1619,14 @@ def autocorrelate(y, max_size=None):
 
     :usage:
         >>> # Compute full autocorrelation of y
-        >>> y, sr   = librosa.load('file.wav')
-        >>> y_ac    = librosa.autocorrelate(y)
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> librosa.autocorrelate(y)
+        array([  1.573e+04,   1.569e+04, ...,   1.090e-13,   1.090e-13])
 
         >>> # Compute autocorrelation up to 4 seconds lag
-        >>> y_ac_4  = librosa.autocorrelate(y, 4 * sr)
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> librosa.autocorrelate(y, max_size=4 * sr)
+        array([ 15734.031,  15689.047, ...,   -410.197,   -436.05 ])
 
     :parameters:
       - y         : np.ndarray [shape=(n,)]
@@ -1596,7 +1710,14 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
         >>> # compute the moving average over +-5 steps
         >>> # peaks must be > avg + 0.5
         >>> # skip 10 steps before taking another peak
-        >>> librosa.peak_pick(x, 3, 3, 5, 5, 0.5, 10)
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=64)
+        >>> librosa.peak_pick(onset_env, 3, 3, 5, 6, 0.5, 10)
+        array([ 2558,  4863,  5259,  5578,  5890,  6212,  6531,  6850,  7162,
+                7484,  7804,  8434,  8756,  9076,  9394,  9706, 10028, 10350,
+               10979, 11301, 11620, 12020, 12251, 12573, 12894, 13523, 13846,
+               14164, 14795, 15117, 15637, 15837, 16274, 16709, 16910, 17109,
+               17824, 18181, 18380, 19452, 19496, 19653, 20369])
 
     :parameters:
       - x         : np.ndarray [shape=(n,)]
