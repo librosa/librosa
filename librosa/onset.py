@@ -34,7 +34,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64,
         >>> o_env = librosa.onset.onset_strength(y, sr=sr, hop_length=64)
         >>> onset_frames = librosa.onset.onset_detect(onset_envelope=o_env,
                                                       sr=sr, hop_length=64)
-        >>> librosa.frames_to_time(onset_frames[:20], sr, hop_length=64)
+        >>> librosa.frames_to_time(onset_frames[:20], sr=sr, hop_length=64)
         array([ 0.052,  0.493,  1.077,  1.196,  1.454,  1.657,  1.898,  2.351,
                 2.923,  3.048,  3.268,  3.741,  4.182,  4.769,  4.873,  6.04 ,
                 6.615,  6.745,  6.96 ,  7.419])
