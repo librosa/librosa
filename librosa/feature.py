@@ -396,7 +396,8 @@ def rms(y=None, sr=22050, S=None, n_fft=2048, hop_length=512):
 @cache
 def line_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                   order=1, freq=None):
-    '''Get coefficients of fitting an nth order polynomial to the data
+    '''Get coefficients of fitting an nth-order polynomial to the columns
+    of a spectrogram.
 
     :parameters:
       - y : np.ndarray [shape=(n,)] or None
