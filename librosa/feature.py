@@ -9,9 +9,8 @@ import librosa.core
 import librosa.util
 from . import cache
 
-# - Features added by BWalburn
 
-
+# -- Spectral features -- #
 @cache
 def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                       freq=None):
@@ -470,8 +469,6 @@ def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                                       axis=0).T
 
     return coefficients
-
-# - End Features added by BWalburn
 
 
 # -- Chroma --#
