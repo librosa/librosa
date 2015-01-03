@@ -165,6 +165,67 @@ def structure_feature(rec, pad=True, inverse=False):
     return np.ascontiguousarray(struct.T).T
 
 
+@cache
+def subsegment(data, frames, n_segments=4):
+    '''Sub-divide a segmentation by feature clustering.
+
+    Given a set of frame boundaries (`frames`), the m
+
+    :usage:
+        >>> # Load audio, detect beat frames, and compute a CQT
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, hop_length=512)
+        >>> cqt = librosa.cqt(y, sr=sr, hop_length=512)
+        >>> beats
+        array([ 186,  211,  236,  261,  286,  311,  336,  361,  386,  411,
+                436,  461,  486,  510,  535,  560,  585,  609,  634,  658,
+                684,  710,  737,  763,  789,  817,  843,  869,  896,  922,
+                948,  976, 1001, 1026, 1051, 1076, 1101, 1126, 1150, 1175,
+               1202, 1229, 1254, 1279, 1304, 1329, 1354, 1379, 1404, 1429,
+               1454, 1479, 1503, 1528, 1553, 1578, 1603, 1627, 1652, 1676,
+               1700, 1724, 1748, 1772, 1797, 1822, 1846, 1871, 1896, 1921,
+               1946, 1971, 1995, 2020, 2045, 2070, 2095, 2120, 2145, 2169,
+               2194, 2220, 2248, 2273, 2298, 2323, 2348, 2373, 2398, 2423,
+               2448, 2472, 2497, 2522])
+        >>> # Sub-divide the beats into (up to) 4 sub-segments each
+        >>> librosa.segment.subsegment(cqt, beats, n_segments=4)
+        array([   0,   74, ..., 2548, 2582])
+
+    :parameters:
+        - data : np.ndarray [shape=(d, n)]
+          Data matrix to use in clustering
+
+        - frames : np.ndarray [shape=(n_boundaries,)], dtype=int, non-negative]
+          Array of beat or segment boundaries, as provided by
+          :func:`librosa.beat.beat_track`, :func:`librosa.onset.onset_detect`,
+          or :func:`librosa.segment.agglomerative`.
+
+        - n_segments : int > 0
+          Maximum number of frames to sub-divide each interval.
+
+    :returns:
+        - boundaries : np.ndarray [shape=(n_subboundaries,)]
+          List of sub-divided segment boundaries
+
+    .. seealso:: :func:`librosa.segment.agglomerative`
+    '''
+
+    n_frames = data.shape[1]
+
+    # Pad and clip to unique frame boundaries
+    frames = np.unique(np.concatenate(([0],
+                                       np.minimum(n_frames, frames),
+                                       [n_frames])))
+
+    boundaries = []
+    for seg_start, seg_end in zip(frames[:-1], frames[1:]):
+        boundaries.extend(seg_start + agglomerative(data[:, seg_start:seg_end],
+                                                    min(seg_end - seg_start,
+                                                        n_segments)))
+
+    return np.ascontiguousarray(boundaries)
+
+
 def agglomerative(data, k, clusterer=None):
     """Bottom-up temporal segmentation.
 
