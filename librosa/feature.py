@@ -24,22 +24,18 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         >>> # From time-series input
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> librosa.feature.spectral_centroid(y=y, sr=sr)
-        array([  545.929,   400.609,   325.021, ...,  1701.903,  1621.184,
-                1591.604])
+        array([[  545.929,   400.609, ...,  1621.184,  1591.604]])
 
         >>> # From spectrogram input
         >>> S, phase = librosa.magphase(librosa.stft(y=y))
         >>> librosa.feature.spectral_centroid(S=S)
-        array([  545.929,   400.609,   325.021, ...,  1701.903,  1621.184,
-                1591.604])
+        array([[  545.929,   400.609, ...,  1621.184,  1591.604]])
 
         >>> # Using variable bin center frequencies
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> if_gram, D = librosa.ifgram(y)
         >>> librosa.feature.spectral_centroid(S=np.abs(D), freq=if_gram)
-        array([  545.069,   400.764,   324.906, ...,  1701.78 ,  1621.139,
-                1590.362])
-
+        array([[  545.069,   400.764, ...,  1621.139,  1590.362]])
 
     :parameters:
       - y : np.ndarray [shape=(n,)] or None
@@ -65,7 +61,7 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
           :func:`librosa.core.ifgram`
 
     :returns:
-      - centroid : np.ndarray [shape=(t,)]
+      - centroid : np.ndarray [shape=(1, t)]
           centroid frequencies
     '''
 
@@ -93,7 +89,7 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     # Column-normalize S
     return np.sum(freq * librosa.util.normalize(S, norm=1, axis=0),
-                  axis=0)
+                  axis=0, keepdims=True)
 
 
 @cache
@@ -107,21 +103,18 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         >>> # From time-series input
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> librosa.feature.spectral_bandwidth(y=y, sr=sr)
-        array([ 1201.067,   920.588,   655.381, ...,  2253.405,  2218.177,
-                2211.325])
+        array([[ 1201.067,   920.588, ...,  2218.177,  2211.325]])
 
         >>> # From spectrogram input
         >>> S, phase = librosa.magphase(librosa.stft(y=y))
         >>> librosa.feature.spectral_bandwidth(S=S)
-        array([ 1201.067,   920.588,   655.381, ...,  2253.405,  2218.177,
-                2211.325])
+        array([[ 1201.067,   920.588, ...,  2218.177,  2211.325]])
 
         >>> # Using variable bin center frequencies
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> if_gram, D = librosa.ifgram(y)
         >>> librosa.feature.spectral_bandwidth(S=np.abs(D), freq=if_gram)
-        array([ 1202.514,   920.453,   655.323, ...,  2253.475,  2218.172,
-                2213.157])
+        array([[ 1202.514,   920.453, ...,  2218.172,  2213.157]])
 
     :parameters:
       - y : np.ndarray [shape=(n,)] or None
@@ -146,7 +139,7 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
           or a matrix of center frequencies as constructed by
           :func:`librosa.core.ifgram`
 
-      - centroid : None or np.ndarray [shape=(t,)]
+      - centroid : None or np.ndarray [shape=(1, t)]
           pre-computed centroid frequencies
 
       - norm : bool
@@ -156,7 +149,7 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
           Power to raise deviation from spectral centroid.
 
     :returns:
-      - bandwidth : np.ndarray [shape=(t,)]
+      - bandwidth : np.ndarray [shape=(1, t)]
           frequency bandwidth for each frame
     '''
     # If we don't have a spectrogram, build one
@@ -185,15 +178,15 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         freq = librosa.core.fft_frequencies(sr=sr, n_fft=n_fft)
 
     if freq.ndim == 1:
-        deviation = np.abs(np.subtract.outer(freq, centroid))
+        deviation = np.abs(np.subtract.outer(freq, np.squeeze(centroid)))
     else:
-        deviation = np.abs(freq - centroid)
+        deviation = np.abs(freq - np.squeeze(centroid))
 
     # Column-normalize S
     if norm:
         S = librosa.util.normalize(S, norm=1, axis=0)
 
-    return np.sum(S * deviation**p, axis=0)**(1./p)
+    return np.sum(S * deviation**p, axis=0, keepdims=True)**(1./p)
 
 
 @cache
@@ -289,14 +282,12 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         >>> # From time-series input
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> librosa.feature.spectral_rolloff(y=y, sr=sr)
-        array([  936.694,   635.229,   592.163, ...,  4134.375,  3983.643,
-                3886.743])
+        array([[  936.694,   635.229, ...,  3983.643,  3886.743]])
 
         >>> # With a higher roll percentage:
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> librosa.feature.spectral_rolloff(y=y, sr=sr, roll_percent=0.95)
-        array([ 2637.817,  1496.558,  1152.026, ...,  7073.657,  6955.225,
-                6933.691])
+        array([[ 2637.817,  1496.558, ...,  6955.225,  6933.691]])
 
     :parameters:
       - y : np.ndarray [shape=(n,)] or None
@@ -323,7 +314,7 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
           Roll-off percentage.
 
     :returns:
-      - rolloff : np.ndarray [shape=(t,)]
+      - rolloff : np.ndarray [shape=(1, t)]
           roll-off frequency for each frame
     '''
 
@@ -356,7 +347,7 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     ind = np.where(total_energy < threshold, np.nan, 1)
 
-    return np.nanmin(ind * freq, axis=0)
+    return np.nanmin(ind * freq, axis=0, keepdims=True)
 
 
 @cache
@@ -366,7 +357,7 @@ def rms(y=None, sr=22050, S=None, n_fft=2048, hop_length=512):
     :usage:
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> librosa.feature.rms(y=y, sr=sr)
-        array([  1.204e-01,   6.263e-01, ...,   1.413e-04,   2.191e-05],
+        array([[  1.204e-01,   6.263e-01, ...,   1.413e-04,   2.191e-05]],
               dtype=float32)
 
     :parameters:
@@ -386,7 +377,7 @@ def rms(y=None, sr=22050, S=None, n_fft=2048, hop_length=512):
           hop length for STFT. See :func:`librosa.core.stft` for details.
 
     :returns:
-      - rms : np.ndarray [shape=(t,)]
+      - rms : np.ndarray [shape=(1, t)]
           RMS value for each frame
     '''
 
@@ -395,7 +386,7 @@ def rms(y=None, sr=22050, S=None, n_fft=2048, hop_length=512):
         # By default, use a magnitude spectrogram
         S = librosa.stft(y, n_fft=n_fft, hop_length=hop_length)
 
-    return np.sqrt(np.mean(np.abs(S)**2, axis=0))
+    return np.sqrt(np.mean(np.abs(S)**2, axis=0, keepdims=True))
 
 
 @cache
