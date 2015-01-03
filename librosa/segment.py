@@ -193,19 +193,20 @@ def subsegment(data, frames, n_segments=4):
 
     :parameters:
         - data : np.ndarray [shape=(d, n)]
-          Data matrix to use in clustering
+            Data matrix to use in clustering
 
         - frames : np.ndarray [shape=(n_boundaries,)], dtype=int, non-negative]
-          Array of beat or segment boundaries, as provided by
-          :func:`librosa.beat.beat_track`, :func:`librosa.onset.onset_detect`,
-          or :func:`librosa.segment.agglomerative`.
+            Array of beat or segment boundaries, as provided by
+            :func:`librosa.beat.beat_track`,
+            :func:`librosa.onset.onset_detect`,
+            or :func:`librosa.segment.agglomerative`.
 
         - n_segments : int > 0
-          Maximum number of frames to sub-divide each interval.
+            Maximum number of frames to sub-divide each interval.
 
     :returns:
         - boundaries : np.ndarray [shape=(n_subboundaries,)]
-          List of sub-divided segment boundaries
+            List of sub-divided segment boundaries
 
     .. seealso:: :func:`librosa.segment.agglomerative`
     '''
