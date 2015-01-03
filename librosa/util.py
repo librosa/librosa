@@ -271,20 +271,49 @@ def fix_frames(frames, x_min=0, x_max=None, pad=True):
     '''Fix a list of frames to lie within [x_min, x_max]
 
     :usage:
+        >>> # Generate a list of frame indices
+        >>> frames = np.arange(0, 1000.0, 50)
+        >>> frames
+        array([   0.,   50.,  100.,  150.,  200.,  250.,  300.,  350.,  400.,
+                450.,  500.,  550.,  600.,  650.,  700.,  750.,  800.,  850.,
+                900.,  950.])
+        >>> # Clip to span at most 250
+        >>> librosa.util.fix_frames(frames, x_max=250)
+        array([  0,  50, 100, 150, 200, 250])
+        >>> # Or pad to span up to 2500
+        >>> librosa.util.fix_frames(frames, x_max=2500)
+        array([   0,   50,  100,  150,  200,  250,  300,  350,  400,  450,
+                500,  550,  600,  650,  700,  750,  800,  850,  900,  950,
+               2500])
+        >>> librosa.util.fix_frames(frames, x_max=2500, pad=False)
+        array([  0,  50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550,
+               600, 650, 700, 750, 800, 850, 900, 950])
 
     :parameters:
+        - frames : np.ndarray [shape=(n_frames,)]
+            List of non-negative frame indices
+
+        - x_min : int >= 0 or None
+            Minimum allowed frame index
+
+        - x_max : int >= 0 or None
+            Maximum allowed frame index
+
+        - pad : boolean
+            If `True`, then `frames` is expanded to span the full range
+            `[x_min, x_max]`
 
     :returns:
+        - fixed_frames : np.ndarray [shape=(n_fixed_frames,), dtype=int]
+            Fixed frame indices, flattened and sorted
 
     :raises:
-
+        - ValueError
+            If `frames` contains negative values
     '''
 
     if np.any(frames < 0):
         raise ValueError('Negative frame index detected')
-
-    if x_max is not None and np.any(frames > x_max):
-        raise ValueError('Frame index exceeds maximum value')
 
     frames = np.clip(frames, x_min, x_max)
 
@@ -297,7 +326,6 @@ def fix_frames(frames, x_min=0, x_max=None, pad=True):
         frames = np.concatenate((pad_data, frames))
 
     return np.unique(frames).astype(int)
-
 
 
 @cache
