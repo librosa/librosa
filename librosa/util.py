@@ -324,7 +324,8 @@ def fix_frames(frames, x_min=0, x_max=None, pad=True):
     if np.any(frames < 0):
         raise ValueError('Negative frame index detected')
 
-    frames = np.clip(frames, x_min, x_max)
+    if pad and (x_min is not None or x_max is not None):
+        frames = np.clip(frames, x_min, x_max)
 
     if pad:
         pad_data = []
@@ -333,6 +334,12 @@ def fix_frames(frames, x_min=0, x_max=None, pad=True):
         if x_max is not None:
             pad_data.append(x_max)
         frames = np.concatenate((pad_data, frames))
+
+    if x_min is not None:
+        frames = frames[frames >= x_min]
+
+    if x_max is not None:
+        frames = frames[frames <= x_max]
 
     return np.unique(frames).astype(int)
 
