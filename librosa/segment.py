@@ -166,10 +166,16 @@ def structure_feature(rec, pad=True, inverse=False):
 
 
 @cache
-def subsegment(data, frames, n_segments=4):
+def subsegment(data, frames, n_segments=4, pad=True):
     '''Sub-divide a segmentation by feature clustering.
 
-    Given a set of frame boundaries (`frames`), the m
+    Given a set of frame boundaries (`frames`), and a data matrix (`data`),
+    each successive interval defined by `frames` is partitioned into
+    `n_segments` by constrained agglomerative clustering.
+
+    .. note::
+        If an interval spans fewer than `n_segments` frames, then each
+        frame becomes a sub-segment.
 
     :usage:
         >>> # Load audio, detect beat frames, and compute a CQT
@@ -204,6 +210,10 @@ def subsegment(data, frames, n_segments=4):
         - n_segments : int > 0
             Maximum number of frames to sub-divide each interval.
 
+        - pad : bool
+            If `True`, then `frames` is expanded to cover the full
+            range `[0, n]`
+
     :returns:
         - boundaries : np.ndarray [shape=(n_subboundaries,)]
             List of sub-divided segment boundaries
@@ -214,9 +224,10 @@ def subsegment(data, frames, n_segments=4):
     n_frames = data.shape[1]
 
     # Pad and clip to unique frame boundaries
-    frames = np.unique(np.concatenate(([0],
-                                       np.minimum(n_frames, frames),
-                                       [n_frames])))
+    frames = np.clip(frames, 0, n_frames)
+    if pad:
+        frames = np.concatenate(([0], frames, [n_frames]))
+    frames = np.unique(frames).astype(int)
 
     boundaries = []
     for seg_start, seg_end in zip(frames[:-1], frames[1:]):
