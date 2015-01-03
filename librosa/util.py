@@ -6,6 +6,7 @@ import numpy as np
 import os
 import glob
 import pkg_resources
+import warnings
 
 from numpy.lib.stride_tricks import as_strided
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -263,6 +264,40 @@ def fix_length(y, n, **kwargs):
         return np.pad(y, (0, n - len(y)), **kwargs)
 
     return y
+
+
+@cache
+def fix_frames(frames, x_min=0, x_max=None, pad=True):
+    '''Fix a list of frames to lie within [x_min, x_max]
+
+    :usage:
+
+    :parameters:
+
+    :returns:
+
+    :raises:
+
+    '''
+
+    if np.any(frames < 0):
+        raise ValueError('Negative frame index detected')
+
+    if x_max is not None and np.any(frames > x_max):
+        raise ValueError('Frame index exceeds maximum value')
+
+    frames = np.clip(frames, x_min, x_max)
+
+    if pad:
+        pad_data = []
+        if x_min is not None:
+            pad_data.append(x_min)
+        if x_max is not None:
+            pad_data.append(x_max)
+        frames = np.concatenate((pad_data, frames))
+
+    return np.unique(frames).astype(int)
+
 
 
 @cache
