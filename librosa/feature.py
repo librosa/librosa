@@ -1325,7 +1325,7 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
 
 
 @cache
-def sync(data, frames, aggregate=None):
+def sync(data, frames, aggregate=None, pad=True):
     """Synchronous aggregation of a feature matrix
 
     :usage:
@@ -1352,6 +1352,9 @@ def sync(data, frames, aggregate=None):
       - aggregate : function
           aggregation function (defualt: ``np.mean``)
 
+      - pad : boolean
+          If true, `frames` is padded to span the full range [0, T]
+
     :returns:
       - Y         : ndarray [shape=(d, M)]
           ``Y[:, i] = aggregate(data[:, F[i-1]:F[i]], axis=1)``
@@ -1376,8 +1379,7 @@ def sync(data, frames, aggregate=None):
 
     (dimension, n_frames) = data.shape
 
-    frames = np.unique(np.concatenate(([0], frames, [n_frames])))
-    frames = frames.astype(int)
+    frames = librosa.util.fix_frames(frames, 0, n_frames, pad=pad)
 
     if min(frames) < 0:
         raise ValueError('Negative frame index.')

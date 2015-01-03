@@ -11,6 +11,7 @@ import sklearn.cluster
 import sklearn.feature_extraction
 
 from . import cache
+from . import util
 
 
 @cache
@@ -221,13 +222,7 @@ def subsegment(data, frames, n_segments=4, pad=True):
     .. seealso:: :func:`librosa.segment.agglomerative`
     '''
 
-    n_frames = data.shape[1]
-
-    # Pad and clip to unique frame boundaries
-    frames = np.clip(frames, 0, n_frames)
-    if pad:
-        frames = np.concatenate(([0], frames, [n_frames]))
-    frames = np.unique(frames).astype(int)
+    frames = util.fix_frames(frames, 0, data.shape[1], pad=pad)
 
     boundaries = []
     for seg_start, seg_end in zip(frames[:-1], frames[1:]):
