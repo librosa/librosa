@@ -289,6 +289,15 @@ def fix_frames(frames, x_min=0, x_max=None, pad=True):
         array([  0,  50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550,
                600, 650, 700, 750, 800, 850, 900, 950])
 
+        >>> # Or starting away from zero
+        >>> frames = np.arange(200, 500, 33)
+        >>> frames
+        array([200, 233, 266, 299, 332, 365, 398, 431, 464, 497])
+        >>> librosa.util.fix_frames(frames)
+        array([  0, 200, 233, 266, 299, 332, 365, 398, 431, 464, 497])
+        >>> librosa.util.fix_frames(frames, x_max=500)
+        array([  0, 200, 233, 266, 299, 332, 365, 398, 431, 464, 497, 500])
+
     :parameters:
         - frames : np.ndarray [shape=(n_frames,)]
             List of non-negative frame indices
