@@ -219,11 +219,11 @@ def pad_center(data, size, axis=-1, **kwargs):
 
 
 @cache
-def fix_length(y, n, **kwargs):
-    '''Fix the length of a one-dimensional array ``y`` to exactly ``n``.
+def fix_length(data, size, axis=-1, **kwargs):
+    '''Fix the length an array ``data`` to exactly ``size``.
 
-    If ``len(y) < n``, pad according to the provided kwargs.
-    By default, ``y`` is padded with trailing zeros.
+    If ``data.shape[axis] < n``, pad according to the provided kwargs.
+    By default, ``data`` is padded with trailing zeros.
 
     :usage:
         >>> y = np.arange(7)
@@ -238,32 +238,39 @@ def fix_length(y, n, **kwargs):
         array([0, 1, 2, 3, 4, 5, 6, 6, 6, 6])
 
     :parameters:
-      - y : np.ndarray [shape=(m,)]
-          one-dimensional array
+      - data : np.ndarray
+          array to be length-adjusted
 
-      - n : int >= 0 [scalar]
+      - size : int >= 0 [scalar]
           desired length of the array
+
+      - axis : int, <= data.ndim
+          axis along which to fix length
 
       - *kwargs*
           Additional keyword arguments.  See ``np.pad()``
 
     :returns:
-      - y : np.ndarray [shape=(n,)]
-          ``y`` either trimmed or padded to length ``n``
+      - data_fixed : np.ndarray [shape=data.shape]
+          ``data`` either trimmed or padded to length ``size``
+          along the specified axis.
     '''
 
     kwargs.setdefault('mode', 'constant')
 
-    # Validate the audio buffer
-    valid_audio(y)
+    n = data.shape[axis]
 
-    if len(y) > n:
-        return y[:n]
+    if n > size:
+        slices = [Ellipsis] * data.ndim
+        slices[axis] = slice(0, size)
+        return data[slices]
 
-    if len(y) < n:
-        return np.pad(y, (0, n - len(y)), **kwargs)
+    elif n < size:
+        lengths = [(0, 0)] * data.ndim
+        lengths[axis] = (0, size - n)
+        return np.pad(data, lengths, **kwargs)
 
-    return y
+    return data
 
 
 @cache
