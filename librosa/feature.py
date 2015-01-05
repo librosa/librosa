@@ -474,25 +474,32 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True,
 
     :parameters:
         - y : np.ndarray [shape=(n,)]
-          Audio time series
+            Audio time series
 
         - frame_length : int > 0
-          Length of the frame over which to compute zero crossing rates
+            Length of the frame over which to compute zero crossing rates
 
         - hop_length : int > 0
-          Number of samples to advance for each frame
+            Number of samples to advance for each frame
 
         - center : bool
-          If true, frames are centered by padding the edges of ``y``.
-          .. seealso:: :func:`librosa.stft`
+            If true, frames are centered by padding the edges of ``y``.
+            This is similar to the padding in :func:`librosa.core.stft`,
+            but uses edge-value copies instead of reflection.
 
         - kwargs : additional keyword arguments
-          See :func:`librosa.zero_crossings`
-          .. note:: By default, the ``pad`` parameter is set to ``False``
+            See :func:`librosa.core.zero_crossings`
+
+    .. note:: By default, the ``pad`` parameter is set to ``False``, which
+        differs from the default specified by
+        :func:`librosa.core.zero_crossings`.
 
     :returns:
         - zcr : np.ndarray [shape=(1, t)]
-          ``zcr[0, i]`` is the fraction of zero crossings in the ``i``th frame
+            ``zcr[0, i]`` is the fraction of zero crossings in the
+            ``i``th frame
+
+    .. seealso:: :func:`librosa.core.zero_crossings`
     '''
 
     librosa.util.valid_audio(y)
@@ -789,7 +796,7 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
 
     .. seealso::
       - :func:`librosa.feature.estimate_tuning`
-        For estimating tuning from time-series or spectrogram input
+          For estimating tuning from time-series or spectrogram input
     '''
 
     frequencies = np.asarray([frequencies], dtype=float).flatten()
