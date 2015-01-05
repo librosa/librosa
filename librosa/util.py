@@ -588,10 +588,25 @@ def match_events(events_from, events_to):
 
     .. seealso:: :func:`librosa.util.match_intervals`
     '''
+    output = np.empty_like(events_from, dtype=np.int)
 
-    return np.argmin(np.abs(np.subtract.outer(events_from,
-                                              events_to)),
-                     axis=-1)
+    n_rows = int(librosa.core._MAX_MEM_BLOCK / (np.prod(output.shape[1:])
+                                                * len(events_to)
+                                                * events_from.itemsize))
+
+    # Make sure we can at least make some progress
+    n_rows = max(1, n_rows)
+
+    # Iterate over blocks of the data
+    for bl_s in range(0, len(events_from), n_rows):
+        bl_t = min(bl_s + n_rows, len(events_from))
+
+        event_block = events_from[bl_s:bl_t]
+        output[bl_s:bl_t] = np.argmin(np.abs(np.subtract.outer(event_block,
+                                                               events_to)),
+                                      axis=-1)
+
+    return output
 
 
 def find_files(directory, ext=None, recurse=True, case_sensitive=False,
