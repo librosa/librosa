@@ -462,6 +462,54 @@ def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     return coefficients
 
 
+@cache
+def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True,
+                       **kwargs):
+    '''Compute the zero-crossing rate of an audio time series.
+
+    :usage:
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> librosa.feature.zero_crossing_rate(y)
+        array([[ 0.072,  0.074, ...,  0.091,  0.038]])
+
+    :parameters:
+        - y : np.ndarray [shape=(n,)]
+          Audio time series
+
+        - frame_length : int > 0
+          Length of the frame over which to compute zero crossing rates
+
+        - hop_length : int > 0
+          Number of samples to advance for each frame
+
+        - center : bool
+          If true, frames are centered by padding the edges of ``y``.
+          .. seealso:: :func:`librosa.stft`
+
+        - kwargs : additional keyword arguments
+          See :func:`librosa.zero_crossings`
+          .. note:: By default, the ``pad`` parameter is set to ``False``
+
+    :returns:
+        - zcr : np.ndarray [shape=(1, t)]
+          ``zcr[0, i]`` is the fraction of zero crossings in the ``i``th frame
+    '''
+
+    librosa.util.valid_audio(y)
+
+    if center:
+        y = np.pad(y, int(frame_length / 2), mode='edge')
+
+    y_framed = librosa.util.frame(y, frame_length, hop_length)
+
+    kwargs['axis'] = 0
+    kwargs.setdefault('pad', False)
+
+    crossings = librosa.core.zero_crossings(y_framed, **kwargs)
+
+    return np.mean(crossings, axis=0, keepdims=True)
+
+
 # -- Chroma --#
 @cache
 def logfsgram(y=None, sr=22050, S=None, n_fft=4096, hop_length=512, **kwargs):
