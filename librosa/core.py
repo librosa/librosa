@@ -1798,3 +1798,119 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
             last_onset = i
 
     return np.array(peaks)
+
+
+@cache
+def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
+                   zero_pos=True, axis=-1):
+    '''Find the zero-crossings of a signal ``y``: indices `i` such that
+    ``sign(y[i]) != sign(y[j])``.
+
+    If ``y`` is multi-dimensional, then zero-crossings are computed along
+    the specified ``axis``.
+
+    :usage:
+        >>> # Generate a time-series
+        >>> y = np.sin(np.linspace(0, 4 * 2 * np.pi, 20))
+        >>> y
+        array([  0.000e+00,   9.694e-01,   4.759e-01,  -7.357e-01,
+                -8.372e-01,   3.247e-01,   9.966e-01,   1.646e-01,
+                -9.158e-01,  -6.142e-01,   6.142e-01,   9.158e-01,
+                -1.646e-01,  -9.966e-01,  -3.247e-01,   8.372e-01,
+                 7.357e-01,  -4.759e-01,  -9.694e-01,  -9.797e-16])
+        >>> # Compute zero-crossings
+        >>> z = librosa.zero_crossings(y)
+        >>> z
+        array([ True, False, False,  True, False,  True, False, False,  True,
+               False,  True, False,  True, False, False,  True, False,  True,
+               False,  True], dtype=bool)
+        >>> # Stack y against the zero-crossing indicator
+        >>> np.vstack([y, z]).T
+        array([[  0.000e+00,   1.000e+00],
+               [  9.694e-01,   0.000e+00],
+               [  4.759e-01,   0.000e+00],
+               [ -7.357e-01,   1.000e+00],
+               [ -8.372e-01,   0.000e+00],
+               [  3.247e-01,   1.000e+00],
+               [  9.966e-01,   0.000e+00],
+               [  1.646e-01,   0.000e+00],
+               [ -9.158e-01,   1.000e+00],
+               [ -6.142e-01,   0.000e+00],
+               [  6.142e-01,   1.000e+00],
+               [  9.158e-01,   0.000e+00],
+               [ -1.646e-01,   1.000e+00],
+               [ -9.966e-01,   0.000e+00],
+               [ -3.247e-01,   0.000e+00],
+               [  8.372e-01,   1.000e+00],
+               [  7.357e-01,   0.000e+00],
+               [ -4.759e-01,   1.000e+00],
+               [ -9.694e-01,   0.000e+00],
+               [ -9.797e-16,   1.000e+00]])
+        >>> # Find the indices of zero-crossings
+        >>> np.nonzero(z)
+        (array([ 0,  3,  5,  8, 10, 12, 15, 17, 19]),)
+
+
+    :parameters:
+      - y : np.ndarray
+          The input array
+
+      - threshold : float > 0 or None
+          If specified, values where ``-threshold <= y <= threshold`` are
+          clipped to 0.
+
+      - ref_magnitude : float > 0 or callable
+          If numeric, the threshold is scaled relative to ``ref_magnitude``
+          If callable, the threshold is scaled relative to
+          ``ref_magnitude(np.abs(y))``
+
+      - pad : boolean
+          If ``True``, then ``y[0]`` is considered a valid zero-crossing.
+
+      - zero_pos : boolean
+          If ``True`` then the value 0 is interpreted as having positive sign.
+          If ``False``, then 0, -1, and +1 all have distinct signs.
+
+      - axis : int
+          Axis along which to compute zero-crossings.
+
+    :returns:
+      - zero_crossings : np.ndarray [shape=y.shape, dtype=boolean]
+          Indicator array of zero-crossings in ``y`` along the selected axis.
+    '''
+
+    # Clip within the threshold
+    if threshold is None:
+        threshold = 0.0
+
+    if hasattr(ref_magnitude, '__call__'):
+        threshold = threshold * ref_magnitude(np.abs(y))
+
+    elif ref_magnitude is not None:
+        threshold = threshold * ref_magnitude
+
+    if threshold > 0:
+        y = y.copy()
+        y[np.abs(y) <= threshold] = 0
+
+    # Extract the sign bit
+    if zero_pos:
+        y_sign = np.signbit(y)
+    else:
+        y_sign = np.sign(y)
+
+    # Find the change-points by slicing
+    slice_pre = [Ellipsis] * y.ndim
+    slice_pre[axis] = slice(1, None)
+
+    slice_post = [Ellipsis] * y.ndim
+    slice_post[axis] = slice(-1)
+
+    # Since we've offset the input by one, pad back onto the front
+    padding = [(0, 0)] * y.ndim
+    padding[axis] = (1, 0)
+
+    return np.pad((y_sign[slice_post] != y_sign[slice_pre]),
+                  padding,
+                  mode='constant',
+                  constant_values=pad)
