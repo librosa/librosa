@@ -6,7 +6,6 @@ import numpy as np
 import os
 import glob
 import pkg_resources
-import warnings
 
 from numpy.lib.stride_tricks import as_strided
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -509,23 +508,29 @@ def normalize(S, norm=np.inf, axis=0):
 def match_intervals(intervals_from, intervals_to):
     '''Match one set of time intervals to another.
 
-    This can be useful for mapping beat timings to segments.
+    This can be useful for tasks such as mapping beat timings
+    to segments.
+
+    .. note:: A target interval may be matched to multiple source
+      intervals.
 
     :parameters:
-      - intervals_from : ndarray [shape=(n, 2)]
+      - intervals_from : np.ndarray [shape=(n, 2)]
           The time range for source intervals.
           The ``i`` th interval spans time ``intervals_from[i, 0]``
           to ``intervals_from[i, 1]``.
           ``intervals_from[0, 0]`` should be 0, ``intervals_from[-1, 1]``
           should be the track duration.
 
-      - intervals_to : ndarray [shape=(m, 2)]
+      - intervals_to : np.ndarray [shape=(m, 2)]
           Analogous to ``intervals_from``.
 
     :returns:
-      - interval_mapping : ndarray [shape=(n,)]
+      - interval_mapping : np.ndarray [shape=(n,)]
           For each interval in ``intervals_from``, the
           corresponding interval in ``intervals_to``.
+
+    .. seealso:: :func:`librosa.util.match_events`
     '''
 
     # The overlap score of a beat with a segment is defined as
@@ -536,6 +541,57 @@ def match_intervals(intervals_from, intervals_to):
     score = np.maximum(0, ends - starts)
 
     return np.argmax(score, axis=1)
+
+
+@cache
+def match_events(events_from, events_to):
+    '''Match one set of events to another.
+
+    This is useful for tasks such as matching beats to the nearest
+    detected onsets, or frame-aligned events to the nearest zero-crossing.
+
+    .. note:: A target event may be matched to multiple source events.
+
+    :usage:
+        >>> # Sources are multiples of 7
+        >>> s_from = np.arange(0, 100, 7)
+        >>> s_from
+        array([ 0,  7, 14, 21, 28, 35, 42, 49, 56, 63, 70, 77, 84, 91, 98])
+        >>> # Targets are multiples of 10
+        >>> s_to = np.arange(0, 100, 10)
+        >>> s_to
+        array([ 0, 10, 20, 30, 40, 50, 60, 70, 80, 90])
+        >>> # Find the matching
+        >>> idx = librosa.util.match_events(s_from, s_to)
+        >>> idx
+        array([0, 1, 1, 2, 3, 3, 4, 5, 6, 6, 7, 8, 8, 9, 9])
+        >>> # Print each source value to its matching target
+        >>> zip(s_from, s_to[idx])
+        [(0, 0), (7, 10), (14, 10), (21, 20), (28, 30), (35, 30),
+         (42, 40), (49, 50), (56, 60), (63, 60), (70, 70), (77, 80),
+         (84, 80), (91, 90), (98, 90)]
+
+    :parameters:
+      - events_from : ndarray [shape=(n,)]
+          Array of events (eg, times, sample or frame indices) to match from.
+
+      - events_to : ndarray [shape=(m,)]
+          Array of events (eg, times, sample or frame indices) to
+          match against.
+
+    :returns:
+      - event_mapping : np.ndarray [shape=(n,)]
+          For each event in ``events_from``, the corresponding event
+          index in ``events_to``.
+
+          ``event_mapping[i] == arg min |events_from[i] - events_to[:]|``
+
+    .. seealso:: :func:`librosa.util.match_intervals`
+    '''
+
+    return np.argmin(np.abs(np.subtract.outer(events_from,
+                                              events_to)),
+                     axis=1)
 
 
 def find_files(directory, ext=None, recurse=True, case_sensitive=False,
