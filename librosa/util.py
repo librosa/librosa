@@ -591,7 +591,7 @@ def match_events(events_from, events_to):
 
     return np.argmin(np.abs(np.subtract.outer(events_from,
                                               events_to)),
-                     axis=1)
+                     axis=-1)
 
 
 def find_files(directory, ext=None, recurse=True, case_sensitive=False,
