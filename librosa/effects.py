@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 """Effects and filters for audio buffer data"""
 
+import numpy as np
+
 import librosa.core
 import librosa.decompose
 import librosa.util
@@ -203,3 +205,51 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12):
 
     # Crop to the same dimension as the input
     return librosa.util.fix_length(y_shift, len(y))
+
+
+@cache
+def remix(y, intervals, align_zeros=True):
+    '''Remix an audio signal by re-ordering time intervals.
+
+    :usage:
+
+    :parameters:
+        - y : np.ndarray [shape=(t,) or (2, t)]
+            Audio time series
+
+        - intervals : iterable of tuples (start, end)
+            An iterable (list-like or generator) where the `i`th item
+            ``intervals[i]`` indicates the start and end (in samples)
+            of a slice of ``y``.
+
+        - align_zeros : boolean
+            If `True`, interval boundaries are mapped to the closest
+            zero-crossing in ``y``.  If ``y`` is stereo, zero-croessings
+            are computed after converting to mono.
+
+    :returns:
+        - y_remix : np.ndarray [shape=(d,) or (2, d)]
+            ``y`` remixed in the order specified by ``intervals``
+    '''
+
+    # Validate the audio buffer
+    librosa.util.valid_audio(y, mono=False)
+
+    y_out = []
+
+    if align_zeros:
+        y_mono = librosa.core.to_mono(y)
+        zeros = np.nonzero(librosa.core.zero_crossings(y_mono))[-1]
+
+    clip = [Ellipsis] * y.ndim
+
+    for interval in intervals:
+
+        if align_zeros:
+            interval = zeros[librosa.util.match_events(interval, zeros)]
+
+        clip[-1] = slice(interval[0], interval[1])
+
+        y_out.append(y[clip])
+
+    return np.concatenate(y_out, axis=-1)
