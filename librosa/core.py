@@ -717,7 +717,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
         >>> # Limit the frequency range
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> C = librosa.cqt(y, sr=sr, fmin=librosa.midi_to_hz(36),
+        >>> C = librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('C3'),
                             n_bins=60)
         >>> C
         array([[  8.936e+01,   9.573e+01, ...,   1.333e-02,   1.443e-02],
@@ -728,7 +728,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
         >>> # Use higher resolution
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> C = librosa.cqt(y, sr=sr, fmin=librosa.midi_to_hz(36),
+        >>> C = librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('C3'),
                             n_bins=60 * 2, bins_per_octave=12 * 2)
         >>> C
         array([[  1.000e+02,   1.094e+02, ...,   8.701e-02,   8.098e-02],
@@ -787,7 +787,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     if fmin is None:
         # C2 by default
-        fmin = midi_to_hz(note_to_midi('C2'))
+        fmin = note_to_hz('C2')
 
     if tuning is None:
         tuning = feature.estimate_tuning(y=y, sr=sr)
@@ -1372,8 +1372,7 @@ def cqt_frequencies(n_bins, fmin, bins_per_octave=12, tuning=0.0):
 
     :usage:
         >>> # Get the CQT frequencies for 24 notes, starting at C2
-        >>> fmin = librosa.midi_to_hz(librosa.note_to_midi('C2'))
-        >>> librosa.cqt_frequencies(24, fmin=fmin)
+        >>> librosa.cqt_frequencies(24, fmin=librosa.note_to_hz('C2'))
         array([  32.703,   34.648,   36.708,   38.891,   41.203,   43.654,
                  46.249,   48.999,   51.913,   55.   ,   58.27 ,   61.735,
                  65.406,   69.296,   73.416,   77.782,   82.407,   87.307,
