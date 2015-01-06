@@ -32,6 +32,7 @@ _MAX_MEM_BLOCK = 2**7 * 2**20
 
 SMALL_FLOAT = 1e-20
 
+
 # -- CORE ROUTINES --#
 # Load should never be cached, since we cannot verify that the contents of
 # 'path' are unchanged across calls.
@@ -1610,6 +1611,85 @@ def perceptual_weighting(S, frequencies, **kwargs):
 
 
 # -- UTILITIES -- #
+def frames_to_samples(frames, hop_length=512, n_fft=None):
+    """Converts frame indices to audio sample indices
+
+    :usage:
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> tempo, beats = librosa.beat.beat_track(y, sr=sr, hop_length=64)
+        >>> beat_samples = librosa.frames_to_samples(beats, hop_length=64)
+        >>> beat_samples[:20]
+        array([  1472,  11328,  21824,  32064,  42112,  52160,  62464,  72448,
+                82688,  92608, 103168, 113472, 123584, 133568, 143872, 153856,
+               163904, 174336, 184704, 195200])
+
+    :parameters:
+      - frames     : np.ndarray [shape=(n,)]
+          vector of frame indices
+
+      - hop_length : int > 0 [scalar]
+          number of samples between successive frames
+
+      - n_fft : None or int > 0 [scalar]
+          Optional: length of the FFT window.
+          If given, time conversion will include an offset of ``n_fft / 2``
+          to counteract windowing effects when using a non-centered STFT.
+
+    :returns:
+      - times : np.ndarray [shape=(n,)]
+          time (in seconds) of each given frame number:
+          ``times[i] = frames[i] * hop_length``
+
+    .. seealso:: :func:`frames_to_time`
+    """
+
+    offset = 0
+    if n_fft is not None:
+        offset = int(n_fft / 2)
+
+    return (frames * hop_length + offset).astype(int)
+
+
+def samples_to_frames(samples, hop_length=512, n_fft=None):
+    """Converts sample indices into STFT frames.
+
+    :usage:
+        >>> # Get the frame numbers for every 256 samples
+        >>> librosa.samples_to_frames(np.arange(0, 22050, 256))
+        array([ 0,  0,  1,  1,  2,  2,  3,  3,  4,  4,  5,  5,  6,  6,  7,  7,
+                8,  8,  9,  9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15,
+               16, 16, 17, 17, 18, 18, 19, 19, 20, 20, 21, 21, 22, 22, 23, 23,
+               24, 24, 25, 25, 26, 26, 27, 27, 28, 28, 29, 29, 30, 30, 31, 31,
+               32, 32, 33, 33, 34, 34, 35, 35, 36, 36, 37, 37, 38, 38, 39, 39,
+               40, 40, 41, 41, 42, 42, 43])
+
+    :parameters:
+      - samples : np.ndarray [shape=(n,)]
+          vector of sample indices
+
+      - hop_length : int > 0 [scalar]
+          number of samples between successive frames
+
+      - n_fft : None or int > 0 [scalar]
+          Optional: length of the FFT window.
+          If given, time conversion will include an offset of ``- n_fft / 2``
+          to counteract windowing effects in STFT.
+
+          .. note:: This may result in negative frame indices.
+
+    :returns:
+      - frames : np.ndarray [shape=(n,), dtype=int]
+          Frame numbers corresponding to the given times:
+          ``frames[i] = floor( samples[i] / hop_length )``
+    """
+
+    offset = 0
+    if n_fft is not None:
+        offset = int(n_fft / 2)
+
+    return np.floor((samples - offset) / hop_length).astype(int)
+
+
 def frames_to_time(frames, sr=22050, hop_length=512, n_fft=None):
     """Converts frame counts to time (seconds)
 
@@ -1643,11 +1723,11 @@ def frames_to_time(frames, sr=22050, hop_length=512, n_fft=None):
           ``times[i] = frames[i] * hop_length / sr``
     """
 
-    offset = 0
-    if n_fft is not None:
-        offset = int(n_fft / 2)
+    samples = frames_to_samples(frames,
+                                hop_length=hop_length,
+                                n_fft=n_fft)
 
-    return (frames * hop_length + offset) / float(sr)
+    return samples_to_time(samples, sr=sr)
 
 
 def time_to_frames(times, sr=22050, hop_length=512, n_fft=None):
@@ -1682,11 +1762,60 @@ def time_to_frames(times, sr=22050, hop_length=512, n_fft=None):
           ``frames[i] = floor( times[i] * sr / hop_length )``
     """
 
-    offset = 0
-    if n_fft is not None:
-        offset = int(n_fft / 2)
+    samples = time_to_samples(times, sr=sr)
 
-    return np.floor((times * np.float(sr) - offset) / hop_length).astype(int)
+    return samples_to_frames(samples, hop_length=hop_length, n_fft=n_fft)
+
+
+def time_to_samples(times, sr=22050):
+    '''Convert timestamps (in seconds) to sample indices.
+
+    :usage:
+        >>> librosa.time_to_samples(np.arange(0, 1, 0.1), sr=22050)
+        array([    0,  2205,  4410,  6615,  8820, 11025, 13230, 15435, 17640,
+               19845])
+
+    :parameters:
+        - times : np.ndarray
+            Array of time values (in seconds)
+
+        - sr : int > 0
+            Sampling rate
+
+    :returns:
+        - samples : np.ndarray [shape=times.shape, dtype=int]
+            Sample indices corresponding to values in ``times``
+    '''
+
+    return (times * sr).astype(int)
+
+
+def samples_to_time(samples, sr=22050):
+    '''Convert sample indices to time (in seconds).
+
+    :usage:
+        >>> # Get timestamps corresponding to every 512 samples
+        >>> librosa.samples_to_time(np.arange(0, 22050, 512))
+        array([ 0.   ,  0.023,  0.046,  0.07 ,  0.093,  0.116,  0.139,  0.163,
+                0.186,  0.209,  0.232,  0.255,  0.279,  0.302,  0.325,  0.348,
+                0.372,  0.395,  0.418,  0.441,  0.464,  0.488,  0.511,  0.534,
+                0.557,  0.58 ,  0.604,  0.627,  0.65 ,  0.673,  0.697,  0.72 ,
+                0.743,  0.766,  0.789,  0.813,  0.836,  0.859,  0.882,  0.906,
+                0.929,  0.952,  0.975,  0.998])
+
+    :parameters:
+        - samples : np.ndarray
+            Array of sample indices
+
+        - sr : int > 0
+            Sampling rate
+
+    :returns:
+        - times : np.ndarray [shape=samples.shape, dtype=int]
+            Time values corresponding to ``samples`` (in seconds)
+    '''
+
+    return samples / float(sr)
 
 
 @cache
