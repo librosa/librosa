@@ -535,12 +535,24 @@ def match_intervals(intervals_from, intervals_to):
 
     # The overlap score of a beat with a segment is defined as
     #   max(0, min(beat_end, segment_end) - max(beat_start, segment_start))
+    output = np.empty(len(intervals_from), dtype=np.int)
 
-    starts = np.maximum.outer(intervals_from[:, 0], intervals_to[:, 0])
-    ends = np.minimum.outer(intervals_from[:, 1], intervals_to[:, 1])
-    score = np.maximum(0, ends - starts)
+    n_rows = int(librosa.core._MAX_MEM_BLOCK / (len(intervals_to)
+                                                * intervals_to.itemsize))
 
-    return np.argmax(score, axis=1)
+    n_rows = max(1, n_rows)
+
+    for bl_s in range(0, len(intervals_from), n_rows):
+        bl_t = min(bl_s + n_rows, len(intervals_from))
+        tmp_from = intervals_from[bl_s:bl_t]
+
+        starts = np.maximum.outer(tmp_from[:, 0], intervals_to[:, 0])
+        ends = np.minimum.outer(tmp_from[:, 1], intervals_to[:, 1])
+        score = np.maximum(0, ends - starts)
+
+        output[bl_s:bl_t] = np.argmax(score, axis=-1)
+
+    return output
 
 
 @cache
