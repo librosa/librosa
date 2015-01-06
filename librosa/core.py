@@ -964,7 +964,38 @@ def phase_vocoder(D, rate, hop_length=None):
 
 
 # -- FREQUENCY UTILITIES AND CONVERTERS -- #
-def note_to_midi(note):
+def note_to_hz(note, **kwargs):
+    '''Convert one or more note names to frequency (Hz)
+
+    :usage:
+        >>> # Get the frequency of a note
+        >>> librosa.note_to_hz('C')
+        array([ 8.176])
+        >>> # Or multiple notes
+        >>> librosa.note_to_hz(['A3', 'A4', 'A5'])
+        array([ 110.,  220.,  440.])
+        >>> # Or notes with tuning deviations
+        >>> librosa.note_to_hz('C2-32', round_midi=False)
+        array([ 32.104])
+
+    :parameters:
+        - note : str or iterable of str
+            One or more note names to convert
+
+        - kwargs : keyword arguments
+            Additional parameters to :func:`note_to_midi`
+
+    :returns:
+        - frequencies : np.ndarray [shape=(len(note),)]
+            Array of frequencies (in Hz) corresponding to ``note``
+
+    .. seealso:: :func:`midi_to_hz`, :func:`note_to_midi`, :func:`note_to_hz`
+
+    '''
+    return midi_to_hz(note_to_midi(note, **kwargs))
+
+
+def note_to_midi(note, round_midi=True):
     '''Convert one or more spelled notes to MIDI number(s).
 
     Notes may be spelled out with optional accidentals or octave numbers.
@@ -993,8 +1024,11 @@ def note_to_midi(note):
       - note : str or iterable of str
           One or more note names.
 
+      - round_midi : bool
+          If True, allow for fractional midi notes
+          Otherwise, round cent deviations to the nearest note
     :returns:
-      - midi : int or np.array
+      - midi : float or np.array
           Midi note numbers corresponding to inputs.
     '''
 
@@ -1005,20 +1039,30 @@ def note_to_midi(note):
     acc_map = {'#': 1, '': 0, 'b': -1, '!': -1}
 
     try:
-        match = re.match(r'^(?P<n>[A-Ga-g])(?P<off>[#b!]?)(?P<oct>[+-]?\d*)$',
+        match = re.match(r'^(?P<n>[A-Ga-g])'
+                         r'(?P<off>[#b!]?)'
+                         r'(?P<oct>[+-]?\d*)'
+                         r'(?P<cents>[+-]?\d*)$',
                          note)
 
         pitch = match.group('n').upper()
         offset = acc_map[match.group('off')]
         octave = match.group('oct')
+        cents = match.group('cents')
         if not octave:
             octave = 0
         else:
             octave = int(octave)
+
+        if round_midi or not cents:
+            cents = 0
+        else:
+            cents = int(cents) * 1e-2
+
     except:
         raise ValueError('Improper note format: {:s}'.format(note))
 
-    return 12 * octave + pitch_map[pitch] + offset
+    return 12 * octave + pitch_map[pitch] + offset + cents
 
 
 def midi_to_note(midi, octave=True, cents=False):
@@ -1123,6 +1167,38 @@ def hz_to_midi(frequencies):
 
     frequencies = np.asarray([frequencies]).flatten()
     return 12 * (np.log2(frequencies) - np.log2(440.0)) + 69
+
+
+def hz_to_note(frequencies, **kwargs):
+    '''Convert one or more frequencies (in Hz) to the nearest note names.
+
+    :usage:
+        >>> # Get a single note name for a frequency
+        >>> librosa.hz_to_note(440.0)
+        ['A5']
+        >>> # Get multiple notes with cent deviation
+        >>> librosa.hz_to_note([32, 64], cents=True)
+        ['C2-38', 'C3-38']
+        >>> # Get multiple notes, but suppress octave labels
+        >>> librosa.hz_to_note(440.0 * (2.0 ** np.linspace(0, 1, 12)),
+                               octave=False)
+        ['A', 'A#', 'B', 'C', 'C#', 'D', 'E', 'F', 'F#', 'G', 'G#', 'A']
+
+    :parameters:
+        - frequencies : float or iterable of float
+            Input frequencies, specified in Hz
+
+        - kwargs : additional keyword arguments
+            Arguments passed through to :func:`midi_to_note`
+
+    :returns:
+        - notes : list of str
+            ``notes[i]`` is the closest note name to ``frequency[i]``
+            (or ``frequency`` if the input is scalar)
+
+    .. seealso:: :func:`hz_to_midi`, :func:`midi_to_note`, :func:`note_to_hz`
+    '''
+    return midi_to_note(hz_to_midi(frequencies), **kwargs)
 
 
 def hz_to_mel(frequencies, htk=False):
