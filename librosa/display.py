@@ -178,7 +178,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
         >>> # Visualize a CQT with note markers
         >>> CQT = librosa.cqt(y, sr=sr)
         >>> librosa.display.specshow(CQT, sr=sr, y_axis='cqt_note',
-                                     fmin=librosa.midi_to_hz(24))
+                                     fmin=librosa.note_to_hz('C2'))
 
         >>> # Draw time markers automatically
         >>> librosa.display.specshow(D, sr=sr, hop_length=hop_length,
