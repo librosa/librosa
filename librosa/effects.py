@@ -212,6 +212,18 @@ def remix(y, intervals, align_zeros=True):
     '''Remix an audio signal by re-ordering time intervals.
 
     :usage:
+        >>> # Load in the example track and reverse the beats
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> # Compute beats
+        >>> _, beat_frames = librosa.beat.beat_track(y=y, sr=sr,
+                                                     hop_length=512)
+        >>> # Convert from frames to sample indices
+        >>> beat_samples = librosa.frames_to_samples(beat_frames)
+        >>> # Generate intervals from consecutive events
+        >>> intervals = librosa.util.frame(beat_samples, frame_length=2,
+                                           hop_length=1).T
+        >>> # Reverse the beat intervals
+        >>> y_out = librosa.effects.remix(y, intervals[::-1])
 
     :parameters:
         - y : np.ndarray [shape=(t,) or (2, t)]
