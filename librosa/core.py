@@ -437,7 +437,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
 
     # how many columns can we fit within MAX_MEM_BLOCK?
     n_columns = int(MAX_MEM_BLOCK / (stft_matrix.shape[0]
-                                      * stft_matrix.itemsize))
+                                     * stft_matrix.itemsize))
 
     for bl_s in range(0, stft_matrix.shape[1], n_columns):
         bl_t = min(bl_s + n_columns, stft_matrix.shape[1])

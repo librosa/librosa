@@ -62,6 +62,7 @@ Package reference
 
 .. automodule:: librosa.feature
     :members:
+    :imported-members:
     :undoc-members:
     :show-inheritance:
     :member-order: bysource
