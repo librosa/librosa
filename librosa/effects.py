@@ -37,15 +37,15 @@ def hpss(y):
     '''
 
     # Compute the STFT matrix
-    D = librosa.core.stft(y)
+    stft = librosa.core.stft(y)
 
     # Decompose into harmonic and percussives
-    D_harm, D_perc = librosa.decompose.hpss(D)
+    stft_harm, stft_perc = librosa.decompose.hpss(stft)
 
     # Invert the STFTs.  Adjust length to match the input.
-    y_harm = librosa.util.fix_length(librosa.istft(D_harm, dtype=y.dtype),
+    y_harm = librosa.util.fix_length(librosa.istft(stft_harm, dtype=y.dtype),
                                      len(y))
-    y_perc = librosa.util.fix_length(librosa.istft(D_perc, dtype=y.dtype),
+    y_perc = librosa.util.fix_length(librosa.istft(stft_perc, dtype=y.dtype),
                                      len(y))
 
     return y_harm, y_perc
@@ -73,13 +73,13 @@ def harmonic(y):
     '''
 
     # Compute the STFT matrix
-    D = librosa.core.stft(y)
+    stft = librosa.core.stft(y)
 
     # Remove percussives
-    D_harm = librosa.decompose.hpss(D)[0]
+    stft_harm = librosa.decompose.hpss(stft)[0]
 
     # Invert the STFTs
-    y_harm = librosa.util.fix_length(librosa.istft(D_harm, dtype=y.dtype),
+    y_harm = librosa.util.fix_length(librosa.istft(stft_harm, dtype=y.dtype),
                                      len(y))
 
     return y_harm
@@ -107,13 +107,13 @@ def percussive(y):
     '''
 
     # Compute the STFT matrix
-    D = librosa.core.stft(y)
+    stft = librosa.core.stft(y)
 
     # Remove harmonics
-    D_perc = librosa.decompose.hpss(D)[1]
+    stft_perc = librosa.decompose.hpss(stft)[1]
 
     # Invert the STFT
-    y_perc = librosa.util.fix_length(librosa.istft(D_perc, dtype=y.dtype),
+    y_perc = librosa.util.fix_length(librosa.istft(stft_perc, dtype=y.dtype),
                                      len(y))
 
     return y_perc
@@ -148,13 +148,13 @@ def time_stretch(y, rate):
     '''
 
     # Construct the stft
-    D = librosa.stft(y)
+    stft = librosa.stft(y)
 
     # Stretch by phase vocoding
-    D_stretch = librosa.phase_vocoder(D, rate)
+    stft_stretch = librosa.phase_vocoder(stft, rate)
 
     # Invert the stft
-    y_stretch = librosa.istft(D_stretch, dtype=y.dtype)
+    y_stretch = librosa.istft(stft_stretch, dtype=y.dtype)
 
     return y_stretch
 

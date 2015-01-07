@@ -537,8 +537,8 @@ def match_intervals(intervals_from, intervals_to):
     #   max(0, min(beat_end, segment_end) - max(beat_start, segment_start))
     output = np.empty(len(intervals_from), dtype=np.int)
 
-    n_rows = int(librosa.core._MAX_MEM_BLOCK / (len(intervals_to)
-                                                * intervals_to.itemsize))
+    n_rows = int(librosa.core.MAX_MEM_BLOCK / (len(intervals_to)
+                                               * intervals_to.itemsize))
 
     n_rows = max(1, n_rows)
 
@@ -602,9 +602,9 @@ def match_events(events_from, events_to):
     '''
     output = np.empty_like(events_from, dtype=np.int)
 
-    n_rows = int(librosa.core._MAX_MEM_BLOCK / (np.prod(output.shape[1:])
-                                                * len(events_to)
-                                                * events_from.itemsize))
+    n_rows = int(librosa.core.MAX_MEM_BLOCK / (np.prod(output.shape[1:])
+                                               * len(events_to)
+                                               * events_from.itemsize))
 
     # Make sure we can at least make some progress
     n_rows = max(1, n_rows)
