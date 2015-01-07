@@ -3,10 +3,10 @@
 """Feature extraction routines."""
 
 import numpy as np
-import scipy.signal
 
 import librosa.core
 import librosa.util
+from . import pitch
 from .. import cache
 
 
@@ -591,8 +591,8 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096, hop_length=512, **kwargs):
     # If we don't have tuning already, grab it from S
     if 'tuning' not in kwargs:
         bins_per_oct = kwargs.get('bins_per_octave', 12)
-        kwargs['tuning'] = estimate_tuning(S=S, sr=sr,
-                                           bins_per_octave=bins_per_oct)
+        kwargs['tuning'] = pitch.estimate_tuning(S=S, sr=sr,
+                                                 bins_per_octave=bins_per_oct)
 
     # Build the CQ basis
     cq_basis = librosa.filters.logfrequency(sr, n_fft=n_fft, **kwargs)
@@ -679,7 +679,7 @@ def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
         n_fft = (S.shape[0] - 1) * 2
 
     if tuning is None:
-        tuning = estimate_tuning(S=S, sr=sr, bins_per_octave=n_chroma)
+        tuning = pitch.estimate_tuning(S=S, sr=sr, bins_per_octave=n_chroma)
 
     # Get the filter bank
     if 'A440' not in kwargs:
