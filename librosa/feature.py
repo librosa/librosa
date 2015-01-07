@@ -351,21 +351,18 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
 
 @cache
-def rms(y=None, sr=22050, S=None, n_fft=2048, hop_length=512):
+def rms(y=None, S=None, n_fft=2048, hop_length=512):
     '''Compute root-mean-square (RMS) energy for each frame.
 
     :usage:
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> librosa.feature.rms(y=y, sr=sr)
+        >>> librosa.feature.rms(y=y)
         array([[  1.204e-01,   6.263e-01, ...,   1.413e-04,   2.191e-05]],
               dtype=float32)
 
     :parameters:
       - y : np.ndarray [shape=(n,)] or None
           audio time series
-
-      - sr : int > 0 [scalar]
-          audio sampling rate of ``y``
 
       - S : np.ndarray [shape=(d, t)] or None
           (optional) spectrogram magnitude

@@ -28,7 +28,7 @@ except ImportError:
     _HAS_SAMPLERATE = False
 
 # Constrain STFT block sizes to 128 MB
-_MAX_MEM_BLOCK = 2**7 * 2**20
+MAX_MEM_BLOCK = 2**7 * 2**20
 
 SMALL_FLOAT = 1e-20
 
@@ -436,7 +436,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
                            order='F')
 
     # how many columns can we fit within MAX_MEM_BLOCK?
-    n_columns = int(_MAX_MEM_BLOCK / (stft_matrix.shape[0]
+    n_columns = int(MAX_MEM_BLOCK / (stft_matrix.shape[0]
                                       * stft_matrix.itemsize))
 
     for bl_s in range(0, stft_matrix.shape[1], n_columns):
