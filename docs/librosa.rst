@@ -11,16 +11,6 @@ Package reference
     :show-inheritance:
     :member-order: bysource
 
-.. _chord:
-
-:mod:`Chord models` 
----------------------
-.. automodule:: librosa.chord
-    :members:
-    :undoc-members:
-    :show-inheritance:
-    :member-order: bysource
-
 .. _core:
 
 :mod:`Core functionality` 
@@ -127,7 +117,9 @@ Package reference
 
 .. automodule:: librosa.util
     :members:
+    :imported-members:
     :undoc-members:
+    :exclude-members: BaseEstimator, TransformerMixin
     :show-inheritance:
     :member-order: bysource
 
