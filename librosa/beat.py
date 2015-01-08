@@ -4,11 +4,9 @@
 
 import numpy as np
 import scipy
-import scipy.signal
 
 import librosa.core
-import librosa.feature
-import librosa.onset
+from . import onset
 from . import cache
 
 
@@ -105,9 +103,9 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=64,
         if y is None:
             raise ValueError('Either "y" or "onsets" must be provided')
 
-        onset_envelope = librosa.onset.onset_strength(y=y,
-                                                      sr=sr,
-                                                      hop_length=hop_length)
+        onset_envelope = onset.onset_strength(y=y,
+                                              sr=sr,
+                                              hop_length=hop_length)
 
     # Do we have any onsets to grab?
     if not onset_envelope.any():

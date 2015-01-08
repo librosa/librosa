@@ -2,6 +2,6 @@
 # -*- coding: utf-8 -*-
 """Feature extraction routines."""
 
-from librosa.feature.spectral import * # pylint: disable=wildcard-import
-from librosa.feature.pitch import * # pylint: disable=wildcard-import
-from librosa.feature.utils import * # pylint: disable=wildcard-import
+from .spectral import * # pylint: disable=wildcard-import
+from .pitch import * # pylint: disable=wildcard-import
+from .utils import * # pylint: disable=wildcard-import
