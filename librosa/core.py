@@ -1850,54 +1850,6 @@ def autocorrelate(y, max_size=None):
 
 
 @cache
-def localmax(x, axis=0):
-    """Find local maxima in an array ``x``.
-
-    :usage:
-        >>> x = np.array([1, 0, 1, 2, -1, 0, -2, 1])
-        >>> librosa.localmax(x)
-        array([False, False, False,  True, False,  True, False, True],
-              dtype=bool)
-
-        >>> # Two-dimensional example
-        >>> x = np.array([[1,0,1], [2, -1, 0], [2, 1, 3]])
-        >>> librosa.localmax(x, axis=0)
-        array([[False, False, False],
-               [ True, False, False],
-               [False,  True,  True]], dtype=bool)
-        >>> librosa.localmax(x, axis=1)
-        array([[False, False,  True],
-               [False, False,  True],
-               [False, False,  True]], dtype=bool)
-
-    :parameters:
-      - x     : np.ndarray [shape=(d1,d2,...)]
-          input vector or array
-
-      - axis : int
-          axis along which to compute local maximality
-
-    :returns:
-      - m     : np.ndarray [shape=x.shape, dtype=bool]
-          indicator vector of local maxima:
-          ``m[i] == True`` if ``x[i]`` is a local maximum
-    """
-
-    paddings = [(0, 0)] * x.ndim
-    paddings[axis] = (1, 1)
-
-    x_pad = np.pad(x, paddings, mode='edge')
-
-    inds1 = [Ellipsis] * x.ndim
-    inds1[axis] = slice(0, -2)
-
-    inds2 = [Ellipsis] * x.ndim
-    inds2[axis] = slice(2, x_pad.shape[axis])
-
-    return (x > x_pad[inds1]) & (x >= x_pad[inds2])
-
-
-@cache
 def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     '''Uses a flexible heuristic to pick peaks in a signal.
 
