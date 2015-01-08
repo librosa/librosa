@@ -4,11 +4,10 @@
 
 import numpy as np
 import scipy
-import scipy.signal
 
-import librosa.core
-import librosa.feature
 from . import cache
+from . import core
+from .feature import melspectrogram
 
 
 @cache
@@ -100,7 +99,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64,
     kwargs.setdefault('delta', 0.06)
 
     # Peak pick the onset envelope
-    return librosa.core.peak_pick(onset_envelope, **kwargs)
+    return core.peak_pick(onset_envelope, **kwargs)
 
 
 @cache
@@ -178,7 +177,7 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
     """
 
     if feature is None:
-        feature = librosa.feature.melspectrogram
+        feature = melspectrogram
 
     if aggregate is None:
         aggregate = np.mean
@@ -191,7 +190,7 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
         S = np.abs(feature(y=y, sr=sr, **kwargs))
 
         # Convert to dBs
-        S = librosa.core.logamplitude(S)
+        S = core.logamplitude(S)
 
     # Retrieve the n_fft and hop_length,
     # or default values for onsets if not provided
