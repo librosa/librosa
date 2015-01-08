@@ -5,10 +5,9 @@
 import numpy as np
 
 import librosa.core
-import librosa.util
 from . import pitch
 from .. import cache
-
+from .. import util
 
 # -- Spectral features -- #
 @cache
@@ -88,7 +87,7 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         freq = freq.reshape((-1, 1))
 
     # Column-normalize S
-    return np.sum(freq * librosa.util.normalize(S, norm=1, axis=0),
+    return np.sum(freq * util.normalize(S, norm=1, axis=0),
                   axis=0, keepdims=True)
 
 
@@ -184,7 +183,7 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     # Column-normalize S
     if norm:
-        S = librosa.util.normalize(S, norm=1, axis=0)
+        S = util.normalize(S, norm=1, axis=0)
 
     return np.sum(S * deviation**p, axis=0, keepdims=True)**(1./p)
 
@@ -499,12 +498,12 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True,
     .. seealso:: :func:`librosa.core.zero_crossings`
     '''
 
-    librosa.util.valid_audio(y)
+    util.valid_audio(y)
 
     if center:
         y = np.pad(y, int(frame_length / 2), mode='edge')
 
-    y_framed = librosa.util.frame(y, frame_length, hop_length)
+    y_framed = util.frame(y, frame_length, hop_length)
 
     kwargs['axis'] = 0
     kwargs.setdefault('pad', False)
@@ -694,7 +693,7 @@ def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
     if norm is None:
         return raw_chroma
 
-    return librosa.util.normalize(raw_chroma, norm=norm, axis=0)
+    return util.normalize(raw_chroma, norm=norm, axis=0)
 
 
 # -- Mel spectrogram and MFCCs -- #

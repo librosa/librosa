@@ -13,9 +13,6 @@ import scipy.signal
 import scipy.ndimage
 
 from . import cache
-from . import filters
-from . import feature
-from . import util
 
 # Do we have scikits.samplerate?
 try:
@@ -2118,3 +2115,9 @@ def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
                   padding,
                   mode='constant',
                   constant_values=pad)
+
+
+# Final imports
+from . import filters
+from . import feature
+from . import util

@@ -3,9 +3,11 @@
 """Commonly used filter banks: DCT, Chroma, Mel, CQT"""
 
 import numpy as np
-import scipy.signal
-import librosa
+import scipy
+
+from .core import note_to_hz, fft_frequencies, mel_frequencies, hz_to_octs
 from . import cache
+from . import util
 
 
 @cache
@@ -105,14 +107,14 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
     weights = np.zeros((n_mels, int(1 + n_fft / 2)))
 
     # Center freqs of each FFT bin
-    fftfreqs = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
+    fftfreqs = fft_frequencies(sr=sr, n_fft=n_fft)
 
     # 'Center freqs' of mel bands - uniformly spaced between limits
-    freqs = librosa.mel_frequencies(n_mels,
-                                    fmin=fmin,
-                                    fmax=fmax,
-                                    htk=htk,
-                                    extra=True)
+    freqs = mel_frequencies(n_mels,
+                            fmin=fmin,
+                            fmax=fmax,
+                            htk=htk,
+                            extra=True)
 
     # Slaney-style mel is scaled to be approx constant energy per channel
     enorm = 2.0 / (freqs[2:n_mels+2] - freqs[:n_mels])
@@ -188,7 +190,7 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=2):
     # Get the FFT bins, not counting the DC component
     frequencies = np.linspace(0, sr, n_fft, endpoint=False)[1:]
 
-    frqbins = n_chroma * librosa.hz_to_octs(frequencies, A440)
+    frqbins = n_chroma * hz_to_octs(frequencies, A440)
 
     # make up a value for the 0 Hz bin = 1.5 octaves below bin 1
     # (so chroma is 50% rotated from bin 1, and bin width is broad)
@@ -210,7 +212,7 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=2):
     wts = np.exp(-0.5 * (2*D / np.tile(binwidthbins, (n_chroma, 1)))**2)
 
     # normalize each column
-    wts = librosa.util.normalize(wts, norm=2, axis=0)
+    wts = util.normalize(wts, norm=2, axis=0)
 
     # Maybe apply scaling for fft bins
     if octwidth is not None:
@@ -279,7 +281,7 @@ def logfrequency(sr, n_fft, n_bins=84, bins_per_octave=12, tuning=0.0,
     '''
 
     if fmin is None:
-        fmin = librosa.midi_to_hz(librosa.note_to_midi('C2'))
+        fmin = note_to_hz('C2')
 
     # Apply tuning correction
     correction = 2.0**(float(tuning) / bins_per_octave)
@@ -291,7 +293,7 @@ def logfrequency(sr, n_fft, n_bins=84, bins_per_octave=12, tuning=0.0,
     basis = np.zeros((n_bins, int(1 + n_fft/2)))
 
     # Get log frequencies of bins
-    log_freqs = np.log2(librosa.fft_frequencies(sr, n_fft)[1:])
+    log_freqs = np.log2(fft_frequencies(sr, n_fft)[1:])
 
     for i in range(n_bins):
         # What's the center (median) frequency of this filter?
@@ -302,7 +304,7 @@ def logfrequency(sr, n_fft, n_bins=84, bins_per_octave=12, tuning=0.0,
                               - np.log2(sigma) - log_freqs)
 
     # Normalize the filters
-    basis = librosa.util.normalize(basis, norm=2, axis=1)
+    basis = util.normalize(basis, norm=2, axis=1)
 
     return basis
 
@@ -364,7 +366,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     '''
 
     if fmin is None:
-        fmin = librosa.midi_to_hz(librosa.note_to_midi('C2'))
+        fmin = note_to_hz('C2')
 
     if window is None:
         window = scipy.signal.hann
@@ -390,7 +392,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
             win = win * window(ilen)
 
         # Normalize
-        win = librosa.util.normalize(win, norm=2)
+        win = util.normalize(win, norm=2)
 
         filters.append(win)
 
@@ -399,7 +401,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 
         # Use reflection padding, unless otherwise specified
         for i in range(len(filters)):
-            filters[i] = librosa.util.pad_center(filters[i], max_len, **kwargs)
+            filters[i] = util.pad_center(filters[i], max_len, **kwargs)
 
     return filters
 
