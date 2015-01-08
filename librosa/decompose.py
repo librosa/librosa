@@ -9,6 +9,7 @@ import sklearn.decomposition
 
 import librosa.core
 from . import cache
+from . import util
 
 
 def decompose(S, n_components=None, transformer=None, sort=False):
@@ -216,18 +217,18 @@ def hpss(S, kernel_size=31, power=2.0, mask=False):
     perc = np.empty_like(S)
     perc[:] = scipy.signal.medfilt2d(S, kernel_size=(win_perc, 1))
 
-    if mask or power < librosa.core.SMALL_FLOAT:
+    if mask or power < util.SMALL_FLOAT:
         mask_harm = (harm > perc).astype(float)
         mask_perc = 1 - mask_harm
         if mask:
             return mask_harm, mask_perc
     else:
         perc = perc ** power
-        zero_perc = (perc < librosa.core.SMALL_FLOAT)
+        zero_perc = (perc < util.SMALL_FLOAT)
         perc[zero_perc] = 0.0
 
         harm = harm ** power
-        zero_harm = (harm < librosa.core.SMALL_FLOAT)
+        zero_harm = (harm < util.SMALL_FLOAT)
         harm[zero_harm] = 0.0
 
         # Find points where both are zero, equalize
