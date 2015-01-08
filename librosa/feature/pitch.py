@@ -5,7 +5,8 @@
 import numpy as np
 from .. import cache
 from .. import util
-from ..core import stft, ifgram, fft_frequencies, hz_to_octs
+from ..core.spectrum import stft, ifgram
+from ..core.time_frequency import fft_frequencies, hz_to_octs
 
 
 @cache

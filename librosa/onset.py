@@ -7,6 +7,7 @@ import scipy
 
 from . import cache
 from . import core
+from . import util
 from .feature import melspectrogram
 
 
@@ -54,7 +55,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64,
       - *kwargs*
           Additional parameters for peak picking
 
-          See :func:`librosa.core.peak_pick()` for details
+          See :func:`librosa.util.peak_pick()` for details
 
     :returns:
 
@@ -99,7 +100,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64,
     kwargs.setdefault('delta', 0.06)
 
     # Peak pick the onset envelope
-    return core.peak_pick(onset_envelope, **kwargs)
+    return util.peak_pick(onset_envelope, **kwargs)
 
 
 @cache

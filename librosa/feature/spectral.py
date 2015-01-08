@@ -8,7 +8,9 @@ from . import pitch
 from .. import cache
 from .. import util
 from .. import filters
-from ..core import stft, fft_frequencies, logamplitude, zero_crossings
+from ..core.spectrum import stft, logamplitude
+from ..core.time_frequency import fft_frequencies
+from ..core.audio import zero_crossings
 
 
 # -- Spectral features -- #
