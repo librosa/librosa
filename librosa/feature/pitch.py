@@ -3,8 +3,9 @@
 """Pitch and tuning"""
 
 import numpy as np
-import librosa.core
 from .. import cache
+from .. import util
+from ..core import stft, ifgram, fft_frequencies, hz_to_octs, localmax
 
 
 @cache
@@ -111,8 +112,7 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     frequencies = frequencies[frequencies > 0]
 
     # Compute the residual relative to the number of bins
-    residual = np.mod(bins_per_octave * librosa.core.hz_to_octs(frequencies),
-                      1.0)
+    residual = np.mod(bins_per_octave * hz_to_octs(frequencies), 1.0)
 
     # Are we on the wrong side of the semitone?
     # A residual of 0.95 is more likely to be a deviation of -0.05
@@ -207,10 +207,8 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=None,
         hop_length = int(n_fft / 4)
 
     # Calculate the inst freq gram
-    if_gram, D = librosa.core.ifgram(y, sr=sr,
-                                     n_fft=n_fft,
-                                     win_length=int(n_fft/2),
-                                     hop_length=hop_length)
+    if_gram, D = ifgram(y, sr=sr, n_fft=n_fft, win_length=int(n_fft/2),
+                        hop_length=hop_length)
 
     # Find plateaus in ifgram - stretches where delta IF is < thr:
     # ie, places where the same frequency is spread across adjacent bins
@@ -338,7 +336,7 @@ def piptrack(y=None, sr=22050, S=None, n_fft=4096, fmin=150.0,
     if S is None:
         if y is None:
             raise ValueError('Either "y" or "S" must be provided')
-        S = np.abs(librosa.core.stft(y, n_fft=n_fft))
+        S = np.abs(stft(y, n_fft=n_fft))
 
     # Truncate to feasible region
     fmin = np.maximum(fmin, 0)
@@ -346,7 +344,7 @@ def piptrack(y=None, sr=22050, S=None, n_fft=4096, fmin=150.0,
 
     # Pre-compute FFT frequencies
     n_fft = 2 * (S.shape[0] - 1)
-    fft_freqs = librosa.core.fft_frequencies(sr=sr, n_fft=n_fft)
+    fft_freqs = fft_frequencies(sr=sr, n_fft=n_fft)
 
     # Do the parabolic interpolation everywhere,
     # then figure out where the peaks are
@@ -356,7 +354,7 @@ def piptrack(y=None, sr=22050, S=None, n_fft=4096, fmin=150.0,
     shift = 2 * S[1:-1] - S[2:] - S[:-2]
     # Suppress divide-by-zeros.
     # Points where shift == 0 will never be selected by localmax anyway
-    shift = avg / (shift + (shift < librosa.core.SMALL_FLOAT))
+    shift = avg / (shift + (shift < util.SMALL_FLOAT))
 
     # Pad back up to the same shape as S
     avg = np.pad(avg, ([1, 1], [0, 0]), mode='constant')
@@ -374,8 +372,7 @@ def piptrack(y=None, sr=22050, S=None, n_fft=4096, fmin=150.0,
     # Compute the column-wise local max of S after thresholding
     # Find the argmax coordinates
     idx = np.argwhere(freq_mask &
-                      librosa.core.localmax(S * (S > (threshold
-                                                      * S.max(axis=0)))))
+                      localmax(S * (S > (threshold * S.max(axis=0)))))
 
     # Store pitch and magnitude
     pitches[idx[:, 0], idx[:, 1]] = ((idx[:, 0] + shift[idx[:, 0], idx[:, 1]])
