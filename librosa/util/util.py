@@ -8,10 +8,15 @@ import glob
 import pkg_resources
 
 from numpy.lib.stride_tricks import as_strided
-import librosa.core
+
 from .. import cache
 
 EXAMPLE_AUDIO = 'example_data/Kevin_MacLeod_-_Vibe_Ace.mp3'
+
+# Constrain STFT block sizes to 128 MB
+MAX_MEM_BLOCK = 2**7 * 2**20
+
+SMALL_FLOAT = 1e-20
 
 
 def example_audio_file():
@@ -497,7 +502,7 @@ def normalize(S, norm=np.inf, axis=0):
         raise ValueError('Unsupported norm value: ' + repr(norm))
 
     # Avoid div-by-zero
-    length[length < librosa.core.SMALL_FLOAT] = 1.0
+    length[length < SMALL_FLOAT] = 1.0
 
     return S / length
 
@@ -535,9 +540,7 @@ def match_intervals(intervals_from, intervals_to):
     #   max(0, min(beat_end, segment_end) - max(beat_start, segment_start))
     output = np.empty(len(intervals_from), dtype=np.int)
 
-    n_rows = int(librosa.core.MAX_MEM_BLOCK / (len(intervals_to)
-                                               * intervals_to.itemsize))
-
+    n_rows = int(MAX_MEM_BLOCK / (len(intervals_to) * intervals_to.itemsize))
     n_rows = max(1, n_rows)
 
     for bl_s in range(0, len(intervals_from), n_rows):
@@ -600,9 +603,8 @@ def match_events(events_from, events_to):
     '''
     output = np.empty_like(events_from, dtype=np.int)
 
-    n_rows = int(librosa.core.MAX_MEM_BLOCK / (np.prod(output.shape[1:])
-                                               * len(events_to)
-                                               * events_from.itemsize))
+    n_rows = int(MAX_MEM_BLOCK / (np.prod(output.shape[1:]) * len(events_to)
+                                  * events_from.itemsize))
 
     # Make sure we can at least make some progress
     n_rows = max(1, n_rows)
