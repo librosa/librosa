@@ -2,5 +2,5 @@
 # -*- coding: utf-8 -*-
 """Utility functions"""
 
-from .util import *  # pylint: disable=wildcard-import
-from .feature_extractor import * # pylint: disable=wildcard-import
+from .utils import *  # pylint: disable=wildcard-import
+from .feature_extractor import *  # pylint: disable=wildcard-import
