@@ -4,10 +4,10 @@
 
 import numpy as np
 
-import librosa.core
-import librosa.decompose
-import librosa.util
+from . import core
 from . import cache
+from . import decompose
+from . import util
 
 
 @cache
@@ -37,16 +37,14 @@ def hpss(y):
     '''
 
     # Compute the STFT matrix
-    stft = librosa.core.stft(y)
+    stft = core.stft(y)
 
     # Decompose into harmonic and percussives
-    stft_harm, stft_perc = librosa.decompose.hpss(stft)
+    stft_harm, stft_perc = decompose.hpss(stft)
 
     # Invert the STFTs.  Adjust length to match the input.
-    y_harm = librosa.util.fix_length(librosa.istft(stft_harm, dtype=y.dtype),
-                                     len(y))
-    y_perc = librosa.util.fix_length(librosa.istft(stft_perc, dtype=y.dtype),
-                                     len(y))
+    y_harm = util.fix_length(core.istft(stft_harm, dtype=y.dtype), len(y))
+    y_perc = util.fix_length(core.istft(stft_perc, dtype=y.dtype), len(y))
 
     return y_harm, y_perc
 
@@ -73,14 +71,13 @@ def harmonic(y):
     '''
 
     # Compute the STFT matrix
-    stft = librosa.core.stft(y)
+    stft = core.stft(y)
 
     # Remove percussives
-    stft_harm = librosa.decompose.hpss(stft)[0]
+    stft_harm = decompose.hpss(stft)[0]
 
     # Invert the STFTs
-    y_harm = librosa.util.fix_length(librosa.istft(stft_harm, dtype=y.dtype),
-                                     len(y))
+    y_harm = util.fix_length(core.istft(stft_harm, dtype=y.dtype), len(y))
 
     return y_harm
 
@@ -107,14 +104,13 @@ def percussive(y):
     '''
 
     # Compute the STFT matrix
-    stft = librosa.core.stft(y)
+    stft = core.stft(y)
 
     # Remove harmonics
-    stft_perc = librosa.decompose.hpss(stft)[1]
+    stft_perc = decompose.hpss(stft)[1]
 
     # Invert the STFT
-    y_perc = librosa.util.fix_length(librosa.istft(stft_perc, dtype=y.dtype),
-                                     len(y))
+    y_perc = util.fix_length(core.istft(stft_perc, dtype=y.dtype), len(y))
 
     return y_perc
 
@@ -148,13 +144,13 @@ def time_stretch(y, rate):
     '''
 
     # Construct the stft
-    stft = librosa.stft(y)
+    stft = core.stft(y)
 
     # Stretch by phase vocoding
-    stft_stretch = librosa.phase_vocoder(stft, rate)
+    stft_stretch = core.phase_vocoder(stft, rate)
 
     # Invert the stft
-    y_stretch = librosa.istft(stft_stretch, dtype=y.dtype)
+    y_stretch = core.istft(stft_stretch, dtype=y.dtype)
 
     return y_stretch
 
@@ -199,12 +195,10 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12):
     rate = 2.0 ** (-float(n_steps) / bins_per_octave)
 
     # Stretch in time, then resample
-    y_shift = librosa.resample(time_stretch(y, rate),
-                               float(sr) / rate,
-                               sr)
+    y_shift = core.resample(time_stretch(y, rate), float(sr) / rate, sr)
 
     # Crop to the same dimension as the input
-    return librosa.util.fix_length(y_shift, len(y))
+    return util.fix_length(y_shift, len(y))
 
 
 @cache
@@ -245,20 +239,20 @@ def remix(y, intervals, align_zeros=True):
     '''
 
     # Validate the audio buffer
-    librosa.util.valid_audio(y, mono=False)
+    util.valid_audio(y, mono=False)
 
     y_out = []
 
     if align_zeros:
-        y_mono = librosa.core.to_mono(y)
-        zeros = np.nonzero(librosa.core.zero_crossings(y_mono))[-1]
+        y_mono = core.to_mono(y)
+        zeros = np.nonzero(core.zero_crossings(y_mono))[-1]
 
     clip = [Ellipsis] * y.ndim
 
     for interval in intervals:
 
         if align_zeros:
-            interval = zeros[librosa.util.match_events(interval, zeros)]
+            interval = zeros[util.match_events(interval, zeros)]
 
         clip[-1] = slice(interval[0], interval[1])
 
