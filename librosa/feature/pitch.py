@@ -5,7 +5,7 @@
 import numpy as np
 from .. import cache
 from .. import util
-from ..core import stft, ifgram, fft_frequencies, hz_to_octs, localmax
+from ..core import stft, ifgram, fft_frequencies, hz_to_octs
 
 
 @cache
@@ -372,7 +372,7 @@ def piptrack(y=None, sr=22050, S=None, n_fft=4096, fmin=150.0,
     # Compute the column-wise local max of S after thresholding
     # Find the argmax coordinates
     idx = np.argwhere(freq_mask &
-                      localmax(S * (S > (threshold * S.max(axis=0)))))
+                      util.localmax(S * (S > (threshold * S.max(axis=0)))))
 
     # Store pitch and magnitude
     pitches[idx[:, 0], idx[:, 1]] = ((idx[:, 0] + shift[idx[:, 0], idx[:, 1]])
