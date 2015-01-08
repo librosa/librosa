@@ -18,7 +18,7 @@ from . import util
 # Do we have scikits.samplerate?
 try:
     # Pylint won't handle dynamic imports, so we suppress this warning
-    import scikits.samplerate as samplerate     # pylint: disable=import-error
+    import scikits.samplerate as samplerate  # pylint: disable=import-error
     _HAS_SAMPLERATE = True
 except ImportError:
     warnings.warn('Could not import scikits.samplerate. ' +
@@ -783,7 +783,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         fmin = note_to_hz('C2')
 
     if tuning is None:
-        tuning = feature.estimate_tuning(y=y, sr=sr)
+        tuning = estimate_tuning(y=y, sr=sr)
 
     # First thing, get the fmin of the top octave
     freqs = cqt_frequencies(n_bins + 1, fmin, bins_per_octave=bins_per_octave)
@@ -841,8 +841,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         if zoom_factor > 0:
             # We need to aggregate.  Generate the boundary frames
             bounds = list(np.arange(0, my_cqt.shape[1], 2**(zoom_factor)))
-            my_cqt = feature.sync(my_cqt, bounds,
-                                  aggregate=aggregate)
+            my_cqt = sync(my_cqt, bounds, aggregate=aggregate)
 
         return my_cqt
 
@@ -2115,4 +2114,5 @@ def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
 
 # Final imports
 from . import filters
-from . import feature
+from .feature.utils import sync
+from .feature.pitch import estimate_tuning
