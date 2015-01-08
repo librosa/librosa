@@ -3,6 +3,7 @@
 """Utility functions"""
 
 import numpy as np
+import scipy.ndimage
 import os
 import glob
 import pkg_resources
@@ -667,6 +668,105 @@ def localmax(x, axis=0):
     inds2[axis] = slice(2, x_pad.shape[axis])
 
     return (x > x_pad[inds1]) & (x >= x_pad[inds2])
+
+
+@cache
+def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
+    '''Uses a flexible heuristic to pick peaks in a signal.
+
+    :usage:
+        >>> # Look +-3 steps
+        >>> # compute the moving average over +-5 steps
+        >>> # peaks must be > avg + 0.5
+        >>> # skip 10 steps before taking another peak
+        >>> y, sr = librosa.load(librosa.util.example_audio_file())
+        >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=64)
+        >>> librosa.util.peak_pick(onset_env, 3, 3, 5, 6, 0.5, 10)
+        array([ 2558,  4863,  5259,  5578,  5890,  6212,  6531,  6850,  7162,
+                7484,  7804,  8434,  8756,  9076,  9394,  9706, 10028, 10350,
+               10979, 11301, 11620, 12020, 12251, 12573, 12894, 13523, 13846,
+               14164, 14795, 15117, 15637, 15837, 16274, 16709, 16910, 17109,
+               17824, 18181, 18380, 19452, 19496, 19653, 20369])
+
+    :parameters:
+      - x         : np.ndarray [shape=(n,)]
+          input signal to peak picks from
+
+      - pre_max   : int >= 0 [scalar]
+          number of samples before n over which max is computed
+
+      - post_max  : int >= 0 [scalar]
+          number of samples after n over which max is computed
+
+      - pre_avg   : int >= 0 [scalar]
+          number of samples before n over which mean is computed
+
+      - post_avg  : int >= 0 [scalar]
+          number of samples after n over which mean is computed
+
+      - delta     : float >= 0 [scalar]
+          threshold offset for mean
+
+      - wait      : int >= 0 [scalar]
+          number of samples to wait after picking a peak
+
+    :returns:
+      - peaks     : np.ndarray [shape=(n_peaks,), dtype=int]
+          indices of peaks in x
+
+    .. note::
+      A sample n is selected as an peak if the corresponding x[n]
+      fulfills the following three conditions:
+
+        1. ``x[n] == max(x[n - pre_max:n + post_max])``
+        2. ``x[n] >= mean(x[n - pre_avg:n + post_avg]) + delta``
+        3. ``n - previous_n > wait``
+
+      where ``previous_n`` is the last sample picked as a peak (greedily).
+
+    .. note::
+      Implementation based on
+      https://github.com/CPJKU/onset_detection/blob/master/onset_program.py
+
+      - Boeck, Sebastian, Florian Krebs, and Markus Schedl.
+        "Evaluating the Online Capabilities of Onset Detection Methods." ISMIR.
+        2012.
+    '''
+
+    # Get the maximum of the signal over a sliding window
+    max_length = pre_max + post_max + 1
+    max_origin = 0.5 * (pre_max - post_max)
+    mov_max = scipy.ndimage.filters.maximum_filter1d(x, int(max_length),
+                                                     mode='constant',
+                                                     origin=int(max_origin))
+
+    # Get the mean of the signal over a sliding window
+    avg_length = pre_avg + post_avg + 1
+    avg_origin = 0.5 * (pre_avg - post_avg)
+    mov_avg = scipy.ndimage.filters.uniform_filter1d(x, int(avg_length),
+                                                     mode='constant',
+                                                     origin=int(avg_origin))
+
+    # First mask out all entries not equal to the local max
+    detections = x*(x == mov_max)
+
+    # Then mask out all entries less than the thresholded average
+    detections = detections*(detections >= mov_avg + delta)
+
+    # Initialize peaks array, to be filled greedily
+    peaks = []
+
+    # Remove onsets which are close together in time
+    last_onset = -np.inf
+
+    for i in np.nonzero(detections)[0]:
+        # Only report an onset if the "wait" samples was reported
+        if i > last_onset + wait:
+            peaks.append(i)
+            # Save last reported onset
+            last_onset = i
+
+    return np.array(peaks)
 
 
 def find_files(directory, ext=None, recurse=True, case_sensitive=False,
