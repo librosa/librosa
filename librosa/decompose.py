@@ -7,7 +7,7 @@ import scipy
 
 import sklearn.decomposition
 
-import librosa.core
+from . import core
 from . import cache
 from . import util
 
@@ -100,7 +100,7 @@ def decompose(S, n_components=None, transformer=None, sort=False):
     components = transformer.components_.T
 
     if sort:
-        components, idx = librosa.util.axis_sort(components, index=True)
+        components, idx = util.axis_sort(components, index=True)
         activations = activations[idx]
 
     return components, activations
@@ -199,7 +199,7 @@ def hpss(S, kernel_size=31, power=2.0, mask=False):
     """
 
     if np.iscomplexobj(S):
-        S, phase = librosa.core.magphase(S)
+        S, phase = core.magphase(S)
     else:
         phase = 1
 
