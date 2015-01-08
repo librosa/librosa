@@ -5,11 +5,10 @@
 import numpy as np
 import matplotlib.image as img
 import matplotlib.pyplot as plt
-
 import warnings
 
-import librosa.core
 from . import cache
+from . import core
 
 
 # This function wraps xticks or yticks: star-args is okay
@@ -309,8 +308,8 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
 
         # only two star-args here, defined immediately above
         # pylint: disable=star-args
-        values = librosa.core.mel_frequencies(n_mels=data.shape[0], extra=True,
-                                              **m_args)[positions].astype(int)
+        values = core.mel_frequencies(n_mels=data.shape[0], extra=True,
+                                      **m_args)[positions].astype(int)
         plt.yticks(positions, values)
         plt.ylabel('Hz')
 
@@ -323,8 +322,8 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
                               dtype=int)
 
         # Get frequencies
-        values = librosa.core.cqt_frequencies(data.shape[0], fmin=fmin,
-                                              bins_per_octave=bins_per_octave)
+        values = core.cqt_frequencies(data.shape[0], fmin=fmin,
+                                      bins_per_octave=bins_per_octave)
         plt.yticks(positions, values[positions].astype(int))
         plt.ylabel('Hz')
 
@@ -337,10 +336,10 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
                               dtype=int)
 
         # Get frequencies
-        values = librosa.core.cqt_frequencies(data.shape[0], fmin=fmin,
-                                              bins_per_octave=bins_per_octave)
+        values = core.cqt_frequencies(data.shape[0], fmin=fmin,
+                                      bins_per_octave=bins_per_octave)
         values = values[positions]
-        values = librosa.core.midi_to_note(librosa.core.hz_to_midi(values))
+        values = core.hz_to_note(values)
 
         plt.yticks(positions, values)
         plt.ylabel('Note')
@@ -351,7 +350,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
                               max(1, float(data.shape[0]) / 12))
 
         # Labels start at 9 here because chroma starts at A.
-        values = librosa.core.midi_to_note(np.arange(9, 9+12), octave=False)
+        values = core.midi_to_note(np.arange(9, 9+12), octave=False)
         plt.yticks(positions, values)
         plt.ylabel('Pitch class')
 
@@ -367,8 +366,8 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
 
     if x_axis is 'time':
         time_ticks(positions,
-                   librosa.core.frames_to_time(positions, sr=sr,
-                                               hop_length=hop_length),
+                   core.frames_to_time(positions, sr=sr,
+                                       hop_length=hop_length),
                    n_ticks=None, axis='x')
 
         plt.xlabel('Time')
