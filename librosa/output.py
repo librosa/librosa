@@ -8,7 +8,7 @@ import numpy as np
 import scipy
 import scipy.io.wavfile
 
-import librosa.core
+from . import core
 from . import util
 
 
@@ -103,7 +103,7 @@ def frames_csv(path, frames, sr=22050, hop_length=512, **kwargs):
           additional keyword arguments.  See :func:`librosa.output.times_csv`
     """
 
-    times = librosa.frames_to_time(frames, sr=sr, hop_length=hop_length)
+    times = core.frames_to_time(frames, sr=sr, hop_length=hop_length)
 
     times_csv(path, times, **kwargs)
 
