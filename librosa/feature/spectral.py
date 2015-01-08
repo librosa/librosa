@@ -4,10 +4,12 @@
 
 import numpy as np
 
-import librosa.core
 from . import pitch
 from .. import cache
 from .. import util
+from .. import filters
+from ..core import stft, fft_frequencies, logamplitude, zero_crossings
+
 
 # -- Spectral features -- #
 @cache
@@ -67,7 +69,7 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     # If we don't have a spectrogram, build one
     if S is None:
         # By default, use a magnitude spectrogram
-        S = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length))
+        S = np.abs(stft(y, n_fft=n_fft, hop_length=hop_length))
     else:
         # Infer n_fft from spectrogram shape
         n_fft = (S.shape[0] - 1) * 2
@@ -81,7 +83,7 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     # Compute the center frequencies of each bin
     if freq is None:
-        freq = librosa.core.fft_frequencies(sr=sr, n_fft=n_fft)
+        freq = fft_frequencies(sr=sr, n_fft=n_fft)
 
     if freq.ndim == 1:
         freq = freq.reshape((-1, 1))
@@ -154,7 +156,7 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     # If we don't have a spectrogram, build one
     if S is None:
         # By default, use a magnitude spectrogram
-        S = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length))
+        S = np.abs(stft(y, n_fft=n_fft, hop_length=hop_length))
     else:
         # Infer n_fft from spectrogram shape
         n_fft = (S.shape[0] - 1) * 2
@@ -174,7 +176,7 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     # Compute the center frequencies of each bin
     if freq is None:
-        freq = librosa.core.fft_frequencies(sr=sr, n_fft=n_fft)
+        freq = fft_frequencies(sr=sr, n_fft=n_fft)
 
     if freq.ndim == 1:
         deviation = np.abs(np.subtract.outer(freq, np.squeeze(centroid)))
@@ -227,14 +229,14 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     # If we don't have a spectrogram, build one
     if S is None:
         # By default, use a magnitude spectrogram
-        S = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length))
+        S = np.abs(stft(y, n_fft=n_fft, hop_length=hop_length))
     else:
         # Infer n_fft from spectrogram shape
         n_fft = (S.shape[0] - 1) * 2
 
     # Compute the center frequencies of each bin
     if freq is None:
-        freq = librosa.core.fft_frequencies(sr=sr, n_fft=n_fft)
+        freq = fft_frequencies(sr=sr, n_fft=n_fft)
 
     #     TODO:   2014-12-31 12:48:36 by Brian McFee <brian.mcfee@nyu.edu>
     #   shouldn't this be scaled relative to the max frequency?
@@ -320,7 +322,7 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     # If we don't have a spectrogram, build one
     if S is None:
         # By default, use a magnitude spectrogram
-        S = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length))
+        S = np.abs(stft(y, n_fft=n_fft, hop_length=hop_length))
     else:
         # Infer n_fft from spectrogram shape
         n_fft = (S.shape[0] - 1) * 2
@@ -334,7 +336,7 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     # Compute the center frequencies of each bin
     if freq is None:
-        freq = librosa.core.fft_frequencies(sr=sr, n_fft=n_fft)
+        freq = fft_frequencies(sr=sr, n_fft=n_fft)
 
     # Make sure that frequency can be broadcast
     if freq.ndim == 1:
@@ -380,7 +382,7 @@ def rms(y=None, S=None, n_fft=2048, hop_length=512):
     # If we don't have a spectrogram, build one
     if S is None:
         # By default, use a magnitude spectrogram
-        S = librosa.stft(y, n_fft=n_fft, hop_length=hop_length)
+        S = stft(y, n_fft=n_fft, hop_length=hop_length)
 
     return np.sqrt(np.mean(np.abs(S)**2, axis=0, keepdims=True))
 
@@ -437,14 +439,14 @@ def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     # If we don't have a spectrogram, build one
     if S is None:
         # By default, use a magnitude spectrogram
-        S = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length))
+        S = np.abs(stft(y, n_fft=n_fft, hop_length=hop_length))
     else:
         # Infer n_fft from spectrogram shape
         n_fft = (S.shape[0] - 1) * 2
 
     # Compute the center frequencies of each bin
     if freq is None:
-        freq = librosa.core.fft_frequencies(sr=sr, n_fft=n_fft)
+        freq = fft_frequencies(sr=sr, n_fft=n_fft)
 
     # If frequencies are constant over frames, then we only need to fit once
     if freq.ndim == 1:
@@ -508,7 +510,7 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True,
     kwargs['axis'] = 0
     kwargs.setdefault('pad', False)
 
-    crossings = librosa.core.zero_crossings(y_framed, **kwargs)
+    crossings = zero_crossings(y_framed, **kwargs)
 
     return np.mean(crossings, axis=0, keepdims=True)
 
@@ -582,7 +584,7 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096, hop_length=512, **kwargs):
     # If we don't have a spectrogram, build one
     if S is None:
         # By default, use a power spectrogram
-        S = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length))**2
+        S = np.abs(stft(y, n_fft=n_fft, hop_length=hop_length))**2
 
     else:
         n_fft = (S.shape[0] - 1) * 2
@@ -594,7 +596,7 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096, hop_length=512, **kwargs):
                                                  bins_per_octave=bins_per_oct)
 
     # Build the CQ basis
-    cq_basis = librosa.filters.logfrequency(sr, n_fft=n_fft, **kwargs)
+    cq_basis = filters.logfrequency(sr, n_fft=n_fft, **kwargs)
 
     return cq_basis.dot(S)
 
@@ -673,7 +675,7 @@ def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
 
     # Build the power spectrogram if unspecified
     if S is None:
-        S = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length))**2
+        S = np.abs(stft(y, n_fft=n_fft, hop_length=hop_length))**2
     else:
         n_fft = (S.shape[0] - 1) * 2
 
@@ -684,7 +686,7 @@ def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
     if 'A440' not in kwargs:
         kwargs['A440'] = 440.0 * 2.0**(float(tuning) / n_chroma)
 
-    chromafb = librosa.filters.chroma(sr, n_fft, **kwargs)
+    chromafb = filters.chroma(sr, n_fft, **kwargs)
 
     # Compute raw chroma
     raw_chroma = np.dot(chromafb, S)
@@ -755,9 +757,9 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
     """
 
     if S is None:
-        S = librosa.logamplitude(melspectrogram(y=y, sr=sr, **kwargs))
+        S = logamplitude(melspectrogram(y=y, sr=sr, **kwargs))
 
-    return np.dot(librosa.filters.dct(n_mfcc, S.shape[0]), S)
+    return np.dot(filters.dct(n_mfcc, S.shape[0]), S)
 
 
 @cache
@@ -819,11 +821,11 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     # Compute the STFT
     if S is None:
-        S = np.abs(librosa.core.stft(y, n_fft=n_fft, hop_length=hop_length))**2
+        S = np.abs(stft(y, n_fft=n_fft, hop_length=hop_length))**2
     else:
         n_fft = 2 * (S.shape[0] - 1)
 
     # Build a Mel filter
-    mel_basis = librosa.filters.mel(sr, n_fft, **kwargs)
+    mel_basis = filters.mel(sr, n_fft, **kwargs)
 
     return np.dot(mel_basis, S)
