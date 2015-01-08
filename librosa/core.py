@@ -13,6 +13,7 @@ import scipy.signal
 import scipy.ndimage
 
 from . import cache
+from . import util
 
 # Do we have scikits.samplerate?
 try:
@@ -23,11 +24,6 @@ except ImportError:
     warnings.warn('Could not import scikits.samplerate. ' +
                   'Falling back to scipy.signal')
     _HAS_SAMPLERATE = False
-
-# Constrain STFT block sizes to 128 MB
-MAX_MEM_BLOCK = 2**7 * 2**20
-
-SMALL_FLOAT = 1e-20
 
 
 # -- CORE ROUTINES --#
@@ -433,8 +429,8 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
                            order='F')
 
     # how many columns can we fit within MAX_MEM_BLOCK?
-    n_columns = int(MAX_MEM_BLOCK / (stft_matrix.shape[0]
-                                     * stft_matrix.itemsize))
+    n_columns = int(util.MAX_MEM_BLOCK / (stft_matrix.shape[0]
+                                          * stft_matrix.itemsize))
 
     for bl_s in range(0, stft_matrix.shape[1], n_columns):
         bl_t = min(bl_s + n_columns, stft_matrix.shape[1])
@@ -628,7 +624,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
 
     # Compute power normalization. Suppress zeros.
     power = np.abs(stft_matrix)**2
-    power[power < SMALL_FLOAT] = 1.0
+    power[power < util.SMALL_FLOAT] = 1.0
 
     # Pylint does not correctly infer the type here, but it's correct.
     # pylint: disable=maybe-no-member
@@ -2120,4 +2116,3 @@ def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
 # Final imports
 from . import filters
 from . import feature
-from . import util
