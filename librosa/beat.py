@@ -5,9 +5,9 @@
 import numpy as np
 import scipy
 
-import librosa.core
-from . import onset
 from . import cache
+from . import core
+from . import onset
 
 
 @cache
@@ -187,8 +187,7 @@ def estimate_tempo(onset_envelope, sr=22050, hop_length=64, start_bpm=120,
     ac_window = min(maxcol, np.round(ac_size * fft_res))
 
     # Compute the autocorrelation
-    x_corr = librosa.core.autocorrelate(onset_envelope[mincol:maxcol],
-                                        ac_window)
+    x_corr = core.autocorrelate(onset_envelope[mincol:maxcol], ac_window)
 
     # re-weight the autocorrelation by log-normal prior
     bpms = 60.0 * fft_res / (np.arange(1, ac_window+1))
@@ -197,7 +196,7 @@ def estimate_tempo(onset_envelope, sr=22050, hop_length=64, start_bpm=120,
     x_corr = x_corr * np.exp(-0.5 * ((np.log2(bpms / start_bpm)) / std_bpm)**2)
 
     # Get the local maximum of weighted correlation
-    x_peaks = librosa.core.localmax(x_corr)
+    x_peaks = core.localmax(x_corr)
 
     # Zero out all peaks before the first negative
     x_peaks[:np.argmax(x_corr < 0)] = False
@@ -290,7 +289,7 @@ def __beat_tracker(onset_envelope, bpm, fft_res, tightness, trim):
     def get_last_beat(cumscore):
         """Get the last beat from the cumulative score array"""
 
-        maxes = librosa.core.localmax(cumscore)
+        maxes = core.localmax(cumscore)
         med_score = np.median(cumscore[np.argwhere(maxes)])
 
         # The last of these is the last beat (since score generally increases)
