@@ -22,45 +22,46 @@ def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
 
     This can be used for segment or chord annotations.
 
-    :usage:
-        >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> data = librosa.feature.mfcc(y=y, sr=sr, hop_length=512)
-        >>> # Detect segment boundaries
-        >>> boundaries = librosa.segment.agglomerative(data, k=10)
-        >>> # Convert to time
-        >>> boundary_times = librosa.frames_to_time(boundaries, sr=sr,
-                                                    hop_length=512)
-        >>> # Make some fake annotations
-        >>> labels = ['Seg #{:03d}'.format(i) for i in range(len(time_start))]
-        >>> # Save the output
-        >>> librosa.output.annotation('segments.csv', boundary_times,
-                                      annotations=annotations)
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> data = librosa.feature.mfcc(y=y, sr=sr, hop_length=512)
+    >>> # Detect segment boundaries
+    >>> boundaries = librosa.segment.agglomerative(data, k=10)
+    >>> # Convert to time
+    >>> boundary_times = librosa.frames_to_time(boundaries, sr=sr,
+                                                hop_length=512)
+    >>> # Make some fake annotations
+    >>> labels = ['Seg #{:03d}'.format(i) for i in range(len(time_start))]
+    >>> # Save the output
+    >>> librosa.output.annotation('segments.csv', boundary_times,
+                                  annotations=annotations)
 
-    :parameters:
-      - path : str
-          path to save the output CSV file
+    Parameters
+    ----------
+    path : str
+        path to save the output CSV file
 
-      - intervals : np.ndarray [shape=(n, 2)]
-          array of interval start and end-times.
+    intervals : np.ndarray [shape=(n, 2)]
+        array of interval start and end-times.
+        - `intervals[i, 0]` marks the start time of interval `i`
+        - `intervals[i, 1]` marks the endtime of interval `i`
 
-          - ``intervals[i, 0]`` marks the start time of interval ``i``
+    annotations : None or list-like [shape=(n,)]
+        optional list of annotation strings. `annotations[i]` applies
+        to the time range `intervals[i, 0]` to `intervals[i, 1]`
 
-          - ``intervals[i, 1]`` marks the endtime of interval ``i``
+    delimiter : str
+        character to separate fields
 
-      - annotations : None or list-like [shape=(n,)]
-          optional list of annotation strings. ``annotations[i]`` applies
-          to the time range ``intervals[i, 0]`` to ``intervals[i, 1]``
+    fmt : str
+        format-string for rendering time data
 
-      - delimiter : str
-          character to separate fields
-
-      - fmt : str
-          format-string for rendering time data
-
-    :raises:
-      - ValueError
-          if ``annotations`` is not ``None`` and length does
-          not match ``intervals``
+    Raises
+    ------
+    ValueError
+        if `annotations` is not `None` and length does
+        not match `intervals`
     '''
 
     if annotations is not None and len(annotations) != len(intervals):
@@ -80,27 +81,29 @@ def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
 def frames_csv(path, frames, sr=22050, hop_length=512, **kwargs):
     """Convert frames to time and store tbrycehe output in CSV format.
 
-    :usage:
-        >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> tempo, beats = librosa.beat.beat_track(y, sr=sr, hop_length=64)
-        >>> librosa.output.frames_csv('beat_times.csv', beats,
-                                      sr=sr, hop_length=64)
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> tempo, beats = librosa.beat.beat_track(y, sr=sr, hop_length=64)
+    >>> librosa.output.frames_csv('beat_times.csv', beats,
+                                  sr=sr, hop_length=64)
 
-    :parameters:
-      - path : string
-          path to save the output CSV file
+    Parameters
+    ----------
+    path : string
+        path to save the output CSV file
 
-      - frames : list-like of ints
-          list of frame numbers for beat events
+    frames : list-like of ints
+        list of frame numbers for beat events
 
-      - sr : int > 0 [scalar]
-          audio sampling rate
+    sr : int > 0 [scalar]
+        audio sampling rate
 
-      - hop_length : int > 0 [scalar]
-          number of samples between success frames
+    hop_length : int > 0 [scalar]
+        number of samples between success frames
 
-      - *kwargs*
-          additional keyword arguments.  See :func:`librosa.output.times_csv`
+    kwargs : additional keyword arguments
+        See :func:`librosa.output.times_csv`
     """
 
     times = core.frames_to_time(frames, sr=sr, hop_length=hop_length)
@@ -112,15 +115,15 @@ def times_csv(path, times, annotations=None, delimiter=',', fmt='%0.3f'):
     r"""Save time steps as in CSV format.  This can be used to store the output
     of a beat-tracker or segmentation algorihtm.
 
-    If only ``times`` are provided, the file will contain each value
-    of ``times`` on a row::
+    If only `times` are provided, the file will contain each value
+    of `times` on a row::
 
         times[0]\n
         times[1]\n
         times[2]\n
         ...
 
-    If ``annotations`` are also provided, the file will contain
+    If `annotations` are also provided, the file will contain
     delimiter-separated values::
 
         times[0],annotations[0]\n
@@ -129,32 +132,35 @@ def times_csv(path, times, annotations=None, delimiter=',', fmt='%0.3f'):
         ...
 
 
-    :usage:
-        >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> tempo, beats = librosa.beat.beat_track(y, sr=sr, hop_length=64)
-        >>> times = librosa.frames_to_time(beats, sr=sr, hop_length=64)
-        >>> librosa.output.times_csv('beat_times.csv', times)
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> tempo, beats = librosa.beat.beat_track(y, sr=sr, hop_length=64)
+    >>> times = librosa.frames_to_time(beats, sr=sr, hop_length=64)
+    >>> librosa.output.times_csv('beat_times.csv', times)
 
-    :parameters:
-      - path : string
-          path to save the output CSV file
+    Parameters
+    ----------
+    path : string
+        path to save the output CSV file
 
-      - times : list-like of floats
-          list of frame numbers for beat events
+    times : list-like of floats
+        list of frame numbers for beat events
 
-      - annotations : None or list-like
-          optional annotations for each time step
+    annotations : None or list-like
+        optional annotations for each time step
 
-      - delimiter : str
-          character to separate fields
+    delimiter : str
+        character to separate fields
 
-      - fmt : str
-          format-string for rendering time
+    fmt : str
+        format-string for rendering time
 
-    :raises:
-      - ValueError
-          if ``annotations`` is not ``None`` and length does not
-          match ``times``
+    Raises
+    ------
+    ValueError
+        if `annotations` is not `None` and length does not
+        match `times`
     """
 
     if annotations is not None and len(annotations) != len(times):
@@ -174,24 +180,26 @@ def times_csv(path, times, annotations=None, delimiter=',', fmt='%0.3f'):
 def write_wav(path, y, sr, norm=True):
     """Output a time series as a .wav file
 
-    :usage:
-        >>> # Trim a signal to 5 seconds and save it back
-        >>> y, sr = librosa.load(librosa.util.example_audio_file(),
-                                 duration=5.0)
-        >>> librosa.output.write_wav('file_trim_5s.wav', y, sr)
+    Examples
+    --------
+    >>> # Trim a signal to 5 seconds and save it back
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(),
+                             duration=5.0)
+    >>> librosa.output.write_wav('file_trim_5s.wav', y, sr)
 
-    :parameters:
-      - path : str
-          path to save the output wav file
+    Parameters
+    ----------
+    path : str
+        path to save the output wav file
 
-      - y : np.ndarray [shape=(n,) or (2,n)]
-          audio time series (mono or stereo)
+    y : np.ndarray [shape=(n,) or (2,n)]
+        audio time series (mono or stereo)
 
-      - sr : int > 0 [scalar]
-          sampling rate of ``y``
+    sr : int > 0 [scalar]
+        sampling rate of `y`
 
-      - norm : boolean [scalar]
-          enable amplitude normalization
+    norm : boolean [scalar]
+        enable amplitude normalization
     """
 
     # Validate the buffer.  Stereo is okay here.
