@@ -11,55 +11,60 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
     This class acts as a bridge between feature extraction functions
     and scikit-learn pipelines.
 
-    :usage:
-        >>> import librosa
-        >>> import sklearn.pipeline
-        >>>
-        >>> # Build a mel-spectrogram extractor
-        >>> MS = librosa.util.FeatureExtractor(librosa.feature.melspectrogram,
-                                               sr=22050, n_fft=2048,
-                                               n_mels=128, fmax=8000)
-        >>>
-        >>> # And a log-amplitude extractor
-        >>> LA = librosa.util.FeatureExtractor(librosa.logamplitude,
-                                               ref_power=np.max)
-        >>>
-        >>> # Chain them into a pipeline
-        >>> Features = sklearn.pipeline.Pipeline([('MelSpectrogram', MS),
-                                                  ('LogAmplitude', LA)])
-        >>>
-        >>> # Load an audio file
-        >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>>
-        >>> # Apply the transformation to y
-        >>> F = Features.transform([y])
+    Examples
+    --------
+    >>> import librosa
+    >>> import sklearn.pipeline
+    >>>
+    >>> # Build a mel-spectrogram extractor
+    >>> MS = librosa.util.FeatureExtractor(librosa.feature.melspectrogram,
+                                           sr=22050, n_fft=2048,
+                                           n_mels=128, fmax=8000)
+    >>>
+    >>> # And a log-amplitude extractor
+    >>> LA = librosa.util.FeatureExtractor(librosa.logamplitude,
+                                           ref_power=np.max)
+    >>>
+    >>> # Chain them into a pipeline
+    >>> Features = sklearn.pipeline.Pipeline([('MelSpectrogram', MS),
+                                              ('LogAmplitude', LA)])
+    >>>
+    >>> # Load an audio file
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>>
+    >>> # Apply the transformation to y
+    >>> F = Features.transform([y])
 
-    :parameters:
-      - function : function
-          The feature extraction function to wrap.
+    Attributes
+    ----------
+    function : function
+        The feature extraction function to wrap.
 
-          Example: ``librosa.feature.melspectrogram``
+        Example: `librosa.feature.melspectrogram`
 
-      - target : str or None
-          If ``None``, then ``function`` is called with the input
-          data as the first positional argument.
+    target : str or None
+        If `None`, then `function` is called with the input
+        data as the first positional argument.
 
-          If ``str``, then ``function`` is called with the input
-          data as a keyword argument with key ``target``.
+        If `str`, then `function` is called with the input
+        data as a keyword argument with key `target`.
 
-      - iterate : bool
-          If ``True``, then ``function`` is applied iteratively to each
-          item of the input.
+    iterate : bool
+        If `True`, then `function` is applied iteratively to each
+        item of the input.
 
-          If ``False``, then ``function`` is applied to the entire data
-          stream simultaneously.  This is useful for things like aggregation
-          and stacking.
+        If `False`, then `function` is applied to the entire data
+        stream simultaneously.  This is useful for things like aggregation
+        and stacking.
 
-      - *kwargs*
-          Parameters to be passed through to ``function``
+    kwargs : additional keyword arguments
+        Parameters to be passed through to `function`
     """
 
     def __init__(self, function, target=None, iterate=True, **kwargs):
+        '''FeatureExtractor constructor
+
+        '''
         self.function = function
         self.target = target
         self.iterate = iterate
@@ -92,11 +97,11 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
     def fit(self, *args, **kwargs):  # pylint: disable=unused-argument
         """This function does nothing, and is provided for interface compatibility.
 
-        .. note:: Since most ``TransformerMixin`` classes implement some
-            statistical modeling (e.g., PCA), the ``fit()`` method is
+        .. note:: Since most `TransformerMixin` classes implement some
+            statistical modeling (e.g., PCA), the `fit()` method is
             required.
 
-            For the ``FeatureExtraction`` class, all parameters are fixed
+            For the `FeatureExtraction` class, all parameters are fixed
             ahead of time, and no statistical estimation takes place.
         """
 
@@ -106,17 +111,19 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
     def transform(self, X):  # pylint: disable=invalid-name
         """Applies the feature transformation to an array of input data.
 
-        :parameters:
-          - X : iterable
-              Array or list of input data
+        Parameters
+        ----------
+        X : iterable
+            Array or list of input data
 
-        :returns:
-          - X_transform : list
-              In positional argument mode (target=None), then
-              ``X_transform[i] = function(X[i], [feature parameters])``
+        Returns
+        -------
+        X_transform : list
+            In positional argument mode (`target=None`), then
+            `X_transform[i] = function(X[i], [feature parameters])`
 
-              If the ``target`` parameter was given, then
-              ``X_transform[i] = function(target=X[i], [feature parameters])``
+            If the `target` parameter was given, then
+            `X_transform[i] = function(target=X[i], [feature parameters])`
         """
 
         if self.target is not None:
