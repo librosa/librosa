@@ -9,33 +9,39 @@ import re
 def frames_to_samples(frames, hop_length=512, n_fft=None):
     """Converts frame indices to audio sample indices
 
-    :usage:
-        >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> tempo, beats = librosa.beat.beat_track(y, sr=sr, hop_length=64)
-        >>> beat_samples = librosa.frames_to_samples(beats, hop_length=64)
-        >>> beat_samples[:20]
-        array([  1472,  11328,  21824,  32064,  42112,  52160,  62464,  72448,
-                82688,  92608, 103168, 113472, 123584, 133568, 143872, 153856,
-               163904, 174336, 184704, 195200])
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> tempo, beats = librosa.beat.beat_track(y, sr=sr, hop_length=64)
+    >>> beat_samples = librosa.frames_to_samples(beats, hop_length=64)
+    >>> beat_samples[:20]
+    array([  1472,  11328,  21824,  32064,  42112,  52160,  62464,  72448,
+            82688,  92608, 103168, 113472, 123584, 133568, 143872, 153856,
+           163904, 174336, 184704, 195200])
 
-    :parameters:
-      - frames     : np.ndarray [shape=(n,)]
-          vector of frame indices
+    Parameters
+    ----------
+    frames     : np.ndarray [shape=(n,)]
+        vector of frame indices
 
-      - hop_length : int > 0 [scalar]
-          number of samples between successive frames
+    hop_length : int > 0 [scalar]
+        number of samples between successive frames
 
-      - n_fft : None or int > 0 [scalar]
-          Optional: length of the FFT window.
-          If given, time conversion will include an offset of ``n_fft / 2``
-          to counteract windowing effects when using a non-centered STFT.
+    n_fft : None or int > 0 [scalar]
+        Optional: length of the FFT window.
+        If given, time conversion will include an offset of `n_fft / 2`
+        to counteract windowing effects when using a non-centered STFT.
 
-    :returns:
-      - times : np.ndarray [shape=(n,)]
-          time (in seconds) of each given frame number:
-          ``times[i] = frames[i] * hop_length``
+    Returns
+    -------
+    times : np.ndarray [shape=(n,)]
+        time (in seconds) of each given frame number:
+        `times[i] = frames[i] * hop_length`
 
-    .. seealso:: :func:`frames_to_time`
+    See Also
+    --------
+    :func:`frames_to_time` : convert frame indices to time values
+    :func:`samples_to_frames` : convert sample indices to frame indices
     """
 
     offset = 0
@@ -48,34 +54,42 @@ def frames_to_samples(frames, hop_length=512, n_fft=None):
 def samples_to_frames(samples, hop_length=512, n_fft=None):
     """Converts sample indices into STFT frames.
 
-    :usage:
-        >>> # Get the frame numbers for every 256 samples
-        >>> librosa.samples_to_frames(np.arange(0, 22050, 256))
-        array([ 0,  0,  1,  1,  2,  2,  3,  3,  4,  4,  5,  5,  6,  6,  7,  7,
-                8,  8,  9,  9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15,
-               16, 16, 17, 17, 18, 18, 19, 19, 20, 20, 21, 21, 22, 22, 23, 23,
-               24, 24, 25, 25, 26, 26, 27, 27, 28, 28, 29, 29, 30, 30, 31, 31,
-               32, 32, 33, 33, 34, 34, 35, 35, 36, 36, 37, 37, 38, 38, 39, 39,
-               40, 40, 41, 41, 42, 42, 43])
+    Examples
+    --------
+    >>> # Get the frame numbers for every 256 samples
+    >>> librosa.samples_to_frames(np.arange(0, 22050, 256))
+    array([ 0,  0,  1,  1,  2,  2,  3,  3,  4,  4,  5,  5,  6,  6,  7,  7,
+            8,  8,  9,  9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15,
+           16, 16, 17, 17, 18, 18, 19, 19, 20, 20, 21, 21, 22, 22, 23, 23,
+           24, 24, 25, 25, 26, 26, 27, 27, 28, 28, 29, 29, 30, 30, 31, 31,
+           32, 32, 33, 33, 34, 34, 35, 35, 36, 36, 37, 37, 38, 38, 39, 39,
+           40, 40, 41, 41, 42, 42, 43])
 
-    :parameters:
-      - samples : np.ndarray [shape=(n,)]
-          vector of sample indices
+    Parameters
+    ----------
+    samples : np.ndarray [shape=(n,)]
+        vector of sample indices
 
-      - hop_length : int > 0 [scalar]
-          number of samples between successive frames
+    hop_length : int > 0 [scalar]
+        number of samples between successive frames
 
-      - n_fft : None or int > 0 [scalar]
-          Optional: length of the FFT window.
-          If given, time conversion will include an offset of ``- n_fft / 2``
-          to counteract windowing effects in STFT.
+    n_fft : None or int > 0 [scalar]
+        Optional: length of the FFT window.
+        If given, time conversion will include an offset of `- n_fft / 2`
+        to counteract windowing effects in STFT.
 
-          .. note:: This may result in negative frame indices.
+        .. note:: This may result in negative frame indices.
 
-    :returns:
-      - frames : np.ndarray [shape=(n,), dtype=int]
-          Frame numbers corresponding to the given times:
-          ``frames[i] = floor( samples[i] / hop_length )``
+    Returns
+    -------
+    frames : np.ndarray [shape=(n,), dtype=int]
+        Frame numbers corresponding to the given times:
+        `frames[i] = floor( samples[i] / hop_length )`
+
+    See Also
+    --------
+    :func:`samples_to_time` : convert sample indices to time values
+    :func:`frames_to_samples` : convert frame indices to sample indices
     """
 
     offset = 0
@@ -88,34 +102,42 @@ def samples_to_frames(samples, hop_length=512, n_fft=None):
 def frames_to_time(frames, sr=22050, hop_length=512, n_fft=None):
     """Converts frame counts to time (seconds)
 
-    :usage:
-        >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> tempo, beats = librosa.beat.beat_track(y, sr=sr, hop_length=64)
-        >>> beat_times = librosa.frames_to_time(beats, sr=sr, hop_length=64)
-        >>> beat_times[:20]
-        array([ 0.067,  0.514,  0.99 ,  1.454,  1.91 ,  2.366,  2.833,  3.286,
-                3.75 ,  4.2  ,  4.679,  5.146,  5.605,  6.058,  6.525,  6.978,
-                7.433,  7.906,  8.377,  8.853])
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> tempo, beats = librosa.beat.beat_track(y, sr=sr, hop_length=64)
+    >>> beat_times = librosa.frames_to_time(beats, sr=sr, hop_length=64)
+    >>> beat_times[:20]
+    array([ 0.067,  0.514,  0.99 ,  1.454,  1.91 ,  2.366,  2.833,  3.286,
+            3.75 ,  4.2  ,  4.679,  5.146,  5.605,  6.058,  6.525,  6.978,
+            7.433,  7.906,  8.377,  8.853])
 
-    :parameters:
-      - frames     : np.ndarray [shape=(n,)]
-          vector of frame numbers
+    Parameters
+    ----------
+    frames     : np.ndarray [shape=(n,)]
+        vector of frame numbers
 
-      - sr         : int > 0 [scalar]
-          audio sampling rate
+    sr         : int > 0 [scalar]
+        audio sampling rate
 
-      - hop_length : int > 0 [scalar]
-          number of samples between successive frames
+    hop_length : int > 0 [scalar]
+        number of samples between successive frames
 
-      - n_fft : None or int > 0 [scalar]
-          Optional: length of the FFT window.
-          If given, time conversion will include an offset of ``n_fft / 2``
-          to counteract windowing effects when using a non-centered STFT.
+    n_fft : None or int > 0 [scalar]
+        Optional: length of the FFT window.
+        If given, time conversion will include an offset of `n_fft / 2`
+        to counteract windowing effects when using a non-centered STFT.
 
-    :returns:
-      - times : np.ndarray [shape=(n,)]
-          time (in seconds) of each given frame number:
-          ``times[i] = frames[i] * hop_length / sr``
+    Returns
+    -------
+    times : np.ndarray [shape=(n,)]
+        time (in seconds) of each given frame number:
+        `times[i] = frames[i] * hop_length / sr`
+
+    See Also
+    --------
+    :func:`time_to_frames` : convert time values to frame indices
+    :func:`frames_to_samples` : convert frame indices to sample indices
     """
 
     samples = frames_to_samples(frames,
@@ -128,33 +150,41 @@ def frames_to_time(frames, sr=22050, hop_length=512, n_fft=None):
 def time_to_frames(times, sr=22050, hop_length=512, n_fft=None):
     """Converts time stamps into STFT frames.
 
-    :usage:
-        >>> # Get the frame numbers for every 100ms
-        >>> librosa.time_to_frames(np.arange(0, 1, 0.1),
-                                   sr=22050, hop_length=512)
-        array([ 0,  4,  8, 12, 17, 21, 25, 30, 34, 38])
+    Examples
+    --------
+    >>> # Get the frame numbers for every 100ms
+    >>> librosa.time_to_frames(np.arange(0, 1, 0.1),
+                                sr=22050, hop_length=512)
+    array([ 0,  4,  8, 12, 17, 21, 25, 30, 34, 38])
 
-    :parameters:
-      - times : np.ndarray [shape=(n,)]
-          vector of time stamps
+    Parameters
+    ----------
+    times : np.ndarray [shape=(n,)]
+        vector of time stamps
 
-      - sr : int > 0 [scalar]
-          audio sampling rate
+    sr : int > 0 [scalar]
+        audio sampling rate
 
-      - hop_length : int > 0 [scalar]
-          number of samples between successive frames
+    hop_length : int > 0 [scalar]
+        number of samples between successive frames
 
-      - n_fft : None or int > 0 [scalar]
-          Optional: length of the FFT window.
-          If given, time conversion will include an offset of ``- n_fft / 2``
-          to counteract windowing effects in STFT.
+    n_fft : None or int > 0 [scalar]
+        Optional: length of the FFT window.
+        If given, time conversion will include an offset of `- n_fft / 2`
+        to counteract windowing effects in STFT.
 
-          .. note:: This may result in negative frame indices.
+        .. note:: This may result in negative frame indices.
 
-    :returns:
-      - frames : np.ndarray [shape=(n,), dtype=int]
-          Frame numbers corresponding to the given times:
-          ``frames[i] = floor( times[i] * sr / hop_length )``
+    Returns
+    -------
+    frames : np.ndarray [shape=(n,), dtype=int]
+        Frame numbers corresponding to the given times:
+        `frames[i] = floor( times[i] * sr / hop_length )`
+
+    See Also
+    --------
+    :func:`frames_to_time` : convert frame indices to time values
+    :func:`time_to_samples` : convert time values to sample indices
     """
 
     samples = time_to_samples(times, sr=sr)
@@ -165,21 +195,29 @@ def time_to_frames(times, sr=22050, hop_length=512, n_fft=None):
 def time_to_samples(times, sr=22050):
     '''Convert timestamps (in seconds) to sample indices.
 
-    :usage:
-        >>> librosa.time_to_samples(np.arange(0, 1, 0.1), sr=22050)
-        array([    0,  2205,  4410,  6615,  8820, 11025, 13230, 15435, 17640,
-               19845])
+    Examples
+    --------
+    >>> librosa.time_to_samples(np.arange(0, 1, 0.1), sr=22050)
+    array([    0,  2205,  4410,  6615,  8820, 11025, 13230, 15435, 17640,
+           19845])
 
-    :parameters:
-        - times : np.ndarray
-            Array of time values (in seconds)
+    Parameters
+    ----------
+    times : np.ndarray
+        Array of time values (in seconds)
 
-        - sr : int > 0
-            Sampling rate
+    sr : int > 0
+        Sampling rate
 
-    :returns:
-        - samples : np.ndarray [shape=times.shape, dtype=int]
-            Sample indices corresponding to values in ``times``
+    Returns
+    -------
+    samples : np.ndarray [shape=times.shape, dtype=int]
+        Sample indices corresponding to values in `times`
+
+    See Also
+    --------
+    :func:`time_to_frames` : convert time values to frame indices
+    :func:`samples_to_time` : convert sample indices to time values
     '''
 
     return (times * sr).astype(int)
@@ -188,26 +226,34 @@ def time_to_samples(times, sr=22050):
 def samples_to_time(samples, sr=22050):
     '''Convert sample indices to time (in seconds).
 
-    :usage:
-        >>> # Get timestamps corresponding to every 512 samples
-        >>> librosa.samples_to_time(np.arange(0, 22050, 512))
-        array([ 0.   ,  0.023,  0.046,  0.07 ,  0.093,  0.116,  0.139,  0.163,
-                0.186,  0.209,  0.232,  0.255,  0.279,  0.302,  0.325,  0.348,
-                0.372,  0.395,  0.418,  0.441,  0.464,  0.488,  0.511,  0.534,
-                0.557,  0.58 ,  0.604,  0.627,  0.65 ,  0.673,  0.697,  0.72 ,
-                0.743,  0.766,  0.789,  0.813,  0.836,  0.859,  0.882,  0.906,
-                0.929,  0.952,  0.975,  0.998])
+    Examples
+    --------
+    >>> # Get timestamps corresponding to every 512 samples
+    >>> librosa.samples_to_time(np.arange(0, 22050, 512))
+    array([ 0.   ,  0.023,  0.046,  0.07 ,  0.093,  0.116,  0.139,  0.163,
+            0.186,  0.209,  0.232,  0.255,  0.279,  0.302,  0.325,  0.348,
+            0.372,  0.395,  0.418,  0.441,  0.464,  0.488,  0.511,  0.534,
+            0.557,  0.58 ,  0.604,  0.627,  0.65 ,  0.673,  0.697,  0.72 ,
+            0.743,  0.766,  0.789,  0.813,  0.836,  0.859,  0.882,  0.906,
+            0.929,  0.952,  0.975,  0.998])
 
-    :parameters:
-        - samples : np.ndarray
-            Array of sample indices
+    Parameters
+    ----------
+    samples : np.ndarray
+        Array of sample indices
 
-        - sr : int > 0
-            Sampling rate
+    sr : int > 0
+        Sampling rate
 
-    :returns:
-        - times : np.ndarray [shape=samples.shape, dtype=int]
-            Time values corresponding to ``samples`` (in seconds)
+    Returns
+    -------
+    times : np.ndarray [shape=samples.shape, dtype=int]
+        Time values corresponding to `samples` (in seconds)
+
+    See Also
+    --------
+    :func:`samples_to_frames` : convert sample indices to frame indices
+    :func:`time_to_samples` : convert time values to sample indices
     '''
 
     return samples / float(sr)
@@ -216,30 +262,34 @@ def samples_to_time(samples, sr=22050):
 def note_to_hz(note, **kwargs):
     '''Convert one or more note names to frequency (Hz)
 
-    :usage:
-        >>> # Get the frequency of a note
-        >>> librosa.note_to_hz('C')
-        array([ 8.176])
-        >>> # Or multiple notes
-        >>> librosa.note_to_hz(['A3', 'A4', 'A5'])
-        array([ 110.,  220.,  440.])
-        >>> # Or notes with tuning deviations
-        >>> librosa.note_to_hz('C2-32', round_midi=False)
-        array([ 32.104])
+    Examples
+    --------
+    >>> # Get the frequency of a note
+    >>> librosa.note_to_hz('C')
+    array([ 8.176])
+    >>> # Or multiple notes
+    >>> librosa.note_to_hz(['A3', 'A4', 'A5'])
+    array([ 110.,  220.,  440.])
+    >>> # Or notes with tuning deviations
+    >>> librosa.note_to_hz('C2-32', round_midi=False)
+    array([ 32.104])
 
-    :parameters:
-        - note : str or iterable of str
-            One or more note names to convert
+    Parameters
+    ----------
+    note : str or iterable of str
+        One or more note names to convert
 
-        - kwargs : keyword arguments
-            Additional parameters to :func:`note_to_midi`
+    kwargs : additional keyword arguments
+        Additional parameters to :func:`note_to_midi`
 
-    :returns:
-        - frequencies : np.ndarray [shape=(len(note),)]
-            Array of frequencies (in Hz) corresponding to ``note``
+    Returns
+    -------
+    frequencies : np.ndarray [shape=(len(note),)]
+        Array of frequencies (in Hz) corresponding to `note`
 
-    .. seealso:: :func:`midi_to_hz`, :func:`note_to_midi`, :func:`note_to_hz`
-
+    See Also
+    --------
+    :func:`midi_to_hz`, :func:`note_to_midi`, :func:`hz_to_note`
     '''
     return midi_to_hz(note_to_midi(note, **kwargs))
 
@@ -253,32 +303,40 @@ def note_to_midi(note, round_midi=True):
 
     Sharps are indicated with `#`, flats may be indicated with `!` or `b`.
 
-    :usage:
-        >>> librosa.note_to_midi('C')
-        0
-        >>> librosa.note_to_midi('C#3')
-        37
-        >>> librosa.note_to_midi('f4')
-        53
-        >>> librosa.note_to_midi('Bb-1')
-        -2
-        >>> librosa.note_to_midi('A!8')
-        104
-        >>> # Lists of notes also work
-        >>> librosa.note_to_midi(['C', 'E', 'G'])
-        array([0, 4, 7])
+    Examples
+    --------
+    >>> librosa.note_to_midi('C')
+    0
+    >>> librosa.note_to_midi('C#3')
+    37
+    >>> librosa.note_to_midi('f4')
+    53
+    >>> librosa.note_to_midi('Bb-1')
+    -2
+    >>> librosa.note_to_midi('A!8')
+    104
+    >>> # Lists of notes also work
+    >>> librosa.note_to_midi(['C', 'E', 'G'])
+    array([0, 4, 7])
 
 
-    :parameters:
-      - note : str or iterable of str
-          One or more note names.
+    Parameters
+    ----------
+    note : str or iterable of str
+        One or more note names.
 
-      - round_midi : bool
-          If True, allow for fractional midi notes
-          Otherwise, round cent deviations to the nearest note
-    :returns:
-      - midi : float or np.array
-          Midi note numbers corresponding to inputs.
+    round_midi : bool
+        - If `True`, allow for fractional midi notes
+        - Otherwise, round cent deviations to the nearest note
+
+    Returns
+    -------
+    midi : float or np.array
+        Midi note numbers corresponding to inputs.
+
+    See Also
+    --------
+    :func:`midi_to_note`, :func:`note_to_hz`
     '''
 
     if not isinstance(note, str):
@@ -321,35 +379,42 @@ def midi_to_note(midi, octave=True, cents=False):
 
     Notes will be of the format 'C0', 'C#0', 'D0', ...
 
-    :usage:
-        >>> librosa.midi_to_note(0)
-        'C0'
-        >>> librosa.midi_to_note(37)
-        'C#3'
-        >>> librosa.midi_to_note(-2)
-        'A#-1'
-        >>> librosa.midi_to_note(104.7)
-        'A8'
-        >>> librosa.midi_to_note(104.7, cents=True)
-        'A8-30'
-        >>> librosa.midi_to_note(range(12))
-        ['C0', 'C#0', 'D0', 'D#0', 'E0', 'F0',
-         'F#0', 'G0', 'G#0', 'A0', 'A#0', 'B0']
+    Examples
+    --------
+    >>> librosa.midi_to_note(0)
+    'C0'
+    >>> librosa.midi_to_note(37)
+    'C#3'
+    >>> librosa.midi_to_note(-2)
+    'A#-1'
+    >>> librosa.midi_to_note(104.7)
+    'A8'
+    >>> librosa.midi_to_note(104.7, cents=True)
+    'A8-30'
+    >>> librosa.midi_to_note(range(12))
+    ['C0', 'C#0', 'D0', 'D#0', 'E0', 'F0',
+     'F#0', 'G0', 'G#0', 'A0', 'A#0', 'B0']
 
-    :parameters:
-      - midi : int or iterable of int
-          Midi numbers to convert.
+    Parameters
+    ----------
+    midi : int or iterable of int
+        Midi numbers to convert.
 
-      - octave: bool
-          If True, include the octave number
+    octave: bool
+        If True, include the octave number
 
-      - cents: bool
-          If true, cent markers will be appended for fractional notes.
-          Eg, ``midi_to_note(69.3, cents=True)`` == ``A5+03``
+    cents: bool
+        If true, cent markers will be appended for fractional notes.
+        Eg, `midi_to_note(69.3, cents=True)` == `A5+03`
 
-    :returns:
-      - notes : str or iterable of str
-          Strings describing each midi note.
+    Returns
+    -------
+    notes : str or iterable of str
+        Strings describing each midi note.
+
+    See Also
+    --------
+    :func:`midi_to_hz`, :func:`note_to_midi`, :func:`hz_to_note`
     '''
 
     if not np.isscalar(midi):
@@ -375,21 +440,28 @@ def midi_to_note(midi, octave=True, cents=False):
 def midi_to_hz(notes):
     """Get the frequency (Hz) of MIDI note(s)
 
-    :usage:
-        >>> librosa.midi_to_hz(36)
-        array([ 65.406])
+    Examples
+    --------
+    >>> librosa.midi_to_hz(36)
+    array([ 65.406])
 
-        >>> librosa.midi_to_hz(np.arange(36, 48))
-        array([  65.406,   69.296,   73.416,   77.782,   82.407,   87.307,
-                 92.499,   97.999,  103.826,  110.   ,  116.541,  123.471])
+    >>> librosa.midi_to_hz(np.arange(36, 48))
+    array([  65.406,   69.296,   73.416,   77.782,   82.407,   87.307,
+             92.499,   97.999,  103.826,  110.   ,  116.541,  123.471])
 
-    :parameters:
-      - notes       : int or np.ndarray [shape=(n,), dtype=int]
-          midi number(s) of the note(s)
+    Parameters
+    ----------
+    notes       : int or np.ndarray [shape=(n,), dtype=int]
+        midi number(s) of the note(s)
 
-    :returns:
-      - frequency   : np.ndarray [shape=(n,), dtype=float]
-          frequency (frequencies) of ``notes`` in Hz
+    Returns
+    -------
+    frequency   : np.ndarray [shape=(n,), dtype=float]
+        frequency (frequencies) of `notes` in Hz
+
+    See Also
+    --------
+    :func:`hz_to_midi`, :func:`note_to_hz`
     """
 
     notes = np.asarray([notes]).flatten()
@@ -399,19 +471,26 @@ def midi_to_hz(notes):
 def hz_to_midi(frequencies):
     """Get the closest MIDI note number(s) for given frequencies
 
-    :usage:
-        >>> librosa.hz_to_midi(60)
-        array([ 34.506])
-        >>> librosa.hz_to_midi([110, 220, 440])
-        array([ 45.,  57.,  69.])
+    Examples
+    --------
+    >>> librosa.hz_to_midi(60)
+    array([ 34.506])
+    >>> librosa.hz_to_midi([110, 220, 440])
+    array([ 45.,  57.,  69.])
 
-    :parameters:
-      - frequencies   : float or np.ndarray [shape=(n,), dtype=float]
-          frequencies to convert
+    Parameters
+    ----------
+    frequencies   : float or np.ndarray [shape=(n,), dtype=float]
+        frequencies to convert
 
-    :returns:
-      - note_nums     : np.ndarray [shape=(n,), dtype=int]
-          closest MIDI notes to ``frequencies``
+    Returns
+    -------
+    note_nums     : np.ndarray [shape=(n,), dtype=int]
+        closest MIDI notes to `frequencies`
+
+    See Also
+    --------
+    :func:`midi_to_hz`, :func:`note_to_midi`, :func:`hz_to_note`
     """
 
     frequencies = np.asarray([frequencies]).flatten()
@@ -421,31 +500,36 @@ def hz_to_midi(frequencies):
 def hz_to_note(frequencies, **kwargs):
     '''Convert one or more frequencies (in Hz) to the nearest note names.
 
-    :usage:
-        >>> # Get a single note name for a frequency
-        >>> librosa.hz_to_note(440.0)
-        ['A5']
-        >>> # Get multiple notes with cent deviation
-        >>> librosa.hz_to_note([32, 64], cents=True)
-        ['C2-38', 'C3-38']
-        >>> # Get multiple notes, but suppress octave labels
-        >>> librosa.hz_to_note(440.0 * (2.0 ** np.linspace(0, 1, 12)),
-                               octave=False)
-        ['A', 'A#', 'B', 'C', 'C#', 'D', 'E', 'F', 'F#', 'G', 'G#', 'A']
+    Examples
+    --------
+    >>> # Get a single note name for a frequency
+    >>> librosa.hz_to_note(440.0)
+    ['A5']
+    >>> # Get multiple notes with cent deviation
+    >>> librosa.hz_to_note([32, 64], cents=True)
+    ['C2-38', 'C3-38']
+    >>> # Get multiple notes, but suppress octave labels
+    >>> librosa.hz_to_note(440.0 * (2.0 ** np.linspace(0, 1, 12)),
+                           octave=False)
+    ['A', 'A#', 'B', 'C', 'C#', 'D', 'E', 'F', 'F#', 'G', 'G#', 'A']
 
-    :parameters:
-        - frequencies : float or iterable of float
-            Input frequencies, specified in Hz
+    Parameters
+    ----------
+    frequencies : float or iterable of float
+        Input frequencies, specified in Hz
 
-        - kwargs : additional keyword arguments
-            Arguments passed through to :func:`midi_to_note`
+    kwargs : additional keyword arguments
+        Arguments passed through to :func:`midi_to_note`
 
-    :returns:
-        - notes : list of str
-            ``notes[i]`` is the closest note name to ``frequency[i]``
-            (or ``frequency`` if the input is scalar)
+    Returns
+    -------
+    notes : list of str
+        `notes[i]` is the closest note name to `frequency[i]`
+        (or `frequency` if the input is scalar)
 
-    .. seealso:: :func:`hz_to_midi`, :func:`midi_to_note`, :func:`note_to_hz`
+    See Also
+    --------
+    :func:`hz_to_midi`, :func:`midi_to_note`, :func:`note_to_hz`
     '''
     return midi_to_note(hz_to_midi(frequencies), **kwargs)
 
@@ -453,21 +537,28 @@ def hz_to_note(frequencies, **kwargs):
 def hz_to_mel(frequencies, htk=False):
     """Convert Hz to Mels
 
-    :usage:
-        >>> librosa.hz_to_mel(60)
-        array([0.9])
-        >>> librosa.hz_to_mel([110, 220, 440])
-        array([ 1.65,  3.3 ,  6.6 ])
+    Examples
+    --------
+    >>> librosa.hz_to_mel(60)
+    array([0.9])
+    >>> librosa.hz_to_mel([110, 220, 440])
+    array([ 1.65,  3.3 ,  6.6 ])
 
-    :parameters:
-      - frequencies   : np.ndarray [shape=(n,)] , float
-          scalar or array of frequencies
-      - htk           : bool
-          use HTK formula instead of Slaney
+    Parameters
+    ----------
+    frequencies   : np.ndarray [shape=(n,)] , float
+        scalar or array of frequencies
+    htk           : bool
+        use HTK formula instead of Slaney
 
-    :returns:
-      - mels        : np.ndarray [shape=(n,)]
-          input frequencies in Mels
+    Returns
+    -------
+    mels        : np.ndarray [shape=(n,)]
+        input frequencies in Mels
+
+    See Also
+    --------
+    :func:`mel_to_hz`
     """
 
     frequencies = np.asarray([frequencies]).flatten()
@@ -501,22 +592,29 @@ def hz_to_mel(frequencies, htk=False):
 def mel_to_hz(mels, htk=False):
     """Convert mel bin numbers to frequencies
 
-    :usage:
-        >>> librosa.mel_to_hz(3)
-        array([ 200.])
+    Examples
+    --------
+    >>> librosa.mel_to_hz(3)
+    array([ 200.])
 
-        >>> librosa.mel_to_hz([1,2,3,4,5])
-        array([  66.667,  133.333,  200.   ,  266.667,  333.333])
+    >>> librosa.mel_to_hz([1,2,3,4,5])
+    array([  66.667,  133.333,  200.   ,  266.667,  333.333])
 
-    :parameters:
-      - mels          : np.ndarray [shape=(n,)], float
-          mel bins to convert
-      - htk           : bool
-          use HTK formula instead of Slaney
+    Parameters
+    ----------
+    mels          : np.ndarray [shape=(n,)], float
+        mel bins to convert
+    htk           : bool
+        use HTK formula instead of Slaney
 
-    :returns:
-      - frequencies   : np.ndarray [shape=(n,)]
-          input mels in Hz
+    Returns
+    -------
+    frequencies   : np.ndarray [shape=(n,)]
+        input mels in Hz
+
+    See Also
+    --------
+    :func:`hz_to_mel`
     """
 
     mels = np.asarray([mels], dtype=float).flatten()
@@ -543,22 +641,28 @@ def mel_to_hz(mels, htk=False):
 def hz_to_octs(frequencies, A440=440.0):
     """Convert frequencies (Hz) to (fractional) octave numbers.
 
-    :usage:
-        >>> librosa.hz_to_octs(440.0)
-        array([ 4.])
-        >>> librosa.hz_to_octs([32, 64, 128, 256])
-        array([ 0.219,  1.219,  2.219,  3.219])
+    Examples
+    --------
+    >>> librosa.hz_to_octs(440.0)
+    array([ 4.])
+    >>> librosa.hz_to_octs([32, 64, 128, 256])
+    array([ 0.219,  1.219,  2.219,  3.219])
 
-    :parameters:
-      - frequencies   : np.ndarray [shape=(n,)] or float
-          scalar or vector of frequencies
-      - A440          : float
-          frequency of A440
+    Parameters
+    ----------
+    frequencies   : np.ndarray [shape=(n,)] or float
+        scalar or vector of frequencies
+    A440          : float
+        frequency of A440 (in Hz)
 
-    :returns:
-      - octaves       : np.ndarray [shape=(n,)]
-          octave number for each frequency
+    Returns
+    -------
+    octaves       : np.ndarray [shape=(n,)]
+        octave number for each frequency
 
+    See Also
+    --------
+    :func:`octs_to_hz`
     """
     frequencies = np.asarray([frequencies]).flatten()
     return np.log2(frequencies / (float(A440) / 16))
@@ -569,44 +673,54 @@ def octs_to_hz(octs, A440=440.0):
 
     Octaves are counted relative to A.
 
-    :usage:
-        >>> librosa.octs_to_hz(1)
-        array([ 55.])
-        >>> librosa.octs_to_hz([-2, -1, 0, 1, 2])
-        array([   6.875,   13.75 ,   27.5  ,   55.   ,  110.   ])
+    Examples
+    --------
+    >>> librosa.octs_to_hz(1)
+    array([ 55.])
+    >>> librosa.octs_to_hz([-2, -1, 0, 1, 2])
+    array([   6.875,   13.75 ,   27.5  ,   55.   ,  110.   ])
 
-    :parameters:
-      - octaves       : np.ndarray [shape=(n,)] or float
-          octave number for each frequency
-      - A440          : float
-          frequency of A440
+    Parameters
+    ----------
+    octaves       : np.ndarray [shape=(n,)] or float
+        octave number for each frequency
+    A440          : float
+        frequency of A440
 
-    :returns:
-      - frequencies   : np.ndarray [shape=(n,)]
-          scalar or vector of frequencies
+    Returns
+    -------
+    frequencies   : np.ndarray [shape=(n,)]
+        scalar or vector of frequencies
+
+    See Also
+    --------
+    :func:`hz_to_octs`
     """
     octs = np.asarray([octs]).flatten()
     return (float(A440) / 16)*(2.0**octs)
 
 
 def fft_frequencies(sr=22050, n_fft=2048):
-    '''Alternative implementation of ``np.fft.fftfreqs``
+    '''Alternative implementation of `np.fft.fftfreqs`
 
-    :usage:
-        >>> librosa.fft_frequencies(sr=22050, n_fft=16)
-        array([     0.   ,   1378.125,   2756.25 ,   4134.375,   5512.5  ,
-                 6890.625,   8268.75 ,   9646.875,  11025.   ])
+    Examples
+    --------
+    >>> librosa.fft_frequencies(sr=22050, n_fft=16)
+    array([     0.   ,   1378.125,   2756.25 ,   4134.375,   5512.5  ,
+             6890.625,   8268.75 ,   9646.875,  11025.   ])
 
-    :parameters:
-      - sr : int > 0 [scalar]
-          Audio sampling rate
+    Parameters
+    ----------
+    sr : int > 0 [scalar]
+        Audio sampling rate
 
-      - n_fft : int > 0 [scalar]
-          FFT window size
+    n_fft : int > 0 [scalar]
+        FFT window size
 
-    :returns:
-      - freqs : np.ndarray [shape=(1 + n_fft/2,)]
-          Frequencies (0, sr/n_fft, 2*sr/n_fft, ..., sr/2)
+    Returns
+    -------
+    freqs : np.ndarray [shape=(1 + n_fft/2,)]
+        Frequencies `(0, sr/n_fft, 2*sr/n_fft, ..., sr/2)`
     '''
 
     return np.linspace(0,
@@ -618,30 +732,33 @@ def fft_frequencies(sr=22050, n_fft=2048):
 def cqt_frequencies(n_bins, fmin, bins_per_octave=12, tuning=0.0):
     """Compute the center frequencies of Constant-Q bins.
 
-    :usage:
-        >>> # Get the CQT frequencies for 24 notes, starting at C2
-        >>> librosa.cqt_frequencies(24, fmin=librosa.note_to_hz('C2'))
-        array([  32.703,   34.648,   36.708,   38.891,   41.203,   43.654,
-                 46.249,   48.999,   51.913,   55.   ,   58.27 ,   61.735,
-                 65.406,   69.296,   73.416,   77.782,   82.407,   87.307,
-                 92.499,   97.999,  103.826,  110.   ,  116.541,  123.471])
+    Examples
+    --------
+    >>> # Get the CQT frequencies for 24 notes, starting at C2
+    >>> librosa.cqt_frequencies(24, fmin=librosa.note_to_hz('C2'))
+    array([  32.703,   34.648,   36.708,   38.891,   41.203,   43.654,
+             46.249,   48.999,   51.913,   55.   ,   58.27 ,   61.735,
+             65.406,   69.296,   73.416,   77.782,   82.407,   87.307,
+             92.499,   97.999,  103.826,  110.   ,  116.541,  123.471])
 
-    :parameters:
-      - n_bins  : int > 0 [scalar]
-          Number of constant-Q bins
+    Parameters
+    ----------
+    n_bins  : int > 0 [scalar]
+        Number of constant-Q bins
 
-      - fmin    : float > 0 [scalar]
-          Minimum frequency
+    fmin    : float > 0 [scalar]
+        Minimum frequency
 
-      - bins_per_octave : int > 0 [scalar]
-          Number of bins per octave
+    bins_per_octave : int > 0 [scalar]
+        Number of bins per octave
 
-      - tuning : float in ``[-0.5, +0.5)``
-          Deviation from A440 tuning in fractional bins (cents)
+    tuning : float in `[-0.5, +0.5)`
+        Deviation from A440 tuning in fractional bins (cents)
 
-    :returns:
-      - frequencies : np.ndarray [shape=(n_bins,)]
-          Center frequency for each CQT bin
+    Returns
+    -------
+    frequencies : np.ndarray [shape=(n_bins,)]
+        Center frequency for each CQT bin
     """
 
     correction = 2.0**(float(tuning) / bins_per_octave)
@@ -654,36 +771,39 @@ def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False,
                     extra=False):
     """Compute the center frequencies of mel bands
 
-    :usage:
-        >>> librosa.mel_frequencies(n_mels=40)
-        array([    0.   ,    81.155,   162.311,   243.466,   324.622,
-                 405.777,   486.933,   568.088,   649.244,   730.399,
-                 811.554,   892.71 ,   973.865,  1058.382,  1150.775,
-                1251.232,  1360.46 ,  1479.222,  1608.352,  1748.754,
-                1901.413,  2067.399,  2247.874,  2444.104,  2657.464,
-                2889.45 ,  3141.687,  3415.943,  3714.14 ,  4038.369,
-                4390.902,  4774.209,  5190.978,  5644.128,  6136.837,
-                6672.557,  7255.043,  7888.378,  8577.001,  9325.737])
+    Examples
+    --------
+    >>> librosa.mel_frequencies(n_mels=40)
+    array([    0.   ,    81.155,   162.311,   243.466,   324.622,
+             405.777,   486.933,   568.088,   649.244,   730.399,
+             811.554,   892.71 ,   973.865,  1058.382,  1150.775,
+            1251.232,  1360.46 ,  1479.222,  1608.352,  1748.754,
+            1901.413,  2067.399,  2247.874,  2444.104,  2657.464,
+            2889.45 ,  3141.687,  3415.943,  3714.14 ,  4038.369,
+            4390.902,  4774.209,  5190.978,  5644.128,  6136.837,
+            6672.557,  7255.043,  7888.378,  8577.001,  9325.737])
 
-    :parameters:
-      - n_mels    : int > 0 [scalar]
-          number of Mel bins
+    Parameters
+    ----------
+    n_mels    : int > 0 [scalar]
+        number of Mel bins
 
-      - fmin      : float >= 0 [scalar]
-          minimum frequency (Hz)
+    fmin      : float >= 0 [scalar]
+        minimum frequency (Hz)
 
-      - fmax      : float >= 0 [scalar]
-          maximum frequency (Hz)
+    fmax      : float >= 0 [scalar]
+        maximum frequency (Hz)
 
-      - htk       : bool
-          use HTK formula instead of Slaney
+    htk       : bool
+        use HTK formula instead of Slaney
 
-      - extra     : bool
-          include extra frequencies necessary for building Mel filters
+    extra     : bool
+        include extra frequencies necessary for building Mel filters
 
-    :returns:
-      - bin_frequencies : ndarray [shape=(n_mels,)]
-          vector of Mel frequencies
+    Returns
+    -------
+    bin_frequencies : ndarray [shape=(n_mels,)]
+        vector of Mel frequencies
     """
 
     # 'Center freqs' of mel bands - uniformly spaced between limits
@@ -702,25 +822,32 @@ def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False,
 def A_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
     '''Compute the A-weighting of a set of frequencies.
 
-    :usage:
-        >>> # Get the A-weighting for 20 Mel frequencies
-        >>> freqs = librosa.mel_frequencies(20)
-        >>> librosa.A_weighting(freqs)
-        array([-80.   , -13.355,  -6.594,  -3.574,  -1.877,  -0.835,  -0.16 ,
-                 0.316,   0.684,   0.953,   1.135,   1.239,   1.271,   1.232,
-                 1.116,   0.916,   0.615,   0.193,  -0.374,  -1.113])
+    Examples
+    --------
+    >>> # Get the A-weighting for 20 Mel frequencies
+    >>> freqs = librosa.mel_frequencies(20)
+    >>> librosa.A_weighting(freqs)
+    array([-80.   , -13.355,  -6.594,  -3.574,  -1.877,  -0.835,  -0.16 ,
+             0.316,   0.684,   0.953,   1.135,   1.239,   1.271,   1.232,
+             1.116,   0.916,   0.615,   0.193,  -0.374,  -1.113])
 
-    :parameters:
-      - frequencies : scalar or np.ndarray [shape=(n,)]
-          One or more frequencies (in Hz)
+    Parameters
+    ----------
+    frequencies : scalar or np.ndarray [shape=(n,)]
+        One or more frequencies (in Hz)
 
-      - min_db : float [scalar] or None
-          Clip weights below this threshold.
-          If ``None``, no clipping is performed.
+    min_db : float [scalar] or None
+        Clip weights below this threshold.
+        If `None`, no clipping is performed.
 
-    :returns:
-      - A_weighting : scalar or np.ndarray [shape=(n,)]
-          ``A_weighting[i]`` is the A-weighting of ``frequencies[i]``
+    Returns
+    -------
+    A_weighting : scalar or np.ndarray [shape=(n,)]
+        `A_weighting[i]` is the A-weighting of `frequencies[i]`
+
+    See Also
+    --------
+    :func:`perceptual_weighting`
     '''
 
     # Vectorize to make our lives easier

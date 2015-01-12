@@ -220,7 +220,7 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest', fix=True,
         adjust the length of the resampled signal to be of size exactly
         `ceil(target_sr * len(y) / orig_sr)`
 
-    *kwargs*
+    kwargs : additional keyword arguments
         If `fix==True`, additional keyword arguments to pass to
         :func:`librosa.util.fix_length()`.
 
@@ -232,7 +232,7 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest', fix=True,
     .. note::
         If `scikits.samplerate` is installed, :func:`librosa.core.resample`
         will use `res_type`.
-        Otherwise, it will fall back on `scipy.signal.resample`
+        Otherwise, librosa will fall back on `scipy.signal.resample`
     """
 
     # First, validate the audio buffer
@@ -297,8 +297,8 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         number of audio samples between columns of `S`
 
     center  : boolean
-    If `True`, `S[:, t]` is centered at `y[t * hop_length]`.
-    If `False`, then `S[f, t]` *begins* at `y[t * hop_length]`
+        - If `True`, `S[:, t]` is centered at `y[t * hop_length]`
+        - If `False`, then `S[:, t]` begins at `y[t * hop_length]`
 
     Returns
     -------
