@@ -31,7 +31,7 @@ sys.path.insert(0, os.path.abspath('../librosa'))
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode', 'numpydoc']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -47,7 +47,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'librosa'
-copyright = u'2014, Dawen Liang, Brian McFee, Matt McVicar, Colin Raffel'
+copyright = u'2015, librosa development team'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -196,7 +196,7 @@ latex_elements = {
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('index', 'librosa.tex', u'librosa Documentation',
-   u'Dawen Liang, Brian McFee, Matt McVicar, Colin Raffel', 'manual'),
+   u'The librosa development team', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -226,7 +226,7 @@ latex_documents = [
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('index', 'librosa', u'librosa Documentation',
-     [u'Dawen Liang, Brian McFee, Matt McVicar, Colin Raffel'], 1)
+     [u'The librosa development team'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -240,7 +240,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   ('index', 'librosa', u'librosa Documentation',
-   u'Dawen Liang, Brian McFee, Matt McVicar, Colin Raffel', 'librosa', 'One line description of project.',
+   u'The librosa development team', 'librosa', 'One line description of project.',
    'Miscellaneous'),
 ]
 
