@@ -88,6 +88,10 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
     ------
     ValueError
         If `window` is supplied as a vector of length `!= n_fft`.
+
+    See Also
+    --------
+    :func:`istft`, :func:`ifgram`
     """
 
     # By default, use the entire frame
@@ -202,6 +206,10 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
     ------
     ValueError
         If `window` is supplied as a vector of length `!= n_fft`
+
+    See Also
+    --------
+    :func:`stft`
     """
 
     n_fft = 2 * (stft_matrix.shape[0] - 1)
@@ -316,6 +324,10 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
 
     D : np.ndarray [shape=(1 + n_fft/2, t), dtype=complex]
         Short-time Fourier transform
+
+    See Also
+    --------
+    :func:`stft`
     '''
 
     if win_length is None:
@@ -750,6 +762,10 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     -------
     log_S   : np.ndarray [shape=(d, t)]
         `log_S ~= 10 * log10(S) - 10 * log10(abs(ref_power))`
+
+    See Also
+    --------
+    :func:`perceptual_weighting`
     """
 
     magnitude = np.abs(S)
@@ -804,6 +820,10 @@ def perceptual_weighting(S, frequencies, **kwargs):
     -------
     S_p : np.ndarray [shape=(d, t)]
         perceptually weighted version of `S`
+
+    See Also
+    --------
+    :func:`logamplitude`
     '''
 
     offset = time_frequency.A_weighting(frequencies).reshape((-1, 1))
