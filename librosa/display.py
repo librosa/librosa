@@ -15,50 +15,54 @@ from . import core
 def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
     '''Plot time-formatted axis ticks.
 
-    :usage:
-        >>> # Tick at pre-computed beat times
-        >>> librosa.display.specshow(S)
-        >>> librosa.display.time_ticks(beat_times)
+    Examples
+    --------
+    >>> # Tick at pre-computed beat times
+    >>> librosa.display.specshow(S)
+    >>> librosa.display.time_ticks(beat_times)
 
-        >>> # Set the locations of the time stamps
-        >>> librosa.display.time_ticks(locations, timestamps)
+    >>> # Set the locations of the time stamps
+    >>> librosa.display.time_ticks(locations, timestamps)
 
-        >>> # Format in seconds
-        >>> librosa.display.time_ticks(beat_times, fmt='s')
+    >>> # Format in seconds
+    >>> librosa.display.time_ticks(beat_times, fmt='s')
 
-        >>> # Tick along the y axis
-        >>> librosa.display.time_ticks(beat_times, axis='y')
+    >>> # Tick along the y axis
+    >>> librosa.display.time_ticks(beat_times, axis='y')
 
-    :parameters:
-       - locations : list or np.ndarray
-           Time-stamps for tick marks
+    Parameters
+    ----------
+    locations : list or np.ndarray
+        Time-stamps for tick marks
 
-       - n_ticks : int > 0 or None
-           Show this number of ticks (evenly spaced).
-           If none, all ticks are displayed.
-           Default: 5
+    n_ticks : int > 0 or None
+        Show this number of ticks (evenly spaced).
 
-       - axis : 'x' or 'y'
-           Which axis should the ticks be plotted on?
-           Default: 'x'
+        If none, all ticks are displayed.
 
-       - fmt : None or {'ms', 's', 'm', 'h'}
-           ms: milliseconds   (eg, 241ms)
-           s: seconds         (eg, 1.43s)
-           m: minutes         (eg, 1:02)
-           h: hours           (eg, 1:02:03)
+        Default: 5
 
-           If none, formatted is automatically selected by the
-           range of the times data.
+    axis : 'x' or 'y'
+        Which axis should the ticks be plotted on?
+        Default: 'x'
 
-           Default: None
+    fmt : None or {'ms', 's', 'm', 'h'}
+        - 'ms': milliseconds   (eg, 241ms)
+        - 's': seconds         (eg, 1.43s)
+        - 'm': minutes         (eg, 1:02)
+        - 'h': hours           (eg, 1:02:03)
 
-       - *kwargs*
-          Additional keyword arguments.
-          See ``matplotlib.pyplot.xticks`` or ``yticks`` for details.
+        If none, formatted is automatically selected by the
+        range of the times data.
 
-    :returns:
-       - See ``matplotlib.pyplot.xticks`` or ``yticks`` for details.
+        Default: None
+
+    kwargs : additional keyword arguments.
+        See `matplotlib.pyplot.xticks` or `yticks` for details.
+
+    Returns
+    -------
+    See `matplotlib.pyplot.xticks` or `yticks` for details.
     '''
 
     n_ticks = kwargs.pop('n_ticks', 5)
@@ -122,26 +126,29 @@ def cmap(data):
 
     Otherwise, use a sequential map.
 
-    PuOr and OrRd are chosen to optimize visibility for color-blind people.
+    `PuOr` and `OrRd` are chosen to optimize visibility for color-blind people.
 
-    :usage:
-        >>> librosa.display.cmap([0, 1, 2])
-        'OrRd'
-        >>> librosa.display.cmap(np.arange(-10, -5))
-        'BuPu_r'
-        >>> librosa.display.cmap(np.arange(-10, 10))
-        'PuOr_r'
+    Examples
+    --------
+    >>> librosa.display.cmap([0, 1, 2])
+    'OrRd'
+    >>> librosa.display.cmap(np.arange(-10, -5))
+    'BuPu_r'
+    >>> librosa.display.cmap(np.arange(-10, 10))
+    'PuOr_r'
 
-    :parameters:
-      - data : np.ndarray
-          Input data
+    Parameters
+    ----------
+    data : np.ndarray
+        Input data
 
-    :returns:
-      - cmap_str
-          - If data is type=boolean, cmap_Str is 'gray_r'
-          - If data has only positive values, cmap_str is 'OrRd'
-          - If data has only negative values, cmap_str is 'BuPu_r'
-          - If data has both positive and negatives, cmap_str is 'PuOr_r'
+    Returns
+    -------
+    cmap_str : str
+        - If `data` has dtype=boolean, `cmap_str` is 'gray_r'
+        - If `data` has only positive values, `cmap_str` is 'OrRd'
+        - If `data` has only negative values, `cmap_str` is 'BuPu_r'
+        - If `data` has both positive and negatives, `cmap_str` is 'PuOr_r'
     '''
 
     if data.dtype == 'bool':
@@ -163,91 +170,97 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
              **kwargs):
     '''Display a spectrogram/chromagram/cqt/etc.
 
-    Functions as a drop-in replacement for ``matplotlib.pyplot.imshow``,
+    Functions as a drop-in replacement for `matplotlib.pyplot.imshow`,
     but with useful defaults.
 
-    :usage:
-        >>> # Visualize an STFT with linear frequency scaling
-        >>> D = np.abs(librosa.stft(y))
-        >>> librosa.display.specshow(D, sr=sr, y_axis='linear')
+    Examples
+    --------
+    >>> # Visualize an STFT with linear frequency scaling
+    >>> D = np.abs(librosa.stft(y))
+    >>> librosa.display.specshow(D, sr=sr, y_axis='linear')
 
-        >>> # Or with logarithmic frequency scaling
-        >>> librosa.display.specshow(D, sr=sr, y_axis='log')
+    >>> # Or with logarithmic frequency scaling
+    >>> librosa.display.specshow(D, sr=sr, y_axis='log')
 
-        >>> # Visualize a CQT with note markers
-        >>> CQT = librosa.cqt(y, sr=sr)
-        >>> librosa.display.specshow(CQT, sr=sr, y_axis='cqt_note',
-                                     fmin=librosa.note_to_hz('C2'))
+    >>> # Visualize a CQT with note markers
+    >>> CQT = librosa.cqt(y, sr=sr)
+    >>> librosa.display.specshow(CQT, sr=sr, y_axis='cqt_note',
+                                 fmin=librosa.note_to_hz('C2'))
 
-        >>> # Draw time markers automatically
-        >>> librosa.display.specshow(D, sr=sr, hop_length=hop_length,
-                                     x_axis='time')
+    >>> # Draw time markers automatically
+    >>> librosa.display.specshow(D, sr=sr, hop_length=hop_length,
+                                 x_axis='time')
 
-        >>> # Draw a chromagram with pitch classes
-        >>> C = librosa.feature.chromagram(y, sr)
-        >>> librosa.display.specshow(C, y_axis='chroma')
+    >>> # Draw a chromagram with pitch classes
+    >>> C = librosa.feature.chromagram(y, sr)
+    >>> librosa.display.specshow(C, y_axis='chroma')
 
-        >>> # Force a grayscale colormap (white -> black)
-        >>> librosa.display.specshow(librosa.logamplitude(D),
-                                     cmap='gray_r')
+    >>> # Force a grayscale colormap (white -> black)
+    >>> librosa.display.specshow(librosa.logamplitude(D),
+                                 cmap='gray_r')
 
-    :parameters:
-      - data : np.ndarray [shape=(d, n)]
-          Matrix to display (e.g., spectrogram)
+    Parameters
+    ----------
+    data : np.ndarray [shape=(d, n)]
+        Matrix to display (e.g., spectrogram)
 
-      - sr : int > 0 [scalar]
-          Sample rate used to determine time scale in x-axis.
+    sr : int > 0 [scalar]
+        Sample rate used to determine time scale in x-axis.
 
-      - hop_length : int > 0 [scalar]
-          Hop length, also used to determine time scale in x-axis
+    hop_length : int > 0 [scalar]
+        Hop length, also used to determine time scale in x-axis
 
-      - x_axis : None or {'time', 'frames', 'off'}
-          If None or 'off', no x axis is displayed.
+    x_axis : None or {'time', 'frames', 'off'}
+        - If `None` or `'off'`, no x axis is displayed.
+        - If `'time'`, markers are shown as milliseconds, seconds,
+          minutes, or hours.  (See :func:`time_ticks()`.)
+        - If `'frames'`, markers are shown as frame counts.
 
-          If 'time', markers are shown as milliseconds, seconds,
-          minutes, or hours.  (See :func:`time_ticks()` for details.)
+    y_axis : None or str
+        Range for the y-axis.  Valid types are:
 
-          If 'frames', markers are shown as frame counts.
-
-      - y_axis : None or str
-          Range for the y-axis.  Valid types are:
-
-          - None or 'off': no y axis is displayed.
-          - 'linear': frequency range is determined by the FFT window
+        - None or 'off': no y axis is displayed.
+        - 'linear': frequency range is determined by the FFT window
             and sampling rate.
-          - 'log': the image is displayed on a vertical log scale.
-          - 'mel': frequencies are determined by the mel scale.
-          - 'cqt_hz': frequencies are determined by the CQT scale.
-          - 'cqt_note': pitches are determined by the CQT scale.
-          - 'chroma': pitches are determined by the chroma filters.
+        - 'log': the image is displayed on a vertical log scale.
+        - 'mel': frequencies are determined by the mel scale.
+        - 'cqt_hz': frequencies are determined by the CQT scale.
+        - 'cqt_note': pitches are determined by the CQT scale.
+        - 'chroma': pitches are determined by the chroma filters.
 
-      - n_xticks : int > 0 [scalar]
-          If x_axis is drawn, the number of ticks to show
+    n_xticks : int > 0 [scalar]
+        If x_axis is drawn, the number of ticks to show
 
-      - n_yticks : int > 0 [scalar]
-          If y_axis is drawn, the number of ticks to show
+    n_yticks : int > 0 [scalar]
+        If y_axis is drawn, the number of ticks to show
 
-      - fmin : float > 0 [scalar] or None
-          Frequency of the lowest spectrogram bin.  Used for Mel and CQT
-          scales.
+    fmin : float > 0 [scalar] or None
+        Frequency of the lowest spectrogram bin.  Used for Mel and CQT
+        scales.
 
-      - fmax : float > 0 [scalar] or None
-          Used for setting the Mel frequency scales
+    fmax : float > 0 [scalar] or None
+        Used for setting the Mel frequency scales
 
-      - bins_per_octave : int > 0 [scalar]
-          Number of bins per octave.  Used for CQT frequency scale.
+    bins_per_octave : int > 0 [scalar]
+        Number of bins per octave.  Used for CQT frequency scale.
 
-      - *kwargs*
-          Additional keyword arguments passed through to
-          ``matplotlib.pyplot.imshow``.
+    kwargs : additional keyword arguments
+        Arguments passed through to `matplotlib.pyplot.imshow`.
 
-    :returns:
-      - image : ``matplotlib.image.AxesImage``
-          As returned from ``matplotlib.pyplot.imshow``.
+    Returns
+    -------
+    image : `matplotlib.image.AxesImage`
+        As returned from `matplotlib.pyplot.imshow`.
 
-    :raises:
-      - ValueError
-          If y_axis is 'cqt_hz' or 'cqt_note' and ``fmin`` is not supplied.
+    Raises
+    ------
+    ValueError
+        If y_axis is 'cqt_hz' or 'cqt_note' and `fmin` is not supplied.
+
+    See Also
+    --------
+    :func:`cmap` : Automatic colormap detection
+    :func:`time_ticks`: time-formatted tick marks
     '''
 
     kwargs.setdefault('aspect', 'auto')
@@ -390,11 +403,13 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
 def __log_scale(n):
     '''Return a log-scale mapping of bins 0..n, and its inverse.
 
-    :parameters:
+    Parameters
+    ----------
       - n : int > 0
           Number of bins
 
-    :returns:
+    Returns
+    -------
       - y   : np.ndarray, shape=(n,)
 
       - y_inv   : np.ndarray, shape=(n,)

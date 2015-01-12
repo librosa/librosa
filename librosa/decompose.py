@@ -185,9 +185,10 @@ def hpss(S, kernel_size=31, power=2.0, mask=False):
         kernel size(s) for the median filters.
 
         - If scalar, the same size is used for both harmonic and percussive.
-        - If array_like, the first value specifies the width of the
-            harmonic filter, and the second value specifies the width
-            of the percussive filter.
+        - If iterable, the first value specifies the width of the
+          harmonic filter, and the second value specifies the width
+          of the percussive filter.
+
 
     power : float >= 0 [scalar]
         Exponent for the Wiener filter when constructing mask matrices.
