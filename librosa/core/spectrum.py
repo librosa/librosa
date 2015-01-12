@@ -779,14 +779,15 @@ def perceptual_weighting(S, frequencies, **kwargs):
     --------
     >>> # Re-weight a CQT representation, using peak power as reference
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> CQT = librosa.cqt(y, sr=sr, fmin=55)
-    >>> freqs = librosa.cqt_frequencies(CQT.shape[0], fmin=55)
+    >>> CQT = librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('A2'))
+    >>> freqs = librosa.cqt_frequencies(CQT.shape[0],
+                                        fmin=librosa.note_to_hz('A2'))
     >>> librosa.perceptual_weighting(CQT, freqs, ref_power=np.max)
-    array([[-50.206, -50.024, ..., -97.805, -90.37 ],
-           [-48.665, -48.196, ..., -81.633, -81.323],
+    array([[-50.113, -49.887, ..., -86.524, -88.887],
+           [-48.525, -48.043, ..., -81.741, -81.102],
            ...,
-           [-55.747, -38.991, ..., -80.098, -80.098],
-           [-55.259, -40.938, ..., -80.311, -80.311]])
+           [-41.162, -44.677, ..., -61.139, -64.137],
+           [-40.303, -44.41 , ..., -59.63 , -65.519]])
 
     Parameters
     ----------
@@ -796,7 +797,7 @@ def perceptual_weighting(S, frequencies, **kwargs):
     frequencies : np.ndarray [shape=(d,)]
         Center frequency for each row of `S`
 
-    *kwargs*
+    kwargs : additional keyword arguments
         Additional keyword arguments to :func:`librosa.core.logamplitude`.
 
     Returns
