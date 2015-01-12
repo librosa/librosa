@@ -30,59 +30,64 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
          dtype=np.float32):
     """Load an audio file as a floating point time series.
 
-    :usage:
-        >>> # Load a wav file
-        >>> filename = librosa.util.example_audio_file()
-        >>> y, sr = librosa.load(filename)
-        >>> y
-        array([ 0.,  0.,  0., ...,  0.,  0.,  0.], dtype=float32)
-        >>> sr
-        22050
+    Examples
+    --------
+    >>> # Load a wav file
+    >>> filename = librosa.util.example_audio_file()
+    >>> y, sr = librosa.load(filename)
+    >>> y
+    array([ 0.,  0.,  0., ...,  0.,  0.,  0.], dtype=float32)
+    >>> sr
+    22050
 
-        >>> # Load a wav file and resample to 11 KHz
-        >>> filename = librosa.util.example_audio_file()
-        >>> y, sr = librosa.load(filename, sr=11025)
-        >>> y
-        array([ 0.,  0.,  0., ...,  0.,  0.,  0.], dtype=float32)
-        >>> sr
-        11025
+    >>> # Load a wav file and resample to 11 KHz
+    >>> filename = librosa.util.example_audio_file()
+    >>> y, sr = librosa.load(filename, sr=11025)
+    >>> y
+    array([ 0.,  0.,  0., ...,  0.,  0.,  0.], dtype=float32)
+    >>> sr
+    11025
 
-        >>> # Load 5 seconds of a wav file, starting 15 seconds in
-        >>> filename = librosa.util.example_audio_file()
-        >>> y, sr = librosa.load(filename, offset=15.0, duration=5.0)
-        >>> y
-        array([ 0.066,  0.101,  0.089, ..., -0.097, -0.109,  0.   ],
-              dtype=float32)
-        >>> sr
-        22050
+    >>> # Load 5 seconds of a wav file, starting 15 seconds in
+    >>> filename = librosa.util.example_audio_file()
+    >>> y, sr = librosa.load(filename, offset=15.0, duration=5.0)
+    >>> y
+    array([ 0.066,  0.101,  0.089, ..., -0.097, -0.109,  0.   ],
+          dtype=float32)
+    >>> sr
+    22050
 
-    :parameters:
-      - path : string
-          path to the input file.
-          Any format supported by ``audioread`` will work.
+    Parameters
+    ----------
+    path : string
+        path to the input file.
 
-      - sr   : int > 0 [scalar]
-          target sampling rate
-          'None' uses the native sampling rate
+        Any format supported by `audioread` will work.
 
-      - mono : bool
-          convert signal to mono
+    sr   : int > 0 [scalar]
+        target sampling rate
 
-      - offset : float
-          start reading after this time (in seconds)
+        'None' uses the native sampling rate
 
-      - duration : float
-          only load up to this much audio (in seconds)
+    mono : bool
+        convert signal to mono
 
-      - dtype : numeric type
-          data type of ``y``
+    offset : float
+        start reading after this time (in seconds)
 
-    :returns:
-      - y    : np.ndarray [shape=(n,) or (2, n)]
-          audio time series
+    duration : float
+        only load up to this much audio (in seconds)
 
-      - sr   : int > 0 [scalar]
-          sampling rate of ``y``
+    dtype : numeric type
+        data type of `y`
+
+    Returns
+    -------
+    y    : np.ndarray [shape=(n,) or (2, n)]
+        audio time series
+
+    sr   : int > 0 [scalar]
+        sampling rate of `y`
     """
 
     y = []
@@ -155,19 +160,24 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
 def to_mono(y):
     '''Force an audio signal down to mono.
 
-    :usage:
-        >>> y, sr = librosa.load(librosa.util.example_audio_file(), mono=False)
-        >>> y.shape
-        (2, 1354752)
-        >>> y_mono = librosa.to_mono(y)
-        >>> y_mono.shape
-        (1354752,)
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), mono=False)
+    >>> y.shape
+    (2, 1354752)
+    >>> y_mono = librosa.to_mono(y)
+    >>> y_mono.shape
+    (1354752,)
 
-    :parameters:
-        - y : np.ndarray [shape=(2,n) or shape=(n,)]
+    Parameters
+    ----------
+    y : np.ndarray [shape=(2,n) or shape=(n,)]
+        audio time series, either stereo or mono
 
-    :returns:
-        - y_mono : np.ndarray [shape=(n,)]
+    Returns
+    -------
+    y_mono : np.ndarray [shape=(n,)]
+        `y` as a monophonic time-series
     '''
 
     # Validate the buffer.  Stereo is ok here.
@@ -184,43 +194,45 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest', fix=True,
              **kwargs):
     """Resample a time series from orig_sr to target_sr
 
-    :usage:
-        >>> # Downsample from 22 KHz to 8 KHz
-        >>> y, sr = librosa.load(librosa.util.example_audio_file(), sr=22050)
-        >>> y_8k = librosa.resample(y, sr, 8000)
-        >>> y.shape, y_8k.shape
-        ((1354752,), (491520,))
+    Examples
+    --------
+    >>> # Downsample from 22 KHz to 8 KHz
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), sr=22050)
+    >>> y_8k = librosa.resample(y, sr, 8000)
+    >>> y.shape, y_8k.shape
+    ((1354752,), (491520,))
 
-    :parameters:
-      - y           : np.ndarray [shape=(n,)]
-          audio time series
+    Parameters
+    ----------
+    y : np.ndarray [shape=(n,)]
+        audio time series
 
-      - orig_sr     : int > 0 [scalar]
-          original sampling rate of ``y``
+    orig_sr : int > 0 [scalar]
+        original sampling rate of `y`
 
-      - target_sr   : int > 0 [scalar]
-          target sampling rate
+    target_sr : int > 0 [scalar]
+        target sampling rate
 
-      - res_type    : str
-          resample type (see note)
+    res_type : str
+        resample type (see note)
 
-      - fix         : bool
-          adjust the length of the resampled signal to be of size exactly
-          ``ceil(target_sr * len(y) / orig_sr)``
+    fix : bool
+        adjust the length of the resampled signal to be of size exactly
+        `ceil(target_sr * len(y) / orig_sr)`
 
-      - *kwargs*
-          If ``fix==True``, additional keyword arguments to pass to
-          :func:`librosa.util.fix_length()`.
+    *kwargs*
+        If `fix==True`, additional keyword arguments to pass to
+        :func:`librosa.util.fix_length()`.
 
-    :returns:
-      - y_hat       : np.ndarray [shape=(n * target_sr / orig_sr,)]
-          ``y`` resampled from ``orig_sr`` to ``target_sr``
+    Returns
+    -------
+    y_hat : np.ndarray [shape=(n * target_sr / orig_sr,)]
+        `y` resampled from `orig_sr` to `target_sr`
 
     .. note::
         If `scikits.samplerate` is installed, :func:`librosa.core.resample`
-        will use ``res_type``.
+        will use `res_type`.
         Otherwise, it will fall back on `scipy.signal.resample`
-
     """
 
     # First, validate the audio buffer
@@ -248,47 +260,50 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                  center=True):
     """Compute the duration (in seconds) of an audio time series or STFT matrix.
 
-    :usage:
-        >>> # Load the example audio file
-        >>> y, sr = librosa.load(librosa.util.example_audio())
-        >>> librosa.get_duration(y=y, sr=sr)
-        61.44
+    Examples
+    --------
+    >>> # Load the example audio file
+    >>> y, sr = librosa.load(librosa.util.example_audio())
+    >>> librosa.get_duration(y=y, sr=sr)
+    61.44
 
-        >>> # Or compute duration from an STFT matrix
-        >>> y, sr = librosa.load(librosa.util.example_audio())
-        >>> S = librosa.stft(y)
-        >>> librosa.get_duration(S=S, sr=sr)
-        61.44
+    >>> # Or compute duration from an STFT matrix
+    >>> y, sr = librosa.load(librosa.util.example_audio())
+    >>> S = librosa.stft(y)
+    >>> librosa.get_duration(S=S, sr=sr)
+    61.44
 
-        >>> # Or a non-centered STFT matrix
-        >>> S_left = librosa.stft(y, center=False)
-        >>> librosa.get_duration(S=S_left, sr=sr)
-        61.3471201814059
+    >>> # Or a non-centered STFT matrix
+    >>> S_left = librosa.stft(y, center=False)
+    >>> librosa.get_duration(S=S_left, sr=sr)
+    61.3471201814059
 
-    :parameters:
-      - y : np.ndarray [shape=(n,), (2, n)] or None
-          Audio time series
+    Parameters
+    ----------
+    y : np.ndarray [shape=(n,), (2, n)] or None
+        audio time series
 
-      - sr : int > 0 [scalar]
-          Audio sampling rate
+    sr : int > 0 [scalar]
+        audio sampling rate of `y`
 
-      - S : np.ndarray [shape=(d, t)] or None
-          STFT matrix, or any STFT-derived matrix (e.g., chromagram
-          or mel spectrogram).
+    S : np.ndarray [shape=(d, t)] or None
+        STFT matrix, or any STFT-derived matrix (e.g., chromagram
+        or mel spectrogram).
 
-      - n_fft       : int > 0 [scalar]
-          FFT window size for ``S``
+    n_fft       : int > 0 [scalar]
+        FFT window size for `S`
 
-      - hop_length  : int > 0 [ scalar]
-          number of audio samples between columns of ``S``
+    hop_length  : int > 0 [ scalar]
+        number of audio samples between columns of `S`
 
-      - center      : boolean
-          - If ``True``, ``S[:, t]`` is centered at ``y[t * hop_length]``.
-          - If ``False``, then ``S[f, t]`` *begins* at ``y[t * hop_length]``
+    center  : boolean
+    If `True`, `S[:, t]` is centered at `y[t * hop_length]`.
+    If `False`, then `S[f, t]` *begins* at `y[t * hop_length]`
 
-    :returns:
-      - d : float >= 0
-          Duration (in seconds) of the input time series or spectrogram.
+    Returns
+    -------
+    d : float >= 0
+        Duration (in seconds) of the input time series or spectrogram.
     """
 
     if y is None:
@@ -316,28 +331,31 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 def autocorrelate(y, max_size=None):
     """Bounded auto-correlation
 
-    :usage:
-        >>> # Compute full autocorrelation of y
-        >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> librosa.autocorrelate(y)
-        array([  1.573e+04,   1.569e+04, ...,   1.090e-13,   1.090e-13])
+    Examples
+    --------
+    >>> # Compute full autocorrelation of y
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> librosa.autocorrelate(y)
+    array([  1.573e+04,   1.569e+04, ...,   1.090e-13,   1.090e-13])
 
-        >>> # Compute autocorrelation up to 4 seconds lag
-        >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> librosa.autocorrelate(y, max_size=4 * sr)
-        array([ 15734.031,  15689.047, ...,   -410.197,   -436.05 ])
+    >>> # Compute autocorrelation up to 4 seconds lag
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> librosa.autocorrelate(y, max_size=4 * sr)
+    array([ 15734.031,  15689.047, ...,   -410.197,   -436.05 ])
 
-    :parameters:
-      - y         : np.ndarray [shape=(n,)]
-          vector to autocorrelate
+    Parameters
+    ----------
+    y : np.ndarray [shape=(n,)]
+        vector to autocorrelate
 
-      - max_size  : int > 0 or None
-          maximum correlation lag.
-          If unspecified, defaults to ``len(y)`` (unbounded)
+    max_size  : int > 0 or None
+        maximum correlation lag.
+        If unspecified, defaults to `len(y)` (unbounded)
 
-    :returns:
-      - z         : np.ndarray [shape=(n,) or (max_size,)]
-          truncated autocorrelation ``y*y``
+    Returns
+    -------
+    z : np.ndarray [shape=(n,) or (max_size,)]
+        truncated autocorrelation `y*y`
     """
 
     result = scipy.signal.fftconvolve(y, y[::-1], mode='full')
@@ -355,80 +373,85 @@ def autocorrelate(y, max_size=None):
 @cache
 def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
                    zero_pos=True, axis=-1):
-    '''Find the zero-crossings of a signal ``y``: indices `i` such that
-    ``sign(y[i]) != sign(y[j])``.
+    '''Find the zero-crossings of a signal `y`: indices `i` such that
+    `sign(y[i]) != sign(y[j])`.
 
-    If ``y`` is multi-dimensional, then zero-crossings are computed along
-    the specified ``axis``.
+    If `y` is multi-dimensional, then zero-crossings are computed along
+    the specified `axis`.
 
-    :usage:
-        >>> # Generate a time-series
-        >>> y = np.sin(np.linspace(0, 4 * 2 * np.pi, 20))
-        >>> y
-        array([  0.000e+00,   9.694e-01,   4.759e-01,  -7.357e-01,
-                -8.372e-01,   3.247e-01,   9.966e-01,   1.646e-01,
-                -9.158e-01,  -6.142e-01,   6.142e-01,   9.158e-01,
-                -1.646e-01,  -9.966e-01,  -3.247e-01,   8.372e-01,
-                 7.357e-01,  -4.759e-01,  -9.694e-01,  -9.797e-16])
-        >>> # Compute zero-crossings
-        >>> z = librosa.zero_crossings(y)
-        >>> z
-        array([ True, False, False,  True, False,  True, False, False,  True,
-               False,  True, False,  True, False, False,  True, False,  True,
-               False,  True], dtype=bool)
-        >>> # Stack y against the zero-crossing indicator
-        >>> np.vstack([y, z]).T
-        array([[  0.000e+00,   1.000e+00],
-               [  9.694e-01,   0.000e+00],
-               [  4.759e-01,   0.000e+00],
-               [ -7.357e-01,   1.000e+00],
-               [ -8.372e-01,   0.000e+00],
-               [  3.247e-01,   1.000e+00],
-               [  9.966e-01,   0.000e+00],
-               [  1.646e-01,   0.000e+00],
-               [ -9.158e-01,   1.000e+00],
-               [ -6.142e-01,   0.000e+00],
-               [  6.142e-01,   1.000e+00],
-               [  9.158e-01,   0.000e+00],
-               [ -1.646e-01,   1.000e+00],
-               [ -9.966e-01,   0.000e+00],
-               [ -3.247e-01,   0.000e+00],
-               [  8.372e-01,   1.000e+00],
-               [  7.357e-01,   0.000e+00],
-               [ -4.759e-01,   1.000e+00],
-               [ -9.694e-01,   0.000e+00],
-               [ -9.797e-16,   1.000e+00]])
-        >>> # Find the indices of zero-crossings
-        >>> np.nonzero(z)
-        (array([ 0,  3,  5,  8, 10, 12, 15, 17, 19]),)
+    Examples
+    --------
+    >>> # Generate a time-series
+    >>> y = np.sin(np.linspace(0, 4 * 2 * np.pi, 20))
+    >>> y
+    array([  0.000e+00,   9.694e-01,   4.759e-01,  -7.357e-01,
+            -8.372e-01,   3.247e-01,   9.966e-01,   1.646e-01,
+            -9.158e-01,  -6.142e-01,   6.142e-01,   9.158e-01,
+            -1.646e-01,  -9.966e-01,  -3.247e-01,   8.372e-01,
+             7.357e-01,  -4.759e-01,  -9.694e-01,  -9.797e-16])
+    >>> # Compute zero-crossings
+    >>> z = librosa.zero_crossings(y)
+    >>> z
+    array([ True, False, False,  True, False,  True, False, False,  True,
+           False,  True, False,  True, False, False,  True, False,  True,
+           False,  True], dtype=bool)
+    >>> # Stack y against the zero-crossing indicator
+    >>> np.vstack([y, z]).T
+    array([[  0.000e+00,   1.000e+00],
+           [  9.694e-01,   0.000e+00],
+           [  4.759e-01,   0.000e+00],
+           [ -7.357e-01,   1.000e+00],
+           [ -8.372e-01,   0.000e+00],
+           [  3.247e-01,   1.000e+00],
+           [  9.966e-01,   0.000e+00],
+           [  1.646e-01,   0.000e+00],
+           [ -9.158e-01,   1.000e+00],
+           [ -6.142e-01,   0.000e+00],
+           [  6.142e-01,   1.000e+00],
+           [  9.158e-01,   0.000e+00],
+           [ -1.646e-01,   1.000e+00],
+           [ -9.966e-01,   0.000e+00],
+           [ -3.247e-01,   0.000e+00],
+           [  8.372e-01,   1.000e+00],
+           [  7.357e-01,   0.000e+00],
+           [ -4.759e-01,   1.000e+00],
+           [ -9.694e-01,   0.000e+00],
+           [ -9.797e-16,   1.000e+00]])
+    >>> # Find the indices of zero-crossings
+    >>> np.nonzero(z)
+    (array([ 0,  3,  5,  8, 10, 12, 15, 17, 19]),)
 
 
-    :parameters:
-      - y : np.ndarray
-          The input array
+    Parameters
+    ----------
+    y : np.ndarray
+        The input array
 
-      - threshold : float > 0 or None
-          If specified, values where ``-threshold <= y <= threshold`` are
-          clipped to 0.
+    threshold : float > 0 or None
+        If specified, values where `-threshold <= y <= threshold` are
+        clipped to 0.
 
-      - ref_magnitude : float > 0 or callable
-          If numeric, the threshold is scaled relative to ``ref_magnitude``
-          If callable, the threshold is scaled relative to
-          ``ref_magnitude(np.abs(y))``
+    ref_magnitude : float > 0 or callable
+        If numeric, the threshold is scaled relative to `ref_magnitude`.
 
-      - pad : boolean
-          If ``True``, then ``y[0]`` is considered a valid zero-crossing.
+        If callable, the threshold is scaled relative to
+        `ref_magnitude(np.abs(y))`.
 
-      - zero_pos : boolean
-          If ``True`` then the value 0 is interpreted as having positive sign.
-          If ``False``, then 0, -1, and +1 all have distinct signs.
+    pad : boolean
+        If `True`, then `y[0]` is considered a valid zero-crossing.
 
-      - axis : int
-          Axis along which to compute zero-crossings.
+    zero_pos : boolean
+        If `True` then the value 0 is interpreted as having positive sign.
 
-    :returns:
-      - zero_crossings : np.ndarray [shape=y.shape, dtype=boolean]
-          Indicator array of zero-crossings in ``y`` along the selected axis.
+        If `False`, then 0, -1, and +1 all have distinct signs.
+
+    axis : int
+        Axis along which to compute zero-crossings.
+
+    Returns
+    -------
+    zero_crossings : np.ndarray [shape=y.shape, dtype=boolean]
+        Indicator array of zero-crossings in `y` along the selected axis.
     '''
 
     # Clip within the threshold
