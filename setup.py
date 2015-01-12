@@ -34,6 +34,7 @@ setup(
         'decorator',
     ],
     extras_require={
-        'resample': 'scikits.samplerate>=0.3'
+        'resample': 'scikits.samplerate>=0.3',
+        'docs': 'numpydoc'
     }
 )
