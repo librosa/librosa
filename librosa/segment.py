@@ -18,47 +18,50 @@ from . import util
 def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
     '''Compute the binary recurrence matrix from a time-series.
 
-    ``rec[i,j] == True`` <=> (``data[:,i]``, ``data[:,j]``) are
-    k-nearest-neighbors and ``|i-j| >= width``
+    `rec[i,j] == True` if (and only if) (`data[:,i]`, `data[:,j]`) are
+    k-nearest-neighbors and `|i-j| >= width`
 
-    :usage:
-        >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> mfcc = librosa.feature.mfcc(y=y, sr=sr)
-        >>> R = librosa.segment.recurrence_matrix(mfcc)
-        >>> # Or fix the number of nearest neighbors to 5
-        >>> R = librosa.segment.recurrence_matrix(mfcc, k=5)
-        >>> # Suppress neighbors within +- 7 samples
-        >>> R = librosa.segment.recurrence_matrix(mfcc, width=7)
-        >>> # Use cosine similarity instead of Euclidean distance
-        >>> R = librosa.segment.recurrence_matrix(mfcc, metric='cosine')
-        >>> # Require mutual nearest neighbors
-        >>> R = librosa.segment.recurrence_matrix(mfcc, sym=True)
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> mfcc = librosa.feature.mfcc(y=y, sr=sr)
+    >>> R = librosa.segment.recurrence_matrix(mfcc)
+    >>> # Or fix the number of nearest neighbors to 5
+    >>> R = librosa.segment.recurrence_matrix(mfcc, k=5)
+    >>> # Suppress neighbors within +- 7 samples
+    >>> R = librosa.segment.recurrence_matrix(mfcc, width=7)
+    >>> # Use cosine similarity instead of Euclidean distance
+    >>> R = librosa.segment.recurrence_matrix(mfcc, metric='cosine')
+    >>> # Require mutual nearest neighbors
+    >>> R = librosa.segment.recurrence_matrix(mfcc, sym=True)
 
-    :parameters:
-      - data : np.ndarray [shape=(d, t)]
-          A feature matrix
+    Parameters
+    ----------
+    data : np.ndarray [shape=(d, t)]
+        A feature matrix
 
-      - k : int > 0 [scalar] or None
-          the number of nearest-neighbors for each sample
+    k : int > 0 [scalar] or None
+        the number of nearest-neighbors for each sample
 
-          Default: ``k = 2 * ceil(sqrt(t - 2 * width + 1))``,
-          or ``k = 2`` if ``t <= 2 * width + 1``
+        Default: `k = 2 * ceil(sqrt(t - 2 * width + 1))`,
+        or `k = 2` if `t <= 2 * width + 1`
 
-      - width : int > 0 [scalar]
-          only link neighbors ``(data[:, i], data[:, j])``
-          if ``|i-j| >= width``
+    width : int > 0 [scalar]
+        only link neighbors `(data[:, i], data[:, j])`
+        if `|i-j| >= width`
 
-      - metric : str
-          Distance metric to use for nearest-neighbor calculation.
+    metric : str
+        Distance metric to use for nearest-neighbor calculation.
 
-          See ``scipy.spatial.distance.cdist()`` for details.
+        See `scipy.spatial.distance.cdist()` for details.
 
-      - sym : bool [scalar]
-          set ``sym=True`` to only link mutual nearest-neighbors
+    sym : bool [scalar]
+        set `sym=True` to only link mutual nearest-neighbors
 
-    :returns:
-      - rec : np.ndarray [shape=(t,t), dtype=bool]
-          Binary recurrence matrix
+    Returns
+    -------
+    rec : np.ndarray [shape=(t,t), dtype=bool]
+        Binary recurrence matrix
     '''
 
     t = data.shape[1]
@@ -110,36 +113,43 @@ def structure_feature(rec, pad=True, inverse=False):
     The resulting matrix is indexed horizontally by time,
     and vertically by lag.
 
-    :usage:
-        >>> # Build the structure feature over mfcc similarity
-        >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> mfccs = librosa.feature.mfcc(y=y, sr=sr)
-        >>> recurrence = librosa.feature.recurrence_matrix(mfccs)
-        >>> struct = librosa.feature.structure_feature(recurrence)
-        >>> # Invert the structure feature to get a recurrence matrix
-        >>> recurrence_2 = librosa.feature.structure_feature(struct,
-                                                             inverse=True)
+    Examples
+    --------
+    >>> # Build the structure feature over mfcc similarity
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> mfccs = librosa.feature.mfcc(y=y, sr=sr)
+    >>> recurrence = librosa.feature.recurrence_matrix(mfccs)
+    >>> struct = librosa.feature.structure_feature(recurrence)
+    >>> # Invert the structure feature to get a recurrence matrix
+    >>> recurrence_2 = librosa.feature.structure_feature(struct,
+                                                         inverse=True)
 
-    :parameters:
-      - rec   : np.ndarray [shape=(t,t) or shape=(2*t, t)]
-          recurrence matrix (see :func:`librosa.segment.recurrence_matrix`)
+    Parameters
+    ----------
+    rec   : np.ndarray [shape=(t,t) or shape=(2*t, t)]
+        recurrence matrix or pre-computed structure feature
 
-      - pad : bool [scalar]
-          Pad the matrix with ``t`` rows of zeros to avoid looping.
+    pad : bool [scalar]
+        Pad the matrix with `t` rows of zeros to avoid looping.
 
-      - inverse : bool [scalar]
-          Unroll the opposite direction. This is useful for converting
-          structure features back into recurrence plots.
+    inverse : bool [scalar]
+        Unroll the opposite direction. This is useful for converting
+        structure features back into recurrence plots.
 
-          .. note: Reversing with ``pad==True`` will truncate the
+        .. note: Reversing with `pad==True` will truncate the
             inferred padding.
 
-    :returns:
-      - struct : np.ndarray [shape=(2*t, t) or shape=(t, t)]
-          ``struct[i, t]`` = the recurrence at time ``t`` with lag ``i``.
+    Returns
+    -------
+    struct : np.ndarray [shape=(2*t, t) or shape=(t, t)]
+        `struct[i, t]` = the recurrence at time `t` with lag `i`.
 
-      .. note:: negative lag values are supported by wrapping to the
-        end of the array.
+        .. note:: negative lag values are supported by wrapping to the
+            end of the array.
+
+    See Also
+    --------
+    :func:`librosa.segment.recurrence_matrix`
     '''
 
     t = rec.shape[1]
@@ -178,48 +188,55 @@ def subsegment(data, frames, n_segments=4, pad=True):
         If an interval spans fewer than `n_segments` frames, then each
         frame becomes a sub-segment.
 
-    :usage:
-        >>> # Load audio, detect beat frames, and compute a CQT
-        >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, hop_length=512)
-        >>> cqt = librosa.cqt(y, sr=sr, hop_length=512)
-        >>> beats
-        array([ 186,  211,  236,  261,  286,  311,  336,  361,  386,  411,
-                436,  461,  486,  510,  535,  560,  585,  609,  634,  658,
-                684,  710,  737,  763,  789,  817,  843,  869,  896,  922,
-                948,  976, 1001, 1026, 1051, 1076, 1101, 1126, 1150, 1175,
-               1202, 1229, 1254, 1279, 1304, 1329, 1354, 1379, 1404, 1429,
-               1454, 1479, 1503, 1528, 1553, 1578, 1603, 1627, 1652, 1676,
-               1700, 1724, 1748, 1772, 1797, 1822, 1846, 1871, 1896, 1921,
-               1946, 1971, 1995, 2020, 2045, 2070, 2095, 2120, 2145, 2169,
-               2194, 2220, 2248, 2273, 2298, 2323, 2348, 2373, 2398, 2423,
-               2448, 2472, 2497, 2522])
-        >>> # Sub-divide the beats into (up to) 4 sub-segments each
-        >>> librosa.segment.subsegment(cqt, beats, n_segments=4)
-        array([   0,   74, ..., 2548, 2582])
+    Examples
+    --------
+    >>> # Load audio, detect beat frames, and compute a CQT
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, hop_length=512)
+    >>> cqt = librosa.cqt(y, sr=sr, hop_length=512)
+    >>> beats
+    array([ 186,  211,  236,  261,  286,  311,  336,  361,  386,  411,
+            436,  461,  486,  510,  535,  560,  585,  609,  634,  658,
+            684,  710,  737,  763,  789,  817,  843,  869,  896,  922,
+            948,  976, 1001, 1026, 1051, 1076, 1101, 1126, 1150, 1175,
+           1202, 1229, 1254, 1279, 1304, 1329, 1354, 1379, 1404, 1429,
+           1454, 1479, 1503, 1528, 1553, 1578, 1603, 1627, 1652, 1676,
+           1700, 1724, 1748, 1772, 1797, 1822, 1846, 1871, 1896, 1921,
+           1946, 1971, 1995, 2020, 2045, 2070, 2095, 2120, 2145, 2169,
+           2194, 2220, 2248, 2273, 2298, 2323, 2348, 2373, 2398, 2423,
+           2448, 2472, 2497, 2522])
+    >>> # Sub-divide the beats into (up to) 4 sub-segments each
+    >>> librosa.segment.subsegment(cqt, beats, n_segments=4)
+    array([   0,   74, ..., 2548, 2582])
 
-    :parameters:
-        - data : np.ndarray [shape=(d, n)]
-            Data matrix to use in clustering
+    Parameters
+    ----------
+    data : np.ndarray [shape=(d, n)]
+        Data matrix to use in clustering
 
-        - frames : np.ndarray [shape=(n_boundaries,)], dtype=int, non-negative]
-            Array of beat or segment boundaries, as provided by
-            :func:`librosa.beat.beat_track`,
-            :func:`librosa.onset.onset_detect`,
-            or :func:`librosa.segment.agglomerative`.
+    frames : np.ndarray [shape=(n_boundaries,)], dtype=int, non-negative]
+        Array of beat or segment boundaries, as provided by
+        :func:`librosa.beat.beat_track`,
+        :func:`librosa.onset.onset_detect`,
+        or :func:`librosa.segment.agglomerative`.
 
-        - n_segments : int > 0
-            Maximum number of frames to sub-divide each interval.
+    n_segments : int > 0
+        Maximum number of frames to sub-divide each interval.
 
-        - pad : bool
-            If `True`, then `frames` is expanded to cover the full
-            range `[0, n]`
+    pad : bool
+        If `True`, then `frames` is expanded to cover the full
+        range `[0, n]`
 
-    :returns:
-        - boundaries : np.ndarray [shape=(n_subboundaries,)]
-            List of sub-divided segment boundaries
+    Returns
+    -------
+    boundaries : np.ndarray [shape=(n_subboundaries,)]
+        List of sub-divided segment boundaries
 
-    .. seealso:: :func:`librosa.segment.agglomerative`
+    See Also
+    --------
+    :func:`librosa.beat.beat_track` : Beat tracking
+    :func:`librosa.onset.onset_detect` : Onset detection
+    :func:`librosa.segment.agglomerative` : Temporal segmentation
     '''
 
     frames = util.fix_frames(frames, 0, data.shape[1], pad=pad)
@@ -237,37 +254,39 @@ def agglomerative(data, k, clusterer=None):
     """Bottom-up temporal segmentation.
 
     Use a temporally-constrained agglomerative clustering routine to partition
-    ``data`` into ``k`` contiguous segments.
+    `data` into `k` contiguous segments.
 
-    :usage:
-        >>> # Cluster by Mel spectrogram similarity
-        >>> # Break into 32 segments
-        >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> S = librosa.feature.melspectrogram(y=y, sr=sr)
-        >>> boundary_frames = librosa.segment.agglomerative(S, 32)
-        >>> librosa.frames_to_time(boundary_frames, sr=sr)
-        array([  0.   ,  18.297,  18.367,  21.989,  22.059,  23.382,  23.452,
-                25.681,  25.751,  27.074,  27.144,  33.065,  33.135,  34.458,
-                34.528,  36.757,  36.827,  38.22 ,  41.842,  41.912,  44.373,
-                44.536,  47.833,  47.949,  51.525,  51.641,  52.918,  52.988,
-                55.217,  55.287,  56.61 ,  56.68 ])
+    Examples
+    --------
+    >>> # Cluster by Mel spectrogram similarity
+    >>> # Break into 32 segments
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> S = librosa.feature.melspectrogram(y=y, sr=sr)
+    >>> boundary_frames = librosa.segment.agglomerative(S, 32)
+    >>> librosa.frames_to_time(boundary_frames, sr=sr)
+    array([  0.   ,  18.297,  18.367,  21.989,  22.059,  23.382,  23.452,
+            25.681,  25.751,  27.074,  27.144,  33.065,  33.135,  34.458,
+            34.528,  36.757,  36.827,  38.22 ,  41.842,  41.912,  44.373,
+            44.536,  47.833,  47.949,  51.525,  51.641,  52.918,  52.988,
+            55.217,  55.287,  56.61 ,  56.68 ])
 
-    :parameters:
-      - data     : np.ndarray [shape=(d, t)]
-          feature matrix
+    Parameters
+    ----------
+    data     : np.ndarray [shape=(d, t)]
+        feature matrix
 
-      - k        : int > 0 [scalar]
-          number of segments to produce
+    k        : int > 0 [scalar]
+        number of segments to produce
 
-      - clusterer : sklearn.cluster.AgglomerativeClustering or ``None``
-          An optional agglomerativeclustering object.
-          If ``None``, a constrained Ward object is instantiated.
+    clusterer : sklearn.cluster.AgglomerativeClustering or `None`
+        An optional AgglomerativeClustering object.
+        If `None`, a constrained Ward object is instantiated.
 
-    :returns:
-      - boundaries : np.ndarray [shape=(k,)]
-          left-boundaries (frame numbers) of detected segments. This
-          will always include ``0`` as the first left-boundary.
-
+    Returns
+    -------
+    boundaries : np.ndarray [shape=(k,)]
+        left-boundaries (frame numbers) of detected segments. This
+        will always include `0` as the first left-boundary.
     """
 
     if clusterer is None:
