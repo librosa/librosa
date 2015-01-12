@@ -17,9 +17,14 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64,
     """Basic onset detector.  Locate note onset events by picking peaks in an
     onset strength envelope.
 
-    .. seealso:: :func:`librosa.onset.onset_strength()`
+    The `peak_pick` parameters were chosen by large-scale hyper-parameter
+    optimization over the dataset provided by [1]_.
 
-    :usage:
+    .. [1] https://github.com/CPJKU/onset_db
+
+
+    Examples
+    --------
         >>> # Get onset times from a signal
         >>> y, sr = librosa.load(librosa.util.example_audio_file())
         >>> onset_frames = librosa.onset.onset_detect(y=y, sr=sr,
@@ -39,40 +44,43 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64,
                 2.923,  3.048,  3.268,  3.741,  4.182,  4.769,  4.873,  6.04 ,
                 6.615,  6.745,  6.96 ,  7.419])
 
-    :parameters:
-      - y          : np.ndarray [shape=(n,)]
-          audio time series
+    Parameters
+    ----------
+    y          : np.ndarray [shape=(n,)]
+        audio time series
 
-      - sr         : int > 0 [scalar]
-          sampling rate of ``y``
+    sr         : int > 0 [scalar]
+        sampling rate of `y`
 
-      - onset_envelope     : np.ndarray [shape=(m,)]
-          (optional) pre-computed onset stength envelope
+    onset_envelope     : np.ndarray [shape=(m,)]
+        (optional) pre-computed onset strength envelope
 
-      - hop_length : int > 0 [scalar]
-          hop length (in samples)
+    hop_length : int > 0 [scalar]
+        hop length (in samples)
 
-      - *kwargs*
-          Additional parameters for peak picking
+    kwargs : additional keyword arguments
+        Additional parameters for peak picking.
 
-          See :func:`librosa.util.peak_pick()` for details
+        See :func:`librosa.util.peak_pick()` for details.
 
-    :returns:
+    Returns
+    -------
 
-      - onsets : np.ndarray [shape=(n_onsets,)]
-          estimated frame numbers of onsets
+    onsets : np.ndarray [shape=(n_onsets,)]
+        estimated frame numbers of onsets
 
-    :raises:
-      - ValueError
-          if neither ``y`` nor ``onsets`` are provided
+        .. note::
+            If no onset strength could be detected, onset_detect returns
+            an empty list.
 
-    .. note::
-      If no onset strength could be detected, onset_detect returns
-      an empty list.
+    Raises
+    ------
+    ValueError
+        if neither `y` nor `onsets` are provided
 
-      The peak_pick parameters were chosen by large-scale hyper-parameter
-      optimization over this dataset:
-      https://github.com/CPJKU/onset_db
+    See Also
+    --------
+    :func:`librosa.onset.onset_strength`
     """
 
     # First, get the frame->beat strength profile if we don't already have one
@@ -108,73 +116,76 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
                    feature=None, aggregate=None, **kwargs):
     """Compute a spectral flux onset strength envelope.
 
-    Onset strength at time t is determined by:
+    Onset strength at time `t` is determined by:
 
-    ``mean_f max(0, S[f, t+1] - S[f, t])``
+    `mean_f max(0, S[f, t+1] - S[f, t])`
 
-    By default, if a time series ``y`` is provided, S will be the
+    By default, if a time series `y` is provided, S will be the
     log-power Mel spectrogram.
 
-    :usage:
-        >>> # Mean aggregation with Mel-scaled spectrogram
-        >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> librosa.onset.onset_strength(y=y, sr=sr)
-        array([ 0.,  0., ...,  0.,  0.])
+    Examples
+    --------
+    >>> # Mean aggregation with Mel-scaled spectrogram
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> librosa.onset.onset_strength(y=y, sr=sr)
+    array([ 0.,  0., ...,  0.,  0.])
 
-        >>> # Median aggregation
-        >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> librosa.onset.onset_strength(y=y, sr=sr, aggregate=np.median)
-        array([ 0.,  0., ...,  0.,  0.])
+    >>> # Median aggregation
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> librosa.onset.onset_strength(y=y, sr=sr, aggregate=np.median)
+    array([ 0.,  0., ...,  0.,  0.])
 
-        >>> # Log-frequency spectrogram instead of Mel
-        >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> librosa.onset.onset_strength(y=y, sr=sr,
-                                         feature=librosa.feature.logfsgram)
-        array([ 0.,  0., ...,  0.,  0.])
+    >>> # Log-frequency spectrogram instead of Mel
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> librosa.onset.onset_strength(y=y, sr=sr,
+                                     feature=librosa.feature.logfsgram)
+    array([ 0.,  0., ...,  0.,  0.])
 
-        >>> # Or Mel spectrogram with customized options
-        >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> librosa.onset.onset_strength(y=y, sr=sr, n_mels=128, fmin=32,
-                                         fmax=8000)
-        array([ 0.,  0., ...,  0.,  0.])
+    >>> # Or Mel spectrogram with customized options
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> librosa.onset.onset_strength(y=y, sr=sr, n_mels=128, fmin=32,
+                                     fmax=8000)
+    array([ 0.,  0., ...,  0.,  0.])
 
-    :parameters:
-      - y        : np.ndarray [shape=(n,)]
-          audio time-series
+    Parameters
+    ----------
+    y        : np.ndarray [shape=(n,)]
+        audio time-series
 
-      - sr       : int > 0 [scalar]
-          sampling rate of ``y``
+    sr       : int > 0 [scalar]
+        sampling rate of `y`
 
-      - S        : np.ndarray [shape=(d, m)]
-          pre-computed (log-power) spectrogram
+    S        : np.ndarray [shape=(d, m)]
+        pre-computed (log-power) spectrogram
 
-      - detrend : bool [scalar]
-          Filter the onset strength to remove the DC component
+    detrend : bool [scalar]
+        Filter the onset strength to remove the DC component
 
-      - centering : bool [scalar]
-          Shift the onset function by ``n_fft / (2 * hop_length)`` frames
+    centering : bool [scalar]
+        Shift the onset function by `n_fft / (2 * hop_length)` frames
 
-      - feature : function
-          Function for computing time-series features, eg, scaled spectrograms.
-          By default, uses :func:`librosa.feature.melspectrogram`
+    feature : function
+        Function for computing time-series features, eg, scaled spectrograms.
+        By default, uses :func:`librosa.feature.melspectrogram`
 
-      - aggregate : function
-          Aggregation function to use when combining onsets
-          at different frequency bins.
-          Default: ``np.mean``
+    aggregate : function
+        Aggregation function to use when combining onsets
+        at different frequency bins.
 
-      - *kwargs*
-          Additional parameters to ``feature()``, if ``S`` is not provided.
+        Default: `np.mean`
 
-    .. note:: if ``S`` is provided, then ``(y, sr)`` are optional.
+    kwargs : additional keyword arguments
+        Additional parameters to `feature()`, if `S` is not provided.
 
-    :returns:
-      - onset_envelope   : np.ndarray [shape=(m,)]
-          vector containing the onset strength envelope
+    Returns
+    -------
+    onset_envelope   : np.ndarray [shape=(m,)]
+        vector containing the onset strength envelope
 
-    :raises:
-      - ValueError
-          if neither ``(y, sr)`` nor ``S`` are provided
+    Raises
+    ------
+    ValueError
+        if neither `(y, sr)` nor `S` are provided
     """
 
     if feature is None:
