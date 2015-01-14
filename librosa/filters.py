@@ -267,7 +267,8 @@ def logfrequency(sr, n_fft, n_bins=84, bins_per_octave=12, tuning=0.0,
 
 @cache
 def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
-               window=None, resolution=2, pad=False, **kwargs):
+               window=None, resolution=2, pad=False,
+               return_lengths=False, **kwargs):
     r'''Construct a constant-Q basis.
 
     :usage:
@@ -309,6 +310,9 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
           By default, padding is done with zeros, but this can be overridden
           by setting the ``mode=`` field in *kwargs*.
 
+      - return_lengths : boolean
+          Whether to return the pre-padding filter lengths along with the filters.
+
       - *kwargs*
           Additional keyword arguments to ``np.pad()`` when ``pad==True``.
 
@@ -336,6 +340,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     Q = float(resolution) / (2.0**(1. / bins_per_octave) - 1)
 
     filters = []
+    lengths = []
     for i in np.arange(n_bins, dtype=float):
 
         freq = fmin * 2.0**(i / bins_per_octave)
@@ -344,6 +349,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 
         # Length of the filter
         ilen = np.ceil(Q * sr / freq)
+        lengths.append(ilen)
 
         # Build the filter
         win = np.exp(Q * 1j * np.linspace(0, 2 * np.pi, ilen, endpoint=False))
@@ -364,7 +370,10 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
         for i in range(len(filters)):
             filters[i] = librosa.util.pad_center(filters[i], max_len, **kwargs)
 
-    return filters
+    if return_lengths:
+        return filters, lengths
+    else:
+        return filters
 
 
 @cache
