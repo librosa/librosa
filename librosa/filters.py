@@ -337,8 +337,13 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 
     filters = []
     for i in np.arange(n_bins, dtype=float):
-        # Length of this filter
-        ilen = np.ceil(Q * sr / (fmin * 2.0**(i / bins_per_octave)))
+
+        freq = fmin * 2.0**(i / bins_per_octave)
+        if (1+1.0/Q)*freq > sr/2:
+            raise ValueError("Filter pass band lies beyond Nyquist")
+
+        # Length of the filter
+        ilen = np.ceil(Q * sr / freq)
 
         # Build the filter
         win = np.exp(Q * 1j * np.linspace(0, 2 * np.pi, ilen, endpoint=False))
