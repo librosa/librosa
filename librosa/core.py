@@ -708,6 +708,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     # Conjugate-transpose the basis
     fft_basis = np.fft.fft(basis, n=n_fft, axis=1).conj()
+    fft_basis = sparsify_fft_basis(fft_basis)
 
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
 
@@ -777,6 +778,33 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     # Transpose magic here to ensure column-contiguity
     return np.ascontiguousarray(cqt_resp.T).T
+
+@cache
+def sparsify_fft_basis(fft_basis, sparse_limit=0.01):
+    '''
+    Return a sparse version of input fft_basis.
+
+    `sparse_limit` is the percentage of the original magnitude sum that can
+    be zeroed out for each filter.
+    '''
+    fft_basis = fft_basis.copy()
+
+    if sparse_limit > 0.0:
+        for i, kern in enumerate(fft_basis):
+
+            kern_mag = np.abs(kern)
+            band_sum = np.sum(kern_mag)
+            sorted_weights = np.sort(kern_mag)[::-1]
+            cumpct = np.cumsum(sorted_weights)/band_sum
+            cutoff_ind = np.where(cumpct >= (1-sparse_limit))[0][0]
+            cutoff_val = sorted_weights[cutoff_ind]
+            zero_inds = np.where(kern_mag < cutoff_val)
+            fft_basis[i][zero_inds] = 0.0
+
+        import scipy.sparse
+        fft_basis = scipy.sparse.csr_matrix(fft_basis)
+
+    return fft_basis
 
 
 @cache
