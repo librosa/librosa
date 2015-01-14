@@ -690,16 +690,20 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     fmin_top = freqs[-bins_per_octave-1]
 
     # Generate the basis filters
-    basis = np.asarray(filters.constant_q(sr,
-                                          fmin=fmin_top,
-                                          n_bins=bins_per_octave,
-                                          bins_per_octave=bins_per_octave,
-                                          tuning=tuning,
-                                          resolution=resolution,
-                                          pad=True))
+    basis, lengths = filters.constant_q(sr,
+                                        fmin=fmin_top,
+                                        n_bins=bins_per_octave,
+                                        bins_per_octave=bins_per_octave,
+                                        tuning=tuning,
+                                        resolution=resolution,
+                                        pad=True,
+                                        return_lengths=True)
+
+    basis = np.asarray(basis)
 
     # FFT the filters
     max_filter_length = basis.shape[1]
+    min_filter_length = min(lengths)
     n_fft = int(2.0**(np.ceil(np.log2(max_filter_length))))
 
     # Conjugate-transpose the basis
@@ -717,14 +721,14 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         to the desired resolution.
         '''
 
-        # If target_hop <= n_fft / 2:
+        # If target_hop <= min_filter_length / 2:
         #   my_hop = target_hop
         # else:
         #   my_hop = target_hop * 2**(-k)
 
         zoom_factor = int(np.maximum(0,
                                      1 + np.ceil(np.log2(target_hop)
-                                                 - np.log2(n_fft))))
+                                                 - np.log2(min_filter_length))))
 
         my_hop = int(target_hop / (2**(zoom_factor)))
 
