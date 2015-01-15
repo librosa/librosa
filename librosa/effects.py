@@ -79,8 +79,8 @@ def harmonic(y):
     See Also
     --------
     :func:`librosa.decompose.hpss` : HPSS for spectrograms
-    :func:`librosa.effects.hpss` : Separate harmonic and percussive components
-    :func:`librosa.effects.percussive` : Extract only the percussive component
+    :func:`hpss` : Separate harmonic and percussive components
+    :func:`percussive` : Extract only the percussive component
     '''
 
     # Compute the STFT matrix
@@ -118,8 +118,8 @@ def percussive(y):
     See Also
     --------
     :func:`librosa.decompose.hpss` : HPSS for spectrograms
-    :func:`librosa.effects.hpss` : Separate harmonic and percussive components
-    :func:`librosa.effects.harmonic` : Extract only the harmonic component
+    :func:`hpss` : Separate harmonic and percussive components
+    :func:`harmonic` : Extract only the harmonic component
     '''
 
     # Compute the STFT matrix
@@ -165,7 +165,7 @@ def time_stretch(y, rate):
     See Also
     --------
     :func:`librosa.core.phase_vocoder` : spectrogram phase vocoder
-    :func:`librosa.effects.pitch_shift` : pitch shifting
+    :func:`pitch_shift` : pitch shifting
     '''
 
     # Construct the stft
@@ -219,7 +219,7 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12):
     See Also
     --------
     :func:`librosa.core.phase_vocoder` : spectrogram phase vocoder
-    :func:`librosa.effects.time_stretch` : time stretching
+    :func:`time_stretch` : time stretching
     '''
 
     rate = 2.0 ** (-float(n_steps) / bins_per_octave)

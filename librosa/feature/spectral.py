@@ -593,7 +593,7 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096, hop_length=512, **kwargs):
         If not provided, it will be automatically estimated.
 
     kwargs : additional keyword arguments
-        See :func:`librosa.filters.logfrequency()`
+        See :func:`librosa.filters.logfrequency`
 
     Returns
     -------
@@ -676,7 +676,7 @@ def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
 
     kwargs : additional keyword arguments
         Arguments to parameterize chroma filters.
-        See :func:`librosa.filters.chroma()` for details.
+        See :func:`librosa.filters.chroma` for details.
 
     Returns
     -------
@@ -757,7 +757,7 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
         number of MFCCs to return
 
     kwargs : additional keyword arguments
-        Arguments to :func:`librosa.feature.melspectrogram`, if operating
+        Arguments to :func:`melspectrogram`, if operating
         on time series input
 
     Returns
@@ -813,11 +813,11 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     hop_length : int > 0 [scalar]
         number of samples between successive frames.
-        See :func:`librosa.core.stft()`
+        See :func:`librosa.core.stft`
 
     kwargs : additional keyword arguments
       Mel filter bank parameters.
-      See :func:`librosa.filters.mel()` for details.
+      See :func:`librosa.filters.mel` for details.
 
     Returns
     -------

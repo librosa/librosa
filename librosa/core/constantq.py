@@ -88,11 +88,11 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         Filter resolution factor. Larger values use longer windows.
 
     res_type : str
-        Resampling type, see :func:`librosa.core.resample()` for details.
+        Resampling type, see :func:`resample` for details.
 
     aggregate : None or function
         Aggregation function for time-oversampling energy aggregation.
-        By default, `np.mean`.  See :func:`librosa.feature.sync()`.
+        By default, `np.mean`.  See :func:`librosa.feature.sync`.
 
     Returns
     -------

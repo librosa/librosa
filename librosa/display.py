@@ -213,7 +213,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
     x_axis : None or {'time', 'frames', 'off'}
         - If `None` or `'off'`, no x axis is displayed.
         - If `'time'`, markers are shown as milliseconds, seconds,
-          minutes, or hours.  (See :func:`time_ticks()`.)
+          minutes, or hours.  (See :func:`time_ticks`.)
         - If `'frames'`, markers are shown as frame counts.
 
     y_axis : None or str

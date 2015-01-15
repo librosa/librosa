@@ -571,7 +571,7 @@ def match_intervals(intervals_from, intervals_to):
 
     See Also
     --------
-    :func:`librosa.util.match_events`
+    :func:`match_events`
     '''
 
     # The overlap score of a beat with a segment is defined as
@@ -642,7 +642,7 @@ def match_events(events_from, events_to):
 
     See Also
     --------
-    :func:`librosa.util.match_intervals`
+    :func:`match_intervals`
     '''
     output = np.empty_like(events_from, dtype=np.int)
 
@@ -921,7 +921,7 @@ def buf_to_int(x, n_bytes=2):
 
     See Also
     --------
-    :func:`librosa.util.buf_to_float`
+    :func:`buf_to_float`
 
     Parameters
     ----------
@@ -954,7 +954,7 @@ def buf_to_float(x, n_bytes=2, dtype=np.float32):
 
     See Also
     --------
-    :func:`librosa.util.buf_to_float`
+    :func:`buf_to_float`
 
     Parameters
     ----------
