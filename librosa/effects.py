@@ -38,9 +38,9 @@ def hpss(y):
 
     See Also
     --------
-    :func:`librosa.decompose.hpss` : HPSS on spectrograms
-    :func:`harmonic` : Extract only the harmonic component
-    :func:`percussive` : Extract only the percussive component
+    harmonic : Extract only the harmonic component
+    percussive : Extract only the percussive component
+    librosa.decompose.hpss : HPSS on spectrograms
     '''
 
     # Compute the STFT matrix
@@ -78,9 +78,9 @@ def harmonic(y):
 
     See Also
     --------
-    :func:`librosa.decompose.hpss` : HPSS for spectrograms
-    :func:`hpss` : Separate harmonic and percussive components
-    :func:`percussive` : Extract only the percussive component
+    hpss : Separate harmonic and percussive components
+    percussive : Extract only the percussive component
+    librosa.decompose.hpss : HPSS for spectrograms
     '''
 
     # Compute the STFT matrix
@@ -117,9 +117,9 @@ def percussive(y):
 
     See Also
     --------
-    :func:`librosa.decompose.hpss` : HPSS for spectrograms
-    :func:`hpss` : Separate harmonic and percussive components
-    :func:`harmonic` : Extract only the harmonic component
+    hpss : Separate harmonic and percussive components
+    harmonic : Extract only the harmonic component
+    librosa.decompose.hpss : HPSS for spectrograms
     '''
 
     # Compute the STFT matrix
@@ -164,8 +164,8 @@ def time_stretch(y, rate):
 
     See Also
     --------
-    :func:`librosa.core.phase_vocoder` : spectrogram phase vocoder
-    :func:`pitch_shift` : pitch shifting
+    pitch_shift : pitch shifting
+    librosa.core.phase_vocoder : spectrogram phase vocoder
     '''
 
     # Construct the stft
@@ -218,8 +218,8 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12):
 
     See Also
     --------
-    :func:`librosa.core.phase_vocoder` : spectrogram phase vocoder
-    :func:`time_stretch` : time stretching
+    time_stretch : time stretching
+    librosa.core.phase_vocoder : spectrogram phase vocoder
     '''
 
     rate = 2.0 ** (-float(n_steps) / bins_per_octave)

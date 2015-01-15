@@ -61,7 +61,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64,
     kwargs : additional keyword arguments
         Additional parameters for peak picking.
 
-        See :func:`librosa.util.peak_pick` for details.
+        See `librosa.util.peak_pick` for details.
 
     Returns
     -------
@@ -80,7 +80,8 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64,
 
     See Also
     --------
-    :func:`onset_strength`
+    onset_strength : compute onset strength per-frame
+    librosa.util.peak_pick : pick peaks from a time series
     """
 
     # First, get the frame->beat strength profile if we don't already have one
@@ -166,7 +167,7 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
 
     feature : function
         Function for computing time-series features, eg, scaled spectrograms.
-        By default, uses :func:`librosa.feature.melspectrogram`
+        By default, uses `librosa.feature.melspectrogram`
 
     aggregate : function
         Aggregation function to use when combining onsets
