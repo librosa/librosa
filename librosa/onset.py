@@ -61,7 +61,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64,
     kwargs : additional keyword arguments
         Additional parameters for peak picking.
 
-        See :func:`librosa.util.peak_pick()` for details.
+        See :func:`librosa.util.peak_pick` for details.
 
     Returns
     -------
@@ -80,7 +80,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64,
 
     See Also
     --------
-    :func:`librosa.onset.onset_strength`
+    :func:`onset_strength`
     """
 
     # First, get the frame->beat strength profile if we don't already have one
