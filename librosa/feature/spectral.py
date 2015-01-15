@@ -57,19 +57,27 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         FFT window size
 
     hop_length : int > 0 [scalar]
-        hop length for STFT. See :func:`librosa.core.stft` for details.
+        hop length for STFT. See `librosa.core.stft` for details.
 
     freq : None or np.ndarray [shape=(d,) or shape=(d, t)]
         Center frequencies for spectrogram bins.
         If `None`, then FFT bin center frequencies are used.
         Otherwise, it can be a single array of `d` center frequencies,
         or a matrix of center frequencies as constructed by
-        :func:`librosa.core.ifgram`
+        `librosa.core.ifgram`
 
     Returns
     -------
     centroid : np.ndarray [shape=(1, t)]
         centroid frequencies
+
+    See Also
+    --------
+    librosa.core.stft
+        Short-time Fourier Transform
+
+    librosa.core.ifgram
+        Instantaneous-frequency spectrogram
     '''
 
     # If we don't have a spectrogram, build one
@@ -139,14 +147,14 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         FFT window size
 
     hop_length : int > 0 [scalar]
-        hop length for STFT. See :func:`librosa.core.stft` for details.
+        hop length for STFT. See `librosa.core.stft` for details.
 
     freq : None or np.ndarray [shape=(d,) or shape=(d, t)]
         Center frequencies for spectrogram bins.
         If `None`, then FFT bin center frequencies are used.
         Otherwise, it can be a single array of `d` center frequencies,
         or a matrix of center frequencies as constructed by
-        :func:`librosa.core.ifgram`
+        `librosa.core.ifgram`
 
     centroid : None or np.ndarray [shape=(1, t)]
         pre-computed centroid frequencies
@@ -219,14 +227,14 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         FFT window size
 
     hop_length : int > 0 [scalar]
-        hop length for STFT. See :func:`librosa.core.stft` for details.
+        hop length for STFT. See `librosa.core.stft` for details.
 
     freq : None or np.ndarray [shape=(d,) or shape=(d, t)]
         Center frequencies for spectrogram bins.
         If `None`, then FFT bin center frequencies are used.
         Otherwise, it can be a single array of `d` center frequencies,
         or a matrix of center frequencies as constructed by
-        :func:`librosa.core.ifgram`
+        `librosa.core.ifgram`
 
     n_bands : int > 1
         number of frequency bands
@@ -317,7 +325,7 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         FFT window size
 
     hop_length : int > 0 [scalar]
-        hop length for STFT. See :func:`librosa.core.stft` for details.
+        hop length for STFT. See `librosa.core.stft` for details.
 
     freq : None or np.ndarray [shape=(d,) or shape=(d, t)]
         Center frequencies for spectrogram bins.
@@ -388,7 +396,7 @@ def rms(y=None, S=None, n_fft=2048, hop_length=512):
         FFT window size
 
     hop_length : int > 0 [scalar]
-        hop length for STFT. See :func:`librosa.core.stft` for details.
+        hop length for STFT. See `librosa.core.stft` for details.
 
     Returns
     -------
@@ -439,7 +447,7 @@ def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         FFT window size
 
     hop_length : int > 0 [scalar]
-        hop length for STFT. See :func:`librosa.core.stft` for details.
+        hop length for STFT. See `librosa.core.stft` for details.
 
     order : int > 0
         order of the polynomial to fit
@@ -449,7 +457,7 @@ def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         If `None`, then FFT bin center frequencies are used.
         Otherwise, it can be a single array of `d` center frequencies,
         or a matrix of center frequencies as constructed by
-        :func:`librosa.core.ifgram`
+        `librosa.core.ifgram`
 
     Returns
     -------
@@ -504,15 +512,15 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True,
 
     center : bool
         If `True`, frames are centered by padding the edges of `y`.
-        This is similar to the padding in :func:`librosa.core.stft`,
+        This is similar to the padding in `librosa.core.stft`,
         but uses edge-value copies instead of reflection.
 
     kwargs : additional keyword arguments
-        See :func:`librosa.core.zero_crossings`
+        See `librosa.core.zero_crossings`
 
         .. note:: By default, the `pad` parameter is set to `False`, which
             differs from the default specified by
-            :func:`librosa.core.zero_crossings`.
+            `librosa.core.zero_crossings`.
 
     Returns
     -------
@@ -522,7 +530,8 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True,
 
     See Also
     --------
-    :func:`librosa.core.zero_crossings`
+    librosa.core.zero_crossings
+        Compute zero-crossings in a time-series
     '''
 
     util.valid_audio(y)
@@ -582,7 +591,7 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096, hop_length=512, **kwargs):
         FFT window size
 
     hop_length : int > 0 [scalar]
-        hop length for STFT. See :func:`librosa.core.stft` for details.
+        hop length for STFT. See `librosa.core.stft` for details.
 
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave. Defaults to 12.
@@ -593,7 +602,7 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096, hop_length=512, **kwargs):
         If not provided, it will be automatically estimated.
 
     kwargs : additional keyword arguments
-        See :func:`librosa.filters.logfrequency`
+        See `librosa.filters.logfrequency`
 
     Returns
     -------
@@ -660,7 +669,7 @@ def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
 
     norm : float or None
         Column-wise normalization.
-        See :func:`librosa.util.normalize` for details.
+        See `librosa.util.normalize` for details.
 
         If `None`, no normalization is performed.
 
@@ -676,12 +685,19 @@ def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
 
     kwargs : additional keyword arguments
         Arguments to parameterize chroma filters.
-        See :func:`librosa.filters.chroma` for details.
+        See `librosa.filters.chroma` for details.
 
     Returns
     -------
     chromagram  : np.ndarray [shape=(n_chroma, t)]
         Normalized energy for each chroma bin at each frame.
+
+    See Also
+    --------
+    librosa.filters.chroma
+        Chroma filter bank construction
+    librosa.util.normalize
+        Vector normalization
     """
 
     n_chroma = kwargs.get('n_chroma', 12)
@@ -757,13 +773,17 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
         number of MFCCs to return
 
     kwargs : additional keyword arguments
-        Arguments to :func:`melspectrogram`, if operating
+        Arguments to `melspectrogram`, if operating
         on time series input
 
     Returns
     -------
     M     : np.ndarray [shape=(n_mfcc, t)]
         MFCC sequence
+
+    See Also
+    --------
+    melspectrogram
     """
 
     if S is None:
@@ -813,16 +833,24 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     hop_length : int > 0 [scalar]
         number of samples between successive frames.
-        See :func:`librosa.core.stft`
+        See `librosa.core.stft`
 
     kwargs : additional keyword arguments
       Mel filter bank parameters.
-      See :func:`librosa.filters.mel` for details.
+      See `librosa.filters.mel` for details.
 
     Returns
     -------
     S : np.ndarray [shape=(n_mels, t)]
         Mel power spectrogram
+
+    See Also
+    --------
+    librosa.filters.mel
+        Mel filter bank construction
+
+    librosa.core.stft
+        Short-time Fourier Transform
     """
 
     # Compute the STFT

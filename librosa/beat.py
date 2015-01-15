@@ -111,7 +111,7 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=64,
 
     See Also
     --------
-    :func:`librosa.onset.onset_strength`
+    librosa.onset.onset_strength
     '''
 
     # First, get the frame->beat strength profile if we don't already have one
@@ -193,7 +193,7 @@ def estimate_tempo(onset_envelope, sr=22050, hop_length=64, start_bpm=120,
 
     See Also
     --------
-    :func:`librosa.onset.onset_strength`
+    librosa.onset.onset_strength
     """
 
     fft_res = float(sr) / hop_length

@@ -40,8 +40,8 @@ def frames_to_samples(frames, hop_length=512, n_fft=None):
 
     See Also
     --------
-    :func:`frames_to_time` : convert frame indices to time values
-    :func:`samples_to_frames` : convert sample indices to frame indices
+    frames_to_time : convert frame indices to time values
+    samples_to_frames : convert sample indices to frame indices
     """
 
     offset = 0
@@ -88,8 +88,8 @@ def samples_to_frames(samples, hop_length=512, n_fft=None):
 
     See Also
     --------
-    :func:`samples_to_time` : convert sample indices to time values
-    :func:`frames_to_samples` : convert frame indices to sample indices
+    samples_to_time : convert sample indices to time values
+    frames_to_samples : convert frame indices to sample indices
     """
 
     offset = 0
@@ -136,8 +136,8 @@ def frames_to_time(frames, sr=22050, hop_length=512, n_fft=None):
 
     See Also
     --------
-    :func:`time_to_frames` : convert time values to frame indices
-    :func:`frames_to_samples` : convert frame indices to sample indices
+    time_to_frames : convert time values to frame indices
+    frames_to_samples : convert frame indices to sample indices
     """
 
     samples = frames_to_samples(frames,
@@ -183,8 +183,8 @@ def time_to_frames(times, sr=22050, hop_length=512, n_fft=None):
 
     See Also
     --------
-    :func:`frames_to_time` : convert frame indices to time values
-    :func:`time_to_samples` : convert time values to sample indices
+    frames_to_time : convert frame indices to time values
+    time_to_samples : convert time values to sample indices
     """
 
     samples = time_to_samples(times, sr=sr)
@@ -216,8 +216,8 @@ def time_to_samples(times, sr=22050):
 
     See Also
     --------
-    :func:`time_to_frames` : convert time values to frame indices
-    :func:`samples_to_time` : convert sample indices to time values
+    time_to_frames : convert time values to frame indices
+    samples_to_time : convert sample indices to time values
     '''
 
     return (times * sr).astype(int)
@@ -252,8 +252,8 @@ def samples_to_time(samples, sr=22050):
 
     See Also
     --------
-    :func:`samples_to_frames` : convert sample indices to frame indices
-    :func:`time_to_samples` : convert time values to sample indices
+    samples_to_frames : convert sample indices to frame indices
+    time_to_samples : convert time values to sample indices
     '''
 
     return samples / float(sr)
@@ -280,7 +280,7 @@ def note_to_hz(note, **kwargs):
         One or more note names to convert
 
     kwargs : additional keyword arguments
-        Additional parameters to :func:`note_to_midi`
+        Additional parameters to `note_to_midi`
 
     Returns
     -------
@@ -289,7 +289,9 @@ def note_to_hz(note, **kwargs):
 
     See Also
     --------
-    :func:`midi_to_hz`, :func:`note_to_midi`, :func:`hz_to_note`
+    midi_to_hz
+    note_to_midi
+    hz_to_note
     '''
     return midi_to_hz(note_to_midi(note, **kwargs))
 
@@ -336,7 +338,8 @@ def note_to_midi(note, round_midi=True):
 
     See Also
     --------
-    :func:`midi_to_note`, :func:`note_to_hz`
+    midi_to_note
+    note_to_hz
     '''
 
     if not isinstance(note, str):
@@ -414,7 +417,9 @@ def midi_to_note(midi, octave=True, cents=False):
 
     See Also
     --------
-    :func:`midi_to_hz`, :func:`note_to_midi`, :func:`hz_to_note`
+    midi_to_hz
+    note_to_midi
+    hz_to_note
     '''
 
     if not np.isscalar(midi):
@@ -461,7 +466,8 @@ def midi_to_hz(notes):
 
     See Also
     --------
-    :func:`hz_to_midi`, :func:`note_to_hz`
+    hz_to_midi
+    note_to_hz
     """
 
     notes = np.asarray([notes]).flatten()
@@ -490,7 +496,9 @@ def hz_to_midi(frequencies):
 
     See Also
     --------
-    :func:`midi_to_hz`, :func:`note_to_midi`, :func:`hz_to_note`
+    midi_to_hz
+    note_to_midi
+    hz_to_note
     """
 
     frequencies = np.asarray([frequencies]).flatten()
@@ -519,7 +527,7 @@ def hz_to_note(frequencies, **kwargs):
         Input frequencies, specified in Hz
 
     kwargs : additional keyword arguments
-        Arguments passed through to :func:`midi_to_note`
+        Arguments passed through to `midi_to_note`
 
     Returns
     -------
@@ -529,7 +537,9 @@ def hz_to_note(frequencies, **kwargs):
 
     See Also
     --------
-    :func:`hz_to_midi`, :func:`midi_to_note`, :func:`note_to_hz`
+    hz_to_midi
+    midi_to_note
+    note_to_hz
     '''
     return midi_to_note(hz_to_midi(frequencies), **kwargs)
 
@@ -558,7 +568,7 @@ def hz_to_mel(frequencies, htk=False):
 
     See Also
     --------
-    :func:`mel_to_hz`
+    mel_to_hz
     """
 
     frequencies = np.asarray([frequencies]).flatten()
@@ -614,7 +624,7 @@ def mel_to_hz(mels, htk=False):
 
     See Also
     --------
-    :func:`hz_to_mel`
+    hz_to_mel
     """
 
     mels = np.asarray([mels], dtype=float).flatten()
@@ -662,7 +672,7 @@ def hz_to_octs(frequencies, A440=440.0):
 
     See Also
     --------
-    :func:`octs_to_hz`
+    octs_to_hz
     """
     frequencies = np.asarray([frequencies]).flatten()
     return np.log2(frequencies / (float(A440) / 16))
@@ -694,7 +704,7 @@ def octs_to_hz(octs, A440=440.0):
 
     See Also
     --------
-    :func:`hz_to_octs`
+    hz_to_octs
     """
     octs = np.asarray([octs]).flatten()
     return (float(A440) / 16)*(2.0**octs)
@@ -847,7 +857,7 @@ def A_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
 
     See Also
     --------
-    :func:`perceptual_weighting`
+    perceptual_weighting
     '''
 
     # Vectorize to make our lives easier

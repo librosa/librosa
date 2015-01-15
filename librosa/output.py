@@ -103,7 +103,11 @@ def frames_csv(path, frames, sr=22050, hop_length=512, **kwargs):
         number of samples between success frames
 
     kwargs : additional keyword arguments
-        See :func:`times_csv`
+        Arguments passed through to `times_csv`
+
+    See Also
+    --------
+    times_csv
     """
 
     times = core.frames_to_time(frames, sr=sr, hop_length=hop_length)

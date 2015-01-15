@@ -62,7 +62,14 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
 
     Returns
     -------
-    See `matplotlib.pyplot.xticks` or `yticks` for details.
+    locs
+    labels
+        Locations and labels of tick marks
+
+    See Also
+    --------
+    matplotlib.pyplot.xticks
+    matplotlib.pyplot.yticks
     '''
 
     n_ticks = kwargs.pop('n_ticks', 5)
@@ -213,7 +220,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
     x_axis : None or {'time', 'frames', 'off'}
         - If `None` or `'off'`, no x axis is displayed.
         - If `'time'`, markers are shown as milliseconds, seconds,
-          minutes, or hours.  (See :func:`time_ticks`.)
+          minutes, or hours
         - If `'frames'`, markers are shown as frame counts.
 
     y_axis : None or str
@@ -259,8 +266,8 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
 
     See Also
     --------
-    :func:`cmap` : Automatic colormap detection
-    :func:`time_ticks`: time-formatted tick marks
+    cmap : Automatic colormap detection
+    time_ticks : time-formatted tick marks
     '''
 
     kwargs.setdefault('aspect', 'auto')
