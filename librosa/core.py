@@ -749,6 +749,9 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
             my_cqt = feature.sync(my_cqt, bounds,
                                   aggregate=aggregate)
 
+        # normalize as in Parseval's relation
+        my_cqt /= n_fft
+
         return my_cqt
 
     cqt_resp = []
