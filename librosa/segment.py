@@ -149,7 +149,7 @@ def structure_feature(rec, pad=True, inverse=False):
 
     See Also
     --------
-    :func:`recurrence_matrix`
+    recurrence_matrix : build a recurrence matrix from feature vectors
     '''
 
     t = rec.shape[1]
@@ -216,9 +216,9 @@ def subsegment(data, frames, n_segments=4, pad=True):
 
     frames : np.ndarray [shape=(n_boundaries,)], dtype=int, non-negative]
         Array of beat or segment boundaries, as provided by
-        :func:`librosa.beat.beat_track`,
-        :func:`librosa.onset.onset_detect`,
-        or :func:`agglomerative`.
+        `librosa.beat.beat_track`,
+        `librosa.onset.onset_detect`,
+        or `agglomerative`.
 
     n_segments : int > 0
         Maximum number of frames to sub-divide each interval.
@@ -234,9 +234,9 @@ def subsegment(data, frames, n_segments=4, pad=True):
 
     See Also
     --------
-    :func:`librosa.beat.beat_track` : Beat tracking
-    :func:`librosa.onset.onset_detect` : Onset detection
-    :func:`agglomerative` : Temporal segmentation
+    agglomerative : Temporal segmentation
+    librosa.onset.onset_detect : Onset detection
+    librosa.beat.beat_track : Beat tracking
     '''
 
     frames = util.fix_frames(frames, 0, data.shape[1], pad=pad)

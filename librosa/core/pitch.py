@@ -48,12 +48,17 @@ def estimate_tuning(resolution=0.01, bins_per_octave=12, **kwargs):
         How many frequency bins per octave
 
     kwargs : additional keyword arguments
-        See :func:`piptrack`
+        Additional arguments passed to `piptrack`
 
     Returns
     -------
     tuning: float in `[-0.5, 0.5)`
         estimated tuning deviation (fractions of a bin)
+
+    See Also
+    --------
+    piptrack
+        Pitch tracking by parabolic interpolation
     '''
 
     pitch, mag = piptrack(**kwargs)
@@ -95,7 +100,7 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     ----------
     frequencies : array-like, float
         A collection of frequencies detected in the signal.
-        See :func:`piptrack`
+        See `piptrack`
 
     resolution : float in `(0, 1)`
         Resolution of the tuning as a fraction of a bin.
@@ -111,8 +116,8 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
 
     See Also
     --------
-    :func:`estimate_tuning` : Estimating tuning from
-        time-series or spectrogram input
+    estimate_tuning
+        Estimating tuning from time-series or spectrogram input
     '''
 
     frequencies = np.asarray([frequencies], dtype=float).flatten()
@@ -160,7 +165,7 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=None,
 
     hop_length : int > 0 [scalar] or None
         Hop size for STFT.  Defaults to `n_fft / 4`.
-        See :func:`librosa.core.stft` for details.
+        See `librosa.core.stft` for details.
 
     threshold : float in `(0, 1)`
         Maximum fraction of expected frequency increment to tolerate
@@ -198,7 +203,8 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=None,
 
     See Also
     --------
-    :func:`piptrack`
+    piptrack
+    librosa.core.stft
     '''
 
     if fmin is None:
@@ -334,7 +340,7 @@ def piptrack(y=None, sr=22050, S=None, n_fft=4096, fmin=150.0,
         One of `S` or `y` must be provided.
 
         If `S` is not given, it is computed from `y` using
-        the default parameters of :func:`librosa.core.stft`.
+        the default parameters of `librosa.core.stft`.
 
     Returns
     -------

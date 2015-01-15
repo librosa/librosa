@@ -90,7 +90,10 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
 
     See Also
     --------
-    :func:`istft`, :func:`ifgram`
+    istft
+        Inverse STFT
+    ifgram
+        Instantaneous frequency spectrogram
     """
 
     # By default, use the entire frame
@@ -172,7 +175,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
     Parameters
     ----------
     stft_matrix : np.ndarray [shape=(1 + n_fft/2, t)]
-        STFT matrix from :func:`stft`
+        STFT matrix from `stft`
 
     hop_length  : int > 0 [scalar]
         Number of frames between STFT columns.
@@ -208,7 +211,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
 
     See Also
     --------
-    :func:`stft`
+    stft : Short-time Fourier Transform
     """
 
     n_fft = 2 * (stft_matrix.shape[0] - 1)
@@ -302,7 +305,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
 
     win_length : int > 0, <= n_fft
         Window length. Defaults to `n_fft`.
-        See :func:`stft` for details.
+        See `stft` for details.
 
     norm : bool
         Normalize the STFT.
@@ -326,7 +329,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
 
     See Also
     --------
-    :func:`stft`
+    stft : Short-time Fourier Transform
     '''
 
     if win_length is None:
@@ -572,7 +575,7 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
 
     See Also
     --------
-    :func:`perceptual_weighting`
+    perceptual_weighting
     """
 
     magnitude = np.abs(S)
@@ -621,7 +624,7 @@ def perceptual_weighting(S, frequencies, **kwargs):
         Center frequency for each row of `S`
 
     kwargs : additional keyword arguments
-        Additional keyword arguments to :func:`logamplitude`.
+        Additional keyword arguments to `logamplitude`.
 
     Returns
     -------
@@ -630,7 +633,7 @@ def perceptual_weighting(S, frequencies, **kwargs):
 
     See Also
     --------
-    :func:`logamplitude`
+    logamplitude
     '''
 
     offset = time_frequency.A_weighting(frequencies).reshape((-1, 1))
