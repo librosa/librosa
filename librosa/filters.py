@@ -5,7 +5,8 @@
 import numpy as np
 import scipy
 
-from .core import note_to_hz, fft_frequencies, mel_frequencies, hz_to_octs
+from .core.time_frequency import note_to_hz, hz_to_octs
+from .core.time_frequency import fft_frequencies, mel_frequencies
 from . import cache
 from . import util
 

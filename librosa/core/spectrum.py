@@ -11,6 +11,7 @@ from . import audio
 from . import time_frequency
 from .. import cache
 from .. import util
+from .. import filters
 
 
 @cache
@@ -832,6 +833,5 @@ def perceptual_weighting(S, frequencies, **kwargs):
 
 
 # Final imports
-from .. import filters
 from ..feature.utils import sync
 from ..feature.pitch import estimate_tuning
