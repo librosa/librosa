@@ -614,7 +614,7 @@ def magphase(D):
 
 @cache
 def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
-        bins_per_octave=12, tuning=None, resolution=2, res_type='sinc_best',
+        bins_per_octave=12, tuning=None, resolution=2, res_type='sinc_fastest',
         aggregate=None):
     '''Compute the constant-Q transform of an audio signal.
 
@@ -778,6 +778,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     # Transpose magic here to ensure column-contiguity
     return np.ascontiguousarray(cqt_resp.T).T
+
 
 @cache
 def sparsify_fft_basis(fft_basis, sparse_limit=0.01):
