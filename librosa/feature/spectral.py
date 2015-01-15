@@ -1,16 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Feature extraction routines."""
+"""Spectral feature extraction"""
 
 import numpy as np
 
-from . import pitch
 from .. import cache
 from .. import util
 from .. import filters
-from ..core.spectrum import stft, logamplitude
+
 from ..core.time_frequency import fft_frequencies
 from ..core.audio import zero_crossings
+from ..core.spectrum import stft, logamplitude
+from ..core.pitch import estimate_tuning
 
 
 # -- Spectral features -- #
@@ -611,8 +612,8 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096, hop_length=512, **kwargs):
     # If we don't have tuning already, grab it from S
     if 'tuning' not in kwargs:
         bins_per_oct = kwargs.get('bins_per_octave', 12)
-        kwargs['tuning'] = pitch.estimate_tuning(S=S, sr=sr,
-                                                 bins_per_octave=bins_per_oct)
+        kwargs['tuning'] = estimate_tuning(S=S, sr=sr,
+                                           bins_per_octave=bins_per_oct)
 
     # Build the CQ basis
     cq_basis = filters.logfrequency(sr, n_fft=n_fft, **kwargs)
@@ -692,7 +693,7 @@ def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
         n_fft = (S.shape[0] - 1) * 2
 
     if tuning is None:
-        tuning = pitch.estimate_tuning(S=S, sr=sr, bins_per_octave=n_chroma)
+        tuning = estimate_tuning(S=S, sr=sr, bins_per_octave=n_chroma)
 
     # Get the filter bank
     if 'A440' not in kwargs:

@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Pitch and tuning"""
+'''Pitch-tracking and tuning estimation'''
 
 import numpy as np
+
+from .spectrum import stft, ifgram
+from . import time_frequency
 from .. import cache
 from .. import util
-from ..core.spectrum import stft, ifgram
-from ..core.time_frequency import fft_frequencies, hz_to_octs
 
 
 @cache
@@ -17,24 +18,24 @@ def estimate_tuning(resolution=0.01, bins_per_octave=12, **kwargs):
     --------
     >>> # With time-series input
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> librosa.feature.estimate_tuning(y=y, sr=sr)
+    >>> librosa.estimate_tuning(y=y, sr=sr)
     0.070000000000000062
 
     >>> # In tenths of a cent
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> librosa.feature.estimate_tuning(y=y, sr=sr, resolution=1e-3))
+    >>> librosa.estimate_tuning(y=y, sr=sr, resolution=1e-3))
     0.071000000000000063
 
     >>> # Using spectrogram input
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> S = np.abs(librosa.stft(y))
-    >>> librosa.feature.estimate_tuning(S=S, sr=sr)
+    >>> librosa.estimate_tuning(S=S, sr=sr)
     0.089999999999999969
 
-    >>> # Using pass-through arguments to `librosa.feature.piptrack`
+    >>> # Using pass-through arguments to `librosa.piptrack`
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> librosa.feature.estimate_tuning(y=y, sr=sr, n_fft=8192,
-                                        fmax=librosa.note_to_hz('G#10'))
+    >>> librosa.estimate_tuning(y=y, sr=sr, n_fft=8192,
+                                fmax=librosa.note_to_hz('G#10'))
     0.070000000000000062
 
     Parameters
@@ -47,7 +48,7 @@ def estimate_tuning(resolution=0.01, bins_per_octave=12, **kwargs):
         How many frequency bins per octave
 
     kwargs : additional keyword arguments
-        See :func:`librosa.feature.piptrack`
+        See :func:`piptrack`
 
     Returns
     -------
@@ -79,22 +80,22 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     --------
     >>> # Generate notes at +25 cents
     >>> freqs = librosa.cqt_frequencies(24, 55, tuning=0.25)
-    >>> librosa.feature.pitch_tuning(freqs)
+    >>> librosa.pitch_tuning(freqs)
     0.25
 
     >>> # Track frequencies from a real spectrogram
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> pitches, magnitudes, stft = librosa.feature.ifptrack(y, sr)
+    >>> pitches, magnitudes, stft = librosa.ifptrack(y, sr)
     >>> # Select out pitches with high energy
     >>> pitches = pitches[magnitudes > np.median(magnitudes)]
-    >>> librosa.feature.pitch_tuning(pitches)
+    >>> librosa.pitch_tuning(pitches)
     0.089999999999999969
 
     Parameters
     ----------
     frequencies : array-like, float
         A collection of frequencies detected in the signal.
-        See :func:`librosa.feature.piptrack`
+        See :func:`piptrack`
 
     resolution : float in `(0, 1)`
         Resolution of the tuning as a fraction of a bin.
@@ -110,7 +111,7 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
 
     See Also
     --------
-    :func:`librosa.feature.estimate_tuning` : Estimating tuning from
+    :func:`estimate_tuning` : Estimating tuning from
         time-series or spectrogram input
     '''
 
@@ -120,7 +121,8 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     frequencies = frequencies[frequencies > 0]
 
     # Compute the residual relative to the number of bins
-    residual = np.mod(bins_per_octave * hz_to_octs(frequencies), 1.0)
+    residual = np.mod(bins_per_octave
+                      * time_frequency.hz_to_octs(frequencies), 1.0)
 
     # Are we on the wrong side of the semitone?
     # A residual of 0.95 is more likely to be a deviation of -0.05
@@ -143,7 +145,7 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=None,
     Examples
     --------
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> pitches, magnitudes, D = librosa.feature.ifptrack(y, sr=sr)
+    >>> pitches, magnitudes, D = librosa.ifptrack(y, sr=sr)
 
     Parameters
     ----------
@@ -158,7 +160,7 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=None,
 
     hop_length : int > 0 [scalar] or None
         Hop size for STFT.  Defaults to `n_fft / 4`.
-        See :func:`librosa.core.stft()` for details.
+        See :func:`librosa.core.stft` for details.
 
     threshold : float in `(0, 1)`
         Maximum fraction of expected frequency increment to tolerate
@@ -302,7 +304,7 @@ def piptrack(y=None, sr=22050, S=None, n_fft=4096, fmin=150.0,
     Examples
     --------
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> pitches, magnitudes = librosa.feature.piptrack(y=y, sr=sr)
+    >>> pitches, magnitudes = librosa.piptrack(y=y, sr=sr)
 
     Parameters
     ----------
@@ -361,7 +363,7 @@ def piptrack(y=None, sr=22050, S=None, n_fft=4096, fmin=150.0,
 
     # Pre-compute FFT frequencies
     n_fft = 2 * (S.shape[0] - 1)
-    fft_freqs = fft_frequencies(sr=sr, n_fft=n_fft)
+    fft_freqs = time_frequency.fft_frequencies(sr=sr, n_fft=n_fft)
 
     # Do the parabolic interpolation everywhere,
     # then figure out where the peaks are
