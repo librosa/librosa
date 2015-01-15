@@ -222,7 +222,7 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest', fix=True,
 
     kwargs : additional keyword arguments
         If `fix==True`, additional keyword arguments to pass to
-        :func:`librosa.util.fix_length()`.
+        :func:`librosa.util.fix_length`.
 
     Returns
     -------
@@ -230,7 +230,7 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest', fix=True,
         `y` resampled from `orig_sr` to `target_sr`
 
     .. note::
-        If `scikits.samplerate` is installed, :func:`librosa.core.resample`
+        If `scikits.samplerate` is installed, :func:`resample`
         will use `res_type`.
         Otherwise, librosa will fall back on `scipy.signal.resample`
     """

@@ -172,7 +172,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
     Parameters
     ----------
     stft_matrix : np.ndarray [shape=(1 + n_fft/2, t)]
-        STFT matrix from :func:`librosa.core.stft()`
+        STFT matrix from :func:`stft`
 
     hop_length  : int > 0 [scalar]
         Number of frames between STFT columns.
@@ -302,7 +302,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
 
     win_length : int > 0, <= n_fft
         Window length. Defaults to `n_fft`.
-        See :func:`librosa.core.stft()` for details.
+        See :func:`stft` for details.
 
     norm : bool
         Normalize the STFT.
@@ -621,7 +621,7 @@ def perceptual_weighting(S, frequencies, **kwargs):
         Center frequency for each row of `S`
 
     kwargs : additional keyword arguments
-        Additional keyword arguments to :func:`librosa.core.logamplitude`.
+        Additional keyword arguments to :func:`logamplitude`.
 
     Returns
     -------
