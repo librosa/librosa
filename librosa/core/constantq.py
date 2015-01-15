@@ -1,17 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-'''Constant-Q transform'''
+'''Pitch-tracking and tuning estimation'''
 
 import numpy as np
 
 from . import audio
-from .spectrum import stft
 from . import time_frequency
+from .spectrum import stft
+from .pitch import estimate_tuning
 from .. import cache
 from .. import filters
-
 from ..feature.utils import sync
-from ..feature.pitch import estimate_tuning
 
 
 @cache
