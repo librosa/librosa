@@ -614,7 +614,7 @@ def magphase(D):
 
 @cache
 def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
-        bins_per_octave=12, tuning=None, resolution=2, res_type='sinc_fastest',
+        bins_per_octave=12, tuning=None, resolution=2, res_type='sinc_best',
         aggregate=None, norm=2):
     '''Compute the constant-Q transform of an audio signal.
 
