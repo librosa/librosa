@@ -267,7 +267,7 @@ def logfrequency(sr, n_fft, n_bins=84, bins_per_octave=12, tuning=0.0,
 
 @cache
 def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
-               window=None, resolution=2, pad=False,
+               window=None, resolution=2, pad=False, norm=2,
                return_lengths=False, **kwargs):
     r'''Construct a constant-Q basis.
 
@@ -309,6 +309,10 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
           Pad all filters to have constant width (equal to the longest filter).
           By default, padding is done with zeros, but this can be overridden
           by setting the ``mode=`` field in *kwargs*.
+
+      - norm : {inf, -inf, 0, float > 0}
+          Type of norm to use for basis function normalization.
+          See librosa.util.normalize
 
       - return_lengths : boolean
           Whether to return the pre-padding filter lengths along with the filters.
@@ -359,7 +363,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
             win = win * window(ilen)
 
         # Normalize
-        win = librosa.util.normalize(win, norm=2)
+        win = librosa.util.normalize(win, norm=norm)
 
         filters.append(win)
 
