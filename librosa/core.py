@@ -615,7 +615,7 @@ def magphase(D):
 @cache
 def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         bins_per_octave=12, tuning=None, resolution=2, res_type='sinc_best',
-        aggregate=None):
+        aggregate=None, norm=2):
     '''Compute the constant-Q transform of an audio signal.
 
     :usage:
@@ -666,6 +666,10 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
           Aggregation function for time-oversampling energy aggregation.
           By default, ``np.mean``.  See :func:`librosa.feature.sync()`.
 
+      - norm : {inf, -inf, 0, float > 0}
+          Type of norm to use for basis function normalization.
+          See librosa.util.normalize
+
     :returns:
       - CQT : np.ndarray [shape=(d, t), dtype=np.float]
           Constant-Q energy for each frequency at each time.
@@ -690,20 +694,26 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     fmin_top = freqs[-bins_per_octave-1]
 
     # Generate the basis filters
-    basis = np.asarray(filters.constant_q(sr,
-                                          fmin=fmin_top,
-                                          n_bins=bins_per_octave,
-                                          bins_per_octave=bins_per_octave,
-                                          tuning=tuning,
-                                          resolution=resolution,
-                                          pad=True))
+    basis, lengths = filters.constant_q(sr,
+                                        fmin=fmin_top,
+                                        n_bins=bins_per_octave,
+                                        bins_per_octave=bins_per_octave,
+                                        tuning=tuning,
+                                        resolution=resolution,
+                                        pad=True,
+                                        norm=norm,
+                                        return_lengths=True)
+
+    basis = np.asarray(basis)
 
     # FFT the filters
     max_filter_length = basis.shape[1]
+    min_filter_length = min(lengths)
     n_fft = int(2.0**(np.ceil(np.log2(max_filter_length))))
 
     # Conjugate-transpose the basis
     fft_basis = np.fft.fft(basis, n=n_fft, axis=1).conj()
+    fft_basis = sparsify_fft_basis(fft_basis)
 
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
 
@@ -717,14 +727,14 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         to the desired resolution.
         '''
 
-        # If target_hop <= n_fft / 2:
+        # If target_hop <= min_filter_length / 2:
         #   my_hop = target_hop
         # else:
         #   my_hop = target_hop * 2**(-k)
 
         zoom_factor = int(np.maximum(0,
                                      1 + np.ceil(np.log2(target_hop)
-                                                 - np.log2(n_fft))))
+                                                 - np.log2(min_filter_length))))
 
         my_hop = int(target_hop / (2**(zoom_factor)))
 
@@ -743,6 +753,9 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
             bounds = list(np.arange(0, my_cqt.shape[1], 2**(zoom_factor)))
             my_cqt = feature.sync(my_cqt, bounds,
                                   aggregate=aggregate)
+
+        # normalize as in Parseval's relation
+        my_cqt /= n_fft
 
         return my_cqt
 
@@ -773,6 +786,34 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     # Transpose magic here to ensure column-contiguity
     return np.ascontiguousarray(cqt_resp.T).T
+
+
+@cache
+def sparsify_fft_basis(fft_basis, sparse_limit=0.01):
+    '''
+    Return a sparse version of input fft_basis.
+
+    `sparse_limit` is the percentage of the original magnitude sum that can
+    be zeroed out for each filter.
+    '''
+    fft_basis = fft_basis.copy()
+
+    if sparse_limit > 0.0:
+        for i, kern in enumerate(fft_basis):
+
+            kern_mag = np.abs(kern)
+            band_sum = np.sum(kern_mag)
+            sorted_weights = np.sort(kern_mag)[::-1]
+            cumpct = np.cumsum(sorted_weights)/band_sum
+            cutoff_ind = np.where(cumpct >= (1-sparse_limit))[0][0]
+            cutoff_val = sorted_weights[cutoff_ind]
+            zero_inds = np.where(kern_mag < cutoff_val)
+            fft_basis[i][zero_inds] = 0.0
+
+        import scipy.sparse
+        fft_basis = scipy.sparse.csr_matrix(fft_basis)
+
+    return fft_basis
 
 
 @cache
