@@ -615,7 +615,7 @@ def magphase(D):
 @cache
 def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         bins_per_octave=12, tuning=None, resolution=2, res_type='sinc_fastest',
-        aggregate=None):
+        aggregate=None, norm=2):
     '''Compute the constant-Q transform of an audio signal.
 
     :usage:
@@ -666,6 +666,10 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
           Aggregation function for time-oversampling energy aggregation.
           By default, ``np.mean``.  See :func:`librosa.feature.sync()`.
 
+      - norm : {inf, -inf, 0, float > 0}
+          Type of norm to use for basis function normalization.
+          See librosa.util.normalize
+
     :returns:
       - CQT : np.ndarray [shape=(d, t), dtype=np.float]
           Constant-Q energy for each frequency at each time.
@@ -697,6 +701,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                         tuning=tuning,
                                         resolution=resolution,
                                         pad=True,
+                                        norm=norm,
                                         return_lengths=True)
 
     basis = np.asarray(basis)
