@@ -324,7 +324,8 @@ def logfrequency(sr, n_fft, n_bins=84, bins_per_octave=12, tuning=0.0,
 
 @cache
 def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
-               window=None, resolution=2, pad=False, **kwargs):
+               window=None, resolution=2, pad=False, norm=2,
+               return_lengths=False, **kwargs):
     r'''Construct a constant-Q basis.
 
     This uses the filter bank described by [1]_.
@@ -375,6 +376,14 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
         By default, padding is done with zeros, but this can be overridden
         by setting the `mode=` field in *kwargs*.
 
+    norm : {inf, -inf, 0, float > 0}
+        Type of norm to use for basis function normalization.
+        See librosa.util.normalize
+
+    return_lengths : boolean
+        Whether to return the pre-padding filter lengths along
+        with the filters.
+
     kwargs : additional keyword arguments
         Arguments to `np.pad()` when `pad==True`.
 
@@ -384,6 +393,14 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     filters : list of np.ndarray, `len(filters) == n_bins`
         `filters[i]` is `i`\ th CQT basis filter (in the time-domain)
 
+    lengths : np.ndarray
+        If `return_lengths == True`, then the length of each filter
+        if also returned.
+
+    See Also
+    --------
+    librosa.core.cqt
+    librosa.util.normalize
     '''
 
     if fmin is None:
@@ -401,9 +418,16 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     Q = float(resolution) / (2.0**(1. / bins_per_octave) - 1)
 
     filters = []
+    lengths = []
     for i in np.arange(n_bins, dtype=float):
-        # Length of this filter
-        ilen = np.ceil(Q * sr / (fmin * 2.0**(i / bins_per_octave)))
+
+        freq = fmin * 2.0**(i / bins_per_octave)
+        if freq * (1 + 1.0 / Q) > sr / 2.0:
+            raise ValueError("Filter pass band lies beyond Nyquist")
+
+        # Length of the filter
+        ilen = np.ceil(Q * sr / freq)
+        lengths.append(ilen)
 
         # Build the filter
         win = np.exp(Q * 1j * np.linspace(0, 2 * np.pi, ilen, endpoint=False))
@@ -413,7 +437,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
             win = win * window(ilen)
 
         # Normalize
-        win = util.normalize(win, norm=2)
+        win = util.normalize(win, norm=norm)
 
         filters.append(win)
 
@@ -424,7 +448,10 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
         for i in range(len(filters)):
             filters[i] = util.pad_center(filters[i], max_len, **kwargs)
 
-    return filters
+    if return_lengths:
+        return filters, np.asarray(lengths)
+    else:
+        return filters
 
 
 @cache

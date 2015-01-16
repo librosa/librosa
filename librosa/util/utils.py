@@ -4,6 +4,7 @@
 
 import numpy as np
 import scipy.ndimage
+import scipy.sparse
 import os
 import glob
 import pkg_resources
@@ -814,6 +815,33 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
             last_onset = i
 
     return np.array(peaks)
+
+
+@cache
+def sparsify(fft_basis, sparse_limit=0.01):
+    '''
+    Return a sparse version of input fft_basis.
+
+    `sparse_limit` is the percentage of the original magnitude sum that can
+    be zeroed out for each filter.
+    '''
+    fft_basis = fft_basis.copy()
+
+    if sparse_limit > 0.0:
+        for i, kern in enumerate(fft_basis):
+
+            kern_mag = np.abs(kern)
+            band_sum = np.sum(kern_mag)
+            sorted_weights = np.sort(kern_mag)[::-1]
+            cumpct = np.cumsum(sorted_weights)/band_sum
+            cutoff_ind = np.where(cumpct >= (1-sparse_limit))[0][0]
+            cutoff_val = sorted_weights[cutoff_ind]
+            zero_inds = np.where(kern_mag < cutoff_val)
+            fft_basis[i][zero_inds] = 0.0
+
+        fft_basis = scipy.sparse.csr_matrix(fft_basis)
+
+    return fft_basis
 
 
 def find_files(directory, ext=None, recurse=True, case_sensitive=False,

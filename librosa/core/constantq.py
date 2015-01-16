@@ -10,13 +10,14 @@ from .spectrum import stft
 from .pitch import estimate_tuning
 from .. import cache
 from .. import filters
+from .. import util
 from ..feature.utils import sync
 
 
 @cache
 def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         bins_per_octave=12, tuning=None, resolution=2, res_type='sinc_best',
-        aggregate=None):
+        aggregate=None, norm=2):
     '''Compute the constant-Q transform of an audio signal.
 
     This implementation is based on the recursive sub-sampling method
@@ -94,6 +95,10 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         Aggregation function for time-oversampling energy aggregation.
         By default, `np.mean`.  See `librosa.feature.sync`.
 
+    norm : {inf, -inf, 0, float > 0}
+        Type of norm to use for basis function normalization.
+        See `librosa.util.normalize`.
+
     Returns
     -------
     CQT : np.ndarray [shape=(n_bins, t), dtype=np.float]
@@ -108,6 +113,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     --------
     librosa.core.resample
     librosa.feature.sync
+    librosa.util.normalize
     '''
 
     if fmin is None:
@@ -124,20 +130,28 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     fmin_top = freqs[-bins_per_octave-1]
 
     # Generate the basis filters
-    basis = np.asarray(filters.constant_q(sr,
-                                          fmin=fmin_top,
-                                          n_bins=bins_per_octave,
-                                          bins_per_octave=bins_per_octave,
-                                          tuning=tuning,
-                                          resolution=resolution,
-                                          pad=True))
+    basis, lengths = filters.constant_q(sr,
+                                        fmin=fmin_top,
+                                        n_bins=bins_per_octave,
+                                        bins_per_octave=bins_per_octave,
+                                        tuning=tuning,
+                                        resolution=resolution,
+                                        pad=True,
+                                        norm=norm,
+                                        return_lengths=True)
+
+    basis = np.asarray(basis)
 
     # FFT the filters
     max_filter_length = basis.shape[1]
+    min_filter_length = np.min(lengths)
+
     n_fft = int(2.0**(np.ceil(np.log2(max_filter_length))))
 
     # Conjugate-transpose the basis
     fft_basis = np.fft.fft(basis, n=n_fft, axis=1).conj()
+
+    fft_basis = util.sparsify(fft_basis)
 
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
 
@@ -158,9 +172,10 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         # else:
         #   my_hop = target_hop * 2**(-k)
 
-        zoom_factor = int(np.maximum(0,
-                                     1 + np.ceil(np.log2(target_hop)
-                                                 - np.log2(n_fft))))
+        zoom_factor = np.maximum(0,
+                                 1 + np.ceil(np.log2(target_hop)
+                                             - np.log2(min_filter_length)))
+        zoom_factor = int(zoom_factor)
 
         my_hop = int(target_hop / (2**(zoom_factor)))
 
@@ -178,6 +193,9 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
             # We need to aggregate.  Generate the boundary frames
             bounds = list(np.arange(0, my_cqt.shape[1], 2**(zoom_factor)))
             my_cqt = sync(my_cqt, bounds, aggregate=aggregate)
+
+        # normalize as in Parseval's relation
+        my_cqt /= n_fft
 
         return my_cqt
 
