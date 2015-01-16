@@ -10,6 +10,7 @@ from .spectrum import stft
 from .pitch import estimate_tuning
 from .. import cache
 from .. import filters
+from .. import util
 from ..feature.utils import sync
 
 
@@ -150,7 +151,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     # Conjugate-transpose the basis
     fft_basis = np.fft.fft(basis, n=n_fft, axis=1).conj()
 
-    # fft_basis = util.sparsify(fft_basis)
+    fft_basis = util.sparsify(fft_basis)
 
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
 
