@@ -395,7 +395,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 
     lengths : np.ndarray
         If `return_lengths == True`, then the length of each filter
-        if also returned.
+        is also returned.
 
     See Also
     --------
