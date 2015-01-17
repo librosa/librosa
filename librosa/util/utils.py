@@ -817,6 +817,10 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     return np.array(peaks)
 
 
+# TODO:   2015-01-16 10:05:10 by Brian McFee <brian.mcfee@nyu.edu>
+# write docstrings here 
+# add axis parameter
+# simplify code
 @cache
 def sparsify(fft_basis, sparse_limit=0.01):
     '''
