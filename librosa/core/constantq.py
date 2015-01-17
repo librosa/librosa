@@ -150,9 +150,13 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         basis[i] = util.pad_center(basis[i], n_fft)
     basis = np.asarray(basis)
 
-    # Conjugate-transpose the basis
+    # FFT the filters
     fft_basis = np.fft.fft(basis, n=n_fft, axis=1).conj()
 
+    # Only need positive frequencies
+    fft_basis = fft_basis[:,:(n_fft/2+1)]
+
+    # Sparsify fft_basis
     fft_basis = util.sparsify(fft_basis)
 
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
@@ -186,7 +190,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         # Compute the STFT matrix
         D = stft(my_y, n_fft=n_fft, hop_length=my_hop)
 
-        D = np.vstack([D.conj(), D[-2:0:-1]])
+        D = D.conj() # stft returns conjugate for some reason
 
         # And filter response energy
         my_cqt = np.abs(fft_basis.dot(D))
