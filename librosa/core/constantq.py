@@ -187,8 +187,9 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
         assert my_hop > 0
 
-        # Compute the STFT matrix
-        D = stft(my_y, n_fft=n_fft, hop_length=my_hop)
+        # Compute the STFT matrix. No window needed (ones=rectangular)
+        D = stft(my_y, n_fft=n_fft, hop_length=my_hop,
+                 window=np.ones)
 
         D = D.conj() # stft returns conjugate for some reason
 
