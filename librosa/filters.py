@@ -442,11 +442,11 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
         filters.append(win)
 
     if pad:
-        max_len = max([len(f) for f in filters])
+        max_len = max(lengths)
 
         # Use reflection padding, unless otherwise specified
-        for i in range(len(filters)):
-            filters[i] = util.pad_center(filters[i], max_len, **kwargs)
+        filters = [util.pad_center(filt, max_len, **kwargs)
+                   for filt in filters]
 
     if return_lengths:
         return filters, np.asarray(lengths)
