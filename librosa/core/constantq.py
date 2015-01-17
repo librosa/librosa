@@ -136,17 +136,19 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                         bins_per_octave=bins_per_octave,
                                         tuning=tuning,
                                         resolution=resolution,
-                                        pad=True,
                                         norm=norm,
                                         return_lengths=True)
 
-    basis = np.asarray(basis)
-
     # FFT the filters
-    max_filter_length = basis.shape[1]
+    max_filter_length = np.max(lengths)
     min_filter_length = np.min(lengths)
 
     n_fft = int(2.0**(np.ceil(np.log2(max_filter_length))))
+
+    # pad and center with respect to window of length n_fft
+    for i in xrange(len(basis)):
+        basis[i] = util.pad_center(basis[i], n_fft)
+    basis = np.asarray(basis)
 
     # Conjugate-transpose the basis
     fft_basis = np.fft.fft(basis, n=n_fft, axis=1).conj()
