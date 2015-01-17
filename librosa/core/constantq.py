@@ -148,9 +148,13 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     n_fft = int(2.0**(np.ceil(np.log2(max_filter_length))))
 
-    # Conjugate-transpose the basis
+    # FFT and retain only the non-negative frequencies
     fft_basis = np.fft.fft(basis, n=n_fft, axis=1)[:, :(n_fft / 2)+1]
 
+    # normalize as in Parseval's relation
+    fft_basis /= n_fft
+
+    # Sparsify the basis
     fft_basis = util.sparsify(fft_basis)
 
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
@@ -160,43 +164,6 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         raise ValueError('Insufficient hop_length {:d} '
                          'for {:d} octaves'.format(hop_length, n_octaves))
 
-    def __variable_hop_response(my_y, target_hop):
-        '''Compute the filter response with a target STFT hop.
-        If the hop is too large (more than half the frame length),
-        then over-sample at a smaller hop, and aggregate the results
-        to the desired resolution.
-        '''
-
-        # If target_hop <= n_fft / 2:
-        #   my_hop = target_hop
-        # else:
-        #   my_hop = target_hop * 2**(-k)
-
-        zoom_factor = np.maximum(0,
-                                 1 + np.ceil(np.log2(target_hop)
-                                             - np.log2(min_filter_length)))
-        zoom_factor = int(zoom_factor)
-
-        my_hop = int(target_hop / (2**(zoom_factor)))
-
-        assert my_hop > 0
-
-        # Compute the STFT matrix
-        D = stft(my_y, n_fft=n_fft, hop_length=my_hop)
-
-        # And filter response energy
-        my_cqt = np.abs(fft_basis.dot(D))
-
-        if zoom_factor > 0:
-            # We need to aggregate.  Generate the boundary frames
-            bounds = list(np.arange(0, my_cqt.shape[1], 2**(zoom_factor)))
-            my_cqt = sync(my_cqt, bounds, aggregate=aggregate)
-
-        # normalize as in Parseval's relation
-        my_cqt /= n_fft
-
-        return my_cqt
-
     cqt_resp = []
 
     my_y, my_sr, my_hop = y, sr, hop_length
@@ -204,7 +171,11 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     # Iterate down the octaves
     for _ in range(n_octaves):
         # Compute a dynamic hop based on n_fft
-        my_cqt = __variable_hop_response(my_y, my_hop)
+        my_cqt = __variable_hop_response(my_y, n_fft,
+                                         my_hop,
+                                         min_filter_length,
+                                         fft_basis,
+                                         aggregate)
 
         # Convolve
         cqt_resp.append(my_cqt)
@@ -224,3 +195,34 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     # Transpose magic here to ensure column-contiguity
     return np.ascontiguousarray(cqt_resp.T).T
+
+
+def __variable_hop_response(y, n_fft, hop_length, min_filter_length,
+                            fft_basis, aggregate):
+    '''Compute the filter response with a target STFT hop.
+    If the hop is too large (more than half the frame length),
+    then over-sample at a smaller hop, and aggregate the results
+    to the desired resolution.
+    '''
+
+    # If target_hop <= n_fft / 2:
+    #   my_hop = target_hop
+    # else:
+    #   my_hop = target_hop * 2**(-k)
+
+    zoom_factor = np.ceil(np.log2(hop_length) - np.log2(min_filter_length))
+
+    zoom_factor = 2**int(np.maximum(0, 1 + zoom_factor))
+
+    # Compute the STFT matrix
+    D = stft(y, n_fft=n_fft, hop_length=int(hop_length / zoom_factor))
+
+    # And filter response energy
+    my_cqt = np.abs(fft_basis.dot(D)) 
+
+    if zoom_factor > 1:
+        # We need to aggregate.  Generate the boundary frames
+        bounds = np.arange(0, my_cqt.shape[1], zoom_factor, dtype=int)
+        my_cqt = sync(my_cqt, bounds, aggregate=aggregate)
+
+    return my_cqt
