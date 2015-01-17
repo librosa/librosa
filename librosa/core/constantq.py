@@ -124,10 +124,10 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         tuning = estimate_tuning(y=y, sr=sr)
 
     # First thing, get the fmin of the top octave
-    freqs = time_frequency.cqt_frequencies(n_bins + 1, fmin,
+    freqs = time_frequency.cqt_frequencies(n_bins, fmin,
                                            bins_per_octave=bins_per_octave)
 
-    fmin_top = freqs[-bins_per_octave-1]
+    fmin_top = freqs[-bins_per_octave]
 
     # Generate the basis filters
     basis, lengths = filters.constant_q(sr,
