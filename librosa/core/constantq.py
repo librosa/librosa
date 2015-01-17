@@ -149,7 +149,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     n_fft = int(2.0**(np.ceil(np.log2(max_filter_length))))
 
     # Conjugate-transpose the basis
-    fft_basis = np.fft.fft(basis, n=n_fft, axis=1).conj()
+    fft_basis = np.fft.fft(basis, n=n_fft, axis=1)[:, :(n_fft / 2)+1]
 
     fft_basis = util.sparsify(fft_basis)
 
@@ -183,8 +183,6 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
         # Compute the STFT matrix
         D = stft(my_y, n_fft=n_fft, hop_length=my_hop)
-
-        D = np.vstack([D.conj(), D[-2:0:-1]])
 
         # And filter response energy
         my_cqt = np.abs(fft_basis.dot(D))
