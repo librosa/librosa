@@ -15,6 +15,28 @@ from . import util
 
 
 @cache
+def __band_infinite(d, width, v_in=0.0, v_out=np.inf, dtype=np.float32):
+    '''Construct a square, banded matrix `X` where
+    `X[i, j] == v_in` if `|i - j| <= width`
+    `X[i, j] == v_out` if `|i - j| > width`
+
+    This is used to suppress nearby links in `recurrence_matrix`.
+    '''
+
+    # Instantiate the matrix
+    band = np.empty((d, d), dtype=dtype)
+
+    # Fill the out-of-band values
+    band.fill(v_out)
+
+    # Fill the in-band values
+    band[np.triu_indices_from(band, width)] = v_in
+    band[np.tril_indices_from(band, -width)] = v_in
+
+    return band
+
+
+@cache
 def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
     '''Compute the binary recurrence matrix from a time-series.
 
@@ -74,21 +96,11 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
 
     k = int(k)
 
-    def _band_infinite():
-        '''Suppress the diagonal+- of a distance matrix'''
-
-        band = np.empty((t, t))
-        band.fill(np.inf)
-        band[np.triu_indices_from(band, width)] = 0
-        band[np.tril_indices_from(band, -width)] = 0
-
-        return band
-
     # Build the distance matrix
     D = scipy.spatial.distance.cdist(data.T, data.T, metric=metric)
 
     # Max out the diagonal band
-    D = D + _band_infinite()
+    D = D + __band_infinite(t, width)
 
     # build the recurrence plot
     rec = np.zeros((t, t), dtype=bool)
