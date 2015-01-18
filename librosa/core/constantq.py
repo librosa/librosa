@@ -149,7 +149,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     basis = np.asarray(basis)
 
     # FFT the filters
-    max_filter_length = basis.shape[1]
+    max_filter_length = np.max(lengths)
     min_filter_length = np.min(lengths)
 
     n_fft = int(2.0**(np.ceil(np.log2(max_filter_length))))
@@ -221,7 +221,8 @@ def __variable_hop_response(y, n_fft, hop_length, min_filter_length,
     zoom_factor = 2**int(np.maximum(0, 1 + zoom_factor))
 
     # Compute the STFT matrix
-    D = stft(y, n_fft=n_fft, hop_length=int(hop_length / zoom_factor))
+    D = stft(y, n_fft=n_fft, hop_length=int(hop_length / zoom_factor),
+             window=np.ones)
 
     # And filter response energy
     my_cqt = np.abs(fft_basis.dot(D))
