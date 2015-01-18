@@ -107,7 +107,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     Raises
     ------
     ValueError
-        If `hop_length < 2**n_octaves`
+        If `hop_length < 2**(n_bins / bins_per_octvae)`
 
     See Also
     --------
@@ -218,7 +218,7 @@ def __variable_hop_response(y, n_fft, hop_length, min_filter_length,
     D = stft(y, n_fft=n_fft, hop_length=int(hop_length / zoom_factor))
 
     # And filter response energy
-    my_cqt = np.abs(fft_basis.dot(D)) 
+    my_cqt = np.abs(fft_basis.dot(D))
 
     if zoom_factor > 1:
         # We need to aggregate.  Generate the boundary frames
