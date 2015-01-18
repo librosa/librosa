@@ -395,7 +395,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 
     lengths : np.ndarray
         If `return_lengths == True`, then the length of each filter
-        if also returned.
+        is also returned.
 
     See Also
     --------
@@ -445,8 +445,8 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
         max_len = max(lengths)
 
         # Use reflection padding, unless otherwise specified
-        filters = [util.pad_center(filt, max_len, **kwargs)
-                   for filt in filters]
+        filters = np.asarray([util.pad_center(filt, max_len, **kwargs)
+                              for filt in filters])
 
     if return_lengths:
         return filters, np.asarray(lengths)
