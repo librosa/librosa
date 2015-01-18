@@ -130,10 +130,10 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         tuning = estimate_tuning(y=y, sr=sr)
 
     # First thing, get the fmin of the top octave
-    freqs = time_frequency.cqt_frequencies(n_bins + 1, fmin,
+    freqs = time_frequency.cqt_frequencies(n_bins, fmin,
                                            bins_per_octave=bins_per_octave)
 
-    fmin_top = freqs[-bins_per_octave-1]
+    fmin_top = freqs[-bins_per_octave]
 
     # Generate the basis filters
     basis, lengths = filters.constant_q(sr,
@@ -142,17 +142,18 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                         bins_per_octave=bins_per_octave,
                                         tuning=tuning,
                                         resolution=resolution,
-                                        pad=True,
                                         norm=norm,
+                                        pad=True,
                                         return_lengths=True)
 
-    basis = np.asarray(basis)
-
     # FFT the filters
-    max_filter_length = np.max(lengths)
     min_filter_length = np.min(lengths)
+    max_filter_length = np.max(lengths)
 
+    # Round the max filter length up to the closest power of 2
     n_fft = int(2.0**(np.ceil(np.log2(max_filter_length))))
+
+    basis = util.pad_center(basis, n_fft, axis=1)
 
     # FFT and retain only the non-negative frequencies
     fft_basis = np.fft.fft(basis, n=n_fft, axis=1)[:, :(n_fft / 2)+1]
