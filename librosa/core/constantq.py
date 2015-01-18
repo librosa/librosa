@@ -5,7 +5,7 @@
 import numpy as np
 
 from . import audio
-from . import time_frequency
+from .time_frequency import cqt_frequencies, note_to_hz
 from .spectrum import stft
 from .pitch import estimate_tuning
 from .. import cache
@@ -122,22 +122,28 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     librosa.util.normalize
     '''
 
+    # How many octaves are we dealing with?
+    n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
+
+    # Make sure our hop is long enough to support the bottom octave
+    if hop_length < 2**n_octaves:
+        raise ValueError('Insufficient hop_length {:d} '
+                         'for {:d} octaves'.format(hop_length, n_octaves))
+
     if fmin is None:
         # C2 by default
-        fmin = time_frequency.note_to_hz('C2')
+        fmin = note_to_hz('C2')
 
     if tuning is None:
         tuning = estimate_tuning(y=y, sr=sr)
 
     # First thing, get the fmin of the top octave
-    freqs = time_frequency.cqt_frequencies(n_bins, fmin,
-                                           bins_per_octave=bins_per_octave)
-
-    fmin_top = freqs[-bins_per_octave]
+    fmin_t = cqt_frequencies(n_bins, fmin,
+                             bins_per_octave=bins_per_octave)[-bins_per_octave]
 
     # Generate the basis filters
     basis, lengths = filters.constant_q(sr,
-                                        fmin=fmin_top,
+                                        fmin=fmin_t,
                                         n_bins=bins_per_octave,
                                         bins_per_octave=bins_per_octave,
                                         tuning=tuning,
@@ -155,16 +161,8 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     # FFT and retain only the non-negative frequencies
     fft_basis = np.fft.fft(basis, n=n_fft, axis=1)[:, :(n_fft / 2)+1]
 
-    # normalize as in Parseval's relation
-    # Sparsify the basis
+    # normalize as in Parseval's relation, and sparsify the basis
     fft_basis = util.sparsify_rows(fft_basis / n_fft, quantile=sparsity)
-
-    n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
-
-    # Make sure our hop is long enough to support the bottom octave
-    if hop_length < 2**n_octaves:
-        raise ValueError('Insufficient hop_length {:d} '
-                         'for {:d} octaves'.format(hop_length, n_octaves))
 
     cqt_resp = []
 
@@ -187,16 +185,20 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         my_sr = my_sr / 2.0
         my_hop = int(my_hop / 2.0)
 
+    return __trim_stack(cqt_resp, n_bins)
+
+
+def __trim_stack(cqt_resp, n_bins):
+    '''Helper function to trim and stack a collection of CQT responses'''
+
     # cleanup any framing errors at the boundaries
     max_col = min([x.shape[1] for x in cqt_resp])
 
     cqt_resp = np.vstack([x[:, :max_col] for x in cqt_resp][::-1])
 
     # Finally, clip out any bottom frequencies that we don't really want
-    cqt_resp = cqt_resp[-n_bins:]
-
     # Transpose magic here to ensure column-contiguity
-    return np.ascontiguousarray(cqt_resp.T).T
+    return np.ascontiguousarray(cqt_resp[-n_bins:].T).T
 
 
 def __variable_hop_response(y, n_fft, hop_length, min_filter_length,
