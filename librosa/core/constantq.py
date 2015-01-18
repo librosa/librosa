@@ -17,7 +17,7 @@ from ..feature.utils import sync
 @cache
 def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         bins_per_octave=12, tuning=None, resolution=2, res_type='sinc_best',
-        aggregate=None, norm=2):
+        aggregate=None, norm=2, sparsity=0.01):
     '''Compute the constant-Q transform of an audio signal.
 
     This implementation is based on the recursive sub-sampling method
@@ -99,6 +99,12 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         Type of norm to use for basis function normalization.
         See `librosa.util.normalize`.
 
+    sparsity : float in [0, 1)
+        Sparsify the CQT basis by discarding up to `sparsity`
+        fraction of the energy in each basis.
+
+        Set `sparsity=0` to disable sparsification.
+
     Returns
     -------
     CQT : np.ndarray [shape=(n_bins, t), dtype=np.float]
@@ -155,7 +161,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     fft_basis /= n_fft
 
     # Sparsify the basis
-    fft_basis = util.sparsify(fft_basis)
+    fft_basis = util.sparsify_rows(fft_basis, quantile=sparsity)
 
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
 
