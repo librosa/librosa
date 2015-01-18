@@ -324,7 +324,7 @@ def logfrequency(sr, n_fft, n_bins=84, bins_per_octave=12, tuning=0.0,
 
 @cache
 def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
-               window=None, resolution=2, pad=False, norm=2,
+               window=None, resolution=2, pad_fft=True, norm=2,
                return_lengths=False, **kwargs):
     r'''Construct a constant-Q basis.
 
@@ -371,8 +371,9 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     resolution : float > 0 [scalar]
         Resolution of filter windows. Larger values use longer windows.
 
-    pad : boolean
-        Pad all filters to have constant width (equal to the longest filter).
+    pad_fft : boolean
+        Center-pad all filters up to the nearest integral power of 2.
+
         By default, padding is done with zeros, but this can be overridden
         by setting the `mode=` field in *kwargs*.
 
@@ -390,7 +391,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 
     Returns
     -------
-    filters : list of np.ndarray, `len(filters) == n_bins`
+    filters : np.ndarray, `len(filters) == n_bins`
         `filters[i]` is `i`\ th CQT basis filter (in the time-domain)
 
     lengths : np.ndarray
@@ -441,12 +442,12 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 
         filters.append(win)
 
-    if pad:
-        max_len = max(lengths)
+    max_len = max(lengths)
+    if pad_fft:
+        max_len = int(2.0**(np.ceil(np.log2(max_len))))
 
-        # Use reflection padding, unless otherwise specified
-        filters = np.asarray([util.pad_center(filt, max_len, **kwargs)
-                              for filt in filters])
+    filters = np.asarray([util.pad_center(filt, max_len, **kwargs)
+                          for filt in filters])
 
     if return_lengths:
         return filters, np.asarray(lengths)

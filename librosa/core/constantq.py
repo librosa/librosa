@@ -143,26 +143,21 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                         tuning=tuning,
                                         resolution=resolution,
                                         norm=norm,
-                                        pad=True,
+                                        pad_fft=True,
                                         return_lengths=True)
 
     # FFT the filters
     min_filter_length = np.min(lengths)
-    max_filter_length = np.max(lengths)
 
-    # Round the max filter length up to the closest power of 2
-    n_fft = int(2.0**(np.ceil(np.log2(max_filter_length))))
-
-    basis = util.pad_center(basis, n_fft, axis=1)
+    # Filters are padded up to the nearest integral power of 2
+    n_fft = basis.shape[1]
 
     # FFT and retain only the non-negative frequencies
     fft_basis = np.fft.fft(basis, n=n_fft, axis=1)[:, :(n_fft / 2)+1]
 
     # normalize as in Parseval's relation
-    fft_basis /= n_fft
-
     # Sparsify the basis
-    fft_basis = util.sparsify_rows(fft_basis, quantile=sparsity)
+    fft_basis = util.sparsify_rows(fft_basis / n_fft, quantile=sparsity)
 
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
 
