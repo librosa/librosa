@@ -15,7 +15,7 @@ from . import util
 
 
 @cache
-def __band_infinite(d, width, v_in=0.0, v_out=np.inf, dtype=np.float32):
+def __band_infinite(n, width, v_in=0.0, v_out=np.inf, dtype=np.float32):
     '''Construct a square, banded matrix `X` where
     `X[i, j] == v_in` if `|i - j| <= width`
     `X[i, j] == v_out` if `|i - j| > width`
@@ -24,7 +24,7 @@ def __band_infinite(d, width, v_in=0.0, v_out=np.inf, dtype=np.float32):
     '''
 
     # Instantiate the matrix
-    band = np.empty((d, d), dtype=dtype)
+    band = np.empty((n, n), dtype=dtype)
 
     # Fill the out-of-band values
     band.fill(v_out)
