@@ -412,18 +412,18 @@ def __log_scale(n):
 
     Parameters
     ----------
-      - n : int > 0
-          Number of bins
+    n : int > 0
+        Number of bins
 
     Returns
     -------
-      - y   : np.ndarray, shape=(n,)
+    y   : np.ndarray, shape=(n,)
 
-      - y_inv   : np.ndarray, shape=(n,)
+    y_inv   : np.ndarray, shape=(n+1,)
     '''
 
     logn = np.log2(n)
-    y = n * (1 - 2.0**np.linspace(-logn, 0, n, endpoint=True))[::-1]
+    y = n * (1 - np.logspace(-logn, 0, n, base=2, endpoint=True))[::-1]
     y = y.astype(int)
 
     y_inv = np.arange(len(y)+1)
