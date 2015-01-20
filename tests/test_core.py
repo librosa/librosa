@@ -292,12 +292,13 @@ def test_to_mono():
 
 def test_zero_crossings():
 
-    def __test(data, threshold, ref_magnitude, pad):
+    def __test(data, threshold, ref_magnitude, pad, zp):
         
         zc = librosa.zero_crossings(y=data,
                                     threshold=threshold,
                                     ref_magnitude=ref_magnitude,
-                                    pad=pad)
+                                    pad=pad,
+                                    zero_pos=zp)
 
         idx = np.flatnonzero(zc)
 
@@ -309,8 +310,9 @@ def test_zero_crossings():
 
     data = np.random.randn(32)
 
-    for threshold in [0, 1e-10]:
+    for threshold in [None, 0, 1e-10]:
         for ref_magnitude in [None, 0.1, np.max]:
             for pad in [False, True]:
+                for zero_pos in [False, True]:
 
-                yield __test, data, threshold, ref_magnitude, pad
+                    yield __test, data, threshold, ref_magnitude, pad, zero_pos
