@@ -35,6 +35,7 @@ import scipy.io
 
 from nose.tools import nottest
 
+
 #-- utilities --#
 def files(pattern):
     test_files = glob.glob(pattern)
@@ -42,11 +43,9 @@ def files(pattern):
     return test_files
 
 def load(infile):
-    DATA = scipy.io.loadmat(infile, chars_as_strings=True)
-    return DATA
-#--           --#
+    return scipy.io.loadmat(infile, chars_as_strings=True)
 
-#-- Tests     --#
+
 def test_load():
     # Note: this does not test resampling.
     # That is a separate unit test.
@@ -64,14 +63,18 @@ def test_load():
         yield (__test, infile)
     pass
 
+
 @nottest
 def test_resample():
 
-    def __test(infile):
-        DATA    = load(infile)
-        
+    def __test(infile, scipy_resample):
+        DATA = load(infile)
+
         # load the wav file
         (y_in, sr_in) = librosa.load(DATA['wavfile'][0], sr=None, mono=True)
+
+        if scipy_resample:
+            librosa.core._HAS_SAMPLERATE = False
 
         # Resample it to the target rate
         y_out = librosa.resample(y_in, DATA['sr_in'], DATA['sr_out'])
@@ -81,8 +84,8 @@ def test_resample():
             # Is the data close?
             assert np.allclose(y_out, DATA['y_out'])
         elif len(y_out) == len(DATA['y_out']) - 1:
-            assert (np.allclose(y_out, DATA['y_out'][:-1,0]) or
-                    np.allclose(y_out, DATA['y_out'][1:,0]))
+            assert (np.allclose(y_out, DATA['y_out'][:-1, 0]) or
+                    np.allclose(y_out, DATA['y_out'][1:, 0]))
         elif len(y_out) == len(DATA['y_out']) + 1:
             assert (np.allclose(y_out[1:], DATA['y_out']) or
                     np.allclose(y_out[:-2], DATA['y_out']))
@@ -91,18 +94,22 @@ def test_resample():
         pass
 
     for infile in files('data/core-resample-*.mat'):
-        yield (__test, infile)
+        for scipy_resample in [False, True]:
+            hold_scipy = librosa.core._HAS_SAMPLERATE
+            yield (__test, infile, scipy_resample)
+            librosa.core._HAS_SAMPLERATE = hold_scipy
     pass
+
 
 def test_stft():
 
     def __test(infile):
-        DATA    = load(infile)
+        DATA = load(infile)
 
         # Load the file
         (y, sr) = librosa.load(DATA['wavfile'][0], sr=None, mono=True)
 
-        if DATA['hann_w'][0,0] == 0:
+        if DATA['hann_w'][0, 0] == 0:
             # Set window to ones, swap back to nfft
             print('Got hann_w == 0')
             window = np.ones
@@ -110,21 +117,21 @@ def test_stft():
 
         else:
             window = None
-            win_length = DATA['hann_w'][0,0]
+            win_length = DATA['hann_w'][0, 0]
 
         # Compute the STFT
-        D       = librosa.stft(y,       n_fft       =   DATA['nfft'][0,0].astype(int),
-                                        hop_length  =   DATA['hop_length'][0,0].astype(int),
-                                        win_length  =   win_length,
-                                        window      =   window,
-                                        center      =   False)
+        D = librosa.stft(y,
+                         n_fft=DATA['nfft'][0, 0].astype(int),
+                         hop_length=DATA['hop_length'][0, 0].astype(int),
+                         win_length=win_length,
+                         window=window,
+                         center=False)
 
-        assert  np.allclose(D, DATA['D'])   
-
+        assert np.allclose(D, DATA['D'])
 
     for infile in files('data/core-stft-*.mat'):
         yield (__test, infile)
-    pass
+
 
 def test_ifgram():
 
@@ -149,6 +156,7 @@ def test_ifgram():
 
     pass
 
+
 def test_magphase():
 
     (y, sr) = librosa.load('data/test1_22050.wav')
@@ -158,6 +166,7 @@ def test_magphase():
     S, P = librosa.magphase(D)
 
     assert np.allclose(S * P, D)
+
 
 def test_istft():
     def __test(infile):
@@ -181,3 +190,64 @@ def test_istft():
         yield (__test, infile)
     pass
 
+
+def test_load_options():
+
+    filename = 'data/test1_22050.wav'
+
+    def __test(offset, duration, mono):
+
+        y, sr = librosa.load(filename, mono=mono, offset=offset,
+                             duration=duration)
+
+        if duration is not None:
+            print(duration, y.shape[-1] / float(sr))
+            assert np.allclose(y.shape[-1] / float(sr), duration)
+
+        if mono:
+            assert y.ndim == 1
+        else:
+            # This test file is stereo, so y.ndim should be 2
+            assert y.ndim == 2
+
+    for offset in [0, 1, 2]:
+        for duration in [None, 0, 1, 2]:
+            for mono in [False, True]:
+                yield __test, offset, duration, mono
+    pass
+
+
+def test_get_duration_wav():
+
+    def __test_audio(filename, mono, sr, duration):
+        y, sr = librosa.load(filename, sr=sr, mono=mono, duration=duration)
+
+        duration_est = librosa.get_duration(y=y, sr=sr)
+
+        assert np.allclose(duration_est, duration, rtol=1e-3, atol=1e-5)
+
+    def __test_spec(filename, sr, duration, n_fft, hop_length, center):
+        y, sr = librosa.load(filename, sr=sr, duration=duration)
+
+        S = librosa.stft(y, n_fft=n_fft, hop_length=hop_length, center=center)
+
+        duration_est = librosa.get_duration(S=S, sr=sr, n_fft=n_fft,
+                                            hop_length=hop_length,
+                                            center=center)
+
+        # We lose a little accuracy in framing without centering, so it's
+        # not as precise as time-domain duration
+        assert np.allclose(duration_est, duration, rtol=1e-1, atol=1e-2)
+
+    test_file = 'data/test1_22050.wav'
+
+    for sr in [8000, 11025, 22050]:
+        for duration in [1.0, 2.5]:
+            for mono in [False, True]:
+                yield __test_audio, test_file, mono, sr, duration
+
+            for n_fft in [256, 512, 1024]:
+                for hop_length in [n_fft / 8, n_fft / 4, n_fft / 2]:
+                    for center in [False, True]:
+                        yield (__test_spec, test_file, sr,
+                               duration, n_fft, hop_length, center)
