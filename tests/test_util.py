@@ -216,14 +216,14 @@ def test_match_intervals():
 
     def __make_truth(ints1, ints2):
 
-        n1, n2 = ints1.shape[0], ints2.shape[0]
-        D = np.empty((n1, n2))
+        n1 = ints1.shape[0]
+
+        y = np.empty(n1)
 
         for i in range(n1):
-            for j in range(n2):
-                D[i, j] = __compare_intervals(ints1[i], ints2[j])
+            y[i] = np.argmax([__compare_intervals(ints1[i], i2) for i2 in ints2])
 
-        return np.argmax(D, axis=1)
+        return y
 
     def __test(n, m):
         ints1 = __make_intervals(n)
@@ -235,6 +235,53 @@ def test_match_intervals():
 
         assert np.allclose(y_pred, y_true)
 
-    for n in [5, 20, 500]:
-        for m in [5, 20, 500, 5000]:
-            yield __test, n, m
+    @raises(ValueError)
+    def __test_fail(n, m):
+        ints1 = __make_intervals(n)
+        ints2 = __make_intervals(m)
+        librosa.util.match_intervals(ints1, ints2)
+
+    for n in [0, 1, 5, 20, 500]:
+        for m in [0, 1, 5, 20, 500, 5000]:
+            if n == 0 or m == 0:
+                yield __test_fail, n, m
+            else:
+                yield __test, n, m
+
+
+def test_match_events():
+
+    def __make_events(n):
+        return np.abs(np.random.randn(n))
+
+    def __make_truth(ev1, ev2):
+        n1 = len(ev1)
+
+        y = np.empty(n1)
+        for i in range(n1):
+            y[i] = np.argmin([np.abs(ev1[i] - ev) for ev in ev2])
+
+        return y
+
+    def __test(n, m):
+        ev1 = __make_events(n)
+        ev2 = __make_events(m)
+
+        y_true = __make_truth(ev1, ev2)
+
+        y_pred = librosa.util.match_events(ev1, ev2)
+
+        assert np.allclose(y_pred, y_true)
+
+    @raises(ValueError)
+    def __test_fail(n, m):
+        ev1 = __make_events(n)
+        ev2 = __make_events(m)
+        librosa.util.match_events(ev1, ev2)
+
+    for n in [0, 1, 5, 20, 500]:
+        for m in [0, 1, 5, 20, 500, 5000]:
+            if n == 0 or m == 0:
+                yield __test_fail, n, m
+            else:
+                yield __test, n, m

@@ -534,7 +534,19 @@ def match_intervals(intervals_from, intervals_to):
     See Also
     --------
     match_events
+
+    Raises
+    ------
+    ValueError
+        If either array of input intervals is not the correct shape
     '''
+
+    if len(intervals_from) == 0 or len(intervals_to) == 0:
+        raise ValueError('Attempting to match empty interval list')
+
+    if (intervals_from.shape[-1] != 2 or intervals_to.shape[-1] != 2
+       or intervals_from.ndim != 2 or intervals_to.ndim != 2):
+        raise ValueError('Interval lists must be shape=(n, 2)')
 
     # The overlap score of a beat with a segment is defined as
     #   max(0, min(beat_end, segment_end) - max(beat_start, segment_start))
@@ -605,7 +617,16 @@ def match_events(events_from, events_to):
     See Also
     --------
     match_intervals
+
+    Raises
+    ------
+    ValueError
+        If either array of input events is not the correct shape
     '''
+
+    if len(events_from) == 0 or len(events_to) == 0:
+        raise ValueError('Attempting to match empty event list')
+
     output = np.empty_like(events_from, dtype=np.int)
 
     n_rows = int(MAX_MEM_BLOCK / (np.prod(output.shape[1:]) * len(events_to)
