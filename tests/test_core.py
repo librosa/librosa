@@ -251,3 +251,21 @@ def test_get_duration_wav():
                     for center in [False, True]:
                         yield (__test_spec, test_file, sr,
                                duration, n_fft, hop_length, center)
+
+
+def test_autocorrelate():
+
+    def __test(y, max_size):
+
+        ac = librosa.autocorrelate(y, max_size=max_size)
+
+        if max_size is None or max_size > len(y):
+            assert len(ac) == len(y)
+
+        else:
+            assert len(ac) == max_size
+
+    y = np.random.randn(256)
+
+    for max_size in [None, len(y), 2 * len(y)]:
+        yield __test, y, max_size
