@@ -12,6 +12,12 @@ except:
 import numpy as np
 import librosa
 
+
+def test_example_audio_file():
+
+    assert os.path.exists(librosa.util.example_audio_file())
+
+
 def test_frame():
 
     # Generate a random time series
