@@ -639,3 +639,50 @@ def perceptual_weighting(S, frequencies, **kwargs):
     offset = time_frequency.A_weighting(frequencies).reshape((-1, 1))
 
     return offset + logamplitude(S, **kwargs)
+
+
+@cache
+def _spectrogram(y=None, S=None, n_fft=2048, hop_length=512, power=1):
+    '''Helper function to retrieve a magnitude spectrogram.
+
+    This is primarily used in feature extraction functions that can operate on
+    either audio time-series or spectrogram input.
+
+
+    Parameters
+    ----------
+    y : None or np.ndarray [ndim=1]
+        If provided, an audio time series
+
+    S : None or np.ndarray
+        Spectrogram input, optional
+
+    n_fft : int > 0
+        STFT window size
+
+    hop_length : int > 0
+        STFT hop length
+
+    power : float > 0
+        Exponent for the magnitude spectrogram,
+        e.g., 1 for energy, 2 for power, etc.
+
+    Returns
+    -------
+    S_out : np.ndarray [dtype=np.float32]
+        - If `S` is provided as input, then `S_out == S`
+        - Else, `S_out = |stft(y, n_fft=n_fft, hop_length=hop_length)|**power`
+
+    n_fft : int > 0
+        - If `S` is provided, then `n_fft` is inferred from `S`
+        - Else, copied from input
+    '''
+
+    if S is not None:
+        # Infer n_fft from spectrogram shape
+        n_fft = 2 * (S.shape[0] - 1)
+    else:
+        # Otherwise, compute a magnitude spectrogram from input
+        S = np.abs(stft(y, n_fft=n_fft, hop_length=hop_length))**power
+
+    return S, n_fft

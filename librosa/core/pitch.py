@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from .spectrum import stft, ifgram
+from .spectrum import ifgram, _spectrogram
 from . import time_frequency
 from .. import cache
 from .. import util
@@ -302,7 +302,7 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=None,
 
 @cache
 def piptrack(y=None, sr=22050, S=None, n_fft=4096, hop_length=None,
-             fmin=150.0, fmax=4000.0, threshold=.1):
+             fmin=150.0, fmax=4000.0, threshold=0.1):
     '''Pitch tracking on thresholded parabolically-interpolated STFT
 
     .. [1] https://ccrma.stanford.edu/~jos/sasp/Sinusoidal_Peak_Interpolation.html
@@ -364,17 +364,11 @@ def piptrack(y=None, sr=22050, S=None, n_fft=4096, hop_length=None,
     if hop_length is None:
         hop_length = int(n_fft / 4)
 
-    if S is None:
-        if y is None:
-            raise ValueError('Either "y" or "S" must be provided')
-        S = np.abs(stft(y, n_fft=n_fft, hop_length=hop_length))
+    S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
 
     # Truncate to feasible region
     fmin = np.maximum(fmin, 0)
     fmax = np.minimum(fmax, float(sr) / 2)
-
-    # Pre-compute FFT frequencies
-    n_fft = 2 * (S.shape[0] - 1)
 
     fft_freqs = time_frequency.fft_frequencies(sr=sr, n_fft=n_fft)
 
