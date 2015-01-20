@@ -366,7 +366,7 @@ def axis_sort(S, axis=-1, index=False, value=None):
         Array to be sorted
 
     axis : int [scalar]
-        The axis along which to sort.
+        The axis along which to compute the sorting values
 
         - `axis=0` to sort rows by peak column index
         - `axis=1` to sort columns by peak row index
@@ -402,16 +402,13 @@ def axis_sort(S, axis=-1, index=False, value=None):
     bin_idx = value(S, axis=np.mod(1-axis, S.ndim))
     idx = np.argsort(bin_idx)
 
-    if axis == 0:
-        if index:
-            return S[idx, :], idx
-        else:
-            return S[idx, :]
+    sort_slice = [Ellipsis] * S.ndim
+    sort_slice[axis] = idx
+
+    if index:
+        return S[sort_slice], idx
     else:
-        if index:
-            return S[:, idx], idx
-        else:
-            return S[:, idx]
+        return S[sort_slice]
 
 
 @cache

@@ -158,3 +158,46 @@ def test_normalize():
             for norm in ['inf', -0.5, -2]:
                 yield __test_fail, X, norm, axis
 
+
+def test_axis_sort():
+
+    def __test_pass(data, axis, index, value):
+
+        if index:
+            Xsorted, idx = librosa.util.axis_sort(data,
+                                                  axis=axis,
+                                                  index=index,
+                                                  value=value)
+
+            cmp_slice = [Ellipsis] * X.ndim
+            cmp_slice[axis] = idx
+
+            assert np.allclose(X[cmp_slice], Xsorted)
+
+        else:
+            Xsorted = librosa.util.axis_sort(data,
+                                             axis=axis,
+                                             index=index,
+                                             value=value)
+
+        compare_axis = np.mod(1 - axis, 2)
+
+        sort_values = value(Xsorted, axis=compare_axis)
+
+        assert np.allclose(sort_values, np.sort(sort_values))
+
+    @raises(ValueError)
+    def __test_fail(data, axis, index, value):
+        librosa.util.axis_sort(data, axis=axis, index=index, value=value)
+
+    for ndim in [1, 2, 3]:
+        X = np.random.randn(*([10] * ndim))
+
+        for axis in [0, 1, -1]:
+            for index in [False, True]:
+                for value in [np.min, np.mean, np.max]:
+
+                    if ndim == 2:
+                        yield __test_pass, X, axis, index, value
+                    else:
+                        yield __test_fail, X, axis, index, value
