@@ -346,17 +346,22 @@ def test_estimate_tuning():
                                              y=y,
                                              sr=sr)
 
-        print('target_hz={:.3f}, estimated={:.3f}, '
-              'resolution={:.1e}'.format(tuning, tuning_est, resolution))
+        print('target_hz={:.3f}'.format(target_hz))
+        print('tuning={:.3f}, estimated={:.3f}'.format(tuning, tuning_est))
+        print('resolution={:.2e}'.format(resolution))
 
         assert np.abs(tuning - tuning_est) <= resolution
 
-    for sr in [8000, 11025, 22050]:
+    for sr in [11025, 22050]:
         duration = 5.0
+
         t = np.linspace(0, duration, duration * sr)
+
         for resolution in [1e-2, 1e-3]:
             for bins_per_octave in [12]:
-                for tuning in [-0.5, -0.375, -0.25, 0.0, 0.25, 0.375]:
-                    target_hz = librosa.midi_to_hz(69 + tuning)
+                for center_note in [69, 84, 108]:
+                    for tuning in [-0.5, -0.375, -0.25, 0.0, 0.25, 0.375]:
+                        target_hz = librosa.midi_to_hz(center_note + tuning)
 
-                    yield __test, target_hz, resolution, bins_per_octave, tuning
+                        yield (__test, np.asscalar(target_hz), resolution,
+                               bins_per_octave, tuning)

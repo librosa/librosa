@@ -301,8 +301,8 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=None,
 
 
 @cache
-def piptrack(y=None, sr=22050, S=None, n_fft=4096, fmin=150.0,
-             fmax=4000.0, threshold=.1):
+def piptrack(y=None, sr=22050, S=None, n_fft=4096, hop_length=None,
+             fmin=150.0, fmax=4000.0, threshold=.1):
     '''Pitch tracking on thresholded parabolically-interpolated STFT
 
     .. [1] https://ccrma.stanford.edu/~jos/sasp/Sinusoidal_Peak_Interpolation.html
@@ -325,6 +325,9 @@ def piptrack(y=None, sr=22050, S=None, n_fft=4096, fmin=150.0,
 
     n_fft : int > 0 [scalar] or None
         number of FFT bins to use, if `y` is provided.
+
+    hop_length : int > 0 [scalar] or None
+        number of samples to hop
 
     threshold : float in `(0, 1)`
         A bin in spectrum X is considered a pitch when it is greater than
@@ -358,10 +361,13 @@ def piptrack(y=None, sr=22050, S=None, n_fft=4096, fmin=150.0,
     '''
 
     # Check that we received an audio time series or STFT
+    if hop_length is None:
+        hop_length = int(n_fft / 4)
+
     if S is None:
         if y is None:
             raise ValueError('Either "y" or "S" must be provided')
-        S = np.abs(stft(y, n_fft=n_fft))
+        S = np.abs(stft(y, n_fft=n_fft, hop_length=hop_length))
 
     # Truncate to feasible region
     fmin = np.maximum(fmin, 0)
@@ -369,6 +375,7 @@ def piptrack(y=None, sr=22050, S=None, n_fft=4096, fmin=150.0,
 
     # Pre-compute FFT frequencies
     n_fft = 2 * (S.shape[0] - 1)
+
     fft_freqs = time_frequency.fft_frequencies(sr=sr, n_fft=n_fft)
 
     # Do the parabolic interpolation everywhere,
@@ -377,6 +384,7 @@ def piptrack(y=None, sr=22050, S=None, n_fft=4096, fmin=150.0,
     avg = 0.5 * (S[2:] - S[:-2])
 
     shift = 2 * S[1:-1] - S[2:] - S[:-2]
+
     # Suppress divide-by-zeros.
     # Points where shift == 0 will never be selected by localmax anyway
     shift = avg / (shift + (shift < util.SMALL_FLOAT))
