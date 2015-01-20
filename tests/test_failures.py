@@ -62,6 +62,19 @@ def test_valid_audio_inf():
     librosa.util.valid_audio(y)
 
 
+def test_valid_audio_ndim():
+    '''valid_audio: y.ndim > 2'''
+
+    y = np.zeros((3, 10, 10))
+
+    @raises(ValueError)
+    def __test(mono):
+        librosa.util.valid_audio(y, mono=mono)
+
+    for mono in [False, True]:
+        yield __test, mono
+
+
 @raises(ValueError)
 def test_frame_hop():
     '''frame: hop_length=0'''
