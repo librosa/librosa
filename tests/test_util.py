@@ -201,3 +201,40 @@ def test_axis_sort():
                         yield __test_pass, X, axis, index, value
                     else:
                         yield __test_fail, X, axis, index, value
+
+
+def test_match_intervals():
+
+    def __make_intervals(n):
+        
+        return np.cumsum(np.abs(np.random.randn(n, 2)), axis=1)
+
+    def __compare_intervals(i1, i2):
+
+        return np.maximum(0, np.minimum(i1[-1], i2[-1])
+                          - np.maximum(i1[0], i2[0]))
+
+    def __make_truth(ints1, ints2):
+
+        n1, n2 = ints1.shape[0], ints2.shape[0]
+        D = np.empty((n1, n2))
+
+        for i in range(n1):
+            for j in range(n2):
+                D[i, j] = __compare_intervals(ints1[i], ints2[j])
+
+        return np.argmax(D, axis=1)
+
+    def __test(n, m):
+        ints1 = __make_intervals(n)
+        ints2 = __make_intervals(m)
+
+        y_true = __make_truth(ints1, ints2)
+
+        y_pred = librosa.util.match_intervals(ints1, ints2)
+
+        assert np.allclose(y_pred, y_true)
+
+    for n in [5, 20, 500]:
+        for m in [5, 20, 500, 5000]:
+            yield __test, n, m
