@@ -305,8 +305,6 @@ def test_zero_crossings():
             idx = idx[1:]
 
         for i in idx:
-            print(data)
-            print(zc)
             assert np.sign(data[i]) != np.sign(data[i-1])
 
     data = np.random.randn(32)
@@ -316,5 +314,3 @@ def test_zero_crossings():
             for pad in [False, True]:
 
                 yield __test, data, threshold, ref_magnitude, pad
-    pass
-
