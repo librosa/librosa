@@ -247,6 +247,9 @@ def test_match_intervals():
                 yield __test_fail, n, m
             else:
                 yield __test, n, m
+    
+    # TODO:   2015-01-20 17:04:55 by Brian McFee <brian.mcfee@nyu.edu>
+    # add coverage for shape errors
 
 
 def test_match_events():
@@ -285,3 +288,32 @@ def test_match_events():
                 yield __test_fail, n, m
             else:
                 yield __test, n, m
+
+
+def test_localmax():
+
+    def __test_axis(ndim, axis):
+
+        data = np.random.randn(*([50] * ndim))
+
+        lm = librosa.util.localmax(data, axis=axis)
+
+        for hits in np.argwhere(lm):
+            for offset in [-1, 1]:
+                compare_idx = hits.copy()
+                compare_idx[axis] += offset
+
+                if compare_idx[axis] < 0:
+                    continue
+
+                if compare_idx[axis] >= data.shape[axis]:
+                    continue
+
+                if offset < 0:
+                    assert data[tuple(hits)] > data[tuple(compare_idx)]
+                else:
+                    assert data[tuple(hits)] >= data[tuple(compare_idx)]
+
+    for ndim in [1, 2, 3]:
+        for axis in range(ndim):
+            yield __test_axis, ndim, axis
