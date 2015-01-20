@@ -51,7 +51,7 @@ def test_load():
     # That is a separate unit test.
 
     def __test(infile):
-        DATA    = load(infile)
+        DATA = load(infile)
         (y, sr) = librosa.load(DATA['wavfile'][0], sr=None, mono=DATA['mono'])
 
         # Verify that the sample rate is correct
@@ -269,3 +269,19 @@ def test_autocorrelate():
 
     for max_size in [None, len(y), 2 * len(y)]:
         yield __test, y, max_size
+
+
+def test_to_mono():
+
+    def __test(filename, mono):
+        y, sr = librosa.load(filename, mono=mono)
+
+        y_mono = librosa.to_mono(y)
+
+        assert y_mono.ndim == 1
+        assert len(y_mono) == y.shape[-1]
+
+    filename = 'data/test1_22050.wav'
+
+    for mono in [False, True]:
+        yield __test, filename, mono
