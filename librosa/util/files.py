@@ -100,7 +100,7 @@ def find_files(directory, ext=None, recurse=True, case_sensitive=False,
     if ext is None:
         ext = ['aac', 'au', 'flac', 'm4a', 'mp3', 'ogg', 'wav']
 
-    elif isinstance(ext, str):
+    elif isinstance(ext, basestring):
         if not case_sensitive:
             ext = ext.lower()
         ext = [ext]
