@@ -123,3 +123,38 @@ def test_fix_frames():
                             yield __test_fail, frames, x_min, x_max, pad
                         else:
                             yield __test_pass, frames, x_min, x_max, pad
+
+
+def test_normalize():
+
+    def __test_pass(X, norm, axis):
+        X_norm = librosa.util.normalize(X, norm=norm, axis=axis)
+
+        X_norm = np.abs(X_norm)
+
+        if norm == np.inf:
+            values = np.max(X_norm, axis=axis)
+        elif norm == -np.inf:
+            values = np.min(X_norm, axis=axis)
+        elif norm == 0:
+            # XXX: normalization here isn't quite right
+            values = np.ones(1)
+        else:
+            values = np.sum(X_norm**norm, axis=axis)**(1./norm)
+
+        assert np.allclose(values, np.ones_like(values))
+
+    @raises(ValueError)
+    def __test_fail(X, norm, axis):
+        librosa.util.normalize(X, norm=norm, axis=axis)
+
+    for ndims in [1, 2, 3]:
+        X = np.random.randn(* ([16] * ndims))
+
+        for axis in range(X.ndim):
+            for norm in [np.inf, -np.inf, 0, 0.5, 1.0, 2.0]:
+                yield __test_pass, X, norm, axis
+
+            for norm in ['inf', -0.5, -2]:
+                yield __test_fail, X, norm, axis
+
