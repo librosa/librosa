@@ -87,3 +87,39 @@ def test_fix_length():
             for n in [-5, 0, 5]:
                 yield __test, y, n + y.shape[axis], axis
 
+
+def test_fix_frames():
+
+    @raises(ValueError)
+    def __test_fail(frames, x_min, x_max, pad):
+        librosa.util.fix_frames(frames, x_min, x_max, pad)
+
+    def __test_pass(frames, x_min, x_max, pad):
+
+        f_fix = librosa.util.fix_frames(frames,
+                                        x_min=x_min,
+                                        x_max=x_max,
+                                        pad=pad)
+
+        if x_min is not None:
+            if pad:
+                assert f_fix[0] == x_min
+            assert np.all(f_fix >= x_min)
+
+        if x_max is not None:
+            if pad:
+                assert f_fix[-1] == x_max
+            assert np.all(f_fix <= x_max)
+
+    for low in [-20, 0, 20]:
+        for high in [low + 20, low + 50, low + 100]:
+
+            frames = np.random.randint(low, high=high, size=15)
+
+            for x_min in [None, 0, 20]:
+                for x_max in [None, 20, 100]:
+                    for pad in [False, True]:
+                        if np.any(frames < 0):
+                            yield __test_fail, frames, x_min, x_max, pad
+                        else:
+                            yield __test_pass, frames, x_min, x_max, pad
