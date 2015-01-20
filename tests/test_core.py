@@ -4,7 +4,7 @@
 #
 # Run me as follows:
 #   cd tests/
-#   nosetests -v
+#   nosetests -v --with-coverage --cover-package=librosa
 #
 # This test suite verifies that librosa core routines match (numerically) the output
 # of various DPWE matlab implementations on a broad range of input parameters.
@@ -36,11 +36,12 @@ import scipy.io
 from nose.tools import nottest
 
 
-#-- utilities --#
+# -- utilities --#
 def files(pattern):
     test_files = glob.glob(pattern)
     test_files.sort()
     return test_files
+
 
 def load(infile):
     return scipy.io.loadmat(infile, chars_as_strings=True)
@@ -132,19 +133,20 @@ def test_stft():
 def test_ifgram():
 
     def __test(infile):
-        DATA    = load(infile)
+        DATA = load(infile)
 
-        y, sr   = librosa.load(DATA['wavfile'][0], sr=None, mono=True)
+        y, sr = librosa.load(DATA['wavfile'][0], sr=None, mono=True)
 
         # Compute the IFgram
-        F, D    = librosa.ifgram(y, n_fft       =   DATA['nfft'][0,0].astype(int),
-                                    hop_length  =   DATA['hop_length'][0,0].astype(int),
-                                    win_length  =   DATA['hann_w'][0,0].astype(int),
-                                    sr          =   DATA['sr'][0,0].astype(int),
-                                    center      =   False)
+        F, D = librosa.ifgram(y,
+                              n_fft=DATA['nfft'][0, 0].astype(int),
+                              hop_length=DATA['hop_length'][0, 0].astype(int),
+                              win_length=DATA['hann_w'][0, 0].astype(int),
+                              sr=DATA['sr'][0, 0].astype(int),
+                              center=False)
 
         # D fails to match here because of fftshift()
-#         assert np.allclose(D, DATA['D'])
+        # assert np.allclose(D, DATA['D'])
         assert np.allclose(F, DATA['F'], atol=1e-3)
 
     for infile in files('data/core-ifgram-*.mat'):
@@ -312,3 +314,23 @@ def test_zero_crossings():
                 for zero_pos in [False, True]:
 
                     yield __test, data, threshold, ref_magnitude, pad, zero_pos
+
+
+def test_pitch_tuning():
+
+    def __test(hz, resolution, bins_per_octave, tuning):
+
+        est_tuning = librosa.pitch_tuning(hz,
+                                          resolution=resolution,
+                                          bins_per_octave=bins_per_octave)
+
+        assert np.abs(tuning - est_tuning) <= resolution
+
+    for resolution in [1e-2, 1e-3]:
+        for bins_per_octave in [12]:
+            # Make up some frequencies
+            for tuning in [-0.5, -0.375, -0.25, 0.0, 0.375]:
+
+                note_hz = librosa.midi_to_hz(tuning + np.arange(128))
+
+                yield __test, note_hz, resolution, bins_per_octave, tuning
