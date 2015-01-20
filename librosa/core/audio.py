@@ -191,7 +191,7 @@ def to_mono(y):
 
 @cache
 def resample(y, orig_sr, target_sr, res_type='sinc_fastest', fix=True,
-             **kwargs):
+             scipy_resample=False, **kwargs):
     """Resample a time series from orig_sr to target_sr
 
     Examples
@@ -220,6 +220,9 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest', fix=True,
         adjust the length of the resampled signal to be of size exactly
         `ceil(target_sr * len(y) / orig_sr)`
 
+    scipy_resample : bool
+        Force usage of `scipy.resample` rather than `scikits.samplerate`
+
     kwargs : additional keyword arguments
         If `fix==True`, additional keyword arguments to pass to
         `librosa.util.fix_length`.
@@ -247,7 +250,7 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest', fix=True,
 
     n_samples = int(np.ceil(y.shape[-1] * float(target_sr) / orig_sr))
 
-    if _HAS_SAMPLERATE:
+    if _HAS_SAMPLERATE and not scipy_resample:
         y_hat = samplerate.resample(y.T,
                                     float(target_sr) / orig_sr,
                                     res_type).T
