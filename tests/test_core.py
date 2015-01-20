@@ -73,11 +73,9 @@ def test_resample():
         # load the wav file
         (y_in, sr_in) = librosa.load(DATA['wavfile'][0], sr=None, mono=True)
 
-        if scipy_resample:
-            librosa.core._HAS_SAMPLERATE = False
-
         # Resample it to the target rate
-        y_out = librosa.resample(y_in, DATA['sr_in'], DATA['sr_out'])
+        y_out = librosa.resample(y_in, DATA['sr_in'], DATA['sr_out'],
+                                 scipy_resample=scipy_resample)
 
         # Are we the same length?
         if len(y_out) == len(DATA['y_out']):
@@ -95,9 +93,7 @@ def test_resample():
 
     for infile in files('data/core-resample-*.mat'):
         for scipy_resample in [False, True]:
-            hold_scipy = librosa.core._HAS_SAMPLERATE
             yield (__test, infile, scipy_resample)
-            librosa.core._HAS_SAMPLERATE = hold_scipy
     pass
 
 
