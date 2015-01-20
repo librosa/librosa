@@ -6,6 +6,8 @@ import os
 import glob
 import pkg_resources
 
+import six
+
 EXAMPLE_AUDIO = 'example_data/Kevin_MacLeod_-_Vibe_Ace.mp3'
 
 
@@ -100,7 +102,7 @@ def find_files(directory, ext=None, recurse=True, case_sensitive=False,
     if ext is None:
         ext = ['aac', 'au', 'flac', 'm4a', 'mp3', 'ogg', 'wav']
 
-    elif isinstance(ext, basestring):
+    elif isinstance(ext, six.string_types):
         if not case_sensitive:
             ext = ext.lower()
         ext = [ext]
