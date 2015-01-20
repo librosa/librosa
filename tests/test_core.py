@@ -281,7 +281,40 @@ def test_to_mono():
         assert y_mono.ndim == 1
         assert len(y_mono) == y.shape[-1]
 
+        if mono:
+            assert np.allclose(y, y_mono)
+
     filename = 'data/test1_22050.wav'
 
     for mono in [False, True]:
         yield __test, filename, mono
+
+
+def test_zero_crossings():
+
+    def __test(data, threshold, ref_magnitude, pad):
+        
+        zc = librosa.zero_crossings(y=data,
+                                    threshold=threshold,
+                                    ref_magnitude=ref_magnitude,
+                                    pad=pad)
+
+        idx = np.flatnonzero(zc)
+
+        if pad:
+            idx = idx[1:]
+
+        for i in idx:
+            print(data)
+            print(zc)
+            assert np.sign(data[i]) != np.sign(data[i-1])
+
+    data = np.random.randn(32)
+
+    for threshold in [0, 1e-10]:
+        for ref_magnitude in [None, 0.1, np.max]:
+            for pad in [False, True]:
+
+                yield __test, data, threshold, ref_magnitude, pad
+    pass
+
