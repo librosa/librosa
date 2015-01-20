@@ -10,21 +10,8 @@ from .. import filters
 
 from ..core.time_frequency import fft_frequencies
 from ..core.audio import zero_crossings
-from ..core.spectrum import stft, logamplitude
+from ..core.spectrum import logamplitude, _spectrogram
 from ..core.pitch import estimate_tuning
-
-
-def __get_spec(y=None, sr=22050, S=None, n_fft=2048, hop_length=512, power=1):
-    '''Helper function to retrieve a magnitude spectrogram.'''
-
-    if S is not None:
-        # Infer n_fft from spectrogram shape
-        n_fft = 2 * (S.shape[0] - 1)
-    else:
-        # Otherwise, compute a magnitude spectrogram from input
-        S = np.abs(stft(y, n_fft=n_fft, hop_length=hop_length))**power
-
-    return S, n_fft
 
 
 # -- Spectral features -- #
@@ -93,7 +80,7 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         Instantaneous-frequency spectrogram
     '''
 
-    S, n_fft = __get_spec(y=y, sr=sr, S=S, n_fft=n_fft, hop_length=hop_length)
+    S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
 
     if not np.isrealobj(S):
         raise ValueError('Spectral centroid is only defined '
@@ -178,7 +165,7 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         frequency bandwidth for each frame
     '''
 
-    S, n_fft = __get_spec(y=y, sr=sr, S=S, n_fft=n_fft, hop_length=hop_length)
+    S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
 
     if not np.isrealobj(S):
         raise ValueError('Spectral bandwidth is only defined '
@@ -248,7 +235,7 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         octave-based frequency
     '''
 
-    S, n_fft = __get_spec(y=y, sr=sr, S=S, n_fft=n_fft, hop_length=hop_length)
+    S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
 
     # Compute the center frequencies of each bin
     if freq is None:
@@ -338,7 +325,7 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         roll-off frequency for each frame
     '''
 
-    S, n_fft = __get_spec(y=y, sr=sr, S=S, n_fft=n_fft, hop_length=hop_length)
+    S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
 
     if not np.isrealobj(S):
         raise ValueError('Spectral centroid is only defined '
@@ -395,7 +382,7 @@ def rms(y=None, S=None, n_fft=2048, hop_length=512):
         RMS value for each frame
     '''
 
-    S, _ = __get_spec(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
+    S, _ = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
 
     return np.sqrt(np.mean(np.abs(S)**2, axis=0, keepdims=True))
 
@@ -453,7 +440,7 @@ def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         polynomial coefficients for each frame
     '''
 
-    S, n_fft = __get_spec(y=y, sr=sr, S=S, n_fft=n_fft, hop_length=hop_length)
+    S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
 
     # Compute the center frequencies of each bin
     if freq is None:
@@ -593,8 +580,8 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096, hop_length=512, **kwargs):
         `P[f, t]` contains the energy at pitch bin `f`, frame `t`.
     '''
 
-    S, n_fft = __get_spec(y=y, sr=sr, S=S, n_fft=n_fft, hop_length=hop_length,
-                          power=2)
+    S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length,
+                            power=2)
 
     # If we don't have tuning already, grab it from S
     if 'tuning' not in kwargs:
@@ -678,8 +665,8 @@ def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
         Vector normalization
     """
 
-    S, n_fft = __get_spec(y=y, sr=sr, S=S, n_fft=n_fft, hop_length=hop_length,
-                          power=2)
+    S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length,
+                            power=2)
 
     n_chroma = kwargs.get('n_chroma', 12)
 
@@ -828,8 +815,8 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         Short-time Fourier Transform
     """
 
-    S, n_fft = __get_spec(y=y, sr=sr, S=S, n_fft=n_fft, hop_length=hop_length,
-                          power=2)
+    S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length,
+                            power=2)
 
     # Build a Mel filter
     mel_basis = filters.mel(sr, n_fft, **kwargs)
