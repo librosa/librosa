@@ -65,3 +65,25 @@ def test_pad_center():
                 for n in [0, 10]:
                     yield __test_fail, y, n, axis, mode
 
+
+def test_fix_length():
+
+    def __test(y, n, axis):
+
+        y_out = librosa.util.fix_length(y, n, axis=axis)
+
+        eq_slice = [Ellipsis] * y.ndim
+        eq_slice[axis] = slice(y.shape[axis])
+
+        if n > y.shape[axis]:
+            assert np.allclose(y, y_out[eq_slice])
+        else:
+            assert np.allclose(y[eq_slice], y)
+
+    for shape in [(16,), (16, 16)]:
+        y = np.ones(shape)
+
+        for axis in [0, -1]:
+            for n in [-5, 0, 5]:
+                yield __test, y, n + y.shape[axis], axis
+
