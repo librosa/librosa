@@ -213,26 +213,22 @@ def test_match_intervals():
         return np.maximum(0, np.minimum(i1[-1], i2[-1])
                           - np.maximum(i1[0], i2[0]))
 
-    def __make_truth(ints1, ints2):
+    def __is_best(y, ints1, ints2):
 
-        n1 = ints1.shape[0]
+        for i in range(len(y)):
+            values = np.asarray([__compare(ints1[i], i2) for i2 in ints2])
+            if np.any(values > values[y[i]]):
+                return False
 
-        y = np.empty(n1)
-
-        for i in range(n1):
-            y[i] = np.argmax([__compare(ints1[i], i2) for i2 in ints2])
-
-        return y
+        return True
 
     def __test(n, m):
         ints1 = __make_intervals(n)
         ints2 = __make_intervals(m)
 
-        y_true = __make_truth(ints1, ints2)
-
         y_pred = librosa.util.match_intervals(ints1, ints2)
 
-        assert np.allclose(y_pred, y_true)
+        assert __is_best(y_pred, ints1, ints2)
 
     @raises(ValueError)
     def __test_fail(n, m):
@@ -256,24 +252,21 @@ def test_match_events():
     def __make_events(n):
         return np.abs(np.random.randn(n))
 
-    def __make_truth(ev1, ev2):
-        n1 = len(ev1)
+    def __is_best(y, ev1, ev2):
+        for i in range(len(y)):
+            values = np.asarray([np.abs(ev1[i] - e2) for e2 in ev2])
+            if np.any(values < values[y[i]]):
+                return False
 
-        y = np.empty(n1)
-        for i in range(n1):
-            y[i] = np.argmin([np.abs(ev1[i] - ev) for ev in ev2])
-
-        return y
+        return True
 
     def __test(n, m):
         ev1 = __make_events(n)
         ev2 = __make_events(m)
 
-        y_true = __make_truth(ev1, ev2)
-
         y_pred = librosa.util.match_events(ev1, ev2)
 
-        assert np.allclose(y_pred, y_true)
+        assert __is_best(y_pred, ev1, ev2)
 
     @raises(ValueError)
     def __test_fail(n, m):
