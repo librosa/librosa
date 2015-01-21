@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # CREATED:2014-01-18 14:09:05 by Brian McFee <brm2132@columbia.edu>
-# unit tests for util routines 
+# unit tests for util routines
 
 # Disable cache
 import os
@@ -29,7 +29,7 @@ def test_frame():
         y_frame = librosa.util.frame(y, frame_length=frame, hop_length=hop)
 
         for i in range(y_frame.shape[1]):
-            assert np.allclose(y_frame[:, i], y[ i * hop : (i * hop + frame)])
+            assert np.allclose(y_frame[:, i], y[i * hop:(i * hop + frame)])
 
     for frame in [256, 1024, 2048]:
         for hop_length in [64, 256, 512]:
@@ -37,7 +37,7 @@ def test_frame():
 
 
 def test_pad_center():
-    
+
     def __test(y, n, axis, mode):
 
         y_out = librosa.util.pad_center(y, n, axis=axis, mode=mode)
@@ -206,7 +206,6 @@ def test_axis_sort():
 def test_match_intervals():
 
     def __make_intervals(n):
-        
         return np.cumsum(np.abs(np.random.randn(n, 2)), axis=1)
 
     def __compare(i1, i2):
