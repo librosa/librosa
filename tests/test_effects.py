@@ -11,8 +11,6 @@ except:
 import librosa
 import numpy as np
 
-from nose.tools import raises
-
 
 def test_time_stretch():
 
@@ -29,3 +27,16 @@ def test_time_stretch():
 
     for rate in [0.25, 0.5, 1.0, 2.0, 4.0]:
         yield __test, 'data/test1_22050.wav', rate
+
+
+def test_hpss():
+
+    y, sr = librosa.load(librosa.util.example_audio_file())
+
+    y_harm, y_perc = librosa.effects.hpss(y)
+
+    Dh = librosa.stft(y_harm)
+    Dp = librosa.stft(y_perc)
+    D = librosa.stft(y)
+
+    assert np.allclose(D, Dh + Dp, rtol=1e-3, atol=1e-4)
