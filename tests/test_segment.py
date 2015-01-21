@@ -79,3 +79,34 @@ def test_recurrence_matrix():
             for width in [1, 3, 5]:
                 for sym in [False, True]:
                     yield __test, n, k, width, sym
+
+
+def test_structure_feature():
+
+    def __test(n, pad):
+        # Make a data matrix
+        data = np.random.randn(17, n)
+
+        # Make a recurrence plot
+        rec = librosa.segment.recurrence_matrix(data)
+
+        # Make a structure feature
+        st = librosa.segment.structure_feature(rec, pad=pad, inverse=False)
+
+        # Test for each column
+        if pad:
+            x = slice(n)
+        else:
+            x = Ellipsis
+
+        for i in range(n):
+            assert np.allclose(rec[:, i], np.roll(st[:, i], i)[x])
+
+        # Invert it
+        rec2 = librosa.segment.structure_feature(st, pad=pad, inverse=True)
+
+        assert np.allclose(rec, rec2)
+
+    for n in [10, 100, 1000]:
+        for pad in [False, True]:
+            yield __test, n, pad
