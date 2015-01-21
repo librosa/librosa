@@ -156,6 +156,10 @@ def cmap(data):
         - If `data` has only positive values, `cmap_str` is 'OrRd'
         - If `data` has only negative values, `cmap_str` is 'BuPu_r'
         - If `data` has both positive and negatives, `cmap_str` is 'PuOr_r'
+
+    See Also
+    --------
+    matplotlib.pyplot.colormaps
     '''
 
     if data.dtype == 'bool':
@@ -268,6 +272,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
     --------
     cmap : Automatic colormap detection
     time_ticks : time-formatted tick marks
+    matplotlib.pyplot.imshow
     '''
 
     kwargs.setdefault('aspect', 'auto')

@@ -84,6 +84,10 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
     -------
     rec : np.ndarray [shape=(t,t), dtype=bool]
         Binary recurrence matrix
+
+    See Also
+    --------
+    scipy.spatial.distance.cdist
     '''
 
     t = data.shape[1]
@@ -299,6 +303,10 @@ def agglomerative(data, k, clusterer=None):
     boundaries : np.ndarray [shape=(k,)]
         left-boundaries (frame numbers) of detected segments. This
         will always include `0` as the first left-boundary.
+
+    See Also
+    --------
+    sklearn.cluster.AgglomerativeClustering
     """
 
     if clusterer is None:

@@ -31,8 +31,17 @@ sys.path.insert(0, os.path.abspath('../librosa'))
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode', 'numpydoc']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode', 'sphinx.ext.intersphinx', 'numpydoc']
 numpydoc_show_class_members = False
+
+intersphinx_mapping = {'python': ('http://docs.python.org/2', None),
+                       'numpy': ('http://docs.scipy.org/doc/numpy/', None),
+                       'np': ('http://docs.scipy.org/doc/numpy/', None),
+                       'scipy': ('http://docs.scipy.org/doc/scipy/reference/', None),
+                       'matplotlib': ('http://matplotlib.sourceforge.net/', None),
+                       'sklearn': ('http://scikit-learn.org/stable/', None),
+                       'samplerate':
+                       ('http://www.ar.media.kyoto-u.ac.jp/members/david/softwares/samplerate/sphinx/', None)}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

@@ -182,6 +182,10 @@ def pad_center(data, size, axis=-1, **kwargs):
     ------
     ValueError
         If `size < data.shape[axis]`
+
+    See Also
+    --------
+    np.pad
     '''
 
     kwargs.setdefault('mode', 'constant')
@@ -238,6 +242,10 @@ def fix_length(data, size, axis=-1, **kwargs):
     data_fixed : np.ndarray [shape=data.shape]
         `data` either trimmed or padded to length `size`
         along the specified axis.
+
+    See Also
+    --------
+    np.pad
     '''
 
     kwargs.setdefault('mode', 'constant')
