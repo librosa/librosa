@@ -344,20 +344,27 @@ def test_estimate_tuning():
         tuning_est = librosa.estimate_tuning(resolution=resolution,
                                              bins_per_octave=bins_per_octave,
                                              y=y,
-                                             sr=sr)
+                                             sr=sr,
+                                             n_fft=2048,
+                                             fmin=librosa.note_to_hz('C4'),
+                                             fmax=librosa.note_to_hz('G#9'))
 
         print('target_hz={:.3f}'.format(target_hz))
         print('tuning={:.3f}, estimated={:.3f}'.format(tuning, tuning_est))
         print('resolution={:.2e}'.format(resolution))
 
-        assert np.abs(tuning - tuning_est) <= resolution
+        # Round to the proper number of decimals
+        deviation = np.around(np.abs(tuning - tuning_est),
+                              int(-np.log10(resolution)))
 
-    for sr in [11025, 22050]:
+        assert deviation <= resolution
+
+    for sr in [22050]:
         duration = 5.0
 
         t = np.linspace(0, duration, duration * sr)
 
-        for resolution in [1e-2, 1e-3]:
+        for resolution in [1e-2]:
             for bins_per_octave in [12]:
                 for center_note in [69, 84, 108]:
                     for tuning in [-0.5, -0.375, -0.25, 0.0, 0.25, 0.375]:
