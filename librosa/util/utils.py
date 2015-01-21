@@ -10,8 +10,8 @@ from numpy.lib.stride_tricks import as_strided
 
 from .. import cache
 
-# Constrain STFT block sizes to 128 MB
-MAX_MEM_BLOCK = 2**7 * 2**20
+# Constrain STFT block sizes to 256 KB
+MAX_MEM_BLOCK = 2**8 * 2**10
 
 SMALL_FLOAT = 1e-20
 
