@@ -40,3 +40,25 @@ def test_hpss():
     D = librosa.stft(y)
 
     assert np.allclose(D, Dh + Dp, rtol=1e-3, atol=1e-4)
+
+
+def test_percussive():
+
+    y, sr = librosa.load('data/test1_22050.wav')
+
+    yh1, yp1 = librosa.effects.hpss(y)
+
+    yp2 = librosa.effects.percussive(y)
+
+    assert np.allclose(yp1, yp2)
+
+
+def test_harmonic():
+
+    y, sr = librosa.load('data/test1_22050.wav')
+
+    yh1, yp1 = librosa.effects.hpss(y)
+
+    yh2 = librosa.effects.harmonic(y)
+
+    assert np.allclose(yh1, yh2)
