@@ -240,6 +240,8 @@ def resample(y, orig_sr, target_sr, res_type='sinc_fastest', fix=True,
     See Also
     --------
     librosa.util.fix_length
+    samplerate.resample
+    scipy.signal.resample
     """
 
     # First, validate the audio buffer
