@@ -169,7 +169,14 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     my_y, my_sr, my_hop = y, sr, hop_length
 
     # Iterate down the octaves
-    for _ in range(n_octaves):
+    for i in range(n_octaves):
+
+        # Resample (except first time)
+        if i > 0:
+            my_y = audio.resample(my_y, my_sr, my_sr/2.0, res_type=res_type)
+            my_sr = my_sr / 2.0
+            my_hop = int(my_hop / 2.0)
+
         # Compute a dynamic hop based on n_fft
         my_cqt = __variable_hop_response(my_y, n_fft,
                                          my_hop,
@@ -180,10 +187,6 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         # Convolve
         cqt_resp.append(my_cqt)
 
-        # Resample
-        my_y = audio.resample(my_y, my_sr, my_sr/2.0, res_type=res_type)
-        my_sr = my_sr / 2.0
-        my_hop = int(my_hop / 2.0)
 
     return __trim_stack(cqt_resp, n_bins)
 
