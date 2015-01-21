@@ -23,6 +23,9 @@ def __band_infinite(n, width, v_in=0.0, v_out=np.inf, dtype=np.float32):
     This is used to suppress nearby links in `recurrence_matrix`.
     '''
 
+    if width > n:
+        raise ValueError('width cannot exceed n')
+
     # Instantiate the matrix
     band = np.empty((n, n), dtype=dtype)
 
@@ -68,7 +71,7 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
         Default: `k = 2 * ceil(sqrt(t - 2 * width + 1))`,
         or `k = 2` if `t <= 2 * width + 1`
 
-    width : int > 0 [scalar]
+    width : int >= 1 [scalar]
         only link neighbors `(data[:, i], data[:, j])`
         if `|i-j| >= width`
 
@@ -91,6 +94,9 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
     '''
 
     t = data.shape[1]
+
+    if width < 1:
+        raise ValueError('width must be at least 1')
 
     if k is None:
         if t > 2 * width + 1:
