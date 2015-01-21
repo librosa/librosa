@@ -100,3 +100,27 @@ def test_frame_size():
     '''frame: len(y) == 128, frame_length==256, hop_length=128'''
     y = np.zeros(64)
     librosa.util.frame(y, frame_length=256, hop_length=128)
+
+
+@raises(ValueError)
+def test_stft_bad_window():
+
+    y = np.zeros(22050 * 5)
+
+    n_fft = 2048
+    window = np.ones(n_fft / 2)
+
+    librosa.stft(y, n_fft=n_fft, window=window)
+
+
+@raises(ValueError)
+def test_istft_bad_window():
+
+    D = np.zeros((1025, 10), dtype=np.complex64)
+
+    n_fft = 2 * (D.shape[0] - 1)
+
+    window = np.ones(n_fft / 2)
+
+    librosa.istft(D, window=window)
+
