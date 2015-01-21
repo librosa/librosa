@@ -71,7 +71,7 @@ def estimate_tuning(resolution=0.01, bins_per_octave=12, **kwargs):
     else:
         threshold = 0.0
 
-    return pitch_tuning(pitch[(mag > threshold) & pitch_mask],
+    return pitch_tuning(pitch[(mag >= threshold) & pitch_mask],
                         resolution=resolution,
                         bins_per_octave=bins_per_octave)
 
