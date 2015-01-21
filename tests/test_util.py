@@ -317,3 +317,35 @@ def test_localmax():
     for ndim in range(1, 5):
         for axis in range(ndim):
             yield __test, ndim, axis
+
+
+def test_feature_extractor():
+
+    y, sr = librosa.load('data/test1_22050.wav')
+
+    def __test_positional(myfunc, args):
+
+        FP = librosa.util.FeatureExtractor(myfunc, **args)
+        output = FP.transform([y])
+        output_raw = myfunc(y, **args)
+
+        assert np.allclose(output, output_raw)
+
+    def __test_keyword(myfunc, args):
+
+        FP = librosa.util.FeatureExtractor(myfunc, target='y', **args)
+        output = FP.transform([y])
+        output_raw = myfunc(y=y, **args)
+
+        assert np.allclose(output, output_raw)
+
+    func = librosa.feature.melspectrogram
+    args = {'sr': sr}
+
+    for n_fft in [1024, 2048]:
+        for n_mels in [32, 64, 128]:
+            args['n_fft'] = n_fft
+            args['n_mels'] = n_mels
+
+            yield __test_positional, func, args
+            yield __test_keyword, func, args
