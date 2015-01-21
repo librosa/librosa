@@ -209,7 +209,7 @@ def test_match_intervals():
         
         return np.cumsum(np.abs(np.random.randn(n, 2)), axis=1)
 
-    def __compare_intervals(i1, i2):
+    def __compare(i1, i2):
 
         return np.maximum(0, np.minimum(i1[-1], i2[-1])
                           - np.maximum(i1[0], i2[0]))
@@ -221,7 +221,7 @@ def test_match_intervals():
         y = np.empty(n1)
 
         for i in range(n1):
-            y[i] = np.argmax([__compare_intervals(ints1[i], i2) for i2 in ints2])
+            y[i] = np.argmax([__compare(ints1[i], i2) for i2 in ints2])
 
         return y
 
@@ -247,7 +247,7 @@ def test_match_intervals():
                 yield __test_fail, n, m
             else:
                 yield __test, n, m
-    
+
     # TODO:   2015-01-20 17:04:55 by Brian McFee <brian.mcfee@nyu.edu>
     # add coverage for shape errors
 
@@ -292,9 +292,9 @@ def test_match_events():
 
 def test_localmax():
 
-    def __test_axis(ndim, axis):
+    def __test(ndim, axis):
 
-        data = np.random.randn(*([50] * ndim))
+        data = np.random.randn(*([20] * ndim))
 
         lm = librosa.util.localmax(data, axis=axis)
 
@@ -314,6 +314,6 @@ def test_localmax():
                 else:
                     assert data[tuple(hits)] >= data[tuple(compare_idx)]
 
-    for ndim in [1, 2, 3]:
+    for ndim in range(1, 5):
         for axis in range(ndim):
-            yield __test_axis, ndim, axis
+            yield __test, ndim, axis
