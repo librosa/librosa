@@ -425,7 +425,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
             raise ValueError("Filter pass band lies beyond Nyquist")
 
         # Length of the filter
-        ilen = np.ceil(Q * sr / freq)
+        ilen = Q * sr / freq
         lengths.append(ilen)
 
         # Build the filter
