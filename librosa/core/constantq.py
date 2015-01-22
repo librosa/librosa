@@ -137,9 +137,28 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     if tuning is None:
         tuning = estimate_tuning(y=y, sr=sr)
 
-    # First thing, get the fmin of the top octave
-    fmin_t = cqt_frequencies(n_bins, fmin,
-                             bins_per_octave=bins_per_octave)[-bins_per_octave]
+    # First thing, get the freqs of the top octave
+    freqs = cqt_frequencies(n_bins, fmin,
+                            bins_per_octave=bins_per_octave)[-bins_per_octave:]
+
+    fmin_t = np.min(freqs)
+    fmax_t = np.max(freqs)
+
+    # Determine required resampling quality
+    Q = float(resolution) / (2.0**(1. / bins_per_octave) - 1)
+    filter_cutoff = fmax_t*(1+1.0/Q)
+    nyquist = sr/2.0
+
+    if filter_cutoff < 0.8*nyquist:
+        res_type = 'sinc_fastest'
+    elif filter_cutoff < 0.9*nyquist:
+        res_type = 'sinc_medium'
+    elif filter_cutoff < 0.97*nyquist:
+        res_type = 'sinc_best'
+    else:
+        ValueError("Highest frequency filter lies beyond Nyquist")
+
+
 
     # Generate the basis filters
     basis, lengths = filters.constant_q(sr,
