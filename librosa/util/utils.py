@@ -937,24 +937,32 @@ def medfilt(data, kernel_size=None, **kwargs):
 
     # Compute the extra space we need for each dimension
     pad_shape = []
-    pad_slice = []
-    for k in kernel_size:
-        pad_k = int(k / 2)
+    pad_slice = [Ellipsis] * data.ndim
+
+    has_padding = False
+    for k in range(data.ndim):
+        pad_k = int(kernel_size[k] / 2)
         pad_shape.append((pad_k, pad_k))
         if pad_k > 0:
-            pad_slice.append(slice(pad_k, -pad_k))
-        else:
-            pad_slice.append(Ellipsis)
+            pad_slice[k] = slice(pad_k, -pad_k)
+            has_padding = True
 
     # Apply the filter on the padded data
-    data_p = np.pad(data, pad_shape, **kwargs)
+    if has_padding:
+        data_p = np.pad(data, pad_shape, **kwargs)
+    else:
+        data_p = data
+
     if data_p.ndim == 2:
         data_p = scipy.signal.medfilt2d(data_p, kernel_size=kernel_size)
     else:
         data_p = scipy.signal.medfilt(data_p, kernel_size=kernel_size)
 
     # Slice back down to the original shape
-    return data_p[pad_slice]
+    if has_padding:
+        return data_p[pad_slice]
+    else:
+        return data_p
 
 
 def buf_to_int(x, n_bytes=2):
