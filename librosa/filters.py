@@ -322,6 +322,34 @@ def logfrequency(sr, n_fft, n_bins=84, bins_per_octave=12, tuning=0.0,
     return basis
 
 
+def __float_window(window_function):
+    '''Decorator function for windows with fractional input.
+
+    This function guarantees that for fractional `x`, the following hold:
+
+    1. `__float_window(window_function)(x)` has length `np.ceil(x)`
+    2. all values from `np.floor(x)` are set to 0.
+
+    For integer-valued `x`, there should be no change in behavior.
+    '''
+
+    def _wrap(n, *args, **kwargs):
+        '''The wrapped window'''
+        n_min, n_max = int(np.floor(n)), int(np.ceil(n))
+
+        window = window_function(n, *args, **kwargs)
+
+        if len(window) < n_max:
+            window = np.pad(window, [(0, n_max - len(window))],
+                            mode='constant')
+
+        window[n_min:] = 0.0
+
+        return window
+
+    return _wrap
+
+
 @cache
 def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
                window=None, resolution=2, pad_fft=True, norm=2,
@@ -364,8 +392,6 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 
     window : function or `None`
         Windowing function to apply to filters.
-        If `None`, no window is applied.
-
         Default: `scipy.signal.hann`
 
     resolution : float > 0 [scalar]
@@ -427,20 +453,19 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
             raise ValueError("Filter pass band lies beyond Nyquist")
 
         # Length of the filter
-        ilen = np.ceil(Q * sr / freq)
+        ilen = Q * sr / freq
         lengths.append(ilen)
 
-        # Build the filter
-        win = np.exp(Q * 1j * np.linspace(0, 2 * np.pi, ilen, endpoint=False))
+        # Build the filter: note, length will be ceil(ilen)
+        sig = np.exp(np.arange(ilen, dtype=float) * 1j * 2 * np.pi * freq / sr)
 
         # Apply the windowing function
-        if window is not None:
-            win = win * window(ilen)
+        sig = sig * __float_window(window)(ilen)
 
         # Normalize
-        win = util.normalize(win, norm=norm)
+        sig = util.normalize(sig, norm=norm)
 
-        filters.append(win)
+        filters.append(sig)
 
     max_len = max(lengths)
     if pad_fft:
