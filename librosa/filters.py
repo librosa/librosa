@@ -364,8 +364,6 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 
     window : function or `None`
         Windowing function to apply to filters.
-        If `None`, no window is applied.
-
         Default: `scipy.signal.hann`
 
     resolution : float > 0 [scalar]
@@ -427,20 +425,19 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
             raise ValueError("Filter pass band lies beyond Nyquist")
 
         # Length of the filter
-        ilen = np.ceil(Q * sr / freq)
+        ilen = Q * sr / freq
         lengths.append(ilen)
 
         # Build the filter
-        win = np.exp(Q * 1j * np.linspace(0, 2 * np.pi, ilen, endpoint=False))
+        sig = np.exp(1j*2*np.pi*freq*np.arange(ilen, dtype=float)/sr)
 
         # Apply the windowing function
-        if window is not None:
-            win = win * window(ilen)
+        sig = sig * window(ilen)
 
         # Normalize
-        win = util.normalize(win, norm=norm)
+        sig = util.normalize(sig, norm=norm)
 
-        filters.append(win)
+        filters.append(sig)
 
     max_len = max(lengths)
     if pad_fft:
