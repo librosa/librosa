@@ -372,3 +372,51 @@ def test_estimate_tuning():
 
                         yield (__test, np.asscalar(target_hz), resolution,
                                bins_per_octave, tuning)
+
+
+def test__spectrogram():
+
+    y, sr = librosa.load('data/test1_22050.wav')
+
+    def __test(n_fft, hop_length, power):
+
+        S = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length))**power
+
+        S_, n_fft_ = librosa.core.spectrum._spectrogram(y=y, S=S, n_fft=n_fft,
+                                                        hop_length=hop_length,
+                                                        power=power)
+
+        # First check with all parameters
+        assert np.allclose(S, S_)
+        assert np.allclose(n_fft, n_fft_)
+
+        # Then check with only the audio
+        S_, n_fft_ = librosa.core.spectrum._spectrogram(y=y, n_fft=n_fft,
+                                                        hop_length=hop_length,
+                                                        power=power)
+        assert np.allclose(S, S_)
+        assert np.allclose(n_fft, n_fft_)
+
+        # And only the spectrogram
+        S_, n_fft_ = librosa.core.spectrum._spectrogram(S=S, n_fft=n_fft,
+                                                        hop_length=hop_length,
+                                                        power=power)
+        assert np.allclose(S, S_)
+        assert np.allclose(n_fft, n_fft_)
+
+        # And only the spectrogram with no shape parameters
+        S_, n_fft_ = librosa.core.spectrum._spectrogram(S=S, power=power)
+        assert np.allclose(S, S_)
+        assert np.allclose(n_fft, n_fft_)
+
+        # And only the spectrogram but with incorrect n_fft
+        S_, n_fft_ = librosa.core.spectrum._spectrogram(S=S, n_fft=2*n_fft,
+                                                        power=power)
+        assert np.allclose(S, S_)
+        assert np.allclose(n_fft, n_fft_)
+
+    for n_fft in [1024, 2048]:
+        for hop_length in [None, 512]:
+            for power in [1, 2]:
+                yield __test, n_fft, hop_length, power
+    assert librosa.core.spectrum._spectrogram(y)
