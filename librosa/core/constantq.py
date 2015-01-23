@@ -3,6 +3,7 @@
 '''Pitch-tracking and tuning estimation'''
 
 import numpy as np
+import warnings
 
 from . import audio
 from .time_frequency import cqt_frequencies, note_to_hz
@@ -153,8 +154,8 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     elif filter_cutoff < 0.97*nyquist:
         res_type = 'sinc_best'
     else:
-        ValueError("Highest frequency filter lies beyond Nyquist")
-
+        res_type = 'sinc_best'
+        warnings.warn("Filter passband lies beyond resampling bandwidth")
 
 
     # Generate the basis filters
