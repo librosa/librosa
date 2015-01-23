@@ -144,8 +144,8 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     # Determine required resampling quality
     Q = float(resolution) / (2.0**(1. / bins_per_octave) - 1)
-    filter_cutoff = fmax_t*(1+1.0/Q)
-    nyquist = sr/2.0
+    filter_cutoff = fmax_t*(1 + 0.725 / Q) # 0.725 for Hann window
+    nyquist = sr / 2.0
 
     if filter_cutoff < 0.8*nyquist:
         res_type = 'sinc_fastest'
