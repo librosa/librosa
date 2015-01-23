@@ -186,29 +186,65 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
 
     Examples
     --------
-    >>> # Visualize an STFT with linear frequency scaling
-    >>> D = np.abs(librosa.stft(y))
-    >>> librosa.display.specshow(D, sr=sr, y_axis='linear')
+    Visualize an STFT power spectrum
 
-    >>> # Or with logarithmic frequency scaling
-    >>> librosa.display.specshow(D, sr=sr, y_axis='log')
+    >>> import matplotlib.pyplot as plt
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> plt.figure(figsize=(12, 8))
 
-    >>> # Visualize a CQT with note markers
-    >>> CQT = librosa.cqt(y, sr=sr)
-    >>> librosa.display.specshow(CQT, sr=sr, y_axis='cqt_note',
-                                 fmin=librosa.note_to_hz('C2'))
+    >>> D = librosa.logamplitude(np.abs(librosa.stft(y))**2, ref_power=np.max)
+    >>> plt.subplot(4, 2, 1)
+    >>> librosa.display.specshow(D, y_axis='linear')
+    >>> plt.colorbar()
+    >>> plt.title('Linear-frequency power spectrogram')
 
-    >>> # Draw time markers automatically
-    >>> librosa.display.specshow(D, sr=sr, hop_length=hop_length,
-                                 x_axis='time')
 
-    >>> # Draw a chromagram with pitch classes
-    >>> C = librosa.feature.chromagram(y, sr)
+    Or on a logarithmic scale
+
+    >>> plt.subplot(4, 2, 2)
+    >>> librosa.display.specshow(D, y_axis='log')
+    >>> plt.colorbar()
+    >>> plt.title('Log-frequency power spectrogram')
+
+
+    Or use a CQT scale
+
+    >>> CQT = librosa.logamplitude(librosa.cqt(y, sr=sr)**2, ref_power=np.max)
+    >>> plt.subplot(4, 2, 3)
+    >>> librosa.display.specshow(CQT, y_axis='cqt_note')
+    >>> plt.colorbar()
+    >>> plt.title('Constant-Q power spectrogram (note)')
+
+    >>> plt.subplot(4, 2, 4)
+    >>> librosa.display.specshow(CQT, y_axis='cqt_hz')
+    >>> plt.colorbar()
+    >>> plt.title('Constant-Q power spectrogram (Hz)')
+
+
+    Draw a chromagram with pitch classes
+
+    >>> C = librosa.feature.chromagram(y=y, sr=sr)
+    >>> plt.subplot(4, 2, 5)
     >>> librosa.display.specshow(C, y_axis='chroma')
+    >>> plt.colorbar()
+    >>> plt.title('Chromagram')
 
-    >>> # Force a grayscale colormap (white -> black)
-    >>> librosa.display.specshow(librosa.logamplitude(D),
-                                 cmap='gray_r')
+
+    Force a grayscale colormap (white -> black)
+
+    >>> plt.subplot(4, 2, 6)
+    >>> librosa.display.specshow(D, cmap='gray_r')
+    >>> plt.colorbar()
+    >>> plt.title('Linear power spectrogram (grayscale)')
+
+
+    Draw time markers automatically
+
+    >>> plt.subplot(4, 2, 7)
+    >>> librosa.display.specshow(D, x_axis='time', y_axis='log')
+    >>> plt.colorbar()
+    >>> plt.title('Log power spectrogram with time')
+
 
     Parameters
     ----------
@@ -249,6 +285,9 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
         Frequency of the lowest spectrogram bin.  Used for Mel and CQT
         scales.
 
+        If `y_axis` is `cqt_hz` or `cqt_note` and `fmin` is not given,
+        it is set by default to `note_to_hz('C2')`.
+
     fmax : float > 0 [scalar] or None
         Used for setting the Mel frequency scales
 
@@ -262,11 +301,6 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
     -------
     image : `matplotlib.image.AxesImage`
         As returned from `matplotlib.pyplot.imshow`.
-
-    Raises
-    ------
-    ValueError
-        If y_axis is 'cqt_hz' or 'cqt_note' and `fmin` is not supplied.
 
     See Also
     --------
@@ -340,7 +374,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
 
     elif y_axis is 'cqt_hz':
         if fmin is None:
-            raise ValueError('fmin must be supplied for CQT display')
+            fmin = core.note_to_hz('C2')
 
         positions = np.arange(0, data.shape[0],
                               np.ceil(float(data.shape[0]) / n_yticks),
@@ -354,7 +388,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
 
     elif y_axis is 'cqt_note':
         if fmin is None:
-            raise ValueError('fmin must be supplied for CQT display')
+            fmin = core.note_to_hz('C2')
 
         positions = np.arange(0, data.shape[0],
                               np.ceil(float(data.shape[0]) / n_yticks),

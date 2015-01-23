@@ -31,7 +31,72 @@ sys.path.insert(0, os.path.abspath('../librosa'))
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode', 'sphinx.ext.intersphinx', 'numpydoc']
+extensions = ['sphinx.ext.autodoc',
+              'sphinx.ext.autosummary',
+              'sphinx.ext.viewcode',
+              'sphinx.ext.intersphinx',
+              'numpydoc']
+
+
+# Determine if the matplotlib has a recent enough version of the
+# plot_directive.
+try:
+    from matplotlib.sphinxext import plot_directive
+except ImportError:
+    use_matplotlib_plot_directive = False
+else:
+    try:
+        use_matplotlib_plot_directive = (plot_directive.__version__ >= 2)
+    except AttributeError:
+        use_matplotlib_plot_directive = False
+
+if use_matplotlib_plot_directive:
+    extensions.append('matplotlib.sphinxext.plot_directive')
+else:
+    raise RuntimeError("You need a recent enough version of matplotlib")
+
+# Generate plots for example sections
+numpydoc_use_plots = True
+
+
+#------------------------------------------------------------------------------
+# Plot
+#------------------------------------------------------------------------------
+plot_pre_code = """
+import numpy as np
+import librosa
+np.random.seed(123)
+"""
+plot_include_source = True
+plot_formats = [('png', 96), 'pdf']
+plot_html_show_formats = False
+
+font_size = 13*72/96.0  # 13 px
+
+plot_rcparams = {
+    'font.size': font_size,
+    'axes.titlesize': font_size,
+    'axes.labelsize': font_size,
+    'xtick.labelsize': font_size,
+    'ytick.labelsize': font_size,
+    'legend.fontsize': font_size,
+    'figure.figsize': (10, 5),
+    'figure.subplot.bottom': 0.2,
+    'figure.subplot.left': 0.2,
+    'figure.subplot.right': 0.9,
+    'figure.subplot.top': 0.85,
+    'figure.subplot.wspace': 0.4,
+    'text.usetex': False,
+    'font.family': 'monospace',
+    'font.monospace': ['Source Code Pro', 'Courier',
+                       'Fixed', 'Terminal', 'monospace'],
+}
+
+if not use_matplotlib_plot_directive:
+    import matplotlib
+    matplotlib.rcParams.update(plot_rcparams)
+
+
 numpydoc_show_class_members = False
 
 intersphinx_mapping = {'python': ('http://docs.python.org/2', None),
@@ -114,7 +179,7 @@ html_theme = 'nature'
 # further.  For a list of options available for each theme, see the
 # documentation.
 # html_theme_options = {
-#     'bootswatch_theme':     'yeti', 
+#     'bootswatch_theme':     'yeti',
 #     'bootstrap_version':    '3',
 #     'navbar_title':         'LibROSA',
 #     'source_link_position': None,
