@@ -160,7 +160,24 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         res_type = 'sinc_best'
     else:
         res_type = 'sinc_best'
-        warnings.warn("Filter passband lies beyond resampling bandwidth")
+
+    if res_type == 'sinc_fastest' and audio._HAS_SAMPLERATE:
+
+        # How many times can we downsample by 2 before filtering?
+        # Requirements:
+        # filter_cutoff < BW*nyquist  # (BW is resampling bandwidth fraction)
+        # hop_length > 2**n_octaves
+
+        downsample_count1 = int(np.ceil(np.log2(BW_FASTEST * nyquist
+                                                / filter_cutoff)) - 1)
+        downsample_count2 = int(np.ceil(np.log2(hop_length) - n_octaves) - 1)
+        downsample_count = min(downsample_count1, downsample_count2)
+        if downsample_count > 0:
+            downsample_factor = 2**downsample_count
+            hop_length = int(hop_length/downsample_factor)
+            y = audio.resample(y, sr, sr/downsample_factor, res_type=res_type)
+            sr = sr/downsample_factor
+
 
 
     # Generate the basis filters
