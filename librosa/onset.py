@@ -23,27 +23,6 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64,
     .. [1] https://github.com/CPJKU/onset_db
 
 
-    Examples
-    --------
-        >>> # Get onset times from a signal
-        >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> onset_frames = librosa.onset.onset_detect(y=y, sr=sr,
-                                                      hop_length=64)
-        >>> librosa.frames_to_time(onset_frames[:20], sr=sr, hop_length=64)
-        array([ 0.052,  0.493,  1.077,  1.196,  1.454,  1.657,  1.898,  2.351,
-                2.923,  3.048,  3.268,  3.741,  4.182,  4.769,  4.873,  6.04 ,
-                6.615,  6.745,  6.96 ,  7.419])
-
-        >>> # Or use a pre-computed onset envelope
-        >>> y, sr = librosa.load(librosa.util.example_audio_file())
-        >>> o_env = librosa.onset.onset_strength(y, sr=sr, hop_length=64)
-        >>> onset_frames = librosa.onset.onset_detect(onset_envelope=o_env,
-                                                      sr=sr, hop_length=64)
-        >>> librosa.frames_to_time(onset_frames[:20], sr=sr, hop_length=64)
-        array([ 0.052,  0.493,  1.077,  1.196,  1.454,  1.657,  1.898,  2.351,
-                2.923,  3.048,  3.268,  3.741,  4.182,  4.769,  4.873,  6.04 ,
-                6.615,  6.745,  6.96 ,  7.419])
-
     Parameters
     ----------
     y          : np.ndarray [shape=(n,)]
@@ -63,6 +42,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64,
 
         See `librosa.util.peak_pick` for details.
 
+
     Returns
     -------
 
@@ -73,15 +53,41 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64,
             If no onset strength could be detected, onset_detect returns
             an empty list.
 
+
     Raises
     ------
     ValueError
         if neither `y` nor `onsets` are provided
 
+
     See Also
     --------
     onset_strength : compute onset strength per-frame
     librosa.util.peak_pick : pick peaks from a time series
+
+
+    Examples
+    --------
+    Get onset times from a signal
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> onset_frames = librosa.onset.onset_detect(y=y, sr=sr,
+    ...                                           hop_length=64)
+    >>> librosa.frames_to_time(onset_frames[:20], sr=sr, hop_length=64)
+    array([ 0.052,  0.493,  1.077,  1.196,  1.454,  1.657,  1.898,  2.351,
+            2.923,  3.048,  3.268,  3.741,  4.182,  4.769,  4.873,  6.04 ,
+            6.615,  6.745,  6.96 ,  7.419])
+
+
+    Or use a pre-computed onset envelope
+
+    >>> o_env = librosa.onset.onset_strength(y, sr=sr, hop_length=64)
+    >>> onset_frames = librosa.onset.onset_detect(onset_envelope=o_env,
+    ...                                           sr=sr, hop_length=64)
+    >>> librosa.frames_to_time(onset_frames[:20], sr=sr, hop_length=64)
+    array([ 0.052,  0.493,  1.077,  1.196,  1.454,  1.657,  1.898,  2.351,
+            2.923,  3.048,  3.268,  3.741,  4.182,  4.769,  4.873,  6.04 ,
+            6.615,  6.745,  6.96 ,  7.419])
     """
 
     # First, get the frame->beat strength profile if we don't already have one
@@ -124,29 +130,6 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
     By default, if a time series `y` is provided, S will be the
     log-power Mel spectrogram.
 
-    Examples
-    --------
-    >>> # Mean aggregation with Mel-scaled spectrogram
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> librosa.onset.onset_strength(y=y, sr=sr)
-    array([ 0.,  0., ...,  0.,  0.])
-
-    >>> # Median aggregation
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> librosa.onset.onset_strength(y=y, sr=sr, aggregate=np.median)
-    array([ 0.,  0., ...,  0.,  0.])
-
-    >>> # Log-frequency spectrogram instead of Mel
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> librosa.onset.onset_strength(y=y, sr=sr,
-                                     feature=librosa.feature.logfsgram)
-    array([ 0.,  0., ...,  0.,  0.])
-
-    >>> # Or Mel spectrogram with customized options
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> librosa.onset.onset_strength(y=y, sr=sr, n_mels=128, fmin=32,
-                                     fmax=8000)
-    array([ 0.,  0., ...,  0.,  0.])
 
     Parameters
     ----------
@@ -178,15 +161,70 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
     kwargs : additional keyword arguments
         Additional parameters to `feature()`, if `S` is not provided.
 
+
     Returns
     -------
     onset_envelope   : np.ndarray [shape=(m,)]
         vector containing the onset strength envelope
 
+
     Raises
     ------
     ValueError
         if neither `(y, sr)` nor `S` are provided
+
+
+    Examples
+    --------
+    Mean aggregation with Mel-scaled spectrogram
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr)
+    >>> onset_env
+    array([ 0.,  0., ...,  0.,  0.])
+    >>> plt.subplot(2, 2, 1)
+    >>> plt.plot(onset_env[:5 * sr/512])
+    >>> plt.axis('tight')
+    >>> plt.title('Mean-aggregation onset strength')
+
+
+    Median aggregation
+
+    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr, aggregate=np.median)
+    >>> onset_env
+    array([ 0.,  0., ...,  0.,  0.])
+    >>> plt.subplot(2, 2, 2)
+    >>> plt.plot(onset_env[:5 * sr/512])
+    >>> plt.axis('tight')
+    >>> plt.title('Median-aggregation onset strength')
+
+
+    Log-frequency spectrogram instead of Mel
+    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr,
+    ...                                          feature=librosa.feature.logfsgram)
+    >>> onset_env
+    array([ 0.,  0., ...,  0.,  0.])
+    >>> plt.subplot(2, 2, 3)
+    >>> plt.plot(onset_env[:5 * sr/512])
+    >>> plt.axis('tight')
+    >>> plt.title('LogFS onset strength')
+
+
+    Or Mel spectrogram with customized options
+
+    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr, n_mels=128, fmin=32,
+    ...                                          fmax=8000)
+    >>> onset_env
+    array([ 0.,  0., ...,  0.,  0.])
+    >>> plt.subplot(2, 2, 4)
+    >>> plt.plot(onset_env[:5 * sr/512])
+    >>> plt.axis('tight')
+    >>> plt.title('Custom Mel spectrum onset strength')
+    >>> plt.tight_layout()
+
     """
 
     if feature is None:
