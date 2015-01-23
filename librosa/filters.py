@@ -18,21 +18,6 @@ def dct(n_filters, n_input):
 
     .. [1] http://en.wikipedia.org/wiki/Discrete_cosine_transform
 
-    Examples
-    --------
-    >>> # Compute MFCCs
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> S = librosa.feature.melspectrogram(y=y, sr=sr)
-    >>> dct_filters = librosa.filters.dct(13, S.shape[0])
-    >>> dct_filters
-    array([[ 0.088,  0.088, ...,  0.088,  0.088],
-           [ 0.125,  0.125, ..., -0.125, -0.125],
-           ...,
-           [ 0.124,  0.115, ..., -0.115, -0.124],
-           [ 0.124,  0.113, ...,  0.113,  0.124]])
-    >>> # Use the filters to make mfccs
-    >>> mfcc = dct_filters.dot(librosa.logamplitude(S))
-
     Parameters
     ----------
     n_filters : int > 0 [scalar]
@@ -45,6 +30,17 @@ def dct(n_filters, n_input):
     -------
     dct_basis: np.ndarray [shape=(n_filters, n_input)]
         DCT (type-III) basis vectors [1]_
+
+    Examples
+    --------
+    >>> dct_filters = librosa.filters.dct(13, S.shape[0])
+    >>> dct_filters
+    array([[ 0.088,  0.088, ...,  0.088,  0.088],
+           [ 0.125,  0.125, ..., -0.125, -0.125],
+           ...,
+           [ 0.124,  0.115, ..., -0.115, -0.124],
+           [ 0.124,  0.113, ...,  0.113,  0.124]])
+
     """
 
     basis = np.empty((n_filters, n_input))
@@ -61,23 +57,6 @@ def dct(n_filters, n_input):
 @cache
 def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
     """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins
-
-    Examples
-    --------
-    >>> librosa.filters.mel(22050, 2048)
-    array([[ 0.   ,  0.016, ...,  0.   ,  0.   ],
-           [ 0.   ,  0.   , ...,  0.   ,  0.   ],
-           ...,
-           [ 0.   ,  0.   , ...,  0.   ,  0.   ],
-           [ 0.   ,  0.   , ...,  0.   ,  0.   ]])
-
-    >>> # Or clip the maximum frequency to 8KHz
-    >>> librosa.filters.mel(22050, 2048, fmax=8000)
-    array([[ 0.  ,  0.02, ...,  0.  ,  0.  ],
-           [ 0.  ,  0.  , ...,  0.  ,  0.  ],
-           ...,
-           [ 0.  ,  0.  , ...,  0.  ,  0.  ],
-           [ 0.  ,  0.  , ...,  0.  ,  0.  ]])
 
     Parameters
     ----------
@@ -104,6 +83,26 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
     -------
     M         : np.ndarray [shape=(n_mels, 1 + n_fft/2)]
         Mel transform matrix
+
+    Examples
+    --------
+    >>> librosa.filters.mel(22050, 2048)
+    array([[ 0.   ,  0.016, ...,  0.   ,  0.   ],
+           [ 0.   ,  0.   , ...,  0.   ,  0.   ],
+    ...,
+           [ 0.   ,  0.   , ...,  0.   ,  0.   ],
+           [ 0.   ,  0.   , ...,  0.   ,  0.   ]])
+
+
+    Clip the maximum frequency to 8KHz
+
+    >>> librosa.filters.mel(22050, 2048, fmax=8000)
+    array([[ 0.  ,  0.02, ...,  0.  ,  0.  ],
+           [ 0.  ,  0.  , ...,  0.  ,  0.  ],
+    ...,
+           [ 0.  ,  0.  , ...,  0.  ,  0.  ],
+           [ 0.  ,  0.  , ...,  0.  ,  0.  ]])
+
     """
 
     if fmax is None:
@@ -141,31 +140,6 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
 def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=2):
     """Create a Filterbank matrix to convert STFT to chroma
 
-    Examples
-    --------
-    >>> # Build a simple chroma filter bank
-    >>> librosa.filters.chroma(22050, 4096)
-    array([[  1.689e-05,   3.024e-04, ...,   4.639e-17,   5.327e-17],
-           [  1.716e-05,   2.652e-04, ...,   2.674e-25,   3.176e-25],
-           ...,
-           [  1.578e-05,   3.619e-04, ...,   8.577e-06,   9.205e-06],
-           [  1.643e-05,   3.355e-04, ...,   1.474e-10,   1.636e-10]])
-
-    >>> # Use quarter-tones instead of semitones
-    >>> librosa.filters.chroma(22050, 4096, n_chroma=24)
-    array([[  1.194e-05,   2.138e-04, ...,   6.297e-64,   1.115e-63],
-           [  1.206e-05,   2.009e-04, ...,   1.546e-79,   2.929e-79],
-           ...,
-           [  1.162e-05,   2.372e-04, ...,   6.417e-38,   9.923e-38],
-           [  1.180e-05,   2.260e-04, ...,   4.697e-50,   7.772e-50]])
-
-    >>> # Equally weight all octaves
-    >>> librosa.filters.chroma(22050, 4096, octwidth=None)
-    array([[  3.036e-01,   2.604e-01, ...,   2.445e-16,   2.809e-16],
-           [  3.084e-01,   2.283e-01, ...,   1.409e-24,   1.675e-24],
-           ...,
-           [  2.836e-01,   3.116e-01, ...,   4.520e-05,   4.854e-05],
-           [  2.953e-01,   2.888e-01, ...,   7.768e-10,   8.629e-10]])
 
     Parameters
     ----------
@@ -193,6 +167,38 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=2):
     -------
     wts : ndarray [shape=(n_chroma, 1 + n_fft / 2)]
         Chroma filter matrix
+
+
+    Examples
+    --------
+    Build a simple chroma filter bank
+
+    >>> librosa.filters.chroma(22050, 4096)
+    array([[  1.689e-05,   3.024e-04, ...,   4.639e-17,   5.327e-17],
+           [  1.716e-05,   2.652e-04, ...,   2.674e-25,   3.176e-25],
+    ...,
+           [  1.578e-05,   3.619e-04, ...,   8.577e-06,   9.205e-06],
+           [  1.643e-05,   3.355e-04, ...,   1.474e-10,   1.636e-10]])
+
+    Use quarter-tones instead of semitones
+
+    >>> librosa.filters.chroma(22050, 4096, n_chroma=24)
+    array([[  1.194e-05,   2.138e-04, ...,   6.297e-64,   1.115e-63],
+           [  1.206e-05,   2.009e-04, ...,   1.546e-79,   2.929e-79],
+    ...,
+           [  1.162e-05,   2.372e-04, ...,   6.417e-38,   9.923e-38],
+           [  1.180e-05,   2.260e-04, ...,   4.697e-50,   7.772e-50]])
+
+
+    Equally weight all octaves
+
+    >>> librosa.filters.chroma(22050, 4096, octwidth=None)
+    array([[  3.036e-01,   2.604e-01, ...,   2.445e-16,   2.809e-16],
+           [  3.084e-01,   2.283e-01, ...,   1.409e-24,   1.675e-24],
+    ...,
+           [  2.836e-01,   3.116e-01, ...,   4.520e-05,   4.854e-05],
+           [  2.953e-01,   2.888e-01, ...,   7.768e-10,   8.629e-10]])
+
     """
 
     wts = np.zeros((n_chroma, n_fft))
@@ -241,29 +247,6 @@ def logfrequency(sr, n_fft, n_bins=84, bins_per_octave=12, tuning=0.0,
 
     Each filter is a log-normal window centered at the corresponding frequency.
 
-    Examples
-    --------
-    >>> # Simple log frequency filters
-    >>> librosa.filters.logfrequency(22050, 4096)
-    array([[ 0.,  0., ...,  0.,  0.],
-           [ 0.,  0., ...,  0.,  0.],
-           ...,
-           [ 0.,  0., ...,  0.,  0.],
-           [ 0.,  0., ...,  0.,  0.]])
-
-    >>> # Use a narrower frequency range
-    >>> librosa.filters.logfrequency(22050, 4096, n_bins=48, fmin=110)
-    array([[ 0.,  0., ...,  0.,  0.],
-           [ 0.,  0., ...,  0.,  0.],
-           ...,
-           [ 0.,  0., ...,  0.,  0.],
-           [ 0.,  0., ...,  0.,  0.]])
-
-    >>> # Use narrower filters for sparser response: 5% of a semitone
-    >>> librosa.filters.logfrequency(22050, 4096, spread=0.05)
-    >>> # Or wider: 50% of a semitone
-    >>> librosa.filters.logfrequency(22050, 4096, spread=0.5)
-
     Parameters
     ----------
     sr : int > 0 [scalar]
@@ -291,6 +274,36 @@ def logfrequency(sr, n_fft, n_bins=84, bins_per_octave=12, tuning=0.0,
     -------
     C : np.ndarray [shape=(n_bins, 1 + n_fft/2)]
         log-frequency filter bank.
+
+    Examples
+    --------
+    Simple log frequency filters
+
+    >>> librosa.filters.logfrequency(22050, 4096)
+    array([[ 0.,  0., ...,  0.,  0.],
+           [ 0.,  0., ...,  0.,  0.],
+    ...,
+           [ 0.,  0., ...,  0.,  0.],
+           [ 0.,  0., ...,  0.,  0.]])
+
+
+    Use a narrower frequency range
+
+    >>> librosa.filters.logfrequency(22050, 4096, n_bins=48, fmin=110)
+    array([[ 0.,  0., ...,  0.,  0.],
+           [ 0.,  0., ...,  0.,  0.],
+    ...,
+           [ 0.,  0., ...,  0.,  0.],
+           [ 0.,  0., ...,  0.,  0.]])
+
+
+    Use narrower filters for sparser response: 5% of a semitone
+    >>> librosa.filters.logfrequency(22050, 4096, spread=0.05)
+
+
+    Or wider: 50% of a semitone
+    >>> librosa.filters.logfrequency(22050, 4096, spread=0.5)
+
     '''
 
     if fmin is None:
@@ -362,16 +375,6 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
             "A machine learning approach to automatic chord extraction."
             Dissertation, University of Bristol. 2013.
 
-    Examples
-    --------
-    >>> # Change the windowing function to Hamming instead of Hann
-    >>> basis = librosa.filters.constant_q(22050, window=np.hamming)
-
-    >>> # Use a longer window for each filter
-    >>> basis = librosa.filters.constant_q(22050, resolution=3)
-
-    >>> # Pad the basis to fixed length
-    >>> basis = librosa.filters.constant_q(22050, pad=True)
 
     Parameters
     ----------
@@ -428,6 +431,21 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     --------
     librosa.core.cqt
     librosa.util.normalize
+
+
+    Examples
+    --------
+    Change the windowing function to Hamming instead of Hann
+    >>> basis = librosa.filters.constant_q(22050, window=np.hamming)
+
+
+    Use a longer window for each filter
+    >>> basis = librosa.filters.constant_q(22050, resolution=3)
+
+
+    Get the lengths of each filter
+    >>> basis, lengths = librosa.filters.constant_q(22050, return_lengths=True)
+
     '''
 
     if fmin is None:
@@ -484,13 +502,6 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12, roll=0):
     '''Convert a Constant-Q basis to Chroma.
 
-    Examples
-    --------
-    >>> # Get a CQT, and wrap bins to chroma
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> CQT = librosa.cqt(y, sr=sr)
-    >>> chroma_map = librosa.filters.cq_to_chroma(CQT.shape[0])
-    >>> chromagram = chroma_map.dot(CQT)
 
     Parameters
     ----------
@@ -517,6 +528,16 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12, roll=0):
     ------
     ValueError
         If `n_input` is not an integer multiple of `n_chroma`
+
+    Examples
+    --------
+    Get a CQT, and wrap bins to chroma
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> CQT = librosa.cqt(y, sr=sr)
+    >>> chroma_map = librosa.filters.cq_to_chroma(CQT.shape[0])
+    >>> chromagram = chroma_map.dot(CQT)
+
     '''
 
     # How many fractional bins are we merging?
