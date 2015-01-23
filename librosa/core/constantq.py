@@ -161,6 +161,11 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     else:
         res_type = 'sinc_best'
 
+
+    cqt_resp = []
+
+
+
     if res_type == 'sinc_fastest' and audio._HAS_SAMPLERATE:
 
         # How many times can we downsample by 2 before filtering?
@@ -178,6 +183,51 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
             y = audio.resample(y, sr, sr/downsample_factor, res_type=res_type)
             sr = sr/downsample_factor
 
+    if res_type != 'sinc_fastest' and audio._HAS_SAMPLERATE:
+
+        # Do two octaves before resampling to allow for usage of sinc_fastest
+
+        # Generate the basis filters
+        basis, lengths = filters.constant_q(sr,
+                                            fmin=fmin_t,
+                                            n_bins=bins_per_octave,
+                                            bins_per_octave=bins_per_octave,
+                                            tuning=tuning,
+                                            resolution=resolution,
+                                            norm=norm,
+                                            pad_fft=True,
+                                            return_lengths=True)
+
+        # FFT the filters
+        min_filter_length = np.min(lengths)
+
+        # Filters are padded up to the nearest integral power of 2
+        n_fft = basis.shape[1]
+
+        # FFT and retain only the non-negative frequencies
+        fft_basis = np.fft.fft(basis, n=n_fft, axis=1)[:, :(n_fft / 2)+1]
+
+        # normalize as in Parseval's relation, and sparsify the basis
+        fft_basis = util.sparsify_rows(fft_basis / n_fft, quantile=sparsity)
+
+        # Compute a dynamic hop based on n_fft
+        my_cqt = __variable_hop_response(y, n_fft,
+                                         hop_length,
+                                         min_filter_length,
+                                         fft_basis,
+                                         aggregate)
+
+        # Convolve
+        cqt_resp.append(my_cqt)
+
+        fmin_t /= 2
+        fmax_t /= 2
+        n_octaves -= 1
+
+        filter_cutoff = fmax_t*(1 + 0.725 / Q) # 0.725 for Hann window
+        assert filter_cutoff < BW_FASTEST*nyquist
+
+        res_type = 'sinc_fastest'
 
 
     # Generate the basis filters
@@ -202,8 +252,6 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     # normalize as in Parseval's relation, and sparsify the basis
     fft_basis = util.sparsify_rows(fft_basis / n_fft, quantile=sparsity)
-
-    cqt_resp = []
 
     my_y, my_sr, my_hop = y, sr, hop_length
 
