@@ -15,6 +15,11 @@ from .. import util
 from ..feature.utils import sync
 
 
+BW_BEST = 0.97
+BW_MEDIUM = 0.9
+BW_FASTEST = 0.8
+
+
 @cache
 def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         bins_per_octave=12, tuning=None, resolution=2,
@@ -147,11 +152,11 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     filter_cutoff = fmax_t*(1 + 0.725 / Q) # 0.725 for Hann window
     nyquist = sr / 2.0
 
-    if filter_cutoff < 0.8*nyquist:
+    if filter_cutoff < BW_FASTEST*nyquist:
         res_type = 'sinc_fastest'
-    elif filter_cutoff < 0.9*nyquist:
+    elif filter_cutoff < BW_MEDIUM*nyquist:
         res_type = 'sinc_medium'
-    elif filter_cutoff < 0.97*nyquist:
+    elif filter_cutoff < BW_BEST*nyquist:
         res_type = 'sinc_best'
     else:
         res_type = 'sinc_best'
