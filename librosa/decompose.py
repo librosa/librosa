@@ -21,36 +21,6 @@ def decompose(S, n_components=None, transformer=None, sort=False):
     By default, this is done with with non-negative matrix factorization (NMF),
     but any `sklearn.decomposition`-type object will work.
 
-    Examples
-    --------
-    >>> # Decompose a magnitude spectrogram into 32 components with NMF
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> S = np.abs(librosa.stft(y))
-    >>> comps, acts = librosa.decompose.decompose(S, n_components=8)
-    >>> comps
-    array([[  9.826e-02,   6.439e-02, ...,   1.194e-01,   1.790e-02],
-           [  2.565e-01,   1.600e-01, ...,   2.181e-01,   7.890e-02],
-           ...,
-           [  8.500e-08,   5.685e-08, ...,   3.240e-08,   3.534e-08],
-           [  8.421e-08,   4.543e-08, ...,   2.183e-08,   2.353e-08]])
-    >>> acts
-    array([[  3.629e-02,   1.766e-01, ...,   3.379e-05,   5.473e-06],
-           [  1.225e-02,   1.294e-01, ...,   3.544e-05,   3.386e-06],
-           ...,
-           [  4.268e-02,   4.184e-02, ...,   1.240e-05,   5.790e-06],
-           [  6.748e-03,   1.720e-01, ...,   3.043e-05,  -0.000e+00]])
-
-    >>> # Sort components by ascending peak frequency
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> S = np.abs(librosa.stft(y))
-    >>> comps, acts = librosa.decompose.decompose(S, n_components=8,
-                                                  sort=True)
-
-    >>> # Or with sparse dictionary learning
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> S = np.abs(librosa.stft(y))
-    >>> T = sklearn.decomposition.DictionaryLearning(n_components=8)
-    >>> comps, acts = librosa.decompose.decompose(S, transformer=T)
 
     Parameters
     ----------
@@ -86,6 +56,7 @@ def decompose(S, n_components=None, transformer=None, sort=False):
             of the decomposition parameters, and not to `transformer`'s
             internal parameters.
 
+
     Returns
     -------
     components: np.ndarray [shape=(n_features, n_components)]
@@ -94,9 +65,44 @@ def decompose(S, n_components=None, transformer=None, sort=False):
     activations: np.ndarray [shape=(n_components, n_samples)]
         transformed matrix/activation matrix
 
+
     See Also
     --------
     sklearn.decomposition : SciKit-Learn matrix decomposition modules
+
+
+    Examples
+    --------
+    Decompose a magnitude spectrogram into 32 components with NMF
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> S = np.abs(librosa.stft(y))
+    >>> comps, acts = librosa.decompose.decompose(S, n_components=8)
+    >>> comps
+    array([[  9.826e-02,   6.439e-02, ...,   1.194e-01,   1.790e-02],
+           [  2.565e-01,   1.600e-01, ...,   2.181e-01,   7.890e-02],
+           ...,
+           [  8.500e-08,   5.685e-08, ...,   3.240e-08,   3.534e-08],
+           [  8.421e-08,   4.543e-08, ...,   2.183e-08,   2.353e-08]])
+    >>> acts
+    array([[  3.629e-02,   1.766e-01, ...,   3.379e-05,   5.473e-06],
+           [  1.225e-02,   1.294e-01, ...,   3.544e-05,   3.386e-06],
+           ...,
+           [  4.268e-02,   4.184e-02, ...,   1.240e-05,   5.790e-06],
+           [  6.748e-03,   1.720e-01, ...,   3.043e-05,  -0.000e+00]])
+
+
+    Sort components by ascending peak frequency
+
+    >>> comps, acts = librosa.decompose.decompose(S, n_components=8,
+    ...                                           sort=True)
+
+
+    Or with sparse dictionary learning
+
+    >>> import sklearn.decomposition
+    >>> T = sklearn.decomposition.DictionaryLearning(n_components=8)
+    >>> comps, acts = librosa.decompose.decompose(S, transformer=T)
     """
 
     if transformer is None:
@@ -129,9 +135,45 @@ def hpss(S, kernel_size=31, power=2.0, mask=False):
         Graz, Austria, 2010.
 
 
+    Parameters
+    ----------
+    S : np.ndarray [shape=(d, n)]
+        input spectrogram. May be real (magnitude) or complex.
+
+    kernel_size : int or tuple (kernel_harmonic, kernel_percussive)
+        kernel size(s) for the median filters.
+
+        - If scalar, the same size is used for both harmonic and percussive.
+        - If iterable, the first value specifies the width of the
+          harmonic filter, and the second value specifies the width
+          of the percussive filter.
+
+
+    power : float >= 0 [scalar]
+        Exponent for the Wiener filter when constructing mask matrices.
+
+        Mask matrices are defined by
+        `mask_H = (r_H ** power) / (r_H ** power + r_P ** power)`
+        where `r_H` and `r_P` are the median-filter responses for
+        harmonic and percussive components.
+
+    mask : bool
+        Return the masking matrices instead of components
+
+
+    Returns
+    -------
+    harmonic : np.ndarray [shape=(d, n)]
+        harmonic component (or mask)
+
+    percussive : np.ndarray [shape=(d, n)]
+        percussive component (or mask)
+
+
     Examples
     --------
-    >>> # Separate into harmonic and percussive
+    Separate into harmonic and percussive
+
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> D = librosa.stft(y)
     >>> H, P = librosa.decompose.hpss(D)
@@ -158,14 +200,13 @@ def hpss(S, kernel_size=31, power=2.0, mask=False):
              -1.181e-10 +1.033e-17j,  -3.002e-11 +2.624e-18j]],
           dtype=complex64)
 
-    >>> # Or with a narrower horizontal filter
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> D = librosa.stft(y)
+
+    Or with a narrower horizontal filter
+
     >>> H, P = librosa.decompose.hpss(D, kernel_size=(13, 31))
 
-    >>> # Just get harmonic/percussive masks, not the spectra
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> D = librosa.stft(y)
+    Just get harmonic/percussive masks, not the spectra
+
     >>> mask_H, mask_P = librosa.decompose.hpss(D, mask=True)
     >>> mask_H
     array([[ 0.,  0., ...,  0.,  1.],
@@ -180,38 +221,6 @@ def hpss(S, kernel_size=31, power=2.0, mask=False):
            [ 1.,  1., ...,  1.,  0.],
            [ 1.,  1., ...,  1.,  0.]])
 
-    Parameters
-    ----------
-    S : np.ndarray [shape=(d, n)]
-        input spectrogram. May be real (magnitude) or complex.
-
-    kernel_size : int or tuple (kernel_harmonic, kernel_percussive)
-        kernel size(s) for the median filters.
-
-        - If scalar, the same size is used for both harmonic and percussive.
-        - If iterable, the first value specifies the width of the
-          harmonic filter, and the second value specifies the width
-          of the percussive filter.
-
-
-    power : float >= 0 [scalar]
-        Exponent for the Wiener filter when constructing mask matrices.
-
-        Mask matrices are defined by
-        `mask_H = (r_H ** power) / (r_H ** power + r_P ** power)`
-        where `r_H` and `r_P` are the median-filter responses for
-        harmonic and percussive components.
-
-    mask : bool
-        Return the masking matrices instead of components
-
-    Returns
-    -------
-    harmonic : np.ndarray [shape=(d, n)]
-        harmonic component (or mask)
-
-    percussive : np.ndarray [shape=(d, n)]
-        percussive component (or mask)
     """
 
     if np.iscomplexobj(S):
