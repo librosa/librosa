@@ -17,11 +17,6 @@ def hpss(y):
     This function automates the STFT->HPSS->ISTFT pipeline, and ensures that
     the output waveforms have equal length to the input waveform `y`.
 
-    Examples
-    --------
-    >>> # Load a waveform
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> y_harmonic, y_percussive = librosa.effects.hpss(y)
 
     Parameters
     ----------
@@ -41,6 +36,13 @@ def hpss(y):
     harmonic : Extract only the harmonic component
     percussive : Extract only the percussive component
     librosa.decompose.hpss : HPSS on spectrograms
+
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y_harmonic, y_percussive = librosa.effects.hpss(y)
+
     '''
 
     # Compute the STFT matrix
@@ -60,12 +62,6 @@ def hpss(y):
 def harmonic(y):
     '''Extract harmonic elements from an audio time-series.
 
-    Examples
-    --------
-    >>> # Load a waveform
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> y_harmonic = librosa.effects.harmonic(y)
-
     Parameters
     ----------
     y : np.ndarray [shape=(n,)]
@@ -81,6 +77,12 @@ def harmonic(y):
     hpss : Separate harmonic and percussive components
     percussive : Extract only the percussive component
     librosa.decompose.hpss : HPSS for spectrograms
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y_harmonic = librosa.effects.harmonic(y)
+
     '''
 
     # Compute the STFT matrix
@@ -99,12 +101,6 @@ def harmonic(y):
 def percussive(y):
     '''Extract percussive elements from an audio time-series.
 
-    Examples
-    --------
-    >>> # Load a waveform
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> y_percussive = librosa.effects.percussive(y)
-
     Parameters
     ----------
     y : np.ndarray [shape=(n,)]
@@ -120,6 +116,12 @@ def percussive(y):
     hpss : Separate harmonic and percussive components
     harmonic : Extract only the harmonic component
     librosa.decompose.hpss : HPSS for spectrograms
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y_percussive = librosa.effects.percussive(y)
+
     '''
 
     # Compute the STFT matrix
@@ -138,14 +140,6 @@ def percussive(y):
 def time_stretch(y, rate):
     '''Time-stretch an audio series by a fixed rate.
 
-    Examples
-    --------
-    >>> # Load a waveform
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> # Compress to be twice as fast
-    >>> y_fast = librosa.effects.time_stretch(y, 2.0)
-    >>> # Or half the original speed
-    >>> y_slow = librosa.effects.time_stretch(y, 0.5)
 
     Parameters
     ----------
@@ -166,6 +160,19 @@ def time_stretch(y, rate):
     --------
     pitch_shift : pitch shifting
     librosa.core.phase_vocoder : spectrogram phase vocoder
+
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+
+    Compress to be twice as fast
+
+    >>> y_fast = librosa.effects.time_stretch(y, 2.0)
+
+    Or half the original speed
+    >>> y_slow = librosa.effects.time_stretch(y, 0.5)
+
     '''
 
     # Construct the stft
@@ -184,18 +191,6 @@ def time_stretch(y, rate):
 def pitch_shift(y, sr, n_steps, bins_per_octave=12):
     '''Pitch-shift the waveform by `n_steps` half-steps.
 
-    Examples
-    --------
-    >>> # Load a waveform
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> # Shift up by a major third (four half-steps)
-    >>> y_third = librosa.effects.pitch_shift(y, sr, n_steps=4)
-    >>> # Shift down by a tritone (six half-steps)
-    >>> y_tritone = librosa.effects.pitch_shift(y, sr, n_steps=-6)
-    >>> # Shift up by 3 quarter-tones
-    >>> y_three_qt = librosa.effects.pitch_shift(y, sr, n_steps=3,
-                                                 bins_per_octave=24)
-
 
     Parameters
     ----------
@@ -211,15 +206,32 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12):
     bins_per_octave : float > 0 [scalar]
         how many steps per octave
 
+
     Returns
     -------
     y_shift : np.ndarray [shape=(n,)]
         The pitch-shifted audio time-series
 
+
     See Also
     --------
     time_stretch : time stretching
     librosa.core.phase_vocoder : spectrogram phase vocoder
+
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+
+    Shift up by a major third (four half-steps)
+    >>> y_third = librosa.effects.pitch_shift(y, sr, n_steps=4)
+
+    Shift down by a tritone (six half-steps)
+    >>> y_tritone = librosa.effects.pitch_shift(y, sr, n_steps=-6)
+
+    Shift up by 3 quarter-tones
+    >>> y_three_qt = librosa.effects.pitch_shift(y, sr, n_steps=3,
+    ...                                          bins_per_octave=24)
     '''
 
     rate = 2.0 ** (-float(n_steps) / bins_per_octave)
@@ -235,20 +247,6 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12):
 def remix(y, intervals, align_zeros=True):
     '''Remix an audio signal by re-ordering time intervals.
 
-    Examples
-    --------
-    >>> # Load in the example track and reverse the beats
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> # Compute beats
-    >>> _, beat_frames = librosa.beat.beat_track(y=y, sr=sr,
-                                                 hop_length=512)
-    >>> # Convert from frames to sample indices
-    >>> beat_samples = librosa.frames_to_samples(beat_frames)
-    >>> # Generate intervals from consecutive events
-    >>> intervals = librosa.util.frame(beat_samples, frame_length=2,
-                                       hop_length=1).T
-    >>> # Reverse the beat intervals
-    >>> y_out = librosa.effects.remix(y, intervals[::-1])
 
     Parameters
     ----------
@@ -265,10 +263,40 @@ def remix(y, intervals, align_zeros=True):
         zero-crossing in `y`.  If `y` is stereo, zero-crossings
         are computed after converting to mono.
 
+
     Returns
     -------
     y_remix : np.ndarray [shape=(d,) or (2, d)]
         `y` remixed in the order specified by `intervals`
+
+
+    Examples
+    --------
+    Load in the example track and reverse the beats
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+
+
+    Compute beats
+
+    >>> _, beat_frames = librosa.beat.beat_track(y=y, sr=sr,
+    ...                                          hop_length=512)
+
+
+    Convert from frames to sample indices
+
+    >>> beat_samples = librosa.frames_to_samples(beat_frames)
+
+
+    Generate intervals from consecutive events
+
+    >>> intervals = librosa.util.frame(beat_samples, frame_length=2,
+    ...                                hop_length=1).T
+
+
+    Reverse the beat intervals
+
+    >>> y_out = librosa.effects.remix(y, intervals[::-1])
     '''
 
     # Validate the audio buffer
