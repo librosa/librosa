@@ -1,16 +1,38 @@
-Project Modules
-===============
+LibROSA documentation
+=====================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    install
    tutorial
 
-   librosa
+Module documentation
+--------------------
+
+.. toctree::
+    :maxdepth: 2
+
+    beat
+    core
+    decomposition
+    display
+    effects
+    feature
+    filters
+    onset
+    output
+    segmentation
+    util
+
+
+Advanced topics
+---------------
 
    cache
 
+Reference
+---------
    glossary
 
 * :ref:`genindex`
