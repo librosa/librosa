@@ -244,6 +244,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
     >>> librosa.display.specshow(D, x_axis='time', y_axis='log')
     >>> plt.colorbar()
     >>> plt.title('Log power spectrogram with time')
+    >>> plt.tight_layout()
 
 
     Parameters

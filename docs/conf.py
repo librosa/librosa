@@ -63,6 +63,8 @@ numpydoc_use_plots = True
 # Plot
 #------------------------------------------------------------------------------
 plot_pre_code = """
+import seaborn
+seaborn.set(style='dark')
 import numpy as np
 import librosa
 np.random.seed(123)
