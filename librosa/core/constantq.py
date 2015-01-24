@@ -229,8 +229,8 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
 @cache
 def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
-        bins_per_octave=12, tuning=None, resolution=2, res_type='sinc_best',
-        norm=2, sparsity=0.01):
+               bins_per_octave=12, tuning=None, resolution=2,
+               norm=2, sparsity=0.01):
     '''Compute the hybrid constant-Q transform of an audio signal.
 
     Here, the hybrid CQT uses the pseudo CQT for higher frequencies and
@@ -363,8 +363,8 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
 @cache
 def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
-        bins_per_octave=12, tuning=None, resolution=2,
-        norm=2, sparsity=0.01):
+               bins_per_octave=12, tuning=None, resolution=2,
+               norm=2, sparsity=0.01):
     '''Compute the pseudo constant-Q transform of an audio signal.
 
     This uses an fft size that is the smallest power of 2 that is greater than
@@ -429,20 +429,25 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
 
     # Generate the pseudo CQT basis filters
-    basis = filters.constant_q(sr,
-                               fmin=fmin,
-                               n_bins=n_bins,
-                               bins_per_octave=bins_per_octave,
-                               tuning=tuning,
-                               resolution=resolution,
-                               pad_fft=True,
-                               norm=norm)
+    basis, lengths = filters.constant_q(sr,
+                                        fmin=fmin,
+                                        n_bins=n_bins,
+                                        bins_per_octave=bins_per_octave,
+                                        tuning=tuning,
+                                        resolution=resolution,
+                                        pad_fft=True,
+                                        return_lengths=True,
+                                        norm=norm)
+
 
     # Filters are padded up to the nearest integral power of 2
     n_fft = basis.shape[1]
 
     if n_fft < 2*hop_length:
         n_fft = int(2.0**(np.ceil(np.log2(2*hop_length))))
+
+    # normalize by inverse length to compensate for phase invariance
+    basis *= lengths[:, None] / n_fft
 
 
     # FFT and retain only the non-negative frequencies
@@ -465,7 +470,7 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     # Remove phase for Pseudo CQT
     D = np.abs(D)
 
-    my_pseudo_cqt = np.abs(fft_basis.dot(D))
+    my_pseudo_cqt = fft_basis.dot(D)
 
     return my_pseudo_cqt
 
