@@ -1,3 +1,5 @@
+.. _decompose:
+
 :mod:`Spectrogram decomposition` 
 --------------------------------
 

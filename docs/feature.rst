@@ -1,3 +1,5 @@
+.. _feature:
+
 :mod:`Feature extraction` 
 -------------------------
 
