@@ -15,24 +15,31 @@ Module documentation
 
     beat
     core
-    decomposition
+    decompose
     display
     effects
     feature
     filters
     onset
     output
-    segmentation
+    segment
     util
 
 
 Advanced topics
 ---------------
 
-   cache
+.. toctree::
+    :maxdepth: 1
+
+    cache
 
 Reference
 ---------
-   glossary
+
+.. toctree::
+    :maxdepth: 1
+
+    glossary
 
 * :ref:`genindex`
