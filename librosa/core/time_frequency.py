@@ -832,15 +832,6 @@ def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False,
 def A_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
     '''Compute the A-weighting of a set of frequencies.
 
-    Examples
-    --------
-    >>> # Get the A-weighting for 20 Mel frequencies
-    >>> freqs = librosa.mel_frequencies(20)
-    >>> librosa.A_weighting(freqs)
-    array([-80.   , -13.355,  -6.594,  -3.574,  -1.877,  -0.835,  -0.16 ,
-             0.316,   0.684,   0.953,   1.135,   1.239,   1.271,   1.232,
-             1.116,   0.916,   0.615,   0.193,  -0.374,  -1.113])
-
     Parameters
     ----------
     frequencies : scalar or np.ndarray [shape=(n,)]
@@ -858,6 +849,21 @@ def A_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
     See Also
     --------
     perceptual_weighting
+
+
+    Examples
+    --------
+
+    Get the A-weighting for CQT frequencies
+
+    >>> import matplotlib.pyplot as plt
+    >>> freqs = librosa.cqt_frequencies(108, librosa.note_to_hz('C2'))
+    >>> aw = librosa.A_weighting(freqs)
+    >>> plt.plot(freqs, aw)
+    >>> plt.xlabel('Frequency (Hz)')
+    >>> plt.ylabel('Weighting (log10)')
+    >>> plt.title('A-Weighting of CQT frequencies')
+
     '''
 
     # Vectorize to make our lives easier

@@ -17,7 +17,7 @@ from ..feature.utils import sync
 @cache
 def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         bins_per_octave=12, tuning=None, resolution=2, res_type='sinc_best',
-        aggregate=None, norm=2, sparsity=0.01):
+        aggregate=None, norm=1, sparsity=0.01):
     '''Compute the constant-Q transform of an audio signal.
 
     This implementation is based on the recursive sub-sampling method
