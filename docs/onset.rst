@@ -1,3 +1,5 @@
+.. _onset:
+
 :mod:`Onset detection`
 ----------------------
 

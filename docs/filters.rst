@@ -1,3 +1,5 @@
+.. _filters:
+
 :mod:`Filter banks`
 -------------------
 

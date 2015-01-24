@@ -1,3 +1,5 @@
+.. _effects:
+
 :mod:`Effects`
 --------------
 

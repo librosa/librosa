@@ -1,3 +1,5 @@
+.. _core:
+
 :mod:`Core functionality` 
 -------------------------
 
