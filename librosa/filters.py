@@ -11,6 +11,8 @@ from . import util
 from .core.time_frequency import note_to_hz, hz_to_octs
 from .core.time_frequency import fft_frequencies, mel_frequencies
 
+HANN_BW = 0.725
+
 
 @cache
 def dct(n_filters, n_input):
@@ -467,7 +469,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     for i in np.arange(n_bins, dtype=float):
 
         freq = fmin * 2.0**(i / bins_per_octave)
-        if freq * (1 + 1.0 / Q) > sr / 2.0:
+        if freq * (1 + HANN_BW / Q) > sr / 2.0:
             raise ValueError("Filter pass band lies beyond Nyquist")
 
         # Length of the filter
