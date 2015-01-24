@@ -113,7 +113,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     Raises
     ------
     ValueError
-        If `hop_length < 2**(n_bins / bins_per_octvae)`
+        If `hop_length < 2**(n_bins / bins_per_octave)`
 
     See Also
     --------
@@ -146,7 +146,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     # Determine required resampling quality
     Q = float(resolution) / (2.0**(1. / bins_per_octave) - 1)
-    filter_cutoff = fmax_t*(1 + 0.725 / Q) # 0.725 for Hann window
+    filter_cutoff = fmax_t*(1 + filters.HANN_BW / Q)
     nyquist = sr / 2.0
 
     if filter_cutoff < audio.BW_FASTEST*nyquist:
@@ -221,7 +221,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         fmax_t /= 2
         n_octaves -= 1
 
-        filter_cutoff = fmax_t*(1 + 0.725 / Q) # 0.725 for Hann window
+        filter_cutoff = fmax_t*(1 + filters.HANN_BW / Q)
         assert filter_cutoff < audio.BW_FASTEST*nyquist
 
         res_type = 'sinc_fastest'
