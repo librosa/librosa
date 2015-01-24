@@ -179,50 +179,59 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
     Mean aggregation with Mel-scaled spectrogram
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr)
+    First, load some audio and plot the spectrogram
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(),
+    ...                      duration=5.0)
+    >>> D = np.abs(librosa.stft(y))**2
+    >>> plt.figure()
+    >>> plt.subplot(2, 1, 1)
+    >>> librosa.display.specshow(librosa.logamplitude(D, ref_power=np.max),
+    ...                          x_axis='time', y_axis='log')
+    >>> plt.title('Power spectrogram')
+
+    Construct a standard onset function
+
+    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=512)
     >>> onset_env
     array([ 0.,  0., ...,  0.,  0.])
-    >>> plt.subplot(2, 2, 1)
-    >>> plt.plot(onset_env[:5 * sr/512])
-    >>> plt.axis('tight')
-    >>> plt.title('Mean-aggregation onset strength')
+    >>> plt.subplot(2, 1, 2)
+    >>> plt.plot(onset_env / onset_env.max(), alpha=0.5,
+    ...          label='Mean aggregation (mel)')
 
 
     Median aggregation
 
-    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr, aggregate=np.median)
+    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=512,
+    ...                                          aggregate=np.median)
     >>> onset_env
     array([ 0.,  0., ...,  0.,  0.])
-    >>> plt.subplot(2, 2, 2)
-    >>> plt.plot(onset_env[:5 * sr/512])
-    >>> plt.axis('tight')
-    >>> plt.title('Median-aggregation onset strength')
+    >>> plt.plot(onset_env / onset_env.max(), alpha=0.5,
+    ...          label='Median aggregation (mel)')
 
 
     Log-frequency spectrogram instead of Mel
-    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr,
+
+    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=512,
     ...                                          feature=librosa.feature.logfsgram)
     >>> onset_env
     array([ 0.,  0., ...,  0.,  0.])
-    >>> plt.subplot(2, 2, 3)
-    >>> plt.plot(onset_env[:5 * sr/512])
-    >>> plt.axis('tight')
-    >>> plt.title('LogFS onset strength')
+    >>> plt.plot(onset_env / onset_env.max(), alpha=0.5, linestyle='--',
+    ...          label='Mean aggregation (logfs)')
 
 
     Or Mel spectrogram with customized options
 
-    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr, n_mels=128, fmin=32,
+    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=512,
+    ...                                          n_mels=32, fmin=32,
     ...                                          fmax=8000)
     >>> onset_env
     array([ 0.,  0., ...,  0.,  0.])
-    >>> plt.subplot(2, 2, 4)
-    >>> plt.plot(onset_env[:5 * sr/512])
+    >>> plt.plot(onset_env / onset_env.max(), alpha=0.5, linestyle='--',
+    ...          label='Mean aggregation (custom mel)')
+    >>> plt.legend()
     >>> plt.axis('tight')
-    >>> plt.title('Custom Mel spectrum onset strength')
     >>> plt.tight_layout()
 
     """
