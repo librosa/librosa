@@ -15,9 +15,6 @@ from .. import util
 from ..feature.utils import sync
 
 
-BW_BEST = 0.97
-BW_MEDIUM = 0.9
-BW_FASTEST = 0.8
 
 
 @cache
@@ -152,11 +149,11 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     filter_cutoff = fmax_t*(1 + 0.725 / Q) # 0.725 for Hann window
     nyquist = sr / 2.0
 
-    if filter_cutoff < BW_FASTEST*nyquist:
+    if filter_cutoff < audio.BW_FASTEST*nyquist:
         res_type = 'sinc_fastest'
-    elif filter_cutoff < BW_MEDIUM*nyquist:
+    elif filter_cutoff < audio.BW_MEDIUM*nyquist:
         res_type = 'sinc_medium'
-    elif filter_cutoff < BW_BEST*nyquist:
+    elif filter_cutoff < audio.BW_BEST*nyquist:
         res_type = 'sinc_best'
     else:
         res_type = 'sinc_best'
@@ -173,7 +170,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         # filter_cutoff < BW*nyquist  # (BW is resampling bandwidth fraction)
         # hop_length > 2**n_octaves
 
-        downsample_count1 = int(np.ceil(np.log2(BW_FASTEST * nyquist
+        downsample_count1 = int(np.ceil(np.log2(audio.BW_FASTEST * nyquist
                                                 / filter_cutoff)) - 1)
         downsample_count2 = int(np.ceil(np.log2(hop_length) - n_octaves) - 1)
         downsample_count = min(downsample_count1, downsample_count2)
@@ -225,7 +222,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         n_octaves -= 1
 
         filter_cutoff = fmax_t*(1 + 0.725 / Q) # 0.725 for Hann window
-        assert filter_cutoff < BW_FASTEST*nyquist
+        assert filter_cutoff < audio.BW_FASTEST*nyquist
 
         res_type = 'sinc_fastest'
 
