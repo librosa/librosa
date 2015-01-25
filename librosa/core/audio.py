@@ -340,18 +340,6 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 def autocorrelate(y, max_size=None):
     """Bounded auto-correlation
 
-    Examples
-    --------
-    >>> # Compute full autocorrelation of y
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> librosa.autocorrelate(y)
-    array([  1.573e+04,   1.569e+04, ...,   1.090e-13,   1.090e-13])
-
-    >>> # Compute autocorrelation up to 4 seconds lag
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> librosa.autocorrelate(y, max_size=4 * sr)
-    array([ 15734.031,  15689.047, ...,   -410.197,   -436.05 ])
-
     Parameters
     ----------
     y : np.ndarray [shape=(n,)]
@@ -365,6 +353,25 @@ def autocorrelate(y, max_size=None):
     -------
     z : np.ndarray [shape=(n,) or (max_size,)]
         truncated autocorrelation `y*y`
+
+    Examples
+    --------
+    Compute full autocorrelation of y
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> librosa.autocorrelate(y)
+    array([  1.573e+04,   1.569e+04, ...,   1.090e-13,   1.090e-13])
+
+
+    Compute onset strength auto-correlation up to 4 seconds
+
+    >>> import matplotlib.pyplot as plt
+    >>> odf = librosa.onset.onset_strength(y=y, sr=sr, hop_length=512)
+    >>> ac = librosa.autocorrelate(odf, max_size=4* sr / 512)
+    >>> plt.plot(ac)
+    >>> plt.title('Auto-correlation')
+    >>> plt.xlabel('Lag (frames)')
+
     """
 
     result = scipy.signal.fftconvolve(y, y[::-1], mode='full')
