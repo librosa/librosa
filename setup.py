@@ -1,14 +1,18 @@
-from setuptools import setup
+from setuptools import setup, find_packages
+
+import imp
+
+version = imp.load_source('librosa.version', 'librosa/version.py')
 
 setup(
     name='librosa',
-    version='0.3.2',
+    version=version.version,
     description='Python module for audio and music processing',
     author='Brian McFee',
     author_email='brian.mcfee@nyu.edu',
     url='http://github.com/bmcfee/librosa',
     download_url='http://github.com/bmcfee/librosa/releases',
-    packages=['librosa'],
+    packages=find_packages(),
     package_data={'': ['example_data/*']},
     long_description="""A python module for audio and music processing.""",
     classifiers=[
