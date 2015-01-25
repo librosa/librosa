@@ -27,39 +27,6 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         "Constant-Q transform toolbox for music processing."
         7th Sound and Music Computing Conference, Barcelona, Spain. 2010.
 
-    Examples
-    --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> C = librosa.cqt(y, sr=sr)
-    >>> C
-    array([[  3.985e-01,   4.696e-01, ...,   7.009e-04,   8.497e-04],
-           [  1.135e+00,   1.220e+00, ...,   1.669e-03,   1.691e-03],
-           ...,
-           [  6.036e-04,   3.765e-02, ...,   3.100e-14,   0.000e+00],
-           [  4.690e-04,   8.762e-02, ...,   1.995e-14,   0.000e+00]])
-
-    >>> # Limit the frequency range
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> C = librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('C3'),
-                        n_bins=60)
-    >>> C
-    array([[  8.936e+01,   9.573e+01, ...,   1.333e-02,   1.443e-02],
-           [  8.181e+01,   8.231e+01, ...,   2.552e-02,   2.147e-02],
-           ...,
-           [  2.791e-03,   2.463e-02, ...,   9.306e-04,   0.000e+00],
-           [  2.687e-03,   1.446e-02, ...,   8.878e-04,   0.000e+00]])
-
-    >>> # Use higher resolution
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> C = librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('C3'),
-                        n_bins=60 * 2, bins_per_octave=12 * 2)
-    >>> C
-    array([[  1.000e+02,   1.094e+02, ...,   8.701e-02,   8.098e-02],
-           [  2.222e+02,   2.346e+02, ...,   5.625e-02,   4.770e-02],
-           ...,
-           [  5.177e-02,   1.710e-02, ...,   4.670e-03,   7.403e-12],
-           [  1.981e-02,   2.721e-03, ...,   1.943e-03,   7.246e-12]])
-
     Parameters
     ----------
     y : np.ndarray [shape=(n,)]
@@ -120,6 +87,41 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     librosa.core.resample
     librosa.feature.sync
     librosa.util.normalize
+
+    Examples
+    --------
+    Generate and plot a constant-Q power spectrum
+
+    >>> import matplotlib.pyplot as plt
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> C = librosa.cqt(y, sr=sr)
+    >>> librosa.display.specshow(librosa.logamplitude(C**2), sr=sr,
+    ...                          x_axis='time', y_axis='cqt_note')
+    >>> plt.title('Constant-Q power spectrum')
+
+
+    Limit the frequency range
+
+    >>> C = librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('C3'),
+    ...                 n_bins=60)
+    >>> C
+    array([[  8.936e+01,   9.573e+01, ...,   1.333e-02,   1.443e-02],
+           [  8.181e+01,   8.231e+01, ...,   2.552e-02,   2.147e-02],
+    ...,
+           [  2.791e-03,   2.463e-02, ...,   9.306e-04,   0.000e+00],
+           [  2.687e-03,   1.446e-02, ...,   8.878e-04,   0.000e+00]])
+
+
+    Using a higher resolution
+
+    >>> C = librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('C3'),
+    ...                 n_bins=60 * 2, bins_per_octave=12 * 2)
+    >>> C
+    array([[  1.000e+02,   1.094e+02, ...,   8.701e-02,   8.098e-02],
+           [  2.222e+02,   2.346e+02, ...,   5.625e-02,   4.770e-02],
+    ...,
+           [  5.177e-02,   1.710e-02, ...,   4.670e-03,   7.403e-12],
+           [  1.981e-02,   2.721e-03, ...,   1.943e-03,   7.246e-12]])
     '''
 
     # How many octaves are we dealing with?
@@ -186,7 +188,6 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
         # Convolve
         cqt_resp.append(my_cqt)
-
 
     return __trim_stack(cqt_resp, n_bins)
 
