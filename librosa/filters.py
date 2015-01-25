@@ -436,14 +436,17 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     Examples
     --------
     Change the windowing function to Hamming instead of Hann
+
     >>> basis = librosa.filters.constant_q(22050, window=np.hamming)
 
 
     Use a longer window for each filter
+
     >>> basis = librosa.filters.constant_q(22050, resolution=3)
 
 
     Get the lengths of each filter
+
     >>> basis, lengths = librosa.filters.constant_q(22050, return_lengths=True)
 
     '''
