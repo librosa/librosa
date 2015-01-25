@@ -174,7 +174,7 @@ def hpss(S, kernel_size=31, power=2.0, mask=False):
     --------
     Separate into harmonic and percussive
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=15)
     >>> D = librosa.stft(y)
     >>> H, P = librosa.decompose.hpss(D)
     >>> H
@@ -199,6 +199,28 @@ def hpss(S, kernel_size=31, power=2.0, mask=False):
            [ -1.458e-08 +1.275e-15j,  -1.258e-08 +1.100e-15j, ...,
              -1.181e-10 +1.033e-17j,  -3.002e-11 +2.624e-18j]],
           dtype=complex64)
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> plt.subplot(3, 1, 1)
+    >>> librosa.display.specshow(librosa.logamplitude(np.abs(D)**2,
+    ...                                               ref_power=np.max),
+    ...                          y_axis='log')
+    >>> plt.colorbar()
+    >>> plt.title('Full power spectrogram')
+    >>> plt.subplot(3, 1, 2)
+    >>> librosa.display.specshow(librosa.logamplitude(np.abs(H)**2,
+    ...                          ref_power=np.max),
+    ...                          y_axis='log')
+    >>> plt.colorbar()
+    >>> plt.title('Harmonic power spectrogram')
+    >>> plt.subplot(3, 1, 3)
+    >>> librosa.display.specshow(librosa.logamplitude(np.abs(P)**2,
+    ...                          ref_power=np.max),
+    ...                          y_axis='log')
+    >>> plt.colorbar()
+    >>> plt.title('Percussive power spectrogram')
+    >>> plt.tight_layout()
 
 
     Or with a narrower horizontal filter
