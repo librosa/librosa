@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """Top-level module for librosa"""
 
+from .version import version as __version__
 
 # And all the librosa sub-modules
 from . import cache
@@ -19,5 +20,3 @@ from . import util
 
 # Exporting all core functions is okay here: suppress the import warning
 from librosa.core import *  # pylint: disable=wildcard-import
-
-from .version import version as __version__
