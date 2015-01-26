@@ -22,19 +22,6 @@ def frame(y, frame_length=2048, hop_length=512):
     This implementation uses low-level stride manipulation to avoid
     redundant copies of the time series data.
 
-    Examples
-    --------
-    >>> # Load a file
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> # Extract 2048-sample frames from y with a hop of 64
-    >>> librosa.util.frame(y, frame_length=2048, hop_length=64)
-    array([[  0.000e+00,   0.000e+00, ...,   1.526e-05,   0.000e+00],
-           [  0.000e+00,   0.000e+00, ...,   1.526e-05,   0.000e+00],
-    ...,
-           [ -2.674e-04,   5.065e-03, ...,   0.000e+00,   0.000e+00],
-           [  2.684e-03,   4.817e-03, ...,   0.000e+00,   0.000e+00]],
-          dtype=float32)
-
     Parameters
     ----------
     y : np.ndarray [shape=(n,)]
@@ -60,6 +47,20 @@ def frame(y, frame_length=2048, hop_length=512):
         See `np.ascontiguous()` for details.
 
         If `hop_length < 1`, frames cannot advance.
+
+    Examples
+    --------
+    Extract 2048-sample frames from `y` with a hop of 64 samples per frame
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> librosa.util.frame(y, frame_length=2048, hop_length=64)
+    array([[  0.000e+00,   0.000e+00, ...,   1.526e-05,   0.000e+00],
+           [  0.000e+00,   0.000e+00, ...,   1.526e-05,   0.000e+00],
+    ...,
+           [ -2.674e-04,   5.065e-03, ...,   0.000e+00,   0.000e+00],
+           [  2.684e-03,   4.817e-03, ...,   0.000e+00,   0.000e+00]],
+          dtype=float32)
+
     '''
 
     if hop_length < 1:
