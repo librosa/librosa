@@ -4,12 +4,16 @@
 
 import numpy as np
 import scipy
+import warnings
 
 from . import cache
 from . import util
 
 from .core.time_frequency import note_to_hz, hz_to_octs
 from .core.time_frequency import fft_frequencies, mel_frequencies
+
+# Dictionary of window function bandwidths
+WINDOW_BANDWIDTHS = dict(hann=0.725)
 
 
 @cache
@@ -470,7 +474,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     for i in np.arange(n_bins, dtype=float):
 
         freq = fmin * 2.0**(i / bins_per_octave)
-        if freq * (1 + 1.0 / Q) > sr / 2.0:
+        if freq * (1 + window_bandwidth('hann') / Q) > sr / 2.0:
             raise ValueError("Filter pass band lies beyond Nyquist")
 
         # Length of the filter
@@ -563,3 +567,40 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12, roll=0):
     cq_to_ch = np.roll(cq_to_ch, -roll, axis=0)
 
     return cq_to_ch
+
+
+def window_bandwidth(window, default=1.0):
+    '''Get the bandwidth of a window function.
+
+    If the window function is unknown, return a default value.
+
+    Parameters
+    ----------
+    window : callable or string
+        A window function, or the name of a window function.
+        Examples:
+          * scipy.signal.hann
+          * 'boxcar'
+
+    default : float >= 0
+        The default value, if `window` is unknown.
+
+    Returns
+    -------
+    bandwidth : float
+        The bandwidth of the given window function
+
+    See Also
+    --------
+    scipy.signal.windows
+    '''
+
+    if hasattr(window, '__name__'):
+        key = window.__name__
+    else:
+        key = window
+
+    if key not in WINDOW_BANDWIDTHS:
+        warnings.warn("Unknown window fuction '{:s}'.".format(key))
+
+    return WINDOW_BANDWIDTHS.get(key, default)

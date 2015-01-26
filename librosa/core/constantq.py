@@ -16,7 +16,7 @@ from ..feature.utils import sync
 
 @cache
 def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
-        bins_per_octave=12, tuning=None, resolution=2, res_type='sinc_best',
+        bins_per_octave=12, tuning=None, resolution=2,
         aggregate=None, norm=1, sparsity=0.01):
     '''Compute the constant-Q transform of an audio signal.
 
@@ -55,9 +55,6 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     resolution : float > 0
         Filter resolution factor. Larger values use longer windows.
 
-    res_type : str
-        Resampling type, see `librosa.core.resample` for details.
-
     aggregate : None or function
         Aggregation function for time-oversampling energy aggregation.
         By default, `np.mean`.  See `librosa.feature.sync`.
@@ -80,7 +77,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     Raises
     ------
     ValueError
-        If `hop_length < 2**(n_bins / bins_per_octvae)`
+        If `hop_length < 2**(n_bins / bins_per_octave)`
 
     See Also
     --------
@@ -139,34 +136,71 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     if tuning is None:
         tuning = estimate_tuning(y=y, sr=sr)
 
-    # First thing, get the fmin of the top octave
-    fmin_t = cqt_frequencies(n_bins, fmin,
-                             bins_per_octave=bins_per_octave)[-bins_per_octave]
+    # First thing, get the freqs of the top octave
+    freqs = cqt_frequencies(n_bins, fmin,
+                            bins_per_octave=bins_per_octave)[-bins_per_octave:]
 
-    # Generate the basis filters
-    basis, lengths = filters.constant_q(sr,
-                                        fmin=fmin_t,
-                                        n_bins=bins_per_octave,
-                                        bins_per_octave=bins_per_octave,
-                                        tuning=tuning,
-                                        resolution=resolution,
-                                        norm=norm,
-                                        pad_fft=True,
-                                        return_lengths=True)
+    fmin_t = np.min(freqs)
+    fmax_t = np.max(freqs)
 
-    # FFT the filters
-    min_filter_length = np.min(lengths)
+    # Determine required resampling quality
+    Q = float(resolution) / (2.0**(1. / bins_per_octave) - 1)
 
-    # Filters are padded up to the nearest integral power of 2
-    n_fft = basis.shape[1]
+    filter_cutoff = fmax_t * (1 + filters.window_bandwidth('hann') / Q)
 
-    # FFT and retain only the non-negative frequencies
-    fft_basis = np.fft.fft(basis, n=n_fft, axis=1)[:, :(n_fft / 2)+1]
+    nyquist = sr / 2.0
 
-    # normalize as in Parseval's relation, and sparsify the basis
-    fft_basis = util.sparsify_rows(fft_basis / n_fft, quantile=sparsity)
+    if filter_cutoff < audio.BW_FASTEST * nyquist:
+        res_type = 'sinc_fastest'
+    elif filter_cutoff < audio.BW_MEDIUM * nyquist:
+        res_type = 'sinc_medium'
+    elif filter_cutoff < audio.BW_BEST * nyquist:
+        res_type = 'sinc_best'
+    else:
+        res_type = 'sinc_best'
 
     cqt_resp = []
+
+    y, sr, hop_length = __early_downsample(y, sr, hop_length,
+                                           res_type, n_octaves,
+                                           nyquist, filter_cutoff)
+
+    if res_type != 'sinc_fastest' and audio._HAS_SAMPLERATE:
+
+        # Do two octaves before resampling to allow for usage of sinc_fastest
+        fft_basis, n_fft, min_filter_length = __fft_filters(sr, fmin_t,
+                                                            bins_per_octave,
+                                                            tuning,
+                                                            resolution,
+                                                            norm,
+                                                            sparsity)
+
+        # Compute a dynamic hop based on n_fft
+        my_cqt = __variable_hop_response(y, n_fft,
+                                         hop_length,
+                                         min_filter_length,
+                                         fft_basis,
+                                         aggregate)
+
+        # Convolve
+        cqt_resp.append(my_cqt)
+
+        fmin_t /= 2
+        fmax_t /= 2
+        n_octaves -= 1
+
+        filter_cutoff = fmax_t * (1 + filters.window_bandwidth('hann') / Q)
+        assert filter_cutoff < audio.BW_FASTEST*nyquist
+
+        res_type = 'sinc_fastest'
+
+    # Now do the recursive bit
+    fft_basis, n_fft, min_filter_length = __fft_filters(sr, fmin_t,
+                                                        bins_per_octave,
+                                                        tuning,
+                                                        resolution,
+                                                        norm,
+                                                        sparsity)
 
     my_y, my_sr, my_hop = y, sr, hop_length
 
@@ -190,6 +224,36 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         cqt_resp.append(my_cqt)
 
     return __trim_stack(cqt_resp, n_bins)
+
+
+def __fft_filters(sr, fmin, bins_per_octave, tuning,
+                  resolution, norm, sparsity):
+    '''Generate the frequency domain constant-Q filter basis.'''
+
+    basis, lengths = filters.constant_q(sr,
+                                        fmin=fmin,
+                                        n_bins=bins_per_octave,
+                                        bins_per_octave=bins_per_octave,
+                                        tuning=tuning,
+                                        resolution=resolution,
+                                        norm=norm,
+                                        pad_fft=True,
+                                        return_lengths=True)
+
+    # FFT the filters
+    min_filter_length = np.min(lengths)
+
+    # Filters are padded up to the nearest integral power of 2
+    n_fft = basis.shape[1]
+
+    # FFT and retain only the non-negative frequencies
+    fft_basis = np.fft.fft(basis, n=n_fft, axis=1)[:, :(n_fft / 2)+1]
+
+    # normalize as in Parseval's relation, and sparsify the basis
+    fft_basis = util.sparsify_rows(fft_basis / n_fft,
+                                   quantile=sparsity)
+
+    return fft_basis, n_fft, min_filter_length
 
 
 def __trim_stack(cqt_resp, n_bins):
@@ -235,3 +299,29 @@ def __variable_hop_response(y, n_fft, hop_length, min_filter_length,
         my_cqt = sync(my_cqt, bounds, aggregate=aggregate)
 
     return my_cqt
+
+
+def __early_downsample(y, sr, hop_length, res_type, n_octaves,
+                       nyquist, filter_cutoff):
+    '''Perform early downsampling on an audio signal, if it applies.'''
+
+    if not (res_type == 'sinc_fastest' and audio._HAS_SAMPLERATE):
+        return y, sr, hop_length
+
+    downsample_count1 = int(np.ceil(np.log2(audio.BW_FASTEST * nyquist
+                                            / filter_cutoff)) - 1)
+
+    downsample_count2 = int(np.ceil(np.log2(hop_length) - n_octaves) - 1)
+
+    downsample_count = min(downsample_count1, downsample_count2)
+
+    if downsample_count > 0:
+        downsample_factor = 2**downsample_count
+
+        hop_length = int(hop_length / downsample_factor)
+
+        y = audio.resample(y, sr, sr / downsample_factor, res_type=res_type)
+
+        sr = sr / downsample_factor
+
+    return y, sr, hop_length
