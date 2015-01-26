@@ -14,6 +14,19 @@ from ..core.spectrum import logamplitude, _spectrogram
 from ..core.pitch import estimate_tuning
 
 
+__all__ = ['spectral_centroid',
+           'spectral_bandwidth',
+           'spectral_contrast',
+           'spectral_rolloff',
+           'poly_features',
+           'rms',
+           'zero_crossing_rate',
+           'logfsgram',
+           'chromagram',
+           'melspectrogram',
+           'mfcc']
+
+
 # -- Spectral features -- #
 @cache
 def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,

@@ -12,6 +12,9 @@ from . import core
 from . import util
 
 
+__all__ = ['annotation', 'frames_csv', 'times_csv', 'write_wav']
+
+
 def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
     r'''Save annotations in a 3-column format::
 

@@ -11,6 +11,9 @@ import six
 EXAMPLE_AUDIO = 'example_data/Kevin_MacLeod_-_Vibe_Ace.mp3'
 
 
+__all__ = ['example_audio_file', 'find_files']
+
+
 def example_audio_file():
     '''Get the path to an included audio example file.
 

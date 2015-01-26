@@ -8,6 +8,8 @@ import scipy.signal
 from .. import cache
 from .. import util
 
+__all__ = ['delta', 'stack_memory', 'sync']
+
 
 @cache
 def delta(data, width=9, order=1, axis=-1, trim=True):

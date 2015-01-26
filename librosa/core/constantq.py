@@ -13,6 +13,8 @@ from .. import filters
 from .. import util
 from ..feature.utils import sync
 
+__all__ = ['cqt']
+
 
 @cache
 def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,

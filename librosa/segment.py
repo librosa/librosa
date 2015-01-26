@@ -15,6 +15,9 @@ import sklearn.feature_extraction
 from . import cache
 from . import util
 
+__all__ = ['recurrence_matrix', 'structure_feature', 'timelag_filter',
+           'agglomerative', 'subsegment']
+
 
 @cache
 def __band_infinite(n, width, v_in=0.0, v_out=np.inf, dtype=np.float32):

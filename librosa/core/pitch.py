@@ -9,6 +9,8 @@ from . import time_frequency
 from .. import cache
 from .. import util
 
+__all__ = ['estimate_tuning', 'pitch_tuning', 'ifptrack', 'piptrack']
+
 
 @cache
 def estimate_tuning(resolution=0.01, bins_per_octave=12, **kwargs):

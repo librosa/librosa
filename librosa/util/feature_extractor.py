@@ -4,6 +4,8 @@
 
 from sklearn.base import BaseEstimator, TransformerMixin
 
+__all__ = ['FeatureExtractor']
+
 
 class FeatureExtractor(BaseEstimator, TransformerMixin):
     """Sci-kit learn wrapper class for feature extraction methods.
