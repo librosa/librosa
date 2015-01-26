@@ -1,6 +1,31 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Effects and filters for audio buffer data"""
+"""Effects and filters for audio data
+
+Harmonic-percussive source separation
+=====================================
+.. autosummary::
+    :toctree: generated/
+
+    hpss
+    harmonic
+    percussive
+
+Time and frequency
+==================
+.. autosummary::
+    :toctree: generated/
+
+    time_stretch
+    pitch_shift
+
+Miscellaneous
+=============
+.. autosummary::
+    :toctree: generated/
+
+    remix
+"""
 
 import numpy as np
 

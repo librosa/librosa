@@ -30,6 +30,7 @@ Spectral representations
     magphase
     logamplitude
     perceptual_weighting
+    A_weighting
 
 Time and frequency conversion
 =============================
