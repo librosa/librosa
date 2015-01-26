@@ -46,19 +46,6 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
     `rec[i,j] == True` if (and only if) (`data[:,i]`, `data[:,j]`) are
     k-nearest-neighbors and `|i-j| >= width`
 
-    Examples
-    --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> mfcc = librosa.feature.mfcc(y=y, sr=sr)
-    >>> R = librosa.segment.recurrence_matrix(mfcc)
-    >>> # Or fix the number of nearest neighbors to 5
-    >>> R = librosa.segment.recurrence_matrix(mfcc, k=5)
-    >>> # Suppress neighbors within +- 7 samples
-    >>> R = librosa.segment.recurrence_matrix(mfcc, width=7)
-    >>> # Use cosine similarity instead of Euclidean distance
-    >>> R = librosa.segment.recurrence_matrix(mfcc, metric='cosine')
-    >>> # Require mutual nearest neighbors
-    >>> R = librosa.segment.recurrence_matrix(mfcc, sym=True)
 
     Parameters
     ----------
@@ -91,6 +78,45 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
     See Also
     --------
     scipy.spatial.distance.cdist
+    librosa.feature.stack_memory
+    structure_feature
+
+    Examples
+    --------
+    Find nearest neighbors in MFCC space
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> mfcc = librosa.feature.mfcc(y=y, sr=sr)
+    >>> R = librosa.segment.recurrence_matrix(mfcc)
+
+    Or fix the number of nearest neighbors to 5
+
+    >>> R = librosa.segment.recurrence_matrix(mfcc, k=5)
+
+    Suppress neighbors within +- 7 samples
+
+    >>> R = librosa.segment.recurrence_matrix(mfcc, width=7)
+
+    Use cosine similarity instead of Euclidean distance
+
+    >>> R = librosa.segment.recurrence_matrix(mfcc, metric='cosine')
+
+    Require mutual nearest neighbors
+
+    >>> R = librosa.segment.recurrence_matrix(mfcc, sym=True)
+
+    Plot the feature and recurrence matrices
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure(figsize=(10, 6))
+    >>> plt.subplot(1, 2, 1)
+    >>> librosa.display.specshow(mfcc, x_axis='time')
+    >>> plt.title('MFCC')
+    >>> plt.subplot(1, 2, 2)
+    >>> librosa.display.specshow(R, x_axis='time', aspect='equal')
+    >>> plt.title('MFCC recurrence (symmetric)')
+    >>> plt.tight_layout()
+
     '''
 
     t = data.shape[1]
