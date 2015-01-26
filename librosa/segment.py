@@ -245,7 +245,6 @@ def structure_feature(rec, pad=True, inverse=False):
     return np.ascontiguousarray(struct.T).T
 
 
-@decorator
 def timelag_filter(function, pad=True, key=None, index=0):
     '''Filtering in the time-lag domain.
 
@@ -265,8 +264,6 @@ def timelag_filter(function, pad=True, key=None, index=0):
 
     function : callable
         The filtering function to wrap, e.g., `scipy.ndimage.median_filter`
-
-    index : int > 0 or None
 
     pad : bool
         Whether to zero-pad the structure feature matrix
@@ -293,14 +290,14 @@ def timelag_filter(function, pad=True, key=None, index=0):
     Examples
     --------
 
-    Apply a 7-bin median filter to the diagonal of a recurrence matrix
+    Apply a 5-bin median filter to the diagonal of a recurrence matrix
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> mfcc = librosa.feature.mfcc(y=y, sr=sr)
     >>> rec = librosa.segment.recurrence_matrix(mfcc, sym=True)
     >>> from scipy.ndimage import median_filter
     >>> diagonal_median = librosa.segment.timelag_filter(median_filter)
-    >>> rec_filtered = diagonal_median(rec, size=(1, 7), mode='mirror')
+    >>> rec_filtered = diagonal_median(rec, size=(1, 5), mode='mirror')
 
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
@@ -314,7 +311,7 @@ def timelag_filter(function, pad=True, key=None, index=0):
     '''
 
     @cache
-    def __my_filter(*args, **kwargs):
+    def __my_filter(wrapped_f, *args, **kwargs):
         '''Decorator to wrap the filter'''
         # Map the input data into time-lag space
         args = list(args)
@@ -328,12 +325,12 @@ def timelag_filter(function, pad=True, key=None, index=0):
                                             inverse=False)
 
         # Apply the filtering function
-        result = function(*args, **kwargs)
+        result = wrapped_f(*args, **kwargs)
 
         # Map back into time-time and return
         return structure_feature(result, pad=pad, inverse=True)
 
-    return __my_filter
+    return decorator(__my_filter, function)
 
 
 @cache
