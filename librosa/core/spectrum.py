@@ -23,29 +23,6 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
       - `np.angle(D[f, t])` is the phase of frequency bin `f`
         at frame `t`
 
-    Examples
-    --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> D = librosa.stft(y)
-    >>> D
-    array([[  2.515e-02 -0.000e+00j,   7.316e-02 -0.000e+00j, ...,
-              2.517e-04 -0.000e+00j,   1.452e-04 -0.000e+00j],
-           [  5.897e-02 +2.488e-17j,   4.895e-02 +1.744e-02j, ...,
-             -2.114e-04 +1.046e-04j,   9.238e-05 -1.012e-06j],
-           ...,
-           [ -4.351e-09 -2.131e-17j,   1.778e-08 +8.089e-09j, ...,
-              1.227e-10 +5.685e-11j,  -3.968e-11 -4.419e-13j],
-           [ -1.805e-08 -0.000e+00j,  -1.289e-08 -0.000e+00j, ...,
-             -1.181e-10 -0.000e+00j,  -6.003e-11 -0.000e+00j]],
-          dtype=complex64)
-
-    >>> # Use left-aligned frames
-    >>> D_left = librosa.stft(y, center=False)
-
-    >>> # Use a shorter hop length
-    >>> D_short = librosa.stft(y, hop_length=64)
-
-
     Parameters
     ----------
     y : np.ndarray [shape=(n,)], real-valued
@@ -94,6 +71,41 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
         Inverse STFT
     ifgram
         Instantaneous frequency spectrogram
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> D = librosa.stft(y)
+    >>> D
+    array([[  2.515e-02 -0.000e+00j,   7.316e-02 -0.000e+00j, ...,
+              2.517e-04 -0.000e+00j,   1.452e-04 -0.000e+00j],
+           [  5.897e-02 +2.488e-17j,   4.895e-02 +1.744e-02j, ...,
+             -2.114e-04 +1.046e-04j,   9.238e-05 -1.012e-06j],
+           ...,
+           [ -4.351e-09 -2.131e-17j,   1.778e-08 +8.089e-09j, ...,
+              1.227e-10 +5.685e-11j,  -3.968e-11 -4.419e-13j],
+           [ -1.805e-08 -0.000e+00j,  -1.289e-08 -0.000e+00j, ...,
+             -1.181e-10 -0.000e+00j,  -6.003e-11 -0.000e+00j]],
+          dtype=complex64)
+
+    Use left-aligned frames, instead of centered frames
+
+    >>> D_left = librosa.stft(y, center=False)
+
+    Use a shorter hop length
+
+    >>> D_short = librosa.stft(y, hop_length=64)
+
+    Display a spectrogram
+
+    >>> import matplotlib.pyplot as plt
+    >>> librosa.display.specshow(librosa.logamplitude(np.abs(D)**2,
+    ...                                               ref_power=np.max),
+    ...                          y_axis='log', x_axis='time')
+    >>> plt.title('Power spectrogram')
+    >>> plt.colorbar(format='%+2.0f dB')
+    >>> plt.tight_layout()
+
     """
 
     # By default, use the entire frame
@@ -615,20 +627,6 @@ def perceptual_weighting(S, frequencies, **kwargs):
 
     `S_p[f] = A_weighting(f) + 10*log(S[f] / ref_power)`
 
-    Examples
-    --------
-    >>> # Re-weight a CQT representation, using peak power as reference
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> CQT = librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('A2'))
-    >>> freqs = librosa.cqt_frequencies(CQT.shape[0],
-                                        fmin=librosa.note_to_hz('A2'))
-    >>> librosa.perceptual_weighting(CQT, freqs, ref_power=np.max)
-    array([[-50.113, -49.887, ..., -86.524, -88.887],
-           [-48.525, -48.043, ..., -81.741, -81.102],
-           ...,
-           [-41.162, -44.677, ..., -61.139, -64.137],
-           [-40.303, -44.41 , ..., -59.63 , -65.519]])
-
     Parameters
     ----------
     S : np.ndarray [shape=(d, t)]
@@ -648,6 +646,39 @@ def perceptual_weighting(S, frequencies, **kwargs):
     See Also
     --------
     logamplitude
+
+    Examples
+    --------
+    Re-weight a CQT power spectrum, using peak power as reference
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> CQT = librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('A2'))
+    >>> freqs = librosa.cqt_frequencies(CQT.shape[0],
+    ...                                 fmin=librosa.note_to_hz('A2'))
+    >>> perceptual_CQT = librosa.perceptual_weighting(CQT**2,
+    ...                                               freqs,
+    ...                                               ref_power=np.max)
+    >>> perceptual_CQT
+    array([[-50.113, -49.887, ..., -86.524, -88.887],
+           [-48.525, -48.043, ..., -81.741, -81.102],
+    ...,
+           [-41.162, -44.677, ..., -61.139, -64.137],
+           [-40.303, -44.41 , ..., -59.63 , -65.519]])
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> plt.subplot(2, 1, 1)
+    >>> librosa.display.specshow(librosa.logamplitude(CQT**2,
+    ...                                               ref_power=np.max),
+    ...                          y_axis='cqt_hz', x_axis='time')
+    >>> plt.title('Log CQT power')
+    >>> plt.colorbar()
+    >>> plt.subplot(2, 1, 2)
+    >>> librosa.display.specshow(perceptual_CQT, y_axis='cqt_hz',
+    ...                          x_axis='time')
+    >>> plt.title('Perceptually weighted log CQT')
+    >>> plt.colorbar()
+    >>> plt.tight_layout()
     '''
 
     offset = time_frequency.A_weighting(frequencies).reshape((-1, 1))
