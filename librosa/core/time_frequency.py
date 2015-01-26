@@ -6,6 +6,21 @@ import numpy as np
 import re
 
 
+__all__ = ['frames_to_samples', 'frames_to_time',
+           'samples_to_frames', 'samples_to_time',
+           'time_to_samples', 'time_to_frames',
+           'note_to_hz', 'note_to_midi',
+           'midi_to_hz', 'midi_to_note',
+           'hz_to_note', 'hz_to_midi',
+           'hz_to_mel', 'hz_to_octs',
+           'mel_to_hz',
+           'octs_to_hz',
+           'fft_frequencies',
+           'cqt_frequencies',
+           'mel_frequencies',
+           'A_weighting']
+
+
 def frames_to_samples(frames, hop_length=512, n_fft=None):
     """Converts frame indices to audio sample indices
 

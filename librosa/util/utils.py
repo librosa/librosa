@@ -15,6 +15,16 @@ MAX_MEM_BLOCK = 2**8 * 2**10
 
 SMALL_FLOAT = 1e-20
 
+__all__ = ['MAX_MEM_BLOCK', 'SMALL_FLOAT',
+           'frame', 'pad_center', 'fix_length',
+           'valid_audio',
+           'fix_frames',
+           'axis_sort', 'localmax', 'normalize',
+           'match_intervals', 'match_events',
+           'peak_pick',
+           'sparsify_rows',
+           'buf_to_int', 'buf_to_float']
+
 
 def frame(y, frame_length=2048, hop_length=512):
     '''Slice a time series into overlapping frames.

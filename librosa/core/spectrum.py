@@ -11,6 +11,11 @@ from . import time_frequency
 from .. import cache
 from .. import util
 
+__all__ = ['stft', 'istft', 'magphase',
+           'ifgram',
+           'phase_vocoder',
+           'logamplitude', 'perceptual_weighting']
+
 
 @cache
 def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,

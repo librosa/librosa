@@ -10,6 +10,8 @@ from . import core
 from . import onset
 from . import util
 
+__all__ = ['beat_track', 'estimate_tempo']
+
 
 @cache
 def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=64,

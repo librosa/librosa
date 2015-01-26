@@ -12,6 +12,9 @@ import scipy.signal
 from .. import cache
 from .. import util
 
+__all__ = ['load', 'to_mono', 'resample', 'get_duration',
+           'autocorrelate', 'zero_crossings']
+
 # Resampling bandwidths as percentage of Nyquist
 # http://www.mega-nerd.com/SRC/api_misc.html#Converters
 BW_BEST = 0.97

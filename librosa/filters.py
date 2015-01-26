@@ -15,6 +15,10 @@ from .core.time_frequency import fft_frequencies, mel_frequencies
 # Dictionary of window function bandwidths
 WINDOW_BANDWIDTHS = dict(hann=0.725)
 
+__all__ = ['dct', 'mel', 'chroma', 'logfrequency',
+           'constant_q', 'cq_to_chroma',
+           'window_bandwidth']
+
 
 @cache
 def dct(n_filters, n_input):
