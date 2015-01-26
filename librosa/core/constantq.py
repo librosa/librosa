@@ -146,39 +146,23 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     # Determine required resampling quality
     Q = float(resolution) / (2.0**(1. / bins_per_octave) - 1)
-    filter_cutoff = fmax_t*(1 + filters.HANN_BW / Q)
+    filter_cutoff = fmax_t * (1 + filters.HANN_BW / Q)
     nyquist = sr / 2.0
 
-    if filter_cutoff < audio.BW_FASTEST*nyquist:
+    if filter_cutoff < audio.BW_FASTEST * nyquist:
         res_type = 'sinc_fastest'
-    elif filter_cutoff < audio.BW_MEDIUM*nyquist:
+    elif filter_cutoff < audio.BW_MEDIUM * nyquist:
         res_type = 'sinc_medium'
-    elif filter_cutoff < audio.BW_BEST*nyquist:
+    elif filter_cutoff < audio.BW_BEST * nyquist:
         res_type = 'sinc_best'
     else:
         res_type = 'sinc_best'
 
-
     cqt_resp = []
 
-
-
-    if res_type == 'sinc_fastest' and audio._HAS_SAMPLERATE:
-
-        # How many times can we downsample by 2 before filtering?
-        # Requirements:
-        # filter_cutoff < BW*nyquist  # (BW is resampling bandwidth fraction)
-        # hop_length > 2**n_octaves
-
-        downsample_count1 = int(np.ceil(np.log2(audio.BW_FASTEST * nyquist
-                                                / filter_cutoff)) - 1)
-        downsample_count2 = int(np.ceil(np.log2(hop_length) - n_octaves) - 1)
-        downsample_count = min(downsample_count1, downsample_count2)
-        if downsample_count > 0:
-            downsample_factor = 2**downsample_count
-            hop_length = int(hop_length/downsample_factor)
-            y = audio.resample(y, sr, sr/downsample_factor, res_type=res_type)
-            sr = sr/downsample_factor
+    y, sr, hop_length = __early_downsample(y, sr, hop_length,
+                                           res_type, n_octaves,
+                                           nyquist, filter_cutoff)
 
     if res_type != 'sinc_fastest' and audio._HAS_SAMPLERATE:
 
@@ -226,7 +210,6 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
         res_type = 'sinc_fastest'
 
-
     # Generate the basis filters
     basis, lengths = filters.constant_q(sr,
                                         fmin=fmin_t,
@@ -270,7 +253,6 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
         # Convolve
         cqt_resp.append(my_cqt)
-
 
     return __trim_stack(cqt_resp, n_bins)
 
@@ -318,3 +300,29 @@ def __variable_hop_response(y, n_fft, hop_length, min_filter_length,
         my_cqt = sync(my_cqt, bounds, aggregate=aggregate)
 
     return my_cqt
+
+
+def __early_downsample(y, sr, hop_length, res_type, n_octaves,
+                       nyquist, filter_cutoff):
+    '''Perform early downsampling on an audio signal, if it applies.'''
+
+    if not (res_type == 'sinc_fastest' and audio._HAS_SAMPLERATE):
+        return y, sr, hop_length
+
+    downsample_count1 = int(np.ceil(np.log2(audio.BW_FASTEST * nyquist
+                                            / filter_cutoff)) - 1)
+
+    downsample_count2 = int(np.ceil(np.log2(hop_length) - n_octaves) - 1)
+
+    downsample_count = min(downsample_count1, downsample_count2)
+
+    if downsample_count > 0:
+        downsample_factor = 2**downsample_count
+
+        hop_length = int(hop_length / downsample_factor)
+
+        y = audio.resample(y, sr, sr / downsample_factor, res_type=res_type)
+
+        sr = sr / downsample_factor
+
+    return y, sr, hop_length
