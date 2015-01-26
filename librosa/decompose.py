@@ -5,6 +5,8 @@
 import numpy as np
 import scipy
 
+from scipy.ndimage import median_filter
+
 import sklearn.decomposition
 
 from . import core
@@ -259,10 +261,10 @@ def hpss(S, kernel_size=31, power=2.0, mask=False):
 
     # Compute median filters. Pre-allocation here preserves memory layout.
     harm = np.empty_like(S)
-    harm[:] = util.medfilt(S, kernel_size=(1, win_harm))
+    harm[:] = median_filter(S, size=(1, win_harm), mode='reflect')
 
     perc = np.empty_like(S)
-    perc[:] = util.medfilt(S, kernel_size=(win_perc, 1))
+    perc[:] = median_filter(S, size=(win_perc, 1), mode='reflect')
 
     if mask or power < util.SMALL_FLOAT:
         mask_harm = (harm > perc).astype(float)
