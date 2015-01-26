@@ -13,24 +13,6 @@ from .. import util
 def delta(data, width=9, order=1, axis=-1, trim=True):
     '''Compute delta features.
 
-    Examples
-    --------
-    >>> # Compute MFCC deltas, delta-deltas
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> mfccs = librosa.feature.mfcc(y=y, sr=sr)
-    >>> librosa.feature.delta(mfccs)
-    array([[ -4.250e+03,  -3.060e+03, ...,  -4.547e-13,  -4.547e-13],
-           [  5.673e+02,   6.931e+02, ...,   0.000e+00,   0.000e+00],
-    ...,
-           [ -5.986e+01,  -5.018e+01, ...,   0.000e+00,   0.000e+00],
-           [ -3.112e+01,  -2.908e+01, ...,   0.000e+00,   0.000e+00]])
-    >>> librosa.feature.delta(mfccs, order=2)
-    array([[ -4.297e+04,  -3.207e+04, ...,  -8.185e-11,  -5.275e-11],
-           [  5.736e+03,   5.420e+03, ...,  -7.390e-12,  -4.547e-12],
-    ...,
-           [ -6.053e+02,  -4.801e+02, ...,   0.000e+00,   0.000e+00],
-           [ -3.146e+02,  -2.615e+02, ...,  -4.619e-13,  -2.842e-13]])
-
     Parameters
     ----------
     data      : np.ndarray [shape=(d, T)]
@@ -54,6 +36,26 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
     -------
     delta_data   : np.ndarray [shape=(d, t) or (d, t + window)]
         delta matrix of `data`.
+
+    Examples
+    --------
+    Compute MFCC deltas, delta-deltas
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> mfccs = librosa.feature.mfcc(y=y, sr=sr)
+    >>> librosa.feature.delta(mfccs)
+    array([[ -4.250e+03,  -3.060e+03, ...,  -4.547e-13,  -4.547e-13],
+           [  5.673e+02,   6.931e+02, ...,   0.000e+00,   0.000e+00],
+    ...,
+           [ -5.986e+01,  -5.018e+01, ...,   0.000e+00,   0.000e+00],
+           [ -3.112e+01,  -2.908e+01, ...,   0.000e+00,   0.000e+00]])
+    >>> librosa.feature.delta(mfccs, order=2)
+    array([[ -4.297e+04,  -3.207e+04, ...,  -8.185e-11,  -5.275e-11],
+           [  5.736e+03,   5.420e+03, ...,  -7.390e-12,  -4.547e-12],
+    ...,
+           [ -6.053e+02,  -4.801e+02, ...,   0.000e+00,   0.000e+00],
+           [ -3.146e+02,  -2.615e+02, ...,  -4.619e-13,  -2.842e-13]])
+
     '''
 
     half_length = 1 + int(np.floor(width / 2.0))
@@ -92,32 +94,6 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
     overridden by supplying additional keyword arguments which are passed
     to `np.pad()`.
 
-    Examples
-    --------
-    >>> # Generate a data vector
-    >>> data = np.arange(-3, 3)
-    >>> # Keep two steps (current and previous)
-    >>> librosa.feature.stack_memory(data)
-    array([[-3, -2, -1,  0,  1,  2],
-           [ 0, -3, -2, -1,  0,  1]])
-
-    >>> # Or three steps
-    >>> librosa.feature.stack_memory(data, n_steps=3)
-    array([[-3, -2, -1,  0,  1,  2],
-           [ 0, -3, -2, -1,  0,  1],
-           [ 0,  0, -3, -2, -1,  0]])
-
-    >>> # Use reflection padding instead of zero-padding
-    >>> librosa.feature.stack_memory(data, n_steps=3, mode='reflect')
-    array([[-3, -2, -1,  0,  1,  2],
-           [-2, -3, -2, -1,  0,  1],
-           [-1, -2, -3, -2, -1,  0]])
-
-    >>> # Or pad with edge-values, and delay by 2
-    >>> librosa.feature.stack_memory(data, n_steps=3, delay=2, mode='edge')
-    array([[-3, -2, -1,  0,  1,  2],
-           [-3, -3, -3, -2, -1,  0],
-           [-3, -3, -3, -3, -3, -2]])
 
     Parameters
     ----------
@@ -139,6 +115,54 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
     data_history : np.ndarray [shape=(m * d, t)]
         data augmented with lagged copies of itself,
         where `m == n_steps - 1`.
+
+    Examples
+    --------
+    Keep two steps (current and previous)
+
+    >>> data = np.arange(-3, 3)
+    >>> librosa.feature.stack_memory(data)
+    array([[-3, -2, -1,  0,  1,  2],
+           [ 0, -3, -2, -1,  0,  1]])
+
+    Or three steps
+
+    >>> librosa.feature.stack_memory(data, n_steps=3)
+    array([[-3, -2, -1,  0,  1,  2],
+           [ 0, -3, -2, -1,  0,  1],
+           [ 0,  0, -3, -2, -1,  0]])
+
+    Use reflection padding instead of zero-padding
+
+    >>> librosa.feature.stack_memory(data, n_steps=3, mode='reflect')
+    array([[-3, -2, -1,  0,  1,  2],
+           [-2, -3, -2, -1,  0,  1],
+           [-1, -2, -3, -2, -1,  0]])
+
+    Or pad with edge-values, and delay by 2
+
+    >>> librosa.feature.stack_memory(data, n_steps=3, delay=2, mode='edge')
+    array([[-3, -2, -1,  0,  1,  2],
+           [-3, -3, -3, -2, -1,  0],
+           [-3, -3, -3, -3, -3, -2]])
+
+    Stack time-lagged beat-synchronous chroma edge padding
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> chroma = librosa.feature.chromagram(y=y, sr=sr)
+    >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, hop_length=512)
+    >>> chroma_sync = librosa.feature.sync(chroma, beats)
+    >>> chroma_lag = librosa.feature.stack_memory(chroma_sync, n_steps=3,
+    ...                                           mode='edge')
+
+    Plot the result
+
+    >>> import matplotlib.pyplot as plt
+    >>> librosa.display.specshow(chroma_lag)
+    >>> librosa.display.time_ticks(librosa.frames_to_time(beats, sr=sr))
+    >>> plt.title('Time-lagged chroma')
+    >>> plt.colorbar()
+    >>> plt.tight_layout()
     """
 
     # If we're given a vector, interpret as a matrix
@@ -177,21 +201,6 @@ def sync(data, frames, aggregate=None, pad=True):
         If synchronizing a feature matrix against beat tracker output, ensure
         that frame numbers are properly aligned and use the same hop length.
 
-    Examples
-    --------
-    >>> # Beat-synchronous MFCCs
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
-    >>> mfcc = librosa.feature.mfcc(y=y, sr=sr)
-    >>> # By default, use mean aggregation
-    >>> mfcc_avg = librosa.feature.sync(mfcc, beats)
-    >>> # Use median-aggregation instead of mean
-    >>> mfcc_med = librosa.feature.sync(mfcc, beats,
-                                        aggregate=np.median)
-    >>> # Or max aggregation
-    >>> mfcc_max = librosa.feature.sync(mfcc, beats,
-                                        aggregate=np.max)
-
     Parameters
     ----------
     data      : np.ndarray [shape=(d, T) or shape=(T,)]
@@ -215,6 +224,29 @@ def sync(data, frames, aggregate=None, pad=True):
     ------
     ValueError
         If `data.ndim` is not 1 or 2
+
+    Examples
+    --------
+    Beat-synchronous MFCCs
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
+    >>> mfcc = librosa.feature.mfcc(y=y, sr=sr)
+
+    By default, use mean aggregation
+
+    >>> mfcc_avg = librosa.feature.sync(mfcc, beats)
+
+    Use median-aggregation instead of mean
+
+    >>> mfcc_med = librosa.feature.sync(mfcc, beats,
+    ...                                 aggregate=np.median)
+
+    Or max aggregation
+
+    >>> mfcc_max = librosa.feature.sync(mfcc, beats,
+    ...                                 aggregate=np.max)
+
     """
 
     if data.ndim < 2:
