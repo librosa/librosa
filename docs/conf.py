@@ -38,6 +38,9 @@ extensions = ['sphinx.ext.autodoc',
               'numpydoc']
 
 
+from glob import glob
+autosummary_generate = glob('*.rst')
+
 # Determine if the matplotlib has a recent enough version of the
 # plot_directive.
 try:
