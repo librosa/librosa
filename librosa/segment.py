@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 """Temporal segmentation utilities"""
 
+from decorator import decorator
+
 import numpy as np
 import scipy
 import scipy.signal
@@ -161,17 +163,6 @@ def structure_feature(rec, pad=True, inverse=False):
     The resulting matrix is indexed horizontally by time,
     and vertically by lag.
 
-    Examples
-    --------
-    >>> # Build the structure feature over mfcc similarity
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> mfccs = librosa.feature.mfcc(y=y, sr=sr)
-    >>> recurrence = librosa.feature.recurrence_matrix(mfccs)
-    >>> struct = librosa.feature.structure_feature(recurrence)
-    >>> # Invert the structure feature to get a recurrence matrix
-    >>> recurrence_2 = librosa.feature.structure_feature(struct,
-                                                         inverse=True)
-
     Parameters
     ----------
     rec   : np.ndarray [shape=(t,t) or shape=(2*t, t)]
@@ -198,6 +189,36 @@ def structure_feature(rec, pad=True, inverse=False):
     See Also
     --------
     recurrence_matrix : build a recurrence matrix from feature vectors
+
+    Examples
+    --------
+    Build the structure feature over mfcc similarity
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> mfccs = librosa.feature.mfcc(y=y, sr=sr)
+    >>> recurrence = librosa.segment.recurrence_matrix(mfccs)
+    >>> struct = librosa.segment.structure_feature(recurrence)
+
+
+    Invert the structure feature to get a recurrence matrix
+
+    >>> recurrence_2 = librosa.segment.structure_feature(struct,
+    ...                                                  inverse=True)
+
+    Display recurrence in time-time and time-lag space
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure(figsize=(10, 5))
+    >>> plt.subplot(1, 2, 1)
+    >>> librosa.display.specshow(recurrence, aspect='equal', x_axis='time')
+    >>> plt.ylabel('Time')
+    >>> plt.title('Recurrence (time-time)')
+    >>> plt.subplot(1, 2, 2)
+    >>> librosa.display.specshow(struct, aspect='auto', x_axis='time')
+    >>> plt.ylabel('Lag')
+    >>> plt.title('Structure feature')
+    >>> plt.tight_layout()
+
     '''
 
     t = rec.shape[1]
@@ -222,6 +243,97 @@ def structure_feature(rec, pad=True, inverse=False):
 
     # Make column-contiguous
     return np.ascontiguousarray(struct.T).T
+
+
+@decorator
+def timelag_filter(function, pad=True, key=None, index=0):
+    '''Filtering in the time-lag domain.
+
+    This is primarily useful for adapting image filters to operate on
+    `structure_feature` output.
+
+    Using `timelag_filter` is equivalent to the following sequence of
+    operations:
+
+    >>> data_tl = librosa.segment.structure_feature(data)
+    >>> data_filtered_tl = function(data_tl, [additional arguments])
+    >>> data_filtered = librosa.segment.structure_feature(data_filtered_tl,
+    ...                                                   inverse=True)
+
+    Parameters
+    ----------
+
+    function : callable
+        The filtering function to wrap, e.g., `scipy.ndimage.median_filter`
+
+    index : int > 0 or None
+
+    pad : bool
+        Whether to zero-pad the structure feature matrix
+
+    key : None or str
+        If `function` accepts input data as a keyword argument, it should be
+        designated by `key`
+
+    index : None or int >= 0
+        If `function` accepts input data as a positional argument, it should be
+        indexed by `index`
+
+    Returns
+    -------
+    wrapped_function : callable
+
+        A new filter function which applies in time-lag space rather than
+        time-time space.
+
+    See Also
+    --------
+    structure_feature
+
+    Examples
+    --------
+
+    Apply a 7-bin median filter to the diagonal of a recurrence matrix
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> mfcc = librosa.feature.mfcc(y=y, sr=sr)
+    >>> rec = librosa.segment.recurrence_matrix(mfcc, sym=True)
+    >>> from scipy.ndimage import median_filter
+    >>> diagonal_median = librosa.segment.timelag_filter(median_filter)
+    >>> rec_filtered = diagonal_median(rec, size=(1, 7), mode='mirror')
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> plt.subplot(1, 2, 1)
+    >>> librosa.display.specshow(rec, x_axis='time', aspect='equal')
+    >>> plt.title('Raw recurrence matrix')
+    >>> plt.subplot(1, 2, 2)
+    >>> librosa.display.specshow(rec_filtered, x_axis='time', aspect='equal')
+    >>> plt.title('Filtered recurrence matrix')
+    >>> plt.tight_layout()
+    '''
+
+    @cache
+    def __my_filter(*args, **kwargs):
+        '''Decorator to wrap the filter'''
+        # Map the input data into time-lag space
+        args = list(args)
+        if key is not None:
+            kwargs['key'] = structure_feature(kwargs['key'],
+                                              pad=pad,
+                                              inverse=False)
+        else:
+            args[index] = structure_feature(args[index],
+                                            pad=pad,
+                                            inverse=False)
+
+        # Apply the filtering function
+        result = function(*args, **kwargs)
+
+        # Map back into time-time and return
+        return structure_feature(result, pad=pad, inverse=True)
+
+    return __my_filter
 
 
 @cache
