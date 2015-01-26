@@ -166,29 +166,12 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     if res_type != 'sinc_fastest' and audio._HAS_SAMPLERATE:
 
         # Do two octaves before resampling to allow for usage of sinc_fastest
-
-        # Generate the basis filters
-        basis, lengths = filters.constant_q(sr,
-                                            fmin=fmin_t,
-                                            n_bins=bins_per_octave,
-                                            bins_per_octave=bins_per_octave,
-                                            tuning=tuning,
-                                            resolution=resolution,
-                                            norm=norm,
-                                            pad_fft=True,
-                                            return_lengths=True)
-
-        # FFT the filters
-        min_filter_length = np.min(lengths)
-
-        # Filters are padded up to the nearest integral power of 2
-        n_fft = basis.shape[1]
-
-        # FFT and retain only the non-negative frequencies
-        fft_basis = np.fft.fft(basis, n=n_fft, axis=1)[:, :(n_fft / 2)+1]
-
-        # normalize as in Parseval's relation, and sparsify the basis
-        fft_basis = util.sparsify_rows(fft_basis / n_fft, quantile=sparsity)
+        fft_basis, n_fft, min_filter_length = __fft_filters(sr, fmin_t,
+                                                            bins_per_octave,
+                                                            tuning,
+                                                            resolution,
+                                                            norm,
+                                                            sparsity)
 
         # Compute a dynamic hop based on n_fft
         my_cqt = __variable_hop_response(y, n_fft,
@@ -209,28 +192,13 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
         res_type = 'sinc_fastest'
 
-    # Generate the basis filters
-    basis, lengths = filters.constant_q(sr,
-                                        fmin=fmin_t,
-                                        n_bins=bins_per_octave,
-                                        bins_per_octave=bins_per_octave,
-                                        tuning=tuning,
-                                        resolution=resolution,
-                                        norm=norm,
-                                        pad_fft=True,
-                                        return_lengths=True)
-
-    # FFT the filters
-    min_filter_length = np.min(lengths)
-
-    # Filters are padded up to the nearest integral power of 2
-    n_fft = basis.shape[1]
-
-    # FFT and retain only the non-negative frequencies
-    fft_basis = np.fft.fft(basis, n=n_fft, axis=1)[:, :(n_fft / 2)+1]
-
-    # normalize as in Parseval's relation, and sparsify the basis
-    fft_basis = util.sparsify_rows(fft_basis / n_fft, quantile=sparsity)
+    # Now do the recursive bit
+    fft_basis, n_fft, min_filter_length = __fft_filters(sr, fmin_t,
+                                                        bins_per_octave,
+                                                        tuning,
+                                                        resolution,
+                                                        norm,
+                                                        sparsity)
 
     my_y, my_sr, my_hop = y, sr, hop_length
 
@@ -254,6 +222,36 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         cqt_resp.append(my_cqt)
 
     return __trim_stack(cqt_resp, n_bins)
+
+
+def __fft_filters(sr, fmin, bins_per_octave, tuning,
+                  resolution, norm, sparsity):
+    '''Generate the frequency domain constant-Q filter basis.'''
+
+    basis, lengths = filters.constant_q(sr,
+                                        fmin=fmin,
+                                        n_bins=bins_per_octave,
+                                        bins_per_octave=bins_per_octave,
+                                        tuning=tuning,
+                                        resolution=resolution,
+                                        norm=norm,
+                                        pad_fft=True,
+                                        return_lengths=True)
+
+    # FFT the filters
+    min_filter_length = np.min(lengths)
+
+    # Filters are padded up to the nearest integral power of 2
+    n_fft = basis.shape[1]
+
+    # FFT and retain only the non-negative frequencies
+    fft_basis = np.fft.fft(basis, n=n_fft, axis=1)[:, :(n_fft / 2)+1]
+
+    # normalize as in Parseval's relation, and sparsify the basis
+    fft_basis = util.sparsify_rows(fft_basis / n_fft,
+                                   quantile=sparsity)
+
+    return fft_basis, n_fft, min_filter_length
 
 
 def __trim_stack(cqt_resp, n_bins):
