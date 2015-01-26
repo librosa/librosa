@@ -164,13 +164,13 @@ def time_stretch(y, rate):
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-
     Compress to be twice as fast
 
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> y_fast = librosa.effects.time_stretch(y, 2.0)
 
     Or half the original speed
+
     >>> y_slow = librosa.effects.time_stretch(y, 0.5)
 
     '''
@@ -221,15 +221,17 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12):
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-
     Shift up by a major third (four half-steps)
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> y_third = librosa.effects.pitch_shift(y, sr, n_steps=4)
 
     Shift down by a tritone (six half-steps)
+
     >>> y_tritone = librosa.effects.pitch_shift(y, sr, n_steps=-6)
 
     Shift up by 3 quarter-tones
+
     >>> y_three_qt = librosa.effects.pitch_shift(y, sr, n_steps=3,
     ...                                          bins_per_octave=24)
     '''
