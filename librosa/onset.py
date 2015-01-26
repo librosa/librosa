@@ -70,7 +70,8 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64,
     --------
     Get onset times from a signal
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(),
+    ...                      duration=10.0)
     >>> onset_frames = librosa.onset.onset_detect(y=y, sr=sr,
     ...                                           hop_length=64)
     >>> librosa.frames_to_time(onset_frames[:20], sr=sr, hop_length=64)
@@ -84,10 +85,18 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64,
     >>> o_env = librosa.onset.onset_strength(y, sr=sr, hop_length=64)
     >>> onset_frames = librosa.onset.onset_detect(onset_envelope=o_env,
     ...                                           sr=sr, hop_length=64)
-    >>> librosa.frames_to_time(onset_frames[:20], sr=sr, hop_length=64)
-    array([ 0.052,  0.493,  1.077,  1.196,  1.454,  1.657,  1.898,  2.351,
-            2.923,  3.048,  3.268,  3.741,  4.182,  4.769,  4.873,  6.04 ,
-            6.615,  6.745,  6.96 ,  7.419])
+
+
+    >>> import matplotlib.pyplot as plt
+    >>> D = np.abs(librosa.stft(y, hop_length=64))**2
+    >>> plt.figure()
+    >>> librosa.display.specshow(librosa.logamplitude(D, ref_power=np.max),
+    ...                          x_axis='time', y_axis='log')
+    >>> plt.vlines(onset_frames, 0, D.shape[0], color='r', alpha=0.9,
+    ...            label='Onsets')
+    >>> plt.legend(frameon=True, shadow=True)
+    >>> plt.title('Power spectrogram')
+
     """
 
     # First, get the frame->beat strength profile if we don't already have one
@@ -176,14 +185,11 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
 
     Examples
     --------
-    Mean aggregation with Mel-scaled spectrogram
-
-    >>> import matplotlib.pyplot as plt
-
     First, load some audio and plot the spectrogram
 
+    >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.load(librosa.util.example_audio_file(),
-    ...                      duration=5.0)
+    ...                      duration=10.0)
     >>> D = np.abs(librosa.stft(y))**2
     >>> plt.figure()
     >>> plt.subplot(2, 1, 1)
