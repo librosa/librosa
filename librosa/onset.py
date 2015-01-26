@@ -10,6 +10,8 @@ from . import core
 from . import util
 from .feature import melspectrogram
 
+__all__ = ['onset_detect', 'onset_strength']
+
 
 @cache
 def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64,

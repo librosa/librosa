@@ -3,7 +3,6 @@
 """Spectrogram decomposition"""
 
 import numpy as np
-import scipy
 
 from scipy.ndimage import median_filter
 
@@ -12,6 +11,8 @@ import sklearn.decomposition
 from . import core
 from . import cache
 from . import util
+
+__all__ = ['decompose', 'hpss']
 
 
 def decompose(S, n_components=None, transformer=None, sort=False):

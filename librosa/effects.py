@@ -9,6 +9,10 @@ from . import cache
 from . import decompose
 from . import util
 
+__all__ = ['hpss', 'harmonic', 'percussive',
+           'time_stretch', 'pitch_shift',
+           'remix']
+
 
 @cache
 def hpss(y):
