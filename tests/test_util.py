@@ -234,6 +234,7 @@ def test_match_intervals():
     def __test_fail(n, m):
         ints1 = __make_intervals(n)
         ints2 = __make_intervals(m)
+
         librosa.util.match_intervals(ints1, ints2)
 
     for n in [0, 1, 5, 20, 500]:

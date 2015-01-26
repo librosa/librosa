@@ -579,8 +579,8 @@ def window_bandwidth(window, default=1.0):
     window : callable or string
         A window function, or the name of a window function.
         Examples:
-          * scipy.signal.hann
-          * 'boxcar'
+        - scipy.signal.hann
+        - 'boxcar'
 
     default : float >= 0
         The default value, if `window` is unknown.
