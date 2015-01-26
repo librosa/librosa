@@ -719,27 +719,6 @@ def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
                hop_length=512, tuning=None, **kwargs):
     """Compute a chromagram from a spectrogram or waveform
 
-    Examples
-    --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> librosa.feature.chromagram(y=y, sr=sr)
-    array([[ 0.548,  0.293, ...,  0.698,  0.677],
-           [ 0.984,  0.369, ...,  0.945,  0.48 ],
-           ...,
-           [ 0.424,  0.466, ...,  0.747,  0.616],
-           [ 0.568,  0.33 , ...,  0.652,  0.565]])
-
-    >>> # Use a pre-computed spectrogram with a larger frame
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> S = np.abs(librosa.stft(y, n_fft=4096))
-    >>> librosa.feature.chromagram(S=S, sr=sr)
-    array([[ 0.591,  0.336, ...,  0.821,  0.831],
-           [ 0.677,  0.46 , ...,  0.961,  0.963],
-           ...,
-           [ 0.499,  0.276, ...,  0.914,  0.881],
-           [ 0.593,  0.388, ...,  0.819,  0.764]])
-
-
     Parameters
     ----------
     y : np.ndarray [shape=(n,)] or None
@@ -782,6 +761,34 @@ def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
         Chroma filter bank construction
     librosa.util.normalize
         Vector normalization
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> librosa.feature.chromagram(y=y, sr=sr)
+    array([[ 0.548,  0.293, ...,  0.698,  0.677],
+           [ 0.984,  0.369, ...,  0.945,  0.48 ],
+    ...,
+           [ 0.424,  0.466, ...,  0.747,  0.616],
+           [ 0.568,  0.33 , ...,  0.652,  0.565]])
+
+    Use a pre-computed spectrogram with a larger frame
+
+    >>> S = np.abs(librosa.stft(y, n_fft=4096))
+    >>> chroma = librosa.feature.chromagram(S=S, sr=sr)
+    >>> chroma
+    array([[ 0.591,  0.336, ...,  0.821,  0.831],
+           [ 0.677,  0.46 , ...,  0.961,  0.963],
+    ...,
+           [ 0.499,  0.276, ...,  0.914,  0.881],
+           [ 0.593,  0.388, ...,  0.819,  0.764]])
+
+    >>> import matplotlib.pyplot as plt
+    >>> librosa.display.specshow(chroma, y_axis='chroma', x_axis='time')
+    >>> plt.colorbar()
+    >>> plt.title('Chromagram')
+    >>> plt.tight_layout()
+
     """
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length,
@@ -813,32 +820,6 @@ def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
 def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
     """Mel-frequency cepstral coefficients
 
-    Examples
-    --------
-    >>> # Generate mfccs from a time series
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> librosa.feature.mfcc(y=y, sr=sr)
-    array([[ -4.722e+02,  -4.107e+02, ...,  -5.234e+02,  -5.234e+02],
-           [  6.304e+01,   1.260e+02, ...,   2.753e-14,   2.753e-14],
-           ...,
-           [ -6.652e+00,  -7.556e+00, ...,   1.865e-14,   1.865e-14],
-           [ -3.458e+00,  -4.677e+00, ...,   3.020e-14,   3.020e-14]])
-
-    >>> # Use a pre-computed log-power Mel spectrogram
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128,
-                                           fmax=8000)
-    >>> librosa.feature.mfcc(S=librosa.logamplitude(S))
-    array([[ -4.659e+02,  -3.988e+02, ...,  -5.212e+02,  -5.212e+02],
-           [  6.631e+01,   1.305e+02, ...,  -2.842e-14,  -2.842e-14],
-           ...,
-           [ -1.608e+00,  -3.963e+00, ...,   1.421e-14,   1.421e-14],
-           [ -1.480e+00,  -4.348e+00, ...,   2.487e-14,   2.487e-14]])
-
-    >>> # Get more components
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=40)
-
     Parameters
     ----------
     y     : np.ndarray [shape=(n,)] or None
@@ -865,6 +846,43 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
     See Also
     --------
     melspectrogram
+
+    Examples
+    --------
+    Generate mfccs from a time series
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> librosa.feature.mfcc(y=y, sr=sr)
+    array([[ -4.722e+02,  -4.107e+02, ...,  -5.234e+02,  -5.234e+02],
+           [  6.304e+01,   1.260e+02, ...,   2.753e-14,   2.753e-14],
+    ...,
+           [ -6.652e+00,  -7.556e+00, ...,   1.865e-14,   1.865e-14],
+           [ -3.458e+00,  -4.677e+00, ...,   3.020e-14,   3.020e-14]])
+
+    Use a pre-computed log-power Mel spectrogram
+
+    >>> S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128,
+    ...                                    fmax=8000)
+    >>> librosa.feature.mfcc(S=librosa.logamplitude(S))
+    array([[ -4.659e+02,  -3.988e+02, ...,  -5.212e+02,  -5.212e+02],
+           [  6.631e+01,   1.305e+02, ...,  -2.842e-14,  -2.842e-14],
+    ...,
+           [ -1.608e+00,  -3.963e+00, ...,   1.421e-14,   1.421e-14],
+           [ -1.480e+00,  -4.348e+00, ...,   2.487e-14,   2.487e-14]])
+
+    Get more components
+
+    >>> mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=40)
+
+    Visualize the MFCC series
+
+    >>> import matplotlib.pyplot as plt
+    >>> librosa.display.specshow(mfccs, x_axis='time')
+    >>> plt.colorbar()
+    >>> plt.title('MFCC')
+    >>> plt.tight_layout()
+
+
     """
 
     if S is None:
@@ -877,26 +895,6 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
 def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                    **kwargs):
     """Compute a Mel-scaled power spectrogram.
-
-    Examples
-    --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> librosa.feature.melspectrogram(y=y, sr=sr)
-    array([[  1.223e-02,   2.988e-02, ...,   1.354e-08,   1.497e-09],
-           [  4.341e-02,   2.063e+00, ...,   9.532e-08,   2.233e-09],
-           ...,
-           [  2.473e-11,   1.167e-10, ...,   1.130e-15,   3.280e-17],
-           [  1.477e-13,   6.739e-13, ...,   4.292e-17,   1.718e-18]])
-
-    >>> # Using a pre-computed power spectrogram
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> D = np.abs(librosa.stft(y))**2
-    >>> S = librosa.feature.melspectrogram(S=D)
-
-    >>> # Passing through arguments to the Mel filters
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128,
-                                           fmax=8000)
 
     Parameters
     ----------
@@ -932,6 +930,37 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     librosa.core.stft
         Short-time Fourier Transform
+
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> librosa.feature.melspectrogram(y=y, sr=sr)
+    array([[  1.223e-02,   2.988e-02, ...,   1.354e-08,   1.497e-09],
+           [  4.341e-02,   2.063e+00, ...,   9.532e-08,   2.233e-09],
+    ...,
+           [  2.473e-11,   1.167e-10, ...,   1.130e-15,   3.280e-17],
+           [  1.477e-13,   6.739e-13, ...,   4.292e-17,   1.718e-18]])
+
+    Using a pre-computed power spectrogram
+
+    >>> D = np.abs(librosa.stft(y))**2
+    >>> S = librosa.feature.melspectrogram(S=D)
+
+    >>> # Passing through arguments to the Mel filters
+    >>> S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128,
+    ...                                     fmax=8000)
+
+    >>> import matplotlib.pyplot as plt
+    >>> librosa.display.specshow(librosa.logamplitude(S,
+    ...                                               ref_power=np.max),
+    ...                          y_axis='mel', fmax=8000,
+    ...                          x_axis='time')
+    >>> plt.colorbar()
+    >>> plt.title('Mel spectrogram')
+    >>> plt.tight_layout()
+
+
     """
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length,

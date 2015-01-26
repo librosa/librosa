@@ -41,7 +41,7 @@ def dct(n_filters, n_input):
     >>> dct_filters
     array([[ 0.088,  0.088, ...,  0.088,  0.088],
            [ 0.125,  0.125, ..., -0.125, -0.125],
-           ...,
+    ...,
            [ 0.124,  0.115, ..., -0.115, -0.124],
            [ 0.124,  0.113, ...,  0.113,  0.124]])
 
@@ -302,10 +302,11 @@ def logfrequency(sr, n_fft, n_bins=84, bins_per_octave=12, tuning=0.0,
 
 
     Use narrower filters for sparser response: 5% of a semitone
+
     >>> librosa.filters.logfrequency(22050, 4096, spread=0.05)
 
-
     Or wider: 50% of a semitone
+
     >>> librosa.filters.logfrequency(22050, 4096, spread=0.5)
 
     '''
