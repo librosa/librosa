@@ -555,7 +555,7 @@ def match_intervals(intervals_from, intervals_to):
     if not (intervals_from.shape[-1] == 2 and
             intervals_to.shape[-1] == 2 and
             intervals_from.ndim == 2 and
-            intervals_to.ndim != 2):
+            intervals_to.ndim == 2):
         raise ValueError('Interval lists must be shape=(n, 2)')
 
     # The overlap score of a beat with a segment is defined as
