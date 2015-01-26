@@ -110,7 +110,7 @@ def valid_audio(y, mono=True):
     ------
     ValueError
         If `y` fails to meet the following criteria:
-            - `typebryce(y)` is `np.ndarray`
+            - `type(y)` is `np.ndarray`
             - `mono == True` and `y.ndim` is not 1
             - `mono == False` and `y.ndim` is not 1 or 2
             - `np.isfinite(y).all()` is not True
