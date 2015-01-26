@@ -517,37 +517,6 @@ def phase_vocoder(D, rate, hop_length=None):
 def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     """Log-scale the amplitude of a spectrogram.
 
-    Examples
-    --------
-    >>> # Get a power spectrogram from a waveform y
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> S = np.abs(librosa.stft(y)) ** 2
-    >>> librosa.logamplitude(S)
-    array([[-31.988, -22.714, ..., -33.325, -33.325],
-           [-24.587, -25.686, ..., -33.325, -33.325],
-           ...,
-           [-33.325, -33.325, ..., -33.325, -33.325],
-           [-33.325, -33.325, ..., -33.325, -33.325]], dtype=float32)
-
-    >>> # Compute dB relative to peak power
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> S = np.abs(librosa.stft(y)) ** 2
-    >>> librosa.logamplitude(S, ref_power=np.max)
-    array([[-78.663, -69.389, ..., -80.   , -80.   ],
-           [-71.262, -72.361, ..., -80.   , -80.   ],
-           ...,
-           [-80.   , -80.   , ..., -80.   , -80.   ],
-           [-80.   , -80.   , ..., -80.   , -80.   ]], dtype=float32)
-
-    >>> # Or compare to median power
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> S = np.abs(librosa.stft(y)) ** 2
-    >>> librosa.logamplitude(S, ref_power=np.median)
-    array([[  3.279,  12.552, ...,   1.942,   1.942],
-           [ 10.68 ,   9.581, ...,   1.942,   1.942],
-           ...,
-           [  1.942,   1.942, ...,   1.942,   1.942],
-           [  1.942,   1.942, ...,   1.942,   1.942]], dtype=float32)
 
     Parameters
     ----------
@@ -576,6 +545,51 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     See Also
     --------
     perceptual_weighting
+
+    Examples
+    --------
+    Get a power spectrogram from a waveform `y`
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> S = np.abs(librosa.stft(y)) ** 2
+    >>> librosa.logamplitude(S)
+    array([[-31.988, -22.714, ..., -33.325, -33.325],
+           [-24.587, -25.686, ..., -33.325, -33.325],
+           ...,
+           [-33.325, -33.325, ..., -33.325, -33.325],
+           [-33.325, -33.325, ..., -33.325, -33.325]], dtype=float32)
+
+    Compute dB relative to peak power
+
+    >>> librosa.logamplitude(S, ref_power=np.max)
+    array([[-78.663, -69.389, ..., -80.   , -80.   ],
+           [-71.262, -72.361, ..., -80.   , -80.   ],
+           ...,
+           [-80.   , -80.   , ..., -80.   , -80.   ],
+           [-80.   , -80.   , ..., -80.   , -80.   ]], dtype=float32)
+
+    Or compare to median power
+
+    >>> librosa.logamplitude(S, ref_power=np.median)
+    array([[  3.279,  12.552, ...,   1.942,   1.942],
+           [ 10.68 ,   9.581, ...,   1.942,   1.942],
+           ...,
+           [  1.942,   1.942, ...,   1.942,   1.942],
+           [  1.942,   1.942, ...,   1.942,   1.942]], dtype=float32)
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> plt.subplot(2, 1, 1)
+    >>> librosa.display.specshow(S, y_axis='log', x_axis='time')
+    >>> plt.colorbar()
+    >>> plt.title('Power spectrogram: $|S|^2$')
+    >>> plt.subplot(2, 1, 2)
+    >>> librosa.display.specshow(librosa.logamplitude(S, ref_power=np.max),
+    ...                                               y_axis='log',
+    ...                                               x_axis='time')
+    >>> plt.colorbar()
+    >>> plt.title('Log-Power spectrogram: $\log |S|^2$')
+    >>> plt.tight_layout()
     """
 
     magnitude = np.abs(S)
