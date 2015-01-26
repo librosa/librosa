@@ -1,6 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Display module for interacting with matplotlib"""
+"""Display module for interacting with matplotlib
+
+Display
+=======
+.. autosummary::
+    :toctree: generated/
+
+    specshow
+    time_ticks
+    cmap
+
+"""
 
 import numpy as np
 import matplotlib.image as img
