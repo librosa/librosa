@@ -12,6 +12,12 @@ import scipy.signal
 from .. import cache
 from .. import util
 
+# Resampling bandwidths as percentage of Nyquist
+# http://www.mega-nerd.com/SRC/api_misc.html#Converters
+BW_BEST = 0.97
+BW_MEDIUM = 0.9
+BW_FASTEST = 0.8
+
 # Do we have scikits.samplerate?
 try:
     # Pylint won't handle dynamic imports, so we suppress this warning
