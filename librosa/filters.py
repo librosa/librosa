@@ -1,6 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Commonly used filter banks: DCT, Chroma, Mel, CQT"""
+"""Functions to construct and manipulate filterbanks
+
+Filter banks
+============
+.. autosummary::
+    :toctree: generated/
+
+    dct
+    mel
+    logfrequency
+    constant_q
+
+Miscellanous
+============
+.. autosummary::
+    :toc:tree: generated/
+
+    cq_to_chroma
+    window_bandwidth
+"""
 
 import numpy as np
 import scipy

@@ -1,6 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Output routines for audio and analysis"""
+"""Output routines for audio and analysis
+
+Text output
+===========
+.. autosummary::
+    :toctree: generated/
+
+    annotation
+    frames_csv
+    times_csv
+
+Audio output
+============
+.. autosummary::
+    :toctree: generated/
+
+    write_wav
+"""
 
 import csv
 

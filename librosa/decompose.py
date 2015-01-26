@@ -1,6 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Spectrogram decomposition"""
+"""Spectrogram decomposition
+==============
+.. autosummary::
+    :toctree: generated/
+
+    decompose
+    hpss
+"""
 
 import numpy as np
 

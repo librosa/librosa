@@ -1,6 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Temporal segmentation utilities"""
+"""Temporal segmentation utilities
+
+Recurrence and self-similarity
+==============================
+.. autosummary::
+    :toctree: generated/
+
+    recurrence_matrix
+    structure_feature
+    timelag_filter
+
+Temporal clustering
+===================
+.. autosummary::
+    :toctree: generated/
+
+    agglomerative
+    subsegment
+"""
 
 from decorator import decorator
 

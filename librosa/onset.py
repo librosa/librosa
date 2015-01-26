@@ -1,6 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Onset detection"""
+"""Onset strength and event detection
+
+Onsets
+======
+.. autosummary::
+    :toctree: generated/
+
+    onset_detect
+    onset_strength
+"""
 
 import numpy as np
 import scipy
