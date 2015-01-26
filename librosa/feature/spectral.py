@@ -24,24 +24,6 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     distribution over frequency bins, from which the mean (centroid) is
     extracted per frame.
 
-    Examples
-    --------
-    >>> # From time-series input
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> librosa.feature.spectral_centroid(y=y, sr=sr)
-    array([[  545.929,   400.609, ...,  1621.184,  1591.604]])
-
-    >>> # From spectrogram input
-    >>> S, phase = librosa.magphase(librosa.stft(y=y))
-    >>> librosa.feature.spectral_centroid(S=S)
-    array([[  545.929,   400.609, ...,  1621.184,  1591.604]])
-
-    >>> # Using variable bin center frequencies
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> if_gram, D = librosa.ifgram(y)
-    >>> librosa.feature.spectral_centroid(S=np.abs(D), freq=if_gram)
-    array([[  545.069,   400.764, ...,  1621.139,  1590.362]])
-
     Parameters
     ----------
     y : np.ndarray [shape=(n,)] or None
@@ -78,6 +60,44 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     librosa.core.ifgram
         Instantaneous-frequency spectrogram
+
+    Examples
+    --------
+    From time-series input:
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> cent = librosa.feature.spectral_centroid(y=y, sr=sr)
+    >>> cent
+    array([[  545.929,   400.609, ...,  1621.184,  1591.604]])
+
+    From spectrogram input:
+
+    >>> S, phase = librosa.magphase(librosa.stft(y=y))
+    >>> librosa.feature.spectral_centroid(S=S)
+    array([[  545.929,   400.609, ...,  1621.184,  1591.604]])
+
+    Using variable bin center frequencies:
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> if_gram, D = librosa.ifgram(y)
+    >>> librosa.feature.spectral_centroid(S=np.abs(D), freq=if_gram)
+    array([[  545.069,   400.764, ...,  1621.139,  1590.362]])
+
+    Plot the result
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> plt.subplot(2, 1, 1)
+    >>> plt.semilogy(cent.T, label='Spectral centroid')
+    >>> plt.ylabel('Hz')
+    >>> plt.xticks([])
+    >>> plt.xlim([0, cent.shape[-1]])
+    >>> plt.legend()
+    >>> plt.subplot(2, 1, 2)
+    >>> librosa.display.specshow(librosa.logamplitude(S**2, ref_power=np.max),
+    ...                          y_axis='log', x_axis='time')
+    >>> plt.title('log Power spectrogram')
+    >>> plt.tight_layout()
     '''
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
@@ -107,24 +127,6 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     '''Compute p'th-order spectral bandwidth:
 
         (sum_k S[k] * (freq[k] - centroid)**p)**(1/p)
-
-    Examples
-    --------
-    >>> # From time-series input
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> librosa.feature.spectral_bandwidth(y=y, sr=sr)
-    array([[ 1201.067,   920.588, ...,  2218.177,  2211.325]])
-
-    >>> # From spectrogram input
-    >>> S, phase = librosa.magphase(librosa.stft(y=y))
-    >>> librosa.feature.spectral_bandwidth(S=S)
-    array([[ 1201.067,   920.588, ...,  2218.177,  2211.325]])
-
-    >>> # Using variable bin center frequencies
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> if_gram, D = librosa.ifgram(y)
-    >>> librosa.feature.spectral_bandwidth(S=np.abs(D), freq=if_gram)
-    array([[ 1202.514,   920.453, ...,  2218.172,  2213.157]])
 
     Parameters
     ----------
@@ -159,10 +161,50 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     p : float > 0
         Power to raise deviation from spectral centroid.
 
+
     Returns
     -------
     bandwidth : np.ndarray [shape=(1, t)]
         frequency bandwidth for each frame
+
+
+    Examples
+    --------
+    From time-series input
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> spec_bw = librosa.feature.spectral_bandwidth(y=y, sr=sr)
+    >>> spec_bw
+    array([[ 1201.067,   920.588, ...,  2218.177,  2211.325]])
+
+    From spectrogram input
+
+    >>> S, phase = librosa.magphase(librosa.stft(y=y))
+    >>> librosa.feature.spectral_bandwidth(S=S)
+    array([[ 1201.067,   920.588, ...,  2218.177,  2211.325]])
+
+    Using variable bin center frequencies
+
+    >>> if_gram, D = librosa.ifgram(y)
+    >>> librosa.feature.spectral_bandwidth(S=np.abs(D), freq=if_gram)
+    array([[ 1202.514,   920.453, ...,  2218.172,  2213.157]])
+
+    Plot the result
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> plt.subplot(2, 1, 1)
+    >>> plt.semilogy(spec_bw.T, label='Spectral bandwidth')
+    >>> plt.ylabel('Hz')
+    >>> plt.xticks([])
+    >>> plt.xlim([0, spec_bw.shape[-1]])
+    >>> plt.legend()
+    >>> plt.subplot(2, 1, 2)
+    >>> librosa.display.specshow(librosa.logamplitude(S**2, ref_power=np.max),
+    ...                          y_axis='log', x_axis='time')
+    >>> plt.title('log Power spectrogram')
+    >>> plt.tight_layout()
+
     '''
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
@@ -282,18 +324,6 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                      freq=None, roll_percent=0.85):
     '''Compute roll-off frequency
 
-    Examples
-    --------
-    >>> # From time-series input
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> librosa.feature.spectral_rolloff(y=y, sr=sr)
-    array([[  936.694,   635.229, ...,  3983.643,  3886.743]])
-
-    >>> # With a higher roll percentage:
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> librosa.feature.spectral_rolloff(y=y, sr=sr, roll_percent=0.95)
-    array([[ 2637.817,  1496.558, ...,  6955.225,  6933.691]])
-
     Parameters
     ----------
     y : np.ndarray [shape=(n,)] or None
@@ -323,6 +353,42 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     -------
     rolloff : np.ndarray [shape=(1, t)]
         roll-off frequency for each frame
+
+
+    Examples
+    --------
+    From time-series input
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> rolloff = librosa.feature.spectral_rolloff(y=y, sr=sr)
+    >>> rolloff
+    array([[  936.694,   635.229, ...,  3983.643,  3886.743]])
+
+    From spectrogram input
+
+    >>> S, phase = librosa.magphase(librosa.stft(y))
+    >>> librosa.feature.spectral_rolloff(S=S, sr=sr)
+    array([[  936.694,   635.229, ...,  3983.643,  3886.743]])
+
+    >>> # With a higher roll percentage:
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> librosa.feature.spectral_rolloff(y=y, sr=sr, roll_percent=0.95)
+    array([[ 2637.817,  1496.558, ...,  6955.225,  6933.691]])
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> plt.subplot(2, 1, 1)
+    >>> plt.semilogy(rolloff.T, label='Roll-off frequency')
+    >>> plt.ylabel('Hz')
+    >>> plt.xticks([])
+    >>> plt.xlim([0, rolloff.shape[-1]])
+    >>> plt.legend()
+    >>> plt.subplot(2, 1, 2)
+    >>> librosa.display.specshow(librosa.logamplitude(S**2, ref_power=np.max),
+    ...                          y_axis='log', x_axis='time')
+    >>> plt.title('log Power spectrogram')
+    >>> plt.tight_layout()
+
     '''
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
@@ -355,12 +421,6 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 def rms(y=None, S=None, n_fft=2048, hop_length=512):
     '''Compute root-mean-square (RMS) energy for each frame.
 
-    Examples
-    --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> librosa.feature.rms(y=y)
-    array([[  1.204e-01,   6.263e-01, ...,   1.413e-04,   2.191e-05]],
-          dtype=float32)
 
     Parameters
     ----------
@@ -380,6 +440,33 @@ def rms(y=None, S=None, n_fft=2048, hop_length=512):
     -------
     rms : np.ndarray [shape=(1, t)]
         RMS value for each frame
+
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> librosa.feature.rms(y=y)
+    array([[  1.204e-01,   6.263e-01, ...,   1.413e-04,   2.191e-05]],
+          dtype=float32)
+
+    Or from spectrogram input
+
+    >>> S, phase = librosa.magphase(librosa.stft(y))
+    >>> rms = librosa.feature.rms(S=S)
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> plt.subplot(2, 1, 1)
+    >>> plt.semilogy(rms.T, label='RMS Energy')
+    >>> plt.xticks([])
+    >>> plt.xlim([0, rms.shape[-1]])
+    >>> plt.legend(loc='best')
+    >>> plt.subplot(2, 1, 2)
+    >>> librosa.display.specshow(librosa.logamplitude(S**2, ref_power=np.max),
+    ...                          y_axis='log', x_axis='time')
+    >>> plt.title('log Power spectrogram')
+    >>> plt.tight_layout()
+
     '''
 
     S, _ = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
@@ -392,20 +479,6 @@ def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                   order=1, freq=None):
     '''Get coefficients of fitting an nth-order polynomial to the columns
     of a spectrogram.
-
-
-    Examples
-    --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> # Line features
-    >>> librosa.feature.poly_features(y=y, sr=sr)
-    array([[ -9.454e-06,  -4.322e-05, ...,  -1.640e-08,  -2.626e-09],
-           [  7.144e-02,   3.241e-01, ...,   1.332e-04,   2.127e-05]])
-    >>> # Quadratic features
-    >>> librosa.feature.poly_features(y=y, sr=sr, order=2)
-    array([[  3.742e-09,   1.753e-08, ...,   5.145e-12,   8.343e-13],
-           [ -5.071e-05,  -2.364e-04, ...,  -7.312e-08,  -1.182e-08],
-           [  1.472e-01,   6.788e-01, ...,   2.373e-04,   3.816e-05]])
 
     Parameters
     ----------
@@ -438,6 +511,46 @@ def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     -------
     coefficients : np.ndarray [shape=(order+1, t)]
         polynomial coefficients for each frame
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> S = np.abs(librosa.stft(y))
+
+    Line features
+
+    >>> line = librosa.feature.poly_features(S=S, sr=sr)
+    >>> line
+    array([[ -9.454e-06,  -4.322e-05, ...,  -1.640e-08,  -2.626e-09],
+           [  7.144e-02,   3.241e-01, ...,   1.332e-04,   2.127e-05]])
+
+    Quadratic features
+
+    >>> quad = librosa.feature.poly_features(S=S, order=2)
+    >>> quad
+    array([[  3.742e-09,   1.753e-08, ...,   5.145e-12,   8.343e-13],
+           [ -5.071e-05,  -2.364e-04, ...,  -7.312e-08,  -1.182e-08],
+           [  1.472e-01,   6.788e-01, ...,   2.373e-04,   3.816e-05]])
+
+    Plot the results for comparison
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> plt.subplot(3, 1, 1)
+    >>> librosa.display.specshow(line)
+    >>> plt.colorbar()
+    >>> plt.title('Line coefficients')
+    >>> plt.subplot(3, 1, 2)
+    >>> librosa.display.specshow(quad)
+    >>> plt.colorbar()
+    >>> plt.title('Quadratic coefficients')
+    >>> plt.subplot(3, 1, 3)
+    >>> librosa.display.specshow(librosa.logamplitude(S**2, ref_power=np.max),
+    ...                          y_axis='log', x_axis='time')
+    >>> plt.title('log Power spectrogram')
+    >>> plt.colorbar()
+    >>> plt.tight_layout()
+
     '''
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
@@ -522,29 +635,9 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True,
 # -- Chroma --#
 @cache
 def logfsgram(y=None, sr=22050, S=None, n_fft=4096, hop_length=512, **kwargs):
-    '''Compute a log-frequency spectrogram (piano roll) using a fixed-window STFT.
+    '''Compute a log-frequency spectrogram (pseudo-CQT) using a
+    fixed-window STFT.
 
-    Examples
-    --------
-    >>> # From time-series input
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> librosa.feature.logfsgram(y=y, sr=sr)
-    array([[  9.255e-01,   1.649e+00, ...,   9.232e-07,   8.588e-07],
-           [  1.152e-22,   2.052e-22, ...,   1.149e-28,   1.069e-28],
-           ...,
-           [  1.919e-04,   2.465e-04, ...,   1.740e-08,   1.128e-08],
-           [  4.007e-04,   4.216e-04, ...,   4.577e-09,   1.997e-09]])
-
-    >>> # Convert to (unnormalized) chroma
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> S_log = librosa.feature.logfsgram(y=y, sr=sr)
-    >>> chroma_map = librosa.filters.cq_to_chroma(S_log.shape[0])
-    >>> chroma_map.dot(S_log)
-    array([[  2.524e+02,   2.484e+02, ...,   6.902e-06,   7.132e-06],
-           [  3.245e+00,   3.303e+02, ...,   9.670e-06,   4.191e-06],
-           ...,
-           [  4.675e+01,   6.706e+01, ...,   5.044e-06,   3.260e-06],
-           [  2.253e+02,   2.426e+02, ...,   8.244e-06,   6.981e-06]])
 
     Parameters
     ----------
@@ -578,6 +671,32 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096, hop_length=512, **kwargs):
     -------
     P : np.ndarray [shape=(n_pitches, t)]
         `P[f, t]` contains the energy at pitch bin `f`, frame `t`.
+
+
+    Examples
+    --------
+    From time-series input
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> pseudo_cqt = librosa.feature.logfsgram(y=y, sr=sr)
+    >>> pseudo_cqt
+    array([[  9.255e-01,   1.649e+00, ...,   9.232e-07,   8.588e-07],
+           [  1.152e-22,   2.052e-22, ...,   1.149e-28,   1.069e-28],
+    ...,
+           [  1.919e-04,   2.465e-04, ...,   1.740e-08,   1.128e-08],
+           [  4.007e-04,   4.216e-04, ...,   4.577e-09,   1.997e-09]])
+
+    Plot the pseudo CQT
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> librosa.display.specshow(librosa.logamplitude(pseudo_cqt,
+    ...                                               ref_power=np.max),
+    ...                          y_axis='cqt_hz', x_axis='time')
+    >>> plt.title('Log-frequency power spectrogram')
+    >>> plt.colorbar()
+    >>> plt.tight_layout()
+
     '''
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length,

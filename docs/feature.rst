@@ -7,7 +7,7 @@
     :members:
     :imported-members:
     :undoc-members:
-    :exclude-members: stft, fft_frequencies, logamplitude, zero_crossings, ifgram, hz_to_octs
+    :exclude-members: stft, fft_frequencies, logamplitude, zero_crossings, ifgram, hz_to_octs, estimate_tuning
     :show-inheritance:
     :member-order: bysource
 
