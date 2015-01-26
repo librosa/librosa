@@ -334,7 +334,7 @@ def logfrequency(sr, n_fft, n_bins=84, bins_per_octave=12, tuning=0.0,
                               - np.log2(sigma) - log_freqs)
 
     # Normalize the filters
-    basis = util.normalize(basis, norm=2, axis=1)
+    basis = util.normalize(basis, norm=1, axis=1)
 
     return basis
 
