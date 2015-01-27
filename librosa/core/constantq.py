@@ -13,7 +13,7 @@ from .. import filters
 from .. import util
 from ..feature.utils import sync
 
-__all__ = ['cqt']
+__all__ = ['cqt', 'hybrid_cqt', 'pseudo_cqt']
 
 
 @cache
@@ -233,15 +233,9 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                norm=2, sparsity=0.01):
     '''Compute the hybrid constant-Q transform of an audio signal.
 
-    Here, the hybrid CQT uses the pseudo CQT for higher frequencies and
-    the full CQT for lower frequencies.
-
-    This implementation is based on the recursive sub-sampling method
-    described by [1]_.
-
-    .. [1] Schoerkhuber, Christian, and Anssi Klapuri.
-        "Constant-Q transform toolbox for music processing."
-        7th Sound and Music Computing Conference, Barcelona, Spain. 2010.
+    Here, the hybrid CQT uses the pseudo CQT for higher frequencies where
+    the hop_length is longer than half the filter length and the full CQT
+    for lower frequencies.
 
     Parameters
     ----------
@@ -289,7 +283,6 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     See Also
     --------
-    librosa.core.resample
     librosa.util.normalize
     '''
 
@@ -367,8 +360,10 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                norm=2, sparsity=0.01):
     '''Compute the pseudo constant-Q transform of an audio signal.
 
-    This uses an fft size that is the smallest power of 2 that is greater than
-    or equal to the longest CQT filter.
+    This uses a single fft size that is the smallest power of 2 that is greater
+    than or equal to the max of:
+        1. The longest CQT filter
+        2. 2x the hop_length
 
     Parameters
     ----------
@@ -407,17 +402,13 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     Returns
     -------
     CQT : np.ndarray [shape=(n_bins, t), dtype=np.float]
-        Constant-Q energy for each frequency at each time.
+        Pseudo Constant-Q energy for each frequency at each time.
 
     Raises
     ------
     ValueError
         If `hop_length < 2**(n_bins / bins_per_octave)`
 
-    See Also
-    --------
-    librosa.core.resample
-    librosa.feature.sync
     '''
 
     if fmin is None:
