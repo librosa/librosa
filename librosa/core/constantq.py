@@ -13,7 +13,7 @@ from .. import filters
 from .. import util
 from ..feature.utils import sync
 
-__all__ = ['cqt']
+__all__ = ['cqt', 'hybrid_cqt', 'pseudo_cqt']
 
 
 @cache
@@ -170,12 +170,13 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     if res_type != 'sinc_fastest' and audio._HAS_SAMPLERATE:
 
         # Do two octaves before resampling to allow for usage of sinc_fastest
-        fft_basis, n_fft, min_filter_length = __fft_filters(sr, fmin_t,
-                                                            bins_per_octave,
-                                                            tuning,
-                                                            resolution,
-                                                            norm,
-                                                            sparsity)
+        fft_basis, n_fft, filter_lengths = __fft_filters(sr, fmin_t,
+                                                         bins_per_octave,
+                                                         tuning,
+                                                         resolution,
+                                                         norm,
+                                                         sparsity)
+        min_filter_length = np.min(filter_lengths)
 
         # Compute a dynamic hop based on n_fft
         my_cqt = __variable_hop_response(y, n_fft,
@@ -197,12 +198,14 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         res_type = 'sinc_fastest'
 
     # Now do the recursive bit
-    fft_basis, n_fft, min_filter_length = __fft_filters(sr, fmin_t,
-                                                        bins_per_octave,
-                                                        tuning,
-                                                        resolution,
-                                                        norm,
-                                                        sparsity)
+    fft_basis, n_fft, filter_lengths = __fft_filters(sr, fmin_t,
+                                                     bins_per_octave,
+                                                     tuning,
+                                                     resolution,
+                                                     norm,
+                                                     sparsity)
+
+    min_filter_length = np.min(filter_lengths)
 
     my_y, my_sr, my_hop = y, sr, hop_length
 
@@ -228,8 +231,219 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     return __trim_stack(cqt_resp, n_bins)
 
 
+@cache
+def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
+               bins_per_octave=12, tuning=None, resolution=2,
+               norm=1, sparsity=0.01):
+    '''Compute the hybrid constant-Q transform of an audio signal.
+
+    Here, the hybrid CQT uses the pseudo CQT for higher frequencies where
+    the hop_length is longer than half the filter length and the full CQT
+    for lower frequencies.
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(n,)]
+        audio time series
+
+    sr : int > 0 [scalar]
+        sampling rate of `y`
+
+    hop_length : int > 0 [scalar]
+        number of samples between successive CQT columns.
+
+    fmin : float > 0 [scalar]
+        Minimum frequency. Defaults to C2 ~= 32.70 Hz
+
+    n_bins : int > 0 [scalar]
+        Number of frequency bins, starting at `fmin`
+
+    bins_per_octave : int > 0 [scalar]
+        Number of bins per octave
+
+    tuning : None or float in `[-0.5, 0.5)`
+        Tuning offset in fractions of a bin (cents).
+
+        If `None`, tuning will be automatically estimated.
+
+    resolution : float > 0
+        Filter resolution factor. Larger values use longer windows.
+
+    sparsity : float in [0, 1)
+        Sparsify the CQT basis by discarding up to `sparsity`
+        fraction of the energy in each basis.
+
+        Set `sparsity=0` to disable sparsification.
+
+    Returns
+    -------
+    CQT : np.ndarray [shape=(n_bins, t), dtype=np.float]
+        Constant-Q energy for each frequency at each time.
+
+    Raises
+    ------
+    ValueError
+        If `hop_length < 2**(n_bins / bins_per_octave)`
+
+    See Also
+    --------
+    cqt
+    pseudo_cqt
+    '''
+
+    # How many octaves are we dealing with?
+    n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
+
+    # Make sure our hop is long enough to support the bottom octave
+    if hop_length < 2**n_octaves:
+        raise ValueError('Insufficient hop_length {:d} '
+                         'for {:d} octaves'.format(hop_length, n_octaves))
+
+    if fmin is None:
+        # C2 by default
+        fmin = note_to_hz('C2')
+
+    if tuning is None:
+        tuning = estimate_tuning(y=y, sr=sr)
+
+    # Get all CQT frequencies
+    freqs = cqt_frequencies(n_bins, fmin,
+                            bins_per_octave=bins_per_octave,
+                            tuning=tuning)
+
+    # Compute the length of each constant-Q basis function
+    lengths = filters.constant_q_lengths(sr,
+                                         fmin=fmin,
+                                         n_bins=n_bins,
+                                         bins_per_octave=bins_per_octave,
+                                         tuning=tuning,
+                                         resolution=resolution)
+
+    # Determine which filters to use with Pseudo CQT
+    pseudo_filters = lengths < 2*hop_length
+    n_bins_pseudo = np.sum(pseudo_filters)
+
+    cqt_resp = []
+
+    if n_bins_pseudo > 0:
+        fmin_pseudo = np.min(freqs[pseudo_filters])
+        my_pseudo_cqt = pseudo_cqt(y, sr,
+                                   hop_length=hop_length,
+                                   fmin=fmin_pseudo,
+                                   n_bins=n_bins_pseudo,
+                                   bins_per_octave=bins_per_octave,
+                                   tuning=tuning,
+                                   resolution=resolution,
+                                   norm=norm,
+                                   sparsity=sparsity)
+        cqt_resp.append(my_pseudo_cqt)
+
+    n_bins_full = np.sum(~pseudo_filters)
+
+    if n_bins_full > 0:
+
+        fmin_full = np.min(freqs[~pseudo_filters])
+
+        my_cqt = cqt(y, sr,
+                     hop_length=hop_length,
+                     fmin=fmin_full,
+                     n_bins=n_bins_full,
+                     bins_per_octave=bins_per_octave,
+                     tuning=tuning,
+                     resolution=resolution,
+                     norm=norm,
+                     sparsity=sparsity)
+
+        cqt_resp.append(my_cqt)
+
+    return __trim_stack(cqt_resp, n_bins)
+
+
+@cache
+def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
+               bins_per_octave=12, tuning=None, resolution=2,
+               norm=1, sparsity=0.01):
+    '''Compute the pseudo constant-Q transform of an audio signal.
+
+    This uses a single fft size that is the smallest power of 2 that is greater
+    than or equal to the max of:
+        1. The longest CQT filter
+        2. 2x the hop_length
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(n,)]
+        audio time series
+
+    sr : int > 0 [scalar]
+        sampling rate of `y`
+
+    hop_length : int > 0 [scalar]
+        number of samples between successive CQT columns.
+
+    fmin : float > 0 [scalar]
+        Minimum frequency. Defaults to C2 ~= 32.70 Hz
+
+    n_bins : int > 0 [scalar]
+        Number of frequency bins, starting at `fmin`
+
+    bins_per_octave : int > 0 [scalar]
+        Number of bins per octave
+
+    tuning : None or float in `[-0.5, 0.5)`
+        Tuning offset in fractions of a bin (cents).
+
+        If `None`, tuning will be automatically estimated.
+
+    resolution : float > 0
+        Filter resolution factor. Larger values use longer windows.
+
+    sparsity : float in [0, 1)
+        Sparsify the CQT basis by discarding up to `sparsity`
+        fraction of the energy in each basis.
+
+        Set `sparsity=0` to disable sparsification.
+
+    Returns
+    -------
+    CQT : np.ndarray [shape=(n_bins, t), dtype=np.float]
+        Pseudo Constant-Q energy for each frequency at each time.
+
+    Raises
+    ------
+    ValueError
+        If `hop_length < 2**(n_bins / bins_per_octave)`
+
+    '''
+
+    if fmin is None:
+        # C2 by default
+        fmin = note_to_hz('C2')
+
+    if tuning is None:
+        tuning = estimate_tuning(y=y, sr=sr)
+
+    fft_basis, n_fft, _ = __fft_filters(sr,
+                                        fmin,
+                                        n_bins,
+                                        tuning,
+                                        resolution,
+                                        norm,
+                                        sparsity,
+                                        hop_length=hop_length)
+
+    # Remove phase for Pseudo CQT
+    fft_basis = np.abs(fft_basis)
+
+    # Compute the magnitude STFT with Hann window
+    D = np.abs(stft(y, n_fft=n_fft, hop_length=hop_length))
+
+    # Project onto the pseudo-cqt basis
+    return fft_basis.dot(D)
+
+
 def __fft_filters(sr, fmin, bins_per_octave, tuning,
-                  resolution, norm, sparsity):
+                  resolution, norm, sparsity, hop_length=None):
     '''Generate the frequency domain constant-Q filter basis.'''
 
     basis, lengths = filters.constant_q(sr,
@@ -242,20 +456,22 @@ def __fft_filters(sr, fmin, bins_per_octave, tuning,
                                         pad_fft=True,
                                         return_lengths=True)
 
-    # FFT the filters
-    min_filter_length = np.min(lengths)
-
     # Filters are padded up to the nearest integral power of 2
     n_fft = basis.shape[1]
+
+    if hop_length is not None and n_fft < 2 * hop_length:
+        n_fft = int(2.0 ** (np.ceil(np.log2(2 * hop_length))))
+
+    # normalize by inverse length to compensate for phase invariance
+    basis *= lengths.reshape((-1, 1)) / n_fft
 
     # FFT and retain only the non-negative frequencies
     fft_basis = np.fft.fft(basis, n=n_fft, axis=1)[:, :(n_fft / 2)+1]
 
     # normalize as in Parseval's relation, and sparsify the basis
-    fft_basis = util.sparsify_rows(fft_basis / n_fft,
-                                   quantile=sparsity)
+    fft_basis = util.sparsify_rows(fft_basis / n_fft, quantile=sparsity)
 
-    return fft_basis, n_fft, min_filter_length
+    return fft_basis, n_fft, lengths
 
 
 def __trim_stack(cqt_resp, n_bins):
