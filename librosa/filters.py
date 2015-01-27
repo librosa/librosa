@@ -514,13 +514,13 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     >>> notes = librosa.midi_to_note(np.arange(24, 24 + len(basis)))
     >>> for i, (f, n) in enumerate(zip(basis, notes)):
     ...     f_scale = librosa.util.normalize(f) / 2
-    ...     plt.plot(i + f_scale.real, label='{:s} (real)'.format(n))
-    ...     plt.plot(i + f_scale.imag, linestyle=':',
-    ...              label='{:s} (imag)'.format(n))
+    ...     plt.plot(i + f_scale.real)
+    ...     plt.plot(i + f_scale.imag, linestyle=':')
     >>> plt.axis('tight')
+    >>> plt.yticks(range(len(notes)), notes)
     >>> plt.ylabel('CQ filters')
     >>> plt.xlabel('Time (samples)')
-    >>> plt.legend(loc='best', frameon=True, framealpha=0.8, ncol=2)
+    >>> plt.legend(['Real', 'Imaginary'], frameon=True, framealpha=0.8)
     >>> plt.tight_layout()
     '''
 

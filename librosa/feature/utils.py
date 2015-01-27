@@ -44,19 +44,36 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
     Compute MFCC deltas, delta-deltas
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> mfccs = librosa.feature.mfcc(y=y, sr=sr)
-    >>> librosa.feature.delta(mfccs)
+    >>> mfcc = librosa.feature.mfcc(y=y, sr=sr)
+    >>> mfcc_delta = librosa.feature.delta(mfcc)
+    >>> mfcc_delta
     array([[ -4.250e+03,  -3.060e+03, ...,  -4.547e-13,  -4.547e-13],
            [  5.673e+02,   6.931e+02, ...,   0.000e+00,   0.000e+00],
     ...,
            [ -5.986e+01,  -5.018e+01, ...,   0.000e+00,   0.000e+00],
            [ -3.112e+01,  -2.908e+01, ...,   0.000e+00,   0.000e+00]])
-    >>> librosa.feature.delta(mfccs, order=2)
+    >>> mfcc_delta2 = librosa.feature.delta(mfcc, order=2)
+    >>> mfcc_delta2
     array([[ -4.297e+04,  -3.207e+04, ...,  -8.185e-11,  -5.275e-11],
            [  5.736e+03,   5.420e+03, ...,  -7.390e-12,  -4.547e-12],
     ...,
            [ -6.053e+02,  -4.801e+02, ...,   0.000e+00,   0.000e+00],
            [ -3.146e+02,  -2.615e+02, ...,  -4.619e-13,  -2.842e-13]])
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.subplot(3, 1, 1)
+    >>> librosa.display.specshow(mfcc)
+    >>> plt.title('MFCC')
+    >>> plt.colorbar()
+    >>> plt.subplot(3, 1, 2)
+    >>> librosa.display.specshow(mfcc_delta)
+    >>> plt.title('MFCC-$\Delta$')
+    >>> plt.colorbar()
+    >>> plt.subplot(3, 1, 3)
+    >>> librosa.display.specshow(mfcc_delta2, x_axis='time')
+    >>> plt.title('MFCC-$\Delta^2$')
+    >>> plt.colorbar()
+    >>> plt.tight_layout()
 
     '''
 
@@ -160,8 +177,9 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
     Plot the result
 
     >>> import matplotlib.pyplot as plt
-    >>> librosa.display.specshow(chroma_lag)
+    >>> librosa.display.specshow(chroma_lag, y_axis='chroma')
     >>> librosa.display.time_ticks(librosa.frames_to_time(beats, sr=sr))
+    >>> plt.yticks([0, 12, 24], ['Lag=0', 'Lag=1', 'Lag=2'])
     >>> plt.title('Time-lagged chroma')
     >>> plt.colorbar()
     >>> plt.tight_layout()
@@ -229,25 +247,49 @@ def sync(data, frames, aggregate=None, pad=True):
 
     Examples
     --------
-    Beat-synchronous MFCCs
+    Beat-synchronous CQT spectra
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
-    >>> mfcc = librosa.feature.mfcc(y=y, sr=sr)
+    >>> cqt = librosa.cqt(y=y, sr=sr)
 
     By default, use mean aggregation
 
-    >>> mfcc_avg = librosa.feature.sync(mfcc, beats)
+    >>> cqt_avg = librosa.feature.sync(cqt, beats)
 
     Use median-aggregation instead of mean
 
-    >>> mfcc_med = librosa.feature.sync(mfcc, beats,
-    ...                                 aggregate=np.median)
+    >>> cqt_med = librosa.feature.sync(cqt, beats,
+    ...                                aggregate=np.median)
 
-    Or max aggregation
+    Or sub-beat synchronization
 
-    >>> mfcc_max = librosa.feature.sync(mfcc, beats,
-    ...                                 aggregate=np.max)
+    >>> sub_beats = librosa.segment.subsegment(cqt, beats)
+    >>> cqt_med_sub = librosa.feature.sync(cqt, sub_beats, aggregate=np.median)
+
+    Plot the results
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> plt.subplot(3, 1, 1)
+    >>> librosa.display.specshow(librosa.logamplitude(cqt**2,
+    ...                                               ref_power=np.max),
+    ...                          x_axis='time')
+    >>> plt.colorbar()
+    >>> plt.title('CQT power, shape={:s}'.format(cqt.shape))
+    >>> plt.subplot(3, 1, 2)
+    >>> librosa.display.specshow(librosa.logamplitude(cqt_med**2,
+    ...                                               ref_power=np.max))
+    >>> plt.colorbar()
+    >>> plt.title('Beat synchronous CQT power, '
+    ...           'shape={:s}'.format(cqt_med.shape))
+    >>> plt.subplot(3, 1, 3)
+    >>> librosa.display.specshow(librosa.logamplitude(cqt_med_sub**2,
+    ...                                               ref_power=np.max))
+    >>> plt.colorbar()
+    >>> plt.title('Sub-beat syncrhonous CQT power, '
+    ...           'shape={:s}'.format(cqt_med_sub.shape))
+    >>> plt.tight_layout()
 
     """
 
