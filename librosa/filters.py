@@ -449,25 +449,21 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     Returns
     -------
     filters : np.ndarray, `len(filters) == n_bins`
-        `filters[i]` is `i`\ th CQT basis filter (in the time-domain)
+        `filters[i]` is `i`\ th time-domain CQT basis filter
 
     lengths : np.ndarray
-        If `return_lengths == True`, then the length of each filter
-        is also returned.
+        If `return_lengths == True`, then the (fractional)
+        length of each filter is also returned.
 
     See Also
     --------
+    constant_q_lengths
     librosa.core.cqt
     librosa.util.normalize
 
 
     Examples
     --------
-    Change the windowing function to Hamming instead of Hann
-
-    >>> basis = librosa.filters.constant_q(22050, window=np.hamming)
-
-
     Use a longer window for each filter
 
     >>> basis = librosa.filters.constant_q(22050, resolution=3)
@@ -485,26 +481,28 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     if window is None:
         window = scipy.signal.hann
 
-    correction = 2.0**(float(tuning) / bins_per_octave)
+    # Pass-through parameters to get the filter lengths
+    lengths = constant_q_lengths(sr,
+                                 fmin=fmin,
+                                 n_bins=n_bins,
+                                 bins_per_octave=bins_per_octave,
+                                 tuning=tuning,
+                                 resolution=resolution)
 
+    # Apply tuning correction
+    correction = 2.0**(float(tuning) / bins_per_octave)
     fmin = correction * fmin
 
     # Q should be capitalized here, so we suppress the name warning
     # pylint: disable=invalid-name
     Q = float(resolution) / (2.0**(1. / bins_per_octave) - 1)
 
+    # Convert lengths back to frequencies
+    freqs = Q * sr / lengths
+
+    # Build the filters
     filters = []
-    lengths = []
-    for i in np.arange(n_bins, dtype=float):
-
-        freq = fmin * 2.0**(i / bins_per_octave)
-        if freq * (1 + window_bandwidth('hann') / Q) > sr / 2.0:
-            raise ValueError("Filter pass band lies beyond Nyquist")
-
-        # Length of the filter
-        ilen = Q * sr / freq
-        lengths.append(ilen)
-
+    for ilen, freq in zip(lengths, freqs):
         # Build the filter: note, length will be ceil(ilen)
         sig = np.exp(np.arange(ilen, dtype=float) * 1j * 2 * np.pi * freq / sr)
 
@@ -516,6 +514,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 
         filters.append(sig)
 
+    # Pad and stack
     max_len = max(lengths)
     if pad_fft:
         max_len = int(2.0**(np.ceil(np.log2(max_len))))
@@ -527,6 +526,64 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
         return filters, np.asarray(lengths)
     else:
         return filters
+
+
+@cache
+def constant_q_lengths(sr, fmin=None, n_bins=84, bins_per_octave=12,
+                       tuning=0.0, resolution=2):
+    r'''Return length of each filter in a constant-Q basis.
+
+    Parameters
+    ----------
+    sr : int > 0 [scalar]
+        Audio sampling rate
+
+    fmin : float > 0 [scalar]
+        Minimum frequency bin. Defaults to `C2 ~= 32.70`
+
+    n_bins : int > 0 [scalar]
+        Number of frequencies.  Defaults to 7 octaves (84 bins).
+
+    bins_per_octave : int > 0 [scalar]
+        Number of bins per octave
+
+    tuning : float in `[-0.5, +0.5)` [scalar]
+        Tuning deviation from A440 in fractions of a bin
+
+    resolution : float > 0 [scalar]
+        Resolution of filter windows. Larger values use longer windows.
+
+    Returns
+    -------
+    lengths : np.ndarray
+        The length of each filter.
+
+    See Also
+    --------
+    constant_q
+    librosa.core.cqt
+    '''
+    if fmin is None:
+        fmin = note_to_hz('C2')
+
+    correction = 2.0**(float(tuning) / bins_per_octave)
+
+    fmin = correction * fmin
+
+    # Q should be capitalized here, so we suppress the name warning
+    # pylint: disable=invalid-name
+    Q = float(resolution) / (2.0**(1. / bins_per_octave) - 1)
+
+    # Compute the frequencies
+    freq = fmin * 2.0 ** (np.arange(n_bins, dtype=float) / bins_per_octave)
+
+    if np.any(freq * (1 + window_bandwidth('hann') / Q) > sr / 2.0):
+        raise ValueError('Filter pass bandlies beyond Nyquist')
+
+    # Convert frequencies to filter lengths
+    lengths = Q * sr / freq
+
+    return lengths
 
 
 @cache
