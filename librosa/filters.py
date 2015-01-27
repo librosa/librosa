@@ -485,26 +485,28 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     if window is None:
         window = scipy.signal.hann
 
-    correction = 2.0**(float(tuning) / bins_per_octave)
+    # Pass-through parameters to get the filter lengths
+    lengths = constant_q_lengths(sr,
+                                 fmin=fmin,
+                                 n_bins=n_bins,
+                                 bins_per_octave=bins_per_octave,
+                                 tuning=tuning,
+                                 resolution=resolution)
 
+    # Apply tuning correction
+    correction = 2.0**(float(tuning) / bins_per_octave)
     fmin = correction * fmin
 
     # Q should be capitalized here, so we suppress the name warning
     # pylint: disable=invalid-name
     Q = float(resolution) / (2.0**(1. / bins_per_octave) - 1)
 
+    # Convert lengths back to frequencies
+    freqs = Q * sr / lengths
+
+    # Build the filters
     filters = []
-    lengths = []
-    for i in np.arange(n_bins, dtype=float):
-
-        freq = fmin * 2.0**(i / bins_per_octave)
-        if freq * (1 + window_bandwidth('hann') / Q) > sr / 2.0:
-            raise ValueError("Filter pass band lies beyond Nyquist")
-
-        # Length of the filter
-        ilen = Q * sr / freq
-        lengths.append(ilen)
-
+    for ilen, freq in zip(lengths, freqs):
         # Build the filter: note, length will be ceil(ilen)
         sig = np.exp(np.arange(ilen, dtype=float) * 1j * 2 * np.pi * freq / sr)
 
@@ -516,6 +518,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 
         filters.append(sig)
 
+    # Pad and stack
     max_len = max(lengths)
     if pad_fft:
         max_len = int(2.0**(np.ceil(np.log2(max_len))))
@@ -528,9 +531,10 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     else:
         return filters
 
+
 @cache
-def constant_q_lengths(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
-                       resolution=2):
+def constant_q_lengths(sr, fmin=None, n_bins=84, bins_per_octave=12,
+                       tuning=0.0, resolution=2):
     r'''Return length of each filter in a constant-Q basis.
 
     Parameters
