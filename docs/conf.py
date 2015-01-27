@@ -192,13 +192,13 @@ class Mock(MagicMock):
             return Mock()
 
 
-# -- Options for HTML output ---------------------------------------------------
+# -- Options for HTML output -------------------------------------------------
 
 
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 if on_rtd:
     html_theme = 'default'
-    MOCK_MODULES = ['argparse', 'numpy', 'scipy', 'matplotlib']
+    MOCK_MODULES = ['argparse', 'numpy', 'scipy', 'freetype', 'matplotlib']
     sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 else:
     html_theme = 'nature'
