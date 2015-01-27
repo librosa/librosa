@@ -110,3 +110,23 @@ def test_structure_feature():
     for n in [10, 100, 1000]:
         for pad in [False, True]:
             yield __test, n, pad
+
+
+def test_timelag_filter():
+
+    def pos0_filter(X):
+        return X
+
+    def pos1_filter(_, X):
+        return X
+
+    def __test_positional(n):
+        dpos0 = librosa.segment.timelag_filter(pos0_filter)
+        dpos1 = librosa.segment.timelag_filter(pos1_filter, index=1)
+
+        X = np.random.randn(n, n)
+
+        assert np.allclose(X, dpos0(X))
+        assert np.allclose(X, dpos1(None, X))
+
+    yield __test_positional, 25
