@@ -61,7 +61,8 @@ def dct(n_filters, n_input):
 
     Examples
     --------
-    >>> dct_filters = librosa.filters.dct(13, S.shape[0])
+    >>> n_fft = 2048
+    >>> dct_filters = librosa.filters.dct(13, 1 + n_fft // 2)
     >>> dct_filters
     array([[ 0.088,  0.088, ...,  0.088,  0.088],
            [ 0.125,  0.125, ..., -0.125, -0.125],
@@ -69,6 +70,13 @@ def dct(n_filters, n_input):
            [ 0.124,  0.115, ..., -0.115, -0.124],
            [ 0.124,  0.113, ...,  0.113,  0.124]])
 
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> librosa.display.specshow(dct_filters, x_axis='linear')
+    >>> plt.ylabel('DCT function')
+    >>> plt.title('DCT filter bank')
+    >>> plt.colorbar()
+    >>> plt.tight_layout()
     """
 
     basis = np.empty((n_filters, n_input))
@@ -114,7 +122,8 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
 
     Examples
     --------
-    >>> librosa.filters.mel(22050, 2048)
+    >>> melfb = librosa.filters.mel(22050, 2048)
+    >>> melfb
     array([[ 0.   ,  0.016, ...,  0.   ,  0.   ],
            [ 0.   ,  0.   , ...,  0.   ,  0.   ],
     ...,
@@ -131,6 +140,14 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
            [ 0.  ,  0.  , ...,  0.  ,  0.  ],
            [ 0.  ,  0.  , ...,  0.  ,  0.  ]])
 
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> librosa.display.specshow(melfb, x_axis='linear')
+    >>> plt.ylabel('Mel filter')
+    >>> plt.title('Mel filter bank')
+    >>> plt.colorbar()
+    >>> plt.tight_layout()
     """
 
     if fmax is None:
@@ -201,7 +218,7 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=2):
     --------
     Build a simple chroma filter bank
 
-    >>> librosa.filters.chroma(22050, 4096)
+    >>> chromafb = librosa.filters.chroma(22050, 4096)
     array([[  1.689e-05,   3.024e-04, ...,   4.639e-17,   5.327e-17],
            [  1.716e-05,   2.652e-04, ...,   2.674e-25,   3.176e-25],
     ...,
@@ -227,6 +244,13 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=2):
            [  2.836e-01,   3.116e-01, ...,   4.520e-05,   4.854e-05],
            [  2.953e-01,   2.888e-01, ...,   7.768e-10,   8.629e-10]])
 
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> librosa.display.specshow(chromafb, x_axis='linear')
+    >>> plt.ylabel('Chroma filter')
+    >>> plt.title('Chroma filter bank')
+    >>> plt.colorbar()
+    >>> plt.tight_layout()
     """
 
     wts = np.zeros((n_chroma, n_fft))
@@ -307,7 +331,8 @@ def logfrequency(sr, n_fft, n_bins=84, bins_per_octave=12, tuning=0.0,
     --------
     Simple log frequency filters
 
-    >>> librosa.filters.logfrequency(22050, 4096)
+    >>> logfb = librosa.filters.logfrequency(22050, 4096)
+    >>> logfb
     array([[ 0.,  0., ...,  0.,  0.],
            [ 0.,  0., ...,  0.,  0.],
     ...,
@@ -333,6 +358,13 @@ def logfrequency(sr, n_fft, n_bins=84, bins_per_octave=12, tuning=0.0,
 
     >>> librosa.filters.logfrequency(22050, 4096, spread=0.5)
 
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> librosa.display.specshow(logfb, x_axis='linear')
+    >>> plt.ylabel('Logarithmic filters')
+    >>> plt.title('Log-frequency filter bank')
+    >>> plt.colorbar()
+    >>> plt.tight_layout()
     '''
 
     if fmin is None:
@@ -394,7 +426,7 @@ def __float_window(window_function):
 
 @cache
 def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
-               window=None, resolution=2, pad_fft=True, norm=2,
+               window=None, resolution=2, pad_fft=True, norm=1,
                return_lengths=False, **kwargs):
     r'''Construct a constant-Q basis.
 
@@ -474,6 +506,22 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 
     >>> basis, lengths = librosa.filters.constant_q(22050, return_lengths=True)
 
+    Get one octave worth of filters
+    >>> basis = librosa.filters.constant_q(22050, n_bins=12)
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> notes = librosa.midi_to_note(np.arange(24, 24 + len(basis)))
+    >>> for i, (f, n) in enumerate(zip(basis, notes)):
+    ...     f_scale = librosa.util.normalize(f) / 2
+    ...     plt.plot(i + f_scale.real, label='{:s} (real)'.format(n))
+    ...     plt.plot(i + f_scale.imag, linestyle=':',
+    ...              label='{:s} (imag)'.format(n))
+    >>> plt.axis('tight')
+    >>> plt.ylabel('CQ filters')
+    >>> plt.xlabel('Time (samples)')
+    >>> plt.legend(loc='best', frameon=True, framealpha=0.8, ncol=2)
+    >>> plt.tight_layout()
     '''
 
     if fmin is None:
