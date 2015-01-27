@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Spectrogram decomposition
-==============
+=========================
 .. autosummary::
     :toctree: generated/
 
@@ -111,12 +111,37 @@ def decompose(S, n_components=None, transformer=None, sort=False):
     Or with sparse dictionary learning
 
     >>> import sklearn.decomposition
-    >>> T = sklearn.decomposition.DictionaryLearning(n_components=8)
-    >>> comps, acts = librosa.decompose.decompose(S, transformer=T)
+    >>> T = sklearn.decomposition.MiniBatchDictionaryLearning(n_components=8)
+    >>> comps, acts = librosa.decompose.decompose(S, transformer=T, sort=True)
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure(figsize=(10,8))
+    >>> plt.subplot(3, 1, 1)
+    >>> librosa.display.specshow(librosa.logamplitude(S**2,
+    ...                                               ref_power=np.max),
+    ...                          y_axis='log', x_axis='time')
+    >>> plt.title('Input spectrogram')
+    >>> plt.subplot(3, 2, 3)
+    >>> librosa.display.specshow(comps, y_axis='log')
+    >>> plt.title('Components')
+    >>> plt.subplot(3, 2, 4)
+    >>> librosa.display.specshow(acts, x_axis='time')
+    >>> plt.ylabel('Components')
+    >>> plt.title('Activations')
+    >>> plt.subplot(3, 1, 3)
+    >>> S_approx = comps.dot(acts)
+    >>> librosa.display.specshow(librosa.logamplitude(S_approx**2,
+    ...                                               ref_power=np.max),
+    ...                          y_axis='log', x_axis='time')
+    >>> plt.title('Reconstructed spectrogram')
+    >>> plt.tight_layout()
     """
 
     if transformer is None:
         transformer = sklearn.decomposition.NMF(n_components=n_components)
+
+    if n_components is None:
+        n_components = S.shape[0]
 
     activations = transformer.fit_transform(S.T).T
 
