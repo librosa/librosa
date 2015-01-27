@@ -362,27 +362,6 @@ def subsegment(data, frames, n_segments=4, pad=True):
         If an interval spans fewer than `n_segments` frames, then each
         frame becomes a sub-segment.
 
-    Examples
-    --------
-    >>> # Load audio, detect beat frames, and compute a CQT
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, hop_length=512)
-    >>> cqt = librosa.cqt(y, sr=sr, hop_length=512)
-    >>> beats
-    array([ 186,  211,  236,  261,  286,  311,  336,  361,  386,  411,
-            436,  461,  486,  510,  535,  560,  585,  609,  634,  658,
-            684,  710,  737,  763,  789,  817,  843,  869,  896,  922,
-            948,  976, 1001, 1026, 1051, 1076, 1101, 1126, 1150, 1175,
-           1202, 1229, 1254, 1279, 1304, 1329, 1354, 1379, 1404, 1429,
-           1454, 1479, 1503, 1528, 1553, 1578, 1603, 1627, 1652, 1676,
-           1700, 1724, 1748, 1772, 1797, 1822, 1846, 1871, 1896, 1921,
-           1946, 1971, 1995, 2020, 2045, 2070, 2095, 2120, 2145, 2169,
-           2194, 2220, 2248, 2273, 2298, 2323, 2348, 2373, 2398, 2423,
-           2448, 2472, 2497, 2522])
-    >>> # Sub-divide the beats into (up to) 4 sub-segments each
-    >>> librosa.segment.subsegment(cqt, beats, n_segments=4)
-    array([   0,   74, ..., 2548, 2582])
-
     Parameters
     ----------
     data : np.ndarray [shape=(d, n)]
@@ -411,6 +390,30 @@ def subsegment(data, frames, n_segments=4, pad=True):
     agglomerative : Temporal segmentation
     librosa.onset.onset_detect : Onset detection
     librosa.beat.beat_track : Beat tracking
+
+    Examples
+    --------
+    Load audio, detect beat frames, and subdivide in fours by CQT
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=15)
+    >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, hop_length=512)
+    >>> cqt = librosa.cqt(y, sr=sr, hop_length=512)
+    >>> subseg = librosa.segment.subsegment(cqt, beats, n_segments=4)
+    >>> subseg
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> librosa.display.specshow(librosa.logamplitude(cqt**2,
+    ...                                               ref_power=np.max),
+    ...                          y_axis='cqt_hz', x_axis='time')
+    >>> plt.vlines(beats, 0, cqt.shape[0], color='r', alpha=0.5,
+    ...            label='Beats')
+    >>> plt.vlines(subseg, 0, cqt.shape[0], color='b', linestyle='--',
+    ...            alpha=0.25, label='Sub-beats')
+    >>> plt.legend(frameon=True, shadow=True)
+    >>> plt.title('CQT + Beat and sub-beat markers')
+    >>> plt.tight_layout()
+
     '''
 
     frames = util.fix_frames(frames, 0, data.shape[1], pad=pad)
@@ -430,20 +433,6 @@ def agglomerative(data, k, clusterer=None):
     Use a temporally-constrained agglomerative clustering routine to partition
     `data` into `k` contiguous segments.
 
-    Examples
-    --------
-    >>> # Cluster by Mel spectrogram similarity
-    >>> # Break into 32 segments
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> S = librosa.feature.melspectrogram(y=y, sr=sr)
-    >>> boundary_frames = librosa.segment.agglomerative(S, 32)
-    >>> librosa.frames_to_time(boundary_frames, sr=sr)
-    array([  0.   ,  18.297,  18.367,  21.989,  22.059,  23.382,  23.452,
-            25.681,  25.751,  27.074,  27.144,  33.065,  33.135,  34.458,
-            34.528,  36.757,  36.827,  38.22 ,  41.842,  41.912,  44.373,
-            44.536,  47.833,  47.949,  51.525,  51.641,  52.918,  52.988,
-            55.217,  55.287,  56.61 ,  56.68 ])
-
     Parameters
     ----------
     data     : np.ndarray [shape=(d, t)]
@@ -452,7 +441,7 @@ def agglomerative(data, k, clusterer=None):
     k        : int > 0 [scalar]
         number of segments to produce
 
-    clusterer : sklearn.cluster.AgglomerativeClustering or `None`
+    clusterer : sklearn.cluster.AgglomerativeClustering, optional
         An optional AgglomerativeClustering object.
         If `None`, a constrained Ward object is instantiated.
 
@@ -465,6 +454,29 @@ def agglomerative(data, k, clusterer=None):
     See Also
     --------
     sklearn.cluster.AgglomerativeClustering
+
+    Examples
+    --------
+    Cluster by MFCC spectrogram similarity, break into 32 segments
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=15)
+    >>> mfcc = librosa.feature.mfcc(y=y, sr=sr)
+    >>> boundary_frames = librosa.segment.agglomerative(mfcc, 32)
+    >>> librosa.frames_to_time(boundary_frames, sr=sr)
+
+    Plot the segmentation against the spectrogram
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> S = np.abs(librosa.stft(y))**2
+    >>> librosa.display.specshow(librosa.logamplitude(S, ref_power=np.max),
+    ...                          y_axis='log', x_axis='time')
+    >>> plt.vlines(boundary_frames, 0, S.shape[0], color='r', alpha=0.9,
+    ...            label='Segment boundaries')
+    >>> plt.legend(frameon=True, shadow=True)
+    >>> plt.title('Power spectrogram')
+    >>> plt.tight_layout()
+
     """
 
     if clusterer is None:
