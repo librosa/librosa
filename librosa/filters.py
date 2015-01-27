@@ -579,7 +579,7 @@ def constant_q_lengths(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     for i in np.arange(n_bins, dtype=float):
 
         freq = fmin * 2.0**(i / bins_per_octave)
-        if freq * (1 + HANN_BW / Q) > sr / 2.0:
+        if freq * (1 + window_bandwidth('hann') / Q) > sr / 2.0:
             raise ValueError("Filter pass band lies beyond Nyquist")
 
         # Length of the filter
