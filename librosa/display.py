@@ -276,7 +276,6 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
     >>> librosa.display.specshow(D, y_axis='linear')
     >>> plt.colorbar()
     >>> plt.title('Linear-frequency power spectrogram')
-8192
 
     Or on a logarithmic scale
 
