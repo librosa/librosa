@@ -175,13 +175,37 @@ pygments_style = 'sphinx'
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []
 
+# -- RTD cruft ---
+
+import sys
+import six
+
+if six.PY3:
+    from unittest.mock import MagicMock
+else:
+    from mock import Mock as MagicMock
+
+
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+            return Mock()
+
 
 # -- Options for HTML output ---------------------------------------------------
+
+
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+if on_rtd:
+    html_theme = 'default'
+    MOCK_MODULES = ['argparse', 'numpy', 'scipy', 'matplotlib']
+    sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+else:
+    html_theme = 'nature'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 # import sphinx_bootstrap_theme
-html_theme = 'nature'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
