@@ -199,7 +199,7 @@ def to_mono(y):
 
 
 @cache
-def resample(y, orig_sr, target_sr, res_type='sinc_fastest', fix=True,
+def resample(y, orig_sr, target_sr, res_type='sinc_best', fix=True,
              scipy_resample=False, **kwargs):
     """Resample a time series from orig_sr to target_sr
 
