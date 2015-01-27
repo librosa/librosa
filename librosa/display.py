@@ -195,6 +195,74 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
     Functions as a drop-in replacement for `matplotlib.pyplot.imshow`,
     but with useful defaults.
 
+
+    Parameters
+    ----------
+    data : np.ndarray [shape=(d, n)]
+        Matrix to display (e.g., spectrogram)
+
+    sr : int > 0 [scalar]
+        Sample rate used to determine time scale in x-axis.
+
+    hop_length : int > 0 [scalar]
+        Hop length, also used to determine time scale in x-axis
+
+    x_axis : None or str
+    y_axis : None or str
+        Range for the x- and y-axes.
+
+        Valid types are:
+
+        - None or 'off': no axis is displayed.
+
+        Frequency types:
+
+        - 'linear': frequency range is determined by the FFT window
+            and sampling rate.
+        - 'log': the image is displayed on a vertical log scale.
+        - 'mel': frequencies are determined by the mel scale.
+        - 'cqt_hz': frequencies are determined by the CQT scale.
+        - 'cqt_note': pitches are determined by the CQT scale.
+        - 'chroma': pitches are determined by the chroma filters.
+
+        Time types:
+        - 'time': markers are shown as milliseconds, seconds,
+          minutes, or hours
+        - 'frames': markers are shown as frame counts.
+
+    n_xticks : int > 0 [scalar]
+        If x_axis is drawn, the number of ticks to show
+
+    n_yticks : int > 0 [scalar]
+        If y_axis is drawn, the number of ticks to show
+
+    fmin : float > 0 [scalar] or None
+        Frequency of the lowest spectrogram bin.  Used for Mel and CQT
+        scales.
+
+        If `y_axis` is `cqt_hz` or `cqt_note` and `fmin` is not given,
+        it is set by default to `note_to_hz('C2')`.
+
+    fmax : float > 0 [scalar] or None
+        Used for setting the Mel frequency scales
+
+    bins_per_octave : int > 0 [scalar]
+        Number of bins per octave.  Used for CQT frequency scale.
+
+    kwargs : additional keyword arguments
+        Arguments passed through to `matplotlib.pyplot.imshow`.
+
+    Returns
+    -------
+    image : `matplotlib.image.AxesImage`
+        As returned from `matplotlib.pyplot.imshow`.
+
+    See Also
+    --------
+    cmap : Automatic colormap detection
+    time_ticks : time-formatted tick marks
+    matplotlib.pyplot.imshow
+
     Examples
     --------
     Visualize an STFT power spectrum
@@ -208,7 +276,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
     >>> librosa.display.specshow(D, y_axis='linear')
     >>> plt.colorbar()
     >>> plt.title('Linear-frequency power spectrogram')
-
+8192
 
     Or on a logarithmic scale
 
@@ -257,68 +325,6 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
     >>> plt.title('Log power spectrogram with time')
     >>> plt.tight_layout()
 
-
-    Parameters
-    ----------
-    data : np.ndarray [shape=(d, n)]
-        Matrix to display (e.g., spectrogram)
-
-    sr : int > 0 [scalar]
-        Sample rate used to determine time scale in x-axis.
-
-    hop_length : int > 0 [scalar]
-        Hop length, also used to determine time scale in x-axis
-
-    x_axis : None or {'time', 'frames', 'off'}
-        - If `None` or `'off'`, no x axis is displayed.
-        - If `'time'`, markers are shown as milliseconds, seconds,
-          minutes, or hours
-        - If `'frames'`, markers are shown as frame counts.
-
-    y_axis : None or str
-        Range for the y-axis.  Valid types are:
-
-        - None or 'off': no y axis is displayed.
-        - 'linear': frequency range is determined by the FFT window
-            and sampling rate.
-        - 'log': the image is displayed on a vertical log scale.
-        - 'mel': frequencies are determined by the mel scale.
-        - 'cqt_hz': frequencies are determined by the CQT scale.
-        - 'cqt_note': pitches are determined by the CQT scale.
-        - 'chroma': pitches are determined by the chroma filters.
-
-    n_xticks : int > 0 [scalar]
-        If x_axis is drawn, the number of ticks to show
-
-    n_yticks : int > 0 [scalar]
-        If y_axis is drawn, the number of ticks to show
-
-    fmin : float > 0 [scalar] or None
-        Frequency of the lowest spectrogram bin.  Used for Mel and CQT
-        scales.
-
-        If `y_axis` is `cqt_hz` or `cqt_note` and `fmin` is not given,
-        it is set by default to `note_to_hz('C2')`.
-
-    fmax : float > 0 [scalar] or None
-        Used for setting the Mel frequency scales
-
-    bins_per_octave : int > 0 [scalar]
-        Number of bins per octave.  Used for CQT frequency scale.
-
-    kwargs : additional keyword arguments
-        Arguments passed through to `matplotlib.pyplot.imshow`.
-
-    Returns
-    -------
-    image : `matplotlib.image.AxesImage`
-        As returned from `matplotlib.pyplot.imshow`.
-
-    See Also
-    --------
-    cmap : Automatic colormap detection
-    time_ticks : time-formatted tick marks
-    matplotlib.pyplot.imshow
     '''
 
     kwargs.setdefault('aspect', 'auto')
@@ -339,123 +345,208 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
 
     axes = plt.imshow(data, **kwargs)
 
-    if y_axis is 'log':
-        axes_phantom = plt.gca()
+    all_params = dict(kwargs=kwargs,
+                      sr=sr,
+                      fmin=fmin,
+                      fmax=fmax,
+                      bins_per_octave=bins_per_octave,
+                      hop_length=hop_length)
 
-        # Non-uniform imshow doesn't like aspect
-        del kwargs['aspect']
-        im_phantom = img.NonUniformImage(axes_phantom, **kwargs)
-
-        y_log, y_inv = __log_scale(data.shape[0])
-
-        im_phantom.set_data(np.arange(0, data.shape[1]), y_log, data)
-        axes_phantom.images.append(im_phantom)
-        axes_phantom.set_ylim(0, data.shape[0])
-        axes_phantom.set_xlim(0, data.shape[1])
-
-    # Set up the y ticks
-    positions = np.asarray(np.linspace(0, data.shape[0], n_yticks), dtype=int)
-
-    if y_axis is 'linear':
-        values = np.asarray(np.linspace(0, 0.5 * sr, data.shape[0] + 1),
-                            dtype=int)
-
-        plt.yticks(positions, values[positions])
-        plt.ylabel('Hz')
-
-    elif y_axis is 'log':
-        values = np.asarray(np.linspace(0, 0.5 * sr, data.shape[0] + 1),
-                            dtype=int)
-        plt.yticks(positions, values[y_inv[positions]])
-
-        plt.ylabel('Hz')
-
-    elif y_axis is 'mel':
-        m_args = {}
-        if fmin is not None:
-            m_args['fmin'] = fmin
-        if fmax is not None:
-            m_args['fmax'] = fmax
-
-        # only two star-args here, defined immediately above
-        # pylint: disable=star-args
-        values = core.mel_frequencies(n_mels=data.shape[0], extra=True,
-                                      **m_args)[positions].astype(int)
-        plt.yticks(positions, values)
-        plt.ylabel('Hz')
-
-    elif y_axis is 'cqt_hz':
-        if fmin is None:
-            fmin = core.note_to_hz('C2')
-
-        positions = np.arange(0, data.shape[0],
-                              np.ceil(float(data.shape[0]) / n_yticks),
-                              dtype=int)
-
-        # Get frequencies
-        values = core.cqt_frequencies(data.shape[0], fmin=fmin,
-                                      bins_per_octave=bins_per_octave)
-        plt.yticks(positions, values[positions].astype(int))
-        plt.ylabel('Hz')
-
-    elif y_axis is 'cqt_note':
-        if fmin is None:
-            fmin = core.note_to_hz('C2')
-
-        positions = np.arange(0, data.shape[0],
-                              np.ceil(float(data.shape[0]) / n_yticks),
-                              dtype=int)
-
-        # Get frequencies
-        values = core.cqt_frequencies(data.shape[0], fmin=fmin,
-                                      bins_per_octave=bins_per_octave)
-        values = values[positions]
-        values = core.hz_to_note(values)
-
-        plt.yticks(positions, values)
-        plt.ylabel('Note')
-
-    elif y_axis is 'chroma':
-        positions = np.arange(0,
-                              data.shape[0],
-                              max(1, float(data.shape[0]) / 12))
-
-        # Labels start at 9 here because chroma starts at A.
-        values = core.midi_to_note(np.arange(9, 9+12), octave=False)
-        plt.yticks(positions, values)
-        plt.ylabel('Pitch class')
-
-    elif y_axis is None or y_axis is 'off':
-        plt.yticks([])
-        plt.ylabel('')
-
-    else:
-        raise ValueError('Unknown y_axis parameter: {:s}'.format(y_axis))
-
-    # Set up the x ticks
-    positions = np.asarray(np.linspace(0, data.shape[1], n_xticks), dtype=int)
-
-    if x_axis is 'time':
-        time_ticks(positions,
-                   core.frames_to_time(positions, sr=sr,
-                                       hop_length=hop_length),
-                   n_ticks=None, axis='x')
-
-        plt.xlabel('Time')
-
-    elif x_axis is 'frames':
-        # Nothing to do here, plot is in frames
-        plt.xticks(positions, positions)
-        plt.xlabel('Frames')
-
-    elif x_axis is None or x_axis is 'off':
-        plt.xticks([])
-        plt.xlabel('')
-
-    else:
-        raise ValueError('Unknown x_axis parameter: {:s}'.format(x_axis))
+    # Scale and decorate the axes
+    __axis(data, n_xticks, x_axis, horiz=True, **all_params)
+    __axis(data, n_yticks, y_axis, horiz=False, **all_params)
 
     return axes
+
+
+def __get_shape_artists(data, horiz):
+    '''Return size, ticker, and labeler'''
+    if horiz:
+        return data.shape[1], plt.xticks, plt.xlabel
+    else:
+        return data.shape[0], plt.yticks, plt.ylabel
+
+
+def __axis(data, n_ticks, ax_type, horiz=False, **kwargs):
+    '''Dispatch function to decorate axes'''
+    axis_map = {'linear': __axis_linear,
+                'log': __axis_log,
+                'mel': __axis_mel,
+                'cqt_hz': __axis_cqt_hz,
+                'cqt_note': __axis_cqt_note,
+                'chroma': __axis_chroma,
+                'off': __axis_none,
+                'time': __axis_time,
+                'frames': __axis_frames}
+
+    if ax_type is None:
+        ax_type = 'off'
+
+    if ax_type not in axis_map:
+        raise ValueError('Unknown axis type: {:s}'.format(ax_type))
+
+    func = axis_map[ax_type]
+
+    func(data, n_ticks, horiz=horiz, **kwargs)
+
+
+def __axis_none(data, n_ticks, horiz, **_kwargs):
+    '''Empty axis artist'''
+
+    _, ticker, labeler = __get_shape_artists(data, horiz)
+
+    ticker([])
+    labeler('')
+
+
+def __axis_log(data, n_ticks, horiz, sr=22050, kwargs=None, label='Hz',
+               **_kwargs):
+    '''Plot a log-scaled image'''
+
+    axes_phantom = plt.gca()
+
+    if kwargs is None:
+        kwargs = dict()
+
+    aspect = kwargs.pop('aspect', None)
+
+    im_phantom = img.NonUniformImage(axes_phantom, **kwargs)
+
+    kwargs['aspect'] = aspect
+
+    n, ticker, labeler = __get_shape_artists(data, horiz)
+    t_log, t_inv = __log_scale(n)
+
+    if horiz:
+        args = (t_log, np.arange(data.shape[0]), data)
+    else:
+        args = (np.arange(data.shape[1]), t_log, data)
+
+    im_phantom.set_data(*args)
+
+    positions = np.linspace(0, n, n_ticks, dtype=int)
+
+    axes_phantom.images[0] = im_phantom
+    axes_phantom.set_xlim(0, data.shape[1])
+    axes_phantom.set_ylim(0, data.shape[0])
+
+    values = np.linspace(0, 0.5 * sr, n + 1, dtype=int)
+    ticker(positions, values[t_inv[positions]])
+
+    labeler(label)
+
+
+def __axis_mel(data, n_ticks, horiz, fmin=None, fmax=None, **_kwargs):
+    '''Mel-scaled axes'''
+
+    n, ticker, labeler = __get_shape_artists(data, horiz)
+
+    positions = np.linspace(0, n, n_ticks, dtype=int)
+
+    kwargs = {}
+
+    if fmin is not None:
+        kwargs['fmin'] = fmin
+
+    if fmax is not None:
+        kwargs['fmax'] = fmax
+
+    # only two star-args here, defined immediately above
+    # pylint: disable=star-args
+    values = core.mel_frequencies(n_mels=n, extra=True,
+                                  **kwargs)[positions]
+    ticker(positions, values.astype(int))
+    labeler('Hz')
+
+
+def __axis_chroma(data, n_ticks, horiz, **_kwargs):
+    '''Chroma axes'''
+
+    n, ticker, labeler = __get_shape_artists(data, horiz)
+
+    positions = np.arange(0, n, max(1, float(n) / 12))
+
+    # Labels start at 9 here because chroma starts at A.
+    values = core.midi_to_note(np.arange(9, 9+12), octave=False)
+    ticker(positions, values)
+    labeler('Pitch class')
+
+
+def __axis_linear(data, n_ticks, horiz, sr=22050, **_kwargs):
+    '''Linear frequency axes'''
+
+    n, ticker, labeler = __get_shape_artists(data, horiz)
+
+    positions = np.linspace(0, n, n_ticks, dtype=int)
+    values = np.linspace(0, 0.5 * sr, n + 1, dtype=int)
+
+    ticker(positions, values[positions])
+    labeler('Hz')
+
+
+def __axis_cqt(data, n_ticks, horiz, note=False, fmin=None,
+               bins_per_octave=12, **_kwargs):
+    '''CQT axes'''
+    if fmin is None:
+        fmin = core.note_to_hz('C2')
+
+    n, ticker, labeler = __get_shape_artists(data, horiz)
+
+    positions = np.arange(0, n, np.ceil(float(n) / n_ticks), dtype=int)
+
+    values = core.cqt_frequencies(n,
+                                  fmin=fmin,
+                                  bins_per_octave=bins_per_octave)
+
+    if note:
+        values = core.hz_to_note(values[positions])
+        label = 'Note'
+    else:
+        values = values[positions].astype(int)
+        label = 'Hz'
+
+    ticker(positions, values)
+    labeler(label)
+
+
+def __axis_cqt_hz(*args, **kwargs):
+    '''CQT in Hz'''
+    kwargs['note'] = False
+    __axis_cqt(*args, **kwargs)
+
+
+def __axis_cqt_note(*args, **kwargs):
+    '''CQT in notes'''
+    kwargs['note'] = True
+    __axis_cqt(*args, **kwargs)
+
+
+def __axis_time(data, n_ticks, horiz, sr=22050, hop_length=512, **_kwargs):
+    '''Time axes'''
+    n, ticker, labeler = __get_shape_artists(data, horiz)
+
+    if horiz:
+        axis = 'x'
+    else:
+        axis = 'y'
+
+    positions = np.linspace(0, n, n_ticks, dtype=int)
+
+    time_ticks(positions,
+               core.frames_to_time(positions, sr=sr, hop_length=hop_length),
+               n_ticks=None, axis=axis)
+
+    labeler('Time')
+
+
+def __axis_frames(data, n_ticks, horiz, label='Frames', **_kwargs):
+    '''Frame axes'''
+    n, ticker, labeler = __get_shape_artists(data, horiz)
+
+    positions = np.linspace(0, n, n_ticks, dtype=int)
+
+    ticker(positions, positions)
+    labeler(label)
 
 
 def __log_scale(n):
