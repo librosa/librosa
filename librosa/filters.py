@@ -531,8 +531,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 @cache
 def constant_q_lengths(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
                        resolution=2):
-    r'''Return lengths of each filter in a constant-Q basis
-
+    r'''Return length of each filter in a constant-Q basis.
 
     Parameters
     ----------
@@ -563,7 +562,6 @@ def constant_q_lengths(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     --------
     librosa.core.cqt
     '''
-
     if fmin is None:
         fmin = note_to_hz('C2')
 
@@ -575,16 +573,14 @@ def constant_q_lengths(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     # pylint: disable=invalid-name
     Q = float(resolution) / (2.0**(1. / bins_per_octave) - 1)
 
-    lengths = []
-    for i in np.arange(n_bins, dtype=float):
+    # Compute the frequencies
+    freq = fmin * 2.0 ** (np.arange(n_bins, dtype=float) / bins_per_octave)
 
-        freq = fmin * 2.0**(i / bins_per_octave)
-        if freq * (1 + window_bandwidth('hann') / Q) > sr / 2.0:
-            raise ValueError("Filter pass band lies beyond Nyquist")
+    if np.any(freq * (1 + window_bandwidth('hann') / Q) > sr / 2.0):
+        raise ValueError('Filter pass bandlies beyond Nyquist')
 
-        # Length of the filter
-        ilen = Q * sr / freq
-        lengths.append(ilen)
+    # Convert frequencies to filter lengths
+    lengths = Q * sr / freq
 
     return lengths
 
