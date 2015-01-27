@@ -17,6 +17,7 @@ Miscellanous
 .. autosummary::
     :toc:tree: generated/
 
+    constant_q_lengths
     cq_to_chroma
     window_bandwidth
 """
@@ -35,7 +36,7 @@ from .core.time_frequency import fft_frequencies, mel_frequencies
 WINDOW_BANDWIDTHS = dict(hann=0.725)
 
 __all__ = ['dct', 'mel', 'chroma', 'logfrequency',
-           'constant_q', 'cq_to_chroma',
+           'constant_q', 'constant_q_lengths', 'cq_to_chroma',
            'window_bandwidth']
 
 
