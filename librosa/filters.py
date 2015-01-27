@@ -449,25 +449,21 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     Returns
     -------
     filters : np.ndarray, `len(filters) == n_bins`
-        `filters[i]` is `i`\ th CQT basis filter (in the time-domain)
+        `filters[i]` is `i`\ th time-domain CQT basis filter
 
     lengths : np.ndarray
-        If `return_lengths == True`, then the length of each filter
-        is also returned.
+        If `return_lengths == True`, then the (fractional)
+        length of each filter is also returned.
 
     See Also
     --------
+    constant_q_lengths
     librosa.core.cqt
     librosa.util.normalize
 
 
     Examples
     --------
-    Change the windowing function to Hamming instead of Hann
-
-    >>> basis = librosa.filters.constant_q(22050, window=np.hamming)
-
-
     Use a longer window for each filter
 
     >>> basis = librosa.filters.constant_q(22050, resolution=3)
@@ -564,6 +560,7 @@ def constant_q_lengths(sr, fmin=None, n_bins=84, bins_per_octave=12,
 
     See Also
     --------
+    constant_q
     librosa.core.cqt
     '''
     if fmin is None:
