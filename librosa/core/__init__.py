@@ -24,6 +24,8 @@ Spectral representations
     istft
     ifgram
     cqt
+    hybrid_cqt
+    pseudo_cqt
 
     phase_vocoder
 

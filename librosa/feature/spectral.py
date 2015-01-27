@@ -648,7 +648,7 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True,
 # -- Chroma --#
 @cache
 def logfsgram(y=None, sr=22050, S=None, n_fft=4096, hop_length=512, **kwargs):
-    '''Compute a log-frequency spectrogram (pseudo-CQT) using a
+    '''Compute a log-frequency spectrogram using a
     fixed-window STFT.
 
 
@@ -691,8 +691,8 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096, hop_length=512, **kwargs):
     From time-series input
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> pseudo_cqt = librosa.feature.logfsgram(y=y, sr=sr)
-    >>> pseudo_cqt
+    >>> L = librosa.feature.logfsgram(y=y, sr=sr)
+    >>> L
     array([[  9.255e-01,   1.649e+00, ...,   9.232e-07,   8.588e-07],
            [  1.152e-22,   2.052e-22, ...,   1.149e-28,   1.069e-28],
     ...,
@@ -703,7 +703,7 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096, hop_length=512, **kwargs):
 
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
-    >>> librosa.display.specshow(librosa.logamplitude(pseudo_cqt,
+    >>> librosa.display.specshow(librosa.logamplitude(L,
     ...                                               ref_power=np.max),
     ...                          y_axis='cqt_hz', x_axis='time')
     >>> plt.title('Log-frequency power spectrogram')
