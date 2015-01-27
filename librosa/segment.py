@@ -136,7 +136,8 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
     >>> librosa.display.specshow(mfcc, x_axis='time')
     >>> plt.title('MFCC')
     >>> plt.subplot(1, 2, 2)
-    >>> librosa.display.specshow(R, x_axis='time', aspect='equal')
+    >>> librosa.display.specshow(R, x_axis='time', y_axis='time',
+    ...                          aspect='equal')
     >>> plt.title('MFCC recurrence (symmetric)')
     >>> plt.tight_layout()
 
@@ -231,7 +232,8 @@ def structure_feature(rec, pad=True, inverse=False):
     >>> import matplotlib.pyplot as plt
     >>> plt.figure(figsize=(10, 5))
     >>> plt.subplot(1, 2, 1)
-    >>> librosa.display.specshow(recurrence, aspect='equal', x_axis='time')
+    >>> librosa.display.specshow(recurrence, aspect='equal', x_axis='time',
+    ...                          y_axis='time')
     >>> plt.ylabel('Time')
     >>> plt.title('Recurrence (time-time)')
     >>> plt.subplot(1, 2, 2)
@@ -323,10 +325,12 @@ def timelag_filter(function, pad=True, key=None, index=0):
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
     >>> plt.subplot(1, 2, 1)
-    >>> librosa.display.specshow(rec, x_axis='time', aspect='equal')
+    >>> librosa.display.specshow(rec, x_axis='time', y_axis='time',
+    ...                          aspect='equal')
     >>> plt.title('Raw recurrence matrix')
     >>> plt.subplot(1, 2, 2)
-    >>> librosa.display.specshow(rec_filtered, x_axis='time', aspect='equal')
+    >>> librosa.display.specshow(rec_filtered, x_axis='time', y_axis='time',
+    ...                          aspect='equal')
     >>> plt.title('Filtered recurrence matrix')
     >>> plt.tight_layout()
     '''
