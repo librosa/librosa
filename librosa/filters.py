@@ -506,21 +506,31 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 
     >>> basis, lengths = librosa.filters.constant_q(22050, return_lengths=True)
 
-    Get one octave worth of filters
-    >>> basis = librosa.filters.constant_q(22050, n_bins=12)
+    Plot one octave of filters in time and frequency
 
+    >>> basis = librosa.filters.constant_q(22050)
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
+    >>> plt.figure(figsize=(10, 6))
+    >>> plt.subplot(2, 1, 1)
     >>> notes = librosa.midi_to_note(np.arange(24, 24 + len(basis)))
-    >>> for i, (f, n) in enumerate(zip(basis, notes)):
+    >>> for i, (f, n) in enumerate(zip(basis, notes)[:12]):
     ...     f_scale = librosa.util.normalize(f) / 2
     ...     plt.plot(i + f_scale.real)
     ...     plt.plot(i + f_scale.imag, linestyle=':')
     >>> plt.axis('tight')
-    >>> plt.yticks(range(len(notes)), notes)
+    >>> plt.yticks(range(len(notes[:12])), notes[:12])
     >>> plt.ylabel('CQ filters')
-    >>> plt.xlabel('Time (samples)')
+    >>> plt.title('CQ filters (one octave, time domain)')
+    >>> plt.xlabel('Time (samples at 22050 Hz)')
     >>> plt.legend(['Real', 'Imaginary'], frameon=True, framealpha=0.8)
+    >>> plt.subplot(2, 1, 2)
+    >>> F = np.abs(np.fft.fftn(basis, axes=[-1]))
+    >>> # Keep only the positive frequencies
+    >>> F = F[:, :(1 + F.shape[1] // 2)]
+    >>> librosa.display.specshow(F, x_axis='linear')
+    >>> plt.yticks(range(len(notes))[::12], notes[::12])
+    >>> plt.ylabel('CQ filters')
+    >>> plt.title('CQ filter magnitudes (frequency domain)')
     >>> plt.tight_layout()
     '''
 
@@ -672,8 +682,28 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12, roll=0):
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> CQT = librosa.cqt(y, sr=sr)
-    >>> chroma_map = librosa.filters.cq_to_chroma(CQT.shape[0])
+    >>> chroma_map = librosa.filters.cq_to_chroma(CQT.shape[0], roll=-3)
     >>> chromagram = chroma_map.dot(CQT)
+    >>> # Max-normalize each time step
+    >>> chromagram = librosa.util.normalize(chromagram, axis=0)
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.subplot(3, 1, 1)
+    >>> librosa.display.specshow(librosa.logamplitude(CQT**2,
+    ...                                               ref_power=np.max),
+    ...                          y_axis='cqt_note', x_axis='time')
+    >>> plt.title('CQT Power')
+    >>> plt.colorbar()
+    >>> plt.subplot(3, 1, 2)
+    >>> librosa.display.specshow(chromagram, y_axis='chroma', x_axis='time')
+    >>> plt.title('Chroma (wrapped CQT)')
+    >>> plt.colorbar()
+    >>> plt.subplot(3, 1, 3)
+    >>> chroma = librosa.feature.chromagram(y=y, sr=sr)
+    >>> librosa.display.specshow(chroma, y_axis='chroma', x_axis='time')
+    >>> plt.title('librosa.feature.chroma')
+    >>> plt.colorbar()
+    >>> plt.tight_layout()
 
     '''
 
