@@ -268,7 +268,7 @@ def structure_feature(rec, pad=True, inverse=False):
     return np.ascontiguousarray(struct.T).T
 
 
-def timelag_filter(function, pad=True, key=None, index=0):
+def timelag_filter(function, pad=True, index=0):
     '''Filtering in the time-lag domain.
 
     This is primarily useful for adapting image filters to operate on
@@ -291,11 +291,7 @@ def timelag_filter(function, pad=True, key=None, index=0):
     pad : bool
         Whether to zero-pad the structure feature matrix
 
-    key : None or str
-        If `function` accepts input data as a keyword argument, it should be
-        designated by `key`
-
-    index : None or int >= 0
+    index : int >= 0
         If `function` accepts input data as a positional argument, it should be
         indexed by `index`
 
@@ -340,14 +336,10 @@ def timelag_filter(function, pad=True, key=None, index=0):
         '''Decorator to wrap the filter'''
         # Map the input data into time-lag space
         args = list(args)
-        if key is not None:
-            kwargs['key'] = structure_feature(kwargs['key'],
-                                              pad=pad,
-                                              inverse=False)
-        else:
-            args[index] = structure_feature(args[index],
-                                            pad=pad,
-                                            inverse=False)
+
+        args[index] = structure_feature(args[index],
+                                        pad=pad,
+                                        inverse=False)
 
         # Apply the filtering function
         result = wrapped_f(*args, **kwargs)
