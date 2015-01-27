@@ -11,6 +11,7 @@ except:
 
 import librosa
 import numpy as np
+from nose.tools import raises
 
 
 def test_band_infinite():
@@ -43,10 +44,16 @@ def test_band_infinite():
 
         assert np.all(Boutcheck == v_out)
 
+    @raises(ValueError)
+    def __test_fail(width, n, v_in, v_out):
+        librosa.segment.__band_infinite(n, width, v_in=v_in, v_out=v_out)
+
     for width in [0, 1, 2, 3, 5, 9]:
-        for n in [width, width+1, width * 2, width*width]:
-            
-            yield __test, width, n, -1, +1
+        for n in [width//2, width, width+1, width * 2, width**2]:
+            if width > n:
+                yield __test_fail, width, n, -1, +1
+            else:
+                yield __test, width, n, -1, +1
 
 
 def test_recurrence_matrix():
