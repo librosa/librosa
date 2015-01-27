@@ -21,6 +21,13 @@ import warnings
 from . import cache
 from . import core
 
+_HAS_SEABORN = False
+try:
+    import seaborn as sns
+    _HAS_SEABORN = True
+except ImportError:
+    pass
+
 
 # This function wraps xticks or yticks: star-args is okay
 def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
@@ -134,57 +141,51 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
 
 
 @cache
-def cmap(data):
+def cmap(data, use_sns=True):
     '''Get a default colormap from the given data.
 
     If the data is boolean, use a black and white colormap.
 
     If the data has both positive and negative values,
-    use a diverging colormap.
+    use a diverging colormap ('coolwarm').
 
-    Otherwise, use a sequential map.
-
-    `PuOr` and `OrRd` are chosen to optimize visibility for color-blind people.
-
-    Examples
-    --------
-    >>> librosa.display.cmap([0, 1, 2])
-    'OrRd'
-    >>> librosa.display.cmap(np.arange(-10, -5))
-    'BuPu_r'
-    >>> librosa.display.cmap(np.arange(-10, 10))
-    'PuOr_r'
+    Otherwise, use a sequential map: either cubehelix or 'OrRd'.
 
     Parameters
     ----------
     data : np.ndarray
         Input data
 
+    use_sns : bool
+        If True, and `seaborn` is installed, use cubehelix maps for
+        sequential data
+
     Returns
     -------
-    cmap_str : str
-        - If `data` has dtype=boolean, `cmap_str` is 'gray_r'
-        - If `data` has only positive values, `cmap_str` is 'OrRd'
-        - If `data` has only negative values, `cmap_str` is 'BuPu_r'
-        - If `data` has both positive and negatives, `cmap_str` is 'PuOr_r'
+    cmap : matplotlib.colors.Colormap
+        - If `data` has dtype=boolean, `cmap` is 'gray_r'
+        - If `data` has only positive or only negative values,
+          `cmap` is 'OrRd' (`use_sns==False`) or cubehelix
+        - If `data` has both positive and negatives, `cmap` is 'coolwarm'
 
     See Also
     --------
     matplotlib.pyplot.colormaps
+    seaborn.cubehelix_palette
     '''
 
     if data.dtype == 'bool':
-        return 'gray_r'
+        return plt.get_cmap('gray_r')
 
     data = np.asarray(data)
 
-    if data.min() >= 0:
-        return 'OrRd'
+    if data.min() >= 0 or data.max() <= 0:
+        if use_sns and _HAS_SEABORN:
+            return sns.cubehelix_palette(light=1.0, as_cmap=True)
+        else:
+            return plt.get_cmap('OrRd')
 
-    if data.max() <= 0:
-        return 'BuPu_r'
-
-    return 'PuOr_r'
+    return plt.get_cmap('coolwarm')
 
 
 def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,

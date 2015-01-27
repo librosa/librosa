@@ -110,6 +110,8 @@ intersphinx_mapping = {'python': ('http://docs.python.org/2', None),
                        'scipy': ('http://docs.scipy.org/doc/scipy/reference/', None),
                        'matplotlib': ('http://matplotlib.sourceforge.net/', None),
                        'sklearn': ('http://scikit-learn.org/stable/', None),
+                       'seaborn': ('http://stanford.edu/~mwaskom/software/seaborn/', None),
+                       'sns': ('http://stanford.edu/~mwaskom/software/seaborn/', None),
                        'samplerate':
                        ('http://www.ar.media.kyoto-u.ac.jp/members/david/softwares/samplerate/sphinx/', None)}
 
