@@ -123,7 +123,8 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=64,
 
     >>> hop_length = 64
     >>> onset_env = librosa.onset.onset_strength(y, sr=sr,
-    ...                                             hop_length=hop_length)
+    ...                                          hop_length=hop_length,
+    ...                                          aggregate=np.median)
     >>> tempo, beats = librosa.beat.beat_track(onset_envelope=onset_env,
     ...                                        sr=sr,
     ...                                        hop_length=hop_length)
@@ -132,6 +133,21 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=64,
     >>> beats[:20]
     array([  23,  177,  341,  501,  658,  815,  976, 1132, 1292, 1447,
            1612, 1773, 1931, 2087, 2248, 2404, 2561, 2724, 2886, 3050])
+
+    Plot the beat events against the onset strength envelope
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> plt.plot(librosa.util.normalize(onset_env), label='Onset strength')
+    >>> plt.vlines(beats, 0, 1, alpha=0.5, color='r',
+    ...            linestyle='--', label='Beats')
+    >>> plt.legend(frameon=True, framealpha=0.75)
+    >>> # Limit the plot to a 15-second window
+    >>> plt.xlim([10 * sr / hop_length, 25 * sr / hop_length])
+    >>> plt.xticks(np.linspace(10, 25, 5) * sr / hop_length,
+    ...            np.linspace(10, 25, 5))
+    >>> plt.xlabel('Time (s)')
+    >>> plt.tight_layout()
     '''
 
     # First, get the frame->beat strength profile if we don't already have one
