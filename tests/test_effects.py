@@ -39,7 +39,7 @@ def test_hpss():
     Dp = librosa.stft(y_perc)
     D = librosa.stft(y)
 
-    assert np.allclose(D, Dh + Dp, rtol=1e-3, atol=1e-4)
+    assert np.allclose(D, Dh + Dp, rtol=1e-3, atol=1e-3)
 
 
 def test_percussive():
