@@ -561,7 +561,7 @@ def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     >>> librosa.display.specshow(librosa.logamplitude(S**2, ref_power=np.max),
     ...                          y_axis='log', x_axis='time')
     >>> plt.title('log Power spectrogram')
-    >>> plt.colorbar()
+    >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.tight_layout()
 
     '''
@@ -707,7 +707,7 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096, hop_length=512, **kwargs):
     ...                                               ref_power=np.max),
     ...                          y_axis='cqt_hz', x_axis='time')
     >>> plt.title('Log-frequency power spectrogram')
-    >>> plt.colorbar()
+    >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.tight_layout()
 
     '''
@@ -969,7 +969,7 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     ...                                               ref_power=np.max),
     ...                          y_axis='mel', fmax=8000,
     ...                          x_axis='time')
-    >>> plt.colorbar()
+    >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Mel spectrogram')
     >>> plt.tight_layout()
 
