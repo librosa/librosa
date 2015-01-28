@@ -141,7 +141,7 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
 
 
 @cache
-def cmap(data, use_sns=True):
+def cmap(data, use_sns=True, robust=True):
     '''Get a default colormap from the given data.
 
     If the data is boolean, use a black and white colormap.
@@ -160,6 +160,10 @@ def cmap(data, use_sns=True):
         If True, and `seaborn` is installed, use cubehelix maps for
         sequential data
 
+    robust : bool
+        If True, discard the top and bottom 2% of data when calculating
+        range.
+
     Returns
     -------
     cmap : matplotlib.colors.Colormap
@@ -177,9 +181,17 @@ def cmap(data, use_sns=True):
     if data.dtype == 'bool':
         return plt.get_cmap('gray_r')
 
-    data = np.asarray(data)
+    data = data[np.isfinite(data)]
 
-    if data.min() >= 0 or data.max() <= 0:
+    if robust:
+        min_p, max_p = 2, 98
+    else:
+        min_p, max_p = 0, 100
+
+    max_val = np.percentile(data, max_p)
+    min_val = np.percentile(data, min_p)
+
+    if min_val >= 0 or max_val <= 0:
         if use_sns and _HAS_SEABORN:
             return sns.cubehelix_palette(light=1.0, as_cmap=True)
         else:
