@@ -797,13 +797,13 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     pre_max   : int >= 0 [scalar]
         number of samples before `n` over which max is computed
 
-    post_max  : int >= 0 [scalar]
+    post_max  : int >= 1 [scalar]
         number of samples after `n` over which max is computed
 
     pre_avg   : int >= 0 [scalar]
         number of samples before `n` over which mean is computed
 
-    post_avg  : int >= 0 [scalar]
+    post_avg  : int >= 1 [scalar]
         number of samples after `n` over which mean is computed
 
     delta     : float >= 0 [scalar]
@@ -817,6 +817,23 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     peaks     : np.ndarray [shape=(n_peaks,), dtype=int]
         indices of peaks in `x`
     '''
+
+    if pre_max < 0:
+        raise ValueError('pre_max must be non-negative')
+    if pre_avg < 0:
+        raise ValueError('pre_avg must be non-negative')
+    if delta < 0:
+        raise ValueError('delta must be non-negative')
+    if wait < 0:
+        raise ValueError('wait must be non-negative')
+
+    if post_max <= 0:
+        raise ValueError('post_max must be positive')
+    if post_avg <= 0:
+        raise ValueError('post_avg must be positive')
+
+    if x.ndim != 1:
+        raise ValueError('input array must be one-dimensional')
 
     # Get the maximum of the signal over a sliding window
     max_length = pre_max + post_max + 1
@@ -833,10 +850,10 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
                                                      origin=int(avg_origin))
 
     # First mask out all entries not equal to the local max
-    detections = x*(x == mov_max)
+    detections = x * (x == mov_max)
 
     # Then mask out all entries less than the thresholded average
-    detections = detections*(detections >= mov_avg + delta)
+    detections = detections * (detections >= mov_avg + delta)
 
     # Initialize peaks array, to be filled greedily
     peaks = []
