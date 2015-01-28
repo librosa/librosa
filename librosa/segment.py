@@ -351,7 +351,7 @@ def timelag_filter(function, pad=True, index=0):
 
 
 @cache
-def subsegment(data, frames, n_segments=4, pad=True):
+def subsegment(data, frames, n_segments=4):
     '''Sub-divide a segmentation by feature clustering.
 
     Given a set of frame boundaries (`frames`), and a data matrix (`data`),
@@ -375,10 +375,6 @@ def subsegment(data, frames, n_segments=4, pad=True):
 
     n_segments : int > 0
         Maximum number of frames to sub-divide each interval.
-
-    pad : bool
-        If `True`, then `frames` is expanded to cover the full
-        range `[0, n]`
 
     Returns
     -------
@@ -416,7 +412,7 @@ def subsegment(data, frames, n_segments=4, pad=True):
 
     '''
 
-    frames = util.fix_frames(frames, 0, data.shape[1], pad=pad)
+    frames = util.fix_frames(frames, x_min=0, x_max=data.shape[1], pad=True)
 
     boundaries = []
     for seg_start, seg_end in zip(frames[:-1], frames[1:]):
