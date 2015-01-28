@@ -137,3 +137,36 @@ def test_timelag_filter():
         assert np.allclose(X, dpos1(None, X))
 
     yield __test_positional, 25
+
+
+def test_subsegment():
+
+    y, sr = librosa.load(librosa.util.example_audio_file())
+
+    X = librosa.feature.mfcc(y=y, sr=sr, hop_length=512)
+    tempo, beats = librosa.beat.beat_track(y=y, sr=sr, hop_length=512)
+
+    def __test(n_segments):
+
+        subseg = librosa.segment.subsegment(X, beats, n_segments=n_segments)
+
+        # Make sure that the boundaries are within range
+        assert subseg.min() >= 0
+        assert subseg.max() <= X.shape[-1]
+
+        # Make sure that all input beats are retained
+        for b in beats:
+            assert b in subseg
+
+        # Do we have a 0 marker?
+        assert 0 in subseg
+
+        # Did we over-segment?  +2 here for 0- and end-padding
+        assert len(subseg) <= n_segments * (len(beats) + 2)
+
+    for n_segments in [0, 1, 2, 3, 4, 100]:
+        if n_segments < 1:
+            tf = raises(ValueError, IndexError)(__test)
+        else:
+            tf = __test
+        yield tf, n_segments
