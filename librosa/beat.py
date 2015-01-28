@@ -230,9 +230,29 @@ def estimate_tempo(onset_envelope, sr=22050, hop_length=64, start_bpm=120,
     >>> hop_length = 64
     >>> onset_env = librosa.onset.onset_strength(y, sr=sr,
     ...                                          hop_length=hop_length)
-    >>> librosa.beat.estimate_tempo(onset_env, sr=sr,
-    ...                             hop_length=hop_length)
+    >>> tempo = librosa.beat.estimate_tempo(onset_env, sr=sr,
+    ...                                     hop_length=hop_length)
+    >>> tempo
     130.011792453
+
+    Plot the estimated tempo against the onset autocorrelation
+
+    >>> import matplotlib.pyplot as plt
+    >>> # Compute 2-second windowed autocorrelation
+    >>> ac = librosa.autocorrelate(onset_env, 2 * sr // hop_length)
+    >>> # Convert tempo estimate from bpm to frames
+    >>> tempo_frames = (60 * sr / hop_length) / tempo
+    >>> plt.plot(librosa.util.normalize(ac),
+    ...          label='Onset autocorrelation')
+    >>> plt.vlines([tempo_frames], 0, 1,
+    ...            color='r', alpha=0.75, linestyle='--',
+    ...            label='Tempo: {:.2f} BPM'.format(tempo))
+    >>> librosa.display.time_ticks(librosa.frames_to_time(np.arange(len(ac)),
+    ...                                                   sr=sr,
+    ...                                                   hop_length=hop_length))
+    >>> plt.xlabel('Lag')
+    >>> plt.legend()
+    >>> plt.axis('tight')
     """
 
     fft_res = float(sr) / hop_length
