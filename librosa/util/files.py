@@ -8,7 +8,7 @@ import pkg_resources
 
 import six
 
-EXAMPLE_AUDIO = 'example_data/Kevin_MacLeod_-_Vibe_Ace.mp3'
+EXAMPLE_AUDIO = 'example_data/Kevin_MacLeod_-_Vibe_Ace.ogg'
 
 
 __all__ = ['example_audio_file', 'find_files']
