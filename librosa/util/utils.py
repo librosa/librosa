@@ -836,24 +836,24 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
         raise ValueError('input array must be one-dimensional')
 
     # Get the maximum of the signal over a sliding window
-    max_length = pre_max + post_max + 1
+    max_length = pre_max + post_max
     max_origin = 0.5 * (pre_max - post_max)
     mov_max = scipy.ndimage.filters.maximum_filter1d(x, int(max_length),
-                                                     mode='constant',
+                                                     mode='nearest',
                                                      origin=int(max_origin))
 
     # Get the mean of the signal over a sliding window
-    avg_length = pre_avg + post_avg + 1
+    avg_length = pre_avg + post_avg
     avg_origin = 0.5 * (pre_avg - post_avg)
     mov_avg = scipy.ndimage.filters.uniform_filter1d(x, int(avg_length),
-                                                     mode='constant',
+                                                     mode='nearest',
                                                      origin=int(avg_origin))
 
     # First mask out all entries not equal to the local max
     detections = x * (x == mov_max)
 
     # Then mask out all entries less than the thresholded average
-    detections = detections * (detections >= mov_avg + delta)
+    detections = detections * (detections >= (mov_avg + delta))
 
     # Initialize peaks array, to be filled greedily
     peaks = []
