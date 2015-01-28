@@ -546,6 +546,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
                                  n_bins=n_bins,
                                  bins_per_octave=bins_per_octave,
                                  tuning=tuning,
+                                 window=window,
                                  resolution=resolution)
 
     # Apply tuning correction
@@ -589,7 +590,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 
 @cache
 def constant_q_lengths(sr, fmin=None, n_bins=84, bins_per_octave=12,
-                       tuning=0.0, resolution=2):
+                       tuning=0.0, window='hann', resolution=2):
     r'''Return length of each filter in a constant-Q basis.
 
     Parameters
@@ -608,6 +609,9 @@ def constant_q_lengths(sr, fmin=None, n_bins=84, bins_per_octave=12,
 
     tuning : float in `[-0.5, +0.5)` [scalar]
         Tuning deviation from A440 in fractions of a bin
+
+    window : str or callable
+        Window function to use on filters
 
     resolution : float > 0 [scalar]
         Resolution of filter windows. Larger values use longer windows.
@@ -636,7 +640,7 @@ def constant_q_lengths(sr, fmin=None, n_bins=84, bins_per_octave=12,
     # Compute the frequencies
     freq = fmin * 2.0 ** (np.arange(n_bins, dtype=float) / bins_per_octave)
 
-    if np.any(freq * (1 + window_bandwidth('hann') / Q) > sr / 2.0):
+    if np.any(freq * (1 + window_bandwidth(window) / Q) > sr / 2.0):
         raise ValueError('Filter pass bandlies beyond Nyquist')
 
     # Convert frequencies to filter lengths
