@@ -6,6 +6,7 @@ import numpy as np
 import numpy.fft as fft
 import scipy
 import scipy.signal
+import six
 
 from . import time_frequency
 from .. import cache
@@ -125,7 +126,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
         # Default is an asymmetric Hann window
         fft_window = scipy.signal.hann(win_length, sym=False)
 
-    elif hasattr(window, '__call__'):
+    elif six.callable(window):
         # User supplied a window function
         fft_window = window(win_length)
 
@@ -246,7 +247,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
         # 2/3 scaling is to make stft(istft(.)) identity for 25% hop
         ifft_window = scipy.signal.hann(win_length, sym=False) * (2.0 / 3)
 
-    elif hasattr(window, '__call__'):
+    elif six.callable(window):
         # User supplied a windowing function
         ifft_window = window(win_length)
 
@@ -604,14 +605,14 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     >>> librosa.display.specshow(librosa.logamplitude(S, ref_power=np.max),
     ...                                               y_axis='log',
     ...                                               x_axis='time')
-    >>> plt.colorbar()
+    >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Log-Power spectrogram: $\log |S|^2$')
     >>> plt.tight_layout()
     """
 
     magnitude = np.abs(S)
 
-    if hasattr(ref_power, '__call__'):
+    if six.callable(ref_power):
         # User supplied a function to calculate reference power
         __ref = ref_power(magnitude)
     else:
@@ -677,12 +678,12 @@ def perceptual_weighting(S, frequencies, **kwargs):
     ...                                               ref_power=np.max),
     ...                          y_axis='cqt_hz', x_axis='time')
     >>> plt.title('Log CQT power')
-    >>> plt.colorbar()
+    >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.subplot(2, 1, 2)
     >>> librosa.display.specshow(perceptual_CQT, y_axis='cqt_hz',
     ...                          x_axis='time')
     >>> plt.title('Perceptually weighted log CQT')
-    >>> plt.colorbar()
+    >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.tight_layout()
     '''
 
