@@ -287,14 +287,14 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
     >>> D = librosa.logamplitude(np.abs(librosa.stft(y))**2, ref_power=np.max)
     >>> plt.subplot(4, 2, 1)
     >>> librosa.display.specshow(D, y_axis='linear')
-    >>> plt.colorbar()
+    >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Linear-frequency power spectrogram')
 
     Or on a logarithmic scale
 
     >>> plt.subplot(4, 2, 2)
     >>> librosa.display.specshow(D, y_axis='log')
-    >>> plt.colorbar()
+    >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Log-frequency power spectrogram')
 
 
@@ -303,12 +303,12 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
     >>> CQT = librosa.logamplitude(librosa.cqt(y, sr=sr)**2, ref_power=np.max)
     >>> plt.subplot(4, 2, 3)
     >>> librosa.display.specshow(CQT, y_axis='cqt_note')
-    >>> plt.colorbar()
+    >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Constant-Q power spectrogram (note)')
 
     >>> plt.subplot(4, 2, 4)
     >>> librosa.display.specshow(CQT, y_axis='cqt_hz')
-    >>> plt.colorbar()
+    >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Constant-Q power spectrogram (Hz)')
 
 
@@ -325,7 +325,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
 
     >>> plt.subplot(4, 2, 6)
     >>> librosa.display.specshow(D, cmap='gray_r')
-    >>> plt.colorbar()
+    >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Linear power spectrogram (grayscale)')
 
 
@@ -333,8 +333,8 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
 
     >>> plt.subplot(4, 2, 7)
     >>> librosa.display.specshow(D, x_axis='time', y_axis='log')
-    >>> plt.colorbar()
-    >>> plt.title('Log power spectrogram with time')
+    >>> plt.colorbar(format='%+2.0f dB')
+    >>> plt.title('Log power spectrogram')
     >>> plt.tight_layout()
 
     '''
