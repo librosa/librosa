@@ -182,6 +182,9 @@ def test_axis_sort():
 
         compare_axis = np.mod(1 - axis, 2)
 
+        if value is None:
+            value = np.argmax
+
         sort_values = value(Xsorted, axis=compare_axis)
 
         assert np.allclose(sort_values, np.sort(sort_values))
@@ -195,7 +198,7 @@ def test_axis_sort():
 
         for axis in [0, 1, -1]:
             for index in [False, True]:
-                for value in [np.min, np.mean, np.max]:
+                for value in [None, np.min, np.mean, np.max]:
 
                     if ndim == 2:
                         yield __test_pass, X, axis, index, value
@@ -342,3 +345,59 @@ def test_feature_extractor():
 
             yield __test_positional, func, args
             yield __test_keyword, func, args
+
+
+def test_peak_pick():
+
+    def __test(n, pre_max, post_max, pre_avg, post_avg, delta, wait):
+
+        # Generate a test signal
+        x = np.random.randn(n)**2
+
+        peaks = librosa.util.peak_pick(x,
+                                       pre_max, post_max,
+                                       pre_avg, post_avg,
+                                       delta, wait)
+
+        for i in peaks:
+            # Test 1: is it a peak in this window?
+            s = np.maximum(0, i - pre_max)
+            t = np.minimum(i + post_max, n)
+
+            assert x[i] >= np.max(x[s:t])
+
+            # Test 2: is it a big enough peak to count?
+            s = np.maximum(0, i - pre_avg)
+            t = np.minimum(i + post_avg, n)
+
+            print 'x = ', list(x)
+            print 'Peak: {:e}, mean: {:e}, delta: {:e}'.format(x[i], np.mean(x[s:t]), delta)
+            assert x[i] >= (np.mean(x[s:t]) + delta)
+
+        # Test 3: peak separation
+        assert not np.any(np.diff(peaks) <= wait)
+
+    win_range = [-1, 0, 1, 5, 10]
+
+    for n in [1, 5, 10, 100]:
+        for pre_max in win_range:
+            for post_max in win_range:
+                for pre_avg in win_range:
+                    for post_avg in win_range:
+                        for wait in win_range:
+                            for delta in [-5, 0, 0.05, 5.0]:
+                                tf = __test
+                                if pre_max < 0:
+                                    tf = raises(ValueError)(__test)
+                                if pre_avg < 0:
+                                    tf = raises(ValueError)(__test)
+                                if delta < 0:
+                                    tf = raises(ValueError)(__test)
+                                if wait < 0:
+                                    tf = raises(ValueError)(__test)
+                                if post_max <= 0:
+                                    tf = raises(ValueError)(__test)
+                                if post_avg <= 0:
+                                    tf = raises(ValueError)(__test)
+                                yield (tf, n, pre_max, post_max,
+                                       pre_avg, post_avg, delta, wait)
