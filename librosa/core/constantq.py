@@ -94,9 +94,11 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> C = librosa.cqt(y, sr=sr)
-    >>> librosa.display.specshow(librosa.logamplitude(C**2), sr=sr,
-    ...                          x_axis='time', y_axis='cqt_note')
+    >>> librosa.display.specshow(librosa.logamplitude(C**2, ref_power=np.max),
+    ...                          sr=sr, x_axis='time', y_axis='cqt_note')
+    >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Constant-Q power spectrum')
+    >>> plt.tight_layout()
 
 
     Limit the frequency range

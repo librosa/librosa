@@ -121,6 +121,7 @@ def decompose(S, n_components=None, transformer=None, sort=False):
     ...                                               ref_power=np.max),
     ...                          y_axis='log', x_axis='time')
     >>> plt.title('Input spectrogram')
+    >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.subplot(3, 2, 3)
     >>> librosa.display.specshow(comps, y_axis='log')
     >>> plt.title('Components')
@@ -133,6 +134,7 @@ def decompose(S, n_components=None, transformer=None, sort=False):
     >>> librosa.display.specshow(librosa.logamplitude(S_approx**2,
     ...                                               ref_power=np.max),
     ...                          y_axis='log', x_axis='time')
+    >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Reconstructed spectrogram')
     >>> plt.tight_layout()
     """
@@ -219,19 +221,19 @@ def hpss(S, kernel_size=31, power=2.0, mask=False):
     >>> librosa.display.specshow(librosa.logamplitude(np.abs(D)**2,
     ...                                               ref_power=np.max),
     ...                          y_axis='log')
-    >>> plt.colorbar()
+    >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Full power spectrogram')
     >>> plt.subplot(3, 1, 2)
     >>> librosa.display.specshow(librosa.logamplitude(np.abs(H)**2,
     ...                          ref_power=np.max),
     ...                          y_axis='log')
-    >>> plt.colorbar()
+    >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Harmonic power spectrogram')
     >>> plt.subplot(3, 1, 3)
     >>> librosa.display.specshow(librosa.logamplitude(np.abs(P)**2,
     ...                          ref_power=np.max),
     ...                          y_axis='log')
-    >>> plt.colorbar()
+    >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Percussive power spectrogram')
     >>> plt.tight_layout()
 

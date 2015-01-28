@@ -4,6 +4,7 @@
 
 import os
 import warnings
+import six
 
 import audioread
 import numpy as np
@@ -483,7 +484,7 @@ def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
     if threshold is None:
         threshold = 0.0
 
-    if hasattr(ref_magnitude, '__call__'):
+    if six.callable(ref_magnitude):
         threshold = threshold * ref_magnitude(np.abs(y))
 
     elif ref_magnitude is not None:
