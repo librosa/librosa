@@ -542,7 +542,7 @@ def __axis_time(data, n_ticks, horiz, sr=22050, hop_length=512, **_kwargs):
     else:
         axis = 'y'
 
-    positions = np.linspace(0, n, n_ticks, dtype=int)
+    positions = np.linspace(0, n, n_ticks, endpoint=False, dtype=int)
 
     time_ticks(positions,
                core.frames_to_time(positions, sr=sr, hop_length=hop_length),
@@ -555,7 +555,7 @@ def __axis_frames(data, n_ticks, horiz, label='Frames', **_kwargs):
     '''Frame axes'''
     n, ticker, labeler = __get_shape_artists(data, horiz)
 
-    positions = np.linspace(0, n, n_ticks, dtype=int)
+    positions = np.linspace(0, n, n_ticks, endpoint=False, dtype=int)
 
     ticker(positions, positions)
     labeler(label)
