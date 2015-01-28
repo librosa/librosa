@@ -117,6 +117,11 @@ def valid_audio(y, mono=True):
     mono : bool
       Whether or not to force monophonic audio
 
+    Returns
+    -------
+    valid : bool
+        True if all tests pass
+
     Raises
     ------
     ValueError
@@ -139,6 +144,8 @@ def valid_audio(y, mono=True):
 
     if not np.isfinite(y).all():
         raise ValueError('Audio buffer is not finite everywhere.')
+
+    return True
 
 
 @cache
