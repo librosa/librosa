@@ -3,7 +3,7 @@
 #  unit tests for librosa.beat
 
 from __future__ import print_function
-from nose.tools import nottest
+from nose.tools import nottest, raises
 
 # Disable cache
 import os
@@ -56,9 +56,82 @@ def test_tempo():
         yield (__test, infile)
 
 
-# Beat tracking test is no longer enabled due to librosa's various corrections
-@nottest
+@raises(ValueError)
+def test_beat_no_input():
+
+    librosa.beat.beat_track(y=None, onset_envelope=None)
+
+
+def test_beat_no_onsets():
+
+    sr = 22050
+    hop_length = 512
+    duration = 30
+
+    onsets = np.zeros(duration * sr // hop_length)
+
+    tempo, beats = librosa.beat.beat_track(onset_envelope=onsets,
+                                           sr=sr,
+                                           hop_length=hop_length)
+
+    assert np.allclose(tempo, 0)
+    assert len(beats) == 0
+
+
 def test_beat():
+
+    y, sr = librosa.load(librosa.util.example_audio_file())
+
+    hop_length = 512
+
+    onset_env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
+
+    def __test(with_audio, with_tempo, start_bpm, bpm, trim, tightness):
+    
+        if with_audio:
+            _y = y
+            _ons = None
+        else:
+            _y = None
+            _ons = onset_env
+
+        tempo, beats = librosa.beat.beat_track(y=_y,
+                                               sr=sr,
+                                               onset_envelope=_ons,
+                                               hop_length=hop_length,
+                                               start_bpm=start_bpm,
+                                               tightness=tightness,
+                                               trim=trim,
+                                               bpm=bpm)
+
+        assert tempo >= 0
+
+        if len(beats):
+            assert beats.min() >= 0
+            assert beats.max() <= len(onset_env)
+
+    for with_audio in [False, True]:
+        for with_tempo in [False, True]:
+            for trim in [False, True]:
+                for start_bpm in [-20, 0, 60, 120, 240]:
+                    for bpm in [-20, 0, None, 150, 360]:
+                        for tightness in [0, 100, 10000]:
+
+                            if (tightness <= 0 or
+                                (bpm is not None and bpm <= 0) or
+                                (start_bpm is not None and bpm is None and start_bpm <= 0)):
+
+                                tf = raises(ValueError)(__test)
+                            else:
+                                tf = __test
+                            yield (tf, with_audio, with_tempo,
+                                   start_bpm, bpm, trim, tightness)
+
+
+# Beat tracking regression test is no longer enabled due to librosa's
+# corrections
+@nottest
+def deprecated_test_beat():
 
     def __test(infile):
 
