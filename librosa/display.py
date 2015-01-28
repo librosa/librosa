@@ -430,19 +430,19 @@ def __axis_log(data, n_ticks, horiz, sr=22050, kwargs=None, label='Hz',
     t_log, t_inv = __log_scale(n)
 
     if horiz:
-        args = (t_log, np.arange(data.shape[0]), data)
+        args = (t_log, np.linspace(0, data.shape[0], data.shape[0]), data)
     else:
-        args = (np.arange(data.shape[1]), t_log, data)
+        args = (np.linspace(0, data.shape[1], data.shape[1]), t_log, data)
 
     im_phantom.set_data(*args)
-
-    positions = np.linspace(0, n, n_ticks, dtype=int)
 
     axes_phantom.images[0] = im_phantom
     axes_phantom.set_xlim(0, data.shape[1])
     axes_phantom.set_ylim(0, data.shape[0])
 
-    values = np.linspace(0, 0.5 * sr, n + 1, dtype=int)
+    positions = np.linspace(0, n, n_ticks, endpoint=False, dtype=int)
+    values = np.linspace(0, 0.5 * sr, n, endpoint=True, dtype=int)
+
     ticker(positions, values[t_inv[positions]])
 
     labeler(label)
@@ -489,8 +489,8 @@ def __axis_linear(data, n_ticks, horiz, sr=22050, **_kwargs):
 
     n, ticker, labeler = __get_shape_artists(data, horiz)
 
-    positions = np.linspace(0, n, n_ticks, dtype=int)
-    values = np.linspace(0, 0.5 * sr, n + 1, dtype=int)
+    positions = np.linspace(0, n, n_ticks, endpoint=False, dtype=int)
+    values = np.linspace(0, 0.5 * sr, n, endpoint=False, dtype=int)
 
     ticker(positions, values[positions])
     labeler('Hz')
