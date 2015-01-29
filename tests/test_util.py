@@ -320,20 +320,61 @@ def test_feature_extractor():
 
     y, sr = librosa.load('data/test1_22050.wav')
 
-    def __test_positional(myfunc, args):
+    def __test_positional_iterate(myfunc, args):
+
+        output_raw = myfunc(y, **args)
 
         FP = librosa.util.FeatureExtractor(myfunc, **args)
         output = FP.transform([y])
+
+        assert np.allclose(output, output_raw)
+
+        # Ensure that fitting does nothing
+        FP.fit()
+        output = FP.transform([y])
+        assert np.allclose(output, output_raw)
+
+    def __test_positional(myfunc, args):
+
         output_raw = myfunc(y, **args)
 
+        FP = librosa.util.FeatureExtractor(myfunc, iterate=False, **args)
+        output = FP.transform(y)
+
+        assert np.allclose(output, output_raw)
+
+        # Ensure that fitting does nothing
+        FP.fit()
+        output = FP.transform(y)
+        assert np.allclose(output, output_raw)
+
+    def __test_keyword_iterate(myfunc, args):
+
+        output_raw = myfunc(y=y, **args)
+
+        FP = librosa.util.FeatureExtractor(myfunc, target='y', **args)
+        output = FP.transform([y])
+
+        assert np.allclose(output, output_raw)
+
+        # Ensure that fitting does nothing
+        FP.fit()
+        output = FP.transform([y])
         assert np.allclose(output, output_raw)
 
     def __test_keyword(myfunc, args):
 
-        FP = librosa.util.FeatureExtractor(myfunc, target='y', **args)
-        output = FP.transform([y])
         output_raw = myfunc(y=y, **args)
 
+        FP = librosa.util.FeatureExtractor(myfunc, target='y',
+                                           iterate=False, **args)
+        output = FP.transform(y)
+
+        assert np.allclose(output, output_raw)
+
+        # Ensure that fitting does nothing
+        FP.fit()
+        output = FP.transform(y)
         assert np.allclose(output, output_raw)
 
     func = librosa.feature.melspectrogram
@@ -344,6 +385,8 @@ def test_feature_extractor():
             args['n_fft'] = n_fft
             args['n_mels'] = n_mels
 
+            yield __test_positional_iterate, func, args
+            yield __test_keyword_iterate, func, args
             yield __test_positional, func, args
             yield __test_keyword, func, args
 
