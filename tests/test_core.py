@@ -67,11 +67,7 @@ def test_load():
 
 def test_resample():
 
-    infile = 'data/test1_44100.wav'
-
-    y, sr_in = librosa.load(infile, sr=None)
-
-    def __test(sr_out, res_type, fix, scipy_resample):
+    def __test(y, sr_in, sr_out, res_type, fix, scipy_resample):
 
         y2 = librosa.resample(y, sr_in, sr_out,
                               res_type=res_type,
@@ -92,11 +88,17 @@ def test_resample():
         target_length = len(y) * sr_out // sr_in
         assert np.abs(len(y2) - target_length) <= 1
 
-    for sr_out in [11025, 22050, sr_in]:
-        for res_type in ['sinc_fastest', 'sinc_best']:
-            for fix in [False, True]:
-                for scipy_resample in [False, True]:
-                    yield __test, sr_out, res_type, fix, scipy_resample
+    for infile in ['data/test1_44100.wav',
+                   'data/test1_22050.wav',
+                   'data/test2_8000.wav']:
+        y, sr_in = librosa.load(infile, sr=None)
+
+        for sr_out in [8000, 22050, 44100]:
+            for res_type in ['sinc_fastest', 'sinc_best']:
+                for fix in [False, True]:
+                    for scipy_resample in [False, True]:
+                        yield (__test, y, sr_in, sr_out,
+                               res_type, fix, scipy_resample)
 
 
 @nottest
