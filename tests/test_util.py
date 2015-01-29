@@ -418,7 +418,7 @@ def test_peak_pick():
             print 'Peak: {:.3e}, max: {:.3e}'.format(x[i], np.max(x_max[s:t]))
             diff = x[i] - np.max(x_max[s:t])
             print diff
-            assert diff > 0 or np.isclose(diff, 0)
+            assert diff > 0 or np.isclose(diff, 0, rtol=1e-3, atol=1e-4)
 
             # Test 2: is it a big enough peak to count?
             i_avg = i + pre_avg
@@ -431,7 +431,7 @@ def test_peak_pick():
                                                                      delta)
             diff = x[i] - (delta + np.mean(x_mean[s:t]))
             print diff
-            assert diff > 0 or np.isclose(diff, 0)
+            assert diff > 0 or np.isclose(diff, 0, rtol=1e-3, atol=1e-4)
 
         # Test 3: peak separation
         assert not np.any(np.diff(peaks) <= wait)
