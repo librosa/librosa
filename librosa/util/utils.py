@@ -774,20 +774,6 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
 
     .. [2] https://github.com/CPJKU/onset_detection/blob/master/onset_program.py
 
-    Examples
-    --------
-    >>> # Look +-3 steps
-    >>> # compute the moving average over +-5 steps
-    >>> # peaks must be > avg + 0.5
-    >>> # skip 10 steps before taking another peak
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=64)
-    >>> librosa.util.peak_pick(onset_env, 3, 3, 5, 6, 0.5, 10)
-    array([ 2558,  4863,  5259,  5578,  5890,  6212,  6531,  6850,  7162,
-            7484,  7804,  8434,  8756,  9076,  9394,  9706, 10028, 10350,
-           10979, 11301, 11620, 12020, 12251, 12573, 12894, 13523, 13846,
-           14164, 14795, 15117, 15637, 15837, 16274, 16709, 16910, 17109,
-           17824, 18181, 18380, 19452, 19496, 19653, 20369])
 
     Parameters
     ----------
@@ -816,6 +802,26 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     -------
     peaks     : np.ndarray [shape=(n_peaks,), dtype=int]
         indices of peaks in `x`
+
+    Raises
+    ------
+    ValueError
+        If any input lies outside its defined range
+
+    Examples
+    --------
+    >>> # Look +-3 steps
+    >>> # compute the moving average over +-5 steps
+    >>> # peaks must be > avg + 0.5
+    >>> # skip 10 steps before taking another peak
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=64)
+    >>> librosa.util.peak_pick(onset_env, 3, 3, 5, 6, 0.5, 10)
+    array([ 2558,  4863,  5259,  5578,  5890,  6212,  6531,  6850,  7162,
+            7484,  7804,  8434,  8756,  9076,  9394,  9706, 10028, 10350,
+           10979, 11301, 11620, 12020, 12251, 12573, 12894, 13523, 13846,
+           14164, 14795, 15117, 15637, 15837, 16274, 16709, 16910, 17109,
+           17824, 18181, 18380, 19452, 19496, 19653, 20369])
     '''
 
     if pre_max < 0:
@@ -829,6 +835,7 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
 
     if post_max <= 0:
         raise ValueError('post_max must be positive')
+
     if post_avg <= 0:
         raise ValueError('post_avg must be positive')
 
@@ -838,9 +845,9 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     # Get the maximum of the signal over a sliding window
     max_length = pre_max + post_max
     max_origin = 0.5 * (pre_max - post_max)
+
     mov_max = scipy.ndimage.filters.maximum_filter1d(x, int(max_length),
-                                                     mode='constant',
-                                                     cval=x.min(),
+                                                     mode='nearest',
                                                      origin=int(max_origin))
 
     # Get the mean of the signal over a sliding window
