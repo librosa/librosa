@@ -10,6 +10,7 @@ except:
     pass
 
 import numpy as np
+np.set_printoptions(precision=3)
 import librosa
 from nose.tools import raises
 
@@ -353,31 +354,46 @@ def test_peak_pick():
 
         # Generate a test signal
         x = np.random.randn(n)**2
+        x_mean = np.pad(x, (pre_avg, post_avg), mode='edge')
+        x_max = np.pad(x, (pre_max, post_max), mode='edge')
 
         peaks = librosa.util.peak_pick(x,
                                        pre_max, post_max,
                                        pre_avg, post_avg,
                                        delta, wait)
 
+        print 'x = ', repr(x)
+        print peaks
+
         for i in peaks:
             # Test 1: is it a peak in this window?
-            s = np.maximum(0, i - pre_max)
-            t = np.minimum(i + post_max, n)
+            i_max = i + pre_max
+            s = i_max - pre_max
+            t = i_max + post_max
 
-            assert x[i] >= np.max(x[s:t])
+            print i, i_max, s, t
+            print 'Peak: {:.3e}, max: {:.3e}'.format(x[i], np.max(x_max[s:t]))
+            diff = x[i] - np.max(x_max[s:t])
+            print diff
+            assert diff > 0 or np.isclose(diff, 0)
 
             # Test 2: is it a big enough peak to count?
-            s = np.maximum(0, i - pre_avg)
-            t = np.minimum(i + post_avg, n)
+            i_avg = i + pre_avg
+            s = i_avg - pre_avg
+            t = i_avg + post_avg
 
-            print 'x = ', list(x)
-            print 'Peak: {:e}, mean: {:e}, delta: {:e}'.format(x[i], np.mean(x[s:t]), delta)
-            assert x[i] >= (np.mean(x[s:t]) + delta)
+            print i, i_avg, s, t
+            print 'Peak: {:.3e}, mean: {:.3e}, delta: {:.3e}'.format(x[i],
+                                                                     np.mean(x_mean[s:t]),
+                                                                     delta)
+            diff = x[i] - (delta + np.mean(x_mean[s:t]))
+            print diff
+            assert diff > 0 or np.isclose(diff, 0)
 
         # Test 3: peak separation
         assert not np.any(np.diff(peaks) <= wait)
 
-    win_range = [-1, 0, 1, 5, 10]
+    win_range = [-1, 0, 1, 10]
 
     for n in [1, 5, 10, 100]:
         for pre_max in win_range:
@@ -385,7 +401,7 @@ def test_peak_pick():
                 for pre_avg in win_range:
                     for post_avg in win_range:
                         for wait in win_range:
-                            for delta in [-5, 0, 0.05, 5.0]:
+                            for delta in [-1, 0.05, 100.0]:
                                 tf = __test
                                 if pre_max < 0:
                                     tf = raises(ValueError)(__test)
