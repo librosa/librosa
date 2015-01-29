@@ -141,6 +141,7 @@ def __get_files(dir_name, extensions):
     dir_name = os.path.abspath(os.path.expanduser(dir_name))
 
     myfiles = []
+
     for sub_ext in extensions:
         globstr = os.path.join(dir_name, '*' + os.path.extsep + sub_ext)
         myfiles.extend(glob.glob(globstr))
