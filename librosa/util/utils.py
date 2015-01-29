@@ -989,6 +989,9 @@ def buf_to_int(x, n_bytes=2):
         The original buffer cast to integer type.
     """
 
+    if n_bytes not in [1, 2, 4]:
+        raise ValueError('n_bytes must be one of {1, 2, 4}')
+
     # What is the scale of the input data?
     scale = float(1 << ((8 * n_bytes) - 1))
 
