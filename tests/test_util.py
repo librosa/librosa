@@ -481,8 +481,6 @@ def test_files():
         else:
             s = slice(offset, len(output))
 
-        print files
-        print output
         assert set(files) == set(output[s])
 
     for searchdir in [os.path.curdir, os.path.join(os.path.curdir, 'data')]:
