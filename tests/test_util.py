@@ -476,19 +476,17 @@ def test_files():
                                         limit=limit,
                                         offset=offset)
 
-        if limit is not None:
-            s = slice(offset, offset + limit)
-        else:
-            s = slice(offset, len(output))
+        s1 = slice(offset, None)
+        s2 = slice(limit)
 
-        assert set(files) == set(output[s])
+        assert set(files) == set(output[s1][s2])
 
     for searchdir in [os.path.curdir, os.path.join(os.path.curdir, 'data')]:
         for ext in [None, 'wav', 'WAV', ['wav'], ['WAV']]:
             for recurse in [False, True]:
                 for case_sensitive in [False, True]:
                     for limit in [None, 1, 2]:
-                        for offset in [0, 1]:
+                        for offset in [0, 1, -1]:
                             tf = __test
 
                             if searchdir == os.path.curdir and not recurse:
@@ -502,4 +500,3 @@ def test_files():
 
                             yield (tf, searchdir, ext, recurse,
                                    case_sensitive, limit, offset)
-
