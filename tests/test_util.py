@@ -417,3 +417,44 @@ def test_peak_pick():
                                     tf = raises(ValueError)(__test)
                                 yield (tf, n, pre_max, post_max,
                                        pre_avg, post_avg, delta, wait)
+
+
+def test_sparsify_rows():
+
+    def __test(n, d, q):
+
+        X = np.random.randn(*([d] * n))**4
+
+        X = np.asarray(X)
+
+        xs = librosa.util.sparsify_rows(X, quantile=q)
+
+        if ndim == 1:
+            X = X.reshape((1, -1))
+
+        assert np.allclose(xs.shape, X.shape)
+
+        # And make sure that xs matches X on nonzeros
+        xsd = np.asarray(xs.todense())
+
+        for i in range(xs.shape[0]):
+            assert np.allclose(xsd[i, xs[i].indices], X[i, xs[i].indices])
+
+        # Compute row-wise magnitude marginals
+        v_in = np.sum(np.abs(X), axis=-1)
+        v_out = np.sum(np.abs(xsd), axis=-1)
+
+        # Ensure that v_out retains 1-q fraction of v_in
+        assert np.all(v_out >= (1.0 - q) * v_in)
+
+    for ndim in range(1, 4):
+        for d in [1, 5, 10, 100]:
+            for q in [-1, 0.0, 0.01, 0.25, 0.5, 0.99, 1.0, 2.0]:
+                tf = __test
+                if ndim not in [1, 2]:
+                    tf = raises(ValueError)(__test)
+
+                if not 0.0 <= q < 1:
+                    tf = raises(ValueError)(__test)
+
+                yield tf, ndim, d, q
