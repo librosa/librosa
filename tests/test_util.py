@@ -458,3 +458,50 @@ def test_sparsify_rows():
                     tf = raises(ValueError)(__test)
 
                 yield tf, ndim, d, q
+
+
+def test_files():
+
+    # Expected output
+    output = [os.path.join(os.path.abspath(os.path.curdir), 'data', s)
+              for s in ['test1_22050.wav',
+                        'test1_44100.wav',
+                        'test2_8000.wav']]
+
+    def __test(searchdir, ext, recurse, case_sensitive, limit, offset):
+        files = librosa.util.find_files(searchdir,
+                                        ext=ext,
+                                        recurse=recurse,
+                                        case_sensitive=case_sensitive,
+                                        limit=limit,
+                                        offset=offset)
+
+        if limit is not None:
+            s = slice(offset, offset + limit)
+        else:
+            s = slice(offset, len(output))
+
+        print files
+        print output
+        assert set(files) == set(output[s])
+
+    for searchdir in [os.path.curdir, os.path.join(os.path.curdir, 'data')]:
+        for ext in [None, 'wav', 'WAV', ['wav'], ['WAV']]:
+            for recurse in [False, True]:
+                for case_sensitive in [False, True]:
+                    for limit in [None, 1, 2]:
+                        for offset in [0, 1]:
+                            tf = __test
+
+                            if searchdir == os.path.curdir and not recurse:
+                                tf = raises(AssertionError)(__test)
+
+                            if (ext is not None and
+                                case_sensitive and
+                                (ext == 'WAV' or set(ext) == set(['WAV']))):
+
+                                tf = raises(AssertionError)(__test)
+
+                            yield (tf, searchdir, ext, recurse,
+                                   case_sensitive, limit, offset)
+
