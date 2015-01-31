@@ -106,14 +106,17 @@ def find_files(directory, ext=None, recurse=True, case_sensitive=False,
         ext = ['aac', 'au', 'flac', 'm4a', 'mp3', 'ogg', 'wav']
 
     elif isinstance(ext, six.string_types):
-        if not case_sensitive:
-            ext = ext.lower()
         ext = [ext]
+
+    # Cast into a set
+    ext = set(ext)
 
     # Generate upper-case versions
     if not case_sensitive:
-        for i in range(len(ext)):
-            ext.append(ext[i].upper())
+        # Force to lower-case
+        ext = set([e.lower() for e in ext])
+        # Add in upper-case versions
+        ext |= set([e.upper() for e in ext])
 
     files = []
 
@@ -138,6 +141,7 @@ def __get_files(dir_name, extensions):
     dir_name = os.path.abspath(os.path.expanduser(dir_name))
 
     myfiles = []
+
     for sub_ext in extensions:
         globstr = os.path.join(dir_name, '*' + os.path.extsep + sub_ext)
         myfiles.extend(glob.glob(globstr))

@@ -320,20 +320,61 @@ def test_feature_extractor():
 
     y, sr = librosa.load('data/test1_22050.wav')
 
-    def __test_positional(myfunc, args):
+    def __test_positional_iterate(myfunc, args):
+
+        output_raw = myfunc(y, **args)
 
         FP = librosa.util.FeatureExtractor(myfunc, **args)
         output = FP.transform([y])
+
+        assert np.allclose(output, output_raw)
+
+        # Ensure that fitting does nothing
+        FP.fit()
+        output = FP.transform([y])
+        assert np.allclose(output, output_raw)
+
+    def __test_positional(myfunc, args):
+
         output_raw = myfunc(y, **args)
 
+        FP = librosa.util.FeatureExtractor(myfunc, iterate=False, **args)
+        output = FP.transform(y)
+
+        assert np.allclose(output, output_raw)
+
+        # Ensure that fitting does nothing
+        FP.fit()
+        output = FP.transform(y)
+        assert np.allclose(output, output_raw)
+
+    def __test_keyword_iterate(myfunc, args):
+
+        output_raw = myfunc(y=y, **args)
+
+        FP = librosa.util.FeatureExtractor(myfunc, target='y', **args)
+        output = FP.transform([y])
+
+        assert np.allclose(output, output_raw)
+
+        # Ensure that fitting does nothing
+        FP.fit()
+        output = FP.transform([y])
         assert np.allclose(output, output_raw)
 
     def __test_keyword(myfunc, args):
 
-        FP = librosa.util.FeatureExtractor(myfunc, target='y', **args)
-        output = FP.transform([y])
         output_raw = myfunc(y=y, **args)
 
+        FP = librosa.util.FeatureExtractor(myfunc, target='y',
+                                           iterate=False, **args)
+        output = FP.transform(y)
+
+        assert np.allclose(output, output_raw)
+
+        # Ensure that fitting does nothing
+        FP.fit()
+        output = FP.transform(y)
         assert np.allclose(output, output_raw)
 
     func = librosa.feature.melspectrogram
@@ -344,6 +385,8 @@ def test_feature_extractor():
             args['n_fft'] = n_fft
             args['n_mels'] = n_mels
 
+            yield __test_positional_iterate, func, args
+            yield __test_keyword_iterate, func, args
             yield __test_positional, func, args
             yield __test_keyword, func, args
 
@@ -374,7 +417,7 @@ def test_peak_pick():
             print 'Peak: {:.3e}, max: {:.3e}'.format(x[i], np.max(x[s:t]))
             diff = x[i] - np.max(x[s:t])
             print diff
-            assert diff > 0 or np.isclose(diff, 0)
+            assert diff > 0 or np.isclose(diff, 0, rtol=1e-3, atol=1e-4)
 
             # Test 2: is it a big enough peak to count?
             s = i - pre_avg
@@ -387,7 +430,7 @@ def test_peak_pick():
                 x[i], np.mean(x[s:t]), delta)
             diff = x[i] - (delta + np.mean(x[s:t]))
             print diff
-            assert diff > 0 or np.isclose(diff, 0)
+            assert diff > 0 or np.isclose(diff, 0, rtol=1e-3, atol=1e-4)
 
         # Test 3: peak separation
         assert not np.any(np.diff(peaks) <= wait)
@@ -416,3 +459,86 @@ def test_peak_pick():
                                     tf = raises(ValueError)(__test)
                                 yield (tf, n, pre_max, post_max,
                                        pre_avg, post_avg, delta, wait)
+
+
+def test_sparsify_rows():
+
+    def __test(n, d, q):
+
+        X = np.random.randn(*([d] * n))**4
+
+        X = np.asarray(X)
+
+        xs = librosa.util.sparsify_rows(X, quantile=q)
+
+        if ndim == 1:
+            X = X.reshape((1, -1))
+
+        assert np.allclose(xs.shape, X.shape)
+
+        # And make sure that xs matches X on nonzeros
+        xsd = np.asarray(xs.todense())
+
+        for i in range(xs.shape[0]):
+            assert np.allclose(xsd[i, xs[i].indices], X[i, xs[i].indices])
+
+        # Compute row-wise magnitude marginals
+        v_in = np.sum(np.abs(X), axis=-1)
+        v_out = np.sum(np.abs(xsd), axis=-1)
+
+        # Ensure that v_out retains 1-q fraction of v_in
+        assert np.all(v_out >= (1.0 - q) * v_in)
+
+    for ndim in range(1, 4):
+        for d in [1, 5, 10, 100]:
+            for q in [-1, 0.0, 0.01, 0.25, 0.5, 0.99, 1.0, 2.0]:
+                tf = __test
+                if ndim not in [1, 2]:
+                    tf = raises(ValueError)(__test)
+
+                if not 0.0 <= q < 1:
+                    tf = raises(ValueError)(__test)
+
+                yield tf, ndim, d, q
+
+
+def test_files():
+
+    # Expected output
+    output = [os.path.join(os.path.abspath(os.path.curdir), 'data', s)
+              for s in ['test1_22050.wav',
+                        'test1_44100.wav',
+                        'test2_8000.wav']]
+
+    def __test(searchdir, ext, recurse, case_sensitive, limit, offset):
+        files = librosa.util.find_files(searchdir,
+                                        ext=ext,
+                                        recurse=recurse,
+                                        case_sensitive=case_sensitive,
+                                        limit=limit,
+                                        offset=offset)
+
+        s1 = slice(offset, None)
+        s2 = slice(limit)
+
+        assert set(files) == set(output[s1][s2])
+
+    for searchdir in [os.path.curdir, os.path.join(os.path.curdir, 'data')]:
+        for ext in [None, 'wav', 'WAV', ['wav'], ['WAV']]:
+            for recurse in [False, True]:
+                for case_sensitive in [False, True]:
+                    for limit in [None, 1, 2]:
+                        for offset in [0, 1, -1]:
+                            tf = __test
+
+                            if searchdir == os.path.curdir and not recurse:
+                                tf = raises(AssertionError)(__test)
+
+                            if (ext is not None and
+                                case_sensitive and
+                                (ext == 'WAV' or set(ext) == set(['WAV']))):
+
+                                tf = raises(AssertionError)(__test)
+
+                            yield (tf, searchdir, ext, recurse,
+                                   case_sensitive, limit, offset)
