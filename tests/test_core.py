@@ -65,8 +65,44 @@ def test_load():
     pass
 
 
-@nottest
 def test_resample():
+
+    def __test(y, sr_in, sr_out, res_type, fix, scipy_resample):
+
+        y2 = librosa.resample(y, sr_in, sr_out,
+                              res_type=res_type,
+                              fix=fix,
+                              scipy_resample=scipy_resample)
+
+        # First, check that the audio is valid
+        librosa.util.valid_audio(y2, mono=True)
+
+        # If it's a no-op, make sure the signal is untouched
+        if sr_out == sr_in:
+            assert np.allclose(y, y2)
+
+        # Check buffer contiguity
+        assert y2.flags['C_CONTIGUOUS']
+
+        # Check that we're within one sample of the target length
+        target_length = len(y) * sr_out // sr_in
+        assert np.abs(len(y2) - target_length) <= 1
+
+    for infile in ['data/test1_44100.wav',
+                   'data/test1_22050.wav',
+                   'data/test2_8000.wav']:
+        y, sr_in = librosa.load(infile, sr=None)
+
+        for sr_out in [8000, 22050, 44100]:
+            for res_type in ['sinc_fastest', 'sinc_best']:
+                for fix in [False, True]:
+                    for scipy_resample in [False, True]:
+                        yield (__test, y, sr_in, sr_out,
+                               res_type, fix, scipy_resample)
+
+
+@nottest
+def __deprecated_test_resample():
 
     def __test(infile, scipy_resample):
         DATA = load(infile)

@@ -288,6 +288,27 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     contrast : np.ndarray [shape=(n_bands + 1, t)]
         each row of spectral contrast values corresponds to a given
         octave-based frequency
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> S = np.abs(librosa.stft(y))
+    >>> contrast = librosa.feature.spectral_contrast(S=S, sr=sr)
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> plt.subplot(2, 1, 1)
+    >>> librosa.display.specshow(librosa.logamplitude(S ** 2,
+    ...                                               ref_power=np.max),
+    ...                          y_axis='log')
+    >>> plt.colorbar(format='%+2.0f dB')
+    >>> plt.title('Power spectrogram')
+    >>> plt.subplot(2, 1, 2)
+    >>> librosa.display.specshow(contrast, x_axis='time')
+    >>> plt.colorbar()
+    >>> plt.ylabel('Frequency bands')
+    >>> plt.title('Spectral contrast')
+    >>> plt.tight_layout()
     '''
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)

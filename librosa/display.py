@@ -422,23 +422,27 @@ def __axis_log(data, n_ticks, horiz, sr=22050, kwargs=None, label='Hz',
 
     aspect = kwargs.pop('aspect', None)
 
-    im_phantom = img.NonUniformImage(axes_phantom, **kwargs)
-
-    kwargs['aspect'] = aspect
-
     n, ticker, labeler = __get_shape_artists(data, horiz)
     t_log, t_inv = __log_scale(n)
 
     if horiz:
-        args = (t_log, np.linspace(0, data.shape[0], data.shape[0]), data)
+        args = (t_log, np.linspace(0, data.shape[0], data.shape[0], dtype=int),
+                data)
     else:
-        args = (np.linspace(0, data.shape[1], data.shape[1]), t_log, data)
+        args = (np.linspace(0, data.shape[1], data.shape[1], dtype=int),
+                t_log, data)
 
+    im_phantom = img.NonUniformImage(axes_phantom,
+                                     extent=(args[0].min(), args[0].max(),
+                                             args[1].min(), args[1].max()),
+                                     **kwargs)
     im_phantom.set_data(*args)
 
+    kwargs['aspect'] = aspect
+
     axes_phantom.images[0] = im_phantom
-    axes_phantom.set_xlim(0, data.shape[1])
-    axes_phantom.set_ylim(0, data.shape[0])
+    axes_phantom.set_xlim(args[0].min(), args[0].max())
+    axes_phantom.set_ylim(args[1].min(), args[1].max())
 
     positions = np.linspace(0, n, n_ticks, endpoint=False, dtype=int)
     values = np.linspace(0, 0.5 * sr, n, endpoint=True, dtype=int)
