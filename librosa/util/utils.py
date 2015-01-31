@@ -810,18 +810,31 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
 
     Examples
     --------
-    >>> # Look +-3 steps
-    >>> # compute the moving average over +-5 steps
-    >>> # peaks must be > avg + 0.5
-    >>> # skip 10 steps before taking another peak
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=64)
-    >>> librosa.util.peak_pick(onset_env, 3, 3, 5, 6, 0.5, 10)
-    array([ 2558,  4863,  5259,  5578,  5890,  6212,  6531,  6850,  7162,
-            7484,  7804,  8434,  8756,  9076,  9394,  9706, 10028, 10350,
-           10979, 11301, 11620, 12020, 12251, 12573, 12894, 13523, 13846,
-           14164, 14795, 15117, 15637, 15837, 16274, 16709, 16910, 17109,
-           17824, 18181, 18380, 19452, 19496, 19653, 20369])
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=15)
+    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr,
+    ...                                          hop_length=512,
+    ...                                          aggregate=np.median)
+    >>> peaks = librosa.util.peak_pick(onset_env, 3, 3, 3, 5, 0.5, 10)
+    >>> peaks
+    array([  4,  23,  73, 102, 142, 162, 182, 211, 261, 301, 320, 331,
+           348, 368, 382, 396, 411, 431, 446, 461, 476, 491, 510, 525,
+           536, 555, 570, 590, 609, 625, 639])
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> plt.subplot(2, 1, 1)
+    >>> plt.plot(onset_env[:30 * sr // 512], alpha=0.8, label='Onset strength')
+    >>> plt.vlines(peaks[peaks < 30 * sr // 512], 0,
+    ...            onset_env.max(), color='r', alpha=0.8,
+    ...            label='Selected peaks')
+    >>> plt.legend(frameon=True, framealpha=0.8)
+    >>> plt.axis('tight')
+    >>> plt.axis('off')
+    >>> plt.subplot(2, 1, 2)
+    >>> D = np.abs(librosa.stft(y))**2
+    >>> librosa.display.specshow(librosa.logamplitude(D, ref_power=np.max),
+    ...                          y_axis='log', x_axis='time')
+    >>> plt.tight_layout()
     '''
 
     if pre_max < 0:
