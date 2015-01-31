@@ -397,8 +397,6 @@ def test_peak_pick():
 
         # Generate a test signal
         x = np.random.randn(n)**2
-        x_mean = np.pad(x, (pre_avg, post_avg), mode='edge')
-        x_max = np.pad(x, (pre_max, post_max), mode='edge')
 
         peaks = librosa.util.peak_pick(x,
                                        pre_max, post_max,
@@ -410,26 +408,27 @@ def test_peak_pick():
 
         for i in peaks:
             # Test 1: is it a peak in this window?
-            i_max = i + pre_max
-            s = i_max - pre_max
-            t = i_max + post_max
+            s = i - pre_max
+            if s < 0:
+                s = 0
+            t = i + post_max
 
-            print i, i_max, s, t
-            print 'Peak: {:.3e}, max: {:.3e}'.format(x[i], np.max(x_max[s:t]))
-            diff = x[i] - np.max(x_max[s:t])
+            print i, s, t
+            print 'Peak: {:.3e}, max: {:.3e}'.format(x[i], np.max(x[s:t]))
+            diff = x[i] - np.max(x[s:t])
             print diff
             assert diff > 0 or np.isclose(diff, 0, rtol=1e-3, atol=1e-4)
 
             # Test 2: is it a big enough peak to count?
-            i_avg = i + pre_avg
-            s = i_avg - pre_avg
-            t = i_avg + post_avg
+            s = i - pre_avg
+            if s < 0:
+                s = 0
+            t = i + post_avg
 
-            print i, i_avg, s, t
-            print 'Peak: {:.3e}, mean: {:.3e}, delta: {:.3e}'.format(x[i],
-                                                                     np.mean(x_mean[s:t]),
-                                                                     delta)
-            diff = x[i] - (delta + np.mean(x_mean[s:t]))
+            print i, s, t
+            print 'Peak: {:.3e}, mean: {:.3e}, delta: {:.3e}'.format(
+                x[i], np.mean(x[s:t]), delta)
+            diff = x[i] - (delta + np.mean(x[s:t]))
             print diff
             assert diff > 0 or np.isclose(diff, 0, rtol=1e-3, atol=1e-4)
 
