@@ -365,7 +365,7 @@ def test_pitch_tuning():
     for resolution in [1e-2, 1e-3]:
         for bins_per_octave in [12]:
             # Make up some frequencies
-            for tuning in [-0.5, -0.375, -0.25, 0.0, 0.375]:
+            for tuning in [-0.5, -0.375, -0.25, 0.0, 0.25, 0.375]:
 
                 note_hz = librosa.midi_to_hz(tuning + np.arange(128))
 
@@ -393,9 +393,10 @@ def test_estimate_tuning():
         deviation = np.around(np.abs(tuning - tuning_est),
                               int(-np.log10(resolution)))
 
-        assert deviation <= resolution
+        # We'll accept an answer within three bins of the resolution
+        assert deviation <= 3 * resolution
 
-    for sr in [22050]:
+    for sr in [11025, 22050]:
         duration = 5.0
 
         t = np.linspace(0, duration, duration * sr)
@@ -403,7 +404,7 @@ def test_estimate_tuning():
         for resolution in [1e-2]:
             for bins_per_octave in [12]:
                 for center_note in [69, 84, 108]:
-                    for tuning in [-0.5, -0.375, -0.25, 0.0, 0.25, 0.375]:
+                    for tuning in [-0.5, -0.375, -0.25, -0.125, 0.0, 0.125, 0.25, 0.375]:
                         target_hz = librosa.midi_to_hz(center_note + tuning)
 
                         yield (__test, np.asscalar(target_hz), resolution,
