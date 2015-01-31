@@ -844,18 +844,42 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
 
     # Get the maximum of the signal over a sliding window
     max_length = pre_max + post_max
-    max_origin = 0.5 * (pre_max - post_max)
-
+    max_origin = np.ceil(0.5 * (pre_max - post_max))
+    # Using mode='constant' and cval=x.min() effectively truncates
+    # the sliding window at the boundaries
     mov_max = scipy.ndimage.filters.maximum_filter1d(x, int(max_length),
-                                                     mode='nearest',
-                                                     origin=int(max_origin))
+                                                     mode='constant',
+                                                     origin=int(max_origin),
+                                                     cval=x.min())
 
     # Get the mean of the signal over a sliding window
     avg_length = pre_avg + post_avg
-    avg_origin = 0.5 * (pre_avg - post_avg)
+    avg_origin = np.ceil(0.5 * (pre_avg - post_avg))
+    # Here, there is no mode which results in the behavior we want,
+    # so we'll correct below.
     mov_avg = scipy.ndimage.filters.uniform_filter1d(x, int(avg_length),
                                                      mode='nearest',
                                                      origin=int(avg_origin))
+
+    # Correct sliding average at the beginning
+    n = 0
+    # Only need to correct in the range where the window needs to be truncated
+    while n - pre_avg < 0 and n < x.shape[0]:
+        # This just explicitly does mean(x[n - pre_avg:n + post_avg])
+        # with truncation
+        start = n - pre_avg
+        start = start if start > 0 else 0
+        mov_avg[n] = np.mean(x[start:n + post_avg])
+        n += 1
+    # Correct sliding average at the end
+    n = x.shape[0] - post_avg
+    # When post_avg > x.shape[0] (weird case), reset to 0
+    n = n if n > 0 else 0
+    while n < x.shape[0]:
+        start = n - pre_avg
+        start = start if start > 0 else 0
+        mov_avg[n] = np.mean(x[start:n + post_avg])
+        n += 1
 
     # First mask out all entries not equal to the local max
     detections = x * (x == mov_max)
