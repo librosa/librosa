@@ -13,14 +13,13 @@ Module documentation
 .. toctree::
     :maxdepth: 2
 
-    beat
     core
-    decompose
     display
-    effects
     feature
-    filters
     onset
+    beat
+    decompose
+    effects
     output
     segment
     util
@@ -32,6 +31,7 @@ Advanced topics
 .. toctree::
     :maxdepth: 1
 
+    filters
     cache
 
 Reference
