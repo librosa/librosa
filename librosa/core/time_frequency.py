@@ -365,13 +365,13 @@ def note_to_midi(note, round_midi=True):
 
     try:
         match = re.match(r'^(?P<n>[A-Ga-g])'
-                         r'(?P<off>[#b!]?)'
+                         r'(?P<offset>[#b!]*)'
                          r'(?P<oct>[+-]?\d*)'
                          r'(?P<cents>[+-]?\d*)$',
                          note)
 
         pitch = match.group('n').upper()
-        offset = acc_map[match.group('off')]
+        offset = np.sum([acc_map[o] for o in match.group('offset')])
         octave = match.group('oct')
         cents = match.group('cents')
         if not octave:
