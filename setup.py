@@ -40,6 +40,6 @@ setup(
     ],
     extras_require={
         'resample': 'scikits.samplerate>=0.3',
-        'docs': ['numpydoc', 'seaborn']
+        'docs': ['numpydoc', 'seaborn', 'sphinx_rtd_theme']
     }
 )
