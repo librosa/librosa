@@ -113,7 +113,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64,
     # First, get the frame->beat strength profile if we don't already have one
     if onset_envelope is None:
         if y is None:
-            raise ValueError('Either "y" or "onsets" must be provided')
+            raise ValueError('Either "y" or "onset_envelope" must be provided')
 
         onset_envelope = onset_strength(y=y, sr=sr, hop_length=hop_length)
 
@@ -127,11 +127,11 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64,
     onset_envelope /= onset_envelope.max()
 
     # These parameter settings found by large-scale search
-    kwargs.setdefault('pre_max', 0.03*sr/hop_length)    # 30ms
-    kwargs.setdefault('post_max', 0.00*sr/hop_length)   # 0ms
-    kwargs.setdefault('pre_avg', 0.10*sr/hop_length)    # 100ms
-    kwargs.setdefault('post_avg', 0.10*sr/hop_length)   # 100ms
-    kwargs.setdefault('wait', 0.03*sr/hop_length)       # 30ms
+    kwargs.setdefault('pre_max', 0.03*sr/hop_length)       # 30ms
+    kwargs.setdefault('post_max', 0.00*sr/hop_length + 1)  # 0ms
+    kwargs.setdefault('pre_avg', 0.10*sr/hop_length)       # 100ms
+    kwargs.setdefault('post_avg', 0.10*sr/hop_length + 1)  # 100ms
+    kwargs.setdefault('wait', 0.03*sr/hop_length)          # 30ms
     kwargs.setdefault('delta', 0.06)
 
     # Peak pick the onset envelope
