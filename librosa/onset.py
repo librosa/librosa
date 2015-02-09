@@ -113,7 +113,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64,
     # First, get the frame->beat strength profile if we don't already have one
     if onset_envelope is None:
         if y is None:
-            raise ValueError('Either "y" or "onsets" must be provided')
+            raise ValueError('Either "y" or "onset_envelope" must be provided')
 
         onset_envelope = onset_strength(y=y, sr=sr, hop_length=hop_length)
 
