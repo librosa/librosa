@@ -5,6 +5,8 @@
 import numpy as np
 import scipy.ndimage
 import scipy.sparse
+import six
+import warnings
 
 from numpy.lib.stride_tricks import as_strided
 
@@ -854,6 +856,27 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
 
     if x.ndim != 1:
         raise ValueError('input array must be one-dimensional')
+
+    if not isinstance(pre_max, six.integer_types + (np.integer,)):
+        warnings.warn('Provided pre_max value is non-integer, using '
+                      'int(ceil(pre_max)) instead')
+        pre_max = int(np.ceil(pre_max))
+    if not isinstance(post_max, six.integer_types + (np.integer,)):
+        warnings.warn('Provided post_max value is non-integer, using '
+                      'int(ceil(post_max)) instead')
+        post_max = int(np.ceil(post_max))
+    if not isinstance(pre_avg, six.integer_types + (np.integer,)):
+        warnings.warn('Provided pre_avg value is non-integer, using '
+                      'int(ceil(pre_avg)) instead')
+        pre_avg = int(np.ceil(pre_avg))
+    if not isinstance(post_avg, six.integer_types + (np.integer,)):
+        warnings.warn('Provided post_avg value is non-integer, using '
+                      'int(ceil(post_avg)) instead')
+        post_avg = int(np.ceil(post_avg))
+    if not isinstance(wait, six.integer_types + (np.integer,)):
+        warnings.warn('Provided wait value is non-integer, using '
+                      'int(ceil(wait)) instead')
+        wait = int(np.ceil(wait))
 
     # Get the maximum of the signal over a sliding window
     max_length = pre_max + post_max
