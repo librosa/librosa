@@ -23,7 +23,7 @@ __all__ = ['onset_detect', 'onset_strength']
 
 
 @cache
-def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64,
+def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
                  **kwargs):
     """Basic onset detector.  Locate note onset events by picking peaks in an
     onset strength envelope.
@@ -83,23 +83,21 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=64,
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file(),
     ...                      duration=10.0)
-    >>> onset_frames = librosa.onset.onset_detect(y=y, sr=sr,
-    ...                                           hop_length=64)
-    >>> librosa.frames_to_time(onset_frames[:20], sr=sr, hop_length=64)
-    array([ 0.052,  0.493,  1.077,  1.196,  1.454,  1.657,  1.898,  2.351,
-            2.923,  3.048,  3.268,  3.741,  4.182,  4.769,  4.873,  6.04 ,
-            6.615,  6.745,  6.96 ,  7.419])
+    >>> onset_frames = librosa.onset.onset_detect(y=y, sr=sr)
+    >>> librosa.frames_to_time(onset_frames[:20], sr=sr)
+    array([ 0.07 ,  0.279,  0.511,  0.859,  1.091,  1.207,  1.463,  1.672,
+            1.904,  2.159,  2.368,  2.601,  2.949,  3.065,  3.297,  3.529,
+            3.762,  3.994,  4.203,  4.69 ])
 
 
     Or use a pre-computed onset envelope
 
-    >>> o_env = librosa.onset.onset_strength(y, sr=sr, hop_length=64)
-    >>> onset_frames = librosa.onset.onset_detect(onset_envelope=o_env,
-    ...                                           sr=sr, hop_length=64)
+    >>> o_env = librosa.onset.onset_strength(y, sr=sr)
+    >>> onset_frames = librosa.onset.onset_detect(onset_envelope=o_env, sr=sr)
 
 
     >>> import matplotlib.pyplot as plt
-    >>> D = np.abs(librosa.stft(y, hop_length=64))**2
+    >>> D = np.abs(librosa.stft(y))**2
     >>> plt.figure()
     >>> librosa.display.specshow(librosa.logamplitude(D, ref_power=np.max),
     ...                          x_axis='time', y_axis='log')
@@ -210,7 +208,7 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
 
     Construct a standard onset function
 
-    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=512)
+    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr)
     >>> plt.subplot(2, 1, 2)
     >>> plt.plot(2 + onset_env / onset_env.max(), alpha=0.8,
     ...          label='Mean aggregation (mel)')
@@ -218,7 +216,7 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
 
     Median aggregation, and custom mel options
 
-    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=512,
+    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr,
     ...                                          aggregate=np.median,
     ...                                          fmax=8000, n_mels=256)
     >>> plt.plot(1 + onset_env / onset_env.max(), alpha=0.8,
@@ -227,7 +225,7 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
 
     Log-frequency spectrogram instead of Mel
 
-    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=512,
+    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr,
     ...                                          feature=librosa.feature.logfsgram)
     >>> plt.plot(onset_env / onset_env.max(), alpha=0.8,
     ...          label='Mean aggregation (logfs)')
@@ -260,7 +258,7 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
     # Retrieve the n_fft and hop_length,
     # or default values for onsets if not provided
     n_fft = kwargs.get('n_fft', 2048)
-    hop_length = kwargs.get('hop_length', 64)
+    hop_length = kwargs.get('hop_length', 512)
 
     # Compute first difference, include padding for alignment purposes
     onset_env = np.diff(S, axis=1)

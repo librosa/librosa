@@ -24,16 +24,6 @@ __all__ = ['frames_to_samples', 'frames_to_time',
 def frames_to_samples(frames, hop_length=512, n_fft=None):
     """Converts frame indices to audio sample indices
 
-    Examples
-    --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> tempo, beats = librosa.beat.beat_track(y, sr=sr, hop_length=64)
-    >>> beat_samples = librosa.frames_to_samples(beats, hop_length=64)
-    >>> beat_samples[:20]
-    array([  1472,  11328,  21824,  32064,  42112,  52160,  62464,  72448,
-            82688,  92608, 103168, 113472, 123584, 133568, 143872, 153856,
-           163904, 174336, 184704, 195200])
-
     Parameters
     ----------
     frames     : np.ndarray [shape=(n,)]
@@ -57,6 +47,12 @@ def frames_to_samples(frames, hop_length=512, n_fft=None):
     --------
     frames_to_time : convert frame indices to time values
     samples_to_frames : convert sample indices to frame indices
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> tempo, beats = librosa.beat.beat_track(y, sr=sr)
+    >>> beat_samples = librosa.frames_to_samples(beats)
     """
 
     offset = 0
@@ -117,16 +113,6 @@ def samples_to_frames(samples, hop_length=512, n_fft=None):
 def frames_to_time(frames, sr=22050, hop_length=512, n_fft=None):
     """Converts frame counts to time (seconds)
 
-    Examples
-    --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> tempo, beats = librosa.beat.beat_track(y, sr=sr, hop_length=64)
-    >>> beat_times = librosa.frames_to_time(beats, sr=sr, hop_length=64)
-    >>> beat_times[:20]
-    array([ 0.067,  0.514,  0.99 ,  1.454,  1.91 ,  2.366,  2.833,  3.286,
-            3.75 ,  4.2  ,  4.679,  5.146,  5.605,  6.058,  6.525,  6.978,
-            7.433,  7.906,  8.377,  8.853])
-
     Parameters
     ----------
     frames     : np.ndarray [shape=(n,)]
@@ -153,6 +139,12 @@ def frames_to_time(frames, sr=22050, hop_length=512, n_fft=None):
     --------
     time_to_frames : convert time values to frame indices
     frames_to_samples : convert frame indices to sample indices
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> tempo, beats = librosa.beat.beat_track(y, sr=sr)
+    >>> beat_times = librosa.frames_to_time(beats, sr=sr)
     """
 
     samples = frames_to_samples(frames,
