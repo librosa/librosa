@@ -19,7 +19,7 @@ SMALL_FLOAT = 1e-20
 
 __all__ = ['MAX_MEM_BLOCK', 'SMALL_FLOAT',
            'frame', 'pad_center', 'fix_length',
-           'valid_audio',
+           'valid_audio', 'valid_int',
            'fix_frames',
            'axis_sort', 'localmax', 'normalize',
            'match_intervals', 'match_events',
@@ -148,6 +148,46 @@ def valid_audio(y, mono=True):
         raise ValueError('Audio buffer is not finite everywhere.')
 
     return True
+
+
+def valid_int(x, cast=None):
+    '''Ensure that an input value is integer-typed.
+    This is primarily useful for ensuring integrable-valued
+    array indices.
+
+    Parameters
+    ----------
+    x : number
+        A scalar value to be cast to int
+
+    cast : function [optional]
+        A function to modify `x` before casting.
+        Default: `np.floor`
+
+    Returns
+    -------
+    x_int : int
+        `x_int = int(cast(x))`
+
+    Raises
+    ------
+    TypeError
+        If `cast` is provided and is not callable.
+    '''
+
+    if cast is None:
+        cast = np.floor
+
+    if not six.callable(cast):
+        raise TypeError('cast parameter must be callable.')
+
+    cast_name = '{:s}'.format(cast.__name__)
+
+    if not isinstance(x, six.integer_types + (np.integer,)):
+        warnings.warn('Value is non-integer, using int({:s}(x)) '
+                      'instead'.format(cast_name))
+
+    return int(cast(x))
 
 
 @cache
@@ -857,26 +897,12 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     if x.ndim != 1:
         raise ValueError('input array must be one-dimensional')
 
-    if not isinstance(pre_max, six.integer_types + (np.integer,)):
-        warnings.warn('Provided pre_max value is non-integer, using '
-                      'int(ceil(pre_max)) instead')
-        pre_max = int(np.ceil(pre_max))
-    if not isinstance(post_max, six.integer_types + (np.integer,)):
-        warnings.warn('Provided post_max value is non-integer, using '
-                      'int(ceil(post_max)) instead')
-        post_max = int(np.ceil(post_max))
-    if not isinstance(pre_avg, six.integer_types + (np.integer,)):
-        warnings.warn('Provided pre_avg value is non-integer, using '
-                      'int(ceil(pre_avg)) instead')
-        pre_avg = int(np.ceil(pre_avg))
-    if not isinstance(post_avg, six.integer_types + (np.integer,)):
-        warnings.warn('Provided post_avg value is non-integer, using '
-                      'int(ceil(post_avg)) instead')
-        post_avg = int(np.ceil(post_avg))
-    if not isinstance(wait, six.integer_types + (np.integer,)):
-        warnings.warn('Provided wait value is non-integer, using '
-                      'int(ceil(wait)) instead')
-        wait = int(np.ceil(wait))
+    # Ensure valid index types
+    pre_max = valid_int(pre_max, cast=np.ceil)
+    post_max = valid_int(post_max, cast=np.ceil)
+    pre_avg = valid_int(pre_avg, cast=np.ceil)
+    post_avg = valid_int(post_avg, cast=np.ceil)
+    wait = valid_int(wait, cast=np.ceil)
 
     # Get the maximum of the signal over a sliding window
     max_length = pre_max + post_max
