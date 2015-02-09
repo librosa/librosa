@@ -101,13 +101,6 @@ def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
 def frames_csv(path, frames, sr=22050, hop_length=512, **kwargs):
     """Convert frames to time and store tbrycehe output in CSV format.
 
-    Examples
-    --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> tempo, beats = librosa.beat.beat_track(y, sr=sr, hop_length=64)
-    >>> librosa.output.frames_csv('beat_times.csv', beats,
-                                  sr=sr, hop_length=64)
-
     Parameters
     ----------
     path : string
@@ -128,6 +121,12 @@ def frames_csv(path, frames, sr=22050, hop_length=512, **kwargs):
     See Also
     --------
     times_csv
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> tempo, beats = librosa.beat.beat_track(y, sr=sr)
+    >>> librosa.output.frames_csv('beat_times.csv', beats, sr=sr)
     """
 
     times = core.frames_to_time(frames, sr=sr, hop_length=hop_length)
@@ -156,13 +155,6 @@ def times_csv(path, times, annotations=None, delimiter=',', fmt='%0.3f'):
         ...
 
 
-    Examples
-    --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> tempo, beats = librosa.beat.beat_track(y, sr=sr, hop_length=64)
-    >>> times = librosa.frames_to_time(beats, sr=sr, hop_length=64)
-    >>> librosa.output.times_csv('beat_times.csv', times)
-
     Parameters
     ----------
     path : string
@@ -185,6 +177,13 @@ def times_csv(path, times, annotations=None, delimiter=',', fmt='%0.3f'):
     ValueError
         if `annotations` is not `None` and length does not
         match `times`
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> tempo, beats = librosa.beat.beat_track(y, sr=sr)
+    >>> times = librosa.frames_to_time(beats, sr=sr)
+    >>> librosa.output.times_csv('beat_times.csv', times)
     """
 
     if annotations is not None and len(annotations) != len(times):
