@@ -426,10 +426,10 @@ def __axis_log(data, n_ticks, horiz, sr=22050, kwargs=None, label='Hz',
     t_log, t_inv = __log_scale(n)
 
     if horiz:
-        args = (t_log, np.linspace(0, data.shape[0], data.shape[0], dtype=int),
+        args = (t_log, np.linspace(0, data.shape[0], data.shape[0]).astype(int),
                 data)
     else:
-        args = (np.linspace(0, data.shape[1], data.shape[1], dtype=int),
+        args = (np.linspace(0, data.shape[1], data.shape[1]).astype(int),
                 t_log, data)
 
     im_phantom = img.NonUniformImage(axes_phantom,
@@ -444,8 +444,8 @@ def __axis_log(data, n_ticks, horiz, sr=22050, kwargs=None, label='Hz',
     axes_phantom.set_xlim(args[0].min(), args[0].max())
     axes_phantom.set_ylim(args[1].min(), args[1].max())
 
-    positions = np.linspace(0, n, n_ticks, endpoint=False, dtype=int)
-    values = np.linspace(0, 0.5 * sr, n, endpoint=True, dtype=int)
+    positions = np.linspace(0, n, n_ticks, endpoint=False).astype(int)
+    values = np.linspace(0, 0.5 * sr, n, endpoint=True).astype(int)
 
     ticker(positions, values[t_inv[positions]])
 
@@ -457,7 +457,7 @@ def __axis_mel(data, n_ticks, horiz, fmin=None, fmax=None, **_kwargs):
 
     n, ticker, labeler = __get_shape_artists(data, horiz)
 
-    positions = np.linspace(0, n, n_ticks, dtype=int)
+    positions = np.linspace(0, n, n_ticks).astype(int)
 
     kwargs = {}
 
@@ -493,8 +493,8 @@ def __axis_linear(data, n_ticks, horiz, sr=22050, **_kwargs):
 
     n, ticker, labeler = __get_shape_artists(data, horiz)
 
-    positions = np.linspace(0, n, n_ticks, endpoint=False, dtype=int)
-    values = np.linspace(0, 0.5 * sr, n, endpoint=False, dtype=int)
+    positions = np.linspace(0, n, n_ticks, endpoint=False).astype(int)
+    values = np.linspace(0, 0.5 * sr, n, endpoint=False).astype(int)
 
     ticker(positions, values[positions])
     labeler('Hz')
@@ -546,7 +546,7 @@ def __axis_time(data, n_ticks, horiz, sr=22050, hop_length=512, **_kwargs):
     else:
         axis = 'y'
 
-    positions = np.linspace(0, n, n_ticks, endpoint=False, dtype=int)
+    positions = np.linspace(0, n, n_ticks, endpoint=False).astype(int)
 
     time_ticks(positions,
                core.frames_to_time(positions, sr=sr, hop_length=hop_length),
@@ -559,7 +559,7 @@ def __axis_frames(data, n_ticks, horiz, label='Frames', **_kwargs):
     '''Frame axes'''
     n, ticker, labeler = __get_shape_artists(data, horiz)
 
-    positions = np.linspace(0, n, n_ticks, endpoint=False, dtype=int)
+    positions = np.linspace(0, n, n_ticks, endpoint=False).astype(int)
 
     ticker(positions, positions)
     labeler(label)
