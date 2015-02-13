@@ -4,7 +4,3 @@
 -------------------
 
 .. automodule:: librosa.filters
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
