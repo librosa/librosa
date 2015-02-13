@@ -15,20 +15,20 @@ import sklearn.decomposition
 
 
 def test_default_decompose():
-    
+
     X = np.array([[1, 2, 3, 4, 5, 6], [1, 1, 1.2, 1, 0.8, 1]])
-    
-    (W, H) = librosa.decompose.decompose(X)
+
+    (W, H) = librosa.decompose.decompose(X, random_state=0)
 
     assert np.allclose(X, W.dot(H), rtol=1e-2, atol=1e-2)
 
 
 def test_given_decompose():
 
-    D = sklearn.decomposition.NMF()
+    D = sklearn.decomposition.NMF(random_state=0)
 
     X = np.array([[1, 2, 3, 4, 5, 6], [1, 1, 1.2, 1, 0.8, 1]])
-    
+
     (W, H) = librosa.decompose.decompose(X, transformer=D)
 
     assert np.allclose(X, W.dot(H), rtol=1e-2, atol=1e-2)
@@ -37,8 +37,8 @@ def test_given_decompose():
 def test_sorted_decompose():
 
     X = np.array([[1, 2, 3, 4, 5, 6], [1, 1, 1.2, 1, 0.8, 1]])
-    
-    (W, H) = librosa.decompose.decompose(X, sort=True)
+
+    (W, H) = librosa.decompose.decompose(X, sort=True, random_state=0)
 
     assert np.allclose(X, W.dot(H), rtol=1e-2, atol=1e-2)
 
