@@ -11,10 +11,10 @@ before_install:
     - sudo apt-get update
     - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
         wget http://repo.continuum.io/miniconda/Miniconda-3.8.3-Linux-x86_64.sh -O miniconda.sh;
-        sudo apt-get install python-gst-1.0
+        sudo apt-get install python-gst-1.0 ;
       else
         wget http://repo.continuum.io/miniconda/Miniconda3-3.8.3-Linux-x86_64.sh -O miniconda.sh;
-        sudo apt-get install python3-gst-1.0
+        sudo apt-get install python3-gst-1.0 ;
       fi
     - bash miniconda.sh -b -p $HOME/miniconda
     - export PATH="$HOME/miniconda/bin:$PATH"
