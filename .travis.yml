@@ -36,4 +36,4 @@ script:
     - "nosetests --with-coverage --cover-package=librosa -w tests/ -v"
 
 after_success:
-    - coveralls
+    - coveralls --data_file .coverage
