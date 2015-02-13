@@ -152,10 +152,10 @@ release = librosa_version.version
 exclude_patterns = ['_build']
 
 # The reST default role (used for this markup: `text`) to use for all documents.
-#default_role = None
+# default_role = None
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
-#add_function_parentheses = True
+# add_function_parentheses = True
 
 # If true, the current module name will be prepended to all description
 # unit titles (such as .. function::).
@@ -169,7 +169,7 @@ show_authors = False
 pygments_style = 'sphinx'
 
 # A list of ignored prefixes for module index sorting.
-#modindex_common_prefix = []
+# modindex_common_prefix = []
 
 # -- RTD cruft ---
 
@@ -197,7 +197,6 @@ if on_rtd:
     MOCK_MODULES = ['argparse', 'numpy', 'scipy', 'freetype', 'matplotlib']
     sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 else:
-#     html_theme = 'nature'
     import sphinx_rtd_theme
     html_theme = 'sphinx_rtd_theme'
     html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
