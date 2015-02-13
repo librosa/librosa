@@ -403,9 +403,6 @@ def test_peak_pick():
                                        pre_avg, post_avg,
                                        delta, wait)
 
-        print 'x = ', repr(x)
-        print peaks
-
         for i in peaks:
             # Test 1: is it a peak in this window?
             s = i - pre_max
@@ -413,10 +410,7 @@ def test_peak_pick():
                 s = 0
             t = i + post_max
 
-            print i, s, t
-            print 'Peak: {:.3e}, max: {:.3e}'.format(x[i], np.max(x[s:t]))
             diff = x[i] - np.max(x[s:t])
-            print diff
             assert diff > 0 or np.isclose(diff, 0, rtol=1e-3, atol=1e-4)
 
             # Test 2: is it a big enough peak to count?
@@ -425,11 +419,7 @@ def test_peak_pick():
                 s = 0
             t = i + post_avg
 
-            print i, s, t
-            print 'Peak: {:.3e}, mean: {:.3e}, delta: {:.3e}'.format(
-                x[i], np.mean(x[s:t]), delta)
             diff = x[i] - (delta + np.mean(x[s:t]))
-            print diff
             assert diff > 0 or np.isclose(diff, 0, rtol=1e-3, atol=1e-4)
 
         # Test 3: peak separation
