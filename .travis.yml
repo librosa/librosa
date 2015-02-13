@@ -1,5 +1,8 @@
 language: python
 
+notifications:
+  email: false
+
 python:
     - "2.7"
     - "3.3"
@@ -7,10 +10,10 @@ python:
 before_install:
     - sudo apt-get update
     - sudo apt-get install python-numpy \
-            python-scipy cython \
-            libatlas-dev liblapack-dev \
-            gfortran ffmpeg \
-            libsamplerate0 libsamplerate0-dev
+        python-scipy cython \
+        libatlas-dev liblapack-dev \
+        gfortran ffmpeg \
+        libsamplerate0 libsamplerate0-dev
     - pip install -r requirements.txt
     - pip install nose
 
