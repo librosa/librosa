@@ -80,7 +80,6 @@ plot_rcparams = {
     'xtick.labelsize': font_size,
     'ytick.labelsize': font_size,
     'legend.fontsize': font_size,
-    'figure.figsize': (10, 5),
     'figure.subplot.bottom': 0.2,
     'figure.subplot.left': 0.2,
     'figure.subplot.right': 0.9,
