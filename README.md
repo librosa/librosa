@@ -57,3 +57,6 @@ Please refer to the Zenodo link below for citation information.
 [![DOI](https://zenodo.org/badge/doi/10.5072/zenodo.12714.png)](http://dx.doi.org/10.5072/zenodo.12714)
 
 
+Build Status
+============
+[![Build Status](https://travis-ci.org/bmcfee/librosa.png)](http://travis-ci.org/bmcfee/librosa)
