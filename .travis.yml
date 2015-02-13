@@ -6,9 +6,13 @@ python:
 
 before_install:
     - sudo apt-get update
-    - sudo apt-get install python-numpy python-scipy cython libatlas-dev liblapack-dev gfortran ffmpeg libsamplerate0
+    - sudo apt-get install python-numpy \
+            python-scipy cython \
+            libatlas-dev liblapack-dev \
+            gfortran ffmpeg \
+            libsamplerate0 libsamplerate0-dev
     - pip install -r requirements.txt
-    - pip install pytest
+    - pip install nose
 
 install:
     - python setup.py install
