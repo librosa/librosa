@@ -1,7 +1,2 @@
 [run]
 source = librosa
-
-[report]
-omit =
-    */python?.?/*
-    */site-packages/nose/*
