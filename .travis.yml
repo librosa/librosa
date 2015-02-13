@@ -11,8 +11,10 @@ before_install:
     - sudo apt-get update
     - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
         wget http://repo.continuum.io/miniconda/Miniconda-3.8.3-Linux-x86_64.sh -O miniconda.sh;
+        sudo apt-get install python-gst-1.0
       else
         wget http://repo.continuum.io/miniconda/Miniconda3-3.8.3-Linux-x86_64.sh -O miniconda.sh;
+        sudo apt-get install python3-gst-1.0
       fi
     - bash miniconda.sh -b -p $HOME/miniconda
     - export PATH="$HOME/miniconda/bin:$PATH"
@@ -23,7 +25,7 @@ before_install:
     - conda info -a
     - deps='pip numpy scipy pandas requests nose numpydoc matplotlib sphinx scikit-learn'
     - conda create -q -n test-environment "python=$TRAVIS_PYTHON_VERSION" $deps
-    - sudo apt-get install libsamplerate0 libsamplerate0-dev
+    - sudo apt-get install libsamplerate0 libsamplerate0-dev libgstreamer-plugins-base1.0-0
     - pip install --no-deps -r requirements.txt
     - source activate test-environment
 
