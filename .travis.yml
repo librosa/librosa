@@ -9,12 +9,15 @@ python:
 
 before_install:
     - sudo apt-get update
-    - sudo apt-get install python-numpy python-scipy cython libsamplerate0 libsamplerate0-dev
-    - pip install -r requirements.txt
-    - pip install nose
+    - sudo apt-get install python-numpy python-scipy cython
+    - sudo apt-get install libatlas-dev liblapack-dev gfortran
+    - sudo apt-get install libsamplerate0 libsamplerate0-dev
+    - sudo apt-get install cython
+    - pip install --upgrade -r requirements.txt
+    - pip install pytest
 
 install:
     - python setup.py install
 
 script:
-    - (cd tests && nosetests test*.py)
+    - (cd tests && py.test test*.py)
