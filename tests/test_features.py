@@ -50,12 +50,19 @@ def test_sync():
         librosa.feature.sync(data, frames)
 
     def __test_pass(data, frames):
+        # By default, mean aggregation
+        dsync = librosa.feature.sync(data, frames)
+        assert np.allclose(dsync, 2 * np.ones_like(dsync))
+
+        # Explicit mean aggregation
         dsync = librosa.feature.sync(data, frames, aggregate=np.mean)
         assert np.allclose(dsync, 2 * np.ones_like(dsync))
 
+        # Max aggregation
         dsync = librosa.feature.sync(data, frames, aggregate=np.max)
         assert np.allclose(dsync, 4 * np.ones_like(dsync))
 
+        # Min aggregation
         dsync = librosa.feature.sync(data, frames, aggregate=np.min)
         assert np.allclose(dsync, np.zeros_like(dsync))
 
