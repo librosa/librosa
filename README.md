@@ -1,12 +1,11 @@
-[![Build Status](https://travis-ci.org/bmcfee/librosa.png)](http://travis-ci.org/bmcfee/librosa)
-[![PyPI](https://img.shields.io/pypi/v/librosa.svg)](https://pypi.python.org/pypi/librosa)
-[![License](https://img.shields.io/pypi/l/librosa.svg)](https://github.com/bmcfee/librosa/blob/master/LICENSE)
-[![DOI](https://zenodo.org/badge/doi/10.5072/zenodo.12714.png)](http://dx.doi.org/10.5072/zenodo.12714)
-
 librosa
 =======
 A python package for music and audio analysis.  The primary purpose of librosa is to implement common tools for low- and high-level signal-based music analysis.
 
+[![Build Status](https://travis-ci.org/bmcfee/librosa.png)](http://travis-ci.org/bmcfee/librosa)
+[![PyPI](https://img.shields.io/pypi/v/librosa.svg)](https://pypi.python.org/pypi/librosa)
+[![License](https://img.shields.io/pypi/l/librosa.svg)](https://github.com/bmcfee/librosa/blob/master/LICENSE)
+[![DOI](https://zenodo.org/badge/doi/10.5072/zenodo.12714.png)](http://dx.doi.org/10.5072/zenodo.12714)
 
 Documentation
 -------------
