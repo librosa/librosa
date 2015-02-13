@@ -11,6 +11,8 @@ except:
 import librosa
 import numpy as np
 
+__EXAMPLE_FILE = 'data/test1_22050.wav'
+
 
 def test_time_stretch():
 
@@ -31,7 +33,7 @@ def test_time_stretch():
 
 def test_hpss():
 
-    y, sr = librosa.load(librosa.util.example_audio_file())
+    y, sr = librosa.load(__EXAMPLE_FILE)
 
     y_harm, y_perc = librosa.effects.hpss(y)
 

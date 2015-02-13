@@ -13,6 +13,8 @@ import librosa
 import numpy as np
 from nose.tools import raises
 
+__EXAMPLE_FILE = 'data/test1_22050.wav'
+
 
 def test_band_infinite():
 
@@ -141,7 +143,7 @@ def test_timelag_filter():
 
 def test_subsegment():
 
-    y, sr = librosa.load(librosa.util.example_audio_file())
+    y, sr = librosa.load(__EXAMPLE_FILE)
 
     X = librosa.feature.mfcc(y=y, sr=sr, hop_length=512)
     tempo, beats = librosa.beat.beat_track(y=y, sr=sr, hop_length=512)

@@ -17,6 +17,8 @@ import librosa
 
 from test_core import files, load
 
+__EXAMPLE_FILE = 'data/test1_22050.wav'
+
 
 def test_onset_strength():
 
@@ -80,7 +82,7 @@ def test_beat_no_onsets():
 
 def test_beat():
 
-    y, sr = librosa.load(librosa.util.example_audio_file())
+    y, sr = librosa.load(__EXAMPLE_FILE)
 
     hop_length = 512
 
