@@ -4,7 +4,3 @@
 ----------------------
 
 .. automodule:: librosa.onset
-    :members:
-    :undoc-members:
-    :show-inheritance:
-

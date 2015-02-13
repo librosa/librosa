@@ -4,8 +4,4 @@
 -------------------------
 
 .. automodule:: librosa.core
-    :members:
-    :imported-members:
-    :undoc-members:
-    :show-inheritance:
 
