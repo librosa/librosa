@@ -22,7 +22,7 @@ from . import util
 __all__ = ['decompose', 'hpss']
 
 
-def decompose(S, n_components=None, transformer=None, sort=False):
+def decompose(S, n_components=None, transformer=None, sort=False, **kwargs):
     """Decompose a feature matrix.
 
     Given a spectrogram `S`, produce a decomposition into `components`
@@ -65,6 +65,9 @@ def decompose(S, n_components=None, transformer=None, sort=False):
         .. note:: If used with `transformer`, sorting is applied to copies
             of the decomposition parameters, and not to `transformer`'s
             internal parameters.
+
+    kwargs : Additional keyword arguments to the default transformer
+        `sklearn.decomposition.NMF`
 
 
     Returns
@@ -140,7 +143,8 @@ def decompose(S, n_components=None, transformer=None, sort=False):
     """
 
     if transformer is None:
-        transformer = sklearn.decomposition.NMF(n_components=n_components)
+        transformer = sklearn.decomposition.NMF(n_components=n_components,
+                                                **kwargs)
 
     if n_components is None:
         n_components = S.shape[0]
