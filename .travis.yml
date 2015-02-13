@@ -13,12 +13,11 @@ before_install:
     # install deps
     - sudo conda init
     - sudo conda update conda --yes
-    - deps='pip numpy pandas requests nose numpydoc sphinx'
+    - deps='pip numpy scipy pandas requests nose numpydoc matplotlib sphinx'
     - conda create -p $HOME/py --yes $deps "python=$TRAVIS_PYTHON_VERSION"
     - export PATH=$HOME/py/bin:$PATH
     - sudo apt-get install libsamplerate0 libsamplerate0-dev
     - pip install -r requirements.txt
-    - pip install nose
 
 install:
     # install your own package into the environment
