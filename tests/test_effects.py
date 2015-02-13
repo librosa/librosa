@@ -37,11 +37,13 @@ def test_hpss():
 
     y_harm, y_perc = librosa.effects.hpss(y)
 
-    Dh = librosa.stft(y_harm)
-    Dp = librosa.stft(y_perc)
-    D = librosa.stft(y)
+    # Make sure that the residual energy is generally small
+    y_residual = y - y_harm - y_perc
 
-    assert np.allclose(D, Dh + Dp, rtol=1e-3, atol=1e-3)
+    rms_orig = librosa.feature.rms(y=y)
+    rms_res = librosa.feature.rms(y=y_residual)
+
+    assert np.percentile(rms_orig, 0.01) > np.percentile(rms_res, 0.99)
 
 
 def test_percussive():
