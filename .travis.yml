@@ -24,6 +24,7 @@ before_install:
     - deps='pip numpy scipy pandas requests nose numpydoc matplotlib sphinx scikit-learn'
     - conda create -q -n test-environment "python=$TRAVIS_PYTHON_VERSION" $deps
     - sudo apt-get install libsamplerate0 libsamplerate0-dev python-gst0.10 gstreamer0.10-plugins-{good,base}
+    - pip install coveralls
     - pip install --no-deps -r requirements.txt
     - source activate test-environment
 
@@ -32,4 +33,7 @@ install:
     - python setup.py install
 
 script:
-    - "nosetests -w tests/ -v"
+    - "nosetests --with-coverage --cover-package=librosa -w tests/ -v"
+
+after_success:
+    - coveralls
