@@ -234,9 +234,6 @@ def write_wav(path, y, sr, norm=True):
     else:
         wav = y
 
-    # Convert to 16bit int
-    wav = util.buf_to_int(wav)
-
     # Check for stereo
     if wav.ndim > 1 and wav.shape[0] == 2:
         wav = wav.T
