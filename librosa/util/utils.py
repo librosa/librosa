@@ -19,7 +19,7 @@ SMALL_FLOAT = 1e-20
 
 __all__ = ['MAX_MEM_BLOCK', 'SMALL_FLOAT',
            'frame', 'pad_center', 'fix_length',
-           'valid_audio', 'valid_int',
+           'valid_audio', 'valid_int', 'valid_intervals',
            'fix_frames',
            'axis_sort', 'localmax', 'normalize',
            'match_intervals', 'match_events',
@@ -188,6 +188,29 @@ def valid_int(x, cast=None):
                       'instead'.format(cast_name))
 
     return int(cast(x))
+
+
+def valid_intervals(intervals):
+    '''Ensure that an array is a valid representation of time intervals:
+
+        - intervals.ndim == 2
+        - intervals.shape[1] == 2
+
+    Parameters
+    ----------
+    intervals : np.ndarray [shape=(n, 2)]
+        set of time intervals
+
+    Returns
+    -------
+    valid : bool
+        True if `intervals` passes validation.
+    '''
+
+    if intervals.ndim != 2 or intervals.shape[-1] != 2:
+        raise ValueError('intervals must have shape (n, 2)')
+
+    return True
 
 
 @cache
@@ -639,11 +662,9 @@ def match_intervals(intervals_from, intervals_to):
     if len(intervals_from) == 0 or len(intervals_to) == 0:
         raise ValueError('Attempting to match empty interval list')
 
-    if not (intervals_from.shape[-1] == 2 and
-            intervals_to.shape[-1] == 2 and
-            intervals_from.ndim == 2 and
-            intervals_to.ndim == 2):
-        raise ValueError('Interval lists must be shape=(n, 2)')
+    # Verify that the input intervals has correct shape and size
+    valid_intervals(intervals_from)
+    valid_intervals(intervals_to)
 
     # The overlap score of a beat with a segment is defined as
     #   max(0, min(beat_end, segment_end) - max(beat_start, segment_start))
