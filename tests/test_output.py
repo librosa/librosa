@@ -12,6 +12,7 @@ except:
 import librosa
 import numpy as np
 import tempfile
+from nose.tools import raises
 
 
 def test_write_wav():
@@ -36,3 +37,39 @@ def test_write_wav():
 
     for mono in [False, True]:
         yield __test, mono
+
+
+def test_times_csv():
+
+    def __test(times, annotations, sep):
+
+        _, tfname = tempfile.mkstemp()
+
+        # Dump to disk
+        librosa.output.times_csv(tfname, times, annotations=annotations,
+                                 delimiter=sep)
+
+        # Load it back
+        with open(tfname, 'r') as fdesc:
+            for i, line in enumerate(fdesc):
+                if annotations is None:
+                    t_in = line.strip()
+                else:
+                    t_in, ann_in = line.strip().split(sep, 2)
+                t_in = float(t_in)
+
+                assert np.allclose(times[i], t_in, atol=1e-3, rtol=1e-3)
+                if annotations is not None:
+                    assert str(annotations[i]) == ann_in
+
+    __test_fail = raises(ValueError)(__test)
+
+    for times in [[], np.linspace(0, 10, 20)]:
+        for annotations in [None, ['abcde'[q] for q in np.random.randint(0, 5,
+                                   size=len(times))], list('abcde')]:
+                for sep in [',', '\t', ' ']:
+
+                    if annotations is not None and len(annotations) != len(times):
+                        yield __test_fail, times, annotations, sep
+                    else:
+                        yield __test, times, annotations, sep
