@@ -426,6 +426,13 @@ def test_peak_pick():
         # Test 3: peak separation
         assert not np.any(np.diff(peaks) <= wait)
 
+    @raises(ValueError)
+    def __test_shape_fail():
+        x = np.eye(10)
+        librosa.util.peak_pick(x, 1, 1, 1, 1, 0.5, 1)
+
+    yield __test_shape_fail
+
     win_range = [-1, 0, 1, 10]
 
     for n in [1, 5, 10, 100]:
