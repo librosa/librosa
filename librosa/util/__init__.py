@@ -11,6 +11,8 @@ Utilities
     pad_center
     fix_length
     valid_audio
+    valid_int
+    valid_intervals
     fix_frames
 
     axis_sort

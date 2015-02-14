@@ -561,3 +561,19 @@ def test_valid_int():
                 yield __test, x, cast
             else:
                 yield __test_fail, x, cast
+
+
+def test_valid_intervals():
+
+    def __test(intval):
+        librosa.util.valid_intervals(intval)
+
+    for d in range(1, 4):
+        for n in range(1, 4):
+            ivals = np.ones(d * [n])
+            for m in range(1, 3):
+                slices = [slice(m)] * d
+                if m == 2 and d == 2 and n > 1:
+                    yield __test, ivals[slices]
+                else:
+                    yield raises(ValueError)(__test), ivals[slices]

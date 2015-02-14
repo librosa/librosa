@@ -84,6 +84,8 @@ def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
         not match `intervals`
     '''
 
+    util.valid_intervals(intervals)
+
     if annotations is not None and len(annotations) != len(intervals):
         raise ValueError('len(annotations) != len(intervals)')
 
