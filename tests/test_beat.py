@@ -80,6 +80,23 @@ def test_beat_no_onsets():
     assert len(beats) == 0
 
 
+def test_tempo_no_onsets():
+
+    sr = 22050
+    hop_length = 512
+    duration = 30
+    onsets = np.zeros(duration * sr // hop_length)
+
+    def __test(start_bpm):
+        tempo = librosa.beat.estimate_tempo(onsets, sr=sr,
+                                            hop_length=hop_length,
+                                            start_bpm=start_bpm)
+        assert tempo == start_bpm
+
+    for start_bpm in [40, 60, 120, 240]:
+        yield __test, start_bpm
+
+
 def test_beat():
 
     y, sr = librosa.load(__EXAMPLE_FILE)
