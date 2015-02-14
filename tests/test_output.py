@@ -73,3 +73,42 @@ def test_times_csv():
                         yield __test_fail, times, annotations, sep
                     else:
                         yield __test, times, annotations, sep
+
+
+def test_annotation():
+
+    def __test(times, annotations, sep):
+
+        _, tfname = tempfile.mkstemp()
+
+        # Dump to disk
+        librosa.output.annotation(tfname, times, annotations=annotations,
+                                  delimiter=sep)
+
+        # Load it back
+        with open(tfname, 'r') as fdesc:
+            for i, line in enumerate(fdesc):
+                if annotations is None:
+                    t_in1, t_in2 = line.strip().split(sep, 2)
+                else:
+                    t_in1, t_in2, ann_in = line.strip().split(sep, 3)
+                t_in1 = float(t_in1)
+                t_in2 = float(t_in2)
+
+                assert np.allclose(times[i], [t_in1, t_in2],
+                                   atol=1e-3, rtol=1e-3)
+
+                if annotations is not None:
+                    assert str(annotations[i]) == ann_in
+
+    __test_fail = raises(ValueError)(__test)
+
+    times = np.random.randn(20, 2)
+
+    for annotations in [None, ['abcde'[q] for q in np.random.randint(0, 5,
+                               size=len(times))], list('abcde')]:
+        for sep in [',', '\t', ' ']:
+            if annotations is not None and len(annotations) != len(times):
+                yield __test_fail, times, annotations, sep
+            else:
+                yield __test, times, annotations, sep
