@@ -85,9 +85,13 @@ def test_recurrence_matrix():
 
     for n in [10, 100, 1000]:
         for k in [None, int(n/4)]:
-            for width in [1, 3, 5]:
-                for sym in [False, True]:
-                    yield __test, n, k, width, sym
+            for sym in [False, True]:
+                for width in [-1, 0, 1, 3, 5]:
+                    tester = __test
+                    if width < 1:
+                        tester = raises(ValueError)(__test)
+
+                    yield tester, n, k, width, sym
 
 
 def test_structure_feature():
