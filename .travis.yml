@@ -28,9 +28,9 @@ before_install:
     - pip install python-coveralls
     - source activate test-environment
 
-#install:
+install:
     # install your own package into the environment
-    #- python setup.py install
+    - python setup.py build_py
 
 script:
     - nosetests --with-coverage --cover-package=librosa -v -w tests/
