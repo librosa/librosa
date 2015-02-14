@@ -127,7 +127,7 @@ def frames_csv(path, frames, sr=22050, hop_length=512, n_fft=None, **kwargs):
     See Also
     --------
     times_csv
-    core.frames_to_time
+    librosa.core.frames_to_time
 
     Examples
     --------
