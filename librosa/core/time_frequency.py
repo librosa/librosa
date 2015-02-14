@@ -57,7 +57,7 @@ def frames_to_samples(frames, hop_length=512, n_fft=None):
 
     offset = 0
     if n_fft is not None:
-        offset = int(n_fft / 2)
+        offset = int(n_fft // 2)
 
     return (frames * hop_length + offset).astype(int)
 
@@ -105,7 +105,7 @@ def samples_to_frames(samples, hop_length=512, n_fft=None):
 
     offset = 0
     if n_fft is not None:
-        offset = int(n_fft / 2)
+        offset = int(n_fft // 2)
 
     return np.floor((samples - offset) / hop_length).astype(int)
 
