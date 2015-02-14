@@ -98,7 +98,7 @@ def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
                 writer.writerow([fmt % t_int[0], fmt % t_int[1], lab])
 
 
-def frames_csv(path, frames, sr=22050, hop_length=512, **kwargs):
+def frames_csv(path, frames, sr=22050, hop_length=512, n_fft=None, **kwargs):
     """Convert frames to time and store tbrycehe output in CSV format.
 
     Parameters
@@ -115,12 +115,19 @@ def frames_csv(path, frames, sr=22050, hop_length=512, **kwargs):
     hop_length : int > 0 [scalar]
         number of samples between success frames
 
+    n_fft : None or int > 0
+        length of the FFT window, if using left-aligned frames.
+        If specified, the output `time[i]` will correspond to the
+        center of the frame starting at `frames[i] * hop_length`
+        samples.
+
     kwargs : additional keyword arguments
         Arguments passed through to `times_csv`
 
     See Also
     --------
     times_csv
+    core.frames_to_time
 
     Examples
     --------
@@ -129,7 +136,8 @@ def frames_csv(path, frames, sr=22050, hop_length=512, **kwargs):
     >>> librosa.output.frames_csv('beat_times.csv', beats, sr=sr)
     """
 
-    times = core.frames_to_time(frames, sr=sr, hop_length=hop_length)
+    times = core.frames_to_time(frames, sr=sr, hop_length=hop_length,
+                                n_fft=n_fft)
 
     times_csv(path, times, **kwargs)
 
