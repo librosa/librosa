@@ -26,7 +26,6 @@ before_install:
     - sudo apt-get install libsamplerate0 libsamplerate0-dev python-gst0.10 gstreamer0.10-plugins-{good,base}
     - pip install --no-deps -r requirements.txt
     - pip install python-coveralls
-    - pip install http://gstreamer.freedesktop.org/src/gst-python/gst-python-1.2.1.tar.gz
     - source activate test-environment
 
 install:
