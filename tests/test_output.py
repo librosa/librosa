@@ -17,13 +17,13 @@ from nose.tools import raises
 
 def test_write_wav():
 
-    def __test(mono):
+    def __test(mono, norm):
 
         y, sr = librosa.load('data/test1_22050.wav', sr=None, mono=mono)
 
         _, tfname = tempfile.mkstemp()
 
-        librosa.output.write_wav(tfname, y, sr, norm=False)
+        librosa.output.write_wav(tfname, y, sr, norm=norm)
 
         y_2, sr2 = librosa.load(tfname, sr=None, mono=mono)
 
@@ -33,10 +33,16 @@ def test_write_wav():
 
         assert np.allclose(sr2, sr)
 
-        assert np.allclose(y, y_2, rtol=1e-3, atol=1e-4)
+        if norm:
+            assert np.allclose(librosa.util.normalize(y, axis=-1),
+                               librosa.util.normalize(y_2, axis=-1),
+                               rtol=1e-3, atol=1e-4)
+        else:
+            assert np.allclose(y, y_2, rtol=1e-3, atol=1e-4)
 
     for mono in [False, True]:
-        yield __test, mono
+        for norm in [False, True]:
+            yield __test, mono, norm
 
 
 def test_times_csv():
