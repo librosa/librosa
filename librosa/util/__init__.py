@@ -24,7 +24,6 @@ Utilities
 
     peak_pick
 
-    buf_to_int
     buf_to_float
 
 
