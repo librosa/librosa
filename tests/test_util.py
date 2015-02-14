@@ -13,6 +13,7 @@ import numpy as np
 np.set_printoptions(precision=3)
 import librosa
 from nose.tools import raises
+import six
 
 
 def test_example_audio_file():
@@ -532,3 +533,24 @@ def test_files():
 
                             yield (tf, searchdir, ext, recurse,
                                    case_sensitive, limit, offset)
+
+
+def test_valid_int():
+
+    def __test(x_in, cast):
+        z = librosa.util.valid_int(x_in, cast)
+
+        assert isinstance(z, int)
+        if cast is None:
+            assert z == int(np.floor(x_in))
+        else:
+            assert z == int(cast(x_in))
+
+    __test_fail = raises(TypeError)(__test)
+
+    for x in np.linspace(-2, 2, num=6):
+        for cast in [None, np.floor, np.ceil, 7]:
+            if cast is None or six.callable(cast):
+                yield __test, x, cast
+            else:
+                yield __test_fail, x, cast
