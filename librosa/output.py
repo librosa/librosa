@@ -213,7 +213,8 @@ def write_wav(path, y, sr, norm=True):
 # Deprecated functions below
 
 @util.decorators.deprecated('0.4', '0.5')
-def frames_csv(path, frames, sr=22050, hop_length=512, n_fft=None, **kwargs):
+def frames_csv(path, frames, sr=22050, hop_length=512,
+               n_fft=None, **kwargs):  # pragma: no cover
     """Convert frames to time and store the output in CSV format.
 
     .. note:: Deprecated in librosa 0.4

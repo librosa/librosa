@@ -1116,7 +1116,7 @@ def buf_to_float(x, n_bytes=2, dtype=np.float32):
 # Deprecated functions
 
 @decorators.deprecated('0.4', '0.5')
-def buf_to_int(x, n_bytes=2):
+def buf_to_int(x, n_bytes=2):  # pragma: no cover
     """Convert a floating point buffer into integer values.
     This is primarily useful as an intermediate step in wav output.
 
