@@ -155,7 +155,7 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
 
     # Initialize the weights
     n_mels = int(n_mels)
-    weights = np.zeros((n_mels, int(1 + n_fft / 2)))
+    weights = np.zeros((n_mels, int(1 + n_fft // 2)))
 
     # Center freqs of each FFT bin
     fftfreqs = fft_frequencies(sr=sr, n_fft=n_fft)
