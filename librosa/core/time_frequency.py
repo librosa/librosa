@@ -4,6 +4,7 @@
 
 import numpy as np
 import re
+import six
 
 
 __all__ = ['frames_to_samples', 'frames_to_time',
@@ -354,37 +355,41 @@ def note_to_midi(note, round_midi=True):
 
     '''
 
-    if not isinstance(note, str):
-        return np.array([note_to_midi(n) for n in note])
+    if not isinstance(note, six.string_types):
+        return np.array([note_to_midi(n, round_midi=round_midi) for n in note])
 
     pitch_map = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
     acc_map = {'#': 1, '': 0, 'b': -1, '!': -1}
 
-    try:
-        match = re.match(r'^(?P<n>[A-Ga-g])'
-                         r'(?P<offset>[#b!]*)'
-                         r'(?P<oct>[+-]?\d*)'
-                         r'(?P<cents>[+-]?\d*)$',
-                         note)
-
-        pitch = match.group('n').upper()
-        offset = np.sum([acc_map[o] for o in match.group('offset')])
-        octave = match.group('oct')
-        cents = match.group('cents')
-        if not octave:
-            octave = 0
-        else:
-            octave = int(octave)
-
-        if round_midi or not cents:
-            cents = 0
-        else:
-            cents = int(cents) * 1e-2
-
-    except:
+    match = re.match(r'^(?P<note>[A-Ga-g])'
+                     r'(?P<accidental>[#b!]*)'
+                     r'(?P<octave>[+-]?\d+)?'
+                     r'(?P<cents>[+-]\d+)?$',
+                     note)
+    if not match:
         raise ValueError('Improper note format: {:s}'.format(note))
 
-    return 12 * octave + pitch_map[pitch] + offset + cents
+    pitch = match.group('note').upper()
+    offset = np.sum([acc_map[o] for o in match.group('accidental')])
+    octave = match.group('octave')
+    cents = match.group('cents')
+
+    if not octave:
+        octave = 0
+    else:
+        octave = int(octave)
+
+    if not cents:
+        cents = 0
+    else:
+        cents = int(cents) * 1e-2
+
+    note_value = 12 * octave + pitch_map[pitch] + offset + cents
+
+    if round_midi:
+        note_value = int(np.round(note_value))
+
+    return note_value
 
 
 def midi_to_note(midi, octave=True, cents=False):
