@@ -115,13 +115,15 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
         onset_envelope = onset_strength(y=y, sr=sr, hop_length=hop_length)
 
+    # Shift onset envelope up to be non-negative
+    # (a common normalization step to make the threshold more consistent)
+    onset_envelope -= onset_envelope.min()
+
     # Do we have any onsets to grab?
     if not onset_envelope.any():
         return np.array([], dtype=np.int)
 
     # Normalize onset strength function to [0, 1] range
-    # (a common normalization step to make the threshold more consistent)
-    onset_envelope -= onset_envelope.min()
     onset_envelope /= onset_envelope.max()
 
     # These parameter settings found by large-scale search
