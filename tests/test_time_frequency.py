@@ -165,7 +165,6 @@ def test_note_to_midi():
             midi_true -= 1
 
         midi = librosa.note_to_midi(note, round_midi=round_midi)
-        print midi, midi_true, note
         if round_midi:
             midi_true = np.round(midi_true)
         assert midi == midi_true
