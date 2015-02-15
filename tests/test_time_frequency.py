@@ -218,7 +218,6 @@ def test_hz_to_note():
     def __test(hz, note, octave, cents):
         note_out = librosa.hz_to_note(hz, octave=octave, cents=cents)
 
-        print note_out, note
         assert list(note_out) == list([note])
 
     hz = 440
