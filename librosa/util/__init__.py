@@ -50,3 +50,4 @@ sklearn integration
 from .utils import *  # pylint: disable=wildcard-import
 from .files import *  # pylint: disable=wildcard-import
 from .feature_extractor import *  # pylint: disable=wildcard-import
+from . import decorators

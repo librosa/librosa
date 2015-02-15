@@ -11,6 +11,7 @@ import warnings
 from numpy.lib.stride_tricks import as_strided
 
 from .. import cache
+from . import decorators
 
 # Constrain STFT block sizes to 256 KB
 MAX_MEM_BLOCK = 2**8 * 2**10
@@ -25,7 +26,9 @@ __all__ = ['MAX_MEM_BLOCK', 'SMALL_FLOAT',
            'match_intervals', 'match_events',
            'peak_pick',
            'sparsify_rows',
-           'buf_to_float']
+           'buf_to_float',
+           # Deprecated functions
+           'buf_to_int']
 
 
 def frame(y, frame_length=2048, hop_length=512):
@@ -1108,3 +1111,41 @@ def buf_to_float(x, n_bytes=2, dtype=np.float32):
 
     # Rescale and format the data buffer
     return scale * np.frombuffer(x, fmt).astype(dtype)
+
+
+# Deprecated functions
+
+@decorators.deprecated('0.4', '0.5')
+def buf_to_int(x, n_bytes=2):
+    """Convert a floating point buffer into integer values.
+    This is primarily useful as an intermediate step in wav output.
+
+    See Also
+    --------
+    buf_to_float
+
+    Parameters
+    ----------
+    x : np.ndarray [dtype=float]
+        Floating point data buffer
+
+    n_bytes : int [1, 2, 4]
+        Number of bytes per output sample
+
+    Returns
+    -------
+    x_int : np.ndarray [dtype=int]
+        The original buffer cast to integer type.
+    """
+
+    if n_bytes not in [1, 2, 4]:
+        raise ValueError('n_bytes must be one of {1, 2, 4}')
+
+    # What is the scale of the input data?
+    scale = float(1 << ((8 * n_bytes) - 1))
+
+    # Construct a format string
+    fmt = '<i{:d}'.format(n_bytes)
+
+    # Rescale and cast the data
+    return (x * scale).astype(fmt)
