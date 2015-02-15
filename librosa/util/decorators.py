@@ -5,6 +5,7 @@
 
 import warnings
 from decorator import decorator
+import six
 
 
 def moved(moved_from, version, version_removed):
@@ -13,6 +14,7 @@ def moved(moved_from, version, version_removed):
     when the function is used.'''
 
     def __wrapper(func, *args, **kwargs):
+        code = six.get_function_code(func)
         warnings.warn_explicit(
             ("\n\tFunction '{:s}' was moved to '{:s}.{:s}' in "
              "librosa version {:s}."
@@ -21,8 +23,8 @@ def moved(moved_from, version, version_removed):
                                      func.__name__, version, version_removed),
 
             category=DeprecationWarning,
-            filename=func.func_code.co_filename,
-            lineno=func.func_code.co_firstlineno + 1
+            filename=code.co_filename,
+            lineno=code.co_firstlineno + 1
         )
         return func(*args, **kwargs)
 
@@ -35,6 +37,7 @@ def deprecated(version, version_removed):
     when the function is used.'''
 
     def __wrapper(func, *args, **kwargs):
+        code = six.get_function_code(func)
         warnings.warn_explicit(
             ("\n\tFunction '{:s}.{:s}' is deprecated as of "
              "librosa version {:s}."
@@ -42,8 +45,8 @@ def deprecated(version, version_removed):
              "version {:s}.").format(func.__module__, func.__name__,
                                      version, version_removed),
             category=DeprecationWarning,
-            filename=func.func_code.co_filename,
-            lineno=func.func_code.co_firstlineno + 1
+            filename=code.co_filename,
+            lineno=code.co_firstlineno + 1
         )
         return func(*args, **kwargs)
 
