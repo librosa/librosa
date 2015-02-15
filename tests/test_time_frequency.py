@@ -187,6 +187,50 @@ def test_note_to_midi():
     yield __test_fail
 
 
+def test_note_to_hz():
+
+    def __test(tuning, accidental, octave, round_midi):
+
+        note = 'A{:s}'.format(accidental)
+
+        if octave is not None:
+            note = '{:s}{:d}'.format(note, octave)
+        else:
+            octave = 0
+
+        if tuning is not None:
+            note = '{:s}{:+d}'.format(note, tuning)
+        else:
+            tuning = 0
+
+        if round_midi:
+            tuning = np.around(tuning, -2)
+
+        hz_true = 440.0 * (2.0**(tuning * 0.01 / 12)) * (2.0**(octave - 5))
+
+        if accidental == '#':
+            hz_true *= 2.0**(1./12)
+        elif accidental in list('b!'):
+            hz_true /= 2.0**(1./12)
+
+        hz = librosa.note_to_hz(note, round_midi=round_midi)
+        assert np.allclose(hz[0], hz_true)
+
+    @raises(ValueError)
+    def __test_fail():
+        librosa.note_to_midi('does not pass')
+
+    for tuning in [None, -25, 0, 25]:
+        for octave in [None, 1, 2, 3]:
+            if octave is None and tuning is not None:
+                continue
+            for accidental in ['', '#', 'b', '!']:
+                for round_midi in [False, True]:
+                    yield __test, tuning, accidental, octave, round_midi
+
+    yield __test_fail
+
+
 def test_midi_to_note():
 
     def __test(midi_num, note, octave, cents):
