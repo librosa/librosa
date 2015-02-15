@@ -14,6 +14,7 @@ np.set_printoptions(precision=3)
 import librosa
 from nose.tools import raises
 import six
+import warnings
 
 
 def test_example_audio_file():
@@ -577,3 +578,49 @@ def test_valid_intervals():
                     yield __test, ivals[slices]
                 else:
                     yield raises(ValueError)(__test), ivals[slices]
+
+
+def test_warning_deprecated():
+
+    @librosa.util.decorators.deprecated('old_version', 'new_version')
+    def __dummy():
+        return True
+
+    warnings.resetwarnings()
+    with warnings.catch_warnings(record=True) as out:
+        x = __dummy()
+
+        # Make sure we still get the right value
+        assert x is True
+
+        # And that the warning triggered
+        assert len(out) > 0
+
+        # And that the category is correct
+        assert out[0].category is DeprecationWarning
+
+        # And that it says the right thing (roughly)
+        assert 'deprecated' in str(out[0].message)
+
+
+def test_warning_moved():
+
+    @librosa.util.decorators.moved('from', 'old_version', 'new_version')
+    def __dummy():
+        return True
+
+    warnings.resetwarnings()
+    with warnings.catch_warnings(record=True) as out:
+        x = __dummy()
+
+        # Make sure we still get the right value
+        assert x is True
+
+        # And that the warning triggered
+        assert len(out) > 0
+
+        # And that the category is correct
+        assert out[0].category is DeprecationWarning
+
+        # And that it says the right thing (roughly)
+        assert 'moved' in str(out[0].message)
