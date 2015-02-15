@@ -793,9 +793,8 @@ def cqt_frequencies(n_bins, fmin, bins_per_octave=12, tuning=0.0):
     return correction * fmin * frequencies
 
 
-def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False,
-                    extra=False):
-    """Compute the center frequencies of mel bands
+def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False):
+    """Compute the center frequencies of mel bands.
 
     Parameters
     ----------
@@ -810,9 +809,6 @@ def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False,
 
     htk       : bool
         use HTK formula instead of Slaney
-
-    extra     : bool
-        include extra frequencies necessary for building Mel filters
 
     Returns
     -------
@@ -837,10 +833,7 @@ def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False,
     min_mel = hz_to_mel(fmin, htk=htk)
     max_mel = hz_to_mel(fmax, htk=htk)
 
-    mels = np.linspace(min_mel, max_mel, n_mels + 2)
-
-    if not extra:
-        mels = mels[:n_mels]
+    mels = np.linspace(min_mel, max_mel, n_mels)
 
     return mel_to_hz(mels, htk=htk)
 

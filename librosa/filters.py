@@ -161,11 +161,10 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
     fftfreqs = fft_frequencies(sr=sr, n_fft=n_fft)
 
     # 'Center freqs' of mel bands - uniformly spaced between limits
-    freqs = mel_frequencies(n_mels,
+    freqs = mel_frequencies(n_mels + 2,
                             fmin=fmin,
                             fmax=fmax,
-                            htk=htk,
-                            extra=True)
+                            htk=htk)
 
     # Slaney-style mel is scaled to be approx constant energy per channel
     enorm = 2.0 / (freqs[2:n_mels+2] - freqs[:n_mels])
