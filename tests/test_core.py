@@ -80,7 +80,7 @@ def test_resample():
                    'data/test2_8000.wav']:
         y, sr_in = librosa.load(infile, sr=None)
 
-        for sr_out in [8000, 22050, 44100]:
+        for sr_out in [8000, 22050]:
             for res_type in ['sinc_fastest', 'sinc_best']:
                 for fix in [False, True]:
                     for scipy_resample in [False, True]:
