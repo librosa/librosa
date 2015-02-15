@@ -59,7 +59,7 @@ def frames_to_samples(frames, hop_length=512, n_fft=None):
     if n_fft is not None:
         offset = int(n_fft // 2)
 
-    return (frames * hop_length + offset).astype(int)
+    return (np.atleast_1d(frames) * hop_length + offset).astype(int)
 
 
 def samples_to_frames(samples, hop_length=512, n_fft=None):
@@ -107,7 +107,7 @@ def samples_to_frames(samples, hop_length=512, n_fft=None):
     if n_fft is not None:
         offset = int(n_fft // 2)
 
-    return np.floor((samples - offset) / hop_length).astype(int)
+    return np.floor((np.atleast_1d(samples) - offset) // hop_length).astype(int)
 
 
 def frames_to_time(frames, sr=22050, hop_length=512, n_fft=None):
@@ -227,7 +227,7 @@ def time_to_samples(times, sr=22050):
     samples_to_time : convert sample indices to time values
     '''
 
-    return (times * sr).astype(int)
+    return (np.atleast_1d(times) * sr).astype(int)
 
 
 def samples_to_time(samples, sr=22050):
@@ -263,7 +263,7 @@ def samples_to_time(samples, sr=22050):
     time_to_samples : convert time values to sample indices
     '''
 
-    return samples / float(sr)
+    return np.atleast_1d(samples) / float(sr)
 
 
 def note_to_hz(note, **kwargs):
@@ -312,6 +312,30 @@ def note_to_midi(note, round_midi=True):
 
     Sharps are indicated with `#`, flats may be indicated with `!` or `b`.
 
+    Parameters
+    ----------
+    note : str or iterable of str
+        One or more note names.
+
+    round_midi : bool
+        - If `True`, allow for fractional midi notes
+        - Otherwise, round cent deviations to the nearest note
+
+    Returns
+    -------
+    midi : float or np.array
+        Midi note numbers corresponding to inputs.
+
+    Raises
+    ------
+    ValueError
+        If the input is not in valid note format
+
+    See Also
+    --------
+    midi_to_note
+    note_to_hz
+
     Examples
     --------
     >>> librosa.note_to_midi('C')
@@ -328,25 +352,6 @@ def note_to_midi(note, round_midi=True):
     >>> librosa.note_to_midi(['C', 'E', 'G'])
     array([0, 4, 7])
 
-
-    Parameters
-    ----------
-    note : str or iterable of str
-        One or more note names.
-
-    round_midi : bool
-        - If `True`, allow for fractional midi notes
-        - Otherwise, round cent deviations to the nearest note
-
-    Returns
-    -------
-    midi : float or np.array
-        Midi note numbers corresponding to inputs.
-
-    See Also
-    --------
-    midi_to_note
-    note_to_hz
     '''
 
     if not isinstance(note, str):
@@ -477,8 +482,7 @@ def midi_to_hz(notes):
     note_to_hz
     """
 
-    notes = np.asarray([notes]).flatten()
-    return 440.0 * (2.0 ** ((notes - 69.0)/12.0))
+    return 440.0 * (2.0 ** ((np.atleast_1d(notes) - 69.0)/12.0))
 
 
 def hz_to_midi(frequencies):
@@ -508,8 +512,7 @@ def hz_to_midi(frequencies):
     hz_to_note
     """
 
-    frequencies = np.asarray([frequencies]).flatten()
-    return 12 * (np.log2(frequencies) - np.log2(440.0)) + 69
+    return 12 * (np.log2(np.atleast_1d(frequencies)) - np.log2(440.0)) + 69
 
 
 def hz_to_note(frequencies, **kwargs):
@@ -578,12 +581,7 @@ def hz_to_mel(frequencies, htk=False):
     mel_to_hz
     """
 
-    frequencies = np.asarray([frequencies]).flatten()
-
-    if np.isscalar(frequencies):
-        frequencies = np.array([frequencies], dtype=float)
-    else:
-        frequencies = frequencies.astype(float)
+    frequencies = np.atleast_1d(frequencies)
 
     if htk:
         return 2595.0 * np.log10(1.0 + frequencies / 700.0)
@@ -634,7 +632,7 @@ def mel_to_hz(mels, htk=False):
     hz_to_mel
     """
 
-    mels = np.asarray([mels], dtype=float).flatten()
+    mels = np.atleast_1d(mels)
 
     if htk:
         return 700.0 * (10.0**(mels / 2595.0) - 1.0)
@@ -681,8 +679,7 @@ def hz_to_octs(frequencies, A440=440.0):
     --------
     octs_to_hz
     """
-    frequencies = np.asarray([frequencies]).flatten()
-    return np.log2(frequencies / (float(A440) / 16))
+    return np.log2(np.atleast_1d(frequencies) / (float(A440) / 16))
 
 
 def octs_to_hz(octs, A440=440.0):
@@ -713,8 +710,7 @@ def octs_to_hz(octs, A440=440.0):
     --------
     hz_to_octs
     """
-    octs = np.asarray([octs]).flatten()
-    return (float(A440) / 16)*(2.0**octs)
+    return (float(A440) / 16)*(2.0**np.atleast_1d(octs))
 
 
 def fft_frequencies(sr=22050, n_fft=2048):
@@ -874,7 +870,7 @@ def A_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
     '''
 
     # Vectorize to make our lives easier
-    frequencies = np.asarray([frequencies]).flatten()
+    frequencies = np.atleast_1d(frequencies)
 
     # Pre-compute squared frequeny
     f_sq = frequencies**2.0
