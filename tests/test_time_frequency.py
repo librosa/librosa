@@ -93,6 +93,31 @@ def test_samples_to_time():
         yield __test, sr
 
 
+def test_time_to_frames():
+
+    def __test(sr, hop_length, n_fft):
+
+        # Generate frames at times 0s, 1s, 2s
+        times = np.arange(3)
+
+        frames = librosa.time_to_frames(times,
+                                        sr=sr,
+                                        hop_length=hop_length,
+                                        n_fft=n_fft)
+
+        if n_fft:
+            frames -= n_fft // (2 * hop_length)
+
+        # we need to be within one frame
+        assert np.all(np.abs(times - np.asarray([0, 1, 2])) * sr
+                      < hop_length)
+
+    for sr in [22050, 44100]:
+        for hop_length in [256, 512]:
+            for n_fft in [None, 2048]:
+                yield __test, sr, hop_length, n_fft
+
+
 def test_octs_to_hz():
 
     def __test(a440):
