@@ -14,7 +14,9 @@ from .. import cache
 from .. import util
 
 __all__ = ['load', 'to_mono', 'resample', 'get_duration',
-           'autocorrelate', 'zero_crossings']
+           'autocorrelate', 'zero_crossings',
+           # Deprecated functions
+           'peak_pick', 'localmax']
 
 # Resampling bandwidths as percentage of Nyquist
 # http://www.mega-nerd.com/SRC/api_misc.html#Converters
@@ -515,3 +517,11 @@ def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
                   padding,
                   mode='constant',
                   constant_values=pad)
+
+
+# Moved/deprecated functions
+peak_pick = util.decorators.moved('librosa.core.peak_pick',
+                                  '0.4', '0.5')(util.peak_pick)
+
+localmax = util.decorators.moved('librosa.core.localmax',
+                                 '0.4', '0.5')(util.localmax)

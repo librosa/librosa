@@ -292,12 +292,14 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=2):
     return np.ascontiguousarray(wts[:, :int(1 + n_fft/2)])
 
 
-@cache
+@util.decorators.deprecated('0.4', '0.5')
 def logfrequency(sr, n_fft, n_bins=84, bins_per_octave=12, tuning=0.0,
                  fmin=None, spread=0.125):
     '''Approximate a constant-Q filter bank for a fixed-window STFT.
 
     Each filter is a log-normal window centered at the corresponding frequency.
+
+    .. note:: Deprecated in librosa 0.4
 
     Parameters
     ----------
