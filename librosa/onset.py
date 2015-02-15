@@ -257,6 +257,9 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
     n_fft = kwargs.get('n_fft', 2048)
     hop_length = kwargs.get('hop_length', 512)
 
+    # Ensure that S is at least 2-d
+    S = np.atleast_2d(S)
+
     # Compute first difference, include padding for alignment purposes
     onset_env = np.diff(S, axis=1)
     onset_env = np.pad(onset_env, ([0, 0], [1, 0]), mode='constant')
