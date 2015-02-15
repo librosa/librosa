@@ -25,7 +25,7 @@
 import os
 try:
     os.environ.pop('LIBROSA_CACHE_DIR')
-except:
+except KeyError:
     pass
 
 import librosa
@@ -102,7 +102,7 @@ def test_melfb():
         # Our version only returns the real-valued part.
         # Pad out.
         wts = numpy.pad(wts, [(0, 0),
-                              (0, int(DATA['nfft'][0]/2 - 1))],
+                              (0, int(DATA['nfft'][0]//2 - 1))],
                         mode='constant')
 
         assert wts.shape == DATA['wts'].shape
@@ -133,7 +133,7 @@ def test_chromafb():
         # Our version only returns the real-valued part.
         # Pad out.
         wts = numpy.pad(wts, [(0, 0),
-                              (0, int(DATA['nfft'][0, 0]/2 - 1))],
+                              (0, int(DATA['nfft'][0, 0]//2 - 1))],
                         mode='constant')
 
         assert wts.shape == DATA['wts'].shape

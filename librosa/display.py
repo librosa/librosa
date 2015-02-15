@@ -469,8 +469,7 @@ def __axis_mel(data, n_ticks, horiz, fmin=None, fmax=None, **_kwargs):
 
     # only two star-args here, defined immediately above
     # pylint: disable=star-args
-    values = core.mel_frequencies(n_mels=n, extra=True,
-                                  **kwargs)[positions]
+    values = core.mel_frequencies(n_mels=n+2, **kwargs)[positions]
     ticker(positions, values.astype(int))
     labeler('Hz')
 
