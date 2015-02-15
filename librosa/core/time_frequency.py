@@ -884,11 +884,11 @@ def A_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
 
     const = np.array([12200, 20.6, 107.7, 737.9])**2.0
 
-    r_a = const[0] * f_sq**2
-    r_a /= (f_sq + const[0]) * (f_sq + const[1])
-    r_a /= np.sqrt((f_sq + const[2]) * (f_sq + const[3]))
-
-    weights = 2.0 + 20 * np.log10(r_a)
+    weights = 2.0 + 20.0 * (np.log10(const[0]) + 4 * np.log10(frequencies)
+                            - np.log10(f_sq + const[0])
+                            - np.log10(f_sq + const[1])
+                            - 0.5 * np.log10(f_sq + const[2])
+                            - 0.5 * np.log10(f_sq + const[3]))
 
     if min_db is not None:
         weights = np.maximum(min_db, weights)
