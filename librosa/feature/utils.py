@@ -293,12 +293,11 @@ def sync(data, frames, aggregate=None, pad=True):
 
     """
 
-    if data.ndim < 2:
-        data = np.asarray([data])
-
-    elif data.ndim > 2:
+    if data.ndim > 2:
         raise ValueError('Synchronized data has ndim={:d},'
                          ' must be 1 or 2.'.format(data.ndim))
+
+    data = np.atleast_2d(data)
 
     if aggregate is None:
         aggregate = np.mean
