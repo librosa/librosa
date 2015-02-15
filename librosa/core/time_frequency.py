@@ -738,7 +738,7 @@ def fft_frequencies(sr=22050, n_fft=2048):
 
     return np.linspace(0,
                        float(sr) / 2,
-                       int(1 + n_fft/2),
+                       int(1 + n_fft//2),
                        endpoint=True)
 
 

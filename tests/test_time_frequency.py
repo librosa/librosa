@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 # CREATED:2015-02-14 19:13:49 by Brian McFee <brian.mcfee@nyu.edu>
-'''Unit tests for time and frequency conversion''' 
+'''Unit tests for time and frequency conversion'''
 
 import os
 try:
@@ -46,6 +46,31 @@ def test_samples_to_frames():
             if n_fft is not None:
                 y += n_fft // 2
             yield __test, y, x, hop_length, n_fft
+
+
+def test_frames_to_time():
+
+    def __test(sr, hop_length, n_fft):
+
+        # Generate frames at times 0s, 1s, 2s
+        frames = np.arange(3) * sr // hop_length
+
+        if n_fft:
+            frames -= n_fft // (2 * hop_length)
+
+        times = librosa.frames_to_time(frames,
+                                       sr=sr,
+                                       hop_length=hop_length,
+                                       n_fft=n_fft)
+
+        # we need to be within one frame
+        assert np.all(np.abs(times - np.asarray([0, 1, 2])) * sr
+                      < hop_length)
+
+    for sr in [22050, 44100]:
+        for hop_length in [256, 512]:
+            for n_fft in [None, 2048]:
+                yield __test, sr, hop_length, n_fft
 
 
 def test_time_to_samples():
