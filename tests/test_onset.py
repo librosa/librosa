@@ -105,3 +105,48 @@ def test_onset_strength_spectrogram():
                             tf = raises(ValueError)(__test)
                             yield (tf, None, sr, feature, n_fft,
                                    hop_length, detrend, centering)
+
+
+def test_onset_detect_real():
+
+    def __test(y, sr, oenv, hop_length):
+
+        onsets = librosa.onset.onset_detect(y=y, sr=sr, onset_envelope=oenv,
+                                            hop_length=hop_length)
+
+        assert np.all(onsets > 0)
+        assert np.all(onsets < len(y) * sr // hop_length)
+        if oenv is not None:
+            assert np.all(onsets < len(oenv))
+
+    y, sr = librosa.load(__EXAMPLE_FILE)
+
+    # Test with no signal
+    yield raises(ValueError)(__test), None, sr, None, 512
+
+    for hop_length in [64, 512, 2048]:
+        yield __test, y, sr, None, hop_length
+        oenv = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
+        yield __test, y, sr, oenv, hop_length
+
+
+def test_onset_detect_const():
+
+    def __test(y, sr, oenv, hop_length):
+
+        onsets = librosa.onset.onset_detect(y=y, sr=sr, onset_envelope=oenv,
+                                            hop_length=hop_length)
+
+        eq_(len(onsets), 0)
+
+    sr = 22050
+    duration = 3.0
+    for f in [np.zeros, np.ones]:
+        y = f(duration * sr)
+        for hop_length in [64, 512, 2048]:
+            yield __test, y, sr, None, hop_length
+            yield __test, -y, sr, None, hop_length
+            oenv = librosa.onset.onset_strength(y=y,
+                                                sr=sr,
+                                                hop_length=hop_length)
+            yield __test, y, sr, oenv, hop_length
