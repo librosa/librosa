@@ -141,6 +141,53 @@ def test_hz_to_octs():
         yield __test, a440
 
 
+def test_note_to_midi():
+
+    def __test(tuning, accidental, octave, round_midi):
+
+        note = 'C{:s}'.format(accidental)
+
+        if octave is not None:
+            note = '{:s}{:d}'.format(note, octave)
+        else:
+            octave = 0
+
+        if tuning is not None:
+            note = '{:s}{:+d}'.format(note, tuning)
+        else:
+            tuning = 0
+
+        midi_true = 12 * octave + tuning * 0.01
+
+        if accidental == '#':
+            midi_true += 1
+        elif accidental in list('b!'):
+            midi_true -= 1
+
+        midi = librosa.note_to_midi(note, round_midi=round_midi)
+        print midi, midi_true, note
+        if round_midi:
+            midi_true = np.round(midi_true)
+        assert midi == midi_true
+
+        midi = librosa.note_to_midi([note], round_midi=round_midi)
+        assert midi[0] == midi_true
+
+    @raises(ValueError)
+    def __test_fail():
+        librosa.note_to_midi('does not pass')
+
+    for tuning in [None, -25, 0, 25]:
+        for octave in [None, 1, 2, 3]:
+            if octave is None and tuning is not None:
+                continue
+            for accidental in ['', '#', 'b', '!']:
+                for round_midi in [False, True]:
+                    yield __test, tuning, accidental, octave, round_midi
+
+    yield __test_fail
+
+
 def test_cqt_frequencies():
 
     def __test(n_bins, fmin, bins_per_octave, tuning):
