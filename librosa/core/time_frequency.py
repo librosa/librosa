@@ -820,10 +820,10 @@ def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False,
     """
 
     # 'Center freqs' of mel bands - uniformly spaced between limits
-    minmel = hz_to_mel(fmin, htk=htk)
-    maxmel = hz_to_mel(fmax, htk=htk)
+    min_mel = hz_to_mel(fmin, htk=htk)
+    max_mel = hz_to_mel(fmax, htk=htk)
 
-    mels = np.arange(minmel, maxmel + 1, (maxmel - minmel) / (n_mels + 1.0))
+    mels = np.linspace(min_mel, max_mel, n_mels + 2)
 
     if not extra:
         mels = mels[:n_mels]
