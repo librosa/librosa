@@ -3,7 +3,7 @@
 #  unit tests for librosa.beat
 
 from __future__ import print_function
-from nose.tools import nottest, raises
+from nose.tools import nottest, raises, eq_
 
 # Disable cache
 import os
@@ -77,7 +77,7 @@ def test_beat_no_onsets():
                                            hop_length=hop_length)
 
     assert np.allclose(tempo, 0)
-    assert len(beats) == 0
+    eq_(len(beats), 0)
 
 
 def test_tempo_no_onsets():
@@ -91,7 +91,7 @@ def test_tempo_no_onsets():
         tempo = librosa.beat.estimate_tempo(onsets, sr=sr,
                                             hop_length=hop_length,
                                             start_bpm=start_bpm)
-        assert tempo == start_bpm
+        eq_(tempo, start_bpm)
 
     for start_bpm in [40, 60, 120, 240]:
         yield __test, start_bpm

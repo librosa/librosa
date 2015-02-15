@@ -11,7 +11,7 @@ except KeyError:
 
 import numpy as np
 import librosa
-from nose.tools import raises
+from nose.tools import raises, eq_
 
 
 def test_frames_to_samples():
@@ -167,10 +167,10 @@ def test_note_to_midi():
         midi = librosa.note_to_midi(note, round_midi=round_midi)
         if round_midi:
             midi_true = np.round(midi_true)
-        assert midi == midi_true
+        eq_(midi, midi_true)
 
         midi = librosa.note_to_midi([note], round_midi=round_midi)
-        assert midi[0] == midi_true
+        eq_(midi[0], midi_true)
 
     @raises(ValueError)
     def __test_fail():
@@ -236,7 +236,7 @@ def test_midi_to_note():
     def __test(midi_num, note, octave, cents):
         note_out = librosa.midi_to_note(midi_num, octave=octave, cents=cents)
 
-        assert note_out == note
+        eq_(note_out, note)
 
     midi_num = 24.25
 
@@ -262,7 +262,7 @@ def test_hz_to_note():
     def __test(hz, note, octave, cents):
         note_out = librosa.hz_to_note(hz, octave=octave, cents=cents)
 
-        assert list(note_out) == list([note])
+        eq_(list(note_out), list([note]))
 
     hz = 440
 
@@ -278,10 +278,10 @@ def test_fft_frequencies():
         freqs = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
 
         # DC
-        assert freqs[0] == 0
+        eq_(freqs[0], 0)
 
         # Nyquist, positive here for more convenient display purposes
-        assert freqs[-1] == sr / 2.0
+        eq_(freqs[-1], sr / 2.0)
 
         # Ensure that the frequencies increase linearly
         dels = np.diff(freqs)
@@ -302,7 +302,7 @@ def test_cqt_frequencies():
                                         tuning=tuning)
 
         # Make sure we get the right number of bins
-        assert len(freqs) == n_bins
+        eq_(len(freqs), n_bins)
 
         # And that the first bin matches fmin by tuning
         assert np.allclose(freqs[0],

@@ -11,7 +11,7 @@ except:
 import librosa
 import numpy as np
 
-from nose.tools import raises
+from nose.tools import raises, eq_
 
 
 def test_stack_memory():
@@ -27,8 +27,8 @@ def test_stack_memory():
 
         d, t = data.shape
 
-        assert data_stack.shape[0] == n_steps * d
-        assert data_stack.shape[1] == t
+        eq_(data_stack.shape[0], n_steps * d)
+        eq_(data_stack.shape[1], t)
 
         for i in range(d):
             for step in range(1, n_steps):
