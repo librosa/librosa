@@ -3,6 +3,7 @@
 '''Pitch-tracking and tuning estimation'''
 
 import numpy as np
+import warnings
 
 from .spectrum import ifgram, _spectrogram
 from . import time_frequency
@@ -99,21 +100,6 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     '''Given a collection of pitches, estimate its tuning offset
     (in fractions of a bin) relative to A440=440.0Hz.
 
-    Examples
-    --------
-    >>> # Generate notes at +25 cents
-    >>> freqs = librosa.cqt_frequencies(24, 55, tuning=0.25)
-    >>> librosa.pitch_tuning(freqs)
-    0.25
-
-    >>> # Track frequencies from a real spectrogram
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> pitches, magnitudes, stft = librosa.ifptrack(y, sr)
-    >>> # Select out pitches with high energy
-    >>> pitches = pitches[magnitudes > np.median(magnitudes)]
-    >>> librosa.pitch_tuning(pitches)
-    0.089999999999999969
-
     Parameters
     ----------
     frequencies : array-like, float
@@ -136,12 +122,32 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     --------
     estimate_tuning
         Estimating tuning from time-series or spectrogram input
+
+    Examples
+    --------
+    >>> # Generate notes at +25 cents
+    >>> freqs = librosa.cqt_frequencies(24, 55, tuning=0.25)
+    >>> librosa.pitch_tuning(freqs)
+    0.25
+
+    >>> # Track frequencies from a real spectrogram
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> pitches, magnitudes, stft = librosa.ifptrack(y, sr)
+    >>> # Select out pitches with high energy
+    >>> pitches = pitches[magnitudes > np.median(magnitudes)]
+    >>> librosa.pitch_tuning(pitches)
+    0.089999999999999969
+
     '''
 
     frequencies = np.atleast_1d(frequencies)
 
     # Trim out any DC components
     frequencies = frequencies[frequencies > 0]
+
+    if not np.any(frequencies):
+        warnings.warn('Trying to estimate tuning from empty frequency set.')
+        return 0.0
 
     # Compute the residual relative to the number of bins
     residual = np.mod(bins_per_octave
