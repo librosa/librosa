@@ -329,7 +329,8 @@ def test_A_weighting():
         a_range = librosa.A_weighting(np.linspace(2e1, 2e4),
                                       min_db=min_db)
         # Check that the db cap works
-        assert not np.any(a_range < min_db)
+        if min_db is not None:
+            assert not np.any(a_range < min_db)
 
     for min_db in [None, -40, -80]:
         yield __test, min_db
