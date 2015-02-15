@@ -228,6 +228,26 @@ def test_hz_to_note():
     yield __test, hz, 'A5+0', True, True
 
 
+def test_fft_frequencies():
+
+    def __test(sr, n_fft):
+        freqs = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
+
+        # DC
+        assert freqs[0] == 0
+
+        # Nyquist, positive here for more convenient display purposes
+        assert freqs[-1] == sr / 2.0
+
+        # Ensure that the frequencies increase linearly
+        dels = np.diff(freqs)
+        assert np.allclose(dels, dels[0])
+
+    for n_fft in [1024, 2048]:
+        for sr in [8000, 22050]:
+            yield __test, sr, n_fft
+
+
 def test_cqt_frequencies():
 
     def __test(n_bins, fmin, bins_per_octave, tuning):
