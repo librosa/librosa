@@ -187,6 +187,22 @@ def test_note_to_midi():
     yield __test_fail
 
 
+def test_midi_to_note():
+
+    def __test(midi_num, note, octave, cents):
+        note_out = librosa.midi_to_note(midi_num, octave=octave, cents=cents)
+
+        assert note_out == note
+
+    midi_num = 24.25
+
+    yield __test, midi_num, 'C', False, False
+    yield __test, midi_num, 'C2', True, False
+    yield raises(RuntimeError)(__test), midi_num, 'C+25', False, True
+    yield __test, midi_num, 'C2+25', True, True
+    yield __test, [midi_num], ['C'], False, False
+
+
 def test_cqt_frequencies():
 
     def __test(n_bins, fmin, bins_per_octave, tuning):

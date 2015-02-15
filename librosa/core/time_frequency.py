@@ -432,12 +432,20 @@ def midi_to_note(midi, octave=True, cents=False):
     notes : str or iterable of str
         Strings describing each midi note.
 
+    Raises
+    ------
+    RuntimeError
+        if `cents` is True and `octave` is False
+
     See Also
     --------
     midi_to_hz
     note_to_midi
     hz_to_note
     '''
+
+    if cents and not octave:
+        raise RuntimeError('Cannot encode cents without octave information.')
 
     if not np.isscalar(midi):
         return [midi_to_note(x, octave=octave, cents=cents) for x in midi]
