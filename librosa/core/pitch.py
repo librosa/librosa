@@ -146,10 +146,6 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     return tuning[np.argmax(counts)]
 
 
-
-    return pitches, magnitudes, D
-
-
 @cache
 def piptrack(y=None, sr=22050, S=None, n_fft=4096, hop_length=None,
              fmin=150.0, fmax=4000.0, threshold=0.1):
@@ -423,3 +419,5 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=None,
         bins = (starts + ends) / 2
         pitches[bins, t] = frqs
         magnitudes[bins, t] = mags
+
+    return pitches, magnitudes, D
