@@ -283,7 +283,7 @@ def piptrack(y=None, sr=22050, S=None, n_fft=4096, hop_length=None,
 @cache
 @util.decorators.deprecated('0.4', '0.5')
 def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=None,
-             fmax=None, threshold=0.75):
+             fmax=None, threshold=0.75):  # pragma: no cover
     '''Instantaneous pitch frequency tracking.
 
     .. note:: Deprecated in librosa 0.4
