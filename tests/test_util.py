@@ -243,8 +243,8 @@ def test_match_intervals():
 
         librosa.util.match_intervals(ints1, ints2)
 
-    for n in [0, 1, 5, 20, 500]:
-        for m in [0, 1, 5, 20, 500, 5000]:
+    for n in [0, 1, 5, 20, 100]:
+        for m in [0, 1, 5, 20, 100]:
             if n == 0 or m == 0:
                 yield __test_fail, n, m
             else:

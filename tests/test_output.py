@@ -12,7 +12,7 @@ except:
 import librosa
 import numpy as np
 import tempfile
-from nose.tools import raises
+from nose.tools import raises, eq_
 
 
 def test_write_wav():
@@ -71,7 +71,7 @@ def test_times_csv():
 
             assert np.allclose(times[i], t_in, atol=1e-3, rtol=1e-3)
             if annotations is not None:
-                assert str(annotations[i]) == ann_in
+                eq_(str(annotations[i]), ann_in)
 
     __test_fail = raises(ValueError)(__test)
 
@@ -116,7 +116,7 @@ def test_frames_csv():
             t_in = float(t_in)
             if annotations is not None:
                 annotations[i], ann_in
-                assert str(annotations[i]) == ann_in
+                eq_(str(annotations[i]), ann_in)
             assert np.allclose(times[i], t_in, atol=1e-3, rtol=1e-3)
 
     __test_fail = raises(ValueError)(__test)
@@ -166,7 +166,7 @@ def test_annotation():
                                atol=1e-3, rtol=1e-3)
 
             if annotations is not None:
-                assert str(annotations[i]) == ann_in
+                eq_(str(annotations[i]), ann_in)
 
     __test_fail = raises(ValueError)(__test)
 

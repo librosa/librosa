@@ -10,7 +10,7 @@ import tempfile
 import numpy as np
 import shutil
 
-from nose.tools import with_setup
+from nose.tools import with_setup, eq_
 
 
 # Disable any initial cache settings
@@ -49,7 +49,7 @@ def test_cache_disabled():
 
     # When there's no cache directory in the environment,
     # librosa.cache is a no-op.
-    assert func == func_cache
+    eq_(func, func_cache)
 
 
 @with_setup(cache_construct, cache_teardown)

@@ -33,8 +33,10 @@ import glob
 import numpy
 import scipy.io
 
+from nose.tools import eq_
 
-#-- utilities --#
+
+# -- utilities --#
 def files(pattern):
     test_files = glob.glob(pattern)
     test_files.sort()
@@ -43,10 +45,10 @@ def files(pattern):
 def load(infile):
     DATA = scipy.io.loadmat(infile, chars_as_strings=True)
     return DATA
-#--           --#
+# --           --#
 
 
-#-- Tests     --#
+# -- Tests     --#
 def test_hz_to_mel():
     def __test_to_mel(infile):
         DATA = load(infile)
@@ -105,13 +107,11 @@ def test_melfb():
                               (0, int(DATA['nfft'][0]//2 - 1))],
                         mode='constant')
 
-        assert wts.shape == DATA['wts'].shape
-
+        eq_(wts.shape, DATA['wts'].shape)
         assert numpy.allclose(wts, DATA['wts'])
 
     for infile in files('data/feature-melfb-*.mat'):
         yield (__test, infile)
-    pass
 
 
 def test_chromafb():
@@ -136,10 +136,8 @@ def test_chromafb():
                               (0, int(DATA['nfft'][0, 0]//2 - 1))],
                         mode='constant')
 
-        assert wts.shape == DATA['wts'].shape
-
+        eq_(wts.shape, DATA['wts'].shape)
         assert numpy.allclose(wts, DATA['wts'])
 
     for infile in files('data/feature-chromafb-*.mat'):
         yield (__test, infile)
-    pass
