@@ -317,3 +317,19 @@ def test_cqt_frequencies():
             for bins_per_octave in [12, 24, 36]:
                 for tuning in [-0.25, 0.0, 0.25]:
                     yield __test, n_bins, fmin, bins_per_octave, tuning
+
+
+def test_A_weighting():
+
+    def __test(min_db):
+        # Check that 1KHz is around 0dB
+        a_khz = librosa.A_weighting(1000.0, min_db=min_db)
+        assert np.allclose(a_khz, 0, atol=1e-3)
+
+        a_range = librosa.A_weighting(np.linspace(2e1, 2e4),
+                                      min_db=min_db)
+        # Check that the db cap works
+        assert not np.any(a_range < min_db)
+
+    for min_db in [None, -40, -80]:
+        yield __test, min_db
