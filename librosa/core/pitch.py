@@ -122,7 +122,7 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
         Estimating tuning from time-series or spectrogram input
     '''
 
-    frequencies = np.asarray([frequencies], dtype=float).flatten()
+    frequencies = np.atleast_1d(frequencies)
 
     # Trim out any DC components
     frequencies = frequencies[frequencies > 0]
@@ -215,8 +215,8 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=None,
     if fmax is None:
         fmax = (2000.0, 4000.0)
 
-    fmin = np.asarray([fmin]).squeeze()
-    fmax = np.asarray([fmax]).squeeze()
+    fmin = np.atleast_1d(fmin)
+    fmax = np.atleast_1d(fmax)
 
     # Truncate to feasible region
     fmin = np.maximum(0, fmin)
@@ -229,7 +229,7 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=None,
     max_bin = int(round(fmax[-1] / fft_res))
 
     if hop_length is None:
-        hop_length = int(n_fft / 4)
+        hop_length = int(n_fft // 4)
 
     # Calculate the inst freq gram
     if_gram, D = ifgram(y, sr=sr, n_fft=n_fft, win_length=int(n_fft/2),
