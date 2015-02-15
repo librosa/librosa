@@ -388,9 +388,10 @@ def test_estimate_tuning():
 
         t = np.linspace(0, duration, duration * sr)
 
+
         for resolution in [1e-2]:
             for bins_per_octave in [12]:
-                for center_note in [69, 84, 108]:
+
                     for tuning in [-0.5, -0.375, -0.25, -0.125, 0.0, 0.125, 0.25, 0.375]:
                         target_hz = librosa.midi_to_hz(center_note + tuning)
 
