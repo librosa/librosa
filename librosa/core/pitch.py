@@ -15,8 +15,43 @@ __all__ = ['estimate_tuning', 'pitch_tuning', 'piptrack',
 
 
 @cache
-def estimate_tuning(resolution=0.01, bins_per_octave=12, **kwargs):
+def estimate_tuning(y=None, sr=22050, S=None, n_fft=2048,
+                    resolution=0.01, bins_per_octave=12, **kwargs):
     '''Estimate the tuning of an audio time series or spectrogram input.
+
+    Parameters
+    ----------
+    y: np.ndarray [shape=(n,)] or None
+        audio signal
+
+    sr : int > 0 [scalar]
+        audio sampling rate of `y`
+
+    S: np.ndarray [shape=(d, t)] or None
+        magnitude or power spectrogram
+
+    n_fft : int > 0 [scalar] or None
+        number of FFT bins to use, if `y` is provided.
+
+    resolution : float in `(0, 1)`
+        Resolution of the tuning as a fraction of a bin.
+        0.01 corresponds to measurements in cents.
+
+    bins_per_octave : int > 0 [scalar]
+        How many frequency bins per octave
+
+    kwargs : additional keyword arguments
+        Additional arguments passed to `piptrack`
+
+    Returns
+    -------
+    tuning: float in `[-0.5, 0.5)`
+        estimated tuning deviation (fractions of a bin)
+
+    See Also
+    --------
+    piptrack
+        Pitch tracking by parabolic interpolation
 
     Examples
     --------
@@ -42,30 +77,9 @@ def estimate_tuning(resolution=0.01, bins_per_octave=12, **kwargs):
                                 fmax=librosa.note_to_hz('G#10'))
     0.070000000000000062
 
-    Parameters
-    ----------
-    resolution : float in `(0, 1)`
-        Resolution of the tuning as a fraction of a bin.
-        0.01 corresponds to measurements in cents.
-
-    bins_per_octave : int > 0 [scalar]
-        How many frequency bins per octave
-
-    kwargs : additional keyword arguments
-        Additional arguments passed to `piptrack`
-
-    Returns
-    -------
-    tuning: float in `[-0.5, 0.5)`
-        estimated tuning deviation (fractions of a bin)
-
-    See Also
-    --------
-    piptrack
-        Pitch tracking by parabolic interpolation
     '''
 
-    pitch, mag = piptrack(**kwargs)
+    pitch, mag = piptrack(y=y, sr=sr, S=S, n_fft=n_fft, **kwargs)
 
     # Only count magnitude where frequency is > 0
     pitch_mask = pitch > 0
@@ -153,11 +167,6 @@ def piptrack(y=None, sr=22050, S=None, n_fft=4096, hop_length=None,
 
     .. [1] https://ccrma.stanford.edu/~jos/sasp/Sinusoidal_Peak_Interpolation.html
 
-    Examples
-    --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> pitches, magnitudes = librosa.piptrack(y=y, sr=sr)
-
     Parameters
     ----------
     y: np.ndarray [shape=(n,)] or None
@@ -204,11 +213,17 @@ def piptrack(y=None, sr=22050, S=None, n_fft=4096, hop_length=None,
 
         Both `pitches` and `magnitudes` take value 0 at bins
         of non-maximal magnitude.
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> pitches, magnitudes = librosa.piptrack(y=y, sr=sr)
+
     '''
 
     # Check that we received an audio time series or STFT
     if hop_length is None:
-        hop_length = int(n_fft / 4)
+        hop_length = int(n_fft // 4)
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
 
