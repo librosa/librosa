@@ -119,12 +119,23 @@ def test_time_to_frames():
 
 
 def test_octs_to_hz():
-
     def __test(a440):
         freq = np.asarray([55, 110, 220, 440]) * (float(a440) / 440.0)
         freq_out = librosa.octs_to_hz([1, 2, 3, 4], A440=a440)
 
         assert np.allclose(freq, freq_out)
+
+    for a440 in [415, 430, 435, 440, 466]:
+        yield __test, a440
+
+
+def test_hz_to_octs():
+    def __test(a440):
+        freq = np.asarray([55, 110, 220, 440]) * (float(a440) / 440.0)
+        octs = [1, 2, 3, 4]
+        oct_out = librosa.hz_to_octs(freq, A440=a440)
+
+        assert np.allclose(octs, oct_out)
 
     for a440 in [415, 430, 435, 440, 466]:
         yield __test, a440

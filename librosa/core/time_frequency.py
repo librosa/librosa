@@ -784,18 +784,6 @@ def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False,
                     extra=False):
     """Compute the center frequencies of mel bands
 
-    Examples
-    --------
-    >>> librosa.mel_frequencies(n_mels=40)
-    array([    0.   ,    81.155,   162.311,   243.466,   324.622,
-             405.777,   486.933,   568.088,   649.244,   730.399,
-             811.554,   892.71 ,   973.865,  1058.382,  1150.775,
-            1251.232,  1360.46 ,  1479.222,  1608.352,  1748.754,
-            1901.413,  2067.399,  2247.874,  2444.104,  2657.464,
-            2889.45 ,  3141.687,  3415.943,  3714.14 ,  4038.369,
-            4390.902,  4774.209,  5190.978,  5644.128,  6136.837,
-            6672.557,  7255.043,  7888.378,  8577.001,  9325.737])
-
     Parameters
     ----------
     n_mels    : int > 0 [scalar]
@@ -817,6 +805,19 @@ def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False,
     -------
     bin_frequencies : ndarray [shape=(n_mels,)]
         vector of Mel frequencies
+
+    Examples
+    --------
+    >>> librosa.mel_frequencies(n_mels=40)
+    array([    0.   ,    81.155,   162.311,   243.466,   324.622,
+             405.777,   486.933,   568.088,   649.244,   730.399,
+             811.554,   892.71 ,   973.865,  1058.382,  1150.775,
+            1251.232,  1360.46 ,  1479.222,  1608.352,  1748.754,
+            1901.413,  2067.399,  2247.874,  2444.104,  2657.464,
+            2889.45 ,  3141.687,  3415.943,  3714.14 ,  4038.369,
+            4390.902,  4774.209,  5190.978,  5644.128,  6136.837,
+            6672.557,  7255.043,  7888.378,  8577.001,  9325.737])
+
     """
 
     # 'Center freqs' of mel bands - uniformly spaced between limits
@@ -872,7 +873,7 @@ def A_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
     # Vectorize to make our lives easier
     frequencies = np.atleast_1d(frequencies)
 
-    # Pre-compute squared frequeny
+    # Pre-compute squared frequency
     f_sq = frequencies**2.0
 
     const = np.array([12200, 20.6, 107.7, 737.9])**2.0
