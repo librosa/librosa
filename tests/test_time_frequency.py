@@ -203,6 +203,32 @@ def test_midi_to_note():
     yield __test, [midi_num], ['C'], False, False
 
 
+def test_midi_to_hz():
+
+    assert np.allclose(librosa.midi_to_hz([33, 45, 57, 69]),
+                       [55, 110, 220, 440])
+
+
+def test_hz_to_midi():
+    assert np.allclose(librosa.hz_to_midi([55, 110, 220, 440]),
+                       [33, 45, 57, 69])
+
+
+def test_hz_to_note():
+    def __test(hz, note, octave, cents):
+        note_out = librosa.hz_to_note(hz, octave=octave, cents=cents)
+
+        print note_out, note
+        assert list(note_out) == list([note])
+
+    hz = 440
+
+    yield __test, hz, 'A', False, False
+    yield __test, hz, 'A5', True, False
+    yield raises(RuntimeError)(__test), hz, 'A+0', False, True
+    yield __test, hz, 'A5+0', True, True
+
+
 def test_cqt_frequencies():
 
     def __test(n_bins, fmin, bins_per_octave, tuning):
