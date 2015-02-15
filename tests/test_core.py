@@ -20,7 +20,7 @@ import glob
 import numpy as np
 import scipy.io
 
-from nose.tools import nottest
+from nose.tools import nottest, eq_
 
 
 # -- utilities --#
@@ -40,10 +40,12 @@ def test_load():
 
     def __test(infile):
         DATA = load(infile)
-        (y, sr) = librosa.load(DATA['wavfile'][0], sr=None, mono=DATA['mono'])
+        y, sr = librosa.load(DATA['wavfile'][0],
+                             sr=None,
+                             mono=DATA['mono'])
 
         # Verify that the sample rate is correct
-        assert sr == DATA['sr']
+        eq_(sr, DATA['sr'])
 
         assert np.allclose(y, DATA['y'])
 
@@ -78,7 +80,7 @@ def test_resample():
     for infile in ['data/test1_44100.wav',
                    'data/test1_22050.wav',
                    'data/test2_8000.wav']:
-        y, sr_in = librosa.load(infile, sr=None)
+        y, sr_in = librosa.load(infile, sr=None, duration=5)
 
         for sr_out in [8000, 22050]:
             for res_type in ['sinc_fastest', 'sinc_best']:
@@ -226,10 +228,10 @@ def test_load_options():
             assert np.allclose(y.shape[-1] / float(sr), duration)
 
         if mono:
-            assert y.ndim == 1
+            eq_(y.ndim, 1)
         else:
             # This test file is stereo, so y.ndim should be 2
-            assert y.ndim == 2
+            eq_(y.ndim, 2)
 
     for offset in [0, 1, 2]:
         for duration in [None, 0, 1, 2]:
@@ -281,10 +283,10 @@ def test_autocorrelate():
         ac = librosa.autocorrelate(y, max_size=max_size)
 
         if max_size is None or max_size > len(y):
-            assert len(ac) == len(y)
+            eq_(len(ac), len(y))
 
         else:
-            assert len(ac) == max_size
+            eq_(len(ac), max_size)
 
     y = np.random.randn(256)
 
@@ -299,8 +301,8 @@ def test_to_mono():
 
         y_mono = librosa.to_mono(y)
 
-        assert y_mono.ndim == 1
-        assert len(y_mono) == y.shape[-1]
+        eq_(y_mono.ndim, 1)
+        eq_(len(y_mono), y.shape[-1])
 
         if mono:
             assert np.allclose(y, y_mono)
