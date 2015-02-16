@@ -600,7 +600,7 @@ def test_warning_deprecated():
         assert out[0].category is DeprecationWarning
 
         # And that it says the right thing (roughly)
-        assert 'deprecated' in str(out[0].message)
+        assert 'deprecated' in str(out[0].message).lower()
 
 
 def test_warning_moved():
@@ -623,4 +623,4 @@ def test_warning_moved():
         assert out[0].category is DeprecationWarning
 
         # And that it says the right thing (roughly)
-        assert 'moved' in str(out[0].message)
+        assert 'moved' in str(out[0].message).lower()
