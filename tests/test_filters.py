@@ -34,7 +34,7 @@ import glob
 import numpy as np
 import scipy.io
 
-from nose.tools import eq_
+from nose.tools import eq_, raises
 
 
 # -- utilities --#
@@ -163,3 +163,66 @@ def test__window():
                             'nuttall', 'parzen', 'triang']:
             window = getattr(scipy.signal.windows, window_name)
             yield __test, n, window
+
+
+def test_constant_q():
+
+    def __test(sr, fmin, n_bins, bins_per_octave, tuning, resolution,
+               pad_fft, norm):
+
+        F, lengths = librosa.filters.constant_q(sr,
+                                                fmin=fmin,
+                                                n_bins=n_bins,
+                                                bins_per_octave=bins_per_octave,
+                                                tuning=tuning,
+                                                resolution=resolution,
+                                                pad_fft=pad_fft,
+                                                norm=norm,
+                                                return_lengths=True)
+
+        assert np.all(lengths <= F.shape[1])
+
+        eq_(len(F), n_bins)
+
+        if not pad_fft:
+            return
+
+        eq_(np.mod(np.log2(F.shape[1]), 1.0), 0.0)
+
+        # Check for vanishing negative frequencies
+        F_fft = np.abs(np.fft.fft(F, axis=1))
+        # Normalize by row-wise peak
+        F_fft = F_fft / np.max(F_fft, axis=1, keepdims=True)
+        assert not np.any(F_fft[:, -F_fft.shape[1]//2:] > 1e-4)
+
+    sr = 11025
+
+    # Try to make a cq basis too close to nyquist
+    yield (raises(ValueError)(__test), sr, sr/2.0, 1, 12, 0, 1, True, 1)
+
+    # with negative fmin
+    yield (raises(ValueError)(__test), sr, -60, 1, 12, 0, 1, True, 1)
+
+    # with negative bins_per_octave
+    yield (raises(ValueError)(__test), sr, 60, 1, -12, 0, 1, True, 1)
+
+    # with negative bins
+    yield (raises(ValueError)(__test), sr, 60, -1, 12, 0, 1, True, 1)
+
+    # with negative resolution
+    yield (raises(ValueError)(__test), sr, 60, 1, 12, 0, -1, True, 1)
+
+    # with negative norm
+    yield (raises(ValueError)(__test), sr, 60, 1, 12, 0, 1, True, -1)
+
+    for fmin in [None, librosa.note_to_hz('C3')]:
+        for n_bins in [12, 24]:
+            for bins_per_octave in [12, 24]:
+                for tuning in [0, 0.25]:
+                    for resolution in [1, 2]:
+                        for norm in [1, 2]:
+                            for pad_fft in [False, True]:
+                                yield (__test, sr, fmin, n_bins,
+                                       bins_per_octave, tuning,
+                                       resolution, pad_fft,
+                                       norm)
