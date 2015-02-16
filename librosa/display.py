@@ -221,27 +221,28 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
         Hop length, also used to determine time scale in x-axis
 
     x_axis : None or str
+
     y_axis : None or str
         Range for the x- and y-axes.
 
         Valid types are:
 
-        - None or 'off': no axis is displayed.
+        - None or 'off' : no axis is displayed.
 
         Frequency types:
 
-        - 'linear': frequency range is determined by the FFT window
+        - 'linear' : frequency range is determined by the FFT window
             and sampling rate.
-        - 'log': the image is displayed on a vertical log scale.
-        - 'mel': frequencies are determined by the mel scale.
-        - 'cqt_hz': frequencies are determined by the CQT scale.
-        - 'cqt_note': pitches are determined by the CQT scale.
-        - 'chroma': pitches are determined by the chroma filters.
+        - 'log' : the image is displayed on a vertical log scale.
+        - 'mel' : frequencies are determined by the mel scale.
+        - 'cqt_hz' : frequencies are determined by the CQT scale.
+        - 'cqt_note' : pitches are determined by the CQT scale.
+        - 'chroma' : pitches are determined by the chroma filters.
 
         Time types:
-        - 'time': markers are shown as milliseconds, seconds,
-          minutes, or hours
-        - 'frames': markers are shown as frame counts.
+        - 'time' : markers are shown as milliseconds, seconds,
+            minutes, or hours
+        - 'frames' : markers are shown as frame counts.
 
     n_xticks : int > 0 [scalar]
         If x_axis is drawn, the number of ticks to show
@@ -265,16 +266,21 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
     kwargs : additional keyword arguments
         Arguments passed through to `matplotlib.pyplot.imshow`.
 
+
     Returns
     -------
     image : `matplotlib.image.AxesImage`
         As returned from `matplotlib.pyplot.imshow`.
 
+
     See Also
     --------
     cmap : Automatic colormap detection
+
     time_ticks : time-formatted tick marks
+
     matplotlib.pyplot.imshow
+
 
     Examples
     --------
@@ -336,6 +342,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Log power spectrogram')
     >>> plt.tight_layout()
+
 
     '''
 
