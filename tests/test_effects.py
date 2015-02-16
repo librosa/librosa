@@ -59,6 +59,36 @@ def test_pitch_shift():
                1, bins_per_octave)
 
 
+def test_remix_mono():
+
+    # without zc alignment
+    y = np.asarray([1,1,1,0,0,0,-1,-1,-1,2,2,2])
+    intervals = np.asarray([[9, 12],
+                            [6, 9],
+                            [3, 6],
+                            [0, 3]])
+
+    y_out = librosa.effects.remix(y, intervals, align_zeros=False)
+
+    assert np.allclose(y_out, y[::-1])
+
+
+def test_remix_stereo():
+
+    # without zc alignment
+    y = np.asarray([[1,1,1,0,0,0,-1,-1,-1,2,2,2],
+                    [1,1,1,0,0,0,-1,-1,-1,2,2,2]])
+
+    intervals = np.asarray([[9, 12],
+                            [6, 9],
+                            [3, 6],
+                            [0, 3]])
+
+    y_out = librosa.effects.remix(y, intervals, align_zeros=False)
+
+    assert np.allclose(y_out, y[:, ::-1])
+
+
 def test_hpss():
 
     y, sr = librosa.load(__EXAMPLE_FILE)
