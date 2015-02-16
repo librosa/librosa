@@ -177,7 +177,31 @@ def test_ifgram():
     for infile in files('data/core-ifgram-*.mat'):
         yield (__test, infile)
 
-    pass
+
+def test_ifgram_matches_stft():
+
+    y, sr = librosa.load('data/test1_22050.wav')
+
+    def __test(n_fft, hop_length, win_length, center, norm, dtype):
+        D_stft = librosa.stft(y, n_fft=n_fft, hop_length=hop_length,
+                              win_length=win_length, center=center,
+                              dtype=dtype)
+
+        _, D_ifgram = librosa.ifgram(y, sr, n_fft=n_fft,
+                                     hop_length=hop_length,
+                                     win_length=win_length, center=center,
+                                     norm=norm, dtype=dtype)
+
+        assert np.allclose(D_stft, D_ifgram)
+
+    for n_fft in [1024, 2048]:
+        for hop_length in [None, n_fft // 2, n_fft // 4]:
+            for win_length in [None, n_fft // 2, n_fft // 4]:
+                for center in [False, True]:
+                    for norm in [False]:
+                        for dtype in [np.complex64, np.complex128]:
+                            yield (__test, n_fft, hop_length, win_length,
+                                   center, norm, dtype)
 
 
 def test_magphase():
