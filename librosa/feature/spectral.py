@@ -254,8 +254,15 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
 @cache
 def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
-                      freq=None, n_bands=6):
-    '''Compute spectral contrast
+                      freq=None, fmin=200.0, n_bands=6, quantile=0.02):
+    '''Compute spectral contrast [1]_
+
+    .. [1] Jiang, Dan-Ning, Lie Lu, Hong-Jiang Zhang, Jian-Hua Tao,
+           and Lian-Hong Cai.
+           "Music type classification by spectral contrast feature."
+           In Multimedia and Expo, 2002. ICME'02. Proceedings.
+           2002 IEEE International Conference on, vol. 1, pp. 113-116.
+           IEEE, 2002.
 
     Parameters
     ----------
@@ -281,8 +288,15 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         or a matrix of center frequencies as constructed by
         `librosa.core.ifgram`
 
+    fmin : float > 0
+        Frequency cutoff for the first bin `[0, fmin]`
+        Subsequent bins will cover `[fmin, 2*fmin]`, `[2*fmin, 4*fmin]`, etc.
+
     n_bands : int > 1
         number of frequency bands
+
+    quantile : float in [0, 1]
+        quantile for determining peaks and valleys
 
     Returns
     -------
@@ -318,10 +332,8 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     if freq is None:
         freq = fft_frequencies(sr=sr, n_fft=n_fft)
 
-    #     TODO:   2014-12-31 12:48:36 by Brian McFee <brian.mcfee@nyu.edu>
-    #   shouldn't this be scaled relative to the max frequency?
     octa = np.zeros(n_bands + 2)
-    octa[1:] = 200 * (2.0**np.arange(0, n_bands + 1))
+    octa[1:] = fmin * (2.0**np.arange(0, n_bands + 1))
 
     valley = np.zeros((n_bands + 1, S.shape[1]))
     peak = np.zeros_like(valley)
@@ -342,16 +354,16 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         if k < n_bands:
             sub_band = sub_band[:-1]
 
-        # FIXME:  2014-12-31 13:06:49 by Brian McFee <brian.mcfee@nyu.edu>
-        # why 50?  what is this?
-        alph = int(max(1, np.rint(0.02 * np.sum(current_band))))
+        # Always take at least one bin from each side
+        idx = np.rint(quantile * np.sum(current_band))
+        idx = int(np.maximum(idx, 1))
 
         sortedr = np.sort(sub_band, axis=0)
 
-        valley[k] = np.mean(sortedr[:alph], axis=0)
-        peak[k] = np.mean(sortedr[-alph:], axis=0)
+        valley[k] = np.mean(sortedr[:idx], axis=0)
+        peak[k] = np.mean(sortedr[-idx:], axis=0)
 
-    return peak - valley
+    return logamplitude(peak) - logamplitude(valley)
 
 
 @cache
