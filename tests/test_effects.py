@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
+'''Unit tests for the effects module'''
 
 # Disable cache
 import os
 try:
     os.environ.pop('LIBROSA_CACHE_DIR')
-except:
+except KeyError:
     pass
+
+from nose.tools import raises, eq_
 
 import librosa
 import numpy as np
@@ -17,7 +20,7 @@ __EXAMPLE_FILE = 'data/test1_22050.wav'
 def test_time_stretch():
 
     def __test(infile, rate):
-        y, sr = librosa.load('data/test1_22050.wav', duration=4.0)
+        y, sr = librosa.load(infile, duration=4.0)
         ys = librosa.effects.time_stretch(y, rate)
 
         orig_duration = librosa.get_duration(y, sr=sr)
@@ -29,6 +32,9 @@ def test_time_stretch():
 
     for rate in [0.25, 0.5, 1.0, 2.0, 4.0]:
         yield __test, 'data/test1_22050.wav', rate
+
+    for rate in [-1, 0]:
+        yield raises(ValueError)(__test), 'data/test1_22050.wav', rate
 
 
 def test_hpss():

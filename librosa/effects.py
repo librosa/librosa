@@ -204,6 +204,9 @@ def time_stretch(y, rate):
 
     '''
 
+    if rate <= 0:
+        raise ValueError('rate must be a positive number')
+
     # Construct the stft
     stft = core.stft(y)
 
