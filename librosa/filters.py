@@ -298,7 +298,7 @@ def logfrequency(sr, n_fft, n_bins=84, bins_per_octave=12, tuning=0.0,
 
     Each filter is a log-normal window centered at the corresponding frequency.
 
-    .. note:: Deprecated in librosa 0.4
+    .. warning:: Deprecated in librosa 0.4
 
     Parameters
     ----------
