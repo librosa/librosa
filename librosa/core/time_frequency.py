@@ -108,7 +108,8 @@ def samples_to_frames(samples, hop_length=512, n_fft=None):
     if n_fft is not None:
         offset = int(n_fft // 2)
 
-    return np.floor((np.atleast_1d(samples) - offset) // hop_length).astype(int)
+    samples = np.atleast_1d(samples)
+    return np.floor((samples - offset) // hop_length).astype(int)
 
 
 def frames_to_time(frames, sr=22050, hop_length=512, n_fft=None):

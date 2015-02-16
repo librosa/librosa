@@ -426,7 +426,8 @@ def __axis_log(data, n_ticks, horiz, sr=22050, kwargs=None, label='Hz',
     t_log, t_inv = __log_scale(n)
 
     if horiz:
-        args = (t_log, np.linspace(0, data.shape[0], data.shape[0]).astype(int),
+        args = (t_log, np.linspace(0, data.shape[0],
+                                   data.shape[0]).astype(int),
                 data)
     else:
         args = (np.linspace(0, data.shape[1], data.shape[1]).astype(int),
