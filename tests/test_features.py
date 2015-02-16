@@ -198,3 +198,29 @@ def test_spectral_centroid_empty():
 
     S = np.zeros((1025, 10))
     yield __test, None, sr, S
+
+
+def test_spectral_bandwidth_errors():
+
+    @raises(ValueError)
+    def __test(S):
+        librosa.feature.spectral_bandwidth(S=S)
+
+    S = - np.ones((513, 10))
+    yield __test, S
+
+    S = - np.ones((513, 10)) * 1.j
+    yield __test, S
+
+
+def test_spectral_rolloff_errors():
+
+    @raises(ValueError)
+    def __test(S):
+        librosa.feature.spectral_rolloff(S=S)
+
+    S = - np.ones((513, 10))
+    yield __test, S
+
+    S = - np.ones((513, 10)) * 1.j
+    yield __test, S
