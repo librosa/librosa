@@ -7,7 +7,7 @@ from __future__ import print_function
 import os
 try:
     os.environ.pop('LIBROSA_CACHE_DIR')
-except:
+except KeyError:
     pass
 
 import librosa
@@ -16,6 +16,7 @@ import numpy as np
 from nose.tools import raises, eq_
 
 
+# utils submodule
 def test_delta():
     # Note: this test currently only checks first-order differences
     #       and width=3 filters
@@ -136,3 +137,64 @@ def test_sync():
 
         else:
             yield __test_pass, data, frames
+
+
+# spectral submodule
+def test_spectral_centroid_synthetic():
+
+    k = 5
+
+    def __test(S, freq, sr, n_fft):
+        cent = librosa.feature.spectral_centroid(S=S, freq=freq)
+
+        if freq is None:
+            freq = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
+
+        assert np.allclose(cent, freq[k])
+
+    # construct a fake spectrogram
+    sr = 22050
+    n_fft = 1024
+    S = np.zeros((1 + n_fft // 2, 10))
+
+    S[k, :] = 1.0
+
+    yield __test, S, None, sr, n_fft
+
+    freq = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
+    yield __test, S, freq, sr, n_fft
+
+    # And if we modify the frequencies
+    freq *= 3
+    yield __test, S, freq, sr, n_fft
+
+    # Or if we make up random frequencies for each frame
+    freq = np.random.randn(*S.shape)
+    yield __test, S, freq, sr, n_fft
+
+
+def test_spectral_centroid_errors():
+
+    @raises(ValueError)
+    def __test(S):
+        librosa.feature.spectral_centroid(S=S)
+
+    S = - np.ones((513, 10))
+    yield __test, S
+
+    S = - np.ones((513, 10)) * 1.j
+    yield __test, S
+
+
+def test_spectral_centroid_empty():
+
+    def __test(y, sr, S):
+        cent = librosa.feature.spectral_centroid(y=y, sr=sr, S=S)
+        assert not np.any(cent)
+
+    sr = 22050
+    y = np.zeros(3 * sr)
+    yield __test, y, sr, None
+
+    S = np.zeros((1025, 10))
+    yield __test, None, sr, S
