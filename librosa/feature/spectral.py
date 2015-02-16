@@ -254,7 +254,8 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
 @cache
 def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
-                      freq=None, fmin=200.0, n_bands=6, quantile=0.02):
+                      freq=None, fmin=200.0, n_bands=6, quantile=0.02,
+                      linear=False):
     '''Compute spectral contrast [1]_
 
     .. [1] Jiang, Dan-Ning, Lie Lu, Hong-Jiang Zhang, Jian-Hua Tao,
@@ -298,11 +299,20 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     quantile : float in [0, 1]
         quantile for determining peaks and valleys
 
+    linear : bool
+        If `True`, return the linear difference of magnitudes:
+        `peaks - valleys`.
+
+        If `False`, return the logarithmic difference:
+        `log(peaks) - log(valleys)`.
+
+
     Returns
     -------
     contrast : np.ndarray [shape=(n_bands + 1, t)]
         each row of spectral contrast values corresponds to a given
         octave-based frequency
+
 
     Examples
     --------
@@ -363,7 +373,10 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         valley[k] = np.mean(sortedr[:idx], axis=0)
         peak[k] = np.mean(sortedr[-idx:], axis=0)
 
-    return logamplitude(peak) - logamplitude(valley)
+    if linear:
+        return peak - valley
+    else:
+        return logamplitude(peak) - logamplitude(valley)
 
 
 @cache
