@@ -295,3 +295,40 @@ def test_spectral_rolloff_errors():
 
     S = np.ones((513, 10))
     yield __test, S, 2
+
+
+def test_spectral_contrast_errors():
+
+    @raises(ValueError)
+    def __test(S, freq, fmin, n_bands, quantile):
+        librosa.feature.spectral_contrast(S,
+                                          freq=freq,
+                                          fmin=fmin,
+                                          n_bands=n_bands,
+                                          quantile=quantile)
+
+    S = np.ones((1025, 10))
+
+    # ill-shaped frequency set: scalar
+    yield __test, S, 0, 200, 6, 0.02
+
+    # ill-shaped frequency set: wrong-length vector
+    yield __test, S, np.zeros((S.shape[0]+1,)), 200, 6, 0.02
+
+    # ill-shaped frequency set: matrix
+    yield __test, S, np.zeros(S.shape), 200, 6, 0.02
+
+    # negative fmin
+    yield __test, S, None, -1, 6, 0.02
+
+    # zero fmin
+    yield __test, S, None, 0, 6, 0.02
+
+    # negative n_bands
+    yield __test, S, None, 200, -1, 0.02
+
+    # bad quantile
+    yield __test, S, None, 200, 6, -1
+
+    # bad quantile
+    yield __test, S, None, 200, 6, 2

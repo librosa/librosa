@@ -282,12 +282,10 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     hop_length : int > 0 [scalar]
         hop length for STFT. See `librosa.core.stft` for details.
 
-    freq : None or np.ndarray [shape=(d,) or shape=(d, t)]
+    freq : None or np.ndarray [shape=(d,)]
         Center frequencies for spectrogram bins.
         If `None`, then FFT bin center frequencies are used.
-        Otherwise, it can be a single array of `d` center frequencies,
-        or a matrix of center frequencies as constructed by
-        `librosa.core.ifgram`
+        Otherwise, it can be a single array of `d` center frequencies.
 
     fmin : float > 0
         Frequency cutoff for the first bin `[0, fmin]`
@@ -296,7 +294,7 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     n_bands : int > 1
         number of frequency bands
 
-    quantile : float in [0, 1]
+    quantile : float in (0, 1)
         quantile for determining peaks and valleys
 
     linear : bool
@@ -341,6 +339,21 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     # Compute the center frequencies of each bin
     if freq is None:
         freq = fft_frequencies(sr=sr, n_fft=n_fft)
+
+    freq = np.atleast_1d(freq)
+
+    if freq.ndim != 1 or len(freq) != S.shape[0]:
+        raise ValueError('freq.shape mismatch: expected '
+                         '({:d},)'.format(S.shape[0]))
+
+    if n_bands < 1 or not isinstance(n_bands, int):
+        raise ValueError('n_bands must be a positive integer')
+
+    if not (0.0 < quantile < 1.0):
+        raise ValueError('quantile must lie in the range (0, 1)')
+
+    if fmin <= 0:
+        raise ValueError('fmin must be a positive number')
 
     octa = np.zeros(n_bands + 2)
     octa[1:] = fmin * (2.0**np.arange(0, n_bands + 1))
