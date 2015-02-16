@@ -15,6 +15,8 @@ import numpy as np
 
 from nose.tools import raises, eq_
 
+__EXAMPLE_FILE = 'data/test1_22050.wav'
+
 
 # utils submodule
 def test_delta():
@@ -295,6 +297,17 @@ def test_spectral_rolloff_errors():
 
     S = np.ones((513, 10))
     yield __test, S, 2
+
+
+def test_spectral_contrast_log():
+    # We already have a regression test for linear energy difference
+    # This test just does a sanity-check on the log-scaled version
+
+    y, sr = librosa.load(__EXAMPLE_FILE)
+
+    contrast = librosa.feature.spectral_contrast(y=y, sr=sr, linear=False)
+
+    assert not np.any(contrast < 0)
 
 
 def test_spectral_contrast_errors():
