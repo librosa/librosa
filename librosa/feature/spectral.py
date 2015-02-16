@@ -454,10 +454,10 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
 
     if not np.isrealobj(S):
-        raise ValueError('Spectral centroid is only defined '
+        raise ValueError('Spectral rolloff is only defined '
                          'with real-valued input')
     elif np.any(S < 0):
-        raise ValueError('Spectral centroid is only defined '
+        raise ValueError('Spectral rolloff is only defined '
                          'with non-negative energies')
 
     # Compute the center frequencies of each bin
@@ -495,6 +495,7 @@ def rms(y=None, S=None, n_fft=2048, hop_length=512):
 
     hop_length : int > 0 [scalar]
         hop length for STFT. See `librosa.core.stft` for details.
+
 
     Returns
     -------
