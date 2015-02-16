@@ -801,8 +801,8 @@ def localmax(x, axis=0):
     Returns
     -------
     m     : np.ndarray [shape=x.shape, dtype=bool]
-        indicator vector of local maxima:
-        `m[i] == True` if `x[i]` is a local maximum
+        indicator array of local maximality along `axis`
+
     """
 
     paddings = [(0, 0)] * x.ndim
