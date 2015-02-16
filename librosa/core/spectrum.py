@@ -533,7 +533,7 @@ def phase_vocoder(D, rate, hop_length=None):
 
 @cache
 def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
-    """Log-scale the amplitude of a spectrogram.
+    r"""Log-scale the amplitude of a spectrogram.
 
     Parameters
     ----------

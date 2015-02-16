@@ -114,7 +114,7 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
 
     # Format the labels by time
     formats = {'ms': lambda t: '{:d}ms'.format(int(1e3 * t)),
-               's': lambda t: '{:0.2f}s'.format(t),
+               's': '{:0.2f}s'.format,
                'm': lambda t: '{:d}:{:02d}'.format(int(t / 6e1),
                                                    int(np.mod(t, 6e1))),
                'h': lambda t: '{:d}:{:02d}:{:02d}'.format(int(t / 3.6e3),

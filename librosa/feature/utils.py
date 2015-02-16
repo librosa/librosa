@@ -13,7 +13,7 @@ __all__ = ['delta', 'stack_memory', 'sync']
 
 @cache
 def delta(data, width=9, order=1, axis=-1, trim=True):
-    '''Compute delta features.
+    r'''Compute delta features.
 
     Parameters
     ----------
@@ -67,11 +67,11 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
     >>> plt.colorbar()
     >>> plt.subplot(3, 1, 2)
     >>> librosa.display.specshow(mfcc_delta)
-    >>> plt.title('MFCC-$\Delta$')
+    >>> plt.title(r'MFCC-$\Delta$')
     >>> plt.colorbar()
     >>> plt.subplot(3, 1, 3)
     >>> librosa.display.specshow(mfcc_delta2, x_axis='time')
-    >>> plt.title('MFCC-$\Delta^2$')
+    >>> plt.title(r'MFCC-$\Delta^2$')
     >>> plt.colorbar()
     >>> plt.tight_layout()
 
