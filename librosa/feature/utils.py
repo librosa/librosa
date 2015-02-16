@@ -20,7 +20,7 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
     data      : np.ndarray [shape=(d, T)]
         the input data matrix (eg, spectrogram)
 
-    width     : int > 0, odd [scalar]
+    width     : int >= 3, odd [scalar]
         Number of frames over which to compute the delta feature
 
     order     : int > 0 [scalar]
@@ -79,8 +79,8 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
 
     data = np.atleast_2d(data)
 
-    if width < 0 or np.mod(width, 2) != 1:
-        raise ValueError('width must be a positive, odd integer')
+    if width < 3 or np.mod(width, 2) != 1:
+        raise ValueError('width must be an odd integer >= 3')
 
     if order <= 0 or not isinstance(order, int):
         raise ValueError('order must be a positive integer')
