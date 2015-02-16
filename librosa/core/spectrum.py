@@ -535,7 +535,6 @@ def phase_vocoder(D, rate, hop_length=None):
 def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     """Log-scale the amplitude of a spectrogram.
 
-
     Parameters
     ----------
     S : np.ndarray [shape=(d, t)]
@@ -548,10 +547,10 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
 
         This is primarily useful for comparing to the maximum value of `S`.
 
-    amin    : float [scalar]
+    amin    : float > 0[scalar]
         minimum amplitude threshold for `abs(S)` and `ref_power`
 
-    top_db  : float [scalar]
+    top_db  : float >= 0 [scalar]
         threshold log amplitude at top_db below the peak:
         `max(log(S)) - top_db`
 
@@ -610,6 +609,9 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     >>> plt.tight_layout()
     """
 
+    if amin <= 0:
+        raise ValueError('amin must be strictly positive')
+
     magnitude = np.abs(S)
 
     if six.callable(ref_power):
@@ -622,6 +624,8 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     log_spec -= 10.0 * np.log10(np.maximum(amin, __ref))
 
     if top_db is not None:
+        if top_db < 0:
+            raise ValueError('top_db must be non-negative positive')
         log_spec = np.maximum(log_spec, log_spec.max() - top_db)
 
     return log_spec
