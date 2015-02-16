@@ -19,11 +19,11 @@ def moved(moved_from, version, version_removed):
         '''Warn the user, and then proceed.'''
         code = six.get_function_code(func)
         warnings.warn_explicit(
-            ("\n\tFunction '{:s}' was moved to '{:s}.{:s}' in "
-             "librosa version {:s}."
-             "\n\tThis alias will be removed in librosa "
-             "version {:s}.").format(moved_from, func.__module__,
-                                     func.__name__, version, version_removed),
+            "{:s}\n\tThis function was moved to '{:s}.{:s}' in "
+            "librosa version {:s}."
+            "\n\tThis alias will be removed in librosa version "
+            "{:s}.".format(moved_from, func.__module__,
+                           func.__name__, version, version_removed),
 
             category=DeprecationWarning,
             filename=code.co_filename,
@@ -44,11 +44,10 @@ def deprecated(version, version_removed):
         '''Warn the user, and then proceed.'''
         code = six.get_function_code(func)
         warnings.warn_explicit(
-            ("\n\tFunction '{:s}.{:s}' is deprecated as of "
-             "librosa version {:s}."
-             "\n\tIt will be removed in librosa "
-             "version {:s}.").format(func.__module__, func.__name__,
-                                     version, version_removed),
+            "{:s}.{:s}\n\tDeprecated as of librosa version {:s}."
+            "\n\tIt will be removed in librosa version {:s}."
+            .format(func.__module__, func.__name__,
+                    version, version_removed),
             category=DeprecationWarning,
             filename=code.co_filename,
             lineno=code.co_firstlineno + 1
