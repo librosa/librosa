@@ -62,31 +62,44 @@ def test_pitch_shift():
 def test_remix_mono():
 
     # without zc alignment
-    y = np.asarray([1,1,1,0,0,0,-1,-1,-1,2,2,2])
-    intervals = np.asarray([[9, 12],
-                            [6, 9],
-                            [3, 6],
-                            [0, 3]])
+    y = np.asarray([1, 1, -1, -1, 2, 2, -1, -1, 1, 1])
+    y_t = np.asarray([-1, -1, -1, -1, 1, 1, 1, 1, 2, 2])
+    intervals = np.asarray([[2, 4],
+                            [6, 8],
+                            [0, 2],
+                            [8, 10],
+                            [4, 6]])
 
-    y_out = librosa.effects.remix(y, intervals, align_zeros=False)
+    def __test(y, y_t, intervals, align_zeros):
+        y_out = librosa.effects.remix(y, intervals,
+                                      align_zeros=align_zeros)
+        assert np.allclose(y_out, y_t)
 
-    assert np.allclose(y_out, y[::-1])
+    for align_zeros in [False, True]:
+        yield __test, y, y_t, intervals, align_zeros
 
 
 def test_remix_stereo():
 
     # without zc alignment
-    y = np.asarray([[1,1,1,0,0,0,-1,-1,-1,2,2,2],
-                    [1,1,1,0,0,0,-1,-1,-1,2,2,2]])
+    y = np.asarray([1, 1, -1, -1, 2, 2, -1, -1, 1, 1])
+    y_t = np.asarray([-1, -1, -1, -1, 1, 1, 1, 1, 2, 2])
+    y = np.vstack([y, y])
+    y_t = np.vstack([y_t, y_t])
 
-    intervals = np.asarray([[9, 12],
-                            [6, 9],
-                            [3, 6],
-                            [0, 3]])
+    intervals = np.asarray([[2, 4],
+                            [6, 8],
+                            [0, 2],
+                            [8, 10],
+                            [4, 6]])
 
-    y_out = librosa.effects.remix(y, intervals, align_zeros=False)
+    def __test(y, y_t, intervals, align_zeros):
+        y_out = librosa.effects.remix(y, intervals,
+                                      align_zeros=align_zeros)
+        assert np.allclose(y_out, y_t), str(y_out)
 
-    assert np.allclose(y_out, y[:, ::-1])
+    for align_zeros in [False, True]:
+        yield __test, y, y_t, intervals, align_zeros
 
 
 def test_hpss():

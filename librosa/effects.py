@@ -344,6 +344,8 @@ def remix(y, intervals, align_zeros=True):
     if align_zeros:
         y_mono = core.to_mono(y)
         zeros = np.nonzero(core.zero_crossings(y_mono))[-1]
+        # Force end-of-signal onto zeros
+        zeros = np.append(zeros, [len(y_mono)])
 
     clip = [Ellipsis] * y.ndim
 
