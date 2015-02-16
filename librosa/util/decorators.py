@@ -10,10 +10,13 @@ import six
 
 def moved(moved_from, version, version_removed):
     '''This is a decorator which can be used to mark functions
-    as deprecated. It will result in a warning being emitted
-    when the function is used.'''
+    as moved/renamed.
+
+    It will result in a warning being emitted when the function is used.
+    '''
 
     def __wrapper(func, *args, **kwargs):
+        '''Warn the user, and then proceed.'''
         code = six.get_function_code(func)
         warnings.warn_explicit(
             ("\n\tFunction '{:s}' was moved to '{:s}.{:s}' in "
@@ -33,10 +36,12 @@ def moved(moved_from, version, version_removed):
 
 def deprecated(version, version_removed):
     '''This is a decorator which can be used to mark functions
-    as deprecated. It will result in a warning being emitted
-    when the function is used.'''
+    as deprecated.
+
+    It will result in a warning being emitted when the function is used.'''
 
     def __wrapper(func, *args, **kwargs):
+        '''Warn the user, and then proceed.'''
         code = six.get_function_code(func)
         warnings.warn_explicit(
             ("\n\tFunction '{:s}.{:s}' is deprecated as of "
