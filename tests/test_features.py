@@ -89,9 +89,14 @@ def test_stack_memory():
     for ndim in [1, 2]:
         data = np.random.randn(* ([5] * ndim))
 
-        for n_steps in [1, 2, 3, 4]:
-            for delay in [1, 2, 4]:
-                yield __test, data, n_steps, delay
+        for n_steps in [-1, 0, 1, 2, 3, 4]:
+            for delay in [-1, 0, 1, 2, 4]:
+                tf = __test
+                if n_steps < 1:
+                    tf = raises(ValueError)(__test)
+                if delay < 1:
+                    tf = raises(ValueError)(__test)
+                yield tf, data, n_steps, delay
 
 
 def test_sync():
