@@ -260,6 +260,3 @@ def frames_csv(path, frames, sr=22050, hop_length=512,
                                 n_fft=n_fft)
 
     times_csv(path, times, **kwargs)
-
-
-
