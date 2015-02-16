@@ -200,6 +200,40 @@ def test_spectral_centroid_empty():
     yield __test, None, sr, S
 
 
+def test_spectral_bandwidth_synthetic():
+    # This test ensures that a signal confined to a single frequency bin
+    # always achieves 0 bandwidth
+    k = 5
+
+    def __test(S, freq, sr, n_fft, norm, p):
+        bw = librosa.feature.spectral_bandwidth(S=S, freq=freq, norm=norm, p=p)
+
+        assert not np.any(bw)
+
+    # construct a fake spectrogram
+    sr = 22050
+    n_fft = 1024
+    S = np.zeros((1 + n_fft // 2, 10))
+    S[k, :] = 1.0
+
+    for norm in [False, True]:
+        for p in [1, 2]:
+            # With vanilla frequencies
+            yield __test, S, None, sr, n_fft, norm, p
+
+            # With explicit frequencies
+            freq = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
+            yield __test, S, freq, sr, n_fft, norm, p
+
+            # And if we modify the frequencies
+            freq = 3 * librosa.fft_frequencies(sr=sr, n_fft=n_fft)
+            yield __test, S, freq, sr, n_fft, norm, p
+
+            # Or if we make up random frequencies for each frame
+            freq = np.random.randn(*S.shape)
+            yield __test, S, freq, sr, n_fft, norm, p
+
+
 def test_spectral_bandwidth_errors():
 
     @raises(ValueError)
