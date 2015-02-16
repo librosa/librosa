@@ -20,7 +20,7 @@ import glob
 import numpy as np
 import scipy.io
 
-from nose.tools import nottest, eq_
+from nose.tools import nottest, eq_, raises
 
 
 # -- utilities --#
@@ -479,3 +479,34 @@ def test__spectrogram():
             for power in [1, 2]:
                 yield __test, n_fft, hop_length, power
     assert librosa.core.spectrum._spectrogram(y)
+
+
+def test_logamplitude():
+
+    # Fake up some data
+    def __test(x, ref_power, amin, top_db):
+    
+        y = librosa.logamplitude(x,
+                                 ref_power=ref_power,
+                                 amin=amin,
+                                 top_db=top_db)
+
+        assert np.isrealobj(y)
+        eq_(y.shape, x.shape)
+
+        print(str(y))
+        if top_db is not None:
+            assert y.min() >= y.max()-top_db
+
+    for n in [1, 2, 10]:
+        x = np.linspace(0, 2e5, num=n)
+        phase = np.exp(1.j * x)
+
+        for ref_power in [1.0, np.max]:
+            for amin in [-1, 0, 1e-10, 1e3]:
+                for top_db in [None, -10, 0, 40, 80]:
+                    tf = __test
+                    if amin <= 0 or (top_db is not None and top_db < 0):
+                        tf = raises(ValueError)(__test)
+                    yield tf, x, ref_power, amin, top_db
+                    yield tf, x * phase, ref_power, amin, top_db
