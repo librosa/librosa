@@ -226,3 +226,9 @@ def test_constant_q():
                                        bins_per_octave, tuning,
                                        resolution, pad_fft,
                                        norm)
+
+
+def test_window_bandwidth():
+
+    eq_(librosa.filters.window_bandwidth('hann'),
+        librosa.filters.window_bandwidth(scipy.signal.hann))
