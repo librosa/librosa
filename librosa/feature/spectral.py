@@ -959,7 +959,7 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096,
     '''Compute a log-frequency spectrogram using a
     fixed-window STFT.
 
-    .. note:: Deprecated in librosa 0.4
+    .. warning:: Deprecated in librosa 0.4
               Functionality is superseded by `librosa.core.pseudo_cqt`
 
     Parameters
