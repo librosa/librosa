@@ -763,6 +763,6 @@ def window_bandwidth(window, default=1.0):
         key = window
 
     if key not in WINDOW_BANDWIDTHS:
-        warnings.warn("Unknown window fuction '{:s}'.".format(key))
+        warnings.warn("Unknown window function '{:s}'.".format(key))
 
     return WINDOW_BANDWIDTHS.get(key, default)
