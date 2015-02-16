@@ -133,7 +133,6 @@ def test_stft():
 
         if DATA['hann_w'][0, 0] == 0:
             # Set window to ones, swap back to nfft
-            print('Got hann_w == 0')
             window = np.ones
             win_length = None
 
@@ -254,7 +253,6 @@ def test_load_options():
                              duration=duration)
 
         if duration is not None:
-            print(duration, y.shape[-1] / float(sr))
             assert np.allclose(y.shape[-1] / float(sr), duration)
 
         if mono:
@@ -494,7 +492,6 @@ def test_logamplitude():
         assert np.isrealobj(y)
         eq_(y.shape, x.shape)
 
-        print(str(y))
         if top_db is not None:
             assert y.min() >= y.max()-top_db
 
