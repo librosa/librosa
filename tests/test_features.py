@@ -301,7 +301,7 @@ def test_spectral_contrast_errors():
 
     @raises(ValueError)
     def __test(S, freq, fmin, n_bands, quantile):
-        librosa.feature.spectral_contrast(S,
+        librosa.feature.spectral_contrast(S=S,
                                           freq=freq,
                                           fmin=fmin,
                                           n_bands=n_bands,
