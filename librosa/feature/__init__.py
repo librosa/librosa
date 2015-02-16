@@ -11,7 +11,7 @@ Spectral features
     logfsgram
     melspectrogram
     mfcc
-    rms
+    rmse
     spectral_centroid
     spectral_bandwidth
     spectral_contrast

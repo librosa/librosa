@@ -345,3 +345,18 @@ def test_spectral_contrast_errors():
 
     # bad quantile
     yield __test, S, None, 200, 6, 2
+
+
+def test_rmse():
+
+    def __test(n):
+        S = np.ones((n, 5))
+
+        # RMSE of an all-ones band is 1
+        rmse = librosa.feature.rmse(S=S)
+
+        assert np.allclose(rmse, np.ones_like(rmse))
+
+    for n in range(10, 100, 10):
+        yield __test, n
+

@@ -111,8 +111,8 @@ def test_hpss():
     # Make sure that the residual energy is generally small
     y_residual = y - y_harm - y_perc
 
-    rms_orig = librosa.feature.rms(y=y)
-    rms_res = librosa.feature.rms(y=y_residual)
+    rms_orig = librosa.feature.rmse(y=y)
+    rms_res = librosa.feature.rmse(y=y_residual)
 
     assert np.percentile(rms_orig, 0.01) > np.percentile(rms_res, 0.99)
 

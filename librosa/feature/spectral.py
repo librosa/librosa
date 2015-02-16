@@ -19,7 +19,7 @@ __all__ = ['spectral_centroid',
            'spectral_contrast',
            'spectral_rolloff',
            'poly_features',
-           'rms',
+           'rmse',
            'zero_crossing_rate',
            'chromagram',
            'melspectrogram',
@@ -496,7 +496,7 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
 
 @cache
-def rms(y=None, S=None, n_fft=2048, hop_length=512):
+def rmse(y=None, S=None, n_fft=2048, hop_length=512):
     '''Compute root-mean-square (RMS) energy for each frame.
 
 
@@ -524,14 +524,14 @@ def rms(y=None, S=None, n_fft=2048, hop_length=512):
     Examples
     --------
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> librosa.feature.rms(y=y)
+    >>> librosa.feature.rmse(y=y)
     array([[  1.204e-01,   6.263e-01, ...,   1.413e-04,   2.191e-05]],
           dtype=float32)
 
     Or from spectrogram input
 
     >>> S, phase = librosa.magphase(librosa.stft(y))
-    >>> rms = librosa.feature.rms(S=S)
+    >>> rms = librosa.feature.rmse(S=S)
 
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
