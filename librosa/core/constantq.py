@@ -314,8 +314,7 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                             tuning=tuning)
 
     # Compute the length of each constant-Q basis function
-    lengths = filters.constant_q_lengths(sr,
-                                         fmin=fmin,
+    lengths = filters.constant_q_lengths(sr, fmin,
                                          n_bins=n_bins,
                                          bins_per_octave=bins_per_octave,
                                          tuning=tuning,
@@ -455,8 +454,7 @@ def __fft_filters(sr, fmin, bins_per_octave, tuning,
                                         tuning=tuning,
                                         resolution=resolution,
                                         norm=norm,
-                                        pad_fft=True,
-                                        return_lengths=True)
+                                        pad_fft=True)
 
     # Filters are padded up to the nearest integral power of 2
     n_fft = basis.shape[1]

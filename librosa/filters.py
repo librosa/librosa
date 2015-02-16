@@ -427,8 +427,7 @@ def __float_window(window_function):
 
 @cache
 def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
-               window=None, resolution=2, pad_fft=True, norm=1,
-               return_lengths=False, **kwargs):
+               window=None, resolution=2, pad_fft=True, norm=1, **kwargs):
     r'''Construct a constant-Q basis.
 
     This uses the filter bank described by [1]_.
@@ -472,10 +471,6 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
         Type of norm to use for basis function normalization.
         See librosa.util.normalize
 
-    return_lengths : boolean
-        Whether to return the pre-padding filter lengths along
-        with the filters.
-
     kwargs : additional keyword arguments
         Arguments to `np.pad()` when `pad==True`.
 
@@ -485,9 +480,8 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     filters : np.ndarray, `len(filters) == n_bins`
         `filters[i]` is `i`\ th time-domain CQT basis filter
 
-    lengths : np.ndarray
-        If `return_lengths == True`, then the (fractional)
-        length of each filter is also returned.
+    lengths : np.ndarray, `len(lengths) == n_bins`
+        The (fractional) length of each filter
 
     See Also
     --------
@@ -500,16 +494,11 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     --------
     Use a longer window for each filter
 
-    >>> basis = librosa.filters.constant_q(22050, resolution=3)
-
-
-    Get the lengths of each filter
-
-    >>> basis, lengths = librosa.filters.constant_q(22050, return_lengths=True)
+    >>> basis, lengths = librosa.filters.constant_q(22050, resolution=3)
 
     Plot one octave of filters in time and frequency
 
-    >>> basis = librosa.filters.constant_q(22050)
+    >>> basis, lengths = librosa.filters.constant_q(22050)
     >>> import matplotlib.pyplot as plt
     >>> plt.figure(figsize=(10, 6))
     >>> plt.subplot(2, 1, 1)
@@ -542,8 +531,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
         window = scipy.signal.hann
 
     # Pass-through parameters to get the filter lengths
-    lengths = constant_q_lengths(sr,
-                                 fmin=fmin,
+    lengths = constant_q_lengths(sr, fmin,
                                  n_bins=n_bins,
                                  bins_per_octave=bins_per_octave,
                                  tuning=tuning,
@@ -585,14 +573,11 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     filters = np.asarray([util.pad_center(filt, max_len, **kwargs)
                           for filt in filters])
 
-    if return_lengths:
-        return filters, np.asarray(lengths)
-    else:
-        return filters
+    return filters, np.asarray(lengths)
 
 
 @cache
-def constant_q_lengths(sr, fmin=None, n_bins=84, bins_per_octave=12,
+def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
                        tuning=0.0, window='hann', resolution=2):
     r'''Return length of each filter in a constant-Q basis.
 
@@ -602,7 +587,7 @@ def constant_q_lengths(sr, fmin=None, n_bins=84, bins_per_octave=12,
         Audio sampling rate
 
     fmin : float > 0 [scalar]
-        Minimum frequency bin. Defaults to `C2 ~= 32.70`
+        Minimum frequency bin.
 
     n_bins : int > 0 [scalar]
         Number of frequencies.  Defaults to 7 octaves (84 bins).
@@ -629,8 +614,6 @@ def constant_q_lengths(sr, fmin=None, n_bins=84, bins_per_octave=12,
     constant_q
     librosa.core.cqt
     '''
-    if fmin is None:
-        fmin = note_to_hz('C2')
 
     if fmin <= 0:
         raise ValueError('fmin must be a positive number')
