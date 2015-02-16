@@ -286,7 +286,7 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=None,
              fmax=None, threshold=0.75):  # pragma: no cover
     '''Instantaneous pitch frequency tracking.
 
-    .. note:: Deprecated in librosa 0.4
+    .. warning:: Deprecated in librosa 0.4
               `ifptrack` will be removed in 0.5.
               See `piptrack` for comparable functionality.
 

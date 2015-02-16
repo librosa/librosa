@@ -217,7 +217,7 @@ def frames_csv(path, frames, sr=22050, hop_length=512,
                n_fft=None, **kwargs):  # pragma: no cover
     """Convert frames to time and store the output in CSV format.
 
-    .. note:: Deprecated in librosa 0.4
+    .. warning:: Deprecated in librosa 0.4
               Functionality is redundant with `times_csv`
 
 
