@@ -192,13 +192,19 @@ def test_ifgram_matches_stft():
                                      win_length=win_length, center=center,
                                      norm=norm, dtype=dtype)
 
+        if norm:
+            # STFT doesn't do window normalization;
+            # let's just ignore the relative scale to make this easy
+            D_stft = librosa.util.normalize(D_stft, axis=0)
+            D_ifgram = librosa.util.normalize(D_ifgram, axis=0)
+
         assert np.allclose(D_stft, D_ifgram)
 
     for n_fft in [1024, 2048]:
         for hop_length in [None, n_fft // 2, n_fft // 4]:
             for win_length in [None, n_fft // 2, n_fft // 4]:
                 for center in [False, True]:
-                    for norm in [False]:
+                    for norm in [False, True]:
                         for dtype in [np.complex64, np.complex128]:
                             yield (__test, n_fft, hop_length, win_length,
                                    center, norm, dtype)
