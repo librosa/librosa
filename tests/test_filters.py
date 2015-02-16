@@ -28,9 +28,10 @@ try:
 except KeyError:
     pass
 
+import six
 import librosa
 import glob
-import numpy
+import numpy as np
 import scipy.io
 
 from nose.tools import eq_
@@ -54,7 +55,7 @@ def test_hz_to_mel():
         DATA = load(infile)
         z = librosa.hz_to_mel(DATA['f'], DATA['htk'])
 
-        assert numpy.allclose(z, DATA['result'])
+        assert np.allclose(z, DATA['result'])
 
     for infile in files('data/feature-hz_to_mel-*.mat'):
         yield (__test_to_mel, infile)
@@ -68,7 +69,7 @@ def test_mel_to_hz():
         DATA = load(infile)
         z = librosa.mel_to_hz(DATA['f'], DATA['htk'])
 
-        assert numpy.allclose(z, DATA['result'])
+        assert np.allclose(z, DATA['result'])
 
     for infile in files('data/feature-mel_to_hz-*.mat'):
         yield (__test_to_hz, infile)
@@ -81,7 +82,7 @@ def test_hz_to_octs():
         DATA = load(infile)
         z = librosa.hz_to_octs(DATA['f'])
 
-        assert numpy.allclose(z, DATA['result'])
+        assert np.allclose(z, DATA['result'])
 
     for infile in files('data/feature-hz_to_octs-*.mat'):
         yield (__test_to_octs, infile)
@@ -103,12 +104,12 @@ def test_melfb():
 
         # Our version only returns the real-valued part.
         # Pad out.
-        wts = numpy.pad(wts, [(0, 0),
+        wts = np.pad(wts, [(0, 0),
                               (0, int(DATA['nfft'][0]//2 - 1))],
                         mode='constant')
 
         eq_(wts.shape, DATA['wts'].shape)
-        assert numpy.allclose(wts, DATA['wts'])
+        assert np.allclose(wts, DATA['wts'])
 
     for infile in files('data/feature-melfb-*.mat'):
         yield (__test, infile)
@@ -132,12 +133,33 @@ def test_chromafb():
 
         # Our version only returns the real-valued part.
         # Pad out.
-        wts = numpy.pad(wts, [(0, 0),
-                              (0, int(DATA['nfft'][0, 0]//2 - 1))],
-                        mode='constant')
+        wts = np.pad(wts, [(0, 0),
+                           (0, int(DATA['nfft'][0, 0]//2 - 1))],
+                     mode='constant')
 
         eq_(wts.shape, DATA['wts'].shape)
-        assert numpy.allclose(wts, DATA['wts'])
+        assert np.allclose(wts, DATA['wts'])
 
     for infile in files('data/feature-chromafb-*.mat'):
         yield (__test, infile)
+
+
+def test__window():
+
+    def __test(n, window):
+
+        wdec = librosa.filters.__float_window(window)
+
+        if n == int(n):
+            assert np.allclose(wdec(n), window(n))
+        else:
+            wf = wdec(n)
+            assert not np.any(wf[np.floor(n):])
+
+    for n in [16, 16.0, 16.25, 16.75]:
+        for window_name in ['barthann', 'bartlett', 'blackman',
+                            'blackmanharris', 'bohman', 'boxcar', 'cosine',
+                            'flattop', 'hamming', 'hann', 'hanning',
+                            'nuttall', 'parzen', 'triang']:
+            window = getattr(scipy.signal.windows, window_name)
+            yield __test, n, window
