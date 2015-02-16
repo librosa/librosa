@@ -278,7 +278,7 @@ def pad_center(data, size, axis=-1, **kwargs):
 
     n = data.shape[axis]
 
-    lpad = int((size - n) / 2)
+    lpad = int((size - n) // 2)
 
     lengths = [(0, 0)] * data.ndim
     lengths[axis] = (lpad, size - n - lpad)
