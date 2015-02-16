@@ -37,6 +37,28 @@ def test_time_stretch():
         yield raises(ValueError)(__test), 'data/test1_22050.wav', rate
 
 
+def test_pitch_shift():
+
+    def __test(infile, n_steps, bins_per_octave):
+        y, sr = librosa.load(infile, duration=4.0)
+        ys = librosa.effects.pitch_shift(y, sr, n_steps,
+                                         bins_per_octave=bins_per_octave)
+
+        orig_duration = librosa.get_duration(y, sr=sr)
+        new_duration = librosa.get_duration(ys, sr=sr)
+
+        # We don't have to be too precise here, since this goes through an STFT
+        eq_(orig_duration, new_duration)
+
+    for n_steps in np.linspace(-1.5, 1.5, 5):
+        for bins_per_octave in [12, 24]:
+            yield __test, 'data/test1_22050.wav', n_steps, bins_per_octave
+
+    for bins_per_octave in [-1, 0]:
+        yield (raises(ValueError)(__test), 'data/test1_22050.wav',
+               1, bins_per_octave)
+
+
 def test_hpss():
 
     y, sr = librosa.load(__EXAMPLE_FILE)
