@@ -77,6 +77,8 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
 
     '''
 
+    data = np.atleast_2d(data)
+
     half_length = 1 + int(np.floor(width / 2.0))
     window = np.arange(half_length - 1, -half_length, -1)
 
@@ -185,9 +187,7 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
     >>> plt.tight_layout()
     """
 
-    # If we're given a vector, interpret as a matrix
-    if data.ndim == 1:
-        data = data.reshape((1, -1))
+    data = np.atleast_2d(data)
 
     t = data.shape[1]
     kwargs.setdefault('mode', 'constant')
