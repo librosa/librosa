@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 
+from __future__ import print_function
+
 # Disable cache
 import os
 try:
@@ -12,6 +14,55 @@ import librosa
 import numpy as np
 
 from nose.tools import raises, eq_
+
+
+def test_delta():
+    # Note: this test currently only checks first-order differences
+    #       and width=3 filters
+
+    def __test(width, order, axis, x):
+        # Compare trimmed and untrimmed versions
+        delta = librosa.feature.delta(x,
+                                      width=width,
+                                      order=order,
+                                      axis=axis,
+                                      trim=False)
+        delta_t = librosa.feature.delta(x,
+                                        width=width,
+                                        order=order,
+                                        axis=axis,
+                                        trim=True)
+
+        # Check that trimming matches the expected shape
+        eq_(x.shape, delta_t.shape)
+
+        # Check that trimming gives the right values in the right places
+        _s = [Ellipsis] * delta.ndim
+        _s[axis] = slice(1 + width//2, -(1 + width//2))
+        delta_retrim = delta[_s]
+        assert np.allclose(delta_t, delta_retrim)
+
+        # Check that the delta values line up with the data
+        # for a width=3 filter, delta[i] = x[i+1] - x[i-1]
+        _s_front = [Ellipsis] * delta.ndim
+        _s_back = [Ellipsis] * delta.ndim
+        _s_front[axis] = slice(1 + width//2, None)
+        _s_back[axis] = slice(None, -(1 + width//2))
+
+        assert np.allclose(x, (delta[_s_front] + delta[_s_back])[_s_back])
+
+    x = np.vstack([np.arange(5.0)**2] * 2)
+
+    for width in [-1, 0, 1, 2, 3, 4]:
+        for order in [0, 1]:
+            for axis in range(x.ndim):
+                tf = __test
+                if width != 3:
+                    tf = raises(ValueError)(__test)
+                if order != 1:
+                    tf = raises(ValueError)(__test)
+
+                yield tf, width, order, axis, x
 
 
 def test_stack_memory():
