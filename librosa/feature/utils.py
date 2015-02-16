@@ -79,7 +79,13 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
 
     data = np.atleast_2d(data)
 
-    half_length = 1 + int(np.floor(width / 2.0))
+    if width < 0 or np.mod(width, 2) != 1:
+        raise ValueError('width must be a positive, odd integer')
+
+    if order <= 0 or not isinstance(order, int):
+        raise ValueError('order must be a positive integer')
+
+    half_length = 1 + int(width // 2)
     window = np.arange(half_length - 1, -half_length, -1)
 
     # Pad out the data by repeating the border values (delta=0)
@@ -186,6 +192,12 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
     >>> plt.colorbar()
     >>> plt.tight_layout()
     """
+
+    if n_steps < 1:
+        raise ValueError('n_steps must be a positive integer')
+
+    if delay < 1:
+        raise ValueError('delay must be a positive integer')
 
     data = np.atleast_2d(data)
 
