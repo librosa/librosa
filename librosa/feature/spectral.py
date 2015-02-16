@@ -406,6 +406,8 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         If `None`, then FFT bin center frequencies are used.
         Otherwise, it can be a single array of `d` center frequencies,
 
+        .. note:: `freq` is assumed to be sorted in increasing order
+
     roll_percent : float [0 < roll_percent < 1]
         Roll-off percentage.
 
@@ -450,6 +452,9 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     >>> plt.tight_layout()
 
     '''
+
+    if not (0.0 < roll_percent < 1.0):
+        raise ValueError('roll_percent must lie in the range (0, 1)')
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
 

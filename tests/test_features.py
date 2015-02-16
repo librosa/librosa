@@ -247,14 +247,51 @@ def test_spectral_bandwidth_errors():
     yield __test, S
 
 
+def test_spectral_rolloff_synthetic():
+
+    sr = 22050
+    n_fft = 2048
+
+    def __test(S, freq, pct):
+
+        rolloff = librosa.feature.spectral_rolloff(S=S, sr=sr, freq=freq,
+                                                   roll_percent=pct)
+
+        if freq is None:
+            freq = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
+
+        idx = np.floor(pct * freq.shape[0])
+        assert np.allclose(rolloff, freq[idx])
+
+    S = np.ones((1 + n_fft // 2, 10))
+
+    for pct in [0.25, 0.5, 0.95]:
+        # Implicit frequencies
+        yield __test, S, None, pct
+
+        # Explicit frequencies
+        freq = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
+        yield __test, S, freq, pct
+
+        # And time-varying frequencies
+        freq = np.cumsum(np.abs(np.random.randn(*S.shape)), axis=0)
+        yield __test, S, freq, pct
+
+
 def test_spectral_rolloff_errors():
 
     @raises(ValueError)
-    def __test(S):
-        librosa.feature.spectral_rolloff(S=S)
+    def __test(S, p):
+        librosa.feature.spectral_rolloff(S=S, roll_percent=p)
 
     S = - np.ones((513, 10))
-    yield __test, S
+    yield __test, S, 0.95
 
     S = - np.ones((513, 10)) * 1.j
-    yield __test, S
+    yield __test, S, 0.95
+
+    S = np.ones((513, 10))
+    yield __test, S, -1
+
+    S = np.ones((513, 10))
+    yield __test, S, 2
