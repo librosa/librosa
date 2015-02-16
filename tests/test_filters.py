@@ -177,8 +177,7 @@ def test_constant_q():
                                                 tuning=tuning,
                                                 resolution=resolution,
                                                 pad_fft=pad_fft,
-                                                norm=norm,
-                                                return_lengths=True)
+                                                norm=norm)
 
         assert np.all(lengths <= F.shape[1])
 
