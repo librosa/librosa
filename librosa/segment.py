@@ -143,6 +143,8 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
 
     '''
 
+    data = np.atleast_2d(data)
+
     t = data.shape[1]
 
     if width < 1:
@@ -412,6 +414,7 @@ def subsegment(data, frames, n_segments=4):
 
     '''
 
+    data = np.atleast_2d(data)
     frames = util.fix_frames(frames, x_min=0, x_max=data.shape[1], pad=True)
 
     boundaries = []
@@ -474,6 +477,8 @@ def agglomerative(data, k, clusterer=None):
     >>> plt.tight_layout()
 
     """
+
+    data = np.atleast_2d(data)
 
     if clusterer is None:
         # Connect the temporal connectivity graph
