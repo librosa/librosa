@@ -579,6 +579,8 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     max_len = max(lengths)
     if pad_fft:
         max_len = int(2.0**(np.ceil(np.log2(max_len))))
+    else:
+        max_len = np.ceil(max_len)
 
     filters = np.asarray([util.pad_center(filt, max_len, **kwargs)
                           for filt in filters])
@@ -630,6 +632,18 @@ def constant_q_lengths(sr, fmin=None, n_bins=84, bins_per_octave=12,
     if fmin is None:
         fmin = note_to_hz('C2')
 
+    if fmin <= 0:
+        raise ValueError('fmin must be a positive number')
+
+    if bins_per_octave <= 0:
+        raise ValueError('bins_per_octave must be a positive number')
+
+    if resolution <= 0:
+        raise ValueError('resolution must be a positive number')
+
+    if n_bins <= 0 or not isinstance(n_bins, int):
+        raise ValueError('n_bins must be a positive integer')
+
     correction = 2.0**(float(tuning) / bins_per_octave)
 
     fmin = correction * fmin
@@ -642,7 +656,7 @@ def constant_q_lengths(sr, fmin=None, n_bins=84, bins_per_octave=12,
     freq = fmin * 2.0 ** (np.arange(n_bins, dtype=float) / bins_per_octave)
 
     if np.any(freq * (1 + window_bandwidth(window) / Q) > sr / 2.0):
-        raise ValueError('Filter pass bandlies beyond Nyquist')
+        raise ValueError('Filter pass-band lies beyond Nyquist')
 
     # Convert frequencies to filter lengths
     lengths = Q * sr / freq
