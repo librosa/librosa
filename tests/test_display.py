@@ -31,9 +31,10 @@ def get_spec():
 
     y, sr = librosa.load(__EXAMPLE_FILE)
 
-    return librosa.stft(y), sr
+    C = librosa.cqt(y, sr=sr)
+    return librosa.stft(y), C, sr
 
-S, sr = get_spec()
+S, C, sr = get_spec()
 S_abs = np.abs(S)
 S_signed = np.abs(S) - np.median(np.abs(S))
 S_bin = S_signed > 0
@@ -43,6 +44,37 @@ S_bin = S_signed > 0
 def test_complex_input():
     plt.figure()
     librosa.display.specshow(S)
+
+
+@image_comparison(baseline_images=['abs'], extensions=['png'])
+def test_abs_input():
+    plt.figure()
+    librosa.display.specshow(S_abs)
+
+
+@image_comparison(baseline_images=['cqt_note'], extensions=['png'])
+def test_cqt_note():
+    plt.figure()
+    librosa.display.specshow(C, y_axis='cqt_note')
+
+
+@image_comparison(baseline_images=['cqt_hz'], extensions=['png'])
+def test_cqt_hz():
+    plt.figure()
+    librosa.display.specshow(C, y_axis='cqt_hz')
+
+
+@image_comparison(baseline_images=['chroma'], extensions=['png'])
+def test_chroma():
+    chr1 = librosa.feature.chromagram(S=S_abs**2, sr=sr)
+
+    plt.figure()
+    plt.subplot(2, 1, 1)
+    librosa.display.specshow(chr1, y_axis='chroma')
+
+    chr2 = librosa.feature.chromagram(S=S_abs**2, sr=sr, n_chroma=24)
+    plt.subplot(2, 1, 2)
+    librosa.display.specshow(chr2, y_axis='chroma', bins_per_octave=24)
 
 
 @image_comparison(baseline_images=['x_none_y_linear'], extensions=['png'])
