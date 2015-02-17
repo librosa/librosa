@@ -643,9 +643,8 @@ def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         coefficients = np.polyfit(freq, S, order)
     else:
         # Else, fit each frame independently and stack the results
-        coefficients = np.concatenate([[np.polyfit(freq_t, S_t, order)]
-                                       for (freq_t, S_t) in zip(freq.T, S.T)],
-                                      axis=0).T
+        coefficients = np.concatenate([[np.polyfit(freq[:, i], S[:, i], order)]
+                                       for i in range(S.shape[1])], axis=0).T
 
     return coefficients
 
@@ -807,9 +806,6 @@ def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
     raw_chroma = np.dot(chromafb, S)
 
     # Compute normalization factor for each frame
-    if norm is None:
-        return raw_chroma
-
     return util.normalize(raw_chroma, norm=norm, axis=0)
 
 
