@@ -71,6 +71,13 @@ Pitch and tuning
     estimate_tuning
     pitch_tuning
     piptrack
+
+
+Deprecated
+==========
+.. autosummary::
+    :toctree: generated/
+
     ifptrack
 
 """
