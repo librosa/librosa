@@ -28,8 +28,9 @@ try:
 except KeyError:
     pass
 
+import matplotlib
+matplotlib.use('Agg')
 import six
-import librosa
 import glob
 import numpy as np
 import scipy.io
@@ -37,6 +38,7 @@ import scipy.io
 from nose.tools import eq_, raises
 import warnings
 
+import librosa
 
 # -- utilities --#
 def files(pattern):

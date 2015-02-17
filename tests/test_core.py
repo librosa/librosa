@@ -20,6 +20,8 @@ import glob
 import numpy as np
 import scipy.io
 
+import matplotlib
+matplotlib.use('Agg')
 from nose.tools import nottest, eq_, raises
 
 
