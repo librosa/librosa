@@ -11,6 +11,8 @@ except KeyError:
 
 from nose.tools import raises, eq_
 
+import matplotlib
+matplotlib.use('Agg')
 import librosa
 import numpy as np
 

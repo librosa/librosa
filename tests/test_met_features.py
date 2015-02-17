@@ -11,7 +11,8 @@ try:
 except:
     pass
 
-import librosa
+import matplotlib
+matplotlib.use('Agg')
 import numpy as np
 import scipy.io
 import scipy.signal
@@ -20,6 +21,7 @@ from nose.tools import nottest, eq_, raises
 
 from test_core import load, files
 
+import librosa
 
 __EXAMPLE_FILE = 'data/test1_22050.wav'
 
