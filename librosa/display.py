@@ -227,24 +227,24 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
 
         Valid types are:
 
-        - None or 'off' : no axis is displayed.
+            - None or 'off' : no axis is displayed.
 
         Frequency types:
 
-        - 'linear' : frequency range is determined by the FFT window
-            and sampling rate.
-        - 'log' : the image is displayed on a vertical log scale.
-        - 'mel' : frequencies are determined by the mel scale.
-        - 'cqt_hz' : frequencies are determined by the CQT scale.
-        - 'cqt_note' : pitches are determined by the CQT scale.
-        - 'chroma' : pitches are determined by the chroma filters.
+            - 'linear' : frequency range is determined by the FFT window
+                and sampling rate.
+            - 'log' : the image is displayed on a vertical log scale.
+            - 'mel' : frequencies are determined by the mel scale.
+            - 'cqt_hz' : frequencies are determined by the CQT scale.
+            - 'cqt_note' : pitches are determined by the CQT scale.
+            - 'chroma' : pitches are determined by the chroma filters.
 
         Time types:
-        - 'time' : markers are shown as milliseconds, seconds,
-            minutes, or hours
-        - 'lag' : like time, but past the half-way point counts 
-            as negative values.
-        - 'frames' : markers are shown as frame counts.
+            - 'time' : markers are shown as milliseconds, seconds,
+                minutes, or hours
+            - 'lag' : like time, but past the half-way point counts 
+                as negative values.
+            - 'frames' : markers are shown as frame counts.
 
     n_xticks : int > 0 [scalar]
         If x_axis is drawn, the number of ticks to show
@@ -298,6 +298,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Linear-frequency power spectrogram')
 
+
     Or on a logarithmic scale
 
     >>> plt.subplot(4, 2, 2)
@@ -344,7 +345,6 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Log power spectrogram')
     >>> plt.tight_layout()
-
 
     '''
 
@@ -503,10 +503,10 @@ def __axis_linear(data, n_ticks, horiz, sr=22050, **_kwargs):
 
     n, ticker, labeler = __get_shape_artists(data, horiz)
 
-    positions = np.linspace(0, n, n_ticks, endpoint=False).astype(int)
-    values = np.linspace(0, 0.5 * sr, n, endpoint=False).astype(int)
+    positions = np.linspace(0, n, n_ticks, endpoint=True).astype(int)
+    values = (positions * sr // (2 * n)).astype(int)
 
-    ticker(positions, values[positions])
+    ticker(positions, values)
     labeler('Hz')
 
 
@@ -518,9 +518,9 @@ def __axis_cqt(data, n_ticks, horiz, note=False, fmin=None,
 
     n, ticker, labeler = __get_shape_artists(data, horiz)
 
-    positions = np.arange(0, n, np.ceil(float(n) / n_ticks), dtype=int)
+    positions = np.linspace(0, n, num=n_ticks, endpoint=True).astype(int)
 
-    values = core.cqt_frequencies(n,
+    values = core.cqt_frequencies(n + 1,
                                   fmin=fmin,
                                   bins_per_octave=bins_per_octave)
 
@@ -587,7 +587,7 @@ def __axis_frames(data, n_ticks, horiz, label='Frames', **_kwargs):
     '''Frame axes'''
     n, ticker, labeler = __get_shape_artists(data, horiz)
 
-    positions = np.linspace(0, n, n_ticks, endpoint=False).astype(int)
+    positions = np.linspace(0, n, n_ticks, endpoint=True).astype(int)
 
     ticker(positions, positions)
     labeler(label)
