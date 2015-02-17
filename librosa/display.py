@@ -491,11 +491,21 @@ def __axis_chroma(data, n_ticks, horiz, bins_per_octave=12, **_kwargs):
 
     n, ticker, labeler = __get_shape_artists(data, horiz)
 
-    positions = np.arange(0, n, max(1, float(n) / bins_per_octave))
+    #positions = np.linspace(0, n-1, num=n_ticks, endpoint=True).astype(int)
+    # Generate the template positions
+    pos = np.asarray([0, 2, 3, 5, 7, 8, 10]) * bins_per_octave // 12
+
+    n_octaves = np.ceil(n / float(bins_per_octave))
+
+    positions = pos.copy()
+    for i in range(1, int(n_octaves)):
+        positions = np.append(positions, pos + i * bins_per_octave, axis=0)
 
     # Labels start at 9 here because chroma starts at A.
-    values = core.midi_to_note(np.arange(9, 9+12), octave=False)
-    ticker(positions, values)
+    values = core.midi_to_note(positions * 12 // bins_per_octave + 9, octave=False)
+#     values = core.midi_to_note(np.arange(9, 9+n), octave=False)
+    ticker(positions[:n], values[:n])
+#     ticker(positions, [values[t] for t in positions])
     labeler('Pitch class')
 
 
