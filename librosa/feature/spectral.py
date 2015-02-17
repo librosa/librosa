@@ -699,7 +699,7 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True,
     util.valid_audio(y)
 
     if center:
-        y = np.pad(y, int(frame_length / 2), mode='edge')
+        y = np.pad(y, int(frame_length // 2), mode='edge')
 
     y_framed = util.frame(y, frame_length, hop_length)
 
