@@ -360,3 +360,30 @@ def test_rmse():
     for n in range(10, 100, 10):
         yield __test, n
 
+
+def test_zcr_synthetic():
+
+    def __test_zcr(rate, y, frame_length, hop_length, center):
+        zcr = librosa.feature.zero_crossing_rate(y,
+                                                 frame_length=frame_length,
+                                                 hop_length=hop_length,
+                                                 center=center)
+
+        # We don't care too much about the edges if there's padding
+        if center:
+            zcr = zcr[:, frame_length//2:-frame_length//2]
+
+        # We'll allow 1% relative error
+        assert np.allclose(zcr, rate, rtol=1e-2)
+
+    sr = 16384
+    for period in [32, 16, 8, 4, 2]:
+        y = np.ones(sr)
+        y[::period] = -1
+        # Every sign flip induces two crossings
+        rate = 2./period
+        # 1+2**k so that we get both sides of the last crossing
+        for frame_length in [513, 2049]:
+            for hop_length in [128, 256]:
+                for center in [False, True]:
+                    yield __test_zcr, rate, y, frame_length, hop_length, center
