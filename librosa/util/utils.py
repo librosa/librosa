@@ -578,12 +578,13 @@ def normalize(S, norm=np.inf, axis=0):
     S : np.ndarray [shape=(d, n)]
         The matrix to normalize
 
-    norm : {inf, -inf, 0, float > 0}
+    norm : {inf, -inf, 0, float > 0, None}
         - `inf`  : maximum absolute value
         - `-inf` : mininum absolute value
         - `0`    : number of non-zeros
         - float  : corresponding l_p norm.
             See `scipy.linalg.norm` for details.
+        - None : no normalization is performed
 
     axis : int [scalar]
         Axis along which to compute the norm.
@@ -615,6 +616,10 @@ def normalize(S, norm=np.inf, axis=0):
 
     elif np.issubdtype(type(norm), np.number) and norm > 0:
         length = np.sum(mag ** norm, axis=axis, keepdims=True)**(1./norm)
+
+    elif norm is None:
+        return S
+
     else:
         raise ValueError('Unsupported norm value: ' + repr(norm))
 

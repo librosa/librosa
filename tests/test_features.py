@@ -400,10 +400,6 @@ def test_poly_features_synthetic():
         p = librosa.feature.poly_features(S=S, sr=sr, n_fft=n_fft,
                                           order=order, freq=freq)
 
-        print(S)
-        print(coeffs, coeffs.shape)
-        print(p)
-
         assert np.allclose(coeffs, p[::-1].squeeze())
 
     def __make_data(coeffs, freq):
