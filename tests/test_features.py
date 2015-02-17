@@ -400,13 +400,15 @@ def test_poly_features_synthetic():
         p = librosa.feature.poly_features(S=S, sr=sr, n_fft=n_fft,
                                           order=order, freq=freq)
 
-        assert np.allclose(coeffs, p[::-1].squeeze())
+        for i in range(S.shape[-1]):
+            assert np.allclose(coeffs, p[::-1, i].squeeze())
 
     def __make_data(coeffs, freq):
         S = np.zeros_like(freq)
         for i, c in enumerate(coeffs):
             S = S + c * freq**i
-        S = S.reshape((-1, 1))
+
+        S = S.reshape((freq.shape[0], -1))
         return S
 
     for order in range(1, 3):
@@ -426,6 +428,6 @@ def test_poly_features_synthetic():
         yield __test, S, coeffs, freq
 
         # And multi-dimensional
-        freq = np.cumsum(np.abs(np.random.randn(1 + n_fft//2, 2)))
+        freq = np.cumsum(np.abs(np.random.randn(1 + n_fft//2, 2)), axis=0)
         S = __make_data(coeffs, freq)
         yield __test, S, coeffs, freq
