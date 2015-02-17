@@ -39,6 +39,12 @@ S_signed = np.abs(S) - np.median(np.abs(S))
 S_bin = S_signed > 0
 
 
+@image_comparison(baseline_images=['complex'], extensions=['png'])
+def test_complex_input():
+    plt.figure()
+    librosa.display.specshow(S)
+
+
 @image_comparison(baseline_images=['x_none_y_linear'], extensions=['png'])
 def test_xaxis_none_yaxis_linear():
     plt.figure()
@@ -57,13 +63,13 @@ def test_xaxis_none_yaxis_log():
     plt.figure()
 
     plt.subplot(3, 1, 1)
-    librosa.display.specshow(S_abs, x_axis='log')
+    librosa.display.specshow(S_abs, y_axis='log')
 
     plt.subplot(3, 1, 2)
-    librosa.display.specshow(S_signed, x_axis='log')
+    librosa.display.specshow(S_signed, y_axis='log')
 
     plt.subplot(3, 1, 3)
-    librosa.display.specshow(S_bin, x_axis='log')
+    librosa.display.specshow(S_bin, y_axis='log')
 
 
 @image_comparison(baseline_images=['x_linear_y_none'], extensions=['png'])
