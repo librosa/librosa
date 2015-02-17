@@ -242,7 +242,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
         Time types:
             - 'time' : markers are shown as milliseconds, seconds,
                 minutes, or hours
-            - 'lag' : like time, but past the half-way point counts 
+            - 'lag' : like time, but past the half-way point counts
                 as negative values.
             - 'frames' : markers are shown as frame counts.
 
@@ -359,11 +359,6 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
 
     kwargs.setdefault('cmap', cmap(data))
 
-    # NOTE:  2013-11-14 16:15:33 by Brian McFee <brm2132@columbia.edu>
-    #  We draw the image twice here. This is a hack to get around
-    #  NonUniformImage not properly setting hooks for color.
-    #  Drawing twice enables things like colorbar() to work properly.
-
     axes = plt.imshow(data, **kwargs)
 
     all_params = dict(kwargs=kwargs,
@@ -422,7 +417,7 @@ def __axis_none(data, n_ticks, horiz, **_kwargs):
 
 
 def __axis_log(data, n_ticks, horiz, sr=22050, kwargs=None, label='Hz',
-               **_kwargs):
+               secondary_axis='linear', **_kwargs):
     '''Plot a log-scaled image'''
 
     axes_phantom = plt.gca()
@@ -436,12 +431,18 @@ def __axis_log(data, n_ticks, horiz, sr=22050, kwargs=None, label='Hz',
     t_log, t_inv = __log_scale(n)
 
     if horiz:
-        args = (t_log, np.linspace(0, data.shape[0],
-                                   data.shape[0]).astype(int),
+        args = (t_log,
+                np.linspace(0, data.shape[0], data.shape[0]).astype(int),
                 data)
     else:
         args = (np.linspace(0, data.shape[1], data.shape[1]).astype(int),
-                t_log, data)
+                t_log,
+                data)
+
+    # NOTE:  2013-11-14 16:15:33 by Brian McFee <brm2132@columbia.edu>
+    #  We draw the image twice here. This is a hack to get around
+    #  NonUniformImage not properly setting hooks for color.
+    #  Drawing twice enables things like colorbar() to work properly.
 
     im_phantom = img.NonUniformImage(axes_phantom,
                                      extent=(args[0].min(), args[0].max(),
@@ -485,12 +486,12 @@ def __axis_mel(data, n_ticks, horiz, fmin=None, fmax=None, **_kwargs):
     labeler('Hz')
 
 
-def __axis_chroma(data, n_ticks, horiz, **_kwargs):
+def __axis_chroma(data, n_ticks, horiz, bins_per_octave=12, **_kwargs):
     '''Chroma axes'''
 
     n, ticker, labeler = __get_shape_artists(data, horiz)
 
-    positions = np.arange(0, n, max(1, float(n) / 12))
+    positions = np.arange(0, n, max(1, float(n) / bins_per_octave))
 
     # Labels start at 9 here because chroma starts at A.
     values = core.midi_to_note(np.arange(9, 9+12), octave=False)
