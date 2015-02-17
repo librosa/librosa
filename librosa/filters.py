@@ -9,7 +9,6 @@ Filter banks
 
     dct
     mel
-    logfrequency
     constant_q
 
 Miscellanous
@@ -20,6 +19,13 @@ Miscellanous
     constant_q_lengths
     cq_to_chroma
     window_bandwidth
+
+Deprecated
+==========
+.. autosummary::
+    :toc:tree: generated/
+
+    logfrequency
 """
 
 import numpy as np
@@ -35,9 +41,16 @@ from .core.time_frequency import fft_frequencies, mel_frequencies
 # Dictionary of window function bandwidths
 WINDOW_BANDWIDTHS = dict(hann=0.725)
 
-__all__ = ['dct', 'mel', 'chroma', 'logfrequency',
-           'constant_q', 'constant_q_lengths', 'cq_to_chroma',
-           'window_bandwidth']
+__all__ = ['dct',
+           'mel',
+           'chroma',
+           'constant_q',
+           'constant_q_lengths',
+           'cq_to_chroma',
+           'window_bandwidth',
+           # Deprecated
+           'logfrequency',
+           ]
 
 
 @cache
