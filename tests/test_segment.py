@@ -94,6 +94,59 @@ def test_recurrence_matrix():
                     yield tester, n, k, width, sym
 
 
+def test_recurrence_to_lag():
+
+    def __test(n, pad):
+        data = np.random.randn(17, n)
+
+        rec = librosa.segment.recurrence_matrix(data)
+
+        lag = librosa.segment.recurrence_to_lag(rec, pad=pad)
+
+        x = Ellipsis
+        if pad:
+            x = slice(n)
+
+        for i in range(n):
+            assert np.allclose(rec[:, i], np.roll(lag[:, i], i)[x])
+
+    @raises(ValueError)
+    def __test_fail(size):
+        librosa.segment.recurrence_to_lag(np.zeros(size))
+
+    for n in [10, 100, 1000]:
+        for pad in [False, True]:
+            yield __test, n, pad
+
+    yield __test_fail, (17,)
+    yield __test_fail, (17, 34)
+    yield __test_fail, (17, 17, 17)
+
+
+def test_lag_to_recurrence():
+
+    def __test(n, pad):
+        data = np.random.randn(17, n)
+
+        rec = librosa.segment.recurrence_matrix(data)
+        lag = librosa.segment.recurrence_to_lag(rec, pad=pad)
+        rec2 = librosa.segment.lag_to_recurrence(lag)
+
+        assert np.allclose(rec, rec2)
+
+    @raises(ValueError)
+    def __test_fail(size):
+        librosa.segment.lag_to_recurrence(np.zeros(size))
+
+    for n in [10, 100, 1000]:
+        for pad in [False, True]:
+            yield __test, n, pad
+
+    yield __test_fail, (17,)
+    yield __test_fail, (17, 35)
+    yield __test_fail, (17, 17, 17)
+
+
 def test_structure_feature():
 
     def __test(n, pad):

@@ -8,7 +8,6 @@ Spectral features
     :toctree: generated/
 
     chromagram
-    logfsgram
     melspectrogram
     mfcc
     rmse
@@ -27,6 +26,13 @@ Feature manipulation
     delta
     stack_memory
     sync
+
+Deprecated
+==========
+.. autosummary::
+    :toctree: generated/
+
+    logfsgram
 """
 
 from .utils import *  # pylint: disable=wildcard-import
