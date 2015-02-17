@@ -133,12 +133,13 @@ def test_normalize():
     def __test_pass(X, norm, axis):
         X_norm = librosa.util.normalize(X, norm=norm, axis=axis)
 
-        X_norm = np.abs(X_norm)
         if norm is None:
             assert np.allclose(X, X_norm)
             return
 
-        elif norm == np.inf:
+        X_norm = np.abs(X_norm)
+
+        if norm == np.inf:
             values = np.max(X_norm, axis=axis)
         elif norm == -np.inf:
             values = np.min(X_norm, axis=axis)
