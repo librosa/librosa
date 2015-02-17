@@ -9,10 +9,12 @@ try:
 except:
     pass
 
-import librosa
+import matplotlib
+matplotlib.use('Agg')
 import numpy as np
 from nose.tools import raises
 
+import librosa
 __EXAMPLE_FILE = 'data/test1_22050.wav'
 
 

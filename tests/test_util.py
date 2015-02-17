@@ -9,12 +9,15 @@ try:
 except:
     pass
 
+import matplotlib
+matplotlib.use('Agg')
 import numpy as np
 np.set_printoptions(precision=3)
-import librosa
 from nose.tools import raises
 import six
 import warnings
+
+import librosa
 
 
 def test_example_audio_file():

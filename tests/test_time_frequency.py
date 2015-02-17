@@ -9,8 +9,11 @@ try:
 except KeyError:
     pass
 
-import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+
 import librosa
+import numpy as np
 from nose.tools import raises, eq_
 
 

@@ -10,6 +10,8 @@ import tempfile
 import numpy as np
 import shutil
 
+import matplotlib
+matplotlib.use('Agg')
 from nose.tools import with_setup, eq_
 
 
