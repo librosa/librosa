@@ -45,6 +45,13 @@ sklearn integration
 
     FeatureExtractor
 
+Deprecated
+==========
+.. autosummary::
+    :toctree: generated/
+
+    buf_to_int
+
 """
 
 from .utils import *  # pylint: disable=wildcard-import

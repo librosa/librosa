@@ -8,7 +8,6 @@ Text output
     :toctree: generated/
 
     annotation
-    frames_csv
     times_csv
 
 Audio output
@@ -17,6 +16,14 @@ Audio output
     :toctree: generated/
 
     write_wav
+
+Deprecated
+==========
+.. autosummary::
+    :toctree: generated/
+
+    frames_csv
+
 """
 
 import csv
