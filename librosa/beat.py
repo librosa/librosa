@@ -131,9 +131,11 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
     array([  23,  177,  341,  501,  658,  815,  976, 1132, 1292, 1447,
            1612, 1773, 1931, 2087, 2248, 2404, 2561, 2724, 2886, 3050])
 
+
     Plot the beat events against the onset strength envelope
 
     >>> import matplotlib.pyplot as plt
+    >>> hop_length = 512
     >>> plt.figure()
     >>> plt.plot(librosa.util.normalize(onset_env), label='Onset strength')
     >>> plt.vlines(beats, 0, 1, alpha=0.5, color='r',

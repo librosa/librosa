@@ -8,7 +8,8 @@ Recurrence and self-similarity
     :toctree: generated/
 
     recurrence_matrix
-    structure_feature
+    recurrence_to_lag
+    lag_to_recurrence
     timelag_filter
 
 Temporal clustering
@@ -18,6 +19,13 @@ Temporal clustering
 
     agglomerative
     subsegment
+
+Deprecated
+==========
+.. autosummary::
+    :toctree: generated/
+
+    structure_feature
 """
 
 from decorator import decorator
@@ -33,8 +41,14 @@ import sklearn.feature_extraction
 from . import cache
 from . import util
 
-__all__ = ['recurrence_matrix', 'structure_feature', 'timelag_filter',
-           'agglomerative', 'subsegment']
+__all__ = ['recurrence_matrix',
+           'recurrence_to_lag',
+           'lag_to_recurrence',
+           'timelag_filter',
+           'agglomerative',
+           'subsegment',
+           # Deprecated functions
+           'structure_feature']
 
 
 @cache
@@ -179,95 +193,133 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
     return rec
 
 
-@cache
-def structure_feature(rec, pad=True, inverse=False):
-    '''Compute the structure feature from a recurrence matrix.
+def recurrence_to_lag(rec, pad=True):
+    '''Convert a recurrence matrix into a lag matrix.
 
-    The i'th column of the recurrence matrix is shifted up by i.
-    The resulting matrix is indexed horizontally by time,
-    and vertically by lag.
+        `lag[i, j] == rec[i+j, j]`
 
     Parameters
     ----------
-    rec   : np.ndarray [shape=(t,t) or shape=(2*t, t)]
-        recurrence matrix or pre-computed structure feature
+    rec : np.ndarray, [shape=(n, n)]
+        A (binary) recurrence matrix, as returned by `recurrence_matrix`
 
-    pad : bool [scalar]
-        Pad the matrix with `t` rows of zeros to avoid looping.
+    pad : bool
+        If False, `lag` matrix is square, which is equivalent to 
+        assuming that the signal repeats itself indefinitely.
 
-    inverse : bool [scalar]
-        Unroll the opposite direction. This is useful for converting
-        structure features back into recurrence plots.
-
-        .. note: Reversing with `pad==True` will truncate the
-            inferred padding.
+        If True, `lag` is padded with `n` zeros, which eliminates
+        the assumption of repetition.
 
     Returns
     -------
-    struct : np.ndarray [shape=(2*t, t) or shape=(t, t)]
-        `struct[i, t]` = the recurrence at time `t` with lag `i`.
+    lag : np.ndarray [shape=(2*n, n) or (n, n)]
+        The recurrence matrix in (lag, time) coordinates
 
-        .. note:: negative lag values are supported by wrapping to the
-            end of the array.
+    Raises
+    ------
+    ValueError : if `rec` is non-square
 
     See Also
     --------
-    recurrence_matrix : build a recurrence matrix from feature vectors
+    recurrence_matrix
+    lag_to_recurrence
 
     Examples
     --------
-    Build the structure feature over mfcc similarity
-
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> mfccs = librosa.feature.mfcc(y=y, sr=sr)
     >>> recurrence = librosa.segment.recurrence_matrix(mfccs)
-    >>> struct = librosa.segment.structure_feature(recurrence)
-
-
-    Invert the structure feature to get a recurrence matrix
-
-    >>> recurrence_2 = librosa.segment.structure_feature(struct,
-    ...                                                  inverse=True)
-
-    Display recurrence in time-time and time-lag space
+    >>> lag_pad = librosa.segment.recurrence_to_lag(recurrence, pad=True)
+    >>> lag_nopad = librosa.segment.recurrence_to_lag(recurrence, pad=False)
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure(figsize=(10, 5))
+    >>> plt.figure(figsize=(8, 4))
     >>> plt.subplot(1, 2, 1)
-    >>> librosa.display.specshow(recurrence, aspect='equal', x_axis='time',
-    ...                          y_axis='time')
-    >>> plt.ylabel('Time')
-    >>> plt.title('Recurrence (time-time)')
+    >>> librosa.display.specshow(lag_pad, x_axis='time', y_axis='lag')
+    >>> plt.title('Lag (zero-padded)')
     >>> plt.subplot(1, 2, 2)
-    >>> librosa.display.specshow(struct, aspect='auto', x_axis='time')
-    >>> plt.ylabel('Lag')
-    >>> plt.title('Structure feature')
+    >>> librosa.display.specshow(lag_nopad, x_axis='time', y_axis='time')
+    >>> plt.title('Lag (no padding)')
+    >>> plt.tight_layout()
+    '''
+
+    if rec.ndim != 2 or rec.shape[0] != rec.shape[1]:
+        raise ValueError('non-square recurrence matrix shape: '
+                         '{:s}'.format(rec.shape))
+
+    t = rec.shape[1]
+    if pad:
+        lag = np.pad(rec, [(0, t), (0, 0)], mode='constant')
+    else:
+        lag = rec.copy()
+
+    for i in range(1, t):
+        lag[:, i] = np.roll(lag[:, i], -i)
+
+    return np.ascontiguousarray(lag.T).T
+
+
+def lag_to_recurrence(lag):
+    '''Convert a lag matrix into a recurrence matrix.
+
+    Parameters
+    ----------
+    lag : np.ndarray [shape=(2*n, n) or (n, n)]
+        A lag matrix, as produced by `recurrence_to_lag`
+
+    Returns
+    -------
+    rec : np.ndarray [shape=(n, n)]
+        A recurrence matrix in (time, time) coordinates
+
+    Raises
+    ------
+    ValueError : if `lag` does not have the correct shape
+
+    See Also
+    --------
+    recurrence_to_lag
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> mfccs = librosa.feature.mfcc(y=y, sr=sr)
+    >>> recurrence = librosa.segment.recurrence_matrix(mfccs)
+    >>> lag_pad = librosa.segment.recurrence_to_lag(recurrence, pad=True)
+    >>> lag_nopad = librosa.segment.recurrence_to_lag(recurrence, pad=False)
+    >>> rec_pad = librosa.segment.lag_to_recurrence(lag_pad)
+    >>> rec_nopad = librosa.segment.lag_to_recurrence(lag_nopad)
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure(figsize=(8, 4))
+    >>> plt.subplot(2, 2, 1)
+    >>> librosa.display.specshow(lag_pad, x_axis='time', y_axis='lag')
+    >>> plt.title('Lag (zero-padded)')
+    >>> plt.subplot(2, 2, 2)
+    >>> librosa.display.specshow(lag_nopad, x_axis='time', y_axis='time')
+    >>> plt.title('Lag (no padding)')
+    >>> plt.subplot(2, 2, 3)
+    >>> librosa.display.specshow(rec_pad, x_axis='time', y_axis='time')
+    >>> plt.title('Recurrence (with padding)')
+    >>> plt.subplot(2, 2, 4)
+    >>> librosa.display.specshow(rec_nopad, x_axis='time', y_axis='time')
+    >>> plt.title('Recurrence (without padding)')
     >>> plt.tight_layout()
 
     '''
 
-    t = rec.shape[1]
+    pad = (lag.shape[0] == 2 * lag.shape[-1])
 
-    if pad and not inverse:
-        # If we don't assume that the signal loops,
-        # stack zeros underneath in the recurrence plot.
-        struct = np.pad(rec, [(0, t), (0, 0)], mode='constant')
-    else:
-        struct = rec.copy()
+    if lag.ndim != 2 or (lag.shape[0] != lag.shape[1] and not pad):
+        raise ValueError('Invalid lag matrix shape: {:s}'.format(lag.shape))
 
-    if inverse:
-        direction = +1
-    else:
-        direction = -1
+    t = lag.shape[1]
+    lag = lag.copy()
 
     for i in range(1, t):
-        struct[:, i] = np.roll(struct[:, i], direction * i, axis=-1)
+        lag[:, i] = np.roll(lag[:, i], i)
 
-    if inverse and pad:
-        struct = struct[:t]
-
-    # Make column-contiguous
-    return np.ascontiguousarray(struct.T).T
+    return np.ascontiguousarray(lag[:t].T).T
 
 
 def timelag_filter(function, pad=True, index=0):
@@ -297,16 +349,18 @@ def timelag_filter(function, pad=True, index=0):
         If `function` accepts input data as a positional argument, it should be
         indexed by `index`
 
+
     Returns
     -------
     wrapped_function : callable
-
         A new filter function which applies in time-lag space rather than
         time-time space.
+
 
     See Also
     --------
     structure_feature
+
 
     Examples
     --------
@@ -339,15 +393,13 @@ def timelag_filter(function, pad=True, index=0):
         # Map the input data into time-lag space
         args = list(args)
 
-        args[index] = structure_feature(args[index],
-                                        pad=pad,
-                                        inverse=False)
+        args[index] = recurrence_to_lag(args[index], pad=pad)
 
         # Apply the filtering function
         result = wrapped_f(*args, **kwargs)
 
         # Map back into time-time and return
-        return structure_feature(result, pad=pad, inverse=True)
+        return lag_to_recurrence(result)
 
     return decorator(__my_filter, function)
 
@@ -499,3 +551,83 @@ def agglomerative(data, k, clusterer=None):
     boundaries.extend(
         list(1 + np.nonzero(np.diff(clusterer.labels_))[0].astype(int)))
     return np.asarray(boundaries)
+
+
+# Deprecated functions
+
+@util.decorators.deprecated('0.4', '0.5')
+@cache
+def structure_feature(rec, pad=True, inverse=False):
+    '''Compute the structure feature from a recurrence matrix.
+
+    The i'th column of the recurrence matrix is shifted up by i.
+    The resulting matrix is indexed horizontally by time,
+    and vertically by lag.
+
+    .. warning:: Deprected in librosa 0.4
+                 Functionality is superseded by
+                 `librosa.segment.recurrence_to_lag` and
+                 `librosa.segment.lag_to_recurrence`.
+
+    Parameters
+    ----------
+    rec   : np.ndarray [shape=(t,t) or shape=(2*t, t)]
+        recurrence matrix or pre-computed structure feature
+
+    pad : bool [scalar]
+        Pad the matrix with `t` rows of zeros to avoid looping.
+
+    inverse : bool [scalar]
+        Unroll the opposite direction. This is useful for converting
+        structure features back into recurrence plots.
+
+        .. note: Reversing with `pad==True` will truncate the
+            inferred padding.
+
+    Returns
+    -------
+    struct : np.ndarray [shape=(2*t, t) or shape=(t, t)]
+        `struct[i, t]` = the recurrence at time `t` with lag `i`.
+
+        .. note:: negative lag values are supported by wrapping to the
+            end of the array.
+
+    See Also
+    --------
+    recurrence_matrix : build a recurrence matrix from feature vectors
+
+    Examples
+    --------
+    Build the structure feature over mfcc similarity
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> mfccs = librosa.feature.mfcc(y=y, sr=sr)
+    >>> recurrence = librosa.segment.recurrence_matrix(mfccs)
+    >>> struct = librosa.segment.structure_feature(recurrence)
+
+
+    Invert the structure feature to get a recurrence matrix
+
+    >>> recurrence_2 = librosa.segment.structure_feature(struct,
+    ...                                                  inverse=True)
+
+    Display recurrence in time-time and time-lag space
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure(figsize=(10, 5))
+    >>> plt.subplot(1, 2, 1)
+    >>> librosa.display.specshow(recurrence, aspect='equal', x_axis='time',
+    ...                          y_axis='time')
+    >>> plt.ylabel('Time')
+    >>> plt.title('Recurrence (time-time)')
+    >>> plt.subplot(1, 2, 2)
+    >>> librosa.display.specshow(struct, aspect='auto', x_axis='time')
+    >>> plt.ylabel('Lag')
+    >>> plt.title('Structure feature')
+    >>> plt.tight_layout()
+
+    '''
+    if inverse:
+        return lag_to_recurrence(rec)
+    else:
+        return recurrence_to_lag(rec, pad=pad)

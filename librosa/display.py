@@ -242,6 +242,8 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
         Time types:
         - 'time' : markers are shown as milliseconds, seconds,
             minutes, or hours
+        - 'lag' : like time, but past the half-way point counts 
+            as negative values.
         - 'frames' : markers are shown as frame counts.
 
     n_xticks : int > 0 [scalar]
@@ -396,6 +398,7 @@ def __axis(data, n_ticks, ax_type, horiz=False, **kwargs):
                 'chroma': __axis_chroma,
                 'off': __axis_none,
                 'time': __axis_time,
+                'lag': __axis_lag,
                 'frames': __axis_frames}
 
     if ax_type is None:
@@ -553,11 +556,29 @@ def __axis_time(data, n_ticks, horiz, sr=22050, hop_length=512, **_kwargs):
     else:
         axis = 'y'
 
-    positions = np.linspace(0, n, n_ticks, endpoint=False).astype(int)
+    positions = np.linspace(0, n, n_ticks, endpoint=True).astype(int)
 
     time_ticks(positions,
                core.frames_to_time(positions, sr=sr, hop_length=hop_length),
                n_ticks=None, axis=axis)
+
+    labeler('Time')
+
+
+def __axis_lag(data, n_ticks, horiz, sr=22050, hop_length=512, **_kwargs):
+    '''Lag axes'''
+    n, ticker, labeler = __get_shape_artists(data, horiz)
+
+    if horiz:
+        axis = 'x'
+    else:
+        axis = 'y'
+
+    positions = np.linspace(0, n, n_ticks, endpoint=True).astype(int)
+    times = core.frames_to_time(positions, sr=sr, hop_length=hop_length)
+    times[positions >= n//2] -= times[-1]
+
+    time_ticks(positions, times, n_ticks=None, axis=axis)
 
     labeler('Time')
 
