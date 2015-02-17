@@ -66,15 +66,18 @@ def test_cqt_hz():
 
 @image_comparison(baseline_images=['chroma'], extensions=['png'])
 def test_chroma():
-    chr1 = librosa.feature.chromagram(S=S_abs**2, sr=sr)
-
     plt.figure()
-    plt.subplot(2, 1, 1)
+    plt.subplot(3, 1, 1)
+    chr1 = librosa.feature.chromagram(S=S_abs**2, sr=sr)
     librosa.display.specshow(chr1, y_axis='chroma')
 
-    chr2 = librosa.feature.chromagram(S=S_abs**2, sr=sr, n_chroma=24)
-    plt.subplot(2, 1, 2)
-    librosa.display.specshow(chr2, y_axis='chroma', bins_per_octave=24)
+    plt.subplot(3, 1, 2)
+    chr2 = librosa.feature.chromagram(S=S_abs**2, sr=sr, n_chroma=2*12)
+    librosa.display.specshow(chr2, y_axis='chroma', bins_per_octave=2*12)
+
+    plt.subplot(3, 1, 3)
+    chr3 = librosa.feature.chromagram(S=S_abs**2, sr=sr, n_chroma=3*12)
+    librosa.display.specshow(chr3, y_axis='chroma', bins_per_octave=3*12)
 
 
 @image_comparison(baseline_images=['x_none_y_linear'], extensions=['png'])
