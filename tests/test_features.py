@@ -387,3 +387,49 @@ def test_zcr_synthetic():
             for hop_length in [128, 256]:
                 for center in [False, True]:
                     yield __test_zcr, rate, y, frame_length, hop_length, center
+
+
+def test_poly_features_synthetic():
+
+    sr = 22050
+    n_fft = 2048
+
+    def __test(S, coeffs, freq):
+
+        order = coeffs.shape[0] - 1
+        p = librosa.feature.poly_features(S=S, sr=sr, n_fft=n_fft,
+                                          order=order, freq=freq)
+
+        print(S)
+        print(coeffs, coeffs.shape)
+        print(p)
+
+        assert np.allclose(coeffs, p[::-1].squeeze())
+
+    def __make_data(coeffs, freq):
+        S = np.zeros_like(freq)
+        for i, c in enumerate(coeffs):
+            S = S + c * freq**i
+        S = S.reshape((-1, 1))
+        return S
+
+    for order in range(1, 3):
+        freq = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
+        coeffs = np.atleast_1d(np.arange(1, 1+order))
+
+        # First test: vanilla
+        S = __make_data(coeffs, freq)
+        yield __test, S, coeffs, None
+
+        # And with explicit frequencies
+        yield __test, S, coeffs, freq
+
+        # And with alternate frequencies
+        freq = freq**2.0
+        S = __make_data(coeffs, freq)
+        yield __test, S, coeffs, freq
+
+        # And multi-dimensional
+        freq = np.cumsum(np.abs(np.random.randn(1 + n_fft//2, 2)))
+        S = __make_data(coeffs, freq)
+        yield __test, S, coeffs, freq
