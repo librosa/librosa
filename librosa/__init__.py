@@ -2,6 +2,12 @@
 # -*- coding: utf-8 -*-
 """Top-level module for librosa"""
 
+import warnings
+import re
+warnings.filterwarnings('always',
+                        category=DeprecationWarning,
+                        module='^{0}'.format(re.escape(__name__)))
+
 from .version import version as __version__
 
 # And all the librosa sub-modules
@@ -22,8 +28,3 @@ from . import util
 from librosa.core import *  # pylint: disable=wildcard-import
 
 
-import warnings
-import re
-warnings.filterwarnings('always',
-                        category=DeprecationWarning,
-                        module='^{0}'.format(re.escape(__name__)))
