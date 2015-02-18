@@ -80,6 +80,15 @@ def test_chroma():
     librosa.display.specshow(chr3, y_axis='chroma', bins_per_octave=3*12)
 
 
+@image_comparison(baseline_images=['double_chroma'], extensions=['png'])
+def test_double_chroma():
+    plt.figure()
+
+    chr1 = librosa.feature.chromagram(S=S_abs**2, sr=sr)
+    chr1 = np.vstack((chr1, chr1))
+    librosa.display.specshow(chr1, y_axis='chroma', bins_per_octave=12)
+
+
 @image_comparison(baseline_images=['x_none_y_linear'], extensions=['png'])
 def test_xaxis_none_yaxis_linear():
     plt.figure()
