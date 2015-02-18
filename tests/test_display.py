@@ -212,6 +212,29 @@ def test_xaxis_time_yaxis_lag():
     librosa.display.specshow(S_abs.T, y_axis='lag')
 
 
+@image_comparison(baseline_images=['time_scales_auto'], extensions=['png'])
+def test_time_scales_auto():
+
+    # sr = 22050, hop_length = 512, S.shape[1] = 198
+    # 197 * 512 / 22050 ~= 4.6s
+    plt.figure()
+    plt.subplot(4, 1, 1)
+    # sr * 10 -> ms
+    librosa.display.specshow(S_abs, sr=10 * sr, x_axis='time')
+
+    plt.subplot(4, 1, 2)
+    # sr -> s
+    librosa.display.specshow(S_abs, sr=sr, x_axis='time')
+
+    plt.subplot(4, 1, 3)
+    # sr / 20 -> m
+    librosa.display.specshow(S_abs, sr=sr // 20, x_axis='time')
+
+    plt.subplot(4, 1, 4)
+    # sr / (60 * 20) -> h
+    librosa.display.specshow(S_abs, sr=sr // (20 * 60), x_axis='time')
+
+
 def test_unknown_axis():
 
     @raises(ValueError)
@@ -261,3 +284,4 @@ def test_time_ticks_failure():
 
     # Unknown fmt
     yield __test, locs, None, 'days', 'x'
+
