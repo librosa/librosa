@@ -675,7 +675,7 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
 
 
 @cache
-def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12, 
+def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
                  fmin=None, base_c=True):
     '''Convert a Constant-Q basis to Chroma.
 
@@ -770,10 +770,13 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
         # rotate to A
         roll = midi_0 - 9
 
-    # Apply the roll
-    cq_to_ch = np.roll(cq_to_ch, -roll, axis=0)
+    # Adjust the roll in terms of how many chroma we want out
+    roll = int(roll) * n_chroma // 12
 
-    return cq_to_ch
+    # Apply the roll
+    cq_to_ch = np.roll(cq_to_ch, int(roll), axis=0)
+
+    return cq_to_ch.astype(np.float)
 
 
 def window_bandwidth(window, default=1.0):
