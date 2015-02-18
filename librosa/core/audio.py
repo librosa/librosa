@@ -202,17 +202,8 @@ def to_mono(y):
 
 
 @cache
-def resample(y, orig_sr, target_sr, res_type='sinc_best', fix=True,
-             scipy_resample=False, **kwargs):
+def resample(y, orig_sr, target_sr, res_type='sinc_best', fix=True, **kwargs):
     """Resample a time series from orig_sr to target_sr
-
-    Examples
-    --------
-    >>> # Downsample from 22 KHz to 8 KHz
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(), sr=22050)
-    >>> y_8k = librosa.resample(y, sr, 8000)
-    >>> y.shape, y_8k.shape
-    ((1354752,), (491520,))
 
     Parameters
     ----------
@@ -228,12 +219,17 @@ def resample(y, orig_sr, target_sr, res_type='sinc_best', fix=True,
     res_type : str
         resample type (see note)
 
+        .. note::
+            If `scikits.samplerate` is installed, `resample`
+            will use `res_type`.
+
+            Otherwise, fall back on `scipy.signal.resample`.
+
+            To force use of `scipy.signal.resample`, set `res_type='scipy'`.
+
     fix : bool
         adjust the length of the resampled signal to be of size exactly
         `ceil(target_sr * len(y) / orig_sr)`
-
-    scipy_resample : bool
-        Force usage of `scipy.resample` rather than `scikits.samplerate`
 
     kwargs : additional keyword arguments
         If `fix==True`, additional keyword arguments to pass to
@@ -244,16 +240,22 @@ def resample(y, orig_sr, target_sr, res_type='sinc_best', fix=True,
     y_hat : np.ndarray [shape=(n * target_sr / orig_sr,)]
         `y` resampled from `orig_sr` to `target_sr`
 
-    .. note::
-        If `scikits.samplerate` is installed, `resample`
-        will use `res_type`.
-        Otherwise, librosa will fall back on `scipy.signal.resample`
 
     See Also
     --------
     librosa.util.fix_length
     samplerate.resample
     scipy.signal.resample
+
+    Examples
+    --------
+    Downsample from 22 KHz to 8 KHz
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), sr=22050)
+    >>> y_8k = librosa.resample(y, sr, 8000)
+    >>> y.shape, y_8k.shape
+    ((1354752,), (491520,))
+
     """
 
     # First, validate the audio buffer
@@ -263,6 +265,8 @@ def resample(y, orig_sr, target_sr, res_type='sinc_best', fix=True,
         return y
 
     n_samples = int(np.ceil(y.shape[-1] * float(target_sr) / orig_sr))
+
+    scipy_resample = (res_type == 'scipy')
 
     if _HAS_SAMPLERATE and not scipy_resample:
         y_hat = samplerate.resample(y.T,

@@ -58,12 +58,11 @@ def test_load():
 
 def test_resample():
 
-    def __test(y, sr_in, sr_out, res_type, fix, scipy_resample):
+    def __test(y, sr_in, sr_out, res_type, fix):
 
         y2 = librosa.resample(y, sr_in, sr_out,
                               res_type=res_type,
-                              fix=fix,
-                              scipy_resample=scipy_resample)
+                              fix=fix)
 
         # First, check that the audio is valid
         librosa.util.valid_audio(y2, mono=True)
@@ -85,11 +84,9 @@ def test_resample():
         y, sr_in = librosa.load(infile, sr=None, duration=5)
 
         for sr_out in [8000, 22050]:
-            for res_type in ['sinc_fastest', 'sinc_best']:
+            for res_type in ['sinc_fastest', 'sinc_best', 'scipy']:
                 for fix in [False, True]:
-                    for scipy_resample in [False, True]:
-                        yield (__test, y, sr_in, sr_out,
-                               res_type, fix, scipy_resample)
+                    yield (__test, y, sr_in, sr_out, res_type, fix)
 
 
 @nottest
