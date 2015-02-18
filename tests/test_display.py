@@ -68,15 +68,15 @@ def test_cqt_hz():
 def test_chroma():
     plt.figure()
     plt.subplot(3, 1, 1)
-    chr1 = librosa.feature.chromagram(S=S_abs**2, sr=sr)
+    chr1 = librosa.feature.chroma_stft(S=S_abs**2, sr=sr)
     librosa.display.specshow(chr1, y_axis='chroma')
 
     plt.subplot(3, 1, 2)
-    chr2 = librosa.feature.chromagram(S=S_abs**2, sr=sr, n_chroma=2*12)
+    chr2 = librosa.feature.chroma_stft(S=S_abs**2, sr=sr, n_chroma=2*12)
     librosa.display.specshow(chr2, y_axis='chroma', bins_per_octave=2*12)
 
     plt.subplot(3, 1, 3)
-    chr3 = librosa.feature.chromagram(S=S_abs**2, sr=sr, n_chroma=3*12)
+    chr3 = librosa.feature.chroma_stft(S=S_abs**2, sr=sr, n_chroma=3*12)
     librosa.display.specshow(chr3, y_axis='chroma', bins_per_octave=3*12)
 
 
@@ -84,7 +84,7 @@ def test_chroma():
 def test_double_chroma():
     plt.figure()
 
-    chr1 = librosa.feature.chromagram(S=S_abs**2, sr=sr)
+    chr1 = librosa.feature.chroma_stft(S=S_abs**2, sr=sr)
     chr1 = np.vstack((chr1, chr1))
     librosa.display.specshow(chr1, y_axis='chroma', bins_per_octave=12)
 
