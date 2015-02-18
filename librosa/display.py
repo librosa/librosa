@@ -329,7 +329,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
 
     Draw a chromagram with pitch classes
 
-    >>> C = librosa.feature.chromagram(y=y, sr=sr)
+    >>> C = librosa.feature.chroma_stft(y=y, sr=sr)
     >>> plt.subplot(4, 2, 5)
     >>> librosa.display.specshow(C, y_axis='chroma')
     >>> plt.colorbar()

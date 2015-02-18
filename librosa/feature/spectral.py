@@ -21,11 +21,12 @@ __all__ = ['spectral_centroid',
            'poly_features',
            'rmse',
            'zero_crossing_rate',
-           'chromagram',
+           'chroma_stft',
            'melspectrogram',
            'mfcc',
            # Deprecated functions
-           'logfsgram']
+           'logfsgram',
+           'chromagram']
 
 
 # -- Spectral features -- #
@@ -712,9 +713,9 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True,
 
 # -- Chroma --#
 @cache
-def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
+def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
                hop_length=512, tuning=None, **kwargs):
-    """Compute a chromagram from a spectrogram or waveform
+    """Compute a chromagram from a STFT spectrogram or waveform
 
     Parameters
     ----------
@@ -762,7 +763,7 @@ def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
     Examples
     --------
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> librosa.feature.chromagram(y=y, sr=sr)
+    >>> librosa.feature.chroma_stft(y=y, sr=sr)
     array([[ 0.548,  0.293, ...,  0.698,  0.677],
            [ 0.984,  0.369, ...,  0.945,  0.48 ],
     ...,
@@ -772,7 +773,7 @@ def chromagram(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
     Use a pre-computed spectrogram with a larger frame
 
     >>> S = np.abs(librosa.stft(y, n_fft=4096))
-    >>> chroma = librosa.feature.chromagram(S=S, sr=sr)
+    >>> chroma = librosa.feature.chroma_stft(S=S, sr=sr)
     >>> chroma
     array([[ 0.591,  0.336, ...,  0.821,  0.831],
            [ 0.677,  0.46 , ...,  0.961,  0.963],
@@ -1050,3 +1051,8 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096,
     cq_basis = filters.logfrequency(sr, n_fft=n_fft, **kwargs)
 
     return cq_basis.dot(S)
+
+
+# Moved functions
+chromagram = util.decorators.moved('librosa.feature.chromagram',
+                                   '0.4', '0.5')(chroma_stft)

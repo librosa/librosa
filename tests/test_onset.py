@@ -54,7 +54,7 @@ def test_onset_strength_audio():
 
     for feature in [None,
                     librosa.feature.melspectrogram,
-                    librosa.feature.chromagram]:
+                    librosa.feature.chroma_stft]:
         for n_fft in [512, 2048]:
             for hop_length in [n_fft // 2, n_fft // 4]:
                 for detrend in [False, True]:
@@ -97,7 +97,7 @@ def test_onset_strength_spectrogram():
 
     for feature in [None,
                     librosa.feature.melspectrogram,
-                    librosa.feature.chromagram]:
+                    librosa.feature.chroma_stft]:
         for n_fft in [512, 2048]:
             for hop_length in [n_fft // 2, n_fft // 4]:
                 for detrend in [False, True]:
