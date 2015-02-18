@@ -20,7 +20,7 @@ seaborn.set(style='white')
 import librosa
 import numpy as np
 
-from nose.tools import nottest
+from nose.tools import nottest, raises
 from mpl_ic import image_comparison
 
 
@@ -201,3 +201,16 @@ def test_xaxis_time_yaxis_lag():
 
     plt.figure()
     librosa.display.specshow(S_abs.T, y_axis='lag')
+
+
+def test_unknown_axis():
+
+    @raises(ValueError)
+    def __test(axis):
+        kwargs = dict()
+        kwargs.setdefault(axis, 'something not in the axis map')
+        plt.figure()
+        librosa.display.specshow(S_abs, **kwargs)
+
+    yield __test, 'x_axis'
+    yield __test, 'y_axis'
