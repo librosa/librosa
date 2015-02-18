@@ -11,7 +11,6 @@ from .pitch import estimate_tuning
 from .. import cache
 from .. import filters
 from .. import util
-from ..feature.utils import sync
 
 __all__ = ['cqt', 'hybrid_cqt', 'pseudo_cqt']
 
@@ -495,6 +494,7 @@ def __variable_hop_response(y, n_fft, hop_length, min_filter_length,
     to the desired resolution.
     '''
 
+    from ..feature.utils import sync
     # If target_hop <= n_fft / 2:
     #   my_hop = target_hop
     # else:

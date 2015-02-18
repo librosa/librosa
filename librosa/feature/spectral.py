@@ -11,6 +11,7 @@ from .. import filters
 from ..core.time_frequency import fft_frequencies
 from ..core.audio import zero_crossings
 from ..core.spectrum import logamplitude, _spectrogram
+from ..core.constantq import cqt, hybrid_cqt
 from ..core.pitch import estimate_tuning
 
 
@@ -22,6 +23,7 @@ __all__ = ['spectral_centroid',
            'rmse',
            'zero_crossing_rate',
            'chroma_stft',
+           'chroma_cqt',
            'melspectrogram',
            'mfcc',
            # Deprecated functions
@@ -808,6 +810,114 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
 
     # Compute normalization factor for each frame
     return util.normalize(raw_chroma, norm=norm, axis=0)
+
+
+@cache
+def chroma_cqt(y, sr=22050, C=None, hop_length=512, fmin=None, norm=np.inf,
+               tuning=None, n_chroma=12, n_octaves=7, bins_per_octave=None,
+               mode='full'):
+    r'''Constant-Q chromagram
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(n,)]
+        audio time series
+
+    sr : int > 0
+        sampling rate of `y`
+
+    C : np.ndarray [shape=(d, t)] [Optional]
+        a pre-computed constant-Q spectrogram
+
+    hop_length : int > 0
+        number of samples between successive chroma frames
+
+    fmin : float > 0
+        minimum frequency to analyze in the CQT.
+        Default: 'C2' ~ 32.7 Hz
+
+    norm : int > 0, +-np.inf, or None
+        Column-wise normalization of the chromagram.
+
+    tuning : float
+        Deviation (in cents) from A440 tuning
+
+    n_chroma : int > 0
+        Number of chroma bins to produce
+
+    n_octaves : int > 0
+        Number of octaves to analyze above `fmin`
+
+    bins_per_octave : int > 0
+        Number of bins per octave in the CQT.
+        Default: matches `n_chroma`
+
+    mode : ['full', 'hybrid']
+        Constant-Q transform mode
+
+    Returns
+    -------
+    chromagram : np.ndarray [shape=(n_chroma, t)]
+        The output chromagram
+
+    See Also
+    --------
+    util.normalize
+    core.cqt
+    core.hybrid_cqt
+    chroma_stft
+
+    Examples
+    --------
+    Compare a long-window STFT chromagram to the CQT chromagram
+
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(),
+    ...                      offset=10, duration=15)
+    >>> chroma_stft = librosa.feature.chroma_stft(y=y, sr=sr,
+    ...                                           n_chroma=12, n_fft=4096)
+    >>> chroma_cq = librosa.feature.chroma_cqt(y=y, sr=sr)
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> plt.subplot(2,1,1)
+    >>> librosa.display.specshow(chroma_stft, y_axis='chroma')
+    >>> plt.title('chroma_stft')
+    >>> plt.colorbar()
+    >>> plt.subplot(2,1,2)
+    >>> librosa.display.specshow(chroma_cq, y_axis='chroma', x_axis='time')
+    >>> plt.title('chroma_cqt')
+    >>> plt.colorbar()
+    >>> plt.tight_layout()
+
+    '''
+
+    cqt_func = {'full': cqt, 'hybrid': hybrid_cqt}
+
+    if bins_per_octave is None:
+        bins_per_octave = n_chroma
+
+    # Build the CQT if we don't have one already
+    if C is None:
+        C = cqt_func[mode](y, sr=sr,
+                           hop_length=hop_length,
+                           fmin=fmin,
+                           n_bins=n_octaves * bins_per_octave,
+                           bins_per_octave=bins_per_octave,
+                           tuning=tuning)
+
+    # Map to chroma
+    cq_to_chr = filters.cq_to_chroma(C.shape[0],
+                                     bins_per_octave=bins_per_octave,
+                                     n_chroma=n_chroma,
+                                     fmin=fmin)
+    chroma = cq_to_chr.dot(C)
+
+    # Normalize
+    if norm is not None:
+        chroma = util.normalize(chroma, norm=norm, axis=0)
+
+    return chroma
 
 
 # -- Mel spectrogram and MFCCs -- #
