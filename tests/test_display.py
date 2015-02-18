@@ -232,7 +232,31 @@ def test_time_scales_auto():
 
     plt.subplot(4, 1, 4)
     # sr / (60 * 20) -> h
-    librosa.display.specshow(S_abs, sr=sr // (20 * 60), x_axis='time')
+    librosa.display.specshow(S_abs, sr=sr // (60 * 20), x_axis='time')
+
+
+@image_comparison(baseline_images=['time_scales_explicit'], extensions=['png'])
+def test_time_scales_explicit():
+
+    locs = np.linspace(0, S.shape[1], num=5)
+    times = locs * 512 // sr
+
+    plt.figure()
+    plt.subplot(4, 1, 1)
+    librosa.display.specshow(S_abs)
+    librosa.display.time_ticks(locs, times, fmt='ms')
+
+    plt.subplot(4, 1, 2)
+    librosa.display.specshow(S_abs)
+    librosa.display.time_ticks(locs, times, fmt='s')
+
+    plt.subplot(4, 1, 3)
+    librosa.display.specshow(S_abs)
+    librosa.display.time_ticks(locs, times, fmt='m')
+
+    plt.subplot(4, 1, 4)
+    librosa.display.specshow(S_abs)
+    librosa.display.time_ticks(locs, times, fmt='h')
 
 
 def test_unknown_axis():
