@@ -105,6 +105,15 @@ def test_y_mel():
     librosa.display.specshow(M.T, x_axis='mel')
 
 
+@image_comparison(baseline_images=['y_mel_bounded'], extensions=['png'])
+def test_y_mel_bounded():
+    plt.figure()
+
+    fmin, fmax = 110, 880
+    M = librosa.feature.melspectrogram(S=S_abs**2, fmin=fmin, fmax=fmax)
+    librosa.display.specshow(M, y_axis='mel', fmin=fmin, fmax=fmax)
+
+
 @image_comparison(baseline_images=['x_none_y_linear'], extensions=['png'])
 def test_xaxis_none_yaxis_linear():
     plt.figure()
