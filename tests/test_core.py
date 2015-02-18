@@ -246,10 +246,10 @@ def test_load_options():
 
     filename = 'data/test1_22050.wav'
 
-    def __test(offset, duration, mono):
+    def __test(offset, duration, mono, dtype):
 
         y, sr = librosa.load(filename, mono=mono, offset=offset,
-                             duration=duration)
+                             duration=duration, dtype=dtype)
 
         if duration is not None:
             assert np.allclose(y.shape[-1] / float(sr), duration)
@@ -260,10 +260,15 @@ def test_load_options():
             # This test file is stereo, so y.ndim should be 2
             eq_(y.ndim, 2)
 
+        # Check the dtype
+        assert np.issubdtype(y.dtype, dtype)
+        assert np.issubdtype(dtype, y.dtype)
+
     for offset in [0, 1, 2]:
         for duration in [None, 0, 1, 2]:
             for mono in [False, True]:
-                yield __test, offset, duration, mono
+                for dtype in [np.float32, np.float64]:
+                    yield __test, offset, duration, mono, dtype
     pass
 
 
