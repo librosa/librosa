@@ -255,10 +255,9 @@ def test_time_ticks_failure():
             librosa.display.time_ticks(locs, times, fmt=fmt, axis=axis)
 
     locs = np.linspace(0, 100.0)
-    
+
     # Unknown axis
     yield __test, locs, None, None, 'z'
 
     # Unknown fmt
     yield __test, locs, None, 'days', 'x'
-
