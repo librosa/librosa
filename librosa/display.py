@@ -33,21 +33,6 @@ except ImportError:
 def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
     '''Plot time-formatted axis ticks.
 
-    Examples
-    --------
-    >>> # Tick at pre-computed beat times
-    >>> librosa.display.specshow(S)
-    >>> librosa.display.time_ticks(beat_times)
-
-    >>> # Set the locations of the time stamps
-    >>> librosa.display.time_ticks(locations, timestamps)
-
-    >>> # Format in seconds
-    >>> librosa.display.time_ticks(beat_times, fmt='s')
-
-    >>> # Tick along the y axis
-    >>> librosa.display.time_ticks(beat_times, axis='y')
-
     Parameters
     ----------
     locations : list or np.ndarray
@@ -78,16 +63,35 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
     kwargs : additional keyword arguments.
         See `matplotlib.pyplot.xticks` or `yticks` for details.
 
+
     Returns
     -------
     locs
     labels
         Locations and labels of tick marks
 
+
     See Also
     --------
     matplotlib.pyplot.xticks
     matplotlib.pyplot.yticks
+
+
+    Examples
+    --------
+    >>> # Tick at pre-computed beat times
+    >>> librosa.display.specshow(S)
+    >>> librosa.display.time_ticks(beat_times)
+
+    >>> # Set the locations of the time stamps
+    >>> librosa.display.time_ticks(locations, timestamps)
+
+    >>> # Format in seconds
+    >>> librosa.display.time_ticks(beat_times, fmt='s')
+
+    >>> # Tick along the y axis
+    >>> librosa.display.time_ticks(beat_times, axis='y')
+
     '''
 
     n_ticks = kwargs.pop('n_ticks', 5)
@@ -591,7 +595,7 @@ def __axis_lag(data, n_ticks, horiz, sr=22050, hop_length=512, **_kwargs):
 
     time_ticks(positions, times, n_ticks=None, axis=axis)
 
-    labeler('Time')
+    labeler('Lag')
 
 
 def __axis_frames(data, n_ticks, horiz, label='Frames', **_kwargs):
