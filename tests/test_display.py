@@ -243,3 +243,22 @@ def test_cmap_robust():
         for use_sns in [False, True]:
             yield __test, use_sns, D
 
+
+def test_time_ticks_failure():
+
+    @raises(ValueError)
+    def __test(locs, times, fmt, axis):
+
+        if times is None:
+            librosa.display.time_ticks(locs, fmt=fmt, axis=axis)
+        else:
+            librosa.display.time_ticks(locs, times, fmt=fmt, axis=axis)
+
+    locs = np.linspace(0, 100.0)
+    
+    # Unknown axis
+    yield __test, locs, None, None, 'z'
+
+    # Unknown fmt
+    yield __test, locs, None, 'days', 'x'
+
