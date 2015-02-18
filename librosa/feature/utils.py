@@ -176,7 +176,7 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
     Stack time-lagged beat-synchronous chroma edge padding
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> chroma = librosa.feature.chromagram(y=y, sr=sr)
+    >>> chroma = librosa.feature.chroma_stft(y=y, sr=sr)
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, hop_length=512)
     >>> chroma_sync = librosa.feature.sync(chroma, beats)
     >>> chroma_lag = librosa.feature.stack_memory(chroma_sync, n_steps=3,

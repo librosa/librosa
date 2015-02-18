@@ -1060,7 +1060,7 @@ def sparsify_rows(x, quantile=0.01):
 
     elif x.ndim > 2:
         raise ValueError('Input must have 2 or fewer dimensions.  '
-                         'Provided x.shape={:s}.'.format(x.shape))
+                         'Provided x.shape={:s}.'.format(str(x.shape)))
 
     if not (0.0 <= quantile < 1):
         raise ValueError('Invalid quantile: {:.2f}'.format(quantile))

@@ -7,7 +7,7 @@ Spectral features
 .. autosummary::
     :toctree: generated/
 
-    chromagram
+    chroma_stft
     melspectrogram
     mfcc
     rmse
