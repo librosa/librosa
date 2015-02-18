@@ -178,6 +178,8 @@ def cmap(data, use_sns=True, robust=True):
     seaborn.cubehelix_palette
     '''
 
+    data = np.atleast_1d(data)
+
     if data.dtype == 'bool':
         return plt.get_cmap('gray_r')
 
