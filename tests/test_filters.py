@@ -132,7 +132,9 @@ def test_chromafb():
                                      DATA['nchroma'][0, 0],
                                      A440=DATA['a440'][0, 0],
                                      ctroct=DATA['ctroct'][0, 0],
-                                     octwidth=octwidth)
+                                     octwidth=octwidth,
+                                     norm=2,
+                                     base_c=False)
 
         # Our version only returns the real-valued part.
         # Pad out.
