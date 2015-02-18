@@ -8,6 +8,7 @@ Spectral features
     :toctree: generated/
 
     chroma_stft
+    chroma_cqt
     melspectrogram
     mfcc
     rmse
