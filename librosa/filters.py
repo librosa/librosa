@@ -35,7 +35,7 @@ import warnings
 from . import cache
 from . import util
 
-from .core.time_frequency import note_to_hz, hz_to_octs
+from .core.time_frequency import note_to_hz, hz_to_midi, hz_to_octs
 from .core.time_frequency import fft_frequencies, mel_frequencies
 
 # Dictionary of window function bandwidths
@@ -194,7 +194,8 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
 
 
 @cache
-def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=2):
+def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0,
+           octwidth=2, norm=2, base_c=True):
     """Create a Filterbank matrix to convert STFT to chroma
 
 
@@ -220,11 +221,21 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=2):
         and with a gaussian half-width of `octwidth`.
         Set `octwidth` to `None` to use a flat weighting.
 
+    norm : float > 0 or np.inf
+        Normalization factor for each filter
+
+    base_c : bool
+        If True, the filter bank will start at 'C'.
+        If False, the filter bank will start at 'A'.
     Returns
     -------
     wts : ndarray [shape=(n_chroma, 1 + n_fft / 2)]
         Chroma filter matrix
 
+    See Also
+    --------
+    util.normalize
+    feature.chroma_stft
 
     Examples
     --------
@@ -285,20 +296,23 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=2):
 
     # Project into range -n_chroma/2 .. n_chroma/2
     # add on fixed offset of 10*n_chroma to ensure all values passed to
-    # rem are +ve
+    # rem are positive
     D = np.remainder(D + n_chroma2 + 10*n_chroma, n_chroma) - n_chroma2
 
     # Gaussian bumps - 2*D to make them narrower
     wts = np.exp(-0.5 * (2*D / np.tile(binwidthbins, (n_chroma, 1)))**2)
 
     # normalize each column
-    wts = util.normalize(wts, norm=2, axis=0)
+    wts = util.normalize(wts, norm=norm, axis=0)
 
     # Maybe apply scaling for fft bins
     if octwidth is not None:
         wts *= np.tile(
             np.exp(-0.5 * (((frqbins/n_chroma - ctroct)/octwidth)**2)),
             (n_chroma, 1))
+
+    if base_c:
+        wts = np.roll(wts, -3, axis=0)
 
     # remove aliasing columns, copy to ensure row-contiguity
     return np.ascontiguousarray(wts[:, :int(1 + n_fft/2)])
@@ -661,7 +675,8 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
 
 
 @cache
-def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12, roll=0):
+def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12, 
+                 fmin=None, base_c=True):
     '''Convert a Constant-Q basis to Chroma.
 
 
@@ -676,10 +691,13 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12, roll=0):
     n_chroma : int > 0 [scalar]
         Number of output bins (per octave) in the chroma
 
-    roll : int [scalar]
-        Number of bins to offset the output by.
-        For example, if the 0-bin of the CQT is C, and
-        the desired 0-bin for the chroma is A, then roll=-3.
+    fmin : None or float > 0
+        Center frequency of the first constant-Q channel.
+        Default: 'C2' ~= 32.7 Hz
+
+    base_c : bool
+        If True, the first chroma bin will start at 'C'
+        If False, the first chroma bin will start at 'A'
 
     Returns
     -------
@@ -725,6 +743,9 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12, roll=0):
     # How many fractional bins are we merging?
     n_merge = float(bins_per_octave) / n_chroma
 
+    if fmin is None:
+        fmin = note_to_hz('C2')
+
     if np.mod(n_merge, 1) != 0:
         raise ValueError('Incompatible CQ merge: input bins must be an '
                          'integer multiple of output bins.')
@@ -737,6 +758,17 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12, roll=0):
 
     # Repeat and trim
     cq_to_ch = np.tile(cq_to_ch, int(n_octaves))[:, :n_input]
+
+    # What's the note number of the first bin in the CQT?
+    # midi uses 12 bins per octave here
+    midi_0 = np.mod(hz_to_midi(fmin), 12)
+
+    if base_c:
+        # rotate to C
+        roll = midi_0
+    else:
+        # rotate to A
+        roll = midi_0 - 9
 
     # Apply the roll
     cq_to_ch = np.roll(cq_to_ch, -roll, axis=0)
