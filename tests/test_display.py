@@ -20,7 +20,7 @@ seaborn.set(style='white')
 import librosa
 import numpy as np
 
-from nose.tools import nottest, raises
+from nose.tools import nottest, raises, eq_
 from mpl_ic import image_comparison
 
 
@@ -223,3 +223,17 @@ def test_unknown_axis():
 
     yield __test, 'x_axis'
     yield __test, 'y_axis'
+
+
+def test_cmap_robust():
+
+    def __test(use_sns, data):
+        cmap1 = librosa.display.cmap(data, use_sns=use_sns, use_robust=False)
+        cmap2 = librosa.display.cmap(data, use_sns=use_sns, use_robust=True)
+
+        eq_(cmap1, cmap2)
+
+    for D in [1 + S_abs, S_signed, S_bin]:
+        for use_sns in [False, True]:
+            yield __test, use_sns, D
+
