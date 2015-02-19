@@ -753,6 +753,9 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
     # Tile the identity to merge fractional bins
     cq_to_ch = np.repeat(np.eye(n_chroma), n_merge, axis=1)
 
+    # Roll it left to center on the target bin
+    cq_to_ch = np.roll(cq_to_ch, - int(n_merge //2), axis=1)
+
     # How many octaves are we repeating?
     n_octaves = np.ceil(np.float(n_input) / bins_per_octave)
 
@@ -771,10 +774,11 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
         roll = midi_0 - 9
 
     # Adjust the roll in terms of how many chroma we want out
-    roll = int(roll) * n_chroma // 12
+    # We need to be careful with rounding here
+    roll = int(np.round(roll * (n_chroma / 12.)))
 
     # Apply the roll
-    cq_to_ch = np.roll(cq_to_ch, int(roll), axis=0)
+    cq_to_ch = np.roll(cq_to_ch, roll, axis=0)
 
     return cq_to_ch.astype(np.float)
 
