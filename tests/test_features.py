@@ -43,7 +43,7 @@ def test_delta():
 
         # Check that trimming gives the right values in the right places
         _s = [Ellipsis] * delta.ndim
-        _s[axis] = slice(1 + width//2, -(1 + width//2))
+        _s[axis] = slice(2 + width//2, -(width//2))
         delta_retrim = delta[_s]
         assert np.allclose(delta_t, delta_retrim)
 
