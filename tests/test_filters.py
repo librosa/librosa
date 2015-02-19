@@ -246,3 +246,68 @@ def test_window_bandwidth_missing():
         assert len(out) > 0
         assert out[0].category is UserWarning
         assert 'Unknown window function' in str(out[0].message)
+
+
+def binstr(m):
+
+    out = []
+    for row in m:
+        line = [' '] * len(row)
+        for i in np.flatnonzero(row):
+            line[i] = '.'
+        out.append(''.join(line))
+    return '\n'.join(out)
+
+
+def test_cq_to_chroma():
+
+    def __test(n_bins, bins_per_octave, n_chroma, fmin, base_c):
+        # Fake up a cqt matrix with the corresponding midi notes
+
+        if fmin is None:
+            midi_base = 24  # C2
+        else:
+            midi_base = librosa.hz_to_midi(fmin)
+
+        midi_notes = np.linspace(midi_base,
+                                 midi_base + float(n_bins) * 12.0 / bins_per_octave,
+                                 endpoint=False,
+                                 num=n_bins)
+        #  We don't care past 2 decimals here.
+        # the log2 inside hz_to_midi can cause problems though.
+        midi_notes = np.around(midi_notes, decimals=2)
+        C = np.diag(midi_notes)
+
+        cq2chr = librosa.filters.cq_to_chroma(n_input=C.shape[0],
+                                              bins_per_octave=bins_per_octave,
+                                              n_chroma=n_chroma,
+                                              fmin=fmin,
+                                              base_c=base_c)
+
+        chroma = cq2chr.dot(C)
+        for i in range(n_chroma):
+            v = chroma[i][chroma[i] != 0]
+            v = np.around(v, decimals=2)
+
+            if base_c:
+                resid = np.mod(v, 12)
+            else:
+                resid = np.mod(v - 9, 12)
+
+            resid = np.round(resid * n_chroma / 12.0)
+            assert np.allclose(np.mod(i - resid, 12), 0.0)
+
+    for n_octaves in [2, 3, 4]:
+        for semitones in [1, 3]:
+            for n_chroma in 12 * np.arange(1, 1 + semitones):
+                for fmin in [None] + list(librosa.midi_to_hz(range(48, 61))):
+                    for base_c in [False, True]:
+                        bins_per_octave = 12 * semitones
+                        n_bins = n_octaves * bins_per_octave
+
+                        if np.mod(bins_per_octave, n_chroma) != 0:
+                            tf = raises(ValueError)(__test)
+                        else:
+                            tf = __test
+                        yield (tf, n_bins, bins_per_octave,
+                               n_chroma, fmin, base_c)
