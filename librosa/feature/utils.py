@@ -98,7 +98,7 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
 
     if trim:
         idx = [Ellipsis] * delta_x.ndim
-        idx[axis] = slice(half_length, -half_length)
+        idx[axis] = slice(half_length + 1, - half_length + 1)
         delta_x = delta_x[idx]
 
     return delta_x
