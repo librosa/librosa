@@ -112,9 +112,11 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
         locs = np.arange(len(times))
 
     if n_ticks is not None:
-        # Slice the locations and labels
-        locs = locs[::max(1, int(len(locs) / n_ticks))]
-        times = times[::max(1, int(len(times) / n_ticks))]
+        # Slice the locations and labels evenly between 0 and the last point
+        positions = np.linspace(0, len(locs)-1, n_ticks,
+                                endpoint=True).astype(int)
+        locs = locs[positions]
+        times = times[positions]
 
     # Format the labels by time
     formats = {'ms': lambda t: '{:d}ms'.format(int(1e3 * t)),
