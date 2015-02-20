@@ -375,8 +375,8 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
                       hop_length=hop_length)
 
     # Scale and decorate the axes
-    __axis(data, n_xticks, x_axis, horiz=True, **all_params)
-    __axis(data, n_yticks, y_axis, horiz=False, **all_params)
+    __axis(data, n_xticks, x_axis, horiz=True, minor=y_axis, **all_params)
+    __axis(data, n_yticks, y_axis, horiz=False, minor=x_axis, **all_params)
 
     return axes
 
@@ -423,7 +423,7 @@ def __axis_none(data, n_ticks, horiz, **_kwargs):
 
 
 def __axis_log(data, n_ticks, horiz, sr=22050, kwargs=None, label='Hz',
-               secondary_axis='linear', **_kwargs):
+               secondary_axis='linear', minor=None, **_kwargs):
     '''Plot a log-scaled image'''
 
     axes_phantom = plt.gca()
@@ -437,13 +437,20 @@ def __axis_log(data, n_ticks, horiz, sr=22050, kwargs=None, label='Hz',
     t_log, t_inv = __log_scale(n)
 
     if horiz:
-        args = (t_log,
-                np.linspace(0, data.shape[0], data.shape[0]).astype(int),
-                data)
+        ax1 = t_log
+        if minor == 'log':
+            ax2 = __log_scale(data.shape[0])[0]
+        else:
+            ax2 = np.linspace(0, data.shape[0], data.shape[0]).astype(int)
     else:
-        args = (np.linspace(0, data.shape[1], data.shape[1]).astype(int),
-                t_log,
-                data)
+        if minor == 'log':
+            ax1 = __log_scale(data.shape[1])[0]
+        else:
+            ax1 = np.linspace(0, data.shape[1], data.shape[1]).astype(int)
+
+        ax2 = t_log
+
+    args = (ax1, ax2, data)
 
     # NOTE:  2013-11-14 16:15:33 by Brian McFee <brm2132@columbia.edu>
     #  We draw the image twice here. This is a hack to get around
@@ -462,7 +469,8 @@ def __axis_log(data, n_ticks, horiz, sr=22050, kwargs=None, label='Hz',
     axes_phantom.set_xlim(args[0].min(), args[0].max())
     axes_phantom.set_ylim(args[1].min(), args[1].max())
 
-    positions = np.linspace(0, n, n_ticks, endpoint=False).astype(int)
+    positions = np.linspace(0, n-1, n_ticks, endpoint=True).astype(int)
+    # One extra value here to catch nyquist
     values = np.linspace(0, 0.5 * sr, n, endpoint=True).astype(int)
 
     ticker(positions, values[t_inv[positions]])
@@ -475,7 +483,7 @@ def __axis_mel(data, n_ticks, horiz, fmin=None, fmax=None, **_kwargs):
 
     n, ticker, labeler = __get_shape_artists(data, horiz)
 
-    positions = np.linspace(0, n, n_ticks).astype(int)
+    positions = np.linspace(0, n-1, n_ticks).astype(int)
 
     kwargs = {}
 
@@ -516,8 +524,8 @@ def __axis_linear(data, n_ticks, horiz, sr=22050, **_kwargs):
 
     n, ticker, labeler = __get_shape_artists(data, horiz)
 
-    positions = np.linspace(0, n, n_ticks, endpoint=True).astype(int)
-    values = (positions * sr // (2 * n)).astype(int)
+    positions = np.linspace(0, n - 1, n_ticks, endpoint=True).astype(int)
+    values = (sr * np.linspace(0, 0.5, n_ticks, endpoint=True)).astype(int)
 
     ticker(positions, values)
     labeler('Hz')
@@ -531,7 +539,7 @@ def __axis_cqt(data, n_ticks, horiz, note=False, fmin=None,
 
     n, ticker, labeler = __get_shape_artists(data, horiz)
 
-    positions = np.linspace(0, n, num=n_ticks, endpoint=True).astype(int)
+    positions = np.linspace(0, n-1, num=n_ticks, endpoint=True).astype(int)
 
     values = core.cqt_frequencies(n + 1,
                                   fmin=fmin,
@@ -569,7 +577,7 @@ def __axis_time(data, n_ticks, horiz, sr=22050, hop_length=512, **_kwargs):
     else:
         axis = 'y'
 
-    positions = np.linspace(0, n, n_ticks, endpoint=True).astype(int)
+    positions = np.linspace(0, n-1, n_ticks, endpoint=True).astype(int)
 
     time_ticks(positions,
                core.frames_to_time(positions, sr=sr, hop_length=hop_length),
@@ -587,7 +595,7 @@ def __axis_lag(data, n_ticks, horiz, sr=22050, hop_length=512, **_kwargs):
     else:
         axis = 'y'
 
-    positions = np.linspace(0, n, n_ticks, endpoint=True).astype(int)
+    positions = np.linspace(0, n-1, n_ticks, endpoint=True).astype(int)
     times = core.frames_to_time(positions, sr=sr, hop_length=hop_length)
     times[positions >= n//2] -= times[-1]
 
@@ -600,7 +608,7 @@ def __axis_frames(data, n_ticks, horiz, label='Frames', **_kwargs):
     '''Frame axes'''
     n, ticker, labeler = __get_shape_artists(data, horiz)
 
-    positions = np.linspace(0, n, n_ticks, endpoint=True).astype(int)
+    positions = np.linspace(0, n-1, n_ticks, endpoint=True).astype(int)
 
     ticker(positions, positions)
     labeler(label)
