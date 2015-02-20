@@ -17,7 +17,7 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
 
     Parameters
     ----------
-    data      : np.ndarray [shape=(d, T)]
+    data      : np.ndarray
         the input data matrix (eg, spectrogram)
 
     width     : int >= 3, odd [scalar]
@@ -77,7 +77,7 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
 
     '''
 
-    data = np.atleast_2d(data)
+    data = np.atleast_1d(data)
 
     if width < 3 or np.mod(width, 2) != 1:
         raise ValueError('width must be an odd integer >= 3')
@@ -86,19 +86,23 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
         raise ValueError('order must be a positive integer')
 
     half_length = 1 + int(width // 2)
-    window = np.arange(half_length - 1, -half_length, -1)
+    window = np.arange(half_length - 1., -half_length, -1.)
+
+    # Normalize the window so we're scale-invariant
+    window /= np.sum(np.abs(window)**2)
 
     # Pad out the data by repeating the border values (delta=0)
     padding = [(0, 0)] * data.ndim
-    padding[axis] = (half_length, half_length)
+    padding[axis] = (width, width)
     delta_x = np.pad(data, padding, mode='edge')
 
     for _ in range(order):
         delta_x = scipy.signal.lfilter(window, 1, delta_x, axis=axis)
 
+    # Cut back to the original shape of the input data
     if trim:
         idx = [Ellipsis] * delta_x.ndim
-        idx[axis] = slice(half_length + 1, - half_length + 1)
+        idx[axis] = slice(- half_length - data.shape[axis], - half_length)
         delta_x = delta_x[idx]
 
     return delta_x
