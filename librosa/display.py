@@ -633,7 +633,7 @@ def __log_scale(n):
     y = n * (1 - np.logspace(-logn, 0, n, base=2, endpoint=True))[::-1]
     y = y.astype(int)
 
-    y_inv = np.arange(len(y)+1)
+    y_inv = np.arange(len(y))
     for i in range(len(y)-1):
         y_inv[y[i]:y[i+1]] = i
 
