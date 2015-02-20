@@ -437,11 +437,11 @@ def __axis_log(data, n_ticks, horiz, sr=22050, kwargs=None, label='Hz',
     t_log, t_inv = __log_scale(n)
 
     if horiz:
-        ax1 = t_log
         if minor == 'log':
             ax2 = __log_scale(data.shape[0])[0]
         else:
             ax2 = np.linspace(0, data.shape[0], data.shape[0]).astype(int)
+        ax1 = t_log
     else:
         if minor == 'log':
             ax1 = __log_scale(data.shape[1])[0]
@@ -466,8 +466,6 @@ def __axis_log(data, n_ticks, horiz, sr=22050, kwargs=None, label='Hz',
     kwargs['aspect'] = aspect
 
     axes_phantom.images[0] = im_phantom
-    axes_phantom.set_xlim(args[0].min(), args[0].max())
-    axes_phantom.set_ylim(args[1].min(), args[1].max())
 
     positions = np.linspace(0, n-1, n_ticks, endpoint=True).astype(int)
     # One extra value here to catch nyquist
