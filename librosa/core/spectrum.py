@@ -354,7 +354,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
         win_length = n_fft
 
     if hop_length is None:
-        hop_length = int(win_length / 4)
+        hop_length = int(win_length // 4)
 
     # Construct a padded hann window
     window = util.pad_center(scipy.signal.hann(win_length, sym=False), n_fft)
@@ -378,7 +378,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     # pylint: disable=maybe-no-member
     freq_angular = freq_angular.reshape((-1, 1))
 
-    if_gram = ((freq_angular[:n_fft/2 + 1]
+    if_gram = ((freq_angular[:n_fft//2 + 1]
                 + (stft_matrix * diff_stft).imag / power)
                * float(sr) / (2.0 * np.pi))
 
