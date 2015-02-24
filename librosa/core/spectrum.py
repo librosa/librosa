@@ -282,7 +282,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
 
 @cache
 def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
-           norm=False, center=True, dtype=np.complex64):
+           norm=False, center=True, ref_power=1e-6, clip=True, dtype=np.complex64):
     '''Compute the instantaneous frequency (as a proportion of the sampling rate)
     obtained as the time-derivative of the phase of the complex spectrum as
     described by [1]_.
@@ -333,6 +333,18 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
             `D[:, t]` (and `if_gram`) is centered at `y[t * hop_length]`.
         - If `False`, then `D[:, t]` at `y[t * hop_length]`
 
+    ref_power : float >= 0 or callable
+        Minimum power threshold for estimating instantaneous frequency.
+        Any bin with `np.abs(D[f, t])**2 < ref_power` will receive the
+        default frequency estimate.
+
+        If callable, the threshold is set to `ref_power(np.abs(D)**2)`.
+
+    clip : boolean
+        - If `True`, clip estimated frequencies to the range `[0, 0.5 * sr]`.
+        - If `False`, estimated frequencies can be negative or exceed
+          `0.5 * sr`.
+
     dtype : numeric type
         Complex numeric type for `D`.  Default is 64-bit complex.
 
@@ -371,19 +383,29 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
                      window=d_window, center=center, dtype=dtype).conj()
 
     # Compute power normalization. Suppress zeros.
-    power = np.abs(stft_matrix)**2
-    power[power < util.SMALL_FLOAT] = 1.0
+    mag, phase = magphase(stft_matrix)
+
+    if six.callable(ref_power):
+        ref_power = ref_power(mag**2)
+    elif ref_power < 0:
+        raise ValueError('ref_power must be non-negative or callable.')
 
     # Pylint does not correctly infer the type here, but it's correct.
     # pylint: disable=maybe-no-member
     freq_angular = freq_angular.reshape((-1, 1))
+    bin_offset = (phase * diff_stft).imag / mag
 
-    if_gram = ((freq_angular[:n_fft//2 + 1]
-                + (stft_matrix * diff_stft).imag / power)
-               * float(sr) / (2.0 * np.pi))
+    bin_offset[mag < ref_power**0.5] = 0
+
+    if_gram = freq_angular[:n_fft//2 + 1] + bin_offset
 
     if norm:
         stft_matrix = stft_matrix * 2.0 / window.sum()
+
+    if clip:
+        np.clip(if_gram, 0, np.pi, out=if_gram)
+
+    if_gram *= float(sr) * 0.5 / np.pi
 
     return if_gram, stft_matrix
 
