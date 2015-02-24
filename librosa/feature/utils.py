@@ -305,7 +305,7 @@ def sync(data, frames, aggregate=None, pad=True):
     >>> librosa.display.specshow(librosa.logamplitude(cqt_med_sub**2,
     ...                                               ref_power=np.max))
     >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.title('Sub-beat syncrhonous CQT power, '
+    >>> plt.title('Sub-beat synchronous CQT power, '
     ...           'shape={:s}'.format(cqt_med_sub.shape))
     >>> plt.tight_layout()
 
