@@ -166,11 +166,13 @@ def test_ifgram():
                               hop_length=DATA['hop_length'][0, 0].astype(int),
                               win_length=DATA['hann_w'][0, 0].astype(int),
                               sr=DATA['sr'][0, 0].astype(int),
+                              ref_power=0.0,
+                              clip=False,
                               center=False)
 
         # D fails to match here because of fftshift()
         # assert np.allclose(D, DATA['D'])
-        assert np.allclose(F, DATA['F'], atol=1e-3)
+        assert np.allclose(F, DATA['F'], rtol=1e-1, atol=1e-1)
 
     for infile in files('data/core-ifgram-*.mat'):
         yield (__test, infile)
