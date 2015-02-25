@@ -42,6 +42,40 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
          dtype=np.float32):
     """Load an audio file as a floating point time series.
 
+    Parameters
+    ----------
+    path : string
+        path to the input file.
+
+        Any format supported by `audioread` will work.
+
+    sr   : int > 0 [scalar]
+        target sampling rate
+
+        'None' uses the native sampling rate
+
+    mono : bool
+        convert signal to mono
+
+    offset : float
+        start reading after this time (in seconds)
+
+    duration : float
+        only load up to this much audio (in seconds)
+
+    dtype : numeric type
+        data type of `y`
+
+
+    Returns
+    -------
+    y    : np.ndarray [shape=(n,) or (2, n)]
+        audio time series
+
+    sr   : int > 0 [scalar]
+        sampling rate of `y`
+
+
     Examples
     --------
     >>> # Load a wav file
@@ -69,37 +103,6 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
     >>> sr
     22050
 
-    Parameters
-    ----------
-    path : string
-        path to the input file.
-
-        Any format supported by `audioread` will work.
-
-    sr   : int > 0 [scalar]
-        target sampling rate
-
-        'None' uses the native sampling rate
-
-    mono : bool
-        convert signal to mono
-
-    offset : float
-        start reading after this time (in seconds)
-
-    duration : float
-        only load up to this much audio (in seconds)
-
-    dtype : numeric type
-        data type of `y`
-
-    Returns
-    -------
-    y    : np.ndarray [shape=(n,) or (2, n)]
-        audio time series
-
-    sr   : int > 0 [scalar]
-        sampling rate of `y`
     """
 
     y = []
@@ -141,22 +144,22 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
             # tack on the current frame
             y.append(frame)
 
-        if len(y):
-            y = np.concatenate(y)
+    if len(y):
+        y = np.concatenate(y)
 
-            if input_file.channels > 1:
-                y = y.reshape((-1, 2)).T
-                if mono:
-                    y = to_mono(y)
+        if input_file.channels > 1:
+            y = y.reshape((-1, 2)).T
+            if mono:
+                y = to_mono(y)
 
-            if sr is not None:
-                if y.ndim > 1:
-                    y = np.vstack([resample(yi, sr_native, sr) for yi in y])
-                else:
-                    y = resample(y, sr_native, sr)
-
+        if sr is not None:
+            if y.ndim > 1:
+                y = np.vstack([resample(yi, sr_native, sr) for yi in y])
             else:
-                sr = sr_native
+                y = resample(y, sr_native, sr)
+
+        else:
+            sr = sr_native
 
     # Final cleanup for dtype and contiguity
     y = np.ascontiguousarray(y, dtype=dtype)
