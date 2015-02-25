@@ -19,6 +19,7 @@ import librosa
 import glob
 import numpy as np
 import scipy.io
+import six
 
 import matplotlib
 matplotlib.use('Agg')
@@ -225,10 +226,10 @@ def test_ifgram_if():
 
     for ref_power in [-10, 0.0, 1e-6, np.max]:
         for clip in [False, True]:
-            if ref_power < 0:
-                tf = raises(ValueError)(__test)
-            else:
+            if six.callable(ref_power) or ref_power >= 0.0:
                 tf = __test
+            else:
+                tf = raises(ValueError)(__test)
 
             yield tf, ref_power, clip
 
