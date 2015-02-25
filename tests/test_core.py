@@ -247,25 +247,25 @@ def test_magphase():
 
 def test_istft():
     def __test(infile):
-        DATA    = load(infile)
+        DATA = load(infile)
 
-        if DATA['hann_w'][0,0] == 0:
-            window      = np.ones
-            win_length  = 2 * (DATA['D'].shape[0] - 1)
+        if DATA['hann_w'][0, 0] == 0:
+            window = np.ones
+            win_length = 2 * (DATA['D'].shape[0] - 1)
         else:
-            window      = None
-            win_length  = DATA['hann_w'][0,0]
-            
-        Dinv    = librosa.istft(DATA['D'],  hop_length  = DATA['hop_length'][0,0].astype(int),
-                                            win_length  = win_length,
-                                            window      = window,
-                                            center      = False)
+            window = None
+            win_length = DATA['hann_w'][0, 0]
+
+        Dinv = librosa.istft(DATA['D'],
+                             hop_length=DATA['hop_length'][0, 0].astype(int),
+                             win_length=win_length,
+                             window=window,
+                             center=False)
 
         assert np.allclose(Dinv, DATA['Dinv'])
 
     for infile in files('data/core-istft-*.mat'):
         yield (__test, infile)
-    pass
 
 
 def test_load_options():
@@ -278,7 +278,7 @@ def test_load_options():
                              duration=duration, dtype=dtype)
 
         if duration is not None:
-            assert np.allclose(y.shape[-1] / float(sr), duration)
+            assert np.allclose(y.shape[-1], int(sr * duration))
 
         if mono:
             eq_(y.ndim, 1)
@@ -291,7 +291,7 @@ def test_load_options():
         assert np.issubdtype(dtype, y.dtype)
 
     for offset in [0, 1, 2]:
-        for duration in [None, 0, 1, 2]:
+        for duration in [None, 0, 0.5, 1, 2]:
             for mono in [False, True]:
                 for dtype in [np.float32, np.float64]:
                     yield __test, offset, duration, mono, dtype
