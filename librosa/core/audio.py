@@ -141,11 +141,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
             # tack on the current frame
             y.append(frame)
 
-        if not len(y):
-            # Zero-length read
-            y = np.zeros(0, dtype=dtype)
-
-        else:
+        if len(y):
             y = np.concatenate(y)
 
             if input_file.channels > 1:
