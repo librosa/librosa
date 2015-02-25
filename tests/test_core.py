@@ -210,6 +210,29 @@ def test_ifgram_matches_stft():
                                    center, norm, dtype)
 
 
+def test_ifgram_if():
+
+    y, sr = librosa.load('data/test1_22050.wav')
+
+    def __test(ref_power, clip):
+
+        F, D = librosa.ifgram(y, sr=sr, ref_power=ref_power, clip=clip)
+
+        if clip:
+            assert np.all(0 <= F) and np.all(F <= 0.5 * sr)
+
+        assert np.all(np.isfinite(F))
+
+    for ref_power in [-10, 0.0, 1e-6, np.max]:
+        for clip in [False, True]:
+            if ref_power < 0:
+                tf = raises(ValueError)(__test)
+            else:
+                tf = __test
+
+            yield tf, ref_power, clip
+
+
 def test_magphase():
 
     (y, sr) = librosa.load('data/test1_22050.wav')
