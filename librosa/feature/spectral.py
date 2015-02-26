@@ -813,7 +813,7 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
 
 
 @cache
-def chroma_cqt(y, sr=22050, C=None, hop_length=512, fmin=None, norm=np.inf,
+def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None, norm=np.inf,
                tuning=None, n_chroma=12, n_octaves=7, bins_per_octave=None,
                mode='full'):
     r'''Constant-Q chromagram
