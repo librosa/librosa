@@ -1207,21 +1207,20 @@ def tonnetz(y=None, sr=22050, chromagram=None, norm=np.inf):
     Examples
     --------
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> chroma = librosa.feature.chroma_stft(y=y, sr=sr)
-    >>> tonnetz = librosa.feature.chroma_to_tonnetz(chroma)
+    >>> tonnetz = librosa.feature.tonnetz(y=y, sr=sr)
     >>> tonnetz
-    array([[ 0.79506535,  0.17179337,  0.30261799, ...,  0.05586615,
-         0.14303219,  0.187812  ],
-       [-0.44264622,  0.41896667,  0.21596437, ...,  0.11552605,
-         0.13349843,  0.92497935],
-       [-1.        ,  0.46310843, -1.        , ...,  0.4240766 ,
-         0.62088668,  0.74145399],
-       [ 0.50550166, -1.        ,  0.33409652, ..., -1.        ,
-        -1.        , -1.        ],
-       [-0.34921771,  0.52859071, -0.14055977, ...,  0.05132072,
-        -0.05028974, -0.22788206],
-       [-0.01232449, -0.19507053, -0.07335521, ..., -0.43501825,
-        -0.49050545, -0.36520804]])
+    array([[ -2.41826496e-01,  -1.72715121e-01,  -6.18609328e-03, ...,
+          5.22433714e-04,  -2.61260595e-01,  -3.62402699e-01],
+       [  3.98255741e-03,   4.74434416e-03,   7.34245455e-03, ...,
+         -1.00000000e+00,  -7.99157252e-01,  -6.34483417e-01],
+       [  1.72874642e-01,   9.66901418e-02,   5.17672209e-02, ...,
+          2.18360773e-01,   2.96231394e-01,   2.33202103e-01],
+       [  1.00000000e+00,   1.00000000e+00,   1.00000000e+00, ...,
+          8.96818213e-01,   1.00000000e+00,   1.00000000e+00],
+       [  1.28118552e-01,   1.11446405e-01,   1.26253266e-01, ...,
+          6.27590321e-01,   4.46819136e-01,   3.91844494e-01],
+       [  1.61835534e-02,   5.17420588e-03,   6.45898537e-03, ...,
+         -1.55136167e-01,   7.00443917e-02,   1.31018665e-01]])
 
     >>> import matplotlib.pyplot as plt
     >>> librosa.display.specshow(tonnetz, x_axis='time')
@@ -1237,14 +1236,12 @@ def tonnetz(y=None, sr=22050, chromagram=None, norm=np.inf):
     if chromagram is None:
         chromagram = chroma_cqt(y=y, sr=sr)
 
-    n_chroma = chromagram.shape[0]
-
     r1 = 1      # Fifths
     r2 = 1      # Minor
     r3 = 0.5    # Major
 
-    # Generate Transformation matrix (map any n_chroma dimensions to 6)
-    dim_map = np.linspace(0, 12, num=n_chroma, endpoint=False)
+    # Generate Transformation matrix
+    dim_map = np.linspace(0, 12, num=chromagram.shape[0], endpoint=False)
     scale = np.pi * np.asarray([7. / 6, 7. / 6, 3. / 2, 3. / 2, 2. / 3,
                                 2. / 3])
     V = np.multiply.outer(scale, dim_map)
