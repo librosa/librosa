@@ -1199,6 +1199,11 @@ def tonnetz(y=None, sr=22050, chromagram=None, norm=np.inf):
     librosa.feature.chroma_stft
         Compute a chromagram from an STFT spectrogram or waveform.
 
+    Harte, C., Sandler, M., & Gasser, M. (2006). Detecting Harmonic Change in
+    Musical Audio. In Proceedings of the 1st ACM Workshop on Audio and Music
+    Computing Multimedia (pp. 21–26). Santa Barbara, CA, USA: ACM Press.
+    doi:10.1145/1178723.1178727
+
     Examples
     --------
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
@@ -1239,10 +1244,10 @@ def tonnetz(y=None, sr=22050, chromagram=None, norm=np.inf):
     r3 = 0.5    # Major
 
     # Generate Transformation matrix (map any n_chroma dimensions to 6)
-    j = np.linspace(0, 12, num=n_chroma, endpoint=False)
+    dim_map = np.linspace(0, 12, num=n_chroma, endpoint=False)
     scale = np.pi * np.asarray([7. / 6, 7. / 6, 3. / 2, 3. / 2, 2. / 3,
                                 2. / 3])
-    V = np.multiply.outer(scale, j)
+    V = np.multiply.outer(scale, dim_map)
     V[::2] -= np.pi / 2
     R = np.array([r1, r1, r2, r2, r3, r3])
     phi = R[:, np.newaxis] * np.cos(V)
