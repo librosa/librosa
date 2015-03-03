@@ -433,3 +433,23 @@ def test_poly_features_synthetic():
         freq = np.cumsum(np.abs(np.random.randn(1 + n_fft//2, 2)), axis=0)
         S = __make_data(coeffs, freq)
         yield __test, S, coeffs, freq
+
+
+def test_chroma_to_tonnetz():
+    y, sr = librosa.load(__EXAMPLE_FILE)
+
+    # Use stft chroma
+    chroma_stft = librosa.feature.chroma_stft(y=y, sr=sr)
+    tonnetz = librosa.feature.chroma_to_tonnetz(chroma_stft)
+    assert tonnetz.shape[1] == chroma_stft.shape[1]
+    assert tonnetz.shape[0] == 6
+
+    # Use cqt chroma
+    chroma_cqt = librosa.feature.chroma_cqt(y=y, sr=sr)
+    tonnetz = librosa.feature.chroma_to_tonnetz(chroma_cqt)
+    assert tonnetz.shape[1] == chroma_cqt.shape[1]
+    assert tonnetz.shape[0] == 6
+
+    # Use high resolution cqt chroma
+    chroma_cqt = librosa.feature.chroma_cqt(y=y, sr=sr, n_chroma=24)
+    yield (raises(ValueError)(librosa.feature.chroma_to_tonnetz), chroma_cqt)

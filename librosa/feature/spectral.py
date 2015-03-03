@@ -717,7 +717,7 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True,
 @cache
 def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
                hop_length=512, tuning=None, **kwargs):
-    """Compute a chromagram from a STFT spectrogram or waveform
+    """Compute a chromagram from an STFT spectrogram or waveform
 
     Parameters
     ----------
