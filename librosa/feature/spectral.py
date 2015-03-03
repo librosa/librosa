@@ -1191,6 +1191,13 @@ def tonnetz(y=None, sr=22050, chromagram=None, norm=np.inf):
     -------
     ton : np.ndarray [shape(6, t)]
         Tonal centroid features for each frame.
+        Tonnetz dimensions:
+            0: Fifth x-axis
+            1: Fifth y-axis
+            2: Minor x-axis
+            3: Minor y-axis
+            4: Major x-axis
+            5: Major y-axis
 
     See Also
     --------
