@@ -393,7 +393,7 @@ def chroma_to_tonnetz(chromagram, norm=np.inf):
         raise ValueError('Tonnetz can only be obtained from 12-dimensional '
                          'chromagrams.')
 
-    t = chromagram.shape[1]
+    n_chroma, t = chromagram.shape
     tonnetz = np.zeros((6, t))
 
     r1 = 1      # Fifths
@@ -401,25 +401,16 @@ def chroma_to_tonnetz(chromagram, norm=np.inf):
     r3 = 0.5    # Major
 
     # Generate Transformation matrix
-    phi = np.zeros((6, 12))
-    for i in range(6):
-        for j in range(12):
-            fun = np.sin if i % 2 == 0 else np.cos
+    phi = np.zeros((6, n_chroma))
+    j = np.linspace(0, 12, num=n_chroma, endpoint=False)
+    scale = np.pi * np.asarray([7./6, 7./6, 3./2, 3./2, 2./3, 2./3])
 
-            if i < 2:
-                phi[i, j] = r1 * fun(j * 7 * np.pi / 6.)
-            elif i >= 2 and i < 4:
-                phi[i, j] = r2 * fun(j * 3 * np.pi / 2.)
-            else:
-                phi[i, j] = r3 * fun(j * 2 * np.pi / 3.)
+    V = np.multiply.outer(scale, j)
+    V[::2] -= np.pi / 2
+    R = np.array([r1, r1, r2, r2, r3, r3])
+    phi = R[:, np.newaxis] * np.cos(V)
 
     # Do the transform to tonnetz
-    for i in range(t):
-        denom = float(chromagram[:, i].sum())
-        for d in range(6):
-            if denom == 0:
-                tonnetz[d, i] = 0
-            else:
-                tonnetz[d, i] = 1 / denom * (phi[d, :] * chromagram[:, i]).sum()
+    tonnetz = phi.dot(util.normalize(chromagram, norm=1, axis=0))
 
     return util.normalize(tonnetz, norm=norm, axis=0)
