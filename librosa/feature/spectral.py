@@ -1165,14 +1165,21 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096,
 
 
 @cache
-def tonnetz(chromagram, norm=np.inf):
-    '''Computes the tonal centroid features (tonnetz) from a 12-dimensional
-    chromagram.
+def tonnetz(y=None, sr=22050, chromagram=None, norm=np.inf):
+    '''Computes the tonal centroid features (tonnetz).
 
     Parameters
     ----------
-    chromagram : np.ndarray [shape=(12, t)]
+    y : np.ndarray [shape=(n,)] or None
+        Audio time series.
+
+    sr : int > 0 [scalar]
+        sampling rate of `y`
+
+    chromagram : np.ndarray [shape=(n_chroma, t)] or None
         Normalized energy for each chroma bin at each frame.
+
+        If `None`, a cqt chromagram is performed.
 
     norm : float or None
         Column-wise normalization.
@@ -1182,7 +1189,7 @@ def tonnetz(chromagram, norm=np.inf):
 
     Returns
     -------
-    tonnetz : np.ndarray [shape(6, t)]
+    ton : np.ndarray [shape(6, t)]
         Tonal centroid features for each frame.
 
     See Also
@@ -1218,22 +1225,23 @@ def tonnetz(chromagram, norm=np.inf):
     >>> plt.tight_layout()
     '''
 
-    if chromagram.shape[0] != 12:
-        raise ValueError('Tonnetz can only be obtained from 12-dimensional '
-                         'chromagrams.')
+    if y is None and chromagram is None:
+        raise ValueError('Either the audio samples or the chromagram must be '
+                         'passed as an argument.')
 
-    n_chroma, t = chromagram.shape
-    tonnetz = np.zeros((6, t))
+    if chromagram is None:
+        chromagram = chroma_cqt(y=y, sr=sr)
+
+    n_chroma = chromagram.shape[0]
 
     r1 = 1      # Fifths
     r2 = 1      # Minor
     r3 = 0.5    # Major
 
-    # Generate Transformation matrix
-    phi = np.zeros((6, n_chroma))
+    # Generate Transformation matrix (map any n_chroma dimensions to 6)
     j = np.linspace(0, 12, num=n_chroma, endpoint=False)
-    scale = np.pi * np.asarray([7./6, 7./6, 3./2, 3./2, 2./3, 2./3])
-
+    scale = np.pi * np.asarray([7. / 6, 7. / 6, 3. / 2, 3. / 2, 2. / 3,
+                                2. / 3])
     V = np.multiply.outer(scale, j)
     V[::2] -= np.pi / 2
     R = np.array([r1, r1, r2, r2, r3, r3])
