@@ -28,7 +28,8 @@ __all__ = ['spectral_centroid',
            'mfcc',
            # Deprecated functions
            'logfsgram',
-           'chromagram']
+           'chromagram',
+           'tonnetz']
 
 
 # -- Spectral features -- #
@@ -1164,7 +1165,7 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096,
 
 
 @cache
-def chroma_to_tonnetz(chromagram, norm=np.inf):
+def tonnetz(chromagram, norm=np.inf):
     '''Computes the tonal centroid features (tonnetz) from a 12-dimensional
     chromagram.
 
