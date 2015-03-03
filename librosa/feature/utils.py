@@ -8,7 +8,7 @@ import scipy.signal
 from .. import cache
 from .. import util
 
-__all__ = ['delta', 'stack_memory', 'sync']
+__all__ = ['delta', 'stack_memory', 'sync', 'chroma_to_tonnetz']
 
 
 @cache
@@ -333,3 +333,93 @@ def sync(data, frames, aggregate=None, pad=True):
         start = end
 
     return data_agg
+
+
+@cache
+def chroma_to_tonnetz(chromagram, norm=np.inf):
+    '''Computes the tonal centroid features (tonnetz) from a 12-dimensional
+    chromagram.
+
+    Parameters
+    ----------
+    chromagram : np.ndarray [shape=(12, t)]
+        Normalized energy for each chroma bin at each frame.
+
+    norm : float or None
+        Column-wise normalization.
+        See `librosa.util.normalize` for details.
+
+        If `None`, no normalization is performed.
+
+    Returns
+    -------
+    tonnetz : np.ndarray [shape(6, t)]
+        Tonal centroid features for each frame.
+
+    See Also
+    --------
+    librosa.feature.chroma_cqt
+        Compute a chromagram from a constat-Q transform.
+    librosa.feature.chroma_stft
+        Compute a chromagram from an STFT spectrogram or waveform.
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> chroma = librosa.feature.chroma_stft(y=y, sr=sr)
+    >>> tonnetz = librosa.feature.chroma_to_tonnetz(chroma)
+    >>> tonnetz
+    array([[ 0.79506535,  0.17179337,  0.30261799, ...,  0.05586615,
+         0.14303219,  0.187812  ],
+       [-0.44264622,  0.41896667,  0.21596437, ...,  0.11552605,
+         0.13349843,  0.92497935],
+       [-1.        ,  0.46310843, -1.        , ...,  0.4240766 ,
+         0.62088668,  0.74145399],
+       [ 0.50550166, -1.        ,  0.33409652, ..., -1.        ,
+        -1.        , -1.        ],
+       [-0.34921771,  0.52859071, -0.14055977, ...,  0.05132072,
+        -0.05028974, -0.22788206],
+       [-0.01232449, -0.19507053, -0.07335521, ..., -0.43501825,
+        -0.49050545, -0.36520804]])
+
+    >>> import matplotlib.pyplot as plt
+    >>> librosa.display.specshow(tonnetz, x_axis='time')
+    >>> plt.colorbar()
+    >>> plt.title('Tonal Centroids (Tonnetz)')
+    >>> plt.tight_layout()
+    '''
+
+    if chromagram.shape[0] != 12:
+        raise ValueError('Tonnetz can only be obtained from 12-dimensional '
+                         'chromagrams.')
+
+    t = chromagram.shape[1]
+    tonnetz = np.zeros((6, t))
+
+    r1 = 1      # Fifths
+    r2 = 1      # Minor
+    r3 = 0.5    # Major
+
+    # Generate Transformation matrix
+    phi = np.zeros((6, 12))
+    for i in range(6):
+        for j in range(12):
+            fun = np.sin if i % 2 == 0 else np.cos
+
+            if i < 2:
+                phi[i, j] = r1 * fun(j * 7 * np.pi / 6.)
+            elif i >= 2 and i < 4:
+                phi[i, j] = r2 * fun(j * 3 * np.pi / 2.)
+            else:
+                phi[i, j] = r3 * fun(j * 2 * np.pi / 3.)
+
+    # Do the transform to tonnetz
+    for i in range(t):
+        denom = float(chromagram[:, i].sum())
+        for d in range(6):
+            if denom == 0:
+                tonnetz[d, i] = 0
+            else:
+                tonnetz[d, i] = 1 / denom * (phi[d, :] * chromagram[:, i]).sum()
+
+    return util.normalize(tonnetz, norm=norm, axis=0)
