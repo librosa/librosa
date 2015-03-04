@@ -26,10 +26,10 @@ __all__ = ['spectral_centroid',
            'chroma_cqt',
            'melspectrogram',
            'mfcc',
+           'tonnetz',
            # Deprecated functions
            'logfsgram',
-           'chromagram',
-           'tonnetz']
+           'chromagram']
 
 
 # -- Spectral features -- #
@@ -1166,7 +1166,13 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096,
 
 @cache
 def tonnetz(y=None, sr=22050, chromagram=None, norm=np.inf):
-    '''Computes the tonal centroid features (tonnetz).
+    '''Computes the tonal centroid features (tonnetz), following the method of
+    [1]_.
+
+    .. [1] Harte, C., Sandler, M., & Gasser, M. (2006). "Detecting Harmonic
+    Change in Musical Audio." In Proceedings of the 1st ACM Workshop on Audio
+    and Music Computing Multimedia (pp. 21–26). Santa Barbara, CA, USA:
+    ACM Press. doi:10.1145/1178723.1178727.
 
     Parameters
     ----------
@@ -1205,11 +1211,6 @@ def tonnetz(y=None, sr=22050, chromagram=None, norm=np.inf):
         Compute a chromagram from a constat-Q transform.
     librosa.feature.chroma_stft
         Compute a chromagram from an STFT spectrogram or waveform.
-
-    Harte, C., Sandler, M., & Gasser, M. (2006). Detecting Harmonic Change in
-    Musical Audio. In Proceedings of the 1st ACM Workshop on Audio and Music
-    Computing Multimedia (pp. 21–26). Santa Barbara, CA, USA: ACM Press.
-    doi:10.1145/1178723.1178727
 
     Examples
     --------
