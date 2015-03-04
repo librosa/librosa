@@ -68,7 +68,7 @@ def test_cqt_hz():
 def test_tonnetz():
     plt.figure()
     chroma = librosa.feature.chroma_cqt(C=C)
-    ton = librosa.feature.tonnetz(chromagram=chroma)
+    ton = librosa.feature.tonnetz(chroma=chroma)
     librosa.display.specshow(ton, y_axis='tonnetz')
 
 
