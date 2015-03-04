@@ -814,9 +814,9 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
 
 
 @cache
-def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None, norm=np.inf,
-               tuning=None, n_chroma=12, n_octaves=7, bins_per_octave=None,
-               mode='full'):
+def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
+               norm=np.inf, tuning=None, n_chroma=12, n_octaves=7,
+               bins_per_octave=None, mode='full'):
     r'''Constant-Q chromagram
 
     Parameters
@@ -1165,7 +1165,7 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096,
 
 
 @cache
-def tonnetz(y=None, sr=22050, chromagram=None, norm=np.inf):
+def tonnetz(y=None, sr=22050, chroma=None):
     '''Computes the tonal centroid features (tonnetz), following the method of
     [1]_.
 
@@ -1182,16 +1182,10 @@ def tonnetz(y=None, sr=22050, chromagram=None, norm=np.inf):
     sr : int > 0 [scalar]
         sampling rate of `y`
 
-    chromagram : np.ndarray [shape=(n_chroma, t)] or None
+    chroma : np.ndarray [shape=(n_chroma, t)] or None
         Normalized energy for each chroma bin at each frame.
 
         If `None`, a cqt chromagram is performed.
-
-    norm : float or None
-        Column-wise normalization.
-        See `librosa.util.normalize` for details.
-
-        If `None`, no normalization is performed.
 
     Returns
     -------
@@ -1210,6 +1204,7 @@ def tonnetz(y=None, sr=22050, chromagram=None, norm=np.inf):
     --------
     chroma_cqt
         Compute a chromagram from a constat-Q transform.
+
     chroma_stft
         Compute a chromagram from an STFT spectrogram or waveform.
 
@@ -1238,32 +1233,33 @@ def tonnetz(y=None, sr=22050, chromagram=None, norm=np.inf):
     >>> plt.tight_layout()
     '''
 
-    if y is None and chromagram is None:
+    if y is None and chroma is None:
         raise ValueError('Either the audio samples or the chromagram must be '
                          'passed as an argument.')
 
-    if chromagram is None:
-        chromagram = chroma_cqt(y=y, sr=sr)
+    if chroma is None:
+        chroma = chroma_cqt(y=y, sr=sr)
 
     # Generate Transformation matrix
-    dim_map = np.linspace(0, 12, num=chromagram.shape[0], endpoint=False)
+    dim_map = np.linspace(0, 12, num=chroma.shape[0], endpoint=False)
 
-    scale = np.pi * np.asarray([7. / 6, 7. / 6,
-                                3. / 2, 3. / 2,
-                                2. / 3, 2. / 3])
+    scale = np.asarray([7. / 6, 7. / 6,
+                        3. / 2, 3. / 2,
+                        2. / 3, 2. / 3])
 
     V = np.multiply.outer(scale, dim_map)
-    V[::2] -= np.pi / 2
+
+    # Even rows compute sin()
+    V[::2] -= 0.5
+
     R = np.array([1, 1,         # Fifths
                   1, 1,         # Minor
                   0.5, 0.5])    # Major
 
-    phi = R[:, np.newaxis] * np.cos(V)
+    phi = R[:, np.newaxis] * np.cos(np.pi * V)
 
     # Do the transform to tonnetz
-    tonnetz = phi.dot(util.normalize(chromagram, norm=1, axis=0))
-
-    return util.normalize(tonnetz, norm=norm, axis=0)
+    return phi.dot(util.normalize(chroma, norm=1, axis=0))
 
 
 # Moved functions
