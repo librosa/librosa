@@ -1232,7 +1232,7 @@ def tonnetz(y=None, sr=22050, chromagram=None, norm=np.inf):
          -1.55136167e-01,   7.00443917e-02,   1.31018665e-01]])
 
     >>> import matplotlib.pyplot as plt
-    >>> librosa.display.specshow(tonnetz, x_axis='time')
+    >>> librosa.display.specshow(tonnetz, y_axis='tonnetz', x_axis='time')
     >>> plt.colorbar()
     >>> plt.title('Tonal Centroids (Tonnetz)')
     >>> plt.tight_layout()
