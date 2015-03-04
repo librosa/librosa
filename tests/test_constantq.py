@@ -7,9 +7,6 @@ Run me as follows:
     cd tests/
     nosetests -v --with-coverage --cover-package=librosa
 """
-
-
-from __future__ import print_function
 from __future__ import division
 
 # Disable cache
@@ -24,76 +21,57 @@ import numpy as np
 
 from nose.tools import nottest, eq_, raises
 
+def __test_cqt_size(y, sr, hop_length, fmin, n_bins, bins_per_octave,
+            tuning, resolution, aggregate, norm, sparsity):
+
+    cqt_output = librosa.cqt(y,
+                             sr=sr,
+                             hop_length=hop_length,
+                             fmin=fmin,
+                             n_bins=n_bins,
+                             bins_per_octave=bins_per_octave,
+                             tuning=tuning,
+                             resolution=resolution,
+                             aggregate=aggregate,
+                             norm=norm,
+                             sparsity=sparsity)
+
+    assert cqt_output.shape[0] == n_bins
+
+    return cqt_output
+
 
 def test_cqt():
-
-    def __test(y, sr, hop_length, fmin, n_bins, bins_per_octave,
-               tuning, resolution, aggregate, norm, sparsity):
-
-        cqt_output = librosa.cqt(y,
-                                 sr=sr,
-                                 hop_length=hop_length,
-                                 fmin=fmin,
-                                 n_bins=n_bins,
-                                 bins_per_octave=bins_per_octave,
-                                 tuning=tuning,
-                                 resolution=resolution,
-                                 aggregate=aggregate,
-                                 norm=norm,
-                                 sparsity=sparsity)
-
-        assert cqt_output.shape[0] == n_bins
-
-        return cqt_output
-
 
     sr = 11025
 
 
     # Impulse train
-    y = np.zeros(int(10.0 * sr))
+    y = np.zeros(int(5.0 * sr))
     y[::sr] = 1.0
 
 
-    hop_length = 512
-    fmin = None
-    n_bins = 48
-    bins_per_octave = 12
-    tuning = None
-    resolution = 2
-    aggregate = None
-    norm = 1
-    sparsity = 0.01
-
-
     # Hop size not long enough for num octaves
-    yield (raises(ValueError)(__test), y, sr, 32, fmin, 72,
-           bins_per_octave, tuning, resolution, aggregate, norm, sparsity)
+    # num_octaves = 6, 2**6 = 64 > 32
+    yield (raises(ValueError)(__test_cqt_size), y, sr, 32, None, 72,
+           12, None, 2, None, 1, 0.01)
 
-    # Filters go beyond Nyquist
-    yield (raises(ValueError)(__test), y, sr, hop_length, 500, 48,
-           bins_per_octave, tuning, resolution, aggregate, norm, sparsity)
-
-    # TODO Test that upper bands of CQT are equivalent to a CQT that
-    # starts at upper bands.
-
-    # TODO Test that lower bands of CQT are equivalent to a CQT with
-    # same bins_per_octave but greater n_bins
+    # Filters go beyond Nyquist. 500 Hz -> 4 octaves = 8000 Hz > 11000 Hz
+    yield (raises(ValueError)(__test_cqt_size), y, sr, 512, 500, 48,
+           12, None, 2, None, 1, 0.01)
 
 
-    hop_length = 512
-    aggregate = None
-    sparsity = 0.01
-
+    # Test for no errors and correct output size
     for fmin in [None, librosa.note_to_hz('C3')]:
-        for n_bins in [12, 24, 48, 72, 74, 76]:
+        for n_bins in [1, 12, 24, 48, 72, 74, 76]:
             for bins_per_octave in [12, 24]:
                 for tuning in [0, 0.25]:
                     for resolution in [1, 2]:
                         for norm in [1, 2]:
-                            yield (__test, y, sr, hop_length, fmin, n_bins,
+                            yield (__test_cqt_size, y, sr, 512, fmin, n_bins,
                                 bins_per_octave, tuning,
-                                resolution, aggregate, norm, sparsity)
+                                resolution, None, norm, 0.01)
+
 
 
 
