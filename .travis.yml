@@ -17,6 +17,8 @@ before_install:
     - bash miniconda.sh -b -p $HOME/miniconda
     - export PATH="$HOME/miniconda/bin:$PATH"
     - hash -r
+    - sudo apt-get install libsamplerate0 libsamplerate0-dev ffmpeg
+    - pip install scikits.samplerate
     - conda config --set always_yes yes --set changeps1 no
     - conda update -q conda
     # Useful for debugging any issues with conda
@@ -29,8 +31,6 @@ before_install:
 install:
     # install your own package into the environment
     # pip install -e rather than setup.py, so that coverage can find the source
-    - sudo apt-get install libsamplerate0 libsamplerate0-dev ffmpeg
-    - pip install scikits.samplerate
     - pip install -e ./
 
 script:
