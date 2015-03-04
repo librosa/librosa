@@ -64,6 +64,14 @@ def test_cqt_hz():
     librosa.display.specshow(C, y_axis='cqt_hz')
 
 
+@image_comparison(baseline_images=['tonnetz'], extensions=['png'])
+def test_tonnetz():
+    plt.figure()
+    chroma = librosa.feature.chroma_cqt(C=C)
+    ton = librosa.feature.tonnetz(chromagram=chroma)
+    librosa.display.specshow(ton, y_axis='tonnetz')
+
+
 @image_comparison(baseline_images=['chroma'], extensions=['png'])
 def test_chroma():
     plt.figure()
