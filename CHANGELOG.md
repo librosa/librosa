@@ -31,6 +31,7 @@ New features
   - Major rewrite and reformatting of documentation
   - Improvements to `display.specshow`:
     - added the `lag` axis format
+    - added the `tonnetz` axis format
     - allow any combination of axis formats
   - `effects.remix()`
   - Added new time and frequency converters:
@@ -54,6 +55,7 @@ New features
     - `feature.poly_features`
     - `feature.rmse`
     - `feature.zero_crossing_rate`
+    - `feature.tonnetz`
 
 
 Other changes
