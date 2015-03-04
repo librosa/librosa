@@ -9,6 +9,7 @@ Contributors
 * Dan Ellis <https://github.com/dpwe>
 * Eric Battenberg <https://github.com/ebattenberg>
 * Bryce Walburn <https://github.com/BWalburn>
+* Oriol Nieto <https://github.com/urinieto>
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
 
