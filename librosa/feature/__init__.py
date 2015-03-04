@@ -17,6 +17,7 @@ Spectral features
     spectral_contrast
     spectral_rolloff
     poly_features
+    tonnetz
     zero_crossing_rate
 
 Feature manipulation
