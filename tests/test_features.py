@@ -447,8 +447,7 @@ def test_tonnetz():
 
     # Use pre-computed chroma
     def __stft():
-        tonnetz = librosa.feature.tonnetz(chromagram=tonnetz_chroma,
-                                          norm=None)
+        tonnetz = librosa.feature.tonnetz(chroma=tonnetz_chroma)
         assert tonnetz.shape[1] == tonnetz_chroma.shape[1]
         assert tonnetz.shape[0] == 6
         assert np.allclose(tonnetz_msaf, tonnetz)
@@ -456,7 +455,7 @@ def test_tonnetz():
     def __cqt():
         # Use high resolution cqt chroma
         chroma_cqt = librosa.feature.chroma_cqt(y=y, sr=sr, n_chroma=24)
-        tonnetz = librosa.feature.tonnetz(chromagram=chroma_cqt)
+        tonnetz = librosa.feature.tonnetz(chroma=chroma_cqt)
         assert tonnetz.shape[1] == chroma_cqt.shape[1]
         assert tonnetz.shape[0] == 6
         # Using stft chroma won't generally match cqt chroma
