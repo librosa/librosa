@@ -26,7 +26,8 @@ before_install:
     - conda info -a
     - deps='pip numpy scipy pandas requests nose coverage numpydoc matplotlib sphinx scikit-learn seaborn'
     - conda create -q -n test-environment "python=$TRAVIS_PYTHON_VERSION" $deps 
-    - conda install -n test-environment -c https://conda.binstar.org/pypi/channel/main scikits.samplerate
+    # The line below ought to work, but doesn't.
+    # - conda install -n test-environment -c https://conda.binstar.org/pypi/channel/main scikits.samplerate
     - source activate test-environment
 
 install:
