@@ -437,25 +437,33 @@ def test_poly_features_synthetic():
 
 def test_tonnetz():
     y, sr = librosa.load(librosa.util.example_audio_file())
+    tonnetz_chroma = np.load("data/feature-tonnetz-chroma.npy")
     tonnetz_msaf = np.load("data/feature-tonnetz-msaf.npy")
 
     # Use cqt chroma
-    tonnetz = librosa.feature.tonnetz(y=y, sr=sr)
-    assert tonnetz.shape[0] == 6
-    np.allclose(tonnetz, tonnetz_msaf)
+    def __audio():
+        tonnetz = librosa.feature.tonnetz(y=y, sr=sr)
+        assert tonnetz.shape[0] == 6
 
-    # Use stft chroma
-    chroma_stft = librosa.feature.chroma_stft(y=y, sr=sr)
-    tonnetz = librosa.feature.tonnetz(chromagram=chroma_stft)
-    assert tonnetz.shape[1] == chroma_stft.shape[1]
-    assert tonnetz.shape[0] == 6
-    np.allclose(tonnetz, tonnetz_msaf)
+    # Use pre-computed chroma
+    def __stft():
+        tonnetz = librosa.feature.tonnetz(chromagram=tonnetz_chroma,
+                                          norm=None)
+        assert tonnetz.shape[1] == tonnetz_chroma.shape[1]
+        assert tonnetz.shape[0] == 6
+        assert np.allclose(tonnetz_msaf, tonnetz)
+
+    def __cqt():
+        # Use high resolution cqt chroma
+        chroma_cqt = librosa.feature.chroma_cqt(y=y, sr=sr, n_chroma=24)
+        tonnetz = librosa.feature.tonnetz(chromagram=chroma_cqt)
+        assert tonnetz.shape[1] == chroma_cqt.shape[1]
+        assert tonnetz.shape[0] == 6
+        # Using stft chroma won't generally match cqt chroma
+        # skip the equivalence check
 
     # Call the function with not enough parameters
     yield (raises(ValueError)(librosa.feature.tonnetz))
-
-    # Use high resolution cqt chroma
-    chroma_cqt = librosa.feature.chroma_cqt(y=y, sr=sr, n_chroma=24)
-    tonnetz = librosa.feature.tonnetz(chromagram=chroma_cqt)
-    assert tonnetz.shape[1] == chroma_cqt.shape[1]
-    assert tonnetz.shape[0] == 6
+    yield __audio
+    yield __stft
+    yield __cqt
