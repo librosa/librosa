@@ -1207,9 +1207,9 @@ def tonnetz(y=None, sr=22050, chromagram=None, norm=np.inf):
 
     See Also
     --------
-    librosa.feature.chroma_cqt
+    chroma_cqt
         Compute a chromagram from a constat-Q transform.
-    librosa.feature.chroma_stft
+    chroma_stft
         Compute a chromagram from an STFT spectrogram or waveform.
 
     Examples
