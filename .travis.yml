@@ -18,7 +18,6 @@ before_install:
     - export PATH="$HOME/miniconda/bin:$PATH"
     - hash -r
     - sudo apt-get install libsamplerate0 libsamplerate0-dev ffmpeg
-    - pip install --user scikits.samplerate
     - conda config --set always_yes yes --set changeps1 no
     - conda update -q conda
     # Useful for debugging any issues with conda
@@ -26,6 +25,7 @@ before_install:
     - deps='pip numpy scipy pandas requests nose coverage numpydoc matplotlib sphinx scikit-learn seaborn'
     - conda create -q -n test-environment "python=$TRAVIS_PYTHON_VERSION" $deps 
     - pip install python-coveralls
+    - pip install scikits.samplerate
     - source activate test-environment
 
 install:
