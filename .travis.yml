@@ -30,6 +30,7 @@ install:
     # install your own package into the environment
     # pip install -e rather than setup.py, so that coverage can find the source
     - sudo apt-get install libsamplerate0 libsamplerate0-dev ffmpeg
+    - pip install scikits.samplerate
     - pip install -e ./
 
 script:
