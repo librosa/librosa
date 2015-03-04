@@ -26,6 +26,7 @@ __all__ = ['spectral_centroid',
            'chroma_cqt',
            'melspectrogram',
            'mfcc',
+           'tonnetz',
            # Deprecated functions
            'logfsgram',
            'chromagram']
@@ -717,7 +718,7 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True,
 @cache
 def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
                hop_length=512, tuning=None, **kwargs):
-    """Compute a chromagram from a STFT spectrogram or waveform
+    """Compute a chromagram from an STFT spectrogram or waveform
 
     Parameters
     ----------
@@ -1161,6 +1162,105 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096,
     cq_basis = filters.logfrequency(sr, n_fft=n_fft, **kwargs)
 
     return cq_basis.dot(S)
+
+
+@cache
+def tonnetz(y=None, sr=22050, chromagram=None, norm=np.inf):
+    '''Computes the tonal centroid features (tonnetz), following the method of
+    [1]_.
+
+    .. [1] Harte, C., Sandler, M., & Gasser, M. (2006). "Detecting Harmonic
+    Change in Musical Audio." In Proceedings of the 1st ACM Workshop on Audio
+    and Music Computing Multimedia (pp. 21–26). Santa Barbara, CA, USA:
+    ACM Press. doi:10.1145/1178723.1178727.
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(n,)] or None
+        Audio time series.
+
+    sr : int > 0 [scalar]
+        sampling rate of `y`
+
+    chromagram : np.ndarray [shape=(n_chroma, t)] or None
+        Normalized energy for each chroma bin at each frame.
+
+        If `None`, a cqt chromagram is performed.
+
+    norm : float or None
+        Column-wise normalization.
+        See `librosa.util.normalize` for details.
+
+        If `None`, no normalization is performed.
+
+    Returns
+    -------
+    ton : np.ndarray [shape(6, t)]
+        Tonal centroid features for each frame.
+        Tonnetz dimensions:
+            0: Fifth x-axis
+            1: Fifth y-axis
+            2: Minor x-axis
+            3: Minor y-axis
+            4: Major x-axis
+            5: Major y-axis
+
+    See Also
+    --------
+    chroma_cqt
+        Compute a chromagram from a constat-Q transform.
+    chroma_stft
+        Compute a chromagram from an STFT spectrogram or waveform.
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> tonnetz = librosa.feature.tonnetz(y=y, sr=sr)
+    >>> tonnetz
+    array([[ -2.41826496e-01,  -1.72715121e-01,  -6.18609328e-03, ...,
+          5.22433714e-04,  -2.61260595e-01,  -3.62402699e-01],
+       [  3.98255741e-03,   4.74434416e-03,   7.34245455e-03, ...,
+         -1.00000000e+00,  -7.99157252e-01,  -6.34483417e-01],
+       [  1.72874642e-01,   9.66901418e-02,   5.17672209e-02, ...,
+          2.18360773e-01,   2.96231394e-01,   2.33202103e-01],
+       [  1.00000000e+00,   1.00000000e+00,   1.00000000e+00, ...,
+          8.96818213e-01,   1.00000000e+00,   1.00000000e+00],
+       [  1.28118552e-01,   1.11446405e-01,   1.26253266e-01, ...,
+          6.27590321e-01,   4.46819136e-01,   3.91844494e-01],
+       [  1.61835534e-02,   5.17420588e-03,   6.45898537e-03, ...,
+         -1.55136167e-01,   7.00443917e-02,   1.31018665e-01]])
+
+    >>> import matplotlib.pyplot as plt
+    >>> librosa.display.specshow(tonnetz, x_axis='time')
+    >>> plt.colorbar()
+    >>> plt.title('Tonal Centroids (Tonnetz)')
+    >>> plt.tight_layout()
+    '''
+
+    if y is None and chromagram is None:
+        raise ValueError('Either the audio samples or the chromagram must be '
+                         'passed as an argument.')
+
+    if chromagram is None:
+        chromagram = chroma_cqt(y=y, sr=sr)
+
+    r1 = 1      # Fifths
+    r2 = 1      # Minor
+    r3 = 0.5    # Major
+
+    # Generate Transformation matrix
+    dim_map = np.linspace(0, 12, num=chromagram.shape[0], endpoint=False)
+    scale = np.pi * np.asarray([7. / 6, 7. / 6, 3. / 2, 3. / 2, 2. / 3,
+                                2. / 3])
+    V = np.multiply.outer(scale, dim_map)
+    V[::2] -= np.pi / 2
+    R = np.array([r1, r1, r2, r2, r3, r3])
+    phi = R[:, np.newaxis] * np.cos(V)
+
+    # Do the transform to tonnetz
+    tonnetz = phi.dot(util.normalize(chromagram, norm=1, axis=0))
+
+    return util.normalize(tonnetz, norm=norm, axis=0)
 
 
 # Moved functions
