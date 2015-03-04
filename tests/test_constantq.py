@@ -72,6 +72,12 @@ def test_cqt():
                                 bins_per_octave, tuning,
                                 resolution, None, norm, 0.01)
 
+    # Test with fmin near Nyquist
+    for fmin in [3000, 4800]:
+        for n_bins in [1, 2]:
+            for bins_per_octave in [12]:
+                yield (__test_cqt_size, y, sr, 512, fmin, n_bins,
+                       bins_per_octave, None, 2, None, 1, 0.01)
 
 
 
