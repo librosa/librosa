@@ -18,8 +18,9 @@ before_install:
     - export PATH="$HOME/miniconda/bin:$PATH"
     - hash -r
     - sudo apt-get install libsamplerate0 libsamplerate0-dev ffmpeg
+    - pip install scikits.samplerate
     - conda config --set always_yes yes --set changeps1 no
-    - conda config --add channels http://conda.binstar.org/pypi
+    # - conda config --add channels http://conda.binstar.org/pypi
     - conda update -q conda
     # Useful for debugging any issues with conda
     - conda info -a
