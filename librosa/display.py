@@ -246,6 +246,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
             - 'cqt_hz' : frequencies are determined by the CQT scale.
             - 'cqt_note' : pitches are determined by the CQT scale.
             - 'chroma' : pitches are determined by the chroma filters.
+            - 'tonnetz' : axes are labeled by Tonnetz dimensions
 
         Time types:
             - 'time' : markers are shown as milliseconds, seconds,
@@ -399,6 +400,7 @@ def __axis(data, n_ticks, ax_type, horiz=False, **kwargs):
                 'cqt_hz': __axis_cqt_hz,
                 'cqt_note': __axis_cqt_note,
                 'chroma': __axis_chroma,
+                'tonnetz': __axis_tonnetz,
                 'off': __axis_none,
                 'time': __axis_time,
                 'lag': __axis_lag,
@@ -603,6 +605,21 @@ def __axis_lag(data, n_ticks, horiz, sr=22050, hop_length=512, **_kwargs):
     time_ticks(positions, times, n_ticks=None, axis=axis)
 
     labeler('Lag')
+
+
+def __axis_tonnetz(data, n_ticks, horiz, **_kwargs):
+    '''Chroma axes'''
+
+    n, ticker, labeler = __get_shape_artists(data, horiz)
+
+    positions = np.arange(6)
+
+    values = [r'5$_x$', r'5$_y$',
+              r'm3$_x$', r'm3$_y$',
+              r'M3$_x$', r'M3$_y$']
+
+    ticker(positions, values)
+    labeler('Tonnetz')
 
 
 def __axis_frames(data, n_ticks, horiz, label='Frames', **_kwargs):
