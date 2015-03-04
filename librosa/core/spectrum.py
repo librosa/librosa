@@ -511,7 +511,7 @@ def phase_vocoder(D, rate, hop_length=None):
     n_fft = 2 * (D.shape[0] - 1)
 
     if hop_length is None:
-        hop_length = int(n_fft / 4)
+        hop_length = int(n_fft // 4)
 
     time_steps = np.arange(0, D.shape[1], rate, dtype=np.float)
 

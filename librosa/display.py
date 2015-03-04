@@ -473,6 +473,7 @@ def __axis_log(data, n_ticks, horiz, sr=22050, kwargs=None, label='Hz',
     # One extra value here to catch nyquist
     values = np.linspace(0, 0.5 * sr, n, endpoint=True).astype(int)
 
+
     ticker(positions, values[t_inv[positions]])
 
     labeler(label)

@@ -717,7 +717,7 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True,
 # -- Chroma --#
 @cache
 def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
-               hop_length=512, tuning=None, **kwargs):
+                hop_length=512, tuning=None, **kwargs):
     """Compute a chromagram from an STFT spectrogram or waveform
 
     Parameters
@@ -1170,9 +1170,9 @@ def tonnetz(y=None, sr=22050, chromagram=None, norm=np.inf):
     [1]_.
 
     .. [1] Harte, C., Sandler, M., & Gasser, M. (2006). "Detecting Harmonic
-    Change in Musical Audio." In Proceedings of the 1st ACM Workshop on Audio
-    and Music Computing Multimedia (pp. 21–26). Santa Barbara, CA, USA:
-    ACM Press. doi:10.1145/1178723.1178727.
+           Change in Musical Audio." In Proceedings of the 1st ACM Workshop
+           on Audio and Music Computing Multimedia (pp. 21-26).
+           Santa Barbara, CA, USA: ACM Press. doi:10.1145/1178723.1178727.
 
     Parameters
     ----------
@@ -1197,13 +1197,14 @@ def tonnetz(y=None, sr=22050, chromagram=None, norm=np.inf):
     -------
     ton : np.ndarray [shape(6, t)]
         Tonal centroid features for each frame.
+
         Tonnetz dimensions:
-            0: Fifth x-axis
-            1: Fifth y-axis
-            2: Minor x-axis
-            3: Minor y-axis
-            4: Major x-axis
-            5: Major y-axis
+            - 0: Fifth x-axis
+            - 1: Fifth y-axis
+            - 2: Minor x-axis
+            - 3: Minor y-axis
+            - 4: Major x-axis
+            - 5: Major y-axis
 
     See Also
     --------
@@ -1244,17 +1245,19 @@ def tonnetz(y=None, sr=22050, chromagram=None, norm=np.inf):
     if chromagram is None:
         chromagram = chroma_cqt(y=y, sr=sr)
 
-    r1 = 1      # Fifths
-    r2 = 1      # Minor
-    r3 = 0.5    # Major
-
     # Generate Transformation matrix
     dim_map = np.linspace(0, 12, num=chromagram.shape[0], endpoint=False)
-    scale = np.pi * np.asarray([7. / 6, 7. / 6, 3. / 2, 3. / 2, 2. / 3,
-                                2. / 3])
+
+    scale = np.pi * np.asarray([7. / 6, 7. / 6,
+                                3. / 2, 3. / 2,
+                                2. / 3, 2. / 3])
+
     V = np.multiply.outer(scale, dim_map)
     V[::2] -= np.pi / 2
-    R = np.array([r1, r1, r2, r2, r3, r3])
+    R = np.array([1, 1,         # Fifths
+                  1, 1,         # Minor
+                  0.5, 0.5])    # Major
+
     phi = R[:, np.newaxis] * np.cos(V)
 
     # Do the transform to tonnetz
