@@ -451,7 +451,7 @@ def test_tonnetz():
     assert tonnetz.shape[0] == 6
     np.allclose(tonnetz, tonnetz_msaf)
 
-    # Call the function without not enough parameters
+    # Call the function with not enough parameters
     yield (raises(ValueError)(librosa.feature.tonnetz))
 
     # Use high resolution cqt chroma
