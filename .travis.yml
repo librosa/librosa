@@ -24,6 +24,7 @@ before_install:
     - conda info -a
     - deps='pip numpy scipy pandas requests nose coverage numpydoc matplotlib sphinx scikit-learn seaborn'
     - conda create -q -n test-environment "python=$TRAVIS_PYTHON_VERSION" $deps 
+    - conda config --add channels http://conda.binstar.org/pypi
     - conda install -c https://conda.binstar.org/pypi/channel/main scikits.samplerate
     - pip install python-coveralls
     - source activate test-environment
