@@ -110,7 +110,7 @@ def test_stft_bad_window():
     y = np.zeros(22050 * 5)
 
     n_fft = 2048
-    window = np.ones(n_fft / 2)
+    window = np.ones(n_fft // 2)
 
     librosa.stft(y, n_fft=n_fft, window=window)
 
