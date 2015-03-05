@@ -103,7 +103,7 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
 
     # Cut back to the original shape of the input data
     if trim:
-        idx = [Ellipsis] * delta_x.ndim
+        idx = [slice(None)] * delta_x.ndim
         idx[axis] = slice(- half_length - data.shape[axis], - half_length)
         delta_x = delta_x[idx]
 

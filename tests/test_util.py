@@ -51,7 +51,7 @@ def test_pad_center():
         n_len = y.shape[axis]
         n_pad = int((n - n_len) / 2)
 
-        eq_slice = [Ellipsis] * y.ndim
+        eq_slice = [slice(None)] * y.ndim
         eq_slice[axis] = slice(n_pad, n_pad + n_len)
 
         assert np.allclose(y, y_out[eq_slice])
@@ -78,7 +78,7 @@ def test_fix_length():
 
         y_out = librosa.util.fix_length(y, n, axis=axis)
 
-        eq_slice = [Ellipsis] * y.ndim
+        eq_slice = [slice(None)] * y.ndim
         eq_slice[axis] = slice(y.shape[axis])
 
         if n > y.shape[axis]:
@@ -180,7 +180,7 @@ def test_axis_sort():
                                                   index=index,
                                                   value=value)
 
-            cmp_slice = [Ellipsis] * X.ndim
+            cmp_slice = [slice(None)] * X.ndim
             cmp_slice[axis] = idx
 
             assert np.allclose(X[cmp_slice], Xsorted)

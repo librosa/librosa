@@ -506,10 +506,10 @@ def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
         y_sign = np.sign(y)
 
     # Find the change-points by slicing
-    slice_pre = [Ellipsis] * y.ndim
+    slice_pre = [slice(None)] * y.ndim
     slice_pre[axis] = slice(1, None)
 
-    slice_post = [Ellipsis] * y.ndim
+    slice_post = [slice(None)] * y.ndim
     slice_post[axis] = slice(-1)
 
     # Since we've offset the input by one, pad back onto the front
