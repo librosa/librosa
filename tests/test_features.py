@@ -264,7 +264,7 @@ def test_spectral_rolloff_synthetic():
         if freq is None:
             freq = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
 
-        idx = np.floor(pct * freq.shape[0])
+        idx = np.floor(pct * freq.shape[0]).astype(int)
         assert np.allclose(rolloff, freq[idx])
 
     S = np.ones((1 + n_fft // 2, 10))
