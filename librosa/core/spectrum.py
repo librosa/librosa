@@ -148,13 +148,13 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
     # Pad the time series so that frames are centered
     if center:
         util.valid_audio(y)
-        y = np.pad(y, int(n_fft / 2), mode='reflect')
+        y = np.pad(y, int(n_fft // 2), mode='reflect')
 
     # Window the time series.
     y_frames = util.frame(y, frame_length=n_fft, hop_length=hop_length)
 
     # Pre-allocate the STFT matrix
-    stft_matrix = np.empty((int(1 + n_fft / 2), y_frames.shape[1]),
+    stft_matrix = np.empty((int(1 + n_fft // 2), y_frames.shape[1]),
                            dtype=dtype,
                            order='F')
 
@@ -275,7 +275,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
         y[sample:(sample+n_fft)] = y[sample:(sample+n_fft)] + ytmp
 
     if center:
-        y = y[int(n_fft / 2):-int(n_fft / 2)]
+        y = y[int(n_fft // 2):-int(n_fft // 2)]
 
     return y
 
