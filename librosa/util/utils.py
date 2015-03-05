@@ -142,10 +142,10 @@ def valid_audio(y, mono=True):
 
     if mono and y.ndim != 1:
         raise ValueError('Invalid shape for monophonic audio: '
-                         'ndim={:d}, shape={:s}'.format(y.ndim, y.shape))
+                         'ndim={:d}, shape={}'.format(y.ndim, y.shape))
     elif y.ndim > 2:
         raise ValueError('Invalid shape for audio: '
-                         'ndim={:d}, shape={:s}'.format(y.ndim, y.shape))
+                         'ndim={:d}, shape={}'.format(y.ndim, y.shape))
 
     if not np.isfinite(y).all():
         raise ValueError('Audio buffer is not finite everywhere.')
@@ -1060,7 +1060,7 @@ def sparsify_rows(x, quantile=0.01):
 
     elif x.ndim > 2:
         raise ValueError('Input must have 2 or fewer dimensions.  '
-                         'Provided x.shape={:s}.'.format(str(x.shape)))
+                         'Provided x.shape={}.'.format(x.shape))
 
     if not (0.0 <= quantile < 1):
         raise ValueError('Invalid quantile: {:.2f}'.format(quantile))
