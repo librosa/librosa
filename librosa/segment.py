@@ -245,7 +245,7 @@ def recurrence_to_lag(rec, pad=True):
 
     if rec.ndim != 2 or rec.shape[0] != rec.shape[1]:
         raise ValueError('non-square recurrence matrix shape: '
-                         '{:s}'.format(rec.shape))
+                         '{}'.format(rec.shape))
 
     t = rec.shape[1]
     if pad:
@@ -311,7 +311,7 @@ def lag_to_recurrence(lag):
     pad = (lag.shape[0] == 2 * lag.shape[-1])
 
     if lag.ndim != 2 or (lag.shape[0] != lag.shape[1] and not pad):
-        raise ValueError('Invalid lag matrix shape: {:s}'.format(lag.shape))
+        raise ValueError('Invalid lag matrix shape: {}'.format(lag.shape))
 
     t = lag.shape[1]
     lag = lag.copy()
