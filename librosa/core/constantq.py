@@ -465,7 +465,7 @@ def __fft_filters(sr, fmin, bins_per_octave, tuning,
     basis *= lengths.reshape((-1, 1)) / n_fft
 
     # FFT and retain only the non-negative frequencies
-    fft_basis = np.fft.fft(basis, n=n_fft, axis=1)[:, :(n_fft / 2)+1]
+    fft_basis = np.fft.fft(basis, n=n_fft, axis=1)[:, :(n_fft // 2)+1]
 
     # normalize as in Parseval's relation, and sparsify the basis
     fft_basis = util.sparsify_rows(fft_basis / n_fft, quantile=sparsity)
