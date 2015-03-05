@@ -159,7 +159,8 @@ def test__window():
             assert np.allclose(wdec(n), window(n))
         else:
             wf = wdec(n)
-            assert not np.any(wf[np.floor(n):])
+            fn = int(np.floor(n))
+            assert not np.any(wf[fn:])
 
     for n in [16, 16.0, 16.25, 16.75]:
         for window_name in ['barthann', 'bartlett', 'blackman',

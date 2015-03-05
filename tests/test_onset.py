@@ -3,7 +3,7 @@
 #  unit tests for librosa.beat
 
 from __future__ import print_function
-from nose.tools import nottest, raises, eq_
+from nose.tools import raises, eq_
 
 # Disable cache
 import os
@@ -145,7 +145,7 @@ def test_onset_detect_const():
     sr = 22050
     duration = 3.0
     for f in [np.zeros, np.ones]:
-        y = f(duration * sr)
+        y = f(int(duration * sr))
         for hop_length in [64, 512, 2048]:
             yield __test, y, sr, None, hop_length
             yield __test, -y, sr, None, hop_length
