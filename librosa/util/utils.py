@@ -339,7 +339,7 @@ def fix_length(data, size, axis=-1, **kwargs):
     n = data.shape[axis]
 
     if n > size:
-        slices = [Ellipsis] * data.ndim
+        slices = [slice(None)] * data.ndim
         slices[axis] = slice(0, size)
         return data[slices]
 
@@ -523,7 +523,7 @@ def axis_sort(S, axis=-1, index=False, value=None):
     bin_idx = value(S, axis=np.mod(1-axis, S.ndim))
     idx = np.argsort(bin_idx)
 
-    sort_slice = [Ellipsis] * S.ndim
+    sort_slice = [slice(None)] * S.ndim
     sort_slice[axis] = idx
 
     if index:
@@ -815,10 +815,10 @@ def localmax(x, axis=0):
 
     x_pad = np.pad(x, paddings, mode='edge')
 
-    inds1 = [Ellipsis] * x.ndim
+    inds1 = [slice(None)] * x.ndim
     inds1[axis] = slice(0, -2)
 
-    inds2 = [Ellipsis] * x.ndim
+    inds2 = [slice(None)] * x.ndim
     inds2[axis] = slice(2, x_pad.shape[axis])
 
     return (x > x_pad[inds1]) & (x >= x_pad[inds2])
