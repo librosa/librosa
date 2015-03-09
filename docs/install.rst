@@ -17,8 +17,8 @@ If you've downloaded the archive manually from the `releases
 <https://github.com/bmcfee/librosa/releases/>`_ page, you can install using the
 `setuptools` script::
 
-    tar xzf librosa-0.3.tar.gz
-    cd librosa-0.3/
+    tar xzf librosa-VERSION.tar.gz
+    cd librosa-VERSION/
     python setup.py install
 
 Additional notes

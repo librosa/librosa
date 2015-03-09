@@ -59,12 +59,12 @@ def estimate_tuning(y=None, sr=22050, S=None, n_fft=2048,
     >>> # With time-series input
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> librosa.estimate_tuning(y=y, sr=sr)
-    0.070000000000000062
+    0.089999999999999969
 
     >>> # In tenths of a cent
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> librosa.estimate_tuning(y=y, sr=sr, resolution=1e-3))
-    0.071000000000000063
+    >>> librosa.estimate_tuning(y=y, sr=sr, resolution=1e-3)
+    0.093999999999999972
 
     >>> # Using spectrogram input
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
@@ -75,7 +75,7 @@ def estimate_tuning(y=None, sr=22050, S=None, n_fft=2048,
     >>> # Using pass-through arguments to `librosa.piptrack`
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> librosa.estimate_tuning(y=y, sr=sr, n_fft=8192,
-                                fmax=librosa.note_to_hz('G#10'))
+    ...                         fmax=librosa.note_to_hz('G#10'))
     0.070000000000000062
 
     '''

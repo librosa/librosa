@@ -69,12 +69,11 @@ def frame(y, frame_length=2048, hop_length=512):
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> librosa.util.frame(y, frame_length=2048, hop_length=64)
-    array([[  0.000e+00,   0.000e+00, ...,   1.526e-05,   0.000e+00],
-           [  0.000e+00,   0.000e+00, ...,   1.526e-05,   0.000e+00],
-    ...,
-           [ -2.674e-04,   5.065e-03, ...,   0.000e+00,   0.000e+00],
-           [  2.684e-03,   4.817e-03, ...,   0.000e+00,   0.000e+00]],
-          dtype=float32)
+    array([[ -9.216e-06,   7.710e-06, ...,  -2.117e-06,  -4.362e-07],
+           [  2.518e-06,  -6.294e-06, ...,  -1.775e-05,  -6.365e-06],
+           ..., 
+           [ -7.429e-04,   5.173e-03, ...,   1.105e-05,  -5.074e-06],
+           [  2.169e-03,   4.867e-03, ...,   3.666e-06,  -5.571e-06]], dtype=float32)
 
     '''
 
@@ -104,15 +103,6 @@ def frame(y, frame_length=2048, hop_length=512):
 def valid_audio(y, mono=True):
     '''Validate whether a variable contains valid, mono audio data.
 
-    Examples
-    --------
-    >>> # Only allow monophonic signals
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> valid_audio(y)
-
-    >>> # If we want to allow stereo signals
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(), mono=False)
-    >>> valid_audio(y, mono=False)
 
     Parameters
     ----------
@@ -135,6 +125,18 @@ def valid_audio(y, mono=True):
             - `mono == True` and `y.ndim` is not 1
             - `mono == False` and `y.ndim` is not 1 or 2
             - `np.isfinite(y).all()` is not True
+
+    Examples
+    --------
+    >>> # Only allow monophonic signals
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> librosa.util.valid_audio(y)
+    True
+
+    >>> # If we want to allow stereo signals
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), mono=False)
+    >>> librosa.util.valid_audio(y, mono=False)
+    True
     '''
 
     if not isinstance(y, np.ndarray):
@@ -354,20 +356,20 @@ def fix_frames(frames, x_min=0, x_max=None, pad=True):
     >>> # Generate a list of frame indices
     >>> frames = np.arange(0, 1000.0, 50)
     >>> frames
-    array([   0.,   50.,  100.,  150.,  200.,  250.,  300.,  350.,  400.,
-            450.,  500.,  550.,  600.,  650.,  700.,  750.,  800.,  850.,
-            900.,  950.])
+    array([   0.,   50.,  100.,  150.,  200.,  250.,  300.,  350.,
+            400.,  450.,  500.,  550.,  600.,  650.,  700.,  750.,
+            800.,  850.,  900.,  950.])
     >>> # Clip to span at most 250
     >>> librosa.util.fix_frames(frames, x_max=250)
     array([  0,  50, 100, 150, 200, 250])
     >>> # Or pad to span up to 2500
     >>> librosa.util.fix_frames(frames, x_max=2500)
-    array([   0,   50,  100,  150,  200,  250,  300,  350,  400,  450,
-            500,  550,  600,  650,  700,  750,  800,  850,  900,  950,
-           2500])
+    array([   0,   50,  100,  150,  200,  250,  300,  350,  400,
+            450,  500,  550,  600,  650,  700,  750,  800,  850,
+            900,  950, 2500])
     >>> librosa.util.fix_frames(frames, x_max=2500, pad=False)
-    array([  0,  50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550,
-           600, 650, 700, 750, 800, 850, 900, 950])
+    array([  0,  50, 100, 150, 200, 250, 300, 350, 400, 450, 500,
+           550, 600, 650, 700, 750, 800, 850, 900, 950])
 
     >>> # Or starting away from zero
     >>> frames = np.arange(200, 500, 33)
@@ -376,7 +378,8 @@ def fix_frames(frames, x_min=0, x_max=None, pad=True):
     >>> librosa.util.fix_frames(frames)
     array([  0, 200, 233, 266, 299, 332, 365, 398, 431, 464, 497])
     >>> librosa.util.fix_frames(frames, x_max=500)
-    array([  0, 200, 233, 266, 299, 332, 365, 398, 431, 464, 497, 500])
+    array([  0, 200, 233, 266, 299, 332, 365, 398, 431, 464, 497,
+           500])
 
 
     Parameters
@@ -702,7 +705,8 @@ def match_events(events_from, events_to):
     >>> # Sources are multiples of 7
     >>> s_from = np.arange(0, 100, 7)
     >>> s_from
-    array([ 0,  7, 14, 21, 28, 35, 42, 49, 56, 63, 70, 77, 84, 91, 98])
+    array([ 0,  7, 14, 21, 28, 35, 42, 49, 56, 63, 70, 77, 84, 91,
+           98])
     >>> # Targets are multiples of 10
     >>> s_to = np.arange(0, 100, 10)
     >>> s_to
@@ -775,8 +779,7 @@ def localmax(x, axis=0):
     --------
     >>> x = np.array([1, 0, 1, 2, -1, 0, -2, 1])
     >>> librosa.util.localmax(x)
-    array([False, False, False,  True, False,  True, False, True],
-          dtype=bool)
+    array([False, False, False,  True, False,  True, False,  True], dtype=bool)
 
     >>> # Two-dimensional example
     >>> x = np.array([[1,0,1], [2, -1, 0], [2, 1, 3]])
@@ -881,9 +884,9 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     ...                                          aggregate=np.median)
     >>> peaks = librosa.util.peak_pick(onset_env, 3, 3, 3, 5, 0.5, 10)
     >>> peaks
-    array([  4,  23,  73, 102, 142, 162, 182, 211, 261, 301, 320, 331,
-           348, 368, 382, 396, 411, 431, 446, 461, 476, 491, 510, 525,
-           536, 555, 570, 590, 609, 625, 639])
+    array([  4,  23,  73, 102, 142, 162, 182, 211, 261, 301, 320,
+           331, 348, 368, 382, 396, 411, 431, 446, 461, 476, 491,
+           510, 525, 536, 555, 570, 590, 609, 625, 639])
 
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
@@ -998,10 +1001,11 @@ def sparsify_rows(x, quantile=0.01):
     >>> # Construct a Hann window to sparsify
     >>> x = scipy.signal.hann(32)
     >>> x
-    array([ 0.   ,  0.01 ,  0.041,  0.09 ,  0.156,  0.236,  0.326,  0.424,
-            0.525,  0.625,  0.72 ,  0.806,  0.879,  0.937,  0.977,  0.997,
-            0.997,  0.977,  0.937,  0.879,  0.806,  0.72 ,  0.625,  0.525,
-            0.424,  0.326,  0.236,  0.156,  0.09 ,  0.041,  0.01 ,  0.   ])
+    array([ 0.   ,  0.01 ,  0.041,  0.09 ,  0.156,  0.236,  0.326,
+            0.424,  0.525,  0.625,  0.72 ,  0.806,  0.879,  0.937,
+            0.977,  0.997,  0.997,  0.977,  0.937,  0.879,  0.806,
+            0.72 ,  0.625,  0.525,  0.424,  0.326,  0.236,  0.156,
+            0.09 ,  0.041,  0.01 ,  0.   ])
     >>> # Discard the bottom percentile
     >>> x_sparse = librosa.util.sparsify_rows(x, quantile=0.01)
     >>> x_sparse

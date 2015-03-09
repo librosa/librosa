@@ -51,21 +51,6 @@ def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
 
     This can be used for segment or chord annotations.
 
-    Examples
-    --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> data = librosa.feature.mfcc(y=y, sr=sr, hop_length=512)
-    >>> # Detect segment boundaries
-    >>> boundaries = librosa.segment.agglomerative(data, k=10)
-    >>> # Convert to time
-    >>> boundary_times = librosa.frames_to_time(boundaries, sr=sr,
-                                                hop_length=512)
-    >>> # Make some fake annotations
-    >>> labels = ['Seg #{:03d}'.format(i) for i in range(len(time_start))]
-    >>> # Save the output
-    >>> librosa.output.annotation('segments.csv', boundary_times,
-                                  annotations=annotations)
-
     Parameters
     ----------
     path : str
@@ -91,6 +76,35 @@ def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
     ValueError
         if `annotations` is not `None` and length does
         not match `intervals`
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> data = librosa.feature.mfcc(y=y, sr=sr, hop_length=512)
+
+    Detect segment boundaries
+
+    >>> boundaries = librosa.segment.agglomerative(data, k=10)
+
+    Convert to time
+
+    >>> boundary_times = librosa.frames_to_time(boundaries, sr=sr,
+    ...                                         hop_length=512)
+
+    Convert events boundaries to intervals
+
+    >>> intervals = np.hstack([boundary_times[:-1, np.newaxis],
+    ...                        boundary_times[1:, np.newaxis]])
+
+    Make some fake annotations
+
+    >>> labels = ['Seg #{:03d}'.format(i) for i in range(len(intervals))]
+
+    Save the output
+
+    >>> librosa.output.annotation('segments.csv', intervals,
+    ...                           annotations=labels)
+
     '''
 
     util.valid_intervals(intervals)
@@ -178,13 +192,6 @@ def times_csv(path, times, annotations=None, delimiter=',', fmt='%0.3f'):
 def write_wav(path, y, sr, norm=True):
     """Output a time series as a .wav file
 
-    Examples
-    --------
-    >>> # Trim a signal to 5 seconds and save it back
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(),
-                             duration=5.0)
-    >>> librosa.output.write_wav('file_trim_5s.wav', y, sr)
-
     Parameters
     ----------
     path : str
@@ -198,6 +205,15 @@ def write_wav(path, y, sr, norm=True):
 
     norm : boolean [scalar]
         enable amplitude normalization
+
+    Examples
+    --------
+    Trim a signal to 5 seconds and save it back
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(),
+    ...                      duration=5.0)
+    >>> librosa.output.write_wav('file_trim_5s.wav', y, sr)
+
     """
 
     # Validate the buffer.  Stereo is okay here.
