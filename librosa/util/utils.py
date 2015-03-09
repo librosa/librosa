@@ -184,12 +184,6 @@ def valid_int(x, cast=None):
     if not six.callable(cast):
         raise TypeError('cast parameter must be callable.')
 
-    cast_name = '{:s}'.format(cast.__name__)
-
-    if not isinstance(x, six.integer_types + (np.integer,)):
-        warnings.warn('Value is non-integer, using int({:s}(x)) '
-                      'instead'.format(cast_name))
-
     return int(cast(x))
 
 
