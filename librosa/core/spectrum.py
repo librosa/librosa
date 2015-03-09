@@ -83,16 +83,15 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> D = librosa.stft(y)
     >>> D
-    array([[  2.515e-02 -0.000e+00j,   7.316e-02 -0.000e+00j, ...,
-              2.517e-04 -0.000e+00j,   1.452e-04 -0.000e+00j],
-           [  5.897e-02 +2.488e-17j,   4.895e-02 +1.744e-02j, ...,
-             -2.114e-04 +1.046e-04j,   9.238e-05 -1.012e-06j],
-           ...,
-           [ -4.351e-09 -2.131e-17j,   1.778e-08 +8.089e-09j, ...,
-              1.227e-10 +5.685e-11j,  -3.968e-11 -4.419e-13j],
-           [ -1.805e-08 -0.000e+00j,  -1.289e-08 -0.000e+00j, ...,
-             -1.181e-10 -0.000e+00j,  -6.003e-11 -0.000e+00j]],
-          dtype=complex64)
+    array([[  2.576e-03 -0.000e+00j,   4.327e-02 -0.000e+00j, ...,
+              3.189e-04 -0.000e+00j,  -5.961e-06 -0.000e+00j],
+           [  2.441e-03 +2.884e-19j,   5.145e-02 -5.076e-03j, ...,
+             -3.885e-04 -7.253e-05j,   7.334e-05 +3.868e-04j],
+           ..., 
+           [ -7.120e-06 -1.029e-19j,  -1.951e-09 -3.568e-06j, ...,
+             -4.912e-07 -1.487e-07j,   4.438e-06 -1.448e-05j],
+           [  7.136e-06 -0.000e+00j,   3.561e-06 -0.000e+00j, ...,
+             -5.144e-07 -0.000e+00j,  -1.514e-05 -0.000e+00j]], dtype=complex64)
 
     Use left-aligned frames, instead of centered frames
 
@@ -181,15 +180,6 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
 
     Converts a complex-valued spectrogram `stft_matrix` to time-series `y`.
 
-    Examples
-    --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> D = librosa.stft(y)
-    >>> y_hat = librosa.istft(D)
-    >>> y_hat
-    array([  1.121e-10,   1.093e-10, ...,   4.644e-14,   3.913e-14],
-          dtype=float32)
-
     Parameters
     ----------
     stft_matrix : np.ndarray [shape=(1 + n_fft/2, t)]
@@ -230,6 +220,15 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
     See Also
     --------
     stft : Short-time Fourier Transform
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> D = librosa.stft(y)
+    >>> y_hat = librosa.istft(D)
+    >>> y_hat
+    array([ -4.812e-06,  -4.267e-06, ...,   6.271e-06,   2.827e-07], dtype=float32)
+
     """
 
     n_fft = 2 * (stft_matrix.shape[0] - 1)
@@ -295,17 +294,6 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
         International Conference on Acoustics, Speech, and Signal Processing,
         ICASSP-95., Vol. 1. IEEE, 1995.
 
-    Examples
-    --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> frequencies, D = librosa.ifgram(y, sr=sr)
-    >>> frequencies
-    array([[  0.000e+00,   0.000e+00, ...,   0.000e+00,   0.000e+00],
-           [  2.613e+01,   3.606e+01, ...,   8.199e+00,   3.845e+01],
-           ...,
-           [  1.096e+04,   5.650e+03, ...,   1.101e+04,   1.101e+04],
-           [  1.102e+04,   1.102e+04, ...,   1.102e+04,   1.102e+04]])
-
     Parameters
     ----------
     y : np.ndarray [shape=(n,)]
@@ -360,6 +348,18 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     See Also
     --------
     stft : Short-time Fourier Transform
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> frequencies, D = librosa.ifgram(y, sr=sr)
+    >>> frequencies
+    array([[  0.000e+00,   0.000e+00, ...,   0.000e+00,   0.000e+00],
+           [  3.150e+01,   3.070e+01, ...,   1.077e+01,   1.077e+01],
+           ..., 
+           [  1.101e+04,   1.101e+04, ...,   1.101e+04,   1.101e+04],
+           [  1.102e+04,   1.102e+04, ...,   1.102e+04,   1.102e+04]])
+
     '''
 
     if win_length is None:
@@ -415,41 +415,12 @@ def magphase(D):
     """Separate a complex-valued spectrogram D into its magnitude (S)
     and phase (P) components, so that `D = S * P`.
 
-    Examples
-    --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> D = librosa.stft(y)
-    >>> magnitude, phase = librosa.magphase(D)
-    >>> magnitude
-    array([[  2.515e-02,   7.316e-02, ...,   2.517e-04,   1.452e-04],
-           [  5.897e-02,   5.196e-02, ...,   2.359e-04,   9.238e-05],
-           ...,
-           [  4.351e-09,   1.953e-08, ...,   1.352e-10,   3.969e-11],
-           [  1.805e-08,   1.289e-08, ...,   1.181e-10,   6.003e-11]],
-          dtype=float32)
-    >>> phase
-    array([[ 1.000 +0.000e+00j,  1.000 +0.000e+00j, ...,
-             1.000 +0.000e+00j,  1.000 +0.000e+00j],
-           [ 1.000 +4.220e-16j,  0.942 +3.356e-01j, ...,
-            -0.896 +4.435e-01j,  1.000 -1.096e-02j],
-           ...,
-           [-1.000 +8.742e-08j,  0.910 +4.141e-01j, ...,
-             0.907 +4.205e-01j, -1.000 -1.114e-02j],
-           [-1.000 +8.742e-08j, -1.000 +8.742e-08j, ...,
-            -1.000 +8.742e-08j, -1.000 +8.742e-08j]], dtype=complex64)
-    >>> # Or get the phase angle (in radians)
-    >>> np.angle(phase)
-    array([[  0.000e+00,   0.000e+00, ...,   0.000e+00,   0.000e+00],
-           [  4.220e-16,   3.422e-01, ...,   2.682e+00,  -1.096e-02],
-           ...,
-           [  3.142e+00,   4.270e-01, ...,   4.339e-01,  -3.130e+00],
-           [  3.142e+00,   3.142e+00, ...,   3.142e+00,   3.142e+00]],
-          dtype=float32)
 
     Parameters
     ----------
     D       : np.ndarray [shape=(d, t), dtype=complex]
         complex-valued spectrogram
+
 
     Returns
     -------
@@ -457,6 +428,40 @@ def magphase(D):
         magnitude of `D`
     D_phase : np.ndarray [shape=(d, t), dtype=complex]
         `exp(1.j * phi)` where `phi` is the phase of `D`
+
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> D = librosa.stft(y)
+    >>> magnitude, phase = librosa.magphase(D)
+    >>> magnitude
+    array([[  2.524e-03,   4.329e-02, ...,   3.217e-04,   3.520e-05],
+           [  2.645e-03,   5.152e-02, ...,   3.283e-04,   3.432e-04],
+           ..., 
+           [  1.966e-05,   9.828e-06, ...,   3.164e-07,   9.370e-06],
+           [  1.966e-05,   9.830e-06, ...,   3.161e-07,   9.366e-06]], dtype=float32)
+    >>> phase
+    array([[  1.000e+00 +0.000e+00j,   1.000e+00 +0.000e+00j, ...,
+             -1.000e+00 +8.742e-08j,  -1.000e+00 +8.742e-08j],
+           [  1.000e+00 +1.615e-16j,   9.950e-01 -1.001e-01j, ...,
+              9.794e-01 +2.017e-01j,   1.492e-02 -9.999e-01j],
+           ..., 
+           [  1.000e+00 -5.609e-15j,  -5.081e-04 +1.000e+00j, ...,
+             -9.549e-01 -2.970e-01j,   2.938e-01 -9.559e-01j],
+           [ -1.000e+00 +8.742e-08j,  -1.000e+00 +8.742e-08j, ...,
+             -1.000e+00 +8.742e-08j,  -1.000e+00 +8.742e-08j]], dtype=complex64)
+
+
+    Or get the phase angle (in radians)
+
+    >>> np.angle(phase)
+    array([[  0.000e+00,   0.000e+00, ...,   3.142e+00,   3.142e+00],
+           [  1.615e-16,  -1.003e-01, ...,   2.031e-01,  -1.556e+00],
+           ..., 
+           [ -5.609e-15,   1.571e+00, ...,  -2.840e+00,  -1.273e+00],
+           [  3.142e+00,   3.142e+00, ...,   3.142e+00,   3.142e+00]], dtype=float32)
+
     """
 
     mag = np.abs(D)
@@ -557,15 +562,16 @@ def phase_vocoder(D, rate, hop_length=None):
 def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     r"""Log-scale the amplitude of a spectrogram.
 
+
     Parameters
     ----------
     S : np.ndarray [shape=(d, t)]
         input spectrogram
 
     ref_power : scalar or function
-        - If scalar, `log(abs(S))` is compared to `log(ref_power)`.
-        - If a function, `log(abs(S))` is compared to
-            `log(ref_power(abs(S)))`.
+        If scalar, `log(abs(S))` is compared to `log(ref_power)`.
+
+        If a function, `log(abs(S))` is compared to `log(ref_power(abs(S)))`.
 
         This is primarily useful for comparing to the maximum value of `S`.
 
@@ -576,6 +582,7 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
         threshold log amplitude at top_db below the peak:
         `max(log(S)) - top_db`
 
+
     Returns
     -------
     log_S   : np.ndarray [shape=(d, t)]
@@ -585,6 +592,7 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     --------
     perceptual_weighting
 
+
     Examples
     --------
     Get a power spectrogram from a waveform `y`
@@ -592,29 +600,30 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> S = np.abs(librosa.stft(y)) ** 2
     >>> librosa.logamplitude(S)
-    array([[-31.988, -22.714, ..., -33.325, -33.325],
-           [-24.587, -25.686, ..., -33.325, -33.325],
-           ...,
-           [-33.325, -33.325, ..., -33.325, -33.325],
-           [-33.325, -33.325, ..., -33.325, -33.325]], dtype=float32)
+    array([[-33.293, -27.32 , ..., -33.293, -33.293],
+           [-33.293, -25.723, ..., -33.293, -33.293],
+           ..., 
+           [-33.293, -33.293, ..., -33.293, -33.293],
+           [-33.293, -33.293, ..., -33.293, -33.293]], dtype=float32)
+*********************************************************************
 
     Compute dB relative to peak power
 
     >>> librosa.logamplitude(S, ref_power=np.max)
-    array([[-78.663, -69.389, ..., -80.   , -80.   ],
-           [-71.262, -72.361, ..., -80.   , -80.   ],
-           ...,
+    array([[-80.   , -74.027, ..., -80.   , -80.   ],
+           [-80.   , -72.431, ..., -80.   , -80.   ],
+           ..., 
            [-80.   , -80.   , ..., -80.   , -80.   ],
            [-80.   , -80.   , ..., -80.   , -80.   ]], dtype=float32)
 
     Or compare to median power
 
     >>> librosa.logamplitude(S, ref_power=np.median)
-    array([[  3.279,  12.552, ...,   1.942,   1.942],
-           [ 10.68 ,   9.581, ...,   1.942,   1.942],
-           ...,
-           [  1.942,   1.942, ...,   1.942,   1.942],
-           [  1.942,   1.942, ...,   1.942,   1.942]], dtype=float32)
+    array([[-0.189,  5.784, ..., -0.189, -0.189],
+           [-0.189,  7.381, ..., -0.189, -0.189],
+           ..., 
+           [-0.189, -0.189, ..., -0.189, -0.189],
+           [-0.189, -0.189, ..., -0.189, -0.189]], dtype=float32)
 
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
@@ -629,6 +638,7 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Log-Power spectrogram: $\log |S|^2$')
     >>> plt.tight_layout()
+
     """
 
     if amin <= 0:
@@ -691,11 +701,11 @@ def perceptual_weighting(S, frequencies, **kwargs):
     ...                                               freqs,
     ...                                               ref_power=np.max)
     >>> perceptual_CQT
-    array([[-50.113, -49.887, ..., -86.524, -88.887],
-           [-48.525, -48.043, ..., -81.741, -81.102],
-    ...,
-           [-41.162, -44.677, ..., -61.139, -64.137],
-           [-40.303, -44.41 , ..., -59.63 , -65.519]])
+    array([[ -80.076,  -80.049, ..., -104.735, -104.735],
+           [ -78.344,  -78.555, ..., -103.725, -103.725],
+           ..., 
+           [ -76.272,  -76.272, ...,  -76.272,  -76.272],
+           [ -76.485,  -76.485, ...,  -76.485,  -76.485]])
 
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()

@@ -85,9 +85,9 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     ...                      duration=10.0)
     >>> onset_frames = librosa.onset.onset_detect(y=y, sr=sr)
     >>> librosa.frames_to_time(onset_frames[:20], sr=sr)
-    array([ 0.07 ,  0.279,  0.511,  0.859,  1.091,  1.207,  1.463,  1.672,
-            1.904,  2.159,  2.368,  2.601,  2.949,  3.065,  3.297,  3.529,
-            3.762,  3.994,  4.203,  4.69 ])
+    array([ 0.07 ,  0.279,  0.511,  0.859,  1.091,  1.207,  1.463,
+            1.672,  1.904,  2.159,  2.368,  2.601,  2.949,  3.065,
+            3.297,  3.529,  3.762,  3.994,  4.203,  4.69 ])
 
 
     Or use a pre-computed onset envelope

@@ -331,14 +331,12 @@ def timelag_filter(function, pad=True, index=0):
     Using `timelag_filter` is equivalent to the following sequence of
     operations:
 
-    >>> data_tl = librosa.segment.structure_feature(data)
-    >>> data_filtered_tl = function(data_tl, [additional arguments])
-    >>> data_filtered = librosa.segment.structure_feature(data_filtered_tl,
-    ...                                                   inverse=True)
+    >>> data_tl = librosa.segment.recurrence_to_lag(data)
+    >>> data_filtered_tl = function(data_tl)
+    >>> data_filtered = librosa.segment.lag_to_recurrence(data_filtered_tl)
 
     Parameters
     ----------
-
     function : callable
         The filtering function to wrap, e.g., `scipy.ndimage.median_filter`
 
@@ -450,6 +448,19 @@ def subsegment(data, frames, n_segments=4):
     >>> cqt = librosa.cqt(y, sr=sr, hop_length=512)
     >>> subseg = librosa.segment.subsegment(cqt, beats, n_segments=4)
     >>> subseg
+    array([  0,   1,   2,   3,   4,   8,  20,  21,  23,  24,  26,
+            34,  43,  51,  55,  57,  63,  69,  72,  76,  83,  90,
+            97, 100, 102, 106, 111, 117, 122, 129, 133, 137, 142,
+           146, 153, 159, 162, 167, 171, 179, 181, 185, 188, 195,
+           201, 210, 215, 217, 221, 226, 231, 236, 241, 252, 256,
+           259, 261, 268, 271, 275, 281, 290, 296, 299, 301, 304,
+           310, 315, 320, 326, 329, 335, 338, 340, 344, 346, 357,
+           368, 370, 374, 377, 385, 389, 392, 396, 399, 403, 412,
+           416, 418, 425, 430, 436, 443, 447, 451, 456, 461, 465,
+           470, 476, 480, 484, 489, 496, 498, 503, 510, 515, 527,
+           529, 533, 534, 535, 544, 549, 553, 558, 563, 569, 571,
+           577, 578, 584, 590, 598, 607, 608, 609, 612, 618, 623,
+           628, 634, 638, 643])
 
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
@@ -514,6 +525,12 @@ def agglomerative(data, k, clusterer=None):
     >>> mfcc = librosa.feature.mfcc(y=y, sr=sr)
     >>> boundary_frames = librosa.segment.agglomerative(mfcc, 32)
     >>> librosa.frames_to_time(boundary_frames, sr=sr)
+    array([  0.   ,   0.046,   0.464,   1.3  ,   1.625,   4.156,
+             4.319,   5.248,   7.384,   7.5  ,   7.848,   7.964,
+             8.243,   8.893,   9.149,   9.358,   9.706,   9.799,
+            10.077,  10.728,  11.099,  11.192,  11.54 ,  11.703,
+            11.912,  12.237,  12.562,  13.375,  13.514,  14.095,
+            14.234,  14.559])
 
     Plot the segmentation against the spectrogram
 

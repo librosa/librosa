@@ -13,29 +13,6 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
     This class acts as a bridge between feature extraction functions
     and scikit-learn pipelines.
 
-    Examples
-    --------
-    >>> import librosa
-    >>> import sklearn.pipeline
-    >>>
-    >>> # Build a mel-spectrogram extractor
-    >>> MS = librosa.util.FeatureExtractor(librosa.feature.melspectrogram,
-                                           sr=22050, n_fft=2048,
-                                           n_mels=128, fmax=8000)
-    >>>
-    >>> # And a log-amplitude extractor
-    >>> LA = librosa.util.FeatureExtractor(librosa.logamplitude,
-                                           ref_power=np.max)
-    >>>
-    >>> # Chain them into a pipeline
-    >>> Features = sklearn.pipeline.Pipeline([('MelSpectrogram', MS),
-                                              ('LogAmplitude', LA)])
-    >>>
-    >>> # Load an audio file
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>>
-    >>> # Apply the transformation to y
-    >>> F = Features.transform([y])
 
     Attributes
     ----------
@@ -61,6 +38,24 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
 
     kwargs : additional keyword arguments
         Parameters to be passed through to `function`
+
+    Examples
+    --------
+    >>> import sklearn.pipeline
+    >>> # Build a mel-spectrogram extractor
+    >>> MS = librosa.util.FeatureExtractor(librosa.feature.melspectrogram,
+    ...                                    sr=22050, n_fft=2048,
+    ...                                    n_mels=128, fmax=8000)
+    >>> # And a log-amplitude extractor
+    >>> LA = librosa.util.FeatureExtractor(librosa.logamplitude,
+    ...                                    ref_power=np.max)
+    >>> # Chain them into a pipeline
+    >>> Features = sklearn.pipeline.Pipeline([('MelSpectrogram', MS),
+    ...                                       ('LogAmplitude', LA)])
+    >>> # Load an audio file
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> # Apply the transformation to y
+    >>> F = Features.transform([y])
     """
 
     def __init__(self, function, target=None, iterate=True, **kwargs):

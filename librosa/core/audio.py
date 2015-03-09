@@ -82,7 +82,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
     >>> filename = librosa.util.example_audio_file()
     >>> y, sr = librosa.load(filename)
     >>> y
-    array([ 0.,  0.,  0., ...,  0.,  0.,  0.], dtype=float32)
+    array([ -4.756e-06,  -6.020e-06, ...,  -1.040e-06,   0.000e+00], dtype=float32)
     >>> sr
     22050
 
@@ -90,7 +90,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
     >>> filename = librosa.util.example_audio_file()
     >>> y, sr = librosa.load(filename, sr=11025)
     >>> y
-    array([ 0.,  0.,  0., ...,  0.,  0.,  0.], dtype=float32)
+    array([ -2.077e-06,  -2.928e-06, ...,  -4.395e-06,   0.000e+00], dtype=float32)
     >>> sr
     11025
 
@@ -98,8 +98,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
     >>> filename = librosa.util.example_audio_file()
     >>> y, sr = librosa.load(filename, offset=15.0, duration=5.0)
     >>> y
-    array([ 0.066,  0.101,  0.089, ..., -0.097, -0.109,  0.   ],
-          dtype=float32)
+    array([ 0.069,  0.1  , ..., -0.101,  0.   ], dtype=float32)
     >>> sr
     22050
 
@@ -171,15 +170,6 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
 def to_mono(y):
     '''Force an audio signal down to mono.
 
-    Examples
-    --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(), mono=False)
-    >>> y.shape
-    (2, 1354752)
-    >>> y_mono = librosa.to_mono(y)
-    >>> y_mono.shape
-    (1354752,)
-
     Parameters
     ----------
     y : np.ndarray [shape=(2,n) or shape=(n,)]
@@ -189,6 +179,16 @@ def to_mono(y):
     -------
     y_mono : np.ndarray [shape=(n,)]
         `y` as a monophonic time-series
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), mono=False)
+    >>> y.shape
+    (2, 1355168)
+    >>> y_mono = librosa.to_mono(y)
+    >>> y_mono.shape
+    (1355168,)
+
     '''
 
     # Validate the buffer.  Stereo is ok here.
@@ -253,7 +253,7 @@ def resample(y, orig_sr, target_sr, res_type='sinc_best', fix=True, **kwargs):
     >>> y, sr = librosa.load(librosa.util.example_audio_file(), sr=22050)
     >>> y_8k = librosa.resample(y, sr, 8000)
     >>> y.shape, y_8k.shape
-    ((1354752,), (491520,))
+    ((1355168,), (491671,))
 
     """
 
@@ -287,12 +287,12 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     Examples
     --------
     >>> # Load the example audio file
-    >>> y, sr = librosa.load(librosa.util.example_audio())
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> librosa.get_duration(y=y, sr=sr)
     61.44
 
     >>> # Or compute duration from an STFT matrix
-    >>> y, sr = librosa.load(librosa.util.example_audio())
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> S = librosa.stft(y)
     >>> librosa.get_duration(S=S, sr=sr)
     61.44
@@ -375,7 +375,7 @@ def autocorrelate(y, max_size=None):
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> librosa.autocorrelate(y)
-    array([  1.573e+04,   1.569e+04, ...,   1.090e-13,   1.090e-13])
+    array([  1.584e+04,   1.580e+04, ...,  -1.154e-10,  -2.725e-13])
 
 
     Compute onset strength auto-correlation up to 4 seconds
@@ -423,9 +423,9 @@ def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
     >>> # Compute zero-crossings
     >>> z = librosa.zero_crossings(y)
     >>> z
-    array([ True, False, False,  True, False,  True, False, False,  True,
-           False,  True, False,  True, False, False,  True, False,  True,
-           False,  True], dtype=bool)
+    array([ True, False, False,  True, False,  True, False, False,
+            True, False,  True, False,  True, False, False,  True,
+           False,  True, False,  True], dtype=bool)
     >>> # Stack y against the zero-crossing indicator
     >>> np.vstack([y, z]).T
     array([[  0.000e+00,   1.000e+00],
