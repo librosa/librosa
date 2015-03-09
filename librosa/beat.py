@@ -101,22 +101,23 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
     >>> tempo
-    130.01179245283018
+    129.19921875
 
 
     Print the first 20 beat frames
 
     >>> beats[:20]
-    array([  23,  177,  341,  501,  658,  815,  976, 1132, 1292, 1447,
-           1612, 1773, 1931, 2087, 2248, 2404, 2561, 2724, 2886, 3050])
+    array([ 461,  500,  540,  580,  619,  658,  698,  737,  777,
+            817,  857,  896,  936,  976, 1016, 1055, 1095, 1135,
+           1175, 1214])
 
 
     Or print them as timestamps
 
     >>> librosa.frames_to_time(beats[:20], sr=sr)
-    array([ 0.067,  0.514,  0.99 ,  1.454,  1.91 ,  2.366,  2.833,  3.286,
-            3.75 ,  4.2  ,  4.679,  5.146,  5.605,  6.058,  6.525,  6.978,
-            7.433,  7.906,  8.377,  8.853])
+    array([ 0.093,  0.534,  0.998,  1.463,  1.927,  2.368,  2.833,
+            3.297,  3.762,  4.203,  4.667,  5.132,  5.596,  6.06 ,
+            6.525,  6.989,  7.454,  7.918,  8.382,  8.847])
 
 
     Track beats using a pre-computed onset envelope
@@ -126,10 +127,11 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
     >>> tempo, beats = librosa.beat.beat_track(onset_envelope=onset_env,
     ...                                        sr=sr)
     >>> tempo
-    130.011792453
+    64.599609375
     >>> beats[:20]
-    array([  23,  177,  341,  501,  658,  815,  976, 1132, 1292, 1447,
-           1612, 1773, 1931, 2087, 2248, 2404, 2561, 2724, 2886, 3050])
+    array([ 461,  500,  540,  580,  619,  658,  698,  737,  777,
+            817,  857,  896,  936,  976, 1016, 1055, 1095, 1135,
+           1175, 1214])
 
 
     Plot the beat events against the onset strength envelope
@@ -229,12 +231,13 @@ def estimate_tempo(onset_envelope, sr=22050, hop_length=512, start_bpm=120,
     >>> onset_env = librosa.onset.onset_strength(y, sr=sr)
     >>> tempo = librosa.beat.estimate_tempo(onset_env, sr=sr)
     >>> tempo
-    130.011792453
+    129.19921875
 
     Plot the estimated tempo against the onset autocorrelation
 
     >>> import matplotlib.pyplot as plt
     >>> # Compute 2-second windowed autocorrelation
+    >>> hop_length = 512
     >>> ac = librosa.autocorrelate(onset_env, 2 * sr // hop_length)
     >>> # Convert tempo estimate from bpm to frames
     >>> tempo_frames = (60 * sr / hop_length) / tempo
@@ -244,7 +247,7 @@ def estimate_tempo(onset_envelope, sr=22050, hop_length=512, start_bpm=120,
     ...            color='r', alpha=0.75, linestyle='--',
     ...            label='Tempo: {:.2f} BPM'.format(tempo))
     >>> librosa.display.time_ticks(librosa.frames_to_time(np.arange(len(ac)),
-    ...                                                   sr=sr)
+    ...                                                   sr=sr))
     >>> plt.xlabel('Lag')
     >>> plt.legend()
     >>> plt.axis('tight')

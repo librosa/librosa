@@ -86,20 +86,20 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> cent = librosa.feature.spectral_centroid(y=y, sr=sr)
     >>> cent
-    array([[  545.929,   400.609, ...,  1621.184,  1591.604]])
+    array([[ 4382.894,   626.588, ...,  5037.07 ,  5413.398]])
 
     From spectrogram input:
 
     >>> S, phase = librosa.magphase(librosa.stft(y=y))
     >>> librosa.feature.spectral_centroid(S=S)
-    array([[  545.929,   400.609, ...,  1621.184,  1591.604]])
+    array([[ 4382.894,   626.588, ...,  5037.07 ,  5413.398]])
 
     Using variable bin center frequencies:
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> if_gram, D = librosa.ifgram(y)
     >>> librosa.feature.spectral_centroid(S=np.abs(D), freq=if_gram)
-    array([[  545.069,   400.764, ...,  1621.139,  1590.362]])
+    array([[ 4420.719,   625.769, ...,  5011.86 ,  5221.492]])
 
     Plot the result
 
@@ -193,19 +193,19 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> spec_bw = librosa.feature.spectral_bandwidth(y=y, sr=sr)
     >>> spec_bw
-    array([[ 1201.067,   920.588, ...,  2218.177,  2211.325]])
+    array([[ 3379.878,  1429.486, ...,  3235.214,  3080.148]])
 
     From spectrogram input
 
     >>> S, phase = librosa.magphase(librosa.stft(y=y))
     >>> librosa.feature.spectral_bandwidth(S=S)
-    array([[ 1201.067,   920.588, ...,  2218.177,  2211.325]])
+    array([[ 3379.878,  1429.486, ...,  3235.214,  3080.148]])
 
     Using variable bin center frequencies
 
     >>> if_gram, D = librosa.ifgram(y)
     >>> librosa.feature.spectral_bandwidth(S=np.abs(D), freq=if_gram)
-    array([[ 1202.514,   920.453, ...,  2218.172,  2213.157]])
+    array([[ 3380.011,  1429.11 , ...,  3235.22 ,  3080.148]])
 
     Plot the result
 
@@ -441,18 +441,18 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> rolloff = librosa.feature.spectral_rolloff(y=y, sr=sr)
     >>> rolloff
-    array([[  936.694,   635.229, ...,  3983.643,  3886.743]])
+    array([[ 8376.416,   968.994, ...,  8925.513,  9108.545]])
 
     From spectrogram input
 
     >>> S, phase = librosa.magphase(librosa.stft(y))
     >>> librosa.feature.spectral_rolloff(S=S, sr=sr)
-    array([[  936.694,   635.229, ...,  3983.643,  3886.743]])
+    array([[ 8376.416,   968.994, ...,  8925.513,  9108.545]])
 
     >>> # With a higher roll percentage:
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> librosa.feature.spectral_rolloff(y=y, sr=sr, roll_percent=0.95)
-    array([[ 2637.817,  1496.558, ...,  6955.225,  6933.691]])
+    array([[ 10012.939,   3003.882, ...,  10034.473,  10077.539]])
 
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
@@ -529,8 +529,7 @@ def rmse(y=None, S=None, n_fft=2048, hop_length=512):
     --------
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> librosa.feature.rmse(y=y)
-    array([[  1.204e-01,   6.263e-01, ...,   1.413e-04,   2.191e-05]],
-          dtype=float32)
+    array([[ 0.   ,  0.056, ...,  0.   ,  0.   ]], dtype=float32)
 
     Or from spectrogram input
 
@@ -604,16 +603,16 @@ def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     >>> line = librosa.feature.poly_features(S=S, sr=sr)
     >>> line
-    array([[ -9.454e-06,  -4.322e-05, ...,  -1.640e-08,  -2.626e-09],
-           [  7.144e-02,   3.241e-01, ...,   1.332e-04,   2.127e-05]])
+    array([[ -2.406e-08,  -5.051e-06, ...,  -1.103e-08,  -5.651e-09],
+           [  3.445e-04,   3.834e-02, ...,   2.661e-04,   2.239e-04]])
 
     Quadratic features
 
     >>> quad = librosa.feature.poly_features(S=S, order=2)
     >>> quad
-    array([[  3.742e-09,   1.753e-08, ...,   5.145e-12,   8.343e-13],
-           [ -5.071e-05,  -2.364e-04, ...,  -7.312e-08,  -1.182e-08],
-           [  1.472e-01,   6.788e-01, ...,   2.373e-04,   3.816e-05]])
+    array([[  6.276e-12,   2.010e-09, ...,   1.493e-12,   1.000e-13],
+           [ -9.325e-08,  -2.721e-05, ...,  -2.749e-08,  -6.754e-09],
+           [  4.715e-04,   7.902e-02, ...,   2.963e-04,   2.259e-04]])
 
     Plot the results for comparison
 
@@ -658,12 +657,6 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True,
                        **kwargs):
     '''Compute the zero-crossing rate of an audio time series.
 
-    Examples
-    --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> librosa.feature.zero_crossing_rate(y)
-    array([[ 0.072,  0.074, ...,  0.091,  0.038]])
-
     Parameters
     ----------
     y : np.ndarray [shape=(n,)]
@@ -697,6 +690,13 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True,
     --------
     librosa.core.zero_crossings
         Compute zero-crossings in a time-series
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> librosa.feature.zero_crossing_rate(y)
+    array([[ 0.134,  0.139, ...,  0.387,  0.322]])
+
     '''
 
     util.valid_audio(y)
@@ -767,22 +767,22 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
     --------
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> librosa.feature.chroma_stft(y=y, sr=sr)
-    array([[ 0.548,  0.293, ...,  0.698,  0.677],
-           [ 0.984,  0.369, ...,  0.945,  0.48 ],
-    ...,
-           [ 0.424,  0.466, ...,  0.747,  0.616],
-           [ 0.568,  0.33 , ...,  0.652,  0.565]])
+    array([[ 0.974,  0.881, ...,  0.925,  1.   ],
+           [ 1.   ,  0.841, ...,  0.882,  0.878],
+           ..., 
+           [ 0.658,  0.985, ...,  0.878,  0.764],
+           [ 0.969,  0.92 , ...,  0.974,  0.915]])
 
     Use a pre-computed spectrogram with a larger frame
 
     >>> S = np.abs(librosa.stft(y, n_fft=4096))
     >>> chroma = librosa.feature.chroma_stft(S=S, sr=sr)
     >>> chroma
-    array([[ 0.591,  0.336, ...,  0.821,  0.831],
-           [ 0.677,  0.46 , ...,  0.961,  0.963],
-    ...,
-           [ 0.499,  0.276, ...,  0.914,  0.881],
-           [ 0.593,  0.388, ...,  0.819,  0.764]])
+    array([[ 0.685,  0.477, ...,  0.961,  0.986],
+           [ 0.674,  0.452, ...,  0.952,  0.926],
+           ..., 
+           [ 0.844,  0.575, ...,  0.934,  0.869],
+           [ 0.793,  0.663, ...,  0.964,  0.972]])
 
     >>> import matplotlib.pyplot as plt
     >>> librosa.display.specshow(chroma, y_axis='chroma', x_axis='time')
@@ -959,22 +959,22 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> librosa.feature.mfcc(y=y, sr=sr)
-    array([[ -4.722e+02,  -4.107e+02, ...,  -5.234e+02,  -5.234e+02],
-           [  6.304e+01,   1.260e+02, ...,   2.753e-14,   2.753e-14],
-    ...,
-           [ -6.652e+00,  -7.556e+00, ...,   1.865e-14,   1.865e-14],
-           [ -3.458e+00,  -4.677e+00, ...,   3.020e-14,   3.020e-14]])
+    array([[ -5.229e+02,  -4.944e+02, ...,  -5.229e+02,  -5.229e+02],
+           [  7.105e-15,   3.787e+01, ...,  -7.105e-15,  -7.105e-15],
+           ..., 
+           [  1.066e-14,  -7.500e+00, ...,   1.421e-14,   1.421e-14],
+           [  3.109e-14,  -5.058e+00, ...,   2.931e-14,   2.931e-14]])
 
     Use a pre-computed log-power Mel spectrogram
 
     >>> S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128,
     ...                                    fmax=8000)
     >>> librosa.feature.mfcc(S=librosa.logamplitude(S))
-    array([[ -4.659e+02,  -3.988e+02, ...,  -5.212e+02,  -5.212e+02],
-           [  6.631e+01,   1.305e+02, ...,  -2.842e-14,  -2.842e-14],
-    ...,
-           [ -1.608e+00,  -3.963e+00, ...,   1.421e-14,   1.421e-14],
-           [ -1.480e+00,  -4.348e+00, ...,   2.487e-14,   2.487e-14]])
+    array([[ -5.207e+02,  -4.898e+02, ...,  -5.207e+02,  -5.207e+02],
+           [ -2.576e-14,   4.054e+01, ...,  -3.997e-14,  -3.997e-14],
+           ..., 
+           [  7.105e-15,  -3.534e+00, ...,   0.000e+00,   0.000e+00],
+           [  3.020e-14,  -2.613e+00, ...,   3.553e-14,   3.553e-14]])
 
     Get more components
 
@@ -1042,11 +1042,11 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     --------
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> librosa.feature.melspectrogram(y=y, sr=sr)
-    array([[  1.223e-02,   2.988e-02, ...,   1.354e-08,   1.497e-09],
-           [  4.341e-02,   2.063e+00, ...,   9.532e-08,   2.233e-09],
-    ...,
-           [  2.473e-11,   1.167e-10, ...,   1.130e-15,   3.280e-17],
-           [  1.477e-13,   6.739e-13, ...,   4.292e-17,   1.718e-18]])
+    array([[  2.891e-07,   2.548e-03, ...,   8.116e-09,   5.633e-09],
+           [  1.986e-07,   1.162e-02, ...,   9.332e-08,   6.716e-09],
+           ..., 
+           [  3.668e-09,   2.029e-08, ...,   3.208e-09,   2.864e-09],
+           [  2.561e-10,   2.096e-09, ...,   7.543e-10,   6.101e-10]])
 
     Using a pre-computed power spectrogram
 
@@ -1130,11 +1130,11 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096,
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> L = librosa.feature.logfsgram(y=y, sr=sr)
     >>> L
-    array([[  9.255e-01,   1.649e+00, ...,   9.232e-07,   8.588e-07],
-           [  1.152e-22,   2.052e-22, ...,   1.149e-28,   1.069e-28],
-    ...,
-           [  1.919e-04,   2.465e-04, ...,   1.740e-08,   1.128e-08],
-           [  4.007e-04,   4.216e-04, ...,   4.577e-09,   1.997e-09]])
+    array([[  1.309e-02,   1.228e+00, ...,   3.785e-08,   7.624e-09],
+           [  1.630e-24,   1.528e-22, ...,   4.710e-30,   9.488e-31],
+           ..., 
+           [  2.617e-05,   3.807e-04, ...,   6.387e-08,   6.000e-08],
+           [  3.214e-05,   3.814e-04, ...,   7.599e-08,   6.046e-08]])
 
     Plot the pseudo CQT
 
@@ -1213,24 +1213,18 @@ def tonnetz(y=None, sr=22050, chroma=None):
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> tonnetz = librosa.feature.tonnetz(y=y, sr=sr)
     >>> tonnetz
-    array([[ -2.41826496e-01,  -1.72715121e-01,  -6.18609328e-03, ...,
-          5.22433714e-04,  -2.61260595e-01,  -3.62402699e-01],
-       [  3.98255741e-03,   4.74434416e-03,   7.34245455e-03, ...,
-         -1.00000000e+00,  -7.99157252e-01,  -6.34483417e-01],
-       [  1.72874642e-01,   9.66901418e-02,   5.17672209e-02, ...,
-          2.18360773e-01,   2.96231394e-01,   2.33202103e-01],
-       [  1.00000000e+00,   1.00000000e+00,   1.00000000e+00, ...,
-          8.96818213e-01,   1.00000000e+00,   1.00000000e+00],
-       [  1.28118552e-01,   1.11446405e-01,   1.26253266e-01, ...,
-          6.27590321e-01,   4.46819136e-01,   3.91844494e-01],
-       [  1.61835534e-02,   5.17420588e-03,   6.45898537e-03, ...,
-         -1.55136167e-01,   7.00443917e-02,   1.31018665e-01]])
+    array([[-0.073, -0.053, ..., -0.054, -0.073],
+           [ 0.001,  0.001, ..., -0.054, -0.062],
+           ..., 
+           [ 0.039,  0.034, ...,  0.044,  0.064],
+           [ 0.005,  0.002, ...,  0.011,  0.017]])
 
     >>> import matplotlib.pyplot as plt
     >>> librosa.display.specshow(tonnetz, y_axis='tonnetz', x_axis='time')
     >>> plt.colorbar()
     >>> plt.title('Tonal Centroids (Tonnetz)')
     >>> plt.tight_layout()
+
     '''
 
     if y is None and chroma is None:

@@ -70,12 +70,13 @@ def samples_to_frames(samples, hop_length=512, n_fft=None):
     --------
     >>> # Get the frame numbers for every 256 samples
     >>> librosa.samples_to_frames(np.arange(0, 22050, 256))
-    array([ 0,  0,  1,  1,  2,  2,  3,  3,  4,  4,  5,  5,  6,  6,  7,  7,
-            8,  8,  9,  9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15,
-           16, 16, 17, 17, 18, 18, 19, 19, 20, 20, 21, 21, 22, 22, 23, 23,
-           24, 24, 25, 25, 26, 26, 27, 27, 28, 28, 29, 29, 30, 30, 31, 31,
-           32, 32, 33, 33, 34, 34, 35, 35, 36, 36, 37, 37, 38, 38, 39, 39,
-           40, 40, 41, 41, 42, 42, 43])
+    array([ 0,  0,  1,  1,  2,  2,  3,  3,  4,  4,  5,  5,  6,  6,
+            7,  7,  8,  8,  9,  9, 10, 10, 11, 11, 12, 12, 13, 13,
+           14, 14, 15, 15, 16, 16, 17, 17, 18, 18, 19, 19, 20, 20,
+           21, 21, 22, 22, 23, 23, 24, 24, 25, 25, 26, 26, 27, 27,
+           28, 28, 29, 29, 30, 30, 31, 31, 32, 32, 33, 33, 34, 34,
+           35, 35, 36, 36, 37, 37, 38, 38, 39, 39, 40, 40, 41, 41,
+           42, 42, 43])
 
     Parameters
     ----------
@@ -159,13 +160,6 @@ def frames_to_time(frames, sr=22050, hop_length=512, n_fft=None):
 def time_to_frames(times, sr=22050, hop_length=512, n_fft=None):
     """Converts time stamps into STFT frames.
 
-    Examples
-    --------
-    >>> # Get the frame numbers for every 100ms
-    >>> librosa.time_to_frames(np.arange(0, 1, 0.1),
-                                sr=22050, hop_length=512)
-    array([ 0,  4,  8, 12, 17, 21, 25, 30, 34, 38])
-
     Parameters
     ----------
     times : np.ndarray [shape=(n,)]
@@ -194,6 +188,15 @@ def time_to_frames(times, sr=22050, hop_length=512, n_fft=None):
     --------
     frames_to_time : convert frame indices to time values
     time_to_samples : convert time values to sample indices
+
+    Examples
+    --------
+    Get the frame numbers for every 100ms
+
+    >>> librosa.time_to_frames(np.arange(0, 1, 0.1),
+    ...                         sr=22050, hop_length=512)
+    array([ 0,  4,  8, 12, 17, 21, 25, 30, 34, 38])
+
     """
 
     samples = time_to_samples(times, sr=sr)
@@ -203,12 +206,6 @@ def time_to_frames(times, sr=22050, hop_length=512, n_fft=None):
 
 def time_to_samples(times, sr=22050):
     '''Convert timestamps (in seconds) to sample indices.
-
-    Examples
-    --------
-    >>> librosa.time_to_samples(np.arange(0, 1, 0.1), sr=22050)
-    array([    0,  2205,  4410,  6615,  8820, 11025, 13230, 15435, 17640,
-           19845])
 
     Parameters
     ----------
@@ -227,6 +224,13 @@ def time_to_samples(times, sr=22050):
     --------
     time_to_frames : convert time values to frame indices
     samples_to_time : convert sample indices to time values
+
+    Examples
+    --------
+    >>> librosa.time_to_samples(np.arange(0, 1, 0.1), sr=22050)
+    array([    0,  2205,  4410,  6615,  8820, 11025, 13230, 15435,
+           17640, 19845])
+
     '''
 
     return (np.atleast_1d(times) * sr).astype(int)
@@ -234,17 +238,6 @@ def time_to_samples(times, sr=22050):
 
 def samples_to_time(samples, sr=22050):
     '''Convert sample indices to time (in seconds).
-
-    Examples
-    --------
-    >>> # Get timestamps corresponding to every 512 samples
-    >>> librosa.samples_to_time(np.arange(0, 22050, 512))
-    array([ 0.   ,  0.023,  0.046,  0.07 ,  0.093,  0.116,  0.139,  0.163,
-            0.186,  0.209,  0.232,  0.255,  0.279,  0.302,  0.325,  0.348,
-            0.372,  0.395,  0.418,  0.441,  0.464,  0.488,  0.511,  0.534,
-            0.557,  0.58 ,  0.604,  0.627,  0.65 ,  0.673,  0.697,  0.72 ,
-            0.743,  0.766,  0.789,  0.813,  0.836,  0.859,  0.882,  0.906,
-            0.929,  0.952,  0.975,  0.998])
 
     Parameters
     ----------
@@ -263,6 +256,20 @@ def samples_to_time(samples, sr=22050):
     --------
     samples_to_frames : convert sample indices to frame indices
     time_to_samples : convert time values to sample indices
+
+    Examples
+    --------
+    Get timestamps corresponding to every 512 samples
+
+    >>> librosa.samples_to_time(np.arange(0, 22050, 512))
+    array([ 0.   ,  0.023,  0.046,  0.07 ,  0.093,  0.116,  0.139,
+            0.163,  0.186,  0.209,  0.232,  0.255,  0.279,  0.302,
+            0.325,  0.348,  0.372,  0.395,  0.418,  0.441,  0.464,
+            0.488,  0.511,  0.534,  0.557,  0.58 ,  0.604,  0.627,
+            0.65 ,  0.673,  0.697,  0.72 ,  0.743,  0.766,  0.789,
+            0.813,  0.836,  0.859,  0.882,  0.906,  0.929,  0.952,
+            0.975,  0.998])
+**********************************************************************
     '''
 
     return np.atleast_1d(samples) / float(sr)
@@ -413,8 +420,7 @@ def midi_to_note(midi, octave=True, cents=False):
     >>> librosa.midi_to_note(104.7, cents=True)
     'A8-30'
     >>> librosa.midi_to_note(range(12))
-    ['C0', 'C#0', 'D0', 'D#0', 'E0', 'F0',
-     'F#0', 'G0', 'G#0', 'A0', 'A#0', 'B0']
+    ['C0', 'C#0', 'D0', 'D#0', 'E0', 'F0', 'F#0', 'G0', 'G#0', 'A0', 'A#0', 'B0']
 
     Parameters
     ----------
@@ -477,8 +483,9 @@ def midi_to_hz(notes):
     array([ 65.406])
 
     >>> librosa.midi_to_hz(np.arange(36, 48))
-    array([  65.406,   69.296,   73.416,   77.782,   82.407,   87.307,
-             92.499,   97.999,  103.826,  110.   ,  116.541,  123.471])
+    array([  65.406,   69.296,   73.416,   77.782,   82.407,
+             87.307,   92.499,   97.999,  103.826,  110.   ,
+            116.541,  123.471])
 
     Parameters
     ----------
@@ -532,19 +539,6 @@ def hz_to_midi(frequencies):
 def hz_to_note(frequencies, **kwargs):
     '''Convert one or more frequencies (in Hz) to the nearest note names.
 
-    Examples
-    --------
-    >>> # Get a single note name for a frequency
-    >>> librosa.hz_to_note(440.0)
-    ['A5']
-    >>> # Get multiple notes with cent deviation
-    >>> librosa.hz_to_note([32, 64], cents=True)
-    ['C2-38', 'C3-38']
-    >>> # Get multiple notes, but suppress octave labels
-    >>> librosa.hz_to_note(440.0 * (2.0 ** np.linspace(0, 1, 12)),
-                           octave=False)
-    ['A', 'A#', 'B', 'C', 'C#', 'D', 'E', 'F', 'F#', 'G', 'G#', 'A']
-
     Parameters
     ----------
     frequencies : float or iterable of float
@@ -553,17 +547,39 @@ def hz_to_note(frequencies, **kwargs):
     kwargs : additional keyword arguments
         Arguments passed through to `midi_to_note`
 
+
     Returns
     -------
     notes : list of str
         `notes[i]` is the closest note name to `frequency[i]`
         (or `frequency` if the input is scalar)
 
+
     See Also
     --------
     hz_to_midi
     midi_to_note
     note_to_hz
+
+
+    Examples
+    --------
+    Get a single note name for a frequency
+
+    >>> librosa.hz_to_note(440.0)
+    ['A5']
+
+    Get multiple notes with cent deviation
+
+    >>> librosa.hz_to_note([32, 64], cents=True)
+    ['C2-38', 'C3-38']
+
+    Get multiple notes, but suppress octave labels
+
+    >>> librosa.hz_to_note(440.0 * (2.0 ** np.linspace(0, 1, 12)),
+    ...                    octave=False)
+    ['A', 'A#', 'B', 'C', 'C#', 'D', 'E', 'F', 'F#', 'G', 'G#', 'A']
+
     '''
     return midi_to_note(hz_to_midi(frequencies), **kwargs)
 
@@ -574,7 +590,7 @@ def hz_to_mel(frequencies, htk=False):
     Examples
     --------
     >>> librosa.hz_to_mel(60)
-    array([0.9])
+    array([ 0.9])
     >>> librosa.hz_to_mel([110, 220, 440])
     array([ 1.65,  3.3 ,  6.6 ])
 
@@ -730,12 +746,6 @@ def octs_to_hz(octs, A440=440.0):
 def fft_frequencies(sr=22050, n_fft=2048):
     '''Alternative implementation of `np.fft.fftfreqs`
 
-    Examples
-    --------
-    >>> librosa.fft_frequencies(sr=22050, n_fft=16)
-    array([     0.   ,   1378.125,   2756.25 ,   4134.375,   5512.5  ,
-             6890.625,   8268.75 ,   9646.875,  11025.   ])
-
     Parameters
     ----------
     sr : int > 0 [scalar]
@@ -744,10 +754,19 @@ def fft_frequencies(sr=22050, n_fft=2048):
     n_fft : int > 0 [scalar]
         FFT window size
 
+
     Returns
     -------
     freqs : np.ndarray [shape=(1 + n_fft/2,)]
         Frequencies `(0, sr/n_fft, 2*sr/n_fft, ..., sr/2)`
+
+
+    Examples
+    --------
+    >>> librosa.fft_frequencies(sr=22050, n_fft=16)
+    array([     0.   ,   1378.125,   2756.25 ,   4134.375,
+             5512.5  ,   6890.625,   8268.75 ,   9646.875,  11025.   ])
+
     '''
 
     return np.linspace(0,
@@ -763,10 +782,11 @@ def cqt_frequencies(n_bins, fmin, bins_per_octave=12, tuning=0.0):
     --------
     >>> # Get the CQT frequencies for 24 notes, starting at C2
     >>> librosa.cqt_frequencies(24, fmin=librosa.note_to_hz('C2'))
-    array([  32.703,   34.648,   36.708,   38.891,   41.203,   43.654,
-             46.249,   48.999,   51.913,   55.   ,   58.27 ,   61.735,
-             65.406,   69.296,   73.416,   77.782,   82.407,   87.307,
-             92.499,   97.999,  103.826,  110.   ,  116.541,  123.471])
+    array([  32.703,   34.648,   36.708,   38.891,   41.203,
+             43.654,   46.249,   48.999,   51.913,   55.   ,
+             58.27 ,   61.735,   65.406,   69.296,   73.416,
+             77.782,   82.407,   87.307,   92.499,   97.999,
+            103.826,  110.   ,  116.541,  123.471])
 
     Parameters
     ----------
@@ -819,14 +839,16 @@ def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False):
     Examples
     --------
     >>> librosa.mel_frequencies(n_mels=40)
-    array([    0.   ,    81.155,   162.311,   243.466,   324.622,
-             405.777,   486.933,   568.088,   649.244,   730.399,
-             811.554,   892.71 ,   973.865,  1058.382,  1150.775,
-            1251.232,  1360.46 ,  1479.222,  1608.352,  1748.754,
-            1901.413,  2067.399,  2247.874,  2444.104,  2657.464,
-            2889.45 ,  3141.687,  3415.943,  3714.14 ,  4038.369,
-            4390.902,  4774.209,  5190.978,  5644.128,  6136.837,
-            6672.557,  7255.043,  7888.378,  8577.001,  9325.737])
+    array([     0.   ,     85.317,    170.635,    255.952,
+              341.269,    426.586,    511.904,    597.221,
+              682.538,    767.855,    853.173,    938.49 ,
+             1024.856,   1119.114,   1222.042,   1334.436,
+             1457.167,   1591.187,   1737.532,   1897.337,
+             2071.84 ,   2262.393,   2470.47 ,   2697.686,
+             2945.799,   3216.731,   3512.582,   3835.643,
+             4188.417,   4573.636,   4994.285,   5453.621,
+             5955.205,   6502.92 ,   7101.009,   7754.107,
+             8467.272,   9246.028,  10096.408,  11025.   ])
 
     """
 

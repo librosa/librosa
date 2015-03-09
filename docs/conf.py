@@ -30,6 +30,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.autosummary',
               'sphinx.ext.viewcode',
               'sphinx.ext.intersphinx',
+              'sphinx.ext.doctest',
               'numpydoc']
 
 
@@ -57,6 +58,18 @@ else:
 numpydoc_use_plots = True
 
 
+#--------
+# Doctest
+#--------
+
+doctest_global_setup = """
+import numpy as np
+import scipy
+import librosa
+np.random.seed(123)
+np.set_printoptions(precision=3, linewidth=64, edgeitems=2, threshold=200)
+"""
+
 #------------------------------------------------------------------------------
 # Plot
 #------------------------------------------------------------------------------
@@ -66,6 +79,7 @@ seaborn.set(style='dark')
 import numpy as np
 import librosa
 np.random.seed(123)
+np.set_printoptions(precision=3, linewidth=64, edgeitems=2, threshold=200)
 """
 plot_include_source = True
 plot_formats = [('png', 96), 'pdf']
