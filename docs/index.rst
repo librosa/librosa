@@ -6,6 +6,7 @@ LibROSA documentation
 
    install
    tutorial
+   changelog
 
 Module documentation
 --------------------
