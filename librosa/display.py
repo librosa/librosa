@@ -235,25 +235,26 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
 
         Valid types are:
 
-            - None or 'off' : no axis is displayed.
+        - None or 'off' : no axis is displayed.
 
         Frequency types:
 
-            - 'linear' : frequency range is determined by the FFT window
-                and sampling rate.
-            - 'log' : the image is displayed on a vertical log scale.
-            - 'mel' : frequencies are determined by the mel scale.
-            - 'cqt_hz' : frequencies are determined by the CQT scale.
-            - 'cqt_note' : pitches are determined by the CQT scale.
-            - 'chroma' : pitches are determined by the chroma filters.
-            - 'tonnetz' : axes are labeled by Tonnetz dimensions
+        - 'linear' : frequency range is determined by the FFT window
+          and sampling rate.
+        - 'log' : the image is displayed on a vertical log scale.
+        - 'mel' : frequencies are determined by the mel scale.
+        - 'cqt_hz' : frequencies are determined by the CQT scale.
+        - 'cqt_note' : pitches are determined by the CQT scale.
+        - 'chroma' : pitches are determined by the chroma filters.
+        - 'tonnetz' : axes are labeled by Tonnetz dimensions
 
         Time types:
-            - 'time' : markers are shown as milliseconds, seconds,
-                minutes, or hours
-            - 'lag' : like time, but past the half-way point counts
-                as negative values.
-            - 'frames' : markers are shown as frame counts.
+
+        - 'time' : markers are shown as milliseconds, seconds,
+          minutes, or hours
+        - 'lag' : like time, but past the half-way point counts
+          as negative values.
+        - 'frames' : markers are shown as frame counts.
 
     n_xticks : int > 0 [scalar]
         If x_axis is drawn, the number of ticks to show
