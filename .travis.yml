@@ -18,7 +18,7 @@ before_install:
     - bash miniconda.sh -b -p $HOME/miniconda
     - export PATH="$HOME/miniconda/bin:$PATH"
     - hash -r
-    - sudo apt-get install libsamplerate0 libsamplerate0-dev ffmpeg
+    - sudo apt-get install ffmpeg
     - pip install python-coveralls
     - conda config --set always_yes yes --set changeps1 no
     - conda update -q conda
@@ -27,12 +27,16 @@ before_install:
     - conda info -a
     - deps='pip numpy scipy pandas requests nose coverage numpydoc matplotlib sphinx scikit-learn seaborn'
     - conda create -q -n test-environment "python=$TRAVIS_PYTHON_VERSION" $deps 
-    # The line below ought to work, but doesn't.
-    # - conda install -n test-environment -c https://conda.binstar.org/pypi/channel/main scikits.samplerate
     - source activate test-environment
+    - apt-get source libsamplerate
+    - pushd libsamplerate-*
+    - ./configure --prefix=$HOME/miniconda/envs/test-environment
+    - make && make install
+    - popd
 
 install:
     # install your own package into the environment
+    - pip install git+https://github.com/bmcfee/samplerate.git
     # pip install -e rather than setup.py, so that coverage can find the source
     - pip install -e ./
 
