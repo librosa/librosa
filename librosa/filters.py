@@ -30,6 +30,7 @@ Deprecated
 
 import numpy as np
 import scipy
+import scipy.signal
 import warnings
 
 from . import cache
@@ -676,7 +677,7 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
 
 @cache
 def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
-                 fmin=None, base_c=True):
+                 fmin=None, window=None, base_c=True):
     '''Convert a Constant-Q basis to Chroma.
 
 
@@ -694,6 +695,10 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
     fmin : None or float > 0
         Center frequency of the first constant-Q channel.
         Default: 'C2' ~= 32.7 Hz
+
+    window : None or np.ndarray
+        If provided, the cq_to_chroma filter bank will be
+        convolved with `window`.
 
     base_c : bool
         If True, the first chroma bin will start at 'C'
@@ -754,7 +759,7 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
     cq_to_ch = np.repeat(np.eye(n_chroma), n_merge, axis=1)
 
     # Roll it left to center on the target bin
-    cq_to_ch = np.roll(cq_to_ch, - int(n_merge //2), axis=1)
+    cq_to_ch = np.roll(cq_to_ch, - int(n_merge // 2), axis=1)
 
     # How many octaves are we repeating?
     n_octaves = np.ceil(np.float(n_input) / bins_per_octave)
@@ -778,9 +783,14 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
     roll = int(np.round(roll * (n_chroma / 12.)))
 
     # Apply the roll
-    cq_to_ch = np.roll(cq_to_ch, roll, axis=0)
+    cq_to_ch = np.roll(cq_to_ch, roll, axis=0).astype(float)
 
-    return cq_to_ch.astype(np.float)
+    if window is not None:
+        cq_to_ch = scipy.signal.convolve(cq_to_ch,
+                                         np.atleast_2d(window),
+                                         mode='same')
+
+    return cq_to_ch
 
 
 def window_bandwidth(window, default=1.0):

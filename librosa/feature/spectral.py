@@ -815,8 +815,8 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
 
 @cache
 def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
-               norm=np.inf, tuning=None, n_chroma=12, n_octaves=7,
-               bins_per_octave=None, mode='full'):
+               norm=np.inf, threshold=0.0, tuning=None, n_chroma=12,
+               n_octaves=7, window=None, bins_per_octave=None, mode='full'):
     r'''Constant-Q chromagram
 
     Parameters
@@ -840,6 +840,9 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
     norm : int > 0, +-np.inf, or None
         Column-wise normalization of the chromagram.
 
+    threshold : float
+        Minimum allowed chroma value (before normalization)
+
     tuning : float
         Deviation (in cents) from A440 tuning
 
@@ -848,6 +851,9 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
 
     n_octaves : int > 0
         Number of octaves to analyze above `fmin`
+
+    window : None or np.ndarray
+        Optional window parameter to `filters.cq_to_chroma`
 
     bins_per_octave : int > 0
         Number of bins per octave in the CQT.
@@ -911,8 +917,12 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
     cq_to_chr = filters.cq_to_chroma(C.shape[0],
                                      bins_per_octave=bins_per_octave,
                                      n_chroma=n_chroma,
-                                     fmin=fmin)
+                                     fmin=fmin,
+                                     window=window)
     chroma = cq_to_chr.dot(C)
+
+    if threshold is not None:
+        chroma = np.maximum(threshold, chroma)
 
     # Normalize
     if norm is not None:
