@@ -262,7 +262,7 @@ def binstr(m):
 
 def test_cq_to_chroma():
 
-    def __test(n_bins, bins_per_octave, n_chroma, fmin, base_c):
+    def __test(n_bins, bins_per_octave, n_chroma, fmin, base_c, window):
         # Fake up a cqt matrix with the corresponding midi notes
 
         if fmin is None:
@@ -271,7 +271,7 @@ def test_cq_to_chroma():
             midi_base = librosa.hz_to_midi(fmin)
 
         midi_notes = np.linspace(midi_base,
-                                 midi_base + float(n_bins) * 12.0 / bins_per_octave,
+                                 midi_base + n_bins * 12.0 / bins_per_octave,
                                  endpoint=False,
                                  num=n_bins)
         #  We don't care past 2 decimals here.
@@ -283,7 +283,8 @@ def test_cq_to_chroma():
                                               bins_per_octave=bins_per_octave,
                                               n_chroma=n_chroma,
                                               fmin=fmin,
-                                              base_c=base_c)
+                                              base_c=base_c,
+                                              window=window)
 
         chroma = cq2chr.dot(C)
         for i in range(n_chroma):
@@ -296,19 +297,20 @@ def test_cq_to_chroma():
                 resid = np.mod(v - 9, 12)
 
             resid = np.round(resid * n_chroma / 12.0)
-            assert np.allclose(np.mod(i - resid, 12), 0.0)
+            assert np.allclose(np.mod(i - resid, 12), 0.0), i-resid
 
     for n_octaves in [2, 3, 4]:
         for semitones in [1, 3]:
             for n_chroma in 12 * np.arange(1, 1 + semitones):
                 for fmin in [None] + list(librosa.midi_to_hz(range(48, 61))):
                     for base_c in [False, True]:
-                        bins_per_octave = 12 * semitones
-                        n_bins = n_octaves * bins_per_octave
+                        for window in [None, [1]]:
+                            bins_per_octave = 12 * semitones
+                            n_bins = n_octaves * bins_per_octave
 
-                        if np.mod(bins_per_octave, n_chroma) != 0:
-                            tf = raises(ValueError)(__test)
-                        else:
-                            tf = __test
-                        yield (tf, n_bins, bins_per_octave,
-                               n_chroma, fmin, base_c)
+                            if np.mod(bins_per_octave, n_chroma) != 0:
+                                tf = raises(ValueError)(__test)
+                            else:
+                                tf = __test
+                            yield (tf, n_bins, bins_per_octave,
+                                   n_chroma, fmin, base_c, window)
