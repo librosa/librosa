@@ -68,6 +68,7 @@ Other changes
   - `filters.constant_q` now returns filter lengths
   - Chroma now starts at `C` by default, instead of `A`
   - `pad_center` supports multi-dimensional input and `axis` parameter
+  - switched from `np.fft` to `scipy.fftpack` for FFT operations
 
 Deprecated functions
 
