@@ -3,7 +3,8 @@
 '''Utilities for spectral processing'''
 
 import numpy as np
-import numpy.fft as fft
+#import numpy.fft as fft
+import scipy.fftpack as fft
 import scipy
 import scipy.signal
 import six
@@ -158,16 +159,16 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
                            order='F')
 
     # how many columns can we fit within MAX_MEM_BLOCK?
-    n_columns = int(util.MAX_MEM_BLOCK / (stft_matrix.shape[0]
-                                          * stft_matrix.itemsize))
+    n_columns = int(util.MAX_MEM_BLOCK / (stft_matrix.shape[0] *
+                                          stft_matrix.itemsize))
 
     for bl_s in range(0, stft_matrix.shape[1], n_columns):
         bl_t = min(bl_s + n_columns, stft_matrix.shape[1])
 
         # RFFT and Conjugate here to match phase from DPWE code
-        stft_matrix[:, bl_s:bl_t] = fft.rfft(fft_window
-                                             * y_frames[:, bl_s:bl_t],
-                                             axis=0).conj()
+        stft_matrix[:, bl_s:bl_t] = fft.fft(fft_window *
+                                            y_frames[:, bl_s:bl_t],
+                                            axis=0)[:stft_matrix.shape[0]].conj()
 
     return stft_matrix
 
