@@ -480,6 +480,9 @@ def subsegment(data, frames, n_segments=4):
     data = np.atleast_2d(data)
     frames = util.fix_frames(frames, x_min=0, x_max=data.shape[1], pad=True)
 
+    if n_segments < 1:
+        raise ValueError('n_segments must be a positive integer')
+
     boundaries = []
     for seg_start, seg_end in zip(frames[:-1], frames[1:]):
         boundaries.extend(seg_start + agglomerative(data[:, seg_start:seg_end],
