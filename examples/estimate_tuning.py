@@ -23,7 +23,7 @@ def estimate_tuning(input_file):
 
     print('Estimating tuning ... ')
     # Just track the pitches associated with high magnitude
-    tuning = librosa.feature.estimate_tuning(y=y_harm, sr=sr)
+    tuning = librosa.estimate_tuning(y=y_harm, sr=sr)
 
     print('{:+0.2f} cents'.format(100 * tuning))
 

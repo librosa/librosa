@@ -1,0 +1,6 @@
+audioread
+decorator
+joblib
+scikits.samplerate
+seaborn
+six

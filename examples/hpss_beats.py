@@ -16,9 +16,9 @@ import librosa
 # Some magic number defaults, FFT window and hop length
 N_FFT = 2048
 
-# We use a hop of 64 here so that the HPSS spectrogram input
+# We use a hop of 512 here so that the HPSS spectrogram input
 # matches the default beat tracker parameters
-HOP_LENGTH = 64
+HOP_LENGTH = 512
 
 
 def hpss_beats(input_file, output_csv):

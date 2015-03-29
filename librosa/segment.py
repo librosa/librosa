@@ -1,6 +1,34 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Temporal segmentation utilities"""
+"""Temporal segmentation utilities
+
+Recurrence and self-similarity
+==============================
+.. autosummary::
+    :toctree: generated/
+
+    recurrence_matrix
+    recurrence_to_lag
+    lag_to_recurrence
+    timelag_filter
+
+Temporal clustering
+===================
+.. autosummary::
+    :toctree: generated/
+
+    agglomerative
+    subsegment
+
+Deprecated
+==========
+.. autosummary::
+    :toctree: generated/
+
+    structure_feature
+"""
+
+from decorator import decorator
 
 import numpy as np
 import scipy
@@ -11,59 +39,130 @@ import sklearn.cluster
 import sklearn.feature_extraction
 
 from . import cache
+from . import util
+
+__all__ = ['recurrence_matrix',
+           'recurrence_to_lag',
+           'lag_to_recurrence',
+           'timelag_filter',
+           'agglomerative',
+           'subsegment',
+           # Deprecated functions
+           'structure_feature']
+
+
+@cache
+def __band_infinite(n, width, v_in=0.0, v_out=np.inf, dtype=np.float32):
+    '''Construct a square, banded matrix `X` where
+    `X[i, j] == v_in` if `|i - j| <= width`
+    `X[i, j] == v_out` if `|i - j| > width`
+
+    This is used to suppress nearby links in `recurrence_matrix`.
+    '''
+
+    if width > n:
+        raise ValueError('width cannot exceed n')
+
+    # Instantiate the matrix
+    band = np.empty((n, n), dtype=dtype)
+
+    # Fill the out-of-band values
+    band.fill(v_out)
+
+    # Fill the in-band values
+    band[np.triu_indices_from(band, width)] = v_in
+    band[np.tril_indices_from(band, -width)] = v_in
+
+    return band
 
 
 @cache
 def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
     '''Compute the binary recurrence matrix from a time-series.
 
-    ``rec[i,j] == True`` <=> (``data[:,i]``, ``data[:,j]``) are
-    k-nearest-neighbors and ``|i-j| >= width``
+    `rec[i,j] == True` if (and only if) (`data[:,i]`, `data[:,j]`) are
+    k-nearest-neighbors and `|i-j| >= width`
 
-    :usage:
-        >>> mfcc    = librosa.feature.mfcc(y=y, sr=sr)
-        >>> R       = librosa.segment.recurrence_matrix(mfcc)
 
-        >>> # Or fix the number of nearest neighbors to 5
-        >>> R       = librosa.segment.recurrence_matrix(mfcc, k=5)
+    Parameters
+    ----------
+    data : np.ndarray [shape=(d, t)]
+        A feature matrix
 
-        >>> # Suppress neighbors within +- 7 samples
-        >>> R       = librosa.segment.recurrence_matrix(mfcc, width=7)
+    k : int > 0 [scalar] or None
+        the number of nearest-neighbors for each sample
 
-        >>> # Use cosine similarity instead of Euclidean distance
-        >>> R       = librosa.segment.recurrence_matrix(mfcc, metric='cosine')
+        Default: `k = 2 * ceil(sqrt(t - 2 * width + 1))`,
+        or `k = 2` if `t <= 2 * width + 1`
 
-        >>> # Require mutual nearest neighbors
-        >>> R       = librosa.segment.recurrence_matrix(mfcc, sym=True)
+    width : int >= 1 [scalar]
+        only link neighbors `(data[:, i], data[:, j])`
+        if `|i-j| >= width`
 
-    :parameters:
-      - data : np.ndarray [shape=(d, t)]
-          A feature matrix
+    metric : str
+        Distance metric to use for nearest-neighbor calculation.
 
-      - k : int > 0 [scalar] or None
-          the number of nearest-neighbors for each sample
+        See `scipy.spatial.distance.cdist()` for details.
 
-          Default: ``k = 2 * ceil(sqrt(t - 2 * width + 1))``,
-          or ``k = 2`` if ``t <= 2 * width + 1``
+    sym : bool [scalar]
+        set `sym=True` to only link mutual nearest-neighbors
 
-      - width : int > 0 [scalar]
-          only link neighbors ``(data[:, i], data[:, j])``
-          if ``|i-j| >= width``
+    Returns
+    -------
+    rec : np.ndarray [shape=(t,t), dtype=bool]
+        Binary recurrence matrix
 
-      - metric : str
-          Distance metric to use for nearest-neighbor calculation.
+    See Also
+    --------
+    scipy.spatial.distance.cdist
+    librosa.feature.stack_memory
+    structure_feature
 
-          See ``scipy.spatial.distance.cdist()`` for details.
+    Examples
+    --------
+    Find nearest neighbors in MFCC space
 
-      - sym : bool [scalar]
-          set ``sym=True`` to only link mutual nearest-neighbors
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> mfcc = librosa.feature.mfcc(y=y, sr=sr)
+    >>> R = librosa.segment.recurrence_matrix(mfcc)
 
-    :returns:
-      - rec : np.ndarray [shape=(t,t), dtype=bool]
-          Binary recurrence matrix
+    Or fix the number of nearest neighbors to 5
+
+    >>> R = librosa.segment.recurrence_matrix(mfcc, k=5)
+
+    Suppress neighbors within +- 7 samples
+
+    >>> R = librosa.segment.recurrence_matrix(mfcc, width=7)
+
+    Use cosine similarity instead of Euclidean distance
+
+    >>> R = librosa.segment.recurrence_matrix(mfcc, metric='cosine')
+
+    Require mutual nearest neighbors
+
+    >>> R = librosa.segment.recurrence_matrix(mfcc, sym=True)
+
+    Plot the feature and recurrence matrices
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure(figsize=(10, 6))
+    >>> plt.subplot(1, 2, 1)
+    >>> librosa.display.specshow(mfcc, x_axis='time')
+    >>> plt.title('MFCC')
+    >>> plt.subplot(1, 2, 2)
+    >>> librosa.display.specshow(R, x_axis='time', y_axis='time',
+    ...                          aspect='equal')
+    >>> plt.title('MFCC recurrence (symmetric)')
+    >>> plt.tight_layout()
+
     '''
 
+    data = np.atleast_2d(data)
+
     t = data.shape[1]
+
+    if width < 1:
+        raise ValueError('width must be at least 1')
 
     if k is None:
         if t > 2 * width + 1:
@@ -73,21 +172,11 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
 
     k = int(k)
 
-    def _band_infinite():
-        '''Suppress the diagonal+- of a distance matrix'''
-
-        band = np.empty((t, t))
-        band.fill(np.inf)
-        band[np.triu_indices_from(band, width)] = 0
-        band[np.tril_indices_from(band, -width)] = 0
-
-        return band
-
     # Build the distance matrix
     D = scipy.spatial.distance.cdist(data.T, data.T, metric=metric)
 
     # Max out the diagonal band
-    D = D + _band_infinite()
+    D = D + __band_infinite(t, width)
 
     # build the recurrence plot
     rec = np.zeros((t, t), dtype=bool)
@@ -104,101 +193,364 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
     return rec
 
 
-@cache
-def structure_feature(rec, pad=True, inverse=False):
-    '''Compute the structure feature from a recurrence matrix.
+def recurrence_to_lag(rec, pad=True):
+    '''Convert a recurrence matrix into a lag matrix.
 
-    The i'th column of the recurrence matrix is shifted up by i.
-    The resulting matrix is indexed horizontally by time,
-    and vertically by lag.
+        `lag[i, j] == rec[i+j, j]`
 
-    :usage:
-        >>> # Build the structure feature over mfcc similarity
-        >>> mfccs   = librosa.feature.mfcc(y=y, sr=sr)
-        >>> R       = librosa.feature.recurrence_matrix(mfccs)
-        >>> S       = librosa.feature.structure_feature(R)
+    Parameters
+    ----------
+    rec : np.ndarray, [shape=(n, n)]
+        A (binary) recurrence matrix, as returned by `recurrence_matrix`
 
-        >>> # Invert the structure feature to get a recurrence matrix
-        >>> R_hat   = librosa.feature.structure_feature(S, inverse=True)
+    pad : bool
+        If False, `lag` matrix is square, which is equivalent to 
+        assuming that the signal repeats itself indefinitely.
 
-    :parameters:
-      - rec   : np.ndarray [shape=(t,t) or shape=(2*t, t)]
-          recurrence matrix (see :func:`librosa.segment.recurrence_matrix`)
+        If True, `lag` is padded with `n` zeros, which eliminates
+        the assumption of repetition.
 
-      - pad : bool [scalar]
-          Pad the matrix with ``t`` rows of zeros to avoid looping.
+    Returns
+    -------
+    lag : np.ndarray [shape=(2*n, n) or (n, n)]
+        The recurrence matrix in (lag, time) coordinates
 
-      - inverse : bool [scalar]
-          Unroll the opposite direction. This is useful for converting
-          structure features back into recurrence plots.
+    Raises
+    ------
+    ValueError : if `rec` is non-square
 
-          .. note: Reversing with ``pad==True`` will truncate the
-            inferred padding.
+    See Also
+    --------
+    recurrence_matrix
+    lag_to_recurrence
 
-    :returns:
-      - struct : np.ndarray [shape=(2*t, t) or shape=(t, t)]
-          ``struct[i, t]`` = the recurrence at time ``t`` with lag ``i``.
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> mfccs = librosa.feature.mfcc(y=y, sr=sr)
+    >>> recurrence = librosa.segment.recurrence_matrix(mfccs)
+    >>> lag_pad = librosa.segment.recurrence_to_lag(recurrence, pad=True)
+    >>> lag_nopad = librosa.segment.recurrence_to_lag(recurrence, pad=False)
 
-      .. note:: negative lag values are supported by wrapping to the
-        end of the array.
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure(figsize=(8, 4))
+    >>> plt.subplot(1, 2, 1)
+    >>> librosa.display.specshow(lag_pad, x_axis='time', y_axis='lag')
+    >>> plt.title('Lag (zero-padded)')
+    >>> plt.subplot(1, 2, 2)
+    >>> librosa.display.specshow(lag_nopad, x_axis='time', y_axis='time')
+    >>> plt.title('Lag (no padding)')
+    >>> plt.tight_layout()
     '''
 
+    if rec.ndim != 2 or rec.shape[0] != rec.shape[1]:
+        raise ValueError('non-square recurrence matrix shape: '
+                         '{}'.format(rec.shape))
+
     t = rec.shape[1]
-
-    if pad and not inverse:
-        # If we don't assume that the signal loops,
-        # stack zeros underneath in the recurrence plot.
-        struct = np.pad(rec, [(0, t), (0, 0)], mode='constant')
+    if pad:
+        lag = np.pad(rec, [(0, t), (0, 0)], mode='constant')
     else:
-        struct = rec.copy()
-
-    if inverse:
-        direction = +1
-    else:
-        direction = -1
+        lag = rec.copy()
 
     for i in range(1, t):
-        struct[:, i] = np.roll(struct[:, i], direction * i, axis=-1)
+        lag[:, i] = np.roll(lag[:, i], -i)
 
-    if inverse and pad:
-        struct = struct[:t]
+    return np.ascontiguousarray(lag.T).T
 
-    # Make column-contiguous
-    return np.ascontiguousarray(struct.T).T
+
+def lag_to_recurrence(lag):
+    '''Convert a lag matrix into a recurrence matrix.
+
+    Parameters
+    ----------
+    lag : np.ndarray [shape=(2*n, n) or (n, n)]
+        A lag matrix, as produced by `recurrence_to_lag`
+
+    Returns
+    -------
+    rec : np.ndarray [shape=(n, n)]
+        A recurrence matrix in (time, time) coordinates
+
+    Raises
+    ------
+    ValueError : if `lag` does not have the correct shape
+
+    See Also
+    --------
+    recurrence_to_lag
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> mfccs = librosa.feature.mfcc(y=y, sr=sr)
+    >>> recurrence = librosa.segment.recurrence_matrix(mfccs)
+    >>> lag_pad = librosa.segment.recurrence_to_lag(recurrence, pad=True)
+    >>> lag_nopad = librosa.segment.recurrence_to_lag(recurrence, pad=False)
+    >>> rec_pad = librosa.segment.lag_to_recurrence(lag_pad)
+    >>> rec_nopad = librosa.segment.lag_to_recurrence(lag_nopad)
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure(figsize=(8, 4))
+    >>> plt.subplot(2, 2, 1)
+    >>> librosa.display.specshow(lag_pad, x_axis='time', y_axis='lag')
+    >>> plt.title('Lag (zero-padded)')
+    >>> plt.subplot(2, 2, 2)
+    >>> librosa.display.specshow(lag_nopad, x_axis='time', y_axis='time')
+    >>> plt.title('Lag (no padding)')
+    >>> plt.subplot(2, 2, 3)
+    >>> librosa.display.specshow(rec_pad, x_axis='time', y_axis='time')
+    >>> plt.title('Recurrence (with padding)')
+    >>> plt.subplot(2, 2, 4)
+    >>> librosa.display.specshow(rec_nopad, x_axis='time', y_axis='time')
+    >>> plt.title('Recurrence (without padding)')
+    >>> plt.tight_layout()
+
+    '''
+
+    pad = (lag.shape[0] == 2 * lag.shape[-1])
+
+    if lag.ndim != 2 or (lag.shape[0] != lag.shape[1] and not pad):
+        raise ValueError('Invalid lag matrix shape: {}'.format(lag.shape))
+
+    t = lag.shape[1]
+    lag = lag.copy()
+
+    for i in range(1, t):
+        lag[:, i] = np.roll(lag[:, i], i)
+
+    return np.ascontiguousarray(lag[:t].T).T
+
+
+def timelag_filter(function, pad=True, index=0):
+    '''Filtering in the time-lag domain.
+
+    This is primarily useful for adapting image filters to operate on
+    `structure_feature` output.
+
+    Using `timelag_filter` is equivalent to the following sequence of
+    operations:
+
+    >>> data_tl = librosa.segment.recurrence_to_lag(data)
+    >>> data_filtered_tl = function(data_tl)
+    >>> data_filtered = librosa.segment.lag_to_recurrence(data_filtered_tl)
+
+    Parameters
+    ----------
+    function : callable
+        The filtering function to wrap, e.g., `scipy.ndimage.median_filter`
+
+    pad : bool
+        Whether to zero-pad the structure feature matrix
+
+    index : int >= 0
+        If `function` accepts input data as a positional argument, it should be
+        indexed by `index`
+
+
+    Returns
+    -------
+    wrapped_function : callable
+        A new filter function which applies in time-lag space rather than
+        time-time space.
+
+
+    See Also
+    --------
+    structure_feature
+
+
+    Examples
+    --------
+
+    Apply a 5-bin median filter to the diagonal of a recurrence matrix
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> mfcc = librosa.feature.mfcc(y=y, sr=sr)
+    >>> rec = librosa.segment.recurrence_matrix(mfcc, sym=True)
+    >>> from scipy.ndimage import median_filter
+    >>> diagonal_median = librosa.segment.timelag_filter(median_filter)
+    >>> rec_filtered = diagonal_median(rec, size=(1, 5), mode='mirror')
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> plt.subplot(1, 2, 1)
+    >>> librosa.display.specshow(rec, x_axis='time', y_axis='time',
+    ...                          aspect='equal')
+    >>> plt.title('Raw recurrence matrix')
+    >>> plt.subplot(1, 2, 2)
+    >>> librosa.display.specshow(rec_filtered, x_axis='time', y_axis='time',
+    ...                          aspect='equal')
+    >>> plt.title('Filtered recurrence matrix')
+    >>> plt.tight_layout()
+    '''
+
+    @cache
+    def __my_filter(wrapped_f, *args, **kwargs):
+        '''Decorator to wrap the filter'''
+        # Map the input data into time-lag space
+        args = list(args)
+
+        args[index] = recurrence_to_lag(args[index], pad=pad)
+
+        # Apply the filtering function
+        result = wrapped_f(*args, **kwargs)
+
+        # Map back into time-time and return
+        return lag_to_recurrence(result)
+
+    return decorator(__my_filter, function)
+
+
+@cache
+def subsegment(data, frames, n_segments=4):
+    '''Sub-divide a segmentation by feature clustering.
+
+    Given a set of frame boundaries (`frames`), and a data matrix (`data`),
+    each successive interval defined by `frames` is partitioned into
+    `n_segments` by constrained agglomerative clustering.
+
+    .. note::
+        If an interval spans fewer than `n_segments` frames, then each
+        frame becomes a sub-segment.
+
+    Parameters
+    ----------
+    data : np.ndarray [shape=(d, n)]
+        Data matrix to use in clustering
+
+    frames : np.ndarray [shape=(n_boundaries,)], dtype=int, non-negative]
+        Array of beat or segment boundaries, as provided by
+        `librosa.beat.beat_track`,
+        `librosa.onset.onset_detect`,
+        or `agglomerative`.
+
+    n_segments : int > 0
+        Maximum number of frames to sub-divide each interval.
+
+    Returns
+    -------
+    boundaries : np.ndarray [shape=(n_subboundaries,)]
+        List of sub-divided segment boundaries
+
+    See Also
+    --------
+    agglomerative : Temporal segmentation
+    librosa.onset.onset_detect : Onset detection
+    librosa.beat.beat_track : Beat tracking
+
+    Examples
+    --------
+    Load audio, detect beat frames, and subdivide in fours by CQT
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=15)
+    >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, hop_length=512)
+    >>> cqt = librosa.cqt(y, sr=sr, hop_length=512)
+    >>> subseg = librosa.segment.subsegment(cqt, beats, n_segments=4)
+    >>> subseg
+    array([  0,   1,   2,   3,   4,   8,  20,  21,  23,  24,  26,
+            34,  43,  51,  55,  57,  63,  69,  72,  76,  83,  90,
+            97, 100, 102, 106, 111, 117, 122, 129, 133, 137, 142,
+           146, 153, 159, 162, 167, 171, 179, 181, 185, 188, 195,
+           201, 210, 215, 217, 221, 226, 231, 236, 241, 252, 256,
+           259, 261, 268, 271, 275, 281, 290, 296, 299, 301, 304,
+           310, 315, 320, 326, 329, 335, 338, 340, 344, 346, 357,
+           368, 370, 374, 377, 385, 389, 392, 396, 399, 403, 412,
+           416, 418, 425, 430, 436, 443, 447, 451, 456, 461, 465,
+           470, 476, 480, 484, 489, 496, 498, 503, 510, 515, 527,
+           529, 533, 534, 535, 544, 549, 553, 558, 563, 569, 571,
+           577, 578, 584, 590, 598, 607, 608, 609, 612, 618, 623,
+           628, 634, 638, 643])
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> librosa.display.specshow(librosa.logamplitude(cqt**2,
+    ...                                               ref_power=np.max),
+    ...                          y_axis='cqt_hz', x_axis='time')
+    >>> plt.vlines(beats, 0, cqt.shape[0], color='r', alpha=0.5,
+    ...            label='Beats')
+    >>> plt.vlines(subseg, 0, cqt.shape[0], color='b', linestyle='--',
+    ...            alpha=0.25, label='Sub-beats')
+    >>> plt.legend(frameon=True, shadow=True)
+    >>> plt.title('CQT + Beat and sub-beat markers')
+    >>> plt.tight_layout()
+
+    '''
+
+    data = np.atleast_2d(data)
+    frames = util.fix_frames(frames, x_min=0, x_max=data.shape[1], pad=True)
+
+    if n_segments < 1:
+        raise ValueError('n_segments must be a positive integer')
+
+    boundaries = []
+    for seg_start, seg_end in zip(frames[:-1], frames[1:]):
+        boundaries.extend(seg_start + agglomerative(data[:, seg_start:seg_end],
+                                                    min(seg_end - seg_start,
+                                                        n_segments)))
+
+    return np.ascontiguousarray(boundaries)
 
 
 def agglomerative(data, k, clusterer=None):
     """Bottom-up temporal segmentation.
 
     Use a temporally-constrained agglomerative clustering routine to partition
-    ``data`` into ``k`` contiguous segments.
+    `data` into `k` contiguous segments.
 
-    :usage:
-        >>> # Cluster by Mel spectrogram similarity
-        >>> # Break into 32 segments
-        >>> S = librosa.feature.melspectrogram(y=y, sr=sr, n_fft=2048,
-                                               hop_length=512)
-        >>> boundary_frames = librosa.segment.agglomerative(S, 32)
-        >>> boundary_times = librosa.frames_to_time(boundary_frames, sr=sr,
-                                                    hop_length=512)
+    Parameters
+    ----------
+    data     : np.ndarray [shape=(d, t)]
+        feature matrix
 
-    :parameters:
-      - data     : np.ndarray [shape=(d, t)]
-          feature matrix
+    k        : int > 0 [scalar]
+        number of segments to produce
 
-      - k        : int > 0 [scalar]
-          number of segments to produce
+    clusterer : sklearn.cluster.AgglomerativeClustering, optional
+        An optional AgglomerativeClustering object.
+        If `None`, a constrained Ward object is instantiated.
 
-      - clusterer : sklearn.cluster.AgglomerativeClustering or ``None``
-          An optional agglomerativeclustering object.
-          If ``None``, a constrained Ward object is instantiated.
+    Returns
+    -------
+    boundaries : np.ndarray [shape=(k,)]
+        left-boundaries (frame numbers) of detected segments. This
+        will always include `0` as the first left-boundary.
 
-    :returns:
-      - boundaries : np.ndarray [shape=(k,)]
-          left-boundaries (frame numbers) of detected segments. This
-          will always include ``0`` as the first left-boundary.
+    See Also
+    --------
+    sklearn.cluster.AgglomerativeClustering
+
+    Examples
+    --------
+    Cluster by MFCC spectrogram similarity, break into 32 segments
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=15)
+    >>> mfcc = librosa.feature.mfcc(y=y, sr=sr)
+    >>> boundary_frames = librosa.segment.agglomerative(mfcc, 32)
+    >>> librosa.frames_to_time(boundary_frames, sr=sr)
+    array([  0.   ,   0.046,   0.464,   1.3  ,   1.625,   4.156,
+             4.319,   5.248,   7.384,   7.5  ,   7.848,   7.964,
+             8.243,   8.893,   9.149,   9.358,   9.706,   9.799,
+            10.077,  10.728,  11.099,  11.192,  11.54 ,  11.703,
+            11.912,  12.237,  12.562,  13.375,  13.514,  14.095,
+            14.234,  14.559])
+
+    Plot the segmentation against the spectrogram
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> S = np.abs(librosa.stft(y))**2
+    >>> librosa.display.specshow(librosa.logamplitude(S, ref_power=np.max),
+    ...                          y_axis='log', x_axis='time')
+    >>> plt.vlines(boundary_frames, 0, S.shape[0], color='r', alpha=0.9,
+    ...            label='Segment boundaries')
+    >>> plt.legend(frameon=True, shadow=True)
+    >>> plt.title('Power spectrogram')
+    >>> plt.tight_layout()
 
     """
+
+    data = np.atleast_2d(data)
 
     if clusterer is None:
         # Connect the temporal connectivity graph
@@ -219,3 +571,83 @@ def agglomerative(data, k, clusterer=None):
     boundaries.extend(
         list(1 + np.nonzero(np.diff(clusterer.labels_))[0].astype(int)))
     return np.asarray(boundaries)
+
+
+# Deprecated functions
+
+@util.decorators.deprecated('0.4', '0.5')
+@cache
+def structure_feature(rec, pad=True, inverse=False):
+    '''Compute the structure feature from a recurrence matrix.
+
+    The i'th column of the recurrence matrix is shifted up by i.
+    The resulting matrix is indexed horizontally by time,
+    and vertically by lag.
+
+    .. warning:: Deprected in librosa 0.4
+                 Functionality is superseded by
+                 `librosa.segment.recurrence_to_lag` and
+                 `librosa.segment.lag_to_recurrence`.
+
+    Parameters
+    ----------
+    rec   : np.ndarray [shape=(t,t) or shape=(2*t, t)]
+        recurrence matrix or pre-computed structure feature
+
+    pad : bool [scalar]
+        Pad the matrix with `t` rows of zeros to avoid looping.
+
+    inverse : bool [scalar]
+        Unroll the opposite direction. This is useful for converting
+        structure features back into recurrence plots.
+
+        .. note: Reversing with `pad==True` will truncate the
+            inferred padding.
+
+    Returns
+    -------
+    struct : np.ndarray [shape=(2*t, t) or shape=(t, t)]
+        `struct[i, t]` = the recurrence at time `t` with lag `i`.
+
+        .. note:: negative lag values are supported by wrapping to the
+            end of the array.
+
+    See Also
+    --------
+    recurrence_matrix : build a recurrence matrix from feature vectors
+
+    Examples
+    --------
+    Build the structure feature over mfcc similarity
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> mfccs = librosa.feature.mfcc(y=y, sr=sr)
+    >>> recurrence = librosa.segment.recurrence_matrix(mfccs)
+    >>> struct = librosa.segment.structure_feature(recurrence)
+
+
+    Invert the structure feature to get a recurrence matrix
+
+    >>> recurrence_2 = librosa.segment.structure_feature(struct,
+    ...                                                  inverse=True)
+
+    Display recurrence in time-time and time-lag space
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure(figsize=(10, 5))
+    >>> plt.subplot(1, 2, 1)
+    >>> librosa.display.specshow(recurrence, aspect='equal', x_axis='time',
+    ...                          y_axis='time')
+    >>> plt.ylabel('Time')
+    >>> plt.title('Recurrence (time-time)')
+    >>> plt.subplot(1, 2, 2)
+    >>> librosa.display.specshow(struct, aspect='auto', x_axis='time')
+    >>> plt.ylabel('Lag')
+    >>> plt.title('Structure feature')
+    >>> plt.tight_layout()
+
+    '''
+    if inverse:
+        return lag_to_recurrence(rec)
+    else:
+        return recurrence_to_lag(rec, pad=pad)
