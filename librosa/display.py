@@ -1,65 +1,97 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Display module for interacting with matplotlib"""
+"""Display module for interacting with matplotlib
+
+Display
+=======
+.. autosummary::
+    :toctree: generated/
+
+    specshow
+    time_ticks
+    cmap
+
+"""
 
 import numpy as np
 import matplotlib.image as img
 import matplotlib.pyplot as plt
-
 import warnings
 
-import librosa.core
 from . import cache
+from . import core
+
+_HAS_SEABORN = False
+try:
+    import seaborn as sns
+    _HAS_SEABORN = True
+except ImportError:
+    pass
 
 
 # This function wraps xticks or yticks: star-args is okay
 def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
     '''Plot time-formatted axis ticks.
 
-    :usage:
-        >>> # Tick at pre-computed beat times
-        >>> librosa.display.specshow(S)
-        >>> librosa.display.time_ticks(beat_times)
+    Parameters
+    ----------
+    locations : list or np.ndarray
+        Time-stamps for tick marks
 
-        >>> # Set the locations of the time stamps
-        >>> librosa.display.time_ticks(locations, timestamps)
+    n_ticks : int > 0 or None
+        Show this number of ticks (evenly spaced).
 
-        >>> # Format in seconds
-        >>> librosa.display.time_ticks(beat_times, fmt='s')
+        If none, all ticks are displayed.
 
-        >>> # Tick along the y axis
-        >>> librosa.display.time_ticks(beat_times, axis='y')
+        Default: 5
 
-    :parameters:
-       - locations : list or np.ndarray
-           Time-stamps for tick marks
+    axis : 'x' or 'y'
+        Which axis should the ticks be plotted on?
+        Default: 'x'
 
-       - n_ticks : int > 0 or None
-           Show this number of ticks (evenly spaced).
-           If none, all ticks are displayed.
-           Default: 5
+    fmt : None or {'ms', 's', 'm', 'h'}
+        - 'ms': milliseconds   (eg, 241ms)
+        - 's': seconds         (eg, 1.43s)
+        - 'm': minutes         (eg, 1:02)
+        - 'h': hours           (eg, 1:02:03)
 
-       - axis : 'x' or 'y'
-           Which axis should the ticks be plotted on?
-           Default: 'x'
+        If none, formatted is automatically selected by the
+        range of the times data.
 
-       - fmt : None or {'ms', 's', 'm', 'h'}
-           ms: milliseconds   (eg, 241ms)
-           s: seconds         (eg, 1.43s)
-           m: minutes         (eg, 1:02)
-           h: hours           (eg, 1:02:03)
+        Default: None
 
-           If none, formatted is automatically selected by the
-           range of the times data.
+    kwargs : additional keyword arguments.
+        See `matplotlib.pyplot.xticks` or `yticks` for details.
 
-           Default: None
 
-       - *kwargs*
-          Additional keyword arguments.
-          See ``matplotlib.pyplot.xticks`` or ``yticks`` for details.
+    Returns
+    -------
+    locs
+    labels
+        Locations and labels of tick marks
 
-    :returns:
-       - See ``matplotlib.pyplot.xticks`` or ``yticks`` for details.
+
+    See Also
+    --------
+    matplotlib.pyplot.xticks
+    matplotlib.pyplot.yticks
+
+
+    Examples
+    --------
+    >>> # Tick at pre-computed beat times
+    >>> librosa.display.specshow(S)
+    >>> librosa.display.time_ticks(beat_times)
+
+    >>> # Set the locations of the time stamps
+    >>> librosa.display.time_ticks(locations, timestamps)
+
+    >>> # Format in seconds
+    >>> librosa.display.time_ticks(beat_times, fmt='s')
+
+    >>> # Tick along the y axis
+    >>> librosa.display.time_ticks(beat_times, axis='y')
+
     '''
 
     n_ticks = kwargs.pop('n_ticks', 5)
@@ -80,13 +112,15 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
         locs = np.arange(len(times))
 
     if n_ticks is not None:
-        # Slice the locations and labels
-        locs = locs[::max(1, int(len(locs) / n_ticks))]
-        times = times[::max(1, int(len(times) / n_ticks))]
+        # Slice the locations and labels evenly between 0 and the last point
+        positions = np.linspace(0, len(locs)-1, n_ticks,
+                                endpoint=True).astype(int)
+        locs = locs[positions]
+        times = times[positions]
 
     # Format the labels by time
     formats = {'ms': lambda t: '{:d}ms'.format(int(1e3 * t)),
-               's': lambda t: '{:0.2f}s'.format(t),
+               's': '{:0.2f}s'.format,
                'm': lambda t: '{:d}:{:02d}'.format(int(t / 6e1),
                                                    int(np.mod(t, 6e1))),
                'h': lambda t: '{:d}:{:02d}:{:02d}'.format(int(t / 3.6e3),
@@ -113,50 +147,65 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
 
 
 @cache
-def cmap(data):
+def cmap(data, use_sns=True, robust=True):
     '''Get a default colormap from the given data.
 
     If the data is boolean, use a black and white colormap.
 
     If the data has both positive and negative values,
-    use a diverging colormap.
+    use a diverging colormap ('coolwarm').
 
-    Otherwise, use a sequential map.
+    Otherwise, use a sequential map: either cubehelix or 'OrRd'.
 
-    PuOr and OrRd are chosen to optimize visibility for color-blind people.
+    Parameters
+    ----------
+    data : np.ndarray
+        Input data
 
-    :usage:
-        >>> librosa.display.cmap([0, 1, 2])
-        'OrRd'
-        >>> librosa.display.cmap(np.arange(-10, -5))
-        'BuPu_r'
-        >>> librosa.display.cmap(np.arange(-10, 10))
-        'PuOr_r'
+    use_sns : bool
+        If True, and `seaborn` is installed, use cubehelix maps for
+        sequential data
 
-    :parameters:
-      - data : np.ndarray
-          Input data
+    robust : bool
+        If True, discard the top and bottom 2% of data when calculating
+        range.
 
-    :returns:
-      - cmap_str
-          - If data is type=boolean, cmap_Str is 'gray_r'
-          - If data has only positive values, cmap_str is 'OrRd'
-          - If data has only negative values, cmap_str is 'BuPu_r'
-          - If data has both positive and negatives, cmap_str is 'PuOr_r'
+    Returns
+    -------
+    cmap : matplotlib.colors.Colormap
+        - If `data` has dtype=boolean, `cmap` is 'gray_r'
+        - If `data` has only positive or only negative values,
+          `cmap` is 'OrRd' (`use_sns==False`) or cubehelix
+        - If `data` has both positive and negatives, `cmap` is 'coolwarm'
+
+    See Also
+    --------
+    matplotlib.pyplot.colormaps
+    seaborn.cubehelix_palette
     '''
 
+    data = np.atleast_1d(data)
+
     if data.dtype == 'bool':
-        return 'gray_r'
+        return plt.get_cmap('gray_r')
 
-    data = np.asarray(data)
+    data = data[np.isfinite(data)]
 
-    if data.min() >= 0:
-        return 'OrRd'
+    if robust:
+        min_p, max_p = 2, 98
+    else:
+        min_p, max_p = 0, 100
 
-    if data.max() <= 0:
-        return 'BuPu_r'
+    max_val = np.percentile(data, max_p)
+    min_val = np.percentile(data, min_p)
 
-    return 'PuOr_r'
+    if min_val >= 0 or max_val <= 0:
+        if use_sns and _HAS_SEABORN:
+            return sns.cubehelix_palette(light=1.0, as_cmap=True)
+        else:
+            return plt.get_cmap('OrRd')
+
+    return plt.get_cmap('coolwarm')
 
 
 def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
@@ -164,91 +213,149 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
              **kwargs):
     '''Display a spectrogram/chromagram/cqt/etc.
 
-    Functions as a drop-in replacement for ``matplotlib.pyplot.imshow``,
+    Functions as a drop-in replacement for `matplotlib.pyplot.imshow`,
     but with useful defaults.
 
-    :usage:
-        >>> # Visualize an STFT with linear frequency scaling
-        >>> D = np.abs(librosa.stft(y))
-        >>> librosa.display.specshow(D, sr=sr, y_axis='linear')
 
-        >>> # Or with logarithmic frequency scaling
-        >>> librosa.display.specshow(D, sr=sr, y_axis='log')
+    Parameters
+    ----------
+    data : np.ndarray [shape=(d, n)]
+        Matrix to display (e.g., spectrogram)
 
-        >>> # Visualize a CQT with note markers
-        >>> CQT = librosa.cqt(y, sr=sr)
-        >>> librosa.display.specshow(CQT, sr=sr, y_axis='cqt_note',
-                                     fmin=librosa.midi_to_hz(24))
+    sr : int > 0 [scalar]
+        Sample rate used to determine time scale in x-axis.
 
-        >>> # Draw time markers automatically
-        >>> librosa.display.specshow(D, sr=sr, hop_length=hop_length,
-                                     x_axis='time')
+    hop_length : int > 0 [scalar]
+        Hop length, also used to determine time scale in x-axis
 
-        >>> # Draw a chromagram with pitch classes
-        >>> C = librosa.feature.chromagram(y, sr)
-        >>> librosa.display.specshow(C, y_axis='chroma')
+    x_axis : None or str
 
-        >>> # Force a grayscale colormap (white -> black)
-        >>> librosa.display.specshow(librosa.logamplitude(D),
-                                     cmap='gray_r')
+    y_axis : None or str
+        Range for the x- and y-axes.
 
-    :parameters:
-      - data : np.ndarray [shape=(d, n)]
-          Matrix to display (e.g., spectrogram)
+        Valid types are:
 
-      - sr : int > 0 [scalar]
-          Sample rate used to determine time scale in x-axis.
+        - None or 'off' : no axis is displayed.
 
-      - hop_length : int > 0 [scalar]
-          Hop length, also used to determine time scale in x-axis
+        Frequency types:
 
-      - x_axis : None or {'time', 'frames', 'off'}
-          If None or 'off', no x axis is displayed.
+        - 'linear' : frequency range is determined by the FFT window
+          and sampling rate.
+        - 'log' : the image is displayed on a vertical log scale.
+        - 'mel' : frequencies are determined by the mel scale.
+        - 'cqt_hz' : frequencies are determined by the CQT scale.
+        - 'cqt_note' : pitches are determined by the CQT scale.
+        - 'chroma' : pitches are determined by the chroma filters.
+        - 'tonnetz' : axes are labeled by Tonnetz dimensions
 
-          If 'time', markers are shown as milliseconds, seconds,
-          minutes, or hours.  (See :func:`time_ticks()` for details.)
+        Time types:
 
-          If 'frames', markers are shown as frame counts.
+        - 'time' : markers are shown as milliseconds, seconds,
+          minutes, or hours
+        - 'lag' : like time, but past the half-way point counts
+          as negative values.
+        - 'frames' : markers are shown as frame counts.
 
-      - y_axis : None or str
-          Range for the y-axis.  Valid types are:
+    n_xticks : int > 0 [scalar]
+        If x_axis is drawn, the number of ticks to show
 
-          - None or 'off': no y axis is displayed.
-          - 'linear': frequency range is determined by the FFT window
-            and sampling rate.
-          - 'log': the image is displayed on a vertical log scale.
-          - 'mel': frequencies are determined by the mel scale.
-          - 'cqt_hz': frequencies are determined by the CQT scale.
-          - 'cqt_note': pitches are determined by the CQT scale.
-          - 'chroma': pitches are determined by the chroma filters.
+    n_yticks : int > 0 [scalar]
+        If y_axis is drawn, the number of ticks to show
 
-      - n_xticks : int > 0 [scalar]
-          If x_axis is drawn, the number of ticks to show
+    fmin : float > 0 [scalar] or None
+        Frequency of the lowest spectrogram bin.  Used for Mel and CQT
+        scales.
 
-      - n_yticks : int > 0 [scalar]
-          If y_axis is drawn, the number of ticks to show
+        If `y_axis` is `cqt_hz` or `cqt_note` and `fmin` is not given,
+        it is set by default to `note_to_hz('C2')`.
 
-      - fmin : float > 0 [scalar] or None
-          Frequency of the lowest spectrogram bin.  Used for Mel and CQT
-          scales.
+    fmax : float > 0 [scalar] or None
+        Used for setting the Mel frequency scales
 
-      - fmax : float > 0 [scalar] or None
-          Used for setting the Mel frequency scales
+    bins_per_octave : int > 0 [scalar]
+        Number of bins per octave.  Used for CQT frequency scale.
 
-      - bins_per_octave : int > 0 [scalar]
-          Number of bins per octave.  Used for CQT frequency scale.
+    kwargs : additional keyword arguments
+        Arguments passed through to `matplotlib.pyplot.imshow`.
 
-      - *kwargs*
-          Additional keyword arguments passed through to
-          ``matplotlib.pyplot.imshow``.
 
-    :returns:
-      - image : ``matplotlib.image.AxesImage``
-          As returned from ``matplotlib.pyplot.imshow``.
+    Returns
+    -------
+    image : `matplotlib.image.AxesImage`
+        As returned from `matplotlib.pyplot.imshow`.
 
-    :raises:
-      - ValueError
-          If y_axis is 'cqt_hz' or 'cqt_note' and ``fmin`` is not supplied.
+
+    See Also
+    --------
+    cmap : Automatic colormap detection
+
+    time_ticks : time-formatted tick marks
+
+    matplotlib.pyplot.imshow
+
+
+    Examples
+    --------
+    Visualize an STFT power spectrum
+
+    >>> import matplotlib.pyplot as plt
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> plt.figure(figsize=(12, 8))
+
+    >>> D = librosa.logamplitude(np.abs(librosa.stft(y))**2, ref_power=np.max)
+    >>> plt.subplot(4, 2, 1)
+    >>> librosa.display.specshow(D, y_axis='linear')
+    >>> plt.colorbar(format='%+2.0f dB')
+    >>> plt.title('Linear-frequency power spectrogram')
+
+
+    Or on a logarithmic scale
+
+    >>> plt.subplot(4, 2, 2)
+    >>> librosa.display.specshow(D, y_axis='log')
+    >>> plt.colorbar(format='%+2.0f dB')
+    >>> plt.title('Log-frequency power spectrogram')
+
+
+    Or use a CQT scale
+
+    >>> CQT = librosa.logamplitude(librosa.cqt(y, sr=sr)**2, ref_power=np.max)
+    >>> plt.subplot(4, 2, 3)
+    >>> librosa.display.specshow(CQT, y_axis='cqt_note')
+    >>> plt.colorbar(format='%+2.0f dB')
+    >>> plt.title('Constant-Q power spectrogram (note)')
+
+    >>> plt.subplot(4, 2, 4)
+    >>> librosa.display.specshow(CQT, y_axis='cqt_hz')
+    >>> plt.colorbar(format='%+2.0f dB')
+    >>> plt.title('Constant-Q power spectrogram (Hz)')
+
+
+    Draw a chromagram with pitch classes
+
+    >>> C = librosa.feature.chroma_cqt(y=y, sr=sr)
+    >>> plt.subplot(4, 2, 5)
+    >>> librosa.display.specshow(C, y_axis='chroma')
+    >>> plt.colorbar()
+    >>> plt.title('Chromagram')
+
+
+    Force a grayscale colormap (white -> black)
+
+    >>> plt.subplot(4, 2, 6)
+    >>> librosa.display.specshow(D, cmap='gray_r')
+    >>> plt.colorbar(format='%+2.0f dB')
+    >>> plt.title('Linear power spectrogram (grayscale)')
+
+
+    Draw time markers automatically
+
+    >>> plt.subplot(4, 2, 7)
+    >>> librosa.display.specshow(D, x_axis='time', y_axis='log')
+    >>> plt.colorbar(format='%+2.0f dB')
+    >>> plt.title('Log power spectrogram')
+    >>> plt.tight_layout()
+
     '''
 
     kwargs.setdefault('aspect', 'auto')
@@ -262,150 +369,290 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
 
     kwargs.setdefault('cmap', cmap(data))
 
+    axes = plt.imshow(data, **kwargs)
+
+    all_params = dict(kwargs=kwargs,
+                      sr=sr,
+                      fmin=fmin,
+                      fmax=fmax,
+                      bins_per_octave=bins_per_octave,
+                      hop_length=hop_length)
+
+    # Scale and decorate the axes
+    __axis(data, n_xticks, x_axis, horiz=True, minor=y_axis, **all_params)
+    __axis(data, n_yticks, y_axis, horiz=False, minor=x_axis, **all_params)
+
+    return axes
+
+
+def __get_shape_artists(data, horiz):
+    '''Return size, ticker, and labeler'''
+    if horiz:
+        return data.shape[1], plt.xticks, plt.xlabel
+    else:
+        return data.shape[0], plt.yticks, plt.ylabel
+
+
+def __axis(data, n_ticks, ax_type, horiz=False, **kwargs):
+    '''Dispatch function to decorate axes'''
+    axis_map = {'linear': __axis_linear,
+                'log': __axis_log,
+                'mel': __axis_mel,
+                'cqt_hz': __axis_cqt_hz,
+                'cqt_note': __axis_cqt_note,
+                'chroma': __axis_chroma,
+                'tonnetz': __axis_tonnetz,
+                'off': __axis_none,
+                'time': __axis_time,
+                'lag': __axis_lag,
+                'frames': __axis_frames}
+
+    if ax_type is None:
+        ax_type = 'off'
+
+    if ax_type not in axis_map:
+        raise ValueError('Unknown axis type: {:s}'.format(ax_type))
+
+    func = axis_map[ax_type]
+
+    func(data, n_ticks, horiz=horiz, **kwargs)
+
+
+def __axis_none(data, n_ticks, horiz, **_kwargs):
+    '''Empty axis artist'''
+
+    _, ticker, labeler = __get_shape_artists(data, horiz)
+
+    ticker([])
+    labeler('')
+
+
+def __axis_log(data, n_ticks, horiz, sr=22050, kwargs=None, label='Hz',
+               secondary_axis='linear', minor=None, **_kwargs):
+    '''Plot a log-scaled image'''
+
+    axes_phantom = plt.gca()
+
+    if kwargs is None:
+        kwargs = dict()
+
+    aspect = kwargs.pop('aspect', None)
+
+    n, ticker, labeler = __get_shape_artists(data, horiz)
+    t_log, t_inv = __log_scale(n)
+
+    if horiz:
+        if minor == 'log':
+            ax2 = __log_scale(data.shape[0])[0]
+        else:
+            ax2 = np.linspace(0, data.shape[0], data.shape[0]).astype(int)
+        ax1 = t_log
+    else:
+        if minor == 'log':
+            ax1 = __log_scale(data.shape[1])[0]
+        else:
+            ax1 = np.linspace(0, data.shape[1], data.shape[1]).astype(int)
+
+        ax2 = t_log
+
+    args = (ax1, ax2, data)
+
     # NOTE:  2013-11-14 16:15:33 by Brian McFee <brm2132@columbia.edu>
     #  We draw the image twice here. This is a hack to get around
     #  NonUniformImage not properly setting hooks for color.
     #  Drawing twice enables things like colorbar() to work properly.
 
-    axes = plt.imshow(data, **kwargs)
+    im_phantom = img.NonUniformImage(axes_phantom,
+                                     extent=(args[0].min(), args[0].max(),
+                                             args[1].min(), args[1].max()),
+                                     **kwargs)
+    im_phantom.set_data(*args)
 
-    if y_axis is 'log':
-        axes_phantom = plt.gca()
+    kwargs['aspect'] = aspect
 
-        # Non-uniform imshow doesn't like aspect
-        del kwargs['aspect']
-        im_phantom = img.NonUniformImage(axes_phantom, **kwargs)
+    axes_phantom.images[0] = im_phantom
 
-        y_log, y_inv = __log_scale(data.shape[0])
+    positions = np.linspace(0, n-1, n_ticks, endpoint=True).astype(int)
+    # One extra value here to catch nyquist
+    values = np.linspace(0, 0.5 * sr, n, endpoint=True).astype(int)
 
-        im_phantom.set_data(np.arange(0, data.shape[1]), y_log, data)
-        axes_phantom.images.append(im_phantom)
-        axes_phantom.set_ylim(0, data.shape[0])
-        axes_phantom.set_xlim(0, data.shape[1])
 
-    # Set up the y ticks
-    positions = np.asarray(np.linspace(0, data.shape[0], n_yticks), dtype=int)
+    ticker(positions, values[t_inv[positions]])
 
-    if y_axis is 'linear':
-        values = np.asarray(np.linspace(0, 0.5 * sr, data.shape[0] + 1),
-                            dtype=int)
+    labeler(label)
 
-        plt.yticks(positions, values[positions])
-        plt.ylabel('Hz')
 
-    elif y_axis is 'log':
-        values = np.asarray(np.linspace(0, 0.5 * sr, data.shape[0] + 1),
-                            dtype=int)
-        plt.yticks(positions, values[y_inv[positions]])
+def __axis_mel(data, n_ticks, horiz, fmin=None, fmax=None, **_kwargs):
+    '''Mel-scaled axes'''
 
-        plt.ylabel('Hz')
+    n, ticker, labeler = __get_shape_artists(data, horiz)
 
-    elif y_axis is 'mel':
-        m_args = {}
-        if fmin is not None:
-            m_args['fmin'] = fmin
-        if fmax is not None:
-            m_args['fmax'] = fmax
+    positions = np.linspace(0, n-1, n_ticks).astype(int)
 
-        # only two star-args here, defined immediately above
-        # pylint: disable=star-args
-        values = librosa.core.mel_frequencies(n_mels=data.shape[0], extra=True,
-                                              **m_args)[positions].astype(int)
-        plt.yticks(positions, values)
-        plt.ylabel('Hz')
+    kwargs = {}
 
-    elif y_axis is 'cqt_hz':
-        if fmin is None:
-            raise ValueError('fmin must be supplied for CQT display')
+    if fmin is not None:
+        kwargs['fmin'] = fmin
 
-        positions = np.arange(0, data.shape[0],
-                              np.ceil(float(data.shape[0]) / n_yticks),
-                              dtype=int)
+    if fmax is not None:
+        kwargs['fmax'] = fmax
 
-        # Get frequencies
-        values = librosa.core.cqt_frequencies(data.shape[0], fmin=fmin,
-                                              bins_per_octave=bins_per_octave)
-        plt.yticks(positions, values[positions].astype(int))
-        plt.ylabel('Hz')
+    # only two star-args here, defined immediately above
+    # pylint: disable=star-args
+    values = core.mel_frequencies(n_mels=n+2, **kwargs)[positions]
+    ticker(positions, values.astype(int))
+    labeler('Hz')
 
-    elif y_axis is 'cqt_note':
-        if fmin is None:
-            raise ValueError('fmin must be supplied for CQT display')
 
-        positions = np.arange(0, data.shape[0],
-                              np.ceil(float(data.shape[0]) / n_yticks),
-                              dtype=int)
+def __axis_chroma(data, n_ticks, horiz, bins_per_octave=12, **_kwargs):
+    '''Chroma axes'''
 
-        # Get frequencies
-        values = librosa.core.cqt_frequencies(data.shape[0], fmin=fmin,
-                                              bins_per_octave=bins_per_octave)
-        values = values[positions]
-        values = librosa.core.midi_to_note(librosa.core.hz_to_midi(values))
+    n, ticker, labeler = __get_shape_artists(data, horiz)
 
-        plt.yticks(positions, values)
-        plt.ylabel('Note')
+    # Generate the template positions: C D E F G A B
+    pos = np.asarray([0, 2, 4, 5, 7, 9, 11]) * bins_per_octave // 12
 
-    elif y_axis is 'chroma':
-        positions = np.arange(0,
-                              data.shape[0],
-                              max(1, float(data.shape[0]) / 12))
+    n_octaves = np.ceil(n / float(bins_per_octave))
 
-        # Labels start at 9 here because chroma starts at A.
-        values = librosa.core.midi_to_note(np.arange(9, 9+12), octave=False)
-        plt.yticks(positions, values)
-        plt.ylabel('Pitch class')
+    positions = pos.copy()
+    for i in range(1, int(n_octaves)):
+        positions = np.append(positions, pos + i * bins_per_octave, axis=0)
 
-    elif y_axis is None or y_axis is 'off':
-        plt.yticks([])
-        plt.ylabel('')
+    values = core.midi_to_note(positions * 12 // bins_per_octave, octave=False)
+    ticker(positions[:n], values[:n])
+    labeler('Pitch class')
 
+
+def __axis_linear(data, n_ticks, horiz, sr=22050, **_kwargs):
+    '''Linear frequency axes'''
+
+    n, ticker, labeler = __get_shape_artists(data, horiz)
+
+    positions = np.linspace(0, n - 1, n_ticks, endpoint=True).astype(int)
+    values = (sr * np.linspace(0, 0.5, n_ticks, endpoint=True)).astype(int)
+
+    ticker(positions, values)
+    labeler('Hz')
+
+
+def __axis_cqt(data, n_ticks, horiz, note=False, fmin=None,
+               bins_per_octave=12, **_kwargs):
+    '''CQT axes'''
+    if fmin is None:
+        fmin = core.note_to_hz('C2')
+
+    n, ticker, labeler = __get_shape_artists(data, horiz)
+
+    positions = np.linspace(0, n-1, num=n_ticks, endpoint=True).astype(int)
+
+    values = core.cqt_frequencies(n + 1,
+                                  fmin=fmin,
+                                  bins_per_octave=bins_per_octave)
+
+    if note:
+        values = core.hz_to_note(values[positions])
+        label = 'Note'
     else:
-        raise ValueError('Unknown y_axis parameter: {:s}'.format(y_axis))
+        values = values[positions].astype(int)
+        label = 'Hz'
 
-    # Set up the x ticks
-    positions = np.asarray(np.linspace(0, data.shape[1], n_xticks), dtype=int)
+    ticker(positions, values)
+    labeler(label)
 
-    if x_axis is 'time':
-        time_ticks(positions,
-                   librosa.core.frames_to_time(positions, sr=sr,
-                                               hop_length=hop_length),
-                   n_ticks=None, axis='x')
 
-        plt.xlabel('Time')
+def __axis_cqt_hz(*args, **kwargs):
+    '''CQT in Hz'''
+    kwargs['note'] = False
+    __axis_cqt(*args, **kwargs)
 
-    elif x_axis is 'frames':
-        # Nothing to do here, plot is in frames
-        plt.xticks(positions, positions)
-        plt.xlabel('Frames')
 
-    elif x_axis is None or x_axis is 'off':
-        plt.xticks([])
-        plt.xlabel('')
+def __axis_cqt_note(*args, **kwargs):
+    '''CQT in notes'''
+    kwargs['note'] = True
+    __axis_cqt(*args, **kwargs)
 
+
+def __axis_time(data, n_ticks, horiz, sr=22050, hop_length=512, **_kwargs):
+    '''Time axes'''
+    n, ticker, labeler = __get_shape_artists(data, horiz)
+
+    if horiz:
+        axis = 'x'
     else:
-        raise ValueError('Unknown x_axis parameter: {:s}'.format(x_axis))
+        axis = 'y'
 
-    return axes
+    positions = np.linspace(0, n-1, n_ticks, endpoint=True).astype(int)
+
+    time_ticks(positions,
+               core.frames_to_time(positions, sr=sr, hop_length=hop_length),
+               n_ticks=None, axis=axis)
+
+    labeler('Time')
+
+
+def __axis_lag(data, n_ticks, horiz, sr=22050, hop_length=512, **_kwargs):
+    '''Lag axes'''
+    n, ticker, labeler = __get_shape_artists(data, horiz)
+
+    if horiz:
+        axis = 'x'
+    else:
+        axis = 'y'
+
+    positions = np.linspace(0, n-1, n_ticks, endpoint=True).astype(int)
+    times = core.frames_to_time(positions, sr=sr, hop_length=hop_length)
+    times[positions >= n//2] -= times[-1]
+
+    time_ticks(positions, times, n_ticks=None, axis=axis)
+
+    labeler('Lag')
+
+
+def __axis_tonnetz(data, n_ticks, horiz, **_kwargs):
+    '''Chroma axes'''
+
+    n, ticker, labeler = __get_shape_artists(data, horiz)
+
+    positions = np.arange(6)
+
+    values = [r'5$_x$', r'5$_y$',
+              r'm3$_x$', r'm3$_y$',
+              r'M3$_x$', r'M3$_y$']
+
+    ticker(positions, values)
+    labeler('Tonnetz')
+
+
+def __axis_frames(data, n_ticks, horiz, label='Frames', **_kwargs):
+    '''Frame axes'''
+    n, ticker, labeler = __get_shape_artists(data, horiz)
+
+    positions = np.linspace(0, n-1, n_ticks, endpoint=True).astype(int)
+
+    ticker(positions, positions)
+    labeler(label)
 
 
 def __log_scale(n):
     '''Return a log-scale mapping of bins 0..n, and its inverse.
 
-    :parameters:
-      - n : int > 0
-          Number of bins
+    Parameters
+    ----------
+    n : int > 0
+        Number of bins
 
-    :returns:
-      - y   : np.ndarray, shape=(n,)
+    Returns
+    -------
+    y   : np.ndarray, shape=(n,)
 
-      - y_inv   : np.ndarray, shape=(n,)
+    y_inv   : np.ndarray, shape=(n+1,)
     '''
 
     logn = np.log2(n)
-    y = n * (1 - 2.0**np.linspace(-logn, 0, n, endpoint=True))[::-1]
+    y = n * (1 - np.logspace(-logn, 0, n, base=2, endpoint=True))[::-1]
     y = y.astype(int)
 
-    y_inv = np.arange(len(y)+1)
+    y_inv = np.arange(len(y))
     for i in range(len(y)-1):
         y_inv[y[i]:y[i+1]] = i
 

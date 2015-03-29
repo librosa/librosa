@@ -1,36 +1,96 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Commonly used filter banks: DCT, Chroma, Mel, CQT"""
+"""Functions to construct and manipulate filterbanks
+
+Filter banks
+============
+.. autosummary::
+    :toctree: generated/
+
+    dct
+    mel
+    constant_q
+
+Miscellanous
+============
+.. autosummary::
+    :toc:tree: generated/
+
+    constant_q_lengths
+    cq_to_chroma
+    window_bandwidth
+
+Deprecated
+==========
+.. autosummary::
+    :toc:tree: generated/
+
+    logfrequency
+"""
 
 import numpy as np
+import scipy
 import scipy.signal
-import librosa
+import warnings
+
 from . import cache
+from . import util
+
+from .core.time_frequency import note_to_hz, hz_to_midi, hz_to_octs
+from .core.time_frequency import fft_frequencies, mel_frequencies
+
+# Dictionary of window function bandwidths
+WINDOW_BANDWIDTHS = dict(hann=0.725)
+
+__all__ = ['dct',
+           'mel',
+           'chroma',
+           'constant_q',
+           'constant_q_lengths',
+           'cq_to_chroma',
+           'window_bandwidth',
+           # Deprecated
+           'logfrequency',
+           ]
 
 
 @cache
 def dct(n_filters, n_input):
     """Discrete cosine transform (DCT type-III) basis.
 
-    .. seealso:: http://en.wikipedia.org/wiki/Discrete_cosine_transform
+    .. [1] http://en.wikipedia.org/wiki/Discrete_cosine_transform
 
-    :usage:
-        >>> # Compute MFCCs
-        >>> S           = librosa.melspectrogram(y, sr)
-        >>> dct_filters = librosa.filters.dct(13, S.shape[0])
-        >>> mfcc        = dct_filters.dot(librosa.logamplitude(S))
+    Parameters
+    ----------
+    n_filters : int > 0 [scalar]
+        number of output components (DCT filters)
 
-    :parameters:
-      - n_filters : int > 0 [scalar]
-          number of output components (DCT filters)
+    n_input : int > 0 [scalar]
+        number of input components (frequency bins)
 
-      - n_input : int > 0 [scalar]
-          number of input components (frequency bins)
+    Returns
+    -------
+    dct_basis: np.ndarray [shape=(n_filters, n_input)]
+        DCT (type-III) basis vectors [1]_
 
-    :returns:
-      - dct_basis: np.ndarray [shape=(n_filters, n_input)]
-          DCT (type-III) basis vectors
+    Examples
+    --------
+    >>> n_fft = 2048
+    >>> dct_filters = librosa.filters.dct(13, 1 + n_fft // 2)
+    >>> dct_filters
+    array([[ 0.031,  0.031, ...,  0.031,  0.031],
+           [ 0.044,  0.044, ..., -0.044, -0.044],
+           ..., 
+           [ 0.044,  0.044, ..., -0.044, -0.044],
+           [ 0.044,  0.044, ...,  0.044,  0.044]])
 
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> librosa.display.specshow(dct_filters, x_axis='linear')
+    >>> plt.ylabel('DCT function')
+    >>> plt.title('DCT filter bank')
+    >>> plt.colorbar()
+    >>> plt.tight_layout()
     """
 
     basis = np.empty((n_filters, n_input))
@@ -48,35 +108,60 @@ def dct(n_filters, n_input):
 def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
     """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins
 
-    :usage:
-        >>> mel_fb = librosa.filters.mel(22050, 2048)
+    Parameters
+    ----------
+    sr        : int > 0 [scalar]
+        sampling rate of the incoming signal
 
-        >>> # Or clip the maximum frequency to 8KHz
-        >>> mel_fb = librosa.filters.mel(22050, 2048, fmax=8000)
+    n_fft     : int > 0 [scalar]
+        number of FFT components
 
-    :parameters:
-      - sr        : int > 0 [scalar]
-          sampling rate of the incoming signal
+    n_mels    : int > 0 [scalar]
+        number of Mel bands to generate
 
-      - n_fft     : int > 0 [scalar]
-          number of FFT components
+    fmin      : float >= 0 [scalar]
+        lowest frequency (in Hz)
 
-      - n_mels    : int > 0 [scalar]
-          number of Mel bands to generate
+    fmax      : float >= 0 [scalar]
+        highest frequency (in Hz).
+        If `None`, use `fmax = sr / 2.0`
 
-      - fmin      : float >= 0 [scalar]
-          lowest frequency (in Hz)
+    htk       : bool [scalar]
+        use HTK formula instead of Slaney
 
-      - fmax      : float >= 0 [scalar]
-          highest frequency (in Hz).
-          If ``None``, use ``fmax = sr / 2.0``
+    Returns
+    -------
+    M         : np.ndarray [shape=(n_mels, 1 + n_fft/2)]
+        Mel transform matrix
 
-      - htk       : bool [scalar]
-          use HTK formula instead of Slaney
+    Examples
+    --------
+    >>> melfb = librosa.filters.mel(22050, 2048)
+    >>> melfb
+    array([[ 0.   ,  0.016, ...,  0.   ,  0.   ],
+           [ 0.   ,  0.   , ...,  0.   ,  0.   ],
+           ..., 
+           [ 0.   ,  0.   , ...,  0.   ,  0.   ],
+           [ 0.   ,  0.   , ...,  0.   ,  0.   ]])
 
-    :returns:
-      - M         : np.ndarray [shape=(n_mels, 1 + n_fft/2)]
-          Mel transform matrix
+
+    Clip the maximum frequency to 8KHz
+
+    >>> librosa.filters.mel(22050, 2048, fmax=8000)
+    array([[ 0.  ,  0.02, ...,  0.  ,  0.  ],
+           [ 0.  ,  0.  , ...,  0.  ,  0.  ],
+           ..., 
+           [ 0.  ,  0.  , ...,  0.  ,  0.  ],
+           [ 0.  ,  0.  , ...,  0.  ,  0.  ]])
+
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> librosa.display.specshow(melfb, x_axis='linear')
+    >>> plt.ylabel('Mel filter')
+    >>> plt.title('Mel filter bank')
+    >>> plt.colorbar()
+    >>> plt.tight_layout()
     """
 
     if fmax is None:
@@ -84,17 +169,16 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
 
     # Initialize the weights
     n_mels = int(n_mels)
-    weights = np.zeros((n_mels, int(1 + n_fft / 2)))
+    weights = np.zeros((n_mels, int(1 + n_fft // 2)))
 
     # Center freqs of each FFT bin
-    fftfreqs = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
+    fftfreqs = fft_frequencies(sr=sr, n_fft=n_fft)
 
     # 'Center freqs' of mel bands - uniformly spaced between limits
-    freqs = librosa.mel_frequencies(n_mels,
-                                    fmin=fmin,
-                                    fmax=fmax,
-                                    htk=htk,
-                                    extra=True)
+    freqs = mel_frequencies(n_mels + 2,
+                            fmin=fmin,
+                            fmax=fmax,
+                            htk=htk)
 
     # Slaney-style mel is scaled to be approx constant energy per channel
     enorm = 2.0 / (freqs[2:n_mels+2] - freqs[:n_mels])
@@ -111,43 +195,86 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
 
 
 @cache
-def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=2):
+def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0,
+           octwidth=2, norm=2, base_c=True):
     """Create a Filterbank matrix to convert STFT to chroma
 
-    :usage:
-        >>> # Build a simple chroma filter bank
-        >>> chroma_fb   = librosa.filters.chroma(22050, 4096)
 
-        >>> # Use quarter-tones instead of semitones
-        >>> chroma_fbq  = librosa.filters.chroma(22050, 4096, n_chroma=24)
+    Parameters
+    ----------
+    sr        : int > 0 [scalar]
+        audio sampling rate
 
-        >>> # Equally weight all octaves
-        >>> chroma_fb   = librosa.filters.chroma(22050, 4096, octwidth=None)
+    n_fft     : int > 0 [scalar]
+        number of FFT bins
 
-    :parameters:
-      - sr        : int > 0 [scalar]
-          audio sampling rate
+    n_chroma  : int > 0 [scalar]
+        number of chroma bins
 
-      - n_fft     : int > 0 [scalar]
-          number of FFT bins
+    A440      : float > 0 [scalar]
+        Reference frequency for A440
 
-      - n_chroma  : int > 0 [scalar]
-          number of chroma bins
+    ctroct    : float > 0 [scalar]
 
-      - A440      : float > 0 [scalar]
-          Reference frequency for A440
+    octwidth  : float > 0 or None [scalar]
+        `ctroct` and `octwidth` specify a dominance window -
+        a Gaussian weighting centered on `ctroct` (in octs, A0 = 27.5Hz)
+        and with a gaussian half-width of `octwidth`.
+        Set `octwidth` to `None` to use a flat weighting.
 
-      - ctroct    : float > 0 [scalar]
+    norm : float > 0 or np.inf
+        Normalization factor for each filter
 
-      - octwidth  : float > 0 or None [scalar]
-          ``ctroct`` and ``octwidth`` specify a dominance window -
-          a Gaussian weighting centered on ``ctroct`` (in octs, A0 = 27.5Hz)
-          and with a gaussian half-width of ``octwidth``.
-          Set ``octwidth`` to ``None`` to use a flat weighting.
+    base_c : bool
+        If True, the filter bank will start at 'C'.
+        If False, the filter bank will start at 'A'.
+    Returns
+    -------
+    wts : ndarray [shape=(n_chroma, 1 + n_fft / 2)]
+        Chroma filter matrix
 
-    :returns:
-      - wts       : ndarray [shape=(n_chroma, 1 + n_fft / 2)]
-          Chroma filter matrix
+    See Also
+    --------
+    util.normalize
+    feature.chroma_stft
+
+    Examples
+    --------
+    Build a simple chroma filter bank
+
+    >>> chromafb = librosa.filters.chroma(22050, 4096)
+    array([[  1.689e-05,   3.024e-04, ...,   4.639e-17,   5.327e-17],
+           [  1.716e-05,   2.652e-04, ...,   2.674e-25,   3.176e-25],
+    ...,
+           [  1.578e-05,   3.619e-04, ...,   8.577e-06,   9.205e-06],
+           [  1.643e-05,   3.355e-04, ...,   1.474e-10,   1.636e-10]])
+
+    Use quarter-tones instead of semitones
+
+    >>> librosa.filters.chroma(22050, 4096, n_chroma=24)
+    array([[  1.194e-05,   2.138e-04, ...,   6.297e-64,   1.115e-63],
+           [  1.206e-05,   2.009e-04, ...,   1.546e-79,   2.929e-79],
+    ...,
+           [  1.162e-05,   2.372e-04, ...,   6.417e-38,   9.923e-38],
+           [  1.180e-05,   2.260e-04, ...,   4.697e-50,   7.772e-50]])
+
+
+    Equally weight all octaves
+
+    >>> librosa.filters.chroma(22050, 4096, octwidth=None)
+    array([[  3.036e-01,   2.604e-01, ...,   2.445e-16,   2.809e-16],
+           [  3.084e-01,   2.283e-01, ...,   1.409e-24,   1.675e-24],
+    ...,
+           [  2.836e-01,   3.116e-01, ...,   4.520e-05,   4.854e-05],
+           [  2.953e-01,   2.888e-01, ...,   7.768e-10,   8.629e-10]])
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> librosa.display.specshow(chromafb, x_axis='linear')
+    >>> plt.ylabel('Chroma filter')
+    >>> plt.title('Chroma filter bank')
+    >>> plt.colorbar()
+    >>> plt.tight_layout()
     """
 
     wts = np.zeros((n_chroma, n_fft))
@@ -155,7 +282,7 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=2):
     # Get the FFT bins, not counting the DC component
     frequencies = np.linspace(0, sr, n_fft, endpoint=False)[1:]
 
-    frqbins = n_chroma * librosa.hz_to_octs(frequencies, A440)
+    frqbins = n_chroma * hz_to_octs(frequencies, A440)
 
     # make up a value for the 0 Hz bin = 1.5 octaves below bin 1
     # (so chroma is 50% rotated from bin 1, and bin width is broad)
@@ -170,14 +297,14 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=2):
 
     # Project into range -n_chroma/2 .. n_chroma/2
     # add on fixed offset of 10*n_chroma to ensure all values passed to
-    # rem are +ve
+    # rem are positive
     D = np.remainder(D + n_chroma2 + 10*n_chroma, n_chroma) - n_chroma2
 
     # Gaussian bumps - 2*D to make them narrower
     wts = np.exp(-0.5 * (2*D / np.tile(binwidthbins, (n_chroma, 1)))**2)
 
     # normalize each column
-    wts = librosa.util.normalize(wts, norm=2, axis=0)
+    wts = util.normalize(wts, norm=norm, axis=0)
 
     # Maybe apply scaling for fft bins
     if octwidth is not None:
@@ -185,59 +312,92 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0, octwidth=2):
             np.exp(-0.5 * (((frqbins/n_chroma - ctroct)/octwidth)**2)),
             (n_chroma, 1))
 
+    if base_c:
+        wts = np.roll(wts, -3, axis=0)
+
     # remove aliasing columns, copy to ensure row-contiguity
     return np.ascontiguousarray(wts[:, :int(1 + n_fft/2)])
 
 
-@cache
+@util.decorators.deprecated('0.4', '0.5')
 def logfrequency(sr, n_fft, n_bins=84, bins_per_octave=12, tuning=0.0,
-                 fmin=None, spread=0.125):
-    '''Approximate a constant-Q filterbank for a fixed-window STFT.
+                 fmin=None, spread=0.125):  # pragma: no cover
+    '''Approximate a constant-Q filter bank for a fixed-window STFT.
 
     Each filter is a log-normal window centered at the corresponding frequency.
 
-    :usage:
-        >>> # Simple log frequency filters
-        >>> logfs_fb = librosa.filters.logfrequency(22050, 4096)
+    .. warning:: Deprecated in librosa 0.4
 
-        >>> # Use a narrower frequency range
-        >>> logfs_fb = librosa.filters.logfrequency(22050, 4096,
-                                                    n_bins=48, fmin=110)
+    Parameters
+    ----------
+    sr : int > 0 [scalar]
+        audio sampling rate
 
-        >>> # Use narrower filters for sparser response: 5% of a semitone
-        >>> logfs_fb = librosa.filters.logfrequency(22050, 4096, spread=0.05)
-        >>> # Or wider: 50% of a semitone
-        >>> logfs_fb = librosa.filters.logfrequency(22050, 4096, spread=0.5)
+    n_fft : int > 0 [scalar]
+        FFT window size
 
-    :parameters:
-      - sr : int > 0 [scalar]
-          audio sampling rate
+    n_bins : int > 0 [scalar]
+        Number of bins.  Defaults to 84 (7 octaves).
 
-      - n_fft : int > 0 [scalar]
-          FFT window size
+    bins_per_octave : int > 0 [scalar]
+        Number of bins per octave. Defaults to 12 (semitones).
 
-      - n_bins : int > 0 [scalar]
-          Number of bins.  Defaults to 84 (7 octaves).
+    tuning : None or float in `[-0.5, +0.5]` [scalar]
+        Tuning correction parameter, in fractions of a bin.
 
-      - bins_per_octave : int > 0 [scalar]
-          Number of bins per octave. Defaults to 12 (semitones).
+    fmin : float > 0 [scalar]
+        Minimum frequency bin. Defaults to `C2 ~= 32.70`
 
-      - tuning : None or float in ``[-0.5, +0.5]`` [scalar]
-          Tuning correction parameter, in fractions of a bin.
+    spread : float > 0 [scalar]
+        Spread of each filter, as a fraction of a bin.
 
-      - fmin : float > 0 [scalar]
-          Minimum frequency bin. Defaults to ``C2 ~= 32.70``
+    Returns
+    -------
+    C : np.ndarray [shape=(n_bins, 1 + n_fft/2)]
+        log-frequency filter bank.
 
-      - spread : float > 0 [scalar]
-          Spread of each filter, as a fraction of a bin.
+    Examples
+    --------
+    Simple log frequency filters
 
-    :returns:
-      - C : np.ndarray [shape=(n_bins, 1 + n_fft/2)]
-          log-frequency filter bank.
+    >>> logfb = librosa.filters.logfrequency(22050, 4096)
+    >>> logfb
+    array([[ 0.,  0., ...,  0.,  0.],
+           [ 0.,  0., ...,  0.,  0.],
+    ...,
+           [ 0.,  0., ...,  0.,  0.],
+           [ 0.,  0., ...,  0.,  0.]])
+
+
+    Use a narrower frequency range
+
+    >>> librosa.filters.logfrequency(22050, 4096, n_bins=48, fmin=110)
+    array([[ 0.,  0., ...,  0.,  0.],
+           [ 0.,  0., ...,  0.,  0.],
+    ...,
+           [ 0.,  0., ...,  0.,  0.],
+           [ 0.,  0., ...,  0.,  0.]])
+
+
+    Use narrower filters for sparser response: 5% of a semitone
+
+    >>> librosa.filters.logfrequency(22050, 4096, spread=0.05)
+
+    Or wider: 50% of a semitone
+
+    >>> librosa.filters.logfrequency(22050, 4096, spread=0.5)
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> librosa.display.specshow(logfb, x_axis='linear')
+    >>> plt.ylabel('Logarithmic filters')
+    >>> plt.title('Log-frequency filter bank')
+    >>> plt.colorbar()
+    >>> plt.tight_layout()
     '''
 
     if fmin is None:
-        fmin = librosa.midi_to_hz(librosa.note_to_midi('C2'))
+        fmin = note_to_hz('C2')
 
     # Apply tuning correction
     correction = 2.0**(float(tuning) / bins_per_octave)
@@ -249,7 +409,7 @@ def logfrequency(sr, n_fft, n_bins=84, bins_per_octave=12, tuning=0.0,
     basis = np.zeros((n_bins, int(1 + n_fft/2)))
 
     # Get log frequencies of bins
-    log_freqs = np.log2(librosa.fft_frequencies(sr, n_fft)[1:])
+    log_freqs = np.log2(fft_frequencies(sr, n_fft)[1:])
 
     for i in range(n_bins):
         # What's the center (median) frequency of this filter?
@@ -260,72 +420,240 @@ def logfrequency(sr, n_fft, n_bins=84, bins_per_octave=12, tuning=0.0,
                               - np.log2(sigma) - log_freqs)
 
     # Normalize the filters
-    basis = librosa.util.normalize(basis, norm=2, axis=1)
+    basis = util.normalize(basis, norm=1, axis=1)
 
     return basis
 
 
+def __float_window(window_function):
+    '''Decorator function for windows with fractional input.
+
+    This function guarantees that for fractional `x`, the following hold:
+
+    1. `__float_window(window_function)(x)` has length `np.ceil(x)`
+    2. all values from `np.floor(x)` are set to 0.
+
+    For integer-valued `x`, there should be no change in behavior.
+    '''
+
+    def _wrap(n, *args, **kwargs):
+        '''The wrapped window'''
+        n_min, n_max = int(np.floor(n)), int(np.ceil(n))
+
+        window = window_function(n, *args, **kwargs)
+
+        if len(window) < n_max:
+            window = np.pad(window, [(0, n_max - len(window))],
+                            mode='constant')
+
+        window[n_min:] = 0.0
+
+        return window
+
+    return _wrap
+
+
 @cache
 def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
-               window=None, resolution=2, pad=False, **kwargs):
+               window=None, resolution=2, pad_fft=True, norm=1, **kwargs):
     r'''Construct a constant-Q basis.
 
-    :usage:
-        >>> # Change the windowing function to Hamming instead of Hann
-        >>> basis   = librosa.filters.constant_q(22050, window=np.hamming)
+    This uses the filter bank described by [1]_.
 
-        >>> # Use a longer window for each filter
-        >>> basis   = librosa.filters.constant_q(22050, resolution=3)
+    .. [1] McVicar, Matthew.
+            "A machine learning approach to automatic chord extraction."
+            Dissertation, University of Bristol. 2013.
 
-        >>> # Pad the basis to fixed length
-        >>> basis   = librosa.filters.constant_q(22050, pad=True)
 
-    :parameters:
-      - sr : int > 0 [scalar]
-          Audio sampling rate
+    Parameters
+    ----------
+    sr : int > 0 [scalar]
+        Audio sampling rate
 
-      - fmin : float > 0 [scalar]
-          Minimum frequency bin. Defaults to ``C2 ~= 32.70``
+    fmin : float > 0 [scalar]
+        Minimum frequency bin. Defaults to `C2 ~= 32.70`
 
-      - n_bins : int > 0 [scalar]
-          Number of frequencies.  Defaults to 7 octaves (84 bins).
+    n_bins : int > 0 [scalar]
+        Number of frequencies.  Defaults to 7 octaves (84 bins).
 
-      - bins_per_octave : int > 0 [scalar]
-          Number of bins per octave
+    bins_per_octave : int > 0 [scalar]
+        Number of bins per octave
 
-      - tuning : float in ``[-0.5, +0.5)`` [scalar]
-          Tuning deviation from A440 in fractions of a bin
+    tuning : float in `[-0.5, +0.5)` [scalar]
+        Tuning deviation from A440 in fractions of a bin
 
-      - window : function or ``None``
-          Windowing function to apply to filters.
-          If ``None``, no window is applied.
-          Default: ``scipy.signal.hann``
+    window : function or `None`
+        Windowing function to apply to filters.
+        Default: `scipy.signal.hann`
 
-      - resolution : float > 0 [scalar]
-          Resolution of filter windows. Larger values use longer windows.
+    resolution : float > 0 [scalar]
+        Resolution of filter windows. Larger values use longer windows.
 
-      - pad : boolean
-          Pad all filters to have constant width (equal to the longest filter).
-          By default, padding is done with zeros, but this can be overridden
-          by setting the ``mode=`` field in *kwargs*.
+    pad_fft : boolean
+        Center-pad all filters up to the nearest integral power of 2.
 
-      - *kwargs*
-          Additional keyword arguments to ``np.pad()`` when ``pad==True``.
+        By default, padding is done with zeros, but this can be overridden
+        by setting the `mode=` field in *kwargs*.
 
-      .. note::
-        - McVicar, Matthew. "A machine learning approach to automatic chord
-          extraction." Dissertation, University of Bristol. 2013.
+    norm : {inf, -inf, 0, float > 0}
+        Type of norm to use for basis function normalization.
+        See librosa.util.normalize
 
-    :returns:
-      - filters : list of np.ndarray, ``len(filters) == n_bins``
-          ``filters[i]`` is ``i``\ th CQT basis filter (in the time-domain)
+    kwargs : additional keyword arguments
+        Arguments to `np.pad()` when `pad==True`.
+
+
+    Returns
+    -------
+    filters : np.ndarray, `len(filters) == n_bins`
+        `filters[i]` is `i`\ th time-domain CQT basis filter
+
+    lengths : np.ndarray, `len(lengths) == n_bins`
+        The (fractional) length of each filter
+
+    See Also
+    --------
+    constant_q_lengths
+    librosa.core.cqt
+    librosa.util.normalize
+
+
+    Examples
+    --------
+    Use a longer window for each filter
+
+    >>> basis, lengths = librosa.filters.constant_q(22050, resolution=3)
+
+    Plot one octave of filters in time and frequency
+
+    >>> basis, lengths = librosa.filters.constant_q(22050)
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure(figsize=(10, 6))
+    >>> plt.subplot(2, 1, 1)
+    >>> notes = librosa.midi_to_note(np.arange(24, 24 + len(basis)))
+    >>> for i, (f, n) in enumerate(zip(basis, notes)[:12]):
+    ...     f_scale = librosa.util.normalize(f) / 2
+    ...     plt.plot(i + f_scale.real)
+    ...     plt.plot(i + f_scale.imag, linestyle=':')
+    >>> plt.axis('tight')
+    >>> plt.yticks(range(len(notes[:12])), notes[:12])
+    >>> plt.ylabel('CQ filters')
+    >>> plt.title('CQ filters (one octave, time domain)')
+    >>> plt.xlabel('Time (samples at 22050 Hz)')
+    >>> plt.legend(['Real', 'Imaginary'], frameon=True, framealpha=0.8)
+    >>> plt.subplot(2, 1, 2)
+    >>> F = np.abs(np.fft.fftn(basis, axes=[-1]))
+    >>> # Keep only the positive frequencies
+    >>> F = F[:, :(1 + F.shape[1] // 2)]
+    >>> librosa.display.specshow(F, x_axis='linear')
+    >>> plt.yticks(range(len(notes))[::12], notes[::12])
+    >>> plt.ylabel('CQ filters')
+    >>> plt.title('CQ filter magnitudes (frequency domain)')
+    >>> plt.tight_layout()
     '''
 
     if fmin is None:
-        fmin = librosa.midi_to_hz(librosa.note_to_midi('C2'))
+        fmin = note_to_hz('C2')
 
     if window is None:
         window = scipy.signal.hann
+
+    # Pass-through parameters to get the filter lengths
+    lengths = constant_q_lengths(sr, fmin,
+                                 n_bins=n_bins,
+                                 bins_per_octave=bins_per_octave,
+                                 tuning=tuning,
+                                 window=window,
+                                 resolution=resolution)
+
+    # Apply tuning correction
+    correction = 2.0**(float(tuning) / bins_per_octave)
+    fmin = correction * fmin
+
+    # Q should be capitalized here, so we suppress the name warning
+    # pylint: disable=invalid-name
+    Q = float(resolution) / (2.0**(1. / bins_per_octave) - 1)
+
+    # Convert lengths back to frequencies
+    freqs = Q * sr / lengths
+
+    # Build the filters
+    filters = []
+    for ilen, freq in zip(lengths, freqs):
+        # Build the filter: note, length will be ceil(ilen)
+        sig = np.exp(np.arange(ilen, dtype=float) * 1j * 2 * np.pi * freq / sr)
+
+        # Apply the windowing function
+        sig = sig * __float_window(window)(ilen)
+
+        # Normalize
+        sig = util.normalize(sig, norm=norm)
+
+        filters.append(sig)
+
+    # Pad and stack
+    max_len = max(lengths)
+    if pad_fft:
+        max_len = int(2.0**(np.ceil(np.log2(max_len))))
+    else:
+        max_len = np.ceil(max_len)
+
+    filters = np.asarray([util.pad_center(filt, max_len, **kwargs)
+                          for filt in filters])
+
+    return filters, np.asarray(lengths)
+
+
+@cache
+def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
+                       tuning=0.0, window='hann', resolution=2):
+    r'''Return length of each filter in a constant-Q basis.
+
+    Parameters
+    ----------
+    sr : int > 0 [scalar]
+        Audio sampling rate
+
+    fmin : float > 0 [scalar]
+        Minimum frequency bin.
+
+    n_bins : int > 0 [scalar]
+        Number of frequencies.  Defaults to 7 octaves (84 bins).
+
+    bins_per_octave : int > 0 [scalar]
+        Number of bins per octave
+
+    tuning : float in `[-0.5, +0.5)` [scalar]
+        Tuning deviation from A440 in fractions of a bin
+
+    window : str or callable
+        Window function to use on filters
+
+    resolution : float > 0 [scalar]
+        Resolution of filter windows. Larger values use longer windows.
+
+    Returns
+    -------
+    lengths : np.ndarray
+        The length of each filter.
+
+    See Also
+    --------
+    constant_q
+    librosa.core.cqt
+    '''
+
+    if fmin <= 0:
+        raise ValueError('fmin must be a positive number')
+
+    if bins_per_octave <= 0:
+        raise ValueError('bins_per_octave must be a positive number')
+
+    if resolution <= 0:
+        raise ValueError('resolution must be a positive number')
+
+    if n_bins <= 0 or not isinstance(n_bins, int):
+        raise ValueError('n_bins must be a positive integer')
 
     correction = 2.0**(float(tuning) / bins_per_octave)
 
@@ -335,76 +663,103 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     # pylint: disable=invalid-name
     Q = float(resolution) / (2.0**(1. / bins_per_octave) - 1)
 
-    filters = []
-    for i in np.arange(n_bins, dtype=float):
-        # Length of this filter
-        ilen = np.ceil(Q * sr / (fmin * 2.0**(i / bins_per_octave)))
+    # Compute the frequencies
+    freq = fmin * 2.0 ** (np.arange(n_bins, dtype=float) / bins_per_octave)
 
-        # Build the filter
-        win = np.exp(Q * 1j * np.linspace(0, 2 * np.pi, ilen, endpoint=False))
+    if np.any(freq * (1 + window_bandwidth(window) / Q) > sr / 2.0):
+        raise ValueError('Filter pass-band lies beyond Nyquist')
 
-        # Apply the windowing function
-        if window is not None:
-            win = win * window(ilen)
+    # Convert frequencies to filter lengths
+    lengths = Q * sr / freq
 
-        # Normalize
-        win = librosa.util.normalize(win, norm=2)
-
-        filters.append(win)
-
-    if pad:
-        max_len = max([len(f) for f in filters])
-
-        # Use reflection padding, unless otherwise specified
-        for i in range(len(filters)):
-            filters[i] = librosa.util.pad_center(filters[i], max_len, **kwargs)
-
-    return filters
+    return lengths
 
 
 @cache
-def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12, roll=0):
+def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
+                 fmin=None, window=None, base_c=True):
     '''Convert a Constant-Q basis to Chroma.
 
-    :usage:
-        >>> # Get a CQT, and wrap bins to chroma
-        >>> CQT         = librosa.cqt(y, sr)
-        >>> chroma_map  = librosa.filters.cq_to_chroma(CQT.shape[0])
-        >>> chromagram  = chroma_map.dot(CQT)
 
-    :parameters:
-      - n_input : int > 0 [scalar]
-          Number of input components (CQT bins)
+    Parameters
+    ----------
+    n_input : int > 0 [scalar]
+        Number of input components (CQT bins)
 
-      - bins_per_octave : int > 0 [scalar]
-          How many bins per octave in the CQT
+    bins_per_octave : int > 0 [scalar]
+        How many bins per octave in the CQT
 
-      - n_chroma : int > 0 [scalar]
-          Number of output bins (per octave) in the chroma
+    n_chroma : int > 0 [scalar]
+        Number of output bins (per octave) in the chroma
 
-      - roll : int [scalar]
-          Number of bins to offset the output by.
-          For example, if the 0-bin of the CQT is C, and
-          the desired 0-bin for the chroma is A, then roll=-3.
+    fmin : None or float > 0
+        Center frequency of the first constant-Q channel.
+        Default: 'C2' ~= 32.7 Hz
 
-    :returns:
-      - cq_to_chroma : np.ndarray [shape=(n_chroma, n_input)]
-          Transformation matrix: ``Chroma = np.dot(cq_to_chroma, CQT)``
+    window : None or np.ndarray
+        If provided, the cq_to_chroma filter bank will be
+        convolved with `window`.
 
-    :raises:
-      - ValueError
-          If ``n_input`` is not an integer multiple of ``n_chroma``
+    base_c : bool
+        If True, the first chroma bin will start at 'C'
+        If False, the first chroma bin will start at 'A'
+
+    Returns
+    -------
+    cq_to_chroma : np.ndarray [shape=(n_chroma, n_input)]
+        Transformation matrix: `Chroma = np.dot(cq_to_chroma, CQT)`
+
+    Raises
+    ------
+    ValueError
+        If `n_input` is not an integer multiple of `n_chroma`
+
+    Examples
+    --------
+    Get a CQT, and wrap bins to chroma
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> CQT = librosa.cqt(y, sr=sr)
+    >>> chroma_map = librosa.filters.cq_to_chroma(CQT.shape[0], roll=-3)
+    >>> chromagram = chroma_map.dot(CQT)
+    >>> # Max-normalize each time step
+    >>> chromagram = librosa.util.normalize(chromagram, axis=0)
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.subplot(3, 1, 1)
+    >>> librosa.display.specshow(librosa.logamplitude(CQT**2,
+    ...                                               ref_power=np.max),
+    ...                          y_axis='cqt_note', x_axis='time')
+    >>> plt.title('CQT Power')
+    >>> plt.colorbar()
+    >>> plt.subplot(3, 1, 2)
+    >>> librosa.display.specshow(chromagram, y_axis='chroma', x_axis='time')
+    >>> plt.title('Chroma (wrapped CQT)')
+    >>> plt.colorbar()
+    >>> plt.subplot(3, 1, 3)
+    >>> chroma = librosa.feature.chromagram(y=y, sr=sr)
+    >>> librosa.display.specshow(chroma, y_axis='chroma', x_axis='time')
+    >>> plt.title('librosa.feature.chroma')
+    >>> plt.colorbar()
+    >>> plt.tight_layout()
+
     '''
 
     # How many fractional bins are we merging?
     n_merge = float(bins_per_octave) / n_chroma
 
+    if fmin is None:
+        fmin = note_to_hz('C2')
+
     if np.mod(n_merge, 1) != 0:
-        raise ValueError('Incompatible CQ merge: input bins \
-        must be an integer multiple of output bins.')
+        raise ValueError('Incompatible CQ merge: input bins must be an '
+                         'integer multiple of output bins.')
 
     # Tile the identity to merge fractional bins
     cq_to_ch = np.repeat(np.eye(n_chroma), n_merge, axis=1)
+
+    # Roll it left to center on the target bin
+    cq_to_ch = np.roll(cq_to_ch, - int(n_merge // 2), axis=1)
 
     # How many octaves are we repeating?
     n_octaves = np.ceil(np.float(n_input) / bins_per_octave)
@@ -412,7 +767,64 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12, roll=0):
     # Repeat and trim
     cq_to_ch = np.tile(cq_to_ch, int(n_octaves))[:, :n_input]
 
+    # What's the note number of the first bin in the CQT?
+    # midi uses 12 bins per octave here
+    midi_0 = np.mod(hz_to_midi(fmin), 12)
+
+    if base_c:
+        # rotate to C
+        roll = midi_0
+    else:
+        # rotate to A
+        roll = midi_0 - 9
+
+    # Adjust the roll in terms of how many chroma we want out
+    # We need to be careful with rounding here
+    roll = int(np.round(roll * (n_chroma / 12.)))
+
     # Apply the roll
-    cq_to_ch = np.roll(cq_to_ch, -roll, axis=0)
+    cq_to_ch = np.roll(cq_to_ch, roll, axis=0).astype(float)
+
+    if window is not None:
+        cq_to_ch = scipy.signal.convolve(cq_to_ch,
+                                         np.atleast_2d(window),
+                                         mode='same')
 
     return cq_to_ch
+
+
+def window_bandwidth(window, default=1.0):
+    '''Get the bandwidth of a window function.
+
+    If the window function is unknown, return a default value.
+
+    Parameters
+    ----------
+    window : callable or string
+        A window function, or the name of a window function.
+        Examples:
+        - scipy.signal.hann
+        - 'boxcar'
+
+    default : float >= 0
+        The default value, if `window` is unknown.
+
+    Returns
+    -------
+    bandwidth : float
+        The bandwidth of the given window function
+
+    See Also
+    --------
+    scipy.signal.windows
+    '''
+
+    if hasattr(window, '__name__'):
+        key = window.__name__
+    else:
+        key = window
+
+    if key not in WINDOW_BANDWIDTHS:
+        warnings.warn("Unknown window function '{:s}'.".format(key))
+
+    return WINDOW_BANDWIDTHS.get(key, default)

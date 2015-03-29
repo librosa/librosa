@@ -1,0 +1,47 @@
+language: python
+
+notifications:
+  email: false
+
+python:
+    - "2.7"
+    - "3.3"
+    - "3.4"
+
+before_install:
+    - sudo apt-get update
+    - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+        wget http://repo.continuum.io/miniconda/Miniconda-3.8.3-Linux-x86_64.sh -O miniconda.sh;
+      else
+        wget http://repo.continuum.io/miniconda/Miniconda3-3.8.3-Linux-x86_64.sh -O miniconda.sh;
+      fi
+    - bash miniconda.sh -b -p $HOME/miniconda
+    - export PATH="$HOME/miniconda/bin:$PATH"
+    - hash -r
+    - sudo apt-get install ffmpeg
+    - pip install python-coveralls
+    - conda config --set always_yes yes --set changeps1 no
+    - conda update -q conda
+    # Useful for debugging any issues with conda
+    - conda config --add channels pypi
+    - conda info -a
+    - deps='pip numpy scipy pandas requests nose coverage numpydoc matplotlib sphinx scikit-learn seaborn'
+    - conda create -q -n test-environment "python=$TRAVIS_PYTHON_VERSION" $deps 
+    - source activate test-environment
+    - apt-get source libsamplerate
+    - pushd libsamplerate-*
+    - ./configure --prefix=$HOME/miniconda/envs/test-environment
+    - make && make install
+    - popd
+
+install:
+    # install your own package into the environment
+    - pip install git+https://github.com/bmcfee/samplerate.git
+    # pip install -e rather than setup.py, so that coverage can find the source
+    - pip install -e ./
+
+script:
+    - nosetests --with-coverage --cover-package=librosa -v -w tests/
+
+after_success:
+    - coveralls

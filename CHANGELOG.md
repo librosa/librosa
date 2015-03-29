@@ -1,6 +1,84 @@
 Changes
 =======
 
+##v0.4.0
+
+Bug fixes
+
+  - Fixed alignment errors with `offset` and `duration` in `load()`
+  - Fixed an edge-padding issue with `decompose.hpss()` which resulted in 
+    percussive noise leaking into the harmonic component.
+  - Fixed stability issues with `ifgram()`, added options to suppress negative frequencies.
+  - Fixed scaling and padding errors in `feature.delta()`
+  - Fixed some errors in `note_to_hz()` string parsing
+  - Added robust range detection for `display.cmap`
+  - Fixed tick placement in `display.specshow`
+  - Fixed a low-frequency filter alignment error in `cqt`
+  - Added aliasing checks for `cqt` filterbanks
+  - Fixed corner cases in `peak_pick`
+  - Fixed bugs in `find_files()` with negative slicing
+  - Fixed tuning estimation errors
+
+New features
+
+  - python 3 compatibility
+  - Deprecation and moved-function warnings
+  - added `norm=None` option to `util.normalize()`
+  - `segment.recurrence_to_lag`, `lag_to_recurrence`
+  - `core.hybrid_cqt()` and `core.pseudo_cqt()`
+  - `segment.timelag_filter`
+  - Efficiency enhancements for `cqt`
+  - Major rewrite and reformatting of documentation
+  - Improvements to `display.specshow`:
+    - added the `lag` axis format
+    - added the `tonnetz` axis format
+    - allow any combination of axis formats
+  - `effects.remix()`
+  - Added new time and frequency converters:
+    - `note_to_hz()`, `hz_to_note()`
+    - `frames_to_samples()`, `samples_to_frames()`
+    - `time_to_samples()`, `samples_to_time()`
+  - `core.zero_crossings`
+  - `util.match_events()`
+  - `segment.subsegment()` for segmentation refinement
+  - Functional examples in almost all docstrings
+  - improved numerical stability in `normalize()`
+  - audio validation checks
+  - `to_mono()`
+  - `librosa.cache` for storing pre-computed features
+  - Stereo output support in `write_wav`
+  - Added new feature extraction functions: 
+    - `feature.spectral_contrast`
+    - `feature.spectral_bandwidth`
+    - `feature.spectral_centroid`
+    - `feature.spectral_rolloff`
+    - `feature.poly_features`
+    - `feature.rmse`
+    - `feature.zero_crossing_rate`
+    - `feature.tonnetz`
+
+
+Other changes
+  - Internal refactoring and restructuring of submodules
+  - Removed the `chord` module
+  - input validation and better exception reporting for most functions
+  - Changed the default colormaps in `display`
+  - Changed default parameters in onset detection, beat tracking
+  - Changed default parameters in `cqt`
+  - `filters.constant_q` now returns filter lengths
+  - Chroma now starts at `C` by default, instead of `A`
+  - `pad_center` supports multi-dimensional input and `axis` parameter
+  - switched from `np.fft` to `scipy.fftpack` for FFT operations
+
+Deprecated functions
+
+  - `util.buf_to_int`
+  - `output.frames_csv`
+  - `segment.structure_feature`
+  - `filters.logfrequency`
+  - `feature.logfsgram`
+
+
 ##v0.3.1
 
 Bug fixes
