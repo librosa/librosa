@@ -38,3 +38,6 @@ pip-log.txt
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Vim
+*.swp

@@ -16,11 +16,6 @@ The *librosa* package is structured as collection of submodules:
     - :ref:`librosa.beat <beat>`
         Functions for estimating tempo and detecting beat events.
 
-    - :ref:`librosa.chord <chord>`
-        This submodule contains a generic class which implements supervised training
-        of Gaussian-emission Hidden Markov Models (HMM) commonly used in chord
-        recognition. 
-
     - :ref:`librosa.core <core>`
         Core functionality includes functions to load audio from disk, compute various
         spectrogram representations, and a variety of commonly used tools for
