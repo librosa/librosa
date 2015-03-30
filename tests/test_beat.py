@@ -32,7 +32,8 @@ def test_onset_strength():
                                               sr=8000,
                                               S=DATA['D'],
                                               centering=False,
-                                              detrend=True)
+                                              detrend=True,
+                                              aggregate=np.mean)
 
         assert np.allclose(onsets[1:], DATA['onsetenv'][0])
 
