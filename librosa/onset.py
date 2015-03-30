@@ -132,7 +132,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     kwargs.setdefault('pre_avg', 0.10*sr//hop_length)       # 100ms
     kwargs.setdefault('post_avg', 0.10*sr//hop_length + 1)  # 100ms
     kwargs.setdefault('wait', 0.03*sr//hop_length)          # 30ms
-    kwargs.setdefault('delta', 0.01)
+    kwargs.setdefault('delta', 0.07)
 
     # Peak pick the onset envelope
     return util.peak_pick(onset_envelope, **kwargs)
