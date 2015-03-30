@@ -176,7 +176,7 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
         Aggregation function to use when combining onsets
         at different frequency bins.
 
-        Default: `np.median`
+        Default: `np.mean`
 
     kwargs : additional keyword arguments
         Additional parameters to `feature()`, if `S` is not provided.
@@ -243,10 +243,10 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
 
     if feature is None:
         feature = melspectrogram
-        kwargs.setdefault('fmax', 8000.0)
+        kwargs.setdefault('fmax', 11025.0)
 
     if aggregate is None:
-        aggregate = np.median
+        aggregate = np.mean
 
     # First, compute mel spectrogram
     if S is None:
