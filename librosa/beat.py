@@ -24,7 +24,7 @@ __all__ = ['beat_track', 'estimate_tempo']
 
 @cache
 def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
-               start_bpm=120.0, tightness=400, trim=True, bpm=None):
+               start_bpm=120.0, tightness=100, trim=True, bpm=None):
     r'''Dynamic programming beat tracker.
 
     Beats are detected in three stages, following the method of [1]_:
@@ -158,7 +158,9 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
         onset_envelope = onset.onset_strength(y=y,
                                               sr=sr,
-                                              hop_length=hop_length)
+                                              hop_length=hop_length,
+                                              aggregate=np.median,
+                                              fmax=8000.0)
 
     # Do we have any onsets to grab?
     if not onset_envelope.any():
@@ -183,7 +185,7 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
 @cache
 def estimate_tempo(onset_envelope, sr=22050, hop_length=512, start_bpm=120,
-                   std_bpm=1.0, ac_size=4.0, duration=90.0, offset=0.0):
+                   std_bpm=1.0, ac_size=2.0, duration=90.0, offset=0.0):
     """Estimate the tempo (beats per minute) from an onset envelope
 
 
