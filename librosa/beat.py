@@ -158,9 +158,7 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
         onset_envelope = onset.onset_strength(y=y,
                                               sr=sr,
-                                              hop_length=hop_length,
-                                              aggregate=np.median,
-                                              fmax=8000.0)
+                                              hop_length=hop_length)
 
     # Do we have any onsets to grab?
     if not onset_envelope.any():
