@@ -184,7 +184,7 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
 @cache
 def estimate_tempo(onset_envelope, sr=22050, hop_length=512, start_bpm=120,
-                   std_bpm=1.0, ac_size=2.0, duration=90.0, offset=0.0):
+                   std_bpm=1.0, ac_size=4.0, duration=90.0, offset=0.0):
     """Estimate the tempo (beats per minute) from an onset envelope
 
 
