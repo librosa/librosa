@@ -4,7 +4,6 @@
 
 import numpy as np
 
-from .. import cache
 from .. import util
 from .. import filters
 
@@ -33,7 +32,6 @@ __all__ = ['spectral_centroid',
 
 
 # -- Spectral features -- #
-@cache
 def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                       freq=None):
     '''Compute the spectral centroid.
@@ -139,7 +137,6 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                   axis=0, keepdims=True)
 
 
-@cache
 def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                        freq=None, centroid=None, norm=True, p=2):
     '''Compute p'th-order spectral bandwidth:
@@ -256,7 +253,6 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     return np.sum(S * deviation**p, axis=0, keepdims=True)**(1./p)
 
 
-@cache
 def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                       freq=None, fmin=200.0, n_bands=6, quantile=0.02,
                       linear=False):
@@ -396,7 +392,6 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         return logamplitude(peak) - logamplitude(valley)
 
 
-@cache
 def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                      freq=None, roll_percent=0.85):
     '''Compute roll-off frequency
@@ -499,7 +494,6 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     return np.nanmin(ind * freq, axis=0, keepdims=True)
 
 
-@cache
 def rmse(y=None, S=None, n_fft=2048, hop_length=512):
     '''Compute root-mean-square (RMS) energy for each frame.
 
@@ -556,7 +550,6 @@ def rmse(y=None, S=None, n_fft=2048, hop_length=512):
     return np.sqrt(np.mean(np.abs(S)**2, axis=0, keepdims=True))
 
 
-@cache
 def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                   order=1, freq=None):
     '''Get coefficients of fitting an nth-order polynomial to the columns
@@ -652,7 +645,6 @@ def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     return coefficients
 
 
-@cache
 def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True,
                        **kwargs):
     '''Compute the zero-crossing rate of an audio time series.
@@ -715,7 +707,6 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True,
 
 
 # -- Chroma --#
-@cache
 def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
                 hop_length=512, tuning=None, **kwargs):
     """Compute a chromagram from an STFT spectrogram or waveform
@@ -813,7 +804,6 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
     return util.normalize(raw_chroma, norm=norm, axis=0)
 
 
-@cache
 def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
                norm=np.inf, threshold=0.0, tuning=None, n_chroma=12,
                n_octaves=7, window=None, bins_per_octave=None, mode='full'):
@@ -932,7 +922,6 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
 
 
 # -- Mel spectrogram and MFCCs -- #
-@cache
 def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
     """Mel-frequency cepstral coefficients
 
@@ -1007,7 +996,6 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
     return np.dot(filters.dct(n_mfcc, S.shape[0]), S)
 
 
-@cache
 def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                    **kwargs):
     """Compute a Mel-scaled power spectrogram.
@@ -1090,7 +1078,6 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
 # Deprecated functions
 @util.decorators.deprecated('0.4', '0.5')
-@cache
 def logfsgram(y=None, sr=22050, S=None, n_fft=4096,
               hop_length=512, **kwargs):  # pragma: no cover
     '''Compute a log-frequency spectrogram using a
@@ -1174,7 +1161,6 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096,
     return cq_basis.dot(S)
 
 
-@cache
 def tonnetz(y=None, sr=22050, chroma=None):
     '''Computes the tonal centroid features (tonnetz), following the method of
     [1]_.

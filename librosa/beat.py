@@ -22,7 +22,6 @@ from . import util
 __all__ = ['beat_track', 'estimate_tempo']
 
 
-@cache
 def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
                start_bpm=120.0, tightness=100, trim=True, bpm=None):
     r'''Dynamic programming beat tracker.
