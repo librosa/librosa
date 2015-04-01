@@ -6,7 +6,6 @@ import numpy as np
 import scipy.ndimage
 import scipy.sparse
 import six
-import warnings
 
 from numpy.lib.stride_tricks import as_strided
 
@@ -347,7 +346,6 @@ def fix_length(data, size, axis=-1, **kwargs):
     return data
 
 
-@cache
 def fix_frames(frames, x_min=0, x_max=None, pad=True):
     '''Fix a list of frames to lie within [x_min, x_max]
 

@@ -15,7 +15,6 @@ __all__ = ['estimate_tuning', 'pitch_tuning', 'piptrack',
            'ifptrack']
 
 
-@cache
 def estimate_tuning(y=None, sr=22050, S=None, n_fft=2048,
                     resolution=0.01, bins_per_octave=12, **kwargs):
     '''Estimate the tuning of an audio time series or spectrogram input.
@@ -95,7 +94,6 @@ def estimate_tuning(y=None, sr=22050, S=None, n_fft=2048,
                         bins_per_octave=bins_per_octave)
 
 
-@cache
 def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     '''Given a collection of pitches, estimate its tuning offset
     (in fractions of a bin) relative to A440=440.0Hz.
@@ -150,8 +148,8 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
         return 0.0
 
     # Compute the residual relative to the number of bins
-    residual = np.mod(bins_per_octave
-                      * time_frequency.hz_to_octs(frequencies), 1.0)
+    residual = np.mod(bins_per_octave *
+                      time_frequency.hz_to_octs(frequencies), 1.0)
 
     # Are we on the wrong side of the semitone?
     # A residual of 0.95 is more likely to be a deviation of -0.05
@@ -280,8 +278,8 @@ def piptrack(y=None, sr=22050, S=None, n_fft=4096, hop_length=None,
 
 # Deprecated functions below
 
-@cache
 @util.decorators.deprecated('0.4', '0.5')
+@cache
 def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=None,
              fmax=None, threshold=0.75):  # pragma: no cover
     '''Instantaneous pitch frequency tracking.

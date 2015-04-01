@@ -280,7 +280,6 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
     return y
 
 
-@cache
 def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
            norm=False, center=True, ref_power=1e-6, clip=True, dtype=np.complex64):
     '''Compute the instantaneous frequency (as a proportion of the sampling rate)
@@ -411,7 +410,6 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     return if_gram, stft_matrix
 
 
-@cache
 def magphase(D):
     """Separate a complex-valued spectrogram D into its magnitude (S)
     and phase (P) components, so that `D = S * P`.
@@ -563,7 +561,6 @@ def phase_vocoder(D, rate, hop_length=None):
 def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     r"""Log-scale the amplitude of a spectrogram.
 
-
     Parameters
     ----------
     S : np.ndarray [shape=(d, t)]
@@ -583,7 +580,6 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
         threshold log amplitude at top_db below the peak:
         `max(log(S)) - top_db`
 
-
     Returns
     -------
     log_S   : np.ndarray [shape=(d, t)]
@@ -592,7 +588,6 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     See Also
     --------
     perceptual_weighting
-
 
     Examples
     --------
