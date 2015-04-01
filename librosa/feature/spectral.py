@@ -921,6 +921,97 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
     return chroma
 
 
+def tonnetz(y=None, sr=22050, chroma=None):
+    '''Computes the tonal centroid features (tonnetz), following the method of
+    [1]_.
+
+    .. [1] Harte, C., Sandler, M., & Gasser, M. (2006). "Detecting Harmonic
+           Change in Musical Audio." In Proceedings of the 1st ACM Workshop
+           on Audio and Music Computing Multimedia (pp. 21-26).
+           Santa Barbara, CA, USA: ACM Press. doi:10.1145/1178723.1178727.
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(n,)] or None
+        Audio time series.
+
+    sr : int > 0 [scalar]
+        sampling rate of `y`
+
+    chroma : np.ndarray [shape=(n_chroma, t)] or None
+        Normalized energy for each chroma bin at each frame.
+
+        If `None`, a cqt chromagram is performed.
+
+    Returns
+    -------
+    ton : np.ndarray [shape(6, t)]
+        Tonal centroid features for each frame.
+
+        Tonnetz dimensions:
+            - 0: Fifth x-axis
+            - 1: Fifth y-axis
+            - 2: Minor x-axis
+            - 3: Minor y-axis
+            - 4: Major x-axis
+            - 5: Major y-axis
+
+    See Also
+    --------
+    chroma_cqt
+        Compute a chromagram from a constat-Q transform.
+
+    chroma_stft
+        Compute a chromagram from an STFT spectrogram or waveform.
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> tonnetz = librosa.feature.tonnetz(y=y, sr=sr)
+    >>> tonnetz
+    array([[-0.073, -0.053, ..., -0.054, -0.073],
+           [ 0.001,  0.001, ..., -0.054, -0.062],
+           ...,
+           [ 0.039,  0.034, ...,  0.044,  0.064],
+           [ 0.005,  0.002, ...,  0.011,  0.017]])
+
+    >>> import matplotlib.pyplot as plt
+    >>> librosa.display.specshow(tonnetz, y_axis='tonnetz', x_axis='time')
+    >>> plt.colorbar()
+    >>> plt.title('Tonal Centroids (Tonnetz)')
+    >>> plt.tight_layout()
+
+    '''
+
+    if y is None and chroma is None:
+        raise ValueError('Either the audio samples or the chromagram must be '
+                         'passed as an argument.')
+
+    if chroma is None:
+        chroma = chroma_cqt(y=y, sr=sr)
+
+    # Generate Transformation matrix
+    dim_map = np.linspace(0, 12, num=chroma.shape[0], endpoint=False)
+
+    scale = np.asarray([7. / 6, 7. / 6,
+                        3. / 2, 3. / 2,
+                        2. / 3, 2. / 3])
+
+    V = np.multiply.outer(scale, dim_map)
+
+    # Even rows compute sin()
+    V[::2] -= 0.5
+
+    R = np.array([1, 1,         # Fifths
+                  1, 1,         # Minor
+                  0.5, 0.5])    # Major
+
+    phi = R[:, np.newaxis] * np.cos(np.pi * V)
+
+    # Do the transform to tonnetz
+    return phi.dot(util.normalize(chroma, norm=1, axis=0))
+
+
 # -- Mel spectrogram and MFCCs -- #
 def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
     """Mel-frequency cepstral coefficients
@@ -1159,97 +1250,6 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096,
     cq_basis = filters.logfrequency(sr, n_fft=n_fft, **kwargs)
 
     return cq_basis.dot(S)
-
-
-def tonnetz(y=None, sr=22050, chroma=None):
-    '''Computes the tonal centroid features (tonnetz), following the method of
-    [1]_.
-
-    .. [1] Harte, C., Sandler, M., & Gasser, M. (2006). "Detecting Harmonic
-           Change in Musical Audio." In Proceedings of the 1st ACM Workshop
-           on Audio and Music Computing Multimedia (pp. 21-26).
-           Santa Barbara, CA, USA: ACM Press. doi:10.1145/1178723.1178727.
-
-    Parameters
-    ----------
-    y : np.ndarray [shape=(n,)] or None
-        Audio time series.
-
-    sr : int > 0 [scalar]
-        sampling rate of `y`
-
-    chroma : np.ndarray [shape=(n_chroma, t)] or None
-        Normalized energy for each chroma bin at each frame.
-
-        If `None`, a cqt chromagram is performed.
-
-    Returns
-    -------
-    ton : np.ndarray [shape(6, t)]
-        Tonal centroid features for each frame.
-
-        Tonnetz dimensions:
-            - 0: Fifth x-axis
-            - 1: Fifth y-axis
-            - 2: Minor x-axis
-            - 3: Minor y-axis
-            - 4: Major x-axis
-            - 5: Major y-axis
-
-    See Also
-    --------
-    chroma_cqt
-        Compute a chromagram from a constat-Q transform.
-
-    chroma_stft
-        Compute a chromagram from an STFT spectrogram or waveform.
-
-    Examples
-    --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> tonnetz = librosa.feature.tonnetz(y=y, sr=sr)
-    >>> tonnetz
-    array([[-0.073, -0.053, ..., -0.054, -0.073],
-           [ 0.001,  0.001, ..., -0.054, -0.062],
-           ..., 
-           [ 0.039,  0.034, ...,  0.044,  0.064],
-           [ 0.005,  0.002, ...,  0.011,  0.017]])
-
-    >>> import matplotlib.pyplot as plt
-    >>> librosa.display.specshow(tonnetz, y_axis='tonnetz', x_axis='time')
-    >>> plt.colorbar()
-    >>> plt.title('Tonal Centroids (Tonnetz)')
-    >>> plt.tight_layout()
-
-    '''
-
-    if y is None and chroma is None:
-        raise ValueError('Either the audio samples or the chromagram must be '
-                         'passed as an argument.')
-
-    if chroma is None:
-        chroma = chroma_cqt(y=y, sr=sr)
-
-    # Generate Transformation matrix
-    dim_map = np.linspace(0, 12, num=chroma.shape[0], endpoint=False)
-
-    scale = np.asarray([7. / 6, 7. / 6,
-                        3. / 2, 3. / 2,
-                        2. / 3, 2. / 3])
-
-    V = np.multiply.outer(scale, dim_map)
-
-    # Even rows compute sin()
-    V[::2] -= 0.5
-
-    R = np.array([1, 1,         # Fifths
-                  1, 1,         # Minor
-                  0.5, 0.5])    # Major
-
-    phi = R[:, np.newaxis] * np.cos(np.pi * V)
-
-    # Do the transform to tonnetz
-    return phi.dot(util.normalize(chroma, norm=1, axis=0))
 
 
 # Moved functions
