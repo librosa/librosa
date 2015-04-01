@@ -50,8 +50,7 @@ __all__ = ['dct',
            'cq_to_chroma',
            'window_bandwidth',
            # Deprecated
-           'logfrequency',
-           ]
+           'logfrequency']
 
 
 @cache
