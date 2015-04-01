@@ -204,7 +204,7 @@ def recurrence_to_lag(rec, pad=True):
         A (binary) recurrence matrix, as returned by `recurrence_matrix`
 
     pad : bool
-        If False, `lag` matrix is square, which is equivalent to 
+        If False, `lag` matrix is square, which is equivalent to
         assuming that the signal repeats itself indefinitely.
 
         If True, `lag` is padded with `n` zeros, which eliminates
