@@ -255,20 +255,25 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, **kwargs):
     See also
     --------
     time_ticks
-    core.resample
+    librosa.core.resample
     matplotlib.pyplot.fill_between
 
     Examples
     --------
     Plot a monophonic waveform
 
+    >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> plt.figure(figsize=(8, 4))
     >>> librosa.display.waveplot(y, sr=sr)
+    >>> plt.title('Monophonic')
 
     Or a stereo waveform
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file(), mono=False)
+    >>> plt.figure(figsize=(8, 4))
     >>> librosa.display.waveplot(y, sr=sr)
+    >>> plt.title('Stereo')
     '''
 
     util.valid_audio(y, mono=False)
