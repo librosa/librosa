@@ -249,8 +249,8 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, **kwargs):
 
     Returns
     -------
-    ax : pyplot.axes
-        The axis handle created by `fill_between`.
+    ax : matplotlib.collections.PolyCollection
+        The PolyCollection created by `fill_between`.
 
     See also
     --------
@@ -258,22 +258,33 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, **kwargs):
     librosa.core.resample
     matplotlib.pyplot.fill_between
 
+
     Examples
     --------
     Plot a monophonic waveform
 
     >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> plt.figure(figsize=(8, 4))
+    >>> plt.figure()
     >>> librosa.display.waveplot(y, sr=sr)
     >>> plt.title('Monophonic')
 
     Or a stereo waveform
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file(), mono=False)
-    >>> plt.figure(figsize=(8, 4))
+    >>> plt.figure()
     >>> librosa.display.waveplot(y, sr=sr)
     >>> plt.title('Stereo')
+
+    Or harmonic and percussive components with transparency
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=10)
+    >>> y_harm, y_perc = librosa.effects.hpss(y)
+    >>> plt.figure()
+    >>> librosa.display.waveplot(y_harm, sr=sr, alpha=0.25)
+    >>> librosa.display.waveplot(y_perc, sr=sr, color='r', alpha=0.5)
+    >>> plt.title('Harmonic + Percussive')
+
     '''
 
     util.valid_audio(y, mono=False)
