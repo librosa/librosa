@@ -56,6 +56,7 @@ New features
     - `feature.rmse`
     - `feature.zero_crossing_rate`
     - `feature.tonnetz`
+  - Added `librosa.display.waveplot`
 
 
 Other changes

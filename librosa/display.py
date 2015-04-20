@@ -8,8 +8,10 @@ Display
     :toctree: generated/
 
     specshow
+    waveplot
     time_ticks
     cmap
+
 
 """
 
@@ -20,6 +22,7 @@ import warnings
 
 from . import cache
 from . import core
+from . import util
 
 _HAS_SEABORN = False
 try:
@@ -206,6 +209,124 @@ def cmap(data, use_sns=True, robust=True):
             return plt.get_cmap('OrRd')
 
     return plt.get_cmap('coolwarm')
+
+
+def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, **kwargs):
+    '''Plot the amplitude of a waveform.
+
+    If `y` is monophonic, a filled curve is drawn between `[-abs(y), abs(y)]`.
+
+    If `y` is stereo, the curve is drawn between `[-abs(y[1]), abs(y[0])]`,
+    so that the left and right channels are drawn above and below the axis,
+    respectively.
+
+    Long signals are optionally downsampled.
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(n,) or (2,n)]
+        audio time series (mono or stereo)
+
+    sr : int > 0 [scalar]
+        sampling rate of `y`
+
+    max_points : postive number or None
+        Maximum number of time-points to plot: if `max_points` exceeds
+        the duration of `y`, then `y` is downsampled.
+
+        If `None`, no downsampling is performed.
+
+    x_axis : str {'time', 'off', 'none'} or None
+        If 'time', the x-axis is given time tick-marks.
+
+        See also: `time_ticks`
+
+    offset : float
+        Horizontal offset (in time) to start the waveform plot
+
+    kwargs
+        Additional keyword arguments to `matplotlib.pyplot.fill_between`
+
+    Returns
+    -------
+    ax : matplotlib.collections.PolyCollection
+        The PolyCollection created by `fill_between`.
+
+    See also
+    --------
+    time_ticks
+    librosa.core.resample
+    matplotlib.pyplot.fill_between
+
+
+    Examples
+    --------
+    Plot a monophonic waveform
+
+    >>> import matplotlib.pyplot as plt
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> plt.figure()
+    >>> librosa.display.waveplot(y, sr=sr)
+    >>> plt.title('Monophonic')
+
+    Or a stereo waveform
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), mono=False)
+    >>> plt.figure()
+    >>> librosa.display.waveplot(y, sr=sr)
+    >>> plt.title('Stereo')
+
+    Or harmonic and percussive components with transparency
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=10)
+    >>> y_harm, y_perc = librosa.effects.hpss(y)
+    >>> plt.figure()
+    >>> librosa.display.waveplot(y_harm, sr=sr, alpha=0.25)
+    >>> librosa.display.waveplot(y_perc, sr=sr, color='r', alpha=0.5)
+    >>> plt.title('Harmonic + Percussive')
+
+    '''
+
+    util.valid_audio(y, mono=False)
+
+    target_sr = sr
+
+    if max_points is not None:
+        if max_points < y.shape[-1]:
+            target_sr = min(256, (sr * y.shape[-1]) // max_points)
+
+    if y.ndim == 1:
+        y = core.resample(y, sr, target_sr, res_type='linear')
+    else:
+        y = np.vstack([core.resample(_, sr, target_sr) for _ in y])
+
+    y = np.abs(y)
+
+    if y.ndim > 1:
+        y_top = y[0]
+        y_bottom = -y[1]
+    else:
+        y_top = y
+        y_bottom = -y
+
+    ax = plt.gca()
+    kwargs.setdefault('color', next(ax._get_lines.color_cycle))
+
+    sample_off = core.time_to_samples(offset, sr=target_sr)
+
+    locs = np.arange(sample_off, sample_off + len(y_top))
+    out = ax.fill_between(locs, y_bottom, y_top, **kwargs)
+
+    plt.xlim([locs[0], locs[-1]])
+
+    if x_axis == 'time':
+        time_ticks(locs, core.samples_to_time(locs, sr=target_sr))
+    elif x_axis is None or x_axis in ['off', 'none']:
+        plt.xticks([])
+    else:
+        raise ValueError('Unknown x_axis value: {}'.format(x_axis))
+
+    return out
 
 
 def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,

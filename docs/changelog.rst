@@ -65,6 +65,8 @@ New features
    -  ``feature.zero_crossing_rate``
    -  ``feature.tonnetz``
 
+- Added ``display.waveplot``
+
 Other changes
 
 -  Internal refactoring and restructuring of submodules
