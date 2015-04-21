@@ -249,7 +249,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, **kwargs):
 
     Returns
     -------
-    ax : matplotlib.collections.PolyCollection
+    pc : matplotlib.collections.PolyCollection
         The PolyCollection created by `fill_between`.
 
     See also
