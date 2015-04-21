@@ -859,9 +859,9 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
 
     See Also
     --------
-    util.normalize
-    core.cqt
-    core.hybrid_cqt
+    librosa.util.normalize
+    librosa.core.cqt
+    librosa.core.hybrid_cqt
     chroma_stft
 
     Examples
