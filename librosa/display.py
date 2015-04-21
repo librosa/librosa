@@ -264,15 +264,17 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, **kwargs):
     Plot a monophonic waveform
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=10)
     >>> plt.figure()
+    >>> plt.subplot(3, 1, 1)
     >>> librosa.display.waveplot(y, sr=sr)
     >>> plt.title('Monophonic')
 
     Or a stereo waveform
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(), mono=False)
-    >>> plt.figure()
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(),
+    ...                      mono=False, duration=10)
+    >>> plt.subplot(3, 1, 2)
     >>> librosa.display.waveplot(y, sr=sr)
     >>> plt.title('Stereo')
 
@@ -280,11 +282,11 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, **kwargs):
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=10)
     >>> y_harm, y_perc = librosa.effects.hpss(y)
-    >>> plt.figure()
+    >>> plt.subplot(3, 1, 3)
     >>> librosa.display.waveplot(y_harm, sr=sr, alpha=0.25)
     >>> librosa.display.waveplot(y_perc, sr=sr, color='r', alpha=0.5)
     >>> plt.title('Harmonic + Percussive')
-
+    >>> plt.tight_layout()
     '''
 
     util.valid_audio(y, mono=False)
