@@ -266,7 +266,7 @@ def pad_center(data, size, axis=-1, **kwargs):
 
     See Also
     --------
-    np.pad
+    numpy.pad
     '''
 
     kwargs.setdefault('mode', 'constant')
@@ -326,7 +326,7 @@ def fix_length(data, size, axis=-1, **kwargs):
 
     See Also
     --------
-    np.pad
+    numpy.pad
     '''
 
     kwargs.setdefault('mode', 'constant')

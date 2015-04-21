@@ -243,7 +243,6 @@ def resample(y, orig_sr, target_sr, res_type='sinc_best', fix=True, **kwargs):
     See Also
     --------
     librosa.util.fix_length
-    samplerate.resample
     scipy.signal.resample
 
     Examples

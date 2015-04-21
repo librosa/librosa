@@ -3,7 +3,6 @@
 '''Utilities for spectral processing'''
 
 import numpy as np
-#import numpy.fft as fft
 import scipy.fftpack as fft
 import scipy
 import scipy.signal
@@ -25,9 +24,10 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
     """Short-time Fourier transform (STFT)
 
     Returns a complex-valued matrix D such that
-      - `np.abs(D[f, t])` is the magnitude of frequency bin `f`
+        `np.abs(D[f, t])` is the magnitude of frequency bin `f`
         at frame `t`
-      - `np.angle(D[f, t])` is the phase of frequency bin `f`
+
+        `np.angle(D[f, t])` is the phase of frequency bin `f`
         at frame `t`
 
     Parameters
@@ -62,22 +62,25 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
     dtype       : numeric type
         Complex numeric type for `D`.  Default is 64-bit complex.
 
+
     Returns
     -------
     D : np.ndarray [shape=(1 + n_fft/2, t), dtype=dtype]
         STFT matrix
+
 
     Raises
     ------
     ValueError
         If `window` is supplied as a vector of length `!= n_fft`.
 
+
     See Also
     --------
-    istft
-        Inverse STFT
-    ifgram
-        Instantaneous frequency spectrogram
+    istft : Inverse STFT
+
+    ifgram : Instantaneous frequency spectrogram
+
 
     Examples
     --------
@@ -561,6 +564,7 @@ def phase_vocoder(D, rate, hop_length=None):
 def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     r"""Log-scale the amplitude of a spectrogram.
 
+
     Parameters
     ----------
     S : np.ndarray [shape=(d, t)]
@@ -580,14 +584,17 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
         threshold log amplitude at top_db below the peak:
         `max(log(S)) - top_db`
 
+
     Returns
     -------
     log_S   : np.ndarray [shape=(d, t)]
         `log_S ~= 10 * log10(S) - 10 * log10(abs(ref_power))`
 
+
     See Also
     --------
     perceptual_weighting
+
 
     Examples
     --------
@@ -612,6 +619,7 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
            [-80.   , -80.   , ..., -80.   , -80.   ],
            [-80.   , -80.   , ..., -80.   , -80.   ]], dtype=float32)
 
+
     Or compare to median power
 
     >>> librosa.logamplitude(S, ref_power=np.median)
@@ -621,20 +629,21 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
            [-0.189, -0.189, ..., -0.189, -0.189],
            [-0.189, -0.189, ..., -0.189, -0.189]], dtype=float32)
 
+
+    And plot the results
+
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
     >>> plt.subplot(2, 1, 1)
     >>> librosa.display.specshow(S, y_axis='log', x_axis='time')
     >>> plt.colorbar()
-    >>> plt.title('Power spectrogram: $|S|^2$')
+    >>> plt.title('Power spectrogram')
     >>> plt.subplot(2, 1, 2)
     >>> librosa.display.specshow(librosa.logamplitude(S, ref_power=np.max),
-    ...                                               y_axis='log',
-    ...                                               x_axis='time')
+    ...                          y_axis='log', x_axis='time')
     >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.title('Log-Power spectrogram: $\log |S|^2$')
+    >>> plt.title('Log-Power spectrogram')
     >>> plt.tight_layout()
-
     """
 
     if amin <= 0:
