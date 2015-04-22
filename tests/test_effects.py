@@ -36,7 +36,7 @@ def test_time_stretch():
         yield __test, 'data/test1_22050.wav', rate
 
     for rate in [-1, 0]:
-        yield raises(ValueError)(__test), 'data/test1_22050.wav', rate
+        yield raises(librosa.ParameterError)(__test), 'data/test1_22050.wav', rate
 
 
 def test_pitch_shift():
@@ -57,7 +57,7 @@ def test_pitch_shift():
             yield __test, 'data/test1_22050.wav', n_steps, bins_per_octave
 
     for bins_per_octave in [-1, 0]:
-        yield (raises(ValueError)(__test), 'data/test1_22050.wav',
+        yield (raises(librosa.ParameterError)(__test), 'data/test1_22050.wav',
                1, bins_per_octave)
 
 

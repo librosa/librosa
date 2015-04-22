@@ -23,7 +23,7 @@ import warnings
 from . import cache
 from . import core
 from . import util
-from .util.exceptions import LibrosaParameterError
+from .util.exceptions import ParameterError
 
 _HAS_SEABORN = False
 try:
@@ -107,7 +107,7 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
     elif axis == 'y':
         ticker = plt.yticks
     else:
-        raise LibrosaParameterError("axis must be either 'x' or 'y'.")
+        raise ParameterError("axis must be either 'x' or 'y'.")
 
     if len(args) > 0:
         times = args[0]
@@ -143,7 +143,7 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
             fmt = 'ms'
 
     elif fmt not in formats:
-        raise LibrosaParameterError('Invalid format: {:s}'.format(fmt))
+        raise ParameterError('Invalid format: {:s}'.format(fmt))
 
     times = [formats[fmt](t) for t in times]
 
@@ -327,7 +327,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, **kwargs):
     elif x_axis is None or x_axis in ['off', 'none']:
         plt.xticks([])
     else:
-        raise LibrosaParameterError('Unknown x_axis value: {}'.format(x_axis))
+        raise ParameterError('Unknown x_axis value: {}'.format(x_axis))
 
     return out
 
@@ -535,7 +535,7 @@ def __axis(data, n_ticks, ax_type, horiz=False, **kwargs):
         ax_type = 'off'
 
     if ax_type not in axis_map:
-        raise LibrosaParameterError('Unknown axis type: {:s}'.format(ax_type))
+        raise ParameterError('Unknown axis type: {:s}'.format(ax_type))
 
     func = axis_map[ax_type]
 

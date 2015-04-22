@@ -48,7 +48,7 @@ def test_band_infinite():
 
         assert np.all(Boutcheck == v_out)
 
-    @raises(ValueError)
+    @raises(librosa.ParameterError)
     def __test_fail(width, n, v_in, v_out):
         librosa.segment.__band_infinite(n, width, v_in=v_in, v_out=v_out)
 
@@ -91,7 +91,7 @@ def test_recurrence_matrix():
                 for width in [-1, 0, 1, 3, 5]:
                     tester = __test
                     if width < 1:
-                        tester = raises(ValueError)(__test)
+                        tester = raises(librosa.ParameterError)(__test)
 
                     yield tester, n, k, width, sym
 
@@ -112,7 +112,7 @@ def test_recurrence_to_lag():
         for i in range(n):
             assert np.allclose(rec[:, i], np.roll(lag[:, i], i)[x])
 
-    @raises(ValueError)
+    @raises(librosa.ParameterError)
     def __test_fail(size):
         librosa.segment.recurrence_to_lag(np.zeros(size))
 
@@ -136,7 +136,7 @@ def test_lag_to_recurrence():
 
         assert np.allclose(rec, rec2)
 
-    @raises(ValueError)
+    @raises(librosa.ParameterError)
     def __test_fail(size):
         librosa.segment.lag_to_recurrence(np.zeros(size))
 
@@ -227,7 +227,7 @@ def test_subsegment():
 
     for n_segments in [0, 1, 2, 3, 4, 100]:
         if n_segments < 1:
-            tf = raises(ValueError, IndexError)(__test)
+            tf = raises(librosa.ParameterError, IndexError)(__test)
         else:
             tf = __test
         yield tf, n_segments

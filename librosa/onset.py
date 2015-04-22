@@ -17,7 +17,7 @@ import scipy
 from . import cache
 from . import core
 from . import util
-from .util.exceptions import LibrosaParameterError
+from .util.exceptions import ParameterError
 
 from .feature import melspectrogram
 
@@ -68,7 +68,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
     Raises
     ------
-    LibrosaParameterError
+    ParameterError
         if neither `y` nor `onsets` are provided
 
 
@@ -112,7 +112,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     # First, get the frame->beat strength profile if we don't already have one
     if onset_envelope is None:
         if y is None:
-            raise LibrosaParameterError('y or onset_envelope must be provided')
+            raise ParameterError('y or onset_envelope must be provided')
 
         onset_envelope = onset_strength(y=y, sr=sr, hop_length=hop_length)
 
@@ -191,7 +191,7 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
 
     Raises
     ------
-    LibrosaParameterError
+    ParameterError
         if neither `(y, sr)` nor `S` are provided
 
 
