@@ -35,6 +35,7 @@ import warnings
 
 from . import cache
 from . import util
+from .util.exceptions import LibrosaParameterError
 
 from .core.time_frequency import note_to_hz, hz_to_midi, hz_to_octs
 from .core.time_frequency import fft_frequencies, mel_frequencies
@@ -643,16 +644,16 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
     '''
 
     if fmin <= 0:
-        raise ValueError('fmin must be a positive number')
+        raise LibrosaParameterError('fmin must be positive')
 
     if bins_per_octave <= 0:
-        raise ValueError('bins_per_octave must be a positive number')
+        raise LibrosaParameterError('bins_per_octave must be positive')
 
     if resolution <= 0:
-        raise ValueError('resolution must be a positive number')
+        raise LibrosaParameterError('resolution must be positive')
 
     if n_bins <= 0 or not isinstance(n_bins, int):
-        raise ValueError('n_bins must be a positive integer')
+        raise LibrosaParameterError('n_bins must be a positive integer')
 
     correction = 2.0**(float(tuning) / bins_per_octave)
 
@@ -666,7 +667,7 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
     freq = fmin * 2.0 ** (np.arange(n_bins, dtype=float) / bins_per_octave)
 
     if np.any(freq * (1 + window_bandwidth(window) / Q) > sr / 2.0):
-        raise ValueError('Filter pass-band lies beyond Nyquist')
+        raise LibrosaParameterError('Filter pass-band lies beyond Nyquist')
 
     # Convert frequencies to filter lengths
     lengths = Q * sr / freq
@@ -710,7 +711,7 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
 
     Raises
     ------
-    ValueError
+    LibrosaParameterError
         If `n_input` is not an integer multiple of `n_chroma`
 
     Examples
@@ -751,8 +752,9 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
         fmin = note_to_hz('C2')
 
     if np.mod(n_merge, 1) != 0:
-        raise ValueError('Incompatible CQ merge: input bins must be an '
-                         'integer multiple of output bins.')
+        raise LibrosaParameterError('Incompatible CQ merge: '
+                                    'input bins must be an '
+                                    'integer multiple of output bins.')
 
     # Tile the identity to merge fractional bins
     cq_to_ch = np.repeat(np.eye(n_chroma), n_merge, axis=1)

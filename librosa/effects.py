@@ -30,9 +30,9 @@ Miscellaneous
 import numpy as np
 
 from . import core
-from . import cache
 from . import decompose
 from . import util
+from .util.exceptions import LibrosaParameterError
 
 __all__ = ['hpss', 'harmonic', 'percussive',
            'time_stretch', 'pitch_shift',
@@ -201,7 +201,7 @@ def time_stretch(y, rate):
     '''
 
     if rate <= 0:
-        raise ValueError('rate must be a positive number')
+        raise LibrosaParameterError('rate must be a positive number')
 
     # Construct the stft
     stft = core.stft(y)
@@ -264,7 +264,7 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12):
     '''
 
     if bins_per_octave < 1 or not np.issubdtype(type(bins_per_octave), np.int):
-        raise ValueError('bins_per_octave must be a positive integer.')
+        raise LibrosaParameterError('bins_per_octave must be a positive integer.')
 
     rate = 2.0 ** (-float(n_steps) / bins_per_octave)
 
