@@ -18,6 +18,7 @@ from . import cache
 from . import core
 from . import onset
 from . import util
+from .util.exceptions import LibrosaParameterError
 
 __all__ = ['beat_track', 'estimate_tempo']
 
@@ -82,8 +83,7 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
     Raises
     ------
-
-    ValueError
+    LibrosaParameterError
         if neither `y` nor `onset_envelope` are provided
 
 
@@ -153,7 +153,7 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
     # First, get the frame->beat strength profile if we don't already have one
     if onset_envelope is None:
         if y is None:
-            raise ValueError('Either `y` or `onset_envelope` must be provided')
+            raise LibrosaParameterError('y or onset_envelope must be provided')
 
         onset_envelope = onset.onset_strength(y=y,
                                               sr=sr,
@@ -254,7 +254,7 @@ def estimate_tempo(onset_envelope, sr=22050, hop_length=512, start_bpm=120,
     """
 
     if start_bpm <= 0:
-        raise ValueError('start_bpm must be strictly positive')
+        raise LibrosaParameterError('start_bpm must be strictly positive')
 
     fft_res = float(sr) / hop_length
 
@@ -324,7 +324,7 @@ def __beat_tracker(onset_envelope, bpm, fft_res, tightness, trim):
     """
 
     if bpm <= 0:
-        raise ValueError('bpm must be strictly positive')
+        raise LibrosaParameterError('bpm must be strictly positive')
 
     # convert bpm to a sample period for searching
     period = round(60.0 * fft_res / bpm)
@@ -382,7 +382,7 @@ def __beat_track_dp(localscore, period, tightness):
 
     # Make a score window, which begins biased toward start_bpm and skewed
     if tightness <= 0:
-        raise ValueError('tightness must be > 0')
+        raise LibrosaParameterError('tightness must be strictly positive')
 
     txwt = -tightness * (np.log(-window / period) ** 2)
 
