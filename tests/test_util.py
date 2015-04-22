@@ -56,7 +56,7 @@ def test_pad_center():
 
         assert np.allclose(y, y_out[eq_slice])
 
-    @raises(ValueError)
+    @raises(librosa.ParameterError)
     def __test_fail(y, n, axis, mode):
         librosa.util.pad_center(y, n, axis=axis, mode=mode)
 
@@ -96,7 +96,7 @@ def test_fix_length():
 
 def test_fix_frames():
 
-    @raises(ValueError)
+    @raises(librosa.ParameterError)
     def __test_fail(frames, x_min, x_max, pad):
         librosa.util.fix_frames(frames, x_min, x_max, pad)
 
@@ -155,7 +155,7 @@ def test_normalize():
 
         assert np.allclose(values, np.ones_like(values))
 
-    @raises(ValueError)
+    @raises(librosa.ParameterError)
     def __test_fail(X, norm, axis):
         librosa.util.normalize(X, norm=norm, axis=axis)
 
@@ -200,7 +200,7 @@ def test_axis_sort():
 
         assert np.allclose(sort_values, np.sort(sort_values))
 
-    @raises(ValueError)
+    @raises(librosa.ParameterError)
     def __test_fail(data, axis, index, value):
         librosa.util.axis_sort(data, axis=axis, index=index, value=value)
 
@@ -244,7 +244,7 @@ def test_match_intervals():
 
         assert __is_best(y_pred, ints1, ints2)
 
-    @raises(ValueError)
+    @raises(librosa.ParameterError)
     def __test_fail(n, m):
         ints1 = __make_intervals(n)
         ints2 = __make_intervals(m)
@@ -283,7 +283,7 @@ def test_match_events():
 
         assert __is_best(y_pred, ev1, ev2)
 
-    @raises(ValueError)
+    @raises(librosa.ParameterError)
     def __test_fail(n, m):
         ev1 = __make_events(n)
         ev2 = __make_events(m)
@@ -435,7 +435,7 @@ def test_peak_pick():
         # Test 3: peak separation
         assert not np.any(np.diff(peaks) <= wait)
 
-    @raises(ValueError)
+    @raises(librosa.ParameterError)
     def __test_shape_fail():
         x = np.eye(10)
         librosa.util.peak_pick(x, 1, 1, 1, 1, 0.5, 1)
@@ -453,17 +453,17 @@ def test_peak_pick():
                             for delta in [-1, 0.05, 100.0]:
                                 tf = __test
                                 if pre_max < 0:
-                                    tf = raises(ValueError)(__test)
+                                    tf = raises(librosa.ParameterError)(__test)
                                 if pre_avg < 0:
-                                    tf = raises(ValueError)(__test)
+                                    tf = raises(librosa.ParameterError)(__test)
                                 if delta < 0:
-                                    tf = raises(ValueError)(__test)
+                                    tf = raises(librosa.ParameterError)(__test)
                                 if wait < 0:
-                                    tf = raises(ValueError)(__test)
+                                    tf = raises(librosa.ParameterError)(__test)
                                 if post_max <= 0:
-                                    tf = raises(ValueError)(__test)
+                                    tf = raises(librosa.ParameterError)(__test)
                                 if post_avg <= 0:
-                                    tf = raises(ValueError)(__test)
+                                    tf = raises(librosa.ParameterError)(__test)
                                 yield (tf, n, pre_max, post_max,
                                        pre_avg, post_avg, delta, wait)
 
@@ -501,10 +501,10 @@ def test_sparsify_rows():
             for q in [-1, 0.0, 0.01, 0.25, 0.5, 0.99, 1.0, 2.0]:
                 tf = __test
                 if ndim not in [1, 2]:
-                    tf = raises(ValueError)(__test)
+                    tf = raises(librosa.ParameterError)(__test)
 
                 if not 0.0 <= q < 1:
-                    tf = raises(ValueError)(__test)
+                    tf = raises(librosa.ParameterError)(__test)
 
                 yield tf, ndim, d, q
 
@@ -562,7 +562,7 @@ def test_valid_int():
         else:
             assert z == int(cast(x_in))
 
-    __test_fail = raises(TypeError)(__test)
+    __test_fail = raises(librosa.ParameterError)(__test)
 
     for x in np.linspace(-2, 2, num=6):
         for cast in [None, np.floor, np.ceil, 7]:
@@ -585,7 +585,7 @@ def test_valid_intervals():
                 if m == 2 and d == 2 and n > 1:
                     yield __test, ivals[slices]
                 else:
-                    yield raises(ValueError)(__test), ivals[slices]
+                    yield raises(librosa.ParameterError)(__test), ivals[slices]
 
 
 def test_warning_deprecated():

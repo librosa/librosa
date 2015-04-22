@@ -40,7 +40,7 @@ import sklearn.feature_extraction
 
 from . import cache
 from . import util
-from .util.exceptions import LibrosaParameterError
+from .util.exceptions import ParameterError
 
 __all__ = ['recurrence_matrix',
            'recurrence_to_lag',
@@ -62,7 +62,7 @@ def __band_infinite(n, width, v_in=0.0, v_out=np.inf, dtype=np.float32):
     '''
 
     if width > n:
-        raise LibrosaParameterError('width cannot exceed n')
+        raise ParameterError('width cannot exceed n')
 
     # Instantiate the matrix
     band = np.empty((n, n), dtype=dtype)
@@ -163,7 +163,7 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
     t = data.shape[1]
 
     if width < 1:
-        raise LibrosaParameterError('width must be at least 1')
+        raise ParameterError('width must be at least 1')
 
     if k is None:
         if t > 2 * width + 1:
@@ -218,7 +218,7 @@ def recurrence_to_lag(rec, pad=True):
 
     Raises
     ------
-    LibrosaParameterError : if `rec` is non-square
+    ParameterError : if `rec` is non-square
 
     See Also
     --------
@@ -245,7 +245,7 @@ def recurrence_to_lag(rec, pad=True):
     '''
 
     if rec.ndim != 2 or rec.shape[0] != rec.shape[1]:
-        raise LibrosaParameterError('non-square recurrence matrix shape: '
+        raise ParameterError('non-square recurrence matrix shape: '
                          '{}'.format(rec.shape))
 
     t = rec.shape[1]
@@ -275,7 +275,7 @@ def lag_to_recurrence(lag):
 
     Raises
     ------
-    LibrosaParameterError : if `lag` does not have the correct shape
+    ParameterError : if `lag` does not have the correct shape
 
     See Also
     --------
@@ -312,7 +312,7 @@ def lag_to_recurrence(lag):
     pad = (lag.shape[0] == 2 * lag.shape[-1])
 
     if lag.ndim != 2 or (lag.shape[0] != lag.shape[1] and not pad):
-        raise LibrosaParameterError('Invalid lag matrix shape: {}'.format(lag.shape))
+        raise ParameterError('Invalid lag matrix shape: {}'.format(lag.shape))
 
     t = lag.shape[1]
     lag = lag.copy()
@@ -482,7 +482,7 @@ def subsegment(data, frames, n_segments=4):
     frames = util.fix_frames(frames, x_min=0, x_max=data.shape[1], pad=True)
 
     if n_segments < 1:
-        raise LibrosaParameterError('n_segments must be a positive integer')
+        raise ParameterError('n_segments must be a positive integer')
 
     boundaries = []
     for seg_start, seg_end in zip(frames[:-1], frames[1:]):

@@ -64,9 +64,9 @@ def test_delta():
                     for axis in range(x.ndim):
                         tf = __test
                         if width < 3 or np.mod(width, 2) != 1:
-                            tf = raises(ValueError)(__test)
+                            tf = raises(librosa.ParameterError)(__test)
                         if order != 1:
-                            tf = raises(ValueError)(__test)
+                            tf = raises(librosa.ParameterError)(__test)
                         yield tf, width, order, axis, slope * x + bias
 
 
@@ -98,15 +98,15 @@ def test_stack_memory():
             for delay in [-1, 0, 1, 2, 4]:
                 tf = __test
                 if n_steps < 1:
-                    tf = raises(ValueError)(__test)
+                    tf = raises(librosa.ParameterError)(__test)
                 if delay < 1:
-                    tf = raises(ValueError)(__test)
+                    tf = raises(librosa.ParameterError)(__test)
                 yield tf, data, n_steps, delay
 
 
 def test_sync():
 
-    @raises(ValueError)
+    @raises(librosa.ParameterError)
     def __test_fail(data, frames):
         librosa.feature.sync(data, frames)
 
@@ -179,7 +179,7 @@ def test_spectral_centroid_synthetic():
 
 def test_spectral_centroid_errors():
 
-    @raises(ValueError)
+    @raises(librosa.ParameterError)
     def __test(S):
         librosa.feature.spectral_centroid(S=S)
 
@@ -240,7 +240,7 @@ def test_spectral_bandwidth_synthetic():
 
 def test_spectral_bandwidth_errors():
 
-    @raises(ValueError)
+    @raises(librosa.ParameterError)
     def __test(S):
         librosa.feature.spectral_bandwidth(S=S)
 
@@ -284,7 +284,7 @@ def test_spectral_rolloff_synthetic():
 
 def test_spectral_rolloff_errors():
 
-    @raises(ValueError)
+    @raises(librosa.ParameterError)
     def __test(S, p):
         librosa.feature.spectral_rolloff(S=S, roll_percent=p)
 
@@ -314,7 +314,7 @@ def test_spectral_contrast_log():
 
 def test_spectral_contrast_errors():
 
-    @raises(ValueError)
+    @raises(librosa.ParameterError)
     def __test(S, freq, fmin, n_bands, quantile):
         librosa.feature.spectral_contrast(S=S,
                                           freq=freq,
@@ -462,7 +462,7 @@ def test_tonnetz():
         # skip the equivalence check
 
     # Call the function with not enough parameters
-    yield (raises(ValueError)(librosa.feature.tonnetz))
+    yield (raises(librosa.ParameterError)(librosa.feature.tonnetz))
     yield __audio
     yield __stft
     yield __cqt

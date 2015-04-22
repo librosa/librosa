@@ -6,6 +6,7 @@ import numpy as np
 
 from .. import util
 from .. import filters
+from ..util.exceptions import ParameterError
 
 from ..core.time_frequency import fft_frequencies
 from ..core.audio import zero_crossings
@@ -119,10 +120,10 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
 
     if not np.isrealobj(S):
-        raise ValueError('Spectral centroid is only defined '
+        raise ParameterError('Spectral centroid is only defined '
                          'with real-valued input')
     elif np.any(S < 0):
-        raise ValueError('Spectral centroid is only defined '
+        raise ParameterError('Spectral centroid is only defined '
                          'with non-negative energies')
 
     # Compute the center frequencies of each bin
@@ -225,10 +226,10 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
 
     if not np.isrealobj(S):
-        raise ValueError('Spectral bandwidth is only defined '
+        raise ParameterError('Spectral bandwidth is only defined '
                          'with real-valued input')
     elif np.any(S < 0):
-        raise ValueError('Spectral bandwidth is only defined '
+        raise ParameterError('Spectral bandwidth is only defined '
                          'with non-negative energies')
 
     if centroid is None:
@@ -343,17 +344,17 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     freq = np.atleast_1d(freq)
 
     if freq.ndim != 1 or len(freq) != S.shape[0]:
-        raise ValueError('freq.shape mismatch: expected '
+        raise ParameterError('freq.shape mismatch: expected '
                          '({:d},)'.format(S.shape[0]))
 
     if n_bands < 1 or not isinstance(n_bands, int):
-        raise ValueError('n_bands must be a positive integer')
+        raise ParameterError('n_bands must be a positive integer')
 
     if not (0.0 < quantile < 1.0):
-        raise ValueError('quantile must lie in the range (0, 1)')
+        raise ParameterError('quantile must lie in the range (0, 1)')
 
     if fmin <= 0:
-        raise ValueError('fmin must be a positive number')
+        raise ParameterError('fmin must be a positive number')
 
     octa = np.zeros(n_bands + 2)
     octa[1:] = fmin * (2.0**np.arange(0, n_bands + 1))
@@ -466,15 +467,15 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     '''
 
     if not (0.0 < roll_percent < 1.0):
-        raise ValueError('roll_percent must lie in the range (0, 1)')
+        raise ParameterError('roll_percent must lie in the range (0, 1)')
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
 
     if not np.isrealobj(S):
-        raise ValueError('Spectral rolloff is only defined '
+        raise ParameterError('Spectral rolloff is only defined '
                          'with real-valued input')
     elif np.any(S < 0):
-        raise ValueError('Spectral rolloff is only defined '
+        raise ParameterError('Spectral rolloff is only defined '
                          'with non-negative energies')
 
     # Compute the center frequencies of each bin
@@ -984,7 +985,7 @@ def tonnetz(y=None, sr=22050, chroma=None):
     '''
 
     if y is None and chroma is None:
-        raise ValueError('Either the audio samples or the chromagram must be '
+        raise ParameterError('Either the audio samples or the chromagram must be '
                          'passed as an argument.')
 
     if chroma is None:
