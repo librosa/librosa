@@ -289,7 +289,7 @@ def test_waveplot_stereo():
     librosa.display.waveplot(ys, sr=sr)
 
 
-@raises(ValueError)
+@raises(librosa.ParameterError)
 def test_unknown_wavaxis():
 
     plt.figure()
@@ -298,7 +298,7 @@ def test_unknown_wavaxis():
 
 def test_unknown_axis():
 
-    @raises(ValueError)
+    @raises(librosa.ParameterError)
     def __test(axis):
         kwargs = dict()
         kwargs.setdefault(axis, 'something not in the axis map')
@@ -330,7 +330,7 @@ def test_cmap_robust():
 
 def test_time_ticks_failure():
 
-    @raises(ValueError)
+    @raises(librosa.ParameterError)
     def __test(locs, times, fmt, axis):
 
         if times is None:
