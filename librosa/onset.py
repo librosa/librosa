@@ -226,12 +226,12 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
     ...          label='Median aggregation (custom mel)')
 
 
-    Log-frequency spectrogram instead of Mel
+    Constant-Q spectrogram instead of Mel
 
     >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr,
-    ...                                          feature=librosa.feature.logfsgram)
+    ...                                          feature=librosa.cqt)
     >>> plt.plot(onset_env / onset_env.max(), alpha=0.8,
-    ...          label='Mean aggregation (logfs)')
+    ...          label='Mean aggregation (CQT)')
 
     >>> plt.legend(frameon=True, framealpha=0.75)
     >>> librosa.display.time_ticks(librosa.frames_to_time(np.arange(len(onset_env))))
