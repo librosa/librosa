@@ -229,7 +229,7 @@ def test_ifgram_if():
             if six.callable(ref_power) or ref_power >= 0.0:
                 tf = __test
             else:
-                tf = raises(ValueError)(__test)
+                tf = raises(librosa.ParameterError)(__test)
 
             yield tf, ref_power, clip
 
@@ -534,6 +534,6 @@ def test_logamplitude():
                 for top_db in [None, -10, 0, 40, 80]:
                     tf = __test
                     if amin <= 0 or (top_db is not None and top_db < 0):
-                        tf = raises(ValueError)(__test)
+                        tf = raises(librosa.ParameterError)(__test)
                     yield tf, x, ref_power, amin, top_db
                     yield tf, x * phase, ref_power, amin, top_db

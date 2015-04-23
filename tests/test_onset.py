@@ -62,7 +62,7 @@ def test_onset_strength_audio():
                         for aggregate in [None, np.mean, np.max]:
                             yield (__test, y, sr, feature, n_fft,
                                    hop_length, detrend, centering)
-                            tf = raises(ValueError)(__test)
+                            tf = raises(librosa.ParameterError)(__test)
                             yield (tf, None, sr, feature, n_fft,
                                    hop_length, detrend, centering)
 
@@ -105,7 +105,7 @@ def test_onset_strength_spectrogram():
                         for aggregate in [None, np.mean, np.max]:
                             yield (__test, S, sr, feature, n_fft,
                                    hop_length, detrend, centering)
-                            tf = raises(ValueError)(__test)
+                            tf = raises(librosa.ParameterError)(__test)
                             yield (tf, None, sr, feature, n_fft,
                                    hop_length, detrend, centering)
 
@@ -125,7 +125,7 @@ def test_onset_detect_real():
     y, sr = librosa.load(__EXAMPLE_FILE)
 
     # Test with no signal
-    yield raises(ValueError)(__test), None, sr, None, 512
+    yield raises(librosa.ParameterError)(__test), None, sr, None, 512
 
     for hop_length in [64, 512, 2048]:
         yield __test, y, sr, None, hop_length

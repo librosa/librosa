@@ -24,7 +24,11 @@ from . import output
 from . import segment
 from . import util
 
+# Exporting exception classes at the top level
+from .util.exceptions import * # pylint: disable=wildcart-import
+
 # Exporting all core functions is okay here: suppress the import warning
 from librosa.core import *  # pylint: disable=wildcard-import
+
 
 

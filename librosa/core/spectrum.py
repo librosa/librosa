@@ -11,6 +11,7 @@ import six
 from . import time_frequency
 from .. import cache
 from .. import util
+from ..util.exceptions import ParameterError
 
 __all__ = ['stft', 'istft', 'magphase',
            'ifgram',
@@ -71,7 +72,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
 
     Raises
     ------
-    ValueError
+    ParameterError
         If `window` is supplied as a vector of length `!= n_fft`.
 
 
@@ -140,7 +141,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
 
         # validate length compatibility
         if fft_window.size != n_fft:
-            raise ValueError('Size mismatch between n_fft and len(window)')
+            raise ParameterError('Size mismatch between n_fft and len(window)')
 
     # Pad the window out to n_fft size
     fft_window = util.pad_center(fft_window, n_fft)
@@ -218,7 +219,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
 
     Raises
     ------
-    ValueError
+    ParameterError
         If `window` is supplied as a vector of length `!= n_fft`
 
     See Also
@@ -261,7 +262,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
 
         # Verify that the shape matches
         if ifft_window.size != n_fft:
-            raise ValueError('Size mismatch between n_fft and window size')
+            raise ParameterError('Size mismatch between n_fft and window size')
 
     # Pad out to match n_fft
     ifft_window = util.pad_center(ifft_window, n_fft)
@@ -391,7 +392,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     if six.callable(ref_power):
         ref_power = ref_power(mag**2)
     elif ref_power < 0:
-        raise ValueError('ref_power must be non-negative or callable.')
+        raise ParameterError('ref_power must be non-negative or callable.')
 
     # Pylint does not correctly infer the type here, but it's correct.
     # pylint: disable=maybe-no-member
@@ -647,7 +648,7 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     """
 
     if amin <= 0:
-        raise ValueError('amin must be strictly positive')
+        raise ParameterError('amin must be strictly positive')
 
     magnitude = np.abs(S)
 
@@ -662,7 +663,7 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
 
     if top_db is not None:
         if top_db < 0:
-            raise ValueError('top_db must be non-negative positive')
+            raise ParameterError('top_db must be non-negative positive')
         log_spec = np.maximum(log_spec, log_spec.max() - top_db)
 
     return log_spec

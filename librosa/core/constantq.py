@@ -12,6 +12,7 @@ from .pitch import estimate_tuning
 from .. import cache
 from .. import filters
 from .. import util
+from ..util.exceptions import ParameterError
 
 __all__ = ['cqt', 'hybrid_cqt', 'pseudo_cqt']
 
@@ -78,7 +79,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     Raises
     ------
-    ValueError
+    ParameterError
         If `hop_length < 2**(n_bins / bins_per_octave)`
 
     See Also
@@ -130,7 +131,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     # Make sure our hop is long enough to support the bottom octave
     if hop_length < 2**n_octaves:
-        raise ValueError('Insufficient hop_length {:d} '
+        raise ParameterError('Insufficient hop_length {:d} '
                          'for {:d} octaves'.format(hop_length, n_octaves))
 
     if fmin is None:
@@ -284,7 +285,7 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     Raises
     ------
-    ValueError
+    ParameterError
         If `hop_length < 2**(n_bins / bins_per_octave)`
 
     See Also
@@ -298,7 +299,7 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     # Make sure our hop is long enough to support the bottom octave
     if hop_length < 2**n_octaves:
-        raise ValueError('Insufficient hop_length {:d} '
+        raise ParameterError('Insufficient hop_length {:d} '
                          'for {:d} octaves'.format(hop_length, n_octaves))
 
     if fmin is None:
@@ -412,7 +413,7 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     Raises
     ------
-    ValueError
+    ParameterError
         If `hop_length < 2**(n_bins / bins_per_octave)`
 
     '''
