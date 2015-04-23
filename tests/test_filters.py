@@ -203,22 +203,22 @@ def test_constant_q():
     sr = 11025
 
     # Try to make a cq basis too close to nyquist
-    yield (raises(ValueError)(__test), sr, sr/2.0, 1, 12, 0, 1, True, 1)
+    yield (raises(librosa.ParameterError)(__test), sr, sr/2.0, 1, 12, 0, 1, True, 1)
 
     # with negative fmin
-    yield (raises(ValueError)(__test), sr, -60, 1, 12, 0, 1, True, 1)
+    yield (raises(librosa.ParameterError)(__test), sr, -60, 1, 12, 0, 1, True, 1)
 
     # with negative bins_per_octave
-    yield (raises(ValueError)(__test), sr, 60, 1, -12, 0, 1, True, 1)
+    yield (raises(librosa.ParameterError)(__test), sr, 60, 1, -12, 0, 1, True, 1)
 
     # with negative bins
-    yield (raises(ValueError)(__test), sr, 60, -1, 12, 0, 1, True, 1)
+    yield (raises(librosa.ParameterError)(__test), sr, 60, -1, 12, 0, 1, True, 1)
 
     # with negative resolution
-    yield (raises(ValueError)(__test), sr, 60, 1, 12, 0, -1, True, 1)
+    yield (raises(librosa.ParameterError)(__test), sr, 60, 1, 12, 0, -1, True, 1)
 
     # with negative norm
-    yield (raises(ValueError)(__test), sr, 60, 1, 12, 0, 1, True, -1)
+    yield (raises(librosa.ParameterError)(__test), sr, 60, 1, 12, 0, 1, True, -1)
 
     for fmin in [None, librosa.note_to_hz('C3')]:
         for n_bins in [12, 24]:
@@ -309,7 +309,7 @@ def test_cq_to_chroma():
                             n_bins = n_octaves * bins_per_octave
 
                             if np.mod(bins_per_octave, n_chroma) != 0:
-                                tf = raises(ValueError)(__test)
+                                tf = raises(librosa.ParameterError)(__test)
                             else:
                                 tf = __test
                             yield (tf, n_bins, bins_per_octave,
