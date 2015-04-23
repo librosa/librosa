@@ -11,10 +11,10 @@ Filter banks
     mel
     constant_q
 
-Miscellanous
-============
+Miscellaneous
+=============
 .. autosummary::
-    :toc:tree: generated/
+    :toctree: generated/
 
     constant_q_lengths
     cq_to_chroma
@@ -23,7 +23,7 @@ Miscellanous
 Deprecated
 ==========
 .. autosummary::
-    :toc:tree: generated/
+    :toctree: generated/
 
     logfrequency
 """
