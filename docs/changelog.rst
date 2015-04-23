@@ -80,6 +80,7 @@ Other changes
 -  ``pad_center`` supports multi-dimensional input and ``axis``
    parameter
 - switched from ``np.fft`` to ``scipy.fftpack`` for FFT operations
+- changed all librosa-generated exception to a new class librosa.ParameterError
 
 Deprecated functions
 
