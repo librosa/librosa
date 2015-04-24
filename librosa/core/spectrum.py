@@ -481,7 +481,7 @@ def phase_vocoder(D, rate, hop_length=None):
 
     .. [1] Ellis, D. P. W. "A phase vocoder in Matlab."
         Columbia University, 2002.
-        http://www.ee.columbia.edu/dpwe/resources/matlab/pvoc/
+        http://www.ee.columbia.edu/~dpwe/resources/matlab/pvoc/
 
     Examples
     --------
