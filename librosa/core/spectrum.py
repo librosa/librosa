@@ -730,7 +730,7 @@ def perceptual_weighting(S, frequencies, **kwargs):
 
 
 @cache
-def _spectrogram(y=None, S=None, n_fft=2048, hop_length=512, power=1):
+def _spectrogram(y=None, S=None, window=None, n_fft=2048, hop_length=512, power=1):
     '''Helper function to retrieve a magnitude spectrogram.
 
     This is primarily used in feature extraction functions that can operate on
@@ -744,6 +744,12 @@ def _spectrogram(y=None, S=None, n_fft=2048, hop_length=512, power=1):
 
     S : None or np.ndarray
         Spectrogram input, optional
+        
+    window : None, function, np.ndarray [shape=(n_fft,)]
+        STFT window type
+        - None (default): use an asymmetric Hann window
+        - a window function, such as `scipy.signal.hann`
+        - a vector or array of length `n_fft`
 
     n_fft : int > 0
         STFT window size
@@ -771,6 +777,6 @@ def _spectrogram(y=None, S=None, n_fft=2048, hop_length=512, power=1):
         n_fft = 2 * (S.shape[0] - 1)
     else:
         # Otherwise, compute a magnitude spectrogram from input
-        S = np.abs(stft(y, n_fft=n_fft, hop_length=hop_length))**power
+        S = np.abs(stft(y, window=window, n_fft=n_fft, hop_length=hop_length))**power
 
     return S, n_fft
