@@ -716,7 +716,7 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True,
 
 # -- Chroma --#
 @cache
-def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
+def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, window=None, n_fft=2048,
                 hop_length=512, tuning=None, **kwargs):
     """Compute a chromagram from an STFT spectrogram or waveform
 
@@ -736,6 +736,12 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
         See `librosa.util.normalize` for details.
 
         If `None`, no normalization is performed.
+    
+    window : None, function, np.ndarray [shape=(n_fft,)]
+        STFT window type
+        - None (default): use an asymmetric Hann window
+        - a window function, such as `scipy.signal.hann`
+        - a vector or array of length `n_fft`
 
     n_fft : int  > 0 [scalar]
         FFT window size if provided `y, sr` instead of `S`
@@ -792,8 +798,8 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
 
     """
 
-    S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length,
-                            power=2)
+    S, n_fft = _spectrogram(y=y, S=S, window=window, n_fft=n_fft,
+                            hop_length=hop_length, power=2)
 
     n_chroma = kwargs.get('n_chroma', 12)
 
