@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Feature extraction routines
+"""Feature extraction
 
 Spectral features
 =================
@@ -39,3 +39,5 @@ Deprecated
 
 from .utils import *  # pylint: disable=wildcard-import
 from .spectral import *  # pylint: disable=wildcard-import
+
+__all__ = [_ for _ in dir() if not _.startswith('_')]

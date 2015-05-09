@@ -13,6 +13,7 @@
 
 import os
 import sys
+from glob import glob
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -34,8 +35,8 @@ extensions = ['sphinx.ext.autodoc',
               'numpydoc']
 
 
-from glob import glob
-autosummary_generate = glob('*.rst')
+#autosummary_generate = glob('*.rst')
+autosummary_generate = True
 
 # Determine if the matplotlib has a recent enough version of the
 # plot_directive.
