@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Feature extraction
+"""
+Feature extraction
+==================
 
 Spectral features
-=================
+-----------------
 .. autosummary::
     :toctree: generated/
 
@@ -21,7 +23,7 @@ Spectral features
     zero_crossing_rate
 
 Feature manipulation
-====================
+--------------------
 .. autosummary::
     :toctree: generated/
 
@@ -30,7 +32,7 @@ Feature manipulation
     sync
 
 Deprecated
-==========
+----------
 .. autosummary::
     :toctree: generated/
 

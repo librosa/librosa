@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Effects and filters for audio data
+"""
+Effects
+=======
 
 Harmonic-percussive source separation
-=====================================
+-------------------------------------
 .. autosummary::
     :toctree: generated/
 
@@ -12,7 +14,7 @@ Harmonic-percussive source separation
     percussive
 
 Time and frequency
-==================
+------------------
 .. autosummary::
     :toctree: generated/
 
@@ -20,7 +22,7 @@ Time and frequency
     pitch_shift
 
 Miscellaneous
-=============
+-------------
 .. autosummary::
     :toctree: generated/
 

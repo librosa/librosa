@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Beat tracking and tempo estimation
-
+"""
 Beat and tempo
 ==============
 .. autosummary::
-    :toctree: generated/
+   :toctree: generated/
 
-    beat_track
-    estimate_tempo
+   beat_track
+   estimate_tempo
 """
 
 import numpy as np

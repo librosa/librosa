@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Display module for interacting with matplotlib
-
+"""
 Display
 =======
 .. autosummary::
@@ -11,8 +10,6 @@ Display
     waveplot
     time_ticks
     cmap
-
-
 """
 
 import numpy as np

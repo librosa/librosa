@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Output routines for audio and analysis
+"""
+Output
+======
 
 Text output
-===========
+-----------
 .. autosummary::
     :toctree: generated/
 
@@ -11,14 +13,14 @@ Text output
     times_csv
 
 Audio output
-============
+------------
 .. autosummary::
     :toctree: generated/
 
     write_wav
 
 Deprecated
-==========
+----------
 .. autosummary::
     :toctree: generated/
 
