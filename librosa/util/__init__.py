@@ -4,6 +4,7 @@
 
 Utilities
 =========
+
 .. autosummary::
     :toctree: generated/
 
@@ -31,6 +32,7 @@ Utilities
 
 File operations
 ===============
+
 .. autosummary::
     :toctree: generated/
 
@@ -40,6 +42,7 @@ File operations
 
 sklearn integration
 ===================
+
 .. autosummary::
     :toctree: generated/
 
@@ -59,3 +62,6 @@ from .files import *  # pylint: disable=wildcard-import
 from .feature_extractor import *  # pylint: disable=wildcard-import
 from . import decorators
 from . import exceptions
+
+__all__ = [_ for _ in dir() if not _.startswith('_')]
+
