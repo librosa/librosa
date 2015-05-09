@@ -13,7 +13,6 @@
 
 import os
 import sys
-from glob import glob
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -188,7 +187,6 @@ pygments_style = 'sphinx'
 
 # -- RTD cruft ---
 
-import sys
 import six
 
 if six.PY3:

@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Onset strength and event detection
-
-Onsets
-======
+"""
+Onset detection
+===============
 .. autosummary::
     :toctree: generated/
 
