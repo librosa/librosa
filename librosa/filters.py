@@ -720,7 +720,7 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> CQT = librosa.cqt(y, sr=sr)
-    >>> chroma_map = librosa.filters.cq_to_chroma(CQT.shape[0], roll=-3)
+    >>> chroma_map = librosa.filters.cq_to_chroma(CQT.shape[0])
     >>> chromagram = chroma_map.dot(CQT)
     >>> # Max-normalize each time step
     >>> chromagram = librosa.util.normalize(chromagram, axis=0)
@@ -753,8 +753,8 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
 
     if np.mod(n_merge, 1) != 0:
         raise ParameterError('Incompatible CQ merge: '
-                                    'input bins must be an '
-                                    'integer multiple of output bins.')
+                             'input bins must be an '
+                             'integer multiple of output bins.')
 
     # Tile the identity to merge fractional bins
     cq_to_ch = np.repeat(np.eye(n_chroma), n_merge, axis=1)
