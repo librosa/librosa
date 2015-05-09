@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Temporal segmentation utilities
+"""
+Temporal segmentation
+=====================
 
 Recurrence and self-similarity
-==============================
+------------------------------
 .. autosummary::
     :toctree: generated/
 
@@ -13,7 +15,7 @@ Recurrence and self-similarity
     timelag_filter
 
 Temporal clustering
-===================
+-------------------
 .. autosummary::
     :toctree: generated/
 
@@ -21,7 +23,7 @@ Temporal clustering
     subsegment
 
 Deprecated
-==========
+----------
 .. autosummary::
     :toctree: generated/
 

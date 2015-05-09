@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Functions to construct and manipulate filterbanks
+"""
+Filters
+=======
 
-Filter banks
-============
+Filter bank construction
+------------------------
 .. autosummary::
     :toctree: generated/
 
@@ -12,7 +14,7 @@ Filter banks
     constant_q
 
 Miscellaneous
-=============
+-------------
 .. autosummary::
     :toctree: generated/
 
@@ -21,7 +23,7 @@ Miscellaneous
     window_bandwidth
 
 Deprecated
-==========
+----------
 .. autosummary::
     :toctree: generated/
 
