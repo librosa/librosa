@@ -85,6 +85,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
 
     Examples
     --------
+
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> D = librosa.stft(y)
     >>> D
@@ -92,21 +93,27 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
               3.189e-04 -0.000e+00j,  -5.961e-06 -0.000e+00j],
            [  2.441e-03 +2.884e-19j,   5.145e-02 -5.076e-03j, ...,
              -3.885e-04 -7.253e-05j,   7.334e-05 +3.868e-04j],
-           ..., 
+          ..., 
            [ -7.120e-06 -1.029e-19j,  -1.951e-09 -3.568e-06j, ...,
              -4.912e-07 -1.487e-07j,   4.438e-06 -1.448e-05j],
            [  7.136e-06 -0.000e+00j,   3.561e-06 -0.000e+00j, ...,
              -5.144e-07 -0.000e+00j,  -1.514e-05 -0.000e+00j]], dtype=complex64)
 
+
     Use left-aligned frames, instead of centered frames
+
 
     >>> D_left = librosa.stft(y, center=False)
 
+
     Use a shorter hop length
+
 
     >>> D_short = librosa.stft(y, hop_length=64)
 
+
     Display a spectrogram
+
 
     >>> import matplotlib.pyplot as plt
     >>> librosa.display.specshow(librosa.logamplitude(np.abs(D)**2,

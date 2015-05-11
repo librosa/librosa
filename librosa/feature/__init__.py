@@ -23,6 +23,7 @@ Spectral features
     tonnetz
     zero_crossing_rate
 
+
 Feature manipulation
 --------------------
 
@@ -32,6 +33,7 @@ Feature manipulation
     delta
     stack_memory
     sync
+
 
 Deprecated
 ----------
