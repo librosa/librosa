@@ -710,7 +710,13 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True,
 # -- Chroma --#
 def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
                 hop_length=512, tuning=None, **kwargs):
-    """Compute a chromagram from an STFT spectrogram or waveform
+    """Compute a chromagram from a waveform or power spectrogram.
+
+    This implementation is derived from `chromagram_E` [1]_
+
+    .. [1] Ellis, Daniel P.W.  "Chroma feature analysis and synthesis"
+           2007/04/21
+           http://labrosa.ee.columbia.edu/matlab/chroma-ansyn/
 
     Parameters
     ----------
