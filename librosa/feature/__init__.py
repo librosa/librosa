@@ -6,6 +6,7 @@ Feature extraction
 
 Spectral features
 -----------------
+
 .. autosummary::
     :toctree: generated/
 
@@ -24,6 +25,7 @@ Spectral features
 
 Feature manipulation
 --------------------
+
 .. autosummary::
     :toctree: generated/
 
@@ -33,6 +35,7 @@ Feature manipulation
 
 Deprecated
 ----------
+
 .. autosummary::
     :toctree: generated/
 
