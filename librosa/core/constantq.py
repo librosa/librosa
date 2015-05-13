@@ -171,11 +171,13 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                            res_type, n_octaves,
                                            nyquist, filter_cutoff)
 
+    n_filters = min(bins_per_octave, n_bins)
+
     if res_type != 'sinc_fastest' and audio._HAS_SAMPLERATE:
 
         # Do two octaves before resampling to allow for usage of sinc_fastest
         fft_basis, n_fft, filter_lengths = __fft_filters(sr, fmin_t,
-                                                         bins_per_octave,
+                                                         n_filters,
                                                          tuning,
                                                          resolution,
                                                          norm,
@@ -203,7 +205,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     # Now do the recursive bit
     fft_basis, n_fft, filter_lengths = __fft_filters(sr, fmin_t,
-                                                     bins_per_octave,
+                                                     n_filters,
                                                      tuning,
                                                      resolution,
                                                      norm,
