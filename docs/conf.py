@@ -39,7 +39,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.autosummary']
 
 
-autosummary_generate = glob.glob('*.rst')
+autosummary_generate = True 
 
 # Determine if the matplotlib has a recent enough version of the
 # plot_directive.
@@ -59,7 +59,6 @@ else:
     raise RuntimeError("You need a recent enough version of matplotlib")
 
 # Generate plots for example sections
-phantom_import_file = 'dump.xml'
 numpydoc_use_plots = True
 
 
@@ -171,7 +170,7 @@ release = librosa_version.version
 exclude_patterns = ['_build']
 
 # The reST default role (used for this markup: `text`) to use for all documents.
-#default_role = 'autolink'
+default_role = 'autolink'
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 add_function_parentheses = False

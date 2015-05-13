@@ -48,7 +48,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
         The window will be of length `win_length` and then padded
         with zeros to match `n_fft`.
 
-        If unspecified, defaults to `win_length = n_fft`.
+        If unspecified, defaults to ``win_length = n_fft``.
 
     window : None, function, np.ndarray [shape=(n_fft,)]
         - None (default): use an asymmetric Hann window
@@ -73,7 +73,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
     Raises
     ------
     ParameterError
-        If `window` is supplied as a vector of length `!= n_fft`.
+        If `window` is supplied as a vector of length `n_fft`.
 
 
     See Also
@@ -227,7 +227,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
     Raises
     ------
     ParameterError
-        If `window` is supplied as a vector of length `!= n_fft`
+        If `window` is supplied as a vector of length `n_fft`
 
     See Also
     --------
@@ -570,8 +570,7 @@ def phase_vocoder(D, rate, hop_length=None):
 
 @cache
 def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
-    r"""Log-scale the amplitude of a spectrogram.
-
+    """Log-scale the amplitude of a spectrogram.
 
     Parameters
     ----------
@@ -590,30 +589,27 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
 
     top_db  : float >= 0 [scalar]
         threshold log amplitude at top_db below the peak:
-        `max(log(S)) - top_db`
-
+        ``max(log(S)) - top_db``
 
     Returns
     -------
     log_S   : np.ndarray [shape=(d, t)]
-        `log_S ~= 10 * log10(S) - 10 * log10(abs(ref_power))`
-
+        ``log_S ~= 10 * log10(S) - 10 * log10(abs(ref_power))``
 
     See Also
     --------
     perceptual_weighting
 
-
     Examples
     --------
-    Get a power spectrogram from a waveform `y`
+    Get a power spectrogram from a waveform ``y``
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> S = np.abs(librosa.stft(y)) ** 2
-    >>> librosa.logamplitude(S)
+    >>> S = np.abs(librosa.stft(y))
+    >>> librosa.logamplitude(S**2)
     array([[-33.293, -27.32 , ..., -33.293, -33.293],
            [-33.293, -25.723, ..., -33.293, -33.293],
-           ..., 
+           ...,
            [-33.293, -33.293, ..., -33.293, -33.293],
            [-33.293, -33.293, ..., -33.293, -33.293]], dtype=float32)
 *********************************************************************
@@ -623,7 +619,7 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     >>> librosa.logamplitude(S, ref_power=np.max)
     array([[-80.   , -74.027, ..., -80.   , -80.   ],
            [-80.   , -72.431, ..., -80.   , -80.   ],
-           ..., 
+           ...,
            [-80.   , -80.   , ..., -80.   , -80.   ],
            [-80.   , -80.   , ..., -80.   , -80.   ]], dtype=float32)
 
@@ -633,7 +629,7 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     >>> librosa.logamplitude(S, ref_power=np.median)
     array([[-0.189,  5.784, ..., -0.189, -0.189],
            [-0.189,  7.381, ..., -0.189, -0.189],
-           ..., 
+           ...,
            [-0.189, -0.189, ..., -0.189, -0.189],
            [-0.189, -0.189, ..., -0.189, -0.189]], dtype=float32)
 
@@ -652,6 +648,7 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Log-Power spectrogram')
     >>> plt.tight_layout()
+
     """
 
     if amin <= 0:
