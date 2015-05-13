@@ -43,7 +43,6 @@ Deprecated
 
     logfsgram
 """
-
 from .utils import *  # pylint: disable=wildcard-import
 from .spectral import *  # pylint: disable=wildcard-import
 
