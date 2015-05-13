@@ -319,7 +319,7 @@ def note_to_midi(note, round_midi=True):
 
     The leading note name is case-insensitive.
 
-    Sharps are indicated with `#`, flats may be indicated with `!` or `b`.
+    Sharps are indicated with ``#``, flats may be indicated with ``!`` or ``b``.
 
     Parameters
     ----------
