@@ -99,12 +99,17 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     >>> import matplotlib.pyplot as plt
     >>> D = np.abs(librosa.stft(y))**2
     >>> plt.figure()
+    >>> plt.subplot(2, 1, 1)
     >>> librosa.display.specshow(librosa.logamplitude(D, ref_power=np.max),
     ...                          x_axis='time', y_axis='log')
-    >>> plt.vlines(onset_frames, 0, D.shape[0], color='r', alpha=0.9,
-    ...            label='Onsets')
-    >>> plt.legend(frameon=True, shadow=True)
     >>> plt.title('Power spectrogram')
+    >>> plt.subplot(2, 1, 2)
+    >>> plt.plot(o_env, label='Onset strength')
+    >>> plt.vlines(onset_frames, 0, o_env.max(), color='r', alpha=0.9,
+    ...            label='Onsets')
+    >>> plt.xticks([])
+    >>> plt.axis('tight')
+    >>> plt.legend(frameon=True, framealpha=0.75, shadow=True)
 
     """
 
