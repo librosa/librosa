@@ -13,16 +13,16 @@ from __future__ import division
 import os
 try:
     os.environ.pop('LIBROSA_CACHE_DIR')
-except:
+except KeyError:
     pass
 
 import librosa
 import numpy as np
 
-from nose.tools import nottest, eq_, raises
+from nose.tools import raises
 
 def __test_cqt_size(y, sr, hop_length, fmin, n_bins, bins_per_octave,
-            tuning, resolution, aggregate, norm, sparsity):
+                    tuning, resolution, aggregate, norm, sparsity):
 
     cqt_output = librosa.cqt(y,
                              sr=sr,
@@ -45,7 +45,6 @@ def test_cqt():
 
     sr = 11025
 
-
     # Impulse train
     y = np.zeros(int(5.0 * sr))
     y[::sr] = 1.0
@@ -53,13 +52,12 @@ def test_cqt():
 
     # Hop size not long enough for num octaves
     # num_octaves = 6, 2**6 = 64 > 32
-    yield (raises(ValueError)(__test_cqt_size), y, sr, 32, None, 72,
+    yield (raises(librosa.ParameterError)(__test_cqt_size), y, sr, 32, None, 72,
            12, None, 2, None, 1, 0.01)
 
     # Filters go beyond Nyquist. 500 Hz -> 4 octaves = 8000 Hz > 11000 Hz
-    yield (raises(ValueError)(__test_cqt_size), y, sr, 512, 500, 48,
+    yield (raises(librosa.ParameterError)(__test_cqt_size), y, sr, 512, 500, 48,
            12, None, 2, None, 1, 0.01)
-
 
     # Test for no errors and correct output size
     for fmin in [None, librosa.note_to_hz('C3')]:
@@ -69,8 +67,8 @@ def test_cqt():
                     for resolution in [1, 2]:
                         for norm in [1, 2]:
                             yield (__test_cqt_size, y, sr, 512, fmin, n_bins,
-                                bins_per_octave, tuning,
-                                resolution, None, norm, 0.01)
+                                   bins_per_octave, tuning,
+                                   resolution, None, norm, 0.01)
 
     # Test with fmin near Nyquist
     for fmin in [3000, 4800]:
@@ -78,6 +76,3 @@ def test_cqt():
             for bins_per_octave in [12]:
                 yield (__test_cqt_size, y, sr, 512, fmin, n_bins,
                        bins_per_octave, None, 2, None, 1, 0.01)
-
-
-
