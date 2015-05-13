@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''Pitch-tracking and tuning estimation'''
+from __future__ import division
 
 import numpy as np
 import scipy.fftpack as fft
