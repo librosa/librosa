@@ -11,6 +11,7 @@ Filter bank construction
 
     dct
     mel
+    chroma
     constant_q
 
 Miscellaneous
