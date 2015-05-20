@@ -56,6 +56,18 @@ def test_load():
         yield (__test, infile)
     pass
 
+def test_segment_load():
+    """
+    Test loading a segment. Check size accuracy
+    """
+
+    sample_len = 2003
+    y, sr = librosa.load('data/test1_44100.wav', sr=None, mono=False, offset=0., duration=sample_len/44100.)
+    assert y.shape[1] == sample_len
+
+    y, sr = librosa.load('data/test1_44100.wav', sr=None, mono=False, offset=2048/44100., duration=1.0)
+    assert y.shape[1] == 44100
+
 
 def test_resample():
 
