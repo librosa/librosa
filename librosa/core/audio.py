@@ -108,12 +108,12 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
     with audioread.audio_open(os.path.realpath(path)) as input_file:
         sr_native = input_file.samplerate
 
-        s_start = int(np.floor(sr_native * offset)) * input_file.channels
+        s_start = int(np.round(sr_native * offset)) * input_file.channels
 
         if duration is None:
             s_end = np.inf
         else:
-            s_end = s_start + (int(np.ceil(sr_native * duration))
+            s_end = s_start + (int(np.round(sr_native * duration))
                                * input_file.channels)
 
         n = 0
@@ -136,7 +136,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
                 # the end is in this frame.  crop.
                 frame = frame[:s_end - n_prev]
 
-            if n_prev <= s_start < n:
+            if n_prev <= s_start <= n:
                 # beginning is in this frame
                 frame = frame[(s_start - n_prev):]
 
