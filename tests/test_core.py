@@ -57,25 +57,26 @@ def test_load():
     pass
 
 def test_segment_load():
-    """
-    Test loading a segment. Check size accuracy
-    """
 
     sample_len = 2003
     fs = 44100
     test_file = 'data/test1_44100.wav'
-    y, sr = librosa.load(test_file, sr=None, mono=False, offset=0., duration=sample_len/float(fs))
-    assert y.shape[1] == sample_len
+    y, sr = librosa.load(test_file, sr=None, mono=False,
+                         offset=0., duration=sample_len/float(fs))
+
+    eq_(y.shape[-1], sample_len)
 
     y2, sr = librosa.load(test_file, sr=None, mono=False)
-    assert np.max(np.abs(y-y2[:,:sample_len]))<1e-4
+    assert np.allclose(y, y2[:, :sample_len])
 
     sample_offset = 2048
-    y, sr = librosa.load(test_file, sr=None, mono=False, offset=sample_offset/float(fs), duration=1.0)
-    assert y.shape[1] == fs
+    y, sr = librosa.load(test_file, sr=None, mono=False,
+                         offset=sample_offset/float(fs), duration=1.0)
+
+    eq_(y.shape[-1], fs)
 
     y2, sr = librosa.load(test_file, sr=None, mono=False)
-    assert np.max(np.abs(y-y2[:,sample_offset:sample_offset+fs]))<1e-4
+    assert np.allclose(y, y2[:, sample_offset:sample_offset+fs])
 
 
 def test_resample():
