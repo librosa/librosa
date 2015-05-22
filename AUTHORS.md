@@ -10,6 +10,7 @@ Contributors
 * Eric Battenberg <https://github.com/ebattenberg>
 * Bryce Walburn <https://github.com/BWalburn>
 * Oriol Nieto <https://github.com/urinieto>
+* Romain Hennequin <https://github.com/romi1502>
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
 
