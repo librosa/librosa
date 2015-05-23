@@ -65,6 +65,8 @@ New features
    -  ``feature.zero_crossing_rate``
    -  ``feature.tonnetz``
 
+- Added ``display.waveplot``
+
 Other changes
 
 -  Internal refactoring and restructuring of submodules
@@ -78,6 +80,7 @@ Other changes
 -  ``pad_center`` supports multi-dimensional input and ``axis``
    parameter
 - switched from ``np.fft`` to ``scipy.fftpack`` for FFT operations
+- changed all librosa-generated exception to a new class librosa.ParameterError
 
 Deprecated functions
 

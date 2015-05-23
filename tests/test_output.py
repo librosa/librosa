@@ -73,7 +73,7 @@ def test_times_csv():
             if annotations is not None:
                 eq_(str(annotations[i]), ann_in)
 
-    __test_fail = raises(ValueError)(__test)
+    __test_fail = raises(librosa.ParameterError)(__test)
 
     for times in [[], np.linspace(0, 10, 20)]:
         for annotations in [None, ['abcde'[q] for q in np.random.randint(0, 5,
@@ -119,7 +119,7 @@ def test_frames_csv():
                 eq_(str(annotations[i]), ann_in)
             assert np.allclose(times[i], t_in, atol=1e-3, rtol=1e-3)
 
-    __test_fail = raises(ValueError)(__test)
+    __test_fail = raises(librosa.ParameterError)(__test)
 
     for frames in [np.asarray([]), np.arange(0, 22050 * 3, 1000)]:
         for annotations in [None, ['abcde'[q] for q in np.random.randint(0, 5,
@@ -168,7 +168,7 @@ def test_annotation():
             if annotations is not None:
                 eq_(str(annotations[i]), ann_in)
 
-    __test_fail = raises(ValueError)(__test)
+    __test_fail = raises(librosa.ParameterError)(__test)
 
     times = np.random.randn(20, 2)
 

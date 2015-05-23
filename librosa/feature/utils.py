@@ -7,6 +7,7 @@ import scipy.signal
 
 from .. import cache
 from .. import util
+from ..util.exceptions import ParameterError
 
 __all__ = ['delta', 'stack_memory', 'sync']
 
@@ -82,10 +83,10 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
     data = np.atleast_1d(data)
 
     if width < 3 or np.mod(width, 2) != 1:
-        raise ValueError('width must be an odd integer >= 3')
+        raise ParameterError('width must be an odd integer >= 3')
 
     if order <= 0 or not isinstance(order, int):
-        raise ValueError('order must be a positive integer')
+        raise ParameterError('order must be a positive integer')
 
     half_length = 1 + int(width // 2)
     window = np.arange(half_length - 1., -half_length, -1.)
@@ -200,10 +201,10 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
     """
 
     if n_steps < 1:
-        raise ValueError('n_steps must be a positive integer')
+        raise ParameterError('n_steps must be a positive integer')
 
     if delay < 1:
-        raise ValueError('delay must be a positive integer')
+        raise ParameterError('delay must be a positive integer')
 
     data = np.atleast_2d(data)
 
@@ -260,7 +261,7 @@ def sync(data, frames, aggregate=None, pad=True):
 
     Raises
     ------
-    ValueError
+    ParameterError
         If `data.ndim` is not 1 or 2
 
     Examples
@@ -312,7 +313,7 @@ def sync(data, frames, aggregate=None, pad=True):
     """
 
     if data.ndim > 2:
-        raise ValueError('Synchronized data has ndim={:d},'
+        raise ParameterError('Synchronized data has ndim={:d},'
                          ' must be 1 or 2.'.format(data.ndim))
 
     data = np.atleast_2d(data)

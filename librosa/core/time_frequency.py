@@ -6,6 +6,7 @@ import numpy as np
 import re
 import six
 
+from ..util.exceptions import ParameterError
 
 __all__ = ['frames_to_samples', 'frames_to_time',
            'samples_to_frames', 'samples_to_time',
@@ -318,7 +319,7 @@ def note_to_midi(note, round_midi=True):
 
     The leading note name is case-insensitive.
 
-    Sharps are indicated with `#`, flats may be indicated with `!` or `b`.
+    Sharps are indicated with ``#``, flats may be indicated with ``!`` or ``b``.
 
     Parameters
     ----------
@@ -336,7 +337,7 @@ def note_to_midi(note, round_midi=True):
 
     Raises
     ------
-    ValueError
+    ParameterError
         If the input is not in valid note format
 
     See Also
@@ -374,7 +375,7 @@ def note_to_midi(note, round_midi=True):
                      r'(?P<cents>[+-]\d+)?$',
                      note)
     if not match:
-        raise ValueError('Improper note format: {:s}'.format(note))
+        raise ParameterError('Improper note format: {:s}'.format(note))
 
     pitch = match.group('note').upper()
     offset = np.sum([acc_map[o] for o in match.group('accidental')])
@@ -440,7 +441,7 @@ def midi_to_note(midi, octave=True, cents=False):
 
     Raises
     ------
-    RuntimeError
+    ParameterError
         if `cents` is True and `octave` is False
 
     See Also
@@ -451,7 +452,7 @@ def midi_to_note(midi, octave=True, cents=False):
     '''
 
     if cents and not octave:
-        raise RuntimeError('Cannot encode cents without octave information.')
+        raise ParameterError('Cannot encode cents without octave information.')
 
     if not np.isscalar(midi):
         return [midi_to_note(x, octave=octave, cents=cents) for x in midi]

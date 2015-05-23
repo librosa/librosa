@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Core IO, DSP and utility functions.
+"""
+Core IO and DSP 
+===============
 
 Audio processing
-================
+----------------
 .. autosummary::
     :toctree: generated/
 
@@ -16,7 +18,7 @@ Audio processing
 
 
 Spectral representations
-========================
+------------------------
 .. autosummary::
     :toctree: generated/
 
@@ -35,7 +37,7 @@ Spectral representations
     A_weighting
 
 Time and frequency conversion
-=============================
+-----------------------------
 .. autosummary::
     :toctree: generated/
 
@@ -64,7 +66,7 @@ Time and frequency conversion
 
 
 Pitch and tuning
-================
+----------------
 .. autosummary::
     :toctree: generated/
 
@@ -74,7 +76,7 @@ Pitch and tuning
 
 
 Deprecated
-==========
+----------
 .. autosummary::
     :toctree: generated/
 
@@ -87,3 +89,6 @@ from .audio import *  # pylint: disable=wildcard-import
 from .spectrum import *  # pylint: disable=wildcard-import
 from .pitch import *  # pylint: disable=wildcard-import
 from .constantq import *  # pylint: disable=wildcard-import
+
+__all__ = [_ for _ in dir() if not _.startswith('_')]
+

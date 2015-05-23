@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Onset strength and event detection
-
-Onsets
-======
+"""
+Onset detection
+===============
 .. autosummary::
     :toctree: generated/
 
@@ -17,12 +16,13 @@ import scipy
 from . import cache
 from . import core
 from . import util
+from .util.exceptions import ParameterError
+
 from .feature import melspectrogram
 
 __all__ = ['onset_detect', 'onset_strength']
 
 
-@cache
 def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
                  **kwargs):
     """Basic onset detector.  Locate note onset events by picking peaks in an
@@ -67,7 +67,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
     Raises
     ------
-    ValueError
+    ParameterError
         if neither `y` nor `onsets` are provided
 
 
@@ -99,19 +99,24 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     >>> import matplotlib.pyplot as plt
     >>> D = np.abs(librosa.stft(y))**2
     >>> plt.figure()
+    >>> plt.subplot(2, 1, 1)
     >>> librosa.display.specshow(librosa.logamplitude(D, ref_power=np.max),
     ...                          x_axis='time', y_axis='log')
-    >>> plt.vlines(onset_frames, 0, D.shape[0], color='r', alpha=0.9,
-    ...            label='Onsets')
-    >>> plt.legend(frameon=True, shadow=True)
     >>> plt.title('Power spectrogram')
+    >>> plt.subplot(2, 1, 2)
+    >>> plt.plot(o_env, label='Onset strength')
+    >>> plt.vlines(onset_frames, 0, o_env.max(), color='r', alpha=0.9,
+    ...            linestyle='--', label='Onsets')
+    >>> plt.xticks([])
+    >>> plt.axis('tight')
+    >>> plt.legend(frameon=True, framealpha=0.75)
 
     """
 
     # First, get the frame->beat strength profile if we don't already have one
     if onset_envelope is None:
         if y is None:
-            raise ValueError('Either "y" or "onset_envelope" must be provided')
+            raise ParameterError('y or onset_envelope must be provided')
 
         onset_envelope = onset_strength(y=y, sr=sr, hop_length=hop_length)
 
@@ -132,7 +137,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     kwargs.setdefault('pre_avg', 0.10*sr//hop_length)       # 100ms
     kwargs.setdefault('post_avg', 0.10*sr//hop_length + 1)  # 100ms
     kwargs.setdefault('wait', 0.03*sr//hop_length)          # 30ms
-    kwargs.setdefault('delta', 0.06)
+    kwargs.setdefault('delta', 0.07)
 
     # Peak pick the onset envelope
     return util.peak_pick(onset_envelope, **kwargs)
@@ -170,7 +175,7 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
 
     feature : function
         Function for computing time-series features, eg, scaled spectrograms.
-        By default, uses `librosa.feature.melspectrogram`
+        By default, uses `librosa.feature.melspectrogram` with `fmax=8000.0`
 
     aggregate : function
         Aggregation function to use when combining onsets
@@ -190,7 +195,7 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
 
     Raises
     ------
-    ValueError
+    ParameterError
         if neither `(y, sr)` nor `S` are provided
 
 
@@ -225,12 +230,12 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
     ...          label='Median aggregation (custom mel)')
 
 
-    Log-frequency spectrogram instead of Mel
+    Constant-Q spectrogram instead of Mel
 
     >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr,
-    ...                                          feature=librosa.feature.logfsgram)
+    ...                                          feature=librosa.cqt)
     >>> plt.plot(onset_env / onset_env.max(), alpha=0.8,
-    ...          label='Mean aggregation (logfs)')
+    ...          label='Mean aggregation (CQT)')
 
     >>> plt.legend(frameon=True, framealpha=0.75)
     >>> librosa.display.time_ticks(librosa.frames_to_time(np.arange(len(onset_env))))
@@ -243,6 +248,7 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
 
     if feature is None:
         feature = melspectrogram
+        kwargs.setdefault('fmax', 11025.0)
 
     if aggregate is None:
         aggregate = np.mean

@@ -25,16 +25,15 @@ from mpl_ic import image_comparison
 
 
 @nottest
-def get_spec():
-
-    __EXAMPLE_FILE = 'data/test1_22050.wav'
-
-    y, sr = librosa.load(__EXAMPLE_FILE)
+def get_spec(y, sr):
 
     C = librosa.cqt(y, sr=sr)
     return librosa.stft(y), C, sr
 
-S, C, sr = get_spec()
+
+__EXAMPLE_FILE = 'data/test1_22050.wav'
+y, sr = librosa.load(__EXAMPLE_FILE)
+S, C, sr = get_spec(y, sr)
 S_abs = np.abs(S)
 S_signed = np.abs(S) - np.median(np.abs(S))
 S_bin = S_signed > 0
@@ -267,9 +266,39 @@ def test_time_scales_explicit():
     librosa.display.time_ticks(locs, times, fmt='h')
 
 
+@image_comparison(baseline_images=['waveplot_mono'], extensions=['png'])
+def test_waveplot_mono():
+
+    plt.figure()
+    plt.subplot(3, 1, 1)
+    librosa.display.waveplot(y, sr=sr, max_points=None, x_axis='off')
+
+    plt.subplot(3, 1, 2)
+    librosa.display.waveplot(y, sr=sr, x_axis='off')
+
+    plt.subplot(3, 1, 3)
+    librosa.display.waveplot(y, sr=sr, x_axis='time')
+
+
+@image_comparison(baseline_images=['waveplot_stereo'], extensions=['png'])
+def test_waveplot_stereo():
+
+    ys = np.vstack([y[np.newaxis, :], 2 * y[np.newaxis, :]])
+
+    plt.figure()
+    librosa.display.waveplot(ys, sr=sr)
+
+
+@raises(librosa.ParameterError)
+def test_unknown_wavaxis():
+
+    plt.figure()
+    librosa.display.waveplot(y, sr=sr, x_axis='something not in the axis map')
+
+
 def test_unknown_axis():
 
-    @raises(ValueError)
+    @raises(librosa.ParameterError)
     def __test(axis):
         kwargs = dict()
         kwargs.setdefault(axis, 'something not in the axis map')
@@ -301,7 +330,7 @@ def test_cmap_robust():
 
 def test_time_ticks_failure():
 
-    @raises(ValueError)
+    @raises(librosa.ParameterError)
     def __test(locs, times, fmt, axis):
 
         if times is None:

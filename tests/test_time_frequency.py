@@ -175,7 +175,7 @@ def test_note_to_midi():
         midi = librosa.note_to_midi([note], round_midi=round_midi)
         eq_(midi[0], midi_true)
 
-    @raises(ValueError)
+    @raises(librosa.ParameterError)
     def __test_fail():
         librosa.note_to_midi('does not pass')
 
@@ -219,7 +219,7 @@ def test_note_to_hz():
         hz = librosa.note_to_hz(note, round_midi=round_midi)
         assert np.allclose(hz[0], hz_true)
 
-    @raises(ValueError)
+    @raises(librosa.ParameterError)
     def __test_fail():
         librosa.note_to_midi('does not pass')
 
@@ -245,7 +245,7 @@ def test_midi_to_note():
 
     yield __test, midi_num, 'C', False, False
     yield __test, midi_num, 'C2', True, False
-    yield raises(RuntimeError)(__test), midi_num, 'C+25', False, True
+    yield raises(librosa.ParameterError)(__test), midi_num, 'C+25', False, True
     yield __test, midi_num, 'C2+25', True, True
     yield __test, [midi_num], ['C'], False, False
 
@@ -271,7 +271,7 @@ def test_hz_to_note():
 
     yield __test, hz, 'A', False, False
     yield __test, hz, 'A5', True, False
-    yield raises(RuntimeError)(__test), hz, 'A+0', False, True
+    yield raises(librosa.ParameterError)(__test), hz, 'A+0', False, True
     yield __test, hz, 'A5+0', True, True
 
 

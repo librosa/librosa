@@ -56,6 +56,7 @@ New features
     - `feature.rmse`
     - `feature.zero_crossing_rate`
     - `feature.tonnetz`
+  - Added `librosa.display.waveplot`
 
 
 Other changes
@@ -69,6 +70,7 @@ Other changes
   - Chroma now starts at `C` by default, instead of `A`
   - `pad_center` supports multi-dimensional input and `axis` parameter
   - switched from `np.fft` to `scipy.fftpack` for FFT operations
+  - changed all librosa-generated exception to a new class librosa.ParameterError
 
 Deprecated functions
 
