@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Output routines for audio and analysis
+"""
+Output
+======
 
 Text output
-===========
+-----------
 .. autosummary::
     :toctree: generated/
 
@@ -11,14 +13,14 @@ Text output
     times_csv
 
 Audio output
-============
+------------
 .. autosummary::
     :toctree: generated/
 
     write_wav
 
 Deprecated
-==========
+----------
 .. autosummary::
     :toctree: generated/
 
@@ -34,6 +36,7 @@ import scipy.io.wavfile
 
 from . import core
 from . import util
+from .util.exceptions import ParameterError
 
 
 __all__ = ['annotation', 'times_csv', 'write_wav',
@@ -73,7 +76,7 @@ def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
 
     Raises
     ------
-    ValueError
+    ParameterError
         if `annotations` is not `None` and length does
         not match `intervals`
 
@@ -110,7 +113,7 @@ def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
     util.valid_intervals(intervals)
 
     if annotations is not None and len(annotations) != len(intervals):
-        raise ValueError('len(annotations) != len(intervals)')
+        raise ParameterError('len(annotations) != len(intervals)')
 
     with open(path, 'w') as output_file:
         writer = csv.writer(output_file, delimiter=delimiter)
@@ -163,7 +166,7 @@ def times_csv(path, times, annotations=None, delimiter=',', fmt='%0.3f'):
 
     Raises
     ------
-    ValueError
+    ParameterError
         if `annotations` is not `None` and length does not
         match `times`
 
@@ -176,7 +179,7 @@ def times_csv(path, times, annotations=None, delimiter=',', fmt='%0.3f'):
     """
 
     if annotations is not None and len(annotations) != len(times):
-        raise ValueError('len(annotations) != len(times)')
+        raise ParameterError('len(annotations) != len(times)')
 
     with open(path, 'w') as output_file:
         writer = csv.writer(output_file, delimiter=delimiter)

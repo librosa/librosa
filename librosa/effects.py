@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Effects and filters for audio data
+"""
+Effects
+=======
 
 Harmonic-percussive source separation
-=====================================
+-------------------------------------
 .. autosummary::
     :toctree: generated/
 
@@ -12,7 +14,7 @@ Harmonic-percussive source separation
     percussive
 
 Time and frequency
-==================
+------------------
 .. autosummary::
     :toctree: generated/
 
@@ -20,7 +22,7 @@ Time and frequency
     pitch_shift
 
 Miscellaneous
-=============
+-------------
 .. autosummary::
     :toctree: generated/
 
@@ -30,16 +32,15 @@ Miscellaneous
 import numpy as np
 
 from . import core
-from . import cache
 from . import decompose
 from . import util
+from .util.exceptions import ParameterError
 
 __all__ = ['hpss', 'harmonic', 'percussive',
            'time_stretch', 'pitch_shift',
            'remix']
 
 
-@cache
 def hpss(y):
     '''Decompose an audio time series into harmonic and percussive components.
 
@@ -87,7 +88,6 @@ def hpss(y):
     return y_harm, y_perc
 
 
-@cache
 def harmonic(y):
     '''Extract harmonic elements from an audio time-series.
 
@@ -126,7 +126,6 @@ def harmonic(y):
     return y_harm
 
 
-@cache
 def percussive(y):
     '''Extract percussive elements from an audio time-series.
 
@@ -165,7 +164,6 @@ def percussive(y):
     return y_perc
 
 
-@cache
 def time_stretch(y, rate):
     '''Time-stretch an audio series by a fixed rate.
 
@@ -205,7 +203,7 @@ def time_stretch(y, rate):
     '''
 
     if rate <= 0:
-        raise ValueError('rate must be a positive number')
+        raise ParameterError('rate must be a positive number')
 
     # Construct the stft
     stft = core.stft(y)
@@ -219,7 +217,6 @@ def time_stretch(y, rate):
     return y_stretch
 
 
-@cache
 def pitch_shift(y, sr, n_steps, bins_per_octave=12):
     '''Pitch-shift the waveform by `n_steps` half-steps.
 
@@ -269,7 +266,7 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12):
     '''
 
     if bins_per_octave < 1 or not np.issubdtype(type(bins_per_octave), np.int):
-        raise ValueError('bins_per_octave must be a positive integer.')
+        raise ParameterError('bins_per_octave must be a positive integer.')
 
     rate = 2.0 ** (-float(n_steps) / bins_per_octave)
 
@@ -280,7 +277,6 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12):
     return util.fix_length(y_shift, len(y))
 
 
-@cache
 def remix(y, intervals, align_zeros=True):
     '''Remix an audio signal by re-ordering time intervals.
 

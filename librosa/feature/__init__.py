@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Feature extraction routines
+"""
+Feature extraction
+==================
 
 Spectral features
-=================
+-----------------
+
 .. autosummary::
     :toctree: generated/
 
@@ -20,8 +23,10 @@ Spectral features
     tonnetz
     zero_crossing_rate
 
+
 Feature manipulation
-====================
+--------------------
+
 .. autosummary::
     :toctree: generated/
 
@@ -29,13 +34,16 @@ Feature manipulation
     stack_memory
     sync
 
+
 Deprecated
-==========
+----------
+
 .. autosummary::
     :toctree: generated/
 
     logfsgram
 """
-
 from .utils import *  # pylint: disable=wildcard-import
 from .spectral import *  # pylint: disable=wildcard-import
+
+__all__ = [_ for _ in dir() if not _.startswith('_')]

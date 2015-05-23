@@ -6,12 +6,12 @@ import numpy as np
 import scipy.ndimage
 import scipy.sparse
 import six
-import warnings
 
 from numpy.lib.stride_tricks import as_strided
 
 from .. import cache
 from . import decorators
+from .exceptions import ParameterError
 
 # Constrain STFT block sizes to 256 KB
 MAX_MEM_BLOCK = 2**8 * 2**10
@@ -57,7 +57,7 @@ def frame(y, frame_length=2048, hop_length=512):
 
     Raises
     ------
-    ValueError
+    ParameterError
         If `y` is not contiguous in memory, framing is invalid.
         See `np.ascontiguous()` for details.
 
@@ -78,10 +78,10 @@ def frame(y, frame_length=2048, hop_length=512):
     '''
 
     if hop_length < 1:
-        raise ValueError('Invalid hop_length: {:d}'.format(hop_length))
+        raise ParameterError('Invalid hop_length: {:d}'.format(hop_length))
 
     if not y.flags['C_CONTIGUOUS']:
-        raise ValueError('Input buffer must be contiguous.')
+        raise ParameterError('Input buffer must be contiguous.')
 
     valid_audio(y)
 
@@ -89,9 +89,9 @@ def frame(y, frame_length=2048, hop_length=512):
     n_frames = 1 + int((len(y) - frame_length) / hop_length)
 
     if n_frames < 1:
-        raise ValueError('Buffer is too short '
-                         '(n={:d}) for frame_length={:d}'.format(len(y),
-                                                                 frame_length))
+        raise ParameterError('Buffer is too short (n={:d})'
+                                    ' for frame_length={:d}'.format(len(y),
+                                                                    frame_length))
     # Vertical stride is one sample
     # Horizontal stride is `hop_length` samples
     y_frames = as_strided(y, shape=(frame_length, n_frames),
@@ -119,7 +119,7 @@ def valid_audio(y, mono=True):
 
     Raises
     ------
-    ValueError
+    ParameterError
         If `y` fails to meet the following criteria:
             - `type(y)` is `np.ndarray`
             - `mono == True` and `y.ndim` is not 1
@@ -140,17 +140,19 @@ def valid_audio(y, mono=True):
     '''
 
     if not isinstance(y, np.ndarray):
-        raise ValueError('Data is not a numpy ndarray audio buffer.')
+        raise ParameterError('data must be of type numpy.ndarray')
 
     if mono and y.ndim != 1:
-        raise ValueError('Invalid shape for monophonic audio: '
-                         'ndim={:d}, shape={}'.format(y.ndim, y.shape))
+        raise ParameterError('Invalid shape for monophonic audio: '
+                                    'ndim={:d}, shape={}'.format(y.ndim,
+                                                                 y.shape))
     elif y.ndim > 2:
-        raise ValueError('Invalid shape for audio: '
-                         'ndim={:d}, shape={}'.format(y.ndim, y.shape))
+        raise ParameterError('Invalid shape for audio: '
+                                    'ndim={:d}, shape={}'.format(y.ndim,
+                                                                 y.shape))
 
     if not np.isfinite(y).all():
-        raise ValueError('Audio buffer is not finite everywhere.')
+        raise ParameterError('Audio buffer is not finite everywhere')
 
     return True
 
@@ -176,7 +178,7 @@ def valid_int(x, cast=None):
 
     Raises
     ------
-    TypeError
+    ParameterError
         If `cast` is provided and is not callable.
     '''
 
@@ -184,7 +186,7 @@ def valid_int(x, cast=None):
         cast = np.floor
 
     if not six.callable(cast):
-        raise TypeError('cast parameter must be callable.')
+        raise ParameterError('cast parameter must be callable')
 
     return int(cast(x))
 
@@ -207,7 +209,7 @@ def valid_intervals(intervals):
     '''
 
     if intervals.ndim != 2 or intervals.shape[-1] != 2:
-        raise ValueError('intervals must have shape (n, 2)')
+        raise ParameterError('intervals must have shape (n, 2)')
 
     return True
 
@@ -262,12 +264,12 @@ def pad_center(data, size, axis=-1, **kwargs):
 
     Raises
     ------
-    ValueError
+    ParameterError
         If `size < data.shape[axis]`
 
     See Also
     --------
-    np.pad
+    numpy.pad
     '''
 
     kwargs.setdefault('mode', 'constant')
@@ -280,7 +282,9 @@ def pad_center(data, size, axis=-1, **kwargs):
     lengths[axis] = (lpad, size - n - lpad)
 
     if lpad < 0:
-        raise ValueError('Target size {:d} < input size {:d}'.format(size, n))
+        raise ParameterError(('Target size ({:d}) must be '
+                                     'at least input size ({:d})').format(size,
+                                                                          n))
 
     return np.pad(data, lengths, **kwargs)
 
@@ -327,7 +331,7 @@ def fix_length(data, size, axis=-1, **kwargs):
 
     See Also
     --------
-    np.pad
+    numpy.pad
     '''
 
     kwargs.setdefault('mode', 'constant')
@@ -347,7 +351,6 @@ def fix_length(data, size, axis=-1, **kwargs):
     return data
 
 
-@cache
 def fix_frames(frames, x_min=0, x_max=None, pad=True):
     '''Fix a list of frames to lie within [x_min, x_max]
 
@@ -404,12 +407,12 @@ def fix_frames(frames, x_min=0, x_max=None, pad=True):
 
     Raises
     ------
-    ValueError
+    ParameterError
         If `frames` contains negative values
     '''
 
     if np.any(frames < 0):
-        raise ValueError('Negative frame index detected')
+        raise ParameterError('Negative frame index detected')
 
     if pad and (x_min is not None or x_max is not None):
         frames = np.clip(frames, x_min, x_max)
@@ -507,7 +510,7 @@ def axis_sort(S, axis=-1, index=False, value=None):
 
     Raises
     ------
-    ValueError
+    ParameterError
         If `S` does not have exactly 2 dimensions (`S.ndim != 2`)
     '''
 
@@ -515,7 +518,7 @@ def axis_sort(S, axis=-1, index=False, value=None):
         value = np.argmax
 
     if S.ndim != 2:
-        raise ValueError('axis_sort is only defined for 2-dimensional arrays.')
+        raise ParameterError('axis_sort is only defined for 2D arrays')
 
     bin_idx = value(S, axis=np.mod(1-axis, S.ndim))
     idx = np.argsort(bin_idx)
@@ -595,7 +598,7 @@ def normalize(S, norm=np.inf, axis=0):
 
     Raises
     ------
-    ValueError
+    ParameterError
         If `norm` is not among the valid types defined above
     '''
 
@@ -618,7 +621,7 @@ def normalize(S, norm=np.inf, axis=0):
         return S
 
     else:
-        raise ValueError('Unsupported norm value: ' + repr(norm))
+        raise ParameterError('Unsupported norm: {}'.format(repr(norm)))
 
     # Avoid div-by-zero
     length[length < SMALL_FLOAT] = 1.0
@@ -660,12 +663,12 @@ def match_intervals(intervals_from, intervals_to):
 
     Raises
     ------
-    ValueError
+    ParameterError
         If either array of input intervals is not the correct shape
     '''
 
     if len(intervals_from) == 0 or len(intervals_to) == 0:
-        raise ValueError('Attempting to match empty interval list')
+        raise ParameterError('Attempting to match empty interval list')
 
     # Verify that the input intervals has correct shape and size
     valid_intervals(intervals_from)
@@ -744,12 +747,12 @@ def match_events(events_from, events_to):
 
     Raises
     ------
-    ValueError
+    ParameterError
         If either array of input events is not the correct shape
     '''
 
     if len(events_from) == 0 or len(events_to) == 0:
-        raise ValueError('Attempting to match empty event list')
+        raise ParameterError('Attempting to match empty event list')
 
     output = np.empty_like(events_from, dtype=np.int)
 
@@ -873,7 +876,7 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
 
     Raises
     ------
-    ValueError
+    ParameterError
         If any input lies outside its defined range
 
     Examples
@@ -906,22 +909,22 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     '''
 
     if pre_max < 0:
-        raise ValueError('pre_max must be non-negative')
+        raise ParameterError('pre_max must be non-negative')
     if pre_avg < 0:
-        raise ValueError('pre_avg must be non-negative')
+        raise ParameterError('pre_avg must be non-negative')
     if delta < 0:
-        raise ValueError('delta must be non-negative')
+        raise ParameterError('delta must be non-negative')
     if wait < 0:
-        raise ValueError('wait must be non-negative')
+        raise ParameterError('wait must be non-negative')
 
     if post_max <= 0:
-        raise ValueError('post_max must be positive')
+        raise ParameterError('post_max must be positive')
 
     if post_avg <= 0:
-        raise ValueError('post_avg must be positive')
+        raise ParameterError('post_avg must be positive')
 
     if x.ndim != 1:
-        raise ValueError('input array must be one-dimensional')
+        raise ParameterError('input array must be one-dimensional')
 
     # Ensure valid index types
     pre_max = valid_int(pre_max, cast=np.ceil)
@@ -1047,7 +1050,7 @@ def sparsify_rows(x, quantile=0.01):
 
     Raises
     ------
-    ValueError
+    ParameterError
         If `x.ndim > 2`
 
         If `quantile` lies outside `[0, 1.0)`
@@ -1057,11 +1060,11 @@ def sparsify_rows(x, quantile=0.01):
         x = x.reshape((1, -1))
 
     elif x.ndim > 2:
-        raise ValueError('Input must have 2 or fewer dimensions.  '
-                         'Provided x.shape={}.'.format(x.shape))
+        raise ParameterError('Input must have 2 or fewer dimensions.  '
+                                    'Provided x.shape={}.'.format(x.shape))
 
     if not (0.0 <= quantile < 1):
-        raise ValueError('Invalid quantile: {:.2f}'.format(quantile))
+        raise ParameterError('Invalid quantile {:.2f}'.format(quantile))
 
     x_sparse = scipy.sparse.lil_matrix(x.shape, dtype=x.dtype)
 
@@ -1142,7 +1145,7 @@ def buf_to_int(x, n_bytes=2):  # pragma: no cover
     """
 
     if n_bytes not in [1, 2, 4]:
-        raise ValueError('n_bytes must be one of {1, 2, 4}')
+        raise ParameterError('n_bytes must be one of {1, 2, 4}')
 
     # What is the scale of the input data?
     scale = float(1 << ((8 * n_bytes) - 1))

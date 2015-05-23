@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Beat tracking and tempo estimation
-
+"""
 Beat and tempo
 ==============
 .. autosummary::
-    :toctree: generated/
+   :toctree: generated/
 
-    beat_track
-    estimate_tempo
+   beat_track
+   estimate_tempo
 """
 
 import numpy as np
@@ -18,13 +17,13 @@ from . import cache
 from . import core
 from . import onset
 from . import util
+from .util.exceptions import ParameterError
 
 __all__ = ['beat_track', 'estimate_tempo']
 
 
-@cache
 def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
-               start_bpm=120.0, tightness=400, trim=True, bpm=None):
+               start_bpm=120.0, tightness=100, trim=True, bpm=None):
     r'''Dynamic programming beat tracker.
 
     Beats are detected in three stages, following the method of [1]_:
@@ -83,8 +82,7 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
     Raises
     ------
-
-    ValueError
+    ParameterError
         if neither `y` nor `onset_envelope` are provided
 
 
@@ -154,11 +152,12 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
     # First, get the frame->beat strength profile if we don't already have one
     if onset_envelope is None:
         if y is None:
-            raise ValueError('Either `y` or `onset_envelope` must be provided')
+            raise ParameterError('y or onset_envelope must be provided')
 
         onset_envelope = onset.onset_strength(y=y,
                                               sr=sr,
-                                              hop_length=hop_length)
+                                              hop_length=hop_length,
+                                              aggregate=np.median)
 
     # Do we have any onsets to grab?
     if not onset_envelope.any():
@@ -254,7 +253,7 @@ def estimate_tempo(onset_envelope, sr=22050, hop_length=512, start_bpm=120,
     """
 
     if start_bpm <= 0:
-        raise ValueError('start_bpm must be strictly positive')
+        raise ParameterError('start_bpm must be strictly positive')
 
     fft_res = float(sr) / hop_length
 
@@ -324,7 +323,7 @@ def __beat_tracker(onset_envelope, bpm, fft_res, tightness, trim):
     """
 
     if bpm <= 0:
-        raise ValueError('bpm must be strictly positive')
+        raise ParameterError('bpm must be strictly positive')
 
     # convert bpm to a sample period for searching
     period = round(60.0 * fft_res / bpm)
@@ -382,7 +381,7 @@ def __beat_track_dp(localscore, period, tightness):
 
     # Make a score window, which begins biased toward start_bpm and skewed
     if tightness <= 0:
-        raise ValueError('tightness must be > 0')
+        raise ParameterError('tightness must be strictly positive')
 
     txwt = -tightness * (np.log(-window / period) ** 2)
 

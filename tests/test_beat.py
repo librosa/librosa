@@ -32,7 +32,8 @@ def test_onset_strength():
                                               sr=8000,
                                               S=DATA['D'],
                                               centering=False,
-                                              detrend=True)
+                                              detrend=True,
+                                              aggregate=np.mean)
 
         assert np.allclose(onsets[1:], DATA['onsetenv'][0])
 
@@ -60,7 +61,7 @@ def test_tempo():
         yield (__test, infile)
 
 
-@raises(ValueError)
+@raises(librosa.ParameterError)
 def test_beat_no_input():
 
     librosa.beat.beat_track(y=None, onset_envelope=None)
@@ -142,7 +143,7 @@ def test_beat():
                                 (bpm is not None and bpm <= 0) or
                                 (start_bpm is not None and bpm is None and start_bpm <= 0)):
 
-                                tf = raises(ValueError)(__test)
+                                tf = raises(librosa.ParameterError)(__test)
                             else:
                                 tf = __test
                             yield (tf, with_audio, with_tempo,

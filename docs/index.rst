@@ -9,10 +9,10 @@ LibROSA documentation
    changelog
 
 Module documentation
---------------------
+====================
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
 
     core
     display
@@ -27,7 +27,7 @@ Module documentation
 
 
 Advanced topics
----------------
+===============
 
 .. toctree::
     :maxdepth: 1
@@ -36,7 +36,7 @@ Advanced topics
     cache
 
 Reference
----------
+=========
 
 .. toctree::
     :maxdepth: 1
