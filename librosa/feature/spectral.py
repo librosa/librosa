@@ -4,9 +4,9 @@
 
 import numpy as np
 
-from .. import cache
 from .. import util
 from .. import filters
+from ..util.exceptions import ParameterError
 
 from ..core.time_frequency import fft_frequencies
 from ..core.audio import zero_crossings
@@ -33,7 +33,6 @@ __all__ = ['spectral_centroid',
 
 
 # -- Spectral features -- #
-@cache
 def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                       freq=None):
     '''Compute the spectral centroid.
@@ -121,10 +120,10 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
 
     if not np.isrealobj(S):
-        raise ValueError('Spectral centroid is only defined '
+        raise ParameterError('Spectral centroid is only defined '
                          'with real-valued input')
     elif np.any(S < 0):
-        raise ValueError('Spectral centroid is only defined '
+        raise ParameterError('Spectral centroid is only defined '
                          'with non-negative energies')
 
     # Compute the center frequencies of each bin
@@ -139,7 +138,6 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                   axis=0, keepdims=True)
 
 
-@cache
 def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                        freq=None, centroid=None, norm=True, p=2):
     '''Compute p'th-order spectral bandwidth:
@@ -228,10 +226,10 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
 
     if not np.isrealobj(S):
-        raise ValueError('Spectral bandwidth is only defined '
+        raise ParameterError('Spectral bandwidth is only defined '
                          'with real-valued input')
     elif np.any(S < 0):
-        raise ValueError('Spectral bandwidth is only defined '
+        raise ParameterError('Spectral bandwidth is only defined '
                          'with non-negative energies')
 
     if centroid is None:
@@ -256,7 +254,6 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     return np.sum(S * deviation**p, axis=0, keepdims=True)**(1./p)
 
 
-@cache
 def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                       freq=None, fmin=200.0, n_bands=6, quantile=0.02,
                       linear=False):
@@ -347,17 +344,17 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     freq = np.atleast_1d(freq)
 
     if freq.ndim != 1 or len(freq) != S.shape[0]:
-        raise ValueError('freq.shape mismatch: expected '
+        raise ParameterError('freq.shape mismatch: expected '
                          '({:d},)'.format(S.shape[0]))
 
     if n_bands < 1 or not isinstance(n_bands, int):
-        raise ValueError('n_bands must be a positive integer')
+        raise ParameterError('n_bands must be a positive integer')
 
     if not (0.0 < quantile < 1.0):
-        raise ValueError('quantile must lie in the range (0, 1)')
+        raise ParameterError('quantile must lie in the range (0, 1)')
 
     if fmin <= 0:
-        raise ValueError('fmin must be a positive number')
+        raise ParameterError('fmin must be a positive number')
 
     octa = np.zeros(n_bands + 2)
     octa[1:] = fmin * (2.0**np.arange(0, n_bands + 1))
@@ -396,7 +393,6 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         return logamplitude(peak) - logamplitude(valley)
 
 
-@cache
 def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                      freq=None, roll_percent=0.85):
     '''Compute roll-off frequency
@@ -471,15 +467,15 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     '''
 
     if not (0.0 < roll_percent < 1.0):
-        raise ValueError('roll_percent must lie in the range (0, 1)')
+        raise ParameterError('roll_percent must lie in the range (0, 1)')
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
 
     if not np.isrealobj(S):
-        raise ValueError('Spectral rolloff is only defined '
+        raise ParameterError('Spectral rolloff is only defined '
                          'with real-valued input')
     elif np.any(S < 0):
-        raise ValueError('Spectral rolloff is only defined '
+        raise ParameterError('Spectral rolloff is only defined '
                          'with non-negative energies')
 
     # Compute the center frequencies of each bin
@@ -499,7 +495,6 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     return np.nanmin(ind * freq, axis=0, keepdims=True)
 
 
-@cache
 def rmse(y=None, S=None, n_fft=2048, hop_length=512):
     '''Compute root-mean-square (RMS) energy for each frame.
 
@@ -556,7 +551,6 @@ def rmse(y=None, S=None, n_fft=2048, hop_length=512):
     return np.sqrt(np.mean(np.abs(S)**2, axis=0, keepdims=True))
 
 
-@cache
 def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                   order=1, freq=None):
     '''Get coefficients of fitting an nth-order polynomial to the columns
@@ -652,7 +646,6 @@ def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     return coefficients
 
 
-@cache
 def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True,
                        **kwargs):
     '''Compute the zero-crossing rate of an audio time series.
@@ -715,10 +708,15 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True,
 
 
 # -- Chroma --#
-@cache
 def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
                 hop_length=512, tuning=None, **kwargs):
-    """Compute a chromagram from an STFT spectrogram or waveform
+    """Compute a chromagram from a waveform or power spectrogram.
+
+    This implementation is derived from `chromagram_E` [1]_
+
+    .. [1] Ellis, Daniel P.W.  "Chroma feature analysis and synthesis"
+           2007/04/21
+           http://labrosa.ee.columbia.edu/matlab/chroma-ansyn/
 
     Parameters
     ----------
@@ -813,7 +811,6 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
     return util.normalize(raw_chroma, norm=norm, axis=0)
 
 
-@cache
 def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
                norm=np.inf, threshold=0.0, tuning=None, n_chroma=12,
                n_octaves=7, window=None, bins_per_octave=None, mode='full'):
@@ -869,9 +866,9 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
 
     See Also
     --------
-    util.normalize
-    core.cqt
-    core.hybrid_cqt
+    librosa.util.normalize
+    librosa.core.cqt
+    librosa.core.hybrid_cqt
     chroma_stft
 
     Examples
@@ -931,8 +928,98 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
     return chroma
 
 
+def tonnetz(y=None, sr=22050, chroma=None):
+    '''Computes the tonal centroid features (tonnetz), following the method of
+    [1]_.
+
+    .. [1] Harte, C., Sandler, M., & Gasser, M. (2006). "Detecting Harmonic
+           Change in Musical Audio." In Proceedings of the 1st ACM Workshop
+           on Audio and Music Computing Multimedia (pp. 21-26).
+           Santa Barbara, CA, USA: ACM Press. doi:10.1145/1178723.1178727.
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(n,)] or None
+        Audio time series.
+
+    sr : int > 0 [scalar]
+        sampling rate of `y`
+
+    chroma : np.ndarray [shape=(n_chroma, t)] or None
+        Normalized energy for each chroma bin at each frame.
+
+        If `None`, a cqt chromagram is performed.
+
+    Returns
+    -------
+    ton : np.ndarray [shape(6, t)]
+        Tonal centroid features for each frame.
+
+        Tonnetz dimensions:
+            - 0: Fifth x-axis
+            - 1: Fifth y-axis
+            - 2: Minor x-axis
+            - 3: Minor y-axis
+            - 4: Major x-axis
+            - 5: Major y-axis
+
+    See Also
+    --------
+    chroma_cqt
+        Compute a chromagram from a constat-Q transform.
+
+    chroma_stft
+        Compute a chromagram from an STFT spectrogram or waveform.
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> tonnetz = librosa.feature.tonnetz(y=y, sr=sr)
+    >>> tonnetz
+    array([[-0.073, -0.053, ..., -0.054, -0.073],
+           [ 0.001,  0.001, ..., -0.054, -0.062],
+           ...,
+           [ 0.039,  0.034, ...,  0.044,  0.064],
+           [ 0.005,  0.002, ...,  0.011,  0.017]])
+
+    >>> import matplotlib.pyplot as plt
+    >>> librosa.display.specshow(tonnetz, y_axis='tonnetz', x_axis='time')
+    >>> plt.colorbar()
+    >>> plt.title('Tonal Centroids (Tonnetz)')
+    >>> plt.tight_layout()
+
+    '''
+
+    if y is None and chroma is None:
+        raise ParameterError('Either the audio samples or the chromagram must be '
+                         'passed as an argument.')
+
+    if chroma is None:
+        chroma = chroma_cqt(y=y, sr=sr)
+
+    # Generate Transformation matrix
+    dim_map = np.linspace(0, 12, num=chroma.shape[0], endpoint=False)
+
+    scale = np.asarray([7. / 6, 7. / 6,
+                        3. / 2, 3. / 2,
+                        2. / 3, 2. / 3])
+
+    V = np.multiply.outer(scale, dim_map)
+
+    # Even rows compute sin()
+    V[::2] -= 0.5
+
+    R = np.array([1, 1,         # Fifths
+                  1, 1,         # Minor
+                  0.5, 0.5])    # Major
+
+    phi = R[:, np.newaxis] * np.cos(np.pi * V)
+
+    # Do the transform to tonnetz
+    return phi.dot(util.normalize(chroma, norm=1, axis=0))
+
+
 # -- Mel spectrogram and MFCCs -- #
-@cache
 def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
     """Mel-frequency cepstral coefficients
 
@@ -1007,7 +1094,6 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
     return np.dot(filters.dct(n_mfcc, S.shape[0]), S)
 
 
-@cache
 def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                    **kwargs):
     """Compute a Mel-scaled power spectrogram.
@@ -1090,7 +1176,6 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
 # Deprecated functions
 @util.decorators.deprecated('0.4', '0.5')
-@cache
 def logfsgram(y=None, sr=22050, S=None, n_fft=4096,
               hop_length=512, **kwargs):  # pragma: no cover
     '''Compute a log-frequency spectrogram using a
@@ -1172,98 +1257,6 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096,
     cq_basis = filters.logfrequency(sr, n_fft=n_fft, **kwargs)
 
     return cq_basis.dot(S)
-
-
-@cache
-def tonnetz(y=None, sr=22050, chroma=None):
-    '''Computes the tonal centroid features (tonnetz), following the method of
-    [1]_.
-
-    .. [1] Harte, C., Sandler, M., & Gasser, M. (2006). "Detecting Harmonic
-           Change in Musical Audio." In Proceedings of the 1st ACM Workshop
-           on Audio and Music Computing Multimedia (pp. 21-26).
-           Santa Barbara, CA, USA: ACM Press. doi:10.1145/1178723.1178727.
-
-    Parameters
-    ----------
-    y : np.ndarray [shape=(n,)] or None
-        Audio time series.
-
-    sr : int > 0 [scalar]
-        sampling rate of `y`
-
-    chroma : np.ndarray [shape=(n_chroma, t)] or None
-        Normalized energy for each chroma bin at each frame.
-
-        If `None`, a cqt chromagram is performed.
-
-    Returns
-    -------
-    ton : np.ndarray [shape(6, t)]
-        Tonal centroid features for each frame.
-
-        Tonnetz dimensions:
-            - 0: Fifth x-axis
-            - 1: Fifth y-axis
-            - 2: Minor x-axis
-            - 3: Minor y-axis
-            - 4: Major x-axis
-            - 5: Major y-axis
-
-    See Also
-    --------
-    chroma_cqt
-        Compute a chromagram from a constat-Q transform.
-
-    chroma_stft
-        Compute a chromagram from an STFT spectrogram or waveform.
-
-    Examples
-    --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> tonnetz = librosa.feature.tonnetz(y=y, sr=sr)
-    >>> tonnetz
-    array([[-0.073, -0.053, ..., -0.054, -0.073],
-           [ 0.001,  0.001, ..., -0.054, -0.062],
-           ..., 
-           [ 0.039,  0.034, ...,  0.044,  0.064],
-           [ 0.005,  0.002, ...,  0.011,  0.017]])
-
-    >>> import matplotlib.pyplot as plt
-    >>> librosa.display.specshow(tonnetz, y_axis='tonnetz', x_axis='time')
-    >>> plt.colorbar()
-    >>> plt.title('Tonal Centroids (Tonnetz)')
-    >>> plt.tight_layout()
-
-    '''
-
-    if y is None and chroma is None:
-        raise ValueError('Either the audio samples or the chromagram must be '
-                         'passed as an argument.')
-
-    if chroma is None:
-        chroma = chroma_cqt(y=y, sr=sr)
-
-    # Generate Transformation matrix
-    dim_map = np.linspace(0, 12, num=chroma.shape[0], endpoint=False)
-
-    scale = np.asarray([7. / 6, 7. / 6,
-                        3. / 2, 3. / 2,
-                        2. / 3, 2. / 3])
-
-    V = np.multiply.outer(scale, dim_map)
-
-    # Even rows compute sin()
-    V[::2] -= 0.5
-
-    R = np.array([1, 1,         # Fifths
-                  1, 1,         # Minor
-                  0.5, 0.5])    # Major
-
-    phi = R[:, np.newaxis] * np.cos(np.pi * V)
-
-    # Do the transform to tonnetz
-    return phi.dot(util.normalize(chroma, norm=1, axis=0))
 
 
 # Moved functions

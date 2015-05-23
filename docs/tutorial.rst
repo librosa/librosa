@@ -71,6 +71,7 @@ Before diving into the details, we'll walk through a brief example program
     :linenos:
 
     # Beat tracking example
+    from __future__ import print_function
     import librosa
 
     # 1. Get the file path to the included audio example
@@ -80,17 +81,15 @@ Before diving into the details, we'll walk through a brief example program
     #    Store the sampling rate as `sr`
     y, sr = librosa.load(filename)
 
-    # 3. Run the default beat tracker, using a hop length of 64 frames
-    #    (64 frames at sr=22.050KHz ~= 2.9ms)
-    hop_length = 64
-    tempo, beat_frames = librosa.beat.beat_track(y=y, sr=sr, hop_length=hop_length)
+    # 3. Run the default beat tracker
+    tempo, beat_frames = librosa.beat.beat_track(y=y, sr=sr)
 
-    print 'Estimated tempo: %0.2f beats per minute' % tempo
+    print('Estimated tempo: {:.2f} beats per minute'.format(tempo))
 
     # 4. Convert the frame indices of beat events into timestamps
-    beat_times = librosa.frames_to_time(beat_frames, sr=sr, hop_length=hop_length)
+    beat_times = librosa.frames_to_time(beat_frames, sr=sr)
 
-    print 'Saving output to beat_times.csv'
+    print('Saving output to beat_times.csv')
     librosa.output.times_csv('beat_times.csv', beat_times)
 
 
@@ -111,28 +110,20 @@ NumPy floating point array.  The variable ``sr`` contains the :term:`sampling ra
 mixed to mono and resampled to 22050 Hz at load time.  This behavior can be overridden
 by supplying additional arguments to ``librosa.load()``.
 
-The next line::
+Next, we run the beat tracker::
 
-    hop_length = 64
-
-sets the :term:`hop length` for the subsequent analysis.  This is number of samples to
-advance between subsequent audio frames.  Here, we've set the hop length to 64
-samples, which at 22KHz, comes to ``64.0 / 22050 ~= 2.9ms``.  
-
-Next, we run the beat tracker using the specified hop length::
-
-    tempo, beat_frames = librosa.beat.beat_track(y=y, sr=sr, hop_length=hop_length)
+    tempo, beat_frames = librosa.beat.beat_track(y=y, sr=sr)
 
 The output of the beat tracker is an estimate of the tempo (in beats per minute), 
 and an array of frame numbers corresponding to detected beat events.
 
 :term:`Frames <frame>` here correspond to short windows of the signal (``y``), each 
-separated by ``hop_length`` samples.  Since v0.3, *librosa* uses centered frames, so 
+separated by ``hop_length = 512`` samples.  Since v0.3, *librosa* uses centered frames, so 
 that the *k*\ th frame is centered around sample ``k * hop_length``.
 
 The next operation converts the frame numbers ``beat_frames`` into timings::
 
-    beat_times = librosa.frames_to_time(beat_frames, sr=sr, hop_length=hop_length)
+    beat_times = librosa.frames_to_time(beat_frames, sr=sr)
 
 Now, ``beat_times`` will be an array of timestamps (in seconds) corresponding to
 detected beat events.
@@ -142,13 +133,12 @@ file::
 
     librosa.output.times_csv('beat_times.csv', beat_times)
 
-The contents of ``beat_times.csv`` should look like this::
+The contents of ``beat_times.csv`` should look something like this::
 
-    0.067
-    0.514
-    0.990
-    1.454
-    1.910
+    7.43
+    8.29
+    9.218
+    10.124
     ...
 
 This is primarily useful for visualization purposes (e.g., using 
@@ -166,7 +156,6 @@ multiple spectral features, and beat-synchronous feature aggregation.
     :linenos:
 
     # Feature extraction example
-
     import numpy as np
     import librosa
 
@@ -176,13 +165,9 @@ multiple spectral features, and beat-synchronous feature aggregation.
     # Separate harmonics and percussives into two waveforms
     y_harmonic, y_percussive = librosa.effects.hpss(y)
 
-    # Set the hop length
-    hop_length = 64
-
     # Beat track on the percussive signal
     tempo, beat_frames = librosa.beat.beat_track(y=y_percussive, 
-                                                 sr=sr,
-                                                 hop_length=hop_length)
+                                                 sr=sr)
 
     # Compute MFCC features from the raw signal
     mfcc = librosa.feature.mfcc(y=y, sr=sr, hop_length=hop_length, n_mfcc=13)
@@ -196,9 +181,8 @@ multiple spectral features, and beat-synchronous feature aggregation.
                                            beat_frames)
 
     # Compute chroma features from the harmonic signal
-    chromagram = librosa.feature.chromagram(y=y_harmonic, 
-                                            sr=sr,
-                                            hop_length=hop_length)
+    chromagram = librosa.feature.chroma_cqt(y=y_harmonic, 
+                                            sr=sr)
 
     # Aggregate chroma features between beat events
     # We'll use the median value of each feature between beat frames
@@ -261,9 +245,8 @@ span the full range ``[0, T]`` so that all data is accounted for.)
 
 Next, we compute a chromagram using just the harmonic component::
 
-    chromagram = librosa.feature.chromagram(y=y_harmonic, 
-                                            sr=sr,
-                                            hop_length=hop_length)
+    chromagram = librosa.feature.chroma_cqt(y=y_harmonic, 
+                                            sr=sr)
 
 After this line, ``chromagram`` will be a *numpy.ndarray* of size ``(12, T)``, and 
 each row corresponds to a pitch class (e.g., *C*, *C#*, etc.).  Each column of 

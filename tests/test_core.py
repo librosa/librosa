@@ -56,6 +56,28 @@ def test_load():
         yield (__test, infile)
     pass
 
+def test_segment_load():
+
+    sample_len = 2003
+    fs = 44100
+    test_file = 'data/test1_44100.wav'
+    y, sr = librosa.load(test_file, sr=None, mono=False,
+                         offset=0., duration=sample_len/float(fs))
+
+    eq_(y.shape[-1], sample_len)
+
+    y2, sr = librosa.load(test_file, sr=None, mono=False)
+    assert np.allclose(y, y2[:, :sample_len])
+
+    sample_offset = 2048
+    y, sr = librosa.load(test_file, sr=None, mono=False,
+                         offset=sample_offset/float(fs), duration=1.0)
+
+    eq_(y.shape[-1], fs)
+
+    y2, sr = librosa.load(test_file, sr=None, mono=False)
+    assert np.allclose(y, y2[:, sample_offset:sample_offset+fs])
+
 
 def test_resample():
 
@@ -229,7 +251,7 @@ def test_ifgram_if():
             if six.callable(ref_power) or ref_power >= 0.0:
                 tf = __test
             else:
-                tf = raises(ValueError)(__test)
+                tf = raises(librosa.ParameterError)(__test)
 
             yield tf, ref_power, clip
 
@@ -534,6 +556,6 @@ def test_logamplitude():
                 for top_db in [None, -10, 0, 40, 80]:
                     tf = __test
                     if amin <= 0 or (top_db is not None and top_db < 0):
-                        tf = raises(ValueError)(__test)
+                        tf = raises(librosa.ParameterError)(__test)
                     yield tf, x, ref_power, amin, top_db
                     yield tf, x * phase, ref_power, amin, top_db

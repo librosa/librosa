@@ -3,7 +3,6 @@
 '''Utilities for spectral processing'''
 
 import numpy as np
-#import numpy.fft as fft
 import scipy.fftpack as fft
 import scipy
 import scipy.signal
@@ -12,6 +11,7 @@ import six
 from . import time_frequency
 from .. import cache
 from .. import util
+from ..util.exceptions import ParameterError
 
 __all__ = ['stft', 'istft', 'magphase',
            'ifgram',
@@ -25,9 +25,10 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
     """Short-time Fourier transform (STFT)
 
     Returns a complex-valued matrix D such that
-      - `np.abs(D[f, t])` is the magnitude of frequency bin `f`
+        `np.abs(D[f, t])` is the magnitude of frequency bin `f`
         at frame `t`
-      - `np.angle(D[f, t])` is the phase of frequency bin `f`
+
+        `np.angle(D[f, t])` is the phase of frequency bin `f`
         at frame `t`
 
     Parameters
@@ -47,7 +48,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
         The window will be of length `win_length` and then padded
         with zeros to match `n_fft`.
 
-        If unspecified, defaults to `win_length = n_fft`.
+        If unspecified, defaults to ``win_length = n_fft``.
 
     window : None, function, np.ndarray [shape=(n_fft,)]
         - None (default): use an asymmetric Hann window
@@ -62,25 +63,29 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
     dtype       : numeric type
         Complex numeric type for `D`.  Default is 64-bit complex.
 
+
     Returns
     -------
     D : np.ndarray [shape=(1 + n_fft/2, t), dtype=dtype]
         STFT matrix
 
+
     Raises
     ------
-    ValueError
-        If `window` is supplied as a vector of length `!= n_fft`.
+    ParameterError
+        If `window` is supplied as a vector of length `n_fft`.
+
 
     See Also
     --------
-    istft
-        Inverse STFT
-    ifgram
-        Instantaneous frequency spectrogram
+    istft : Inverse STFT
+
+    ifgram : Instantaneous frequency spectrogram
+
 
     Examples
     --------
+
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> D = librosa.stft(y)
     >>> D
@@ -88,21 +93,27 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
               3.189e-04 -0.000e+00j,  -5.961e-06 -0.000e+00j],
            [  2.441e-03 +2.884e-19j,   5.145e-02 -5.076e-03j, ...,
              -3.885e-04 -7.253e-05j,   7.334e-05 +3.868e-04j],
-           ..., 
+          ..., 
            [ -7.120e-06 -1.029e-19j,  -1.951e-09 -3.568e-06j, ...,
              -4.912e-07 -1.487e-07j,   4.438e-06 -1.448e-05j],
            [  7.136e-06 -0.000e+00j,   3.561e-06 -0.000e+00j, ...,
              -5.144e-07 -0.000e+00j,  -1.514e-05 -0.000e+00j]], dtype=complex64)
 
+
     Use left-aligned frames, instead of centered frames
+
 
     >>> D_left = librosa.stft(y, center=False)
 
+
     Use a shorter hop length
+
 
     >>> D_short = librosa.stft(y, hop_length=64)
 
+
     Display a spectrogram
+
 
     >>> import matplotlib.pyplot as plt
     >>> librosa.display.specshow(librosa.logamplitude(np.abs(D)**2,
@@ -137,7 +148,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
 
         # validate length compatibility
         if fft_window.size != n_fft:
-            raise ValueError('Size mismatch between n_fft and len(window)')
+            raise ParameterError('Size mismatch between n_fft and len(window)')
 
     # Pad the window out to n_fft size
     fft_window = util.pad_center(fft_window, n_fft)
@@ -215,8 +226,8 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
 
     Raises
     ------
-    ValueError
-        If `window` is supplied as a vector of length `!= n_fft`
+    ParameterError
+        If `window` is supplied as a vector of length `n_fft`
 
     See Also
     --------
@@ -258,7 +269,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
 
         # Verify that the shape matches
         if ifft_window.size != n_fft:
-            raise ValueError('Size mismatch between n_fft and window size')
+            raise ParameterError('Size mismatch between n_fft and window size')
 
     # Pad out to match n_fft
     ifft_window = util.pad_center(ifft_window, n_fft)
@@ -280,7 +291,6 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
     return y
 
 
-@cache
 def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
            norm=False, center=True, ref_power=1e-6, clip=True, dtype=np.complex64):
     '''Compute the instantaneous frequency (as a proportion of the sampling rate)
@@ -389,7 +399,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     if six.callable(ref_power):
         ref_power = ref_power(mag**2)
     elif ref_power < 0:
-        raise ValueError('ref_power must be non-negative or callable.')
+        raise ParameterError('ref_power must be non-negative or callable.')
 
     # Pylint does not correctly infer the type here, but it's correct.
     # pylint: disable=maybe-no-member
@@ -411,7 +421,6 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     return if_gram, stft_matrix
 
 
-@cache
 def magphase(D):
     """Separate a complex-valued spectrogram D into its magnitude (S)
     and phase (P) components, so that `D = S * P`.
@@ -479,7 +488,7 @@ def phase_vocoder(D, rate, hop_length=None):
 
     .. [1] Ellis, D. P. W. "A phase vocoder in Matlab."
         Columbia University, 2002.
-        http://www.ee.columbia.edu/dpwe/resources/matlab/pvoc/
+        http://www.ee.columbia.edu/~dpwe/resources/matlab/pvoc/
 
     Examples
     --------
@@ -561,8 +570,7 @@ def phase_vocoder(D, rate, hop_length=None):
 
 @cache
 def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
-    r"""Log-scale the amplitude of a spectrogram.
-
+    """Log-scale the amplitude of a spectrogram.
 
     Parameters
     ----------
@@ -581,29 +589,27 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
 
     top_db  : float >= 0 [scalar]
         threshold log amplitude at top_db below the peak:
-        `max(log(S)) - top_db`
-
+        ``max(log(S)) - top_db``
 
     Returns
     -------
     log_S   : np.ndarray [shape=(d, t)]
-        `log_S ~= 10 * log10(S) - 10 * log10(abs(ref_power))`
+        ``log_S ~= 10 * log10(S) - 10 * log10(abs(ref_power))``
 
     See Also
     --------
     perceptual_weighting
 
-
     Examples
     --------
-    Get a power spectrogram from a waveform `y`
+    Get a power spectrogram from a waveform ``y``
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> S = np.abs(librosa.stft(y)) ** 2
-    >>> librosa.logamplitude(S)
+    >>> S = np.abs(librosa.stft(y))
+    >>> librosa.logamplitude(S**2)
     array([[-33.293, -27.32 , ..., -33.293, -33.293],
            [-33.293, -25.723, ..., -33.293, -33.293],
-           ..., 
+           ...,
            [-33.293, -33.293, ..., -33.293, -33.293],
            [-33.293, -33.293, ..., -33.293, -33.293]], dtype=float32)
 *********************************************************************
@@ -613,37 +619,40 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     >>> librosa.logamplitude(S, ref_power=np.max)
     array([[-80.   , -74.027, ..., -80.   , -80.   ],
            [-80.   , -72.431, ..., -80.   , -80.   ],
-           ..., 
+           ...,
            [-80.   , -80.   , ..., -80.   , -80.   ],
            [-80.   , -80.   , ..., -80.   , -80.   ]], dtype=float32)
+
 
     Or compare to median power
 
     >>> librosa.logamplitude(S, ref_power=np.median)
     array([[-0.189,  5.784, ..., -0.189, -0.189],
            [-0.189,  7.381, ..., -0.189, -0.189],
-           ..., 
+           ...,
            [-0.189, -0.189, ..., -0.189, -0.189],
            [-0.189, -0.189, ..., -0.189, -0.189]], dtype=float32)
+
+
+    And plot the results
 
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
     >>> plt.subplot(2, 1, 1)
     >>> librosa.display.specshow(S, y_axis='log', x_axis='time')
     >>> plt.colorbar()
-    >>> plt.title('Power spectrogram: $|S|^2$')
+    >>> plt.title('Power spectrogram')
     >>> plt.subplot(2, 1, 2)
     >>> librosa.display.specshow(librosa.logamplitude(S, ref_power=np.max),
-    ...                                               y_axis='log',
-    ...                                               x_axis='time')
+    ...                          y_axis='log', x_axis='time')
     >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.title('Log-Power spectrogram: $\log |S|^2$')
+    >>> plt.title('Log-Power spectrogram')
     >>> plt.tight_layout()
 
     """
 
     if amin <= 0:
-        raise ValueError('amin must be strictly positive')
+        raise ParameterError('amin must be strictly positive')
 
     magnitude = np.abs(S)
 
@@ -658,7 +667,7 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
 
     if top_db is not None:
         if top_db < 0:
-            raise ValueError('top_db must be non-negative positive')
+            raise ParameterError('top_db must be non-negative positive')
         log_spec = np.maximum(log_spec, log_spec.max() - top_db)
 
     return log_spec

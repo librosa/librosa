@@ -13,6 +13,8 @@
 
 import os
 import sys
+import glob
+import sphinx
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -22,20 +24,22 @@ sys.path.insert(0, os.path.abspath('../librosa'))
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-#needs_sphinx = '1.0'
+if sphinx.__version__ < "1.1":
+    raise RuntimeError("Sphinx 1.1 or newer is required")
+
+needs_sphinx = '1.1'
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.autodoc',
-              'sphinx.ext.autosummary',
               'sphinx.ext.viewcode',
               'sphinx.ext.intersphinx',
               'sphinx.ext.doctest',
-              'numpydoc']
+              'numpydoc',
+              'sphinx.ext.autosummary']
 
 
-from glob import glob
-autosummary_generate = glob('*.rst')
+autosummary_generate = True 
 
 # Determine if the matplotlib has a recent enough version of the
 # plot_directive.
@@ -166,10 +170,10 @@ release = librosa_version.version
 exclude_patterns = ['_build']
 
 # The reST default role (used for this markup: `text`) to use for all documents.
-# default_role = None
+default_role = 'autolink'
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
-# add_function_parentheses = True
+add_function_parentheses = False
 
 # If true, the current module name will be prepended to all description
 # unit titles (such as .. function::).
@@ -187,7 +191,6 @@ pygments_style = 'sphinx'
 
 # -- RTD cruft ---
 
-import sys
 import six
 
 if six.PY3:
