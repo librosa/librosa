@@ -128,7 +128,7 @@ def test_beat():
 
         assert tempo >= 0
 
-        if len(beats):
+        if len(beats) > 0:
             assert beats.min() >= 0
             assert beats.max() <= len(onset_env)
 
