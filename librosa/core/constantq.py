@@ -328,7 +328,7 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     # Determine which filters to use with Pseudo CQT
     pseudo_filters = lengths < 2*hop_length
-    n_bins_pseudo = np.sum(pseudo_filters)
+    n_bins_pseudo = int(np.sum(pseudo_filters))
 
     cqt_resp = []
 
