@@ -369,6 +369,7 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     This uses a single fft size that is the smallest power of 2 that is greater
     than or equal to the max of:
+
         1. The longest CQT filter
         2. 2x the hop_length
 
