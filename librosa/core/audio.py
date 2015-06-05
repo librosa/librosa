@@ -30,7 +30,7 @@ try:
     import scikits.samplerate as samplerate  # pylint: disable=import-error
     _HAS_SAMPLERATE = True
 except ImportError:
-    warnings.warn('Could not import scikits.samplerate. ' +
+    warnings.warn('Could not import scikits.samplerate. '
                   'Falling back to scipy.signal')
     _HAS_SAMPLERATE = False
 

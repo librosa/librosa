@@ -484,7 +484,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
     kwargs.setdefault('interpolation', 'nearest')
 
     if np.issubdtype(data.dtype, np.complex):
-        warnings.warn('Trying to display complex-valued input. ' +
+        warnings.warn('Trying to display complex-valued input. '
                       'Showing magnitude instead.')
         data = np.abs(data)
 
