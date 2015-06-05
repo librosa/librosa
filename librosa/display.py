@@ -388,7 +388,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
         scales.
 
         If `y_axis` is `cqt_hz` or `cqt_note` and `fmin` is not given,
-        it is set by default to `note_to_hz('C2')`.
+        it is set by default to `note_to_hz('C1')`.
 
     fmax : float > 0 [scalar] or None
         Used for setting the Mel frequency scales
@@ -660,7 +660,7 @@ def __axis_cqt(data, n_ticks, horiz, note=False, fmin=None,
                bins_per_octave=12, **_kwargs):
     '''CQT axes'''
     if fmin is None:
-        fmin = core.note_to_hz('C2')
+        fmin = core.note_to_hz('C1')
 
     n, ticker, labeler = __get_shape_artists(data, horiz)
 
