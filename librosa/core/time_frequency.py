@@ -833,7 +833,8 @@ def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False):
     Returns
     -------
     bin_frequencies : ndarray [shape=(n_mels,)]
-        vector of Mel frequencies
+        vector of n_mels frequencies in Hz which are uniformly spaced on the Mel 
+        axis.
 
     Examples
     --------
