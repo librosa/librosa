@@ -305,7 +305,7 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     # Make sure our hop is long enough to support the bottom octave
     if hop_length < 2**n_octaves:
         raise ParameterError('Insufficient hop_length {:d} '
-                         'for {:d} octaves'.format(hop_length, n_octaves))
+                             'for {:d} octaves'.format(hop_length, n_octaves))
 
     if fmin is None:
         # C2 by default
@@ -345,7 +345,7 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                    sparsity=sparsity)
         cqt_resp.append(my_pseudo_cqt)
 
-    n_bins_full = np.sum(~pseudo_filters)
+    n_bins_full = int(np.sum(~pseudo_filters))
 
     if n_bins_full > 0:
 
@@ -544,10 +544,10 @@ def __early_downsample(y, sr, hop_length, res_type, n_octaves,
     if downsample_count > 0:
         downsample_factor = 2**(downsample_count)
 
-        hop_length = int(hop_length / downsample_factor)
+        hop_length = hop_length // downsample_factor
 
         y = audio.resample(y, sr, sr / downsample_factor, res_type=res_type)
 
-        sr = sr / downsample_factor
+        sr = sr // downsample_factor
 
     return y, sr, hop_length
