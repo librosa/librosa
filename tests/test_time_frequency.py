@@ -160,7 +160,7 @@ def test_note_to_midi():
         else:
             tuning = 0
 
-        midi_true = 12 * octave + tuning * 0.01
+        midi_true = 12 * (octave + 1) + tuning * 0.01
 
         if accidental == '#':
             midi_true += 1
@@ -209,7 +209,7 @@ def test_note_to_hz():
         if round_midi:
             tuning = np.around(tuning, -2)
 
-        hz_true = 440.0 * (2.0**(tuning * 0.01 / 12)) * (2.0**(octave - 5))
+        hz_true = 440.0 * (2.0**(tuning * 0.01 / 12)) * (2.0**(octave - 4))
 
         if accidental == '#':
             hz_true *= 2.0**(1./12)
@@ -217,6 +217,7 @@ def test_note_to_hz():
             hz_true /= 2.0**(1./12)
 
         hz = librosa.note_to_hz(note, round_midi=round_midi)
+        print note, hz, hz_true
         assert np.allclose(hz[0], hz_true)
 
     @raises(librosa.ParameterError)
@@ -244,9 +245,9 @@ def test_midi_to_note():
     midi_num = 24.25
 
     yield __test, midi_num, 'C', False, False
-    yield __test, midi_num, 'C2', True, False
+    yield __test, midi_num, 'C1', True, False
     yield raises(librosa.ParameterError)(__test), midi_num, 'C+25', False, True
-    yield __test, midi_num, 'C2+25', True, True
+    yield __test, midi_num, 'C1+25', True, True
     yield __test, [midi_num], ['C'], False, False
 
 
@@ -270,9 +271,9 @@ def test_hz_to_note():
     hz = 440
 
     yield __test, hz, 'A', False, False
-    yield __test, hz, 'A5', True, False
+    yield __test, hz, 'A4', True, False
     yield raises(librosa.ParameterError)(__test), hz, 'A+0', False, True
-    yield __test, hz, 'A5+0', True, True
+    yield __test, hz, 'A4+0', True, True
 
 
 def test_fft_frequencies():

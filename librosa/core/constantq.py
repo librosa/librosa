@@ -42,7 +42,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         number of samples between successive CQT columns.
 
     fmin : float > 0 [scalar]
-        Minimum frequency. Defaults to C2 ~= 32.70 Hz
+        Minimum frequency. Defaults to C1 ~= 32.70 Hz
 
     n_bins : int > 0 [scalar]
         Number of frequency bins, starting at `fmin`
@@ -104,7 +104,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     Limit the frequency range
 
-    >>> C = librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('C3'),
+    >>> C = librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('C2'),
     ...                 n_bins=60)
     >>> C
     array([[  8.827e-04,   9.293e-04, ...,   3.133e-07,   2.942e-07],
@@ -116,7 +116,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     Using a higher resolution
 
-    >>> C = librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('C3'),
+    >>> C = librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('C2'),
     ...                 n_bins=60 * 2, bins_per_octave=12 * 2)
     >>> C
     array([[  1.536e-05,   5.848e-05, ...,   3.241e-07,   2.453e-07],
@@ -132,11 +132,11 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     # Make sure our hop is long enough to support the bottom octave
     if hop_length < 2**n_octaves:
         raise ParameterError('Insufficient hop_length {:d} '
-                         'for {:d} octaves'.format(hop_length, n_octaves))
+                             'for {:d} octaves'.format(hop_length, n_octaves))
 
     if fmin is None:
         # C2 by default
-        fmin = note_to_hz('C2')
+        fmin = note_to_hz('C1')
 
     if tuning is None:
         tuning = estimate_tuning(y=y, sr=sr)
@@ -256,7 +256,7 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         number of samples between successive CQT columns.
 
     fmin : float > 0 [scalar]
-        Minimum frequency. Defaults to C2 ~= 32.70 Hz
+        Minimum frequency. Defaults to C1 ~= 32.70 Hz
 
     n_bins : int > 0 [scalar]
         Number of frequency bins, starting at `fmin`
@@ -303,8 +303,8 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                          'for {:d} octaves'.format(hop_length, n_octaves))
 
     if fmin is None:
-        # C2 by default
-        fmin = note_to_hz('C2')
+        # C1 by default
+        fmin = note_to_hz('C1')
 
     if tuning is None:
         tuning = estimate_tuning(y=y, sr=sr)
@@ -384,7 +384,7 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         number of samples between successive CQT columns.
 
     fmin : float > 0 [scalar]
-        Minimum frequency. Defaults to C2 ~= 32.70 Hz
+        Minimum frequency. Defaults to C1 ~= 32.70 Hz
 
     n_bins : int > 0 [scalar]
         Number of frequency bins, starting at `fmin`
@@ -419,8 +419,8 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     '''
 
     if fmin is None:
-        # C2 by default
-        fmin = note_to_hz('C2')
+        # C1 by default
+        fmin = note_to_hz('C1')
 
     if tuning is None:
         tuning = estimate_tuning(y=y, sr=sr)
