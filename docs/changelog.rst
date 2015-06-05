@@ -21,6 +21,7 @@ Bug fixes
 -  Fixed corner cases in ``peak_pick``
 -  Fixed bugs in ``find_files()`` with negative slicing
 -  Fixed tuning estimation errors
+-  Fixed octave numbering in to conform to scientific pitch notation
 
 New features
 
