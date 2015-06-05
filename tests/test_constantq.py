@@ -108,6 +108,9 @@ def test_hybrid_cqt():
 
         eq_(C1.shape, C2.shape)
 
+        # Check for numerical comparability
+        assert np.mean(np.abs(C1 - C2)) < 1e-3
+
     # Hop size not long enough for num octaves
     # num_octaves = 6, 2**(72/12) = 64 > 32
     yield (raises(librosa.ParameterError)(__test), 32, None, 72,
