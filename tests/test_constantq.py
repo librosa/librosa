@@ -127,3 +127,35 @@ def test_hybrid_cqt():
                                    resolution, norm, 0.01)
 
 
+def test_cqt_position():
+
+    # synthesize a two second sine wave at midi note 60
+
+    sr = 22050
+    f = librosa.midi_to_hz(60)
+
+    y = np.sin(2 * np.pi * f * np.linspace(0, 2.0, 2 * sr))
+
+    def __test(note_min):
+
+        C = librosa.cqt(y, sr=sr, fmin=librosa.midi_to_hz(note_min))
+
+        # Average over time
+        Cbar = np.median(C, axis=1)
+
+        # Find the peak
+        idx = np.argmax(Cbar)
+
+        eq_(idx, 60 - note_min)
+
+        # Make sure that the max outside the peak is sufficiently small
+        Cscale = Cbar / Cbar[idx]
+        Cscale[idx] = np.nan
+
+        assert np.nanmax(Cscale) < 1e-1
+
+        Cscale[idx-1:idx+2] = np.nan
+        assert np.nanmax(Cscale) < 1e-2
+
+    for note_min in [12, 18, 24, 30, 36]:
+        yield __test, note_min
