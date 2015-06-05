@@ -538,8 +538,8 @@ def __early_downsample(y, sr, hop_length, res_type, n_octaves,
 
     downsample_count = min(downsample_count1, downsample_count2)
 
-    if downsample_count > 0:
-        downsample_factor = 2**downsample_count
+    if downsample_count > 1:
+        downsample_factor = 2**(downsample_count - 1)
 
         hop_length = int(hop_length / downsample_factor)
 
