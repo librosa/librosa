@@ -53,11 +53,18 @@ def test_cqt():
     # Hop size not long enough for num octaves
     # num_octaves = 6, 2**6 = 64 > 32
     yield (raises(librosa.ParameterError)(__test_cqt_size), y, sr, 32, None, 72,
-           12, None, 2, None, 1, 0.01)
+           12, 0.0, 2, None, 1, 0.01)
 
     # Filters go beyond Nyquist. 500 Hz -> 4 octaves = 8000 Hz > 11000 Hz
     yield (raises(librosa.ParameterError)(__test_cqt_size), y, sr, 512, 500, 48,
-           12, None, 2, None, 1, 0.01)
+           12, 0.0, 2, None, 1, 0.01)
+
+    # Test with fmin near Nyquist
+    for fmin in [3000, 4800]:
+        for n_bins in [1, 2]:
+            for bins_per_octave in [12]:
+                yield (__test_cqt_size, y, sr, 512, fmin, n_bins,
+                       bins_per_octave, 0.0, 2, None, 1, 0.01)
 
     # Test for no errors and correct output size
     for fmin in [None, librosa.note_to_hz('C3')]:
@@ -70,9 +77,3 @@ def test_cqt():
                                    bins_per_octave, tuning,
                                    resolution, None, norm, 0.01)
 
-    # Test with fmin near Nyquist
-    for fmin in [3000, 4800]:
-        for n_bins in [1, 2]:
-            for bins_per_octave in [12]:
-                yield (__test_cqt_size, y, sr, 512, fmin, n_bins,
-                       bins_per_octave, None, 2, None, 1, 0.01)

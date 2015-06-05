@@ -667,7 +667,7 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
     Q = float(resolution) / (2.0**(1. / bins_per_octave) - 1)
 
     # Compute the frequencies
-    freq = fmin * 2.0 ** (np.arange(n_bins, dtype=float) / bins_per_octave)
+    freq = fmin * (2.0 ** (np.arange(n_bins, dtype=float) / bins_per_octave))
 
     if np.any(freq * (1 + window_bandwidth(window) / Q) > sr / 2.0):
         raise ParameterError('Filter pass-band lies beyond Nyquist')
