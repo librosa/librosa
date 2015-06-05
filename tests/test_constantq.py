@@ -71,7 +71,7 @@ def test_cqt():
     for fmin in [None, librosa.note_to_hz('C3')]:
         for n_bins in [1, 12, 24, 48, 72, 74, 76]:
             for bins_per_octave in [12, 24]:
-                for tuning in [0, 0.25]:
+                for tuning in [None, 0, 0.25]:
                     for resolution in [1, 2]:
                         for norm in [1, 2]:
                             yield (__test_cqt_size, y, sr, 512, fmin, n_bins,
@@ -90,14 +90,6 @@ def test_hybrid_cqt():
     def __test(hop_length, fmin, n_bins, bins_per_octave,
                tuning, resolution, norm, sparsity):
 
-        C1 = librosa.cqt(y, sr=sr,
-                         hop_length=hop_length,
-                         fmin=fmin, n_bins=n_bins,
-                         bins_per_octave=bins_per_octave,
-                         tuning=tuning, resolution=resolution,
-                         norm=norm,
-                         sparsity=sparsity)
-
         C2 = librosa.hybrid_cqt(y, sr=sr,
                                 hop_length=hop_length,
                                 fmin=fmin, n_bins=n_bins,
@@ -106,12 +98,25 @@ def test_hybrid_cqt():
                                 norm=norm,
                                 sparsity=sparsity)
 
+        C1 = librosa.cqt(y, sr=sr,
+                         hop_length=hop_length,
+                         fmin=fmin, n_bins=n_bins,
+                         bins_per_octave=bins_per_octave,
+                         tuning=tuning, resolution=resolution,
+                         norm=norm,
+                         sparsity=sparsity)
+
         eq_(C1.shape, C2.shape)
+
+    # Hop size not long enough for num octaves
+    # num_octaves = 6, 2**(72/12) = 64 > 32
+    yield (raises(librosa.ParameterError)(__test), 32, None, 72,
+           12, 0.0, 2, 1, 0.01)
 
     for fmin in [None, librosa.note_to_hz('C3')]:
         for n_bins in [1, 12, 24, 48, 72, 74, 76]:
             for bins_per_octave in [12, 24]:
-                for tuning in [0, 0.25]:
+                for tuning in [None, 0, 0.25]:
                     for resolution in [1, 2]:
                         for norm in [1, 2]:
                             yield (__test, 512, fmin, n_bins,
