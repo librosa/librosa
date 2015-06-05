@@ -217,7 +217,6 @@ def test_note_to_hz():
             hz_true /= 2.0**(1./12)
 
         hz = librosa.note_to_hz(note, round_midi=round_midi)
-        print note, hz, hz_true
         assert np.allclose(hz[0], hz_true)
 
     @raises(librosa.ParameterError)
