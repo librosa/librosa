@@ -178,6 +178,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         # Do two octaves before resampling to allow for usage of sinc_fastest
         fft_basis, n_fft, filter_lengths = __fft_filters(sr, fmin_t,
                                                          n_filters,
+                                                         bins_per_octave,
                                                          tuning,
                                                          resolution,
                                                          norm,
@@ -206,6 +207,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     # Now do the recursive bit
     fft_basis, n_fft, filter_lengths = __fft_filters(sr, fmin_t,
                                                      n_filters,
+                                                     bins_per_octave,
                                                      tuning,
                                                      resolution,
                                                      norm,
@@ -431,6 +433,7 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     fft_basis, n_fft, _ = __fft_filters(sr,
                                         fmin,
                                         n_bins,
+                                        bins_per_octave,
                                         tuning,
                                         resolution,
                                         norm,
@@ -447,13 +450,13 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     return fft_basis.dot(D)
 
 
-def __fft_filters(sr, fmin, bins_per_octave, tuning,
+def __fft_filters(sr, fmin, n_bins, bins_per_octave, tuning,
                   resolution, norm, sparsity, hop_length=None):
     '''Generate the frequency domain constant-Q filter basis.'''
 
     basis, lengths = filters.constant_q(sr,
                                         fmin=fmin,
-                                        n_bins=bins_per_octave,
+                                        n_bins=n_bins,
                                         bins_per_octave=bins_per_octave,
                                         tuning=tuning,
                                         resolution=resolution,
