@@ -74,7 +74,7 @@ def estimate_tuning(y=None, sr=22050, S=None, n_fft=2048,
     >>> # Using pass-through arguments to `librosa.piptrack`
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> librosa.estimate_tuning(y=y, sr=sr, n_fft=8192,
-    ...                         fmax=librosa.note_to_hz('G#10'))
+    ...                         fmax=librosa.note_to_hz('G#9'))
     0.070000000000000062
 
     '''
