@@ -19,7 +19,8 @@ except KeyError:
 import librosa
 import numpy as np
 
-from nose.tools import raises
+from nose.tools import raises, eq_
+
 
 def __test_cqt_size(y, sr, hop_length, fmin, n_bins, bins_per_octave,
                     tuning, resolution, aggregate, norm, sparsity):
@@ -36,7 +37,7 @@ def __test_cqt_size(y, sr, hop_length, fmin, n_bins, bins_per_octave,
                              norm=norm,
                              sparsity=sparsity)
 
-    assert cqt_output.shape[0] == n_bins
+    eq_(cqt_output.shape[0], n_bins)
 
     return cqt_output
 
@@ -76,4 +77,45 @@ def test_cqt():
                             yield (__test_cqt_size, y, sr, 512, fmin, n_bins,
                                    bins_per_octave, tuning,
                                    resolution, None, norm, 0.01)
+
+
+def test_hybrid_cqt():
+
+    sr = 11025
+
+    # Impulse train
+    y = np.zeros(int(5.0 * sr))
+    y[::sr] = 1.0
+
+    def __test(hop_length, fmin, n_bins, bins_per_octave,
+               tuning, resolution, norm, sparsity):
+
+        C1 = librosa.cqt(y, sr=sr,
+                         hop_length=hop_length,
+                         fmin=fmin, n_bins=n_bins,
+                         bins_per_octave=bins_per_octave,
+                         tuning=tuning, resolution=resolution,
+                         norm=norm,
+                         sparsity=sparsity)
+
+        C2 = librosa.hybrid_cqt(y, sr=sr,
+                                hop_length=hop_length,
+                                fmin=fmin, n_bins=n_bins,
+                                bins_per_octave=bins_per_octave,
+                                tuning=tuning, resolution=resolution,
+                                norm=norm,
+                                sparsity=sparsity)
+
+        eq_(C1.shape, C2.shape)
+
+    for fmin in [None, librosa.note_to_hz('C3')]:
+        for n_bins in [1, 12, 24, 48, 72, 74, 76]:
+            for bins_per_octave in [12, 24]:
+                for tuning in [0, 0.25]:
+                    for resolution in [1, 2]:
+                        for norm in [1, 2]:
+                            yield (__test, 512, fmin, n_bins,
+                                   bins_per_octave, tuning,
+                                   resolution, norm, 0.01)
+
 
