@@ -282,13 +282,13 @@ def note_to_hz(note, **kwargs):
     --------
     >>> # Get the frequency of a note
     >>> librosa.note_to_hz('C')
-    array([ 8.176])
+    array([ 16.352])
     >>> # Or multiple notes
     >>> librosa.note_to_hz(['A3', 'A4', 'A5'])
-    array([ 110.,  220.,  440.])
+    array([ 220.,  440.,  880.])
     >>> # Or notes with tuning deviations
     >>> librosa.note_to_hz('C2-32', round_midi=False)
-    array([ 32.104])
+    array([ 64.209])
 
     Parameters
     ----------
@@ -348,18 +348,18 @@ def note_to_midi(note, round_midi=True):
     Examples
     --------
     >>> librosa.note_to_midi('C')
-    0
+    12
     >>> librosa.note_to_midi('C#3')
-    37
+    49
     >>> librosa.note_to_midi('f4')
-    53
+    65
     >>> librosa.note_to_midi('Bb-1')
-    -2
+    10
     >>> librosa.note_to_midi('A!8')
-    104
+    116
     >>> # Lists of notes also work
     >>> librosa.note_to_midi(['C', 'E', 'G'])
-    array([0, 4, 7])
+    array([12, 16, 19])
 
     '''
 
@@ -392,7 +392,7 @@ def note_to_midi(note, round_midi=True):
     else:
         cents = int(cents) * 1e-2
 
-    note_value = 12 * octave + pitch_map[pitch] + offset + cents
+    note_value = 12 * (octave + 1) + pitch_map[pitch] + offset + cents
 
     if round_midi:
         note_value = int(np.round(note_value))
@@ -410,16 +410,16 @@ def midi_to_note(midi, octave=True, cents=False):
     Examples
     --------
     >>> librosa.midi_to_note(0)
-    'C0'
+    'C-1'
     >>> librosa.midi_to_note(37)
-    'C#3'
+    'C#2'
     >>> librosa.midi_to_note(-2)
-    'A#-1'
+    'A#-2'
     >>> librosa.midi_to_note(104.7)
-    'A8'
+    'A7'
     >>> librosa.midi_to_note(104.7, cents=True)
-    'A8-30'
-    >>> librosa.midi_to_note(range(12))
+    'A7-30'
+    >>> librosa.midi_to_note(list(range(12, 24)))
     ['C0', 'C#0', 'D0', 'D#0', 'E0', 'F0', 'F#0', 'G0', 'G#0', 'A0', 'A#0', 'B0']
 
     Parameters
@@ -432,7 +432,7 @@ def midi_to_note(midi, octave=True, cents=False):
 
     cents: bool
         If true, cent markers will be appended for fractional notes.
-        Eg, `midi_to_note(69.3, cents=True)` == `A5+03`
+        Eg, `midi_to_note(69.3, cents=True)` == `A4+03`
 
     Returns
     -------
@@ -467,7 +467,7 @@ def midi_to_note(midi, octave=True, cents=False):
     note = note_map[note_num % 12]
 
     if octave:
-        note = '{:s}{:0d}'.format(note, int(note_num / 12))
+        note = '{:s}{:0d}'.format(note, int(note_num / 12) - 1)
     if cents:
         note = '{:s}{:+02d}'.format(note, note_cents)
 
@@ -572,7 +572,7 @@ def hz_to_note(frequencies, **kwargs):
     Get multiple notes with cent deviation
 
     >>> librosa.hz_to_note([32, 64], cents=True)
-    ['C2-38', 'C3-38']
+    ['C1-38', 'C2-38']
 
     Get multiple notes, but suppress octave labels
 
@@ -782,11 +782,10 @@ def cqt_frequencies(n_bins, fmin, bins_per_octave=12, tuning=0.0):
     --------
     >>> # Get the CQT frequencies for 24 notes, starting at C2
     >>> librosa.cqt_frequencies(24, fmin=librosa.note_to_hz('C2'))
-    array([  32.703,   34.648,   36.708,   38.891,   41.203,
-             43.654,   46.249,   48.999,   51.913,   55.   ,
-             58.27 ,   61.735,   65.406,   69.296,   73.416,
-             77.782,   82.407,   87.307,   92.499,   97.999,
-            103.826,  110.   ,  116.541,  123.471])
+    array([  65.406,   69.296,   73.416,   77.782,   82.407,   87.307,
+             92.499,   97.999,  103.826,  110.   ,  116.541,  123.471,
+            130.813,  138.591,  146.832,  155.563,  164.814,  174.614,
+            184.997,  195.998,  207.652,  220.   ,  233.082,  246.942])
 
     Parameters
     ----------
@@ -890,7 +889,7 @@ def A_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
     Get the A-weighting for CQT frequencies
 
     >>> import matplotlib.pyplot as plt
-    >>> freqs = librosa.cqt_frequencies(108, librosa.note_to_hz('C2'))
+    >>> freqs = librosa.cqt_frequencies(108, librosa.note_to_hz('C1'))
     >>> aw = librosa.A_weighting(freqs)
     >>> plt.plot(freqs, aw)
     >>> plt.xlabel('Frequency (Hz)')
