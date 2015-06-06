@@ -444,26 +444,19 @@ def subsegment(data, frames, n_segments=4):
 
     Examples
     --------
-    Load audio, detect beat frames, and subdivide in fours by CQT
+    Load audio, detect beat frames, and subdivide in twos by CQT
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=15)
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, hop_length=512)
     >>> cqt = librosa.cqt(y, sr=sr, hop_length=512)
-    >>> subseg = librosa.segment.subsegment(cqt, beats, n_segments=4)
+    >>> subseg = librosa.segment.subsegment(cqt, beats, n_segments=2)
     >>> subseg
-    array([  0,   1,   2,   3,   4,   8,  20,  21,  23,  24,  26,
-            34,  43,  51,  55,  57,  63,  69,  72,  76,  83,  90,
-            97, 100, 102, 106, 111, 117, 122, 129, 133, 137, 142,
-           146, 153, 159, 162, 167, 171, 179, 181, 185, 188, 195,
-           201, 210, 215, 217, 221, 226, 231, 236, 241, 252, 256,
-           259, 261, 268, 271, 275, 281, 290, 296, 299, 301, 304,
-           310, 315, 320, 326, 329, 335, 338, 340, 344, 346, 357,
-           368, 370, 374, 377, 385, 389, 392, 396, 399, 403, 412,
-           416, 418, 425, 430, 436, 443, 447, 451, 456, 461, 465,
-           470, 476, 480, 484, 489, 496, 498, 503, 510, 515, 527,
-           529, 533, 534, 535, 544, 549, 553, 558, 563, 569, 571,
-           577, 578, 584, 590, 598, 607, 608, 609, 612, 618, 623,
-           628, 634, 638, 643])
+    array([  0,   2,   4,  21,  23,  26,  43,  55,  63,  72,  83,
+            97, 102, 111, 122, 137, 142, 153, 162, 180, 182, 185,
+           202, 210, 221, 231, 241, 256, 261, 271, 281, 296, 301,
+           310, 320, 339, 341, 344, 361, 368, 382, 389, 401, 416,
+           420, 430, 436, 451, 456, 465, 476, 489, 496, 503, 515,
+           527, 535, 544, 553, 558, 571, 578, 590, 607, 609, 638])
 
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
@@ -473,7 +466,7 @@ def subsegment(data, frames, n_segments=4):
     >>> plt.vlines(beats, 0, cqt.shape[0], color='r', alpha=0.5,
     ...            label='Beats')
     >>> plt.vlines(subseg, 0, cqt.shape[0], color='b', linestyle='--',
-    ...            alpha=0.25, label='Sub-beats')
+    ...            alpha=0.5, label='Sub-beats')
     >>> plt.legend(frameon=True, shadow=True)
     >>> plt.title('CQT + Beat and sub-beat markers')
     >>> plt.tight_layout()
@@ -525,18 +518,16 @@ def agglomerative(data, k, clusterer=None):
 
     Examples
     --------
-    Cluster by MFCC spectrogram similarity, break into 32 segments
+    Cluster by chroma similarity, break into 20 segments
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=15)
-    >>> mfcc = librosa.feature.mfcc(y=y, sr=sr)
-    >>> boundary_frames = librosa.segment.agglomerative(mfcc, 32)
+    >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
+    >>> boundary_frames = librosa.segment.agglomerative(chroma, 20)
     >>> librosa.frames_to_time(boundary_frames, sr=sr)
-    array([  0.   ,   0.046,   0.464,   1.3  ,   1.625,   4.156,
-             4.319,   5.248,   7.384,   7.5  ,   7.848,   7.964,
-             8.243,   8.893,   9.149,   9.358,   9.706,   9.799,
-            10.077,  10.728,  11.099,  11.192,  11.54 ,  11.703,
-            11.912,  12.237,  12.562,  13.375,  13.514,  14.095,
-            14.234,  14.559])
+    array([  0.   ,   1.672,   2.322,   2.624,   3.251,   3.506,
+             4.18 ,   5.387,   6.014,   6.293,   6.943,   7.198,
+             7.848,   9.033,   9.706,   9.961,  10.635,  10.89 ,
+            11.54 ,  12.539])
 
     Plot the segmentation against the spectrogram
 
