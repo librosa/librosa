@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''Pitch-tracking and tuning estimation'''
+from __future__ import division
 
 import numpy as np
 import scipy.fftpack as fft
@@ -170,10 +171,13 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                            res_type, n_octaves,
                                            nyquist, filter_cutoff)
 
+    n_filters = min(bins_per_octave, n_bins)
+
     if res_type != 'sinc_fastest' and audio._HAS_SAMPLERATE:
 
         # Do two octaves before resampling to allow for usage of sinc_fastest
         fft_basis, n_fft, filter_lengths = __fft_filters(sr, fmin_t,
+                                                         n_filters,
                                                          bins_per_octave,
                                                          tuning,
                                                          resolution,
@@ -202,6 +206,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     # Now do the recursive bit
     fft_basis, n_fft, filter_lengths = __fft_filters(sr, fmin_t,
+                                                     n_filters,
                                                      bins_per_octave,
                                                      tuning,
                                                      resolution,
@@ -300,7 +305,7 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     # Make sure our hop is long enough to support the bottom octave
     if hop_length < 2**n_octaves:
         raise ParameterError('Insufficient hop_length {:d} '
-                         'for {:d} octaves'.format(hop_length, n_octaves))
+                             'for {:d} octaves'.format(hop_length, n_octaves))
 
     if fmin is None:
         # C1 by default
@@ -323,7 +328,7 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     # Determine which filters to use with Pseudo CQT
     pseudo_filters = lengths < 2*hop_length
-    n_bins_pseudo = np.sum(pseudo_filters)
+    n_bins_pseudo = int(np.sum(pseudo_filters))
 
     cqt_resp = []
 
@@ -340,7 +345,7 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                    sparsity=sparsity)
         cqt_resp.append(my_pseudo_cqt)
 
-    n_bins_full = np.sum(~pseudo_filters)
+    n_bins_full = int(np.sum(~pseudo_filters))
 
     if n_bins_full > 0:
 
@@ -429,6 +434,7 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     fft_basis, n_fft, _ = __fft_filters(sr,
                                         fmin,
                                         n_bins,
+                                        bins_per_octave,
                                         tuning,
                                         resolution,
                                         norm,
@@ -445,13 +451,13 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     return fft_basis.dot(D)
 
 
-def __fft_filters(sr, fmin, bins_per_octave, tuning,
+def __fft_filters(sr, fmin, n_bins, bins_per_octave, tuning,
                   resolution, norm, sparsity, hop_length=None):
     '''Generate the frequency domain constant-Q filter basis.'''
 
     basis, lengths = filters.constant_q(sr,
                                         fmin=fmin,
-                                        n_bins=bins_per_octave,
+                                        n_bins=n_bins,
                                         bins_per_octave=bins_per_octave,
                                         tuning=tuning,
                                         resolution=resolution,
@@ -537,12 +543,12 @@ def __early_downsample(y, sr, hop_length, res_type, n_octaves,
     downsample_count = min(downsample_count1, downsample_count2)
 
     if downsample_count > 0:
-        downsample_factor = 2**downsample_count
+        downsample_factor = 2**(downsample_count)
 
-        hop_length = int(hop_length / downsample_factor)
+        hop_length = hop_length // downsample_factor
 
         y = audio.resample(y, sr, sr / downsample_factor, res_type=res_type)
 
-        sr = sr / downsample_factor
+        sr = sr // downsample_factor
 
     return y, sr, hop_length
