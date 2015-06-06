@@ -68,7 +68,7 @@ def test_cqt():
                        bins_per_octave, 0.0, 2, None, 1, 0.01)
 
     # Test for no errors and correct output size
-    for fmin in [None, librosa.note_to_hz('C3')]:
+    for fmin in [None, librosa.note_to_hz('C2')]:
         for n_bins in [1, 12, 24, 48, 72, 74, 76]:
             for bins_per_octave in [12, 24]:
                 for tuning in [None, 0, 0.25]:
@@ -116,7 +116,7 @@ def test_hybrid_cqt():
     yield (raises(librosa.ParameterError)(__test), 32, None, 72,
            12, 0.0, 2, 1, 0.01)
 
-    for fmin in [None, librosa.note_to_hz('C3')]:
+    for fmin in [None, librosa.note_to_hz('C2')]:
         for n_bins in [1, 12, 24, 48, 72, 74, 76]:
             for bins_per_octave in [12, 24]:
                 for tuning in [None, 0, 0.25]:
