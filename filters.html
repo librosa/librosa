@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>LibROSA &mdash; librosa 0.4.0 documentation</title>
+  <title>Filters &mdash; librosa 0.4.0 documentation</title>
   
 
   
@@ -30,8 +30,9 @@
   
 
   
-    <link rel="top" title="librosa 0.4.0 documentation" href="#"/>
-        <link rel="next" title="Installation instructions" href="install.html"/> 
+    <link rel="top" title="librosa 0.4.0 documentation" href="index.html"/>
+        <link rel="next" title="librosa.filters.dct" href="generated/librosa.filters.dct.html"/>
+        <link rel="prev" title="librosa.util.buf_to_int" href="generated/librosa.util.buf_to_int.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -48,7 +49,7 @@
         
 
         
-          <a href="#" class="icon icon-home"> librosa
+          <a href="index.html" class="icon icon-home"> librosa
         
 
         
@@ -289,22 +290,22 @@
 </ul>
 </li>
 </ul>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="filters.html">Filters</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="filters.html#filter-bank-construction">Filter bank construction</a><ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="">Filters</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#filter-bank-construction">Filter bank construction</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.filters.dct.html">librosa.filters.dct</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.filters.mel.html">librosa.filters.mel</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.filters.chroma.html">librosa.filters.chroma</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.filters.constant_q.html">librosa.filters.constant_q</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="filters.html#miscellaneous">Miscellaneous</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#miscellaneous">Miscellaneous</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.filters.constant_q_lengths.html">librosa.filters.constant_q_lengths</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.filters.cq_to_chroma.html">librosa.filters.cq_to_chroma</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.filters.window_bandwidth.html">librosa.filters.window_bandwidth</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="filters.html#deprecated">Deprecated</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#deprecated">Deprecated</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.filters.logfrequency.html">librosa.filters.logfrequency</a></li>
 </ul>
 </li>
@@ -341,7 +342,7 @@
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="#">librosa</a>
+        <a href="index.html">librosa</a>
       </nav>
 
 
@@ -350,13 +351,13 @@
         <div class="rst-content">
           <div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="#">Docs</a> &raquo;</li>
+    <li><a href="index.html">Docs</a> &raquo;</li>
       
-    <li>LibROSA</li>
+    <li>Filters</li>
       <li class="wy-breadcrumbs-aside">
         
           
-            <a href="_sources/index.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/filters.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -365,61 +366,64 @@
 </div>
           <div role="main" class="document">
             
-  <div class="section" id="librosa">
-<h1>LibROSA<a class="headerlink" href="#librosa" title="Permalink to this headline">¶</a></h1>
-<p>LibROSA is a python package for music and audio analysis.  It provides the building
-blocks necessary to create music information retrieval systems.</p>
-<div class="section" id="getting-started">
-<h2>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="install.html">Installation instructions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
-</ul>
+  <span class="target" id="module-librosa.filters"><span id="filters"></span></span><div class="section" id="id1">
+<h1>Filters<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="filter-bank-construction">
+<h2>Filter bank construction<a class="headerlink" href="#filter-bank-construction" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.filters.dct.html#librosa.filters.dct" title="librosa.filters.dct"><tt class="xref py py-obj docutils literal"><span class="pre">dct</span></tt></a>(n_filters,&nbsp;n_input)</td>
+<td>Discrete cosine transform (DCT type-III) basis.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/librosa.filters.mel.html#librosa.filters.mel" title="librosa.filters.mel"><tt class="xref py py-obj docutils literal"><span class="pre">mel</span></tt></a>(sr,&nbsp;n_fft[,&nbsp;n_mels,&nbsp;fmin,&nbsp;fmax,&nbsp;htk])</td>
+<td>Create a Filterbank matrix to combine FFT bins into Mel-frequency bins</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.filters.chroma.html#librosa.filters.chroma" title="librosa.filters.chroma"><tt class="xref py py-obj docutils literal"><span class="pre">chroma</span></tt></a>(sr,&nbsp;n_fft[,&nbsp;n_chroma,&nbsp;A440,&nbsp;ctroct,&nbsp;...])</td>
+<td>Create a Filterbank matrix to convert STFT to chroma</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/librosa.filters.constant_q.html#librosa.filters.constant_q" title="librosa.filters.constant_q"><tt class="xref py py-obj docutils literal"><span class="pre">constant_q</span></tt></a>(sr[,&nbsp;fmin,&nbsp;n_bins,&nbsp;...])</td>
+<td>Construct a constant-Q basis.</td>
+</tr>
+</tbody>
+</table>
 </div>
+<div class="section" id="miscellaneous">
+<h2>Miscellaneous<a class="headerlink" href="#miscellaneous" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.filters.constant_q_lengths.html#librosa.filters.constant_q_lengths" title="librosa.filters.constant_q_lengths"><tt class="xref py py-obj docutils literal"><span class="pre">constant_q_lengths</span></tt></a>(sr,&nbsp;fmin[,&nbsp;n_bins,&nbsp;...])</td>
+<td>Return length of each filter in a constant-Q basis.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/librosa.filters.cq_to_chroma.html#librosa.filters.cq_to_chroma" title="librosa.filters.cq_to_chroma"><tt class="xref py py-obj docutils literal"><span class="pre">cq_to_chroma</span></tt></a>(n_input[,&nbsp;bins_per_octave,&nbsp;...])</td>
+<td>Convert a Constant-Q basis to Chroma.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.filters.window_bandwidth.html#librosa.filters.window_bandwidth" title="librosa.filters.window_bandwidth"><tt class="xref py py-obj docutils literal"><span class="pre">window_bandwidth</span></tt></a>(window[,&nbsp;default])</td>
+<td>Get the bandwidth of a window function.</td>
+</tr>
+</tbody>
+</table>
 </div>
-<div class="section" id="troubleshooting">
-<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this headline">¶</a></h2>
-<p>If you have questions about how to use librosa, please consult the <a class="reference external" href="https://groups.google.com/forum/#!forum/librosa">discussion forum</a>.
-For bug reports and other, more technical issues, consult the <a class="reference external" href="https://github.com/bmcfee/librosa/issues">github issues</a>.</p>
-</div>
-<div class="section" id="api-documentation">
-<h2>API documentation<a class="headerlink" href="#api-documentation" title="Permalink to this headline">¶</a></h2>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="core.html">Core IO and DSP</a></li>
-<li class="toctree-l1"><a class="reference internal" href="display.html">Display</a></li>
-<li class="toctree-l1"><a class="reference internal" href="feature.html">Feature extraction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="onset.html">Onset detection</a></li>
-<li class="toctree-l1"><a class="reference internal" href="beat.html">Beat and tempo</a></li>
-<li class="toctree-l1"><a class="reference internal" href="decompose.html">Spectrogram decomposition</a></li>
-<li class="toctree-l1"><a class="reference internal" href="effects.html">Effects</a></li>
-<li class="toctree-l1"><a class="reference internal" href="output.html">Output</a></li>
-<li class="toctree-l1"><a class="reference internal" href="segment.html">Temporal segmentation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="util.html">Utilities</a></li>
-</ul>
-</div>
-</div>
-<div class="section" id="advanced-topics">
-<h2>Advanced topics<a class="headerlink" href="#advanced-topics" title="Permalink to this headline">¶</a></h2>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="filters.html">Filters</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cache.html">Caching</a></li>
-</ul>
-</div>
-</div>
-<div class="section" id="reference">
-<h2>Reference<a class="headerlink" href="#reference" title="Permalink to this headline">¶</a></h2>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="glossary.html">Glossary</a></li>
-</ul>
-</div>
-<ul class="simple">
-<li><a class="reference internal" href="genindex.html"><em>Index</em></a></li>
-</ul>
+<div class="section" id="deprecated">
+<h2>Deprecated<a class="headerlink" href="#deprecated" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.filters.logfrequency.html#librosa.filters.logfrequency" title="librosa.filters.logfrequency"><tt class="xref py py-obj docutils literal"><span class="pre">logfrequency</span></tt></a>(sr,&nbsp;n_fft[,&nbsp;n_bins,&nbsp;...])</td>
+<td>Approximate a constant-Q filter bank for a fixed-window STFT.</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 
@@ -429,8 +433,10 @@ For bug reports and other, more technical issues, consult the <a class="referenc
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="install.html" class="btn btn-neutral float-right" title="Installation instructions" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="generated/librosa.filters.dct.html" class="btn btn-neutral float-right" title="librosa.filters.dct" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
+      
+        <a href="generated/librosa.util.buf_to_int.html" class="btn btn-neutral" title="librosa.util.buf_to_int" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

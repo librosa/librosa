@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>LibROSA &mdash; librosa 0.4.0 documentation</title>
+  <title>Beat and tempo &mdash; librosa 0.4.0 documentation</title>
   
 
   
@@ -30,8 +30,9 @@
   
 
   
-    <link rel="top" title="librosa 0.4.0 documentation" href="#"/>
-        <link rel="next" title="Installation instructions" href="install.html"/> 
+    <link rel="top" title="librosa 0.4.0 documentation" href="index.html"/>
+        <link rel="next" title="librosa.beat.beat_track" href="generated/librosa.beat.beat_track.html"/>
+        <link rel="prev" title="librosa.onset.onset_strength" href="generated/librosa.onset.onset_strength.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -48,7 +49,7 @@
         
 
         
-          <a href="#" class="icon icon-home"> librosa
+          <a href="index.html" class="icon icon-home"> librosa
         
 
         
@@ -83,7 +84,7 @@
 </ul>
 </li>
 </ul>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="core.html">Core IO and DSP</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="core.html#audio-processing">Audio processing</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.core.load.html">librosa.core.load</a></li>
@@ -182,7 +183,7 @@
 <li class="toctree-l2"><a class="reference internal" href="generated/librosa.onset.onset_strength.html">librosa.onset.onset_strength</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="beat.html">Beat and tempo</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Beat and tempo</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="generated/librosa.beat.beat_track.html">librosa.beat.beat_track</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated/librosa.beat.estimate_tempo.html">librosa.beat.estimate_tempo</a></li>
 </ul>
@@ -341,7 +342,7 @@
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="#">librosa</a>
+        <a href="index.html">librosa</a>
       </nav>
 
 
@@ -350,13 +351,13 @@
         <div class="rst-content">
           <div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="#">Docs</a> &raquo;</li>
+    <li><a href="index.html">Docs</a> &raquo;</li>
       
-    <li>LibROSA</li>
+    <li>Beat and tempo</li>
       <li class="wy-breadcrumbs-aside">
         
           
-            <a href="_sources/index.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/beat.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -365,62 +366,22 @@
 </div>
           <div role="main" class="document">
             
-  <div class="section" id="librosa">
-<h1>LibROSA<a class="headerlink" href="#librosa" title="Permalink to this headline">¶</a></h1>
-<p>LibROSA is a python package for music and audio analysis.  It provides the building
-blocks necessary to create music information retrieval systems.</p>
-<div class="section" id="getting-started">
-<h2>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="install.html">Installation instructions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
-</ul>
-</div>
-</div>
-<div class="section" id="troubleshooting">
-<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this headline">¶</a></h2>
-<p>If you have questions about how to use librosa, please consult the <a class="reference external" href="https://groups.google.com/forum/#!forum/librosa">discussion forum</a>.
-For bug reports and other, more technical issues, consult the <a class="reference external" href="https://github.com/bmcfee/librosa/issues">github issues</a>.</p>
-</div>
-<div class="section" id="api-documentation">
-<h2>API documentation<a class="headerlink" href="#api-documentation" title="Permalink to this headline">¶</a></h2>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="core.html">Core IO and DSP</a></li>
-<li class="toctree-l1"><a class="reference internal" href="display.html">Display</a></li>
-<li class="toctree-l1"><a class="reference internal" href="feature.html">Feature extraction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="onset.html">Onset detection</a></li>
-<li class="toctree-l1"><a class="reference internal" href="beat.html">Beat and tempo</a></li>
-<li class="toctree-l1"><a class="reference internal" href="decompose.html">Spectrogram decomposition</a></li>
-<li class="toctree-l1"><a class="reference internal" href="effects.html">Effects</a></li>
-<li class="toctree-l1"><a class="reference internal" href="output.html">Output</a></li>
-<li class="toctree-l1"><a class="reference internal" href="segment.html">Temporal segmentation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="util.html">Utilities</a></li>
-</ul>
-</div>
-</div>
-<div class="section" id="advanced-topics">
-<h2>Advanced topics<a class="headerlink" href="#advanced-topics" title="Permalink to this headline">¶</a></h2>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="filters.html">Filters</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cache.html">Caching</a></li>
-</ul>
-</div>
-</div>
-<div class="section" id="reference">
-<h2>Reference<a class="headerlink" href="#reference" title="Permalink to this headline">¶</a></h2>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="glossary.html">Glossary</a></li>
-</ul>
-</div>
-<ul class="simple">
-<li><a class="reference internal" href="genindex.html"><em>Index</em></a></li>
-</ul>
-</div>
+  <span class="target" id="module-librosa.beat"><span id="beat"></span></span><div class="section" id="beat-and-tempo">
+<h1>Beat and tempo<a class="headerlink" href="#beat-and-tempo" title="Permalink to this headline">¶</a></h1>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.beat.beat_track.html#librosa.beat.beat_track" title="librosa.beat.beat_track"><tt class="xref py py-obj docutils literal"><span class="pre">beat_track</span></tt></a>([y,&nbsp;sr,&nbsp;onset_envelope,&nbsp;...])</td>
+<td>Dynamic programming beat tracker.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/librosa.beat.estimate_tempo.html#librosa.beat.estimate_tempo" title="librosa.beat.estimate_tempo"><tt class="xref py py-obj docutils literal"><span class="pre">estimate_tempo</span></tt></a>(onset_envelope[,&nbsp;sr,&nbsp;...])</td>
+<td>Estimate the tempo (beats per minute) from an onset envelope</td>
+</tr>
+</tbody>
+</table>
 </div>
 
 
@@ -429,8 +390,10 @@ For bug reports and other, more technical issues, consult the <a class="referenc
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="install.html" class="btn btn-neutral float-right" title="Installation instructions" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="generated/librosa.beat.beat_track.html" class="btn btn-neutral float-right" title="librosa.beat.beat_track" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
+      
+        <a href="generated/librosa.onset.onset_strength.html" class="btn btn-neutral" title="librosa.onset.onset_strength" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

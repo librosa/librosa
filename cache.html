@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>LibROSA &mdash; librosa 0.4.0 documentation</title>
+  <title>Caching &mdash; librosa 0.4.0 documentation</title>
   
 
   
@@ -30,8 +30,9 @@
   
 
   
-    <link rel="top" title="librosa 0.4.0 documentation" href="#"/>
-        <link rel="next" title="Installation instructions" href="install.html"/> 
+    <link rel="top" title="librosa 0.4.0 documentation" href="index.html"/>
+        <link rel="next" title="Changes" href="changelog.html"/>
+        <link rel="prev" title="librosa.filters.logfrequency" href="generated/librosa.filters.logfrequency.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -48,7 +49,7 @@
         
 
         
-          <a href="#" class="icon icon-home"> librosa
+          <a href="index.html" class="icon icon-home"> librosa
         
 
         
@@ -289,7 +290,7 @@
 </ul>
 </li>
 </ul>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="filters.html">Filters</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="filters.html#filter-bank-construction">Filter bank construction</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.filters.dct.html">librosa.filters.dct</a></li>
@@ -310,10 +311,10 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="cache.html">Caching</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="cache.html#enabling-the-cache">Enabling the cache</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cache.html#cache-configuration">Cache configuration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cache.html#example">Example</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Caching</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#enabling-the-cache">Enabling the cache</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cache-configuration">Cache configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example">Example</a></li>
 </ul>
 </li>
 </ul>
@@ -341,7 +342,7 @@
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="#">librosa</a>
+        <a href="index.html">librosa</a>
       </nav>
 
 
@@ -350,13 +351,13 @@
         <div class="rst-content">
           <div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="#">Docs</a> &raquo;</li>
+    <li><a href="index.html">Docs</a> &raquo;</li>
       
-    <li>LibROSA</li>
+    <li>Caching</li>
       <li class="wy-breadcrumbs-aside">
         
           
-            <a href="_sources/index.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/cache.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -365,61 +366,102 @@
 </div>
           <div role="main" class="document">
             
-  <div class="section" id="librosa">
-<h1>LibROSA<a class="headerlink" href="#librosa" title="Permalink to this headline">¶</a></h1>
-<p>LibROSA is a python package for music and audio analysis.  It provides the building
-blocks necessary to create music information retrieval systems.</p>
-<div class="section" id="getting-started">
-<h2>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="install.html">Installation instructions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
+  <div class="section" id="caching">
+<h1>Caching<a class="headerlink" href="#caching" title="Permalink to this headline">¶</a></h1>
+<p>This section covers the <em>librosa</em> function cache.  This allows you
+to store and re-use intermediate computations across sessions.</p>
+<div class="section" id="enabling-the-cache">
+<h2>Enabling the cache<a class="headerlink" href="#enabling-the-cache" title="Permalink to this headline">¶</a></h2>
+<p>By default, caching is disabled.  To enable caching, the environment
+variable <em class="xref py py-obj">LIBROSA_CACHE_DIR</em> must be set prior to loading <em>librosa</em>.
+This can be done on the command line prior to instantiating a python interpreter:</p>
+<div class="highlight-python"><div class="highlight"><pre>$ export LIBROSA_CACHE_DIR=/tmp/librosa_cache
+$ ipython
+</pre></div>
+</div>
+<p>or from within python, prior to importing <em>librosa</em>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">os</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s">&#39;LIBROSA_CACHE_DIR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;/tmp/librosa_cache&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">librosa</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p>The cache does not implement any eviction policy.  As such,
+it can grow without bound on disk if not purged.
+To purge the cache directly, call:</p>
+<div class="last highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">librosa</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="cache-configuration">
+<h2>Cache configuration<a class="headerlink" href="#cache-configuration" title="Permalink to this headline">¶</a></h2>
+<p>The cache is implemented on top of <a class="reference external" href="https://pythonhosted.org/joblib/memory.html">joblib.Memory</a>.
+The default configuration can be overridden by setting the following environment variables</p>
+<blockquote>
+<div><ul class="simple">
+<li><em class="xref py py-obj">LIBROSA_CACHE_DIR</em> : path (on disk) to the cache directory</li>
+<li><em class="xref py py-obj">LIBROSA_CACHE_MMAP</em> : optional memory mapping mode <em class="xref py py-obj">{None, &#8216;r+&#8217;, &#8216;r&#8217;, &#8216;w+&#8217;, &#8216;c&#8217;}</em></li>
+<li><em class="xref py py-obj">LIBROSA_CACHE_COMPRESS</em> : flag to enable compression of data on disk <em class="xref py py-obj">{0, 1}</em></li>
+<li><em class="xref py py-obj">LIBROSA_CACHE_VERBOSE</em> : controls how much debug info is displayed. <em class="xref py py-obj">{int, non-negative}</em></li>
 </ul>
+</div></blockquote>
+<p>Please refer to the <tt class="xref py py-obj docutils literal"><span class="pre">joblib.Memory</span></tt> <a class="reference external" href="https://pythonhosted.org/joblib/memory.html#memory-reference">documentation</a> for a detailed explanation of these
+parameters.</p>
 </div>
+<div class="section" id="example">
+<h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
+<p>To demonstrate how to use the cache, we&#8217;ll first call an example script twice without caching:</p>
+<div class="highlight-python"><div class="highlight"><pre>[~/git/librosa/examples]$ time ./estimate_tuning.py ../librosa/example_data/Kevin_MacLeod_-_Vibe_Ace.mp3
+Loading  ../librosa/example_data/Kevin_MacLeod_-_Vibe_Ace.mp3
+Separating harmonic component ...
+Estimating tuning ...
++6.00 cents
+
+real    0m4.369s
+user    0m4.065s
+sys     0m0.350s
+
+[~/git/librosa/examples]$ time ./estimate_tuning.py ../librosa/example_data/Kevin_MacLeod_-_Vibe_Ace.mp3
+Loading  ../librosa/example_data/Kevin_MacLeod_-_Vibe_Ace.mp3
+Separating harmonic component ...
+Estimating tuning ...
++6.00 cents
+
+real    0m4.414s
+user    0m4.013s
+sys     0m0.440s
+</pre></div>
 </div>
-<div class="section" id="troubleshooting">
-<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this headline">¶</a></h2>
-<p>If you have questions about how to use librosa, please consult the <a class="reference external" href="https://groups.google.com/forum/#!forum/librosa">discussion forum</a>.
-For bug reports and other, more technical issues, consult the <a class="reference external" href="https://github.com/bmcfee/librosa/issues">github issues</a>.</p>
+<p>Next, we&#8217;ll enable caching to <em class="xref py py-obj">/tmp/librosa</em>:</p>
+<div class="highlight-python"><div class="highlight"><pre>[~/git/librosa/examples]$ export LIBROSA_CACHE_DIR=/tmp/librosa
+</pre></div>
 </div>
-<div class="section" id="api-documentation">
-<h2>API documentation<a class="headerlink" href="#api-documentation" title="Permalink to this headline">¶</a></h2>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="core.html">Core IO and DSP</a></li>
-<li class="toctree-l1"><a class="reference internal" href="display.html">Display</a></li>
-<li class="toctree-l1"><a class="reference internal" href="feature.html">Feature extraction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="onset.html">Onset detection</a></li>
-<li class="toctree-l1"><a class="reference internal" href="beat.html">Beat and tempo</a></li>
-<li class="toctree-l1"><a class="reference internal" href="decompose.html">Spectrogram decomposition</a></li>
-<li class="toctree-l1"><a class="reference internal" href="effects.html">Effects</a></li>
-<li class="toctree-l1"><a class="reference internal" href="output.html">Output</a></li>
-<li class="toctree-l1"><a class="reference internal" href="segment.html">Temporal segmentation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="util.html">Utilities</a></li>
-</ul>
+<p>And now we&#8217;ll re-run the example script twice.  The first time, there will be no cached values, so the time
+should be similar to running without cache.  The second time, we&#8217;ll be able to reuse intermediate values, so
+it should be significantly faster.:</p>
+<div class="highlight-python"><div class="highlight"><pre>[~/git/librosa/examples]$ time ./estimate_tuning.py ../librosa/example_data/Kevin_MacLeod_-_Vibe_Ace.mp3
+Loading  ../librosa/example_data/Kevin_MacLeod_-_Vibe_Ace.mp3
+Separating harmonic component ...
+Estimating tuning ...
++6.00 cents
+
+real    0m4.859s
+user    0m4.471s
+sys     0m0.429s
+
+[~/git/librosa/examples]$ time ./estimate_tuning.py ../librosa/example_data/Kevin_MacLeod_-_Vibe_Ace.mp3
+Loading  ../librosa/example_data/Kevin_MacLeod_-_Vibe_Ace.mp3
+Separating harmonic component ...
+Estimating tuning ...
++6.00 cents
+
+real    0m0.931s
+user    0m0.862s
+sys     0m0.112s
+</pre></div>
 </div>
-</div>
-<div class="section" id="advanced-topics">
-<h2>Advanced topics<a class="headerlink" href="#advanced-topics" title="Permalink to this headline">¶</a></h2>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="filters.html">Filters</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cache.html">Caching</a></li>
-</ul>
-</div>
-</div>
-<div class="section" id="reference">
-<h2>Reference<a class="headerlink" href="#reference" title="Permalink to this headline">¶</a></h2>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="glossary.html">Glossary</a></li>
-</ul>
-</div>
-<ul class="simple">
-<li><a class="reference internal" href="genindex.html"><em>Index</em></a></li>
-</ul>
 </div>
 </div>
 
@@ -429,8 +471,10 @@ For bug reports and other, more technical issues, consult the <a class="referenc
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="install.html" class="btn btn-neutral float-right" title="Installation instructions" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="changelog.html" class="btn btn-neutral float-right" title="Changes" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
+      
+        <a href="generated/librosa.filters.logfrequency.html" class="btn btn-neutral" title="librosa.filters.logfrequency" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

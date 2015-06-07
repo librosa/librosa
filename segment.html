@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>LibROSA &mdash; librosa 0.4.0 documentation</title>
+  <title>Temporal segmentation &mdash; librosa 0.4.0 documentation</title>
   
 
   
@@ -30,8 +30,9 @@
   
 
   
-    <link rel="top" title="librosa 0.4.0 documentation" href="#"/>
-        <link rel="next" title="Installation instructions" href="install.html"/> 
+    <link rel="top" title="librosa 0.4.0 documentation" href="index.html"/>
+        <link rel="next" title="librosa.segment.recurrence_matrix" href="generated/librosa.segment.recurrence_matrix.html"/>
+        <link rel="prev" title="librosa.output.frames_csv" href="generated/librosa.output.frames_csv.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -48,7 +49,7 @@
         
 
         
-          <a href="#" class="icon icon-home"> librosa
+          <a href="index.html" class="icon icon-home"> librosa
         
 
         
@@ -83,7 +84,7 @@
 </ul>
 </li>
 </ul>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="core.html">Core IO and DSP</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="core.html#audio-processing">Audio processing</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.core.load.html">librosa.core.load</a></li>
@@ -226,20 +227,20 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="segment.html">Temporal segmentation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="segment.html#recurrence-and-self-similarity">Recurrence and self-similarity</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Temporal segmentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#recurrence-and-self-similarity">Recurrence and self-similarity</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.segment.recurrence_matrix.html">librosa.segment.recurrence_matrix</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.segment.recurrence_to_lag.html">librosa.segment.recurrence_to_lag</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.segment.lag_to_recurrence.html">librosa.segment.lag_to_recurrence</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.segment.timelag_filter.html">librosa.segment.timelag_filter</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="segment.html#temporal-clustering">Temporal clustering</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#temporal-clustering">Temporal clustering</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.segment.agglomerative.html">librosa.segment.agglomerative</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.segment.subsegment.html">librosa.segment.subsegment</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="segment.html#deprecated">Deprecated</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#deprecated">Deprecated</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.segment.structure_feature.html">librosa.segment.structure_feature</a></li>
 </ul>
 </li>
@@ -341,7 +342,7 @@
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="#">librosa</a>
+        <a href="index.html">librosa</a>
       </nav>
 
 
@@ -350,13 +351,13 @@
         <div class="rst-content">
           <div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="#">Docs</a> &raquo;</li>
+    <li><a href="index.html">Docs</a> &raquo;</li>
       
-    <li>LibROSA</li>
+    <li>Temporal segmentation</li>
       <li class="wy-breadcrumbs-aside">
         
           
-            <a href="_sources/index.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/segment.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -365,61 +366,61 @@
 </div>
           <div role="main" class="document">
             
-  <div class="section" id="librosa">
-<h1>LibROSA<a class="headerlink" href="#librosa" title="Permalink to this headline">¶</a></h1>
-<p>LibROSA is a python package for music and audio analysis.  It provides the building
-blocks necessary to create music information retrieval systems.</p>
-<div class="section" id="getting-started">
-<h2>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="install.html">Installation instructions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
-</ul>
+  <span class="target" id="module-librosa.segment"><span id="segment"></span></span><div class="section" id="temporal-segmentation">
+<h1>Temporal segmentation<a class="headerlink" href="#temporal-segmentation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="recurrence-and-self-similarity">
+<h2>Recurrence and self-similarity<a class="headerlink" href="#recurrence-and-self-similarity" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.segment.recurrence_matrix.html#librosa.segment.recurrence_matrix" title="librosa.segment.recurrence_matrix"><tt class="xref py py-obj docutils literal"><span class="pre">recurrence_matrix</span></tt></a>(data[,&nbsp;k,&nbsp;width,&nbsp;metric,&nbsp;sym])</td>
+<td>Compute the binary recurrence matrix from a time-series.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/librosa.segment.recurrence_to_lag.html#librosa.segment.recurrence_to_lag" title="librosa.segment.recurrence_to_lag"><tt class="xref py py-obj docutils literal"><span class="pre">recurrence_to_lag</span></tt></a>(rec[,&nbsp;pad])</td>
+<td>Convert a recurrence matrix into a lag matrix.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.segment.lag_to_recurrence.html#librosa.segment.lag_to_recurrence" title="librosa.segment.lag_to_recurrence"><tt class="xref py py-obj docutils literal"><span class="pre">lag_to_recurrence</span></tt></a>(lag)</td>
+<td>Convert a lag matrix into a recurrence matrix.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/librosa.segment.timelag_filter.html#librosa.segment.timelag_filter" title="librosa.segment.timelag_filter"><tt class="xref py py-obj docutils literal"><span class="pre">timelag_filter</span></tt></a>(function[,&nbsp;pad,&nbsp;index])</td>
+<td>Filtering in the time-lag domain.</td>
+</tr>
+</tbody>
+</table>
 </div>
+<div class="section" id="temporal-clustering">
+<h2>Temporal clustering<a class="headerlink" href="#temporal-clustering" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.segment.agglomerative.html#librosa.segment.agglomerative" title="librosa.segment.agglomerative"><tt class="xref py py-obj docutils literal"><span class="pre">agglomerative</span></tt></a>(data,&nbsp;k[,&nbsp;clusterer])</td>
+<td>Bottom-up temporal segmentation.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/librosa.segment.subsegment.html#librosa.segment.subsegment" title="librosa.segment.subsegment"><tt class="xref py py-obj docutils literal"><span class="pre">subsegment</span></tt></a>(data,&nbsp;frames[,&nbsp;n_segments])</td>
+<td>Sub-divide a segmentation by feature clustering.</td>
+</tr>
+</tbody>
+</table>
 </div>
-<div class="section" id="troubleshooting">
-<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Permalink to this headline">¶</a></h2>
-<p>If you have questions about how to use librosa, please consult the <a class="reference external" href="https://groups.google.com/forum/#!forum/librosa">discussion forum</a>.
-For bug reports and other, more technical issues, consult the <a class="reference external" href="https://github.com/bmcfee/librosa/issues">github issues</a>.</p>
-</div>
-<div class="section" id="api-documentation">
-<h2>API documentation<a class="headerlink" href="#api-documentation" title="Permalink to this headline">¶</a></h2>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="core.html">Core IO and DSP</a></li>
-<li class="toctree-l1"><a class="reference internal" href="display.html">Display</a></li>
-<li class="toctree-l1"><a class="reference internal" href="feature.html">Feature extraction</a></li>
-<li class="toctree-l1"><a class="reference internal" href="onset.html">Onset detection</a></li>
-<li class="toctree-l1"><a class="reference internal" href="beat.html">Beat and tempo</a></li>
-<li class="toctree-l1"><a class="reference internal" href="decompose.html">Spectrogram decomposition</a></li>
-<li class="toctree-l1"><a class="reference internal" href="effects.html">Effects</a></li>
-<li class="toctree-l1"><a class="reference internal" href="output.html">Output</a></li>
-<li class="toctree-l1"><a class="reference internal" href="segment.html">Temporal segmentation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="util.html">Utilities</a></li>
-</ul>
-</div>
-</div>
-<div class="section" id="advanced-topics">
-<h2>Advanced topics<a class="headerlink" href="#advanced-topics" title="Permalink to this headline">¶</a></h2>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="filters.html">Filters</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cache.html">Caching</a></li>
-</ul>
-</div>
-</div>
-<div class="section" id="reference">
-<h2>Reference<a class="headerlink" href="#reference" title="Permalink to this headline">¶</a></h2>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changes</a></li>
-<li class="toctree-l1"><a class="reference internal" href="glossary.html">Glossary</a></li>
-</ul>
-</div>
-<ul class="simple">
-<li><a class="reference internal" href="genindex.html"><em>Index</em></a></li>
-</ul>
+<div class="section" id="deprecated">
+<h2>Deprecated<a class="headerlink" href="#deprecated" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.segment.structure_feature.html#librosa.segment.structure_feature" title="librosa.segment.structure_feature"><tt class="xref py py-obj docutils literal"><span class="pre">structure_feature</span></tt></a>(rec[,&nbsp;pad,&nbsp;inverse])</td>
+<td>Compute the structure feature from a recurrence matrix.</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 
@@ -429,8 +430,10 @@ For bug reports and other, more technical issues, consult the <a class="referenc
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="install.html" class="btn btn-neutral float-right" title="Installation instructions" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="generated/librosa.segment.recurrence_matrix.html" class="btn btn-neutral float-right" title="librosa.segment.recurrence_matrix" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
+      
+        <a href="generated/librosa.output.frames_csv.html" class="btn btn-neutral" title="librosa.output.frames_csv" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
