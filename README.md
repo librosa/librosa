@@ -1,6 +1,6 @@
 librosa
 =======
-A python package for music and audio analysis.  The primary purpose of librosa is to implement common tools for low- and high-level signal-based music analysis.
+A python package for music and audio analysis.  
 
 [![PyPI](https://img.shields.io/pypi/v/librosa.svg)](https://pypi.python.org/pypi/librosa)
 [![License](https://img.shields.io/pypi/l/librosa.svg)](https://github.com/bmcfee/librosa/blob/master/LICENSE.md)
