@@ -30,7 +30,7 @@ try:
     import scikits.samplerate as samplerate  # pylint: disable=import-error
     _HAS_SAMPLERATE = True
 except ImportError:
-    warnings.warn('Could not import scikits.samplerate. ' +
+    warnings.warn('Could not import scikits.samplerate. '
                   'Falling back to scipy.signal')
     _HAS_SAMPLERATE = False
 
@@ -143,7 +143,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
             # tack on the current frame
             y.append(frame)
 
-    if len(y):
+    if y:
         y = np.concatenate(y)
 
         if input_file.channels > 1:
