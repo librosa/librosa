@@ -838,7 +838,8 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
         Column-wise normalization of the chromagram.
 
     threshold : float
-        Minimum allowed chroma value (before normalization)
+        Pre-normalization energy threshold.  Values below the
+        threshold are discarded, resulting in a sparse chromagram.
 
     tuning : float
         Deviation (in cents) from A440 tuning
