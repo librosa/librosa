@@ -349,7 +349,7 @@ def logfrequency(sr, n_fft, n_bins=84, bins_per_octave=12, tuning=0.0,
         Tuning correction parameter, in fractions of a bin.
 
     fmin : float > 0 [scalar]
-        Minimum frequency bin. Defaults to `C2 ~= 32.70`
+        Minimum frequency bin. Defaults to `C1 ~= 32.70`
 
     spread : float > 0 [scalar]
         Spread of each filter, as a fraction of a bin.
@@ -400,7 +400,7 @@ def logfrequency(sr, n_fft, n_bins=84, bins_per_octave=12, tuning=0.0,
     '''
 
     if fmin is None:
-        fmin = note_to_hz('C2')
+        fmin = note_to_hz('C1')
 
     # Apply tuning correction
     correction = 2.0**(float(tuning) / bins_per_octave)
@@ -474,7 +474,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
         Audio sampling rate
 
     fmin : float > 0 [scalar]
-        Minimum frequency bin. Defaults to `C2 ~= 32.70`
+        Minimum frequency bin. Defaults to `C1 ~= 32.70`
 
     n_bins : int > 0 [scalar]
         Number of frequencies.  Defaults to 7 octaves (84 bins).
@@ -556,7 +556,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     '''
 
     if fmin is None:
-        fmin = note_to_hz('C2')
+        fmin = note_to_hz('C1')
 
     if window is None:
         window = scipy.signal.hann
@@ -667,7 +667,7 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
     Q = float(resolution) / (2.0**(1. / bins_per_octave) - 1)
 
     # Compute the frequencies
-    freq = fmin * 2.0 ** (np.arange(n_bins, dtype=float) / bins_per_octave)
+    freq = fmin * (2.0 ** (np.arange(n_bins, dtype=float) / bins_per_octave))
 
     if np.any(freq * (1 + window_bandwidth(window) / Q) > sr / 2.0):
         raise ParameterError('Filter pass-band lies beyond Nyquist')
@@ -697,7 +697,7 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
 
     fmin : None or float > 0
         Center frequency of the first constant-Q channel.
-        Default: 'C2' ~= 32.7 Hz
+        Default: 'C1' ~= 32.7 Hz
 
     window : None or np.ndarray
         If provided, the cq_to_chroma filter bank will be
@@ -752,7 +752,7 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
     n_merge = float(bins_per_octave) / n_chroma
 
     if fmin is None:
-        fmin = note_to_hz('C2')
+        fmin = note_to_hz('C1')
 
     if np.mod(n_merge, 1) != 0:
         raise ParameterError('Incompatible CQ merge: '

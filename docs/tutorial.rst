@@ -98,7 +98,9 @@ The first step of the program::
     filename = librosa.util.example_audio_file()
 
 gets the path to the audio example file included with *librosa*.  After this step,
-``filename`` will be a string variable containing the path to the example mp3.
+``filename`` will be a string variable containing the path to the example audio file.
+The example is encoded in OGG Vorbis format, so you will need the appropriate codec
+installed for `audioread <https://github.com/sampsyo/audioread>`_.
 
 The second step::
 
