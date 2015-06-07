@@ -63,5 +63,4 @@ Citing
 
 Please refer to the Zenodo link below for citation information.
 
-[![DOI](https://zenodo.org/badge/doi/10.5072/zenodo.12714.png)](http://dx.doi.org/10.5072/zenodo.12714)
-
+[![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.18369.svg)](http://dx.doi.org/10.5281/zenodo.18369)
