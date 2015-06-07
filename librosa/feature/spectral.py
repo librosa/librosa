@@ -919,7 +919,7 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
     chroma = cq_to_chr.dot(C)
 
     if threshold is not None:
-        chroma = np.maximum(threshold, chroma)
+        chroma[chroma < threshold] = 0.0
 
     # Normalize
     if norm is not None:
