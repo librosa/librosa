@@ -1,5 +1,4 @@
-Copyright (c) 2014, Brian McFee, Matt McVicar, Dawen Liang, Colin Raffel,
-Douglas Repetto, Dan Ellis.
+Copyright (c) 2015, librosa development team.
 
 Permission to use, copy, modify, and/or distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
