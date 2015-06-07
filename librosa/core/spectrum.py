@@ -612,11 +612,10 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
            ...,
            [-33.293, -33.293, ..., -33.293, -33.293],
            [-33.293, -33.293, ..., -33.293, -33.293]], dtype=float32)
-*********************************************************************
 
     Compute dB relative to peak power
 
-    >>> librosa.logamplitude(S, ref_power=np.max)
+    >>> librosa.logamplitude(S**2, ref_power=np.max)
     array([[-80.   , -74.027, ..., -80.   , -80.   ],
            [-80.   , -72.431, ..., -80.   , -80.   ],
            ...,
@@ -626,7 +625,7 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
 
     Or compare to median power
 
-    >>> librosa.logamplitude(S, ref_power=np.median)
+    >>> librosa.logamplitude(S**2, ref_power=np.median)
     array([[-0.189,  5.784, ..., -0.189, -0.189],
            [-0.189,  7.381, ..., -0.189, -0.189],
            ...,
@@ -639,12 +638,12 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
     >>> plt.subplot(2, 1, 1)
-    >>> librosa.display.specshow(S, y_axis='log', x_axis='time')
+    >>> librosa.display.specshow(S**2, sr=sr, y_axis='log', x_axis='time')
     >>> plt.colorbar()
     >>> plt.title('Power spectrogram')
     >>> plt.subplot(2, 1, 2)
-    >>> librosa.display.specshow(librosa.logamplitude(S, ref_power=np.max),
-    ...                          y_axis='log', x_axis='time')
+    >>> librosa.display.specshow(librosa.logamplitude(S**2, ref_power=np.max),
+    ...                          sr=sr, y_axis='log', x_axis='time')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Log-Power spectrogram')
     >>> plt.tight_layout()
@@ -704,9 +703,9 @@ def perceptual_weighting(S, frequencies, **kwargs):
     Re-weight a CQT power spectrum, using peak power as reference
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> CQT = librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('A2'))
+    >>> CQT = librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('A1'))
     >>> freqs = librosa.cqt_frequencies(CQT.shape[0],
-    ...                                 fmin=librosa.note_to_hz('A2'))
+    ...                                 fmin=librosa.note_to_hz('A1'))
     >>> perceptual_CQT = librosa.perceptual_weighting(CQT**2,
     ...                                               freqs,
     ...                                               ref_power=np.max)
@@ -722,11 +721,14 @@ def perceptual_weighting(S, frequencies, **kwargs):
     >>> plt.subplot(2, 1, 1)
     >>> librosa.display.specshow(librosa.logamplitude(CQT**2,
     ...                                               ref_power=np.max),
-    ...                          y_axis='cqt_hz', x_axis='time')
+    ...                          fmin=librosa.note_to_hz('A1'),
+    ...                          y_axis='cqt_hz',
+    ...                          x_axis='time')
     >>> plt.title('Log CQT power')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.subplot(2, 1, 2)
     >>> librosa.display.specshow(perceptual_CQT, y_axis='cqt_hz',
+    ...                          fmin=librosa.note_to_hz('A1'),
     ...                          x_axis='time')
     >>> plt.title('Perceptually weighted log CQT')
     >>> plt.colorbar(format='%+2.0f dB')
