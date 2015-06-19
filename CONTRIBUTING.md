@@ -5,7 +5,7 @@ Contributing code
 How to contribute
 -----------------
 
-The preferred way to contribute to scikit-learn is to fork the 
+The preferred way to contribute to librosa is to fork the 
 [main repository](http://github.com/bmcfee/librosa/) on
 GitHub:
 
@@ -16,7 +16,7 @@ GitHub:
 2. Clone this copy to your local disk:
 
           $ git clone git@github.com:YourLogin/librosa.git
-          $ cd scikit-learn
+          $ cd librosa 
 
 3. Create a branch to hold your changes:
 
@@ -53,7 +53,7 @@ tools:
 -  Code with good unittest coverage (at least 80%), check with:
 
           $ pip install nose coverage
-          $ nosetests --with-coverage path/to/tests_for_package
+          $ nosetests --with-coverage --cover-package=librosa -w tests/
 
 -  No pyflakes warnings, check with:
 
