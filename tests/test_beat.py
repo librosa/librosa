@@ -31,6 +31,8 @@ def test_onset_strength():
         onsets = librosa.onset.onset_strength(y=None,
                                               sr=8000,
                                               S=DATA['D'],
+                                              lag=1,
+                                              max_size=1,
                                               centering=False,
                                               detrend=True,
                                               aggregate=np.mean)
