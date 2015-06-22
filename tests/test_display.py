@@ -296,6 +296,19 @@ def test_unknown_wavaxis():
     librosa.display.waveplot(y, sr=sr, x_axis='something not in the axis map')
 
 
+@raises(librosa.ParameterError)
+def test_waveplot_bad_maxsr():
+
+    plt.figure()
+    librosa.display.waveplot(y, sr=sr, max_sr=0)
+
+
+@raises(librosa.ParameterError)
+def test_waveplot_bad_maxploints():
+    plt.figure()
+    librosa.display.waveplot(y, sr=sr, max_points=0)
+
+
 def test_unknown_axis():
 
     @raises(librosa.ParameterError)
