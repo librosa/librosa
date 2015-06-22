@@ -209,8 +209,14 @@ def cmap(data, use_sns=True, robust=True):
     return plt.get_cmap('coolwarm')
 
 
-def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, **kwargs):
-    '''Plot the amplitude of a waveform.
+def __envelope(x, hop):
+    '''Compute the max-envelope of x at a stride/frame length of h'''
+    return util.frame(x, hop_length=hop, frame_length=hop).max(axis=0)
+
+
+def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000,
+             **kwargs):
+    '''Plot the amplitude envelope of a waveform.
 
     If `y` is monophonic, a filled curve is drawn between `[-abs(y), abs(y)]`.
 
@@ -218,7 +224,8 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, **kwargs):
     so that the left and right channels are drawn above and below the axis,
     respectively.
 
-    Long signals are optionally downsampled.
+    Long signals (`duration >= max_points`) are down-sampled to at
+    most `max_sr` before plotting.
 
     Parameters
     ----------
@@ -242,6 +249,9 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, **kwargs):
     offset : float
         Horizontal offset (in time) to start the waveform plot
 
+    max_sr : int > 0
+        Maximum sampling rate for the visualization
+        
     kwargs
         Additional keyword arguments to `matplotlib.pyplot.fill_between`
 
@@ -289,18 +299,24 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, **kwargs):
 
     util.valid_audio(y, mono=False)
 
+    if not (util.valid_int(max_sr) and max_sr > 0):
+        raise ParameterError('max_sr must be a non-negative integer')
+
     target_sr = sr
 
     if max_points is not None:
+        if max_points <= 0:
+            raise ParameterError('max_points must be strictly positive')
+
         if max_points < y.shape[-1]:
-            target_sr = min(256, (sr * y.shape[-1]) // max_points)
+            target_sr = min(max_sr, (sr * y.shape[-1]) // max_points)
 
-    if y.ndim == 1:
-        y = core.resample(y, sr, target_sr, res_type='linear')
-    else:
-        y = np.vstack([core.resample(_, sr, target_sr) for _ in y])
+        hop_length = sr // target_sr
 
-    y = np.abs(y)
+        if y.ndim == 1:
+            y = __envelope(y, hop_length)
+        else:
+            y = np.vstack([__envelope(_, hop_length) for _ in y])
 
     if y.ndim > 1:
         y_top = y[0]
@@ -309,13 +325,13 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, **kwargs):
         y_top = y
         y_bottom = -y
 
-    ax = plt.gca()
-    kwargs.setdefault('color', next(ax._get_lines.color_cycle))
+    axes = plt.gca()
+    kwargs.setdefault('color', next(axes._get_lines.color_cycle))
 
     sample_off = core.time_to_samples(offset, sr=target_sr)
 
     locs = np.arange(sample_off, sample_off + len(y_top))
-    out = ax.fill_between(locs, y_bottom, y_top, **kwargs)
+    out = axes.fill_between(locs, y_bottom, y_top, **kwargs)
 
     plt.xlim([locs[0], locs[-1]])
 
