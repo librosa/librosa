@@ -1,6 +1,10 @@
 Changes
 =======
 
+##v0.4.1
+
+  - Rewrote `display.waveplot` for improved efficiency
+
 ##v0.4.0
 
 Bug fixes
