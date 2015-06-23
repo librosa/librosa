@@ -4,6 +4,7 @@ Changes
 ##v0.4.1
 
   - Rewrote `display.waveplot` for improved efficiency
+  - Improved safety check in CQT for invalid hop lengths
 
 ##v0.4.0
 

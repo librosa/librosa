@@ -81,7 +81,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     Raises
     ------
     ParameterError
-        If `hop_length < 2**(n_bins / bins_per_octave)`
+        If `hop_length` is not an integer multiple of `2**(n_bins / bins_per_octave)`
 
     See Also
     --------
@@ -131,9 +131,9 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
 
     # Make sure our hop is long enough to support the bottom octave
-    if hop_length < 2**n_octaves:
-        raise ParameterError('Insufficient hop_length {:d} '
-                             'for {:d} octaves'.format(hop_length, n_octaves))
+    if np.mod(hop_length, 2**n_octaves) != 0:
+        raise ParameterError('hop_length must be an integer multiple of 2^{0:d} '
+                             'for {0:d}-octave CQT'.format(n_octaves))
 
     if fmin is None:
         # C2 by default
@@ -291,7 +291,7 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     Raises
     ------
     ParameterError
-        If `hop_length < 2**(n_bins / bins_per_octave)`
+        If `hop_length` is not an integer multiple of `2**(n_bins / bins_per_octave)`
 
     See Also
     --------
@@ -303,9 +303,9 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
 
     # Make sure our hop is long enough to support the bottom octave
-    if hop_length < 2**n_octaves:
-        raise ParameterError('Insufficient hop_length {:d} '
-                             'for {:d} octaves'.format(hop_length, n_octaves))
+    if np.mod(hop_length, 2**n_octaves) != 0:
+        raise ParameterError('hop_length must be an integer multiple of 2^{0:d} '
+                             'for {0:d}-octave CQT'.format(n_octaves))
 
     if fmin is None:
         # C1 by default
@@ -420,7 +420,7 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     Raises
     ------
     ParameterError
-        If `hop_length < 2**(n_bins / bins_per_octave)`
+        If `hop_length` is not an integer multiple of `2**(n_bins / bins_per_octave)`
 
     '''
 
