@@ -131,8 +131,8 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
 
     # Make sure our hop is long enough to support the bottom octave
-    if np.mod(hop_length, 2**n_octaves) != 0:
-        raise ParameterError('hop_length must be an integer multiple of 2^{0:d} '
+    if np.mod(hop_length, 2**n_octaves) != 0 or hop_length < 2**n_octaves:
+        raise ParameterError('hop_length must be a positive integer multiple of 2^{0:d} '
                              'for {0:d}-octave CQT'.format(n_octaves))
 
     if fmin is None:
@@ -303,8 +303,8 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
 
     # Make sure our hop is long enough to support the bottom octave
-    if np.mod(hop_length, 2**n_octaves) != 0:
-        raise ParameterError('hop_length must be an integer multiple of 2^{0:d} '
+    if np.mod(hop_length, 2**n_octaves) != 0 or hop_length < 2**n_octaves:
+        raise ParameterError('hop_length must be a positive integer multiple of 2^{0:d} '
                              'for {0:d}-octave CQT'.format(n_octaves))
 
     if fmin is None:
