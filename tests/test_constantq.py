@@ -51,10 +51,11 @@ def test_cqt():
     y[::sr] = 1.0
 
 
-    # Hop size not long enough for num octaves
+    # incorrect hop length for a 6-octave analysis
     # num_octaves = 6, 2**6 = 64 > 32
-    yield (raises(librosa.ParameterError)(__test_cqt_size), y, sr, 32, None, 72,
-           12, 0.0, 2, None, 1, 0.01)
+    for hop_length in [32, 63, 65]:
+        yield (raises(librosa.ParameterError)(__test_cqt_size), y, sr, hop_length, None, 72,
+               12, 0.0, 2, None, 1, 0.01)
 
     # Filters go beyond Nyquist. 500 Hz -> 4 octaves = 8000 Hz > 11000 Hz
     yield (raises(librosa.ParameterError)(__test_cqt_size), y, sr, 512, 500, 48,
