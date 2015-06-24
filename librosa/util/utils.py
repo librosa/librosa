@@ -578,9 +578,9 @@ def normalize(S, norm=np.inf, axis=0):
     S : np.ndarray [shape=(d, n)]
         The matrix to normalize
 
-    norm : {inf, -inf, 0, float > 0, None}
-        - `inf`  : maximum absolute value
-        - `-inf` : mininum absolute value
+    norm : {np.inf, -np.inf, 0, float > 0, None}
+        - `np.inf`  : maximum absolute value
+        - `-np.inf` : mininum absolute value
         - `0`    : number of non-zeros
         - float  : corresponding l_p norm.
             See `scipy.linalg.norm` for details.
