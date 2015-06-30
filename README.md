@@ -8,9 +8,8 @@ A python package for music and audio analysis.
 
 * Master branch: [![Build Status](https://travis-ci.org/bmcfee/librosa.png?branch=master)](http://travis-ci.org/bmcfee/librosa?branch=master)
 [![Coverage Status](https://coveralls.io/repos/bmcfee/librosa/badge.svg?branch=master)](https://coveralls.io/r/bmcfee/librosa?branch=master)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/bmcfee/librosa/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/bmcfee/librosa/?branch=master)
 
-* Development branch: [![Build Status](https://travis-ci.org/bmcfee/librosa.png?branch=develop)](http://travis-ci.org/bmcfee/librosa?branch=develop)
-[![Coverage Status](https://coveralls.io/repos/bmcfee/librosa/badge.svg?branch=develop)](https://coveralls.io/r/bmcfee/librosa?branch=develop)
 
 Documentation
 -------------
