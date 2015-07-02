@@ -110,7 +110,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     >>> C
     array([[  8.827e-04,   9.293e-04, ...,   3.133e-07,   2.942e-07],
            [  1.076e-03,   1.068e-03, ...,   1.153e-06,   1.148e-06],
-           ..., 
+           ...,
            [  1.042e-07,   4.087e-07, ...,   1.612e-07,   1.928e-07],
            [  2.363e-07,   5.329e-07, ...,   1.294e-07,   1.611e-07]])
 
@@ -122,7 +122,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     >>> C
     array([[  1.536e-05,   5.848e-05, ...,   3.241e-07,   2.453e-07],
            [  1.856e-03,   1.854e-03, ...,   2.397e-08,   3.549e-08],
-           ..., 
+           ...,
            [  2.034e-07,   4.245e-07, ...,   6.213e-08,   1.463e-07],
            [  4.896e-08,   5.407e-07, ...,   9.176e-08,   1.051e-07]])
     '''
@@ -130,10 +130,6 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     # How many octaves are we dealing with?
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
 
-    # Make sure our hop is long enough to support the bottom octave
-    if np.mod(hop_length, 2**n_octaves) != 0 or hop_length < 2**n_octaves:
-        raise ParameterError('hop_length must be a positive integer multiple of 2^{0:d} '
-                             'for {0:d}-octave CQT'.format(n_octaves))
 
     if fmin is None:
         # C2 by default
@@ -203,6 +199,11 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         assert filter_cutoff < audio.BW_FASTEST*nyquist
 
         res_type = 'sinc_fastest'
+
+    # Make sure our hop is long enough to support the bottom octave
+    if np.mod(hop_length, 2**n_octaves) != 0 or hop_length < 2**n_octaves:
+        raise ParameterError('hop_length must be a positive integer multiple of 2^{0:d} '
+                            'for {0:d}-octave CQT'.format(n_octaves))
 
     # Now do the recursive bit
     fft_basis, n_fft, filter_lengths = __fft_filters(sr, fmin_t,
@@ -535,11 +536,11 @@ def __early_downsample(y, sr, hop_length, res_type, n_octaves,
     if not (res_type == 'sinc_fastest' and audio._HAS_SAMPLERATE):
         return y, sr, hop_length
 
+
     downsample_count1 = int(np.ceil(np.log2(audio.BW_FASTEST * nyquist
                                             / filter_cutoff)) - 1)
-
-    downsample_count2 = int(np.ceil(np.log2(hop_length) - n_octaves) - 1)
-
+    num_twos = __num_two_factors(hop_length)
+    downsample_count2 = max(0, num_twos - n_octaves + 1)
     downsample_count = min(downsample_count1, downsample_count2)
 
     if downsample_count > 0:
@@ -552,3 +553,19 @@ def __early_downsample(y, sr, hop_length, res_type, n_octaves,
         sr = sr // downsample_factor
 
     return y, sr, hop_length
+
+
+def __num_two_factors(x):
+    """Return how many times integer x can be evenly divided by 2.
+
+    Returns 0 for non-positive integers.
+    """
+    if x <= 0:
+        return 0
+    num_twos = 0
+    while x % 2 == 0:
+        num_twos += 1
+        x //= 2
+
+    return num_twos
+
