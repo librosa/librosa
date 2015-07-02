@@ -226,7 +226,8 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         if i > 0:
             my_y = audio.resample(my_y, my_sr, my_sr/2.0, res_type=res_type)
             my_sr = my_sr / 2.0
-            my_hop = int(my_hop / 2.0)
+            assert my_hop % 2 == 0
+            my_hop //= 2
 
         # Compute a dynamic hop based on n_fft
         my_cqt = __variable_hop_response(my_y, n_fft,
@@ -542,6 +543,7 @@ def __early_downsample(y, sr, hop_length, res_type, n_octaves,
     if downsample_count > 0:
         downsample_factor = 2**(downsample_count)
 
+        assert hop_length % downsample_factor == 0
         hop_length = hop_length // downsample_factor
 
         y = audio.resample(y, sr, sr / downsample_factor, res_type=res_type)
