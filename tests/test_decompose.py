@@ -36,7 +36,7 @@ def test_given_decompose():
 
     assert np.allclose(X, W.dot(H), rtol=1e-2, atol=1e-2)
 
-def test_fit():
+def test_decompose_fit():
 
     D = sklearn.decomposition.NMF(random_state=0)
 
@@ -44,13 +44,16 @@ def test_fit():
 
     # Do a first fit
     (W, H) = librosa.decompose.decompose(X, transformer=D, fit=True)
+
+    # Make random data and decompose with the same basis
+    X = np.random.randn(*X.shape)**2
     (W2, H2) = librosa.decompose.decompose(X, transformer=D, fit=False)
     
+    # Make sure the basis hasn't changed
     assert np.allclose(W, W2)
-    assert np.allclose(H, H2)
 
 @raises(librosa.ParameterError)
-def test_fit_false():
+def test_decompose_fit_false():
 
     X = np.array([[1, 2, 3, 4, 5, 6], [1, 1, 1.2, 1, 0.8, 1]])
     (W, H) = librosa.decompose.decompose(X, fit=False)
