@@ -15,6 +15,7 @@ import numpy as np
 import librosa
 import sklearn.decomposition
 
+from nose.tools import raises
 
 def test_default_decompose():
 
@@ -34,6 +35,25 @@ def test_given_decompose():
     (W, H) = librosa.decompose.decompose(X, transformer=D)
 
     assert np.allclose(X, W.dot(H), rtol=1e-2, atol=1e-2)
+
+def test_fit():
+
+    D = sklearn.decomposition.NMF(random_state=0)
+
+    X = np.array([[1, 2, 3, 4, 5, 6], [1, 1, 1.2, 1, 0.8, 1]])
+
+    # Do a first fit
+    (W, H) = librosa.decompose.decompose(X, transformer=D, fit=True)
+    (W2, H2) = librosa.decompose.decompose(X, transformer=D, fit=False)
+    
+    assert np.allclose(W, W2)
+    assert np.allclose(H, H2)
+
+@raises(librosa.ParameterError)
+def test_fit_false():
+
+    X = np.array([[1, 2, 3, 4, 5, 6], [1, 1, 1.2, 1, 0.8, 1]])
+    (W, H) = librosa.decompose.decompose(X, fit=False)
 
 
 def test_sorted_decompose():
