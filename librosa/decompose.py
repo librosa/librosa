@@ -19,11 +19,12 @@ import sklearn.decomposition
 from . import core
 from . import cache
 from . import util
+from .util.exceptions import ParameterError
 
 __all__ = ['decompose', 'hpss']
 
 
-def decompose(S, n_components=None, transformer=None, sort=False, **kwargs):
+def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kwargs):
     """Decompose a feature matrix.
 
     Given a spectrogram `S`, produce a decomposition into `components`
@@ -67,6 +68,12 @@ def decompose(S, n_components=None, transformer=None, sort=False, **kwargs):
             of the decomposition parameters, and not to `transformer`'s
             internal parameters.
 
+    fit : bool
+        If `True`, components are estimated from the input ``S``.
+
+        If `False`, components are assumed to be pre-computed and stored
+        in ``transformer``, and are not changed.
+
     kwargs : Additional keyword arguments to the default transformer
         `sklearn.decomposition.NMF`
 
@@ -78,6 +85,12 @@ def decompose(S, n_components=None, transformer=None, sort=False, **kwargs):
 
     activations: np.ndarray [shape=(n_components, n_samples)]
         transformed matrix/activation matrix
+
+
+    Raises
+    ------
+    ParameterError
+        if `fit` is False and no `transformer` object is provided.
 
 
     See Also
@@ -144,13 +157,19 @@ def decompose(S, n_components=None, transformer=None, sort=False, **kwargs):
     """
 
     if transformer is None:
+        if fit is False:
+            raise ParameterError('fit must be True if transformer is None')
+
         transformer = sklearn.decomposition.NMF(n_components=n_components,
                                                 **kwargs)
 
     if n_components is None:
         n_components = S.shape[0]
 
-    activations = transformer.fit_transform(S.T).T
+    if fit:
+        activations = transformer.fit_transform(S.T).T
+    else:
+        activations = transformer.transform(S.T).T
 
     components = transformer.components_.T
 
