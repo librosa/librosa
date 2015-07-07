@@ -112,11 +112,6 @@ def test_hybrid_cqt():
         # Check for numerical comparability
         assert np.mean(np.abs(C1 - C2)) < 1e-3
 
-    # Hop size not long enough for num octaves
-    # num_octaves = 6, 2**(72/12) = 64 > 32
-    yield (raises(librosa.ParameterError)(__test), 32, None, 72,
-           12, 0.0, 2, 1, 0.01)
-
     for fmin in [None, librosa.note_to_hz('C2')]:
         for n_bins in [1, 12, 24, 48, 72, 74, 76]:
             for bins_per_octave in [12, 24]:
