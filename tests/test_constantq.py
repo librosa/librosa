@@ -52,8 +52,8 @@ def test_cqt():
 
 
     # incorrect hop length for a 6-octave analysis
-    # num_octaves = 6, 2**6 = 64 > 32
-    for hop_length in [-1, 0, 32, 63, 65]:
+    # num_octaves = 6, 2**(6-1) = 32 > 16
+    for hop_length in [-1, 0, 16, 63, 65]:
         yield (raises(librosa.ParameterError)(__test_cqt_size), y, sr, hop_length, None, 72,
                12, 0.0, 2, None, 1, 0.01)
 
