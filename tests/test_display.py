@@ -14,11 +14,13 @@ except KeyError:
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import seaborn
-seaborn.set(style='white')
 
 import librosa
 import numpy as np
+
+import seaborn as sns
+
+sns.set(style='white')
 
 from nose.tools import nottest, raises, eq_
 from mpl_ic import image_comparison
