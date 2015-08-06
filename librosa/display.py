@@ -13,6 +13,8 @@ Display
 """
 
 import numpy as np
+import copy
+import matplotlib as mpl
 import matplotlib.image as img
 import matplotlib.pyplot as plt
 import warnings
@@ -24,8 +26,10 @@ from .util.exceptions import ParameterError
 
 _HAS_SEABORN = False
 try:
+    _matplotlibrc = copy.deepcopy(mpl.rcParams)
     import seaborn as sns
     _HAS_SEABORN = True
+    mpl.rcParams.update(**_matplotlibrc)
 except ImportError:
     pass
 

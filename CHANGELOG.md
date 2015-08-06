@@ -6,6 +6,7 @@ Changes
   - Rewrote `display.waveplot` for improved efficiency
   - Improved safety check in CQT for invalid hop lengths
   - `decompose.deompose()` now supports pre-trained transformation objects
+  - Nullified side-effects of optional seaborn dependency
 
 ##v0.4.0
 
