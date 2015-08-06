@@ -29,7 +29,7 @@ try:
     _matplotlibrc = copy.deepcopy(mpl.rcParams)
     import seaborn as sns
     _HAS_SEABORN = True
-    mpl.rcParams = _matplotlibrc
+    mpl.rcParams.update(**_matplotlibrc)
 except ImportError:
     pass
 
