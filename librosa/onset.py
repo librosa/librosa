@@ -175,7 +175,7 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
 
     feature : function
         Function for computing time-series features, eg, scaled spectrograms.
-        By default, uses `librosa.feature.melspectrogram` with `fmax=8000.0`
+        By default, uses `librosa.feature.melspectrogram` with `fmax=11025.0`
 
     aggregate : function
         Aggregation function to use when combining onsets
