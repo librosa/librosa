@@ -555,18 +555,34 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
     length : int
         desired number of samples in the output signal,
 
+
     Returns
     -------
     click_signal : np.ndarray
         Synthesized click signal
+
 
     Raises
     ------
     ParameterError
         If neither ``times`` nor ``frames`` are provided.
 
+
     Examples
     --------
+    >>> # Sonify detected beat events
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
+    >>> y_beats = librosa.clicks(frames=beats, sr=sr)
+
+    >>> # Or generate a signal of the same length as ``y``
+    >>> y_beats = librosa.clicks(frames=beats, sr=sr, length=len(y))
+
+    >>> # Or use timing instead of frame indices
+    >>> y_beat_times = librosa.clicks(times=librosa.frames_to_time(beats, sr=sr), sr=sr)
+
+    >>> # Or with a click frequency of 880 and a 500ms sample
+    >>> y_beat_times = librosa.clicks(frames=beats, sr=sr, click_freq=880, click_duration=0.5)
     """
 
     # Compute sample positions from time or frames
