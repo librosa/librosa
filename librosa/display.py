@@ -236,7 +236,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000
     y : np.ndarray [shape=(n,) or (2,n)]
         audio time series (mono or stereo)
 
-    sr : int > 0 [scalar]
+    sr : number > 0 [scalar]
         sampling rate of `y`
 
     max_points : postive number or None
@@ -253,7 +253,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000
     offset : float
         Horizontal offset (in time) to start the waveform plot
 
-    max_sr : int > 0
+    max_sr : number > 0 [scalar]
         Maximum sampling rate for the visualization
         
     kwargs
@@ -363,7 +363,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
     data : np.ndarray [shape=(d, n)]
         Matrix to display (e.g., spectrogram)
 
-    sr : int > 0 [scalar]
+    sr : number > 0 [scalar]
         Sample rate used to determine time scale in x-axis.
 
     hop_length : int > 0 [scalar]

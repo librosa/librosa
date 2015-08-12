@@ -43,7 +43,7 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
     y : np.ndarray [shape=(n,)] or None
         audio time series
 
-    sr : int > 0 [scalar]
+    sr : number > 0 [scalar]
         sampling rate of `y`
 
     onset_envelope : np.ndarray [shape=(n,)] or None
@@ -191,7 +191,7 @@ def estimate_tempo(onset_envelope, sr=22050, hop_length=512, start_bpm=120,
     onset_envelope    : np.ndarray [shape=(n,)]
         onset strength envelope
 
-    sr : int > 0 [scalar]
+    sr : number > 0 [scalar]
         sampling rate of the time series
 
     hop_length : int > 0 [scalar]

@@ -226,7 +226,7 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12):
     y : np.ndarray [shape=(n,)]
         audio time-series
 
-    sr : int > 0 [scalar]
+    sr : number > 0 [scalar]
         audio sampling rate of `y`
 
     n_steps : float [scalar]

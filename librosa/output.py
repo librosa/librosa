@@ -255,7 +255,7 @@ def frames_csv(path, frames, sr=22050, hop_length=512,
     frames : list-like of ints
         list of frame numbers for beat events
 
-    sr : int > 0 [scalar]
+    sr : number > 0 [scalar]
         audio sampling rate
 
     hop_length : int > 0 [scalar]

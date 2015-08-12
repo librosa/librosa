@@ -39,7 +39,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     y          : np.ndarray [shape=(n,)]
         audio time series
 
-    sr         : int > 0 [scalar]
+    sr         : number > 0 [scalar]
         sampling rate of `y`
 
     onset_envelope     : np.ndarray [shape=(m,)]
@@ -161,7 +161,7 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
     y        : np.ndarray [shape=(n,)]
         audio time-series
 
-    sr       : int > 0 [scalar]
+    sr       : number > 0 [scalar]
         sampling rate of `y`
 
     S        : np.ndarray [shape=(d, m)]
