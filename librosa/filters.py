@@ -113,7 +113,7 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
 
     Parameters
     ----------
-    sr        : int > 0 [scalar]
+    sr        : number > 0 [scalar]
         sampling rate of the incoming signal
 
     n_fft     : int > 0 [scalar]
@@ -205,7 +205,7 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0,
 
     Parameters
     ----------
-    sr        : int > 0 [scalar]
+    sr        : number > 0 [scalar]
         audio sampling rate
 
     n_fft     : int > 0 [scalar]
@@ -333,7 +333,7 @@ def logfrequency(sr, n_fft, n_bins=84, bins_per_octave=12, tuning=0.0,
 
     Parameters
     ----------
-    sr : int > 0 [scalar]
+    sr : number > 0 [scalar]
         audio sampling rate
 
     n_fft : int > 0 [scalar]
@@ -470,7 +470,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 
     Parameters
     ----------
-    sr : int > 0 [scalar]
+    sr : number > 0 [scalar]
         Audio sampling rate
 
     fmin : float > 0 [scalar]
@@ -614,7 +614,7 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
 
     Parameters
     ----------
-    sr : int > 0 [scalar]
+    sr : number > 0 [scalar]
         Audio sampling rate
 
     fmin : float > 0 [scalar]

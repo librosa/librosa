@@ -36,7 +36,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     y : np.ndarray [shape=(n,)]
         audio time series
 
-    sr : int > 0 [scalar]
+    sr : number > 0 [scalar]
         sampling rate of `y`
 
     hop_length : int > 0 [scalar]
@@ -257,7 +257,7 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     y : np.ndarray [shape=(n,)]
         audio time series
 
-    sr : int > 0 [scalar]
+    sr : number > 0 [scalar]
         sampling rate of `y`
 
     hop_length : int > 0 [scalar]
@@ -381,7 +381,7 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     y : np.ndarray [shape=(n,)]
         audio time series
 
-    sr : int > 0 [scalar]
+    sr : number > 0 [scalar]
         sampling rate of `y`
 
     hop_length : int > 0 [scalar]

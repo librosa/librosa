@@ -122,7 +122,7 @@ def frames_to_time(frames, sr=22050, hop_length=512, n_fft=None):
     frames     : np.ndarray [shape=(n,)]
         vector of frame numbers
 
-    sr         : int > 0 [scalar]
+    sr         : number > 0 [scalar]
         audio sampling rate
 
     hop_length : int > 0 [scalar]
@@ -166,7 +166,7 @@ def time_to_frames(times, sr=22050, hop_length=512, n_fft=None):
     times : np.ndarray [shape=(n,)]
         vector of time stamps
 
-    sr : int > 0 [scalar]
+    sr : number > 0 [scalar]
         audio sampling rate
 
     hop_length : int > 0 [scalar]
@@ -213,7 +213,7 @@ def time_to_samples(times, sr=22050):
     times : np.ndarray
         Array of time values (in seconds)
 
-    sr : int > 0
+    sr : number > 0
         Sampling rate
 
     Returns
@@ -245,7 +245,7 @@ def samples_to_time(samples, sr=22050):
     samples : np.ndarray
         Array of sample indices
 
-    sr : int > 0
+    sr : number > 0
         Sampling rate
 
     Returns
@@ -748,7 +748,7 @@ def fft_frequencies(sr=22050, n_fft=2048):
 
     Parameters
     ----------
-    sr : int > 0 [scalar]
+    sr : number > 0 [scalar]
         Audio sampling rate
 
     n_fft : int > 0 [scalar]

@@ -52,7 +52,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
 
         Any format supported by `audioread` will work.
 
-    sr   : int > 0 [scalar]
+    sr   : number > 0 [scalar]
         target sampling rate
 
         'None' uses the native sampling rate
@@ -75,7 +75,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
     y    : np.ndarray [shape=(n,) or (2, n)]
         audio time series
 
-    sr   : int > 0 [scalar]
+    sr   : number > 0 [scalar]
         sampling rate of `y`
 
 
@@ -212,10 +212,10 @@ def resample(y, orig_sr, target_sr, res_type='sinc_best', fix=True, **kwargs):
     y : np.ndarray [shape=(n,)]
         audio time series
 
-    orig_sr : int > 0 [scalar]
+    orig_sr : number > 0 [scalar]
         original sampling rate of `y`
 
-    target_sr : int > 0 [scalar]
+    target_sr : number > 0 [scalar]
         target sampling rate
 
     res_type : str
@@ -309,7 +309,7 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     y : np.ndarray [shape=(n,), (2, n)] or None
         audio time series
 
-    sr : int > 0 [scalar]
+    sr : number > 0 [scalar]
         audio sampling rate of `y`
 
     S : np.ndarray [shape=(d, t)] or None
@@ -537,7 +537,7 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
     frames : np.ndarray or None
         frame indices to place clicks
 
-    sr : number
+    sr : number > 0
         desired sampling rate of the output signal
 
     hop_length : int > 0
