@@ -421,7 +421,8 @@ def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=3,
                           axis=0)
 
     # compensate for lag
-    onset_env = np.pad(onset_env, (lag, 0), mode='constant')
+    onset_env = util.pad_center(onset_env, len(onset_env) + lag, mode='constant')
+    # onset_env = np.pad(onset_env, (lag, 0), mode='constant')
 
     # Counter-act framing effects. Shift the onsets by n_fft / hop_length
     if centering:
