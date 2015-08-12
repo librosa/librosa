@@ -24,7 +24,7 @@ def estimate_tuning(y=None, sr=22050, S=None, n_fft=2048,
     y: np.ndarray [shape=(n,)] or None
         audio signal
 
-    sr : int > 0 [scalar]
+    sr : number > 0 [scalar]
         audio sampling rate of `y`
 
     S: np.ndarray [shape=(d, t)] or None
@@ -176,7 +176,7 @@ def piptrack(y=None, sr=22050, S=None, n_fft=4096, hop_length=None,
     y: np.ndarray [shape=(n,)] or None
         audio signal
 
-    sr : int > 0 [scalar]
+    sr : number > 0 [scalar]
         audio sampling rate of `y`
 
     S: np.ndarray [shape=(d, t)] or None
@@ -293,7 +293,7 @@ def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=None,
     y: np.ndarray [shape=(n,)]
         audio signal
 
-    sr : int > 0 [scalar]
+    sr : number > 0 [scalar]
         audio sampling rate of `y`
 
     n_fft: int > 0 [scalar]

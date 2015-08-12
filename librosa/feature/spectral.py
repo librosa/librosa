@@ -46,7 +46,7 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     y : np.ndarray [shape=(n,)] or None
         audio time series
 
-    sr : int > 0 [scalar]
+    sr : number > 0 [scalar]
         audio sampling rate of `y`
 
     S : np.ndarray [shape=(d, t)] or None
@@ -149,7 +149,7 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     y : np.ndarray [shape=(n,)] or None
         audio time series
 
-    sr : int > 0 [scalar]
+    sr : number > 0 [scalar]
         audio sampling rate of `y`
 
     S : np.ndarray [shape=(d, t)] or None
@@ -271,7 +271,7 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     y : np.ndarray [shape=(n,)] or None
         audio time series
 
-    sr : int > 0 [scalar]
+    sr : number  > 0 [scalar]
         audio sampling rate of `y`
 
     S : np.ndarray [shape=(d, t)] or None
@@ -402,7 +402,7 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     y : np.ndarray [shape=(n,)] or None
         audio time series
 
-    sr : int > 0 [scalar]
+    sr : number > 0 [scalar]
         audio sampling rate of `y`
 
     S : np.ndarray [shape=(d, t)] or None
@@ -561,7 +561,7 @@ def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     y : np.ndarray [shape=(n,)] or None
         audio time series
 
-    sr : int > 0 [scalar]
+    sr : number > 0 [scalar]
         audio sampling rate of `y`
 
     S : np.ndarray [shape=(d, t)] or None
@@ -723,7 +723,7 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
     y : np.ndarray [shape=(n,)] or None
         audio time series
 
-    sr : int > 0 [scalar]
+    sr : number > 0 [scalar]
         sampling rate of `y`
 
     S : np.ndarray [shape=(d, t)] or None
@@ -821,7 +821,7 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
     y : np.ndarray [shape=(n,)]
         audio time series
 
-    sr : int > 0
+    sr : number > 0
         sampling rate of `y`
 
     C : np.ndarray [shape=(d, t)] [Optional]
@@ -943,7 +943,7 @@ def tonnetz(y=None, sr=22050, chroma=None):
     y : np.ndarray [shape=(n,)] or None
         Audio time series.
 
-    sr : int > 0 [scalar]
+    sr : number > 0 [scalar]
         sampling rate of `y`
 
     chroma : np.ndarray [shape=(n_chroma, t)] or None
@@ -1040,7 +1040,7 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
     y     : np.ndarray [shape=(n,)] or None
         audio time series
 
-    sr    : int > 0 [scalar]
+    sr    : number > 0 [scalar]
         sampling rate of `y`
 
     S     : np.ndarray [shape=(d, t)] or None
@@ -1115,7 +1115,7 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     y : np.ndarray [shape=(n,)] or None
         audio time-series
 
-    sr : int > 0 [scalar]
+    sr : number > 0 [scalar]
         sampling rate of `y`
 
     S : np.ndarray [shape=(d, t)]
@@ -1201,7 +1201,7 @@ def logfsgram(y=None, sr=22050, S=None, n_fft=4096,
     y : np.ndarray [shape=(n,)] or None
         audio time series
 
-    sr : int > 0 [scalar]
+    sr : number > 0 [scalar]
         audio sampling rate of `y`
 
     S : np.ndarray [shape=(d, t)] or None

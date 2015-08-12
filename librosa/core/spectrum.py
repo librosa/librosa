@@ -310,7 +310,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     y : np.ndarray [shape=(n,)]
         audio time series
 
-    sr : int > 0 [scalar]
+    sr : number > 0 [scalar]
         sampling rate of `y`
 
     n_fft : int > 0 [scalar]
