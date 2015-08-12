@@ -579,10 +579,12 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
     >>> y_beats = librosa.clicks(frames=beats, sr=sr, length=len(y))
 
     >>> # Or use timing instead of frame indices
-    >>> y_beat_times = librosa.clicks(times=librosa.frames_to_time(beats, sr=sr), sr=sr)
+    >>> times = librosa.frames_to_time(beats, sr=sr)
+    >>> y_beat_times = librosa.clicks(times=times, sr=sr)
 
-    >>> # Or with a click frequency of 880 and a 500ms sample
-    >>> y_beat_times = librosa.clicks(frames=beats, sr=sr, click_freq=880, click_duration=0.5)
+    >>> # Or with a click frequency of 880Hz and a 500ms sample
+    >>> y_beat_times880 = librosa.clicks(times=times, sr=sr,
+    ...                                  click_freq=880, click_duration=0.5)
     """
 
     # Compute sample positions from time or frames
@@ -608,7 +610,11 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
             raise ParameterError('click_freq must be strictly positive')
 
         angular_freq = 2 * np.pi * click_freq / float(sr)
-        click = np.logspace(0, -10, num=int(sr * click_duration), base=2.0)
+
+        click = np.logspace(0, -10,
+                            num=int(np.round(sr * click_duration)),
+                            base=2.0)
+
         click *= np.sin(angular_freq * np.arange(len(click)))
 
     # Set default length
