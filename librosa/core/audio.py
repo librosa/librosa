@@ -10,11 +10,14 @@ import audioread
 import numpy as np
 import scipy.signal
 
+
+from .time_frequency import frames_to_samples, time_to_samples
 from .. import cache
 from .. import util
+from ..util.exceptions import ParameterError
 
 __all__ = ['load', 'to_mono', 'resample', 'get_duration',
-           'autocorrelate', 'zero_crossings',
+           'autocorrelate', 'zero_crossings', 'clicks',
            # Deprecated functions
            'peak_pick', 'localmax']
 
@@ -519,6 +522,104 @@ def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
                   padding,
                   mode='constant',
                   constant_values=pad)
+
+
+@cache
+def clicks(times=None, frames=None, sr=22050, hop_length=512,
+           click_freq=1000.0, click_duration=0.1, click=None, length=None):
+    """Returns a signal with the signal 'click' placed at each specified time
+
+    Parameters
+    ----------
+    times : np.ndarray or None
+        times to place clicks, in seconds
+
+    frames : np.ndarray or None
+        frame indices to place clicks
+
+    sr : number
+        desired sampling rate of the output signal
+
+    hop_length : int > 0
+        if positions are specified by `frames`, the number of samples between frames.
+
+    click_freq : float > 0
+        frequency (in Hz) of the default click signal.  Default is 1KHz.
+
+    click_duration : float > 0
+        duration (in seconds) of the default click signal.  Default is 100ms.
+
+    click : np.ndarray or None
+        optional click signal sample to use instead of the default blip.
+
+    length : int
+        desired number of samples in the output signal,
+
+    Returns
+    -------
+    click_signal : np.ndarray
+        Synthesized click signal
+
+    Raises
+    ------
+    ParameterError
+        If neither ``times`` nor ``frames`` are provided.
+
+    Examples
+    --------
+    """
+
+    # Compute sample positions from time or frames
+    if times is None:
+        if frames is None:
+            raise ParameterError('either "times" or "frames" must be provided')
+
+        positions = frames_to_samples(frames, hop_length=hop_length)
+    else:
+        # Convert times to positions
+        positions = time_to_samples(times, sr=sr)
+
+    if click is not None:
+        # Check that we have a well-formed audio buffer
+        util.valid_audio(click, mono=True)
+
+    else:
+        # Create default click signal
+        if click_duration <= 0:
+            raise ParameterError('click_duration must be strictly positive')
+
+        if click_freq <= 0:
+            raise ParameterError('click_freq must be strictly positive')
+
+        angular_freq = 2 * np.pi * click_freq / float(sr)
+        click = np.logspace(0, -10, num=int(sr * click_duration), base=2.0)
+        click *= np.sin(angular_freq * np.arange(len(click)))
+
+    # Set default length
+    if length is None:
+        length = positions.max() + click.shape[0]
+    else:
+        if length < 1:
+            raise ParameterError('length must be a positive integer')
+
+        # Filter out any positions past the length boundary
+        positions = positions[positions < length]
+
+    # Pre-allocate click signal
+    click_signal = np.zeros(length, dtype=np.float32)
+
+    # Place clicks
+    for start in positions:
+        # Compute the end-point of this click
+        end = start + click.shape[0]
+
+        if end >= length:
+            click_signal[start:] += click[:length - start]
+        else:
+            # Normally, just add a click here
+            click_signal[start:end] += click
+
+    return click_signal
 
 
 # Moved/deprecated functions
