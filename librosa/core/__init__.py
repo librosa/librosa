@@ -15,7 +15,7 @@ Audio processing
     get_duration
     autocorrelate
     zero_crossings
-
+    clicks
 
 Spectral representations
 ------------------------
