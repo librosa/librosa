@@ -527,7 +527,7 @@ def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
 @cache
 def clicks(times=None, frames=None, sr=22050, hop_length=512,
            click_freq=1000.0, click_duration=0.1, click=None, length=None):
-    """Returns a signal with the signal 'click' placed at each specified time
+    """Returns a signal with the signal `click` placed at each specified time
 
     Parameters
     ----------
@@ -552,7 +552,7 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
     click : np.ndarray or None
         optional click signal sample to use instead of the default blip.
 
-    length : int
+    length : int > 0
         desired number of samples in the output signal,
 
 
@@ -565,7 +565,8 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
     Raises
     ------
     ParameterError
-        If neither ``times`` nor ``frames`` are provided.
+        - If neither `times` nor `frames` are provided.
+        - If any of `click_freq`, `click_duration`, or `length` are out of range.
 
 
     Examples
@@ -575,7 +576,7 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
     >>> y_beats = librosa.clicks(frames=beats, sr=sr)
 
-    >>> # Or generate a signal of the same length as ``y``
+    >>> # Or generate a signal of the same length as y
     >>> y_beats = librosa.clicks(frames=beats, sr=sr, length=len(y))
 
     >>> # Or use timing instead of frame indices

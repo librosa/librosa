@@ -559,3 +559,49 @@ def test_logamplitude():
                         tf = raises(librosa.ParameterError)(__test)
                     yield tf, x, ref_power, amin, top_db
                     yield tf, x * phase, ref_power, amin, top_db
+
+
+def test_clicks():
+
+    def __test(times, frames, sr, hop_length, click_freq, click_duration, click, length):
+
+        y = librosa.clicks(times=times,
+                           frames=frames,
+                           sr=sr,
+                           hop_length=hop_length,
+                           click_freq=click_freq,
+                           click_duration=click_duration,
+                           click=click,
+                           length=length)
+
+        if times is not None:
+            nmax = librosa.time_to_samples(times, sr=sr).max()
+        else:
+            nmax = librosa.frames_to_samples(frames, hop_length=hop_length).max()
+
+        if length is not None:
+            assert len(y) == length
+        elif click is not None:
+            assert len(y) == nmax + len(click)
+
+
+    test_times = np.linspace(0, 10.0, num=5)
+
+    # Bad cases
+    yield raises(librosa.ParameterError)(__test), None, None, 22050, 512, 1000, 0.1, None, None
+    yield raises(librosa.ParameterError)(__test), test_times, None, 22050, 512, 1000, 0.1, np.ones((2, 10)), None
+    yield raises(librosa.ParameterError)(__test), test_times, None, 22050, 512, 1000, 0.1, None, 0
+    yield raises(librosa.ParameterError)(__test), test_times, None, 22050, 512, 0, 0.1, None, None
+    yield raises(librosa.ParameterError)(__test), test_times, None, 22050, 512, 1000, 0, None, None
+
+    for sr in [11025, 22050]:
+        for hop_length in [512, 1024]:
+            test_frames = librosa.time_to_frames(test_times, sr=sr, hop_length=hop_length)
+
+            for click in [None, np.ones(sr * 0.1)]:
+
+                for length in [None, 5 * sr, 15 * sr]:
+                    yield __test, test_times, None, sr, hop_length, 1000, 0.1, click, length
+                    yield __test, None, test_frames, sr, hop_length, 1000, 0.1, click, length
+
+
