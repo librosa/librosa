@@ -553,7 +553,7 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
         optional click signal sample to use instead of the default blip.
 
     length : int > 0
-        desired number of samples in the output signal,
+        desired number of samples in the output signal
 
 
     Returns
