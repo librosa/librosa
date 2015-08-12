@@ -8,6 +8,10 @@ Changes
   - `decompose.deompose()` now supports pre-trained transformation objects
   - Nullified side-effects of optional seaborn dependency
 
+New features
+  - `librosa.clicks` sonifies timed events such as beats or onsets
+
+
 ##v0.4.0
 
 Bug fixes
