@@ -13,7 +13,7 @@ import matplotlib
 matplotlib.use('Agg')
 import numpy as np
 np.set_printoptions(precision=3)
-from nose.tools import raises
+from nose.tools import raises, eq_
 import six
 import warnings
 
@@ -632,3 +632,45 @@ def test_warning_moved():
 
         # And that it says the right thing (roughly)
         assert 'moved' in str(out[0].message).lower()
+
+
+def test_index_to_slice():
+
+    def __test(idx, idx_min, idx_max, step, pad):
+
+        slices = librosa.util.index_to_slice(idx,
+                                             idx_min=idx_min,
+                                             idx_max=idx_max,
+                                             step=step,
+                                             pad=pad)
+
+        if pad:
+            if idx_min is not None:
+                eq_(slices[0].start, idx_min)
+                if idx.min() != idx_min:
+                    slices = slices[1:]
+            if idx_max is not None:
+                eq_(slices[-1].stop, idx_max)
+                if idx.max() != idx_max:
+                    slices = slices[:-1]
+
+        if idx_min is not None:
+            idx = idx[idx >= idx_min]
+
+        if idx_max is not None:
+            idx = idx[idx <= idx_max]
+
+        idx = np.unique(idx)
+        eq_(len(slices), len(idx) - 1)
+
+        for sl, start, stop in zip(slices, idx, idx[1:]):
+            eq_(sl.start, start)
+            eq_(sl.stop, stop)
+            eq_(sl.step, step)
+
+    for indices in [np.arange(10, 90, 10), np.arange(10, 90, 15)]:
+        for idx_min in [None, 5, 15]:
+            for idx_max in [None, 85, 100]:
+                for step in [None, 2]:
+                    for pad in [False, True]:
+                        yield __test, indices, idx_min, idx_max, step, pad
