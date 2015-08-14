@@ -26,6 +26,7 @@ __all__ = ['MAX_MEM_BLOCK', 'SMALL_FLOAT',
            'match_intervals', 'match_events',
            'peak_pick',
            'sparsify_rows',
+           'index_to_slice',
            'buf_to_float',
            # Deprecated functions
            'buf_to_int']
@@ -1117,6 +1118,62 @@ def buf_to_float(x, n_bytes=2, dtype=np.float32):
 
     # Rescale and format the data buffer
     return scale * np.frombuffer(x, fmt).astype(dtype)
+
+
+def index_to_slice(idx, idx_min=None, idx_max=None, step=None, pad=True):
+    '''Generate a slice array from an index array.
+
+    Parameters
+    ----------
+    idx : list-like
+        Array of index boundaries
+
+    idx_min : None or int
+    idx_max : None or int
+        Minimum and maximum allowed indices
+
+    step : None or int
+        Step size for each slice.  If `None`, then the default
+        step of 1 is used.
+
+    pad : boolean
+        If `True`, pad `idx` to span the range `idx_min:idx_max`.
+
+    Returns
+    -------
+    slices : list of slice
+        ``slices[i] = slice(idx[i], idx[i+1], step)``
+        Additional slice objects may be added at the beginning or end,
+        depending on whether ``pad==True`` and the supplied values for
+        `idx_min` and `idx_max`.
+
+    See also
+    --------
+    fix_frames
+
+    Examples
+    --------
+    >>> # Generate slices from spaced indices
+    >>> librosa.util.index_to_slice(np.arange(20, 100, 15))
+    [slice(20, 35, None), slice(35, 50, None), slice(50, 65, None), slice(65, 80, None),
+     slice(80, 95, None)]
+    >>> # Pad to span the range (0, 100)
+    >>> librosa.util.index_to_slice(np.arange(20, 100, 15),
+    ...                             idx_min=0, idx_max=100)
+    [slice(0, 20, None), slice(20, 35, None), slice(35, 50, None), slice(50, 65, None),
+     slice(65, 80, None), slice(80, 95, None), slice(95, 100, None)]
+    >>> # Use a step of 5 for each slice
+    >>> librosa.util.index_to_slice(np.arange(20, 100, 15),
+    ...                             idx_min=0, idx_max=100, step=5)
+    [slice(0, 20, 5), slice(20, 35, 5), slice(35, 50, 5), slice(50, 65, 5), slice(65, 80, 5),
+     slice(80, 95, 5), slice(95, 100, 5)]
+    '''
+
+    # First, normalize the index set
+    idx_fixed = fix_frames(idx, idx_min, idx_max, pad=pad)
+
+    # Now convert the indices to slices
+    return [slice(start, end, step) for (start, end) in zip(idx_fixed, idx_fixed[1:])]
 
 
 # Deprecated functions
