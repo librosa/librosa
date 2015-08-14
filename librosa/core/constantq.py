@@ -501,7 +501,6 @@ def __variable_hop_response(y, n_fft, hop_length, min_filter_length,
     to the desired resolution.
     '''
 
-    from ..feature.utils import sync
     # If target_hop <= n_fft / 2:
     #   my_hop = target_hop
     # else:
@@ -521,7 +520,7 @@ def __variable_hop_response(y, n_fft, hop_length, min_filter_length,
     if zoom_factor > 1:
         # We need to aggregate.  Generate the boundary frames
         bounds = np.arange(0, my_cqt.shape[1], zoom_factor, dtype=int)
-        my_cqt = sync(my_cqt, bounds, aggregate=aggregate)
+        my_cqt = util.sync(my_cqt, bounds, aggregate=aggregate)
 
     return my_cqt
 
