@@ -106,10 +106,6 @@ def test_stack_memory():
 
 def test_sync():
 
-    @raises(librosa.ParameterError)
-    def __test_fail(data, frames):
-        librosa.feature.sync(data, frames)
-
     def __test_pass(axis, data, frames):
         # By default, mean aggregation
         dsync = librosa.feature.sync(data, frames, axis=axis)
@@ -148,10 +144,6 @@ def test_sync():
 
         data = np.reshape(data, shaper)
 
-        #if ndim > 2:
-        #    yield __test_fail, data, frames
-
-        #else:
         for axis in [0, -1]:
             yield __test_pass, axis, data, frames
 
