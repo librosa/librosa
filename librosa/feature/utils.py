@@ -242,8 +242,8 @@ def sync(data, frames, aggregate=None, pad=True, axis=-1):
 
     Parameters
     ----------
-    data      : np.ndarray [shape=(d, T) or shape=(T,)]
-        matrix of features
+    data      : np.ndarray
+        multi-dimensional array of features
 
     frames    : np.ndarray [shape=(m,)]
         ordered array of frame segment boundaries
@@ -252,15 +252,20 @@ def sync(data, frames, aggregate=None, pad=True, axis=-1):
         aggregation function (default: `np.mean`)
 
     pad : boolean
-        If `True`, `frames` is padded to span the full range `[0, T]`
+        If `True`, `frames` is padded to span the full range `[0, data.shape[axis]]`
 
     axis : int
         The axis along which to aggregate data
 
     Returns
     -------
-    Y         : ndarray [shape=(d, M)]
-        `Y[:, i] = aggregate(data[:, F[i-1]:F[i]], axis=1)`
+    data_sync : ndarray
+        `data_sync` will have the same dimension as `data`, except that the `axis`
+        coordinate will be reduced according to `frames`.
+
+        For example, a 2-dimensional `data` with `axis=-1` should satisfy
+
+        `data_sync[:, i] = aggregate(data[:, frames[i-1]:frames[i]], axis=-1)`
 
     Examples
     --------
