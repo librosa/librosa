@@ -8,6 +8,7 @@ Onset detection
 
     onset_detect
     onset_strength
+    onset_strength_multi
 """
 
 import numpy as np
@@ -20,7 +21,7 @@ from .util.exceptions import ParameterError
 
 from .feature import melspectrogram
 
-__all__ = ['onset_detect', 'onset_strength']
+__all__ = ['onset_detect', 'onset_strength', 'onset_strength_multi']
 
 
 def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
@@ -143,7 +144,6 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     return util.peak_pick(onset_envelope, **kwargs)
 
 
-@cache
 def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
                    feature=None, aggregate=None, **kwargs):
     """Compute a spectral flux onset strength envelope.
@@ -199,6 +199,12 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
         if neither `(y, sr)` nor `S` are provided
 
 
+    See Also
+    --------
+    onset_detect
+    onset_strength_multi
+
+
     Examples
     --------
     First, load some audio and plot the spectrogram
@@ -246,6 +252,105 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
 
     """
 
+    odf_all = onset_strength_multi(y=y,
+                                   sr=sr,
+                                   S=S,
+                                   detrend=detrend,
+                                   centering=centering,
+                                   feature=feature,
+                                   aggregate=aggregate,
+                                   channels=None,
+                                   **kwargs)
+
+    return odf_all[0]
+
+
+@cache
+def onset_strength_multi(y=None, sr=22050, S=None, detrend=False, centering=True,
+                         feature=None, aggregate=None, channels=None, **kwargs):
+    """Compute a spectral flux onset strength envelope across multiple channels.
+
+    Onset strength for channel `i` at time `t` is determined by:
+
+    `mean_{f in channels[i]} max(0, S[f, t+1] - S[f, t])`
+
+
+    Parameters
+    ----------
+    y        : np.ndarray [shape=(n,)]
+        audio time-series
+
+    sr       : number > 0 [scalar]
+        sampling rate of `y`
+
+    S        : np.ndarray [shape=(d, m)]
+        pre-computed (log-power) spectrogram
+
+    detrend : bool [scalar]
+        Filter the onset strength to remove the DC component
+
+    centering : bool [scalar]
+        Shift the onset function by `n_fft / (2 * hop_length)` frames
+
+    feature : function
+        Function for computing time-series features, eg, scaled spectrograms.
+        By default, uses `librosa.feature.melspectrogram` with `fmax=11025.0`
+
+    aggregate : function
+        Aggregation function to use when combining onsets
+        at different frequency bins.
+
+        Default: `np.mean`
+
+    channels : list or None
+        Array of channel boundaries or slice objects.
+        If `None`, then a single channel is generated to span all bands.
+
+    kwargs : additional keyword arguments
+        Additional parameters to `feature()`, if `S` is not provided.
+
+
+    Returns
+    -------
+    onset_envelope   : np.ndarray [shape=(n_channels, m)]
+        array containing the onset strength envelope for each specified channel.
+
+
+    Raises
+    ------
+    ParameterError
+        if neither `(y, sr)` nor `S` are provided
+
+
+    See Also
+    --------
+    onset_strength
+
+
+    Examples
+    --------
+    First, load some audio and plot the spectrogram
+
+    >>> import matplotlib.pyplot as plt
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(),
+    ...                      duration=10.0)
+    >>> D = np.abs(librosa.stft(y))**2
+    >>> plt.figure()
+    >>> plt.subplot(2, 1, 1)
+    >>> librosa.display.specshow(librosa.logamplitude(D, ref_power=np.max),
+    ...                          y_axis='log')
+    >>> plt.title('Power spectrogram')
+
+    Construct a standard onset function over four sub-bands
+
+    >>> onset_subbands = librosa.onset.onset_strength_multi(y=y, sr=sr,
+    ...                                                     channels=[0, 32, 64, 96, 128])
+    >>> plt.subplot(2, 1, 2)
+    >>> librosa.display.specshow(onset_subbands, x_axis='time')
+    >>> plt.title('Sub-band onset strength')
+
+    """
+
     if feature is None:
         feature = melspectrogram
         kwargs.setdefault('fmax', 11025.0)
@@ -275,17 +380,26 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
     # Discard negatives (decreasing amplitude)
     onset_env = np.maximum(0.0, onset_env)
 
-    # Average over mel bands
-    onset_env = aggregate(onset_env, axis=0)
+    # Aggregate within channels
+    pad = True
+    if channels is None:
+        channels = []
+    else:
+        pad = False
+
+    onset_env = util.sync(onset_env, channels,
+                          aggregate=aggregate,
+                          pad=pad,
+                          axis=0)
 
     # Counter-act framing effects. Shift the onsets by n_fft / hop_length
     if centering:
-        onset_env = np.pad(onset_env,
-                           (int(n_fft // (2 * hop_length)), 0),
-                           mode='constant')
+        padding = [(0, 0)] * onset_env.ndim
+        padding[-1] = (n_fft // (2 * hop_length), 0)
+        onset_env = np.pad(onset_env, padding, mode='constant')
 
     # remove the DC component
     if detrend:
-        onset_env = scipy.signal.lfilter([1.0, -1.0], [1.0, -0.99], onset_env)
+        onset_env = scipy.signal.lfilter([1.0, -1.0], [1.0, -0.99], onset_env, axis=-1)
 
     return onset_env
