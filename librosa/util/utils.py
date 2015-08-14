@@ -1178,29 +1178,29 @@ def index_to_slice(idx, idx_min=None, idx_max=None, step=None, pad=True):
 
 
 @cache
-def sync(data, frames, aggregate=None, pad=True, axis=-1):
-    """Synchronous aggregation of a feature matrix
+def sync(data, idx, aggregate=None, pad=True, axis=-1):
+    """Synchronous aggregation of a multi-dimensional array between boundaries
 
     .. note::
         In order to ensure total coverage, boundary points may be added
-        to `frames`.
+        to `idx`.
 
         If synchronizing a feature matrix against beat tracker output, ensure
-        that frame numbers are properly aligned and use the same hop length.
+        that frame index numbers are properly aligned and use the same hop length.
 
     Parameters
     ----------
     data      : np.ndarray
         multi-dimensional array of features
 
-    frames    : np.ndarray [shape=(m,)]
-        ordered array of frame segment boundaries
+    idx : np.ndarray [shape=(m,)]
+        ordered array of boundary indices
 
     aggregate : function
         aggregation function (default: `np.mean`)
 
     pad : boolean
-        If `True`, `frames` is padded to span the full range `[0, data.shape[axis]]`
+        If `True`, `idx` is padded to span the full range `[0, data.shape[axis]]`
 
     axis : int
         The axis along which to aggregate data
@@ -1209,11 +1209,11 @@ def sync(data, frames, aggregate=None, pad=True, axis=-1):
     -------
     data_sync : ndarray
         `data_sync` will have the same dimension as `data`, except that the `axis`
-        coordinate will be reduced according to `frames`.
+        coordinate will be reduced according to `idx`.
 
         For example, a 2-dimensional `data` with `axis=-1` should satisfy
 
-        `data_sync[:, i] = aggregate(data[:, frames[i-1]:frames[i]], axis=-1)`
+        `data_sync[:, i] = aggregate(data[:, idx[i-1]:idx[i]], axis=-1)`
 
     Examples
     --------
@@ -1268,7 +1268,7 @@ def sync(data, frames, aggregate=None, pad=True, axis=-1):
 
     shape = list(data.shape)
 
-    slices = index_to_slice(frames, 0, shape[axis], pad=pad)
+    slices = index_to_slice(idx, 0, shape[axis], pad=pad)
 
     agg_shape = list(shape)
     agg_shape[axis] = len(slices)
