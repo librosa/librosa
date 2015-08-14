@@ -13,6 +13,7 @@ Array operations
     pad_center
     fix_length
     fix_frames
+    index_to_slice
 
     axis_sort
     normalize
