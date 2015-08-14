@@ -230,7 +230,7 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
 
 
 @cache
-def sync(data, frames, aggregate=None, pad=True):
+def sync(data, frames, aggregate=None, pad=True, axis=-1):
     """Synchronous aggregation of a feature matrix
 
     .. note::
@@ -254,15 +254,13 @@ def sync(data, frames, aggregate=None, pad=True):
     pad : boolean
         If `True`, `frames` is padded to span the full range `[0, T]`
 
+    axis : int
+        The axis along which to aggregate data
+
     Returns
     -------
     Y         : ndarray [shape=(d, M)]
         `Y[:, i] = aggregate(data[:, F[i-1]:F[i]], axis=1)`
-
-    Raises
-    ------
-    ParameterError
-        If `data.ndim` is not 1 or 2
 
     Examples
     --------
@@ -312,25 +310,24 @@ def sync(data, frames, aggregate=None, pad=True):
 
     """
 
-    if data.ndim > 2:
-        raise ParameterError('Synchronized data has ndim={:d},'
-                         ' must be 1 or 2.'.format(data.ndim))
-
-    data = np.atleast_2d(data)
-
     if aggregate is None:
         aggregate = np.mean
 
-    dimension, n_frames = data.shape
+    shape = list(data.shape)
 
-    frames = util.fix_frames(frames, 0, n_frames, pad=pad)
+    slices = util.index_to_slice(frames, 0, shape[axis], pad=pad)
 
-    data_agg = np.empty((dimension, len(frames)-1), order='F')
+    agg_shape = list(shape)
+    agg_shape[axis] = len(slices)
 
-    start = frames[0]
+    data_agg = np.empty(agg_shape, order='F')
 
-    for (i, end) in enumerate(frames[1:]):
-        data_agg[:, i] = aggregate(data[:, start:end], axis=1)
-        start = end
+    idx_in = [slice(None)] * data.ndim
+    idx_agg = [slice(None)] * data_agg.ndim
+
+    for (i, segment) in enumerate(slices):
+        idx_in[axis] = segment
+        idx_agg[axis] = i
+        data_agg[idx_agg] = aggregate(data[idx_in], axis=axis)
 
     return data_agg
