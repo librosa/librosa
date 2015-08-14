@@ -110,22 +110,34 @@ def test_sync():
     def __test_fail(data, frames):
         librosa.feature.sync(data, frames)
 
-    def __test_pass(data, frames):
+    def __test_pass(axis, data, frames):
         # By default, mean aggregation
-        dsync = librosa.feature.sync(data, frames)
-        assert np.allclose(dsync, 2 * np.ones_like(dsync))
+        dsync = librosa.feature.sync(data, frames, axis=axis)
+        if data.ndim == 1 or axis == -1:
+            assert np.allclose(dsync, 2 * np.ones_like(dsync))
+        else:
+            assert np.allclose(dsync, data)
 
         # Explicit mean aggregation
-        dsync = librosa.feature.sync(data, frames, aggregate=np.mean)
-        assert np.allclose(dsync, 2 * np.ones_like(dsync))
+        dsync = librosa.feature.sync(data, frames, aggregate=np.mean, axis=axis)
+        if data.ndim == 1 or axis == -1:
+            assert np.allclose(dsync, 2 * np.ones_like(dsync))
+        else:
+            assert np.allclose(dsync, data)
 
         # Max aggregation
-        dsync = librosa.feature.sync(data, frames, aggregate=np.max)
-        assert np.allclose(dsync, 4 * np.ones_like(dsync))
+        dsync = librosa.feature.sync(data, frames, aggregate=np.max, axis=axis)
+        if data.ndim == 1 or axis == -1:
+            assert np.allclose(dsync, 4 * np.ones_like(dsync))
+        else:
+            assert np.allclose(dsync, data)
 
         # Min aggregation
-        dsync = librosa.feature.sync(data, frames, aggregate=np.min)
-        assert np.allclose(dsync, np.zeros_like(dsync))
+        dsync = librosa.feature.sync(data, frames, aggregate=np.min, axis=axis)
+        if data.ndim == 1 or axis == -1:
+            assert np.allclose(dsync, np.zeros_like(dsync))
+        else:
+            assert np.allclose(dsync, data)
 
     for ndim in [1, 2, 3]:
         shaper = [1] * ndim
@@ -136,11 +148,12 @@ def test_sync():
 
         data = np.reshape(data, shaper)
 
-        if ndim > 2:
-            yield __test_fail, data, frames
+        #if ndim > 2:
+        #    yield __test_fail, data, frames
 
-        else:
-            yield __test_pass, data, frames
+        #else:
+        for axis in [0, -1]:
+            yield __test_pass, axis, data, frames
 
 
 # spectral submodule
