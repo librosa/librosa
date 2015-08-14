@@ -1150,7 +1150,7 @@ def index_to_slice(idx, idx_min=None, idx_max=None, step=None, pad=True):
         depending on whether ``pad==True`` and the supplied values for
         `idx_min` and `idx_max`.
 
-    See also
+    See Also
     --------
     fix_frames
 
