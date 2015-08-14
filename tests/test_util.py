@@ -674,3 +674,49 @@ def test_index_to_slice():
                 for step in [None, 2]:
                     for pad in [False, True]:
                         yield __test, indices, idx_min, idx_max, step, pad
+
+
+def test_sync():
+
+    def __test_pass(axis, data, frames):
+        # By default, mean aggregation
+        dsync = librosa.util.sync(data, frames, axis=axis)
+        if data.ndim == 1 or axis == -1:
+            assert np.allclose(dsync, 2 * np.ones_like(dsync))
+        else:
+            assert np.allclose(dsync, data)
+
+        # Explicit mean aggregation
+        dsync = librosa.util.sync(data, frames, aggregate=np.mean, axis=axis)
+        if data.ndim == 1 or axis == -1:
+            assert np.allclose(dsync, 2 * np.ones_like(dsync))
+        else:
+            assert np.allclose(dsync, data)
+
+        # Max aggregation
+        dsync = librosa.util.sync(data, frames, aggregate=np.max, axis=axis)
+        if data.ndim == 1 or axis == -1:
+            assert np.allclose(dsync, 4 * np.ones_like(dsync))
+        else:
+            assert np.allclose(dsync, data)
+
+        # Min aggregation
+        dsync = librosa.util.sync(data, frames, aggregate=np.min, axis=axis)
+        if data.ndim == 1 or axis == -1:
+            assert np.allclose(dsync, np.zeros_like(dsync))
+        else:
+            assert np.allclose(dsync, data)
+
+    for ndim in [1, 2, 3]:
+        shaper = [1] * ndim
+        shaper[-1] = -1
+
+        data = np.mod(np.arange(135), 5)
+        frames = np.flatnonzero(data[0] == 0)
+
+        data = np.reshape(data, shaper)
+
+        for axis in [0, -1]:
+            yield __test_pass, axis, data, frames
+
+
