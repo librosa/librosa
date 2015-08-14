@@ -413,6 +413,8 @@ def fix_frames(frames, x_min=0, x_max=None, pad=True):
         If `frames` contains negative values
     '''
 
+    frames = np.asarray(frames)
+
     if np.any(frames < 0):
         raise ParameterError('Negative frame index detected')
 
