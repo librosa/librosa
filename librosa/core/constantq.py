@@ -61,7 +61,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     aggregate : None or function
         Aggregation function for time-oversampling energy aggregation.
-        By default, `np.mean`.  See `librosa.feature.sync`.
+        By default, `np.mean`.  See `librosa.util.sync`.
 
     norm : {inf, -inf, 0, float > 0}
         Type of norm to use for basis function normalization.
@@ -86,7 +86,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     See Also
     --------
     librosa.core.resample
-    librosa.feature.sync
+    librosa.util.sync
     librosa.util.normalize
 
     Examples

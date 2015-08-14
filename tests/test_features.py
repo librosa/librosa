@@ -104,50 +104,6 @@ def test_stack_memory():
                 yield tf, data, n_steps, delay
 
 
-def test_sync():
-
-    def __test_pass(axis, data, frames):
-        # By default, mean aggregation
-        dsync = librosa.feature.sync(data, frames, axis=axis)
-        if data.ndim == 1 or axis == -1:
-            assert np.allclose(dsync, 2 * np.ones_like(dsync))
-        else:
-            assert np.allclose(dsync, data)
-
-        # Explicit mean aggregation
-        dsync = librosa.feature.sync(data, frames, aggregate=np.mean, axis=axis)
-        if data.ndim == 1 or axis == -1:
-            assert np.allclose(dsync, 2 * np.ones_like(dsync))
-        else:
-            assert np.allclose(dsync, data)
-
-        # Max aggregation
-        dsync = librosa.feature.sync(data, frames, aggregate=np.max, axis=axis)
-        if data.ndim == 1 or axis == -1:
-            assert np.allclose(dsync, 4 * np.ones_like(dsync))
-        else:
-            assert np.allclose(dsync, data)
-
-        # Min aggregation
-        dsync = librosa.feature.sync(data, frames, aggregate=np.min, axis=axis)
-        if data.ndim == 1 or axis == -1:
-            assert np.allclose(dsync, np.zeros_like(dsync))
-        else:
-            assert np.allclose(dsync, data)
-
-    for ndim in [1, 2, 3]:
-        shaper = [1] * ndim
-        shaper[-1] = -1
-
-        data = np.mod(np.arange(135), 5)
-        frames = np.flatnonzero(data[0] == 0)
-
-        data = np.reshape(data, shaper)
-
-        for axis in [0, -1]:
-            yield __test_pass, axis, data, frames
-
-
 # spectral submodule
 def test_spectral_centroid_synthetic():
 

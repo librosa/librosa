@@ -27,6 +27,7 @@ __all__ = ['MAX_MEM_BLOCK', 'SMALL_FLOAT',
            'peak_pick',
            'sparsify_rows',
            'index_to_slice',
+           'sync',
            'buf_to_float',
            # Deprecated functions
            'buf_to_int']
@@ -1174,6 +1175,115 @@ def index_to_slice(idx, idx_min=None, idx_max=None, step=None, pad=True):
 
     # Now convert the indices to slices
     return [slice(start, end, step) for (start, end) in zip(idx_fixed, idx_fixed[1:])]
+
+
+@cache
+def sync(data, frames, aggregate=None, pad=True, axis=-1):
+    """Synchronous aggregation of a feature matrix
+
+    .. note::
+        In order to ensure total coverage, boundary points may be added
+        to `frames`.
+
+        If synchronizing a feature matrix against beat tracker output, ensure
+        that frame numbers are properly aligned and use the same hop length.
+
+    Parameters
+    ----------
+    data      : np.ndarray
+        multi-dimensional array of features
+
+    frames    : np.ndarray [shape=(m,)]
+        ordered array of frame segment boundaries
+
+    aggregate : function
+        aggregation function (default: `np.mean`)
+
+    pad : boolean
+        If `True`, `frames` is padded to span the full range `[0, data.shape[axis]]`
+
+    axis : int
+        The axis along which to aggregate data
+
+    Returns
+    -------
+    data_sync : ndarray
+        `data_sync` will have the same dimension as `data`, except that the `axis`
+        coordinate will be reduced according to `frames`.
+
+        For example, a 2-dimensional `data` with `axis=-1` should satisfy
+
+        `data_sync[:, i] = aggregate(data[:, frames[i-1]:frames[i]], axis=-1)`
+
+    Examples
+    --------
+    Beat-synchronous CQT spectra
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
+    >>> cqt = librosa.cqt(y=y, sr=sr)
+
+    By default, use mean aggregation
+
+    >>> cqt_avg = librosa.util.sync(cqt, beats)
+
+    Use median-aggregation instead of mean
+
+    >>> cqt_med = librosa.util.sync(cqt, beats,
+    ...                                aggregate=np.median)
+
+    Or sub-beat synchronization
+
+    >>> sub_beats = librosa.segment.subsegment(cqt, beats)
+    >>> cqt_med_sub = librosa.util.sync(cqt, sub_beats, aggregate=np.median)
+
+    Plot the results
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> plt.subplot(3, 1, 1)
+    >>> librosa.display.specshow(librosa.logamplitude(cqt**2,
+    ...                                               ref_power=np.max),
+    ...                          x_axis='time')
+    >>> plt.colorbar(format='%+2.0f dB')
+    >>> plt.title('CQT power, shape={}'.format(cqt.shape))
+    >>> plt.subplot(3, 1, 2)
+    >>> librosa.display.specshow(librosa.logamplitude(cqt_med**2,
+    ...                                               ref_power=np.max))
+    >>> plt.colorbar(format='%+2.0f dB')
+    >>> plt.title('Beat synchronous CQT power, '
+    ...           'shape={}'.format(cqt_med.shape))
+    >>> plt.subplot(3, 1, 3)
+    >>> librosa.display.specshow(librosa.logamplitude(cqt_med_sub**2,
+    ...                                               ref_power=np.max))
+    >>> plt.colorbar(format='%+2.0f dB')
+    >>> plt.title('Sub-beat synchronous CQT power, '
+    ...           'shape={}'.format(cqt_med_sub.shape))
+    >>> plt.tight_layout()
+
+    """
+
+    if aggregate is None:
+        aggregate = np.mean
+
+    shape = list(data.shape)
+
+    slices = index_to_slice(frames, 0, shape[axis], pad=pad)
+
+    agg_shape = list(shape)
+    agg_shape[axis] = len(slices)
+
+    data_agg = np.empty(agg_shape, order='F' if np.isfortran(data) else 'C')
+
+    idx_in = [slice(None)] * data.ndim
+    idx_agg = [slice(None)] * data_agg.ndim
+
+    for (i, segment) in enumerate(slices):
+        idx_in[axis] = segment
+        idx_agg[axis] = i
+        data_agg[idx_agg] = aggregate(data[idx_in], axis=axis)
+
+    return data_agg
 
 
 # Deprecated functions
