@@ -9,7 +9,10 @@ from .. import cache
 from .. import util
 from ..util.exceptions import ParameterError
 
-__all__ = ['delta', 'stack_memory', 'sync']
+__all__ = ['delta',
+           'stack_memory',
+           # Moved/deprecated
+           'sync']
 
 
 @cache
@@ -185,7 +188,7 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> chroma = librosa.feature.chroma_stft(y=y, sr=sr)
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, hop_length=512)
-    >>> chroma_sync = librosa.feature.sync(chroma, beats)
+    >>> chroma_sync = librosa.util.sync(chroma, beats)
     >>> chroma_lag = librosa.feature.stack_memory(chroma_sync, n_steps=3,
     ...                                           mode='edge')
 
@@ -228,109 +231,6 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
     # Make contiguous
     return np.ascontiguousarray(history.T).T
 
-
-@cache
-def sync(data, frames, aggregate=None, pad=True):
-    """Synchronous aggregation of a feature matrix
-
-    .. note::
-        In order to ensure total coverage, boundary points may be added
-        to `frames`.
-
-        If synchronizing a feature matrix against beat tracker output, ensure
-        that frame numbers are properly aligned and use the same hop length.
-
-    Parameters
-    ----------
-    data      : np.ndarray [shape=(d, T) or shape=(T,)]
-        matrix of features
-
-    frames    : np.ndarray [shape=(m,)]
-        ordered array of frame segment boundaries
-
-    aggregate : function
-        aggregation function (default: `np.mean`)
-
-    pad : boolean
-        If `True`, `frames` is padded to span the full range `[0, T]`
-
-    Returns
-    -------
-    Y         : ndarray [shape=(d, M)]
-        `Y[:, i] = aggregate(data[:, F[i-1]:F[i]], axis=1)`
-
-    Raises
-    ------
-    ParameterError
-        If `data.ndim` is not 1 or 2
-
-    Examples
-    --------
-    Beat-synchronous CQT spectra
-
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
-    >>> cqt = librosa.cqt(y=y, sr=sr)
-
-    By default, use mean aggregation
-
-    >>> cqt_avg = librosa.feature.sync(cqt, beats)
-
-    Use median-aggregation instead of mean
-
-    >>> cqt_med = librosa.feature.sync(cqt, beats,
-    ...                                aggregate=np.median)
-
-    Or sub-beat synchronization
-
-    >>> sub_beats = librosa.segment.subsegment(cqt, beats)
-    >>> cqt_med_sub = librosa.feature.sync(cqt, sub_beats, aggregate=np.median)
-
-    Plot the results
-
-    >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> plt.subplot(3, 1, 1)
-    >>> librosa.display.specshow(librosa.logamplitude(cqt**2,
-    ...                                               ref_power=np.max),
-    ...                          x_axis='time')
-    >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.title('CQT power, shape={}'.format(cqt.shape))
-    >>> plt.subplot(3, 1, 2)
-    >>> librosa.display.specshow(librosa.logamplitude(cqt_med**2,
-    ...                                               ref_power=np.max))
-    >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.title('Beat synchronous CQT power, '
-    ...           'shape={}'.format(cqt_med.shape))
-    >>> plt.subplot(3, 1, 3)
-    >>> librosa.display.specshow(librosa.logamplitude(cqt_med_sub**2,
-    ...                                               ref_power=np.max))
-    >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.title('Sub-beat synchronous CQT power, '
-    ...           'shape={}'.format(cqt_med_sub.shape))
-    >>> plt.tight_layout()
-
-    """
-
-    if data.ndim > 2:
-        raise ParameterError('Synchronized data has ndim={:d},'
-                         ' must be 1 or 2.'.format(data.ndim))
-
-    data = np.atleast_2d(data)
-
-    if aggregate is None:
-        aggregate = np.mean
-
-    dimension, n_frames = data.shape
-
-    frames = util.fix_frames(frames, 0, n_frames, pad=pad)
-
-    data_agg = np.empty((dimension, len(frames)-1), order='F')
-
-    start = frames[0]
-
-    for (i, end) in enumerate(frames[1:]):
-        data_agg[:, i] = aggregate(data[:, start:end], axis=1)
-        start = end
-
-    return data_agg
+# Moved/deprecated functions
+sync = util.decorators.moved('librosa.feature.sync',
+                             '0.4.1', '0.5')(util.sync)

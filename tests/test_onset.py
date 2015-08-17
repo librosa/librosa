@@ -110,6 +110,22 @@ def test_onset_strength_spectrogram():
                                    hop_length, detrend, centering)
 
 
+def test_onset_strength_multi():
+
+    y, sr = librosa.load(__EXAMPLE_FILE)
+    S = librosa.feature.melspectrogram(y=y, sr=sr)
+
+    channels = np.linspace(0, S.shape[0], num=5)
+
+    odf_multi = librosa.onset.onset_strength_multi(S=S, channels=channels)
+
+    eq_(len(odf_multi), len(channels) - 1)
+
+    for i, (s, t) in enumerate(zip(channels, channels[1:])):
+        odf_single = librosa.onset.onset_strength(S=S[s:t])
+        assert np.allclose(odf_single, odf_multi[i])
+
+
 def test_onset_detect_real():
 
     def __test(y, sr, oenv, hop_length):

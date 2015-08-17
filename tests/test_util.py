@@ -13,7 +13,7 @@ import matplotlib
 matplotlib.use('Agg')
 import numpy as np
 np.set_printoptions(precision=3)
-from nose.tools import raises
+from nose.tools import raises, eq_
 import six
 import warnings
 
@@ -632,3 +632,98 @@ def test_warning_moved():
 
         # And that it says the right thing (roughly)
         assert 'moved' in str(out[0].message).lower()
+
+
+def test_index_to_slice():
+
+    def __test(idx, idx_min, idx_max, step, pad):
+
+        slices = librosa.util.index_to_slice(idx,
+                                             idx_min=idx_min,
+                                             idx_max=idx_max,
+                                             step=step,
+                                             pad=pad)
+
+        if pad:
+            if idx_min is not None:
+                eq_(slices[0].start, idx_min)
+                if idx.min() != idx_min:
+                    slices = slices[1:]
+            if idx_max is not None:
+                eq_(slices[-1].stop, idx_max)
+                if idx.max() != idx_max:
+                    slices = slices[:-1]
+
+        if idx_min is not None:
+            idx = idx[idx >= idx_min]
+
+        if idx_max is not None:
+            idx = idx[idx <= idx_max]
+
+        idx = np.unique(idx)
+        eq_(len(slices), len(idx) - 1)
+
+        for sl, start, stop in zip(slices, idx, idx[1:]):
+            eq_(sl.start, start)
+            eq_(sl.stop, stop)
+            eq_(sl.step, step)
+
+    for indices in [np.arange(10, 90, 10), np.arange(10, 90, 15)]:
+        for idx_min in [None, 5, 15]:
+            for idx_max in [None, 85, 100]:
+                for step in [None, 2]:
+                    for pad in [False, True]:
+                        yield __test, indices, idx_min, idx_max, step, pad
+
+
+def test_sync():
+
+    def __test_pass(axis, data, idx):
+        # By default, mean aggregation
+        dsync = librosa.util.sync(data, idx, axis=axis)
+        if data.ndim == 1 or axis == -1:
+            assert np.allclose(dsync, 2 * np.ones_like(dsync))
+        else:
+            assert np.allclose(dsync, data)
+
+        # Explicit mean aggregation
+        dsync = librosa.util.sync(data, idx, aggregate=np.mean, axis=axis)
+        if data.ndim == 1 or axis == -1:
+            assert np.allclose(dsync, 2 * np.ones_like(dsync))
+        else:
+            assert np.allclose(dsync, data)
+
+        # Max aggregation
+        dsync = librosa.util.sync(data, idx, aggregate=np.max, axis=axis)
+        if data.ndim == 1 or axis == -1:
+            assert np.allclose(dsync, 4 * np.ones_like(dsync))
+        else:
+            assert np.allclose(dsync, data)
+
+        # Min aggregation
+        dsync = librosa.util.sync(data, idx, aggregate=np.min, axis=axis)
+        if data.ndim == 1 or axis == -1:
+            assert np.allclose(dsync, np.zeros_like(dsync))
+        else:
+            assert np.allclose(dsync, data)
+
+    @raises(librosa.ParameterError)
+    def __test_fail(data, idx):
+        librosa.util.sync(data, idx)
+
+
+    for ndim in [1, 2, 3]:
+        shaper = [1] * ndim
+        shaper[-1] = -1
+
+        data = np.mod(np.arange(135), 5)
+        frames = np.flatnonzero(data[0] == 0)
+        slices = [slice(start, stop) for (start, stop) in zip(frames, frames[1:])]
+        data = np.reshape(data, shaper)
+
+        for axis in [0, -1]:
+            yield __test_pass, axis, data, frames
+            yield __test_pass, axis, data, slices
+
+    for bad_idx in [ ['foo', 'bar'], [23], [None], [slice(None), None] ]:
+        yield __test_fail, data, bad_idx
