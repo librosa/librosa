@@ -42,6 +42,7 @@ Thumbs.db
 
 # Sphinx stuff
 docs/generated/
+docs/_build/
 
 # Vim
 *.swp
