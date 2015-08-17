@@ -383,7 +383,7 @@ def onset_strength_multi(y=None, sr=22050, S=None, detrend=False, centering=True
     # Aggregate within channels
     pad = True
     if channels is None:
-        channels = []
+        channels = [slice(None)]
     else:
         pad = False
 
