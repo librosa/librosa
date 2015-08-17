@@ -19,6 +19,7 @@ pip-log.txt
 # Unit test / coverage reports
 .coverage
 .tox
+tests/result_images/
 
 #Translations
 *.mo
@@ -38,6 +39,9 @@ pip-log.txt
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Sphinx stuff
+docs/generated/
 
 # Vim
 *.swp
