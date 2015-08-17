@@ -26,6 +26,8 @@ __all__ = ['MAX_MEM_BLOCK', 'SMALL_FLOAT',
            'match_intervals', 'match_events',
            'peak_pick',
            'sparsify_rows',
+           'index_to_slice',
+           'sync',
            'buf_to_float',
            # Deprecated functions
            'buf_to_int']
@@ -410,6 +412,8 @@ def fix_frames(frames, x_min=0, x_max=None, pad=True):
     ParameterError
         If `frames` contains negative values
     '''
+
+    frames = np.asarray(frames)
 
     if np.any(frames < 0):
         raise ParameterError('Negative frame index detected')
@@ -1117,6 +1121,179 @@ def buf_to_float(x, n_bytes=2, dtype=np.float32):
 
     # Rescale and format the data buffer
     return scale * np.frombuffer(x, fmt).astype(dtype)
+
+
+def index_to_slice(idx, idx_min=None, idx_max=None, step=None, pad=True):
+    '''Generate a slice array from an index array.
+
+    Parameters
+    ----------
+    idx : list-like
+        Array of index boundaries
+
+    idx_min : None or int
+    idx_max : None or int
+        Minimum and maximum allowed indices
+
+    step : None or int
+        Step size for each slice.  If `None`, then the default
+        step of 1 is used.
+
+    pad : boolean
+        If `True`, pad `idx` to span the range `idx_min:idx_max`.
+
+    Returns
+    -------
+    slices : list of slice
+        ``slices[i] = slice(idx[i], idx[i+1], step)``
+        Additional slice objects may be added at the beginning or end,
+        depending on whether ``pad==True`` and the supplied values for
+        `idx_min` and `idx_max`.
+
+    See Also
+    --------
+    fix_frames
+
+    Examples
+    --------
+    >>> # Generate slices from spaced indices
+    >>> librosa.util.index_to_slice(np.arange(20, 100, 15))
+    [slice(20, 35, None), slice(35, 50, None), slice(50, 65, None), slice(65, 80, None),
+     slice(80, 95, None)]
+    >>> # Pad to span the range (0, 100)
+    >>> librosa.util.index_to_slice(np.arange(20, 100, 15),
+    ...                             idx_min=0, idx_max=100)
+    [slice(0, 20, None), slice(20, 35, None), slice(35, 50, None), slice(50, 65, None),
+     slice(65, 80, None), slice(80, 95, None), slice(95, 100, None)]
+    >>> # Use a step of 5 for each slice
+    >>> librosa.util.index_to_slice(np.arange(20, 100, 15),
+    ...                             idx_min=0, idx_max=100, step=5)
+    [slice(0, 20, 5), slice(20, 35, 5), slice(35, 50, 5), slice(50, 65, 5), slice(65, 80, 5),
+     slice(80, 95, 5), slice(95, 100, 5)]
+    '''
+
+    # First, normalize the index set
+    idx_fixed = fix_frames(idx, idx_min, idx_max, pad=pad)
+
+    # Now convert the indices to slices
+    return [slice(start, end, step) for (start, end) in zip(idx_fixed, idx_fixed[1:])]
+
+
+@cache
+def sync(data, idx, aggregate=None, pad=True, axis=-1):
+    """Synchronous aggregation of a multi-dimensional array between boundaries
+
+    .. note::
+        In order to ensure total coverage, boundary points may be added
+        to `idx`.
+
+        If synchronizing a feature matrix against beat tracker output, ensure
+        that frame index numbers are properly aligned and use the same hop length.
+
+    Parameters
+    ----------
+    data      : np.ndarray
+        multi-dimensional array of features
+
+    idx : np.ndarray [shape=(m,)] or iterable of slice
+        Either an ordered array of boundary indices, or
+        an iterable collection of slice objects.
+
+
+    aggregate : function
+        aggregation function (default: `np.mean`)
+
+    pad : boolean
+        If `True`, `idx` is padded to span the full range `[0, data.shape[axis]]`
+
+    axis : int
+        The axis along which to aggregate data
+
+    Returns
+    -------
+    data_sync : ndarray
+        `data_sync` will have the same dimension as `data`, except that the `axis`
+        coordinate will be reduced according to `idx`.
+
+        For example, a 2-dimensional `data` with `axis=-1` should satisfy
+
+        `data_sync[:, i] = aggregate(data[:, idx[i-1]:idx[i]], axis=-1)`
+
+    Examples
+    --------
+    Beat-synchronous CQT spectra
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
+    >>> cqt = librosa.cqt(y=y, sr=sr)
+
+    By default, use mean aggregation
+
+    >>> cqt_avg = librosa.util.sync(cqt, beats)
+
+    Use median-aggregation instead of mean
+
+    >>> cqt_med = librosa.util.sync(cqt, beats,
+    ...                                aggregate=np.median)
+
+    Or sub-beat synchronization
+
+    >>> sub_beats = librosa.segment.subsegment(cqt, beats)
+    >>> cqt_med_sub = librosa.util.sync(cqt, sub_beats, aggregate=np.median)
+
+
+    Plot the results
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> plt.subplot(3, 1, 1)
+    >>> librosa.display.specshow(librosa.logamplitude(cqt**2,
+    ...                                               ref_power=np.max),
+    ...                          x_axis='time')
+    >>> plt.colorbar(format='%+2.0f dB')
+    >>> plt.title('CQT power, shape={}'.format(cqt.shape))
+    >>> plt.subplot(3, 1, 2)
+    >>> librosa.display.specshow(librosa.logamplitude(cqt_med**2,
+    ...                                               ref_power=np.max))
+    >>> plt.colorbar(format='%+2.0f dB')
+    >>> plt.title('Beat synchronous CQT power, '
+    ...           'shape={}'.format(cqt_med.shape))
+    >>> plt.subplot(3, 1, 3)
+    >>> librosa.display.specshow(librosa.logamplitude(cqt_med_sub**2,
+    ...                                               ref_power=np.max))
+    >>> plt.colorbar(format='%+2.0f dB')
+    >>> plt.title('Sub-beat synchronous CQT power, '
+    ...           'shape={}'.format(cqt_med_sub.shape))
+    >>> plt.tight_layout()
+
+    """
+
+    if aggregate is None:
+        aggregate = np.mean
+
+    shape = list(data.shape)
+
+    if isinstance(idx, np.ndarray):
+        slices = index_to_slice(idx, 0, shape[axis], pad=pad)
+    else:
+        slices = idx
+
+    agg_shape = list(shape)
+    agg_shape[axis] = len(slices)
+
+    data_agg = np.empty(agg_shape, order='F' if np.isfortran(data) else 'C')
+
+    idx_in = [slice(None)] * data.ndim
+    idx_agg = [slice(None)] * data_agg.ndim
+
+    for (i, segment) in enumerate(slices):
+        if not isinstance(segment, slice):
+            raise ParameterError('Invalid slice object: {}'.format(segment))
+        idx_in[axis] = segment
+        idx_agg[axis] = i
+        data_agg[idx_agg] = aggregate(data[idx_in], axis=axis)
+
+    return data_agg
 
 
 # Deprecated functions
