@@ -1195,8 +1195,10 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     data      : np.ndarray
         multi-dimensional array of features
 
-    idx : np.ndarray [shape=(m,)]
-        ordered array of boundary indices
+    idx : np.ndarray [shape=(m,)] or iterable of slice
+        Either an ordered array of boundary indices, or
+        an iterable collection of slice objects.
+
 
     aggregate : function
         aggregation function (default: `np.mean`)
@@ -1239,6 +1241,7 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     >>> sub_beats = librosa.segment.subsegment(cqt, beats)
     >>> cqt_med_sub = librosa.util.sync(cqt, sub_beats, aggregate=np.median)
 
+
     Plot the results
 
     >>> import matplotlib.pyplot as plt
@@ -1270,7 +1273,10 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
 
     shape = list(data.shape)
 
-    slices = index_to_slice(idx, 0, shape[axis], pad=pad)
+    if isinstance(idx, np.ndarray):
+        slices = index_to_slice(idx, 0, shape[axis], pad=pad)
+    else:
+        slices = idx
 
     agg_shape = list(shape)
     agg_shape[axis] = len(slices)
@@ -1281,6 +1287,8 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     idx_agg = [slice(None)] * data_agg.ndim
 
     for (i, segment) in enumerate(slices):
+        if not isinstance(segment, slice):
+            raise ParameterError('Invalid slice object: {}'.format(segment))
         idx_in[axis] = segment
         idx_agg[axis] = i
         data_agg[idx_agg] = aggregate(data[idx_in], axis=axis)
