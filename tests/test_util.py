@@ -678,34 +678,39 @@ def test_index_to_slice():
 
 def test_sync():
 
-    def __test_pass(axis, data, frames):
+    def __test_pass(axis, data, idx):
         # By default, mean aggregation
-        dsync = librosa.util.sync(data, frames, axis=axis)
+        dsync = librosa.util.sync(data, idx, axis=axis)
         if data.ndim == 1 or axis == -1:
             assert np.allclose(dsync, 2 * np.ones_like(dsync))
         else:
             assert np.allclose(dsync, data)
 
         # Explicit mean aggregation
-        dsync = librosa.util.sync(data, frames, aggregate=np.mean, axis=axis)
+        dsync = librosa.util.sync(data, idx, aggregate=np.mean, axis=axis)
         if data.ndim == 1 or axis == -1:
             assert np.allclose(dsync, 2 * np.ones_like(dsync))
         else:
             assert np.allclose(dsync, data)
 
         # Max aggregation
-        dsync = librosa.util.sync(data, frames, aggregate=np.max, axis=axis)
+        dsync = librosa.util.sync(data, idx, aggregate=np.max, axis=axis)
         if data.ndim == 1 or axis == -1:
             assert np.allclose(dsync, 4 * np.ones_like(dsync))
         else:
             assert np.allclose(dsync, data)
 
         # Min aggregation
-        dsync = librosa.util.sync(data, frames, aggregate=np.min, axis=axis)
+        dsync = librosa.util.sync(data, idx, aggregate=np.min, axis=axis)
         if data.ndim == 1 or axis == -1:
             assert np.allclose(dsync, np.zeros_like(dsync))
         else:
             assert np.allclose(dsync, data)
+
+    @raises(librosa.ParameterError)
+    def __test_fail(data, idx):
+        librosa.util.sync(data, idx)
+
 
     for ndim in [1, 2, 3]:
         shaper = [1] * ndim
@@ -713,10 +718,12 @@ def test_sync():
 
         data = np.mod(np.arange(135), 5)
         frames = np.flatnonzero(data[0] == 0)
-
+        slices = [slice(start, stop) for (start, stop) in zip(frames, frames[1:])]
         data = np.reshape(data, shaper)
 
         for axis in [0, -1]:
             yield __test_pass, axis, data, frames
+            yield __test_pass, axis, data, slices
 
-
+    for bad_idx in [ ['foo', 'bar'], [23], [None], [slice(None), None] ]:
+        yield __test_fail, data, bad_idx
