@@ -61,7 +61,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     aggregate : None or function
         Aggregation function for time-oversampling energy aggregation.
-        By default, `np.mean`.  See `librosa.feature.sync`.
+        By default, `np.mean`.  See `librosa.util.sync`.
 
     norm : {inf, -inf, 0, float > 0}
         Type of norm to use for basis function normalization.
@@ -86,7 +86,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     See Also
     --------
     librosa.core.resample
-    librosa.feature.sync
+    librosa.util.sync
     librosa.util.normalize
 
     Examples
@@ -501,7 +501,6 @@ def __variable_hop_response(y, n_fft, hop_length, min_filter_length,
     to the desired resolution.
     '''
 
-    from ..feature.utils import sync
     # If target_hop <= n_fft / 2:
     #   my_hop = target_hop
     # else:
@@ -521,7 +520,7 @@ def __variable_hop_response(y, n_fft, hop_length, min_filter_length,
     if zoom_factor > 1:
         # We need to aggregate.  Generate the boundary frames
         bounds = np.arange(0, my_cqt.shape[1], zoom_factor, dtype=int)
-        my_cqt = sync(my_cqt, bounds, aggregate=aggregate)
+        my_cqt = util.sync(my_cqt, bounds, aggregate=aggregate)
 
     return my_cqt
 
