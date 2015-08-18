@@ -8,11 +8,11 @@ Changes
   - `decompose.deompose()` now supports pre-trained transformation objects
   - Nullified side-effects of optional seaborn dependency
   - Moved `feature.sync` to `util.sync` and expanded its functionality
+  - `librosa.onset.onset_strength` and `onset_strength_multi` support superflux-style lag and max-filtering
 
 New features
   - `librosa.clicks` sonifies timed events such as beats or onsets
   - `librosa.onset.onset_strength_multi` computes onset strength within multiple sub-bands
-
 
 ##v0.4.0
 
