@@ -144,17 +144,25 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     return util.peak_pick(onset_envelope, **kwargs)
 
 
-def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
+def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
+                   detrend=False, centering=True,
                    feature=None, aggregate=None, **kwargs):
     """Compute a spectral flux onset strength envelope.
 
     Onset strength at time `t` is determined by:
 
-    `mean_f max(0, S[f, t+1] - S[f, t])`
+    `mean_f max(0, S[f, t] - ref_S[f, t - lag])`
+
+    where `ref_S` is `S` after local max filtering along the frequency
+    axis [1]_.
 
     By default, if a time series `y` is provided, S will be the
     log-power Mel spectrogram.
 
+    .. [1] Böck, Sebastian, and Gerhard Widmer.
+           "Maximum filter vibrato suppression for onset detection."
+           16th International Conference on Digital Audio Effects,
+           Maynooth, Ireland. 2013.
 
     Parameters
     ----------
@@ -166,6 +174,13 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
 
     S        : np.ndarray [shape=(d, m)]
         pre-computed (log-power) spectrogram
+
+    lag      : int > 0
+        time lag for computing differences
+
+    max_size : int > 0
+        size (in frequency bins) of the local max filter.
+        set to `1` to disable filtering.
 
     detrend : bool [scalar]
         Filter the onset strength to remove the DC component
@@ -197,6 +212,8 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
     ------
     ParameterError
         if neither `(y, sr)` nor `S` are provided
+
+        or if `lag` or `max_size` are not positive integers
 
 
     See Also
@@ -255,6 +272,8 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
     odf_all = onset_strength_multi(y=y,
                                    sr=sr,
                                    S=S,
+                                   lag=lag,
+                                   max_size=max_size,
                                    detrend=detrend,
                                    centering=centering,
                                    feature=feature,
@@ -266,8 +285,9 @@ def onset_strength(y=None, sr=22050, S=None, detrend=False, centering=True,
 
 
 @cache
-def onset_strength_multi(y=None, sr=22050, S=None, detrend=False, centering=True,
-                         feature=None, aggregate=None, channels=None, **kwargs):
+def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1, 
+                         detrend=False, centering=True, feature=None,
+                         aggregate=None, channels=None, **kwargs):
     """Compute a spectral flux onset strength envelope across multiple channels.
 
     Onset strength for channel `i` at time `t` is determined by:
@@ -285,6 +305,13 @@ def onset_strength_multi(y=None, sr=22050, S=None, detrend=False, centering=True
 
     S        : np.ndarray [shape=(d, m)]
         pre-computed (log-power) spectrogram
+
+    lag      : int > 0
+        time lag for computing differences
+
+    max_size : int > 0
+        size (in frequency bins) of the local max filter.
+        set to `1` to disable filtering.
 
     detrend : bool [scalar]
         Filter the onset strength to remove the DC component
@@ -358,6 +385,12 @@ def onset_strength_multi(y=None, sr=22050, S=None, detrend=False, centering=True
     if aggregate is None:
         aggregate = np.mean
 
+    if lag < 1 or not isinstance(lag, int):
+        raise ParameterError('lag must be a positive integer')
+
+    if max_size < 1 or not isinstance(max_size, int):
+        raise ParameterError('max_size must be a positive integer')
+
     # First, compute mel spectrogram
     if S is None:
         S = np.abs(feature(y=y, sr=sr, **kwargs))
@@ -373,9 +406,11 @@ def onset_strength_multi(y=None, sr=22050, S=None, detrend=False, centering=True
     # Ensure that S is at least 2-d
     S = np.atleast_2d(S)
 
-    # Compute first difference, include padding for alignment purposes
-    onset_env = np.diff(S, axis=1)
-    onset_env = np.pad(onset_env, ([0, 0], [1, 0]), mode='constant')
+    # Compute the reference spectrogram
+    ref_spec = scipy.ndimage.maximum_filter1d(S, max_size, axis=0)
+
+    # Compute difference to the reference, spaced by lag
+    onset_env = S[:, lag:] - ref_spec[:, :-lag]
 
     # Discard negatives (decreasing amplitude)
     onset_env = np.maximum(0.0, onset_env)
@@ -392,11 +427,13 @@ def onset_strength_multi(y=None, sr=22050, S=None, detrend=False, centering=True
                           pad=pad,
                           axis=0)
 
-    # Counter-act framing effects. Shift the onsets by n_fft / hop_length
+    # compensate for lag
+    pad_width = lag
     if centering:
-        onset_env = np.pad(onset_env,
-                           [(0, 0), (n_fft // (2 * hop_length), 0)],
-                           mode='constant')
+        # Counter-act framing effects. Shift the onsets by n_fft / hop_length
+        pad_width += n_fft // (2 * hop_length)
+
+    onset_env = np.pad(onset_env, ([0, 0], [pad_width, 0]), mode='constant')
 
     # remove the DC component
     if detrend:

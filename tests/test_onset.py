@@ -23,7 +23,7 @@ __EXAMPLE_FILE = 'data/test1_22050.wav'
 
 def test_onset_strength_audio():
 
-    def __test(y, sr, feature, n_fft, hop_length, detrend, centering):
+    def __test(y, sr, feature, n_fft, hop_length, lag, max_size, detrend, centering, aggregate):
 
         oenv = librosa.onset.onset_strength(y=y, sr=sr,
                                             S=None,
@@ -32,7 +32,9 @@ def test_onset_strength_audio():
                                             aggregate=aggregate,
                                             feature=feature,
                                             n_fft=n_fft,
-                                            hop_length=hop_length)
+                                            hop_length=hop_length,
+                                            lag=lag,
+                                            max_size=max_size)
 
         assert oenv.ndim == 1
 
@@ -57,14 +59,22 @@ def test_onset_strength_audio():
                     librosa.feature.chroma_stft]:
         for n_fft in [512, 2048]:
             for hop_length in [n_fft // 2, n_fft // 4]:
-                for detrend in [False, True]:
-                    for centering in [False, True]:
-                        for aggregate in [None, np.mean, np.max]:
-                            yield (__test, y, sr, feature, n_fft,
-                                   hop_length, detrend, centering)
-                            tf = raises(librosa.ParameterError)(__test)
-                            yield (tf, None, sr, feature, n_fft,
-                                   hop_length, detrend, centering)
+                for lag in [0, 1, 2]:
+                    for max_size in [0, 1, 2]:
+                        for detrend in [False, True]:
+                            for centering in [False, True]:
+                                for aggregate in [None, np.mean, np.max]:
+                                    if lag < 1 or max_size < 1:
+                                        tf = raises(librosa.ParameterError)(__test)
+                                    else:
+                                        tf = __test
+
+                                    yield (tf, y, sr, feature, n_fft,
+                                           hop_length, lag, max_size, detrend, centering, aggregate)
+
+                                    tf = raises(librosa.ParameterError)(__test)
+                                    yield (tf, None, sr, feature, n_fft,
+                                           hop_length, lag, max_size, detrend, centering, aggregate)
 
 
 def test_onset_strength_spectrogram():
@@ -117,13 +127,20 @@ def test_onset_strength_multi():
 
     channels = np.linspace(0, S.shape[0], num=5)
 
-    odf_multi = librosa.onset.onset_strength_multi(S=S, channels=channels)
+    for lag in [1, 2, 3]:
+        for max_size in [1]:
+            # We only test with max_size=1 here to make the sub-band slicing test simple
+            odf_multi = librosa.onset.onset_strength_multi(S=S,
+                                                           lag=lag, max_size=1,
+                                                           channels=channels)
 
-    eq_(len(odf_multi), len(channels) - 1)
+            eq_(len(odf_multi), len(channels) - 1)
 
-    for i, (s, t) in enumerate(zip(channels, channels[1:])):
-        odf_single = librosa.onset.onset_strength(S=S[s:t])
-        assert np.allclose(odf_single, odf_multi[i])
+            for i, (s, t) in enumerate(zip(channels, channels[1:])):
+                odf_single = librosa.onset.onset_strength(S=S[s:t],
+                                                          lag=lag,
+                                                          max_size=1)
+                assert np.allclose(odf_single, odf_multi[i])
 
 
 def test_onset_detect_real():
