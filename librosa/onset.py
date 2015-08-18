@@ -306,6 +306,13 @@ def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=3,
     S        : np.ndarray [shape=(d, m)]
         pre-computed (log-power) spectrogram
 
+    lag      : int > 0
+        time lag for computing differences
+
+    max_size : int > 0
+        size (in frequency bins) of the local max filter.
+        set to `1` to disable filtering.
+
     detrend : bool [scalar]
         Filter the onset strength to remove the DC component
 
