@@ -124,15 +124,22 @@ def test_onset_strength_multi():
 
     y, sr = librosa.load(__EXAMPLE_FILE)
     S = librosa.feature.melspectrogram(y=y, sr=sr)
+    # TODO:   2015-08-18 10:28:20 by Brian McFee <brian.mcfee@nyu.edu>
+    # test with multiple lags
 
     channels = np.linspace(0, S.shape[0], num=5)
 
-    odf_multi = librosa.onset.onset_strength_multi(S=S, channels=channels)
+    odf_multi = librosa.onset.onset_strength_multi(S=S,
+                                                   lag=1,
+                                                   max_size=1,
+                                                   channels=channels)
 
     eq_(len(odf_multi), len(channels) - 1)
 
     for i, (s, t) in enumerate(zip(channels, channels[1:])):
-        odf_single = librosa.onset.onset_strength(S=S[s:t])
+        odf_single = librosa.onset.onset_strength(S=S[s:t],
+                                                  lag=1,
+                                                  max_size=1)
         assert np.allclose(odf_single, odf_multi[i])
 
 
