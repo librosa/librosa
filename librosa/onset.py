@@ -411,8 +411,6 @@ def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
 
     # Compute difference to the reference, spaced by lag
     onset_env = S[:, lag:] - ref_spec[:, :-lag]
-    # compensate for lag
-    onset_env = np.pad(onset_env, ([0, 0], [lag, 0]), mode='constant')
 
     # Discard negatives (decreasing amplitude)
     onset_env = np.maximum(0.0, onset_env)
@@ -429,11 +427,13 @@ def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
                           pad=pad,
                           axis=0)
 
-    # Counter-act framing effects. Shift the onsets by n_fft / hop_length
+    # compensate for lag
+    pad_width = lag
     if centering:
-        onset_env = np.pad(onset_env,
-                           [(0, 0), (n_fft // (2 * hop_length), 0)],
-                           mode='constant')
+        # Counter-act framing effects. Shift the onsets by n_fft / hop_length
+        pad_width += n_fft // (2 * hop_length)
+
+    onset_env = np.pad(onset_env, ([0, 0], [pad_width, 0]), mode='constant')
 
     # remove the DC component
     if detrend:
