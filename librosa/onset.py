@@ -144,7 +144,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     return util.peak_pick(onset_envelope, **kwargs)
 
 
-def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=3,
+def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
                    detrend=False, centering=True,
                    feature=None, aggregate=None, **kwargs):
     """Compute a spectral flux onset strength envelope.
@@ -285,7 +285,7 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=3,
 
 
 @cache
-def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=3, 
+def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1, 
                          detrend=False, centering=True, feature=None,
                          aggregate=None, channels=None, **kwargs):
     """Compute a spectral flux onset strength envelope across multiple channels.
@@ -385,10 +385,10 @@ def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=3,
     if aggregate is None:
         aggregate = np.mean
 
-    if lag <= 0 or not isinstance(lag, int):
+    if lag < 1 or not isinstance(lag, int):
         raise ParameterError('lag must be a positive integer')
 
-    if max_size <= 0 or not isinstance(max_size, int):
+    if max_size < 1 or not isinstance(max_size, int):
         raise ParameterError('max_size must be a positive integer')
 
     # First, compute mel spectrogram
