@@ -411,6 +411,8 @@ def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=3,
 
     # Compute difference to the reference, spaced by lag
     onset_env = S[:, lag:] - ref_spec[:, :-lag]
+    # compensate for lag
+    onset_env = np.pad(onset_env, ([0, 0], [lag, 0]), mode='constant')
 
     # Discard negatives (decreasing amplitude)
     onset_env = np.maximum(0.0, onset_env)
@@ -426,9 +428,6 @@ def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=3,
                           aggregate=aggregate,
                           pad=pad,
                           axis=0)
-
-    # compensate for lag
-    onset_env = np.pad(onset_env, (lag, 0), mode='constant')
 
     # Counter-act framing effects. Shift the onsets by n_fft / hop_length
     if centering:
