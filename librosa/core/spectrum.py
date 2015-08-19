@@ -16,7 +16,8 @@ from ..util.exceptions import ParameterError
 __all__ = ['stft', 'istft', 'magphase',
            'ifgram',
            'phase_vocoder',
-           'logamplitude', 'perceptual_weighting']
+           'logamplitude', 'perceptual_weighting',
+           'dst']
 
 
 @cache
@@ -756,6 +757,99 @@ def perceptual_weighting(S, frequencies, **kwargs):
     offset = time_frequency.A_weighting(frequencies).reshape((-1, 1))
 
     return offset + logamplitude(S, **kwargs)
+
+
+@cache
+def dst(x, lag_min=1, n_bins=128, delta_c=1.0, axis=-1):
+    """The discrete scale transform (DST) of a signal x.
+
+    Parameters
+    ----------
+    x : np.ndarray
+        The input signal(s).  Can be multidimensional.
+
+    lag_min : int > 0
+        The minimum sample lag (in samples)
+
+    n_bins : int > 0
+        The number of scale transform bins to use
+
+    delta_c : float > 0
+        The spacing between scale bins
+
+    axis : int
+        The axis along which to transform `x`
+
+    Returns
+    -------
+    x_scale : np.ndarray [dtype=complex]
+        The scale transform of `x` along the `axis` dimension.
+
+    Raises
+    ------
+    ParameterError
+        if `n_bins < 1`, `lag_min < 1`, or `delta_c <= 0`
+
+    Examples
+    --------
+    >>> # Plot the scale transform of an onset strength autocorrelation
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(),
+    ...                      offset=10.0, duration=30.0)
+    >>> odf = librosa.onset.onset_strength(y=y, sr=sr)
+    >>> # Auto-correlate with up to 10 seconds lag
+    >>> odf_ac = librosa.autocorrelate(odf, max_size=10 * sr // 512)
+    >>> odf_ac_scale = librosa.dst(librosa.util.normalize(odf_ac))
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> plt.subplot(3, 1, 1)
+    >>> plt.plot(odf, label='Onset strength')
+    >>> plt.axis('tight')
+    >>> plt.xlabel('Time (frames)')
+    >>> plt.xticks([])
+    >>> plt.legend(frameon=True)
+    >>> plt.subplot(3, 1, 2)
+    >>> plt.plot(odf_ac, label='Onset autocorrelation')
+    >>> plt.axis('tight')
+    >>> plt.xlabel('Lag (frames)')
+    >>> plt.xticks([])
+    >>> plt.legend(frameon=True)
+    >>> plt.subplot(3, 1, 3)
+    >>> plt.plot(np.abs(odf_ac_scale), label='Scale transform magnitude')
+    >>> plt.axis('tight')
+    >>> plt.xlabel('Scale')
+    >>> plt.legend(frameon=True)
+    >>> plt.tight_layout()
+    """
+
+    if n_bins < 1:
+        raise ParameterError('n_bins must be a positive integer')
+
+    if lag_min < 1:
+        raise ParameterError('lag_min must be a positive integer')
+
+    if delta_c <= 0:
+        raise ParameterError('delta_c must be strictly positive')
+
+    # build the lag-sampled differential of x
+    sub_slice = [Ellipsis] * x.ndim
+    sub_slice[axis] = slice(0, None, lag_min)
+    x_diff = - np.diff(x[sub_slice], axis=axis)
+
+    # build the transformation basis
+    scales = (0.5 - 1.j * delta_c * np.arange(1, 1 + n_bins))
+    normalizer = (2 * np.pi)**-0.5 * scipy.sparse.diags([scales**-1], offsets=[0])
+    basis = normalizer.dot(np.power.outer(np.linspace(lag_min,
+                                                      lag_min * x_diff.shape[axis],
+                                                      num=x_diff.shape[axis]),
+                                          scales).T)
+
+    # Project along the target axis
+    transform = np.tensordot(x_diff, basis,
+                             ((axis,), (1,)))
+
+    # Permute the axes to match the input shape / axis specification
+    return transform.swapaxes(-1, axis)
 
 
 @cache
