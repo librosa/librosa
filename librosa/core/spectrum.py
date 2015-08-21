@@ -760,7 +760,7 @@ def perceptual_weighting(S, frequencies, **kwargs):
 
 
 @cache
-def dst(x, lag_min=1, n_bins=128, delta_c=1.0, axis=-1):
+def dst(x, lag_min=1, n_bins=128, delta_c=1.0, axis=-1, aggregate=None):
     """The discrete scale transform (DST) of a signal x.
 
     Parameters
@@ -779,6 +779,14 @@ def dst(x, lag_min=1, n_bins=128, delta_c=1.0, axis=-1):
 
     axis : int
         The axis along which to transform `x`
+
+    aggregate : function or None
+        If `lag_min > 1`, then samples of `x` are aggregated prior
+        to downsampling.
+
+        If `aggregate=None`, then `x` is sampled at multiples of `lag_min`.
+
+        See also: librosa.util.sync
 
     Returns
     -------
@@ -832,9 +840,19 @@ def dst(x, lag_min=1, n_bins=128, delta_c=1.0, axis=-1):
         raise ParameterError('delta_c must be strictly positive')
 
     # build the lag-sampled differential of x
-    sub_slice = [Ellipsis] * x.ndim
-    sub_slice[axis] = slice(0, None, lag_min)
-    x_diff = - np.diff(x[sub_slice], axis=axis)
+    if lag_min > 1:
+        if aggregate is None:
+            slices = [Ellipsis] * x.ndim
+            slices[axis] = slice(0, None, lag_min)
+            x_agg = x[slices]
+        else:
+            x_agg = util.sync(x, np.arange(0, x.shape[axis], lag_min),
+                              axis=axis, aggregate=aggregate)
+    else:
+        x_agg = x
+
+    # build the differential of x
+    x_diff = - np.diff(x_agg, axis=axis)
 
     # build the transformation basis
     scales = (0.5 - 1.j * delta_c * np.arange(1, 1 + n_bins))
