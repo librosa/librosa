@@ -760,7 +760,7 @@ def perceptual_weighting(S, frequencies, **kwargs):
 
 
 @cache
-def dst(x, lag_min=1, n_bins=128, delta_c=1.0, axis=-1, aggregate=None):
+def dst(x, lag_min=1, n_bins=None, delta_c=None, axis=-1, aggregate=None):
     """The discrete scale transform (DST) of a signal x.
 
     Parameters
@@ -771,11 +771,14 @@ def dst(x, lag_min=1, n_bins=128, delta_c=1.0, axis=-1, aggregate=None):
     lag_min : int > 0
         The minimum sample lag (in samples)
 
-    n_bins : int > 0
-        The number of scale transform bins to use
+    n_bins : int > 0 or None
+        The number of scale transform bins to use.
+        If None, then `n_bins = ceil(n * log(n))` is taken,
+        where `n = x.shape[n]`
 
-    delta_c : float > 0
-        The spacing between scale bins
+    delta_c : float > 0 or None
+        The spacing between scale bins.
+        If None, then `delta_c = pi / log(1 + n / lag_min)` is taken.
 
     axis : int
         The axis along which to transform `x`
@@ -830,13 +833,19 @@ def dst(x, lag_min=1, n_bins=128, delta_c=1.0, axis=-1, aggregate=None):
     >>> plt.tight_layout()
     """
 
-    if n_bins < 1:
-        raise ParameterError('n_bins must be a positive integer')
+    n = x.shape[axis]
 
     if lag_min < 1:
         raise ParameterError('lag_min must be a positive integer')
 
-    if delta_c <= 0:
+    if n_bins is None:
+        n_bins = np.ceil(n * np.log(n))
+    elif n_bins < 1:
+        raise ParameterError('n_bins must be a positive integer')
+
+    if delta_c is None:
+        delta_c = np.pi / np.log(1 + float(n_bins) / lag_min)
+    elif delta_c <= 0:
         raise ParameterError('delta_c must be strictly positive')
 
     # build the lag-sampled differential of x
@@ -846,7 +855,7 @@ def dst(x, lag_min=1, n_bins=128, delta_c=1.0, axis=-1, aggregate=None):
             slices[axis] = slice(0, None, lag_min)
             x_agg = x[slices]
         else:
-            x_agg = util.sync(x, np.arange(0, x.shape[axis], lag_min),
+            x_agg = util.sync(x, np.arange(0, n, lag_min),
                               axis=axis, aggregate=aggregate)
     else:
         x_agg = x
