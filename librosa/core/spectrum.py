@@ -6,6 +6,7 @@ import numpy as np
 import scipy.fftpack as fft
 import scipy
 import scipy.signal
+import scipy.interpolate
 import six
 
 from . import time_frequency
@@ -17,7 +18,7 @@ __all__ = ['stft', 'istft', 'magphase',
            'ifgram',
            'phase_vocoder',
            'logamplitude', 'perceptual_weighting',
-           'dst']
+           'fmt']
 
 
 @cache
@@ -760,46 +761,45 @@ def perceptual_weighting(S, frequencies, **kwargs):
 
 
 @cache
-def dst(x, lag_min=1, n_bins=None, delta_c=None, axis=-1, aggregate=None):
-    """The discrete scale transform (DST) of a signal x.
+def fmt(y, t_min=1, n_fmt=None, kind='slinear', beta=0.5, axis=-1):
+    """The fast Mellin transform (FMT) [1]_ of a signal y.
+
+    .. [1] De Sena, Antonio, and Davide Rocchesso.
+        "A fast Mellin and scale transform."
+        EURASIP Journal on Applied Signal Processing 2007.1 (2007): 75-75.
 
     Parameters
     ----------
-    x : np.ndarray
+    y : np.ndarray, real-valued
         The input signal(s).  Can be multidimensional.
 
-    lag_min : int > 0
-        The minimum sample lag (in samples)
+    t_min : float > 0
+        The minimum time spacing
 
-    n_bins : int > 0 or None
+    n_fmt : int > 0 or None
         The number of scale transform bins to use.
-        If None, then `n_bins = ceil(n * log(n))` is taken,
-        where `n = x.shape[n]`
+        If None, then `n_bins = 2 * ceil(n * log2(n))` is taken,
+        where `n = y.shape[axis]`
 
-    delta_c : float > 0 or None
-        The spacing between scale bins.
-        If None, then `delta_c = pi / log(1 + n / lag_min)` is taken.
+    kind : str
+        The type of interpolation to use when re-sampling the input.
+        See ``scipy.interpolate.interp1d`` for possible values.
+
+    beta : float
+        The Mellin parameter.  beta=0.5 provides the scale transform.
 
     axis : int
-        The axis along which to transform `x`
-
-    aggregate : function or None
-        If `lag_min > 1`, then samples of `x` are aggregated prior
-        to downsampling.
-
-        If `aggregate=None`, then `x` is sampled at multiples of `lag_min`.
-
-        See also: librosa.util.sync
+        The axis along which to transform `y`
 
     Returns
     -------
     x_scale : np.ndarray [dtype=complex]
-        The scale transform of `x` along the `axis` dimension.
+        The scale transform of `y` along the `axis` dimension.
 
     Raises
     ------
     ParameterError
-        if `n_bins < 1`, `lag_min < 1`, or `delta_c <= 0`
+        if `n_fmt < 1` or `t_min <= 0`
 
     Examples
     --------
@@ -809,7 +809,7 @@ def dst(x, lag_min=1, n_bins=None, delta_c=None, axis=-1, aggregate=None):
     >>> odf = librosa.onset.onset_strength(y=y, sr=sr)
     >>> # Auto-correlate with up to 10 seconds lag
     >>> odf_ac = librosa.autocorrelate(odf, max_size=10 * sr // 512)
-    >>> odf_ac_scale = librosa.dst(librosa.util.normalize(odf_ac))
+    >>> odf_ac_scale = librosa.fmt(librosa.util.normalize(odf_ac))
 
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
@@ -833,50 +833,48 @@ def dst(x, lag_min=1, n_bins=None, delta_c=None, axis=-1, aggregate=None):
     >>> plt.tight_layout()
     """
 
-    n = x.shape[axis]
+    n = y.shape[axis]
 
-    if lag_min < 1:
-        raise ParameterError('lag_min must be a positive integer')
+    if t_min <= 0:
+        raise ParameterError('t_min must be a positive number')
 
-    if n_bins is None:
-        n_bins = np.ceil(n * np.log(n))
-    elif n_bins < 1:
-        raise ParameterError('n_bins must be a positive integer')
+    if n_fmt is None:
+        n_fmt = 2 * int(n * np.ceil(np.log2(n)))
+    elif n_fmt < 1:
+        raise ParameterError('n_fmt must be a positive integer')
 
-    if delta_c is None:
-        delta_c = np.pi / np.log(1 + float(n_bins) / lag_min)
-    elif delta_c <= 0:
-        raise ParameterError('delta_c must be strictly positive')
+    # original grid
+    x = np.arange(n)
 
-    # build the lag-sampled differential of x
-    if lag_min > 1:
-        if aggregate is None:
-            slices = [Ellipsis] * x.ndim
-            slices[axis] = slice(0, None, lag_min)
-            x_agg = x[slices]
-        else:
-            x_agg = util.sync(x, np.arange(0, n, lag_min),
-                              axis=axis, aggregate=aggregate)
-    else:
-        x_agg = x
+    # build the interpolator
+    f_interp = scipy.interpolate.interp1d(x, y, kind=kind, axis=axis)
 
-    # build the differential of x
-    x_diff = - np.diff(x_agg, axis=axis)
+    exp_base = (n+1.0)/n
 
-    # build the transformation basis
-    scales = (0.5 - 1.j * delta_c * np.arange(1, 1 + n_bins))
-    normalizer = (2 * np.pi)**-0.5 * scipy.sparse.diags([scales**-1], offsets=[0])
-    basis = normalizer.dot(np.power.outer(np.linspace(lag_min,
-                                                      lag_min * x_diff.shape[axis],
-                                                      num=x_diff.shape[axis]),
-                                          scales).T)
+    # build the new sampling grid
+    x_exp = np.logspace(t_min,
+                        np.log(n-1) / np.log(exp_base),
+                        num=n_fmt,
+                        endpoint=False,
+                        base=exp_base)
 
-    # Project along the target axis
-    transform = np.tensordot(x_diff, basis,
-                             ((axis,), (1,)))
+    # Resample the signal
+    y_res = f_interp(x_exp)
 
-    # Permute the axes to match the input shape / axis specification
-    return transform.swapaxes(-1, axis)
+    # Broadcast the window correctly
+    shape = [1] * y_res.ndim
+    shape[axis] = -1
+
+    # Apply the window and fft
+    result = scipy.fftpack.fft(y_res * (x_exp**beta).reshape(shape),
+                               axis=axis,
+                               overwrite_x=True)
+
+    # Slice out the positive-scale component
+    idx = [slice(None)] * result.ndim
+    idx[axis] = slice(0, n_fmt//2)
+
+    return result[idx]
 
 
 @cache
