@@ -28,7 +28,7 @@ Spectral representations
     cqt
     hybrid_cqt
     pseudo_cqt
-    dst
+    fmt
 
     phase_vocoder
 
