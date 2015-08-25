@@ -10,6 +10,7 @@ Changes
   - Moved `feature.sync` to `util.sync` and expanded its functionality
   - `librosa.onset.onset_strength` and `onset_strength_multi` support superflux-style lag and max-filtering
   - `librosa.core.autocorrelate` can now operate along any axis of multi-dimensional input
+  - `segment.agglomerative` and `segment.subsegment` now support arbitrary target axis
 
 New features
   - `librosa.clicks` sonifies timed events such as beats or onsets
