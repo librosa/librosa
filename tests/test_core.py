@@ -358,20 +358,30 @@ def test_get_duration_wav():
 
 def test_autocorrelate():
 
-    def __test(y, max_size):
+    def __test(y, truth, max_size, axis):
 
-        ac = librosa.autocorrelate(y, max_size=max_size)
+        ac = librosa.autocorrelate(y, max_size=max_size, axis=axis)
 
-        if max_size is None or max_size > len(y):
-            eq_(len(ac), len(y))
+        my_slice = [Ellipsis] * truth.ndim
+        if max_size is not None and max_size <= y.shape[axis]:
+            my_slice[axis] = slice(min(max_size, y.shape[axis]))
 
-        else:
-            eq_(len(ac), max_size)
+        assert np.allclose(ac, truth[my_slice])
 
-    y = np.random.randn(256)
+    np.random.seed(128)
+    y = np.random.randn(256, 256)
 
-    for max_size in [None, len(y), 2 * len(y)]:
-        yield __test, y, max_size
+    # Make ground-truth autocorrelations along each axis
+    truth = [np.asarray([scipy.signal.fftconvolve(yi,
+                                                  yi[::-1],
+                                                  mode='full')[len(yi)-1:] for yi in y.T]).T,
+             np.asarray([scipy.signal.fftconvolve(yi,
+                                                  yi[::-1],
+                                                  mode='full')[len(yi)-1:] for yi in y])]
+
+    for axis in [0, 1, -1]:
+        for max_size in [None, y.shape[axis]//2, y.shape[axis], 2 * y.shape[axis]]:
+            yield __test, y, truth[axis], max_size, axis
 
 
 def test_to_mono():

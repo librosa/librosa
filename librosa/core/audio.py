@@ -9,6 +9,7 @@ import six
 import audioread
 import numpy as np
 import scipy.signal
+import scipy.fftpack as fft
 
 
 from .time_frequency import frames_to_samples, time_to_samples
@@ -354,22 +355,28 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
 
 @cache
-def autocorrelate(y, max_size=None):
+def autocorrelate(y, max_size=None, axis=-1):
     """Bounded auto-correlation
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        vector to autocorrelate
+    y : np.ndarray
+        array to autocorrelate
 
     max_size  : int > 0 or None
         maximum correlation lag.
-        If unspecified, defaults to `len(y)` (unbounded)
+        If unspecified, defaults to `y.shape[axis]` (unbounded)
+
+    axis : int
+        The axis along which to autocorrelate.
+        By default, the last axis (-1) is taken.
 
     Returns
     -------
-    z : np.ndarray [shape=(n,) or (max_size,)]
-        truncated autocorrelation `y*y`
+    z : np.ndarray
+        truncated autocorrelation `y*y` along the specified axis.
+        If `max_size` is specified, then `z.shape[axis]` is bounded
+        to `max_size`.
 
     Examples
     --------
@@ -391,16 +398,23 @@ def autocorrelate(y, max_size=None):
 
     """
 
-    result = scipy.signal.fftconvolve(y, y[::-1], mode='full')
-
-    result = result[int(len(result)/2):]
-
     if max_size is None:
-        return result
-    else:
-        max_size = int(max_size)
+        max_size = y.shape[axis]
 
-    return result[:max_size]
+    max_size = int(min(max_size, y.shape[axis]))
+
+    # Compute the power spectrum along the chosen axis
+    # Pad out the signal to support full-length auto-correlation.
+    powspec = np.abs(fft.fft(y, n=2 * y.shape[axis] + 1, axis=axis))**2
+
+    # Convert back to time domain
+    autocorr = fft.ifft(powspec, axis=axis, overwrite_x=True)
+
+    # Slice down to max_size
+    subslice = [Ellipsis] * autocorr.ndim
+    subslice[axis] = slice(max_size)
+
+    return autocorr[subslice]
 
 
 @cache
