@@ -209,7 +209,7 @@ def test_subsegment():
 
     def __test(n_segments):
 
-        subseg = librosa.segment.subsegment(X, beats, n_segments=n_segments)
+        subseg = librosa.segment.subsegment(X, beats, n_segments=n_segments, axis=-1)
 
         # Make sure that the boundaries are within range
         assert subseg.min() >= 0
@@ -224,6 +224,10 @@ def test_subsegment():
 
         # Did we over-segment?  +2 here for 0- and end-padding
         assert len(subseg) <= n_segments * (len(beats) + 2)
+
+        # Verify that running on the transpose gives the same answer
+        ss2 = librosa.segment.subsegment(X.T, beats, n_segments=n_segments, axis=0)
+        assert np.allclose(subseg, ss2)
 
     for n_segments in [0, 1, 2, 3, 4, 100]:
         if n_segments < 1:
