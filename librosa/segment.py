@@ -80,7 +80,7 @@ def __band_infinite(n, width, v_in=0.0, v_out=np.inf, dtype=np.float32):
 
 
 @cache
-def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
+def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False, axis=-1):
     '''Compute the binary recurrence matrix from a time-series.
 
     `rec[i,j] == True` if (and only if) (`data[:,i]`, `data[:,j]`) are
@@ -89,7 +89,7 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
 
     Parameters
     ----------
-    data : np.ndarray [shape=(d, t)]
+    data : np.ndarray 
         A feature matrix
 
     k : int > 0 [scalar] or None
@@ -109,6 +109,10 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
 
     sym : bool [scalar]
         set `sym=True` to only link mutual nearest-neighbors
+
+    axis : int
+        The axis along which to compute recurrence.
+        By default, the last index (-1) is taken.
 
     Returns
     -------
@@ -162,7 +166,10 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
 
     data = np.atleast_2d(data)
 
-    t = data.shape[1]
+    # Swap observations to the first dimension and flatten the rest
+    data = np.swapaxes(data, axis, 0)
+    t = data.shape[0]
+    data = data.reshape((t, -1))
 
     if width < 1:
         raise ParameterError('width must be at least 1')
@@ -176,7 +183,7 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
     k = int(k)
 
     # Build the distance matrix
-    D = scipy.spatial.distance.cdist(data.T, data.T, metric=metric)
+    D = scipy.spatial.distance.cdist(data, data, metric=metric)
 
     # Max out the diagonal band
     D = D + __band_infinite(t, width)
