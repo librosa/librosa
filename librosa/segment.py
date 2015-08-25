@@ -204,7 +204,7 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean',
     return rec
 
 
-def recurrence_to_lag(rec, pad=True):
+def recurrence_to_lag(rec, pad=True, axis=-1):
     '''Convert a recurrence matrix into a lag matrix.
 
         `lag[i, j] == rec[i+j, j]`
@@ -220,6 +220,9 @@ def recurrence_to_lag(rec, pad=True):
 
         If True, `lag` is padded with `n` zeros, which eliminates
         the assumption of repetition.
+
+    axis : int
+        The axis along which to apply the recurrence-to-lag conversion
 
     Returns
     -------
@@ -254,29 +257,39 @@ def recurrence_to_lag(rec, pad=True):
     >>> plt.tight_layout()
     '''
 
+    axis = np.abs(axis)
+
     if rec.ndim != 2 or rec.shape[0] != rec.shape[1]:
         raise ParameterError('non-square recurrence matrix shape: '
-                         '{}'.format(rec.shape))
+                             '{}'.format(rec.shape))
 
-    t = rec.shape[1]
+    t = rec.shape[axis]
+
     if pad:
-        lag = np.pad(rec, [(0, t), (0, 0)], mode='constant')
+        padding = [(0, 0), (0, 0)]
+        padding[(1-axis)] = (0, t)
+        lag = np.pad(rec, padding, mode='constant')
     else:
         lag = rec.copy()
 
+    idx_slice = [Ellipsis] * lag.ndim
     for i in range(1, t):
-        lag[:, i] = np.roll(lag[:, i], -i)
+        idx_slice[axis] = i
+        lag[idx_slice] = np.roll(lag[idx_slice], -i)
 
     return np.ascontiguousarray(lag.T).T
 
 
-def lag_to_recurrence(lag):
+def lag_to_recurrence(lag, axis=-1):
     '''Convert a lag matrix into a recurrence matrix.
 
     Parameters
     ----------
     lag : np.ndarray [shape=(2*n, n) or (n, n)]
         A lag matrix, as produced by `recurrence_to_lag`
+
+    axis : int
+        The axis along which to apply the recurrence-to-lag conversion
 
     Returns
     -------
@@ -319,18 +332,24 @@ def lag_to_recurrence(lag):
 
     '''
 
-    pad = (lag.shape[0] == 2 * lag.shape[-1])
+    axis = np.abs(axis)
 
-    if lag.ndim != 2 or (lag.shape[0] != lag.shape[1] and not pad):
+    if lag.ndim != 2 or (lag.shape[0] != lag.shape[1] and
+                         lag.shape[1 - axis] != 2 * lag.shape[axis]):
         raise ParameterError('Invalid lag matrix shape: {}'.format(lag.shape))
 
-    t = lag.shape[1]
+    # Since lag must be 2-dimensional, abs(axis) = axis
+    t = lag.shape[axis]
     lag = lag.copy()
 
+    idx_slice = [Ellipsis] * lag.ndim
     for i in range(1, t):
-        lag[:, i] = np.roll(lag[:, i], i)
+        idx_slice[axis] = i
+        lag[idx_slice] = np.roll(lag[idx_slice], i)
 
-    return np.ascontiguousarray(lag[:t].T).T
+    sub_slice = [Ellipsis] * lag.ndim
+    sub_slice[1 - axis] = slice(t)
+    return np.ascontiguousarray(lag[sub_slice].T).T
 
 
 def timelag_filter(function, pad=True, index=0):
