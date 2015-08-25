@@ -414,7 +414,7 @@ def autocorrelate(y, max_size=None, axis=-1):
     subslice = [Ellipsis] * autocorr.ndim
     subslice[axis] = slice(max_size)
 
-    return autocorr[subslice]
+    return autocorr[subslice].real
 
 
 @cache
