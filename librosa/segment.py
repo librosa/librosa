@@ -80,7 +80,8 @@ def __band_infinite(n, width, v_in=0.0, v_out=np.inf, dtype=np.float32):
 
 
 @cache
-def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False, axis=-1):
+def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean',
+                      sym=False, axis=-1):
     '''Compute the binary recurrence matrix from a time-series.
 
     `rec[i,j] == True` if (and only if) (`data[:,i]`, `data[:,j]`) are
@@ -89,7 +90,7 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False, ax
 
     Parameters
     ----------
-    data : np.ndarray 
+    data : np.ndarray
         A feature matrix
 
     k : int > 0 [scalar] or None

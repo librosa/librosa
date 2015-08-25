@@ -66,11 +66,16 @@ def test_recurrence_matrix():
         # Make a data matrix
         data = np.random.randn(3, n)
 
-        D = librosa.segment.recurrence_matrix(data, k=k, width=width, sym=sym)
+        D = librosa.segment.recurrence_matrix(data, k=k, width=width, sym=sym, axis=-1)
+
 
         # First test for symmetry
         if sym:
             assert np.allclose(D, D.T)
+
+        # Test for target-axis invariance
+        D_trans = librosa.segment.recurrence_matrix(data.T, k=k, width=width, sym=sym, axis=0)
+        assert np.allclose(D, D_trans)
 
         # If not symmetric, test for correct number of links
         if not sym and k is not None:
@@ -84,6 +89,7 @@ def test_recurrence_matrix():
         D[idx] = False
         D.T[idx] = False
         assert not np.any(D)
+
 
     for n in [10, 100, 1000]:
         for k in [None, int(n/4)]:
