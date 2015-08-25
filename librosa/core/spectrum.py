@@ -761,7 +761,7 @@ def perceptual_weighting(S, frequencies, **kwargs):
 
 
 @cache
-def fmt(y, t_min=1, n_fmt=None, kind='slinear', beta=0.5, axis=-1):
+def fmt(y, t_min=1, n_fmt=None, kind='slinear', beta=0.5, over_sample=2, axis=-1):
     """The fast Mellin transform (FMT) [1]_ of a signal y.
 
     .. [1] De Sena, Antonio, and Davide Rocchesso.
@@ -778,7 +778,7 @@ def fmt(y, t_min=1, n_fmt=None, kind='slinear', beta=0.5, axis=-1):
 
     n_fmt : int > 0 or None
         The number of scale transform bins to use.
-        If None, then `n_bins = 2 * ceil(n * log2(n))` is taken,
+        If None, then `n_bins = over_sample * ceil(n * log2(n))` is taken,
         where `n = y.shape[axis]`
 
     kind : str
@@ -787,6 +787,9 @@ def fmt(y, t_min=1, n_fmt=None, kind='slinear', beta=0.5, axis=-1):
 
     beta : float
         The Mellin parameter.  beta=0.5 provides the scale transform.
+
+    over_sample : float >= 1
+        Over-sampling factor for exponential resampling.
 
     axis : int
         The axis along which to transform `y`
@@ -839,7 +842,9 @@ def fmt(y, t_min=1, n_fmt=None, kind='slinear', beta=0.5, axis=-1):
         raise ParameterError('t_min must be a positive number')
 
     if n_fmt is None:
-        n_fmt = 2 * int(n * np.ceil(np.log2(n)))
+        if over_sample < 1:
+            raise ParameterError('over_sample must be >= 1')
+        n_fmt = int(over_sample * n * np.ceil(np.log2(n)))
     elif n_fmt < 1:
         raise ParameterError('n_fmt must be a positive integer')
 
@@ -872,7 +877,7 @@ def fmt(y, t_min=1, n_fmt=None, kind='slinear', beta=0.5, axis=-1):
 
     # Slice out the positive-scale component
     idx = [slice(None)] * result.ndim
-    idx[axis] = slice(0, n_fmt//2)
+    idx[axis] = slice(0, 1 + n_fmt//2)
 
     return result[idx]
 
