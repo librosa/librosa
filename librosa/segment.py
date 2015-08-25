@@ -406,7 +406,7 @@ def timelag_filter(function, pad=True, index=0):
 
 
 @cache
-def subsegment(data, frames, n_segments=4):
+def subsegment(data, frames, n_segments=4, axis=-1):
     '''Sub-divide a segmentation by feature clustering.
 
     Given a set of frame boundaries (`frames`), and a data matrix (`data`),
@@ -419,7 +419,7 @@ def subsegment(data, frames, n_segments=4):
 
     Parameters
     ----------
-    data : np.ndarray [shape=(d, n)]
+    data : np.ndarray
         Data matrix to use in clustering
 
     frames : np.ndarray [shape=(n_boundaries,)], dtype=int, non-negative]
@@ -430,6 +430,10 @@ def subsegment(data, frames, n_segments=4):
 
     n_segments : int > 0
         Maximum number of frames to sub-divide each interval.
+
+    axis : int
+        Axis along which to apply the segmentation.
+        By default, the last index (-1) is taken.
 
     Returns
     -------
@@ -473,17 +477,19 @@ def subsegment(data, frames, n_segments=4):
 
     '''
 
-    data = np.atleast_2d(data)
-    frames = util.fix_frames(frames, x_min=0, x_max=data.shape[1], pad=True)
+    frames = util.fix_frames(frames, x_min=0, x_max=data.shape[axis], pad=True)
 
     if n_segments < 1:
         raise ParameterError('n_segments must be a positive integer')
 
     boundaries = []
+    idx_slices = [Ellipsis] * data.ndim
+
     for seg_start, seg_end in zip(frames[:-1], frames[1:]):
-        boundaries.extend(seg_start + agglomerative(data[:, seg_start:seg_end],
-                                                    min(seg_end - seg_start,
-                                                        n_segments)))
+        idx_slices[axis] = slice(seg_start, seg_end)
+        boundaries.extend(seg_start + agglomerative(data[idx_slices],
+                                                    min(seg_end - seg_start, n_segments),
+                                                    axis=axis))
 
     return np.ascontiguousarray(boundaries)
 
