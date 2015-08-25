@@ -366,22 +366,25 @@ def test_autocorrelate():
         if max_size is not None and max_size <= y.shape[axis]:
             my_slice[axis] = slice(min(max_size, y.shape[axis]))
 
+        if not np.iscomplexobj(y):
+            assert not np.iscomplexobj(ac)
+
         assert np.allclose(ac, truth[my_slice])
 
     np.random.seed(128)
-    y = np.random.randn(256, 256)
 
-    # Make ground-truth autocorrelations along each axis
-    truth = [np.asarray([scipy.signal.fftconvolve(yi,
-                                                  yi[::-1],
-                                                  mode='full')[len(yi)-1:] for yi in y.T]).T,
-             np.asarray([scipy.signal.fftconvolve(yi,
-                                                  yi[::-1],
-                                                  mode='full')[len(yi)-1:] for yi in y])]
+    # test with both real and complex signals
+    for y in [np.random.randn(256, 256), np.exp(1.j * np.random.randn(256, 256))]:
 
-    for axis in [0, 1, -1]:
-        for max_size in [None, y.shape[axis]//2, y.shape[axis], 2 * y.shape[axis]]:
-            yield __test, y, truth[axis], max_size, axis
+        # Make ground-truth autocorrelations along each axis
+        truth = [np.asarray([scipy.signal.fftconvolve(yi, yi[::-1].conj(),
+                                                      mode='full')[len(yi)-1:] for yi in y.T]).T,
+                 np.asarray([scipy.signal.fftconvolve(yi, yi[::-1].conj(),
+                                                      mode='full')[len(yi)-1:] for yi in y])]
+
+        for axis in [0, 1, -1]:
+            for max_size in [None, y.shape[axis]//2, y.shape[axis], 2 * y.shape[axis]]:
+                yield __test, y, truth[axis], max_size, axis
 
 
 def test_to_mono():
