@@ -488,7 +488,7 @@ def subsegment(data, frames, n_segments=4):
     return np.ascontiguousarray(boundaries)
 
 
-def agglomerative(data, k, clusterer=None):
+def agglomerative(data, k, clusterer=None, axis=-1):
     """Bottom-up temporal segmentation.
 
     Use a temporally-constrained agglomerative clustering routine to partition
@@ -496,8 +496,8 @@ def agglomerative(data, k, clusterer=None):
 
     Parameters
     ----------
-    data     : np.ndarray [shape=(d, t)]
-        feature matrix
+    data     : np.ndarray
+        data to cluster
 
     k        : int > 0 [scalar]
         number of segments to produce
@@ -505,6 +505,10 @@ def agglomerative(data, k, clusterer=None):
     clusterer : sklearn.cluster.AgglomerativeClustering, optional
         An optional AgglomerativeClustering object.
         If `None`, a constrained Ward object is instantiated.
+
+    axis : int
+        axis along which to cluster.
+        By default, the last axis (-1) is chosen.
 
     Returns
     -------
@@ -544,11 +548,18 @@ def agglomerative(data, k, clusterer=None):
 
     """
 
+    # Make sure we have at least two dimensions
     data = np.atleast_2d(data)
+
+    # Swap data index to position 0
+    data = np.swapaxes(data, axis, 0)
+
+    # Flatten the features
+    n = data.shape[0]
+    data = data.reshape((n, -1))
 
     if clusterer is None:
         # Connect the temporal connectivity graph
-        n = data.shape[1]
         grid = sklearn.feature_extraction.image.grid_to_graph(n_x=n,
                                                               n_y=1, n_z=1)
 
@@ -558,7 +569,7 @@ def agglomerative(data, k, clusterer=None):
                                                             memory=cache)
 
     # Fit the model
-    clusterer.fit(data.T)
+    clusterer.fit(data)
 
     # Find the change points from the labels
     boundaries = [0]
