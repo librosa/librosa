@@ -803,6 +803,7 @@ def fmt(y, t_min=1, n_fmt=None, kind='slinear', beta=0.5, over_sample=2, axis=-1
     ------
     ParameterError
         if `n_fmt < 1` or `t_min <= 0`
+        or if `y` is not finite
 
     Examples
     --------
@@ -847,6 +848,9 @@ def fmt(y, t_min=1, n_fmt=None, kind='slinear', beta=0.5, over_sample=2, axis=-1
         n_fmt = int(over_sample * n * np.ceil(np.log2(n)))
     elif n_fmt < 1:
         raise ParameterError('n_fmt must be a positive integer')
+
+    if not np.all(np.isfinite(y)):
+        raise ParameterError('y must be finite everywhere')
 
     # original grid
     x = np.arange(n)
