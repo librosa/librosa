@@ -80,7 +80,8 @@ def __band_infinite(n, width, v_in=0.0, v_out=np.inf, dtype=np.float32):
 
 
 @cache
-def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
+def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean',
+                      sym=False, axis=-1):
     '''Compute the binary recurrence matrix from a time-series.
 
     `rec[i,j] == True` if (and only if) (`data[:,i]`, `data[:,j]`) are
@@ -89,7 +90,7 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
 
     Parameters
     ----------
-    data : np.ndarray [shape=(d, t)]
+    data : np.ndarray
         A feature matrix
 
     k : int > 0 [scalar] or None
@@ -109,6 +110,10 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
 
     sym : bool [scalar]
         set `sym=True` to only link mutual nearest-neighbors
+
+    axis : int
+        The axis along which to compute recurrence.
+        By default, the last index (-1) is taken.
 
     Returns
     -------
@@ -162,7 +167,10 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
 
     data = np.atleast_2d(data)
 
-    t = data.shape[1]
+    # Swap observations to the first dimension and flatten the rest
+    data = np.swapaxes(data, axis, 0)
+    t = data.shape[0]
+    data = data.reshape((t, -1))
 
     if width < 1:
         raise ParameterError('width must be at least 1')
@@ -176,7 +184,7 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
     k = int(k)
 
     # Build the distance matrix
-    D = scipy.spatial.distance.cdist(data.T, data.T, metric=metric)
+    D = scipy.spatial.distance.cdist(data, data, metric=metric)
 
     # Max out the diagonal band
     D = D + __band_infinite(t, width)
@@ -196,7 +204,7 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean', sym=False):
     return rec
 
 
-def recurrence_to_lag(rec, pad=True):
+def recurrence_to_lag(rec, pad=True, axis=-1):
     '''Convert a recurrence matrix into a lag matrix.
 
         `lag[i, j] == rec[i+j, j]`
@@ -212,6 +220,9 @@ def recurrence_to_lag(rec, pad=True):
 
         If True, `lag` is padded with `n` zeros, which eliminates
         the assumption of repetition.
+
+    axis : int
+        The axis along which to apply the recurrence-to-lag conversion
 
     Returns
     -------
@@ -246,29 +257,39 @@ def recurrence_to_lag(rec, pad=True):
     >>> plt.tight_layout()
     '''
 
+    axis = np.abs(axis)
+
     if rec.ndim != 2 or rec.shape[0] != rec.shape[1]:
         raise ParameterError('non-square recurrence matrix shape: '
-                         '{}'.format(rec.shape))
+                             '{}'.format(rec.shape))
 
-    t = rec.shape[1]
+    t = rec.shape[axis]
+
     if pad:
-        lag = np.pad(rec, [(0, t), (0, 0)], mode='constant')
+        padding = [(0, 0), (0, 0)]
+        padding[(1-axis)] = (0, t)
+        lag = np.pad(rec, padding, mode='constant')
     else:
         lag = rec.copy()
 
+    idx_slice = [Ellipsis] * lag.ndim
     for i in range(1, t):
-        lag[:, i] = np.roll(lag[:, i], -i)
+        idx_slice[axis] = i
+        lag[idx_slice] = np.roll(lag[idx_slice], -i)
 
     return np.ascontiguousarray(lag.T).T
 
 
-def lag_to_recurrence(lag):
+def lag_to_recurrence(lag, axis=-1):
     '''Convert a lag matrix into a recurrence matrix.
 
     Parameters
     ----------
     lag : np.ndarray [shape=(2*n, n) or (n, n)]
         A lag matrix, as produced by `recurrence_to_lag`
+
+    axis : int
+        The axis along which to apply the recurrence-to-lag conversion
 
     Returns
     -------
@@ -311,18 +332,24 @@ def lag_to_recurrence(lag):
 
     '''
 
-    pad = (lag.shape[0] == 2 * lag.shape[-1])
+    axis = np.abs(axis)
 
-    if lag.ndim != 2 or (lag.shape[0] != lag.shape[1] and not pad):
+    if lag.ndim != 2 or (lag.shape[0] != lag.shape[1] and
+                         lag.shape[1 - axis] != 2 * lag.shape[axis]):
         raise ParameterError('Invalid lag matrix shape: {}'.format(lag.shape))
 
-    t = lag.shape[1]
+    # Since lag must be 2-dimensional, abs(axis) = axis
+    t = lag.shape[axis]
     lag = lag.copy()
 
+    idx_slice = [Ellipsis] * lag.ndim
     for i in range(1, t):
-        lag[:, i] = np.roll(lag[:, i], i)
+        idx_slice[axis] = i
+        lag[idx_slice] = np.roll(lag[idx_slice], i)
 
-    return np.ascontiguousarray(lag[:t].T).T
+    sub_slice = [Ellipsis] * lag.ndim
+    sub_slice[1 - axis] = slice(t)
+    return np.ascontiguousarray(lag[sub_slice].T).T
 
 
 def timelag_filter(function, pad=True, index=0):
@@ -406,7 +433,7 @@ def timelag_filter(function, pad=True, index=0):
 
 
 @cache
-def subsegment(data, frames, n_segments=4):
+def subsegment(data, frames, n_segments=4, axis=-1):
     '''Sub-divide a segmentation by feature clustering.
 
     Given a set of frame boundaries (`frames`), and a data matrix (`data`),
@@ -419,7 +446,7 @@ def subsegment(data, frames, n_segments=4):
 
     Parameters
     ----------
-    data : np.ndarray [shape=(d, n)]
+    data : np.ndarray
         Data matrix to use in clustering
 
     frames : np.ndarray [shape=(n_boundaries,)], dtype=int, non-negative]
@@ -430,6 +457,10 @@ def subsegment(data, frames, n_segments=4):
 
     n_segments : int > 0
         Maximum number of frames to sub-divide each interval.
+
+    axis : int
+        Axis along which to apply the segmentation.
+        By default, the last index (-1) is taken.
 
     Returns
     -------
@@ -473,22 +504,24 @@ def subsegment(data, frames, n_segments=4):
 
     '''
 
-    data = np.atleast_2d(data)
-    frames = util.fix_frames(frames, x_min=0, x_max=data.shape[1], pad=True)
+    frames = util.fix_frames(frames, x_min=0, x_max=data.shape[axis], pad=True)
 
     if n_segments < 1:
         raise ParameterError('n_segments must be a positive integer')
 
     boundaries = []
+    idx_slices = [Ellipsis] * data.ndim
+
     for seg_start, seg_end in zip(frames[:-1], frames[1:]):
-        boundaries.extend(seg_start + agglomerative(data[:, seg_start:seg_end],
-                                                    min(seg_end - seg_start,
-                                                        n_segments)))
+        idx_slices[axis] = slice(seg_start, seg_end)
+        boundaries.extend(seg_start + agglomerative(data[idx_slices],
+                                                    min(seg_end - seg_start, n_segments),
+                                                    axis=axis))
 
     return np.ascontiguousarray(boundaries)
 
 
-def agglomerative(data, k, clusterer=None):
+def agglomerative(data, k, clusterer=None, axis=-1):
     """Bottom-up temporal segmentation.
 
     Use a temporally-constrained agglomerative clustering routine to partition
@@ -496,8 +529,8 @@ def agglomerative(data, k, clusterer=None):
 
     Parameters
     ----------
-    data     : np.ndarray [shape=(d, t)]
-        feature matrix
+    data     : np.ndarray
+        data to cluster
 
     k        : int > 0 [scalar]
         number of segments to produce
@@ -505,6 +538,10 @@ def agglomerative(data, k, clusterer=None):
     clusterer : sklearn.cluster.AgglomerativeClustering, optional
         An optional AgglomerativeClustering object.
         If `None`, a constrained Ward object is instantiated.
+
+    axis : int
+        axis along which to cluster.
+        By default, the last axis (-1) is chosen.
 
     Returns
     -------
@@ -544,11 +581,18 @@ def agglomerative(data, k, clusterer=None):
 
     """
 
+    # Make sure we have at least two dimensions
     data = np.atleast_2d(data)
+
+    # Swap data index to position 0
+    data = np.swapaxes(data, axis, 0)
+
+    # Flatten the features
+    n = data.shape[0]
+    data = data.reshape((n, -1))
 
     if clusterer is None:
         # Connect the temporal connectivity graph
-        n = data.shape[1]
         grid = sklearn.feature_extraction.image.grid_to_graph(n_x=n,
                                                               n_y=1, n_z=1)
 
@@ -558,7 +602,7 @@ def agglomerative(data, k, clusterer=None):
                                                             memory=cache)
 
     # Fit the model
-    clusterer.fit(data.T)
+    clusterer.fit(data)
 
     # Find the change points from the labels
     boundaries = [0]
