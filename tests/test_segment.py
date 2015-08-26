@@ -66,11 +66,16 @@ def test_recurrence_matrix():
         # Make a data matrix
         data = np.random.randn(3, n)
 
-        D = librosa.segment.recurrence_matrix(data, k=k, width=width, sym=sym)
+        D = librosa.segment.recurrence_matrix(data, k=k, width=width, sym=sym, axis=-1)
+
 
         # First test for symmetry
         if sym:
             assert np.allclose(D, D.T)
+
+        # Test for target-axis invariance
+        D_trans = librosa.segment.recurrence_matrix(data.T, k=k, width=width, sym=sym, axis=0)
+        assert np.allclose(D, D_trans)
 
         # If not symmetric, test for correct number of links
         if not sym and k is not None:
@@ -84,6 +89,7 @@ def test_recurrence_matrix():
         D[idx] = False
         D.T[idx] = False
         assert not np.any(D)
+
 
     for n in [10, 100, 1000]:
         for k in [None, int(n/4)]:
@@ -103,7 +109,10 @@ def test_recurrence_to_lag():
 
         rec = librosa.segment.recurrence_matrix(data)
 
-        lag = librosa.segment.recurrence_to_lag(rec, pad=pad)
+        lag = librosa.segment.recurrence_to_lag(rec, pad=pad, axis=-1)
+        lag2 = librosa.segment.recurrence_to_lag(rec.T, pad=pad, axis=0).T
+
+        assert np.allclose(lag, lag2)
 
         x = Ellipsis
         if pad:
@@ -131,10 +140,13 @@ def test_lag_to_recurrence():
         data = np.random.randn(17, n)
 
         rec = librosa.segment.recurrence_matrix(data)
-        lag = librosa.segment.recurrence_to_lag(rec, pad=pad)
+        lag = librosa.segment.recurrence_to_lag(rec, pad=pad, axis=-1)
+        lag2 = librosa.segment.recurrence_to_lag(rec.T, pad=pad, axis=0).T
+
         rec2 = librosa.segment.lag_to_recurrence(lag)
 
         assert np.allclose(rec, rec2)
+        assert np.allclose(lag, lag2)
 
     @raises(librosa.ParameterError)
     def __test_fail(size):
@@ -209,7 +221,7 @@ def test_subsegment():
 
     def __test(n_segments):
 
-        subseg = librosa.segment.subsegment(X, beats, n_segments=n_segments)
+        subseg = librosa.segment.subsegment(X, beats, n_segments=n_segments, axis=-1)
 
         # Make sure that the boundaries are within range
         assert subseg.min() >= 0
@@ -224,6 +236,10 @@ def test_subsegment():
 
         # Did we over-segment?  +2 here for 0- and end-padding
         assert len(subseg) <= n_segments * (len(beats) + 2)
+
+        # Verify that running on the transpose gives the same answer
+        ss2 = librosa.segment.subsegment(X.T, beats, n_segments=n_segments, axis=0)
+        assert np.allclose(subseg, ss2)
 
     for n_segments in [0, 1, 2, 3, 4, 100]:
         if n_segments < 1:
