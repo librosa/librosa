@@ -861,7 +861,7 @@ def fmt(y, t_min=1, n_fmt=None, kind='slinear', beta=0.5, over_sample=2, axis=-1
     exp_base = (n+1.0)/n
 
     # build the new sampling grid
-    x_exp = np.logspace(t_min,
+    x_exp = np.logspace(np.log(t_min) / np.log(exp_base),
                         np.log(n-1) / np.log(exp_base),
                         num=n_fmt,
                         endpoint=False,
