@@ -267,27 +267,56 @@ def test_magphase():
     assert np.allclose(S * P, D)
 
 
-def test_istft():
-    def __test(infile):
-        DATA = load(infile)
+def test_istft_reconstruction():
+    from scipy.signal import bartlett, hann, hamming, blackman, blackmanharris
 
-        if DATA['hann_w'][0, 0] == 0:
-            window = np.ones
-            win_length = 2 * (DATA['D'].shape[0] - 1)
-        else:
-            window = None
-            win_length = DATA['hann_w'][0, 0]
+    def __test(x, n_fft, hop_length, window, atol):
+        S = librosa.core.stft(
+            x, n_fft=n_fft, hop_length=hop_length, window=window)
+        x_reconstructed = librosa.core.istft(
+            S, hop_length=hop_length, window=window)
 
-        Dinv = librosa.istft(DATA['D'],
-                             hop_length=DATA['hop_length'][0, 0].astype(int),
-                             win_length=win_length,
-                             window=window,
-                             center=False)
+        L = min(len(x), len(x_reconstructed))
+        x = np.resize(x, L)
+        x_reconstructed = np.resize(x_reconstructed, L)
 
-        assert np.allclose(Dinv, DATA['Dinv'])
+        # NaN/Inf/-Inf should not happen
+        assert np.all(np.isfinite(x_reconstructed))
 
-    for infile in files('data/core-istft-*.mat'):
-        yield (__test, infile)
+        # should be almost approximately reconstucted
+        assert np.allclose(x, x_reconstructed, atol=atol)
+
+    # White noise
+    np.random.seed(98765)
+    x1 = np.random.randn(2 ** 15)
+
+    # Sin wave
+    x2 = np.sin(np.linspace(-np.pi, np.pi, 2 ** 15))
+
+    # Real music signal
+    x3, sr = librosa.load('data/test1_44100.wav', sr=None, mono=True)
+    assert sr == 44100
+
+    for x, atol in [(x1, 1.0e-6), (x2, 1.0e-7), (x3, 1.0e-7)]:
+        for window_func in [bartlett, hann, hamming, blackman, blackmanharris]:
+            for n_fft in [512, 1024, 2048, 4096]:
+                win = window_func(n_fft, sym=False)
+                symwin = window_func(n_fft, sym=True)
+                # tests with pre-computed window fucntions
+                for hop_length_denom in six.moves.range(2, 9):
+                    hop_length = n_fft // hop_length_denom
+                    yield (__test, x, n_fft, hop_length, win, atol)
+                    yield (__test, x, n_fft, hop_length, symwin, atol)
+                # also tests with passing widnow function itself
+                yield (__test, x, n_fft, n_fft // 9, window_func, atol)
+
+        # test with default paramters
+        x_reconstructed = librosa.core.istft(librosa.core.stft(x))
+        L = min(len(x), len(x_reconstructed))
+        x = np.resize(x, L)
+        x_reconstructed = np.resize(x_reconstructed, L)
+
+        assert np.allclose(x, x_reconstructed, atol=atol)
 
 
 def test_load_options():
@@ -409,7 +438,7 @@ def test_to_mono():
 def test_zero_crossings():
 
     def __test(data, threshold, ref_magnitude, pad, zp):
-        
+
         zc = librosa.zero_crossings(y=data,
                                     threshold=threshold,
                                     ref_magnitude=ref_magnitude,
@@ -548,7 +577,7 @@ def test_logamplitude():
 
     # Fake up some data
     def __test(x, ref_power, amin, top_db):
-    
+
         y = librosa.logamplitude(x,
                                  ref_power=ref_power,
                                  amin=amin,
@@ -616,5 +645,3 @@ def test_clicks():
                 for length in [None, 5 * sr, 15 * sr]:
                     yield __test, test_times, None, sr, hop_length, 1000, 0.1, click, length
                     yield __test, None, test_frames, sr, hop_length, 1000, 0.1, click, length
-
-
