@@ -93,7 +93,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
               3.189e-04 -0.000e+00j,  -5.961e-06 -0.000e+00j],
            [  2.441e-03 +2.884e-19j,   5.145e-02 -5.076e-03j, ...,
              -3.885e-04 -7.253e-05j,   7.334e-05 +3.868e-04j],
-          ..., 
+          ...,
            [ -7.120e-06 -1.029e-19j,  -1.951e-09 -3.568e-06j, ...,
              -4.912e-07 -1.487e-07j,   4.438e-06 -1.448e-05j],
            [  7.136e-06 -0.000e+00j,   3.561e-06 -0.000e+00j, ...,
@@ -188,9 +188,19 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
 def istft(stft_matrix, hop_length=None, win_length=None, window=None,
           center=True, dtype=np.float32):
     """
-    Inverse short-time Fourier transform.
+    Inverse short-time Fourier transform (ISTFT).
 
-    Converts a complex-valued spectrogram `stft_matrix` to time-series `y`.
+    Converts a complex-valued spectrogram `stft_matrix` to time-series `y`
+    by minimizing the mean squared error between `stft_matrix` and STFT of
+    `y` as described in [1]_.
+
+    In general, window function, hop length and other parameters should be same
+    as in stft, which mostly leads to perfect reconstruction of a signal from
+    unmodified `stft_matrix`.
+
+    .. [1] D. W. Griffin and J. S. Lim,
+        "Signal estimation from modified short-time Fourier transform,"
+        IEEE Trans. ASSP, vol.32, no.2, pp.236–243, Apr. 1984.
 
     Parameters
     ----------
@@ -203,12 +213,13 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
 
     win_length  : int <= n_fft = 2 * (stft_matrix.shape[0] - 1)
         When reconstructing the time series, each frame is windowed
+        and each sample is normalized by the sum of squared window
         according to the `window` function (see below).
 
         If unspecified, defaults to `n_fft`.
 
     window      : None, function, np.ndarray [shape=(n_fft,)]
-        - None (default): use an asymmetric Hann window * 2/3
+        - None (default): use an asymmetric Hann window
         - a window function, such as `scipy.signal.hanning`
         - a user-specified window vector of length `n_fft`
 
@@ -255,8 +266,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
 
     if window is None:
         # Default is an asymmetric Hann window.
-        # 2/3 scaling is to make stft(istft(.)) identity for 25% hop
-        ifft_window = scipy.signal.hann(win_length, sym=False) * (2.0 / 3)
+        ifft_window = scipy.signal.hann(win_length, sym=False)
 
     elif six.callable(window):
         # User supplied a windowing function
@@ -275,7 +285,10 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
     ifft_window = util.pad_center(ifft_window, n_fft)
 
     n_frames = stft_matrix.shape[1]
-    y = np.zeros(n_fft + hop_length * (n_frames - 1), dtype=dtype)
+    expected_signal_len = n_fft + hop_length * (n_frames - 1)
+    y = np.zeros(expected_signal_len, dtype=dtype)
+    ifft_window_sum = np.zeros(expected_signal_len, dtype=dtype)
+    ifft_window_square = ifft_window * ifft_window
 
     for i in range(n_frames):
         sample = i * hop_length
@@ -283,7 +296,12 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
         spec = np.concatenate((spec.conj(), spec[-2:0:-1]), 0)
         ytmp = ifft_window * fft.ifft(spec).real
 
-        y[sample:(sample+n_fft)] = y[sample:(sample+n_fft)] + ytmp
+        y[sample:(sample + n_fft)] = y[sample:(sample + n_fft)] + ytmp
+        ifft_window_sum[sample:(sample + n_fft)] += ifft_window_square
+
+    # Normalize by sum of squared window
+    approx_nonzero_indices = ifft_window_sum > util.SMALL_FLOAT
+    y[approx_nonzero_indices] /= ifft_window_sum[approx_nonzero_indices]
 
     if center:
         y = y[int(n_fft // 2):-int(n_fft // 2)]
@@ -367,7 +385,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     >>> frequencies
     array([[  0.000e+00,   0.000e+00, ...,   0.000e+00,   0.000e+00],
            [  3.150e+01,   3.070e+01, ...,   1.077e+01,   1.077e+01],
-           ..., 
+           ...,
            [  1.101e+04,   1.101e+04, ...,   1.101e+04,   1.101e+04],
            [  1.102e+04,   1.102e+04, ...,   1.102e+04,   1.102e+04]])
 
@@ -448,7 +466,7 @@ def magphase(D):
     >>> magnitude
     array([[  2.524e-03,   4.329e-02, ...,   3.217e-04,   3.520e-05],
            [  2.645e-03,   5.152e-02, ...,   3.283e-04,   3.432e-04],
-           ..., 
+           ...,
            [  1.966e-05,   9.828e-06, ...,   3.164e-07,   9.370e-06],
            [  1.966e-05,   9.830e-06, ...,   3.161e-07,   9.366e-06]], dtype=float32)
     >>> phase
@@ -456,7 +474,7 @@ def magphase(D):
              -1.000e+00 +8.742e-08j,  -1.000e+00 +8.742e-08j],
            [  1.000e+00 +1.615e-16j,   9.950e-01 -1.001e-01j, ...,
               9.794e-01 +2.017e-01j,   1.492e-02 -9.999e-01j],
-           ..., 
+           ...,
            [  1.000e+00 -5.609e-15j,  -5.081e-04 +1.000e+00j, ...,
              -9.549e-01 -2.970e-01j,   2.938e-01 -9.559e-01j],
            [ -1.000e+00 +8.742e-08j,  -1.000e+00 +8.742e-08j, ...,
@@ -468,7 +486,7 @@ def magphase(D):
     >>> np.angle(phase)
     array([[  0.000e+00,   0.000e+00, ...,   3.142e+00,   3.142e+00],
            [  1.615e-16,  -1.003e-01, ...,   2.031e-01,  -1.556e+00],
-           ..., 
+           ...,
            [ -5.609e-15,   1.571e+00, ...,  -2.840e+00,  -1.273e+00],
            [  3.142e+00,   3.142e+00, ...,   3.142e+00,   3.142e+00]], dtype=float32)
 
@@ -712,7 +730,7 @@ def perceptual_weighting(S, frequencies, **kwargs):
     >>> perceptual_CQT
     array([[ -80.076,  -80.049, ..., -104.735, -104.735],
            [ -78.344,  -78.555, ..., -103.725, -103.725],
-           ..., 
+           ...,
            [ -76.272,  -76.272, ...,  -76.272,  -76.272],
            [ -76.485,  -76.485, ...,  -76.485,  -76.485]])
 
