@@ -11,6 +11,7 @@ Contributors
 * Bryce Walburn <https://github.com/BWalburn>
 * Oriol Nieto <https://github.com/urinieto>
 * Romain Hennequin <https://github.com/romi1502>
+* Ryuichi Yamamoto <https://github.com/r9y9>
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
 
