@@ -188,9 +188,19 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
 def istft(stft_matrix, hop_length=None, win_length=None, window=None,
           center=True, dtype=np.float32):
     """
-    Inverse short-time Fourier transform.
+    Inverse short-time Fourier transform (ISTFT).
 
-    Converts a complex-valued spectrogram `stft_matrix` to time-series `y`.
+    Converts a complex-valued spectrogram `stft_matrix` to time-series `y`
+    by minimizing the mean squared error between `stft_matrix` and STFT of
+    `y` as described in [1]_.
+
+    In general, window function, hop length and other parameters should be same
+    as in stft, which mostly leads to perfect reconstruction of a signal from
+    unmodified `stft_matrix`.
+
+    .. [1] D. W. Griffin and J. S. Lim,
+        "Signal estimation from modified short-time Fourier transform,"
+        IEEE Trans. ASSP, vol.32, no.2, pp.236–243, Apr. 1984.
 
     Parameters
     ----------
@@ -203,12 +213,13 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
 
     win_length  : int <= n_fft = 2 * (stft_matrix.shape[0] - 1)
         When reconstructing the time series, each frame is windowed
+        and each sample is normalized by the sum of squared window
         according to the `window` function (see below).
 
         If unspecified, defaults to `n_fft`.
 
     window      : None, function, np.ndarray [shape=(n_fft,)]
-        - None (default): use an asymmetric Hann window * 2/3
+        - None (default): use an asymmetric Hann window
         - a window function, such as `scipy.signal.hanning`
         - a user-specified window vector of length `n_fft`
 
@@ -288,7 +299,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
         y[sample:(sample + n_fft)] = y[sample:(sample + n_fft)] + ytmp
         ifft_window_sum[sample:(sample + n_fft)] += ifft_window_square
 
-    # Normalize by window
+    # Normalize by sum of squared window
     approx_nonzero_indices = ifft_window_sum > util.SMALL_FLOAT
     y[approx_nonzero_indices] /= ifft_window_sum[approx_nonzero_indices]
 
