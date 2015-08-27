@@ -11,11 +11,14 @@ Changes
   - `librosa.onset.onset_strength` and `onset_strength_multi` support superflux-style lag and max-filtering
   - `librosa.core.autocorrelate` can now operate along any axis of multi-dimensional input
   - the `segment` module functions now support arbitrary target axis
+  - Added proper window normalization to `librosa.core.istft` for better reconstruction ([#235]).
 
 
 New features
   - `librosa.clicks` sonifies timed events such as beats or onsets
   - `librosa.onset.onset_strength_multi` computes onset strength within multiple sub-bands
+
+[#235]: https://github.com/bmcfee/librosa/pull/235
 
 ##v0.4.0
 
