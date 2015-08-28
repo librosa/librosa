@@ -884,7 +884,7 @@ def fmt(y, t_min=1, n_fmt=None, kind='slinear', beta=0.5, over_sample=2, axis=-1
     idx[axis] = slice(0, 1 + n_fmt//2)
 
     # Truncate and length-normalize
-    return result[idx] / (1 + 0.5 * n_fmt)
+    return result[idx] / n_fmt
 
 
 @cache
