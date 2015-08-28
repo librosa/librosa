@@ -778,7 +778,7 @@ def fmt(y, t_min=1, n_fmt=None, kind='slinear', beta=0.5, over_sample=2, axis=-1
 
     n_fmt : int > 0 or None
         The number of scale transform bins to use.
-        If None, then `n_bins = over_sample * ceil(n * log2(n))` is taken,
+        If None, then `n_bins = over_sample * ceil(n * log(n))` is taken,
         where `n = y.shape[axis]`
 
     kind : str
@@ -842,10 +842,13 @@ def fmt(y, t_min=1, n_fmt=None, kind='slinear', beta=0.5, over_sample=2, axis=-1
     if t_min <= 0:
         raise ParameterError('t_min must be a positive number')
 
+    exp_base = float(t_min + n)/float(t_min + n - 1)
+
     if n_fmt is None:
         if over_sample < 1:
             raise ParameterError('over_sample must be >= 1')
-        n_fmt = int(over_sample * n * np.ceil(np.log2(n)))
+        n_fmt = int(np.ceil(over_sample * (1 + np.log(1 + float(n) / t_min) / np.log(exp_base))))
+
     elif n_fmt < 1:
         raise ParameterError('n_fmt must be a positive integer')
 
@@ -858,14 +861,16 @@ def fmt(y, t_min=1, n_fmt=None, kind='slinear', beta=0.5, over_sample=2, axis=-1
     # build the interpolator
     f_interp = scipy.interpolate.interp1d(x, y, kind=kind, axis=axis)
 
-    exp_base = (n+1.0)/n
-
     # build the new sampling grid
+    # exponentially spaced between t_min and n-1 (since x covers [0, n-1])
     x_exp = np.logspace(np.log(t_min) / np.log(exp_base),
                         np.log(n-1) / np.log(exp_base),
                         num=n_fmt,
-                        endpoint=False,
+                        endpoint=True,
                         base=exp_base)
+
+    # Clean up any rounding errors at the boundaries of the interpolation
+    x_exp = np.clip(x_exp, t_min, n - 1)
 
     # Resample the signal
     y_res = f_interp(x_exp)
@@ -875,9 +880,8 @@ def fmt(y, t_min=1, n_fmt=None, kind='slinear', beta=0.5, over_sample=2, axis=-1
     shape[axis] = -1
 
     # Apply the window and fft
-    result = scipy.fftpack.fft(y_res * (x_exp**beta).reshape(shape),
-                               axis=axis,
-                               overwrite_x=True)
+    result = fft.fft(y_res * (x_exp**beta).reshape(shape),
+                     axis=axis, overwrite_x=True)
 
     # Slice out the positive-scale component
     idx = [slice(None)] * result.ndim

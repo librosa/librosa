@@ -738,14 +738,15 @@ def test_fmt_scale():
         # Trim to the same number of components
         n = min(len(f_orig), len(f_res))
 
-        assert np.allclose(f_orig[:n], f_res[:n])
+        # Due to sampling alignment, we'll get some phase deviation here
+        # The spectrum should be approximately preserved though.
+        assert np.allclose(np.abs(f_orig[:n]), np.abs(f_res[:n]), atol=1e-3)
 
 
     y_orig = np.cos(2 * np.pi * np.linspace(0, 1, num=256))
 
-    for scale in 2.0**np.arange(-2, 3):
-        if scale == 1:
-            continue
+    for scale in [9./8, 7./8]:
+
         # Scale the time axis
         y_res = librosa.resample(y_orig, 1.0, scale, fix=True, res_type='scipy')
 
