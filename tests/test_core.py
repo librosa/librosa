@@ -781,5 +781,14 @@ def test_fmt_fail():
 
     # Test for bad input
     y[len(y)//2:] = np.inf
-    yield __test, 1 , None, 2, y
+    yield __test, 1, None, 2, y
 
+
+def test_fmt_axis():
+
+    y = np.random.randn(32, 32)
+
+    f1 = librosa.fmt(y, axis=-1)
+    f2 = librosa.fmt(y.T, axis=0).T
+
+    assert np.allclose(f1, f2)
