@@ -724,3 +724,35 @@ def test_clicks():
                 for length in [None, 5 * sr, 15 * sr]:
                     yield __test, test_times, None, sr, hop_length, 1000, 0.1, click, length
                     yield __test, None, test_frames, sr, hop_length, 1000, 0.1, click, length
+
+
+def test_fmt():
+
+    def __test(n_fmt, over_sample, kind, y_orig, y_res):
+        
+        f_orig = librosa.fmt(y_orig, n_fmt=n_fmt, over_sample=over_sample, kind=kind)
+        f_res = librosa.fmt(y_res, n_fmt=n_fmt, over_sample=over_sample, kind=kind)
+
+        # Trim to the same number of components
+        n = min(len(f_orig), len(f_res))
+
+        assert np.allclose(f_orig[:n], f_res[:n])
+
+
+    y_orig = np.cos(2 * np.pi * np.linspace(0, 1, num=100))
+
+    for scale in 2.0**np.arange(-2, 3):
+        if scale == 1:
+            continue
+        # Scale the time axis
+        y_res = librosa.resample(y_orig, 1.0, scale, fix=True, res_type='scipy')
+
+        # Re-normalize the energy to match that of y_orig
+        y_res /= np.sqrt(scale)
+
+        for kind in ['linear', 'slinear', 'quadratic', 'cubic']:
+            for over_sample in [2, 4, 8]:
+                yield __test, None, over_sample, kind, y_orig, y_res
+            for n_fmt in [32, 64, 128, 256]:
+                yield __test, n_fmt, 2, kind, y_orig, y_res
+

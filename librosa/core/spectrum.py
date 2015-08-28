@@ -883,7 +883,8 @@ def fmt(y, t_min=1, n_fmt=None, kind='slinear', beta=0.5, over_sample=2, axis=-1
     idx = [slice(None)] * result.ndim
     idx[axis] = slice(0, 1 + n_fmt//2)
 
-    return result[idx]
+    # Truncate and length-normalize
+    return result[idx] / (1 + 0.5 * n_fmt)
 
 
 @cache
