@@ -727,11 +727,13 @@ def test_clicks():
 
 
 def test_fmt():
+    # This test constructs a single-cycle cosine wave, applies various axis scalings, 
+    # and tests that the FMT is preserved
 
-    def __test(n_fmt, over_sample, kind, y_orig, y_res):
+    def __test(scale, n_fmt, over_sample, kind, y_orig, y_res):
         
-        f_orig = librosa.fmt(y_orig, n_fmt=n_fmt, over_sample=over_sample, kind=kind)
-        f_res = librosa.fmt(y_res, n_fmt=n_fmt, over_sample=over_sample, kind=kind)
+        f_orig = librosa.fmt(y_orig, t_min=1, n_fmt=n_fmt, over_sample=over_sample, kind=kind)
+        f_res = librosa.fmt(y_res, t_min=scale, n_fmt=n_fmt, over_sample=over_sample, kind=kind)
 
         # Trim to the same number of components
         n = min(len(f_orig), len(f_res))
@@ -739,7 +741,7 @@ def test_fmt():
         assert np.allclose(f_orig[:n], f_res[:n])
 
 
-    y_orig = np.cos(2 * np.pi * np.linspace(0, 1, num=100))
+    y_orig = np.cos(2 * np.pi * np.linspace(0, 1, num=256))
 
     for scale in 2.0**np.arange(-2, 3):
         if scale == 1:
@@ -752,7 +754,7 @@ def test_fmt():
 
         for kind in ['linear', 'slinear', 'quadratic', 'cubic']:
             for over_sample in [2, 4, 8]:
-                yield __test, None, over_sample, kind, y_orig, y_res
+                yield __test, scale, None, over_sample, kind, y_orig, y_res
             for n_fmt in [32, 64, 128, 256]:
-                yield __test, n_fmt, 2, kind, y_orig, y_res
+                yield __test, scale, n_fmt, 2, kind, y_orig, y_res
 
