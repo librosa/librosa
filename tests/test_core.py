@@ -726,7 +726,7 @@ def test_clicks():
                     yield __test, None, test_frames, sr, hop_length, 1000, 0.1, click, length
 
 
-def test_fmt():
+def test_fmt_scale():
     # This test constructs a single-cycle cosine wave, applies various axis scalings, 
     # and tests that the FMT is preserved
 
@@ -757,4 +757,29 @@ def test_fmt():
                 yield __test, scale, None, over_sample, kind, y_orig, y_res
             for n_fmt in [32, 64, 128, 256]:
                 yield __test, scale, n_fmt, 2, kind, y_orig, y_res
+
+
+def test_fmt_fail():
+
+    @raises(librosa.ParameterError)
+    def __test(t_min, n_fmt, over_sample, y):
+        librosa.fmt(y, t_min=t_min, n_fmt=n_fmt, over_sample=over_sample)
+
+    y = np.random.randn(256)
+
+    # Test for bad t_min
+    for t_min in [-1, 0]:
+        yield __test, t_min, None, 2, y
+
+    # Test for bad n_fmt
+    for n_fmt in [-1, 0]:
+        yield __test, 1, n_fmt, 2, y
+
+    # Test for bad over_sample
+    for over_sample in [-1, 0, 0.5]:
+        yield __test, 1, None, over_sample, y
+
+    # Test for bad input
+    y[len(y)//2:] = np.inf
+    yield __test, 1 , None, 2, y
 
