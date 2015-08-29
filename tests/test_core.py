@@ -483,6 +483,18 @@ def test_pitch_tuning():
                 yield __test, note_hz, resolution, bins_per_octave, tuning
 
 
+def test_piptrack():
+
+    def __test(y, sr, S, n_fft, hop_length, fmin, fmax, threshold):
+        pitches, mags = librosa.piptrack(
+            y=y, sr=sr, S=S, n_fft=n_fft, hop_length=hop_length, fmin=fmin,
+            fmax=fmax, threshold=threshold)
+
+    S = np.asarray([[1, 0, 0]]).T
+    np.seterr(divide='raise')
+    yield __test, None, 22050, S, 4096, None, 150.0, 4000.0, 0.1
+
+
 def test_estimate_tuning():
 
     def __test(target_hz, resolution, bins_per_octave, tuning):
