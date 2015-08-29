@@ -842,12 +842,13 @@ def fmt(y, t_min=1, n_fmt=None, kind='slinear', beta=0.5, over_sample=2, axis=-1
     if t_min <= 0:
         raise ParameterError('t_min must be a positive number')
 
-    exp_base = float(t_min + n)/float(t_min + n - 1)
+    log_base = np.log(n - 1) - np.log(n - 2)
+    base = np.exp(log_base)
 
     if n_fmt is None:
         if over_sample < 1:
             raise ParameterError('over_sample must be >= 1')
-        n_fmt = int(np.ceil(over_sample * (1 + np.log(1 + float(n) / t_min) / np.log(exp_base))))
+        n_fmt = int(np.ceil(over_sample * (np.log(n - 1) - np.log(t_min)) / log_base))
 
     elif n_fmt < 1:
         raise ParameterError('n_fmt must be a positive integer')
@@ -863,11 +864,11 @@ def fmt(y, t_min=1, n_fmt=None, kind='slinear', beta=0.5, over_sample=2, axis=-1
 
     # build the new sampling grid
     # exponentially spaced between t_min and n-1 (since x covers [0, n-1])
-    x_exp = np.logspace(np.log(t_min) / np.log(exp_base),
-                        np.log(n-1) / np.log(exp_base),
+    x_exp = np.logspace(np.log(t_min) / log_base,
+                        np.log(n - 1) / log_base,
                         num=n_fmt,
                         endpoint=True,
-                        base=exp_base)
+                        base=base)
 
     # Clean up any rounding errors at the boundaries of the interpolation
     x_exp = np.clip(x_exp, t_min, n - 1)
