@@ -12,7 +12,7 @@ Changes
   - `librosa.core.autocorrelate` can now operate along any axis of multi-dimensional input
   - the `segment` module functions now support arbitrary target axis
   - Added proper window normalization to `librosa.core.istft` for better reconstruction ([#235]).
-
+  - Fixed division by zero bug in `core.pitch.pip_track`
 
 New features
   - `librosa.clicks` sonifies timed events such as beats or onsets
