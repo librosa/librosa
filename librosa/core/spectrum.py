@@ -857,7 +857,7 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=2, axis=
         raise ParameterError('y must be finite everywhere')
 
     # original grid
-    x = np.arange(n)
+    x = np.arange(0, n)
 
     # build the interpolator
     f_interp = scipy.interpolate.interp1d(x, y, kind=kind, axis=axis)
@@ -867,11 +867,11 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=2, axis=
     x_exp = np.logspace(np.log(t_min) / log_base,
                         np.log(n - 1) / log_base,
                         num=n_fmt,
-                        endpoint=True,
+                        endpoint=False,
                         base=base)
 
     # Clean up any rounding errors at the boundaries of the interpolation
-    x_exp = np.unique(np.clip(x_exp, t_min, n - 1))
+    x_exp = np.clip(x_exp, t_min, x[-1])
 
     # Resample the signal
     y_res = f_interp(x_exp)
