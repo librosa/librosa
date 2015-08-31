@@ -165,7 +165,7 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
 
 
 @cache
-def piptrack(y=None, sr=22050, S=None, n_fft=4096, hop_length=None,
+def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
              fmin=150.0, fmax=4000.0, threshold=0.1):
     '''Pitch tracking on thresholded parabolically-interpolated STFT
 
@@ -283,7 +283,7 @@ def piptrack(y=None, sr=22050, S=None, n_fft=4096, hop_length=None,
 
 @util.decorators.deprecated('0.4', '0.5')
 @cache
-def ifptrack(y, sr=22050, n_fft=4096, hop_length=None, fmin=None,
+def ifptrack(y, sr=22050, n_fft=2048, hop_length=None, fmin=None,
              fmax=None, threshold=0.75):  # pragma: no cover
     '''Instantaneous pitch frequency tracking.
 
