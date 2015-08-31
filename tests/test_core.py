@@ -732,8 +732,24 @@ def test_fmt_scale():
 
     def __test(scale, n_fmt, over_sample, kind, y_orig, y_res):
         
-        f_orig = librosa.fmt(y_orig, t_min=1, n_fmt=n_fmt, over_sample=over_sample, kind=kind)
-        f_res = librosa.fmt(y_res, t_min=scale, n_fmt=n_fmt, over_sample=over_sample, kind=kind)
+        assert np.allclose(np.sum(y_orig**2), np.sum(y_res**2))
+
+        f_orig = librosa.fmt(y_orig,
+                             t_min=0.5,
+                             n_fmt=n_fmt,
+                             over_sample=over_sample,
+                             kind=kind)
+
+        if n_fmt is None:
+            n_fmt_res = 2 * len(f_orig) - 2
+        else:
+            n_fmt_res = n_fmt
+
+        f_res = librosa.fmt(y_res,
+                            t_min=scale * 0.5,
+                            n_fmt=n_fmt_res,
+                            over_sample=over_sample,
+                            kind=kind)
 
         # Trim to the same number of components
         n = min(len(f_orig), len(f_res))
@@ -754,7 +770,7 @@ def test_fmt_scale():
 
     y_orig = f(x)
 
-    for scale in [9./8, 7./8]:
+    for scale in [9./8, 5./4, 3./2, 2./1]:
 
         # Scale the time axis
         x_res = np.linspace(bounds[0], bounds[1], num=scale * num, endpoint=False)
@@ -764,10 +780,10 @@ def test_fmt_scale():
         y_res /= np.sqrt(scale)
 
         for kind in ['linear', 'slinear', 'quadratic', 'cubic']:
-            for over_sample in [2, 4, 8]:
-                yield __test, scale, None, over_sample, kind, y_orig, y_res
             for n_fmt in [32, 64, 128, 256]:
                 yield __test, scale, n_fmt, 2, kind, y_orig, y_res
+            for over_sample in [2, 4, 8]:
+                yield __test, scale, None, over_sample, kind, y_orig, y_res
 
 
 def test_fmt_fail():
