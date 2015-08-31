@@ -483,7 +483,44 @@ def test_pitch_tuning():
                 yield __test, note_hz, resolution, bins_per_octave, tuning
 
 
-def test_piptrack():
+def test_piptrack_properties():
+
+    def __test(S, n_fft, hop_length, fmin, fmax, threshold):
+
+        pitches, mags = librosa.core.piptrack(S=S,
+                                              n_fft=n_fft,
+                                              hop_length=hop_length,
+                                              fmin=fmin,
+                                              fmax=fmax,
+                                              threshold=threshold)
+
+        # Shape tests
+        eq_(S.shape, pitches.shape)
+        eq_(S.shape, mags.shape)
+
+        # Make sure all magnitudes are positive
+        assert np.all(mags >= 0)
+
+        # Check the frequency estimates for bins with non-zero magnitude
+        idx = (mags > 0)
+        assert np.all(pitches[idx] >= fmin)
+        assert np.all(pitches[idx] <= fmax)
+
+        # And everywhere else, pitch should be 0
+        assert np.all(pitches[~idx] == 0)
+
+    y, sr = librosa.load('data/test1_22050.wav')
+
+    for n_fft in [2048, 4096]:
+        for hop_length in [None, n_fft // 4, n_fft // 2]:
+            S = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length))
+            for fmin in [0, 100]:
+                for fmax in [4000, 8000, sr // 2]:
+                    for threshold in [0.1, 0.2, 0.5]:
+                        yield __test, S, n_fft, hop_length, fmin, fmax, threshold
+
+
+def test_piptrack_errors():
 
     def __test(y, sr, S, n_fft, hop_length, fmin, fmax, threshold):
         pitches, mags = librosa.piptrack(
@@ -493,6 +530,36 @@ def test_piptrack():
     S = np.asarray([[1, 0, 0]]).T
     np.seterr(divide='raise')
     yield __test, None, 22050, S, 4096, None, 150.0, 4000.0, 0.1
+
+
+def test_piptrack():
+
+
+    def __test(S, freq):
+        pitches, mags = librosa.piptrack(S=S, fmin=100)
+
+        idx = (mags > 0)
+
+        assert len(idx) > 0
+
+        recovered_pitches = pitches[idx]
+
+        # We should be within one cent of the target
+        assert np.all(np.abs(np.log2(recovered_pitches) - np.log2(freq)) <= 1e-2)
+
+
+    sr = 22050
+    duration = 3.0
+
+    for freq in [110, 220, 440, 880]:
+        # Generate a sine tone
+        y = np.sin(2 * np.pi * freq * np.linspace(0, duration, num=duration*sr))
+        for n_fft in [1024, 2048, 4096]:
+            # Using left-aligned frames eliminates reflection artifacts at the boundaries
+            S = np.abs(librosa.stft(y, n_fft=n_fft, center=False))
+
+            yield __test, S, freq
+
 
 
 def test_estimate_tuning():
