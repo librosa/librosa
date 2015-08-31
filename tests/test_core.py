@@ -743,12 +743,22 @@ def test_fmt_scale():
         assert np.allclose(np.abs(f_orig[:n]), np.abs(f_res[:n]), atol=1e-3)
 
 
-    y_orig = np.cos(2 * np.pi * np.linspace(0, 1, num=256))
+    def f(x):
+        freq = 3
+        return np.cos(2 * np.pi * freq * x)
+
+    bounds = [0, 1.0]
+    num = 2**9
+
+    x = np.linspace(bounds[0], bounds[1], num=num, endpoint=False)
+
+    y_orig = f(x)
 
     for scale in [9./8, 7./8]:
 
         # Scale the time axis
-        y_res = librosa.resample(y_orig, 1.0, scale, fix=True, res_type='scipy')
+        x_res = np.linspace(bounds[0], bounds[1], num=scale * num, endpoint=False)
+        y_res = f(x_res)
 
         # Re-normalize the energy to match that of y_orig
         y_res /= np.sqrt(scale)
