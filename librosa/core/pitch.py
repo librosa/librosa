@@ -229,7 +229,10 @@ def piptrack(y=None, sr=22050, S=None, n_fft=4096, hop_length=None,
     if hop_length is None:
         hop_length = int(n_fft // 4)
 
-    S, n_fft = _spectrogram(y=y, S=np.abs(S), n_fft=n_fft, hop_length=hop_length)
+    S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
+
+    # Make sure we're dealing with magnitudes
+    S = np.abs(S)
 
     # Truncate to feasible region
     fmin = np.maximum(fmin, 0)
