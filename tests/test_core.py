@@ -483,7 +483,7 @@ def test_pitch_tuning():
                 yield __test, note_hz, resolution, bins_per_octave, tuning
 
 
-def test_piptrack():
+def test_piptrack_properties():
 
     def __test(S, n_fft, hop_length, fmin, fmax, threshold):
 
@@ -520,7 +520,7 @@ def test_piptrack():
                         yield __test, S, n_fft, hop_length, fmin, fmax, threshold
 
 
-def test_piptrack_negative():
+def test_piptrack_errors():
 
     def __test(y, sr, S, n_fft, hop_length, fmin, fmax, threshold):
         pitches, mags = librosa.piptrack(
@@ -530,6 +530,34 @@ def test_piptrack_negative():
     S = np.asarray([[1, 0, 0]]).T
     np.seterr(divide='raise')
     yield __test, None, 22050, S, 4096, None, 150.0, 4000.0, 0.1
+
+
+def test_piptrack():
+
+
+    def __test(S, freq):
+        pitches, mags = librosa.piptrack(S=S)
+
+        idx = (mags > 0)
+
+        recovered_pitches = pitches[idx]
+
+        # We should be within one cent of the target
+        assert np.all(np.abs(np.log2(recovered_pitches) - np.log2(freq)) <= 1e-2)
+
+
+    sr = 22050
+    duration = 3.0
+
+    for freq in [110, 220, 440, 880]:
+        # Generate a sine tone
+        y = np.sin(2 * np.pi * freq * np.linspace(0, duration, num=duration*sr))
+        for n_fft in [1024, 2048, 4096]:
+            # Using left-aligned frames eliminates reflection artifacts at the boundaries
+            S = np.abs(librosa.stft(y, n_fft=n_fft, center=False))
+
+            yield __test, S, freq
+
 
 
 def test_estimate_tuning():
