@@ -761,7 +761,7 @@ def perceptual_weighting(S, frequencies, **kwargs):
 
 
 @cache
-def fmt(y, t_min=1, n_fmt=None, kind='slinear', beta=0.5, over_sample=2, axis=-1):
+def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=2, axis=-1):
     """The fast Mellin transform (FMT) [1]_ of a signal y.
 
     .. [1] De Sena, Antonio, and Davide Rocchesso.
@@ -774,7 +774,7 @@ def fmt(y, t_min=1, n_fmt=None, kind='slinear', beta=0.5, over_sample=2, axis=-1
         The input signal(s).  Can be multidimensional.
 
     t_min : float > 0
-        The minimum time spacing
+        The minimum time spacing (in samples)
 
     n_fmt : int > 0 or None
         The number of scale transform bins to use.
@@ -871,7 +871,7 @@ def fmt(y, t_min=1, n_fmt=None, kind='slinear', beta=0.5, over_sample=2, axis=-1
                         base=base)
 
     # Clean up any rounding errors at the boundaries of the interpolation
-    x_exp = np.clip(x_exp, t_min, n - 1)
+    x_exp = np.unique(np.clip(x_exp, t_min, n - 1))
 
     # Resample the signal
     y_res = f_interp(x_exp)
