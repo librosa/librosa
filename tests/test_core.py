@@ -485,6 +485,43 @@ def test_pitch_tuning():
 
 def test_piptrack():
 
+    def __test(S, n_fft, hop_length, fmin, fmax, threshold):
+
+        pitches, mags = librosa.core.piptrack(S=S,
+                                              n_fft=n_fft,
+                                              hop_length=hop_length,
+                                              fmin=fmin,
+                                              fmax=fmax,
+                                              threshold=threshold)
+
+        # Shape tests
+        eq_(S.shape, pitches.shape)
+        eq_(S.shape, mags.shape)
+
+        # Make sure all magnitudes are positive
+        assert np.all(mags >= 0)
+
+        # Check the frequency estimates for bins with non-zero magnitude
+        idx = (mags > 0)
+        assert np.all(pitches[idx] >= fmin)
+        assert np.all(pitches[idx] <= fmax)
+
+        # And everywhere else, pitch should be 0
+        assert np.all(pitches[~idx] == 0)
+
+    y, sr = librosa.load('data/test1_22050.wav')
+
+    for n_fft in [2048, 4096]:
+        for hop_length in [None, n_fft // 4, n_fft // 2]:
+            S = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length))
+            for fmin in [0, 100]:
+                for fmax in [4000, 8000, sr // 2]:
+                    for threshold in [0.1, 0.2, 0.5]:
+                        yield __test, S, n_fft, hop_length, fmin, fmax, threshold
+
+
+def test_piptrack_negative():
+
     def __test(y, sr, S, n_fft, hop_length, fmin, fmax, threshold):
         pitches, mags = librosa.piptrack(
             y=y, sr=sr, S=S, n_fft=n_fft, hop_length=hop_length, fmin=fmin,
