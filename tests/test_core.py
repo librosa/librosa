@@ -536,7 +536,7 @@ def test_piptrack():
 
 
     def __test(S, freq):
-        pitches, mags = librosa.piptrack(S=S)
+        pitches, mags = librosa.piptrack(S=S, fmin=100)
 
         idx = (mags > 0)
 
