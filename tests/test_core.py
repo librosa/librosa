@@ -540,6 +540,8 @@ def test_piptrack():
 
         idx = (mags > 0)
 
+        assert len(idx) > 0
+
         recovered_pitches = pitches[idx]
 
         # We should be within one cent of the target
