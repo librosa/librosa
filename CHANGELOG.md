@@ -13,6 +13,7 @@ Changes
   - the `segment` module functions now support arbitrary target axis
   - Added proper window normalization to `librosa.core.istft` for better reconstruction ([#235]).
   - Fixed division by zero bug in `core.pitch.pip_track`
+  - Standardized `n_fft=2048` for `piptrack`, `ifptrack` (deprecated), and `logfsgram` (deprecated)
 
 New features
   - `librosa.clicks` sonifies timed events such as beats or onsets

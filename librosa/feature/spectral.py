@@ -1188,7 +1188,7 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
 # Deprecated functions
 @util.decorators.deprecated('0.4', '0.5')
-def logfsgram(y=None, sr=22050, S=None, n_fft=4096,
+def logfsgram(y=None, sr=22050, S=None, n_fft=2048,
               hop_length=512, **kwargs):  # pragma: no cover
     '''Compute a log-frequency spectrogram using a
     fixed-window STFT.
