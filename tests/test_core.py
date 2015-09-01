@@ -756,8 +756,6 @@ def test_fmt_scale():
         # The shape of the spectrum should be approximately preserved though.
         assert np.allclose(np.abs(f_orig), np.abs(f_res), atol=atol, rtol=1e-7)
 
-
-
     # Our test signal is a single-cycle sine wave
     def f(x):
         freq = 1
@@ -809,6 +807,9 @@ def test_fmt_fail():
     # Test for bad input
     y[len(y)//2:] = np.inf
     yield __test, 1, None, 2, y
+
+    # Test for insufficient samples
+    yield __test, 1, None, 1, np.ones(2)
 
 
 def test_fmt_axis():
