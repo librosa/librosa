@@ -872,7 +872,7 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=1, axis=
                         base=base)
 
     # Clean up any rounding errors at the boundaries of the interpolation
-    x_exp = np.clip(x_exp, t_min / n, x[-1])
+    x_exp = np.clip(x_exp, float(t_min) / n, x[-1])
 
     # Resample the signal
     y_res = f_interp(x_exp)
@@ -890,7 +890,7 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=1, axis=
     idx[axis] = slice(0, 1 + n_fmt//2)
 
     # Truncate and length-normalize
-    return result[idx] / n_fmt
+    return result[idx] * np.sqrt(n) / n_fmt
 
 
 @cache

@@ -730,7 +730,7 @@ def test_fmt_scale():
     # This test constructs a single-cycle cosine wave, applies various axis scalings, 
     # and tests that the FMT is preserved
 
-    def __test(scale, n_fmt, over_sample, kind, y_orig, y_res):
+    def __test(scale, n_fmt, over_sample, kind, y_orig, y_res, atol):
         
         # Make sure our signals preserve energy
         assert np.allclose(np.sum(y_orig**2), np.sum(y_res**2))
@@ -754,9 +754,8 @@ def test_fmt_scale():
 
         # Due to sampling alignment, we'll get some phase deviation here
         # The shape of the spectrum should be approximately preserved though.
-        assert np.allclose(librosa.util.normalize(np.abs(f_orig), norm=2),
-                           librosa.util.normalize(np.abs(f_res), norm=2),
-                           atol=1e-4, rtol=1e-7)
+        assert np.allclose(np.abs(f_orig), np.abs(f_res), atol=atol, rtol=1e-7)
+
 
 
     # Our test signal is a single-cycle sine wave
@@ -765,11 +764,13 @@ def test_fmt_scale():
         return np.sin(2 * np.pi * freq * x)
 
     bounds = [0, 1.0]
-    num = 2**7
+    num = 2**8
 
     x = np.linspace(bounds[0], bounds[1], num=num, endpoint=False)
 
     y_orig = f(x)
+
+    atol = {'linear': 1e-4, 'slinear': 1e-4, 'quadratic': 1e-5, 'cubic': 1e-6}
 
     for scale in [9./8, 5./4, 3./2, 2./1]:
 
@@ -781,10 +782,8 @@ def test_fmt_scale():
         y_res /= np.sqrt(scale)
 
         for kind in ['linear', 'slinear', 'quadratic', 'cubic']:
-            for n_fmt in [64, 128, 256, 512]:
-                yield __test, scale, n_fmt, 2, kind, y_orig, y_res
-            for over_sample in [1]:
-                yield __test, scale, None, over_sample, kind, y_orig, y_res
+            for n_fmt in [None, 64, 128, 256, 512]:
+                yield __test, scale, n_fmt, 1, kind, y_orig, y_res, atol[kind]
 
 
 def test_fmt_fail():
