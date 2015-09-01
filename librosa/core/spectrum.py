@@ -772,13 +772,14 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=1, axis=
     ----------
     y : np.ndarray, real-valued
         The input signal(s).  Can be multidimensional.
+        The target axis must contain at least 3 samples.
 
     t_min : float > 0
         The minimum time spacing (in samples)
 
     n_fmt : int > 0 or None
         The number of scale transform bins to use.
-        If None, then `n_bins = over_sample * ceil(n * log(n))` is taken,
+        If None, then `n_bins = over_sample * ceil(n * log((n-1)/t_min))` is taken,
         where `n = y.shape[axis]`
 
     kind : str
@@ -804,6 +805,7 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=1, axis=
     ParameterError
         if `n_fmt < 1` or `t_min <= 0`
         or if `y` is not finite
+        or if `y.shape[axis] < 3`.
 
     Examples
     --------
@@ -866,6 +868,9 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=1, axis=
     """
 
     n = y.shape[axis]
+
+    if n < 3:
+        raise ParameterError('y.shape[{:}]=={:} < 3'.format(axis, n))
 
     if t_min <= 0:
         raise ParameterError('t_min must be a positive number')
