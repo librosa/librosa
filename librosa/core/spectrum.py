@@ -761,7 +761,7 @@ def perceptual_weighting(S, frequencies, **kwargs):
 
 
 @cache
-def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=2, axis=-1):
+def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=1, axis=-1):
     """The fast Mellin transform (FMT) [1]_ of a signal y.
 
     .. [1] De Sena, Antonio, and Davide Rocchesso.
@@ -848,6 +848,7 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=2, axis=
     if n_fmt is None:
         if over_sample < 1:
             raise ParameterError('over_sample must be >= 1')
+
         n_fmt = int(np.ceil(over_sample * (np.log(n - 1) - np.log(t_min)) / log_base))
 
     elif n_fmt < 1:
@@ -856,22 +857,22 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=2, axis=
     if not np.all(np.isfinite(y)):
         raise ParameterError('y must be finite everywhere')
 
-    # original grid
-    x = np.arange(0, n)
+    # original grid: signal covers 0 to 1
+    x = np.linspace(0, 1, num=n, endpoint=False)
 
     # build the interpolator
     f_interp = scipy.interpolate.interp1d(x, y, kind=kind, axis=axis)
 
     # build the new sampling grid
-    # exponentially spaced between t_min and n-1 (since x covers [0, n-1])
-    x_exp = np.logspace(np.log(t_min) / log_base,
-                        np.log(n - 1) / log_base,
+    # exponentially spaced between t_min/n and 1
+    x_exp = np.logspace((np.log(t_min) - np.log(n)) / log_base,
+                        0,
                         num=n_fmt,
                         endpoint=False,
                         base=base)
 
     # Clean up any rounding errors at the boundaries of the interpolation
-    x_exp = np.clip(x_exp, t_min, x[-1])
+    x_exp = np.clip(x_exp, t_min / n, x[-1])
 
     # Resample the signal
     y_res = f_interp(x_exp)
