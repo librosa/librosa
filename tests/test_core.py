@@ -732,39 +732,40 @@ def test_fmt_scale():
 
     def __test(scale, n_fmt, over_sample, kind, y_orig, y_res):
         
+        # Make sure our signals preserve energy
         assert np.allclose(np.sum(y_orig**2), np.sum(y_res**2))
 
+        # Scale-transform the original
         f_orig = librosa.fmt(y_orig,
                              t_min=0.5,
                              n_fmt=n_fmt,
                              over_sample=over_sample,
                              kind=kind)
 
-        if n_fmt is None:
-            n_fmt_res = 2 * len(f_orig) - 2
-        else:
-            n_fmt_res = n_fmt
+        # Force to the same length
+        n_fmt_res = 2 * len(f_orig) - 2
 
+        # Scale-transform the new signal to match
         f_res = librosa.fmt(y_res,
                             t_min=scale * 0.5,
                             n_fmt=n_fmt_res,
                             over_sample=over_sample,
                             kind=kind)
 
-        # Trim to the same number of components
-        n = min(len(f_orig), len(f_res))
-
         # Due to sampling alignment, we'll get some phase deviation here
-        # The spectrum should be approximately preserved though.
-        assert np.allclose(np.abs(f_orig[:n]), np.abs(f_res[:n]), atol=1e-3)
+        # The shape of the spectrum should be approximately preserved though.
+        assert np.allclose(librosa.util.normalize(np.abs(f_orig), norm=2),
+                           librosa.util.normalize(np.abs(f_res), norm=2),
+                           atol=1e-4, rtol=1e-7)
 
 
+    # Our test signal is a single-cycle sine wave
     def f(x):
-        freq = 3
-        return np.cos(2 * np.pi * freq * x)
+        freq = 1
+        return np.sin(2 * np.pi * freq * x)
 
     bounds = [0, 1.0]
-    num = 2**9
+    num = 2**7
 
     x = np.linspace(bounds[0], bounds[1], num=num, endpoint=False)
 
@@ -780,9 +781,9 @@ def test_fmt_scale():
         y_res /= np.sqrt(scale)
 
         for kind in ['linear', 'slinear', 'quadratic', 'cubic']:
-            for n_fmt in [32, 64, 128, 256]:
+            for n_fmt in [64, 128, 256, 512]:
                 yield __test, scale, n_fmt, 2, kind, y_orig, y_res
-            for over_sample in [2, 4, 8]:
+            for over_sample in [1]:
                 yield __test, scale, None, over_sample, kind, y_orig, y_res
 
 
