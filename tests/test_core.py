@@ -768,9 +768,9 @@ def test_fmt_scale():
 
     y_orig = f(x)
 
-    atol = {'linear': 1e-4, 'slinear': 1e-4, 'quadratic': 1e-5, 'cubic': 1e-6}
+    atol = {'slinear': 1e-4, 'quadratic': 1e-5, 'cubic': 1e-6}
 
-    for scale in [9./8, 5./4, 3./2, 2./1]:
+    for scale in [2, 3./2, 5./4, 9./8]:
 
         # Scale the time axis
         x_res = np.linspace(bounds[0], bounds[1], num=scale * num, endpoint=False)
@@ -779,9 +779,12 @@ def test_fmt_scale():
         # Re-normalize the energy to match that of y_orig
         y_res /= np.sqrt(scale)
 
-        for kind in ['linear', 'slinear', 'quadratic', 'cubic']:
+        for kind in ['slinear', 'quadratic', 'cubic']:
             for n_fmt in [None, 64, 128, 256, 512]:
-                yield __test, scale, n_fmt, 1, kind, y_orig, y_res, atol[kind]
+                for os in [1, 2, 3]:
+                    yield __test, scale, n_fmt, os, kind, y_orig, y_res, atol[kind]
+
+                # Over-sampling with down-scaling gets dicey at the end-points
                 yield __test, 1./scale, n_fmt, 1, kind, y_res, y_orig, atol[kind]
 
 
