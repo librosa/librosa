@@ -900,11 +900,12 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=1, axis=
 
     # build the new sampling grid
     # exponentially spaced between t_min/n and 1
+    # we'll go one past where we need, and drop the last sample
     x_exp = np.logspace((np.log(t_min) - np.log(n)) / log_base,
                         0,
-                        num=n_fmt,
+                        num=n_fmt + 1,
                         endpoint=False,
-                        base=base)
+                        base=base)[:-1]
 
     # Clean up any rounding errors at the boundaries of the interpolation
     x_exp = np.clip(x_exp, float(t_min) / n, x[-1])
