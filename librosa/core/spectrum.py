@@ -886,7 +886,7 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=1, axis=
     elif n_fmt < 3:
         raise ParameterError('n_fmt must be a positive integer')
     else:
-        log_base = np.log(n_fmt - 1) - np.log(n_fmt - 2)
+        log_base = (np.log(n_fmt - 1) - np.log(n_fmt - 2)) / over_sample
 
     if not np.all(np.isfinite(y)):
         raise ParameterError('y must be finite everywhere')
@@ -901,11 +901,12 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=1, axis=
     # build the new sampling grid
     # exponentially spaced between t_min/n and 1
     # we'll go one past where we need, and drop the last sample
+    n_over = int(np.ceil(over_sample))
     x_exp = np.logspace((np.log(t_min) - np.log(n)) / log_base,
                         0,
-                        num=n_fmt + 1,
+                        num=n_fmt + n_over,
                         endpoint=False,
-                        base=base)[:-1]
+                        base=base)[:-n_over]
 
     # Clean up any rounding errors at the boundaries of the interpolation
     x_exp = np.clip(x_exp, float(t_min) / n, x[-1])
