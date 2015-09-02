@@ -731,7 +731,7 @@ def test_fmt_scale():
     # and tests that the FMT is preserved
 
     def __test(scale, n_fmt, over_sample, kind, y_orig, y_res, atol):
-        
+
         # Make sure our signals preserve energy
         assert np.allclose(np.sum(y_orig**2), np.sum(y_res**2))
 
