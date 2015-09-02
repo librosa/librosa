@@ -777,7 +777,7 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=1, axis=
     t_min : float > 0
         The minimum time spacing (in samples)
 
-    n_fmt : int > 0 or None
+    n_fmt : int > 2 or None
         The number of scale transform bins to use.
         If None, then `n_bins = over_sample * ceil(n * log((n-1)/t_min))` is taken,
         where `n = y.shape[axis]`
@@ -803,7 +803,7 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=1, axis=
     Raises
     ------
     ParameterError
-        if `n_fmt < 1` or `t_min <= 0`
+        if `n_fmt < 2` or `t_min <= 0`
         or if `y` is not finite
         or if `y.shape[axis] < 3`.
 
@@ -875,21 +875,23 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=1, axis=
     if t_min <= 0:
         raise ParameterError('t_min must be a positive number')
 
-    log_base = np.log(n - 1) - np.log(n - 2)
-    base = np.exp(log_base)
 
     if n_fmt is None:
         if over_sample < 1:
             raise ParameterError('over_sample must be >= 1')
 
+        log_base = np.log(n - 1) - np.log(n - 2)
         n_fmt = int(np.ceil(over_sample * (np.log(n - 1) - np.log(t_min)) / log_base))
 
-    elif n_fmt < 1:
+    elif n_fmt < 3:
         raise ParameterError('n_fmt must be a positive integer')
+    else:
+        log_base = np.log(n_fmt - 1) - np.log(n_fmt - 2)
 
     if not np.all(np.isfinite(y)):
         raise ParameterError('y must be finite everywhere')
 
+    base = np.exp(log_base)
     # original grid: signal covers 0 to 1
     x = np.linspace(0, 1, num=n, endpoint=False)
 
