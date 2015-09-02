@@ -782,6 +782,7 @@ def test_fmt_scale():
         for kind in ['linear', 'slinear', 'quadratic', 'cubic']:
             for n_fmt in [None, 64, 128, 256, 512]:
                 yield __test, scale, n_fmt, 1, kind, y_orig, y_res, atol[kind]
+                yield __test, 1./scale, n_fmt, 1, kind, y_res, y_orig, atol[kind]
 
 
 def test_fmt_fail():
