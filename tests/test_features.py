@@ -14,6 +14,7 @@ import matplotlib
 matplotlib.use('Agg')
 import librosa
 import numpy as np
+import scipy.signal
 
 from nose.tools import raises, eq_
 
@@ -433,22 +434,30 @@ def test_tempogram_odf():
 
     sr = 22050
     hop_length = 512
-    duration = 16
+    duration = 8
 
     # Generate a synthetic onset envelope
-    def __test(tempo):
+    def __test(tempo, win_length, window, norm):
         # Generate an evenly-spaced pulse train
         odf = np.zeros(duration * sr // hop_length)
         spacing = sr * 60. // (hop_length * tempo)
         odf[::int(spacing)] = 1
 
-        tempogram = librosa.feature.tempogram(onset_envelope=odf)
+        tempogram = librosa.feature.tempogram(onset_envelope=odf,
+                                              sr=sr,
+                                              hop_length=hop_length,
+                                              win_length=win_length,
+                                              window=window,
+                                              norm=norm)
 
-        # Max over time to wash over the boundary padding effects
+        # Mean over time to wash over the boundary padding effects
         idx = np.where(librosa.localmax(tempogram.max(axis=1)))[0]
 
         # Indices should all be non-zero integer multiples of spacing
         assert np.allclose(idx, spacing * np.arange(1, 1 + len(idx)))
 
-    for tempo in [60, 72, 90, 120, 140]:
-        yield __test, tempo
+    for tempo in [60, 90, 120, 160, 200]:
+        for win_length in [192, 384]:
+            for window in [None, np.ones, np.ones(win_length)]:
+                for norm in [None, 1, 2, np.inf]:
+                    yield __test, tempo, win_length, window, norm
