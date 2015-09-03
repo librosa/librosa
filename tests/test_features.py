@@ -427,3 +427,28 @@ def test_tonnetz():
     yield __audio
     yield __stft
     yield __cqt
+
+
+def test_tempogram_odf():
+
+    sr = 22050
+    hop_length = 512
+    duration = 16
+
+    # Generate a synthetic onset envelope
+    def __test(tempo):
+        # Generate an evenly-spaced pulse train
+        odf = np.zeros(duration * sr // hop_length)
+        spacing = sr * 60. // (hop_length * tempo)
+        odf[::int(spacing)] = 1
+
+        tempogram = librosa.feature.tempogram(onset_envelope=odf)
+
+        # Max over time to wash over the boundary padding effects
+        idx = np.where(librosa.localmax(tempogram.max(axis=1)))[0]
+
+        # Indices should all be non-zero integer multiples of spacing
+        assert np.allclose(idx, spacing * np.arange(1, 1 + len(idx)))
+
+    for tempo in [60, 72, 90, 120, 140]:
+        yield __test, tempo
