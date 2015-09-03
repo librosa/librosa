@@ -458,7 +458,7 @@ def test_tempogram_fail():
         yield __test, y, sr, None, hop_length, win_length, True, None, np.inf
 
     # Fail when len(window) != win_length
-    yield __test, y, sr, None, hop_length, win_length, True, np.ones(win_length + 1), np.inf
+    yield __test, y, sr, None, hop_length, 384, True, np.ones(win_length + 1), np.inf
 
 
 def test_tempogram_audio():
