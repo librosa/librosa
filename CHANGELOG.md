@@ -18,6 +18,8 @@ Changes
 New features
   - `librosa.clicks` sonifies timed events such as beats or onsets
   - `librosa.onset.onset_strength_multi` computes onset strength within multiple sub-bands
+  - `librosa.feature.tempogram` computes localized onset strength autocorrelation
+  - `librosa.display.specshow` now supports `*_axis='tempo'` for annotating tempo-scaled data
 
 [#235]: https://github.com/bmcfee/librosa/pull/235
 
