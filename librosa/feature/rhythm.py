@@ -21,7 +21,7 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
     '''Compute the tempogram: local autocorrelation of the onset strength envelope. [1]_
 
     .. [1] Grosche, Peter, Meinard Müller, and Frank Kurth.
-        "Cyclic tempogram—A mid-level tempo representation for musicsignals."
+        "Cyclic tempogram - A mid-level tempo representation for music signals."
         ICASSP, 2010.
 
     Parameters
@@ -106,14 +106,6 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
     from ..onset import onset_strength
 
-    if onset_envelope is None:
-        if y is None:
-            raise ParameterError('Either y or onset_envelope must be provided')
-
-        onset_envelope = onset_strength(y=y, sr=sr,
-                                        hop_length=hop_length,
-                                        centering=False)
-
     if win_length < 1:
         raise ParameterError('win_length must be a positive integer')
 
@@ -126,16 +118,24 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
         if ac_window.size != win_length:
             raise ParameterError('Size mismatch between win_length and len(window)')
 
+    if onset_envelope is None:
+        if y is None:
+            raise ParameterError('Either y or onset_envelope must be provided')
+
+        onset_envelope = onset_strength(y=y, sr=sr,
+                                        hop_length=hop_length,
+                                        centering=False)
+
     # Pad the envelope so that autocorrelation windows are centered on the input
     if center:
-        onset_envelope = np.pad(onset_envelope,
-                                win_length // 2,
+        onset_envelope = np.pad(onset_envelope, win_length // 2,
                                 mode='linear_ramp', end_values=[0, 0])
 
-    # Hann-window to avoid edge effects
+    # Carve onset envelope into frames
     odf_frame = util.frame(onset_envelope,
                            frame_length=win_length,
                            hop_length=1)
 
+    # Window, autocorrelate, and normalize
     return util.normalize(autocorrelate(odf_frame * ac_window[:, np.newaxis], axis=0),
                           norm=norm, axis=0)
