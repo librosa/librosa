@@ -18,8 +18,7 @@ __all__ = ['tempogram']
 # -- Rhythmic features -- #
 def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
               win_length=384, center=True, window=None, norm=np.inf):
-    '''Compute the tempogram: local autocorrelation of the onset
-       strength envelope.  [1]_
+    '''Compute the tempogram: local autocorrelation of the onset strength envelope. [1]_
 
     .. [1] Grosche, Peter, Meinard Müller, and Frank Kurth.
         "Cyclic tempogram—A mid-level tempo representation for musicsignals."
@@ -78,19 +77,30 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
     Examples
     --------
+    >>> # Compute local onset autocorrelation
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> oenv = librosa.onset.onset_strength(y=y, sr=sr, centering=False)
     >>> tempogram = librosa.feature.tempogram(onset_envelope=oenv, sr=sr)
+    >>> # Compute global onset autocorrelation
+    >>> ac_global = librosa.autocorrelate(oenv, max_size=tempogram.shape[0])
+    >>> ac_global = librosa.util.normalize(ac_global)
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.subplot(2, 1, 1)
+    >>> plt.subplot(3, 1, 1)
     >>> plt.plot(oenv, label='Onset strength')
     >>> plt.xticks([])
     >>> plt.legend(frameon=True)
     >>> plt.axis('tight')
-    >>> plt.subplot(2, 1, 2)
+    >>> plt.subplot(3, 1, 2)
     >>> librosa.display.specshow(tempogram, x_axis='time')
-    >>> plt.title('Tempogram')
+    >>> plt.ylabel('Tempogram')
+    >>> plt.subplot(3, 1, 3)
+    >>> x = np.linspace(0, tempogram.shape[0] * 512. / sr, num=tempogram.shape[0])
+    >>> plt.plot(x, np.mean(tempogram, axis=1), label='Mean local autocorrelation')
+    >>> plt.plot(x, ac_global, '--', alpha=0.75, label='Global autocorrelation')
+    >>> plt.xlabel('Lag (seconds)')
+    >>> plt.axis('tight')
+    >>> plt.legend(frameon=True)
     >>> plt.tight_layout()
     '''
 
