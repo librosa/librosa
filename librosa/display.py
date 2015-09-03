@@ -351,7 +351,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000
 
 def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
              n_xticks=5, n_yticks=5, fmin=None, fmax=None, bins_per_octave=12,
-             **kwargs):
+             tmin=32, tmax=240, **kwargs):
     '''Display a spectrogram/chromagram/cqt/etc.
 
     Functions as a drop-in replacement for `matplotlib.pyplot.imshow`,
@@ -396,6 +396,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
         - 'lag' : like time, but past the half-way point counts
           as negative values.
         - 'frames' : markers are shown as frame counts.
+        - 'tempo' : markers are shown as beats-per-minute
 
     n_xticks : int > 0 [scalar]
         If x_axis is drawn, the number of ticks to show
@@ -415,6 +416,11 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
 
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave.  Used for CQT frequency scale.
+
+    tmin : float > 0 [scalar]
+    tmax : float > 0 [scalar]
+        Minimum and maximum tempi displayed when `_axis='tempo'`,
+        as measured in beats per minute.
 
     kwargs : additional keyword arguments
         Arguments passed through to `matplotlib.pyplot.imshow`.
@@ -517,6 +523,8 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
                       fmin=fmin,
                       fmax=fmax,
                       bins_per_octave=bins_per_octave,
+                      tmin=tmin,
+                      tmax=tmax,
                       hop_length=hop_length)
 
     # Scale and decorate the axes
@@ -545,6 +553,7 @@ def __axis(data, n_ticks, ax_type, horiz=False, **kwargs):
                 'tonnetz': __axis_tonnetz,
                 'off': __axis_none,
                 'time': __axis_time,
+                'tempo': __axis_tempo,
                 'lag': __axis_lag,
                 'frames': __axis_frames}
 
@@ -729,6 +738,22 @@ def __axis_time(data, n_ticks, horiz, sr=22050, hop_length=512, **_kwargs):
                n_ticks=None, axis=axis)
 
     labeler('Time')
+
+
+def __axis_tempo(data, n_ticks, horiz, sr=22050, hop_length=512, tmin=32, tmax=240, **_kwargs):
+    '''Tempo axes'''
+    n, ticker, labeler = __get_shape_artists(data, horiz)
+
+    nmin = min(n-1, sr * 60.0 / (hop_length * tmin))
+    nmax = max(1, sr * 60.0 / (hop_length * tmax))
+
+    positions = np.logspace(np.log2(nmin), np.log2(nmax),
+                            num=n_ticks, endpoint=True, base=2).astype(int)
+
+    tempi = ['{:.1f}'.format(60 * float(sr) / (hop_length * t)) for t in positions]
+    ticker(positions, tempi)
+    labeler('Tempo (BPM)')
+
 
 
 def __axis_lag(data, n_ticks, horiz, sr=22050, hop_length=512, **_kwargs):
