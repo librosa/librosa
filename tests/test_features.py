@@ -461,6 +461,45 @@ def test_tempogram_fail():
     yield __test, y, sr, None, hop_length, win_length, True, np.ones(win_length + 1), np.inf
 
 
+def test_tempogram_audio():
+
+    def __test(y, sr, oenv, hop_length):
+
+        # Get the tempogram from audio
+        t1 = librosa.feature.tempogram(y=y, sr=sr,
+                                       onset_envelope=None,
+                                       hop_length=hop_length)
+
+        # Get the tempogram from oenv
+        t2 = librosa.feature.tempogram(y=None, sr=sr,
+                                       onset_envelope=oenv,
+                                       hop_length=hop_length)
+
+        # Make sure it works when both are provided
+        t3 = librosa.feature.tempogram(y=y, sr=sr,
+                                       onset_envelope=oenv,
+                                       hop_length=hop_length)
+
+        # And that oenv overrides y
+        t4 = librosa.feature.tempogram(y=0 * y, sr=sr,
+                                       onset_envelope=oenv,
+                                       hop_length=hop_length)
+
+        assert np.allclose(t1, t2)
+        assert np.allclose(t1, t3)
+        assert np.allclose(t1, t4)
+
+    y, sr = librosa.load(__EXAMPLE_FILE)
+
+    for hop_length in [512, 1024]:
+        oenv = librosa.onset.onset_strength(y=y,
+                                            sr=sr,
+                                            hop_length=hop_length,
+                                            centering=False)
+
+        yield __test, y, sr, oenv, hop_length
+
+
 def test_tempogram_odf():
 
     sr = 22050
