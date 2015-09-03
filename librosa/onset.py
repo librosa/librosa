@@ -19,7 +19,7 @@ from . import core
 from . import util
 from .util.exceptions import ParameterError
 
-from .feature import melspectrogram
+from .feature.spectral import melspectrogram
 
 __all__ = ['onset_detect', 'onset_strength', 'onset_strength_multi']
 
