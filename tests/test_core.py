@@ -801,7 +801,7 @@ def test_fmt_fail():
         yield __test, t_min, None, 2, y
 
     # Test for bad n_fmt
-    for n_fmt in [-1, 0]:
+    for n_fmt in [-1, 0, 1, 2]:
         yield __test, 1, n_fmt, 2, y
 
     # Test for bad over_sample

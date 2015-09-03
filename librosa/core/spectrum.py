@@ -884,7 +884,7 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=1, axis=
         n_fmt = int(np.ceil(over_sample * (np.log(n - 1) - np.log(t_min)) / log_base))
 
     elif n_fmt < 3:
-        raise ParameterError('n_fmt must be a positive integer')
+        raise ParameterError('n_fmt=={:} < 3'.format(n_fmt))
     else:
         log_base = (np.log(n_fmt - 1) - np.log(n_fmt - 2)) / over_sample
 
