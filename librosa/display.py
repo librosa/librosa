@@ -351,7 +351,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000
 
 def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
              n_xticks=5, n_yticks=5, fmin=None, fmax=None, bins_per_octave=12,
-             tmin=32, tmax=240, **kwargs):
+             tmin=16, tmax=240, **kwargs):
     '''Display a spectrogram/chromagram/cqt/etc.
 
     Functions as a drop-in replacement for `matplotlib.pyplot.imshow`,
@@ -740,7 +740,7 @@ def __axis_time(data, n_ticks, horiz, sr=22050, hop_length=512, **_kwargs):
     labeler('Time')
 
 
-def __axis_tempo(data, n_ticks, horiz, sr=22050, hop_length=512, tmin=32, tmax=240, **_kwargs):
+def __axis_tempo(data, n_ticks, horiz, sr=22050, hop_length=512, tmin=16, tmax=240, **_kwargs):
     '''Tempo axes'''
     n, ticker, labeler = __get_shape_artists(data, horiz)
 
