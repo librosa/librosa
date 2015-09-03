@@ -430,6 +430,37 @@ def test_tonnetz():
     yield __cqt
 
 
+def test_tempogram_fail():
+
+    @raises(librosa.ParameterError)
+    def __test(y, sr, onset_envelope, hop_length, win_length, center, window, norm):
+
+        librosa.feature.tempogram(y=y,
+                                  sr=sr,
+                                  onset_envelope=onset_envelope,
+                                  hop_length=hop_length, 
+                                  win_length=win_length,
+                                  center=center,
+                                  window=window,
+                                  norm=norm)
+
+    sr = 22050
+    hop_length = 512
+    duration = 10
+
+    y = np.zeros(duration * sr)
+
+    # Fail when no input is provided
+    yield __test, None, sr, None, hop_length, 384, True, None, np.inf
+
+    # Fail when win_length is too small
+    for win_length in [-384, -1, 0]:
+        yield __test, y, sr, None, hop_length, win_length, True, None, np.inf
+
+    # Fail when len(window) != win_length
+    yield __test, y, sr, None, hop_length, win_length, True, np.ones(win_length + 1), np.inf
+
+
 def test_tempogram_odf():
 
     sr = 22050
