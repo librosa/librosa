@@ -14,6 +14,7 @@ import matplotlib
 matplotlib.use('Agg')
 import librosa
 import numpy as np
+import scipy.signal
 
 from nose.tools import raises, eq_
 
@@ -427,3 +428,135 @@ def test_tonnetz():
     yield __audio
     yield __stft
     yield __cqt
+
+
+def test_tempogram_fail():
+
+    @raises(librosa.ParameterError)
+    def __test(y, sr, onset_envelope, hop_length, win_length, center, window, norm):
+
+        librosa.feature.tempogram(y=y,
+                                  sr=sr,
+                                  onset_envelope=onset_envelope,
+                                  hop_length=hop_length, 
+                                  win_length=win_length,
+                                  center=center,
+                                  window=window,
+                                  norm=norm)
+
+    sr = 22050
+    hop_length = 512
+    duration = 10
+
+    y = np.zeros(duration * sr)
+
+    # Fail when no input is provided
+    yield __test, None, sr, None, hop_length, 384, True, None, np.inf
+
+    # Fail when win_length is too small
+    for win_length in [-384, -1, 0]:
+        yield __test, y, sr, None, hop_length, win_length, True, None, np.inf
+
+    # Fail when len(window) != win_length
+    yield __test, y, sr, None, hop_length, 384, True, np.ones(win_length + 1), np.inf
+
+
+def test_tempogram_audio():
+
+    def __test(y, sr, oenv, hop_length):
+
+        # Get the tempogram from audio
+        t1 = librosa.feature.tempogram(y=y, sr=sr,
+                                       onset_envelope=None,
+                                       hop_length=hop_length)
+
+        # Get the tempogram from oenv
+        t2 = librosa.feature.tempogram(y=None, sr=sr,
+                                       onset_envelope=oenv,
+                                       hop_length=hop_length)
+
+        # Make sure it works when both are provided
+        t3 = librosa.feature.tempogram(y=y, sr=sr,
+                                       onset_envelope=oenv,
+                                       hop_length=hop_length)
+
+        # And that oenv overrides y
+        t4 = librosa.feature.tempogram(y=0 * y, sr=sr,
+                                       onset_envelope=oenv,
+                                       hop_length=hop_length)
+
+        assert np.allclose(t1, t2)
+        assert np.allclose(t1, t3)
+        assert np.allclose(t1, t4)
+
+    y, sr = librosa.load(__EXAMPLE_FILE)
+
+    for hop_length in [512, 1024]:
+        oenv = librosa.onset.onset_strength(y=y,
+                                            sr=sr,
+                                            hop_length=hop_length,
+                                            centering=False)
+
+        yield __test, y, sr, oenv, hop_length
+
+
+def test_tempogram_odf():
+
+    sr = 22050
+    hop_length = 512
+    duration = 8
+
+    def __test_equiv(tempo, center):
+        odf = np.zeros(duration * sr // hop_length)
+        spacing = sr * 60. // (hop_length * tempo)
+        odf[::int(spacing)] = 1
+
+        odf_ac = librosa.autocorrelate(odf)
+
+        tempogram = librosa.feature.tempogram(onset_envelope=odf,
+                                              sr=sr,
+                                              hop_length=hop_length,
+                                              win_length=len(odf),
+                                              window=np.ones,
+                                              center=center,
+                                              norm=None)
+
+        idx = 0
+        if center:
+            idx = len(odf)//2
+
+        assert np.allclose(odf_ac, tempogram[:, idx])
+
+    # Generate a synthetic onset envelope
+    def __test_peaks(tempo, win_length, window, norm):
+        # Generate an evenly-spaced pulse train
+        odf = np.zeros(duration * sr // hop_length)
+        spacing = sr * 60. // (hop_length * tempo)
+        odf[::int(spacing)] = 1
+
+        tempogram = librosa.feature.tempogram(onset_envelope=odf,
+                                              sr=sr,
+                                              hop_length=hop_length,
+                                              win_length=win_length,
+                                              window=window,
+                                              norm=norm)
+
+        # Check the shape of the output
+        eq_(tempogram.shape[0], win_length)
+
+        eq_(tempogram.shape[1], len(odf))
+
+        # Mean over time to wash over the boundary padding effects
+        idx = np.where(librosa.localmax(tempogram.max(axis=1)))[0]
+
+        # Indices should all be non-zero integer multiples of spacing
+        assert np.allclose(idx, spacing * np.arange(1, 1 + len(idx)))
+
+    for tempo in [60, 90, 120, 160, 200]:
+        for center in [False, True]:
+            yield __test_equiv, tempo, center
+
+        for win_length in [192, 384]:
+            for window in [None, np.ones, np.ones(win_length)]:
+                for norm in [None, 1, 2, np.inf]:
+                    yield __test_peaks, tempo, win_length, window, norm
