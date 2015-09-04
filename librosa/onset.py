@@ -422,8 +422,13 @@ def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
     # Ensure that S is at least 2-d
     S = np.atleast_2d(S)
 
-    # Compute the reference spectrogram
-    ref_spec = scipy.ndimage.maximum_filter1d(S, max_size, axis=0)
+    # Compute the reference spectrogram.
+    # Efficiency hack: skip filtering step and pass by reference
+    # if max_size will produce a no-op.
+    if max_size == 1:
+        ref_spec = S
+    else:
+        ref_spec = scipy.ndimage.maximum_filter1d(S, max_size, axis=0)
 
     # Compute difference to the reference, spaced by lag
     onset_env = S[:, lag:] - ref_spec[:, :-lag]
