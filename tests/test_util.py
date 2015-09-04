@@ -595,6 +595,7 @@ def test_warning_deprecated():
         return True
 
     warnings.resetwarnings()
+    warnings.simplefilter('always')
     with warnings.catch_warnings(record=True) as out:
         x = __dummy()
 
@@ -618,6 +619,7 @@ def test_warning_moved():
         return True
 
     warnings.resetwarnings()
+    warnings.simplefilter('always')
     with warnings.catch_warnings(record=True) as out:
         x = __dummy()
 
