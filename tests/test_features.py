@@ -494,8 +494,7 @@ def test_tempogram_audio():
     for hop_length in [512, 1024]:
         oenv = librosa.onset.onset_strength(y=y,
                                             sr=sr,
-                                            hop_length=hop_length,
-                                            centering=False)
+                                            hop_length=hop_length)
 
         yield __test, y, sr, oenv, hop_length
 

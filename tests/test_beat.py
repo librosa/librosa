@@ -33,7 +33,7 @@ def test_onset_strength():
                                               S=DATA['D'],
                                               lag=1,
                                               max_size=1,
-                                              centering=False,
+                                              center=False,
                                               detrend=True,
                                               aggregate=np.mean)
 
