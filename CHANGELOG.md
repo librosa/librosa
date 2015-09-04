@@ -14,6 +14,8 @@ Changes
   - Added proper window normalization to `librosa.core.istft` for better reconstruction ([#235]).
   - Fixed division by zero bug in `core.pitch.pip_track`
   - Standardized `n_fft=2048` for `piptrack`, `ifptrack` (deprecated), and `logfsgram` (deprecated)
+  - `onset_strength` parameter `'centering'` has been deprecated and renamed to `'center'`
+  - `onset_strength` always trims to match the input spectrogram duration
 
 New features
   - `librosa.clicks` sonifies timed events such as beats or onsets
