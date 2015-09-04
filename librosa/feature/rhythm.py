@@ -80,8 +80,7 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
     >>> # Compute local onset autocorrelation
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> hop_length = 512
-    >>> oenv = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length,
-    ...                                     centering=False)
+    >>> oenv = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
     >>> tempogram = librosa.feature.tempogram(onset_envelope=oenv, sr=sr,
     ...                                       hop_length=hop_length)
     >>> # Compute global onset autocorrelation
@@ -131,8 +130,7 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
             raise ParameterError('Either y or onset_envelope must be provided')
 
         onset_envelope = onset_strength(y=y, sr=sr,
-                                        hop_length=hop_length,
-                                        centering=False)
+                                        hop_length=hop_length)
 
     # Pad the envelope so that autocorrelation windows are centered on the input
     n = len(onset_envelope)
