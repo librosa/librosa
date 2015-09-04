@@ -46,8 +46,8 @@ def test_onset_strength_audio():
 
         target_shape = S.shape[-1]
 
-        if center:
-            target_shape += n_fft // (2 * hop_length)
+        #if center:
+        #    target_shape += n_fft // (2 * hop_length)
 
         if not detrend:
             assert np.all(oenv >= 0)
@@ -96,8 +96,8 @@ def test_onset_strength_spectrogram():
 
         target_shape = S.shape[-1]
 
-        if center:
-            target_shape += n_fft // (2 * hop_length)
+        #if center:
+        #    target_shape += n_fft // (2 * hop_length)
 
         if not detrend:
             assert np.all(oenv >= 0)
