@@ -203,8 +203,6 @@ def test_onset_strength_deprecated():
         with warnings.catch_warnings(record=True) as out:
             librosa.onset.onset_strength(y=y, sr=sr, centering=centering)
 
-            print(centering, no_warning, out)
-
             if no_warning:
                 eq_(out, [])
             else:
