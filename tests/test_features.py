@@ -544,7 +544,7 @@ def test_tempogram_odf():
         # Check the shape of the output
         eq_(tempogram.shape[0], win_length)
 
-        assert np.abs(tempogram.shape[1] - len(odf)) < 2
+        eq_(tempogram.shape[1], len(odf))
 
         # Mean over time to wash over the boundary padding effects
         idx = np.where(librosa.localmax(tempogram.max(axis=1)))[0]
