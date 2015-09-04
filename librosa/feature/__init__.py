@@ -23,6 +23,12 @@ Spectral features
     tonnetz
     zero_crossing_rate
 
+Rhythm features
+---------------
+.. autosummary::
+    :toctree: generated/
+
+    tempogram
 
 Feature manipulation
 --------------------
@@ -45,5 +51,6 @@ Deprecated
 """
 from .utils import *  # pylint: disable=wildcard-import
 from .spectral import *  # pylint: disable=wildcard-import
+from .rhythm import * # pylint: disable=wildcard-import
 
 __all__ = [_ for _ in dir() if not _.startswith('_')]

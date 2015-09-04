@@ -41,6 +41,7 @@ S_signed = np.abs(S) - np.median(np.abs(S))
 S_bin = S_signed > 0
 
 
+
 @image_comparison(baseline_images=['complex'], extensions=['png'])
 def test_complex_input():
     plt.figure()
@@ -63,6 +64,14 @@ def test_cqt_note():
 def test_cqt_hz():
     plt.figure()
     librosa.display.specshow(C, y_axis='cqt_hz')
+
+
+@image_comparison(baseline_images=['tempo'], extensions=['png'])
+def test_tempo():
+    T = librosa.feature.tempogram(y=y, sr=sr)
+
+    plt.figure()
+    librosa.display.specshow(T, y_axis='tempo')
 
 
 @image_comparison(baseline_images=['tonnetz'], extensions=['png'])
