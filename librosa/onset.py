@@ -13,6 +13,7 @@ Onset detection
 
 import numpy as np
 import scipy
+import six
 import warnings
 
 from . import cache
@@ -278,11 +279,11 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
 
     if centering is not None:
         center = centering
-        warnings.warn_explicit("The 'centering=' parameter of onset_strength is "
-                               "deprecated as of librosa version 0.4.1."
-                               "\n\tIt will be removed in librosa version 0.5.0."
-                               "\n\tPlease use 'center=' instead.",
-                               category=DeprecationWarning)
+        warnings.warn("The 'centering=' parameter of onset_strength is "
+                      "deprecated as of librosa version 0.4.1."
+                      "\n\tIt will be removed in librosa version 0.5.0."
+                      "\n\tPlease use 'center=' instead.",
+                      category=DeprecationWarning)
 
     odf_all = onset_strength_multi(y=y,
                                    sr=sr,
