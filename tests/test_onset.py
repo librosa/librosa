@@ -23,12 +23,12 @@ __EXAMPLE_FILE = 'data/test1_22050.wav'
 
 def test_onset_strength_audio():
 
-    def __test(y, sr, feature, n_fft, hop_length, lag, max_size, detrend, centering, aggregate):
+    def __test(y, sr, feature, n_fft, hop_length, lag, max_size, detrend, center, aggregate):
 
         oenv = librosa.onset.onset_strength(y=y, sr=sr,
                                             S=None,
                                             detrend=detrend,
-                                            centering=centering,
+                                            center=center,
                                             aggregate=aggregate,
                                             feature=feature,
                                             n_fft=n_fft,
@@ -44,7 +44,7 @@ def test_onset_strength_audio():
 
         target_shape = S.shape[-1]
 
-        if centering:
+        if center:
             target_shape += n_fft // (2 * hop_length)
 
         if not detrend:
@@ -62,7 +62,7 @@ def test_onset_strength_audio():
                 for lag in [0, 1, 2]:
                     for max_size in [0, 1, 2]:
                         for detrend in [False, True]:
-                            for centering in [False, True]:
+                            for center in [False, True]:
                                 for aggregate in [None, np.mean, np.max]:
                                     if lag < 1 or max_size < 1:
                                         tf = raises(librosa.ParameterError)(__test)
@@ -70,21 +70,21 @@ def test_onset_strength_audio():
                                         tf = __test
 
                                     yield (tf, y, sr, feature, n_fft,
-                                           hop_length, lag, max_size, detrend, centering, aggregate)
+                                           hop_length, lag, max_size, detrend, center, aggregate)
 
                                     tf = raises(librosa.ParameterError)(__test)
                                     yield (tf, None, sr, feature, n_fft,
-                                           hop_length, lag, max_size, detrend, centering, aggregate)
+                                           hop_length, lag, max_size, detrend, center, aggregate)
 
 
 def test_onset_strength_spectrogram():
 
-    def __test(S, sr, feature, n_fft, hop_length, detrend, centering):
+    def __test(S, sr, feature, n_fft, hop_length, detrend, center):
 
         oenv = librosa.onset.onset_strength(y=None, sr=sr,
                                             S=S,
                                             detrend=detrend,
-                                            centering=centering,
+                                            center=center,
                                             aggregate=aggregate,
                                             feature=feature,
                                             n_fft=n_fft,
@@ -94,7 +94,7 @@ def test_onset_strength_spectrogram():
 
         target_shape = S.shape[-1]
 
-        if centering:
+        if center:
             target_shape += n_fft // (2 * hop_length)
 
         if not detrend:
@@ -111,13 +111,13 @@ def test_onset_strength_spectrogram():
         for n_fft in [512, 2048]:
             for hop_length in [n_fft // 2, n_fft // 4]:
                 for detrend in [False, True]:
-                    for centering in [False, True]:
+                    for center in [False, True]:
                         for aggregate in [None, np.mean, np.max]:
                             yield (__test, S, sr, feature, n_fft,
-                                   hop_length, detrend, centering)
+                                   hop_length, detrend, center)
                             tf = raises(librosa.ParameterError)(__test)
                             yield (tf, None, sr, feature, n_fft,
-                                   hop_length, detrend, centering)
+                                   hop_length, detrend, center)
 
 
 def test_onset_strength_multi():

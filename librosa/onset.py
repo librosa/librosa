@@ -13,6 +13,7 @@ Onset detection
 
 import numpy as np
 import scipy
+import warnings
 
 from . import cache
 from . import core
@@ -145,8 +146,10 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
 
 def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
-                   detrend=False, centering=True,
-                   feature=None, aggregate=None, **kwargs):
+                   detrend=False, center=True,
+                   feature=None, aggregate=None,
+                   centering=None,
+                   **kwargs):
     """Compute a spectral flux onset strength envelope.
 
     Onset strength at time `t` is determined by:
@@ -185,8 +188,12 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
     detrend : bool [scalar]
         Filter the onset strength to remove the DC component
 
-    centering : bool [scalar]
+    center : bool [scalar]
+    centering : bool [scalar] (deprecated)
         Shift the onset function by `n_fft / (2 * hop_length)` frames
+
+        .. note:: The `centering` parameter is deprecated as of 0.4.1,
+        and has been replaced by the `center` parameter.
 
     feature : function
         Function for computing time-series features, eg, scaled spectrograms.
@@ -269,13 +276,21 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
 
     """
 
+    if centering is not None:
+        center = centering
+        warnings.warn_explicit("The 'centering=' parameter of onset_strength is "
+                               "deprecated as of librosa version 0.4.1."
+                               "\n\tIt will be removed in librosa version 0.5.0."
+                               "\n\tPlease use 'center=' instead.",
+                               category=DeprecationWarning)
+
     odf_all = onset_strength_multi(y=y,
                                    sr=sr,
                                    S=S,
                                    lag=lag,
                                    max_size=max_size,
                                    detrend=detrend,
-                                   centering=centering,
+                                   center=center,
                                    feature=feature,
                                    aggregate=aggregate,
                                    channels=None,
@@ -286,7 +301,7 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
 
 @cache
 def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1, 
-                         detrend=False, centering=True, feature=None,
+                         detrend=False, center=True, feature=None,
                          aggregate=None, channels=None, **kwargs):
     """Compute a spectral flux onset strength envelope across multiple channels.
 
@@ -316,7 +331,7 @@ def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
     detrend : bool [scalar]
         Filter the onset strength to remove the DC component
 
-    centering : bool [scalar]
+    center : bool [scalar]
         Shift the onset function by `n_fft / (2 * hop_length)` frames
 
     feature : function
@@ -429,7 +444,7 @@ def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
 
     # compensate for lag
     pad_width = lag
-    if centering:
+    if center:
         # Counter-act framing effects. Shift the onsets by n_fft / hop_length
         pad_width += n_fft // (2 * hop_length)
 
