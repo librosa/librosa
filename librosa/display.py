@@ -506,7 +506,8 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
     Draw a tempogram with BPM markers
 
     >>> plt.subplot(4, 2, 8)
-    >>> tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
+    >>> oenv = librosa.onset.onset_strength(y=y, sr=sr)
+    >>> tempo = librosa.beat.estimate_tempo(oenv, sr=sr)
     >>> Tgram = librosa.feature.tempogram(y=y, sr=sr)
     >>> librosa.display.specshow(Tgram[:100], x_axis='time', y_axis='tempo',
     ...                          tmin=tempo/4, tmax=tempo*2, n_yticks=4)
