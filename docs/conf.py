@@ -79,7 +79,7 @@ np.set_printoptions(precision=3, linewidth=64, edgeitems=2, threshold=200)
 #------------------------------------------------------------------------------
 plot_pre_code = """
 import seaborn
-seaborn.set(style='dark')
+seaborn.set(style='ticks')
 import numpy as np
 import librosa
 np.random.seed(123)
