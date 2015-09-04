@@ -455,4 +455,8 @@ def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
     if detrend:
         onset_env = scipy.signal.lfilter([1.0, -1.0], [1.0, -0.99], onset_env, axis=-1)
 
+    # Trim to match the input duration
+    if center:
+        onset_env = onset_env[:, :S.shape[1]]
+
     return onset_env
