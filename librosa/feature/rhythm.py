@@ -135,6 +135,8 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
                                         centering=False)
 
     # Pad the envelope so that autocorrelation windows are centered on the input
+    n = len(onset_envelope)
+
     if center:
         onset_envelope = np.pad(onset_envelope, win_length // 2,
                                 mode='linear_ramp', end_values=[0, 0])
@@ -143,6 +145,10 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
     odf_frame = util.frame(onset_envelope,
                            frame_length=win_length,
                            hop_length=1)
+
+    # Truncate to the length of the original signal
+    if center:
+        odf_frame = odf_frame[:, :n]
 
     # Window, autocorrelate, and normalize
     return util.normalize(autocorrelate(odf_frame * ac_window[:, np.newaxis], axis=0),
