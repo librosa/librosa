@@ -506,7 +506,7 @@ def test_tempogram_odf():
     hop_length = 512
     duration = 8
 
-    def __test_equiv(tempo):
+    def __test_equiv(tempo, center):
         odf = np.zeros(duration * sr // hop_length)
         spacing = sr * 60. // (hop_length * tempo)
         odf[::int(spacing)] = 1
@@ -518,10 +518,14 @@ def test_tempogram_odf():
                                               hop_length=hop_length,
                                               win_length=len(odf),
                                               window=np.ones,
-                                              center=False,
+                                              center=center,
                                               norm=None)
 
-        assert np.allclose(odf_ac, tempogram.squeeze())
+        idx = 0
+        if center:
+            idx = len(odf)//2
+
+        assert np.allclose(odf_ac, tempogram[:, idx])
 
     # Generate a synthetic onset envelope
     def __test_peaks(tempo, win_length, window, norm):
@@ -549,7 +553,9 @@ def test_tempogram_odf():
         assert np.allclose(idx, spacing * np.arange(1, 1 + len(idx)))
 
     for tempo in [60, 90, 120, 160, 200]:
-        yield __test_equiv, tempo
+        for center in [False, True]:
+            yield __test_equiv, tempo, center
+
         for win_length in [192, 384]:
             for window in [None, np.ones, np.ones(win_length)]:
                 for norm in [None, 1, 2, np.inf]:
