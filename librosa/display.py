@@ -490,7 +490,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
     Force a grayscale colormap (white -> black)
 
     >>> plt.subplot(4, 2, 6)
-    >>> librosa.display.specshow(D, cmap='gray_r')
+    >>> librosa.display.specshow(D, cmap='gray_r', y_axis='linear')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Linear power spectrogram (grayscale)')
 
@@ -501,7 +501,19 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
     >>> librosa.display.specshow(D, x_axis='time', y_axis='log')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Log power spectrogram')
+
+
+    Draw a tempogram with BPM markers
+
+    >>> plt.subplot(4, 2, 8)
+    >>> tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
+    >>> Tgram = librosa.feature.tempogram(y=y, sr=sr)
+    >>> librosa.display.specshow(Tgram[:100], x_axis='time', y_axis='tempo',
+    ...                          tmin=tempo/4, tmax=tempo*2, n_yticks=4)
+    >>> plt.colorbar()
+    >>> plt.title('Tempogram')
     >>> plt.tight_layout()
+
 
     '''
 
