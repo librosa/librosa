@@ -84,16 +84,20 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
     >>> # Compute global onset autocorrelation
     >>> ac_global = librosa.autocorrelate(oenv, max_size=tempogram.shape[0])
     >>> ac_global = librosa.util.normalize(ac_global)
+    >>> # Estimate the global tempo for display purposes
+    >>> tempo = librosa.beat.estimate_tempo(oenv, sr=sr)
 
     >>> import matplotlib.pyplot as plt
+    >>> plt.figure(figsize=(8, 6))
     >>> plt.subplot(3, 1, 1)
     >>> plt.plot(oenv, label='Onset strength')
     >>> plt.xticks([])
     >>> plt.legend(frameon=True)
     >>> plt.axis('tight')
     >>> plt.subplot(3, 1, 2)
-    >>> librosa.display.specshow(tempogram, x_axis='time')
-    >>> plt.ylabel('Tempogram')
+    >>> # We'll truncate the display to a narrower range of tempi
+    >>> librosa.display.specshow(tempogram[:96], x_axis='time', y_axis='tempo',
+    ...                          tmin=tempo/4, tmax=2*tempo, n_yticks=4)
     >>> plt.subplot(3, 1, 3)
     >>> x = np.linspace(0, tempogram.shape[0] * 512. / sr, num=tempogram.shape[0])
     >>> plt.plot(x, np.mean(tempogram, axis=1), label='Mean local autocorrelation')
