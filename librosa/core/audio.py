@@ -111,14 +111,15 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
     y = []
     with audioread.audio_open(os.path.realpath(path)) as input_file:
         sr_native = input_file.samplerate
+        n_channels = input_file.channels
 
-        s_start = int(np.round(sr_native * offset)) * input_file.channels
+        s_start = int(np.round(sr_native * offset)) * n_channels
 
         if duration is None:
             s_end = np.inf
         else:
             s_end = s_start + (int(np.round(sr_native * duration))
-                               * input_file.channels)
+                               * n_channels)
 
         n = 0
 
@@ -150,7 +151,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
     if y:
         y = np.concatenate(y)
 
-        if input_file.channels > 1:
+        if n_channels > 1:
             y = y.reshape((-1, 2)).T
             if mono:
                 y = to_mono(y)
