@@ -42,14 +42,24 @@ def __test_cqt_size(y, sr, hop_length, fmin, n_bins, bins_per_octave,
     return cqt_output
 
 
+def make_signal(sr, duration, fmax='C8'):
+    ''' Generates a linear sine sweep '''
+
+    fmin = librosa.note_to_hz('C1') / sr
+    if fmax is None:
+        fmax = 0.5
+    else:
+        fmax = librosa.note_to_hz(fmax) / sr
+
+    return np.sin(np.cumsum(2 * np.pi * np.logspace(np.log10(fmin), np.log10(fmax),
+                                                    num=duration * sr)))
+
 def test_cqt():
 
     sr = 11025
+    duration = 5.0
 
-    # Impulse train
-    y = np.zeros(int(5.0 * sr))
-    y[::sr] = 1.0
-
+    y = make_signal(sr, duration)
 
     # incorrect hop length for a 6-octave analysis
     # num_octaves = 6, 2**(6-1) = 32 > 16
@@ -58,7 +68,7 @@ def test_cqt():
                12, 0.0, 2, None, 1, 0.01)
 
     # Filters go beyond Nyquist. 500 Hz -> 4 octaves = 8000 Hz > 11000 Hz
-    yield (raises(librosa.ParameterError)(__test_cqt_size), y, sr, 512, 500, 48,
+    yield (raises(librosa.ParameterError)(__test_cqt_size), y, sr, 512, 500, 4 * 12,
            12, 0.0, 2, None, 1, 0.01)
 
     # Test with fmin near Nyquist
@@ -81,12 +91,13 @@ def test_cqt():
 
 
 def test_hybrid_cqt():
+    # This test verifies that hybrid and full cqt agree down to 1e-4
+    # on 99% of bins which are nonzero (> 1e-8) in either representation.
 
     sr = 11025
+    duration = 5.0
 
-    # Impulse train
-    y = np.zeros(int(5.0 * sr))
-    y[::sr] = 1.0
+    y = make_signal(sr, duration, None)
 
     def __test(hop_length, fmin, n_bins, bins_per_octave,
                tuning, resolution, norm, sparsity):
@@ -110,7 +121,12 @@ def test_hybrid_cqt():
         eq_(C1.shape, C2.shape)
 
         # Check for numerical comparability
-        assert np.mean(np.abs(C1 - C2)) < 1e-3
+        idx1 = (C1 > 1e-8)
+        idx2 = (C2 > 1e-8)
+        perc = 0.99
+        thresh = 1e-4
+        assert np.percentile(np.abs(C1[idx1] - C2[idx1]), perc) < thresh
+        assert np.percentile(np.abs(C1[idx2] - C2[idx2]), perc) < thresh
 
     for fmin in [None, librosa.note_to_hz('C2')]:
         for n_bins in [1, 12, 24, 48, 72, 74, 76]:
@@ -128,9 +144,9 @@ def test_cqt_position():
     # synthesize a two second sine wave at midi note 60
 
     sr = 22050
-    f = librosa.midi_to_hz(60)
+    freq = librosa.midi_to_hz(60)
 
-    y = np.sin(2 * np.pi * f * np.linspace(0, 2.0, 2 * sr))
+    y = np.sin(2 * np.pi * freq * np.linspace(0, 2.0, 2 * sr))
 
     def __test(note_min):
 
