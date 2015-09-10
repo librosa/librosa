@@ -136,7 +136,7 @@ def test_hybrid_cqt():
     for fmin in [None, librosa.note_to_hz('C2')]:
         for n_bins in [1, 12, 24, 48, 72, 74, 76]:
             for bins_per_octave in [12, 24]:
-                for tuning in [None, 0]:#, 0.25]:
+                for tuning in [None, 0, 0.25]:
                     for resolution in [1, 2]:
                         for norm in [1, 2]:
                             yield (__test, 512, fmin, n_bins,
