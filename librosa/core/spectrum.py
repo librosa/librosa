@@ -764,9 +764,19 @@ def perceptual_weighting(S, frequencies, **kwargs):
 def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=1, axis=-1):
     """The fast Mellin transform (FMT) [1]_ of a signal y.
 
+    When the Mellin parameter (beta) is 1/2, it is also known as the scale transform [2]_.
+    The scale transform can be useful for audio analysis because its magnitude is invariant
+    to scaling of the domain (e.g., time stretching or compression).  This is analogous
+    to the magnitude of the Fourier transform being invariant to shifts in the input domain.
+
+
     .. [1] De Sena, Antonio, and Davide Rocchesso.
         "A fast Mellin and scale transform."
         EURASIP Journal on Applied Signal Processing 2007.1 (2007): 75-75.
+
+    .. [2] Cohen, L.
+        "The scale representation."
+        IEEE Transactions on Signal Processing 41, no. 12 (1993): 3275-3292.
 
     Parameters
     ----------
@@ -828,12 +838,14 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=1, axis=
     >>> plt.plot(y1, label='Original')
     >>> plt.plot(y2, label='Stretched')
     >>> plt.xlabel('time (samples)')
+    >>> plt.title('Input signals')
     >>> plt.legend(frameon=True)
     >>> plt.axis('tight')
     >>> plt.subplot(1, 2, 2)
     >>> plt.semilogy(np.abs(scale1), label='Original')
     >>> plt.semilogy(np.abs(scale2), label='Stretched')
     >>> plt.xlabel('scale coefficients')
+    >>> plt.title('Scale transform magnitude')
     >>> plt.legend(frameon=True)
     >>> plt.axis('tight')
     >>> plt.tight_layout()
@@ -880,7 +892,11 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=1, axis=
         if over_sample < 1:
             raise ParameterError('over_sample must be >= 1')
 
+        # The base is the maximum ratio between adjacent samples
+        # Since the sample spacing is increasing, this is simply the
+        # ratio between the positions of the last two samples: (n-1)/(n-2)
         log_base = np.log(n - 1) - np.log(n - 2)
+
         n_fmt = int(np.ceil(over_sample * (np.log(n - 1) - np.log(t_min)) / log_base))
 
     elif n_fmt < 3:
@@ -892,15 +908,19 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=1, axis=
         raise ParameterError('y must be finite everywhere')
 
     base = np.exp(log_base)
-    # original grid: signal covers 0 to 1
+    # original grid: signal covers [0, 1).  This range is arbitrary, but convenient.
+    # The final sample is positioned at (n-1)/n, so we omit the endpoint
     x = np.linspace(0, 1, num=n, endpoint=False)
 
     # build the interpolator
     f_interp = scipy.interpolate.interp1d(x, y, kind=kind, axis=axis)
 
     # build the new sampling grid
-    # exponentially spaced between t_min/n and 1
+    # exponentially spaced between t_min/n and 1 (exclusive)
     # we'll go one past where we need, and drop the last sample
+    # When over-sampling, the last input sample contributions n_over samples.
+    # To keep the spacing consistent, we over-sample by n_over, and then
+    # trim the final samples.
     n_over = int(np.ceil(over_sample))
     x_exp = np.logspace((np.log(t_min) - np.log(n)) / log_base,
                         0,
@@ -909,6 +929,7 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=1, axis=
                         base=base)[:-n_over]
 
     # Clean up any rounding errors at the boundaries of the interpolation
+    # The interpolator gets angry if we try to extrapolate, so clipping is necessary here.
     x_exp = np.clip(x_exp, float(t_min) / n, x[-1])
 
     # Resample the signal
