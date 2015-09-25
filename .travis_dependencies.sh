@@ -14,7 +14,6 @@ conda_create ()
     deps='pip numpy scipy pandas requests nose coverage numpydoc matplotlib sphinx scikit-learn seaborn'
 
     conda create -q -n $ENV_NAME "python=$1" $deps
-    pip install python-coveralls
 }
 
 if [ ! -f "$HOME/env/miniconda2.sh" ]; then
@@ -50,6 +49,7 @@ if [ ! -f "$HOME/env/miniconda2.sh" ]; then
             source activate $ENV_NAME
 
             pip install git+https://github.com/bmcfee/samplerate.git
+            pip install python-coveralls
             
             source deactivate
 
