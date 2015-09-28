@@ -928,10 +928,6 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=1, axis=
                         endpoint=False,
                         base=base)[:-n_over]
 
-    # Clean up any rounding errors at the boundaries of the interpolation
-    # The interpolator gets angry if we try to extrapolate, so clipping is necessary here.
-    x_exp = np.clip(x_exp, float(t_min) / n, x[-1])
-
     # Resample the signal
     y_res = f_interp(x_exp)
 
