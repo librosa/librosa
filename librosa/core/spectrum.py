@@ -786,6 +786,8 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=1, axis=
 
     t_min : float > 0
         The minimum time spacing (in samples).
+        This value should generally be less than 1 to preserve as much information as
+        possible.
 
     n_fmt : int > 2 or None
         The number of scale transform bins to use.
