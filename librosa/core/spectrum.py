@@ -762,7 +762,7 @@ def perceptual_weighting(S, frequencies, **kwargs):
 
 @cache
 def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=1, axis=-1):
-    """The fast Mellin transform (FMT) [1]_ of a signal y.
+    """The fast Mellin transform (FMT) [1]_ of a uniformly sampled signal y.
 
     When the Mellin parameter (beta) is 1/2, it is also known as the scale transform [2]_.
     The scale transform can be useful for audio analysis because its magnitude is invariant
@@ -785,7 +785,7 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=1, axis=
         The target axis must contain at least 3 samples.
 
     t_min : float > 0
-        The minimum time spacing (in samples)
+        The minimum time spacing (in samples).
 
     n_fmt : int > 2 or None
         The number of scale transform bins to use.
@@ -930,7 +930,11 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=1, axis=
 
     # Clean up any rounding errors at the boundaries of the interpolation
     # The interpolator gets angry if we try to extrapolate, so clipping is necessary here.
-    x_exp = np.clip(x_exp, float(t_min) / n, x[-1])
+    if x_exp[0] < t_min or x_exp[-1] > float(n - 1.0) / n:
+        x_exp = np.clip(x_exp, float(t_min) / n, x[-1])
+
+    # Make sure that all sample points are unique
+    assert len(np.unique(x_exp)) == len(x_exp)
 
     # Resample the signal
     y_res = f_interp(x_exp)
