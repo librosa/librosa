@@ -83,7 +83,7 @@ def dct(n_filters, n_input):
     >>> dct_filters
     array([[ 0.031,  0.031, ...,  0.031,  0.031],
            [ 0.044,  0.044, ..., -0.044, -0.044],
-           ..., 
+           ...,
            [ 0.044,  0.044, ..., -0.044, -0.044],
            [ 0.044,  0.044, ...,  0.044,  0.044]])
 
@@ -143,7 +143,7 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
     >>> melfb
     array([[ 0.   ,  0.016, ...,  0.   ,  0.   ],
            [ 0.   ,  0.   , ...,  0.   ,  0.   ],
-           ..., 
+           ...,
            [ 0.   ,  0.   , ...,  0.   ,  0.   ],
            [ 0.   ,  0.   , ...,  0.   ,  0.   ]])
 
@@ -153,7 +153,7 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
     >>> librosa.filters.mel(22050, 2048, fmax=8000)
     array([[ 0.  ,  0.02, ...,  0.  ,  0.  ],
            [ 0.  ,  0.  , ...,  0.  ,  0.  ],
-           ..., 
+           ...,
            [ 0.  ,  0.  , ...,  0.  ,  0.  ],
            [ 0.  ,  0.  , ...,  0.  ,  0.  ]])
 
@@ -599,7 +599,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     if pad_fft:
         max_len = int(2.0**(np.ceil(np.log2(max_len))))
     else:
-        max_len = np.ceil(max_len)
+        max_len = int(np.ceil(max_len))
 
     filters = np.asarray([util.pad_center(filt, max_len, **kwargs)
                           for filt in filters])
