@@ -73,7 +73,7 @@ def frame(y, frame_length=2048, hop_length=512):
     >>> librosa.util.frame(y, frame_length=2048, hop_length=64)
     array([[ -9.216e-06,   7.710e-06, ...,  -2.117e-06,  -4.362e-07],
            [  2.518e-06,  -6.294e-06, ...,  -1.775e-05,  -6.365e-06],
-           ..., 
+           ...,
            [ -7.429e-04,   5.173e-03, ...,   1.105e-05,  -5.074e-06],
            [  2.169e-03,   4.867e-03, ...,   3.666e-06,  -5.571e-06]], dtype=float32)
 
@@ -281,7 +281,7 @@ def pad_center(data, size, axis=-1, **kwargs):
     lpad = int((size - n) // 2)
 
     lengths = [(0, 0)] * data.ndim
-    lengths[axis] = (lpad, size - n - lpad)
+    lengths[axis] = (lpad, int(size - n - lpad))
 
     if lpad < 0:
         raise ParameterError(('Target size ({:d}) must be '
