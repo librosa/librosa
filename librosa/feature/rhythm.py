@@ -136,7 +136,7 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
     n = len(onset_envelope)
 
     if center:
-        onset_envelope = np.pad(onset_envelope, win_length // 2,
+        onset_envelope = np.pad(onset_envelope, int(win_length // 2),
                                 mode='linear_ramp', end_values=[0, 0])
 
     # Carve onset envelope into frames
