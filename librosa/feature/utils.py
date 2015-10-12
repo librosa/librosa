@@ -55,14 +55,14 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
     >>> mfcc_delta
     array([[  2.929e+01,   3.090e+01, ...,   0.000e+00,   0.000e+00],
            [  2.226e+01,   2.553e+01, ...,   3.944e-31,   3.944e-31],
-           ..., 
+           ...,
            [ -1.192e+00,  -6.099e-01, ...,   9.861e-32,   9.861e-32],
            [ -5.349e-01,  -2.077e-01, ...,   1.183e-30,   1.183e-30]])
     >>> mfcc_delta2 = librosa.feature.delta(mfcc, order=2)
     >>> mfcc_delta2
     array([[  1.281e+01,   1.020e+01, ...,   0.000e+00,   0.000e+00],
            [  2.726e+00,   3.558e+00, ...,   0.000e+00,   0.000e+00],
-           ..., 
+           ...,
            [ -1.702e-01,  -1.509e-01, ...,   0.000e+00,   0.000e+00],
            [ -9.021e-02,  -7.007e-02, ...,  -2.190e-47,  -2.190e-47]])
 
@@ -99,6 +99,7 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
 
     # Pad out the data by repeating the border values (delta=0)
     padding = [(0, 0)] * data.ndim
+    width = int(width)
     padding[axis] = (width, width)
     delta_x = np.pad(data, padding, mode='edge')
 
@@ -218,7 +219,7 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
         kwargs.setdefault('constant_values', [0])
 
     # Pad the end with zeros, which will roll to the front below
-    data = np.pad(data, [(0, 0), ((n_steps - 1) * delay, 0)], **kwargs)
+    data = np.pad(data, [(0, 0), (int((n_steps - 1) * delay), 0)], **kwargs)
 
     history = data
 
