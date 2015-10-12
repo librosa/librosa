@@ -301,7 +301,7 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
 
 
 @cache
-def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1, 
+def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
                          detrend=False, center=True, feature=None,
                          aggregate=None, channels=None, **kwargs):
     """Compute a spectral flux onset strength envelope across multiple channels.
@@ -454,7 +454,7 @@ def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
         # Counter-act framing effects. Shift the onsets by n_fft / hop_length
         pad_width += n_fft // (2 * hop_length)
 
-    onset_env = np.pad(onset_env, ([0, 0], [pad_width, 0]), mode='constant')
+    onset_env = np.pad(onset_env, ([0, 0], [int(pad_width), 0]), mode='constant')
 
     # remove the DC component
     if detrend:
