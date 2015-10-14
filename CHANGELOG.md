@@ -3,8 +3,23 @@ Changes
 
 ##v0.4.1
 
-  - Rewrote `display.waveplot` for improved efficiency
+Bug fixes
   - Improved safety check in CQT for invalid hop lengths
+  - Fixed division by zero bug in `core.pitch.pip_track`
+  - Fixed integer-type error in `util.pad_center` on numpy v1.10
+  - Fixed a context scoping error in `librosa.load` with some audioread backends
+  - `librosa.autocorrelate` now persists type for complex input
+
+New features
+  - `librosa.clicks` sonifies timed events such as beats or onsets
+  - `librosa.onset.onset_strength_multi` computes onset strength within multiple sub-bands
+  - `librosa.feature.tempogram` computes localized onset strength autocorrelation
+  - `librosa.display.specshow` now supports `*_axis='tempo'` for annotating tempo-scaled data
+  - `librosa.fmt` implements the Fast Mellin Transform
+
+Other changes
+
+  - Rewrote `display.waveplot` for improved efficiency
   - `decompose.deompose()` now supports pre-trained transformation objects
   - Nullified side-effects of optional seaborn dependency
   - Moved `feature.sync` to `util.sync` and expanded its functionality
@@ -12,16 +27,11 @@ Changes
   - `librosa.core.autocorrelate` can now operate along any axis of multi-dimensional input
   - the `segment` module functions now support arbitrary target axis
   - Added proper window normalization to `librosa.core.istft` for better reconstruction ([#235]).
-  - Fixed division by zero bug in `core.pitch.pip_track`
   - Standardized `n_fft=2048` for `piptrack`, `ifptrack` (deprecated), and `logfsgram` (deprecated)
   - `onset_strength` parameter `'centering'` has been deprecated and renamed to `'center'`
   - `onset_strength` always trims to match the input spectrogram duration
+  - added tests for `piptrack`
 
-New features
-  - `librosa.clicks` sonifies timed events such as beats or onsets
-  - `librosa.onset.onset_strength_multi` computes onset strength within multiple sub-bands
-  - `librosa.feature.tempogram` computes localized onset strength autocorrelation
-  - `librosa.display.specshow` now supports `*_axis='tempo'` for annotating tempo-scaled data
 
 [#235]: https://github.com/bmcfee/librosa/pull/235
 
