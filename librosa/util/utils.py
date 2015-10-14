@@ -1219,6 +1219,11 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
 
         `data_sync[:, i] = aggregate(data[:, idx[i-1]:idx[i]], axis=-1)`
 
+    Raises
+    ------
+    ParameterError
+        If the index set is not of consistent type (all slices or all integers)
+
     Examples
     --------
     Beat-synchronous CQT spectra
@@ -1275,8 +1280,10 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
 
     if np.all([isinstance(_, slice) for _ in idx]):
         slices = idx
+    elif np.all([np.issubdtype(type(_), np.int) for _ in idx]):
+        slices = index_to_slice(np.asarray(idx), 0, shape[axis], pad=pad)
     else:
-        slices = index_to_slice(idx, 0, shape[axis], pad=pad)
+        raise ParameterError('Invalid index set: {}'.format(idx))
 
     agg_shape = list(shape)
     agg_shape[axis] = len(slices)
