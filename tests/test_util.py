@@ -731,5 +731,5 @@ def test_sync():
             # Test with list of slices
             yield __test_pass, axis, data, slices
 
-    for bad_idx in [ ['foo', 'bar'], [23], [None], [slice(None), None] ]:
+    for bad_idx in [ ['foo', 'bar'], [None], [slice(None), None] ]:
         yield __test_fail, data, bad_idx
