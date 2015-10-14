@@ -127,7 +127,7 @@ def test_onset_strength_multi():
     y, sr = librosa.load(__EXAMPLE_FILE)
     S = librosa.feature.melspectrogram(y=y, sr=sr)
 
-    channels = np.linspace(0, S.shape[0], num=5)
+    channels = np.linspace(0, S.shape[0], num=5).astype(int)
 
     for lag in [1, 2, 3]:
         for max_size in [1]:

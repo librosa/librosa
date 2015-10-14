@@ -1195,7 +1195,7 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     data      : np.ndarray
         multi-dimensional array of features
 
-    idx : np.ndarray [shape=(m,)] or iterable of slice
+    idx : iterable of ints or slices
         Either an ordered array of boundary indices, or
         an iterable collection of slice objects.
 
@@ -1218,6 +1218,11 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
         For example, a 2-dimensional `data` with `axis=-1` should satisfy
 
         `data_sync[:, i] = aggregate(data[:, idx[i-1]:idx[i]], axis=-1)`
+
+    Raises
+    ------
+    ParameterError
+        If the index set is not of consistent type (all slices or all integers)
 
     Examples
     --------
@@ -1273,10 +1278,12 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
 
     shape = list(data.shape)
 
-    if isinstance(idx, np.ndarray):
-        slices = index_to_slice(idx, 0, shape[axis], pad=pad)
-    else:
+    if np.all([isinstance(_, slice) for _ in idx]):
         slices = idx
+    elif np.all([np.issubdtype(type(_), np.int) for _ in idx]):
+        slices = index_to_slice(np.asarray(idx), 0, shape[axis], pad=pad)
+    else:
+        raise ParameterError('Invalid index set: {}'.format(idx))
 
     agg_shape = list(shape)
     agg_shape[axis] = len(slices)
@@ -1287,8 +1294,6 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     idx_agg = [slice(None)] * data_agg.ndim
 
     for (i, segment) in enumerate(slices):
-        if not isinstance(segment, slice):
-            raise ParameterError('Invalid slice object: {}'.format(segment))
         idx_in[axis] = segment
         idx_agg[axis] = i
         data_agg[idx_agg] = aggregate(data[idx_in], axis=axis)
