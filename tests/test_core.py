@@ -724,3 +724,103 @@ def test_clicks():
                 for length in [None, 5 * sr, 15 * sr]:
                     yield __test, test_times, None, sr, hop_length, 1000, 0.1, click, length
                     yield __test, None, test_frames, sr, hop_length, 1000, 0.1, click, length
+
+
+def test_fmt_scale():
+    # This test constructs a single-cycle cosine wave, applies various axis scalings, 
+    # and tests that the FMT is preserved
+
+    def __test(scale, n_fmt, over_sample, kind, y_orig, y_res, atol):
+
+        # Make sure our signals preserve energy
+        assert np.allclose(np.sum(y_orig**2), np.sum(y_res**2))
+
+        # Scale-transform the original
+        f_orig = librosa.fmt(y_orig,
+                             t_min=0.5,
+                             n_fmt=n_fmt,
+                             over_sample=over_sample,
+                             kind=kind)
+
+        # Force to the same length
+        n_fmt_res = 2 * len(f_orig) - 2
+
+        # Scale-transform the new signal to match
+        f_res = librosa.fmt(y_res,
+                            t_min=scale * 0.5,
+                            n_fmt=n_fmt_res,
+                            over_sample=over_sample,
+                            kind=kind)
+
+        # Due to sampling alignment, we'll get some phase deviation here
+        # The shape of the spectrum should be approximately preserved though.
+        assert np.allclose(np.abs(f_orig), np.abs(f_res), atol=atol, rtol=1e-7)
+
+    # Our test signal is a single-cycle sine wave
+    def f(x):
+        freq = 1
+        return np.sin(2 * np.pi * freq * x)
+
+    bounds = [0, 1.0]
+    num = 2**8
+
+    x = np.linspace(bounds[0], bounds[1], num=num, endpoint=False)
+
+    y_orig = f(x)
+
+    atol = {'slinear': 1e-4, 'quadratic': 1e-5, 'cubic': 1e-6}
+
+    for scale in [2, 3./2, 5./4, 9./8]:
+
+        # Scale the time axis
+        x_res = np.linspace(bounds[0], bounds[1], num=scale * num, endpoint=False)
+        y_res = f(x_res)
+
+        # Re-normalize the energy to match that of y_orig
+        y_res /= np.sqrt(scale)
+
+        for kind in ['slinear', 'quadratic', 'cubic']:
+            for n_fmt in [None, 64, 128, 256, 512]:
+                for os in [1, 2, 3]:
+                    yield __test, scale, n_fmt, os, kind, y_orig, y_res, atol[kind]
+
+                # Over-sampling with down-scaling gets dicey at the end-points
+                yield __test, 1./scale, n_fmt, 1, kind, y_res, y_orig, atol[kind]
+
+
+def test_fmt_fail():
+
+    @raises(librosa.ParameterError)
+    def __test(t_min, n_fmt, over_sample, y):
+        librosa.fmt(y, t_min=t_min, n_fmt=n_fmt, over_sample=over_sample)
+
+    y = np.random.randn(256)
+
+    # Test for bad t_min
+    for t_min in [-1, 0]:
+        yield __test, t_min, None, 2, y
+
+    # Test for bad n_fmt
+    for n_fmt in [-1, 0, 1, 2]:
+        yield __test, 1, n_fmt, 2, y
+
+    # Test for bad over_sample
+    for over_sample in [-1, 0, 0.5]:
+        yield __test, 1, None, over_sample, y
+
+    # Test for bad input
+    y[len(y)//2:] = np.inf
+    yield __test, 1, None, 2, y
+
+    # Test for insufficient samples
+    yield __test, 1, None, 1, np.ones(2)
+
+
+def test_fmt_axis():
+
+    y = np.random.randn(32, 32)
+
+    f1 = librosa.fmt(y, axis=-1)
+    f2 = librosa.fmt(y.T, axis=0).T
+
+    assert np.allclose(f1, f2)
