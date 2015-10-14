@@ -724,7 +724,11 @@ def test_sync():
         data = np.reshape(data, shaper)
 
         for axis in [0, -1]:
+            # Test with list of indices
+            yield __test_pass, axis, data, list(frames)
+            # Test with ndarray of indices
             yield __test_pass, axis, data, frames
+            # Test with list of slices
             yield __test_pass, axis, data, slices
 
     for bad_idx in [ ['foo', 'bar'], [23], [None], [slice(None), None] ]:
