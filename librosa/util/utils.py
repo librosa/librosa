@@ -1195,7 +1195,7 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     data      : np.ndarray
         multi-dimensional array of features
 
-    idx : np.ndarray [shape=(m,)] or iterable of slice
+    idx : iterable of ints or slices
         Either an ordered array of boundary indices, or
         an iterable collection of slice objects.
 
@@ -1273,10 +1273,10 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
 
     shape = list(data.shape)
 
-    if isinstance(idx, np.ndarray):
-        slices = index_to_slice(idx, 0, shape[axis], pad=pad)
-    else:
+    if np.all([isinstance(_, slice) for _ in idx]):
         slices = idx
+    else:
+        slices = index_to_slice(idx, 0, shape[axis], pad=pad)
 
     agg_shape = list(shape)
     agg_shape[axis] = len(slices)
