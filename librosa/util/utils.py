@@ -1294,8 +1294,6 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     idx_agg = [slice(None)] * data_agg.ndim
 
     for (i, segment) in enumerate(slices):
-        if not isinstance(segment, slice):
-            raise ParameterError('Invalid slice object: {}'.format(segment))
         idx_in[axis] = segment
         idx_agg[axis] = i
         data_agg[idx_agg] = aggregate(data[idx_in], axis=axis)
