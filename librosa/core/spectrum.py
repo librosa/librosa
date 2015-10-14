@@ -761,7 +761,7 @@ def perceptual_weighting(S, frequencies, **kwargs):
 
 
 @cache
-def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=1, axis=-1):
+def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1):
     """The fast Mellin transform (FMT) [1]_ of a uniformly sampled signal y.
 
     When the Mellin parameter (beta) is 1/2, it is also known as the scale transform [2]_.
@@ -822,30 +822,30 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=1, axis=
     Examples
     --------
     >>> # Generate a signal and time-stretch it (with energy normalization)
-    >>> scale = 1.5
-    >>> x1 = np.linspace(0, 1, num=512, endpoint=False)
+    >>> scale = 1.25
+    >>> freq = 3.0
+    >>> x1 = np.linspace(0, 1, num=1024, endpoint=False)
     >>> x2 = np.linspace(0, 1, num=scale * len(x1), endpoint=False)
-    >>> y1 = np.sin(2 * np.pi * x1)
-    >>> y2 = np.sin(2 * np.pi * x2) / np.sqrt(scale)
+    >>> y1 = np.sin(2 * np.pi * freq * x1)
+    >>> y2 = np.sin(2 * np.pi * freq * x2) / np.sqrt(scale)
     >>> # Verify that the two signals have the same energy
     >>> np.sum(np.abs(y1)**2), np.sum(np.abs(y2)**2)
-        (256.0, 255.99999999999997)
-    >>> # We'll use cubic interpolation here for high precision
-    >>> scale1 = librosa.fmt(y1, n_fmt=200, kind='cubic')
-    >>> scale2 = librosa.fmt(y2, n_fmt=200, kind='cubic')
+        (255.99999999999997, 255.99999999999969)
+    >>> scale1 = librosa.fmt(y1, n_fmt=512)
+    >>> scale2 = librosa.fmt(y2, n_fmt=512)
     >>> # And plot the results
     >>> import matplotlib.pyplot as plt
     >>> plt.figure(figsize=(8, 4))
     >>> plt.subplot(1, 2, 1)
     >>> plt.plot(y1, label='Original')
-    >>> plt.plot(y2, label='Stretched')
+    >>> plt.plot(y2, linestyle='--', label='Stretched')
     >>> plt.xlabel('time (samples)')
     >>> plt.title('Input signals')
     >>> plt.legend(frameon=True)
     >>> plt.axis('tight')
     >>> plt.subplot(1, 2, 2)
     >>> plt.semilogy(np.abs(scale1), label='Original')
-    >>> plt.semilogy(np.abs(scale2), label='Stretched')
+    >>> plt.semilogy(np.abs(scale2), linestyle='--', label='Stretched')
     >>> plt.xlabel('scale coefficients')
     >>> plt.title('Scale transform magnitude')
     >>> plt.legend(frameon=True)
@@ -858,6 +858,9 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='slinear', beta=0.5, over_sample=1, axis=
     >>> odf = librosa.onset.onset_strength(y=y, sr=sr)
     >>> # Auto-correlate with up to 10 seconds lag
     >>> odf_ac = librosa.autocorrelate(odf, max_size=10 * sr // 512)
+    >>> # Normalize
+    >>> odf_ac = librosa.util.normalize(odf_ac, norm=np.inf)
+    >>> # Compute the scale transform
     >>> odf_ac_scale = librosa.fmt(librosa.util.normalize(odf_ac), n_fmt=512)
     >>> # Plot the results
     >>> plt.figure()
