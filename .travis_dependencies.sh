@@ -21,20 +21,20 @@ if [ ! -f "$HOME/env/miniconda2.sh" ]; then
     pushd $HOME/env
     
         # Download miniconda packages
-        wget http://repo.continuum.io/miniconda/Miniconda-3.8.3-Linux-x86_64.sh -O miniconda2.sh;
+        wget http://repo.continuum.io/miniconda/Miniconda-3.8.3-Linux-x86_64.sh -O miniconda27.sh;
         wget http://repo.continuum.io/miniconda/Miniconda3-3.8.3-Linux-x86_64.sh -O miniconda34.sh;
         wget http://repo.continuum.io/miniconda/Miniconda3-3.6.0-Linux-x86_64.sh -O miniconda35.sh; 
         # Install libsamplerate
         apt-get source libsamplerate
 
         # Install both environments
-        bash miniconda2.sh -b -p $HOME/env/miniconda2
+        bash miniconda27.sh -b -p $HOME/env/miniconda27
         bash miniconda34.sh -b -p $HOME/env/miniconda34
         bash miniconda35.sh -b -p $HOME/env/miniconda35
 
         for version in 2.7 3.4 3.5; do
             if [[ "$version" == "2.7" ]]; then
-                src="$HOME/env/miniconda2"
+                src="$HOME/env/miniconda27"
             elif [[ "$version" == "3.4" ]]; then
                 src="$HOME/env/miniconda34"
             else
