@@ -16,21 +16,19 @@ conda_create ()
     conda create -q -n $ENV_NAME "python=$1" $deps
 }
 
-if [ ! -f "$HOME/env/miniconda2.sh" ]; then
+if [ ! -f "$HOME/env/miniconda.sh" ]; then
     mkdir -p $HOME/env
     pushd $HOME/env
     
         # Download miniconda packages
-        wget http://repo.continuum.io/miniconda/Miniconda-3.8.3-Linux-x86_64.sh -O miniconda27.sh;
-        wget http://repo.continuum.io/miniconda/Miniconda3-3.8.3-Linux-x86_64.sh -O miniconda34.sh;
-        wget http://repo.continuum.io/miniconda/Miniconda3-3.6.0-Linux-x86_64.sh -O miniconda35.sh; 
+        wget http://repo.continuum.io/miniconda/Miniconda-3.16.0-Linux-x86_64.sh -O miniconda.sh;
         # Install libsamplerate
         apt-get source libsamplerate
 
         # Install both environments
-        bash miniconda27.sh -b -p $HOME/env/miniconda27
-        bash miniconda34.sh -b -p $HOME/env/miniconda34
-        bash miniconda35.sh -b -p $HOME/env/miniconda35
+        bash miniconda.sh -b -p $HOME/env/miniconda27
+        bash miniconda.sh -b -p $HOME/env/miniconda34
+        bash miniconda.sh -b -p $HOME/env/miniconda35
 
         for version in 2.7 3.4 3.5; do
             if [[ "$version" == "2.7" ]]; then
