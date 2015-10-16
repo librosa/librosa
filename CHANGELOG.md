@@ -31,7 +31,7 @@ Other changes
   - `onset_strength` parameter `'centering'` has been deprecated and renamed to `'center'`
   - `onset_strength` always trims to match the input spectrogram duration
   - added tests for `piptrack`
-
+  - added test support for Python 3.5
 
 [#235]: https://github.com/bmcfee/librosa/pull/235
 
