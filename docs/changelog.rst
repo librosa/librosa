@@ -35,6 +35,7 @@ Other changes
     ``'center'``
   - ``onset_strength`` always trims to match the input spectrogram duration
   - added tests for ``piptrack``
+  - added test support for Python 3.5
 
 
 
