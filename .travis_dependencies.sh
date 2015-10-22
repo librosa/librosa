@@ -13,10 +13,11 @@ conda_create ()
     conda info -a
     deps='pip numpy scipy pandas requests nose coverage numpydoc matplotlib sphinx scikit-learn seaborn'
 
-    conda create -q -n $ENV_NAME "python=$1" $deps
+    conda create -q -n $ENV_NAME "python=$TRAVIS_PYTHON_VERSION" $deps
 }
 
-if [ ! -f "$HOME/env/miniconda.sh" ]; then
+src="$HOME/env/miniconda$TRAVIS_PYTHON_VERSION"
+if [ ! -d "$src" ]; then
     mkdir -p $HOME/env
     pushd $HOME/env
     
@@ -26,36 +27,22 @@ if [ ! -f "$HOME/env/miniconda.sh" ]; then
         apt-get source libsamplerate
 
         # Install both environments
-        bash miniconda.sh -b -p $HOME/env/miniconda27
-        bash miniconda.sh -b -p $HOME/env/miniconda34
-        bash miniconda.sh -b -p $HOME/env/miniconda35
+        bash miniconda.sh -b -p $src
 
-        for version in 2.7 3.4 3.5; do
-            if [[ "$version" == "2.7" ]]; then
-                src="$HOME/env/miniconda27"
-            elif [[ "$version" == "3.4" ]]; then
-                src="$HOME/env/miniconda34"
-            else
-                src="$HOME/env/miniconda35"
-            fi
-            OLDPATH=$PATH
-            export PATH="$src/bin:$PATH"
-            conda_create $version
+        export PATH="$src/bin:$PATH"
+        conda_create
 
-            pushd libsamplerate-*
-                ./configure --prefix=$src/envs/$ENV_NAME
-                make && make install
-            popd
+        pushd libsamplerate-*
+            ./configure --prefix=$src/envs/$ENV_NAME
+            make && make install
+        popd
 
-            source activate $ENV_NAME
+        source activate $ENV_NAME
 
-            pip install git+https://github.com/bmcfee/samplerate.git
-            pip install python-coveralls
+        pip install git+https://github.com/bmcfee/samplerate.git
+        pip install python-coveralls
             
-            source deactivate
-
-            export PATH=$OLDPATH
-        done
+        source deactivate
     popd
 else
     echo "Using cached dependencies"
