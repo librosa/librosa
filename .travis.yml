@@ -21,13 +21,7 @@ python:
 
 before_install:
     - bash .travis_dependencies.sh
-    - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-        export PATH="$HOME/env/miniconda27/bin:$PATH";
-      elif [[ "$TRAVIS_PYTHON_VERSION" == "3.4" ]]; then
-        export PATH="$HOME/env/miniconda34/bin:$PATH";
-      elif [[ "$TRAVIS_PYTHON_VERSION" == "3.5" ]]; then
-        export PATH="$HOME/env/miniconda35/bin:$PATH";
-      fi
+    - export PATH="$HOME/env/miniconda$TRAVIS_PYTHON_VERSION/bin:$PATH";
     - hash -r
     - source activate test-environment
 
