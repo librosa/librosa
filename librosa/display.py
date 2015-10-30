@@ -330,7 +330,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000
         y_bottom = -y
 
     axes = plt.gca()
-    kwargs.setdefault('color', next(axes._get_lines.color_cycle))
+    kwargs.setdefault('color', next(axes._get_lines.prop_cycler)['color'])
 
     sample_off = core.time_to_samples(offset, sr=target_sr)
 
