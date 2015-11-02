@@ -331,7 +331,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000
 
     axes = plt.gca()
 
-    if hasattr(axes._get_lines.prop_cycler):
+    if hasattr(axes._get_lines, 'prop_cycler'):
         # matplotlib >= 1.5
         kwargs.setdefault('color', next(axes._get_lines.prop_cycler)['color'])
     else:
