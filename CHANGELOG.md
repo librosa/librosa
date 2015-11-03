@@ -1,6 +1,11 @@
 Changes
 =======
 
+##v0.4.2
+
+Bug fixes
+  - Support for matplotlib 1.5 color properties in the `display` module
+
 ##v0.4.1
 
 Bug fixes
