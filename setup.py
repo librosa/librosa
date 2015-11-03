@@ -34,7 +34,7 @@ setup(
         'numpy >= 1.8.0',
         'scipy >= 0.13.0',
         'scikit-learn >= 0.14.0',
-        'matplotlib',
+        'matplotlib >= 1.4.3',
         'joblib',
         'decorator',
         'six',
