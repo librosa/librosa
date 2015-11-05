@@ -31,3 +31,27 @@ be slow in practice.  It is highly recommended to install `librsamplerate
 
 Once these are installed, *librosa* will use the faster `scikits.samplerate` for all 
 resampling operations.
+
+
+Additional notes for OS X
+-------------------------
+
+libsamplerate
+-------------
+
+In order to use *scipy* with *libsamplerate*, you can use *homebrew* (http://brew.sh)
+for installation:
+```
+brew install libsamplerate
+```
+
+The Python bindings are installed via `pip install scikits.samplerate`.
+
+ffmpeg
+------
+
+To fuel `audioread` with more audio-decoding power, you can install *ffmpeg* which
+ships with many audio decoders.
+
+You can use *homebrew* to install the programm by calling
+`brew install ffmpeg` or get a binary version from their website https://www.ffmpeg.org.
