@@ -35,9 +35,10 @@ pip install librosa
 
 To build librosa from source, say `python setup.py build`.
 Then, to install librosa, say `python setup.py install`.
-If all went well, you should be able to execute the demo scripts under `examples/`.
+If all went well, you should be able to execute the demo scripts under `examples/`
+(OS X users should follow the installation guide given below).
 
-Alternatively, you can download or clone the repository and use `easy_install` to handle dependencies:
+Alternatively, you can download or clone the repository and use `pip` to handle dependencies:
 
 ```
 unzip librosa.zip
@@ -58,7 +59,7 @@ librosa (0.x.x, /path/to/librosa)
 
 ### libsamplerate
 
-In order to use scipy with libsamplerate, we recommend to use homebrew (http://brew.sh).
+In order to use *scipy* with *libsamplerate*, we recommend to use *homebrew* (http://brew.sh).
 Install the library by entering
 ```
 brew install libsamplerate
@@ -68,9 +69,10 @@ The Python bindings are installed via `pip install scikits.samplerate`.
 
 ### ffmpeg
 
-To fuel `audioread` with more audio-decoding power, you can install ffmpeg.
+To fuel `audioread` with more audio-decoding power, you can install *ffmpeg* which
+ships with many audio decoders.
 
-Again we recommend to use homebrew. Install the programm by calling
+Again, we recommend using *homebrew*. Install the programm by calling
 `brew install ffmpeg`.
 
 Discussion
