@@ -41,14 +41,37 @@ Alternatively, you can download or clone the repository and use `easy_install` t
 
 ```
 unzip librosa.zip
-easy_install librosa
+pip install -e librosa
 ```
 or
 ```
 git clone https://github.com/bmcfee/librosa.git
-easy_install librosa
+pip install -e librosa
 ```
 
+By calling `pip list` you should see `librosa` now as an installed pacakge:
+```
+librosa (0.x.x, /path/to/librosa)
+```
+
+## Installation on OS X
+
+### libsamplerate
+
+In order to use scipy with libsamplerate, we recommend to use homebrew (http://brew.sh).
+Install the library by entering
+```
+brew install libsamplerate
+```
+
+The Python bindings are installed via `pip install scikits.samplerate`.
+
+### ffmpeg
+
+To fuel `audioread` with more audio-decoding power, you can install ffmpeg.
+
+Again we recommend to use homebrew. Install the programm by calling
+`brew install ffmpeg`.
 
 Discussion
 ----------
