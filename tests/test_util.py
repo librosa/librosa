@@ -748,6 +748,9 @@ def test_sync():
         else:
             assert np.allclose(dsync, data)
 
+        # Test for dtype propagation
+        assert dsync.dtype == data.dtype
+
     @raises(librosa.ParameterError)
     def __test_fail(data, idx):
         librosa.util.sync(data, idx)
