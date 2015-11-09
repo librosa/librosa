@@ -21,7 +21,7 @@ __all__ = ['cqt', 'hybrid_cqt', 'pseudo_cqt']
 @cache
 def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         bins_per_octave=12, tuning=None, resolution=2,
-        aggregate=None, norm=1, sparsity=0.01):
+        aggregate=None, norm=1, sparsity=0.01, real=True):
     '''Compute the constant-Q transform of an audio signal.
 
     This implementation is based on the recursive sub-sampling method
@@ -81,7 +81,8 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     Raises
     ------
     ParameterError
-        If `hop_length` is not an integer multiple of `2**(n_bins / bins_per_octave)`
+        If `hop_length` is not an integer multiple of
+        `2**(n_bins / bins_per_octave)`
 
     See Also
     --------
@@ -129,7 +130,6 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     # How many octaves are we dealing with?
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
-
 
     if fmin is None:
         # C2 by default
@@ -186,7 +186,8 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                          hop_length,
                                          min_filter_length,
                                          fft_basis,
-                                         aggregate)
+                                         aggregate,
+                                         real)
 
         # Convolve
         cqt_resp.append(my_cqt)
@@ -203,8 +204,9 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     # Make sure our hop is long enough to support the bottom octave
     num_twos = __num_two_factors(hop_length)
     if num_twos < n_octaves - 1:
-        raise ParameterError('hop_length must be a positive integer multiple of 2^{0:d} '
-                            'for {1:d}-octave CQT'.format(n_octaves - 1, n_octaves))
+        raise ParameterError('hop_length must be a positive integer '
+                             'multiple of 2^{0:d} for {1:d}-octave CQT'
+                             .format(n_octaves - 1, n_octaves))
 
     # Now do the recursive bit
     fft_basis, n_fft, filter_lengths = __fft_filters(sr, fmin_t,
@@ -234,7 +236,8 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                          my_hop,
                                          min_filter_length,
                                          fft_basis,
-                                         aggregate)
+                                         aggregate,
+                                         real)
 
         # Convolve
         cqt_resp.append(my_cqt)
@@ -245,7 +248,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 @cache
 def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                bins_per_octave=12, tuning=None, resolution=2,
-               norm=1, sparsity=0.01):
+               norm=1, sparsity=0.01, real=True):
     '''Compute the hybrid constant-Q transform of an audio signal.
 
     Here, the hybrid CQT uses the pseudo CQT for higher frequencies where
@@ -294,16 +297,14 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     Raises
     ------
     ParameterError
-        If `hop_length` is not an integer multiple of `2**(n_bins / bins_per_octave)`
+        If `hop_length` is not an integer multiple of
+        `2**(n_bins / bins_per_octave)`
 
     See Also
     --------
     cqt
     pseudo_cqt
     '''
-
-    # How many octaves are we dealing with?
-    n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
 
     if fmin is None:
         # C1 by default
@@ -340,7 +341,8 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                    tuning=tuning,
                                    resolution=resolution,
                                    norm=norm,
-                                   sparsity=sparsity)
+                                   sparsity=sparsity,
+                                   real=real)
         cqt_resp.append(my_pseudo_cqt)
 
     n_bins_full = int(np.sum(~pseudo_filters))
@@ -357,7 +359,8 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                      tuning=tuning,
                      resolution=resolution,
                      norm=norm,
-                     sparsity=sparsity)
+                     sparsity=sparsity,
+                     real=real)
 
         cqt_resp.append(my_cqt)
 
@@ -367,7 +370,7 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 @cache
 def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                bins_per_octave=12, tuning=None, resolution=2,
-               norm=1, sparsity=0.01):
+               norm=1, sparsity=0.01, real=True):
     '''Compute the pseudo constant-Q transform of an audio signal.
 
     This uses a single fft size that is the smallest power of 2 that is greater
@@ -418,7 +421,8 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     Raises
     ------
     ParameterError
-        If `hop_length` is not an integer multiple of `2**(n_bins / bins_per_octave)`
+        If `hop_length` is not an integer multiple of
+        `2**(n_bins / bins_per_octave)`
 
     '''
 
@@ -439,14 +443,17 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                         sparsity,
                                         hop_length=hop_length)
 
-    # Remove phase for Pseudo CQT
-    fft_basis = np.abs(fft_basis)
-
     # Compute the magnitude STFT with Hann window
-    D = np.abs(stft(y, n_fft=n_fft, hop_length=hop_length))
+    D = stft(y, n_fft=n_fft, hop_length=hop_length)
 
     # Project onto the pseudo-cqt basis
-    return fft_basis.dot(D)
+    pcqt = fft_basis.dot(D)
+
+    if real:
+        # Remove phase for Pseudo CQT
+        pcqt = np.abs(pcqt)
+
+    return pcqt
 
 
 def __fft_filters(sr, fmin, n_bins, bins_per_octave, tuning,
@@ -494,7 +501,7 @@ def __trim_stack(cqt_resp, n_bins):
 
 
 def __variable_hop_response(y, n_fft, hop_length, min_filter_length,
-                            fft_basis, aggregate):
+                            fft_basis, aggregate, real):
     '''Compute the filter response with a target STFT hop.
     If the hop is too large (more than half the frame length),
     then over-sample at a smaller hop, and aggregate the results
@@ -515,7 +522,9 @@ def __variable_hop_response(y, n_fft, hop_length, min_filter_length,
              window=np.ones)
 
     # And filter response energy
-    my_cqt = np.abs(fft_basis.dot(D))
+    my_cqt = fft_basis.dot(D)
+    if real:
+        my_cqt = np.abs(my_cqt)
 
     if zoom_factor > 1:
         # We need to aggregate.  Generate the boundary frames
@@ -532,9 +541,8 @@ def __early_downsample(y, sr, hop_length, res_type, n_octaves,
     if not (res_type == 'sinc_fastest' and audio._HAS_SAMPLERATE):
         return y, sr, hop_length
 
-
-    downsample_count1 = int(np.ceil(np.log2(audio.BW_FASTEST * nyquist
-                                            / filter_cutoff)) - 1)
+    downsample_count1 = int(np.ceil(np.log2(audio.BW_FASTEST * nyquist /
+                                            filter_cutoff)) - 1)
     num_twos = __num_two_factors(hop_length)
     downsample_count2 = max(0, num_twos - n_octaves + 1)
     downsample_count = min(downsample_count1, downsample_count2)
@@ -565,4 +573,3 @@ def __num_two_factors(x):
         x //= 2
 
     return num_twos
-
