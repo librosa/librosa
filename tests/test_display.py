@@ -255,6 +255,8 @@ def test_time_scales_auto():
     # sr / (60 * 20) -> h
     librosa.display.specshow(S_abs, sr=sr // (60 * 20), x_axis='time')
 
+    plt.tight_layout()
+
 
 @image_comparison(baseline_images=['time_scales_explicit'], extensions=['png'])
 def test_time_scales_explicit():
@@ -286,12 +288,17 @@ def test_waveplot_mono():
     plt.figure()
     plt.subplot(3, 1, 1)
     librosa.display.waveplot(y, sr=sr, max_points=None, x_axis='off')
+    plt.yticks([])
 
     plt.subplot(3, 1, 2)
     librosa.display.waveplot(y, sr=sr, x_axis='off')
+    plt.yticks([])
 
     plt.subplot(3, 1, 3)
     librosa.display.waveplot(y, sr=sr, x_axis='time')
+    plt.yticks([])
+
+    plt.tight_layout()
 
 
 @image_comparison(baseline_images=['waveplot_stereo'], extensions=['png'])
@@ -300,7 +307,10 @@ def test_waveplot_stereo():
     ys = np.vstack([y[np.newaxis, :], 2 * y[np.newaxis, :]])
 
     plt.figure()
-    librosa.display.waveplot(ys, sr=sr)
+    librosa.display.waveplot(ys, sr=sr, x_axis='off')
+    plt.yticks([])
+
+    plt.tight_layout()
 
 
 @raises(librosa.ParameterError)
