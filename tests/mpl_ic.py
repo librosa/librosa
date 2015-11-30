@@ -18,7 +18,7 @@ import unittest
 import nose
 import numpy as np
 
-import matplotlib.tests
+import matplotlib as mpl
 import matplotlib.units
 from matplotlib import cbook
 from matplotlib import ticker
@@ -70,11 +70,16 @@ def knownfailureif(fail_condition, msg=None, known_exception_class=None ):
     return known_fail_decorator
 
 
-def _do_cleanup(original_units_registry):
+def _do_cleanup(original_units_registry, original_settings):
     plt.close('all')
     gc.collect()
 
-    matplotlib.tests.setup()
+    try:
+        import matplotlib.tests as tests
+        tests.setup()
+    except ImportError:
+        mpl.rcParams.clear()
+        mpl.rcParams.update(original_settings)
 
     matplotlib.units.registry.clear()
     matplotlib.units.registry.update(original_units_registry)
@@ -85,10 +90,12 @@ class CleanupTest(object):
     @classmethod
     def setup_class(cls):
         cls.original_units_registry = matplotlib.units.registry.copy()
+        cls.original_settings = mpl.rcParams.copy()
 
     @classmethod
     def teardown_class(cls):
-        _do_cleanup(cls.original_units_registry)
+        _do_cleanup(cls.original_units_registry,
+                    cls.original_settings)
 
     def test(self):
         self._func()
@@ -100,20 +107,24 @@ class CleanupTestCase(unittest.TestCase):
     def setUpClass(cls):
         import matplotlib.units
         cls.original_units_registry = matplotlib.units.registry.copy()
+        cls.original_settings = mpl.rcParams.copy()
 
     @classmethod
     def tearDownClass(cls):
-        _do_cleanup(cls.original_units_registry)
+        _do_cleanup(cls.original_units_registry,
+                    cls.original_settings)
 
 
 def cleanup(func):
     @functools.wraps(func)
     def wrapped_function(*args, **kwargs):
         original_units_registry = matplotlib.units.registry.copy()
+        original_settings = mpl.rcParams.copy()
         try:
             func(*args, **kwargs)
         finally:
-            _do_cleanup(original_units_registry)
+            _do_cleanup(original_units_registry,
+                        original_settings)
 
     return wrapped_function
 
