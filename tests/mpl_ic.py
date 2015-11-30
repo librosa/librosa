@@ -78,8 +78,9 @@ def _do_cleanup(original_units_registry, original_settings):
         import matplotlib.tests as tests
         tests.setup()
     except ImportError:
-        mpl.rcParams.clear()
-        mpl.rcParams.update(original_settings)
+        pass
+    mpl.rcParams.clear()
+    mpl.rcParams.update(original_settings)
 
     matplotlib.units.registry.clear()
     matplotlib.units.registry.update(original_units_registry)
