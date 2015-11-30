@@ -15,6 +15,9 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
+# Reset the mpl rc to defaults
+plt.rcdefaults()
+
 import librosa
 import numpy as np
 
