@@ -17,6 +17,9 @@ from ..util.exceptions import ParameterError
 
 __all__ = ['cqt', 'hybrid_cqt', 'pseudo_cqt']
 
+#TODO:   2015-11-09 16:48:08 by Brian McFee <brian.mcfee@nyu.edu>
+# deprecation warning for real=True 
+
 
 @cache
 def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
@@ -186,8 +189,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                          hop_length,
                                          min_filter_length,
                                          fft_basis,
-                                         aggregate,
-                                         real)
+                                         aggregate)
 
         # Convolve
         cqt_resp.append(my_cqt)
@@ -236,19 +238,18 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                          my_hop,
                                          min_filter_length,
                                          fft_basis,
-                                         aggregate,
-                                         real)
+                                         aggregate)
 
         # Convolve
         cqt_resp.append(my_cqt)
 
-    return __trim_stack(cqt_resp, n_bins)
+    return __trim_stack(cqt_resp, n_bins, real)
 
 
 @cache
 def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                bins_per_octave=12, tuning=None, resolution=2,
-               norm=1, sparsity=0.01, real=True):
+               norm=1, sparsity=0.01):
     '''Compute the hybrid constant-Q transform of an audio signal.
 
     Here, the hybrid CQT uses the pseudo CQT for higher frequencies where
@@ -341,8 +342,7 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                    tuning=tuning,
                                    resolution=resolution,
                                    norm=norm,
-                                   sparsity=sparsity,
-                                   real=real)
+                                   sparsity=sparsity)
         cqt_resp.append(my_pseudo_cqt)
 
     n_bins_full = int(np.sum(~pseudo_filters))
@@ -360,17 +360,17 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                      resolution=resolution,
                      norm=norm,
                      sparsity=sparsity,
-                     real=real)
+                     real=True)
 
         cqt_resp.append(my_cqt)
 
-    return __trim_stack(cqt_resp, n_bins)
+    return __trim_stack(cqt_resp, n_bins, True)
 
 
 @cache
 def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                bins_per_octave=12, tuning=None, resolution=2,
-               norm=1, sparsity=0.01, real=True):
+               norm=1, sparsity=0.01):
     '''Compute the pseudo constant-Q transform of an audio signal.
 
     This uses a single fft size that is the smallest power of 2 that is greater
@@ -443,17 +443,13 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                         sparsity,
                                         hop_length=hop_length)
 
+    fft_basis = np.abs(fft_basis)
+
     # Compute the magnitude STFT with Hann window
-    D = stft(y, n_fft=n_fft, hop_length=hop_length)
+    D = np.abs(stft(y, n_fft=n_fft, hop_length=hop_length))
 
     # Project onto the pseudo-cqt basis
-    pcqt = fft_basis.dot(D)
-
-    if real:
-        # Remove phase for Pseudo CQT
-        pcqt = np.abs(pcqt)
-
-    return pcqt
+    return fft_basis.dot(D)
 
 
 def __fft_filters(sr, fmin, n_bins, bins_per_octave, tuning,
@@ -487,7 +483,7 @@ def __fft_filters(sr, fmin, n_bins, bins_per_octave, tuning,
     return fft_basis, n_fft, lengths
 
 
-def __trim_stack(cqt_resp, n_bins):
+def __trim_stack(cqt_resp, n_bins, real):
     '''Helper function to trim and stack a collection of CQT responses'''
 
     # cleanup any framing errors at the boundaries
@@ -497,11 +493,15 @@ def __trim_stack(cqt_resp, n_bins):
 
     # Finally, clip out any bottom frequencies that we don't really want
     # Transpose magic here to ensure column-contiguity
-    return np.ascontiguousarray(cqt_resp[-n_bins:].T).T
+
+    C = np.ascontiguousarray(cqt_resp[-n_bins:].T).T
+    if real:
+        C = np.abs(C)
+    return C
 
 
 def __variable_hop_response(y, n_fft, hop_length, min_filter_length,
-                            fft_basis, aggregate, real):
+                            fft_basis, aggregate):
     '''Compute the filter response with a target STFT hop.
     If the hop is too large (more than half the frame length),
     then over-sample at a smaller hop, and aggregate the results
@@ -523,8 +523,6 @@ def __variable_hop_response(y, n_fft, hop_length, min_filter_length,
 
     # And filter response energy
     my_cqt = fft_basis.dot(D)
-    if real:
-        my_cqt = np.abs(my_cqt)
 
     if zoom_factor > 1:
         # We need to aggregate.  Generate the boundary frames
