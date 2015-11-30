@@ -78,8 +78,8 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     Returns
     -------
-    CQT : np.ndarray [shape=(n_bins, t), dtype=np.float]
-        Constant-Q energy for each frequency at each time.
+    CQT : np.ndarray [shape=(n_bins, t), dtype=np.complex or np.float]
+        Constant-Q value each frequency at each time.
 
     Raises
     ------
