@@ -15,6 +15,9 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
+# Reset the mpl rc to defaults
+plt.rcdefaults()
+
 import librosa
 import numpy as np
 
@@ -230,27 +233,39 @@ def test_xaxis_time_yaxis_lag():
     librosa.display.specshow(S_abs.T, y_axis='lag')
 
 
-@image_comparison(baseline_images=['time_scales_auto'], extensions=['png'])
-def test_time_scales_auto():
+@image_comparison(baseline_images=['time_scales_auto_ms'], extensions=['png'])
+def test_time_scales_auto_ms():
 
     # sr = 22050, hop_length = 512, S.shape[1] = 198
     # 197 * 512 / 22050 ~= 4.6s
     plt.figure()
-    plt.subplot(4, 1, 1)
     # sr * 10 -> ms
     librosa.display.specshow(S_abs, sr=10 * sr, x_axis='time')
+    plt.tight_layout()
 
-    plt.subplot(4, 1, 2)
+
+@image_comparison(baseline_images=['time_scales_auto_s'], extensions=['png'])
+def test_time_scales_auto_s():
+    plt.figure()
     # sr -> s
     librosa.display.specshow(S_abs, sr=sr, x_axis='time')
+    plt.tight_layout()
 
-    plt.subplot(4, 1, 3)
+
+@image_comparison(baseline_images=['time_scales_auto_m'], extensions=['png'])
+def test_time_scales_auto_m():
+    plt.figure()
     # sr / 20 -> m
     librosa.display.specshow(S_abs, sr=sr // 20, x_axis='time')
+    plt.tight_layout()
 
-    plt.subplot(4, 1, 4)
+
+@image_comparison(baseline_images=['time_scales_auto_h'], extensions=['png'])
+def test_time_scales_auto_h():
+    plt.figure()
     # sr / (60 * 20) -> h
     librosa.display.specshow(S_abs, sr=sr // (60 * 20), x_axis='time')
+    plt.tight_layout()
 
 
 @image_comparison(baseline_images=['time_scales_explicit'], extensions=['png'])
@@ -276,6 +291,8 @@ def test_time_scales_explicit():
     librosa.display.specshow(S_abs)
     librosa.display.time_ticks(locs, times, fmt='h')
 
+    plt.tight_layout()
+
 
 @image_comparison(baseline_images=['waveplot_mono'], extensions=['png'])
 def test_waveplot_mono():
@@ -283,12 +300,17 @@ def test_waveplot_mono():
     plt.figure()
     plt.subplot(3, 1, 1)
     librosa.display.waveplot(y, sr=sr, max_points=None, x_axis='off')
+    plt.yticks([])
 
     plt.subplot(3, 1, 2)
     librosa.display.waveplot(y, sr=sr, x_axis='off')
+    plt.yticks([])
 
     plt.subplot(3, 1, 3)
     librosa.display.waveplot(y, sr=sr, x_axis='time')
+    plt.yticks([])
+
+    plt.tight_layout()
 
 
 @image_comparison(baseline_images=['waveplot_stereo'], extensions=['png'])
@@ -297,7 +319,10 @@ def test_waveplot_stereo():
     ys = np.vstack([y[np.newaxis, :], 2 * y[np.newaxis, :]])
 
     plt.figure()
-    librosa.display.waveplot(ys, sr=sr)
+    librosa.display.waveplot(ys, sr=sr, x_axis='off')
+    plt.yticks([])
+
+    plt.tight_layout()
 
 
 @raises(librosa.ParameterError)
