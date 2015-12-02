@@ -18,7 +18,6 @@ import unittest
 import nose
 import numpy as np
 
-import matplotlib.tests
 import matplotlib.units
 from matplotlib import cbook
 from matplotlib import ticker
@@ -74,6 +73,7 @@ def _do_cleanup(original_units_registry):
     plt.close('all')
     gc.collect()
 
+    import matplotlib.tests
     matplotlib.tests.setup()
 
     matplotlib.units.registry.clear()
