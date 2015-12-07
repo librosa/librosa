@@ -157,10 +157,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
                 y = to_mono(y)
 
         if sr is not None:
-            if y.ndim > 1:
-                y = np.vstack([resample(yi, sr_native, sr) for yi in y])
-            else:
-                y = resample(y, sr_native, sr)
+            y = resample(y, sr_native, sr)
 
         else:
             sr = sr_native
@@ -211,8 +208,8 @@ def resample(y, orig_sr, target_sr, res_type='sinc_best', fix=True, **kwargs):
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        audio time series
+    y : np.ndarray [shape=(n,) or shape=(2, n)]
+        audio time series.  Can be mono or stereo.
 
     orig_sr : number > 0 [scalar]
         original sampling rate of `y`
@@ -261,8 +258,15 @@ def resample(y, orig_sr, target_sr, res_type='sinc_best', fix=True, **kwargs):
 
     """
 
+    if y.ndim > 1:
+        return np.vstack([resample(yi, orig_sr, target_sr,
+                                   res_type=res_type,
+                                   fix=fix,
+                                   **kwargs)
+                          for yi in y])
+
     # First, validate the audio buffer
-    util.valid_audio(y)
+    util.valid_audio(y, mono=True)
 
     if orig_sr == target_sr:
         return y
