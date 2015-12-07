@@ -79,7 +79,7 @@ def test_segment_load():
     assert np.allclose(y, y2[:, sample_offset:sample_offset+fs])
 
 
-def test_resample():
+def test_resample_mono():
 
     def __test(y, sr_in, sr_out, res_type, fix):
 
@@ -98,8 +98,8 @@ def test_resample():
         assert y2.flags['C_CONTIGUOUS']
 
         # Check that we're within one sample of the target length
-        target_length = len(y) * sr_out // sr_in
-        assert np.abs(len(y2) - target_length) <= 1
+        target_length = y.shape[-1] * sr_out // sr_in
+        assert np.abs(y2.shape[-1] - target_length) <= 1
 
     for infile in ['data/test1_44100.wav',
                    'data/test1_22050.wav',
@@ -111,6 +111,38 @@ def test_resample():
                 for fix in [False, True]:
                     yield (__test, y, sr_in, sr_out, res_type, fix)
 
+
+def test_resample_stereo():
+
+    def __test(y, sr_in, sr_out, res_type, fix):
+
+        y2 = librosa.resample(y, sr_in, sr_out,
+                              res_type=res_type,
+                              fix=fix)
+
+        # First, check that the audio is valid
+        librosa.util.valid_audio(y2, mono=False)
+
+        eq_(y2.ndim, y.ndim)
+
+        # If it's a no-op, make sure the signal is untouched
+        if sr_out == sr_in:
+            assert np.allclose(y, y2)
+
+        # Check buffer contiguity
+        assert y2.flags['C_CONTIGUOUS']
+
+        # Check that we're within one sample of the target length
+        target_length = y.shape[-1] * sr_out // sr_in
+        assert np.abs(y2.shape[-1] - target_length) <= 1
+
+
+    y, sr_in = librosa.load('data/test1_44100.wav', mono=False, sr=None, duration=5)
+
+    for sr_out in [8000, 22050]:
+        for res_type in ['sinc_fastest', 'scipy']:
+            for fix in [False, True]:
+                yield __test, y, sr_in, sr_out, res_type, fix
 
 @nottest
 def __deprecated_test_resample():
