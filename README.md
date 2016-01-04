@@ -8,7 +8,6 @@ A python package for music and audio analysis.
 
 [![Build Status](https://travis-ci.org/bmcfee/librosa.png?branch=master)](http://travis-ci.org/bmcfee/librosa?branch=master)
 [![Coverage Status](https://coveralls.io/repos/bmcfee/librosa/badge.svg?branch=master)](https://coveralls.io/r/bmcfee/librosa?branch=master)
-[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/bmcfee/librosa/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/bmcfee/librosa/?branch=master)
 
 
 Documentation
@@ -22,7 +21,6 @@ What does librosa do?  Here are some quick demonstrations:
 
 * [Introduction notebook](http://nbviewer.ipython.org/github/bmcfee/librosa/blob/master/examples/LibROSA%20demo.ipynb): a brief introduction to some commonly used features.
 * [Decomposition and IPython integration](http://nbviewer.ipython.org/github/bmcfee/librosa/blob/master/examples/LibROSA%20audio%20effects%20and%20playback.ipynb): an intermediate demonstration, illustrating how to process and play back sound
-* [SciKit-Learn integration](http://nbviewer.ipython.org/github/bmcfee/librosa/blob/master/examples/LibROSA%20sklearn%20feature%20pipeline.ipynb): an advanced demonstration, showing how to tie librosa functions to feature extraction pipelines for machine learning
 
 
 Installation
