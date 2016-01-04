@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """scikit-learn feature extraction integration"""
 
+from .decorators import deprecated
 from sklearn.base import BaseEstimator, TransformerMixin
 
 __all__ = ['FeatureExtractor']
@@ -39,6 +40,10 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
     kwargs : additional keyword arguments
         Parameters to be passed through to `function`
 
+    .. note:: The `FeatureExtractor` object is deprecated as of 0.4.2, and will be
+              removed in 0.5.
+              Instead, use ``sklearn.preprocessing.FunctionTransformer``.
+
     Examples
     --------
     >>> import sklearn.pipeline
@@ -58,6 +63,7 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
     >>> F = Features.transform([y])
     """
 
+    @deprecated('0.4.2', '0.5')
     def __init__(self, function, target=None, iterate=True, **kwargs):
         '''FeatureExtractor constructor
 
