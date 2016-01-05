@@ -151,6 +151,125 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
     return ticker(locs, times, **kwargs)
 
 
+def frequency_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
+    '''Plot frequency-formatted axis ticks.
+
+    Parameters
+    ----------
+    locations : list or np.ndarray
+        Frequency values for tick marks
+
+    n_ticks : int > 0 or None
+        Show this number of ticks (evenly spaced).
+
+        If none, all ticks are displayed.
+
+        Default: 5
+
+    axis : 'x' or 'y'
+        Which axis should the ticks be plotted on?
+        Default: 'x'
+
+    fmt : None or {'mHz', 'Hz', 'kHz', 'MHz', 'GHz'}
+        - 'mHz': millihertz
+        - 'Hz': hertz
+        - 'kHz': kilohertz
+        - 'MHz': megahertz
+        - 'GHz': gigahertz
+
+        If none, formatted is automatically selected by the
+        range of the frequency data.
+
+        Default: None
+
+    kwargs : additional keyword arguments.
+        See `matplotlib.pyplot.xticks` or `yticks` for details.
+
+
+    Returns
+    -------
+    (locs, labels)
+        Locations and labels of tick marks
+
+    label
+        Axis label
+
+    See Also
+    --------
+    matplotlib.pyplot.xticks
+    matplotlib.pyplot.yticks
+
+
+    Examples
+    --------
+    >>> # Tick at pre-computed beat times
+    >>> librosa.display.specshow(S)
+    >>> librosa.display.frequency_ticks()
+
+    >>> # Set the locations of the time stamps
+    >>> librosa.display.frequency_ticks(locations, frequencies)
+
+    >>> # Format in hertz
+    >>> librosa.display.frequency_ticks(frequencies, fmt='Hz')
+
+    >>> # Tick along the y axis
+    >>> librosa.display.frequency_ticks(frequencies, axis='y')
+
+    '''
+
+    n_ticks = kwargs.pop('n_ticks', 5)
+    axis = kwargs.pop('axis', 'x')
+    fmt = kwargs.pop('fmt', None)
+
+    if axis == 'x':
+        ticker = plt.xticks
+    elif axis == 'y':
+        ticker = plt.yticks
+    else:
+        raise ParameterError("axis must be either 'x' or 'y'.")
+
+    if len(args) > 0:
+        freqs = args[0]
+    else:
+        freqs = locs
+        locs = np.arange(len(freqs))
+
+    if n_ticks is not None:
+        # Slice the locations and labels evenly between 0 and the last point
+        positions = np.linspace(0, len(locs)-1, n_ticks,
+                                endpoint=True).astype(int)
+        locs = locs[positions]
+        freqs = freqs[positions]
+
+    # Format the labels by time
+    formats = {'mHz': lambda f: '{:.2f}mHz'.format(f * 1e3),
+               'Hz': '{:0.2f}Hz'.format,
+               'kHz': lambda f: '{:0.2f}kHz'.format(f * 1e-3),
+               'MHz': lambda f: '{:0.2f}MHz'.format(f * 1e-6),
+               'GHz': lambda f: '{:0.2f}GHz'.format(f * 1e-9)}
+
+    f_max = np.max(freqs)
+
+    if fmt is None:
+        if f_max > 1e10:
+            fmt = 'GHz'
+        if f_max > 1e7:
+            fmt = 'MHz'
+        elif f_max > 1e4:
+            fmt = 'kHz'
+        elif f_max > 1e1:
+            fmt = 'Hz'
+        else:
+            fmt = 'mHz'
+
+    elif fmt not in formats:
+        raise ParameterError('Invalid format: {:s}'.format(fmt))
+
+    times = [formats[fmt](f) for f in freqs]
+
+    return ticker(locs, times, **kwargs), fmt
+
+
 @cache
 def cmap(data, use_sns=True, robust=True):
     '''Get a default colormap from the given data.
