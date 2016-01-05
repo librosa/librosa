@@ -242,11 +242,11 @@ def frequency_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
         freqs = freqs[positions]
 
     # Format the labels by time
-    formats = {'mHz': lambda f: '{:.2f}mHz'.format(f * 1e3),
-               'Hz': '{:0.2f}Hz'.format,
-               'kHz': lambda f: '{:0.2f}kHz'.format(f * 1e-3),
-               'MHz': lambda f: '{:0.2f}MHz'.format(f * 1e-6),
-               'GHz': lambda f: '{:0.2f}GHz'.format(f * 1e-9)}
+    formats = {'mHz': lambda f: '{:0.2f}'.format(f * 1e3),
+               'Hz': '{:0.2f}'.format,
+               'kHz': lambda f: '{:0.2f}'.format(f * 1e-3),
+               'MHz': lambda f: '{:0.2f}'.format(f * 1e-6),
+               'GHz': lambda f: '{:0.2f}'.format(f * 1e-9)}
 
     f_max = np.max(freqs)
 
@@ -715,7 +715,7 @@ def __axis_none(data, n_ticks, horiz, **_kwargs):
     labeler('')
 
 
-def __axis_log(data, n_ticks, horiz, sr=22050, kwargs=None, label='Hz',
+def __axis_log(data, n_ticks, horiz, sr=22050, kwargs=None,
                secondary_axis='linear', minor=None, **_kwargs):
     '''Plot a log-scaled image'''
 
@@ -730,12 +730,15 @@ def __axis_log(data, n_ticks, horiz, sr=22050, kwargs=None, label='Hz',
     t_log, t_inv = __log_scale(n)
 
     if horiz:
+        axis = 'x'
+
         if minor == 'log':
             ax2 = __log_scale(data.shape[0])[0]
         else:
             ax2 = np.linspace(0, data.shape[0], data.shape[0]).astype(int)
         ax1 = t_log
     else:
+        axis = 'y'
         if minor == 'log':
             ax1 = __log_scale(data.shape[1])[0]
         else:
@@ -764,14 +767,18 @@ def __axis_log(data, n_ticks, horiz, sr=22050, kwargs=None, label='Hz',
     # One extra value here to catch nyquist
     values = np.linspace(0, 0.5 * sr, n, endpoint=True).astype(int)
 
-
-    ticker(positions, values[t_inv[positions]])
-
+    _, label = frequency_ticks(positions, values[t_inv[positions]],
+                               n_ticks=None, axis=axis)
     labeler(label)
 
 
 def __axis_mel(data, n_ticks, horiz, fmin=None, fmax=None, **_kwargs):
     '''Mel-scaled axes'''
+
+    if horiz:
+        axis = 'x'
+    else:
+        axis = 'y'
 
     n, ticker, labeler = __get_shape_artists(data, horiz)
 
@@ -788,8 +795,8 @@ def __axis_mel(data, n_ticks, horiz, fmin=None, fmax=None, **_kwargs):
     # only two star-args here, defined immediately above
     # pylint: disable=star-args
     values = core.mel_frequencies(n_mels=n+2, **kwargs)[positions]
-    ticker(positions, values.astype(int))
-    labeler('Hz')
+    _, label = frequency_ticks(positions, values.astype(int), n_ticks=None, axis=axis)
+    labeler(label)
 
 
 def __axis_chroma(data, n_ticks, horiz, bins_per_octave=12, **_kwargs):
@@ -814,13 +821,18 @@ def __axis_chroma(data, n_ticks, horiz, bins_per_octave=12, **_kwargs):
 def __axis_linear(data, n_ticks, horiz, sr=22050, **_kwargs):
     '''Linear frequency axes'''
 
+    if horiz:
+        axis = 'x'
+    else:
+        axis = 'y'
+
     n, ticker, labeler = __get_shape_artists(data, horiz)
 
     positions = np.linspace(0, n - 1, n_ticks, endpoint=True).astype(int)
     values = (sr * np.linspace(0, 0.5, n_ticks, endpoint=True)).astype(int)
 
-    ticker(positions, values)
-    labeler('Hz')
+    _, label = frequency_ticks(positions, values, n_ticks=None, axis=axis)
+    labeler(label)
 
 
 def __axis_cqt(data, n_ticks, horiz, note=False, fmin=None,
@@ -828,6 +840,11 @@ def __axis_cqt(data, n_ticks, horiz, note=False, fmin=None,
     '''CQT axes'''
     if fmin is None:
         fmin = core.note_to_hz('C1')
+
+    if horiz:
+        axis = 'x'
+    else:
+        axis = 'y'
 
     n, ticker, labeler = __get_shape_artists(data, horiz)
 
@@ -840,11 +857,11 @@ def __axis_cqt(data, n_ticks, horiz, note=False, fmin=None,
     if note:
         values = core.hz_to_note(values[positions])
         label = 'Note'
+        ticker(positions, values)
     else:
         values = values[positions].astype(int)
-        label = 'Hz'
+        _, label = frequency_ticks(positions, values, n_ticks=None, axis=axis)
 
-    ticker(positions, values)
     labeler(label)
 
 
