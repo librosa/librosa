@@ -476,7 +476,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000
 
 def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
              n_xticks=5, n_yticks=5, fmin=None, fmax=None, bins_per_octave=12,
-             tmin=16, tmax=240, **kwargs):
+             tmin=16, tmax=240, freq_fmt='Hz', **kwargs):
     '''Display a spectrogram/chromagram/cqt/etc.
 
     Functions as a drop-in replacement for `matplotlib.pyplot.imshow`,
@@ -547,6 +547,11 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
         Minimum and maximum tempi displayed when `_axis='tempo'`,
         as measured in beats per minute.
 
+    freq_fmt : None or str
+        Formatting for frequency axes.  'Hz', by default.
+
+        See `frequency_ticks`.
+
     kwargs : additional keyword arguments
         Arguments passed through to `matplotlib.pyplot.imshow`.
 
@@ -562,6 +567,8 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
     cmap : Automatic colormap detection
 
     time_ticks : time-formatted tick marks
+
+    frequency_ticks : frequency-formatted tick marks
 
     matplotlib.pyplot.imshow
 
@@ -663,7 +670,8 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
                       bins_per_octave=bins_per_octave,
                       tmin=tmin,
                       tmax=tmax,
-                      hop_length=hop_length)
+                      hop_length=hop_length,
+                      freq_fmt=freq_fmt)
 
     # Scale and decorate the axes
     __axis(data, n_xticks, x_axis, horiz=True, minor=y_axis, **all_params)
@@ -725,6 +733,7 @@ def __axis_log(data, n_ticks, horiz, sr=22050, kwargs=None,
         kwargs = dict()
 
     aspect = kwargs.pop('aspect', None)
+    fmt = _kwargs.pop('freq_fmt', 'Hz')
 
     n, ticker, labeler = __get_shape_artists(data, horiz)
     t_log, t_inv = __log_scale(n)
@@ -768,12 +777,14 @@ def __axis_log(data, n_ticks, horiz, sr=22050, kwargs=None,
     values = np.linspace(0, 0.5 * sr, n, endpoint=True).astype(int)
 
     _, label = frequency_ticks(positions, values[t_inv[positions]],
-                               n_ticks=None, axis=axis)
+                               n_ticks=None, axis=axis, fmt=fmt)
     labeler(label)
 
 
 def __axis_mel(data, n_ticks, horiz, fmin=None, fmax=None, **_kwargs):
     '''Mel-scaled axes'''
+
+    fmt = _kwargs.pop('freq_fmt', 'Hz')
 
     if horiz:
         axis = 'x'
@@ -795,7 +806,8 @@ def __axis_mel(data, n_ticks, horiz, fmin=None, fmax=None, **_kwargs):
     # only two star-args here, defined immediately above
     # pylint: disable=star-args
     values = core.mel_frequencies(n_mels=n+2, **kwargs)[positions]
-    _, label = frequency_ticks(positions, values.astype(int), n_ticks=None, axis=axis)
+    _, label = frequency_ticks(positions, values.astype(int),
+                               n_ticks=None, axis=axis, fmt=fmt)
     labeler(label)
 
 
@@ -820,6 +832,7 @@ def __axis_chroma(data, n_ticks, horiz, bins_per_octave=12, **_kwargs):
 
 def __axis_linear(data, n_ticks, horiz, sr=22050, **_kwargs):
     '''Linear frequency axes'''
+    fmt = _kwargs.pop('freq_fmt', 'Hz')
 
     if horiz:
         axis = 'x'
@@ -831,7 +844,8 @@ def __axis_linear(data, n_ticks, horiz, sr=22050, **_kwargs):
     positions = np.linspace(0, n - 1, n_ticks, endpoint=True).astype(int)
     values = (sr * np.linspace(0, 0.5, n_ticks, endpoint=True)).astype(int)
 
-    _, label = frequency_ticks(positions, values, n_ticks=None, axis=axis)
+    _, label = frequency_ticks(positions, values,
+                               n_ticks=None, axis=axis, fmt=fmt)
     labeler(label)
 
 
@@ -845,6 +859,8 @@ def __axis_cqt(data, n_ticks, horiz, note=False, fmin=None,
         axis = 'x'
     else:
         axis = 'y'
+
+    fmt = _kwargs.pop('freq_fmt', 'Hz')
 
     n, ticker, labeler = __get_shape_artists(data, horiz)
 
@@ -860,7 +876,8 @@ def __axis_cqt(data, n_ticks, horiz, note=False, fmin=None,
         ticker(positions, values)
     else:
         values = values[positions].astype(int)
-        _, label = frequency_ticks(positions, values, n_ticks=None, axis=axis)
+        _, label = frequency_ticks(positions, values,
+                                   n_ticks=None, axis=axis, fmt=fmt)
 
     labeler(label)
 
