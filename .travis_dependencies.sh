@@ -14,6 +14,7 @@ conda_create ()
     deps='pip numpy scipy pandas requests nose coverage numpydoc matplotlib sphinx scikit-learn seaborn'
 
     conda create -q -n $ENV_NAME "python=$TRAVIS_PYTHON_VERSION" $deps
+    conda update --all
 }
 
 src="$HOME/env/miniconda$TRAVIS_PYTHON_VERSION"
