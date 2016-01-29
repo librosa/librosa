@@ -73,8 +73,8 @@ def _do_cleanup(original_units_registry):
     plt.close('all')
     gc.collect()
 
-    import matplotlib.tests
-    matplotlib.tests.setup()
+    import matplotlib.testing
+    matplotlib.testing.setup()
 
     matplotlib.units.registry.clear()
     matplotlib.units.registry.update(original_units_registry)
