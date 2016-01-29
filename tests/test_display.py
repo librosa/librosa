@@ -43,35 +43,30 @@ S_signed = np.abs(S) - np.median(np.abs(S))
 S_bin = S_signed > 0
 
 
-@SkipTest
 @image_comparison(baseline_images=['complex'], extensions=['png'])
 def test_complex_input():
     plt.figure()
     librosa.display.specshow(S)
 
 
-@SkipTest
 @image_comparison(baseline_images=['abs'], extensions=['png'])
 def test_abs_input():
     plt.figure()
     librosa.display.specshow(S_abs)
 
 
-@SkipTest
 @image_comparison(baseline_images=['cqt_note'], extensions=['png'])
 def test_cqt_note():
     plt.figure()
     librosa.display.specshow(C, y_axis='cqt_note')
 
 
-@SkipTest
 @image_comparison(baseline_images=['cqt_hz'], extensions=['png'])
 def test_cqt_hz():
     plt.figure()
     librosa.display.specshow(C, y_axis='cqt_hz')
 
 
-@SkipTest
 @image_comparison(baseline_images=['tempo'], extensions=['png'])
 def test_tempo():
     T = librosa.feature.tempogram(y=y, sr=sr)
@@ -80,7 +75,6 @@ def test_tempo():
     librosa.display.specshow(T, y_axis='tempo')
 
 
-@SkipTest
 @image_comparison(baseline_images=['tonnetz'], extensions=['png'])
 def test_tonnetz():
     plt.figure()
@@ -89,7 +83,6 @@ def test_tonnetz():
     librosa.display.specshow(ton, y_axis='tonnetz')
 
 
-@SkipTest
 @image_comparison(baseline_images=['chroma'], extensions=['png'])
 def test_chroma():
     plt.figure()
@@ -106,7 +99,6 @@ def test_chroma():
     librosa.display.specshow(chr3, y_axis='chroma', bins_per_octave=3*12)
 
 
-@SkipTest
 @image_comparison(baseline_images=['double_chroma'], extensions=['png'])
 def test_double_chroma():
     plt.figure()
@@ -116,7 +108,6 @@ def test_double_chroma():
     librosa.display.specshow(chr1, y_axis='chroma', bins_per_octave=12)
 
 
-@SkipTest
 @image_comparison(baseline_images=['x_mel'], extensions=['png'])
 def test_x_mel():
     plt.figure()
@@ -125,7 +116,6 @@ def test_x_mel():
     librosa.display.specshow(M, y_axis='mel')
 
 
-@SkipTest
 @image_comparison(baseline_images=['y_mel'], extensions=['png'])
 def test_y_mel():
     plt.figure()
@@ -134,7 +124,6 @@ def test_y_mel():
     librosa.display.specshow(M.T, x_axis='mel')
 
 
-@SkipTest
 @image_comparison(baseline_images=['y_mel_bounded'], extensions=['png'])
 def test_y_mel_bounded():
     plt.figure()
@@ -144,7 +133,6 @@ def test_y_mel_bounded():
     librosa.display.specshow(M, y_axis='mel', fmin=fmin, fmax=fmax)
 
 
-@SkipTest
 @image_comparison(baseline_images=['x_none_y_linear'], extensions=['png'])
 def test_xaxis_none_yaxis_linear():
     plt.figure()
@@ -158,7 +146,6 @@ def test_xaxis_none_yaxis_linear():
     librosa.display.specshow(S_bin, x_axis='linear')
 
 
-@SkipTest
 @image_comparison(baseline_images=['x_none_y_log'], extensions=['png'])
 def test_xaxis_none_yaxis_log():
     plt.figure()
@@ -173,7 +160,6 @@ def test_xaxis_none_yaxis_log():
     librosa.display.specshow(S_bin, y_axis='log')
 
 
-@SkipTest
 @image_comparison(baseline_images=['x_linear_y_none'], extensions=['png'])
 def test_xaxis_linear_yaxis_none():
     plt.figure()
@@ -188,7 +174,6 @@ def test_xaxis_linear_yaxis_none():
     librosa.display.specshow(S_bin.T, x_axis='linear')
 
 
-@SkipTest
 @image_comparison(baseline_images=['x_log_y_none'], extensions=['png'])
 def test_xaxis_log_yaxis_none():
 
@@ -204,7 +189,6 @@ def test_xaxis_log_yaxis_none():
     librosa.display.specshow(S_bin.T, x_axis='log')
 
 
-@SkipTest
 @image_comparison(baseline_images=['x_time_y_none'], extensions=['png'])
 def test_xaxis_time_yaxis_none():
 
@@ -212,7 +196,6 @@ def test_xaxis_time_yaxis_none():
     librosa.display.specshow(S_abs, x_axis='time')
 
 
-@SkipTest
 @image_comparison(baseline_images=['x_none_y_time'], extensions=['png'])
 def test_xaxis_none_yaxis_time():
 
@@ -220,7 +203,6 @@ def test_xaxis_none_yaxis_time():
     librosa.display.specshow(S_abs.T, y_axis='time')
 
 
-@SkipTest
 @image_comparison(baseline_images=['x_frames_y_none'], extensions=['png'])
 def test_xaxis_frames_yaxis_none():
 
@@ -228,7 +210,6 @@ def test_xaxis_frames_yaxis_none():
     librosa.display.specshow(S_abs, x_axis='frames')
 
 
-@SkipTest
 @image_comparison(baseline_images=['x_none_y_frames'], extensions=['png'])
 def test_xaxis_none_yaxis_frames():
 
@@ -236,7 +217,6 @@ def test_xaxis_none_yaxis_frames():
     librosa.display.specshow(S_abs.T, y_axis='frames')
 
 
-@SkipTest
 @image_comparison(baseline_images=['x_lag_y_none'], extensions=['png'])
 def test_xaxis_lag_yaxis_none():
 
@@ -244,7 +224,6 @@ def test_xaxis_lag_yaxis_none():
     librosa.display.specshow(S_abs, x_axis='lag')
 
 
-@SkipTest
 @image_comparison(baseline_images=['x_none_y_lag'], extensions=['png'])
 def test_xaxis_time_yaxis_lag():
 
@@ -252,7 +231,6 @@ def test_xaxis_time_yaxis_lag():
     librosa.display.specshow(S_abs.T, y_axis='lag')
 
 
-@SkipTest
 @image_comparison(baseline_images=['time_scales_auto'], extensions=['png'])
 def test_time_scales_auto():
 
@@ -276,7 +254,6 @@ def test_time_scales_auto():
     librosa.display.specshow(S_abs, sr=sr // (60 * 20), x_axis='time')
 
 
-@SkipTest
 @image_comparison(baseline_images=['time_scales_explicit'], extensions=['png'])
 def test_time_scales_explicit():
 
@@ -301,7 +278,6 @@ def test_time_scales_explicit():
     librosa.display.time_ticks(locs, times, fmt='h')
 
 
-@SkipTest
 @image_comparison(baseline_images=['waveplot_mono'], extensions=['png'])
 def test_waveplot_mono():
 
@@ -316,7 +292,6 @@ def test_waveplot_mono():
     librosa.display.waveplot(y, sr=sr, x_axis='time')
 
 
-@SkipTest
 @image_comparison(baseline_images=['waveplot_stereo'], extensions=['png'])
 def test_waveplot_stereo():
 
