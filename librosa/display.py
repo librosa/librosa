@@ -242,11 +242,11 @@ def frequency_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
         freqs = freqs[positions]
 
     # Format the labels by time
-    formats = {'mHz': lambda f: '{:0.2f}'.format(f * 1e3),
-               'Hz': '{:0.2f}'.format,
-               'kHz': lambda f: '{:0.2f}'.format(f * 1e-3),
-               'MHz': lambda f: '{:0.2f}'.format(f * 1e-6),
-               'GHz': lambda f: '{:0.2f}'.format(f * 1e-9)}
+    formats = {'mHz': lambda f: '{:.5g}'.format(f * 1e3),
+               'Hz': '{:.5g}'.format,
+               'kHz': lambda f: '{:.5g}'.format(f * 1e-3),
+               'MHz': lambda f: '{:.5g}'.format(f * 1e-6),
+               'GHz': lambda f: '{:.5g}'.format(f * 1e-9)}
 
     f_max = np.max(freqs)
 
