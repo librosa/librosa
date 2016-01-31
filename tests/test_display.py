@@ -160,6 +160,33 @@ def test_xaxis_none_yaxis_log():
     librosa.display.specshow(S_bin, y_axis='log')
 
 
+@image_comparison(baseline_images=['x_none_y_log_khz'], extensions=['png'])
+def test_xaxis_none_yaxis_log_khz():
+    plt.figure()
+    librosa.display.specshow(S_abs, y_axis='log', freq_fmt='kHz')
+    plt.tight_layout()
+
+
+@image_comparison(baseline_images=['x_none_y_log_mhz'], extensions=['png'])
+def test_xaxis_none_yaxis_log_mhz():
+    plt.figure()
+    librosa.display.specshow(S_abs, y_axis='log', freq_fmt='mHz')
+    plt.tight_layout()
+
+@image_comparison(baseline_images=['x_none_y_log_megahz'], extensions=['png'])
+def test_xaxis_none_yaxis_log_megahz():
+    plt.figure()
+    librosa.display.specshow(S_abs, y_axis='log', freq_fmt='MHz')
+    plt.tight_layout()
+
+
+@image_comparison(baseline_images=['x_none_y_log_ghz'], extensions=['png'])
+def test_xaxis_none_yaxis_log_ghz():
+    plt.figure()
+    librosa.display.specshow(S_abs, y_axis='log', freq_fmt='GHz')
+    plt.tight_layout()
+
+
 @image_comparison(baseline_images=['x_linear_y_none'], extensions=['png'])
 def test_xaxis_linear_yaxis_none():
     plt.figure()
