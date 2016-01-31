@@ -186,6 +186,11 @@ def test_xaxis_none_yaxis_log_ghz():
     librosa.display.specshow(S_abs, y_axis='log', freq_fmt='GHz')
     plt.tight_layout()
 
+@raises(librosa.ParameterError)
+def test_xaxis_none_yaxis_log_badscale():
+    plt.figure()
+    librosa.display.specshow(S_abs, y_axis='log', freq_fmt='no-scale')
+    plt.tight_layout()
 
 @image_comparison(baseline_images=['x_linear_y_none'], extensions=['png'])
 def test_xaxis_linear_yaxis_none():
