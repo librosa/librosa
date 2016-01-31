@@ -338,7 +338,7 @@ def __envelope(x, hop):
 
 
 def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000,
-             **kwargs):
+             time_fmt=None, **kwargs):
     '''Plot the amplitude envelope of a waveform.
 
     If `y` is monophonic, a filled curve is drawn between `[-abs(y), abs(y)]`.
@@ -375,6 +375,11 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000
     max_sr : number > 0 [scalar]
         Maximum sampling rate for the visualization
         
+    time_fmt : None or str
+        Formatting for time axis.  None (automatic) by default.
+
+        See `time_ticks`.
+
     kwargs
         Additional keyword arguments to `matplotlib.pyplot.fill_between`
 
@@ -465,7 +470,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000
     plt.xlim([locs[0], locs[-1]])
 
     if x_axis == 'time':
-        time_ticks(locs, core.samples_to_time(locs, sr=target_sr))
+        time_ticks(locs, core.samples_to_time(locs, sr=target_sr), fmt=time_fmt)
     elif x_axis is None or x_axis in ['off', 'none']:
         plt.xticks([])
     else:
