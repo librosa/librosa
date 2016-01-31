@@ -265,9 +265,9 @@ def frequency_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
     elif fmt not in formats:
         raise ParameterError('Invalid format: {:s}'.format(fmt))
 
-    times = [formats[fmt](f) for f in freqs]
+    ticks = [formats[fmt](f) for f in freqs]
 
-    return ticker(locs, times, **kwargs), fmt
+    return ticker(locs, ticks, **kwargs), fmt
 
 
 @cache
@@ -774,7 +774,7 @@ def __axis_log(data, n_ticks, horiz, sr=22050, kwargs=None,
 
     positions = np.linspace(0, n-1, n_ticks, endpoint=True).astype(int)
     # One extra value here to catch nyquist
-    values = np.linspace(0, 0.5 * sr, n, endpoint=True).astype(int)
+    values = np.linspace(0, 0.5 * sr, n, endpoint=True)
 
     _, label = frequency_ticks(positions, values[t_inv[positions]],
                                n_ticks=None, axis=axis, fmt=fmt)
@@ -806,7 +806,7 @@ def __axis_mel(data, n_ticks, horiz, fmin=None, fmax=None, **_kwargs):
     # only two star-args here, defined immediately above
     # pylint: disable=star-args
     values = core.mel_frequencies(n_mels=n+2, **kwargs)[positions]
-    _, label = frequency_ticks(positions, values.astype(int),
+    _, label = frequency_ticks(positions, values,
                                n_ticks=None, axis=axis, fmt=fmt)
     labeler(label)
 
@@ -842,7 +842,7 @@ def __axis_linear(data, n_ticks, horiz, sr=22050, **_kwargs):
     n, ticker, labeler = __get_shape_artists(data, horiz)
 
     positions = np.linspace(0, n - 1, n_ticks, endpoint=True).astype(int)
-    values = (sr * np.linspace(0, 0.5, n_ticks, endpoint=True)).astype(int)
+    values = (sr * np.linspace(0, 0.5, n_ticks, endpoint=True))
 
     _, label = frequency_ticks(positions, values,
                                n_ticks=None, axis=axis, fmt=fmt)
@@ -875,7 +875,7 @@ def __axis_cqt(data, n_ticks, horiz, note=False, fmin=None,
         label = 'Note'
         ticker(positions, values)
     else:
-        values = values[positions].astype(int)
+        values = values[positions]
         _, label = frequency_ticks(positions, values,
                                    n_ticks=None, axis=axis, fmt=fmt)
 
