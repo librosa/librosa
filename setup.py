@@ -30,14 +30,14 @@ setup(
     keywords='audio music sound',
     license='ISC',
     install_requires=[
-        'audioread',
+        'audioread >= 2.0.0',
         'numpy >= 1.8.0',
         'scipy >= 0.13.0',
         'scikit-learn >= 0.14.0',
         'matplotlib >= 1.4.3',
-        'joblib',
-        'decorator',
-        'six',
+        'joblib >= 0.7.0',
+        'decorator >= 3.0.0',
+        'six >= 1.3',
     ],
     extras_require={
         'resample': 'scikits.samplerate>=0.3',
