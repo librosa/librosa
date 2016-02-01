@@ -456,3 +456,6 @@ def test_freq_ticks():
             for n_ticks in [3, 5, None]:
                 for axis in ['x', 'y']:
                     yield __test, locs, freqs, n_ticks, axis
+
+    yield raises(librosa.ParameterError)(__test), locs, freqs, n_ticks, 23
+
