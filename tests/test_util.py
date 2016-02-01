@@ -641,11 +641,11 @@ def test_warning_rename_kw_pass():
     warnings.resetwarnings()
     warnings.simplefilter('always')
 
-    ov = librosa.util.decorators.Deprecated()
+    ov = librosa.util.Deprecated()
     nv = 23
 
     with warnings.catch_warnings(record=True) as out:
-        v = librosa.util.decorators.rename_kw('old', ov, 'new', nv, '0', '1')
+        v = librosa.util.rename_kw('old', ov, 'new', nv, '0', '1')
 
         eq_(v, nv)
 
@@ -661,7 +661,7 @@ def test_warning_rename_kw_fail():
     nv = 23
 
     with warnings.catch_warnings(record=True) as out:
-        v = librosa.util.decorators.rename_kw('old', ov, 'new', nv, '0', '1')
+        v = librosa.util.rename_kw('old', ov, 'new', nv, '0', '1')
 
         eq_(v, ov)
 
