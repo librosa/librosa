@@ -403,3 +403,56 @@ def test_time_ticks_failure():
     # Unknown fmt
     yield __test, locs, None, 'days', 'x'
 
+
+def test_freq_ticks():
+
+    def __test(locs, freqs, n_ticks, axis):
+
+        if freqs is None:
+            args = [locs]
+            fmax = max(locs)
+        else:
+            args = [locs, freqs]
+            fmax = max(freqs)
+
+        plt.figure()
+        (ticks, labels), fmt = librosa.display.frequency_ticks(*args,
+                                                               axis=axis,
+                                                               n_ticks=n_ticks)
+
+        if n_ticks is None:
+            n_ticks = len(locs)
+
+        eq_(len(ticks), n_ticks)
+        eq_(len(labels), n_ticks)
+
+        if fmt == 'mHz':
+            assert fmax <= 1e1
+        elif fmt == 'Hz':
+            assert fmax <= 1e4
+        elif fmt == 'kHz':
+            assert fmax <= 1e7
+        elif fmt == 'MHz':
+            assert fmax <= 1e10
+        elif fmt == 'GHz':
+            assert fmax > 1e10
+        else:
+            raise ValueError('Incorrect fmt={}'.format(fmt))
+
+        if axis == 'x':
+            cls = matplotlib.axis.XTick
+        elif axis == 'y':
+            cls = matplotlib.axis.YTick
+        else:
+            raise ValueError('Incorrect axis={}'.format(axis))
+        
+        assert all([isinstance(_, cls) for _ in ticks])
+
+
+    for sr in [1e-3, 1e1, 1e3, 1e5, 1e8, 1e12]:
+        locs = librosa.fft_frequencies(sr=sr, n_fft=32)
+        
+        for freqs in [None, locs]:
+            for n_ticks in [3, 5, None]:
+                for axis in ['x', 'y']:
+                    yield __test, locs, freqs, n_ticks, axis
