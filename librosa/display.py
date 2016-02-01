@@ -136,20 +136,20 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
                                                                      6e1)),
                                                           int(np.mod(t, 6e1)))}
 
-    if fmt is None:
+    if time_fmt is None:
         if max(times) > 3.6e3:
-            fmt = 'h'
+            time_fmt = 'h'
         elif max(times) > 6e1:
-            fmt = 'm'
+            time_fmt = 'm'
         elif max(times) > 1.0:
-            fmt = 's'
+            time_fmt = 's'
         else:
-            fmt = 'ms'
+            time_fmt = 'ms'
 
-    elif fmt not in formats:
-        raise ParameterError('Invalid format: {:s}'.format(fmt))
+    elif time_fmt not in formats:
+        raise ParameterError('Invalid format: {:s}'.format(time_fmt))
 
-    times = [formats[fmt](t) for t in times]
+    times = [formats[time_fmt](t) for t in times]
 
     return ticker(locs, times, **kwargs)
 
