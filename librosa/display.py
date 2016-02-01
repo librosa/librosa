@@ -253,7 +253,7 @@ def frequency_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
     if fmt is None:
         if f_max > 1e10:
             fmt = 'GHz'
-        if f_max > 1e7:
+        elif f_max > 1e7:
             fmt = 'MHz'
         elif f_max > 1e4:
             fmt = 'kHz'
