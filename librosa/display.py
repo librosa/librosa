@@ -151,6 +151,125 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
     return ticker(locs, times, **kwargs)
 
 
+def frequency_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
+    '''Plot frequency-formatted axis ticks.
+
+    Parameters
+    ----------
+    locations : list or np.ndarray
+        Frequency values for tick marks
+
+    n_ticks : int > 0 or None
+        Show this number of ticks (evenly spaced).
+
+        If none, all ticks are displayed.
+
+        Default: 5
+
+    axis : 'x' or 'y'
+        Which axis should the ticks be plotted on?
+        Default: 'x'
+
+    fmt : None or {'mHz', 'Hz', 'kHz', 'MHz', 'GHz'}
+        - 'mHz': millihertz
+        - 'Hz': hertz
+        - 'kHz': kilohertz
+        - 'MHz': megahertz
+        - 'GHz': gigahertz
+
+        If none, formatted is automatically selected by the
+        range of the frequency data.
+
+        Default: None
+
+    kwargs : additional keyword arguments.
+        See `matplotlib.pyplot.xticks` or `yticks` for details.
+
+
+    Returns
+    -------
+    (locs, labels)
+        Locations and labels of tick marks
+
+    label
+        Axis label
+
+    See Also
+    --------
+    matplotlib.pyplot.xticks
+    matplotlib.pyplot.yticks
+
+
+    Examples
+    --------
+    >>> # Tick at pre-computed beat times
+    >>> librosa.display.specshow(S)
+    >>> librosa.display.frequency_ticks()
+
+    >>> # Set the locations of the time stamps
+    >>> librosa.display.frequency_ticks(locations, frequencies)
+
+    >>> # Format in hertz
+    >>> librosa.display.frequency_ticks(frequencies, fmt='Hz')
+
+    >>> # Tick along the y axis
+    >>> librosa.display.frequency_ticks(frequencies, axis='y')
+
+    '''
+
+    n_ticks = kwargs.pop('n_ticks', 5)
+    axis = kwargs.pop('axis', 'x')
+    fmt = kwargs.pop('fmt', None)
+
+    if axis == 'x':
+        ticker = plt.xticks
+    elif axis == 'y':
+        ticker = plt.yticks
+    else:
+        raise ParameterError("axis must be either 'x' or 'y'.")
+
+    if len(args) > 0:
+        freqs = args[0]
+    else:
+        freqs = locs
+        locs = np.arange(len(freqs))
+
+    if n_ticks is not None:
+        # Slice the locations and labels evenly between 0 and the last point
+        positions = np.linspace(0, len(locs)-1, n_ticks,
+                                endpoint=True).astype(int)
+        locs = locs[positions]
+        freqs = freqs[positions]
+
+    # Format the labels by time
+    formats = {'mHz': lambda f: '{:.5g}'.format(f * 1e3),
+               'Hz': '{:.5g}'.format,
+               'kHz': lambda f: '{:.5g}'.format(f * 1e-3),
+               'MHz': lambda f: '{:.5g}'.format(f * 1e-6),
+               'GHz': lambda f: '{:.5g}'.format(f * 1e-9)}
+
+    f_max = np.max(freqs)
+
+    if fmt is None:
+        if f_max > 1e10:
+            fmt = 'GHz'
+        elif f_max > 1e7:
+            fmt = 'MHz'
+        elif f_max > 1e4:
+            fmt = 'kHz'
+        elif f_max > 1e1:
+            fmt = 'Hz'
+        else:
+            fmt = 'mHz'
+
+    elif fmt not in formats:
+        raise ParameterError('Invalid format: {:s}'.format(fmt))
+
+    ticks = [formats[fmt](f) for f in freqs]
+
+    return ticker(locs, ticks, **kwargs), fmt
+
+
 @cache
 def cmap(data, use_sns=True, robust=True):
     '''Get a default colormap from the given data.
@@ -219,7 +338,7 @@ def __envelope(x, hop):
 
 
 def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000,
-             **kwargs):
+             time_fmt=None, **kwargs):
     '''Plot the amplitude envelope of a waveform.
 
     If `y` is monophonic, a filled curve is drawn between `[-abs(y), abs(y)]`.
@@ -256,6 +375,11 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000
     max_sr : number > 0 [scalar]
         Maximum sampling rate for the visualization
         
+    time_fmt : None or str
+        Formatting for time axis.  None (automatic) by default.
+
+        See `time_ticks`.
+
     kwargs
         Additional keyword arguments to `matplotlib.pyplot.fill_between`
 
@@ -346,7 +470,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000
     plt.xlim([locs[0], locs[-1]])
 
     if x_axis == 'time':
-        time_ticks(locs, core.samples_to_time(locs, sr=target_sr))
+        time_ticks(locs, core.samples_to_time(locs, sr=target_sr), fmt=time_fmt)
     elif x_axis is None or x_axis in ['off', 'none']:
         plt.xticks([])
     else:
@@ -357,7 +481,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000
 
 def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
              n_xticks=5, n_yticks=5, fmin=None, fmax=None, bins_per_octave=12,
-             tmin=16, tmax=240, **kwargs):
+             tmin=16, tmax=240, freq_fmt='Hz', time_fmt=None, **kwargs):
     '''Display a spectrogram/chromagram/cqt/etc.
 
     Functions as a drop-in replacement for `matplotlib.pyplot.imshow`,
@@ -428,6 +552,16 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
         Minimum and maximum tempi displayed when `_axis='tempo'`,
         as measured in beats per minute.
 
+    freq_fmt : None or str
+        Formatting for frequency axes.  'Hz', by default.
+
+        See `frequency_ticks`.
+
+    time_fmt : None or str
+        Formatting for time axes.  None (automatic) by default.
+
+        See `time_ticks`.
+
     kwargs : additional keyword arguments
         Arguments passed through to `matplotlib.pyplot.imshow`.
 
@@ -443,6 +577,8 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
     cmap : Automatic colormap detection
 
     time_ticks : time-formatted tick marks
+
+    frequency_ticks : frequency-formatted tick marks
 
     matplotlib.pyplot.imshow
 
@@ -544,7 +680,9 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
                       bins_per_octave=bins_per_octave,
                       tmin=tmin,
                       tmax=tmax,
-                      hop_length=hop_length)
+                      hop_length=hop_length,
+                      time_fmt=time_fmt,
+                      freq_fmt=freq_fmt)
 
     # Scale and decorate the axes
     __axis(data, n_xticks, x_axis, horiz=True, minor=y_axis, **all_params)
@@ -596,7 +734,7 @@ def __axis_none(data, n_ticks, horiz, **_kwargs):
     labeler('')
 
 
-def __axis_log(data, n_ticks, horiz, sr=22050, kwargs=None, label='Hz',
+def __axis_log(data, n_ticks, horiz, sr=22050, kwargs=None,
                secondary_axis='linear', minor=None, **_kwargs):
     '''Plot a log-scaled image'''
 
@@ -606,17 +744,21 @@ def __axis_log(data, n_ticks, horiz, sr=22050, kwargs=None, label='Hz',
         kwargs = dict()
 
     aspect = kwargs.pop('aspect', None)
+    fmt = _kwargs.pop('freq_fmt', 'Hz')
 
     n, ticker, labeler = __get_shape_artists(data, horiz)
     t_log, t_inv = __log_scale(n)
 
     if horiz:
+        axis = 'x'
+
         if minor == 'log':
             ax2 = __log_scale(data.shape[0])[0]
         else:
             ax2 = np.linspace(0, data.shape[0], data.shape[0]).astype(int)
         ax1 = t_log
     else:
+        axis = 'y'
         if minor == 'log':
             ax1 = __log_scale(data.shape[1])[0]
         else:
@@ -643,16 +785,22 @@ def __axis_log(data, n_ticks, horiz, sr=22050, kwargs=None, label='Hz',
 
     positions = np.linspace(0, n-1, n_ticks, endpoint=True).astype(int)
     # One extra value here to catch nyquist
-    values = np.linspace(0, 0.5 * sr, n, endpoint=True).astype(int)
+    values = np.linspace(0, 0.5 * sr, n, endpoint=True)
 
-
-    ticker(positions, values[t_inv[positions]])
-
+    _, label = frequency_ticks(positions, values[t_inv[positions]],
+                               n_ticks=None, axis=axis, fmt=fmt)
     labeler(label)
 
 
 def __axis_mel(data, n_ticks, horiz, fmin=None, fmax=None, **_kwargs):
     '''Mel-scaled axes'''
+
+    fmt = _kwargs.pop('freq_fmt', 'Hz')
+
+    if horiz:
+        axis = 'x'
+    else:
+        axis = 'y'
 
     n, ticker, labeler = __get_shape_artists(data, horiz)
 
@@ -669,8 +817,9 @@ def __axis_mel(data, n_ticks, horiz, fmin=None, fmax=None, **_kwargs):
     # only two star-args here, defined immediately above
     # pylint: disable=star-args
     values = core.mel_frequencies(n_mels=n+2, **kwargs)[positions]
-    ticker(positions, values.astype(int))
-    labeler('Hz')
+    _, label = frequency_ticks(positions, values,
+                               n_ticks=None, axis=axis, fmt=fmt)
+    labeler(label)
 
 
 def __axis_chroma(data, n_ticks, horiz, bins_per_octave=12, **_kwargs):
@@ -694,14 +843,21 @@ def __axis_chroma(data, n_ticks, horiz, bins_per_octave=12, **_kwargs):
 
 def __axis_linear(data, n_ticks, horiz, sr=22050, **_kwargs):
     '''Linear frequency axes'''
+    fmt = _kwargs.pop('freq_fmt', 'Hz')
+
+    if horiz:
+        axis = 'x'
+    else:
+        axis = 'y'
 
     n, ticker, labeler = __get_shape_artists(data, horiz)
 
     positions = np.linspace(0, n - 1, n_ticks, endpoint=True).astype(int)
-    values = (sr * np.linspace(0, 0.5, n_ticks, endpoint=True)).astype(int)
+    values = (sr * np.linspace(0, 0.5, n_ticks, endpoint=True))
 
-    ticker(positions, values)
-    labeler('Hz')
+    _, label = frequency_ticks(positions, values,
+                               n_ticks=None, axis=axis, fmt=fmt)
+    labeler(label)
 
 
 def __axis_cqt(data, n_ticks, horiz, note=False, fmin=None,
@@ -709,6 +865,13 @@ def __axis_cqt(data, n_ticks, horiz, note=False, fmin=None,
     '''CQT axes'''
     if fmin is None:
         fmin = core.note_to_hz('C1')
+
+    if horiz:
+        axis = 'x'
+    else:
+        axis = 'y'
+
+    fmt = _kwargs.pop('freq_fmt', 'Hz')
 
     n, ticker, labeler = __get_shape_artists(data, horiz)
 
@@ -721,11 +884,12 @@ def __axis_cqt(data, n_ticks, horiz, note=False, fmin=None,
     if note:
         values = core.hz_to_note(values[positions])
         label = 'Note'
+        ticker(positions, values)
     else:
-        values = values[positions].astype(int)
-        label = 'Hz'
+        values = values[positions]
+        _, label = frequency_ticks(positions, values,
+                                   n_ticks=None, axis=axis, fmt=fmt)
 
-    ticker(positions, values)
     labeler(label)
 
 
@@ -750,11 +914,13 @@ def __axis_time(data, n_ticks, horiz, sr=22050, hop_length=512, **_kwargs):
     else:
         axis = 'y'
 
+    fmt = _kwargs.pop('time_fmt', None)
+
     positions = np.linspace(0, n-1, n_ticks, endpoint=True).astype(int)
 
     time_ticks(positions,
                core.frames_to_time(positions, sr=sr, hop_length=hop_length),
-               n_ticks=None, axis=axis)
+               n_ticks=None, fmt=fmt, axis=axis)
 
     labeler('Time')
 
