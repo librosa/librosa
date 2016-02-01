@@ -160,6 +160,38 @@ def test_xaxis_none_yaxis_log():
     librosa.display.specshow(S_bin, y_axis='log')
 
 
+@image_comparison(baseline_images=['x_none_y_log_khz'], extensions=['png'])
+def test_xaxis_none_yaxis_log_khz():
+    plt.figure()
+    librosa.display.specshow(S_abs, y_axis='log', freq_fmt='kHz')
+    plt.tight_layout()
+
+
+@image_comparison(baseline_images=['x_none_y_log_mhz'], extensions=['png'])
+def test_xaxis_none_yaxis_log_mhz():
+    plt.figure()
+    librosa.display.specshow(S_abs, y_axis='log', freq_fmt='mHz')
+    plt.tight_layout()
+
+@image_comparison(baseline_images=['x_none_y_log_megahz'], extensions=['png'])
+def test_xaxis_none_yaxis_log_megahz():
+    plt.figure()
+    librosa.display.specshow(S_abs, y_axis='log', freq_fmt='MHz')
+    plt.tight_layout()
+
+
+@image_comparison(baseline_images=['x_none_y_log_ghz'], extensions=['png'])
+def test_xaxis_none_yaxis_log_ghz():
+    plt.figure()
+    librosa.display.specshow(S_abs, y_axis='log', freq_fmt='GHz')
+    plt.tight_layout()
+
+@raises(librosa.ParameterError)
+def test_xaxis_none_yaxis_log_badscale():
+    plt.figure()
+    librosa.display.specshow(S_abs, y_axis='log', freq_fmt='no-scale')
+    plt.tight_layout()
+
 @image_comparison(baseline_images=['x_linear_y_none'], extensions=['png'])
 def test_xaxis_linear_yaxis_none():
     plt.figure()
@@ -370,4 +402,60 @@ def test_time_ticks_failure():
 
     # Unknown fmt
     yield __test, locs, None, 'days', 'x'
+
+
+def test_freq_ticks():
+
+    def __test(locs, freqs, n_ticks, axis):
+
+        if freqs is None:
+            args = [locs]
+            fmax = max(locs)
+        else:
+            args = [locs, freqs]
+            fmax = max(freqs)
+
+        plt.figure()
+        (ticks, labels), fmt = librosa.display.frequency_ticks(*args,
+                                                               axis=axis,
+                                                               n_ticks=n_ticks)
+
+        if n_ticks is None:
+            n_ticks = len(locs)
+
+        eq_(len(ticks), n_ticks)
+        eq_(len(labels), n_ticks)
+
+        if fmt == 'mHz':
+            assert fmax <= 1e1
+        elif fmt == 'Hz':
+            assert fmax <= 1e4
+        elif fmt == 'kHz':
+            assert fmax <= 1e7
+        elif fmt == 'MHz':
+            assert fmax <= 1e10
+        elif fmt == 'GHz':
+            assert fmax > 1e10
+        else:
+            raise ValueError('Incorrect fmt={}'.format(fmt))
+
+        if axis == 'x':
+            cls = matplotlib.axis.XTick
+        elif axis == 'y':
+            cls = matplotlib.axis.YTick
+        else:
+            raise ValueError('Incorrect axis={}'.format(axis))
+        
+        assert all([isinstance(_, cls) for _ in ticks])
+
+
+    for sr in [1e-3, 1e1, 1e3, 1e5, 1e8, 1e12]:
+        locs = librosa.fft_frequencies(sr=sr, n_fft=32)
+        
+        for freqs in [None, locs]:
+            for n_ticks in [3, 5, None]:
+                for axis in ['x', 'y']:
+                    yield __test, locs, freqs, n_ticks, axis
+
+    yield raises(librosa.ParameterError)(__test), locs, freqs, n_ticks, 23
 
