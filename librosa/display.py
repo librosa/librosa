@@ -54,7 +54,7 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
         Which axis should the ticks be plotted on?
         Default: 'x'
 
-    fmt : None or {'ms', 's', 'm', 'h'}
+    time_fmt : None or {'ms', 's', 'm', 'h'}
         - 'ms': milliseconds   (eg, 241ms)
         - 's': seconds         (eg, 1.43s)
         - 'm': minutes         (eg, 1:02)
@@ -64,6 +64,11 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
         range of the times data.
 
         Default: None
+
+    fmt : str
+        .. warning:: This parameter name was in librosa 0.4.2
+            Use the `time_fmt` parameter instead.
+            The `fmt` parameter will be removed in librosa 0.5.0.
 
     kwargs : additional keyword arguments.
         See `matplotlib.pyplot.xticks` or `yticks` for details.
@@ -92,7 +97,7 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
     >>> librosa.display.time_ticks(locations, timestamps)
 
     >>> # Format in seconds
-    >>> librosa.display.time_ticks(beat_times, fmt='s')
+    >>> librosa.display.time_ticks(beat_times, time_fmt='s')
 
     >>> # Tick along the y axis
     >>> librosa.display.time_ticks(beat_times, axis='y')
@@ -101,7 +106,10 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
 
     n_ticks = kwargs.pop('n_ticks', 5)
     axis = kwargs.pop('axis', 'x')
-    fmt = kwargs.pop('fmt', None)
+    fmt = kwargs.pop('fmt', util.Deprecated())
+    time_fmt = kwargs.pop('time_fmt', None)
+
+    time_fmt = util.rename_kw('fmt', fmt, 'time_fmt', time_fmt, '0.4.2', '0.5.0')
 
     if axis == 'x':
         ticker = plt.xticks
@@ -133,20 +141,20 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
                                                                      6e1)),
                                                           int(np.mod(t, 6e1)))}
 
-    if fmt is None:
+    if time_fmt is None:
         if max(times) > 3.6e3:
-            fmt = 'h'
+            time_fmt = 'h'
         elif max(times) > 6e1:
-            fmt = 'm'
+            time_fmt = 'm'
         elif max(times) > 1.0:
-            fmt = 's'
+            time_fmt = 's'
         else:
-            fmt = 'ms'
+            time_fmt = 'ms'
 
-    elif fmt not in formats:
-        raise ParameterError('Invalid format: {:s}'.format(fmt))
+    elif time_fmt not in formats:
+        raise ParameterError('Invalid format: {:s}'.format(time_fmt))
 
-    times = [formats[fmt](t) for t in times]
+    times = [formats[time_fmt](t) for t in times]
 
     return ticker(locs, times, **kwargs)
 
@@ -170,7 +178,7 @@ def frequency_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
         Which axis should the ticks be plotted on?
         Default: 'x'
 
-    fmt : None or {'mHz', 'Hz', 'kHz', 'MHz', 'GHz'}
+    freq_fmt : None or {'mHz', 'Hz', 'kHz', 'MHz', 'GHz'}
         - 'mHz': millihertz
         - 'Hz': hertz
         - 'kHz': kilohertz
@@ -210,7 +218,7 @@ def frequency_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
     >>> librosa.display.frequency_ticks(locations, frequencies)
 
     >>> # Format in hertz
-    >>> librosa.display.frequency_ticks(frequencies, fmt='Hz')
+    >>> librosa.display.frequency_ticks(frequencies, freq_fmt='Hz')
 
     >>> # Tick along the y axis
     >>> librosa.display.frequency_ticks(frequencies, axis='y')
@@ -219,7 +227,7 @@ def frequency_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
 
     n_ticks = kwargs.pop('n_ticks', 5)
     axis = kwargs.pop('axis', 'x')
-    fmt = kwargs.pop('fmt', None)
+    freq_fmt = kwargs.pop('freq_fmt', None)
 
     if axis == 'x':
         ticker = plt.xticks
@@ -250,24 +258,24 @@ def frequency_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
 
     f_max = np.max(freqs)
 
-    if fmt is None:
+    if freq_fmt is None:
         if f_max > 1e10:
-            fmt = 'GHz'
+            freq_fmt = 'GHz'
         elif f_max > 1e7:
-            fmt = 'MHz'
+            freq_fmt = 'MHz'
         elif f_max > 1e4:
-            fmt = 'kHz'
+            freq_fmt = 'kHz'
         elif f_max > 1e1:
-            fmt = 'Hz'
+            freq_fmt = 'Hz'
         else:
-            fmt = 'mHz'
+            freq_fmt = 'mHz'
 
-    elif fmt not in formats:
-        raise ParameterError('Invalid format: {:s}'.format(fmt))
+    elif freq_fmt not in formats:
+        raise ParameterError('Invalid format: {:s}'.format(freq_fmt))
 
-    ticks = [formats[fmt](f) for f in freqs]
+    ticks = [formats[freq_fmt](f) for f in freqs]
 
-    return ticker(locs, ticks, **kwargs), fmt
+    return ticker(locs, ticks, **kwargs), freq_fmt
 
 
 @cache
@@ -470,7 +478,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000
     plt.xlim([locs[0], locs[-1]])
 
     if x_axis == 'time':
-        time_ticks(locs, core.samples_to_time(locs, sr=target_sr), fmt=time_fmt)
+        time_ticks(locs, core.samples_to_time(locs, sr=target_sr), time_fmt=time_fmt)
     elif x_axis is None or x_axis in ['off', 'none']:
         plt.xticks([])
     else:
@@ -788,7 +796,7 @@ def __axis_log(data, n_ticks, horiz, sr=22050, kwargs=None,
     values = np.linspace(0, 0.5 * sr, n, endpoint=True)
 
     _, label = frequency_ticks(positions, values[t_inv[positions]],
-                               n_ticks=None, axis=axis, fmt=fmt)
+                               n_ticks=None, axis=axis, freq_fmt=fmt)
     labeler(label)
 
 
@@ -818,7 +826,7 @@ def __axis_mel(data, n_ticks, horiz, fmin=None, fmax=None, **_kwargs):
     # pylint: disable=star-args
     values = core.mel_frequencies(n_mels=n+2, **kwargs)[positions]
     _, label = frequency_ticks(positions, values,
-                               n_ticks=None, axis=axis, fmt=fmt)
+                               n_ticks=None, axis=axis, freq_fmt=fmt)
     labeler(label)
 
 
@@ -856,7 +864,7 @@ def __axis_linear(data, n_ticks, horiz, sr=22050, **_kwargs):
     values = (sr * np.linspace(0, 0.5, n_ticks, endpoint=True))
 
     _, label = frequency_ticks(positions, values,
-                               n_ticks=None, axis=axis, fmt=fmt)
+                               n_ticks=None, axis=axis, freq_fmt=fmt)
     labeler(label)
 
 
@@ -888,7 +896,7 @@ def __axis_cqt(data, n_ticks, horiz, note=False, fmin=None,
     else:
         values = values[positions]
         _, label = frequency_ticks(positions, values,
-                                   n_ticks=None, axis=axis, fmt=fmt)
+                                   n_ticks=None, axis=axis, freq_fmt=fmt)
 
     labeler(label)
 
@@ -920,7 +928,7 @@ def __axis_time(data, n_ticks, horiz, sr=22050, hop_length=512, **_kwargs):
 
     time_ticks(positions,
                core.frames_to_time(positions, sr=sr, hop_length=hop_length),
-               n_ticks=None, fmt=fmt, axis=axis)
+               n_ticks=None, time_fmt=fmt, axis=axis)
 
     labeler('Time')
 
