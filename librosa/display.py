@@ -65,6 +65,11 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
 
         Default: None
 
+    fmt : str
+        .. warning:: This parameter name was in librosa 0.4.2
+            Use the `time_fmt` parameter instead.
+            The `fmt` parameter will be removed in librosa 0.5.0.
+
     kwargs : additional keyword arguments.
         See `matplotlib.pyplot.xticks` or `yticks` for details.
 
