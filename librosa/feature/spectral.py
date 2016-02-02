@@ -7,6 +7,7 @@ import numpy as np
 from .. import util
 from .. import filters
 from ..util.exceptions import ParameterError
+from ..util import Deprecated, rename_kw
 
 from ..core.time_frequency import fft_frequencies
 from ..core.audio import zero_crossings
@@ -813,7 +814,8 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
 
 def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
                norm=np.inf, threshold=0.0, tuning=None, n_chroma=12,
-               n_octaves=7, window=None, bins_per_octave=None, mode='full'):
+               n_octaves=7, window=None, bins_per_octave=None, cqt_mode='full',
+               mode=Deprecated()):
     r'''Constant-Q chromagram
 
     Parameters
@@ -857,8 +859,13 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
         Number of bins per octave in the CQT.
         Default: matches `n_chroma`
 
-    mode : ['full', 'hybrid']
+    cqt_mode : ['full', 'hybrid']
         Constant-Q transform mode
+
+    mode : str
+        .. warning:: This parameter name was in librosa 0.4.2
+            Use the `cqt_mode` parameter instead.
+            The `mode` parameter will be removed in librosa 0.5.0.
 
     Returns
     -------
@@ -899,12 +906,14 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
 
     cqt_func = {'full': cqt, 'hybrid': hybrid_cqt}
 
+    cqt_mode = rename_kw('mode', mode, 'cqt_mode', cqt_mode, '0.4.2', '0.5.0')
+
     if bins_per_octave is None:
         bins_per_octave = n_chroma
 
     # Build the CQT if we don't have one already
     if C is None:
-        C = cqt_func[mode](y, sr=sr,
+        C = cqt_func[cqt_mode](y, sr=sr,
                            hop_length=hop_length,
                            fmin=fmin,
                            n_bins=n_octaves * bins_per_octave,
