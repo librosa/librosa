@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 # CREATED:2015-02-15 10:06:03 by Brian McFee <brian.mcfee@nyu.edu>
-'''Helpful decorators'''
+'''Helpful tools for deprecation'''
 
 import warnings
 from decorator import decorator
 import six
+import inspect
 
 
 def moved(moved_from, version, version_removed):

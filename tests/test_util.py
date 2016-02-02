@@ -636,6 +636,45 @@ def test_warning_moved():
         assert 'moved' in str(out[0].message).lower()
 
 
+def test_warning_rename_kw_pass():
+
+    warnings.resetwarnings()
+    warnings.simplefilter('always')
+
+    ov = librosa.util.Deprecated()
+    nv = 23
+
+    with warnings.catch_warnings(record=True) as out:
+        v = librosa.util.rename_kw('old', ov, 'new', nv, '0', '1')
+
+        eq_(v, nv)
+
+        # Make sure no warning triggered
+        assert len(out) == 0
+
+def test_warning_rename_kw_fail():
+
+    warnings.resetwarnings()
+    warnings.simplefilter('always')
+
+    ov = 27
+    nv = 23
+
+    with warnings.catch_warnings(record=True) as out:
+        v = librosa.util.rename_kw('old', ov, 'new', nv, '0', '1')
+
+        eq_(v, ov)
+
+        # Make sure the warning triggered
+        assert len(out) > 0
+
+        # And that the category is correct
+        assert out[0].category is DeprecationWarning
+
+        # And that it says the right thing (roughly)
+        assert 'renamed' in str(out[0].message).lower()
+
+
 def test_index_to_slice():
 
     def __test(idx, idx_min, idx_max, step, pad):
