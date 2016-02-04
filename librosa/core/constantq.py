@@ -5,6 +5,7 @@ from __future__ import division
 
 import numpy as np
 import scipy.fftpack as fft
+from warnings import warn
 
 from . import audio
 from .time_frequency import cqt_frequencies, note_to_hz
@@ -16,9 +17,6 @@ from .. import util
 from ..util.exceptions import ParameterError
 
 __all__ = ['cqt', 'hybrid_cqt', 'pseudo_cqt']
-
-#TODO:   2015-11-09 16:48:08 by Brian McFee <brian.mcfee@nyu.edu>
-# deprecation warning for real=True 
 
 
 @cache
@@ -145,6 +143,13 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     filter_scale = util.rename_kw('resolution', resolution,
                                   'filter_scale', filter_scale,
                                   '0.4.2', '0.5.0')
+
+    if real:
+        warn('Real-valued CQT (real=True) is deprecated in 0.4.2. '
+             'Complex-valued CQT will become the default in 0.5.0. '
+             'Consider using np.abs(librosa.cqt(..., real=False)) '
+             'instead of real=True to maintain forward compatibility.',
+             DeprecationWarning)
 
     # How many octaves are we dealing with?
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
