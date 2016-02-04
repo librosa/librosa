@@ -458,7 +458,8 @@ def __float_window(window_function):
 
 @cache
 def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
-               window=None, resolution=2, pad_fft=True, norm=1, **kwargs):
+               window=None, filter_scale=2, pad_fft=True, norm=1,
+               resolution=util.Deprecated(), **kwargs):
     r'''Construct a constant-Q basis.
 
     This uses the filter bank described by [1]_.
@@ -489,8 +490,9 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
         Windowing function to apply to filters.
         Default: `scipy.signal.hann`
 
-    resolution : float > 0 [scalar]
-        Resolution of filter windows. Larger values use longer windows.
+    filter_scale : float > 0 [scalar]
+        Scale of filter windows.
+        Small values (<1) use shorter windows for higher temporal resolution.
 
     pad_fft : boolean
         Center-pad all filters up to the nearest integral power of 2.
@@ -505,6 +507,10 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     kwargs : additional keyword arguments
         Arguments to `np.pad()` when `pad==True`.
 
+    resolution : float
+        .. warning:: This parameter name was in librosa 0.4.2
+            Use the `filter_scale` parameter instead.
+            The `resolution` parameter will be removed in librosa 0.5.0.
 
     Returns
     -------
@@ -523,9 +529,9 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 
     Examples
     --------
-    Use a longer window for each filter
+    Use a shorter window for each filter
 
-    >>> basis, lengths = librosa.filters.constant_q(22050, resolution=3)
+    >>> basis, lengths = librosa.filters.constant_q(22050, filter_scale=0.5)
 
     Plot one octave of filters in time and frequency
 
@@ -561,13 +567,17 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     if window is None:
         window = scipy.signal.hann
 
+    filter_scale = util.rename_kw('resolution', resolution,
+                                  'filter_scale', filter_scale,
+                                  '0.4.2', '0.5.0')
+
     # Pass-through parameters to get the filter lengths
     lengths = constant_q_lengths(sr, fmin,
                                  n_bins=n_bins,
                                  bins_per_octave=bins_per_octave,
                                  tuning=tuning,
                                  window=window,
-                                 resolution=resolution)
+                                 filter_scale=filter_scale)
 
     # Apply tuning correction
     correction = 2.0**(float(tuning) / bins_per_octave)
@@ -575,7 +585,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 
     # Q should be capitalized here, so we suppress the name warning
     # pylint: disable=invalid-name
-    Q = float(resolution) / (2.0**(1. / bins_per_octave) - 1)
+    Q = float(filter_scale) / (2.0**(1. / bins_per_octave) - 1)
 
     # Convert lengths back to frequencies
     freqs = Q * sr / lengths
@@ -609,7 +619,8 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 
 @cache
 def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
-                       tuning=0.0, window='hann', resolution=2):
+                       tuning=0.0, window='hann', filter_scale=2,
+                       resolution=util.Deprecated()):
     r'''Return length of each filter in a constant-Q basis.
 
     Parameters
@@ -632,8 +643,13 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
     window : str or callable
         Window function to use on filters
 
-    resolution : float > 0 [scalar]
+    filter_scale : float > 0 [scalar]
         Resolution of filter windows. Larger values use longer windows.
+
+    resolution : float
+        .. warning:: This parameter name was in librosa 0.4.2
+            Use the `filter_scale` parameter instead.
+            The `resolution` parameter will be removed in librosa 0.5.0.
 
     Returns
     -------
@@ -646,14 +662,18 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
     librosa.core.cqt
     '''
 
+    filter_scale = util.rename_kw('resolution', resolution,
+                                  'filter_scale', filter_scale,
+                                  '0.4.2', '0.5.0')
+
     if fmin <= 0:
         raise ParameterError('fmin must be positive')
 
     if bins_per_octave <= 0:
         raise ParameterError('bins_per_octave must be positive')
 
-    if resolution <= 0:
-        raise ParameterError('resolution must be positive')
+    if filter_scale <= 0:
+        raise ParameterError('filter_scale must be positive')
 
     if n_bins <= 0 or not isinstance(n_bins, int):
         raise ParameterError('n_bins must be a positive integer')
@@ -664,7 +684,7 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
 
     # Q should be capitalized here, so we suppress the name warning
     # pylint: disable=invalid-name
-    Q = float(resolution) / (2.0**(1. / bins_per_octave) - 1)
+    Q = float(filter_scale) / (2.0**(1. / bins_per_octave) - 1)
 
     # Compute the frequencies
     freq = fmin * (2.0 ** (np.arange(n_bins, dtype=float) / bins_per_octave))
