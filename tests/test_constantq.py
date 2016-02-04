@@ -32,7 +32,7 @@ def __test_cqt_size(y, sr, hop_length, fmin, n_bins, bins_per_octave,
                              n_bins=n_bins,
                              bins_per_octave=bins_per_octave,
                              tuning=tuning,
-                             resolution=resolution,
+                             filter_scale=resolution,
                              aggregate=aggregate,
                              norm=norm,
                              sparsity=sparsity)
@@ -106,7 +106,7 @@ def test_hybrid_cqt():
                                 hop_length=hop_length,
                                 fmin=fmin, n_bins=n_bins,
                                 bins_per_octave=bins_per_octave,
-                                tuning=tuning, resolution=resolution,
+                                tuning=tuning, filter_scale=resolution,
                                 norm=norm,
                                 sparsity=sparsity)
 
@@ -114,7 +114,7 @@ def test_hybrid_cqt():
                          hop_length=hop_length,
                          fmin=fmin, n_bins=n_bins,
                          bins_per_octave=bins_per_octave,
-                         tuning=tuning, resolution=resolution,
+                         tuning=tuning, filter_scale=resolution,
                          norm=norm,
                          sparsity=sparsity)
 

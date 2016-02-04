@@ -173,7 +173,7 @@ def test__window():
 
 def test_constant_q():
 
-    def __test(sr, fmin, n_bins, bins_per_octave, tuning, resolution,
+    def __test(sr, fmin, n_bins, bins_per_octave, tuning, filter_scale,
                pad_fft, norm):
 
         F, lengths = librosa.filters.constant_q(sr,
@@ -181,7 +181,7 @@ def test_constant_q():
                                                 n_bins=n_bins,
                                                 bins_per_octave=bins_per_octave,
                                                 tuning=tuning,
-                                                resolution=resolution,
+                                                filter_scale=filter_scale,
                                                 pad_fft=pad_fft,
                                                 norm=norm)
 
@@ -214,7 +214,7 @@ def test_constant_q():
     # with negative bins
     yield (raises(librosa.ParameterError)(__test), sr, 60, -1, 12, 0, 1, True, 1)
 
-    # with negative resolution
+    # with negative filter_scale
     yield (raises(librosa.ParameterError)(__test), sr, 60, 1, 12, 0, -1, True, 1)
 
     # with negative norm
@@ -224,12 +224,12 @@ def test_constant_q():
         for n_bins in [12, 24]:
             for bins_per_octave in [12, 24]:
                 for tuning in [0, 0.25]:
-                    for resolution in [1, 2]:
+                    for filter_scale in [1, 2]:
                         for norm in [1, 2]:
                             for pad_fft in [False, True]:
                                 yield (__test, sr, fmin, n_bins,
                                        bins_per_octave, tuning,
-                                       resolution, pad_fft,
+                                       filter_scale, pad_fft,
                                        norm)
 
 
