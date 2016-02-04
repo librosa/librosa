@@ -9,7 +9,8 @@ import warnings
 
 class Deprecated(object):
     '''A dummy class to catch usage of deprecated variable names'''
-    pass
+    def __repr__(self):
+        return '<DEPRECATED parameter>'
 
 
 def rename_kw(old_name, old_value, new_name, new_value, version_deprecated, version_removed):
