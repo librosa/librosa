@@ -23,8 +23,9 @@ __all__ = ['cqt', 'hybrid_cqt', 'pseudo_cqt']
 
 @cache
 def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
-        bins_per_octave=12, tuning=None, resolution=2,
-        aggregate=None, norm=1, sparsity=0.01, real=True):
+        bins_per_octave=12, tuning=None, filter_scale=2,
+        aggregate=None, norm=1, sparsity=0.01, real=True,
+        resolution=util.Deprecated()):
     '''Compute the constant-Q transform of an audio signal.
 
     This implementation is based on the recursive sub-sampling method
@@ -59,8 +60,9 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
         If `None`, tuning will be automatically estimated.
 
-    resolution : float > 0
-        Filter resolution factor. Larger values use longer windows.
+    filter_scale : float > 0
+        Filter scale factor. Small values (<1) use shorter windows
+        for improved time resolution.
 
     aggregate : None or function
         Aggregation function for time-oversampling energy aggregation.
@@ -75,6 +77,15 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         fraction of the energy in each basis.
 
         Set `sparsity=0` to disable sparsification.
+
+    real : bool
+        If true, return only the magnitude of the CQT.
+
+    resolution : float
+        .. warning:: This parameter name was in librosa 0.4.2
+            Use the `filter_scale` parameter instead.
+            The `resolution` parameter will be removed in librosa 0.5.0.
+
 
     Returns
     -------
@@ -119,7 +130,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
            [  2.363e-07,   5.329e-07, ...,   1.294e-07,   1.611e-07]])
 
 
-    Using a higher resolution
+    Using a higher frequency resolution
 
     >>> C = librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('C2'),
     ...                 n_bins=60 * 2, bins_per_octave=12 * 2)
@@ -130,6 +141,10 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
            [  2.034e-07,   4.245e-07, ...,   6.213e-08,   1.463e-07],
            [  4.896e-08,   5.407e-07, ...,   9.176e-08,   1.051e-07]])
     '''
+
+    filter_scale = util.rename_kw('resolution', resolution,
+                                  'filter_scale', filter_scale,
+                                  '0.4.2', '0.5.0')
 
     # How many octaves are we dealing with?
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
@@ -149,7 +164,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     fmax_t = np.max(freqs)
 
     # Determine required resampling quality
-    Q = float(resolution) / (2.0**(1. / bins_per_octave) - 1)
+    Q = float(filter_scale) / (2.0**(1. / bins_per_octave) - 1)
 
     filter_cutoff = fmax_t * (1 + filters.window_bandwidth('hann') / Q)
 
@@ -179,7 +194,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                                          n_filters,
                                                          bins_per_octave,
                                                          tuning,
-                                                         resolution,
+                                                         filter_scale,
                                                          norm,
                                                          sparsity)
         min_filter_length = np.min(filter_lengths)
@@ -215,7 +230,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                                      n_filters,
                                                      bins_per_octave,
                                                      tuning,
-                                                     resolution,
+                                                     filter_scale,
                                                      norm,
                                                      sparsity)
 
@@ -248,8 +263,9 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
 @cache
 def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
-               bins_per_octave=12, tuning=None, resolution=2,
-               norm=1, sparsity=0.01):
+               bins_per_octave=12, tuning=None, filter_scale=2,
+               norm=1, sparsity=0.01,
+               resolution=util.Deprecated()):
     '''Compute the hybrid constant-Q transform of an audio signal.
 
     Here, the hybrid CQT uses the pseudo CQT for higher frequencies where
@@ -281,14 +297,20 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
         If `None`, tuning will be automatically estimated.
 
-    resolution : float > 0
-        Filter resolution factor. Larger values use longer windows.
+    filter_scale : float > 0
+        Filter filter_scale factor. Larger values use longer windows.
 
     sparsity : float in [0, 1)
         Sparsify the CQT basis by discarding up to `sparsity`
         fraction of the energy in each basis.
 
         Set `sparsity=0` to disable sparsification.
+
+    resolution : float
+        .. warning:: This parameter name was in librosa 0.4.2
+            Use the `filter_scale` parameter instead.
+            The `resolution` parameter will be removed in librosa 0.5.0.
+
 
     Returns
     -------
@@ -307,6 +329,10 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     pseudo_cqt
     '''
 
+    filter_scale = util.rename_kw('resolution', resolution,
+                                  'filter_scale', filter_scale,
+                                  '0.4.2', '0.5.0')
+
     if fmin is None:
         # C1 by default
         fmin = note_to_hz('C1')
@@ -324,7 +350,7 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                          n_bins=n_bins,
                                          bins_per_octave=bins_per_octave,
                                          tuning=tuning,
-                                         resolution=resolution)
+                                         filter_scale=filter_scale)
 
     # Determine which filters to use with Pseudo CQT
     pseudo_filters = lengths < 2*hop_length
@@ -340,7 +366,7 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                    n_bins=n_bins_pseudo,
                                    bins_per_octave=bins_per_octave,
                                    tuning=tuning,
-                                   resolution=resolution,
+                                   filter_scale=filter_scale,
                                    norm=norm,
                                    sparsity=sparsity)
         cqt_resp.append(my_pseudo_cqt)
@@ -357,7 +383,7 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                      n_bins=n_bins_full,
                      bins_per_octave=bins_per_octave,
                      tuning=tuning,
-                     resolution=resolution,
+                     filter_scale=filter_scale,
                      norm=norm,
                      sparsity=sparsity,
                      real=True)
@@ -369,8 +395,9 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
 @cache
 def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
-               bins_per_octave=12, tuning=None, resolution=2,
-               norm=1, sparsity=0.01):
+               bins_per_octave=12, tuning=None, filter_scale=2,
+               norm=1, sparsity=0.01,
+               resolution=util.Deprecated()):
     '''Compute the pseudo constant-Q transform of an audio signal.
 
     This uses a single fft size that is the smallest power of 2 that is greater
@@ -404,14 +431,20 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
         If `None`, tuning will be automatically estimated.
 
-    resolution : float > 0
-        Filter resolution factor. Larger values use longer windows.
+    filter_scale : float > 0
+        Filter filter_scale factor. Larger values use longer windows.
 
     sparsity : float in [0, 1)
         Sparsify the CQT basis by discarding up to `sparsity`
         fraction of the energy in each basis.
 
         Set `sparsity=0` to disable sparsification.
+
+    resolution : float
+        .. warning:: This parameter name was in librosa 0.4.2
+            Use the `filter_scale` parameter instead.
+            The `resolution` parameter will be removed in librosa 0.5.0.
+
 
     Returns
     -------
@@ -426,6 +459,10 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     '''
 
+    filter_scale = util.rename_kw('resolution', resolution,
+                                  'filter_scale', filter_scale,
+                                  '0.4.2', '0.5.0')
+
     if fmin is None:
         # C1 by default
         fmin = note_to_hz('C1')
@@ -438,7 +475,7 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                         n_bins,
                                         bins_per_octave,
                                         tuning,
-                                        resolution,
+                                        filter_scale,
                                         norm,
                                         sparsity,
                                         hop_length=hop_length)
@@ -453,7 +490,7 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
 
 def __fft_filters(sr, fmin, n_bins, bins_per_octave, tuning,
-                  resolution, norm, sparsity, hop_length=None):
+                  filter_scale, norm, sparsity, hop_length=None):
     '''Generate the frequency domain constant-Q filter basis.'''
 
     basis, lengths = filters.constant_q(sr,
@@ -461,7 +498,7 @@ def __fft_filters(sr, fmin, n_bins, bins_per_octave, tuning,
                                         n_bins=n_bins,
                                         bins_per_octave=bins_per_octave,
                                         tuning=tuning,
-                                        resolution=resolution,
+                                        filter_scale=filter_scale,
                                         norm=norm,
                                         pad_fft=True)
 
