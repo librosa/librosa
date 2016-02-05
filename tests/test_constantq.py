@@ -25,17 +25,18 @@ from nose.tools import raises, eq_
 def __test_cqt_size(y, sr, hop_length, fmin, n_bins, bins_per_octave,
                     tuning, resolution, aggregate, norm, sparsity):
 
-    cqt_output = librosa.cqt(y,
-                             sr=sr,
-                             hop_length=hop_length,
-                             fmin=fmin,
-                             n_bins=n_bins,
-                             bins_per_octave=bins_per_octave,
-                             tuning=tuning,
-                             filter_scale=resolution,
-                             aggregate=aggregate,
-                             norm=norm,
-                             sparsity=sparsity)
+    cqt_output = np.abs(librosa.cqt(y,
+                                    sr=sr,
+                                    hop_length=hop_length,
+                                    fmin=fmin,
+                                    n_bins=n_bins,
+                                    bins_per_octave=bins_per_octave,
+                                    tuning=tuning,
+                                    filter_scale=resolution,
+                                    aggregate=aggregate,
+                                    norm=norm,
+                                    sparsity=sparsity,
+                                    real=False))
 
     eq_(cqt_output.shape[0], n_bins)
 
@@ -110,13 +111,13 @@ def test_hybrid_cqt():
                                 norm=norm,
                                 sparsity=sparsity)
 
-        C1 = librosa.cqt(y, sr=sr,
-                         hop_length=hop_length,
-                         fmin=fmin, n_bins=n_bins,
-                         bins_per_octave=bins_per_octave,
-                         tuning=tuning, filter_scale=resolution,
-                         norm=norm,
-                         sparsity=sparsity)
+        C1 = np.abs(librosa.cqt(y, sr=sr,
+                                hop_length=hop_length,
+                                fmin=fmin, n_bins=n_bins,
+                                bins_per_octave=bins_per_octave,
+                                tuning=tuning, filter_scale=resolution,
+                                norm=norm,
+                                sparsity=sparsity, real=False))
 
         eq_(C1.shape, C2.shape)
 
@@ -155,7 +156,7 @@ def test_cqt_position():
 
     def __test(note_min):
 
-        C = librosa.cqt(y, sr=sr, fmin=librosa.midi_to_hz(note_min))
+        C = np.abs(librosa.cqt(y, sr=sr, fmin=librosa.midi_to_hz(note_min), real=False))
 
         # Average over time
         Cbar = np.median(C, axis=1)

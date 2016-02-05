@@ -382,16 +382,16 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
         fmin_full = np.min(freqs[~pseudo_filters])
 
-        my_cqt = cqt(y, sr,
-                     hop_length=hop_length,
-                     fmin=fmin_full,
-                     n_bins=n_bins_full,
-                     bins_per_octave=bins_per_octave,
-                     tuning=tuning,
-                     filter_scale=filter_scale,
-                     norm=norm,
-                     sparsity=sparsity,
-                     real=True)
+        my_cqt = np.abs(cqt(y, sr,
+                            hop_length=hop_length,
+                            fmin=fmin_full,
+                            n_bins=n_bins_full,
+                            bins_per_octave=bins_per_octave,
+                            tuning=tuning,
+                            filter_scale=filter_scale,
+                            norm=norm,
+                            sparsity=sparsity,
+                            real=False))
 
         cqt_resp.append(my_cqt)
 
