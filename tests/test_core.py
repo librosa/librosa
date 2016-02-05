@@ -607,10 +607,6 @@ def test_estimate_tuning():
                                              fmin=librosa.note_to_hz('C4'),
                                              fmax=librosa.note_to_hz('G#9'))
 
-        print('target_hz={:.3f}'.format(target_hz))
-        print('tuning={:.3f}, estimated={:.3f}'.format(tuning, tuning_est))
-        print('resolution={:.2e}'.format(resolution))
-
         # Round to the proper number of decimals
         deviation = np.around(np.abs(tuning - tuning_est),
                               int(-np.log10(resolution)))

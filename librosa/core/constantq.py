@@ -5,6 +5,7 @@ from __future__ import division
 
 import numpy as np
 import scipy.fftpack as fft
+from warnings import warn
 
 from . import audio
 from .time_frequency import cqt_frequencies, note_to_hz
@@ -20,8 +21,9 @@ __all__ = ['cqt', 'hybrid_cqt', 'pseudo_cqt']
 
 @cache
 def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
-        bins_per_octave=12, tuning=None, resolution=2,
-        aggregate=None, norm=1, sparsity=0.01):
+        bins_per_octave=12, tuning=None, filter_scale=2,
+        aggregate=None, norm=1, sparsity=0.01, real=True,
+        resolution=util.Deprecated()):
     '''Compute the constant-Q transform of an audio signal.
 
     This implementation is based on the recursive sub-sampling method
@@ -56,8 +58,9 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
         If `None`, tuning will be automatically estimated.
 
-    resolution : float > 0
-        Filter resolution factor. Larger values use longer windows.
+    filter_scale : float > 0
+        Filter scale factor. Small values (<1) use shorter windows
+        for improved time resolution.
 
     aggregate : None or function
         Aggregation function for time-oversampling energy aggregation.
@@ -73,15 +76,25 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
         Set `sparsity=0` to disable sparsification.
 
+    real : bool
+        If true, return only the magnitude of the CQT.
+
+    resolution : float
+        .. warning:: This parameter name was in librosa 0.4.2
+            Use the `filter_scale` parameter instead.
+            The `resolution` parameter will be removed in librosa 0.5.0.
+
+
     Returns
     -------
-    CQT : np.ndarray [shape=(n_bins, t), dtype=np.float]
-        Constant-Q energy for each frequency at each time.
+    CQT : np.ndarray [shape=(n_bins, t), dtype=np.complex or np.float]
+        Constant-Q value each frequency at each time.
 
     Raises
     ------
     ParameterError
-        If `hop_length` is not an integer multiple of `2**(n_bins / bins_per_octave)`
+        If `hop_length` is not an integer multiple of
+        `2**(n_bins / bins_per_octave)`
 
     See Also
     --------
@@ -115,7 +128,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
            [  2.363e-07,   5.329e-07, ...,   1.294e-07,   1.611e-07]])
 
 
-    Using a higher resolution
+    Using a higher frequency resolution
 
     >>> C = librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('C2'),
     ...                 n_bins=60 * 2, bins_per_octave=12 * 2)
@@ -127,9 +140,19 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
            [  4.896e-08,   5.407e-07, ...,   9.176e-08,   1.051e-07]])
     '''
 
+    filter_scale = util.rename_kw('resolution', resolution,
+                                  'filter_scale', filter_scale,
+                                  '0.4.2', '0.5.0')
+
+    if real:
+        warn('Real-valued CQT (real=True) is deprecated in 0.4.2. '
+             'Complex-valued CQT will become the default in 0.5.0. '
+             'Consider using np.abs(librosa.cqt(..., real=False)) '
+             'instead of real=True to maintain forward compatibility.',
+             DeprecationWarning)
+
     # How many octaves are we dealing with?
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
-
 
     if fmin is None:
         # C2 by default
@@ -146,7 +169,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     fmax_t = np.max(freqs)
 
     # Determine required resampling quality
-    Q = float(resolution) / (2.0**(1. / bins_per_octave) - 1)
+    Q = float(filter_scale) / (2.0**(1. / bins_per_octave) - 1)
 
     filter_cutoff = fmax_t * (1 + filters.window_bandwidth('hann') / Q)
 
@@ -176,7 +199,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                                          n_filters,
                                                          bins_per_octave,
                                                          tuning,
-                                                         resolution,
+                                                         filter_scale,
                                                          norm,
                                                          sparsity)
         min_filter_length = np.min(filter_lengths)
@@ -203,15 +226,16 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     # Make sure our hop is long enough to support the bottom octave
     num_twos = __num_two_factors(hop_length)
     if num_twos < n_octaves - 1:
-        raise ParameterError('hop_length must be a positive integer multiple of 2^{0:d} '
-                            'for {1:d}-octave CQT'.format(n_octaves - 1, n_octaves))
+        raise ParameterError('hop_length must be a positive integer '
+                             'multiple of 2^{0:d} for {1:d}-octave CQT'
+                             .format(n_octaves - 1, n_octaves))
 
     # Now do the recursive bit
     fft_basis, n_fft, filter_lengths = __fft_filters(sr, fmin_t,
                                                      n_filters,
                                                      bins_per_octave,
                                                      tuning,
-                                                     resolution,
+                                                     filter_scale,
                                                      norm,
                                                      sparsity)
 
@@ -239,13 +263,14 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         # Convolve
         cqt_resp.append(my_cqt)
 
-    return __trim_stack(cqt_resp, n_bins)
+    return __trim_stack(cqt_resp, n_bins, real)
 
 
 @cache
 def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
-               bins_per_octave=12, tuning=None, resolution=2,
-               norm=1, sparsity=0.01):
+               bins_per_octave=12, tuning=None, filter_scale=2,
+               norm=1, sparsity=0.01,
+               resolution=util.Deprecated()):
     '''Compute the hybrid constant-Q transform of an audio signal.
 
     Here, the hybrid CQT uses the pseudo CQT for higher frequencies where
@@ -277,14 +302,20 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
         If `None`, tuning will be automatically estimated.
 
-    resolution : float > 0
-        Filter resolution factor. Larger values use longer windows.
+    filter_scale : float > 0
+        Filter filter_scale factor. Larger values use longer windows.
 
     sparsity : float in [0, 1)
         Sparsify the CQT basis by discarding up to `sparsity`
         fraction of the energy in each basis.
 
         Set `sparsity=0` to disable sparsification.
+
+    resolution : float
+        .. warning:: This parameter name was in librosa 0.4.2
+            Use the `filter_scale` parameter instead.
+            The `resolution` parameter will be removed in librosa 0.5.0.
+
 
     Returns
     -------
@@ -294,7 +325,8 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     Raises
     ------
     ParameterError
-        If `hop_length` is not an integer multiple of `2**(n_bins / bins_per_octave)`
+        If `hop_length` is not an integer multiple of
+        `2**(n_bins / bins_per_octave)`
 
     See Also
     --------
@@ -302,8 +334,9 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     pseudo_cqt
     '''
 
-    # How many octaves are we dealing with?
-    n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
+    filter_scale = util.rename_kw('resolution', resolution,
+                                  'filter_scale', filter_scale,
+                                  '0.4.2', '0.5.0')
 
     if fmin is None:
         # C1 by default
@@ -322,7 +355,7 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                          n_bins=n_bins,
                                          bins_per_octave=bins_per_octave,
                                          tuning=tuning,
-                                         resolution=resolution)
+                                         filter_scale=filter_scale)
 
     # Determine which filters to use with Pseudo CQT
     pseudo_filters = lengths < 2*hop_length
@@ -338,7 +371,7 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                    n_bins=n_bins_pseudo,
                                    bins_per_octave=bins_per_octave,
                                    tuning=tuning,
-                                   resolution=resolution,
+                                   filter_scale=filter_scale,
                                    norm=norm,
                                    sparsity=sparsity)
         cqt_resp.append(my_pseudo_cqt)
@@ -349,25 +382,27 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
         fmin_full = np.min(freqs[~pseudo_filters])
 
-        my_cqt = cqt(y, sr,
-                     hop_length=hop_length,
-                     fmin=fmin_full,
-                     n_bins=n_bins_full,
-                     bins_per_octave=bins_per_octave,
-                     tuning=tuning,
-                     resolution=resolution,
-                     norm=norm,
-                     sparsity=sparsity)
+        my_cqt = np.abs(cqt(y, sr,
+                            hop_length=hop_length,
+                            fmin=fmin_full,
+                            n_bins=n_bins_full,
+                            bins_per_octave=bins_per_octave,
+                            tuning=tuning,
+                            filter_scale=filter_scale,
+                            norm=norm,
+                            sparsity=sparsity,
+                            real=False))
 
         cqt_resp.append(my_cqt)
 
-    return __trim_stack(cqt_resp, n_bins)
+    return __trim_stack(cqt_resp, n_bins, True)
 
 
 @cache
 def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
-               bins_per_octave=12, tuning=None, resolution=2,
-               norm=1, sparsity=0.01):
+               bins_per_octave=12, tuning=None, filter_scale=2,
+               norm=1, sparsity=0.01,
+               resolution=util.Deprecated()):
     '''Compute the pseudo constant-Q transform of an audio signal.
 
     This uses a single fft size that is the smallest power of 2 that is greater
@@ -401,14 +436,20 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
         If `None`, tuning will be automatically estimated.
 
-    resolution : float > 0
-        Filter resolution factor. Larger values use longer windows.
+    filter_scale : float > 0
+        Filter filter_scale factor. Larger values use longer windows.
 
     sparsity : float in [0, 1)
         Sparsify the CQT basis by discarding up to `sparsity`
         fraction of the energy in each basis.
 
         Set `sparsity=0` to disable sparsification.
+
+    resolution : float
+        .. warning:: This parameter name was in librosa 0.4.2
+            Use the `filter_scale` parameter instead.
+            The `resolution` parameter will be removed in librosa 0.5.0.
+
 
     Returns
     -------
@@ -418,9 +459,14 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     Raises
     ------
     ParameterError
-        If `hop_length` is not an integer multiple of `2**(n_bins / bins_per_octave)`
+        If `hop_length` is not an integer multiple of
+        `2**(n_bins / bins_per_octave)`
 
     '''
+
+    filter_scale = util.rename_kw('resolution', resolution,
+                                  'filter_scale', filter_scale,
+                                  '0.4.2', '0.5.0')
 
     if fmin is None:
         # C1 by default
@@ -434,12 +480,11 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                         n_bins,
                                         bins_per_octave,
                                         tuning,
-                                        resolution,
+                                        filter_scale,
                                         norm,
                                         sparsity,
                                         hop_length=hop_length)
 
-    # Remove phase for Pseudo CQT
     fft_basis = np.abs(fft_basis)
 
     # Compute the magnitude STFT with Hann window
@@ -450,7 +495,7 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
 
 def __fft_filters(sr, fmin, n_bins, bins_per_octave, tuning,
-                  resolution, norm, sparsity, hop_length=None):
+                  filter_scale, norm, sparsity, hop_length=None):
     '''Generate the frequency domain constant-Q filter basis.'''
 
     basis, lengths = filters.constant_q(sr,
@@ -458,7 +503,7 @@ def __fft_filters(sr, fmin, n_bins, bins_per_octave, tuning,
                                         n_bins=n_bins,
                                         bins_per_octave=bins_per_octave,
                                         tuning=tuning,
-                                        resolution=resolution,
+                                        filter_scale=filter_scale,
                                         norm=norm,
                                         pad_fft=True)
 
@@ -480,7 +525,7 @@ def __fft_filters(sr, fmin, n_bins, bins_per_octave, tuning,
     return fft_basis, n_fft, lengths
 
 
-def __trim_stack(cqt_resp, n_bins):
+def __trim_stack(cqt_resp, n_bins, real):
     '''Helper function to trim and stack a collection of CQT responses'''
 
     # cleanup any framing errors at the boundaries
@@ -490,7 +535,11 @@ def __trim_stack(cqt_resp, n_bins):
 
     # Finally, clip out any bottom frequencies that we don't really want
     # Transpose magic here to ensure column-contiguity
-    return np.ascontiguousarray(cqt_resp[-n_bins:].T).T
+
+    C = np.ascontiguousarray(cqt_resp[-n_bins:].T).T
+    if real:
+        C = np.abs(C)
+    return C
 
 
 def __variable_hop_response(y, n_fft, hop_length, min_filter_length,
@@ -515,7 +564,7 @@ def __variable_hop_response(y, n_fft, hop_length, min_filter_length,
              window=np.ones)
 
     # And filter response energy
-    my_cqt = np.abs(fft_basis.dot(D))
+    my_cqt = fft_basis.dot(D)
 
     if zoom_factor > 1:
         # We need to aggregate.  Generate the boundary frames
@@ -532,9 +581,8 @@ def __early_downsample(y, sr, hop_length, res_type, n_octaves,
     if not (res_type == 'sinc_fastest' and audio._HAS_SAMPLERATE):
         return y, sr, hop_length
 
-
-    downsample_count1 = int(np.ceil(np.log2(audio.BW_FASTEST * nyquist
-                                            / filter_cutoff)) - 1)
+    downsample_count1 = int(np.ceil(np.log2(audio.BW_FASTEST * nyquist /
+                                            filter_cutoff)) - 1)
     num_twos = __num_two_factors(hop_length)
     downsample_count2 = max(0, num_twos - n_octaves + 1)
     downsample_count = min(downsample_count1, downsample_count2)
@@ -565,4 +613,3 @@ def __num_two_factors(x):
         x //= 2
 
     return num_twos
-
