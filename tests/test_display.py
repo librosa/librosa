@@ -31,7 +31,7 @@ from nose.plugins.skip import SkipTest
 @nottest
 def get_spec(y, sr):
 
-    C = librosa.cqt(y, sr=sr)
+    C = np.abs(librosa.cqt(y, sr=sr, real=False))
     return librosa.stft(y), C, sr
 
 
@@ -295,19 +295,19 @@ def test_time_scales_explicit():
     plt.figure()
     plt.subplot(4, 1, 1)
     librosa.display.specshow(S_abs)
-    librosa.display.time_ticks(locs, times, fmt='ms')
+    librosa.display.time_ticks(locs, times, time_fmt='ms')
 
     plt.subplot(4, 1, 2)
     librosa.display.specshow(S_abs)
-    librosa.display.time_ticks(locs, times, fmt='s')
+    librosa.display.time_ticks(locs, times, time_fmt='s')
 
     plt.subplot(4, 1, 3)
     librosa.display.specshow(S_abs)
-    librosa.display.time_ticks(locs, times, fmt='m')
+    librosa.display.time_ticks(locs, times, time_fmt='m')
 
     plt.subplot(4, 1, 4)
     librosa.display.specshow(S_abs)
-    librosa.display.time_ticks(locs, times, fmt='h')
+    librosa.display.time_ticks(locs, times, time_fmt='h')
 
 
 @image_comparison(baseline_images=['waveplot_mono'], extensions=['png'])
@@ -391,9 +391,9 @@ def test_time_ticks_failure():
     def __test(locs, times, fmt, axis):
 
         if times is None:
-            librosa.display.time_ticks(locs, fmt=fmt, axis=axis)
+            librosa.display.time_ticks(locs, time_fmt=fmt, axis=axis)
         else:
-            librosa.display.time_ticks(locs, times, fmt=fmt, axis=axis)
+            librosa.display.time_ticks(locs, times, time_fmt=fmt, axis=axis)
 
     locs = np.linspace(0, 100.0)
 

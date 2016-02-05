@@ -1288,7 +1288,7 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     agg_shape = list(shape)
     agg_shape[axis] = len(slices)
 
-    data_agg = np.empty(agg_shape, order='F' if np.isfortran(data) else 'C')
+    data_agg = np.empty(agg_shape, order='F' if np.isfortran(data) else 'C', dtype=data.dtype)
 
     idx_in = [slice(None)] * data.ndim
     idx_agg = [slice(None)] * data_agg.ndim
