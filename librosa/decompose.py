@@ -181,14 +181,14 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
 
 
 @cache
-def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1):
+def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
     """Median-filtering harmonic percussive source separation (HPSS).
 
-    Decomposes an input spectrogram `S = H + P`
+    If margin = 1.0, decomposes an input spectrogram `S = H + P`
     where `H` contains the harmonic components,
     and `P` contains the percussive components.
 
-    Or with margin > 1.0, decomposes an input spectrogram `S = H + P + R` 
+    If margin > 1.0, decomposes an input spectrogram `S = H + P + R` 
     where `R` contains residual components not included in `H` or `P`. 
 
     This implementation is based upon the algorithm described by [1]_ and [2]_.
@@ -198,7 +198,7 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1):
         13th International Conference on Digital Audio Effects (DAFX10),
         Graz, Austria, 2010.
 
-    .. [2] Driedger, Muller, Disch.
+    .. [2] Driedger, Müller, Disch.
         "Extending harmonic-percussive separation of audio."
         15th International Society for Music Information Retrieval Conference (ISMIR 2014),
         Taipei, Taiwan, 2014.

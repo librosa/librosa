@@ -12,6 +12,7 @@ Harmonic-percussive source separation
     hpss
     harmonic
     percussive
+    residual 
 
 Time and frequency
 ------------------
@@ -36,7 +37,7 @@ from . import decompose
 from . import util
 from .util.exceptions import ParameterError
 
-__all__ = ['hpss', 'harmonic', 'percussive',
+__all__ = ['hpss', 'harmonic', 'percussive', 'residual',
            'time_stretch', 'pitch_shift',
            'remix']
 
@@ -65,6 +66,7 @@ def hpss(y):
     --------
     harmonic : Extract only the harmonic component
     percussive : Extract only the percussive component
+    residual : Extract only the residual component
     librosa.decompose.hpss : HPSS on spectrograms
 
 
