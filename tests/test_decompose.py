@@ -15,7 +15,7 @@ import numpy as np
 import librosa
 import sklearn.decomposition
 
-from nose.tools import raises
+from nose.tools import raises, assert_raises
 
 def test_default_decompose():
 
@@ -75,18 +75,35 @@ def test_real_hpss():
 
     D = np.abs(librosa.stft(y))
 
-    def __hpss_test(w, p, m):
-        H, P = librosa.decompose.hpss(D, kernel_size=w, power=p, mask=m)
+    def __hpss_test(w, p, m, margin):
+        H, P = librosa.decompose.hpss(D, kernel_size=w, power=p, mask=m, margin=margin)
 
-        if m:
-            assert np.allclose(H + P, np.ones_like(D))
+        if margin == 1.0 or margin == (1.0, 1.0):
+            if m:
+                assert np.allclose(H + P, np.ones_like(D))
+            else:
+                assert np.allclose(H + P, D)
         else:
-            assert np.allclose(H + P, D)
+            if m: 
+                assert not np.any(H & P)
+            else:
+                assert np.all(H + P <= D)
 
     for window in [31, (5, 5)]:
         for power in [0, 1, 2]:
             for mask in [False, True]:
-                yield __hpss_test, window, power, mask
+                for margin in [1.0, 3.0, (1.0,1.0), (9.0, 10.0)]:
+                    yield __hpss_test, window, power, mask, margin
+
+    def test_margin_parameter_error():
+        H, P = librosa.decompose.hpss(D, margin=0.9)
+
+    assert_raises(ParameterError, test_margin_parameter_error)  
+
+    def test_power_parameter_error():
+        H, P = librosa.decompose.hpss(D, margin=10.0, power=30.0)
+        
+    assert_raises(ParameterError, test_power_parameter_error)
 
 
 def test_complex_hpss():
