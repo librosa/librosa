@@ -81,11 +81,11 @@ def test_segment_load():
 
 def test_resample_mono():
 
-    def __test(y, sr_in, sr_out, res_type, fix, scale):
+    def __test(y, sr_in, sr_out, res_type, fix):
 
         y2 = librosa.resample(y, sr_in, sr_out,
                               res_type=res_type,
-                              fix=fix, scale=scale)
+                              fix=fix)
 
         # First, check that the audio is valid
         librosa.util.valid_audio(y2, mono=True)
@@ -109,8 +109,7 @@ def test_resample_mono():
         for sr_out in [8000, 22050]:
             for res_type in ['sinc_fastest', 'sinc_best', 'scipy']:
                 for fix in [False, True]:
-                    for scale in [False, True]:
-                        yield (__test, y, sr_in, sr_out, res_type, fix, scale)
+                    yield (__test, y, sr_in, sr_out, res_type, fix)
 
 
 def test_resample_stereo():
@@ -144,6 +143,31 @@ def test_resample_stereo():
         for res_type in ['sinc_fastest', 'scipy']:
             for fix in [False, True]:
                 yield __test, y, sr_in, sr_out, res_type, fix
+
+
+def test_resample_scale():
+
+    def __test(sr_in, sr_out, res_type, y):
+
+        y2 = librosa.resample(y, sr_in, sr_out,
+                              res_type=res_type,
+                              scale=True)
+
+        # First, check that the audio is valid
+        librosa.util.valid_audio(y2, mono=True)
+
+        n_orig = np.sqrt(np.sum(np.abs(y)**2))
+        n_res = np.sqrt(np.sum(np.abs(y2)**2))
+
+        # If it's a no-op, make sure the signal is untouched
+        assert np.allclose(n_orig, n_res, atol=1e-2)
+
+    y, sr_in = librosa.load('data/test1_22050.wav', mono=True, sr=None, duration=5)
+
+    for sr_out in [8000, 11025, 22050, 44100]:
+        for res_type in ['sinc_fastest', 'scipy', 'sinc_best']:
+            yield __test, sr_in, sr_out, res_type, y
+
 
 @nottest
 def __deprecated_test_resample():
