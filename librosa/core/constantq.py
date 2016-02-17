@@ -21,7 +21,7 @@ __all__ = ['cqt', 'hybrid_cqt', 'pseudo_cqt']
 
 @cache
 def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
-        bins_per_octave=12, tuning=None, filter_scale=1,
+        bins_per_octave=12, tuning=None, filter_scale=None,
         aggregate=None, norm=1, sparsity=0.01, real=False,
         resolution=util.Deprecated()):
     '''Compute the constant-Q transform of an audio signal.
@@ -143,6 +143,10 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     filter_scale = util.rename_kw('resolution', resolution,
                                   'filter_scale', filter_scale,
                                   '0.4.2', '0.5.0')
+
+    # If filter_scale is None, auto-tune it based on frequency resolution
+    if filter_scale is None:
+        filter_scale = (2.0**(1./bins_per_octave) - 1.0)/(2.0**(1./12) - 1.0)
 
     if real:
         warn('Real-valued CQT (real=True) is deprecated in 0.4.2. '
@@ -268,7 +272,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
 @cache
 def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
-               bins_per_octave=12, tuning=None, filter_scale=2,
+               bins_per_octave=12, tuning=None, filter_scale=None,
                norm=1, sparsity=0.01,
                resolution=util.Deprecated()):
     '''Compute the hybrid constant-Q transform of an audio signal.
@@ -338,6 +342,10 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                   'filter_scale', filter_scale,
                                   '0.4.2', '0.5.0')
 
+    # If filter_scale is None, auto-tune it based on frequency resolution
+    if filter_scale is None:
+        filter_scale = (2.0**(1./bins_per_octave) - 1.0)/(2.0**(1./12) - 1.0)
+
     if fmin is None:
         # C1 by default
         fmin = note_to_hz('C1')
@@ -400,7 +408,7 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
 @cache
 def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
-               bins_per_octave=12, tuning=None, filter_scale=2,
+               bins_per_octave=12, tuning=None, filter_scale=None,
                norm=1, sparsity=0.01,
                resolution=util.Deprecated()):
     '''Compute the pseudo constant-Q transform of an audio signal.
@@ -467,6 +475,10 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     filter_scale = util.rename_kw('resolution', resolution,
                                   'filter_scale', filter_scale,
                                   '0.4.2', '0.5.0')
+
+    # If filter_scale is None, auto-tune it based on frequency resolution
+    if filter_scale is None:
+        filter_scale = (2.0**(1./bins_per_octave) - 1.0)/(2.0**(1./12) - 1.0)
 
     if fmin is None:
         # C1 by default
