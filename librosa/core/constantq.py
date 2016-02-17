@@ -155,7 +155,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
 
     if fmin is None:
-        # C2 by default
+        # C1 by default
         fmin = note_to_hz('C1')
 
     if tuning is None:
@@ -248,7 +248,10 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
         # Resample (except first time)
         if i > 0:
-            my_y = audio.resample(my_y, my_sr, my_sr/2.0, res_type=res_type, scale=True)
+            # The additional scaling of sqrt(2) here is to implicitly rescale the filters
+            my_y = np.sqrt(2) * audio.resample(my_y, my_sr, my_sr/2.0,
+                                               res_type=res_type,
+                                               scale=True)
             my_sr /= 2.0
             assert my_hop % 2 == 0
             my_hop //= 2
@@ -588,12 +591,15 @@ def __early_downsample(y, sr, hop_length, res_type, n_octaves,
     downsample_count = min(downsample_count1, downsample_count2)
 
     if downsample_count > 0:
-        downsample_factor = 2**(downsample_count)
+        downsample_factor = 2.0**(downsample_count)
 
         assert hop_length % downsample_factor == 0
         hop_length //= downsample_factor
 
-        y = audio.resample(y, sr, sr / downsample_factor, res_type=res_type, scale=True)
+        # The additional scaling of sqrt(downsample_factor) here is to implicitly
+        # rescale the filters
+        y = np.sqrt(downsample_factor) * audio.resample(y, sr, sr / downsample_factor,
+                                                        res_type=res_type, scale=True)
 
         sr /= downsample_factor
 
