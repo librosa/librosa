@@ -22,7 +22,7 @@ __all__ = ['cqt', 'hybrid_cqt', 'pseudo_cqt']
 @cache
 def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         bins_per_octave=12, tuning=None, filter_scale=1,
-        aggregate=None, norm=2, sparsity=0.01, real=False,
+        aggregate=None, norm=1, sparsity=0.01, real=False,
         resolution=util.Deprecated()):
     '''Compute the constant-Q transform of an audio signal.
 
@@ -248,7 +248,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
         # Resample (except first time)
         if i > 0:
-            my_y = audio.resample(my_y, my_sr, my_sr/2.0, res_type=res_type) * np.sqrt(2)
+            my_y = audio.resample(my_y, my_sr, my_sr/2.0, res_type=res_type, scale=True)
             my_sr /= 2.0
             assert my_hop % 2 == 0
             my_hop //= 2
@@ -593,7 +593,7 @@ def __early_downsample(y, sr, hop_length, res_type, n_octaves,
         assert hop_length % downsample_factor == 0
         hop_length //= downsample_factor
 
-        y = audio.resample(y, sr, sr / downsample_factor, res_type=res_type)
+        y = audio.resample(y, sr, sr / downsample_factor, res_type=res_type, scale=True)
 
         sr /= downsample_factor
 
