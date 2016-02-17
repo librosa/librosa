@@ -913,12 +913,12 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
 
     # Build the CQT if we don't have one already
     if C is None:
-        C = cqt_func[cqt_mode](y, sr=sr,
-                           hop_length=hop_length,
-                           fmin=fmin,
-                           n_bins=n_octaves * bins_per_octave,
-                           bins_per_octave=bins_per_octave,
-                           tuning=tuning)
+        C = np.abs(cqt_func[cqt_mode](y, sr=sr,
+                                      hop_length=hop_length,
+                                      fmin=fmin,
+                                      n_bins=n_octaves * bins_per_octave,
+                                      bins_per_octave=bins_per_octave,
+                                      tuning=tuning))
 
     # Map to chroma
     cq_to_chr = filters.cq_to_chroma(C.shape[0],
