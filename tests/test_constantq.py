@@ -169,7 +169,6 @@ def test_cqt_position():
         # Make sure that the max outside the peak is sufficiently small
         Cscale = Cbar / Cbar[idx]
         Cscale[idx] = np.nan
-
         assert np.nanmax(Cscale) < 1e-1
 
         Cscale[idx-1:idx+2] = np.nan
