@@ -458,7 +458,7 @@ def __float_window(window_function):
 
 @cache
 def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
-               window=None, filter_scale=2, pad_fft=True, norm=1,
+               window=None, filter_scale=None, pad_fft=True, norm=1,
                resolution=util.Deprecated(), **kwargs):
     r'''Construct a constant-Q basis.
 
@@ -571,6 +571,10 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
                                   'filter_scale', filter_scale,
                                   '0.4.2', '0.5.0')
 
+    # If filter_scale is None, auto-tune it based on frequency resolution
+    if filter_scale is None:
+        filter_scale = (2.0**(1./bins_per_octave) - 1.0)/(2.0**(1./12) - 1.0)
+
     # Pass-through parameters to get the filter lengths
     lengths = constant_q_lengths(sr, fmin,
                                  n_bins=n_bins,
@@ -619,7 +623,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 
 @cache
 def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
-                       tuning=0.0, window='hann', filter_scale=2,
+                       tuning=0.0, window='hann', filter_scale=None,
                        resolution=util.Deprecated()):
     r'''Return length of each filter in a constant-Q basis.
 
@@ -665,6 +669,10 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
     filter_scale = util.rename_kw('resolution', resolution,
                                   'filter_scale', filter_scale,
                                   '0.4.2', '0.5.0')
+
+    # If filter_scale is None, auto-tune it based on frequency resolution
+    if filter_scale is None:
+        filter_scale = (2.0**(1./bins_per_octave) - 1.0)/(2.0**(1./12) - 1.0)
 
     if fmin <= 0:
         raise ParameterError('fmin must be positive')

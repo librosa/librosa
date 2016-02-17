@@ -170,10 +170,8 @@ def test_cqt_position():
         Cscale = Cbar / Cbar[idx]
         Cscale[idx] = np.nan
 
-        assert np.nanmax(Cscale) < 1e-1
-
         Cscale[idx-1:idx+2] = np.nan
-        assert np.nanmax(Cscale) < 1e-2
+        assert np.nanmax(Cscale) < 1e-1
 
     for note_min in [12, 18, 24, 30, 36]:
         yield __test, note_min
