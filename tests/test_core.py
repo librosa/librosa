@@ -81,11 +81,11 @@ def test_segment_load():
 
 def test_resample_mono():
 
-    def __test(y, sr_in, sr_out, res_type, fix):
+    def __test(y, sr_in, sr_out, res_type, fix, scale):
 
         y2 = librosa.resample(y, sr_in, sr_out,
                               res_type=res_type,
-                              fix=fix)
+                              fix=fix, scale=scale)
 
         # First, check that the audio is valid
         librosa.util.valid_audio(y2, mono=True)
@@ -109,7 +109,8 @@ def test_resample_mono():
         for sr_out in [8000, 22050]:
             for res_type in ['sinc_fastest', 'sinc_best', 'scipy']:
                 for fix in [False, True]:
-                    yield (__test, y, sr_in, sr_out, res_type, fix)
+                    for scale in [False, True]:
+                        yield (__test, y, sr_in, sr_out, res_type, fix, scale)
 
 
 def test_resample_stereo():
