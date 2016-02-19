@@ -60,20 +60,12 @@ File operations
     find_files
 
 
-sklearn integration
--------------------
-
-.. autosummary::
-    :toctree: generated/
-
-    FeatureExtractor
-
-
 Deprecated
 ----------
 .. autosummary::
     :toctree: generated/
 
+    FeatureExtractor
     buf_to_int
 
 """

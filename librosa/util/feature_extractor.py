@@ -14,6 +14,9 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
     This class acts as a bridge between feature extraction functions
     and scikit-learn pipelines.
 
+    .. warning:: The `FeatureExtractor` object is deprecated as of 0.4.2, and will be
+                 removed in 0.5.
+                 Instead, use ``sklearn.preprocessing.FunctionTransformer``.
 
     Attributes
     ----------
@@ -39,10 +42,6 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
 
     kwargs : additional keyword arguments
         Parameters to be passed through to `function`
-
-    .. note:: The `FeatureExtractor` object is deprecated as of 0.4.2, and will be
-              removed in 0.5.
-              Instead, use ``sklearn.preprocessing.FunctionTransformer``.
 
     Examples
     --------
