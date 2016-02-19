@@ -106,7 +106,7 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean',
     metric : str
         Distance metric to use for nearest-neighbor calculation.
 
-        See `scipy.spatial.distance.cdist()` for details.
+        See `scipy.spatial.distance.cdist` for details.
 
     sym : bool [scalar]
         set `sym=True` to only link mutual nearest-neighbors

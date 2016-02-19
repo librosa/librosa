@@ -16,7 +16,7 @@ class FeatureExtractor(BaseEstimator, TransformerMixin):
 
     .. warning:: The `FeatureExtractor` object is deprecated as of 0.4.2, and will be
                  removed in 0.5.
-                 Instead, use ``sklearn.preprocessing.FunctionTransformer``.
+                 Instead, use `sklearn.preprocessing.FunctionTransformer`.
 
     Attributes
     ----------
