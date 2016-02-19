@@ -1046,7 +1046,7 @@ def sparsify_rows(x, quantile=0.01):
 
     Returns
     -------
-    x_sparse : scipy.sparse.csr_matrix [shape=x.shape]
+    x_sparse : `scipy.sparse.csr_matrix` [shape=x.shape]
         Row-sparsified approximation of `x`
 
         If `x.ndim == 1`, then `x` is interpreted as a row vector,

@@ -796,7 +796,7 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
 
     kind : str
         The type of interpolation to use when re-sampling the input.
-        See ``scipy.interpolate.interp1d`` for possible values.
+        See `scipy.interpolate.interp1d` for possible values.
 
     beta : float
         The Mellin parameter.  beta=0.5 provides the scale transform.
