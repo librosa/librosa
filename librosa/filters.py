@@ -840,7 +840,7 @@ def window_bandwidth(window, default=1.0):
 
     See Also
     --------
-    scipy.signal.windows
+    scipy.signal.get_window
     '''
 
     if hasattr(window, '__name__'):
