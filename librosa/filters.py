@@ -458,7 +458,7 @@ def __float_window(window_function):
 
 @cache
 def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
-               window=None, filter_scale=2, pad_fft=True, norm=1,
+               window=None, filter_scale=1, pad_fft=True, norm=1,
                resolution=util.Deprecated(), **kwargs):
     r'''Construct a constant-Q basis.
 
@@ -619,7 +619,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 
 @cache
 def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
-                       tuning=0.0, window='hann', filter_scale=2,
+                       tuning=0.0, window='hann', filter_scale=1,
                        resolution=util.Deprecated()):
     r'''Return length of each filter in a constant-Q basis.
 
