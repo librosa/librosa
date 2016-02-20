@@ -203,7 +203,7 @@ def to_mono(y):
 
 
 @cache
-def resample(y, orig_sr, target_sr, res_type='sinc_best', fix=True, **kwargs):
+def resample(y, orig_sr, target_sr, res_type='sinc_best', fix=True, scale=False, **kwargs):
     """Resample a time series from orig_sr to target_sr
 
     Parameters
@@ -231,6 +231,10 @@ def resample(y, orig_sr, target_sr, res_type='sinc_best', fix=True, **kwargs):
     fix : bool
         adjust the length of the resampled signal to be of size exactly
         `ceil(target_sr * len(y) / orig_sr)`
+
+    scale : bool
+        Scale the resampled signal so that `y` and `y_hat` have approximately
+        equal total energy.
 
     kwargs : additional keyword arguments
         If `fix==True`, additional keyword arguments to pass to
@@ -271,19 +275,22 @@ def resample(y, orig_sr, target_sr, res_type='sinc_best', fix=True, **kwargs):
     if orig_sr == target_sr:
         return y
 
-    n_samples = int(np.ceil(y.shape[-1] * float(target_sr) / orig_sr))
+    ratio = float(target_sr) / orig_sr
+
+    n_samples = int(np.ceil(y.shape[-1] * ratio))
 
     scipy_resample = (res_type == 'scipy')
 
     if _HAS_SAMPLERATE and not scipy_resample:
-        y_hat = samplerate.resample(y.T,
-                                    float(target_sr) / orig_sr,
-                                    res_type).T
+        y_hat = samplerate.resample(y.T, ratio, res_type).T
     else:
         y_hat = scipy.signal.resample(y, n_samples, axis=-1)
 
     if fix:
         y_hat = util.fix_length(y_hat, n_samples, **kwargs)
+
+    if scale:
+        y_hat /= np.sqrt(ratio)
 
     return np.ascontiguousarray(y_hat, dtype=y.dtype)
 
