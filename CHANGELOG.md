@@ -5,6 +5,34 @@ Changes
 
 Bug fixes
   - Support for matplotlib 1.5 color properties in the `display` module
+  - [#308] Fixed a per-octave scaling error in `librosa.cqt`
+
+New features
+  - [#279] `librosa.cqt` now provides complex-valued output with argument `real=False`.
+    This will become the default behavior in subsequent releases.
+  - [#288] `core.resample` now supports multi-channel inputs
+  - [#295] `librosa.display.frequency_ticks`: like `time_ticks`. Ticks can now dynamically
+    adapt to scale (mHz, Hz, KHz, MHz, GHz) and use automatic precision formatting (`%g`)
+
+
+Other changes
+  - [#277] improved documentation
+  - [#294] deprecated the `FeatureExtractor` object
+  - [#300] added dependency version requirements to install script
+  - [#302], [#279] renamed the following parameters
+    - `librosa.display.time_ticks`: `fmt` is now `time_fmt`
+    - `librosa.feature.chroma_cqt`: `mode` is now `cqt_mode`
+    - `librosa.cqt`, `hybrid_cqt`, `pseudo_cqt`, `librosa.filters.constant_q`: `resolution` is now `filter_scale`
+  - [#308] `librosa.cqt` default `filter_scale` parameter is now 1 instead of 2.
+
+[#277]: https://github.com/bmcfee/librosa/pull/277
+[#279]: https://github.com/bmcfee/librosa/pull/279
+[#288]: https://github.com/bmcfee/librosa/pull/288
+[#294]: https://github.com/bmcfee/librosa/pull/294
+[#295]: https://github.com/bmcfee/librosa/pull/295
+[#300]: https://github.com/bmcfee/librosa/pull/300
+[#302]: https://github.com/bmcfee/librosa/pull/302
+[#308]: https://github.com/bmcfee/librosa/pull/308
 
 ##v0.4.1
 
