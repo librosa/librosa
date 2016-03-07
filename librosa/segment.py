@@ -39,6 +39,7 @@ import scipy.signal
 import sklearn
 import sklearn.cluster
 import sklearn.feature_extraction
+import sklearn.neighbors
 
 from . import cache
 from . import util
@@ -55,33 +56,8 @@ __all__ = ['recurrence_matrix',
 
 
 @cache
-def __band_infinite(n, width, v_in=0.0, v_out=np.inf, dtype=np.float32):
-    '''Construct a square, banded matrix `X` where
-    `X[i, j] == v_in` if `|i - j| <= width`
-    `X[i, j] == v_out` if `|i - j| > width`
-
-    This is used to suppress nearby links in `recurrence_matrix`.
-    '''
-
-    if width > n:
-        raise ParameterError('width cannot exceed n')
-
-    # Instantiate the matrix
-    band = np.empty((n, n), dtype=dtype)
-
-    # Fill the out-of-band values
-    band.fill(v_out)
-
-    # Fill the in-band values
-    band[np.triu_indices_from(band, width)] = v_in
-    band[np.tril_indices_from(band, -width)] = v_in
-
-    return band
-
-
-@cache
-def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean',
-                      sym=False, axis=-1):
+def recurrence_matrix(data, k=None, width=1, metric='euclidean',
+                      sym=False, dense=True, axis=-1):
     '''Compute the binary recurrence matrix from a time-series.
 
     `rec[i,j] == True` if (and only if) (`data[:,i]`, `data[:,j]`) are
@@ -111,13 +87,17 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean',
     sym : bool [scalar]
         set `sym=True` to only link mutual nearest-neighbors
 
+    dense : bool [scalar]
+        if True, returns a dense type (ndarray)
+        if False, returns a sparse type (scipy.sparse.csr_matrix)
+
     axis : int
         The axis along which to compute recurrence.
         By default, the last index (-1) is taken.
 
     Returns
     -------
-    rec : np.ndarray [shape=(t,t), dtype=bool]
+    rec : np.ndarray [shape=(t,t), dtype=bool] or scipy.sparse.csr_matrix
         Binary recurrence matrix
 
     See Also
@@ -183,23 +163,47 @@ def recurrence_matrix(data, k=None, width=1, metric='sqeuclidean',
 
     k = int(k)
 
-    # Build the distance matrix
-    D = scipy.spatial.distance.cdist(data, data, metric=metric)
+    # Build the neighbor search object
+    try:
+        knn = sklearn.neighbors.NearestNeighbors(n_neighbors=min(t-1, k + 2 * width),
+                                                 metric=metric,
+                                                 algorithm='auto')
+    except ValueError:
+        knn = sklearn.neighbors.NearestNeighbors(n_neighbors=min(t-1, k + 2 * width),
+                                                 metric=metric,
+                                                 algorithm='brute')
 
-    # Max out the diagonal band
-    D = D + __band_infinite(t, width)
+    knn.fit(data)
 
-    # build the recurrence plot
-    rec = np.zeros((t, t), dtype=bool)
+    # Get the knn graph
+    rec = knn.kneighbors_graph().tolil()
 
-    # get the k nearest neighbors for each point
+    # Remove connections within width
+    for diag in range(-width, width+1):
+        rec.setdiag(0, diag)
+
+    # Retain only the top-k links per point
     for i in range(t):
-        for j in np.argsort(D[i])[:k]:
-            rec[i, j] = True
+        # Get the links from point i
+        links = rec[i].nonzero()[1]
+
+        # Order them ascending
+        idx = links[np.argsort(rec[i, links].toarray())][0]
+
+        # Everything past the kth closest gets squashed
+        rec[i, idx[k:]] = 0
+
+    rec = rec.astype(np.bool)
 
     # symmetrize
     if sym:
-        rec = rec * rec.T
+        rec = rec.minimum(rec.T)
+
+    if dense:
+        rec = rec.toarray()
+    else:
+        rec = rec.tocsr()
+        rec.eliminate_zeros()
 
     return rec
 
