@@ -793,7 +793,7 @@ def test_clicks():
 
 
 def test_fmt_scale():
-    # This test constructs a single-cycle cosine wave, applies various axis scalings, 
+    # This test constructs a single-cycle cosine wave, applies various axis scalings,
     # and tests that the FMT is preserved
 
     def __test(scale, n_fmt, over_sample, kind, y_orig, y_res, atol):
@@ -890,3 +890,20 @@ def test_fmt_axis():
     f2 = librosa.fmt(y.T, axis=0).T
 
     assert np.allclose(f1, f2)
+
+
+def test_dtw():
+
+    X = np.array([[1, 3, 3, 8, 1]])
+    Y = np.array([[2, 0, 0, 8, 7, 2]])
+
+    gt_D = np.array([[1., 2., 3., 10., 16., 17.],
+                     [2., 4., 5., 8., 12., 13.],
+                     [3., 5., 7., 10., 12., 13.],
+                     [9., 11., 13., 7., 8., 14.],
+                     [10, 10., 11., 14., 13., 9.]])
+
+    mut_D = librosa.dtw(X, Y)
+
+    print(mut_D)
+    assert np.allclose(gt_D, mut_D)
