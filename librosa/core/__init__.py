@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Core IO and DSP 
+Core IO and DSP
 ===============
 
 Audio processing
@@ -76,6 +76,14 @@ Pitch and tuning
     piptrack
 
 
+Sequence Alignment with Dynamic Time Warping
+--------------------------------------------
+.. autosummary::
+    :toctree: generated/
+
+    dtw
+
+
 Deprecated
 ----------
 .. autosummary::
@@ -90,6 +98,6 @@ from .audio import *  # pylint: disable=wildcard-import
 from .spectrum import *  # pylint: disable=wildcard-import
 from .pitch import *  # pylint: disable=wildcard-import
 from .constantq import *  # pylint: disable=wildcard-import
+from .dtw import *  # pylint: disable=wildcard-import
 
 __all__ = [_ for _ in dir() if not _.startswith('_')]
-
