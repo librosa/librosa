@@ -6,6 +6,8 @@ import numpy as np
 import numba
 from scipy.spatial.distance import cdist
 
+__all__ = ['dtw']
+
 
 def dtw(X, Y,
         dist='euclidean',
@@ -13,7 +15,51 @@ def dtw(X, Y,
         weights_add=np.array([0, 0, 0]),
         weights_mul=np.array([1, 1, 1]),
         subseq=False):
+    '''Dynamic time warping (DTW).
 
+    This function performs a DTW and path backtracking on two sequences.
+
+
+    Parameters
+    ----------
+    X : np.ndarray [shape=(K, N)]
+        audio feature matrix (e.g., chroma features)
+
+    Y : np.ndarray [shape=(K, M)]
+        audio feature matrix (e.g., chroma features)
+
+    dist : str
+        Identifier for the cost-function as documented
+        in scipy.spatial.cdist()
+
+    step_sizes_sigma : np.ndarray [shape=[n, 2]]
+        Specifies allowed step sizes as used by the dtw.
+
+    weights_add : np.ndarray [shape=[n, ]]
+        Additive weights to penalize certain step sizes.
+
+    weights_mul : np.ndarray [shape=[n, ]]
+        Multiplicative weights to penalize certain step sizes.
+
+    subseq : binary
+        Enable subsequence DTW, e.g., for retrieval tasks.
+
+    Returns
+    -------
+    D : np.ndarray [shape=(N,M)]
+        accumulated cost matrix.
+        D[N,M] is the total alignment cost.
+        When doing subsequence DTW, D[N,:] indicates a matching function.
+
+    wp : list [shape=(N,)]
+        Warping path with index pairs.
+        Each list entry contains an index pair
+        (n,m) as a tuple
+
+    See Also
+    --------
+
+    '''
     max_0 = step_sizes_sigma[:, 0].max()
     max_1 = step_sizes_sigma[:, 1].max()
 
@@ -71,7 +117,32 @@ def calc_accu_cost(C, D, D_steps, step_sizes_sigma, weights_mul, weights_add, ma
 
 @numba.jit(nopython=True)
 def backtracking(D_steps, step_sizes_sigma):
+    '''Backtrack optimal warping path.
 
+    Uses the saved step sizes from the cost accumulation
+    step to backtrack the index pairs for an optimal
+    warping path.
+
+
+    Parameters
+    ----------
+    D_steps : np.ndarray [shape=(N, M)]
+        Saved indices of the used steps used in the calculation of D.
+
+    step_sizes_sigma : np.ndarray [shape=[n, 2]]
+        Specifies allowed step sizes as used by the dtw.
+
+    Returns
+    -------
+    wp : list [shape=(N,)]
+        Warping path with index pairs.
+        Each list entry contains an index pair
+        (n,m) as a tuple
+
+    See Also
+    --------
+
+    '''
     wp = []
     # Set starting point D(N,M) and append it to the path
     cur_idx = (D_steps.shape[0]-1, D_steps.shape[1]-1)
