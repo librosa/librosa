@@ -29,20 +29,26 @@ def dtw(X, Y,
     if subseq:
         D[max_0, max_1:] = C[0, :]
 
+    D_steps = np.empty(D.shape, dtype=np.int)
+
     # calculate accumulated cost matrix
-    # will result in
-    D = calc_accu_cost(C, D,
-                       step_sizes_sigma, weights_mul,
-                       max_0, max_1)
+    D, D_steps = calc_accu_cost(C, D, D_steps,
+                                step_sizes_sigma, weights_mul,
+                                max_0, max_1)
 
     # delete infinity rows and columns
     D = D[max_0:, max_1:]
+    D_steps = D_steps[max_0:, max_1:]
 
-    return D
+    # perform warping path backtracking
+    wp = backtracking(D_steps, step_sizes_sigma)
+
+    return D, wp
 
 
 @numba.jit(nopython=True)
-def calc_accu_cost(C, D, step_sizes_sigma, weights_mul, max_0, max_1):
+def calc_accu_cost(C, D, D_steps, step_sizes_sigma, weights_mul, max_0, max_1):
+
     for cur_n in range(max_0, D.shape[0]):
         for cur_m in range(max_1, D.shape[1]):
             # loop over all step sizes
@@ -52,5 +58,36 @@ def calc_accu_cost(C, D, step_sizes_sigma, weights_mul, max_0, max_1):
                 cur_cost = cur_D + cur_C
 
                 # check if cur_cost is smaller than the one stored in D
-                D[cur_n, cur_m] = min(cur_cost, D[cur_n, cur_m])
-    return D
+                if cur_cost < D[cur_n, cur_m]:
+                    D[cur_n, cur_m] = cur_cost
+
+                    # save step-index
+                    D_steps[cur_n, cur_m] = cur_step_idx
+                # D[cur_n, cur_m] = min(cur_cost, D[cur_n, cur_m])
+    return D, D_steps
+
+
+@numba.jit(nopython=True)
+def backtracking(D_steps, step_sizes_sigma):
+
+    wp = []
+    # Set starting point D(N,M) and append it to the path
+    cur_idx = (D_steps.shape[0]-1, D_steps.shape[1]-1)
+    wp.append(cur_idx)
+
+    while True:
+        cur_n = cur_idx[0]
+        cur_m = cur_idx[1]
+
+        cur_step_idx = D_steps[cur_n, cur_m]
+
+        # save tuple with minimal acc. cost in path
+        cur_idx = (cur_n-step_sizes_sigma[cur_step_idx][0],
+                   cur_m-step_sizes_sigma[cur_step_idx][1])
+        wp.append(cur_idx)
+
+        # set stop criteria
+        if cur_idx == (0, 0):
+            break
+
+    return wp
