@@ -905,5 +905,4 @@ def test_dtw():
 
     mut_D, wp = librosa.dtw(X, Y)
 
-    print(mut_D)
     assert np.allclose(gt_D, mut_D)
