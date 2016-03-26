@@ -903,7 +903,7 @@ def test_dtw():
                      [9., 11., 13., 7., 8., 14.],
                      [10, 10., 11., 14., 13., 9.]])
 
-    mut_D = librosa.dtw(X, Y)
+    mut_D, wp = librosa.dtw(X, Y)
 
     print(mut_D)
     assert np.allclose(gt_D, mut_D)

@@ -33,7 +33,8 @@ def dtw(X, Y,
 
     # calculate accumulated cost matrix
     D, D_steps = calc_accu_cost(C, D, D_steps,
-                                step_sizes_sigma, weights_mul,
+                                step_sizes_sigma,
+                                weights_mul, weights_add,
                                 max_0, max_1)
 
     # delete infinity rows and columns
@@ -47,7 +48,7 @@ def dtw(X, Y,
 
 
 @numba.jit(nopython=True)
-def calc_accu_cost(C, D, D_steps, step_sizes_sigma, weights_mul, max_0, max_1):
+def calc_accu_cost(C, D, D_steps, step_sizes_sigma, weights_mul, weights_add, max_0, max_1):
 
     for cur_n in range(max_0, D.shape[0]):
         for cur_m in range(max_1, D.shape[1]):
@@ -55,6 +56,7 @@ def calc_accu_cost(C, D, D_steps, step_sizes_sigma, weights_mul, max_0, max_1):
             for cur_step_idx in range(step_sizes_sigma.shape[0]):
                 cur_D = D[cur_n-step_sizes_sigma[cur_step_idx, 0], cur_m-step_sizes_sigma[cur_step_idx, 1]]
                 cur_C = weights_mul[cur_step_idx] * C[cur_n-max_0, cur_m-max_1]
+                cur_C += weights_add[cur_step_idx]
                 cur_cost = cur_D + cur_C
 
                 # check if cur_cost is smaller than the one stored in D
