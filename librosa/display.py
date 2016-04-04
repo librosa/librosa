@@ -763,14 +763,14 @@ def __axis_log(data, n_ticks, horiz, sr=22050, kwargs=None,
         if minor == 'log':
             ax2 = __log_scale(data.shape[0])[0]
         else:
-            ax2 = np.linspace(0, data.shape[0], data.shape[0]).astype(int)
+            ax2 = np.linspace(0, data.shape[0], data.shape[0], endpoint=False).astype(int)
         ax1 = t_log
     else:
         axis = 'y'
         if minor == 'log':
             ax1 = __log_scale(data.shape[1])[0]
         else:
-            ax1 = np.linspace(0, data.shape[1], data.shape[1]).astype(int)
+            ax1 = np.linspace(0, data.shape[1], data.shape[1], endpoint=False).astype(int)
 
         ax2 = t_log
 
