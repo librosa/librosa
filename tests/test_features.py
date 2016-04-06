@@ -2,6 +2,11 @@
 # -*- encoding: utf-8 -*-
 
 from __future__ import print_function
+import librosa
+import numpy as np
+from nose.tools import raises, eq_
+
+from test_core import load
 
 # Disable cache
 import os
@@ -9,14 +14,6 @@ try:
     os.environ.pop('LIBROSA_CACHE_DIR')
 except KeyError:
     pass
-
-import matplotlib
-matplotlib.use('Agg')
-import librosa
-import numpy as np
-import scipy.signal
-
-from nose.tools import raises, eq_
 
 __EXAMPLE_FILE = 'data/test1_22050.wav'
 
@@ -438,7 +435,7 @@ def test_tempogram_fail():
         librosa.feature.tempogram(y=y,
                                   sr=sr,
                                   onset_envelope=onset_envelope,
-                                  hop_length=hop_length, 
+                                  hop_length=hop_length,
                                   win_length=win_length,
                                   center=center,
                                   window=window,
@@ -559,3 +556,34 @@ def test_tempogram_odf():
             for window in [None, np.ones, np.ones(win_length)]:
                 for norm in [None, 1, 2, np.inf]:
                     yield __test_peaks, tempo, win_length, window, norm
+
+
+def test_cens():
+    # load CQT data from Chroma Toolbox
+    ct_cqt = load(os.path.join('data', 'features-CT-cqt.mat'))
+
+    fn_ct_chroma_cens = ['features-CT-CENS_9-2.mat',
+                         'features-CT-CENS_21-5.mat',
+                         'features-CT-CENS_41-1.mat']
+
+    cens_params = [(9, 2), (21, 5), (41, 1)]
+
+    for cur_test_case, cur_fn_ct_chroma_cens in enumerate(fn_ct_chroma_cens):
+        win_len_smooth = cens_params[cur_test_case][0]
+        downsample_smooth = cens_params[cur_test_case][1]
+
+        # plug into librosa cens computation
+        lr_chroma_cens = librosa.feature.chroma_cens(C=ct_cqt['f_cqt'],
+                                                     win_len_smooth=win_len_smooth,
+                                                     fmin=librosa.core.midi_to_hz(1),
+                                                     bins_per_octave=12,
+                                                     n_octaves=10)
+
+        # leaving out frames to match chroma toolbox behaviour
+        # lr_chroma_cens = librosa.resample(lr_chroma_cens, orig_sr=1, target_sr=1/downsample_smooth)
+        lr_chroma_cens = lr_chroma_cens[:, ::downsample_smooth]
+
+        # load CENS-41-1 features
+        ct_chroma_cens = load(os.path.join('data', cur_fn_ct_chroma_cens))
+
+        assert np.allclose(ct_chroma_cens['f_CENS'], lr_chroma_cens, rtol=1e-15, atol=1e-15)
