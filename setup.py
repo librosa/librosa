@@ -39,6 +39,7 @@ setup(
         'decorator >= 3.0.0',
         'six >= 1.3',
         'resampy >= 0.1.2'
+        'numba >= 0.25',
     ],
     extras_require={
         'docs': ['numpydoc', 'sphinx!=1.3.1', 'sphinx_rtd_theme']
