@@ -1,0 +1,36 @@
+import librosa
+import numpy as np
+
+
+def test_dtw_global():
+    # Example taken from:
+    # Meinard Mueller, Fundamentals of Music Processing
+    X = np.array([[1, 3, 3, 8, 1]])
+    Y = np.array([[2, 0, 0, 8, 7, 2]])
+
+    gt_D = np.array([[1., 2., 3., 10., 16., 17.],
+                     [2., 4., 5., 8., 12., 13.],
+                     [3., 5., 7., 10., 12., 13.],
+                     [9., 11., 13., 7., 8., 14.],
+                     [10, 10., 11., 14., 13., 9.]])
+
+    mut_D, _ = librosa.dtw(X, Y)
+
+    assert np.array_equal(gt_D, mut_D)
+
+
+def test_dtw_subseq():
+    # query is a linear ramp
+    X = np.linspace(0, 1, 100)
+
+    # database is query surrounded by noise
+    noise_len = 200
+    noise = np.random.rand(noise_len)
+    Y = np.concatenate((noise, noise, X, noise))
+
+    _, mut_wp = librosa.dtw(X, Y, subseq=True)
+
+    # estimated sequence has to match original sequence
+    # note the +1 due to python indexing
+    mut_X = Y[mut_wp[-1][1]:mut_wp[0][1]+1]
+    assert np.array_equal(X, mut_X)
