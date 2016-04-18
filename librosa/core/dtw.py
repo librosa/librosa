@@ -63,6 +63,9 @@ def dtw(X, Y,
     max_0 = step_sizes_sigma[:, 0].max()
     max_1 = step_sizes_sigma[:, 1].max()
 
+    X = np.atleast_2d(X)
+    Y = np.atleast_2d(Y)
+
     # calculate pair-wise distances
     C = cdist(X.T, Y.T, dist)
 
@@ -87,8 +90,16 @@ def dtw(X, Y,
     D = D[max_0:, max_1:]
     D_steps = D_steps[max_0:, max_1:]
 
-    # perform warping path backtracking
-    wp = backtracking(D_steps, step_sizes_sigma)
+    if subseq is False:
+        # perform warping path backtracking
+        wp = backtracking(D_steps, step_sizes_sigma)
+    elif subseq is True:
+        # search for global minimum in last row of D-matrix
+        wp_end_idx = np.argmin(D[-1, :]) + 1
+        # import matplotlib.pyplot as plt
+        # plt.plot(D[-1, :])
+        # plt.show()
+        wp = backtracking(D_steps[:, :wp_end_idx], step_sizes_sigma)
 
     return D, wp
 
@@ -160,7 +171,8 @@ def backtracking(D_steps, step_sizes_sigma):
         wp.append(cur_idx)
 
         # set stop criteria
-        if cur_idx == (0, 0):
+        # Setting it to (0, 0) does not work for the subsequence dtw
+        if cur_idx[0] == 0:
             break
 
     return wp
