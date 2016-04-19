@@ -19,6 +19,20 @@ def test_dtw_global():
     assert np.array_equal(gt_D, mut_D)
 
 
+def test_dtw_global_diagonal():
+    # query is a linear ramp
+    X = np.linspace(0.1, 1, 10)
+    Y = X
+
+    gt_wp = list(zip(list(range(10)), list(range(10))))[::-1]
+
+    mut_D, mut_wp = librosa.dtw(X, Y, subseq=True, dist='cosine',
+                                step_sizes_sigma=np.array([[1, 1]]),
+                                weights_mul=np.array([1, ]))
+
+    assert np.array_equal(np.asarray(gt_wp), np.asarray(mut_wp))
+
+
 def test_dtw_subseq():
     # query is a linear ramp
     X = np.linspace(0, 1, 100)
