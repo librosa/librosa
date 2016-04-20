@@ -13,6 +13,7 @@ except KeyError:
 
 import matplotlib
 matplotlib.use('Agg')
+matplotlib.rcParams.update(matplotlib.rcParamsDefault)
 import matplotlib.pyplot as plt
 
 import librosa
@@ -309,6 +310,8 @@ def test_time_scales_explicit():
     librosa.display.specshow(S_abs)
     librosa.display.time_ticks(locs, times, time_fmt='h')
 
+    plt.tight_layout()
+
 
 @image_comparison(baseline_images=['waveplot_mono'], extensions=['png'])
 def test_waveplot_mono():
@@ -415,10 +418,11 @@ def test_freq_ticks():
             args = [locs, freqs]
             fmax = max(freqs)
 
-        plt.figure()
+        fig = plt.figure()
         (ticks, labels), fmt = librosa.display.frequency_ticks(*args,
                                                                axis=axis,
                                                                n_ticks=n_ticks)
+        plt.close(fig)
 
         if n_ticks is None:
             n_ticks = len(locs)
