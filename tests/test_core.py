@@ -448,7 +448,7 @@ def test_autocorrelate():
 
         ac = librosa.autocorrelate(y, max_size=max_size, axis=axis)
 
-        my_slice = [Ellipsis] * truth.ndim
+        my_slice = [slice(None)] * truth.ndim
         if max_size is not None and max_size <= y.shape[axis]:
             my_slice[axis] = slice(min(max_size, y.shape[axis]))
 

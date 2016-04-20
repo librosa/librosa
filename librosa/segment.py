@@ -272,7 +272,7 @@ def recurrence_to_lag(rec, pad=True, axis=-1):
     else:
         lag = rec.copy()
 
-    idx_slice = [Ellipsis] * lag.ndim
+    idx_slice = [slice(None)] * lag.ndim
     for i in range(1, t):
         idx_slice[axis] = i
         lag[idx_slice] = np.roll(lag[idx_slice], -i)
@@ -342,12 +342,12 @@ def lag_to_recurrence(lag, axis=-1):
     t = lag.shape[axis]
     lag = lag.copy()
 
-    idx_slice = [Ellipsis] * lag.ndim
+    idx_slice = [slice(None)] * lag.ndim
     for i in range(1, t):
         idx_slice[axis] = i
         lag[idx_slice] = np.roll(lag[idx_slice], i)
 
-    sub_slice = [Ellipsis] * lag.ndim
+    sub_slice = [slice(None)] * lag.ndim
     sub_slice[1 - axis] = slice(t)
     return np.ascontiguousarray(lag[sub_slice].T).T
 
@@ -510,7 +510,7 @@ def subsegment(data, frames, n_segments=4, axis=-1):
         raise ParameterError('n_segments must be a positive integer')
 
     boundaries = []
-    idx_slices = [Ellipsis] * data.ndim
+    idx_slices = [slice(None)] * data.ndim
 
     for seg_start, seg_end in zip(frames[:-1], frames[1:]):
         idx_slices[axis] = slice(seg_start, seg_end)
