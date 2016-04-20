@@ -107,7 +107,7 @@ def test_resample_mono():
         y, sr_in = librosa.load(infile, sr=None, duration=5)
 
         for sr_out in [8000, 22050]:
-            for res_type in ['sinc_fastest', 'sinc_best', 'scipy']:
+            for res_type in ['sinc_fastest', 'sinc_best', 'kaiser_best', 'kaiser_fast', 'scipy']:
                 for fix in [False, True]:
                     yield (__test, y, sr_in, sr_out, res_type, fix)
 
@@ -160,12 +160,12 @@ def test_resample_scale():
         n_res = np.sqrt(np.sum(np.abs(y2)**2))
 
         # If it's a no-op, make sure the signal is untouched
-        assert np.allclose(n_orig, n_res, atol=1e-2)
+        assert np.allclose(n_orig, n_res, atol=1e-2), (n_orig, n_res)
 
-    y, sr_in = librosa.load('data/test1_22050.wav', mono=True, sr=None, duration=5)
+    y, sr_in = librosa.load('data/test1_44100.wav', mono=True, sr=None, duration=5)
 
-    for sr_out in [8000, 11025, 22050, 44100]:
-        for res_type in ['sinc_fastest', 'scipy', 'sinc_best']:
+    for sr_out in [11025, 22050, 44100]:
+        for res_type in ['sinc_fastest', 'scipy', 'sinc_best', 'kaiser_best', 'kaiser_fast']:
             yield __test, sr_in, sr_out, res_type, y
 
 
