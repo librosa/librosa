@@ -546,7 +546,7 @@ def test_tempogram_odf():
         eq_(tempogram.shape[1], len(odf))
 
         # Mean over time to wash over the boundary padding effects
-        idx = np.where(librosa.localmax(tempogram.max(axis=1)))[0]
+        idx = np.where(librosa.util.localmax(tempogram.max(axis=1)))[0]
 
         # Indices should all be non-zero integer multiples of spacing
         assert np.allclose(idx, spacing * np.arange(1, 1 + len(idx)))
