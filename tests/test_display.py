@@ -310,6 +310,8 @@ def test_time_scales_explicit():
     librosa.display.specshow(S_abs)
     librosa.display.time_ticks(locs, times, time_fmt='h')
 
+    plt.tight_layout()
+
 
 @image_comparison(baseline_images=['waveplot_mono'], extensions=['png'])
 def test_waveplot_mono():
