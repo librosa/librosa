@@ -10,6 +10,7 @@ import audioread
 import numpy as np
 import scipy.signal
 import scipy.fftpack as fft
+import resampy
 
 
 from .time_frequency import frames_to_samples, time_to_samples
@@ -24,9 +25,8 @@ __all__ = ['load', 'to_mono', 'resample', 'get_duration',
 
 # Resampling bandwidths as percentage of Nyquist
 # http://www.mega-nerd.com/SRC/api_misc.html#Converters
-BW_BEST = 0.97
-BW_MEDIUM = 0.9
-BW_FASTEST = 0.8
+BW_BEST = 0.9476
+BW_FASTEST = 0.85
 
 # Do we have scikits.samplerate?
 try:
@@ -203,7 +203,7 @@ def to_mono(y):
 
 
 @cache
-def resample(y, orig_sr, target_sr, res_type='sinc_best', fix=True, scale=False, **kwargs):
+def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=False, **kwargs):
     """Resample a time series from orig_sr to target_sr
 
     Parameters
@@ -221,10 +221,11 @@ def resample(y, orig_sr, target_sr, res_type='sinc_best', fix=True, scale=False,
         resample type (see note)
 
         .. note::
-            If `scikits.samplerate` is installed, `resample`
-            will use `res_type`.
+            By default, this uses `resampy`'s high-quality mode ('kaiser_best').
+            If `res_type` is not recognized by `resampy.resample`, it then
+            falls back on `scikits.samplerate` (if it is installed)
 
-            Otherwise, fall back on `scipy.signal.resample`.
+            If both of those fail, it will fall back on `scipy.signal.resample`.
 
             To force use of `scipy.signal.resample`, set `res_type='scipy'`.
 
@@ -281,10 +282,13 @@ def resample(y, orig_sr, target_sr, res_type='sinc_best', fix=True, scale=False,
 
     scipy_resample = (res_type == 'scipy')
 
-    if _HAS_SAMPLERATE and not scipy_resample:
-        y_hat = samplerate.resample(y.T, ratio, res_type).T
-    else:
-        y_hat = scipy.signal.resample(y, n_samples, axis=-1)
+    try:
+        y_hat = resampy.resample(y, orig_sr, target_sr, filter=res_type, axis=-1)
+    except NotImplementedError:
+        if _HAS_SAMPLERATE and not scipy_resample:
+            y_hat = samplerate.resample(y.T, ratio, res_type).T
+        else:
+            y_hat = scipy.signal.resample(y, n_samples, axis=-1)
 
     if fix:
         y_hat = util.fix_length(y_hat, n_samples, **kwargs)
