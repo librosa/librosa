@@ -13,6 +13,7 @@ except KeyError:
 
 import matplotlib
 matplotlib.use('Agg')
+matplotlib.rcParams.update(matplotlib.rcParamsDefault)
 import matplotlib.pyplot as plt
 
 import librosa

@@ -8,6 +8,7 @@ addons:
 cache:
   directories:
   - $HOME/env
+  - $HOME/tests/result_images
 
 language: python
 
