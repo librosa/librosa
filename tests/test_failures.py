@@ -122,7 +122,7 @@ def test_istft_bad_window():
 
     n_fft = 2 * (D.shape[0] - 1)
 
-    window = np.ones(n_fft / 2)
+    window = np.ones(n_fft // 2)
 
     librosa.istft(D, window=window)
 
