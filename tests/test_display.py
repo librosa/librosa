@@ -416,10 +416,11 @@ def test_freq_ticks():
             args = [locs, freqs]
             fmax = max(freqs)
 
-        plt.figure()
+        fig = plt.figure()
         (ticks, labels), fmt = librosa.display.frequency_ticks(*args,
                                                                axis=axis,
                                                                n_ticks=n_ticks)
+        plt.close(fig)
 
         if n_ticks is None:
             n_ticks = len(locs)
