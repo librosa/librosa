@@ -24,7 +24,7 @@ __all__ = ['load', 'to_mono', 'resample', 'get_duration',
            'peak_pick', 'localmax']
 
 # Resampling bandwidths as percentage of Nyquist
-# http://www.mega-nerd.com/SRC/api_misc.html#Converters
+# http://resampy.readthedocs.org/en/latest/api.html#module-resampy.filters
 BW_BEST = 0.9476
 BW_FASTEST = 0.85
 
@@ -34,8 +34,6 @@ try:
     import scikits.samplerate as samplerate  # pylint: disable=import-error
     _HAS_SAMPLERATE = True
 except ImportError:
-    warnings.warn('Could not import scikits.samplerate. '
-                  'Falling back to scipy.signal')
     _HAS_SAMPLERATE = False
 
 
@@ -263,15 +261,8 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
 
     """
 
-    if y.ndim > 1:
-        return np.vstack([resample(yi, orig_sr, target_sr,
-                                   res_type=res_type,
-                                   fix=fix,
-                                   **kwargs)
-                          for yi in y])
-
     # First, validate the audio buffer
-    util.valid_audio(y, mono=True)
+    util.valid_audio(y, mono=False)
 
     if orig_sr == target_sr:
         return y
@@ -280,12 +271,10 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
 
     n_samples = int(np.ceil(y.shape[-1] * ratio))
 
-    scipy_resample = (res_type == 'scipy')
-
     try:
         y_hat = resampy.resample(y, orig_sr, target_sr, filter=res_type, axis=-1)
     except NotImplementedError:
-        if _HAS_SAMPLERATE and not scipy_resample:
+        if _HAS_SAMPLERATE and (res_type != 'scipy'):
             y_hat = samplerate.resample(y.T, ratio, res_type).T
         else:
             y_hat = scipy.signal.resample(y, n_samples, axis=-1)
