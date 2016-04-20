@@ -423,7 +423,7 @@ def autocorrelate(y, max_size=None, axis=-1):
     autocorr = fft.ifft(powspec, axis=axis, overwrite_x=True)
 
     # Slice down to max_size
-    subslice = [Ellipsis] * autocorr.ndim
+    subslice = [slice(None)] * autocorr.ndim
     subslice[axis] = slice(max_size)
 
     autocorr = autocorr[subslice]
