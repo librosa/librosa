@@ -186,6 +186,8 @@ class ImageComparisonTest(CleanupTest):
 
                     figure.savefig(actual_fname, **self._savefig_kwarg)
 
+                    plt.close(figure)
+
                     err = compare_images(expected_fname, actual_fname,
                                          self._tol, in_decorator=True)
 
