@@ -156,6 +156,7 @@ def test__window():
         wdec = librosa.filters.__float_window(window)
 
         if n == int(n):
+            n = int(n)
             assert np.allclose(wdec(n), window(n))
         else:
             wf = wdec(n)

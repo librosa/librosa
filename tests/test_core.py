@@ -436,7 +436,7 @@ def test_get_duration_wav():
                 yield __test_audio, test_file, mono, sr, duration
 
             for n_fft in [256, 512, 1024]:
-                for hop_length in [n_fft / 8, n_fft / 4, n_fft / 2]:
+                for hop_length in [n_fft // 8, n_fft // 4, n_fft // 2]:
                     for center in [False, True]:
                         yield (__test_spec, test_file, sr,
                                duration, n_fft, hop_length, center)
@@ -772,7 +772,7 @@ def test_clicks():
         for hop_length in [512, 1024]:
             test_frames = librosa.time_to_frames(test_times, sr=sr, hop_length=hop_length)
 
-            for click in [None, np.ones(sr * 0.1)]:
+            for click in [None, np.ones(sr // 10)]:
 
                 for length in [None, 5 * sr, 15 * sr]:
                     yield __test, test_times, None, sr, hop_length, 1000, 0.1, click, length
