@@ -12,7 +12,6 @@ import scipy.signal
 import scipy.fftpack as fft
 import resampy
 
-
 from .time_frequency import frames_to_samples, time_to_samples
 from .. import cache
 from .. import util
@@ -275,6 +274,10 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
         y_hat = resampy.resample(y, orig_sr, target_sr, filter=res_type, axis=-1)
     except NotImplementedError:
         if _HAS_SAMPLERATE and (res_type != 'scipy'):
+            warnings.warn('scikits.samplerate resampling is deprecated as '
+                          'of librosa version 0.4.3.\n\tSupport will be '
+                          'removed in librosa version 0.5.',
+                          category=DeprecationWarning)
             y_hat = samplerate.resample(y.T, ratio, res_type).T
         else:
             y_hat = scipy.signal.resample(y, n_samples, axis=-1)
