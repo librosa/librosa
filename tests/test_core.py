@@ -20,6 +20,7 @@ import glob
 import numpy as np
 import scipy.io
 import six
+import warnings
 
 import matplotlib
 matplotlib.use('Agg')
@@ -167,6 +168,18 @@ def test_resample_scale():
     for sr_out in [11025, 22050, 44100]:
         for res_type in ['sinc_fastest', 'scipy', 'sinc_best', 'kaiser_best', 'kaiser_fast']:
             yield __test, sr_in, sr_out, res_type, y
+
+
+def test_resample_scikitsamplerate():
+    warnings.resetwarnings()
+    warnings.simplefilter('always')
+    with warnings.catch_warnings(record=True) as out:
+
+        librosa.resample(np.zeros(1000), 1000, 500, res_type='sinc_best')
+
+        assert len(out) > 0
+        assert out[0].category is DeprecationWarning
+        assert 'deprecated' in str(out[0].message).lower()
 
 
 @nottest
