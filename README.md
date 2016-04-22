@@ -55,16 +55,6 @@ librosa (0.x.x, /path/to/librosa)
 
 ### Hints for OS X
 
-#### libsamplerate
-
-In order to use *scipy* with *libsamplerate*, you can use *homebrew* (http://brew.sh)
-for installation:
-```
-brew install libsamplerate
-```
-
-The Python bindings are installed via `pip install scikits.samplerate`.
-
 #### ffmpeg
 
 To fuel `audioread` with more audio-decoding power, you can install *ffmpeg* which

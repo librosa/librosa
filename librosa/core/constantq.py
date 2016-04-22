@@ -176,13 +176,11 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     nyquist = sr / 2.0
 
     if filter_cutoff < audio.BW_FASTEST * nyquist:
-        res_type = 'sinc_fastest'
-    elif filter_cutoff < audio.BW_MEDIUM * nyquist:
-        res_type = 'sinc_medium'
+        res_type = 'kaiser_fast'
     elif filter_cutoff < audio.BW_BEST * nyquist:
-        res_type = 'sinc_best'
+        res_type = 'kaiser_best'
     else:
-        res_type = 'sinc_best'
+        res_type = 'kaiser_best'
 
     cqt_resp = []
 
@@ -192,7 +190,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     n_filters = min(bins_per_octave, n_bins)
 
-    if res_type != 'sinc_fastest' and audio._HAS_SAMPLERATE:
+    if res_type != 'kaiser_fast':
 
         # Do two octaves before resampling to allow for usage of sinc_fastest
         fft_basis, n_fft, filter_lengths = __fft_filters(sr, fmin_t,
@@ -221,7 +219,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         filter_cutoff = fmax_t * (1 + filters.window_bandwidth('hann') / Q)
         assert filter_cutoff < audio.BW_FASTEST*nyquist
 
-        res_type = 'sinc_fastest'
+        res_type = 'kaiser_fast'
 
     # Make sure our hop is long enough to support the bottom octave
     num_twos = __num_two_factors(hop_length)
@@ -581,7 +579,7 @@ def __early_downsample(y, sr, hop_length, res_type, n_octaves,
                        nyquist, filter_cutoff):
     '''Perform early downsampling on an audio signal, if it applies.'''
 
-    if not (res_type == 'sinc_fastest' and audio._HAS_SAMPLERATE):
+    if res_type != 'kaiser_fast':
         return y, sr, hop_length
 
     downsample_count1 = int(np.ceil(np.log2(audio.BW_FASTEST * nyquist /
