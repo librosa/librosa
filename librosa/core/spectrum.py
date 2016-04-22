@@ -254,6 +254,16 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
     >>> y_hat
     array([ -4.812e-06,  -4.267e-06, ...,   6.271e-06,   2.827e-07], dtype=float32)
 
+    Exactly preserving length of the input signal requires explicit padding.
+    Otherwise, a partial frame at the end of `y` will not be represented.
+
+    >>> n = len(y)
+    >>> n_fft = 2048
+    >>> y_pad = librosa.util.fix_length(y, n + n_fft // 2)
+    >>> D = librosa.stft(y_pad, n_fft=n_fft)
+    >>> y_out = librosa.util.fix_length(librosa.istft(D), n)
+    >>> np.max(np.abs(y - y_out))
+    1.4901161e-07
     """
 
     n_fft = 2 * (stft_matrix.shape[0] - 1)
