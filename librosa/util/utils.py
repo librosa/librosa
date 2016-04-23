@@ -26,6 +26,7 @@ __all__ = ['MAX_MEM_BLOCK', 'SMALL_FLOAT',
            'match_intervals', 'match_events',
            'peak_pick',
            'sparsify_rows',
+           'roll_sparse',
            'index_to_slice',
            'sync',
            'buf_to_float',
@@ -1085,6 +1086,77 @@ def sparsify_rows(x, quantile=0.01):
         x_sparse[i, idx] = x[i, idx]
 
     return x_sparse.tocsr()
+
+
+@cache
+def roll_sparse(x, shift, axis=0):
+    '''Sparse matrix roll
+
+    This operation is equivalent to ``numpy.roll``, but operates on sparse matrices.
+
+    Parameters
+    ----------
+    x : scipy.sparse.spmatrix or np.ndarray
+        The sparse matrix input
+
+    shift : int
+        The number of positions to roll the specified axis
+
+    axis : (0, 1, -1)
+        The axis along which to roll.
+
+    Returns
+    -------
+    x_rolled : same type as `x`
+        The rolled matrix, with the same format as `x`
+
+    See Also
+    --------
+    ``numpy.roll``
+
+    Examples
+    --------
+    >>> # Generate a random sparse binary matrix
+    >>> X = scipy.sparse.lil_matrix(np.random.randint(0, 2, size=(5,5)))
+    >>> X_roll = roll_sparse(X, 2, axis=0)  # Roll by 2 on the first axis
+    >>> X_dense_r = roll_sparse(X.toarray(), 2, axis=0)  # Equivalent dense roll
+    >>> np.allclose(X_roll, X_dense_r.toarray())
+    True
+    '''
+    if not scipy.sparse.isspmatrix(x):
+        return np.roll(x, shift, axis=axis)
+
+    # shift-mod-length lets us have shift > x.shape[axis]
+    if axis not in [0, 1, -1]:
+        raise ParameterError('axis must be one of (0, 1, -1)')
+
+    shift = np.mod(shift, x.shape[axis])
+
+    if shift == 0:
+        return x.copy()
+
+    fmt = x.format
+    if axis == 0:
+        x = x.tocsc()
+    elif axis in (-1, 1):
+        x = x.tocsr()
+
+
+    # lil matrix to start
+    x_r = scipy.sparse.lil_matrix(x.shape, dtype=x.dtype)
+
+    idx_in = [slice(None)] * x.ndim
+    idx_out = [slice(None)] * x_r.ndim
+
+    idx_in[axis] = slice(0, -shift)
+    idx_out[axis] = slice(shift, None)
+    x_r[tuple(idx_out)] = x[tuple(idx_in)]
+
+    idx_out[axis] = slice(0, shift)
+    idx_in[axis] = slice(-shift, None)
+    x_r[tuple(idx_out)] = x[tuple(idx_in)]
+
+    return x_r.asformat(fmt)
 
 
 def buf_to_float(x, n_bytes=2, dtype=np.float32):
