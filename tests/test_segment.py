@@ -65,8 +65,8 @@ def test_recurrence_matrix():
 def test_recurrence_sparse():
 
     data = np.random.randn(3, 100)
-    D_sparse = librosa.segment.recurrence_matrix(data, dense=False)
-    D_dense = librosa.segment.recurrence_matrix(data, dense=True)
+    D_sparse = librosa.segment.recurrence_matrix(data, sparse=True)
+    D_dense = librosa.segment.recurrence_matrix(data, sparse=False)
 
     assert scipy.sparse.isspmatrix(D_sparse)
     assert np.allclose(D_sparse.todense(), D_dense)
@@ -104,6 +104,27 @@ def test_recurrence_to_lag():
     yield __test_fail, (17, 17, 17)
 
 
+def test_recurrence_to_lag_sparse():
+
+    def __test(pad, axis, rec):
+
+        rec_dense = rec.toarray()
+
+        lag_sparse = librosa.segment.recurrence_to_lag(rec, pad=pad, axis=axis)
+        lag_dense = librosa.segment.recurrence_to_lag(rec_dense, pad=pad, axis=axis)
+
+        assert scipy.sparse.issparse(lag_sparse)
+        assert rec.format == lag_sparse.format
+        assert rec.dtype == lag_sparse.dtype
+        assert np.allclose(lag_sparse.toarray(), lag_dense)
+
+    data = np.random.randn(3, 100)
+    R_sparse = librosa.segment.recurrence_matrix(data, sparse=True)
+
+    for pad in [False, True]:
+        for axis in [0, 1, -1]:
+            yield __test, pad, axis, R_sparse
+
 def test_lag_to_recurrence():
 
     def __test(n, pad):
@@ -130,6 +151,37 @@ def test_lag_to_recurrence():
     yield __test_fail, (17, 35)
     yield __test_fail, (17, 17, 17)
 
+
+def test_lag_to_recurrence_sparse():
+
+    def __test(axis, lag):
+
+        lag_dense = lag.toarray()
+
+        rec_sparse = librosa.segment.lag_to_recurrence(lag, axis=axis)
+        rec_dense = librosa.segment.lag_to_recurrence(lag_dense, axis=axis)
+
+        assert scipy.sparse.issparse(rec_sparse)
+        assert rec_sparse.format == lag.format
+        assert rec_sparse.dtype == lag.dtype
+        assert np.allclose(rec_sparse.toarray(), rec_dense)
+
+    data = np.random.randn(3, 100)
+    R = librosa.segment.recurrence_matrix(data, sparse=True)
+
+    for pad in [False, True]:
+        for axis in [0, 1, -1]:
+            L = librosa.segment.recurrence_to_lag(R, pad=pad, axis=axis)
+            yield __test, axis, L
+
+@raises(librosa.ParameterError)
+def test_lag_to_recurrence_sparse_badaxis():
+
+
+    data = np.random.randn(3, 100)
+    R = librosa.segment.recurrence_matrix(data, sparse=True)
+    L = librosa.segment.recurrence_to_lag(R)
+    librosa.segment.lag_to_recurrence(L, axis=2)
 
 def test_structure_feature():
 
