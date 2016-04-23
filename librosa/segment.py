@@ -57,7 +57,7 @@ __all__ = ['recurrence_matrix',
 
 @cache
 def recurrence_matrix(data, k=None, width=1, metric='euclidean',
-                      sym=False, dense=True, axis=-1):
+                      sym=False, sparse=False, axis=-1):
     '''Compute the binary recurrence matrix from a time-series.
 
     `rec[i,j] == True` if (and only if) (`data[:,i]`, `data[:,j]`) are
@@ -87,9 +87,9 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
     sym : bool [scalar]
         set `sym=True` to only link mutual nearest-neighbors
 
-    dense : bool [scalar]
-        if True, returns a dense type (ndarray)
-        if False, returns a sparse type (scipy.sparse.csr_matrix)
+    sparse : bool [scalar]
+        if False, returns a dense type (ndarray)
+        if True, returns a sparse type (scipy.sparse.csr_matrix)
 
     axis : int
         The axis along which to compute recurrence.
@@ -199,11 +199,11 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
     if sym:
         rec = rec.minimum(rec.T)
 
-    if dense:
-        rec = rec.toarray()
-    else:
+    if sparse:
         rec = rec.tocsr()
         rec.eliminate_zeros()
+    else:
+        rec = rec.toarray()
 
     return rec
 
@@ -215,7 +215,7 @@ def recurrence_to_lag(rec, pad=True, axis=-1):
 
     Parameters
     ----------
-    rec : np.ndarray, [shape=(n, n)]
+    rec : np.ndarray, or scipy.sparse.spmatrix [shape=(n, n)]
         A (binary) recurrence matrix, as returned by `recurrence_matrix`
 
     pad : bool
@@ -226,12 +226,14 @@ def recurrence_to_lag(rec, pad=True, axis=-1):
         the assumption of repetition.
 
     axis : int
-        The axis along which to apply the recurrence-to-lag conversion
+        The axis to keep as the `time` axis.
+        The alternate axis will be converted to lag coordinates.
 
     Returns
     -------
-    lag : np.ndarray [shape=(2*n, n) or (n, n)]
-        The recurrence matrix in (lag, time) coordinates
+    lag : np.ndarray
+        The recurrence matrix in (lag, time) (if `axis=1`)
+        or (time, lag) (if `axis=0`) coordinates
 
     Raises
     ------
@@ -267,21 +269,43 @@ def recurrence_to_lag(rec, pad=True, axis=-1):
         raise ParameterError('non-square recurrence matrix shape: '
                              '{}'.format(rec.shape))
 
+    sparse = scipy.sparse.issparse(rec)
+
+    roll_ax = None
+    if sparse:
+        roll_ax = 1 - axis
+        lag_format = rec.format
+        if axis == 0:
+            rec = rec.tocsc()
+        elif axis in (-1, 1):
+            rec = rec.tocsr()
+
     t = rec.shape[axis]
 
-    if pad:
-        padding = [(0, 0), (0, 0)]
-        padding[(1-axis)] = (0, t)
-        lag = np.pad(rec, padding, mode='constant')
+    if sparse:
+        if pad:
+            kron = np.asarray([[1, 0]]).swapaxes(axis, 0)
+            lag = scipy.sparse.kron(kron.astype(rec.dtype), rec, format='lil')
+        else:
+            lag = scipy.sparse.lil_matrix(rec)
     else:
-        lag = rec.copy()
+        if pad:
+            padding = [(0, 0), (0, 0)]
+            padding[(1-axis)] = (0, t)
+            lag = np.pad(rec, padding, mode='constant')
+        else:
+            lag = rec.copy()
 
     idx_slice = [slice(None)] * lag.ndim
+
     for i in range(1, t):
         idx_slice[axis] = i
-        lag[idx_slice] = np.roll(lag[idx_slice], -i)
+        lag[tuple(idx_slice)] = util.roll_sparse(lag[tuple(idx_slice)], -i, axis=roll_ax)
 
-    return np.ascontiguousarray(lag.T).T
+    if sparse:
+        return lag.asformat(lag_format)
+    else:
+        return np.ascontiguousarray(lag.T).T
 
 
 def lag_to_recurrence(lag, axis=-1):
@@ -289,16 +313,18 @@ def lag_to_recurrence(lag, axis=-1):
 
     Parameters
     ----------
-    lag : np.ndarray [shape=(2*n, n) or (n, n)]
+    lag : np.ndarray or scipy.sparse.spmatrix
         A lag matrix, as produced by `recurrence_to_lag`
 
     axis : int
-        The axis along which to apply the recurrence-to-lag conversion
+        The axis corresponding to the time dimension.
+        The alternate axis will be interpreted in lag coordinates.
 
     Returns
     -------
-    rec : np.ndarray [shape=(n, n)]
+    rec : np.ndarray or scipy.sparse.spmatrix [shape=(n, n)]
         A recurrence matrix in (time, time) coordinates
+        For sparse matrices, format will match that of `lag`.
 
     Raises
     ------
@@ -336,6 +362,9 @@ def lag_to_recurrence(lag, axis=-1):
 
     '''
 
+    if axis not in [0, 1, -1]:
+        raise ParameterError('Invalid target axis: {}'.format(axis))
+
     axis = np.abs(axis)
 
     if lag.ndim != 2 or (lag.shape[0] != lag.shape[1] and
@@ -344,16 +373,28 @@ def lag_to_recurrence(lag, axis=-1):
 
     # Since lag must be 2-dimensional, abs(axis) = axis
     t = lag.shape[axis]
-    lag = lag.copy()
+
+    sparse = scipy.sparse.issparse(lag)
+    if sparse:
+        rec = scipy.sparse.lil_matrix(lag)
+        roll_ax = 1 - axis
+    else:
+        rec = lag.copy()
+        roll_ax = None
 
     idx_slice = [slice(None)] * lag.ndim
     for i in range(1, t):
         idx_slice[axis] = i
-        lag[idx_slice] = np.roll(lag[idx_slice], i)
+        rec[tuple(idx_slice)] = util.roll_sparse(lag[tuple(idx_slice)], i, axis=roll_ax)
 
-    sub_slice = [slice(None)] * lag.ndim
+    sub_slice = [slice(None)] * rec.ndim
     sub_slice[1 - axis] = slice(t)
-    return np.ascontiguousarray(lag[sub_slice].T).T
+    rec = rec[tuple(sub_slice)]
+
+    if sparse:
+        return rec.asformat(lag.format)
+    else:
+        return np.ascontiguousarray(rec.T).T
 
 
 def timelag_filter(function, pad=True, index=0):
