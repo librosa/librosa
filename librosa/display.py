@@ -489,7 +489,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000
 
 def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
              n_xticks=5, n_yticks=5, fmin=None, fmax=None, bins_per_octave=12,
-             tmin=16, tmax=240, freq_fmt='Hz', time_fmt=None, **kwargs):
+             tmin=None, tmax=None, freq_fmt='Hz', time_fmt=None, **kwargs):
     '''Display a spectrogram/chromagram/cqt/etc.
 
     Functions as a drop-in replacement for `matplotlib.pyplot.imshow`,
@@ -679,6 +679,12 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
 
     kwargs.setdefault('cmap', cmap(data))
 
+    if x_axis == 'tempo' or y_axis == 'tempo':
+        if tmin is None:
+            tmin = 16
+        if tmax is None:
+            tmax = 240
+
     axes = plt.imshow(data, **kwargs)
 
     all_params = dict(kwargs=kwargs,
@@ -853,15 +859,30 @@ def __axis_linear(data, n_ticks, horiz, sr=22050, **_kwargs):
     '''Linear frequency axes'''
     fmt = _kwargs.pop('freq_fmt', 'Hz')
 
+    n, ticker, labeler = __get_shape_artists(data, horiz)
+    # Assume we have been given a full n_fft/2 + 1 points.
+    n_fft = 2 * (n - 1)
+
+    n_min = 0
+    n_max = n
+    if _kwargs['fmin'] is not None:
+        n_min = int(round(_kwargs['fmin'] * n_fft / float(sr)))
+
+    if _kwargs['fmax'] is not None:
+        n_max = 1 + int(round(_kwargs['fmax'] * n_fft / float(sr)))
+    f_min = sr * float(n_min) / n_fft
+    f_max = sr * float(n_max - 1) / n_fft
+
     if horiz:
         axis = 'x'
+        plt.xlim((n_min, n_max))
     else:
         axis = 'y'
+        plt.ylim((n_min, n_max))
 
-    n, ticker, labeler = __get_shape_artists(data, horiz)
-
-    positions = np.linspace(0, n - 1, n_ticks, endpoint=True).astype(int)
-    values = (sr * np.linspace(0, 0.5, n_ticks, endpoint=True))
+    positions = np.linspace(n_min, n_max - 1, n_ticks, 
+                            endpoint=True).astype(int)
+    values = np.linspace(f_min, f_max, n_ticks, endpoint=True)
 
     _, label = frequency_ticks(positions, values,
                                n_ticks=None, axis=axis, freq_fmt=fmt)
@@ -917,14 +938,27 @@ def __axis_time(data, n_ticks, horiz, sr=22050, hop_length=512, **_kwargs):
     '''Time axes'''
     n, ticker, labeler = __get_shape_artists(data, horiz)
 
+    n_min = 0
+    n_max = n
+    if _kwargs['tmin'] is not None:
+        n_min = core.time_to_frames(_kwargs['tmin'], sr=sr, 
+                                    hop_length=hop_length)
+
+    if _kwargs['tmax'] is not None:
+        n_max = 1 + core.time_to_frames(_kwargs['tmax'], sr=sr, 
+                                        hop_length=hop_length)
+
     if horiz:
         axis = 'x'
+        plt.xlim((n_min, n_max))
     else:
         axis = 'y'
+        plt.ylim((n_min, n_max))
 
     fmt = _kwargs.pop('time_fmt', None)
 
-    positions = np.linspace(0, n-1, n_ticks, endpoint=True).astype(int)
+    positions = np.linspace(n_min, n_max - 1, 
+                            n_ticks, endpoint=True).astype(int)
 
     time_ticks(positions,
                core.frames_to_time(positions, sr=sr, hop_length=hop_length),
