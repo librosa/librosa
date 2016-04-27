@@ -19,6 +19,7 @@ Array operations
     axis_sort
     normalize
     sparsify_rows
+    roll_sparse
 
     buf_to_float
 
