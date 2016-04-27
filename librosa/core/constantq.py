@@ -96,6 +96,8 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         If `hop_length` is not an integer multiple of
         `2**(n_bins / bins_per_octave)`
 
+        Or if `y` is too short to support the frequency range of the CQT.
+
     See Also
     --------
     librosa.core.resample
@@ -184,6 +186,8 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     cqt_resp = []
 
+    len_orig = len(y)
+
     y, sr, hop_length = __early_downsample(y, sr, hop_length,
                                            res_type, n_octaves,
                                            nyquist, filter_cutoff)
@@ -246,6 +250,10 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
         # Resample (except first time)
         if i > 0:
+            if len(my_y) < 2:
+                raise ParameterError('Input signal length={} is too short for '
+                                     '{:d}-octave CQT'.format(len_orig, n_octaves))
+
             # The additional scaling of sqrt(2) here is to implicitly rescale the filters
             my_y = np.sqrt(2) * audio.resample(my_y, my_sr, my_sr/2.0,
                                                res_type=res_type,
@@ -328,6 +336,8 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     ParameterError
         If `hop_length` is not an integer multiple of
         `2**(n_bins / bins_per_octave)`
+
+        Or if `y` is too short to support the frequency range of the CQT.
 
     See Also
     --------
@@ -463,6 +473,7 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         If `hop_length` is not an integer multiple of
         `2**(n_bins / bins_per_octave)`
 
+        Or if `y` is too short to support the frequency range of the CQT.
     '''
 
     filter_scale = util.rename_kw('resolution', resolution,
@@ -593,6 +604,10 @@ def __early_downsample(y, sr, hop_length, res_type, n_octaves,
 
         assert hop_length % downsample_factor == 0
         hop_length //= downsample_factor
+
+        if len(y) < downsample_factor:
+            raise ParameterError('Input signal length={:d} is too short for '
+                                 '{:d}-octave CQT'.format(len(y), n_octaves))
 
         # The additional scaling of sqrt(downsample_factor) here is to implicitly
         # rescale the filters
