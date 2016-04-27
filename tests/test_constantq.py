@@ -176,3 +176,19 @@ def test_cqt_position():
 
     for note_min in [12, 18, 24, 30, 36]:
         yield __test, note_min
+
+
+@raises(librosa.ParameterError)
+def test_cqt_fail_short_early():
+
+    # sampling rate is sufficiently above the top octave to trigger early downsampling
+    y = np.zeros(16)
+    librosa.cqt(y, sr=44100, n_bins=36, real=False)
+
+
+@raises(librosa.ParameterError)
+def test_cqt_fail_short_late():
+
+    y = np.zeros(64)
+    librosa.cqt(y, sr=22050, real=False)
+
