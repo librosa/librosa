@@ -57,10 +57,12 @@ __all__ = ['recurrence_matrix',
 
 @cache
 def recurrence_matrix(data, k=None, width=1, metric='euclidean',
-                      sym=False, sparse=False, axis=-1):
-    '''Compute the binary recurrence matrix from a time-series.
+                      sym=False, sparse=False, mode='connectivity',
+                      bandwidth=None, axis=-1):
+    '''Compute a recurrence matrix from a data matrix.
 
-    `rec[i,j] == True` if (and only if) (`data[:, i]`, `data[:, j]`) are
+
+    `rec[i, j]` is non-zero if (`data[:, i]`, `data[:, j]`) are
     k-nearest-neighbors and `|i - j| >= width`
 
 
@@ -82,7 +84,7 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
     metric : str
         Distance metric to use for nearest-neighbor calculation.
 
-        See `scipy.spatial.distance.cdist` for details.
+        See `sklearn.neighbors.NearestNeighbors` for details.
 
     sym : bool [scalar]
         set `sym=True` to only link mutual nearest-neighbors
@@ -91,20 +93,38 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
         if False, returns a dense type (ndarray)
         if True, returns a sparse type (scipy.sparse.csr_matrix)
 
+    mode : str, {'connectivity', 'distance', 'affinity'}
+        If 'connectivity', a binary connectivity matrix is produced.
+
+        If 'distance', then a non-zero entry contains the distance between
+        points.
+
+        If 'adjacency', then non-zero entries are mapped to
+        `exp( - distance(i, j) / bandwidth)` where `bandwidth` is
+        as specified below.
+
+    bandwidth : None or float > 0
+        If using ``mode='affinity'``, this can be used to set the
+        bandwidth on the affinity kernel.
+
+        If no value is provided, it is set automatically to the median
+        distance between furthest nearest neighbors.
+
     axis : int
         The axis along which to compute recurrence.
         By default, the last index (-1) is taken.
 
     Returns
     -------
-    rec : np.ndarray [shape=(t,t), dtype=bool] or scipy.sparse.csr_matrix
-        Binary recurrence matrix
+    rec : np.ndarray or scipy.sparse.csr_matrix, [shape=(t, t)]
+        Recurrence matrix
 
     See Also
     --------
+    sklearn.neighbors.NearestNeighbors
     scipy.spatial.distance.cdist
     librosa.feature.stack_memory
-    structure_feature
+    recurrence_to_lag
 
     Examples
     --------
@@ -130,17 +150,22 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
 
     >>> R = librosa.segment.recurrence_matrix(mfcc, sym=True)
 
+    Use an affinity matrix instead of binary connectivity
+
+    >>> R_aff = librosa.segment.recurrence_matrix(mfcc, mode='affinity')
+
     Plot the feature and recurrence matrices
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure(figsize=(10, 6))
+    >>> plt.figure(figsize=(8, 4))
     >>> plt.subplot(1, 2, 1)
-    >>> librosa.display.specshow(mfcc, x_axis='time')
-    >>> plt.title('MFCC')
-    >>> plt.subplot(1, 2, 2)
     >>> librosa.display.specshow(R, x_axis='time', y_axis='time',
     ...                          aspect='equal')
-    >>> plt.title('MFCC recurrence (symmetric)')
+    >>> plt.title('Binary recurrence (symmetric)')
+    >>> plt.subplot(1, 2, 2)
+    >>> librosa.display.specshow(R_aff, x_axis='time', y_axis='time',
+    ...                          aspect='equal')
+    >>> plt.title('Affinity recurrence')
     >>> plt.tight_layout()
 
     '''
@@ -155,11 +180,20 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
     if width < 1:
         raise ParameterError('width must be at least 1')
 
+    if mode not in ['connectivity', 'distance', 'affinity']:
+        raise ParameterError(("Invalid mode='{}'. Must be one of "
+                              "['connectivity', 'distance', "
+                              "'affinity']").format(mode))
     if k is None:
         if t > 2 * width + 1:
             k = 2 * np.ceil(np.sqrt(t - 2 * width + 1))
         else:
             k = 2
+
+    if bandwidth is not None:
+        if bandwidth <= 0:
+            raise ParameterError('Invalid bandwidth={}. '
+                                 'Must be strictly positive.'.format(bandwidth))
 
     k = int(k)
 
@@ -176,7 +210,12 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
     knn.fit(data)
 
     # Get the knn graph
-    rec = knn.kneighbors_graph().tolil()
+    if mode == 'affinity':
+        kng_mode = 'distance'
+    else:
+        kng_mode = mode
+
+    rec = knn.kneighbors_graph(mode=kng_mode).tolil()
 
     # Remove connections within width
     for diag in range(-width + 1, width):
@@ -193,16 +232,21 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
         # Everything past the kth closest gets squashed
         rec[i, idx[k:]] = 0
 
-    rec = rec.astype(np.bool)
-
     # symmetrize
     if sym:
         rec = rec.minimum(rec.T)
 
-    if sparse:
-        rec = rec.tocsr()
-        rec.eliminate_zeros()
-    else:
+    rec = rec.tocsr()
+    rec.eliminate_zeros()
+
+    if mode == 'connectivity':
+        rec = rec.astype(np.bool)
+    elif mode == 'affinity':
+        if bandwidth is None:
+            bandwidth = np.median(rec.max(axis=1).data)
+        rec.data[:] = np.exp(- rec.data / bandwidth)
+
+    if not sparse:
         rec = rec.toarray()
 
     return rec
