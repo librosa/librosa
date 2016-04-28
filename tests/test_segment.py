@@ -87,19 +87,28 @@ def test_recurrence_distance():
 
 def test_recurrence_affinity():
 
-    data = np.random.randn(3, 100)
-    distance = squareform(pdist(data.T, metric='sqeuclidean'))
-    rec = librosa.segment.recurrence_matrix(data, mode='affinity',
-                                            metric='sqeuclidean',
-                                            sparse=True)
+    def __test(metric, bandwidth):
+        data = np.random.randn(3, 100)
+        distance = squareform(pdist(data.T, metric=metric))
+        rec = librosa.segment.recurrence_matrix(data, mode='affinity',
+                                                metric=metric,
+                                                sparse=True,
+                                                bandwidth=bandwidth)
 
-    i, j, vals = scipy.sparse.find(rec)
-    logvals = np.log(vals)
+        i, j, vals = scipy.sparse.find(rec)
+        logvals = np.log(vals)
 
-    # After log-scaling, affinity will match distance up to a constant factor
-    ratio = logvals / distance[i, j]
+        # After log-scaling, affinity will match distance up to a constant factor
+        ratio = -logvals / distance[i, j]
+        if bandwidth is None:
+            assert np.allclose(ratio, ratio[0])
+        else:
+            assert np.allclose(ratio, bandwidth)
 
-    assert np.allclose(ratio, ratio[0])
+    for metric in ['sqeuclidean', 'cityblock']:
+        for bandwidth in [None, 1]:
+            yield __test, metric, bandwidth
+
 
 @raises(librosa.ParameterError)
 def test_recurrence_badmode():
@@ -109,6 +118,14 @@ def test_recurrence_badmode():
     rec = librosa.segment.recurrence_matrix(data, mode='NOT A MODE',
                                             metric='sqeuclidean',
                                             sparse=True)
+
+
+@raises(librosa.ParameterError)
+def test_recurrence_bad_bandwidth():
+
+    data = np.random.randn(3, 100)
+    rec = librosa.segment.recurrence_matrix(data, bandwidth=-2)
+
 
 def test_recurrence_to_lag():
 
