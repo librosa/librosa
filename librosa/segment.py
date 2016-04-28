@@ -58,7 +58,7 @@ __all__ = ['recurrence_matrix',
 @cache
 def recurrence_matrix(data, k=None, width=1, metric='euclidean',
                       sym=False, sparse=False, mode='connectivity',
-                      axis=-1):
+                      bandwidth=None, axis=-1):
     '''Compute a recurrence matrix from a data matrix.
 
 
@@ -100,7 +100,14 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
         points.
 
         If 'adjacency', then non-zero entries are mapped to
-        `exp( - distance(i, j) / h)` where `h` is the median
+        `exp( - distance(i, j) / bandwidth)` where `bandwidth` is
+        as specified below.
+
+    bandwidth : None or float > 0
+        If using ``mode='affinity'``, this can be used to set the
+        bandwidth on the affinity kernel.
+
+        If no value is provided, it is set automatically to the median
         distance between furthest nearest neighbors.
 
     axis : int
@@ -183,6 +190,11 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
         else:
             k = 2
 
+    if bandwidth is not None:
+        if bandwidth <= 0:
+            raise ParameterError('Invalid bandwidth={}. '
+                                 'Must be strictly positive.'.format(bandwidth))
+
     k = int(k)
 
     # Build the neighbor search object
@@ -230,7 +242,8 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
     if mode == 'connectivity':
         rec = rec.astype(np.bool)
     elif mode == 'affinity':
-        bandwidth = np.median(rec.max(axis=1).data)
+        if bandwidth is None:
+            bandwidth = np.median(rec.max(axis=1).data)
         rec.data[:] = np.exp(- rec.data / bandwidth)
 
     if not sparse:
