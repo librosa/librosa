@@ -38,11 +38,11 @@ setup(
         'joblib >= 0.7.0',
         'decorator >= 3.0.0',
         'six >= 1.3',
-        'resampy >= 0.1.0',
-        'numba >= 0.25',
+        'resampy >= 0.1.0'
     ],
     extras_require={
         'resample': 'scikits.samplerate>=0.3',
-        'docs': ['numpydoc', 'seaborn', 'sphinx_rtd_theme']
+        'docs': ['numpydoc', 'seaborn', 'sphinx_rtd_theme'],
+        'numba': 'numba >= 0.25'
     }
 )

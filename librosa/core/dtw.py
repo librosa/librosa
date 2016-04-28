@@ -3,8 +3,9 @@
 """Sequence Alignment with Dynamic Time Warping."""
 
 import numpy as np
-import numba
 from scipy.spatial.distance import cdist
+from librosa.util.decorators import optional_jit
+import numba
 
 __all__ = ['dtw']
 
@@ -14,11 +15,15 @@ def dtw(X, Y,
         step_sizes_sigma=np.array([[1, 1], [0, 1], [1, 0]]),
         weights_add=np.array([0, 0, 0]),
         weights_mul=np.array([1, 1, 1]),
-        subseq=False):
+        subseq=False, backtrack=True):
     '''Dynamic time warping (DTW).
 
     This function performs a DTW and path backtracking on two sequences.
+    We follow the nomenclature and algorithmic approach as described in [1].
 
+    .. [1] Meinard Mueller
+           Fundamentals of Music Processing — Audio, Analysis, Algorithms, Applications
+           Springer Verlag, ISBN: 978-3-319-21944-8, 2015.
 
     Parameters
     ----------
@@ -30,7 +35,7 @@ def dtw(X, Y,
 
     dist : str
         Identifier for the cost-function as documented
-        in scipy.spatial.cdist()
+        in `scipy.spatial.cdist()`
 
     step_sizes_sigma : np.ndarray [shape=[n, 2]]
         Specifies allowed step sizes as used by the dtw.
@@ -44,6 +49,9 @@ def dtw(X, Y,
     subseq : binary
         Enable subsequence DTW, e.g., for retrieval tasks.
 
+    backtrack : binary
+        Enable backtracking in accumulated cost matrix.
+
     Returns
     -------
     D : np.ndarray [shape=(N,M)]
@@ -55,14 +63,11 @@ def dtw(X, Y,
         Warping path with index pairs.
         Each list entry contains an index pair
         (n,m) as a tuple
-
-    See Also
-    --------
-
     '''
     max_0 = step_sizes_sigma[:, 0].max()
     max_1 = step_sizes_sigma[:, 1].max()
 
+    # take care of dimensions
     X = np.atleast_2d(X)
     Y = np.atleast_2d(Y)
 
@@ -90,23 +95,66 @@ def dtw(X, Y,
     D = D[max_0:, max_1:]
     D_steps = D_steps[max_0:, max_1:]
 
-    if subseq is False:
-        # perform warping path backtracking
-        wp = backtracking(D_steps, step_sizes_sigma)
-    elif subseq is True:
-        # search for global minimum in last row of D-matrix
-        wp_end_idx = np.argmin(D[-1, :]) + 1
-        # import matplotlib.pyplot as plt
-        # plt.plot(D[-1, :])
-        # plt.show()
-        wp = backtracking(D_steps[:, :wp_end_idx], step_sizes_sigma)
+    if backtrack:
+        if subseq is False:
+            # perform warping path backtracking
+            wp = backtracking(D_steps, step_sizes_sigma)
+        elif subseq is True:
+            # search for global minimum in last row of D-matrix
+            wp_end_idx = np.argmin(D[-1, :]) + 1
+            wp = backtracking(D_steps[:, :wp_end_idx], step_sizes_sigma)
+    else:
+        wp = []
 
     return D, wp
 
 
-@numba.jit(nopython=True)
+@optional_jit(True)
 def calc_accu_cost(C, D, D_steps, step_sizes_sigma, weights_mul, weights_add, max_0, max_1):
+    '''Calculate the accumulated cost matrix D.
 
+    Use dynamic programming to calculated the accumulated costs.
+
+    Parameters
+    ----------
+    C : np.ndarray [shape=(N, M)]
+        pre-computed cost matrix
+
+    D : np.ndarray [shape=(N, M)]
+        accumulated cost matrix
+
+    D_steps : np.ndarray [shape=(N, M)]
+        steps which were used for calculating D
+
+    step_sizes_sigma : np.ndarray [shape=[n, 2]]
+        Specifies allowed step sizes as used by the dtw.
+
+    weights_add : np.ndarray [shape=[n, ]]
+        Additive weights to penalize certain step sizes.
+
+    weights_mul : np.ndarray [shape=[n, ]]
+        Multiplicative weights to penalize certain step sizes.
+
+    max_0 : int
+        maximum number of steps in step_sizes_sigma in dim 0.
+
+    max_1 : int
+        maximum number of steps in step_sizes_sigma in dim 1.
+
+    Returns
+    -------
+    D : np.ndarray [shape=(N,M)]
+        accumulated cost matrix.
+        D[N,M] is the total alignment cost.
+        When doing subsequence DTW, D[N,:] indicates a matching function.
+
+    D_steps : np.ndarray [shape=(N,M)]
+        steps which were used for calculating D.
+
+    See Also
+    --------
+    dtw
+    '''
     for cur_n in range(max_0, D.shape[0]):
         for cur_m in range(max_1, D.shape[1]):
             # loop over all step sizes
@@ -122,11 +170,11 @@ def calc_accu_cost(C, D, D_steps, step_sizes_sigma, weights_mul, weights_add, ma
 
                     # save step-index
                     D_steps[cur_n, cur_m] = cur_step_idx
-                # D[cur_n, cur_m] = min(cur_cost, D[cur_n, cur_m])
+
     return D, D_steps
 
 
-@numba.jit(nopython=True)
+@optional_jit(True)
 def backtracking(D_steps, step_sizes_sigma):
     '''Backtrack optimal warping path.
 
@@ -152,7 +200,7 @@ def backtracking(D_steps, step_sizes_sigma):
 
     See Also
     --------
-
+    dtw
     '''
     wp = []
     # Set starting point D(N,M) and append it to the path
@@ -171,7 +219,8 @@ def backtracking(D_steps, step_sizes_sigma):
         wp.append(cur_idx)
 
         # set stop criteria
-        # Setting it to (0, 0) does not work for the subsequence dtw
+        # Setting it to (0, 0) does not work for the subsequence dtw,
+        # so we only ask to reach the first row of the matrix.
         if cur_idx[0] == 0:
             break
 
