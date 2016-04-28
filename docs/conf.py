@@ -124,6 +124,7 @@ intersphinx_mapping = {'python': ('http://docs.python.org/2', None),
                        'sklearn': ('http://scikit-learn.org/stable/', None),
                        'seaborn': ('http://stanford.edu/~mwaskom/software/seaborn/', None),
                        'sns': ('http://stanford.edu/~mwaskom/software/seaborn/', None),
+                       'resampy': ('http://resampy.readthedocs.io/en/latest/', None),
                        'samplerate':
                        ('http://www.ar.media.kyoto-u.ac.jp/members/david/softwares/samplerate/sphinx/', None)}
 
