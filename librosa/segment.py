@@ -59,9 +59,10 @@ __all__ = ['recurrence_matrix',
 def recurrence_matrix(data, k=None, width=1, metric='euclidean',
                       sym=False, sparse=False, mode='connectivity',
                       axis=-1):
-    '''Compute the binary recurrence matrix from a time-series.
+    '''Compute a recurrence matrix from a data matrix.
 
-    `rec[i,j] == True` if (and only if) (`data[:, i]`, `data[:, j]`) are
+
+    `rec[i, j]` is non-zero if (`data[:, i]`, `data[:, j]`) are
     k-nearest-neighbors and `|i - j| >= width`
 
 
@@ -100,7 +101,7 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
 
         If 'adjacency', then non-zero entries are mapped to
         `exp( - distance(i, j) / h)` where `h` is the median
-        distance between `k`-nearest neighbors.
+        distance between furthest nearest neighbors.
 
     axis : int
         The axis along which to compute recurrence.
@@ -142,17 +143,22 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
 
     >>> R = librosa.segment.recurrence_matrix(mfcc, sym=True)
 
+    Use an affinity matrix instead of binary connectivity
+
+    >>> R_aff = librosa.segment.recurrence_matrix(mfcc, mode='affinity')
+
     Plot the feature and recurrence matrices
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure(figsize=(10, 6))
+    >>> plt.figure(figsize=(8, 4))
     >>> plt.subplot(1, 2, 1)
-    >>> librosa.display.specshow(mfcc, x_axis='time')
-    >>> plt.title('MFCC')
-    >>> plt.subplot(1, 2, 2)
     >>> librosa.display.specshow(R, x_axis='time', y_axis='time',
     ...                          aspect='equal')
-    >>> plt.title('MFCC recurrence (symmetric)')
+    >>> plt.title('Binary recurrence (symmetric)')
+    >>> plt.subplot(1, 2, 2)
+    >>> librosa.display.specshow(R_aff, x_axis='time', y_axis='time',
+    ...                          aspect='equal')
+    >>> plt.title('Affinity recurrence')
     >>> plt.tight_layout()
 
     '''
@@ -218,9 +224,8 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
     if sym:
         rec = rec.minimum(rec.T)
 
-    if sparse:
-        rec = rec.tocsr()
-        rec.eliminate_zeros()
+    rec = rec.tocsr()
+    rec.eliminate_zeros()
 
     if mode == 'connectivity':
         rec = rec.astype(np.bool)
