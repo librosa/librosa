@@ -1112,7 +1112,7 @@ def roll_sparse(x, shift, axis=0):
 
     See Also
     --------
-    ``numpy.roll``
+    numpy.roll
 
     Examples
     --------

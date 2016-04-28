@@ -41,7 +41,6 @@ setup(
         'resampy >= 0.1.0'
     ],
     extras_require={
-        'resample': 'scikits.samplerate>=0.3',
-        'docs': ['numpydoc', 'seaborn', 'sphinx_rtd_theme']
+        'docs': ['numpydoc', 'seaborn', 'sphinx!=1.3.1', 'sphinx_rtd_theme']
     }
 )
