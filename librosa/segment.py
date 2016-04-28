@@ -60,8 +60,8 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
                       sym=False, sparse=False, axis=-1):
     '''Compute the binary recurrence matrix from a time-series.
 
-    `rec[i,j] == True` if (and only if) (`data[:,i]`, `data[:,j]`) are
-    k-nearest-neighbors and `|i-j| >= width`
+    `rec[i,j] == True` if (and only if) (`data[:, i]`, `data[:, j]`) are
+    k-nearest-neighbors and `|i - j| >= width`
 
 
     Parameters
@@ -77,7 +77,7 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
 
     width : int >= 1 [scalar]
         only link neighbors `(data[:, i], data[:, j])`
-        if `|i-j| >= width`
+        if `|i - j| >= width`
 
     metric : str
         Distance metric to use for nearest-neighbor calculation.
@@ -179,7 +179,7 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
     rec = knn.kneighbors_graph().tolil()
 
     # Remove connections within width
-    for diag in range(-width, width+1):
+    for diag in range(-width + 1, width):
         rec.setdiag(0, diag)
 
     # Retain only the top-k links per point
