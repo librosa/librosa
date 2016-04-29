@@ -12,6 +12,8 @@ except:
 import matplotlib
 matplotlib.use('Agg')
 import numpy as np
+import scipy.sparse
+
 import librosa
 import sklearn.decomposition
 
@@ -99,3 +101,81 @@ def test_complex_hpss():
     H, P = librosa.decompose.hpss(D)
 
     assert np.allclose(H + P, D)
+
+
+def test_nn_filter_mean():
+
+    X = np.random.randn(10, 100)
+
+    # Build a recurrence matrix, just for testing purposes
+    rec = librosa.segment.recurrence_matrix(X)
+
+    X_filtered = librosa.decompose.nn_filter(X)
+
+    # Normalize the recurrence matrix so dotting computes an average
+    rec = librosa.util.normalize(rec, axis=1, norm=1)
+
+    assert np.allclose(X_filtered, X.dot(rec.T))
+
+def test_nn_filter_mean_rec():
+
+    X = np.random.randn(10, 100)
+
+    # Build a recurrence matrix, just for testing purposes
+    rec = librosa.segment.recurrence_matrix(X)
+
+    # Knock out the first three rows of links
+    rec[:3] = 0
+
+    X_filtered = librosa.decompose.nn_filter(X, rec=rec)
+
+    for i in range(3):
+        assert np.allclose(X_filtered[:, i], X[:, i])
+
+    # Normalize the recurrence matrix
+    rec = librosa.util.normalize(rec, axis=1, norm=1)
+    assert np.allclose(X_filtered[:, 3:], (X.dot(rec.T))[:, 3:])
+
+def test_nn_filter_mean_rec_sparse():
+
+    X = np.random.randn(10, 100)
+
+    # Build a recurrence matrix, just for testing purposes
+    rec = librosa.segment.recurrence_matrix(X, sparse=True)
+
+    X_filtered = librosa.decompose.nn_filter(X, rec=rec)
+
+    # Normalize the recurrence matrix
+    rec = librosa.util.normalize(rec.toarray(), axis=1, norm=1)
+    assert np.allclose(X_filtered, (X.dot(rec.T)))
+
+def test_nn_filter_avg():
+
+    X = np.random.randn(10, 100)
+
+    # Build a recurrence matrix, just for testing purposes
+    rec = librosa.segment.recurrence_matrix(X, mode='affinity')
+
+    X_filtered = librosa.decompose.nn_filter(X, rec=rec, aggregate=np.average)
+
+    # Normalize the recurrence matrix so dotting computes an average
+    rec = librosa.util.normalize(rec, axis=1, norm=1)
+
+    assert np.allclose(X_filtered, X.dot(rec.T))
+
+
+def test_nn_filter_badselfsim():
+
+    @raises(librosa.ParameterError)
+    def __test(x, y, sparse):
+        X = np.empty((10, 100))
+        # Build a recurrence matrix, just for testing purposes
+        rec = np.random.randn(x, y)
+        if sparse:
+            rec = scipy.sparse.csr_matrix(rec)
+
+        librosa.decompose.nn_filter(X, rec=rec)
+
+    for (x,y) in [(10, 10), (100, 20), (20, 100), (100, 101), (101, 101)]:
+        for sparse in [False, True]:
+            yield __test, x, y, sparse
