@@ -292,8 +292,9 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
 
 
 def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
-                 center=True):
-    """Compute the duration (in seconds) of an audio time series or STFT matrix.
+                 center=True, filename=None):
+    """Compute the duration (in seconds) of an audio time series,
+    feature matrix, or filename.
 
     Examples
     --------
@@ -301,6 +302,10 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> librosa.get_duration(y=y, sr=sr)
     61.44
+
+    >>> # Or directly from an audio file
+    >>> librosa.get_duration(filename=librosa.util.example_audio_file())
+    61.4
 
     >>> # Or compute duration from an STFT matrix
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
@@ -335,11 +340,22 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         - If `True`, `S[:, t]` is centered at `y[t * hop_length]`
         - If `False`, then `S[:, t]` begins at `y[t * hop_length]`
 
+    filename : str
+        If provided, all other parameters are ignored, and the
+        duration is calculated directly from the audio file.
+        Note that this avoids loading the contents into memory,
+        and is therefore useful for querying the duration of
+        long files.
+
     Returns
     -------
     d : float >= 0
         Duration (in seconds) of the input time series or spectrogram.
     """
+
+    if filename is not None:
+        with audioread.audio_open(filename) as fdesc:
+            return fdesc.duration
 
     if y is None:
         assert S is not None
