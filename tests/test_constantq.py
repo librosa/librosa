@@ -192,3 +192,31 @@ def test_cqt_fail_short_late():
     y = np.zeros(64)
     librosa.cqt(y, sr=22050, real=False)
 
+
+def test_hybrid_cqt_scale():
+    # Test to resolve issue #341
+    def __test(sr, hop_length, y):
+
+        hcqt = librosa.hybrid_cqt(y=y, sr=sr, hop_length=hop_length)
+
+        max_response = np.max(np.abs(hcqt), axis=1)
+
+        # Test that peak-energy deviation is bounded
+        assert np.std(max_response) < 1e-2
+
+        ref_response = np.max(max_response)
+        continuity = np.abs(np.diff(max_response)) / ref_response
+
+        # Test that continuity is never violated by more than 20% point-wise energy
+        assert np.max(continuity) < 2e-1, continuity
+
+
+    for sr in [22050, 32000]:
+        # Generate an impulse
+        x = np.zeros(16384)
+
+        for hop_length in [64, 128, 384, 512, 1024]:
+            # Center the impulse response on a frame
+            center = (len(x) / (2 * float(hop_length))) * hop_length
+            x[center] = 1
+            yield __test, sr, hop_length, x
