@@ -455,6 +455,19 @@ def test_get_duration_wav():
                                duration, n_fft, hop_length, center)
 
 
+def test_get_duration_filename():
+
+    filename = 'data/test2_8000.wav'
+    true_duration = 30.197625
+
+    duration_fn = librosa.get_duration(filename=filename)
+    y, sr = librosa.load(filename, sr=None)
+    duration_y = librosa.get_duration(y=y, sr=sr)
+
+    assert np.allclose(duration_fn, true_duration)
+    assert np.allclose(duration_fn, duration_y)
+
+
 def test_autocorrelate():
 
     def __test(y, truth, max_size, axis):
