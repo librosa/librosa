@@ -385,6 +385,21 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                    filter_scale=filter_scale,
                                    norm=norm,
                                    sparsity=sparsity)
+
+        # Compute the scaling factor for the pseudo-cqt
+        Q = float(filter_scale) / (2.0**(1. / bins_per_octave) - 1)
+
+        filter_cutoff = (freqs[-(n_bins_pseudo+1)] *
+                         (1 + filters.window_bandwidth('hann') / Q))
+
+        n_octaves = int(np.ceil(float(n_bins - n_bins_pseudo) / bins_per_octave))
+
+        downsample_count = __early_downsample_count(sr/2,
+                                                    filter_cutoff,
+                                                    hop_length,
+                                                    n_octaves)
+
+        my_pseudo_cqt *= 2.0**(downsample_count - 1)
         cqt_resp.append(my_pseudo_cqt)
 
     n_bins_full = int(np.sum(~pseudo_filters))
@@ -586,20 +601,26 @@ def __variable_hop_response(y, n_fft, hop_length, min_filter_length,
     return my_cqt
 
 
-def __early_downsample(y, sr, hop_length, res_type, n_octaves,
-                       nyquist, filter_cutoff):
-    '''Perform early downsampling on an audio signal, if it applies.'''
 
-    if res_type != 'kaiser_fast':
-        return y, sr, hop_length
+def __early_downsample_count(nyquist, filter_cutoff, hop_length, n_octaves):
+    '''Compute the number of early downsampling operations'''
 
     downsample_count1 = int(np.ceil(np.log2(audio.BW_FASTEST * nyquist /
                                             filter_cutoff)) - 1)
     num_twos = __num_two_factors(hop_length)
     downsample_count2 = max(0, num_twos - n_octaves + 1)
-    downsample_count = min(downsample_count1, downsample_count2)
 
-    if downsample_count > 0:
+    return min(downsample_count1, downsample_count2)
+
+
+def __early_downsample(y, sr, hop_length, res_type, n_octaves,
+                       nyquist, filter_cutoff):
+    '''Perform early downsampling on an audio signal, if it applies.'''
+
+    downsample_count = __early_downsample_count(nyquist, filter_cutoff,
+                                                hop_length, n_octaves)
+
+    if downsample_count > 0 and res_type == 'kaiser_fast':
         downsample_factor = 2.0**(downsample_count)
 
         assert hop_length % downsample_factor == 0
