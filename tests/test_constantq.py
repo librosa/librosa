@@ -192,30 +192,60 @@ def test_cqt_fail_short_late():
     y = np.zeros(64)
     librosa.cqt(y, sr=22050, real=False)
 
+def test_cqt_impulse():
+    # Test to resolve issue #348
+    def __test(sr, hop_length, y):
+
+        C = np.abs(librosa.cqt(y=y, sr=sr, hop_length=hop_length, real=False))
+
+        max_response = np.max(C, axis=1)
+
+
+        ref_response = np.max(max_response)
+        continuity = np.abs(np.diff(max_response))
+
+        # Test that continuity is never violated by more than 15% point-wise energy
+        assert np.max(continuity) < 1.5e-1 * ref_response, np.max(continuity) / ref_response
+
+        # Test that peak-energy deviation is bounded
+        assert np.std(max_response) < 0.5 * ref_response, np.std(max_response) / ref_response
+
+    for sr in [11025, 16384, 22050, 32000, 44100]:
+        # Generate an impulse
+        x = np.zeros(sr)
+
+        for hop_scale in range(1, 9):
+            hop_length = 64 * hop_scale
+            # Center the impulse response on a frame
+            center = (len(x) / (2 * float(hop_length))) * hop_length
+            x[center] = 1
+            yield __test, sr, hop_length, x
+
 
 def test_hybrid_cqt_scale():
     # Test to resolve issue #341
     def __test(sr, hop_length, y):
 
-        hcqt = librosa.hybrid_cqt(y=y, sr=sr, hop_length=hop_length)
+        hcqt = librosa.hybrid_cqt(y=y, sr=sr, hop_length=hop_length, tuning=0)
 
         max_response = np.max(np.abs(hcqt), axis=1)
 
-        # Test that peak-energy deviation is bounded
-        assert np.std(max_response) < 1e-2
 
         ref_response = np.max(max_response)
-        continuity = np.abs(np.diff(max_response)) / ref_response
+        continuity = np.abs(np.diff(max_response))
 
-        # Test that continuity is never violated by more than 20% point-wise energy
-        assert np.max(continuity) < 2e-1, continuity
+        # Test that continuity is never violated by more than 75% point-wise energy
+        assert np.max(continuity) <= 0.6 * ref_response, np.max(continuity)
 
+        # Test that peak-energy deviation is bounded
+        assert np.std(max_response) < 0.5 * ref_response, np.std(max_response)
 
-    for sr in [22050, 32000]:
+    for sr in [11025, 16384, 22050, 32000, 44100]:
         # Generate an impulse
-        x = np.zeros(16384)
+        x = np.zeros(sr)
 
-        for hop_length in [64, 128, 384, 512, 1024]:
+        for hop_scale in range(1, 9):
+            hop_length = 64 * hop_scale
             # Center the impulse response on a frame
             center = (len(x) / (2 * float(hop_length))) * hop_length
             x[center] = 1
