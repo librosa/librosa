@@ -1,6 +1,37 @@
 Changes
 =======
 
+v0.4.3
+------
+
+Bug fixes
+  - `#315`_ fixed a positioning error in ``display.specshow`` with logarithmic axes
+  - `#332`_ ``librosa.cqt`` now throws an exception if the signal is too short for analysis
+  - `#341`_ ``librosa.hybrid_cqt`` properly matches the scale of ``librosa.cqt``
+  - `#348`_ ``librosa.cqt`` fixed a bug introduced in v0.4.2.
+
+New features
+  - `#312`_ ``librosa.segment.recurrence_matrix`` can now construct sparse self-similarity matrices
+  - `#337`_ ``librosa.segment.recurrence_matrix`` can now produce weighted affinities and distances
+  - `#311`_ ``librosa.decompose.nl_filter`` implements several self-similarity based filtering operations
+    including non-local means.
+  - `#320`_ ``librosa.feature.chroma_cens`` implements chroma energy normalized statistics (CENS) features
+
+Other changes
+  - ``librosa.cqt``, ``librosa.hybrid_cqt`` parameter `aggregate` is now deprecated.
+  - Resampling is now handled by the ``resampy`` library
+  - ``librosa.get_duration`` can now operate directly on filenames as well as audio buffers and feature
+    matrices.
+
+.. _#315: https://github.com/bmcfee/librosa/pull/315
+.. _#332: https://github.com/bmcfee/librosa/pull/332
+.. _#341: https://github.com/bmcfee/librosa/pull/341
+.. _#348: https://github.com/bmcfee/librosa/pull/348
+.. _#312: https://github.com/bmcfee/librosa/pull/312
+.. _#337: https://github.com/bmcfee/librosa/pull/337
+.. _#311: https://github.com/bmcfee/librosa/pull/311
+.. _#320: https://github.com/bmcfee/librosa/pull/320
+
 v0.4.2
 ------
 

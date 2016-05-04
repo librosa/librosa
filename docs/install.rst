@@ -11,7 +11,11 @@ or::
 
     sudo pip install librosa
 
-to install system-wide.
+to install system-wide, or::
+
+    pip install -u librosa
+
+to install just for your own user.
 
 If you've downloaded the archive manually from the `releases
 <https://github.com/bmcfee/librosa/releases/>`_ page, you can install using the
@@ -21,31 +25,8 @@ If you've downloaded the archive manually from the `releases
     cd librosa-VERSION/
     python setup.py install
 
-Additional notes
-----------------
-
-By default, *librosa* will use `scipy.signal` to resample audio signals, which can 
-be slow in practice.  It is highly recommended to install `librsamplerate
-<http://www.mega-nerd.com/SRC/>`_ and the corresponding python module,
-`scikits.samplerate <https://pypi.python.org/pypi/scikits.samplerate>`_.  
-
-Once these are installed, *librosa* will use the faster `scikits.samplerate` for all 
-resampling operations.
-
-
 Additional notes for OS X
 -------------------------
-
-libsamplerate
--------------
-
-In order to use *scipy* with *libsamplerate*, you can use *homebrew* (http://brew.sh)
-for installation:
-```
-brew install libsamplerate
-```
-
-The Python bindings are installed via `pip install scikits.samplerate`.
 
 ffmpeg
 ------
