@@ -354,7 +354,7 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     if n_bands < 1 or not isinstance(n_bands, int):
         raise ParameterError('n_bands must be a positive integer')
 
-    if not (0.0 < quantile < 1.0):
+    if not 0.0 < quantile < 1.0:
         raise ParameterError('quantile must lie in the range (0, 1)')
 
     if fmin <= 0:
@@ -470,7 +470,7 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     '''
 
-    if not (0.0 < roll_percent < 1.0):
+    if not 0.0 < roll_percent < 1.0:
         raise ParameterError('roll_percent must lie in the range (0, 1)')
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
@@ -954,7 +954,7 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
 
 
 def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
-                threshold=0.001, tuning=None, n_chroma=12,
+                tuning=None, n_chroma=12,
                 n_octaves=7, bins_per_octave=None, cqt_mode='full', window=None,
                 norm=2, win_len_smooth=41):
     r'''Computes the chroma variant "Chroma Energy Normalized" (CENS), following [1]_.
@@ -983,10 +983,6 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
 
     norm : int > 0, +-np.inf, or None
         Column-wise normalization of the chromagram.
-
-    threshold : float
-        Pre-normalization energy threshold.  Values below the
-        threshold are set to the unit vector.
 
     tuning : float
         Deviation (in cents) from A440 tuning
@@ -1050,8 +1046,12 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
                         hop_length=hop_length,
                         fmin=fmin,
                         bins_per_octave=bins_per_octave,
-                        tuning=tuning, norm=None,
-                        n_octaves=n_octaves, window=window)
+                        tuning=tuning,
+                        norm=None,
+                        n_chroma=n_chroma,
+                        n_octaves=n_octaves,
+                        cqt_mode=cqt_mode,
+                        window=window)
 
     # L1-Normalization
     chroma = util.normalize(chroma, norm=1, axis=0)
@@ -1070,12 +1070,10 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
     win /= np.sum(win)
     win = np.atleast_2d(win)
 
-    chroma_cens = scipy.signal.convolve2d(chroma_quant, win, mode='same')
+    cens = scipy.signal.convolve2d(chroma_quant, win, mode='same')
 
     # L2-Normalization
-    chroma_cens = util.normalize(chroma_cens, norm=norm, axis=0)
-
-    return chroma_cens
+    return util.normalize(cens, norm=norm, axis=0)
 
 
 def tonnetz(y=None, sr=22050, chroma=None):
