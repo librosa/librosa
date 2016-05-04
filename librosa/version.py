@@ -3,4 +3,4 @@
 """Version info"""
 
 short_version = '0.4'
-version = '0.4.2'
+version = '0.4.3rc0'
