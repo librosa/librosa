@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 '''Pitch-tracking and tuning estimation'''
 
-import numpy as np
 import warnings
+
+import numpy as np
 
 from .spectrum import ifgram, _spectrogram
 from . import time_frequency

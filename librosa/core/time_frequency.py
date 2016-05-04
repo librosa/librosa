@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 '''Time and frequency utilities'''
 
-import numpy as np
 import re
+
+import numpy as np
 import six
 
 from ..util.exceptions import ParameterError
@@ -834,7 +835,7 @@ def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False):
     Returns
     -------
     bin_frequencies : ndarray [shape=(n_mels,)]
-        vector of n_mels frequencies in Hz which are uniformly spaced on the Mel 
+        vector of n_mels frequencies in Hz which are uniformly spaced on the Mel
         axis.
 
     Examples

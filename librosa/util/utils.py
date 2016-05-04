@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 """Utility functions"""
 
-import numpy as np
 import scipy.ndimage
 import scipy.sparse
 import six
 
+import numpy as np
 from numpy.lib.stride_tricks import as_strided
 
 from .. import cache
@@ -94,8 +94,8 @@ def frame(y, frame_length=2048, hop_length=512):
 
     if n_frames < 1:
         raise ParameterError('Buffer is too short (n={:d})'
-                                    ' for frame_length={:d}'.format(len(y),
-                                                                    frame_length))
+                             ' for frame_length={:d}'.format(len(y), frame_length))
+
     # Vertical stride is one sample
     # Horizontal stride is `hop_length` samples
     y_frames = as_strided(y, shape=(frame_length, n_frames),
@@ -148,12 +148,10 @@ def valid_audio(y, mono=True):
 
     if mono and y.ndim != 1:
         raise ParameterError('Invalid shape for monophonic audio: '
-                                    'ndim={:d}, shape={}'.format(y.ndim,
-                                                                 y.shape))
+                             'ndim={:d}, shape={}'.format(y.ndim, y.shape))
     elif y.ndim > 2:
         raise ParameterError('Invalid shape for audio: '
-                                    'ndim={:d}, shape={}'.format(y.ndim,
-                                                                 y.shape))
+                             'ndim={:d}, shape={}'.format(y.ndim, y.shape))
 
     if not np.isfinite(y).all():
         raise ParameterError('Audio buffer is not finite everywhere')
@@ -287,8 +285,7 @@ def pad_center(data, size, axis=-1, **kwargs):
 
     if lpad < 0:
         raise ParameterError(('Target size ({:d}) must be '
-                                     'at least input size ({:d})').format(size,
-                                                                          n))
+                              'at least input size ({:d})').format(size, n))
 
     return np.pad(data, lengths, **kwargs)
 
@@ -1066,10 +1063,10 @@ def sparsify_rows(x, quantile=0.01):
         x = x.reshape((1, -1))
 
     elif x.ndim > 2:
-        raise ParameterError('Input must have 2 or fewer dimensions.  '
-                                    'Provided x.shape={}.'.format(x.shape))
+        raise ParameterError('Input must have 2 or fewer dimensions. '
+                             'Provided x.shape={}.'.format(x.shape))
 
-    if not (0.0 <= quantile < 1):
+    if not 0.0 <= quantile < 1:
         raise ParameterError('Invalid quantile {:.2f}'.format(quantile))
 
     x_sparse = scipy.sparse.lil_matrix(x.shape, dtype=x.dtype)

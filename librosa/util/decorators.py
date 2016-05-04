@@ -6,7 +6,6 @@
 import warnings
 from decorator import decorator
 import six
-import inspect
 
 
 def moved(moved_from, version, version_removed):
