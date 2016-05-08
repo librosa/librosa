@@ -12,11 +12,9 @@ Display
     cmap
 """
 
-import copy
 import warnings
 
 import numpy as np
-import matplotlib as mpl
 import matplotlib.image as img
 import matplotlib.pyplot as plt
 
@@ -24,15 +22,6 @@ from . import cache
 from . import core
 from . import util
 from .util.exceptions import ParameterError
-
-_HAS_SEABORN = False
-try:
-    _matplotlibrc = copy.deepcopy(mpl.rcParams)
-    import seaborn as sns
-    _HAS_SEABORN = True
-    mpl.rcParams.update(**_matplotlibrc)
-except ImportError:
-    pass
 
 
 # This function wraps xticks or yticks: star-args is okay
@@ -277,7 +266,7 @@ def frequency_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
 
 
 @cache
-def cmap(data, use_sns=True, robust=True):
+def cmap(data, robust=True):
     '''Get a default colormap from the given data.
 
     If the data is boolean, use a black and white colormap.
@@ -285,16 +274,12 @@ def cmap(data, use_sns=True, robust=True):
     If the data has both positive and negative values,
     use a diverging colormap ('coolwarm').
 
-    Otherwise, use a sequential map: either cubehelix or 'OrRd'.
+    Otherwise, use a sequential map: either 'magma' or 'OrRd'.
 
     Parameters
     ----------
     data : np.ndarray
         Input data
-
-    use_sns : bool
-        If True, and `seaborn` is installed, use cubehelix maps for
-        sequential data
 
     robust : bool
         If True, discard the top and bottom 2% of data when calculating
@@ -305,13 +290,12 @@ def cmap(data, use_sns=True, robust=True):
     cmap : matplotlib.colors.Colormap
         - If `data` has dtype=boolean, `cmap` is 'gray_r'
         - If `data` has only positive or only negative values,
-          `cmap` is 'OrRd' (`use_sns==False`) or cubehelix
+          `cmap` is 'magma'
         - If `data` has both positive and negatives, `cmap` is 'coolwarm'
 
     See Also
     --------
     matplotlib.pyplot.colormaps
-    seaborn.cubehelix_palette
     '''
 
     data = np.atleast_1d(data)
@@ -330,10 +314,7 @@ def cmap(data, use_sns=True, robust=True):
     min_val = np.percentile(data, min_p)
 
     if min_val >= 0 or max_val <= 0:
-        if use_sns and _HAS_SEABORN:
-            return sns.cubehelix_palette(light=1.0, as_cmap=True)
-        else:
-            return plt.get_cmap('OrRd')
+        return plt.get_cmap('magma')
 
     return plt.get_cmap('coolwarm')
 
@@ -461,12 +442,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000
 
     axes = plt.gca()
 
-    if hasattr(axes._get_lines, 'prop_cycler'):
-        # matplotlib >= 1.5
-        kwargs.setdefault('color', next(axes._get_lines.prop_cycler)['color'])
-    else:
-        # matplotlib 1.4
-        kwargs.setdefault('color', next(axes._get_lines.color_cycle))
+    kwargs.setdefault('color', next(axes._get_lines.prop_cycler)['color'])
 
     sample_off = core.time_to_samples(offset, sr=target_sr)
 
