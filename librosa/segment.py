@@ -155,7 +155,7 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
     >>> plt.title('Binary recurrence (symmetric)')
     >>> plt.subplot(1, 2, 2)
     >>> librosa.display.specshow(R_aff, x_axis='time', y_axis='time',
-    ...                          aspect='equal')
+    ...                          aspect='equal', cmap='magma_r')
     >>> plt.title('Affinity recurrence')
     >>> plt.tight_layout()
 
@@ -471,22 +471,34 @@ def timelag_filter(function, pad=True, index=0):
     Apply a 5-bin median filter to the diagonal of a recurrence matrix
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> mfcc = librosa.feature.mfcc(y=y, sr=sr)
-    >>> rec = librosa.segment.recurrence_matrix(mfcc, sym=True)
+    >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
+    >>> rec = librosa.segment.recurrence_matrix(chroma)
     >>> from scipy.ndimage import median_filter
     >>> diagonal_median = librosa.segment.timelag_filter(median_filter)
-    >>> rec_filtered = diagonal_median(rec, size=(1, 5), mode='mirror')
+    >>> rec_filtered = diagonal_median(rec, size=(1, 3), mode='mirror')
+
+    Or with affinity weights
+
+    >>> rec_aff = librosa.segment.recurrence_matrix(chroma, mode='affinity')
+    >>> rec_aff_fil = diagonal_median(rec_aff, size=(1, 3), mode='mirror')
 
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
-    >>> plt.subplot(1, 2, 1)
+    >>> plt.subplot(2, 2, 1)
     >>> librosa.display.specshow(rec, x_axis='time', y_axis='time',
     ...                          aspect='equal')
     >>> plt.title('Raw recurrence matrix')
-    >>> plt.subplot(1, 2, 2)
+    >>> plt.subplot(2, 2, 2)
     >>> librosa.display.specshow(rec_filtered, x_axis='time', y_axis='time',
     ...                          aspect='equal')
     >>> plt.title('Filtered recurrence matrix')
+    >>> plt.subplot(2, 2, 3)
+    >>> librosa.display.specshow(rec_aff, x_axis='time', y_axis='time',
+    ...                          aspect='equal', cmap='magma_r')
+    >>> plt.title('Raw affinity matrix')
+    >>> plt.subplot(2, 2, 4)
+    >>> librosa.display.specshow(rec_aff_fil, x_axis='time', y_axis='time',
+    ...                          aspect='equal', cmap='magma_r')
     >>> plt.tight_layout()
     '''
 
@@ -569,10 +581,10 @@ def subsegment(data, frames, n_segments=4, axis=-1):
     >>> librosa.display.specshow(librosa.logamplitude(cqt**2,
     ...                                               ref_power=np.max),
     ...                          y_axis='cqt_hz', x_axis='time')
-    >>> plt.vlines(beats, 0, cqt.shape[0], color='r', alpha=0.5,
-    ...            label='Beats')
-    >>> plt.vlines(subseg, 0, cqt.shape[0], color='b', linestyle='--',
-    ...            alpha=0.5, label='Sub-beats')
+    >>> plt.vlines(beats, 0, cqt.shape[0], color='lime', alpha=0.9,
+    ...            linewidth=2, label='Beats')
+    >>> plt.vlines(subseg, 0, cqt.shape[0], color='linen', linestyle='--',
+    ...            linewidth=1.5, alpha=0.5, label='Sub-beats')
     >>> plt.legend(frameon=True, shadow=True)
     >>> plt.title('CQT + Beat and sub-beat markers')
     >>> plt.tight_layout()
@@ -645,11 +657,10 @@ def agglomerative(data, k, clusterer=None, axis=-1):
 
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
-    >>> S = np.abs(librosa.stft(y))**2
-    >>> librosa.display.specshow(librosa.logamplitude(S, ref_power=np.max),
-    ...                          y_axis='log', x_axis='time')
-    >>> plt.vlines(boundary_frames, 0, S.shape[0], color='r', alpha=0.9,
-    ...            label='Segment boundaries')
+    >>> librosa.display.specshow(chroma, y_axis='chroma', x_axis='time')
+    >>> plt.vlines(boundary_frames, -0.5, chroma.shape[0]-0.5, color='lime',
+    ...            linewidth=4, alpha=0.9, label='Segment boundaries')
+    >>> plt.axis('tight')
     >>> plt.legend(frameon=True, shadow=True)
     >>> plt.title('Power spectrogram')
     >>> plt.tight_layout()
