@@ -3,9 +3,9 @@
 '''Pitch-tracking and tuning estimation'''
 from __future__ import division
 
+from warnings import warn
 import numpy as np
 import scipy.fftpack as fft
-from warnings import warn
 
 from . import audio
 from .time_frequency import cqt_frequencies, note_to_hz
@@ -193,18 +193,16 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     if res_type != 'kaiser_fast':
 
         # Do the top octave before resampling to allow for fast resampling
-        fft_basis, n_fft, _ = __fft_filters(sr, fmin_t,
-                                            n_filters,
-                                            bins_per_octave,
-                                            tuning,
-                                            filter_scale,
-                                            norm,
-                                            sparsity)
+        fft_basis, n_fft, _ = __cqt_filter_fft(sr, fmin_t,
+                                               n_filters,
+                                               bins_per_octave,
+                                               tuning,
+                                               filter_scale,
+                                               norm,
+                                               sparsity)
 
-        my_cqt = __fft_response(y, n_fft, hop_length, fft_basis)
-
-        # Convolve
-        cqt_resp.append(my_cqt)
+        # Compute the CQT filter response and append it to the stack
+        cqt_resp.append(__cqt_response(y, n_fft, hop_length, fft_basis))
 
         fmin_t /= 2
         fmax_t /= 2
@@ -222,13 +220,13 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                              .format(n_octaves - 1, n_octaves))
 
     # Now do the recursive bit
-    fft_basis, n_fft, _ = __fft_filters(sr, fmin_t,
-                                        n_filters,
-                                        bins_per_octave,
-                                        tuning,
-                                        filter_scale,
-                                        norm,
-                                        sparsity)
+    fft_basis, n_fft, _ = __cqt_filter_fft(sr, fmin_t,
+                                           n_filters,
+                                           bins_per_octave,
+                                           tuning,
+                                           filter_scale,
+                                           norm,
+                                           sparsity)
 
     my_y, my_sr, my_hop = y, sr, hop_length
 
@@ -248,11 +246,9 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
             my_sr /= 2.0
             my_hop //= 2
 
-        # Compute a dynamic hop based on n_fft
-        my_cqt = __fft_response(my_y, n_fft, my_hop, fft_basis)
+        # Compute the cqt filter response and append to the stack
+        cqt_resp.append(__cqt_response(my_y, n_fft, my_hop, fft_basis))
 
-        # Convolve
-        cqt_resp.append(my_cqt)
 
     return __trim_stack(cqt_resp, n_bins, real)
 
@@ -361,7 +357,7 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     if n_bins_pseudo > 0:
         fmin_pseudo = np.min(freqs[pseudo_filters])
-        my_pseudo_cqt = pseudo_cqt(y, sr,
+        cqt_resp.append(pseudo_cqt(y, sr,
                                    hop_length=hop_length,
                                    fmin=fmin_pseudo,
                                    n_bins=n_bins_pseudo,
@@ -369,23 +365,19 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                    tuning=tuning,
                                    filter_scale=filter_scale,
                                    norm=norm,
-                                   sparsity=sparsity)
-
-        cqt_resp.append(my_pseudo_cqt)
+                                   sparsity=sparsity))
 
     if n_bins_full > 0:
-        my_cqt = np.abs(cqt(y, sr,
-                            hop_length=hop_length,
-                            fmin=fmin,
-                            n_bins=n_bins_full,
-                            bins_per_octave=bins_per_octave,
-                            tuning=tuning,
-                            filter_scale=filter_scale,
-                            norm=norm,
-                            sparsity=sparsity,
-                            real=False))
-
-        cqt_resp.append(my_cqt)
+        cqt_resp.append(np.abs(cqt(y, sr,
+                                   hop_length=hop_length,
+                                   fmin=fmin,
+                                   n_bins=n_bins_full,
+                                   bins_per_octave=bins_per_octave,
+                                   tuning=tuning,
+                                   filter_scale=filter_scale,
+                                   norm=norm,
+                                   sparsity=sparsity,
+                                   real=False)))
 
     return __trim_stack(cqt_resp, n_bins, True)
 
@@ -468,15 +460,11 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     if tuning is None:
         tuning = estimate_tuning(y=y, sr=sr)
 
-    fft_basis, n_fft, _ = __fft_filters(sr,
-                                        fmin,
-                                        n_bins,
-                                        bins_per_octave,
-                                        tuning,
-                                        filter_scale,
-                                        norm,
-                                        sparsity,
-                                        hop_length=hop_length)
+    fft_basis, n_fft, _ = __cqt_filter_fft(sr, fmin, n_bins,
+                                           bins_per_octave,
+                                           tuning, filter_scale,
+                                           norm, sparsity,
+                                           hop_length=hop_length)
 
     fft_basis = np.abs(fft_basis)
 
@@ -487,8 +475,8 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     return fft_basis.dot(D)
 
 
-def __fft_filters(sr, fmin, n_bins, bins_per_octave, tuning,
-                  filter_scale, norm, sparsity, hop_length=None):
+def __cqt_filter_fft(sr, fmin, n_bins, bins_per_octave, tuning,
+                     filter_scale, norm, sparsity, hop_length=None):
     '''Generate the frequency domain constant-Q filter basis.'''
 
     basis, lengths = filters.constant_q(sr,
@@ -506,7 +494,7 @@ def __fft_filters(sr, fmin, n_bins, bins_per_octave, tuning,
     if hop_length is not None and n_fft < 2.0**(1 + np.ceil(np.log2(hop_length))):
         n_fft = int(2.0 ** (1 + np.ceil(np.log2(hop_length))))
 
-    # normalize by inverse length to compensate for phase invariance
+    # re-normalize bases with respect to the FFT window length
     basis *= lengths[:, np.newaxis] / float(n_fft)
 
     # FFT and retain only the non-negative frequencies
@@ -535,7 +523,7 @@ def __trim_stack(cqt_resp, n_bins, real):
     return C
 
 
-def __fft_response(y, n_fft, hop_length, fft_basis):
+def __cqt_response(y, n_fft, hop_length, fft_basis):
     '''Compute the filter response with a target STFT hop.'''
 
     # Compute the STFT matrix
