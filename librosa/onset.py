@@ -190,11 +190,7 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
         Filter the onset strength to remove the DC component
 
     center : bool [scalar]
-    centering : bool [scalar] (deprecated)
         Shift the onset function by `n_fft / (2 * hop_length)` frames
-
-        .. note:: The `centering` parameter is deprecated as of 0.4.1,
-        and has been replaced by the `center` parameter.
 
     feature : function
         Function for computing time-series features, eg, scaled spectrograms.
@@ -276,14 +272,6 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
     >>> plt.tight_layout()
 
     """
-
-    if centering is not None:
-        center = centering
-        warnings.warn("The 'centering=' parameter of onset_strength is "
-                      "deprecated as of librosa version 0.4.1."
-                      "\n\tIt will be removed in librosa version 0.5.0."
-                      "\n\tPlease use 'center=' instead.",
-                      category=DeprecationWarning)
 
     odf_all = onset_strength_multi(y=y,
                                    sr=sr,

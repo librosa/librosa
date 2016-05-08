@@ -9,7 +9,6 @@ import scipy.signal
 from .. import util
 from .. import filters
 from ..util.exceptions import ParameterError
-from ..util import Deprecated, rename_kw
 
 from ..core.time_frequency import fft_frequencies
 from ..core.audio import zero_crossings
@@ -30,10 +29,7 @@ __all__ = ['spectral_centroid',
            'chroma_cens',
            'melspectrogram',
            'mfcc',
-           'tonnetz',
-           # Deprecated functions
-           'logfsgram',
-           'chromagram']
+           'tonnetz']
 
 
 # -- Spectral features -- #
@@ -828,8 +824,7 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
 
 def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
                norm=np.inf, threshold=0.0, tuning=None, n_chroma=12,
-               n_octaves=7, window=None, bins_per_octave=None, cqt_mode='full',
-               mode=Deprecated()):
+               n_octaves=7, window=None, bins_per_octave=None, cqt_mode='full'):
     r'''Constant-Q chromagram
 
     Parameters
@@ -876,11 +871,6 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
     cqt_mode : ['full', 'hybrid']
         Constant-Q transform mode
 
-    mode : str
-        .. warning:: This parameter name was in librosa 0.4.2
-            Use the `cqt_mode` parameter instead.
-            The `mode` parameter will be removed in librosa 0.5.0.
-
     Returns
     -------
     chromagram : np.ndarray [shape=(n_chroma, t)]
@@ -919,8 +909,6 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
     '''
 
     cqt_func = {'full': cqt, 'hybrid': hybrid_cqt}
-
-    cqt_mode = rename_kw('mode', mode, 'cqt_mode', cqt_mode, '0.4.2', '0.5.0')
 
     if bins_per_octave is None:
         bins_per_octave = n_chroma
@@ -1331,93 +1319,3 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     mel_basis = filters.mel(sr, n_fft, **kwargs)
 
     return np.dot(mel_basis, S)
-
-
-# Deprecated functions
-@util.decorators.deprecated('0.4', '0.5')
-def logfsgram(y=None, sr=22050, S=None, n_fft=2048,
-              hop_length=512, **kwargs):  # pragma: no cover
-    '''Compute a log-frequency spectrogram using a
-    fixed-window STFT.
-
-    .. warning:: Deprecated in librosa 0.4
-              Functionality is superseded by `librosa.core.pseudo_cqt`
-
-    Parameters
-    ----------
-    y : np.ndarray [shape=(n,)] or None
-        audio time series
-
-    sr : number > 0 [scalar]
-        audio sampling rate of `y`
-
-    S : np.ndarray [shape=(d, t)] or None
-        (optional) power spectrogram
-
-    n_fft : int > 0 [scalar]
-        FFT window size
-
-    hop_length : int > 0 [scalar]
-        hop length for STFT. See `librosa.core.stft` for details.
-
-    bins_per_octave : int > 0 [scalar]
-        Number of bins per octave. Defaults to 12.
-
-    tuning : float in `[-0.5,  0.5)` [scalar]
-        Deviation (in fractions of a bin) from A440 tuning.
-
-        If not provided, it will be automatically estimated.
-
-    kwargs : additional keyword arguments
-        See `librosa.filters.logfrequency`
-
-    Returns
-    -------
-    P : np.ndarray [shape=(n_pitches, t)]
-        `P[f, t]` contains the energy at pitch bin `f`, frame `t`.
-
-
-    Examples
-    --------
-    From time-series input
-
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> L = librosa.feature.logfsgram(y=y, sr=sr)
-    >>> L
-    array([[  1.309e-02,   1.228e+00, ...,   3.785e-08,   7.624e-09],
-           [  1.630e-24,   1.528e-22, ...,   4.710e-30,   9.488e-31],
-           ...,
-           [  2.617e-05,   3.807e-04, ...,   6.387e-08,   6.000e-08],
-           [  3.214e-05,   3.814e-04, ...,   7.599e-08,   6.046e-08]])
-
-    Plot the pseudo CQT
-
-    >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> librosa.display.specshow(librosa.logamplitude(L,
-    ...                                               ref_power=np.max),
-    ...                          y_axis='cqt_hz', x_axis='time')
-    >>> plt.title('Log-frequency power spectrogram')
-    >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.tight_layout()
-
-    '''
-
-    S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length,
-                            power=2)
-
-    # If we don't have tuning already, grab it from S
-    if 'tuning' not in kwargs:
-        bins_per_oct = kwargs.get('bins_per_octave', 12)
-        kwargs['tuning'] = estimate_tuning(S=S, sr=sr,
-                                           bins_per_octave=bins_per_oct)
-
-    # Build the CQ basis
-    cq_basis = filters.logfrequency(sr, n_fft=n_fft, **kwargs)
-
-    return cq_basis.dot(S)
-
-
-# Moved functions
-chromagram = util.decorators.moved('librosa.feature.chromagram',
-                                   '0.4', '0.5')(chroma_stft)
