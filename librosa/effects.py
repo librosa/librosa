@@ -36,7 +36,7 @@ from . import decompose
 from . import util
 from .util.exceptions import ParameterError
 
-__all__ = ['hpss', 'harmonic', 'percussive', 'residual',
+__all__ = ['hpss', 'harmonic', 'percussive',
            'time_stretch', 'pitch_shift',
            'remix']
 
@@ -68,7 +68,6 @@ def hpss(y, **kwargs):
     --------
     harmonic : Extract only the harmonic component
     percussive : Extract only the percussive component
-    residual : Extract only the residual component
     librosa.decompose.hpss : HPSS on spectrograms
 
 
@@ -114,7 +113,6 @@ def harmonic(y, **kwargs):
     --------
     hpss : Separate harmonic and percussive components
     percussive : Extract only the percussive component
-    residual : Extract only the residual component
     librosa.decompose.hpss : HPSS for spectrograms
 
     Examples
@@ -141,11 +139,7 @@ def harmonic(y, **kwargs):
     return y_harm
 
 
-<<<<<<< HEAD
 def percussive(y, **kwargs):
-=======
-def percussive(y, margin=1.0):
->>>>>>> b914064cf904ea1b18473044c32ab5fc29cde599
     '''Extract percussive elements from an audio time-series.
 
     Parameters
@@ -154,7 +148,7 @@ def percussive(y, margin=1.0):
         audio time series
     kwargs : additional keyword arguments.
         See `librosa.decompose.hpss` for details.
-        
+
     Returns
     -------
     y_percussive : np.ndarray [shape=(n,)]
@@ -164,7 +158,6 @@ def percussive(y, margin=1.0):
     --------
     hpss : Separate harmonic and percussive components
     harmonic : Extract only the harmonic component
-    residual : Extract only the residual component
     librosa.decompose.hpss : HPSS for spectrograms
 
     Examples
@@ -184,51 +177,11 @@ def percussive(y, margin=1.0):
 
     # Remove harmonics
     stft_perc = decompose.hpss(stft, **kwargs)[1]
+
     # Invert the STFT
     y_perc = util.fix_length(core.istft(stft_perc, dtype=y.dtype), len(y))
 
     return y_perc
-
-def residual(y, margin=3.0):
-    '''Extract residual (non-harmonic, non-percussive) elements from an audio time-series.
-
-    Parameters
-    ----------
-    y : np.ndarray [shape=(n,)]
-        audio time series
-    margin : float or tuple (margin_harmonic, margin_percussive)
-        use margin[s] > 1.0, the greater the margin the more that is captured in the residual component 
-
-    Returns
-    -------
-    y_residual : np.ndarray [shape=(n,)]
-        audio time series of just the residual portion
-
-    See Also
-    --------
-    hpss : Separate harmonic and percussive components
-    harmonic : Extract only the harmonic component
-    percussive : Extract only the percussive component
-    librosa.decompose.hpss : HPSS for spectrograms
-
-    Examples
-    --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> y_residual = librosa.effects.residual(y)
-
-    '''
-
-    # Compute the STFT matrix
-    stft = core.stft(y)
-
-    # Subtract harmonics and percussives 
-    H, P = decompose.hpss(stft, margin=margin)
-    stft_resi = stft - (H + P)
-
-    # Invert the STFT
-    y_resi = util.fix_length(core.istft(stft_resi, dtype=y.dtype), len(y))
-
-    return y_resi
 
 
 def time_stretch(y, rate):
