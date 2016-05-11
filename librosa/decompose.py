@@ -373,6 +373,4 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
         except DivideByZero:
             raise ParameterError("Power is too large. Try using power between 1 and 10.")
 
-
-
     return ((S * mask_harm) * phase, (S * mask_perc) * phase)
