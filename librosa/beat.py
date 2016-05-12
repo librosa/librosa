@@ -238,17 +238,16 @@ def estimate_tempo(onset_envelope, sr=22050, hop_length=512, start_bpm=120,
     >>> # Compute 2-second windowed autocorrelation
     >>> hop_length = 512
     >>> ac = librosa.autocorrelate(onset_env, 2 * sr // hop_length)
-    >>> # Convert tempo estimate from bpm to frames
-    >>> tempo_frames = (60 * sr / hop_length) / tempo
-    >>> plt.plot(librosa.util.normalize(ac),
-    ...          label='Onset autocorrelation')
-    >>> plt.vlines([tempo_frames], 0, 1,
-    ...            color='r', alpha=0.75, linestyle='--',
+    >>> freqs = librosa.tempo_frequencies(len(ac), sr=sr,
+    ...                                   hop_length=hop_length)
+    >>> # Plot on a BPM axis.  We skip the first (0-lag) bin.
+    >>> plt.semilogx(freqs[1:], librosa.util.normalize(ac)[1:],
+    ...              label='Onset autocorrelation', basex=2)
+    >>> plt.axvline(tempo, 0, 1, color='r', alpha=0.75, linestyle='--',
     ...            label='Tempo: {:.2f} BPM'.format(tempo))
-    >>> librosa.display.time_ticks(librosa.frames_to_time(np.arange(len(ac)),
-    ...                                                   sr=sr))
-    >>> plt.xlabel('Lag')
-    >>> plt.legend()
+    >>> plt.xlabel('Tempo (BPM)')
+    >>> plt.grid()
+    >>> plt.legend(frameon=True)
     >>> plt.axis('tight')
     """
 
