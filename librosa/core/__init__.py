@@ -64,6 +64,7 @@ Time and frequency conversion
     fft_frequencies
     cqt_frequencies
     mel_frequencies
+    tempo_frequencies
 
 
 Pitch and tuning
