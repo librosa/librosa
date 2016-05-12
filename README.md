@@ -3,24 +3,24 @@ librosa
 A python package for music and audio analysis.  
 
 [![PyPI](https://img.shields.io/pypi/v/librosa.svg)](https://pypi.python.org/pypi/librosa)
-[![License](https://img.shields.io/pypi/l/librosa.svg)](https://github.com/bmcfee/librosa/blob/master/LICENSE.md)
+[![License](https://img.shields.io/pypi/l/librosa.svg)](https://github.com/librosa/librosa/blob/master/LICENSE.md)
 [![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.32193.svg)](http://dx.doi.org/10.5281/zenodo.32193)
 
-[![Build Status](https://travis-ci.org/bmcfee/librosa.png?branch=master)](http://travis-ci.org/bmcfee/librosa?branch=master)
-[![Coverage Status](https://coveralls.io/repos/bmcfee/librosa/badge.svg?branch=master)](https://coveralls.io/r/bmcfee/librosa?branch=master)
+[![Build Status](https://travis-ci.org/librosa/librosa.png?branch=master)](http://travis-ci.org/librosa/librosa?branch=master)
+[![Coverage Status](https://coveralls.io/repos/librosa/librosa/badge.svg?branch=master)](https://coveralls.io/r/librosa/librosa?branch=master)
 
 
 Documentation
 -------------
-See http://bmcfee.github.io/librosa/ for a complete reference manual and introductory tutorials.
+See http://librosa.github.io/librosa/ for a complete reference manual and introductory tutorials.
 
 
 Demonstration notebooks
 -----------------------
 What does librosa do?  Here are some quick demonstrations:
 
-* [Introduction notebook](http://nbviewer.ipython.org/github/bmcfee/librosa/blob/master/examples/LibROSA%20demo.ipynb): a brief introduction to some commonly used features.
-* [Decomposition and IPython integration](http://nbviewer.ipython.org/github/bmcfee/librosa/blob/master/examples/LibROSA%20audio%20effects%20and%20playback.ipynb): an intermediate demonstration, illustrating how to process and play back sound
+* [Introduction notebook](http://nbviewer.ipython.org/github/librosa/librosa/blob/master/examples/LibROSA%20demo.ipynb): a brief introduction to some commonly used features.
+* [Decomposition and IPython integration](http://nbviewer.ipython.org/github/librosa/librosa/blob/master/examples/LibROSA%20audio%20effects%20and%20playback.ipynb): an intermediate demonstration, illustrating how to process and play back sound
 
 
 Installation
@@ -44,7 +44,7 @@ pip install -e librosa
 ```
 or
 ```
-git clone https://github.com/bmcfee/librosa.git
+git clone https://github.com/librosa/librosa.git
 pip install -e librosa
 ```
 
