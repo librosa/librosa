@@ -22,14 +22,14 @@ Other changes
   - `librosa.get_duration` can now operate directly on filenames as well as audio buffers and feature
     matrices.
 
-[#315]: https://github.com/bmcfee/librosa/pull/315
-[#332]: https://github.com/bmcfee/librosa/pull/332
-[#341]: https://github.com/bmcfee/librosa/pull/341
-[#348]: https://github.com/bmcfee/librosa/pull/348
-[#312]: https://github.com/bmcfee/librosa/pull/312
-[#337]: https://github.com/bmcfee/librosa/pull/337
-[#311]: https://github.com/bmcfee/librosa/pull/311
-[#320]: https://github.com/bmcfee/librosa/pull/320
+[#315]: https://github.com/librosa/librosa/pull/315
+[#332]: https://github.com/librosa/librosa/pull/332
+[#341]: https://github.com/librosa/librosa/pull/341
+[#348]: https://github.com/librosa/librosa/pull/348
+[#312]: https://github.com/librosa/librosa/pull/312
+[#337]: https://github.com/librosa/librosa/pull/337
+[#311]: https://github.com/librosa/librosa/pull/311
+[#320]: https://github.com/librosa/librosa/pull/320
 
 
 
@@ -57,14 +57,14 @@ Other changes
     - `librosa.cqt`, `hybrid_cqt`, `pseudo_cqt`, `librosa.filters.constant_q`: `resolution` is now `filter_scale`
   - [#308] `librosa.cqt` default `filter_scale` parameter is now 1 instead of 2.
 
-[#277]: https://github.com/bmcfee/librosa/pull/277
-[#279]: https://github.com/bmcfee/librosa/pull/279
-[#288]: https://github.com/bmcfee/librosa/pull/288
-[#294]: https://github.com/bmcfee/librosa/pull/294
-[#295]: https://github.com/bmcfee/librosa/pull/295
-[#300]: https://github.com/bmcfee/librosa/pull/300
-[#302]: https://github.com/bmcfee/librosa/pull/302
-[#308]: https://github.com/bmcfee/librosa/pull/308
+[#277]: https://github.com/librosa/librosa/pull/277
+[#279]: https://github.com/librosa/librosa/pull/279
+[#288]: https://github.com/librosa/librosa/pull/288
+[#294]: https://github.com/librosa/librosa/pull/294
+[#295]: https://github.com/librosa/librosa/pull/295
+[#300]: https://github.com/librosa/librosa/pull/300
+[#302]: https://github.com/librosa/librosa/pull/302
+[#308]: https://github.com/librosa/librosa/pull/308
 
 ##v0.4.1
 
@@ -98,7 +98,7 @@ Other changes
   - added tests for `piptrack`
   - added test support for Python 3.5
 
-[#235]: https://github.com/bmcfee/librosa/pull/235
+[#235]: https://github.com/librosa/librosa/pull/235
 
 ##v0.4.0
 

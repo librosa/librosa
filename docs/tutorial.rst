@@ -278,4 +278,4 @@ More examples
 -------------
 
 More example scripts are provided in the `examples
-<https://github.com/bmcfee/librosa/tree/master/examples>`_ folder.
+<https://github.com/librosa/librosa/tree/master/examples>`_ folder.

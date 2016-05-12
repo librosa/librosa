@@ -23,14 +23,14 @@ Other changes
   - ``librosa.get_duration`` can now operate directly on filenames as well as audio buffers and feature
     matrices.
 
-.. _#315: https://github.com/bmcfee/librosa/pull/315
-.. _#332: https://github.com/bmcfee/librosa/pull/332
-.. _#341: https://github.com/bmcfee/librosa/pull/341
-.. _#348: https://github.com/bmcfee/librosa/pull/348
-.. _#312: https://github.com/bmcfee/librosa/pull/312
-.. _#337: https://github.com/bmcfee/librosa/pull/337
-.. _#311: https://github.com/bmcfee/librosa/pull/311
-.. _#320: https://github.com/bmcfee/librosa/pull/320
+.. _#315: https://github.com/librosa/librosa/pull/315
+.. _#332: https://github.com/librosa/librosa/pull/332
+.. _#341: https://github.com/librosa/librosa/pull/341
+.. _#348: https://github.com/librosa/librosa/pull/348
+.. _#312: https://github.com/librosa/librosa/pull/312
+.. _#337: https://github.com/librosa/librosa/pull/337
+.. _#311: https://github.com/librosa/librosa/pull/311
+.. _#320: https://github.com/librosa/librosa/pull/320
 
 v0.4.2
 ------
@@ -57,14 +57,14 @@ Other changes
       - ``librosa.cqt``, ``hybrid_cqt``, ``pseudo_cqt``, ``librosa.filters.constant_q``: `resolution` is now `filter_scale`
   - `#308`_ ``librosa.cqt`` default `filter_scale` parameter is now 1 instead of 2.
 
-.. _#277: https://github.com/bmcfee/librosa/pull/277
-.. _#279: https://github.com/bmcfee/librosa/pull/279
-.. _#288: https://github.com/bmcfee/librosa/pull/288
-.. _#294: https://github.com/bmcfee/librosa/pull/294
-.. _#295: https://github.com/bmcfee/librosa/pull/295
-.. _#300: https://github.com/bmcfee/librosa/pull/300
-.. _#302: https://github.com/bmcfee/librosa/pull/302
-.. _#308: https://github.com/bmcfee/librosa/pull/308
+.. _#277: https://github.com/librosa/librosa/pull/277
+.. _#279: https://github.com/librosa/librosa/pull/279
+.. _#288: https://github.com/librosa/librosa/pull/288
+.. _#294: https://github.com/librosa/librosa/pull/294
+.. _#295: https://github.com/librosa/librosa/pull/295
+.. _#300: https://github.com/librosa/librosa/pull/300
+.. _#302: https://github.com/librosa/librosa/pull/302
+.. _#308: https://github.com/librosa/librosa/pull/308
 
 v0.4.1
 ------
@@ -93,7 +93,7 @@ Other changes
   - ``librosa.core.autocorrelate`` can now operate along any axis of multi-dimensional input
   - the ``segment`` module functions now support arbitrary target axis
   - Added proper window normalization to ``librosa.core.istft`` for better reconstruction 
-    (`PR #235 <https://github.com/bmcfee/librosa/pull/235>`_).
+    (`PR #235 <https://github.com/librosa/librosa/pull/235>`_).
   - Standardized ``n_fft=2048`` for ``piptrack``, ``ifptrack`` (deprecated), and
     ``logfsgram`` (deprecated)
   - ``onset_strength`` parameter ``'centering'`` has been deprecated and renamed to

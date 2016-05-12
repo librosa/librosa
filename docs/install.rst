@@ -18,7 +18,7 @@ to install system-wide, or::
 to install just for your own user.
 
 If you've downloaded the archive manually from the `releases
-<https://github.com/bmcfee/librosa/releases/>`_ page, you can install using the
+<https://github.com/librosa/librosa/releases/>`_ page, you can install using the
 `setuptools` script::
 
     tar xzf librosa-VERSION.tar.gz
