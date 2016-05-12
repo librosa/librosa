@@ -887,6 +887,7 @@ def tempo_frequencies(n_bins, hop_length=512, sr=22050):
     Examples
     --------
     Get the tempo frequencies corresponding to a 384-bin (8-second) tempogram
+
     >>> librosa.tempo_frequencies(384)
     array([      inf,  2583.984,  1291.992, ...,     6.782,
                6.764,     6.747])
