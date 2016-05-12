@@ -322,6 +322,29 @@ def test_cqt_frequencies():
                     yield __test, n_bins, fmin, bins_per_octave, tuning
 
 
+def test_tempo_frequencies():
+
+    def __test(n_bins, hop_length, sr):
+
+        freqs = librosa.tempo_frequencies(n_bins, hop_length=hop_length, sr=sr)
+
+        # Verify the length
+        eq_(len(freqs), n_bins)
+
+        # 0-bin should be infinite
+        assert not np.isfinite(freqs[0])
+
+        # remaining bins should be spaced by 1/hop_length
+        if n_bins > 1:
+            invdiff = (freqs[1:]**-1) * (60.0 * sr)
+            assert np.allclose(invdiff[0], hop_length)
+            assert np.allclose(np.diff(invdiff), np.asarray(hop_length)), np.diff(invdiff)
+
+    for n_bins in [1, 16, 128]:
+        for hop_length in [256, 512, 1024]:
+            for sr in [11025, 22050, 44100]:
+                yield __test, n_bins, hop_length, sr
+
 def test_A_weighting():
 
     def __test(min_db):
