@@ -8,6 +8,7 @@ Bug fixes
   - [#332] `librosa.cqt` now throws an exception if the signal is too short for analysis
   - [#341] `librosa.hybrid_cqt` properly matches the scale of `librosa.cqt`
   - [#348] `librosa.cqt` fixed a bug introduced in v0.4.2.
+  - [#354] Fixed a minor off-by-one error in `librosa.beat.estimate_tempo`
 
 New features
   - [#312] `librosa.segment.recurrence_matrix` can now construct sparse self-similarity matrices
@@ -15,6 +16,8 @@ New features
   - [#311] `librosa.decompose.nl_filter` implements several self-similarity based filtering operations
     including non-local means.
   - [#320] `librosa.feature.chroma_cens` implements chroma energy normalized statistics (CENS) features
+  - [#354] `librosa.core.tempo_frequencies` computes tempo (BPM) frequencies for autocorrelation and tempogram
+    features
 
 Other changes
   - `librosa.cqt`, `librosa.hybrid_cqt` parameter `aggregate` is now deprecated.
@@ -30,6 +33,7 @@ Other changes
 [#337]: https://github.com/librosa/librosa/pull/337
 [#311]: https://github.com/librosa/librosa/pull/311
 [#320]: https://github.com/librosa/librosa/pull/320
+[#354]: https://github.com/librosa/librosa/pull/354
 
 
 
