@@ -41,7 +41,8 @@ __all__ = ['hpss', 'harmonic', 'percussive',
            'remix']
 
 
-def hpss(y):
+
+def hpss(y, **kwargs):
     '''Decompose an audio time series into harmonic and percussive components.
 
     This function automates the STFT->HPSS->ISTFT pipeline, and ensures that
@@ -52,6 +53,9 @@ def hpss(y):
     ----------
     y : np.ndarray [shape=(n,)]
         audio time series
+    kwargs : additional keyword arguments.
+        See `librosa.decompose.hpss` for details.
+
 
     Returns
     -------
@@ -70,8 +74,12 @@ def hpss(y):
 
     Examples
     --------
+    >>> # Extract harmonic and percussive components
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> y_harmonic, y_percussive = librosa.effects.hpss(y)
+
+    >>> # Get a more isolated percussive component by widening its margin 
+    >>> y_harmonic, y_percussive = librosa.effects.hpss(y, margin=(1.0,5.0))
 
     '''
 
@@ -79,7 +87,7 @@ def hpss(y):
     stft = core.stft(y)
 
     # Decompose into harmonic and percussives
-    stft_harm, stft_perc = decompose.hpss(stft)
+    stft_harm, stft_perc = decompose.hpss(stft, **kwargs)
 
     # Invert the STFTs.  Adjust length to match the input.
     y_harm = util.fix_length(core.istft(stft_harm, dtype=y.dtype), len(y))
@@ -88,13 +96,15 @@ def hpss(y):
     return y_harm, y_perc
 
 
-def harmonic(y):
+def harmonic(y, **kwargs):
     '''Extract harmonic elements from an audio time-series.
 
     Parameters
     ----------
     y : np.ndarray [shape=(n,)]
         audio time series
+    kwargs : additional keyword arguments.
+        See `librosa.decompose.hpss` for details.
 
     Returns
     -------
@@ -109,8 +119,13 @@ def harmonic(y):
 
     Examples
     --------
+    >>> # Extract harmonic component 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> y_harmonic = librosa.effects.harmonic(y)
+
+    >>> # Use a margin > 1.0 for greater harmonic separation
+    >>> y_harmonic = librosa.effects.harmonic(y, margin=3.0)
+
 
     '''
 
@@ -118,7 +133,7 @@ def harmonic(y):
     stft = core.stft(y)
 
     # Remove percussives
-    stft_harm = decompose.hpss(stft)[0]
+    stft_harm = decompose.hpss(stft, **kwargs)[0]
 
     # Invert the STFTs
     y_harm = util.fix_length(core.istft(stft_harm, dtype=y.dtype), len(y))
@@ -126,13 +141,15 @@ def harmonic(y):
     return y_harm
 
 
-def percussive(y):
+def percussive(y, **kwargs):
     '''Extract percussive elements from an audio time-series.
 
     Parameters
     ----------
     y : np.ndarray [shape=(n,)]
         audio time series
+    kwargs : additional keyword arguments.
+        See `librosa.decompose.hpss` for details.
 
     Returns
     -------
@@ -146,9 +163,14 @@ def percussive(y):
     librosa.decompose.hpss : HPSS for spectrograms
 
     Examples
-    --------
+    --------    
+    >>> # Extract percussive component 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> y_percussive = librosa.effects.percussive(y)
+
+    >>> # Use a margin > 1.0 for greater percussive separation
+    >>> y_percussive = librosa.effects.percussive(y, margin=3.0)
+
 
     '''
 
@@ -156,7 +178,7 @@ def percussive(y):
     stft = core.stft(y)
 
     # Remove harmonics
-    stft_perc = decompose.hpss(stft)[1]
+    stft_perc = decompose.hpss(stft, **kwargs)[1]
 
     # Invert the STFT
     y_perc = util.fix_length(core.istft(stft_perc, dtype=y.dtype), len(y))
