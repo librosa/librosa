@@ -111,13 +111,13 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
     >>> comps
     array([[  1.876e-01,   5.559e-02, ...,   1.687e-01,   4.907e-02],
            [  3.148e-01,   1.719e-01, ...,   2.314e-01,   9.493e-02],
-           ..., 
+           ...,
            [  1.561e-07,   8.564e-08, ...,   7.167e-08,   4.997e-08],
            [  1.531e-07,   7.880e-08, ...,   5.632e-08,   4.028e-08]])
     >>> acts
     array([[  4.197e-05,   8.512e-03, ...,   3.056e-05,   9.159e-06],
            [  9.568e-06,   1.718e-02, ...,   3.322e-05,   7.869e-06],
-           ..., 
+           ...,
            [  5.982e-05,   1.311e-02, ...,  -0.000e+00,   6.323e-06],
            [  3.782e-05,   7.056e-03, ...,   3.290e-05,  -0.000e+00]])
 
@@ -187,12 +187,12 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
 def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
     """Median-filtering harmonic percussive source separation (HPSS).
 
-    If margin = 1.0, decomposes an input spectrogram `S = H + P`
+    If `margin = 1.0`, decomposes an input spectrogram `S = H + P`
     where `H` contains the harmonic components,
     and `P` contains the percussive components.
 
-    If margin > 1.0, decomposes an input spectrogram `S = H + P + R` 
-    where `R` contains residual components not included in `H` or `P`. 
+    If `margin > 1.0`, decomposes an input spectrogram `S = H + P + R`
+    where `R` contains residual components not included in `H` or `P`.
 
     This implementation is based upon the algorithm described by [1]_ and [2]_.
 
@@ -219,7 +219,7 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
           harmonic filter, and the second value specifies the width
           of the percussive filter.
 
-    power : float >= 0 [scalar]
+    power : float > 0 [scalar]
         Exponent for the Wiener filter when constructing mask matrices.
 
         Mask matrices are defined by
@@ -228,7 +228,7 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
         harmonic and percussive components.
 
     mask : bool
-        Return the masking matrices instead of components
+        Return the (binary) masking matrices instead of components
 
     margin : float or tuple (margin_harmonic, margin_percussive)
         margin size(s) for the masks (as described in [2]_)
@@ -236,7 +236,7 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
         - If scalar, the same size is used for both harmonic and percussive.
         - If tuple, the first value specifies the margin of the
           harmonic mask, and the second value specifies the margin
-          of the percussive mask.    
+          of the percussive mask.
 
     Returns
     -------
@@ -245,6 +245,11 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
 
     percussive : np.ndarray [shape=(d, n)]
         percussive component (or mask)
+
+
+    See Also
+    --------
+    util.softmask
 
 
     Examples
@@ -288,13 +293,13 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
     >>> mask_H
     array([[ 1.,  0., ...,  0.,  0.],
            [ 1.,  0., ...,  0.,  0.],
-           ..., 
+           ...,
            [ 0.,  0., ...,  0.,  0.],
            [ 0.,  0., ...,  0.,  0.]])
     >>> mask_P
     array([[ 0.,  1., ...,  1.,  1.],
            [ 0.,  1., ...,  1.,  1.],
-           ..., 
+           ...,
            [ 1.,  1., ...,  1.,  1.],
            [ 1.,  1., ...,  1.,  1.]])
 
@@ -308,7 +313,7 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
     >>> y_resi = librosa.core.istft(R)
 
 
-    Get a more isolated percussive component by widening its margin 
+    Get a more isolated percussive component by widening its margin
 
     >>> H, P = librosa.decompose.hpss(D, margin=(1.0,5.0))
 
@@ -334,7 +339,7 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
         margin_perc = margin[1]
 
     # margin minimum is 1.0
-    if margin_harm < 1 or margin_perc < 1: 
+    if margin_harm < 1 or margin_perc < 1:
         raise ParameterError("Margins must be >= 1.0. A typical range is between 1 and 10.")
 
     # Compute median filters. Pre-allocation here preserves memory layout.
@@ -344,33 +349,26 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
     perc = np.empty_like(S)
     perc[:] = median_filter(S, size=(win_perc, 1), mode='reflect')
 
-    if mask or power < util.SMALL_FLOAT:
-        mask_harm = (harm >  perc * margin_harm).astype(float)
-        mask_perc = (perc >= harm * margin_perc).astype(float)
-        if mask:
-            return mask_harm, mask_perc
+    split_zeros = (margin_harm == 1 and margin_perc == 1)
 
-    else:
-        perc = perc ** power
-        zero_perc = (perc < util.SMALL_FLOAT)
-        perc[zero_perc] = 0.0
+    mask_harm = util.softmask(harm, perc * margin_harm,
+                              power=power,
+                              split_zeros=split_zeros)
 
-        harm = harm ** power
-        zero_harm = (harm < util.SMALL_FLOAT)
-        harm[zero_harm] = 0.0
+    mask_perc = util.softmask(perc, harm * margin_perc,
+                              power=power,
+                              split_zeros=split_zeros)
 
-        # For margin==1, the residual component must be zero, so we split zeros evenly.
+    if mask:
+        # If the margins are tight, H + P should sum to 1, so we use >=.
+        # Otherwise, comparisons should be strict on both sides.
         if margin_harm == 1 and margin_perc == 1:
-            harm[zero_harm & zero_perc] = 0.5
-            perc[zero_harm & zero_perc] = 0.5
+            compare = np.greater_equal
+        else:
+            compare = np.greater
 
-        # Compute harmonic mask
-        mask_harm = harm / (harm + perc * margin_harm**power)
-        mask_harm[np.isnan(mask_harm)] = 0
-        
-        # Compute percussive mask
-        mask_perc = perc / (perc + harm * margin_perc**power)
-        mask_harm[np.isnan(mask_perc)] = 0
+        return ((mask_harm > mask_perc).astype(float),
+                compare(mask_perc, mask_harm).astype(float))
 
     return ((S * mask_harm) * phase, (S * mask_perc) * phase)
 

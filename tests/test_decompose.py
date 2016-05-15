@@ -93,9 +93,9 @@ def test_real_hpss():
                 assert np.all(H + P <= D)
 
     for window in [31, (5, 5)]:
-        for power in [0, 1, 2]:
+        for power in [1, 2, 10]:
             for mask in [False, True]:
-                for margin in [1.0, 3.0, (1.0,1.0), (9.0, 10.0)]:
+                for margin in [1.0, 3.0, (1.0, 1.0), (9.0, 10.0)]:
                     yield __hpss_test, window, power, mask, margin
 
 @raises(librosa.ParameterError)
