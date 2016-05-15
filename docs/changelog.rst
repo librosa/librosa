@@ -10,6 +10,7 @@ Bug fixes
   - `#341`_ ``librosa.hybrid_cqt`` properly matches the scale of ``librosa.cqt``
   - `#348`_ ``librosa.cqt`` fixed a bug introduced in v0.4.2.
   - `#354`_ Fixed a minor off-by-one error in ``librosa.beat.estimate_tempo``
+  - `#357`_ improved numerical stability of ``librosa.decompose.hpss``
 
 New features
   - `#312`_ ``librosa.segment.recurrence_matrix`` can now construct sparse self-similarity matrices
@@ -18,12 +19,15 @@ New features
     including non-local means.
   - `#320`_ ``librosa.feature.chroma_cens`` implements chroma energy normalized statistics (CENS) features
   - `#354`_ ``librosa.core.tempo_frequencies`` computes tempo (BPM) frequencies for autocorrelation and tempogram features
+  - `#355`_ ``librosa.decompose.hpss`` now supports harmonic-percussive-residual separation
+  - `#357`_ ``librosa.util.softmask`` computes numerically stable soft masks
 
 Other changes
   - ``librosa.cqt``, ``librosa.hybrid_cqt`` parameter `aggregate` is now deprecated.
   - Resampling is now handled by the ``resampy`` library
   - ``librosa.get_duration`` can now operate directly on filenames as well as audio buffers and feature
     matrices.
+  - ``librosa.decompose.hpss`` no longer supports ``power=0``.
 
 .. _#315: https://github.com/librosa/librosa/pull/315
 .. _#332: https://github.com/librosa/librosa/pull/332
@@ -34,6 +38,8 @@ Other changes
 .. _#311: https://github.com/librosa/librosa/pull/311
 .. _#320: https://github.com/librosa/librosa/pull/320
 .. _#354: https://github.com/librosa/librosa/pull/354
+.. _#355: https://github.com/librosa/librosa/pull/355
+.. _#357: https://github.com/librosa/librosa/pull/357
 
 v0.4.2
 ------
