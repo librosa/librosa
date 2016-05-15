@@ -14,13 +14,14 @@ Array operations
     fix_length
     fix_frames
     index_to_slice
+    softmask
     sync
     softmask
 
     axis_sort
     normalize
-    sparsify_rows
     roll_sparse
+    sparsify_rows
 
     buf_to_float
 

@@ -29,6 +29,7 @@ __all__ = ['MAX_MEM_BLOCK', 'SMALL_FLOAT',
            'roll_sparse',
            'index_to_slice',
            'sync',
+           'softmask',
            'buf_to_float',
            # Deprecated functions
            'buf_to_int']
@@ -1371,6 +1372,79 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
         data_agg[idx_agg] = aggregate(data[idx_in], axis=axis)
 
     return data_agg
+
+
+@cache
+def softmask(X, X_ref, power=1, split_zeros=False):
+    '''Robustly compute a softmask operation.
+
+        `M = X**power / (X**power + X_ref**power)`
+
+
+    Parameters
+    ----------
+    X : np.ndarray
+        The (non-negative) input array corresponding to the positive mask elements
+
+    X_ref : np.ndarray
+        The (non-negative) array of reference or background elements.
+        Must have the same shape as `X`.
+
+    power : number > 0 or np.inf
+        If infinite, returns a hard (binary) mask equivalent to `X > X_ref`
+
+        Otherwise, returns the soft mask computed in a numerically stable way
+
+    split_zeros : bool
+        If `True`, entries where `X` and X`_ref` are both 0
+        (or very small, below `librosa.util.SMALL_FLOAT`) will receive mask values
+        of 0.5
+
+        Otherwise, the mask is set to 0 for these entries.
+
+    Returns
+    -------
+    mask : np.ndarray, shape=`X.shape`
+        The output mask array
+
+    Raises
+    ------
+    ParameterError
+        If `X` and `X_ref` have different shapes.
+
+        If `X` or `X_ref` are negative anywhere
+
+        If `power <= 0`
+
+    '''
+    if not np.allclose(X.shape, X_ref.shape):
+        raise ParameterError('Shape mismatch: {}!={}'.format(X.shape, X_ref.shape))
+
+    if np.any(X < 0) or np.any(X_ref < 0):
+        raise ParameterError('X and X_ref must be non-negative')
+
+    if power <= 0:
+        raise ParameterError('power must be strictly positive')
+
+    # Re-scale the input arrays relative to the larger value
+    Z = np.maximum(X, X_ref)
+    bad_idx = (Z < np.finfo(X.dtype).tiny)
+    Z[bad_idx] = 1
+
+    # For finite power, compute the softmask
+    if np.isfinite(power):
+        mask = (X / Z)**power
+        mask /= mask + (X_ref / Z)**power
+        # Wherever energy is below energy in both inputs, split the mask
+        if split_zeros:
+            mask[bad_idx] = 0.5
+        else:
+            mask[bad_idx] = 0.0
+    else:
+        # Otherwise, compute the hard mask
+        mask = X > X_ref
+
+    return mask
 
 
 # Deprecated functions
