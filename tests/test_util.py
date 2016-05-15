@@ -839,6 +839,15 @@ def test_softmask():
             yield __test, power, split_zeros
 
 
+def test_softmask_int():
+    X = 2 * np.ones((3,3), dtype=np.int32)
+    X_ref = np.vander(np.arange(3))
+
+    M1 = librosa.util.softmask(X, X_ref, power=1)
+    M2 = librosa.util.softmask(X_ref, X, power=1)
+
+    assert np.allclose(M1 + M2, 1)
+
 def test_softmask_fail():
 
     failure = raises(librosa.ParameterError)(librosa.util.softmask)

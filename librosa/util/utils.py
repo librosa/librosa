@@ -1391,16 +1391,18 @@ def softmask(X, X_ref, power=1, split_zeros=False):
         Must have the same shape as `X`.
 
     power : number > 0 or np.inf
-        If infinite, returns a hard (binary) mask equivalent to `X > X_ref`
+        If finite, returns the soft mask computed in a numerically stable way
 
-        Otherwise, returns the soft mask computed in a numerically stable way
+        If infinite, returns a hard (binary) mask equivalent to `X > X_ref`.
+        Note: for hard masks, ties are always broken in favor of `X_ref` (`mask=0`).
+
 
     split_zeros : bool
-        If `True`, entries where `X` and X`_ref` are both 0
-        (or very small, below `librosa.util.SMALL_FLOAT`) will receive mask values
-        of 0.5
+        If `True`, entries where `X` and X`_ref` are both small (close to 0)
+        will receive mask values of 0.5.
 
         Otherwise, the mask is set to 0 for these entries.
+
 
     Returns
     -------
@@ -1416,8 +1418,45 @@ def softmask(X, X_ref, power=1, split_zeros=False):
 
         If `power <= 0`
 
+    Examples
+    --------
+
+    >>> X = 2 * np.ones((3, 3))
+    >>> X_ref = np.vander(np.arange(3.0))
+    >>> X
+    array([[ 2.,  2.,  2.],
+           [ 2.,  2.,  2.],
+           [ 2.,  2.,  2.]])
+    >>> X_ref
+    array([[ 0.,  0.,  1.],
+           [ 1.,  1.,  1.],
+           [ 4.,  2.,  1.]])
+    >>> librosa.util.softmask(X, X_ref, power=1)
+    array([[ 1.   ,  1.   ,  0.667],
+           [ 0.667,  0.667,  0.667],
+           [ 0.333,  0.5  ,  0.667]])
+    >>> librosa.util.softmask(X_ref, X, power=1)
+    array([[ 0.   ,  0.   ,  0.333],
+           [ 0.333,  0.333,  0.333],
+           [ 0.667,  0.5  ,  0.333]])
+    >>> librosa.util.softmask(X, X_ref, power=2)
+    array([[ 1. ,  1. ,  0.8],
+           [ 0.8,  0.8,  0.8],
+           [ 0.2,  0.5,  0.8]])
+    >>> librosa.util.softmask(X, X_ref, power=4)
+    array([[ 1.   ,  1.   ,  0.941],
+           [ 0.941,  0.941,  0.941],
+           [ 0.059,  0.5  ,  0.941]])
+    >>> librosa.util.softmask(X, X_ref, power=100)
+    array([[  1.000e+00,   1.000e+00,   1.000e+00],
+           [  1.000e+00,   1.000e+00,   1.000e+00],
+           [  7.889e-31,   5.000e-01,   1.000e+00]])
+    >>> librosa.util.softmask(X, X_ref, power=np.inf)
+    array([[ True,  True,  True],
+           [ True,  True,  True],
+           [False, False,  True]], dtype=bool)
     '''
-    if not np.allclose(X.shape, X_ref.shape):
+    if X.shape != X_ref.shape:
         raise ParameterError('Shape mismatch: {}!={}'.format(X.shape, X_ref.shape))
 
     if np.any(X < 0) or np.any(X_ref < 0):
@@ -1426,9 +1465,14 @@ def softmask(X, X_ref, power=1, split_zeros=False):
     if power <= 0:
         raise ParameterError('power must be strictly positive')
 
+    # We're working with ints, cast to float.
+    dtype = X.dtype
+    if not np.issubdtype(dtype, float):
+        dtype = np.float32
+
     # Re-scale the input arrays relative to the larger value
-    Z = np.maximum(X, X_ref)
-    bad_idx = (Z < np.finfo(X.dtype).tiny)
+    Z = np.maximum(X, X_ref).astype(dtype)
+    bad_idx = (Z < np.finfo(dtype).tiny)
     Z[bad_idx] = 1
 
     # For finite power, compute the softmask
