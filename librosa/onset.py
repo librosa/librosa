@@ -11,10 +11,10 @@ Onset detection
     onset_strength_multi
 """
 
+import warnings
+
 import numpy as np
 import scipy
-import six
-import warnings
 
 from . import cache
 from . import core
