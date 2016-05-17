@@ -31,10 +31,11 @@ Deprecated
     logfrequency
 """
 
+import warnings
+
 import numpy as np
 import scipy
 import scipy.signal
-import warnings
 
 from . import cache
 from . import util

@@ -12,12 +12,13 @@ Display
     cmap
 """
 
-import numpy as np
 import copy
+import warnings
+
+import numpy as np
 import matplotlib as mpl
 import matplotlib.image as img
 import matplotlib.pyplot as plt
-import warnings
 
 from . import cache
 from . import core
@@ -382,7 +383,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000
 
     max_sr : number > 0 [scalar]
         Maximum sampling rate for the visualization
-        
+
     time_fmt : None or str
         Formatting for time axis.  None (automatic) by default.
 
@@ -743,7 +744,7 @@ def __axis_none(data, n_ticks, horiz, **_kwargs):
 
 
 def __axis_log(data, n_ticks, horiz, sr=22050, kwargs=None,
-               secondary_axis='linear', minor=None, **_kwargs):
+               minor=None, **_kwargs):
     '''Plot a log-scaled image'''
 
     axes_phantom = plt.gca()
