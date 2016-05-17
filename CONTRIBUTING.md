@@ -6,10 +6,10 @@ How to contribute
 -----------------
 
 The preferred way to contribute to librosa is to fork the 
-[main repository](http://github.com/bmcfee/librosa/) on
+[main repository](http://github.com/librosa/librosa/) on
 GitHub:
 
-1. Fork the [project repository](http://github.com/bmcfee/librosa):
+1. Fork the [project repository](http://github.com/librosa/librosa):
    click on the 'Fork' button near the top of the page. This creates
    a copy of the code under your account on the GitHub server.
 

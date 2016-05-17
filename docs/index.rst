@@ -23,7 +23,7 @@ Troubleshooting
 If you have questions about how to use librosa, please consult the `discussion forum 
 <https://groups.google.com/forum/#!forum/librosa>`_.
 For bug reports and other, more technical issues, consult the `github issues 
-<https://github.com/bmcfee/librosa/issues>`_.
+<https://github.com/librosa/librosa/issues>`_.
 
 API documentation
 -----------------
