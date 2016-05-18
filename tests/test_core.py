@@ -108,7 +108,7 @@ def test_resample_mono():
         y, sr_in = librosa.load(infile, sr=None, duration=5)
 
         for sr_out in [8000, 22050]:
-            for res_type in ['sinc_fastest', 'sinc_best', 'kaiser_best', 'kaiser_fast', 'scipy']:
+            for res_type in ['kaiser_best', 'kaiser_fast', 'scipy']:
                 for fix in [False, True]:
                     yield (__test, y, sr_in, sr_out, res_type, fix)
 
@@ -141,7 +141,7 @@ def test_resample_stereo():
     y, sr_in = librosa.load('data/test1_44100.wav', mono=False, sr=None, duration=5)
 
     for sr_out in [8000, 22050]:
-        for res_type in ['sinc_fastest', 'scipy']:
+        for res_type in ['kaiser_fast', 'scipy']:
             for fix in [False, True]:
                 yield __test, y, sr_in, sr_out, res_type, fix
 
@@ -166,53 +166,8 @@ def test_resample_scale():
     y, sr_in = librosa.load('data/test1_44100.wav', mono=True, sr=None, duration=5)
 
     for sr_out in [11025, 22050, 44100]:
-        for res_type in ['sinc_fastest', 'scipy', 'sinc_best', 'kaiser_best', 'kaiser_fast']:
+        for res_type in ['scipy', 'kaiser_best', 'kaiser_fast']:
             yield __test, sr_in, sr_out, res_type, y
-
-
-def test_resample_scikitsamplerate():
-    warnings.resetwarnings()
-    warnings.simplefilter('always')
-    with warnings.catch_warnings(record=True) as out:
-
-        librosa.resample(np.zeros(1000), 1000, 500, res_type='sinc_best')
-
-        assert len(out) > 0
-        assert out[0].category is DeprecationWarning
-        assert 'deprecated' in str(out[0].message).lower()
-
-
-@nottest
-def __deprecated_test_resample():
-
-    def __test(infile, scipy_resample):
-        DATA = load(infile)
-
-        # load the wav file
-        (y_in, sr_in) = librosa.load(DATA['wavfile'][0], sr=None, mono=True)
-
-        # Resample it to the target rate
-        y_out = librosa.resample(y_in, DATA['sr_in'], DATA['sr_out'],
-                                 scipy_resample=scipy_resample)
-
-        # Are we the same length?
-        if len(y_out) == len(DATA['y_out']):
-            # Is the data close?
-            assert np.allclose(y_out, DATA['y_out'])
-        elif len(y_out) == len(DATA['y_out']) - 1:
-            assert (np.allclose(y_out, DATA['y_out'][:-1, 0]) or
-                    np.allclose(y_out, DATA['y_out'][1:, 0]))
-        elif len(y_out) == len(DATA['y_out']) + 1:
-            assert (np.allclose(y_out[1:], DATA['y_out']) or
-                    np.allclose(y_out[:-2], DATA['y_out']))
-        else:
-            assert False
-        pass
-
-    for infile in files('data/core-resample-*.mat'):
-        for scipy_resample in [False, True]:
-            yield (__test, infile, scipy_resample)
-    pass
 
 
 def test_stft():

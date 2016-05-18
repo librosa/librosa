@@ -3,7 +3,6 @@
 """Core IO, DSP and utility functions."""
 
 import os
-import warnings
 import six
 
 import audioread
@@ -18,23 +17,12 @@ from .. import util
 from ..util.exceptions import ParameterError
 
 __all__ = ['load', 'to_mono', 'resample', 'get_duration',
-           'autocorrelate', 'zero_crossings', 'clicks',
-           # Deprecated functions
-           'peak_pick', 'localmax']
+           'autocorrelate', 'zero_crossings', 'clicks']
 
 # Resampling bandwidths as percentage of Nyquist
 # http://resampy.readthedocs.org/en/latest/api.html#module-resampy.filters
 BW_BEST = 0.9476
 BW_FASTEST = 0.85
-
-# Do we have scikits.samplerate?
-try:
-    # Pylint won't handle dynamic imports, so we suppress this warning
-    import scikits.samplerate as samplerate  # pylint: disable=import-error
-    _HAS_SAMPLERATE = True
-except ImportError:
-    _HAS_SAMPLERATE = False
-
 
 # -- CORE ROUTINES --#
 # Load should never be cached, since we cannot verify that the contents of
@@ -219,12 +207,8 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
 
         .. note::
             By default, this uses `resampy`'s high-quality mode ('kaiser_best').
-            If `res_type` is not recognized by `resampy.resample`, it then
-            falls back on `scikits.samplerate` (if it is installed)
 
-            If both of those fail, it will fall back on `scipy.signal.resample`.
-
-            To force use of `scipy.signal.resample`, set `res_type='scipy'`.
+            To use `scipy.signal.resample`, set `res_type='scipy'`.
 
     fix : bool
         adjust the length of the resampled signal to be of size exactly
@@ -248,6 +232,7 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
     --------
     librosa.util.fix_length
     scipy.signal.resample
+    resampy.resample
 
     Examples
     --------
@@ -270,17 +255,10 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
 
     n_samples = int(np.ceil(y.shape[-1] * ratio))
 
-    try:
+    if res_type == 'scipy':
+        y_hat = scipy.signal.resample(y, n_samples, axis=-1)
+    else:
         y_hat = resampy.resample(y, orig_sr, target_sr, filter=res_type, axis=-1)
-    except NotImplementedError:
-        if _HAS_SAMPLERATE and (res_type != 'scipy'):
-            warnings.warn('scikits.samplerate resampling is deprecated as '
-                          'of librosa version 0.4.3.\n\tSupport will be '
-                          'removed in librosa version 0.5.',
-                          category=DeprecationWarning)
-            y_hat = samplerate.resample(y.T, ratio, res_type).T
-        else:
-            y_hat = scipy.signal.resample(y, n_samples, axis=-1)
 
     if fix:
         y_hat = util.fix_length(y_hat, n_samples, **kwargs)
@@ -686,11 +664,3 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
             click_signal[start:end] += click
 
     return click_signal
-
-
-# Moved/deprecated functions
-peak_pick = util.decorators.moved('librosa.core.peak_pick',
-                                  '0.4', '0.5')(util.peak_pick)
-
-localmax = util.decorators.moved('librosa.core.localmax',
-                                 '0.4', '0.5')(util.localmax)
