@@ -627,9 +627,9 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
     >>> plt.title('Chroma (wrapped CQT)')
     >>> plt.colorbar()
     >>> plt.subplot(3, 1, 3)
-    >>> chroma = librosa.feature.chromagram(y=y, sr=sr)
+    >>> chroma = librosa.feature.chroma_stft(y=y, sr=sr)
     >>> librosa.display.specshow(chroma, y_axis='chroma', x_axis='time')
-    >>> plt.title('librosa.feature.chroma')
+    >>> plt.title('librosa.feature.chroma_stft')
     >>> plt.colorbar()
     >>> plt.tight_layout()
 
