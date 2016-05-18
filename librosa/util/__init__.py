@@ -62,20 +62,10 @@ File operations
     example_audio_file
     find_files
 
-
-Deprecated
-----------
-.. autosummary::
-    :toctree: generated/
-
-    FeatureExtractor
-    buf_to_int
-
 """
 
 from .utils import *  # pylint: disable=wildcard-import
 from .files import *  # pylint: disable=wildcard-import
-from .feature_extractor import *  # pylint: disable=wildcard-import
 from .deprecation import * # pylint: disable=wildcard-import
 from . import decorators
 from . import exceptions

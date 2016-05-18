@@ -188,28 +188,3 @@ def test_onset_detect_const():
                                                 sr=sr,
                                                 hop_length=hop_length)
             yield __test, y, sr, oenv, hop_length
-
-
-def test_onset_strength_deprecated():
-
-    y, sr = librosa.load(__EXAMPLE_FILE)
-
-    def __test(centering):
-
-        no_warning = (centering is None)
-
-        warnings.resetwarnings()
-        warnings.simplefilter('always')
-        with warnings.catch_warnings(record=True) as out:
-            librosa.onset.onset_strength(y=y, sr=sr, centering=centering)
-
-            if no_warning:
-                eq_(out, [])
-            else:
-                assert len(out) > 0
-                assert out[0].category is DeprecationWarning
-                assert 'deprecated' in str(out[0].message).lower()
-
-
-    for centering in [True, False, None]:
-        yield __test, centering

@@ -107,10 +107,7 @@ def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
 
     n_ticks = kwargs.pop('n_ticks', 5)
     axis = kwargs.pop('axis', 'x')
-    fmt = kwargs.pop('fmt', util.Deprecated())
     time_fmt = kwargs.pop('time_fmt', None)
-
-    time_fmt = util.rename_kw('fmt', fmt, 'time_fmt', time_fmt, '0.4.2', '0.5.0')
 
     if axis == 'x':
         ticker = plt.xticks

@@ -6,13 +6,9 @@ import numpy as np
 import scipy.signal
 
 from .. import cache
-from .. import util
 from ..util.exceptions import ParameterError
 
-__all__ = ['delta',
-           'stack_memory',
-           # Moved/deprecated
-           'sync']
+__all__ = ['delta', 'stack_memory']
 
 
 @cache
@@ -231,7 +227,3 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
 
     # Make contiguous
     return np.ascontiguousarray(history.T).T
-
-# Moved/deprecated functions
-sync = util.decorators.moved('librosa.feature.sync',
-                             '0.4.1', '0.5')(util.sync)
