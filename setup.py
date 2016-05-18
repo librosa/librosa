@@ -34,13 +34,13 @@ setup(
         'numpy >= 1.8.0',
         'scipy >= 0.13.0',
         'scikit-learn >= 0.14.0',
-        'matplotlib >= 1.4.3',
+        'matplotlib >= 1.5',
         'joblib >= 0.7.0',
         'decorator >= 3.0.0',
         'six >= 1.3',
         'resampy >= 0.1.0'
     ],
     extras_require={
-        'docs': ['numpydoc', 'seaborn', 'sphinx!=1.3.1', 'sphinx_rtd_theme']
+        'docs': ['numpydoc', 'sphinx!=1.3.1', 'sphinx_rtd_theme']
     }
 )
