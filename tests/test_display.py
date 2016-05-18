@@ -14,20 +14,17 @@ except KeyError:
 import matplotlib
 matplotlib.use('Agg')
 matplotlib.rcParams.update(matplotlib.rcParamsDefault)
+
+import matplotlib.style
+matplotlib.style.use('seaborn-white')
+
 import matplotlib.pyplot as plt
 
 import librosa
 import numpy as np
 
-import seaborn as sns
-
-sns.set(style='white')
-
 from nose.tools import nottest, raises, eq_
 from mpl_ic import image_comparison
-
-# MPL 1.5 broke things pretty bad.  We'll skip image tests for now.
-from nose.plugins.skip import SkipTest
 
 @nottest
 def get_spec(y, sr):
@@ -371,9 +368,9 @@ def test_unknown_axis():
 
 def test_cmap_robust():
 
-    def __test(use_sns, data):
-        cmap1 = librosa.display.cmap(data, use_sns=use_sns, robust=False)
-        cmap2 = librosa.display.cmap(data, use_sns=use_sns, robust=True)
+    def __test(data):
+        cmap1 = librosa.display.cmap(data, robust=False)
+        cmap2 = librosa.display.cmap(data, robust=True)
 
         assert type(cmap1) is type(cmap2)
 
@@ -384,8 +381,7 @@ def test_cmap_robust():
 
     # Inputs here are constructed to not need robust sign estimation
     for D in [1.0 + S_abs, -(1.0 + S_abs), S_signed, S_bin]:
-        for use_sns in [False, True]:
-            yield __test, use_sns, D
+        yield __test, D
 
 
 def test_time_ticks_failure():

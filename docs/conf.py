@@ -78,8 +78,8 @@ np.set_printoptions(precision=3, linewidth=64, edgeitems=2, threshold=200)
 # Plot
 #------------------------------------------------------------------------------
 plot_pre_code = """
-import seaborn
-seaborn.set(style='ticks')
+import matplotlib.style
+matplotlib.style.use('seaborn-white')
 import numpy as np
 import librosa
 np.random.seed(123)
@@ -122,11 +122,7 @@ intersphinx_mapping = {'python': ('http://docs.python.org/2', None),
                        'scipy': ('http://docs.scipy.org/doc/scipy/reference/', None),
                        'matplotlib': ('http://matplotlib.sourceforge.net/', None),
                        'sklearn': ('http://scikit-learn.org/stable/', None),
-                       'seaborn': ('http://stanford.edu/~mwaskom/software/seaborn/', None),
-                       'sns': ('http://stanford.edu/~mwaskom/software/seaborn/', None),
-                       'resampy': ('http://resampy.readthedocs.io/en/latest/', None),
-                       'samplerate':
-                       ('http://www.ar.media.kyoto-u.ac.jp/members/david/softwares/samplerate/sphinx/', None)}
+                       'resampy': ('http://resampy.readthedocs.io/en/latest/', None)}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

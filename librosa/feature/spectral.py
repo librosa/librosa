@@ -794,6 +794,7 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
            [ 0.793,  0.663, ...,  0.964,  0.972]])
 
     >>> import matplotlib.pyplot as plt
+    >>> plt.figure(figsize=(10, 4))
     >>> librosa.display.specshow(chroma, y_axis='chroma', x_axis='time')
     >>> plt.colorbar()
     >>> plt.title('Chromagram')
@@ -1227,6 +1228,7 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
     Visualize the MFCC series
 
     >>> import matplotlib.pyplot as plt
+    >>> plt.figure(figsize=(10, 4))
     >>> librosa.display.specshow(mfccs, x_axis='time')
     >>> plt.colorbar()
     >>> plt.title('MFCC')
@@ -1301,6 +1303,7 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     ...                                     fmax=8000)
 
     >>> import matplotlib.pyplot as plt
+    >>> plt.figure(figsize=(10, 4))
     >>> librosa.display.specshow(librosa.logamplitude(S,
     ...                                               ref_power=np.max),
     ...                          y_axis='mel', fmax=8000,
