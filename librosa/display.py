@@ -266,15 +266,15 @@ def frequency_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
 
 
 @cache
-def cmap(data, robust=True):
+def cmap(data, robust=True, cmap_seq='magma', cmap_bool='gray_r', cmap_div='coolwarm'):
     '''Get a default colormap from the given data.
 
     If the data is boolean, use a black and white colormap.
 
     If the data has both positive and negative values,
-    use a diverging colormap ('coolwarm').
+    use a diverging colormap.
 
-    Otherwise, use a sequential map: either 'magma' or 'OrRd'.
+    Otherwise, use a sequential colormap.
 
     Parameters
     ----------
@@ -285,13 +285,19 @@ def cmap(data, robust=True):
         If True, discard the top and bottom 2% of data when calculating
         range.
 
+    cmap_seq : str
+        The sequential colormap name
+
+    cmap_bool : str
+        The boolean colormap name
+
+    cmap_div : str
+        The diverging colormap name
+
     Returns
     -------
     cmap : matplotlib.colors.Colormap
-        - If `data` has dtype=boolean, `cmap` is 'gray_r'
-        - If `data` has only positive or only negative values,
-          `cmap` is 'magma'
-        - If `data` has both positive and negatives, `cmap` is 'coolwarm'
+        The colormap to use for `data`
 
     See Also
     --------
@@ -301,7 +307,7 @@ def cmap(data, robust=True):
     data = np.atleast_1d(data)
 
     if data.dtype == 'bool':
-        return plt.get_cmap('gray_r')
+        return plt.get_cmap(cmap_bool)
 
     data = data[np.isfinite(data)]
 
@@ -314,9 +320,9 @@ def cmap(data, robust=True):
     min_val = np.percentile(data, min_p)
 
     if min_val >= 0 or max_val <= 0:
-        return plt.get_cmap('magma')
+        return plt.get_cmap(cmap_seq)
 
-    return plt.get_cmap('coolwarm')
+    return plt.get_cmap(cmap_div)
 
 
 def __envelope(x, hop):
