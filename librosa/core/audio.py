@@ -384,10 +384,9 @@ def autocorrelate(y, max_size=None, axis=-1):
     --------
     Compute full autocorrelation of y
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), offset=20, duration=10)
     >>> librosa.autocorrelate(y)
-    array([  1.584e+04,   1.580e+04, ...,  -1.154e-10,  -2.725e-13])
-
+    array([  3.226e+03,   3.217e+03, ...,   8.277e-04,   3.575e-04], dtype=float32)
 
     Compute onset strength auto-correlation up to 4 seconds
 
