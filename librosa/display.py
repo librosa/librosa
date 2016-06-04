@@ -467,9 +467,13 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000
     return out
 
 
-def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
-             n_xticks=5, n_yticks=5, fmin=None, fmax=None, bins_per_octave=12,
-             tmin=16, tmax=240, freq_fmt='Hz', time_fmt=None, **kwargs):
+def specshow(data, x_coords=None, y_coords=None,
+             x_axis=None, y_axis=None,
+             sr=22050, hop_length=512,
+             fmin=None, fmax=None,
+             bins_per_octave=12,
+             tmin=16, tmax=240,
+             **kwargs):
     '''Display a spectrogram/chromagram/cqt/etc.
 
     Functions as a drop-in replacement for `matplotlib.pyplot.imshow`,
@@ -516,12 +520,6 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
         - 'frames' : markers are shown as frame counts.
         - 'tempo' : markers are shown as beats-per-minute
 
-    n_xticks : int > 0 [scalar]
-        If x_axis is drawn, the number of ticks to show
-
-    n_yticks : int > 0 [scalar]
-        If y_axis is drawn, the number of ticks to show
-
     fmin : float > 0 [scalar] or None
         Frequency of the lowest spectrogram bin.  Used for Mel and CQT
         scales.
@@ -540,16 +538,6 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
         Minimum and maximum tempi displayed when `_axis='tempo'`,
         as measured in beats per minute.
 
-    freq_fmt : None or str
-        Formatting for frequency axes.  'Hz', by default.
-
-        See `frequency_ticks`.
-
-    time_fmt : None or str
-        Formatting for time axes.  None (automatic) by default.
-
-        See `time_ticks`.
-
     kwargs : additional keyword arguments
         Arguments passed through to `matplotlib.pyplot.imshow`.
 
@@ -564,11 +552,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
     --------
     cmap : Automatic colormap detection
 
-    time_ticks : time-formatted tick marks
-
-    frequency_ticks : frequency-formatted tick marks
-
-    matplotlib.pyplot.imshow
+    matplotlib.pyplot.pcolormesh
 
 
     Examples
@@ -648,9 +632,7 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
 
     '''
 
-    kwargs.setdefault('aspect', 'auto')
-    kwargs.setdefault('origin', 'lower')
-    kwargs.setdefault('interpolation', 'nearest')
+    kwargs.setdefault('shading', 'flat')
 
     if np.issubdtype(data.dtype, np.complex):
         warnings.warn('Trying to display complex-valued input. '
@@ -659,8 +641,6 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
 
     kwargs.setdefault('cmap', cmap(data))
 
-    axes = plt.imshow(data, **kwargs)
-
     all_params = dict(kwargs=kwargs,
                       sr=sr,
                       fmin=fmin,
@@ -668,15 +648,122 @@ def specshow(data, sr=22050, hop_length=512, x_axis=None, y_axis=None,
                       bins_per_octave=bins_per_octave,
                       tmin=tmin,
                       tmax=tmax,
-                      hop_length=hop_length,
-                      time_fmt=time_fmt,
-                      freq_fmt=freq_fmt)
+                      hop_length=hop_length)
 
-    # Scale and decorate the axes
-    __axis(data, n_xticks, x_axis, horiz=True, minor=y_axis, **all_params)
-    __axis(data, n_yticks, y_axis, horiz=False, minor=x_axis, **all_params)
+    # Get the x and y coordinates
+    y_coords = __mesh_coords(y_axis, y_coords, data.shape[0], **all_params)
+    x_coords = __mesh_coords(x_axis, x_coords, data.shape[1], **all_params)
 
-    return axes
+    ax = plt.gca()
+    ax.pcolormesh(x_coords, y_coords, data, **kwargs)
+
+    # Set up axis scaling
+    __scale_axes(ax, x_axis, 'x')
+    __scale_axes(ax, y_axis, 'y')
+
+    # Construct tickers
+    #TODO
+
+    return ax
+
+
+def __mesh_coords(ax_type, coords, n, **kwargs):
+    '''Compute axis coordinates'''
+
+    if coords is not None:
+        if len(coords) != n:
+            raise ParameterError('Coordinate shape mismatch: '
+                                 '{}!={}'.format(len(coords), n))
+        return coords
+
+    coord_map = {'linear': __coord_fft_hz,
+                 'hz': __coord_fft_hz,
+                 'log': __coord_fft_hz,
+                 'mel': __coord_mel_hz,
+                 'cqt': __coord_cqt_hz,
+                 'chroma': __coord_chroma,
+                 'time': __coord_time,
+                 'lag': __coord_time,
+                 'tonnetz': __coord_n,
+                 'off': __coord_n,
+                 'tempo': __coord_n,
+                 'frames': __coord_n,
+                 None: __coord_n}
+
+    if ax_type not in coord_map:
+        raise ParameterError('Unknown axis type: {}'.format(ax_type))
+
+    return coord_map[ax_type](n, **kwargs)
+
+
+def __scale_axes(axes, ax_type, which):
+    '''Set the axis scaling'''
+
+    kwargs = dict()
+    if which == 'x':
+        thresh = 'linthreshx'
+        base = 'basex'
+        scale = 'linscalex'
+        scaler = axes.set_xscale
+    else:
+        thresh = 'linthreshy'
+        base = 'basey'
+        scale = 'linscaley'
+        scaler = axes.set_yscale
+
+    if ax_type == 'mel':
+        mode = 'symlog'
+        kwargs[thresh] = 1000.0
+        kwargs[base] = 2
+
+    elif ax_type == 'log':
+        mode = 'symlog'
+        kwargs[base] = 2
+        kwargs[thresh] = core.note_to_hz('C2')
+        kwargs[scale] = 0.5
+
+    elif ax_type == 'cqt':
+        mode = 'log'
+        kwargs[base] = 2
+    else:
+        return
+
+    scaler(mode, **kwargs)
+
+
+def __coord_fft_hz(n, sr=22050, **_kwargs):
+    '''Get the frequencies for FFT bins'''
+    n_fft = 2 * (n - 1)
+
+    return core.fft_frequencies(sr=sr, n_fft=n_fft)
+
+
+def __coord_mel_hz(n, fmin=0, fmax=11025.0, **_kwargs):
+    '''Get the frequencies for Mel bins'''
+
+    return core.mel_frequencies(n, fmin=fmin, fmax=fmax)
+
+
+def __coord_cqt_hz(n, fmin=None, bins_per_octave=12, **_kwargs):
+    '''Get CQT bin frequencies'''
+
+    return core.cqt_frequencies(n, fmin=fmin, bins_per_octave=bins_per_octave)
+
+
+def __coord_chroma(n, bins_per_octave=12, **_kwargs):
+    '''Get chroma bin numbers'''
+
+    return np.linspace(0, 12 * (n // bins_per_octave), num=n)
+
+
+def __coord_n(n, **_kwargs):
+    '''Get bare positions'''
+    return np.arange(n)
+
+
+def __coord_time(n, sr=22050, hop_length=512, **_kwargs):
+    '''Get time coordinates from frames'''
+    return core.frames_to_time(np.arange(n), sr=sr, hop_length=hop_length)
 
 
 def __get_shape_artists(data, horiz):
@@ -685,129 +772,6 @@ def __get_shape_artists(data, horiz):
         return data.shape[1], plt.xticks, plt.xlabel
     else:
         return data.shape[0], plt.yticks, plt.ylabel
-
-
-def __axis(data, n_ticks, ax_type, horiz=False, **kwargs):
-    '''Dispatch function to decorate axes'''
-    axis_map = {'linear': __axis_linear,
-                'log': __axis_log,
-                'mel': __axis_mel,
-                'cqt_hz': __axis_cqt_hz,
-                'cqt_note': __axis_cqt_note,
-                'chroma': __axis_chroma,
-                'tonnetz': __axis_tonnetz,
-                'off': __axis_none,
-                'time': __axis_time,
-                'tempo': __axis_tempo,
-                'lag': __axis_lag,
-                'frames': __axis_frames}
-
-    if ax_type is None:
-        ax_type = 'off'
-
-    if ax_type not in axis_map:
-        raise ParameterError('Unknown axis type: {:s}'.format(ax_type))
-
-    func = axis_map[ax_type]
-
-    func(data, n_ticks, horiz=horiz, **kwargs)
-
-
-def __axis_none(data, n_ticks, horiz, **_kwargs):
-    '''Empty axis artist'''
-
-    _, ticker, labeler = __get_shape_artists(data, horiz)
-
-    ticker([])
-    labeler('')
-
-
-def __axis_log(data, n_ticks, horiz, sr=22050, kwargs=None,
-               minor=None, **_kwargs):
-    '''Plot a log-scaled image'''
-
-    axes_phantom = plt.gca()
-
-    if kwargs is None:
-        kwargs = dict()
-
-    aspect = kwargs.pop('aspect', None)
-    fmt = _kwargs.pop('freq_fmt', 'Hz')
-
-    n, ticker, labeler = __get_shape_artists(data, horiz)
-    t_log, t_inv = __log_scale(n)
-
-    if horiz:
-        axis = 'x'
-
-        if minor == 'log':
-            ax2 = __log_scale(data.shape[0])[0]
-        else:
-            ax2 = np.arange(data.shape[0])
-        ax1 = t_log
-    else:
-        axis = 'y'
-        if minor == 'log':
-            ax1 = __log_scale(data.shape[1])[0]
-        else:
-            ax1 = np.arange(data.shape[1])
-
-        ax2 = t_log
-
-    args = (ax1, ax2, data)
-
-    # NOTE:  2013-11-14 16:15:33 by Brian McFee <brm2132@columbia.edu>
-    #  We draw the image twice here. This is a hack to get around
-    #  NonUniformImage not properly setting hooks for color.
-    #  Drawing twice enables things like colorbar() to work properly.
-
-    im_phantom = img.NonUniformImage(axes_phantom,
-                                     extent=(args[0].min(), args[0].max(),
-                                             args[1].min(), args[1].max()),
-                                     **kwargs)
-    im_phantom.set_data(*args)
-
-    kwargs['aspect'] = aspect
-
-    axes_phantom.images[0] = im_phantom
-
-    positions = np.linspace(0, n-1, n_ticks, endpoint=True).astype(int)
-    # One extra value here to catch nyquist
-    values = np.linspace(0, 0.5 * sr, n, endpoint=True)
-
-    _, label = frequency_ticks(positions, values[t_inv[positions]],
-                               n_ticks=None, axis=axis, freq_fmt=fmt)
-    labeler(label)
-
-
-def __axis_mel(data, n_ticks, horiz, fmin=None, fmax=None, **_kwargs):
-    '''Mel-scaled axes'''
-
-    fmt = _kwargs.pop('freq_fmt', 'Hz')
-
-    if horiz:
-        axis = 'x'
-    else:
-        axis = 'y'
-
-    n, ticker, labeler = __get_shape_artists(data, horiz)
-
-    positions = np.linspace(0, n-1, n_ticks).astype(int)
-
-    kwargs = {}
-
-    if fmin is not None:
-        kwargs['fmin'] = fmin
-
-    if fmax is not None:
-        kwargs['fmax'] = fmax
-
-    # only two star-args here, defined immediately above
-    # pylint: disable=star-args
-    values = core.mel_frequencies(n_mels=n+2, **kwargs)[positions]
-    _, label = frequency_ticks(positions, values,
-                               n_ticks=None, axis=axis, freq_fmt=fmt)
-    labeler(label)
 
 
 def __axis_chroma(data, n_ticks, horiz, bins_per_octave=12, **_kwargs):
@@ -827,25 +791,6 @@ def __axis_chroma(data, n_ticks, horiz, bins_per_octave=12, **_kwargs):
     values = core.midi_to_note(positions * 12 // bins_per_octave, octave=False)
     ticker(positions[:n], values[:n])
     labeler('Pitch class')
-
-
-def __axis_linear(data, n_ticks, horiz, sr=22050, **_kwargs):
-    '''Linear frequency axes'''
-    fmt = _kwargs.pop('freq_fmt', 'Hz')
-
-    if horiz:
-        axis = 'x'
-    else:
-        axis = 'y'
-
-    n, ticker, labeler = __get_shape_artists(data, horiz)
-
-    positions = np.linspace(0, n - 1, n_ticks, endpoint=True).astype(int)
-    values = (sr * np.linspace(0, 0.5, n_ticks, endpoint=True))
-
-    _, label = frequency_ticks(positions, values,
-                               n_ticks=None, axis=axis, freq_fmt=fmt)
-    labeler(label)
 
 
 def __axis_cqt(data, n_ticks, horiz, note=False, fmin=None,
@@ -893,26 +838,6 @@ def __axis_cqt_note(*args, **kwargs):
     __axis_cqt(*args, **kwargs)
 
 
-def __axis_time(data, n_ticks, horiz, sr=22050, hop_length=512, **_kwargs):
-    '''Time axes'''
-    n, ticker, labeler = __get_shape_artists(data, horiz)
-
-    if horiz:
-        axis = 'x'
-    else:
-        axis = 'y'
-
-    fmt = _kwargs.pop('time_fmt', None)
-
-    positions = np.linspace(0, n-1, n_ticks, endpoint=True).astype(int)
-
-    time_ticks(positions,
-               core.frames_to_time(positions, sr=sr, hop_length=hop_length),
-               n_ticks=None, time_fmt=fmt, axis=axis)
-
-    labeler('Time')
-
-
 def __axis_tempo(data, n_ticks, horiz, sr=22050, hop_length=512, tmin=16, tmax=240, **_kwargs):
     '''Tempo axes'''
     n, ticker, labeler = __get_shape_artists(data, horiz)
@@ -926,7 +851,6 @@ def __axis_tempo(data, n_ticks, horiz, sr=22050, hop_length=512, tmin=16, tmax=2
     tempi = ['{:.1f}'.format(60 * float(sr) / (hop_length * t)) for t in positions]
     ticker(positions, tempi)
     labeler('Tempo (BPM)')
-
 
 
 def __axis_lag(data, n_ticks, horiz, sr=22050, hop_length=512, **_kwargs):
@@ -960,39 +884,3 @@ def __axis_tonnetz(data, n_ticks, horiz, **_kwargs):
 
     ticker(positions, values)
     labeler('Tonnetz')
-
-
-def __axis_frames(data, n_ticks, horiz, label='Frames', **_kwargs):
-    '''Frame axes'''
-    n, ticker, labeler = __get_shape_artists(data, horiz)
-
-    positions = np.linspace(0, n-1, n_ticks, endpoint=True).astype(int)
-
-    ticker(positions, positions)
-    labeler(label)
-
-
-def __log_scale(n):
-    '''Return a log-scale mapping of bins 0..n, and its inverse.
-
-    Parameters
-    ----------
-    n : int > 0
-        Number of bins
-
-    Returns
-    -------
-    y   : np.ndarray, shape=(n,)
-
-    y_inv   : np.ndarray, shape=(n+1,)
-    '''
-
-    logn = np.log2(n)
-    y = n * (1 - np.logspace(-logn, 0, n, base=2, endpoint=True))[::-1]
-    y = y.astype(int)
-
-    y_inv = np.arange(len(y))
-    for i in range(len(y)-1):
-        y_inv[y[i]:y[i+1]] = i
-
-    return y, y_inv
