@@ -10,7 +10,6 @@ import numpy as np
 from numpy.lib.stride_tricks import as_strided
 
 from .. import cache
-from . import decorators
 from .exceptions import ParameterError
 
 # Constrain STFT block sizes to 256 KB
@@ -30,9 +29,7 @@ __all__ = ['MAX_MEM_BLOCK', 'SMALL_FLOAT',
            'index_to_slice',
            'sync',
            'softmask',
-           'buf_to_float',
-           # Deprecated functions
-           'buf_to_int']
+           'buf_to_float']
 
 
 def frame(y, frame_length=2048, hop_length=512):
@@ -1486,41 +1483,3 @@ def softmask(X, X_ref, power=1, split_zeros=False):
         mask = X > X_ref
 
     return mask
-
-
-# Deprecated functions
-
-@decorators.deprecated('0.4', '0.5')
-def buf_to_int(x, n_bytes=2):  # pragma: no cover
-    """Convert a floating point buffer into integer values.
-    This is primarily useful as an intermediate step in wav output.
-
-    See Also
-    --------
-    buf_to_float
-
-    Parameters
-    ----------
-    x : np.ndarray [dtype=float]
-        Floating point data buffer
-
-    n_bytes : int [1, 2, 4]
-        Number of bytes per output sample
-
-    Returns
-    -------
-    x_int : np.ndarray [dtype=int]
-        The original buffer cast to integer type.
-    """
-
-    if n_bytes not in [1, 2, 4]:
-        raise ParameterError('n_bytes must be one of {1, 2, 4}')
-
-    # What is the scale of the input data?
-    scale = float(1 << ((8 * n_bytes) - 1))
-
-    # Construct a format string
-    fmt = '<i{:d}'.format(n_bytes)
-
-    # Rescale and cast the data
-    return (x * scale).astype(fmt)
