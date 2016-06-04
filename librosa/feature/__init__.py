@@ -39,16 +39,6 @@ Feature manipulation
 
     delta
     stack_memory
-
-
-Deprecated
-----------
-
-.. autosummary::
-    :toctree: generated/
-
-    logfsgram
-    sync
 """
 from .utils import *  # pylint: disable=wildcard-import
 from .spectral import *  # pylint: disable=wildcard-import
