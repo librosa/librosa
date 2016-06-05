@@ -120,125 +120,6 @@ TONNETZ_FORMATTER = FixedFormatter([r'5$_x$', r'5$_y$',
                                     r'M3$_x$', r'M3$_y$'])
 
 
-def frequency_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
-    '''Plot frequency-formatted axis ticks.
-
-    Parameters
-    ----------
-    locations : list or np.ndarray
-        Frequency values for tick marks
-
-    n_ticks : int > 0 or None
-        Show this number of ticks (evenly spaced).
-
-        If none, all ticks are displayed.
-
-        Default: 5
-
-    axis : 'x' or 'y'
-        Which axis should the ticks be plotted on?
-        Default: 'x'
-
-    freq_fmt : None or {'mHz', 'Hz', 'kHz', 'MHz', 'GHz'}
-        - 'mHz': millihertz
-        - 'Hz': hertz
-        - 'kHz': kilohertz
-        - 'MHz': megahertz
-        - 'GHz': gigahertz
-
-        If none, formatted is automatically selected by the
-        range of the frequency data.
-
-        Default: None
-
-    kwargs : additional keyword arguments.
-        See `matplotlib.pyplot.xticks` or `yticks` for details.
-
-
-    Returns
-    -------
-    (locs, labels)
-        Locations and labels of tick marks
-
-    label
-        Axis label
-
-    See Also
-    --------
-    matplotlib.pyplot.xticks
-    matplotlib.pyplot.yticks
-
-
-    Examples
-    --------
-    >>> # Tick at pre-computed beat times
-    >>> librosa.display.specshow(S)
-    >>> librosa.display.frequency_ticks()
-
-    >>> # Set the locations of the time stamps
-    >>> librosa.display.frequency_ticks(locations, frequencies)
-
-    >>> # Format in hertz
-    >>> librosa.display.frequency_ticks(frequencies, freq_fmt='Hz')
-
-    >>> # Tick along the y axis
-    >>> librosa.display.frequency_ticks(frequencies, axis='y')
-
-    '''
-
-    n_ticks = kwargs.pop('n_ticks', 5)
-    axis = kwargs.pop('axis', 'x')
-    freq_fmt = kwargs.pop('freq_fmt', None)
-
-    if axis == 'x':
-        ticker = plt.xticks
-    elif axis == 'y':
-        ticker = plt.yticks
-    else:
-        raise ParameterError("axis must be either 'x' or 'y'.")
-
-    if len(args) > 0:
-        freqs = args[0]
-    else:
-        freqs = locs
-        locs = np.arange(len(freqs))
-
-    if n_ticks is not None:
-        # Slice the locations and labels evenly between 0 and the last point
-        positions = np.linspace(0, len(locs)-1, n_ticks,
-                                endpoint=True).astype(int)
-        locs = locs[positions]
-        freqs = freqs[positions]
-
-    # Format the labels by time
-    formats = {'mHz': lambda f: '{:.5g}'.format(f * 1e3),
-               'Hz': '{:.5g}'.format,
-               'kHz': lambda f: '{:.5g}'.format(f * 1e-3),
-               'MHz': lambda f: '{:.5g}'.format(f * 1e-6),
-               'GHz': lambda f: '{:.5g}'.format(f * 1e-9)}
-
-    f_max = np.max(freqs)
-
-    if freq_fmt is None:
-        if f_max > 1e10:
-            freq_fmt = 'GHz'
-        elif f_max > 1e7:
-            freq_fmt = 'MHz'
-        elif f_max > 1e4:
-            freq_fmt = 'kHz'
-        elif f_max > 1e1:
-            freq_fmt = 'Hz'
-        else:
-            freq_fmt = 'mHz'
-
-    elif freq_fmt not in formats:
-        raise ParameterError('Invalid format: {:s}'.format(freq_fmt))
-
-    ticks = [formats[freq_fmt](f) for f in freqs]
-
-    return ticker(locs, ticks, **kwargs), freq_fmt
-
-
 @cache
 def cmap(data, robust=True, cmap_seq='magma', cmap_bool='gray_r', cmap_div='coolwarm'):
     '''Get a default colormap from the given data.
@@ -305,7 +186,7 @@ def __envelope(x, hop):
 
 
 def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000,
-             time_fmt=None, **kwargs):
+             **kwargs):
     '''Plot the amplitude envelope of a waveform.
 
     If `y` is monophonic, a filled curve is drawn between `[-abs(y), abs(y)]`.
@@ -334,18 +215,11 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000
     x_axis : str {'time', 'off', 'none'} or None
         If 'time', the x-axis is given time tick-marks.
 
-        See also: `time_ticks`
-
     offset : float
         Horizontal offset (in time) to start the waveform plot
 
     max_sr : number > 0 [scalar]
         Maximum sampling rate for the visualization
-
-    time_fmt : None or str
-        Formatting for time axis.  None (automatic) by default.
-
-        See `time_ticks`.
 
     kwargs
         Additional keyword arguments to `matplotlib.pyplot.fill_between`
@@ -398,6 +272,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000
         raise ParameterError('max_sr must be a non-negative integer')
 
     target_sr = sr
+    hop_length = 1
 
     if max_points is not None:
         if max_points <= 0:
@@ -424,17 +299,17 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000
 
     kwargs.setdefault('color', next(axes._get_lines.prop_cycler)['color'])
 
-    sample_off = core.time_to_samples(offset, sr=target_sr)
-
-    locs = np.arange(sample_off, sample_off + len(y_top))
+    locs = offset + core.frames_to_time(np.arange(len(y_top)),
+                                        sr=sr,
+                                        hop_length=hop_length)
     out = axes.fill_between(locs, y_bottom, y_top, **kwargs)
 
-    plt.xlim([locs[0], locs[-1]])
-
+    axes.set_xlim([locs.min(), locs.max()])
     if x_axis == 'time':
-        time_ticks(locs, core.samples_to_time(locs, sr=target_sr), time_fmt=time_fmt)
+        axes.xaxis.set_major_formatter(TimeFormatter(lag=False))
+        axes.xaxis.set_label_text('Time')
     elif x_axis is None or x_axis in ['off', 'none']:
-        plt.xticks([])
+        axes.set_xticks([])
     else:
         raise ParameterError('Unknown x_axis value: {}'.format(x_axis))
 
