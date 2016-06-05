@@ -8,15 +8,20 @@ Display
 
     specshow
     waveplot
-    time_ticks
     cmap
+
+    TimeFormatter
+    NoteFormatter
+    ChromaFormatter
+    TempoFormatter
 """
 
 import warnings
 
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.ticker import Formatter, FixedFormatter, Locator
+from matplotlib.ticker import Formatter, FixedFormatter, ScalarFormatter
+from matplotlib.ticker import LogLocator, FixedLocator
 
 from . import cache
 from . import core
@@ -85,7 +90,7 @@ class TempoFormatter(Formatter):
 
 
 class NoteFormatter(Formatter):
-
+    '''Ticker formatter for Notes'''
     def __init__(self, octave=True):
 
         self.octave = octave
@@ -105,7 +110,7 @@ class NoteFormatter(Formatter):
 class ChromaFormatter(Formatter):
     '''A formatter for chroma'''
     def __call__(self, x, pos=None):
-
+        '''Format for chroma positions'''
         return core.midi_to_note(int(x), octave=False, cents=False)
 
 
@@ -623,17 +628,18 @@ def specshow(data, x_coords=None, y_coords=None,
     y_coords = __mesh_coords(y_axis, y_coords, data.shape[0], **all_params)
     x_coords = __mesh_coords(x_axis, x_coords, data.shape[1], **all_params)
 
-    ax = plt.gca()
-    ax.pcolormesh(x_coords, y_coords, data, **kwargs)
+    axes = plt.gca()
+    axes.pcolormesh(x_coords, y_coords, data, **kwargs)
 
     # Set up axis scaling
-    __scale_axes(ax, x_axis, 'x')
-    __scale_axes(ax, y_axis, 'y')
+    __scale_axes(axes, x_axis, 'x')
+    __scale_axes(axes, y_axis, 'y')
 
-    # Construct tickers
-    #TODO
+    # Construct tickers and locators
+    __tick_axes(axes.xaxis, x_axis, all_params)
+    __tick_axes(axes.yaxis, y_axis, all_params)
 
-    return ax
+    return axes
 
 
 def __mesh_coords(ax_type, coords, n, **kwargs):
@@ -698,6 +704,40 @@ def __scale_axes(axes, ax_type, which):
         return
 
     scaler(mode, **kwargs)
+
+
+def __tick_axes(axis, ax_type, kwargs):
+    '''Configure axis tickers, locators, and labels'''
+    if ax_type == 'tonnetz':
+        # tonnetz => TONNETZ_FORMATTER
+        axis.set_major_formatter(TONNETZ_FORMATTER)
+        axis.set_major_locator(FixedLocator(np.arange(0.5, 6.5)))
+    elif ax_type == 'chroma':
+        # chroma => ChromaFormatter, fixedlocator
+        axis.set_major_formatter(ChromaFormatter())
+        axis.set_major_locator(FixedLocator(np.asarray([0, 2, 4, 5, 7, 9, 11])))
+    elif ax_type == 'tempo':
+        # tempo => TempoFormatter
+        axis.set_major_formatter(TempoFormatter(sr=kwargs['sr'],
+                                                hop_length=kwargs['hop_length']))
+        axis.set_major_locator(LogLocator(base=2.0, subs=[1.0, 2.0, 3.0]))
+        axis.set_label_text('BPM')
+    elif ax_type == 'time':
+        axis.set_major_formatter(TimeFormatter(lag=False))
+        axis.set_label_text('Time')
+    elif ax_type == 'lag':
+        axis.set_major_formatter(TimeFormatter(lag=True))
+        axis.set_label_text('Lag')
+    elif ax_type == 'cqt_note':
+        axis.set_major_formatter(NoteFormatter())
+        axis.set_major_locator(LogLocator(base=2.0, subs=[1.0, 2.0, 3.0]))
+    elif ax_type in ['cqt_hz']:
+        axis.set_major_formatter(ScalarFormatter())
+        axis.set_major_locator(LogLocator(base=2.0, subs=[1.0, 2.0, 3.0]))
+        axis.set_label_text('Hz')
+    elif ax_type in ['linear', 'hz', 'log']:
+        axis.set_major_formatter(ScalarFormatter())
+        axis.set_label_text('Hz')
 
 
 def __coord_fft_hz(n, sr=22050, **_kwargs):
