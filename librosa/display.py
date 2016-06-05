@@ -15,8 +15,8 @@ Display
 import warnings
 
 import numpy as np
-import matplotlib.image as img
 import matplotlib.pyplot as plt
+from matplotlib.ticker import Formatter, FixedFormatter, Locator
 
 from . import cache
 from . import core
@@ -24,126 +24,95 @@ from . import util
 from .util.exceptions import ParameterError
 
 
-# This function wraps xticks or yticks: star-args is okay
-def time_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
-    '''Plot time-formatted axis ticks.
+class TimeFormatter(Formatter):
+    '''A tick formatter for time axes.
 
-    Parameters
-    ----------
-    locations : list or np.ndarray
-        Time-stamps for tick marks
-
-    n_ticks : int > 0 or None
-        Show this number of ticks (evenly spaced).
-
-        If none, all ticks are displayed.
-
-        Default: 5
-
-    axis : 'x' or 'y'
-        Which axis should the ticks be plotted on?
-        Default: 'x'
-
-    time_fmt : None or {'ms', 's', 'm', 'h'}
-        - 'ms': milliseconds   (eg, 241ms)
-        - 's': seconds         (eg, 1.43s)
-        - 'm': minutes         (eg, 1:02)
-        - 'h': hours           (eg, 1:02:03)
-
-        If none, formatted is automatically selected by the
-        range of the times data.
-
-        Default: None
-
-    fmt : str
-        .. warning:: This parameter name was in librosa 0.4.2
-            Use the `time_fmt` parameter instead.
-            The `fmt` parameter will be removed in librosa 0.5.0.
-
-    kwargs : additional keyword arguments.
-        See `matplotlib.pyplot.xticks` or `yticks` for details.
-
-
-    Returns
-    -------
-    locs
-    labels
-        Locations and labels of tick marks
-
-
-    See Also
-    --------
-    matplotlib.pyplot.xticks
-    matplotlib.pyplot.yticks
-
-
-    Examples
-    --------
-    >>> # Tick at pre-computed beat times
-    >>> librosa.display.specshow(S)
-    >>> librosa.display.time_ticks(beat_times)
-
-    >>> # Set the locations of the time stamps
-    >>> librosa.display.time_ticks(locations, timestamps)
-
-    >>> # Format in seconds
-    >>> librosa.display.time_ticks(beat_times, time_fmt='s')
-
-    >>> # Tick along the y axis
-    >>> librosa.display.time_ticks(beat_times, axis='y')
-
+    Automatically switches between ms, s, minutes:sec, etc.
     '''
 
-    n_ticks = kwargs.pop('n_ticks', 5)
-    axis = kwargs.pop('axis', 'x')
-    time_fmt = kwargs.pop('time_fmt', None)
+    def __init__(self, lag=False):
 
-    if axis == 'x':
-        ticker = plt.xticks
-    elif axis == 'y':
-        ticker = plt.yticks
-    else:
-        raise ParameterError("axis must be either 'x' or 'y'.")
+        self.lag = lag
 
-    if len(args) > 0:
-        times = args[0]
-    else:
-        times = locs
-        locs = np.arange(len(times))
+    def __call__(self, x, pos=None):
+        '''Return the time format as pos'''
 
-    if n_ticks is not None:
-        # Slice the locations and labels evenly between 0 and the last point
-        positions = np.linspace(0, len(locs)-1, n_ticks,
-                                endpoint=True).astype(int)
-        locs = locs[positions]
-        times = times[positions]
+        _, dmax = self.axis.get_data_interval()
+        vmin, vmax = self.axis.get_view_interval()
 
-    # Format the labels by time
-    formats = {'ms': lambda t: '{:d}ms'.format(int(1e3 * t)),
-               's': '{:0.2f}s'.format,
-               'm': lambda t: '{:d}:{:02d}'.format(int(t / 6e1),
-                                                   int(np.mod(t, 6e1))),
-               'h': lambda t: '{:d}:{:02d}:{:02d}'.format(int(t / 3.6e3),
-                                                          int(np.mod(t / 6e1,
-                                                                     6e1)),
-                                                          int(np.mod(t, 6e1)))}
-
-    if time_fmt is None:
-        if max(times) > 3.6e3:
-            time_fmt = 'h'
-        elif max(times) > 6e1:
-            time_fmt = 'm'
-        elif max(times) > 1.0:
-            time_fmt = 's'
+        # In lag-time axes, anything greater than dmax / 2 is negative time
+        if self.lag and x >= dmax * 0.5:
+            value = np.abs(x - dmax)
+            # Do we need to tweak vmin/vmax here?
+            sign = '-'
         else:
-            time_fmt = 'ms'
+            value = x
+            sign = ''
 
-    elif time_fmt not in formats:
-        raise ParameterError('Invalid format: {:s}'.format(time_fmt))
+        if vmax - vmin > 3.6e3:
+            s = '{:d}:{:02d}:{:02d}'.format(int(value / 3.6e3),
+                                            int(np.mod(value / 6e1, 6e1)),
+                                            int(np.mod(value, 6e1)))
+        elif vmax - vmin > 6e1:
+            s = '{:d}:{:02d}'.format(int(value / 6e1),
+                                     int(np.mod(value, 6e1)))
+        elif vmax - vmin > 1.0:
+            s = '{:0.2f}s'.format(value)
+        else:
+            s = '{:g}ms'.format(1e3 * value)
 
-    times = [formats[time_fmt](t) for t in times]
+        return '{:s}{:s}'.format(sign, s)
 
-    return ticker(locs, times, **kwargs)
+
+class TempoFormatter(Formatter):
+    '''A formatter for tempo'''
+
+    def __init__(self, sr=22050, hop_length=512):
+
+        self.sr = sr
+        self.hop_length = hop_length
+
+    def __call__(self, x, pos=None):
+
+        try:
+            v = 60.0 * self.sr / (self.hop_length * x)
+            return '{:g}'.format(v)
+
+        except ZeroDivisionError:
+            pass
+
+        return ''
+
+
+class NoteFormatter(Formatter):
+
+    def __init__(self, octave=True):
+
+        self.octave = octave
+
+    def __call__(self, x, pos=None):
+
+        if x < core.note_to_hz('C0'):
+            return ''
+
+        # Only use cent precision if our vspan is less than an octave
+        vmin, vmax = self.axis.get_view_interval()
+        cents = vmax < 2 * max(1, vmin)
+
+        return core.hz_to_note(int(x), octave=self.octave, cents=cents)[0]
+
+
+class ChromaFormatter(Formatter):
+    '''A formatter for chroma'''
+    def __call__(self, x, pos=None):
+
+        return core.midi_to_note(int(x), octave=False, cents=False)
+
+
+# A fixed formatter for tonnetz
+TONNETZ_FORMATTER = FixedFormatter([r'5$_x$', r'5$_y$',
+                                    r'm3$_x$', r'm3$_y$',
+                                    r'M3$_x$', r'M3$_y$'])
 
 
 def frequency_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
@@ -753,7 +722,7 @@ def __coord_cqt_hz(n, fmin=None, bins_per_octave=12, **_kwargs):
 def __coord_chroma(n, bins_per_octave=12, **_kwargs):
     '''Get chroma bin numbers'''
 
-    return np.linspace(0, 12 * (n // bins_per_octave), num=n)
+    return np.linspace(0, (12.0 * n) / bins_per_octave, num=n)
 
 
 def __coord_n(n, **_kwargs):
@@ -764,123 +733,3 @@ def __coord_n(n, **_kwargs):
 def __coord_time(n, sr=22050, hop_length=512, **_kwargs):
     '''Get time coordinates from frames'''
     return core.frames_to_time(np.arange(n), sr=sr, hop_length=hop_length)
-
-
-def __get_shape_artists(data, horiz):
-    '''Return size, ticker, and labeler'''
-    if horiz:
-        return data.shape[1], plt.xticks, plt.xlabel
-    else:
-        return data.shape[0], plt.yticks, plt.ylabel
-
-
-def __axis_chroma(data, n_ticks, horiz, bins_per_octave=12, **_kwargs):
-    '''Chroma axes'''
-
-    n, ticker, labeler = __get_shape_artists(data, horiz)
-
-    # Generate the template positions: C D E F G A B
-    pos = np.asarray([0, 2, 4, 5, 7, 9, 11]) * bins_per_octave // 12
-
-    n_octaves = np.ceil(n / float(bins_per_octave))
-
-    positions = pos.copy()
-    for i in range(1, int(n_octaves)):
-        positions = np.append(positions, pos + i * bins_per_octave, axis=0)
-
-    values = core.midi_to_note(positions * 12 // bins_per_octave, octave=False)
-    ticker(positions[:n], values[:n])
-    labeler('Pitch class')
-
-
-def __axis_cqt(data, n_ticks, horiz, note=False, fmin=None,
-               bins_per_octave=12, **_kwargs):
-    '''CQT axes'''
-    if fmin is None:
-        fmin = core.note_to_hz('C1')
-
-    if horiz:
-        axis = 'x'
-    else:
-        axis = 'y'
-
-    fmt = _kwargs.pop('freq_fmt', 'Hz')
-
-    n, ticker, labeler = __get_shape_artists(data, horiz)
-
-    positions = np.linspace(0, n-1, num=n_ticks, endpoint=True).astype(int)
-
-    values = core.cqt_frequencies(n + 1,
-                                  fmin=fmin,
-                                  bins_per_octave=bins_per_octave)
-
-    if note:
-        values = core.hz_to_note(values[positions])
-        label = 'Note'
-        ticker(positions, values)
-    else:
-        values = values[positions]
-        _, label = frequency_ticks(positions, values,
-                                   n_ticks=None, axis=axis, freq_fmt=fmt)
-
-    labeler(label)
-
-
-def __axis_cqt_hz(*args, **kwargs):
-    '''CQT in Hz'''
-    kwargs['note'] = False
-    __axis_cqt(*args, **kwargs)
-
-
-def __axis_cqt_note(*args, **kwargs):
-    '''CQT in notes'''
-    kwargs['note'] = True
-    __axis_cqt(*args, **kwargs)
-
-
-def __axis_tempo(data, n_ticks, horiz, sr=22050, hop_length=512, tmin=16, tmax=240, **_kwargs):
-    '''Tempo axes'''
-    n, ticker, labeler = __get_shape_artists(data, horiz)
-
-    nmin = min(n-1, sr * 60.0 / (hop_length * tmin))
-    nmax = max(1, sr * 60.0 / (hop_length * tmax))
-
-    positions = np.logspace(np.log2(nmin), np.log2(nmax),
-                            num=n_ticks, endpoint=True, base=2).astype(int)
-
-    tempi = ['{:.1f}'.format(60 * float(sr) / (hop_length * t)) for t in positions]
-    ticker(positions, tempi)
-    labeler('Tempo (BPM)')
-
-
-def __axis_lag(data, n_ticks, horiz, sr=22050, hop_length=512, **_kwargs):
-    '''Lag axes'''
-    n, ticker, labeler = __get_shape_artists(data, horiz)
-
-    if horiz:
-        axis = 'x'
-    else:
-        axis = 'y'
-
-    positions = np.linspace(0, n-1, n_ticks, endpoint=True).astype(int)
-    times = core.frames_to_time(positions, sr=sr, hop_length=hop_length)
-    times[positions >= n//2] -= times[-1]
-
-    time_ticks(positions, times, n_ticks=None, axis=axis)
-
-    labeler('Lag')
-
-
-def __axis_tonnetz(data, n_ticks, horiz, **_kwargs):
-    '''Chroma axes'''
-
-    n, ticker, labeler = __get_shape_artists(data, horiz)
-
-    positions = np.arange(6)
-
-    values = [r'5$_x$', r'5$_y$',
-              r'm3$_x$', r'm3$_y$',
-              r'M3$_x$', r'M3$_y$']
-
-    ticker(positions, values)
-    labeler('Tonnetz')
