@@ -646,16 +646,18 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
     '''Compute axis coordinates'''
 
     if coords is not None:
-        if len(coords) != n:
+        if len(coords) < n:
             raise ParameterError('Coordinate shape mismatch: '
-                                 '{}!={}'.format(len(coords), n))
-        return coords
+                                 '{}<{}'.format(len(coords), n))
+        return coords[:n]
 
     coord_map = {'linear': __coord_fft_hz,
                  'hz': __coord_fft_hz,
                  'log': __coord_fft_hz,
                  'mel': __coord_mel_hz,
                  'cqt': __coord_cqt_hz,
+                 'cqt_hz': __coord_cqt_hz,
+                 'cqt_note': __coord_cqt_hz,
                  'chroma': __coord_chroma,
                  'time': __coord_time,
                  'lag': __coord_time,
@@ -697,7 +699,7 @@ def __scale_axes(axes, ax_type, which):
         kwargs[thresh] = core.note_to_hz('C2')
         kwargs[scale] = 0.5
 
-    elif ax_type == 'cqt':
+    elif ax_type in ['cqt', 'cqt_hz', 'cqt_note']:
         mode = 'log'
         kwargs[base] = 2
     else:
@@ -735,7 +737,7 @@ def __tick_axes(axis, ax_type, kwargs):
         axis.set_major_formatter(ScalarFormatter())
         axis.set_major_locator(LogLocator(base=2.0, subs=[1.0, 2.0, 3.0]))
         axis.set_label_text('Hz')
-    elif ax_type in ['linear', 'hz', 'log']:
+    elif ax_type in ['linear', 'hz', 'log', 'mel']:
         axis.set_major_formatter(ScalarFormatter())
         axis.set_label_text('Hz')
 
@@ -750,12 +752,18 @@ def __coord_fft_hz(n, sr=22050, **_kwargs):
 def __coord_mel_hz(n, fmin=0, fmax=11025.0, **_kwargs):
     '''Get the frequencies for Mel bins'''
 
+    if fmin is None:
+        fmin = 0
+    if fmax is None:
+        fmax = 11025.0
     return core.mel_frequencies(n, fmin=fmin, fmax=fmax)
 
 
 def __coord_cqt_hz(n, fmin=None, bins_per_octave=12, **_kwargs):
     '''Get CQT bin frequencies'''
 
+    if fmin is None:
+        fmin = core.note_to_hz('C1')
     return core.cqt_frequencies(n, fmin=fmin, bins_per_octave=bins_per_octave)
 
 
