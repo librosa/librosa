@@ -8,15 +8,20 @@ Display
 
     specshow
     waveplot
-    time_ticks
     cmap
+
+    TimeFormatter
+    NoteFormatter
+    ChromaFormatter
+    TempoFormatter
 """
 
 import warnings
 
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.ticker import Formatter, FixedFormatter, Locator
+from matplotlib.ticker import Formatter, FixedFormatter, ScalarFormatter
+from matplotlib.ticker import LogLocator, FixedLocator
 
 from . import cache
 from . import core
@@ -85,7 +90,7 @@ class TempoFormatter(Formatter):
 
 
 class NoteFormatter(Formatter):
-
+    '''Ticker formatter for Notes'''
     def __init__(self, octave=True):
 
         self.octave = octave
@@ -105,7 +110,7 @@ class NoteFormatter(Formatter):
 class ChromaFormatter(Formatter):
     '''A formatter for chroma'''
     def __call__(self, x, pos=None):
-
+        '''Format for chroma positions'''
         return core.midi_to_note(int(x), octave=False, cents=False)
 
 
@@ -113,125 +118,6 @@ class ChromaFormatter(Formatter):
 TONNETZ_FORMATTER = FixedFormatter([r'5$_x$', r'5$_y$',
                                     r'm3$_x$', r'm3$_y$',
                                     r'M3$_x$', r'M3$_y$'])
-
-
-def frequency_ticks(locs, *args, **kwargs):  # pylint: disable=star-args
-    '''Plot frequency-formatted axis ticks.
-
-    Parameters
-    ----------
-    locations : list or np.ndarray
-        Frequency values for tick marks
-
-    n_ticks : int > 0 or None
-        Show this number of ticks (evenly spaced).
-
-        If none, all ticks are displayed.
-
-        Default: 5
-
-    axis : 'x' or 'y'
-        Which axis should the ticks be plotted on?
-        Default: 'x'
-
-    freq_fmt : None or {'mHz', 'Hz', 'kHz', 'MHz', 'GHz'}
-        - 'mHz': millihertz
-        - 'Hz': hertz
-        - 'kHz': kilohertz
-        - 'MHz': megahertz
-        - 'GHz': gigahertz
-
-        If none, formatted is automatically selected by the
-        range of the frequency data.
-
-        Default: None
-
-    kwargs : additional keyword arguments.
-        See `matplotlib.pyplot.xticks` or `yticks` for details.
-
-
-    Returns
-    -------
-    (locs, labels)
-        Locations and labels of tick marks
-
-    label
-        Axis label
-
-    See Also
-    --------
-    matplotlib.pyplot.xticks
-    matplotlib.pyplot.yticks
-
-
-    Examples
-    --------
-    >>> # Tick at pre-computed beat times
-    >>> librosa.display.specshow(S)
-    >>> librosa.display.frequency_ticks()
-
-    >>> # Set the locations of the time stamps
-    >>> librosa.display.frequency_ticks(locations, frequencies)
-
-    >>> # Format in hertz
-    >>> librosa.display.frequency_ticks(frequencies, freq_fmt='Hz')
-
-    >>> # Tick along the y axis
-    >>> librosa.display.frequency_ticks(frequencies, axis='y')
-
-    '''
-
-    n_ticks = kwargs.pop('n_ticks', 5)
-    axis = kwargs.pop('axis', 'x')
-    freq_fmt = kwargs.pop('freq_fmt', None)
-
-    if axis == 'x':
-        ticker = plt.xticks
-    elif axis == 'y':
-        ticker = plt.yticks
-    else:
-        raise ParameterError("axis must be either 'x' or 'y'.")
-
-    if len(args) > 0:
-        freqs = args[0]
-    else:
-        freqs = locs
-        locs = np.arange(len(freqs))
-
-    if n_ticks is not None:
-        # Slice the locations and labels evenly between 0 and the last point
-        positions = np.linspace(0, len(locs)-1, n_ticks,
-                                endpoint=True).astype(int)
-        locs = locs[positions]
-        freqs = freqs[positions]
-
-    # Format the labels by time
-    formats = {'mHz': lambda f: '{:.5g}'.format(f * 1e3),
-               'Hz': '{:.5g}'.format,
-               'kHz': lambda f: '{:.5g}'.format(f * 1e-3),
-               'MHz': lambda f: '{:.5g}'.format(f * 1e-6),
-               'GHz': lambda f: '{:.5g}'.format(f * 1e-9)}
-
-    f_max = np.max(freqs)
-
-    if freq_fmt is None:
-        if f_max > 1e10:
-            freq_fmt = 'GHz'
-        elif f_max > 1e7:
-            freq_fmt = 'MHz'
-        elif f_max > 1e4:
-            freq_fmt = 'kHz'
-        elif f_max > 1e1:
-            freq_fmt = 'Hz'
-        else:
-            freq_fmt = 'mHz'
-
-    elif freq_fmt not in formats:
-        raise ParameterError('Invalid format: {:s}'.format(freq_fmt))
-
-    ticks = [formats[freq_fmt](f) for f in freqs]
-
-    return ticker(locs, ticks, **kwargs), freq_fmt
 
 
 @cache
@@ -300,7 +186,7 @@ def __envelope(x, hop):
 
 
 def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000,
-             time_fmt=None, **kwargs):
+             **kwargs):
     '''Plot the amplitude envelope of a waveform.
 
     If `y` is monophonic, a filled curve is drawn between `[-abs(y), abs(y)]`.
@@ -329,18 +215,11 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000
     x_axis : str {'time', 'off', 'none'} or None
         If 'time', the x-axis is given time tick-marks.
 
-        See also: `time_ticks`
-
     offset : float
         Horizontal offset (in time) to start the waveform plot
 
     max_sr : number > 0 [scalar]
         Maximum sampling rate for the visualization
-
-    time_fmt : None or str
-        Formatting for time axis.  None (automatic) by default.
-
-        See `time_ticks`.
 
     kwargs
         Additional keyword arguments to `matplotlib.pyplot.fill_between`
@@ -393,6 +272,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000
         raise ParameterError('max_sr must be a non-negative integer')
 
     target_sr = sr
+    hop_length = 1
 
     if max_points is not None:
         if max_points <= 0:
@@ -419,17 +299,17 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000
 
     kwargs.setdefault('color', next(axes._get_lines.prop_cycler)['color'])
 
-    sample_off = core.time_to_samples(offset, sr=target_sr)
-
-    locs = np.arange(sample_off, sample_off + len(y_top))
+    locs = offset + core.frames_to_time(np.arange(len(y_top)),
+                                        sr=sr,
+                                        hop_length=hop_length)
     out = axes.fill_between(locs, y_bottom, y_top, **kwargs)
 
-    plt.xlim([locs[0], locs[-1]])
-
+    axes.set_xlim([locs.min(), locs.max()])
     if x_axis == 'time':
-        time_ticks(locs, core.samples_to_time(locs, sr=target_sr), time_fmt=time_fmt)
+        axes.xaxis.set_major_formatter(TimeFormatter(lag=False))
+        axes.xaxis.set_label_text('Time')
     elif x_axis is None or x_axis in ['off', 'none']:
-        plt.xticks([])
+        axes.set_xticks([])
     else:
         raise ParameterError('Unknown x_axis value: {}'.format(x_axis))
 
@@ -623,33 +503,38 @@ def specshow(data, x_coords=None, y_coords=None,
     y_coords = __mesh_coords(y_axis, y_coords, data.shape[0], **all_params)
     x_coords = __mesh_coords(x_axis, x_coords, data.shape[1], **all_params)
 
-    ax = plt.gca()
-    ax.pcolormesh(x_coords, y_coords, data, **kwargs)
+    axes = plt.gca()
+    axes.pcolormesh(x_coords, y_coords, data, **kwargs)
+
+    plt.axis('tight')
 
     # Set up axis scaling
-    __scale_axes(ax, x_axis, 'x')
-    __scale_axes(ax, y_axis, 'y')
+    __scale_axes(axes, x_axis, 'x')
+    __scale_axes(axes, y_axis, 'y')
 
-    # Construct tickers
-    #TODO
+    # Construct tickers and locators
+    __tick_axes(axes.xaxis, x_axis, all_params)
+    __tick_axes(axes.yaxis, y_axis, all_params)
 
-    return ax
+    return axes
 
 
 def __mesh_coords(ax_type, coords, n, **kwargs):
     '''Compute axis coordinates'''
 
     if coords is not None:
-        if len(coords) != n:
+        if len(coords) < n:
             raise ParameterError('Coordinate shape mismatch: '
-                                 '{}!={}'.format(len(coords), n))
-        return coords
+                                 '{}<{}'.format(len(coords), n))
+        return coords[:n]
 
     coord_map = {'linear': __coord_fft_hz,
                  'hz': __coord_fft_hz,
                  'log': __coord_fft_hz,
                  'mel': __coord_mel_hz,
                  'cqt': __coord_cqt_hz,
+                 'cqt_hz': __coord_cqt_hz,
+                 'cqt_note': __coord_cqt_hz,
                  'chroma': __coord_chroma,
                  'time': __coord_time,
                  'lag': __coord_time,
@@ -691,13 +576,47 @@ def __scale_axes(axes, ax_type, which):
         kwargs[thresh] = core.note_to_hz('C2')
         kwargs[scale] = 0.5
 
-    elif ax_type == 'cqt':
+    elif ax_type in ['cqt', 'cqt_hz', 'cqt_note']:
         mode = 'log'
         kwargs[base] = 2
     else:
         return
 
     scaler(mode, **kwargs)
+
+
+def __tick_axes(axis, ax_type, kwargs):
+    '''Configure axis tickers, locators, and labels'''
+    if ax_type == 'tonnetz':
+        # tonnetz => TONNETZ_FORMATTER
+        axis.set_major_formatter(TONNETZ_FORMATTER)
+        axis.set_major_locator(FixedLocator(np.arange(0.5, 6.5)))
+    elif ax_type == 'chroma':
+        # chroma => ChromaFormatter, fixedlocator
+        axis.set_major_formatter(ChromaFormatter())
+        axis.set_major_locator(FixedLocator(0.5 + np.asarray([0, 2, 4, 5, 7, 9, 11])))
+    elif ax_type == 'tempo':
+        # tempo => TempoFormatter
+        axis.set_major_formatter(TempoFormatter(sr=kwargs['sr'],
+                                                hop_length=kwargs['hop_length']))
+        axis.set_major_locator(LogLocator(base=2.0, subs=[1.0, 2.0, 3.0]))
+        axis.set_label_text('BPM')
+    elif ax_type == 'time':
+        axis.set_major_formatter(TimeFormatter(lag=False))
+        axis.set_label_text('Time')
+    elif ax_type == 'lag':
+        axis.set_major_formatter(TimeFormatter(lag=True))
+        axis.set_label_text('Lag')
+    elif ax_type == 'cqt_note':
+        axis.set_major_formatter(NoteFormatter())
+        axis.set_major_locator(LogLocator(base=2.0, subs=[1.0, 2.0, 3.0]))
+    elif ax_type in ['cqt_hz']:
+        axis.set_major_formatter(ScalarFormatter())
+        axis.set_major_locator(LogLocator(base=2.0, subs=[1.0, 2.0, 3.0]))
+        axis.set_label_text('Hz')
+    elif ax_type in ['linear', 'hz', 'log', 'mel']:
+        axis.set_major_formatter(ScalarFormatter())
+        axis.set_label_text('Hz')
 
 
 def __coord_fft_hz(n, sr=22050, **_kwargs):
@@ -710,19 +629,25 @@ def __coord_fft_hz(n, sr=22050, **_kwargs):
 def __coord_mel_hz(n, fmin=0, fmax=11025.0, **_kwargs):
     '''Get the frequencies for Mel bins'''
 
+    if fmin is None:
+        fmin = 0
+    if fmax is None:
+        fmax = 11025.0
     return core.mel_frequencies(n, fmin=fmin, fmax=fmax)
 
 
 def __coord_cqt_hz(n, fmin=None, bins_per_octave=12, **_kwargs):
     '''Get CQT bin frequencies'''
 
+    if fmin is None:
+        fmin = core.note_to_hz('C1')
     return core.cqt_frequencies(n, fmin=fmin, bins_per_octave=bins_per_octave)
 
 
 def __coord_chroma(n, bins_per_octave=12, **_kwargs):
     '''Get chroma bin numbers'''
 
-    return np.linspace(0, (12.0 * n) / bins_per_octave, num=n)
+    return np.linspace(0, (12.0 * n) / bins_per_octave, num=n+1, endpoint=True)
 
 
 def __coord_n(n, **_kwargs):
