@@ -506,6 +506,8 @@ def specshow(data, x_coords=None, y_coords=None,
     axes = plt.gca()
     axes.pcolormesh(x_coords, y_coords, data, **kwargs)
 
+    plt.axis('tight')
+
     # Set up axis scaling
     __scale_axes(axes, x_axis, 'x')
     __scale_axes(axes, y_axis, 'y')
@@ -592,7 +594,7 @@ def __tick_axes(axis, ax_type, kwargs):
     elif ax_type == 'chroma':
         # chroma => ChromaFormatter, fixedlocator
         axis.set_major_formatter(ChromaFormatter())
-        axis.set_major_locator(FixedLocator(np.asarray([0, 2, 4, 5, 7, 9, 11])))
+        axis.set_major_locator(FixedLocator(0.5 + np.asarray([0, 2, 4, 5, 7, 9, 11])))
     elif ax_type == 'tempo':
         # tempo => TempoFormatter
         axis.set_major_formatter(TempoFormatter(sr=kwargs['sr'],
@@ -645,7 +647,7 @@ def __coord_cqt_hz(n, fmin=None, bins_per_octave=12, **_kwargs):
 def __coord_chroma(n, bins_per_octave=12, **_kwargs):
     '''Get chroma bin numbers'''
 
-    return np.linspace(0, (12.0 * n) / bins_per_octave, num=n)
+    return np.linspace(0, (12.0 * n) / bins_per_octave, num=n+1, endpoint=True)
 
 
 def __coord_n(n, **_kwargs):
