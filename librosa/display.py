@@ -32,6 +32,12 @@ class TimeFormatter(Formatter):
     '''A tick formatter for time axes.
 
     Automatically switches between ms, s, minutes:sec, etc.
+
+    Parameters
+    ----------
+    lag : bool
+        If `True`, then the time axis is interpreted in lag coordinates.
+        Anything past the mid-point will be converted to negative time.
     '''
 
     def __init__(self, lag=False):
@@ -69,7 +75,15 @@ class TimeFormatter(Formatter):
 
 
 class NoteFormatter(Formatter):
-    '''Ticker formatter for Notes'''
+    '''Ticker formatter for Notes
+
+    Parameters
+    ----------
+    octave : bool
+        If `True`, display the octave number along with the note name.
+
+        Otherwise, only show the note name (and cent deviation)
+    '''
     def __init__(self, octave=True):
 
         self.octave = octave
@@ -87,7 +101,7 @@ class NoteFormatter(Formatter):
 
 
 class ChromaFormatter(Formatter):
-    '''A formatter for chroma'''
+    '''A formatter for chroma axes'''
     def __call__(self, x, pos=None):
         '''Format for chroma positions'''
         return core.midi_to_note(int(x), octave=False, cents=False)

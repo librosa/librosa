@@ -606,6 +606,20 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
     >>> # Or with a click frequency of 880Hz and a 500ms sample
     >>> y_beat_times880 = librosa.clicks(times=times, sr=sr,
     ...                                  click_freq=880, click_duration=0.5)
+
+    Display click waveform next to the spectrogram
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> S = librosa.feature.melspectrogram(y=y, sr=sr)
+    >>> ax = plt.subplot(2,1,2)
+    >>> librosa.display.specshow(librosa.logamplitude(S, ref_power=np.max),
+    ...                          x_axis='time', y_axis='mel')
+    >>> plt.subplot(2,1,1, sharex=ax)
+    >>> librosa.display.waveplot(y_beat_times, sr=sr, label='Beat clicks')
+    >>> plt.legend()
+    >>> plt.xlim(15, 30)
+    >>> plt.tight_layout()
     """
 
     # Compute sample positions from time or frames
