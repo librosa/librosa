@@ -19,7 +19,7 @@ import warnings
 
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.ticker import Formatter, FixedFormatter, ScalarFormatter
+from matplotlib.ticker import Formatter, FixedFormatter, ScalarFormatter, NullFormatter
 from matplotlib.ticker import LogLocator, FixedLocator, MaxNLocator
 
 from . import cache
@@ -83,10 +83,16 @@ class NoteFormatter(Formatter):
         If `True`, display the octave number along with the note name.
 
         Otherwise, only show the note name (and cent deviation)
+
+    major : bool
+        If `True`, ticks are always labeled.
+
+        If `False`, ticks are only labeled if the span is less than 2 octaves
     '''
-    def __init__(self, octave=True):
+    def __init__(self, octave=True, major=True):
 
         self.octave = octave
+        self.major = major
 
     def __call__(self, x, pos=None):
 
@@ -95,7 +101,11 @@ class NoteFormatter(Formatter):
 
         # Only use cent precision if our vspan is less than an octave
         vmin, vmax = self.axis.get_view_interval()
-        cents = vmax < 2 * max(1, vmin)
+
+        if not self.major and vmax > 4 * max(1, vmin):
+            return ''
+
+        cents = vmax <= 2 * max(1, vmin)
 
         return core.hz_to_note(int(x), octave=self.octave, cents=cents)[0]
 
@@ -609,11 +619,16 @@ def __decorate_axis(axis, ax_type):
     elif ax_type == 'cqt_note':
         axis.set_major_formatter(NoteFormatter())
         axis.set_major_locator(LogLocator(base=2.0))
+        axis.set_minor_formatter(NoteFormatter(major=False))
+        axis.set_minor_locator(LogLocator(base=2.0,
+                                          subs=2.0**(np.arange(1, 12)/12.0)))
         axis.set_label_text('Note')
 
     elif ax_type in ['cqt_hz']:
         axis.set_major_formatter(ScalarFormatter())
         axis.set_major_locator(LogLocator(base=2.0))
+        axis.set_minor_locator(LogLocator(base=2.0,
+                                          subs=2.0**(np.arange(1, 12)/12.0)))
         axis.set_label_text('Hz')
 
     elif ax_type in ['linear', 'hz', 'mel', 'log']:
