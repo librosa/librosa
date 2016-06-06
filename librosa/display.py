@@ -485,7 +485,9 @@ def specshow(data, x_coords=None, y_coords=None,
     axes = plt.gca()
     axes.pcolormesh(x_coords, y_coords, data, **kwargs)
 
-    plt.axis('tight')
+    #plt.axis('tight')
+    axes.set_xlim(x_coords.min(), x_coords.max())
+    axes.set_ylim(y_coords.min(), y_coords.max())
 
     # Set up axis scaling
     __scale_axes(axes, x_axis, 'x')
@@ -538,11 +540,13 @@ def __scale_axes(axes, ax_type, which):
         base = 'basex'
         scale = 'linscalex'
         scaler = axes.set_xscale
+        limit = axes.set_xlim
     else:
         thresh = 'linthreshy'
         base = 'basey'
         scale = 'linscaley'
         scaler = axes.set_yscale
+        limit = axes.set_ylim
 
     # Map ticker scales
     if ax_type == 'mel':
@@ -564,6 +568,7 @@ def __scale_axes(axes, ax_type, which):
         kwargs[base] = 2
         kwargs[thresh] = 32.0
         kwargs[scale] = 1.0
+        limit(16, 400)
     else:
         return
 
@@ -576,12 +581,14 @@ def __tick_axes(axis, ax_type, kwargs):
         # tonnetz => TONNETZ_FORMATTER
         axis.set_major_formatter(TONNETZ_FORMATTER)
         axis.set_major_locator(FixedLocator(0.5 + np.arange(6)))
+        axis.set_label_text('Tonnetz')
     elif ax_type == 'chroma':
         # chroma => ChromaFormatter, fixedlocator
         axis.set_major_formatter(ChromaFormatter())
         axis.set_major_locator(FixedLocator(0.5 +
                                             np.add.outer(np.arange(0, 96, 12),
                                                          [0, 2, 4, 5, 7, 9, 11]).ravel()))
+        axis.set_label_text('Pitch class')
     elif ax_type == 'tempo':
         axis.set_major_formatter(ScalarFormatter())
         axis.set_major_locator(LogLocator(base=2.0, subs=[1.0, 2.0, 3.0]))
@@ -611,7 +618,7 @@ def __coord_fft_hz(n, sr=22050, **_kwargs):
     '''Get the frequencies for FFT bins'''
     n_fft = 2 * (n - 1)
 
-    return core.fft_frequencies(sr=sr, n_fft=n_fft)
+    return core.fft_frequencies(sr=sr, n_fft=1+n_fft)
 
 
 def __coord_mel_hz(n, fmin=0, fmax=11025.0, **_kwargs):
