@@ -13,7 +13,6 @@ Display
     TimeFormatter
     NoteFormatter
     ChromaFormatter
-    TempoFormatter
 """
 
 import warnings
@@ -67,26 +66,6 @@ class TimeFormatter(Formatter):
             s = '{:g}ms'.format(1e3 * value)
 
         return '{:s}{:s}'.format(sign, s)
-
-
-class TempoFormatter(Formatter):
-    '''A formatter for tempo'''
-
-    def __init__(self, sr=22050, hop_length=512):
-
-        self.sr = sr
-        self.hop_length = hop_length
-
-    def __call__(self, x, pos=None):
-
-        try:
-            v = 60.0 * self.sr / (self.hop_length * x)
-            return '{:g}'.format(v)
-
-        except ZeroDivisionError:
-            pass
-
-        return ''
 
 
 class NoteFormatter(Formatter):
@@ -526,7 +505,7 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
         if len(coords) < n:
             raise ParameterError('Coordinate shape mismatch: '
                                  '{}<{}'.format(len(coords), n))
-        return coords[:n]
+        return coords
 
     coord_map = {'linear': __coord_fft_hz,
                  'hz': __coord_fft_hz,
@@ -540,7 +519,7 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
                  'lag': __coord_time,
                  'tonnetz': __coord_n,
                  'off': __coord_n,
-                 'tempo': __coord_n,
+                 'tempo': __coord_tempo,
                  'frames': __coord_n,
                  None: __coord_n}
 
@@ -565,6 +544,7 @@ def __scale_axes(axes, ax_type, which):
         scale = 'linscaley'
         scaler = axes.set_yscale
 
+    # Map ticker scales
     if ax_type == 'mel':
         mode = 'symlog'
         kwargs[thresh] = 1000.0
@@ -579,6 +559,11 @@ def __scale_axes(axes, ax_type, which):
     elif ax_type in ['cqt', 'cqt_hz', 'cqt_note']:
         mode = 'log'
         kwargs[base] = 2
+    elif ax_type == 'tempo':
+        mode = 'symlog'
+        kwargs[base] = 2
+        kwargs[thresh] = 32.0
+        kwargs[scale] = 1.0
     else:
         return
 
@@ -590,15 +575,15 @@ def __tick_axes(axis, ax_type, kwargs):
     if ax_type == 'tonnetz':
         # tonnetz => TONNETZ_FORMATTER
         axis.set_major_formatter(TONNETZ_FORMATTER)
-        axis.set_major_locator(FixedLocator(np.arange(0.5, 6.5)))
+        axis.set_major_locator(FixedLocator(0.5 + np.arange(6)))
     elif ax_type == 'chroma':
         # chroma => ChromaFormatter, fixedlocator
         axis.set_major_formatter(ChromaFormatter())
-        axis.set_major_locator(FixedLocator(0.5 + np.asarray([0, 2, 4, 5, 7, 9, 11])))
+        axis.set_major_locator(FixedLocator(0.5 +
+                                            np.add.outer(np.arange(0, 96, 12),
+                                                         [0, 2, 4, 5, 7, 9, 11]).ravel()))
     elif ax_type == 'tempo':
-        # tempo => TempoFormatter
-        axis.set_major_formatter(TempoFormatter(sr=kwargs['sr'],
-                                                hop_length=kwargs['hop_length']))
+        axis.set_major_formatter(ScalarFormatter())
         axis.set_major_locator(LogLocator(base=2.0, subs=[1.0, 2.0, 3.0]))
         axis.set_label_text('BPM')
     elif ax_type == 'time':
@@ -617,6 +602,9 @@ def __tick_axes(axis, ax_type, kwargs):
     elif ax_type in ['linear', 'hz', 'log', 'mel']:
         axis.set_major_formatter(ScalarFormatter())
         axis.set_label_text('Hz')
+    elif ax_type in ['off', 'none', None]:
+        axis.set_label_text('')
+        axis.set_ticks([])
 
 
 def __coord_fft_hz(n, sr=22050, **_kwargs):
@@ -633,7 +621,8 @@ def __coord_mel_hz(n, fmin=0, fmax=11025.0, **_kwargs):
         fmin = 0
     if fmax is None:
         fmax = 11025.0
-    return core.mel_frequencies(n, fmin=fmin, fmax=fmax)
+
+    return core.mel_frequencies(n+2, fmin=fmin, fmax=fmax)[1:]
 
 
 def __coord_cqt_hz(n, fmin=None, bins_per_octave=12, **_kwargs):
@@ -641,7 +630,7 @@ def __coord_cqt_hz(n, fmin=None, bins_per_octave=12, **_kwargs):
 
     if fmin is None:
         fmin = core.note_to_hz('C1')
-    return core.cqt_frequencies(n, fmin=fmin, bins_per_octave=bins_per_octave)
+    return core.cqt_frequencies(n+1, fmin=fmin, bins_per_octave=bins_per_octave)
 
 
 def __coord_chroma(n, bins_per_octave=12, **_kwargs):
@@ -650,11 +639,15 @@ def __coord_chroma(n, bins_per_octave=12, **_kwargs):
     return np.linspace(0, (12.0 * n) / bins_per_octave, num=n+1, endpoint=True)
 
 
+def __coord_tempo(n, sr=22050, hop_length=512, **_kwargs):
+    '''Tempo coordinates'''
+    return core.tempo_frequencies(n+1, sr=sr, hop_length=hop_length)
+
 def __coord_n(n, **_kwargs):
     '''Get bare positions'''
-    return np.arange(n)
+    return np.arange(n+1)
 
 
 def __coord_time(n, sr=22050, hop_length=512, **_kwargs):
     '''Get time coordinates from frames'''
-    return core.frames_to_time(np.arange(n), sr=sr, hop_length=hop_length)
+    return core.frames_to_time(np.arange(n+1), sr=sr, hop_length=hop_length)
