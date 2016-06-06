@@ -19,7 +19,7 @@ import warnings
 
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.ticker import Formatter, FixedFormatter, ScalarFormatter, NullFormatter
+from matplotlib.ticker import Formatter, FixedFormatter, ScalarFormatter
 from matplotlib.ticker import LogLocator, FixedLocator, MaxNLocator
 
 from . import cache

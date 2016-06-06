@@ -16,7 +16,7 @@ matplotlib.use('Agg')
 matplotlib.rcParams.update(matplotlib.rcParamsDefault)
 
 import matplotlib.style
-matplotlib.style.use('seaborn-white')
+matplotlib.style.use('seaborn-ticks')
 
 import matplotlib.pyplot as plt
 
@@ -70,7 +70,7 @@ def test_tempo():
     T = librosa.feature.tempogram(y=y, sr=sr)
 
     plt.figure()
-    librosa.display.specshow(T, y_axis='tempo')
+    librosa.display.specshow(T, y_axis='tempo', cmap='magma')
 
 
 @image_comparison(baseline_images=['tonnetz'], extensions=['png'])
@@ -111,7 +111,7 @@ def test_x_mel():
     plt.figure()
 
     M = librosa.feature.melspectrogram(S=S_abs**2)
-    librosa.display.specshow(M, y_axis='mel')
+    librosa.display.specshow(M.T, x_axis='mel')
 
 
 @image_comparison(baseline_images=['y_mel'], extensions=['png'])
@@ -119,7 +119,7 @@ def test_y_mel():
     plt.figure()
 
     M = librosa.feature.melspectrogram(S=S_abs**2)
-    librosa.display.specshow(M.T, x_axis='mel')
+    librosa.display.specshow(M, y_axis='mel')
 
 
 @image_comparison(baseline_images=['y_mel_bounded'], extensions=['png'])
@@ -135,13 +135,13 @@ def test_y_mel_bounded():
 def test_xaxis_none_yaxis_linear():
     plt.figure()
     plt.subplot(3, 1, 1)
-    librosa.display.specshow(S_abs, x_axis='linear')
+    librosa.display.specshow(S_abs, y_axis='linear')
 
     plt.subplot(3, 1, 2)
-    librosa.display.specshow(S_signed, x_axis='linear')
+    librosa.display.specshow(S_signed, y_axis='linear')
 
     plt.subplot(3, 1, 3)
-    librosa.display.specshow(S_bin, x_axis='linear')
+    librosa.display.specshow(S_bin, y_axis='linear')
 
 
 @image_comparison(baseline_images=['x_none_y_log'], extensions=['png'])
