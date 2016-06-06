@@ -587,7 +587,7 @@ def __decorate_axis(axis, ax_type):
     elif ax_type == 'chroma':
         axis.set_major_formatter(ChromaFormatter())
         axis.set_major_locator(FixedLocator(0.5 +
-                                            np.add.outer(np.arange(0, 96, 12),
+                                            np.add.outer(12 * np.arange(10),
                                                          [0, 2, 4, 5, 7, 9, 11]).ravel()))
         axis.set_label_text('Pitch class')
 
