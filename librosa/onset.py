@@ -96,21 +96,21 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     Or use a pre-computed onset envelope
 
     >>> o_env = librosa.onset.onset_strength(y, sr=sr)
+    >>> times = librosa.frames_to_time(np.arange(len(o_env)), sr=sr)
     >>> onset_frames = librosa.onset.onset_detect(onset_envelope=o_env, sr=sr)
 
 
     >>> import matplotlib.pyplot as plt
     >>> D = np.abs(librosa.stft(y))**2
     >>> plt.figure()
-    >>> plt.subplot(2, 1, 1)
+    >>> ax1 = plt.subplot(2, 1, 1)
     >>> librosa.display.specshow(librosa.logamplitude(D, ref_power=np.max),
     ...                          x_axis='time', y_axis='log')
     >>> plt.title('Power spectrogram')
-    >>> plt.subplot(2, 1, 2)
-    >>> plt.plot(o_env, label='Onset strength')
-    >>> plt.vlines(onset_frames, 0, o_env.max(), color='r', alpha=0.9,
+    >>> plt.subplot(2, 1, 2, sharex=ax1)
+    >>> plt.plot(times, o_env, label='Onset strength')
+    >>> plt.vlines(times[onset_frames], 0, o_env.max(), color='r', alpha=0.9,
     ...            linestyle='--', label='Onsets')
-    >>> plt.xticks([])
     >>> plt.axis('tight')
     >>> plt.legend(frameon=True, framealpha=0.75)
 
@@ -234,17 +234,18 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
     >>> y, sr = librosa.load(librosa.util.example_audio_file(),
     ...                      duration=10.0)
     >>> D = np.abs(librosa.stft(y))**2
+    >>> times = librosa.frames_to_time(np.arange(D.shape[1]))
     >>> plt.figure()
-    >>> plt.subplot(2, 1, 1)
+    >>> ax1 = plt.subplot(2, 1, 1)
     >>> librosa.display.specshow(librosa.logamplitude(D, ref_power=np.max),
-    ...                          y_axis='log')
+    ...                          y_axis='log', x_axis='time')
     >>> plt.title('Power spectrogram')
 
     Construct a standard onset function
 
     >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr)
-    >>> plt.subplot(2, 1, 2)
-    >>> plt.plot(2 + onset_env / onset_env.max(), alpha=0.8,
+    >>> plt.subplot(2, 1, 2, sharex=ax1)
+    >>> plt.plot(times, 2 + onset_env / onset_env.max(), alpha=0.8,
     ...          label='Mean aggregation (mel)')
 
 
@@ -253,7 +254,7 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
     >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr,
     ...                                          aggregate=np.median,
     ...                                          fmax=8000, n_mels=256)
-    >>> plt.plot(1 + onset_env / onset_env.max(), alpha=0.8,
+    >>> plt.plot(times, 1 + onset_env / onset_env.max(), alpha=0.8,
     ...          label='Median aggregation (custom mel)')
 
 
@@ -261,11 +262,9 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
 
     >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr,
     ...                                          feature=librosa.cqt)
-    >>> plt.plot(onset_env / onset_env.max(), alpha=0.8,
+    >>> plt.plot(times, onset_env / onset_env.max(), alpha=0.8,
     ...          label='Mean aggregation (CQT)')
-
     >>> plt.legend(frameon=True, framealpha=0.75)
-    >>> librosa.display.time_ticks(librosa.frames_to_time(np.arange(len(onset_env))))
     >>> plt.ylabel('Normalized strength')
     >>> plt.yticks([])
     >>> plt.axis('tight')
