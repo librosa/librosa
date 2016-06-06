@@ -502,8 +502,8 @@ def specshow(data, x_coords=None, y_coords=None,
     __scale_axes(axes, y_axis, 'y')
 
     # Construct tickers and locators
-    __decorate_axis(axes.xaxis, x_axis, all_params)
-    __decorate_axis(axes.yaxis, y_axis, all_params)
+    __decorate_axis(axes.xaxis, x_axis)
+    __decorate_axis(axes.yaxis, y_axis)
 
     return axes
 
@@ -584,7 +584,7 @@ def __scale_axes(axes, ax_type, which):
     scaler(mode, **kwargs)
 
 
-def __decorate_axis(axis, ax_type, kwargs):
+def __decorate_axis(axis, ax_type):
     '''Configure axis tickers, locators, and labels'''
 
     if ax_type == 'tonnetz':
