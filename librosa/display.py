@@ -562,12 +562,13 @@ def __scale_axes(axes, ax_type, which):
     elif ax_type in ['cqt', 'cqt_hz', 'cqt_note']:
         mode = 'log'
         kwargs[base] = 2
+
     elif ax_type == 'tempo':
         mode = 'symlog'
         kwargs[base] = 2
         kwargs[thresh] = 32.0
         kwargs[scale] = 1.0
-        limit(16, 400)
+        limit(16, 480)
     else:
         return
 
@@ -609,12 +610,12 @@ def __decorate_axis(axis, ax_type, kwargs):
         axis.set_major_locator(LogLocator(base=2.0))
         axis.set_label_text('Note')
 
-    elif ax_type == 'cqt_hz':
+    elif ax_type in ['cqt_hz']:
         axis.set_major_formatter(ScalarFormatter())
         axis.set_major_locator(LogLocator(base=2.0))
         axis.set_label_text('Hz')
 
-    elif ax_type in ['linear', 'hz', 'log', 'mel']:
+    elif ax_type in ['linear', 'hz', 'mel', 'log']:
         axis.set_major_formatter(ScalarFormatter())
         axis.set_label_text('Hz')
 
@@ -629,7 +630,6 @@ def __decorate_axis(axis, ax_type, kwargs):
 def __coord_fft_hz(n, sr=22050, **_kwargs):
     '''Get the frequencies for FFT bins'''
     n_fft = 2 * (n - 1)
-
     return core.fft_frequencies(sr=sr, n_fft=1+n_fft)
 
 
@@ -646,7 +646,6 @@ def __coord_mel_hz(n, fmin=0, fmax=11025.0, **_kwargs):
 
 def __coord_cqt_hz(n, fmin=None, bins_per_octave=12, **_kwargs):
     '''Get CQT bin frequencies'''
-
     if fmin is None:
         fmin = core.note_to_hz('C1')
     return core.cqt_frequencies(n+1, fmin=fmin, bins_per_octave=bins_per_octave)
@@ -654,13 +653,13 @@ def __coord_cqt_hz(n, fmin=None, bins_per_octave=12, **_kwargs):
 
 def __coord_chroma(n, bins_per_octave=12, **_kwargs):
     '''Get chroma bin numbers'''
-
     return np.linspace(0, (12.0 * n) / bins_per_octave, num=n+1, endpoint=True)
 
 
 def __coord_tempo(n, sr=22050, hop_length=512, **_kwargs):
     '''Tempo coordinates'''
     return core.tempo_frequencies(n+1, sr=sr, hop_length=hop_length)
+
 
 def __coord_n(n, **_kwargs):
     '''Get bare positions'''
