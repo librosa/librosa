@@ -20,7 +20,7 @@ import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import Formatter, FixedFormatter, ScalarFormatter
-from matplotlib.ticker import LogLocator, FixedLocator, MaxNLocator
+from matplotlib.ticker import LogLocator, FixedLocator, MaxNLocator, SymmetricalLogLocator
 
 from . import cache
 from . import core
@@ -575,10 +575,8 @@ def __scale_axes(axes, ax_type, which):
         kwargs[base] = 2
 
     elif ax_type == 'tempo':
-        mode = 'symlog'
+        mode = 'log'
         kwargs[base] = 2
-        kwargs[thresh] = 32.0
-        kwargs[scale] = 1.0
         limit(16, 480)
     else:
         return
@@ -631,7 +629,12 @@ def __decorate_axis(axis, ax_type):
                                           subs=2.0**(np.arange(1, 12)/12.0)))
         axis.set_label_text('Hz')
 
-    elif ax_type in ['linear', 'hz', 'mel', 'log']:
+    elif ax_type in ['mel', 'log']:
+        axis.set_major_formatter(ScalarFormatter())
+        axis.set_major_locator(SymmetricalLogLocator(axis.get_transform()))
+        axis.set_label_text('Hz')
+
+    elif ax_type in ['linear', 'hz']:
         axis.set_major_formatter(ScalarFormatter())
         axis.set_label_text('Hz')
 
