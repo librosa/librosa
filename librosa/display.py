@@ -313,7 +313,6 @@ def specshow(data, x_coords=None, y_coords=None,
              sr=22050, hop_length=512,
              fmin=None, fmax=None,
              bins_per_octave=12,
-             tmin=16, tmax=240,
              **kwargs):
     '''Display a spectrogram/chromagram/cqt/etc.
 
@@ -373,11 +372,6 @@ def specshow(data, x_coords=None, y_coords=None,
 
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave.  Used for CQT frequency scale.
-
-    tmin : float > 0 [scalar]
-    tmax : float > 0 [scalar]
-        Minimum and maximum tempi displayed when `_axis='tempo'`,
-        as measured in beats per minute.
 
     kwargs : additional keyword arguments
         Arguments passed through to `matplotlib.pyplot.pcolormesh`.
@@ -482,8 +476,6 @@ def specshow(data, x_coords=None, y_coords=None,
                       fmin=fmin,
                       fmax=fmax,
                       bins_per_octave=bins_per_octave,
-                      tmin=tmin,
-                      tmax=tmax,
                       hop_length=hop_length)
 
     # Get the x and y coordinates
