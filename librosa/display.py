@@ -20,7 +20,7 @@ import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import Formatter, FixedFormatter, ScalarFormatter
-from matplotlib.ticker import LogLocator, FixedLocator, MaxNLocator
+from matplotlib.ticker import LogLocator, FixedLocator, MaxNLocator, SymmetricalLogLocator
 
 from . import cache
 from . import core
@@ -31,13 +31,44 @@ from .util.exceptions import ParameterError
 class TimeFormatter(Formatter):
     '''A tick formatter for time axes.
 
-    Automatically switches between ms, s, minutes:sec, etc.
+    Automatically switches between seconds, minutes:seconds,
+    or hours:minutes:seconds.
 
     Parameters
     ----------
     lag : bool
         If `True`, then the time axis is interpreted in lag coordinates.
         Anything past the mid-point will be converted to negative time.
+
+
+    See also
+    --------
+    matplotlib.ticker.Formatter
+
+
+    Examples
+    --------
+
+    For normal time
+
+    >>> import matplotlib.pyplot as plt
+    >>> times = np.arange(30)
+    >>> values = np.random.randn(len(times))
+    >>> plt.figure()
+    >>> ax = plt.gca()
+    >>> ax.plot(times, values)
+    >>> ax.xaxis.set_major_formatter(librosa.display.TimeFormatter())
+    >>> ax.set_xlabel('Time')
+
+    For lag plots
+
+    >>> times = np.arange(60)
+    >>> values = np.random.randn(len(times))
+    >>> plt.figure()
+    >>> ax = plt.gca()
+    >>> ax.plot(times, values)
+    >>> ax.xaxis.set_major_formatter(librosa.display.TimeFormatter(lag=True))
+    >>> ax.set_xlabel('Lag')
     '''
 
     def __init__(self, lag=False):
@@ -52,6 +83,9 @@ class TimeFormatter(Formatter):
 
         # In lag-time axes, anything greater than dmax / 2 is negative time
         if self.lag and x >= dmax * 0.5:
+            # In lag mode, don't tick past the limits of the data
+            if x > dmax:
+                return ''
             value = np.abs(x - dmax)
             # Do we need to tweak vmin/vmax here?
             sign = '-'
@@ -59,17 +93,15 @@ class TimeFormatter(Formatter):
             value = x
             sign = ''
 
-        if vmax - vmin > 3.6e3:
-            s = '{:d}:{:02d}:{:02d}'.format(int(value / 3.6e3),
-                                            int(np.mod(value / 6e1, 6e1)),
-                                            int(np.mod(value, 6e1)))
-        elif vmax - vmin > 6e1:
-            s = '{:d}:{:02d}'.format(int(value / 6e1),
-                                     int(np.mod(value, 6e1)))
-        elif vmax - vmin > 1.0:
-            s = '{:0.2f}s'.format(value)
+        if vmax - vmin > 3600:
+            s = '{:d}:{:02d}:{:02d}'.format(int(value / 3600.0),
+                                            int(np.mod(value / 60.0, 60)),
+                                            int(np.mod(value, 60)))
+        elif vmax - vmin > 60:
+            s = '{:d}:{:02d}'.format(int(value / 60.0),
+                                     int(np.mod(value, 60)))
         else:
-            s = '{:g}ms'.format(1e3 * value)
+            s = '{:.2g}'.format(value)
 
         return '{:s}{:s}'.format(sign, s)
 
@@ -83,10 +115,33 @@ class NoteFormatter(Formatter):
         If `True`, display the octave number along with the note name.
 
         Otherwise, only show the note name (and cent deviation)
+
+    major : bool
+        If `True`, ticks are always labeled.
+
+        If `False`, ticks are only labeled if the span is less than 2 octaves
+
+    See also
+    --------
+    matplotlib.ticker.Formatter
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> values = librosa.midi_to_hz(np.arange(48, 72))
+    >>> plt.figure()
+    >>> ax1 = plt.subplot(2,1,1)
+    >>> ax1.bar(np.arange(len(values)), values)
+    >>> ax1.set_ylabel('Hz')
+    >>> ax2 = plt.subplot(2,1,2)
+    >>> ax2.bar(np.arange(len(values)), values)
+    >>> ax2.yaxis.set_major_formatter(librosa.display.NoteFormatter())
+    >>> ax2.set_ylabel('Note')
     '''
-    def __init__(self, octave=True):
+    def __init__(self, octave=True, major=True):
 
         self.octave = octave
+        self.major = major
 
     def __call__(self, x, pos=None):
 
@@ -95,13 +150,32 @@ class NoteFormatter(Formatter):
 
         # Only use cent precision if our vspan is less than an octave
         vmin, vmax = self.axis.get_view_interval()
-        cents = vmax < 2 * max(1, vmin)
+
+        if not self.major and vmax > 4 * max(1, vmin):
+            return ''
+
+        cents = vmax <= 2 * max(1, vmin)
 
         return core.hz_to_note(int(x), octave=self.octave, cents=cents)[0]
 
 
 class ChromaFormatter(Formatter):
-    '''A formatter for chroma axes'''
+    '''A formatter for chroma axes
+
+    See also
+    --------
+    matplotlib.ticker.Formatter
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> values = np.arange(12)
+    >>> plt.figure()
+    >>> ax = plt.gca()
+    >>> ax.plot(values)
+    >>> ax.yaxis.set_major_formatter(librosa.display.ChromaFormatter())
+    >>> ax.set_ylabel('Pitch class')
+    '''
     def __call__(self, x, pos=None):
         '''Format for chroma positions'''
         return core.midi_to_note(int(x), octave=False, cents=False)
@@ -313,12 +387,8 @@ def specshow(data, x_coords=None, y_coords=None,
              sr=22050, hop_length=512,
              fmin=None, fmax=None,
              bins_per_octave=12,
-             tmin=16, tmax=240,
              **kwargs):
     '''Display a spectrogram/chromagram/cqt/etc.
-
-    Images are displayed in natural coordinates, e.g., seconds, Hz, or notes,
-    rather than bins or frames.
 
 
     Parameters
@@ -339,18 +409,27 @@ def specshow(data, x_coords=None, y_coords=None,
 
         Valid types are:
 
-        - None or 'off' : no axis is displayed.
+        - None, 'none', or 'off' : no axis decoration is displayed.
 
         Frequency types:
 
-        - 'linear' : frequency range is determined by the FFT window
-          and sampling rate.
-        - 'log' : the image is displayed on a vertical log scale.
+        - 'linear', 'fft', 'hz' : frequency range is determined by
+          the FFT window and sampling rate.
+        - 'log' : the spectrum is displayed on a log scale.
         - 'mel' : frequencies are determined by the mel scale.
         - 'cqt_hz' : frequencies are determined by the CQT scale.
         - 'cqt_note' : pitches are determined by the CQT scale.
+
+        All frequency types are plotted in units of Hz.
+
+        Categorical types:
+
         - 'chroma' : pitches are determined by the chroma filters.
-        - 'tonnetz' : axes are labeled by Tonnetz dimensions
+          Pitch classes are arranged at integer locations (0-11).
+
+        - 'tonnetz' : axes are labeled by Tonnetz dimensions (0-5)
+        - 'frames' : markers are shown as frame counts.
+
 
         Time types:
 
@@ -358,8 +437,23 @@ def specshow(data, x_coords=None, y_coords=None,
           minutes, or hours
         - 'lag' : like time, but past the half-way point counts
           as negative values.
-        - 'frames' : markers are shown as frame counts.
-        - 'tempo' : markers are shown as beats-per-minute
+
+        All time types are plotted in units of seconds.
+
+        Other:
+
+        - 'tempo' : markers are shown as beats-per-minute (BPM)
+            using a logarithmic scale.
+
+    x_coords : np.ndarray [shape=data.shape[1]+1]
+    y_coords : np.ndarray [shape=data.shape[0]+1]
+
+        Optional positioning coordinates of the input data.
+        These can be use to explicitly set the location of each
+        element `data[i, j]`, e.g., for displaying beat-synchronous
+        features in natural time coordinates.
+
+        If not provided, they are inferred from `x_axis` and `y_axis`.
 
     fmin : float > 0 [scalar] or None
         Frequency of the lowest spectrogram bin.  Used for Mel and CQT
@@ -373,11 +467,6 @@ def specshow(data, x_coords=None, y_coords=None,
 
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave.  Used for CQT frequency scale.
-
-    tmin : float > 0 [scalar]
-    tmax : float > 0 [scalar]
-        Minimum and maximum tempi displayed when `_axis='tempo'`,
-        as measured in beats per minute.
 
     kwargs : additional keyword arguments
         Arguments passed through to `matplotlib.pyplot.pcolormesh`.
@@ -466,6 +555,23 @@ def specshow(data, x_coords=None, y_coords=None,
     >>> plt.colorbar()
     >>> plt.title('Tempogram')
     >>> plt.tight_layout()
+
+
+    Draw beat-synchronous chroma in natural time
+
+    >>> plt.figure()
+    >>> tempo, beat_f = librosa.beat.beat_track(y=y, sr=sr, trim=False)
+    >>> beat_f = librosa.util.fix_frames(beat_f, x_max=C.shape[1])
+    >>> Csync = librosa.util.sync(C, beat_f, aggregate=np.median)
+    >>> beat_t = librosa.frames_to_time(beat_f, sr=sr)
+    >>> ax1 = plt.subplot(2,1,1)
+    >>> librosa.display.specshow(C, y_axis='chroma', x_axis='time')
+    >>> plt.title('Chroma (linear time)')
+    >>> ax2 = plt.subplot(2,1,2, sharex=ax1)
+    >>> librosa.display.specshow(Csync, y_axis='chroma', x_axis='time',
+    ...                          x_coords=beat_t)
+    >>> plt.title('Chroma (beat time)')
+    >>> plt.tight_layout()
     '''
 
     kwargs.setdefault('shading', 'flat')
@@ -482,8 +588,6 @@ def specshow(data, x_coords=None, y_coords=None,
                       fmin=fmin,
                       fmax=fmax,
                       bins_per_octave=bins_per_octave,
-                      tmin=tmin,
-                      tmax=tmax,
                       hop_length=hop_length)
 
     # Get the x and y coordinates
@@ -573,10 +677,8 @@ def __scale_axes(axes, ax_type, which):
         kwargs[base] = 2
 
     elif ax_type == 'tempo':
-        mode = 'symlog'
+        mode = 'log'
         kwargs[base] = 2
-        kwargs[thresh] = 32.0
-        kwargs[scale] = 1.0
         limit(16, 480)
     else:
         return
@@ -595,7 +697,7 @@ def __decorate_axis(axis, ax_type):
     elif ax_type == 'chroma':
         axis.set_major_formatter(ChromaFormatter())
         axis.set_major_locator(FixedLocator(0.5 +
-                                            np.add.outer(np.arange(0, 96, 12),
+                                            np.add.outer(12 * np.arange(10),
                                                          [0, 2, 4, 5, 7, 9, 11]).ravel()))
         axis.set_label_text('Pitch class')
 
@@ -606,25 +708,35 @@ def __decorate_axis(axis, ax_type):
 
     elif ax_type == 'time':
         axis.set_major_formatter(TimeFormatter(lag=False))
-        axis.set_major_locator(MaxNLocator(prune=None))
+        axis.set_major_locator(MaxNLocator(prune=None, steps=[1,5,10,15,20,30,45,60]))
         axis.set_label_text('Time')
 
     elif ax_type == 'lag':
         axis.set_major_formatter(TimeFormatter(lag=True))
-        axis.set_major_locator(MaxNLocator(prune=None))
+        axis.set_major_locator(MaxNLocator(prune=None, steps=[1,5,10,15,20,30,45,60]))
         axis.set_label_text('Lag')
 
     elif ax_type == 'cqt_note':
         axis.set_major_formatter(NoteFormatter())
         axis.set_major_locator(LogLocator(base=2.0))
+        axis.set_minor_formatter(NoteFormatter(major=False))
+        axis.set_minor_locator(LogLocator(base=2.0,
+                                          subs=2.0**(np.arange(1, 12)/12.0)))
         axis.set_label_text('Note')
 
     elif ax_type in ['cqt_hz']:
         axis.set_major_formatter(ScalarFormatter())
         axis.set_major_locator(LogLocator(base=2.0))
+        axis.set_minor_locator(LogLocator(base=2.0,
+                                          subs=2.0**(np.arange(1, 12)/12.0)))
         axis.set_label_text('Hz')
 
-    elif ax_type in ['linear', 'hz', 'mel', 'log']:
+    elif ax_type in ['mel', 'log']:
+        axis.set_major_formatter(ScalarFormatter())
+        axis.set_major_locator(SymmetricalLogLocator(axis.get_transform()))
+        axis.set_label_text('Hz')
+
+    elif ax_type in ['linear', 'hz']:
         axis.set_major_formatter(ScalarFormatter())
         axis.set_label_text('Hz')
 

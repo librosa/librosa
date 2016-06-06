@@ -16,7 +16,7 @@ matplotlib.use('Agg')
 matplotlib.rcParams.update(matplotlib.rcParamsDefault)
 
 import matplotlib.style
-matplotlib.style.use('seaborn-white')
+matplotlib.style.use('seaborn-ticks')
 
 import matplotlib.pyplot as plt
 
@@ -29,7 +29,7 @@ from mpl_ic import image_comparison
 @nottest
 def get_spec(y, sr):
 
-    C = np.abs(librosa.cqt(y, sr=sr, real=False))
+    C = np.abs(librosa.cqt(y, sr=sr))
     return librosa.stft(y), C, sr
 
 
@@ -39,6 +39,11 @@ S, C, sr = get_spec(y, sr)
 S_abs = np.abs(S)
 S_signed = np.abs(S) - np.median(np.abs(S))
 S_bin = S_signed > 0
+
+tempo, beats = librosa.beat.beat_track(y=y, sr=sr, trim=False)
+beats = librosa.util.fix_frames(beats, x_max=C.shape[1])
+beat_t = librosa.frames_to_time(beats, sr=sr)
+Csync = librosa.util.sync(C, beats, aggregate=np.median)
 
 
 @image_comparison(baseline_images=['complex'], extensions=['png'])
@@ -70,7 +75,7 @@ def test_tempo():
     T = librosa.feature.tempogram(y=y, sr=sr)
 
     plt.figure()
-    librosa.display.specshow(T, y_axis='tempo')
+    librosa.display.specshow(T, y_axis='tempo', cmap='magma')
 
 
 @image_comparison(baseline_images=['tonnetz'], extensions=['png'])
@@ -111,7 +116,7 @@ def test_x_mel():
     plt.figure()
 
     M = librosa.feature.melspectrogram(S=S_abs**2)
-    librosa.display.specshow(M, y_axis='mel')
+    librosa.display.specshow(M.T, x_axis='mel')
 
 
 @image_comparison(baseline_images=['y_mel'], extensions=['png'])
@@ -119,7 +124,7 @@ def test_y_mel():
     plt.figure()
 
     M = librosa.feature.melspectrogram(S=S_abs**2)
-    librosa.display.specshow(M.T, x_axis='mel')
+    librosa.display.specshow(M, y_axis='mel')
 
 
 @image_comparison(baseline_images=['y_mel_bounded'], extensions=['png'])
@@ -135,13 +140,13 @@ def test_y_mel_bounded():
 def test_xaxis_none_yaxis_linear():
     plt.figure()
     plt.subplot(3, 1, 1)
-    librosa.display.specshow(S_abs, x_axis='linear')
+    librosa.display.specshow(S_abs, y_axis='linear')
 
     plt.subplot(3, 1, 2)
-    librosa.display.specshow(S_signed, x_axis='linear')
+    librosa.display.specshow(S_signed, y_axis='linear')
 
     plt.subplot(3, 1, 3)
-    librosa.display.specshow(S_bin, x_axis='linear')
+    librosa.display.specshow(S_bin, y_axis='linear')
 
 
 @image_comparison(baseline_images=['x_none_y_log'], extensions=['png'])
@@ -325,4 +330,14 @@ def test_cmap_robust():
     for D in [1.0 + S_abs, -(1.0 + S_abs), S_signed, S_bin]:
         yield __test, D
 
+@image_comparison(baseline_images=['coords'], extensions=['png'])
+def test_coords():
+
+    plt.figure()
+    librosa.display.specshow(Csync, x_coords=beat_t, x_axis='time', y_axis='cqt_note')
+
+@raises(librosa.ParameterError)
+def test_bad_coords():
+
+    librosa.display.specshow(S_abs, x_coords=np.arange(S.shape[1] // 2))
 
