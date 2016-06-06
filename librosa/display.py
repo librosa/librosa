@@ -20,7 +20,7 @@ import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import Formatter, FixedFormatter, ScalarFormatter
-from matplotlib.ticker import LogLocator, FixedLocator
+from matplotlib.ticker import LogLocator, FixedLocator, MaxNLocator
 
 from . import cache
 from . import core
@@ -485,7 +485,6 @@ def specshow(data, x_coords=None, y_coords=None,
     axes = plt.gca()
     axes.pcolormesh(x_coords, y_coords, data, **kwargs)
 
-    #plt.axis('tight')
     axes.set_xlim(x_coords.min(), x_coords.max())
     axes.set_ylim(y_coords.min(), y_coords.max())
 
@@ -494,8 +493,8 @@ def specshow(data, x_coords=None, y_coords=None,
     __scale_axes(axes, y_axis, 'y')
 
     # Construct tickers and locators
-    __tick_axes(axes.xaxis, x_axis, all_params)
-    __tick_axes(axes.yaxis, y_axis, all_params)
+    __decorate_axis(axes.xaxis, x_axis, all_params)
+    __decorate_axis(axes.yaxis, y_axis, all_params)
 
     return axes
 
@@ -575,40 +574,53 @@ def __scale_axes(axes, ax_type, which):
     scaler(mode, **kwargs)
 
 
-def __tick_axes(axis, ax_type, kwargs):
+def __decorate_axis(axis, ax_type, kwargs):
     '''Configure axis tickers, locators, and labels'''
+
     if ax_type == 'tonnetz':
-        # tonnetz => TONNETZ_FORMATTER
         axis.set_major_formatter(TONNETZ_FORMATTER)
         axis.set_major_locator(FixedLocator(0.5 + np.arange(6)))
         axis.set_label_text('Tonnetz')
+
     elif ax_type == 'chroma':
-        # chroma => ChromaFormatter, fixedlocator
         axis.set_major_formatter(ChromaFormatter())
         axis.set_major_locator(FixedLocator(0.5 +
                                             np.add.outer(np.arange(0, 96, 12),
                                                          [0, 2, 4, 5, 7, 9, 11]).ravel()))
         axis.set_label_text('Pitch class')
+
     elif ax_type == 'tempo':
         axis.set_major_formatter(ScalarFormatter())
-        axis.set_major_locator(LogLocator(base=2.0, subs=[1.0, 2.0, 3.0]))
+        axis.set_major_locator(LogLocator(base=2.0))
         axis.set_label_text('BPM')
+
     elif ax_type == 'time':
         axis.set_major_formatter(TimeFormatter(lag=False))
+        axis.set_major_locator(MaxNLocator(prune=None))
         axis.set_label_text('Time')
+
     elif ax_type == 'lag':
         axis.set_major_formatter(TimeFormatter(lag=True))
+        axis.set_major_locator(MaxNLocator(prune=None))
         axis.set_label_text('Lag')
+
     elif ax_type == 'cqt_note':
         axis.set_major_formatter(NoteFormatter())
-        axis.set_major_locator(LogLocator(base=2.0, subs=[1.0, 2.0, 3.0]))
-    elif ax_type in ['cqt_hz']:
+        axis.set_major_locator(LogLocator(base=2.0))
+        axis.set_label_text('Note')
+
+    elif ax_type == 'cqt_hz':
         axis.set_major_formatter(ScalarFormatter())
-        axis.set_major_locator(LogLocator(base=2.0, subs=[1.0, 2.0, 3.0]))
+        axis.set_major_locator(LogLocator(base=2.0))
         axis.set_label_text('Hz')
+
     elif ax_type in ['linear', 'hz', 'log', 'mel']:
         axis.set_major_formatter(ScalarFormatter())
         axis.set_label_text('Hz')
+
+    elif ax_type in ['frames']:
+        axis.set_label_text('Frames')
+
     elif ax_type in ['off', 'none', None]:
         axis.set_label_text('')
         axis.set_ticks([])
