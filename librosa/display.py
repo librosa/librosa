@@ -210,7 +210,6 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000
 
     See also
     --------
-    time_ticks
     librosa.core.resample
     matplotlib.pyplot.fill_between
 
@@ -304,8 +303,8 @@ def specshow(data, x_coords=None, y_coords=None,
              **kwargs):
     '''Display a spectrogram/chromagram/cqt/etc.
 
-    Functions as a drop-in replacement for `matplotlib.pyplot.imshow`,
-    but with useful defaults.
+    Images are displayed in natural coordinates, e.g., seconds, Hz, or notes,
+    rather than bins or frames.
 
 
     Parameters
@@ -367,13 +366,13 @@ def specshow(data, x_coords=None, y_coords=None,
         as measured in beats per minute.
 
     kwargs : additional keyword arguments
-        Arguments passed through to `matplotlib.pyplot.imshow`.
+        Arguments passed through to `matplotlib.pyplot.pcolormesh`.
 
 
     Returns
     -------
-    image : `matplotlib.image.AxesImage`
-        As returned from `matplotlib.pyplot.imshow`.
+    axes
+        The axis handle for the figure.
 
 
     See Also
@@ -448,16 +447,11 @@ def specshow(data, x_coords=None, y_coords=None,
     Draw a tempogram with BPM markers
 
     >>> plt.subplot(4, 2, 8)
-    >>> oenv = librosa.onset.onset_strength(y=y, sr=sr)
-    >>> tempo = librosa.beat.estimate_tempo(oenv, sr=sr)
     >>> Tgram = librosa.feature.tempogram(y=y, sr=sr)
-    >>> librosa.display.specshow(Tgram[:100], x_axis='time', y_axis='tempo',
-    ...                          tmin=tempo/4, tmax=tempo*2, n_yticks=4)
+    >>> librosa.display.specshow(Tgram, x_axis='time', y_axis='tempo')
     >>> plt.colorbar()
     >>> plt.title('Tempogram')
     >>> plt.tight_layout()
-
-
     '''
 
     kwargs.setdefault('shading', 'flat')
@@ -483,7 +477,8 @@ def specshow(data, x_coords=None, y_coords=None,
     x_coords = __mesh_coords(x_axis, x_coords, data.shape[1], **all_params)
 
     axes = plt.gca()
-    axes.pcolormesh(x_coords, y_coords, data, **kwargs)
+    out = axes.pcolormesh(x_coords, y_coords, data, **kwargs)
+    plt.sci(out)
 
     axes.set_xlim(x_coords.min(), x_coords.max())
     axes.set_ylim(y_coords.min(), y_coords.max())
