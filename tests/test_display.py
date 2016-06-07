@@ -40,6 +40,11 @@ S_abs = np.abs(S)
 S_signed = np.abs(S) - np.median(np.abs(S))
 S_bin = S_signed > 0
 
+tempo, beats = librosa.beat.beat_track(y=y, sr=sr, trim=False)
+beats = librosa.util.fix_frames(beats, x_max=C.shape[1])
+beat_t = librosa.frames_to_time(beats, sr=sr)
+Csync = librosa.util.sync(C, beats, aggregate=np.median)
+
 
 @image_comparison(baseline_images=['complex'], extensions=['png'])
 def test_complex_input():
@@ -325,6 +330,11 @@ def test_cmap_robust():
     for D in [1.0 + S_abs, -(1.0 + S_abs), S_signed, S_bin]:
         yield __test, D
 
+@image_comparison(baseline_images=['coords'], extensions=['png'])
+def test_coords():
+
+    plt.figure()
+    librosa.display.specshow(Csync, x_coords=beat_t, x_axis='time', y_axis='cqt_note')
 
 @raises(librosa.ParameterError)
 def test_bad_coords():

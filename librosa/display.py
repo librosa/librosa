@@ -326,9 +326,6 @@ def specshow(data, x_coords=None, y_coords=None,
              **kwargs):
     '''Display a spectrogram/chromagram/cqt/etc.
 
-    Images are displayed in natural coordinates, e.g., seconds, Hz, or notes,
-    rather than bins or frames.
-
 
     Parameters
     ----------
@@ -348,18 +345,27 @@ def specshow(data, x_coords=None, y_coords=None,
 
         Valid types are:
 
-        - None or 'off' : no axis is displayed.
+        - None, 'none', or 'off' : no axis decoration is displayed.
 
         Frequency types:
 
-        - 'linear' : frequency range is determined by the FFT window
-          and sampling rate.
-        - 'log' : the image is displayed on a vertical log scale.
+        - 'linear', 'fft', 'hz' : frequency range is determined by
+          the FFT window and sampling rate.
+        - 'log' : the spectrum is displayed on a log scale.
         - 'mel' : frequencies are determined by the mel scale.
         - 'cqt_hz' : frequencies are determined by the CQT scale.
         - 'cqt_note' : pitches are determined by the CQT scale.
+
+        All frequency types are plotted in units of Hz.
+
+        Categorical types:
+
         - 'chroma' : pitches are determined by the chroma filters.
-        - 'tonnetz' : axes are labeled by Tonnetz dimensions
+          Pitch classes are arranged at integer locations (0-11).
+
+        - 'tonnetz' : axes are labeled by Tonnetz dimensions (0-5)
+        - 'frames' : markers are shown as frame counts.
+
 
         Time types:
 
@@ -367,8 +373,23 @@ def specshow(data, x_coords=None, y_coords=None,
           minutes, or hours
         - 'lag' : like time, but past the half-way point counts
           as negative values.
-        - 'frames' : markers are shown as frame counts.
-        - 'tempo' : markers are shown as beats-per-minute
+
+        All time types are plotted in units of seconds.
+
+        Other:
+
+        - 'tempo' : markers are shown as beats-per-minute (BPM)
+            using a logarithmic scale.
+
+    x_coords : np.ndarray [shape=data.shape[1]+1]
+    y_coords : np.ndarray [shape=data.shape[0]+1]
+
+        Optional positioning coordinates of the input data.
+        These can be use to explicitly set the location of each
+        element `data[i, j]`, e.g., for displaying beat-synchronous
+        features in natural time coordinates.
+
+        If not provided, they are inferred from `x_axis` and `y_axis`.
 
     fmin : float > 0 [scalar] or None
         Frequency of the lowest spectrogram bin.  Used for Mel and CQT
@@ -469,6 +490,23 @@ def specshow(data, x_coords=None, y_coords=None,
     >>> librosa.display.specshow(Tgram, x_axis='time', y_axis='tempo')
     >>> plt.colorbar()
     >>> plt.title('Tempogram')
+    >>> plt.tight_layout()
+
+
+    Draw beat-synchronous chroma in natural time
+
+    >>> plt.figure()
+    >>> tempo, beat_f = librosa.beat.beat_track(y=y, sr=sr)
+    >>> beat_f = librosa.util.fix_frames(beat_f, x_max=C.shape[1])
+    >>> Csync = librosa.util.sync(C, beat_f, aggregate=np.median)
+    >>> beat_t = librosa.frames_to_time(beat_f, sr=sr)
+    >>> ax1 = plt.subplot(2,1,1)
+    >>> librosa.display.specshow(C, y_axis='chroma', x_axis='time')
+    >>> plt.title('Chroma (linear time)')
+    >>> ax2 = plt.subplot(2,1,2, sharex=ax1)
+    >>> librosa.display.specshow(Csync, y_axis='chroma', x_axis='time',
+    ...                          x_coords=beat_t)
+    >>> plt.title('Chroma (beat time)')
     >>> plt.tight_layout()
     '''
 
