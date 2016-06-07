@@ -496,7 +496,7 @@ def specshow(data, x_coords=None, y_coords=None,
     Draw beat-synchronous chroma in natural time
 
     >>> plt.figure()
-    >>> tempo, beat_f = librosa.beat.beat_track(y=y, sr=sr)
+    >>> tempo, beat_f = librosa.beat.beat_track(y=y, sr=sr, trim=False)
     >>> beat_f = librosa.util.fix_frames(beat_f, x_max=C.shape[1])
     >>> Csync = librosa.util.sync(C, beat_f, aggregate=np.median)
     >>> beat_t = librosa.frames_to_time(beat_f, sr=sr)
