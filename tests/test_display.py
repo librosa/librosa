@@ -29,7 +29,7 @@ from mpl_ic import image_comparison
 @nottest
 def get_spec(y, sr):
 
-    C = np.abs(librosa.cqt(y, sr=sr, real=False))
+    C = np.abs(librosa.cqt(y, sr=sr))
     return librosa.stft(y), C, sr
 
 
@@ -325,4 +325,9 @@ def test_cmap_robust():
     for D in [1.0 + S_abs, -(1.0 + S_abs), S_signed, S_bin]:
         yield __test, D
 
+
+@raises(librosa.ParameterError)
+def test_bad_coords():
+
+    librosa.display.specshow(S_abs, x_coords=np.arange(S.shape[1] // 2))
 
