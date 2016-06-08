@@ -506,7 +506,7 @@ def __early_downsample(y, sr, hop_length, res_type, n_octaves,
                                                 hop_length, n_octaves)
 
     if downsample_count > 0 and res_type == 'kaiser_fast':
-        downsample_factor = 2.0**(downsample_count)
+        downsample_factor = 2**(downsample_count)
 
         hop_length //= downsample_factor
 
