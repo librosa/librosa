@@ -20,9 +20,8 @@ __all__ = ['load', 'to_mono', 'resample', 'get_duration',
            'autocorrelate', 'zero_crossings', 'clicks']
 
 # Resampling bandwidths as percentage of Nyquist
-# http://resampy.readthedocs.org/en/latest/api.html#module-resampy.filters
-BW_BEST = 0.9476
-BW_FASTEST = 0.85
+BW_BEST = resampy.filters.get_filter('kaiser_best')[2]
+BW_FASTEST = resampy.filters.get_filter('kaiser_fast')[2]
 
 # -- CORE ROUTINES --#
 # Load should never be cached, since we cannot verify that the contents of
