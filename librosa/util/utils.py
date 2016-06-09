@@ -15,9 +15,7 @@ from .exceptions import ParameterError
 # Constrain STFT block sizes to 256 KB
 MAX_MEM_BLOCK = 2**8 * 2**10
 
-SMALL_FLOAT = 1e-20
-
-__all__ = ['MAX_MEM_BLOCK', 'SMALL_FLOAT',
+__all__ = ['MAX_MEM_BLOCK',
            'frame', 'pad_center', 'fix_length',
            'valid_audio', 'valid_int', 'valid_intervals',
            'fix_frames',
@@ -624,7 +622,8 @@ def normalize(S, norm=np.inf, axis=0):
         raise ParameterError('Unsupported norm: {}'.format(repr(norm)))
 
     # Avoid div-by-zero
-    length[length < SMALL_FLOAT] = 1.0
+    tiny = np.finfo(length.dtype).tiny
+    length[length < tiny] = 1.0
 
     return S / length
 
