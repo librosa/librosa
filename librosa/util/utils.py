@@ -15,9 +15,7 @@ from .exceptions import ParameterError
 # Constrain STFT block sizes to 256 KB
 MAX_MEM_BLOCK = 2**8 * 2**10
 
-SMALL_FLOAT = 1e-20
-
-__all__ = ['MAX_MEM_BLOCK', 'SMALL_FLOAT',
+__all__ = ['MAX_MEM_BLOCK',
            'frame', 'pad_center', 'fix_length',
            'valid_audio', 'valid_int', 'valid_intervals',
            'fix_frames',
@@ -29,7 +27,8 @@ __all__ = ['MAX_MEM_BLOCK', 'SMALL_FLOAT',
            'index_to_slice',
            'sync',
            'softmask',
-           'buf_to_float']
+           'buf_to_float',
+           'tiny']
 
 
 def frame(y, frame_length=2048, hop_length=512):
@@ -624,7 +623,7 @@ def normalize(S, norm=np.inf, axis=0):
         raise ParameterError('Unsupported norm: {}'.format(repr(norm)))
 
     # Avoid div-by-zero
-    length[length < SMALL_FLOAT] = 1.0
+    length[length < tiny(length)] = 1.0
 
     return S / length
 
@@ -1483,3 +1482,65 @@ def softmask(X, X_ref, power=1, split_zeros=False):
         mask = X > X_ref
 
     return mask
+
+
+def tiny(x):
+    '''Compute the tiny-value corresponding to an input's data type.
+
+    This is the smallest "usable" number representable in `x`'s
+    data type (e.g., float32).
+
+    This is primarily useful for determining a threshold for
+    numerical underflow in division or multiplication operations.
+
+    Parameters
+    ----------
+    x : number or np.ndarray
+        The array to compute the tiny-value for.
+        All that matters here is `x.dtype`.
+
+    Returns
+    -------
+    tiny_value : float
+        The smallest positive usable number for the type of `x`.
+        If `x` is integer-typed, then the tiny value for `np.float32`
+        is returned instead.
+
+    See Also
+    --------
+    numpy.finfo
+
+    Examples
+    --------
+
+    For a standard double-precision floating point number:
+    >>> librosa.util.tiny(1.0)
+    2.2250738585072014e-308
+
+    Or explicitly as double-precision
+    >>> librosa.util.tiny(np.asarray(1e-5, dtype=np.float64))
+    2.2250738585072014e-308
+
+    Or complex numbers
+    >>> librosa.util.tiny(1j)
+    2.2250738585072014e-308
+
+    Single-precision floating point:
+    >>> librosa.util.tiny(np.asarray(1e-5, dtype=np.float32))
+    1.1754944e-38
+
+    Integer
+    >>> librosa.util.tiny(5)
+    1.1754944e-38
+    '''
+
+    # Make sure we have an array view
+    x = np.asarray(x)
+
+    # Only floating types generate a tiny
+    if np.issubdtype(x.dtype, float) or np.issubdtype(x.dtype, complex):
+        dtype = x.dtype
+    else:
+        dtype = np.float32
+
+    return np.finfo(dtype).tiny
