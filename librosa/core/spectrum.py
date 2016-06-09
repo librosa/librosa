@@ -312,7 +312,8 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
         ifft_window_sum[sample:(sample + n_fft)] += ifft_window_square
 
     # Normalize by sum of squared window
-    approx_nonzero_indices = ifft_window_sum > util.SMALL_FLOAT
+    tiny = np.finfo(ifft_window_sum.dtype).tiny
+    approx_nonzero_indices = ifft_window_sum > tiny
     y[approx_nonzero_indices] /= ifft_window_sum[approx_nonzero_indices]
 
     if center:
