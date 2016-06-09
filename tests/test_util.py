@@ -781,3 +781,22 @@ def test_softmask_fail():
     yield failure, np.ones(3), np.ones(4), 1, False
     yield failure, np.ones(3), np.ones(3), 0, False
     yield failure, np.ones(3), np.ones(3), -1, False
+
+
+def test_tiny():
+
+    def __test(x, value):
+
+        eq_(value, librosa.util.tiny(x))
+
+
+    for x, value in [(1, np.finfo(np.float32).tiny),
+                     (np.ones(3, dtype=int), np.finfo(np.float32).tiny),
+                     (np.ones(3, dtype=np.float32), np.finfo(np.float32).tiny),
+                     (1.0, np.finfo(np.float64).tiny),
+                     (np.ones(3, dtype=np.float64), np.finfo(np.float64).tiny),
+                     (1j, np.finfo(np.complex128).tiny),
+                     (np.ones(3, dtype=np.complex64), np.finfo(np.complex64).tiny),
+                     (np.ones(3, dtype=np.complex128), np.finfo(np.complex128).tiny)]:
+        yield __test, x, value
+

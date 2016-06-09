@@ -24,7 +24,7 @@ Array operations
     sparsify_rows
 
     buf_to_float
-
+    tiny
 
 Matching
 --------

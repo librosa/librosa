@@ -247,7 +247,7 @@ def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
 
     # Suppress divide-by-zeros.
     # Points where shift == 0 will never be selected by localmax anyway
-    shift = avg / (shift + (np.abs(shift) < util.SMALL_FLOAT))
+    shift = avg / (shift + (np.abs(shift) < util.tiny(shift)))
 
     # Pad back up to the same shape as S
     avg = np.pad(avg, ([1, 1], [0, 0]), mode='constant')
