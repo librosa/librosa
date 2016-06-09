@@ -27,7 +27,8 @@ __all__ = ['MAX_MEM_BLOCK',
            'index_to_slice',
            'sync',
            'softmask',
-           'buf_to_float']
+           'buf_to_float',
+           'tiny']
 
 
 def frame(y, frame_length=2048, hop_length=512):
@@ -622,8 +623,7 @@ def normalize(S, norm=np.inf, axis=0):
         raise ParameterError('Unsupported norm: {}'.format(repr(norm)))
 
     # Avoid div-by-zero
-    tiny = np.finfo(length.dtype).tiny
-    length[length < tiny] = 1.0
+    length[length < tiny(length)] = 1.0
 
     return S / length
 
@@ -1482,3 +1482,33 @@ def softmask(X, X_ref, power=1, split_zeros=False):
         mask = X > X_ref
 
     return mask
+
+
+def tiny(x, default=1e-20):
+    '''Compute the tiny-value corresponding to an input's data type
+
+    Parameters
+    ----------
+    x : number or np.ndarray
+        The array to compute the tiny-value for.
+        All that matters here is `x.dtype`.
+
+    Returns
+    -------
+    tiny_value : float
+        The smallest positive usable number for the type of x.
+        If x is integer-typed, then `default` is returned.
+
+    See Also
+    --------
+    numpy.finfo
+    '''
+
+    # Make sure we have an array view
+    x = np.asarray(x)
+
+    # Only floating types generate a tiny
+    if np.issubdtype(x.dtype, float) or np.issubdtype(x.dtype, complex):
+        return np.finfo(x.dtype).tiny
+
+    return default
