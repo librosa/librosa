@@ -891,19 +891,20 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
            510, 525, 536, 555, 570, 590, 609, 625, 639])
 
     >>> import matplotlib.pyplot as plt
+    >>> times = librosa.frames_to_time(np.arange(len(onset_env)),
+    ...                                sr=sr, hop_length=512)
     >>> plt.figure()
-    >>> plt.subplot(2, 1, 1)
-    >>> plt.plot(onset_env[:30 * sr // 512], alpha=0.8, label='Onset strength')
-    >>> plt.vlines(peaks[peaks < 30 * sr // 512], 0,
+    >>> ax = plt.subplot(2, 1, 2)
+    >>> D = np.abs(librosa.stft(y))**2
+    >>> librosa.display.specshow(librosa.logamplitude(D, ref_power=np.max),
+    ...                          y_axis='log', x_axis='time')
+    >>> plt.subplot(2, 1, 1, sharex=ax)
+    >>> plt.plot(times, onset_env, alpha=0.8, label='Onset strength')
+    >>> plt.vlines(times[peaks], 0,
     ...            onset_env.max(), color='r', alpha=0.8,
     ...            label='Selected peaks')
     >>> plt.legend(frameon=True, framealpha=0.8)
     >>> plt.axis('tight')
-    >>> plt.axis('off')
-    >>> plt.subplot(2, 1, 2)
-    >>> D = np.abs(librosa.stft(y))**2
-    >>> librosa.display.specshow(librosa.logamplitude(D, ref_power=np.max),
-    ...                          y_axis='log', x_axis='time')
     >>> plt.tight_layout()
     '''
 
@@ -1295,8 +1296,9 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     Beat-synchronous CQT spectra
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
+    >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, trim=False)
     >>> cqt = librosa.cqt(y=y, sr=sr)
+    >>> beats = librosa.util.fix_frames(beats, x_max=cqt.shape[1])
 
     By default, use mean aggregation
 
@@ -1305,17 +1307,20 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     Use median-aggregation instead of mean
 
     >>> cqt_med = librosa.util.sync(cqt, beats,
-    ...                                aggregate=np.median)
+    ...                             aggregate=np.median)
 
     Or sub-beat synchronization
 
     >>> sub_beats = librosa.segment.subsegment(cqt, beats)
+    >>> sub_beats = librosa.util.fix_frames(sub_beats, x_max=cqt.shape[1])
     >>> cqt_med_sub = librosa.util.sync(cqt, sub_beats, aggregate=np.median)
 
 
     Plot the results
 
     >>> import matplotlib.pyplot as plt
+    >>> beat_t = librosa.frames_to_time(beats, sr=sr)
+    >>> subbeat_t = librosa.frames_to_time(sub_beats, sr=sr)
     >>> plt.figure()
     >>> plt.subplot(3, 1, 1)
     >>> librosa.display.specshow(librosa.logamplitude(cqt**2,
@@ -1325,13 +1330,15 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     >>> plt.title('CQT power, shape={}'.format(cqt.shape))
     >>> plt.subplot(3, 1, 2)
     >>> librosa.display.specshow(librosa.logamplitude(cqt_med**2,
-    ...                                               ref_power=np.max))
+    ...                                               ref_power=np.max),
+    ...                          x_coords=beat_t, x_axis='time')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Beat synchronous CQT power, '
     ...           'shape={}'.format(cqt_med.shape))
     >>> plt.subplot(3, 1, 3)
     >>> librosa.display.specshow(librosa.logamplitude(cqt_med_sub**2,
-    ...                                               ref_power=np.max))
+    ...                                               ref_power=np.max),
+    ...                          x_coords=subbeat_t, x_axis='time')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Sub-beat synchronous CQT power, '
     ...           'shape={}'.format(cqt_med_sub.shape))

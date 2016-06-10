@@ -16,7 +16,7 @@ matplotlib.use('Agg')
 matplotlib.rcParams.update(matplotlib.rcParamsDefault)
 
 import matplotlib.style
-matplotlib.style.use('seaborn-white')
+matplotlib.style.use('seaborn-ticks')
 
 import matplotlib.pyplot as plt
 
@@ -29,7 +29,7 @@ from mpl_ic import image_comparison
 @nottest
 def get_spec(y, sr):
 
-    C = np.abs(librosa.cqt(y, sr=sr, real=False))
+    C = np.abs(librosa.cqt(y, sr=sr))
     return librosa.stft(y), C, sr
 
 
@@ -39,6 +39,11 @@ S, C, sr = get_spec(y, sr)
 S_abs = np.abs(S)
 S_signed = np.abs(S) - np.median(np.abs(S))
 S_bin = S_signed > 0
+
+tempo, beats = librosa.beat.beat_track(y=y, sr=sr, trim=False)
+beats = librosa.util.fix_frames(beats, x_max=C.shape[1])
+beat_t = librosa.frames_to_time(beats, sr=sr)
+Csync = librosa.util.sync(C, beats, aggregate=np.median)
 
 
 @image_comparison(baseline_images=['complex'], extensions=['png'])
@@ -70,7 +75,7 @@ def test_tempo():
     T = librosa.feature.tempogram(y=y, sr=sr)
 
     plt.figure()
-    librosa.display.specshow(T, y_axis='tempo')
+    librosa.display.specshow(T, y_axis='tempo', cmap='magma')
 
 
 @image_comparison(baseline_images=['tonnetz'], extensions=['png'])
@@ -111,7 +116,7 @@ def test_x_mel():
     plt.figure()
 
     M = librosa.feature.melspectrogram(S=S_abs**2)
-    librosa.display.specshow(M, y_axis='mel')
+    librosa.display.specshow(M.T, x_axis='mel')
 
 
 @image_comparison(baseline_images=['y_mel'], extensions=['png'])
@@ -119,7 +124,7 @@ def test_y_mel():
     plt.figure()
 
     M = librosa.feature.melspectrogram(S=S_abs**2)
-    librosa.display.specshow(M.T, x_axis='mel')
+    librosa.display.specshow(M, y_axis='mel')
 
 
 @image_comparison(baseline_images=['y_mel_bounded'], extensions=['png'])
@@ -135,13 +140,13 @@ def test_y_mel_bounded():
 def test_xaxis_none_yaxis_linear():
     plt.figure()
     plt.subplot(3, 1, 1)
-    librosa.display.specshow(S_abs, x_axis='linear')
+    librosa.display.specshow(S_abs, y_axis='linear')
 
     plt.subplot(3, 1, 2)
-    librosa.display.specshow(S_signed, x_axis='linear')
+    librosa.display.specshow(S_signed, y_axis='linear')
 
     plt.subplot(3, 1, 3)
-    librosa.display.specshow(S_bin, x_axis='linear')
+    librosa.display.specshow(S_bin, y_axis='linear')
 
 
 @image_comparison(baseline_images=['x_none_y_log'], extensions=['png'])
@@ -157,38 +162,6 @@ def test_xaxis_none_yaxis_log():
     plt.subplot(3, 1, 3)
     librosa.display.specshow(S_bin, y_axis='log')
 
-
-@image_comparison(baseline_images=['x_none_y_log_khz'], extensions=['png'])
-def test_xaxis_none_yaxis_log_khz():
-    plt.figure()
-    librosa.display.specshow(S_abs, y_axis='log', freq_fmt='kHz')
-    plt.tight_layout()
-
-
-@image_comparison(baseline_images=['x_none_y_log_mhz'], extensions=['png'])
-def test_xaxis_none_yaxis_log_mhz():
-    plt.figure()
-    librosa.display.specshow(S_abs, y_axis='log', freq_fmt='mHz')
-    plt.tight_layout()
-
-@image_comparison(baseline_images=['x_none_y_log_megahz'], extensions=['png'])
-def test_xaxis_none_yaxis_log_megahz():
-    plt.figure()
-    librosa.display.specshow(S_abs, y_axis='log', freq_fmt='MHz')
-    plt.tight_layout()
-
-
-@image_comparison(baseline_images=['x_none_y_log_ghz'], extensions=['png'])
-def test_xaxis_none_yaxis_log_ghz():
-    plt.figure()
-    librosa.display.specshow(S_abs, y_axis='log', freq_fmt='GHz')
-    plt.tight_layout()
-
-@raises(librosa.ParameterError)
-def test_xaxis_none_yaxis_log_badscale():
-    plt.figure()
-    librosa.display.specshow(S_abs, y_axis='log', freq_fmt='no-scale')
-    plt.tight_layout()
 
 @image_comparison(baseline_images=['x_linear_y_none'], extensions=['png'])
 def test_xaxis_linear_yaxis_none():
@@ -284,32 +257,6 @@ def test_time_scales_auto():
     librosa.display.specshow(S_abs, sr=sr // (60 * 20), x_axis='time')
 
 
-@image_comparison(baseline_images=['time_scales_explicit'], extensions=['png'])
-def test_time_scales_explicit():
-
-    locs = np.linspace(0, S.shape[1], num=5)
-    times = locs * 512 // sr
-
-    plt.figure()
-    plt.subplot(4, 1, 1)
-    librosa.display.specshow(S_abs)
-    librosa.display.time_ticks(locs, times, time_fmt='ms')
-
-    plt.subplot(4, 1, 2)
-    librosa.display.specshow(S_abs)
-    librosa.display.time_ticks(locs, times, time_fmt='s')
-
-    plt.subplot(4, 1, 3)
-    librosa.display.specshow(S_abs)
-    librosa.display.time_ticks(locs, times, time_fmt='m')
-
-    plt.subplot(4, 1, 4)
-    librosa.display.specshow(S_abs)
-    librosa.display.time_ticks(locs, times, time_fmt='h')
-
-    plt.tight_layout()
-
-
 @image_comparison(baseline_images=['waveplot_mono'], extensions=['png'])
 def test_waveplot_mono():
 
@@ -383,79 +330,14 @@ def test_cmap_robust():
     for D in [1.0 + S_abs, -(1.0 + S_abs), S_signed, S_bin]:
         yield __test, D
 
+@image_comparison(baseline_images=['coords'], extensions=['png'])
+def test_coords():
 
-def test_time_ticks_failure():
+    plt.figure()
+    librosa.display.specshow(Csync, x_coords=beat_t, x_axis='time', y_axis='cqt_note')
 
-    @raises(librosa.ParameterError)
-    def __test(locs, times, fmt, axis):
+@raises(librosa.ParameterError)
+def test_bad_coords():
 
-        if times is None:
-            librosa.display.time_ticks(locs, time_fmt=fmt, axis=axis)
-        else:
-            librosa.display.time_ticks(locs, times, time_fmt=fmt, axis=axis)
-
-    locs = np.linspace(0, 100.0)
-
-    # Unknown axis
-    yield __test, locs, None, None, 'z'
-
-    # Unknown fmt
-    yield __test, locs, None, 'days', 'x'
-
-
-def test_freq_ticks():
-
-    def __test(locs, freqs, n_ticks, axis):
-
-        if freqs is None:
-            args = [locs]
-            fmax = max(locs)
-        else:
-            args = [locs, freqs]
-            fmax = max(freqs)
-
-        fig = plt.figure()
-        (ticks, labels), fmt = librosa.display.frequency_ticks(*args,
-                                                               axis=axis,
-                                                               n_ticks=n_ticks)
-        plt.close(fig)
-
-        if n_ticks is None:
-            n_ticks = len(locs)
-
-        eq_(len(ticks), n_ticks)
-        eq_(len(labels), n_ticks)
-
-        if fmt == 'mHz':
-            assert fmax <= 1e1
-        elif fmt == 'Hz':
-            assert fmax <= 1e4
-        elif fmt == 'kHz':
-            assert fmax <= 1e7
-        elif fmt == 'MHz':
-            assert fmax <= 1e10
-        elif fmt == 'GHz':
-            assert fmax > 1e10
-        else:
-            raise ValueError('Incorrect fmt={}'.format(fmt))
-
-        if axis == 'x':
-            cls = matplotlib.axis.XTick
-        elif axis == 'y':
-            cls = matplotlib.axis.YTick
-        else:
-            raise ValueError('Incorrect axis={}'.format(axis))
-        
-        assert all([isinstance(_, cls) for _ in ticks])
-
-
-    for sr in [1e-3, 1e1, 1e3, 1e5, 1e8, 1e12]:
-        locs = librosa.fft_frequencies(sr=sr, n_fft=32)
-        
-        for freqs in [None, locs]:
-            for n_ticks in [3, 5, None]:
-                for axis in ['x', 'y']:
-                    yield __test, locs, freqs, n_ticks, axis
-
-    yield raises(librosa.ParameterError)(__test), locs, freqs, n_ticks, 23
+    librosa.display.specshow(S_abs, x_coords=np.arange(S.shape[1] // 2))
 
