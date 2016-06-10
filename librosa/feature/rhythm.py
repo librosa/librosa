@@ -98,9 +98,11 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
     >>> plt.axis('tight')
     >>> plt.subplot(4, 1, 2)
     >>> # We'll truncate the display to a narrower range of tempi
-    >>> librosa.display.specshow(tempogram[:100], sr=sr, hop_length=hop_length,
-    >>>                          x_axis='time', y_axis='tempo',
-    ...                          tmin=tempo/4, tmax=2*tempo, n_yticks=4)
+    >>> librosa.display.specshow(tempogram, sr=sr, hop_length=hop_length,
+    >>>                          x_axis='time', y_axis='tempo')
+    >>> plt.axhline(tempo, color='black', linestyle='--', alpha=.8,
+    ...             label='Estimated tempo={:g}'.format(tempo))
+    >>> plt.legend(frameon=True)
     >>> plt.subplot(4, 1, 3)
     >>> x = np.linspace(0, tempogram.shape[0] * float(hop_length) / sr,
     ...                 num=tempogram.shape[0])
@@ -116,6 +118,8 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
     ...              label='Mean local autocorrelation', basex=2)
     >>> plt.semilogx(freqs[1:], ac_global[1:], '--', alpha=0.75,
     ...              label='Global autocorrelation', basex=2)
+    >>> plt.axvline(tempo, color='black', linestyle='--', alpha=.8,
+    ...             label='Estimated tempo={:g}'.format(tempo))
     >>> plt.legend(frameon=True)
     >>> plt.xlabel('BPM')
     >>> plt.axis('tight')

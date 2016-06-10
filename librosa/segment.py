@@ -150,12 +150,11 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
     >>> import matplotlib.pyplot as plt
     >>> plt.figure(figsize=(8, 4))
     >>> plt.subplot(1, 2, 1)
-    >>> librosa.display.specshow(R, x_axis='time', y_axis='time',
-    ...                          aspect='equal')
+    >>> librosa.display.specshow(R, x_axis='time', y_axis='time')
     >>> plt.title('Binary recurrence (symmetric)')
     >>> plt.subplot(1, 2, 2)
     >>> librosa.display.specshow(R_aff, x_axis='time', y_axis='time',
-    ...                          aspect='equal', cmap='magma_r')
+    ...                          cmap='magma_r')
     >>> plt.title('Affinity recurrence')
     >>> plt.tight_layout()
 
@@ -293,7 +292,7 @@ def recurrence_to_lag(rec, pad=True, axis=-1):
     >>> librosa.display.specshow(lag_pad, x_axis='time', y_axis='lag')
     >>> plt.title('Lag (zero-padded)')
     >>> plt.subplot(1, 2, 2)
-    >>> librosa.display.specshow(lag_nopad, x_axis='time', y_axis='time')
+    >>> librosa.display.specshow(lag_nopad, x_axis='time')
     >>> plt.title('Lag (no padding)')
     >>> plt.tight_layout()
     '''
@@ -485,20 +484,18 @@ def timelag_filter(function, pad=True, index=0):
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
     >>> plt.subplot(2, 2, 1)
-    >>> librosa.display.specshow(rec, x_axis='time', y_axis='time',
-    ...                          aspect='equal')
+    >>> librosa.display.specshow(rec, x_axis='time', y_axis='time')
     >>> plt.title('Raw recurrence matrix')
     >>> plt.subplot(2, 2, 2)
-    >>> librosa.display.specshow(rec_filtered, x_axis='time', y_axis='time',
-    ...                          aspect='equal')
+    >>> librosa.display.specshow(rec_filtered, x_axis='time', y_axis='time')
     >>> plt.title('Filtered recurrence matrix')
     >>> plt.subplot(2, 2, 3)
     >>> librosa.display.specshow(rec_aff, x_axis='time', y_axis='time',
-    ...                          aspect='equal', cmap='magma_r')
+    ...                          cmap='magma_r')
     >>> plt.title('Raw affinity matrix')
     >>> plt.subplot(2, 2, 4)
     >>> librosa.display.specshow(rec_aff_fil, x_axis='time', y_axis='time',
-    ...                          aspect='equal', cmap='magma_r')
+    ...                          cmap='magma_r')
     >>> plt.tight_layout()
     '''
 
@@ -566,8 +563,10 @@ def subsegment(data, frames, n_segments=4, axis=-1):
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=15)
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, hop_length=512)
-    >>> cqt = librosa.cqt(y, sr=sr, hop_length=512)
+    >>> beat_times = librosa.frames_to_time(beats, sr=sr, hop_length=512)
+    >>> cqt = np.abs(librosa.cqt(y, sr=sr, hop_length=512))
     >>> subseg = librosa.segment.subsegment(cqt, beats, n_segments=2)
+    >>> subseg_t = librosa.frames_to_time(subseg, sr=sr, hop_length=512)
     >>> subseg
     array([  0,   2,   4,  21,  23,  26,  43,  55,  63,  72,  83,
             97, 102, 111, 122, 137, 142, 153, 162, 180, 182, 185,
@@ -581,9 +580,10 @@ def subsegment(data, frames, n_segments=4, axis=-1):
     >>> librosa.display.specshow(librosa.logamplitude(cqt**2,
     ...                                               ref_power=np.max),
     ...                          y_axis='cqt_hz', x_axis='time')
-    >>> plt.vlines(beats, 0, cqt.shape[0], color='lime', alpha=0.9,
+    >>> lims = plt.gca().get_ylim()
+    >>> plt.vlines(beat_times, lims[0], lims[1], color='lime', alpha=0.9,
     ...            linewidth=2, label='Beats')
-    >>> plt.vlines(subseg, 0, cqt.shape[0], color='linen', linestyle='--',
+    >>> plt.vlines(subseg_t, lims[0], lims[1], color='linen', linestyle='--',
     ...            linewidth=1.5, alpha=0.5, label='Sub-beats')
     >>> plt.legend(frameon=True, shadow=True)
     >>> plt.title('CQT + Beat and sub-beat markers')
@@ -646,20 +646,21 @@ def agglomerative(data, k, clusterer=None, axis=-1):
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=15)
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
-    >>> boundary_frames = librosa.segment.agglomerative(chroma, 20)
-    >>> librosa.frames_to_time(boundary_frames, sr=sr)
+    >>> bounds = librosa.segment.agglomerative(chroma, 20)
+    >>> bound_times = librosa.frames_to_time(bounds, sr=sr)
+    >>> bound_times
     array([  0.   ,   1.672,   2.322,   2.624,   3.251,   3.506,
              4.18 ,   5.387,   6.014,   6.293,   6.943,   7.198,
              7.848,   9.033,   9.706,   9.961,  10.635,  10.89 ,
             11.54 ,  12.539])
 
-    Plot the segmentation against the spectrogram
+    Plot the segmentation over the chromagram
 
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
     >>> librosa.display.specshow(chroma, y_axis='chroma', x_axis='time')
-    >>> plt.vlines(boundary_frames, -0.5, chroma.shape[0]-0.5, color='lime',
-    ...            linewidth=4, alpha=0.9, label='Segment boundaries')
+    >>> plt.vlines(bound_times, 0, chroma.shape[0], color='lime',
+    ...            linewidth=2, alpha=0.9, label='Segment boundaries')
     >>> plt.axis('tight')
     >>> plt.legend(frameon=True, shadow=True)
     >>> plt.title('Power spectrogram')
