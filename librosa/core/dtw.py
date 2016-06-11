@@ -113,7 +113,7 @@ def dtw(X, Y,
 def calc_accu_cost(C, D, D_steps, step_sizes_sigma, weights_mul, weights_add, max_0, max_1):
     '''Calculate the accumulated cost matrix D.
 
-    Use dynamic programming to calculated the accumulated costs.
+    Use dynamic programming to calculate the accumulated costs.
 
     Parameters
     ----------
