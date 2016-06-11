@@ -22,19 +22,13 @@ Miscellaneous
     constant_q_lengths
     cq_to_chroma
     window_bandwidth
-
-Deprecated
-----------
-.. autosummary::
-    :toctree: generated/
-
-    logfrequency
 """
+
+import warnings
 
 import numpy as np
 import scipy
 import scipy.signal
-import warnings
 
 from . import cache
 from . import util
@@ -52,9 +46,7 @@ __all__ = ['dct',
            'constant_q',
            'constant_q_lengths',
            'cq_to_chroma',
-           'window_bandwidth',
-           # Deprecated
-           'logfrequency']
+           'window_bandwidth']
 
 
 @cache
@@ -322,112 +314,6 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0,
     return np.ascontiguousarray(wts[:, :int(1 + n_fft/2)])
 
 
-@util.decorators.deprecated('0.4', '0.5')
-def logfrequency(sr, n_fft, n_bins=84, bins_per_octave=12, tuning=0.0,
-                 fmin=None, spread=0.125):  # pragma: no cover
-    '''Approximate a constant-Q filter bank for a fixed-window STFT.
-
-    Each filter is a log-normal window centered at the corresponding frequency.
-
-    .. warning:: Deprecated in librosa 0.4
-
-    Parameters
-    ----------
-    sr : number > 0 [scalar]
-        audio sampling rate
-
-    n_fft : int > 0 [scalar]
-        FFT window size
-
-    n_bins : int > 0 [scalar]
-        Number of bins.  Defaults to 84 (7 octaves).
-
-    bins_per_octave : int > 0 [scalar]
-        Number of bins per octave. Defaults to 12 (semitones).
-
-    tuning : None or float in `[-0.5, +0.5]` [scalar]
-        Tuning correction parameter, in fractions of a bin.
-
-    fmin : float > 0 [scalar]
-        Minimum frequency bin. Defaults to `C1 ~= 32.70`
-
-    spread : float > 0 [scalar]
-        Spread of each filter, as a fraction of a bin.
-
-    Returns
-    -------
-    C : np.ndarray [shape=(n_bins, 1 + n_fft/2)]
-        log-frequency filter bank.
-
-    Examples
-    --------
-    Simple log frequency filters
-
-    >>> logfb = librosa.filters.logfrequency(22050, 4096)
-    >>> logfb
-    array([[ 0.,  0., ...,  0.,  0.],
-           [ 0.,  0., ...,  0.,  0.],
-    ...,
-           [ 0.,  0., ...,  0.,  0.],
-           [ 0.,  0., ...,  0.,  0.]])
-
-
-    Use a narrower frequency range
-
-    >>> librosa.filters.logfrequency(22050, 4096, n_bins=48, fmin=110)
-    array([[ 0.,  0., ...,  0.,  0.],
-           [ 0.,  0., ...,  0.,  0.],
-    ...,
-           [ 0.,  0., ...,  0.,  0.],
-           [ 0.,  0., ...,  0.,  0.]])
-
-
-    Use narrower filters for sparser response: 5% of a semitone
-
-    >>> librosa.filters.logfrequency(22050, 4096, spread=0.05)
-
-    Or wider: 50% of a semitone
-
-    >>> librosa.filters.logfrequency(22050, 4096, spread=0.5)
-
-    >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> librosa.display.specshow(logfb, x_axis='linear')
-    >>> plt.ylabel('Logarithmic filters')
-    >>> plt.title('Log-frequency filter bank')
-    >>> plt.colorbar()
-    >>> plt.tight_layout()
-    '''
-
-    if fmin is None:
-        fmin = note_to_hz('C1')
-
-    # Apply tuning correction
-    correction = 2.0**(float(tuning) / bins_per_octave)
-
-    # What's the shape parameter for our log-normal filters?
-    sigma = float(spread) / bins_per_octave
-
-    # Construct the output matrix
-    basis = np.zeros((n_bins, int(1 + n_fft/2)))
-
-    # Get log frequencies of bins
-    log_freqs = np.log2(fft_frequencies(sr, n_fft)[1:])
-
-    for i in range(n_bins):
-        # What's the center (median) frequency of this filter?
-        c_freq = correction * fmin * (2.0**(float(i) / bins_per_octave))
-
-        # Place a log-normal window around c_freq
-        basis[i, 1:] = np.exp(-0.5 * ((log_freqs - np.log2(c_freq)) / sigma)**2
-                              - np.log2(sigma) - log_freqs)
-
-    # Normalize the filters
-    basis = util.normalize(basis, norm=1, axis=1)
-
-    return basis
-
-
 def __float_window(window_function):
     '''Decorator function for windows with fractional input.
 
@@ -459,7 +345,7 @@ def __float_window(window_function):
 @cache
 def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
                window=None, filter_scale=1, pad_fft=True, norm=1,
-               resolution=util.Deprecated(), **kwargs):
+               **kwargs):
     r'''Construct a constant-Q basis.
 
     This uses the filter bank described by [1]_.
@@ -507,11 +393,6 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     kwargs : additional keyword arguments
         Arguments to `np.pad()` when `pad==True`.
 
-    resolution : float
-        .. warning:: This parameter name was in librosa 0.4.2
-            Use the `filter_scale` parameter instead.
-            The `resolution` parameter will be removed in librosa 0.5.0.
-
     Returns
     -------
     filters : np.ndarray, `len(filters) == n_bins`
@@ -535,17 +416,17 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 
     Plot one octave of filters in time and frequency
 
-    >>> basis, lengths = librosa.filters.constant_q(22050)
     >>> import matplotlib.pyplot as plt
+    >>> basis, lengths = librosa.filters.constant_q(22050)
     >>> plt.figure(figsize=(10, 6))
     >>> plt.subplot(2, 1, 1)
     >>> notes = librosa.midi_to_note(np.arange(24, 24 + len(basis)))
-    >>> for i, (f, n) in enumerate(zip(basis, notes)[:12]):
+    >>> for i, (f, n) in enumerate(zip(basis, notes[:12])):
     ...     f_scale = librosa.util.normalize(f) / 2
     ...     plt.plot(i + f_scale.real)
     ...     plt.plot(i + f_scale.imag, linestyle=':')
     >>> plt.axis('tight')
-    >>> plt.yticks(range(len(notes[:12])), notes[:12])
+    >>> plt.yticks(np.arange(len(notes[:12])), notes[:12])
     >>> plt.ylabel('CQ filters')
     >>> plt.title('CQ filters (one octave, time domain)')
     >>> plt.xlabel('Time (samples at 22050 Hz)')
@@ -555,7 +436,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     >>> # Keep only the positive frequencies
     >>> F = F[:, :(1 + F.shape[1] // 2)]
     >>> librosa.display.specshow(F, x_axis='linear')
-    >>> plt.yticks(range(len(notes))[::12], notes[::12])
+    >>> plt.yticks(np.arange(len(notes))[::12], notes[::12])
     >>> plt.ylabel('CQ filters')
     >>> plt.title('CQ filter magnitudes (frequency domain)')
     >>> plt.tight_layout()
@@ -566,10 +447,6 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 
     if window is None:
         window = scipy.signal.hann
-
-    filter_scale = util.rename_kw('resolution', resolution,
-                                  'filter_scale', filter_scale,
-                                  '0.4.2', '0.5.0')
 
     # Pass-through parameters to get the filter lengths
     lengths = constant_q_lengths(sr, fmin,
@@ -619,8 +496,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 
 @cache
 def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
-                       tuning=0.0, window='hann', filter_scale=1,
-                       resolution=util.Deprecated()):
+                       tuning=0.0, window='hann', filter_scale=1):
     r'''Return length of each filter in a constant-Q basis.
 
     Parameters
@@ -646,11 +522,6 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
     filter_scale : float > 0 [scalar]
         Resolution of filter windows. Larger values use longer windows.
 
-    resolution : float
-        .. warning:: This parameter name was in librosa 0.4.2
-            Use the `filter_scale` parameter instead.
-            The `resolution` parameter will be removed in librosa 0.5.0.
-
     Returns
     -------
     lengths : np.ndarray
@@ -661,10 +532,6 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
     constant_q
     librosa.core.cqt
     '''
-
-    filter_scale = util.rename_kw('resolution', resolution,
-                                  'filter_scale', filter_scale,
-                                  '0.4.2', '0.5.0')
 
     if fmin <= 0:
         raise ParameterError('fmin must be positive')
@@ -760,9 +627,9 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
     >>> plt.title('Chroma (wrapped CQT)')
     >>> plt.colorbar()
     >>> plt.subplot(3, 1, 3)
-    >>> chroma = librosa.feature.chromagram(y=y, sr=sr)
+    >>> chroma = librosa.feature.chroma_stft(y=y, sr=sr)
     >>> librosa.display.specshow(chroma, y_axis='chroma', x_axis='time')
-    >>> plt.title('librosa.feature.chroma')
+    >>> plt.title('librosa.feature.chroma_stft')
     >>> plt.colorbar()
     >>> plt.tight_layout()
 

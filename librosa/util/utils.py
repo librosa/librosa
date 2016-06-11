@@ -2,23 +2,20 @@
 # -*- coding: utf-8 -*-
 """Utility functions"""
 
-import numpy as np
 import scipy.ndimage
 import scipy.sparse
 import six
 
+import numpy as np
 from numpy.lib.stride_tricks import as_strided
 
 from .. import cache
-from . import decorators
 from .exceptions import ParameterError
 
 # Constrain STFT block sizes to 256 KB
 MAX_MEM_BLOCK = 2**8 * 2**10
 
-SMALL_FLOAT = 1e-20
-
-__all__ = ['MAX_MEM_BLOCK', 'SMALL_FLOAT',
+__all__ = ['MAX_MEM_BLOCK',
            'frame', 'pad_center', 'fix_length',
            'valid_audio', 'valid_int', 'valid_intervals',
            'fix_frames',
@@ -26,11 +23,12 @@ __all__ = ['MAX_MEM_BLOCK', 'SMALL_FLOAT',
            'match_intervals', 'match_events',
            'peak_pick',
            'sparsify_rows',
+           'roll_sparse',
            'index_to_slice',
            'sync',
+           'softmask',
            'buf_to_float',
-           # Deprecated functions
-           'buf_to_int']
+           'tiny']
 
 
 def frame(y, frame_length=2048, hop_length=512):
@@ -92,8 +90,8 @@ def frame(y, frame_length=2048, hop_length=512):
 
     if n_frames < 1:
         raise ParameterError('Buffer is too short (n={:d})'
-                                    ' for frame_length={:d}'.format(len(y),
-                                                                    frame_length))
+                             ' for frame_length={:d}'.format(len(y), frame_length))
+
     # Vertical stride is one sample
     # Horizontal stride is `hop_length` samples
     y_frames = as_strided(y, shape=(frame_length, n_frames),
@@ -146,12 +144,10 @@ def valid_audio(y, mono=True):
 
     if mono and y.ndim != 1:
         raise ParameterError('Invalid shape for monophonic audio: '
-                                    'ndim={:d}, shape={}'.format(y.ndim,
-                                                                 y.shape))
+                             'ndim={:d}, shape={}'.format(y.ndim, y.shape))
     elif y.ndim > 2:
         raise ParameterError('Invalid shape for audio: '
-                                    'ndim={:d}, shape={}'.format(y.ndim,
-                                                                 y.shape))
+                             'ndim={:d}, shape={}'.format(y.ndim, y.shape))
 
     if not np.isfinite(y).all():
         raise ParameterError('Audio buffer is not finite everywhere')
@@ -285,8 +281,7 @@ def pad_center(data, size, axis=-1, **kwargs):
 
     if lpad < 0:
         raise ParameterError(('Target size ({:d}) must be '
-                                     'at least input size ({:d})').format(size,
-                                                                          n))
+                              'at least input size ({:d})').format(size, n))
 
     return np.pad(data, lengths, **kwargs)
 
@@ -628,7 +623,7 @@ def normalize(S, norm=np.inf, axis=0):
         raise ParameterError('Unsupported norm: {}'.format(repr(norm)))
 
     # Avoid div-by-zero
-    length[length < SMALL_FLOAT] = 1.0
+    length[length < tiny(length)] = 1.0
 
     return S / length
 
@@ -896,19 +891,20 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
            510, 525, 536, 555, 570, 590, 609, 625, 639])
 
     >>> import matplotlib.pyplot as plt
+    >>> times = librosa.frames_to_time(np.arange(len(onset_env)),
+    ...                                sr=sr, hop_length=512)
     >>> plt.figure()
-    >>> plt.subplot(2, 1, 1)
-    >>> plt.plot(onset_env[:30 * sr // 512], alpha=0.8, label='Onset strength')
-    >>> plt.vlines(peaks[peaks < 30 * sr // 512], 0,
+    >>> ax = plt.subplot(2, 1, 2)
+    >>> D = np.abs(librosa.stft(y))**2
+    >>> librosa.display.specshow(librosa.logamplitude(D, ref_power=np.max),
+    ...                          y_axis='log', x_axis='time')
+    >>> plt.subplot(2, 1, 1, sharex=ax)
+    >>> plt.plot(times, onset_env, alpha=0.8, label='Onset strength')
+    >>> plt.vlines(times[peaks], 0,
     ...            onset_env.max(), color='r', alpha=0.8,
     ...            label='Selected peaks')
     >>> plt.legend(frameon=True, framealpha=0.8)
     >>> plt.axis('tight')
-    >>> plt.axis('off')
-    >>> plt.subplot(2, 1, 2)
-    >>> D = np.abs(librosa.stft(y))**2
-    >>> librosa.display.specshow(librosa.logamplitude(D, ref_power=np.max),
-    ...                          y_axis='log', x_axis='time')
     >>> plt.tight_layout()
     '''
 
@@ -1064,10 +1060,10 @@ def sparsify_rows(x, quantile=0.01):
         x = x.reshape((1, -1))
 
     elif x.ndim > 2:
-        raise ParameterError('Input must have 2 or fewer dimensions.  '
-                                    'Provided x.shape={}.'.format(x.shape))
+        raise ParameterError('Input must have 2 or fewer dimensions. '
+                             'Provided x.shape={}.'.format(x.shape))
 
-    if not (0.0 <= quantile < 1):
+    if not 0.0 <= quantile < 1:
         raise ParameterError('Invalid quantile {:.2f}'.format(quantile))
 
     x_sparse = scipy.sparse.lil_matrix(x.shape, dtype=x.dtype)
@@ -1085,6 +1081,77 @@ def sparsify_rows(x, quantile=0.01):
         x_sparse[i, idx] = x[i, idx]
 
     return x_sparse.tocsr()
+
+
+@cache
+def roll_sparse(x, shift, axis=0):
+    '''Sparse matrix roll
+
+    This operation is equivalent to ``numpy.roll``, but operates on sparse matrices.
+
+    Parameters
+    ----------
+    x : scipy.sparse.spmatrix or np.ndarray
+        The sparse matrix input
+
+    shift : int
+        The number of positions to roll the specified axis
+
+    axis : (0, 1, -1)
+        The axis along which to roll.
+
+    Returns
+    -------
+    x_rolled : same type as `x`
+        The rolled matrix, with the same format as `x`
+
+    See Also
+    --------
+    numpy.roll
+
+    Examples
+    --------
+    >>> # Generate a random sparse binary matrix
+    >>> X = scipy.sparse.lil_matrix(np.random.randint(0, 2, size=(5,5)))
+    >>> X_roll = roll_sparse(X, 2, axis=0)  # Roll by 2 on the first axis
+    >>> X_dense_r = roll_sparse(X.toarray(), 2, axis=0)  # Equivalent dense roll
+    >>> np.allclose(X_roll, X_dense_r.toarray())
+    True
+    '''
+    if not scipy.sparse.isspmatrix(x):
+        return np.roll(x, shift, axis=axis)
+
+    # shift-mod-length lets us have shift > x.shape[axis]
+    if axis not in [0, 1, -1]:
+        raise ParameterError('axis must be one of (0, 1, -1)')
+
+    shift = np.mod(shift, x.shape[axis])
+
+    if shift == 0:
+        return x.copy()
+
+    fmt = x.format
+    if axis == 0:
+        x = x.tocsc()
+    elif axis in (-1, 1):
+        x = x.tocsr()
+
+
+    # lil matrix to start
+    x_r = scipy.sparse.lil_matrix(x.shape, dtype=x.dtype)
+
+    idx_in = [slice(None)] * x.ndim
+    idx_out = [slice(None)] * x_r.ndim
+
+    idx_in[axis] = slice(0, -shift)
+    idx_out[axis] = slice(shift, None)
+    x_r[tuple(idx_out)] = x[tuple(idx_in)]
+
+    idx_out[axis] = slice(0, shift)
+    idx_in[axis] = slice(-shift, None)
+    x_r[tuple(idx_out)] = x[tuple(idx_in)]
+
+    return x_r.asformat(fmt)
 
 
 def buf_to_float(x, n_bytes=2, dtype=np.float32):
@@ -1229,8 +1296,9 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     Beat-synchronous CQT spectra
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
+    >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, trim=False)
     >>> cqt = librosa.cqt(y=y, sr=sr)
+    >>> beats = librosa.util.fix_frames(beats, x_max=cqt.shape[1])
 
     By default, use mean aggregation
 
@@ -1239,17 +1307,20 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     Use median-aggregation instead of mean
 
     >>> cqt_med = librosa.util.sync(cqt, beats,
-    ...                                aggregate=np.median)
+    ...                             aggregate=np.median)
 
     Or sub-beat synchronization
 
     >>> sub_beats = librosa.segment.subsegment(cqt, beats)
+    >>> sub_beats = librosa.util.fix_frames(sub_beats, x_max=cqt.shape[1])
     >>> cqt_med_sub = librosa.util.sync(cqt, sub_beats, aggregate=np.median)
 
 
     Plot the results
 
     >>> import matplotlib.pyplot as plt
+    >>> beat_t = librosa.frames_to_time(beats, sr=sr)
+    >>> subbeat_t = librosa.frames_to_time(sub_beats, sr=sr)
     >>> plt.figure()
     >>> plt.subplot(3, 1, 1)
     >>> librosa.display.specshow(librosa.logamplitude(cqt**2,
@@ -1259,13 +1330,15 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     >>> plt.title('CQT power, shape={}'.format(cqt.shape))
     >>> plt.subplot(3, 1, 2)
     >>> librosa.display.specshow(librosa.logamplitude(cqt_med**2,
-    ...                                               ref_power=np.max))
+    ...                                               ref_power=np.max),
+    ...                          x_coords=beat_t, x_axis='time')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Beat synchronous CQT power, '
     ...           'shape={}'.format(cqt_med.shape))
     >>> plt.subplot(3, 1, 3)
     >>> librosa.display.specshow(librosa.logamplitude(cqt_med_sub**2,
-    ...                                               ref_power=np.max))
+    ...                                               ref_power=np.max),
+    ...                          x_coords=subbeat_t, x_axis='time')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Sub-beat synchronous CQT power, '
     ...           'shape={}'.format(cqt_med_sub.shape))
@@ -1301,39 +1374,180 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     return data_agg
 
 
-# Deprecated functions
+@cache
+def softmask(X, X_ref, power=1, split_zeros=False):
+    '''Robustly compute a softmask operation.
 
-@decorators.deprecated('0.4', '0.5')
-def buf_to_int(x, n_bytes=2):  # pragma: no cover
-    """Convert a floating point buffer into integer values.
-    This is primarily useful as an intermediate step in wav output.
+        `M = X**power / (X**power + X_ref**power)`
 
-    See Also
-    --------
-    buf_to_float
 
     Parameters
     ----------
-    x : np.ndarray [dtype=float]
-        Floating point data buffer
+    X : np.ndarray
+        The (non-negative) input array corresponding to the positive mask elements
 
-    n_bytes : int [1, 2, 4]
-        Number of bytes per output sample
+    X_ref : np.ndarray
+        The (non-negative) array of reference or background elements.
+        Must have the same shape as `X`.
+
+    power : number > 0 or np.inf
+        If finite, returns the soft mask computed in a numerically stable way
+
+        If infinite, returns a hard (binary) mask equivalent to `X > X_ref`.
+        Note: for hard masks, ties are always broken in favor of `X_ref` (`mask=0`).
+
+
+    split_zeros : bool
+        If `True`, entries where `X` and X`_ref` are both small (close to 0)
+        will receive mask values of 0.5.
+
+        Otherwise, the mask is set to 0 for these entries.
+
 
     Returns
     -------
-    x_int : np.ndarray [dtype=int]
-        The original buffer cast to integer type.
-    """
+    mask : np.ndarray, shape=`X.shape`
+        The output mask array
 
-    if n_bytes not in [1, 2, 4]:
-        raise ParameterError('n_bytes must be one of {1, 2, 4}')
+    Raises
+    ------
+    ParameterError
+        If `X` and `X_ref` have different shapes.
 
-    # What is the scale of the input data?
-    scale = float(1 << ((8 * n_bytes) - 1))
+        If `X` or `X_ref` are negative anywhere
 
-    # Construct a format string
-    fmt = '<i{:d}'.format(n_bytes)
+        If `power <= 0`
 
-    # Rescale and cast the data
-    return (x * scale).astype(fmt)
+    Examples
+    --------
+
+    >>> X = 2 * np.ones((3, 3))
+    >>> X_ref = np.vander(np.arange(3.0))
+    >>> X
+    array([[ 2.,  2.,  2.],
+           [ 2.,  2.,  2.],
+           [ 2.,  2.,  2.]])
+    >>> X_ref
+    array([[ 0.,  0.,  1.],
+           [ 1.,  1.,  1.],
+           [ 4.,  2.,  1.]])
+    >>> librosa.util.softmask(X, X_ref, power=1)
+    array([[ 1.   ,  1.   ,  0.667],
+           [ 0.667,  0.667,  0.667],
+           [ 0.333,  0.5  ,  0.667]])
+    >>> librosa.util.softmask(X_ref, X, power=1)
+    array([[ 0.   ,  0.   ,  0.333],
+           [ 0.333,  0.333,  0.333],
+           [ 0.667,  0.5  ,  0.333]])
+    >>> librosa.util.softmask(X, X_ref, power=2)
+    array([[ 1. ,  1. ,  0.8],
+           [ 0.8,  0.8,  0.8],
+           [ 0.2,  0.5,  0.8]])
+    >>> librosa.util.softmask(X, X_ref, power=4)
+    array([[ 1.   ,  1.   ,  0.941],
+           [ 0.941,  0.941,  0.941],
+           [ 0.059,  0.5  ,  0.941]])
+    >>> librosa.util.softmask(X, X_ref, power=100)
+    array([[  1.000e+00,   1.000e+00,   1.000e+00],
+           [  1.000e+00,   1.000e+00,   1.000e+00],
+           [  7.889e-31,   5.000e-01,   1.000e+00]])
+    >>> librosa.util.softmask(X, X_ref, power=np.inf)
+    array([[ True,  True,  True],
+           [ True,  True,  True],
+           [False, False,  True]], dtype=bool)
+    '''
+    if X.shape != X_ref.shape:
+        raise ParameterError('Shape mismatch: {}!={}'.format(X.shape, X_ref.shape))
+
+    if np.any(X < 0) or np.any(X_ref < 0):
+        raise ParameterError('X and X_ref must be non-negative')
+
+    if power <= 0:
+        raise ParameterError('power must be strictly positive')
+
+    # We're working with ints, cast to float.
+    dtype = X.dtype
+    if not np.issubdtype(dtype, float):
+        dtype = np.float32
+
+    # Re-scale the input arrays relative to the larger value
+    Z = np.maximum(X, X_ref).astype(dtype)
+    bad_idx = (Z < np.finfo(dtype).tiny)
+    Z[bad_idx] = 1
+
+    # For finite power, compute the softmask
+    if np.isfinite(power):
+        mask = (X / Z)**power
+        mask /= mask + (X_ref / Z)**power
+        # Wherever energy is below energy in both inputs, split the mask
+        if split_zeros:
+            mask[bad_idx] = 0.5
+        else:
+            mask[bad_idx] = 0.0
+    else:
+        # Otherwise, compute the hard mask
+        mask = X > X_ref
+
+    return mask
+
+
+def tiny(x):
+    '''Compute the tiny-value corresponding to an input's data type.
+
+    This is the smallest "usable" number representable in `x`'s
+    data type (e.g., float32).
+
+    This is primarily useful for determining a threshold for
+    numerical underflow in division or multiplication operations.
+
+    Parameters
+    ----------
+    x : number or np.ndarray
+        The array to compute the tiny-value for.
+        All that matters here is `x.dtype`.
+
+    Returns
+    -------
+    tiny_value : float
+        The smallest positive usable number for the type of `x`.
+        If `x` is integer-typed, then the tiny value for `np.float32`
+        is returned instead.
+
+    See Also
+    --------
+    numpy.finfo
+
+    Examples
+    --------
+
+    For a standard double-precision floating point number:
+    >>> librosa.util.tiny(1.0)
+    2.2250738585072014e-308
+
+    Or explicitly as double-precision
+    >>> librosa.util.tiny(np.asarray(1e-5, dtype=np.float64))
+    2.2250738585072014e-308
+
+    Or complex numbers
+    >>> librosa.util.tiny(1j)
+    2.2250738585072014e-308
+
+    Single-precision floating point:
+    >>> librosa.util.tiny(np.asarray(1e-5, dtype=np.float32))
+    1.1754944e-38
+
+    Integer
+    >>> librosa.util.tiny(5)
+    1.1754944e-38
+    '''
+
+    # Make sure we have an array view
+    x = np.asarray(x)
+
+    # Only floating types generate a tiny
+    if np.issubdtype(x.dtype, float) or np.issubdtype(x.dtype, complex):
+        dtype = x.dtype
+    else:
+        dtype = np.float32
+
+    return np.finfo(dtype).tiny

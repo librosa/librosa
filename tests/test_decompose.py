@@ -12,6 +12,8 @@ except:
 import matplotlib
 matplotlib.use('Agg')
 import numpy as np
+import scipy.sparse
+
 import librosa
 import sklearn.decomposition
 
@@ -68,25 +70,39 @@ def test_sorted_decompose():
     assert np.allclose(X, W.dot(H), rtol=1e-2, atol=1e-2)
 
 
+
 def test_real_hpss():
 
     # Load an audio signal
     y, sr = librosa.load('data/test1_22050.wav')
 
     D = np.abs(librosa.stft(y))
+    
+    def __hpss_test(window, power, mask, margin):
+        H, P = librosa.decompose.hpss(D, kernel_size=window, power=power, mask=mask, margin=margin)
 
-    def __hpss_test(w, p, m):
-        H, P = librosa.decompose.hpss(D, kernel_size=w, power=p, mask=m)
-
-        if m:
-            assert np.allclose(H + P, np.ones_like(D))
+        if margin == 1.0 or margin == (1.0, 1.0):
+            if mask:
+                assert np.allclose(H + P, np.ones_like(D))
+            else:
+                assert np.allclose(H + P, D)
         else:
-            assert np.allclose(H + P, D)
+            if mask: 
+                assert not np.any(H.astype(bool) & P.astype(bool))
+            else:
+                assert np.all(H + P <= D)
 
     for window in [31, (5, 5)]:
-        for power in [0, 1, 2]:
+        for power in [1, 2, 10]:
             for mask in [False, True]:
-                yield __hpss_test, window, power, mask
+                for margin in [1.0, 3.0, (1.0, 1.0), (9.0, 10.0)]:
+                    yield __hpss_test, window, power, mask, margin
+
+@raises(librosa.ParameterError)
+def test_hpss_margin_error():
+    y, sr = librosa.load('data/test1_22050.wav')
+    D = np.abs(librosa.stft(y))
+    H, P = librosa.decompose.hpss(D, margin=0.9)
 
 
 def test_complex_hpss():
@@ -99,3 +115,81 @@ def test_complex_hpss():
     H, P = librosa.decompose.hpss(D)
 
     assert np.allclose(H + P, D)
+
+
+def test_nn_filter_mean():
+
+    X = np.random.randn(10, 100)
+
+    # Build a recurrence matrix, just for testing purposes
+    rec = librosa.segment.recurrence_matrix(X)
+
+    X_filtered = librosa.decompose.nn_filter(X)
+
+    # Normalize the recurrence matrix so dotting computes an average
+    rec = librosa.util.normalize(rec, axis=1, norm=1)
+
+    assert np.allclose(X_filtered, X.dot(rec.T))
+
+def test_nn_filter_mean_rec():
+
+    X = np.random.randn(10, 100)
+
+    # Build a recurrence matrix, just for testing purposes
+    rec = librosa.segment.recurrence_matrix(X)
+
+    # Knock out the first three rows of links
+    rec[:3] = 0
+
+    X_filtered = librosa.decompose.nn_filter(X, rec=rec)
+
+    for i in range(3):
+        assert np.allclose(X_filtered[:, i], X[:, i])
+
+    # Normalize the recurrence matrix
+    rec = librosa.util.normalize(rec, axis=1, norm=1)
+    assert np.allclose(X_filtered[:, 3:], (X.dot(rec.T))[:, 3:])
+
+def test_nn_filter_mean_rec_sparse():
+
+    X = np.random.randn(10, 100)
+
+    # Build a recurrence matrix, just for testing purposes
+    rec = librosa.segment.recurrence_matrix(X, sparse=True)
+
+    X_filtered = librosa.decompose.nn_filter(X, rec=rec)
+
+    # Normalize the recurrence matrix
+    rec = librosa.util.normalize(rec.toarray(), axis=1, norm=1)
+    assert np.allclose(X_filtered, (X.dot(rec.T)))
+
+def test_nn_filter_avg():
+
+    X = np.random.randn(10, 100)
+
+    # Build a recurrence matrix, just for testing purposes
+    rec = librosa.segment.recurrence_matrix(X, mode='affinity')
+
+    X_filtered = librosa.decompose.nn_filter(X, rec=rec, aggregate=np.average)
+
+    # Normalize the recurrence matrix so dotting computes an average
+    rec = librosa.util.normalize(rec, axis=1, norm=1)
+
+    assert np.allclose(X_filtered, X.dot(rec.T))
+
+
+def test_nn_filter_badselfsim():
+
+    @raises(librosa.ParameterError)
+    def __test(x, y, sparse):
+        X = np.empty((10, 100))
+        # Build a recurrence matrix, just for testing purposes
+        rec = np.random.randn(x, y)
+        if sparse:
+            rec = scipy.sparse.csr_matrix(rec)
+
+        librosa.decompose.nn_filter(X, rec=rec)
+
+    for (x,y) in [(10, 10), (100, 20), (20, 100), (100, 101), (101, 101)]:
+        for sparse in [False, True]:
+            yield __test, x, y, sparse

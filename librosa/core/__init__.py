@@ -64,6 +64,7 @@ Time and frequency conversion
     fft_frequencies
     cqt_frequencies
     mel_frequencies
+    tempo_frequencies
 
 
 Pitch and tuning
@@ -75,21 +76,12 @@ Pitch and tuning
     pitch_tuning
     piptrack
 
-
 Sequence Alignment with Dynamic Time Warping
 --------------------------------------------
 .. autosummary::
     :toctree: generated/
 
     dtw
-
-
-Deprecated
-----------
-.. autosummary::
-    :toctree: generated/
-
-    ifptrack
 
 """
 

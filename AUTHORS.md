@@ -14,6 +14,7 @@ Contributors
 * Ryuichi Yamamoto <https://github.com/r9y9>
 * Rachel Bittner <https://github.com/rabitt>
 * Stefan Balke <https://github.com/stefan-balke>
+* CJ Carr <https://github.com/Cortexelus>
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
 

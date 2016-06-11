@@ -12,6 +12,7 @@ except:
 import matplotlib
 matplotlib.use('Agg')
 import numpy as np
+import scipy.sparse
 np.set_printoptions(precision=3)
 from nose.tools import raises, eq_
 import six
@@ -324,81 +325,6 @@ def test_localmax():
     for ndim in range(1, 5):
         for axis in range(ndim):
             yield __test, ndim, axis
-
-
-def test_feature_extractor():
-
-    y, sr = librosa.load('data/test1_22050.wav')
-
-    def __test_positional_iterate(myfunc, args):
-
-        output_raw = myfunc(y, **args)
-
-        FP = librosa.util.FeatureExtractor(myfunc, **args)
-        output = FP.transform([y])
-
-        assert np.allclose(output, output_raw)
-
-        # Ensure that fitting does nothing
-        FP.fit()
-        output = FP.transform([y])
-        assert np.allclose(output, output_raw)
-
-    def __test_positional(myfunc, args):
-
-        output_raw = myfunc(y, **args)
-
-        FP = librosa.util.FeatureExtractor(myfunc, iterate=False, **args)
-        output = FP.transform(y)
-
-        assert np.allclose(output, output_raw)
-
-        # Ensure that fitting does nothing
-        FP.fit()
-        output = FP.transform(y)
-        assert np.allclose(output, output_raw)
-
-    def __test_keyword_iterate(myfunc, args):
-
-        output_raw = myfunc(y=y, **args)
-
-        FP = librosa.util.FeatureExtractor(myfunc, target='y', **args)
-        output = FP.transform([y])
-
-        assert np.allclose(output, output_raw)
-
-        # Ensure that fitting does nothing
-        FP.fit()
-        output = FP.transform([y])
-        assert np.allclose(output, output_raw)
-
-    def __test_keyword(myfunc, args):
-
-        output_raw = myfunc(y=y, **args)
-
-        FP = librosa.util.FeatureExtractor(myfunc, target='y',
-                                           iterate=False, **args)
-        output = FP.transform(y)
-
-        assert np.allclose(output, output_raw)
-
-        # Ensure that fitting does nothing
-        FP.fit()
-        output = FP.transform(y)
-        assert np.allclose(output, output_raw)
-
-    func = librosa.feature.melspectrogram
-    args = {'sr': sr}
-
-    for n_fft in [1024, 2048]:
-        for n_mels in [32, 64, 128]:
-            args['n_fft'] = n_fft
-            args['n_mels'] = n_mels
-
-            yield __test_positional_iterate, func, args
-            yield __test_keyword_iterate, func, args
-            yield __test_positional, func, args
-            yield __test_keyword, func, args
 
 
 def test_peak_pick():
@@ -775,3 +701,102 @@ def test_sync():
 
     for bad_idx in [ ['foo', 'bar'], [None], [slice(None), None] ]:
         yield __test_fail, data, bad_idx
+
+
+def test_roll_sparse():
+
+    def __test(fmt, shift, axis, X):
+
+        X_sparse = X.asformat(fmt)
+        X_dense = X.toarray()
+
+        Xs_roll = librosa.util.roll_sparse(X_sparse, shift, axis=axis)
+
+        assert scipy.sparse.issparse(Xs_roll)
+        eq_(Xs_roll.format, X_sparse.format)
+
+        Xd_roll = librosa.util.roll_sparse(X_dense, shift, axis=axis)
+
+        assert np.allclose(Xs_roll.toarray(), Xd_roll), (X_dense, Xs_roll.toarray(), Xd_roll)
+
+        Xd_roll_np = np.roll(X_dense, shift, axis=axis)
+
+        assert np.allclose(Xd_roll, Xd_roll_np)
+
+
+    X = scipy.sparse.lil_matrix(np.random.randint(0, high=10, size=(16, 16)))
+
+    for fmt in ['csr', 'csc', 'lil', 'dok', 'coo']:
+        for shift in [0, 8, -8, 20, -20]:
+            for axis in [0, 1, -1]:
+                yield __test, fmt, shift, axis, X
+
+
+@raises(librosa.ParameterError)
+def test_roll_sparse_bad_axis():
+
+    X = scipy.sparse.eye(5, format='csr')
+    librosa.util.roll_sparse(X, 3, axis=2)
+
+
+def test_softmask():
+
+    def __test(power, split_zeros):
+
+        X = np.abs(np.random.randn(10, 10))
+        X_ref = np.abs(np.random.randn(10, 10))
+
+        # Zero out some rows
+        X[3, :] = 0
+        X_ref[3, :] = 0
+
+        M = librosa.util.softmask(X, X_ref, power=power, split_zeros=split_zeros)
+
+        assert np.all(0 <= M) and np.all(M <= 1)
+
+        if split_zeros and np.isfinite(power):
+            assert np.allclose(M[3, :], 0.5)
+        else:
+            assert not np.any(M[3, :]), M[3]
+
+    for power in [1, 2, 50, 100, np.inf]:
+        for split_zeros in [False, True]:
+            yield __test, power, split_zeros
+
+
+def test_softmask_int():
+    X = 2 * np.ones((3,3), dtype=np.int32)
+    X_ref = np.vander(np.arange(3))
+
+    M1 = librosa.util.softmask(X, X_ref, power=1)
+    M2 = librosa.util.softmask(X_ref, X, power=1)
+
+    assert np.allclose(M1 + M2, 1)
+
+def test_softmask_fail():
+
+    failure = raises(librosa.ParameterError)(librosa.util.softmask)
+    yield failure, -np.ones(3), np.ones(3), 1, False
+    yield failure, np.ones(3), -np.ones(3), 1, False
+    yield failure, np.ones(3), np.ones(4), 1, False
+    yield failure, np.ones(3), np.ones(3), 0, False
+    yield failure, np.ones(3), np.ones(3), -1, False
+
+
+def test_tiny():
+
+    def __test(x, value):
+
+        eq_(value, librosa.util.tiny(x))
+
+
+    for x, value in [(1, np.finfo(np.float32).tiny),
+                     (np.ones(3, dtype=int), np.finfo(np.float32).tiny),
+                     (np.ones(3, dtype=np.float32), np.finfo(np.float32).tiny),
+                     (1.0, np.finfo(np.float64).tiny),
+                     (np.ones(3, dtype=np.float64), np.finfo(np.float64).tiny),
+                     (1j, np.finfo(np.complex128).tiny),
+                     (np.ones(3, dtype=np.complex64), np.finfo(np.complex64).tiny),
+                     (np.ones(3, dtype=np.complex128), np.finfo(np.complex128).tiny)]:
+        yield __test, x, value
+

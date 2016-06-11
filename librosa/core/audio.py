@@ -3,7 +3,6 @@
 """Core IO, DSP and utility functions."""
 
 import os
-import warnings
 import six
 
 import audioread
@@ -18,23 +17,11 @@ from .. import util
 from ..util.exceptions import ParameterError
 
 __all__ = ['load', 'to_mono', 'resample', 'get_duration',
-           'autocorrelate', 'zero_crossings', 'clicks',
-           # Deprecated functions
-           'peak_pick', 'localmax']
+           'autocorrelate', 'zero_crossings', 'clicks']
 
 # Resampling bandwidths as percentage of Nyquist
-# http://resampy.readthedocs.org/en/latest/api.html#module-resampy.filters
-BW_BEST = 0.9476
-BW_FASTEST = 0.85
-
-# Do we have scikits.samplerate?
-try:
-    # Pylint won't handle dynamic imports, so we suppress this warning
-    import scikits.samplerate as samplerate  # pylint: disable=import-error
-    _HAS_SAMPLERATE = True
-except ImportError:
-    _HAS_SAMPLERATE = False
-
+BW_BEST = resampy.filters.get_filter('kaiser_best')[2]
+BW_FASTEST = resampy.filters.get_filter('kaiser_fast')[2]
 
 # -- CORE ROUTINES --#
 # Load should never be cached, since we cannot verify that the contents of
@@ -219,12 +206,8 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
 
         .. note::
             By default, this uses `resampy`'s high-quality mode ('kaiser_best').
-            If `res_type` is not recognized by `resampy.resample`, it then
-            falls back on `scikits.samplerate` (if it is installed)
 
-            If both of those fail, it will fall back on `scipy.signal.resample`.
-
-            To force use of `scipy.signal.resample`, set `res_type='scipy'`.
+            To use `scipy.signal.resample`, set `res_type='scipy'`.
 
     fix : bool
         adjust the length of the resampled signal to be of size exactly
@@ -248,6 +231,7 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
     --------
     librosa.util.fix_length
     scipy.signal.resample
+    resampy.resample
 
     Examples
     --------
@@ -270,17 +254,10 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
 
     n_samples = int(np.ceil(y.shape[-1] * ratio))
 
-    try:
+    if res_type == 'scipy':
+        y_hat = scipy.signal.resample(y, n_samples, axis=-1)
+    else:
         y_hat = resampy.resample(y, orig_sr, target_sr, filter=res_type, axis=-1)
-    except NotImplementedError:
-        if _HAS_SAMPLERATE and (res_type != 'scipy'):
-            warnings.warn('scikits.samplerate resampling is deprecated as '
-                          'of librosa version 0.4.3.\n\tSupport will be '
-                          'removed in librosa version 0.5.',
-                          category=DeprecationWarning)
-            y_hat = samplerate.resample(y.T, ratio, res_type).T
-        else:
-            y_hat = scipy.signal.resample(y, n_samples, axis=-1)
 
     if fix:
         y_hat = util.fix_length(y_hat, n_samples, **kwargs)
@@ -292,8 +269,9 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
 
 
 def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
-                 center=True):
-    """Compute the duration (in seconds) of an audio time series or STFT matrix.
+                 center=True, filename=None):
+    """Compute the duration (in seconds) of an audio time series,
+    feature matrix, or filename.
 
     Examples
     --------
@@ -301,6 +279,10 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> librosa.get_duration(y=y, sr=sr)
     61.44
+
+    >>> # Or directly from an audio file
+    >>> librosa.get_duration(filename=librosa.util.example_audio_file())
+    61.4
 
     >>> # Or compute duration from an STFT matrix
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
@@ -335,11 +317,22 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         - If `True`, `S[:, t]` is centered at `y[t * hop_length]`
         - If `False`, then `S[:, t]` begins at `y[t * hop_length]`
 
+    filename : str
+        If provided, all other parameters are ignored, and the
+        duration is calculated directly from the audio file.
+        Note that this avoids loading the contents into memory,
+        and is therefore useful for querying the duration of
+        long files.
+
     Returns
     -------
     d : float >= 0
         Duration (in seconds) of the input time series or spectrogram.
     """
+
+    if filename is not None:
+        with audioread.audio_open(filename) as fdesc:
+            return fdesc.duration
 
     if y is None:
         assert S is not None
@@ -390,10 +383,9 @@ def autocorrelate(y, max_size=None, axis=-1):
     --------
     Compute full autocorrelation of y
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), offset=20, duration=10)
     >>> librosa.autocorrelate(y)
-    array([  1.584e+04,   1.580e+04, ...,  -1.154e-10,  -2.725e-13])
-
+    array([  3.226e+03,   3.217e+03, ...,   8.277e-04,   3.575e-04], dtype=float32)
 
     Compute onset strength auto-correlation up to 4 seconds
 
@@ -613,6 +605,20 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
     >>> # Or with a click frequency of 880Hz and a 500ms sample
     >>> y_beat_times880 = librosa.clicks(times=times, sr=sr,
     ...                                  click_freq=880, click_duration=0.5)
+
+    Display click waveform next to the spectrogram
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> S = librosa.feature.melspectrogram(y=y, sr=sr)
+    >>> ax = plt.subplot(2,1,2)
+    >>> librosa.display.specshow(librosa.logamplitude(S, ref_power=np.max),
+    ...                          x_axis='time', y_axis='mel')
+    >>> plt.subplot(2,1,1, sharex=ax)
+    >>> librosa.display.waveplot(y_beat_times, sr=sr, label='Beat clicks')
+    >>> plt.legend()
+    >>> plt.xlim(15, 30)
+    >>> plt.tight_layout()
     """
 
     # Compute sample positions from time or frames
@@ -670,11 +676,3 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
             click_signal[start:end] += click
 
     return click_signal
-
-
-# Moved/deprecated functions
-peak_pick = util.decorators.moved('librosa.core.peak_pick',
-                                  '0.4', '0.5')(util.peak_pick)
-
-localmax = util.decorators.moved('librosa.core.localmax',
-                                 '0.4', '0.5')(util.localmax)

@@ -57,7 +57,7 @@ def test_tempo():
                                             start_bpm=120.0)
 
         assert (np.allclose(tempo, DATA['t'][0, 0]) or
-                np.allclose(tempo, DATA['t'][0, 1]))
+                np.allclose(tempo, DATA['t'][0, 1])), (tempo, DATA['t'])
 
     for infile in files('data/beat-tempo-*.mat'):
         yield (__test, infile)

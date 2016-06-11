@@ -23,7 +23,7 @@ from nose.tools import raises, eq_
 
 
 def __test_cqt_size(y, sr, hop_length, fmin, n_bins, bins_per_octave,
-                    tuning, resolution, aggregate, norm, sparsity):
+                    tuning, filter_scale, norm, sparsity):
 
     cqt_output = np.abs(librosa.cqt(y,
                                     sr=sr,
@@ -32,11 +32,9 @@ def __test_cqt_size(y, sr, hop_length, fmin, n_bins, bins_per_octave,
                                     n_bins=n_bins,
                                     bins_per_octave=bins_per_octave,
                                     tuning=tuning,
-                                    filter_scale=resolution,
-                                    aggregate=aggregate,
+                                    filter_scale=filter_scale,
                                     norm=norm,
-                                    sparsity=sparsity,
-                                    real=False))
+                                    sparsity=sparsity))
 
     eq_(cqt_output.shape[0], n_bins)
 
@@ -66,29 +64,29 @@ def test_cqt():
     # num_octaves = 6, 2**(6-1) = 32 > 16
     for hop_length in [-1, 0, 16, 63, 65]:
         yield (raises(librosa.ParameterError)(__test_cqt_size), y, sr, hop_length, None, 72,
-               12, 0.0, 2, None, 1, 0.01)
+               12, 0.0, 2, 1, 0.01)
 
     # Filters go beyond Nyquist. 500 Hz -> 4 octaves = 8000 Hz > 11000 Hz
     yield (raises(librosa.ParameterError)(__test_cqt_size), y, sr, 512, 500, 4 * 12,
-           12, 0.0, 2, None, 1, 0.01)
+           12, 0.0, 2, 1, 0.01)
 
     # Test with fmin near Nyquist
     for fmin in [3000, 4800]:
         for n_bins in [1, 2]:
             for bins_per_octave in [12]:
                 yield (__test_cqt_size, y, sr, 512, fmin, n_bins,
-                       bins_per_octave, 0.0, 2, None, 1, 0.01)
+                       bins_per_octave, 0.0, 2, 1, 0.01)
 
     # Test for no errors and correct output size
     for fmin in [None, librosa.note_to_hz('C2')]:
         for n_bins in [1, 12, 24, 48, 72, 74, 76]:
             for bins_per_octave in [12, 24]:
                 for tuning in [None, 0, 0.25]:
-                    for resolution in [1, 2]:
+                    for filter_scale in [1, 2]:
                         for norm in [1, 2]:
                             yield (__test_cqt_size, y, sr, 512, fmin, n_bins,
                                    bins_per_octave, tuning,
-                                   resolution, None, norm, 0.01)
+                                   filter_scale, norm, 0.01)
 
 
 def test_hybrid_cqt():
@@ -176,3 +174,77 @@ def test_cqt_position():
 
     for note_min in [12, 18, 24, 30, 36]:
         yield __test, note_min
+
+
+@raises(librosa.ParameterError)
+def test_cqt_fail_short_early():
+
+    # sampling rate is sufficiently above the top octave to trigger early downsampling
+    y = np.zeros(16)
+    librosa.cqt(y, sr=44100, n_bins=36, real=False)
+
+
+@raises(librosa.ParameterError)
+def test_cqt_fail_short_late():
+
+    y = np.zeros(64)
+    librosa.cqt(y, sr=22050, real=False)
+
+def test_cqt_impulse():
+    # Test to resolve issue #348
+    def __test(sr, hop_length, y):
+
+        C = np.abs(librosa.cqt(y=y, sr=sr, hop_length=hop_length, real=False))
+
+        max_response = np.max(C, axis=1)
+
+
+        ref_response = np.max(max_response)
+        continuity = np.abs(np.diff(max_response))
+
+        # Test that continuity is never violated by more than 15% point-wise energy
+        assert np.max(continuity) < 1.5e-1 * ref_response, np.max(continuity) / ref_response
+
+        # Test that peak-energy deviation is bounded
+        assert np.std(max_response) < 0.5 * ref_response, np.std(max_response) / ref_response
+
+    for sr in [11025, 16384, 22050, 32000, 44100]:
+        # Generate an impulse
+        x = np.zeros(sr)
+
+        for hop_scale in range(1, 9):
+            hop_length = 64 * hop_scale
+            # Center the impulse response on a frame
+            center = (len(x) / (2 * float(hop_length))) * hop_length
+            x[center] = 1
+            yield __test, sr, hop_length, x
+
+
+def test_hybrid_cqt_scale():
+    # Test to resolve issue #341
+    def __test(sr, hop_length, y):
+
+        hcqt = librosa.hybrid_cqt(y=y, sr=sr, hop_length=hop_length, tuning=0)
+
+        max_response = np.max(np.abs(hcqt), axis=1)
+
+
+        ref_response = np.max(max_response)
+        continuity = np.abs(np.diff(max_response))
+
+        # Test that continuity is never violated by more than 75% point-wise energy
+        assert np.max(continuity) <= 0.6 * ref_response, np.max(continuity)
+
+        # Test that peak-energy deviation is bounded
+        assert np.std(max_response) < 0.5 * ref_response, np.std(max_response)
+
+    for sr in [11025, 16384, 22050, 32000, 44100]:
+        # Generate an impulse
+        x = np.zeros(sr)
+
+        for hop_scale in range(1, 9):
+            hop_length = 64 * hop_scale
+            # Center the impulse response on a frame
+            center = (len(x) / (2 * float(hop_length))) * hop_length
+            x[center] = 1
+            yield __test, sr, hop_length, x
