@@ -21,7 +21,7 @@ src="$HOME/env/miniconda$TRAVIS_PYTHON_VERSION"
 if [ ! -d "$src" ]; then
     mkdir -p $HOME/env
     pushd $HOME/env
-    
+
         # Download miniconda packages
         wget http://repo.continuum.io/miniconda/Miniconda-3.16.0-Linux-x86_64.sh -O miniconda.sh;
 
@@ -34,7 +34,7 @@ if [ ! -d "$src" ]; then
         source activate $ENV_NAME
 
         pip install python-coveralls
-            
+
         source deactivate
     popd
 else
