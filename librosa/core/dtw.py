@@ -5,9 +5,75 @@
 import numpy as np
 from scipy.spatial.distance import cdist
 from librosa.util.decorators import optional_jit
-import numba
 
 __all__ = ['dtw']
+
+
+@optional_jit(True)
+def band_mask(radius, mask):
+    """Construct band-around-diagonal mask (Sakoe-Chiba band).  When
+    ``mask.shape[0] != mask.shape[1]``, the radius will be expanded so that
+    ``mask[-1, -1] = 1`` always.
+
+    `mask` will be modified in place.
+
+    Parameters
+    ----------
+    radius : float
+        The band radius (1/2 of the width) will be
+        ``int(radius*min(mask.shape))``.
+    mask : np.ndarray
+        Pre-allocated boolean matrix of zeros.
+
+    Examples
+    --------
+    >>> mask = np.zeros((8, 8), dtype=np.bool)
+    >>> band_mask(0.25, mask)
+    >>> mask.astype(int)
+    array([[1, 1, 0, 0, 0, 0, 0, 0],
+           [1, 1, 1, 0, 0, 0, 0, 0],
+           [0, 1, 1, 1, 0, 0, 0, 0],
+           [0, 0, 1, 1, 1, 0, 0, 0],
+           [0, 0, 0, 1, 1, 1, 0, 0],
+           [0, 0, 0, 0, 1, 1, 1, 0],
+           [0, 0, 0, 0, 0, 1, 1, 1],
+           [0, 0, 0, 0, 0, 0, 1, 1]])
+    >>> mask = np.zeros((8, 12), dtype=np.bool)
+    >>> band_mask(0.25, mask)
+    >>> mask.astype(int)
+    array([[1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
+           [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+           [0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+           [0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0],
+           [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+           [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0],
+           [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1],
+           [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]])
+    """
+    nx, ny = mask.shape
+
+    # The logic will be different depending on whether there are more rows
+    # or columns in the mask.  Coding it this way results in some code
+    # duplication but it's the most efficient way with numba
+    if nx < ny:
+        # Calculate the radius in indices, rather than proportion
+        radius = int(round(nx*radius))
+        # Force radius to be at least one
+        radius = 1 if radius == 0 else radius
+        for i in range(nx):
+            for j in range(ny):
+                # If this i, j falls within the band
+                if i - j + (nx - radius) < nx and j - i + (nx - radius) < ny:
+                    # Set the mask to 1 here
+                    mask[i, j] = 1
+    # Same exact approach with ny/ny and i/j switched.
+    else:
+        radius = int(round(ny*radius))
+        radius = 1 if radius == 0 else radius
+        for i in range(nx):
+            for j in range(ny):
+                if j - i + (ny - radius) < ny and i - j + (ny - radius) < nx:
+                    mask[i, j] = 1
 
 
 def dtw(X, Y,
@@ -15,7 +81,8 @@ def dtw(X, Y,
         step_sizes_sigma=np.array([[1, 1], [0, 1], [1, 0]]),
         weights_add=np.array([0, 0, 0]),
         weights_mul=np.array([1, 1, 1]),
-        subseq=False, backtrack=True):
+        subseq=False, backtrack=True,
+        mask=False, mask_rad=0.25):
     '''Dynamic time warping (DTW).
 
     This function performs a DTW and path backtracking on two sequences.
@@ -52,6 +119,13 @@ def dtw(X, Y,
     backtrack : binary
         Enable backtracking in accumulated cost matrix.
 
+    mask : binary
+        Construct band-around-diagonal mask (Sakoe-Chiba band).
+
+    mask_rad : float
+        The band radius (1/2 of the width) will be
+        ``int(radius*min(C.shape))``.
+
     Returns
     -------
     D : np.ndarray [shape=(N,M)]
@@ -73,6 +147,13 @@ def dtw(X, Y,
 
     # calculate pair-wise distances
     C = cdist(X.T, Y.T, dist)
+
+    if mask:
+        my_mask = np.zeros_like(C, dtype=np.bool)
+        band_mask(mask_rad, my_mask)
+
+        # set cost to infinity where the mask is True
+        C[my_mask == 0] = np.inf
 
     # initialize whole matrix with infinity values
     D = np.ones(C.shape + np.array([max_0, max_1])) * np.inf
