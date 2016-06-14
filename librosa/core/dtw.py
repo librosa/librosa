@@ -177,13 +177,13 @@ def dtw(X, Y,
     D_steps = D_steps[max_0:, max_1:]
 
     if backtrack:
-        if subseq is False:
-            # perform warping path backtracking
-            wp = backtracking(D_steps, step_sizes_sigma)
-        elif subseq is True:
+        if subseq:
             # search for global minimum in last row of D-matrix
             wp_end_idx = np.argmin(D[-1, :]) + 1
             wp = backtracking(D_steps[:, :wp_end_idx], step_sizes_sigma)
+        else:
+            # perform warping path backtracking
+            wp = backtracking(D_steps, step_sizes_sigma)
     else:
         wp = []
 
@@ -191,7 +191,8 @@ def dtw(X, Y,
 
 
 @optional_jit(True)
-def calc_accu_cost(C, D, D_steps, step_sizes_sigma, weights_mul, weights_add, max_0, max_1):
+def calc_accu_cost(C, D, D_steps, step_sizes_sigma,
+                   weights_mul, weights_add, max_0, max_1):
     '''Calculate the accumulated cost matrix D.
 
     Use dynamic programming to calculate the accumulated costs.
@@ -240,7 +241,8 @@ def calc_accu_cost(C, D, D_steps, step_sizes_sigma, weights_mul, weights_add, ma
         for cur_m in range(max_1, D.shape[1]):
             # loop over all step sizes
             for cur_step_idx in range(step_sizes_sigma.shape[0]):
-                cur_D = D[cur_n-step_sizes_sigma[cur_step_idx, 0], cur_m-step_sizes_sigma[cur_step_idx, 1]]
+                cur_D = D[cur_n-step_sizes_sigma[cur_step_idx, 0],
+                          cur_m-step_sizes_sigma[cur_step_idx, 1]]
                 cur_C = weights_mul[cur_step_idx] * C[cur_n-max_0, cur_m-max_1]
                 cur_C += weights_add[cur_step_idx]
                 cur_cost = cur_D + cur_C
