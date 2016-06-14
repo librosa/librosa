@@ -11,7 +11,7 @@ conda_create ()
     conda update -q conda
     conda config --add channels pypi
     conda info -a
-    deps='pip numpy scipy pandas requests nose coverage numpydoc matplotlib sphinx scikit-learn seaborn'
+    deps='pip numpy scipy pandas requests nose coverage numpydoc matplotlib sphinx scikit-learn seaborn numba'
 
     conda create -q -n $ENV_NAME "python=$TRAVIS_PYTHON_VERSION" $deps
     conda update --all
