@@ -76,14 +76,15 @@ Pitch and tuning
     pitch_tuning
     piptrack
 
-=======
-
-Sequence Alignment with Dynamic Time Warping
---------------------------------------------
+Dynamic Time Warping
+--------------------
 .. autosummary::
     :toctree: generated/
 
     dtw
+    calc_accu_cost
+    backtracking
+    band_mask
 
 """
 
