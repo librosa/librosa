@@ -137,13 +137,47 @@ def dtw(X, Y,
         Warping path with index pairs.
         Each list entry contains an index pair
         (n,m) as a tuple
-    '''
-    max_0 = step_sizes_sigma[:, 0].max()
-    max_1 = step_sizes_sigma[:, 1].max()
 
+    Raises
+    ------
+    AssertionError
+        If you are doing diagonal matching and Y is shorter than X
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import matplotlib.pyplot as plt
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), offset=10, duration=15)
+    >>> X = librosa.feature.chroma_cens(y=y, sr=sr)
+    >>> noise = np.random.rand(X.shape[0], 200)
+    >>> Y = np.concatenate((noise, noise, X, noise), axis=1)
+    >>> D, wp = librosa.dtw(X, Y, subseq=True)
+    >>> wp = np.asarray(wp)
+    >>> f, axarr = plt.subplots(2)
+    >>> axarr[0].imshow(D, cmap=plt.get_cmap('gray_r'),
+    ...                 origin='lower', interpolation='nearest', aspect='auto')
+    >>> axarr[0].set_title('Database Excerpt')
+    >>> axarr[0].plot(wp[:, 1], wp[:, 0], label='Optimal path', marker='o', color='r')
+    >>> axarr[0].set_xlim([0, Y.shape[1]])
+    >>> axarr[0].set_ylim([0, X.shape[1]])
+    >>> axarr[0].legend()
+    >>> axarr[1].plot(D[-1, :] / wp.shape[0])
+    >>> axarr[1].set_xlim([0, Y.shape[1]])
+    >>> axarr[1].set_ylim([0, 2])
+    >>> axarr[1].set_title('Matching Function')
+    '''
     # take care of dimensions
     X = np.atleast_2d(X)
     Y = np.atleast_2d(Y)
+
+    # if diagonal matching, Y has to be longer than Y
+    # (X simply cannot be contained in Y)
+    if np.array_equal(step_sizes_sigma, np.array([[1, 1]])) & \
+       X.shape[1] >= Y.shape[1]:
+        raise AssertionError('For diagonal matching: M >= N')
+
+    max_0 = step_sizes_sigma[:, 0].max()
+    max_1 = step_sizes_sigma[:, 1].max()
 
     # calculate pair-wise distances
     C = cdist(X.T, Y.T, dist)
