@@ -57,11 +57,12 @@ def deprecated(version, version_removed):
     return decorator(__wrapper)
 
 
-def optional_jit(f):
+def optional_jit(func):
     '''This is a decorator which can be used to mark functions
     as numba functions.'''
+
     try:
-        import numba
-        return numba.jit(nopython=f)
+        from numba.decorators import jit
+        return jit(func)
     except ImportError:
-        return f
+        return(func)

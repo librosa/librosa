@@ -9,7 +9,7 @@ from librosa.util.decorators import optional_jit
 __all__ = ['dtw']
 
 
-@optional_jit(True)
+@optional_jit
 def band_mask(radius, mask):
     """Construct band-around-diagonal mask (Sakoe-Chiba band).  When
     ``mask.shape[0] != mask.shape[1]``, the radius will be expanded so that
@@ -224,7 +224,7 @@ def dtw(X, Y,
     return D, wp
 
 
-@optional_jit(True)
+@optional_jit
 def calc_accu_cost(C, D, D_steps, step_sizes_sigma,
                    weights_mul, weights_add, max_0, max_1):
     '''Calculate the accumulated cost matrix D.
@@ -291,7 +291,7 @@ def calc_accu_cost(C, D, D_steps, step_sizes_sigma,
     return D, D_steps
 
 
-@optional_jit(True)
+@optional_jit
 def backtracking(D_steps, step_sizes_sigma):
     '''Backtrack optimal warping path.
 
