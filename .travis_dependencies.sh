@@ -34,6 +34,10 @@ if [ ! -d "$src" ]; then
         source activate $ENV_NAME
 
         pip install python-coveralls
+<<<<<<< 4c807743d12362942c59d637c805121ffbeebbbf
+=======
+        conda install numba
+>>>>>>> numba as conda dep
 
         source deactivate
     popd
