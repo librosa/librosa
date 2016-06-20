@@ -29,6 +29,7 @@ install:
     # install your own package into the environment
     # pip install -e rather than setup.py, so that coverage can find the source
     - pip install -e ./
+    - conda install numba
 
 script:
     - python --version
