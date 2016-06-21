@@ -220,10 +220,7 @@ def dtw(X, Y, dist='euclidean', step_sizes_sigma=None,
         else:
             # perform warping path backtracking
             wp = backtracking(D_steps, step_sizes_sigma)
-    else:
-        wp = None
 
-    if backtrack:
         return D, np.asarray(wp, dtype=int)
     else:
         return D
