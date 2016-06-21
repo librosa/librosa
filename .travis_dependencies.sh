@@ -11,7 +11,7 @@ conda_create ()
     conda update -q conda
     conda config --add channels pypi
     conda info -a
-    deps='pip numpy scipy pandas requests nose coverage numpydoc matplotlib sphinx scikit-learn seaborn numba'
+    deps='pip numpy scipy pandas requests nose coverage numpydoc matplotlib sphinx scikit-learn seaborn'
 
     conda create -q -n $ENV_NAME "python=$TRAVIS_PYTHON_VERSION" $deps
     conda update --all
@@ -21,7 +21,7 @@ src="$HOME/env/miniconda$TRAVIS_PYTHON_VERSION"
 if [ ! -d "$src" ]; then
     mkdir -p $HOME/env
     pushd $HOME/env
-    
+
         # Download miniconda packages
         wget http://repo.continuum.io/miniconda/Miniconda-3.16.0-Linux-x86_64.sh -O miniconda.sh;
         # Install libsamplerate
@@ -42,6 +42,10 @@ if [ ! -d "$src" ]; then
 
         pip install git+https://github.com/bmcfee/samplerate.git
         pip install python-coveralls
+
+        if [ "$ENABLE_NUMBA" = true ]; then
+            conda install numba
+        fi
 
         source deactivate
     popd
