@@ -5,6 +5,7 @@
 import numpy as np
 from scipy.spatial.distance import cdist
 from librosa.util.decorators import optional_jit
+from ..util.exceptions import ParameterError
 
 __all__ = ['dtw']
 
@@ -176,7 +177,7 @@ def dtw(X, Y, dist='euclidean', step_sizes_sigma=None,
     # if diagonal matching, Y has to be longer than X
     # (X simply cannot be contained in Y)
     if np.array_equal(step_sizes_sigma, np.array([[1, 1]])) and (X.shape[1] > Y.shape[1]):
-        raise ValueError('For diagonal matching: Y.shape[1] >= X.shape[1]')
+        raise ParameterError('For diagonal matching: Y.shape[1] >= X.shape[1]')
 
     max_0 = step_sizes_sigma[:, 0].max()
     max_1 = step_sizes_sigma[:, 1].max()
