@@ -226,7 +226,7 @@ def dtw(X, Y, dist='euclidean', step_sizes_sigma=None,
         return D
 
 
-@optional_jit
+# @optional_jit
 def calc_accu_cost(C, D, D_steps, step_sizes_sigma,
                    weights_mul, weights_add, max_0, max_1):
     '''Calculate the accumulated cost matrix D.
@@ -275,12 +275,13 @@ def calc_accu_cost(C, D, D_steps, step_sizes_sigma,
     '''
     for cur_n in range(max_0, D.shape[0]):
         for cur_m in range(max_1, D.shape[1]):
-            # loop over all step sizes
-            for cur_step_idx in range(step_sizes_sigma.shape[0]):
+            # accumulate costs
+            for cur_step_idx, cur_w_add, cur_w_mul in zip(range(step_sizes_sigma.shape[0]),
+                                                          weights_add, weights_mul):
                 cur_D = D[cur_n-step_sizes_sigma[cur_step_idx, 0],
                           cur_m-step_sizes_sigma[cur_step_idx, 1]]
-                cur_C = weights_mul[cur_step_idx] * C[cur_n-max_0, cur_m-max_1]
-                cur_C += weights_add[cur_step_idx]
+                cur_C = cur_w_mul * C[cur_n-max_0, cur_m-max_1]
+                cur_C += cur_w_add
                 cur_cost = cur_D + cur_C
 
                 # check if cur_cost is smaller than the one stored in D
