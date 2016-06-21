@@ -326,22 +326,20 @@ def backtracking(D_steps, step_sizes_sigma):
     '''
     wp = []
     # Set starting point D(N,M) and append it to the path
-    cur_idx = (D_steps.shape[0]-1, D_steps.shape[1]-1)
-    wp.append(cur_idx)
+    cur_idx = np.asarray(D_steps.shape) - 1
+    wp.append((cur_idx[0], cur_idx[1]))
 
     # Loop backwards.
     # Stop criteria:
     # Setting it to (0, 0) does not work for the subsequence dtw,
     # so we only ask to reach the first row of the matrix.
     while cur_idx[0]:
-        cur_n = cur_idx[0]
-        cur_m = cur_idx[1]
-
-        cur_step_idx = D_steps[cur_n, cur_m]
+        cur_step_idx = D_steps[(cur_idx[0], cur_idx[1])]
 
         # save tuple with minimal acc. cost in path
-        cur_idx = (cur_n-step_sizes_sigma[cur_step_idx][0],
-                   cur_m-step_sizes_sigma[cur_step_idx][1])
-        wp.append(cur_idx)
+        cur_idx = np.asarray(cur_idx) - step_sizes_sigma[cur_step_idx]
+
+        # append to warping path
+        wp.append((cur_idx[0], cur_idx[1]))
 
     return wp
