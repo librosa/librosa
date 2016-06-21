@@ -35,6 +35,10 @@ if [ ! -d "$src" ]; then
 
         pip install python-coveralls
 
+        if [ "$ENABLE_NUMBA" = true ]; then
+            conda install numba
+        fi
+
         source deactivate
     popd
 else
