@@ -133,10 +133,9 @@ def dtw(X, Y,
         D[N,M] is the total alignment cost.
         When doing subsequence DTW, D[N,:] indicates a matching function.
 
-    wp : list [shape=(N,)]
+    wp : np.ndarray [shape=(N,2)]
         Warping path with index pairs.
-        Each list entry contains an index pair
-        (n,m) as a tuple
+        Each row of the array contains an index pair n,m).
 
     Raises
     ------
@@ -152,7 +151,6 @@ def dtw(X, Y,
     >>> noise = np.random.rand(X.shape[0], 200)
     >>> Y = np.concatenate((noise, noise, X, noise), axis=1)
     >>> D, wp = librosa.dtw(X, Y, subseq=True)
-    >>> wp = np.asarray(wp)
     >>> f, axarr = plt.subplots(2)
     >>> axarr[0].imshow(D, cmap=plt.get_cmap('gray_r'),
     ...                 origin='lower', interpolation='nearest', aspect='auto')
@@ -170,10 +168,9 @@ def dtw(X, Y,
     X = np.atleast_2d(X)
     Y = np.atleast_2d(Y)
 
-    # if diagonal matching, Y has to be longer than Y
+    # if diagonal matching, Y has to be longer than X
     # (X simply cannot be contained in Y)
-    if np.array_equal(step_sizes_sigma, np.array([[1, 1]])) & \
-       X.shape[1] >= Y.shape[1]:
+    if np.array_equal(step_sizes_sigma, np.array([[1, 1]])) & X.shape[1] >= Y.shape[1]:
         raise AssertionError('For diagonal matching: M >= N')
 
     max_0 = step_sizes_sigma[:, 0].max()
@@ -219,9 +216,9 @@ def dtw(X, Y,
             # perform warping path backtracking
             wp = backtracking(D_steps, step_sizes_sigma)
     else:
-        wp = []
+        wp = None
 
-    return D, wp
+    return D, np.asarray(wp, dtype=int)
 
 
 @optional_jit
@@ -324,7 +321,11 @@ def backtracking(D_steps, step_sizes_sigma):
     cur_idx = (D_steps.shape[0]-1, D_steps.shape[1]-1)
     wp.append(cur_idx)
 
-    while True:
+    # Loop backwards.
+    # Stop criteria:
+    # Setting it to (0, 0) does not work for the subsequence dtw,
+    # so we only ask to reach the first row of the matrix.
+    while cur_idx[0]:
         cur_n = cur_idx[0]
         cur_m = cur_idx[1]
 
@@ -334,11 +335,5 @@ def backtracking(D_steps, step_sizes_sigma):
         cur_idx = (cur_n-step_sizes_sigma[cur_step_idx][0],
                    cur_m-step_sizes_sigma[cur_step_idx][1])
         wp.append(cur_idx)
-
-        # set stop criteria
-        # Setting it to (0, 0) does not work for the subsequence dtw,
-        # so we only ask to reach the first row of the matrix.
-        if cur_idx[0] == 0:
-            break
 
     return wp
