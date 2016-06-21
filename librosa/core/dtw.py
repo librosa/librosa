@@ -76,12 +76,8 @@ def band_mask(radius, mask):
                     mask[i, j] = 1
 
 
-def dtw(X, Y,
-        dist='euclidean',
-        step_sizes_sigma=np.array([[1, 1], [0, 1], [1, 0]]),
-        weights_add=np.array([0, 0, 0]),
-        weights_mul=np.array([1, 1, 1]),
-        subseq=False, backtrack=True,
+def dtw(X, Y, dist='euclidean', step_sizes_sigma=None,
+        weights_add=None, weights_mul=None, subseq=False, backtrack=True,
         mask=False, mask_rad=0.25):
     '''Dynamic time warping (DTW).
 
@@ -134,12 +130,13 @@ def dtw(X, Y,
         When doing subsequence DTW, D[N,:] indicates a matching function.
 
     wp : np.ndarray [shape=(N,2)]
+        (only if backtrack=True)
         Warping path with index pairs.
         Each row of the array contains an index pair n,m).
 
     Raises
     ------
-    AssertionError
+    ParameterError
         If you are doing diagonal matching and Y is shorter than X
 
     Examples
@@ -164,6 +161,14 @@ def dtw(X, Y,
     >>> axarr[1].set_ylim([0, 2])
     >>> axarr[1].set_title('Matching Function')
     '''
+    # Default Parameters
+    if step_sizes_sigma is None:
+        step_sizes_sigma = np.array([[1, 1], [0, 1], [1, 0]])
+    if weights_add is None:
+        weights_add=np.array([0, 0, 0])
+    if weights_mul is None:
+        weights_mul=np.array([1, 1, 1])
+
     # take care of dimensions
     X = np.atleast_2d(X)
     Y = np.atleast_2d(Y)
@@ -171,7 +176,7 @@ def dtw(X, Y,
     # if diagonal matching, Y has to be longer than X
     # (X simply cannot be contained in Y)
     if np.array_equal(step_sizes_sigma, np.array([[1, 1]])) & X.shape[1] >= Y.shape[1]:
-        raise AssertionError('For diagonal matching: M >= N')
+        raise ParameterError('For diagonal matching: M >= N')
 
     max_0 = step_sizes_sigma[:, 0].max()
     max_1 = step_sizes_sigma[:, 1].max()
@@ -218,7 +223,10 @@ def dtw(X, Y,
     else:
         wp = None
 
-    return D, np.asarray(wp, dtype=int)
+    if backtrack:
+        return D, np.asarray(wp, dtype=int)
+    else:
+        return D
 
 
 @optional_jit
