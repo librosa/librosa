@@ -130,9 +130,9 @@ def dtw(X, Y, dist='euclidean', step_sizes_sigma=None,
         When doing subsequence DTW, D[N,:] indicates a matching function.
 
     wp : np.ndarray [shape=(N,2)]
-        (only if backtrack=True)
         Warping path with index pairs.
         Each row of the array contains an index pair n,m).
+        Only returned when ``backtrack`` is True.
 
     Raises
     ------
@@ -176,7 +176,7 @@ def dtw(X, Y, dist='euclidean', step_sizes_sigma=None,
     # if diagonal matching, Y has to be longer than X
     # (X simply cannot be contained in Y)
     if np.array_equal(step_sizes_sigma, np.array([[1, 1]])) & X.shape[1] >= Y.shape[1]:
-        raise ParameterError('For diagonal matching: M >= N')
+        raise ParameterError('For diagonal matching: Y.shape[1] >= X.shape[1]')
 
     max_0 = step_sizes_sigma[:, 0].max()
     max_1 = step_sizes_sigma[:, 1].max()
