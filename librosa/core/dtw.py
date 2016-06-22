@@ -10,7 +10,7 @@ from ..util.exceptions import ParameterError
 __all__ = ['dtw']
 
 
-@optional_jit
+@optional_jit(nopython=True)
 def band_mask(radius, mask):
     """Construct band-around-diagonal mask (Sakoe-Chiba band).  When
     ``mask.shape[0] != mask.shape[1]``, the radius will be expanded so that
@@ -166,9 +166,9 @@ def dtw(X, Y, dist='euclidean', step_sizes_sigma=None,
     if step_sizes_sigma is None:
         step_sizes_sigma = np.array([[1, 1], [0, 1], [1, 0]])
     if weights_add is None:
-        weights_add=np.array([0, 0, 0])
+        weights_add = np.array([0, 0, 0])
     if weights_mul is None:
-        weights_mul=np.array([1, 1, 1])
+        weights_mul = np.array([1, 1, 1])
 
     # take care of dimensions
     X = np.atleast_2d(X)
@@ -227,7 +227,7 @@ def dtw(X, Y, dist='euclidean', step_sizes_sigma=None,
         return D
 
 
-# @optional_jit
+@optional_jit(nopython=True)
 def calc_accu_cost(C, D, D_steps, step_sizes_sigma,
                    weights_mul, weights_add, max_0, max_1):
     '''Calculate the accumulated cost matrix D.
@@ -295,7 +295,7 @@ def calc_accu_cost(C, D, D_steps, step_sizes_sigma,
     return D, D_steps
 
 
-@optional_jit
+@optional_jit(nopython=True)
 def backtracking(D_steps, step_sizes_sigma):
     '''Backtrack optimal warping path.
 
@@ -325,7 +325,7 @@ def backtracking(D_steps, step_sizes_sigma):
     '''
     wp = []
     # Set starting point D(N,M) and append it to the path
-    cur_idx = np.asarray(D_steps.shape) - 1
+    cur_idx = (D_steps.shape[0]-1, D_steps.shape[1]-1)
     wp.append((cur_idx[0], cur_idx[1]))
 
     # Loop backwards.
@@ -336,7 +336,8 @@ def backtracking(D_steps, step_sizes_sigma):
         cur_step_idx = D_steps[(cur_idx[0], cur_idx[1])]
 
         # save tuple with minimal acc. cost in path
-        cur_idx = np.asarray(cur_idx) - step_sizes_sigma[cur_step_idx]
+        cur_idx = (cur_idx[0]-step_sizes_sigma[cur_step_idx][0],
+                   cur_idx[1]-step_sizes_sigma[cur_step_idx][1])
 
         # append to warping path
         wp.append((cur_idx[0], cur_idx[1]))
