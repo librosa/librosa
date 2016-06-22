@@ -20,11 +20,9 @@ import glob
 import numpy as np
 import scipy.io
 import six
-import warnings
-
+from nose.tools import eq_, raises
 import matplotlib
 matplotlib.use('Agg')
-from nose.tools import nottest, eq_, raises
 
 
 # -- utilities --#
@@ -56,6 +54,7 @@ def test_load():
     for infile in files('data/core-load-*.mat'):
         yield (__test, infile)
     pass
+
 
 def test_segment_load():
 
@@ -136,7 +135,6 @@ def test_resample_stereo():
         # Check that we're within one sample of the target length
         target_length = y.shape[-1] * sr_out // sr_in
         assert np.abs(y2.shape[-1] - target_length) <= 1
-
 
     y, sr_in = librosa.load('data/test1_44100.wav', mono=False, sr=None, duration=5)
 
@@ -572,7 +570,6 @@ def test_piptrack_errors():
 
 def test_piptrack():
 
-
     def __test(S, freq):
         pitches, mags = librosa.piptrack(S=S, fmin=100)
 
@@ -585,7 +582,6 @@ def test_piptrack():
         # We should be within one cent of the target
         assert np.all(np.abs(np.log2(recovered_pitches) - np.log2(freq)) <= 1e-2)
 
-
     sr = 22050
     duration = 3.0
 
@@ -597,7 +593,6 @@ def test_piptrack():
             S = np.abs(librosa.stft(y, n_fft=n_fft, center=False))
 
             yield __test, S, freq
-
 
 
 def test_estimate_tuning():
@@ -739,7 +734,6 @@ def test_clicks():
         elif click is not None:
             assert len(y) == nmax + len(click)
 
-
     test_times = np.linspace(0, 10.0, num=5)
 
     # Bad cases
@@ -761,7 +755,7 @@ def test_clicks():
 
 
 def test_fmt_scale():
-    # This test constructs a single-cycle cosine wave, applies various axis scalings, 
+    # This test constructs a single-cycle cosine wave, applies various axis scalings,
     # and tests that the FMT is preserved
 
     def __test(scale, n_fmt, over_sample, kind, y_orig, y_res, atol):
@@ -815,8 +809,8 @@ def test_fmt_scale():
 
         for kind in ['slinear', 'quadratic', 'cubic']:
             for n_fmt in [None, 64, 128, 256, 512]:
-                for os in [1, 2, 3]:
-                    yield __test, scale, n_fmt, os, kind, y_orig, y_res, atol[kind]
+                for cur_os in [1, 2, 3]:
+                    yield __test, scale, n_fmt, cur_os, kind, y_orig, y_res, atol[kind]
 
                 # Over-sampling with down-scaling gets dicey at the end-points
                 yield __test, 1./scale, n_fmt, 1, kind, y_res, y_orig, atol[kind]
