@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 '''Utilities for spectral processing'''
 import multiprocessing
+import functools
 
 import six
 import numpy as np
@@ -9,15 +10,17 @@ import scipy
 import scipy.signal
 import scipy.interpolate
 try:
-    from pyfftw.builders import fft, ifft
-    fft = pyfftw.builders.fft(a,
-                              overwrite_input=True,
-                              threads=multiprocessing.cpu_count(),
-                              avoid_copy=True)
-    ifft = pyfftw.builders.ifft(a,
-                                overwrite_input=True,
-                                threads=multiprocessing.cpu_count(),
-                                avoid_copy=True)
+    import pyfftw
+    pyfftw.interfaces.cache.enable()
+    from pyfftw.interfaces.scipy_fftpack import fft, ifft
+    fft = functools.partial(fft,
+                            overwrite_x=True,
+                            planner_effort='FFTW_ESTIMATE',
+                            threads=multiprocessing.cpu_count())
+    ifft = functools.partial(ifft,
+                             overwrite_x=True,
+                             planner_effort='FFTW_ESTIMATE',
+                             threads=multiprocessing.cpu_count())
 except ImportError:
     from scipy.fftpack import fft, ifft
 
