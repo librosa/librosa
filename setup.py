@@ -41,6 +41,7 @@ setup(
         'resampy >= 0.1.2'
     ],
     extras_require={
-        'docs': ['numpydoc', 'sphinx!=1.3.1', 'sphinx_rtd_theme']
+        'docs': ['numpydoc', 'sphinx!=1.3.1', 'sphinx_rtd_theme'],
+        'stft': ['pyfftw']
     }
 )
