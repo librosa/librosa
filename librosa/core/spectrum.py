@@ -19,7 +19,7 @@ try:
                                 threads=multiprocessing.cpu_count(),
                                 avoid_copy=True)
 except ImportError:
-    from numpy.fft import fft, ifft
+    from scipy.fftpack import fft, ifft
 
 from . import time_frequency
 from .. import cache
