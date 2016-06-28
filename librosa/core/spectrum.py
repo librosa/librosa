@@ -2,12 +2,19 @@
 # -*- coding: utf-8 -*-
 '''Utilities for spectral processing'''
 
+import six
 import numpy as np
-import scipy.fftpack as fft
 import scipy
 import scipy.signal
 import scipy.interpolate
-import six
+try:
+    import pyfftw
+    pyfftw.interfaces.cache.enable()
+    import pyfftw.interfaces.scipy_fftpack as fft
+    print('pyFFTW')
+except ImportError:
+    import scipy.fftpack as fft
+    print('scipy.fftpack')
 
 from . import time_frequency
 from .. import cache
