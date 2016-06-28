@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''Utilities for spectral processing'''
+import warnings
 
 import six
 import numpy as np
@@ -11,10 +12,9 @@ try:
     import pyfftw
     pyfftw.interfaces.cache.enable()
     import pyfftw.interfaces.scipy_fftpack as fft
-    print('pyFFTW')
 except ImportError:
     import scipy.fftpack as fft
-    print('scipy.fftpack')
+    warnings.warn('Install pyFFTW for faster spectral transforms.')
 
 from . import time_frequency
 from .. import cache
