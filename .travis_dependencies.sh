@@ -34,6 +34,11 @@ if [ ! -d "$src" ]; then
         source activate $ENV_NAME
 
         pip install python-coveralls
+
+        if [ "$ENABLE_FFTW" = true ]; then
+            apt-get install fftw3-dev
+            pip install pyfftw
+        fi
             
         source deactivate
     popd
