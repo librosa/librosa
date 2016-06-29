@@ -11,18 +11,10 @@ import scipy.signal
 import scipy.interpolate
 try:
     import pyfftw
-    pyfftw.interfaces.cache.enable()
-    from pyfftw.interfaces.scipy_fftpack import fft, ifft
-    fft = functools.partial(fft,
-                            overwrite_x=True,
-                            planner_effort='FFTW_ESTIMATE',
-                            threads=multiprocessing.cpu_count())
-    ifft = functools.partial(ifft,
-                             overwrite_x=True,
-                             planner_effort='FFTW_ESTIMATE',
-                             threads=multiprocessing.cpu_count())
+    USE_FFTW = True
 except ImportError:
     from scipy.fftpack import fft, ifft
+    USE_FFTW = False
 
 from . import time_frequency
 from .. import cache
@@ -180,6 +172,13 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
 
     # Window the time series.
     y_frames = util.frame(y, frame_length=n_fft, hop_length=hop_length)
+
+    # TODO Test performance. If decent, add similar setups to istft, etc.
+    if USE_FFTW:
+        x = np.array(fft_window * y_frames, dtype='float32')
+        y = np.empty((x.shape[0]//2 + 1, x.shape[1]), dtype=dtype)
+        pyfftw.FFTW(x.T, y.T)()
+        return y
 
     # Pre-allocate the STFT matrix
     stft_matrix = np.empty((int(1 + n_fft // 2), y_frames.shape[1]),
