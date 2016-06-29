@@ -36,7 +36,6 @@ if [ ! -d "$src" ]; then
         pip install python-coveralls
 
         if [ "$ENABLE_FFTW" = true ]; then
-            apt-get install fftw3-dev
             pip install pyfftw
         fi
             
