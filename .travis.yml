@@ -4,7 +4,6 @@ addons:
   apt:
     packages:
     - ffmpeg
-    - fftw3-dev
 
 cache:
   directories:
