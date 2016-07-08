@@ -77,6 +77,10 @@ def frame(y, frame_length=2048, hop_length=512):
 
     '''
 
+    if len(y) < frame_length:
+        raise ParameterError('Buffer is too short (n={:d})'
+                             ' for frame_length={:d}'.format(len(y), frame_length))
+
     if hop_length < 1:
         raise ParameterError('Invalid hop_length: {:d}'.format(hop_length))
 
@@ -87,10 +91,6 @@ def frame(y, frame_length=2048, hop_length=512):
 
     # Compute the number of frames that will fit. The end may get truncated.
     n_frames = 1 + int((len(y) - frame_length) / hop_length)
-
-    if n_frames < 1:
-        raise ParameterError('Buffer is too short (n={:d})'
-                             ' for frame_length={:d}'.format(len(y), frame_length))
 
     # Vertical stride is one sample
     # Horizontal stride is `hop_length` samples
