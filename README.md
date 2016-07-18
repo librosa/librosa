@@ -3,12 +3,18 @@ librosa
 A python package for music and audio analysis.  
 
 [![PyPI](https://img.shields.io/pypi/v/librosa.svg)](https://pypi.python.org/pypi/librosa)
+[![Anaconda-Server Badge](https://anaconda.org/conda-forge/librosa/badges/version.svg)](https://anaconda.org/conda-forge/librosa)
 [![License](https://img.shields.io/pypi/l/librosa.svg)](https://github.com/librosa/librosa/blob/master/LICENSE.md)
 [![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.32193.svg)](http://dx.doi.org/10.5281/zenodo.32193)
 
 [![Build Status](https://travis-ci.org/librosa/librosa.png?branch=master)](http://travis-ci.org/librosa/librosa?branch=master)
 [![Coverage Status](https://coveralls.io/repos/librosa/librosa/badge.svg?branch=master)](https://coveralls.io/r/librosa/librosa?branch=master)
 [![Dependency Status](https://dependencyci.com/github/librosa/librosa/badge)](https://dependencyci.com/github/librosa/librosa)
+
+[![Linux](https://circleci.com/gh/conda-forge/librosa-feedstock.svg?style=svg)](https://circleci.com/gh/conda-forge/librosa-feedstock)
+[![OSX](https://travis-ci.org/conda-forge/librosa-feedstock.svg?branch=master)](https://travis-ci.org/conda-forge/librosa-feedstock)
+[![Windows](https://ci.appveyor.com/api/projects/status/github/conda-forge/librosa-feedstock?svg=True)](https://ci.appveyor.com/project/conda-forge/librosa-feedstock/branch/master)
+
 
 Documentation
 -------------
@@ -30,6 +36,15 @@ The latest stable release is available on PyPI, and you can install it by saying
 ```
 pip install librosa
 ```
+
+Anaconda users can install using ``conda-forge``:
+```
+conda install -c conda-forge librosa
+```
+If you use Anaconda on Windows, we recommend installing the `gstreamer` and/or
+`ffmpeg` libraries separately, as they are not (yet) available as conda
+packages.
+
 
 To build librosa from source, say `python setup.py build`.
 Then, to install librosa, say `python setup.py install`.
@@ -53,14 +68,15 @@ By calling `pip list` you should see `librosa` now as an installed pacakge:
 librosa (0.x.x, /path/to/librosa)
 ```
 
-### Hints for OS X
+### Hints for OS X and Windows
 
 #### ffmpeg
 
 To fuel `audioread` with more audio-decoding power, you can install *ffmpeg* which
-ships with many audio decoders.
+ships with many audio decoders.  (Note: if you are using the conda package for
+`audioread`, this will be done automatically.)
 
-You can use *homebrew* to install the programm by calling
+You can use *homebrew* to install the program by calling
 `brew install ffmpeg` or get a binary version from their website https://www.ffmpeg.org.
 
 Discussion
