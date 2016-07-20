@@ -7,30 +7,31 @@ from scipy.spatial.distance import cdist
 from librosa.util.decorators import optional_jit
 from ..util.exceptions import ParameterError
 
-__all__ = ['dtw']
+__all__ = ['dtw', 'band_mask']
 
 
-@optional_jit(nopython=True)
-def band_mask(radius, mask):
+def band_mask(x, radius, value=0):
     """Construct band-around-diagonal mask (Sakoe-Chiba band).  When
-    ``mask.shape[0] != mask.shape[1]``, the radius will be expanded so that
-    ``mask[-1, -1] = 1`` always.
+    ``x.shape[0] != x.shape[1]``, the radius will be expanded so that
+    ``x[-1, -1] = 1`` always.
 
-    `mask` will be modified in place.
+    `x` will be modified in place.
 
     Parameters
     ----------
+    x : np.ndarray
+        Input matrix, will be modified in place.
     radius : float
         The band radius (1/2 of the width) will be
         ``int(radius*min(mask.shape))``.
-    mask : np.ndarray
-        Pre-allocated boolean matrix of zeros.
+    value : int
+        Replacement-value.
 
     Examples
     --------
-    >>> mask = np.zeros((8, 8), dtype=np.bool)
-    >>> band_mask(0.25, mask)
-    >>> mask.astype(int)
+    >>> x = np.ones((8, 8))
+    >>> band_mask(x, 0.25)
+    >>> x
     array([[1, 1, 0, 0, 0, 0, 0, 0],
            [1, 1, 1, 0, 0, 0, 0, 0],
            [0, 1, 1, 1, 0, 0, 0, 0],
@@ -39,9 +40,9 @@ def band_mask(radius, mask):
            [0, 0, 0, 0, 1, 1, 1, 0],
            [0, 0, 0, 0, 0, 1, 1, 1],
            [0, 0, 0, 0, 0, 0, 1, 1]])
-    >>> mask = np.zeros((8, 12), dtype=np.bool)
-    >>> band_mask(0.25, mask)
-    >>> mask.astype(int)
+    >>> x = np.ones((8, 12))
+    >>> band_mask(x, 0.25)
+    >>> x
     array([[1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
            [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
            [0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
@@ -51,30 +52,24 @@ def band_mask(radius, mask):
            [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1],
            [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]])
     """
-    nx, ny = mask.shape
+    nx, ny = x.shape
 
-    # The logic will be different depending on whether there are more rows
-    # or columns in the mask.  Coding it this way results in some code
-    # duplication but it's the most efficient way with numba
+    # Calculate the radius in indices, rather than proportion
+    radius = int(round(radius*np.min(x.shape)))
+
+    nx, ny = x.shape
+    offset = np.abs((x.shape[0] - x.shape[1]))
+
     if nx < ny:
-        # Calculate the radius in indices, rather than proportion
-        radius = int(round(nx*radius))
-        # Force radius to be at least one
-        radius = 1 if radius == 0 else radius
-        for i in range(nx):
-            for j in range(ny):
-                # If this i, j falls within the band
-                if i - j + (nx - radius) < nx and j - i + (nx - radius) < ny:
-                    # Set the mask to 1 here
-                    mask[i, j] = 1
-    # Same exact approach with ny/ny and i/j switched.
+        idx_u = np.triu_indices_from(x, k=radius+offset)
+        idx_l = np.tril_indices_from(x, k=-radius)
     else:
-        radius = int(round(ny*radius))
-        radius = 1 if radius == 0 else radius
-        for i in range(nx):
-            for j in range(ny):
-                if j - i + (ny - radius) < ny and i - j + (ny - radius) < nx:
-                    mask[i, j] = 1
+        idx_u = np.triu_indices_from(x, k=radius)
+        idx_l = np.tril_indices_from(x, k=-radius-offset)
+
+    # modify input matrix
+    x[idx_u] = value
+    x[idx_l] = value
 
 
 def dtw(X, Y, dist='euclidean', step_sizes_sigma=None,
@@ -187,10 +182,7 @@ def dtw(X, Y, dist='euclidean', step_sizes_sigma=None,
 
     if mask:
         my_mask = np.zeros_like(C, dtype=np.bool)
-        band_mask(mask_rad, my_mask)
-
-        # set cost to infinity where the mask is True
-        C[my_mask == 0] = np.inf
+        band_mask(C, mask_rad, value=np.inf)
 
     # initialize whole matrix with infinity values
     D = np.ones(C.shape + np.array([max_0, max_1])) * np.inf

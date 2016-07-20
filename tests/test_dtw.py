@@ -48,3 +48,41 @@ def test_dtw_subseq():
     # note the +1 due to python indexing
     mut_X = Y[mut_wp[-1][1]:mut_wp[0][1]+1]
     assert np.array_equal(X, mut_X)
+
+
+def test_dtw_band_mask():
+    # Case 1: Square matrix (N=M)
+    mut_x = np.ones((8, 8))
+    librosa.band_mask(mut_x, 0.25)
+
+    gt_x = np.array([[1, 1, 0, 0, 0, 0, 0, 0],
+                     [1, 1, 1, 0, 0, 0, 0, 0],
+                     [0, 1, 1, 1, 0, 0, 0, 0],
+                     [0, 0, 1, 1, 1, 0, 0, 0],
+                     [0, 0, 0, 1, 1, 1, 0, 0],
+                     [0, 0, 0, 0, 1, 1, 1, 0],
+                     [0, 0, 0, 0, 0, 1, 1, 1],
+                     [0, 0, 0, 0, 0, 0, 1, 1]])
+
+    assert np.array_equal(mut_x, gt_x)
+
+    # Case 2: N!=M
+    mut_x = np.ones((8, 12))
+    librosa.band_mask(mut_x, 0.25)
+
+    gt_x = np.array([[1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
+                     [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+                     [0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+                     [0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0],
+                     [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+                     [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0],
+                     [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1],
+                     [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]])
+
+    assert np.array_equal(mut_x, gt_x)
+
+    # Case 3: (N!=M).T
+    mut_x = np.ones((8, 12)).T
+    librosa.band_mask(mut_x, 0.25)
+
+    assert np.array_equal(mut_x, gt_x.T)
