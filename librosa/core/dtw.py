@@ -182,7 +182,7 @@ def dtw(X, Y, metric='euclidean', step_sizes_sigma=None,
     max_1 = step_sizes_sigma[:, 1].max()
 
     # calculate pair-wise distances
-    C = cdist(X.T, Y.T, metric)
+    C = cdist(X.T, Y.T, metric=metric)
 
     if global_constraints:
         # Apply global constraints to the cost matrix
