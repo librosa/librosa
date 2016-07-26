@@ -26,7 +26,7 @@ def test_dtw_global_diagonal():
 
     gt_wp = list(zip(list(range(10)), list(range(10))))[::-1]
 
-    mut_D, mut_wp = librosa.dtw(X, Y, subseq=True, dist='cosine',
+    mut_D, mut_wp = librosa.dtw(X, Y, subseq=True, metric='cosine',
                                 step_sizes_sigma=np.array([[1, 1]]),
                                 weights_mul=np.array([1, ]))
 
