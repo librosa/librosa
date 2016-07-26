@@ -55,3 +55,16 @@ def deprecated(version, version_removed):
         return func(*args, **kwargs)
 
     return decorator(__wrapper)
+
+
+'''Define the optional_jit decorator
+   If numba is importable, use numba.jit.
+   Else create a no-op decorator.
+'''
+try:
+    from numba.decorators import jit as optional_jit
+except ImportError:
+    def optional_jit(*_, **__):
+        def __wrapper(func, *args, **kwargs):
+            return func(*args, **kwargs)
+        return decorator(__wrapper)
