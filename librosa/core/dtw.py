@@ -76,7 +76,7 @@ def fill_off_diagonal(x, radius, value=0):
     x[idx_l] = value
 
 
-def dtw(X, Y, dist='euclidean', step_sizes_sigma=None,
+def dtw(X, Y, metric='euclidean', step_sizes_sigma=None,
         weights_add=None, weights_mul=None, subseq=False, backtrack=True,
         global_constraints=False, band_rad=0.25):
     '''Dynamic time warping (DTW).
@@ -96,7 +96,7 @@ def dtw(X, Y, dist='euclidean', step_sizes_sigma=None,
     Y : np.ndarray [shape=(K, M)]
         audio feature matrix (e.g., chroma features)
 
-    dist : str
+    metric : str
         Identifier for the cost-function as documented
         in `scipy.spatial.cdist()`
 
@@ -182,7 +182,7 @@ def dtw(X, Y, dist='euclidean', step_sizes_sigma=None,
     max_1 = step_sizes_sigma[:, 1].max()
 
     # calculate pair-wise distances
-    C = cdist(X.T, Y.T, dist)
+    C = cdist(X.T, Y.T, metric=metric)
 
     if global_constraints:
         # Apply global constraints to the cost matrix
