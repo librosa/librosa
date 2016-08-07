@@ -719,3 +719,7 @@ def window_bandwidth(window, default=1.0):
         warnings.warn("Unknown window function '{:s}'.".format(key))
 
     return WINDOW_BANDWIDTHS.get(key, default)
+
+
+def get_window(window, Nx):
+    scipy.signal.get_window(window, Nx)
