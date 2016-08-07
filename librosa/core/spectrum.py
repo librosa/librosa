@@ -11,6 +11,7 @@ import six
 
 from . import time_frequency
 from .. import cache
+from .. import filters
 from .. import util
 from ..util.exceptions import ParameterError
 
