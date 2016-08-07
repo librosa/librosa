@@ -127,23 +127,19 @@ def stft(y, n_fft=None, hop_length=None, win_length=None, window=None,
     >>> plt.tight_layout()
 
     """
+    # By default, the window length (also called frame length) is 2048 samples
+    if win_length is None:
+        win_length = 2048
+
     if window is None:
         # Hann window is the default
-        if win_length is None:
-            win_length = 2048
         fft_window = scipy.signal.hann(win_length, sym=False)
     if six.callable(window):
         # Case where window is a user-defined function of win_length
-        if win_length is None:
-            win_length = 2048
         fft_window = window(win_length)
     elif isinstance(window, tuple):
         # Case where window is a tuple of arguments to be passed to get_window
-        if win_length is None:
-            win_length = window[1]
-        elif win_length != window[1]:
-            raise ParameterError('win_length must be equal to window[1]')
-        fft_window = filters.get_window(window)
+        fft_window = filters.get_window(window, win_length)
     else:
         # Case where window is an array
         fft_window = np.asarray(window)
