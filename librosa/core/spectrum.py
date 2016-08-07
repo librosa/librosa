@@ -148,11 +148,16 @@ def stft(y, n_fft=None, hop_length=None, win_length=None, window=None,
         fft_window = np.asarray(window)
         win_length = fft_window.size
 
+    # By default, the FFT length is equal to the window length
     if n_fft is None:
         # The FFT length is set equal to window length by default
         n_fft = win_length
-    elif n_fft > win_length:
+    elif n_fft < win_length:
         raise ParameterError('n_fft must be greater than win_length')
+
+    # By default, adjacent windows in time have a 75% overlap
+    if hop_length is None:
+        hop_length = int(win_length / 4)
 
     # Pad the window out to n_fft size
     fft_window = util.pad_center(fft_window, n_fft)
