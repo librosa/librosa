@@ -722,4 +722,4 @@ def window_bandwidth(window, default=1.0):
 
 
 def get_window(window, Nx):
-    scipy.signal.get_window(window, Nx)
+    return scipy.signal.get_window(window, Nx)
