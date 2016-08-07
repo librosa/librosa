@@ -22,7 +22,7 @@ __all__ = ['stft', 'istft', 'magphase',
 
 
 @cache
-def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
+def stft(y, n_fft=None, hop_length=None, win_length=None, window=None,
          center=True, dtype=np.complex64):
     """Short-time Fourier transform (STFT)
 
@@ -126,31 +126,33 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
     >>> plt.tight_layout()
 
     """
-
-    # By default, use the entire frame
-    if win_length is None:
-        win_length = n_fft
-
-    # Set the default hop, if it's not already specified
-    if hop_length is None:
-        hop_length = int(win_length / 4)
-
     if window is None:
-        # Default is an asymmetric Hann window
+        # Hann window is the default
+        if win_length is None:
+            win_length = 2048
         fft_window = scipy.signal.hann(win_length, sym=False)
-
-    elif six.callable(window):
-        # User supplied a window function
+    if six.callable(window):
+        # Case where window is a user-defined function of win_length
+        if win_length is None:
+            win_length = 2048
         fft_window = window(win_length)
-
+    elif isinstance(window, tuple):
+        # Case where window is a tuple of arguments to be passed to get_window
+        if win_length is None:
+            win_length = window[1]
+        elif win_length != window[1]:
+            raise ParameterError('win_length must be equal to window[1]')
+        fft_window = filters.get_window(window)
     else:
-        # User supplied a window vector.
-        # Make sure it's an array:
+        # Case where window is an array
         fft_window = np.asarray(window)
+        win_length = fft_window.size
 
-        # validate length compatibility
-        if fft_window.size != n_fft:
-            raise ParameterError('Size mismatch between n_fft and len(window)')
+    if n_fft is None:
+        # The FFT length is set equal to window length by default
+        n_fft = win_length
+    elif n_fft > win_length:
+        raise ParameterError('n_fft must be greater than win_length')
 
     # Pad the window out to n_fft size
     fft_window = util.pad_center(fft_window, n_fft)
