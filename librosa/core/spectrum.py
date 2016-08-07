@@ -137,8 +137,8 @@ def stft(y, n_fft=None, hop_length=None, win_length=None, window=None,
     if six.callable(window):
         # Case where window is a user-defined function of win_length
         fft_window = window(win_length)
-    elif isinstance(window, tuple):
-        # Case where window is a tuple of arguments to be passed to get_window
+    elif isinstance(window, tuple) or isinstance(window, basestring):
+        # Case where window is in SciPy get_window format (string or tuple)
         fft_window = filters.get_window(window, win_length)
     else:
         # Case where window is an array
