@@ -59,17 +59,17 @@ def fill_off_diagonal(x, radius, value=0):
     nx, ny = x.shape
 
     # Calculate the radius in indices, rather than proportion
-    radius = int(round(radius*np.min(x.shape)))
+    radius = int(round(radius * np.min(x.shape)))
 
     nx, ny = x.shape
     offset = np.abs((x.shape[0] - x.shape[1]))
 
     if nx < ny:
-        idx_u = np.triu_indices_from(x, k=radius+offset)
+        idx_u = np.triu_indices_from(x, k=radius + offset)
         idx_l = np.tril_indices_from(x, k=-radius)
     else:
         idx_u = np.triu_indices_from(x, k=radius)
-        idx_l = np.tril_indices_from(x, k=-radius-offset)
+        idx_l = np.tril_indices_from(x, k=-radius - offset)
 
     # modify input matrix
     x[idx_u] = value
@@ -275,9 +275,9 @@ def calc_accu_cost(C, D, D_steps, step_sizes_sigma,
             # accumulate costs
             for cur_step_idx, cur_w_add, cur_w_mul in zip(range(step_sizes_sigma.shape[0]),
                                                           weights_add, weights_mul):
-                cur_D = D[cur_n-step_sizes_sigma[cur_step_idx, 0],
-                          cur_m-step_sizes_sigma[cur_step_idx, 1]]
-                cur_C = cur_w_mul * C[cur_n-max_0, cur_m-max_1]
+                cur_D = D[cur_n - step_sizes_sigma[cur_step_idx, 0],
+                          cur_m - step_sizes_sigma[cur_step_idx, 1]]
+                cur_C = cur_w_mul * C[cur_n - max_0, cur_m - max_1]
                 cur_C += cur_w_add
                 cur_cost = cur_D + cur_C
 
@@ -321,19 +321,19 @@ def backtracking(D_steps, step_sizes_sigma):
     '''
     wp = []
     # Set starting point D(N,M) and append it to the path
-    cur_idx = (D_steps.shape[0]-1, D_steps.shape[1]-1)
+    cur_idx = (D_steps.shape[0] - 1, D_steps.shape[1] - 1)
     wp.append((cur_idx[0], cur_idx[1]))
 
     # Loop backwards.
     # Stop criteria:
     # Setting it to (0, 0) does not work for the subsequence dtw,
     # so we only ask to reach the first row of the matrix.
-    while cur_idx[0]:
+    while cur_idx[0] > 0:
         cur_step_idx = D_steps[(cur_idx[0], cur_idx[1])]
 
         # save tuple with minimal acc. cost in path
-        cur_idx = (cur_idx[0]-step_sizes_sigma[cur_step_idx][0],
-                   cur_idx[1]-step_sizes_sigma[cur_step_idx][1])
+        cur_idx = (cur_idx[0] - step_sizes_sigma[cur_step_idx][0],
+                   cur_idx[1] - step_sizes_sigma[cur_step_idx][1])
 
         # append to warping path
         wp.append((cur_idx[0], cur_idx[1]))
