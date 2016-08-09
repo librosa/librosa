@@ -59,7 +59,7 @@ def fill_off_diagonal(x, radius, value=0):
     nx, ny = x.shape
 
     # Calculate the radius in indices, rather than proportion
-    radius = int(round(radius * np.min(x.shape)))
+    radius = np.round(radius * np.min(x.shape))
 
     nx, ny = x.shape
     offset = np.abs((x.shape[0] - x.shape[1]))
