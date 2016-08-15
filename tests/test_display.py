@@ -21,6 +21,7 @@ matplotlib.style.use('seaborn-ticks')
 import matplotlib.pyplot as plt
 
 import librosa
+import librosa.display
 import numpy as np
 
 from nose.tools import nottest, raises, eq_
