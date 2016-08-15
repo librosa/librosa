@@ -325,7 +325,7 @@ def test_cmap_robust():
         if isinstance(cmap1, matplotlib.colors.ListedColormap):
             assert np.allclose(cmap1.colors, cmap2.colors)
         else:
-            eq_(cmap1, cmap2)
+            eq_(list(cmap1), list(cmap2))
 
     # Inputs here are constructed to not need robust sign estimation
     for D in [1.0 + S_abs, -(1.0 + S_abs), S_signed, S_bin]:
