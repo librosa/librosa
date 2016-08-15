@@ -81,6 +81,7 @@ import matplotlib.style
 matplotlib.style.use('seaborn-muted')
 import numpy as np
 import librosa
+import librosa.display
 np.random.seed(123)
 np.set_printoptions(precision=3, linewidth=64, edgeitems=2, threshold=200)
 """
