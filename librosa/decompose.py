@@ -223,15 +223,18 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
           of the percussive filter.
 
     power : float > 0 [scalar]
-        Exponent for the Wiener filter when constructing mask matrices.
-
-        Mask matrices are defined by
-        `mask_H = (r_H ** power) / (r_H ** power + r_P ** power)`
-        where `r_H` and `r_P` are the median-filter responses for
-        harmonic and percussive components.
+        Exponent for the Wiener filter when constructing soft mask matrices.
 
     mask : bool
-        Return the (binary) masking matrices instead of components
+        Return the masking matrices instead of components.
+
+        Masking matrices contain non-negative real values that
+        can be used to measure the assignment of energy from `S`
+        into harmonic or percussive components.
+
+        Components can be recovered by multiplying `S * mask_H`
+        or `S * mask_P`.
+
 
     margin : float or tuple (margin_harmonic, margin_percussive)
         margin size(s) for the masks (as described in [2]_)
@@ -343,7 +346,8 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
 
     # margin minimum is 1.0
     if margin_harm < 1 or margin_perc < 1:
-        raise ParameterError("Margins must be >= 1.0. A typical range is between 1 and 10.")
+        raise ParameterError("Margins must be >= 1.0. "
+                             "A typical range is between 1 and 10.")
 
     # Compute median filters. Pre-allocation here preserves memory layout.
     harm = np.empty_like(S)
@@ -363,15 +367,7 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
                               split_zeros=split_zeros)
 
     if mask:
-        # If the margins are tight, H + P should sum to 1, so we use >=.
-        # Otherwise, comparisons should be strict on both sides.
-        if margin_harm == 1 and margin_perc == 1:
-            compare = np.greater_equal
-        else:
-            compare = np.greater
-
-        return ((mask_harm > mask_perc).astype(float),
-                compare(mask_perc, mask_harm).astype(float))
+        return mask_harm, mask_perc
 
     return ((S * mask_harm) * phase, (S * mask_perc) * phase)
 
