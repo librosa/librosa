@@ -79,7 +79,8 @@ def test_real_hpss():
     D = np.abs(librosa.stft(y))
     
     def __hpss_test(window, power, mask, margin):
-        H, P = librosa.decompose.hpss(D, kernel_size=window, power=power, mask=mask, margin=margin)
+        H, P = librosa.decompose.hpss(D, kernel_size=window, power=power,
+                                      mask=mask, margin=margin)
 
         if margin == 1.0 or margin == (1.0, 1.0):
             if mask:
@@ -87,8 +88,8 @@ def test_real_hpss():
             else:
                 assert np.allclose(H + P, D)
         else:
-            if mask: 
-                assert not np.any(H.astype(bool) & P.astype(bool))
+            if mask:
+                assert np.all(H + P <= np.ones_like(D))
             else:
                 assert np.all(H + P <= D)
 
