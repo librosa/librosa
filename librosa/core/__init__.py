@@ -30,6 +30,8 @@ Spectral representations
     pseudo_cqt
     fmt
 
+    harmonics
+
     phase_vocoder
 
     magphase
