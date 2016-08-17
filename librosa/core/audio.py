@@ -166,6 +166,10 @@ def to_mono(y):
     y_mono : np.ndarray [shape=(n,)]
         `y` as a monophonic time-series
 
+    Notes
+    -----
+    This function caches at level 20.
+
     Examples
     --------
     >>> y, sr = librosa.load(librosa.util.example_audio_file(), mono=False)
@@ -232,6 +236,10 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
     librosa.util.fix_length
     scipy.signal.resample
     resampy.resample
+
+    Notes
+    -----
+    This function caches at level 20.
 
     Examples
     --------
@@ -379,6 +387,10 @@ def autocorrelate(y, max_size=None, axis=-1):
         If `max_size` is specified, then `z.shape[axis]` is bounded
         to `max_size`.
 
+    Notes
+    -----
+    This function caches at level 20.
+
     Examples
     --------
     Compute full autocorrelation of y
@@ -431,6 +443,42 @@ def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
     If `y` is multi-dimensional, then zero-crossings are computed along
     the specified `axis`.
 
+
+    Parameters
+    ----------
+    y : np.ndarray
+        The input array
+
+    threshold : float > 0 or None
+        If specified, values where `-threshold <= y <= threshold` are
+        clipped to 0.
+
+    ref_magnitude : float > 0 or callable
+        If numeric, the threshold is scaled relative to `ref_magnitude`.
+
+        If callable, the threshold is scaled relative to
+        `ref_magnitude(np.abs(y))`.
+
+    pad : boolean
+        If `True`, then `y[0]` is considered a valid zero-crossing.
+
+    zero_pos : boolean
+        If `True` then the value 0 is interpreted as having positive sign.
+
+        If `False`, then 0, -1, and +1 all have distinct signs.
+
+    axis : int
+        Axis along which to compute zero-crossings.
+
+    Returns
+    -------
+    zero_crossings : np.ndarray [shape=y.shape, dtype=boolean]
+        Indicator array of zero-crossings in `y` along the selected axis.
+
+    Notes
+    -----
+    This function caches at level 20.
+
     Examples
     --------
     >>> # Generate a time-series
@@ -472,38 +520,6 @@ def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
     >>> # Find the indices of zero-crossings
     >>> np.nonzero(z)
     (array([ 0,  3,  5,  8, 10, 12, 15, 17, 19]),)
-
-
-    Parameters
-    ----------
-    y : np.ndarray
-        The input array
-
-    threshold : float > 0 or None
-        If specified, values where `-threshold <= y <= threshold` are
-        clipped to 0.
-
-    ref_magnitude : float > 0 or callable
-        If numeric, the threshold is scaled relative to `ref_magnitude`.
-
-        If callable, the threshold is scaled relative to
-        `ref_magnitude(np.abs(y))`.
-
-    pad : boolean
-        If `True`, then `y[0]` is considered a valid zero-crossing.
-
-    zero_pos : boolean
-        If `True` then the value 0 is interpreted as having positive sign.
-
-        If `False`, then 0, -1, and +1 all have distinct signs.
-
-    axis : int
-        Axis along which to compute zero-crossings.
-
-    Returns
-    -------
-    zero_crossings : np.ndarray [shape=y.shape, dtype=boolean]
-        Indicator array of zero-crossings in `y` along the selected axis.
     '''
 
     # Clip within the threshold

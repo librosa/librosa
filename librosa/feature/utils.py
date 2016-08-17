@@ -41,6 +41,10 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
     delta_data   : np.ndarray [shape=(d, t) or (d, t + window)]
         delta matrix of `data`.
 
+    Notes
+    -----
+    This function caches at level 40.
+
     Examples
     --------
     Compute MFCC deltas, delta-deltas
@@ -149,6 +153,11 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
     data_history : np.ndarray [shape=(m * d, t)]
         data augmented with lagged copies of itself,
         where `m == n_steps - 1`.
+
+    Notes
+    -----
+    This function caches at level 40.
+
 
     Examples
     --------

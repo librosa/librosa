@@ -95,6 +95,10 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     librosa.core.resample
     librosa.util.normalize
 
+    Notes
+    -----
+    This function caches at level 20.
+
     Examples
     --------
     Generate and plot a constant-Q power spectrum
@@ -293,6 +297,11 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     --------
     cqt
     pseudo_cqt
+
+    Notes
+    -----
+    This function caches at level 20.
+
     '''
 
     if fmin is None:
@@ -408,6 +417,11 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         `2**(n_bins / bins_per_octave)`
 
         Or if `y` is too short to support the frequency range of the CQT.
+    
+    Notes
+    -----
+    This function caches at level 20.
+
     '''
 
     if fmin is None:
