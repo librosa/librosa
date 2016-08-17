@@ -16,7 +16,7 @@ class CacheManager(Memory):
     '''
 
     def __init__(self, cachedir, level=10, **kwargs):
-        super().__init__(cachedir, **kwargs)
+        super(CacheManager, self).__init__(cachedir, **kwargs)
         # The level parameter controls which data we cache
         # smaller numbers mean less caching
         self.level = level
