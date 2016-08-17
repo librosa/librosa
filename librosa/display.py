@@ -187,7 +187,6 @@ TONNETZ_FORMATTER = FixedFormatter([r'5$_x$', r'5$_y$',
                                     r'M3$_x$', r'M3$_y$'])
 
 
-@cache
 def cmap(data, robust=True, cmap_seq='magma', cmap_bool='gray_r', cmap_div='coolwarm'):
     '''Get a default colormap from the given data.
 

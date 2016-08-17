@@ -49,7 +49,7 @@ __all__ = ['dct',
            'window_bandwidth']
 
 
-@cache
+@cache(level=10)
 def dct(n_filters, n_input):
     """Discrete cosine transform (DCT type-III) basis.
 
@@ -99,7 +99,7 @@ def dct(n_filters, n_input):
     return basis
 
 
-@cache
+@cache(level=10)
 def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
     """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins
 
@@ -189,7 +189,7 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
     return weights
 
 
-@cache
+@cache(level=10)
 def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0,
            octwidth=2, norm=2, base_c=True):
     """Create a Filterbank matrix to convert STFT to chroma
@@ -342,7 +342,7 @@ def __float_window(window_function):
     return _wrap
 
 
-@cache
+@cache(level=10)
 def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
                window=None, filter_scale=1, pad_fft=True, norm=1,
                **kwargs):
@@ -494,7 +494,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     return filters, np.asarray(lengths)
 
 
-@cache
+@cache(level=10)
 def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
                        tuning=0.0, window='hann', filter_scale=1):
     r'''Return length of each filter in a constant-Q basis.
@@ -565,7 +565,7 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
     return lengths
 
 
-@cache
+@cache(level=10)
 def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
                  fmin=None, window=None, base_c=True):
     '''Convert a Constant-Q basis to Chroma.

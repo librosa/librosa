@@ -287,7 +287,7 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
     return odf_all[0]
 
 
-@cache
+@cache(level=30)
 def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
                          detrend=False, center=True, feature=None,
                          aggregate=None, channels=None, **kwargs):
