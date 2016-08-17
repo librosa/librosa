@@ -68,6 +68,10 @@ def dct(n_filters, n_input):
     dct_basis: np.ndarray [shape=(n_filters, n_input)]
         DCT (type-III) basis vectors [1]_
 
+    Notes
+    -----
+    This function caches at level 10.
+
     Examples
     --------
     >>> n_fft = 2048
@@ -128,6 +132,10 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
     -------
     M         : np.ndarray [shape=(n_mels, 1 + n_fft/2)]
         Mel transform matrix
+
+    Notes
+    -----
+    This function caches at level 10.
 
     Examples
     --------
@@ -223,6 +231,7 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0,
     base_c : bool
         If True, the filter bank will start at 'C'.
         If False, the filter bank will start at 'A'.
+
     Returns
     -------
     wts : ndarray [shape=(n_chroma, 1 + n_fft / 2)]
@@ -232,6 +241,10 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0,
     --------
     util.normalize
     feature.chroma_stft
+
+    Notes
+    -----
+    This function caches at level 10.
 
     Examples
     --------
@@ -401,6 +414,10 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     lengths : np.ndarray, `len(lengths) == n_bins`
         The (fractional) length of each filter
 
+    Notes
+    -----
+    This function caches at level 10.
+
     See Also
     --------
     constant_q_lengths
@@ -527,6 +544,10 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
     lengths : np.ndarray
         The length of each filter.
 
+    Notes
+    -----
+    This function caches at level 10.
+
     See Also
     --------
     constant_q
@@ -603,6 +624,10 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
     ------
     ParameterError
         If `n_input` is not an integer multiple of `n_chroma`
+
+    Notes
+    -----
+    This function caches at level 10.
 
     Examples
     --------

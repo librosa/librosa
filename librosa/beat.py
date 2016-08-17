@@ -225,6 +225,9 @@ def estimate_tempo(onset_envelope, sr=22050, hop_length=512, start_bpm=120,
     --------
     librosa.onset.onset_strength
 
+    Notes
+    -----
+    This function caches at level 30.
 
     Examples
     --------
@@ -297,7 +300,6 @@ def estimate_tempo(onset_envelope, sr=22050, hop_length=512, start_bpm=120,
     return start_bpm
 
 
-@cache(level=30)
 def __beat_tracker(onset_envelope, bpm, fft_res, tightness, trim):
     """Internal function that tracks beats in an onset strength envelope.
 

@@ -85,6 +85,11 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
     ifgram : Instantaneous frequency spectrogram
 
 
+    Notes
+    -----
+    This function caches at level 20.
+
+
     Examples
     --------
 
@@ -186,7 +191,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
     return stft_matrix
 
 
-@cache(level=20)
+@cache(level=30)
 def istft(stft_matrix, hop_length=None, win_length=None, window=None,
           center=True, dtype=np.float32):
     """
@@ -245,6 +250,10 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
     See Also
     --------
     stft : Short-time Fourier Transform
+
+    Notes
+    -----
+    This function caches at level 30.
 
     Examples
     --------
@@ -629,6 +638,11 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     --------
     perceptual_weighting
 
+    Notes
+    -----
+    This function caches at level 30.
+
+
     Examples
     --------
     Get a power spectrogram from a waveform ``y``
@@ -726,6 +740,11 @@ def perceptual_weighting(S, frequencies, **kwargs):
     See Also
     --------
     logamplitude
+
+    Notes
+    -----
+    This function caches at level 30.
+
 
     Examples
     --------
@@ -827,6 +846,11 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
         if `n_fmt < 2` or `t_min <= 0`
         or if `y` is not finite
         or if `y.shape[axis] < 3`.
+
+    Notes
+    -----
+    This function caches at level 30.
+
 
     Examples
     --------
