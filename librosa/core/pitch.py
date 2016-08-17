@@ -162,7 +162,7 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     return tuning[np.argmax(counts)]
 
 
-@cache
+@cache(level=30)
 def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
              fmin=150.0, fmax=4000.0, threshold=0.1):
     '''Pitch tracking on thresholded parabolically-interpolated STFT

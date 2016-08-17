@@ -152,7 +152,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
     return (y, sr)
 
 
-@cache
+@cache(level=20)
 def to_mono(y):
     '''Force an audio signal down to mono.
 
@@ -186,7 +186,7 @@ def to_mono(y):
     return y
 
 
-@cache
+@cache(level=20)
 def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=False, **kwargs):
     """Resample a time series from orig_sr to target_sr
 
@@ -355,7 +355,7 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     return float(n_samples) / sr
 
 
-@cache
+@cache(level=20)
 def autocorrelate(y, max_size=None, axis=-1):
     """Bounded auto-correlation
 
@@ -422,7 +422,7 @@ def autocorrelate(y, max_size=None, axis=-1):
     return autocorr
 
 
-@cache
+@cache(level=20)
 def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
                    zero_pos=True, axis=-1):
     '''Find the zero-crossings of a signal `y`: indices `i` such that
@@ -543,7 +543,6 @@ def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
                   constant_values=pad)
 
 
-@cache
 def clicks(times=None, frames=None, sr=22050, hop_length=512,
            click_freq=1000.0, click_duration=0.1, click=None, length=None):
     """Returns a signal with the signal `click` placed at each specified time
