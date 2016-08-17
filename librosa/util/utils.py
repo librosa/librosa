@@ -99,7 +99,7 @@ def frame(y, frame_length=2048, hop_length=512):
     return y_frames
 
 
-@cache
+@cache(level=20)
 def valid_audio(y, mono=True):
     '''Validate whether a variable contains valid, mono audio data.
 
@@ -212,7 +212,6 @@ def valid_intervals(intervals):
     return True
 
 
-@cache
 def pad_center(data, size, axis=-1, **kwargs):
     '''Wrapper for np.pad to automatically center an array prior to padding.
     This is analogous to `str.center()`
@@ -286,7 +285,6 @@ def pad_center(data, size, axis=-1, **kwargs):
     return np.pad(data, lengths, **kwargs)
 
 
-@cache
 def fix_length(data, size, axis=-1, **kwargs):
     '''Fix the length an array `data` to exactly `size`.
 
@@ -433,7 +431,6 @@ def fix_frames(frames, x_min=0, x_max=None, pad=True):
     return np.unique(frames).astype(int)
 
 
-@cache
 def axis_sort(S, axis=-1, index=False, value=None):
     '''Sort an array along its rows or columns.
 
@@ -531,7 +528,7 @@ def axis_sort(S, axis=-1, index=False, value=None):
         return S[sort_slice]
 
 
-@cache
+@cache(level=40)
 def normalize(S, norm=np.inf, axis=0):
     '''Normalize the columns or rows of a matrix
 
@@ -628,7 +625,6 @@ def normalize(S, norm=np.inf, axis=0):
     return S / length
 
 
-@cache
 def match_intervals(intervals_from, intervals_to):
     '''Match one set of time intervals to another.
 
@@ -693,7 +689,6 @@ def match_intervals(intervals_from, intervals_to):
     return output
 
 
-@cache
 def match_events(events_from, events_to):
     '''Match one set of events to another.
 
@@ -773,7 +768,6 @@ def match_events(events_from, events_to):
     return output
 
 
-@cache
 def localmax(x, axis=0):
     """Find local maxima in an array `x`.
 
@@ -823,7 +817,6 @@ def localmax(x, axis=0):
     return (x > x_pad[inds1]) & (x >= x_pad[inds2])
 
 
-@cache
 def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     '''Uses a flexible heuristic to pick peaks in a signal.
 
@@ -994,7 +987,7 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     return np.array(peaks)
 
 
-@cache
+@cache(level=40)
 def sparsify_rows(x, quantile=0.01):
     '''
     Return a row-sparse matrix approximating the input `x`.
@@ -1083,7 +1076,6 @@ def sparsify_rows(x, quantile=0.01):
     return x_sparse.tocsr()
 
 
-@cache
 def roll_sparse(x, shift, axis=0):
     '''Sparse matrix roll
 
@@ -1246,7 +1238,7 @@ def index_to_slice(idx, idx_min=None, idx_max=None, step=None, pad=True):
     return [slice(start, end, step) for (start, end) in zip(idx_fixed, idx_fixed[1:])]
 
 
-@cache
+@cache(level=40)
 def sync(data, idx, aggregate=None, pad=True, axis=-1):
     """Synchronous aggregation of a multi-dimensional array between boundaries
 
@@ -1374,7 +1366,6 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     return data_agg
 
 
-@cache
 def softmask(X, X_ref, power=1, split_zeros=False):
     '''Robustly compute a softmask operation.
 

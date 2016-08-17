@@ -11,7 +11,7 @@ from ..util.exceptions import ParameterError
 __all__ = ['delta', 'stack_memory']
 
 
-@cache
+@cache(level=40)
 def delta(data, width=9, order=1, axis=-1, trim=True):
     r'''Compute delta features: local estimate of the derivative
     of the input data along the selected axis.
@@ -111,7 +111,7 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
     return delta_x
 
 
-@cache
+@cache(level=40)
 def stack_memory(data, n_steps=2, delay=1, **kwargs):
     """Short-term history embedding: vertically concatenate a data
     vector or matrix with delayed copies of itself.
