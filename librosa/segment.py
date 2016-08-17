@@ -46,7 +46,7 @@ __all__ = ['recurrence_matrix',
            'subsegment']
 
 
-@cache
+@cache(level=30)
 def recurrence_matrix(data, k=None, width=1, metric='euclidean',
                       sym=False, sparse=False, mode='connectivity',
                       bandwidth=None, axis=-1):
@@ -116,6 +116,10 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
     scipy.spatial.distance.cdist
     librosa.feature.stack_memory
     recurrence_to_lag
+
+    Notes
+    -----
+    This function caches at level 30.
 
     Examples
     --------
@@ -499,7 +503,6 @@ def timelag_filter(function, pad=True, index=0):
     >>> plt.tight_layout()
     '''
 
-    @cache
     def __my_filter(wrapped_f, *args, **kwargs):
         '''Decorator to wrap the filter'''
         # Map the input data into time-lag space
@@ -516,7 +519,7 @@ def timelag_filter(function, pad=True, index=0):
     return decorator(__my_filter, function)
 
 
-@cache
+@cache(level=30)
 def subsegment(data, frames, n_segments=4, axis=-1):
     '''Sub-divide a segmentation by feature clustering.
 
@@ -556,6 +559,10 @@ def subsegment(data, frames, n_segments=4, axis=-1):
     agglomerative : Temporal segmentation
     librosa.onset.onset_detect : Onset detection
     librosa.beat.beat_track : Beat tracking
+
+    Notes
+    -----
+    This function caches at level 30.
 
     Examples
     --------

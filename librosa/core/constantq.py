@@ -20,7 +20,7 @@ from ..util.exceptions import ParameterError
 __all__ = ['cqt', 'hybrid_cqt', 'pseudo_cqt']
 
 
-@cache
+@cache(level=20)
 def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         bins_per_octave=12, tuning=None, filter_scale=1,
         norm=1, sparsity=0.01, real=util.Deprecated()):
@@ -94,6 +94,10 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     --------
     librosa.core.resample
     librosa.util.normalize
+
+    Notes
+    -----
+    This function caches at level 20.
 
     Examples
     --------
@@ -232,7 +236,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     return __trim_stack(cqt_resp, n_bins)
 
 
-@cache
+@cache(level=20)
 def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                bins_per_octave=12, tuning=None, filter_scale=1,
                norm=1, sparsity=0.01):
@@ -293,6 +297,11 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     --------
     cqt
     pseudo_cqt
+
+    Notes
+    -----
+    This function caches at level 20.
+
     '''
 
     if fmin is None:
@@ -349,7 +358,7 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     return __trim_stack(cqt_resp, n_bins)
 
 
-@cache
+@cache(level=20)
 def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                bins_per_octave=12, tuning=None, filter_scale=1,
                norm=1, sparsity=0.01):
@@ -408,6 +417,11 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         `2**(n_bins / bins_per_octave)`
 
         Or if `y` is too short to support the frequency range of the CQT.
+    
+    Notes
+    -----
+    This function caches at level 20.
+
     '''
 
     if fmin is None:
@@ -432,6 +446,7 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     return fft_basis.dot(D)
 
 
+@cache(level=10)
 def __cqt_filter_fft(sr, fmin, n_bins, bins_per_octave, tuning,
                      filter_scale, norm, sparsity, hop_length=None):
     '''Generate the frequency domain constant-Q filter basis.'''
