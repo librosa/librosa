@@ -15,7 +15,7 @@ class CacheManager(Memory):
     field, thereby allowing librosa.cache to act as a decorator function.
     '''
 
-    def __init__(self, cachedir, level=0, **kwargs):
+    def __init__(self, cachedir, level=10, **kwargs):
         super().__init__(cachedir, **kwargs)
         # The level parameter controls which data we cache
         # smaller numbers mean less caching
@@ -59,7 +59,7 @@ CACHE = CacheManager(os.environ.get('LIBROSA_CACHE_DIR', None),
                      mmap_mode=os.environ.get('LIBROSA_CACHE_MMAP', None),
                      compress=os.environ.get('LIBROSA_CACHE_COMPRESS', False),
                      verbose=int(os.environ.get('LIBROSA_CACHE_VERBOSE', 0)),
-                     level=int(os.environ.get('LIBROSA_CACHE_LEVEL', 0)))
+                     level=int(os.environ.get('LIBROSA_CACHE_LEVEL', 10)))
 
 # Override the module's __call__ attribute
 sys.modules[__name__] = CACHE
