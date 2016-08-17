@@ -852,3 +852,51 @@ def test_fmt_axis():
     f2 = librosa.fmt(y.T, axis=0).T
 
     assert np.allclose(f1, f2)
+
+
+def test_harmonics_1d():
+
+    x = np.arange(16)
+    y = np.linspace(-8, 8, num=len(x), endpoint=False)**2
+
+    h = [0.25, 0.5, 1, 2, 4]
+
+    yh = librosa.harmonics(y, x, h)
+
+    eq_(yh.shape[1:], y.shape)
+    eq_(yh.shape[0], len(h))
+    for i in range(len(h)):
+        if h[i] <= 1:
+            # Check that subharmonics match
+            step = int(1./h[i])
+            vals = yh[i, ::step]
+            assert np.allclose(vals, y[:len(vals)])
+        else:
+            # Else check that harmonics match
+            step = h[i]
+            vals = y[::step]
+            assert np.allclose(vals, yh[i, :len(vals)])
+
+
+def test_harmonics_2d():
+
+    x = np.arange(16)
+    y = np.linspace(-8, 8, num=len(x), endpoint=False)**2
+    y = np.tile(y, (5, 1)).T
+    h = [0.25, 0.5, 1, 2, 4]
+
+    yh = librosa.harmonics(y, x, h, axis=0)
+
+    eq_(yh.shape[1:], y.shape)
+    eq_(yh.shape[0], len(h))
+    for i in range(len(h)):
+        if h[i] <= 1:
+            # Check that subharmonics match
+            step = int(1./h[i])
+            vals = yh[i, ::step]
+            assert np.allclose(vals, y[:len(vals)])
+        else:
+            # Else check that harmonics match
+            step = h[i]
+            vals = y[::step]
+            assert np.allclose(vals, yh[i, :len(vals)])
