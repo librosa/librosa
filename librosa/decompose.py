@@ -186,7 +186,7 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
     return components, activations
 
 
-@cache
+@cache(level=30)
 def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
     """Median-filtering harmonic percussive source separation (HPSS).
 
@@ -257,6 +257,9 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
     --------
     util.softmask
 
+    Notes
+    -----
+    This function caches at level 30.
 
     Examples
     --------
@@ -371,7 +374,7 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
     return ((S * mask_harm) * phase, (S * mask_perc) * phase)
 
 
-@cache
+@cache(level=30)
 def nn_filter(S, rec=None, aggregate=None, axis=-1, **kwargs):
     '''Filtering by nearest-neighbors.
 
@@ -436,6 +439,12 @@ def nn_filter(S, rec=None, aggregate=None, axis=-1, **kwargs):
     decompose
     hpss
     librosa.segment.recurrence_matrix
+
+
+    Notes
+    -----
+    This function caches at level 30.
+
 
     Examples
     --------
