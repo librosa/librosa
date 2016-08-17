@@ -1095,6 +1095,9 @@ def harmonics(X, freqs, h_range, kind='slinear', fill_value=0, axis=0):
 
     idx_out = [slice(None)] * harmonic_out.ndim
 
+    # Compute the output index of the interpolated values
+    interp_axis = 1 + (axis % X.ndim)
+
     # Iterate over the harmonics range
     for h_index, harmonic in enumerate(h_range):
         idx_out[0] = h_index
@@ -1102,7 +1105,7 @@ def harmonics(X, freqs, h_range, kind='slinear', fill_value=0, axis=0):
         # Iterate over frequencies
         for f_index, frequency in enumerate(freqs):
             # Offset the output axis by 1 to account for the harmonic index
-            idx_out[1 + axis] = f_index
+            idx_out[interp_axis] = f_index
 
             # Estimate the harmonic energy at this frequency across time
             harmonic_out[tuple(idx_out)] = f_interp(harmonic * frequency)
