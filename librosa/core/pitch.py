@@ -216,6 +216,10 @@ def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
         Both `pitches` and `magnitudes` take value 0 at bins
         of non-maximal magnitude.
 
+    Notes
+    -----
+    This function caches at level 30.
+
     Examples
     --------
     >>> y, sr = librosa.load(librosa.util.example_audio_file())

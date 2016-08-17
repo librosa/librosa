@@ -117,6 +117,10 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
     librosa.feature.stack_memory
     recurrence_to_lag
 
+    Notes
+    -----
+    This function caches at level 30.
+
     Examples
     --------
     Find nearest neighbors in MFCC space
@@ -555,6 +559,10 @@ def subsegment(data, frames, n_segments=4, axis=-1):
     agglomerative : Temporal segmentation
     librosa.onset.onset_detect : Onset detection
     librosa.beat.beat_track : Beat tracking
+
+    Notes
+    -----
+    This function caches at level 30.
 
     Examples
     --------

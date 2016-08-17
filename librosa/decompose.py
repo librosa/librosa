@@ -257,6 +257,9 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
     --------
     util.softmask
 
+    Notes
+    -----
+    This function caches at level 30.
 
     Examples
     --------
@@ -436,6 +439,12 @@ def nn_filter(S, rec=None, aggregate=None, axis=-1, **kwargs):
     decompose
     hpss
     librosa.segment.recurrence_matrix
+
+
+    Notes
+    -----
+    This function caches at level 30.
+
 
     Examples
     --------

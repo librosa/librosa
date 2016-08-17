@@ -126,6 +126,10 @@ def valid_audio(y, mono=True):
             - `mono == False` and `y.ndim` is not 1 or 2
             - `np.isfinite(y).all()` is not True
 
+    Notes
+    -----
+    This function caches at level 20.
+
     Examples
     --------
     >>> # Only allow monophonic signals
@@ -534,6 +538,37 @@ def normalize(S, norm=np.inf, axis=0):
 
     .. note::
          Columns/rows with length 0 will be left as zeros.
+    Parameters
+    ----------
+    S : np.ndarray [shape=(d, n)]
+        The matrix to normalize
+
+    norm : {np.inf, -np.inf, 0, float > 0, None}
+        - `np.inf`  : maximum absolute value
+        - `-np.inf` : mininum absolute value
+        - `0`    : number of non-zeros
+        - float  : corresponding l_p norm.
+            See `scipy.linalg.norm` for details.
+        - None : no normalization is performed
+
+    axis : int [scalar]
+        Axis along which to compute the norm.
+        `axis=0` will normalize columns, `axis=1` will normalize rows.
+        `axis=None` will normalize according to the entire matrix.
+
+    Returns
+    -------
+    S_norm : np.ndarray [shape=S.shape]
+        Normalized matrix
+
+    Raises
+    ------
+    ParameterError
+        If `norm` is not among the valid types defined above
+
+    Notes
+    -----
+    This function caches at level 40.
 
     Examples
     --------
@@ -569,33 +604,6 @@ def normalize(S, norm=np.inf, axis=0):
            [ 0.   ,  0.   ,  0.   ,  0.5  ],
            [ 0.123,  0.236,  0.408,  0.5  ]])
 
-    Parameters
-    ----------
-    S : np.ndarray [shape=(d, n)]
-        The matrix to normalize
-
-    norm : {np.inf, -np.inf, 0, float > 0, None}
-        - `np.inf`  : maximum absolute value
-        - `-np.inf` : mininum absolute value
-        - `0`    : number of non-zeros
-        - float  : corresponding l_p norm.
-            See `scipy.linalg.norm` for details.
-        - None : no normalization is performed
-
-    axis : int [scalar]
-        Axis along which to compute the norm.
-        `axis=0` will normalize columns, `axis=1` will normalize rows.
-        `axis=None` will normalize according to the entire matrix.
-
-    Returns
-    -------
-    S_norm : np.ndarray [shape=S.shape]
-        Normalized matrix
-
-    Raises
-    ------
-    ParameterError
-        If `norm` is not among the valid types defined above
     '''
 
     # All norms only depend on magnitude, let's do that first
@@ -992,6 +1000,33 @@ def sparsify_rows(x, quantile=0.01):
     '''
     Return a row-sparse matrix approximating the input `x`.
 
+    Parameters
+    ----------
+    x : np.ndarray [ndim <= 2]
+        The input matrix to sparsify.
+
+    quantile : float in [0, 1.0)
+        Percentage of magnitude to discard in each row of `x`
+
+    Returns
+    -------
+    x_sparse : `scipy.sparse.csr_matrix` [shape=x.shape]
+        Row-sparsified approximation of `x`
+
+        If `x.ndim == 1`, then `x` is interpreted as a row vector,
+        and `x_sparse.shape == (1, len(x))`.
+
+    Raises
+    ------
+    ParameterError
+        If `x.ndim > 2`
+
+        If `quantile` lies outside `[0, 1.0)`
+
+    Notes
+    -----
+    This function caches at level 40.
+
     Examples
     --------
     >>> # Construct a Hann window to sparsify
@@ -1024,29 +1059,6 @@ def sparsify_rows(x, quantile=0.01):
               0.977,  0.997,  0.997,  0.977,  0.937,  0.879,  0.806,
               0.72 ,  0.625,  0.525,  0.424,  0.326,  0.   ,  0.   ,
               0.   ,  0.   ,  0.   ,  0.   ]])
-
-    Parameters
-    ----------
-    x : np.ndarray [ndim <= 2]
-        The input matrix to sparsify.
-
-    quantile : float in [0, 1.0)
-        Percentage of magnitude to discard in each row of `x`
-
-    Returns
-    -------
-    x_sparse : `scipy.sparse.csr_matrix` [shape=x.shape]
-        Row-sparsified approximation of `x`
-
-        If `x.ndim == 1`, then `x` is interpreted as a row vector,
-        and `x_sparse.shape == (1, len(x))`.
-
-    Raises
-    ------
-    ParameterError
-        If `x.ndim > 2`
-
-        If `quantile` lies outside `[0, 1.0)`
     '''
 
     if x.ndim == 1:
@@ -1282,6 +1294,10 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     ------
     ParameterError
         If the index set is not of consistent type (all slices or all integers)
+
+    Notes
+    -----
+    This function caches at level 40.
 
     Examples
     --------
