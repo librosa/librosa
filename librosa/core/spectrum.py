@@ -1084,6 +1084,7 @@ def harmonics(X, freqs, h_range, kind='slinear', fill_value=0, axis=0):
     f_interp = scipy.interpolate.interp1d(freqs, X,
                                           kind=kind,
                                           axis=axis,
+                                          copy=False,
                                           bounds_error=False,
                                           fill_value=fill_value)
 
