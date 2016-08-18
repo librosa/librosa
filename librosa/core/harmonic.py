@@ -8,6 +8,7 @@ from ..util.exceptions import ParameterError
 
 __all__ = ['harmonics']
 
+
 def harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
     '''Built a harmonic tensor from a time-frequency representation.
 
@@ -93,24 +94,38 @@ def harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
     >>> plt.tight_layout()
     '''
 
+    # X_out will be the same shape as X, plus a leading
+    # axis that has length = len(h_range)
+    out_shape = [len(h_range)]
+    out_shape.extend(x.shape)
+
+    harmonic_out = np.zeros(out_shape, dtype=x.dtype)
+
     if freqs.ndim == 1:
-        return harmonics_1d(x, freqs, h_range,
-                            kind=kind, fill_value=fill_value,
-                            axis=axis)
-    elif freqs.shape == x.shape:
-        return harmonics_2d(x, freqs, h_range,
-                            kind=kind, fill_value=fill_value,
-                            axis=axis)
+        harmonics_1d(harmonic_out, x, freqs, h_range,
+                     kind=kind, fill_value=fill_value,
+                     axis=axis)
+
+    elif freqs.ndim == 2 and freqs.shape == x.shape:
+        harmonics_2d(harmonic_out, x, freqs, h_range,
+                     kind=kind, fill_value=fill_value,
+                     axis=axis)
     else:
         raise ParameterError('freqs.shape={}, must be either 1 '
                              'or 2-dimensional'.format(freqs.shape))
 
+    return harmonic_out
 
-def harmonics_1d(X, freqs, h_range, kind='linear', fill_value=0, axis=0, X_out=None):
+
+def harmonics_1d(harmonic_out, x, freqs, h_range, kind='linear',
+                 fill_value=0, axis=0):
     '''Built a harmonic tensor from a time-frequency representation.
 
     Parameters
     ----------
+    harmonic_out : np.ndarray, shape=(len(h_range), X.shape)
+        The output array to store harmonics
+
     X : np.ndarray, real-valued
         The input energy
 
@@ -132,15 +147,6 @@ def harmonics_1d(X, freqs, h_range, kind='linear', fill_value=0, axis=0, X_out=N
 
     axis : int
         The axis along which to compute harmonics
-
-    X_out : np.ndarray, shape=(len(h_range), X.shape) (optional) 
-        The output array to store harmonics
-
-    Returns
-    -------
-    X_harm : np.ndarray, shape=(len(h_range), [X.shape])
-        `X_harm[i]` will have the same shape as `X`, and measure
-        the energy at the `h_range[i]` harmonic of each frequency.
 
     See Also
     --------
@@ -195,30 +201,17 @@ def harmonics_1d(X, freqs, h_range, kind='linear', fill_value=0, axis=0, X_out=N
     '''
 
     # Note: this only works for fixed-grid, 1d interpolation
-    f_interp = scipy.interpolate.interp1d(freqs, X,
+    f_interp = scipy.interpolate.interp1d(freqs, x,
                                           kind=kind,
                                           axis=axis,
                                           copy=False,
                                           bounds_error=False,
                                           fill_value=fill_value)
 
-    # X_out will be the same shape as X, plus a leading
-    # axis that has length = len(h_range)
-    out_shape = [len(h_range)]
-    out_shape.extend(X.shape)
-
-    if X_out is not None:
-        if X_out.shape != tuple(out_shape) or X_out.dtype != X.dtype:
-            raise ParameterError('X_out must have shape={} '
-                                 'and dtype={}'.format(out_shape, X.dtype))
-        harmonic_out = X_out
-    else:
-        harmonic_out = np.zeros(out_shape, dtype=X.dtype)
-
     idx_out = [slice(None)] * harmonic_out.ndim
 
     # Compute the output index of the interpolated values
-    interp_axis = 1 + (axis % X.ndim)
+    interp_axis = 1 + (axis % x.ndim)
 
     # Iterate over the harmonics range
     for h_index, harmonic in enumerate(h_range):
@@ -235,5 +228,6 @@ def harmonics_1d(X, freqs, h_range, kind='linear', fill_value=0, axis=0, X_out=N
     return harmonic_out
 
 
-def harmonics_2d(X, freqs, h_range, kind='linear', fill_value=0, axis=0, X_out=None):
+def harmonics_2d(harmonic_out, x, freqs, h_range, kind='linear', fill_value=0, axis=0):
+
     pass
