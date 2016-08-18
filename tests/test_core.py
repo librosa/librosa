@@ -878,6 +878,18 @@ def test_harmonics_1d():
             assert np.allclose(vals, yh[i, :len(vals)])
 
 
+def test_harmonics_1d_out():
+
+    x = np.arange(16)
+    y = np.linspace(-8, 8, num=len(x), endpoint=False)**2
+    h = [0.25, 0.5, 1, 2, 4]
+    z = np.zeros([len(h)] + list(y.shape), y.dtype)
+
+    yh = librosa.harmonics(y, x, h, X_out=z)
+
+    assert yh is z
+
+
 def test_harmonics_2d():
 
     x = np.arange(16)

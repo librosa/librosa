@@ -993,7 +993,7 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
     return result[idx] * np.sqrt(n) / n_fmt
 
 
-def harmonics(X, freqs, h_range, kind='linear', fill_value=0, axis=0):
+def harmonics(X, freqs, h_range, kind='linear', fill_value=0, axis=0, X_out=None):
     '''Built a harmonic tensor from a time-frequency representation.
 
     Parameters
@@ -1013,12 +1013,15 @@ def harmonics(X, freqs, h_range, kind='linear', fill_value=0, axis=0):
     kind : str
         Interpolation type.  See `scipy.interpolate.interp1d`.
 
-    axis : int
-        The axis along which to compute harmonics
-
     fill_value : float
         The value to fill when extrapolating beyond the observed
         frequency range.
+
+    axis : int
+        The axis along which to compute harmonics
+
+    X_out : np.ndarray, shape=(len(h_range), X.shape) (optional) 
+        The output array to store harmonics
 
     Returns
     -------
@@ -1090,7 +1093,14 @@ def harmonics(X, freqs, h_range, kind='linear', fill_value=0, axis=0):
     # axis that has length = len(h_range)
     out_shape = [len(h_range)]
     out_shape.extend(X.shape)
-    harmonic_out = np.zeros(out_shape, dtype=X.dtype)
+
+    if X_out is not None:
+        if X_out.shape != tuple(out_shape) or X_out.dtype != X.dtype:
+            raise ParameterError('X_out must have shape={} '
+                                 'and dtype={}'.format(out_shape, X.dtype))
+        harmonic_out = X_out
+    else:
+        harmonic_out = np.zeros(out_shape, dtype=X.dtype)
 
     idx_out = [slice(None)] * harmonic_out.ndim
 
