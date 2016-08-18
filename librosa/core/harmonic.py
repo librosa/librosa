@@ -230,4 +230,19 @@ def harmonics_1d(harmonic_out, x, freqs, h_range, kind='linear',
 
 def harmonics_2d(harmonic_out, x, freqs, h_range, kind='linear', fill_value=0, axis=0):
 
-    pass
+    idx_in = [slice(None)] * x.ndim
+    idx_freq = [slice(None)] * x.ndim
+    idx_out = [slice(None)] * harmonic_out.ndim
+
+    # This is the non-interpolation axis
+    ni_axis = (1 + axis) % x.ndim
+
+    # For each value in the non-interpolated axis, compute its harmonics
+    for i in range(x.shape[ni_axis]):
+        idx_in[ni_axis] = slice(i, i + 1)
+        idx_freq[ni_axis] = i
+        idx_out[1 + ni_axis] = idx_in[ni_axis]
+
+        harmonics_1d(harmonic_out[idx_out], x[idx_in], freqs[idx_freq],
+                     h_range, kind=kind, fill_value=fill_value,
+                     axis=axis)
