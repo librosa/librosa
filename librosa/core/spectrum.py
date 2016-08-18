@@ -993,7 +993,7 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
     return result[idx] * np.sqrt(n) / n_fmt
 
 
-def harmonics(X, freqs, h_range, kind='slinear', fill_value=0, axis=0):
+def harmonics(X, freqs, h_range, kind='linear', fill_value=0, axis=0):
     '''Built a harmonic tensor from a time-frequency representation.
 
     Parameters
@@ -1044,8 +1044,6 @@ def harmonics(X, freqs, h_range, kind='slinear', fill_value=0, axis=0):
     >>> f_tempo = librosa.tempo_frequencies(len(tempi), sr=sr)
     >>> # Build the harmonic tensor
     >>> t_harmonics = librosa.harmonics(tempi, f_tempo, h_range)
-    >>> # We'll ignore any nans or infs
-    >>> t_harmonics[np.isnan(t_harmonics)] = 0
     >>> print(t_harmonics.shape)
     (5, 384)
 
