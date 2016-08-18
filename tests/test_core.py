@@ -20,7 +20,7 @@ import glob
 import numpy as np
 import scipy.io
 import six
-from nose.tools import eq_, raises
+from nose.tools import eq_, raises, nottest
 import matplotlib
 matplotlib.use('Agg')
 
@@ -878,6 +878,7 @@ def test_harmonics_1d():
             assert np.allclose(vals, yh[i, :len(vals)])
 
 
+@nottest
 def test_harmonics_1d_out():
 
     x = np.arange(16)
