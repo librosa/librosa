@@ -101,7 +101,7 @@ def harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
 
     harmonic_out = np.zeros(out_shape, dtype=x.dtype)
 
-    if freqs.ndim == 1:
+    if freqs.ndim == 1 and len(freqs) == x.shape[axis]:
         harmonics_1d(harmonic_out, x, freqs, h_range,
                      kind=kind, fill_value=fill_value,
                      axis=axis)
@@ -111,8 +111,8 @@ def harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
                      kind=kind, fill_value=fill_value,
                      axis=axis)
     else:
-        raise ParameterError('freqs.shape={}, must be either 1 '
-                             'or 2-dimensional'.format(freqs.shape))
+        raise ParameterError('freqs.shape={} does not match '
+                             'input shape={}'.format(freqs.shape, x.shape))
 
     return harmonic_out
 
