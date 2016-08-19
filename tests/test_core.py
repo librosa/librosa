@@ -878,19 +878,6 @@ def test_harmonics_1d():
             assert np.allclose(vals, yh[i, :len(vals)])
 
 
-@nottest
-def test_harmonics_1d_out():
-
-    x = np.arange(16)
-    y = np.linspace(-8, 8, num=len(x), endpoint=False)**2
-    h = [0.25, 0.5, 1, 2, 4]
-    z = np.zeros([len(h)] + list(y.shape), y.dtype)
-
-    yh = librosa.harmonics(y, x, h, X_out=z)
-
-    assert yh is z
-
-
 def test_harmonics_2d():
 
     x = np.arange(16)
@@ -913,3 +900,42 @@ def test_harmonics_2d():
             step = h[i]
             vals = y[::step]
             assert np.allclose(vals, yh[i, :len(vals)])
+
+
+@raises(librosa.ParameterError)
+def test_harmonics_badshape_1d():
+    freqs = np.zeros(100)
+    obs = np.zeros((5, 10))
+    librosa.harmonics(obs, freqs, [1])
+
+@raises(librosa.ParameterError)
+def test_harmonics_badshape_2d():
+    freqs = np.zeros((5, 5))
+    obs = np.zeros((5, 10))
+    librosa.harmonics(obs, freqs, [1])
+
+
+def test_harmonics_2d_varying():
+
+    x = np.arange(16)
+    y = np.linspace(-8, 8, num=len(x), endpoint=False)**2
+    x = np.tile(x, (5, 1)).T
+    y = np.tile(y, (5, 1)).T
+    h = [0.25, 0.5, 1, 2, 4]
+
+    yh = librosa.harmonics(y, x, h, axis=0)
+
+    eq_(yh.shape[1:], y.shape)
+    eq_(yh.shape[0], len(h))
+    for i in range(len(h)):
+        if h[i] <= 1:
+            # Check that subharmonics match
+            step = int(1./h[i])
+            vals = yh[i, ::step]
+            assert np.allclose(vals, y[:len(vals)])
+        else:
+            # Else check that harmonics match
+            step = h[i]
+            vals = y[::step]
+            assert np.allclose(vals, yh[i, :len(vals)])
+
