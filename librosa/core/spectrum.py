@@ -28,7 +28,7 @@ __all__ = ['stft', 'istft', 'magphase',
            'fmt']
 
 
-@cache
+@cache(level=20)
 def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
          center=True, dtype=np.complex64):
     """Short-time Fourier transform (STFT)
@@ -90,6 +90,11 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
     istft : Inverse STFT
 
     ifgram : Instantaneous frequency spectrogram
+
+
+    Notes
+    -----
+    This function caches at level 20.
 
 
     Examples
@@ -200,7 +205,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
     return stft_matrix
 
 
-@cache
+@cache(level=30)
 def istft(stft_matrix, hop_length=None, win_length=None, window=None,
           center=True, dtype=np.float32):
     """
@@ -259,6 +264,10 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
     See Also
     --------
     stft : Short-time Fourier Transform
+
+    Notes
+    -----
+    This function caches at level 30.
 
     Examples
     --------
@@ -524,7 +533,6 @@ def magphase(D):
     return mag, phase
 
 
-@cache
 def phase_vocoder(D, rate, hop_length=None):
     """Phase vocoder.  Given an STFT matrix D, speed up by a factor of `rate`
 
@@ -612,7 +620,7 @@ def phase_vocoder(D, rate, hop_length=None):
     return d_stretch
 
 
-@cache
+@cache(level=30)
 def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     """Log-scale the amplitude of a spectrogram.
 
@@ -643,6 +651,11 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     See Also
     --------
     perceptual_weighting
+
+    Notes
+    -----
+    This function caches at level 30.
+
 
     Examples
     --------
@@ -716,7 +729,7 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     return log_spec
 
 
-@cache
+@cache(level=30)
 def perceptual_weighting(S, frequencies, **kwargs):
     '''Perceptual weighting of a power spectrogram:
 
@@ -741,6 +754,11 @@ def perceptual_weighting(S, frequencies, **kwargs):
     See Also
     --------
     logamplitude
+
+    Notes
+    -----
+    This function caches at level 30.
+
 
     Examples
     --------
@@ -784,7 +802,7 @@ def perceptual_weighting(S, frequencies, **kwargs):
     return offset + logamplitude(S, **kwargs)
 
 
-@cache
+@cache(level=30)
 def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1):
     """The fast Mellin transform (FMT) [1]_ of a uniformly sampled signal y.
 
@@ -842,6 +860,11 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
         if `n_fmt < 2` or `t_min <= 0`
         or if `y` is not finite
         or if `y.shape[axis] < 3`.
+
+    Notes
+    -----
+    This function caches at level 30.
+
 
     Examples
     --------
@@ -984,7 +1007,6 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
     return result[idx] * np.sqrt(n) / n_fmt
 
 
-@cache
 def _spectrogram(y=None, S=None, n_fft=2048, hop_length=512, power=1):
     '''Helper function to retrieve a magnitude spectrogram.
 

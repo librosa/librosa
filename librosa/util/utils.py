@@ -77,6 +77,10 @@ def frame(y, frame_length=2048, hop_length=512):
 
     '''
 
+    if len(y) < frame_length:
+        raise ParameterError('Buffer is too short (n={:d})'
+                             ' for frame_length={:d}'.format(len(y), frame_length))
+
     if hop_length < 1:
         raise ParameterError('Invalid hop_length: {:d}'.format(hop_length))
 
@@ -88,10 +92,6 @@ def frame(y, frame_length=2048, hop_length=512):
     # Compute the number of frames that will fit. The end may get truncated.
     n_frames = 1 + int((len(y) - frame_length) / hop_length)
 
-    if n_frames < 1:
-        raise ParameterError('Buffer is too short (n={:d})'
-                             ' for frame_length={:d}'.format(len(y), frame_length))
-
     # Vertical stride is one sample
     # Horizontal stride is `hop_length` samples
     y_frames = as_strided(y, shape=(frame_length, n_frames),
@@ -99,7 +99,7 @@ def frame(y, frame_length=2048, hop_length=512):
     return y_frames
 
 
-@cache
+@cache(level=20)
 def valid_audio(y, mono=True):
     '''Validate whether a variable contains valid, mono audio data.
 
@@ -125,6 +125,10 @@ def valid_audio(y, mono=True):
             - `mono == True` and `y.ndim` is not 1
             - `mono == False` and `y.ndim` is not 1 or 2
             - `np.isfinite(y).all()` is not True
+
+    Notes
+    -----
+    This function caches at level 20.
 
     Examples
     --------
@@ -212,7 +216,6 @@ def valid_intervals(intervals):
     return True
 
 
-@cache
 def pad_center(data, size, axis=-1, **kwargs):
     '''Wrapper for np.pad to automatically center an array prior to padding.
     This is analogous to `str.center()`
@@ -286,7 +289,6 @@ def pad_center(data, size, axis=-1, **kwargs):
     return np.pad(data, lengths, **kwargs)
 
 
-@cache
 def fix_length(data, size, axis=-1, **kwargs):
     '''Fix the length an array `data` to exactly `size`.
 
@@ -433,7 +435,6 @@ def fix_frames(frames, x_min=0, x_max=None, pad=True):
     return np.unique(frames).astype(int)
 
 
-@cache
 def axis_sort(S, axis=-1, index=False, value=None):
     '''Sort an array along its rows or columns.
 
@@ -531,12 +532,43 @@ def axis_sort(S, axis=-1, index=False, value=None):
         return S[sort_slice]
 
 
-@cache
+@cache(level=40)
 def normalize(S, norm=np.inf, axis=0):
     '''Normalize the columns or rows of a matrix
 
     .. note::
          Columns/rows with length 0 will be left as zeros.
+    Parameters
+    ----------
+    S : np.ndarray [shape=(d, n)]
+        The matrix to normalize
+
+    norm : {np.inf, -np.inf, 0, float > 0, None}
+        - `np.inf`  : maximum absolute value
+        - `-np.inf` : mininum absolute value
+        - `0`    : number of non-zeros
+        - float  : corresponding l_p norm.
+            See `scipy.linalg.norm` for details.
+        - None : no normalization is performed
+
+    axis : int [scalar]
+        Axis along which to compute the norm.
+        `axis=0` will normalize columns, `axis=1` will normalize rows.
+        `axis=None` will normalize according to the entire matrix.
+
+    Returns
+    -------
+    S_norm : np.ndarray [shape=S.shape]
+        Normalized matrix
+
+    Raises
+    ------
+    ParameterError
+        If `norm` is not among the valid types defined above
+
+    Notes
+    -----
+    This function caches at level 40.
 
     Examples
     --------
@@ -572,33 +604,6 @@ def normalize(S, norm=np.inf, axis=0):
            [ 0.   ,  0.   ,  0.   ,  0.5  ],
            [ 0.123,  0.236,  0.408,  0.5  ]])
 
-    Parameters
-    ----------
-    S : np.ndarray [shape=(d, n)]
-        The matrix to normalize
-
-    norm : {np.inf, -np.inf, 0, float > 0, None}
-        - `np.inf`  : maximum absolute value
-        - `-np.inf` : mininum absolute value
-        - `0`    : number of non-zeros
-        - float  : corresponding l_p norm.
-            See `scipy.linalg.norm` for details.
-        - None : no normalization is performed
-
-    axis : int [scalar]
-        Axis along which to compute the norm.
-        `axis=0` will normalize columns, `axis=1` will normalize rows.
-        `axis=None` will normalize according to the entire matrix.
-
-    Returns
-    -------
-    S_norm : np.ndarray [shape=S.shape]
-        Normalized matrix
-
-    Raises
-    ------
-    ParameterError
-        If `norm` is not among the valid types defined above
     '''
 
     # All norms only depend on magnitude, let's do that first
@@ -628,7 +633,6 @@ def normalize(S, norm=np.inf, axis=0):
     return S / length
 
 
-@cache
 def match_intervals(intervals_from, intervals_to):
     '''Match one set of time intervals to another.
 
@@ -693,7 +697,6 @@ def match_intervals(intervals_from, intervals_to):
     return output
 
 
-@cache
 def match_events(events_from, events_to):
     '''Match one set of events to another.
 
@@ -773,7 +776,6 @@ def match_events(events_from, events_to):
     return output
 
 
-@cache
 def localmax(x, axis=0):
     """Find local maxima in an array `x`.
 
@@ -823,7 +825,6 @@ def localmax(x, axis=0):
     return (x > x_pad[inds1]) & (x >= x_pad[inds2])
 
 
-@cache
 def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     '''Uses a flexible heuristic to pick peaks in a signal.
 
@@ -994,10 +995,37 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     return np.array(peaks)
 
 
-@cache
+@cache(level=40)
 def sparsify_rows(x, quantile=0.01):
     '''
     Return a row-sparse matrix approximating the input `x`.
+
+    Parameters
+    ----------
+    x : np.ndarray [ndim <= 2]
+        The input matrix to sparsify.
+
+    quantile : float in [0, 1.0)
+        Percentage of magnitude to discard in each row of `x`
+
+    Returns
+    -------
+    x_sparse : `scipy.sparse.csr_matrix` [shape=x.shape]
+        Row-sparsified approximation of `x`
+
+        If `x.ndim == 1`, then `x` is interpreted as a row vector,
+        and `x_sparse.shape == (1, len(x))`.
+
+    Raises
+    ------
+    ParameterError
+        If `x.ndim > 2`
+
+        If `quantile` lies outside `[0, 1.0)`
+
+    Notes
+    -----
+    This function caches at level 40.
 
     Examples
     --------
@@ -1031,29 +1059,6 @@ def sparsify_rows(x, quantile=0.01):
               0.977,  0.997,  0.997,  0.977,  0.937,  0.879,  0.806,
               0.72 ,  0.625,  0.525,  0.424,  0.326,  0.   ,  0.   ,
               0.   ,  0.   ,  0.   ,  0.   ]])
-
-    Parameters
-    ----------
-    x : np.ndarray [ndim <= 2]
-        The input matrix to sparsify.
-
-    quantile : float in [0, 1.0)
-        Percentage of magnitude to discard in each row of `x`
-
-    Returns
-    -------
-    x_sparse : `scipy.sparse.csr_matrix` [shape=x.shape]
-        Row-sparsified approximation of `x`
-
-        If `x.ndim == 1`, then `x` is interpreted as a row vector,
-        and `x_sparse.shape == (1, len(x))`.
-
-    Raises
-    ------
-    ParameterError
-        If `x.ndim > 2`
-
-        If `quantile` lies outside `[0, 1.0)`
     '''
 
     if x.ndim == 1:
@@ -1083,7 +1088,6 @@ def sparsify_rows(x, quantile=0.01):
     return x_sparse.tocsr()
 
 
-@cache
 def roll_sparse(x, shift, axis=0):
     '''Sparse matrix roll
 
@@ -1246,7 +1250,7 @@ def index_to_slice(idx, idx_min=None, idx_max=None, step=None, pad=True):
     return [slice(start, end, step) for (start, end) in zip(idx_fixed, idx_fixed[1:])]
 
 
-@cache
+@cache(level=40)
 def sync(data, idx, aggregate=None, pad=True, axis=-1):
     """Synchronous aggregation of a multi-dimensional array between boundaries
 
@@ -1290,6 +1294,10 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     ------
     ParameterError
         If the index set is not of consistent type (all slices or all integers)
+
+    Notes
+    -----
+    This function caches at level 40.
 
     Examples
     --------
@@ -1374,7 +1382,6 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     return data_agg
 
 
-@cache
 def softmask(X, X_ref, power=1, split_zeros=False):
     '''Robustly compute a softmask operation.
 
