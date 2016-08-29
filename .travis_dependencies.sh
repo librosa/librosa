@@ -9,7 +9,8 @@ conda_create ()
     hash -r
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
-    conda config --add channels pypi conda-forge
+    conda config --add channels pypi
+    conda config --add channels conda-forge
     conda info -a
     deps='pip numpy scipy nose coverage matplotlib scikit-learn'
 
