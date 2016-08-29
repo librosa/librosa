@@ -99,8 +99,17 @@ def test_frame_contiguous():
 
 @raises(librosa.ParameterError)
 def test_frame_size():
-    '''frame: len(y) == 128, frame_length==256, hop_length=128'''
+    # frame: len(y) == 128, frame_length==256, hop_length=128
     y = np.zeros(64)
+    librosa.util.frame(y, frame_length=256, hop_length=128)
+
+
+@raises(librosa.ParameterError)
+def test_frame_size_difference():
+    # In response to issue #385
+    # https://github.com/librosa/librosa/issues/385
+    # frame: len(y) == 129, frame_length==256, hop_length=128
+    y = np.zeros(129)
     librosa.util.frame(y, frame_length=256, hop_length=128)
 
 

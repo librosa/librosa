@@ -21,6 +21,7 @@ matplotlib.style.use('seaborn-ticks')
 import matplotlib.pyplot as plt
 
 import librosa
+import librosa.display
 import numpy as np
 
 from nose.tools import nottest, raises, eq_
@@ -323,6 +324,8 @@ def test_cmap_robust():
 
         if isinstance(cmap1, matplotlib.colors.ListedColormap):
             assert np.allclose(cmap1.colors, cmap2.colors)
+        elif isinstance(cmap1, matplotlib.colors.LinearSegmentedColormap):
+            eq_(cmap1.name, cmap2.name)
         else:
             eq_(cmap1, cmap2)
 

@@ -22,6 +22,8 @@ python:
 env:
     - ENABLE_FFTW=false
     - ENABLE_FFTW=true
+    - ENABLE_NUMBA=false
+    - ENABLE_NUMBA=true
 
 before_install:
     - bash .travis_dependencies.sh
@@ -32,7 +34,7 @@ before_install:
 install:
     # install your own package into the environment
     # pip install -e rather than setup.py, so that coverage can find the source
-    - pip install -e ./
+    - pip install -e .[display]
 
 script:
     - python --version
