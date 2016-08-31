@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''Utilities for spectral processing'''
-import multiprocessing
-import functools
-
-import six
 import numpy as np
 import scipy
-import scipy.signal
 import scipy.interpolate
+import scipy.signal
+import six
+
+from . import time_frequency
+from .. import cache, util
+from ..util.exceptions import ParameterError
+
 try:
     import pyfftw
     pyfftw.interfaces.cache.enable()
@@ -16,10 +18,6 @@ try:
 except ImportError:
     from scipy.fftpack import fft, ifft
 
-from . import time_frequency
-from .. import cache
-from .. import util
-from ..util.exceptions import ParameterError
 
 __all__ = ['stft', 'istft', 'magphase',
            'ifgram',
