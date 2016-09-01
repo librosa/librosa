@@ -44,6 +44,6 @@ setup(
                  'matplotlib >= 1.5'],
         'numba': ['numba >= 0.25'],
         'display': ['matplotlib >= 1.5'],
-        'fftw': ['pyfftw => 0.10.4']
+        'fftw': ['pyfftw >= 0.10.4']
     }
 )
