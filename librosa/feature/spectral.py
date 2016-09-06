@@ -11,7 +11,7 @@ from .. import filters
 from ..util.exceptions import ParameterError
 
 from ..core.time_frequency import fft_frequencies
-from ..core.audio import zero_crossings
+from ..core.audio import zero_crossings, to_mono
 from ..core.spectrum import logamplitude, _spectrogram
 from ..core.constantq import cqt, hybrid_cqt
 from ..core.pitch import estimate_tuning
@@ -502,7 +502,7 @@ def rmse(y=None, S=None, n_fft=2048, hop_length=512):
     Parameters
     ----------
     y : np.ndarray [shape=(n,)] or None
-        audio time series
+        (optional) audio time series
 
     S : np.ndarray [shape=(d, t)] or None
         (optional) spectrogram magnitude
@@ -545,10 +545,13 @@ def rmse(y=None, S=None, n_fft=2048, hop_length=512):
     >>> plt.tight_layout()
 
     '''
-
-    S, _ = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
-
-    return np.sqrt(np.mean(np.abs(S)**2, axis=0, keepdims=True))
+    if y is not None:
+        x = util.frame(to_mono(y))
+    if S is not None:
+        x, _ = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
+    else:
+        raise ValueError('Either y or S must be input.')
+    return np.sqrt(np.mean(np.abs(x)**2, axis=0, keepdims=True))
 
 
 def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
