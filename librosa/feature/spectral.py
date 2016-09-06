@@ -547,7 +547,7 @@ def rmse(y=None, S=None, n_fft=2048, hop_length=512):
     '''
     if y is not None:
         x = util.frame(to_mono(y))
-    if S is not None:
+    elif S is not None:
         x, _ = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
     else:
         raise ValueError('Either y or S must be input.')
