@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Spectral feature extraction"""
+
 import numpy as np
 import scipy
 import scipy.signal
