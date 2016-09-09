@@ -560,17 +560,14 @@ def rmse(y=None, S=None, n_fft=2048, hop_length=512, mode='time-frequency'):
     >>> plt.tight_layout()
 
     '''
-    if mode == 'time':
+    if S is not None or mode == 'time-frequency':
+        x, _ = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)    
+    elif mode == 'time':
         if y is None:
             raise ValueError("`y` must be input if `mode='time'`")
-        if S is not None:
-            warn("`y` and `S` both input with `mode='time'`. Ignoring `S`.")
         x = util.frame(to_mono(y))
-    elif mode == 'time-frequency':
-        x, _ = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)    
     else: 
         raise ValueError('Invalid mode.')
-
     return np.sqrt(np.mean(np.abs(x)**2, axis=0, keepdims=True))
 
 
