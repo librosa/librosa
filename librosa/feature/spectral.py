@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Spectral feature extraction"""
+from warnings import warn
 
 import numpy as np
 import scipy
@@ -495,23 +496,37 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     return np.nanmin(ind * freq, axis=0, keepdims=True)
 
 
-def rmse(y=None, S=None, n_fft=2048, hop_length=512):
-    '''Compute root-mean-square (RMS) energy for each frame.
+def rmse(y=None, S=None, n_fft=2048, hop_length=512, mode='time-frequency'):
+    '''Compute root-mean-square (RMS) energy for each frame, either from the 
+    audio samples `y` or from a spectrogram `S`.
+    
+    Computing the energy from audio samples is faster as it doesn't require a 
+    STFT calculation. However, using a spectrogram will give a more accurate 
+    representation of energy over time because its frames have been windowed, 
+    thus prefer using `S` if it's already available.
 
 
     Parameters
     ----------
     y : np.ndarray [shape=(n,)] or None
-        (optional) audio time series
+        (optional) audio time series. Required if `S` is not input.
 
     S : np.ndarray [shape=(d, t)] or None
-        (optional) spectrogram magnitude
+        (optional) spectrogram magnitude. If input RMS energy will be computed 
+        in the time-frequency domain regardless of `mode`.
 
     n_fft : int > 0 [scalar]
         FFT window size
 
     hop_length : int > 0 [scalar]
         hop length for STFT. See `librosa.core.stft` for details.
+        
+    mode : str
+        Can be either 'time' or 'time-frequency'. If it's set to 'time' the RMS 
+        energy will be computed in the time-domain from `y`. If it's set to set 
+        'time-frequency' the RMS energy will be computed in the time-frequency 
+        domain with `S` (if available), or by first transforming `y` with the 
+        STFT.
 
 
     Returns
@@ -545,12 +560,17 @@ def rmse(y=None, S=None, n_fft=2048, hop_length=512):
     >>> plt.tight_layout()
 
     '''
-    if y is not None:
+    if mode == 'time':
+        if y is None:
+            raise ValueError("`y` must be input if `mode='time'`")
+        if S is not None:
+            warn("`y` and `S` both input with `mode='time'`. Ignoring `S`.")
         x = util.frame(to_mono(y))
-    elif S is not None:
-        x, _ = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
-    else:
-        raise ValueError('Either y or S must be input.')
+    elif mode == 'time-frequency':
+        x, _ = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)    
+    else: 
+        raise ValueError('Invalid mode.')
+
     return np.sqrt(np.mean(np.abs(x)**2, axis=0, keepdims=True))
 
 
