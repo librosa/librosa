@@ -324,8 +324,8 @@ def test_rmse():
         # STFT magnitudes with a constant windowing function.
         S = librosa.magphase(librosa.stft(y, window=np.ones))[0]
         
-        np.testing.assert_array_equal(librosa.feature.rmse(S=S),
-                                      librosa.feature.rmse(y=y))  
+        np.testing.assert_allclose(librosa.feature.rmse(S=S),
+                                   librosa.feature.rmse(y=y))  
 
     yield __test_equal
     
