@@ -337,13 +337,11 @@ def test_rmse():
         rms2 = librosa.feature.rmse(y=y)
 
         # Normalize envelopes.
-        rms1, rms2 = map(lambda x: librosa.util.normalize(x, axis=1), [rms1, 
-                                                                       rms2])
+        rms1 /= rms1.max()
+        rms2 /= rms2.max()
         
         # Ensure results are similar.
-        np.testing.assert_allclose(rms1,
-                                   rms2, 
-                                   rtol=1e-2)
+        np.testing.assert_allclose(rms1, rms2, rtol=1e-2)
 
     yield __test_consistency
     
