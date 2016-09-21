@@ -11,7 +11,7 @@ from .. import filters
 from ..util.exceptions import ParameterError
 
 from ..core.time_frequency import fft_frequencies
-from ..core.audio import zero_crossings
+from ..core.audio import zero_crossings, to_mono
 from ..core.spectrum import logamplitude, _spectrogram
 from ..core.constantq import cqt, hybrid_cqt
 from ..core.pitch import estimate_tuning
@@ -496,16 +496,22 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
 
 def rmse(y=None, S=None, n_fft=2048, hop_length=512):
-    '''Compute root-mean-square (RMS) energy for each frame.
+    '''Compute root-mean-square (RMS) energy for each frame, either from the 
+    audio samples `y` or from a spectrogram `S`.
+    
+    Computing the energy from audio samples is faster as it doesn't require a 
+    STFT calculation. However, using a spectrogram will give a more accurate 
+    representation of energy over time because its frames can be windowed, 
+    thus prefer using `S` if it's already available.
 
 
     Parameters
     ----------
     y : np.ndarray [shape=(n,)] or None
-        audio time series
+        (optional) audio time series. Required if `S` is not input.
 
     S : np.ndarray [shape=(d, t)] or None
-        (optional) spectrogram magnitude
+        (optional) spectrogram magnitude. Required if `y` is not input.
 
     n_fft : int > 0 [scalar]
         FFT window size
@@ -521,7 +527,7 @@ def rmse(y=None, S=None, n_fft=2048, hop_length=512):
 
 
     Examples
-    --------
+    --------    
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> librosa.feature.rmse(y=y)
     array([[ 0.   ,  0.056, ...,  0.   ,  0.   ]], dtype=float32)
@@ -543,12 +549,24 @@ def rmse(y=None, S=None, n_fft=2048, hop_length=512):
     ...                          y_axis='log', x_axis='time')
     >>> plt.title('log Power spectrogram')
     >>> plt.tight_layout()
+    
+    Use a STFT window of constant ones and no frame centering to get consistent 
+    results with the RMS energy computed from the audio samples `y`
+    
+    >>> S = librosa.magphase(librosa.stft(y, window=np.ones, center=False)[0]
+    >>> librosa.feature.rmse(S=S)
+    
 
     '''
-
-    S, _ = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
-
-    return np.sqrt(np.mean(np.abs(S)**2, axis=0, keepdims=True))
+    if y is not None and S is not None:
+        raise ValueError('Either `y` or `S` should be input.')
+    if y is not None:
+        x = util.frame(to_mono(y))
+    elif S is not None:
+        x, _ = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)    
+    else: 
+        raise ValueError('Either `y` or `S` must be input.')
+    return np.sqrt(np.mean(np.abs(x)**2, axis=0, keepdims=True))
 
 
 def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
