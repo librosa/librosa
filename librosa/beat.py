@@ -91,6 +91,7 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
     ParameterError
         if neither `y` nor `onset_envelope` are provided
 
+        or if `units` is not one of 'frames', 'samples', or 'time'
 
     See Also
     --------
