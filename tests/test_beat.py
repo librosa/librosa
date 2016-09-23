@@ -152,6 +152,36 @@ def test_beat():
                                    start_bpm, bpm, trim, tightness)
 
 
+def test_beat_units():
+
+    def __test(units, hop_length, y, sr):
+
+        tempo, b1 = librosa.beat.beat_track(y=y, sr=sr, hop_length=hop_length)
+        _, b2 = librosa.beat.beat_track(y=y, sr=sr, hop_length=hop_length,
+                                        units=units)
+
+        t1 = librosa.frames_to_time(b1, sr=sr, hop_length=hop_length)
+
+        if units == 'time':
+            t2 = b2
+
+        elif units == 'samples':
+            t2 = librosa.samples_to_time(b2, sr=sr)
+
+        elif units == 'frames':
+            t2 = librosa.frames_to_time(b2, sr=sr, hop_length=hop_length)
+
+        assert np.allclose(t1, t2)
+
+    for sr in [None, 11025]:
+        y, sr = librosa.load(__EXAMPLE_FILE, sr=sr)
+        for hop_length in [512, 1024]:
+            for units in ['frames', 'time', 'samples']:
+                yield __test, units, hop_length, y, sr
+            yield raises(librosa.ParameterError)(__test), 'bad units', hop_length, y, sr
+
+
+
 # Beat tracking regression test is no longer enabled due to librosa's
 # corrections
 @nottest
