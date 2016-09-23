@@ -23,7 +23,8 @@ __all__ = ['beat_track', 'estimate_tempo']
 
 
 def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
-               start_bpm=120.0, tightness=100, trim=True, bpm=None):
+               start_bpm=120.0, tightness=100, trim=True, bpm=None,
+               units='frames'):
     r'''Dynamic programming beat tracker.
 
     Beats are detected in three stages, following the method of [1]_:
@@ -65,6 +66,10 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
         (optional) If provided, use `bpm` as the tempo instead of
         estimating it from `onsets`.
 
+    units : {'frames', 'samples', 'time'}
+        The units to encode detected beat events in.
+        By default, 'frames' are used.
+
 
     Returns
     -------
@@ -73,7 +78,8 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
         estimated global tempo (in beats per minute)
 
     beats : np.ndarray [shape=(m,)]
-        frame numbers of estimated beat events
+        estimated beat event locations in the specified units
+        (default is frame indices)
 
     .. note::
         If no onset strength could be detected, beat_tracker estimates 0 BPM
@@ -178,6 +184,15 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
                            float(sr) / hop_length,
                            tightness,
                            trim)
+
+    if units == 'frames':
+        pass
+    elif units == 'samples':
+        beats = core.frames_to_samples(beats, hop_length=hop_length)
+    elif units == 'time':
+        beats = core.frames_to_time(beats, hop_length=hop_length, sr=sr)
+    else:
+        raise ParameterError('Invalid unit type: {}'.format(units))
 
     return (bpm, beats)
 
