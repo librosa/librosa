@@ -27,7 +27,7 @@ __all__ = ['onset_detect', 'onset_strength', 'onset_strength_multi']
 
 
 def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
-                 **kwargs):
+                 units='frames', **kwargs):
     """Basic onset detector.  Locate note onset events by picking peaks in an
     onset strength envelope.
 
@@ -51,6 +51,10 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     hop_length : int > 0 [scalar]
         hop length (in samples)
 
+    units : {'frames', 'samples', 'time'}
+        The units to encode detected onset events in.
+        By default, 'frames' are used.
+
     kwargs : additional keyword arguments
         Additional parameters for peak picking.
 
@@ -61,7 +65,8 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     -------
 
     onsets : np.ndarray [shape=(n_onsets,)]
-        estimated frame numbers of onsets
+        estimated positions of detected onsets, in whichever units
+        are specified.  By default, frame indices.
 
         .. note::
             If no onset strength could be detected, onset_detect returns
@@ -73,6 +78,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     ParameterError
         if neither `y` nor `onsets` are provided
 
+        or if `units` is not one of 'frames', 'samples', or 'time'
 
     See Also
     --------
@@ -143,7 +149,18 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     kwargs.setdefault('delta', 0.07)
 
     # Peak pick the onset envelope
-    return util.peak_pick(onset_envelope, **kwargs)
+    onsets = util.peak_pick(onset_envelope, **kwargs)
+
+    if units == 'frames':
+        pass
+    elif units == 'samples':
+        onsets = core.frames_to_samples(onsets, hop_length=hop_length)
+    elif units == 'time':
+        onsets = core.frames_to_time(onsets, hop_length=hop_length, sr=sr)
+    else:
+        raise ParameterError('Invalid unit type: {}'.format(units))
+
+    return onsets
 
 
 def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
