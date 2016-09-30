@@ -14,7 +14,7 @@ def harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
 
     Parameters
     ----------
-    X : np.ndarray, real-valued
+    x : np.ndarray
         The input energy
 
     freqs : np.ndarray, shape=(X.shape[axis])
@@ -22,7 +22,7 @@ def harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
         chosen axis.
 
     h_range : list-like, non-negative
-        Harmonics to compute.  The first harmonic (1) corresponds to `X`
+        Harmonics to compute.  The first harmonic (1) corresponds to `x`
         itself.
         Values less than one (e.g., 1/2) correspond to sub-harmonics.
 
@@ -38,8 +38,8 @@ def harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
 
     Returns
     -------
-    X_harm : np.ndarray, shape=(len(h_range), [X.shape])
-        `X_harm[i]` will have the same shape as `X`, and measure
+    x_harm : np.ndarray, shape=(len(h_range), [x.shape])
+        `x_harm[i]` will have the same shape as `x`, and measure
         the energy at the `h_range[i]` harmonic of each frequency.
 
     See Also
@@ -99,22 +99,22 @@ def harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
     out_shape = [len(h_range)]
     out_shape.extend(x.shape)
 
-    harmonic_out = np.zeros(out_shape, dtype=x.dtype)
+    x_out = np.zeros(out_shape, dtype=x.dtype)
 
     if freqs.ndim == 1 and len(freqs) == x.shape[axis]:
-        harmonics_1d(harmonic_out, x, freqs, h_range,
+        harmonics_1d(x_out, x, freqs, h_range,
                      kind=kind, fill_value=fill_value,
                      axis=axis)
 
     elif freqs.ndim == 2 and freqs.shape == x.shape:
-        harmonics_2d(harmonic_out, x, freqs, h_range,
+        harmonics_2d(x_out, x, freqs, h_range,
                      kind=kind, fill_value=fill_value,
                      axis=axis)
     else:
         raise ParameterError('freqs.shape={} does not match '
                              'input shape={}'.format(freqs.shape, x.shape))
 
-    return harmonic_out
+    return x_out
 
 
 def harmonics_1d(harmonic_out, x, freqs, h_range, kind='linear',
@@ -126,15 +126,15 @@ def harmonics_1d(harmonic_out, x, freqs, h_range, kind='linear',
     harmonic_out : np.ndarray, shape=(len(h_range), X.shape)
         The output array to store harmonics
 
-    X : np.ndarray, real-valued
+    X : np.ndarray
         The input energy
 
-    freqs : np.ndarray, shape=(X.shape[axis])
-        The frequency values corresponding to X's elements along the
+    freqs : np.ndarray, shape=(x.shape[axis])
+        The frequency values corresponding to x's elements along the
         chosen axis.
 
     h_range : list-like, non-negative
-        Harmonics to compute.  The first harmonic (1) corresponds to `X`
+        Harmonics to compute.  The first harmonic (1) corresponds to `x`
         itself.
         Values less than one (e.g., 1/2) correspond to sub-harmonics.
 
@@ -150,6 +150,7 @@ def harmonics_1d(harmonic_out, x, freqs, h_range, kind='linear',
 
     See Also
     --------
+    harmonics
     scipy.interpolate.interp1d
 
 
@@ -228,8 +229,42 @@ def harmonics_1d(harmonic_out, x, freqs, h_range, kind='linear',
     return harmonic_out
 
 
-def harmonics_2d(harmonic_out, x, freqs, h_range, kind='linear', fill_value=0, axis=0):
+def harmonics_2d(harmonic_out, x, freqs, h_range, kind='linear', fill_value=0,
+                 axis=0):
+    '''Built a harmonic tensor from a time-frequency representation with
+    time-varying frequencies.
 
+    Parameters
+    ----------
+    harmonic_out : np.ndarray
+        The output array to store harmonics
+
+    x : np.ndarray
+        The input energy
+
+    freqs : np.ndarray, shape=x.shape
+        The frequency values corresponding to each element of `x`
+
+    h_range : list-like, non-negative
+        Harmonics to compute.  The first harmonic (1) corresponds to `x`
+        itself.  Values less than one (e.g., 1/2) correspond to
+        sub-harmonics.
+
+    kind : str
+        Interpolation type.  See `scipy.interpolate.interp1d`.
+
+    fill_value : float
+        The value to fill when extrapolating beyond the observed
+        frequency range.
+
+    axis : int
+        The axis along which to compute harmonics
+
+    See Also
+    --------
+    harmonics
+    harmonics_1d
+    '''
     idx_in = [slice(None)] * x.ndim
     idx_freq = [slice(None)] * x.ndim
     idx_out = [slice(None)] * harmonic_out.ndim
