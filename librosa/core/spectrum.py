@@ -13,6 +13,7 @@ from . import time_frequency
 from .. import cache
 from .. import util
 from ..util.exceptions import ParameterError
+from ..filters import get_window, hann_asym
 
 __all__ = ['stft', 'istft', 'magphase',
            'ifgram',
@@ -70,12 +71,6 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
     -------
     D : np.ndarray [shape=(1 + n_fft/2, t), dtype=dtype]
         STFT matrix
-
-
-    Raises
-    ------
-    ParameterError
-        If `window` is supplied as a vector of length `n_fft`.
 
 
     See Also
@@ -138,24 +133,12 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
 
     # Set the default hop, if it's not already specified
     if hop_length is None:
-        hop_length = int(win_length / 4)
+        hop_length = int(win_length // 4)
 
     if window is None:
-        # Default is an asymmetric Hann window
-        fft_window = scipy.signal.hann(win_length, sym=False)
+        window = hann_asym
 
-    elif six.callable(window):
-        # User supplied a window function
-        fft_window = window(win_length)
-
-    else:
-        # User supplied a window vector.
-        # Make sure it's an array:
-        fft_window = np.asarray(window)
-
-        # validate length compatibility
-        if fft_window.size != n_fft:
-            raise ParameterError('Size mismatch between n_fft and len(window)')
+    fft_window = get_window(window, win_length)
 
     # Pad the window out to n_fft size
     fft_window = util.pad_center(fft_window, n_fft)
@@ -242,11 +225,6 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
     y : np.ndarray [shape=(n,)]
         time domain signal reconstructed from `stft_matrix`
 
-    Raises
-    ------
-    ParameterError
-        If `window` is supplied as a vector of length `n_fft`
-
     See Also
     --------
     stft : Short-time Fourier Transform
@@ -283,25 +261,13 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
 
     # Set the default hop, if it's not already specified
     if hop_length is None:
-        hop_length = int(win_length / 4)
+        hop_length = int(win_length // 4)
 
     if window is None:
         # Default is an asymmetric Hann window.
-        ifft_window = scipy.signal.hann(win_length, sym=False)
+        window = hann_asym
 
-    elif six.callable(window):
-        # User supplied a windowing function
-        ifft_window = window(win_length)
-
-    else:
-        # User supplied a window vector.
-        # Make it into an array
-        ifft_window = np.asarray(window)
-
-        # Verify that the shape matches
-        if ifft_window.size != n_fft:
-            raise ParameterError('Size mismatch between n_fft and window size')
-
+    ifft_window = get_window(window, win_length)
     # Pad out to match n_fft
     ifft_window = util.pad_center(ifft_window, n_fft)
 
@@ -331,7 +297,8 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
 
 
 def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
-           norm=False, center=True, ref_power=1e-6, clip=True, dtype=np.complex64):
+           norm=False, center=True, ref_power=1e-6, clip=True,
+           dtype=np.complex64):
     '''Compute the instantaneous frequency (as a proportion of the sampling rate)
     obtained as the time-derivative of the phase of the complex spectrum as
     described by [1]_.
@@ -419,7 +386,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
         hop_length = int(win_length // 4)
 
     # Construct a padded hann window
-    window = util.pad_center(scipy.signal.hann(win_length, sym=False), n_fft)
+    window = util.pad_center(hann_asym(win_length), n_fft)
 
     # Window for discrete differentiation
     freq_angular = np.linspace(0, 2 * np.pi, n_fft, endpoint=False)

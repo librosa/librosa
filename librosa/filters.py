@@ -14,6 +14,16 @@ Filter bank construction
     chroma
     constant_q
 
+Window functions
+----------------
+.. autosummary::
+    :toctree: generated/
+
+    hann_asym
+    window_bandwidth
+    get_window
+
+
 Miscellaneous
 -------------
 .. autosummary::
@@ -21,7 +31,6 @@ Miscellaneous
 
     constant_q_lengths
     cq_to_chroma
-    window_bandwidth
 """
 
 import warnings
@@ -29,6 +38,7 @@ import warnings
 import numpy as np
 import scipy
 import scipy.signal
+import six
 
 from . import cache
 from . import util
@@ -46,7 +56,9 @@ __all__ = ['dct',
            'constant_q',
            'constant_q_lengths',
            'cq_to_chroma',
-           'window_bandwidth']
+           'window_bandwidth',
+           'get_window',
+           'hann_asym']
 
 
 @cache(level=10)
@@ -744,3 +756,77 @@ def window_bandwidth(window, default=1.0):
         warnings.warn("Unknown window function '{:s}'.".format(key))
 
     return WINDOW_BANDWIDTHS.get(key, default)
+
+
+def get_window(window, Nx, fftbins=True):
+    '''Compute a window function
+
+    Parameters
+    ----------
+    window : string, tuple, callable, or list-like
+        The window specification:
+
+        - If string, it's the name of the window function (e.g., `'hann'`)
+        - If tuple, it's the name of the window function and any parameters
+          (e.g., `('kaiser', 4.0)`)
+        - If callable, it's a function that accepts one integer argument
+          (the window length)
+        - If list-like, it's a pre-computed window of the correct length `Nx`
+
+    Nx : int > 0
+        The length of the window
+
+    fftbins : bool, optional
+        If True (default), create a periodic window for use with FFT
+        If False, create a symmetric window for use with filter design
+
+    Returns
+    -------
+    get_window : np.ndarray
+        A window of length `Nx` and type `window`
+
+    See Also
+    --------
+    scipy.signal.get_window
+
+    Raises
+    ------
+    ParameterError
+        If `window` is supplied as a vector of length != `n_fft`,
+        or is otherwise mis-specified.
+    '''
+    if six.callable(window):
+        return window(Nx)
+
+    elif isinstance(window, (str, tuple)):
+        # TODO: if we add more window functions, put that index check here
+
+        return scipy.signal.get_window(window, Nx, fftbins=fftbins)
+    elif isinstance(window, (np.ndarray, list)):
+        if len(window) == Nx:
+            return np.asarray(window)
+        raise ParameterError('Window size mismatch: '
+                             '{:d} != {:d}'.format(len(window), Nx))
+    else:
+        raise ParameterError('Invalid window specification: {}'.format(window))
+
+
+# -- Window functions
+def hann_asym(n):
+    '''Returns an asymmetric Hann window.
+
+    Parameters
+    ----------
+    n : int > 0
+        The length of the window
+
+    Returns
+    -------
+    window : np.ndarray
+        The window of length `n`
+
+    See Also
+    --------
+    scipy.signal.hann
+    '''
+    return scipy.signal.hann(n, sym=False)
