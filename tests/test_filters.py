@@ -315,3 +315,17 @@ def test_cq_to_chroma():
                                 tf = __test
                             yield (tf, n_bins, bins_per_octave,
                                    n_chroma, fmin, base_c, window)
+
+
+def test_get_window_tuple():
+
+    x1 = scipy.signal.get_window(('kaiser', 4.0), 32)
+    x2 = librosa.filters.get_window(('kaiser', 4.0), 32)
+
+    assert np.allclose(x1, x2)
+
+
+@raises(librosa.ParameterError)
+def test_get_window_fail():
+
+    librosa.filters.get_window(None, 32)
