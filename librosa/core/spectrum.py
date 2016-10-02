@@ -13,7 +13,7 @@ from . import time_frequency
 from .. import cache
 from .. import util
 from ..util.exceptions import ParameterError
-from ..filters import get_window, hann_asym
+from ..filters import get_window
 
 __all__ = ['stft', 'istft', 'magphase',
            'ifgram',
@@ -136,9 +136,9 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
         hop_length = int(win_length // 4)
 
     if window is None:
-        window = hann_asym
+        window = 'hann'
 
-    fft_window = get_window(window, win_length)
+    fft_window = get_window(window, win_length, fftbins=True)
 
     # Pad the window out to n_fft size
     fft_window = util.pad_center(fft_window, n_fft)
@@ -265,9 +265,10 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
 
     if window is None:
         # Default is an asymmetric Hann window.
-        window = hann_asym
+        window = 'hann'
 
-    ifft_window = get_window(window, win_length)
+    ifft_window = get_window(window, win_length, fftbins=True)
+
     # Pad out to match n_fft
     ifft_window = util.pad_center(ifft_window, n_fft)
 
@@ -386,7 +387,8 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
         hop_length = int(win_length // 4)
 
     # Construct a padded hann window
-    window = util.pad_center(hann_asym(win_length), n_fft)
+    window = util.pad_center(get_window('hann', win_length, fftbins=True),
+                             n_fft)
 
     # Window for discrete differentiation
     freq_angular = np.linspace(0, 2 * np.pi, n_fft, endpoint=False)
