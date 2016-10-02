@@ -19,7 +19,6 @@ Window functions
 .. autosummary::
     :toctree: generated/
 
-    hann_asym
     window_bandwidth
     get_window
 
@@ -57,8 +56,7 @@ __all__ = ['dct',
            'constant_q_lengths',
            'cq_to_chroma',
            'window_bandwidth',
-           'get_window',
-           'hann_asym']
+           'get_window']
 
 
 @cache(level=10)
@@ -809,24 +807,3 @@ def get_window(window, Nx, fftbins=True):
                              '{:d} != {:d}'.format(len(window), Nx))
     else:
         raise ParameterError('Invalid window specification: {}'.format(window))
-
-
-# -- Window functions
-def hann_asym(n):
-    '''Returns an asymmetric Hann window.
-
-    Parameters
-    ----------
-    n : int > 0
-        The length of the window
-
-    Returns
-    -------
-    window : np.ndarray
-        The window of length `n`
-
-    See Also
-    --------
-    scipy.signal.hann
-    '''
-    return scipy.signal.hann(n, sym=False)
