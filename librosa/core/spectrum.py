@@ -23,7 +23,7 @@ __all__ = ['stft', 'istft', 'magphase',
 
 
 @cache(level=20)
-def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
+def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
          center=True, dtype=np.complex64):
     """Short-time Fourier transform (STFT)
 
@@ -135,9 +135,6 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
     if hop_length is None:
         hop_length = int(win_length // 4)
 
-    if window is None:
-        window = 'hann'
-
     fft_window = get_window(window, win_length, fftbins=True)
 
     # Pad the window out to n_fft size
@@ -175,7 +172,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
 
 
 @cache(level=30)
-def istft(stft_matrix, hop_length=None, win_length=None, window=None,
+def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
           center=True, dtype=np.float32):
     """
     Inverse short-time Fourier transform (ISTFT).
@@ -263,10 +260,6 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
     if hop_length is None:
         hop_length = int(win_length // 4)
 
-    if window is None:
-        # Default is an asymmetric Hann window.
-        window = 'hann'
-
     ifft_window = get_window(window, win_length, fftbins=True)
 
     # Pad out to match n_fft
@@ -298,8 +291,8 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
 
 
 def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
-           norm=False, center=True, ref_power=1e-6, clip=True,
-           dtype=np.complex64):
+           window='hann', norm=False, center=True, ref_power=1e-6,
+           clip=True, dtype=np.complex64):
     '''Compute the instantaneous frequency (as a proportion of the sampling rate)
     obtained as the time-derivative of the phase of the complex spectrum as
     described by [1]_.
@@ -329,6 +322,10 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
 
     win_length : int > 0, <= n_fft
         Window length. Defaults to `n_fft`.
+        See `stft` for details.
+
+    window : string, tuple, function, or np.ndarray
+        Window function to use in ifgram calculation.
         See `stft` for details.
 
     norm : bool
@@ -387,8 +384,8 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
         hop_length = int(win_length // 4)
 
     # Construct a padded hann window
-    window = util.pad_center(get_window('hann', win_length, fftbins=True),
-                             n_fft)
+    win = util.pad_center(get_window(window, win_length, fftbins=True),
+                          n_fft)
 
     # Window for discrete differentiation
     freq_angular = np.linspace(0, 2 * np.pi, n_fft, endpoint=False)
@@ -419,7 +416,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     if_gram = freq_angular[:n_fft//2 + 1] + bin_offset
 
     if norm:
-        stft_matrix = stft_matrix * 2.0 / window.sum()
+        stft_matrix = stft_matrix * 2.0 / win.sum()
 
     if clip:
         np.clip(if_gram, 0, np.pi, out=if_gram)
