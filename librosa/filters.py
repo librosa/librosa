@@ -758,7 +758,10 @@ def window_bandwidth(window, default=1.0):
 
 @cache(level=10)
 def get_window(window, Nx, fftbins=True):
-    '''Compute a window function
+    '''Compute a window function.
+
+    This is a wrapper for `scipy.signal.get_window` that additionally
+    supports callable or pre-computed windows.
 
     Parameters
     ----------
@@ -798,7 +801,7 @@ def get_window(window, Nx, fftbins=True):
         return window(Nx)
 
     elif isinstance(window, (str, tuple)):
-        # TODO: if we add more window functions, put that index check here
+        # TODO: if we add custom window functions in librosa, call them here
 
         return scipy.signal.get_window(window, Nx, fftbins=fftbins)
     elif isinstance(window, (np.ndarray, list)):

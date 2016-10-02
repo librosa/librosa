@@ -53,8 +53,8 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
 
         If unspecified, defaults to ``win_length = n_fft``.
 
-    window : None, function, np.ndarray [shape=(n_fft,)]
-        - None (default): use an asymmetric Hann window
+    window : string, tuple, function, or np.ndarray [shape=(n_fft,)]
+        - a window specification (string or tuple); see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.hanning`
         - a vector or array of length `n_fft`
 
@@ -205,8 +205,8 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
 
         If unspecified, defaults to `n_fft`.
 
-    window      : None, function, np.ndarray [shape=(n_fft,)]
-        - None (default): use an asymmetric Hann window
+    window      : string, tuple, function, np.ndarray [shape=(n_fft,)]
+        - a window specification (string or tuple); see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.hanning`
         - a user-specified window vector of length `n_fft`
 
@@ -324,8 +324,10 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
         Window length. Defaults to `n_fft`.
         See `stft` for details.
 
-    window : string, tuple, function, or np.ndarray
-        Window function to use in ifgram calculation.
+    window : string, tuple, function, or np.ndarray [shape=(n_fft,)]
+        - a window specification (string or tuple); see `scipy.signal.get_window`
+        - a window function, such as `scipy.signal.hanning`
+        - a user-specified window vector of length `n_fft`
         See `stft` for details.
 
     norm : bool
