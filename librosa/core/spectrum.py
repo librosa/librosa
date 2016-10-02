@@ -384,8 +384,9 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
         hop_length = int(win_length // 4)
 
     # Construct a padded hann window
-    win = util.pad_center(get_window(window, win_length, fftbins=True),
-                          n_fft)
+    fft_window = util.pad_center(get_window(window, win_length,
+                                            fftbins=True),
+                                 n_fft)
 
     # Window for discrete differentiation
     freq_angular = np.linspace(0, 2 * np.pi, n_fft, endpoint=False)
@@ -393,6 +394,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     d_window = np.sin(-freq_angular) * np.pi / n_fft
 
     stft_matrix = stft(y, n_fft=n_fft, hop_length=hop_length,
+                       win_length=win_length,
                        window=window, center=center, dtype=dtype)
 
     diff_stft = stft(y, n_fft=n_fft, hop_length=hop_length,
@@ -416,7 +418,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     if_gram = freq_angular[:n_fft//2 + 1] + bin_offset
 
     if norm:
-        stft_matrix = stft_matrix * 2.0 / win.sum()
+        stft_matrix = stft_matrix * 2.0 / fft_window.sum()
 
     if clip:
         np.clip(if_gram, 0, np.pi, out=if_gram)
