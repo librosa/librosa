@@ -756,6 +756,7 @@ def window_bandwidth(window, default=1.0):
     return WINDOW_BANDWIDTHS.get(key, default)
 
 
+@cache(level=10)
 def get_window(window, Nx, fftbins=True):
     '''Compute a window function
 
