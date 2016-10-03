@@ -475,11 +475,11 @@ def test_tempogram_fail():
     y = np.zeros(duration * sr)
 
     # Fail when no input is provided
-    yield __test, None, sr, None, hop_length, 384, True, None, np.inf
+    yield __test, None, sr, None, hop_length, 384, True, 'hann', np.inf
 
     # Fail when win_length is too small
     for win_length in [-384, -1, 0]:
-        yield __test, y, sr, None, hop_length, win_length, True, None, np.inf
+        yield __test, y, sr, None, hop_length, win_length, True, 'hann', np.inf
 
     # Fail when len(window) != win_length
     yield __test, y, sr, None, hop_length, 384, True, np.ones(win_length + 1), np.inf
@@ -580,7 +580,7 @@ def test_tempogram_odf():
             yield __test_equiv, tempo, center
 
         for win_length in [192, 384]:
-            for window in [None, np.ones, np.ones(win_length)]:
+            for window in ['hann', np.ones, np.ones(win_length)]:
                 for norm in [None, 1, 2, np.inf]:
                     yield __test_peaks, tempo, win_length, window, norm
 

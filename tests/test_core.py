@@ -182,7 +182,7 @@ def test_stft():
             win_length = None
 
         else:
-            window = None
+            window = 'hann'
             win_length = DATA['hann_w'][0, 0]
 
         # Compute the STFT
