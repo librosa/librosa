@@ -772,7 +772,7 @@ def get_window(window, Nx, fftbins=True):
         - If tuple, it's the name of the window function and any parameters
           (e.g., `('kaiser', 4.0)`)
         - If numeric, it is treated as the beta parameter of the `'kaiser'`
-          window.
+          window, as in `scipy.signal.get_window`.
         - If callable, it's a function that accepts one integer argument
           (the window length)
         - If list-like, it's a pre-computed window of the correct length `Nx`
