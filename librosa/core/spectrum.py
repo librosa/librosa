@@ -53,10 +53,13 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
 
         If unspecified, defaults to ``win_length = n_fft``.
 
-    window : string, tuple, function, or np.ndarray [shape=(n_fft,)]
-        - a window specification (string or tuple); see `scipy.signal.get_window`
+    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        - a window specification (string, tuple, or number); 
+          see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.hanning`
         - a vector or array of length `n_fft`
+
+        .. see also:: `filters.get_window`
 
     center      : boolean
         - If `True`, the signal `y` is padded so that frame
@@ -205,10 +208,13 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
 
         If unspecified, defaults to `n_fft`.
 
-    window      : string, tuple, function, np.ndarray [shape=(n_fft,)]
-        - a window specification (string or tuple); see `scipy.signal.get_window`
+    window      : string, tuple, number, function, np.ndarray [shape=(n_fft,)]
+        - a window specification (string, tuple, or number);
+          see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.hanning`
         - a user-specified window vector of length `n_fft`
+
+        .. see also:: `filters.get_window`
 
     center      : boolean
         - If `True`, `D` is assumed to have centered frames.
@@ -324,11 +330,14 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
         Window length. Defaults to `n_fft`.
         See `stft` for details.
 
-    window : string, tuple, function, or np.ndarray [shape=(n_fft,)]
-        - a window specification (string or tuple); see `scipy.signal.get_window`
+    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        - a window specification (string, tuple, number);
+          see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.hanning`
         - a user-specified window vector of length `n_fft`
         See `stft` for details.
+
+        .. see also:: `filters.get_window`
 
     norm : bool
         Normalize the STFT.

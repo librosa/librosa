@@ -765,12 +765,14 @@ def get_window(window, Nx, fftbins=True):
 
     Parameters
     ----------
-    window : string, tuple, callable, or list-like
+    window : string, tuple, number, callable, or list-like
         The window specification:
 
         - If string, it's the name of the window function (e.g., `'hann'`)
         - If tuple, it's the name of the window function and any parameters
           (e.g., `('kaiser', 4.0)`)
+        - If numeric, it is treated as the beta parameter of the `'kaiser'`
+          window.
         - If callable, it's a function that accepts one integer argument
           (the window length)
         - If list-like, it's a pre-computed window of the correct length `Nx`
@@ -780,7 +782,7 @@ def get_window(window, Nx, fftbins=True):
 
     fftbins : bool, optional
         If True (default), create a periodic window for use with FFT
-        If False, create a symmetric window for use with filter design
+        If False, create a symmetric window for filter design applications.
 
     Returns
     -------
@@ -800,13 +802,16 @@ def get_window(window, Nx, fftbins=True):
     if six.callable(window):
         return window(Nx)
 
-    elif isinstance(window, (str, tuple)):
+    elif (isinstance(window, (six.string_types, tuple)) or
+          np.isscalar(window)):
         # TODO: if we add custom window functions in librosa, call them here
 
         return scipy.signal.get_window(window, Nx, fftbins=fftbins)
+
     elif isinstance(window, (np.ndarray, list)):
         if len(window) == Nx:
             return np.asarray(window)
+
         raise ParameterError('Window size mismatch: '
                              '{:d} != {:d}'.format(len(window), Nx))
     else:
