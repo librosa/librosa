@@ -315,3 +315,43 @@ def test_cq_to_chroma():
                                 tf = __test
                             yield (tf, n_bins, bins_per_octave,
                                    n_chroma, fmin, base_c, window)
+
+
+@raises(librosa.ParameterError)
+def test_get_window_fail():
+
+    librosa.filters.get_window(None, 32)
+
+
+def test_get_window():
+
+    def __test(window):
+
+        w1 = librosa.filters.get_window(window, 32)
+        w2 = scipy.signal.get_window(window, 32)
+
+        assert np.allclose(w1, w2)
+
+    for window in ['hann', u'hann', 4.0, ('kaiser', 4.0)]:
+        yield __test, window
+
+
+def test_get_window_func():
+
+    w1 = librosa.filters.get_window(scipy.signal.boxcar, 32)
+    w2 = scipy.signal.get_window('boxcar', 32)
+    assert np.allclose(w1, w2)
+
+
+def test_get_window_pre():
+
+
+    def __test(pre_win):
+        win = librosa.filters.get_window(pre_win, len(pre_win))
+        assert np.allclose(win, pre_win)
+
+
+    yield __test, scipy.signal.hann(16)
+    yield __test, list(scipy.signal.hann(16))
+    yield __test, [1, 1, 1]
+
