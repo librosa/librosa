@@ -48,8 +48,8 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
         If `True`, onset autocorrelation windows are centered.
         If `False`, windows are left-aligned.
 
-    window : string, function, tuple, or np.ndarray [shape=(win_length,)]
-        A window specification as in `core.stft`
+    window : string, function, number, tuple, or np.ndarray [shape=(win_length,)]
+        A window specification as in `core.stft`.
 
     norm : {np.inf, -np.inf, 0, float > 0, None}
         Normalization mode.  Set to `None` to disable normalization.
