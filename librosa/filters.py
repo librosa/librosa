@@ -793,6 +793,10 @@ def get_window(window, Nx, fftbins=True):
     --------
     scipy.signal.get_window
 
+    Notes
+    -----
+    This function caches at level 10.
+
     Raises
     ------
     ParameterError
