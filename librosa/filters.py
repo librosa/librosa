@@ -789,7 +789,7 @@ def window_bandwidth(window, n=1000):
 
     if key not in WINDOW_BANDWIDTHS:
         win = get_window(window, n)
-        WINDOW_BANDWIDTHS[key] = np.sum(win**2) / np.sum(np.abs(win))**2
+        WINDOW_BANDWIDTHS[key] = n * np.sum(win**2) / np.sum(np.abs(win))**2
 
     return WINDOW_BANDWIDTHS[key]
 

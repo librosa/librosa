@@ -240,6 +240,14 @@ def test_window_bandwidth():
         librosa.filters.window_bandwidth(scipy.signal.hann))
 
 
+def test_window_bandwidth_dynamic():
+
+    # Test with a window constructor guaranteed to not exist in
+    # the dictionary.
+    # should behave like a box filter, which has enbw == 1
+    eq_(librosa.filters.window_bandwidth(lambda n: np.ones(n)), 1)
+
+
 @raises(ValueError)
 def test_window_bandwidth_missing():
     librosa.filters.window_bandwidth('made up window name')
