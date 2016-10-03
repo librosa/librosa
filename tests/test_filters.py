@@ -334,3 +334,17 @@ def test_get_window():
 
     for window in ['hann', u'hann', 4.0, ('kaiser', 4.0)]:
         yield __test, window
+
+
+def test_get_window_pre():
+
+
+    def __test(pre_win):
+        win = librosa.filters.get_window(pre_win, len(pre_win))
+        assert np.allclose(win, pre_win)
+
+
+    yield __test, scipy.signal.hann(16)
+    yield __test, list(scipy.signal.hann(16))
+    yield __test, [1, 1, 1]
+
