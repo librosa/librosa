@@ -3,8 +3,6 @@
 '''Pitch-tracking and tuning estimation'''
 from __future__ import division
 
-from warnings import warn
-
 import numpy as np
 import scipy.fftpack as fft
 
@@ -23,7 +21,8 @@ __all__ = ['cqt', 'hybrid_cqt', 'pseudo_cqt']
 @cache(level=20)
 def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         bins_per_octave=12, tuning=None, filter_scale=1,
-        norm=1, sparsity=0.01, real=util.Deprecated()):
+        norm=1, sparsity=0.01, window='hann',
+        real=util.Deprecated()):
     '''Compute the constant-Q transform of an audio signal.
 
     This implementation is based on the recursive sub-sampling method
@@ -71,6 +70,10 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         fraction of the energy in each basis.
 
         Set `sparsity=0` to disable sparsification.
+
+    window : str, tuple, number, or function
+        Window specification for the basis filters.
+        See `filters.get_window` for details.
 
     real : [DEPRECATED]
         .. warning:: This parameter name deprecated in librosa 0.5.0
@@ -159,7 +162,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     # Determine required resampling quality
     Q = float(filter_scale) / (2.0**(1. / bins_per_octave) - 1)
-    filter_cutoff = fmax_t * (1 + filters.window_bandwidth('hann') / Q)
+    filter_cutoff = fmax_t * (1 + 0.5 * filters.window_bandwidth(window) / Q)
     nyquist = sr / 2.0
     if filter_cutoff < audio.BW_FASTEST * nyquist:
         res_type = 'kaiser_fast'
@@ -182,7 +185,8 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                                tuning,
                                                filter_scale,
                                                norm,
-                                               sparsity)
+                                               sparsity,
+                                               window=window)
 
         # Compute the CQT filter response and append it to the stack
         cqt_resp.append(__cqt_response(y, n_fft, hop_length, fft_basis))
@@ -191,7 +195,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         fmax_t /= 2
         n_octaves -= 1
 
-        filter_cutoff = fmax_t * (1 + filters.window_bandwidth('hann') / Q)
+        filter_cutoff = fmax_t * (1 + 0.5 * filters.window_bandwidth(window) / Q)
 
         res_type = 'kaiser_fast'
 
@@ -209,7 +213,8 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                            tuning,
                                            filter_scale,
                                            norm,
-                                           sparsity)
+                                           sparsity,
+                                           window=window)
 
     my_y, my_sr, my_hop = y, sr, hop_length
 
@@ -220,9 +225,11 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         if i > 0:
             if len(my_y) < 2:
                 raise ParameterError('Input signal length={} is too short for '
-                                     '{:d}-octave CQT'.format(len_orig, n_octaves))
+                                     '{:d}-octave CQT'.format(len_orig,
+                                                              n_octaves))
 
-            # The additional scaling of sqrt(2) here is to implicitly rescale the filters
+            # The additional scaling of sqrt(2) here is to implicitly rescale
+            # the filters
             my_y = np.sqrt(2) * audio.resample(my_y, my_sr, my_sr/2.0,
                                                res_type=res_type,
                                                scale=True)
@@ -232,14 +239,13 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         # Compute the cqt filter response and append to the stack
         cqt_resp.append(__cqt_response(my_y, n_fft, my_hop, fft_basis))
 
-
     return __trim_stack(cqt_resp, n_bins)
 
 
 @cache(level=20)
 def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                bins_per_octave=12, tuning=None, filter_scale=1,
-               norm=1, sparsity=0.01):
+               norm=1, sparsity=0.01, window='hann'):
     '''Compute the hybrid constant-Q transform of an audio signal.
 
     Here, the hybrid CQT uses the pseudo CQT for higher frequencies where
@@ -279,6 +285,11 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         fraction of the energy in each basis.
 
         Set `sparsity=0` to disable sparsification.
+
+    window : str, tuple, number, or function
+        Window specification for the basis filters.
+        See `filters.get_window` for details.
+
 
     Returns
     -------
@@ -321,7 +332,8 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                          n_bins=n_bins,
                                          bins_per_octave=bins_per_octave,
                                          tuning=tuning,
-                                         filter_scale=filter_scale)
+                                         filter_scale=filter_scale,
+                                         window=window)
 
     # Determine which filters to use with Pseudo CQT
     # These are the ones that fit within 2 hop lengths after padding
@@ -342,7 +354,8 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                    tuning=tuning,
                                    filter_scale=filter_scale,
                                    norm=norm,
-                                   sparsity=sparsity))
+                                   sparsity=sparsity,
+                                   window=window))
 
     if n_bins_full > 0:
         cqt_resp.append(np.abs(cqt(y, sr,
@@ -353,7 +366,8 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                    tuning=tuning,
                                    filter_scale=filter_scale,
                                    norm=norm,
-                                   sparsity=sparsity)))
+                                   sparsity=sparsity,
+                                   window=window)))
 
     return __trim_stack(cqt_resp, n_bins)
 
@@ -361,7 +375,7 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 @cache(level=20)
 def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                bins_per_octave=12, tuning=None, filter_scale=1,
-               norm=1, sparsity=0.01):
+               norm=1, sparsity=0.01, window='hann'):
     '''Compute the pseudo constant-Q transform of an audio signal.
 
     This uses a single fft size that is the smallest power of 2 that is greater
@@ -404,6 +418,10 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
         Set `sparsity=0` to disable sparsification.
 
+    window : str, tuple, number, or function
+        Window specification for the basis filters.
+        See `filters.get_window` for details.
+
 
     Returns
     -------
@@ -417,7 +435,7 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         `2**(n_bins / bins_per_octave)`
 
         Or if `y` is too short to support the frequency range of the CQT.
-    
+
     Notes
     -----
     This function caches at level 20.
@@ -435,7 +453,8 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                            bins_per_octave,
                                            tuning, filter_scale,
                                            norm, sparsity,
-                                           hop_length=hop_length)
+                                           hop_length=hop_length,
+                                           window=window)
 
     fft_basis = np.abs(fft_basis)
 
@@ -448,7 +467,8 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
 @cache(level=10)
 def __cqt_filter_fft(sr, fmin, n_bins, bins_per_octave, tuning,
-                     filter_scale, norm, sparsity, hop_length=None):
+                     filter_scale, norm, sparsity, hop_length=None,
+                     window='hann'):
     '''Generate the frequency domain constant-Q filter basis.'''
 
     basis, lengths = filters.constant_q(sr,
@@ -458,12 +478,15 @@ def __cqt_filter_fft(sr, fmin, n_bins, bins_per_octave, tuning,
                                         tuning=tuning,
                                         filter_scale=filter_scale,
                                         norm=norm,
-                                        pad_fft=True)
+                                        pad_fft=True,
+                                        window=window)
 
     # Filters are padded up to the nearest integral power of 2
     n_fft = basis.shape[1]
 
-    if hop_length is not None and n_fft < 2.0**(1 + np.ceil(np.log2(hop_length))):
+    if (hop_length is not None and
+            n_fft < 2.0**(1 + np.ceil(np.log2(hop_length)))):
+
         n_fft = int(2.0 ** (1 + np.ceil(np.log2(hop_length))))
 
     # re-normalize bases with respect to the FFT window length
@@ -529,10 +552,12 @@ def __early_downsample(y, sr, hop_length, res_type, n_octaves,
             raise ParameterError('Input signal length={:d} is too short for '
                                  '{:d}-octave CQT'.format(len(y), n_octaves))
 
-        # The additional scaling of sqrt(downsample_factor) here is to implicitly
-        # rescale the filters
-        y = np.sqrt(downsample_factor) * audio.resample(y, sr, sr / downsample_factor,
-                                                        res_type=res_type, scale=True)
+        # The additional scaling of sqrt(downsample_factor) here is to
+        # implicitly rescale the filters
+        y = np.sqrt(downsample_factor) * audio.resample(y, sr,
+                                                        sr / downsample_factor,
+                                                        res_type=res_type,
+                                                        scale=True)
 
         sr /= downsample_factor
 
