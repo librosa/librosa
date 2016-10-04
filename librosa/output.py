@@ -183,7 +183,7 @@ def times_csv(path, times, annotations=None, delimiter=',', fmt='%0.3f'):
                 writer.writerow([(fmt % t), lab])
 
 
-def write_wav(path, y, sr, norm=True):
+def write_wav(path, y, sr, norm=False):
     """Output a time series as a .wav file
 
     Parameters
@@ -198,7 +198,8 @@ def write_wav(path, y, sr, norm=True):
         sampling rate of `y`
 
     norm : boolean [scalar]
-        enable amplitude normalization
+        enable amplitude normalization.
+        For floating point `y`, scale the data to the range [-1, +1].
 
     Examples
     --------
@@ -214,7 +215,7 @@ def write_wav(path, y, sr, norm=True):
     util.valid_audio(y, mono=False)
 
     # normalize
-    if norm:
+    if norm and np.issubdtype(y.dtype, np.float):
         wav = util.normalize(y, norm=np.inf, axis=None)
     else:
         wav = y
