@@ -198,7 +198,8 @@ def write_wav(path, y, sr, norm=False):
         sampling rate of `y`
 
     norm : boolean [scalar]
-        enable amplitude normalization
+        enable amplitude normalization.
+        For floating point `y`, scale the data to the range [-1, +1].
 
     Examples
     --------
