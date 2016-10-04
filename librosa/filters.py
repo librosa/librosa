@@ -32,8 +32,6 @@ Miscellaneous
     cq_to_chroma
 """
 
-import warnings
-
 import numpy as np
 import scipy
 import scipy.signal
@@ -46,9 +44,6 @@ from .util.exceptions import ParameterError
 from .core.time_frequency import note_to_hz, hz_to_midi, hz_to_octs
 from .core.time_frequency import fft_frequencies, mel_frequencies
 
-# Dictionary of window function bandwidths
-WINDOW_BANDWIDTHS = dict(hann=0.725)
-
 __all__ = ['dct',
            'mel',
            'chroma',
@@ -57,6 +52,50 @@ __all__ = ['dct',
            'cq_to_chroma',
            'window_bandwidth',
            'get_window']
+
+
+# Dictionary of window function bandwidths
+
+WINDOW_BANDWIDTHS = {'bart': 1.3334961334912805,
+                     'barthann': 1.4560255965133932,
+                     'bartlett': 1.3334961334912805,
+                     'bkh': 2.0045975283585014,
+                     'black': 1.7269681554262326,
+                     'blackharr': 2.0045975283585014,
+                     'blackman': 1.7269681554262326,
+                     'blackmanharris': 2.0045975283585014,
+                     'blk': 1.7269681554262326,
+                     'bman': 1.7859588613860062,
+                     'bmn': 1.7859588613860062,
+                     'bohman': 1.7859588613860062,
+                     'box': 1.0,
+                     'boxcar': 1.0,
+                     'brt': 1.3334961334912805,
+                     'brthan': 1.4560255965133932,
+                     'bth': 1.4560255965133932,
+                     'cosine': 1.2337005350199792,
+                     'flat': 2.7762255046484143,
+                     'flattop': 2.7762255046484143,
+                     'flt': 2.7762255046484143,
+                     'halfcosine': 1.2337005350199792,
+                     'ham': 1.3629455320350348,
+                     'hamm': 1.3629455320350348,
+                     'hamming': 1.3629455320350348,
+                     'han': 1.50018310546875,
+                     'hann': 1.50018310546875,
+                     'hanning': 1.50018310546875,
+                     'nut': 1.9763500280946082,
+                     'nutl': 1.9763500280946082,
+                     'nuttall': 1.9763500280946082,
+                     'ones': 1.0,
+                     'par': 1.9174603174603191,
+                     'parz': 1.9174603174603191,
+                     'parzen': 1.9174603174603191,
+                     'rect': 1.0,
+                     'rectangular': 1.0,
+                     'tri': 1.3331706523555851,
+                     'triang': 1.3331706523555851,
+                     'triangle': 1.3331706523555851}
 
 
 @cache(level=10)
@@ -337,7 +376,7 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0,
     return np.ascontiguousarray(wts[:, :int(1 + n_fft/2)])
 
 
-def __float_window(window_function):
+def __float_window(window_spec):
     '''Decorator function for windows with fractional input.
 
     This function guarantees that for fractional `x`, the following hold:
@@ -352,7 +391,7 @@ def __float_window(window_function):
         '''The wrapped window'''
         n_min, n_max = int(np.floor(n)), int(np.ceil(n))
 
-        window = window_function(n, *args, **kwargs)
+        window = get_window(window_spec, n)
 
         if len(window) < n_max:
             window = np.pad(window, [(0, n_max - len(window))],
@@ -367,7 +406,7 @@ def __float_window(window_function):
 
 @cache(level=10)
 def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
-               window=None, filter_scale=1, pad_fft=True, norm=1,
+               window='hann', filter_scale=1, pad_fft=True, norm=1,
                **kwargs):
     r'''Construct a constant-Q basis.
 
@@ -395,9 +434,8 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     tuning : float in `[-0.5, +0.5)` [scalar]
         Tuning deviation from A440 in fractions of a bin
 
-    window : function or `None`
+    window : string, tuple, number, or function
         Windowing function to apply to filters.
-        Default: `scipy.signal.hann`
 
     filter_scale : float > 0 [scalar]
         Scale of filter windows.
@@ -471,9 +509,6 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 
     if fmin is None:
         fmin = note_to_hz('C1')
-
-    if window is None:
-        window = scipy.signal.hann
 
     # Pass-through parameters to get the filter lengths
     lengths = constant_q_lengths(sr, fmin,
@@ -587,7 +622,7 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
     # Compute the frequencies
     freq = fmin * (2.0 ** (np.arange(n_bins, dtype=float) / bins_per_octave))
 
-    if np.any(freq * (1 + window_bandwidth(window) / Q) > sr / 2.0):
+    if freq[-1] * (1 + 0.5 * window_bandwidth(window) / Q) > sr / 2.0:
         raise ParameterError('Filter pass-band lies beyond Nyquist')
 
     # Convert frequencies to filter lengths
@@ -719,10 +754,10 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
     return cq_to_ch
 
 
-def window_bandwidth(window, default=1.0):
-    '''Get the bandwidth of a window function.
+@cache(level=10)
+def window_bandwidth(window, n=1000):
+    '''Get the equivalent noise bandwidth of a window function.
 
-    If the window function is unknown, return a default value.
 
     Parameters
     ----------
@@ -732,17 +767,19 @@ def window_bandwidth(window, default=1.0):
         - scipy.signal.hann
         - 'boxcar'
 
-    default : float >= 0
-        The default value, if `window` is unknown.
+    n : int > 0
+        The number of coefficients to use in estimating the
+        window bandwidth
 
     Returns
     -------
     bandwidth : float
-        The bandwidth of the given window function
+        The equivalent noise bandwidth (in FFT bins) of the
+        given window function
 
     See Also
     --------
-    scipy.signal.get_window
+    get_window
     '''
 
     if hasattr(window, '__name__'):
@@ -751,9 +788,10 @@ def window_bandwidth(window, default=1.0):
         key = window
 
     if key not in WINDOW_BANDWIDTHS:
-        warnings.warn("Unknown window function '{:s}'.".format(key))
+        win = get_window(window, n)
+        WINDOW_BANDWIDTHS[key] = n * np.sum(win**2) / np.sum(np.abs(win))**2
 
-    return WINDOW_BANDWIDTHS.get(key, default)
+    return WINDOW_BANDWIDTHS[key]
 
 
 @cache(level=10)
