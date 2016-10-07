@@ -563,8 +563,8 @@ def __cqt_response(y, n_fft, hop_length, fft_basis):
 def __early_downsample_count(nyquist, filter_cutoff, hop_length, n_octaves):
     '''Compute the number of early downsampling operations'''
 
-    downsample_count1 = int(np.ceil(np.log2(audio.BW_FASTEST * nyquist /
-                                            filter_cutoff)) - 1)
+    downsample_count1 = max(0, int(np.ceil(np.log2(audio.BW_FASTEST * nyquist /
+                                                   filter_cutoff)) - 1) - 1)
 
     num_twos = __num_two_factors(hop_length)
     downsample_count2 = max(0, num_twos - n_octaves + 1)
