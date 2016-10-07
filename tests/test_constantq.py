@@ -187,7 +187,7 @@ def test_cqt_fail_short_early():
 @raises(librosa.ParameterError)
 def test_cqt_fail_short_late():
 
-    y = np.zeros(64)
+    y = np.zeros(16)
     librosa.cqt(y, sr=22050, real=False)
 
 def test_cqt_impulse():
@@ -197,7 +197,6 @@ def test_cqt_impulse():
         C = np.abs(librosa.cqt(y=y, sr=sr, hop_length=hop_length, real=False))
 
         max_response = np.max(C, axis=1)
-
 
         ref_response = np.max(max_response)
         continuity = np.abs(np.diff(max_response))
@@ -215,7 +214,7 @@ def test_cqt_impulse():
         for hop_scale in range(1, 9):
             hop_length = 64 * hop_scale
             # Center the impulse response on a frame
-            center = (len(x) / (2 * float(hop_length))) * hop_length
+            center = int((len(x) / (2.0 * float(hop_length))) * hop_length)
             x[center] = 1
             yield __test, sr, hop_length, x
 
@@ -245,6 +244,6 @@ def test_hybrid_cqt_scale():
         for hop_scale in range(1, 9):
             hop_length = 64 * hop_scale
             # Center the impulse response on a frame
-            center = (len(x) // (2 * float(hop_length))) * hop_length
+            center = int((len(x) / (2.0 * float(hop_length))) * hop_length)
             x[center] = 1
             yield __test, sr, hop_length, x
