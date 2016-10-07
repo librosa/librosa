@@ -22,7 +22,7 @@ __all__ = ['cqt', 'hybrid_cqt', 'pseudo_cqt']
 def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         bins_per_octave=12, tuning=None, filter_scale=1,
         norm=1, sparsity=0.01, window='hann',
-        scale=True,
+        scale=False,
         real=util.Deprecated()):
     '''Compute the constant-Q transform of an audio signal.
 
@@ -264,7 +264,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 @cache(level=20)
 def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                bins_per_octave=12, tuning=None, filter_scale=1,
-               norm=1, sparsity=0.01, window='hann', scale=True):
+               norm=1, sparsity=0.01, window='hann', scale=False):
     '''Compute the hybrid constant-Q transform of an audio signal.
 
     Here, the hybrid CQT uses the pseudo CQT for higher frequencies where
