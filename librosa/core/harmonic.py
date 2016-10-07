@@ -226,8 +226,6 @@ def harmonics_1d(harmonic_out, x, freqs, h_range, kind='linear',
             # Estimate the harmonic energy at this frequency across time
             harmonic_out[tuple(idx_out)] = f_interp(harmonic * frequency)
 
-    return harmonic_out
-
 
 def harmonics_2d(harmonic_out, x, freqs, h_range, kind='linear', fill_value=0,
                  axis=0):
