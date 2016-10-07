@@ -180,7 +180,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     y, sr, hop_length = __early_downsample(y, sr, hop_length,
                                            res_type,
                                            n_octaves,
-                                           nyquist, filter_cutoff)
+                                           nyquist, filter_cutoff, scale)
 
     cqt_resp = []
 
@@ -573,7 +573,7 @@ def __early_downsample_count(nyquist, filter_cutoff, hop_length, n_octaves):
 
 
 def __early_downsample(y, sr, hop_length, res_type, n_octaves,
-                       nyquist, filter_cutoff):
+                       nyquist, filter_cutoff, scale):
     '''Perform early downsampling on an audio signal, if it applies.'''
 
     downsample_count = __early_downsample_count(nyquist, filter_cutoff,
@@ -589,10 +589,15 @@ def __early_downsample(y, sr, hop_length, res_type, n_octaves,
                                  '{:d}-octave CQT'.format(len(y), n_octaves))
 
         new_sr = sr / float(downsample_factor)
-        y = audio.resample(y, sr,
-                           new_sr,
+        y = audio.resample(y, sr, new_sr,
                            res_type=res_type,
                            scale=True)
+
+        # If we're not going to length-scale after CQT, we
+        # need to compensate for the downsampling factor here
+        if not scale:
+            y *= np.sqrt(downsample_factor)
+
         sr = new_sr
 
     return y, sr, hop_length
