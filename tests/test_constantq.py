@@ -245,6 +245,6 @@ def test_hybrid_cqt_scale():
         for hop_scale in range(1, 9):
             hop_length = 64 * hop_scale
             # Center the impulse response on a frame
-            center = (len(x) / (2 * float(hop_length))) * hop_length
+            center = (len(x) // (2 * float(hop_length))) * hop_length
             x[center] = 1
             yield __test, sr, hop_length, x
