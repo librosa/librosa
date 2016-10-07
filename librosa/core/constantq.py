@@ -365,6 +365,7 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     if n_bins_pseudo > 0:
         fmin_pseudo = np.min(freqs[pseudo_filters])
+
         cqt_resp.append(pseudo_cqt(y, sr,
                                    hop_length=hop_length,
                                    fmin=fmin_pseudo,
@@ -486,6 +487,8 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     C = fft_basis.dot(D)
 
     if scale:
+        C /= np.sqrt(n_fft)
+    else:
         lengths = filters.constant_q_lengths(sr, fmin,
                                              n_bins=n_bins,
                                              bins_per_octave=bins_per_octave,
@@ -493,7 +496,7 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                              window=window,
                                              filter_scale=filter_scale)
 
-        C /= np.sqrt(lengths[:, np.newaxis])
+        C *= np.sqrt(lengths[:, np.newaxis] / n_fft)
 
     return C
 
@@ -585,14 +588,12 @@ def __early_downsample(y, sr, hop_length, res_type, n_octaves,
             raise ParameterError('Input signal length={:d} is too short for '
                                  '{:d}-octave CQT'.format(len(y), n_octaves))
 
-        # The additional scaling of sqrt(downsample_factor) here is to
-        # implicitly rescale the filters
-        y = np.sqrt(downsample_factor) * audio.resample(y, sr,
-                                                        sr / downsample_factor,
-                                                        res_type=res_type,
-                                                        scale=True)
-
-        sr /= downsample_factor
+        new_sr = sr / float(downsample_factor)
+        y = audio.resample(y, sr,
+                           new_sr,
+                           res_type=res_type,
+                           scale=True)
+        sr = new_sr
 
     return y, sr, hop_length
 
