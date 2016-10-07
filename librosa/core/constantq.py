@@ -22,6 +22,7 @@ __all__ = ['cqt', 'hybrid_cqt', 'pseudo_cqt']
 def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         bins_per_octave=12, tuning=None, filter_scale=1,
         norm=1, sparsity=0.01, window='hann',
+        scale=True,
         real=util.Deprecated()):
     '''Compute the constant-Q transform of an audio signal.
 
@@ -74,6 +75,13 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     window : str, tuple, number, or function
         Window specification for the basis filters.
         See `filters.get_window` for details.
+
+    scale : bool
+        If `True`, scale the CQT response by square-root the length of
+        each channel's filter.  This is analogous to `norm='ortho'` in FFT.
+
+        If `False`, do not scale the CQT. This is analogous to
+        `norm=None` in FFT.
 
     real : [DEPRECATED]
         .. warning:: This parameter name deprecated in librosa 0.5.0
@@ -239,13 +247,24 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         # Compute the cqt filter response and append to the stack
         cqt_resp.append(__cqt_response(my_y, n_fft, my_hop, fft_basis))
 
-    return __trim_stack(cqt_resp, n_bins)
+    C = __trim_stack(cqt_resp, n_bins)
+
+    if scale:
+        lengths = filters.constant_q_lengths(sr, fmin,
+                                             n_bins=n_bins,
+                                             bins_per_octave=bins_per_octave,
+                                             tuning=tuning,
+                                             window=window,
+                                             filter_scale=filter_scale)
+        C /= np.sqrt(lengths[:, np.newaxis])
+
+    return C
 
 
 @cache(level=20)
 def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                bins_per_octave=12, tuning=None, filter_scale=1,
-               norm=1, sparsity=0.01, window='hann'):
+               norm=1, sparsity=0.01, window='hann', scale=True):
     '''Compute the hybrid constant-Q transform of an audio signal.
 
     Here, the hybrid CQT uses the pseudo CQT for higher frequencies where
@@ -355,7 +374,8 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                    filter_scale=filter_scale,
                                    norm=norm,
                                    sparsity=sparsity,
-                                   window=window))
+                                   window=window,
+                                   scale=scale))
 
     if n_bins_full > 0:
         cqt_resp.append(np.abs(cqt(y, sr,
@@ -367,7 +387,8 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                    filter_scale=filter_scale,
                                    norm=norm,
                                    sparsity=sparsity,
-                                   window=window)))
+                                   window=window,
+                                   scale=scale)))
 
     return __trim_stack(cqt_resp, n_bins)
 
@@ -375,7 +396,7 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 @cache(level=20)
 def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                bins_per_octave=12, tuning=None, filter_scale=1,
-               norm=1, sparsity=0.01, window='hann'):
+               norm=1, sparsity=0.01, window='hann', scale=False):
     '''Compute the pseudo constant-Q transform of an audio signal.
 
     This uses a single fft size that is the smallest power of 2 that is greater
@@ -462,7 +483,19 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     D = np.abs(stft(y, n_fft=n_fft, hop_length=hop_length))
 
     # Project onto the pseudo-cqt basis
-    return fft_basis.dot(D)
+    C = fft_basis.dot(D)
+
+    if scale:
+        lengths = filters.constant_q_lengths(sr, fmin,
+                                             n_bins=n_bins,
+                                             bins_per_octave=bins_per_octave,
+                                             tuning=tuning,
+                                             window=window,
+                                             filter_scale=filter_scale)
+
+        C /= np.sqrt(lengths[:, np.newaxis])
+
+    return C
 
 
 @cache(level=10)
