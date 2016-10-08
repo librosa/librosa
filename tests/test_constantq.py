@@ -264,15 +264,17 @@ def test_cqt_white_noise():
                                                          n_bins=n_bins)
             C /= np.sqrt(lengths[:, np.newaxis])
 
-        assert np.isclose(np.mean(C), 1, atol=2e-1), np.mean(C)
-        assert np.isclose(np.std(C), 0.5, atol=5e-1), np.std(C)
+        # Only compare statistics across the time dimension
+        # we want ~ constant mean and variance across frequencies
+        assert np.allclose(np.mean(C, axis=1), 1.0, atol=2.5e-1), np.mean(C, axis=1)
+        assert np.allclose(np.std(C, axis=1), 0.5, atol=5e-1), np.std(C, axis=1)
 
-    for sr in [22050, 44100]:
-        y = np.random.randn(10 * sr)
+    for sr in [22050]:
+        y = np.random.randn(30 * sr)
 
         for scale in [False, True]:
-            for fmin in librosa.note_to_hz(['C0', 'C1', 'C2']):
-                for n_octaves in range(1, 5):
+            for fmin in librosa.note_to_hz(['C1', 'C2']):
+                for n_octaves in range(2, 4):
                     yield __test, fmin, n_octaves * 12, scale, sr, y
 
 
@@ -290,14 +292,14 @@ def test_hcqt_white_noise():
                                                          n_bins=n_bins)
             C /= np.sqrt(lengths[:, np.newaxis])
 
-        assert np.isclose(np.mean(C), 1, atol=2e-1), np.mean(C)
-        assert np.isclose(np.std(C), 0.5, atol=5e-1), np.std(C)
+        assert np.allclose(np.mean(C, axis=1), 1.0, atol=2.5e-1), np.mean(C, axis=1)
+        assert np.allclose(np.std(C, axis=1), 0.5, atol=5e-1), np.std(C, axis=1)
 
-    for sr in [22050, 44100]:
-        y = np.random.randn(10 * sr)
+    for sr in [22050]:
+        y = np.random.randn(30 * sr)
 
         for scale in [False, True]:
-            for fmin in librosa.note_to_hz(['C0', 'C1', 'C2']):
-                for n_octaves in range(1, 5):
+            for fmin in librosa.note_to_hz(['C1', 'C2']):
+                for n_octaves in range(2, 4):
                     yield __test, fmin, n_octaves * 12, scale, sr, y
 
