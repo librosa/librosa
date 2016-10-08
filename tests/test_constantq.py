@@ -247,3 +247,57 @@ def test_hybrid_cqt_scale():
             center = int((len(x) / (2.0 * float(hop_length))) * hop_length)
             x[center] = 1
             yield __test, sr, hop_length, x
+
+
+def test_cqt_white_noise():
+
+    def __test(fmin, n_bins, scale, sr, y):
+
+        C = np.abs(librosa.cqt(y=y, sr=sr,
+                               fmin=fmin,
+                               n_bins=n_bins,
+                               scale=scale,
+                               real=False))
+
+        if not scale:
+            lengths = librosa.filters.constant_q_lengths(sr, fmin,
+                                                         n_bins=n_bins)
+            C /= np.sqrt(lengths[:, np.newaxis])
+
+        assert np.isclose(np.mean(C), 1, atol=2e-1), np.mean(C)
+        assert np.isclose(np.std(C), 0.5, atol=5e-1), np.std(C)
+
+    for sr in [22050, 44100]:
+        y = np.random.randn(10 * sr)
+
+        for scale in [False, True]:
+            for fmin in librosa.note_to_hz(['C0', 'C1', 'C2']):
+                for n_octaves in range(1, 5):
+                    yield __test, fmin, n_octaves * 12, scale, sr, y
+
+
+def test_hcqt_white_noise():
+
+    def __test(fmin, n_bins, scale, sr, y):
+
+        C = librosa.hybrid_cqt(y=y, sr=sr,
+                               fmin=fmin,
+                               n_bins=n_bins,
+                               scale=scale)
+
+        if not scale:
+            lengths = librosa.filters.constant_q_lengths(sr, fmin,
+                                                         n_bins=n_bins)
+            C /= np.sqrt(lengths[:, np.newaxis])
+
+        assert np.isclose(np.mean(C), 1, atol=2e-1), np.mean(C)
+        assert np.isclose(np.std(C), 0.5, atol=5e-1), np.std(C)
+
+    for sr in [22050, 44100]:
+        y = np.random.randn(10 * sr)
+
+        for scale in [False, True]:
+            for fmin in librosa.note_to_hz(['C0', 'C1', 'C2']):
+                for n_octaves in range(1, 5):
+                    yield __test, fmin, n_octaves * 12, scale, sr, y
+
