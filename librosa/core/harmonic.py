@@ -10,7 +10,13 @@ __all__ = ['harmonics']
 
 
 def harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
-    '''Built a harmonic tensor from a time-frequency representation.
+    '''Compute the energy at harmonics of time-frequency representation.
+
+    Given a frequency-based energy representation such as a spectrogram
+    or tempogram, this function computes the energy at the chosen harmonics
+    of the frequency axis.  (See examples below.)
+    The resulting harmonic array can then be used as input to a salience
+    computation.
 
     Parameters
     ----------
@@ -74,7 +80,7 @@ def harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
     >>> plt.tight_layout()
 
     We can also compute frequency harmonics for spectrograms.
-    To calculate subharmonic energy, use values < 1.
+    To calculate sub-harmonic energy, use values < 1.
 
     >>> h_range = [1./3, 1./2, 1, 2, 3, 4]
     >>> S = np.abs(librosa.stft(y))
@@ -85,7 +91,7 @@ def harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
 
     >>> plt.figure()
     >>> for i, _sh in enumerate(S_harm, 1):
-    ...     plt.subplot(3,2,i)
+    ...     plt.subplot(3, 2, i)
     ...     librosa.display.specshow(librosa.logamplitude(_sh**2,
     ...                                                   ref_power=S.max()**2),
     ...                              sr=sr, y_axis='log')
@@ -119,7 +125,7 @@ def harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
 
 def harmonics_1d(harmonic_out, x, freqs, h_range, kind='linear',
                  fill_value=0, axis=0):
-    '''Built a harmonic tensor from a time-frequency representation.
+    '''Populate a harmonic tensor from a time-frequency representation.
 
     Parameters
     ----------
@@ -229,7 +235,7 @@ def harmonics_1d(harmonic_out, x, freqs, h_range, kind='linear',
 
 def harmonics_2d(harmonic_out, x, freqs, h_range, kind='linear', fill_value=0,
                  axis=0):
-    '''Built a harmonic tensor from a time-frequency representation with
+    '''Populate a harmonic tensor from a time-frequency representation with
     time-varying frequencies.
 
     Parameters
