@@ -30,6 +30,8 @@ Spectral representations
     pseudo_cqt
     fmt
 
+    harmonics
+
     phase_vocoder
 
     magphase
@@ -94,5 +96,6 @@ from .spectrum import *  # pylint: disable=wildcard-import
 from .pitch import *  # pylint: disable=wildcard-import
 from .constantq import *  # pylint: disable=wildcard-import
 from .dtw import *  # pylint: disable=wildcard-import
+from .harmonic import * # pylint: disable=wildcard-import
 
 __all__ = [_ for _ in dir() if not _.startswith('_')]
