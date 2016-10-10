@@ -300,6 +300,6 @@ def test_hcqt_white_noise():
 
         for scale in [False, True]:
             for fmin in librosa.note_to_hz(['C1', 'C2']):
-                for n_octaves in range(2, 4):
+                for n_octaves in [6, 7]:
                     yield __test, fmin, n_octaves * 12, scale, sr, y
 
