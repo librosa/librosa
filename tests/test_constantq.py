@@ -154,7 +154,7 @@ def test_cqt_position():
 
     def __test(note_min):
 
-        C = np.abs(librosa.cqt(y, sr=sr, fmin=librosa.midi_to_hz(note_min), real=False))
+        C = np.abs(librosa.cqt(y, sr=sr, fmin=librosa.midi_to_hz(note_min)))**2
 
         # Average over time
         Cbar = np.median(C, axis=1)
@@ -167,10 +167,10 @@ def test_cqt_position():
         # Make sure that the max outside the peak is sufficiently small
         Cscale = Cbar / Cbar[idx]
         Cscale[idx] = np.nan
-        assert np.nanmax(Cscale) < 6e-1
+        assert np.nanmax(Cscale) < 6e-1, Cscale
 
         Cscale[idx-1:idx+2] = np.nan
-        assert np.nanmax(Cscale) < 5e-2
+        assert np.nanmax(Cscale) < 5e-2, Cscale
 
     for note_min in [12, 18, 24, 30, 36]:
         yield __test, note_min
@@ -187,26 +187,22 @@ def test_cqt_fail_short_early():
 @raises(librosa.ParameterError)
 def test_cqt_fail_short_late():
 
-    y = np.zeros(64)
+    y = np.zeros(16)
     librosa.cqt(y, sr=22050, real=False)
 
 def test_cqt_impulse():
     # Test to resolve issue #348
+    # Updated in #417 to use integrated energy, rather than frame-wise max
     def __test(sr, hop_length, y):
 
-        C = np.abs(librosa.cqt(y=y, sr=sr, hop_length=hop_length, real=False))
+        C = np.abs(librosa.cqt(y=y, sr=sr, hop_length=hop_length))
 
-        max_response = np.max(C, axis=1)
+        response = np.mean(C**2, axis=1)
 
+        continuity = np.abs(np.diff(response))
 
-        ref_response = np.max(max_response)
-        continuity = np.abs(np.diff(max_response))
-
-        # Test that continuity is never violated by more than 15% point-wise energy
-        assert np.max(continuity) < 1.5e-1 * ref_response, np.max(continuity) / ref_response
-
-        # Test that peak-energy deviation is bounded
-        assert np.std(max_response) < 0.5 * ref_response, np.std(max_response) / ref_response
+        # Test that integrated energy is approximately constant
+        assert np.max(continuity) < 5e-4, continuity
 
     for sr in [11025, 16384, 22050, 32000, 44100]:
         # Generate an impulse
@@ -215,28 +211,23 @@ def test_cqt_impulse():
         for hop_scale in range(1, 9):
             hop_length = 64 * hop_scale
             # Center the impulse response on a frame
-            center = (len(x) / (2 * float(hop_length))) * hop_length
+            center = int((len(x) / (2.0 * float(hop_length))) * hop_length)
             x[center] = 1
             yield __test, sr, hop_length, x
 
 
 def test_hybrid_cqt_scale():
     # Test to resolve issue #341
+    # Updated in #417 to ise integrated energy instead of pointwise max
     def __test(sr, hop_length, y):
 
         hcqt = librosa.hybrid_cqt(y=y, sr=sr, hop_length=hop_length, tuning=0)
 
-        max_response = np.max(np.abs(hcqt), axis=1)
+        response = np.mean(np.abs(hcqt)**2, axis=1)
 
+        continuity = np.abs(np.diff(response))
 
-        ref_response = np.max(max_response)
-        continuity = np.abs(np.diff(max_response))
-
-        # Test that continuity is never violated by more than 75% point-wise energy
-        assert np.max(continuity) <= 0.6 * ref_response, np.max(continuity)
-
-        # Test that peak-energy deviation is bounded
-        assert np.std(max_response) < 0.5 * ref_response, np.std(max_response)
+        assert np.max(continuity) < 5e-4, continuity
 
     for sr in [11025, 16384, 22050, 32000, 44100]:
         # Generate an impulse
@@ -245,6 +236,61 @@ def test_hybrid_cqt_scale():
         for hop_scale in range(1, 9):
             hop_length = 64 * hop_scale
             # Center the impulse response on a frame
-            center = (len(x) / (2 * float(hop_length))) * hop_length
+            center = int((len(x) / (2.0 * float(hop_length))) * hop_length)
             x[center] = 1
             yield __test, sr, hop_length, x
+
+
+def test_cqt_white_noise():
+
+    def __test(fmin, n_bins, scale, sr, y):
+
+        C = np.abs(librosa.cqt(y=y, sr=sr,
+                               fmin=fmin,
+                               n_bins=n_bins,
+                               scale=scale,
+                               real=False))
+
+        if not scale:
+            lengths = librosa.filters.constant_q_lengths(sr, fmin,
+                                                         n_bins=n_bins)
+            C /= np.sqrt(lengths[:, np.newaxis])
+
+        # Only compare statistics across the time dimension
+        # we want ~ constant mean and variance across frequencies
+        assert np.allclose(np.mean(C, axis=1), 1.0, atol=2.5e-1), np.mean(C, axis=1)
+        assert np.allclose(np.std(C, axis=1), 0.5, atol=5e-1), np.std(C, axis=1)
+
+    for sr in [22050]:
+        y = np.random.randn(30 * sr)
+
+        for scale in [False, True]:
+            for fmin in librosa.note_to_hz(['C1', 'C2']):
+                for n_octaves in range(2, 4):
+                    yield __test, fmin, n_octaves * 12, scale, sr, y
+
+
+def test_hcqt_white_noise():
+
+    def __test(fmin, n_bins, scale, sr, y):
+
+        C = librosa.hybrid_cqt(y=y, sr=sr,
+                               fmin=fmin,
+                               n_bins=n_bins,
+                               scale=scale)
+
+        if not scale:
+            lengths = librosa.filters.constant_q_lengths(sr, fmin,
+                                                         n_bins=n_bins)
+            C /= np.sqrt(lengths[:, np.newaxis])
+
+        assert np.allclose(np.mean(C, axis=1), 1.0, atol=2.5e-1), np.mean(C, axis=1)
+        assert np.allclose(np.std(C, axis=1), 0.5, atol=5e-1), np.std(C, axis=1)
+
+    for sr in [22050]:
+        y = np.random.randn(30 * sr)
+
+        for scale in [False, True]:
+            for fmin in librosa.note_to_hz(['C1', 'C2']):
+                for n_octaves in [6, 7]:
+                    yield __test, fmin, n_octaves * 12, scale, sr, y
