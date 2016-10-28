@@ -9,9 +9,9 @@ import scipy.signal
 import scipy.interpolate
 import six
 
-from . import decompose
 from . import harmonic
 from . import time_frequency
+from .. import decompose
 from .. import cache
 from .. import util
 from ..util.exceptions import ParameterError
