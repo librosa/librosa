@@ -279,6 +279,92 @@ def test_ifgram_if():
             yield tf, ref_power, clip
 
 
+def test_salience_basecase():
+    (y, sr) = librosa.load('data/test1_22050.wav')
+    S = np.abs(librosa.stft(y))
+    freqs = librosa.core.fft_frequencies(sr)
+    harms = [1]
+    weights = [1.0]
+    S_sal = librosa.core.salience(S, freqs, harms, weights, filter_peaks=False)
+    assert np.allclose(S_sal, S)
+
+def test_salience_basecase2():
+    (y, sr) = librosa.load('data/test1_22050.wav')
+    S = np.abs(librosa.stft(y))
+    freqs = librosa.core.fft_frequencies(sr)
+    harms = [1, 0.5, 2.0]
+    weights = [1.0, 0.0, 0.0]
+    S_sal = librosa.core.salience(
+        S, freqs, harms, weights, filter_peaks=False
+    )
+    assert np.allclose(S_sal, S)
+
+def test_salience_defaults():
+    S = np.array([
+        [0.1, 0.5, 0.0],
+        [0.2, 1.2, 1.2],
+        [0.0, 0.7, 0.3],
+        [1.3, 3.2, 0.8]
+    ])
+    freqs = np.array([50.0, 100.0, 200.0, 400.0])
+    harms = [0.5, 1, 2]
+    weights = [1.0, 1.0, 1.0]
+    actual = librosa.core.salience(
+        S, freqs, harms, weights
+    )
+
+    expected = np.array([
+        [0.0, 0.0, 0.0],
+        [0.3, 2.4, 1.5],
+        [0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0]
+    ]) / 3.0
+    assert np.allclose(expected, actual)
+
+def test_salience_no_peak_filter():
+    S = np.array([
+        [0.1, 0.5, 0.0],
+        [0.2, 1.2, 1.2],
+        [0.0, 0.7, 0.3],
+        [1.3, 3.2, 0.8]
+    ])
+    freqs = np.array([50.0, 100.0, 200.0, 400.0])
+    harms = [0.5, 1, 2]
+    weights = [1.0, 1.0, 1.0]
+    actual = librosa.core.salience(
+        S, freqs, harms, weights, filter_peaks=False
+    )
+
+    expected = np.array([
+        [0.3, 1.7, 1.2],
+        [0.3, 2.4, 1.5],
+        [1.5, 5.1, 2.3],
+        [1.3, 3.9, 1.1]
+    ]) / 3.0
+    assert np.allclose(expected, actual)
+
+def test_salience_aggregate():
+    S = np.array([
+        [0.1, 0.5, 0.0],
+        [0.2, 1.2, 1.2],
+        [0.0, 0.7, 0.3],
+        [1.3, 3.2, 0.8]
+    ])
+    freqs = np.array([50.0, 100.0, 200.0, 400.0])
+    harms = [0.5, 1, 2]
+    weights = [1.0, 1.0, 1.0]
+    actual = librosa.core.salience(
+        S, freqs, harms, weights, aggregate=np.ma.max
+    )
+
+    expected = np.array([
+        [0.0, 0.0, 0.0],
+        [0.2, 1.2, 1.2],
+        [0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0]
+    ]) 
+    assert np.allclose(expected, actual)
+
 def test_magphase():
 
     (y, sr) = librosa.load('data/test1_22050.wav')
