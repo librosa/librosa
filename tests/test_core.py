@@ -279,6 +279,16 @@ def test_ifgram_if():
             yield tf, ref_power, clip
 
 
+def test_salience():
+    (y, sr) = librosa.load('data/test1_22050.wav')
+    S = librosa.stft(y)
+    freqs = librosa.core.fft_frequencies(sr)
+    harmonics = [1, 2]
+    weights = [1.0, 0.5]
+    S_sal = librosa.core.salience(S, freqs, harmonics, weights)
+    #TODO
+
+
 def test_magphase():
 
     (y, sr) = librosa.load('data/test1_22050.wav')
