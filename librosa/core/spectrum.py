@@ -18,7 +18,7 @@ from ..util.exceptions import ParameterError
 from ..filters import get_window
 
 __all__ = ['stft', 'istft', 'magphase',
-           'ifgram',
+           'ifgram', 'salience',
            'phase_vocoder',
            'logamplitude', 'perceptual_weighting',
            'fmt']
