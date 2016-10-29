@@ -441,14 +441,14 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     return if_gram, stft_matrix
 
 
-def salience(S, freqs, harmonics, weights, peak_filter=True, use_hpss=True):
+def salience(S, freqs, harmonics, weights, aggregate=None, filter_peaks=True):
     """Harmonic salience function.
 
     Parameters
     ----------
     S : np.ndarray [shape=(d, n)]
-        input time frequency representation (stft, ifgram, etc).
-        May be real (magnitude) or complex.
+        input time frequency magnitude representation (stft, ifgram, etc).
+        Must be real-valued.
 
     freqs : np.ndarray, shape=(X.shape[axis])
         The frequency values corresponding to X's elements along the
@@ -463,14 +463,17 @@ def salience(S, freqs, harmonics, weights, peak_filter=True, use_hpss=True):
         The weight to apply to each harmonic in the summation.
         Must be the same length as `harmonics`.
 
-    peak_filter : bool
+    aggregate : function
+        aggregation function (default: `np.mean`)
+        If `aggregate=np.average`, then a weighted average is
+        computed according to the (per-row) weights in `rec`.
+        For all other aggregation functions, all neighbors
+        are treated equally.
+
+    filter_peaks : bool
         If true, computes harmonic summation only on peaks in frequency.
         Otherwise computes harmonic summation over the full spectrum.
         Defaults to True.
-
-    use_hpss : bool
-        If true, the salience function is computed on the harmonic portion
-        of the input representation. Defaults to True.
 
     Returns
     -------
@@ -503,24 +506,26 @@ def salience(S, freqs, harmonics, weights, peak_filter=True, use_hpss=True):
     >>> plt.tight_layout()
 
     """
-
-    if np.iscomplexobj(S):
-        S = np.abs(S)
-
-    if use_hpss:
-        S, _ = decompose.hpss(S)
+    if aggregate is None:
+        aggregate = np.mean
 
     weights = np.array(weights, dtype=float)
 
     S_harm = harmonic.harmonics(np.abs(S), freqs, harmonics)
     S_peaks = scipy.signal.argrelmax(np.abs(S), axis=0)
 
-    if peak_filter:
+    if filter_peaks:
         peak_mask = np.ones(S_harm.shape)
         peak_mask[:, S_peaks[0], S_peaks[1]] = 0
-        S_harm[peak_mask.astype(bool)] = 0
+    else:
+        peak_mask = np.zeros(S_harm.shape)
 
-    S_sal = (S_harm.T * weights).T.sum(axis=0)
+    S_mask = np.ma.masked_array(S_harm, mask=peak_mask)
+
+    if aggregate is np.average:
+        S_sal = aggregate(S_mask, axis=0, weights=weights)
+    else:
+        S_sal = aggregate(S_mask, axis=axis)
 
     return S_sal
 
