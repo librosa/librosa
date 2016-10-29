@@ -11,7 +11,6 @@ import six
 
 from . import harmonic
 from . import time_frequency
-from .. import decompose
 from .. import cache
 from .. import util
 from ..util.exceptions import ParameterError
@@ -520,7 +519,7 @@ def salience(S, freqs, harmonics, weights, aggregate=None, filter_peaks=True):
     else:
         peak_mask = np.zeros(S_harm.shape)
 
-    S_mask = np.ma.masked_array(S_harm, mask=peak_mask)
+    S_mask = np.sma.masked_array(S_harm, mask=peak_mask)
 
     if aggregate is np.average:
         S_sal = aggregate(S_mask, axis=0, weights=weights)
