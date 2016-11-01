@@ -9,7 +9,6 @@ import scipy.signal
 import scipy.interpolate
 import six
 
-from . import harmonic
 from . import time_frequency
 from .. import cache
 from .. import util
@@ -17,8 +16,7 @@ from ..util.exceptions import ParameterError
 from ..filters import get_window
 
 __all__ = ['stft', 'istft', 'magphase',
-           'ifgram', 'salience',
-           'phase_vocoder',
+           'ifgram', 'phase_vocoder',
            'logamplitude', 'perceptual_weighting',
            'fmt']
 
@@ -438,95 +436,6 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     if_gram *= float(sr) * 0.5 / np.pi
 
     return if_gram, stft_matrix
-
-
-def salience(S, freqs, harmonics, weights, aggregate=None, filter_peaks=True):
-    """Harmonic salience function.
-
-    Parameters
-    ----------
-    S : np.ndarray [shape=(d, n)]
-        input time frequency magnitude representation (stft, ifgram, etc).
-        Must be real-valued.
-
-    freqs : np.ndarray, shape=(X.shape[axis])
-        The frequency values corresponding to X's elements along the
-        chosen axis.
-
-    harmonics : list-like, non-negative
-        Harmonics to include in salience computation.  The first harmonic (1)
-        corresponds to `S` itself. Values less than one (e.g., 1/2) correspond
-        to sub-harmonics.
-
-    weights : list-like
-        The weight to apply to each harmonic in the summation.
-        Must be the same length as `harmonics`.
-
-    aggregate : function
-        aggregation function (default: `np.mean`)
-        If `aggregate=np.average`, then a weighted average is
-        computed according to the (per-row) weights in `rec`.
-        For all other aggregation functions, all neighbors
-        are treated equally.
-
-    filter_peaks : bool
-        If true, computes harmonic summation only on peaks in frequency.
-        Otherwise computes harmonic summation over the full spectrum.
-        Defaults to True.
-
-    Returns
-    -------
-    S_sal : np.ndarray, shape=(len(h_range), [x.shape])
-        `S_sal` will have the same shape as `S`, and measure
-        the overal harmonic energy at each frequency.
-
-
-    See Also
-    --------
-    core.harmonics
-
-
-    Examples
-    --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(),
-    ...                      duration=15, offset=30)
-    >>> S = np.abs(librosa.stft(y))
-    >>> freqs = librosa.core.fft_frequencies(sr)
-    >>> harmonics = [1./3, 1./2, 1, 2, 3, 4]
-    >>> weights = [-0.5, -1.0, 1.0, 0.5, 0.33, 0.25]
-    >>> S_sal = librosa.salience(S, freqs, harmonics, weights)
-    >>> print(S_sal.shape)
-    (1025, 646)
-
-    >>> plt.figure()
-    >>> librosa.display.specshow(librosa.logamplitude(S_sal**2,
-    ...                                               ref_power=S_sal.max()*2),
-    ...                          sr=sr, y_axis='log')
-    >>> plt.tight_layout()
-
-    """
-    if aggregate is None:
-        aggregate = np.mean
-
-    weights = np.array(weights, dtype=float)
-
-    S_harm = harmonic.harmonics(np.abs(S), freqs, harmonics)
-    S_peaks = scipy.signal.argrelmax(np.abs(S), axis=0)
-
-    if filter_peaks:
-        peak_mask = np.ones(S_harm.shape)
-        peak_mask[:, S_peaks[0], S_peaks[1]] = 0
-    else:
-        peak_mask = np.zeros(S_harm.shape)
-
-    S_mask = np.ma.masked_array(S_harm, mask=peak_mask)
-
-    if aggregate is np.average:
-        S_sal = aggregate(S_mask, axis=0, weights=weights)
-    else:
-        S_sal = aggregate(S_mask, axis=axis)
-
-    return S_sal
 
 
 def magphase(D):
