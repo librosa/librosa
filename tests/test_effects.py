@@ -139,3 +139,34 @@ def test_harmonic():
     yh2 = librosa.effects.harmonic(y)
 
     assert np.allclose(yh1, yh2)
+
+
+def test_trim():
+
+    def __test(y, top_db, index):
+
+        if index:
+            yt, idx = librosa.effects.trim(y, top_db=top_db, index=True)
+
+            # Test for index position
+        else:
+            yt = librosa.effects.trim(y, top_db=top_db)
+
+        # Verify logamp
+        rms = librosa.feature.rmse(librosa.to_mono(yt))
+        logamp = librosa.logamplitude(rms**2, ref_power=np.max, top_db=None)
+
+        assert np.all(logamp >= - top_db)
+
+    # construct 5 seconds of stereo silence
+    # Stick a sine wave in the middle three seconds
+    sr = float(22050)
+    y = np.zeros((2, int(5 * sr)))
+    y[0, sr:4*sr] = np.sin(2 * np.pi * 440 * np.arange(0, 3 * sr) / sr)
+
+    for top_db in [60, 40, 20]:
+        for index in [False, True]:
+            # Test stereo
+            yield __test, y, top_db, index
+            # Test mono
+            yield __test, y[0], top_db, index
