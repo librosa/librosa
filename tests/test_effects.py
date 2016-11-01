@@ -143,18 +143,24 @@ def test_harmonic():
 
 def test_trim():
 
-    def __test(y, top_db, index):
+    def __test(y, top_db, ref_power, index):
 
         if index:
-            yt, idx = librosa.effects.trim(y, top_db=top_db, index=True)
+            yt, idx = librosa.effects.trim(y, top_db=top_db, ref_power=ref_power,
+                                           index=True)
 
             # Test for index position
+            fidx = [slice(None)] * y.ndim
+            fidx[-1] = idx
+            assert np.allclose(yt, y[fidx])
+
         else:
-            yt = librosa.effects.trim(y, top_db=top_db)
+            yt = librosa.effects.trim(y, top_db=top_db, ref_power=ref_power,
+                                      index=False)
 
         # Verify logamp
         rms = librosa.feature.rmse(librosa.to_mono(yt))
-        logamp = librosa.logamplitude(rms**2, ref_power=np.max, top_db=None)
+        logamp = librosa.logamplitude(rms**2, ref_power=ref_power, top_db=None)
 
         assert np.all(logamp >= - top_db)
 
@@ -166,7 +172,8 @@ def test_trim():
 
     for top_db in [60, 40, 20]:
         for index in [False, True]:
-            # Test stereo
-            yield __test, y, top_db, index
-            # Test mono
-            yield __test, y[0], top_db, index
+            for ref_power in [1, np.max]:
+                # Test stereo
+                yield __test, y, top_db, ref_power, index
+                # Test mono
+                yield __test, y[0], top_db, ref_power, index

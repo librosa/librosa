@@ -377,7 +377,8 @@ def remix(y, intervals, align_zeros=True):
     return np.concatenate(y_out, axis=-1)
 
 
-def trim(y, top_db=60, n_fft=2048, hop_length=512, index=False):
+def trim(y, top_db=60, ref_power=np.max, n_fft=2048, hop_length=512,
+         index=False):
     '''Trim leading and trailing silence from an audio signal.
 
     Parameters
@@ -386,8 +387,12 @@ def trim(y, top_db=60, n_fft=2048, hop_length=512, index=False):
         Audio signal, can be mono or stereo
 
     top_db : number > 0
-        The threshold (in decibels) below peak to consider as
+        The threshold (in decibels) below reference to consider as
         silence
+
+    ref_power : number or callable
+        The reference power.  By default, it uses `np.max` and compares
+        to the peak power in the signal.
 
     n_fft : int > 0
         The number of samples per analysis frame
@@ -429,7 +434,7 @@ def trim(y, top_db=60, n_fft=2048, hop_length=512, index=False):
     mse = feature.rmse(y=y_mono, n_fft=n_fft, hop_length=hop_length)**2
 
     # Compute the log power indicator and non-zero positions
-    logp = core.logamplitude(mse, ref_power=np.max, top_db=None) > - top_db
+    logp = core.logamplitude(mse, ref_power=ref_power, top_db=None) > - top_db
     nonzero = np.flatnonzero(logp)
 
     # Compute the start and end positions
