@@ -146,7 +146,8 @@ def test_trim():
     def __test(y, top_db, ref_power, index):
 
         if index:
-            yt, idx = librosa.effects.trim(y, top_db=top_db, ref_power=ref_power,
+            yt, idx = librosa.effects.trim(y, top_db=top_db,
+                                           ref_power=ref_power,
                                            index=True)
 
             # Test for index position
@@ -163,6 +164,10 @@ def test_trim():
         logamp = librosa.logamplitude(rms**2, ref_power=ref_power, top_db=None)
 
         assert np.all(logamp >= - top_db)
+
+        # Verify duration
+        duration = librosa.get_duration(yt)
+        assert np.allclose(duration, 3.0, atol=1e-1), duration
 
     # construct 5 seconds of stereo silence
     # Stick a sine wave in the middle three seconds
