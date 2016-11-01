@@ -419,7 +419,7 @@ def trim(y, top_db=60, n_fft=2048, hop_length=512, index=False):
     >>> yt = librosa.effects.trim(y)
     >>> # Print the durations
     >>> print(librosa.get_duration(y), librosa.get_duration(yt))
-    61.45886621315193 60.55764172335601
+    61.45886621315193 60.58086167800454
     '''
 
     # Convert to mono
@@ -428,15 +428,17 @@ def trim(y, top_db=60, n_fft=2048, hop_length=512, index=False):
     # Compute the MSE for the signal
     mse = feature.rmse(y=y_mono, n_fft=n_fft, hop_length=hop_length)**2
 
-    # Compute the log power indicator
+    # Compute the log power indicator and non-zero positions
     logp = core.logamplitude(mse, ref_power=np.max, top_db=None) > - top_db
+    nonzero = np.flatnonzero(logp)
 
-    # Find the first index above -top_db
-    nz = np.flatnonzero(logp)
+    # Compute the start and end positions
+    # End position goes one frame past the last non-zero
+    start = int(core.frames_to_samples(nonzero[0], hop_length))
+    end = min(len(y_mono),
+              int(core.frames_to_samples(nonzero[-1] + 1, hop_length)))
 
-    start = nz[0] * hop_length
-    end = nz[-1] * hop_length
-
+    # Build the mono/stereo index
     full_index = [slice(None)] * y.ndim
     full_index[-1] = slice(start, end)
 
