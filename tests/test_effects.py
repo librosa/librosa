@@ -144,7 +144,6 @@ def test_harmonic():
 def test_trim():
 
     def __test(y, top_db, ref_power, trim_duration):
-
         yt, idx = librosa.effects.trim(y, top_db=top_db,
                                        ref_power=ref_power)
 
@@ -175,9 +174,10 @@ def test_trim():
     # construct 5 seconds of stereo silence
     # Stick a sine wave in the middle three seconds
     sr = float(22050)
-    y = np.zeros((2, int(5 * sr)))
     trim_duration = 3.0
-    y[0, sr:4*sr] = np.sin(2 * np.pi * 440 * np.arange(0, 3 * sr) / sr)
+    y = np.sin(2 * np.pi * 440. * np.arange(0, trim_duration * sr) / sr)
+    y = librosa.util.pad_center(y, 5 * sr)
+    y = np.vstack([y, np.zeros_like(y)])
 
     for top_db in [60, 40, 20]:
         for ref_power in [1, np.max]:
