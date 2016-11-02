@@ -379,7 +379,7 @@ def remix(y, intervals, align_zeros=True):
     return np.concatenate(y_out, axis=-1)
 
 
-def _signal_to_frame_nonsilent(y, n_fft=2048, hop_length=512, top_db=60,
+def _signal_to_frame_nonsilent(y, frame_length=2048, hop_length=512, top_db=60,
                                ref_power=np.max):
     '''Frame-wise non-silent indicator for audio input.
 
@@ -390,7 +390,7 @@ def _signal_to_frame_nonsilent(y, n_fft=2048, hop_length=512, top_db=60,
     y : np.ndarray, shape=(n,) or (2,n)
         Audio signal, mono or stereo
 
-    n_fft : int > 0
+    frame_length : int > 0
         The number of samples per frame
 
     hop_length : int > 0
@@ -412,14 +412,14 @@ def _signal_to_frame_nonsilent(y, n_fft=2048, hop_length=512, top_db=60,
     y_mono = core.to_mono(y)
 
     # Compute the MSE for the signal
-    mse = feature.rmse(y=y_mono, n_fft=n_fft, hop_length=hop_length)**2
+    mse = feature.rmse(y=y_mono, n_fft=frame_length, hop_length=hop_length)**2
 
     return (core.logamplitude(mse.squeeze(),
                               ref_power=ref_power,
                               top_db=None) > - top_db)
 
 
-def trim(y, top_db=60, ref_power=np.max, n_fft=2048, hop_length=512):
+def trim(y, top_db=60, ref_power=np.max, frame_length=2048, hop_length=512):
     '''Trim leading and trailing silence from an audio signal.
 
     Parameters
@@ -435,7 +435,7 @@ def trim(y, top_db=60, ref_power=np.max, n_fft=2048, hop_length=512):
         The reference power.  By default, it uses `np.max` and compares
         to the peak power in the signal.
 
-    n_fft : int > 0
+    frame_length : int > 0
         The number of samples per analysis frame
 
     hop_length : int > 0
@@ -462,8 +462,10 @@ def trim(y, top_db=60, ref_power=np.max, n_fft=2048, hop_length=512):
     '''
 
     non_silent = _signal_to_frame_nonsilent(y,
-                                            n_fft=n_fft, hop_length=hop_length,
-                                            ref_power=ref_power, top_db=top_db)
+                                            frame_length=frame_length,
+                                            hop_length=hop_length,
+                                            ref_power=ref_power,
+                                            top_db=top_db)
 
     nonzero = np.flatnonzero(non_silent)
 
@@ -480,7 +482,7 @@ def trim(y, top_db=60, ref_power=np.max, n_fft=2048, hop_length=512):
     return y[full_index], full_index[-1]
 
 
-def split(y, top_db=60, ref_power=np.max, n_fft=2048, hop_length=512):
+def split(y, top_db=60, ref_power=np.max, frame_length=2048, hop_length=512):
     '''Split an audio signal into non-silent intervals.
 
     Parameters
@@ -496,7 +498,7 @@ def split(y, top_db=60, ref_power=np.max, n_fft=2048, hop_length=512):
         The reference power.  By default, it uses `np.max` and compares
         to the peak power in the signal.
 
-    n_fft : int > 0
+    frame_length : int > 0
         The number of samples per analysis frame
 
     hop_length : int > 0
@@ -510,8 +512,10 @@ def split(y, top_db=60, ref_power=np.max, n_fft=2048, hop_length=512):
     '''
 
     non_silent = _signal_to_frame_nonsilent(y,
-                                            n_fft=n_fft, hop_length=hop_length,
-                                            ref_power=ref_power, top_db=top_db)
+                                            frame_length=frame_length,
+                                            hop_length=hop_length,
+                                            ref_power=ref_power,
+                                            top_db=top_db)
 
     # Interval slicing, adapted from
     # https://stackoverflow.com/questions/2619413/efficiently-finding-the-interval-with-non-zeros-in-scipy-numpy-in-python
