@@ -189,10 +189,11 @@ def test_trim():
 
 def test_split():
 
-    def __test(hop_length, top_db):
+    def __test(hop_length, frame_length, top_db):
 
         intervals = librosa.effects.split(y,
                                           top_db=top_db,
+                                          frame_length=frame_length,
                                           hop_length=hop_length)
 
         int_match = librosa.util.match_intervals(intervals, idx_true)
@@ -200,7 +201,7 @@ def test_split():
         for i in range(len(intervals)):
             i_true = idx_true[int_match[i]]
 
-            assert np.all(np.abs(i_true - intervals[i]) <= 2048), intervals[i]
+            assert np.all(np.abs(i_true - intervals[i]) <= frame_length), intervals[i]
 
     # Make some high-frequency noise
     sr = 8192
@@ -217,6 +218,7 @@ def test_split():
     idx_true = np.asarray([[sr, 2 * sr],
                            [3 * sr, 4 * sr]])
 
-    for hop_length in [256, 512, 1024]:
-        for top_db in [20, 60, 80]:
-            yield __test, hop_length, top_db
+    for frame_length in [1024, 2048, 4096]:
+        for hop_length in [256, 512, 1024]:
+            for top_db in [20, 60, 80]:
+                yield __test, hop_length, frame_length, top_db
