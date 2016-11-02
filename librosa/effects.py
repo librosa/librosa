@@ -27,10 +27,11 @@ Miscellaneous
     :toctree: generated/
 
     remix
+    trim
+    split
 """
 
 import numpy as np
-import scipy.ndimage
 
 from . import core
 from . import decompose
@@ -40,7 +41,7 @@ from .util.exceptions import ParameterError
 
 __all__ = ['hpss', 'harmonic', 'percussive',
            'time_stretch', 'pitch_shift',
-           'remix', 'trim']
+           'remix', 'trim', 'split']
 
 
 def hpss(y, **kwargs):
