@@ -387,10 +387,26 @@ def _signal_to_frame_nonsilent(y, n_fft=2048, hop_length=512, top_db=60,
 
     Parameters
     ----------
+    y : np.ndarray, shape=(n,) or (2,n)
+        Audio signal, mono or stereo
+
+    n_fft : int > 0
+        The number of samples per frame
+
+    hop_length : int > 0
+        The number of samples between frames
+
+    top_db : number > 0
+        The threshold (in decibels) below reference to consider as
+        silence
+
+    ref_power : callable or float
+        The reference power
 
     Returns
     -------
-
+    non_silent : np.ndarray, shape=(m,), dtype=bool
+        Indicator of non-silent frames
     '''
     # Convert to mono
     y_mono = core.to_mono(y)
