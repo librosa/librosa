@@ -30,6 +30,7 @@ Miscellaneous
 """
 
 import numpy as np
+import scipy.ndimage
 
 from . import core
 from . import decompose
@@ -451,3 +452,76 @@ def trim(y, top_db=60, ref_power=np.max, n_fft=2048, hop_length=512,
         return y[full_index], full_index[-1]
     else:
         return y[full_index]
+
+
+def split(y, top_db=60, ref_power=np.max, min_length=None, n_fft=2048,
+          hop_length=512):
+    '''Split an audio signal into non-silent intervals.
+
+    Parameters
+    ----------
+    y : np.ndarray, shape=(n,) or (2, n)
+        An audio signal
+
+    top_db : number > 0
+        The threshold (in decibels) below reference to consider as
+        silence
+
+    ref_power : number or callable
+        The reference power.  By default, it uses `np.max` and compares
+        to the peak power in the signal.
+
+    min_length : int > 0 [optional]
+        The minimum duration (in frames) of a non-silent interval
+
+    n_fft : int > 0
+        The number of samples per analysis frame
+
+    hop_length : int > 0
+        The number of samples between analysis frames
+
+    Returns
+    -------
+    intervals : np.ndarray, shape=(m, 2)
+        `intervals[i] == (start_i, end_i)` are the start and end time
+        (in samples) if the `i`th non-silent interval.
+    '''
+
+    # Convert to mono
+    y_mono = core.to_mono(y)
+
+    # Compute the MSE for the signal
+    mse = feature.rmse(y=y_mono, n_fft=n_fft, hop_length=hop_length)**2
+
+    # Compute the log power indicator and non-zero positions
+    logp = (core.logamplitude(mse.squeeze(),
+                              ref_power=ref_power,
+                              top_db=None) > -top_db)
+
+    # Now smooth the nonzeros
+    if min_length is not None:
+        # Filter the logp indicator:
+        #   we don't want any sequences of True with duration < min_length
+        logp = scipy.ndimage.maximum_filter1d(logp, size=min_length + 1)
+
+    # Interval slicing, adapted from
+    # https://stackoverflow.com/questions/2619413/efficiently-finding-the-interval-with-non-zeros-in-scipy-numpy-in-python
+    # Find points where the sign flips
+    edges = np.flatnonzero(np.diff((~logp).astype(int)))
+
+    # Pad back the sample lost in the diff
+    edges = [edges + 1]
+
+    # If the first frame had high energy, count it
+    if logp[0]:
+        edges.insert(0, [0])
+
+    # Likewise for the last frame
+    if logp[-1]:
+        edges.append([len(logp)])
+
+    # Convert to samples
+    edges = core.frames_to_samples(np.concatenate(edges),
+                                   hop_length=hop_length)
+
+    return np.asarray(list(zip(edges[::2], edges[1::2])))
