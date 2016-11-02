@@ -454,8 +454,7 @@ def trim(y, top_db=60, ref_power=np.max, n_fft=2048, hop_length=512,
         return y[full_index]
 
 
-def split(y, top_db=60, ref_power=np.max, min_length=None, n_fft=2048,
-          hop_length=512):
+def split(y, top_db=60, ref_power=np.max, n_fft=2048, hop_length=512):
     '''Split an audio signal into non-silent intervals.
 
     Parameters
@@ -471,9 +470,6 @@ def split(y, top_db=60, ref_power=np.max, min_length=None, n_fft=2048,
         The reference power.  By default, it uses `np.max` and compares
         to the peak power in the signal.
 
-    min_length : int > 0 [optional]
-        The minimum duration (in frames) of a non-silent interval
-
     n_fft : int > 0
         The number of samples per analysis frame
 
@@ -488,21 +484,15 @@ def split(y, top_db=60, ref_power=np.max, min_length=None, n_fft=2048,
     '''
 
     # Convert to mono
-    y_mono = core.to_mono(y)
+    y = core.to_mono(y)
 
     # Compute the MSE for the signal
-    mse = feature.rmse(y=y_mono, n_fft=n_fft, hop_length=hop_length)**2
+    mse = feature.rmse(y=y, n_fft=n_fft, hop_length=hop_length)**2
 
     # Compute the log power indicator and non-zero positions
     logp = (core.logamplitude(mse.squeeze(),
                               ref_power=ref_power,
                               top_db=None) > -top_db)
-
-    # Now smooth the nonzeros
-    if min_length is not None:
-        # Filter the logp indicator:
-        #   we don't want any sequences of True with duration < min_length
-        logp = scipy.ndimage.maximum_filter1d(logp, size=min_length + 1)
 
     # Interval slicing, adapted from
     # https://stackoverflow.com/questions/2619413/efficiently-finding-the-interval-with-non-zeros-in-scipy-numpy-in-python
@@ -520,8 +510,9 @@ def split(y, top_db=60, ref_power=np.max, min_length=None, n_fft=2048,
     if logp[-1]:
         edges.append([len(logp)])
 
-    # Convert to samples
+    # Convert from frames to samples
     edges = core.frames_to_samples(np.concatenate(edges),
                                    hop_length=hop_length)
 
-    return np.asarray(list(zip(edges[::2], edges[1::2])))
+    # Stack the results back as an ndarray
+    return edges.reshape((-1, 2))
