@@ -446,7 +446,7 @@ def trim(y, top_db=60, ref_power=np.max, frame_length=2048, hop_length=512):
     y_trimmed : np.ndarray, shape=(m,) or (2, m)
         The trimmed signal
 
-    index : slice
+    index : np.ndarray, shape=(2,)
         the slice of `y` corresponding to the non-silent region:
         `y_trimmed = y[index]`.
 
@@ -479,7 +479,7 @@ def trim(y, top_db=60, ref_power=np.max, frame_length=2048, hop_length=512):
     full_index = [slice(None)] * y.ndim
     full_index[-1] = slice(start, end)
 
-    return y[full_index], full_index[-1]
+    return y[full_index], np.asarray([start, end])
 
 
 def split(y, top_db=60, ref_power=np.max, frame_length=2048, hop_length=512):

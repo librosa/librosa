@@ -149,7 +149,7 @@ def test_trim():
 
         # Test for index position
         fidx = [slice(None)] * y.ndim
-        fidx[-1] = idx
+        fidx[-1] = slice(*idx.tolist())
         assert np.allclose(yt, y[fidx])
 
         # Verify logamp
@@ -162,8 +162,8 @@ def test_trim():
         logamp_all = librosa.logamplitude(rms_all**2, ref_power=ref_power,
                                           top_db=None)
 
-        start = int(librosa.samples_to_frames(idx.start))
-        stop = int(librosa.samples_to_frames(idx.stop))
+        start = int(librosa.samples_to_frames(idx[0]))
+        stop = int(librosa.samples_to_frames(idx[1]))
         assert np.all(logamp_all[:start] <= - top_db)
         assert np.all(logamp_all[stop:] <= - top_db)
 
