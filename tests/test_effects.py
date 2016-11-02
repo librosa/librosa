@@ -182,3 +182,40 @@ def test_trim():
                 yield __test, y, top_db, ref_power, index
                 # Test mono
                 yield __test, y[0], top_db, ref_power, index
+
+
+def test_split():
+
+    def __test(hop_length, top_db):
+
+        intervals = librosa.effects.split(y,
+                                          top_db=top_db,
+                                          hop_length=hop_length)
+
+        int_match = librosa.util.match_intervals(intervals, idx_true)
+
+        print(idx_true)
+        print(intervals)
+        for i in range(len(intervals)):
+            i_true = idx_true[int_match[i]]
+
+            assert np.all(np.abs(i_true - intervals[i]) <= 2048), intervals[i]
+
+    # Make some high-frequency noise
+    sr = 8192
+
+    y = np.ones(10 * sr)
+    y[::2] *= -1
+
+    # Zero out all but two few intervals
+    y[:sr] = 0
+    y[2 * sr:3 * sr] = 0
+    y[4 * sr:] = 0
+
+    # The true non-silent intervals
+    idx_true = np.asarray([[sr, 2 * sr],
+                           [3 * sr, 4 * sr]])
+
+    for hop_length in [256, 512, 1024]:
+        for top_db in [20, 60, 80]:
+            yield __test, hop_length, top_db
