@@ -156,8 +156,17 @@ def test_trim():
         # Verify logamp
         rms = librosa.feature.rmse(librosa.to_mono(yt))
         logamp = librosa.logamplitude(rms**2, ref_power=ref_power, top_db=None)
+        assert np.all(logamp > - top_db)
 
-        assert np.all(logamp >= - top_db)
+        # Verify logamp
+        rms_all = librosa.feature.rmse(librosa.to_mono(y)).squeeze()
+        logamp_all = librosa.logamplitude(rms_all**2, ref_power=ref_power,
+                                          top_db=None)
+
+        start = int(librosa.samples_to_frames(idx.start))
+        stop = int(librosa.samples_to_frames(idx.stop))
+        assert np.all(logamp_all[:start] <= - top_db)
+        assert np.all(logamp_all[stop:] <= - top_db)
 
         # Verify duration
         duration = librosa.get_duration(yt)
