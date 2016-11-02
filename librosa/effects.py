@@ -412,7 +412,9 @@ def _signal_to_frame_nonsilent(y, frame_length=2048, hop_length=512, top_db=60,
     y_mono = core.to_mono(y)
 
     # Compute the MSE for the signal
-    mse = feature.rmse(y=y_mono, n_fft=frame_length, hop_length=hop_length)**2
+    mse = feature.rmse(y=y_mono,
+                       frame_length=frame_length,
+                       hop_length=hop_length)**2
 
     return (core.logamplitude(mse.squeeze(),
                               ref_power=ref_power,
