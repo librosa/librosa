@@ -9,6 +9,7 @@ import scipy.signal
 from .. import util
 from .. import filters
 from ..util.exceptions import ParameterError
+from ..util.deprecation import Deprecated, rename_kw
 
 from ..core.time_frequency import fft_frequencies
 from ..core.audio import zero_crossings, to_mono
@@ -495,7 +496,8 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     return np.nanmin(ind * freq, axis=0, keepdims=True)
 
 
-def rmse(y=None, S=None, n_fft=2048, hop_length=512):
+def rmse(y=None, S=None, frame_length=2048, hop_length=512,
+         n_fft=Deprecated()):
     '''Compute root-mean-square (RMS) energy for each frame, either from the
     audio samples `y` or from a spectrogram `S`.
 
@@ -513,12 +515,16 @@ def rmse(y=None, S=None, n_fft=2048, hop_length=512):
     S : np.ndarray [shape=(d, t)] or None
         (optional) spectrogram magnitude. Required if `y` is not input.
 
-    n_fft : int > 0 [scalar]
-        FFT window size
+    frame_length : int > 0 [scalar]
+        length of analysis frame (in samples) for energy calculation
 
     hop_length : int > 0 [scalar]
         hop length for STFT. See `librosa.core.stft` for details.
 
+    n_fft : [DEPRECATED]
+        .. warning:: This parameter name was deprecated in librosa 0.5.0
+            Use the `frame_length` parameter instead.
+            The `n_fft` parameter will be removed in librosa 0.6.0.
 
     Returns
     -------
@@ -557,12 +563,20 @@ def rmse(y=None, S=None, n_fft=2048, hop_length=512):
     >>> librosa.feature.rmse(S=S)
 
     '''
+    frame_length = rename_kw('n_fft', n_fft,
+                             'frame_length', frame_length,
+                             '0.5', '0.6')
+
     if y is not None and S is not None:
         raise ValueError('Either `y` or `S` should be input.')
     if y is not None:
-        x = util.frame(to_mono(y), frame_length=n_fft, hop_length=hop_length)
+        x = util.frame(to_mono(y),
+                       frame_length=frame_length,
+                       hop_length=hop_length)
     elif S is not None:
-        x, _ = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
+        x, _ = _spectrogram(y=y, S=S,
+                            n_fft=frame_length,
+                            hop_length=hop_length)
     else:
         raise ValueError('Either `y` or `S` must be input.')
     return np.sqrt(np.mean(np.abs(x)**2, axis=0, keepdims=True))
