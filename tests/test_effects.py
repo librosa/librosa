@@ -143,7 +143,7 @@ def test_harmonic():
 
 def test_trim():
 
-    def __test(y, top_db, ref_power):
+    def __test(y, top_db, ref_power, trim_duration):
 
         yt, idx = librosa.effects.trim(y, top_db=top_db,
                                        ref_power=ref_power)
@@ -170,20 +170,21 @@ def test_trim():
 
         # Verify duration
         duration = librosa.get_duration(yt)
-        assert np.allclose(duration, 3.0, atol=1e-1), duration
+        assert np.allclose(duration, trim_duration, atol=1e-1), duration
 
     # construct 5 seconds of stereo silence
     # Stick a sine wave in the middle three seconds
     sr = float(22050)
     y = np.zeros((2, int(5 * sr)))
+    trim_duration = 3.0
     y[0, sr:4*sr] = np.sin(2 * np.pi * 440 * np.arange(0, 3 * sr) / sr)
 
     for top_db in [60, 40, 20]:
         for ref_power in [1, np.max]:
             # Test stereo
-            yield __test, y, top_db, ref_power
+            yield __test, y, top_db, ref_power, trim_duration
             # Test mono
-            yield __test, y[0], top_db, ref_power
+            yield __test, y[0], top_db, ref_power, trim_duration
 
 
 def test_split():
@@ -196,8 +197,6 @@ def test_split():
 
         int_match = librosa.util.match_intervals(intervals, idx_true)
 
-        print(idx_true)
-        print(intervals)
         for i in range(len(intervals)):
             i_true = idx_true[int_match[i]]
 
@@ -209,7 +208,7 @@ def test_split():
     y = np.ones(10 * sr)
     y[::2] *= -1
 
-    # Zero out all but two few intervals
+    # Zero out all but two intervals
     y[:sr] = 0
     y[2 * sr:3 * sr] = 0
     y[4 * sr:] = 0
