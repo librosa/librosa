@@ -27,6 +27,8 @@ Miscellaneous
     :toctree: generated/
 
     remix
+    trim
+    split
 """
 
 import numpy as np
@@ -39,7 +41,7 @@ from .util.exceptions import ParameterError
 
 __all__ = ['hpss', 'harmonic', 'percussive',
            'time_stretch', 'pitch_shift',
-           'remix', 'trim']
+           'remix', 'trim', 'split']
 
 
 def hpss(y, **kwargs):
@@ -377,8 +379,49 @@ def remix(y, intervals, align_zeros=True):
     return np.concatenate(y_out, axis=-1)
 
 
-def trim(y, top_db=60, ref_power=np.max, n_fft=2048, hop_length=512,
-         index=False):
+def _signal_to_frame_nonsilent(y, frame_length=2048, hop_length=512, top_db=60,
+                               ref_power=np.max):
+    '''Frame-wise non-silent indicator for audio input.
+
+    This is a helper function for `trim` and `split`.
+
+    Parameters
+    ----------
+    y : np.ndarray, shape=(n,) or (2,n)
+        Audio signal, mono or stereo
+
+    frame_length : int > 0
+        The number of samples per frame
+
+    hop_length : int > 0
+        The number of samples between frames
+
+    top_db : number > 0
+        The threshold (in decibels) below reference to consider as
+        silence
+
+    ref_power : callable or float
+        The reference power
+
+    Returns
+    -------
+    non_silent : np.ndarray, shape=(m,), dtype=bool
+        Indicator of non-silent frames
+    '''
+    # Convert to mono
+    y_mono = core.to_mono(y)
+
+    # Compute the MSE for the signal
+    mse = feature.rmse(y=y_mono,
+                       frame_length=frame_length,
+                       hop_length=hop_length)**2
+
+    return (core.logamplitude(mse.squeeze(),
+                              ref_power=ref_power,
+                              top_db=None) > - top_db)
+
+
+def trim(y, top_db=60, ref_power=np.max, frame_length=2048, hop_length=512):
     '''Trim leading and trailing silence from an audio signal.
 
     Parameters
@@ -394,60 +437,109 @@ def trim(y, top_db=60, ref_power=np.max, n_fft=2048, hop_length=512,
         The reference power.  By default, it uses `np.max` and compares
         to the peak power in the signal.
 
-    n_fft : int > 0
+    frame_length : int > 0
         The number of samples per analysis frame
 
     hop_length : int > 0
         The number of samples between analysis frames
-
-    index : bool
-        If `True`, return the start and end of the non-silent
-        region of `y` along with the trimmed signal.
-
-        If `False`, only return the trimmed signal.
 
     Returns
     -------
     y_trimmed : np.ndarray, shape=(m,) or (2, m)
         The trimmed signal
 
-    index : slice, optional
-        If `index=True` is provided, then this contains
-        the slice of `y` corresponding to the non-silent region:
-        `y_trimmed = y[index]`.
+    index : np.ndarray, shape=(2,)
+        the interval of `y` corresponding to the non-silent region:
+        `y_trimmed = y[index[0]:index[1]]` (for mono) or
+        `y_trimmed = y[:, index[0]:index[1]]` (for stereo).
+
 
     Examples
     --------
     >>> # Load some audio
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> # Trim the beginning and ending silence
-    >>> yt = librosa.effects.trim(y)
+    >>> yt, index = librosa.effects.trim(y)
     >>> # Print the durations
     >>> print(librosa.get_duration(y), librosa.get_duration(yt))
     61.45886621315193 60.58086167800454
     '''
 
-    # Convert to mono
-    y_mono = core.to_mono(y)
+    non_silent = _signal_to_frame_nonsilent(y,
+                                            frame_length=frame_length,
+                                            hop_length=hop_length,
+                                            ref_power=ref_power,
+                                            top_db=top_db)
 
-    # Compute the MSE for the signal
-    mse = feature.rmse(y=y_mono, n_fft=n_fft, hop_length=hop_length)**2
-
-    # Compute the log power indicator and non-zero positions
-    logp = core.logamplitude(mse, ref_power=ref_power, top_db=None) > - top_db
-    nonzero = np.flatnonzero(logp)
+    nonzero = np.flatnonzero(non_silent)
 
     # Compute the start and end positions
     # End position goes one frame past the last non-zero
     start = int(core.frames_to_samples(nonzero[0], hop_length))
-    end = min(len(y_mono),
+    end = min(y.shape[-1],
               int(core.frames_to_samples(nonzero[-1] + 1, hop_length)))
 
     # Build the mono/stereo index
     full_index = [slice(None)] * y.ndim
     full_index[-1] = slice(start, end)
 
-    if index:
-        return y[full_index], full_index[-1]
-    else:
-        return y[full_index]
+    return y[full_index], np.asarray([start, end])
+
+
+def split(y, top_db=60, ref_power=np.max, frame_length=2048, hop_length=512):
+    '''Split an audio signal into non-silent intervals.
+
+    Parameters
+    ----------
+    y : np.ndarray, shape=(n,) or (2, n)
+        An audio signal
+
+    top_db : number > 0
+        The threshold (in decibels) below reference to consider as
+        silence
+
+    ref_power : number or callable
+        The reference power.  By default, it uses `np.max` and compares
+        to the peak power in the signal.
+
+    frame_length : int > 0
+        The number of samples per analysis frame
+
+    hop_length : int > 0
+        The number of samples between analysis frames
+
+    Returns
+    -------
+    intervals : np.ndarray, shape=(m, 2)
+        `intervals[i] == (start_i, end_i)` are the start and end time
+        (in samples) if the `i`th non-silent interval.
+    '''
+
+    non_silent = _signal_to_frame_nonsilent(y,
+                                            frame_length=frame_length,
+                                            hop_length=hop_length,
+                                            ref_power=ref_power,
+                                            top_db=top_db)
+
+    # Interval slicing, adapted from
+    # https://stackoverflow.com/questions/2619413/efficiently-finding-the-interval-with-non-zeros-in-scipy-numpy-in-python
+    # Find points where the sign flips
+    edges = np.flatnonzero(np.diff(non_silent.astype(int)))
+
+    # Pad back the sample lost in the diff
+    edges = [edges + 1]
+
+    # If the first frame had high energy, count it
+    if non_silent[0]:
+        edges.insert(0, [0])
+
+    # Likewise for the last frame
+    if non_silent[-1]:
+        edges.append([len(non_silent)])
+
+    # Convert from frames to samples
+    edges = core.frames_to_samples(np.concatenate(edges),
+                                   hop_length=hop_length)
+
+    # Stack the results back as an ndarray
+    return edges.reshape((-1, 2))
