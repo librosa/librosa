@@ -317,34 +317,36 @@ def test_rmse():
         rmse = librosa.feature.rmse(S=S)
 
         assert np.allclose(rmse, np.ones_like(rmse))
-        
-    def __test_consistency():
+
+    def __test_consistency(frame_length, hop_length):
         y, sr = librosa.load(__EXAMPLE_FILE, sr=None)
-        
+
         # Ensure audio is divisible into frame size.
-        frame_length = 2048
         y = librosa.util.fix_length(y, y.size - y.size % frame_length)
         assert y.size % frame_length == 0
-        
+
         # STFT magnitudes with a constant windowing function and no centering.
-        S = librosa.magphase(librosa.stft(y, 
+        S = librosa.magphase(librosa.stft(y,
                                           n_fft=frame_length,
-                                          window=np.ones, 
+                                          hop_length=hop_length,
+                                          window=np.ones,
                                           center=False))[0]
-                                          
+
         # Try both RMS methods.
-        rms1 = librosa.feature.rmse(S=S)
-        rms2 = librosa.feature.rmse(y=y)
+        rms1 = librosa.feature.rmse(S=S, n_fft=frame_length, hop_length=hop_length)
+        rms2 = librosa.feature.rmse(y=y, n_fft=frame_length, hop_length=hop_length)
 
         # Normalize envelopes.
         rms1 /= rms1.max()
         rms2 /= rms2.max()
-        
+
         # Ensure results are similar.
         np.testing.assert_allclose(rms1, rms2, rtol=1e-2)
 
-    yield __test_consistency
-    
+    for n_fft in [2048, 4096]:
+        for hop_length in [128, 512, 1024]:
+            yield __test_consistency, n_fft, hop_length
+
     for n in range(10, 100, 10):
         yield __test, n
 
