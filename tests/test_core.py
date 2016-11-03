@@ -279,15 +279,23 @@ def test_ifgram_if():
             yield tf, ref_power, clip
 
 
+def test_salience_basecase():
+    (y, sr) = librosa.load('data/test1_22050.wav')
+    S = librosa.stft(y)
+    freqs = librosa.core.fft_frequencies(sr)
+    harms = [1]
+    weights = [1.0]
+    S_sal = librosa.core.salience(S, freqs, harms, weights)
+    assert np.allclose(S_sal, S)
+
 def test_salience():
     (y, sr) = librosa.load('data/test1_22050.wav')
     S = librosa.stft(y)
     freqs = librosa.core.fft_frequencies(sr)
-    harmonics = [1, 2]
-    weights = [1.0, 0.5]
-    S_sal = librosa.core.salience(S, freqs, harmonics, weights)
-    #TODO
-
+    harms = [1, 0.5, 2.0]
+    weights = [1.0, 0.0, 0.0]
+    S_sal = librosa.core.salience(S, freqs, harms, weights)
+    assert np.allclose(S_sal, S)
 
 def test_magphase():
 
