@@ -206,7 +206,7 @@ def test_split():
     # Make some high-frequency noise
     sr = 8192
 
-    y = np.ones(10 * sr)
+    y = np.ones(5 * sr)
     y[::2] *= -1
 
     # Zero out all but two intervals
@@ -218,6 +218,25 @@ def test_split():
     idx_true = np.asarray([[sr, 2 * sr],
                            [3 * sr, 4 * sr]])
 
+    for frame_length in [1024, 2048, 4096]:
+        for hop_length in [256, 512, 1024]:
+            for top_db in [20, 60, 80]:
+                yield __test, hop_length, frame_length, top_db
+
+    # Do it again, but without the silence at the beginning
+    y = np.ones(5 * sr)
+    y[::2] *= -1
+    y[4*sr:] = 0
+    idx_true = np.asarray([[0, 4 * sr]])
+    for frame_length in [1024, 2048, 4096]:
+        for hop_length in [256, 512, 1024]:
+            for top_db in [20, 60, 80]:
+                yield __test, hop_length, frame_length, top_db
+
+    # And without the silence at the end
+    y = np.ones(5 * sr)
+    y[::2] *= -1
+    idx_true = np.asarray([[0, 5 * sr]])
     for frame_length in [1024, 2048, 4096]:
         for hop_length in [256, 512, 1024]:
             for top_db in [20, 60, 80]:
