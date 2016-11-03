@@ -10,7 +10,8 @@ from ..util.exceptions import ParameterError
 __all__ = ['salience', 'harmonics']
 
 
-def salience(S, freqs, harmonics, weights, aggregate=None, filter_peaks=True):
+def salience(S, freqs, harmonic_vals, weights, aggregate=None,
+             filter_peaks=True):
     """Harmonic salience function.
 
     Parameters
@@ -23,7 +24,7 @@ def salience(S, freqs, harmonics, weights, aggregate=None, filter_peaks=True):
         The frequency values corresponding to X's elements along the
         chosen axis.
 
-    harmonics : list-like, non-negative
+    harmonic_vals : list-like, non-negative
         Harmonics to include in salience computation.  The first harmonic (1)
         corresponds to `S` itself. Values less than one (e.g., 1/2) correspond
         to sub-harmonics.
@@ -62,9 +63,9 @@ def salience(S, freqs, harmonics, weights, aggregate=None, filter_peaks=True):
     ...                      duration=15, offset=30)
     >>> S = np.abs(librosa.stft(y))
     >>> freqs = librosa.core.fft_frequencies(sr)
-    >>> harmonics = [1./3, 1./2, 1, 2, 3, 4]
+    >>> harms = [1./3, 1./2, 1, 2, 3, 4]
     >>> weights = [-0.5, -1.0, 1.0, 0.5, 0.33, 0.25]
-    >>> S_sal = librosa.salience(S, freqs, harmonics, weights)
+    >>> S_sal = librosa.salience(S, freqs, harms, weights)
     >>> print(S_sal.shape)
     (1025, 646)
 
@@ -80,7 +81,7 @@ def salience(S, freqs, harmonics, weights, aggregate=None, filter_peaks=True):
 
     weights = np.array(weights, dtype=float)
 
-    S_harm = harmonics(np.abs(S), freqs, harmonics)
+    S_harm = harmonics(np.abs(S), freqs, harmonic_vals)
     S_peaks = scipy.signal.argrelmax(np.abs(S), axis=0)
 
     if filter_peaks:
