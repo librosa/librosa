@@ -286,6 +286,8 @@ def test_salience_basecase():
     harms = [1]
     weights = [1.0]
     S_sal = librosa.core.salience(S, freqs, harms, weights, filter_peaks=False)
+    print(S_sal.shape)
+    print(S.shape)
     assert np.allclose(S_sal, S)
 
 def test_salience():
@@ -295,6 +297,8 @@ def test_salience():
     harms = [1, 0.5, 2.0]
     weights = [1.0, 0.0, 0.0]
     S_sal = librosa.core.salience(S, freqs, harms, weights, filter_peaks=False)
+    print(S_sal.shape)
+    print(S.shape)
     assert np.allclose(S_sal, S)
 
 def test_magphase():
