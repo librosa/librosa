@@ -33,6 +33,8 @@ Miscellaneous
     constant_q_lengths
     cq_to_chroma
     mr_frequencies
+    window_sumsquare
+
 """
 import warnings
 
@@ -43,6 +45,7 @@ import six
 
 from . import cache
 from . import util
+from .util.decorators import optional_jit
 from .util.exceptions import ParameterError
 
 from .core.time_frequency import note_to_hz, hz_to_midi, midi_to_hz, hz_to_octs
@@ -57,7 +60,8 @@ __all__ = ['dct',
            'window_bandwidth',
            'get_window',
            'mr_frequencies',
-           'semitone_filterbank']
+           'semitone_filterbank',
+           'window_sumsquare']
 
 
 # Dictionary of window function bandwidths
@@ -1090,3 +1094,87 @@ def semitone_filterbank(center_freqs=None, tuning=0.0, sample_rates=None, **kwar
     filterbank, fb_sample_rates = _multirate_fb(center_freqs=center_freqs, sample_rates=sample_rates, **kwargs)
 
     return filterbank, fb_sample_rates
+
+@optional_jit
+def __window_ss_fill(x, win_sq, n_frames, hop_length):
+    '''Helper function for window sum-square calculation.'''
+
+    n = len(x)
+    n_fft = len(win_sq)
+    for i in range(n_frames):
+        sample = i * hop_length
+        x[sample:min(n, sample + n_fft)] += win_sq[:max(0, min(n_fft, n - sample))]
+    pass
+
+
+def window_sumsquare(window, n_frames, hop_length=512, win_length=None, n_fft=2048,
+                     dtype=np.float32):
+    '''
+    Compute the sum-square envelope of a window function at a given hop length.
+
+    This is used to estimate modulation effects induced by windowing observations
+    in short-time fourier transforms.
+
+    Parameters
+    ----------
+    window : string, tuple, number, callable, or list-like
+        Window specification, as in `get_window`
+
+    n_frames : int > 0
+        The number of analysis frames
+
+    hop_length : int > 0
+        The number of samples to advance between frames
+
+    win_length : [optional]
+        The length of the window function.  By default, this matches `n_fft`.
+
+    n_fft : int > 0
+        The length of each analysis frame.
+
+    dtype : np.dtype
+        The data type of the output
+
+    Returns
+    -------
+    wss : np.ndarray, shape=`(n_fft + hop_length * (n_frames - 1))`
+        The sum-squared envelope of the window function
+
+    Examples
+    --------
+    For a fixed frame length (2048), compare modulation effects for a Hann window
+    at different hop lengths:
+
+    >>> n_frames = 50
+    >>> wss_256 = librosa.filters.window_sumsquare('hann', n_frames, hop_length=256)
+    >>> wss_512 = librosa.filters.window_sumsquare('hann', n_frames, hop_length=512)
+    >>> wss_1024 = librosa.filters.window_sumsquare('hann', n_frames, hop_length=1024)
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> plt.subplot(3,1,1)
+    >>> plt.plot(wss_256)
+    >>> plt.title('hop_length=256')
+    >>> plt.subplot(3,1,2)
+    >>> plt.plot(wss_512)
+    >>> plt.title('hop_length=512')
+    >>> plt.subplot(3,1,3)
+    >>> plt.plot(wss_1024)
+    >>> plt.title('hop_length=1024')
+    >>> plt.tight_layout()
+
+    '''
+    if win_length is None:
+        win_length = n_fft
+
+    n = n_fft + hop_length * (n_frames - 1)
+    x = np.zeros(n, dtype=dtype)
+
+    # Compute the squared window at the desired length
+    win_sq = get_window(window, win_length)**2
+    win_sq = util.pad_center(win_sq, n_fft)
+
+    # Fill the envelope
+    __window_ss_fill(x, win_sq, n_frames, hop_length)
+
+    return x

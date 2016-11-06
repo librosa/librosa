@@ -48,10 +48,14 @@ def __test_cqt_size(y, sr, hop_length, fmin, n_bins, bins_per_octave,
     return cqt_output
 
 
-def make_signal(sr, duration, fmax='C8'):
+def make_signal(sr, duration, fmin='C1', fmax='C8'):
     ''' Generates a linear sine sweep '''
 
-    fmin = librosa.note_to_hz('C1') / sr
+    if fmin is None:
+        fmin = 0.01
+    else:
+        fmin = librosa.note_to_hz(fmin) / sr
+
     if fmax is None:
         fmax = 0.5
     else:
@@ -304,3 +308,58 @@ def test_hcqt_white_noise():
             for fmin in librosa.note_to_hz(['C1', 'C2']):
                 for n_octaves in [6, 7]:
                     yield __test, fmin, n_octaves * 12, scale, sr, y
+
+
+def test_cqt_real_warning():
+
+    def __test(real):
+        warnings.resetwarnings()
+        warnings.simplefilter('always')
+        with warnings.catch_warnings(record=True) as out:
+            C = librosa.cqt(y=y, sr=sr, real=real)
+            assert len(out) > 0
+            assert out[0].category is DeprecationWarning
+
+            if real:
+                assert np.isrealobj(C)
+            else:
+                assert np.iscomplexobj(C)
+
+    sr = 22050
+    y = np.zeros(2 * sr)
+
+    yield __test, False
+    yield __test, True
+
+
+def test_icqt():
+
+    def __test(sr, scale, hop_length, over_sample, y):
+
+        bins_per_octave = over_sample * 12
+        n_bins = 6 * bins_per_octave
+
+        C = librosa.cqt(y, sr=sr, n_bins=n_bins,
+                        bins_per_octave=bins_per_octave,
+                        scale=scale,
+                        hop_length=hop_length)
+
+        yinv = librosa.icqt(C, sr=sr,
+                            scale=scale,
+                            hop_length=hop_length,
+                            bins_per_octave=bins_per_octave)
+
+        # Only test on the middle section
+        yinv = librosa.util.fix_length(yinv, len(y))
+        y = y[sr//4:-sr//4]
+        yinv = yinv[sr//4:-sr//4]
+
+        assert np.allclose(y, yinv), (np.max(np.abs(yinv)),
+                                      np.max(np.abs(y)))
+
+    for sr in [22050, 44100]:
+        y = make_signal(sr, 1.5, fmin='C2', fmax='C6')
+        for over_sample in [1, 3]:
+            for scale in [False, True]:
+                for hop_length in [64, 128, 384, 512]:
+                    yield __test, sr, scale, hop_length, over_sample, y
