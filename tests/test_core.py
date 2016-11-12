@@ -55,7 +55,6 @@ def test_load():
         yield (__test, infile)
     pass
 
-
 def test_segment_load():
 
     sample_len = 2003
@@ -77,6 +76,20 @@ def test_segment_load():
 
     y2, sr = librosa.load(test_file, sr=None, mono=False)
     assert np.allclose(y, y2[:, sample_offset:sample_offset+fs])
+
+
+def test_load_fail():
+    
+    @raises(IOError)
+    def __test(path):
+        librosa.load(path)
+
+    test_file_nonexistent = 'data/this_does_not_exist.wav'
+    paths = [test_file_nonexistent]
+
+    # Test for nonexistent files
+    for path in paths:
+        yield __test, path
 
 
 def test_resample_mono():
