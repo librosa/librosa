@@ -281,7 +281,7 @@ def test_ifgram_if():
 
 def test_salience_basecase():
     (y, sr) = librosa.load('data/test1_22050.wav')
-    S = librosa.stft(y)
+    S = np.abs(librosa.stft(y))
     freqs = librosa.core.fft_frequencies(sr)
     harms = [1]
     weights = [1.0]
@@ -293,7 +293,7 @@ def test_salience_basecase():
 
 def test_salience():
     (y, sr) = librosa.load('data/test1_22050.wav')
-    S = librosa.stft(y)
+    S = np.abs(librosa.stft(y))
     freqs = librosa.core.fft_frequencies(sr)
     harms = [1, 0.5, 2.0]
     weights = [1.0, 0.0, 0.0]
