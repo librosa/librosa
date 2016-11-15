@@ -13,6 +13,7 @@ Filter bank construction
     mel
     chroma
     constant_q
+    multirate_pitch_fb
 
 Window functions
 ----------------
@@ -42,7 +43,7 @@ from . import cache
 from . import util
 from .util.exceptions import ParameterError
 
-from .core.time_frequency import note_to_hz, hz_to_midi, hz_to_octs
+from .core.time_frequency import note_to_hz, midi_to_hz, hz_to_midi, hz_to_octs
 from .core.time_frequency import fft_frequencies, mel_frequencies
 
 __all__ = ['dct',
@@ -451,7 +452,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
 
-    tuning : float in `[-0.5, +0.5)` [scalar]
+    tuning : float in `[-0.5, +0.5]` [scalar]
         Tuning deviation from A440 in fractions of a bin
 
     window : string, tuple, number, or function
@@ -595,7 +596,7 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
 
-    tuning : float in `[-0.5, +0.5)` [scalar]
+    tuning : float in `[-0.5, +0.5]` [scalar]
         Tuning deviation from A440 in fractions of a bin
 
     window : str or callable
@@ -882,3 +883,82 @@ def get_window(window, Nx, fftbins=True):
                              '{:d} != {:d}'.format(len(window), Nx))
     else:
         raise ParameterError('Invalid window specification: {}'.format(window))
+
+
+@cache(level=10)
+def multirate_pitch_fb(sr=22050, Q=25, passband_ripple=1, stopband_attenuation=50, A440=440.0):
+    r'''Construct a multirate filterbank with ellipitical filters.
+
+    This uses the filter bank described in [1]_.
+
+    .. [1] Müller, Meinard.
+           "Information Retrieval for Music and Motion."
+           Springer Verlag. 2007.
+
+
+    Parameters
+    ----------
+    sr : number > 0 [scalar]
+        sampling rate of `y`
+    A440 : float
+        frequency of A440
+
+    Returns
+    -------
+    pitch_filterbank
+    sample_rates
+    midi_pitches
+    center_freqs
+
+    Notes
+    -----
+    This function caches at level 10.
+
+    See Also
+    --------
+    librosa.core.cqt
+
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> import numpy as np
+    >>> import scipy.signal
+    >>> pitch_filterbank, sample_rates, _, _ = librosa.filters.multirate_pitch_fb()
+    >>> plt.figure(figsize=(10, 6))
+    >>> for cur_sr, cur_filter in zip(sample_rates, pitch_filterbank):
+    ...    w, h = scipy.signal.freqz(cur_filter[0], cur_filter[1], worN=2000)
+    ...    plt.plot((cur_sr / (2 * np.pi)) * w, 20 * np.log10(abs(h)))
+    >>> plt.semilogx()
+    >>> plt.xlim([20, 10e3])
+    >>> plt.ylim([-60, 3])
+    >>> plt.title('Magnitude Responses of the Pitch Filterbank')
+    >>> plt.xlabel('Log-Frequency (Hz)')
+    >>> plt.ylabel('Magnitude (dB)')
+    >>> plt.tight_layout()
+    '''
+
+    midi_start = 21
+    midi_pitches = np.arange(midi_start, 121)
+    center_freqs = midi_to_hz(midi_pitches, A440=A440)
+
+    sample_rates = np.zeros_like(center_freqs)
+    sample_rates[21 - midi_start:60 - midi_start] = sr / 25
+    sample_rates[60 - midi_start:95 - midi_start] = sr / 5
+    sample_rates[95 - midi_start:] = sr
+    nyquist = sample_rates / 2
+    filter_bandwidths = center_freqs / Q
+
+    pitch_filterbank = []
+
+    for cur_center_freq, cur_nyquist, cur_bw in zip(center_freqs, nyquist, filter_bandwidths):
+        passband_freqs = [cur_center_freq - cur_bw / 2, cur_center_freq + cur_bw / 2] / cur_nyquist
+        stopband_freqs = [cur_center_freq - cur_bw, cur_center_freq + cur_bw] / cur_nyquist
+
+        cur_filter = scipy.signal.iirdesign(passband_freqs, stopband_freqs,
+                                            passband_ripple, stopband_attenuation,
+                                            analog=False, ftype='ellip', output='ba')
+
+        pitch_filterbank.append(cur_filter)
+
+    return pitch_filterbank, sample_rates, midi_pitches, center_freqs
