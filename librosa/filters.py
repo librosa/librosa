@@ -862,10 +862,10 @@ def get_window(window, Nx, fftbins=True):
 
 
 @cache(level=10)
-def multirate_pitch_fb():
+def multirate_pitch_fb(sr=22050, Q=25, passband_ripple=1, stopband_attenuation=50, A440=440.0):
     r'''Construct a multirate filterbank with ellipitical filters.
 
-    This uses the filter bank described by [1]_.
+    This uses the filter bank described in [1]_.
 
     .. [1] Müller, Meinard.
            "Information Retrieval for Music and Motion."
@@ -874,9 +874,17 @@ def multirate_pitch_fb():
 
     Parameters
     ----------
+    sr : number > 0 [scalar]
+        sampling rate of `y`
+    A440 : float
+        frequency of A440
 
     Returns
     -------
+    pitch_filterbank
+    sample_rates
+    midi_pitches
+    center_freqs
 
     Notes
     -----
@@ -908,15 +916,12 @@ def multirate_pitch_fb():
 
     midi_start = 21
     midi_pitches = np.arange(midi_start, 121)
-    center_freqs = midi_to_hz(midi_pitches)
-    passband_ripple = 1  # in dB
-    stopband_attenuation = 50  # in dB
-    Q = 25
+    center_freqs = midi_to_hz(midi_pitches, A440=A440)
 
     sample_rates = np.zeros_like(center_freqs)
-    sample_rates[21 - midi_start:60 - midi_start] = 882
-    sample_rates[60 - midi_start:95 - midi_start] = 4410
-    sample_rates[95 - midi_start:] = 22050
+    sample_rates[21 - midi_start:60 - midi_start] = sr / 25
+    sample_rates[60 - midi_start:95 - midi_start] = sr / 5
+    sample_rates[95 - midi_start:] = sr
     nyquist = sample_rates / 2
     filter_bandwidths = center_freqs / Q
 
