@@ -81,7 +81,7 @@ def salience(S, freqs, harmonic_vals, weights, aggregate=None,
 
     weights = np.array(weights, dtype=float)
 
-    S_harm = harmonics(np.abs(S), freqs, harmonic_vals)
+    S_harm = harmonics(np.abs(S), freqs, harmonic_vals, kind='quadratic')
 
     if filter_peaks:
         S_peaks = scipy.signal.argrelmax(np.abs(S), axis=0)
