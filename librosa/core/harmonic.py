@@ -77,7 +77,7 @@ def salience(S, freqs, harmonic_vals, weights, aggregate=None,
 
     """
     if aggregate is None:
-        aggregate = np.mean
+        aggregate = np.average
 
     weights = np.array(weights, dtype=float)
 

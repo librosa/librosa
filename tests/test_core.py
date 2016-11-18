@@ -310,31 +310,14 @@ def test_salience_toy():
     actual = librosa.core.salience(
         S, freqs, harms, weights, filter_peaks=False
     )
-    # expected = np.array([
-    #     [0.0, 0.0, 0.0]
-    #     [0.1, 0.5, 0.0],
-    #     [0.2, 1.2, 1.2],
-    #     [0.0, 0.7, 0.3]
-    # ]) + np.array([
-    #     [0.1, 0.5, 0.0],
-    #     [0.2, 1.2, 1.2],
-    #     [0.0, 0.7, 0.3],
-    #     [1.3, 3.2, 0.8]
-    # ]) + np.array([
-    #     [0.2, 1.2, 1.2],
-    #     [0.0, 0.7, 0.3],
-    #     [1.3, 3.2, 0.8],
-    #     [0.0, 0.0, 0.0]
-    # ])
 
     expected = np.array([
-        [0.3, 1.7, 1.2]
+        [0.3, 1.7, 1.2],
         [0.3, 2.4, 1.5],
         [1.5, 5.1, 2.3],
         [1.3, 3.9, 1.1]
-    ])
-    print(expected)
-    print(actual)
+    ]) / 3.0
+
     assert np.allclose(expected, actual)
 
 def test_magphase():
