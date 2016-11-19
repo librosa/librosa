@@ -1,6 +1,8 @@
 import librosa
 import numpy as np
 
+from test_core import srand
+
 
 def test_dtw_global():
     # Example taken from:
@@ -34,6 +36,8 @@ def test_dtw_global_diagonal():
 
 
 def test_dtw_subseq():
+    srand()
+
     # query is a linear ramp
     X = np.linspace(0, 1, 100)
 

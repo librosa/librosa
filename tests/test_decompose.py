@@ -19,6 +19,9 @@ import sklearn.decomposition
 
 from nose.tools import raises
 
+from test_core import srand
+
+
 def test_default_decompose():
 
     X = np.array([[1, 2, 3, 4, 5, 6], [1, 1, 1.2, 1, 0.8, 1]])
@@ -38,7 +41,10 @@ def test_given_decompose():
 
     assert np.allclose(X, W.dot(H), rtol=1e-2, atol=1e-2)
 
+
 def test_decompose_fit():
+
+    srand()
 
     D = sklearn.decomposition.NMF(random_state=0)
 
@@ -120,6 +126,7 @@ def test_complex_hpss():
 
 def test_nn_filter_mean():
 
+    srand()
     X = np.random.randn(10, 100)
 
     # Build a recurrence matrix, just for testing purposes
@@ -132,8 +139,10 @@ def test_nn_filter_mean():
 
     assert np.allclose(X_filtered, X.dot(rec.T))
 
+
 def test_nn_filter_mean_rec():
 
+    srand()
     X = np.random.randn(10, 100)
 
     # Build a recurrence matrix, just for testing purposes
@@ -151,8 +160,10 @@ def test_nn_filter_mean_rec():
     rec = librosa.util.normalize(rec, axis=1, norm=1)
     assert np.allclose(X_filtered[:, 3:], (X.dot(rec.T))[:, 3:])
 
+
 def test_nn_filter_mean_rec_sparse():
 
+    srand()
     X = np.random.randn(10, 100)
 
     # Build a recurrence matrix, just for testing purposes
@@ -164,8 +175,10 @@ def test_nn_filter_mean_rec_sparse():
     rec = librosa.util.normalize(rec.toarray(), axis=1, norm=1)
     assert np.allclose(X_filtered, (X.dot(rec.T)))
 
+
 def test_nn_filter_avg():
 
+    srand()
     X = np.random.randn(10, 100)
 
     # Build a recurrence matrix, just for testing purposes
@@ -183,6 +196,8 @@ def test_nn_filter_badselfsim():
 
     @raises(librosa.ParameterError)
     def __test(x, y, sparse):
+        srand()
+
         X = np.empty((10, 100))
         # Build a recurrence matrix, just for testing purposes
         rec = np.random.randn(x, y)

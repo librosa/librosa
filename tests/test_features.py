@@ -9,7 +9,7 @@ from nose.tools import raises, eq_
 
 import librosa
 
-from test_core import load
+from test_core import load, srand
 
 # Disable cache
 import os
@@ -92,6 +92,8 @@ def test_stack_memory():
                 assert np.allclose(data[i, :- step * delay],
                                    data_stack[step * d + i, step * delay:])
 
+    srand()
+
     for ndim in [1, 2]:
         data = np.random.randn(* ([5] * ndim))
 
@@ -118,6 +120,7 @@ def test_spectral_centroid_synthetic():
 
         assert np.allclose(cent, freq[k])
 
+    srand()
     # construct a fake spectrogram
     sr = 22050
     n_fft = 1024
@@ -176,6 +179,7 @@ def test_spectral_bandwidth_synthetic():
 
         assert not np.any(bw)
 
+    srand()
     # construct a fake spectrogram
     sr = 22050
     n_fft = 1024
@@ -214,6 +218,8 @@ def test_spectral_bandwidth_errors():
 
 
 def test_spectral_rolloff_synthetic():
+
+    srand()
 
     sr = 22050
     n_fft = 2048
@@ -397,6 +403,7 @@ def test_zcr_synthetic():
 
 def test_poly_features_synthetic():
 
+    srand()
     sr = 22050
     n_fft = 2048
 
