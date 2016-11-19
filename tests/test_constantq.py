@@ -21,6 +21,8 @@ import numpy as np
 
 from nose.tools import raises, eq_
 
+from test_core import srand
+
 
 def __test_cqt_size(y, sr, hop_length, fmin, n_bins, bins_per_octave,
                     tuning, filter_scale, norm, sparsity):
@@ -241,6 +243,7 @@ def test_hybrid_cqt_scale():
             yield __test, sr, hop_length, x
 
 
+@srand
 def test_cqt_white_noise():
 
     def __test(fmin, n_bins, scale, sr, y):
@@ -270,6 +273,7 @@ def test_cqt_white_noise():
                     yield __test, fmin, n_octaves * 12, scale, sr, y
 
 
+@srand
 def test_hcqt_white_noise():
 
     def __test(fmin, n_bins, scale, sr, y):
