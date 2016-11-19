@@ -20,7 +20,7 @@ import glob
 import numpy as np
 import scipy.io
 import six
-from nose.tools import eq_, raises, nottest
+from nose.tools import eq_, raises, make_decorator
 import matplotlib
 matplotlib.use('Agg')
 
@@ -31,6 +31,10 @@ def files(pattern):
     test_files.sort()
     return test_files
 
+
+def srand(seed=628318530):
+    np.random.seed(seed)
+    pass
 
 def load(infile):
     return scipy.io.loadmat(infile, chars_as_strings=True)
@@ -309,8 +313,8 @@ def test_istft_reconstruction():
         # should be almost approximately reconstucted
         assert np.allclose(x, x_reconstructed, atol=atol)
 
+    srand()
     # White noise
-    np.random.seed(98765)
     x1 = np.random.randn(2 ** 15)
 
     # Sin wave
@@ -436,8 +440,8 @@ def test_autocorrelate():
 
         assert np.allclose(ac, truth[my_slice])
 
-    np.random.seed(128)
 
+    srand()
     # test with both real and complex signals
     for y in [np.random.randn(256, 256), np.exp(1.j * np.random.randn(256, 256))]:
 
@@ -489,6 +493,7 @@ def test_zero_crossings():
         for i in idx:
             assert np.sign(data[i]) != np.sign(data[i-1])
 
+    srand()
     data = np.random.randn(32)
 
     for threshold in [None, 0, 1e-10]:
@@ -822,6 +827,7 @@ def test_fmt_fail():
     def __test(t_min, n_fmt, over_sample, y):
         librosa.fmt(y, t_min=t_min, n_fmt=n_fmt, over_sample=over_sample)
 
+    srand()
     y = np.random.randn(256)
 
     # Test for bad t_min
@@ -846,6 +852,7 @@ def test_fmt_fail():
 
 def test_fmt_axis():
 
+    srand()
     y = np.random.randn(32, 32)
 
     f1 = librosa.fmt(y, axis=-1)
