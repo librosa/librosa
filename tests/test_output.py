@@ -46,7 +46,6 @@ def test_write_wav():
             yield __test, mono, norm
 
 
-@srand
 def test_times_csv():
 
     def __test(times, annotations, sep):
@@ -77,6 +76,7 @@ def test_times_csv():
 
     __test_fail = raises(librosa.ParameterError)(__test)
 
+    srand()
     for times in [[], np.linspace(0, 10, 20)]:
         for annotations in [None, ['abcde'[q] for q in np.random.randint(0, 5,
                                    size=len(times))], list('abcde')]:
@@ -88,7 +88,6 @@ def test_times_csv():
                         yield __test, times, annotations, sep
 
 
-@srand
 def test_annotation():
 
     def __test(times, annotations, sep):
@@ -122,6 +121,7 @@ def test_annotation():
 
     __test_fail = raises(librosa.ParameterError)(__test)
 
+    srand()
     times = np.random.randn(20, 2)
 
     for annotations in [None, ['abcde'[q] for q in np.random.randint(0, 5,

@@ -243,7 +243,6 @@ def test_hybrid_cqt_scale():
             yield __test, sr, hop_length, x
 
 
-@srand
 def test_cqt_white_noise():
 
     def __test(fmin, n_bins, scale, sr, y):
@@ -264,6 +263,7 @@ def test_cqt_white_noise():
         assert np.allclose(np.mean(C, axis=1), 1.0, atol=2.5e-1), np.mean(C, axis=1)
         assert np.allclose(np.std(C, axis=1), 0.5, atol=5e-1), np.std(C, axis=1)
 
+    srand()
     for sr in [22050]:
         y = np.random.randn(30 * sr)
 
@@ -273,7 +273,6 @@ def test_cqt_white_noise():
                     yield __test, fmin, n_octaves * 12, scale, sr, y
 
 
-@srand
 def test_hcqt_white_noise():
 
     def __test(fmin, n_bins, scale, sr, y):
@@ -291,6 +290,7 @@ def test_hcqt_white_noise():
         assert np.allclose(np.mean(C, axis=1), 1.0, atol=2.5e-1), np.mean(C, axis=1)
         assert np.allclose(np.std(C, axis=1), 0.5, atol=5e-1), np.std(C, axis=1)
 
+    srand()
     for sr in [22050]:
         y = np.random.randn(30 * sr)
 

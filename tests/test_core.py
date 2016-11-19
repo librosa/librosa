@@ -20,8 +20,7 @@ import glob
 import numpy as np
 import scipy.io
 import six
-from nose.tools import eq_, raises
-from decorator import decorator
+from nose.tools import eq_, raises, make_decorator
 import matplotlib
 matplotlib.use('Agg')
 
@@ -33,11 +32,9 @@ def files(pattern):
     return test_files
 
 
-@decorator
-def srand(f, *args, **kwargs):
-    np.random.seed(628318530)
-    return f(*args, **kwargs)
-
+def srand(seed=628318530):
+    np.random.seed(seed)
+    pass
 
 def load(infile):
     return scipy.io.loadmat(infile, chars_as_strings=True)
@@ -297,7 +294,6 @@ def test_magphase():
     assert np.allclose(S * P, D)
 
 
-@srand
 def test_istft_reconstruction():
     from scipy.signal import bartlett, hann, hamming, blackman, blackmanharris
 
@@ -317,6 +313,7 @@ def test_istft_reconstruction():
         # should be almost approximately reconstucted
         assert np.allclose(x, x_reconstructed, atol=atol)
 
+    srand()
     # White noise
     x1 = np.random.randn(2 ** 15)
 
@@ -428,7 +425,6 @@ def test_get_duration_filename():
     assert np.allclose(duration_fn, duration_y)
 
 
-@srand
 def test_autocorrelate():
 
     def __test(y, truth, max_size, axis):
@@ -445,6 +441,7 @@ def test_autocorrelate():
         assert np.allclose(ac, truth[my_slice])
 
 
+    srand()
     # test with both real and complex signals
     for y in [np.random.randn(256, 256), np.exp(1.j * np.random.randn(256, 256))]:
 
@@ -478,7 +475,6 @@ def test_to_mono():
         yield __test, filename, mono
 
 
-@srand
 def test_zero_crossings():
 
     def __test(data, threshold, ref_magnitude, pad, zp):
@@ -497,6 +493,7 @@ def test_zero_crossings():
         for i in idx:
             assert np.sign(data[i]) != np.sign(data[i-1])
 
+    srand()
     data = np.random.randn(32)
 
     for threshold in [None, 0, 1e-10]:
@@ -824,13 +821,13 @@ def test_fmt_scale():
                 yield __test, 1./scale, n_fmt, 1, kind, y_res, y_orig, atol[kind]
 
 
-@srand
 def test_fmt_fail():
 
     @raises(librosa.ParameterError)
     def __test(t_min, n_fmt, over_sample, y):
         librosa.fmt(y, t_min=t_min, n_fmt=n_fmt, over_sample=over_sample)
 
+    srand()
     y = np.random.randn(256)
 
     # Test for bad t_min
@@ -853,9 +850,9 @@ def test_fmt_fail():
     yield __test, 1, None, 1, np.ones(2)
 
 
-@srand
 def test_fmt_axis():
 
+    srand()
     y = np.random.randn(32, 32)
 
     f1 = librosa.fmt(y, axis=-1)

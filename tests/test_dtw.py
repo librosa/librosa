@@ -3,6 +3,7 @@ import numpy as np
 
 from test_core import srand
 
+
 def test_dtw_global():
     # Example taken from:
     # Meinard Mueller, Fundamentals of Music Processing
@@ -34,8 +35,9 @@ def test_dtw_global_diagonal():
     assert np.array_equal(np.asarray(gt_wp), np.asarray(mut_wp))
 
 
-@srand
 def test_dtw_subseq():
+    srand()
+
     # query is a linear ramp
     X = np.linspace(0, 1, 100)
 
