@@ -31,8 +31,8 @@ def test_example_audio_file():
 def test_frame():
 
     # Generate a random time series
-    @srand
     def __test(P):
+        srand()
         frame, hop = P
 
         y = np.random.randn(8000)
@@ -98,8 +98,8 @@ def test_fix_length():
                 yield __test, y, n + y.shape[axis], axis
 
 
-@srand
 def test_fix_frames():
+    srand()
 
     @raises(librosa.ParameterError)
     def __test_fail(frames, x_min, x_max, pad):
@@ -136,8 +136,8 @@ def test_fix_frames():
                             yield __test_pass, frames, x_min, x_max, pad
 
 
-@srand
 def test_normalize():
+    srand()
 
     def __test_pass(X, norm, axis):
         X_norm = librosa.util.normalize(X, norm=norm, axis=axis)
@@ -176,8 +176,8 @@ def test_normalize():
                 yield __test_fail, X, norm, axis
 
 
-@srand
 def test_axis_sort():
+    srand()
 
     def __test_pass(data, axis, index, value):
 
@@ -226,8 +226,8 @@ def test_axis_sort():
 
 def test_match_intervals():
 
-    @srand
     def __make_intervals(n):
+        srand()
         return np.cumsum(np.abs(np.random.randn(n, 2)), axis=1)
 
     def __compare(i1, i2):
@@ -272,8 +272,8 @@ def test_match_intervals():
 
 def test_match_events():
 
-    @srand
     def __make_events(n):
+        srand()
         return np.abs(np.random.randn(n))
 
     def __is_best(y, ev1, ev2):
@@ -308,8 +308,8 @@ def test_match_events():
 
 def test_localmax():
 
-    @srand
     def __test(ndim, axis):
+        srand()
 
         data = np.random.randn(*([20] * ndim))
 
@@ -338,8 +338,8 @@ def test_localmax():
 
 def test_peak_pick():
 
-    @srand
     def __test(n, pre_max, post_max, pre_avg, post_avg, delta, wait):
+        srand()
 
         # Generate a test signal
         x = np.random.randn(n)**2
@@ -406,8 +406,8 @@ def test_peak_pick():
 
 def test_sparsify_rows():
 
-    @srand
     def __test(n, d, q):
+        srand()
 
         X = np.random.randn(*([d] * n))**4
 
@@ -714,8 +714,8 @@ def test_sync():
         yield __test_fail, data, bad_idx
 
 
-@srand
 def test_roll_sparse():
+    srand()
 
     def __test(fmt, shift, axis, X):
 
@@ -753,8 +753,8 @@ def test_roll_sparse_bad_axis():
 
 def test_softmask():
 
-    @srand
     def __test(power, split_zeros):
+        srand()
 
         X = np.abs(np.random.randn(10, 10))
         X_ref = np.abs(np.random.randn(10, 10))

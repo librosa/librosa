@@ -71,7 +71,6 @@ def test_delta():
                         yield tf, width, order, axis, slope * x + bias
 
 
-@srand
 def test_stack_memory():
 
     def __test(data, n_steps, delay):
@@ -93,6 +92,8 @@ def test_stack_memory():
                 assert np.allclose(data[i, :- step * delay],
                                    data_stack[step * d + i, step * delay:])
 
+    srand()
+
     for ndim in [1, 2]:
         data = np.random.randn(* ([5] * ndim))
 
@@ -107,7 +108,6 @@ def test_stack_memory():
 
 
 # spectral submodule
-@srand
 def test_spectral_centroid_synthetic():
 
     k = 5
@@ -120,6 +120,7 @@ def test_spectral_centroid_synthetic():
 
         assert np.allclose(cent, freq[k])
 
+    srand()
     # construct a fake spectrogram
     sr = 22050
     n_fft = 1024
@@ -168,7 +169,6 @@ def test_spectral_centroid_empty():
     yield __test, None, sr, S
 
 
-@srand
 def test_spectral_bandwidth_synthetic():
     # This test ensures that a signal confined to a single frequency bin
     # always achieves 0 bandwidth
@@ -179,6 +179,7 @@ def test_spectral_bandwidth_synthetic():
 
         assert not np.any(bw)
 
+    srand()
     # construct a fake spectrogram
     sr = 22050
     n_fft = 1024
@@ -216,8 +217,9 @@ def test_spectral_bandwidth_errors():
     yield __test, S
 
 
-@srand
 def test_spectral_rolloff_synthetic():
+
+    srand()
 
     sr = 22050
     n_fft = 2048
@@ -399,9 +401,9 @@ def test_zcr_synthetic():
                     yield __test_zcr, rate, y, frame_length, hop_length, center
 
 
-@srand
 def test_poly_features_synthetic():
 
+    srand()
     sr = 22050
     n_fft = 2048
 
