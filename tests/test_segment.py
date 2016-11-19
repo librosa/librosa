@@ -24,8 +24,8 @@ __EXAMPLE_FILE = 'data/test1_22050.wav'
 
 def test_recurrence_matrix():
 
-    @srand
     def __test(n, k, width, sym, metric):
+        srand()
         # Make a data matrix
         data = np.random.randn(3, n)
 
@@ -66,9 +66,9 @@ def test_recurrence_matrix():
                         yield tester, n, k, width, sym, metric
 
 
-@srand
 def test_recurrence_sparse():
 
+    srand()
     data = np.random.randn(3, 100)
     D_sparse = librosa.segment.recurrence_matrix(data, sparse=True)
     D_dense = librosa.segment.recurrence_matrix(data, sparse=False)
@@ -77,9 +77,9 @@ def test_recurrence_sparse():
     assert np.allclose(D_sparse.todense(), D_dense)
 
 
-@srand
 def test_recurrence_distance():
 
+    srand()
     data = np.random.randn(3, 100)
     distance = squareform(pdist(data.T, metric='sqeuclidean'))
     rec = librosa.segment.recurrence_matrix(data, mode='distance',
@@ -92,8 +92,8 @@ def test_recurrence_distance():
 
 def test_recurrence_affinity():
 
-    @srand
     def __test(metric, bandwidth):
+        srand()
         data = np.random.randn(3, 100)
         distance = squareform(pdist(data.T, metric=metric))
         rec = librosa.segment.recurrence_matrix(data, mode='affinity',
@@ -117,9 +117,9 @@ def test_recurrence_affinity():
 
 
 @raises(librosa.ParameterError)
-@srand
 def test_recurrence_badmode():
 
+    srand()
     data = np.random.randn(3, 100)
 
     rec = librosa.segment.recurrence_matrix(data, mode='NOT A MODE',
@@ -128,17 +128,17 @@ def test_recurrence_badmode():
 
 
 @raises(librosa.ParameterError)
-@srand
 def test_recurrence_bad_bandwidth():
 
+    srand()
     data = np.random.randn(3, 100)
     rec = librosa.segment.recurrence_matrix(data, bandwidth=-2)
 
 
 def test_recurrence_to_lag():
 
-    @srand
     def __test(n, pad):
+        srand()
         data = np.random.randn(17, n)
 
         rec = librosa.segment.recurrence_matrix(data)
@@ -168,9 +168,9 @@ def test_recurrence_to_lag():
     yield __test_fail, (17, 17, 17)
 
 
-@srand
 def test_recurrence_to_lag_sparse():
 
+    srand()
     def __test(pad, axis, rec):
 
         rec_dense = rec.toarray()
@@ -192,8 +192,8 @@ def test_recurrence_to_lag_sparse():
 
 def test_lag_to_recurrence():
 
-    @srand
     def __test(n, pad):
+        srand()
         data = np.random.randn(17, n)
 
         rec = librosa.segment.recurrence_matrix(data)
@@ -218,9 +218,9 @@ def test_lag_to_recurrence():
     yield __test_fail, (17, 17, 17)
 
 
-@srand
 def test_lag_to_recurrence_sparse():
 
+    srand()
     def __test(axis, lag):
 
         lag_dense = lag.toarray()
@@ -242,9 +242,9 @@ def test_lag_to_recurrence_sparse():
             yield __test, axis, L
 
 @raises(librosa.ParameterError)
-@srand
 def test_lag_to_recurrence_sparse_badaxis():
 
+    srand()
 
     data = np.random.randn(3, 100)
     R = librosa.segment.recurrence_matrix(data, sparse=True)
@@ -260,8 +260,8 @@ def test_timelag_filter():
     def pos1_filter(_, X):
         return X
 
-    @srand
     def __test_positional(n):
+        srand()
         dpos0 = librosa.segment.timelag_filter(pos0_filter)
         dpos1 = librosa.segment.timelag_filter(pos1_filter, index=1)
 
