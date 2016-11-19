@@ -9,7 +9,7 @@ from nose.tools import raises, eq_
 
 import librosa
 
-from test_core import load
+from test_core import load, srand
 
 # Disable cache
 import os
@@ -71,6 +71,7 @@ def test_delta():
                         yield tf, width, order, axis, slope * x + bias
 
 
+@srand
 def test_stack_memory():
 
     def __test(data, n_steps, delay):
@@ -106,6 +107,7 @@ def test_stack_memory():
 
 
 # spectral submodule
+@srand
 def test_spectral_centroid_synthetic():
 
     k = 5
@@ -166,6 +168,7 @@ def test_spectral_centroid_empty():
     yield __test, None, sr, S
 
 
+@srand
 def test_spectral_bandwidth_synthetic():
     # This test ensures that a signal confined to a single frequency bin
     # always achieves 0 bandwidth
@@ -213,6 +216,7 @@ def test_spectral_bandwidth_errors():
     yield __test, S
 
 
+@srand
 def test_spectral_rolloff_synthetic():
 
     sr = 22050
@@ -395,6 +399,7 @@ def test_zcr_synthetic():
                     yield __test_zcr, rate, y, frame_length, hop_length, center
 
 
+@srand
 def test_poly_features_synthetic():
 
     sr = 22050

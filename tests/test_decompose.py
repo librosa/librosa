@@ -19,6 +19,9 @@ import sklearn.decomposition
 
 from nose.tools import raises
 
+from test_core import srand
+
+
 def test_default_decompose():
 
     X = np.array([[1, 2, 3, 4, 5, 6], [1, 1, 1.2, 1, 0.8, 1]])
@@ -38,6 +41,8 @@ def test_given_decompose():
 
     assert np.allclose(X, W.dot(H), rtol=1e-2, atol=1e-2)
 
+
+@srand
 def test_decompose_fit():
 
     D = sklearn.decomposition.NMF(random_state=0)
@@ -118,6 +123,7 @@ def test_complex_hpss():
     assert np.allclose(H + P, D)
 
 
+@srand
 def test_nn_filter_mean():
 
     X = np.random.randn(10, 100)
@@ -132,6 +138,8 @@ def test_nn_filter_mean():
 
     assert np.allclose(X_filtered, X.dot(rec.T))
 
+
+@srand
 def test_nn_filter_mean_rec():
 
     X = np.random.randn(10, 100)
@@ -151,6 +159,8 @@ def test_nn_filter_mean_rec():
     rec = librosa.util.normalize(rec, axis=1, norm=1)
     assert np.allclose(X_filtered[:, 3:], (X.dot(rec.T))[:, 3:])
 
+
+@srand
 def test_nn_filter_mean_rec_sparse():
 
     X = np.random.randn(10, 100)
@@ -164,6 +174,8 @@ def test_nn_filter_mean_rec_sparse():
     rec = librosa.util.normalize(rec.toarray(), axis=1, norm=1)
     assert np.allclose(X_filtered, (X.dot(rec.T)))
 
+
+@srand
 def test_nn_filter_avg():
 
     X = np.random.randn(10, 100)
@@ -179,6 +191,7 @@ def test_nn_filter_avg():
     assert np.allclose(X_filtered, X.dot(rec.T))
 
 
+@srand
 def test_nn_filter_badselfsim():
 
     @raises(librosa.ParameterError)

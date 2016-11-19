@@ -20,7 +20,8 @@ import glob
 import numpy as np
 import scipy.io
 import six
-from nose.tools import eq_, raises, nottest
+from nose.tools import eq_, raises
+from decorator import decorator
 import matplotlib
 matplotlib.use('Agg')
 
@@ -30,6 +31,12 @@ def files(pattern):
     test_files = glob.glob(pattern)
     test_files.sort()
     return test_files
+
+
+@decorator
+def srand(f, *args, **kwargs):
+    np.random.seed(628318530)
+    return f(*args, **kwargs)
 
 
 def load(infile):
@@ -290,6 +297,7 @@ def test_magphase():
     assert np.allclose(S * P, D)
 
 
+@srand
 def test_istft_reconstruction():
     from scipy.signal import bartlett, hann, hamming, blackman, blackmanharris
 
@@ -310,7 +318,6 @@ def test_istft_reconstruction():
         assert np.allclose(x, x_reconstructed, atol=atol)
 
     # White noise
-    np.random.seed(98765)
     x1 = np.random.randn(2 ** 15)
 
     # Sin wave
@@ -421,6 +428,7 @@ def test_get_duration_filename():
     assert np.allclose(duration_fn, duration_y)
 
 
+@srand
 def test_autocorrelate():
 
     def __test(y, truth, max_size, axis):
@@ -436,7 +444,6 @@ def test_autocorrelate():
 
         assert np.allclose(ac, truth[my_slice])
 
-    np.random.seed(128)
 
     # test with both real and complex signals
     for y in [np.random.randn(256, 256), np.exp(1.j * np.random.randn(256, 256))]:
@@ -471,6 +478,7 @@ def test_to_mono():
         yield __test, filename, mono
 
 
+@srand
 def test_zero_crossings():
 
     def __test(data, threshold, ref_magnitude, pad, zp):
@@ -816,6 +824,7 @@ def test_fmt_scale():
                 yield __test, 1./scale, n_fmt, 1, kind, y_res, y_orig, atol[kind]
 
 
+@srand
 def test_fmt_fail():
 
     @raises(librosa.ParameterError)
@@ -844,6 +853,7 @@ def test_fmt_fail():
     yield __test, 1, None, 1, np.ones(2)
 
 
+@srand
 def test_fmt_axis():
 
     y = np.random.randn(32, 32)
