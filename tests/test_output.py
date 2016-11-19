@@ -14,6 +14,7 @@ import numpy as np
 import tempfile
 from nose.tools import raises, eq_
 
+from test_core import srand
 
 def test_write_wav():
 
@@ -45,6 +46,7 @@ def test_write_wav():
             yield __test, mono, norm
 
 
+@srand
 def test_times_csv():
 
     def __test(times, annotations, sep):
@@ -86,6 +88,7 @@ def test_times_csv():
                         yield __test, times, annotations, sep
 
 
+@srand
 def test_annotation():
 
     def __test(times, annotations, sep):

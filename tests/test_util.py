@@ -20,6 +20,8 @@ import warnings
 
 import librosa
 
+from test_core import srand
+
 
 def test_example_audio_file():
 
@@ -29,6 +31,7 @@ def test_example_audio_file():
 def test_frame():
 
     # Generate a random time series
+    @srand
     def __test(P):
         frame, hop = P
 
@@ -95,6 +98,7 @@ def test_fix_length():
                 yield __test, y, n + y.shape[axis], axis
 
 
+@srand
 def test_fix_frames():
 
     @raises(librosa.ParameterError)
@@ -132,6 +136,7 @@ def test_fix_frames():
                             yield __test_pass, frames, x_min, x_max, pad
 
 
+@srand
 def test_normalize():
 
     def __test_pass(X, norm, axis):
@@ -171,6 +176,7 @@ def test_normalize():
                 yield __test_fail, X, norm, axis
 
 
+@srand
 def test_axis_sort():
 
     def __test_pass(data, axis, index, value):
@@ -220,6 +226,7 @@ def test_axis_sort():
 
 def test_match_intervals():
 
+    @srand
     def __make_intervals(n):
         return np.cumsum(np.abs(np.random.randn(n, 2)), axis=1)
 
@@ -265,6 +272,7 @@ def test_match_intervals():
 
 def test_match_events():
 
+    @srand
     def __make_events(n):
         return np.abs(np.random.randn(n))
 
@@ -300,6 +308,7 @@ def test_match_events():
 
 def test_localmax():
 
+    @srand
     def __test(ndim, axis):
 
         data = np.random.randn(*([20] * ndim))
@@ -329,6 +338,7 @@ def test_localmax():
 
 def test_peak_pick():
 
+    @srand
     def __test(n, pre_max, post_max, pre_avg, post_avg, delta, wait):
 
         # Generate a test signal
@@ -396,6 +406,7 @@ def test_peak_pick():
 
 def test_sparsify_rows():
 
+    @srand
     def __test(n, d, q):
 
         X = np.random.randn(*([d] * n))**4
@@ -703,6 +714,7 @@ def test_sync():
         yield __test_fail, data, bad_idx
 
 
+@srand
 def test_roll_sparse():
 
     def __test(fmt, shift, axis, X):
@@ -741,6 +753,7 @@ def test_roll_sparse_bad_axis():
 
 def test_softmask():
 
+    @srand
     def __test(power, split_zeros):
 
         X = np.abs(np.random.randn(10, 10))
