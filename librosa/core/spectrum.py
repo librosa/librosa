@@ -16,8 +16,7 @@ from ..util.exceptions import ParameterError
 from ..filters import get_window
 
 __all__ = ['stft', 'istft', 'magphase',
-           'ifgram',
-           'phase_vocoder',
+           'ifgram', 'phase_vocoder',
            'logamplitude', 'perceptual_weighting',
            'fmt']
 
@@ -54,7 +53,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
         If unspecified, defaults to ``win_length = n_fft``.
 
     window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
-        - a window specification (string, tuple, or number); 
+        - a window specification (string, tuple, or number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.hanning`
         - a vector or array of length `n_fft`
