@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-'''Pitch-tracking and tuning estimation'''
+'''Constant-Q transforms'''
 from __future__ import division
 
 import numpy as np
@@ -20,7 +20,7 @@ __all__ = ['cqt', 'hybrid_cqt', 'pseudo_cqt']
 
 @cache(level=20)
 def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
-        bins_per_octave=12, tuning=None, filter_scale=1,
+        bins_per_octave=12, tuning=0.0, filter_scale=1,
         norm=1, sparsity=0.01, window='hann',
         scale=True,
         real=util.Deprecated()):
@@ -56,7 +56,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     tuning : None or float in `[-0.5, 0.5)`
         Tuning offset in fractions of a bin (cents).
 
-        If `None`, tuning will be automatically estimated.
+        If `None`, tuning will be automatically estimated from the signal.
 
     filter_scale : float > 0
         Filter scale factor. Small values (<1) use shorter windows
@@ -263,7 +263,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
 @cache(level=20)
 def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
-               bins_per_octave=12, tuning=None, filter_scale=1,
+               bins_per_octave=12, tuning=0.0, filter_scale=1,
                norm=1, sparsity=0.01, window='hann', scale=True):
     '''Compute the hybrid constant-Q transform of an audio signal.
 
@@ -294,7 +294,7 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     tuning : None or float in `[-0.5, 0.5)`
         Tuning offset in fractions of a bin (cents).
 
-        If `None`, tuning will be automatically estimated.
+        If `None`, tuning will be automatically estimated from the signal.
 
     filter_scale : float > 0
         Filter filter_scale factor. Larger values use longer windows.
@@ -396,7 +396,7 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
 @cache(level=20)
 def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
-               bins_per_octave=12, tuning=None, filter_scale=1,
+               bins_per_octave=12, tuning=0.0, filter_scale=1,
                norm=1, sparsity=0.01, window='hann', scale=True):
     '''Compute the pseudo constant-Q transform of an audio signal.
 
@@ -429,7 +429,7 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     tuning : None or float in `[-0.5, 0.5)`
         Tuning offset in fractions of a bin (cents).
 
-        If `None`, tuning will be automatically estimated.
+        If `None`, tuning will be automatically estimated from the signal.
 
     filter_scale : float > 0
         Filter filter_scale factor. Larger values use longer windows.
