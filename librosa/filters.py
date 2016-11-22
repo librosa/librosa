@@ -391,7 +391,7 @@ def __float_window(window_spec):
         '''The wrapped window'''
         n_min, n_max = int(np.floor(n)), int(np.ceil(n))
 
-        window = get_window(window_spec, n)
+        window = get_window(window_spec, n_min)
 
         if len(window) < n_max:
             window = np.pad(window, [(0, n_max - len(window))],
