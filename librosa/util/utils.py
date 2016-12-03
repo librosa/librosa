@@ -1464,7 +1464,8 @@ def softmask(X, X_ref, power=1, split_zeros=False):
            [False, False,  True]], dtype=bool)
     '''
     if X.shape != X_ref.shape:
-        raise ParameterError('Shape mismatch: {}!={}'.format(X.shape, X_ref.shape))
+        raise ParameterError('Shape mismatch: {}!={}'.format(X.shape,
+                                                             X_ref.shape))
 
     if np.any(X < 0) or np.any(X_ref < 0):
         raise ParameterError('X and X_ref must be non-negative')
@@ -1485,7 +1486,9 @@ def softmask(X, X_ref, power=1, split_zeros=False):
     # For finite power, compute the softmask
     if np.isfinite(power):
         mask = (X / Z)**power
-        mask /= mask + (X_ref / Z)**power
+        ref_mask = (X_ref / Z)**power
+        good_idx = ~bad_idx
+        mask[good_idx] /= mask[good_idx] + ref_mask[good_idx]
         # Wherever energy is below energy in both inputs, split the mask
         if split_zeros:
             mask[bad_idx] = 0.5

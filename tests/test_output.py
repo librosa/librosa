@@ -14,6 +14,7 @@ import numpy as np
 import tempfile
 from nose.tools import raises, eq_
 
+from test_core import srand
 
 def test_write_wav():
 
@@ -75,6 +76,7 @@ def test_times_csv():
 
     __test_fail = raises(librosa.ParameterError)(__test)
 
+    srand()
     for times in [[], np.linspace(0, 10, 20)]:
         for annotations in [None, ['abcde'[q] for q in np.random.randint(0, 5,
                                    size=len(times))], list('abcde')]:
@@ -119,6 +121,7 @@ def test_annotation():
 
     __test_fail = raises(librosa.ParameterError)(__test)
 
+    srand()
     times = np.random.randn(20, 2)
 
     for annotations in [None, ['abcde'[q] for q in np.random.randint(0, 5,
