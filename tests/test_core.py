@@ -315,7 +315,7 @@ def test_salience_defaults():
     freqs = np.array([50.0, 100.0, 200.0, 400.0])
     harms = [0.5, 1, 2]
     actual = librosa.core.salience(
-        S, freqs, harms, kind='quadratic'
+        S, freqs, harms, kind='quadratic', fill_value=0.0
     )
 
     expected = np.array([
@@ -337,7 +337,7 @@ def test_salience_weights():
     harms = [0.5, 1, 2]
     weights = [1.0, 1.0, 1.0]
     actual = librosa.core.salience(
-        S, freqs, harms, weights, kind='quadratic'
+        S, freqs, harms, weights, kind='quadratic', fill_value=0.0
     )
 
     expected = np.array([
@@ -385,10 +385,10 @@ def test_salience_aggregate():
     )
 
     expected = np.array([
-        [0.0, 0.0, 0.0],
+        [np.nan, np.nan, np.nan],
         [0.2, 1.2, 1.2],
-        [0.0, 0.0, 0.0],
-        [0.0, 0.0, 0.0]
+        [np.nan, np.nan, np.nan],
+        [np.nan, np.nan, np.nan]
     ]) 
     assert np.allclose(expected, actual)
 
