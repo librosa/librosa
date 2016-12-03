@@ -13,57 +13,44 @@ __all__ = ['salience', 'harmonics']
 def salience(S, freqs, h_range, weights=None, aggregate=None,
              filter_peaks=True, kind='linear', axis=0):
     """Harmonic salience function.
-
     Parameters
     ----------
     S : np.ndarray [shape=(d, n)]
         input time frequency magnitude representation (stft, ifgram, etc).
         Must be real-valued and non-negative.
-
     freqs : np.ndarray, shape=(S.shape[axis])
         The frequency values corresponding to S's elements along the
         chosen axis.
-
     h_range : list-like, non-negative
         Harmonics to include in salience computation.  The first harmonic (1)
         corresponds to `S` itself. Values less than one (e.g., 1/2) correspond
         to sub-harmonics.
-
     weights : list-like
         The weight to apply to each harmonic in the summation. (default:
         uniform weights). Must be the same length as `harmonics`.
-
     aggregate : function
-        aggregation function (default: `np.ma.average`)
+        aggregation function (default: `np.average`)
         If `aggregate=np.average`, then a weighted average is
         computed per-harmonic according to the specified weights.
         For all other aggregation functions, all harmonics
         are treated equally.
-
     filter_peaks : bool
-        If true, computes harmonic summation only on frequencies of peak
-        magnitude. Otherwise computes harmonic summation over the full spectrum.
+        If true, returns harmonic summation only on frequencies of peak
+        magnitude. Otherwise returns harmonic summation over the full spectrum.
         Defaults to True.
-
     kind : str
         Interpolation type for harmonic estimation.
         See `scipy.interpolate.interp1d`.
-
     axis : int
         The axis along which to compute harmonics
-
     Returns
     -------
     S_sal : np.ndarray, shape=(len(h_range), [x.shape])
         `S_sal` will have the same shape as `S`, and measure
         the overal harmonic energy at each frequency.
-
-
     See Also
     --------
     core.harmonics
-
-
     Examples
     --------
     >>> y, sr = librosa.load(librosa.util.example_audio_file(),
@@ -75,17 +62,15 @@ def salience(S, freqs, h_range, weights=None, aggregate=None,
     >>> S_sal = librosa.salience(S, freqs, harms, weights)
     >>> print(S_sal.shape)
     (1025, 646)
-
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
     >>> librosa.display.specshow(librosa.logamplitude(S_sal**2,
     ...                                               ref_power=S_sal.max()*2),
     ...                          sr=sr, y_axis='log')
     >>> plt.tight_layout()
-
     """
-    if aggregate is None or aggregate is np.average:
-        aggregate = np.ma.average
+    if aggregate is None:
+        aggregate = np.average
 
     if weights is None:
         weights = np.ones((len(h_range), ))
@@ -94,19 +79,16 @@ def salience(S, freqs, h_range, weights=None, aggregate=None,
 
     S_harm = harmonics(S, freqs, h_range, kind=kind, axis=axis)
 
+    if aggregate is np.average:
+        S_sal = aggregate(S_harm, axis=0, weights=weights)
+    else:
+        S_sal = aggregate(S_harm, axis=0)
+
     if filter_peaks:
         S_peaks = scipy.signal.argrelmax(S, axis=0)
-        peak_mask = np.ones(S_harm.shape)
-        peak_mask[:, S_peaks[0], S_peaks[1]] = 0
-    else:
-        peak_mask = np.zeros(S_harm.shape)
-
-    S_mask = np.ma.masked_array(S_harm, mask=peak_mask)
-
-    if aggregate is np.ma.average:
-        S_sal = aggregate(S_mask, axis=0, weights=weights)
-    else:
-        S_sal = aggregate(S_mask, axis=0)
+        peak_mask = np.zeros(S_harm.shape).astype(bool)
+        peak_mask[:, S_peaks[0], S_peaks[1]] = True
+        S_sal[peak_mask] = 0.0
 
     return S_sal
 
