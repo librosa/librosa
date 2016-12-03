@@ -282,7 +282,6 @@ def test_ifgram_if():
 
             yield tf, ref_power, clip
 
-
 def test_salience_basecase():
     (y, sr) = librosa.load('data/test1_22050.wav')
     S = np.abs(librosa.stft(y))
