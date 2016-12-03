@@ -11,8 +11,9 @@ __all__ = ['salience', 'harmonics']
 
 
 def salience(S, freqs, h_range, weights=None, aggregate=None,
-             filter_peaks=True, kind='linear', axis=0):
+             filter_peaks=True, fill_value=np.nan,  kind='linear', axis=0):
     """Harmonic salience function.
+
     Parameters
     ----------
     S : np.ndarray [shape=(d, n)]
@@ -38,6 +39,9 @@ def salience(S, freqs, h_range, weights=None, aggregate=None,
         If true, returns harmonic summation only on frequencies of peak
         magnitude. Otherwise returns harmonic summation over the full spectrum.
         Defaults to True.
+    fill_value : float
+        The value to fill non-peaks in the output representation. (default:
+        np.nan) Only used if fitler_peaks = True.
     kind : str
         Interpolation type for harmonic estimation.
         See `scipy.interpolate.interp1d`.
@@ -86,9 +90,11 @@ def salience(S, freqs, h_range, weights=None, aggregate=None,
 
     if filter_peaks:
         S_peaks = scipy.signal.argrelmax(S, axis=0)
-        peak_mask = np.zeros(S_harm.shape).astype(bool)
-        peak_mask[:, S_peaks[0], S_peaks[1]] = True
-        S_sal[peak_mask] = 0.0
+        S_out = np.empty(S.shape)
+        S_out.fill(fill_value)
+        S_out[S_peaks[0], S_peaks[1]] = S_sal[S_peaks[0], S_peaks[1]]
+
+        S_sal = S_out
 
     return S_sal
 
