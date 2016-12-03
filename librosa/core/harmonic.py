@@ -34,15 +34,15 @@ def salience(S, freqs, h_range, weights=None, aggregate=None,
         uniform weights). Must be the same length as `harmonics`.
 
     aggregate : function
-        aggregation function (default: `np.ma.average`)
+        aggregation function (default: `np.average`)
         If `aggregate=np.average`, then a weighted average is
         computed per-harmonic according to the specified weights.
         For all other aggregation functions, all harmonics
         are treated equally.
 
     filter_peaks : bool
-        If true, computes harmonic summation only on frequencies of peak
-        magnitude. Otherwise computes harmonic summation over the full spectrum.
+        If true, returns harmonic summation only on frequencies of peak
+        magnitude. Otherwise returns harmonic summation over the full spectrum.
         Defaults to True.
 
     kind : str
@@ -84,8 +84,8 @@ def salience(S, freqs, h_range, weights=None, aggregate=None,
     >>> plt.tight_layout()
 
     """
-    if aggregate is None or aggregate is np.average:
-        aggregate = np.ma.average
+    if aggregate is None:
+        aggregate = np.average
 
     if weights is None:
         weights = np.ones((len(h_range), ))
@@ -94,19 +94,16 @@ def salience(S, freqs, h_range, weights=None, aggregate=None,
 
     S_harm = harmonics(S, freqs, h_range, kind=kind, axis=axis)
 
+    if aggregate is np.average:
+        S_sal = aggregate(S_harm, axis=0, weights=weights)
+    else:
+        S_sal = aggregate(S_harm, axis=0)
+
     if filter_peaks:
         S_peaks = scipy.signal.argrelmax(S, axis=0)
-        peak_mask = np.ones(S_harm.shape)
-        peak_mask[:, S_peaks[0], S_peaks[1]] = 0
-    else:
-        peak_mask = np.zeros(S_harm.shape)
-
-    S_mask = np.ma.masked_array(S_harm, mask=peak_mask)
-
-    if aggregate is np.ma.average:
-        S_sal = aggregate(S_mask, axis=0, weights=weights)
-    else:
-        S_sal = aggregate(S_mask, axis=0)
+        peak_mask = np.zeros(S_harm.shape).astype(bool)
+        peak_mask[:, S_peaks[0], S_peaks[1]] = True
+        S_sal[peak_mask] = 0.0
 
     return S_sal
 
