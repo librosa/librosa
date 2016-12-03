@@ -381,14 +381,15 @@ def test_salience_aggregate():
     harms = [0.5, 1, 2]
     weights = [1.0, 1.0, 1.0]
     actual = librosa.core.salience(
-        S, freqs, harms, weights, aggregate=np.ma.max, kind='quadratic'
+        S, freqs, harms, weights, aggregate=np.ma.max, kind='quadratic',
+        fill_value=0.0
     )
 
     expected = np.array([
-        [np.nan, np.nan, np.nan],
+        [0.0, 0.0, 0.0],
         [0.2, 1.2, 1.2],
-        [np.nan, np.nan, np.nan],
-        [np.nan, np.nan, np.nan]
+        [0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0]
     ]) 
     assert np.allclose(expected, actual)
 
