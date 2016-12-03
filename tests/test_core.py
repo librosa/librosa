@@ -20,7 +20,7 @@ import glob
 import numpy as np
 import scipy.io
 import six
-from nose.tools import eq_, raises, nottest
+from nose.tools import eq_, raises, make_decorator
 import matplotlib
 matplotlib.use('Agg')
 
@@ -31,6 +31,10 @@ def files(pattern):
     test_files.sort()
     return test_files
 
+
+def srand(seed=628318530):
+    np.random.seed(seed)
+    pass
 
 def load(infile):
     return scipy.io.loadmat(infile, chars_as_strings=True)
@@ -278,16 +282,114 @@ def test_ifgram_if():
 
             yield tf, ref_power, clip
 
-
-def test_salience():
+def test_salience_basecase():
     (y, sr) = librosa.load('data/test1_22050.wav')
-    S = librosa.stft(y)
+    S = np.abs(librosa.stft(y))
     freqs = librosa.core.fft_frequencies(sr)
-    harmonics = [1, 2]
-    weights = [1.0, 0.5]
-    S_sal = librosa.core.salience(S, freqs, harmonics, weights)
-    #TODO
+    harms = [1]
+    weights = [1.0]
+    S_sal = librosa.core.salience(
+        S, freqs, harms, weights, filter_peaks=False, kind='quadratic'
+    )
+    assert np.allclose(S_sal, S)
 
+def test_salience_basecase2():
+    (y, sr) = librosa.load('data/test1_22050.wav')
+    S = np.abs(librosa.stft(y))
+    freqs = librosa.core.fft_frequencies(sr)
+    harms = [1, 0.5, 2.0]
+    weights = [1.0, 0.0, 0.0]
+    S_sal = librosa.core.salience(
+        S, freqs, harms, weights, filter_peaks=False, kind='quadratic'
+    )
+    assert np.allclose(S_sal, S)
+
+def test_salience_defaults():
+    S = np.array([
+        [0.1, 0.5, 0.0],
+        [0.2, 1.2, 1.2],
+        [0.0, 0.7, 0.3],
+        [1.3, 3.2, 0.8]
+    ])
+    freqs = np.array([50.0, 100.0, 200.0, 400.0])
+    harms = [0.5, 1, 2]
+    actual = librosa.core.salience(
+        S, freqs, harms, kind='quadratic'
+    )
+
+    expected = np.array([
+        [0.0, 0.0, 0.0],
+        [0.3, 2.4, 1.5],
+        [0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0]
+    ]) / 3.0
+    assert np.allclose(expected, actual)
+
+def test_salience_weights():
+    S = np.array([
+        [0.1, 0.5, 0.0],
+        [0.2, 1.2, 1.2],
+        [0.0, 0.7, 0.3],
+        [1.3, 3.2, 0.8]
+    ])
+    freqs = np.array([50.0, 100.0, 200.0, 400.0])
+    harms = [0.5, 1, 2]
+    weights = [1.0, 1.0, 1.0]
+    actual = librosa.core.salience(
+        S, freqs, harms, weights, kind='quadratic'
+    )
+
+    expected = np.array([
+        [0.0, 0.0, 0.0],
+        [0.3, 2.4, 1.5],
+        [0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0]
+    ]) / 3.0
+    assert np.allclose(expected, actual)
+
+def test_salience_no_peak_filter():
+    S = np.array([
+        [0.1, 0.5, 0.0],
+        [0.2, 1.2, 1.2],
+        [0.0, 0.7, 0.3],
+        [1.3, 3.2, 0.8]
+    ])
+    freqs = np.array([50.0, 100.0, 200.0, 400.0])
+    harms = [0.5, 1, 2]
+    weights = [1.0, 1.0, 1.0]
+    actual = librosa.core.salience(
+        S, freqs, harms, weights, filter_peaks=False, kind='quadratic'
+    )
+
+    expected = np.array([
+        [0.3, 1.7, 1.2],
+        [0.3, 2.4, 1.5],
+        [1.5, 5.1, 2.3],
+        [1.3, 3.9, 1.1]
+    ]) / 3.0
+    assert np.allclose(expected, actual)
+
+def test_salience_aggregate():
+    S = np.array([
+        [0.1, 0.5, 0.0],
+        [0.2, 1.2, 1.2],
+        [0.0, 0.7, 0.3],
+        [1.3, 3.2, 0.8]
+    ])
+    freqs = np.array([50.0, 100.0, 200.0, 400.0])
+    harms = [0.5, 1, 2]
+    weights = [1.0, 1.0, 1.0]
+    actual = librosa.core.salience(
+        S, freqs, harms, weights, aggregate=np.ma.max, kind='quadratic'
+    )
+
+    expected = np.array([
+        [0.0, 0.0, 0.0],
+        [0.2, 1.2, 1.2],
+        [0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0]
+    ]) 
+    assert np.allclose(expected, actual)
 
 def test_magphase():
 
@@ -319,8 +421,8 @@ def test_istft_reconstruction():
         # should be almost approximately reconstucted
         assert np.allclose(x, x_reconstructed, atol=atol)
 
+    srand()
     # White noise
-    np.random.seed(98765)
     x1 = np.random.randn(2 ** 15)
 
     # Sin wave
@@ -446,8 +548,8 @@ def test_autocorrelate():
 
         assert np.allclose(ac, truth[my_slice])
 
-    np.random.seed(128)
 
+    srand()
     # test with both real and complex signals
     for y in [np.random.randn(256, 256), np.exp(1.j * np.random.randn(256, 256))]:
 
@@ -499,6 +601,7 @@ def test_zero_crossings():
         for i in idx:
             assert np.sign(data[i]) != np.sign(data[i-1])
 
+    srand()
     data = np.random.randn(32)
 
     for threshold in [None, 0, 1e-10]:
@@ -832,6 +935,7 @@ def test_fmt_fail():
     def __test(t_min, n_fmt, over_sample, y):
         librosa.fmt(y, t_min=t_min, n_fmt=n_fmt, over_sample=over_sample)
 
+    srand()
     y = np.random.randn(256)
 
     # Test for bad t_min
@@ -856,6 +960,7 @@ def test_fmt_fail():
 
 def test_fmt_axis():
 
+    srand()
     y = np.random.randn(32, 32)
 
     f1 = librosa.fmt(y, axis=-1)
