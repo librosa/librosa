@@ -7,7 +7,7 @@ import scipy.interpolate
 import scipy.signal
 from ..util.exceptions import ParameterError
 
-__all__ = ['salience', 'harmonics']
+__all__ = ['salience', 'interp_harmonics']
 
 
 def salience(S, freqs, h_range, weights=None, aggregate=None,
@@ -81,7 +81,7 @@ def salience(S, freqs, h_range, weights=None, aggregate=None,
     else:
         weights = np.array(weights, dtype=float)
 
-    S_harm = harmonics(S, freqs, h_range, kind=kind, axis=axis)
+    S_harm = interp_harmonics(S, freqs, h_range, kind=kind, axis=axis)
 
     if aggregate is np.average:
         S_sal = aggregate(S_harm, axis=0, weights=weights)
@@ -99,7 +99,7 @@ def salience(S, freqs, h_range, weights=None, aggregate=None,
     return S_sal
 
 
-def harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
+def interp_harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
     '''Compute the energy at harmonics of time-frequency representation.
 
     Given a frequency-based energy representation such as a spectrogram
@@ -155,7 +155,7 @@ def harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
     >>> h_range = [1, 2, 3, 4, 5]
     >>> f_tempo = librosa.tempo_frequencies(len(tempi), sr=sr)
     >>> # Build the harmonic tensor
-    >>> t_harmonics = librosa.harmonics(tempi, f_tempo, h_range)
+    >>> t_harmonics = librosa.interp_harmonics(tempi, f_tempo, h_range)
     >>> print(t_harmonics.shape)
     (5, 384)
 
@@ -175,7 +175,7 @@ def harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
     >>> h_range = [1./3, 1./2, 1, 2, 3, 4]
     >>> S = np.abs(librosa.stft(y))
     >>> fft_freqs = librosa.fft_frequencies(sr=sr)
-    >>> S_harm = librosa.harmonics(S, fft_freqs, h_range, axis=0)
+    >>> S_harm = librosa.interp_harmonics(S, fft_freqs, h_range, axis=0)
     >>> print(S_harm.shape)
     (6, 1025, 646)
 
@@ -262,7 +262,7 @@ def harmonics_1d(harmonic_out, x, freqs, h_range, kind='linear',
     >>> h_range = [1, 2, 3, 4, 5]
     >>> f_tempo = librosa.tempo_frequencies(len(tempi), sr=sr)
     >>> # Build the harmonic tensor
-    >>> t_harmonics = librosa.harmonics(tempi, f_tempo, h_range)
+    >>> t_harmonics = librosa.interp_harmonics(tempi, f_tempo, h_range)
     >>> print(t_harmonics.shape)
     (5, 384)
 
@@ -282,7 +282,7 @@ def harmonics_1d(harmonic_out, x, freqs, h_range, kind='linear',
     >>> h_range = [1./3, 1./2, 1, 2, 3, 4]
     >>> S = np.abs(librosa.stft(y))
     >>> fft_freqs = librosa.fft_frequencies(sr=sr)
-    >>> S_harm = librosa.harmonics(S, fft_freqs, h_range, axis=0)
+    >>> S_harm = librosa.interp_harmonics(S, fft_freqs, h_range, axis=0)
     >>> print(S_harm.shape)
     (6, 1025, 646)
 
