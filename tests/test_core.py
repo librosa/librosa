@@ -978,7 +978,7 @@ def test_harmonics_1d():
 
     h = [0.25, 0.5, 1, 2, 4]
 
-    yh = librosa.harmonics(y, x, h)
+    yh = librosa.interp_harmonics(y, x, h)
 
     eq_(yh.shape[1:], y.shape)
     eq_(yh.shape[0], len(h))
@@ -1002,7 +1002,7 @@ def test_harmonics_2d():
     y = np.tile(y, (5, 1)).T
     h = [0.25, 0.5, 1, 2, 4]
 
-    yh = librosa.harmonics(y, x, h, axis=0)
+    yh = librosa.interp_harmonics(y, x, h, axis=0)
 
     eq_(yh.shape[1:], y.shape)
     eq_(yh.shape[0], len(h))
@@ -1023,13 +1023,13 @@ def test_harmonics_2d():
 def test_harmonics_badshape_1d():
     freqs = np.zeros(100)
     obs = np.zeros((5, 10))
-    librosa.harmonics(obs, freqs, [1])
+    librosa.interp_harmonics(obs, freqs, [1])
 
 @raises(librosa.ParameterError)
 def test_harmonics_badshape_2d():
     freqs = np.zeros((5, 5))
     obs = np.zeros((5, 10))
-    librosa.harmonics(obs, freqs, [1])
+    librosa.interp_harmonics(obs, freqs, [1])
 
 
 def test_harmonics_2d_varying():
@@ -1040,7 +1040,7 @@ def test_harmonics_2d_varying():
     y = np.tile(y, (5, 1)).T
     h = [0.25, 0.5, 1, 2, 4]
 
-    yh = librosa.harmonics(y, x, h, axis=0)
+    yh = librosa.interp_harmonics(y, x, h, axis=0)
 
     eq_(yh.shape[1:], y.shape)
     eq_(yh.shape[0], len(h))
