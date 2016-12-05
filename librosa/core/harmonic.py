@@ -47,14 +47,17 @@ def salience(S, freqs, h_range, weights=None, aggregate=None,
         See `scipy.interpolate.interp1d`.
     axis : int
         The axis along which to compute harmonics
+
     Returns
     -------
     S_sal : np.ndarray, shape=(len(h_range), [x.shape])
         `S_sal` will have the same shape as `S`, and measure
         the overal harmonic energy at each frequency.
+
     See Also
     --------
-    core.harmonics
+    core.interp_harmonics
+
     Examples
     --------
     >>> y, sr = librosa.load(librosa.util.example_audio_file(),
