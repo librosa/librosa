@@ -30,7 +30,7 @@ Spectral representations
     pseudo_cqt
     fmt
 
-    harmonics
+    interp_harmonics
 
     phase_vocoder
 
