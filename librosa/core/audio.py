@@ -3,7 +3,6 @@
 """Core IO, DSP and utility functions."""
 
 import os
-import warnings
 import six
 
 import audioread
@@ -18,23 +17,11 @@ from .. import util
 from ..util.exceptions import ParameterError
 
 __all__ = ['load', 'to_mono', 'resample', 'get_duration',
-           'autocorrelate', 'zero_crossings', 'clicks',
-           # Deprecated functions
-           'peak_pick', 'localmax']
+           'autocorrelate', 'zero_crossings', 'clicks']
 
 # Resampling bandwidths as percentage of Nyquist
-# http://resampy.readthedocs.org/en/latest/api.html#module-resampy.filters
-BW_BEST = 0.9476
-BW_FASTEST = 0.85
-
-# Do we have scikits.samplerate?
-try:
-    # Pylint won't handle dynamic imports, so we suppress this warning
-    import scikits.samplerate as samplerate  # pylint: disable=import-error
-    _HAS_SAMPLERATE = True
-except ImportError:
-    _HAS_SAMPLERATE = False
-
+BW_BEST = resampy.filters.get_filter('kaiser_best')[2]
+BW_FASTEST = resampy.filters.get_filter('kaiser_fast')[2]
 
 # -- CORE ROUTINES --#
 # Load should never be cached, since we cannot verify that the contents of
@@ -165,7 +152,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
     return (y, sr)
 
 
-@cache
+@cache(level=20)
 def to_mono(y):
     '''Force an audio signal down to mono.
 
@@ -178,6 +165,10 @@ def to_mono(y):
     -------
     y_mono : np.ndarray [shape=(n,)]
         `y` as a monophonic time-series
+
+    Notes
+    -----
+    This function caches at level 20.
 
     Examples
     --------
@@ -199,7 +190,7 @@ def to_mono(y):
     return y
 
 
-@cache
+@cache(level=20)
 def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=False, **kwargs):
     """Resample a time series from orig_sr to target_sr
 
@@ -219,12 +210,8 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
 
         .. note::
             By default, this uses `resampy`'s high-quality mode ('kaiser_best').
-            If `res_type` is not recognized by `resampy.resample`, it then
-            falls back on `scikits.samplerate` (if it is installed)
 
-            If both of those fail, it will fall back on `scipy.signal.resample`.
-
-            To force use of `scipy.signal.resample`, set `res_type='scipy'`.
+            To use `scipy.signal.resample`, set `res_type='scipy'`.
 
     fix : bool
         adjust the length of the resampled signal to be of size exactly
@@ -248,6 +235,11 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
     --------
     librosa.util.fix_length
     scipy.signal.resample
+    resampy.resample
+
+    Notes
+    -----
+    This function caches at level 20.
 
     Examples
     --------
@@ -270,17 +262,10 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
 
     n_samples = int(np.ceil(y.shape[-1] * ratio))
 
-    try:
+    if res_type == 'scipy':
+        y_hat = scipy.signal.resample(y, n_samples, axis=-1)
+    else:
         y_hat = resampy.resample(y, orig_sr, target_sr, filter=res_type, axis=-1)
-    except NotImplementedError:
-        if _HAS_SAMPLERATE and (res_type != 'scipy'):
-            warnings.warn('scikits.samplerate resampling is deprecated as '
-                          'of librosa version 0.4.3.\n\tSupport will be '
-                          'removed in librosa version 0.5.',
-                          category=DeprecationWarning)
-            y_hat = samplerate.resample(y.T, ratio, res_type).T
-        else:
-            y_hat = scipy.signal.resample(y, n_samples, axis=-1)
 
     if fix:
         y_hat = util.fix_length(y_hat, n_samples, **kwargs)
@@ -378,7 +363,7 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     return float(n_samples) / sr
 
 
-@cache
+@cache(level=20)
 def autocorrelate(y, max_size=None, axis=-1):
     """Bounded auto-correlation
 
@@ -402,14 +387,17 @@ def autocorrelate(y, max_size=None, axis=-1):
         If `max_size` is specified, then `z.shape[axis]` is bounded
         to `max_size`.
 
+    Notes
+    -----
+    This function caches at level 20.
+
     Examples
     --------
     Compute full autocorrelation of y
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), offset=20, duration=10)
     >>> librosa.autocorrelate(y)
-    array([  1.584e+04,   1.580e+04, ...,  -1.154e-10,  -2.725e-13])
-
+    array([  3.226e+03,   3.217e+03, ...,   8.277e-04,   3.575e-04], dtype=float32)
 
     Compute onset strength auto-correlation up to 4 seconds
 
@@ -446,7 +434,7 @@ def autocorrelate(y, max_size=None, axis=-1):
     return autocorr
 
 
-@cache
+@cache(level=20)
 def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
                    zero_pos=True, axis=-1):
     '''Find the zero-crossings of a signal `y`: indices `i` such that
@@ -454,6 +442,42 @@ def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
 
     If `y` is multi-dimensional, then zero-crossings are computed along
     the specified `axis`.
+
+
+    Parameters
+    ----------
+    y : np.ndarray
+        The input array
+
+    threshold : float > 0 or None
+        If specified, values where `-threshold <= y <= threshold` are
+        clipped to 0.
+
+    ref_magnitude : float > 0 or callable
+        If numeric, the threshold is scaled relative to `ref_magnitude`.
+
+        If callable, the threshold is scaled relative to
+        `ref_magnitude(np.abs(y))`.
+
+    pad : boolean
+        If `True`, then `y[0]` is considered a valid zero-crossing.
+
+    zero_pos : boolean
+        If `True` then the value 0 is interpreted as having positive sign.
+
+        If `False`, then 0, -1, and +1 all have distinct signs.
+
+    axis : int
+        Axis along which to compute zero-crossings.
+
+    Returns
+    -------
+    zero_crossings : np.ndarray [shape=y.shape, dtype=boolean]
+        Indicator array of zero-crossings in `y` along the selected axis.
+
+    Notes
+    -----
+    This function caches at level 20.
 
     Examples
     --------
@@ -496,38 +520,6 @@ def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
     >>> # Find the indices of zero-crossings
     >>> np.nonzero(z)
     (array([ 0,  3,  5,  8, 10, 12, 15, 17, 19]),)
-
-
-    Parameters
-    ----------
-    y : np.ndarray
-        The input array
-
-    threshold : float > 0 or None
-        If specified, values where `-threshold <= y <= threshold` are
-        clipped to 0.
-
-    ref_magnitude : float > 0 or callable
-        If numeric, the threshold is scaled relative to `ref_magnitude`.
-
-        If callable, the threshold is scaled relative to
-        `ref_magnitude(np.abs(y))`.
-
-    pad : boolean
-        If `True`, then `y[0]` is considered a valid zero-crossing.
-
-    zero_pos : boolean
-        If `True` then the value 0 is interpreted as having positive sign.
-
-        If `False`, then 0, -1, and +1 all have distinct signs.
-
-    axis : int
-        Axis along which to compute zero-crossings.
-
-    Returns
-    -------
-    zero_crossings : np.ndarray [shape=y.shape, dtype=boolean]
-        Indicator array of zero-crossings in `y` along the selected axis.
     '''
 
     # Clip within the threshold
@@ -567,7 +559,6 @@ def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
                   constant_values=pad)
 
 
-@cache
 def clicks(times=None, frames=None, sr=22050, hop_length=512,
            click_freq=1000.0, click_duration=0.1, click=None, length=None):
     """Returns a signal with the signal `click` placed at each specified time
@@ -629,6 +620,20 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
     >>> # Or with a click frequency of 880Hz and a 500ms sample
     >>> y_beat_times880 = librosa.clicks(times=times, sr=sr,
     ...                                  click_freq=880, click_duration=0.5)
+
+    Display click waveform next to the spectrogram
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> S = librosa.feature.melspectrogram(y=y, sr=sr)
+    >>> ax = plt.subplot(2,1,2)
+    >>> librosa.display.specshow(librosa.logamplitude(S, ref_power=np.max),
+    ...                          x_axis='time', y_axis='mel')
+    >>> plt.subplot(2,1,1, sharex=ax)
+    >>> librosa.display.waveplot(y_beat_times, sr=sr, label='Beat clicks')
+    >>> plt.legend()
+    >>> plt.xlim(15, 30)
+    >>> plt.tight_layout()
     """
 
     # Compute sample positions from time or frames
@@ -686,11 +691,3 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
             click_signal[start:end] += click
 
     return click_signal
-
-
-# Moved/deprecated functions
-peak_pick = util.decorators.moved('librosa.core.peak_pick',
-                                  '0.4', '0.5')(util.peak_pick)
-
-localmax = util.decorators.moved('librosa.core.localmax',
-                                 '0.4', '0.5')(util.localmax)

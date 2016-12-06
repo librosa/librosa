@@ -9,10 +9,10 @@ import scipy.signal
 from .. import util
 from .. import filters
 from ..util.exceptions import ParameterError
-from ..util import Deprecated, rename_kw
+from ..util.deprecation import Deprecated, rename_kw
 
 from ..core.time_frequency import fft_frequencies
-from ..core.audio import zero_crossings
+from ..core.audio import zero_crossings, to_mono
 from ..core.spectrum import logamplitude, _spectrogram
 from ..core.constantq import cqt, hybrid_cqt
 from ..core.pitch import estimate_tuning
@@ -30,10 +30,7 @@ __all__ = ['spectral_centroid',
            'chroma_cens',
            'melspectrogram',
            'mfcc',
-           'tonnetz',
-           # Deprecated functions
-           'logfsgram',
-           'chromagram']
+           'tonnetz']
 
 
 # -- Spectral features -- #
@@ -354,7 +351,7 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     if n_bands < 1 or not isinstance(n_bands, int):
         raise ParameterError('n_bands must be a positive integer')
 
-    if not (0.0 < quantile < 1.0):
+    if not 0.0 < quantile < 1.0:
         raise ParameterError('quantile must lie in the range (0, 1)')
 
     if fmin <= 0:
@@ -470,7 +467,7 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     '''
 
-    if not (0.0 < roll_percent < 1.0):
+    if not 0.0 < roll_percent < 1.0:
         raise ParameterError('roll_percent must lie in the range (0, 1)')
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
@@ -499,24 +496,35 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     return np.nanmin(ind * freq, axis=0, keepdims=True)
 
 
-def rmse(y=None, S=None, n_fft=2048, hop_length=512):
-    '''Compute root-mean-square (RMS) energy for each frame.
+def rmse(y=None, S=None, frame_length=2048, hop_length=512,
+         n_fft=Deprecated()):
+    '''Compute root-mean-square (RMS) energy for each frame, either from the
+    audio samples `y` or from a spectrogram `S`.
+
+    Computing the energy from audio samples is faster as it doesn't require a
+    STFT calculation. However, using a spectrogram will give a more accurate
+    representation of energy over time because its frames can be windowed,
+    thus prefer using `S` if it's already available.
 
 
     Parameters
     ----------
     y : np.ndarray [shape=(n,)] or None
-        audio time series
+        (optional) audio time series. Required if `S` is not input.
 
     S : np.ndarray [shape=(d, t)] or None
-        (optional) spectrogram magnitude
+        (optional) spectrogram magnitude. Required if `y` is not input.
 
-    n_fft : int > 0 [scalar]
-        FFT window size
+    frame_length : int > 0 [scalar]
+        length of analysis frame (in samples) for energy calculation
 
     hop_length : int > 0 [scalar]
         hop length for STFT. See `librosa.core.stft` for details.
 
+    n_fft : [DEPRECATED]
+        .. warning:: This parameter name was deprecated in librosa 0.5.0
+            Use the `frame_length` parameter instead.
+            The `n_fft` parameter will be removed in librosa 0.6.0.
 
     Returns
     -------
@@ -548,11 +556,30 @@ def rmse(y=None, S=None, n_fft=2048, hop_length=512):
     >>> plt.title('log Power spectrogram')
     >>> plt.tight_layout()
 
+    Use a STFT window of constant ones and no frame centering to get consistent
+    results with the RMS energy computed from the audio samples `y`
+
+    >>> S = librosa.magphase(librosa.stft(y, window=np.ones, center=False)[0]
+    >>> librosa.feature.rmse(S=S)
+
     '''
+    frame_length = rename_kw('n_fft', n_fft,
+                             'frame_length', frame_length,
+                             '0.5', '0.6')
 
-    S, _ = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
-
-    return np.sqrt(np.mean(np.abs(S)**2, axis=0, keepdims=True))
+    if y is not None and S is not None:
+        raise ValueError('Either `y` or `S` should be input.')
+    if y is not None:
+        x = util.frame(to_mono(y),
+                       frame_length=frame_length,
+                       hop_length=hop_length)
+    elif S is not None:
+        x, _ = _spectrogram(y=y, S=S,
+                            n_fft=frame_length,
+                            hop_length=hop_length)
+    else:
+        raise ValueError('Either `y` or `S` must be input.')
+    return np.sqrt(np.mean(np.abs(x)**2, axis=0, keepdims=True))
 
 
 def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
@@ -798,6 +825,7 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
            [ 0.793,  0.663, ...,  0.964,  0.972]])
 
     >>> import matplotlib.pyplot as plt
+    >>> plt.figure(figsize=(10, 4))
     >>> librosa.display.specshow(chroma, y_axis='chroma', x_axis='time')
     >>> plt.colorbar()
     >>> plt.title('Chromagram')
@@ -828,8 +856,7 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
 
 def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
                norm=np.inf, threshold=0.0, tuning=None, n_chroma=12,
-               n_octaves=7, window=None, bins_per_octave=None, cqt_mode='full',
-               mode=Deprecated()):
+               n_octaves=7, window=None, bins_per_octave=None, cqt_mode='full'):
     r'''Constant-Q chromagram
 
     Parameters
@@ -876,11 +903,6 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
     cqt_mode : ['full', 'hybrid']
         Constant-Q transform mode
 
-    mode : str
-        .. warning:: This parameter name was in librosa 0.4.2
-            Use the `cqt_mode` parameter instead.
-            The `mode` parameter will be removed in librosa 0.5.0.
-
     Returns
     -------
     chromagram : np.ndarray [shape=(n_chroma, t)]
@@ -920,8 +942,6 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
 
     cqt_func = {'full': cqt, 'hybrid': hybrid_cqt}
 
-    cqt_mode = rename_kw('mode', mode, 'cqt_mode', cqt_mode, '0.4.2', '0.5.0')
-
     if bins_per_octave is None:
         bins_per_octave = n_chroma
 
@@ -954,7 +974,7 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
 
 
 def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
-                threshold=0.001, tuning=None, n_chroma=12,
+                tuning=None, n_chroma=12,
                 n_octaves=7, bins_per_octave=None, cqt_mode='full', window=None,
                 norm=2, win_len_smooth=41):
     r'''Computes the chroma variant "Chroma Energy Normalized" (CENS), following [1]_.
@@ -983,10 +1003,6 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
 
     norm : int > 0, +-np.inf, or None
         Column-wise normalization of the chromagram.
-
-    threshold : float
-        Pre-normalization energy threshold.  Values below the
-        threshold are set to the unit vector.
 
     tuning : float
         Deviation (in cents) from A440 tuning
@@ -1050,8 +1066,12 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
                         hop_length=hop_length,
                         fmin=fmin,
                         bins_per_octave=bins_per_octave,
-                        tuning=tuning, norm=None,
-                        n_octaves=n_octaves, window=window)
+                        tuning=tuning,
+                        norm=None,
+                        n_chroma=n_chroma,
+                        n_octaves=n_octaves,
+                        cqt_mode=cqt_mode,
+                        window=window)
 
     # L1-Normalization
     chroma = util.normalize(chroma, norm=1, axis=0)
@@ -1070,12 +1090,10 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
     win /= np.sum(win)
     win = np.atleast_2d(win)
 
-    chroma_cens = scipy.signal.convolve2d(chroma_quant, win, mode='same')
+    cens = scipy.signal.convolve2d(chroma_quant, win, mode='same')
 
     # L2-Normalization
-    chroma_cens = util.normalize(chroma_cens, norm=norm, axis=0)
-
-    return chroma_cens
+    return util.normalize(cens, norm=norm, axis=0)
 
 
 def tonnetz(y=None, sr=22050, chroma=None):
@@ -1241,6 +1259,7 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
     Visualize the MFCC series
 
     >>> import matplotlib.pyplot as plt
+    >>> plt.figure(figsize=(10, 4))
     >>> librosa.display.specshow(mfccs, x_axis='time')
     >>> plt.colorbar()
     >>> plt.title('MFCC')
@@ -1315,6 +1334,7 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     ...                                     fmax=8000)
 
     >>> import matplotlib.pyplot as plt
+    >>> plt.figure(figsize=(10, 4))
     >>> librosa.display.specshow(librosa.logamplitude(S,
     ...                                               ref_power=np.max),
     ...                          y_axis='mel', fmax=8000,
@@ -1333,93 +1353,3 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     mel_basis = filters.mel(sr, n_fft, **kwargs)
 
     return np.dot(mel_basis, S)
-
-
-# Deprecated functions
-@util.decorators.deprecated('0.4', '0.5')
-def logfsgram(y=None, sr=22050, S=None, n_fft=2048,
-              hop_length=512, **kwargs):  # pragma: no cover
-    '''Compute a log-frequency spectrogram using a
-    fixed-window STFT.
-
-    .. warning:: Deprecated in librosa 0.4
-              Functionality is superseded by `librosa.core.pseudo_cqt`
-
-    Parameters
-    ----------
-    y : np.ndarray [shape=(n,)] or None
-        audio time series
-
-    sr : number > 0 [scalar]
-        audio sampling rate of `y`
-
-    S : np.ndarray [shape=(d, t)] or None
-        (optional) power spectrogram
-
-    n_fft : int > 0 [scalar]
-        FFT window size
-
-    hop_length : int > 0 [scalar]
-        hop length for STFT. See `librosa.core.stft` for details.
-
-    bins_per_octave : int > 0 [scalar]
-        Number of bins per octave. Defaults to 12.
-
-    tuning : float in `[-0.5,  0.5)` [scalar]
-        Deviation (in fractions of a bin) from A440 tuning.
-
-        If not provided, it will be automatically estimated.
-
-    kwargs : additional keyword arguments
-        See `librosa.filters.logfrequency`
-
-    Returns
-    -------
-    P : np.ndarray [shape=(n_pitches, t)]
-        `P[f, t]` contains the energy at pitch bin `f`, frame `t`.
-
-
-    Examples
-    --------
-    From time-series input
-
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> L = librosa.feature.logfsgram(y=y, sr=sr)
-    >>> L
-    array([[  1.309e-02,   1.228e+00, ...,   3.785e-08,   7.624e-09],
-           [  1.630e-24,   1.528e-22, ...,   4.710e-30,   9.488e-31],
-           ...,
-           [  2.617e-05,   3.807e-04, ...,   6.387e-08,   6.000e-08],
-           [  3.214e-05,   3.814e-04, ...,   7.599e-08,   6.046e-08]])
-
-    Plot the pseudo CQT
-
-    >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> librosa.display.specshow(librosa.logamplitude(L,
-    ...                                               ref_power=np.max),
-    ...                          y_axis='cqt_hz', x_axis='time')
-    >>> plt.title('Log-frequency power spectrogram')
-    >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.tight_layout()
-
-    '''
-
-    S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length,
-                            power=2)
-
-    # If we don't have tuning already, grab it from S
-    if 'tuning' not in kwargs:
-        bins_per_oct = kwargs.get('bins_per_octave', 12)
-        kwargs['tuning'] = estimate_tuning(S=S, sr=sr,
-                                           bins_per_octave=bins_per_oct)
-
-    # Build the CQ basis
-    cq_basis = filters.logfrequency(sr, n_fft=n_fft, **kwargs)
-
-    return cq_basis.dot(S)
-
-
-# Moved functions
-chromagram = util.decorators.moved('librosa.feature.chromagram',
-                                   '0.4', '0.5')(chroma_stft)

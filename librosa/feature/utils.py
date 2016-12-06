@@ -6,16 +6,12 @@ import numpy as np
 import scipy.signal
 
 from .. import cache
-from .. import util
 from ..util.exceptions import ParameterError
 
-__all__ = ['delta',
-           'stack_memory',
-           # Moved/deprecated
-           'sync']
+__all__ = ['delta', 'stack_memory']
 
 
-@cache
+@cache(level=40)
 def delta(data, width=9, order=1, axis=-1, trim=True):
     r'''Compute delta features: local estimate of the derivative
     of the input data along the selected axis.
@@ -44,6 +40,10 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
     -------
     delta_data   : np.ndarray [shape=(d, t) or (d, t + window)]
         delta matrix of `data`.
+
+    Notes
+    -----
+    This function caches at level 40.
 
     Examples
     --------
@@ -115,7 +115,7 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
     return delta_x
 
 
-@cache
+@cache(level=40)
 def stack_memory(data, n_steps=2, delay=1, **kwargs):
     """Short-term history embedding: vertically concatenate a data
     vector or matrix with delayed copies of itself.
@@ -154,6 +154,11 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
         data augmented with lagged copies of itself,
         where `m == n_steps - 1`.
 
+    Notes
+    -----
+    This function caches at level 40.
+
+
     Examples
     --------
     Keep two steps (current and previous)
@@ -189,6 +194,7 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> chroma = librosa.feature.chroma_stft(y=y, sr=sr)
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, hop_length=512)
+    >>> beats = librosa.util.fix_frames(beats, x_min=0, x_max=chroma.shape[1])
     >>> chroma_sync = librosa.util.sync(chroma, beats)
     >>> chroma_lag = librosa.feature.stack_memory(chroma_sync, n_steps=3,
     ...                                           mode='edge')
@@ -196,8 +202,9 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
     Plot the result
 
     >>> import matplotlib.pyplot as plt
-    >>> librosa.display.specshow(chroma_lag, y_axis='chroma')
-    >>> librosa.display.time_ticks(librosa.frames_to_time(beats, sr=sr))
+    >>> beat_times = librosa.frames_to_time(beats, sr=sr, hop_length=512)
+    >>> librosa.display.specshow(chroma_lag, y_axis='chroma', x_axis='time',
+    ...                          x_coords=beat_times)
     >>> plt.yticks([0, 12, 24], ['Lag=0', 'Lag=1', 'Lag=2'])
     >>> plt.title('Time-lagged chroma')
     >>> plt.colorbar()
@@ -231,7 +238,3 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
 
     # Make contiguous
     return np.ascontiguousarray(history.T).T
-
-# Moved/deprecated functions
-sync = util.decorators.moved('librosa.feature.sync',
-                             '0.4.1', '0.5')(util.sync)

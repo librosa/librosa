@@ -2,23 +2,20 @@
 # -*- coding: utf-8 -*-
 """Utility functions"""
 
-import numpy as np
 import scipy.ndimage
 import scipy.sparse
 import six
 
+import numpy as np
 from numpy.lib.stride_tricks import as_strided
 
 from .. import cache
-from . import decorators
 from .exceptions import ParameterError
 
 # Constrain STFT block sizes to 256 KB
 MAX_MEM_BLOCK = 2**8 * 2**10
 
-SMALL_FLOAT = 1e-20
-
-__all__ = ['MAX_MEM_BLOCK', 'SMALL_FLOAT',
+__all__ = ['MAX_MEM_BLOCK',
            'frame', 'pad_center', 'fix_length',
            'valid_audio', 'valid_int', 'valid_intervals',
            'fix_frames',
@@ -29,9 +26,9 @@ __all__ = ['MAX_MEM_BLOCK', 'SMALL_FLOAT',
            'roll_sparse',
            'index_to_slice',
            'sync',
+           'softmask',
            'buf_to_float',
-           # Deprecated functions
-           'buf_to_int']
+           'tiny']
 
 
 def frame(y, frame_length=2048, hop_length=512):
@@ -80,6 +77,10 @@ def frame(y, frame_length=2048, hop_length=512):
 
     '''
 
+    if len(y) < frame_length:
+        raise ParameterError('Buffer is too short (n={:d})'
+                             ' for frame_length={:d}'.format(len(y), frame_length))
+
     if hop_length < 1:
         raise ParameterError('Invalid hop_length: {:d}'.format(hop_length))
 
@@ -91,10 +92,6 @@ def frame(y, frame_length=2048, hop_length=512):
     # Compute the number of frames that will fit. The end may get truncated.
     n_frames = 1 + int((len(y) - frame_length) / hop_length)
 
-    if n_frames < 1:
-        raise ParameterError('Buffer is too short (n={:d})'
-                                    ' for frame_length={:d}'.format(len(y),
-                                                                    frame_length))
     # Vertical stride is one sample
     # Horizontal stride is `hop_length` samples
     y_frames = as_strided(y, shape=(frame_length, n_frames),
@@ -102,7 +99,7 @@ def frame(y, frame_length=2048, hop_length=512):
     return y_frames
 
 
-@cache
+@cache(level=20)
 def valid_audio(y, mono=True):
     '''Validate whether a variable contains valid, mono audio data.
 
@@ -129,6 +126,10 @@ def valid_audio(y, mono=True):
             - `mono == False` and `y.ndim` is not 1 or 2
             - `np.isfinite(y).all()` is not True
 
+    Notes
+    -----
+    This function caches at level 20.
+
     Examples
     --------
     >>> # Only allow monophonic signals
@@ -147,12 +148,10 @@ def valid_audio(y, mono=True):
 
     if mono and y.ndim != 1:
         raise ParameterError('Invalid shape for monophonic audio: '
-                                    'ndim={:d}, shape={}'.format(y.ndim,
-                                                                 y.shape))
+                             'ndim={:d}, shape={}'.format(y.ndim, y.shape))
     elif y.ndim > 2:
         raise ParameterError('Invalid shape for audio: '
-                                    'ndim={:d}, shape={}'.format(y.ndim,
-                                                                 y.shape))
+                             'ndim={:d}, shape={}'.format(y.ndim, y.shape))
 
     if not np.isfinite(y).all():
         raise ParameterError('Audio buffer is not finite everywhere')
@@ -217,7 +216,6 @@ def valid_intervals(intervals):
     return True
 
 
-@cache
 def pad_center(data, size, axis=-1, **kwargs):
     '''Wrapper for np.pad to automatically center an array prior to padding.
     This is analogous to `str.center()`
@@ -286,13 +284,11 @@ def pad_center(data, size, axis=-1, **kwargs):
 
     if lpad < 0:
         raise ParameterError(('Target size ({:d}) must be '
-                                     'at least input size ({:d})').format(size,
-                                                                          n))
+                              'at least input size ({:d})').format(size, n))
 
     return np.pad(data, lengths, **kwargs)
 
 
-@cache
 def fix_length(data, size, axis=-1, **kwargs):
     '''Fix the length an array `data` to exactly `size`.
 
@@ -439,7 +435,6 @@ def fix_frames(frames, x_min=0, x_max=None, pad=True):
     return np.unique(frames).astype(int)
 
 
-@cache
 def axis_sort(S, axis=-1, index=False, value=None):
     '''Sort an array along its rows or columns.
 
@@ -537,12 +532,43 @@ def axis_sort(S, axis=-1, index=False, value=None):
         return S[sort_slice]
 
 
-@cache
+@cache(level=40)
 def normalize(S, norm=np.inf, axis=0):
     '''Normalize the columns or rows of a matrix
 
     .. note::
          Columns/rows with length 0 will be left as zeros.
+    Parameters
+    ----------
+    S : np.ndarray [shape=(d, n)]
+        The matrix to normalize
+
+    norm : {np.inf, -np.inf, 0, float > 0, None}
+        - `np.inf`  : maximum absolute value
+        - `-np.inf` : mininum absolute value
+        - `0`    : number of non-zeros
+        - float  : corresponding l_p norm.
+            See `scipy.linalg.norm` for details.
+        - None : no normalization is performed
+
+    axis : int [scalar]
+        Axis along which to compute the norm.
+        `axis=0` will normalize columns, `axis=1` will normalize rows.
+        `axis=None` will normalize according to the entire matrix.
+
+    Returns
+    -------
+    S_norm : np.ndarray [shape=S.shape]
+        Normalized matrix
+
+    Raises
+    ------
+    ParameterError
+        If `norm` is not among the valid types defined above
+
+    Notes
+    -----
+    This function caches at level 40.
 
     Examples
     --------
@@ -578,33 +604,6 @@ def normalize(S, norm=np.inf, axis=0):
            [ 0.   ,  0.   ,  0.   ,  0.5  ],
            [ 0.123,  0.236,  0.408,  0.5  ]])
 
-    Parameters
-    ----------
-    S : np.ndarray [shape=(d, n)]
-        The matrix to normalize
-
-    norm : {np.inf, -np.inf, 0, float > 0, None}
-        - `np.inf`  : maximum absolute value
-        - `-np.inf` : mininum absolute value
-        - `0`    : number of non-zeros
-        - float  : corresponding l_p norm.
-            See `scipy.linalg.norm` for details.
-        - None : no normalization is performed
-
-    axis : int [scalar]
-        Axis along which to compute the norm.
-        `axis=0` will normalize columns, `axis=1` will normalize rows.
-        `axis=None` will normalize according to the entire matrix.
-
-    Returns
-    -------
-    S_norm : np.ndarray [shape=S.shape]
-        Normalized matrix
-
-    Raises
-    ------
-    ParameterError
-        If `norm` is not among the valid types defined above
     '''
 
     # All norms only depend on magnitude, let's do that first
@@ -629,12 +628,11 @@ def normalize(S, norm=np.inf, axis=0):
         raise ParameterError('Unsupported norm: {}'.format(repr(norm)))
 
     # Avoid div-by-zero
-    length[length < SMALL_FLOAT] = 1.0
+    length[length < tiny(length)] = 1.0
 
     return S / length
 
 
-@cache
 def match_intervals(intervals_from, intervals_to):
     '''Match one set of time intervals to another.
 
@@ -699,7 +697,6 @@ def match_intervals(intervals_from, intervals_to):
     return output
 
 
-@cache
 def match_events(events_from, events_to):
     '''Match one set of events to another.
 
@@ -779,7 +776,6 @@ def match_events(events_from, events_to):
     return output
 
 
-@cache
 def localmax(x, axis=0):
     """Find local maxima in an array `x`.
 
@@ -829,7 +825,6 @@ def localmax(x, axis=0):
     return (x > x_pad[inds1]) & (x >= x_pad[inds2])
 
 
-@cache
 def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     '''Uses a flexible heuristic to pick peaks in a signal.
 
@@ -897,19 +892,20 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
            510, 525, 536, 555, 570, 590, 609, 625, 639])
 
     >>> import matplotlib.pyplot as plt
+    >>> times = librosa.frames_to_time(np.arange(len(onset_env)),
+    ...                                sr=sr, hop_length=512)
     >>> plt.figure()
-    >>> plt.subplot(2, 1, 1)
-    >>> plt.plot(onset_env[:30 * sr // 512], alpha=0.8, label='Onset strength')
-    >>> plt.vlines(peaks[peaks < 30 * sr // 512], 0,
+    >>> ax = plt.subplot(2, 1, 2)
+    >>> D = np.abs(librosa.stft(y))**2
+    >>> librosa.display.specshow(librosa.logamplitude(D, ref_power=np.max),
+    ...                          y_axis='log', x_axis='time')
+    >>> plt.subplot(2, 1, 1, sharex=ax)
+    >>> plt.plot(times, onset_env, alpha=0.8, label='Onset strength')
+    >>> plt.vlines(times[peaks], 0,
     ...            onset_env.max(), color='r', alpha=0.8,
     ...            label='Selected peaks')
     >>> plt.legend(frameon=True, framealpha=0.8)
     >>> plt.axis('tight')
-    >>> plt.axis('off')
-    >>> plt.subplot(2, 1, 2)
-    >>> D = np.abs(librosa.stft(y))**2
-    >>> librosa.display.specshow(librosa.logamplitude(D, ref_power=np.max),
-    ...                          y_axis='log', x_axis='time')
     >>> plt.tight_layout()
     '''
 
@@ -999,10 +995,37 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     return np.array(peaks)
 
 
-@cache
+@cache(level=40)
 def sparsify_rows(x, quantile=0.01):
     '''
     Return a row-sparse matrix approximating the input `x`.
+
+    Parameters
+    ----------
+    x : np.ndarray [ndim <= 2]
+        The input matrix to sparsify.
+
+    quantile : float in [0, 1.0)
+        Percentage of magnitude to discard in each row of `x`
+
+    Returns
+    -------
+    x_sparse : `scipy.sparse.csr_matrix` [shape=x.shape]
+        Row-sparsified approximation of `x`
+
+        If `x.ndim == 1`, then `x` is interpreted as a row vector,
+        and `x_sparse.shape == (1, len(x))`.
+
+    Raises
+    ------
+    ParameterError
+        If `x.ndim > 2`
+
+        If `quantile` lies outside `[0, 1.0)`
+
+    Notes
+    -----
+    This function caches at level 40.
 
     Examples
     --------
@@ -1036,39 +1059,16 @@ def sparsify_rows(x, quantile=0.01):
               0.977,  0.997,  0.997,  0.977,  0.937,  0.879,  0.806,
               0.72 ,  0.625,  0.525,  0.424,  0.326,  0.   ,  0.   ,
               0.   ,  0.   ,  0.   ,  0.   ]])
-
-    Parameters
-    ----------
-    x : np.ndarray [ndim <= 2]
-        The input matrix to sparsify.
-
-    quantile : float in [0, 1.0)
-        Percentage of magnitude to discard in each row of `x`
-
-    Returns
-    -------
-    x_sparse : `scipy.sparse.csr_matrix` [shape=x.shape]
-        Row-sparsified approximation of `x`
-
-        If `x.ndim == 1`, then `x` is interpreted as a row vector,
-        and `x_sparse.shape == (1, len(x))`.
-
-    Raises
-    ------
-    ParameterError
-        If `x.ndim > 2`
-
-        If `quantile` lies outside `[0, 1.0)`
     '''
 
     if x.ndim == 1:
         x = x.reshape((1, -1))
 
     elif x.ndim > 2:
-        raise ParameterError('Input must have 2 or fewer dimensions.  '
-                                    'Provided x.shape={}.'.format(x.shape))
+        raise ParameterError('Input must have 2 or fewer dimensions. '
+                             'Provided x.shape={}.'.format(x.shape))
 
-    if not (0.0 <= quantile < 1):
+    if not 0.0 <= quantile < 1:
         raise ParameterError('Invalid quantile {:.2f}'.format(quantile))
 
     x_sparse = scipy.sparse.lil_matrix(x.shape, dtype=x.dtype)
@@ -1088,7 +1088,6 @@ def sparsify_rows(x, quantile=0.01):
     return x_sparse.tocsr()
 
 
-@cache
 def roll_sparse(x, shift, axis=0):
     '''Sparse matrix roll
 
@@ -1251,7 +1250,7 @@ def index_to_slice(idx, idx_min=None, idx_max=None, step=None, pad=True):
     return [slice(start, end, step) for (start, end) in zip(idx_fixed, idx_fixed[1:])]
 
 
-@cache
+@cache(level=40)
 def sync(data, idx, aggregate=None, pad=True, axis=-1):
     """Synchronous aggregation of a multi-dimensional array between boundaries
 
@@ -1296,13 +1295,18 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     ParameterError
         If the index set is not of consistent type (all slices or all integers)
 
+    Notes
+    -----
+    This function caches at level 40.
+
     Examples
     --------
     Beat-synchronous CQT spectra
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
+    >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, trim=False)
     >>> cqt = librosa.cqt(y=y, sr=sr)
+    >>> beats = librosa.util.fix_frames(beats, x_max=cqt.shape[1])
 
     By default, use mean aggregation
 
@@ -1311,17 +1315,20 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     Use median-aggregation instead of mean
 
     >>> cqt_med = librosa.util.sync(cqt, beats,
-    ...                                aggregate=np.median)
+    ...                             aggregate=np.median)
 
     Or sub-beat synchronization
 
     >>> sub_beats = librosa.segment.subsegment(cqt, beats)
+    >>> sub_beats = librosa.util.fix_frames(sub_beats, x_max=cqt.shape[1])
     >>> cqt_med_sub = librosa.util.sync(cqt, sub_beats, aggregate=np.median)
 
 
     Plot the results
 
     >>> import matplotlib.pyplot as plt
+    >>> beat_t = librosa.frames_to_time(beats, sr=sr)
+    >>> subbeat_t = librosa.frames_to_time(sub_beats, sr=sr)
     >>> plt.figure()
     >>> plt.subplot(3, 1, 1)
     >>> librosa.display.specshow(librosa.logamplitude(cqt**2,
@@ -1331,13 +1338,15 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     >>> plt.title('CQT power, shape={}'.format(cqt.shape))
     >>> plt.subplot(3, 1, 2)
     >>> librosa.display.specshow(librosa.logamplitude(cqt_med**2,
-    ...                                               ref_power=np.max))
+    ...                                               ref_power=np.max),
+    ...                          x_coords=beat_t, x_axis='time')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Beat synchronous CQT power, '
     ...           'shape={}'.format(cqt_med.shape))
     >>> plt.subplot(3, 1, 3)
     >>> librosa.display.specshow(librosa.logamplitude(cqt_med_sub**2,
-    ...                                               ref_power=np.max))
+    ...                                               ref_power=np.max),
+    ...                          x_coords=subbeat_t, x_axis='time')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Sub-beat synchronous CQT power, '
     ...           'shape={}'.format(cqt_med_sub.shape))
@@ -1373,39 +1382,182 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     return data_agg
 
 
-# Deprecated functions
+def softmask(X, X_ref, power=1, split_zeros=False):
+    '''Robustly compute a softmask operation.
 
-@decorators.deprecated('0.4', '0.5')
-def buf_to_int(x, n_bytes=2):  # pragma: no cover
-    """Convert a floating point buffer into integer values.
-    This is primarily useful as an intermediate step in wav output.
+        `M = X**power / (X**power + X_ref**power)`
 
-    See Also
-    --------
-    buf_to_float
 
     Parameters
     ----------
-    x : np.ndarray [dtype=float]
-        Floating point data buffer
+    X : np.ndarray
+        The (non-negative) input array corresponding to the positive mask elements
 
-    n_bytes : int [1, 2, 4]
-        Number of bytes per output sample
+    X_ref : np.ndarray
+        The (non-negative) array of reference or background elements.
+        Must have the same shape as `X`.
+
+    power : number > 0 or np.inf
+        If finite, returns the soft mask computed in a numerically stable way
+
+        If infinite, returns a hard (binary) mask equivalent to `X > X_ref`.
+        Note: for hard masks, ties are always broken in favor of `X_ref` (`mask=0`).
+
+
+    split_zeros : bool
+        If `True`, entries where `X` and X`_ref` are both small (close to 0)
+        will receive mask values of 0.5.
+
+        Otherwise, the mask is set to 0 for these entries.
+
 
     Returns
     -------
-    x_int : np.ndarray [dtype=int]
-        The original buffer cast to integer type.
-    """
+    mask : np.ndarray, shape=`X.shape`
+        The output mask array
 
-    if n_bytes not in [1, 2, 4]:
-        raise ParameterError('n_bytes must be one of {1, 2, 4}')
+    Raises
+    ------
+    ParameterError
+        If `X` and `X_ref` have different shapes.
 
-    # What is the scale of the input data?
-    scale = float(1 << ((8 * n_bytes) - 1))
+        If `X` or `X_ref` are negative anywhere
 
-    # Construct a format string
-    fmt = '<i{:d}'.format(n_bytes)
+        If `power <= 0`
 
-    # Rescale and cast the data
-    return (x * scale).astype(fmt)
+    Examples
+    --------
+
+    >>> X = 2 * np.ones((3, 3))
+    >>> X_ref = np.vander(np.arange(3.0))
+    >>> X
+    array([[ 2.,  2.,  2.],
+           [ 2.,  2.,  2.],
+           [ 2.,  2.,  2.]])
+    >>> X_ref
+    array([[ 0.,  0.,  1.],
+           [ 1.,  1.,  1.],
+           [ 4.,  2.,  1.]])
+    >>> librosa.util.softmask(X, X_ref, power=1)
+    array([[ 1.   ,  1.   ,  0.667],
+           [ 0.667,  0.667,  0.667],
+           [ 0.333,  0.5  ,  0.667]])
+    >>> librosa.util.softmask(X_ref, X, power=1)
+    array([[ 0.   ,  0.   ,  0.333],
+           [ 0.333,  0.333,  0.333],
+           [ 0.667,  0.5  ,  0.333]])
+    >>> librosa.util.softmask(X, X_ref, power=2)
+    array([[ 1. ,  1. ,  0.8],
+           [ 0.8,  0.8,  0.8],
+           [ 0.2,  0.5,  0.8]])
+    >>> librosa.util.softmask(X, X_ref, power=4)
+    array([[ 1.   ,  1.   ,  0.941],
+           [ 0.941,  0.941,  0.941],
+           [ 0.059,  0.5  ,  0.941]])
+    >>> librosa.util.softmask(X, X_ref, power=100)
+    array([[  1.000e+00,   1.000e+00,   1.000e+00],
+           [  1.000e+00,   1.000e+00,   1.000e+00],
+           [  7.889e-31,   5.000e-01,   1.000e+00]])
+    >>> librosa.util.softmask(X, X_ref, power=np.inf)
+    array([[ True,  True,  True],
+           [ True,  True,  True],
+           [False, False,  True]], dtype=bool)
+    '''
+    if X.shape != X_ref.shape:
+        raise ParameterError('Shape mismatch: {}!={}'.format(X.shape,
+                                                             X_ref.shape))
+
+    if np.any(X < 0) or np.any(X_ref < 0):
+        raise ParameterError('X and X_ref must be non-negative')
+
+    if power <= 0:
+        raise ParameterError('power must be strictly positive')
+
+    # We're working with ints, cast to float.
+    dtype = X.dtype
+    if not np.issubdtype(dtype, float):
+        dtype = np.float32
+
+    # Re-scale the input arrays relative to the larger value
+    Z = np.maximum(X, X_ref).astype(dtype)
+    bad_idx = (Z < np.finfo(dtype).tiny)
+    Z[bad_idx] = 1
+
+    # For finite power, compute the softmask
+    if np.isfinite(power):
+        mask = (X / Z)**power
+        ref_mask = (X_ref / Z)**power
+        good_idx = ~bad_idx
+        mask[good_idx] /= mask[good_idx] + ref_mask[good_idx]
+        # Wherever energy is below energy in both inputs, split the mask
+        if split_zeros:
+            mask[bad_idx] = 0.5
+        else:
+            mask[bad_idx] = 0.0
+    else:
+        # Otherwise, compute the hard mask
+        mask = X > X_ref
+
+    return mask
+
+
+def tiny(x):
+    '''Compute the tiny-value corresponding to an input's data type.
+
+    This is the smallest "usable" number representable in `x`'s
+    data type (e.g., float32).
+
+    This is primarily useful for determining a threshold for
+    numerical underflow in division or multiplication operations.
+
+    Parameters
+    ----------
+    x : number or np.ndarray
+        The array to compute the tiny-value for.
+        All that matters here is `x.dtype`.
+
+    Returns
+    -------
+    tiny_value : float
+        The smallest positive usable number for the type of `x`.
+        If `x` is integer-typed, then the tiny value for `np.float32`
+        is returned instead.
+
+    See Also
+    --------
+    numpy.finfo
+
+    Examples
+    --------
+
+    For a standard double-precision floating point number:
+    >>> librosa.util.tiny(1.0)
+    2.2250738585072014e-308
+
+    Or explicitly as double-precision
+    >>> librosa.util.tiny(np.asarray(1e-5, dtype=np.float64))
+    2.2250738585072014e-308
+
+    Or complex numbers
+    >>> librosa.util.tiny(1j)
+    2.2250738585072014e-308
+
+    Single-precision floating point:
+    >>> librosa.util.tiny(np.asarray(1e-5, dtype=np.float32))
+    1.1754944e-38
+
+    Integer
+    >>> librosa.util.tiny(5)
+    1.1754944e-38
+    '''
+
+    # Make sure we have an array view
+    x = np.asarray(x)
+
+    # Only floating types generate a tiny
+    if np.issubdtype(x.dtype, float) or np.issubdtype(x.dtype, complex):
+        dtype = x.dtype
+    else:
+        dtype = np.float32
+
+    return np.finfo(dtype).tiny

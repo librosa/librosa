@@ -11,10 +11,10 @@ Onset detection
     onset_strength_multi
 """
 
+import warnings
+
 import numpy as np
 import scipy
-import six
-import warnings
 
 from . import cache
 from . import core
@@ -27,7 +27,7 @@ __all__ = ['onset_detect', 'onset_strength', 'onset_strength_multi']
 
 
 def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
-                 **kwargs):
+                 units='frames', **kwargs):
     """Basic onset detector.  Locate note onset events by picking peaks in an
     onset strength envelope.
 
@@ -51,6 +51,10 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     hop_length : int > 0 [scalar]
         hop length (in samples)
 
+    units : {'frames', 'samples', 'time'}
+        The units to encode detected onset events in.
+        By default, 'frames' are used.
+
     kwargs : additional keyword arguments
         Additional parameters for peak picking.
 
@@ -61,7 +65,8 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     -------
 
     onsets : np.ndarray [shape=(n_onsets,)]
-        estimated frame numbers of onsets
+        estimated positions of detected onsets, in whichever units
+        are specified.  By default, frame indices.
 
         .. note::
             If no onset strength could be detected, onset_detect returns
@@ -73,6 +78,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     ParameterError
         if neither `y` nor `onsets` are provided
 
+        or if `units` is not one of 'frames', 'samples', or 'time'
 
     See Also
     --------
@@ -96,21 +102,21 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     Or use a pre-computed onset envelope
 
     >>> o_env = librosa.onset.onset_strength(y, sr=sr)
+    >>> times = librosa.frames_to_time(np.arange(len(o_env)), sr=sr)
     >>> onset_frames = librosa.onset.onset_detect(onset_envelope=o_env, sr=sr)
 
 
     >>> import matplotlib.pyplot as plt
     >>> D = np.abs(librosa.stft(y))**2
     >>> plt.figure()
-    >>> plt.subplot(2, 1, 1)
+    >>> ax1 = plt.subplot(2, 1, 1)
     >>> librosa.display.specshow(librosa.logamplitude(D, ref_power=np.max),
     ...                          x_axis='time', y_axis='log')
     >>> plt.title('Power spectrogram')
-    >>> plt.subplot(2, 1, 2)
-    >>> plt.plot(o_env, label='Onset strength')
-    >>> plt.vlines(onset_frames, 0, o_env.max(), color='r', alpha=0.9,
+    >>> plt.subplot(2, 1, 2, sharex=ax1)
+    >>> plt.plot(times, o_env, label='Onset strength')
+    >>> plt.vlines(times[onset_frames], 0, o_env.max(), color='r', alpha=0.9,
     ...            linestyle='--', label='Onsets')
-    >>> plt.xticks([])
     >>> plt.axis('tight')
     >>> plt.legend(frameon=True, framealpha=0.75)
 
@@ -143,7 +149,18 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     kwargs.setdefault('delta', 0.07)
 
     # Peak pick the onset envelope
-    return util.peak_pick(onset_envelope, **kwargs)
+    onsets = util.peak_pick(onset_envelope, **kwargs)
+
+    if units == 'frames':
+        pass
+    elif units == 'samples':
+        onsets = core.frames_to_samples(onsets, hop_length=hop_length)
+    elif units == 'time':
+        onsets = core.frames_to_time(onsets, hop_length=hop_length, sr=sr)
+    else:
+        raise ParameterError('Invalid unit type: {}'.format(units))
+
+    return onsets
 
 
 def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
@@ -190,11 +207,7 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
         Filter the onset strength to remove the DC component
 
     center : bool [scalar]
-    centering : bool [scalar] (deprecated)
         Shift the onset function by `n_fft / (2 * hop_length)` frames
-
-        .. note:: The `centering` parameter is deprecated as of 0.4.1,
-        and has been replaced by the `center` parameter.
 
     feature : function
         Function for computing time-series features, eg, scaled spectrograms.
@@ -238,17 +251,18 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
     >>> y, sr = librosa.load(librosa.util.example_audio_file(),
     ...                      duration=10.0)
     >>> D = np.abs(librosa.stft(y))**2
+    >>> times = librosa.frames_to_time(np.arange(D.shape[1]))
     >>> plt.figure()
-    >>> plt.subplot(2, 1, 1)
+    >>> ax1 = plt.subplot(2, 1, 1)
     >>> librosa.display.specshow(librosa.logamplitude(D, ref_power=np.max),
-    ...                          y_axis='log')
+    ...                          y_axis='log', x_axis='time')
     >>> plt.title('Power spectrogram')
 
     Construct a standard onset function
 
     >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr)
-    >>> plt.subplot(2, 1, 2)
-    >>> plt.plot(2 + onset_env / onset_env.max(), alpha=0.8,
+    >>> plt.subplot(2, 1, 2, sharex=ax1)
+    >>> plt.plot(times, 2 + onset_env / onset_env.max(), alpha=0.8,
     ...          label='Mean aggregation (mel)')
 
 
@@ -257,7 +271,7 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
     >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr,
     ...                                          aggregate=np.median,
     ...                                          fmax=8000, n_mels=256)
-    >>> plt.plot(1 + onset_env / onset_env.max(), alpha=0.8,
+    >>> plt.plot(times, 1 + onset_env / onset_env.max(), alpha=0.8,
     ...          label='Median aggregation (custom mel)')
 
 
@@ -265,25 +279,15 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
 
     >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr,
     ...                                          feature=librosa.cqt)
-    >>> plt.plot(onset_env / onset_env.max(), alpha=0.8,
+    >>> plt.plot(times, onset_env / onset_env.max(), alpha=0.8,
     ...          label='Mean aggregation (CQT)')
-
     >>> plt.legend(frameon=True, framealpha=0.75)
-    >>> librosa.display.time_ticks(librosa.frames_to_time(np.arange(len(onset_env))))
     >>> plt.ylabel('Normalized strength')
     >>> plt.yticks([])
     >>> plt.axis('tight')
     >>> plt.tight_layout()
 
     """
-
-    if centering is not None:
-        center = centering
-        warnings.warn("The 'centering=' parameter of onset_strength is "
-                      "deprecated as of librosa version 0.4.1."
-                      "\n\tIt will be removed in librosa version 0.5.0."
-                      "\n\tPlease use 'center=' instead.",
-                      category=DeprecationWarning)
 
     odf_all = onset_strength_multi(y=y,
                                    sr=sr,
@@ -300,7 +304,7 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
     return odf_all[0]
 
 
-@cache
+@cache(level=30)
 def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
                          detrend=False, center=True, feature=None,
                          aggregate=None, channels=None, **kwargs):
@@ -369,6 +373,9 @@ def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
     --------
     onset_strength
 
+    Notes
+    -----
+    This function caches at level 30.
 
     Examples
     --------

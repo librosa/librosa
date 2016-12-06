@@ -10,6 +10,7 @@ from .. import util
 
 from ..core.audio import autocorrelate
 from ..util.exceptions import ParameterError
+from ..filters import get_window
 
 
 __all__ = ['tempogram']
@@ -17,7 +18,7 @@ __all__ = ['tempogram']
 
 # -- Rhythmic features -- #
 def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
-              win_length=384, center=True, window=None, norm=np.inf):
+              win_length=384, center=True, window='hann', norm=np.inf):
     '''Compute the tempogram: local autocorrelation of the onset strength envelope. [1]_
 
     .. [1] Grosche, Peter, Meinard Müller, and Frank Kurth.
@@ -47,9 +48,8 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
         If `True`, onset autocorrelation windows are centered.
         If `False`, windows are left-aligned.
 
-    window : None, function, np.ndarray [shape=(win_length,)]
-        Window function to apply to onset strength function.
-        By default (`None`), an asymmetric Hann window.
+    window : string, function, number, tuple, or np.ndarray [shape=(win_length,)]
+        A window specification as in `core.stft`.
 
     norm : {np.inf, -np.inf, 0, float > 0, None}
         Normalization mode.  Set to `None` to disable normalization.
@@ -65,8 +65,6 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
         if neither `y` nor `onset_envelope` are provided
 
         if `win_length < 1`
-
-        if `window` is an array and `len(window) != win_length`
 
     See Also
     --------
@@ -98,9 +96,11 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
     >>> plt.axis('tight')
     >>> plt.subplot(4, 1, 2)
     >>> # We'll truncate the display to a narrower range of tempi
-    >>> librosa.display.specshow(tempogram[:100], sr=sr, hop_length=hop_length,
-    >>>                          x_axis='time', y_axis='tempo',
-    ...                          tmin=tempo/4, tmax=2*tempo, n_yticks=4)
+    >>> librosa.display.specshow(tempogram, sr=sr, hop_length=hop_length,
+    >>>                          x_axis='time', y_axis='tempo')
+    >>> plt.axhline(tempo, color='black', linestyle='--', alpha=.8,
+    ...             label='Estimated tempo={:g}'.format(tempo))
+    >>> plt.legend(frameon=True)
     >>> plt.subplot(4, 1, 3)
     >>> x = np.linspace(0, tempogram.shape[0] * float(hop_length) / sr,
     ...                 num=tempogram.shape[0])
@@ -116,6 +116,8 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
     ...              label='Mean local autocorrelation', basex=2)
     >>> plt.semilogx(freqs[1:], ac_global[1:], '--', alpha=0.75,
     ...              label='Global autocorrelation', basex=2)
+    >>> plt.axvline(tempo, color='black', linestyle='--', alpha=.8,
+    ...             label='Estimated tempo={:g}'.format(tempo))
     >>> plt.legend(frameon=True)
     >>> plt.xlabel('BPM')
     >>> plt.axis('tight')
@@ -128,23 +130,15 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
     if win_length < 1:
         raise ParameterError('win_length must be a positive integer')
 
-    if window is None:
-        ac_window = scipy.signal.hann(win_length, sym=False)
-    elif six.callable(window):
-        ac_window = window(win_length)
-    else:
-        ac_window = np.asarray(window)
-        if ac_window.size != win_length:
-            raise ParameterError('Size mismatch between win_length and len(window)')
+    ac_window = get_window(window, win_length, fftbins=True)
 
     if onset_envelope is None:
         if y is None:
             raise ParameterError('Either y or onset_envelope must be provided')
 
-        onset_envelope = onset_strength(y=y, sr=sr,
-                                        hop_length=hop_length)
+        onset_envelope = onset_strength(y=y, sr=sr, hop_length=hop_length)
 
-    # Pad the envelope so that autocorrelation windows are centered on the input
+    # Center the autocorrelation windows
     n = len(onset_envelope)
 
     if center:
@@ -161,5 +155,6 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
         odf_frame = odf_frame[:, :n]
 
     # Window, autocorrelate, and normalize
-    return util.normalize(autocorrelate(odf_frame * ac_window[:, np.newaxis], axis=0),
+    return util.normalize(autocorrelate(odf_frame * ac_window[:, np.newaxis],
+                                        axis=0),
                           norm=norm, axis=0)

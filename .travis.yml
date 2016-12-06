@@ -19,6 +19,10 @@ python:
     - "3.4"
     - "3.5"
 
+env:
+    - ENABLE_NUMBA=false
+    - ENABLE_NUMBA=true
+
 before_install:
     - bash .travis_dependencies.sh
     - export PATH="$HOME/env/miniconda$TRAVIS_PYTHON_VERSION/bin:$PATH";
@@ -28,7 +32,7 @@ before_install:
 install:
     # install your own package into the environment
     # pip install -e rather than setup.py, so that coverage can find the source
-    - pip install -e ./
+    - pip install -e .[display]
 
 script:
     - python --version

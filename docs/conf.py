@@ -13,7 +13,6 @@
 
 import os
 import sys
-import glob
 import sphinx
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -24,10 +23,10 @@ sys.path.insert(0, os.path.abspath('../'))
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-if sphinx.__version__ < "1.1":
-    raise RuntimeError("Sphinx 1.1 or newer is required")
+if sphinx.__version__ < "1.4":
+    raise RuntimeError("Sphinx 1.4 or newer is required")
 
-needs_sphinx = '1.1'
+needs_sphinx = '1.4'
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
@@ -78,15 +77,16 @@ np.set_printoptions(precision=3, linewidth=64, edgeitems=2, threshold=200)
 # Plot
 #------------------------------------------------------------------------------
 plot_pre_code = """
-import seaborn
-seaborn.set(style='ticks')
+import matplotlib.style
+matplotlib.style.use('seaborn-muted')
 import numpy as np
 import librosa
+import librosa.display
 np.random.seed(123)
 np.set_printoptions(precision=3, linewidth=64, edgeitems=2, threshold=200)
 """
 plot_include_source = True
-plot_formats = [('png', 96), 'pdf']
+plot_formats = [('png', 96)]
 plot_html_show_formats = False
 
 font_size = 13*72/96.0  # 13 px
@@ -122,11 +122,7 @@ intersphinx_mapping = {'python': ('http://docs.python.org/2', None),
                        'scipy': ('http://docs.scipy.org/doc/scipy/reference/', None),
                        'matplotlib': ('http://matplotlib.sourceforge.net/', None),
                        'sklearn': ('http://scikit-learn.org/stable/', None),
-                       'seaborn': ('http://stanford.edu/~mwaskom/software/seaborn/', None),
-                       'sns': ('http://stanford.edu/~mwaskom/software/seaborn/', None),
-                       'resampy': ('http://resampy.readthedocs.io/en/latest/', None),
-                       'samplerate':
-                       ('http://www.ar.media.kyoto-u.ac.jp/members/david/softwares/samplerate/sphinx/', None)}
+                       'resampy': ('http://resampy.readthedocs.io/en/latest/', None)}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

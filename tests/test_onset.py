@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # CREATED:2013-03-11 18:14:30 by Brian McFee <brm2132@columbia.edu>
-#  unit tests for librosa.beat
+#  unit tests for librosa.onset
 
 from __future__ import print_function
 from nose.tools import raises, eq_
@@ -190,26 +190,30 @@ def test_onset_detect_const():
             yield __test, y, sr, oenv, hop_length
 
 
-def test_onset_strength_deprecated():
+def test_onset_units():
 
-    y, sr = librosa.load(__EXAMPLE_FILE)
+    def __test(units, hop_length, y, sr):
 
-    def __test(centering):
+        b1 = librosa.onset.onset_detect(y=y, sr=sr, hop_length=hop_length)
+        b2 = librosa.onset.onset_detect(y=y, sr=sr, hop_length=hop_length,
+                                        units=units)
 
-        no_warning = (centering is None)
+        t1 = librosa.frames_to_time(b1, sr=sr, hop_length=hop_length)
 
-        warnings.resetwarnings()
-        warnings.simplefilter('always')
-        with warnings.catch_warnings(record=True) as out:
-            librosa.onset.onset_strength(y=y, sr=sr, centering=centering)
+        if units == 'time':
+            t2 = b2
 
-            if no_warning:
-                eq_(out, [])
-            else:
-                assert len(out) > 0
-                assert out[0].category is DeprecationWarning
-                assert 'deprecated' in str(out[0].message).lower()
+        elif units == 'samples':
+            t2 = librosa.samples_to_time(b2, sr=sr)
 
+        elif units == 'frames':
+            t2 = librosa.frames_to_time(b2, sr=sr, hop_length=hop_length)
 
-    for centering in [True, False, None]:
-        yield __test, centering
+        assert np.allclose(t1, t2)
+
+    for sr in [None, 11024]:
+        y, sr = librosa.load(__EXAMPLE_FILE, sr=sr)
+        for hop_length in [512, 1024]:
+            for units in ['frames', 'time', 'samples']:
+                yield __test, units, hop_length, y, sr
+            yield raises(librosa.ParameterError)(__test), 'bad units', hop_length, y, sr
