@@ -15,7 +15,6 @@ from . import cache
 from . import core
 from . import beat
 from . import decompose
-from . import display
 from . import effects
 from . import feature
 from . import filters
@@ -29,6 +28,3 @@ from .util.exceptions import * # pylint: disable=wildcard-import
 
 # Exporting all core functions is okay here: suppress the import warning
 from librosa.core import *  # pylint: disable=wildcard-import
-
-
-

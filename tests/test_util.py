@@ -20,6 +20,8 @@ import warnings
 
 import librosa
 
+from test_core import srand
+
 
 def test_example_audio_file():
 
@@ -30,6 +32,7 @@ def test_frame():
 
     # Generate a random time series
     def __test(P):
+        srand()
         frame, hop = P
 
         y = np.random.randn(8000)
@@ -96,6 +99,7 @@ def test_fix_length():
 
 
 def test_fix_frames():
+    srand()
 
     @raises(librosa.ParameterError)
     def __test_fail(frames, x_min, x_max, pad):
@@ -133,6 +137,7 @@ def test_fix_frames():
 
 
 def test_normalize():
+    srand()
 
     def __test_pass(X, norm, axis):
         X_norm = librosa.util.normalize(X, norm=norm, axis=axis)
@@ -172,6 +177,7 @@ def test_normalize():
 
 
 def test_axis_sort():
+    srand()
 
     def __test_pass(data, axis, index, value):
 
@@ -221,6 +227,7 @@ def test_axis_sort():
 def test_match_intervals():
 
     def __make_intervals(n):
+        srand()
         return np.cumsum(np.abs(np.random.randn(n, 2)), axis=1)
 
     def __compare(i1, i2):
@@ -266,6 +273,7 @@ def test_match_intervals():
 def test_match_events():
 
     def __make_events(n):
+        srand()
         return np.abs(np.random.randn(n))
 
     def __is_best(y, ev1, ev2):
@@ -301,6 +309,7 @@ def test_match_events():
 def test_localmax():
 
     def __test(ndim, axis):
+        srand()
 
         data = np.random.randn(*([20] * ndim))
 
@@ -327,84 +336,10 @@ def test_localmax():
             yield __test, ndim, axis
 
 
-def test_feature_extractor():
-
-    y, sr = librosa.load('data/test1_22050.wav')
-
-    def __test_positional_iterate(myfunc, args):
-
-        output_raw = myfunc(y, **args)
-
-        FP = librosa.util.FeatureExtractor(myfunc, **args)
-        output = FP.transform([y])
-
-        assert np.allclose(output, output_raw)
-
-        # Ensure that fitting does nothing
-        FP.fit()
-        output = FP.transform([y])
-        assert np.allclose(output, output_raw)
-
-    def __test_positional(myfunc, args):
-
-        output_raw = myfunc(y, **args)
-
-        FP = librosa.util.FeatureExtractor(myfunc, iterate=False, **args)
-        output = FP.transform(y)
-
-        assert np.allclose(output, output_raw)
-
-        # Ensure that fitting does nothing
-        FP.fit()
-        output = FP.transform(y)
-        assert np.allclose(output, output_raw)
-
-    def __test_keyword_iterate(myfunc, args):
-
-        output_raw = myfunc(y=y, **args)
-
-        FP = librosa.util.FeatureExtractor(myfunc, target='y', **args)
-        output = FP.transform([y])
-
-        assert np.allclose(output, output_raw)
-
-        # Ensure that fitting does nothing
-        FP.fit()
-        output = FP.transform([y])
-        assert np.allclose(output, output_raw)
-
-    def __test_keyword(myfunc, args):
-
-        output_raw = myfunc(y=y, **args)
-
-        FP = librosa.util.FeatureExtractor(myfunc, target='y',
-                                           iterate=False, **args)
-        output = FP.transform(y)
-
-        assert np.allclose(output, output_raw)
-
-        # Ensure that fitting does nothing
-        FP.fit()
-        output = FP.transform(y)
-        assert np.allclose(output, output_raw)
-
-    func = librosa.feature.melspectrogram
-    args = {'sr': sr}
-
-    for n_fft in [1024, 2048]:
-        for n_mels in [32, 64, 128]:
-            args['n_fft'] = n_fft
-            args['n_mels'] = n_mels
-
-            yield __test_positional_iterate, func, args
-            yield __test_keyword_iterate, func, args
-            yield __test_positional, func, args
-            yield __test_keyword, func, args
-
-
 def test_peak_pick():
 
     def __test(n, pre_max, post_max, pre_avg, post_avg, delta, wait):
+        srand()
 
         # Generate a test signal
         x = np.random.randn(n)**2
@@ -472,6 +407,7 @@ def test_peak_pick():
 def test_sparsify_rows():
 
     def __test(n, d, q):
+        srand()
 
         X = np.random.randn(*([d] * n))**4
 
@@ -779,6 +715,7 @@ def test_sync():
 
 
 def test_roll_sparse():
+    srand()
 
     def __test(fmt, shift, axis, X):
 
@@ -812,3 +749,67 @@ def test_roll_sparse_bad_axis():
 
     X = scipy.sparse.eye(5, format='csr')
     librosa.util.roll_sparse(X, 3, axis=2)
+
+
+def test_softmask():
+
+    def __test(power, split_zeros):
+        srand()
+
+        X = np.abs(np.random.randn(10, 10))
+        X_ref = np.abs(np.random.randn(10, 10))
+
+        # Zero out some rows
+        X[3, :] = 0
+        X_ref[3, :] = 0
+
+        M = librosa.util.softmask(X, X_ref, power=power, split_zeros=split_zeros)
+
+        assert np.all(0 <= M) and np.all(M <= 1)
+
+        if split_zeros and np.isfinite(power):
+            assert np.allclose(M[3, :], 0.5)
+        else:
+            assert not np.any(M[3, :]), M[3]
+
+    for power in [1, 2, 50, 100, np.inf]:
+        for split_zeros in [False, True]:
+            yield __test, power, split_zeros
+
+
+def test_softmask_int():
+    X = 2 * np.ones((3,3), dtype=np.int32)
+    X_ref = np.vander(np.arange(3))
+
+    M1 = librosa.util.softmask(X, X_ref, power=1)
+    M2 = librosa.util.softmask(X_ref, X, power=1)
+
+    assert np.allclose(M1 + M2, 1)
+
+def test_softmask_fail():
+
+    failure = raises(librosa.ParameterError)(librosa.util.softmask)
+    yield failure, -np.ones(3), np.ones(3), 1, False
+    yield failure, np.ones(3), -np.ones(3), 1, False
+    yield failure, np.ones(3), np.ones(4), 1, False
+    yield failure, np.ones(3), np.ones(3), 0, False
+    yield failure, np.ones(3), np.ones(3), -1, False
+
+
+def test_tiny():
+
+    def __test(x, value):
+
+        eq_(value, librosa.util.tiny(x))
+
+
+    for x, value in [(1, np.finfo(np.float32).tiny),
+                     (np.ones(3, dtype=int), np.finfo(np.float32).tiny),
+                     (np.ones(3, dtype=np.float32), np.finfo(np.float32).tiny),
+                     (1.0, np.finfo(np.float64).tiny),
+                     (np.ones(3, dtype=np.float64), np.finfo(np.float64).tiny),
+                     (1j, np.finfo(np.complex128).tiny),
+                     (np.ones(3, dtype=np.complex64), np.finfo(np.complex64).tiny),
+                     (np.ones(3, dtype=np.complex128), np.finfo(np.complex128).tiny)]:
+        yield __test, x, value
+

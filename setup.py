@@ -10,8 +10,8 @@ setup(
     description='Python module for audio and music processing',
     author='Brian McFee',
     author_email='brian.mcfee@nyu.edu',
-    url='http://github.com/bmcfee/librosa',
-    download_url='http://github.com/bmcfee/librosa/releases',
+    url='http://github.com/librosa/librosa',
+    download_url='http://github.com/librosa/librosa/releases',
     packages=find_packages(),
     package_data={'': ['example_data/*']},
     long_description="""A python module for audio and music processing.""",
@@ -34,13 +34,15 @@ setup(
         'numpy >= 1.8.0',
         'scipy >= 0.13.0',
         'scikit-learn >= 0.14.0',
-        'matplotlib >= 1.4.3',
         'joblib >= 0.7.0',
         'decorator >= 3.0.0',
         'six >= 1.3',
-        'resampy >= 0.1.0'
+        'resampy >= 0.1.2'
     ],
     extras_require={
-        'docs': ['numpydoc', 'seaborn', 'sphinx!=1.3.1', 'sphinx_rtd_theme']
+        'docs': ['numpydoc', 'sphinx!=1.3.1', 'sphinx_rtd_theme',
+                 'matplotlib >= 1.5'],
+        'numba': ['numba >= 0.25'],
+        'display': ['matplotlib >= 1.5'],
     }
 )

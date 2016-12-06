@@ -13,16 +13,16 @@ from . import time_frequency
 from .. import cache
 from .. import util
 from ..util.exceptions import ParameterError
+from ..filters import get_window
 
 __all__ = ['stft', 'istft', 'magphase',
-           'ifgram',
-           'phase_vocoder',
+           'ifgram', 'phase_vocoder',
            'logamplitude', 'perceptual_weighting',
            'fmt']
 
 
-@cache
-def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
+@cache(level=20)
+def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
          center=True, dtype=np.complex64):
     """Short-time Fourier transform (STFT)
 
@@ -52,10 +52,13 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
 
         If unspecified, defaults to ``win_length = n_fft``.
 
-    window : None, function, np.ndarray [shape=(n_fft,)]
-        - None (default): use an asymmetric Hann window
+    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        - a window specification (string, tuple, or number);
+          see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.hanning`
         - a vector or array of length `n_fft`
+
+        .. see also:: `filters.get_window`
 
     center      : boolean
         - If `True`, the signal `y` is padded so that frame
@@ -72,17 +75,16 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
         STFT matrix
 
 
-    Raises
-    ------
-    ParameterError
-        If `window` is supplied as a vector of length `n_fft`.
-
-
     See Also
     --------
     istft : Inverse STFT
 
     ifgram : Instantaneous frequency spectrogram
+
+
+    Notes
+    -----
+    This function caches at level 20.
 
 
     Examples
@@ -133,24 +135,9 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
 
     # Set the default hop, if it's not already specified
     if hop_length is None:
-        hop_length = int(win_length / 4)
+        hop_length = int(win_length // 4)
 
-    if window is None:
-        # Default is an asymmetric Hann window
-        fft_window = scipy.signal.hann(win_length, sym=False)
-
-    elif six.callable(window):
-        # User supplied a window function
-        fft_window = window(win_length)
-
-    else:
-        # User supplied a window vector.
-        # Make sure it's an array:
-        fft_window = np.asarray(window)
-
-        # validate length compatibility
-        if fft_window.size != n_fft:
-            raise ParameterError('Size mismatch between n_fft and len(window)')
+    fft_window = get_window(window, win_length, fftbins=True)
 
     # Pad the window out to n_fft size
     fft_window = util.pad_center(fft_window, n_fft)
@@ -186,8 +173,8 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window=None,
     return stft_matrix
 
 
-@cache
-def istft(stft_matrix, hop_length=None, win_length=None, window=None,
+@cache(level=30)
+def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
           center=True, dtype=np.float32):
     """
     Inverse short-time Fourier transform (ISTFT).
@@ -220,10 +207,13 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
 
         If unspecified, defaults to `n_fft`.
 
-    window      : None, function, np.ndarray [shape=(n_fft,)]
-        - None (default): use an asymmetric Hann window
+    window      : string, tuple, number, function, np.ndarray [shape=(n_fft,)]
+        - a window specification (string, tuple, or number);
+          see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.hanning`
         - a user-specified window vector of length `n_fft`
+
+        .. see also:: `filters.get_window`
 
     center      : boolean
         - If `True`, `D` is assumed to have centered frames.
@@ -237,14 +227,13 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
     y : np.ndarray [shape=(n,)]
         time domain signal reconstructed from `stft_matrix`
 
-    Raises
-    ------
-    ParameterError
-        If `window` is supplied as a vector of length `n_fft`
-
     See Also
     --------
     stft : Short-time Fourier Transform
+
+    Notes
+    -----
+    This function caches at level 30.
 
     Examples
     --------
@@ -274,24 +263,9 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
 
     # Set the default hop, if it's not already specified
     if hop_length is None:
-        hop_length = int(win_length / 4)
+        hop_length = int(win_length // 4)
 
-    if window is None:
-        # Default is an asymmetric Hann window.
-        ifft_window = scipy.signal.hann(win_length, sym=False)
-
-    elif six.callable(window):
-        # User supplied a windowing function
-        ifft_window = window(win_length)
-
-    else:
-        # User supplied a window vector.
-        # Make it into an array
-        ifft_window = np.asarray(window)
-
-        # Verify that the shape matches
-        if ifft_window.size != n_fft:
-            raise ParameterError('Size mismatch between n_fft and window size')
+    ifft_window = get_window(window, win_length, fftbins=True)
 
     # Pad out to match n_fft
     ifft_window = util.pad_center(ifft_window, n_fft)
@@ -312,7 +286,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
         ifft_window_sum[sample:(sample + n_fft)] += ifft_window_square
 
     # Normalize by sum of squared window
-    approx_nonzero_indices = ifft_window_sum > util.SMALL_FLOAT
+    approx_nonzero_indices = ifft_window_sum > util.tiny(ifft_window_sum)
     y[approx_nonzero_indices] /= ifft_window_sum[approx_nonzero_indices]
 
     if center:
@@ -322,7 +296,8 @@ def istft(stft_matrix, hop_length=None, win_length=None, window=None,
 
 
 def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
-           norm=False, center=True, ref_power=1e-6, clip=True, dtype=np.complex64):
+           window='hann', norm=False, center=True, ref_power=1e-6,
+           clip=True, dtype=np.complex64):
     '''Compute the instantaneous frequency (as a proportion of the sampling rate)
     obtained as the time-derivative of the phase of the complex spectrum as
     described by [1]_.
@@ -353,6 +328,15 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     win_length : int > 0, <= n_fft
         Window length. Defaults to `n_fft`.
         See `stft` for details.
+
+    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        - a window specification (string, tuple, number);
+          see `scipy.signal.get_window`
+        - a window function, such as `scipy.signal.hanning`
+        - a user-specified window vector of length `n_fft`
+        See `stft` for details.
+
+        .. see also:: `filters.get_window`
 
     norm : bool
         Normalize the STFT.
@@ -410,7 +394,9 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
         hop_length = int(win_length // 4)
 
     # Construct a padded hann window
-    window = util.pad_center(scipy.signal.hann(win_length, sym=False), n_fft)
+    fft_window = util.pad_center(get_window(window, win_length,
+                                            fftbins=True),
+                                 n_fft)
 
     # Window for discrete differentiation
     freq_angular = np.linspace(0, 2 * np.pi, n_fft, endpoint=False)
@@ -418,6 +404,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     d_window = np.sin(-freq_angular) * np.pi / n_fft
 
     stft_matrix = stft(y, n_fft=n_fft, hop_length=hop_length,
+                       win_length=win_length,
                        window=window, center=center, dtype=dtype)
 
     diff_stft = stft(y, n_fft=n_fft, hop_length=hop_length,
@@ -441,7 +428,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     if_gram = freq_angular[:n_fft//2 + 1] + bin_offset
 
     if norm:
-        stft_matrix = stft_matrix * 2.0 / window.sum()
+        stft_matrix = stft_matrix * 2.0 / fft_window.sum()
 
     if clip:
         np.clip(if_gram, 0, np.pi, out=if_gram)
@@ -510,7 +497,6 @@ def magphase(D):
     return mag, phase
 
 
-@cache
 def phase_vocoder(D, rate, hop_length=None):
     """Phase vocoder.  Given an STFT matrix D, speed up by a factor of `rate`
 
@@ -598,7 +584,7 @@ def phase_vocoder(D, rate, hop_length=None):
     return d_stretch
 
 
-@cache
+@cache(level=30)
 def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     """Log-scale the amplitude of a spectrogram.
 
@@ -629,6 +615,11 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     See Also
     --------
     perceptual_weighting
+
+    Notes
+    -----
+    This function caches at level 30.
+
 
     Examples
     --------
@@ -702,7 +693,7 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     return log_spec
 
 
-@cache
+@cache(level=30)
 def perceptual_weighting(S, frequencies, **kwargs):
     '''Perceptual weighting of a power spectrogram:
 
@@ -727,6 +718,11 @@ def perceptual_weighting(S, frequencies, **kwargs):
     See Also
     --------
     logamplitude
+
+    Notes
+    -----
+    This function caches at level 30.
+
 
     Examples
     --------
@@ -770,7 +766,7 @@ def perceptual_weighting(S, frequencies, **kwargs):
     return offset + logamplitude(S, **kwargs)
 
 
-@cache
+@cache(level=30)
 def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1):
     """The fast Mellin transform (FMT) [1]_ of a uniformly sampled signal y.
 
@@ -828,6 +824,11 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
         if `n_fmt < 2` or `t_min <= 0`
         or if `y` is not finite
         or if `y.shape[axis] < 3`.
+
+    Notes
+    -----
+    This function caches at level 30.
+
 
     Examples
     --------
@@ -970,7 +971,6 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
     return result[idx] * np.sqrt(n) / n_fmt
 
 
-@cache
 def _spectrogram(y=None, S=None, n_fft=2048, hop_length=512, power=1):
     '''Helper function to retrieve a magnitude spectrogram.
 

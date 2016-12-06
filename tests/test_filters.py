@@ -240,14 +240,17 @@ def test_window_bandwidth():
         librosa.filters.window_bandwidth(scipy.signal.hann))
 
 
+def test_window_bandwidth_dynamic():
+
+    # Test with a window constructor guaranteed to not exist in
+    # the dictionary.
+    # should behave like a box filter, which has enbw == 1
+    eq_(librosa.filters.window_bandwidth(lambda n: np.ones(n)), 1)
+
+
+@raises(ValueError)
 def test_window_bandwidth_missing():
-    warnings.resetwarnings()
-    with warnings.catch_warnings(record=True) as out:
-        x = librosa.filters.window_bandwidth('unknown_window')
-        eq_(x, 1)
-        assert len(out) > 0
-        assert out[0].category is UserWarning
-        assert 'Unknown window function' in str(out[0].message)
+    librosa.filters.window_bandwidth('made up window name')
 
 
 def binstr(m):
@@ -315,3 +318,43 @@ def test_cq_to_chroma():
                                 tf = __test
                             yield (tf, n_bins, bins_per_octave,
                                    n_chroma, fmin, base_c, window)
+
+
+@raises(librosa.ParameterError)
+def test_get_window_fail():
+
+    librosa.filters.get_window(None, 32)
+
+
+def test_get_window():
+
+    def __test(window):
+
+        w1 = librosa.filters.get_window(window, 32)
+        w2 = scipy.signal.get_window(window, 32)
+
+        assert np.allclose(w1, w2)
+
+    for window in ['hann', u'hann', 4.0, ('kaiser', 4.0)]:
+        yield __test, window
+
+
+def test_get_window_func():
+
+    w1 = librosa.filters.get_window(scipy.signal.boxcar, 32)
+    w2 = scipy.signal.get_window('boxcar', 32)
+    assert np.allclose(w1, w2)
+
+
+def test_get_window_pre():
+
+
+    def __test(pre_win):
+        win = librosa.filters.get_window(pre_win, len(pre_win))
+        assert np.allclose(win, pre_win)
+
+
+    yield __test, scipy.signal.hann(16)
+    yield __test, list(scipy.signal.hann(16))
+    yield __test, [1, 1, 1]
+

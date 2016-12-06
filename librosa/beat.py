@@ -23,7 +23,8 @@ __all__ = ['beat_track', 'estimate_tempo']
 
 
 def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
-               start_bpm=120.0, tightness=100, trim=True, bpm=None):
+               start_bpm=120.0, tightness=100, trim=True, bpm=None,
+               units='frames'):
     r'''Dynamic programming beat tracker.
 
     Beats are detected in three stages, following the method of [1]_:
@@ -65,6 +66,10 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
         (optional) If provided, use `bpm` as the tempo instead of
         estimating it from `onsets`.
 
+    units : {'frames', 'samples', 'time'}
+        The units to encode detected beat events in.
+        By default, 'frames' are used.
+
 
     Returns
     -------
@@ -73,7 +78,8 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
         estimated global tempo (in beats per minute)
 
     beats : np.ndarray [shape=(m,)]
-        frame numbers of estimated beat events
+        estimated beat event locations in the specified units
+        (default is frame indices)
 
     .. note::
         If no onset strength could be detected, beat_tracker estimates 0 BPM
@@ -85,6 +91,7 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
     ParameterError
         if neither `y` nor `onset_envelope` are provided
 
+        or if `units` is not one of 'frames', 'samples', or 'time'
 
     See Also
     --------
@@ -138,15 +145,16 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
     >>> import matplotlib.pyplot as plt
     >>> hop_length = 512
     >>> plt.figure(figsize=(8, 4))
-    >>> plt.plot(librosa.util.normalize(onset_env), label='Onset strength')
-    >>> plt.vlines(beats, 0, 1, alpha=0.5, color='r',
+    >>> times = librosa.frames_to_time(np.arange(len(onset_env)),
+    ...                                sr=sr, hop_length=hop_length)
+    >>> plt.plot(times, librosa.util.normalize(onset_env),
+    ...          label='Onset strength')
+    >>> plt.vlines(times[beats], 0, 1, alpha=0.5, color='r',
     ...            linestyle='--', label='Beats')
     >>> plt.legend(frameon=True, framealpha=0.75)
     >>> # Limit the plot to a 15-second window
-    >>> plt.xlim([10 * sr / hop_length, 25 * sr / hop_length])
-    >>> plt.xticks(np.linspace(10, 25, 5) * sr / hop_length,
-    ...            np.linspace(10, 25, 5))
-    >>> plt.xlabel('Time (s)')
+    >>> plt.xlim(15, 30)
+    >>> plt.gca().xaxis.set_major_formatter(librosa.display.TimeFormatter())
     >>> plt.tight_layout()
     '''
 
@@ -178,10 +186,19 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
                            tightness,
                            trim)
 
+    if units == 'frames':
+        pass
+    elif units == 'samples':
+        beats = core.frames_to_samples(beats, hop_length=hop_length)
+    elif units == 'time':
+        beats = core.frames_to_time(beats, hop_length=hop_length, sr=sr)
+    else:
+        raise ParameterError('Invalid unit type: {}'.format(units))
+
     return (bpm, beats)
 
 
-@cache
+@cache(level=30)
 def estimate_tempo(onset_envelope, sr=22050, hop_length=512, start_bpm=120,
                    std_bpm=1.0, ac_size=4.0, duration=90.0, offset=0.0):
     """Estimate the tempo (beats per minute) from an onset envelope
@@ -224,6 +241,9 @@ def estimate_tempo(onset_envelope, sr=22050, hop_length=512, start_bpm=120,
     --------
     librosa.onset.onset_strength
 
+    Notes
+    -----
+    This function caches at level 30.
 
     Examples
     --------
@@ -296,7 +316,6 @@ def estimate_tempo(onset_envelope, sr=22050, hop_length=512, start_bpm=120,
     return start_bpm
 
 
-@cache
 def __beat_tracker(onset_envelope, bpm, fft_res, tightness, trim):
     """Internal function that tracks beats in an onset strength envelope.
 

@@ -20,11 +20,9 @@ import glob
 import numpy as np
 import scipy.io
 import six
-import warnings
-
+from nose.tools import eq_, raises, make_decorator
 import matplotlib
 matplotlib.use('Agg')
-from nose.tools import nottest, eq_, raises
 
 
 # -- utilities --#
@@ -33,6 +31,10 @@ def files(pattern):
     test_files.sort()
     return test_files
 
+
+def srand(seed=628318530):
+    np.random.seed(seed)
+    pass
 
 def load(infile):
     return scipy.io.loadmat(infile, chars_as_strings=True)
@@ -56,6 +58,7 @@ def test_load():
     for infile in files('data/core-load-*.mat'):
         yield (__test, infile)
     pass
+
 
 def test_segment_load():
 
@@ -108,7 +111,7 @@ def test_resample_mono():
         y, sr_in = librosa.load(infile, sr=None, duration=5)
 
         for sr_out in [8000, 22050]:
-            for res_type in ['sinc_fastest', 'sinc_best', 'kaiser_best', 'kaiser_fast', 'scipy']:
+            for res_type in ['kaiser_best', 'kaiser_fast', 'scipy']:
                 for fix in [False, True]:
                     yield (__test, y, sr_in, sr_out, res_type, fix)
 
@@ -137,11 +140,10 @@ def test_resample_stereo():
         target_length = y.shape[-1] * sr_out // sr_in
         assert np.abs(y2.shape[-1] - target_length) <= 1
 
-
     y, sr_in = librosa.load('data/test1_44100.wav', mono=False, sr=None, duration=5)
 
     for sr_out in [8000, 22050]:
-        for res_type in ['sinc_fastest', 'scipy']:
+        for res_type in ['kaiser_fast', 'scipy']:
             for fix in [False, True]:
                 yield __test, y, sr_in, sr_out, res_type, fix
 
@@ -166,53 +168,8 @@ def test_resample_scale():
     y, sr_in = librosa.load('data/test1_44100.wav', mono=True, sr=None, duration=5)
 
     for sr_out in [11025, 22050, 44100]:
-        for res_type in ['sinc_fastest', 'scipy', 'sinc_best', 'kaiser_best', 'kaiser_fast']:
+        for res_type in ['scipy', 'kaiser_best', 'kaiser_fast']:
             yield __test, sr_in, sr_out, res_type, y
-
-
-def test_resample_scikitsamplerate():
-    warnings.resetwarnings()
-    warnings.simplefilter('always')
-    with warnings.catch_warnings(record=True) as out:
-
-        librosa.resample(np.zeros(1000), 1000, 500, res_type='sinc_best')
-
-        assert len(out) > 0
-        assert out[0].category is DeprecationWarning
-        assert 'deprecated' in str(out[0].message).lower()
-
-
-@nottest
-def __deprecated_test_resample():
-
-    def __test(infile, scipy_resample):
-        DATA = load(infile)
-
-        # load the wav file
-        (y_in, sr_in) = librosa.load(DATA['wavfile'][0], sr=None, mono=True)
-
-        # Resample it to the target rate
-        y_out = librosa.resample(y_in, DATA['sr_in'], DATA['sr_out'],
-                                 scipy_resample=scipy_resample)
-
-        # Are we the same length?
-        if len(y_out) == len(DATA['y_out']):
-            # Is the data close?
-            assert np.allclose(y_out, DATA['y_out'])
-        elif len(y_out) == len(DATA['y_out']) - 1:
-            assert (np.allclose(y_out, DATA['y_out'][:-1, 0]) or
-                    np.allclose(y_out, DATA['y_out'][1:, 0]))
-        elif len(y_out) == len(DATA['y_out']) + 1:
-            assert (np.allclose(y_out[1:], DATA['y_out']) or
-                    np.allclose(y_out[:-2], DATA['y_out']))
-        else:
-            assert False
-        pass
-
-    for infile in files('data/core-resample-*.mat'):
-        for scipy_resample in [False, True]:
-            yield (__test, infile, scipy_resample)
-    pass
 
 
 def test_stft():
@@ -229,7 +186,7 @@ def test_stft():
             win_length = None
 
         else:
-            window = None
+            window = 'hann'
             win_length = DATA['hann_w'][0, 0]
 
         # Compute the STFT
@@ -326,6 +283,116 @@ def test_ifgram_if():
             yield tf, ref_power, clip
 
 
+def test_salience_basecase():
+    (y, sr) = librosa.load('data/test1_22050.wav')
+    S = np.abs(librosa.stft(y))
+    freqs = librosa.core.fft_frequencies(sr)
+    harms = [1]
+    weights = [1.0]
+    S_sal = librosa.core.salience(
+        S, freqs, harms, weights, filter_peaks=False, kind='quadratic'
+    )
+    assert np.allclose(S_sal, S)
+
+def test_salience_basecase2():
+    (y, sr) = librosa.load('data/test1_22050.wav')
+    S = np.abs(librosa.stft(y))
+    freqs = librosa.core.fft_frequencies(sr)
+    harms = [1, 0.5, 2.0]
+    weights = [1.0, 0.0, 0.0]
+    S_sal = librosa.core.salience(
+        S, freqs, harms, weights, filter_peaks=False, kind='quadratic'
+    )
+    assert np.allclose(S_sal, S)
+
+def test_salience_defaults():
+    S = np.array([
+        [0.1, 0.5, 0.0],
+        [0.2, 1.2, 1.2],
+        [0.0, 0.7, 0.3],
+        [1.3, 3.2, 0.8]
+    ])
+    freqs = np.array([50.0, 100.0, 200.0, 400.0])
+    harms = [0.5, 1, 2]
+    actual = librosa.core.salience(
+        S, freqs, harms, kind='quadratic', fill_value=0.0
+    )
+
+    expected = np.array([
+        [0.0, 0.0, 0.0],
+        [0.3, 2.4, 1.5],
+        [0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0]
+    ]) / 3.0
+    assert np.allclose(expected, actual)
+
+def test_salience_weights():
+    S = np.array([
+        [0.1, 0.5, 0.0],
+        [0.2, 1.2, 1.2],
+        [0.0, 0.7, 0.3],
+        [1.3, 3.2, 0.8]
+    ])
+    freqs = np.array([50.0, 100.0, 200.0, 400.0])
+    harms = [0.5, 1, 2]
+    weights = [1.0, 1.0, 1.0]
+    actual = librosa.core.salience(
+        S, freqs, harms, weights, kind='quadratic', fill_value=0.0
+    )
+
+    expected = np.array([
+        [0.0, 0.0, 0.0],
+        [0.3, 2.4, 1.5],
+        [0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0]
+    ]) / 3.0
+    assert np.allclose(expected, actual)
+
+def test_salience_no_peak_filter():
+    S = np.array([
+        [0.1, 0.5, 0.0],
+        [0.2, 1.2, 1.2],
+        [0.0, 0.7, 0.3],
+        [1.3, 3.2, 0.8]
+    ])
+    freqs = np.array([50.0, 100.0, 200.0, 400.0])
+    harms = [0.5, 1, 2]
+    weights = [1.0, 1.0, 1.0]
+    actual = librosa.core.salience(
+        S, freqs, harms, weights, filter_peaks=False, kind='quadratic'
+    )
+
+    expected = np.array([
+        [0.3, 1.7, 1.2],
+        [0.3, 2.4, 1.5],
+        [1.5, 5.1, 2.3],
+        [1.3, 3.9, 1.1]
+    ]) / 3.0
+    assert np.allclose(expected, actual)
+
+def test_salience_aggregate():
+    S = np.array([
+        [0.1, 0.5, 0.0],
+        [0.2, 1.2, 1.2],
+        [0.0, 0.7, 0.3],
+        [1.3, 3.2, 0.8]
+    ])
+    freqs = np.array([50.0, 100.0, 200.0, 400.0])
+    harms = [0.5, 1, 2]
+    weights = [1.0, 1.0, 1.0]
+    actual = librosa.core.salience(
+        S, freqs, harms, weights, aggregate=np.ma.max, kind='quadratic',
+        fill_value=0.0
+    )
+
+    expected = np.array([
+        [0.0, 0.0, 0.0],
+        [0.2, 1.2, 1.2],
+        [0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0]
+    ]) 
+    assert np.allclose(expected, actual)
+
 def test_magphase():
 
     (y, sr) = librosa.load('data/test1_22050.wav')
@@ -356,8 +423,8 @@ def test_istft_reconstruction():
         # should be almost approximately reconstucted
         assert np.allclose(x, x_reconstructed, atol=atol)
 
+    srand()
     # White noise
-    np.random.seed(98765)
     x1 = np.random.randn(2 ** 15)
 
     # Sin wave
@@ -483,8 +550,8 @@ def test_autocorrelate():
 
         assert np.allclose(ac, truth[my_slice])
 
-    np.random.seed(128)
 
+    srand()
     # test with both real and complex signals
     for y in [np.random.randn(256, 256), np.exp(1.j * np.random.randn(256, 256))]:
 
@@ -536,6 +603,7 @@ def test_zero_crossings():
         for i in idx:
             assert np.sign(data[i]) != np.sign(data[i-1])
 
+    srand()
     data = np.random.randn(32)
 
     for threshold in [None, 0, 1e-10]:
@@ -617,7 +685,6 @@ def test_piptrack_errors():
 
 def test_piptrack():
 
-
     def __test(S, freq):
         pitches, mags = librosa.piptrack(S=S, fmin=100)
 
@@ -630,7 +697,6 @@ def test_piptrack():
         # We should be within one cent of the target
         assert np.all(np.abs(np.log2(recovered_pitches) - np.log2(freq)) <= 1e-2)
 
-
     sr = 22050
     duration = 3.0
 
@@ -642,7 +708,6 @@ def test_piptrack():
             S = np.abs(librosa.stft(y, n_fft=n_fft, center=False))
 
             yield __test, S, freq
-
 
 
 def test_estimate_tuning():
@@ -784,7 +849,6 @@ def test_clicks():
         elif click is not None:
             assert len(y) == nmax + len(click)
 
-
     test_times = np.linspace(0, 10.0, num=5)
 
     # Bad cases
@@ -806,7 +870,7 @@ def test_clicks():
 
 
 def test_fmt_scale():
-    # This test constructs a single-cycle cosine wave, applies various axis scalings, 
+    # This test constructs a single-cycle cosine wave, applies various axis scalings,
     # and tests that the FMT is preserved
 
     def __test(scale, n_fmt, over_sample, kind, y_orig, y_res, atol):
@@ -860,8 +924,8 @@ def test_fmt_scale():
 
         for kind in ['slinear', 'quadratic', 'cubic']:
             for n_fmt in [None, 64, 128, 256, 512]:
-                for os in [1, 2, 3]:
-                    yield __test, scale, n_fmt, os, kind, y_orig, y_res, atol[kind]
+                for cur_os in [1, 2, 3]:
+                    yield __test, scale, n_fmt, cur_os, kind, y_orig, y_res, atol[kind]
 
                 # Over-sampling with down-scaling gets dicey at the end-points
                 yield __test, 1./scale, n_fmt, 1, kind, y_res, y_orig, atol[kind]
@@ -873,6 +937,7 @@ def test_fmt_fail():
     def __test(t_min, n_fmt, over_sample, y):
         librosa.fmt(y, t_min=t_min, n_fmt=n_fmt, over_sample=over_sample)
 
+    srand()
     y = np.random.randn(256)
 
     # Test for bad t_min
@@ -897,9 +962,97 @@ def test_fmt_fail():
 
 def test_fmt_axis():
 
+    srand()
     y = np.random.randn(32, 32)
 
     f1 = librosa.fmt(y, axis=-1)
     f2 = librosa.fmt(y.T, axis=0).T
 
     assert np.allclose(f1, f2)
+
+
+def test_harmonics_1d():
+
+    x = np.arange(16)
+    y = np.linspace(-8, 8, num=len(x), endpoint=False)**2
+
+    h = [0.25, 0.5, 1, 2, 4]
+
+    yh = librosa.interp_harmonics(y, x, h)
+
+    eq_(yh.shape[1:], y.shape)
+    eq_(yh.shape[0], len(h))
+    for i in range(len(h)):
+        if h[i] <= 1:
+            # Check that subharmonics match
+            step = int(1./h[i])
+            vals = yh[i, ::step]
+            assert np.allclose(vals, y[:len(vals)])
+        else:
+            # Else check that harmonics match
+            step = h[i]
+            vals = y[::step]
+            assert np.allclose(vals, yh[i, :len(vals)])
+
+
+def test_harmonics_2d():
+
+    x = np.arange(16)
+    y = np.linspace(-8, 8, num=len(x), endpoint=False)**2
+    y = np.tile(y, (5, 1)).T
+    h = [0.25, 0.5, 1, 2, 4]
+
+    yh = librosa.interp_harmonics(y, x, h, axis=0)
+
+    eq_(yh.shape[1:], y.shape)
+    eq_(yh.shape[0], len(h))
+    for i in range(len(h)):
+        if h[i] <= 1:
+            # Check that subharmonics match
+            step = int(1./h[i])
+            vals = yh[i, ::step]
+            assert np.allclose(vals, y[:len(vals)])
+        else:
+            # Else check that harmonics match
+            step = h[i]
+            vals = y[::step]
+            assert np.allclose(vals, yh[i, :len(vals)])
+
+
+@raises(librosa.ParameterError)
+def test_harmonics_badshape_1d():
+    freqs = np.zeros(100)
+    obs = np.zeros((5, 10))
+    librosa.interp_harmonics(obs, freqs, [1])
+
+@raises(librosa.ParameterError)
+def test_harmonics_badshape_2d():
+    freqs = np.zeros((5, 5))
+    obs = np.zeros((5, 10))
+    librosa.interp_harmonics(obs, freqs, [1])
+
+
+def test_harmonics_2d_varying():
+
+    x = np.arange(16)
+    y = np.linspace(-8, 8, num=len(x), endpoint=False)**2
+    x = np.tile(x, (5, 1)).T
+    y = np.tile(y, (5, 1)).T
+    h = [0.25, 0.5, 1, 2, 4]
+
+    yh = librosa.interp_harmonics(y, x, h, axis=0)
+
+    eq_(yh.shape[1:], y.shape)
+    eq_(yh.shape[0], len(h))
+    for i in range(len(h)):
+        if h[i] <= 1:
+            # Check that subharmonics match
+            step = int(1./h[i])
+            vals = yh[i, ::step]
+            assert np.allclose(vals, y[:len(vals)])
+        else:
+            # Else check that harmonics match
+            step = h[i]
+            vals = y[::step]
+            assert np.allclose(vals, yh[i, :len(vals)])
+
