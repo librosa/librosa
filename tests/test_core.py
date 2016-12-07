@@ -898,7 +898,7 @@ def test_db_to_power():
 
     for erp in range(-5, 6):
         for db in range(-100, 101, 10):
-            yield __test, db, 10.0**erp, 10.0**(0.1 * (db + erp))
+            yield __test, db, 10.0**erp, 10.0**erp * 10.0**(0.1 * db)
 
 
 def test_db_to_amplitude():
