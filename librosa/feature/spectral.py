@@ -875,7 +875,7 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
 
     fmin : float > 0
         minimum frequency to analyze in the CQT.
-        Default: C1' ~= 32.7 Hz
+        Default: 'C1' ~= 32.7 Hz
 
     norm : int > 0, +-np.inf, or None
         Column-wise normalization of the chromagram.
