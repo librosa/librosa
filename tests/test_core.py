@@ -826,6 +826,66 @@ def test_logamplitude():
                     yield tf, x * phase, ref_power, amin, top_db
 
 
+def test_power_to_db():
+
+    srand()
+
+    NOISE_FLOOR = 1e-6
+
+    # Make some noise
+    x = np.abs(np.random.randn(1000)) + NOISE_FLOOR
+
+    db1 = librosa.power_to_db(x**2, top_db=None)
+    db2 = librosa.logamplitude(x**2, top_db=None)
+
+    assert np.allclose(db1, db2)
+
+
+def test_amplitude_to_db():
+
+    srand()
+
+    NOISE_FLOOR = 1e-6
+
+    # Make some noise
+    x = np.abs(np.random.randn(1000)) + NOISE_FLOOR
+
+    db1 = librosa.amplitude_to_db(x, top_db=None)
+    db2 = librosa.logamplitude(x**2, top_db=None)
+
+    assert np.allclose(db1, db2)
+
+
+def test_db_to_power():
+
+    srand()
+
+    NOISE_FLOOR = 1e-6
+
+    # Make some noise
+    xp = (np.abs(np.random.randn(1000)) + NOISE_FLOOR)**2
+
+    db = librosa.power_to_db(xp, top_db=None)
+    xp2 = librosa.db_to_power(db)
+
+    assert np.allclose(xp, xp2)
+
+
+def test_db_to_amplitude():
+
+    srand()
+
+    NOISE_FLOOR = 1e-6
+
+    # Make some noise
+    x = np.abs(np.random.randn(1000)) + NOISE_FLOOR
+
+    db = librosa.amplitude_to_db(x, top_db=None)
+    x2 = librosa.db_to_amplitude(db)
+
+    assert np.allclose(x, x2)
+
+
 def test_clicks():
 
     def __test(times, frames, sr, hop_length, click_freq, click_duration, click, length):

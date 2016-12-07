@@ -729,7 +729,7 @@ def db_to_power(log_S, ref_power=1.0):
     -----
     This function caches at level 30.
     '''
-    return np.pow(10.0, 0.1 * (log_S + np.log10(ref_power)))
+    return np.power(10.0, 0.1 * (log_S + np.log10(ref_power)))
 
 
 @cache(level=30)
