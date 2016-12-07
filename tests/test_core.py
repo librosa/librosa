@@ -901,6 +901,26 @@ def test_db_to_power():
             yield __test, db, 10.0**erp, 10.0**erp * 10.0**(0.1 * db)
 
 
+def test_db_to_amplitude_inv():
+
+    srand()
+
+    NOISE_FLOOR = 1e-5
+
+    # Make some noise
+    xp = np.abs(np.random.randn(1000)) + NOISE_FLOOR
+
+    def __test(ref):
+
+        db = librosa.amplitude_to_db(xp, ref=ref, top_db=None)
+        xp2 = librosa.db_to_amplitude(db, ref=ref)
+
+        assert np.allclose(xp, xp2)
+
+    for ref_p in range(-3, 4):
+        yield __test, 10.0**ref_p
+
+
 def test_db_to_amplitude():
 
     srand()
