@@ -216,7 +216,7 @@ def test_ifgram():
                               hop_length=DATA['hop_length'][0, 0].astype(int),
                               win_length=DATA['hann_w'][0, 0].astype(int),
                               sr=DATA['sr'][0, 0].astype(int),
-                              ref=0.0,
+                              ref_power=0.0,
                               clip=False,
                               center=False)
 
@@ -266,7 +266,7 @@ def test_ifgram_if():
 
     def __test(ref, clip):
 
-        F, D = librosa.ifgram(y, sr=sr, ref=ref, clip=clip)
+        F, D = librosa.ifgram(y, sr=sr, ref_power=ref, clip=clip)
 
         if clip:
             assert np.all(0 <= F) and np.all(F <= 0.5 * sr)
