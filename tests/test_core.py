@@ -264,23 +264,23 @@ def test_ifgram_if():
 
     y, sr = librosa.load('data/test1_22050.wav')
 
-    def __test(ref_power, clip):
+    def __test(ref, clip):
 
-        F, D = librosa.ifgram(y, sr=sr, ref_power=ref_power, clip=clip)
+        F, D = librosa.ifgram(y, sr=sr, ref_power=ref, clip=clip)
 
         if clip:
             assert np.all(0 <= F) and np.all(F <= 0.5 * sr)
 
         assert np.all(np.isfinite(F))
 
-    for ref_power in [-10, 0.0, 1e-6, np.max]:
+    for ref in [-10, 0.0, 1e-6, np.max]:
         for clip in [False, True]:
-            if six.callable(ref_power) or ref_power >= 0.0:
+            if six.callable(ref) or ref >= 0.0:
                 tf = __test
             else:
                 tf = raises(librosa.ParameterError)(__test)
 
-            yield tf, ref_power, clip
+            yield tf, ref, clip
 
 
 def test_salience_basecase():
@@ -799,10 +799,10 @@ def test__spectrogram():
 def test_logamplitude():
 
     # Fake up some data
-    def __test(x, ref_power, amin, top_db):
+    def __test(x, ref, amin, top_db):
 
         y = librosa.logamplitude(x,
-                                 ref_power=ref_power,
+                                 ref=ref,
                                  amin=amin,
                                  top_db=top_db)
 
@@ -816,14 +816,124 @@ def test_logamplitude():
         x = np.linspace(0, 2e5, num=n)
         phase = np.exp(1.j * x)
 
-        for ref_power in [1.0, np.max]:
+        for ref in [1.0, np.max]:
             for amin in [-1, 0, 1e-10, 1e3]:
                 for top_db in [None, -10, 0, 40, 80]:
                     tf = __test
                     if amin <= 0 or (top_db is not None and top_db < 0):
                         tf = raises(librosa.ParameterError)(__test)
-                    yield tf, x, ref_power, amin, top_db
-                    yield tf, x * phase, ref_power, amin, top_db
+                    yield tf, x, ref, amin, top_db
+                    yield tf, x * phase, ref, amin, top_db
+
+
+def test_power_to_db_logamp():
+
+    srand()
+
+    NOISE_FLOOR = 1e-6
+
+    # Make some noise
+    x = np.abs(np.random.randn(1000)) + NOISE_FLOOR
+
+    db1 = librosa.power_to_db(x**2, top_db=None)
+    db2 = librosa.logamplitude(x**2, top_db=None)
+
+    assert np.allclose(db1, db2)
+
+
+def test_power_to_db():
+
+    def __test(y_true, x, rp):
+        y = librosa.power_to_db(x, ref=rp, top_db=None)
+
+        assert np.isclose(y, y_true)
+
+    for erp in range(-5, 6):
+        for k in range(-5, 6):
+            yield __test, (k-erp)*10, 10.0**k, 10.0**erp
+
+
+def test_amplitude_to_db():
+
+    srand()
+
+    NOISE_FLOOR = 1e-6
+
+    # Make some noise
+    x = np.abs(np.random.randn(1000)) + NOISE_FLOOR
+
+    db1 = librosa.amplitude_to_db(x, top_db=None)
+    db2 = librosa.logamplitude(x**2, top_db=None)
+
+    assert np.allclose(db1, db2)
+
+
+def test_db_to_power_inv():
+
+    srand()
+
+    NOISE_FLOOR = 1e-5
+
+    # Make some noise
+    xp = (np.abs(np.random.randn(1000)) + NOISE_FLOOR)**2
+
+    def __test(ref):
+
+        db = librosa.power_to_db(xp, ref=ref, top_db=None)
+        xp2 = librosa.db_to_power(db, ref=ref)
+
+        assert np.allclose(xp, xp2)
+
+    for ref_p in range(-3, 4):
+        yield __test, 10.0**ref_p
+
+
+def test_db_to_power():
+
+    def __test(y, rp, x_true):
+
+        x = librosa.db_to_power(y, ref=rp)
+
+        assert np.isclose(x, x_true), (x, x_true, y, rp)
+
+    for erp in range(-5, 6):
+        for db in range(-100, 101, 10):
+            yield __test, db, 10.0**erp, 10.0**erp * 10.0**(0.1 * db)
+
+
+def test_db_to_amplitude_inv():
+
+    srand()
+
+    NOISE_FLOOR = 1e-5
+
+    # Make some noise
+    xp = np.abs(np.random.randn(1000)) + NOISE_FLOOR
+
+    def __test(ref):
+
+        db = librosa.amplitude_to_db(xp, ref=ref, top_db=None)
+        xp2 = librosa.db_to_amplitude(db, ref=ref)
+
+        assert np.allclose(xp, xp2)
+
+    for ref_p in range(-3, 4):
+        yield __test, 10.0**ref_p
+
+
+def test_db_to_amplitude():
+
+    srand()
+
+    NOISE_FLOOR = 1e-6
+
+    # Make some noise
+    x = np.abs(np.random.randn(1000)) + NOISE_FLOOR
+
+    db = librosa.amplitude_to_db(x, top_db=None)
+    x2 = librosa.db_to_amplitude(db)
+
+    assert np.allclose(x, x2)
 
 
 def test_clicks():
