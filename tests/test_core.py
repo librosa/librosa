@@ -848,8 +848,8 @@ def test_power_to_db():
 
         assert np.isclose(y, y_true)
 
-    for k in range(-5, 6):
-        for erp in range(-5, 6):
+    for erp in range(-5, 6):
+        for k in range(-5, 6):
             yield __test, (k-erp)*10, 10.0**k, 10.0**erp
 
 
@@ -885,15 +885,15 @@ def test_db_to_power_inv():
 
 def test_db_to_power():
 
-    def __test(x_true, y, rp):
+    def __test(y, rp, x_true):
 
         x = librosa.db_to_power(y, ref_power=rp)
 
-        assert np.isclose(x, x_true), (y, x_true, rp)
+        assert np.isclose(x, x_true), (x, x_true, y, rp)
 
-    for db in range(-100, 101, step=10):
-        for erp in range(-5, 6):
-            yield __test, 0, db, 10.0**erp
+    for erp in range(-5, 6):
+        for db in range(-100, 101, 10):
+            yield __test, db, 10.0**erp, 10.0**(0.1 * (db + erp))
 
 
 def test_db_to_amplitude():
