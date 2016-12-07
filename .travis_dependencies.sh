@@ -10,6 +10,7 @@ conda_create ()
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
     conda config --add channels pypi
+    conda config --add channels conda-forge
     conda info -a
     deps='pip numpy scipy nose coverage matplotlib scikit-learn'
 
@@ -35,6 +36,10 @@ if [ ! -d "$src" ]; then
 
         pip install python-coveralls
 
+        if [ "$ENABLE_FFTW" = true ]; then
+            conda install pyfftw
+        fi
+        
         if [ "$ENABLE_NUMBA" = true ]; then
             conda install numba
         fi

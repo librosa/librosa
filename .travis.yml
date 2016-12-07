@@ -20,6 +20,8 @@ python:
     - "3.5"
 
 env:
+    - ENABLE_FFTW=false
+    - ENABLE_FFTW=true
     - ENABLE_NUMBA=false
     - ENABLE_NUMBA=true
 

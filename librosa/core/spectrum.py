@@ -1,19 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''Utilities for spectral processing'''
-
 import numpy as np
-import scipy.fftpack as fft
 import scipy
-import scipy.signal
 import scipy.interpolate
+import scipy.signal
 import six
 
 from . import time_frequency
-from .. import cache
-from .. import util
+from .. import cache, util
 from ..util.exceptions import ParameterError
 from ..filters import get_window
+
+try:
+    import pyfftw
+    pyfftw.interfaces.cache.enable()
+    from pyfftw.interfaces.scipy_fftpack import fft, ifft
+except ImportError:
+    from scipy.fftpack import fft, ifft
+
 
 __all__ = ['stft', 'istft', 'magphase',
            'ifgram', 'phase_vocoder',
@@ -166,9 +171,9 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
         bl_t = min(bl_s + n_columns, stft_matrix.shape[1])
 
         # RFFT and Conjugate here to match phase from DPWE code
-        stft_matrix[:, bl_s:bl_t] = fft.fft(fft_window *
-                                            y_frames[:, bl_s:bl_t],
-                                            axis=0)[:stft_matrix.shape[0]].conj()
+        stft_matrix[:, bl_s:bl_t] = fft(fft_window *
+                                        y_frames[:, bl_s:bl_t],
+                                        axis=0)[:stft_matrix.shape[0]].conj()
 
     return stft_matrix
 
@@ -280,7 +285,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
         sample = i * hop_length
         spec = stft_matrix[:, i].flatten()
         spec = np.concatenate((spec.conj(), spec[-2:0:-1]), 0)
-        ytmp = ifft_window * fft.ifft(spec).real
+        ytmp = ifft_window * ifft(spec).real
 
         y[sample:(sample + n_fft)] = y[sample:(sample + n_fft)] + ytmp
         ifft_window_sum[sample:(sample + n_fft)] += ifft_window_square
@@ -960,8 +965,8 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
     shape[axis] = -1
 
     # Apply the window and fft
-    result = fft.fft(y_res * (x_exp**beta).reshape(shape),
-                     axis=axis, overwrite_x=True)
+    result = fft(y_res * (x_exp**beta).reshape(shape),
+                 axis=axis, overwrite_x=True)
 
     # Slice out the positive-scale component
     idx = [slice(None)] * result.ndim
