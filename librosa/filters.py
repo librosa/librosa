@@ -687,8 +687,8 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
 
     >>> import matplotlib.pyplot as plt
     >>> plt.subplot(3, 1, 1)
-    >>> librosa.display.specshow(librosa.logamplitude(CQT**2,
-    ...                                               ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(CQT,
+    ...                                                  ref=np.max),
     ...                          y_axis='cqt_note', x_axis='time')
     >>> plt.title('CQT Power')
     >>> plt.colorbar()
