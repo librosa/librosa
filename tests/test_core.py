@@ -826,7 +826,7 @@ def test_logamplitude():
                     yield tf, x * phase, ref_power, amin, top_db
 
 
-def test_power_to_db():
+def test_power_to_db_logamp():
 
     srand()
 
@@ -839,6 +839,18 @@ def test_power_to_db():
     db2 = librosa.logamplitude(x**2, top_db=None)
 
     assert np.allclose(db1, db2)
+
+
+def test_power_to_db():
+
+    def __test(y_true, x, rp):
+        y = librosa.power_to_db(x, ref_power=rp, top_db=None)
+
+        assert np.isclose(y, y_true)
+
+    for k in range(-5, 6):
+        for erp in range(-5, 6):
+            yield __test, (k-erp)*10, 10.0**k, 10.0**erp
 
 
 def test_amplitude_to_db():
@@ -856,7 +868,7 @@ def test_amplitude_to_db():
     assert np.allclose(db1, db2)
 
 
-def test_db_to_power():
+def test_db_to_power_inv():
 
     srand()
 
@@ -869,6 +881,19 @@ def test_db_to_power():
     xp2 = librosa.db_to_power(db)
 
     assert np.allclose(xp, xp2)
+
+
+def test_db_to_power():
+
+    def __test(x_true, y, rp):
+
+        x = librosa.db_to_power(y, ref_power=rp)
+
+        assert np.isclose(x, x_true), (y, x_true, rp)
+
+    for db in range(-100, 101, step=10):
+        for erp in range(-5, 6):
+            yield __test, 0, db, 10.0**erp
 
 
 def test_db_to_amplitude():
