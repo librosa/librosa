@@ -615,7 +615,7 @@ def logamplitude(S, ref=1.0, amin=1e-10, top_db=80.0, ref_power=Deprecated()):
 
     top_db  : float >= 0 [scalar]
         threshold the output at `top_db` below the peak:
-        ``max(log10(S)) - top_db``
+        ``max(10 * log10(S)) - top_db``
 
     ref_power : scalar or callable
         .. warning:: This parameter name was deprecated in librosa 0.5.0.
@@ -624,8 +624,8 @@ def logamplitude(S, ref=1.0, amin=1e-10, top_db=80.0, ref_power=Deprecated()):
 
     Returns
     -------
-    S_out   : np.ndarray
-        ``S_out ~= 10 * log10(abs(S)) - 10 * log10(abs(ref))``
+    S_db   : np.ndarray
+        ``S_db ~= 10 * log10(abs(S)) - 10 * log10(abs(ref))``
 
     See Also
     --------
@@ -721,11 +721,11 @@ def db_to_power(S_db, ref=1.0):
 
     This effectively inverts `power_to_db` (or `logamplitude`):
 
-        `db_to_power(log_S) ~= 10.0**((log_S + log10(ref)) / 10)`
+        `db_to_power(S_db) ~= 10.0**((S_db + log10(ref)) / 10)`
 
     Parameters
     ----------
-    log_S : np.ndarray
+    S_db : np.ndarray
         Log-power spectrogram, as computed by `power_to_db` or `logamplitude`
 
     ref : number > 0
@@ -733,18 +733,18 @@ def db_to_power(S_db, ref=1.0):
 
     Returns
     -------
-    S : np.ndarray [shape=log_S.shape]
+    S : np.ndarray
         Power spectrogram
 
     Notes
     -----
     This function caches at level 30.
     '''
-    return np.power(10.0, 0.1 * (S_db + np.log10(ref)))
+    return np.power(ref, 0.1) * np.power(10.0, 0.1 * S_db)
 
 
 @cache(level=30)
-def amplitude_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
+def amplitude_to_db(S, ref=1.0, amin=1e-5, top_db=80.0):
     '''Convert an amplitude spectrogram to dB-scaled spectrogram.
 
     This is equivalent to ``power_to_db(S**2)``, but is provided for convenience.
@@ -781,7 +781,17 @@ def amplitude_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
     -----
     This function caches at level 30.
     '''
-    return power_to_db(S**2, ref=ref, amin=amin, top_db=top_db)
+    magnitude = np.abs(S)
+
+    if six.callable(ref):
+        # User supplied a function to calculate reference power
+        ref_value = ref(magnitude)
+    else:
+        ref_value = np.abs(ref)
+
+    magnitude **= 2
+    return power_to_db(magnitude, ref=ref_value**2, amin=amin**2,
+                       top_db=top_db)
 
 
 @cache(level=30)
@@ -790,7 +800,7 @@ def db_to_amplitude(S_db, ref=1.0):
 
     This effectively inverts `amplitude_to_db`:
 
-        `db_to_amplitude(log_S) ~= 10.0**(0.5 * (log_S + log10(ref)/10))`
+        `db_to_amplitude(S_db) ~= 10.0**(0.5 * (S_db + log10(ref)/10))`
 
     Parameters
     ----------
@@ -809,7 +819,7 @@ def db_to_amplitude(S_db, ref=1.0):
     -----
     This function caches at level 30.
     '''
-    return db_to_power(0.5 * S_db, ref=ref)
+    return db_to_power(0.5 * S_db, ref=ref**0.5)
 
 
 @cache(level=30)
