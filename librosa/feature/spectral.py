@@ -13,7 +13,7 @@ from ..util.deprecation import Deprecated, rename_kw
 
 from ..core.time_frequency import fft_frequencies
 from ..core.audio import zero_crossings, to_mono
-from ..core.spectrum import logamplitude, _spectrogram
+from ..core.spectrum import logamplitude, power_to_db, _spectrogram
 from ..core.constantq import cqt, hybrid_cqt
 from ..core.pitch import estimate_tuning
 
@@ -112,7 +112,7 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     >>> plt.xlim([0, cent.shape[-1]])
     >>> plt.legend()
     >>> plt.subplot(2, 1, 2)
-    >>> librosa.display.specshow(librosa.logamplitude(S**2, ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref_power=np.max),
     ...                          y_axis='log', x_axis='time')
     >>> plt.title('log Power spectrogram')
     >>> plt.tight_layout()
@@ -217,7 +217,7 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     >>> plt.xlim([0, spec_bw.shape[-1]])
     >>> plt.legend()
     >>> plt.subplot(2, 1, 2)
-    >>> librosa.display.specshow(librosa.logamplitude(S**2, ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref_power=np.max),
     ...                          y_axis='log', x_axis='time')
     >>> plt.title('log Power spectrogram')
     >>> plt.tight_layout()
@@ -323,8 +323,8 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
     >>> plt.subplot(2, 1, 1)
-    >>> librosa.display.specshow(librosa.logamplitude(S ** 2,
-    ...                                               ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S,
+    ...                                                  ref_power=np.max),
     ...                          y_axis='log')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Power spectrogram')
@@ -460,7 +460,7 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     >>> plt.xlim([0, rolloff.shape[-1]])
     >>> plt.legend()
     >>> plt.subplot(2, 1, 2)
-    >>> librosa.display.specshow(librosa.logamplitude(S**2, ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref_power=np.max),
     ...                          y_axis='log', x_axis='time')
     >>> plt.title('log Power spectrogram')
     >>> plt.tight_layout()
@@ -551,7 +551,7 @@ def rmse(y=None, S=None, frame_length=2048, hop_length=512,
     >>> plt.xlim([0, rms.shape[-1]])
     >>> plt.legend(loc='best')
     >>> plt.subplot(2, 1, 2)
-    >>> librosa.display.specshow(librosa.logamplitude(S**2, ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref_power=np.max),
     ...                          y_axis='log', x_axis='time')
     >>> plt.title('log Power spectrogram')
     >>> plt.tight_layout()
@@ -652,7 +652,7 @@ def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     >>> plt.colorbar()
     >>> plt.title('Quadratic coefficients')
     >>> plt.subplot(3, 1, 3)
-    >>> librosa.display.specshow(librosa.logamplitude(S**2, ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref_power=np.max),
     ...                          y_axis='log', x_axis='time')
     >>> plt.title('log Power spectrogram')
     >>> plt.colorbar(format='%+2.0f dB')
@@ -1245,7 +1245,7 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
 
     >>> S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128,
     ...                                    fmax=8000)
-    >>> librosa.feature.mfcc(S=librosa.logamplitude(S))
+    >>> librosa.feature.mfcc(S=librosa.power_to_db(S))
     array([[ -5.207e+02,  -4.898e+02, ...,  -5.207e+02,  -5.207e+02],
            [ -2.576e-14,   4.054e+01, ...,  -3.997e-14,  -3.997e-14],
            ...,
@@ -1269,7 +1269,7 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
     """
 
     if S is None:
-        S = logamplitude(melspectrogram(y=y, sr=sr, **kwargs))
+        S = power_to_db(melspectrogram(y=y, sr=sr, **kwargs))
 
     return np.dot(filters.dct(n_mfcc, S.shape[0]), S)
 
@@ -1335,8 +1335,8 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     >>> import matplotlib.pyplot as plt
     >>> plt.figure(figsize=(10, 4))
-    >>> librosa.display.specshow(librosa.logamplitude(S,
-    ...                                               ref_power=np.max),
+    >>> librosa.display.specshow(librosa.power_to_db(S,
+    ...                                              ref_power=np.max),
     ...                          y_axis='mel', fmax=8000,
     ...                          x_axis='time')
     >>> plt.colorbar(format='%+2.0f dB')

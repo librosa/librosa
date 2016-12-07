@@ -416,9 +416,9 @@ def _signal_to_frame_nonsilent(y, frame_length=2048, hop_length=512, top_db=60,
                        frame_length=frame_length,
                        hop_length=hop_length)**2
 
-    return (core.logamplitude(mse.squeeze(),
-                              ref_power=ref_power,
-                              top_db=None) > - top_db)
+    return (core.power_to_db(mse.squeeze(),
+                             ref_power=ref_power,
+                             top_db=None) > - top_db)
 
 
 def trim(y, top_db=60, ref_power=np.max, frame_length=2048, hop_length=512):
