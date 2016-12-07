@@ -464,7 +464,7 @@ def axis_sort(S, axis=-1, index=False, value=None):
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
     >>> plt.subplot(2, 2, 1)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(W, ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(W, ref=np.max),
     ...                          y_axis='log')
     >>> plt.title('W')
     >>> plt.subplot(2, 2, 2)
@@ -472,7 +472,7 @@ def axis_sort(S, axis=-1, index=False, value=None):
     >>> plt.title('H')
     >>> plt.subplot(2, 2, 3)
     >>> librosa.display.specshow(librosa.amplitude_to_db(W_sort,
-    ...                                                  ref_power=np.max),
+    ...                                                  ref=np.max),
     ...                          y_axis='log')
     >>> plt.title('W sorted')
     >>> plt.subplot(2, 2, 4)
@@ -897,7 +897,7 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     >>> plt.figure()
     >>> ax = plt.subplot(2, 1, 2)
     >>> D = librosa.stft(y)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
     ...                          y_axis='log', x_axis='time')
     >>> plt.subplot(2, 1, 1, sharex=ax)
     >>> plt.plot(times, onset_env, alpha=0.8, label='Onset strength')
@@ -1332,20 +1332,20 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     >>> plt.figure()
     >>> plt.subplot(3, 1, 1)
     >>> librosa.display.specshow(librosa.amplitude_to_db(cqt,
-    ...                                                  ref_power=np.max),
+    ...                                                  ref=np.max),
     ...                          x_axis='time')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('CQT power, shape={}'.format(cqt.shape))
     >>> plt.subplot(3, 1, 2)
     >>> librosa.display.specshow(librosa.amplitude_to_db(cqt_med,
-    ...                                                  ref_power=np.max),
+    ...                                                  ref=np.max),
     ...                          x_coords=beat_t, x_axis='time')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Beat synchronous CQT power, '
     ...           'shape={}'.format(cqt_med.shape))
     >>> plt.subplot(3, 1, 3)
     >>> librosa.display.specshow(librosa.amplitude_to_db(cqt_med_sub,
-    ...                                                  ref_power=np.max),
+    ...                                                  ref=np.max),
     ...                          x_coords=subbeat_t, x_axis='time')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Sub-beat synchronous CQT power, '

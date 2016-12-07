@@ -138,13 +138,13 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
     >>> plt.figure(figsize=(10,8))
     >>> plt.subplot(3, 1, 1)
     >>> librosa.display.specshow(librosa.amplitude_to_db(S,
-    ...                                                  ref_power=np.max),
+    ...                                                  ref=np.max),
     ...                          y_axis='log', x_axis='time')
     >>> plt.title('Input spectrogram')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.subplot(3, 2, 3)
     >>> librosa.display.specshow(librosa.amplitude_to_db(comps,
-    ...                                                  ref_power=np.max),
+    ...                                                  ref=np.max),
     ...                          y_axis='log')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Components')
@@ -156,7 +156,7 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
     >>> plt.subplot(3, 1, 3)
     >>> S_approx = comps.dot(acts)
     >>> librosa.display.specshow(librosa.amplitude_to_db(S_approx,
-    ...                                                  ref_power=np.max),
+    ...                                                  ref=np.max),
     ...                          y_axis='log', x_axis='time')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Reconstructed spectrogram')
@@ -274,19 +274,19 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
     >>> plt.figure()
     >>> plt.subplot(3, 1, 1)
     >>> librosa.display.specshow(librosa.amplitude_to_db(D,
-    ...                                                  ref_power=np.max),
+    ...                                                  ref=np.max),
     ...                          y_axis='log')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Full power spectrogram')
     >>> plt.subplot(3, 1, 2)
     >>> librosa.display.specshow(librosa.amplitude_to_db(H,
-    ...                                                  ref_power=np.max),
+    ...                                                  ref=np.max),
     ...                          y_axis='log')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Harmonic power spectrogram')
     >>> plt.subplot(3, 1, 3)
     >>> librosa.display.specshow(librosa.amplitude_to_db(P,
-    ...                                                  ref_power=np.max),
+    ...                                                  ref=np.max),
     ...                          y_axis='log')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Percussive power spectrogram')

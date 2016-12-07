@@ -12,6 +12,7 @@ import six
 from . import time_frequency
 from .. import cache
 from .. import util
+from ..util.deprecation import rename_kw, Deprecated
 from ..util.exceptions import ParameterError
 from ..filters import get_window
 
@@ -123,7 +124,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
 
     >>> import matplotlib.pyplot as plt
     >>> librosa.display.specshow(librosa.amplitude_to_db(D,
-    ...                                                  ref_power=np.max),
+    ...                                                  ref=np.max),
     ...                          y_axis='log', x_axis='time')
     >>> plt.title('Power spectrogram')
     >>> plt.colorbar(format='%+2.0f dB')
@@ -587,10 +588,10 @@ def phase_vocoder(D, rate, hop_length=None):
 
 
 @cache(level=30)
-def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
+def logamplitude(S, ref=1.0, amin=1e-10, top_db=80.0, ref_power=Deprecated()):
     """Log-scale the amplitude of a spectrogram.
 
-    This computes the scaling ``10 * log10(S / ref_power)`` in a numerically
+    This computes the scaling ``10 * log10(S / ref)`` in a numerically
     stable way.
 
     If `S` is a power spectrum (amplitude squared), then the result is in
@@ -601,26 +602,30 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     S : np.ndarray
         input amplitudes
 
-    ref_power : scalar or callable
-        If scalar, `log10(abs(S))` is compared to `log10(ref_power)`.
-        Zeros in the output correspond to positions where `S == ref_power`.
+    ref : scalar or callable
+        If scalar, `log10(abs(S))` is compared to `log10(ref)`.
+        Zeros in the output correspond to positions where `S == ref`.
 
-        If callable, `log10(abs(S))` is compared to `log10(ref_power(abs(S)))`.
+        If callable, `log10(abs(S))` is compared to `log10(ref(abs(S)))`.
 
         This is primarily useful for comparing to the maximum value of `S`.
 
-
     amin    : float > 0 [scalar]
-        minimum threshold for `abs(S)` and `ref_power`
+        minimum threshold for `abs(S)` and `ref`
 
     top_db  : float >= 0 [scalar]
         threshold the output at `top_db` below the peak:
         ``max(log10(S)) - top_db``
 
+    ref_power : scalar or callable
+        .. warning:: This parameter name was deprecated in librosa 0.5.0.
+            Use the `ref` parameter instead.
+            The `ref_power` parameter will be removed in librosa 0.6.0.
+
     Returns
     -------
     S_out   : np.ndarray
-        ``S_out ~= 10 * log10(abs(S)) - 10 * log10(abs(ref_power))``
+        ``S_out ~= 10 * log10(abs(S)) - 10 * log10(abs(ref))``
 
     See Also
     --------
@@ -646,7 +651,7 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
 
     Compute dB relative to peak power
 
-    >>> librosa.logamplitude(S**2, ref_power=np.max)
+    >>> librosa.logamplitude(S**2, ref=np.max)
     array([[-80.   , -74.027, ..., -80.   , -80.   ],
            [-80.   , -72.431, ..., -80.   , -80.   ],
            ...,
@@ -656,7 +661,7 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
 
     Or compare to median power
 
-    >>> librosa.logamplitude(S**2, ref_power=np.median)
+    >>> librosa.logamplitude(S**2, ref=np.median)
     array([[-0.189,  5.784, ..., -0.189, -0.189],
            [-0.189,  7.381, ..., -0.189, -0.189],
            ...,
@@ -673,7 +678,7 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     >>> plt.colorbar()
     >>> plt.title('Power spectrogram')
     >>> plt.subplot(2, 1, 2)
-    >>> librosa.display.specshow(librosa.logamplitude(S**2, ref_power=np.max),
+    >>> librosa.display.specshow(librosa.logamplitude(S**2, ref=np.max),
     ...                          sr=sr, y_axis='log', x_axis='time')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Log-Power spectrogram')
@@ -686,14 +691,18 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
 
     magnitude = np.abs(S)
 
-    if six.callable(ref_power):
+    ref = rename_kw('ref_power', ref_power,
+                    'ref', ref,
+                    '0.5', '0.6')
+
+    if six.callable(ref):
         # User supplied a function to calculate reference power
-        __ref = ref_power(magnitude)
+        ref_value = ref(magnitude)
     else:
-        __ref = np.abs(ref_power)
+        ref_value = np.abs(ref)
 
     log_spec = 10.0 * np.log10(np.maximum(amin, magnitude))
-    log_spec -= 10.0 * np.log10(np.maximum(amin, __ref))
+    log_spec -= 10.0 * np.log10(np.maximum(amin, ref_value))
 
     if top_db is not None:
         if top_db < 0:
@@ -707,19 +716,19 @@ power_to_db = logamplitude
 
 
 @cache(level=30)
-def db_to_power(S_db, ref_power=1.0):
+def db_to_power(S_db, ref=1.0):
     '''Convert a dB-scale spectrogram to a power spectrogram.
 
     This effectively inverts `power_to_db` (or `logamplitude`):
 
-        `db_to_power(log_S) ~= 10.0**((log_S + log10(ref_power)) / 10)`
+        `db_to_power(log_S) ~= 10.0**((log_S + log10(ref)) / 10)`
 
     Parameters
     ----------
     log_S : np.ndarray
         Log-power spectrogram, as computed by `power_to_db` or `logamplitude`
 
-    ref_power : number > 0
+    ref : number > 0
         Optional reference power.
 
     Returns
@@ -731,11 +740,11 @@ def db_to_power(S_db, ref_power=1.0):
     -----
     This function caches at level 30.
     '''
-    return np.power(10.0, 0.1 * (S_db + np.log10(ref_power)))
+    return np.power(10.0, 0.1 * (S_db + np.log10(ref)))
 
 
 @cache(level=30)
-def amplitude_to_db(S, ref_power=1.0, amin=1e-10, top_db=80.0):
+def amplitude_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
     '''Convert an amplitude spectrogram to dB-scaled spectrogram.
 
     This is equivalent to ``power_to_db(S**2)``, but is provided for convenience.
@@ -745,16 +754,16 @@ def amplitude_to_db(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     S : np.ndarray
         The input spectrogram (linear amplitude scale)
 
-    ref_power : scalar or callable
-        If scalar, `log10(abs(S)**2)` is compared to `log10(ref_power)`.
-        Zeros in the output correspond to positions where `S == ref_power`.
+    ref : scalar or callable
+        If scalar, `log10(abs(S)**2)` is compared to `log10(ref)`.
+        Zeros in the output correspond to positions where `S == ref`.
 
-        If callable, `log10(abs(S)**2)` is compared to `log10(ref_power(abs(S)**2))`.
+        If callable, `log10(abs(S)**2)` is compared to `log10(ref(abs(S)**2))`.
 
         This is primarily useful for comparing to the maximum value of `S**2`
 
     amin : float > 0 [scalar]
-        minimum threshold for `abs(S)` and `ref_power`
+        minimum threshold for `abs(S)` and `ref`
 
     top_db : float >= 0 [scalar]
         threshold the output at `top_db` below the peak value
@@ -772,23 +781,23 @@ def amplitude_to_db(S, ref_power=1.0, amin=1e-10, top_db=80.0):
     -----
     This function caches at level 30.
     '''
-    return power_to_db(S**2, ref_power=ref_power, amin=amin, top_db=top_db)
+    return power_to_db(S**2, ref=ref, amin=amin, top_db=top_db)
 
 
 @cache(level=30)
-def db_to_amplitude(S_db, ref_power=1.0):
+def db_to_amplitude(S_db, ref=1.0):
     '''Convert a dB-scaled spectrogram to an amplitude spectrogram.
 
     This effectively inverts `amplitude_to_db`:
 
-        `db_to_amplitude(log_S) ~= 10.0**(0.5 * (log_S + log10(ref_power)/10))`
+        `db_to_amplitude(log_S) ~= 10.0**(0.5 * (log_S + log10(ref)/10))`
 
     Parameters
     ----------
     S_db : np.ndarray
         Log-power spectrogram, as computed by `amplitude_to_db`
 
-    ref_power : number > 0
+    ref: number > 0
         Optional reference power.
 
     Returns
@@ -800,14 +809,14 @@ def db_to_amplitude(S_db, ref_power=1.0):
     -----
     This function caches at level 30.
     '''
-    return db_to_power(0.5 * S_db, ref_power=ref_power)
+    return db_to_power(0.5 * S_db, ref=ref)
 
 
 @cache(level=30)
 def perceptual_weighting(S, frequencies, **kwargs):
     '''Perceptual weighting of a power spectrogram:
 
-    `S_p[f] = A_weighting(f) + 10*log(S[f] / ref_power)`
+    `S_p[f] = A_weighting(f) + 10*log(S[f] / ref)`
 
     Parameters
     ----------
@@ -844,7 +853,7 @@ def perceptual_weighting(S, frequencies, **kwargs):
     ...                                 fmin=librosa.note_to_hz('A1'))
     >>> perceptual_CQT = librosa.perceptual_weighting(CQT**2,
     ...                                               freqs,
-    ...                                               ref_power=np.max)
+    ...                                               ref=np.max)
     >>> perceptual_CQT
     array([[ -80.076,  -80.049, ..., -104.735, -104.735],
            [ -78.344,  -78.555, ..., -103.725, -103.725],
@@ -856,7 +865,7 @@ def perceptual_weighting(S, frequencies, **kwargs):
     >>> plt.figure()
     >>> plt.subplot(2, 1, 1)
     >>> librosa.display.specshow(librosa.amplitude_to_db(CQT,
-    ...                                                  ref_power=np.max),
+    ...                                                  ref=np.max),
     ...                          fmin=librosa.note_to_hz('A1'),
     ...                          y_axis='cqt_hz',
     ...                          x_axis='time')

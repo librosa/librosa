@@ -110,7 +110,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     >>> D = librosa.stft(y)
     >>> plt.figure()
     >>> ax1 = plt.subplot(2, 1, 1)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
     ...                          x_axis='time', y_axis='log')
     >>> plt.title('Power spectrogram')
     >>> plt.subplot(2, 1, 2, sharex=ax1)
@@ -254,7 +254,7 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
     >>> times = librosa.frames_to_time(np.arange(D.shape[1]))
     >>> plt.figure()
     >>> ax1 = plt.subplot(2, 1, 1)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
     ...                          y_axis='log', x_axis='time')
     >>> plt.title('Power spectrogram')
 
@@ -387,7 +387,7 @@ def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
     >>> D = librosa.stft(y)
     >>> plt.figure()
     >>> plt.subplot(2, 1, 1)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
     ...                          y_axis='log')
     >>> plt.title('Power spectrogram')
 

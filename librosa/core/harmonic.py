@@ -72,7 +72,7 @@ def salience(S, freqs, h_range, weights=None, aggregate=None,
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
     >>> librosa.display.specshow(librosa.logamplitude(S_sal**2,
-    ...                                               ref_power=S_sal.max()*2),
+    ...                                               ref=S_sal.max()**2),
     ...                          sr=sr, y_axis='log')
     >>> plt.tight_layout()
     """
@@ -186,7 +186,7 @@ def interp_harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
     >>> for i, _sh in enumerate(S_harm, 1):
     ...     plt.subplot(3, 2, i)
     ...     librosa.display.specshow(librosa.logamplitude(_sh**2,
-    ...                                                   ref_power=S.max()**2),
+    ...                                                   ref=S.max()**2),
     ...                              sr=sr, y_axis='log')
     ...     plt.title('h={:.3g}'.format(h_range[i-1]))
     ...     plt.yticks([])
@@ -293,7 +293,7 @@ def harmonics_1d(harmonic_out, x, freqs, h_range, kind='linear',
     >>> for i, _sh in enumerate(S_harm, 1):
     ...     plt.subplot(3,2,i)
     ...     librosa.display.specshow(librosa.logamplitude(_sh**2,
-    ...                                                   ref_power=S.max()**2),
+    ...                                                   ref=S.max()**2),
     ...                              sr=sr, y_axis='log')
     ...     plt.title('h={:.3g}'.format(h_range[i-1]))
     ...     plt.yticks([])

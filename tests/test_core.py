@@ -216,7 +216,7 @@ def test_ifgram():
                               hop_length=DATA['hop_length'][0, 0].astype(int),
                               win_length=DATA['hann_w'][0, 0].astype(int),
                               sr=DATA['sr'][0, 0].astype(int),
-                              ref_power=0.0,
+                              ref=0.0,
                               clip=False,
                               center=False)
 
@@ -264,23 +264,23 @@ def test_ifgram_if():
 
     y, sr = librosa.load('data/test1_22050.wav')
 
-    def __test(ref_power, clip):
+    def __test(ref, clip):
 
-        F, D = librosa.ifgram(y, sr=sr, ref_power=ref_power, clip=clip)
+        F, D = librosa.ifgram(y, sr=sr, ref=ref, clip=clip)
 
         if clip:
             assert np.all(0 <= F) and np.all(F <= 0.5 * sr)
 
         assert np.all(np.isfinite(F))
 
-    for ref_power in [-10, 0.0, 1e-6, np.max]:
+    for ref in [-10, 0.0, 1e-6, np.max]:
         for clip in [False, True]:
-            if six.callable(ref_power) or ref_power >= 0.0:
+            if six.callable(ref) or ref >= 0.0:
                 tf = __test
             else:
                 tf = raises(librosa.ParameterError)(__test)
 
-            yield tf, ref_power, clip
+            yield tf, ref, clip
 
 
 def test_salience_basecase():
@@ -799,10 +799,10 @@ def test__spectrogram():
 def test_logamplitude():
 
     # Fake up some data
-    def __test(x, ref_power, amin, top_db):
+    def __test(x, ref, amin, top_db):
 
         y = librosa.logamplitude(x,
-                                 ref_power=ref_power,
+                                 ref=ref,
                                  amin=amin,
                                  top_db=top_db)
 
@@ -816,14 +816,14 @@ def test_logamplitude():
         x = np.linspace(0, 2e5, num=n)
         phase = np.exp(1.j * x)
 
-        for ref_power in [1.0, np.max]:
+        for ref in [1.0, np.max]:
             for amin in [-1, 0, 1e-10, 1e3]:
                 for top_db in [None, -10, 0, 40, 80]:
                     tf = __test
                     if amin <= 0 or (top_db is not None and top_db < 0):
                         tf = raises(librosa.ParameterError)(__test)
-                    yield tf, x, ref_power, amin, top_db
-                    yield tf, x * phase, ref_power, amin, top_db
+                    yield tf, x, ref, amin, top_db
+                    yield tf, x * phase, ref, amin, top_db
 
 
 def test_power_to_db_logamp():
@@ -844,7 +844,7 @@ def test_power_to_db_logamp():
 def test_power_to_db():
 
     def __test(y_true, x, rp):
-        y = librosa.power_to_db(x, ref_power=rp, top_db=None)
+        y = librosa.power_to_db(x, ref=rp, top_db=None)
 
         assert np.isclose(y, y_true)
 
@@ -887,7 +887,7 @@ def test_db_to_power():
 
     def __test(y, rp, x_true):
 
-        x = librosa.db_to_power(y, ref_power=rp)
+        x = librosa.db_to_power(y, ref=rp)
 
         assert np.isclose(x, x_true), (x, x_true, y, rp)
 

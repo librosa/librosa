@@ -112,7 +112,7 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     >>> plt.xlim([0, cent.shape[-1]])
     >>> plt.legend()
     >>> plt.subplot(2, 1, 2)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
     ...                          y_axis='log', x_axis='time')
     >>> plt.title('log Power spectrogram')
     >>> plt.tight_layout()
@@ -217,7 +217,7 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     >>> plt.xlim([0, spec_bw.shape[-1]])
     >>> plt.legend()
     >>> plt.subplot(2, 1, 2)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
     ...                          y_axis='log', x_axis='time')
     >>> plt.title('log Power spectrogram')
     >>> plt.tight_layout()
@@ -324,7 +324,7 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     >>> plt.figure()
     >>> plt.subplot(2, 1, 1)
     >>> librosa.display.specshow(librosa.amplitude_to_db(S,
-    ...                                                  ref_power=np.max),
+    ...                                                  ref=np.max),
     ...                          y_axis='log')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Power spectrogram')
@@ -460,7 +460,7 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     >>> plt.xlim([0, rolloff.shape[-1]])
     >>> plt.legend()
     >>> plt.subplot(2, 1, 2)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
     ...                          y_axis='log', x_axis='time')
     >>> plt.title('log Power spectrogram')
     >>> plt.tight_layout()
@@ -551,7 +551,7 @@ def rmse(y=None, S=None, frame_length=2048, hop_length=512,
     >>> plt.xlim([0, rms.shape[-1]])
     >>> plt.legend(loc='best')
     >>> plt.subplot(2, 1, 2)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
     ...                          y_axis='log', x_axis='time')
     >>> plt.title('log Power spectrogram')
     >>> plt.tight_layout()
@@ -652,7 +652,7 @@ def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     >>> plt.colorbar()
     >>> plt.title('Quadratic coefficients')
     >>> plt.subplot(3, 1, 3)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
     ...                          y_axis='log', x_axis='time')
     >>> plt.title('log Power spectrogram')
     >>> plt.colorbar(format='%+2.0f dB')
@@ -1336,7 +1336,7 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     >>> import matplotlib.pyplot as plt
     >>> plt.figure(figsize=(10, 4))
     >>> librosa.display.specshow(librosa.power_to_db(S,
-    ...                                              ref_power=np.max),
+    ...                                              ref=np.max),
     ...                          y_axis='mel', fmax=8000,
     ...                          x_axis='time')
     >>> plt.colorbar(format='%+2.0f dB')
