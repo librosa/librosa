@@ -819,7 +819,7 @@ def db_to_amplitude(S_db, ref=1.0):
     -----
     This function caches at level 30.
     '''
-    return db_to_power(0.5 * S_db, ref=ref**0.5)
+    return db_to_power(S_db, ref=ref**2)**0.5
 
 
 @cache(level=30)
