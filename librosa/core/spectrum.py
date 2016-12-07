@@ -588,19 +588,16 @@ def phase_vocoder(D, rate, hop_length=None):
 
 
 @cache(level=30)
-def logamplitude(S, ref=1.0, amin=1e-10, top_db=80.0, ref_power=Deprecated()):
-    """Log-scale the amplitude of a spectrogram.
+def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0, ref_power=Deprecated()):
+    """Convert a power spectrogram (amplitude squared) to decibel (dB) units
 
     This computes the scaling ``10 * log10(S / ref)`` in a numerically
     stable way.
 
-    If `S` is a power spectrum (amplitude squared), then the result is in
-    units of decibels (dB).
-
     Parameters
     ----------
     S : np.ndarray
-        input amplitudes
+        input power
 
     ref : scalar or callable
         If scalar, `log10(abs(S))` is compared to `log10(ref)`.
@@ -630,6 +627,9 @@ def logamplitude(S, ref=1.0, amin=1e-10, top_db=80.0, ref_power=Deprecated()):
     See Also
     --------
     perceptual_weighting
+    db_to_power
+    amplitude_to_db
+    db_to_amplitude
 
     Notes
     -----
@@ -642,7 +642,7 @@ def logamplitude(S, ref=1.0, amin=1e-10, top_db=80.0, ref_power=Deprecated()):
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> S = np.abs(librosa.stft(y))
-    >>> librosa.logamplitude(S**2)
+    >>> librosa.power_to_db(S**2)
     array([[-33.293, -27.32 , ..., -33.293, -33.293],
            [-33.293, -25.723, ..., -33.293, -33.293],
            ...,
@@ -651,7 +651,7 @@ def logamplitude(S, ref=1.0, amin=1e-10, top_db=80.0, ref_power=Deprecated()):
 
     Compute dB relative to peak power
 
-    >>> librosa.logamplitude(S**2, ref=np.max)
+    >>> librosa.power_to_db(S**2, ref=np.max)
     array([[-80.   , -74.027, ..., -80.   , -80.   ],
            [-80.   , -72.431, ..., -80.   , -80.   ],
            ...,
@@ -661,7 +661,7 @@ def logamplitude(S, ref=1.0, amin=1e-10, top_db=80.0, ref_power=Deprecated()):
 
     Or compare to median power
 
-    >>> librosa.logamplitude(S**2, ref=np.median)
+    >>> librosa.power_to_db(S**2, ref=np.median)
     array([[-0.189,  5.784, ..., -0.189, -0.189],
            [-0.189,  7.381, ..., -0.189, -0.189],
            ...,
@@ -678,7 +678,7 @@ def logamplitude(S, ref=1.0, amin=1e-10, top_db=80.0, ref_power=Deprecated()):
     >>> plt.colorbar()
     >>> plt.title('Power spectrogram')
     >>> plt.subplot(2, 1, 2)
-    >>> librosa.display.specshow(librosa.logamplitude(S**2, ref=np.max),
+    >>> librosa.display.specshow(librosa.power_to_db(S**2, ref=np.max),
     ...                          sr=sr, y_axis='log', x_axis='time')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Log-Power spectrogram')
@@ -712,21 +712,21 @@ def logamplitude(S, ref=1.0, amin=1e-10, top_db=80.0, ref_power=Deprecated()):
     return log_spec
 
 
-power_to_db = logamplitude
+logamplitude = power_to_db
 
 
 @cache(level=30)
 def db_to_power(S_db, ref=1.0):
     '''Convert a dB-scale spectrogram to a power spectrogram.
 
-    This effectively inverts `power_to_db` (or `logamplitude`):
+    This effectively inverts `power_to_db`:
 
-        `db_to_power(S_db) ~= 10.0**((S_db + log10(ref)) / 10)`
+        `db_to_power(S_db) ~= ref * 10.0**(S_db / 10)`
 
     Parameters
     ----------
     S_db : np.ndarray
-        Log-power spectrogram, as computed by `power_to_db` or `logamplitude`
+        dB-scaled spectrogram
 
     ref : number > 0
         Optional reference power.
@@ -740,7 +740,7 @@ def db_to_power(S_db, ref=1.0):
     -----
     This function caches at level 30.
     '''
-    return np.power(ref, 0.1) * np.power(10.0, 0.1 * S_db)
+    return ref * np.power(10.0, 0.1 * S_db)
 
 
 @cache(level=30)
@@ -805,7 +805,7 @@ def db_to_amplitude(S_db, ref=1.0):
     Parameters
     ----------
     S_db : np.ndarray
-        Log-power spectrogram, as computed by `amplitude_to_db`
+        dB-scaled spectrogram
 
     ref: number > 0
         Optional reference power.

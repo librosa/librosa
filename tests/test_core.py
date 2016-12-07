@@ -872,15 +872,20 @@ def test_db_to_power_inv():
 
     srand()
 
-    NOISE_FLOOR = 1e-6
+    NOISE_FLOOR = 1e-5
 
     # Make some noise
     xp = (np.abs(np.random.randn(1000)) + NOISE_FLOOR)**2
 
-    db = librosa.power_to_db(xp, top_db=None)
-    xp2 = librosa.db_to_power(db)
+    def __test(ref):
 
-    assert np.allclose(xp, xp2)
+        db = librosa.power_to_db(xp, ref=ref, top_db=None)
+        xp2 = librosa.db_to_power(db, ref=ref)
+
+        assert np.allclose(xp, xp2)
+
+    for ref_p in range(-3, 4):
+        yield __test, 10.0**ref_p
 
 
 def test_db_to_power():
