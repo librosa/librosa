@@ -107,10 +107,10 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
 
     >>> import matplotlib.pyplot as plt
-    >>> D = np.abs(librosa.stft(y))**2
+    >>> D = librosa.stft(y)
     >>> plt.figure()
     >>> ax1 = plt.subplot(2, 1, 1)
-    >>> librosa.display.specshow(librosa.logamplitude(D, ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
     ...                          x_axis='time', y_axis='log')
     >>> plt.title('Power spectrogram')
     >>> plt.subplot(2, 1, 2, sharex=ax1)
@@ -250,11 +250,11 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
     >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.load(librosa.util.example_audio_file(),
     ...                      duration=10.0)
-    >>> D = np.abs(librosa.stft(y))**2
+    >>> D = librosa.stft(y)
     >>> times = librosa.frames_to_time(np.arange(D.shape[1]))
     >>> plt.figure()
     >>> ax1 = plt.subplot(2, 1, 1)
-    >>> librosa.display.specshow(librosa.logamplitude(D, ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
     ...                          y_axis='log', x_axis='time')
     >>> plt.title('Power spectrogram')
 
@@ -384,10 +384,10 @@ def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
     >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.load(librosa.util.example_audio_file(),
     ...                      duration=10.0)
-    >>> D = np.abs(librosa.stft(y))**2
+    >>> D = librosa.stft(y)
     >>> plt.figure()
     >>> plt.subplot(2, 1, 1)
-    >>> librosa.display.specshow(librosa.logamplitude(D, ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
     ...                          y_axis='log')
     >>> plt.title('Power spectrogram')
 
@@ -419,7 +419,7 @@ def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
         S = np.abs(feature(y=y, sr=sr, **kwargs))
 
         # Convert to dBs
-        S = core.logamplitude(S)
+        S = core.power_to_db(S)
 
     # Retrieve the n_fft and hop_length,
     # or default values for onsets if not provided

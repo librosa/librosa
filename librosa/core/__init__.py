@@ -95,7 +95,6 @@ Dynamic Time Warping
     :toctree: generated/
 
     dtw
-    band_mask
 """
 
 from .time_frequency import *  # pylint: disable=wildcard-import
