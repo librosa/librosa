@@ -598,27 +598,29 @@ def logamplitude(S, ref_power=1.0, amin=1e-10, top_db=80.0):
 
     Parameters
     ----------
-    S : np.ndarray [shape=(d, t)]
-        input spectrogram
+    S : np.ndarray
+        input amplitudes
 
     ref_power : scalar or callable
         If scalar, `log10(abs(S))` is compared to `log10(ref_power)`.
+        Zeros in the output correspond to positions where `S == ref_power`.
 
         If callable, `log10(abs(S))` is compared to `log10(ref_power(abs(S)))`.
 
         This is primarily useful for comparing to the maximum value of `S`.
 
+
     amin    : float > 0 [scalar]
-        minimum amplitude threshold for `abs(S)` and `ref_power`
+        minimum threshold for `abs(S)` and `ref_power`
 
     top_db  : float >= 0 [scalar]
-        threshold log amplitude at `top_db` below the peak:
+        threshold the output at `top_db` below the peak:
         ``max(log10(S)) - top_db``
 
     Returns
     -------
-    log_S   : np.ndarray [shape=(d, t)]
-        ``log_S ~= 10 * log10(S) - 10 * log10(abs(ref_power))``
+    S_out   : np.ndarray
+        ``S_out ~= 10 * log10(abs(S)) - 10 * log10(abs(ref_power))``
 
     See Also
     --------
@@ -705,12 +707,12 @@ power_to_db = logamplitude
 
 
 @cache(level=30)
-def db_to_power(log_S, ref_power=1.0):
-    '''Convert a log-power spectrogram (in dB) to a power spectrogram.
+def db_to_power(S_db, ref_power=1.0):
+    '''Convert a dB-scale spectrogram to a power spectrogram.
 
     This effectively inverts `power_to_db` (or `logamplitude`):
 
-        `db_to_power(log_S) ~= 10.0**((log_S + log10(ref_power)/ 10))`
+        `db_to_power(log_S) ~= 10.0**((log_S + log10(ref_power)) / 10)`
 
     Parameters
     ----------
@@ -729,12 +731,12 @@ def db_to_power(log_S, ref_power=1.0):
     -----
     This function caches at level 30.
     '''
-    return np.power(10.0, 0.1 * (log_S + np.log10(ref_power)))
+    return np.power(10.0, 0.1 * (S_db + np.log10(ref_power)))
 
 
 @cache(level=30)
 def amplitude_to_db(S, ref_power=1.0, amin=1e-10, top_db=80.0):
-    '''Convert a log-power spectrogram (in dB) to an amplitude spectrogram.
+    '''Convert an amplitude spectrogram to dB-scaled spectrogram.
 
     This is equivalent to ``power_to_db(S**2)``, but is provided for convenience.
 
@@ -745,20 +747,21 @@ def amplitude_to_db(S, ref_power=1.0, amin=1e-10, top_db=80.0):
 
     ref_power : scalar or callable
         If scalar, `log10(abs(S)**2)` is compared to `log10(ref_power)`.
+        Zeros in the output correspond to positions where `S == ref_power`.
 
         If callable, `log10(abs(S)**2)` is compared to `log10(ref_power(abs(S)**2))`.
 
         This is primarily useful for comparing to the maximum value of `S**2`
 
     amin : float > 0 [scalar]
-        minimum power threshold for `abs(S)` and `ref_power`
+        minimum threshold for `abs(S)` and `ref_power`
 
     top_db : float >= 0 [scalar]
         threshold the output at `top_db` below the peak value
 
     Returns
     -------
-    log_S : np.ndarray [shape=S.shape]
+    S_db : np.ndarray
         ``S`` measured in dB
 
     See Also
@@ -773,8 +776,8 @@ def amplitude_to_db(S, ref_power=1.0, amin=1e-10, top_db=80.0):
 
 
 @cache(level=30)
-def db_to_amplitude(log_S, ref_power=1.0):
-    '''Convert a log-power spectrogram (in dB) to an amplitude spectrogram.
+def db_to_amplitude(S_db, ref_power=1.0):
+    '''Convert a dB-scaled spectrogram to an amplitude spectrogram.
 
     This effectively inverts `amplitude_to_db`:
 
@@ -782,7 +785,7 @@ def db_to_amplitude(log_S, ref_power=1.0):
 
     Parameters
     ----------
-    log_S : np.ndarray
+    S_db : np.ndarray
         Log-power spectrogram, as computed by `amplitude_to_db`
 
     ref_power : number > 0
@@ -790,14 +793,14 @@ def db_to_amplitude(log_S, ref_power=1.0):
 
     Returns
     -------
-    S : np.ndarray [shape=log_S.shape]
+    S : np.ndarray
         Linear magnitude spectrogram
 
     Notes
     -----
     This function caches at level 30.
     '''
-    return db_to_power(0.5 * log_S, ref_power=ref_power)
+    return db_to_power(0.5 * S_db, ref_power=ref_power)
 
 
 @cache(level=30)
