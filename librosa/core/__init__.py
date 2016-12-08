@@ -31,11 +31,22 @@ Spectral representations
     fmt
 
     interp_harmonics
+    salience
 
     phase_vocoder
-
     magphase
+
+Magnitude scaling
+-----------------
+.. autosummary::
+    :toctree: generated/
+
     logamplitude
+    amplitude_to_db
+    db_to_amplitude
+    power_to_db
+    db_to_power
+
     perceptual_weighting
     A_weighting
 
@@ -84,10 +95,6 @@ Dynamic Time Warping
     :toctree: generated/
 
     dtw
-    calc_accu_cost
-    backtracking
-    band_mask
-
 """
 
 from .time_frequency import *  # pylint: disable=wildcard-import
