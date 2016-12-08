@@ -584,8 +584,8 @@ def subsegment(data, frames, n_segments=4, axis=-1):
 
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
-    >>> librosa.display.specshow(librosa.logamplitude(cqt**2,
-    ...                                               ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(cqt,
+    ...                                                  ref=np.max),
     ...                          y_axis='cqt_hz', x_axis='time')
     >>> lims = plt.gca().get_ylim()
     >>> plt.vlines(beat_times, lims[0], lims[1], color='lime', alpha=0.9,
