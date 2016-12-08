@@ -601,10 +601,10 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0, ref_power=Deprecated()):
 
     ref : scalar or callable
         If scalar, the amplitude `abs(S)` is scaled relative to `ref`:
-        `log10(abs(S) / ref)`.
+        `10 * log10(S / ref)`.
         Zeros in the output correspond to positions where `S == ref`.
 
-        If callable, the reference value is computed as `ref(abs(S))`.
+        If callable, the reference value is computed as `ref(S)`.
 
     amin : float > 0 [scalar]
         minimum threshold for `abs(S)` and `ref`
@@ -621,7 +621,7 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0, ref_power=Deprecated()):
     Returns
     -------
     S_db   : np.ndarray
-        ``S_db ~= 10 * log10(abs(S)) - 10 * log10(abs(ref))``
+        ``S_db ~= 10 * log10(S) - 10 * log10(ref)``
 
     See Also
     --------
@@ -755,17 +755,17 @@ def amplitude_to_db(S, ref=1.0, amin=1e-5, top_db=80.0):
 
     ref : scalar or callable
         If scalar, the amplitude `abs(S)` is scaled relative to `ref`:
-        `log10(abs(S) / ref)`.
+        `20 * log10(S / ref)`.
         Zeros in the output correspond to positions where `S == ref`.
 
-        If callable, the reference value is computed as `ref(abs(S))`.
+        If callable, the reference value is computed as `ref(S)`.
 
     amin : float > 0 [scalar]
-        minimum threshold for `abs(S)` and `ref`
+        minimum threshold for `S` and `ref`
 
     top_db : float >= 0 [scalar]
         threshold the output at `top_db` below the peak:
-        ``max(10 * log10(S)) - top_db``
+        ``max(20 * log10(S)) - top_db``
 
 
     Returns
