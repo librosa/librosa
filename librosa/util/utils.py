@@ -533,11 +533,12 @@ def axis_sort(S, axis=-1, index=False, value=None):
 
 
 @cache(level=40)
-def normalize(S, norm=np.inf, axis=0):
+def normalize(S, norm=np.inf, axis=0, threshold=None):
     '''Normalize the columns or rows of a matrix
 
     .. note::
          Columns/rows with length 0 will be left as zeros.
+
     Parameters
     ----------
     S : np.ndarray [shape=(d, n)]
@@ -555,6 +556,13 @@ def normalize(S, norm=np.inf, axis=0):
         Axis along which to compute the norm.
         `axis=0` will normalize columns, `axis=1` will normalize rows.
         `axis=None` will normalize according to the entire matrix.
+
+    threshold : number > 0 [optional]
+        Only the columns (or rows) with norm at least `threshold` are
+        normalized.
+
+        By default, the threshold is determined from
+        the numerical precision of `S.dtype`.
 
     Returns
     -------
@@ -606,6 +614,12 @@ def normalize(S, norm=np.inf, axis=0):
 
     '''
 
+    # Avoid div-by-zero
+    if threshold is None:
+        threshold = tiny(S)
+    elif threshold <= 0:
+        raise ParameterError('threshold must be strictly positive')
+
     # All norms only depend on magnitude, let's do that first
     mag = np.abs(S)
 
@@ -627,9 +641,11 @@ def normalize(S, norm=np.inf, axis=0):
     else:
         raise ParameterError('Unsupported norm: {}'.format(repr(norm)))
 
-    # Avoid div-by-zero
-    length[length < tiny(length)] = 1.0
+    # indices where norm is below the threshold
+    small_idx = length < threshold
 
+    # If we don't fill, leave small indices unnormalized
+    length[small_idx] = 1.0
     return S / length
 
 
