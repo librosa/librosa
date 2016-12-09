@@ -176,6 +176,23 @@ def test_normalize():
                 yield __test_fail, X, norm, axis
 
 
+def test_normalize_threshold():
+
+    x = np.asarray([[0, 1, 2, 3]])
+
+    def __test(threshold, result):
+        assert np.allclose(librosa.util.normalize(x, threshold=threshold),
+                           result)
+
+    yield __test, None, [[0, 1, 1, 1]]
+    yield __test, 1, [[0, 1, 1, 1]]
+    yield __test, 2, [[0, 1, 1, 1]]
+    yield __test, 3, [[0, 1, 2, 1]]
+    yield __test, 4, [[0, 1, 2, 3]]
+    yield raises(librosa.ParameterError)(__test), 0, [[0, 1, 1, 1]]
+    yield raises(librosa.ParameterError)(__test), -1, [[0, 1, 1, 1]]
+
+
 def test_axis_sort():
     srand()
 
