@@ -533,11 +533,8 @@ def axis_sort(S, axis=-1, index=False, value=None):
 
 
 @cache(level=40)
-def normalize(S, norm=np.inf, axis=0, threshold=None):
-    '''Normalize the columns or rows of a matrix
-
-    .. note::
-         Columns/rows with length 0 will be left as zeros.
+def normalize(S, norm=np.inf, axis=0, threshold=None, fill=None):
+    '''Normalize an array along a chosen axis.
 
     Parameters
     ----------
@@ -563,6 +560,24 @@ def normalize(S, norm=np.inf, axis=0, threshold=None):
 
         By default, the threshold is determined from
         the numerical precision of `S.dtype`.
+
+    fill : None or bool
+
+        If None, then columns (or rows) with norm below `threshold`
+        are left as is.
+
+        If False, then columns (rows) with norm below `threshold`
+        are set to 0.
+
+        If True, then columns (rows) with norm below `threshold`
+        are filled uniformly such that the corresponding norm is 1.
+
+        .. note:: Anywhere columns (rows) with non-finite entries
+            are interpreted as having norm below `threshold` when `fill=True`.
+
+        .. note:: If `norm=0`, then `fill=True` cannot generally fill with
+            uniform non-zero values.  In this case, the corresponding columns
+            (rows) are filled with zeros.
 
     Returns
     -------
@@ -617,11 +632,19 @@ def normalize(S, norm=np.inf, axis=0, threshold=None):
     # Avoid div-by-zero
     if threshold is None:
         threshold = tiny(S)
+
     elif threshold <= 0:
-        raise ParameterError('threshold must be strictly positive')
+        raise ParameterError('threshold={} must be strictly '
+                             'positive'.format(threshold))
+
+    if fill not in [None, False, True]:
+        raise ParameterError('fill={} must be None or boolean'.format(fill))
 
     # All norms only depend on magnitude, let's do that first
-    mag = np.abs(S)
+    mag = np.abs(S).astype(np.float)
+
+    # For max/min norms, filling with 1 works
+    fill_norm = 1
 
     if norm == np.inf:
         length = np.max(mag, axis=axis, keepdims=True)
@@ -630,10 +653,16 @@ def normalize(S, norm=np.inf, axis=0, threshold=None):
         length = np.min(mag, axis=axis, keepdims=True)
 
     elif norm == 0:
-        length = np.sum(mag > 0, axis=axis, keepdims=True)
+        length = np.sum(mag > 0, axis=axis, keepdims=True, dtype=mag.dtype)
+        fill_norm = 0
 
     elif np.issubdtype(type(norm), np.number) and norm > 0:
-        length = np.sum(mag ** norm, axis=axis, keepdims=True)**(1./norm)
+        length = np.sum(mag**norm, axis=axis, keepdims=True)**(1./norm)
+
+        if axis is None:
+            fill_norm = mag.size**(-1./norm)
+        else:
+            fill_norm = mag.shape[axis]**(-1./norm)
 
     elif norm is None:
         return S
@@ -644,9 +673,29 @@ def normalize(S, norm=np.inf, axis=0, threshold=None):
     # indices where norm is below the threshold
     small_idx = length < threshold
 
-    # If we don't fill, leave small indices unnormalized
-    length[small_idx] = 1.0
-    return S / length
+    if fill is None:
+        # Leave small indices un-normalized
+        length[small_idx] = 1.0
+        Snorm = S / length
+
+    elif fill:
+        # If we have a non-zero fill value, we locate those entries by
+        # doing a nan-divide.
+        # If S was finite, then length is finite (except for small positions)
+        # If S has non-finite values, then so will length, and Snorm
+        # will get nans
+        length[small_idx] = np.nan
+        Snorm = S / length
+        Snorm[np.isnan(Snorm)] = fill_norm
+    else:
+        # Set small values to zero by doing an inf-divide.
+        # This is safe (by IEEE-754) as long as S is finite.
+        # If S is not finite, then length will be non-finite,
+        #   and Snorm will be NaN in the corresponding locations.
+        length[small_idx] = np.inf
+        Snorm = S / length
+
+    return Snorm
 
 
 def match_intervals(intervals_from, intervals_to):
