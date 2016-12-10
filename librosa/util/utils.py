@@ -536,6 +536,25 @@ def axis_sort(S, axis=-1, index=False, value=None):
 def normalize(S, norm=np.inf, axis=0, threshold=None, fill=None):
     '''Normalize an array along a chosen axis.
 
+    Given a norm (described below) and a target axis, the input
+    array is scaled so that
+
+        `norm(S, axis=axis) == 1`
+
+    For example, `axis=0` normalizes each column of a 2-d array
+    by aggregating over the rows (0-axis).
+    Similarly, `axis=1` normalizes each row of a 2-d array.
+
+    This function also supports thresholding small-norm slices:
+    any slice (i.e., row or column) with norm below a specified
+    `threshold` can be left un-normalized, set to all-zeros, or
+    filled with uniform non-zero values that normalize to 1.
+
+    Note: the semantics of this function differ from
+    `scipy.linalg.norm` in two ways: multi-dimensional arrays
+    are supported, but matrix-norms are not.
+
+
     Parameters
     ----------
     S : np.ndarray
@@ -544,15 +563,13 @@ def normalize(S, norm=np.inf, axis=0, threshold=None, fill=None):
     norm : {np.inf, -np.inf, 0, float > 0, None}
         - `np.inf`  : maximum absolute value
         - `-np.inf` : mininum absolute value
-        - `0`    : number of non-zeros
-        - float  : corresponding l_p norm.
+        - `0`    : number of non-zeros (the support)
+        - float  : corresponding l_p norm
             See `scipy.linalg.norm` for details.
         - None : no normalization is performed
 
     axis : int [scalar]
         Axis along which to compute the norm.
-        `axis=0` will normalize columns, `axis=1` will normalize rows.
-        `axis=None` will normalize according to the entire matrix.
 
     threshold : number > 0 [optional]
         Only the columns (or rows) with norm at least `threshold` are
@@ -577,7 +594,7 @@ def normalize(S, norm=np.inf, axis=0, threshold=None, fill=None):
     Returns
     -------
     S_norm : np.ndarray [shape=S.shape]
-        Normalized matrix
+        Normalized array
 
     Raises
     ------
@@ -587,6 +604,10 @@ def normalize(S, norm=np.inf, axis=0, threshold=None, fill=None):
         If `S` is not finite
 
         If `fill=True` and `norm=0`
+
+    See Also
+    --------
+    scipy.linalg.norm
 
     Notes
     -----
@@ -626,6 +647,46 @@ def normalize(S, norm=np.inf, axis=0, threshold=None, fill=None):
            [ 0.   ,  0.   ,  0.   ,  0.5  ],
            [ 0.123,  0.236,  0.408,  0.5  ]])
 
+    >>> # Thresholding and filling
+    >>> S[:, -1] = 1e-308
+    >>> S
+    array([[ -8.000e+000,   4.000e+000,  -2.000e+000,
+              1.000e-308],
+           [ -1.000e+000,   1.000e+000,  -1.000e+000,
+              1.000e-308],
+           [  0.000e+000,   0.000e+000,   0.000e+000,
+              1.000e-308],
+           [  1.000e+000,   1.000e+000,   1.000e+000,
+              1.000e-308]])
+
+    >>> # By default, small-norm columns are left untouched
+    >>> librosa.util.normalize(S)
+    array([[ -1.000e+000,   1.000e+000,  -1.000e+000,
+              1.000e-308],
+           [ -1.250e-001,   2.500e-001,  -5.000e-001,
+              1.000e-308],
+           [  0.000e+000,   0.000e+000,   0.000e+000,
+              1.000e-308],
+           [  1.250e-001,   2.500e-001,   5.000e-001,
+              1.000e-308]])
+    >>> # Small-norm columns can be zeroed out
+    >>> librosa.util.normalize(S, fill=False)
+    array([[-1.   ,  1.   , -1.   ,  0.   ],
+           [-0.125,  0.25 , -0.5  ,  0.   ],
+           [ 0.   ,  0.   ,  0.   ,  0.   ],
+           [ 0.125,  0.25 ,  0.5  ,  0.   ]])
+    >>> # Or set to constant with unit-norm
+    >>> librosa.util.normalize(S, fill=True)
+    array([[-1.   ,  1.   , -1.   ,  1.   ],
+           [-0.125,  0.25 , -0.5  ,  1.   ],
+           [ 0.   ,  0.   ,  0.   ,  1.   ],
+           [ 0.125,  0.25 ,  0.5  ,  1.   ]])
+    >>> # With an l1 norm instead of max-norm
+    >>> librosa.util.normalize(S, norm=1, fill=True)
+    array([[-0.8  ,  0.667, -0.5  ,  0.25 ],
+           [-0.1  ,  0.167, -0.25 ,  0.25 ],
+           [ 0.   ,  0.   ,  0.   ,  0.25 ],
+           [ 0.1  ,  0.167,  0.25 ,  0.25 ]])
     '''
 
     # Avoid div-by-zero
