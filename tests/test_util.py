@@ -175,6 +175,15 @@ def test_normalize():
             for norm in ['inf', -0.5, -2]:
                 yield __test_fail, X, norm, axis
 
+        # And test for non-finite failure
+        X[0] = np.nan
+        yield __test_fail, X, np.inf, 0
+
+        X[0] = np.inf
+        yield __test_fail, X, np.inf, 0
+        X[0] = -np.inf
+        yield __test_fail, X, np.inf, 0
+
 
 def test_normalize_threshold():
 
@@ -195,42 +204,57 @@ def test_normalize_threshold():
 
 def test_normalize_fill():
 
-    def __test(fill, norm, threshold, x, result):
-        xn = librosa.util.normalize(x, fill=fill, threshold=threshold, norm=norm)
+    def __test(fill, norm, threshold, axis, x, result):
+        xn = librosa.util.normalize(x, axis=axis,
+                                    fill=fill,
+                                    threshold=threshold,
+                                    norm=norm)
         assert np.allclose(xn, result), (xn, np.asarray(result))
 
     x = np.asarray([[0, 1, 2, 3]], dtype=np.float32)
 
+    axis = 0
+    norm = np.inf
+    threshold = 2
     # Test with inf norm
-    yield __test, None, np.inf, 2, x, [[0, 1, 1, 1]]
-    yield __test, False, np.inf, 2, x, [[0, 0, 1, 1]]
-    yield __test, True, np.inf, 2, x, [[1, 1, 1, 1]]
+    yield __test, None, norm, threshold, axis, x, [[0, 1, 1, 1]]
+    yield __test, False, norm, threshold, axis, x, [[0, 0, 1, 1]]
+    yield __test, True, norm, threshold, axis, x, [[1, 1, 1, 1]]
 
     # Test with l0 norm
-    yield __test, None, 0, 2, x, [[0, 1, 2, 3]]
-    yield __test, False, 0, 2, x, [[0, 0, 0, 0]]
-    yield __test, True, 0, 2, x, [[0, 0, 0, 0]]
+    norm = 0
+    yield __test, None, norm, threshold, axis, x, [[0, 1, 2, 3]]
+    yield __test, False, norm, threshold, axis, x, [[0, 0, 0, 0]]
+    yield raises(librosa.ParameterError)(__test), True, norm, threshold, axis, x, [[0, 0, 0, 0]]
 
     # Test with l1 norm
-    yield __test, None, 1, 2, x, [[0, 1, 1, 1]]
-    yield __test, False, 1, 2, x, [[0, 0, 1, 1]]
-    yield __test, True, 1, 2, x, [[1, 1, 1, 1]]
+    norm = 1
+    yield __test, None, norm, threshold, axis, x, [[0, 1, 1, 1]]
+    yield __test, False, norm, threshold, axis, x, [[0, 0, 1, 1]]
+    yield __test, True, norm, threshold, axis, x, [[1, 1, 1, 1]]
 
     # And with l2 norm
+    norm = 2
     x = np.repeat(x, 2, axis=0)
     s = np.sqrt(2)/2
 
     # First two columns are left as is, second two map to sqrt(2)/2
-    yield __test, None, 2, 2, x, [[0, 1, s, s], [0, 1, s, s]]
+    yield __test, None, norm, threshold, axis, x, [[0, 1, s, s], [0, 1, s, s]]
 
     # First two columns are zeroed, second two map to sqrt(2)/2
-    yield __test, False, 2, 2, x, [[0, 0, s, s], [0, 0, s, s]]
+    yield __test, False, norm, threshold, axis, x, [[0, 0, s, s], [0, 0, s, s]]
 
     # All columns map to sqrt(2)/2
-    yield __test, True, 2, 2, x, [[s, s, s, s], [s, s, s, s]]
+    yield __test, True, norm, threshold, axis, x, [[s, s, s, s], [s, s, s, s]]
 
     # And test the bad-fill case
-    yield raises(librosa.ParameterError)(__test), 3, 2, 2, x, x
+    yield raises(librosa.ParameterError)(__test), 3, norm, threshold, axis, x, x
+
+    # And an all-axes test
+    axis = None
+    threshold = None
+    norm = 2
+    yield __test, None, norm, threshold, axis, np.asarray([[3, 0], [0, 4]]), np.asarray([[0.6, 0], [0, 0.8]])
 
 
 def test_axis_sort():
