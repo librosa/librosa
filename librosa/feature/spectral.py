@@ -1274,9 +1274,10 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
     return np.dot(filters.dct(n_mfcc, S.shape[0]), S)
 
 
-def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
-                   **kwargs):
-    """Compute a Mel-scaled power spectrogram.
+def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512, 
+                   power=2.0, **kwargs):
+    """Compute a Mel-scaled spectrogram.
+    By default, it returns power-spectrogram (`power=2.0`).
 
     Parameters
     ----------
@@ -1287,7 +1288,7 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         sampling rate of `y`
 
     S : np.ndarray [shape=(d, t)]
-        power spectrogram
+        spectrogram
 
     n_fft : int > 0 [scalar]
         length of the FFT window
@@ -1296,6 +1297,10 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         number of samples between successive frames.
         See `librosa.core.stft`
 
+    power : float > 0 [scalar]
+        Exponent for the magnitude melspectrogram.
+        e.g., 1 for energy, 2 for power, etc.
+
     kwargs : additional keyword arguments
       Mel filter bank parameters.
       See `librosa.filters.mel` for details.
@@ -1303,7 +1308,7 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     Returns
     -------
     S : np.ndarray [shape=(n_mels, t)]
-        Mel power spectrogram
+        Mel spectrogram
 
     See Also
     --------
@@ -1347,7 +1352,7 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     """
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length,
-                            power=2)
+                            power=power)
 
     # Build a Mel filter
     mel_basis = filters.mel(sr, n_fft, **kwargs)
