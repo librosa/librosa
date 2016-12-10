@@ -538,7 +538,7 @@ def normalize(S, norm=np.inf, axis=0, threshold=None, fill=None):
 
     Parameters
     ----------
-    S : np.ndarray [shape=(d, n)]
+    S : np.ndarray
         The matrix to normalize
 
     norm : {np.inf, -np.inf, 0, float > 0, None}
@@ -562,7 +562,6 @@ def normalize(S, norm=np.inf, axis=0, threshold=None, fill=None):
         the numerical precision of `S.dtype`.
 
     fill : None or bool
-
         If None, then columns (or rows) with norm below `threshold`
         are left as is.
 
@@ -572,12 +571,8 @@ def normalize(S, norm=np.inf, axis=0, threshold=None, fill=None):
         If True, then columns (rows) with norm below `threshold`
         are filled uniformly such that the corresponding norm is 1.
 
-        .. note:: Anywhere columns (rows) with non-finite entries
-            are interpreted as having norm below `threshold` when `fill=True`.
-
-        .. note:: If `norm=0`, then `fill=True` cannot generally fill with
-            uniform non-zero values.  In this case, the corresponding columns
-            (rows) are filled with zeros.
+        .. note:: `fill=True` is incompatible with `norm=0` because
+            no uniform vector exists with l0 "norm" equal to 1.
 
     Returns
     -------
@@ -588,6 +583,10 @@ def normalize(S, norm=np.inf, axis=0, threshold=None, fill=None):
     ------
     ParameterError
         If `norm` is not among the valid types defined above
+
+        If `S` is not finite
+
+        If `fill=True` and `norm=0`
 
     Notes
     -----
@@ -640,6 +639,9 @@ def normalize(S, norm=np.inf, axis=0, threshold=None, fill=None):
     if fill not in [None, False, True]:
         raise ParameterError('fill={} must be None or boolean'.format(fill))
 
+    if not np.all(np.isfinite(S)):
+        raise ParameterError('Input must be finite')
+
     # All norms only depend on magnitude, let's do that first
     mag = np.abs(S).astype(np.float)
 
@@ -653,8 +655,10 @@ def normalize(S, norm=np.inf, axis=0, threshold=None, fill=None):
         length = np.min(mag, axis=axis, keepdims=True)
 
     elif norm == 0:
+        if fill is True:
+            raise ParameterError('Cannot normalize with norm=0 and fill=True')
+
         length = np.sum(mag > 0, axis=axis, keepdims=True, dtype=mag.dtype)
-        fill_norm = 0
 
     elif np.issubdtype(type(norm), np.number) and norm > 0:
         length = np.sum(mag**norm, axis=axis, keepdims=True)**(1./norm)
@@ -682,16 +686,12 @@ def normalize(S, norm=np.inf, axis=0, threshold=None, fill=None):
         # If we have a non-zero fill value, we locate those entries by
         # doing a nan-divide.
         # If S was finite, then length is finite (except for small positions)
-        # If S has non-finite values, then so will length, and Snorm
-        # will get nans
         length[small_idx] = np.nan
         Snorm = S / length
         Snorm[np.isnan(Snorm)] = fill_norm
     else:
         # Set small values to zero by doing an inf-divide.
         # This is safe (by IEEE-754) as long as S is finite.
-        # If S is not finite, then length will be non-finite,
-        #   and Snorm will be NaN in the corresponding locations.
         length[small_idx] = np.inf
         Snorm = S / length
 
