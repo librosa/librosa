@@ -231,14 +231,19 @@ def test_onset_backtrack():
     oenv = librosa.onset.onset_strength(y=y, sr=sr)
     onsets = librosa.onset.onset_detect(onset_envelope=oenv, backtrack=False)
 
-    # Test backtracking
-    onsets_bt = librosa.onset.onset_backtrack(onsets, oenv)
+    def __test(energy):
+        # Test backtracking
+        onsets_bt = librosa.onset.onset_backtrack(onsets, energy)
 
-    # Make sure there are no negatives
-    assert np.all(onsets_bt >= 0)
+        # Make sure there are no negatives
+        assert np.all(onsets_bt >= 0)
 
-    # And that we never roll forward
-    assert np.all(onsets_bt <= onsets)
+        # And that we never roll forward
+        assert np.all(onsets_bt <= onsets)
 
-    # And that the detected peaks are actually minima
-    assert np.all(oenv[onsets_bt] <= oenv[np.maximum(0, onsets_bt - 1)])
+        # And that the detected peaks are actually minima
+        assert np.all(energy[onsets_bt] <= energy[np.maximum(0, onsets_bt - 1)])
+
+    yield __test, oenv
+    rmse = librosa.feature.rmse(y=y)
+    yield __test, rmse
