@@ -165,11 +165,12 @@ def test_resample_scale():
         # If it's a no-op, make sure the signal is untouched
         assert np.allclose(n_orig, n_res, atol=1e-2), (n_orig, n_res)
 
-    y, sr_in = librosa.load('data/test1_44100.wav', mono=True, sr=None, duration=5)
+    y, sr_in = librosa.load('data/test1_22050.wav', mono=True, sr=None, duration=3)
 
-    for sr_out in [11025, 22050, 44100]:
-        for res_type in ['scipy', 'kaiser_best', 'kaiser_fast']:
+    for res_type in ['scipy', 'kaiser_best', 'kaiser_fast']:
+        for sr_out in [11025, 22050, 44100]:
             yield __test, sr_in, sr_out, res_type, y
+            yield __test, sr_out, sr_in, res_type, y
 
 
 def test_stft():
