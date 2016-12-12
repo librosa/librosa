@@ -3,6 +3,8 @@
 '''Constant-Q transforms'''
 from __future__ import division
 
+from warnings import warn
+
 import numpy as np
 import scipy.fftpack as fft
 
@@ -257,6 +259,15 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                              window=window,
                                              filter_scale=filter_scale)
         C /= np.sqrt(lengths[:, np.newaxis])
+
+    if not isinstance(real, util.Deprecated):
+        warn('Real-valued CQT (real=True) is deprecated in 0.4.2. '
+             'The `real` parameter will be removed in 0.6.0.'
+             'Use np.abs(librosa.cqt(...)) '
+             'instead of real=True to maintain forward compatibility.',
+             DeprecationWarning)
+        if real:
+            C = np.abs(C)
 
     return C
 
