@@ -3,6 +3,8 @@
 '''Constant-Q transforms'''
 from __future__ import division
 
+from warnings import warn
+
 import numpy as np
 import scipy.fftpack as fft
 
@@ -83,8 +85,12 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         If `False`, do not scale the CQT. This is analogous to
         `norm=None` in FFT.
 
-    real : [DEPRECATED]
-        .. warning:: This parameter name deprecated in librosa 0.5.0
+    real : bool [DEPRECATED]
+        If `False`, return a complex-valued constant-Q transform (default).
+
+        If `True`, return the CQT magnitude.
+
+        .. warning:: This parameter is deprecated in librosa 0.5.0
             It will be removed in librosa 0.6.0.
 
 
@@ -257,6 +263,15 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                              window=window,
                                              filter_scale=filter_scale)
         C /= np.sqrt(lengths[:, np.newaxis])
+
+    if not isinstance(real, util.Deprecated):
+        warn('Real-valued CQT (real=True) is deprecated in 0.4.2. '
+             'The `real` parameter will be removed in 0.6.0.'
+             'Use np.abs(librosa.cqt(...)) '
+             'instead of real=True to maintain forward compatibility.',
+             DeprecationWarning)
+        if real:
+            C = np.abs(C)
 
     return C
 
