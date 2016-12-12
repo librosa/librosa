@@ -85,8 +85,12 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         If `False`, do not scale the CQT. This is analogous to
         `norm=None` in FFT.
 
-    real : [DEPRECATED]
-        .. warning:: This parameter name deprecated in librosa 0.5.0
+    real : bool [DEPRECATED]
+        If `False`, return a complex-valued constant-Q transform (default).
+
+        If `True`, return the CQT magnitude.
+
+        .. warning:: This parameter is deprecated in librosa 0.5.0
             It will be removed in librosa 0.6.0.
 
 
