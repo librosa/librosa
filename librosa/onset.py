@@ -60,7 +60,9 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
     backtrack : bool
         If `True`, detected onset events are backtracked to the nearest
-        preceding minimum of `energy`
+        preceding minimum of `energy`.
+
+        This is primarily useful when using onsets as slice points for segmentation.
 
     energy : np.ndarray [shape=(m,)] (optional)
         An energy function to use for backtracking detected onset events.
@@ -329,12 +331,20 @@ def onset_backtrack(events, energy):
     This function can be used to roll back the timing of detected onsets
     from a detected peak amplitude to the preceding minimum.
 
+    This is most useful when using onsets to determine slice points for
+    segmentation.
+
+    .. [1] Jehan, Tristan.
+           "Creating music by listening"
+           Doctoral dissertation
+           Massachusetts Institute of Technology, 2005.
+
     Parameters
     ----------
     events : np.ndarray, dtype=int
         List of onset event frame indices, as computed by `onset_detect`
 
-    energy : np.ndarray
+    energy : np.ndarray, shape=(m,)
         An energy function
 
     Returns
@@ -350,19 +360,25 @@ def onset_backtrack(events, energy):
     >>> # Detect events without backtracking
     >>> onset_raw = librosa.onset.onset_detect(onset_envelope=oenv,
     ...                                        backtrack=False)
-    >>> # Backtrack the events
+    >>> # Backtrack the events using the onset envelope
     >>> onset_bt = librosa.onset.onset_backtrack(onset_raw, oenv)
+    >>> # Backtrack the events using the RMS energy
+    >>> rmse = librosa.feature.rmse(S=np.abs(librosa.stft(y=y)))
+    >>> onset_bt_rmse = librosa.onset.onset_backtrack(onset_raw, rmse[0])
 
     >>> # Plot the results
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
     >>> plt.plot(oenv, label='Onset strength')
-    >>> plt.vlines(onset_raw, 0, oenv.max(), linestyle='--', color='g',
+    >>> plt.plot(rmse[0] / rmse.max(), label='RMSE (normalized)', alpha=0.5)
+    >>> plt.vlines(onset_raw, 0, oenv.max(), linestyle='--', color='k',
     ...            label='Raw onsets')
     >>> plt.vlines(onset_bt, 0, oenv.max(), color='r',
-    ...            label='Backtracked onsets')
+    ...            label='Backtracked onsets (onset strength)')
+    >>> plt.vlines(onset_bt_rmse, 0, oenv.max(), color='m', linestyle='-.',
+    ...            label='Backtracked onsets (RMSE)')
     >>> plt.axis('tight')
-    >>> plt.legend()
+    >>> plt.legend(frameon=True, framealpha=0.75)
     '''
 
     # Find points where energy is decreasing
