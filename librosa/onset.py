@@ -107,10 +107,9 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     >>> y, sr = librosa.load(librosa.util.example_audio_file(),
     ...                      offset=30, duration=2.0)
     >>> onset_frames = librosa.onset.onset_detect(y=y, sr=sr)
-    >>> librosa.frames_to_time(onset_frames[:20], sr=sr)
-    array([ 0.046,  0.372,  0.488,  0.58 ,  0.72 ,  0.929,
-            1.161,  1.277,  1.393,  1.741,  1.834])
-
+    >>> librosa.frames_to_time(onset_frames, sr=sr)
+    array([ 0.07 ,  0.395,  0.511,  0.627,  0.766,  0.975,
+            1.207,  1.324,  1.44 ,  1.788,  1.881])
 
     Or use a pre-computed onset envelope
 
