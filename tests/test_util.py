@@ -387,6 +387,37 @@ def test_match_events():
                 yield __test, n, m
 
 
+def test_match_events_onesided():
+
+    events_from = np.asarray([5, 15, 25])
+    events_to = np.asarray([0, 10, 20, 30])
+
+    def __test(left, right, target):
+        match = librosa.util.match_events(events_from, events_to,
+                                          left=left, right=right)
+
+        assert np.allclose(target, events_to[match])
+
+    yield __test, False, True, [10, 20, 30]
+    yield __test, True, False, [0, 10, 20]
+
+    # Make a right-sided fail
+    events_from[0] = 40
+    yield raises(librosa.ParameterError)(__test), False, True, [10, 20, 30]
+
+    # Make a left-sided fail
+    events_from[0] = -1
+    yield raises(librosa.ParameterError)(__test), True, False, [10, 20, 30]
+
+    # Make a two-sided fail
+    events_from[0] = -1
+    yield raises(librosa.ParameterError)(__test), False, False, [10, 20, 30]
+
+    # Make a two-sided success
+    events_to[:-1] = events_from
+    yield __test, False, False, events_from
+
+
 def test_localmax():
 
     def __test(ndim, axis):

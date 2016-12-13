@@ -823,7 +823,7 @@ def match_intervals(intervals_from, intervals_to):
     return output
 
 
-def match_events(events_from, events_to):
+def match_events(events_from, events_to, left=True, right=True):
     '''Match one set of events to another.
 
     This is useful for tasks such as matching beats to the nearest
@@ -861,6 +861,11 @@ def match_events(events_from, events_to):
       Array of events (eg, times, sample or frame indices) to
       match against.
 
+    left : bool
+    right : bool
+        If `False`, then matched events cannot be to the left (or right)
+        of source events.
+
     Returns
     -------
     event_mapping : np.ndarray [shape=(n,)]
@@ -882,8 +887,29 @@ def match_events(events_from, events_to):
     if len(events_from) == 0 or len(events_to) == 0:
         raise ParameterError('Attempting to match empty event list')
 
+    # If we can't match left or right, then only strict equivalence
+    # counts as a match.
+    if not (left or right) and not np.all(np.in1d(events_from, events_to)):
+            raise ParameterError('Cannot match events with left=right=False '
+                                 'and events_from is not contained '
+                                 'in events_to')
+
+    # If we can't match to the left, then there should be at least one
+    # target event greater-equal to every source event
+    if (not left) and max(events_to) < max(events_from):
+        raise ParameterError('Cannot match events with left=False '
+                             'and max(events_to) < max(events_from)')
+
+    # If we can't match to the right, then there should be at least one
+    # target event less-equal to every source event
+    if (not right) and min(events_to) > min(events_from):
+        raise ParameterError('Cannot match events with right=False '
+                             'and min(events_to) > min(events_from)')
+
+    # Pre-allocate the output array
     output = np.empty_like(events_from, dtype=np.int)
 
+    # Compute how many rows we can process at once within the memory block
     n_rows = int(MAX_MEM_BLOCK / (np.prod(output.shape[1:]) * len(events_to)
                                   * events_from.itemsize))
 
@@ -895,9 +921,23 @@ def match_events(events_from, events_to):
         bl_t = min(bl_s + n_rows, len(events_from))
 
         event_block = events_from[bl_s:bl_t]
-        output[bl_s:bl_t] = np.argmin(np.abs(np.subtract.outer(event_block,
-                                                               events_to)),
-                                      axis=-1)
+
+        # distance[i, j] = |events_from - events_to[j]|
+        distance = np.abs(np.subtract.outer(event_block,
+                                            events_to)).astype(np.float)
+
+        # If we can't match to the right, squash all comparisons where
+        # events_to[j] > events_from[i]
+        if not right:
+            distance[np.less.outer(event_block, events_to)] = np.nan
+
+        # If we can't match to the left, squash all comparisons where
+        # events_to[j] < events_from[i]
+        if not left:
+            distance[np.greater.outer(event_block, events_to)] = np.nan
+
+        # Find the minimum distance point from whatever's left after squashing
+        output[bl_s:bl_t] = np.nanargmin(distance, axis=-1)
 
     return output
 
