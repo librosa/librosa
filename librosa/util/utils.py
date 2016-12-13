@@ -906,8 +906,10 @@ def match_events(events_from, events_to, left=True, right=True):
         raise ParameterError('Cannot match events with right=False '
                              'and min(events_to) > min(events_from)')
 
+    # Pre-allocate the output array
     output = np.empty_like(events_from, dtype=np.int)
 
+    # Compute how many rows we can process at once within the memory block
     n_rows = int(MAX_MEM_BLOCK / (np.prod(output.shape[1:]) * len(events_to)
                                   * events_from.itemsize))
 
@@ -920,15 +922,21 @@ def match_events(events_from, events_to, left=True, right=True):
 
         event_block = events_from[bl_s:bl_t]
 
+        # distance[i, j] = |events_from - events_to[j]|
         distance = np.abs(np.subtract.outer(event_block,
                                             events_to)).astype(np.float)
 
+        # If we can't match to the right, squash all comparisons where
+        # events_to[j] > events_from[i]
         if not right:
             distance[np.less.outer(event_block, events_to)] = np.nan
 
+        # If we can't match to the left, squash all comparisons where
+        # events_to[j] < events_from[i]
         if not left:
             distance[np.greater.outer(event_block, events_to)] = np.nan
 
+        # Find the minimum distance point from whatever's left after squashing
         output[bl_s:bl_t] = np.nanargmin(distance, axis=-1)
 
     return output
