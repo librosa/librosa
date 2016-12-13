@@ -7,11 +7,10 @@ Onset detection
     :toctree: generated/
 
     onset_detect
+    onset_backtrack
     onset_strength
     onset_strength_multi
 """
-
-import warnings
 
 import numpy as np
 import scipy
@@ -23,10 +22,14 @@ from .util.exceptions import ParameterError
 
 from .feature.spectral import melspectrogram
 
-__all__ = ['onset_detect', 'onset_strength', 'onset_strength_multi']
+__all__ = ['onset_detect',
+           'onset_strength',
+           'onset_strength_multi',
+           'onset_backtrack']
 
 
 def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
+                 backtrack=False, energy=None,
                  units='frames', **kwargs):
     """Basic onset detector.  Locate note onset events by picking peaks in an
     onset strength envelope.
@@ -54,6 +57,16 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     units : {'frames', 'samples', 'time'}
         The units to encode detected onset events in.
         By default, 'frames' are used.
+
+    backtrack : bool
+        If `True`, detected onset events are backtracked to the nearest
+        preceding minimum of `energy`.
+
+        This is primarily useful when using onsets as slice points for segmentation.
+
+    energy : np.ndarray [shape=(m,)] (optional)
+        An energy function to use for backtracking detected onset events.
+        If none is provided, then `onset_envelope` is used.
 
     kwargs : additional keyword arguments
         Additional parameters for peak picking.
@@ -83,21 +96,20 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     See Also
     --------
     onset_strength : compute onset strength per-frame
+    onset_backtrack : backtracking onset events
     librosa.util.peak_pick : pick peaks from a time series
-
+    
 
     Examples
     --------
     Get onset times from a signal
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file(),
-    ...                      duration=10.0)
+    ...                      offset=30, duration=2.0)
     >>> onset_frames = librosa.onset.onset_detect(y=y, sr=sr)
-    >>> librosa.frames_to_time(onset_frames[:20], sr=sr)
-    array([ 0.07 ,  0.279,  0.511,  0.859,  1.091,  1.207,  1.463,
-            1.672,  1.904,  2.159,  2.368,  2.601,  2.949,  3.065,
-            3.297,  3.529,  3.762,  3.994,  4.203,  4.69 ])
-
+    >>> librosa.frames_to_time(onset_frames, sr=sr)
+    array([ 0.07 ,  0.395,  0.511,  0.627,  0.766,  0.975,
+            1.207,  1.324,  1.44 ,  1.788,  1.881])
 
     Or use a pre-computed onset envelope
 
@@ -150,6 +162,13 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
     # Peak pick the onset envelope
     onsets = util.peak_pick(onset_envelope, **kwargs)
+
+    # Optionally backtrack the events
+    if backtrack:
+        if energy is None:
+            energy = onset_envelope
+
+        onsets = onset_backtrack(onsets, energy)
 
     if units == 'frames':
         pass
@@ -304,6 +323,77 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
     return odf_all[0]
 
 
+def onset_backtrack(events, energy):
+    '''Backtrack detected onset events to the nearest preceding local
+    minimum of an energy function.
+
+    This function can be used to roll back the timing of detected onsets
+    from a detected peak amplitude to the preceding minimum.
+
+    This is most useful when using onsets to determine slice points for
+    segmentation.
+
+    .. [1] Jehan, Tristan.
+           "Creating music by listening"
+           Doctoral dissertation
+           Massachusetts Institute of Technology, 2005.
+
+    Parameters
+    ----------
+    events : np.ndarray, dtype=int
+        List of onset event frame indices, as computed by `onset_detect`
+
+    energy : np.ndarray, shape=(m,)
+        An energy function
+
+    Returns
+    -------
+    events_backtracked : np.ndarray, shape=events.shape
+        The input events matched to nearest preceding minima of `energy`.
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(),
+    ...                      offset=30, duration=2.0)
+    >>> oenv = librosa.onset.onset_strength(y=y, sr=sr)
+    >>> # Detect events without backtracking
+    >>> onset_raw = librosa.onset.onset_detect(onset_envelope=oenv,
+    ...                                        backtrack=False)
+    >>> # Backtrack the events using the onset envelope
+    >>> onset_bt = librosa.onset.onset_backtrack(onset_raw, oenv)
+    >>> # Backtrack the events using the RMS energy
+    >>> rmse = librosa.feature.rmse(S=np.abs(librosa.stft(y=y)))
+    >>> onset_bt_rmse = librosa.onset.onset_backtrack(onset_raw, rmse[0])
+
+    >>> # Plot the results
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> plt.plot(oenv, label='Onset strength')
+    >>> plt.plot(rmse[0] / rmse.max(), label='RMSE (normalized)', alpha=0.5)
+    >>> plt.vlines(onset_raw, 0, oenv.max(), linestyle='--', color='k',
+    ...            label='Raw onsets')
+    >>> plt.vlines(onset_bt, 0, oenv.max(), color='r',
+    ...            label='Backtracked onsets (onset strength)')
+    >>> plt.vlines(onset_bt_rmse, 0, oenv.max(), color='m', linestyle='-.',
+    ...            label='Backtracked onsets (RMSE)')
+    >>> plt.axis('tight')
+    >>> plt.legend(frameon=True, framealpha=0.75)
+    '''
+
+    # Find points where energy is non-increasing
+    # all points:  energy[i] <= energy[i-1]
+    # tail points: energy[i] < energy[i+1]
+    minima = np.flatnonzero((energy[1:-1] <= energy[:-2]) &
+                            (energy[1:-1] < energy[2:]))
+
+    # Pad on a 0, just in case we have onsets with no preceding minimum
+    # Shift by one to account for slicing in minima detection
+    minima = util.fix_frames(1 + minima, x_min=0)
+
+    # Only match going left from the detected events
+    return minima[util.match_events(events, minima, right=False)]
+
+
 @cache(level=30)
 def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
                          detrend=False, center=True, feature=None,
@@ -360,7 +450,7 @@ def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
     Returns
     -------
     onset_envelope   : np.ndarray [shape=(n_channels, m)]
-        array containing the onset strength envelope for each specified channel.
+        array containing the onset strength envelope for each specified channel
 
 
     Raises
@@ -461,11 +551,13 @@ def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
         # Counter-act framing effects. Shift the onsets by n_fft / hop_length
         pad_width += n_fft // (2 * hop_length)
 
-    onset_env = np.pad(onset_env, ([0, 0], [int(pad_width), 0]), mode='constant')
+    onset_env = np.pad(onset_env, ([0, 0], [int(pad_width), 0]),
+                       mode='constant')
 
     # remove the DC component
     if detrend:
-        onset_env = scipy.signal.lfilter([1.0, -1.0], [1.0, -0.99], onset_env, axis=-1)
+        onset_env = scipy.signal.lfilter([1.0, -1.0], [1.0, -0.99],
+                                         onset_env, axis=-1)
 
     # Trim to match the input duration
     if center:
