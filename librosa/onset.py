@@ -380,11 +380,15 @@ def onset_backtrack(events, energy):
     >>> plt.legend(frameon=True, framealpha=0.75)
     '''
 
-    # Find points where energy is decreasing
-    minima = 1 + np.flatnonzero(energy[1:] <= energy[:-1])
+    # Find points where energy is non-increasing
+    # all points:  energy[i] <= energy[i-1]
+    # tail points: energy[i] < energy[i+1]
+    minima = np.flatnonzero((energy[1:-1] <= energy[:-2]) &
+                            (energy[1:-1] < energy[2:]))
 
-    # Pad on a 0, since we only do left-sided matching
-    minima = util.fix_frames(minima)
+    # Pad on a 0, just in case we have onsets with no preceding minimum
+    # Shift by one to account for slicing in minima detection
+    minima = util.fix_frames(1 + minima, x_min=0)
 
     # Only match going left from the detected events
     return minima[util.match_events(events, minima, right=False)]
