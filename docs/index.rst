@@ -51,7 +51,7 @@ Advanced topics
 
     filters
     cache
-    io
+    ioformats
 
 Reference
 ---------
@@ -61,4 +61,5 @@ Reference
 
     changelog
     glossary
+
 * :ref:`genindex`
