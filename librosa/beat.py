@@ -330,7 +330,7 @@ def estimate_tempo(onset_envelope, sr=22050, hop_length=512, start_bpm=120,
 
 @cache(level=30)
 def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
-          std_bpm=1.0, ac_size=4.0, aggregate=np.mean):
+          std_bpm=1.0, ac_size=4.0, max_tempo=320.0, aggregate=np.mean):
     """Estimate the tempo (beats per minute)
 
     Parameters
@@ -355,6 +355,9 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
 
     ac_size : float > 0 [scalar]
         length (in seconds) of the auto-correlation window
+
+    max_tempo : float > 0 [scalar, optional]
+        If provided, only estimate tempo below this threshold
 
     aggregate : callable [optional]
         Aggregation function for estimating global tempo.
@@ -422,6 +425,12 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
 
     # Weight the autocorrelation by a log-normal distribution
     prior = np.exp(-0.5 * ((np.log2(bpms) - np.log2(start_bpm)) / std_bpm)**2)
+
+    # Kill everything above the max tempo
+    if max_tempo is not None:
+        max_idx = np.argmax(bpms < max_tempo)
+        prior[:max_idx] = 0
+
     tg *= prior[:, np.newaxis]
 
     # Really, instead of multiplying by the prior, we should set up a
