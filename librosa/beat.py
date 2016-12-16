@@ -330,7 +330,7 @@ def estimate_tempo(onset_envelope, sr=22050, hop_length=512, start_bpm=120,
 
 @cache(level=30)
 def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
-          std_bpm=1.0, ac_size=4.0, max_tempo=320.0, aggregate=np.mean):
+          std_bpm=1.0, ac_size=8.0, max_tempo=320.0, aggregate=np.mean):
     """Estimate the tempo (beats per minute)
 
     Parameters
@@ -379,15 +379,26 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
 
     Examples
     --------
+    >>> # Estimate a static tempo
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> onset_env = librosa.onset.onset_strength(y, sr=sr)
     >>> tempo = librosa.beat.tempo(onset_envelope=onset_env, sr=sr)
     >>> tempo
-    array([103.359375])
+    array([129.199])
+
+    >>> # Or a dynamic tempo
+    >>> dtempo = librosa.beat.tempo(onset_envelope=onset_env, sr=sr,
+    ...                             aggregate=None)
+    >>> dtempo
+    array([ 143.555,  143.555,  143.555, ...,  161.499,  161.499,
+            172.266])
+
 
     Plot the estimated tempo against the onset autocorrelation
 
     >>> import matplotlib.pyplot as plt
+    >>> # Convert to scalar
+    >>> tempo = np.asscalar(tempo)
     >>> # Compute 2-second windowed autocorrelation
     >>> hop_length = 512
     >>> ac = librosa.autocorrelate(onset_env, 2 * sr // hop_length)
@@ -401,8 +412,20 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
     ...            label='Tempo: {:.2f} BPM'.format(tempo))
     >>> plt.xlabel('Tempo (BPM)')
     >>> plt.grid()
+    >>> plt.title('Static tempo estimation')
     >>> plt.legend(frameon=True)
     >>> plt.axis('tight')
+
+    Plot dynamic tempo estimates over a tempogram
+
+    >>> plt.figure()
+    >>> tg = librosa.feature.tempogram(onset_envelope=onset_env, sr=sr,
+    ...                                hop_length=hop_length)
+    >>> librosa.display.specshow(tg, x_axis='time', y_axis='tempo')
+    >>> plt.plot(librosa.frames_to_time(np.arange(len(dtempo))), dtempo,
+    ...          color='w', linewidth=1.5, label='Tempo estimate')
+    >>> plt.title('Dynamic tempo estimation')
+    >>> plt.legend(frameon=True, framealpha=0.75)
     """
 
     if start_bpm <= 0:
