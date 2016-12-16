@@ -71,16 +71,16 @@ def test_tempo():
                                        ac_size=ac_size,
                                        aggregate=aggregate)
 
-        # Being within 10% for the stable frames is close enough
+        # Being within 5% for the stable frames is close enough
         if aggregate is None:
             win_size = int(ac_size * sr // hop_length)
-            assert np.all(np.abs(tempo_est[win_size:-win_size] - tempo) <= 0.10 * tempo), (tempo,
+            assert np.all(np.abs(tempo_est[win_size:-win_size] - tempo) <= 0.05 * tempo), (tempo,
                     tempo_est[win_size:-win_size])
         else:
-            assert np.abs(tempo_est - tempo) <= 0.10 * tempo, (tempo, tempo_est)
+            assert np.abs(tempo_est - tempo) <= 0.05 * tempo, (tempo, tempo_est)
 
     for sr in [22050, 44100]:
-        for tempo in [40, 60, 80, 110, 150, 160]:
+        for tempo in [40, 60, 80, 110, 160]:
             # Make a pulse train at the target tempo
             y = np.zeros(20 * sr)
             delay = np.asscalar(librosa.time_to_samples(60./tempo, sr=sr))
