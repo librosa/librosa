@@ -45,7 +45,7 @@ def test_onset_strength():
         yield (__test, infile)
 
 
-def test_tempo():
+def test_estimate_tempo():
 
     def __test(infile):
         DATA = load(infile)
@@ -85,7 +85,7 @@ def test_beat_no_onsets():
     eq_(len(beats), 0)
 
 
-def test_tempo_no_onsets():
+def test_estimate_tempo_no_onsets():
 
     sr = 22050
     hop_length = 512
@@ -100,6 +100,25 @@ def test_tempo_no_onsets():
 
     for start_bpm in [40, 60, 120, 240]:
         yield __test, start_bpm
+
+
+def test_tempo_no_onsets():
+
+    sr = 22050
+    hop_length = 512
+    duration = 30
+    onsets = np.zeros(duration * sr // hop_length)
+
+    def __test(start_bpm, aggregate):
+        tempo = librosa.beat.tempo(onset_envelope=onsets, sr=sr,
+                                   hop_length=hop_length,
+                                   start_bpm=start_bpm,
+                                   aggregate=aggregate)
+        assert np.allclose(tempo, start_bpm)
+
+    for start_bpm in [40, 60, 120, 240]:
+        for aggregate in [None, np.mean]:
+            yield __test, start_bpm, aggregate
 
 
 def test_beat():
