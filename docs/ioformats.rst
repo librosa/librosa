@@ -1,5 +1,5 @@
 Advanced I/O Use Cases
-=====================
+======================
 
 This section covers advanced use cases for input and output which go beyond the I/O
 functionality currently provided by *librosa*.
@@ -7,9 +7,12 @@ functionality currently provided by *librosa*.
 Read specific formats
 ---------------------
 
-*librosa* uses `audioread <https://github.com/sampsyo/audioread>`_ for reading audio. While we chose this library for best flexibility and support of various compressed formats like MP3; some specific formats might not be supported. Especially specific WAV subformats like 24bit PCM or 32bit float might cause problems depending on your installed audioread codecs. *libsndfile* covers a `bunch of these formats <http://www.mega-nerd.com/libsndfile/>`_.
+*librosa* uses `audioread <https://github.com/sampsyo/audioread>`_ for reading audio. While we chose this library for best flexibility and support of various compressed formats like MP3: some specific formats might not be supported. Especially specific WAV subformats like 24bit PCM or 32bit float might cause problems depending on your installed audioread codecs. *libsndfile* covers a `bunch of these formats <http://www.mega-nerd.com/libsndfile/>`_. There is a neat wrapper for
+*libsndfile* called `PySoundFile <https://github.com/bastibe/PySoundFile>`_ which makes it easy to use the library from python.
 
-Reading audio files using pysoundfile is silimar to the method in *librosa*. One important difference is that the read data is of shape ``(nb_samples, nb_channels)`` compared to ``(nb_channels, nb_samples)`` in :func:`<librosa.core.load>`, hence it should be transposed for further processing in *librosa*.
+.. note:: See installation instruction for PySoundFile `here <http://pysoundfile.readthedocs.io>`_.
+
+Reading audio files using PySoundFile is similmar to the method in *librosa*. One important difference is that the read data is of shape ``(nb_samples, nb_channels)`` compared to ``(nb_channels, nb_samples)`` in :func:`<librosa.core.load>`, hence it should be transposed for further processing in *librosa*.
 
 .. code-block:: python
     :linenos:
@@ -23,13 +26,11 @@ Reading audio files using pysoundfile is silimar to the method in *librosa*. One
     data, samplerate = sf.read(filename)
     data = data.T
 
-.. note:: See installation instruction for PySoundfile `here <http://pysoundfile.readthedocs.io>`_.
-
 Blockwise Reading
 -----------------
 
-For large audio signal it could be benficial to not load the whole audio file
-into memory. *PySoundfile* supports blockwise reading. In the following example
+For large audio signals it could be benficial to not load the whole audio file
+into memory. *PySoundFile* supports blockwise reading. In the following example
 a block of 1024 samples of audio are read and directly fed into the chroma
 feature extractor.
 
@@ -43,16 +44,20 @@ feature extractor.
     block_gen = sf.blocks('stereo_file.wav', blocksize=1024)
     rate = sf.info('stereo_file.wav').samplerate
 
-    chromas = [chroma_stft(y=np.mean(bl, axis=1), sr=rate) for bl in block_gen]
+    chromas = []
+    for bl in block_gen:
+        # downmix frame to mono (averaging out the channel dimension)
+        y=np.mean(bl, axis=1)
+        # compute chroma feature
+        chromas.append(chroma_stft(y, sr=rate))
 
-.. note:: See installation instruction for PySoundfile `here <http://pysoundfile.readthedocs.io>`_.
 
 
 Read file-like objects
 ----------------------
 
 If you want to read audio from file-like objects (also called *virtual files*)
-you can use *PySoundfile*, as well.
+you can use *PySoundFile*, as well.
 
 E.g.: read files from zip compressed archives:
 
@@ -68,6 +73,7 @@ E.g.: read files from zip compressed archives:
             tmp = io.BytesIO(myfile.read())
             data, samplerate = sf.read(tmp)
 
+.. warning:: This is a example does only work in python 3. For python 2 please use ``from urllib2 import urlopen``.
 
 Download and read from URL:
 
@@ -77,17 +83,11 @@ Download and read from URL:
     import soundfile as sf
     import io
 
-    from urllib.request import urlopen
+    from six.moves.urllib.request import urlopen
 
-    url = "https://raw.githubusercontent.com/librosa/" +
-      "librosa/master/tests/data/test1_44100.wav"
+    url = "https://raw.githubusercontent.com/librosa/librosa/master/tests/data/test1_44100.wav"
 
     data, samplerate = sf.read(io.BytesIO(urlopen(url).read()))
-
-
-.. warning:: This is a example does only work in python 3. For python 2 please use ``from urllib2 import urlopen``.
-
-.. note:: See installation instruction for PySoundfile `here <http://pysoundfile.readthedocs.io>`_.
 
 
 Write out audio files
