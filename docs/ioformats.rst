@@ -23,7 +23,7 @@ Reading audio files using PySoundFile is similmar to the method in *librosa*. On
     # Get example audio file
     filename = librosa.util.example_audio_file()
 
-    data, samplerate = sf.read(filename)
+    data, samplerate = sf.read(filename, dtype='float32')
     data = data.T
     data_22k = librosa.resample(data, samplerate, 22050)
 
