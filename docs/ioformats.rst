@@ -12,7 +12,7 @@ Read specific formats
 
 .. note:: See installation instruction for PySoundFile `here <http://pysoundfile.readthedocs.io>`_.
 
-Reading audio files using PySoundFile is similmar to the method in *librosa*. One important difference is that the read data is of shape ``(nb_samples, nb_channels)`` compared to ``(nb_channels, nb_samples)`` in :func:`<librosa.core.load>`, hence it should be transposed for further processing in *librosa*.
+Reading audio files using PySoundFile is similmar to the method in *librosa*. One important difference is that the read data is of shape ``(nb_samples, nb_channels)`` compared to ``(nb_channels, nb_samples)`` in :func:`<librosa.core.load>`. Also the signal is not resampled to 22050 Hz by default, hence it would need be transposed and resampled for further processing in *librosa*. The following example is equivalent to ``librosa.load(librosa.util.example_audio_file())``:
 
 .. code-block:: python
     :linenos:
@@ -25,6 +25,8 @@ Reading audio files using PySoundFile is similmar to the method in *librosa*. On
 
     data, samplerate = sf.read(filename)
     data = data.T
+    data_22k = librosa.resample(data, samplerate, 22050)
+
 
 Blockwise Reading
 -----------------
