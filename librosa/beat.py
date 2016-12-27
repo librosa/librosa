@@ -454,27 +454,14 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
         max_idx = np.argmax(bpms < max_tempo)
         prior[:max_idx] = 0
 
-    tg *= prior[:, np.newaxis]
-
     # Really, instead of multiplying by the prior, we should set up a
     # probabilistic model for tempo and add log-probabilities.
     # This would give us a chance to recover from null signals and
     # rely on the prior.
     # it would also make time aggregation much more natural
 
-    # Get the local maximum of weighted correlation
-    x_peaks = util.localmax(tg, axis=0)
-
-    # For each peak, set its harmonics to true
-    peak_idy, peak_idx = np.nonzero(x_peaks)
-
-    for h in [1./3, 1./2, 2./3, 3./2, 2, 3]:
-        rows = (peak_idy * h).astype(int)
-        # Only take rows that stay within sample
-        v = (0 < rows) & (rows < x_peaks.shape[0])
-        x_peaks[rows[v], peak_idx[v]] = True
-
-    best_period = np.argmax(tg * x_peaks, axis=0)
+    # Get the maximum, weighted by the prior
+    best_period = np.argmax(tg * prior[:, np.newaxis], axis=0)
 
     tempi = bpms[best_period]
     # Wherever the best tempo is index 0, return start_bpm
