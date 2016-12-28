@@ -91,6 +91,8 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
     22050
 
     """
+    if not os.path.exists(os.path.realpath(path)):
+        raise IOError("path does not exist")
 
     y = []
     with audioread.audio_open(os.path.realpath(path)) as input_file:
