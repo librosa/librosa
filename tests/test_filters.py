@@ -120,23 +120,22 @@ def test_melfb():
 
 def test_mel_gap():
 
-    warnings.resetwarnings()
-    warnings.simplefilter('always')
-
     # This configuration should trigger some empty filters
-    sr = 22050
+    sr = 44100
     n_fft = 1024
     fmin = 0
     fmax = 2000
     n_mels = 128
     htk = True
+
+    warnings.resetwarnings()
+    warnings.simplefilter('always')
     with warnings.catch_warnings(record=True) as out:
         librosa.filters.mel(sr, n_fft, n_mels=n_mels,
                             fmin=fmin, fmax=fmax, htk=htk)
 
         assert len(out) > 0
         assert out[0].category is UserWarning
-
         assert 'empty filters' in str(out[0].message).lower()
 
 
