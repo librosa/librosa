@@ -4,6 +4,9 @@
 '''Regression tests on metlab features''' 
 
 from __future__ import print_function
+import warnings
+warnings.resetwarnings()
+warnings.simplefilter('always')
 # Disable cache
 import os
 try:

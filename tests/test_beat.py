@@ -15,12 +15,16 @@ except:
 import matplotlib
 matplotlib.use('Agg')
 import numpy as np
+import warnings
 import librosa
 
 from test_core import files, load
 
 __EXAMPLE_FILE = 'data/test1_22050.wav'
 
+
+warnings.resetwarnings()
+warnings.simplefilter('always')
 
 def test_onset_strength():
 

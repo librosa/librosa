@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # CREATED: 2013-10-06 22:31:29 by Dawen Liang <dl2771@columbia.edu>
 # unit tests for librosa.decompose
+import warnings
+warnings.resetwarnings()
+warnings.simplefilter('always')
 
 # Disable cache
 import os

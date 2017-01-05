@@ -16,6 +16,8 @@ import matplotlib
 matplotlib.use('Agg')
 
 import warnings
+warnings.resetwarnings()
+warnings.simplefilter('always')
 
 import numpy as np
 import librosa
