@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 '''Tests for segmentation functions'''
+import warnings
+warnings.resetwarnings()
+warnings.simplefilter('always')
 
 # Disable cache
 import os

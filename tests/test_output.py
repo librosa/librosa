@@ -15,6 +15,9 @@ import tempfile
 from nose.tools import raises, eq_
 
 from test_core import srand
+import warnings
+warnings.resetwarnings()
+warnings.simplefilter('always')
 
 def test_write_wav():
 

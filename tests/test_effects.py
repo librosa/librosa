@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 '''Unit tests for the effects module'''
+import warnings
+warnings.resetwarnings()
+warnings.simplefilter('always')
 
 # Disable cache
 import os

@@ -14,6 +14,9 @@ matplotlib.use('Agg')
 import numpy as np
 import librosa
 from nose.tools import raises
+import warnings
+warnings.resetwarnings()
+warnings.simplefilter('always')
 
 
 @raises(librosa.ParameterError)
