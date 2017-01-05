@@ -17,6 +17,8 @@ np.set_printoptions(precision=3)
 from nose.tools import raises, eq_
 import six
 import warnings
+warnings.resetwarnings()
+warnings.simplefilter('always')
 
 import librosa
 

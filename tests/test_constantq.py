@@ -10,6 +10,8 @@ Run me as follows:
 from __future__ import division
 
 import warnings
+warnings.resetwarnings()
+warnings.simplefilter('always')
 
 # Disable cache
 import os
