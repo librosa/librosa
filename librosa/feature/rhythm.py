@@ -85,7 +85,8 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
     >>> ac_global = librosa.autocorrelate(oenv, max_size=tempogram.shape[0])
     >>> ac_global = librosa.util.normalize(ac_global)
     >>> # Estimate the global tempo for display purposes
-    >>> tempo = librosa.beat.estimate_tempo(oenv, sr=sr, hop_length=hop_length)
+    >>> tempo = librosa.beat.tempo(onset_envelope=oenv, sr=sr,
+    ...                            hop_length=hop_length)[0]
 
     >>> import matplotlib.pyplot as plt
     >>> plt.figure(figsize=(8, 8))
@@ -98,9 +99,9 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
     >>> # We'll truncate the display to a narrower range of tempi
     >>> librosa.display.specshow(tempogram, sr=sr, hop_length=hop_length,
     >>>                          x_axis='time', y_axis='tempo')
-    >>> plt.axhline(tempo, color='black', linestyle='--', alpha=.8,
+    >>> plt.axhline(tempo, color='w', linestyle='--', alpha=1,
     ...             label='Estimated tempo={:g}'.format(tempo))
-    >>> plt.legend(frameon=True)
+    >>> plt.legend(frameon=True, framealpha=0.75)
     >>> plt.subplot(4, 1, 3)
     >>> x = np.linspace(0, tempogram.shape[0] * float(hop_length) / sr,
     ...                 num=tempogram.shape[0])
