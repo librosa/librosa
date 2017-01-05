@@ -24,6 +24,10 @@ from nose.tools import eq_, raises, make_decorator
 import matplotlib
 matplotlib.use('Agg')
 
+import warnings
+warnings.resetwarnings()
+warnings.simplefilter('always')
+
 
 # -- utilities --#
 def files(pattern):

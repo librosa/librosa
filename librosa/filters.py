@@ -31,6 +31,7 @@ Miscellaneous
     constant_q_lengths
     cq_to_chroma
 """
+import warnings
 
 import numpy as np
 import scipy
@@ -227,21 +228,30 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
     fftfreqs = fft_frequencies(sr=sr, n_fft=n_fft)
 
     # 'Center freqs' of mel bands - uniformly spaced between limits
-    freqs = mel_frequencies(n_mels + 2,
-                            fmin=fmin,
-                            fmax=fmax,
-                            htk=htk)
+    mel_f = mel_frequencies(n_mels + 2, fmin=fmin, fmax=fmax, htk=htk)
 
-    # Slaney-style mel is scaled to be approx constant energy per channel
-    enorm = 2.0 / (freqs[2:n_mels+2] - freqs[:n_mels])
+    fdiff = np.diff(mel_f)
+    ramps = np.subtract.outer(mel_f, fftfreqs)
 
     for i in range(n_mels):
         # lower and upper slopes for all bins
-        lower = (fftfreqs - freqs[i]) / (freqs[i+1] - freqs[i])
-        upper = (freqs[i+2] - fftfreqs) / (freqs[i+2] - freqs[i+1])
+        lower = -ramps[i] / fdiff[i]
+        upper = ramps[i+2] / fdiff[i+1]
 
         # .. then intersect them with each other and zero
-        weights[i] = np.maximum(0, np.minimum(lower, upper)) * enorm[i]
+        weights[i] = np.maximum(0, np.minimum(lower, upper))
+
+    # Slaney-style mel is scaled to be approx constant energy per channel
+    enorm = 2.0 / (mel_f[2:n_mels+2] - mel_f[:n_mels])
+    weights *= enorm[:, np.newaxis]
+
+    # Only check weights if f_mel[0] is positive
+    if not np.all((mel_f[:-2] == 0) | (weights.max(axis=1) > 0)):
+        # This means we have an empty channel somewhere
+        warnings.warn('Empty filters detected in mel frequency basis. '
+                      'Some channels will produce empty responses. '
+                      'Try increasing your sampling rate (and fmax) or '
+                      'reducing n_mels.')
 
     return weights
 
