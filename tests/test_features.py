@@ -4,6 +4,8 @@
 from __future__ import print_function
 import warnings
 import numpy as np
+warnings.resetwarnings()
+warnings.simplefilter('always')
 
 from nose.tools import raises, eq_
 

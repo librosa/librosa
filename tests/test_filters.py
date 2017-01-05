@@ -40,6 +40,9 @@ import warnings
 
 import librosa
 
+warnings.resetwarnings()
+warnings.simplefilter('always')
+
 # -- utilities --#
 def files(pattern):
     test_files = glob.glob(pattern)
