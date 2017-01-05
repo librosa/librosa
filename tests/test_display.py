@@ -3,6 +3,9 @@
 # CREATED:2015-02-14 22:51:01 by Brian McFee <brian.mcfee@nyu.edu>
 '''Unit tests for display module'''
 
+import warnings
+warnings.resetwarnings()
+warnings.simplefilter('always')
 
 # Disable cache
 import os
