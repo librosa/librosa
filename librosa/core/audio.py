@@ -27,7 +27,7 @@ BW_FASTEST = resampy.filters.get_filter('kaiser_fast')[2]
 # Load should never be cached, since we cannot verify that the contents of
 # 'path' are unchanged across calls.
 def load(path, sr=22050, mono=True, offset=0.0, duration=None,
-         dtype=np.float32):
+         dtype=np.float32, res_type='kaiser_best'):
     """Load an audio file as a floating point time series.
 
     Parameters
@@ -53,6 +53,16 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
 
     dtype : numeric type
         data type of `y`
+
+    res_type : str
+        resample type (see note)
+
+        .. note::
+            By default, this uses `resampy`'s high-quality mode ('kaiser_best').
+
+            To use a faster method, set `res_type='kaiser_fast'`.
+
+            To use `scipy.signal.resample`, set `res_type='scipy'`.
 
 
     Returns
@@ -141,7 +151,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
                 y = to_mono(y)
 
         if sr is not None:
-            y = resample(y, sr_native, sr)
+            y = resample(y, sr_native, sr, res_type=res_type)
 
         else:
             sr = sr_native
@@ -210,6 +220,8 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
 
         .. note::
             By default, this uses `resampy`'s high-quality mode ('kaiser_best').
+
+            To use a faster method, set `res_type='kaiser_fast'`.
 
             To use `scipy.signal.resample`, set `res_type='scipy'`.
 
