@@ -64,6 +64,33 @@ def test_load():
     pass
 
 
+def test_load_resample():
+
+    sr_target = 16000
+    offset = 10
+    duration = 5
+
+    def __test(res_type):
+        y_native, sr = librosa.load(librosa.util.example_audio_file(),
+                                    sr=None,
+                                    offset=offset,
+                                    duration=duration,
+                                    res_type=res_type)
+
+        y2 = librosa.resample(y_native, sr, sr_target, res_type=res_type)
+
+        y, _ = librosa.load(librosa.util.example_audio_file(),
+                            sr=sr_target,
+                            offset=offset,
+                            duration=duration,
+                            res_type=res_type)
+
+        assert np.allclose(y2, y)
+
+    for res_type in ['kaiser_fast', 'kaiser_best', 'scipy']:
+        yield __test, res_type
+
+
 def test_segment_load():
 
     sample_len = 2003
