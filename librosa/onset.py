@@ -98,7 +98,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     onset_strength : compute onset strength per-frame
     onset_backtrack : backtracking onset events
     librosa.util.peak_pick : pick peaks from a time series
-    
+
 
     Examples
     --------
