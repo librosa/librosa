@@ -19,6 +19,7 @@ import warnings
 warnings.resetwarnings()
 warnings.simplefilter('always')
 
+
 def test_write_wav():
 
     def __test(mono, norm):

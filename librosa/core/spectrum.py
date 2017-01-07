@@ -1032,7 +1032,6 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
     if t_min <= 0:
         raise ParameterError('t_min must be a positive number')
 
-
     if n_fmt is None:
         if over_sample < 1:
             raise ParameterError('over_sample must be >= 1')

@@ -1306,7 +1306,6 @@ def roll_sparse(x, shift, axis=0):
     elif axis in (-1, 1):
         x = x.tocsr()
 
-
     # lil matrix to start
     x_r = scipy.sparse.lil_matrix(x.shape, dtype=x.dtype)
 

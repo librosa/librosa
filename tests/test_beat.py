@@ -12,8 +12,6 @@ try:
 except:
     pass
 
-import matplotlib
-matplotlib.use('Agg')
 import numpy as np
 import warnings
 import librosa
@@ -25,6 +23,7 @@ __EXAMPLE_FILE = 'data/test1_22050.wav'
 
 warnings.resetwarnings()
 warnings.simplefilter('always')
+
 
 def test_onset_strength():
 
@@ -78,8 +77,7 @@ def test_tempo():
         # Being within 5% for the stable frames is close enough
         if aggregate is None:
             win_size = int(ac_size * sr // hop_length)
-            assert np.all(np.abs(tempo_est[win_size:-win_size] - tempo) <= 0.05 * tempo), (tempo,
-                    tempo_est[win_size:-win_size])
+            assert np.all(np.abs(tempo_est[win_size:-win_size] - tempo) <= 0.05 * tempo)
         else:
             assert np.abs(tempo_est - tempo) <= 0.05 * tempo, (tempo, tempo_est)
 
@@ -162,7 +160,6 @@ def test_beat():
     onset_env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
 
     def __test(with_audio, with_tempo, start_bpm, bpm, trim, tightness):
-    
         if with_audio:
             _y = y
             _ons = None
@@ -194,7 +191,9 @@ def test_beat():
 
                             if (tightness <= 0 or
                                 (bpm is not None and bpm <= 0) or
-                                (start_bpm is not None and bpm is None and start_bpm <= 0)):
+                                (start_bpm is not None and
+                                 bpm is None and
+                                 start_bpm <= 0)):
 
                                 tf = raises(librosa.ParameterError)(__test)
                             else:
@@ -224,13 +223,12 @@ def test_beat_units():
 
         assert np.allclose(t1, t2)
 
-    for sr in [None, 11025]:
+    for sr in [None, 44100]:
         y, sr = librosa.load(__EXAMPLE_FILE, sr=sr)
         for hop_length in [512, 1024]:
             for units in ['frames', 'time', 'samples']:
                 yield __test, units, hop_length, y, sr
             yield raises(librosa.ParameterError)(__test), 'bad units', hop_length, y, sr
-
 
 
 # Beat tracking regression test is no longer enabled due to librosa's

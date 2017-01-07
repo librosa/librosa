@@ -9,8 +9,6 @@ try:
 except:
     pass
 
-import matplotlib
-matplotlib.use('Agg')
 import numpy as np
 import librosa
 from nose.tools import raises
@@ -137,4 +135,3 @@ def test_istft_bad_window():
     window = np.ones(n_fft // 2)
 
     librosa.istft(D, window=window)
-

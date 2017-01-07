@@ -10,8 +10,6 @@ Run me as follows:
 from __future__ import division
 
 import warnings
-warnings.resetwarnings()
-warnings.simplefilter('always')
 
 # Disable cache
 import os
@@ -26,6 +24,9 @@ import numpy as np
 from nose.tools import raises, eq_
 
 from test_core import srand
+
+warnings.resetwarnings()
+warnings.simplefilter('always')
 
 
 def __test_cqt_size(y, sr, hop_length, fmin, n_bins, bins_per_octave,
@@ -58,6 +59,7 @@ def make_signal(sr, duration, fmax='C8'):
 
     return np.sin(np.cumsum(2 * np.pi * np.logspace(np.log10(fmin), np.log10(fmax),
                                                     num=duration * sr)))
+
 
 def test_cqt():
 
@@ -121,7 +123,7 @@ def test_hybrid_cqt():
                                 bins_per_octave=bins_per_octave,
                                 tuning=tuning, filter_scale=resolution,
                                 norm=norm,
-                                sparsity=sparsity, real=False))
+                                sparsity=sparsity))
 
         eq_(C1.shape, C2.shape)
 
@@ -196,6 +198,7 @@ def test_cqt_fail_short_late():
     y = np.zeros(16)
     librosa.cqt(y, sr=22050, real=False)
 
+
 def test_cqt_impulse():
     # Test to resolve issue #348
     # Updated in #417 to use integrated energy, rather than frame-wise max
@@ -254,8 +257,7 @@ def test_cqt_white_noise():
         C = np.abs(librosa.cqt(y=y, sr=sr,
                                fmin=fmin,
                                n_bins=n_bins,
-                               scale=scale,
-                               real=False))
+                               scale=scale))
 
         if not scale:
             lengths = librosa.filters.constant_q_lengths(sr, fmin,
