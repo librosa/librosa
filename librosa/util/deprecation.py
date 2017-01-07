@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
-#CREATED:2016-02-01 16:50:04 by Brian McFee <brian.mcfee@nyu.edu>
 '''Deprecation utilities'''
 
 import inspect
@@ -13,7 +12,8 @@ class Deprecated(object):
         return '<DEPRECATED parameter>'
 
 
-def rename_kw(old_name, old_value, new_name, new_value, version_deprecated, version_removed):
+def rename_kw(old_name, old_value, new_name, new_value,
+              version_deprecated, version_removed):
     '''Handle renamed arguments.
 
     Parameters
@@ -50,15 +50,15 @@ def rename_kw(old_name, old_value, new_name, new_value, version_deprecated, vers
         dep_func = stack[1]
         caller = stack[2]
 
-        warnings.warn_explicit("{:s}() keyword argument '{:s}' has been renamed to '{:s}' in "
-                               "version {:}."
+        warnings.warn_explicit("{:s}() keyword argument '{:s}' has been "
+                               "renamed to '{:s}' in version {:}."
                                "\n\tThis alias will be removed in version "
                                "{:}.".format(dep_func[3],
                                              old_name, new_name,
-                                             version_deprecated, version_removed),
+                                             version_deprecated,
+                                             version_removed),
                                category=DeprecationWarning,
                                filename=caller[1],
                                lineno=caller[2])
 
         return old_value
-
