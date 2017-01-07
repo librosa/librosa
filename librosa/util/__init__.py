@@ -66,9 +66,8 @@ File operations
 
 from .utils import *  # pylint: disable=wildcard-import
 from .files import *  # pylint: disable=wildcard-import
-from .deprecation import * # pylint: disable=wildcard-import
+from .deprecation import *  # pylint: disable=wildcard-import
 from . import decorators
 from . import exceptions
 
 __all__ = [_ for _ in dir() if not _.startswith('_')]
-
