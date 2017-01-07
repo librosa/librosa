@@ -2,8 +2,6 @@
 # -*- encoding: utf-8 -*-
 '''Unit tests for the effects module'''
 import warnings
-warnings.resetwarnings()
-warnings.simplefilter('always')
 
 # Disable cache
 import os
@@ -14,12 +12,12 @@ except KeyError:
 
 from nose.tools import raises, eq_
 
-import matplotlib
-matplotlib.use('Agg')
 import librosa
 import numpy as np
 
 __EXAMPLE_FILE = 'data/test1_22050.wav'
+warnings.resetwarnings()
+warnings.simplefilter('always')
 
 
 def test_time_stretch():

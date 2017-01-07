@@ -4,8 +4,6 @@
 from __future__ import print_function
 import warnings
 import numpy as np
-warnings.resetwarnings()
-warnings.simplefilter('always')
 
 from nose.tools import raises, eq_
 
@@ -21,6 +19,8 @@ except KeyError:
     pass
 
 __EXAMPLE_FILE = 'data/test1_22050.wav'
+warnings.resetwarnings()
+warnings.simplefilter('always')
 
 
 # utils submodule
