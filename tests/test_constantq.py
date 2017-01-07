@@ -10,8 +10,6 @@ Run me as follows:
 from __future__ import division
 
 import warnings
-warnings.resetwarnings()
-warnings.simplefilter('always')
 
 # Disable cache
 import os
@@ -26,6 +24,9 @@ import numpy as np
 from nose.tools import raises, eq_
 
 from test_core import srand
+
+warnings.resetwarnings()
+warnings.simplefilter('always')
 
 
 def __test_cqt_size(y, sr, hop_length, fmin, n_bins, bins_per_octave,
@@ -58,6 +59,7 @@ def make_signal(sr, duration, fmax='C8'):
 
     return np.sin(np.cumsum(2 * np.pi * np.logspace(np.log10(fmin), np.log10(fmax),
                                                     num=duration * sr)))
+
 
 def test_cqt():
 
@@ -195,6 +197,7 @@ def test_cqt_fail_short_late():
 
     y = np.zeros(16)
     librosa.cqt(y, sr=22050, real=False)
+
 
 def test_cqt_impulse():
     # Test to resolve issue #348
