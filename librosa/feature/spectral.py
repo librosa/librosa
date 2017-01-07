@@ -1274,7 +1274,7 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
     return np.dot(filters.dct(n_mfcc, S.shape[0]), S)
 
 
-def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512, 
+def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                    power=2.0, **kwargs):
     """Compute a Mel-scaled spectrogram.
     By default, it returns power-spectrogram (`power=2.0`).
