@@ -211,7 +211,7 @@ def test_onset_units():
 
         assert np.allclose(t1, t2)
 
-    for sr in [None, 11024]:
+    for sr in [None, 44100]:
         y, sr = librosa.load(__EXAMPLE_FILE, sr=sr)
         for hop_length in [512, 1024]:
             for units in ['frames', 'time', 'samples']:
