@@ -3,8 +3,6 @@
 # CREATED:2015-02-14 19:13:49 by Brian McFee <brian.mcfee@nyu.edu>
 '''Unit tests for time and frequency conversion'''
 import warnings
-warnings.resetwarnings()
-warnings.simplefilter('always')
 
 import os
 try:
@@ -12,12 +10,12 @@ try:
 except KeyError:
     pass
 
-import matplotlib
-matplotlib.use('Agg')
-
 import librosa
 import numpy as np
 from nose.tools import raises, eq_
+
+warnings.resetwarnings()
+warnings.simplefilter('always')
 
 
 def test_frames_to_samples():
@@ -347,6 +345,7 @@ def test_tempo_frequencies():
         for hop_length in [256, 512, 1024]:
             for sr in [11025, 22050, 44100]:
                 yield __test, n_bins, hop_length, sr
+
 
 def test_A_weighting():
 

@@ -306,8 +306,10 @@ def estimate_tempo(onset_envelope, sr=22050, hop_length=512, start_bpm=120,
     # Get the BPM values for each bin, skipping the 0-lag bin
     bpms = core.tempo_frequencies(ac_window, hop_length=hop_length, sr=sr)[1:]
 
-    # Weight the autocorrelation by a log-normal distribution centered start_bpm
-    x_corr *= np.exp(-0.5 * ((np.log2(bpms) - np.log2(start_bpm)) / std_bpm)**2)
+    # Weight the autocorrelation by a log-normal distribution
+    # centered at `start_bpm`
+    x_corr *= np.exp(-0.5 *
+                     ((np.log2(bpms) - np.log2(start_bpm)) / std_bpm)**2)
 
     # Get the local maximum of weighted correlation
     x_peaks = util.localmax(x_corr)

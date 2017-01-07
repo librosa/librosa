@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- encoding: utf-8 -*-
+
 import librosa
 import numpy as np
 
@@ -6,6 +9,7 @@ from test_core import srand
 import warnings
 warnings.resetwarnings()
 warnings.simplefilter('always')
+
 
 def test_dtw_global():
     # Example taken from:

@@ -23,6 +23,7 @@ __all__ = ['load', 'to_mono', 'resample', 'get_duration',
 BW_BEST = resampy.filters.get_filter('kaiser_best')[2]
 BW_FASTEST = resampy.filters.get_filter('kaiser_fast')[2]
 
+
 # -- CORE ROUTINES --#
 # Load should never be cached, since we cannot verify that the contents of
 # 'path' are unchanged across calls.
