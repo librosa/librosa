@@ -9,20 +9,18 @@ try:
 except:
     pass
 
-import matplotlib
-matplotlib.use('Agg')
 import numpy as np
 import scipy.sparse
-np.set_printoptions(precision=3)
 from nose.tools import raises, eq_
 import six
 import warnings
-warnings.resetwarnings()
-warnings.simplefilter('always')
-
 import librosa
 
 from test_core import srand
+
+warnings.resetwarnings()
+warnings.simplefilter('always')
+np.set_printoptions(precision=3)
 
 
 def test_example_audio_file():
@@ -592,9 +590,9 @@ def test_files():
                             if searchdir == os.path.curdir and not recurse:
                                 tf = raises(AssertionError)(__test)
 
-                            if (ext is not None and
-                                case_sensitive and
-                                (ext == 'WAV' or set(ext) == set(['WAV']))):
+                            if (ext is not None and case_sensitive and
+                                    (ext == 'WAV' or
+                                     set(ext) == set(['WAV']))):
 
                                 tf = raises(AssertionError)(__test)
 
@@ -703,6 +701,7 @@ def test_warning_rename_kw_pass():
         # Make sure no warning triggered
         assert len(out) == 0
 
+
 def test_warning_rename_kw_fail():
 
     warnings.resetwarnings()
@@ -806,7 +805,6 @@ def test_sync():
     def __test_fail(data, idx):
         librosa.util.sync(data, idx)
 
-
     for ndim in [1, 2, 3]:
         shaper = [1] * ndim
         shaper[-1] = -1
@@ -824,7 +822,7 @@ def test_sync():
             # Test with list of slices
             yield __test_pass, axis, data, slices
 
-    for bad_idx in [ ['foo', 'bar'], [None], [slice(None), None] ]:
+    for bad_idx in [['foo', 'bar'], [None], [slice(None), None]]:
         yield __test_fail, data, bad_idx
 
 
@@ -848,7 +846,6 @@ def test_roll_sparse():
         Xd_roll_np = np.roll(X_dense, shift, axis=axis)
 
         assert np.allclose(Xd_roll, Xd_roll_np)
-
 
     X = scipy.sparse.lil_matrix(np.random.randint(0, high=10, size=(16, 16)))
 
@@ -892,13 +889,14 @@ def test_softmask():
 
 
 def test_softmask_int():
-    X = 2 * np.ones((3,3), dtype=np.int32)
+    X = 2 * np.ones((3, 3), dtype=np.int32)
     X_ref = np.vander(np.arange(3))
 
     M1 = librosa.util.softmask(X, X_ref, power=1)
     M2 = librosa.util.softmask(X_ref, X, power=1)
 
     assert np.allclose(M1 + M2, 1)
+
 
 def test_softmask_fail():
 
@@ -916,7 +914,6 @@ def test_tiny():
 
         eq_(value, librosa.util.tiny(x))
 
-
     for x, value in [(1, np.finfo(np.float32).tiny),
                      (np.ones(3, dtype=int), np.finfo(np.float32).tiny),
                      (np.ones(3, dtype=np.float32), np.finfo(np.float32).tiny),
@@ -926,4 +923,3 @@ def test_tiny():
                      (np.ones(3, dtype=np.complex64), np.finfo(np.complex64).tiny),
                      (np.ones(3, dtype=np.complex128), np.finfo(np.complex128).tiny)]:
         yield __test, x, value
-
