@@ -257,8 +257,7 @@ def test_cqt_white_noise():
         C = np.abs(librosa.cqt(y=y, sr=sr,
                                fmin=fmin,
                                n_bins=n_bins,
-                               scale=scale,
-                               real=False))
+                               scale=scale))
 
         if not scale:
             lengths = librosa.filters.constant_q_lengths(sr, fmin,

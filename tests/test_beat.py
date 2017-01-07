@@ -77,8 +77,7 @@ def test_tempo():
         # Being within 5% for the stable frames is close enough
         if aggregate is None:
             win_size = int(ac_size * sr // hop_length)
-            assert (np.all(np.abs(tempo_est[win_size:-win_size] - tempo) <= 0.05 * tempo),
-                    (tempo, tempo_est[win_size:-win_size]))
+            assert np.all(np.abs(tempo_est[win_size:-win_size] - tempo) <= 0.05 * tempo)
         else:
             assert np.abs(tempo_est - tempo) <= 0.05 * tempo, (tempo, tempo_est)
 
