@@ -123,7 +123,7 @@ def test_hybrid_cqt():
                                 bins_per_octave=bins_per_octave,
                                 tuning=tuning, filter_scale=resolution,
                                 norm=norm,
-                                sparsity=sparsity, real=False))
+                                sparsity=sparsity))
 
         eq_(C1.shape, C2.shape)
 
