@@ -21,8 +21,6 @@ import numpy as np
 import scipy.io
 import six
 from nose.tools import eq_, raises, make_decorator
-import matplotlib
-matplotlib.use('Agg')
 
 import warnings
 warnings.resetwarnings()
@@ -39,6 +37,7 @@ def files(pattern):
 def srand(seed=628318530):
     np.random.seed(seed)
     pass
+
 
 def load(infile):
     return scipy.io.loadmat(infile, chars_as_strings=True)
@@ -326,6 +325,7 @@ def test_salience_basecase():
     )
     assert np.allclose(S_sal, S)
 
+
 def test_salience_basecase2():
     (y, sr) = librosa.load('data/test1_22050.wav')
     S = np.abs(librosa.stft(y))
@@ -336,6 +336,7 @@ def test_salience_basecase2():
         S, freqs, harms, weights, filter_peaks=False, kind='quadratic'
     )
     assert np.allclose(S_sal, S)
+
 
 def test_salience_defaults():
     S = np.array([
@@ -357,6 +358,7 @@ def test_salience_defaults():
         [0.0, 0.0, 0.0]
     ]) / 3.0
     assert np.allclose(expected, actual)
+
 
 def test_salience_weights():
     S = np.array([
@@ -380,6 +382,7 @@ def test_salience_weights():
     ]) / 3.0
     assert np.allclose(expected, actual)
 
+
 def test_salience_no_peak_filter():
     S = np.array([
         [0.1, 0.5, 0.0],
@@ -402,6 +405,7 @@ def test_salience_no_peak_filter():
     ]) / 3.0
     assert np.allclose(expected, actual)
 
+
 def test_salience_aggregate():
     S = np.array([
         [0.1, 0.5, 0.0],
@@ -422,8 +426,9 @@ def test_salience_aggregate():
         [0.2, 1.2, 1.2],
         [0.0, 0.0, 0.0],
         [0.0, 0.0, 0.0]
-    ]) 
+    ])
     assert np.allclose(expected, actual)
+
 
 def test_magphase():
 
@@ -581,7 +586,6 @@ def test_autocorrelate():
             assert not np.iscomplexobj(ac)
 
         assert np.allclose(ac, truth[my_slice])
-
 
     srand()
     # test with both real and complex signals
@@ -1167,6 +1171,7 @@ def test_harmonics_badshape_1d():
     obs = np.zeros((5, 10))
     librosa.interp_harmonics(obs, freqs, [1])
 
+
 @raises(librosa.ParameterError)
 def test_harmonics_badshape_2d():
     freqs = np.zeros((5, 5))
@@ -1197,4 +1202,3 @@ def test_harmonics_2d_varying():
             step = h[i]
             vals = y[::step]
             assert np.allclose(vals, yh[i, :len(vals)])
-
