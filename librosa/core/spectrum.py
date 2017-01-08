@@ -337,6 +337,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.hanning`
         - a user-specified window vector of length `n_fft`
+
         See `stft` for details.
 
         .. see also:: `filters.get_window`
