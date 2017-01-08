@@ -559,7 +559,7 @@ def rmse(y=None, S=None, frame_length=2048, hop_length=512,
     Use a STFT window of constant ones and no frame centering to get consistent
     results with the RMS energy computed from the audio samples `y`
 
-    >>> S = librosa.magphase(librosa.stft(y, window=np.ones, center=False)[0]
+    >>> S = librosa.magphase(librosa.stft(y, window=np.ones, center=False))[0]
     >>> librosa.feature.rmse(S=S)
 
     '''
