@@ -934,8 +934,12 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
         The type of interpolation to use when re-sampling the input.
         See `scipy.interpolate.interp1d` for possible values.
 
+        Note that the default is to use high-precision (cubic) interpolation.
+        This can be slow in practice; if speed is preferred over accuracy,
+        then consider using `kind='linear'`.
+
     beta : float
-        The Mellin parameter.  beta=0.5 provides the scale transform.
+        The Mellin parameter.  `beta=0.5` provides the scale transform.
 
     over_sample : float >= 1
         Over-sampling factor for exponential resampling.
