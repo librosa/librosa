@@ -512,7 +512,8 @@ def split(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
     -------
     intervals : np.ndarray, shape=(m, 2)
         `intervals[i] == (start_i, end_i)` are the start and end time
-        (in samples) if the `i`th non-silent interval.
+        (in samples) of non-silent interval `i`.
+
     '''
 
     non_silent = _signal_to_frame_nonsilent(y,
