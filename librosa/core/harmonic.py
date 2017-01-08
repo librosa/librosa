@@ -56,7 +56,7 @@ def salience(S, freqs, h_range, weights=None, aggregate=None,
 
     See Also
     --------
-    core.interp_harmonics
+    interp_harmonics
 
     Examples
     --------
@@ -64,9 +64,9 @@ def salience(S, freqs, h_range, weights=None, aggregate=None,
     ...                      duration=15, offset=30)
     >>> S = np.abs(librosa.stft(y))
     >>> freqs = librosa.core.fft_frequencies(sr)
-    >>> harms = [1./3, 1./2, 1, 2, 3, 4]
-    >>> weights = [-0.5, -1.0, 1.0, 0.5, 0.33, 0.25]
-    >>> S_sal = librosa.salience(S, freqs, harms, weights)
+    >>> harms = [1, 2, 3, 4]
+    >>> weights = [1.0, 0.5, 0.33, 0.25]
+    >>> S_sal = librosa.salience(S, freqs, harms, weights, fill_value=0)
     >>> print(S_sal.shape)
     (1025, 646)
     >>> import matplotlib.pyplot as plt
