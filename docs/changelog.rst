@@ -1,6 +1,81 @@
 Changes
 =======
 
+v0.5.0
+------
+
+Bug fixes
+
+  - `#369`_ preserve integer hop lengths in constant-Q transforms
+  - `#386`_ fixed a length check in ``librosa.util.frame``
+  - `#416`_ ``librosa.output.write_wav`` only normalizes floating point, and normalization is disabled by
+    default
+  - `#417`_ ``librosa.cqt`` output is now scaled continuously across octave boundaries
+  - `#450`_ enhanced numerical stability for ``librosa.util.softmask``
+  - `#467`_ correction to chroma documentation
+
+New features
+
+  - `#323`_ ``librosa.dtw`` dynamic time warping
+  - `#404`_ ``librosa.cache`` now supports priority levels, analogous to logging levels
+  - `#405`_ ``librosa.interp_harmonics`` for estimating harmonics of time-frequency representations
+  - `#410`_ ``librosa.beat.beat_track`` and ``librosa.onset.onset_detect`` can return output in frames,
+    samples, or time units
+  - `#413`_ full support for scipy-style window specifications
+  - `#427`_ ``librosa.salience`` for computing spectrogram salience using harmonic peaks
+  - `#428`_ ``librosa.effects.trim`` and ``librosa.effects.split`` for trimming and splitting waveforms
+  - `#464`_ ``librosa.amplitude_to_db``, ``db_to_amplitude``, ``power_to_db``, and ``db_to_power`` for
+    amplitude conversions.  This deprecates ``logamplitude``.
+  - `#471`_ ``librosa.util.normalize`` now supports ``threshold`` and ``fill_value`` arguments
+  - `#472`_ ``librosa.feature.melspectrogram`` now supports ``power`` argument
+  - `#473`_ ``librosa.onset.onset_backtrack`` for backtracking onset events to previous local minima of energy
+  - `#479`_ ``librosa.beat.tempo`` replaces ``librosa.beat.estimate_tempo``, supports time-varying estimation
+  
+
+Other changes
+
+  - `#352`_ removed ``seaborn`` integration
+  - `#368`_ rewrite of the ``librosa.display`` submodule.  All plots are now in natural coordinates.
+  - `#402`_ ``librosa.display`` submodule is not automatically imported
+  - `#403`_ ``librosa.decompose.hpss`` now returns soft masks
+  - `#407`_ ``librosa.feature.rmse`` can now compute directly in the time domain
+  - `#432`_ ``librosa.feature.rmse`` renames ``n_fft`` to ``frame_length``
+  - `#446`_ ``librosa.cqt`` now disables tuning estimation by default
+  - `#452`_ ``librosa.filters.__float_window`` now always uses integer length windows
+  - `#459`_ ``librosa.load`` now supports ``res_type`` argument for resampling
+  - `#482`_ ``librosa.filters.mel`` now warns if parameters will generate empty filter channels
+
+.. _#467: https://github.com/librosa/librosa/pull/467
+.. _#450: https://github.com/librosa/librosa/pull/450
+.. _#417: https://github.com/librosa/librosa/pull/417
+.. _#416: https://github.com/librosa/librosa/pull/416
+.. _#386: https://github.com/librosa/librosa/pull/386
+.. _#369: https://github.com/librosa/librosa/pull/369
+.. _#479: https://github.com/librosa/librosa/pull/479
+.. _#473: https://github.com/librosa/librosa/pull/473
+.. _#472: https://github.com/librosa/librosa/pull/472
+.. _#471: https://github.com/librosa/librosa/pull/471
+.. _#464: https://github.com/librosa/librosa/pull/464
+.. _#428: https://github.com/librosa/librosa/pull/428
+.. _#427: https://github.com/librosa/librosa/pull/427
+.. _#413: https://github.com/librosa/librosa/pull/413
+.. _#410: https://github.com/librosa/librosa/pull/410
+.. _#405: https://github.com/librosa/librosa/pull/405
+.. _#404: https://github.com/librosa/librosa/pull/404
+.. _#323: https://github.com/librosa/librosa/pull/323
+.. _#482: https://github.com/librosa/librosa/pull/482
+.. _#459: https://github.com/librosa/librosa/pull/459
+.. _#452: https://github.com/librosa/librosa/pull/452
+.. _#446: https://github.com/librosa/librosa/pull/446
+.. _#432: https://github.com/librosa/librosa/pull/432
+.. _#407: https://github.com/librosa/librosa/pull/407
+.. _#403: https://github.com/librosa/librosa/pull/403
+.. _#402: https://github.com/librosa/librosa/pull/402
+.. _#368: https://github.com/librosa/librosa/pull/368
+.. _#352: https://github.com/librosa/librosa/pull/352
+
+
+
 v0.4.3
 ------
 
