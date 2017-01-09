@@ -708,13 +708,13 @@ def __decorate_axis(axis, ax_type):
     elif ax_type == 'time':
         axis.set_major_formatter(TimeFormatter(lag=False))
         axis.set_major_locator(MaxNLocator(prune=None,
-                                           steps=[1, 5, 10, 15, 20, 30, 45, 60]))
+                                           steps=[1, 1.5, 5, 6, 10]))
         axis.set_label_text('Time')
 
     elif ax_type == 'lag':
         axis.set_major_formatter(TimeFormatter(lag=True))
         axis.set_major_locator(MaxNLocator(prune=None,
-                                           steps=[1, 5, 10, 15, 20, 30, 45, 60]))
+                                           steps=[1, 1.5, 5, 6, 10]))
         axis.set_label_text('Lag')
 
     elif ax_type == 'cqt_note':
