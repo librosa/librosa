@@ -952,8 +952,7 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
                                       fmin=fmin,
                                       n_bins=n_octaves * bins_per_octave,
                                       bins_per_octave=bins_per_octave,
-                                      tuning=tuning,
-                                      real=False))
+                                      tuning=tuning))
 
     # Map to chroma
     cq_to_chr = filters.cq_to_chroma(C.shape[0],
