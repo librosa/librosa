@@ -787,6 +787,10 @@ def window_bandwidth(window, n=1000):
         The equivalent noise bandwidth (in FFT bins) of the
         given window function
 
+    Notes
+    -----
+    This function caches at level 10.
+
     See Also
     --------
     get_window
