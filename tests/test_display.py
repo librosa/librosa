@@ -261,6 +261,8 @@ def test_time_scales_auto():
     # sr / (60 * 20) -> h
     librosa.display.specshow(S_abs, sr=sr // (60 * 20), x_axis='time')
 
+    plt.tight_layout()
+
 
 @image_comparison(baseline_images=['waveplot_mono'], extensions=['png'])
 def test_waveplot_mono():
