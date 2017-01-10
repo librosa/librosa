@@ -20,12 +20,19 @@ import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import Formatter, FixedFormatter, ScalarFormatter
-from matplotlib.ticker import LogLocator, FixedLocator, MaxNLocator, SymmetricalLogLocator
+from matplotlib.ticker import LogLocator, FixedLocator, MaxNLocator
+from matplotlib.ticker import SymmetricalLogLocator
 
-from . import cache
 from . import core
 from . import util
 from .util.exceptions import ParameterError
+
+__all__ = ['specshow',
+           'waveplot',
+           'cmap',
+           'TimeFormatter',
+           'NoteFormatter',
+           'ChromaFormatter']
 
 
 class TimeFormatter(Formatter):
