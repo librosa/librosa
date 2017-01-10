@@ -7,7 +7,7 @@ from scipy.spatial.distance import cdist
 from ..util.decorators import optional_jit
 from ..util.exceptions import ParameterError
 
-__all__ = ['dtw', 'fill_off_diagonal']
+__all__ = ['dtw']
 
 
 def fill_off_diagonal(x, radius, value=0):
