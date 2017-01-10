@@ -1275,8 +1275,14 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
 
 def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                    power=2.0, **kwargs):
-    """Compute a Mel-scaled spectrogram.
-    By default, it returns power-spectrogram (`power=2.0`).
+    """Compute a mel-scaled spectrogram.
+
+    If a spectrogram input `S` is provided, then it is mapped directly onto
+    the mel basis `mel_f` by `mel_f.dot(S)`.
+
+    If a time-series input `y, sr` is provided, then its magnitude spectrogram
+    `S` is first computed, and then mapped onto the mel scale by
+    `mel_f.dot(S**power)`.  By default, `power=2` operates on a power spectrum.
 
     Parameters
     ----------
