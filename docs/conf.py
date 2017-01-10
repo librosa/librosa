@@ -86,13 +86,15 @@ np.random.seed(123)
 np.set_printoptions(precision=3, linewidth=64, edgeitems=2, threshold=200)
 """
 plot_include_source = True
-plot_formats = [('png', 96)]
+plot_formats = [('png', 100)]
 plot_html_show_formats = False
 
-font_size = 13*72/96.0  # 13 px
+font_size = 12  # 13*72/96.0  # 13 px
 
 plot_rcparams = {
     'font.size': font_size,
+    'axes.xmargin': 0,
+    'axes.ymargin': 0,
     'axes.titlesize': font_size,
     'axes.labelsize': font_size,
     'xtick.labelsize': font_size,
