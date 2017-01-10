@@ -12,6 +12,7 @@ import six
 from . import time_frequency
 from .. import cache
 from .. import util
+from ..util.decorators import moved
 from ..util.deprecation import rename_kw, Deprecated
 from ..util.exceptions import ParameterError
 from ..filters import get_window
@@ -712,7 +713,7 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0, ref_power=Deprecated()):
     return log_spec
 
 
-logamplitude = power_to_db
+logamplitude = moved('librosa.logamplitude', '0.5', '0.6')(power_to_db)
 
 
 @cache(level=30)
