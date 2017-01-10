@@ -32,7 +32,7 @@ before_install:
 install:
     # install your own package into the environment
     # pip install -e rather than setup.py, so that coverage can find the source
-    - pip install -e .[display]
+    - pip install --pre -e .[display,tests]
 
 script:
     - python --version
