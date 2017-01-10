@@ -41,7 +41,6 @@ Magnitude scaling
 .. autosummary::
     :toctree: generated/
 
-    logamplitude
     amplitude_to_db
     db_to_amplitude
     power_to_db
@@ -95,6 +94,14 @@ Dynamic Time Warping
     :toctree: generated/
 
     dtw
+
+
+Deprecated
+----------
+.. autosummary::
+    :toctree: generated/
+
+    logamplitude
 """
 
 from .time_frequency import *  # pylint: disable=wildcard-import
