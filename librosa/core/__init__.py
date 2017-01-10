@@ -94,6 +94,7 @@ Dynamic Time Warping
     :toctree: generated/
 
     dtw
+    fill_off_diagonal
 
 
 Deprecated
