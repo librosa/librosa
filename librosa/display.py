@@ -32,6 +32,7 @@ __all__ = ['specshow',
            'cmap',
            'TimeFormatter',
            'NoteFormatter',
+           'LogHzFormatter',
            'ChromaFormatter']
 
 
@@ -130,6 +131,7 @@ class NoteFormatter(Formatter):
 
     See also
     --------
+    LogHzFormatter
     matplotlib.ticker.Formatter
 
     Examples
@@ -164,6 +166,52 @@ class NoteFormatter(Formatter):
         cents = vmax <= 2 * max(1, vmin)
 
         return core.hz_to_note(int(x), octave=self.octave, cents=cents)[0]
+
+
+class LogHzFormatter(Formatter):
+    '''Ticker formatter for logarithmic frequency
+
+    Parameters
+    ----------
+    major : bool
+        If `True`, ticks are always labeled.
+
+        If `False`, ticks are only labeled if the span is less than 2 octaves
+
+    See also
+    --------
+    NoteFormatter
+    matplotlib.ticker.Formatter
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> values = librosa.midi_to_hz(np.arange(48, 72))
+    >>> plt.figure()
+    >>> ax1 = plt.subplot(2,1,1)
+    >>> ax1.bar(np.arange(len(values)), values)
+    >>> ax1.set_ylabel('Hz')
+    >>> ax2 = plt.subplot(2,1,2)
+    >>> ax2.bar(np.arange(len(values)), values)
+    >>> ax2.yaxis.set_major_formatter(librosa.display.LogHzFormatter())
+    >>> ax2.set_ylabel('Note')
+    '''
+    def __init__(self, major=True):
+
+        self.major = major
+
+    def __call__(self, x, pos=None):
+
+        if x < core.note_to_hz('C0'):
+            return ''
+
+        # Only use cent precision if our vspan is less than an octave
+        vmin, vmax = self.axis.get_view_interval()
+
+        if not self.major and vmax > 4 * max(1, vmin):
+            return ''
+
+        return '{:g}'.format(x)
 
 
 class ChromaFormatter(Formatter):
@@ -733,8 +781,9 @@ def __decorate_axis(axis, ax_type):
         axis.set_label_text('Note')
 
     elif ax_type in ['cqt_hz']:
-        axis.set_major_formatter(ScalarFormatter())
+        axis.set_major_formatter(LogHzFormatter())
         axis.set_major_locator(LogLocator(base=2.0))
+        axis.set_minor_formatter(LogHzFormatter(major=False))
         axis.set_minor_locator(LogLocator(base=2.0,
                                           subs=2.0**(np.arange(1, 12)/12.0)))
         axis.set_label_text('Hz')
