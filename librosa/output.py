@@ -18,7 +18,6 @@ Audio output
     :toctree: generated/
 
     write_wav
-
 """
 
 import csv
@@ -27,7 +26,6 @@ import numpy as np
 import scipy
 import scipy.io.wavfile
 
-from . import core
 from . import util
 from .util.exceptions import ParameterError
 
@@ -52,8 +50,10 @@ def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
 
     intervals : np.ndarray [shape=(n, 2)]
         array of interval start and end-times.
-        - `intervals[i, 0]` marks the start time of interval `i`
-        - `intervals[i, 1]` marks the endtime of interval `i`
+
+        `intervals[i, 0]` marks the start time of interval `i`
+
+        `intervals[i, 1]` marks the end time of interval `i`
 
     annotations : None or list-like [shape=(n,)]
         optional list of annotation strings. `annotations[i]` applies
@@ -90,6 +90,7 @@ def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
     >>> intervals = np.hstack([boundary_times[:-1, np.newaxis],
     ...                        boundary_times[1:, np.newaxis]])
 
+
     Make some fake annotations
 
     >>> labels = ['Seg #{:03d}'.format(i) for i in range(len(intervals))]
@@ -98,7 +99,6 @@ def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
 
     >>> librosa.output.annotation('segments.csv', intervals,
     ...                           annotations=labels)
-
     '''
 
     util.valid_intervals(intervals)
@@ -163,10 +163,11 @@ def times_csv(path, times, annotations=None, delimiter=',', fmt='%0.3f'):
 
     Examples
     --------
+    Write beat-tracker time to CSV
+
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> tempo, beats = librosa.beat.beat_track(y, sr=sr)
-    >>> times = librosa.frames_to_time(beats, sr=sr)
-    >>> librosa.output.times_csv('beat_times.csv', times)
+    >>> tempo, beats = librosa.beat.beat_track(y, sr=sr, units='time')
+    >>> librosa.output.times_csv('beat_times.csv', beats)
     """
 
     if annotations is not None and len(annotations) != len(times):

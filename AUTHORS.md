@@ -15,6 +15,13 @@ Contributors
 * Rachel Bittner <https://github.com/rabitt>
 * Stefan Balke <https://github.com/stefan-balke>
 * CJ Carr <https://github.com/Cortexelus>
+* Fabian Robert-Stoeter <https://github.com/faroit>
+* Keunwoo Choi <https://github.com/keunwoochoi>
+* Eric Humphrey <https://github.com/ejhumphrey>
+* Carl Thome <https://github.com/carlthome>
+* Seth Kranzler <https://github.com/polyrhythmatic>
+* Waldir Pimenta <https://github.com/waldyrious>
+
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
 

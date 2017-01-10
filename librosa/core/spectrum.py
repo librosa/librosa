@@ -12,6 +12,7 @@ import six
 from . import time_frequency
 from .. import cache
 from .. import util
+from ..util.decorators import moved
 from ..util.deprecation import rename_kw, Deprecated
 from ..util.exceptions import ParameterError
 from ..filters import get_window
@@ -337,6 +338,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.hanning`
         - a user-specified window vector of length `n_fft`
+
         See `stft` for details.
 
         .. see also:: `filters.get_window`
@@ -711,7 +713,7 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0, ref_power=Deprecated()):
     return log_spec
 
 
-logamplitude = power_to_db
+logamplitude = moved('librosa.logamplitude', '0.5', '0.6')(power_to_db)
 
 
 @cache(level=30)
@@ -933,8 +935,12 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
         The type of interpolation to use when re-sampling the input.
         See `scipy.interpolate.interp1d` for possible values.
 
+        Note that the default is to use high-precision (cubic) interpolation.
+        This can be slow in practice; if speed is preferred over accuracy,
+        then consider using `kind='linear'`.
+
     beta : float
-        The Mellin parameter.  beta=0.5 provides the scale transform.
+        The Mellin parameter.  `beta=0.5` provides the scale transform.
 
     over_sample : float >= 1
         Over-sampling factor for exponential resampling.

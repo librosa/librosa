@@ -44,7 +44,7 @@ def frames_to_samples(frames, hop_length=512, n_fft=None):
     Returns
     -------
     times : np.ndarray [shape=(n,)]
-        time (in seconds) of each given frame number:
+        time (in samples) of each given frame number:
         `times[i] = frames[i] * hop_length`
 
     See Also

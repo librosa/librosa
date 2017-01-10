@@ -559,7 +559,7 @@ def rmse(y=None, S=None, frame_length=2048, hop_length=512,
     Use a STFT window of constant ones and no frame centering to get consistent
     results with the RMS energy computed from the audio samples `y`
 
-    >>> S = librosa.magphase(librosa.stft(y, window=np.ones, center=False)[0]
+    >>> S = librosa.magphase(librosa.stft(y, window=np.ones, center=False))[0]
     >>> librosa.feature.rmse(S=S)
 
     '''
@@ -952,8 +952,7 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
                                       fmin=fmin,
                                       n_bins=n_octaves * bins_per_octave,
                                       bins_per_octave=bins_per_octave,
-                                      tuning=tuning,
-                                      real=False))
+                                      tuning=tuning))
 
     # Map to chroma
     cq_to_chr = filters.cq_to_chroma(C.shape[0],
@@ -1276,8 +1275,14 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
 
 def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                    power=2.0, **kwargs):
-    """Compute a Mel-scaled spectrogram.
-    By default, it returns power-spectrogram (`power=2.0`).
+    """Compute a mel-scaled spectrogram.
+
+    If a spectrogram input `S` is provided, then it is mapped directly onto
+    the mel basis `mel_f` by `mel_f.dot(S)`.
+
+    If a time-series input `y, sr` is provided, then its magnitude spectrogram
+    `S` is first computed, and then mapped onto the mel scale by
+    `mel_f.dot(S**power)`.  By default, `power=2` operates on a power spectrum.
 
     Parameters
     ----------
