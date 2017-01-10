@@ -1499,20 +1499,17 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     >>> librosa.display.specshow(librosa.amplitude_to_db(cqt,
     ...                                                  ref=np.max),
     ...                          x_axis='time')
-    >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('CQT power, shape={}'.format(cqt.shape))
     >>> plt.subplot(3, 1, 2)
     >>> librosa.display.specshow(librosa.amplitude_to_db(cqt_med,
     ...                                                  ref=np.max),
     ...                          x_coords=beat_t, x_axis='time')
-    >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Beat synchronous CQT power, '
     ...           'shape={}'.format(cqt_med.shape))
     >>> plt.subplot(3, 1, 3)
     >>> librosa.display.specshow(librosa.amplitude_to_db(cqt_med_sub,
     ...                                                  ref=np.max),
     ...                          x_coords=subbeat_t, x_axis='time')
-    >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Sub-beat synchronous CQT power, '
     ...           'shape={}'.format(cqt_med_sub.shape))
     >>> plt.tight_layout()

@@ -699,11 +699,11 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
     >>> plt.subplot(3, 1, 1)
     >>> librosa.display.specshow(librosa.amplitude_to_db(CQT,
     ...                                                  ref=np.max),
-    ...                          y_axis='cqt_note', x_axis='time')
+    ...                          y_axis='cqt_note')
     >>> plt.title('CQT Power')
     >>> plt.colorbar()
     >>> plt.subplot(3, 1, 2)
-    >>> librosa.display.specshow(chromagram, y_axis='chroma', x_axis='time')
+    >>> librosa.display.specshow(chromagram, y_axis='chroma')
     >>> plt.title('Chroma (wrapped CQT)')
     >>> plt.colorbar()
     >>> plt.subplot(3, 1, 3)
