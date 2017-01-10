@@ -12,6 +12,7 @@ Display
 
     TimeFormatter
     NoteFormatter
+    LogHzFormatter
     ChromaFormatter
 """
 
@@ -154,7 +155,7 @@ class NoteFormatter(Formatter):
 
     def __call__(self, x, pos=None):
 
-        if x < core.note_to_hz('C0'):
+        if x <= 0:
             return ''
 
         # Only use cent precision if our vspan is less than an octave
@@ -202,10 +203,9 @@ class LogHzFormatter(Formatter):
 
     def __call__(self, x, pos=None):
 
-        if x < core.note_to_hz('C0'):
+        if x <= 0:
             return ''
 
-        # Only use cent precision if our vspan is less than an octave
         vmin, vmax = self.axis.get_view_interval()
 
         if not self.major and vmax > 4 * max(1, vmin):
