@@ -212,7 +212,7 @@ def estimate_tempo(onset_envelope, sr=22050, hop_length=512, start_bpm=120,
                    std_bpm=1.0, ac_size=4.0, duration=90.0, offset=0.0):
     """Estimate the tempo (beats per minute) from an onset envelope
 
-    .. warning:: Deprected in librosa 0.5
+    .. warning:: Deprecated in librosa 0.5
                  Functionality is superseded by
                  `librosa.beat.tempo`.
 
