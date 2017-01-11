@@ -675,7 +675,7 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0, ref_power=Deprecated()):
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
     >>> plt.subplot(2, 1, 1)
-    >>> librosa.display.specshow(S**2, sr=sr, y_axis='log', x_axis='time')
+    >>> librosa.display.specshow(S**2, sr=sr, y_axis='log')
     >>> plt.colorbar()
     >>> plt.title('Power spectrogram')
     >>> plt.subplot(2, 1, 2)
@@ -879,8 +879,7 @@ def perceptual_weighting(S, frequencies, **kwargs):
     >>> librosa.display.specshow(librosa.amplitude_to_db(CQT,
     ...                                                  ref=np.max),
     ...                          fmin=librosa.note_to_hz('A1'),
-    ...                          y_axis='cqt_hz',
-    ...                          x_axis='time')
+    ...                          y_axis='cqt_hz')
     >>> plt.title('Log CQT power')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.subplot(2, 1, 2)
