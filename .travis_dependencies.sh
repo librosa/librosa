@@ -39,8 +39,6 @@ if [ ! -d "$src" ]; then
             conda install numba
         fi
 
-        conda install -c conda-forge matplotlib 
-
         source deactivate
     popd
 else
