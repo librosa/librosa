@@ -282,7 +282,7 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
     >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr)
     >>> plt.subplot(2, 1, 2, sharex=ax1)
     >>> plt.plot(times, 2 + onset_env / onset_env.max(), alpha=0.8,
-    ...          label='Mean aggregation (mel)')
+    ...          label='Mean (mel)')
 
 
     Median aggregation, and custom mel options
@@ -291,7 +291,7 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
     ...                                          aggregate=np.median,
     ...                                          fmax=8000, n_mels=256)
     >>> plt.plot(times, 1 + onset_env / onset_env.max(), alpha=0.8,
-    ...          label='Median aggregation (custom mel)')
+    ...          label='Median (custom mel)')
 
 
     Constant-Q spectrogram instead of Mel
@@ -299,7 +299,7 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
     >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr,
     ...                                          feature=librosa.cqt)
     >>> plt.plot(times, onset_env / onset_env.max(), alpha=0.8,
-    ...          label='Mean aggregation (CQT)')
+    ...          label='Mean (CQT)')
     >>> plt.legend(frameon=True, framealpha=0.75)
     >>> plt.ylabel('Normalized strength')
     >>> plt.yticks([])
@@ -368,15 +368,14 @@ def onset_backtrack(events, energy):
     >>> # Plot the results
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
+    >>> plt.subplot(2,1,1)
     >>> plt.plot(oenv, label='Onset strength')
-    >>> plt.plot(rmse[0] / rmse.max(), label='RMSE (normalized)', alpha=0.5)
-    >>> plt.vlines(onset_raw, 0, oenv.max(), linestyle='--', color='k',
-    ...            label='Raw onsets')
-    >>> plt.vlines(onset_bt, 0, oenv.max(), color='r',
-    ...            label='Backtracked onsets (onset strength)')
-    >>> plt.vlines(onset_bt_rmse, 0, oenv.max(), color='m', linestyle='-.',
-    ...            label='Backtracked onsets (RMSE)')
-    >>> plt.axis('tight')
+    >>> plt.vlines(onset_raw, 0, oenv.max(), label='Raw onsets')
+    >>> plt.vlines(onset_bt, 0, oenv.max(), label='Backtracked', color='r')
+    >>> plt.legend(frameon=True, framealpha=0.75)
+    >>> plt.subplot(2,1,2)
+    >>> plt.plot(rmse[0], label='RMSE')
+    >>> plt.vlines(onset_bt_rmse, 0, rmse.max(), label='Backtracked (RMSE)', color='r')
     >>> plt.legend(frameon=True, framealpha=0.75)
     '''
 
@@ -487,6 +486,7 @@ def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
     ...                                                     channels=[0, 32, 64, 96, 128])
     >>> plt.subplot(2, 1, 2)
     >>> librosa.display.specshow(onset_subbands, x_axis='time')
+    >>> plt.ylabel('Sub-bands')
     >>> plt.title('Sub-band onset strength')
 
     """
