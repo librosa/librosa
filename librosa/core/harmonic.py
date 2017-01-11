@@ -73,7 +73,9 @@ def salience(S, freqs, h_range, weights=None, aggregate=None,
     >>> plt.figure()
     >>> librosa.display.specshow(librosa.amplitude_to_db(S_sal,
     ...                                                  ref=np.max),
-    ...                          sr=sr, y_axis='log')
+    ...                          sr=sr, y_axis='log', x_axis='time')
+    >>> plt.colorbar()
+    >>> plt.title('Salience spectrogram')
     >>> plt.tight_layout()
     """
     if aggregate is None:

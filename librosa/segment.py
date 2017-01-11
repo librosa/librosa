@@ -486,20 +486,21 @@ def timelag_filter(function, pad=True, index=0):
     >>> rec_aff_fil = diagonal_median(rec_aff, size=(1, 3), mode='mirror')
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
+    >>> plt.figure(figsize=(8,8))
     >>> plt.subplot(2, 2, 1)
-    >>> librosa.display.specshow(rec, x_axis='time', y_axis='time')
+    >>> librosa.display.specshow(rec, y_axis='time')
     >>> plt.title('Raw recurrence matrix')
     >>> plt.subplot(2, 2, 2)
-    >>> librosa.display.specshow(rec_filtered, x_axis='time', y_axis='time')
+    >>> librosa.display.specshow(rec_filtered)
     >>> plt.title('Filtered recurrence matrix')
     >>> plt.subplot(2, 2, 3)
     >>> librosa.display.specshow(rec_aff, x_axis='time', y_axis='time',
     ...                          cmap='magma_r')
     >>> plt.title('Raw affinity matrix')
     >>> plt.subplot(2, 2, 4)
-    >>> librosa.display.specshow(rec_aff_fil, x_axis='time', y_axis='time',
+    >>> librosa.display.specshow(rec_aff_fil, x_axis='time',
     ...                          cmap='magma_r')
+    >>> plt.title('Filtered affinity matrix')
     >>> plt.tight_layout()
     '''
 
@@ -568,7 +569,7 @@ def subsegment(data, frames, n_segments=4, axis=-1):
     --------
     Load audio, detect beat frames, and subdivide in twos by CQT
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=15)
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=8)
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, hop_length=512)
     >>> beat_times = librosa.frames_to_time(beats, sr=sr, hop_length=512)
     >>> cqt = np.abs(librosa.cqt(y, sr=sr, hop_length=512))
@@ -666,7 +667,7 @@ def agglomerative(data, k, clusterer=None, axis=-1):
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
     >>> librosa.display.specshow(chroma, y_axis='chroma', x_axis='time')
-    >>> plt.vlines(bound_times, 0, chroma.shape[0], color='lime',
+    >>> plt.vlines(bound_times, 0, chroma.shape[0], color='linen', linestyle='--',
     ...            linewidth=2, alpha=0.9, label='Segment boundaries')
     >>> plt.axis('tight')
     >>> plt.legend(frameon=True, shadow=True)
