@@ -42,9 +42,9 @@ setup(
     ],
     extras_require={
         'docs': ['numpydoc', 'sphinx!=1.3.1', 'sphinx_rtd_theme',
-                 'matplotlib >= 2.0.0rc2'],
+                 'matplotlib >= 2.0.0'],
         'numba': ['numba >= 0.25'],
-        'tests': ['matplotlib >= 2.0.0rc2'],
+        'tests': ['matplotlib >= 2.0.0'],
         'display': ['matplotlib >= 1.5'],
     }
 )
