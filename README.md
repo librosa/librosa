@@ -32,7 +32,7 @@ What does librosa do?  Here are some quick demonstrations:
 Installation
 ------------
 
-The latest stable release is available on PyPI, and you can install it by saying 
+The latest stable release is available on PyPI, and you can install it by saying
 ```
 pip install librosa
 ```
@@ -41,10 +41,6 @@ Anaconda users can install using ``conda-forge``:
 ```
 conda install -c conda-forge librosa
 ```
-If you use Anaconda on Windows, we recommend installing the `gstreamer` and/or
-`ffmpeg` libraries separately, as they are not (yet) available as conda
-packages.
-
 
 To build librosa from source, say `python setup.py build`.
 Then, to install librosa, say `python setup.py install`.
@@ -72,18 +68,20 @@ librosa (0.x.x, /path/to/librosa)
 
 #### ffmpeg
 
-To fuel `audioread` with more audio-decoding power, you can install *ffmpeg* which
-ships with many audio decoders.  (Note: if you are using the conda package for
-`audioread`, this will be done automatically.)
+To fuel `audioread` with more audio-decoding power, you can either install *ffmpeg*
+or *GStreamer*. (If you are using the conda package for
+`audioread`, *ffmpeg* will be installed automatically.)
 
-You can use *homebrew* to install the program by calling
-`brew install ffmpeg` or get a binary version from their website https://www.ffmpeg.org.
+If you are not using Anaconda, you can use *homebrew* to install the program by calling
+`brew install ffmpeg` or `brew install gstreamer` or get a binary version from their websites.
+
+Note that `audioread` needs at least one of the programs to work properly.
 
 Discussion
 ----------
 
-Please direct non-development questions and discussion topics to our web forum at 
-https://groups.google.com/forum/#!forum/librosa 
+Please direct non-development questions and discussion topics to our web forum at
+https://groups.google.com/forum/#!forum/librosa
 
 
 Citing
