@@ -617,47 +617,55 @@ def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     Returns
     -------
     coefficients : np.ndarray [shape=(order+1, t)]
-        polynomial coefficients for each frame
+        polynomial coefficients for each frame.
+
+        `coeffecients[0]` corresponds to the highest degree (`order`),
+
+        `coefficients[1]` corresponds to the next highest degree (`order-1`),
+
+        down to the constant term `coefficients[order]`.
 
     Examples
     --------
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> S = np.abs(librosa.stft(y))
 
-    Line features
+    Fit a degree-0 polynomial (constant) to each frame
 
-    >>> line = librosa.feature.poly_features(S=S, sr=sr)
-    >>> line
-    array([[ -2.406e-08,  -5.051e-06, ...,  -1.103e-08,  -5.651e-09],
-           [  3.445e-04,   3.834e-02, ...,   2.661e-04,   2.239e-04]])
+    >>> p0 = librosa.feature.poly_features(S=S, order=0)
 
-    Quadratic features
+    Fit a linear polynomial to each frame
 
-    >>> quad = librosa.feature.poly_features(S=S, order=2)
-    >>> quad
-    array([[  6.276e-12,   2.010e-09, ...,   1.493e-12,   1.000e-13],
-           [ -9.325e-08,  -2.721e-05, ...,  -2.749e-08,  -6.754e-09],
-           [  4.715e-04,   7.902e-02, ...,   2.963e-04,   2.259e-04]])
+    >>> p1 = librosa.feature.poly_features(S=S, order=1)
+
+    Fit a quadratic to each frame
+
+    >>> p2 = librosa.feature.poly_features(S=S, order=2)
 
     Plot the results for comparison
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> plt.subplot(3, 1, 1)
-    >>> librosa.display.specshow(line)
-    >>> plt.colorbar()
-    >>> plt.title('Line coefficients')
-    >>> plt.subplot(3, 1, 2)
-    >>> librosa.display.specshow(quad)
-    >>> plt.colorbar()
-    >>> plt.title('Quadratic coefficients')
-    >>> plt.subplot(3, 1, 3)
+    >>> plt.figure(figsize=(8, 8))
+    >>> ax = plt.subplot(4,1,1)
+    >>> plt.plot(p2[2], label='order=2', alpha=0.8)
+    >>> plt.plot(p1[1], label='order=1', alpha=0.8)
+    >>> plt.plot(p0[0], label='order=0', alpha=0.8)
+    >>> plt.xticks([])
+    >>> plt.ylabel('Constant')
+    >>> plt.legend()
+    >>> plt.subplot(4,1,2, sharex=ax)
+    >>> plt.plot(p2[1], label='order=2', alpha=0.8)
+    >>> plt.plot(p1[0], label='order=1', alpha=0.8)
+    >>> plt.xticks([])
+    >>> plt.ylabel('Linear')
+    >>> plt.subplot(4,1,3, sharex=ax)
+    >>> plt.plot(p2[0], label='order=2', alpha=0.8)
+    >>> plt.xticks([])
+    >>> plt.ylabel('Quadratic')
+    >>> plt.subplot(4,1,4, sharex=ax)
     >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
-    ...                          y_axis='log', x_axis='time')
-    >>> plt.title('log Power spectrogram')
-    >>> plt.colorbar(format='%+2.0f dB')
+    ...                          y_axis='log')
     >>> plt.tight_layout()
-
     '''
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
