@@ -17,6 +17,7 @@ from .. import cache
 from .. import filters
 from .. import util
 from ..util.exceptions import ParameterError
+from ..util.decorators import optional_jit
 
 __all__ = ['cqt', 'hybrid_cqt', 'pseudo_cqt', 'icqt']
 
@@ -660,7 +661,6 @@ def icqt(C, sr=22050, hop_length=512, fmin=None,
         # Make a dummy activation
         oct_hop = hop_length // 2**octave
         n = n_fft + (C_.shape[1] - 1) * oct_hop
-        activation = np.zeros(n, dtype=C_.dtype)
         
         for i in range(fb.shape[0]-1, -1 , -1):
             wss = filters.window_sumsquare(window,
@@ -669,14 +669,13 @@ def icqt(C, sr=22050, hop_length=512, fmin=None,
                                            win_length=lengths[i],
                                            n_fft=n_fft)
             
-            activation[n_trim:n_trim + C_.shape[1] * oct_hop:oct_hop] = C_[i]
-            
-            # We only need the real part of this convolution
-            y_oct_i = scipy.signal.convolve(activation, fb[i], mode='same').real
-        
+            # Construct the response for this filter
+            y_oct_i = np.zeros(n, dtype=C_.dtype)
+            __activation_fill(y_oct_i, fb[i], C_[i], oct_hop)
+            # Retain only the real part
             # Only do squared window normalization for sufficiently large window
             # coefficients
-            y_oct_i /= np.maximum(amin, wss) 
+            y_oct_i = y_oct_i.real / np.maximum(amin, wss)
 
             if y_oct is None:
                 y_oct = y_oct_i
@@ -812,3 +811,17 @@ def __num_two_factors(x):
         x //= 2
 
     return num_twos
+
+
+@optional_jit
+def __activation_fill(x, basis, activation, hop_length):
+    '''Helper function for icqt time-domain reconstruction'''
+    
+    n = len(x)
+    n_fft = len(basis)
+    n_frames = len(activation)
+    
+    
+    for i in range(n_frames):
+        sample = i * hop_length
+        x[sample:min(n, sample + n_fft)] += activation[i] * basis[:max(0, min(n_fft, n - sample))]
