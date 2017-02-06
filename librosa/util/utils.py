@@ -1693,22 +1693,27 @@ def tiny(x):
     --------
 
     For a standard double-precision floating point number:
+
     >>> librosa.util.tiny(1.0)
     2.2250738585072014e-308
 
     Or explicitly as double-precision
+
     >>> librosa.util.tiny(np.asarray(1e-5, dtype=np.float64))
     2.2250738585072014e-308
 
     Or complex numbers
+
     >>> librosa.util.tiny(1j)
     2.2250738585072014e-308
 
     Single-precision floating point:
+
     >>> librosa.util.tiny(np.asarray(1e-5, dtype=np.float32))
     1.1754944e-38
 
     Integer
+
     >>> librosa.util.tiny(5)
     1.1754944e-38
     '''
