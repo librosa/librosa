@@ -6,7 +6,6 @@ from __future__ import division
 from warnings import warn
 
 import numpy as np
-import scipy.signal
 import scipy.fftpack as fft
 
 from . import audio
@@ -531,6 +530,14 @@ def icqt(C, sr=22050, hop_length=512, fmin=None,
          amin=np.sqrt(2)):
     '''Compute the inverse constant-Q transform.
 
+    Given a constant-Q transform representation `C` of an audio signal `y`,
+    this function produces an approximation `y_hat`.
+
+    .. warning:: This implementation is unstable, and subject to change in
+                 future versions of librosa.  We recommend that its use be
+                 limited to sonification and diagnostic applications.
+
+
     Parameters
     ----------
     C : np.ndarray, [shape=(n_bins, n_frames)]
@@ -571,7 +578,7 @@ def icqt(C, sr=22050, hop_length=512, fmin=None,
         in FFT.
 
     amin : float or None
-        When applying squared window normalization, sample positions with 
+        When applying squared window normalization, sample positions with
         coefficients below `amin` will left as is.
 
         If `None`, then `amin` is inferred as the smallest valid floating
@@ -589,14 +596,28 @@ def icqt(C, sr=22050, hop_length=512, fmin=None,
     Notes
     -----
     This function caches at level 40.
+
+    Examples
+    --------
+    Using default parameters
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=15)
+    >>> C = librosa.cqt(y=y, sr=sr)
+    >>> y_hat = librosa.icqt(C=C, sr=sr)
+
+    Or with a different hop length and frequency resolution:
+    >>> hop_length = 256
+    >>> bins_per_octave = 12 * 3
+    >>> C = librosa.cqt(y=y, sr=sr, hop_length=256, n_bins=7*bins_per_octave,
+    ...                 bins_per_octave=bins_per_octave)
+    >>> y_hat = librosa.icqt(C=C, sr=sr, hop_length=hop_length,
+    ...                 bins_per_octave=bins_per_octave)
     '''
     n_bins, n_frames = C.shape
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
 
-    
     if amin is None:
         amin = util.tiny(C)
-        
+
     if fmin is None:
         fmin = note_to_hz('C1')
 
@@ -608,21 +629,22 @@ def icqt(C, sr=22050, hop_length=512, fmin=None,
     fmin_t = np.min(freqs)
 
     # Make the filter bank
-    f, lengths = filters.constant_q(sr=sr,
-                                    fmin=fmin_t,
-                                    n_bins=bins_per_octave,
-                                    bins_per_octave=bins_per_octave,
-                                    filter_scale=filter_scale,
-                                    tuning=tuning,
-                                    norm=norm,
-                                    window=window,
-                                    pad_fft=True)
-    n_fft = f.shape[1]
-    
+    basis, lengths = filters.constant_q(sr=sr,
+                                        fmin=fmin_t,
+                                        n_bins=bins_per_octave,
+                                        bins_per_octave=bins_per_octave,
+                                        filter_scale=filter_scale,
+                                        tuning=tuning,
+                                        norm=norm,
+                                        window=window,
+                                        pad_fft=True)
+    n_fft = basis.shape[1]
+
     # The extra factor of lengths**0.5 corrects for within-octave tapering
     # The factor of sqrt(2) compensates for downsampling effects
-    f = f.conj() * lengths[:, np.newaxis]**0.5 / np.sqrt(2)
-    
+    basis = basis.conj() * lengths[:, np.newaxis]**0.5 / np.sqrt(2)
+    n_trim = basis.shape[1] // 2
+
     if scale:
         Cnorm = np.ones(n_bins)[:, np.newaxis]
     else:
@@ -634,8 +656,6 @@ def icqt(C, sr=22050, hop_length=512, fmin=None,
                                            tuning=tuning,
                                            window=window)[:, np.newaxis]**0.5
 
-    n_trim = f.shape[1] // 2
-
     y = None
 
     # Revised algorithm:
@@ -646,32 +666,32 @@ def icqt(C, sr=22050, hop_length=512, fmin=None,
     #         convolve with activation (valid-mode)
     #         divide by window sumsquare
     #         trim and add to total
-    
+
     for octave in range(n_octaves - 1, -1, -1):
         # Compute the slice index for the current octave
         slice_ = slice(-(octave+1) * bins_per_octave - 1,
                        -(octave) * bins_per_octave - 1)
 
         # Project onto the basis
-        C_ = C[slice_] / Cnorm[slice_]
-        fb = f[-C_.shape[0]:]
-        
+        C_oct = C[slice_] / Cnorm[slice_]
+        basis_oct = basis[-C_oct.shape[0]:]
+
         y_oct = None
-        
+
         # Make a dummy activation
         oct_hop = hop_length // 2**octave
-        n = n_fft + (C_.shape[1] - 1) * oct_hop
-        
-        for i in range(fb.shape[0]-1, -1 , -1):
+        n = n_fft + (C_oct.shape[1] - 1) * oct_hop
+
+        for i in range(basis_oct.shape[0]-1, -1, -1):
             wss = filters.window_sumsquare(window,
-                                           C_.shape[1],
+                                           n_frames,
                                            hop_length=oct_hop,
                                            win_length=lengths[i],
                                            n_fft=n_fft)
-            
+
             # Construct the response for this filter
-            y_oct_i = np.zeros(n, dtype=C_.dtype)
-            __activation_fill(y_oct_i, fb[i], C_[i], oct_hop)
+            y_oct_i = np.zeros(n, dtype=C_oct.dtype)
+            __activation_fill(y_oct_i, basis_oct[i], C_oct[i], oct_hop)
             # Retain only the real part
             # Only do squared window normalization for sufficiently large window
             # coefficients
@@ -684,7 +704,7 @@ def icqt(C, sr=22050, hop_length=512, fmin=None,
 
         # Remove the effects of zero-padding
         y_oct = y_oct[n_trim:-n_trim]
-        
+
         if y is None:
             y = y_oct
         else:
@@ -816,12 +836,11 @@ def __num_two_factors(x):
 @optional_jit
 def __activation_fill(x, basis, activation, hop_length):
     '''Helper function for icqt time-domain reconstruction'''
-    
+
     n = len(x)
     n_fft = len(basis)
     n_frames = len(activation)
-    
-    
+
     for i in range(n_frames):
         sample = i * hop_length
         x[sample:min(n, sample + n_fft)] += activation[i] * basis[:max(0, min(n_fft, n - sample))]
