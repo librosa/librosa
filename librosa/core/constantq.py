@@ -833,7 +833,7 @@ def __num_two_factors(x):
     return num_twos
 
 
-@optional_jit
+@optional_jit(nopython=True)
 def __activation_fill(x, basis, activation, hop_length):
     '''Helper function for icqt time-domain reconstruction'''
 

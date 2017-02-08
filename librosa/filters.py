@@ -1095,7 +1095,7 @@ def semitone_filterbank(center_freqs=None, tuning=0.0, sample_rates=None, **kwar
 
     return filterbank, fb_sample_rates
 
-@optional_jit
+@optional_jit(nopython=True)
 def __window_ss_fill(x, win_sq, n_frames, hop_length):
     '''Helper function for window sum-square calculation.'''
 

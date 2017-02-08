@@ -61,7 +61,8 @@ def make_signal(sr, duration, fmin='C1', fmax='C8'):
     else:
         fmax = librosa.note_to_hz(fmax) / sr
 
-    return np.sin(np.cumsum(2 * np.pi * np.logspace(np.log10(fmin), np.log10(fmax),
+    return np.sin(np.cumsum(2 * np.pi * np.logspace(np.log10(fmin),
+                                                    np.log10(fmax),
                                                     num=int(duration * sr))))
 
 
