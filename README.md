@@ -64,18 +64,27 @@ By calling `pip list` you should see `librosa` now as an installed pacakge:
 librosa (0.x.x, /path/to/librosa)
 ```
 
-### Hints for OS X and Windows
+### Hints for the Installation
 
-#### ffmpeg
+#### audioread
 
-To fuel `audioread` with more audio-decoding power, you can either install *ffmpeg*
-or *GStreamer*. (If you are using the conda package for
-`audioread`, *ffmpeg* will be installed automatically.)
+`librosa` uses `audiored` to load audio files.
 
-If you are not using Anaconda, you can use *homebrew* to install the program by calling
-`brew install ffmpeg` or `brew install gstreamer` or get a binary version from their websites.
+To fuel `audioread` with more audio-decoding power (e. g. for reading MP3 files),
+you can either install *ffmpeg* or *GStreamer*.
 
-Note that `audioread` needs at least one of the programs to work properly.
+If you are using Anaconda, install *ffmpeg* by calling
+```
+conda install -c conda-forge ffmpeg
+```
+
+If you are not using Anaconda, here are some common commands for different operating systems:
+
+* Linux: `apt-get install ffmpeg`
+* Mac: `brew install ffmpeg`
+* Windows: download binary from the website
+
+*Note that `audioread` needs at least one of the programs to work properly.*
 
 Discussion
 ----------
