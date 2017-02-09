@@ -923,3 +923,21 @@ def test_tiny():
                      (np.ones(3, dtype=np.complex64), np.finfo(np.complex64).tiny),
                      (np.ones(3, dtype=np.complex128), np.finfo(np.complex128).tiny)]:
         yield __test, x, value
+
+
+def test_optional_jit():
+
+    @librosa.util.decorators.optional_jit(nopython=True)
+    def __func1(x):
+        return x**2
+
+    @librosa.util.decorators.optional_jit
+    def __func2(x):
+        return x**2
+
+    def __test(f):
+        y = f(2)
+        eq_(y, 2**2)
+
+    yield __test, __func1
+    yield __test, __func2
