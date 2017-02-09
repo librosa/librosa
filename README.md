@@ -32,7 +32,7 @@ What does librosa do?  Here are some quick demonstrations:
 Installation
 ------------
 
-The latest stable release is available on PyPI, and you can install it by saying 
+The latest stable release is available on PyPI, and you can install it by saying
 ```
 pip install librosa
 ```
@@ -41,10 +41,6 @@ Anaconda users can install using ``conda-forge``:
 ```
 conda install -c conda-forge librosa
 ```
-If you use Anaconda on Windows, we recommend installing the `gstreamer` and/or
-`ffmpeg` libraries separately, as they are not (yet) available as conda
-packages.
-
 
 To build librosa from source, say `python setup.py build`.
 Then, to install librosa, say `python setup.py install`.
@@ -68,22 +64,39 @@ By calling `pip list` you should see `librosa` now as an installed pacakge:
 librosa (0.x.x, /path/to/librosa)
 ```
 
-### Hints for OS X and Windows
+### Hints for the Installation
 
-#### ffmpeg
+#### audioread
 
-To fuel `audioread` with more audio-decoding power, you can install *ffmpeg* which
-ships with many audio decoders.  (Note: if you are using the conda package for
-`audioread`, this will be done automatically.)
+*Note that `audioread` needs at least one of the programs to work properly.*
 
-You can use *homebrew* to install the program by calling
-`brew install ffmpeg` or get a binary version from their website https://www.ffmpeg.org.
+`librosa` uses `audioread` to load audio files.
+
+To fuel `audioread` with more audio-decoding power (e. g. for reading MP3 files),
+you can either install *ffmpeg* or *GStreamer*.
+
+If you are using Anaconda, install *ffmpeg* by calling
+```
+conda install -c conda-forge ffmpeg
+```
+
+If you are not using Anaconda, here are some common commands for different operating systems:
+
+* Linux (apt-get): `apt-get install ffmpeg` or `apt-get install gstreamer1.0-plugins-base gstreamer1.0-plugins-ugly`
+* Linux (yum): `yum install ffmpeg` or `yum install gstreamer1.0-plugins-base gstreamer1.0-plugins-ugly`
+* Mac: `brew install ffmpeg` or `brew install gstreamer`
+* Windows: download binaries from the website
+
+For GStreamer, you also need to install the Python bindings with
+```
+pip install pygobject
+```
 
 Discussion
 ----------
 
-Please direct non-development questions and discussion topics to our web forum at 
-https://groups.google.com/forum/#!forum/librosa 
+Please direct non-development questions and discussion topics to our web forum at
+https://groups.google.com/forum/#!forum/librosa
 
 
 Citing
