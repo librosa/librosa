@@ -70,7 +70,7 @@ librosa (0.x.x, /path/to/librosa)
 
 *Note that `audioread` needs at least one of the programs to work properly.*
 
-`librosa` uses `audiored` to load audio files.
+`librosa` uses `audioread` to load audio files.
 
 To fuel `audioread` with more audio-decoding power (e. g. for reading MP3 files),
 you can either install *ffmpeg* or *GStreamer*.
@@ -82,7 +82,8 @@ conda install -c conda-forge ffmpeg
 
 If you are not using Anaconda, here are some common commands for different operating systems:
 
-* Linux: `apt-get install ffmpeg` or `apt-get install gstreamer1.0-plugins-base gstreamer1.0-plugins-ugly`
+* Linux (apt-get): `apt-get install ffmpeg` or `apt-get install gstreamer1.0-plugins-base gstreamer1.0-plugins-ugly`
+* Linux (yum): `yum install ffmpeg` or `yum install gstreamer1.0-plugins-base gstreamer1.0-plugins-ugly`
 * Mac: `brew install ffmpeg` or `brew install gstreamer`
 * Windows: download binaries from the website
 
