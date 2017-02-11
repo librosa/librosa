@@ -21,6 +21,7 @@ Contributors
 * Carl Thome <https://github.com/carlthome>
 * Seth Kranzler <https://github.com/polyrhythmatic>
 * Waldir Pimenta <https://github.com/waldyrious>
+* Hojin Lee <https://github.com/hojinlee>
 
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
