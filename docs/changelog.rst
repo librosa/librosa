@@ -14,6 +14,7 @@ Bug fixes
     Humphrey*
   - `#450`_ enhanced numerical stability for ``librosa.util.softmask``. *Brian McFee*
   - `#467`_ correction to chroma documentation. *Seth Kranzler*
+  - `#501`_ fixed a numpy 1.12 compatibility error in ``pitch_tuning``. *Hojin Lee*
 
 New features
 
@@ -104,6 +105,7 @@ API changes and compatibility
     has been renamed to `ref`.
 
 
+.. _#501: https://github.com/librosa/librosa/pull/501
 .. _#480: https://github.com/librosa/librosa/pull/480
 .. _#467: https://github.com/librosa/librosa/pull/467
 .. _#450: https://github.com/librosa/librosa/pull/450
