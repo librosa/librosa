@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Installation instructions &mdash; librosa 0.4.3 documentation</title>
+  <title>Installation instructions &mdash; librosa 0.5.0 documentation</title>
   
 
   
@@ -28,9 +28,14 @@
   
 
   
+    <link rel="stylesheet" href="_static/banner.css" type="text/css" />
+  
 
   
-    <link rel="top" title="librosa 0.4.3 documentation" href="index.html"/>
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="librosa 0.5.0 documentation" href="index.html"/>
         <link rel="next" title="Tutorial" href="tutorial.html"/>
         <link rel="prev" title="LibROSA" href="index.html"/> 
 
@@ -60,7 +65,7 @@
             
             
               <div class="version">
-                0.4
+                0.5
               </div>
             
           
@@ -83,8 +88,12 @@
             
                 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation instructions</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#additional-notes-for-os-x">Additional notes for OS X</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#ffmpeg">ffmpeg</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pypi">pypi</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#conda">conda</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#source">Source</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#ffmpeg">ffmpeg</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
@@ -104,9 +113,10 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="filters.html">Filters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cache.html">Caching</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ioformats.html">Advanced I/O Use Cases</a></li>
 </ul>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Release notes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="glossary.html">Glossary</a></li>
 </ul>
 
@@ -142,7 +152,7 @@
       <li class="wy-breadcrumbs-aside">
         
           
-            <a href="_sources/install.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/install.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -152,11 +162,19 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="installation-instructions">
+  
+
+
+
+
+
+<div class="section" id="installation-instructions">
 <h1>Installation instructions<a class="headerlink" href="#installation-instructions" title="Permalink to this headline">¶</a></h1>
-<p>The simplest way to install <em>librosa</em> is through the Python Package Index (PyPI).  This
-will ensure that all required dependencies are fulfilled.  This can be achieved by
-executing the following command:</p>
+<div class="section" id="pypi">
+<h2>pypi<a class="headerlink" href="#pypi" title="Permalink to this headline">¶</a></h2>
+<p>The simplest way to install <em>librosa</em> is through the Python Package Index (PyPI).
+This will ensure that all required dependencies are fulfilled.
+This can be achieved by executing the following command:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">librosa</span>
 </pre></div>
 </div>
@@ -169,6 +187,17 @@ executing the following command:</p>
 </pre></div>
 </div>
 <p>to install just for your own user.</p>
+</div>
+<div class="section" id="conda">
+<h2>conda<a class="headerlink" href="#conda" title="Permalink to this headline">¶</a></h2>
+<p>If you use conda/Anaconda environments, librosa can be installed from the
+<em class="xref py py-obj">conda-forge</em> channel:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">install</span> <span class="o">-</span><span class="n">c</span> <span class="n">conda</span><span class="o">-</span><span class="n">forge</span> <span class="n">librosa</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="source">
+<h2>Source<a class="headerlink" href="#source" title="Permalink to this headline">¶</a></h2>
 <p>If you&#8217;ve downloaded the archive manually from the <a class="reference external" href="https://github.com/librosa/librosa/releases/">releases</a> page, you can install using the
 <code class="xref py py-obj docutils literal"><span class="pre">setuptools</span></code> script:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">tar</span> <span class="n">xzf</span> <span class="n">librosa</span><span class="o">-</span><span class="n">VERSION</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">gz</span>
@@ -176,15 +205,18 @@ executing the following command:</p>
 <span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span>
 </pre></div>
 </div>
-<div class="section" id="additional-notes-for-os-x">
-<h2>Additional notes for OS X<a class="headerlink" href="#additional-notes-for-os-x" title="Permalink to this headline">¶</a></h2>
+<p>Alternately, the latest development version can be installed via pip:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">git</span><span class="o">+</span><span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">librosa</span><span class="o">/</span><span class="n">librosa</span>
+</pre></div>
 </div>
 <div class="section" id="ffmpeg">
-<h2>ffmpeg<a class="headerlink" href="#ffmpeg" title="Permalink to this headline">¶</a></h2>
+<h3>ffmpeg<a class="headerlink" href="#ffmpeg" title="Permalink to this headline">¶</a></h3>
 <p>To fuel <code class="xref py py-obj docutils literal"><span class="pre">audioread</span></code> with more audio-decoding power, you can install <em>ffmpeg</em> which
-ships with many audio decoders.</p>
-<p>You can use <em>homebrew</em> to install the programm by calling
+ships with many audio decoders.  Note that conda users on Linux and OSX will
+have this installed by default; Windows users must install ffmpeg separately.</p>
+<p>OSX users can use <em>homebrew</em> to install ffmpeg by calling
 <em class="xref py py-obj">brew install ffmpeg</em> or get a binary version from their website <a class="reference external" href="https://www.ffmpeg.org">https://www.ffmpeg.org</a>.</p>
+</div>
 </div>
 </div>
 
@@ -207,7 +239,7 @@ ships with many audio decoders.</p>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2016, librosa development team.
+        &copy; Copyright 2013--2017, librosa development team.
 
     </p>
   </div>
@@ -222,6 +254,28 @@ ships with many audio decoders.</p>
 
   </div>
   
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+        <span class="fa fa-book"> Other Versions</span>
+        v: 0.5.0
+        <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+        <dl>
+            <dt>Tags</dt>
+            <dd><a href="0.4.0rc1/install.html">0.4.0rc1</a></dd>
+            <dd><a href="0.4.2/install.html">0.4.2</a></dd>
+            <dd><a href="0.4.3/install.html">0.4.3</a></dd>
+            <dd><a href="0.4.3rc0/install.html">0.4.3rc0</a></dd>
+            <dd><a href="0.5.0/install.html">0.5.0</a></dd>
+            <dd><a href="0.5.0rc0/install.html">0.5.0rc0</a></dd>
+        </dl>
+        <dl>
+            <dt>Branches</dt>
+            <dd><a href="master/install.html">master</a></dd>
+        </dl>
+    </div>
+</div>
 
 
   
@@ -229,7 +283,7 @@ ships with many audio decoders.</p>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'0.4.3',
+            VERSION:'0.5.0',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true

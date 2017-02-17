@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Display &mdash; librosa 0.4.3 documentation</title>
+  <title>Display &mdash; librosa 0.5.0 documentation</title>
   
 
   
@@ -28,11 +28,16 @@
   
 
   
+    <link rel="stylesheet" href="_static/banner.css" type="text/css" />
+  
 
   
-    <link rel="top" title="librosa 0.4.3 documentation" href="index.html"/>
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="librosa 0.5.0 documentation" href="index.html"/>
         <link rel="next" title="librosa.display.specshow" href="generated/librosa.display.specshow.html"/>
-        <link rel="prev" title="librosa.core.ifptrack" href="generated/librosa.core.ifptrack.html"/> 
+        <link rel="prev" title="librosa.core.logamplitude" href="generated/librosa.core.logamplitude.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -60,7 +65,7 @@
             
             
               <div class="version">
-                0.4
+                0.5
               </div>
             
           
@@ -90,8 +95,11 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Display</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="generated/librosa.display.specshow.html">librosa.display.specshow</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated/librosa.display.waveplot.html">librosa.display.waveplot</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated/librosa.display.time_ticks.html">librosa.display.time_ticks</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated/librosa.display.cmap.html">librosa.display.cmap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/librosa.display.TimeFormatter.html">librosa.display.TimeFormatter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/librosa.display.NoteFormatter.html">librosa.display.NoteFormatter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/librosa.display.LogHzFormatter.html">librosa.display.LogHzFormatter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/librosa.display.ChromaFormatter.html">librosa.display.ChromaFormatter</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="feature.html">Feature extraction</a></li>
@@ -106,9 +114,10 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="filters.html">Filters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cache.html">Caching</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ioformats.html">Advanced I/O Use Cases</a></li>
 </ul>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Release notes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="glossary.html">Glossary</a></li>
 </ul>
 
@@ -144,7 +153,7 @@
       <li class="wy-breadcrumbs-aside">
         
           
-            <a href="_sources/display.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/display.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -154,7 +163,13 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <span class="target" id="module-librosa.display"><span id="display"></span></span><div class="section" id="id1">
+  
+
+
+
+
+
+<span class="target" id="module-librosa.display"><span id="display"></span></span><div class="section" id="id1">
 <h1>Display<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
 <table border="1" class="longtable docutils">
 <colgroup>
@@ -162,17 +177,26 @@
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.display.specshow.html#librosa.display.specshow" title="librosa.display.specshow"><code class="xref py py-obj docutils literal"><span class="pre">specshow</span></code></a>(data[,&nbsp;sr,&nbsp;hop_length,&nbsp;x_axis,&nbsp;...])</td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.display.specshow.html#librosa.display.specshow" title="librosa.display.specshow"><code class="xref py py-obj docutils literal"><span class="pre">specshow</span></code></a>(data[,&nbsp;x_coords,&nbsp;y_coords,&nbsp;x_axis,&nbsp;...])</td>
 <td>Display a spectrogram/chromagram/cqt/etc.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="generated/librosa.display.waveplot.html#librosa.display.waveplot" title="librosa.display.waveplot"><code class="xref py py-obj docutils literal"><span class="pre">waveplot</span></code></a>(y[,&nbsp;sr,&nbsp;max_points,&nbsp;x_axis,&nbsp;...])</td>
 <td>Plot the amplitude envelope of a waveform.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.display.time_ticks.html#librosa.display.time_ticks" title="librosa.display.time_ticks"><code class="xref py py-obj docutils literal"><span class="pre">time_ticks</span></code></a>(locs,&nbsp;*args,&nbsp;**kwargs)</td>
-<td>Plot time-formatted axis ticks.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="generated/librosa.display.cmap.html#librosa.display.cmap" title="librosa.display.cmap"><code class="xref py py-obj docutils literal"><span class="pre">cmap</span></code></a>(data[,&nbsp;use_sns,&nbsp;robust])</td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.display.cmap.html#librosa.display.cmap" title="librosa.display.cmap"><code class="xref py py-obj docutils literal"><span class="pre">cmap</span></code></a>(data[,&nbsp;robust,&nbsp;cmap_seq,&nbsp;cmap_bool,&nbsp;...])</td>
 <td>Get a default colormap from the given data.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/librosa.display.TimeFormatter.html#librosa.display.TimeFormatter" title="librosa.display.TimeFormatter"><code class="xref py py-obj docutils literal"><span class="pre">TimeFormatter</span></code></a>([lag])</td>
+<td>A tick formatter for time axes.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.display.NoteFormatter.html#librosa.display.NoteFormatter" title="librosa.display.NoteFormatter"><code class="xref py py-obj docutils literal"><span class="pre">NoteFormatter</span></code></a>([octave,&nbsp;major])</td>
+<td>Ticker formatter for Notes</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/librosa.display.LogHzFormatter.html#librosa.display.LogHzFormatter" title="librosa.display.LogHzFormatter"><code class="xref py py-obj docutils literal"><span class="pre">LogHzFormatter</span></code></a>([major])</td>
+<td>Ticker formatter for logarithmic frequency</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.display.ChromaFormatter.html#librosa.display.ChromaFormatter" title="librosa.display.ChromaFormatter"><code class="xref py py-obj docutils literal"><span class="pre">ChromaFormatter</span></code></a></td>
+<td>A formatter for chroma axes</td>
 </tr>
 </tbody>
 </table>
@@ -188,7 +212,7 @@
         <a href="generated/librosa.display.specshow.html" class="btn btn-neutral float-right" title="librosa.display.specshow" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="generated/librosa.core.ifptrack.html" class="btn btn-neutral" title="librosa.core.ifptrack" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="generated/librosa.core.logamplitude.html" class="btn btn-neutral" title="librosa.core.logamplitude" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -197,7 +221,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2016, librosa development team.
+        &copy; Copyright 2013--2017, librosa development team.
 
     </p>
   </div>
@@ -212,6 +236,28 @@
 
   </div>
   
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+        <span class="fa fa-book"> Other Versions</span>
+        v: 0.5.0
+        <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+        <dl>
+            <dt>Tags</dt>
+            <dd><a href="0.4.0rc1/display.html">0.4.0rc1</a></dd>
+            <dd><a href="0.4.2/display.html">0.4.2</a></dd>
+            <dd><a href="0.4.3/display.html">0.4.3</a></dd>
+            <dd><a href="0.4.3rc0/display.html">0.4.3rc0</a></dd>
+            <dd><a href="0.5.0/display.html">0.5.0</a></dd>
+            <dd><a href="0.5.0rc0/display.html">0.5.0rc0</a></dd>
+        </dl>
+        <dl>
+            <dt>Branches</dt>
+            <dd><a href="master/display.html">master</a></dd>
+        </dl>
+    </div>
+</div>
 
 
   
@@ -219,7 +265,7 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'0.4.3',
+            VERSION:'0.5.0',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true

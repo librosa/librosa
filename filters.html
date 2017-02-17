@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Filters &mdash; librosa 0.4.3 documentation</title>
+  <title>Filters &mdash; librosa 0.5.0 documentation</title>
   
 
   
@@ -28,11 +28,16 @@
   
 
   
+    <link rel="stylesheet" href="_static/banner.css" type="text/css" />
+  
 
   
-    <link rel="top" title="librosa 0.4.3 documentation" href="index.html"/>
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="librosa 0.5.0 documentation" href="index.html"/>
         <link rel="next" title="librosa.filters.dct" href="generated/librosa.filters.dct.html"/>
-        <link rel="prev" title="librosa.util.buf_to_int" href="generated/librosa.util.buf_to_int.html"/> 
+        <link rel="prev" title="librosa.util.find_files" href="generated/librosa.util.find_files.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -60,7 +65,7 @@
             
             
               <div class="version">
-                0.4
+                0.5
               </div>
             
           
@@ -106,22 +111,23 @@
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.filters.constant_q.html">librosa.filters.constant_q</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#window-functions">Window functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/librosa.filters.window_bandwidth.html">librosa.filters.window_bandwidth</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/librosa.filters.get_window.html">librosa.filters.get_window</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#miscellaneous">Miscellaneous</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.filters.constant_q_lengths.html">librosa.filters.constant_q_lengths</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.filters.cq_to_chroma.html">librosa.filters.cq_to_chroma</a></li>
-<li class="toctree-l3"><a class="reference internal" href="generated/librosa.filters.window_bandwidth.html">librosa.filters.window_bandwidth</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#deprecated">Deprecated</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="generated/librosa.filters.logfrequency.html">librosa.filters.logfrequency</a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="cache.html">Caching</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ioformats.html">Advanced I/O Use Cases</a></li>
 </ul>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Release notes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="glossary.html">Glossary</a></li>
 </ul>
 
@@ -157,7 +163,7 @@
       <li class="wy-breadcrumbs-aside">
         
           
-            <a href="_sources/filters.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/filters.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -167,7 +173,13 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <span class="target" id="module-librosa.filters"><span id="filters"></span></span><div class="section" id="id1">
+  
+
+
+
+
+
+<span class="target" id="module-librosa.filters"><span id="filters"></span></span><div class="section" id="id1">
 <h1>Filters<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="filter-bank-construction">
 <h2>Filter bank construction<a class="headerlink" href="#filter-bank-construction" title="Permalink to this headline">¶</a></h2>
@@ -192,6 +204,23 @@
 </tbody>
 </table>
 </div>
+<div class="section" id="window-functions">
+<h2>Window functions<a class="headerlink" href="#window-functions" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.filters.window_bandwidth.html#librosa.filters.window_bandwidth" title="librosa.filters.window_bandwidth"><code class="xref py py-obj docutils literal"><span class="pre">window_bandwidth</span></code></a>(window[,&nbsp;n])</td>
+<td>Get the equivalent noise bandwidth of a window function.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/librosa.filters.get_window.html#librosa.filters.get_window" title="librosa.filters.get_window"><code class="xref py py-obj docutils literal"><span class="pre">get_window</span></code></a>(window,&nbsp;Nx[,&nbsp;fftbins])</td>
+<td>Compute a window function.</td>
+</tr>
+</tbody>
+</table>
+</div>
 <div class="section" id="miscellaneous">
 <h2>Miscellaneous<a class="headerlink" href="#miscellaneous" title="Permalink to this headline">¶</a></h2>
 <table border="1" class="longtable docutils">
@@ -205,23 +234,6 @@
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="generated/librosa.filters.cq_to_chroma.html#librosa.filters.cq_to_chroma" title="librosa.filters.cq_to_chroma"><code class="xref py py-obj docutils literal"><span class="pre">cq_to_chroma</span></code></a>(n_input[,&nbsp;bins_per_octave,&nbsp;...])</td>
 <td>Convert a Constant-Q basis to Chroma.</td>
-</tr>
-<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.filters.window_bandwidth.html#librosa.filters.window_bandwidth" title="librosa.filters.window_bandwidth"><code class="xref py py-obj docutils literal"><span class="pre">window_bandwidth</span></code></a>(window[,&nbsp;default])</td>
-<td>Get the bandwidth of a window function.</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="section" id="deprecated">
-<h2>Deprecated<a class="headerlink" href="#deprecated" title="Permalink to this headline">¶</a></h2>
-<table border="1" class="longtable docutils">
-<colgroup>
-<col width="10%" />
-<col width="90%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.filters.logfrequency.html#librosa.filters.logfrequency" title="librosa.filters.logfrequency"><code class="xref py py-obj docutils literal"><span class="pre">logfrequency</span></code></a>(sr,&nbsp;n_fft[,&nbsp;n_bins,&nbsp;...])</td>
-<td>Approximate a constant-Q filter bank for a fixed-window STFT.</td>
 </tr>
 </tbody>
 </table>
@@ -238,7 +250,7 @@
         <a href="generated/librosa.filters.dct.html" class="btn btn-neutral float-right" title="librosa.filters.dct" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="generated/librosa.util.buf_to_int.html" class="btn btn-neutral" title="librosa.util.buf_to_int" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="generated/librosa.util.find_files.html" class="btn btn-neutral" title="librosa.util.find_files" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -247,7 +259,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2016, librosa development team.
+        &copy; Copyright 2013--2017, librosa development team.
 
     </p>
   </div>
@@ -262,6 +274,28 @@
 
   </div>
   
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+        <span class="fa fa-book"> Other Versions</span>
+        v: 0.5.0
+        <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+        <dl>
+            <dt>Tags</dt>
+            <dd><a href="0.4.0rc1/filters.html">0.4.0rc1</a></dd>
+            <dd><a href="0.4.2/filters.html">0.4.2</a></dd>
+            <dd><a href="0.4.3/filters.html">0.4.3</a></dd>
+            <dd><a href="0.4.3rc0/filters.html">0.4.3rc0</a></dd>
+            <dd><a href="0.5.0/filters.html">0.5.0</a></dd>
+            <dd><a href="0.5.0rc0/filters.html">0.5.0rc0</a></dd>
+        </dl>
+        <dl>
+            <dt>Branches</dt>
+            <dd><a href="master/filters.html">master</a></dd>
+        </dl>
+    </div>
+</div>
 
 
   
@@ -269,7 +303,7 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'0.4.3',
+            VERSION:'0.5.0',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true

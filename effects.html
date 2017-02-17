@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Effects &mdash; librosa 0.4.3 documentation</title>
+  <title>Effects &mdash; librosa 0.5.0 documentation</title>
   
 
   
@@ -28,9 +28,14 @@
   
 
   
+    <link rel="stylesheet" href="_static/banner.css" type="text/css" />
+  
 
   
-    <link rel="top" title="librosa 0.4.3 documentation" href="index.html"/>
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="librosa 0.5.0 documentation" href="index.html"/>
         <link rel="next" title="librosa.effects.hpss" href="generated/librosa.effects.hpss.html"/>
         <link rel="prev" title="librosa.decompose.nn_filter" href="generated/librosa.decompose.nn_filter.html"/> 
 
@@ -60,7 +65,7 @@
             
             
               <div class="version">
-                0.4
+                0.5
               </div>
             
           
@@ -106,6 +111,8 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#miscellaneous">Miscellaneous</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.effects.remix.html">librosa.effects.remix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/librosa.effects.trim.html">librosa.effects.trim</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/librosa.effects.split.html">librosa.effects.split</a></li>
 </ul>
 </li>
 </ul>
@@ -117,9 +124,10 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="filters.html">Filters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cache.html">Caching</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ioformats.html">Advanced I/O Use Cases</a></li>
 </ul>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Release notes</a></li>
 <li class="toctree-l1"><a class="reference internal" href="glossary.html">Glossary</a></li>
 </ul>
 
@@ -155,7 +163,7 @@
       <li class="wy-breadcrumbs-aside">
         
           
-            <a href="_sources/effects.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/effects.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -165,7 +173,13 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <span class="target" id="module-librosa.effects"><span id="effects"></span></span><div class="section" id="id1">
+  
+
+
+
+
+
+<span class="target" id="module-librosa.effects"><span id="effects"></span></span><div class="section" id="id1">
 <h1>Effects<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="harmonic-percussive-source-separation">
 <h2>Harmonic-percussive source separation<a class="headerlink" href="#harmonic-percussive-source-separation" title="Permalink to this headline">¶</a></h2>
@@ -215,6 +229,12 @@
 <tr class="row-odd"><td><a class="reference internal" href="generated/librosa.effects.remix.html#librosa.effects.remix" title="librosa.effects.remix"><code class="xref py py-obj docutils literal"><span class="pre">remix</span></code></a>(y,&nbsp;intervals[,&nbsp;align_zeros])</td>
 <td>Remix an audio signal by re-ordering time intervals.</td>
 </tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/librosa.effects.trim.html#librosa.effects.trim" title="librosa.effects.trim"><code class="xref py py-obj docutils literal"><span class="pre">trim</span></code></a>(y[,&nbsp;top_db,&nbsp;ref,&nbsp;frame_length,&nbsp;hop_length])</td>
+<td>Trim leading and trailing silence from an audio signal.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.effects.split.html#librosa.effects.split" title="librosa.effects.split"><code class="xref py py-obj docutils literal"><span class="pre">split</span></code></a>(y[,&nbsp;top_db,&nbsp;ref,&nbsp;frame_length,&nbsp;hop_length])</td>
+<td>Split an audio signal into non-silent intervals.</td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -239,7 +259,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2016, librosa development team.
+        &copy; Copyright 2013--2017, librosa development team.
 
     </p>
   </div>
@@ -254,6 +274,28 @@
 
   </div>
   
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+        <span class="fa fa-book"> Other Versions</span>
+        v: 0.5.0
+        <span class="fa fa-caret-down"></span>
+    </span>
+    <div class="rst-other-versions">
+        <dl>
+            <dt>Tags</dt>
+            <dd><a href="0.4.0rc1/effects.html">0.4.0rc1</a></dd>
+            <dd><a href="0.4.2/effects.html">0.4.2</a></dd>
+            <dd><a href="0.4.3/effects.html">0.4.3</a></dd>
+            <dd><a href="0.4.3rc0/effects.html">0.4.3rc0</a></dd>
+            <dd><a href="0.5.0/effects.html">0.5.0</a></dd>
+            <dd><a href="0.5.0rc0/effects.html">0.5.0rc0</a></dd>
+        </dl>
+        <dl>
+            <dt>Branches</dt>
+            <dd><a href="master/effects.html">master</a></dd>
+        </dl>
+    </div>
+</div>
 
 
   
@@ -261,7 +303,7 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'0.4.3',
+            VERSION:'0.5.0',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true
