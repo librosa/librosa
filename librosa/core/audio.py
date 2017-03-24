@@ -147,7 +147,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
         y = np.concatenate(y)
 
         if n_channels > 1:
-            y = y.reshape((-1, 2)).T
+            y = y.reshape((-1, n_channels)).T
             if mono:
                 y = to_mono(y)
 
