@@ -18,6 +18,7 @@ from . import onset
 from . import output
 from . import segment
 from . import util
+from . import display
 
 # Exporting exception classes at the top level
 from .util.exceptions import *  # pylint: disable=wildcard-import
