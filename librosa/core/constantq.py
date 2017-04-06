@@ -556,7 +556,7 @@ def __trim_stack(cqt_resp, n_bins):
     '''Helper function to trim and stack a collection of CQT responses'''
 
     # cleanup any framing errors at the boundaries
-    max_col = min([x.shape[1] for x in cqt_resp])
+    max_col = min(x.shape[1] for x in cqt_resp)
 
     cqt_resp = np.vstack([x[:, :max_col] for x in cqt_resp][::-1])
 
