@@ -1097,7 +1097,7 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
     win /= np.sum(win)
     win = np.atleast_2d(win)
 
-    cens = scipy.signal.convolve2d(chroma_quant, win, mode='same')
+    cens = scipy.signal.convolve2d(chroma_quant, win, mode='same', boundary='fill')
 
     # L2-Normalization
     return util.normalize(cens, norm=norm, axis=0)
