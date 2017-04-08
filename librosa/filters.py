@@ -108,7 +108,8 @@ def dct(n_filters, n_input):
 
 
 @cache
-def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
+def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False, 
+        area_norm=True):
     """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins
 
     Parameters
@@ -131,6 +132,10 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
 
     htk       : bool [scalar]
         use HTK formula instead of Slaney
+
+    area_norm : bool [scalar]
+        divide the triangular mel weights by the width of the mel band instead
+        of having all the triangles aim for the same peak value of 1.0
 
     Returns
     -------
@@ -183,16 +188,17 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
                             fmax=fmax,
                             htk=htk)
 
-    # Slaney-style mel is scaled to be approx constant energy per channel
-    enorm = 2.0 / (freqs[2:n_mels+2] - freqs[:n_mels])
-
     for i in range(n_mels):
         # lower and upper slopes for all bins
         lower = (fftfreqs - freqs[i]) / (freqs[i+1] - freqs[i])
         upper = (freqs[i+2] - fftfreqs) / (freqs[i+2] - freqs[i+1])
 
         # .. then intersect them with each other and zero
-        weights[i] = np.maximum(0, np.minimum(lower, upper)) * enorm[i]
+        weights[i] = np.maximum(0, np.minimum(lower, upper))
+
+        # Slaney-style mel is scaled to be approx constant energy per channel
+        if area_norm:
+            weights[i] /= (freqs[i + 2] - freqs[i]) / 2.0
 
     return weights
 
