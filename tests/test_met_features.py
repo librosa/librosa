@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 # CREATED:2015-02-16 13:10:05 by Brian McFee <brian.mcfee@nyu.edu>
-'''Regression tests on metlab features''' 
+'''Regression tests on metlab features'''
 
 from __future__ import print_function
+import warnings
 # Disable cache
 import os
 try:
@@ -11,19 +12,17 @@ try:
 except:
     pass
 
-import matplotlib
-matplotlib.use('Agg')
 import numpy as np
 import scipy.io
 import scipy.signal
-
-from nose.tools import nottest, eq_, raises
 
 from test_core import load, files
 
 import librosa
 
 __EXAMPLE_FILE = 'data/test1_22050.wav'
+warnings.resetwarnings()
+warnings.simplefilter('always')
 
 
 def met_stft(y, n_fft, hop_length, win_length, normalize):
@@ -42,7 +41,6 @@ def met_stft(y, n_fft, hop_length, win_length, normalize):
 
 
 def test_spectral_centroid():
-    
     def __test(infile):
         DATA = load(infile)
 
@@ -66,7 +64,6 @@ def test_spectral_centroid():
 
 
 def test_spectral_contrast():
-    
     def __test(infile):
         DATA = load(infile)
 
@@ -90,7 +87,6 @@ def test_spectral_contrast():
 
 
 def test_spectral_rolloff():
-    
     def __test(infile):
         DATA = load(infile)
 
@@ -115,7 +111,6 @@ def test_spectral_rolloff():
 
 
 def test_spectral_bandwidth():
-    
     def __test(infile):
         DATA = load(infile)
 

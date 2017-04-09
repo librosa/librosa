@@ -9,11 +9,12 @@ try:
 except:
     pass
 
-import matplotlib
-matplotlib.use('Agg')
 import numpy as np
 import librosa
 from nose.tools import raises
+import warnings
+warnings.resetwarnings()
+warnings.simplefilter('always')
 
 
 @raises(librosa.ParameterError)
@@ -99,8 +100,17 @@ def test_frame_contiguous():
 
 @raises(librosa.ParameterError)
 def test_frame_size():
-    '''frame: len(y) == 128, frame_length==256, hop_length=128'''
+    # frame: len(y) == 128, frame_length==256, hop_length=128
     y = np.zeros(64)
+    librosa.util.frame(y, frame_length=256, hop_length=128)
+
+
+@raises(librosa.ParameterError)
+def test_frame_size_difference():
+    # In response to issue #385
+    # https://github.com/librosa/librosa/issues/385
+    # frame: len(y) == 129, frame_length==256, hop_length=128
+    y = np.zeros(129)
     librosa.util.frame(y, frame_length=256, hop_length=128)
 
 
@@ -125,4 +135,3 @@ def test_istft_bad_window():
     window = np.ones(n_fft // 2)
 
     librosa.istft(D, window=window)
-

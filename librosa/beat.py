@@ -7,6 +7,13 @@ Beat and tempo
    :toctree: generated/
 
    beat_track
+   tempo
+
+Deprecated
+----------
+.. autosummary::
+   :toctree: generated/
+
    estimate_tempo
 """
 
@@ -17,13 +24,15 @@ from . import cache
 from . import core
 from . import onset
 from . import util
+from .feature import tempogram
 from .util.exceptions import ParameterError
 
-__all__ = ['beat_track', 'estimate_tempo']
+__all__ = ['beat_track', 'tempo', 'estimate_tempo']
 
 
 def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
-               start_bpm=120.0, tightness=100, trim=True, bpm=None):
+               start_bpm=120.0, tightness=100, trim=True, bpm=None,
+               units='frames'):
     r'''Dynamic programming beat tracker.
 
     Beats are detected in three stages, following the method of [1]_:
@@ -65,6 +74,10 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
         (optional) If provided, use `bpm` as the tempo instead of
         estimating it from `onsets`.
 
+    units : {'frames', 'samples', 'time'}
+        The units to encode detected beat events in.
+        By default, 'frames' are used.
+
 
     Returns
     -------
@@ -73,7 +86,8 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
         estimated global tempo (in beats per minute)
 
     beats : np.ndarray [shape=(m,)]
-        frame numbers of estimated beat events
+        estimated beat event locations in the specified units
+        (default is frame indices)
 
     .. note::
         If no onset strength could be detected, beat_tracker estimates 0 BPM
@@ -85,6 +99,7 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
     ParameterError
         if neither `y` nor `onset_envelope` are provided
 
+        or if `units` is not one of 'frames', 'samples', or 'time'
 
     See Also
     --------
@@ -99,23 +114,24 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
     >>> tempo
-    129.19921875
+    64.599609375
 
 
     Print the first 20 beat frames
 
     >>> beats[:20]
-    array([ 461,  500,  540,  580,  619,  658,  698,  737,  777,
-            817,  857,  896,  936,  976, 1016, 1055, 1095, 1135,
-           1175, 1214])
+    array([ 320,  357,  397,  436,  480,  525,  569,  609,  658,
+            698,  737,  777,  817,  857,  896,  936,  976, 1016,
+           1055, 1095])
 
 
     Or print them as timestamps
 
     >>> librosa.frames_to_time(beats[:20], sr=sr)
-    array([ 0.093,  0.534,  0.998,  1.463,  1.927,  2.368,  2.833,
-            3.297,  3.762,  4.203,  4.667,  5.132,  5.596,  6.06 ,
-            6.525,  6.989,  7.454,  7.918,  8.382,  8.847])
+    array([  7.43 ,   8.29 ,   9.218,  10.124,  11.146,  12.19 ,
+            13.212,  14.141,  15.279,  16.208,  17.113,  18.042,
+            18.971,  19.9  ,  20.805,  21.734,  22.663,  23.591,
+            24.497,  25.426])
 
 
     Track beats using a pre-computed onset envelope
@@ -127,25 +143,26 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
     >>> tempo
     64.599609375
     >>> beats[:20]
-    array([ 461,  500,  540,  580,  619,  658,  698,  737,  777,
-            817,  857,  896,  936,  976, 1016, 1055, 1095, 1135,
-           1175, 1214])
+    array([ 320,  357,  397,  436,  480,  525,  569,  609,  658,
+            698,  737,  777,  817,  857,  896,  936,  976, 1016,
+           1055, 1095])
 
 
     Plot the beat events against the onset strength envelope
 
     >>> import matplotlib.pyplot as plt
     >>> hop_length = 512
-    >>> plt.figure()
-    >>> plt.plot(librosa.util.normalize(onset_env), label='Onset strength')
-    >>> plt.vlines(beats, 0, 1, alpha=0.5, color='r',
+    >>> plt.figure(figsize=(8, 4))
+    >>> times = librosa.frames_to_time(np.arange(len(onset_env)),
+    ...                                sr=sr, hop_length=hop_length)
+    >>> plt.plot(times, librosa.util.normalize(onset_env),
+    ...          label='Onset strength')
+    >>> plt.vlines(times[beats], 0, 1, alpha=0.5, color='r',
     ...            linestyle='--', label='Beats')
     >>> plt.legend(frameon=True, framealpha=0.75)
     >>> # Limit the plot to a 15-second window
-    >>> plt.xlim([10 * sr / hop_length, 25 * sr / hop_length])
-    >>> plt.xticks(np.linspace(10, 25, 5) * sr / hop_length,
-    ...            np.linspace(10, 25, 5))
-    >>> plt.xlabel('Time (s)')
+    >>> plt.xlim(15, 30)
+    >>> plt.gca().xaxis.set_major_formatter(librosa.display.TimeFormatter())
     >>> plt.tight_layout()
     '''
 
@@ -165,10 +182,10 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
     # Estimate BPM if one was not provided
     if bpm is None:
-        bpm = estimate_tempo(onset_envelope,
-                             sr=sr,
-                             hop_length=hop_length,
-                             start_bpm=start_bpm)
+        bpm = tempo(onset_envelope=onset_envelope,
+                    sr=sr,
+                    hop_length=hop_length,
+                    start_bpm=start_bpm)[0]
 
     # Then, run the tracker
     beats = __beat_tracker(onset_envelope,
@@ -177,14 +194,27 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
                            tightness,
                            trim)
 
+    if units == 'frames':
+        pass
+    elif units == 'samples':
+        beats = core.frames_to_samples(beats, hop_length=hop_length)
+    elif units == 'time':
+        beats = core.frames_to_time(beats, hop_length=hop_length, sr=sr)
+    else:
+        raise ParameterError('Invalid unit type: {}'.format(units))
+
     return (bpm, beats)
 
 
-@cache
+@util.decorators.deprecated('0.5.0', '0.6')
+@cache(level=30)
 def estimate_tempo(onset_envelope, sr=22050, hop_length=512, start_bpm=120,
                    std_bpm=1.0, ac_size=4.0, duration=90.0, offset=0.0):
     """Estimate the tempo (beats per minute) from an onset envelope
 
+    .. warning:: Deprecated in librosa 0.5
+                 Functionality is superseded by
+                 `librosa.beat.tempo`.
 
     Parameters
     ----------
@@ -223,6 +253,9 @@ def estimate_tempo(onset_envelope, sr=22050, hop_length=512, start_bpm=120,
     --------
     librosa.onset.onset_strength
 
+    Notes
+    -----
+    This function caches at level 30.
 
     Examples
     --------
@@ -230,7 +263,7 @@ def estimate_tempo(onset_envelope, sr=22050, hop_length=512, start_bpm=120,
     >>> onset_env = librosa.onset.onset_strength(y, sr=sr)
     >>> tempo = librosa.beat.estimate_tempo(onset_env, sr=sr)
     >>> tempo
-    129.19921875
+    103.359375
 
     Plot the estimated tempo against the onset autocorrelation
 
@@ -238,17 +271,17 @@ def estimate_tempo(onset_envelope, sr=22050, hop_length=512, start_bpm=120,
     >>> # Compute 2-second windowed autocorrelation
     >>> hop_length = 512
     >>> ac = librosa.autocorrelate(onset_env, 2 * sr // hop_length)
-    >>> # Convert tempo estimate from bpm to frames
-    >>> tempo_frames = (60 * sr / hop_length) / tempo
-    >>> plt.plot(librosa.util.normalize(ac),
-    ...          label='Onset autocorrelation')
-    >>> plt.vlines([tempo_frames], 0, 1,
-    ...            color='r', alpha=0.75, linestyle='--',
+    >>> freqs = librosa.tempo_frequencies(len(ac), sr=sr,
+    ...                                   hop_length=hop_length)
+    >>> # Plot on a BPM axis.  We skip the first (0-lag) bin.
+    >>> plt.figure(figsize=(8,4))
+    >>> plt.semilogx(freqs[1:], librosa.util.normalize(ac)[1:],
+    ...              label='Onset autocorrelation', basex=2)
+    >>> plt.axvline(tempo, 0, 1, color='r', alpha=0.75, linestyle='--',
     ...            label='Tempo: {:.2f} BPM'.format(tempo))
-    >>> librosa.display.time_ticks(librosa.frames_to_time(np.arange(len(ac)),
-    ...                                                   sr=sr))
-    >>> plt.xlabel('Lag')
-    >>> plt.legend()
+    >>> plt.xlabel('Tempo (BPM)')
+    >>> plt.grid()
+    >>> plt.legend(frameon=True)
     >>> plt.axis('tight')
     """
 
@@ -268,13 +301,15 @@ def estimate_tempo(onset_envelope, sr=22050, hop_length=512, start_bpm=120,
     ac_window = min(maxcol, np.round(ac_size * fft_res))
 
     # Compute the autocorrelation
-    x_corr = core.autocorrelate(onset_envelope[mincol:maxcol], ac_window)
+    x_corr = core.autocorrelate(onset_envelope[mincol:maxcol], ac_window)[1:]
 
-    # re-weight the autocorrelation by log-normal prior
-    bpms = 60.0 * fft_res / (np.arange(1, ac_window+1))
+    # Get the BPM values for each bin, skipping the 0-lag bin
+    bpms = core.tempo_frequencies(ac_window, hop_length=hop_length, sr=sr)[1:]
 
-    # Smooth the autocorrelation by a log-normal distribution
-    x_corr = x_corr * np.exp(-0.5 * ((np.log2(bpms / start_bpm)) / std_bpm)**2)
+    # Weight the autocorrelation by a log-normal distribution
+    # centered at `start_bpm`
+    x_corr *= np.exp(-0.5 *
+                     ((np.log2(bpms) - np.log2(start_bpm)) / std_bpm)**2)
 
     # Get the local maximum of weighted correlation
     x_peaks = util.localmax(x_corr)
@@ -290,12 +325,152 @@ def estimate_tempo(onset_envelope, sr=22050, hop_length=512, start_bpm=120,
     best_period = np.argmax(x_corr[candidates])
 
     if candidates[best_period] > 0:
-        return 60.0 * fft_res / candidates[best_period]
+        return bpms[candidates[best_period]]
 
     return start_bpm
 
 
-@cache
+@cache(level=30)
+def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
+          std_bpm=1.0, ac_size=8.0, max_tempo=320.0, aggregate=np.mean):
+    """Estimate the tempo (beats per minute)
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(n,)] or None
+        audio time series
+
+    sr : number > 0 [scalar]
+        sampling rate of the time series
+
+    onset_envelope    : np.ndarray [shape=(n,)]
+        pre-computed onset strength envelope
+
+    hop_length : int > 0 [scalar]
+        hop length of the time series
+
+    start_bpm : float [scalar]
+        initial guess of the BPM
+
+    std_bpm : float > 0 [scalar]
+        standard deviation of tempo distribution
+
+    ac_size : float > 0 [scalar]
+        length (in seconds) of the auto-correlation window
+
+    max_tempo : float > 0 [scalar, optional]
+        If provided, only estimate tempo below this threshold
+
+    aggregate : callable [optional]
+        Aggregation function for estimating global tempo.
+        If `None`, then tempo is estimated independently for each frame.
+
+    Returns
+    -------
+    tempo : np.ndarray [scalar]
+        estimated tempo (beats per minute)
+
+    See Also
+    --------
+    librosa.onset.onset_strength
+    librosa.feature.tempogram
+
+    Notes
+    -----
+    This function caches at level 30.
+
+    Examples
+    --------
+    >>> # Estimate a static tempo
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> onset_env = librosa.onset.onset_strength(y, sr=sr)
+    >>> tempo = librosa.beat.tempo(onset_envelope=onset_env, sr=sr)
+    >>> tempo
+    array([129.199])
+
+    >>> # Or a dynamic tempo
+    >>> dtempo = librosa.beat.tempo(onset_envelope=onset_env, sr=sr,
+    ...                             aggregate=None)
+    >>> dtempo
+    array([ 143.555,  143.555,  143.555, ...,  161.499,  161.499,
+            172.266])
+
+
+    Plot the estimated tempo against the onset autocorrelation
+
+    >>> import matplotlib.pyplot as plt
+    >>> # Convert to scalar
+    >>> tempo = np.asscalar(tempo)
+    >>> # Compute 2-second windowed autocorrelation
+    >>> hop_length = 512
+    >>> ac = librosa.autocorrelate(onset_env, 2 * sr // hop_length)
+    >>> freqs = librosa.tempo_frequencies(len(ac), sr=sr,
+    ...                                   hop_length=hop_length)
+    >>> # Plot on a BPM axis.  We skip the first (0-lag) bin.
+    >>> plt.figure(figsize=(8,4))
+    >>> plt.semilogx(freqs[1:], librosa.util.normalize(ac)[1:],
+    ...              label='Onset autocorrelation', basex=2)
+    >>> plt.axvline(tempo, 0, 1, color='r', alpha=0.75, linestyle='--',
+    ...            label='Tempo: {:.2f} BPM'.format(tempo))
+    >>> plt.xlabel('Tempo (BPM)')
+    >>> plt.grid()
+    >>> plt.title('Static tempo estimation')
+    >>> plt.legend(frameon=True)
+    >>> plt.axis('tight')
+
+    Plot dynamic tempo estimates over a tempogram
+
+    >>> plt.figure()
+    >>> tg = librosa.feature.tempogram(onset_envelope=onset_env, sr=sr,
+    ...                                hop_length=hop_length)
+    >>> librosa.display.specshow(tg, x_axis='time', y_axis='tempo')
+    >>> plt.plot(librosa.frames_to_time(np.arange(len(dtempo))), dtempo,
+    ...          color='w', linewidth=1.5, label='Tempo estimate')
+    >>> plt.title('Dynamic tempo estimation')
+    >>> plt.legend(frameon=True, framealpha=0.75)
+    """
+
+    if start_bpm <= 0:
+        raise ParameterError('start_bpm must be strictly positive')
+
+    win_length = np.asscalar(core.time_to_frames(ac_size, sr=sr,
+                                                 hop_length=hop_length))
+
+    tg = tempogram(y=y, sr=sr,
+                   onset_envelope=onset_envelope,
+                   hop_length=hop_length,
+                   win_length=win_length)
+
+    # Eventually, we want this to work for time-varying tempo
+    if aggregate is not None:
+        tg = aggregate(tg, axis=1, keepdims=True)
+
+    # Get the BPM values for each bin, skipping the 0-lag bin
+    bpms = core.tempo_frequencies(tg.shape[0], hop_length=hop_length, sr=sr)
+
+    # Weight the autocorrelation by a log-normal distribution
+    prior = np.exp(-0.5 * ((np.log2(bpms) - np.log2(start_bpm)) / std_bpm)**2)
+
+    # Kill everything above the max tempo
+    if max_tempo is not None:
+        max_idx = np.argmax(bpms < max_tempo)
+        prior[:max_idx] = 0
+
+    # Really, instead of multiplying by the prior, we should set up a
+    # probabilistic model for tempo and add log-probabilities.
+    # This would give us a chance to recover from null signals and
+    # rely on the prior.
+    # it would also make time aggregation much more natural
+
+    # Get the maximum, weighted by the prior
+    best_period = np.argmax(tg * prior[:, np.newaxis], axis=0)
+
+    tempi = bpms[best_period]
+    # Wherever the best tempo is index 0, return start_bpm
+    tempi[best_period == 0] = start_bpm
+    return tempi
+
+
 def __beat_tracker(onset_envelope, bpm, fft_res, tightness, trim):
     """Internal function that tracks beats in an onset strength envelope.
 

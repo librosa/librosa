@@ -4,6 +4,7 @@
 # You can set these variables from the command line.
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
+SPHINXVBUILD   = sphinx-versioning
 PAPER         =
 BUILDDIR      = _build
 
@@ -151,3 +152,9 @@ doctest:
 	$(SPHINXBUILD) -b doctest $(ALLSPHINXOPTS) $(BUILDDIR)/doctest
 	@echo "Testing of doctests in the sources finished, look at the " \
 	      "results in $(BUILDDIR)/doctest/output.txt."
+
+html_version:
+	$(SPHINXVBUILD) build . _build/html
+
+html_version_deploy:
+	$(SPHINXVBUILD) push . gh-pages .

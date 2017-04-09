@@ -37,61 +37,93 @@ The default configuration can be overridden by setting the following environment
   - `LIBROSA_CACHE_MMAP` : optional memory mapping mode `{None, 'r+', 'r', 'w+', 'c'}`
   - `LIBROSA_CACHE_COMPRESS` : flag to enable compression of data on disk `{0, 1}`
   - `LIBROSA_CACHE_VERBOSE` : controls how much debug info is displayed. `{int, non-negative}`
+  - `LIBROSA_CACHE_LEVEL` : controls the caching level: the larger this value, the more data is cached. `{int}`
 
 Please refer to the `joblib.Memory` `documentation
 <https://pythonhosted.org/joblib/memory.html#memory-reference>`_ for a detailed explanation of these
 parameters.
 
+
+Cache levels
+------------
+
+Cache levels operate in a fashion similar to logging levels.
+For small values of `LIBROSA_CACHE_LEVEL`, only the most important (frequently used) data are cached.
+As the cache level increases, broader classes of functions are cached.
+As a result, application code may run faster at the expense of larger disk usage.
+
+The caching levels are described as follows:
+
+    - 10: filter bases, independent of audio data (dct, mel, chroma, constant-q)
+    - 20: low-level features (cqt, stft, zero-crossings, etc)
+    - 30: high-level features (tempo, beats, decomposition, recurrence, etc)
+    - 40: post-processing (delta, stack_memory, normalize, sync)
+
+The default cache level is 10.
+
+
 Example
 -------
 To demonstrate how to use the cache, we'll first call an example script twice without caching::
 
-    [~/git/librosa/examples]$ time ./estimate_tuning.py ../librosa/example_data/Kevin_MacLeod_-_Vibe_Ace.mp3 
-    Loading  ../librosa/example_data/Kevin_MacLeod_-_Vibe_Ace.mp3
+    $ time -p ./estimate_tuning.py ../librosa/util/example_data/Kevin_MacLeod_-_Vibe_Ace.ogg 
+    Loading  ../librosa/util/example_data/Kevin_MacLeod_-_Vibe_Ace.ogg
     Separating harmonic component ... 
     Estimating tuning ... 
-    +6.00 cents
-    
-    real    0m4.369s
-    user    0m4.065s
-    sys     0m0.350s
-    
-    [~/git/librosa/examples]$ time ./estimate_tuning.py ../librosa/example_data/Kevin_MacLeod_-_Vibe_Ace.mp3 
-    Loading  ../librosa/example_data/Kevin_MacLeod_-_Vibe_Ace.mp3
+    +9.00 cents
+    real 6.74
+    user 6.03
+    sys 1.09
+
+    $ time -p ./estimate_tuning.py ../librosa/util/example_data/Kevin_MacLeod_-_Vibe_Ace.ogg 
+    Loading  ../librosa/util/example_data/Kevin_MacLeod_-_Vibe_Ace.ogg
     Separating harmonic component ... 
     Estimating tuning ... 
-    +6.00 cents
-    
-    real    0m4.414s
-    user    0m4.013s
-    sys     0m0.440s
-    
+    +9.00 cents
+    real 6.68
+    user 6.04
+    sys 1.05
+
 
 Next, we'll enable caching to `/tmp/librosa`::
 
-    [~/git/librosa/examples]$ export LIBROSA_CACHE_DIR=/tmp/librosa
+    $ export LIBROSA_CACHE_DIR=/tmp/librosa
+
+and set the cache level to 50::
+
+    $ export LIBROSA_CACHE_LEVEL=50
 
 And now we'll re-run the example script twice.  The first time, there will be no cached values, so the time
 should be similar to running without cache.  The second time, we'll be able to reuse intermediate values, so
 it should be significantly faster.::
 
-    [~/git/librosa/examples]$ time ./estimate_tuning.py ../librosa/example_data/Kevin_MacLeod_-_Vibe_Ace.mp3 
-    Loading  ../librosa/example_data/Kevin_MacLeod_-_Vibe_Ace.mp3
+    $ time -p ./estimate_tuning.py ../librosa/util/example_data/Kevin_MacLeod_-_Vibe_Ace.ogg 
+    Loading  ../librosa/util/example_data/Kevin_MacLeod_-_Vibe_Ace.ogg
     Separating harmonic component ... 
     Estimating tuning ... 
-    +6.00 cents
-    
-    real    0m4.859s
-    user    0m4.471s
-    sys     0m0.429s
-    
-    [~/git/librosa/examples]$ time ./estimate_tuning.py ../librosa/example_data/Kevin_MacLeod_-_Vibe_Ace.mp3 
-    Loading  ../librosa/example_data/Kevin_MacLeod_-_Vibe_Ace.mp3
-    Separating harmonic component ... 
-    Estimating tuning ... 
-    +6.00 cents
-    
-    real    0m0.931s
-    user    0m0.862s
-    sys     0m0.112s
+    +9.00 cents
+    real 7.60
+    user 6.79
+    sys 1.15
 
+    $ time -p ./estimate_tuning.py ../librosa/util/example_data/Kevin_MacLeod_-_Vibe_Ace.ogg 
+    Loading  ../librosa/util/example_data/Kevin_MacLeod_-_Vibe_Ace.ogg
+    Separating harmonic component ... 
+    Estimating tuning ... 
+    +9.00 cents
+    real 1.64
+    user 1.30
+    sys 0.74
+
+Reducing the cache level to 20 yields an intermediate acceleration::
+
+    $ export LIBROSA_CACHE_LEVEL=20
+
+    $ time -p ./estimate_tuning.py ../librosa/util/example_data/Kevin_MacLeod_-_Vibe_Ace.ogg 
+    Loading  ../librosa/util/example_data/Kevin_MacLeod_-_Vibe_Ace.ogg
+    Separating harmonic component ... 
+    Estimating tuning ... 
+    +9.00 cents
+    real 4.98
+    user 4.17
+    sys 1.22

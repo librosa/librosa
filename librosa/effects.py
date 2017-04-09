@@ -27,21 +27,24 @@ Miscellaneous
     :toctree: generated/
 
     remix
+    trim
+    split
 """
 
 import numpy as np
 
 from . import core
 from . import decompose
+from . import feature
 from . import util
 from .util.exceptions import ParameterError
 
 __all__ = ['hpss', 'harmonic', 'percussive',
            'time_stretch', 'pitch_shift',
-           'remix']
+           'remix', 'trim', 'split']
 
 
-def hpss(y):
+def hpss(y, **kwargs):
     '''Decompose an audio time series into harmonic and percussive components.
 
     This function automates the STFT->HPSS->ISTFT pipeline, and ensures that
@@ -52,6 +55,9 @@ def hpss(y):
     ----------
     y : np.ndarray [shape=(n,)]
         audio time series
+    kwargs : additional keyword arguments.
+        See `librosa.decompose.hpss` for details.
+
 
     Returns
     -------
@@ -70,8 +76,12 @@ def hpss(y):
 
     Examples
     --------
+    >>> # Extract harmonic and percussive components
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> y_harmonic, y_percussive = librosa.effects.hpss(y)
+
+    >>> # Get a more isolated percussive component by widening its margin
+    >>> y_harmonic, y_percussive = librosa.effects.hpss(y, margin=(1.0,5.0))
 
     '''
 
@@ -79,7 +89,7 @@ def hpss(y):
     stft = core.stft(y)
 
     # Decompose into harmonic and percussives
-    stft_harm, stft_perc = decompose.hpss(stft)
+    stft_harm, stft_perc = decompose.hpss(stft, **kwargs)
 
     # Invert the STFTs.  Adjust length to match the input.
     y_harm = util.fix_length(core.istft(stft_harm, dtype=y.dtype), len(y))
@@ -88,13 +98,15 @@ def hpss(y):
     return y_harm, y_perc
 
 
-def harmonic(y):
+def harmonic(y, **kwargs):
     '''Extract harmonic elements from an audio time-series.
 
     Parameters
     ----------
     y : np.ndarray [shape=(n,)]
         audio time series
+    kwargs : additional keyword arguments.
+        See `librosa.decompose.hpss` for details.
 
     Returns
     -------
@@ -109,8 +121,12 @@ def harmonic(y):
 
     Examples
     --------
+    >>> # Extract harmonic component
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> y_harmonic = librosa.effects.harmonic(y)
+
+    >>> # Use a margin > 1.0 for greater harmonic separation
+    >>> y_harmonic = librosa.effects.harmonic(y, margin=3.0)
 
     '''
 
@@ -118,7 +134,7 @@ def harmonic(y):
     stft = core.stft(y)
 
     # Remove percussives
-    stft_harm = decompose.hpss(stft)[0]
+    stft_harm = decompose.hpss(stft, **kwargs)[0]
 
     # Invert the STFTs
     y_harm = util.fix_length(core.istft(stft_harm, dtype=y.dtype), len(y))
@@ -126,13 +142,15 @@ def harmonic(y):
     return y_harm
 
 
-def percussive(y):
+def percussive(y, **kwargs):
     '''Extract percussive elements from an audio time-series.
 
     Parameters
     ----------
     y : np.ndarray [shape=(n,)]
         audio time series
+    kwargs : additional keyword arguments.
+        See `librosa.decompose.hpss` for details.
 
     Returns
     -------
@@ -147,8 +165,12 @@ def percussive(y):
 
     Examples
     --------
+    >>> # Extract percussive component
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> y_percussive = librosa.effects.percussive(y)
+
+    >>> # Use a margin > 1.0 for greater percussive separation
+    >>> y_percussive = librosa.effects.percussive(y, margin=3.0)
 
     '''
 
@@ -156,7 +178,7 @@ def percussive(y):
     stft = core.stft(y)
 
     # Remove harmonics
-    stft_perc = decompose.hpss(stft)[1]
+    stft_perc = decompose.hpss(stft, **kwargs)[1]
 
     # Invert the STFT
     y_perc = util.fix_length(core.istft(stft_perc, dtype=y.dtype), len(y))
@@ -355,3 +377,170 @@ def remix(y, intervals, align_zeros=True):
         y_out.append(y[clip])
 
     return np.concatenate(y_out, axis=-1)
+
+
+def _signal_to_frame_nonsilent(y, frame_length=2048, hop_length=512, top_db=60,
+                               ref=np.max):
+    '''Frame-wise non-silent indicator for audio input.
+
+    This is a helper function for `trim` and `split`.
+
+    Parameters
+    ----------
+    y : np.ndarray, shape=(n,) or (2,n)
+        Audio signal, mono or stereo
+
+    frame_length : int > 0
+        The number of samples per frame
+
+    hop_length : int > 0
+        The number of samples between frames
+
+    top_db : number > 0
+        The threshold (in decibels) below reference to consider as
+        silence
+
+    ref : callable or float
+        The reference power
+
+    Returns
+    -------
+    non_silent : np.ndarray, shape=(m,), dtype=bool
+        Indicator of non-silent frames
+    '''
+    # Convert to mono
+    y_mono = core.to_mono(y)
+
+    # Compute the MSE for the signal
+    mse = feature.rmse(y=y_mono,
+                       frame_length=frame_length,
+                       hop_length=hop_length)**2
+
+    return (core.power_to_db(mse.squeeze(),
+                             ref=ref,
+                             top_db=None) > - top_db)
+
+
+def trim(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
+    '''Trim leading and trailing silence from an audio signal.
+
+    Parameters
+    ----------
+    y : np.ndarray, shape=(n,) or (2,n)
+        Audio signal, can be mono or stereo
+
+    top_db : number > 0
+        The threshold (in decibels) below reference to consider as
+        silence
+
+    ref : number or callable
+        The reference power.  By default, it uses `np.max` and compares
+        to the peak power in the signal.
+
+    frame_length : int > 0
+        The number of samples per analysis frame
+
+    hop_length : int > 0
+        The number of samples between analysis frames
+
+    Returns
+    -------
+    y_trimmed : np.ndarray, shape=(m,) or (2, m)
+        The trimmed signal
+
+    index : np.ndarray, shape=(2,)
+        the interval of `y` corresponding to the non-silent region:
+        `y_trimmed = y[index[0]:index[1]]` (for mono) or
+        `y_trimmed = y[:, index[0]:index[1]]` (for stereo).
+
+
+    Examples
+    --------
+    >>> # Load some audio
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> # Trim the beginning and ending silence
+    >>> yt, index = librosa.effects.trim(y)
+    >>> # Print the durations
+    >>> print(librosa.get_duration(y), librosa.get_duration(yt))
+    61.45886621315193 60.58086167800454
+    '''
+
+    non_silent = _signal_to_frame_nonsilent(y,
+                                            frame_length=frame_length,
+                                            hop_length=hop_length,
+                                            ref=ref,
+                                            top_db=top_db)
+
+    nonzero = np.flatnonzero(non_silent)
+
+    # Compute the start and end positions
+    # End position goes one frame past the last non-zero
+    start = int(core.frames_to_samples(nonzero[0], hop_length))
+    end = min(y.shape[-1],
+              int(core.frames_to_samples(nonzero[-1] + 1, hop_length)))
+
+    # Build the mono/stereo index
+    full_index = [slice(None)] * y.ndim
+    full_index[-1] = slice(start, end)
+
+    return y[full_index], np.asarray([start, end])
+
+
+def split(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
+    '''Split an audio signal into non-silent intervals.
+
+    Parameters
+    ----------
+    y : np.ndarray, shape=(n,) or (2, n)
+        An audio signal
+
+    top_db : number > 0
+        The threshold (in decibels) below reference to consider as
+        silence
+
+    ref : number or callable
+        The reference power.  By default, it uses `np.max` and compares
+        to the peak power in the signal.
+
+    frame_length : int > 0
+        The number of samples per analysis frame
+
+    hop_length : int > 0
+        The number of samples between analysis frames
+
+    Returns
+    -------
+    intervals : np.ndarray, shape=(m, 2)
+        `intervals[i] == (start_i, end_i)` are the start and end time
+        (in samples) of non-silent interval `i`.
+
+    '''
+
+    non_silent = _signal_to_frame_nonsilent(y,
+                                            frame_length=frame_length,
+                                            hop_length=hop_length,
+                                            ref=ref,
+                                            top_db=top_db)
+
+    # Interval slicing, adapted from
+    # https://stackoverflow.com/questions/2619413/efficiently-finding-the-interval-with-non-zeros-in-scipy-numpy-in-python
+    # Find points where the sign flips
+    edges = np.flatnonzero(np.diff(non_silent.astype(int)))
+
+    # Pad back the sample lost in the diff
+    edges = [edges + 1]
+
+    # If the first frame had high energy, count it
+    if non_silent[0]:
+        edges.insert(0, [0])
+
+    # Likewise for the last frame
+    if non_silent[-1]:
+        edges.append([len(non_silent)])
+
+    # Convert from frames to samples
+    edges = core.frames_to_samples(np.concatenate(edges),
+                                   hop_length=hop_length)
+
+    # Stack the results back as an ndarray
+    return edges.reshape((-1, 2))

@@ -2,6 +2,14 @@
 # -*- encoding: utf-8 -*-
 
 from __future__ import print_function
+import warnings
+import numpy as np
+
+from nose.tools import raises, eq_
+
+import librosa
+
+from test_core import load, srand
 
 # Disable cache
 import os
@@ -10,15 +18,9 @@ try:
 except KeyError:
     pass
 
-import matplotlib
-matplotlib.use('Agg')
-import librosa
-import numpy as np
-import scipy.signal
-
-from nose.tools import raises, eq_
-
 __EXAMPLE_FILE = 'data/test1_22050.wav'
+warnings.resetwarnings()
+warnings.simplefilter('always')
 
 
 # utils submodule
@@ -92,6 +94,8 @@ def test_stack_memory():
                 assert np.allclose(data[i, :- step * delay],
                                    data_stack[step * d + i, step * delay:])
 
+    srand()
+
     for ndim in [1, 2]:
         data = np.random.randn(* ([5] * ndim))
 
@@ -118,6 +122,7 @@ def test_spectral_centroid_synthetic():
 
         assert np.allclose(cent, freq[k])
 
+    srand()
     # construct a fake spectrogram
     sr = 22050
     n_fft = 1024
@@ -176,6 +181,7 @@ def test_spectral_bandwidth_synthetic():
 
         assert not np.any(bw)
 
+    srand()
     # construct a fake spectrogram
     sr = 22050
     n_fft = 1024
@@ -214,6 +220,8 @@ def test_spectral_bandwidth_errors():
 
 
 def test_spectral_rolloff_synthetic():
+
+    srand()
 
     sr = 22050
     n_fft = 2048
@@ -321,8 +329,50 @@ def test_rmse():
 
         assert np.allclose(rmse, np.ones_like(rmse))
 
+    def __test_consistency(frame_length, hop_length):
+        y, sr = librosa.load(__EXAMPLE_FILE, sr=None)
+
+        # Ensure audio is divisible into frame size.
+        y = librosa.util.fix_length(y, y.size - y.size % frame_length)
+        assert y.size % frame_length == 0
+
+        # STFT magnitudes with a constant windowing function and no centering.
+        S = librosa.magphase(librosa.stft(y,
+                                          n_fft=frame_length,
+                                          hop_length=hop_length,
+                                          window=np.ones,
+                                          center=False))[0]
+
+        # Try both RMS methods.
+        rms1 = librosa.feature.rmse(S=S, frame_length=frame_length,
+                                    hop_length=hop_length)
+        rms2 = librosa.feature.rmse(y=y, frame_length=frame_length,
+                                    hop_length=hop_length)
+
+        # Normalize envelopes.
+        rms1 /= rms1.max()
+        rms2 /= rms2.max()
+
+        # Ensure results are similar.
+        np.testing.assert_allclose(rms1, rms2, rtol=1e-2)
+
+    for frame_length in [2048, 4096]:
+        for hop_length in [128, 512, 1024]:
+            yield __test_consistency, frame_length, hop_length
+
     for n in range(10, 100, 10):
         yield __test, n
+
+
+def test_rmse_nfft():
+
+    warnings.resetwarnings()
+    warnings.simplefilter('always')
+    with warnings.catch_warnings(record=True) as out:
+        librosa.feature.rmse(y=np.zeros(8192), n_fft=1024)
+        assert len(out) > 0
+        assert out[0].category is DeprecationWarning
+        assert 'renamed' in str(out[0].message).lower()
 
 
 def test_zcr_synthetic():
@@ -355,6 +405,7 @@ def test_zcr_synthetic():
 
 def test_poly_features_synthetic():
 
+    srand()
     sr = 22050
     n_fft = 2048
 
@@ -438,7 +489,7 @@ def test_tempogram_fail():
         librosa.feature.tempogram(y=y,
                                   sr=sr,
                                   onset_envelope=onset_envelope,
-                                  hop_length=hop_length, 
+                                  hop_length=hop_length,
                                   win_length=win_length,
                                   center=center,
                                   window=window,
@@ -451,11 +502,11 @@ def test_tempogram_fail():
     y = np.zeros(duration * sr)
 
     # Fail when no input is provided
-    yield __test, None, sr, None, hop_length, 384, True, None, np.inf
+    yield __test, None, sr, None, hop_length, 384, True, 'hann', np.inf
 
     # Fail when win_length is too small
     for win_length in [-384, -1, 0]:
-        yield __test, y, sr, None, hop_length, win_length, True, None, np.inf
+        yield __test, y, sr, None, hop_length, win_length, True, 'hann', np.inf
 
     # Fail when len(window) != win_length
     yield __test, y, sr, None, hop_length, 384, True, np.ones(win_length + 1), np.inf
@@ -556,6 +607,37 @@ def test_tempogram_odf():
             yield __test_equiv, tempo, center
 
         for win_length in [192, 384]:
-            for window in [None, np.ones, np.ones(win_length)]:
+            for window in ['hann', np.ones, np.ones(win_length)]:
                 for norm in [None, 1, 2, np.inf]:
                     yield __test_peaks, tempo, win_length, window, norm
+
+
+def test_cens():
+    # load CQT data from Chroma Toolbox
+    ct_cqt = load(os.path.join('data', 'features-CT-cqt.mat'))
+
+    fn_ct_chroma_cens = ['features-CT-CENS_9-2.mat',
+                         'features-CT-CENS_21-5.mat',
+                         'features-CT-CENS_41-1.mat']
+
+    cens_params = [(9, 2), (21, 5), (41, 1)]
+
+    for cur_test_case, cur_fn_ct_chroma_cens in enumerate(fn_ct_chroma_cens):
+        win_len_smooth = cens_params[cur_test_case][0]
+        downsample_smooth = cens_params[cur_test_case][1]
+
+        # plug into librosa cens computation
+        lr_chroma_cens = librosa.feature.chroma_cens(C=ct_cqt['f_cqt'],
+                                                     win_len_smooth=win_len_smooth,
+                                                     fmin=librosa.core.midi_to_hz(1),
+                                                     bins_per_octave=12,
+                                                     n_octaves=10)
+
+        # leaving out frames to match chroma toolbox behaviour
+        # lr_chroma_cens = librosa.resample(lr_chroma_cens, orig_sr=1, target_sr=1/downsample_smooth)
+        lr_chroma_cens = lr_chroma_cens[:, ::downsample_smooth]
+
+        # load CENS-41-1 features
+        ct_chroma_cens = load(os.path.join('data', cur_fn_ct_chroma_cens))
+
+        assert np.allclose(ct_chroma_cens['f_CENS'], lr_chroma_cens, rtol=1e-15, atol=1e-15)

@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 '''Time and frequency utilities'''
 
-import numpy as np
 import re
+
+import numpy as np
 import six
 
 from ..util.exceptions import ParameterError
@@ -20,6 +21,7 @@ __all__ = ['frames_to_samples', 'frames_to_time',
            'fft_frequencies',
            'cqt_frequencies',
            'mel_frequencies',
+           'tempo_frequencies',
            'A_weighting']
 
 
@@ -42,7 +44,7 @@ def frames_to_samples(frames, hop_length=512, n_fft=None):
     Returns
     -------
     times : np.ndarray [shape=(n,)]
-        time (in seconds) of each given frame number:
+        time (in samples) of each given frame number:
         `times[i] = frames[i] * hop_length`
 
     See Also
@@ -833,7 +835,7 @@ def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False):
     Returns
     -------
     bin_frequencies : ndarray [shape=(n_mels,)]
-        vector of n_mels frequencies in Hz which are uniformly spaced on the Mel 
+        vector of n_mels frequencies in Hz which are uniformly spaced on the Mel
         axis.
 
     Examples
@@ -859,6 +861,45 @@ def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False):
     mels = np.linspace(min_mel, max_mel, n_mels)
 
     return mel_to_hz(mels, htk=htk)
+
+
+def tempo_frequencies(n_bins, hop_length=512, sr=22050):
+    '''Compute the frequencies (in beats-per-minute) corresponding
+    to an onset auto-correlation or tempogram matrix.
+
+    Parameters
+    ----------
+    n_bins : int > 0
+        The number of lag bins
+
+    hop_length : int > 0
+        The number of samples between each bin
+
+    sr : number > 0
+        The audio sampling rate
+
+    Returns
+    -------
+    bin_frequencies : ndarray [shape=(n_bins,)]
+        vector of bin frequencies measured in BPM.
+
+        .. note:: `bin_frequencies[0] = +np.inf` corresponds to 0-lag
+
+    Examples
+    --------
+    Get the tempo frequencies corresponding to a 384-bin (8-second) tempogram
+
+    >>> librosa.tempo_frequencies(384)
+    array([      inf,  2583.984,  1291.992, ...,     6.782,
+               6.764,     6.747])
+    '''
+
+    bin_frequencies = np.zeros(int(n_bins), dtype=np.float)
+
+    bin_frequencies[0] = np.inf
+    bin_frequencies[1:] = 60.0 * sr / (hop_length * np.arange(1.0, n_bins))
+
+    return bin_frequencies
 
 
 # A-weighting should be capitalized: suppress the naming warning
