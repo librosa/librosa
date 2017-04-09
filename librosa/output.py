@@ -18,14 +18,6 @@ Audio output
     :toctree: generated/
 
     write_wav
-
-Deprecated
-----------
-.. autosummary::
-    :toctree: generated/
-
-    frames_csv
-
 """
 
 import csv
@@ -34,14 +26,11 @@ import numpy as np
 import scipy
 import scipy.io.wavfile
 
-from . import core
 from . import util
 from .util.exceptions import ParameterError
 
 
-__all__ = ['annotation', 'times_csv', 'write_wav',
-           # Deprecated functions
-           'frames_csv']
+__all__ = ['annotation', 'times_csv', 'write_wav']
 
 
 def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
@@ -61,8 +50,10 @@ def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
 
     intervals : np.ndarray [shape=(n, 2)]
         array of interval start and end-times.
-        - `intervals[i, 0]` marks the start time of interval `i`
-        - `intervals[i, 1]` marks the endtime of interval `i`
+
+        `intervals[i, 0]` marks the start time of interval `i`
+
+        `intervals[i, 1]` marks the end time of interval `i`
 
     annotations : None or list-like [shape=(n,)]
         optional list of annotation strings. `annotations[i]` applies
@@ -99,6 +90,7 @@ def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
     >>> intervals = np.hstack([boundary_times[:-1, np.newaxis],
     ...                        boundary_times[1:, np.newaxis]])
 
+
     Make some fake annotations
 
     >>> labels = ['Seg #{:03d}'.format(i) for i in range(len(intervals))]
@@ -107,7 +99,6 @@ def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
 
     >>> librosa.output.annotation('segments.csv', intervals,
     ...                           annotations=labels)
-
     '''
 
     util.valid_intervals(intervals)
@@ -172,10 +163,11 @@ def times_csv(path, times, annotations=None, delimiter=',', fmt='%0.3f'):
 
     Examples
     --------
+    Write beat-tracker time to CSV
+
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> tempo, beats = librosa.beat.beat_track(y, sr=sr)
-    >>> times = librosa.frames_to_time(beats, sr=sr)
-    >>> librosa.output.times_csv('beat_times.csv', times)
+    >>> tempo, beats = librosa.beat.beat_track(y, sr=sr, units='time')
+    >>> librosa.output.times_csv('beat_times.csv', beats)
     """
 
     if annotations is not None and len(annotations) != len(times):
@@ -192,7 +184,7 @@ def times_csv(path, times, annotations=None, delimiter=',', fmt='%0.3f'):
                 writer.writerow([(fmt % t), lab])
 
 
-def write_wav(path, y, sr, norm=True):
+def write_wav(path, y, sr, norm=False):
     """Output a time series as a .wav file
 
     Parameters
@@ -207,7 +199,8 @@ def write_wav(path, y, sr, norm=True):
         sampling rate of `y`
 
     norm : boolean [scalar]
-        enable amplitude normalization
+        enable amplitude normalization.
+        For floating point `y`, scale the data to the range [-1, +1].
 
     Examples
     --------
@@ -223,7 +216,7 @@ def write_wav(path, y, sr, norm=True):
     util.valid_audio(y, mono=False)
 
     # normalize
-    if norm:
+    if norm and np.issubdtype(y.dtype, np.float):
         wav = util.normalize(y, norm=np.inf, axis=None)
     else:
         wav = y
@@ -234,55 +227,3 @@ def write_wav(path, y, sr, norm=True):
 
     # Save
     scipy.io.wavfile.write(path, sr, wav)
-
-
-# Deprecated functions below
-
-@util.decorators.deprecated('0.4', '0.5')
-def frames_csv(path, frames, sr=22050, hop_length=512,
-               n_fft=None, **kwargs):  # pragma: no cover
-    """Convert frames to time and store the output in CSV format.
-
-    .. warning:: Deprecated in librosa 0.4
-              Functionality is redundant with `times_csv`
-
-
-    Parameters
-    ----------
-    path : string
-        path to save the output CSV file
-
-    frames : list-like of ints
-        list of frame numbers for beat events
-
-    sr : number > 0 [scalar]
-        audio sampling rate
-
-    hop_length : int > 0 [scalar]
-        number of samples between success frames
-
-    n_fft : None or int > 0
-        length of the FFT window, if using left-aligned frames.
-        If specified, the output `time[i]` will correspond to the
-        center of the frame starting at `frames[i] * hop_length`
-        samples.
-
-    kwargs : additional keyword arguments
-        Arguments passed through to `times_csv`
-
-    See Also
-    --------
-    times_csv
-    librosa.core.frames_to_time
-
-    Examples
-    --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> tempo, beats = librosa.beat.beat_track(y, sr=sr)
-    >>> librosa.output.frames_csv('beat_times.csv', beats, sr=sr)
-    """
-
-    times = core.frames_to_time(frames, sr=sr, hop_length=hop_length,
-                                n_fft=n_fft)
-
-    times_csv(path, times, **kwargs)

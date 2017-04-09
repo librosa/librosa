@@ -164,6 +164,9 @@ multiple spectral features, and beat-synchronous feature aggregation.
     # Load the example clip
     y, sr = librosa.load(librosa.util.example_audio_file())
 
+    # Set the hop length; at 22050 Hz, 512 samples ~= 23ms
+    hop_length = 512
+
     # Separate harmonics and percussives into two waveforms
     y_harmonic, y_percussive = librosa.effects.hpss(y)
 
@@ -277,5 +280,4 @@ resulting in a feature matrix ``beat_features`` of dimension
 More examples
 -------------
 
-More example scripts are provided in the `examples
-<https://github.com/bmcfee/librosa/tree/master/examples>`_ folder.
+More example scripts are provided in the `example gallery <https://librosa.github.io/librosa_gallery/>`_.

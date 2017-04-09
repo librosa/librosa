@@ -1,42 +1,226 @@
-Changes
-=======
+Release notes
+=============
 
-v0.4.2
+v0.5.0
 ------
 
 Bug fixes
+
+  - `#371`_ preserve integer hop lengths in constant-Q transforms. *Brian McFee*
+  - `#386`_ fixed a length check in ``librosa.util.frame``. *Brian McFee*
+  - `#416`_ ``librosa.output.write_wav`` only normalizes floating point, and normalization is disabled by
+    default. *Brian McFee*
+  - `#417`_ ``librosa.cqt`` output is now scaled continuously across octave boundaries. *Brian McFee, Eric
+    Humphrey*
+  - `#450`_ enhanced numerical stability for ``librosa.util.softmask``. *Brian McFee*
+  - `#467`_ correction to chroma documentation. *Seth Kranzler*
+  - `#501`_ fixed a numpy 1.12 compatibility error in ``pitch_tuning``. *Hojin Lee*
+
+New features
+
+  - `#323`_ ``librosa.dtw`` dynamic time warping. *Stefan Balke*
+  - `#404`_ ``librosa.cache`` now supports priority levels, analogous to logging levels. *Brian McFee*
+  - `#405`_ ``librosa.interp_harmonics`` for estimating harmonics of time-frequency representations. *Brian
+    McFee*
+  - `#410`_ ``librosa.beat.beat_track`` and ``librosa.onset.onset_detect`` can return output in frames,
+    samples, or time units. *Brian McFee*
+  - `#413`_ full support for scipy-style window specifications. *Brian McFee*
+  - `#427`_ ``librosa.salience`` for computing spectrogram salience using harmonic peaks. *Rachel Bittner*
+  - `#428`_ ``librosa.effects.trim`` and ``librosa.effects.split`` for trimming and splitting waveforms. *Brian
+    McFee*
+  - `#464`_ ``librosa.amplitude_to_db``, ``db_to_amplitude``, ``power_to_db``, and ``db_to_power`` for
+    amplitude conversions.  This deprecates ``logamplitude``.  *Brian McFee*
+  - `#471`_ ``librosa.util.normalize`` now supports ``threshold`` and ``fill_value`` arguments. *Brian McFee*
+  - `#472`_ ``librosa.feature.melspectrogram`` now supports ``power`` argument. *Keunwoo Choi*
+  - `#473`_ ``librosa.onset.onset_backtrack`` for backtracking onset events to previous local minima of
+    energy. *Brian McFee*
+  - `#479`_ ``librosa.beat.tempo`` replaces ``librosa.beat.estimate_tempo``, supports time-varying estimation.
+    *Brian McFee*
+  
+
+Other changes
+
+  - `#352`_ removed ``seaborn`` integration. *Brian McFee*
+  - `#368`_ rewrite of the ``librosa.display`` submodule.  All plots are now in natural coordinates. *Brian
+    McFee*
+  - `#402`_ ``librosa.display`` submodule is not automatically imported. *Brian McFee*
+  - `#403`_ ``librosa.decompose.hpss`` now returns soft masks. *Brian McFee*
+  - `#407`_ ``librosa.feature.rmse`` can now compute directly in the time domain. *Carl Thome*
+  - `#432`_ ``librosa.feature.rmse`` renames ``n_fft`` to ``frame_length``. *Brian McFee*
+  - `#446`_ ``librosa.cqt`` now disables tuning estimation by default. *Brian McFee*
+  - `#452`_ ``librosa.filters.__float_window`` now always uses integer length windows. *Brian McFee*
+  - `#459`_ ``librosa.load`` now supports ``res_type`` argument for resampling. *CJ Carr*
+  - `#482`_ ``librosa.filters.mel`` now warns if parameters will generate empty filter channels. *Brian McFee*
+  - `#480`_ expanded documentation for advanced IO use-cases. *Fabian Robert-Stoeter*
+
+API changes and compatibility
+
+  - The following functions have permanently moved:
+        - ``core.peak_peak`` to ``util.peak_pick``
+        - ``core.localmax`` to ``util.localmax``
+        - ``feature.sync`` to ``util.sync``
+
+  - The following functions, classes, and constants have been removed:
+        - ``core.ifptrack``
+        - ``feature.chromagram``
+        - ``feature.logfsgram``
+        - ``filters.logfrequency``
+        - ``output.frames_csv``
+        - ``segment.structure_Feature``
+        - ``display.time_ticks``
+        - ``util.FeatureExtractor``
+        - ``util.buf_to_int``
+        - ``util.SMALL_FLOAT``
+
+  - The following parameters have been removed:
+        - ``librosa.cqt``: `resolution`
+        - ``librosa.cqt``: `aggregate`
+        - ``feature.chroma_cqt``: `mode`
+        - ``onset_strength``: `centering`
+
+  - Seaborn integration has been removed, and the ``display`` submodule now requires matplotlib >= 1.5.
+        - The `use_sns` argument has been removed from `display.cmap`
+        - `magma` is now the default sequential colormap.
+
+  - The ``librosa.display`` module has been rewritten.
+        - ``librosa.display.specshow`` now plots using `pcolormesh`, and supports non-uniform time and frequency axes.
+        - All plots can be rendered in natural coordinates (e.g., time or Hz)
+        - Interactive plotting is now supported via ticker and formatter objects
+
+  - ``librosa.decompose.hpss`` with `mask=True` now returns soft masks, rather than binary masks.
+
+  - ``librosa.filters.get_window`` wraps ``scipy.signal.get_window``, and handles generic callables as well pre-registered
+    window functions.  All windowed analyses (e.g., ``stft``, ``cqt``, or ``tempogram``) now support the full range
+    of window functions and parameteric windows via tuple parameters, e.g., ``window=('kaiser', 4.0)``.
+        
+  - ``stft`` windows are now explicitly asymmetric by default, which breaks backwards compatibility with the 0.4 series.
+
+  - ``cqt`` now returns properly scaled outputs that are continuous across octave boundaries.  This breaks
+    backwards compatibility with the 0.4 series.
+
+  - ``cqt`` now uses `tuning=0.0` by default, rather than estimating the tuning from the signal.  Tuning
+    estimation is still supported, and enabled by default for chroma analysis (``librosa.feature.chroma_cqt``).
+
+  - ``logamplitude`` is deprecated in favor of ``amplitude_to_db`` or ``power_to_db``.  The `ref_power` parameter
+    has been renamed to `ref`.
+
+
+.. _#501: https://github.com/librosa/librosa/pull/501
+.. _#480: https://github.com/librosa/librosa/pull/480
+.. _#467: https://github.com/librosa/librosa/pull/467
+.. _#450: https://github.com/librosa/librosa/pull/450
+.. _#417: https://github.com/librosa/librosa/pull/417
+.. _#416: https://github.com/librosa/librosa/pull/416
+.. _#386: https://github.com/librosa/librosa/pull/386
+.. _#371: https://github.com/librosa/librosa/pull/371
+.. _#479: https://github.com/librosa/librosa/pull/479
+.. _#473: https://github.com/librosa/librosa/pull/473
+.. _#472: https://github.com/librosa/librosa/pull/472
+.. _#471: https://github.com/librosa/librosa/pull/471
+.. _#464: https://github.com/librosa/librosa/pull/464
+.. _#428: https://github.com/librosa/librosa/pull/428
+.. _#427: https://github.com/librosa/librosa/pull/427
+.. _#413: https://github.com/librosa/librosa/pull/413
+.. _#410: https://github.com/librosa/librosa/pull/410
+.. _#405: https://github.com/librosa/librosa/pull/405
+.. _#404: https://github.com/librosa/librosa/pull/404
+.. _#323: https://github.com/librosa/librosa/pull/323
+.. _#482: https://github.com/librosa/librosa/pull/482
+.. _#459: https://github.com/librosa/librosa/pull/459
+.. _#452: https://github.com/librosa/librosa/pull/452
+.. _#446: https://github.com/librosa/librosa/pull/446
+.. _#432: https://github.com/librosa/librosa/pull/432
+.. _#407: https://github.com/librosa/librosa/pull/407
+.. _#403: https://github.com/librosa/librosa/pull/403
+.. _#402: https://github.com/librosa/librosa/pull/402
+.. _#368: https://github.com/librosa/librosa/pull/368
+.. _#352: https://github.com/librosa/librosa/pull/352
+
+
+
+v0.4.3
+------
+2016-05-17
+
+Bug fixes
+  - `#315`_ fixed a positioning error in ``display.specshow`` with logarithmic axes. *Brian McFee*
+  - `#332`_ ``librosa.cqt`` now throws an exception if the signal is too short for analysis. *Brian McFee*
+  - `#341`_ ``librosa.hybrid_cqt`` properly matches the scale of ``librosa.cqt``. *Brian McFee*
+  - `#348`_ ``librosa.cqt`` fixed a bug introduced in v0.4.2. *Brian McFee*
+  - `#354`_ Fixed a minor off-by-one error in ``librosa.beat.estimate_tempo``. *Brian McFee*
+  - `#357`_ improved numerical stability of ``librosa.decompose.hpss``. *Brian McFee*
+
+New features
+  - `#312`_ ``librosa.segment.recurrence_matrix`` can now construct sparse self-similarity matrices. *Brian
+    McFee*
+  - `#337`_ ``librosa.segment.recurrence_matrix`` can now produce weighted affinities and distances. *Brian
+    McFee*
+  - `#311`_ ``librosa.decompose.nl_filter`` implements several self-similarity based filtering operations
+    including non-local means. *Brian McFee*
+  - `#320`_ ``librosa.feature.chroma_cens`` implements chroma energy normalized statistics (CENS) features.
+    *Stefan Balke*
+  - `#354`_ ``librosa.core.tempo_frequencies`` computes tempo (BPM) frequencies for autocorrelation and
+    tempogram features. *Brian McFee*
+  - `#355`_ ``librosa.decompose.hpss`` now supports harmonic-percussive-residual separation. *CJ Carr, Brian McFee*
+  - `#357`_ ``librosa.util.softmask`` computes numerically stable soft masks. *Brian McFee*
+
+Other changes
+  - ``librosa.cqt``, ``librosa.hybrid_cqt`` parameter `aggregate` is now deprecated.
+  - Resampling is now handled by the ``resampy`` library
+  - ``librosa.get_duration`` can now operate directly on filenames as well as audio buffers and feature
+    matrices.
+  - ``librosa.decompose.hpss`` no longer supports ``power=0``.
+
+.. _#315: https://github.com/librosa/librosa/pull/315
+.. _#332: https://github.com/librosa/librosa/pull/332
+.. _#341: https://github.com/librosa/librosa/pull/341
+.. _#348: https://github.com/librosa/librosa/pull/348
+.. _#312: https://github.com/librosa/librosa/pull/312
+.. _#337: https://github.com/librosa/librosa/pull/337
+.. _#311: https://github.com/librosa/librosa/pull/311
+.. _#320: https://github.com/librosa/librosa/pull/320
+.. _#354: https://github.com/librosa/librosa/pull/354
+.. _#355: https://github.com/librosa/librosa/pull/355
+.. _#357: https://github.com/librosa/librosa/pull/357
+
+v0.4.2
+------
+2016-02-20
+
+Bug fixes
   - Support for matplotlib 1.5 color properties in the ``display`` module
-  - `#308`_ Fixed a per-octave scaling error in ``librosa.cqt``
+  - `#308`_ Fixed a per-octave scaling error in ``librosa.cqt``. *Brian McFee*
 
 New features
   - `#279`_ ``librosa.cqt`` now provides complex-valued output with argument `real=False`.
     This will become the default behavior in subsequent releases.
-  - `#288`_ ``core.resample`` now supports multi-channel inputs
+  - `#288`_ ``core.resample`` now supports multi-channel inputs. *Brian McFee*
   - `#295`_ ``librosa.display.frequency_ticks``: like ``time_ticks``. Ticks can now dynamically
-    adapt to scale (mHz, Hz, KHz, MHz, GHz) and use automatic precision formatting (``%g``)
+    adapt to scale (mHz, Hz, KHz, MHz, GHz) and use automatic precision formatting (``%g``). *Brian McFee*
 
 
 Other changes
-  - `#277`_ improved documentation
-  - `#294`_ deprecated the ``FeatureExtractor`` object
-  - `#300`_ added dependency version requirements to install script
+  - `#277`_ improved documentation for OSX. *Stefan Balke*
+  - `#294`_ deprecated the ``FeatureExtractor`` object. *Brian McFee*
+  - `#300`_ added dependency version requirements to install script. *Brian McFee*
   - `#302`_, `#279`_ renamed the following parameters
       - ``librosa.display.time_ticks``: `fmt` is now `time_fmt`
       - ``librosa.feature.chroma_cqt``: `mode` is now `cqt_mode`
       - ``librosa.cqt``, ``hybrid_cqt``, ``pseudo_cqt``, ``librosa.filters.constant_q``: `resolution` is now `filter_scale`
   - `#308`_ ``librosa.cqt`` default `filter_scale` parameter is now 1 instead of 2.
 
-.. _#277: https://github.com/bmcfee/librosa/pull/277
-.. _#279: https://github.com/bmcfee/librosa/pull/279
-.. _#288: https://github.com/bmcfee/librosa/pull/288
-.. _#294: https://github.com/bmcfee/librosa/pull/294
-.. _#295: https://github.com/bmcfee/librosa/pull/295
-.. _#300: https://github.com/bmcfee/librosa/pull/300
-.. _#302: https://github.com/bmcfee/librosa/pull/302
-.. _#308: https://github.com/bmcfee/librosa/pull/308
+.. _#277: https://github.com/librosa/librosa/pull/277
+.. _#279: https://github.com/librosa/librosa/pull/279
+.. _#288: https://github.com/librosa/librosa/pull/288
+.. _#294: https://github.com/librosa/librosa/pull/294
+.. _#295: https://github.com/librosa/librosa/pull/295
+.. _#300: https://github.com/librosa/librosa/pull/300
+.. _#302: https://github.com/librosa/librosa/pull/302
+.. _#308: https://github.com/librosa/librosa/pull/308
 
 v0.4.1
 ------
+2015-10-17
 
 Bug fixes
   - Improved safety check in CQT for invalid hop lengths
@@ -62,7 +246,7 @@ Other changes
   - ``librosa.core.autocorrelate`` can now operate along any axis of multi-dimensional input
   - the ``segment`` module functions now support arbitrary target axis
   - Added proper window normalization to ``librosa.core.istft`` for better reconstruction 
-    (`PR #235 <https://github.com/bmcfee/librosa/pull/235>`_).
+    (`PR #235 <https://github.com/librosa/librosa/pull/235>`_).
   - Standardized ``n_fft=2048`` for ``piptrack``, ``ifptrack`` (deprecated), and
     ``logfsgram`` (deprecated)
   - ``onset_strength`` parameter ``'centering'`` has been deprecated and renamed to
@@ -76,6 +260,7 @@ Other changes
 
 v0.4.0
 ------
+2015-07-08
 
 Bug fixes
 
@@ -166,6 +351,7 @@ Deprecated functions
 
 v0.3.1
 ------
+2015-02-18
 
 Bug fixes
 
@@ -200,6 +386,7 @@ Other changes
 
 v0.3.0
 ------
+2014-06-30
 
 Bug fixes
 
@@ -254,6 +441,7 @@ Other changes
 
 v0.2.1
 ------
+2014-01-21
 
 Bug fixes
 
@@ -295,6 +483,7 @@ Other changes
 
 v0.2.0
 ------
+2013-12-14
 
 Bug fixes
 

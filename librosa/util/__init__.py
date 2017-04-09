@@ -14,14 +14,17 @@ Array operations
     fix_length
     fix_frames
     index_to_slice
+    softmask
     sync
+    softmask
 
     axis_sort
     normalize
+    roll_sparse
     sparsify_rows
 
     buf_to_float
-
+    tiny
 
 Matching
 --------
@@ -59,23 +62,12 @@ File operations
     example_audio_file
     find_files
 
-
-Deprecated
-----------
-.. autosummary::
-    :toctree: generated/
-
-    FeatureExtractor
-    buf_to_int
-
 """
 
 from .utils import *  # pylint: disable=wildcard-import
 from .files import *  # pylint: disable=wildcard-import
-from .feature_extractor import *  # pylint: disable=wildcard-import
-from .deprecation import * # pylint: disable=wildcard-import
+from .deprecation import *  # pylint: disable=wildcard-import
 from . import decorators
 from . import exceptions
 
 __all__ = [_ for _ in dir() if not _.startswith('_')]
-

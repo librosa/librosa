@@ -15,35 +15,51 @@ class CacheManager(Memory):
     field, thereby allowing librosa.cache to act as a decorator function.
     '''
 
-    def __call__(self, function):
-        '''Decorator function.  Adds an input/output cache to
-        the specified function.'''
+    def __init__(self, cachedir, level=10, **kwargs):
+        super(CacheManager, self).__init__(cachedir, **kwargs)
+        # The level parameter controls which data we cache
+        # smaller numbers mean less caching
+        self.level = level
 
-        from decorator import FunctionMaker
+    def __call__(self, level):
+        '''Example usage:
 
-        def decorator_apply(dec, func):
-            """Decorate a function by preserving the signature even if dec
-            is not a signature-preserving decorator.
+        @cache(level=2)
+        def semi_important_function(some_arguments):
+            ...
+        '''
+        def wrapper(function):
+            '''Decorator function.  Adds an input/output cache to
+            the specified function.'''
 
-            This recipe is derived from
-            http://micheles.googlecode.com/hg/decorator/documentation.html#id14
-            """
+            from decorator import FunctionMaker
 
-            return FunctionMaker.create(
-                func, 'return decorated(%(signature)s)',
-                dict(decorated=dec(func)), __wrapped__=func)
+            def decorator_apply(dec, func):
+                """Decorate a function by preserving the signature even if dec
+                is not a signature-preserving decorator.
 
-        if self.cachedir is not None:
-            return decorator_apply(self.cache, function)
+                This recipe is derived from
+                http://micheles.googlecode.com/hg/decorator/documentation.html#id14
+                """
 
-        else:
-            return function
+                return FunctionMaker.create(
+                    func, 'return decorated(%(signature)s)',
+                    dict(decorated=dec(func)), __wrapped__=func)
+
+            if self.cachedir is not None and self.level >= level:
+                return decorator_apply(self.cache, function)
+
+            else:
+                return function
+        return wrapper
+
 
 # Instantiate the cache from the environment
 CACHE = CacheManager(os.environ.get('LIBROSA_CACHE_DIR', None),
                      mmap_mode=os.environ.get('LIBROSA_CACHE_MMAP', None),
                      compress=os.environ.get('LIBROSA_CACHE_COMPRESS', False),
-                     verbose=int(os.environ.get('LIBROSA_CACHE_VERBOSE', 0)))
+                     verbose=int(os.environ.get('LIBROSA_CACHE_VERBOSE', 0)),
+                     level=int(os.environ.get('LIBROSA_CACHE_LEVEL', 10)))
 
 # Override the module's __call__ attribute
 sys.modules[__name__] = CACHE

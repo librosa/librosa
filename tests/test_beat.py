@@ -12,14 +12,17 @@ try:
 except:
     pass
 
-import matplotlib
-matplotlib.use('Agg')
 import numpy as np
+import warnings
 import librosa
 
 from test_core import files, load
 
 __EXAMPLE_FILE = 'data/test1_22050.wav'
+
+
+warnings.resetwarnings()
+warnings.simplefilter('always')
 
 
 def test_onset_strength():
@@ -45,7 +48,7 @@ def test_onset_strength():
         yield (__test, infile)
 
 
-def test_tempo():
+def test_estimate_tempo():
 
     def __test(infile):
         DATA = load(infile)
@@ -57,10 +60,37 @@ def test_tempo():
                                             start_bpm=120.0)
 
         assert (np.allclose(tempo, DATA['t'][0, 0]) or
-                np.allclose(tempo, DATA['t'][0, 1]))
+                np.allclose(tempo, DATA['t'][0, 1])), (tempo, DATA['t'])
 
     for infile in files('data/beat-tempo-*.mat'):
         yield (__test, infile)
+
+
+def test_tempo():
+
+    def __test(tempo, sr, hop_length, ac_size, aggregate, y):
+
+        tempo_est = librosa.beat.tempo(y=y, sr=sr, hop_length=hop_length,
+                                       ac_size=ac_size,
+                                       aggregate=aggregate)
+
+        # Being within 5% for the stable frames is close enough
+        if aggregate is None:
+            win_size = int(ac_size * sr // hop_length)
+            assert np.all(np.abs(tempo_est[win_size:-win_size] - tempo) <= 0.05 * tempo)
+        else:
+            assert np.abs(tempo_est - tempo) <= 0.05 * tempo, (tempo, tempo_est)
+
+    for sr in [22050, 44100]:
+        for tempo in [40, 60, 80, 110, 160]:
+            # Make a pulse train at the target tempo
+            y = np.zeros(20 * sr)
+            delay = np.asscalar(librosa.time_to_samples(60./tempo, sr=sr))
+            y[::delay] = 1
+            for hop_length in [512, 1024]:
+                for ac_size in [4, 8]:
+                    for aggregate in [None, np.mean]:
+                        yield __test, tempo, sr, hop_length, ac_size, aggregate, y
 
 
 @raises(librosa.ParameterError)
@@ -85,7 +115,7 @@ def test_beat_no_onsets():
     eq_(len(beats), 0)
 
 
-def test_tempo_no_onsets():
+def test_estimate_tempo_no_onsets():
 
     sr = 22050
     hop_length = 512
@@ -102,6 +132,25 @@ def test_tempo_no_onsets():
         yield __test, start_bpm
 
 
+def test_tempo_no_onsets():
+
+    sr = 22050
+    hop_length = 512
+    duration = 30
+    onsets = np.zeros(duration * sr // hop_length)
+
+    def __test(start_bpm, aggregate):
+        tempo = librosa.beat.tempo(onset_envelope=onsets, sr=sr,
+                                   hop_length=hop_length,
+                                   start_bpm=start_bpm,
+                                   aggregate=aggregate)
+        assert np.allclose(tempo, start_bpm)
+
+    for start_bpm in [40, 60, 120, 240]:
+        for aggregate in [None, np.mean]:
+            yield __test, start_bpm, aggregate
+
+
 def test_beat():
 
     y, sr = librosa.load(__EXAMPLE_FILE)
@@ -111,7 +160,6 @@ def test_beat():
     onset_env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
 
     def __test(with_audio, with_tempo, start_bpm, bpm, trim, tightness):
-    
         if with_audio:
             _y = y
             _ons = None
@@ -143,13 +191,44 @@ def test_beat():
 
                             if (tightness <= 0 or
                                 (bpm is not None and bpm <= 0) or
-                                (start_bpm is not None and bpm is None and start_bpm <= 0)):
+                                (start_bpm is not None and
+                                 bpm is None and
+                                 start_bpm <= 0)):
 
                                 tf = raises(librosa.ParameterError)(__test)
                             else:
                                 tf = __test
                             yield (tf, with_audio, with_tempo,
                                    start_bpm, bpm, trim, tightness)
+
+
+def test_beat_units():
+
+    def __test(units, hop_length, y, sr):
+
+        tempo, b1 = librosa.beat.beat_track(y=y, sr=sr, hop_length=hop_length)
+        _, b2 = librosa.beat.beat_track(y=y, sr=sr, hop_length=hop_length,
+                                        units=units)
+
+        t1 = librosa.frames_to_time(b1, sr=sr, hop_length=hop_length)
+
+        if units == 'time':
+            t2 = b2
+
+        elif units == 'samples':
+            t2 = librosa.samples_to_time(b2, sr=sr)
+
+        elif units == 'frames':
+            t2 = librosa.frames_to_time(b2, sr=sr, hop_length=hop_length)
+
+        assert np.allclose(t1, t2)
+
+    for sr in [None, 44100]:
+        y, sr = librosa.load(__EXAMPLE_FILE, sr=sr)
+        for hop_length in [512, 1024]:
+            for units in ['frames', 'time', 'samples']:
+                yield __test, units, hop_length, y, sr
+            yield raises(librosa.ParameterError)(__test), 'bad units', hop_length, y, sr
 
 
 # Beat tracking regression test is no longer enabled due to librosa's

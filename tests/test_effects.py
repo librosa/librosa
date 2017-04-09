@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 '''Unit tests for the effects module'''
+import warnings
 
 # Disable cache
 import os
@@ -11,12 +12,12 @@ except KeyError:
 
 from nose.tools import raises, eq_
 
-import matplotlib
-matplotlib.use('Agg')
 import librosa
 import numpy as np
 
 __EXAMPLE_FILE = 'data/test1_22050.wav'
+warnings.resetwarnings()
+warnings.simplefilter('always')
 
 
 def test_time_stretch():
@@ -139,3 +140,105 @@ def test_harmonic():
     yh2 = librosa.effects.harmonic(y)
 
     assert np.allclose(yh1, yh2)
+
+
+def test_trim():
+
+    def __test(y, top_db, ref, trim_duration):
+        yt, idx = librosa.effects.trim(y, top_db=top_db,
+                                       ref=ref)
+
+        # Test for index position
+        fidx = [slice(None)] * y.ndim
+        fidx[-1] = slice(*idx.tolist())
+        assert np.allclose(yt, y[fidx])
+
+        # Verify logamp
+        rms = librosa.feature.rmse(librosa.to_mono(yt))
+        logamp = librosa.logamplitude(rms**2, ref=ref, top_db=None)
+        assert np.all(logamp > - top_db)
+
+        # Verify logamp
+        rms_all = librosa.feature.rmse(librosa.to_mono(y)).squeeze()
+        logamp_all = librosa.logamplitude(rms_all**2, ref=ref,
+                                          top_db=None)
+
+        start = int(librosa.samples_to_frames(idx[0]))
+        stop = int(librosa.samples_to_frames(idx[1]))
+        assert np.all(logamp_all[:start] <= - top_db)
+        assert np.all(logamp_all[stop:] <= - top_db)
+
+        # Verify duration
+        duration = librosa.get_duration(yt)
+        assert np.allclose(duration, trim_duration, atol=1e-1), duration
+
+    # construct 5 seconds of stereo silence
+    # Stick a sine wave in the middle three seconds
+    sr = float(22050)
+    trim_duration = 3.0
+    y = np.sin(2 * np.pi * 440. * np.arange(0, trim_duration * sr) / sr)
+    y = librosa.util.pad_center(y, 5 * sr)
+    y = np.vstack([y, np.zeros_like(y)])
+
+    for top_db in [60, 40, 20]:
+        for ref in [1, np.max]:
+            # Test stereo
+            yield __test, y, top_db, ref, trim_duration
+            # Test mono
+            yield __test, y[0], top_db, ref, trim_duration
+
+
+def test_split():
+
+    def __test(hop_length, frame_length, top_db):
+
+        intervals = librosa.effects.split(y,
+                                          top_db=top_db,
+                                          frame_length=frame_length,
+                                          hop_length=hop_length)
+
+        int_match = librosa.util.match_intervals(intervals, idx_true)
+
+        for i in range(len(intervals)):
+            i_true = idx_true[int_match[i]]
+
+            assert np.all(np.abs(i_true - intervals[i]) <= frame_length), intervals[i]
+
+    # Make some high-frequency noise
+    sr = 8192
+
+    y = np.ones(5 * sr)
+    y[::2] *= -1
+
+    # Zero out all but two intervals
+    y[:sr] = 0
+    y[2 * sr:3 * sr] = 0
+    y[4 * sr:] = 0
+
+    # The true non-silent intervals
+    idx_true = np.asarray([[sr, 2 * sr],
+                           [3 * sr, 4 * sr]])
+
+    for frame_length in [1024, 2048, 4096]:
+        for hop_length in [256, 512, 1024]:
+            for top_db in [20, 60, 80]:
+                yield __test, hop_length, frame_length, top_db
+
+    # Do it again, but without the silence at the beginning
+    y = np.ones(5 * sr)
+    y[::2] *= -1
+    y[4*sr:] = 0
+    idx_true = np.asarray([[0, 4 * sr]])
+    for frame_length in [1024, 2048, 4096]:
+        for hop_length in [256, 512, 1024]:
+            for top_db in [20, 60, 80]:
+                yield __test, hop_length, frame_length, top_db
+
+    # And without the silence at the end
+    y = np.ones(5 * sr)
+    y[::2] *= -1
+    idx_true = np.asarray([[0, 5 * sr]])
+    for frame_length in [1024, 2048, 4096]:
+        for hop_length in [256, 512, 1024]:
+            for top_db in [20, 60, 80]:
+                yield __test, hop_length, frame_length, top_db
