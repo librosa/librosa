@@ -2,17 +2,15 @@
 # -*- coding: utf-8 -*-
 '''Pitch-tracking and tuning estimation'''
 
-import numpy as np
 import warnings
+import numpy as np
 
-from .spectrum import ifgram, _spectrogram
+from .spectrum import _spectrogram
 from . import time_frequency
 from .. import cache
 from .. import util
 
-__all__ = ['estimate_tuning', 'pitch_tuning', 'piptrack',
-           # Deprecated functions
-           'ifptrack']
+__all__ = ['estimate_tuning', 'pitch_tuning', 'piptrack']
 
 
 def estimate_tuning(y=None, sr=22050, S=None, n_fft=2048,
@@ -156,7 +154,7 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     # from the next tone up.
     residual[residual >= 0.5] -= 1.0
 
-    bins = np.linspace(-0.5, 0.5, np.ceil(1./resolution), endpoint=False)
+    bins = np.linspace(-0.5, 0.5, int(np.ceil(1./resolution)), endpoint=False)
 
     counts, tuning = np.histogram(residual, bins)
 
@@ -164,7 +162,7 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     return tuning[np.argmax(counts)]
 
 
-@cache
+@cache(level=30)
 def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
              fmin=150.0, fmax=4000.0, threshold=0.1):
     '''Pitch tracking on thresholded parabolically-interpolated STFT
@@ -218,6 +216,10 @@ def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
         Both `pitches` and `magnitudes` take value 0 at bins
         of non-maximal magnitude.
 
+    Notes
+    -----
+    This function caches at level 30.
+
     Examples
     --------
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
@@ -249,7 +251,7 @@ def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
 
     # Suppress divide-by-zeros.
     # Points where shift == 0 will never be selected by localmax anyway
-    shift = avg / (shift + (np.abs(shift) < util.SMALL_FLOAT))
+    shift = avg / (shift + (np.abs(shift) < util.tiny(shift)))
 
     # Pad back up to the same shape as S
     avg = np.pad(avg, ([1, 1], [0, 0]), mode='constant')
@@ -277,169 +279,3 @@ def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
                                   + dskew[idx[:, 0], idx[:, 1]])
 
     return pitches, mags
-
-
-# Deprecated functions below
-
-@util.decorators.deprecated('0.4', '0.5')
-@cache
-def ifptrack(y, sr=22050, n_fft=2048, hop_length=None, fmin=None,
-             fmax=None, threshold=0.75):  # pragma: no cover
-    '''Instantaneous pitch frequency tracking.
-
-    .. warning:: Deprecated in librosa 0.4
-              `ifptrack` will be removed in 0.5.
-              See `piptrack` for comparable functionality.
-
-    Parameters
-    ----------
-    y: np.ndarray [shape=(n,)]
-        audio signal
-
-    sr : number > 0 [scalar]
-        audio sampling rate of `y`
-
-    n_fft: int > 0 [scalar]
-        FFT window size
-
-    hop_length : int > 0 [scalar] or None
-        Hop size for STFT.  Defaults to `n_fft / 4`.
-        See `librosa.core.stft` for details.
-
-    threshold : float in `(0, 1)`
-        Maximum fraction of expected frequency increment to tolerate
-
-    fmin : float or tuple of float
-        Ramp parameter for lower frequency cutoff.
-
-        If scalar, the ramp has 0 width.
-
-        If tuple, a linear ramp is applied from `fmin[0]` to `fmin[1]`
-
-        Default: (150.0, 300.0)
-
-    fmax : float or tuple of float
-        Ramp parameter for upper frequency cutoff.
-
-        If scalar, the ramp has 0 width.
-
-        If tuple, a linear ramp is applied from `fmax[0]` to `fmax[1]`
-
-        Default: (2000.0, 4000.0)
-
-    Returns
-    -------
-    pitches : np.ndarray [shape=(d, t)]
-    magnitudes : np.ndarray [shape=(d, t)]
-        Where `d` is the subset of FFT bins within `fmin` and `fmax`.
-
-        `pitches[i, t]` contains instantaneous frequencies at time `t`
-
-        `magnitudes[i, t]` contains their magnitudes.
-
-    D : np.ndarray [shape=(d, t), dtype=complex]
-        STFT matrix
-
-    See Also
-    --------
-    piptrack
-    librosa.core.stft
-
-    Examples
-    --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> pitches, magnitudes, D = librosa.ifptrack(y, sr=sr)
-
-    '''
-
-    if fmin is None:
-        fmin = (150.0, 300.0)
-
-    if fmax is None:
-        fmax = (2000.0, 4000.0)
-
-    fmin = np.atleast_1d(fmin)
-    fmax = np.atleast_1d(fmax)
-
-    # Truncate to feasible region
-    fmin = np.maximum(0, fmin)
-    fmax = np.minimum(fmax, float(sr) / 2)
-
-    # What's our DFT bin resolution?
-    fft_res = float(sr) / n_fft
-
-    # Only look at bins up to 2 kHz
-    max_bin = int(round(fmax[-1] / fft_res))
-
-    if hop_length is None:
-        hop_length = int(n_fft // 4)
-
-    # Calculate the inst freq gram
-    if_gram, D = ifgram(y, sr=sr, n_fft=n_fft, win_length=int(n_fft/2),
-                        hop_length=hop_length)
-
-    # Find plateaus in ifgram - stretches where delta IF is < thr:
-    # ie, places where the same frequency is spread across adjacent bins
-    idx_above = list(range(1, max_bin)) + [max_bin - 1]
-    idx_below = [0] + list(range(0, max_bin - 1))
-
-    # expected increment per bin = sr/w, threshold at 3/4 that
-    matches = (abs(if_gram[idx_above] - if_gram[idx_below])
-               < (threshold * fft_res))
-
-    # mask out any singleton bins (where both above and below are zero)
-    matches = matches * ((matches[idx_above] > 0) | (matches[idx_below] > 0))
-
-    pitches = np.zeros_like(matches, dtype=float)
-    magnitudes = np.zeros_like(matches, dtype=float)
-
-    # For each frame, extract all harmonic freqs & magnitudes
-    for t in range(matches.shape[1]):
-
-        # find nonzero regions in this vector
-        # The mask selects out constant regions + active borders
-        mask = ~np.pad(matches[:, t], 1, mode='constant')
-
-        starts = np.argwhere(matches[:, t] & mask[:-2]).astype(int)
-        ends = 1 + np.argwhere(matches[:, t] & mask[2:]).astype(int)
-
-        # Set up inner loop
-        frqs = np.zeros_like(starts, dtype=float)
-        mags = np.zeros_like(starts, dtype=float)
-
-        for i, (start_i, end_i) in enumerate(zip(starts, ends)):
-
-            start_i = np.asscalar(start_i)
-            end_i = np.asscalar(end_i)
-
-            # Weight frequencies by energy
-            weights = np.abs(D[start_i:end_i, t])
-            mags[i] = weights.sum()
-
-            # Compute the weighted average frequency.
-            # FIXME: is this the right thing to do?
-            # These are frequencies... shouldn't this be a
-            # weighted geometric average?
-            frqs[i] = weights.dot(if_gram[start_i:end_i, t])
-            if mags[i] > 0:
-                frqs[i] /= mags[i]
-
-        # Clip outside the ramp zones
-        idx = (fmax[-1] < frqs) | (frqs < fmin[0])
-        mags[idx] = 0
-        frqs[idx] = 0
-
-        # Ramp down at the high end
-        idx = (fmax[-1] > frqs) & (frqs > fmax[0])
-        mags[idx] *= (fmax[-1] - frqs[idx]) / (fmax[-1] - fmax[0])
-
-        # Ramp up from the bottom end
-        idx = (fmin[-1] > frqs) & (frqs > fmin[0])
-        mags[idx] *= (frqs[idx] - fmin[0]) / (fmin[-1] - fmin[0])
-
-        # Assign pitch and magnitude to their center bin
-        bins = (starts + ends) / 2
-        pitches[bins, t] = frqs
-        magnitudes[bins, t] = mags
-
-    return pitches, magnitudes, D

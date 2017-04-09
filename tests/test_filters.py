@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 # CREATED:2013-03-08 15:25:18 by Brian McFee <brm2132@columbia.edu>
-#  unit tests for librosa.feature (feature.py)
-#
-# Run me as follows:
-#   cd tests/
-#   nosetests -v
+#  unit tests for librosa.filters
 #
 # This test suite verifies that librosa core routines match (numerically) the output
 # of various DPWE matlab implementations on a broad range of input parameters.
@@ -14,12 +10,6 @@
 # function.  The test then runs the librosa implementation and verifies the results
 # against the desired output, typically via numpy.allclose().
 #
-# CAVEATS:
-#
-#   Currently, not all tests are exhaustive in parameter space.  This is typically due
-#   restricted functionality of the librosa implementations.  Similarly, there is no
-#   fuzz-testing here, so behavior on invalid inputs is not yet well-defined.
-#
 
 # Disable cache
 import os
@@ -28,9 +18,6 @@ try:
 except KeyError:
     pass
 
-import matplotlib
-matplotlib.use('Agg')
-import six
 import glob
 import numpy as np
 import scipy.io
@@ -40,11 +27,16 @@ import warnings
 
 import librosa
 
+warnings.resetwarnings()
+warnings.simplefilter('always')
+
+
 # -- utilities --#
 def files(pattern):
     test_files = glob.glob(pattern)
     test_files.sort()
     return test_files
+
 
 def load(infile):
     DATA = scipy.io.loadmat(infile, chars_as_strings=True)
@@ -108,14 +100,35 @@ def test_melfb():
         # Our version only returns the real-valued part.
         # Pad out.
         wts = np.pad(wts, [(0, 0),
-                              (0, int(DATA['nfft'][0]//2 - 1))],
-                        mode='constant')
+                           (0, int(DATA['nfft'][0]//2 - 1))],
+                     mode='constant')
 
         eq_(wts.shape, DATA['wts'].shape)
         assert np.allclose(wts, DATA['wts'])
 
     for infile in files('data/feature-melfb-*.mat'):
         yield (__test, infile)
+
+
+def test_mel_gap():
+
+    # This configuration should trigger some empty filters
+    sr = 44100
+    n_fft = 1024
+    fmin = 0
+    fmax = 2000
+    n_mels = 128
+    htk = True
+
+    warnings.resetwarnings()
+    warnings.simplefilter('always')
+    with warnings.catch_warnings(record=True) as out:
+        librosa.filters.mel(sr, n_fft, n_mels=n_mels,
+                            fmin=fmin, fmax=fmax, htk=htk)
+
+        assert len(out) > 0
+        assert out[0].category is UserWarning
+        assert 'empty filters' in str(out[0].message).lower()
 
 
 def test_chromafb():
@@ -240,14 +253,17 @@ def test_window_bandwidth():
         librosa.filters.window_bandwidth(scipy.signal.hann))
 
 
+def test_window_bandwidth_dynamic():
+
+    # Test with a window constructor guaranteed to not exist in
+    # the dictionary.
+    # should behave like a box filter, which has enbw == 1
+    eq_(librosa.filters.window_bandwidth(lambda n: np.ones(n)), 1)
+
+
+@raises(ValueError)
 def test_window_bandwidth_missing():
-    warnings.resetwarnings()
-    with warnings.catch_warnings(record=True) as out:
-        x = librosa.filters.window_bandwidth('unknown_window')
-        eq_(x, 1)
-        assert len(out) > 0
-        assert out[0].category is UserWarning
-        assert 'Unknown window function' in str(out[0].message)
+    librosa.filters.window_bandwidth('made up window name')
 
 
 def binstr(m):
@@ -315,3 +331,39 @@ def test_cq_to_chroma():
                                 tf = __test
                             yield (tf, n_bins, bins_per_octave,
                                    n_chroma, fmin, base_c, window)
+
+
+@raises(librosa.ParameterError)
+def test_get_window_fail():
+
+    librosa.filters.get_window(None, 32)
+
+
+def test_get_window():
+
+    def __test(window):
+
+        w1 = librosa.filters.get_window(window, 32)
+        w2 = scipy.signal.get_window(window, 32)
+
+        assert np.allclose(w1, w2)
+
+    for window in ['hann', u'hann', 4.0, ('kaiser', 4.0)]:
+        yield __test, window
+
+
+def test_get_window_func():
+
+    w1 = librosa.filters.get_window(scipy.signal.boxcar, 32)
+    w2 = scipy.signal.get_window('boxcar', 32)
+    assert np.allclose(w1, w2)
+
+
+def test_get_window_pre():
+    def __test(pre_win):
+        win = librosa.filters.get_window(pre_win, len(pre_win))
+        assert np.allclose(win, pre_win)
+
+    yield __test, scipy.signal.hann(16)
+    yield __test, list(scipy.signal.hann(16))
+    yield __test, [1, 1, 1]

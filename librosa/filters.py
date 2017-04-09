@@ -14,6 +14,15 @@ Filter bank construction
     chroma
     constant_q
 
+Window functions
+----------------
+.. autosummary::
+    :toctree: generated/
+
+    window_bandwidth
+    get_window
+
+
 Miscellaneous
 -------------
 .. autosummary::
@@ -21,20 +30,13 @@ Miscellaneous
 
     constant_q_lengths
     cq_to_chroma
-    window_bandwidth
-
-Deprecated
-----------
-.. autosummary::
-    :toctree: generated/
-
-    logfrequency
 """
+import warnings
 
 import numpy as np
 import scipy
 import scipy.signal
-import warnings
+import six
 
 from . import cache
 from . import util
@@ -43,9 +45,6 @@ from .util.exceptions import ParameterError
 from .core.time_frequency import note_to_hz, hz_to_midi, hz_to_octs
 from .core.time_frequency import fft_frequencies, mel_frequencies
 
-# Dictionary of window function bandwidths
-WINDOW_BANDWIDTHS = dict(hann=0.725)
-
 __all__ = ['dct',
            'mel',
            'chroma',
@@ -53,11 +52,54 @@ __all__ = ['dct',
            'constant_q_lengths',
            'cq_to_chroma',
            'window_bandwidth',
-           # Deprecated
-           'logfrequency']
+           'get_window']
 
 
-@cache
+# Dictionary of window function bandwidths
+
+WINDOW_BANDWIDTHS = {'bart': 1.3334961334912805,
+                     'barthann': 1.4560255965133932,
+                     'bartlett': 1.3334961334912805,
+                     'bkh': 2.0045975283585014,
+                     'black': 1.7269681554262326,
+                     'blackharr': 2.0045975283585014,
+                     'blackman': 1.7269681554262326,
+                     'blackmanharris': 2.0045975283585014,
+                     'blk': 1.7269681554262326,
+                     'bman': 1.7859588613860062,
+                     'bmn': 1.7859588613860062,
+                     'bohman': 1.7859588613860062,
+                     'box': 1.0,
+                     'boxcar': 1.0,
+                     'brt': 1.3334961334912805,
+                     'brthan': 1.4560255965133932,
+                     'bth': 1.4560255965133932,
+                     'cosine': 1.2337005350199792,
+                     'flat': 2.7762255046484143,
+                     'flattop': 2.7762255046484143,
+                     'flt': 2.7762255046484143,
+                     'halfcosine': 1.2337005350199792,
+                     'ham': 1.3629455320350348,
+                     'hamm': 1.3629455320350348,
+                     'hamming': 1.3629455320350348,
+                     'han': 1.50018310546875,
+                     'hann': 1.50018310546875,
+                     'hanning': 1.50018310546875,
+                     'nut': 1.9763500280946082,
+                     'nutl': 1.9763500280946082,
+                     'nuttall': 1.9763500280946082,
+                     'ones': 1.0,
+                     'par': 1.9174603174603191,
+                     'parz': 1.9174603174603191,
+                     'parzen': 1.9174603174603191,
+                     'rect': 1.0,
+                     'rectangular': 1.0,
+                     'tri': 1.3331706523555851,
+                     'triang': 1.3331706523555851,
+                     'triangle': 1.3331706523555851}
+
+
+@cache(level=10)
 def dct(n_filters, n_input):
     """Discrete cosine transform (DCT type-III) basis.
 
@@ -75,6 +117,10 @@ def dct(n_filters, n_input):
     -------
     dct_basis: np.ndarray [shape=(n_filters, n_input)]
         DCT (type-III) basis vectors [1]_
+
+    Notes
+    -----
+    This function caches at level 10.
 
     Examples
     --------
@@ -107,7 +153,7 @@ def dct(n_filters, n_input):
     return basis
 
 
-@cache
+@cache(level=10)
 def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
     """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins
 
@@ -136,6 +182,10 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
     -------
     M         : np.ndarray [shape=(n_mels, 1 + n_fft/2)]
         Mel transform matrix
+
+    Notes
+    -----
+    This function caches at level 10.
 
     Examples
     --------
@@ -178,26 +228,35 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
     fftfreqs = fft_frequencies(sr=sr, n_fft=n_fft)
 
     # 'Center freqs' of mel bands - uniformly spaced between limits
-    freqs = mel_frequencies(n_mels + 2,
-                            fmin=fmin,
-                            fmax=fmax,
-                            htk=htk)
+    mel_f = mel_frequencies(n_mels + 2, fmin=fmin, fmax=fmax, htk=htk)
 
-    # Slaney-style mel is scaled to be approx constant energy per channel
-    enorm = 2.0 / (freqs[2:n_mels+2] - freqs[:n_mels])
+    fdiff = np.diff(mel_f)
+    ramps = np.subtract.outer(mel_f, fftfreqs)
 
     for i in range(n_mels):
         # lower and upper slopes for all bins
-        lower = (fftfreqs - freqs[i]) / (freqs[i+1] - freqs[i])
-        upper = (freqs[i+2] - fftfreqs) / (freqs[i+2] - freqs[i+1])
+        lower = -ramps[i] / fdiff[i]
+        upper = ramps[i+2] / fdiff[i+1]
 
         # .. then intersect them with each other and zero
-        weights[i] = np.maximum(0, np.minimum(lower, upper)) * enorm[i]
+        weights[i] = np.maximum(0, np.minimum(lower, upper))
+
+    # Slaney-style mel is scaled to be approx constant energy per channel
+    enorm = 2.0 / (mel_f[2:n_mels+2] - mel_f[:n_mels])
+    weights *= enorm[:, np.newaxis]
+
+    # Only check weights if f_mel[0] is positive
+    if not np.all((mel_f[:-2] == 0) | (weights.max(axis=1) > 0)):
+        # This means we have an empty channel somewhere
+        warnings.warn('Empty filters detected in mel frequency basis. '
+                      'Some channels will produce empty responses. '
+                      'Try increasing your sampling rate (and fmax) or '
+                      'reducing n_mels.')
 
     return weights
 
 
-@cache
+@cache(level=10)
 def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0,
            octwidth=2, norm=2, base_c=True):
     """Create a Filterbank matrix to convert STFT to chroma
@@ -231,6 +290,7 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0,
     base_c : bool
         If True, the filter bank will start at 'C'.
         If False, the filter bank will start at 'A'.
+
     Returns
     -------
     wts : ndarray [shape=(n_chroma, 1 + n_fft / 2)]
@@ -240,6 +300,10 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0,
     --------
     util.normalize
     feature.chroma_stft
+
+    Notes
+    -----
+    This function caches at level 10.
 
     Examples
     --------
@@ -322,113 +386,7 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0,
     return np.ascontiguousarray(wts[:, :int(1 + n_fft/2)])
 
 
-@util.decorators.deprecated('0.4', '0.5')
-def logfrequency(sr, n_fft, n_bins=84, bins_per_octave=12, tuning=0.0,
-                 fmin=None, spread=0.125):  # pragma: no cover
-    '''Approximate a constant-Q filter bank for a fixed-window STFT.
-
-    Each filter is a log-normal window centered at the corresponding frequency.
-
-    .. warning:: Deprecated in librosa 0.4
-
-    Parameters
-    ----------
-    sr : number > 0 [scalar]
-        audio sampling rate
-
-    n_fft : int > 0 [scalar]
-        FFT window size
-
-    n_bins : int > 0 [scalar]
-        Number of bins.  Defaults to 84 (7 octaves).
-
-    bins_per_octave : int > 0 [scalar]
-        Number of bins per octave. Defaults to 12 (semitones).
-
-    tuning : None or float in `[-0.5, +0.5]` [scalar]
-        Tuning correction parameter, in fractions of a bin.
-
-    fmin : float > 0 [scalar]
-        Minimum frequency bin. Defaults to `C1 ~= 32.70`
-
-    spread : float > 0 [scalar]
-        Spread of each filter, as a fraction of a bin.
-
-    Returns
-    -------
-    C : np.ndarray [shape=(n_bins, 1 + n_fft/2)]
-        log-frequency filter bank.
-
-    Examples
-    --------
-    Simple log frequency filters
-
-    >>> logfb = librosa.filters.logfrequency(22050, 4096)
-    >>> logfb
-    array([[ 0.,  0., ...,  0.,  0.],
-           [ 0.,  0., ...,  0.,  0.],
-    ...,
-           [ 0.,  0., ...,  0.,  0.],
-           [ 0.,  0., ...,  0.,  0.]])
-
-
-    Use a narrower frequency range
-
-    >>> librosa.filters.logfrequency(22050, 4096, n_bins=48, fmin=110)
-    array([[ 0.,  0., ...,  0.,  0.],
-           [ 0.,  0., ...,  0.,  0.],
-    ...,
-           [ 0.,  0., ...,  0.,  0.],
-           [ 0.,  0., ...,  0.,  0.]])
-
-
-    Use narrower filters for sparser response: 5% of a semitone
-
-    >>> librosa.filters.logfrequency(22050, 4096, spread=0.05)
-
-    Or wider: 50% of a semitone
-
-    >>> librosa.filters.logfrequency(22050, 4096, spread=0.5)
-
-    >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> librosa.display.specshow(logfb, x_axis='linear')
-    >>> plt.ylabel('Logarithmic filters')
-    >>> plt.title('Log-frequency filter bank')
-    >>> plt.colorbar()
-    >>> plt.tight_layout()
-    '''
-
-    if fmin is None:
-        fmin = note_to_hz('C1')
-
-    # Apply tuning correction
-    correction = 2.0**(float(tuning) / bins_per_octave)
-
-    # What's the shape parameter for our log-normal filters?
-    sigma = float(spread) / bins_per_octave
-
-    # Construct the output matrix
-    basis = np.zeros((n_bins, int(1 + n_fft/2)))
-
-    # Get log frequencies of bins
-    log_freqs = np.log2(fft_frequencies(sr, n_fft)[1:])
-
-    for i in range(n_bins):
-        # What's the center (median) frequency of this filter?
-        c_freq = correction * fmin * (2.0**(float(i) / bins_per_octave))
-
-        # Place a log-normal window around c_freq
-        basis[i, 1:] = np.exp(-0.5 * ((log_freqs - np.log2(c_freq)) / sigma)**2
-                              - np.log2(sigma) - log_freqs)
-
-    # Normalize the filters
-    basis = util.normalize(basis, norm=1, axis=1)
-
-    return basis
-
-
-def __float_window(window_function):
+def __float_window(window_spec):
     '''Decorator function for windows with fractional input.
 
     This function guarantees that for fractional `x`, the following hold:
@@ -443,7 +401,7 @@ def __float_window(window_function):
         '''The wrapped window'''
         n_min, n_max = int(np.floor(n)), int(np.ceil(n))
 
-        window = window_function(n, *args, **kwargs)
+        window = get_window(window_spec, n_min)
 
         if len(window) < n_max:
             window = np.pad(window, [(0, n_max - len(window))],
@@ -456,10 +414,10 @@ def __float_window(window_function):
     return _wrap
 
 
-@cache
+@cache(level=10)
 def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
-               window=None, filter_scale=1, pad_fft=True, norm=1,
-               resolution=util.Deprecated(), **kwargs):
+               window='hann', filter_scale=1, pad_fft=True, norm=1,
+               **kwargs):
     r'''Construct a constant-Q basis.
 
     This uses the filter bank described by [1]_.
@@ -486,9 +444,8 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     tuning : float in `[-0.5, +0.5)` [scalar]
         Tuning deviation from A440 in fractions of a bin
 
-    window : function or `None`
+    window : string, tuple, number, or function
         Windowing function to apply to filters.
-        Default: `scipy.signal.hann`
 
     filter_scale : float > 0 [scalar]
         Scale of filter windows.
@@ -507,11 +464,6 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     kwargs : additional keyword arguments
         Arguments to `np.pad()` when `pad==True`.
 
-    resolution : float
-        .. warning:: This parameter name was in librosa 0.4.2
-            Use the `filter_scale` parameter instead.
-            The `resolution` parameter will be removed in librosa 0.5.0.
-
     Returns
     -------
     filters : np.ndarray, `len(filters) == n_bins`
@@ -519,6 +471,10 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 
     lengths : np.ndarray, `len(lengths) == n_bins`
         The (fractional) length of each filter
+
+    Notes
+    -----
+    This function caches at level 10.
 
     See Also
     --------
@@ -535,17 +491,17 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 
     Plot one octave of filters in time and frequency
 
-    >>> basis, lengths = librosa.filters.constant_q(22050)
     >>> import matplotlib.pyplot as plt
+    >>> basis, lengths = librosa.filters.constant_q(22050)
     >>> plt.figure(figsize=(10, 6))
     >>> plt.subplot(2, 1, 1)
     >>> notes = librosa.midi_to_note(np.arange(24, 24 + len(basis)))
-    >>> for i, (f, n) in enumerate(zip(basis, notes)[:12]):
+    >>> for i, (f, n) in enumerate(zip(basis, notes[:12])):
     ...     f_scale = librosa.util.normalize(f) / 2
     ...     plt.plot(i + f_scale.real)
     ...     plt.plot(i + f_scale.imag, linestyle=':')
     >>> plt.axis('tight')
-    >>> plt.yticks(range(len(notes[:12])), notes[:12])
+    >>> plt.yticks(np.arange(len(notes[:12])), notes[:12])
     >>> plt.ylabel('CQ filters')
     >>> plt.title('CQ filters (one octave, time domain)')
     >>> plt.xlabel('Time (samples at 22050 Hz)')
@@ -555,7 +511,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     >>> # Keep only the positive frequencies
     >>> F = F[:, :(1 + F.shape[1] // 2)]
     >>> librosa.display.specshow(F, x_axis='linear')
-    >>> plt.yticks(range(len(notes))[::12], notes[::12])
+    >>> plt.yticks(np.arange(len(notes))[::12], notes[::12])
     >>> plt.ylabel('CQ filters')
     >>> plt.title('CQ filter magnitudes (frequency domain)')
     >>> plt.tight_layout()
@@ -563,13 +519,6 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 
     if fmin is None:
         fmin = note_to_hz('C1')
-
-    if window is None:
-        window = scipy.signal.hann
-
-    filter_scale = util.rename_kw('resolution', resolution,
-                                  'filter_scale', filter_scale,
-                                  '0.4.2', '0.5.0')
 
     # Pass-through parameters to get the filter lengths
     lengths = constant_q_lengths(sr, fmin,
@@ -617,10 +566,9 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     return filters, np.asarray(lengths)
 
 
-@cache
+@cache(level=10)
 def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
-                       tuning=0.0, window='hann', filter_scale=1,
-                       resolution=util.Deprecated()):
+                       tuning=0.0, window='hann', filter_scale=1):
     r'''Return length of each filter in a constant-Q basis.
 
     Parameters
@@ -646,25 +594,20 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
     filter_scale : float > 0 [scalar]
         Resolution of filter windows. Larger values use longer windows.
 
-    resolution : float
-        .. warning:: This parameter name was in librosa 0.4.2
-            Use the `filter_scale` parameter instead.
-            The `resolution` parameter will be removed in librosa 0.5.0.
-
     Returns
     -------
     lengths : np.ndarray
         The length of each filter.
+
+    Notes
+    -----
+    This function caches at level 10.
 
     See Also
     --------
     constant_q
     librosa.core.cqt
     '''
-
-    filter_scale = util.rename_kw('resolution', resolution,
-                                  'filter_scale', filter_scale,
-                                  '0.4.2', '0.5.0')
 
     if fmin <= 0:
         raise ParameterError('fmin must be positive')
@@ -689,7 +632,7 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
     # Compute the frequencies
     freq = fmin * (2.0 ** (np.arange(n_bins, dtype=float) / bins_per_octave))
 
-    if np.any(freq * (1 + window_bandwidth(window) / Q) > sr / 2.0):
+    if freq[-1] * (1 + 0.5 * window_bandwidth(window) / Q) > sr / 2.0:
         raise ParameterError('Filter pass-band lies beyond Nyquist')
 
     # Convert frequencies to filter lengths
@@ -698,7 +641,7 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
     return lengths
 
 
-@cache
+@cache(level=10)
 def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
                  fmin=None, window=None, base_c=True):
     '''Convert a Constant-Q basis to Chroma.
@@ -737,6 +680,10 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
     ParameterError
         If `n_input` is not an integer multiple of `n_chroma`
 
+    Notes
+    -----
+    This function caches at level 10.
+
     Examples
     --------
     Get a CQT, and wrap bins to chroma
@@ -750,19 +697,19 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
 
     >>> import matplotlib.pyplot as plt
     >>> plt.subplot(3, 1, 1)
-    >>> librosa.display.specshow(librosa.logamplitude(CQT**2,
-    ...                                               ref_power=np.max),
-    ...                          y_axis='cqt_note', x_axis='time')
+    >>> librosa.display.specshow(librosa.amplitude_to_db(CQT,
+    ...                                                  ref=np.max),
+    ...                          y_axis='cqt_note')
     >>> plt.title('CQT Power')
     >>> plt.colorbar()
     >>> plt.subplot(3, 1, 2)
-    >>> librosa.display.specshow(chromagram, y_axis='chroma', x_axis='time')
+    >>> librosa.display.specshow(chromagram, y_axis='chroma')
     >>> plt.title('Chroma (wrapped CQT)')
     >>> plt.colorbar()
     >>> plt.subplot(3, 1, 3)
-    >>> chroma = librosa.feature.chromagram(y=y, sr=sr)
+    >>> chroma = librosa.feature.chroma_stft(y=y, sr=sr)
     >>> librosa.display.specshow(chroma, y_axis='chroma', x_axis='time')
-    >>> plt.title('librosa.feature.chroma')
+    >>> plt.title('librosa.feature.chroma_stft')
     >>> plt.colorbar()
     >>> plt.tight_layout()
 
@@ -817,10 +764,10 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
     return cq_to_ch
 
 
-def window_bandwidth(window, default=1.0):
-    '''Get the bandwidth of a window function.
+@cache(level=10)
+def window_bandwidth(window, n=1000):
+    '''Get the equivalent noise bandwidth of a window function.
 
-    If the window function is unknown, return a default value.
 
     Parameters
     ----------
@@ -830,17 +777,23 @@ def window_bandwidth(window, default=1.0):
         - scipy.signal.hann
         - 'boxcar'
 
-    default : float >= 0
-        The default value, if `window` is unknown.
+    n : int > 0
+        The number of coefficients to use in estimating the
+        window bandwidth
 
     Returns
     -------
     bandwidth : float
-        The bandwidth of the given window function
+        The equivalent noise bandwidth (in FFT bins) of the
+        given window function
+
+    Notes
+    -----
+    This function caches at level 10.
 
     See Also
     --------
-    scipy.signal.get_window
+    get_window
     '''
 
     if hasattr(window, '__name__'):
@@ -849,6 +802,73 @@ def window_bandwidth(window, default=1.0):
         key = window
 
     if key not in WINDOW_BANDWIDTHS:
-        warnings.warn("Unknown window function '{:s}'.".format(key))
+        win = get_window(window, n)
+        WINDOW_BANDWIDTHS[key] = n * np.sum(win**2) / np.sum(np.abs(win))**2
 
-    return WINDOW_BANDWIDTHS.get(key, default)
+    return WINDOW_BANDWIDTHS[key]
+
+
+@cache(level=10)
+def get_window(window, Nx, fftbins=True):
+    '''Compute a window function.
+
+    This is a wrapper for `scipy.signal.get_window` that additionally
+    supports callable or pre-computed windows.
+
+    Parameters
+    ----------
+    window : string, tuple, number, callable, or list-like
+        The window specification:
+
+        - If string, it's the name of the window function (e.g., `'hann'`)
+        - If tuple, it's the name of the window function and any parameters
+          (e.g., `('kaiser', 4.0)`)
+        - If numeric, it is treated as the beta parameter of the `'kaiser'`
+          window, as in `scipy.signal.get_window`.
+        - If callable, it's a function that accepts one integer argument
+          (the window length)
+        - If list-like, it's a pre-computed window of the correct length `Nx`
+
+    Nx : int > 0
+        The length of the window
+
+    fftbins : bool, optional
+        If True (default), create a periodic window for use with FFT
+        If False, create a symmetric window for filter design applications.
+
+    Returns
+    -------
+    get_window : np.ndarray
+        A window of length `Nx` and type `window`
+
+    See Also
+    --------
+    scipy.signal.get_window
+
+    Notes
+    -----
+    This function caches at level 10.
+
+    Raises
+    ------
+    ParameterError
+        If `window` is supplied as a vector of length != `n_fft`,
+        or is otherwise mis-specified.
+    '''
+    if six.callable(window):
+        return window(Nx)
+
+    elif (isinstance(window, (six.string_types, tuple)) or
+          np.isscalar(window)):
+        # TODO: if we add custom window functions in librosa, call them here
+
+        return scipy.signal.get_window(window, Nx, fftbins=fftbins)
+
+    elif isinstance(window, (np.ndarray, list)):
+        if len(window) == Nx:
+            return np.asarray(window)
+
+        raise ParameterError('Window size mismatch: '
+                             '{:d} != {:d}'.format(len(window), Nx))
+    else:
+        raise ParameterError('Invalid window specification: {}'.format(window))

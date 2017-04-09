@@ -7,16 +7,17 @@
 import os
 import sys
 import tempfile
-import numpy as np
 import shutil
+import numpy as np
 
-import matplotlib
-matplotlib.use('Agg')
 from nose.tools import with_setup, eq_
 
+import warnings
+warnings.resetwarnings()
+warnings.simplefilter('always')
 
 # Disable any initial cache settings
-for key in ['DIR', 'MMAP', 'COMPRESS', 'VERBOSE']:
+for key in ['DIR', 'MMAP', 'COMPRESS', 'VERBOSE', 'LEVEL']:
     try:
         os.environ.pop('LIBROSA_CACHE_{:s}'.format(key))
     except KeyError:
@@ -47,7 +48,7 @@ def test_cache_disabled():
     sys.modules.pop('librosa.cache', None)
     import librosa.cache
 
-    func_cache = librosa.cache(func)
+    func_cache = librosa.cache(level=-10)(func)
 
     # When there's no cache directory in the environment,
     # librosa.cache is a no-op.
@@ -61,7 +62,7 @@ def test_cache_enabled():
     import librosa.cache
     librosa.cache.clear()
 
-    func_cache = librosa.cache(func)
+    func_cache = librosa.cache(level=-10)(func)
 
     # The cache should be active now
     assert func_cache != func
