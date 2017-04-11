@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 '''Unit tests for the effects module'''
+import warnings
 
 # Disable cache
 import os
@@ -11,12 +12,12 @@ except KeyError:
 
 from nose.tools import raises, eq_
 
-import matplotlib
-matplotlib.use('Agg')
 import librosa
 import numpy as np
 
 __EXAMPLE_FILE = 'data/test1_22050.wav'
+warnings.resetwarnings()
+warnings.simplefilter('always')
 
 
 def test_time_stretch():
@@ -143,9 +144,9 @@ def test_harmonic():
 
 def test_trim():
 
-    def __test(y, top_db, ref_power, trim_duration):
+    def __test(y, top_db, ref, trim_duration):
         yt, idx = librosa.effects.trim(y, top_db=top_db,
-                                       ref_power=ref_power)
+                                       ref=ref)
 
         # Test for index position
         fidx = [slice(None)] * y.ndim
@@ -154,12 +155,12 @@ def test_trim():
 
         # Verify logamp
         rms = librosa.feature.rmse(librosa.to_mono(yt))
-        logamp = librosa.logamplitude(rms**2, ref_power=ref_power, top_db=None)
+        logamp = librosa.logamplitude(rms**2, ref=ref, top_db=None)
         assert np.all(logamp > - top_db)
 
         # Verify logamp
         rms_all = librosa.feature.rmse(librosa.to_mono(y)).squeeze()
-        logamp_all = librosa.logamplitude(rms_all**2, ref_power=ref_power,
+        logamp_all = librosa.logamplitude(rms_all**2, ref=ref,
                                           top_db=None)
 
         start = int(librosa.samples_to_frames(idx[0]))
@@ -180,11 +181,11 @@ def test_trim():
     y = np.vstack([y, np.zeros_like(y)])
 
     for top_db in [60, 40, 20]:
-        for ref_power in [1, np.max]:
+        for ref in [1, np.max]:
             # Test stereo
-            yield __test, y, top_db, ref_power, trim_duration
+            yield __test, y, top_db, ref, trim_duration
             # Test mono
-            yield __test, y[0], top_db, ref_power, trim_duration
+            yield __test, y[0], top_db, ref, trim_duration
 
 
 def test_split():

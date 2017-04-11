@@ -3,6 +3,7 @@
 # CREATED:2015-02-14 22:51:01 by Brian McFee <brian.mcfee@nyu.edu>
 '''Unit tests for display module'''
 
+import warnings
 
 # Disable cache
 import os
@@ -26,6 +27,9 @@ import numpy as np
 
 from nose.tools import nottest, raises, eq_
 from mpl_ic import image_comparison
+warnings.resetwarnings()
+warnings.simplefilter('always')
+
 
 @nottest
 def get_spec(y, sr):
@@ -257,6 +261,8 @@ def test_time_scales_auto():
     # sr / (60 * 20) -> h
     librosa.display.specshow(S_abs, sr=sr // (60 * 20), x_axis='time')
 
+    plt.tight_layout()
+
 
 @image_comparison(baseline_images=['waveplot_mono'], extensions=['png'])
 def test_waveplot_mono():
@@ -333,14 +339,15 @@ def test_cmap_robust():
     for D in [1.0 + S_abs, -(1.0 + S_abs), S_signed, S_bin]:
         yield __test, D
 
+
 @image_comparison(baseline_images=['coords'], extensions=['png'])
 def test_coords():
 
     plt.figure()
     librosa.display.specshow(Csync, x_coords=beat_t, x_axis='time', y_axis='cqt_note')
 
+
 @raises(librosa.ParameterError)
 def test_bad_coords():
 
     librosa.display.specshow(S_abs, x_coords=np.arange(S.shape[1] // 2))
-

@@ -117,7 +117,7 @@ it should be significantly faster.::
 
 Reducing the cache level to 20 yields an intermediate acceleration::
 
-    $ export LIBROSA_CACHE_LEVEL=50
+    $ export LIBROSA_CACHE_LEVEL=20
 
     $ time -p ./estimate_tuning.py ../librosa/util/example_data/Kevin_MacLeod_-_Vibe_Ace.ogg 
     Loading  ../librosa/util/example_data/Kevin_MacLeod_-_Vibe_Ace.ogg

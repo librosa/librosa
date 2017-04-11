@@ -32,6 +32,7 @@ Miscellaneous
     constant_q_lengths
     cq_to_chroma
 """
+import warnings
 
 import numpy as np
 import scipy
@@ -228,21 +229,30 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False):
     fftfreqs = fft_frequencies(sr=sr, n_fft=n_fft)
 
     # 'Center freqs' of mel bands - uniformly spaced between limits
-    freqs = mel_frequencies(n_mels + 2,
-                            fmin=fmin,
-                            fmax=fmax,
-                            htk=htk)
+    mel_f = mel_frequencies(n_mels + 2, fmin=fmin, fmax=fmax, htk=htk)
 
-    # Slaney-style mel is scaled to be approx constant energy per channel
-    enorm = 2.0 / (freqs[2:n_mels+2] - freqs[:n_mels])
+    fdiff = np.diff(mel_f)
+    ramps = np.subtract.outer(mel_f, fftfreqs)
 
     for i in range(n_mels):
         # lower and upper slopes for all bins
-        lower = (fftfreqs - freqs[i]) / (freqs[i+1] - freqs[i])
-        upper = (freqs[i+2] - fftfreqs) / (freqs[i+2] - freqs[i+1])
+        lower = -ramps[i] / fdiff[i]
+        upper = ramps[i+2] / fdiff[i+1]
 
         # .. then intersect them with each other and zero
-        weights[i] = np.maximum(0, np.minimum(lower, upper)) * enorm[i]
+        weights[i] = np.maximum(0, np.minimum(lower, upper))
+
+    # Slaney-style mel is scaled to be approx constant energy per channel
+    enorm = 2.0 / (mel_f[2:n_mels+2] - mel_f[:n_mels])
+    weights *= enorm[:, np.newaxis]
+
+    # Only check weights if f_mel[0] is positive
+    if not np.all((mel_f[:-2] == 0) | (weights.max(axis=1) > 0)):
+        # This means we have an empty channel somewhere
+        warnings.warn('Empty filters detected in mel frequency basis. '
+                      'Some channels will produce empty responses. '
+                      'Try increasing your sampling rate (and fmax) or '
+                      'reducing n_mels.')
 
     return weights
 
@@ -392,7 +402,7 @@ def __float_window(window_spec):
         '''The wrapped window'''
         n_min, n_max = int(np.floor(n)), int(np.ceil(n))
 
-        window = get_window(window_spec, n)
+        window = get_window(window_spec, n_min)
 
         if len(window) < n_max:
             window = np.pad(window, [(0, n_max - len(window))],
@@ -688,13 +698,13 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
 
     >>> import matplotlib.pyplot as plt
     >>> plt.subplot(3, 1, 1)
-    >>> librosa.display.specshow(librosa.logamplitude(CQT**2,
-    ...                                               ref_power=np.max),
-    ...                          y_axis='cqt_note', x_axis='time')
+    >>> librosa.display.specshow(librosa.amplitude_to_db(CQT,
+    ...                                                  ref=np.max),
+    ...                          y_axis='cqt_note')
     >>> plt.title('CQT Power')
     >>> plt.colorbar()
     >>> plt.subplot(3, 1, 2)
-    >>> librosa.display.specshow(chromagram, y_axis='chroma', x_axis='time')
+    >>> librosa.display.specshow(chromagram, y_axis='chroma')
     >>> plt.title('Chroma (wrapped CQT)')
     >>> plt.colorbar()
     >>> plt.subplot(3, 1, 3)
@@ -777,6 +787,10 @@ def window_bandwidth(window, n=1000):
     bandwidth : float
         The equivalent noise bandwidth (in FFT bins) of the
         given window function
+
+    Notes
+    -----
+    This function caches at level 10.
 
     See Also
     --------

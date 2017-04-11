@@ -23,11 +23,12 @@ __all__ = ['load', 'to_mono', 'resample', 'get_duration',
 BW_BEST = resampy.filters.get_filter('kaiser_best')[2]
 BW_FASTEST = resampy.filters.get_filter('kaiser_fast')[2]
 
+
 # -- CORE ROUTINES --#
 # Load should never be cached, since we cannot verify that the contents of
 # 'path' are unchanged across calls.
 def load(path, sr=22050, mono=True, offset=0.0, duration=None,
-         dtype=np.float32):
+         dtype=np.float32, res_type='kaiser_best'):
     """Load an audio file as a floating point time series.
 
     Parameters
@@ -53,6 +54,16 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
 
     dtype : numeric type
         data type of `y`
+
+    res_type : str
+        resample type (see note)
+
+        .. note::
+            By default, this uses `resampy`'s high-quality mode ('kaiser_best').
+
+            To use a faster method, set `res_type='kaiser_fast'`.
+
+            To use `scipy.signal.resample`, set `res_type='scipy'`.
 
 
     Returns
@@ -136,12 +147,12 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
         y = np.concatenate(y)
 
         if n_channels > 1:
-            y = y.reshape((-1, 2)).T
+            y = y.reshape((-1, n_channels)).T
             if mono:
                 y = to_mono(y)
 
         if sr is not None:
-            y = resample(y, sr_native, sr)
+            y = resample(y, sr_native, sr, res_type=res_type)
 
         else:
             sr = sr_native
@@ -210,6 +221,8 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
 
         .. note::
             By default, this uses `resampy`'s high-quality mode ('kaiser_best').
+
+            To use a faster method, set `res_type='kaiser_fast'`.
 
             To use `scipy.signal.resample`, set `res_type='scipy'`.
 
@@ -627,7 +640,7 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
     >>> plt.figure()
     >>> S = librosa.feature.melspectrogram(y=y, sr=sr)
     >>> ax = plt.subplot(2,1,2)
-    >>> librosa.display.specshow(librosa.logamplitude(S, ref_power=np.max),
+    >>> librosa.display.specshow(librosa.power_to_db(S, ref=np.max),
     ...                          x_axis='time', y_axis='mel')
     >>> plt.subplot(2,1,1, sharex=ax)
     >>> librosa.display.waveplot(y_beat_times, sr=sr, label='Beat clicks')

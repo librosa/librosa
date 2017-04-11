@@ -12,8 +12,6 @@ try:
 except:
     pass
 
-import matplotlib
-matplotlib.use('Agg')
 
 import warnings
 
@@ -21,6 +19,8 @@ import numpy as np
 import librosa
 
 __EXAMPLE_FILE = 'data/test1_22050.wav'
+warnings.resetwarnings()
+warnings.simplefilter('always')
 
 
 def test_onset_strength_audio():
@@ -45,9 +45,6 @@ def test_onset_strength_audio():
                                            hop_length=hop_length)
 
         target_shape = S.shape[-1]
-
-        #if center:
-        #    target_shape += n_fft // (2 * hop_length)
 
         if not detrend:
             assert np.all(oenv >= 0)
@@ -95,9 +92,6 @@ def test_onset_strength_spectrogram():
         assert oenv.ndim == 1
 
         target_shape = S.shape[-1]
-
-        #if center:
-        #    target_shape += n_fft // (2 * hop_length)
 
         if not detrend:
             assert np.all(oenv >= 0)
@@ -147,12 +141,17 @@ def test_onset_strength_multi():
 
 def test_onset_detect_real():
 
-    def __test(y, sr, oenv, hop_length):
+    def __test(y, sr, oenv, hop_length, bt):
 
         onsets = librosa.onset.onset_detect(y=y, sr=sr, onset_envelope=oenv,
-                                            hop_length=hop_length)
+                                            hop_length=hop_length,
+                                            backtrack=bt)
 
-        assert np.all(onsets > 0)
+        if bt:
+            assert np.all(onsets >= 0)
+        else:
+            assert np.all(onsets > 0)
+
         assert np.all(onsets < len(y) * sr // hop_length)
         if oenv is not None:
             assert np.all(onsets < len(oenv))
@@ -160,12 +159,13 @@ def test_onset_detect_real():
     y, sr = librosa.load(__EXAMPLE_FILE)
 
     # Test with no signal
-    yield raises(librosa.ParameterError)(__test), None, sr, None, 512
+    yield raises(librosa.ParameterError)(__test), None, sr, None, 512, False
 
     for hop_length in [64, 512, 2048]:
-        yield __test, y, sr, None, hop_length
         oenv = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
-        yield __test, y, sr, oenv, hop_length
+        for bt in [False, True]:
+            yield __test, y, sr, None, hop_length, bt
+            yield __test, y, sr, oenv, hop_length, bt
 
 
 def test_onset_detect_const():
@@ -211,9 +211,33 @@ def test_onset_units():
 
         assert np.allclose(t1, t2)
 
-    for sr in [None, 11024]:
+    for sr in [None, 44100]:
         y, sr = librosa.load(__EXAMPLE_FILE, sr=sr)
         for hop_length in [512, 1024]:
             for units in ['frames', 'time', 'samples']:
                 yield __test, units, hop_length, y, sr
             yield raises(librosa.ParameterError)(__test), 'bad units', hop_length, y, sr
+
+
+def test_onset_backtrack():
+    y, sr = librosa.load(__EXAMPLE_FILE)
+
+    oenv = librosa.onset.onset_strength(y=y, sr=sr)
+    onsets = librosa.onset.onset_detect(onset_envelope=oenv, backtrack=False)
+
+    def __test(energy):
+        # Test backtracking
+        onsets_bt = librosa.onset.onset_backtrack(onsets, energy)
+
+        # Make sure there are no negatives
+        assert np.all(onsets_bt >= 0)
+
+        # And that we never roll forward
+        assert np.all(onsets_bt <= onsets)
+
+        # And that the detected peaks are actually minima
+        assert np.all(energy[onsets_bt] <= energy[np.maximum(0, onsets_bt - 1)])
+
+    yield __test, oenv
+    rmse = librosa.feature.rmse(y=y)
+    yield __test, rmse

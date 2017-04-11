@@ -26,6 +26,7 @@ setup(
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
     ],
     keywords='audio music sound',
     license='ISC',
@@ -41,8 +42,10 @@ setup(
     ],
     extras_require={
         'docs': ['numpydoc', 'sphinx!=1.3.1', 'sphinx_rtd_theme',
-                 'matplotlib >= 1.5'],
+                 'matplotlib >= 2.0.0',
+                 'sphinxcontrib-versioning >= 2.2.1'],
         'numba': ['numba >= 0.25'],
+        'tests': ['matplotlib >= 2.0.0'],
         'display': ['matplotlib >= 1.5'],
     }
 )

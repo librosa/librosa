@@ -12,6 +12,7 @@ Display
 
     TimeFormatter
     NoteFormatter
+    LogHzFormatter
     ChromaFormatter
 """
 
@@ -20,12 +21,20 @@ import warnings
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import Formatter, FixedFormatter, ScalarFormatter
-from matplotlib.ticker import LogLocator, FixedLocator, MaxNLocator, SymmetricalLogLocator
+from matplotlib.ticker import LogLocator, FixedLocator, MaxNLocator
+from matplotlib.ticker import SymmetricalLogLocator
 
-from . import cache
 from . import core
 from . import util
 from .util.exceptions import ParameterError
+
+__all__ = ['specshow',
+           'waveplot',
+           'cmap',
+           'TimeFormatter',
+           'NoteFormatter',
+           'LogHzFormatter',
+           'ChromaFormatter']
 
 
 class TimeFormatter(Formatter):
@@ -123,6 +132,7 @@ class NoteFormatter(Formatter):
 
     See also
     --------
+    LogHzFormatter
     matplotlib.ticker.Formatter
 
     Examples
@@ -145,7 +155,7 @@ class NoteFormatter(Formatter):
 
     def __call__(self, x, pos=None):
 
-        if x < core.note_to_hz('C0'):
+        if x <= 0:
             return ''
 
         # Only use cent precision if our vspan is less than an octave
@@ -157,6 +167,52 @@ class NoteFormatter(Formatter):
         cents = vmax <= 2 * max(1, vmin)
 
         return core.hz_to_note(int(x), octave=self.octave, cents=cents)[0]
+
+
+class LogHzFormatter(Formatter):
+    '''Ticker formatter for logarithmic frequency
+
+    Parameters
+    ----------
+    major : bool
+        If `True`, ticks are always labeled.
+
+        If `False`, ticks are only labeled if the span is less than 2 octaves
+
+    See also
+    --------
+    NoteFormatter
+    matplotlib.ticker.Formatter
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> values = librosa.midi_to_hz(np.arange(48, 72))
+    >>> plt.figure()
+    >>> ax1 = plt.subplot(2,1,1)
+    >>> ax1.bar(np.arange(len(values)), values)
+    >>> ax1.yaxis.set_major_formatter(librosa.display.LogHzFormatter())
+    >>> ax1.set_ylabel('Hz')
+    >>> ax2 = plt.subplot(2,1,2)
+    >>> ax2.bar(np.arange(len(values)), values)
+    >>> ax2.yaxis.set_major_formatter(librosa.display.NoteFormatter())
+    >>> ax2.set_ylabel('Note')
+    '''
+    def __init__(self, major=True):
+
+        self.major = major
+
+    def __call__(self, x, pos=None):
+
+        if x <= 0:
+            return ''
+
+        vmin, vmax = self.axis.get_view_interval()
+
+        if not self.major and vmax > 4 * max(1, vmin):
+            return ''
+
+        return '{:g}'.format(x)
 
 
 class ChromaFormatter(Formatter):
@@ -492,7 +548,7 @@ def specshow(data, x_coords=None, y_coords=None,
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> plt.figure(figsize=(12, 8))
 
-    >>> D = librosa.logamplitude(np.abs(librosa.stft(y))**2, ref_power=np.max)
+    >>> D = librosa.amplitude_to_db(librosa.stft(y), ref=np.max)
     >>> plt.subplot(4, 2, 1)
     >>> librosa.display.specshow(D, y_axis='linear')
     >>> plt.colorbar(format='%+2.0f dB')
@@ -509,7 +565,7 @@ def specshow(data, x_coords=None, y_coords=None,
 
     Or use a CQT scale
 
-    >>> CQT = librosa.logamplitude(librosa.cqt(y, sr=sr)**2, ref_power=np.max)
+    >>> CQT = librosa.amplitude_to_db(librosa.cqt(y, sr=sr), ref=np.max)
     >>> plt.subplot(4, 2, 3)
     >>> librosa.display.specshow(CQT, y_axis='cqt_note')
     >>> plt.colorbar(format='%+2.0f dB')
@@ -707,12 +763,14 @@ def __decorate_axis(axis, ax_type):
 
     elif ax_type == 'time':
         axis.set_major_formatter(TimeFormatter(lag=False))
-        axis.set_major_locator(MaxNLocator(prune=None, steps=[1,5,10,15,20,30,45,60]))
+        axis.set_major_locator(MaxNLocator(prune=None,
+                                           steps=[1, 1.5, 5, 6, 10]))
         axis.set_label_text('Time')
 
     elif ax_type == 'lag':
         axis.set_major_formatter(TimeFormatter(lag=True))
-        axis.set_major_locator(MaxNLocator(prune=None, steps=[1,5,10,15,20,30,45,60]))
+        axis.set_major_locator(MaxNLocator(prune=None,
+                                           steps=[1, 1.5, 5, 6, 10]))
         axis.set_label_text('Lag')
 
     elif ax_type == 'cqt_note':
@@ -724,8 +782,9 @@ def __decorate_axis(axis, ax_type):
         axis.set_label_text('Note')
 
     elif ax_type in ['cqt_hz']:
-        axis.set_major_formatter(ScalarFormatter())
+        axis.set_major_formatter(LogHzFormatter())
         axis.set_major_locator(LogLocator(base=2.0))
+        axis.set_minor_formatter(LogHzFormatter(major=False))
         axis.set_minor_locator(LogLocator(base=2.0,
                                           subs=2.0**(np.arange(1, 12)/12.0)))
         axis.set_label_text('Hz')

@@ -30,12 +30,22 @@ Spectral representations
     pseudo_cqt
     fmt
 
-    harmonics
+    interp_harmonics
+    salience
 
     phase_vocoder
-
     magphase
-    logamplitude
+
+Magnitude scaling
+-----------------
+.. autosummary::
+    :toctree: generated/
+
+    amplitude_to_db
+    db_to_amplitude
+    power_to_db
+    db_to_power
+
     perceptual_weighting
     A_weighting
 
@@ -84,10 +94,15 @@ Dynamic Time Warping
     :toctree: generated/
 
     dtw
-    calc_accu_cost
-    backtracking
-    band_mask
+    fill_off_diagonal
 
+
+Deprecated
+----------
+.. autosummary::
+    :toctree: generated/
+
+    logamplitude
 """
 
 from .time_frequency import *  # pylint: disable=wildcard-import
@@ -96,6 +111,6 @@ from .spectrum import *  # pylint: disable=wildcard-import
 from .pitch import *  # pylint: disable=wildcard-import
 from .constantq import *  # pylint: disable=wildcard-import
 from .dtw import *  # pylint: disable=wildcard-import
-from .harmonic import * # pylint: disable=wildcard-import
+from .harmonic import *  # pylint: disable=wildcard-import
 
 __all__ = [_ for _ in dir() if not _.startswith('_')]

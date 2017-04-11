@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # CREATED: 2013-10-06 22:31:29 by Dawen Liang <dl2771@columbia.edu>
 # unit tests for librosa.decompose
+import warnings
 
 # Disable cache
 import os
@@ -9,8 +10,6 @@ try:
 except:
     pass
 
-import matplotlib
-matplotlib.use('Agg')
 import numpy as np
 import scipy.sparse
 
@@ -18,6 +17,12 @@ import librosa
 import sklearn.decomposition
 
 from nose.tools import raises
+
+from test_core import srand
+
+warnings.resetwarnings()
+warnings.simplefilter('always')
+
 
 def test_default_decompose():
 
@@ -38,7 +43,10 @@ def test_given_decompose():
 
     assert np.allclose(X, W.dot(H), rtol=1e-2, atol=1e-2)
 
+
 def test_decompose_fit():
+
+    srand()
 
     D = sklearn.decomposition.NMF(random_state=0)
 
@@ -50,9 +58,10 @@ def test_decompose_fit():
     # Make random data and decompose with the same basis
     X = np.random.randn(*X.shape)**2
     (W2, H2) = librosa.decompose.decompose(X, transformer=D, fit=False)
-    
+
     # Make sure the basis hasn't changed
     assert np.allclose(W, W2)
+
 
 @raises(librosa.ParameterError)
 def test_decompose_fit_false():
@@ -70,14 +79,13 @@ def test_sorted_decompose():
     assert np.allclose(X, W.dot(H), rtol=1e-2, atol=1e-2)
 
 
-
 def test_real_hpss():
 
     # Load an audio signal
     y, sr = librosa.load('data/test1_22050.wav')
 
     D = np.abs(librosa.stft(y))
-    
+
     def __hpss_test(window, power, mask, margin):
         H, P = librosa.decompose.hpss(D, kernel_size=window, power=power,
                                       mask=mask, margin=margin)
@@ -98,6 +106,7 @@ def test_real_hpss():
             for mask in [False, True]:
                 for margin in [1.0, 3.0, (1.0, 1.0), (9.0, 10.0)]:
                     yield __hpss_test, window, power, mask, margin
+
 
 @raises(librosa.ParameterError)
 def test_hpss_margin_error():
@@ -120,6 +129,7 @@ def test_complex_hpss():
 
 def test_nn_filter_mean():
 
+    srand()
     X = np.random.randn(10, 100)
 
     # Build a recurrence matrix, just for testing purposes
@@ -132,8 +142,10 @@ def test_nn_filter_mean():
 
     assert np.allclose(X_filtered, X.dot(rec.T))
 
+
 def test_nn_filter_mean_rec():
 
+    srand()
     X = np.random.randn(10, 100)
 
     # Build a recurrence matrix, just for testing purposes
@@ -151,8 +163,10 @@ def test_nn_filter_mean_rec():
     rec = librosa.util.normalize(rec, axis=1, norm=1)
     assert np.allclose(X_filtered[:, 3:], (X.dot(rec.T))[:, 3:])
 
+
 def test_nn_filter_mean_rec_sparse():
 
+    srand()
     X = np.random.randn(10, 100)
 
     # Build a recurrence matrix, just for testing purposes
@@ -164,8 +178,10 @@ def test_nn_filter_mean_rec_sparse():
     rec = librosa.util.normalize(rec.toarray(), axis=1, norm=1)
     assert np.allclose(X_filtered, (X.dot(rec.T)))
 
+
 def test_nn_filter_avg():
 
+    srand()
     X = np.random.randn(10, 100)
 
     # Build a recurrence matrix, just for testing purposes
@@ -183,6 +199,8 @@ def test_nn_filter_badselfsim():
 
     @raises(librosa.ParameterError)
     def __test(x, y, sparse):
+        srand()
+
         X = np.empty((10, 100))
         # Build a recurrence matrix, just for testing purposes
         rec = np.random.randn(x, y)
@@ -191,6 +209,6 @@ def test_nn_filter_badselfsim():
 
         librosa.decompose.nn_filter(X, rec=rec)
 
-    for (x,y) in [(10, 10), (100, 20), (20, 100), (100, 101), (101, 101)]:
+    for (x, y) in [(10, 10), (100, 20), (20, 100), (100, 101), (101, 101)]:
         for sparse in [False, True]:
             yield __test, x, y, sparse

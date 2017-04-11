@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-'''Pitch-tracking and tuning estimation'''
+'''Constant-Q transforms'''
 from __future__ import division
+
+from warnings import warn
 
 import numpy as np
 import scipy.fftpack as fft
@@ -20,7 +22,7 @@ __all__ = ['cqt', 'hybrid_cqt', 'pseudo_cqt']
 
 @cache(level=20)
 def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
-        bins_per_octave=12, tuning=None, filter_scale=1,
+        bins_per_octave=12, tuning=0.0, filter_scale=1,
         norm=1, sparsity=0.01, window='hann',
         scale=True,
         real=util.Deprecated()):
@@ -56,7 +58,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     tuning : None or float in `[-0.5, 0.5)`
         Tuning offset in fractions of a bin (cents).
 
-        If `None`, tuning will be automatically estimated.
+        If `None`, tuning will be automatically estimated from the signal.
 
     filter_scale : float > 0
         Filter scale factor. Small values (<1) use shorter windows
@@ -83,8 +85,12 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         If `False`, do not scale the CQT. This is analogous to
         `norm=None` in FFT.
 
-    real : [DEPRECATED]
-        .. warning:: This parameter name deprecated in librosa 0.5.0
+    real : bool [DEPRECATED]
+        If `False`, return a complex-valued constant-Q transform (default).
+
+        If `True`, return the CQT magnitude.
+
+        .. warning:: This parameter is deprecated in librosa 0.5.0
             It will be removed in librosa 0.6.0.
 
 
@@ -117,7 +123,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> C = librosa.cqt(y, sr=sr)
-    >>> librosa.display.specshow(librosa.logamplitude(C**2, ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(C, ref=np.max),
     ...                          sr=sr, x_axis='time', y_axis='cqt_note')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Constant-Q power spectrum')
@@ -258,12 +264,21 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                              filter_scale=filter_scale)
         C /= np.sqrt(lengths[:, np.newaxis])
 
+    if not isinstance(real, util.Deprecated):
+        warn('Real-valued CQT (real=True) is deprecated in 0.4.2. '
+             'The `real` parameter will be removed in 0.6.0.'
+             'Use np.abs(librosa.cqt(...)) '
+             'instead of real=True to maintain forward compatibility.',
+             DeprecationWarning)
+        if real:
+            C = np.abs(C)
+
     return C
 
 
 @cache(level=20)
 def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
-               bins_per_octave=12, tuning=None, filter_scale=1,
+               bins_per_octave=12, tuning=0.0, filter_scale=1,
                norm=1, sparsity=0.01, window='hann', scale=True):
     '''Compute the hybrid constant-Q transform of an audio signal.
 
@@ -294,7 +309,7 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     tuning : None or float in `[-0.5, 0.5)`
         Tuning offset in fractions of a bin (cents).
 
-        If `None`, tuning will be automatically estimated.
+        If `None`, tuning will be automatically estimated from the signal.
 
     filter_scale : float > 0
         Filter filter_scale factor. Larger values use longer windows.
@@ -396,7 +411,7 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
 @cache(level=20)
 def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
-               bins_per_octave=12, tuning=None, filter_scale=1,
+               bins_per_octave=12, tuning=0.0, filter_scale=1,
                norm=1, sparsity=0.01, window='hann', scale=True):
     '''Compute the pseudo constant-Q transform of an audio signal.
 
@@ -429,7 +444,7 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     tuning : None or float in `[-0.5, 0.5)`
         Tuning offset in fractions of a bin (cents).
 
-        If `None`, tuning will be automatically estimated.
+        If `None`, tuning will be automatically estimated from the signal.
 
     filter_scale : float > 0
         Filter filter_scale factor. Larger values use longer windows.
@@ -541,7 +556,7 @@ def __trim_stack(cqt_resp, n_bins):
     '''Helper function to trim and stack a collection of CQT responses'''
 
     # cleanup any framing errors at the boundaries
-    max_col = min([x.shape[1] for x in cqt_resp])
+    max_col = min(x.shape[1] for x in cqt_resp)
 
     cqt_resp = np.vstack([x[:, :max_col] for x in cqt_resp][::-1])
 

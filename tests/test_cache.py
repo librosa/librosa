@@ -10,10 +10,11 @@ import tempfile
 import shutil
 import numpy as np
 
-import matplotlib
-matplotlib.use('Agg')
 from nose.tools import with_setup, eq_
 
+import warnings
+warnings.resetwarnings()
+warnings.simplefilter('always')
 
 # Disable any initial cache settings
 for key in ['DIR', 'MMAP', 'COMPRESS', 'VERBOSE', 'LEVEL']:

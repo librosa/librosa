@@ -464,15 +464,15 @@ def axis_sort(S, axis=-1, index=False, value=None):
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
     >>> plt.subplot(2, 2, 1)
-    >>> librosa.display.specshow(librosa.logamplitude(W**2, ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(W, ref=np.max),
     ...                          y_axis='log')
     >>> plt.title('W')
     >>> plt.subplot(2, 2, 2)
     >>> librosa.display.specshow(H, x_axis='time')
     >>> plt.title('H')
     >>> plt.subplot(2, 2, 3)
-    >>> librosa.display.specshow(librosa.logamplitude(W_sort**2,
-    ...                                               ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(W_sort,
+    ...                                                  ref=np.max),
     ...                          y_axis='log')
     >>> plt.title('W sorted')
     >>> plt.subplot(2, 2, 4)
@@ -533,38 +533,81 @@ def axis_sort(S, axis=-1, index=False, value=None):
 
 
 @cache(level=40)
-def normalize(S, norm=np.inf, axis=0):
-    '''Normalize the columns or rows of a matrix
+def normalize(S, norm=np.inf, axis=0, threshold=None, fill=None):
+    '''Normalize an array along a chosen axis.
 
-    .. note::
-         Columns/rows with length 0 will be left as zeros.
+    Given a norm (described below) and a target axis, the input
+    array is scaled so that
+
+        `norm(S, axis=axis) == 1`
+
+    For example, `axis=0` normalizes each column of a 2-d array
+    by aggregating over the rows (0-axis).
+    Similarly, `axis=1` normalizes each row of a 2-d array.
+
+    This function also supports thresholding small-norm slices:
+    any slice (i.e., row or column) with norm below a specified
+    `threshold` can be left un-normalized, set to all-zeros, or
+    filled with uniform non-zero values that normalize to 1.
+
+    Note: the semantics of this function differ from
+    `scipy.linalg.norm` in two ways: multi-dimensional arrays
+    are supported, but matrix-norms are not.
+
+
     Parameters
     ----------
-    S : np.ndarray [shape=(d, n)]
+    S : np.ndarray
         The matrix to normalize
 
     norm : {np.inf, -np.inf, 0, float > 0, None}
         - `np.inf`  : maximum absolute value
         - `-np.inf` : mininum absolute value
-        - `0`    : number of non-zeros
-        - float  : corresponding l_p norm.
+        - `0`    : number of non-zeros (the support)
+        - float  : corresponding l_p norm
             See `scipy.linalg.norm` for details.
         - None : no normalization is performed
 
     axis : int [scalar]
         Axis along which to compute the norm.
-        `axis=0` will normalize columns, `axis=1` will normalize rows.
-        `axis=None` will normalize according to the entire matrix.
+
+    threshold : number > 0 [optional]
+        Only the columns (or rows) with norm at least `threshold` are
+        normalized.
+
+        By default, the threshold is determined from
+        the numerical precision of `S.dtype`.
+
+    fill : None or bool
+        If None, then columns (or rows) with norm below `threshold`
+        are left as is.
+
+        If False, then columns (rows) with norm below `threshold`
+        are set to 0.
+
+        If True, then columns (rows) with norm below `threshold`
+        are filled uniformly such that the corresponding norm is 1.
+
+        .. note:: `fill=True` is incompatible with `norm=0` because
+            no uniform vector exists with l0 "norm" equal to 1.
 
     Returns
     -------
     S_norm : np.ndarray [shape=S.shape]
-        Normalized matrix
+        Normalized array
 
     Raises
     ------
     ParameterError
         If `norm` is not among the valid types defined above
+
+        If `S` is not finite
+
+        If `fill=True` and `norm=0`
+
+    See Also
+    --------
+    scipy.linalg.norm
 
     Notes
     -----
@@ -604,10 +647,67 @@ def normalize(S, norm=np.inf, axis=0):
            [ 0.   ,  0.   ,  0.   ,  0.5  ],
            [ 0.123,  0.236,  0.408,  0.5  ]])
 
+    >>> # Thresholding and filling
+    >>> S[:, -1] = 1e-308
+    >>> S
+    array([[ -8.000e+000,   4.000e+000,  -2.000e+000,
+              1.000e-308],
+           [ -1.000e+000,   1.000e+000,  -1.000e+000,
+              1.000e-308],
+           [  0.000e+000,   0.000e+000,   0.000e+000,
+              1.000e-308],
+           [  1.000e+000,   1.000e+000,   1.000e+000,
+              1.000e-308]])
+
+    >>> # By default, small-norm columns are left untouched
+    >>> librosa.util.normalize(S)
+    array([[ -1.000e+000,   1.000e+000,  -1.000e+000,
+              1.000e-308],
+           [ -1.250e-001,   2.500e-001,  -5.000e-001,
+              1.000e-308],
+           [  0.000e+000,   0.000e+000,   0.000e+000,
+              1.000e-308],
+           [  1.250e-001,   2.500e-001,   5.000e-001,
+              1.000e-308]])
+    >>> # Small-norm columns can be zeroed out
+    >>> librosa.util.normalize(S, fill=False)
+    array([[-1.   ,  1.   , -1.   ,  0.   ],
+           [-0.125,  0.25 , -0.5  ,  0.   ],
+           [ 0.   ,  0.   ,  0.   ,  0.   ],
+           [ 0.125,  0.25 ,  0.5  ,  0.   ]])
+    >>> # Or set to constant with unit-norm
+    >>> librosa.util.normalize(S, fill=True)
+    array([[-1.   ,  1.   , -1.   ,  1.   ],
+           [-0.125,  0.25 , -0.5  ,  1.   ],
+           [ 0.   ,  0.   ,  0.   ,  1.   ],
+           [ 0.125,  0.25 ,  0.5  ,  1.   ]])
+    >>> # With an l1 norm instead of max-norm
+    >>> librosa.util.normalize(S, norm=1, fill=True)
+    array([[-0.8  ,  0.667, -0.5  ,  0.25 ],
+           [-0.1  ,  0.167, -0.25 ,  0.25 ],
+           [ 0.   ,  0.   ,  0.   ,  0.25 ],
+           [ 0.1  ,  0.167,  0.25 ,  0.25 ]])
     '''
 
+    # Avoid div-by-zero
+    if threshold is None:
+        threshold = tiny(S)
+
+    elif threshold <= 0:
+        raise ParameterError('threshold={} must be strictly '
+                             'positive'.format(threshold))
+
+    if fill not in [None, False, True]:
+        raise ParameterError('fill={} must be None or boolean'.format(fill))
+
+    if not np.all(np.isfinite(S)):
+        raise ParameterError('Input must be finite')
+
     # All norms only depend on magnitude, let's do that first
-    mag = np.abs(S)
+    mag = np.abs(S).astype(np.float)
+
+    # For max/min norms, filling with 1 works
+    fill_norm = 1
 
     if norm == np.inf:
         length = np.max(mag, axis=axis, keepdims=True)
@@ -616,10 +716,18 @@ def normalize(S, norm=np.inf, axis=0):
         length = np.min(mag, axis=axis, keepdims=True)
 
     elif norm == 0:
-        length = np.sum(mag > 0, axis=axis, keepdims=True)
+        if fill is True:
+            raise ParameterError('Cannot normalize with norm=0 and fill=True')
+
+        length = np.sum(mag > 0, axis=axis, keepdims=True, dtype=mag.dtype)
 
     elif np.issubdtype(type(norm), np.number) and norm > 0:
-        length = np.sum(mag ** norm, axis=axis, keepdims=True)**(1./norm)
+        length = np.sum(mag**norm, axis=axis, keepdims=True)**(1./norm)
+
+        if axis is None:
+            fill_norm = mag.size**(-1./norm)
+        else:
+            fill_norm = mag.shape[axis]**(-1./norm)
 
     elif norm is None:
         return S
@@ -627,10 +735,28 @@ def normalize(S, norm=np.inf, axis=0):
     else:
         raise ParameterError('Unsupported norm: {}'.format(repr(norm)))
 
-    # Avoid div-by-zero
-    length[length < tiny(length)] = 1.0
+    # indices where norm is below the threshold
+    small_idx = length < threshold
 
-    return S / length
+    if fill is None:
+        # Leave small indices un-normalized
+        length[small_idx] = 1.0
+        Snorm = S / length
+
+    elif fill:
+        # If we have a non-zero fill value, we locate those entries by
+        # doing a nan-divide.
+        # If S was finite, then length is finite (except for small positions)
+        length[small_idx] = np.nan
+        Snorm = S / length
+        Snorm[np.isnan(Snorm)] = fill_norm
+    else:
+        # Set small values to zero by doing an inf-divide.
+        # This is safe (by IEEE-754) as long as S is finite.
+        length[small_idx] = np.inf
+        Snorm = S / length
+
+    return Snorm
 
 
 def match_intervals(intervals_from, intervals_to):
@@ -697,7 +823,7 @@ def match_intervals(intervals_from, intervals_to):
     return output
 
 
-def match_events(events_from, events_to):
+def match_events(events_from, events_to, left=True, right=True):
     '''Match one set of events to another.
 
     This is useful for tasks such as matching beats to the nearest
@@ -735,6 +861,11 @@ def match_events(events_from, events_to):
       Array of events (eg, times, sample or frame indices) to
       match against.
 
+    left : bool
+    right : bool
+        If `False`, then matched events cannot be to the left (or right)
+        of source events.
+
     Returns
     -------
     event_mapping : np.ndarray [shape=(n,)]
@@ -756,8 +887,29 @@ def match_events(events_from, events_to):
     if len(events_from) == 0 or len(events_to) == 0:
         raise ParameterError('Attempting to match empty event list')
 
+    # If we can't match left or right, then only strict equivalence
+    # counts as a match.
+    if not (left or right) and not np.all(np.in1d(events_from, events_to)):
+            raise ParameterError('Cannot match events with left=right=False '
+                                 'and events_from is not contained '
+                                 'in events_to')
+
+    # If we can't match to the left, then there should be at least one
+    # target event greater-equal to every source event
+    if (not left) and max(events_to) < max(events_from):
+        raise ParameterError('Cannot match events with left=False '
+                             'and max(events_to) < max(events_from)')
+
+    # If we can't match to the right, then there should be at least one
+    # target event less-equal to every source event
+    if (not right) and min(events_to) > min(events_from):
+        raise ParameterError('Cannot match events with right=False '
+                             'and min(events_to) > min(events_from)')
+
+    # Pre-allocate the output array
     output = np.empty_like(events_from, dtype=np.int)
 
+    # Compute how many rows we can process at once within the memory block
     n_rows = int(MAX_MEM_BLOCK / (np.prod(output.shape[1:]) * len(events_to)
                                   * events_from.itemsize))
 
@@ -769,9 +921,23 @@ def match_events(events_from, events_to):
         bl_t = min(bl_s + n_rows, len(events_from))
 
         event_block = events_from[bl_s:bl_t]
-        output[bl_s:bl_t] = np.argmin(np.abs(np.subtract.outer(event_block,
-                                                               events_to)),
-                                      axis=-1)
+
+        # distance[i, j] = |events_from - events_to[j]|
+        distance = np.abs(np.subtract.outer(event_block,
+                                            events_to)).astype(np.float)
+
+        # If we can't match to the right, squash all comparisons where
+        # events_to[j] > events_from[i]
+        if not right:
+            distance[np.less.outer(event_block, events_to)] = np.nan
+
+        # If we can't match to the left, squash all comparisons where
+        # events_to[j] < events_from[i]
+        if not left:
+            distance[np.greater.outer(event_block, events_to)] = np.nan
+
+        # Find the minimum distance point from whatever's left after squashing
+        output[bl_s:bl_t] = np.nanargmin(distance, axis=-1)
 
     return output
 
@@ -896,8 +1062,8 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     ...                                sr=sr, hop_length=512)
     >>> plt.figure()
     >>> ax = plt.subplot(2, 1, 2)
-    >>> D = np.abs(librosa.stft(y))**2
-    >>> librosa.display.specshow(librosa.logamplitude(D, ref_power=np.max),
+    >>> D = librosa.stft(y)
+    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
     ...                          y_axis='log', x_axis='time')
     >>> plt.subplot(2, 1, 1, sharex=ax)
     >>> plt.plot(times, onset_env, alpha=0.8, label='Onset strength')
@@ -1140,7 +1306,6 @@ def roll_sparse(x, shift, axis=0):
     elif axis in (-1, 1):
         x = x.tocsr()
 
-
     # lil matrix to start
     x_r = scipy.sparse.lil_matrix(x.shape, dtype=x.dtype)
 
@@ -1331,23 +1496,20 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     >>> subbeat_t = librosa.frames_to_time(sub_beats, sr=sr)
     >>> plt.figure()
     >>> plt.subplot(3, 1, 1)
-    >>> librosa.display.specshow(librosa.logamplitude(cqt**2,
-    ...                                               ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(cqt,
+    ...                                                  ref=np.max),
     ...                          x_axis='time')
-    >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('CQT power, shape={}'.format(cqt.shape))
     >>> plt.subplot(3, 1, 2)
-    >>> librosa.display.specshow(librosa.logamplitude(cqt_med**2,
-    ...                                               ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(cqt_med,
+    ...                                                  ref=np.max),
     ...                          x_coords=beat_t, x_axis='time')
-    >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Beat synchronous CQT power, '
     ...           'shape={}'.format(cqt_med.shape))
     >>> plt.subplot(3, 1, 3)
-    >>> librosa.display.specshow(librosa.logamplitude(cqt_med_sub**2,
-    ...                                               ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(cqt_med_sub,
+    ...                                                  ref=np.max),
     ...                          x_coords=subbeat_t, x_axis='time')
-    >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Sub-beat synchronous CQT power, '
     ...           'shape={}'.format(cqt_med_sub.shape))
     >>> plt.tight_layout()
@@ -1464,7 +1626,8 @@ def softmask(X, X_ref, power=1, split_zeros=False):
            [False, False,  True]], dtype=bool)
     '''
     if X.shape != X_ref.shape:
-        raise ParameterError('Shape mismatch: {}!={}'.format(X.shape, X_ref.shape))
+        raise ParameterError('Shape mismatch: {}!={}'.format(X.shape,
+                                                             X_ref.shape))
 
     if np.any(X < 0) or np.any(X_ref < 0):
         raise ParameterError('X and X_ref must be non-negative')
@@ -1485,7 +1648,9 @@ def softmask(X, X_ref, power=1, split_zeros=False):
     # For finite power, compute the softmask
     if np.isfinite(power):
         mask = (X / Z)**power
-        mask /= mask + (X_ref / Z)**power
+        ref_mask = (X_ref / Z)**power
+        good_idx = ~bad_idx
+        mask[good_idx] /= mask[good_idx] + ref_mask[good_idx]
         # Wherever energy is below energy in both inputs, split the mask
         if split_zeros:
             mask[bad_idx] = 0.5
@@ -1528,22 +1693,27 @@ def tiny(x):
     --------
 
     For a standard double-precision floating point number:
+
     >>> librosa.util.tiny(1.0)
     2.2250738585072014e-308
 
     Or explicitly as double-precision
+
     >>> librosa.util.tiny(np.asarray(1e-5, dtype=np.float64))
     2.2250738585072014e-308
 
     Or complex numbers
+
     >>> librosa.util.tiny(1j)
     2.2250738585072014e-308
 
     Single-precision floating point:
+
     >>> librosa.util.tiny(np.asarray(1e-5, dtype=np.float32))
     1.1754944e-38
 
     Integer
+
     >>> librosa.util.tiny(5)
     1.1754944e-38
     '''

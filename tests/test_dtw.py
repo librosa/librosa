@@ -1,5 +1,14 @@
+#!/usr/bin/env python
+# -*- encoding: utf-8 -*-
+
 import librosa
 import numpy as np
+
+from test_core import srand
+
+import warnings
+warnings.resetwarnings()
+warnings.simplefilter('always')
 
 
 def test_dtw_global():
@@ -34,6 +43,8 @@ def test_dtw_global_diagonal():
 
 
 def test_dtw_subseq():
+    srand()
+
     # query is a linear ramp
     X = np.linspace(0, 1, 100)
 

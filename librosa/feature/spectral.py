@@ -13,7 +13,7 @@ from ..util.deprecation import Deprecated, rename_kw
 
 from ..core.time_frequency import fft_frequencies
 from ..core.audio import zero_crossings, to_mono
-from ..core.spectrum import logamplitude, _spectrogram
+from ..core.spectrum import power_to_db, _spectrogram
 from ..core.constantq import cqt, hybrid_cqt
 from ..core.pitch import estimate_tuning
 
@@ -112,7 +112,7 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     >>> plt.xlim([0, cent.shape[-1]])
     >>> plt.legend()
     >>> plt.subplot(2, 1, 2)
-    >>> librosa.display.specshow(librosa.logamplitude(S**2, ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
     ...                          y_axis='log', x_axis='time')
     >>> plt.title('log Power spectrogram')
     >>> plt.tight_layout()
@@ -217,7 +217,7 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     >>> plt.xlim([0, spec_bw.shape[-1]])
     >>> plt.legend()
     >>> plt.subplot(2, 1, 2)
-    >>> librosa.display.specshow(librosa.logamplitude(S**2, ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
     ...                          y_axis='log', x_axis='time')
     >>> plt.title('log Power spectrogram')
     >>> plt.tight_layout()
@@ -323,8 +323,8 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
     >>> plt.subplot(2, 1, 1)
-    >>> librosa.display.specshow(librosa.logamplitude(S ** 2,
-    ...                                               ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S,
+    ...                                                  ref=np.max),
     ...                          y_axis='log')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Power spectrogram')
@@ -391,7 +391,7 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     if linear:
         return peak - valley
     else:
-        return logamplitude(peak) - logamplitude(valley)
+        return power_to_db(peak) - power_to_db(valley)
 
 
 def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
@@ -460,7 +460,7 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     >>> plt.xlim([0, rolloff.shape[-1]])
     >>> plt.legend()
     >>> plt.subplot(2, 1, 2)
-    >>> librosa.display.specshow(librosa.logamplitude(S**2, ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
     ...                          y_axis='log', x_axis='time')
     >>> plt.title('log Power spectrogram')
     >>> plt.tight_layout()
@@ -551,7 +551,7 @@ def rmse(y=None, S=None, frame_length=2048, hop_length=512,
     >>> plt.xlim([0, rms.shape[-1]])
     >>> plt.legend(loc='best')
     >>> plt.subplot(2, 1, 2)
-    >>> librosa.display.specshow(librosa.logamplitude(S**2, ref_power=np.max),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
     ...                          y_axis='log', x_axis='time')
     >>> plt.title('log Power spectrogram')
     >>> plt.tight_layout()
@@ -559,7 +559,7 @@ def rmse(y=None, S=None, frame_length=2048, hop_length=512,
     Use a STFT window of constant ones and no frame centering to get consistent
     results with the RMS energy computed from the audio samples `y`
 
-    >>> S = librosa.magphase(librosa.stft(y, window=np.ones, center=False)[0]
+    >>> S = librosa.magphase(librosa.stft(y, window=np.ones, center=False))[0]
     >>> librosa.feature.rmse(S=S)
 
     '''
@@ -617,47 +617,55 @@ def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     Returns
     -------
     coefficients : np.ndarray [shape=(order+1, t)]
-        polynomial coefficients for each frame
+        polynomial coefficients for each frame.
+
+        `coeffecients[0]` corresponds to the highest degree (`order`),
+
+        `coefficients[1]` corresponds to the next highest degree (`order-1`),
+
+        down to the constant term `coefficients[order]`.
 
     Examples
     --------
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> S = np.abs(librosa.stft(y))
 
-    Line features
+    Fit a degree-0 polynomial (constant) to each frame
 
-    >>> line = librosa.feature.poly_features(S=S, sr=sr)
-    >>> line
-    array([[ -2.406e-08,  -5.051e-06, ...,  -1.103e-08,  -5.651e-09],
-           [  3.445e-04,   3.834e-02, ...,   2.661e-04,   2.239e-04]])
+    >>> p0 = librosa.feature.poly_features(S=S, order=0)
 
-    Quadratic features
+    Fit a linear polynomial to each frame
 
-    >>> quad = librosa.feature.poly_features(S=S, order=2)
-    >>> quad
-    array([[  6.276e-12,   2.010e-09, ...,   1.493e-12,   1.000e-13],
-           [ -9.325e-08,  -2.721e-05, ...,  -2.749e-08,  -6.754e-09],
-           [  4.715e-04,   7.902e-02, ...,   2.963e-04,   2.259e-04]])
+    >>> p1 = librosa.feature.poly_features(S=S, order=1)
+
+    Fit a quadratic to each frame
+
+    >>> p2 = librosa.feature.poly_features(S=S, order=2)
 
     Plot the results for comparison
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> plt.subplot(3, 1, 1)
-    >>> librosa.display.specshow(line)
-    >>> plt.colorbar()
-    >>> plt.title('Line coefficients')
-    >>> plt.subplot(3, 1, 2)
-    >>> librosa.display.specshow(quad)
-    >>> plt.colorbar()
-    >>> plt.title('Quadratic coefficients')
-    >>> plt.subplot(3, 1, 3)
-    >>> librosa.display.specshow(librosa.logamplitude(S**2, ref_power=np.max),
-    ...                          y_axis='log', x_axis='time')
-    >>> plt.title('log Power spectrogram')
-    >>> plt.colorbar(format='%+2.0f dB')
+    >>> plt.figure(figsize=(8, 8))
+    >>> ax = plt.subplot(4,1,1)
+    >>> plt.plot(p2[2], label='order=2', alpha=0.8)
+    >>> plt.plot(p1[1], label='order=1', alpha=0.8)
+    >>> plt.plot(p0[0], label='order=0', alpha=0.8)
+    >>> plt.xticks([])
+    >>> plt.ylabel('Constant')
+    >>> plt.legend()
+    >>> plt.subplot(4,1,2, sharex=ax)
+    >>> plt.plot(p2[1], label='order=2', alpha=0.8)
+    >>> plt.plot(p1[0], label='order=1', alpha=0.8)
+    >>> plt.xticks([])
+    >>> plt.ylabel('Linear')
+    >>> plt.subplot(4,1,3, sharex=ax)
+    >>> plt.plot(p2[0], label='order=2', alpha=0.8)
+    >>> plt.xticks([])
+    >>> plt.ylabel('Quadratic')
+    >>> plt.subplot(4,1,4, sharex=ax)
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    ...                          y_axis='log')
     >>> plt.tight_layout()
-
     '''
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
@@ -875,7 +883,7 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
 
     fmin : float > 0
         minimum frequency to analyze in the CQT.
-        Default: 'C2' ~ 32.7 Hz
+        Default: 'C1' ~= 32.7 Hz
 
     norm : int > 0, +-np.inf, or None
         Column-wise normalization of the chromagram.
@@ -952,8 +960,7 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
                                       fmin=fmin,
                                       n_bins=n_octaves * bins_per_octave,
                                       bins_per_octave=bins_per_octave,
-                                      tuning=tuning,
-                                      real=False))
+                                      tuning=tuning))
 
     # Map to chroma
     cq_to_chr = filters.cq_to_chroma(C.shape[0],
@@ -999,7 +1006,7 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
 
     fmin : float > 0
         minimum frequency to analyze in the CQT.
-        Default: 'C2' ~ 32.7 Hz
+        Default: 'C1' ~= 32.7 Hz
 
     norm : int > 0, +-np.inf, or None
         Column-wise normalization of the chromagram.
@@ -1245,7 +1252,7 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
 
     >>> S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128,
     ...                                    fmax=8000)
-    >>> librosa.feature.mfcc(S=librosa.logamplitude(S))
+    >>> librosa.feature.mfcc(S=librosa.power_to_db(S))
     array([[ -5.207e+02,  -4.898e+02, ...,  -5.207e+02,  -5.207e+02],
            [ -2.576e-14,   4.054e+01, ...,  -3.997e-14,  -3.997e-14],
            ...,
@@ -1269,14 +1276,21 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
     """
 
     if S is None:
-        S = logamplitude(melspectrogram(y=y, sr=sr, **kwargs))
+        S = power_to_db(melspectrogram(y=y, sr=sr, **kwargs))
 
     return np.dot(filters.dct(n_mfcc, S.shape[0]), S)
 
 
 def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
-                   **kwargs):
-    """Compute a Mel-scaled power spectrogram.
+                   power=2.0, **kwargs):
+    """Compute a mel-scaled spectrogram.
+
+    If a spectrogram input `S` is provided, then it is mapped directly onto
+    the mel basis `mel_f` by `mel_f.dot(S)`.
+
+    If a time-series input `y, sr` is provided, then its magnitude spectrogram
+    `S` is first computed, and then mapped onto the mel scale by
+    `mel_f.dot(S**power)`.  By default, `power=2` operates on a power spectrum.
 
     Parameters
     ----------
@@ -1287,7 +1301,7 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         sampling rate of `y`
 
     S : np.ndarray [shape=(d, t)]
-        power spectrogram
+        spectrogram
 
     n_fft : int > 0 [scalar]
         length of the FFT window
@@ -1296,6 +1310,10 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         number of samples between successive frames.
         See `librosa.core.stft`
 
+    power : float > 0 [scalar]
+        Exponent for the magnitude melspectrogram.
+        e.g., 1 for energy, 2 for power, etc.
+
     kwargs : additional keyword arguments
       Mel filter bank parameters.
       See `librosa.filters.mel` for details.
@@ -1303,7 +1321,7 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     Returns
     -------
     S : np.ndarray [shape=(n_mels, t)]
-        Mel power spectrogram
+        Mel spectrogram
 
     See Also
     --------
@@ -1335,8 +1353,8 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     >>> import matplotlib.pyplot as plt
     >>> plt.figure(figsize=(10, 4))
-    >>> librosa.display.specshow(librosa.logamplitude(S,
-    ...                                               ref_power=np.max),
+    >>> librosa.display.specshow(librosa.power_to_db(S,
+    ...                                              ref=np.max),
     ...                          y_axis='mel', fmax=8000,
     ...                          x_axis='time')
     >>> plt.colorbar(format='%+2.0f dB')
@@ -1347,7 +1365,7 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     """
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length,
-                            power=2)
+                            power=power)
 
     # Build a Mel filter
     mel_basis = filters.mel(sr, n_fft, **kwargs)

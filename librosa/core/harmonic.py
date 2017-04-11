@@ -4,12 +4,107 @@
 
 import numpy as np
 import scipy.interpolate
+import scipy.signal
 from ..util.exceptions import ParameterError
 
-__all__ = ['harmonics']
+__all__ = ['salience', 'interp_harmonics']
 
 
-def harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
+def salience(S, freqs, h_range, weights=None, aggregate=None,
+             filter_peaks=True, fill_value=np.nan,  kind='linear', axis=0):
+    """Harmonic salience function.
+
+    Parameters
+    ----------
+    S : np.ndarray [shape=(d, n)]
+        input time frequency magnitude representation (stft, ifgram, etc).
+        Must be real-valued and non-negative.
+    freqs : np.ndarray, shape=(S.shape[axis])
+        The frequency values corresponding to S's elements along the
+        chosen axis.
+    h_range : list-like, non-negative
+        Harmonics to include in salience computation.  The first harmonic (1)
+        corresponds to `S` itself. Values less than one (e.g., 1/2) correspond
+        to sub-harmonics.
+    weights : list-like
+        The weight to apply to each harmonic in the summation. (default:
+        uniform weights). Must be the same length as `harmonics`.
+    aggregate : function
+        aggregation function (default: `np.average`)
+        If `aggregate=np.average`, then a weighted average is
+        computed per-harmonic according to the specified weights.
+        For all other aggregation functions, all harmonics
+        are treated equally.
+    filter_peaks : bool
+        If true, returns harmonic summation only on frequencies of peak
+        magnitude. Otherwise returns harmonic summation over the full spectrum.
+        Defaults to True.
+    fill_value : float
+        The value to fill non-peaks in the output representation. (default:
+        np.nan) Only used if `filter_peaks == True`.
+    kind : str
+        Interpolation type for harmonic estimation.
+        See `scipy.interpolate.interp1d`.
+    axis : int
+        The axis along which to compute harmonics
+
+    Returns
+    -------
+    S_sal : np.ndarray, shape=(len(h_range), [x.shape])
+        `S_sal` will have the same shape as `S`, and measure
+        the overal harmonic energy at each frequency.
+
+    See Also
+    --------
+    interp_harmonics
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(),
+    ...                      duration=15, offset=30)
+    >>> S = np.abs(librosa.stft(y))
+    >>> freqs = librosa.core.fft_frequencies(sr)
+    >>> harms = [1, 2, 3, 4]
+    >>> weights = [1.0, 0.5, 0.33, 0.25]
+    >>> S_sal = librosa.salience(S, freqs, harms, weights, fill_value=0)
+    >>> print(S_sal.shape)
+    (1025, 646)
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S_sal,
+    ...                                                  ref=np.max),
+    ...                          sr=sr, y_axis='log', x_axis='time')
+    >>> plt.colorbar()
+    >>> plt.title('Salience spectrogram')
+    >>> plt.tight_layout()
+    """
+    if aggregate is None:
+        aggregate = np.average
+
+    if weights is None:
+        weights = np.ones((len(h_range), ))
+    else:
+        weights = np.array(weights, dtype=float)
+
+    S_harm = interp_harmonics(S, freqs, h_range, kind=kind, axis=axis)
+
+    if aggregate is np.average:
+        S_sal = aggregate(S_harm, axis=0, weights=weights)
+    else:
+        S_sal = aggregate(S_harm, axis=0)
+
+    if filter_peaks:
+        S_peaks = scipy.signal.argrelmax(S, axis=0)
+        S_out = np.empty(S.shape)
+        S_out.fill(fill_value)
+        S_out[S_peaks[0], S_peaks[1]] = S_sal[S_peaks[0], S_peaks[1]]
+
+        S_sal = S_out
+
+    return S_sal
+
+
+def interp_harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
     '''Compute the energy at harmonics of time-frequency representation.
 
     Given a frequency-based energy representation such as a spectrogram
@@ -65,7 +160,7 @@ def harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
     >>> h_range = [1, 2, 3, 4, 5]
     >>> f_tempo = librosa.tempo_frequencies(len(tempi), sr=sr)
     >>> # Build the harmonic tensor
-    >>> t_harmonics = librosa.harmonics(tempi, f_tempo, h_range)
+    >>> t_harmonics = librosa.interp_harmonics(tempi, f_tempo, h_range)
     >>> print(t_harmonics.shape)
     (5, 384)
 
@@ -85,15 +180,15 @@ def harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
     >>> h_range = [1./3, 1./2, 1, 2, 3, 4]
     >>> S = np.abs(librosa.stft(y))
     >>> fft_freqs = librosa.fft_frequencies(sr=sr)
-    >>> S_harm = librosa.harmonics(S, fft_freqs, h_range, axis=0)
+    >>> S_harm = librosa.interp_harmonics(S, fft_freqs, h_range, axis=0)
     >>> print(S_harm.shape)
     (6, 1025, 646)
 
     >>> plt.figure()
     >>> for i, _sh in enumerate(S_harm, 1):
     ...     plt.subplot(3, 2, i)
-    ...     librosa.display.specshow(librosa.logamplitude(_sh**2,
-    ...                                                   ref_power=S.max()**2),
+    ...     librosa.display.specshow(librosa.amplitude_to_db(_sh,
+    ...                                                      ref=S.max()),
     ...                              sr=sr, y_axis='log')
     ...     plt.title('h={:.3g}'.format(h_range[i-1]))
     ...     plt.yticks([])
@@ -172,7 +267,7 @@ def harmonics_1d(harmonic_out, x, freqs, h_range, kind='linear',
     >>> h_range = [1, 2, 3, 4, 5]
     >>> f_tempo = librosa.tempo_frequencies(len(tempi), sr=sr)
     >>> # Build the harmonic tensor
-    >>> t_harmonics = librosa.harmonics(tempi, f_tempo, h_range)
+    >>> t_harmonics = librosa.interp_harmonics(tempi, f_tempo, h_range)
     >>> print(t_harmonics.shape)
     (5, 384)
 
@@ -192,15 +287,15 @@ def harmonics_1d(harmonic_out, x, freqs, h_range, kind='linear',
     >>> h_range = [1./3, 1./2, 1, 2, 3, 4]
     >>> S = np.abs(librosa.stft(y))
     >>> fft_freqs = librosa.fft_frequencies(sr=sr)
-    >>> S_harm = librosa.harmonics(S, fft_freqs, h_range, axis=0)
+    >>> S_harm = librosa.interp_harmonics(S, fft_freqs, h_range, axis=0)
     >>> print(S_harm.shape)
     (6, 1025, 646)
 
     >>> plt.figure()
     >>> for i, _sh in enumerate(S_harm, 1):
     ...     plt.subplot(3,2,i)
-    ...     librosa.display.specshow(librosa.logamplitude(_sh**2,
-    ...                                                   ref_power=S.max()**2),
+    ...     librosa.display.specshow(librosa.amplitude_to_db(_sh,
+    ...                                                      ref=S.max()),
     ...                              sr=sr, y_axis='log')
     ...     plt.title('h={:.3g}'.format(h_range[i-1]))
     ...     plt.yticks([])

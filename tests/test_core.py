@@ -20,9 +20,11 @@ import glob
 import numpy as np
 import scipy.io
 import six
-from nose.tools import eq_, raises, nottest
-import matplotlib
-matplotlib.use('Agg')
+from nose.tools import eq_, raises, make_decorator
+
+import warnings
+warnings.resetwarnings()
+warnings.simplefilter('always')
 
 
 # -- utilities --#
@@ -30,6 +32,11 @@ def files(pattern):
     test_files = glob.glob(pattern)
     test_files.sort()
     return test_files
+
+
+def srand(seed=628318530):
+    np.random.seed(seed)
+    pass
 
 
 def load(infile):
@@ -54,6 +61,33 @@ def test_load():
     for infile in files('data/core-load-*.mat'):
         yield (__test, infile)
     pass
+
+
+def test_load_resample():
+
+    sr_target = 16000
+    offset = 10
+    duration = 5
+
+    def __test(res_type):
+        y_native, sr = librosa.load(librosa.util.example_audio_file(),
+                                    sr=None,
+                                    offset=offset,
+                                    duration=duration,
+                                    res_type=res_type)
+
+        y2 = librosa.resample(y_native, sr, sr_target, res_type=res_type)
+
+        y, _ = librosa.load(librosa.util.example_audio_file(),
+                            sr=sr_target,
+                            offset=offset,
+                            duration=duration,
+                            res_type=res_type)
+
+        assert np.allclose(y2, y)
+
+    for res_type in ['kaiser_fast', 'kaiser_best', 'scipy']:
+        yield __test, res_type
 
 
 def test_segment_load():
@@ -161,11 +195,12 @@ def test_resample_scale():
         # If it's a no-op, make sure the signal is untouched
         assert np.allclose(n_orig, n_res, atol=1e-2), (n_orig, n_res)
 
-    y, sr_in = librosa.load('data/test1_44100.wav', mono=True, sr=None, duration=5)
+    y, sr_in = librosa.load('data/test1_22050.wav', mono=True, sr=None, duration=3)
 
-    for sr_out in [11025, 22050, 44100]:
-        for res_type in ['scipy', 'kaiser_best', 'kaiser_fast']:
+    for res_type in ['scipy', 'kaiser_best', 'kaiser_fast']:
+        for sr_out in [11025, 22050, 44100]:
             yield __test, sr_in, sr_out, res_type, y
+            yield __test, sr_out, sr_in, res_type, y
 
 
 def test_stft():
@@ -260,23 +295,139 @@ def test_ifgram_if():
 
     y, sr = librosa.load('data/test1_22050.wav')
 
-    def __test(ref_power, clip):
+    def __test(ref, clip):
 
-        F, D = librosa.ifgram(y, sr=sr, ref_power=ref_power, clip=clip)
+        F, D = librosa.ifgram(y, sr=sr, ref_power=ref, clip=clip)
 
         if clip:
             assert np.all(0 <= F) and np.all(F <= 0.5 * sr)
 
         assert np.all(np.isfinite(F))
 
-    for ref_power in [-10, 0.0, 1e-6, np.max]:
+    for ref in [-10, 0.0, 1e-6, np.max]:
         for clip in [False, True]:
-            if six.callable(ref_power) or ref_power >= 0.0:
+            if six.callable(ref) or ref >= 0.0:
                 tf = __test
             else:
                 tf = raises(librosa.ParameterError)(__test)
 
-            yield tf, ref_power, clip
+            yield tf, ref, clip
+
+
+def test_salience_basecase():
+    (y, sr) = librosa.load('data/test1_22050.wav')
+    S = np.abs(librosa.stft(y))
+    freqs = librosa.core.fft_frequencies(sr)
+    harms = [1]
+    weights = [1.0]
+    S_sal = librosa.core.salience(
+        S, freqs, harms, weights, filter_peaks=False, kind='quadratic'
+    )
+    assert np.allclose(S_sal, S)
+
+
+def test_salience_basecase2():
+    (y, sr) = librosa.load('data/test1_22050.wav')
+    S = np.abs(librosa.stft(y))
+    freqs = librosa.core.fft_frequencies(sr)
+    harms = [1, 0.5, 2.0]
+    weights = [1.0, 0.0, 0.0]
+    S_sal = librosa.core.salience(
+        S, freqs, harms, weights, filter_peaks=False, kind='quadratic'
+    )
+    assert np.allclose(S_sal, S)
+
+
+def test_salience_defaults():
+    S = np.array([
+        [0.1, 0.5, 0.0],
+        [0.2, 1.2, 1.2],
+        [0.0, 0.7, 0.3],
+        [1.3, 3.2, 0.8]
+    ])
+    freqs = np.array([50.0, 100.0, 200.0, 400.0])
+    harms = [0.5, 1, 2]
+    actual = librosa.core.salience(
+        S, freqs, harms, kind='quadratic', fill_value=0.0
+    )
+
+    expected = np.array([
+        [0.0, 0.0, 0.0],
+        [0.3, 2.4, 1.5],
+        [0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0]
+    ]) / 3.0
+    assert np.allclose(expected, actual)
+
+
+def test_salience_weights():
+    S = np.array([
+        [0.1, 0.5, 0.0],
+        [0.2, 1.2, 1.2],
+        [0.0, 0.7, 0.3],
+        [1.3, 3.2, 0.8]
+    ])
+    freqs = np.array([50.0, 100.0, 200.0, 400.0])
+    harms = [0.5, 1, 2]
+    weights = [1.0, 1.0, 1.0]
+    actual = librosa.core.salience(
+        S, freqs, harms, weights, kind='quadratic', fill_value=0.0
+    )
+
+    expected = np.array([
+        [0.0, 0.0, 0.0],
+        [0.3, 2.4, 1.5],
+        [0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0]
+    ]) / 3.0
+    assert np.allclose(expected, actual)
+
+
+def test_salience_no_peak_filter():
+    S = np.array([
+        [0.1, 0.5, 0.0],
+        [0.2, 1.2, 1.2],
+        [0.0, 0.7, 0.3],
+        [1.3, 3.2, 0.8]
+    ])
+    freqs = np.array([50.0, 100.0, 200.0, 400.0])
+    harms = [0.5, 1, 2]
+    weights = [1.0, 1.0, 1.0]
+    actual = librosa.core.salience(
+        S, freqs, harms, weights, filter_peaks=False, kind='quadratic'
+    )
+
+    expected = np.array([
+        [0.3, 1.7, 1.2],
+        [0.3, 2.4, 1.5],
+        [1.5, 5.1, 2.3],
+        [1.3, 3.9, 1.1]
+    ]) / 3.0
+    assert np.allclose(expected, actual)
+
+
+def test_salience_aggregate():
+    S = np.array([
+        [0.1, 0.5, 0.0],
+        [0.2, 1.2, 1.2],
+        [0.0, 0.7, 0.3],
+        [1.3, 3.2, 0.8]
+    ])
+    freqs = np.array([50.0, 100.0, 200.0, 400.0])
+    harms = [0.5, 1, 2]
+    weights = [1.0, 1.0, 1.0]
+    actual = librosa.core.salience(
+        S, freqs, harms, weights, aggregate=np.ma.max, kind='quadratic',
+        fill_value=0.0
+    )
+
+    expected = np.array([
+        [0.0, 0.0, 0.0],
+        [0.2, 1.2, 1.2],
+        [0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0]
+    ])
+    assert np.allclose(expected, actual)
 
 
 def test_magphase():
@@ -309,8 +460,8 @@ def test_istft_reconstruction():
         # should be almost approximately reconstucted
         assert np.allclose(x, x_reconstructed, atol=atol)
 
+    srand()
     # White noise
-    np.random.seed(98765)
     x1 = np.random.randn(2 ** 15)
 
     # Sin wave
@@ -436,8 +587,7 @@ def test_autocorrelate():
 
         assert np.allclose(ac, truth[my_slice])
 
-    np.random.seed(128)
-
+    srand()
     # test with both real and complex signals
     for y in [np.random.randn(256, 256), np.exp(1.j * np.random.randn(256, 256))]:
 
@@ -489,6 +639,7 @@ def test_zero_crossings():
         for i in idx:
             assert np.sign(data[i]) != np.sign(data[i-1])
 
+    srand()
     data = np.random.randn(32)
 
     for threshold in [None, 0, 1e-10]:
@@ -684,10 +835,10 @@ def test__spectrogram():
 def test_logamplitude():
 
     # Fake up some data
-    def __test(x, ref_power, amin, top_db):
+    def __test(x, ref, amin, top_db):
 
         y = librosa.logamplitude(x,
-                                 ref_power=ref_power,
+                                 ref=ref,
                                  amin=amin,
                                  top_db=top_db)
 
@@ -701,14 +852,124 @@ def test_logamplitude():
         x = np.linspace(0, 2e5, num=n)
         phase = np.exp(1.j * x)
 
-        for ref_power in [1.0, np.max]:
+        for ref in [1.0, np.max]:
             for amin in [-1, 0, 1e-10, 1e3]:
                 for top_db in [None, -10, 0, 40, 80]:
                     tf = __test
                     if amin <= 0 or (top_db is not None and top_db < 0):
                         tf = raises(librosa.ParameterError)(__test)
-                    yield tf, x, ref_power, amin, top_db
-                    yield tf, x * phase, ref_power, amin, top_db
+                    yield tf, x, ref, amin, top_db
+                    yield tf, x * phase, ref, amin, top_db
+
+
+def test_power_to_db_logamp():
+
+    srand()
+
+    NOISE_FLOOR = 1e-6
+
+    # Make some noise
+    x = np.abs(np.random.randn(1000)) + NOISE_FLOOR
+
+    db1 = librosa.power_to_db(x**2, top_db=None)
+    db2 = librosa.logamplitude(x**2, top_db=None)
+
+    assert np.allclose(db1, db2)
+
+
+def test_power_to_db():
+
+    def __test(y_true, x, rp):
+        y = librosa.power_to_db(x, ref=rp, top_db=None)
+
+        assert np.isclose(y, y_true)
+
+    for erp in range(-5, 6):
+        for k in range(-5, 6):
+            yield __test, (k-erp)*10, 10.0**k, 10.0**erp
+
+
+def test_amplitude_to_db():
+
+    srand()
+
+    NOISE_FLOOR = 1e-6
+
+    # Make some noise
+    x = np.abs(np.random.randn(1000)) + NOISE_FLOOR
+
+    db1 = librosa.amplitude_to_db(x, top_db=None)
+    db2 = librosa.logamplitude(x**2, top_db=None)
+
+    assert np.allclose(db1, db2)
+
+
+def test_db_to_power_inv():
+
+    srand()
+
+    NOISE_FLOOR = 1e-5
+
+    # Make some noise
+    xp = (np.abs(np.random.randn(1000)) + NOISE_FLOOR)**2
+
+    def __test(ref):
+
+        db = librosa.power_to_db(xp, ref=ref, top_db=None)
+        xp2 = librosa.db_to_power(db, ref=ref)
+
+        assert np.allclose(xp, xp2)
+
+    for ref_p in range(-3, 4):
+        yield __test, 10.0**ref_p
+
+
+def test_db_to_power():
+
+    def __test(y, rp, x_true):
+
+        x = librosa.db_to_power(y, ref=rp)
+
+        assert np.isclose(x, x_true), (x, x_true, y, rp)
+
+    for erp in range(-5, 6):
+        for db in range(-100, 101, 10):
+            yield __test, db, 10.0**erp, 10.0**erp * 10.0**(0.1 * db)
+
+
+def test_db_to_amplitude_inv():
+
+    srand()
+
+    NOISE_FLOOR = 1e-5
+
+    # Make some noise
+    xp = np.abs(np.random.randn(1000)) + NOISE_FLOOR
+
+    def __test(ref):
+
+        db = librosa.amplitude_to_db(xp, ref=ref, top_db=None)
+        xp2 = librosa.db_to_amplitude(db, ref=ref)
+
+        assert np.allclose(xp, xp2)
+
+    for ref_p in range(-3, 4):
+        yield __test, 10.0**ref_p
+
+
+def test_db_to_amplitude():
+
+    srand()
+
+    NOISE_FLOOR = 1e-6
+
+    # Make some noise
+    x = np.abs(np.random.randn(1000)) + NOISE_FLOOR
+
+    db = librosa.amplitude_to_db(x, top_db=None)
+    x2 = librosa.db_to_amplitude(db)
+
+    assert np.allclose(x, x2)
 
 
 def test_clicks():
@@ -822,6 +1083,7 @@ def test_fmt_fail():
     def __test(t_min, n_fmt, over_sample, y):
         librosa.fmt(y, t_min=t_min, n_fmt=n_fmt, over_sample=over_sample)
 
+    srand()
     y = np.random.randn(256)
 
     # Test for bad t_min
@@ -846,6 +1108,7 @@ def test_fmt_fail():
 
 def test_fmt_axis():
 
+    srand()
     y = np.random.randn(32, 32)
 
     f1 = librosa.fmt(y, axis=-1)
@@ -861,7 +1124,7 @@ def test_harmonics_1d():
 
     h = [0.25, 0.5, 1, 2, 4]
 
-    yh = librosa.harmonics(y, x, h)
+    yh = librosa.interp_harmonics(y, x, h)
 
     eq_(yh.shape[1:], y.shape)
     eq_(yh.shape[0], len(h))
@@ -885,7 +1148,7 @@ def test_harmonics_2d():
     y = np.tile(y, (5, 1)).T
     h = [0.25, 0.5, 1, 2, 4]
 
-    yh = librosa.harmonics(y, x, h, axis=0)
+    yh = librosa.interp_harmonics(y, x, h, axis=0)
 
     eq_(yh.shape[1:], y.shape)
     eq_(yh.shape[0], len(h))
@@ -906,13 +1169,14 @@ def test_harmonics_2d():
 def test_harmonics_badshape_1d():
     freqs = np.zeros(100)
     obs = np.zeros((5, 10))
-    librosa.harmonics(obs, freqs, [1])
+    librosa.interp_harmonics(obs, freqs, [1])
+
 
 @raises(librosa.ParameterError)
 def test_harmonics_badshape_2d():
     freqs = np.zeros((5, 5))
     obs = np.zeros((5, 10))
-    librosa.harmonics(obs, freqs, [1])
+    librosa.interp_harmonics(obs, freqs, [1])
 
 
 def test_harmonics_2d_varying():
@@ -923,7 +1187,7 @@ def test_harmonics_2d_varying():
     y = np.tile(y, (5, 1)).T
     h = [0.25, 0.5, 1, 2, 4]
 
-    yh = librosa.harmonics(y, x, h, axis=0)
+    yh = librosa.interp_harmonics(y, x, h, axis=0)
 
     eq_(yh.shape[1:], y.shape)
     eq_(yh.shape[0], len(h))
@@ -938,4 +1202,3 @@ def test_harmonics_2d_varying():
             step = h[i]
             vals = y[::step]
             assert np.allclose(vals, yh[i, :len(vals)])
-

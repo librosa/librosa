@@ -9,16 +9,18 @@ try:
 except:
     pass
 
-import matplotlib
-matplotlib.use('Agg')
 import numpy as np
 import scipy.sparse
-np.set_printoptions(precision=3)
 from nose.tools import raises, eq_
 import six
 import warnings
-
 import librosa
+
+from test_core import srand
+
+warnings.resetwarnings()
+warnings.simplefilter('always')
+np.set_printoptions(precision=3)
 
 
 def test_example_audio_file():
@@ -30,6 +32,7 @@ def test_frame():
 
     # Generate a random time series
     def __test(P):
+        srand()
         frame, hop = P
 
         y = np.random.randn(8000)
@@ -96,6 +99,7 @@ def test_fix_length():
 
 
 def test_fix_frames():
+    srand()
 
     @raises(librosa.ParameterError)
     def __test_fail(frames, x_min, x_max, pad):
@@ -133,6 +137,7 @@ def test_fix_frames():
 
 
 def test_normalize():
+    srand()
 
     def __test_pass(X, norm, axis):
         X_norm = librosa.util.normalize(X, norm=norm, axis=axis)
@@ -170,8 +175,90 @@ def test_normalize():
             for norm in ['inf', -0.5, -2]:
                 yield __test_fail, X, norm, axis
 
+        # And test for non-finite failure
+        X[0] = np.nan
+        yield __test_fail, X, np.inf, 0
+
+        X[0] = np.inf
+        yield __test_fail, X, np.inf, 0
+        X[0] = -np.inf
+        yield __test_fail, X, np.inf, 0
+
+
+def test_normalize_threshold():
+
+    x = np.asarray([[0, 1, 2, 3]])
+
+    def __test(threshold, result):
+        assert np.allclose(librosa.util.normalize(x, threshold=threshold),
+                           result)
+
+    yield __test, None, [[0, 1, 1, 1]]
+    yield __test, 1, [[0, 1, 1, 1]]
+    yield __test, 2, [[0, 1, 1, 1]]
+    yield __test, 3, [[0, 1, 2, 1]]
+    yield __test, 4, [[0, 1, 2, 3]]
+    yield raises(librosa.ParameterError)(__test), 0, [[0, 1, 1, 1]]
+    yield raises(librosa.ParameterError)(__test), -1, [[0, 1, 1, 1]]
+
+
+def test_normalize_fill():
+
+    def __test(fill, norm, threshold, axis, x, result):
+        xn = librosa.util.normalize(x, axis=axis,
+                                    fill=fill,
+                                    threshold=threshold,
+                                    norm=norm)
+        assert np.allclose(xn, result), (xn, np.asarray(result))
+
+    x = np.asarray([[0, 1, 2, 3]], dtype=np.float32)
+
+    axis = 0
+    norm = np.inf
+    threshold = 2
+    # Test with inf norm
+    yield __test, None, norm, threshold, axis, x, [[0, 1, 1, 1]]
+    yield __test, False, norm, threshold, axis, x, [[0, 0, 1, 1]]
+    yield __test, True, norm, threshold, axis, x, [[1, 1, 1, 1]]
+
+    # Test with l0 norm
+    norm = 0
+    yield __test, None, norm, threshold, axis, x, [[0, 1, 2, 3]]
+    yield __test, False, norm, threshold, axis, x, [[0, 0, 0, 0]]
+    yield raises(librosa.ParameterError)(__test), True, norm, threshold, axis, x, [[0, 0, 0, 0]]
+
+    # Test with l1 norm
+    norm = 1
+    yield __test, None, norm, threshold, axis, x, [[0, 1, 1, 1]]
+    yield __test, False, norm, threshold, axis, x, [[0, 0, 1, 1]]
+    yield __test, True, norm, threshold, axis, x, [[1, 1, 1, 1]]
+
+    # And with l2 norm
+    norm = 2
+    x = np.repeat(x, 2, axis=0)
+    s = np.sqrt(2)/2
+
+    # First two columns are left as is, second two map to sqrt(2)/2
+    yield __test, None, norm, threshold, axis, x, [[0, 1, s, s], [0, 1, s, s]]
+
+    # First two columns are zeroed, second two map to sqrt(2)/2
+    yield __test, False, norm, threshold, axis, x, [[0, 0, s, s], [0, 0, s, s]]
+
+    # All columns map to sqrt(2)/2
+    yield __test, True, norm, threshold, axis, x, [[s, s, s, s], [s, s, s, s]]
+
+    # And test the bad-fill case
+    yield raises(librosa.ParameterError)(__test), 3, norm, threshold, axis, x, x
+
+    # And an all-axes test
+    axis = None
+    threshold = None
+    norm = 2
+    yield __test, None, norm, threshold, axis, np.asarray([[3, 0], [0, 4]]), np.asarray([[0.6, 0], [0, 0.8]])
+
 
 def test_axis_sort():
+    srand()
 
     def __test_pass(data, axis, index, value):
 
@@ -221,6 +308,7 @@ def test_axis_sort():
 def test_match_intervals():
 
     def __make_intervals(n):
+        srand()
         return np.cumsum(np.abs(np.random.randn(n, 2)), axis=1)
 
     def __compare(i1, i2):
@@ -266,6 +354,7 @@ def test_match_intervals():
 def test_match_events():
 
     def __make_events(n):
+        srand()
         return np.abs(np.random.randn(n))
 
     def __is_best(y, ev1, ev2):
@@ -298,9 +387,41 @@ def test_match_events():
                 yield __test, n, m
 
 
+def test_match_events_onesided():
+
+    events_from = np.asarray([5, 15, 25])
+    events_to = np.asarray([0, 10, 20, 30])
+
+    def __test(left, right, target):
+        match = librosa.util.match_events(events_from, events_to,
+                                          left=left, right=right)
+
+        assert np.allclose(target, events_to[match])
+
+    yield __test, False, True, [10, 20, 30]
+    yield __test, True, False, [0, 10, 20]
+
+    # Make a right-sided fail
+    events_from[0] = 40
+    yield raises(librosa.ParameterError)(__test), False, True, [10, 20, 30]
+
+    # Make a left-sided fail
+    events_from[0] = -1
+    yield raises(librosa.ParameterError)(__test), True, False, [10, 20, 30]
+
+    # Make a two-sided fail
+    events_from[0] = -1
+    yield raises(librosa.ParameterError)(__test), False, False, [10, 20, 30]
+
+    # Make a two-sided success
+    events_to[:-1] = events_from
+    yield __test, False, False, events_from
+
+
 def test_localmax():
 
     def __test(ndim, axis):
+        srand()
 
         data = np.random.randn(*([20] * ndim))
 
@@ -330,6 +451,7 @@ def test_localmax():
 def test_peak_pick():
 
     def __test(n, pre_max, post_max, pre_avg, post_avg, delta, wait):
+        srand()
 
         # Generate a test signal
         x = np.random.randn(n)**2
@@ -397,6 +519,7 @@ def test_peak_pick():
 def test_sparsify_rows():
 
     def __test(n, d, q):
+        srand()
 
         X = np.random.randn(*([d] * n))**4
 
@@ -467,9 +590,9 @@ def test_files():
                             if searchdir == os.path.curdir and not recurse:
                                 tf = raises(AssertionError)(__test)
 
-                            if (ext is not None and
-                                case_sensitive and
-                                (ext == 'WAV' or set(ext) == set(['WAV']))):
+                            if (ext is not None and case_sensitive and
+                                    (ext == 'WAV' or
+                                     set(ext) == set(['WAV']))):
 
                                 tf = raises(AssertionError)(__test)
 
@@ -578,6 +701,7 @@ def test_warning_rename_kw_pass():
         # Make sure no warning triggered
         assert len(out) == 0
 
+
 def test_warning_rename_kw_fail():
 
     warnings.resetwarnings()
@@ -681,7 +805,6 @@ def test_sync():
     def __test_fail(data, idx):
         librosa.util.sync(data, idx)
 
-
     for ndim in [1, 2, 3]:
         shaper = [1] * ndim
         shaper[-1] = -1
@@ -699,11 +822,12 @@ def test_sync():
             # Test with list of slices
             yield __test_pass, axis, data, slices
 
-    for bad_idx in [ ['foo', 'bar'], [None], [slice(None), None] ]:
+    for bad_idx in [['foo', 'bar'], [None], [slice(None), None]]:
         yield __test_fail, data, bad_idx
 
 
 def test_roll_sparse():
+    srand()
 
     def __test(fmt, shift, axis, X):
 
@@ -723,7 +847,6 @@ def test_roll_sparse():
 
         assert np.allclose(Xd_roll, Xd_roll_np)
 
-
     X = scipy.sparse.lil_matrix(np.random.randint(0, high=10, size=(16, 16)))
 
     for fmt in ['csr', 'csc', 'lil', 'dok', 'coo']:
@@ -742,6 +865,7 @@ def test_roll_sparse_bad_axis():
 def test_softmask():
 
     def __test(power, split_zeros):
+        srand()
 
         X = np.abs(np.random.randn(10, 10))
         X_ref = np.abs(np.random.randn(10, 10))
@@ -765,13 +889,14 @@ def test_softmask():
 
 
 def test_softmask_int():
-    X = 2 * np.ones((3,3), dtype=np.int32)
+    X = 2 * np.ones((3, 3), dtype=np.int32)
     X_ref = np.vander(np.arange(3))
 
     M1 = librosa.util.softmask(X, X_ref, power=1)
     M2 = librosa.util.softmask(X_ref, X, power=1)
 
     assert np.allclose(M1 + M2, 1)
+
 
 def test_softmask_fail():
 
@@ -789,7 +914,6 @@ def test_tiny():
 
         eq_(value, librosa.util.tiny(x))
 
-
     for x, value in [(1, np.finfo(np.float32).tiny),
                      (np.ones(3, dtype=int), np.finfo(np.float32).tiny),
                      (np.ones(3, dtype=np.float32), np.finfo(np.float32).tiny),
@@ -800,3 +924,20 @@ def test_tiny():
                      (np.ones(3, dtype=np.complex128), np.finfo(np.complex128).tiny)]:
         yield __test, x, value
 
+
+def test_optional_jit():
+
+    @librosa.util.decorators.optional_jit(nopython=True)
+    def __func1(x):
+        return x**2
+
+    @librosa.util.decorators.optional_jit
+    def __func2(x):
+        return x**2
+
+    def __test(f):
+        y = f(2)
+        eq_(y, 2**2)
+
+    yield __test, __func1
+    yield __test, __func2
