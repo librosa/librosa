@@ -87,15 +87,15 @@ def test_hz_to_octs():
 
 def test_melfb():
 
-    def __test(infile):
+    def __test_default_norm(infile):
         DATA = load(infile)
 
-        wts = librosa.filters.mel(DATA['sr'][0],
-                                  DATA['nfft'][0],
-                                  n_mels=DATA['nfilts'][0],
-                                  fmin=DATA['fmin'][0],
-                                  fmax=DATA['fmax'][0],
-                                  htk=DATA['htk'][0])
+        wts = librosa.filters.mel(DATA['sr'][0, 0],
+                                  DATA['nfft'][0, 0],
+                                  n_mels=DATA['nfilts'][0, 0],
+                                  fmin=DATA['fmin'][0, 0],
+                                  fmax=DATA['fmax'][0, 0],
+                                  htk=DATA['htk'][0, 0])
 
         # Our version only returns the real-valued part.
         # Pad out.
@@ -107,7 +107,32 @@ def test_melfb():
         assert np.allclose(wts, DATA['wts'])
 
     for infile in files('data/feature-melfb-*.mat'):
-        yield (__test, infile)
+        yield (__test_default_norm, infile)
+
+    def __test_with_norm(infile):
+        DATA = load(infile)
+        # if DATA['norm'] is empty, pass None.
+        if DATA['norm'].shape[-1] == 0:
+            norm = None
+        else:
+            norm = DATA['norm'][0, 0]
+        wts = librosa.filters.mel(DATA['sr'][0, 0],
+                                  DATA['nfft'][0, 0],
+                                  n_mels=DATA['nfilts'][0, 0],
+                                  fmin=DATA['fmin'][0, 0],
+                                  fmax=DATA['fmax'][0, 0],
+                                  htk=DATA['htk'][0, 0], 
+                                  norm=norm)
+        # Pad out.
+        wts = np.pad(wts, [(0, 0),
+                           (0, int(DATA['nfft'][0]//2 - 1))],
+                     mode='constant')
+
+        eq_(wts.shape, DATA['wts'].shape)
+        assert np.allclose(wts, DATA['wts'])
+
+    for infile in files('data/feature-melfbnorm-*.mat'):
+        yield (__test_with_norm, infile)
 
 
 def test_mel_gap():
