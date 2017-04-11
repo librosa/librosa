@@ -640,4 +640,5 @@ def test_cens():
         # load CENS-41-1 features
         ct_chroma_cens = load(os.path.join('data', cur_fn_ct_chroma_cens))
 
-        assert np.allclose(ct_chroma_cens['f_CENS'], lr_chroma_cens, rtol=1e-15, atol=1e-15)
+        maxdev = np.abs(ct_chroma_cens['f_CENS'] - lr_chroma_cens)
+        assert np.allclose(ct_chroma_cens['f_CENS'], lr_chroma_cens, rtol=1e-15, atol=1e-15), maxdev
