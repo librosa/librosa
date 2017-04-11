@@ -1093,11 +1093,12 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
         chroma_quant += (chroma > cur_quant_step) * QUANT_WEIGHTS[cur_quant_step_idx]
 
     # Apply temporal smoothing
-    win = scipy.signal.hanning(win_len_smooth + 2, sym=False)
+    win = scipy.signal.hanning(win_len_smooth + 2)
     win /= np.sum(win)
     win = np.atleast_2d(win)
 
-    cens = scipy.signal.convolve2d(chroma_quant, win, mode='same', boundary='fill')
+    cens = scipy.signal.convolve2d(chroma_quant, win,
+                                   mode='same', boundary='fill')
 
     # L2-Normalization
     return util.normalize(cens, norm=norm, axis=0)
