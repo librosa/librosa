@@ -621,7 +621,10 @@ def phase_vocoder(D, rate, hop_length=None):
     return d_stretch
 
 
-def stft_log_freq_semitone_fb(y, sr=22050, hop_length=2205, win_length=4410, A440=440.0):
+def stft_log_freq_semitone_fb(y, sr=22050, hop_length=2205, win_length=4410, A440=440.0,
+                              center_freqs=time_frequency.midi_to_hz(np.arange(21, 121), A440=440),
+                              fb_sample_rates=[22050, 4410, 882],
+                              bands_in_rate=[np.arange(74, 100), np.arange(39, 74), np.arange(0, 39)]):
     r'''Log-frequency time-frequency representations using a filterbank.
 
     This function will return a log-frequency time-frequency representation
@@ -666,36 +669,21 @@ def stft_log_freq_semitone_fb(y, sr=22050, hop_length=2205, win_length=4410, A44
     >>> plt.tight_layout()
     '''
 
-    # Fixed frequency range
-    MIDI_START = 21
-    MIDI_END = 121
+    # create three downsampled versions of the audio signal
+    y = []
+    win_length_STMSP = []
+    hop_length_STMSP = []
+    sample_rates = []
 
-    # create downsampled versions of the audio signal
-    y = dict()
-    y[22050] = y
-    y[4410] = resample(y, sr, 4410)
-    y[882] = resample(y, sr, 882)
+    for cur_sr, cur_bands_in_rate in zip(sample_rates, bands_in_rate):
+        y.append(resample(y, sr, cur_sr))
 
-    # Each sampling rate needs different window and hop lengths
-    win_length_STMSP = dict()
-    win_length_STMSP[22050] = win_length
-    win_length_STMSP[4410] = np.round(win_length / 5)
-    win_length_STMSP[882] = np.round(win_length / 25)
+        # Each sampling rate needs different window and hop lengths
+        win_length_STMSP.append(np.round(win_length / (sr / cur_sr)))
+        hop_length_STMSP.append(np.round(hop_length / (sr / cur_sr)))
 
-    hop_length_STMSP = dict()
-    hop_length_STMSP[22050] = hop_length
-    hop_length_STMSP[4410] = np.round(hop_length / 5)
-    hop_length_STMSP[882] = np.round(hop_length / 25)
-
-    # get the log-frequency values
-    midi_pitches = np.arange(MIDI_START, MIDI_END)
-    center_freqs = time_frequency.midi_to_hz(midi_pitches, A440=A440)
-
-    # define the sample-rate for each filter
-    sample_rates = np.zeros_like(center_freqs)
-    sample_rates[21 - MIDI_START:60 - MIDI_START] = sr / 25
-    sample_rates[60 - MIDI_START:95 - MIDI_START] = sr / 5
-    sample_rates[95 - MIDI_START:] = sr
+        # define the sample-rate for each filter
+        sample_rates.extend([cur_sr] * len(cur_bands_in_rate))
 
     # get the filter
     pitch_filterbank = multirate_fb(center_freqs, sample_rates)
