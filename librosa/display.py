@@ -14,13 +14,14 @@ Display
     NoteFormatter
     LogHzFormatter
     ChromaFormatter
+    TonnetzFormatter
 """
 
 import warnings
 
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.ticker import Formatter, FixedFormatter, ScalarFormatter
+from matplotlib.ticker import Formatter, ScalarFormatter
 from matplotlib.ticker import LogLocator, FixedLocator, MaxNLocator
 from matplotlib.ticker import SymmetricalLogLocator
 
@@ -34,7 +35,8 @@ __all__ = ['specshow',
            'TimeFormatter',
            'NoteFormatter',
            'LogHzFormatter',
-           'ChromaFormatter']
+           'ChromaFormatter',
+           'TonnetzFormatter']
 
 
 class TimeFormatter(Formatter):
@@ -237,10 +239,27 @@ class ChromaFormatter(Formatter):
         return core.midi_to_note(int(x), octave=False, cents=False)
 
 
-# A fixed formatter for tonnetz
-TONNETZ_FORMATTER = FixedFormatter([r'5$_x$', r'5$_y$',
-                                    r'm3$_x$', r'm3$_y$',
-                                    r'M3$_x$', r'M3$_y$'])
+class TonnetzFormatter(Formatter):
+    '''A formatter for tonnetz axes
+
+    See also
+    --------
+    matplotlib.ticker.Formatter
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> values = np.arange(6)
+    >>> plt.figure()
+    >>> ax = plt.gca()
+    >>> ax.plot(values)
+    >>> ax.yaxis.set_major_formatter(librosa.display.TonnetzFormatter())
+    >>> ax.set_ylabel('Tonnetz')
+    '''
+    def __call__(self, x, pos=None):
+        '''Format for tonnetz positions'''
+        return [r'5$_x$', r'5$_y$', r'm3$_x$',
+                r'm3$_y$', r'M3$_x$', r'M3$_y$'][int(x)]
 
 
 def cmap(data, robust=True, cmap_seq='magma', cmap_bool='gray_r', cmap_div='coolwarm'):
@@ -745,7 +764,7 @@ def __decorate_axis(axis, ax_type):
     '''Configure axis tickers, locators, and labels'''
 
     if ax_type == 'tonnetz':
-        axis.set_major_formatter(TONNETZ_FORMATTER)
+        axis.set_major_formatter(TonnetzFormatter())
         axis.set_major_locator(FixedLocator(0.5 + np.arange(6)))
         axis.set_label_text('Tonnetz')
 
