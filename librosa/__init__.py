@@ -5,6 +5,7 @@
 import warnings
 import re
 from .version import version as __version__
+from .version import show_versions
 
 # And all the librosa sub-modules
 from . import cache
