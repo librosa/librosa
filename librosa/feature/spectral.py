@@ -244,9 +244,9 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         freq = fft_frequencies(sr=sr, n_fft=n_fft)
 
     if freq.ndim == 1:
-        deviation = np.abs(np.subtract.outer(freq, np.squeeze(centroid)))
+        deviation = np.abs(np.subtract.outer(freq, centroid[0]))
     else:
-        deviation = np.abs(freq - np.squeeze(centroid))
+        deviation = np.abs(freq - centroid[0])
 
     # Column-normalize S
     if norm:
