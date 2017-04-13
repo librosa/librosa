@@ -353,6 +353,9 @@ def test_spectral_contrast_errors():
     # bad quantile
     yield __test, S, None, 200, 6, 2
 
+    # bands exceed nyquist
+    yield __test, S, None, 200, 7, 0.02
+
 
 def test_rmse():
 
