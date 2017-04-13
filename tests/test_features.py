@@ -206,6 +206,40 @@ def test_spectral_bandwidth_synthetic():
             yield __test, S, freq, sr, n_fft, norm, p
 
 
+def test_spectral_bandwidth_onecol():
+    # This test checks for issue https://github.com/librosa/librosa/issues/552
+    # failure when the spectrogram has a single column
+
+    def __test(S, freq):
+        bw = librosa.feature.spectral_bandwidth(S=S, freq=freq)
+
+        assert bw.shape == (1, 1)
+
+    k = 5
+
+    srand()
+    # construct a fake spectrogram
+    sr = 22050
+    n_fft = 1024
+    S = np.zeros((1 + n_fft // 2, 1))
+    S[k, :] = 1.0
+
+    # With vanilla frequencies
+    yield __test, S, None
+
+    # With explicit frequencies
+    freq = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
+    yield __test, S, freq
+
+    # And if we modify the frequencies
+    freq = 3 * librosa.fft_frequencies(sr=sr, n_fft=n_fft)
+    yield __test, S, freq
+
+    # Or if we make up random frequencies for each frame
+    freq = np.random.randn(*S.shape)
+    yield __test, S, freq
+
+
 def test_spectral_bandwidth_errors():
 
     @raises(librosa.ParameterError)
@@ -217,6 +251,7 @@ def test_spectral_bandwidth_errors():
 
     S = - np.ones((513, 10)) * 1.j
     yield __test, S
+
 
 
 def test_spectral_rolloff_synthetic():
