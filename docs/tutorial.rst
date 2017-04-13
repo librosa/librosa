@@ -182,8 +182,8 @@ multiple spectral features, and beat-synchronous feature aggregation.
 
     # Stack and synchronize between beat events
     # This time, we'll use the mean value (default) instead of median
-    beat_mfcc_delta = librosa.feature.sync(np.vstack([mfcc, mfcc_delta]),
-                                           beat_frames)
+    beat_mfcc_delta = librosa.util.sync(np.vstack([mfcc, mfcc_delta]),
+                                        beat_frames)
 
     # Compute chroma features from the harmonic signal
     chromagram = librosa.feature.chroma_cqt(y=y_harmonic, 
@@ -191,9 +191,9 @@ multiple spectral features, and beat-synchronous feature aggregation.
 
     # Aggregate chroma features between beat events
     # We'll use the median value of each feature between beat frames
-    beat_chroma = librosa.feature.sync(chromagram, 
-                                       beat_frames,
-                                       aggregate=np.median)
+    beat_chroma = librosa.util.sync(chromagram, 
+                                    beat_frames,
+                                    aggregate=np.median)
 
     # Finally, stack all beat-synchronous features together
     beat_features = np.vstack([beat_chroma, beat_mfcc_delta])
@@ -238,8 +238,8 @@ The resulting matrix ``mfcc_delta`` has the same shape as the input ``mfcc``.
 The second type of feature manipulation is ``sync``, which aggregates columns of its
 input between sample indices (e.g., beat frames)::
 
-    beat_mfcc_delta = librosa.feature.sync(np.vstack([mfcc, mfcc_delta]),
-                                           beat_frames)
+    beat_mfcc_delta = librosa.util.sync(np.vstack([mfcc, mfcc_delta]),
+                                        beat_frames)
 
 Here, we've vertically stacked the ``mfcc`` and ``mfcc_delta`` matrices together.  The
 result of this operation is a matrix ``beat_mfcc_delta`` with the same number of rows
@@ -261,9 +261,9 @@ by setting the ``norm`` parameter.
 Once we have the chromagram and list of beat frames, we again synchronize the chroma 
 between beat events::
 
-    beat_chroma = librosa.feature.sync(chromagram, 
-                                       beat_frames,
-                                       aggregate=np.median)
+    beat_chroma = librosa.util.sync(chromagram, 
+                                    beat_frames,
+                                    aggregate=np.median)
 
 This time, we've replaced the default aggregate operation (*average*, as used above
 for MFCCs) with the *median*.  In general, any statistical summarization function can
