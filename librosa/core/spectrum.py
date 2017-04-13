@@ -10,12 +10,13 @@ import scipy.interpolate
 import six
 
 from . import time_frequency
+from .audio import resample
 from .. import cache
 from .. import util
 from ..util.decorators import moved
 from ..util.deprecation import rename_kw, Deprecated
 from ..util.exceptions import ParameterError
-from ..filters import get_window
+from ..filters import get_window, multirate_fb
 
 __all__ = ['stft', 'istft', 'magphase',
            'ifgram', 'phase_vocoder',
@@ -618,6 +619,102 @@ def phase_vocoder(D, rate, hop_length=None):
         phase_acc += phi_advance + dphase
 
     return d_stretch
+
+
+def stft_log_freq_semitone_fb(y, sr=22050, hop_length=2205, win_length=4410, A440=440.0):
+    r'''Log-frequency time-frequency representations using a filterbank.
+
+    This function will return a log-frequency time-frequency representation
+    using the multirate filter bank described in [1]_.
+
+    `scipy.signal.filtfilt` is applied to the input signal to make the phase linear.
+
+    .. [1] Müller, Meinard.
+           "Information Retrieval for Music and Motion."
+           Springer Verlag. 2007.
+
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(n,)]
+        audio time series
+
+    Returns
+    -------
+    pitch_filterbank
+
+    See Also
+    --------
+    librosa.core.cqt
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> import numpy as np
+    >>> import scipy.signal
+    >>> pitch_filterbank, sample_rates, _, _ = librosa.filters.multirate_pitch_fb()
+    >>> plt.figure(figsize=(10, 6))
+    >>> for cur_sr, cur_filter in zip(sample_rates, pitch_filterbank):
+    ...    w, h = scipy.signal.freqz(cur_filter[0], cur_filter[1], worN=2000)
+    ...    plt.plot((cur_sr / (2 * np.pi)) * w, 20 * np.log10(abs(h)))
+    >>> plt.semilogx()
+    >>> plt.xlim([20, 10e3])
+    >>> plt.ylim([-60, 3])
+    >>> plt.title('Magnitude Responses of the Pitch Filterbank')
+    >>> plt.xlabel('Log-Frequency (Hz)')
+    >>> plt.ylabel('Magnitude (dB)')
+    >>> plt.tight_layout()
+    '''
+
+    # Fixed frequency range
+    MIDI_START = 21
+    MIDI_END = 121
+
+    # create downsampled versions of the audio signal
+    y = dict()
+    y[22050] = y
+    y[4410] = resample(y, sr, 4410)
+    y[882] = resample(y, sr, 882)
+
+    # Each sampling rate needs different window and hop lengths
+    win_length_STMSP = dict()
+    win_length_STMSP[22050] = win_length
+    win_length_STMSP[4410] = np.round(win_length / 5)
+    win_length_STMSP[882] = np.round(win_length / 25)
+
+    hop_length_STMSP = dict()
+    hop_length_STMSP[22050] = hop_length
+    hop_length_STMSP[4410] = np.round(hop_length / 5)
+    hop_length_STMSP[882] = np.round(hop_length / 25)
+
+    # get the log-frequency values
+    midi_pitches = np.arange(MIDI_START, MIDI_END)
+    center_freqs = time_frequency.midi_to_hz(midi_pitches, A440=A440)
+
+    # define the sample-rate for each filter
+    sample_rates = np.zeros_like(center_freqs)
+    sample_rates[21 - MIDI_START:60 - MIDI_START] = sr / 25
+    sample_rates[60 - MIDI_START:95 - MIDI_START] = sr / 5
+    sample_rates[95 - MIDI_START:] = sr
+
+    # get the filter
+    pitch_filterbank = multirate_fb(center_freqs, sample_rates)
+
+    pitch_energy = []
+
+    for cur_sr, cur_filter in zip(sample_rates, pitch_filterbank):
+        # filter the signal
+        cur_filter_output = scipy.signal.filtfilt(cur_filter[0], cur_filter[1], y[int(cur_sr)])
+
+        # frame the current filter output
+        cur_frames = util.frame(np.ascontiguousarray(cur_filter_output),
+                                frame_length=win_length_STMSP[int(cur_sr)],
+                                hop_length=hop_length_STMSP[int(cur_sr)])
+        factor = sr / cur_sr
+
+        pitch_energy.append(factor * np.sum(cur_frames**2, axis=0))
+
+    return pitch_energy
 
 
 @cache(level=30)
