@@ -360,6 +360,10 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     octa = np.zeros(n_bands + 2)
     octa[1:] = fmin * (2.0**np.arange(0, n_bands + 1))
 
+    if np.any(octa[:-1] >= 0.5 * sr):
+        raise ParameterError('Frequency band exceeds Nyquist. '
+                             'Reduce either fmin or n_bands.')
+
     valley = np.zeros((n_bands + 1, S.shape[1]))
     peak = np.zeros_like(valley)
 
