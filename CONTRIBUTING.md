@@ -70,6 +70,33 @@ tools:
            $ pip install autopep8
            $ autopep8 path/to/pep8.py
 
+Filing bugs
+-----------
+We use Github issues to track all bugs and feature requests; feel free to
+open an issue if you have found a bug or wish to see a feature implemented.
+
+It is recommended to check that your issue complies with the
+following rules before submitting:
+
+-  Verify that your issue is not being currently addressed by other
+   [issues](https://github.com/librosa/librosa/issues?q=)
+   or [pull requests](https://github.com/librosa/librosa/pulls?q=).
+
+-  Please ensure all code snippets and error messages are formatted in
+   appropriate code blocks.
+   See [Creating and highlighting code blocks](https://help.github.com/articles/creating-and-highlighting-code-blocks).
+
+-  Please include your operating system type and version number, as well
+   as your Python, scikit-learn, numpy, and scipy versions. This information
+   can be found by runnning the following code snippet:
+
+  ```python
+  import platform; print(platform.platform())
+  import sys; print("Python", sys.version)
+  import numpy; print("NumPy", numpy.__version__)
+  import scipy; print("SciPy", scipy.__version__)
+  import librosa; print("librosa", librosa.__version__)
+  ```
 
 Documentation
 -------------
@@ -79,10 +106,9 @@ the HTML output by typing ``make html`` from the docs/ directory.
 The resulting HTML files will be placed in _build/html/ and are viewable 
 in a web browser. See the README file in the doc/ directory for more information.
 
-For building the documentation, you will need
+For building the documentation, you will need 
 [sphinx](http://sphinx.pocoo.org/),
-[matplotlib](http://matplotlib.sourceforge.net/), and [scikit-learn](http://scikit-learn.org/).
-
+[matplotlib](http://matplotlib.sourceforge.net/), and [numpydoc](https://pypi.python.org/pypi/numpydoc).
 
 Note
 ----
