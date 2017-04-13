@@ -452,7 +452,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
 
-    tuning : float in `[-0.5, +0.5]` [scalar]
+    tuning : float in `[-0.5, +0.5)` [scalar]
         Tuning deviation from A440 in fractions of a bin
 
     window : string, tuple, number, or function
@@ -596,7 +596,7 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
 
-    tuning : float in `[-0.5, +0.5]` [scalar]
+    tuning : float in `[-0.5, +0.5)` [scalar]
         Tuning deviation from A440 in fractions of a bin
 
     window : str or callable
@@ -886,10 +886,11 @@ def get_window(window, Nx, fftbins=True):
 
 
 @cache(level=10)
-def multirate_pitch_fb(sr=22050, Q=25, passband_ripple=1, stopband_attenuation=50, A440=440.0):
-    r'''Construct a multirate filterbank with ellipitical filters.
+def multirate_fb(center_freqs, sample_rates, Q=25, passband_ripple=1, stopband_attenuation=50, ftype='ellip'):
+    r'''Construct a multirate filterbank.
 
-    This uses the filter bank described in [1]_.
+     Uses `scipy.signal.iirdesign` to design the filters.
+     the filter bank described in [1]_.
 
     .. [1] Müller, Meinard.
            "Information Retrieval for Music and Motion."
@@ -898,17 +899,20 @@ def multirate_pitch_fb(sr=22050, Q=25, passband_ripple=1, stopband_attenuation=5
 
     Parameters
     ----------
-    sr : number > 0 [scalar]
-        sampling rate of `y`
-    A440 : float
-        frequency of A440
+    center_freqs : np.ndarray
+        Filters' center frequencies.
+    Q : float
+        Q factor (influences the filter bandwith).
+    passband_ripple : float
+        The maximum loss in the passband (dB) (cf. `scipy.signal.iirdesign`).
+    stopband_attenuation : float
+        The minimum attenuation in the stopband (dB) (cf. `scipy.signal.iirdesign`).
+    ftype : str
+        The type of IIR filter to design (cf. `scipy.signal.iirdesign`).
 
     Returns
     -------
-    pitch_filterbank
-    sample_rates
-    midi_pitches
-    center_freqs
+    filterbank
 
     Notes
     -----
@@ -938,18 +942,10 @@ def multirate_pitch_fb(sr=22050, Q=25, passband_ripple=1, stopband_attenuation=5
     >>> plt.tight_layout()
     '''
 
-    midi_start = 21
-    midi_pitches = np.arange(midi_start, 121)
-    center_freqs = midi_to_hz(midi_pitches, A440=A440)
-
-    sample_rates = np.zeros_like(center_freqs)
-    sample_rates[21 - midi_start:60 - midi_start] = sr / 25
-    sample_rates[60 - midi_start:95 - midi_start] = sr / 5
-    sample_rates[95 - midi_start:] = sr
     nyquist = sample_rates / 2
     filter_bandwidths = center_freqs / Q
 
-    pitch_filterbank = []
+    filterbank = []
 
     for cur_center_freq, cur_nyquist, cur_bw in zip(center_freqs, nyquist, filter_bandwidths):
         passband_freqs = [cur_center_freq - cur_bw / 2, cur_center_freq + cur_bw / 2] / cur_nyquist
@@ -957,8 +953,8 @@ def multirate_pitch_fb(sr=22050, Q=25, passband_ripple=1, stopband_attenuation=5
 
         cur_filter = scipy.signal.iirdesign(passband_freqs, stopband_freqs,
                                             passband_ripple, stopband_attenuation,
-                                            analog=False, ftype='ellip', output='ba')
+                                            analog=False, ftype=ftype, output='ba')
 
-        pitch_filterbank.append(cur_filter)
+        filterbank.append(cur_filter)
 
-    return pitch_filterbank, sample_rates, midi_pitches, center_freqs
+    return filterbank
