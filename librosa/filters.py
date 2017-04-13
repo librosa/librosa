@@ -452,7 +452,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
 
-    tuning : float in `[-0.5, +0.5]` [scalar]
+    tuning : float in `[-0.5, +0.5)` [scalar]
         Tuning deviation from A440 in fractions of a bin
 
     window : string, tuple, number, or function
@@ -596,7 +596,7 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
 
-    tuning : float in `[-0.5, +0.5]` [scalar]
+    tuning : float in `[-0.5, +0.5)` [scalar]
         Tuning deviation from A440 in fractions of a bin
 
     window : str or callable
