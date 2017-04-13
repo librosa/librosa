@@ -1202,3 +1202,8 @@ def test_harmonics_2d_varying():
             step = h[i]
             vals = y[::step]
             assert np.allclose(vals, yh[i, :len(vals)])
+
+
+def test_show_versions():
+    # Nothing to test here, except that everything passes.
+    librosa.show_versions()
