@@ -444,11 +444,14 @@ def test_magphase():
 def test_istft_reconstruction():
     from scipy.signal import bartlett, hann, hamming, blackman, blackmanharris
 
-    def __test(x, n_fft, hop_length, window, atol):
+    def __test(x, n_fft, hop_length, window, atol, length):
         S = librosa.core.stft(
             x, n_fft=n_fft, hop_length=hop_length, window=window)
         x_reconstructed = librosa.core.istft(
-            S, hop_length=hop_length, window=window)
+            S, hop_length=hop_length, window=window, length=length)
+
+        if length is not None:
+            assert len(x_reconstructed) == length
 
         L = min(len(x), len(x_reconstructed))
         x = np.resize(x, L)
@@ -479,10 +482,11 @@ def test_istft_reconstruction():
                 # tests with pre-computed window fucntions
                 for hop_length_denom in six.moves.range(2, 9):
                     hop_length = n_fft // hop_length_denom
-                    yield (__test, x, n_fft, hop_length, win, atol)
-                    yield (__test, x, n_fft, hop_length, symwin, atol)
+                    for length in [None, len(x) - 1000, len(x + 1000)]:
+                        yield (__test, x, n_fft, hop_length, win, atol, length)
+                        yield (__test, x, n_fft, hop_length, symwin, atol, length)
                 # also tests with passing widnow function itself
-                yield (__test, x, n_fft, n_fft // 9, window_func, atol)
+                yield (__test, x, n_fft, n_fft // 9, window_func, atol, None)
 
         # test with default paramters
         x_reconstructed = librosa.core.istft(librosa.core.stft(x))
