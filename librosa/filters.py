@@ -43,7 +43,7 @@ from . import cache
 from . import util
 from .util.exceptions import ParameterError
 
-from .core.time_frequency import note_to_hz, midi_to_hz, hz_to_midi, hz_to_octs
+from .core.time_frequency import note_to_hz, hz_to_midi, hz_to_octs
 from .core.time_frequency import fft_frequencies, mel_frequencies
 
 __all__ = ['dct',
@@ -53,7 +53,8 @@ __all__ = ['dct',
            'constant_q_lengths',
            'cq_to_chroma',
            'window_bandwidth',
-           'get_window']
+           'get_window',
+           'multirate_fb']
 
 
 # Dictionary of window function bandwidths
@@ -957,15 +958,4 @@ def multirate_fb(center_freqs, sample_rates, Q=25, passband_ripple=1, stopband_a
 
         filterbank.append(cur_filter)
 
-    return filterbank
-
-
-def multirate_fb_ct(center_freqs=midi_to_hz(np.arange(21, 121), A440=440),
-                    sample_rates=np.asarray(len(np.arange(0, 39))*[882, ] +
-                                            len(np.arange(39, 74))*[4410, ] +
-                                            len(np.arange(74, 100))*[22050, ])):
-
-    filterbank_ct = multirate_fb(center_freqs, sample_rates, Q=25, passband_ripple=1,
-                                 stopband_attenuation=50, ftype='ellip')
-
-    return filterbank_ct, sample_rates
+    return filterbank, sample_rates
