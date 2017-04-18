@@ -958,3 +958,14 @@ def multirate_fb(center_freqs, sample_rates, Q=25, passband_ripple=1, stopband_a
         filterbank.append(cur_filter)
 
     return filterbank
+
+
+def multirate_fb_ct(center_freqs=midi_to_hz(np.arange(21, 121), A440=440),
+                    sample_rates=np.asarray(len(np.arange(0, 39))*[882, ] +
+                                            len(np.arange(39, 74))*[4410, ] +
+                                            len(np.arange(74, 100))*[22050, ])):
+
+    filterbank_ct = multirate_fb(center_freqs, sample_rates, Q=25, passband_ripple=1,
+                                 stopband_attenuation=50, ftype='ellip')
+
+    return filterbank_ct, sample_rates
