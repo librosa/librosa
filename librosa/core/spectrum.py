@@ -16,9 +16,9 @@ from .. import util
 from ..util.decorators import moved
 from ..util.deprecation import rename_kw, Deprecated
 from ..util.exceptions import ParameterError
-from ..filters import get_window, multirate_fb_ct
+from ..filters import get_window, multirate_fb
 
-__all__ = ['stft', 'istft', 'magphase',
+__all__ = ['stft', 'istft', 'magphase', 'stft_log_freq_semitone_fb',
            'ifgram', 'phase_vocoder',
            'logamplitude', 'perceptual_weighting',
            'power_to_db', 'db_to_power',
@@ -623,8 +623,9 @@ def phase_vocoder(D, rate, hop_length=None):
 
 def stft_log_freq_semitone_fb(y, sr=22050, hop_length=2205, win_length=4410, A440=440.0,
                               center_freqs=time_frequency.midi_to_hz(np.arange(21, 121), A440=440),
-                              fb_sample_rates=np.asarray([22050, 4410, 882]),
-                              bands_in_rate=[np.arange(74, 100), np.arange(39, 74), np.arange(0, 39)]):
+                              sample_rates=np.asarray(len(np.arange(0, 39))*[882, ] +
+                                                      len(np.arange(39, 74))*[4410, ] +
+                                                      len(np.arange(74, 100))*[22050, ])):
     r'''Log-frequency time-frequency representations using a filterbank.
 
     This function will return a log-frequency time-frequency representation
@@ -670,13 +671,19 @@ def stft_log_freq_semitone_fb(y, sr=22050, hop_length=2205, win_length=4410, A44
     '''
 
     # create three downsampled versions of the audio signal
-    y = []
+    y_resampled = []
 
-    for cur_sr in fb_sample_rates:
-        y.append(resample(y, sr, cur_sr))
+    y_srs = np.unique(sample_rates)
+
+    for cur_sr in y_srs:
+        y_resampled.append(resample(y, sr, cur_sr))
 
     # get the semitone filterbank
-    filterbank_ct, sample_rates = multirate_fb_ct()
+    filterbank_ct, sample_rates = multirate_fb(center_freqs=center_freqs,
+                                               sample_rates=sample_rates)
+
+    # Compute the number of frames that will fit. The end may get truncated.
+    n_frames = 1 + int((len(y) - win_length) / hop_length)
 
     band_energy = []
 
@@ -685,17 +692,19 @@ def stft_log_freq_semitone_fb(y, sr=22050, hop_length=2205, win_length=4410, A44
         hop_length_STMSP = np.round(hop_length / (sr / cur_sr))
 
         # filter the signal
-        cur_filter_output = scipy.signal.filtfilt(cur_filter[0], cur_filter[1], y[int(cur_sr)])
+        cur_sr_id = int(np.where(y_srs == cur_sr)[0][0])
+        cur_filter_output = scipy.signal.filtfilt(cur_filter[0], cur_filter[1],
+                                                  y_resampled[cur_sr_id])
 
         # frame the current filter output
         cur_frames = util.frame(np.ascontiguousarray(cur_filter_output),
-                                frame_length=win_length_STMSP[int(cur_sr)],
-                                hop_length=hop_length_STMSP[int(cur_sr)])
+                                frame_length=win_length_STMSP,
+                                hop_length=hop_length_STMSP)
         factor = sr / cur_sr
 
-        band_energy.append(factor * np.sum(cur_frames**2, axis=0))
+        band_energy.append(factor * np.sum(cur_frames**2, axis=0)[:n_frames])
 
-    return band_energy
+    return np.asarray(band_energy)
 
 
 @cache(level=30)
