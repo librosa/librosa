@@ -16,7 +16,7 @@ from .. import util
 from ..util.decorators import moved
 from ..util.deprecation import rename_kw, Deprecated
 from ..util.exceptions import ParameterError
-from ..filters import get_window, multirate_fb
+from ..filters import get_window, multirate_fb_ct
 
 __all__ = ['stft', 'istft', 'magphase',
            'ifgram', 'phase_vocoder',
@@ -623,7 +623,7 @@ def phase_vocoder(D, rate, hop_length=None):
 
 def stft_log_freq_semitone_fb(y, sr=22050, hop_length=2205, win_length=4410, A440=440.0,
                               center_freqs=time_frequency.midi_to_hz(np.arange(21, 121), A440=440),
-                              fb_sample_rates=[22050, 4410, 882],
+                              fb_sample_rates=np.asarray([22050, 4410, 882]),
                               bands_in_rate=[np.arange(74, 100), np.arange(39, 74), np.arange(0, 39)]):
     r'''Log-frequency time-frequency representations using a filterbank.
 
@@ -671,26 +671,19 @@ def stft_log_freq_semitone_fb(y, sr=22050, hop_length=2205, win_length=4410, A44
 
     # create three downsampled versions of the audio signal
     y = []
-    win_length_STMSP = []
-    hop_length_STMSP = []
-    sample_rates = []
 
-    for cur_sr, cur_bands_in_rate in zip(sample_rates, bands_in_rate):
+    for cur_sr in fb_sample_rates:
         y.append(resample(y, sr, cur_sr))
 
-        # Each sampling rate needs different window and hop lengths
-        win_length_STMSP.append(np.round(win_length / (sr / cur_sr)))
-        hop_length_STMSP.append(np.round(hop_length / (sr / cur_sr)))
+    # get the semitone filterbank
+    filterbank_ct, sample_rates = multirate_fb_ct()
 
-        # define the sample-rate for each filter
-        sample_rates.extend([cur_sr] * len(cur_bands_in_rate))
+    band_energy = []
 
-    # get the filter
-    pitch_filterbank = multirate_fb(center_freqs, sample_rates)
+    for cur_sr, cur_filter in zip(sample_rates, filterbank_ct):
+        win_length_STMSP = np.round(win_length / (sr / cur_sr))
+        hop_length_STMSP = np.round(hop_length / (sr / cur_sr))
 
-    pitch_energy = []
-
-    for cur_sr, cur_filter in zip(sample_rates, pitch_filterbank):
         # filter the signal
         cur_filter_output = scipy.signal.filtfilt(cur_filter[0], cur_filter[1], y[int(cur_sr)])
 
@@ -700,9 +693,9 @@ def stft_log_freq_semitone_fb(y, sr=22050, hop_length=2205, win_length=4410, A44
                                 hop_length=hop_length_STMSP[int(cur_sr)])
         factor = sr / cur_sr
 
-        pitch_energy.append(factor * np.sum(cur_frames**2, axis=0))
+        band_energy.append(factor * np.sum(cur_frames**2, axis=0))
 
-    return pitch_energy
+    return band_energy
 
 
 @cache(level=30)

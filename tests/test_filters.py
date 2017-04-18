@@ -392,3 +392,26 @@ def test_get_window_pre():
     yield __test, scipy.signal.hann(16)
     yield __test, list(scipy.signal.hann(16))
     yield __test, [1, 1, 1]
+
+
+def test_multirate_fb_ct():
+    # load data from chroma toolbox
+    gt_fb = scipy.io.loadmat(os.path.join('data', 'filter-muliratefb-MIDI_FB_ellip_pitch_60_96_22050_Q25'),
+                             squeeze_me=True)['h']
+
+    # reproduce settings from chroma toolbox
+    mut_ft, mut_srs = librosa.filters.multirate_fb_ct()
+
+    for cur_filter_id in range(len(mut_ft)):
+        cur_filter_gt = gt_fb[cur_filter_id + 20]
+        cur_filter_mut = mut_ft[cur_filter_id]
+
+        cur_a_gt = cur_filter_gt[0]
+        cur_b_gt = cur_filter_gt[1]
+        cur_a_mut = cur_filter_mut[1]
+        cur_b_mut = cur_filter_mut[0]
+
+        # Filter 74 has an issue in the original Chroma Toolbox 2.0 release.
+        if cur_filter_id is not 74:
+            assert np.allclose(cur_a_gt, cur_a_mut, atol=1e-4)
+            assert np.allclose(cur_b_gt, cur_b_mut, atol=1e-4)
