@@ -43,7 +43,7 @@ from . import cache
 from . import util
 from .util.exceptions import ParameterError
 
-from .core.time_frequency import note_to_hz, hz_to_midi, hz_to_octs
+from .core.time_frequency import note_to_hz, hz_to_midi, midi_to_hz, hz_to_octs
 from .core.time_frequency import fft_frequencies, mel_frequencies
 
 __all__ = ['dct',
@@ -887,7 +887,11 @@ def get_window(window, Nx, fftbins=True):
 
 
 @cache(level=10)
-def multirate_fb(center_freqs, sample_rates, Q=25, passband_ripple=1, stopband_attenuation=50, ftype='ellip'):
+def multirate_fb(center_freqs=midi_to_hz(np.arange(21, 109), A440=440),
+                 sample_rates=np.asarray(len(np.arange(0, 39))*[882, ] +
+                                         len(np.arange(39, 74))*[4410, ] +
+                                         len(np.arange(74, 88))*[22050, ]),
+                 Q=25, passband_ripple=1, stopband_attenuation=50, ftype='ellip'):
     r'''Construct a multirate filterbank.
 
      Uses `scipy.signal.iirdesign` to design the filters.
@@ -900,20 +904,29 @@ def multirate_fb(center_freqs, sample_rates, Q=25, passband_ripple=1, stopband_a
 
     Parameters
     ----------
-    center_freqs : np.ndarray
-        Filters' center frequencies.
+    center_freqs : np.ndarray [shape=(n,), dtype=float]
+        Center frequencies of the filter kernels.
+        Also defines the number of filters in the filterbank.
+
+    sample_rates : np.ndarray [shape=(n,), dtype=float]
+        Samplerate for each filter (used for multirate filterbank).
+
     Q : float
         Q factor (influences the filter bandwith).
+
     passband_ripple : float
         The maximum loss in the passband (dB) (cf. `scipy.signal.iirdesign`).
+
     stopband_attenuation : float
         The minimum attenuation in the stopband (dB) (cf. `scipy.signal.iirdesign`).
+
     ftype : str
         The type of IIR filter to design (cf. `scipy.signal.iirdesign`).
 
     Returns
     -------
     filterbank
+    sample_rates
 
     Notes
     -----
@@ -929,7 +942,7 @@ def multirate_fb(center_freqs, sample_rates, Q=25, passband_ripple=1, stopband_a
     >>> import matplotlib.pyplot as plt
     >>> import numpy as np
     >>> import scipy.signal
-    >>> pitch_filterbank, sample_rates, _, _ = librosa.filters.multirate_pitch_fb()
+    >>> pitch_filterbank, sample_rates, _, _ = librosa.filters.multirate_fb()
     >>> plt.figure(figsize=(10, 6))
     >>> for cur_sr, cur_filter in zip(sample_rates, pitch_filterbank):
     ...    w, h = scipy.signal.freqz(cur_filter[0], cur_filter[1], worN=2000)
