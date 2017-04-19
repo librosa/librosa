@@ -612,9 +612,24 @@ def stft_log_freq_semitone_fb(y, sr=22050, hop_length=2205, win_length=4410, A44
     y : np.ndarray [shape=(n,)]
         audio time series
 
+    hop_length : int > 0 [scalar]
+        hop length, number samples between subsequent frames.
+        If not supplied, defaults to `win_length / 4`.
+
+    win_length : int > 0, <= n_fft
+        Window length. Defaults to `n_fft`.
+        See `stft` for details.
+
+    center_freqs : np.ndarray [shape=(n,), dtype=float]
+        Center frequencies of the filter kernels.
+        Also defines the number of filters in the filterbank.
+
+    sample_rates : np.ndarray [shape=(n,), dtype=float]
+        Samplerate for each filter (used for multirate filterbank).
+
     Returns
     -------
-    pitch_filterbank
+    band_energy
 
     See Also
     --------
@@ -626,7 +641,8 @@ def stft_log_freq_semitone_fb(y, sr=22050, hop_length=2205, win_length=4410, A44
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> D = stft_log_freq_semitone_fb(y)
     >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
-    ...                          y_axis='cqt', x_axis='time')
+    ...                          y_axis='cqt_hz', fmin=librosa.note_to_hz('A0'),
+    ...                          x_axis='time')
     >>> plt.title('Output of Semitone Filterbank')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.tight_layout()
