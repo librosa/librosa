@@ -395,6 +395,7 @@ def test_get_window_pre():
 
 
 def test_multirate_fb():
+    # We test against Chroma Toolbox' elliptical semitone filterbank
     # load data from chroma toolbox
     gt_fb = scipy.io.loadmat(os.path.join('data', 'filter-muliratefb-MIDI_FB_ellip_pitch_60_96_22050_Q25'),
                              squeeze_me=True)['h']
