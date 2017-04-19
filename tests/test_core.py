@@ -1202,3 +1202,25 @@ def test_harmonics_2d_varying():
             step = h[i]
             vals = y[::step]
             assert np.allclose(vals, yh[i, :len(vals)])
+
+
+def test_stft_log_freq_semitone_fb():
+    gt = scipy.io.loadmat(os.path.join('data', 'features-CT-cqt'), squeeze_me=True)['f_cqt']
+
+    y, sr = librosa.load(os.path.join('data', 'test1_44100.wav'))
+    mut = librosa.stft_log_freq_semitone_fb(y)
+    # print(gt.max(), mut.max())
+    # print(gt.min(), mut.min())
+    # print(np.sum(gt[20:108, :mut.shape[1]], axis=1))
+    # print(np.sum(mut, axis=1))
+    # print((np.sum(gt[20:108, :mut.shape[1]], axis=1) - np.sum(mut, axis=1)).argmin())
+    # # assert np.allclose(gt[20:74, :mut.shape[1]], mut[:54, :], rtol=1e-1, atol=1e-1)
+    # import matplotlib.pyplot as plt
+    # f, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
+    # ax1.imshow(gt[20:108, :mut.shape[1]], origin='lower')
+    # ax1.set_title('Chroma Toolbox')
+    # ax2.imshow(mut, origin='lower')
+    # ax2.set_title('librosa')
+    # plt.tight_layout()
+    # plt.show()
+    assert np.allclose(gt[20:108, :mut.shape[1]], mut)

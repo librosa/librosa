@@ -591,10 +591,10 @@ def phase_vocoder(D, rate, hop_length=None):
 
 
 def stft_log_freq_semitone_fb(y, sr=22050, hop_length=2205, win_length=4410, A440=440.0,
-                              center_freqs=time_frequency.midi_to_hz(np.arange(21, 121), A440=440),
+                              center_freqs=time_frequency.midi_to_hz(np.arange(21, 109), A440=440),
                               sample_rates=np.asarray(len(np.arange(0, 39))*[882, ] +
                                                       len(np.arange(39, 74))*[4410, ] +
-                                                      len(np.arange(74, 100))*[22050, ])):
+                                                      len(np.arange(74, 88))*[22050, ])):
     r'''Log-frequency time-frequency representations using a filterbank.
 
     This function will return a log-frequency time-frequency representation
@@ -623,19 +623,12 @@ def stft_log_freq_semitone_fb(y, sr=22050, hop_length=2205, win_length=4410, A44
     Examples
     --------
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
-    >>> import scipy.signal
-    >>> pitch_filterbank, sample_rates, _, _ = librosa.filters.multirate_pitch_fb()
-    >>> plt.figure(figsize=(10, 6))
-    >>> for cur_sr, cur_filter in zip(sample_rates, pitch_filterbank):
-    ...    w, h = scipy.signal.freqz(cur_filter[0], cur_filter[1], worN=2000)
-    ...    plt.plot((cur_sr / (2 * np.pi)) * w, 20 * np.log10(abs(h)))
-    >>> plt.semilogx()
-    >>> plt.xlim([20, 10e3])
-    >>> plt.ylim([-60, 3])
-    >>> plt.title('Magnitude Responses of the Pitch Filterbank')
-    >>> plt.xlabel('Log-Frequency (Hz)')
-    >>> plt.ylabel('Magnitude (dB)')
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> D = stft_log_freq_semitone_fb(y)
+    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
+    ...                          y_axis='cqt', x_axis='time')
+    >>> plt.title('Output of Semitone Filterbank')
+    >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.tight_layout()
     '''
 
@@ -657,8 +650,8 @@ def stft_log_freq_semitone_fb(y, sr=22050, hop_length=2205, win_length=4410, A44
     band_energy = []
 
     for cur_sr, cur_filter in zip(sample_rates, filterbank_ct):
-        win_length_STMSP = np.round(win_length / (sr / cur_sr))
-        hop_length_STMSP = np.round(hop_length / (sr / cur_sr))
+        win_length_STMSP = int(np.round(win_length / (sr / cur_sr)))
+        hop_length_STMSP = int(np.round(hop_length / (sr / cur_sr)))
 
         # filter the signal
         cur_sr_id = int(np.where(y_srs == cur_sr)[0][0])
@@ -669,8 +662,8 @@ def stft_log_freq_semitone_fb(y, sr=22050, hop_length=2205, win_length=4410, A44
         cur_frames = util.frame(np.ascontiguousarray(cur_filter_output),
                                 frame_length=win_length_STMSP,
                                 hop_length=hop_length_STMSP)
-        factor = sr / cur_sr
 
+        factor = sr / cur_sr
         band_energy.append(factor * np.sum(cur_frames**2, axis=0)[:n_frames])
 
     return np.asarray(band_energy)
