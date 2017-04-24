@@ -513,7 +513,7 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     fft_basis = np.abs(fft_basis)
 
     # Compute the magnitude STFT with Hann window
-    D = np.abs(stft(y, n_fft=n_fft, hop_length=hop_length, mode=pad_mode))
+    D = np.abs(stft(y, n_fft=n_fft, hop_length=hop_length, pad_mode=pad_mode))
 
     # Project onto the pseudo-cqt basis
     C = fft_basis.dot(D)
@@ -586,7 +586,8 @@ def __cqt_response(y, n_fft, hop_length, fft_basis, mode):
     '''Compute the filter response with a target STFT hop.'''
 
     # Compute the STFT matrix
-    D = stft(y, n_fft=n_fft, hop_length=hop_length, window=np.ones, mode=mode)
+    D = stft(y, n_fft=n_fft, hop_length=hop_length, window=np.ones,
+             pad_mode=mode)
 
     # And filter response energy
     return fft_basis.dot(D)
