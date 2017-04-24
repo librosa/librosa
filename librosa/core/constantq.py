@@ -25,7 +25,8 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         bins_per_octave=12, tuning=0.0, filter_scale=1,
         norm=1, sparsity=0.01, window='hann',
         scale=True,
-        real=util.Deprecated()):
+        real=util.Deprecated(),
+        pad_mode='reflect'):
     '''Compute the constant-Q transform of an audio signal.
 
     This implementation is based on the recursive sub-sampling method
@@ -93,6 +94,10 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         .. warning:: This parameter is deprecated in librosa 0.5.0
             It will be removed in librosa 0.6.0.
 
+    pad_mode : string
+        Padding mode for centered frame analysis.
+
+        See also: `librosa.core.stft` and `np.pad`.
 
     Returns
     -------
@@ -203,7 +208,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                                window=window)
 
         # Compute the CQT filter response and append it to the stack
-        cqt_resp.append(__cqt_response(y, n_fft, hop_length, fft_basis))
+        cqt_resp.append(__cqt_response(y, n_fft, hop_length, fft_basis, pad_mode))
 
         fmin_t /= 2
         fmax_t /= 2
@@ -251,7 +256,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
             my_hop //= 2
 
         # Compute the cqt filter response and append to the stack
-        cqt_resp.append(__cqt_response(my_y, n_fft, my_hop, fft_basis))
+        cqt_resp.append(__cqt_response(my_y, n_fft, my_hop, fft_basis, pad_mode))
 
     C = __trim_stack(cqt_resp, n_bins)
 
@@ -279,7 +284,8 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 @cache(level=20)
 def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                bins_per_octave=12, tuning=0.0, filter_scale=1,
-               norm=1, sparsity=0.01, window='hann', scale=True):
+               norm=1, sparsity=0.01, window='hann', scale=True,
+               pad_mode='reflect'):
     '''Compute the hybrid constant-Q transform of an audio signal.
 
     Here, the hybrid CQT uses the pseudo CQT for higher frequencies where
@@ -324,6 +330,10 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         Window specification for the basis filters.
         See `filters.get_window` for details.
 
+    pad_mode : string
+        Padding mode for centered frame analysis.
+
+        See also: `librosa.core.stft` and `np.pad`.
 
     Returns
     -------
@@ -391,7 +401,8 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                    norm=norm,
                                    sparsity=sparsity,
                                    window=window,
-                                   scale=scale))
+                                   scale=scale,
+                                   pad_mode=pad_mode))
 
     if n_bins_full > 0:
         cqt_resp.append(np.abs(cqt(y, sr,
@@ -404,7 +415,8 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                    norm=norm,
                                    sparsity=sparsity,
                                    window=window,
-                                   scale=scale)))
+                                   scale=scale,
+                                   pad_mode=pad_mode)))
 
     return __trim_stack(cqt_resp, n_bins)
 
@@ -412,7 +424,8 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 @cache(level=20)
 def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                bins_per_octave=12, tuning=0.0, filter_scale=1,
-               norm=1, sparsity=0.01, window='hann', scale=True):
+               norm=1, sparsity=0.01, window='hann', scale=True,
+               pad_mode='reflect'):
     '''Compute the pseudo constant-Q transform of an audio signal.
 
     This uses a single fft size that is the smallest power of 2 that is greater
@@ -459,6 +472,10 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         Window specification for the basis filters.
         See `filters.get_window` for details.
 
+    pad_mode : string
+        Padding mode for centered frame analysis.
+
+        See also: `librosa.core.stft` and `np.pad`.
 
     Returns
     -------
@@ -496,7 +513,7 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     fft_basis = np.abs(fft_basis)
 
     # Compute the magnitude STFT with Hann window
-    D = np.abs(stft(y, n_fft=n_fft, hop_length=hop_length))
+    D = np.abs(stft(y, n_fft=n_fft, hop_length=hop_length, mode=pad_mode))
 
     # Project onto the pseudo-cqt basis
     C = fft_basis.dot(D)
@@ -565,11 +582,11 @@ def __trim_stack(cqt_resp, n_bins):
     return np.ascontiguousarray(cqt_resp[-n_bins:].T).T
 
 
-def __cqt_response(y, n_fft, hop_length, fft_basis):
+def __cqt_response(y, n_fft, hop_length, fft_basis, mode):
     '''Compute the filter response with a target STFT hop.'''
 
     # Compute the STFT matrix
-    D = stft(y, n_fft=n_fft, hop_length=hop_length, window=np.ones)
+    D = stft(y, n_fft=n_fft, hop_length=hop_length, window=np.ones, mode=mode)
 
     # And filter response energy
     return fft_basis.dot(D)
