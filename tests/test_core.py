@@ -1215,7 +1215,8 @@ def test_padding():
     # different answers for different modes.
     # Does not validate the correctness of each mode.
 
-    y, sr = librosa.load('data/test1_44100.wav', sr=None, mono=True)
+    y, sr = librosa.load('data/test1_44100.wav', sr=None, mono=True,
+                         duration=1)
 
     def __test_stft(center, pad_mode):
         D1 = librosa.stft(y, center=center, pad_mode='reflect')
@@ -1262,9 +1263,21 @@ def test_padding():
         else:
             assert np.allclose(D1, D2)
 
+    def __test_pseudo_cqt(pad_mode):
+        D1 = librosa.pseudo_cqt(y, pad_mode='reflect')
+        D2 = librosa.pseudo_cqt(y, pad_mode=pad_mode)
+
+        assert D1.shape == D2.shape
+
+        if pad_mode != 'reflect':
+            assert not np.allclose(D1, D2)
+        else:
+            assert np.allclose(D1, D2)
+
     for pad_mode in ['reflect', 'constant']:
         yield __test_cqt, pad_mode
         yield __test_hybrid_cqt, pad_mode
+        yield __test_pseudo_cqt, pad_mode
         for center in [False, True]:
             yield __test_stft, center, pad_mode
             yield __test_ifgram, center, pad_mode
