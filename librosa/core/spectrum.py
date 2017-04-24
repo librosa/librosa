@@ -421,11 +421,11 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     stft_matrix = stft(y, n_fft=n_fft, hop_length=hop_length,
                        win_length=win_length,
                        window=window, center=center,
-                       dtype=dtype, mode=pad_mode)
+                       dtype=dtype, pad_mode=pad_mode)
 
     diff_stft = stft(y, n_fft=n_fft, hop_length=hop_length,
                      window=d_window, center=center,
-                     dtype=dtype, mode=pad_mode).conj()
+                     dtype=dtype, pad_mode=pad_mode).conj()
 
     # Compute power normalization. Suppress zeros.
     mag, phase = magphase(stft_matrix)
