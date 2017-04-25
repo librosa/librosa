@@ -76,7 +76,7 @@ def fill_off_diagonal(x, radius, value=0):
     x[idx_l] = value
 
 
-def dtw(X, Y, metric='euclidean', step_sizes_sigma=None,
+def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
         weights_add=None, weights_mul=None, subseq=False, backtrack=True,
         global_constraints=False, band_rad=0.25):
     '''Dynamic time warping (DTW).
@@ -95,6 +95,10 @@ def dtw(X, Y, metric='euclidean', step_sizes_sigma=None,
 
     Y : np.ndarray [shape=(K, M)]
         audio feature matrix (e.g., chroma features)
+
+    C : np.ndarray [shape=(N, M)]
+        Precomputed distance matrix. If supplied, X and Y must not be supplied and
+        ``metric`` will be ignored.
 
     metric : str
         Identifier for the cost-function as documented
@@ -137,7 +141,8 @@ def dtw(X, Y, metric='euclidean', step_sizes_sigma=None,
     Raises
     ------
     ParameterError
-        If you are doing diagonal matching and Y is shorter than X
+        If you are doing diagonal matching and Y is shorter than X or if an incompatible
+        combination of X, Y, and C are supplied.
 
     Examples
     --------
@@ -168,20 +173,29 @@ def dtw(X, Y, metric='euclidean', step_sizes_sigma=None,
     if weights_mul is None:
         weights_mul = np.array([1, 1, 1])
 
-    # take care of dimensions
-    X = np.atleast_2d(X)
-    Y = np.atleast_2d(Y)
+    if C is None and (X is None or Y is None):
+      raise ParameterError('If C is not supplied, both X and Y must be supplied')
+    if C is not None and (X is not None or Y is not None):
+      raise ParameterError('If C is supplied, both X and Y must not be supplied')
+
+    # calculate pair-wise distances, unless already supplied.
+    if C is None:
+      # take care of dimensions
+      X = np.atleast_2d(X)
+      Y = np.atleast_2d(Y)
+
+      C = cdist(X.T, Y.T, metric=metric)
+
+    C = np.atleast_2d(C)
 
     # if diagonal matching, Y has to be longer than X
     # (X simply cannot be contained in Y)
-    if np.array_equal(step_sizes_sigma, np.array([[1, 1]])) and (X.shape[1] > Y.shape[1]):
-        raise ParameterError('For diagonal matching: Y.shape[1] >= X.shape[1]')
+    if np.array_equal(step_sizes_sigma, np.array([[1, 1]])) and (C.shape[0] > C.shape[1]):
+        raise ParameterError('For diagonal matching: Y.shape[1] >= X.shape[1] '
+                             '(C.shape[1] >= C.shape[0])')
 
     max_0 = step_sizes_sigma[:, 0].max()
     max_1 = step_sizes_sigma[:, 1].max()
-
-    # calculate pair-wise distances
-    C = cdist(X.T, Y.T, metric=metric)
 
     if global_constraints:
         # Apply global constraints to the cost matrix
