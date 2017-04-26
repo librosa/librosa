@@ -545,6 +545,11 @@ def specshow(data, x_coords=None, y_coords=None,
     kwargs : additional keyword arguments
         Arguments passed through to `matplotlib.pyplot.pcolormesh`.
 
+        By default, the following options are set:
+
+            - `rasterized=True`
+            - `shading='flat'`
+            - `edgecolors='None'`
 
     Returns
     -------
@@ -648,14 +653,15 @@ def specshow(data, x_coords=None, y_coords=None,
     >>> plt.tight_layout()
     '''
 
-    kwargs.setdefault('shading', 'flat')
-
     if np.issubdtype(data.dtype, np.complex):
         warnings.warn('Trying to display complex-valued input. '
                       'Showing magnitude instead.')
         data = np.abs(data)
 
     kwargs.setdefault('cmap', cmap(data))
+    kwargs.setdefault('rasterized', True)
+    kwargs.setdefault('edgecolors', 'None')
+    kwargs.setdefault('shading', 'flat')
 
     all_params = dict(kwargs=kwargs,
                       sr=sr,
