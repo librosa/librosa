@@ -27,7 +27,7 @@ __all__ = ['stft', 'istft', 'magphase',
 
 @cache(level=20)
 def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
-         center=True, dtype=np.complex64):
+         center=True, dtype=np.complex64, pad_mode='reflect'):
     """Short-time Fourier transform (STFT)
 
     Returns a complex-valued matrix D such that
@@ -72,6 +72,10 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
     dtype       : numeric type
         Complex numeric type for `D`.  Default is 64-bit complex.
 
+    mode : string
+        If `center=True`, the padding mode to use at the edges of the signal.
+        By default, STFT uses reflection padding.
+
 
     Returns
     -------
@@ -85,6 +89,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
 
     ifgram : Instantaneous frequency spectrogram
 
+    np.pad : array padding
 
     Notes
     -----
@@ -152,7 +157,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
     # Pad the time series so that frames are centered
     if center:
         util.valid_audio(y)
-        y = np.pad(y, int(n_fft // 2), mode='reflect')
+        y = np.pad(y, int(n_fft // 2), mode=pad_mode)
 
     # Window the time series.
     y_frames = util.frame(y, frame_length=n_fft, hop_length=hop_length)
@@ -301,7 +306,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
 
 def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
            window='hann', norm=False, center=True, ref_power=1e-6,
-           clip=True, dtype=np.complex64):
+           clip=True, dtype=np.complex64, pad_mode='reflect'):
     '''Compute the instantaneous frequency (as a proportion of the sampling rate)
     obtained as the time-derivative of the phase of the complex spectrum as
     described by [1]_.
@@ -366,6 +371,11 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     dtype : numeric type
         Complex numeric type for `D`.  Default is 64-bit complex.
 
+    mode : string
+        If `center=True`, the padding mode to use at the edges of the signal.
+        By default, STFT uses reflection padding.
+
+
     Returns
     -------
     if_gram : np.ndarray [shape=(1 + n_fft/2, t), dtype=real]
@@ -410,10 +420,12 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
 
     stft_matrix = stft(y, n_fft=n_fft, hop_length=hop_length,
                        win_length=win_length,
-                       window=window, center=center, dtype=dtype)
+                       window=window, center=center,
+                       dtype=dtype, pad_mode=pad_mode)
 
     diff_stft = stft(y, n_fft=n_fft, hop_length=hop_length,
-                     window=d_window, center=center, dtype=dtype).conj()
+                     window=d_window, center=center,
+                     dtype=dtype, pad_mode=pad_mode).conj()
 
     # Compute power normalization. Suppress zeros.
     mag, phase = magphase(stft_matrix)

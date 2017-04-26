@@ -1207,3 +1207,77 @@ def test_harmonics_2d_varying():
 def test_show_versions():
     # Nothing to test here, except that everything passes.
     librosa.show_versions()
+
+
+def test_padding():
+
+    # A simple test to verify that pad_mode is used properly by giving
+    # different answers for different modes.
+    # Does not validate the correctness of each mode.
+
+    y, sr = librosa.load('data/test1_44100.wav', sr=None, mono=True,
+                         duration=1)
+
+    def __test_stft(center, pad_mode):
+        D1 = librosa.stft(y, center=center, pad_mode='reflect')
+        D2 = librosa.stft(y, center=center, pad_mode=pad_mode)
+
+        assert D1.shape == D2.shape
+
+        if center and pad_mode != 'reflect':
+            assert not np.allclose(D1, D2)
+        else:
+            assert np.allclose(D1, D2)
+
+    def __test_ifgram(center, pad_mode):
+        D1, F1 = librosa.ifgram(y, center=center, pad_mode='reflect')
+        D2, F2 = librosa.ifgram(y, center=center, pad_mode=pad_mode)
+
+        assert D1.shape == D2.shape
+
+        if center and pad_mode != 'reflect':
+            assert not np.allclose(D1, D2)
+        else:
+            assert np.allclose(D1, D2)
+            assert np.allclose(F1, F2)
+
+    def __test_cqt(pad_mode):
+        D1 = librosa.cqt(y, pad_mode='reflect')
+        D2 = librosa.cqt(y, pad_mode=pad_mode)
+
+        assert D1.shape == D2.shape
+
+        if pad_mode != 'reflect':
+            assert not np.allclose(D1, D2)
+        else:
+            assert np.allclose(D1, D2)
+
+    def __test_hybrid_cqt(pad_mode):
+        D1 = librosa.hybrid_cqt(y, pad_mode='reflect')
+        D2 = librosa.hybrid_cqt(y, pad_mode=pad_mode)
+
+        assert D1.shape == D2.shape
+
+        if pad_mode != 'reflect':
+            assert not np.allclose(D1, D2)
+        else:
+            assert np.allclose(D1, D2)
+
+    def __test_pseudo_cqt(pad_mode):
+        D1 = librosa.pseudo_cqt(y, pad_mode='reflect')
+        D2 = librosa.pseudo_cqt(y, pad_mode=pad_mode)
+
+        assert D1.shape == D2.shape
+
+        if pad_mode != 'reflect':
+            assert not np.allclose(D1, D2)
+        else:
+            assert np.allclose(D1, D2)
+
+    for pad_mode in ['reflect', 'constant']:
+        yield __test_cqt, pad_mode
+        yield __test_hybrid_cqt, pad_mode
+        yield __test_pseudo_cqt, pad_mode
+        for center in [False, True]:
+            yield __test_stft, center, pad_mode
+            yield __test_ifgram, center, pad_mode
