@@ -184,7 +184,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
 
 @cache(level=30)
 def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
-          center=True, dtype=np.float32):
+          center=True, dtype=np.float32, length=None):
     """
     Inverse short-time Fourier transform (ISTFT).
 
@@ -231,6 +231,10 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
     dtype       : numeric type
         Real numeric type for `y`.  Default is 32-bit float.
 
+    length : int > 0, optional
+        If provided, the output `y` is zero-padded or clipped to exactly
+        `length` samples.
+
     Returns
     -------
     y : np.ndarray [shape=(n,)]
@@ -259,7 +263,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
     >>> n_fft = 2048
     >>> y_pad = librosa.util.fix_length(y, n + n_fft // 2)
     >>> D = librosa.stft(y_pad, n_fft=n_fft)
-    >>> y_out = librosa.util.fix_length(librosa.istft(D), n)
+    >>> y_out = librosa.istft(D, length=n)
     >>> np.max(np.abs(y - y_out))
     1.4901161e-07
     """
@@ -298,8 +302,23 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
     approx_nonzero_indices = ifft_window_sum > util.tiny(ifft_window_sum)
     y[approx_nonzero_indices] /= ifft_window_sum[approx_nonzero_indices]
 
-    if center:
-        y = y[int(n_fft // 2):-int(n_fft // 2)]
+    if length is None:
+        # If we don't need to control length, just do the usual center trimming
+        # to eliminate padded data
+        if center:
+            y = y[int(n_fft // 2):-int(n_fft // 2)]
+    else:
+        if center:
+            # If we're centering, crop off the first n_fft//2 samples
+            # and then trim/pad to the target length.
+            # We don't trim the end here, so that if the signal is zero-padded
+            # to a longer duration, the decay is smooth by windowing
+            start = int(n_fft // 2)
+        else:
+            # If we're not centering, start at 0 and trim/pad as necessary
+            start = 0
+
+        y = util.fix_length(y[start:], length)
 
     return y
 
