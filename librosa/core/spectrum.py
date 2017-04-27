@@ -621,17 +621,19 @@ def phase_vocoder(D, rate, hop_length=None):
     return d_stretch
 
 
-def stft_log_freq_semitone_fb(y, sr=22050, hop_length=2205, win_length=4410, A440=440.0,
-                              center_freqs=time_frequency.midi_to_hz(np.arange(21, 109), A440=440),
-                              sample_rates=np.asarray(len(np.arange(0, 39))*[882, ] +
-                                                      len(np.arange(39, 74))*[4410, ] +
-                                                      len(np.arange(74, 88))*[22050, ])):
+def stft_log_freq_semitone_fb(y, sr=22050, win_length=2048, hop_length=None, tuning=0.0,
+                              center_freqs=None, sample_rates=None):
     r'''Log-frequency time-frequency representations using a filterbank.
 
     This function will return a log-frequency time-frequency representation
     using the multirate filter bank described in [1]_.
-
-    `scipy.signal.filtfilt` is applied to the input signal to make the phase linear.
+    First, the signal is resampled as needed by the supplied `sample_rates`.
+    Then, a filterbank with with `n` band-pass filter is designed, where each
+    filter has a bandwith of one semitone.
+    The resampled input signals are processed by the filterbank as a whole.
+    (`scipy.signal.filtfilt` is used to make the phase linear.)
+    The output of the filterbank is cut into frames and for each band,
+    the frame-wise short-time mean-square power (STMSP) is calculated.
 
     .. [1] Müller, Meinard.
            "Information Retrieval for Music and Motion."
@@ -643,13 +645,18 @@ def stft_log_freq_semitone_fb(y, sr=22050, hop_length=2205, win_length=4410, A44
     y : np.ndarray [shape=(n,)]
         audio time series
 
-    hop_length : int > 0 [scalar]
-        hop length, number samples between subsequent frames.
-        If not supplied, defaults to `win_length / 4`.
+    sr : number > 0 [scalar]
+        sampling rate of `y`
 
     win_length : int > 0, <= n_fft
-        Window length. Defaults to `n_fft`.
-        See `stft` for details.
+        Window length.
+
+    hop_length : int > 0 [scalar]
+        Hop length, number samples between subsequent frames.
+        If not supplied, defaults to `win_length / 4`.
+
+    tuning : float in `[-0.5, +0.5)` [scalar]
+        Tuning deviation from A440 in fractions of a bin.
 
     center_freqs : np.ndarray [shape=(n,), dtype=float]
         Center frequencies of the filter kernels.
@@ -660,11 +667,13 @@ def stft_log_freq_semitone_fb(y, sr=22050, hop_length=2205, win_length=4410, A44
 
     Returns
     -------
-    band_energy
+    band_energy : np.ndarray [shape=(n, t), dtype=dtype]
+        Time-frequency representation of the input signal.
 
     See Also
     --------
     librosa.core.cqt
+    scipy.signal.filtfilt
 
     Examples
     --------
@@ -679,6 +688,18 @@ def stft_log_freq_semitone_fb(y, sr=22050, hop_length=2205, win_length=4410, A44
     >>> plt.tight_layout()
     '''
 
+    # Set the default hop, if it's not already specified
+    if hop_length is None:
+        hop_length = int(win_length // 4)
+
+    if center_freqs is None:
+        center_freqs = time_frequency.midi_to_hz(np.arange(21, 109))
+
+    if sample_rates is None:
+        sample_rates = np.asarray(len(np.arange(0, 39)) * [882, ] +
+                                  len(np.arange(39, 74)) * [4410, ] +
+                                  len(np.arange(74, 88)) * [22050, ])
+
     # create three downsampled versions of the audio signal
     y_resampled = []
 
@@ -689,7 +710,8 @@ def stft_log_freq_semitone_fb(y, sr=22050, hop_length=2205, win_length=4410, A44
 
     # get the semitone filterbank
     filterbank_ct, sample_rates = multirate_fb(center_freqs=center_freqs,
-                                               sample_rates=sample_rates)
+                                               sample_rates=sample_rates,
+                                               tuning=tuning)
 
     # Compute the number of frames that will fit. The end may get truncated.
     n_frames = 1 + int((len(y) - win_length) / hop_length)

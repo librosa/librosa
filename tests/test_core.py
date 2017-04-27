@@ -1291,7 +1291,7 @@ def test_stft_log_freq_semitone_fb():
     gt = scipy.io.loadmat(os.path.join('data', 'features-CT-cqt'), squeeze_me=True)['f_cqt']
 
     y, sr = librosa.load(os.path.join('data', 'test1_44100.wav'))
-    mut = librosa.stft_log_freq_semitone_fb(y)
+    mut = librosa.stft_log_freq_semitone_fb(y, hop_length=2205, win_length=4410)
     # print(gt.max(), mut.max())
     # print(gt.min(), mut.min())
     # print(np.sum(gt[20:108, :mut.shape[1]], axis=1))
