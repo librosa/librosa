@@ -887,15 +887,18 @@ def get_window(window, Nx, fftbins=True):
 
 
 @cache(level=10)
-def multirate_fb(center_freqs=midi_to_hz(np.arange(21, 109), A440=440),
-                 sample_rates=np.asarray(len(np.arange(0, 39))*[882, ] +
-                                         len(np.arange(39, 74))*[4410, ] +
-                                         len(np.arange(74, 88))*[22050, ]),
-                 Q=25, passband_ripple=1, stopband_attenuation=50, ftype='ellip'):
+def multirate_fb(center_freqs=None, tuning=0.0, sample_rates=None, Q=25.0,
+                 passband_ripple=1, stopband_attenuation=50, ftype='ellip'):
     r'''Construct a multirate filterbank.
 
-     Uses `scipy.signal.iirdesign` to design the filters.
-     the filter bank described in [1]_.
+     A filter bank consists of multiple band-pass filters which divide the input signal
+     into subbands. In the case of a multirate filter bank, the band-pass filters
+     operate with resampled versions of the input signal, e.g. to keep the length
+     of a filter constant while shifting its center frequency.
+
+     This implementation uses `scipy.signal.iirdesign` to design the filters.
+     When run with default parameters, a filter bank with 88 filters, each having
+     a bandwith of one semitone, is designed. For details see, e.g. [1]_.
 
     .. [1] Müller, Meinard.
            "Information Retrieval for Music and Motion."
@@ -908,6 +911,9 @@ def multirate_fb(center_freqs=midi_to_hz(np.arange(21, 109), A440=440),
         Center frequencies of the filter kernels.
         Also defines the number of filters in the filterbank.
 
+    tuning : float in `[-0.5, +0.5)` [scalar]
+        Tuning deviation from A440 in fractions of a bin.
+
     sample_rates : np.ndarray [shape=(n,), dtype=float]
         Samplerate for each filter (used for multirate filterbank).
 
@@ -915,18 +921,23 @@ def multirate_fb(center_freqs=midi_to_hz(np.arange(21, 109), A440=440),
         Q factor (influences the filter bandwith).
 
     passband_ripple : float
-        The maximum loss in the passband (dB) (cf. `scipy.signal.iirdesign`).
+        The maximum loss in the passband (dB)
+        See `scipy.signal.iirdesign` for details.
 
     stopband_attenuation : float
-        The minimum attenuation in the stopband (dB) (cf. `scipy.signal.iirdesign`).
+        The minimum attenuation in the stopband (dB)
+        See `scipy.signal.iirdesign` for details.
 
     ftype : str
-        The type of IIR filter to design (cf. `scipy.signal.iirdesign`).
+        The type of IIR filter to design
+        See `scipy.signal.iirdesign` for details.
 
     Returns
     -------
-    filterbank
-    sample_rates
+    filterbank : list [shape=(n,), dtype=float]
+        Each list entry comprises the filter coefficients for a single filter.
+    sample_rates : np.ndarray [shape=(n,), dtype=float]
+        Samplerate for each filter.
 
     Notes
     -----
@@ -935,7 +946,7 @@ def multirate_fb(center_freqs=midi_to_hz(np.arange(21, 109), A440=440),
     See Also
     --------
     librosa.core.cqt
-
+    scipy.signal.iirdesign
 
     Examples
     --------
@@ -956,13 +967,21 @@ def multirate_fb(center_freqs=midi_to_hz(np.arange(21, 109), A440=440),
     >>> plt.tight_layout()
     '''
 
-    nyquist = sample_rates / 2
-    filter_bandwidths = center_freqs / Q
+    if center_freqs is None:
+        center_freqs = midi_to_hz(np.arange(21 + tuning, 109 + tuning))
+
+    if sample_rates is None:
+        sample_rates = np.asarray(len(np.arange(0, 39)) * [882, ] +
+                                  len(np.arange(39, 74)) * [4410, ] +
+                                  len(np.arange(74, 88)) * [22050, ])
+
+    nyquist = 0.5 * sample_rates
+    filter_bandwidths = center_freqs / float(Q)
 
     filterbank = []
 
     for cur_center_freq, cur_nyquist, cur_bw in zip(center_freqs, nyquist, filter_bandwidths):
-        passband_freqs = [cur_center_freq - cur_bw / 2, cur_center_freq + cur_bw / 2] / cur_nyquist
+        passband_freqs = [cur_center_freq - 0.5 * cur_bw, cur_center_freq + 0.5 * cur_bw] / cur_nyquist
         stopband_freqs = [cur_center_freq - cur_bw, cur_center_freq + cur_bw] / cur_nyquist
 
         cur_filter = scipy.signal.iirdesign(passband_freqs, stopband_freqs,

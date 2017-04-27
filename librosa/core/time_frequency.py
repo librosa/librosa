@@ -476,7 +476,7 @@ def midi_to_note(midi, octave=True, cents=False):
     return note
 
 
-def midi_to_hz(notes, A440=440.0):
+def midi_to_hz(notes):
     """Get the frequency (Hz) of MIDI note(s)
 
     Examples
@@ -493,8 +493,6 @@ def midi_to_hz(notes, A440=440.0):
     ----------
     notes       : int or np.ndarray [shape=(n,), dtype=int]
         midi number(s) of the note(s)
-    A440          : float
-        frequency of A440
 
     Returns
     -------
@@ -507,10 +505,10 @@ def midi_to_hz(notes, A440=440.0):
     note_to_hz
     """
 
-    return A440 * (2.0 ** ((np.atleast_1d(notes) - 69.0)/12.0))
+    return 440.0 * (2.0 ** ((np.atleast_1d(notes) - 69.0)/12.0))
 
 
-def hz_to_midi(frequencies, A440=440.0):
+def hz_to_midi(frequencies):
     """Get the closest MIDI note number(s) for given frequencies
 
     Examples
@@ -524,8 +522,6 @@ def hz_to_midi(frequencies, A440=440.0):
     ----------
     frequencies   : float or np.ndarray [shape=(n,), dtype=float]
         frequencies to convert
-    A440          : float
-        frequency of A440
 
     Returns
     -------
@@ -539,7 +535,7 @@ def hz_to_midi(frequencies, A440=440.0):
     hz_to_note
     """
 
-    return 12 * (np.log2(np.atleast_1d(frequencies)) - np.log2(A440)) + 69
+    return 12 * (np.log2(np.atleast_1d(frequencies)) - np.log2(440.0)) + 69
 
 
 def hz_to_note(frequencies, **kwargs):
