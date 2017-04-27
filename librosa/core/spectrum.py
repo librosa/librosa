@@ -621,8 +621,8 @@ def phase_vocoder(D, rate, hop_length=None):
     return d_stretch
 
 
-def stft_log_freq_semitone_fb(y, sr=22050, win_length=2048, hop_length=None, tuning=0.0,
-                              center_freqs=None, sample_rates=None):
+def stft_log_freq_semitone_fb(y, sr=22050, win_length=2048, hop_length=None, center=True,
+                              tuning=0.0, center_freqs=None, sample_rates=None):
     r'''Log-frequency time-frequency representations using a filterbank.
 
     This function will return a log-frequency time-frequency representation
@@ -654,6 +654,11 @@ def stft_log_freq_semitone_fb(y, sr=22050, win_length=2048, hop_length=None, tun
     hop_length : int > 0 [scalar]
         Hop length, number samples between subsequent frames.
         If not supplied, defaults to `win_length / 4`.
+
+    center : boolean
+        - If `True`, the signal `y` is padded so that frame
+          `D[:, t]` is centered at `y[t * hop_length]`.
+        - If `False`, then `D[:, t]` begins at `y[t * hop_length]`
 
     tuning : float in `[-0.5, +0.5)` [scalar]
         Tuning deviation from A440 in fractions of a bin.
@@ -699,6 +704,11 @@ def stft_log_freq_semitone_fb(y, sr=22050, win_length=2048, hop_length=None, tun
         sample_rates = np.asarray(len(np.arange(0, 39)) * [882, ] +
                                   len(np.arange(39, 74)) * [4410, ] +
                                   len(np.arange(74, 88)) * [22050, ])
+
+    # Pad the time series so that frames are centered
+    if center:
+        util.valid_audio(y)
+        y = np.pad(y, int(win_length // 2), mode='reflect')
 
     # create three downsampled versions of the audio signal
     y_resampled = []
