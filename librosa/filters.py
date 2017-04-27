@@ -936,6 +936,7 @@ def multirate_fb(center_freqs=None, tuning=0.0, sample_rates=None, Q=25.0,
     -------
     filterbank : list [shape=(n,), dtype=float]
         Each list entry comprises the filter coefficients for a single filter.
+
     sample_rates : np.ndarray [shape=(n,), dtype=float]
         Samplerate for each filter.
 
