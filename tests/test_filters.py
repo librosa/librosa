@@ -401,11 +401,12 @@ def test_multirate_fb():
                              squeeze_me=True)['h']
 
     # reproduce settings from chroma toolbox
-    mut_ft, mut_srs = librosa.filters.multirate_fb(
-        center_freqs=librosa.time_frequency.midi_to_hz(np.arange(21, 121), A440=440),
-        sample_rates=np.asarray(len(np.arange(0, 39))*[882, ] +
-                                len(np.arange(39, 74))*[4410, ] +
-                                len(np.arange(74, 100))*[22050, ]))
+    center_freqs = librosa.time_frequency.midi_to_hz(np.arange(21, 109))
+    sample_rates = np.asarray(len(np.arange(0, 39)) * [882, ] +
+                              len(np.arange(39, 74)) * [4410, ] +
+                              len(np.arange(74, 88)) * [22050, ])
+
+    mut_ft, mut_srs = librosa.filters.multirate_fb(center_freqs=center_freqs, sample_rates=sample_rates)
 
     for cur_filter_id in range(len(mut_ft)):
         cur_filter_gt = gt_fb[cur_filter_id + 20]
