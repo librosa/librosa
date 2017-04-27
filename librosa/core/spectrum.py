@@ -714,13 +714,13 @@ def stft_log_freq_semitone_fb(y, sr=22050, win_length=2048, hop_length=None, tun
                                                tuning=tuning)
 
     # Compute the number of frames that will fit. The end may get truncated.
-    n_frames = 1 + int((len(y) - win_length) / hop_length)
+    n_frames = 1 + int((len(y) - win_length) / float(hop_length))
 
     band_energy = []
 
     for cur_sr, cur_filter in zip(sample_rates, filterbank_ct):
-        win_length_STMSP = int(np.round(win_length / (sr / cur_sr)))
-        hop_length_STMSP = int(np.round(hop_length / (sr / cur_sr)))
+        win_length_STMSP = int(np.round(win_length / (float(sr) / float(cur_sr))))
+        hop_length_STMSP = int(np.round(hop_length / (float(sr) / float(cur_sr))))
 
         # filter the signal
         cur_sr_id = int(np.where(y_srs == cur_sr)[0][0])
