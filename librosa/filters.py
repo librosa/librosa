@@ -936,6 +936,7 @@ def multirate_fb(center_freqs=None, tuning=0.0, sample_rates=None, Q=25.0,
     -------
     filterbank : list [shape=(n,), dtype=float]
         Each list entry comprises the filter coefficients for a single filter.
+
     sample_rates : np.ndarray [shape=(n,), dtype=float]
         Samplerate for each filter.
 
@@ -953,7 +954,7 @@ def multirate_fb(center_freqs=None, tuning=0.0, sample_rates=None, Q=25.0,
     >>> import matplotlib.pyplot as plt
     >>> import numpy as np
     >>> import scipy.signal
-    >>> pitch_filterbank, sample_rates, _, _ = librosa.filters.multirate_fb()
+    >>> pitch_filterbank, sample_rates = librosa.filters.multirate_fb()
     >>> plt.figure(figsize=(10, 6))
     >>> for cur_sr, cur_filter in zip(sample_rates, pitch_filterbank):
     ...    w, h = scipy.signal.freqz(cur_filter[0], cur_filter[1], worN=2000)
