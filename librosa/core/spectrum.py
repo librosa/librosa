@@ -668,7 +668,7 @@ def stft_log_freq_semitone_fb(y, sr=22050, win_length=2048, hop_length=None, tun
     Returns
     -------
     band_energy : np.ndarray [shape=(n, t), dtype=dtype]
-        Time-frequency representation of the input signal.
+        Short-time mean-square power for the input signal.
 
     See Also
     --------
