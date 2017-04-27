@@ -693,7 +693,7 @@ def stft_log_freq_semitone_fb(y, sr=22050, win_length=2048, hop_length=None, tun
         hop_length = int(win_length // 4)
 
     if center_freqs is None:
-        center_freqs = time_frequency.midi_to_hz(np.arange(21 + tuning, 109 + tuning))
+        center_freqs = time_frequency.midi_to_hz(np.arange(21, 109))
 
     if sample_rates is None:
         sample_rates = np.asarray(len(np.arange(0, 39)) * [882, ] +
@@ -710,7 +710,8 @@ def stft_log_freq_semitone_fb(y, sr=22050, win_length=2048, hop_length=None, tun
 
     # get the semitone filterbank
     filterbank_ct, sample_rates = multirate_fb(center_freqs=center_freqs,
-                                               sample_rates=sample_rates)
+                                               sample_rates=sample_rates,
+                                               tuning=tuning)
 
     # Compute the number of frames that will fit. The end may get truncated.
     n_frames = 1 + int((len(y) - win_length) / hop_length)
