@@ -75,7 +75,7 @@ def test_delta():
 
 def test_stack_memory():
 
-    def __test(data, n_steps, delay):
+    def __test(n_steps, delay, data):
         data_stack = librosa.feature.stack_memory(data,
                                                   n_steps=n_steps,
                                                   delay=delay)
@@ -89,10 +89,16 @@ def test_stack_memory():
         eq_(data_stack.shape[0], n_steps * d)
         eq_(data_stack.shape[1], t)
 
+        assert np.allclose(data_stack[0], data[0])
+
         for i in range(d):
             for step in range(1, n_steps):
-                assert np.allclose(data[i, :- step * delay],
-                                   data_stack[step * d + i, step * delay:])
+                if delay > 0:
+                    assert np.allclose(data[i, :- step * delay],
+                                       data_stack[step * d + i, step * delay:])
+                else:
+                    assert np.allclose(data[i, -step * delay:],
+                                       data_stack[step * d + i, :step * delay])
 
     srand()
 
@@ -100,13 +106,13 @@ def test_stack_memory():
         data = np.random.randn(* ([5] * ndim))
 
         for n_steps in [-1, 0, 1, 2, 3, 4]:
-            for delay in [-1, 0, 1, 2, 4]:
+            for delay in [-4, -2, -1, 0, 1, 2, 4]:
                 tf = __test
                 if n_steps < 1:
                     tf = raises(librosa.ParameterError)(__test)
-                if delay < 1:
+                if delay == 0:
                     tf = raises(librosa.ParameterError)(__test)
-                yield tf, data, n_steps, delay
+                yield tf, n_steps, delay, data
 
 
 # spectral submodule
