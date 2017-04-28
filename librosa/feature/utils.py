@@ -142,8 +142,12 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
     n_steps : int > 0 [scalar]
         embedding dimension, the number of steps back in time to stack
 
-    delay : int > 0 [scalar]
-        the number of columns to step
+    delay : int != 0 [scalar]
+        the number of columns to step.
+
+        Positive values embed from the past (previous columns).
+
+        Negative values embed from the future (subsequent columns).
 
     kwargs : additional keyword arguments
       Additional arguments to pass to `np.pad`.
@@ -214,8 +218,8 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
     if n_steps < 1:
         raise ParameterError('n_steps must be a positive integer')
 
-    if delay < 1:
-        raise ParameterError('delay must be a positive integer')
+    if delay == 0:
+        raise ParameterError('delay must be a non-zero integer')
 
     data = np.atleast_2d(data)
 
@@ -226,7 +230,12 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
         kwargs.setdefault('constant_values', [0])
 
     # Pad the end with zeros, which will roll to the front below
-    data = np.pad(data, [(0, 0), (int((n_steps - 1) * delay), 0)], **kwargs)
+    if delay > 0:
+        padding = (int((n_steps - 1) * delay), 0)
+    else:
+        padding = (0, int((n_steps - 1) * -delay))
+
+    data = np.pad(data, [(0, 0), padding], **kwargs)
 
     history = data
 
@@ -234,7 +243,10 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
         history = np.vstack([np.roll(data, -i * delay, axis=1), history])
 
     # Trim to original width
-    history = history[:, :t]
+    if delay > 0:
+        history = history[:, :t]
+    else:
+        history = history[:, -t:]
 
     # Make contiguous
     return np.ascontiguousarray(history.T).T
