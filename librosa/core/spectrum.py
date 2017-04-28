@@ -672,7 +672,7 @@ def stft_log_freq_semitone_fb(y, sr=22050, win_length=2048, hop_length=None, cen
 
     Returns
     -------
-    band_energy : np.ndarray [shape=(n, t), dtype=dtype]
+    bands_power : np.ndarray [shape=(n, t), dtype=dtype]
         Short-time mean-square power for the input signal.
 
     See Also
@@ -726,14 +726,14 @@ def stft_log_freq_semitone_fb(y, sr=22050, win_length=2048, hop_length=None, cen
     # Compute the number of frames that will fit. The end may get truncated.
     n_frames = 1 + int((len(y) - win_length) / float(hop_length))
 
-    band_energy = []
+    bands_power = []
 
     for cur_sr, cur_filter in zip(sample_rates, filterbank_ct):
         win_length_STMSP = int(np.round(win_length / (float(sr) / float(cur_sr))))
         hop_length_STMSP = int(np.round(hop_length / (float(sr) / float(cur_sr))))
 
         # filter the signal
-        cur_sr_id = int(np.where(y_srs == cur_sr)[0][0])
+        cur_sr_id = int(np.flatnonzero(y_srs == cur_sr))
         cur_filter_output = scipy.signal.filtfilt(cur_filter[0], cur_filter[1],
                                                   y_resampled[cur_sr_id])
 
@@ -743,9 +743,9 @@ def stft_log_freq_semitone_fb(y, sr=22050, win_length=2048, hop_length=None, cen
                                 hop_length=hop_length_STMSP)
 
         factor = sr / cur_sr
-        band_energy.append(factor * np.sum(cur_frames**2, axis=0)[:n_frames])
+        bands_power.append(factor * np.sum(cur_frames**2, axis=0)[:n_frames])
 
-    return np.asarray(band_energy)
+    return np.asarray(bands_power)
 
 
 @cache(level=30)
