@@ -16,9 +16,9 @@ from .. import util
 from ..util.decorators import moved
 from ..util.deprecation import rename_kw, Deprecated
 from ..util.exceptions import ParameterError
-from ..filters import get_window, multirate_fb
+from ..filters import get_window, semitone_filterbank
 
-__all__ = ['stft', 'istft', 'magphase', 'stft_log_freq_semitone_fb',
+__all__ = ['stft', 'istft', 'magphase', 'semitone_spectrogram',
            'ifgram', 'phase_vocoder',
            'logamplitude', 'perceptual_weighting',
            'power_to_db', 'db_to_power',
@@ -621,9 +621,9 @@ def phase_vocoder(D, rate, hop_length=None):
     return d_stretch
 
 
-def stft_log_freq_semitone_fb(y, sr=22050, win_length=2048, hop_length=None, center=True,
-                              tuning=0.0, center_freqs=None, sample_rates=None):
-    r'''Log-frequency time-frequency representations using a filterbank.
+def semitone_spectrogram(y, sr=22050, win_length=2048, hop_length=None, center=True,
+                         tuning=0.0, **kwargs):
+    r'''Spectrogram representation as presented in [1]_.
 
     This function will return a log-frequency time-frequency representation
     using the multirate filter bank described in [1]_.
@@ -670,13 +670,19 @@ def stft_log_freq_semitone_fb(y, sr=22050, win_length=2048, hop_length=None, cen
     sample_rates : np.ndarray [shape=(n,), dtype=float]
         Samplerate for each filter (used for multirate filterbank).
 
+    kwargs : additional keyword arguments
+        Additional arguments for `librosa.filters.semitone_filterbank()`
+        (e.g., could be used to provide another set of `center_freqs` and `sample_rates`).
+
     Returns
     -------
-    band_energy : np.ndarray [shape=(n, t), dtype=dtype]
+    bands_power : np.ndarray [shape=(n, t), dtype=dtype]
         Short-time mean-square power for the input signal.
 
     See Also
     --------
+    brosa.filters.semitone_filterbank
+    brosa.filters._multirate_fb
     librosa.core.cqt
     scipy.signal.filtfilt
 
@@ -684,11 +690,11 @@ def stft_log_freq_semitone_fb(y, sr=22050, win_length=2048, hop_length=None, cen
     --------
     >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> D = stft_log_freq_semitone_fb(y)
+    >>> D = semitone_spectrogram(y)
     >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
     ...                          y_axis='cqt_hz', fmin=librosa.note_to_hz('A0'),
     ...                          x_axis='time')
-    >>> plt.title('Output of Semitone Filterbank')
+    >>> plt.title('Semitone spectrogram')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.tight_layout()
     '''
@@ -697,18 +703,13 @@ def stft_log_freq_semitone_fb(y, sr=22050, win_length=2048, hop_length=None, cen
     if hop_length is None:
         hop_length = int(win_length // 4)
 
-    if center_freqs is None:
-        center_freqs = time_frequency.midi_to_hz(np.arange(21, 109))
-
-    if sample_rates is None:
-        sample_rates = np.asarray(len(np.arange(0, 39)) * [882, ] +
-                                  len(np.arange(39, 74)) * [4410, ] +
-                                  len(np.arange(74, 88)) * [22050, ])
-
     # Pad the time series so that frames are centered
     if center:
         util.valid_audio(y)
-        y = np.pad(y, int(win_length // 2), mode='reflect')
+        y = np.pad(y, int(hop_length), mode='reflect')
+
+    # get the semitone filterbank
+    filterbank_ct, sample_rates = semitone_filterbank(tuning=tuning, **kwargs)
 
     # create three downsampled versions of the audio signal
     y_resampled = []
@@ -718,34 +719,29 @@ def stft_log_freq_semitone_fb(y, sr=22050, win_length=2048, hop_length=None, cen
     for cur_sr in y_srs:
         y_resampled.append(resample(y, sr, cur_sr))
 
-    # get the semitone filterbank
-    filterbank_ct, sample_rates = multirate_fb(center_freqs=center_freqs,
-                                               sample_rates=sample_rates,
-                                               tuning=tuning)
-
     # Compute the number of frames that will fit. The end may get truncated.
     n_frames = 1 + int((len(y) - win_length) / float(hop_length))
 
-    band_energy = []
+    bands_power = []
 
     for cur_sr, cur_filter in zip(sample_rates, filterbank_ct):
-        win_length_STMSP = int(np.round(win_length / (float(sr) / float(cur_sr))))
-        hop_length_STMSP = int(np.round(hop_length / (float(sr) / float(cur_sr))))
+        factor = float(sr) / float(cur_sr)
+        win_length_STMSP = int(np.round(win_length / factor))
+        hop_length_STMSP = int(np.round(hop_length / factor))
 
         # filter the signal
-        cur_sr_id = int(np.where(y_srs == cur_sr)[0][0])
+        cur_sr_idx = int(np.flatnonzero(y_srs == cur_sr))
         cur_filter_output = scipy.signal.filtfilt(cur_filter[0], cur_filter[1],
-                                                  y_resampled[cur_sr_id])
+                                                  y_resampled[cur_sr_idx])
 
         # frame the current filter output
         cur_frames = util.frame(np.ascontiguousarray(cur_filter_output),
                                 frame_length=win_length_STMSP,
                                 hop_length=hop_length_STMSP)
 
-        factor = sr / cur_sr
-        band_energy.append(factor * np.sum(cur_frames**2, axis=0)[:n_frames])
+        bands_power.append(factor * np.sum(cur_frames**2, axis=0)[:n_frames])
 
-    return np.asarray(band_energy)
+    return np.asarray(bands_power)
 
 
 @cache(level=30)
