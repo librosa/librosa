@@ -177,6 +177,8 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
     # Further detect
     if precise:
+        if y is None:
+            raise ParameterError('y must be provided for precision mode')
         samples_starts = core.frames_to_samples(onsets, hop_length=hop_length)
         strengths = [onset_strength(y[range(startSample-hop_length*precise_window_size, startSample+hop_length*precise_window_size)],
                                     sr=sr, hop_length=precise_hop_length)
