@@ -29,7 +29,7 @@ __all__ = ['onset_detect',
 
 
 def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
-                 backtrack=False, energy=None, precise=False, precise_hop_length=8, precise_window_size=3,
+                 backtrack=False, energy=None, precise=False, precise_hop_length=64, precise_window_size=3,
                  units='frames', **kwargs):
     """Basic onset detector.  Locate note onset events by picking peaks in an
     onset strength envelope.
