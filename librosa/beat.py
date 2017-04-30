@@ -18,6 +18,8 @@ Deprecated
 """
 
 import numpy as np
+from itertools import islice
+from functools import reduce
 import scipy
 
 from . import cache
@@ -27,7 +29,12 @@ from . import util
 from .feature import tempogram
 from .util.exceptions import ParameterError
 
-__all__ = ['beat_track', 'tempo', 'estimate_tempo']
+__all__ = [
+    'beat_track',
+    'tempo',
+    'estimate_tempo',
+    'dynamic_tempo_summary'
+]
 
 
 def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
@@ -470,6 +477,67 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
     tempi[best_period == 0] = start_bpm
     return tempi
 
+def dynamic_tempo_summary(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
+                          std_bpm=1.0, ac_size=8.0, max_tempo=320.0, precise=False):
+    """Get dynamic tempo (beats per minute) summary
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(n,)] or None
+        audio time series
+
+    sr : number > 0 [scalar]
+        sampling rate of the time series
+
+    onset_envelope    : np.ndarray [shape=(n,)]
+        pre-computed onset strength envelope
+
+    hop_length : int > 0 [scalar]
+        hop length of the time series
+
+    start_bpm : float [scalar]
+        initial guess of the BPM
+
+    std_bpm : float > 0 [scalar]
+        standard deviation of tempo distribution
+
+    ac_size : float > 0 [scalar]
+        length (in seconds) of the auto-correlation window
+
+    max_tempo : float > 0 [scalar, optional]
+        If provided, only estimate tempo below this threshold
+
+    Returns
+    -------
+    tempo : np.ndarray [(start_time, endtime, bpm)]
+        start_time : [scalar]
+            in frames
+        endtime : [scalar]
+            in frames
+        bpm : [scalar]
+            estimated tempo (beats per minute)
+
+    See Also
+    --------
+    librosa.beat.dynamic_tempo_summary
+
+    Notes
+    -----
+    This function caches at level 30.
+
+    """
+    dtempos = tempo(y=y, sr=sr, hop_length=hop_length, start_bpm=start_bpm,
+                    std_bpm=std_bpm, ac_size=ac_size, max_tempo=max_tempo, aggregate=None)
+    #dtempo_times = core.frames_to_time(dtempo_frames, sr=sr, hop_length=hop_length)
+    bpms = [(bpm1, core.frames_to_time(i, sr=sr, hop_length=hop_length)[0])
+            for ((bpm1, bpm2), i)
+            in zip(__window(np.append(dtempos, -1), n=2), range(0, len(dtempos)))
+            if bpm1 != bpm2]
+    bpms.insert(0, (0, 0))
+    bpms = [(start, end, newbpm)
+            for ((_, start), (newbpm, end))
+            in __window(bpms, n=2)]
+    return bpms
 
 def __beat_tracker(onset_envelope, bpm, fft_res, tightness, trim):
     """Internal function that tracks beats in an onset strength envelope.
@@ -615,3 +683,15 @@ def __trim_beats(localscore, beats, trim):
     valid = np.argwhere(smooth_boe > threshold)
 
     return beats[valid.min():valid.max()]
+
+def __window(seq, n=2):
+    """Returns a sliding window (of width n) over data from the iterable
+       s -> (s0,s1,...s[n-1]), (s1,s2,...,sn), ...                   """
+    iterable = iter(seq)
+    result = tuple(islice(iterable, n))
+    if len(result) == n:
+        yield result
+    for elem in iterable:
+        result = result[1:] + (elem,)
+        yield result
+    
