@@ -478,7 +478,7 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
     return tempi
 
 def dynamic_tempo_summary(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
-                          std_bpm=1.0, ac_size=8.0, max_tempo=320.0, precise=False):
+                          std_bpm=1.0, ac_size=8.0, max_tempo=320.0, precise=False, **preciseArgs):
     """Get dynamic tempo (beats per minute) summary
 
     Parameters
@@ -526,10 +526,14 @@ def dynamic_tempo_summary(y=None, sr=22050, onset_envelope=None, hop_length=512,
     This function caches at level 30.
 
     """
+    if precise:
+        if y is None:
+            raise ParameterError('y must be provided for precision mode')
+    
     dtempos = tempo(y=y, sr=sr, hop_length=hop_length, start_bpm=start_bpm,
                     std_bpm=std_bpm, ac_size=ac_size, max_tempo=max_tempo, aggregate=None)
     #dtempo_times = core.frames_to_time(dtempo_frames, sr=sr, hop_length=hop_length)
-    bpms = [(bpm1, core.frames_to_time(i, sr=sr, hop_length=hop_length)[0])
+    bpms = [(bpm1, i)
             for ((bpm1, bpm2), i)
             in zip(__window(np.append(dtempos, -1), n=2), range(0, len(dtempos)))
             if bpm1 != bpm2]
@@ -537,6 +541,42 @@ def dynamic_tempo_summary(y=None, sr=22050, onset_envelope=None, hop_length=512,
     bpms = [(start, end, newbpm)
             for ((_, start), (newbpm, end))
             in __window(bpms, n=2)]
+    if precise:
+        onsets = onset.onset_detect(y=y, sr=sr, hop_length=hop_length, precise=True ,units='frames', **preciseArgs)
+        revisedBPMs = []
+        for (start, end, bpm) in bpms:
+            this_onsets = [onset for onset in onsets if onset >= start and onset < end]
+            if len(this_onsets) > 2:
+                windowsize = 1
+                onsetIntervals = [(w[windowsize] - w[0]) / windowsize
+                                  for w in __window(this_onsets, windowsize + 1)]
+                #
+                original = core.time_to_frames(60/bpm, sr=sr, hop_length=hop_length)[0]
+                #
+                for i in range(0, 1):
+                    onsetIntervals = [interval*2 if interval < original/1.5 else interval
+                                      for interval
+                                      in onsetIntervals]
+                for i in range(0, 2):
+                    onsetIntervals = [interval/2 if interval > original*1.5 else interval
+                                      for interval
+                                      in onsetIntervals]
+                #
+                median = np.median(onsetIntervals)
+                (upperThreshold, lowerThreshold) = median*1.1, median*0.9
+                onsetIntervals = [interval for interval in onsetIntervals
+                                  if interval < upperThreshold and interval > lowerThreshold]
+                #
+                if len(onsetIntervals) > 2:
+                    newBPM = 60/core.frames_to_time(
+                        np.mean(onsetIntervals), sr=sr, hop_length=hop_length
+                        )[0]
+                else:
+                    newBPM = bpm
+            else:
+                newBPM = bpm
+            revisedBPMs.append((start, end, bpm, newBPM))
+        bpms = revisedBPMs
     return bpms
 
 def __beat_tracker(onset_envelope, bpm, fft_res, tightness, trim):
