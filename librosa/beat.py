@@ -590,8 +590,8 @@ def dynamic_tempo_summary(y=None, sr=22050, onset_envelope=None, hop_length=512,
                     newBPM = bpm
             else:
                 newBPM = bpm
-            if precise_show_original: revisedBPMs.append((start, end, newBPM))
-            else: revisedBPMs.append((start, end, bpm, newBPM))
+            if precise_show_original: revisedBPMs.append((start, end, bpm, newBPM))
+            else: revisedBPMs.append((start, end, newBPM))
         bpms = revisedBPMs
     return bpms
 
