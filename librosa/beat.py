@@ -478,7 +478,8 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
     return tempi
 
 def dynamic_tempo_summary(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
-                          std_bpm=1.0, ac_size=8.0, max_tempo=320.0, precise=False, **preciseArgs):
+                          std_bpm=1.0, ac_size=8.0, max_tempo=320.0,
+                          precise=False, precise_show_original=False, **onsetsArgs):
     """Get dynamic tempo (beats per minute) summary
 
     Parameters
@@ -506,16 +507,30 @@ def dynamic_tempo_summary(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
     max_tempo : float > 0 [scalar, optional]
         If provided, only estimate tempo below this threshold
+    
+    precise : boolean
+        If `True`, use precise mode.
+        Take longer time
+
+    precise_show_original: boolean
+        If `True`, show bpm result before precision.
+
+    onsetsArgs : additional onset arguments
+        Additional parameters for precise mode onset.
+
+        See `librosa.onset.onset_detect` for details.
 
     Returns
     -------
-    tempo : np.ndarray [(start_time, endtime, bpm)]
+    tempo : np.ndarray [(start_time, endtime, <original_bpm,> bpm)]
         start_time : [scalar]
             in frames
         endtime : [scalar]
             in frames
         bpm : [scalar]
             estimated tempo (beats per minute)
+        <original_bpm>: [scalar, optional]
+            only appear when `precise_show_original` is `True`
 
     See Also
     --------
@@ -542,7 +557,7 @@ def dynamic_tempo_summary(y=None, sr=22050, onset_envelope=None, hop_length=512,
             for ((_, start), (newbpm, end))
             in __window(bpms, n=2)]
     if precise:
-        onsets = onset.onset_detect(y=y, sr=sr, hop_length=hop_length, precise=True ,units='frames', **preciseArgs)
+        onsets = onset.onset_detect(y=y, sr=sr, hop_length=hop_length, precise=True ,units='frames', **onsetsArgs)
         revisedBPMs = []
         for (start, end, bpm) in bpms:
             this_onsets = [onset for onset in onsets if onset >= start and onset < end]
@@ -575,7 +590,8 @@ def dynamic_tempo_summary(y=None, sr=22050, onset_envelope=None, hop_length=512,
                     newBPM = bpm
             else:
                 newBPM = bpm
-            revisedBPMs.append((start, end, bpm, newBPM))
+            if precise_show_original: revisedBPMs.append((start, end, newBPM))
+            else: revisedBPMs.append((start, end, bpm, newBPM))
         bpms = revisedBPMs
     return bpms
 
