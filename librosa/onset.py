@@ -29,7 +29,7 @@ __all__ = ['onset_detect',
 
 
 def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
-                 backtrack=False, energy=None,
+                 backtrack=False, energy=None, precise=False, precise_hop_length=8, precise_window_size=3,
                  units='frames', **kwargs):
     """Basic onset detector.  Locate note onset events by picking peaks in an
     onset strength envelope.
@@ -67,6 +67,18 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     energy : np.ndarray [shape=(m,)] (optional)
         An energy function to use for backtracking detected onset events.
         If none is provided, then `onset_envelope` is used.
+
+    precise : bool
+        If `True`, use `precise_hop_length` to further detect onsets
+
+        This will cost much more time but results in better percision.
+        And will cause return values to be float instead of int.
+
+    precise_hop_length : int
+        Decrease to cost more time
+
+    precise_window_size : int
+        Increase to cost more time
 
     kwargs : additional keyword arguments
         Additional parameters for peak picking.
@@ -162,6 +174,16 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
     # Peak pick the onset envelope
     onsets = util.peak_pick(onset_envelope, **kwargs)
+
+    # Further detect
+    if precise:
+        samples_starts = core.frames_to_samples(onsets, hop_length=hop_length)
+        strengths = [onset_strength(y[range(startSample-hop_length*precise_window_size, startSample+hop_length*precise_window_size)],
+                                    sr=sr, hop_length=precise_hop_length)
+                     for startSample in samples_starts]
+        onsets = [onset +
+                  (np.argmax(strength)-(len(strength)-1)//2)/(len(strength)-1)*precise_window_size*2
+                  for (strength, onset) in zip(strengths, onsets)]
 
     # Optionally backtrack the events
     if backtrack:
