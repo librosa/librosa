@@ -479,7 +479,7 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
 
 def dynamic_tempo_summary(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
                           std_bpm=1.0, ac_size=8.0, max_tempo=320.0, 
-                          precise=False, precise_show_original=False,
+                          precise=False, precise_show_original=False, precise_starting_beat=False,
                           units='frames', **onsetsArgs):
     """Get dynamic tempo (beats per minute) summary
 
@@ -596,8 +596,29 @@ def dynamic_tempo_summary(y=None, sr=22050, onset_envelope=None, hop_length=512,
                     newBPM = bpm
             else:
                 newBPM = bpm
-            if precise_show_original: revisedBPMs.append((start, end, bpm, newBPM))
-            else: revisedBPMs.append((start, end, newBPM))
+            #
+            if precise_starting_beat:
+                if len(this_onsets) >= 1:
+                    offsets = [(o - start) % (60 / newBPM) for o in this_onsets]
+                    median_offset = np.median(offsets)
+                    offsets = [o if o > median_offset*0.75 else o* 2 for o in offsets]
+                    median_offset = np.median(offsets)
+                else:
+                    median_offset = 0
+                starting_beat = start + median_offset
+                if units == 'frames':
+                    pass
+                elif units == 'samples':
+                    starting_beat = core.frames_to_samples(starting_beat, hop_length=hop_length)[0]
+                elif units == 'time':
+                    starting_beat = core.frames_to_time(starting_beat, hop_length=hop_length, sr=sr)[0]
+                else:
+                    raise ParameterError('Invalid unit type: {}'.format(units))
+                if precise_show_original: revisedBPMs.append((start, end, bpm, newBPM, starting_beat))
+                else: revisedBPMs.append((start, end, newBPM, starting_beat))
+            else:
+                if precise_show_original: revisedBPMs.append((start, end, bpm, newBPM))
+                else: revisedBPMs.append((start, end, newBPM))
         bpms = revisedBPMs
 
     if units == 'frames':
