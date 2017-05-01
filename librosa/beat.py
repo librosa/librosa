@@ -478,8 +478,9 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
     return tempi
 
 def dynamic_tempo_summary(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
-                          std_bpm=1.0, ac_size=8.0, max_tempo=320.0,
-                          precise=False, precise_show_original=False, **onsetsArgs):
+                          std_bpm=1.0, ac_size=8.0, max_tempo=320.0, 
+                          precise=False, precise_show_original=False,
+                          units='frames', **onsetsArgs):
     """Get dynamic tempo (beats per minute) summary
 
     Parameters
@@ -514,6 +515,11 @@ def dynamic_tempo_summary(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
     precise_show_original: boolean
         If `True`, show bpm result before precision.
+        Only available when `precise` is `True`.
+
+    units : {'frames', 'samples', 'time'}
+        The units to encode start_time and end_time.
+        By default, 'frames' are used.
 
     onsetsArgs : additional onset arguments
         Additional parameters for precise mode onset.
@@ -522,11 +528,11 @@ def dynamic_tempo_summary(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
     Returns
     -------
-    tempo : np.ndarray [(start_time, endtime, <original_bpm,> bpm)]
+    tempo : [(start_time, end_time, <original_bpm,> bpm)]
         start_time : [scalar]
-            in frames
-        endtime : [scalar]
-            in frames
+            in `unites` default to `frames`
+        end_time : [scalar]
+            in `unites` default to `frames`
         bpm : [scalar]
             estimated tempo (beats per minute)
         <original_bpm>: [scalar, optional]
@@ -593,6 +599,18 @@ def dynamic_tempo_summary(y=None, sr=22050, onset_envelope=None, hop_length=512,
             if precise_show_original: revisedBPMs.append((start, end, bpm, newBPM))
             else: revisedBPMs.append((start, end, newBPM))
         bpms = revisedBPMs
+
+    if units == 'frames':
+        pass
+    elif units == 'samples':
+        start_end = core.frames_to_samples([(bpm[0], bpm[1]) for bpm in bpms], hop_length=hop_length)
+        bpms = [(start, end, *summary[2:]) for ((start, end), summary) in zip(start_end, bpms)]
+    elif units == 'time':
+        start_end = core.frames_to_time([(bpm[0], bpm[1]) for bpm in bpms], hop_length=hop_length, sr=sr)
+        bpms = [(start, end, *summary[2:]) for ((start, end), summary) in zip(start_end, bpms)]
+    else:
+        raise ParameterError('Invalid unit type: {}'.format(units))
+
     return bpms
 
 def __beat_tracker(onset_envelope, bpm, fft_res, tightness, trim):
