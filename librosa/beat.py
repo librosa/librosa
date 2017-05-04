@@ -604,7 +604,9 @@ def dynamic_tempo_summary(y=None, sr=22050, onset_envelope=None, hop_length=512,
             #
             if precise_starting_beat:
                 if len(this_onsets) >= 1:
-                    offsets = [(o - start) % (60 / newBPM) for o in this_onsets]
+                    fpb = core.time_to_frames(60 / newBPM, sr=sr, hop_length=hop_length,
+                                              precise=True)[0]
+                    offsets = [(o - start) % fpb for o in this_onsets]
                     median_offset = np.median(offsets)
                     offsets = [o if o > median_offset*0.75 else o* 2 for o in offsets]
                     median_offset = np.median(offsets)
