@@ -3,6 +3,7 @@ Release notes
 
 v0.5.1
 ------
+2017-05-08
 
 Bug fixes
   - `#555`_ added safety check for frequency bands in `spectral_contrast`. *Brian McFee*
@@ -43,6 +44,7 @@ Other changes
 
 v0.5.0
 ------
+2017-02-17
 
 Bug fixes
 
