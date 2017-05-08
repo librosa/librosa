@@ -21,6 +21,7 @@ New features
 
 Other changes
 
+  - `#569`_ `feature.rmse` now centers frames in the time-domain by default. *Brian McFee*
   - `#564`_ `display.specshow` now rasterizes images by default. *Brian McFee*
   - `#558`_ updated contributing documentation and issue templates. *Brian McFee*
   - `#556`_ updated tutorial for 0.5 API compatibility. *Brian McFee*
@@ -41,6 +42,7 @@ Other changes
 .. _#553: https://github.com/librosa/librosa/pull/553
 .. _#554: https://github.com/librosa/librosa/pull/554
 .. _#555: https://github.com/librosa/librosa/pull/555
+.. _#569: https://github.com/librosa/librosa/pull/569
 
 v0.5.0
 ------
