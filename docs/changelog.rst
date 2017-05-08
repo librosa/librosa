@@ -1,6 +1,46 @@
 Release notes
 =============
 
+v0.5.1
+------
+
+Bug fixes
+  - `#555`_ added safety check for frequency bands in `spectral_contrast`. *Brian McFee*
+  - `#554`_ fix interactive display for `tonnetz` visualization. *Brian McFee*
+  - `#553`_ fix bug in `feature.spectral_bandwidth`. *Brian McFee*
+  - `#539`_ fix `chroma_cens` to support scipy >=0.19. *Brian McFee*
+
+New features
+
+  - `#565`_ `feature.stack_memory` now supports negative delay. *Brian McFee*
+  - `#563`_ expose padding mode in `stft/ifgram/cqt`. *Brian McFee*
+  - `#559`_ explicit length option for `istft`. *Brian McFee*
+  - `#557`_ added `show_versions`. *Brian McFee*
+  - `#551`_ add `norm=` option to `filters.mel`. *Dan Ellis*
+
+Other changes
+
+  - `#564`_ `display.specshow` now rasterizes images by default. *Brian McFee*
+  - `#558`_ updated contributing documentation and issue templates. *Brian McFee*
+  - `#556`_ updated tutorial for 0.5 API compatibility. *Brian McFee*
+  - `#544`_ efficiency improvement in CQT. *Carl Thome*
+  - `#523`_ support reading files with more than two channels. *Paul Brossier*
+
+.. _#523: https://github.com/librosa/librosa/pull/523
+.. _#544: https://github.com/librosa/librosa/pull/544
+.. _#556: https://github.com/librosa/librosa/pull/556
+.. _#558: https://github.com/librosa/librosa/pull/558
+.. _#564: https://github.com/librosa/librosa/pull/564
+.. _#551: https://github.com/librosa/librosa/pull/551
+.. _#557: https://github.com/librosa/librosa/pull/557
+.. _#559: https://github.com/librosa/librosa/pull/559
+.. _#563: https://github.com/librosa/librosa/pull/563
+.. _#565: https://github.com/librosa/librosa/pull/565
+.. _#539: https://github.com/librosa/librosa/pull/539
+.. _#553: https://github.com/librosa/librosa/pull/553
+.. _#554: https://github.com/librosa/librosa/pull/554
+.. _#555: https://github.com/librosa/librosa/pull/555
+
 v0.5.0
 ------
 
