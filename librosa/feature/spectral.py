@@ -501,6 +501,7 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
 
 def rmse(y=None, S=None, frame_length=2048, hop_length=512,
+         center=True, pad_mode='reflect',
          n_fft=Deprecated()):
     '''Compute root-mean-square (RMS) energy for each frame, either from the
     audio samples `y` or from a spectrogram `S`.
@@ -524,6 +525,16 @@ def rmse(y=None, S=None, frame_length=2048, hop_length=512,
 
     hop_length : int > 0 [scalar]
         hop length for STFT. See `librosa.core.stft` for details.
+
+    center : bool
+        If `True` and operating on time-domain input (`y`), pad the signal
+        by `frame_length//2` on either side.
+
+        If operating on spectrogram input, this has no effect.
+
+    pad_mode : str
+        Padding mode for centered analysis.  See `np.pad` for valid
+        values.
 
     n_fft : [DEPRECATED]
         .. warning:: This parameter name was deprecated in librosa 0.5.0
@@ -574,7 +585,11 @@ def rmse(y=None, S=None, frame_length=2048, hop_length=512,
     if y is not None and S is not None:
         raise ValueError('Either `y` or `S` should be input.')
     if y is not None:
-        x = util.frame(to_mono(y),
+        y = to_mono(y)
+        if center:
+            y = np.pad(y, int(frame_length // 2), mode=pad_mode)
+
+        x = util.frame(y,
                        frame_length=frame_length,
                        hop_length=hop_length)
     elif S is not None:

@@ -373,7 +373,7 @@ def test_rmse():
 
         assert np.allclose(rmse, np.ones_like(rmse))
 
-    def __test_consistency(frame_length, hop_length):
+    def __test_consistency(frame_length, hop_length, center):
         y, sr = librosa.load(__EXAMPLE_FILE, sr=None)
 
         # Ensure audio is divisible into frame size.
@@ -385,24 +385,26 @@ def test_rmse():
                                           n_fft=frame_length,
                                           hop_length=hop_length,
                                           window=np.ones,
-                                          center=False))[0]
+                                          center=center))[0]
 
         # Try both RMS methods.
         rms1 = librosa.feature.rmse(S=S, frame_length=frame_length,
                                     hop_length=hop_length)
         rms2 = librosa.feature.rmse(y=y, frame_length=frame_length,
-                                    hop_length=hop_length)
+                                    hop_length=hop_length, center=center)
 
+        assert rms1.shape == rms2.shape
         # Normalize envelopes.
         rms1 /= rms1.max()
         rms2 /= rms2.max()
 
         # Ensure results are similar.
-        np.testing.assert_allclose(rms1, rms2, rtol=1e-2)
+        np.testing.assert_allclose(rms1, rms2, rtol=5e-2)
 
     for frame_length in [2048, 4096]:
         for hop_length in [128, 512, 1024]:
-            yield __test_consistency, frame_length, hop_length
+            for center in [False, True]:
+                yield __test_consistency, frame_length, hop_length, center
 
     for n in range(10, 100, 10):
         yield __test, n
