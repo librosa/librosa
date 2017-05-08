@@ -154,12 +154,12 @@ def test_trim():
         assert np.allclose(yt, y[fidx])
 
         # Verify logamp
-        rms = librosa.feature.rmse(librosa.to_mono(yt))
+        rms = librosa.feature.rmse(y=librosa.to_mono(yt), center=False)
         logamp = librosa.logamplitude(rms**2, ref=ref, top_db=None)
         assert np.all(logamp > - top_db)
 
         # Verify logamp
-        rms_all = librosa.feature.rmse(librosa.to_mono(y)).squeeze()
+        rms_all = librosa.feature.rmse(y=librosa.to_mono(y)).squeeze()
         logamp_all = librosa.logamplitude(rms_all**2, ref=ref,
                                           top_db=None)
 
