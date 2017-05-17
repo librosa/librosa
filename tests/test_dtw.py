@@ -3,7 +3,9 @@
 
 import librosa
 import numpy as np
+from scipy.spatial.distance import cdist
 
+from nose.tools import assert_raises
 from test_core import srand
 
 import warnings
@@ -26,6 +28,33 @@ def test_dtw_global():
     mut_D, _ = librosa.dtw(X, Y)
 
     assert np.array_equal(gt_D, mut_D)
+
+
+def test_dtw_global_supplied_distance_matrix():
+    # Example taken from:
+    # Meinard Mueller, Fundamentals of Music Processing
+    X = np.array([[1, 3, 3, 8, 1]])
+    Y = np.array([[2, 0, 0, 8, 7, 2]])
+
+    # Precompute distance matrix.
+    C = cdist(X.T, Y.T, metric='euclidean')
+
+    gt_D = np.array([[1., 2., 3., 10., 16., 17.],
+                     [2., 4., 5., 8., 12., 13.],
+                     [3., 5., 7., 10., 12., 13.],
+                     [9., 11., 13., 7., 8., 14.],
+                     [10, 10., 11., 14., 13., 9.]])
+
+    # Supply precomputed distance matrix and specify an invalid distance
+    # metric to verify that it isn't used.
+    mut_D, _ = librosa.dtw(C=C, metric='invalid')
+
+    assert np.array_equal(gt_D, mut_D)
+
+
+def test_dtw_incompatible_args():
+  assert_raises(librosa.util.exceptions.ParameterError, librosa.dtw, C=1, X=1, Y=1)
+  assert_raises(librosa.util.exceptions.ParameterError, librosa.dtw, C=None, X=None, Y=None)
 
 
 def test_dtw_global_diagonal():
