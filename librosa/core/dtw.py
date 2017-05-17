@@ -174,17 +174,17 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
         weights_mul = np.array([1, 1, 1])
 
     if C is None and (X is None or Y is None):
-      raise ParameterError('If C is not supplied, both X and Y must be supplied')
+        raise ParameterError('If C is not supplied, both X and Y must be supplied')
     if C is not None and (X is not None or Y is not None):
-      raise ParameterError('If C is supplied, both X and Y must not be supplied')
+        raise ParameterError('If C is supplied, both X and Y must not be supplied')
 
     # calculate pair-wise distances, unless already supplied.
     if C is None:
-      # take care of dimensions
-      X = np.atleast_2d(X)
-      Y = np.atleast_2d(Y)
+        # take care of dimensions
+        X = np.atleast_2d(X)
+        Y = np.atleast_2d(Y)
 
-      C = cdist(X.T, Y.T, metric=metric)
+        C = cdist(X.T, Y.T, metric=metric)
 
     C = np.atleast_2d(C)
 
