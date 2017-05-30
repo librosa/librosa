@@ -121,7 +121,7 @@ def test_melfb():
                                   n_mels=DATA['nfilts'][0, 0],
                                   fmin=DATA['fmin'][0, 0],
                                   fmax=DATA['fmax'][0, 0],
-                                  htk=DATA['htk'][0, 0], 
+                                  htk=DATA['htk'][0, 0],
                                   norm=norm)
         # Pad out.
         wts = np.pad(wts, [(0, 0),
@@ -394,19 +394,14 @@ def test_get_window_pre():
     yield __test, [1, 1, 1]
 
 
-def test_multirate_fb():
+def test_semitone_filterbank():
     # We test against Chroma Toolbox' elliptical semitone filterbank
     # load data from chroma toolbox
     gt_fb = scipy.io.loadmat(os.path.join('data', 'filter-muliratefb-MIDI_FB_ellip_pitch_60_96_22050_Q25'),
                              squeeze_me=True)['h']
 
-    # reproduce settings from chroma toolbox
-    center_freqs = librosa.time_frequency.midi_to_hz(np.arange(21, 109))
-    sample_rates = np.asarray(len(np.arange(0, 39)) * [882, ] +
-                              len(np.arange(39, 74)) * [4410, ] +
-                              len(np.arange(74, 88)) * [22050, ])
-
-    mut_ft, mut_srs = librosa.filters.multirate_fb(center_freqs=center_freqs, sample_rates=sample_rates)
+    # standard parameters reproduce settings from chroma toolbox
+    mut_ft, mut_srs = librosa.filters.semitone_filterbank()
 
     for cur_filter_id in range(len(mut_ft)):
         cur_filter_gt = gt_fb[cur_filter_id + 20]
@@ -417,7 +412,5 @@ def test_multirate_fb():
         cur_a_mut = cur_filter_mut[1]
         cur_b_mut = cur_filter_mut[0]
 
-        # Filter 74 has an issue in the original Chroma Toolbox 2.0 release.
-        if cur_filter_id is not 74:
-            assert np.allclose(cur_a_gt, cur_a_mut)
-            assert np.allclose(cur_b_gt, cur_b_mut, atol=1e-4)
+        assert np.allclose(cur_a_gt, cur_a_mut)
+        assert np.allclose(cur_b_gt, cur_b_mut, atol=1e-4)
