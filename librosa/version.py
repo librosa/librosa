@@ -31,7 +31,7 @@ def show_versions():
     core_deps = ['audioread',
                  'numpy',
                  'scipy',
-                 'scikit-learn',
+                 'sklearn',
                  'joblib',
                  'decorator',
                  'six',
@@ -40,7 +40,7 @@ def show_versions():
     extra_deps = ['numpydoc',
                   'sphinx',
                   'sphinx_rtd_theme',
-                  'sphinxcontrib-versioning',
+                  'sphinxcontrib',
                   'matplotlib',
                   'numba']
 
