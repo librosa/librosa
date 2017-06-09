@@ -40,7 +40,7 @@ def show_versions():
     extra_deps = ['numpydoc',
                   'sphinx',
                   'sphinx_rtd_theme',
-                  'sphinxcontrib',
+                  'sphinxcontrib.versioning',
                   'matplotlib',
                   'numba']
 
