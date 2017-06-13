@@ -11,6 +11,7 @@ from .version import show_versions
 from . import cache
 from . import core
 from . import beat
+from . import display
 from . import decompose
 from . import effects
 from . import feature
