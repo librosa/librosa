@@ -622,7 +622,7 @@ def phase_vocoder(D, rate, hop_length=None):
 
 
 def semitone_spectrogram(y, sr=22050, win_length=2048, hop_length=None, center=True,
-                         tuning=0.0, **kwargs):
+                         tuning=0.0, pad_mode='reflect', **kwargs):
     r'''Spectrogram representation as presented in [1]_.
 
     This function will return a log-frequency time-frequency representation
@@ -663,12 +663,9 @@ def semitone_spectrogram(y, sr=22050, win_length=2048, hop_length=None, center=T
     tuning : float in `[-0.5, +0.5)` [scalar]
         Tuning deviation from A440 in fractions of a bin.
 
-    center_freqs : np.ndarray [shape=(n,), dtype=float]
-        Center frequencies of the filter kernels.
-        Also defines the number of filters in the filterbank.
-
-    sample_rates : np.ndarray [shape=(n,), dtype=float]
-        Samplerate for each filter (used for multirate filterbank).
+    pad_mode : string
+        If `center=True`, the padding mode to use at the edges of the signal.
+        By default, this function uses reflection padding.
 
     kwargs : additional keyword arguments
         Additional arguments for `librosa.filters.semitone_filterbank()`
@@ -706,7 +703,7 @@ def semitone_spectrogram(y, sr=22050, win_length=2048, hop_length=None, center=T
     # Pad the time series so that frames are centered
     if center:
         util.valid_audio(y)
-        y = np.pad(y, int(hop_length), mode='reflect')
+        y = np.pad(y, int(hop_length), mode=pad_mode)
 
     # get the semitone filterbank
     filterbank_ct, sample_rates = semitone_filterbank(tuning=tuning, **kwargs)
