@@ -1287,10 +1287,10 @@ def test_padding():
             yield __test_ifgram, center, pad_mode
 
 
-def test_semitone_spectrogram():
+def test_iirt():
     gt = scipy.io.loadmat(os.path.join('data', 'features-CT-cqt'), squeeze_me=True)['f_cqt']
 
     y, sr = librosa.load(os.path.join('data', 'test1_44100.wav'))
-    mut = librosa.semitone_spectrogram(y, hop_length=2205, win_length=4410)
+    mut = librosa.iirt(y, hop_length=2205, win_length=4410)
 
     assert np.allclose(mut, gt[20:108, :mut.shape[1]], atol=1.8)
