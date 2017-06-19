@@ -976,8 +976,9 @@ def _multirate_fb(center_freqs=None, sample_rates=None, Q=25.0,
     return filterbank, sample_rates
 
 
+@cache(level=10)
 def mr_frequencies(tuning):
-    r'''Helper function center frequency and samplerate pairs.
+    r'''Helper function for generating center frequency and samplerate pairs.
 
     This function will return center frequency and corresponding samplerates
     to obtain the pitch filterbank setting as described in [1]_.
@@ -1000,6 +1001,16 @@ def mr_frequencies(tuning):
 
     sample_rates : np.ndarray [shape=(n,), dtype=float]
         Samplerate for each filter (used for multirate filterbank).
+
+    Notes
+    -----
+    This function caches at level 10.
+
+
+    See Also
+    --------
+    librosa.filters.semitone_filterbank
+    librosa.filters._multirate_fb
     '''
 
     center_freqs = midi_to_hz(np.arange(21 + tuning, 109 + tuning))
