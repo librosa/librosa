@@ -18,7 +18,7 @@ from ..util.deprecation import rename_kw, Deprecated
 from ..util.exceptions import ParameterError
 from ..filters import get_window, semitone_filterbank
 
-__all__ = ['stft', 'istft', 'magphase', 'semitone_spectrogram',
+__all__ = ['stft', 'istft', 'magphase', 'iirt',
            'ifgram', 'phase_vocoder',
            'logamplitude', 'perceptual_weighting',
            'power_to_db', 'db_to_power',
@@ -621,19 +621,24 @@ def phase_vocoder(D, rate, hop_length=None):
     return d_stretch
 
 
-def semitone_spectrogram(y, sr=22050, win_length=2048, hop_length=None, center=True,
-                         tuning=0.0, pad_mode='reflect', **kwargs):
-    r'''Spectrogram representation as presented in [1]_.
+def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
+         tuning=0.0, pad_mode='reflect', **kwargs):
+    r'''Time-frequency representation using IIR filters [1]_.
 
-    This function will return a log-frequency time-frequency representation
-    using the multirate filter bank described in [1]_.
-    First, the signal is resampled as needed by the supplied `sample_rates`.
-    Then, a filterbank with with `n` band-pass filter is designed, where each
-    filter has a bandwith of one semitone.
+    This function will return a time-frequency representation
+    using a multirate filter bank consisting of IIR filters.
+    First, `y` is resampled as needed according to the provided `sample_rates`.
+    Then, a filterbank with with `n` band-pass filters is designed.
     The resampled input signals are processed by the filterbank as a whole.
     (`scipy.signal.filtfilt` is used to make the phase linear.)
-    The output of the filterbank is cut into frames and for each band,
-    the frame-wise short-time mean-square power (STMSP) is calculated.
+    The output of the filterbank is cut into frames.
+    For each band, the short-time mean-square power (STMSP) is calculated by
+    summing `win_length` subsequent filtered time samples.
+
+    When called with the default set of parameters, it will generate the TF-representation
+    as described in [1]_ (pitch filterbank), which covers the range of a piano:
+     * 88 filters with MIDI pitches [21, 108] as `center_freqs`.
+     * each filter having a bandwith of one semitone.
 
     .. [1] Müller, Meinard.
            "Information Retrieval for Music and Motion."
@@ -678,8 +683,9 @@ def semitone_spectrogram(y, sr=22050, win_length=2048, hop_length=None, center=T
 
     See Also
     --------
-    brosa.filters.semitone_filterbank
-    brosa.filters._multirate_fb
+    librosa.filters.semitone_filterbank
+    librosa.filters._multirate_fb
+    librosa.filters.mr_frequencies
     librosa.core.cqt
     scipy.signal.filtfilt
 
