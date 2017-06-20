@@ -412,5 +412,8 @@ def test_semitone_filterbank():
         cur_a_mut = cur_filter_mut[1]
         cur_b_mut = cur_filter_mut[0]
 
-        assert np.allclose(cur_a_gt, cur_a_mut)
-        assert np.allclose(cur_b_gt, cur_b_mut, atol=1e-4)
+        # we deviate from the chroma toolboxes for pitches 94 and 95
+        # (filters 70 and 71) by processing them with a higher samplerate
+        if (cur_filter_id != 70) and (cur_filter_id != 71):
+            assert np.allclose(cur_a_gt, cur_a_mut)
+            assert np.allclose(cur_b_gt, cur_b_mut, atol=1e-4)
