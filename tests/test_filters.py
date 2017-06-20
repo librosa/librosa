@@ -404,7 +404,7 @@ def test_semitone_filterbank():
     mut_ft, mut_srs = librosa.filters.semitone_filterbank()
 
     for cur_filter_id in range(len(mut_ft)):
-        cur_filter_gt = gt_fb[cur_filter_id + 20]
+        cur_filter_gt = gt_fb[cur_filter_id + 23]
         cur_filter_mut = mut_ft[cur_filter_id]
 
         cur_a_gt = cur_filter_gt[0]

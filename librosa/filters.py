@@ -13,7 +13,8 @@ Filter bank construction
     mel
     chroma
     constant_q
-    multirate_pitch_fb
+    _multirate_fb
+    semitone_filterbank
 
 Window functions
 ----------------
@@ -981,7 +982,8 @@ def mr_frequencies(tuning):
     r'''Helper function for generating center frequency and samplerate pairs.
 
     This function will return center frequency and corresponding samplerates
-    to obtain the pitch filterbank setting as described in [1]_.
+    to obtain similar pitch filterbank settings as described in [1]_.
+    (Instead of starting with MIDI pitch `A0`, we start with `C0`.)
 
     .. [1] Müller, Meinard.
            "Information Retrieval for Music and Motion."
@@ -1013,11 +1015,11 @@ def mr_frequencies(tuning):
     librosa.filters._multirate_fb
     '''
 
-    center_freqs = midi_to_hz(np.arange(21 + tuning, 109 + tuning))
+    center_freqs = midi_to_hz(np.arange(24 + tuning, 109 + tuning))
 
-    sample_rates = np.asarray(len(np.arange(0, 39)) * [882, ] +
-                              len(np.arange(39, 75)) * [4410, ] +
-                              len(np.arange(75, 88)) * [22050, ])
+    sample_rates = np.asarray(len(np.arange(0, 36)) * [882, ] +
+                              len(np.arange(36, 72)) * [4410, ] +
+                              len(np.arange(72, 85)) * [22050, ])
 
     return center_freqs, sample_rates
 
