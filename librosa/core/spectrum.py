@@ -695,8 +695,7 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> D = semitone_spectrogram(y)
     >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
-    ...                          y_axis='cqt_hz', fmin=librosa.note_to_hz('A0'),
-    ...                          x_axis='time')
+    ...                          y_axis='cqt_hz', x_axis='time')
     >>> plt.title('Semitone spectrogram')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.tight_layout()
