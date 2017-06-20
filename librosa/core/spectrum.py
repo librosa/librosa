@@ -636,8 +636,8 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
     summing `win_length` subsequent filtered time samples.
 
     When called with the default set of parameters, it will generate the TF-representation
-    as described in [1]_ (pitch filterbank), which covers the range of a piano:
-     * 88 filters with MIDI pitches [21, 108] as `center_freqs`.
+    as described in [1]_ (pitch filterbank):
+     * 85 filters with MIDI pitches [24, 108] as `center_freqs`.
      * each filter having a bandwith of one semitone.
 
     .. [1] Müller, Meinard.
@@ -733,7 +733,8 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
         hop_length_STMSP = int(np.round(hop_length / factor))
 
         # filter the signal
-        cur_sr_idx = int(np.flatnonzero(y_srs == cur_sr))
+        cur_sr_idx = np.flatnonzero(y_srs == cur_sr)[0]
+
         cur_filter_output = scipy.signal.filtfilt(cur_filter[0], cur_filter[1],
                                                   y_resampled[cur_sr_idx])
 
