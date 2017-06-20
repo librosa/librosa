@@ -693,7 +693,7 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
     --------
     >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> D = semitone_spectrogram(y)
+    >>> D = librosa.iirt(y)
     >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
     ...                          y_axis='cqt_hz', x_axis='time')
     >>> plt.title('Semitone spectrogram')
@@ -701,13 +701,15 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
     >>> plt.tight_layout()
     '''
 
+    # check audio input
+    util.valid_audio(y)
+
     # Set the default hop, if it's not already specified
     if hop_length is None:
         hop_length = int(win_length // 4)
 
     # Pad the time series so that frames are centered
     if center:
-        util.valid_audio(y)
         y = np.pad(y, int(hop_length), mode=pad_mode)
 
     # get the semitone filterbank
