@@ -169,9 +169,14 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
     if step_sizes_sigma is None:
         step_sizes_sigma = np.array([[1, 1], [0, 1], [1, 0]])
     if weights_add is None:
-        weights_add = np.array([0, 0, 0])
+        weights_add = np.zeros(len(step_sizes_sigma))
     if weights_mul is None:
-        weights_mul = np.array([1, 1, 1])
+        weights_mul = np.ones(len(step_sizes_sigma))
+
+    if len(step_sizes_sigma) != len(weights_add):
+        raise ParameterError('len(weights_add) must be equal to len(step_sizes_sigma)')
+    if len(step_sizes_sigma) != len(weights_mul):
+        raise ParameterError('len(weights_mul) must be equal to len(step_sizes_sigma)')
 
     if C is None and (X is None or Y is None):
         raise ParameterError('If C is not supplied, both X and Y must be supplied')
