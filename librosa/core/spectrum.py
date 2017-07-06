@@ -154,9 +154,11 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
     # Reshape so that the window can be broadcast
     fft_window = fft_window.reshape((-1, 1))
 
+    # Check audio is valid
+    util.valid_audio(y)
+
     # Pad the time series so that frames are centered
     if center:
-        util.valid_audio(y)
         y = np.pad(y, int(n_fft // 2), mode=pad_mode)
 
     # Window the time series.
