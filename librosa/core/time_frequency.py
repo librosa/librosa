@@ -66,7 +66,7 @@ def frames_to_samples(frames, hop_length=512, n_fft=None):
     return (np.atleast_1d(frames) * hop_length + offset).astype(int)
 
 
-def samples_to_frames(samples, hop_length=512, n_fft=None):
+def samples_to_frames(samples, hop_length=512, n_fft=None, precise=False):
     """Converts sample indices into STFT frames.
 
     Examples
@@ -95,6 +95,9 @@ def samples_to_frames(samples, hop_length=512, n_fft=None):
         to counteract windowing effects in STFT.
 
         .. note:: This may result in negative frame indices.
+    
+    precise : boolean
+        If `True`, result in float frame indices.
 
     Returns
     -------
@@ -110,9 +113,14 @@ def samples_to_frames(samples, hop_length=512, n_fft=None):
 
     offset = 0
     if n_fft is not None:
-        offset = int(n_fft // 2)
+        if precise:
+            offset = n_fft / 2
+        else:
+            offset = int(n_fft // 2)
 
     samples = np.atleast_1d(samples)
+    if precise:
+        return (samples - offset) / hop_length
     return np.floor((samples - offset) // hop_length).astype(int)
 
 
@@ -160,7 +168,7 @@ def frames_to_time(frames, sr=22050, hop_length=512, n_fft=None):
     return samples_to_time(samples, sr=sr)
 
 
-def time_to_frames(times, sr=22050, hop_length=512, n_fft=None):
+def time_to_frames(times, sr=22050, hop_length=512, n_fft=None, precise=False):
     """Converts time stamps into STFT frames.
 
     Parameters
@@ -180,6 +188,9 @@ def time_to_frames(times, sr=22050, hop_length=512, n_fft=None):
         to counteract windowing effects in STFT.
 
         .. note:: This may result in negative frame indices.
+
+    precise: boolean
+        If `True`, result in float frame indices.
 
     Returns
     -------
@@ -204,7 +215,7 @@ def time_to_frames(times, sr=22050, hop_length=512, n_fft=None):
 
     samples = time_to_samples(times, sr=sr)
 
-    return samples_to_frames(samples, hop_length=hop_length, n_fft=n_fft)
+    return samples_to_frames(samples, hop_length=hop_length, n_fft=n_fft, precise=precise)
 
 
 def time_to_samples(times, sr=22050):

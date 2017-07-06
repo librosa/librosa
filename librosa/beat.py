@@ -18,6 +18,8 @@ Deprecated
 """
 
 import numpy as np
+from itertools import islice
+from functools import reduce
 import scipy
 
 from . import cache
@@ -27,7 +29,12 @@ from . import util
 from .feature import tempogram
 from .util.exceptions import ParameterError
 
-__all__ = ['beat_track', 'tempo', 'estimate_tempo']
+__all__ = [
+    'beat_track',
+    'tempo',
+    'estimate_tempo',
+    'dynamic_tempo_summary'
+]
 
 
 def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
@@ -470,6 +477,175 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
     tempi[best_period == 0] = start_bpm
     return tempi
 
+def dynamic_tempo_summary(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
+                          std_bpm=1.0, ac_size=8.0, max_tempo=320.0, 
+                          precise=False, precise_show_original=False, precise_starting_beat=False,
+                          units='frames', **onsetsArgs):
+    """Get dynamic tempo (beats per minute) summary
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(n,)] or None
+        audio time series
+
+    sr : number > 0 [scalar]
+        sampling rate of the time series
+
+    onset_envelope    : np.ndarray [shape=(n,)]
+        pre-computed onset strength envelope
+
+    hop_length : int > 0 [scalar]
+        hop length of the time series
+
+    start_bpm : float [scalar]
+        initial guess of the BPM
+
+    std_bpm : float > 0 [scalar]
+        standard deviation of tempo distribution
+
+    ac_size : float > 0 [scalar]
+        length (in seconds) of the auto-correlation window
+
+    max_tempo : float > 0 [scalar, optional]
+        If provided, only estimate tempo below this threshold
+    
+    precise : boolean
+        If `True`, use precise mode.
+        Take longer time
+
+    precise_show_original: boolean
+        If `True`, show bpm result before precision.
+        Only available when `precise` is `True`.
+
+    units : {'frames', 'samples', 'time'}
+        The units to encode start_time and end_time.
+        By default, 'frames' are used.
+
+    onsetsArgs : additional onset arguments
+        Additional parameters for precise mode onset.
+
+        See `librosa.onset.onset_detect` for details.
+
+    Returns
+    -------
+    report : np.array [(start_time, end_time <, original_bpm> , bpm <, starting_beat> )]
+        start_time : [scalar]
+            in `unites` default to `frames`
+        end_time : [scalar]
+            in `unites` default to `frames`
+        bpm : [scalar]
+            estimated tempo (beats per minute)
+        <original_bpm>: [scalar, optional]
+            Only available in precise mode.
+            Only appear when `precise_show_original` is `True`.
+        <starting_beat>: [scalar, optional]
+            Only available in precise mode.
+            Only appear when `precise_starting_beat` is `True`.
+
+    See Also
+    --------
+    librosa.beat.dynamic_tempo_summary
+
+    Notes
+    -----
+    This function caches at level 30.
+
+    """
+    if precise:
+        if y is None:
+            raise ParameterError('y must be provided for precision mode')
+    
+    dtempos = tempo(y=y, sr=sr, hop_length=hop_length, start_bpm=start_bpm,
+                    std_bpm=std_bpm, ac_size=ac_size, max_tempo=max_tempo, aggregate=None)
+    #dtempo_times = core.frames_to_time(dtempo_frames, sr=sr, hop_length=hop_length)
+    bpms = [(bpm1, i)
+            for ((bpm1, bpm2), i)
+            in zip(__window(np.append(dtempos, -1), n=2), range(0, len(dtempos)))
+            if bpm1 != bpm2]
+    bpms.insert(0, (0, 0))
+    bpms = [(start, end, newbpm)
+            for ((_, start), (newbpm, end))
+            in __window(bpms, n=2)]
+    if precise:
+        onsets = onset.onset_detect(y=y, sr=sr, hop_length=hop_length,
+                                    precise=True, units='frames', **onsetsArgs)
+        revisedBPMs = []
+        for (start, end, bpm) in bpms:
+            this_onsets = [onset for onset in onsets if onset >= start and onset < end]
+            if len(this_onsets) > 2:
+                windowsize = 1
+                onsetIntervals = [(w[windowsize] - w[0]) / windowsize
+                                  for w in __window(this_onsets, windowsize + 1)]
+                #
+                original = core.time_to_frames(60/bpm, sr=sr, hop_length=hop_length)[0]
+                #
+                for i in range(0, 1):
+                    onsetIntervals = [interval*2 if interval < original/1.5 else interval
+                                      for interval
+                                      in onsetIntervals]
+                for i in range(0, 2):
+                    onsetIntervals = [interval/2 if interval > original*1.5 else interval
+                                      for interval
+                                      in onsetIntervals]
+                #
+                median = np.median(onsetIntervals)
+                (upperThreshold, lowerThreshold) = median*1.1, median*0.9
+                onsetIntervals = [interval for interval in onsetIntervals
+                                  if interval < upperThreshold and interval > lowerThreshold]
+                #
+                if len(onsetIntervals) > 2:
+                    newBPM = 60/core.frames_to_time(
+                        np.mean(onsetIntervals), sr=sr, hop_length=hop_length
+                        )[0]
+                else:
+                    newBPM = bpm
+            else:
+                newBPM = bpm
+            #
+            if precise_starting_beat:
+                if len(this_onsets) >= 1:
+                    fpb = core.time_to_frames(60 / newBPM, sr=sr, hop_length=hop_length,
+                                              precise=True)[0]
+                    offsets = [(o - start) % fpb for o in this_onsets]
+                    median_offset = np.median(offsets)
+                    offsets = [o if o > median_offset*0.75 else o* 2 for o in offsets]
+                    median_offset = np.median(offsets)
+                else:
+                    median_offset = 0
+                starting_beat = start + median_offset
+                if units == 'frames':
+                    pass
+                elif units == 'samples':
+                    starting_beat = core.frames_to_samples(starting_beat,
+                                                           hop_length=hop_length)[0]
+                elif units == 'time':
+                    starting_beat = core.frames_to_time(starting_beat,
+                                                        hop_length=hop_length, sr=sr)[0]
+                else:
+                    raise ParameterError('Invalid unit type: {}'.format(units))
+                if precise_show_original:
+                    revisedBPMs.append((start, end, bpm, newBPM, starting_beat))
+                else: revisedBPMs.append((start, end, newBPM, starting_beat))
+            else:
+                if precise_show_original:
+                    revisedBPMs.append((start, end, bpm, newBPM))
+                else: revisedBPMs.append((start, end, newBPM))
+        bpms = revisedBPMs
+
+    if units == 'frames':
+        pass
+    elif units == 'samples':
+        start_end = core.frames_to_samples(
+            [(bpm[0], bpm[1]) for bpm in bpms], hop_length=hop_length)
+        bpms = [(start, end, *summary[2:]) for ((start, end), summary) in zip(start_end, bpms)]
+    elif units == 'time':
+        start_end = core.frames_to_time(
+            [(bpm[0], bpm[1]) for bpm in bpms], hop_length=hop_length, sr=sr)
+        bpms = [(start, end, *summary[2:]) for ((start, end), summary) in zip(start_end, bpms)]
+    else:
+        raise ParameterError('Invalid unit type: {}'.format(units))
+
+    return np.array(bpms)
 
 def __beat_tracker(onset_envelope, bpm, fft_res, tightness, trim):
     """Internal function that tracks beats in an onset strength envelope.
@@ -615,3 +791,15 @@ def __trim_beats(localscore, beats, trim):
     valid = np.argwhere(smooth_boe > threshold)
 
     return beats[valid.min():valid.max()]
+
+def __window(seq, n=2):
+    """Returns a sliding window (of width n) over data from the iterable
+       s -> (s0,s1,...s[n-1]), (s1,s2,...,sn), ...                   """
+    iterable = iter(seq)
+    result = tuple(islice(iterable, n))
+    if len(result) == n:
+        yield result
+    for elem in iterable:
+        result = result[1:] + (elem,)
+        yield result
+    
