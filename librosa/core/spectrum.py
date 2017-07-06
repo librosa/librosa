@@ -10,14 +10,15 @@ import scipy.interpolate
 import six
 
 from . import time_frequency
+from .audio import resample
 from .. import cache
 from .. import util
 from ..util.decorators import moved
 from ..util.deprecation import rename_kw, Deprecated
 from ..util.exceptions import ParameterError
-from ..filters import get_window
+from ..filters import get_window, semitone_filterbank
 
-__all__ = ['stft', 'istft', 'magphase',
+__all__ = ['stft', 'istft', 'magphase', 'iirt',
            'ifgram', 'phase_vocoder',
            'logamplitude', 'perceptual_weighting',
            'power_to_db', 'db_to_power',
@@ -620,6 +621,134 @@ def phase_vocoder(D, rate, hop_length=None):
         phase_acc += phi_advance + dphase
 
     return d_stretch
+
+
+def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
+         tuning=0.0, pad_mode='reflect', **kwargs):
+    r'''Time-frequency representation using IIR filters [1]_.
+
+    This function will return a time-frequency representation
+    using a multirate filter bank consisting of IIR filters.
+    First, `y` is resampled as needed according to the provided `sample_rates`.
+    Then, a filterbank with with `n` band-pass filters is designed.
+    The resampled input signals are processed by the filterbank as a whole.
+    (`scipy.signal.filtfilt` is used to make the phase linear.)
+    The output of the filterbank is cut into frames.
+    For each band, the short-time mean-square power (STMSP) is calculated by
+    summing `win_length` subsequent filtered time samples.
+
+    When called with the default set of parameters, it will generate the TF-representation
+    as described in [1]_ (pitch filterbank):
+     * 85 filters with MIDI pitches [24, 108] as `center_freqs`.
+     * each filter having a bandwith of one semitone.
+
+    .. [1] Müller, Meinard.
+           "Information Retrieval for Music and Motion."
+           Springer Verlag. 2007.
+
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(n,)]
+        audio time series
+
+    sr : number > 0 [scalar]
+        sampling rate of `y`
+
+    win_length : int > 0, <= n_fft
+        Window length.
+
+    hop_length : int > 0 [scalar]
+        Hop length, number samples between subsequent frames.
+        If not supplied, defaults to `win_length / 4`.
+
+    center : boolean
+        - If `True`, the signal `y` is padded so that frame
+          `D[:, t]` is centered at `y[t * hop_length]`.
+        - If `False`, then `D[:, t]` begins at `y[t * hop_length]`
+
+    tuning : float in `[-0.5, +0.5)` [scalar]
+        Tuning deviation from A440 in fractions of a bin.
+
+    pad_mode : string
+        If `center=True`, the padding mode to use at the edges of the signal.
+        By default, this function uses reflection padding.
+
+    kwargs : additional keyword arguments
+        Additional arguments for `librosa.filters.semitone_filterbank()`
+        (e.g., could be used to provide another set of `center_freqs` and `sample_rates`).
+
+    Returns
+    -------
+    bands_power : np.ndarray [shape=(n, t), dtype=dtype]
+        Short-time mean-square power for the input signal.
+
+    See Also
+    --------
+    librosa.filters.semitone_filterbank
+    librosa.filters._multirate_fb
+    librosa.filters.mr_frequencies
+    librosa.core.cqt
+    scipy.signal.filtfilt
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> D = librosa.iirt(y)
+    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
+    ...                          y_axis='cqt_hz', x_axis='time')
+    >>> plt.title('Semitone spectrogram')
+    >>> plt.colorbar(format='%+2.0f dB')
+    >>> plt.tight_layout()
+    '''
+
+    # check audio input
+    util.valid_audio(y)
+
+    # Set the default hop, if it's not already specified
+    if hop_length is None:
+        hop_length = int(win_length // 4)
+
+    # Pad the time series so that frames are centered
+    if center:
+        y = np.pad(y, int(hop_length), mode=pad_mode)
+
+    # get the semitone filterbank
+    filterbank_ct, sample_rates = semitone_filterbank(tuning=tuning, **kwargs)
+
+    # create three downsampled versions of the audio signal
+    y_resampled = []
+
+    y_srs = np.unique(sample_rates)
+
+    for cur_sr in y_srs:
+        y_resampled.append(resample(y, sr, cur_sr))
+
+    # Compute the number of frames that will fit. The end may get truncated.
+    n_frames = 1 + int((len(y) - win_length) / float(hop_length))
+
+    bands_power = []
+
+    for cur_sr, cur_filter in zip(sample_rates, filterbank_ct):
+        factor = float(sr) / float(cur_sr)
+        win_length_STMSP = int(np.round(win_length / factor))
+        hop_length_STMSP = int(np.round(hop_length / factor))
+
+        # filter the signal
+        cur_sr_idx = np.flatnonzero(y_srs == cur_sr)[0]
+
+        cur_filter_output = scipy.signal.filtfilt(cur_filter[0], cur_filter[1],
+                                                  y_resampled[cur_sr_idx])
+
+        # frame the current filter output
+        cur_frames = util.frame(np.ascontiguousarray(cur_filter_output),
+                                frame_length=win_length_STMSP,
+                                hop_length=hop_length_STMSP)
+
+        bands_power.append(factor * np.sum(cur_frames**2, axis=0)[:n_frames])
+
+    return np.asarray(bands_power)
 
 
 @cache(level=30)
