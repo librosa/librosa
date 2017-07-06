@@ -13,6 +13,8 @@ Filter bank construction
     mel
     chroma
     constant_q
+    _multirate_fb
+    semitone_filterbank
 
 Window functions
 ----------------
@@ -30,6 +32,7 @@ Miscellaneous
 
     constant_q_lengths
     cq_to_chroma
+    mr_frequencies
 """
 import warnings
 
@@ -42,7 +45,7 @@ from . import cache
 from . import util
 from .util.exceptions import ParameterError
 
-from .core.time_frequency import note_to_hz, hz_to_midi, hz_to_octs
+from .core.time_frequency import note_to_hz, hz_to_midi, midi_to_hz, hz_to_octs
 from .core.time_frequency import fft_frequencies, mel_frequencies
 
 __all__ = ['dct',
@@ -52,7 +55,9 @@ __all__ = ['dct',
            'constant_q_lengths',
            'cq_to_chroma',
            'window_bandwidth',
-           'get_window']
+           'get_window',
+           'mr_frequencies',
+           'semitone_filterbank']
 
 
 # Dictionary of window function bandwidths
@@ -180,8 +185,8 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
         use HTK formula instead of Slaney
 
     norm : {None, 1, np.inf} [scalar]
-        if 1, divide the triangular mel weights by the width of the mel band 
-        (area normalization).  Otherwise, leave all the triangles aiming for 
+        if 1, divide the triangular mel weights by the width of the mel band
+        (area normalization).  Otherwise, leave all the triangles aiming for
         a peak value of 1.0
 
     Returns
@@ -882,3 +887,206 @@ def get_window(window, Nx, fftbins=True):
                              '{:d} != {:d}'.format(len(window), Nx))
     else:
         raise ParameterError('Invalid window specification: {}'.format(window))
+
+
+@cache(level=10)
+def _multirate_fb(center_freqs=None, sample_rates=None, Q=25.0,
+                  passband_ripple=1, stopband_attenuation=50, ftype='ellip'):
+    r'''Helper function to construct a multirate filterbank.
+
+     A filter bank consists of multiple band-pass filters which divide the input signal
+     into subbands. In the case of a multirate filter bank, the band-pass filters
+     operate with resampled versions of the input signal, e.g. to keep the length
+     of a filter constant while shifting its center frequency.
+
+     This implementation uses `scipy.signal.iirdesign` to design the filters.
+
+
+    Parameters
+    ----------
+    center_freqs : np.ndarray [shape=(n,), dtype=float]
+        Center frequencies of the filter kernels.
+        Also defines the number of filters in the filterbank.
+
+    sample_rates : np.ndarray [shape=(n,), dtype=float]
+        Samplerate for each filter (used for multirate filterbank).
+
+    Q : float
+        Q factor (influences the filter bandwith).
+
+    passband_ripple : float
+        The maximum loss in the passband (dB)
+        See `scipy.signal.iirdesign` for details.
+
+    stopband_attenuation : float
+        The minimum attenuation in the stopband (dB)
+        See `scipy.signal.iirdesign` for details.
+
+    ftype : str
+        The type of IIR filter to design
+        See `scipy.signal.iirdesign` for details.
+
+    Returns
+    -------
+    filterbank : list [shape=(n,), dtype=float]
+        Each list entry comprises the filter coefficients for a single filter.
+
+    sample_rates : np.ndarray [shape=(n,), dtype=float]
+        Samplerate for each filter.
+
+    Notes
+    -----
+    This function caches at level 10.
+
+    See Also
+    --------
+    scipy.signal.iirdesign
+
+    Raises
+    ------
+    ParameterError
+        If `center_freqs` is `None`.
+        If `sample_rates` is `None`.
+        If `center_freqs.shape` does not match `sample_rates.shape`.
+    '''
+
+    if center_freqs is None:
+        raise ParameterError('center_freqs must be provided.')
+
+    if sample_rates is None:
+        raise ParameterError('sample_rates must be provided.')
+
+    if center_freqs.shape != sample_rates.shape:
+        raise ParameterError('Number of provided center_freqs and sample_rates must be equal.')
+
+    nyquist = 0.5 * sample_rates
+    filter_bandwidths = center_freqs / float(Q)
+
+    filterbank = []
+
+    for cur_center_freq, cur_nyquist, cur_bw in zip(center_freqs, nyquist, filter_bandwidths):
+        passband_freqs = [cur_center_freq - 0.5 * cur_bw, cur_center_freq + 0.5 * cur_bw] / cur_nyquist
+        stopband_freqs = [cur_center_freq - cur_bw, cur_center_freq + cur_bw] / cur_nyquist
+
+        cur_filter = scipy.signal.iirdesign(passband_freqs, stopband_freqs,
+                                            passband_ripple, stopband_attenuation,
+                                            analog=False, ftype=ftype, output='ba')
+
+        filterbank.append(cur_filter)
+
+    return filterbank, sample_rates
+
+
+@cache(level=10)
+def mr_frequencies(tuning):
+    r'''Helper function for generating center frequency and samplerate pairs.
+
+    This function will return center frequency and corresponding samplerates
+    to obtain similar pitch filterbank settings as described in [1]_.
+    (Instead of starting with MIDI pitch `A0`, we start with `C0`.)
+
+    .. [1] Müller, Meinard.
+           "Information Retrieval for Music and Motion."
+           Springer Verlag. 2007.
+
+
+    Parameters
+    ----------
+    tuning : float in `[-0.5, +0.5)` [scalar]
+        Tuning deviation from A440 in fractions of a bin.
+
+    Returns
+    -------
+    center_freqs : np.ndarray [shape=(n,), dtype=float]
+        Center frequencies of the filter kernels.
+        Also defines the number of filters in the filterbank.
+
+    sample_rates : np.ndarray [shape=(n,), dtype=float]
+        Samplerate for each filter (used for multirate filterbank).
+
+    Notes
+    -----
+    This function caches at level 10.
+
+
+    See Also
+    --------
+    librosa.filters.semitone_filterbank
+    librosa.filters._multirate_fb
+    '''
+
+    center_freqs = midi_to_hz(np.arange(24 + tuning, 109 + tuning))
+
+    sample_rates = np.asarray(len(np.arange(0, 36)) * [882, ] +
+                              len(np.arange(36, 70)) * [4410, ] +
+                              len(np.arange(70, 85)) * [22050, ])
+
+    return center_freqs, sample_rates
+
+
+def semitone_filterbank(center_freqs=None, tuning=0.0, sample_rates=None, **kwargs):
+    r'''Constructs a filterbank with 88 filters mimicing the equal-tempered scale.
+
+     When run with default parameters, a filter bank with 88 filters, each having
+     a bandwith of one semitone, is designed. For details, see [1]_.
+
+    .. [1] Müller, Meinard.
+           "Information Retrieval for Music and Motion."
+           Springer Verlag. 2007.
+
+
+    Parameters
+    ----------
+    center_freqs : np.ndarray [shape=(n,), dtype=float]
+        Center frequencies of the filter kernels.
+        Also defines the number of filters in the filterbank.
+
+    tuning : float in `[-0.5, +0.5)` [scalar]
+        Tuning deviation from A440 in fractions of a bin.
+
+    sample_rates : np.ndarray [shape=(n,), dtype=float]
+        Samplerate for each filter (used for multirate filterbank).
+
+    kwargs : additional keyword arguments
+        Additional arguments for `multirate_fb()`.
+
+    Returns
+    -------
+    filterbank : list [shape=(n,), dtype=float]
+        Each list entry comprises the filter coefficients for a single filter.
+
+    fb_sample_rates : np.ndarray [shape=(n,), dtype=float]
+        Samplerate for each filter.
+
+    See Also
+    --------
+    librosa.filters.multirate_fb
+    librosa.core.semitone_spectrogram
+    librosa.core.cqt
+    scipy.signal.iirdesign
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> import numpy as np
+    >>> import scipy.signal
+    >>> semitone_filterbank, sample_rates = librosa.filters.semitone_filterbank()
+    >>> plt.figure(figsize=(10, 6))
+    >>> for cur_sr, cur_filter in zip(sample_rates, semitone_filterbank):
+    ...    w, h = scipy.signal.freqz(cur_filter[0], cur_filter[1], worN=2000)
+    ...    plt.plot((cur_sr / (2 * np.pi)) * w, 20 * np.log10(abs(h)))
+    >>> plt.semilogx()
+    >>> plt.xlim([20, 10e3])
+    >>> plt.ylim([-60, 3])
+    >>> plt.title('Magnitude Responses of the Pitch Filterbank')
+    >>> plt.xlabel('Log-Frequency (Hz)')
+    >>> plt.ylabel('Magnitude (dB)')
+    >>> plt.tight_layout()
+    '''
+
+    if (center_freqs is None) and (sample_rates is None):
+        center_freqs, sample_rates = mr_frequencies(tuning)
+
+    filterbank, fb_sample_rates = _multirate_fb(center_freqs=center_freqs, sample_rates=sample_rates, **kwargs)
+
+    return filterbank, fb_sample_rates
