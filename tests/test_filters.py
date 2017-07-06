@@ -121,7 +121,7 @@ def test_melfb():
                                   n_mels=DATA['nfilts'][0, 0],
                                   fmin=DATA['fmin'][0, 0],
                                   fmax=DATA['fmax'][0, 0],
-                                  htk=DATA['htk'][0, 0], 
+                                  htk=DATA['htk'][0, 0],
                                   norm=norm)
         # Pad out.
         wts = np.pad(wts, [(0, 0),
@@ -392,3 +392,28 @@ def test_get_window_pre():
     yield __test, scipy.signal.hann(16)
     yield __test, list(scipy.signal.hann(16))
     yield __test, [1, 1, 1]
+
+
+def test_semitone_filterbank():
+    # We test against Chroma Toolbox' elliptical semitone filterbank
+    # load data from chroma toolbox
+    gt_fb = scipy.io.loadmat(os.path.join('data', 'filter-muliratefb-MIDI_FB_ellip_pitch_60_96_22050_Q25'),
+                             squeeze_me=True)['h']
+
+    # standard parameters reproduce settings from chroma toolbox
+    mut_ft, mut_srs = librosa.filters.semitone_filterbank()
+
+    for cur_filter_id in range(len(mut_ft)):
+        cur_filter_gt = gt_fb[cur_filter_id + 23]
+        cur_filter_mut = mut_ft[cur_filter_id]
+
+        cur_a_gt = cur_filter_gt[0]
+        cur_b_gt = cur_filter_gt[1]
+        cur_a_mut = cur_filter_mut[1]
+        cur_b_mut = cur_filter_mut[0]
+
+        # we deviate from the chroma toolboxes for pitches 94 and 95
+        # (filters 70 and 71) by processing them with a higher samplerate
+        if (cur_filter_id != 70) and (cur_filter_id != 71):
+            assert np.allclose(cur_a_gt, cur_a_mut)
+            assert np.allclose(cur_b_gt, cur_b_mut, atol=1e-4)
