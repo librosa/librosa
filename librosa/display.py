@@ -834,7 +834,7 @@ def __decorate_axis(axis, ax_type):
 def __coord_fft_hz(n, sr=22050, **_kwargs):
     '''Get the frequencies for FFT bins'''
     n_fft = 2 * (n - 1)
-    return core.fft_frequencies(sr=sr, n_fft=1+n_fft)
+    return core.fft_frequencies(sr=sr, n_fft=2+n_fft)
 
 
 def __coord_mel_hz(n, fmin=0, fmax=11025.0, **_kwargs):
@@ -852,7 +852,11 @@ def __coord_cqt_hz(n, fmin=None, bins_per_octave=12, **_kwargs):
     '''Get CQT bin frequencies'''
     if fmin is None:
         fmin = core.note_to_hz('C1')
-    return core.cqt_frequencies(n+1, fmin=fmin, bins_per_octave=bins_per_octave)
+
+    # we drop by half a bin so that CQT bins are centered vertically
+    return core.cqt_frequencies(n+1,
+                                fmin=fmin / 2.0**(0.5/bins_per_octave),
+                                bins_per_octave=bins_per_octave)
 
 
 def __coord_chroma(n, bins_per_octave=12, **_kwargs):
