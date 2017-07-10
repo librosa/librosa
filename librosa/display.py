@@ -834,7 +834,10 @@ def __decorate_axis(axis, ax_type):
 def __coord_fft_hz(n, sr=22050, **_kwargs):
     '''Get the frequencies for FFT bins'''
     n_fft = 2 * (n - 1)
-    return core.fft_frequencies(sr=sr, n_fft=2+n_fft)
+    # We'll stick on one bin past the end so that we have n+1 ticks
+    basis = core.fft_frequencies(sr=sr, n_fft=1+n_fft)
+    basis = np.append(basis, [basis[-1] + basis[1] - basis[0]])
+    return basis
 
 
 def __coord_mel_hz(n, fmin=0, fmax=11025.0, **_kwargs):
