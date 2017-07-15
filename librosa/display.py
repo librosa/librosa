@@ -851,7 +851,10 @@ def __coord_mel_hz(n, fmin=0, fmax=11025.0, **_kwargs):
     if fmax is None:
         fmax = 11025.0
 
-    return core.mel_frequencies(n+2, fmin=fmin, fmax=fmax)[1:]
+    basis = core.mel_frequencies(n, fmin=fmin, fmax=fmax)
+    basis[1:] -= 0.5 * np.diff(basis)
+    basis = np.append(np.maximum(0, basis), [fmax])
+    return basis
 
 
 def __coord_cqt_hz(n, fmin=None, bins_per_octave=12, **_kwargs):
