@@ -875,7 +875,9 @@ def __coord_chroma(n, bins_per_octave=12, **_kwargs):
 
 def __coord_tempo(n, sr=22050, hop_length=512, **_kwargs):
     '''Tempo coordinates'''
-    return core.tempo_frequencies(n+1, sr=sr, hop_length=hop_length)
+    basis = core.tempo_frequencies(n+2, sr=sr, hop_length=hop_length)[1:]
+    edges = np.arange(1, n+2)
+    return basis * (edges + 0.5) / edges
 
 
 def __coord_n(n, **_kwargs):
