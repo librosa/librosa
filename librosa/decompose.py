@@ -509,24 +509,52 @@ def nn_filter(S, rec=None, aggregate=None, axis=-1, **kwargs):
                              'rec.shape={} for S.shape={}'.format(rec.shape,
                                                                   S.shape))
 
-    s_out = S.copy()
+    return __nn_filter_helper(rec.data, rec.indices, rec.indptr,
+                              S.swapaxes(0, axis), aggregate).swapaxes(0, axis)
 
-    index = [slice(None)] * s_out.ndim
 
-    for i in range(rec.shape[0]):
-        index[axis] = i
+def __nn_filter_helper(R_data, R_indices, R_ptr, S, aggregate):
+    '''Nearest-neighbor filter helper function.
+
+    This is an internal function, not for use outside of the decompose module.
+
+    It applies the nearest-neighbor filter to S, assuming that the first index
+    corresponds to observations.
+
+    Parameters
+    ----------
+    R_data, R_indices, R_ptr : np.ndarrays
+        The `data`, `indices`, and `indptr` of a scipy.sparse matrix
+
+    S : np.ndarray
+        The observation data to filter
+
+    aggregate : callable
+        The aggregation operator
+
+
+    Returns
+    -------
+    S_out : np.ndarray like S
+        The filtered data array
+    '''
+    s_out = np.empty_like(S)
+
+    for i in range(len(R_ptr)-1):
 
         # Get the non-zeros out of the recurrence matrix
-        targets = rec[i].nonzero()[-1]
+        targets = R_indices[R_ptr[i]:R_ptr[i+1]]
+
         if not len(targets):
+            s_out[i] = S[i]
             continue
 
-        neighbors = np.take(S, targets, axis=axis)
+        neighbors = np.take(S, targets, axis=0)
 
         if aggregate is np.average:
-            weights = rec[i, targets].toarray().squeeze()
-            s_out[tuple(index)] = aggregate(neighbors, axis=axis, weights=weights)
+            weights = R_data[R_ptr[i]:R_ptr[i+1]]
+            s_out[i] = aggregate(neighbors, axis=0, weights=weights)
         else:
-            s_out[tuple(index)] = aggregate(neighbors, axis=axis)
+            s_out[i] = aggregate(neighbors, axis=0)
 
     return s_out
