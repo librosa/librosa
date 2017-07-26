@@ -562,10 +562,11 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     filters = []
     for ilen, freq in zip(lengths, freqs):
         # Build the filter: note, length will be ceil(ilen)
-        sig = np.exp(np.arange(ilen, dtype=float) * 1j * 2 * np.pi * freq / sr)
+        #sig = np.exp(np.arange(ilen, dtype=float) * 1j * 2 * np.pi * freq / sr)
+        sig = np.exp(np.arange(-ilen//2, ilen//2, dtype=float) * 1j * 2 * np.pi * freq / sr)
 
         # Apply the windowing function
-        sig = sig * __float_window(window)(ilen)
+        sig = sig * __float_window(window)(len(sig))
 
         # Normalize
         sig = util.normalize(sig, norm=norm)
