@@ -311,28 +311,6 @@ def test_hcqt_white_noise():
                     yield __test, fmin, n_octaves * 12, scale, sr, y
 
 
-def test_cqt_real_warning():
-
-    def __test(real):
-        warnings.resetwarnings()
-        warnings.simplefilter('always')
-        with warnings.catch_warnings(record=True) as out:
-            C = librosa.cqt(y=y, sr=sr, real=real)
-            assert len(out) > 0
-            assert out[0].category is DeprecationWarning
-
-            if real:
-                assert np.isrealobj(C)
-            else:
-                assert np.iscomplexobj(C)
-
-    sr = 22050
-    y = np.zeros(2 * sr)
-
-    yield __test, False
-    yield __test, True
-
-
 def test_icqt():
 
     def __test(sr, scale, hop_length, over_sample, y):
@@ -356,11 +334,12 @@ def test_icqt():
         yinv = yinv[sr//2:-sr//2]
 
         residual = np.abs(y - yinv)
-        y_scale = np.max(np.abs(y))
-        assert np.median(residual) <= 2e-1, (y_scale, np.median(residual))
+        # We'll tolerate 5.5% RMSE
+        # error is lower on more recent numpy/scipy builds
+        assert np.sqrt(np.mean(residual**2)) <= 5.5e-2, np.sqrt(np.mean(residual**2))
 
     for sr in [22050, 44100]:
-        y = make_signal(sr, 1.5, fmin='C2', fmax='C3')
+        y = make_signal(sr, 1.5, fmin='C2', fmax='C4')
         for over_sample in [1, 3]:
             for scale in [False, True]:
                 for hop_length in [128, 384, 512]:

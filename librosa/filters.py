@@ -43,9 +43,10 @@ import scipy
 import scipy.signal
 import six
 
+from numba import jit
+
 from . import cache
 from . import util
-from .util.decorators import optional_jit
 from .util.exceptions import ParameterError
 
 from .core.time_frequency import note_to_hz, hz_to_midi, midi_to_hz, hz_to_octs
@@ -562,10 +563,10 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     filters = []
     for ilen, freq in zip(lengths, freqs):
         # Build the filter: note, length will be ceil(ilen)
-        sig = np.exp(np.arange(ilen, dtype=float) * 1j * 2 * np.pi * freq / sr)
+        sig = np.exp(np.arange(-ilen//2, ilen//2, dtype=float) * 1j * 2 * np.pi * freq / sr)
 
         # Apply the windowing function
-        sig = sig * __float_window(window)(ilen)
+        sig = sig * __float_window(window)(len(sig))
 
         # Normalize
         sig = util.normalize(sig, norm=norm)
@@ -1095,7 +1096,8 @@ def semitone_filterbank(center_freqs=None, tuning=0.0, sample_rates=None, **kwar
 
     return filterbank, fb_sample_rates
 
-@optional_jit(nopython=True)
+
+@jit(nopython=True)
 def __window_ss_fill(x, win_sq, n_frames, hop_length):
     '''Helper function for window sum-square calculation.'''
 
