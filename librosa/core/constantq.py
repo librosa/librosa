@@ -686,14 +686,14 @@ def icqt(C, sr=22050, hop_length=512, fmin=None,
             wss = filters.window_sumsquare(window,
                                            n_frames,
                                            hop_length=oct_hop,
-                                           win_length=lengths[i],
+                                           win_length=int(lengths[i]),
                                            n_fft=n_fft)
 
             # Construct the response for this filter
             y_oct_i = np.zeros(n, dtype=C_oct.dtype)
             __activation_fill(y_oct_i, basis_oct[i], C_oct[i], oct_hop)
             # Retain only the real part
-            # Only do squared window normalization for sufficiently large window
+            # Only do window normalization for sufficiently large window
             # coefficients
             y_oct_i = y_oct_i.real / np.maximum(amin, wss)
 
