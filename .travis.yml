@@ -22,7 +22,7 @@ env:
 matrix:
     exclude:
         - python: 3.4
-        - env: ENABLE_NUMBA=true
+          env: ENABLE_NUMBA=true
 
 before_install:
     - bash .travis_dependencies.sh
