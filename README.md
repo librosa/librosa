@@ -102,6 +102,15 @@ https://groups.google.com/forum/#!forum/librosa
 Citing
 ------
 
-Please refer to the Zenodo link below for citation information.
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.293021.svg)](https://doi.org/10.5281/zenodo.293021)
+If you want to cite librosa in a scholarly work, there are two ways to do it.
+
+- If you wish to cite librosa for its design, motivation etc., please cite the paper
+  published at SciPy 2015:
+
+    McFee, Brian, Colin Raffel, Dawen Liang, Daniel PW Ellis, Matt McVicar, Eric Battenberg, and Oriol Nieto. "librosa: Audio and music signal analysis in python." In Proceedings of the 14th python in science conference, pp. 18-25. 2015.
+
+- If you are using the library for your work, for the sake of reproducibility, please cite
+  the version you used as indexed at Zenodo:
+
+    [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.293021.svg)](https://doi.org/10.5281/zenodo.293021)
 
