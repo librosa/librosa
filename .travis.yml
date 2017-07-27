@@ -1,10 +1,5 @@
 sudo: false
 
-addons:
-  apt:
-    packages:
-    - ffmpeg
-
 cache:
   directories:
   - $HOME/env
@@ -15,14 +10,19 @@ notifications:
   email: false
 
 python:
-    - "2.7"
-    - "3.4"
-    - "3.5"
-    - "3.6"
+    - 2.7
+    - 3.4
+    - 3.5
+    - 3.6
 
 env:
     - ENABLE_NUMBA=false
     - ENABLE_NUMBA=true
+
+matrix:
+    exclude:
+        - python: 3.4
+          env: ENABLE_NUMBA=true
 
 before_install:
     - bash .travis_dependencies.sh
