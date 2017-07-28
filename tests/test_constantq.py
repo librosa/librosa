@@ -356,11 +356,11 @@ def test_icqt():
         yinv = yinv[sr//2:-sr//2]
 
         residual = np.abs(y - yinv)
-        y_scale = np.max(np.abs(y))
-        assert np.median(residual) <= 2e-1, (y_scale, np.median(residual))
+        # We'll tolerate 4% RMSE
+        assert np.sqrt(np.mean(residual**2)) <= 4e-2, np.sqrt(np.mean(residual**2))
 
     for sr in [22050, 44100]:
-        y = make_signal(sr, 1.5, fmin='C2', fmax='C3')
+        y = make_signal(sr, 1.5, fmin='C2', fmax='C4')
         for over_sample in [1, 3]:
             for scale in [False, True]:
                 for hop_length in [128, 384, 512]:
