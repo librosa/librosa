@@ -834,7 +834,13 @@ def __decorate_axis(axis, ax_type):
 def __coord_fft_hz(n, sr=22050, **_kwargs):
     '''Get the frequencies for FFT bins'''
     n_fft = 2 * (n - 1)
-    return core.fft_frequencies(sr=sr, n_fft=1+n_fft)
+    # The following code centers the FFT bins at their frequencies
+    # and clips to the non-negative frequency range [0, nyquist]
+    basis = core.fft_frequencies(sr=sr, n_fft=n_fft)
+    fmax = basis[-1]
+    basis -= 0.5 * (basis[1] - basis[0])
+    basis = np.append(np.maximum(0, basis), [fmax])
+    return basis
 
 
 def __coord_mel_hz(n, fmin=0, fmax=11025.0, **_kwargs):
@@ -845,14 +851,21 @@ def __coord_mel_hz(n, fmin=0, fmax=11025.0, **_kwargs):
     if fmax is None:
         fmax = 11025.0
 
-    return core.mel_frequencies(n+2, fmin=fmin, fmax=fmax)[1:]
+    basis = core.mel_frequencies(n, fmin=fmin, fmax=fmax)
+    basis[1:] -= 0.5 * np.diff(basis)
+    basis = np.append(np.maximum(0, basis), [fmax])
+    return basis
 
 
 def __coord_cqt_hz(n, fmin=None, bins_per_octave=12, **_kwargs):
     '''Get CQT bin frequencies'''
     if fmin is None:
         fmin = core.note_to_hz('C1')
-    return core.cqt_frequencies(n+1, fmin=fmin, bins_per_octave=bins_per_octave)
+
+    # we drop by half a bin so that CQT bins are centered vertically
+    return core.cqt_frequencies(n+1,
+                                fmin=fmin / 2.0**(0.5/bins_per_octave),
+                                bins_per_octave=bins_per_octave)
 
 
 def __coord_chroma(n, bins_per_octave=12, **_kwargs):
@@ -862,7 +875,9 @@ def __coord_chroma(n, bins_per_octave=12, **_kwargs):
 
 def __coord_tempo(n, sr=22050, hop_length=512, **_kwargs):
     '''Tempo coordinates'''
-    return core.tempo_frequencies(n+1, sr=sr, hop_length=hop_length)
+    basis = core.tempo_frequencies(n+2, sr=sr, hop_length=hop_length)[1:]
+    edges = np.arange(1, n+2)
+    return basis * (edges + 0.5) / edges
 
 
 def __coord_n(n, **_kwargs):
