@@ -356,8 +356,8 @@ def test_icqt():
         yinv = yinv[sr//2:-sr//2]
 
         residual = np.abs(y - yinv)
-        # We'll tolerate 4% RMSE
-        assert np.sqrt(np.mean(residual**2)) <= 4e-2, np.sqrt(np.mean(residual**2))
+        # We'll tolerate 5% RMSE
+        assert np.sqrt(np.mean(residual**2)) <= 5e-2, np.sqrt(np.mean(residual**2))
 
     for sr in [22050, 44100]:
         y = make_signal(sr, 1.5, fmin='C2', fmax='C4')
