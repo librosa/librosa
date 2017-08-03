@@ -90,7 +90,7 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
         If 'distance', then a non-zero entry contains the distance between
         points.
 
-        If 'adjacency', then non-zero entries are mapped to
+        If 'affinity', then non-zero entries are mapped to
         `exp( - distance(i, j) / bandwidth)` where `bandwidth` is
         as specified below.
 
