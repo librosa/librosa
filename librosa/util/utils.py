@@ -125,6 +125,7 @@ def valid_audio(y, mono=True):
             - `y.dtype` is floating-point
             - `mono == True` and `y.ndim` is not 1
             - `mono == False` and `y.ndim` is not 1 or 2
+            - `y.ndim` is 2 and `y.shape[0] <= y.shape[1]`
             - `np.isfinite(y).all()` is not True
 
     Notes
