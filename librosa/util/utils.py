@@ -125,7 +125,6 @@ def valid_audio(y, mono=True):
             - `y.dtype` is floating-point
             - `mono == True` and `y.ndim` is not 1
             - `mono == False` and `y.ndim` is not 1 or 2
-            - `y.ndim` is 2 and `y.shape[0] <= y.shape[1]`
             - `np.isfinite(y).all()` is not True
 
     Notes
@@ -155,7 +154,7 @@ def valid_audio(y, mono=True):
         raise ParameterError('Invalid shape for monophonic audio: '
                              'ndim={:d}, shape={}'.format(y.ndim, y.shape))
 
-    elif y.ndim > 2 or y.ndim == 0 or (y.ndim == 2 and y.shape[0] > y.shape[1]):
+    elif y.ndim > 2 or y.ndim == 0:
         raise ParameterError('Audio must have shape (samples,) or (channels, samples). '
                              'Received shape={}'.format(y.shape))
 
