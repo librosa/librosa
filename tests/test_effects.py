@@ -65,8 +65,8 @@ def test_pitch_shift():
 def test_remix_mono():
 
     # without zc alignment
-    y = np.asarray([1, 1, -1, -1, 2, 2, -1, -1, 1, 1])
-    y_t = np.asarray([-1, -1, -1, -1, 1, 1, 1, 1, 2, 2])
+    y = np.asarray([1, 1, -1, -1, 2, 2, -1, -1, 1, 1], dtype=np.float)
+    y_t = np.asarray([-1, -1, -1, -1, 1, 1, 1, 1, 2, 2], dtype=np.float)
     intervals = np.asarray([[2, 4],
                             [6, 8],
                             [0, 2],
@@ -85,8 +85,8 @@ def test_remix_mono():
 def test_remix_stereo():
 
     # without zc alignment
-    y = np.asarray([1, 1, -1, -1, 2, 2, -1, -1, 1, 1])
-    y_t = np.asarray([-1, -1, -1, -1, 1, 1, 1, 1, 2, 2])
+    y = np.asarray([1, 1, -1, -1, 2, 2, -1, -1, 1, 1], dtype=np.float)
+    y_t = np.asarray([-1, -1, -1, -1, 1, 1, 1, 1, 2, 2], dtype=np.float)
     y = np.vstack([y, y])
     y_t = np.vstack([y_t, y_t])
 

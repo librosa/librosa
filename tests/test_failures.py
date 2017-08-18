@@ -36,12 +36,6 @@ def test_valid_audio_scalar():
     librosa.util.valid_audio(y)
 
 
-@raises(librosa.ParameterError)
-def test_valid_audio_transpose():
-    y = np.zeros((100, 2))
-    librosa.util.valid_audio(y)
-
-
 def test_valid_stereo_or_mono():
     '''valid_audio: mono=False, y.ndim==1'''
     y = np.zeros(1000)
