@@ -122,6 +122,7 @@ def valid_audio(y, mono=True):
     ParameterError
         If `y` fails to meet the following criteria:
             - `type(y)` is `np.ndarray`
+            - `y.dtype` is floating-point
             - `mono == True` and `y.ndim` is not 1
             - `mono == False` and `y.ndim` is not 1 or 2
             - `np.isfinite(y).all()` is not True
@@ -146,12 +147,16 @@ def valid_audio(y, mono=True):
     if not isinstance(y, np.ndarray):
         raise ParameterError('data must be of type numpy.ndarray')
 
+    if not np.issubdtype(y.dtype, np.float):
+        raise ParameterError('data must be floating-point')
+
     if mono and y.ndim != 1:
         raise ParameterError('Invalid shape for monophonic audio: '
                              'ndim={:d}, shape={}'.format(y.ndim, y.shape))
-    elif y.ndim > 2:
-        raise ParameterError('Invalid shape for audio: '
-                             'ndim={:d}, shape={}'.format(y.ndim, y.shape))
+
+    elif y.ndim > 2 or y.ndim == 0:
+        raise ParameterError('Audio must have shape (samples,) or (channels, samples). '
+                             'Received shape={}'.format(y.shape))
 
     if not np.isfinite(y).all():
         raise ParameterError('Audio buffer is not finite everywhere')
