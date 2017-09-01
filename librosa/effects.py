@@ -542,5 +542,8 @@ def split(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
     edges = core.frames_to_samples(np.concatenate(edges),
                                    hop_length=hop_length)
 
+    # Clip to the signal duration
+    edges = np.minimum(edges, y.shape[-1])
+
     # Stack the results back as an ndarray
     return edges.reshape((-1, 2))
