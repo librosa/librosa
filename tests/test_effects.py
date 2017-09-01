@@ -197,6 +197,8 @@ def test_split():
                                           frame_length=frame_length,
                                           hop_length=hop_length)
 
+        assert np.all(intervals <= y.shape[-1])
+
         int_match = librosa.util.match_intervals(intervals, idx_true)
 
         for i in range(len(intervals)):
@@ -237,6 +239,14 @@ def test_split():
     # And without the silence at the end
     y = np.ones(5 * sr)
     y[::2] *= -1
+    idx_true = np.asarray([[0, 5 * sr]])
+    for frame_length in [1024, 2048, 4096]:
+        for hop_length in [256, 512, 1024]:
+            for top_db in [20, 60, 80]:
+                yield __test, hop_length, frame_length, top_db
+
+    # And once with a constant signal
+    y = np.ones(5 * sr)
     idx_true = np.asarray([[0, 5 * sr]])
     for frame_length in [1024, 2048, 4096]:
         for hop_length in [256, 512, 1024]:
