@@ -191,8 +191,10 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
 
         C = cdist(X.T, Y.T, metric=metric)
 
-        # if X.shape[1] > Y.shape[1]:
-        #     C = C.T
+        # for subsequence matching:
+        # if N > M, Y can be a subsequence of X
+        if subseq and (X.shape[1] > Y.shape[1]):
+            C = C.T
 
     C = np.atleast_2d(C)
 
@@ -218,6 +220,8 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
     if subseq:
         D[max_0, max_1:] = C[0, :]
 
+    # initialize step matrix with -1
+    # will be filled in calc_accu_cost() with indices from step_sizes_sigma
     D_steps = -1 * np.ones(D.shape, dtype=np.int)
 
     # calculate accumulated cost matrix
@@ -229,11 +233,6 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
     # delete infinity rows and columns
     D = D[max_0:, max_1:]
     D_steps = D_steps[max_0:, max_1:]
-    print(D_steps)
-    import matplotlib.pyplot as plt
-    plt.imshow(D_steps)
-    plt.colorbar()
-    plt.show()
 
     if backtrack:
         if subseq:
@@ -244,7 +243,13 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
             # perform warping path backtracking
             wp = backtracking(D_steps, step_sizes_sigma)
 
-        return D, np.asarray(wp, dtype=int)
+        wp = np.asarray(wp, dtype=int)
+
+        # since we transposed in the beginning, we have to adjust the index pairs back
+        if subseq and (X.shape[1] > Y.shape[1]):
+            wp = np.fliplr(wp)
+
+        return D, wp
     else:
         return D
 
