@@ -191,6 +191,9 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
 
         C = cdist(X.T, Y.T, metric=metric)
 
+        # if X.shape[1] > Y.shape[1]:
+        #     C = C.T
+
     C = np.atleast_2d(C)
 
     # if diagonal matching, Y has to be longer than X
@@ -215,7 +218,7 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
     if subseq:
         D[max_0, max_1:] = C[0, :]
 
-    D_steps = np.empty(D.shape, dtype=np.int)
+    D_steps = -1 * np.ones(D.shape, dtype=np.int)
 
     # calculate accumulated cost matrix
     D, D_steps = calc_accu_cost(C, D, D_steps,
@@ -226,6 +229,11 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
     # delete infinity rows and columns
     D = D[max_0:, max_1:]
     D_steps = D_steps[max_0:, max_1:]
+    print(D_steps)
+    import matplotlib.pyplot as plt
+    plt.imshow(D_steps)
+    plt.colorbar()
+    plt.show()
 
     if backtrack:
         if subseq:
