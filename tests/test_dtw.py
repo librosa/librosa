@@ -53,8 +53,8 @@ def test_dtw_global_supplied_distance_matrix():
 
 
 def test_dtw_incompatible_args():
-  assert_raises(librosa.util.exceptions.ParameterError, librosa.dtw, C=1, X=1, Y=1)
-  assert_raises(librosa.util.exceptions.ParameterError, librosa.dtw, C=None, X=None, Y=None)
+    assert_raises(librosa.util.exceptions.ParameterError, librosa.dtw, C=1, X=1, Y=1)
+    assert_raises(librosa.util.exceptions.ParameterError, librosa.dtw, C=None, X=None, Y=None)
 
 
 def test_dtw_global_diagonal():
@@ -86,8 +86,22 @@ def test_dtw_subseq():
 
     # estimated sequence has to match original sequence
     # note the +1 due to python indexing
-    mut_X = Y[mut_wp[-1][1]:mut_wp[0][1]+1]
+    mut_X = Y[mut_wp[-1][1]:mut_wp[0][1] + 1]
     assert np.array_equal(X, mut_X)
+
+
+def test_dtw_subseq_sym():
+    Y = np.array([10., 10., 0., 1., 2., 3., 10., 10.])
+    X = np.arange(4)
+
+    gt_wp_XY = np.array([[3, 5], [2, 4], [1, 3], [0, 2]])
+    gt_wp_YX = np.array([[5, 3], [4, 2], [3, 1], [2, 0]])
+
+    _, mut_wp_XY = librosa.dtw(X, Y, subseq=True)
+    _, mut_wp_YX = librosa.dtw(Y, X, subseq=True)
+
+    assert np.array_equal(gt_wp_XY, mut_wp_XY)
+    assert np.array_equal(gt_wp_YX, mut_wp_YX)
 
 
 def test_dtw_fill_off_diagonal_8_8():
