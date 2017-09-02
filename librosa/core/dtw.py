@@ -143,6 +143,7 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
     ParameterError
         If you are doing diagonal matching and Y is shorter than X or if an incompatible
         combination of X, Y, and C are supplied.
+        If your input dimensions are incompatible.
 
     Examples
     --------
@@ -189,7 +190,12 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
         X = np.atleast_2d(X)
         Y = np.atleast_2d(Y)
 
-        C = cdist(X.T, Y.T, metric=metric)
+        try:
+            C = cdist(X.T, Y.T, metric=metric)
+        except ValueError:
+            raise ParameterError('scipy.spatial.distance.cdist returned an error.\n'
+                                 'Please provide your input in the form X.shape=(K, N) and Y.shape=(K, M).\n'
+                                 '1-dimensional sequences should be reshaped to X.shape=(1, N) and Y.shape=(1, M).')
 
         # for subsequence matching:
         # if N > M, Y can be a subsequence of X
