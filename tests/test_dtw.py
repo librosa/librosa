@@ -13,6 +13,13 @@ warnings.resetwarnings()
 warnings.simplefilter('always')
 
 
+def test_1d_input():
+    X = np.array([[1], [3], [3], [8], [1]])
+    Y = np.array([[2], [0], [0], [8], [7], [2]])
+
+    assert_raises(librosa.util.exceptions.ParameterError, librosa.dtw, X=X, Y=Y)
+
+
 def test_dtw_global():
     # Example taken from:
     # Meinard Mueller, Fundamentals of Music Processing
