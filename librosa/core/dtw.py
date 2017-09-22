@@ -3,8 +3,9 @@
 """Sequence Alignment with Dynamic Time Warping."""
 
 import numpy as np
+from numba import jit
+
 from scipy.spatial.distance import cdist
-from ..util.decorators import optional_jit
 from ..util.exceptions import ParameterError
 
 __all__ = ['dtw', 'fill_off_diagonal']
@@ -241,7 +242,7 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
         return D
 
 
-@optional_jit(nopython=True)
+@jit(nopython=True)
 def calc_accu_cost(C, D, D_steps, step_sizes_sigma,
                    weights_mul, weights_add, max_0, max_1):
     '''Calculate the accumulated cost matrix D.
@@ -309,7 +310,7 @@ def calc_accu_cost(C, D, D_steps, step_sizes_sigma,
     return D, D_steps
 
 
-@optional_jit(nopython=True)
+@jit(nopython=True)
 def backtracking(D_steps, step_sizes_sigma):
     '''Backtrack optimal warping path.
 
