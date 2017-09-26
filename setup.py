@@ -38,13 +38,12 @@ setup(
         'joblib >= 0.7.0',
         'decorator >= 3.0.0',
         'six >= 1.3',
-        'resampy >= 0.1.2'
+        'resampy >= 0.2.0'
     ],
     extras_require={
         'docs': ['numpydoc', 'sphinx!=1.3.1', 'sphinx_rtd_theme',
                  'matplotlib >= 2.0.0',
                  'sphinxcontrib-versioning >= 2.2.1'],
-        'numba': ['numba >= 0.25'],
         'tests': ['matplotlib >= 2.0.0'],
         'display': ['matplotlib >= 1.5'],
     }

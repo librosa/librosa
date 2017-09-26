@@ -15,15 +15,6 @@ python:
     - 3.5
     - 3.6
 
-env:
-    - ENABLE_NUMBA=false
-    - ENABLE_NUMBA=true
-
-matrix:
-    exclude:
-        - python: 3.4
-          env: ENABLE_NUMBA=true
-
 before_install:
     - bash .travis_dependencies.sh
     - export PATH="$HOME/env/miniconda$TRAVIS_PYTHON_VERSION/bin:$PATH";
