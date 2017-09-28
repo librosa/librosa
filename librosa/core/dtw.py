@@ -3,6 +3,7 @@
 """Sequence Alignment with Dynamic Time Warping."""
 
 import numpy as np
+import six
 from scipy.spatial.distance import cdist
 from ..util.decorators import optional_jit
 from ..util.exceptions import ParameterError
@@ -192,10 +193,11 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
 
         try:
             C = cdist(X.T, Y.T, metric=metric)
-        except ValueError:
-            raise ParameterError('scipy.spatial.distance.cdist returned an error.\n'
-                                 'Please provide your input in the form X.shape=(K, N) and Y.shape=(K, M).\n'
-                                 '1-dimensional sequences should be reshaped to X.shape=(1, N) and Y.shape=(1, M).')
+        except ValueError as e:
+            msg = ('scipy.spatial.distance.cdist returned an error.\n'
+                   'Please provide your input in the form X.shape=(K, N) and Y.shape=(K, M).\n'
+                   '1-dimensional sequences should be reshaped to X.shape=(1, N) and Y.shape=(1, M).')
+            six.reraise(ParameterError, ParameterError(msg))
 
         # for subsequence matching:
         # if N > M, Y can be a subsequence of X
