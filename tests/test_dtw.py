@@ -60,8 +60,12 @@ def test_dtw_global_supplied_distance_matrix():
 
 
 @raises(librosa.ParameterError)
-def test_dtw_incompatible_args():
+def test_dtw_incompatible_args_01():
     librosa.dtw(C=1, X=1, Y=1)
+
+
+@raises(librosa.ParameterError)
+def test_dtw_incompatible_args_02():
     librosa.dtw(C=None, X=None, Y=None)
 
 

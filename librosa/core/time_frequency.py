@@ -509,7 +509,7 @@ def midi_to_hz(notes):
 
 
 def hz_to_midi(frequencies):
-    """Get the closest MIDI note number(s) for given frequencies
+    """Get MIDI note number(s) for given frequencies
 
     Examples
     --------
@@ -525,8 +525,8 @@ def hz_to_midi(frequencies):
 
     Returns
     -------
-    note_nums     : np.ndarray [shape=(n,), dtype=int]
-        closest MIDI notes to `frequencies`
+    note_nums     : np.ndarray [shape=(n,), dtype=float]
+        MIDI notes to `frequencies`
 
     See Also
     --------
