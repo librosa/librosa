@@ -4,7 +4,7 @@
 
 import numpy as np
 from numba import jit
-
+import six
 from scipy.spatial.distance import cdist
 from ..util.exceptions import ParameterError
 
@@ -144,6 +144,7 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
     ParameterError
         If you are doing diagonal matching and Y is shorter than X or if an incompatible
         combination of X, Y, and C are supplied.
+        If your input dimensions are incompatible.
 
     Examples
     --------
@@ -190,7 +191,18 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
         X = np.atleast_2d(X)
         Y = np.atleast_2d(Y)
 
-        C = cdist(X.T, Y.T, metric=metric)
+        try:
+            C = cdist(X.T, Y.T, metric=metric)
+        except ValueError as e:
+            msg = ('scipy.spatial.distance.cdist returned an error.\n'
+                   'Please provide your input in the form X.shape=(K, N) and Y.shape=(K, M).\n'
+                   '1-dimensional sequences should be reshaped to X.shape=(1, N) and Y.shape=(1, M).')
+            six.reraise(ParameterError, ParameterError(msg))
+
+        # for subsequence matching:
+        # if N > M, Y can be a subsequence of X
+        if subseq and (X.shape[1] > Y.shape[1]):
+            C = C.T
 
     C = np.atleast_2d(C)
 
@@ -216,7 +228,9 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
     if subseq:
         D[max_0, max_1:] = C[0, :]
 
-    D_steps = np.empty(D.shape, dtype=np.int)
+    # initialize step matrix with -1
+    # will be filled in calc_accu_cost() with indices from step_sizes_sigma
+    D_steps = -1 * np.ones(D.shape, dtype=np.int)
 
     # calculate accumulated cost matrix
     D, D_steps = calc_accu_cost(C, D, D_steps,
@@ -237,7 +251,13 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
             # perform warping path backtracking
             wp = backtracking(D_steps, step_sizes_sigma)
 
-        return D, np.asarray(wp, dtype=int)
+        wp = np.asarray(wp, dtype=int)
+
+        # since we transposed in the beginning, we have to adjust the index pairs back
+        if subseq and (X.shape[1] > Y.shape[1]):
+            wp = np.fliplr(wp)
+
+        return D, wp
     else:
         return D
 
