@@ -5,7 +5,7 @@ import librosa
 import numpy as np
 from scipy.spatial.distance import cdist
 
-from nose.tools import assert_raises
+from nose.tools import raises
 from test_core import srand
 
 import warnings
@@ -13,11 +13,11 @@ warnings.resetwarnings()
 warnings.simplefilter('always')
 
 
+@raises(librosa.ParameterError)
 def test_1d_input():
     X = np.array([[1], [3], [3], [8], [1]])
     Y = np.array([[2], [0], [0], [8], [7], [2]])
-
-    assert_raises(librosa.util.exceptions.ParameterError, librosa.dtw, X=X, Y=Y)
+    librosa.dtw(X=X, Y=Y)
 
 
 def test_dtw_global():
@@ -59,9 +59,10 @@ def test_dtw_global_supplied_distance_matrix():
     assert np.array_equal(gt_D, mut_D)
 
 
+@raises(librosa.ParameterError)
 def test_dtw_incompatible_args():
-    assert_raises(librosa.util.exceptions.ParameterError, librosa.dtw, C=1, X=1, Y=1)
-    assert_raises(librosa.util.exceptions.ParameterError, librosa.dtw, C=None, X=None, Y=None)
+    librosa.dtw(C=1, X=1, Y=1)
+    librosa.dtw(C=None, X=None, Y=None)
 
 
 def test_dtw_global_diagonal():
