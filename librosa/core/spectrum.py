@@ -14,7 +14,6 @@ from .audio import resample
 from .. import cache
 from .. import util
 from ..util.decorators import moved
-from ..util.deprecation import rename_kw, Deprecated
 from ..util.exceptions import ParameterError
 from ..filters import get_window, semitone_filterbank
 
@@ -752,7 +751,7 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
 
 
 @cache(level=30)
-def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0, ref_power=Deprecated()):
+def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
     """Convert a power spectrogram (amplitude squared) to decibel (dB) units
 
     This computes the scaling ``10 * log10(S / ref)`` in a numerically
@@ -776,11 +775,6 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0, ref_power=Deprecated()):
     top_db : float >= 0 [scalar]
         threshold the output at `top_db` below the peak:
         ``max(10 * log10(S)) - top_db``
-
-    ref_power : scalar or callable
-        .. warning:: This parameter name was deprecated in librosa 0.5.0.
-            Use the `ref` parameter instead.
-            The `ref_power` parameter will be removed in librosa 0.6.0.
 
     Returns
     -------
@@ -853,10 +847,6 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0, ref_power=Deprecated()):
         raise ParameterError('amin must be strictly positive')
 
     magnitude = np.abs(S)
-
-    ref = rename_kw('ref_power', ref_power,
-                    'ref', ref,
-                    '0.5', '0.6')
 
     if six.callable(ref):
         # User supplied a function to calculate reference power
