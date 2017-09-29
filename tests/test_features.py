@@ -259,7 +259,6 @@ def test_spectral_bandwidth_errors():
     yield __test, S
 
 
-
 def test_spectral_rolloff_synthetic():
 
     srand()
@@ -408,17 +407,6 @@ def test_rmse():
 
     for n in range(10, 100, 10):
         yield __test, n
-
-
-def test_rmse_nfft():
-
-    warnings.resetwarnings()
-    warnings.simplefilter('always')
-    with warnings.catch_warnings(record=True) as out:
-        librosa.feature.rmse(y=np.zeros(8192), n_fft=1024)
-        assert len(out) > 0
-        assert out[0].category is DeprecationWarning
-        assert 'renamed' in str(out[0].message).lower()
 
 
 def test_zcr_synthetic():
