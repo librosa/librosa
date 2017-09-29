@@ -58,7 +58,7 @@ def make_signal(sr, duration, fmax='C8'):
         fmax = librosa.note_to_hz(fmax) / sr
 
     return np.sin(np.cumsum(2 * np.pi * np.logspace(np.log10(fmin), np.log10(fmax),
-                                                    num=duration * sr)))
+                                                    num=int(duration * sr))))
 
 
 def test_cqt():
