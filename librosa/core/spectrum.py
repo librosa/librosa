@@ -13,13 +13,12 @@ from . import time_frequency
 from .audio import resample
 from .. import cache
 from .. import util
-from ..util.decorators import moved
 from ..util.exceptions import ParameterError
 from ..filters import get_window, semitone_filterbank
 
 __all__ = ['stft', 'istft', 'magphase', 'iirt',
            'ifgram', 'phase_vocoder',
-           'logamplitude', 'perceptual_weighting',
+           'perceptual_weighting',
            'power_to_db', 'db_to_power',
            'amplitude_to_db', 'db_to_amplitude',
            'fmt']
@@ -865,9 +864,6 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
     return log_spec
 
 
-logamplitude = moved('librosa.logamplitude', '0.5', '0.6')(power_to_db)
-
-
 @cache(level=30)
 def db_to_power(S_db, ref=1.0):
     '''Convert a dB-scale spectrogram to a power spectrogram.
@@ -929,7 +925,7 @@ def amplitude_to_db(S, ref=1.0, amin=1e-5, top_db=80.0):
 
     See Also
     --------
-    logamplitude, power_to_db, db_to_amplitude
+    power_to_db, db_to_amplitude
 
     Notes
     -----
@@ -991,7 +987,7 @@ def perceptual_weighting(S, frequencies, **kwargs):
         Center frequency for each row of `S`
 
     kwargs : additional keyword arguments
-        Additional keyword arguments to `logamplitude`.
+        Additional keyword arguments to `power_to_db`.
 
     Returns
     -------
@@ -1000,7 +996,7 @@ def perceptual_weighting(S, frequencies, **kwargs):
 
     See Also
     --------
-    logamplitude
+    power_to_db
 
     Notes
     -----
@@ -1045,7 +1041,7 @@ def perceptual_weighting(S, frequencies, **kwargs):
 
     offset = time_frequency.A_weighting(frequencies).reshape((-1, 1))
 
-    return offset + logamplitude(S, **kwargs)
+    return offset + power_to_db(S, **kwargs)
 
 
 @cache(level=30)
