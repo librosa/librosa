@@ -20,7 +20,7 @@ import glob
 import numpy as np
 import scipy.io
 import six
-from nose.tools import eq_, raises, make_decorator
+from nose.tools import eq_, raises
 
 import warnings
 warnings.resetwarnings()
@@ -836,15 +836,15 @@ def test__spectrogram():
     assert librosa.core.spectrum._spectrogram(y)
 
 
-def test_logamplitude():
+def test_power_to_db():
 
     # Fake up some data
     def __test(x, ref, amin, top_db):
 
-        y = librosa.logamplitude(x,
-                                 ref=ref,
-                                 amin=amin,
-                                 top_db=top_db)
+        y = librosa.power_to_db(x,
+                                ref=ref,
+                                amin=amin,
+                                top_db=top_db)
 
         assert np.isrealobj(y)
         eq_(y.shape, x.shape)
@@ -866,22 +866,7 @@ def test_logamplitude():
                     yield tf, x * phase, ref, amin, top_db
 
 
-def test_power_to_db_logamp():
-
-    srand()
-
-    NOISE_FLOOR = 1e-6
-
-    # Make some noise
-    x = np.abs(np.random.randn(1000)) + NOISE_FLOOR
-
-    db1 = librosa.power_to_db(x**2, top_db=None)
-    db2 = librosa.logamplitude(x**2, top_db=None)
-
-    assert np.allclose(db1, db2)
-
-
-def test_power_to_db():
+def test_power_to_db_inv():
 
     def __test(y_true, x, rp):
         y = librosa.power_to_db(x, ref=rp, top_db=None)
@@ -903,7 +888,7 @@ def test_amplitude_to_db():
     x = np.abs(np.random.randn(1000)) + NOISE_FLOOR
 
     db1 = librosa.amplitude_to_db(x, top_db=None)
-    db2 = librosa.logamplitude(x**2, top_db=None)
+    db2 = librosa.power_to_db(x**2, top_db=None)
 
     assert np.allclose(db1, db2)
 
