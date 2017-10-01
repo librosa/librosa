@@ -742,7 +742,7 @@ def test_piptrack():
 
     for freq in [110, 220, 440, 880]:
         # Generate a sine tone
-        y = np.sin(2 * np.pi * freq * np.linspace(0, duration, num=duration*sr))
+        y = np.sin(2 * np.pi * freq * np.linspace(0, duration, num=int(duration*sr)))
         for n_fft in [1024, 2048, 4096]:
             # Using left-aligned frames eliminates reflection artifacts at the boundaries
             S = np.abs(librosa.stft(y, n_fft=n_fft, center=False))
@@ -773,7 +773,7 @@ def test_estimate_tuning():
     for sr in [11025, 22050]:
         duration = 5.0
 
-        t = np.linspace(0, duration, duration * sr)
+        t = np.linspace(0, duration, int(duration * sr))
 
         for resolution in [1e-2]:
             for bins_per_octave in [12]:
@@ -1051,7 +1051,7 @@ def test_fmt_scale():
     for scale in [2, 3./2, 5./4, 9./8]:
 
         # Scale the time axis
-        x_res = np.linspace(bounds[0], bounds[1], num=scale * num, endpoint=False)
+        x_res = np.linspace(bounds[0], bounds[1], num=int(scale * num), endpoint=False)
         y_res = f(x_res)
 
         # Re-normalize the energy to match that of y_orig
