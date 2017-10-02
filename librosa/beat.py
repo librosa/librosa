@@ -8,13 +8,6 @@ Beat and tempo
 
    beat_track
    tempo
-
-Deprecated
-----------
-.. autosummary::
-   :toctree: generated/
-
-   estimate_tempo
 """
 
 import numpy as np
@@ -27,7 +20,7 @@ from . import util
 from .feature import tempogram
 from .util.exceptions import ParameterError
 
-__all__ = ['beat_track', 'tempo', 'estimate_tempo']
+__all__ = ['beat_track', 'tempo']
 
 
 def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
@@ -204,130 +197,6 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
         raise ParameterError('Invalid unit type: {}'.format(units))
 
     return (bpm, beats)
-
-
-@util.decorators.deprecated('0.5.0', '0.6')
-@cache(level=30)
-def estimate_tempo(onset_envelope, sr=22050, hop_length=512, start_bpm=120,
-                   std_bpm=1.0, ac_size=4.0, duration=90.0, offset=0.0):
-    """Estimate the tempo (beats per minute) from an onset envelope
-
-    .. warning:: Deprecated in librosa 0.5
-                 Functionality is superseded by
-                 `librosa.beat.tempo`.
-
-    Parameters
-    ----------
-    onset_envelope    : np.ndarray [shape=(n,)]
-        onset strength envelope
-
-    sr : number > 0 [scalar]
-        sampling rate of the time series
-
-    hop_length : int > 0 [scalar]
-        hop length of the time series
-
-    start_bpm : float [scalar]
-        initial guess of the BPM
-
-    std_bpm : float > 0 [scalar]
-        standard deviation of tempo distribution
-
-    ac_size : float > 0 [scalar]
-        length (in seconds) of the auto-correlation window
-
-    duration : float > 0 [scalar]
-        length of signal (in seconds) to use in estimating tempo
-
-    offset : float > 0 [scalar]
-        offset (in seconds) of signal sample to use in estimating tempo
-
-
-    Returns
-    -------
-    tempo : float [scalar]
-        estimated tempo (beats per minute)
-
-
-    See Also
-    --------
-    librosa.onset.onset_strength
-
-    Notes
-    -----
-    This function caches at level 30.
-
-    Examples
-    --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> onset_env = librosa.onset.onset_strength(y, sr=sr)
-    >>> tempo = librosa.beat.estimate_tempo(onset_env, sr=sr)
-    >>> tempo
-    103.359375
-
-    Plot the estimated tempo against the onset autocorrelation
-
-    >>> import matplotlib.pyplot as plt
-    >>> # Compute 2-second windowed autocorrelation
-    >>> hop_length = 512
-    >>> ac = librosa.autocorrelate(onset_env, 2 * sr // hop_length)
-    >>> freqs = librosa.tempo_frequencies(len(ac), sr=sr,
-    ...                                   hop_length=hop_length)
-    >>> # Plot on a BPM axis.  We skip the first (0-lag) bin.
-    >>> plt.figure(figsize=(8,4))
-    >>> plt.semilogx(freqs[1:], librosa.util.normalize(ac)[1:],
-    ...              label='Onset autocorrelation', basex=2)
-    >>> plt.axvline(tempo, 0, 1, color='r', alpha=0.75, linestyle='--',
-    ...            label='Tempo: {:.2f} BPM'.format(tempo))
-    >>> plt.xlabel('Tempo (BPM)')
-    >>> plt.grid()
-    >>> plt.legend(frameon=True)
-    >>> plt.axis('tight')
-    """
-
-    if start_bpm <= 0:
-        raise ParameterError('start_bpm must be strictly positive')
-
-    fft_res = float(sr) / hop_length
-
-    # Chop onsets to X[(upper_limit - duration):upper_limit]
-    # or as much as will fit
-    maxcol = int(min(len(onset_envelope)-1,
-                     np.round((offset + duration) * fft_res)))
-
-    mincol = int(max(0, maxcol - np.round(duration * fft_res)))
-
-    # Use auto-correlation out of 4 seconds (empirically set??)
-    ac_window = min(maxcol, np.round(ac_size * fft_res))
-
-    # Compute the autocorrelation
-    x_corr = core.autocorrelate(onset_envelope[mincol:maxcol], ac_window)[1:]
-
-    # Get the BPM values for each bin, skipping the 0-lag bin
-    bpms = core.tempo_frequencies(ac_window, hop_length=hop_length, sr=sr)[1:]
-
-    # Weight the autocorrelation by a log-normal distribution
-    # centered at `start_bpm`
-    x_corr *= np.exp(-0.5 *
-                     ((np.log2(bpms) - np.log2(start_bpm)) / std_bpm)**2)
-
-    # Get the local maximum of weighted correlation
-    x_peaks = util.localmax(x_corr)
-
-    # Zero out all peaks before the first negative
-    x_peaks[:np.argmax(x_corr < 0)] = False
-
-    # Choose the best peak out of .33, .5, 2, 3 * start_period
-    candidates = np.argmax(x_peaks * x_corr) * np.asarray([1./3, 0.5, 1, 2, 3])
-
-    candidates = candidates[candidates < ac_window].astype(int)
-
-    best_period = np.argmax(x_corr[candidates])
-
-    if candidates[best_period] > 0:
-        return bpms[candidates[best_period]]
-
-    return start_bpm
 
 
 @cache(level=30)

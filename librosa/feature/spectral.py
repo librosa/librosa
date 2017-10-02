@@ -9,7 +9,6 @@ import scipy.signal
 from .. import util
 from .. import filters
 from ..util.exceptions import ParameterError
-from ..util.deprecation import Deprecated, rename_kw
 
 from ..core.time_frequency import fft_frequencies
 from ..core.audio import zero_crossings, to_mono
@@ -501,8 +500,7 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
 
 def rmse(y=None, S=None, frame_length=2048, hop_length=512,
-         center=True, pad_mode='reflect',
-         n_fft=Deprecated()):
+         center=True, pad_mode='reflect'):
     '''Compute root-mean-square (RMS) energy for each frame, either from the
     audio samples `y` or from a spectrogram `S`.
 
@@ -535,11 +533,6 @@ def rmse(y=None, S=None, frame_length=2048, hop_length=512,
     pad_mode : str
         Padding mode for centered analysis.  See `np.pad` for valid
         values.
-
-    n_fft : [DEPRECATED]
-        .. warning:: This parameter name was deprecated in librosa 0.5.0
-            Use the `frame_length` parameter instead.
-            The `n_fft` parameter will be removed in librosa 0.6.0.
 
     Returns
     -------
@@ -578,10 +571,6 @@ def rmse(y=None, S=None, frame_length=2048, hop_length=512,
     >>> librosa.feature.rmse(S=S)
 
     '''
-    frame_length = rename_kw('n_fft', n_fft,
-                             'frame_length', frame_length,
-                             '0.5', '0.6')
-
     if y is not None and S is not None:
         raise ValueError('Either `y` or `S` should be input.')
     if y is not None:
