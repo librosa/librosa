@@ -58,7 +58,7 @@ def make_signal(sr, duration, fmax='C8'):
         fmax = librosa.note_to_hz(fmax) / sr
 
     return np.sin(np.cumsum(2 * np.pi * np.logspace(np.log10(fmin), np.log10(fmax),
-                                                    num=duration * sr)))
+                                                    num=int(duration * sr))))
 
 
 def test_cqt():
@@ -189,14 +189,14 @@ def test_cqt_fail_short_early():
 
     # sampling rate is sufficiently above the top octave to trigger early downsampling
     y = np.zeros(16)
-    librosa.cqt(y, sr=44100, n_bins=36, real=False)
+    librosa.cqt(y, sr=44100, n_bins=36)
 
 
 @raises(librosa.ParameterError)
 def test_cqt_fail_short_late():
 
     y = np.zeros(16)
-    librosa.cqt(y, sr=22050, real=False)
+    librosa.cqt(y, sr=22050)
 
 
 def test_cqt_impulse():
@@ -304,25 +304,3 @@ def test_hcqt_white_noise():
             for fmin in librosa.note_to_hz(['C1', 'C2']):
                 for n_octaves in [6, 7]:
                     yield __test, fmin, n_octaves * 12, scale, sr, y
-
-
-def test_cqt_real_warning():
-
-    def __test(real):
-        warnings.resetwarnings()
-        warnings.simplefilter('always')
-        with warnings.catch_warnings(record=True) as out:
-            C = librosa.cqt(y=y, sr=sr, real=real)
-            assert len(out) > 0
-            assert out[0].category is DeprecationWarning
-
-            if real:
-                assert np.isrealobj(C)
-            else:
-                assert np.iscomplexobj(C)
-
-    sr = 22050
-    y = np.zeros(2 * sr)
-
-    yield __test, False
-    yield __test, True
