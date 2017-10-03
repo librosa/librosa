@@ -168,7 +168,7 @@ class NoteFormatter(Formatter):
 
         cents = vmax <= 2 * max(1, vmin)
 
-        return core.hz_to_note(int(x), octave=self.octave, cents=cents)[0]
+        return core.hz_to_note(int(x), octave=self.octave, cents=cents)
 
 
 class LogHzFormatter(Formatter):
