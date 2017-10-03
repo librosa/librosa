@@ -3,10 +3,9 @@
 '''Constant-Q transforms'''
 from __future__ import division
 
-from warnings import warn
-
 import numpy as np
 import scipy.fftpack as fft
+from numba import jit
 
 from . import audio
 from .time_frequency import cqt_frequencies, note_to_hz
@@ -16,7 +15,6 @@ from .. import cache
 from .. import filters
 from .. import util
 from ..util.exceptions import ParameterError
-from ..util.decorators import optional_jit
 
 __all__ = ['cqt', 'hybrid_cqt', 'pseudo_cqt', 'icqt']
 
@@ -833,7 +831,7 @@ def __num_two_factors(x):
     return num_twos
 
 
-@optional_jit(nopython=True)
+@jit(nopython=True)
 def __activation_fill(x, basis, activation, hop_length):
     '''Helper function for icqt time-domain reconstruction'''
 
