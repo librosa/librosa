@@ -30,8 +30,8 @@ def frames_to_samples(frames, hop_length=512, n_fft=None):
 
     Parameters
     ----------
-    frames     : np.ndarray [shape=(n,)]
-        vector of frame indices
+    frames     : number or np.ndarray [shape=(n,)]
+        frame index or vector of frame indices
 
     hop_length : int > 0 [scalar]
         number of samples between successive frames
@@ -43,7 +43,7 @@ def frames_to_samples(frames, hop_length=512, n_fft=None):
 
     Returns
     -------
-    times : np.ndarray [shape=(n,)]
+    times : number or np.ndarray
         time (in samples) of each given frame number:
         `times[i] = frames[i] * hop_length`
 
@@ -63,7 +63,7 @@ def frames_to_samples(frames, hop_length=512, n_fft=None):
     if n_fft is not None:
         offset = int(n_fft // 2)
 
-    return (np.atleast_1d(frames) * hop_length + offset).astype(int)
+    return (np.asanyarray(frames) * hop_length + offset).astype(int)
 
 
 def samples_to_frames(samples, hop_length=512, n_fft=None):
@@ -83,8 +83,8 @@ def samples_to_frames(samples, hop_length=512, n_fft=None):
 
     Parameters
     ----------
-    samples : np.ndarray [shape=(n,)]
-        vector of sample indices
+    samples : int or np.ndarray [shape=(n,)]
+        sample index or vector of sample indices
 
     hop_length : int > 0 [scalar]
         number of samples between successive frames
@@ -98,7 +98,7 @@ def samples_to_frames(samples, hop_length=512, n_fft=None):
 
     Returns
     -------
-    frames : np.ndarray [shape=(n,), dtype=int]
+    frames : int or np.ndarray [shape=(n,), dtype=int]
         Frame numbers corresponding to the given times:
         `frames[i] = floor( samples[i] / hop_length )`
 
@@ -112,7 +112,7 @@ def samples_to_frames(samples, hop_length=512, n_fft=None):
     if n_fft is not None:
         offset = int(n_fft // 2)
 
-    samples = np.atleast_1d(samples)
+    samples = np.asanyarray(samples)
     return np.floor((samples - offset) // hop_length).astype(int)
 
 
@@ -122,7 +122,7 @@ def frames_to_time(frames, sr=22050, hop_length=512, n_fft=None):
     Parameters
     ----------
     frames     : np.ndarray [shape=(n,)]
-        vector of frame numbers
+        frame index or vector of frame indices
 
     sr         : number > 0 [scalar]
         audio sampling rate
@@ -166,7 +166,7 @@ def time_to_frames(times, sr=22050, hop_length=512, n_fft=None):
     Parameters
     ----------
     times : np.ndarray [shape=(n,)]
-        vector of time stamps
+        time (in seconds) or vector of time values
 
     sr : number > 0 [scalar]
         audio sampling rate
@@ -212,15 +212,15 @@ def time_to_samples(times, sr=22050):
 
     Parameters
     ----------
-    times : np.ndarray
-        Array of time values (in seconds)
+    times : number or np.ndarray
+        Time value or array of time values (in seconds)
 
     sr : number > 0
         Sampling rate
 
     Returns
     -------
-    samples : np.ndarray [shape=times.shape, dtype=int]
+    samples : int or np.ndarray [shape=times.shape, dtype=int]
         Sample indices corresponding to values in `times`
 
     See Also
@@ -236,7 +236,7 @@ def time_to_samples(times, sr=22050):
 
     '''
 
-    return (np.atleast_1d(times) * sr).astype(int)
+    return (np.asanyarray(times) * sr).astype(int)
 
 
 def samples_to_time(samples, sr=22050):
@@ -245,7 +245,7 @@ def samples_to_time(samples, sr=22050):
     Parameters
     ----------
     samples : np.ndarray
-        Array of sample indices
+        Sample index or array of sample indices
 
     sr : number > 0
         Sampling rate
@@ -274,7 +274,7 @@ def samples_to_time(samples, sr=22050):
             0.975,  0.998])
     '''
 
-    return np.atleast_1d(samples) / float(sr)
+    return np.asanyarray(samples) / float(sr)
 
 
 def note_to_hz(note, **kwargs):
@@ -302,7 +302,7 @@ def note_to_hz(note, **kwargs):
 
     Returns
     -------
-    frequencies : np.ndarray [shape=(len(note),)]
+    frequencies : number or np.ndarray [shape=(len(note),)]
         Array of frequencies (in Hz) corresponding to `note`
 
     See Also
@@ -482,7 +482,7 @@ def midi_to_hz(notes):
     Examples
     --------
     >>> librosa.midi_to_hz(36)
-    array([ 65.406])
+    65.406
 
     >>> librosa.midi_to_hz(np.arange(36, 48))
     array([  65.406,   69.296,   73.416,   77.782,   82.407,
@@ -496,7 +496,7 @@ def midi_to_hz(notes):
 
     Returns
     -------
-    frequency   : np.ndarray [shape=(n,), dtype=float]
+    frequency   : number or np.ndarray [shape=(n,), dtype=float]
         frequency (frequencies) of `notes` in Hz
 
     See Also
@@ -505,7 +505,7 @@ def midi_to_hz(notes):
     note_to_hz
     """
 
-    return 440.0 * (2.0 ** ((np.atleast_1d(notes) - 69.0)/12.0))
+    return 440.0 * (2.0 ** ((np.asanyarray(notes) - 69.0)/12.0))
 
 
 def hz_to_midi(frequencies):
@@ -514,7 +514,7 @@ def hz_to_midi(frequencies):
     Examples
     --------
     >>> librosa.hz_to_midi(60)
-    array([ 34.506])
+    34.506
     >>> librosa.hz_to_midi([110, 220, 440])
     array([ 45.,  57.,  69.])
 
@@ -525,7 +525,7 @@ def hz_to_midi(frequencies):
 
     Returns
     -------
-    note_nums     : np.ndarray [shape=(n,), dtype=float]
+    note_nums     : number or np.ndarray [shape=(n,), dtype=float]
         MIDI notes to `frequencies`
 
     See Also
@@ -535,7 +535,7 @@ def hz_to_midi(frequencies):
     hz_to_note
     """
 
-    return 12 * (np.log2(np.atleast_1d(frequencies)) - np.log2(440.0)) + 69
+    return 12 * (np.log2(np.asanyarray(frequencies)) - np.log2(440.0)) + 69
 
 
 def hz_to_note(frequencies, **kwargs):
@@ -592,20 +592,20 @@ def hz_to_mel(frequencies, htk=False):
     Examples
     --------
     >>> librosa.hz_to_mel(60)
-    array([ 0.9])
+    0.9
     >>> librosa.hz_to_mel([110, 220, 440])
     array([ 1.65,  3.3 ,  6.6 ])
 
     Parameters
     ----------
-    frequencies   : np.ndarray [shape=(n,)] , float
+    frequencies   : number or np.ndarray [shape=(n,)] , float
         scalar or array of frequencies
     htk           : bool
         use HTK formula instead of Slaney
 
     Returns
     -------
-    mels        : np.ndarray [shape=(n,)]
+    mels        : number or np.ndarray [shape=(n,)]
         input frequencies in Mels
 
     See Also
@@ -613,7 +613,7 @@ def hz_to_mel(frequencies, htk=False):
     mel_to_hz
     """
 
-    frequencies = np.atleast_1d(frequencies)
+    frequencies = np.asanyarray(frequencies)
 
     if htk:
         return 2595.0 * np.log10(1.0 + frequencies / 700.0)
@@ -630,8 +630,13 @@ def hz_to_mel(frequencies, htk=False):
     min_log_mel = (min_log_hz - f_min) / f_sp   # same (Mels)
     logstep = np.log(6.4) / 27.0                # step size for log region
 
-    log_t = (frequencies >= min_log_hz)
-    mels[log_t] = min_log_mel + np.log(frequencies[log_t]/min_log_hz) / logstep
+    if frequencies.ndim:
+        # If we have array data, vectorize
+        log_t = (frequencies >= min_log_hz)
+        mels[log_t] = min_log_mel + np.log(frequencies[log_t]/min_log_hz) / logstep
+    elif frequencies >= min_log_hz:
+        # If we have scalar data, heck directly
+        mels = min_log_mel + np.log(frequencies / min_log_hz) / logstep
 
     return mels
 
@@ -642,7 +647,7 @@ def mel_to_hz(mels, htk=False):
     Examples
     --------
     >>> librosa.mel_to_hz(3)
-    array([ 200.])
+    200.
 
     >>> librosa.mel_to_hz([1,2,3,4,5])
     array([  66.667,  133.333,  200.   ,  266.667,  333.333])
@@ -664,7 +669,7 @@ def mel_to_hz(mels, htk=False):
     hz_to_mel
     """
 
-    mels = np.atleast_1d(mels)
+    mels = np.asanyarray(mels)
 
     if htk:
         return 700.0 * (10.0**(mels / 2595.0) - 1.0)
@@ -678,9 +683,14 @@ def mel_to_hz(mels, htk=False):
     min_log_hz = 1000.0                         # beginning of log region (Hz)
     min_log_mel = (min_log_hz - f_min) / f_sp   # same (Mels)
     logstep = np.log(6.4) / 27.0                # step size for log region
-    log_t = (mels >= min_log_mel)
 
-    freqs[log_t] = min_log_hz * np.exp(logstep * (mels[log_t] - min_log_mel))
+    if mels.ndim:
+        # If we have vector data, vectorize
+        log_t = (mels >= min_log_mel)
+        freqs[log_t] = min_log_hz * np.exp(logstep * (mels[log_t] - min_log_mel))
+    elif mels >= min_log_mel:
+        # If we have scalar data, check directly
+        freqs = min_log_hz * np.exp(logstep * (mels - min_log_mel))
 
     return freqs
 
@@ -691,27 +701,27 @@ def hz_to_octs(frequencies, A440=440.0):
     Examples
     --------
     >>> librosa.hz_to_octs(440.0)
-    array([ 4.])
+    4.
     >>> librosa.hz_to_octs([32, 64, 128, 256])
     array([ 0.219,  1.219,  2.219,  3.219])
 
     Parameters
     ----------
-    frequencies   : np.ndarray [shape=(n,)] or float
+    frequencies   : number >0 or np.ndarray [shape=(n,)] or float
         scalar or vector of frequencies
     A440          : float
         frequency of A440 (in Hz)
 
     Returns
     -------
-    octaves       : np.ndarray [shape=(n,)]
+    octaves       : number or np.ndarray [shape=(n,)]
         octave number for each frequency
 
     See Also
     --------
     octs_to_hz
     """
-    return np.log2(np.atleast_1d(frequencies) / (float(A440) / 16))
+    return np.log2(np.asanyarray(frequencies) / (float(A440) / 16))
 
 
 def octs_to_hz(octs, A440=440.0):
@@ -722,7 +732,7 @@ def octs_to_hz(octs, A440=440.0):
     Examples
     --------
     >>> librosa.octs_to_hz(1)
-    array([ 55.])
+    55.
     >>> librosa.octs_to_hz([-2, -1, 0, 1, 2])
     array([   6.875,   13.75 ,   27.5  ,   55.   ,  110.   ])
 
@@ -735,14 +745,14 @@ def octs_to_hz(octs, A440=440.0):
 
     Returns
     -------
-    frequencies   : np.ndarray [shape=(n,)]
+    frequencies   : number or np.ndarray [shape=(n,)]
         scalar or vector of frequencies
 
     See Also
     --------
     hz_to_octs
     """
-    return (float(A440) / 16)*(2.0**np.atleast_1d(octs))
+    return (float(A440) / 16)*(2.0**np.asanyarray(octs))
 
 
 def fft_frequencies(sr=22050, n_fft=2048):
@@ -941,7 +951,7 @@ def A_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
     '''
 
     # Vectorize to make our lives easier
-    frequencies = np.atleast_1d(frequencies)
+    frequencies = np.asanyarray(frequencies)
 
     # Pre-compute squared frequency
     f_sq = frequencies**2.0
