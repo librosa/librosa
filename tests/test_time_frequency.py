@@ -25,14 +25,17 @@ def test_frames_to_samples():
                                            hop_length=hop_length,
                                            n_fft=n_fft)
         assert np.allclose(y, y_test)
+        y = np.asanyarray(y)
+        assert y.shape == y_test.shape
+        assert y.ndim == y_test.ndim
 
-    x = np.arange(2)
-    for hop_length in [512, 1024]:
-        for n_fft in [None, 1024]:
-            y = x * hop_length
-            if n_fft is not None:
-                y += n_fft // 2
-            yield __test, x, y, hop_length, n_fft
+    for x in [100, np.arange(10.5)]:
+        for hop_length in [512, 1024]:
+            for n_fft in [None, 1024]:
+                y = x * hop_length
+                if n_fft is not None:
+                    y += n_fft // 2
+                yield __test, x, y, hop_length, n_fft
 
 
 def test_samples_to_frames():
@@ -42,14 +45,17 @@ def test_samples_to_frames():
                                            hop_length=hop_length,
                                            n_fft=n_fft)
         assert np.allclose(y, y_test)
+        y = np.asanyarray(y)
+        assert y.shape == y_test.shape
+        assert y.ndim == y_test.ndim
 
-    x = np.arange(2)
-    for hop_length in [512, 1024]:
-        for n_fft in [None, 1024]:
-            y = x * hop_length
-            if n_fft is not None:
-                y += n_fft // 2
-            yield __test, y, x, hop_length, n_fft
+    for x in [100, np.arange(10.5)]:
+        for hop_length in [512, 1024]:
+            for n_fft in [None, 1024]:
+                y = x * hop_length
+                if n_fft is not None:
+                    y += n_fft // 2
+                yield __test, y, x, hop_length, n_fft
 
 
 def test_frames_to_time():
@@ -218,6 +224,9 @@ def test_note_to_hz():
             hz_true /= 2.0**(1./12)
 
         hz = librosa.note_to_hz(note, round_midi=round_midi)
+        assert np.allclose(hz, hz_true)
+
+        hz = librosa.note_to_hz([note], round_midi=round_midi)
         assert np.allclose(hz[0], hz_true)
 
     @raises(librosa.ParameterError)
@@ -258,6 +267,7 @@ def test_midi_to_hz():
 
 
 def test_hz_to_midi():
+    assert np.allclose(librosa.hz_to_midi(55), 33)
     assert np.allclose(librosa.hz_to_midi([55, 110, 220, 440]),
                        [33, 45, 57, 69])
 
@@ -266,7 +276,7 @@ def test_hz_to_note():
     def __test(hz, note, octave, cents):
         note_out = librosa.hz_to_note(hz, octave=octave, cents=cents)
 
-        eq_(list(note_out), list([note]))
+        eq_(note_out, note)
 
     hz = 440
 
@@ -274,6 +284,7 @@ def test_hz_to_note():
     yield __test, hz, 'A4', True, False
     yield raises(librosa.ParameterError)(__test), hz, 'A+0', False, True
     yield __test, hz, 'A4+0', True, True
+    yield __test, [hz, 2*hz], ['A4+0', 'A5+0'], True, True
 
 
 def test_fft_frequencies():
