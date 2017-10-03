@@ -311,28 +311,6 @@ def test_hcqt_white_noise():
                     yield __test, fmin, n_octaves * 12, scale, sr, y
 
 
-def test_cqt_real_warning():
-
-    def __test(real):
-        warnings.resetwarnings()
-        warnings.simplefilter('always')
-        with warnings.catch_warnings(record=True) as out:
-            C = librosa.cqt(y=y, sr=sr, real=real)
-            assert len(out) > 0
-            assert out[0].category is DeprecationWarning
-
-            if real:
-                assert np.isrealobj(C)
-            else:
-                assert np.iscomplexobj(C)
-
-    sr = 22050
-    y = np.zeros(2 * sr)
-
-    yield __test, False
-    yield __test, True
-
-
 def test_icqt():
 
     def __test(sr, scale, hop_length, over_sample, y):
