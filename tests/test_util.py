@@ -46,6 +46,26 @@ def test_frame():
             yield (__test, [frame, hop_length])
 
 
+def test_frame_fail():
+
+    __test = raises(librosa.ParameterError)(librosa.util.frame)
+
+    # First fail, not an ndarray
+    yield __test, list(range(10)), 5, 1
+
+    # Second fail: wrong ndims
+    yield __test, np.zeros((10, 10)), 5, 1
+
+    # Third fail: too short
+    yield __test, np.zeros(10), 20, 1
+
+    # Fourth fail: bad hop length
+    yield __test, np.zeros(10), 20, -1
+
+    # Fifth fail: discontiguous input
+    yield __test, np.zeros(20)[::2], 10, 1
+
+
 def test_pad_center():
 
     def __test(y, n, axis, mode):
