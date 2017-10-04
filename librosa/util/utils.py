@@ -58,10 +58,12 @@ def frame(y, frame_length=2048, hop_length=512):
     Raises
     ------
     ParameterError
-        If `y` is not contiguous in memory, framing is invalid.
-        See `np.ascontiguous()` for details.
+        If `y` is not contiguous in memory, not an `np.ndarray`, or
+        not one-dimensional.  See `np.ascontiguous()` for details.
 
         If `hop_length < 1`, frames cannot advance.
+
+        If `len(y) < frame_length`.
 
     Examples
     --------
@@ -77,6 +79,14 @@ def frame(y, frame_length=2048, hop_length=512):
 
     '''
 
+    if not isinstance(y, np.ndarray):
+        raise ParameterError('Input must be of type numpy.ndarray, '
+                             'given type(y)={}'.format(type(y)))
+
+    if y.ndim != 1:
+        raise ParameterError('Input must be one-dimensional, '
+                             'given y.ndim={}'.format(y.ndim))
+
     if len(y) < frame_length:
         raise ParameterError('Buffer is too short (n={:d})'
                              ' for frame_length={:d}'.format(len(y), frame_length))
@@ -86,8 +96,6 @@ def frame(y, frame_length=2048, hop_length=512):
 
     if not y.flags['C_CONTIGUOUS']:
         raise ParameterError('Input buffer must be contiguous.')
-
-    valid_audio(y)
 
     # Compute the number of frames that will fit. The end may get truncated.
     n_frames = 1 + int((len(y) - frame_length) / hop_length)
