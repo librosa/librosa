@@ -646,6 +646,44 @@ def test_tempogram_odf():
                     yield __test_peaks, tempo, win_length, window, norm
 
 
+def test_tempogram_odf_multi():
+
+    sr = 22050
+    hop_length = 512
+    duration = 8
+
+    # Generate a synthetic onset envelope
+    def __test(center, win_length, window, norm):
+        # Generate an evenly-spaced pulse train
+        odf = np.zeros((10, duration * sr // hop_length))
+        for i in range(10):
+            spacing = sr * 60. // (hop_length * (60 + 12 * i))
+            odf[i, ::int(spacing)] = 1
+
+        tempogram = librosa.feature.tempogram(onset_envelope=odf,
+                                              sr=sr,
+                                              hop_length=hop_length,
+                                              win_length=win_length,
+                                              window=window,
+                                              norm=norm)
+
+        for i in range(10):
+            tg_local = librosa.feature.tempogram(onset_envelope=odf[i],
+                                                 sr=sr,
+                                                 hop_length=hop_length,
+                                                 win_length=win_length,
+                                                 window=window,
+                                                 norm=norm)
+
+            assert np.allclose(tempogram[i], tg_local)
+
+    for center in [False, True]:
+        for win_length in [192, 384]:
+            for window in ['hann', np.ones, np.ones(win_length)]:
+                for norm in [None, 1, 2, np.inf]:
+                    yield __test, center, win_length, window, norm
+
+
 def test_cens():
     # load CQT data from Chroma Toolbox
     ct_cqt = load(os.path.join('data', 'features-CT-cqt.mat'))
