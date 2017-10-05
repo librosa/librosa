@@ -178,7 +178,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
         # RFFT and Conjugate here to match phase from DPWE code
         stft_matrix[:, bl_s:bl_t] = fft.fft(fft_window *
                                             y_frames[:, bl_s:bl_t],
-                                            axis=0)[:stft_matrix.shape[0]].conj()
+                                            axis=0)[:stft_matrix.shape[0]]
 
     return stft_matrix
 
@@ -293,7 +293,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
     for i in range(n_frames):
         sample = i * hop_length
         spec = stft_matrix[:, i].flatten()
-        spec = np.concatenate((spec.conj(), spec[-2:0:-1]), 0)
+        spec = np.concatenate((spec, spec[-2:0:-1].conj()), 0)
         ytmp = ifft_window * fft.ifft(spec).real
 
         y[sample:(sample + n_fft)] = y[sample:(sample + n_fft)] + ytmp
@@ -458,7 +458,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     # Pylint does not correctly infer the type here, but it's correct.
     # pylint: disable=maybe-no-member
     freq_angular = freq_angular.reshape((-1, 1))
-    bin_offset = (phase * diff_stft).imag / mag
+    bin_offset = (-phase * diff_stft).imag / mag
 
     bin_offset[mag < ref_power**0.5] = 0
 
