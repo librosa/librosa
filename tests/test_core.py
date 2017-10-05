@@ -228,7 +228,8 @@ def test_stft():
                          window=window,
                          center=False)
 
-        assert np.allclose(D, DATA['D'])
+        # conjugate matlab stft to fix the ' vs .' bug
+        assert np.allclose(D, DATA['D'].conj())
 
     for infile in files('data/core-stft-*.mat'):
         yield (__test, infile)
