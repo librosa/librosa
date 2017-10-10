@@ -237,12 +237,11 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                      '{:d}-octave CQT'.format(len_orig,
                                                               n_octaves))
 
-            # The additional scaling of sqrt(2) here is to implicitly rescale
-            # the filters
             my_y = audio.resample(my_y, my_sr, my_sr/2.0,
                                   res_type=res_type,
                                   scale=True)
-            my_y[:] *= np.sqrt(2)
+            # The re-scale the filters to compensate for downsampling
+            fft_basis[:] *= np.sqrt(2)
 
             my_sr /= 2.0
             my_hop //= 2
@@ -525,7 +524,7 @@ def icqt(C, sr=22050, hop_length=512, fmin=None,
          sparsity=0.01,
          window='hann',
          scale=True,
-         amin=np.sqrt(2)):
+         amin=1e-6):
     '''Compute the inverse constant-Q transform.
 
     Given a constant-Q transform representation `C` of an audio signal `y`,
@@ -639,8 +638,12 @@ def icqt(C, sr=22050, hop_length=512, fmin=None,
     n_fft = basis.shape[1]
 
     # The extra factor of lengths**0.5 corrects for within-octave tapering
-    # The factor of sqrt(2) compensates for downsampling effects
-    basis = basis.conj() * lengths[:, np.newaxis]**0.5 / np.sqrt(2)
+    basis = basis * np.sqrt(lengths[:, np.newaxis])
+
+    # Estimate the gain per filter
+    bdot = basis.conj().dot(basis.T)
+    bscale = np.sum(np.abs(bdot), axis=1)
+
     n_trim = basis.shape[1] // 2
 
     if scale:
@@ -685,7 +688,10 @@ def icqt(C, sr=22050, hop_length=512, fmin=None,
                                            n_frames,
                                            hop_length=oct_hop,
                                            win_length=int(lengths[i]),
-                                           n_fft=n_fft)
+                                           n_fft=n_fft,
+                                           norm=norm)
+
+            wss *= lengths[i]**2
 
             # Construct the response for this filter
             y_oct_i = np.zeros(n, dtype=C_oct.dtype)
@@ -701,7 +707,7 @@ def icqt(C, sr=22050, hop_length=512, fmin=None,
                 y_oct += y_oct_i
 
         # Remove the effects of zero-padding
-        y_oct = y_oct[n_trim:-n_trim]
+        y_oct = y_oct[n_trim:-n_trim] * bscale[i]
 
         if y is None:
             y = y_oct
@@ -731,6 +737,10 @@ def __cqt_filter_fft(sr, fmin, n_bins, bins_per_octave, tuning,
 
     # Filters are padded up to the nearest integral power of 2
     n_fft = basis.shape[1]
+
+    global_win = filters.get_window('hann', n_fft)[np.newaxis]
+
+    basis /= (1e-10 + global_win)
 
     if (hop_length is not None and
             n_fft < 2.0**(1 + np.ceil(np.log2(hop_length)))):
@@ -766,7 +776,8 @@ def __cqt_response(y, n_fft, hop_length, fft_basis, mode):
     '''Compute the filter response with a target STFT hop.'''
 
     # Compute the STFT matrix
-    D = stft(y, n_fft=n_fft, hop_length=hop_length, window=np.ones,
+    D = stft(y, n_fft=n_fft, hop_length=hop_length, window='hann',
+            #             window=np.ones,
              pad_mode=mode)
 
     # And filter response energy
