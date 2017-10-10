@@ -336,7 +336,9 @@ def test_icqt():
         residual = np.abs(y - yinv)
         # We'll tolerate 5.5% RMSE
         # error is lower on more recent numpy/scipy builds
-        assert np.sqrt(np.mean(residual**2)) <= 5.5e-2, np.sqrt(np.mean(residual**2))
+
+        resnorm = np.sqrt(np.mean(residual**2))
+        assert resnorm <= 5.5e-2, resnorm
 
     for sr in [22050, 44100]:
         y = make_signal(sr, 1.5, fmin='C2', fmax='C4')

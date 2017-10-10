@@ -1110,7 +1110,7 @@ def __window_ss_fill(x, win_sq, n_frames, hop_length):
 
 
 def window_sumsquare(window, n_frames, hop_length=512, win_length=None, n_fft=2048,
-                     dtype=np.float32):
+                     dtype=np.float32, norm=None):
     '''
     Compute the sum-square envelope of a window function at a given hop length.
 
@@ -1173,7 +1173,8 @@ def window_sumsquare(window, n_frames, hop_length=512, win_length=None, n_fft=20
     x = np.zeros(n, dtype=dtype)
 
     # Compute the squared window at the desired length
-    win_sq = get_window(window, win_length)**2
+    win_sq = get_window(window, win_length)
+    win_sq = util.normalize(win_sq, norm=norm)**2
     win_sq = util.pad_center(win_sq, n_fft)
 
     # Fill the envelope
