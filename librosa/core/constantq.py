@@ -640,7 +640,7 @@ def icqt(C, sr=22050, hop_length=512, fmin=None,
 
     # The extra factor of lengths**0.5 corrects for within-octave tapering
     # The factor of sqrt(2) compensates for downsampling effects
-    basis = basis.conj() * lengths[:, np.newaxis]**0.5 / np.sqrt(2)
+    basis = basis * lengths[:, np.newaxis]**0.5 / np.sqrt(2)
     n_trim = basis.shape[1] // 2
 
     if scale:
