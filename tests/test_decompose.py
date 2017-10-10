@@ -133,7 +133,7 @@ def test_nn_filter_mean():
     X = np.random.randn(10, 100)
 
     # Build a recurrence matrix, just for testing purposes
-    rec = librosa.segment.recurrence_matrix(X)
+    rec = librosa.segment.recurrence_matrix(X).astype(np.float)
 
     X_filtered = librosa.decompose.nn_filter(X)
 
@@ -149,7 +149,7 @@ def test_nn_filter_mean_rec():
     X = np.random.randn(10, 100)
 
     # Build a recurrence matrix, just for testing purposes
-    rec = librosa.segment.recurrence_matrix(X)
+    rec = librosa.segment.recurrence_matrix(X).astype(np.float)
 
     # Knock out the first three rows of links
     rec[:3] = 0
@@ -170,7 +170,7 @@ def test_nn_filter_mean_rec_sparse():
     X = np.random.randn(10, 100)
 
     # Build a recurrence matrix, just for testing purposes
-    rec = librosa.segment.recurrence_matrix(X, sparse=True)
+    rec = librosa.segment.recurrence_matrix(X, sparse=True).astype(np.float)
 
     X_filtered = librosa.decompose.nn_filter(X, rec=rec)
 
