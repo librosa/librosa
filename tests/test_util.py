@@ -162,6 +162,10 @@ def test_normalize():
     def __test_pass(X, norm, axis):
         X_norm = librosa.util.normalize(X, norm=norm, axis=axis)
 
+        # Shape and dtype checks
+        assert X_norm.dtype == X.dtype
+        assert X_norm.shape == X.shape
+
         if norm is None:
             assert np.allclose(X, X_norm)
             return
@@ -225,7 +229,8 @@ def test_normalize_threshold():
 def test_normalize_fill():
 
     def __test(fill, norm, threshold, axis, x, result):
-        xn = librosa.util.normalize(x, axis=axis,
+        xn = librosa.util.normalize(x,
+                                    axis=axis,
                                     fill=fill,
                                     threshold=threshold,
                                     norm=norm)
@@ -274,7 +279,8 @@ def test_normalize_fill():
     axis = None
     threshold = None
     norm = 2
-    yield __test, None, norm, threshold, axis, np.asarray([[3, 0], [0, 4]]), np.asarray([[0.6, 0], [0, 0.8]])
+    yield __test, None, norm, threshold, axis, np.asarray([[3, 0], [0, 4]]), np.asarray([[0, 0], [0, 0]])
+    yield __test, None, norm, threshold, axis, np.asarray([[3., 0], [0, 4]]), np.asarray([[0.6, 0], [0, 0.8]])
 
 
 def test_axis_sort():
