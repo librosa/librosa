@@ -751,23 +751,24 @@ def normalize(S, norm=np.inf, axis=0, threshold=None, fill=None):
     # indices where norm is below the threshold
     small_idx = length < threshold
 
+    Snorm = np.empty_like(S)
     if fill is None:
         # Leave small indices un-normalized
         length[small_idx] = 1.0
-        Snorm = S / length
+        Snorm[:] = S / length
 
     elif fill:
         # If we have a non-zero fill value, we locate those entries by
         # doing a nan-divide.
         # If S was finite, then length is finite (except for small positions)
         length[small_idx] = np.nan
-        Snorm = S / length
+        Snorm[:] = S / length
         Snorm[np.isnan(Snorm)] = fill_norm
     else:
         # Set small values to zero by doing an inf-divide.
         # This is safe (by IEEE-754) as long as S is finite.
         length[small_idx] = np.inf
-        Snorm = S / length
+        Snorm[:] = S / length
 
     return Snorm
 
