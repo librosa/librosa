@@ -121,7 +121,7 @@ convert to a given PCM subtype and additionally support several compressed forma
     import soundfile as sf
 
     rate = 44100
-    data = np.random.randn(rate * 10, 2)
+    data = np.random.uniform(-1, 1, size = (rate * 10, 2))
 
     # Write out audio as 24bit PCM WAV
     sf.write('stereo_file.wav', data, samplerate, subtype='PCM_24')
