@@ -638,7 +638,7 @@ def icqt(C, sr=22050, hop_length=512, fmin=None,
     n_fft = basis.shape[1]
 
     # The extra factor of lengths**0.5 corrects for within-octave tapering
-    basis = basis * lengths[:, np.newaxis]**0.5
+    basis = basis * np.sqrt(lengths[:, np.newaxis] * n_fft)
     n_trim = basis.shape[1] // 2
 
     if scale:
@@ -686,7 +686,7 @@ def icqt(C, sr=22050, hop_length=512, fmin=None,
                                            n_fft=n_fft,
                                            norm=norm)
 
-            wss *= lengths[i]**2 / np.sqrt(n_fft)
+            wss *= lengths[i]**2
 
             # Construct the response for this filter
             y_oct_i = np.zeros(n, dtype=C_oct.dtype)
