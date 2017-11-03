@@ -237,12 +237,11 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                      '{:d}-octave CQT'.format(len_orig,
                                                               n_octaves))
 
-            # The additional scaling of sqrt(2) here is to implicitly rescale
-            # the filters
             my_y = audio.resample(my_y, my_sr, my_sr/2.0,
                                   res_type=res_type,
                                   scale=True)
-            my_y[:] *= np.sqrt(2)
+            # The re-scale the filters to compensate for downsampling
+            fft_basis[:] *= np.sqrt(2)
 
             my_sr /= 2.0
             my_hop //= 2
@@ -525,7 +524,7 @@ def icqt(C, sr=22050, hop_length=512, fmin=None,
          sparsity=0.01,
          window='hann',
          scale=True,
-         amin=np.sqrt(2)):
+         amin=1e-5):
     '''Compute the inverse constant-Q transform.
 
     Given a constant-Q transform representation `C` of an audio signal `y`,
@@ -639,8 +638,7 @@ def icqt(C, sr=22050, hop_length=512, fmin=None,
     n_fft = basis.shape[1]
 
     # The extra factor of lengths**0.5 corrects for within-octave tapering
-    # The factor of sqrt(2) compensates for downsampling effects
-    basis = basis * lengths[:, np.newaxis]**0.5 / np.sqrt(2)
+    basis = basis * lengths[:, np.newaxis]**0.5
     n_trim = basis.shape[1] // 2
 
     if scale:
@@ -685,7 +683,10 @@ def icqt(C, sr=22050, hop_length=512, fmin=None,
                                            n_frames,
                                            hop_length=oct_hop,
                                            win_length=int(lengths[i]),
-                                           n_fft=n_fft)
+                                           n_fft=n_fft,
+                                           norm=norm)
+
+            wss *= lengths[i]**2 / np.sqrt(n_fft)
 
             # Construct the response for this filter
             y_oct_i = np.zeros(n, dtype=C_oct.dtype)
