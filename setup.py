@@ -44,7 +44,7 @@ setup(
         'docs': ['numpydoc', 'sphinx!=1.3.1', 'sphinx_rtd_theme',
                  'matplotlib >= 2.0.0',
                  'sphinxcontrib-versioning >= 2.2.1'],
-        'tests': ['matplotlib >= 2.0.0'],
+        'tests': ['matplotlib == 2.0'],
         'display': ['matplotlib >= 1.5'],
     }
 )
