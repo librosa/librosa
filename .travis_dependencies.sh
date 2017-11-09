@@ -11,7 +11,7 @@ conda_create ()
     conda update -q conda
     conda config --add channels pypi
     conda info -a
-    deps='pip numpy scipy nose coverage scikit-learn!=0.19.0 matplotlib numba'
+    deps='pip numpy scipy nose coverage scikit-learn!=0.19.0 matplotlib==2.0 numba'
 
     conda create -q -n $ENV_NAME "python=$TRAVIS_PYTHON_VERSION" $deps
     conda update --all
