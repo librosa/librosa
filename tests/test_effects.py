@@ -188,6 +188,17 @@ def test_trim():
             yield __test, y[0], top_db, ref, trim_duration
 
 
+def test_trim_empty():
+
+    y = np.zeros(1)
+
+    yt, idx = librosa.effects.trim(y, ref=1)
+
+    assert yt.size == 0
+    assert idx[0] == 0
+    assert idx[1] == 0
+
+
 def test_split():
 
     def __test(hop_length, frame_length, top_db):

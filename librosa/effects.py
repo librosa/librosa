@@ -473,11 +473,15 @@ def trim(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
 
     nonzero = np.flatnonzero(non_silent)
 
-    # Compute the start and end positions
-    # End position goes one frame past the last non-zero
-    start = int(core.frames_to_samples(nonzero[0], hop_length))
-    end = min(y.shape[-1],
-              int(core.frames_to_samples(nonzero[-1] + 1, hop_length)))
+    if nonzero.size > 0:
+        # Compute the start and end positions
+        # End position goes one frame past the last non-zero
+        start = int(core.frames_to_samples(nonzero[0], hop_length))
+        end = min(y.shape[-1],
+                int(core.frames_to_samples(nonzero[-1] + 1, hop_length)))
+    else:
+        # The signal only contains zeros
+        start, end = 0, 0
 
     # Build the mono/stereo index
     full_index = [slice(None)] * y.ndim
