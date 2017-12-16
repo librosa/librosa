@@ -362,6 +362,22 @@ def test_spectral_contrast_errors():
     yield __test, S, None, 200, 7, 0.02
 
 
+def test_spectral_flatness_errors():
+
+    @raises(librosa.ParameterError)
+    def __test(S, amin):
+        librosa.feature.spectral_flatness(S=S,
+                                          amin=amin)
+
+    S = np.ones((1025, 10))
+
+    # zero amin
+    yield __test, S, 0
+
+    # negative amin
+    yield __test, S, -1
+
+
 def test_rmse():
 
     def __test(n):

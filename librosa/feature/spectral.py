@@ -21,6 +21,7 @@ __all__ = ['spectral_centroid',
            'spectral_bandwidth',
            'spectral_contrast',
            'spectral_rolloff',
+           'spectral_flatness',
            'poly_features',
            'rmse',
            'zero_crossing_rate',
@@ -497,6 +498,70 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     ind = np.where(total_energy < threshold, np.nan, 1)
 
     return np.nanmin(ind * freq, axis=0, keepdims=True)
+
+
+def spectral_flatness(y=None, S=None, n_fft=2048, hop_length=512, amin=1e-5):
+    '''Compute spectral flatness
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(n,)] or None
+        audio time series
+
+    S : np.ndarray [shape=(d, t)] or None
+        (optional) spectrogram magnitude
+
+    n_fft : int > 0 [scalar]
+        FFT window size
+
+    hop_length : int > 0 [scalar]
+        hop length for STFT. See `librosa.core.stft` for details.
+
+    amin : float > 0 [scalar]
+        minimum threshold for `S` (=added noise floor for numerical stability)
+
+
+    Returns
+    -------
+    flatness : np.ndarray [shape=(1, t)]
+        spectral flatness for each frame.
+        The returned value is in [0, 1] and often converted to dB scale.
+
+
+    Examples
+    --------
+    From time-series input
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> flatness = librosa.feature.spectral_flatness(y=y)
+    >>> flatness
+    array([[  1.00000e+00,   5.82299e-03,   5.64624e-04, ...,   9.99063e-01,
+          1.00000e+00,   1.00000e+00]], dtype=float32)
+
+    From spectrogram input
+
+    >>> S, phase = librosa.magphase(librosa.stft(y))
+    >>> librosa.feature.spectral_flatness(S=S)
+    array([[  1.00000e+00,   5.82299e-03,   5.64624e-04, ...,   9.99063e-01,
+          1.00000e+00,   1.00000e+00]], dtype=float32)
+
+    '''
+    if amin <= 0:
+        raise ParameterError('amin must be strictly positive')
+
+    S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
+
+    if not np.isrealobj(S):
+        raise ParameterError('Spectral flatness is only defined '
+                             'with real-valued input')
+    elif np.any(S < 0):
+        raise ParameterError('Spectral flatness is only defined '
+                             'with non-negative energies')
+
+    gmean = np.exp(np.mean(np.log(np.maximum(amin, S ** 2)), 
+                           axis=0, keepdims=True))
+    amean = np.mean(np.maximum(amin, S ** 2), axis=0, keepdims=True)
+    return gmean / amean
 
 
 def rmse(y=None, S=None, frame_length=2048, hop_length=512,
