@@ -500,7 +500,7 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     return np.nanmin(ind * freq, axis=0, keepdims=True)
 
 
-def spectral_flatness(y=None, S=None, n_fft=2048, hop_length=512, amin=1e-5):
+def spectral_flatness(y=None, S=None, n_fft=2048, hop_length=512, amin=1e-10):
     '''Compute spectral flatness
 
     Parameters
@@ -549,7 +549,8 @@ def spectral_flatness(y=None, S=None, n_fft=2048, hop_length=512, amin=1e-5):
     if amin <= 0:
         raise ParameterError('amin must be strictly positive')
 
-    S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
+    S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length,
+                            power=1.)
 
     if not np.isrealobj(S):
         raise ParameterError('Spectral flatness is only defined '
@@ -558,7 +559,7 @@ def spectral_flatness(y=None, S=None, n_fft=2048, hop_length=512, amin=1e-5):
         raise ParameterError('Spectral flatness is only defined '
                              'with non-negative energies')
 
-    gmean = np.exp(np.mean(np.log(np.maximum(amin, S ** 2)), 
+    gmean = np.exp(np.mean(np.log(np.maximum(amin, S ** 2)),
                            axis=0, keepdims=True))
     amean = np.mean(np.maximum(amin, S ** 2), axis=0, keepdims=True)
     return gmean / amean
