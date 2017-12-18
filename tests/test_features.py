@@ -362,6 +362,33 @@ def test_spectral_contrast_errors():
     yield __test, S, None, 200, 7, 0.02
 
 
+def test_spectral_flatness_synthetic():
+
+    # to construct a spectrogram
+    n_fft = 2048
+    def __test(y, S, flatness_ref):
+        flatness = librosa.feature.spectral_flatness(y=y,
+                                                     S=S,
+                                                     n_fft=2048,
+                                                     hop_length=512)
+        assert np.allclose(flatness, flatness_ref)
+
+    # a known case
+    y, _ = librosa.load(__EXAMPLE_FILE)
+    flatness_ref = np.load("data/feature-spectral-flatness.npy")
+    yield __test, y, None, flatness_ref
+
+    # ones
+    S = np.ones((1 + n_fft // 2, 10))
+    flatness_ones = np.ones((1, 10))
+    yield __test, None, S, flatness_ones
+
+    # zeros
+    S = np.zeros((1 + n_fft // 2, 10))
+    flatness_zeros = np.ones((1, 10))
+    yield __test, None, S, flatness_zeros
+
+
 def test_spectral_flatness_errors():
 
     @raises(librosa.ParameterError)
