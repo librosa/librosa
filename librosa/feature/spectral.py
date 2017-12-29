@@ -500,8 +500,19 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     return np.nanmin(ind * freq, axis=0, keepdims=True)
 
 
-def spectral_flatness(y=None, S=None, n_fft=2048, hop_length=512, amin=1e-10):
+def spectral_flatness(y=None, S=None, n_fft=2048, hop_length=512,
+                      amin=1e-10, power=2.0):
     '''Compute spectral flatness
+
+    Spectral flatness (or tonality coefficient) is a measure to
+    quantify how much noise-like a sound is, as opposed to being
+    tone-like [1]_. A high spectral flatness (closer to 1.0)
+    indicates the spectrum is similar to white noise.
+    It is often converted to decibel.
+
+    .. [1] Dubnov, Shlomo  "Generalization of spectral flatness
+           measure for non-gaussian linear processes"
+           IEEE Signal Processing Letters, 2004, Vol. 11.
 
     Parameters
     ----------
@@ -509,7 +520,7 @@ def spectral_flatness(y=None, S=None, n_fft=2048, hop_length=512, amin=1e-10):
         audio time series
 
     S : np.ndarray [shape=(d, t)] or None
-        (optional) spectrogram magnitude
+        (optional) pre-computed spectrogram magnitude
 
     n_fft : int > 0 [scalar]
         FFT window size
@@ -520,6 +531,10 @@ def spectral_flatness(y=None, S=None, n_fft=2048, hop_length=512, amin=1e-10):
     amin : float > 0 [scalar]
         minimum threshold for `S` (=added noise floor for numerical stability)
 
+    power : float > 0 [scalar]
+        Exponent for the magnitude spectrogram.
+        e.g., 1 for energy, 2 for power, etc.
+        Power spectrogram is usually used for computing spectral flatness.
 
     Returns
     -------
@@ -545,6 +560,14 @@ def spectral_flatness(y=None, S=None, n_fft=2048, hop_length=512, amin=1e-10):
     array([[  1.00000e+00,   5.82299e-03,   5.64624e-04, ...,   9.99063e-01,
           1.00000e+00,   1.00000e+00]], dtype=float32)
 
+    From power spectrogram input
+
+    >>> S, phase = librosa.magphase(librosa.stft(y))
+    >>> S_power = S ** 2
+    >>> librosa.feature.spectral_flatness(S=S_power, power=1.0)
+    array([[  1.00000e+00,   5.82299e-03,   5.64624e-04, ...,   9.99063e-01,
+          1.00000e+00,   1.00000e+00]], dtype=float32)
+
     '''
     if amin <= 0:
         raise ParameterError('amin must be strictly positive')
@@ -559,9 +582,9 @@ def spectral_flatness(y=None, S=None, n_fft=2048, hop_length=512, amin=1e-10):
         raise ParameterError('Spectral flatness is only defined '
                              'with non-negative energies')
 
-    gmean = np.exp(np.mean(np.log(np.maximum(amin, S ** 2)),
+    gmean = np.exp(np.mean(np.log(np.maximum(amin, S ** power)),
                            axis=0, keepdims=True))
-    amean = np.mean(np.maximum(amin, S ** 2), axis=0, keepdims=True)
+    amean = np.mean(np.maximum(amin, S ** power), axis=0, keepdims=True)
     return gmean / amean
 
 
