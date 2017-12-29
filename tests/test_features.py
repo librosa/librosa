@@ -373,10 +373,10 @@ def test_spectral_flatness_synthetic():
                                                      hop_length=512)
         assert np.allclose(flatness, flatness_ref)
 
-    # a known case
-    y, _ = librosa.load(__EXAMPLE_FILE)
-    flatness_ref = np.load("data/feature-spectral-flatness.npy")
-    yield __test, y, None, flatness_ref
+    # comparison to a manual calculation result
+    S = np.array([[1, 3], [2, 1], [1, 2]])
+    flatness_ref = np.array([[0.7937005259, 0.7075558390]])
+    yield __test, None, S, flatness_ref
 
     # ones
     S = np.ones((1 + n_fft // 2, 10))
