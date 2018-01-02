@@ -582,9 +582,9 @@ def spectral_flatness(y=None, S=None, n_fft=2048, hop_length=512,
         raise ParameterError('Spectral flatness is only defined '
                              'with non-negative energies')
 
-    gmean = np.exp(np.mean(np.log(np.maximum(amin, S ** power)),
-                           axis=0, keepdims=True))
-    amean = np.mean(np.maximum(amin, S ** power), axis=0, keepdims=True)
+    S_thresh = np.maximum(amin, S ** power)
+    gmean = np.exp(np.mean(np.log(S_thresh), axis=0, keepdims=True))
+    amean = np.mean(S_thresh, axis=0, keepdims=True)
     return gmean / amean
 
 
