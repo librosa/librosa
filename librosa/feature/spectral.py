@@ -21,6 +21,7 @@ __all__ = ['spectral_centroid',
            'spectral_bandwidth',
            'spectral_contrast',
            'spectral_rolloff',
+           'spectral_flatness',
            'poly_features',
            'rmse',
            'zero_crossing_rate',
@@ -497,6 +498,94 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     ind = np.where(total_energy < threshold, np.nan, 1)
 
     return np.nanmin(ind * freq, axis=0, keepdims=True)
+
+
+def spectral_flatness(y=None, S=None, n_fft=2048, hop_length=512,
+                      amin=1e-10, power=2.0):
+    '''Compute spectral flatness
+
+    Spectral flatness (or tonality coefficient) is a measure to
+    quantify how much noise-like a sound is, as opposed to being
+    tone-like [1]_. A high spectral flatness (closer to 1.0)
+    indicates the spectrum is similar to white noise.
+    It is often converted to decibel.
+
+    .. [1] Dubnov, Shlomo  "Generalization of spectral flatness
+           measure for non-gaussian linear processes"
+           IEEE Signal Processing Letters, 2004, Vol. 11.
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(n,)] or None
+        audio time series
+
+    S : np.ndarray [shape=(d, t)] or None
+        (optional) pre-computed spectrogram magnitude
+
+    n_fft : int > 0 [scalar]
+        FFT window size
+
+    hop_length : int > 0 [scalar]
+        hop length for STFT. See `librosa.core.stft` for details.
+
+    amin : float > 0 [scalar]
+        minimum threshold for `S` (=added noise floor for numerical stability)
+
+    power : float > 0 [scalar]
+        Exponent for the magnitude spectrogram.
+        e.g., 1 for energy, 2 for power, etc.
+        Power spectrogram is usually used for computing spectral flatness.
+
+    Returns
+    -------
+    flatness : np.ndarray [shape=(1, t)]
+        spectral flatness for each frame.
+        The returned value is in [0, 1] and often converted to dB scale.
+
+
+    Examples
+    --------
+    From time-series input
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> flatness = librosa.feature.spectral_flatness(y=y)
+    >>> flatness
+    array([[  1.00000e+00,   5.82299e-03,   5.64624e-04, ...,   9.99063e-01,
+          1.00000e+00,   1.00000e+00]], dtype=float32)
+
+    From spectrogram input
+
+    >>> S, phase = librosa.magphase(librosa.stft(y))
+    >>> librosa.feature.spectral_flatness(S=S)
+    array([[  1.00000e+00,   5.82299e-03,   5.64624e-04, ...,   9.99063e-01,
+          1.00000e+00,   1.00000e+00]], dtype=float32)
+
+    From power spectrogram input
+
+    >>> S, phase = librosa.magphase(librosa.stft(y))
+    >>> S_power = S ** 2
+    >>> librosa.feature.spectral_flatness(S=S_power, power=1.0)
+    array([[  1.00000e+00,   5.82299e-03,   5.64624e-04, ...,   9.99063e-01,
+          1.00000e+00,   1.00000e+00]], dtype=float32)
+
+    '''
+    if amin <= 0:
+        raise ParameterError('amin must be strictly positive')
+
+    S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length,
+                            power=1.)
+
+    if not np.isrealobj(S):
+        raise ParameterError('Spectral flatness is only defined '
+                             'with real-valued input')
+    elif np.any(S < 0):
+        raise ParameterError('Spectral flatness is only defined '
+                             'with non-negative energies')
+
+    S_thresh = np.maximum(amin, S ** power)
+    gmean = np.exp(np.mean(np.log(S_thresh), axis=0, keepdims=True))
+    amean = np.mean(S_thresh, axis=0, keepdims=True)
+    return gmean / amean
 
 
 def rmse(y=None, S=None, frame_length=2048, hop_length=512,
