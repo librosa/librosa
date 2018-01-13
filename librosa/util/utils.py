@@ -1736,7 +1736,7 @@ def tiny(x):
     x = np.asarray(x)
 
     # Only floating types generate a tiny
-    if np.issubdtype(x.dtype, np.dtype(float).type) or np.issubdtype(x.dtype, np.dtype(complex).type):
+    if np.issubdtype(x.dtype, np.floating) or np.issubdtype(x.dtype, np.complexfloating):
         dtype = x.dtype
     else:
         dtype = np.float32
