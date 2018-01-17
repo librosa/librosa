@@ -216,7 +216,7 @@ def write_wav(path, y, sr, norm=False):
     util.valid_audio(y, mono=False)
 
     # normalize
-    if norm and np.issubdtype(y.dtype, np.float):
+    if norm and np.issubdtype(y.dtype, np.floating):
         wav = util.normalize(y, norm=np.inf, axis=None)
     else:
         wav = y
