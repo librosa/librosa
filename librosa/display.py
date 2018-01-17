@@ -653,7 +653,7 @@ def specshow(data, x_coords=None, y_coords=None,
     >>> plt.tight_layout()
     '''
 
-    if np.issubdtype(data.dtype, np.complex):
+    if np.issubdtype(data.dtype, np.complexfloating):
         warnings.warn('Trying to display complex-valued input. '
                       'Showing magnitude instead.')
         data = np.abs(data)
