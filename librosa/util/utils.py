@@ -155,7 +155,7 @@ def valid_audio(y, mono=True):
     if not isinstance(y, np.ndarray):
         raise ParameterError('data must be of type numpy.ndarray')
 
-    if not np.issubdtype(y.dtype, np.float):
+    if not np.issubdtype(y.dtype, np.floating):
         raise ParameterError('data must be floating-point')
 
     if mono and y.ndim != 1:
@@ -1537,7 +1537,7 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
 
     if np.all([isinstance(_, slice) for _ in idx]):
         slices = idx
-    elif np.all([np.issubdtype(type(_), np.int) for _ in idx]):
+    elif np.all([np.issubdtype(type(_), np.integer) for _ in idx]):
         slices = index_to_slice(np.asarray(idx), 0, shape[axis], pad=pad)
     else:
         raise ParameterError('Invalid index set: {}'.format(idx))
@@ -1651,7 +1651,7 @@ def softmask(X, X_ref, power=1, split_zeros=False):
 
     # We're working with ints, cast to float.
     dtype = X.dtype
-    if not np.issubdtype(dtype, float):
+    if not np.issubdtype(dtype, np.floating):
         dtype = np.float32
 
     # Re-scale the input arrays relative to the larger value
@@ -1736,7 +1736,7 @@ def tiny(x):
     x = np.asarray(x)
 
     # Only floating types generate a tiny
-    if np.issubdtype(x.dtype, float) or np.issubdtype(x.dtype, complex):
+    if np.issubdtype(x.dtype, np.floating) or np.issubdtype(x.dtype, np.complexfloating):
         dtype = x.dtype
     else:
         dtype = np.float32
