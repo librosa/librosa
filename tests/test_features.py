@@ -29,34 +29,22 @@ def test_delta():
     #       and width=3 filters
 
     def __test(width, order, axis, x):
-        # Compare trimmed and untrimmed versions
-        delta = librosa.feature.delta(x,
-                                      width=width,
-                                      order=order,
-                                      axis=axis,
-                                      trim=False)
-        delta_t = librosa.feature.delta(x,
+        delta   = librosa.feature.delta(x,
                                         width=width,
                                         order=order,
                                         axis=axis,
                                         trim=True)
 
         # Check that trimming matches the expected shape
-        eq_(x.shape, delta_t.shape)
-
-        # Check that trimming gives the right values in the right places
-        _s = [slice(None)] * delta.ndim
-        _s[axis] = slice(- width//2 - x.shape[axis], -(width//2)-1)
-        delta_retrim = delta[_s]
-        assert np.allclose(delta_t, delta_retrim)
+        eq_(x.shape, delta.shape)
 
         # Once we're sufficiently far into the signal (ie beyond half_len)
-        # (x + delta_t)[t] should approximate x[t+1] if x is actually linear
+        # (x + delta)[t] should approximate x[t+1] if x is actually linear
         slice_orig = [slice(None)] * x.ndim
         slice_out = [slice(None)] * delta.ndim
         slice_orig[axis] = slice(width//2 + 1, -width//2 + 1)
         slice_out[axis] = slice(width//2, -width//2)
-        assert np.allclose((x + delta_t)[slice_out], x[slice_orig])
+        assert np.allclose((x + delta)[slice_out], x[slice_orig])
 
     x = np.vstack([np.arange(100.0)] * 3)
 
