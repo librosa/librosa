@@ -7,12 +7,12 @@ import scipy.signal
 
 from .. import cache
 from ..util.exceptions import ParameterError
-
+from ..util.deprecation import Deprecated
 __all__ = ['delta', 'stack_memory']
 
 
 @cache(level=40)
-def delta(data, width=9, order=1, axis=-1, trim=True):
+def delta(data, width=9, order=1, axis=-1, trim=Deprecated()):
     r'''Compute delta features: local estimate of the derivative
     of the input data along the selected axis.
 
@@ -33,13 +33,14 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
         the axis along which to compute deltas.
         Default is -1 (columns).
 
-    trim      : bool
-        set to `True` to trim the output matrix to the original size.
+    trim      : bool [DEPRECATED]
+        This parameter is deprecated in 0.6.0 and will be removed
+        in 0.7.0.
 
     Returns
     -------
-    delta_data   : np.ndarray [shape=(d, t) or (d, t + window)]
-        delta matrix of `data`.
+    delta_data   : np.ndarray [shape=(d, t)]
+        delta matrix of `data` at specified order
 
     Notes
     -----
@@ -97,20 +98,12 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
     # Normalize the window so we're scale-invariant
     window /= np.sum(np.abs(window)**2)
 
-    # Pad out the data by repeating the border values (delta=0)
-    padding = [(0, 0)] * data.ndim
-    width = int(width)
-    padding[axis] = (width, width)
-    delta_x = np.pad(data, padding, mode='edge')
-
+    delta_x = data
     for _ in range(order):
-        delta_x = scipy.signal.lfilter(window, 1, delta_x, axis=axis)
-
-    # Cut back to the original shape of the input data
-    if trim:
-        idx = [slice(None)] * delta_x.ndim
-        idx[axis] = slice(- half_length - data.shape[axis], - half_length)
-        delta_x = delta_x[idx]
+        delta_x = scipy.ndimage.convolve1d(delta_x,
+                                           window,
+                                           axis=axis,
+                                           mode='nearest')
 
     return delta_x
 
