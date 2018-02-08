@@ -56,17 +56,17 @@ def delta(data, width=9, order=1, axis=-1, trim=Deprecated()):
     >>> mfcc_delta
     array([[ 29.278,  30.896, ...,  -0.   ,  -0.   ],
            [ 22.27 ,  25.54 , ...,   0.   ,   0.   ],
-           ..., 
+           ...,
            [ -1.198,  -0.613, ...,   0.   ,   0.   ],
            [ -0.529,  -0.204, ...,   0.   ,   0.   ]])
 
     >>> mfcc_delta2 = librosa.feature.delta(mfcc, order=2)
     >>> mfcc_delta2
-    array([[-0.992, -2.336, ..., -0.   , -0.   ],
-           [-0.024, -0.986, ...,  0.   ,  0.   ],
-           ..., 
-           [ 0.258,  0.341, ...,  0.   ,  0.   ],
-           [ 0.158,  0.198, ...,  0.   ,  0.   ]])
+    array([[  3.123e+00,   7.475e-01, ...,  -3.553e-15,  -3.553e-15],
+           [  2.933e+00,   1.101e+00, ...,   7.396e-32,   7.396e-32],
+           ...,
+           [  1.285e-01,   2.718e-01, ...,   0.000e+00,   0.000e+00],
+           [  1.157e-01,   1.889e-01, ...,   0.000e+00,   0.000e+00]])
 
     >>> import matplotlib.pyplot as plt
     >>> plt.subplot(3, 1, 1)
@@ -99,14 +99,12 @@ def delta(data, width=9, order=1, axis=-1, trim=Deprecated()):
     # Normalize the window so we're scale-invariant
     window /= np.sum(np.abs(window)**2)
 
-    delta_x = data
-    for _ in range(order):
-        delta_x = scipy.ndimage.convolve1d(delta_x,
-                                           window,
-                                           axis=axis,
-                                           mode='nearest')
+    window_in = window
 
-    return delta_x
+    for _ in range(order-1):
+        window = scipy.signal.convolve(window, window_in)
+
+    return scipy.ndimage.convolve1d(data, window, axis=axis, mode='nearest')
 
 
 @cache(level=40)
