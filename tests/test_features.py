@@ -54,7 +54,7 @@ def test_delta():
                 for order in [0, 1]:
                     for axis in range(x.ndim):
                         tf = __test
-                        if width < 3 or np.mod(width, 2) != 1:
+                        if width < 3 or np.mod(width, 2) != 1 or width > x.shape[axis]:
                             tf = raises(librosa.ParameterError)(__test)
                         if order != 1:
                             tf = raises(librosa.ParameterError)(__test)
