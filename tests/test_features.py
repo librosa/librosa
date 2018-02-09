@@ -26,14 +26,12 @@ warnings.simplefilter('always')
 # utils submodule
 def test_delta():
     # Note: this test currently only checks first-order differences
-    #       and width=3 filters
 
     def __test(width, order, axis, x):
         delta   = librosa.feature.delta(x,
                                         width=width,
                                         order=order,
-                                        axis=axis,
-                                        trim=True)
+                                        axis=axis)
 
         # Check that trimming matches the expected shape
         eq_(x.shape, delta.shape)
