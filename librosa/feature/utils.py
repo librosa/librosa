@@ -23,9 +23,10 @@ def delta(data, width=9, order=1, axis=-1, trim=Deprecated(), mode='interp', **k
     data      : np.ndarray
         the input data matrix (eg, spectrogram)
 
-    width     : int in `[3, data.shape[axis]]` odd [scalar]
+    width     : int, positive, odd [scalar]
         Number of frames over which to compute the delta features.
         Cannot exceed the length of `data` along the specified axis.
+        If `mode='interp'`, then `width` must be at least `data.shape[axis]`.
 
     order     : int > 0 [scalar]
         the order of the difference operator.
@@ -99,8 +100,8 @@ def delta(data, width=9, order=1, axis=-1, trim=Deprecated(), mode='interp', **k
 
     data = np.atleast_1d(data)
 
-    if width < 3 or np.mod(width, 2) != 1 or width > data.shape[axis]:
-        raise ParameterError('width must be an odd integer in [3, data.shape[axis]]')
+    if width < 3 or np.mod(width, 2) != 1 or (mode=='interp' and width > data.shape[axis]):
+        raise ParameterError('width must be an odd integer >= 3')
 
     if order <= 0 or not isinstance(order, int):
         raise ParameterError('order must be a positive integer')
