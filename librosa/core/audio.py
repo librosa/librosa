@@ -31,6 +31,11 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
          dtype=np.float32, res_type='kaiser_best'):
     """Load an audio file as a floating point time series.
 
+    Audio will be automatically resampled to the given rate
+    (default `sr=22050`).
+
+    To preserve the native sampling rate of the file, use `sr=None`.
+
     Parameters
     ----------
     path : string
