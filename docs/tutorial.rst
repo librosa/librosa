@@ -280,4 +280,4 @@ resulting in a feature matrix ``beat_features`` of dimension
 More examples
 ~~~~~~~~~~~~~
 
-More example scripts are provided in the `example gallery <https://librosa.github.io/librosa_gallery/>`_.
+More example scripts are provided in the :ref:`advanced examples <advanced>` section.
