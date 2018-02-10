@@ -1,5 +1,5 @@
 Installation instructions
-=========================
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 pypi
 ~~~~
@@ -38,13 +38,20 @@ If you've downloaded the archive manually from the `releases
     cd librosa-VERSION/
     python setup.py install
 
+If you intend to develop librosa or make changes to the source code, you can
+install with `pip install -e` to link to your actively developed source tree::
+
+    tar xzf librosa-VERSION.tar.gz
+    cd librosa-VERSION/
+    pip install -e .
+
 Alternately, the latest development version can be installed via pip::
 
     pip install git+https://github.com/librosa/librosa
 
 
 ffmpeg
-------
+~~~~~~
 
 To fuel `audioread` with more audio-decoding power, you can install *ffmpeg* which
 ships with many audio decoders.  Note that conda users on Linux and OSX will
