@@ -1,5 +1,5 @@
 Installation instructions
-=========================
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 pypi
 ~~~~
@@ -51,7 +51,7 @@ Alternately, the latest development version can be installed via pip::
 
 
 ffmpeg
-------
+~~~~~~
 
 To fuel `audioread` with more audio-decoding power, you can install *ffmpeg* which
 ships with many audio decoders.  Note that conda users on Linux and OSX will

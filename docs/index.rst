@@ -47,7 +47,7 @@ Advanced topics
 ---------------
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
 
     filters
     cache
@@ -57,7 +57,7 @@ Reference
 ---------
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
 
     changelog
     glossary

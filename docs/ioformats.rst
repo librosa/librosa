@@ -1,5 +1,5 @@
 Advanced I/O Use Cases
-======================
+^^^^^^^^^^^^^^^^^^^^^^
 
 This section covers advanced use cases for input and output which go beyond the I/O
 functionality currently provided by *librosa*.
