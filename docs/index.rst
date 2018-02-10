@@ -52,6 +52,7 @@ Advanced topics
     filters
     cache
     ioformats
+    advanced
 
 Reference
 ---------
