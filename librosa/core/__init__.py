@@ -26,6 +26,7 @@ Spectral representations
     istft
     ifgram
     cqt
+    icqt
     hybrid_cqt
     pseudo_cqt
     fmt
@@ -95,14 +96,6 @@ Dynamic Time Warping
 
     dtw
     fill_off_diagonal
-
-
-Deprecated
-----------
-.. autosummary::
-    :toctree: generated/
-
-    logamplitude
 """
 
 from .time_frequency import *  # pylint: disable=wildcard-import
