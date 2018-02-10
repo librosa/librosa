@@ -47,17 +47,18 @@ Advanced topics
 ---------------
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
 
     filters
     cache
     ioformats
+    advanced
 
 Reference
 ---------
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
 
     changelog
     glossary

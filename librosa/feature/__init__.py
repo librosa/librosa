@@ -19,6 +19,7 @@ Spectral features
     spectral_centroid
     spectral_bandwidth
     spectral_contrast
+    spectral_flatness
     spectral_rolloff
     poly_features
     tonnetz
