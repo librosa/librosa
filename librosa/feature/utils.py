@@ -106,9 +106,10 @@ def delta(data, width=9, order=1, axis=-1, trim=Deprecated(), mode='interp', **k
     if order <= 0 or not isinstance(order, int):
         raise ParameterError('order must be a positive integer')
 
+    kwargs.pop('deriv', None)
+    kwargs.setdefault('polyorder', order)
     return scipy.signal.savgol_filter(data, width,
                                       deriv=order,
-                                      polyorder=order,
                                       axis=axis,
                                       mode=mode,
                                       **kwargs)
