@@ -1,5 +1,5 @@
-Release notes
-=============
+Changelog
+=========
 
 v0.6.0rc0
 ---------
