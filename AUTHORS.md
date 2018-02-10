@@ -23,6 +23,12 @@ Contributors
 * Waldir Pimenta <https://github.com/waldyrious>
 * Hojin Lee <https://github.com/hojinlee>
 * Paul Brossier <https://github.com/piem>
+* Rimvydas Naktinis <https://github.com/naktinis>
+* Jackie Wu <https://github.com/wkcn>
+* Erik Peterson <https://github.com/EMCP>
+* Siddhartha Kumar <https://github.com/siddhugolu>
+* Julia Wilkins <https://github.com/jlw365>
+* Curtis Hawthorne <https://github.com/cghawthorne>
 
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
