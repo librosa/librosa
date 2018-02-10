@@ -284,7 +284,7 @@ def test_cqt_white_noise():
                     yield __test, fmin, n_octaves * 12, scale, sr, y
 
 
-def test_hcqt_white_noise():
+def test_hybrid_cqt_white_noise():
 
     def __test(fmin, n_bins, scale, sr, y):
 
@@ -334,11 +334,11 @@ def test_icqt():
         yinv = yinv[sr//2:-sr//2]
 
         residual = np.abs(y - yinv)
-        # We'll tolerate 5.5% RMSE
+        # We'll tolerate 10% RMSE
         # error is lower on more recent numpy/scipy builds
 
         resnorm = np.sqrt(np.mean(residual**2))
-        assert resnorm <= 5.5e-2, resnorm
+        assert resnorm <= 1e-1, resnorm
 
     for sr in [22050, 44100]:
         y = make_signal(sr, 1.5, fmin='C2', fmax='C4')
