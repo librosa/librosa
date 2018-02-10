@@ -29,6 +29,7 @@ Spectral representations
     icqt
     hybrid_cqt
     pseudo_cqt
+    iirt
     fmt
 
     interp_harmonics

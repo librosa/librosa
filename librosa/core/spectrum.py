@@ -626,6 +626,7 @@ def phase_vocoder(D, rate, hop_length=None):
     return d_stretch
 
 
+@cache(level=20)
 def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
          tuning=0.0, pad_mode='reflect', **kwargs):
     r'''Time-frequency representation using IIR filters [1]_.
@@ -642,8 +643,9 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
 
     When called with the default set of parameters, it will generate the TF-representation
     as described in [1]_ (pitch filterbank):
-     * 85 filters with MIDI pitches [24, 108] as `center_freqs`.
-     * each filter having a bandwith of one semitone.
+
+        * 85 filters with MIDI pitches [24, 108] as `center_freqs`.
+        * each filter having a bandwith of one semitone.
 
     .. [1] Müller, Meinard.
            "Information Retrieval for Music and Motion."
