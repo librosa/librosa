@@ -3,6 +3,7 @@
 '''Constant-Q transforms'''
 from __future__ import division
 
+import warnings
 import numpy as np
 import scipy.fftpack as fft
 from numba import jit
@@ -609,6 +610,9 @@ def icqt(C, sr=22050, hop_length=512, fmin=None,
     >>> y_hat = librosa.icqt(C=C, sr=sr, hop_length=hop_length,
     ...                 bins_per_octave=bins_per_octave)
     '''
+    warnings.warn('librosa.icqt is unstable, and subject to change in future versions. '
+                  'Please use with caution.')
+
     n_bins, n_frames = C.shape
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
 
@@ -738,10 +742,6 @@ def __cqt_filter_fft(sr, fmin, n_bins, bins_per_octave, tuning,
     # Filters are padded up to the nearest integral power of 2
     n_fft = basis.shape[1]
 
-    global_win = filters.get_window('hann', n_fft)[np.newaxis]
-
-    basis /= (1e-10 + global_win)
-
     if (hop_length is not None and
             n_fft < 2.0**(1 + np.ceil(np.log2(hop_length)))):
 
@@ -776,8 +776,8 @@ def __cqt_response(y, n_fft, hop_length, fft_basis, mode):
     '''Compute the filter response with a target STFT hop.'''
 
     # Compute the STFT matrix
-    D = stft(y, n_fft=n_fft, hop_length=hop_length, window='hann',
-            #             window=np.ones,
+    D = stft(y, n_fft=n_fft, hop_length=hop_length,
+             window='ones',
              pad_mode=mode)
 
     # And filter response energy
