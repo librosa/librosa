@@ -8,9 +8,11 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Effects &mdash; librosa 0.5.0 documentation</title>
+  <title>Effects &mdash; librosa 0.6.0rc0 documentation</title>
   
 
+  
+  
   
   
 
@@ -28,6 +30,8 @@
   
 
   
+    <link rel="stylesheet" href="_static/gallery.css" type="text/css" />
+  
     <link rel="stylesheet" href="_static/banner.css" type="text/css" />
   
 
@@ -35,7 +39,7 @@
         <link rel="index" title="Index"
               href="genindex.html"/>
         <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="librosa 0.5.0 documentation" href="index.html"/>
+    <link rel="top" title="librosa 0.6.0rc0 documentation" href="index.html"/>
         <link rel="next" title="librosa.effects.hpss" href="generated/librosa.effects.hpss.html"/>
         <link rel="prev" title="librosa.decompose.nn_filter" href="generated/librosa.decompose.nn_filter.html"/> 
 
@@ -46,6 +50,7 @@
 
 <body class="wy-body-for-nav" role="document">
 
+   
   <div class="wy-grid-for-nav">
 
     
@@ -65,7 +70,7 @@
             
             
               <div class="version">
-                0.5
+                0.6
               </div>
             
           
@@ -86,7 +91,10 @@
           
             
             
-                <ul>
+              
+            
+            
+              <ul>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation instructions</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
 </ul>
@@ -125,9 +133,10 @@
 <li class="toctree-l1"><a class="reference internal" href="filters.html">Filters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cache.html">Caching</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ioformats.html">Advanced I/O Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced.html">Advanced examples</a></li>
 </ul>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="changelog.html">Release notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
 <li class="toctree-l1"><a class="reference internal" href="glossary.html">Glossary</a></li>
 </ul>
 
@@ -141,8 +150,10 @@
 
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="index.html">librosa</a>
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">librosa</a>
+        
       </nav>
 
 
@@ -151,35 +162,46 @@
         <div class="rst-content">
           
 
- 
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 <div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-    <li><a href="index.html">Docs</a> &raquo;</li>
-      
-    <li>Effects</li>
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Effects</li>
+    
+    
       <li class="wy-breadcrumbs-aside">
         
-          
+            
             <a href="_sources/effects.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  
-
-
-
-
-
-<span class="target" id="module-librosa.effects"><span id="effects"></span></span><div class="section" id="id1">
+  <span class="target" id="module-librosa.effects"><span id="effects"></span></span><div class="section" id="id1">
 <h1>Effects<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="harmonic-percussive-source-separation">
 <h2>Harmonic-percussive source separation<a class="headerlink" href="#harmonic-percussive-source-separation" title="Permalink to this headline">¶</a></h2>
@@ -242,15 +264,18 @@
 
 
            </div>
+           <div class="articleComments">
+            
+           </div>
           </div>
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="generated/librosa.effects.hpss.html" class="btn btn-neutral float-right" title="librosa.effects.hpss" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="generated/librosa.effects.hpss.html" class="btn btn-neutral float-right" title="librosa.effects.hpss" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="generated/librosa.decompose.nn_filter.html" class="btn btn-neutral" title="librosa.decompose.nn_filter" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="generated/librosa.decompose.nn_filter.html" class="btn btn-neutral" title="librosa.decompose.nn_filter" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -277,21 +302,29 @@
 <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
     <span class="rst-current-version" data-toggle="rst-current-version">
         <span class="fa fa-book"> Other Versions</span>
-        v: 0.5.0
+        v: master
         <span class="fa fa-caret-down"></span>
     </span>
     <div class="rst-other-versions">
         <dl>
             <dt>Tags</dt>
             <dd><a href="0.4.0rc1/effects.html">0.4.0rc1</a></dd>
+            <dd><a href="0.4.0rc2/effects.html">0.4.0rc2</a></dd>
+            <dd><a href="0.4.1/effects.html">0.4.1</a></dd>
+            <dd><a href="0.4.1rc0/effects.html">0.4.1rc0</a></dd>
             <dd><a href="0.4.2/effects.html">0.4.2</a></dd>
             <dd><a href="0.4.3/effects.html">0.4.3</a></dd>
             <dd><a href="0.4.3rc0/effects.html">0.4.3rc0</a></dd>
             <dd><a href="0.5.0/effects.html">0.5.0</a></dd>
             <dd><a href="0.5.0rc0/effects.html">0.5.0rc0</a></dd>
+            <dd><a href="0.5.1/effects.html">0.5.1</a></dd>
+            <dd><a href="0.6.0rc0/effects.html">0.6.0rc0</a></dd>
+            <dd><a href="v0.1.0/index.html">v0.1.0</a></dd>
+            <dd><a href="v0.4.0/effects.html">v0.4.0</a></dd>
         </dl>
         <dl>
             <dt>Branches</dt>
+            <dd><a href="display-bin-centering/effects.html">display-bin-centering</a></dd>
             <dd><a href="master/effects.html">master</a></dd>
         </dl>
     </div>
@@ -303,15 +336,17 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'0.5.0',
+            VERSION:'0.6.0rc0',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
         };
     </script>
       <script type="text/javascript" src="_static/jquery.js"></script>
       <script type="text/javascript" src="_static/underscore.js"></script>
       <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 
   
 

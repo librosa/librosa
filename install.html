@@ -8,9 +8,11 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Installation instructions &mdash; librosa 0.5.0 documentation</title>
+  <title>Installation instructions &mdash; librosa 0.6.0rc0 documentation</title>
   
 
+  
+  
   
   
 
@@ -28,6 +30,8 @@
   
 
   
+    <link rel="stylesheet" href="_static/gallery.css" type="text/css" />
+  
     <link rel="stylesheet" href="_static/banner.css" type="text/css" />
   
 
@@ -35,7 +39,7 @@
         <link rel="index" title="Index"
               href="genindex.html"/>
         <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="librosa 0.5.0 documentation" href="index.html"/>
+    <link rel="top" title="librosa 0.6.0rc0 documentation" href="index.html"/>
         <link rel="next" title="Tutorial" href="tutorial.html"/>
         <link rel="prev" title="LibROSA" href="index.html"/> 
 
@@ -46,6 +50,7 @@
 
 <body class="wy-body-for-nav" role="document">
 
+   
   <div class="wy-grid-for-nav">
 
     
@@ -65,7 +70,7 @@
             
             
               <div class="version">
-                0.5
+                0.6
               </div>
             
           
@@ -86,14 +91,15 @@
           
             
             
-                <ul class="current">
+              
+            
+            
+              <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation instructions</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#pypi">pypi</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#conda">conda</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#source">Source</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#ffmpeg">ffmpeg</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#source">Source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#ffmpeg">ffmpeg</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial.html">Tutorial</a></li>
@@ -114,9 +120,10 @@
 <li class="toctree-l1"><a class="reference internal" href="filters.html">Filters</a></li>
 <li class="toctree-l1"><a class="reference internal" href="cache.html">Caching</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ioformats.html">Advanced I/O Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced.html">Advanced examples</a></li>
 </ul>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="changelog.html">Release notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
 <li class="toctree-l1"><a class="reference internal" href="glossary.html">Glossary</a></li>
 </ul>
 
@@ -130,8 +137,10 @@
 
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="index.html">librosa</a>
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">librosa</a>
+        
       </nav>
 
 
@@ -140,35 +149,46 @@
         <div class="rst-content">
           
 
- 
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 <div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-    <li><a href="index.html">Docs</a> &raquo;</li>
-      
-    <li>Installation instructions</li>
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Installation instructions</li>
+    
+    
       <li class="wy-breadcrumbs-aside">
         
-          
+            
             <a href="_sources/install.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  
-
-
-
-
-
-<div class="section" id="installation-instructions">
+  <div class="section" id="installation-instructions">
 <h1>Installation instructions<a class="headerlink" href="#installation-instructions" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="pypi">
 <h2>pypi<a class="headerlink" href="#pypi" title="Permalink to this headline">¶</a></h2>
@@ -205,12 +225,20 @@ This can be achieved by executing the following command:</p>
 <span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span>
 </pre></div>
 </div>
+<p>If you intend to develop librosa or make changes to the source code, you can
+install with <em class="xref py py-obj">pip install -e</em> to link to your actively developed source tree:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">tar</span> <span class="n">xzf</span> <span class="n">librosa</span><span class="o">-</span><span class="n">VERSION</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">gz</span>
+<span class="n">cd</span> <span class="n">librosa</span><span class="o">-</span><span class="n">VERSION</span><span class="o">/</span>
+<span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">e</span> <span class="o">.</span>
+</pre></div>
+</div>
 <p>Alternately, the latest development version can be installed via pip:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">git</span><span class="o">+</span><span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">librosa</span><span class="o">/</span><span class="n">librosa</span>
 </pre></div>
 </div>
+</div>
 <div class="section" id="ffmpeg">
-<h3>ffmpeg<a class="headerlink" href="#ffmpeg" title="Permalink to this headline">¶</a></h3>
+<h2>ffmpeg<a class="headerlink" href="#ffmpeg" title="Permalink to this headline">¶</a></h2>
 <p>To fuel <code class="xref py py-obj docutils literal"><span class="pre">audioread</span></code> with more audio-decoding power, you can install <em>ffmpeg</em> which
 ships with many audio decoders.  Note that conda users on Linux and OSX will
 have this installed by default; Windows users must install ffmpeg separately.</p>
@@ -218,19 +246,21 @@ have this installed by default; Windows users must install ffmpeg separately.</p
 <em class="xref py py-obj">brew install ffmpeg</em> or get a binary version from their website <a class="reference external" href="https://www.ffmpeg.org">https://www.ffmpeg.org</a>.</p>
 </div>
 </div>
-</div>
 
 
+           </div>
+           <div class="articleComments">
+            
            </div>
           </div>
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="tutorial.html" class="btn btn-neutral float-right" title="Tutorial" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="tutorial.html" class="btn btn-neutral float-right" title="Tutorial" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="index.html" class="btn btn-neutral" title="LibROSA" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="index.html" class="btn btn-neutral" title="LibROSA" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -257,21 +287,29 @@ have this installed by default; Windows users must install ffmpeg separately.</p
 <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
     <span class="rst-current-version" data-toggle="rst-current-version">
         <span class="fa fa-book"> Other Versions</span>
-        v: 0.5.0
+        v: master
         <span class="fa fa-caret-down"></span>
     </span>
     <div class="rst-other-versions">
         <dl>
             <dt>Tags</dt>
             <dd><a href="0.4.0rc1/install.html">0.4.0rc1</a></dd>
+            <dd><a href="0.4.0rc2/install.html">0.4.0rc2</a></dd>
+            <dd><a href="0.4.1/install.html">0.4.1</a></dd>
+            <dd><a href="0.4.1rc0/install.html">0.4.1rc0</a></dd>
             <dd><a href="0.4.2/install.html">0.4.2</a></dd>
             <dd><a href="0.4.3/install.html">0.4.3</a></dd>
             <dd><a href="0.4.3rc0/install.html">0.4.3rc0</a></dd>
             <dd><a href="0.5.0/install.html">0.5.0</a></dd>
             <dd><a href="0.5.0rc0/install.html">0.5.0rc0</a></dd>
+            <dd><a href="0.5.1/install.html">0.5.1</a></dd>
+            <dd><a href="0.6.0rc0/install.html">0.6.0rc0</a></dd>
+            <dd><a href="v0.1.0/index.html">v0.1.0</a></dd>
+            <dd><a href="v0.4.0/install.html">v0.4.0</a></dd>
         </dl>
         <dl>
             <dt>Branches</dt>
+            <dd><a href="display-bin-centering/install.html">display-bin-centering</a></dd>
             <dd><a href="master/install.html">master</a></dd>
         </dl>
     </div>
@@ -283,15 +321,17 @@ have this installed by default; Windows users must install ffmpeg separately.</p
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'0.5.0',
+            VERSION:'0.6.0rc0',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
         };
     </script>
       <script type="text/javascript" src="_static/jquery.js"></script>
       <script type="text/javascript" src="_static/underscore.js"></script>
       <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 
   
 
