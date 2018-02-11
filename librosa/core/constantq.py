@@ -598,11 +598,13 @@ def icqt(C, sr=22050, hop_length=512, fmin=None,
     Examples
     --------
     Using default parameters
+
     >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=15)
     >>> C = librosa.cqt(y=y, sr=sr)
     >>> y_hat = librosa.icqt(C=C, sr=sr)
 
     Or with a different hop length and frequency resolution:
+
     >>> hop_length = 256
     >>> bins_per_octave = 12 * 3
     >>> C = librosa.cqt(y=y, sr=sr, hop_length=256, n_bins=7*bins_per_octave,
