@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''Utilities for spectral processing'''
+import warnings
 
 import numpy as np
 import scipy.fftpack as fft
@@ -852,6 +853,10 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
     if amin <= 0:
         raise ParameterError('amin must be strictly positive')
 
+    if np.issubdtype(S.dtype, np.complexfloating):
+        warnings.warn('Input was complex. Phase information will be discarded.'
+                      'Only input magnitudes to avoid this warning (e.g. `np.abs(S)`).')
+
     magnitude = np.abs(S)
 
     if six.callable(ref):
@@ -938,6 +943,10 @@ def amplitude_to_db(S, ref=1.0, amin=1e-5, top_db=80.0):
     -----
     This function caches at level 30.
     '''
+    if np.issubdtype(S.dtype, np.complexfloating):
+        warnings.warn('Input was complex. Phase information will be discarded.'
+                      'Only input magnitudes to avoid this warning (e.g. `np.abs(S)`).')
+
     magnitude = np.abs(S)
 
     if six.callable(ref):
@@ -946,8 +955,8 @@ def amplitude_to_db(S, ref=1.0, amin=1e-5, top_db=80.0):
     else:
         ref_value = np.abs(ref)
 
-    magnitude **= 2
-    return power_to_db(magnitude, ref=ref_value**2, amin=amin**2,
+    power = magnitude**2
+    return power_to_db(power, ref=ref_value**2, amin=amin**2,
                        top_db=top_db)
 
 
