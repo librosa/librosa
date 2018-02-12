@@ -26,6 +26,7 @@ New features
   - `#435`_ `core.icqt` inverse constant-Q transform (unstable). *Brian McFee*
 
 Other changes
+  - `#671`_ Warn users when phase information is lost in dB conversion. *Carl Thome*
   - `#666`_ Expanded documentation for `load`'s resampling behavior. *Brian McFee*
   - `#656`_ Future-proofing numpy data type checks. *Carl Thome*
   - `#642`_ Updated unit tests for compatibility with matplotlib 2.1. *Brian McFee*
@@ -53,6 +54,7 @@ API changes and compatibility
   - The following features have been deprecated, and will be removed in 0.7.0:
       - `trim=` parameter to `feature.delta`
 
+.. _#671: https://github.com/librosa/librosa/pull/671
 .. _#663: https://github.com/librosa/librosa/pull/663
 .. _#646: https://github.com/librosa/librosa/pull/646
 .. _#634: https://github.com/librosa/librosa/pull/634
