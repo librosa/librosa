@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''Utilities for spectral processing'''
+import warnings
 
 import numpy as np
 import scipy.fftpack as fft
@@ -480,7 +481,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     return if_gram, stft_matrix
 
 
-def magphase(D):
+def magphase(D, power=1):
     """Separate a complex-valued spectrogram D into its magnitude (S)
     and phase (P) components, so that `D = S * P`.
 
@@ -489,12 +490,15 @@ def magphase(D):
     ----------
     D       : np.ndarray [shape=(d, t), dtype=complex]
         complex-valued spectrogram
+    power : float > 0
+        Exponent for the magnitude spectrogram,
+        e.g., 1 for energy, 2 for power, etc.
 
 
     Returns
     -------
     D_mag   : np.ndarray [shape=(d, t), dtype=real]
-        magnitude of `D`
+        magnitude of `D`, raised to `power`
     D_phase : np.ndarray [shape=(d, t), dtype=complex]
         `exp(1.j * phi)` where `phi` is the phase of `D`
 
@@ -534,6 +538,7 @@ def magphase(D):
     """
 
     mag = np.abs(D)
+    mag **= power
     phase = np.exp(1.j * np.angle(D))
 
     return mag, phase
@@ -849,10 +854,18 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
 
     """
 
+    S = np.asarray(S)
+
     if amin <= 0:
         raise ParameterError('amin must be strictly positive')
 
-    magnitude = np.abs(S)
+    if np.issubdtype(S.dtype, np.complexfloating):
+        warnings.warn('power_to_db was called on complex input so phase '
+                      'information will be discarded. To suppress this warning, '
+                      'call power_to_db(magphase(D, power=2)[0]) instead.')
+        magnitude = np.abs(S)
+    else:
+        magnitude = S
 
     if six.callable(ref):
         # User supplied a function to calculate reference power
@@ -938,6 +951,14 @@ def amplitude_to_db(S, ref=1.0, amin=1e-5, top_db=80.0):
     -----
     This function caches at level 30.
     '''
+
+    S = np.asarray(S)
+
+    if np.issubdtype(S.dtype, np.complexfloating):
+        warnings.warn('amplitude_to_db was called on complex input so phase '
+                      'information will be discarded. To suppress this warning, '
+                      'call amplitude_to_db(magphase(D)[0]) instead.')
+
     magnitude = np.abs(S)
 
     if six.callable(ref):
@@ -946,8 +967,9 @@ def amplitude_to_db(S, ref=1.0, amin=1e-5, top_db=80.0):
     else:
         ref_value = np.abs(ref)
 
-    magnitude **= 2
-    return power_to_db(magnitude, ref=ref_value**2, amin=amin**2,
+    power = np.square(magnitude, out=magnitude)
+
+    return power_to_db(power, ref=ref_value**2, amin=amin**2,
                        top_db=top_db)
 
 
