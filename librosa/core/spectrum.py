@@ -850,6 +850,8 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
 
     """
 
+    S = np.array(S)
+
     if amin <= 0:
         raise ParameterError('amin must be strictly positive')
 
@@ -943,6 +945,9 @@ def amplitude_to_db(S, ref=1.0, amin=1e-5, top_db=80.0):
     -----
     This function caches at level 30.
     '''
+
+    S = np.array(S)
+
     if np.issubdtype(S.dtype, np.complexfloating):
         warnings.warn('Input was complex. Phase information will be discarded.'
                       'Only input magnitudes to avoid this warning (e.g. `np.abs(S)`).')
