@@ -481,7 +481,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     return if_gram, stft_matrix
 
 
-def magphase(D):
+def magphase(D, power=1):
     """Separate a complex-valued spectrogram D into its magnitude (S)
     and phase (P) components, so that `D = S * P`.
 
@@ -490,12 +490,15 @@ def magphase(D):
     ----------
     D       : np.ndarray [shape=(d, t), dtype=complex]
         complex-valued spectrogram
+    power : float > 0
+        Exponent for the magnitude spectrogram,
+        e.g., 1 for energy, 2 for power, etc.
 
 
     Returns
     -------
     D_mag   : np.ndarray [shape=(d, t), dtype=real]
-        magnitude of `D`
+        magnitude of `D`, raised to `power`
     D_phase : np.ndarray [shape=(d, t), dtype=complex]
         `exp(1.j * phi)` where `phi` is the phase of `D`
 
@@ -534,7 +537,7 @@ def magphase(D):
 
     """
 
-    mag = np.abs(D)
+    mag = np.pow(np.abs(D), power)
     phase = np.exp(1.j * np.angle(D))
 
     return mag, phase
@@ -856,10 +859,12 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
         raise ParameterError('amin must be strictly positive')
 
     if np.issubdtype(S.dtype, np.complexfloating):
-        warnings.warn('Input was complex. Phase information will be discarded.'
-                      'Only input magnitudes to avoid this warning (e.g. `np.abs(S)`).')
-
-    magnitude = np.abs(S)
+        warnings.warn('power_to_db was called on complex input so phase '
+                      'information will be discarded. To suppress this warning, '
+                      'call power_to_db(magphase(S, power=2)[0]) instead.')
+        magnitude = np.abs(S)
+    else:
+        magnitude = S
 
     if six.callable(ref):
         # User supplied a function to calculate reference power
@@ -949,8 +954,9 @@ def amplitude_to_db(S, ref=1.0, amin=1e-5, top_db=80.0):
     S = np.asarray(S)
 
     if np.issubdtype(S.dtype, np.complexfloating):
-        warnings.warn('Input was complex. Phase information will be discarded.'
-                      'Only input magnitudes to avoid this warning (e.g. `np.abs(S)`).')
+        warnings.warn('amplitude_to_db was called on complex input so phase '
+                      'information will be discarded. To suppress this warning, '
+                      'call amplitude_to_db(magphase(S)[0]) instead.')
 
     magnitude = np.abs(S)
 
@@ -961,6 +967,7 @@ def amplitude_to_db(S, ref=1.0, amin=1e-5, top_db=80.0):
         ref_value = np.abs(ref)
 
     power = np.square(magnitude, out=magnitude)
+
     return power_to_db(power, ref=ref_value**2, amin=amin**2,
                        top_db=top_db)
 
