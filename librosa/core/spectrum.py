@@ -960,7 +960,7 @@ def amplitude_to_db(S, ref=1.0, amin=1e-5, top_db=80.0):
     else:
         ref_value = np.abs(ref)
 
-    power = magnitude**2
+    power = np.square(magnitude, out=magnitude)
     return power_to_db(power, ref=ref_value**2, amin=amin**2,
                        top_db=top_db)
 
