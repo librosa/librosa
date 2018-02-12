@@ -537,7 +537,8 @@ def magphase(D, power=1):
 
     """
 
-    mag = np.pow(np.abs(D), power)
+    mag = np.abs(D)
+    mag **= power
     phase = np.exp(1.j * np.angle(D))
 
     return mag, phase
