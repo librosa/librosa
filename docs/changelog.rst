@@ -55,6 +55,10 @@ API changes and compatibility
   - The following features have been deprecated, and will be removed in 0.7.0:
       - `trim=` parameter to `feature.delta`
 
+  - `#616`_ `write_wav` no longer supports integer-typed waveforms. This is due to enforcing
+    consistency with `util.valid_audio` checks elsewhere in the codebase. If you have existing
+    code that requires integer-valued output, consider using `soundfile.write` instead.
+
 .. _#674: https://github.com/librosa/librosa/pull/674
 .. _#671: https://github.com/librosa/librosa/pull/671
 .. _#663: https://github.com/librosa/librosa/pull/663
