@@ -141,6 +141,7 @@ intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
                        'matplotlib': ('http://matplotlib.org/', None),
                        'sklearn': ('http://scikit-learn.org/stable/', None),
                        'resampy': ('http://resampy.readthedocs.io/en/latest/', None),
+                       'soundfile': ('https://pysoundfile.readthedocs.io/en/latest', None),
                        'librosa_gallery': ('https://librosa.github.io/librosa_gallery/', None)}
 
 # Add any paths that contain templates here, relative to this directory.

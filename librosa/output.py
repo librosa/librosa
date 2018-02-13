@@ -119,7 +119,7 @@ def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
 
 def times_csv(path, times, annotations=None, delimiter=',', fmt='%0.3f'):
     r"""Save time steps as in CSV format.  This can be used to store the output
-    of a beat-tracker or segmentation algorihtm.
+    of a beat-tracker or segmentation algorithm.
 
     If only `times` are provided, the file will contain each value
     of `times` on a row::
@@ -187,6 +187,10 @@ def times_csv(path, times, annotations=None, delimiter=',', fmt='%0.3f'):
 def write_wav(path, y, sr, norm=False):
     """Output a time series as a .wav file
 
+    Note: only mono or stereo, floating-point data is supported.
+        For more advanced and flexible output options, refer to
+        `soundfile`.
+
     Parameters
     ----------
     path : str
@@ -210,6 +214,9 @@ def write_wav(path, y, sr, norm=False):
     ...                      duration=5.0)
     >>> librosa.output.write_wav('file_trim_5s.wav', y, sr)
 
+    See Also
+    --------
+    soundfile.write
     """
 
     # Validate the buffer.  Stereo is okay here.
