@@ -24,9 +24,11 @@ def test_write_wav():
 
     def __test(mono, norm):
 
-        y, sr = librosa.load('data/test1_22050.wav', sr=None, mono=mono)
+        fpath = os.path.join('data', 'test1_22050.wav')
+        y, sr = librosa.load(fpath, sr=None, mono=mono)
 
         _, tfname = tempfile.mkstemp()
+        os.close(_)
 
         librosa.output.write_wav(tfname, y, sr, norm=norm)
 
@@ -55,6 +57,7 @@ def test_times_csv():
     def __test(times, annotations, sep):
 
         _, tfname = tempfile.mkstemp()
+        os.close(_)
 
         # Dump to disk
         librosa.output.times_csv(tfname, times, annotations=annotations,
@@ -97,6 +100,7 @@ def test_annotation():
     def __test(times, annotations, sep):
 
         _, tfname = tempfile.mkstemp()
+        os.close(_)
 
         # Dump to disk
         librosa.output.annotation(tfname, times, annotations=annotations,

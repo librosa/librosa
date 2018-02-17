@@ -9,6 +9,7 @@ try:
 except:
     pass
 
+import platform
 import numpy as np
 import scipy.sparse
 from nose.tools import raises, eq_
@@ -603,12 +604,17 @@ def test_files():
         s1 = slice(offset, None)
         s2 = slice(limit)
 
-        assert set(files) == set(output[s1][s2])
+        assert set(files) == set(output[s1][s2]), (files, output[s1][s2])
 
+    if platform.system() == 'Windows':
+        cases = [False]
+    else:
+        cases = [False, True]
+        
     for searchdir in [os.path.curdir, os.path.join(os.path.curdir, 'data')]:
         for ext in [None, 'wav', 'WAV', ['wav'], ['WAV']]:
             for recurse in [False, True]:
-                for case_sensitive in [False, True]:
+                for case_sensitive in cases:
                     for limit in [None, 1, 2]:
                         for offset in [0, 1, -1]:
                             tf = __test
