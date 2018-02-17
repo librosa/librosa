@@ -18,7 +18,7 @@ try:
 except KeyError:
     pass
 
-__EXAMPLE_FILE = 'data/test1_22050.wav'
+__EXAMPLE_FILE = os.path.join('data', 'test1_22050.wav')
 warnings.resetwarnings()
 warnings.simplefilter('always')
 
@@ -513,8 +513,8 @@ def test_poly_features_synthetic():
 
 def test_tonnetz():
     y, sr = librosa.load(librosa.util.example_audio_file())
-    tonnetz_chroma = np.load("data/feature-tonnetz-chroma.npy")
-    tonnetz_msaf = np.load("data/feature-tonnetz-msaf.npy")
+    tonnetz_chroma = np.load(os.path.join("data", "feature-tonnetz-chroma.npy"))
+    tonnetz_msaf = np.load(os.path.join("data", "feature-tonnetz-msaf.npy"))
 
     # Use cqt chroma
     def __audio():

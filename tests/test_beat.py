@@ -18,7 +18,7 @@ import librosa
 
 from test_core import files, load
 
-__EXAMPLE_FILE = 'data/test1_22050.wav'
+__EXAMPLE_FILE = os.path.join('data', 'test1_22050.wav')
 
 
 warnings.resetwarnings()
@@ -44,7 +44,7 @@ def test_onset_strength():
 
         pass
 
-    for infile in files('data/beat-onset-*.mat'):
+    for infile in files(os.path.join('data','beat-onset-*.mat')):
         yield (__test, infile)
 
 
@@ -213,5 +213,5 @@ def deprecated_test_beat():
         beat_times = librosa.frames_to_time(beats, sr=8000, hop_length=32)
         assert np.allclose(beat_times, DATA['beats'])
 
-    for infile in files('data/beat-beat-*.mat'):
+    for infile in files(os.path.join('data','beat-beat-*.mat')):
         yield (__test, infile)
