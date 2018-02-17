@@ -1,9 +1,9 @@
 Changelog
 =========
 
-v0.6.0rc1
----------
-2018-02-13
+v0.6.0
+------
+2018-02-17
 
 Bug fixes
   - `#663`_ fixed alignment errors in `feature.delta`. *Brian McFee*
