@@ -9,6 +9,7 @@ try:
 except:
     pass
 
+import six
 import librosa
 import numpy as np
 import tempfile
@@ -63,23 +64,21 @@ def test_times_csv():
         librosa.output.times_csv(tfname, times, annotations=annotations,
                                  delimiter=sep)
 
+        kwargs = dict()
+        if six.PY3:
+            kwargs['newline'] = '\n'
+
         # Load it back
-        with open(tfname, 'r') as fdesc:
-            lines = [line for line in fdesc]
+        with open(tfname, 'r', **kwargs) as fdesc:
+            for i, line in enumerate(fdesc):
+                row = line.strip().split(sep)
+                assert np.allclose(float(row[0]), times[i], atol=1e-3, rtol=1e-3), (row, times)
+
+                if annotations is not None:
+                    assert row[1] == annotations[i]
 
         # Remove the file
         os.unlink(tfname)
-
-        for i, line in enumerate(lines):
-            if annotations is None:
-                t_in = line.strip()
-            else:
-                t_in, ann_in = line.strip().split(sep, 2)
-            t_in = float(t_in)
-
-            assert np.allclose(times[i], t_in, atol=1e-3, rtol=1e-3)
-            if annotations is not None:
-                eq_(str(annotations[i]), ann_in)
 
     __test_fail = raises(librosa.ParameterError)(__test)
 
@@ -87,12 +86,11 @@ def test_times_csv():
     for times in [[], np.linspace(0, 10, 20)]:
         for annotations in [None, ['abcde'[q] for q in np.random.randint(0, 5,
                                    size=len(times))], list('abcde')]:
-                for sep in [',', '\t', ' ']:
-
-                    if annotations is not None and len(annotations) != len(times):
-                        yield __test_fail, times, annotations, sep
-                    else:
-                        yield __test, times, annotations, sep
+            for sep in [',', '\t', ' ']:
+                if annotations is not None and len(annotations) != len(times):
+                    yield __test_fail, times, annotations, sep
+                else:
+                    yield __test, times, annotations, sep
 
 
 def test_annotation():
@@ -107,33 +105,28 @@ def test_annotation():
                                   delimiter=sep)
 
         # Load it back
-        with open(tfname, 'r') as fdesc:
-            lines = [line for line in fdesc]
+        kwargs = dict()
+        if six.PY3:
+            kwargs['newline'] = '\n'
+
+        with open(tfname, 'r', **kwargs) as fdesc:
+            for i, line in enumerate(fdesc):
+                row = line.strip().split(sep)
+                assert np.allclose([float(row[0]), float(row[1])], times[i], atol=1e-3, rtol=1e-3), (row, times)
+
+                if annotations is not None:
+                    assert row[2] == annotations[i]
 
         # Remove the file
         os.unlink(tfname)
-
-        for i, line in enumerate(lines):
-            if annotations is None:
-                t_in1, t_in2 = line.strip().split(sep, 2)
-            else:
-                t_in1, t_in2, ann_in = line.strip().split(sep, 3)
-            t_in1 = float(t_in1)
-            t_in2 = float(t_in2)
-
-            assert np.allclose(times[i], [t_in1, t_in2],
-                               atol=1e-3, rtol=1e-3)
-
-            if annotations is not None:
-                eq_(str(annotations[i]), ann_in)
 
     __test_fail = raises(librosa.ParameterError)(__test)
 
     srand()
     times = np.random.randn(20, 2)
 
-    for annotations in [None, ['abcde'[q] for q in np.random.randint(0, 5,
-                               size=len(times))], list('abcde')]:
+    for annotations in [None, ['abcde'[q]
+                               for q in np.random.randint(0, 5, size=len(times))], list('abcde')]:
         for sep in [',', '\t', ' ']:
             if annotations is not None and len(annotations) != len(times):
                 yield __test_fail, times, annotations, sep
