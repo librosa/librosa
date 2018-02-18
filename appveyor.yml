@@ -24,8 +24,4 @@ install:
   - pip install --pre -e .[tests]
 
 test_script:
-  - python --version
   - nosetests --with-coverage --cover-erase --cover-package=librosa -v -w tests
-
-after_test:
-  - coveralls
