@@ -9,6 +9,7 @@ try:
 except:
     pass
 
+import csv
 import librosa
 import numpy as np
 import tempfile
@@ -64,20 +65,15 @@ def test_times_csv():
                                  delimiter=sep)
 
         # Load it back
-        recons = np.loadtxt(tfname, delimiter=sep, dtype=object)
+        with open(tfname, 'rb') as fdesc:
+            for i, row in enumerate(csv.reader(fdesc, delimiter=sep)):
+                assert np.allclose(float(row[0]), times[i], atol=1e-3, rtol=1e-3), (row, times)
+
+                if annotations is not None:
+                    assert row[1] == annotations[i]
 
         # Remove the file
         os.unlink(tfname)
-
-        if recons.ndim > 1:
-            times_r = recons[:, 0].astype(np.float)
-        else:
-            times_r = recons.astype(np.float)
-
-        assert np.allclose(times_r, times, atol=1e-3, rtol=1e-3)
-
-        if len(times) and annotations is not None:
-            eq_(list(recons[:, 1]), annotations)
 
     __test_fail = raises(librosa.ParameterError)(__test)
 
@@ -104,28 +100,23 @@ def test_annotation():
                                   delimiter=sep)
 
         # Load it back
-        recons = np.loadtxt(tfname, delimiter=sep, dtype=object)
+        with open(tfname, 'rb') as fdesc:
+            for i, row in enumerate(csv.reader(fdesc, delimiter=sep)):
+                assert np.allclose([float(row[0]), float(row[1])], times[i], atol=1e-3, rtol=1e-3), (row, times)
+
+                if annotations is not None:
+                    assert row[2] == annotations[i]
 
         # Remove the file
         os.unlink(tfname)
-
-        if recons.shape[1] > 2:
-            times_r = recons[:, :2].astype(np.float)
-        else:
-            times_r = recons.astype(np.float)
-
-        assert np.allclose(times_r, times, atol=1e-3, rtol=1e-3)
-
-        if len(times) and annotations is not None:
-            eq_(list(recons[:, 2]), annotations)
 
     __test_fail = raises(librosa.ParameterError)(__test)
 
     srand()
     times = np.random.randn(20, 2)
 
-    for annotations in [None, ['abcde'[q] for q in np.random.randint(0, 5,
-                               size=len(times))], list('abcde')]:
+    for annotations in [None, ['abcde'[q]
+                               for q in np.random.randint(0, 5, size=len(times))], list('abcde')]:
         for sep in [',', '\t', ' ']:
             if annotations is not None and len(annotations) != len(times):
                 yield __test_fail, times, annotations, sep
