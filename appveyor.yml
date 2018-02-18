@@ -18,7 +18,12 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
-  - "(conda create -q -n test-environment python=%PYTHON_VERSION% numpy scipy nose coverage scikit-learn!=0.19.0 matplotlib==2.0 numba || echo Using cached environment) ; ver > nul"
+  - cmd: | 
+        IF NOT EXIST "%MINICONDA%\\envs\\test-environment" (
+            "conda create -q -n test-environment python=%PYTHON_VERSION% numpy scipy nose coverage scikit-learn!=0.19.0 matplotlib==2.0 numba"
+        ) ELSE (
+            echo Using cached environment
+        )
   - activate test-environment
   - conda install -c conda-forge ffmpeg
   - pip install -e .[tests]
