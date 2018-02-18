@@ -118,14 +118,15 @@ def find_files(directory, ext=None, recurse=True, case_sensitive=False,
         # Add in upper-case versions
         ext |= set([e.upper() for e in ext])
 
-    files = []
+    files = set()
 
     if recurse:
         for walk in os.walk(directory):
-            files.extend(__get_files(walk[0], ext))
+            files |= __get_files(walk[0], ext)
     else:
         files = __get_files(directory, ext)
 
+    files = list(files)
     files.sort()
     files = files[offset:]
     if limit is not None:
@@ -140,10 +141,10 @@ def __get_files(dir_name, extensions):
     # Expand out the directory
     dir_name = os.path.abspath(os.path.expanduser(dir_name))
 
-    myfiles = []
+    myfiles = set()
 
     for sub_ext in extensions:
         globstr = os.path.join(dir_name, '*' + os.path.extsep + sub_ext)
-        myfiles.extend(glob.glob(globstr))
+        myfiles |= set(glob.glob(globstr))
 
     return myfiles
