@@ -64,22 +64,20 @@ def test_times_csv():
                                  delimiter=sep)
 
         # Load it back
-        with open(tfname, 'r') as fdesc:
-            lines = [line for line in fdesc]
+        recons = np.loadtxt(tfname, delimiter=sep, dtype=object)
 
         # Remove the file
         os.unlink(tfname)
 
-        for i, line in enumerate(lines):
-            if annotations is None:
-                t_in = line.strip()
-            else:
-                t_in, ann_in = line.strip().split(sep, 2)
-            t_in = float(t_in)
+        if recons.ndim > 1:
+            times_r = recons[:, 0].astype(np.float)
+        else:
+            times_r = recons.astype(np.float)
 
-            assert np.allclose(times[i], t_in, atol=1e-3, rtol=1e-3)
-            if annotations is not None:
-                eq_(str(annotations[i]), ann_in)
+        assert np.allclose(times_r, times, atol=1e-3, rtol=1e-3)
+
+        if len(times) and annotations is not None:
+            eq_(list(recons[:, 1]), annotations)
 
     __test_fail = raises(librosa.ParameterError)(__test)
 
@@ -87,12 +85,11 @@ def test_times_csv():
     for times in [[], np.linspace(0, 10, 20)]:
         for annotations in [None, ['abcde'[q] for q in np.random.randint(0, 5,
                                    size=len(times))], list('abcde')]:
-                for sep in [',', '\t', ' ']:
-
-                    if annotations is not None and len(annotations) != len(times):
-                        yield __test_fail, times, annotations, sep
-                    else:
-                        yield __test, times, annotations, sep
+            for sep in [',', '\t', ' ']:
+                if annotations is not None and len(annotations) != len(times):
+                    yield __test_fail, times, annotations, sep
+                else:
+                    yield __test, times, annotations, sep
 
 
 def test_annotation():
@@ -107,25 +104,20 @@ def test_annotation():
                                   delimiter=sep)
 
         # Load it back
-        with open(tfname, 'r') as fdesc:
-            lines = [line for line in fdesc]
+        recons = np.loadtxt(tfname, delimiter=sep, dtype=object)
 
         # Remove the file
         os.unlink(tfname)
 
-        for i, line in enumerate(lines):
-            if annotations is None:
-                t_in1, t_in2 = line.strip().split(sep, 2)
-            else:
-                t_in1, t_in2, ann_in = line.strip().split(sep, 3)
-            t_in1 = float(t_in1)
-            t_in2 = float(t_in2)
+        if recons.shape[1] > 2:
+            times_r = recons[:, :2].astype(np.float)
+        else:
+            times_r = recons.astype(np.float)
 
-            assert np.allclose(times[i], [t_in1, t_in2],
-                               atol=1e-3, rtol=1e-3)
+        assert np.allclose(times_r, times, atol=1e-3, rtol=1e-3)
 
-            if annotations is not None:
-                eq_(str(annotations[i]), ann_in)
+        if len(times) and annotations is not None:
+            eq_(list(recons[:, 2]), annotations)
 
     __test_fail = raises(librosa.ParameterError)(__test)
 
