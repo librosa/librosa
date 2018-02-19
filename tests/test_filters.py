@@ -52,7 +52,7 @@ def test_hz_to_mel():
 
         assert np.allclose(z, DATA['result'])
 
-    for infile in files('data/feature-hz_to_mel-*.mat'):
+    for infile in files(os.path.join('data', 'feature-hz_to_mel-*.mat')):
         yield (__test_to_mel, infile)
 
     pass
@@ -66,7 +66,7 @@ def test_mel_to_hz():
 
         assert np.allclose(z, DATA['result'])
 
-    for infile in files('data/feature-mel_to_hz-*.mat'):
+    for infile in files(os.path.join('data', 'feature-mel_to_hz-*.mat')):
         yield (__test_to_hz, infile)
 
     pass
@@ -79,7 +79,7 @@ def test_hz_to_octs():
 
         assert np.allclose(z, DATA['result'])
 
-    for infile in files('data/feature-hz_to_octs-*.mat'):
+    for infile in files(os.path.join('data', 'feature-hz_to_octs-*.mat')):
         yield (__test_to_octs, infile)
 
     pass
@@ -106,7 +106,7 @@ def test_melfb():
         eq_(wts.shape, DATA['wts'].shape)
         assert np.allclose(wts, DATA['wts'])
 
-    for infile in files('data/feature-melfb-*.mat'):
+    for infile in files(os.path.join('data', 'feature-melfb-*.mat')):
         yield (__test_default_norm, infile)
 
     def __test_with_norm(infile):
@@ -131,7 +131,7 @@ def test_melfb():
         eq_(wts.shape, DATA['wts'].shape)
         assert np.allclose(wts, DATA['wts'])
 
-    for infile in files('data/feature-melfbnorm-*.mat'):
+    for infile in files(os.path.join('data', 'feature-melfbnorm-*.mat')):
         yield (__test_with_norm, infile)
 
 
@@ -183,7 +183,7 @@ def test_chromafb():
         eq_(wts.shape, DATA['wts'].shape)
         assert np.allclose(wts, DATA['wts'])
 
-    for infile in files('data/feature-chromafb-*.mat'):
+    for infile in files(os.path.join('data', 'feature-chromafb-*.mat')):
         yield (__test, infile)
 
 

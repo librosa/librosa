@@ -38,7 +38,7 @@ def get_spec(y, sr):
     return librosa.stft(y), C, sr
 
 
-__EXAMPLE_FILE = 'data/test1_22050.wav'
+__EXAMPLE_FILE = os.path.join('data', 'test1_22050.wav')
 y, sr = librosa.load(__EXAMPLE_FILE)
 S, C, sr = get_spec(y, sr)
 S_abs = np.abs(S)
