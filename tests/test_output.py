@@ -10,6 +10,7 @@ except:
     pass
 
 import csv
+import six
 import librosa
 import numpy as np
 import tempfile
@@ -65,7 +66,12 @@ def test_times_csv():
                                  delimiter=sep)
 
         # Load it back
-        with open(tfname, 'r', newline='') as fdesc:
+        if six.PY2:
+            kwargs = {}
+        else:
+            kwargs = dict(newline='')
+
+        with open(tfname, 'r', **kwargs) as fdesc:
             for i, row in enumerate(csv.reader(fdesc, delimiter=sep)):
                 assert np.allclose(float(row[0]), times[i], atol=1e-3, rtol=1e-3), (row, times)
 
@@ -100,7 +106,12 @@ def test_annotation():
                                   delimiter=sep)
 
         # Load it back
-        with open(tfname, 'r', newline='') as fdesc:
+        if six.PY2:
+            kwargs = {}
+        else:
+            kwargs = dict(newline='')
+
+        with open(tfname, 'r', **kwargs) as fdesc:
             for i, row in enumerate(csv.reader(fdesc, delimiter=sep)):
                 assert np.allclose([float(row[0]), float(row[1])], times[i], atol=1e-3, rtol=1e-3), (row, times)
 
