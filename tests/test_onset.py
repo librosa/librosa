@@ -18,7 +18,7 @@ import warnings
 import numpy as np
 import librosa
 
-__EXAMPLE_FILE = 'data/test1_22050.wav'
+__EXAMPLE_FILE = os.path.join('data', 'test1_22050.wav')
 warnings.resetwarnings()
 warnings.simplefilter('always')
 

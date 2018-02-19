@@ -15,7 +15,7 @@ from nose.tools import raises, eq_
 import librosa
 import numpy as np
 
-__EXAMPLE_FILE = 'data/test1_22050.wav'
+__EXAMPLE_FILE = os.path.join('data', 'test1_22050.wav')
 warnings.resetwarnings()
 warnings.simplefilter('always')
 
@@ -34,10 +34,10 @@ def test_time_stretch():
                            rtol=1e-2, atol=1e-3)
 
     for rate in [0.25, 0.5, 1.0, 2.0, 4.0]:
-        yield __test, 'data/test1_22050.wav', rate
+        yield __test, os.path.join('data', 'test1_22050.wav'), rate
 
     for rate in [-1, 0]:
-        yield raises(librosa.ParameterError)(__test), 'data/test1_22050.wav', rate
+        yield raises(librosa.ParameterError)(__test), os.path.join('data', 'test1_22050.wav'), rate
 
 
 def test_pitch_shift():
@@ -55,10 +55,10 @@ def test_pitch_shift():
 
     for n_steps in np.linspace(-1.5, 1.5, 5):
         for bins_per_octave in [12, 24]:
-            yield __test, 'data/test1_22050.wav', n_steps, bins_per_octave
+            yield __test, os.path.join('data', 'test1_22050.wav'), n_steps, bins_per_octave
 
     for bins_per_octave in [-1, 0]:
-        yield (raises(librosa.ParameterError)(__test), 'data/test1_22050.wav',
+        yield (raises(librosa.ParameterError)(__test), os.path.join('data', 'test1_22050.wav'),
                1, bins_per_octave)
 
 
@@ -122,7 +122,7 @@ def test_hpss():
 
 def test_percussive():
 
-    y, sr = librosa.load('data/test1_22050.wav')
+    y, sr = librosa.load(os.path.join('data', 'test1_22050.wav'))
 
     yh1, yp1 = librosa.effects.hpss(y)
 
@@ -133,7 +133,7 @@ def test_percussive():
 
 def test_harmonic():
 
-    y, sr = librosa.load('data/test1_22050.wav')
+    y, sr = librosa.load(os.path.join('data', 'test1_22050.wav'))
 
     yh1, yp1 = librosa.effects.hpss(y)
 
