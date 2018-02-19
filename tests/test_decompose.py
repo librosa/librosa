@@ -82,7 +82,7 @@ def test_sorted_decompose():
 def test_real_hpss():
 
     # Load an audio signal
-    y, sr = librosa.load('data/test1_22050.wav')
+    y, sr = librosa.load(os.path.join('data', 'test1_22050.wav'))
 
     D = np.abs(librosa.stft(y))
 
@@ -110,7 +110,7 @@ def test_real_hpss():
 
 @raises(librosa.ParameterError)
 def test_hpss_margin_error():
-    y, sr = librosa.load('data/test1_22050.wav')
+    y, sr = librosa.load(os.path.join('data', 'test1_22050.wav'))
     D = np.abs(librosa.stft(y))
     H, P = librosa.decompose.hpss(D, margin=0.9)
 
@@ -118,7 +118,7 @@ def test_hpss_margin_error():
 def test_complex_hpss():
 
     # Load an audio signal
-    y, sr = librosa.load('data/test1_22050.wav')
+    y, sr = librosa.load(os.path.join('data', 'test1_22050.wav'))
 
     D = librosa.stft(y)
 
