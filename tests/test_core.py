@@ -1289,9 +1289,17 @@ def test_pcen():
 
     def __test(gain, bias, power, b, time_constant, eps, ms, S, Pexp):
 
-        P = librosa.pcen(S, gain=gain, bias=bias, power=power,
-                         time_constant=time_constant, eps=eps, b=b,
-                         max_size=ms)
+        warnings.resetwarnings()
+        warnings.simplefilter('always')
+        with warnings.catch_warnings(record=True) as out:
+
+            P = librosa.pcen(S, gain=gain, bias=bias, power=power,
+                             time_constant=time_constant, eps=eps, b=b,
+                             max_size=ms)
+
+            if np.issubdtype(S.dtype, np.complexfloating):
+                assert len(out) > 0
+                assert 'complex' in str(out[0].message).lower()
 
         assert P.shape == S.shape
         assert np.all(P >= 0)
@@ -1326,9 +1334,10 @@ def test_pcen():
 
     #   eps <= 0
     yield tf, 1, 1, 1, 0.5, 0.5, 0, 1, S, S
+
     #   max_size not int, < 1
-    yield tf, 1, 1, 1, 0.5, 0.5, 0, 1.5, S, S
-    yield tf, 1, 1, 1, 0.5, 0.5, 0, 0, S, S
+    yield tf, 1, 1, 1, 0.5, 0.5, 1e-6, 1.5, S, S
+    yield tf, 1, 1, 1, 0.5, 0.5, 1e-6, 0, S, S
 
     # Edge cases:
     #   gain=0, bias=0, power=p, b=1 => S**p
@@ -1338,7 +1347,10 @@ def test_pcen():
     #   gain=1, bias=0, power=1, b=1, eps=1e-20 => ones
     yield __test, 1, 0, 1, 1.0, 0.5, 1e-20, 1, S, np.ones_like(S)
 
+    # Catch the complex warning
+    yield __test, 1, 0, 1, 1.0, 0.5, 1e-20, 1, S * 1.j, np.ones_like(S)
+
     #   zeros to zeros
     Z = np.zeros_like(S)
     yield __test, 0.98, 2.0, 0.5, None, 0.395, 1e-6, 1, Z, Z
-
+    yield __test, 0.98, 2.0, 0.5, None, 0.395, 1e-6, 3, Z, Z
