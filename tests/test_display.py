@@ -244,7 +244,7 @@ def test_time_scales_auto():
 
     # sr = 22050, hop_length = 512, S.shape[1] = 198
     # 197 * 512 / 22050 ~= 4.6s
-    plt.figure()
+    plt.figure(figsize=(10, 10))
     plt.subplot(4, 1, 1)
     # sr * 10 -> ms
     librosa.display.specshow(S_abs, sr=10 * sr, x_axis='time')
