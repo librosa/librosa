@@ -23,13 +23,13 @@ from matplotlib import cbook
 from matplotlib import ticker
 from matplotlib import pyplot as plt
 from matplotlib import ft2font
-from matplotlib.testing.noseclasses import KnownFailureTest, \
-     KnownFailureDidNotFailTest, ImageComparisonFailure
+from matplotlib.testing.noseclasses import KnownFailure
+from matplotlib.testing.exceptions import ImageComparisonFailure
 from matplotlib.testing.compare import comparable_formats, compare_images, \
      make_test_filename
 
 
-def knownfailureif(fail_condition, msg=None, known_exception_class=None ):
+def knownfailureif(fail_condition, msg=None, known_exception_class=None):
     """
 
     Assume a will fail if *fail_condition* is True. *fail_condition*
@@ -44,10 +44,12 @@ def knownfailureif(fail_condition, msg=None, known_exception_class=None ):
     # based on numpy.testing.dec.knownfailureif
     if msg is None:
         msg = 'Test known to fail'
+
     def known_fail_decorator(f):
         # Local import to avoid a hard nose dependency and only incur the
         # import time overhead at actual test-time.
         import nose
+
         def failer(*args, **kwargs):
             try:
                 # Always run the test (to generate images).
@@ -55,11 +57,15 @@ def knownfailureif(fail_condition, msg=None, known_exception_class=None ):
             except Exception as err:
                 if fail_condition:
                     if known_exception_class is not None:
-                        if not isinstance(err,known_exception_class):
+                        if not isinstance(err, known_exception_class):
                             # This is not the expected exception
                             raise
-                    # (Keep the next ultra-long comment so in shows in console.)
-                    raise KnownFailureTest(msg) # An error here when running nose means that you don't have the matplotlib.testing.noseclasses:KnownFailure plugin in use.
+                    # (Keep the next ultra-long comment so in shows in
+                    # console.)
+                    # An error here when running nose means that you don't have
+                    # the matplotlib.testing.noseclasses:KnownFailure plugin in
+                    # use.
+                    raise KnownFailure(msg)
                 else:
                     raise
             if fail_condition and fail_condition != 'indeterminate':
@@ -79,6 +85,10 @@ def _do_cleanup(original_units_registry):
     matplotlib.units.registry.clear()
     matplotlib.units.registry.update(original_units_registry)
     warnings.resetwarnings()  # reset any warning filters set in tests
+
+
+class KnownFailureDidNotFailTest(KnownFailure):
+    pass
 
 
 class CleanupTest(object):
@@ -130,6 +140,7 @@ def check_freetype_version(ver):
 
     return found >= ver[0] and found <= ver[1]
 
+
 class ImageComparisonTest(CleanupTest):
     @classmethod
     def setup_class(cls):
@@ -157,18 +168,24 @@ class ImageComparisonTest(CleanupTest):
 
         for fignum, baseline in zip(plt.get_fignums(), self._baseline_images):
             for extension in self._extensions:
-                will_fail = not extension in comparable_formats()
+                will_fail = extension not in comparable_formats()
                 if will_fail:
-                    fail_msg = 'Cannot compare %s files on this system' % extension
+                    fail_msg = ('Cannot compare %s files on this system' %
+                                extension)
                 else:
                     fail_msg = 'No failure expected'
 
-                orig_expected_fname = os.path.join(baseline_dir, baseline) + '.' + extension
-                if extension == 'eps' and not os.path.exists(orig_expected_fname):
-                    orig_expected_fname = os.path.join(baseline_dir, baseline) + '.pdf'
+                orig_expected_fname = (
+                    os.path.join(baseline_dir, baseline) + '.' + extension)
+                if (extension == 'eps' and
+                        not os.path.exists(orig_expected_fname)):
+                    orig_expected_fname = (
+                        os.path.join(baseline_dir, baseline) + '.pdf')
                 expected_fname = make_test_filename(os.path.join(
-                    result_dir, os.path.basename(orig_expected_fname)), 'expected')
-                actual_fname = os.path.join(result_dir, baseline) + '.' + extension
+                    result_dir,
+                    os.path.basename(orig_expected_fname)), 'expected')
+                actual_fname = (
+                    os.path.join(result_dir, baseline) + '.' + extension)
                 if os.path.exists(orig_expected_fname):
                     shutil.copyfile(orig_expected_fname, expected_fname)
                 else:
@@ -198,16 +215,19 @@ class ImageComparisonTest(CleanupTest):
 
                         if err:
                             raise ImageComparisonFailure(
-                                'images not close: %(actual)s vs. %(expected)s '
-                                '(RMS %(rms).3f)'%err)
+                                'images not close: %(actual)s vs. %(expected)s'
+                                ' (RMS %(rms).3f)' % err)
                     except ImageComparisonFailure:
                         if not check_freetype_version(self._freetype_version):
-                            raise KnownFailureTest(
-                                "Mismatched version of freetype.  Test requires '%s', you have '%s'" %
-                                (self._freetype_version, ft2font.__freetype_version__))
+                            raise KnownFailure(
+                                "Mismatched version of freetype.  Test "
+                                "requires '%s', you have '%s'" %
+                                (self._freetype_version,
+                                 ft2font.__freetype_version__))
                         raise
 
                 yield (do_test,)
+
 
 def image_comparison(baseline_images=None, extensions=None, tol=13,
                      freetype_version=None, remove_text=False,
@@ -258,7 +278,7 @@ def image_comparison(baseline_images=None, extensions=None, tol=13,
         extensions = ['png', 'pdf', 'svg']
 
     if savefig_kwarg is None:
-        #default no kwargs to savefig
+        # default no kwargs to savefig
         savefig_kwarg = dict()
 
     def compare_images_decorator(func):
@@ -290,20 +310,22 @@ def image_comparison(baseline_images=None, extensions=None, tol=13,
         return new_class
     return compare_images_decorator
 
+
 def _image_directories(func):
     """
     Compute the baseline and result image directories for testing *func*.
     Create the result directory if it doesn't exist.
     """
     module_name = func.__module__
-#     mods = module_name.split('.')
-#     mods.pop(0) # <- will be the name of the package being tested (in
-                # most cases "matplotlib")
-#     assert mods.pop(0) == 'tests'
-#     subdir = os.path.join(*mods)
+    # mods = module_name.split('.')
+    # mods.pop(0) # <- will be the name of the package being tested (in
+    # most cases "matplotlib")
+    # assert mods.pop(0) == 'tests'
+    # subdir = os.path.join(*mods)
     subdir = module_name
 
     import imp
+
     def find_dotted_module(module_name, path=None):
         """A version of imp which can handle dots in the module name"""
         res = None
