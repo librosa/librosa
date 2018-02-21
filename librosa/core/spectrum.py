@@ -1426,7 +1426,7 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
     if time_constant <= 0:
         raise ParameterError('time_constant={} must be strictly positive'.format(time_constant))
 
-    if max_size <= 0 or not isinstance(max_size, int):
+    if max_size < 1 or not isinstance(max_size, int):
         raise ParameterError('max_size={} must be a positive integer'.format(max_size))
 
     if b is None:
