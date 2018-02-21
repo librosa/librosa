@@ -1297,12 +1297,13 @@ def test_pcen():
         assert np.all(P >= 0)
         assert np.all(np.isfinite(P))
 
-        assert np.allclose(P, Pexp)
+        if Pexp is not None:
+            assert np.allclose(P, Pexp)
 
     tf = raises(librosa.ParameterError)(__test)
 
     srand()
-    S = np.abs(np.random.randn(10, 50))
+    S = np.abs(np.random.randn(9, 30))
 
     # Bounds tests (failures):
     #   gain < 0
@@ -1337,4 +1338,7 @@ def test_pcen():
     #   gain=1, bias=0, power=1, b=1, eps=1e-20 => ones
     yield __test, 1, 0, 1, 1.0, 0.5, 1e-20, 1, S, np.ones_like(S)
 
+    #   zeros to zeros
+    Z = np.zeros_like(S)
+    yield __test, 0.98, 2.0, 0.5, None, 0.395, 1e-6, 1, Z, Z
 
