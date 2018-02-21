@@ -1439,8 +1439,7 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
         warnings.warn('pcen was called on complex input so phase '
                       'information will be discarded. To suppress this warning, '
                       'call pcen(magphase(D)[0]) instead.')
-
-    S = np.abs(S)
+        S = np.abs(S)
 
     if max_size == 1:
         ref_spec = S
