@@ -1290,7 +1290,7 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
     This function normalizes a time-frequency representation `S` by
     performing automatic gain control, followed by nonlinear compression:
 
-        P = (S / (eps + M)**gain + bias)**power - bias**power
+        P[f, t] = (S / (eps + M[f, t])**gain + bias)**power - bias**power
 
     where `M` is the result of applying a low-pass, temporal IIR filter
     to `S`:
@@ -1336,7 +1336,7 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
     hop_length : int > 0 [scalar]
         The hop length of `S`, expressed in samples
 
-    gain : number > 0 [scalar]
+    gain : number >= 0 [scalar]
         The gain factor.  Typical values should be slightly less than 1.
 
     bias : number >= 0 [scalar]
@@ -1397,7 +1397,7 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
 
     Compare PCEN with and without max-filtering
 
-    >>> pcen_max = librosa.pcen(S, max_size=5)
+    >>> pcen_max = librosa.pcen(S, max_size=3)
     >>> plt.figure()
     >>> plt.subplot(2,1,1)
     >>> librosa.display.specshow(pcen_S, x_axis='time', y_axis='mel')
@@ -1405,25 +1405,47 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
     >>> plt.colorbar()
     >>> plt.subplot(2,1,2)
     >>> librosa.display.specshow(pcen_max, x_axis='time', y_axis='mel')
-    >>> plt.title('Per-channel energy normalization (max_size=5)')
+    >>> plt.title('Per-channel energy normalization (max_size=3)')
     >>> plt.colorbar()
     >>> plt.tight_layout()
 
     '''
+
+    if power <= 0:
+        raise ParameterError('power={} must be strictly positive'.format(power))
+
+    if gain < 0:
+        raise ParameterError('gain={} must be non-negative'.format(gain))
+
+    if bias < 0:
+        raise ParameterError('bias={} must be non-negative'.format(bias))
+
+    if eps <= 0:
+        raise ParameterError('eps={} must be strictly positive'.format(eps))
+
+    if time_constant <= 0:
+        raise ParameterError('time_constant={} must be strictly positive'.format(time_constant))
+
+    if max_size <= 0 or not isinstance(max_size, int):
+        raise ParameterError('max_size={} must be a positive integer'.format(max_size))
+
+    if b is None:
+        b = 1 - np.exp(- float(hop_length) / (time_constant * sr))
+
+    if not 0 <= b <= 1:
+        raise ParameterError('b={} must be between 0 and 1'.format(b))
+
     if np.issubdtype(S.dtype, np.complexfloating):
         warnings.warn('pcen was called on complex input so phase '
                       'information will be discarded. To suppress this warning, '
                       'call pcen(magphase(D)[0]) instead.')
 
-        S = np.abs(S)
+    S = np.abs(S)
 
     if max_size == 1:
         ref_spec = S
     else:
         ref_spec = scipy.ndimage.maximum_filter1d(S, max_size, axis=0)
-
-    if b is None:
-        b = 1 - np.exp(- float(hop_length) / (time_constant * sr))
 
     smooth = (eps + scipy.signal.lfilter([b], [1, b - 1], ref_spec))**gain
 
