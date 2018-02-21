@@ -1288,7 +1288,7 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
     '''Per-channel energy normalization (PCEN) [1]_
 
     This function normalizes a time-frequency representation `S` by
-    performing automatic gain control, followed by non-linear compression:
+    performing automatic gain control, followed by nonlinear compression:
 
         P = (S / (eps + M)**gain + bias)**power - bias**power
 
