@@ -1447,9 +1447,11 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
     else:
         ref_spec = scipy.ndimage.maximum_filter1d(S, max_size, axis=0)
 
-    smooth = (eps + scipy.signal.lfilter([b], [1, b - 1], ref_spec))**gain
+    S_smooth = scipy.signal.lfilter([b], [1, b - 1], ref_spec)
 
-    return (S / smooth + bias)**power - bias**power
+    # Working in log-space gives us some stability, and a slight speedup
+    smooth = np.exp(-gain * (np.log(eps) + np.log1p(S_smooth / eps)))
+    return (S * smooth + bias)**power - bias**power
 
 
 def _spectrogram(y=None, S=None, n_fft=2048, hop_length=512, power=1):
