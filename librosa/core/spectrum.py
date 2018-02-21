@@ -6,6 +6,7 @@ import warnings
 import numpy as np
 import scipy.fftpack as fft
 import scipy
+import scipy.ndimage
 import scipy.signal
 import scipy.interpolate
 import six
@@ -23,7 +24,7 @@ __all__ = ['stft', 'istft', 'magphase', 'iirt',
            'perceptual_weighting',
            'power_to_db', 'db_to_power',
            'amplitude_to_db', 'db_to_amplitude',
-           'fmt']
+           'fmt', 'pcen']
 
 
 @cache(level=20)
@@ -1279,6 +1280,152 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
 
     # Truncate and length-normalize
     return result[idx] * np.sqrt(n) / n_fmt
+
+
+@cache(level=30)
+def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
+         time_constant=0.395, eps=1e-6, b=None, max_size=1):
+    '''Per-channel energy normalization (PCEN) [1]_
+
+    This function normalizes a time-frequency representation `S` by
+    performing automatic gain control, followed by non-linear compression:
+
+        P = (S / (eps + M)**gain + bias)**power - bias**power
+
+    where `M` is the low-pass filtered output of `S`:
+
+        M[f, t] = (1 - b) M[f, t - 1] + b * S[f, t]
+
+    and if `b` is not provided, it is calculated as:
+
+        b = 1 - exp(-hop_length / (sr * time_constant))
+
+    This normalization is designed to suppress background noise, and
+    emphasize foreground signals, and can be used as an alternative to
+    decibel scaling (`amplitude_to_db`).
+
+    This implementation also supports frequency-bin smoothing by specifying
+    `max_size > 1`.  If this option is used, the filtered spectrogram `M` is
+    computed as
+
+        M[f, t] = (1 - b) M[f, t - 1] + b * R[f, t]
+        
+    where `R` has been max-filtered along the frequency axis, similar to
+    the Superflux algorithm implemented in `onset.onset_strength`:
+
+        R[f, t] = max(R[f - max_size//2: f + max_size//2, t])
+
+    This can be used to perform automatic gain control on signals that cross
+    or span multiple frequency bans, which may be desirable for spectrograms
+    with high frequency resolution.
+
+    .. [1] Wang, Y., Getreuer, P., Hughes, T., Lyon, R. F., & Saurous, R. A.
+       (2017, March). Trainable frontend for robust and far-field keyword spotting.
+       In Acoustics, Speech and Signal Processing (ICASSP), 2017
+       IEEE International Conference on (pp. 5670-5674). IEEE.
+
+    Parameters
+    ----------
+    S : np.ndarray (non-negative) [shape=(n, m)]
+        input spectrogram
+
+    sr : number > 0 [scalar]
+        Sampling rate of audio
+
+    hop_length : int > 0 [scalar]
+        Hop length of `S`
+
+    gain : number > 0 [scalar]
+        Gain factor.  Typical values should be slightly less than 1.
+
+    bias : number >= 0 [scalar]
+        The bias point of the non-linear compression
+
+    power : number > 0 [scalar]
+        The compression factor.  Typical values should be between 0 and 1.
+
+    time_constant : number > 0 [scalar]
+        The time constant for IIR filtering, measured in seconds.
+
+    eps : number > 0 [scalar]
+        A small constant used to ensure numerical stability of the filter.
+
+    b : number in [0, 1]  [scalar]
+        The filter coefficient for the low-pass filter.
+        If not provided, it will be inferred from `time_constant`.
+
+    max_size : int > 0 [scalar]
+        The size of the frequency axis max filter.
+        If left as `1`, no filtering is performed.
+
+    Returns
+    -------
+    P : np.ndarray, non-negative [shape=(n, m)]
+        The per-channel energy normalized version of `S`.
+
+    See Also
+    --------
+    amplitude_to_db
+    librosa.onset.onset_strength
+
+    Examples
+    --------
+
+    Compare PCEN to log amplitude (dB) scaling on Mel spectra
+
+    >>> import matplotlib.pyplot as plt
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(),
+    ...                      offset=10, duration=10)
+
+    >>> # We'll use power=1 to get a magnitude spectrum,
+    >>> # instead of a power spectrum
+    >>> S = librosa.feature.melspectrogram(y, sr=sr, power=1)
+    >>> log_S = librosa.amplitude_to_db(S, ref=np.max)
+    >>> pcen_S = librosa.pcen(S)
+    >>> plt.figure()
+    >>> plt.subplot(2,1,1)
+    >>> librosa.display.specshow(log_S, x_axis='time', y_axis='mel')
+    >>> plt.title('log amplitude (dB)')
+    >>> plt.colorbar()
+    >>> plt.subplot(2,1,2)
+    >>> librosa.display.specshow(pcen_S, x_axis='time', y_axis='mel')
+    >>> plt.title('Per-channel energy normalization')
+    >>> plt.colorbar()
+    >>> plt.tight_layout()
+
+    Compare PCEN with and without max-filtering
+
+    >>> pcen_max = librosa.pcen(S, max_size=5)
+    >>> plt.figure()
+    >>> plt.subplot(2,1,1)
+    >>> librosa.display.specshow(pcen_S, x_axis='time', y_axis='mel')
+    >>> plt.title('Per-channel energy normalization (no max-filter)')
+    >>> plt.colorbar()
+    >>> plt.subplot(2,1,2)
+    >>> librosa.display.specshow(pcen_max, x_axis='time', y_axis='mel')
+    >>> plt.title('Per-channel energy normalization (max_size=5)')
+    >>> plt.colorbar()
+    >>> plt.tight_layout()
+
+    '''
+    if np.issubdtype(S.dtype, np.complexfloating):
+        warnings.warn('pcen was called on complex input so phase '
+                      'information will be discarded. To suppress this warning, '
+                      'call pcen(magphase(D)[0]) instead.')
+
+        S = np.abs(S)
+
+    if max_size == 1:
+        ref_spec = S
+    else:
+        ref_spec = scipy.ndimage.maximum_filter1d(S, max_size, axis=0)
+
+    if b is None:
+        b = 1 - np.exp(- float(hop_length) / (time_constant * sr))
+
+    smooth = (eps + scipy.signal.lfilter([b], [1, b - 1], ref_spec))**gain
+
+    return (S / smooth + bias)**power - bias**power
 
 
 def _spectrogram(y=None, S=None, n_fft=2048, hop_length=512, power=1):
