@@ -1314,7 +1314,7 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
     where `R` has been max-filtered along the frequency axis, similar to
     the SuperFlux algorithm implemented in `onset.onset_strength`:
 
-        R[f, t] = max(R[f - max_size//2: f + max_size//2, t])
+        R[f, t] = max(S[f - max_size//2: f + max_size//2, t])
 
     This can be used to perform automatic gain control on signals that cross
     or span multiple frequency bans, which may be desirable for spectrograms
