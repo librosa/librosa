@@ -1292,26 +1292,27 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
 
         P = (S / (eps + M)**gain + bias)**power - bias**power
 
-    where `M` is the low-pass filtered output of `S`:
+    where `M` is the result of applying a low-pass, temporal IIR filter
+    to `S`:
 
-        M[f, t] = (1 - b) M[f, t - 1] + b * S[f, t]
+        M[f, t] = (1 - b) * M[f, t - 1] + b * S[f, t]
 
-    and if `b` is not provided, it is calculated as:
+    If `b` is not provided, it is calculated as:
 
         b = 1 - exp(-hop_length / (sr * time_constant))
 
-    This normalization is designed to suppress background noise, and
+    This normalization is designed to suppress background noise and
     emphasize foreground signals, and can be used as an alternative to
     decibel scaling (`amplitude_to_db`).
 
-    This implementation also supports frequency-bin smoothing by specifying
-    `max_size > 1`.  If this option is used, the filtered spectrogram `M` is
-    computed as
+    This implementation also supports smoothing across frequency bins
+    by specifying `max_size > 1`.  If this option is used, the filtered
+    spectrogram `M` is computed as
 
-        M[f, t] = (1 - b) M[f, t - 1] + b * R[f, t]
-        
+        M[f, t] = (1 - b) * M[f, t - 1] + b * R[f, t]
+
     where `R` has been max-filtered along the frequency axis, similar to
-    the Superflux algorithm implemented in `onset.onset_strength`:
+    the SuperFlux algorithm implemented in `onset.onset_strength`:
 
         R[f, t] = max(R[f - max_size//2: f + max_size//2, t])
 
@@ -1327,22 +1328,23 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
     Parameters
     ----------
     S : np.ndarray (non-negative) [shape=(n, m)]
-        input spectrogram
+        The input (magnitude) spectrogram
 
     sr : number > 0 [scalar]
-        Sampling rate of audio
+        The audio sampling rate
 
     hop_length : int > 0 [scalar]
-        Hop length of `S`
+        The hop length of `S`, expressed in samples
 
     gain : number > 0 [scalar]
-        Gain factor.  Typical values should be slightly less than 1.
+        The gain factor.  Typical values should be slightly less than 1.
 
     bias : number >= 0 [scalar]
-        The bias point of the non-linear compression
+        The bias point of the nonlinear compression (default: 2)
 
     power : number > 0 [scalar]
-        The compression factor.  Typical values should be between 0 and 1.
+        The compression exponent.  Typical values should be between 0 and 1.
+        Smaller values of `power` result in stronger compression.
 
     time_constant : number > 0 [scalar]
         The time constant for IIR filtering, measured in seconds.
@@ -1355,7 +1357,7 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
         If not provided, it will be inferred from `time_constant`.
 
     max_size : int > 0 [scalar]
-        The size of the frequency axis max filter.
+        The width of the max filter applied to the frequency axis.
         If left as `1`, no filtering is performed.
 
     Returns
@@ -1377,7 +1379,7 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
     >>> y, sr = librosa.load(librosa.util.example_audio_file(),
     ...                      offset=10, duration=10)
 
-    >>> # We'll use power=1 to get a magnitude spectrum,
+    >>> # We'll use power=1 to get a magnitude spectrum
     >>> # instead of a power spectrum
     >>> S = librosa.feature.melspectrogram(y, sr=sr, power=1)
     >>> log_S = librosa.amplitude_to_db(S, ref=np.max)
