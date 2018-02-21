@@ -1283,3 +1283,74 @@ def test_iirt():
     mut = librosa.iirt(y, hop_length=2205, win_length=4410)
 
     assert np.allclose(mut, gt[23:108, :mut.shape[1]], atol=1.8)
+
+
+def test_pcen():
+
+    def __test(gain, bias, power, b, time_constant, eps, ms, S, Pexp):
+
+        warnings.resetwarnings()
+        warnings.simplefilter('always')
+        with warnings.catch_warnings(record=True) as out:
+
+            P = librosa.pcen(S, gain=gain, bias=bias, power=power,
+                             time_constant=time_constant, eps=eps, b=b,
+                             max_size=ms)
+
+            if np.issubdtype(S.dtype, np.complexfloating):
+                assert len(out) > 0
+                assert 'complex' in str(out[0].message).lower()
+
+        assert P.shape == S.shape
+        assert np.all(P >= 0)
+        assert np.all(np.isfinite(P))
+
+        if Pexp is not None:
+            assert np.allclose(P, Pexp)
+
+    tf = raises(librosa.ParameterError)(__test)
+
+    srand()
+    S = np.abs(np.random.randn(9, 30))
+
+    # Bounds tests (failures):
+    #   gain < 0
+    yield tf, -1, 1, 1, 0.5, 0.5, 1e-6, 1, S, S
+
+    #   bias < 0
+    yield tf, 1, -1, 1, 0.5, 0.5, 1e-6, 1, S, S
+
+    #   power <= 0
+    yield tf, 1, 1, 0, 0.5, 0.5, 1e-6, 1, S, S
+
+    #   b < 0
+    yield tf, 1, 1, 1, -2, 0.5, 1e-6, 1, S, S
+
+    #   b > 1
+    yield tf, 1, 1, 1, 2, 0.5, 1e-6, 1, S, S
+
+    #   time_constant <= 0
+    yield tf, 1, 1, 1, 0.5, -2, 1e-6, 1, S, S
+
+    #   eps <= 0
+    yield tf, 1, 1, 1, 0.5, 0.5, 0, 1, S, S
+
+    #   max_size not int, < 1
+    yield tf, 1, 1, 1, 0.5, 0.5, 1e-6, 1.5, S, S
+    yield tf, 1, 1, 1, 0.5, 0.5, 1e-6, 0, S, S
+
+    # Edge cases:
+    #   gain=0, bias=0, power=p, b=1 => S**p
+    for p in [0.5, 1, 2]:
+        yield __test, 0, 0, p, 1.0, 0.5, 1e-6, 1, S, S**p
+
+    #   gain=1, bias=0, power=1, b=1, eps=1e-20 => ones
+    yield __test, 1, 0, 1, 1.0, 0.5, 1e-20, 1, S, np.ones_like(S)
+
+    # Catch the complex warning
+    yield __test, 1, 0, 1, 1.0, 0.5, 1e-20, 1, S * 1.j, np.ones_like(S)
+
+    #   zeros to zeros
+    Z = np.zeros_like(S)
+    yield __test, 0.98, 2.0, 0.5, None, 0.395, 1e-6, 1, Z, Z
+    yield __test, 0.98, 2.0, 0.5, None, 0.395, 1e-6, 3, Z, Z

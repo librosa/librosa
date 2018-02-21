@@ -51,6 +51,8 @@ Magnitude scaling
     perceptual_weighting
     A_weighting
 
+    pcen
+
 Time and frequency conversion
 -----------------------------
 .. autosummary::
