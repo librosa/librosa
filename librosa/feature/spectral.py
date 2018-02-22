@@ -5,6 +5,7 @@
 import numpy as np
 import scipy
 import scipy.signal
+import scipy.fftpack
 
 from .. import util
 from .. import filters
@@ -1304,8 +1305,8 @@ def tonnetz(y=None, sr=22050, chroma=None):
 
 
 # -- Mel spectrogram and MFCCs -- #
-def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
-    """Mel-frequency cepstral coefficients
+def mfcc(y=None, sr=22050, S=None, n_mfcc=20, dct_type=None, norm=None, **kwargs):
+    """Mel-frequency cepstral coefficients (MFCCs)
 
     Parameters
     ----------
@@ -1321,9 +1322,23 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
     n_mfcc: int > 0 [scalar]
         number of MFCCs to return
 
+    dct_type : None, or {1, 2, 3}
+        Discrete cosine transform (DCT) type.
+        By default (None), the reference implementation from RASTAMAT [1]_ is used.
+
+    norm : None or 'ortho'
+        If `dct_type` is `2 or 3`, setting `norm='ortho'` uses an ortho-normal
+        DCT basis.
+
+        If `dct_type=None`, this parameter is ignored.
+
     kwargs : additional keyword arguments
         Arguments to `melspectrogram`, if operating
         on time series input
+
+    .. [1] Ellis, D. (2006). PLP and RASTA (and MFCC, and inversion)
+        in MATLAB using melfcc.m and invmelfcc.m.
+        https://labrosa.ee.columbia.edu/matlab/rastamat/
 
     Returns
     -------
@@ -1333,12 +1348,13 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
     See Also
     --------
     melspectrogram
+    scipy.fftpack.dct
 
     Examples
     --------
     Generate mfccs from a time series
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), offset=30, duration=5)
     >>> librosa.feature.mfcc(y=y, sr=sr)
     array([[ -5.229e+02,  -4.944e+02, ...,  -5.229e+02,  -5.229e+02],
            [  7.105e-15,   3.787e+01, ...,  -7.105e-15,  -7.105e-15],
@@ -1370,13 +1386,34 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
     >>> plt.title('MFCC')
     >>> plt.tight_layout()
 
+    Compare different DCT bases
 
+    >>> m_rasta = librosa.feature.mfcc(y=y, sr=sr)
+    >>> m_slaney = librosa.feature.mfcc(y=y, sr=sr, dct_type=2)
+    >>> m_htk = librosa.feature.mfcc(y=y, sr=sr, dct_type=3)
+    >>> plt.figure(figsize=(10, 8))
+    >>> plt.subplot(3, 1, 1)
+    >>> librosa.display.specshow(m_rasta, x_axis='time')
+    >>> plt.title('RASTAMAT')
+    >>> plt.colorbar()
+    >>> plt.subplot(3, 1, 2)
+    >>> librosa.display.specshow(m_slaney, x_axis='time')
+    >>> plt.title('Slaney Auditory toolbox-style (dct_type=2)')
+    >>> plt.colorbar()
+    >>> plt.subplot(3, 1, 3)
+    >>> librosa.display.specshow(m_htk, x_axis='time')
+    >>> plt.title('HTK-style (dct_type=3)')
+    >>> plt.colorbar()
+    >>> plt.tight_layout()
     """
 
     if S is None:
         S = power_to_db(melspectrogram(y=y, sr=sr, **kwargs))
 
-    return np.dot(filters.dct(n_mfcc, S.shape[0]), S)
+    if dct_type is None:
+        return np.dot(filters.dct(n_mfcc, S.shape[0]), S)
+
+    return scipy.fftpack.dct(S, axis=0, n=n_mfcc, type=dct_type, norm=norm)
 
 
 def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
