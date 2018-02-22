@@ -9,7 +9,6 @@ Filter bank construction
 .. autosummary::
     :toctree: generated/
 
-    dct
     mel
     chroma
     constant_q
@@ -35,6 +34,12 @@ Miscellaneous
     mr_frequencies
     window_sumsquare
 
+Deprecated
+----------
+.. autosummary::
+    :toctree: generated/
+
+    dct
 """
 import warnings
 
@@ -48,6 +53,7 @@ from numba import jit
 from . import cache
 from . import util
 from .util.exceptions import ParameterError
+from .util.decorators import deprecated
 
 from .core.time_frequency import note_to_hz, hz_to_midi, midi_to_hz, hz_to_octs
 from .core.time_frequency import fft_frequencies, mel_frequencies
@@ -109,11 +115,14 @@ WINDOW_BANDWIDTHS = {'bart': 1.3334961334912805,
                      'triangle': 1.3331706523555851}
 
 
-@cache(level=10)
+@deprecated('0.6.1', '0.7.0')
 def dct(n_filters, n_input):
-    """Discrete cosine transform (DCT type-III) basis.
+    """Discrete cosine transform (DCT type-II, normalized) basis.
 
     .. [1] http://en.wikipedia.org/wiki/Discrete_cosine_transform
+
+    .. warning:: This function is deprecated in librosa 0.6.1. It will
+        be removed in 0.7.0.
 
     Parameters
     ----------
@@ -126,11 +135,15 @@ def dct(n_filters, n_input):
     Returns
     -------
     dct_basis: np.ndarray [shape=(n_filters, n_input)]
-        DCT (type-III) basis vectors [1]_
+        DCT (type-II) basis vectors [1]_
 
     Notes
     -----
     This function caches at level 10.
+
+    See Also
+    --------
+    scipy.fftpack.dct
 
     Examples
     --------
