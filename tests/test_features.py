@@ -743,3 +743,30 @@ def test_cens():
 
         maxdev = np.abs(ct_chroma_cens['f_CENS'] - lr_chroma_cens)
         assert np.allclose(ct_chroma_cens['f_CENS'], lr_chroma_cens, rtol=1e-15, atol=1e-15), maxdev
+
+
+def test_mfcc():
+
+    def __test(dct_type, norm, n_mfcc, S):
+
+        E_total = np.sum(S, axis=0)
+
+        mfcc = librosa.feature.mfcc(S=S, dct_type=dct_type, norm=norm, n_mfcc=n_mfcc)
+
+        assert mfcc.shape[0] == n_mfcc
+        assert mfcc.shape[1] == S.shape[1]
+
+        # In type-2 mode, DC component should be constant over all frames
+        if dct_type == 2:
+            assert np.var(mfcc[0] / E_total) <= 1e-30
+
+    S = librosa.power_to_db(np.random.randn(128, 100)**2, ref=np.max)
+
+    for n_mfcc in [13, 20]:
+        for dct_type in [1, 2, 3]:
+            for norm in [None, 'ortho']:
+                if dct_type == 1 and norm == 'ortho':
+                    tf = raises(NotImplementedError)(__test)
+                else:
+                    tf = __test
+                yield tf, dct_type, norm, n_mfcc, S

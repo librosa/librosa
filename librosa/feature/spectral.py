@@ -5,6 +5,7 @@
 import numpy as np
 import scipy
 import scipy.signal
+import scipy.fftpack
 
 from .. import util
 from .. import filters
@@ -1304,8 +1305,8 @@ def tonnetz(y=None, sr=22050, chroma=None):
 
 
 # -- Mel spectrogram and MFCCs -- #
-def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
-    """Mel-frequency cepstral coefficients
+def mfcc(y=None, sr=22050, S=None, n_mfcc=20, dct_type=2, norm='ortho', **kwargs):
+    """Mel-frequency cepstral coefficients (MFCCs)
 
     Parameters
     ----------
@@ -1321,6 +1322,16 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
     n_mfcc: int > 0 [scalar]
         number of MFCCs to return
 
+    dct_type : None, or {1, 2, 3}
+        Discrete cosine transform (DCT) type.
+        By default, DCT type-2 is used.
+
+    norm : None or 'ortho'
+        If `dct_type` is `2 or 3`, setting `norm='ortho'` uses an ortho-normal
+        DCT basis.
+
+        Normalization is not supported for `dct_type=1`.
+
     kwargs : additional keyword arguments
         Arguments to `melspectrogram`, if operating
         on time series input
@@ -1333,12 +1344,13 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
     See Also
     --------
     melspectrogram
+    scipy.fftpack.dct
 
     Examples
     --------
     Generate mfccs from a time series
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), offset=30, duration=5)
     >>> librosa.feature.mfcc(y=y, sr=sr)
     array([[ -5.229e+02,  -4.944e+02, ...,  -5.229e+02,  -5.229e+02],
            [  7.105e-15,   3.787e+01, ...,  -7.105e-15,  -7.105e-15],
@@ -1370,13 +1382,26 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, **kwargs):
     >>> plt.title('MFCC')
     >>> plt.tight_layout()
 
+    Compare different DCT bases
 
+    >>> m_slaney = librosa.feature.mfcc(y=y, sr=sr, dct_type=2)
+    >>> m_htk = librosa.feature.mfcc(y=y, sr=sr, dct_type=3)
+    >>> plt.figure(figsize=(10, 6))
+    >>> plt.subplot(2, 1, 1)
+    >>> librosa.display.specshow(m_slaney, x_axis='time')
+    >>> plt.title('RASTAMAT / Auditory toolbox (dct_type=2)')
+    >>> plt.colorbar()
+    >>> plt.subplot(2, 1, 2)
+    >>> librosa.display.specshow(m_htk, x_axis='time')
+    >>> plt.title('HTK-style (dct_type=3)')
+    >>> plt.colorbar()
+    >>> plt.tight_layout()
     """
 
     if S is None:
         S = power_to_db(melspectrogram(y=y, sr=sr, **kwargs))
 
-    return np.dot(filters.dct(n_mfcc, S.shape[0]), S)
+    return scipy.fftpack.dct(S, axis=0, type=dct_type, norm=norm)[:n_mfcc]
 
 
 def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
