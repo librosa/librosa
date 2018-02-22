@@ -1305,7 +1305,7 @@ def tonnetz(y=None, sr=22050, chroma=None):
 
 
 # -- Mel spectrogram and MFCCs -- #
-def mfcc(y=None, sr=22050, S=None, n_mfcc=20, dct_type=None, norm=None, **kwargs):
+def mfcc(y=None, sr=22050, S=None, n_mfcc=20, dct_type=2, norm='ortho', **kwargs):
     """Mel-frequency cepstral coefficients (MFCCs)
 
     Parameters
@@ -1324,21 +1324,17 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, dct_type=None, norm=None, **kwargs
 
     dct_type : None, or {1, 2, 3}
         Discrete cosine transform (DCT) type.
-        By default (None), the reference implementation from RASTAMAT [1]_ is used.
+        By default, DCT type-2 is used.
 
     norm : None or 'ortho'
         If `dct_type` is `2 or 3`, setting `norm='ortho'` uses an ortho-normal
         DCT basis.
 
-        If `dct_type=None`, this parameter is ignored.
+        Normalization is not supported for `dct_type=1`.
 
     kwargs : additional keyword arguments
         Arguments to `melspectrogram`, if operating
         on time series input
-
-    .. [1] Ellis, D. (2006). PLP and RASTA (and MFCC, and inversion)
-        in MATLAB using melfcc.m and invmelfcc.m.
-        https://labrosa.ee.columbia.edu/matlab/rastamat/
 
     Returns
     -------
@@ -1388,19 +1384,14 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, dct_type=None, norm=None, **kwargs
 
     Compare different DCT bases
 
-    >>> m_rasta = librosa.feature.mfcc(y=y, sr=sr)
     >>> m_slaney = librosa.feature.mfcc(y=y, sr=sr, dct_type=2)
     >>> m_htk = librosa.feature.mfcc(y=y, sr=sr, dct_type=3)
-    >>> plt.figure(figsize=(10, 8))
-    >>> plt.subplot(3, 1, 1)
-    >>> librosa.display.specshow(m_rasta, x_axis='time')
-    >>> plt.title('RASTAMAT')
-    >>> plt.colorbar()
-    >>> plt.subplot(3, 1, 2)
+    >>> plt.figure(figsize=(10, 6))
+    >>> plt.subplot(2, 1, 1)
     >>> librosa.display.specshow(m_slaney, x_axis='time')
-    >>> plt.title('Slaney Auditory toolbox-style (dct_type=2)')
+    >>> plt.title('RASTAMAT / Auditory toolbox (dct_type=2)')
     >>> plt.colorbar()
-    >>> plt.subplot(3, 1, 3)
+    >>> plt.subplot(2, 1, 2)
     >>> librosa.display.specshow(m_htk, x_axis='time')
     >>> plt.title('HTK-style (dct_type=3)')
     >>> plt.colorbar()
@@ -1410,10 +1401,7 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, dct_type=None, norm=None, **kwargs
     if S is None:
         S = power_to_db(melspectrogram(y=y, sr=sr, **kwargs))
 
-    if dct_type is None:
-        return np.dot(filters.dct(n_mfcc, S.shape[0]), S)
-
-    return scipy.fftpack.dct(S, axis=0, n=n_mfcc, type=dct_type, norm=norm)
+    return scipy.fftpack.dct(S, axis=0, type=dct_type, norm=norm)[:n_mfcc]
 
 
 def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
