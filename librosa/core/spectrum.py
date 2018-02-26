@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''Utilities for spectral processing'''
+import warnings
 
 import numpy as np
 import scipy.fftpack as fft
 import scipy
+import scipy.ndimage
 import scipy.signal
 import scipy.interpolate
 import six
@@ -15,13 +17,14 @@ from .. import cache
 from .. import util
 from ..util.exceptions import ParameterError
 from ..filters import get_window, semitone_filterbank
+from ..filters import window_sumsquare
 
 __all__ = ['stft', 'istft', 'magphase', 'iirt',
            'ifgram', 'phase_vocoder',
            'perceptual_weighting',
            'power_to_db', 'db_to_power',
            'amplitude_to_db', 'db_to_amplitude',
-           'fmt']
+           'fmt', 'pcen']
 
 
 @cache(level=20)
@@ -287,8 +290,6 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
     n_frames = stft_matrix.shape[1]
     expected_signal_len = n_fft + hop_length * (n_frames - 1)
     y = np.zeros(expected_signal_len, dtype=dtype)
-    ifft_window_sum = np.zeros(expected_signal_len, dtype=dtype)
-    ifft_window_square = ifft_window * ifft_window
 
     for i in range(n_frames):
         sample = i * hop_length
@@ -297,9 +298,15 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
         ytmp = ifft_window * fft.ifft(spec).real
 
         y[sample:(sample + n_fft)] = y[sample:(sample + n_fft)] + ytmp
-        ifft_window_sum[sample:(sample + n_fft)] += ifft_window_square
 
     # Normalize by sum of squared window
+    ifft_window_sum = window_sumsquare(window,
+                                       n_frames,
+                                       win_length=win_length,
+                                       n_fft=n_fft,
+                                       hop_length=hop_length,
+                                       dtype=dtype)
+
     approx_nonzero_indices = ifft_window_sum > util.tiny(ifft_window_sum)
     y[approx_nonzero_indices] /= ifft_window_sum[approx_nonzero_indices]
 
@@ -475,7 +482,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     return if_gram, stft_matrix
 
 
-def magphase(D):
+def magphase(D, power=1):
     """Separate a complex-valued spectrogram D into its magnitude (S)
     and phase (P) components, so that `D = S * P`.
 
@@ -484,12 +491,15 @@ def magphase(D):
     ----------
     D       : np.ndarray [shape=(d, t), dtype=complex]
         complex-valued spectrogram
+    power : float > 0
+        Exponent for the magnitude spectrogram,
+        e.g., 1 for energy, 2 for power, etc.
 
 
     Returns
     -------
     D_mag   : np.ndarray [shape=(d, t), dtype=real]
-        magnitude of `D`
+        magnitude of `D`, raised to `power`
     D_phase : np.ndarray [shape=(d, t), dtype=complex]
         `exp(1.j * phi)` where `phi` is the phase of `D`
 
@@ -529,6 +539,7 @@ def magphase(D):
     """
 
     mag = np.abs(D)
+    mag **= power
     phase = np.exp(1.j * np.angle(D))
 
     return mag, phase
@@ -621,6 +632,7 @@ def phase_vocoder(D, rate, hop_length=None):
     return d_stretch
 
 
+@cache(level=20)
 def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
          tuning=0.0, pad_mode='reflect', **kwargs):
     r'''Time-frequency representation using IIR filters [1]_.
@@ -637,8 +649,9 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
 
     When called with the default set of parameters, it will generate the TF-representation
     as described in [1]_ (pitch filterbank):
-     * 85 filters with MIDI pitches [24, 108] as `center_freqs`.
-     * each filter having a bandwith of one semitone.
+
+        * 85 filters with MIDI pitches [24, 108] as `center_freqs`.
+        * each filter having a bandwith of one semitone.
 
     .. [1] Müller, Meinard.
            "Information Retrieval for Music and Motion."
@@ -842,10 +855,18 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
 
     """
 
+    S = np.asarray(S)
+
     if amin <= 0:
         raise ParameterError('amin must be strictly positive')
 
-    magnitude = np.abs(S)
+    if np.issubdtype(S.dtype, np.complexfloating):
+        warnings.warn('power_to_db was called on complex input so phase '
+                      'information will be discarded. To suppress this warning, '
+                      'call power_to_db(magphase(D, power=2)[0]) instead.')
+        magnitude = np.abs(S)
+    else:
+        magnitude = S
 
     if six.callable(ref):
         # User supplied a function to calculate reference power
@@ -931,6 +952,14 @@ def amplitude_to_db(S, ref=1.0, amin=1e-5, top_db=80.0):
     -----
     This function caches at level 30.
     '''
+
+    S = np.asarray(S)
+
+    if np.issubdtype(S.dtype, np.complexfloating):
+        warnings.warn('amplitude_to_db was called on complex input so phase '
+                      'information will be discarded. To suppress this warning, '
+                      'call amplitude_to_db(magphase(D)[0]) instead.')
+
     magnitude = np.abs(S)
 
     if six.callable(ref):
@@ -939,8 +968,9 @@ def amplitude_to_db(S, ref=1.0, amin=1e-5, top_db=80.0):
     else:
         ref_value = np.abs(ref)
 
-    magnitude **= 2
-    return power_to_db(magnitude, ref=ref_value**2, amin=amin**2,
+    power = np.square(magnitude, out=magnitude)
+
+    return power_to_db(power, ref=ref_value**2, amin=amin**2,
                        top_db=top_db)
 
 
@@ -1250,6 +1280,177 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
 
     # Truncate and length-normalize
     return result[idx] * np.sqrt(n) / n_fmt
+
+
+@cache(level=30)
+def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
+         time_constant=0.395, eps=1e-6, b=None, max_size=1):
+    '''Per-channel energy normalization (PCEN) [1]_
+
+    This function normalizes a time-frequency representation `S` by
+    performing automatic gain control, followed by nonlinear compression:
+
+        P[f, t] = (S / (eps + M[f, t])**gain + bias)**power - bias**power
+
+    where `M` is the result of applying a low-pass, temporal IIR filter
+    to `S`:
+
+        M[f, t] = (1 - b) * M[f, t - 1] + b * S[f, t]
+
+    If `b` is not provided, it is calculated as:
+
+        b = 1 - exp(-hop_length / (sr * time_constant))
+
+    This normalization is designed to suppress background noise and
+    emphasize foreground signals, and can be used as an alternative to
+    decibel scaling (`amplitude_to_db`).
+
+    This implementation also supports smoothing across frequency bins
+    by specifying `max_size > 1`.  If this option is used, the filtered
+    spectrogram `M` is computed as
+
+        M[f, t] = (1 - b) * M[f, t - 1] + b * R[f, t]
+
+    where `R` has been max-filtered along the frequency axis, similar to
+    the SuperFlux algorithm implemented in `onset.onset_strength`:
+
+        R[f, t] = max(S[f - max_size//2: f + max_size//2, t])
+
+    This can be used to perform automatic gain control on signals that cross
+    or span multiple frequency bans, which may be desirable for spectrograms
+    with high frequency resolution.
+
+    .. [1] Wang, Y., Getreuer, P., Hughes, T., Lyon, R. F., & Saurous, R. A.
+       (2017, March). Trainable frontend for robust and far-field keyword spotting.
+       In Acoustics, Speech and Signal Processing (ICASSP), 2017
+       IEEE International Conference on (pp. 5670-5674). IEEE.
+
+    Parameters
+    ----------
+    S : np.ndarray (non-negative) [shape=(n, m)]
+        The input (magnitude) spectrogram
+
+    sr : number > 0 [scalar]
+        The audio sampling rate
+
+    hop_length : int > 0 [scalar]
+        The hop length of `S`, expressed in samples
+
+    gain : number >= 0 [scalar]
+        The gain factor.  Typical values should be slightly less than 1.
+
+    bias : number >= 0 [scalar]
+        The bias point of the nonlinear compression (default: 2)
+
+    power : number > 0 [scalar]
+        The compression exponent.  Typical values should be between 0 and 1.
+        Smaller values of `power` result in stronger compression.
+
+    time_constant : number > 0 [scalar]
+        The time constant for IIR filtering, measured in seconds.
+
+    eps : number > 0 [scalar]
+        A small constant used to ensure numerical stability of the filter.
+
+    b : number in [0, 1]  [scalar]
+        The filter coefficient for the low-pass filter.
+        If not provided, it will be inferred from `time_constant`.
+
+    max_size : int > 0 [scalar]
+        The width of the max filter applied to the frequency axis.
+        If left as `1`, no filtering is performed.
+
+    Returns
+    -------
+    P : np.ndarray, non-negative [shape=(n, m)]
+        The per-channel energy normalized version of `S`.
+
+    See Also
+    --------
+    amplitude_to_db
+    librosa.onset.onset_strength
+
+    Examples
+    --------
+
+    Compare PCEN to log amplitude (dB) scaling on Mel spectra
+
+    >>> import matplotlib.pyplot as plt
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(),
+    ...                      offset=10, duration=10)
+
+    >>> # We'll use power=1 to get a magnitude spectrum
+    >>> # instead of a power spectrum
+    >>> S = librosa.feature.melspectrogram(y, sr=sr, power=1)
+    >>> log_S = librosa.amplitude_to_db(S, ref=np.max)
+    >>> pcen_S = librosa.pcen(S)
+    >>> plt.figure()
+    >>> plt.subplot(2,1,1)
+    >>> librosa.display.specshow(log_S, x_axis='time', y_axis='mel')
+    >>> plt.title('log amplitude (dB)')
+    >>> plt.colorbar()
+    >>> plt.subplot(2,1,2)
+    >>> librosa.display.specshow(pcen_S, x_axis='time', y_axis='mel')
+    >>> plt.title('Per-channel energy normalization')
+    >>> plt.colorbar()
+    >>> plt.tight_layout()
+
+    Compare PCEN with and without max-filtering
+
+    >>> pcen_max = librosa.pcen(S, max_size=3)
+    >>> plt.figure()
+    >>> plt.subplot(2,1,1)
+    >>> librosa.display.specshow(pcen_S, x_axis='time', y_axis='mel')
+    >>> plt.title('Per-channel energy normalization (no max-filter)')
+    >>> plt.colorbar()
+    >>> plt.subplot(2,1,2)
+    >>> librosa.display.specshow(pcen_max, x_axis='time', y_axis='mel')
+    >>> plt.title('Per-channel energy normalization (max_size=3)')
+    >>> plt.colorbar()
+    >>> plt.tight_layout()
+
+    '''
+
+    if power <= 0:
+        raise ParameterError('power={} must be strictly positive'.format(power))
+
+    if gain < 0:
+        raise ParameterError('gain={} must be non-negative'.format(gain))
+
+    if bias < 0:
+        raise ParameterError('bias={} must be non-negative'.format(bias))
+
+    if eps <= 0:
+        raise ParameterError('eps={} must be strictly positive'.format(eps))
+
+    if time_constant <= 0:
+        raise ParameterError('time_constant={} must be strictly positive'.format(time_constant))
+
+    if max_size < 1 or not isinstance(max_size, int):
+        raise ParameterError('max_size={} must be a positive integer'.format(max_size))
+
+    if b is None:
+        b = 1 - np.exp(- float(hop_length) / (time_constant * sr))
+
+    if not 0 <= b <= 1:
+        raise ParameterError('b={} must be between 0 and 1'.format(b))
+
+    if np.issubdtype(S.dtype, np.complexfloating):
+        warnings.warn('pcen was called on complex input so phase '
+                      'information will be discarded. To suppress this warning, '
+                      'call pcen(magphase(D)[0]) instead.')
+        S = np.abs(S)
+
+    if max_size == 1:
+        ref_spec = S
+    else:
+        ref_spec = scipy.ndimage.maximum_filter1d(S, max_size, axis=0)
+
+    S_smooth = scipy.signal.lfilter([b], [1, b - 1], ref_spec)
+
+    # Working in log-space gives us some stability, and a slight speedup
+    smooth = np.exp(-gain * (np.log(eps) + np.log1p(S_smooth / eps)))
+    return (S * smooth + bias)**power - bias**power
 
 
 def _spectrogram(y=None, S=None, n_fft=2048, hop_length=512, power=1):

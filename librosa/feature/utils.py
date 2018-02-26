@@ -2,28 +2,32 @@
 # -*- coding: utf-8 -*-
 """Feature manipulation utilities"""
 
+from warnings import warn
 import numpy as np
 import scipy.signal
 
 from .. import cache
 from ..util.exceptions import ParameterError
-
+from ..util.deprecation import Deprecated
 __all__ = ['delta', 'stack_memory']
 
 
 @cache(level=40)
-def delta(data, width=9, order=1, axis=-1, trim=True):
+def delta(data, width=9, order=1, axis=-1, trim=Deprecated(), mode='interp', **kwargs):
     r'''Compute delta features: local estimate of the derivative
     of the input data along the selected axis.
 
+    Delta features are computed Savitsky-Golay filtering.
 
     Parameters
     ----------
     data      : np.ndarray
         the input data matrix (eg, spectrogram)
 
-    width     : int >= 3, odd [scalar]
-        Number of frames over which to compute the delta feature
+    width     : int, positive, odd [scalar]
+        Number of frames over which to compute the delta features.
+        Cannot exceed the length of `data` along the specified axis.
+        If `mode='interp'`, then `width` must be at least `data.shape[axis]`.
 
     order     : int > 0 [scalar]
         the order of the difference operator.
@@ -33,17 +37,28 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
         the axis along which to compute deltas.
         Default is -1 (columns).
 
-    trim      : bool
-        set to `True` to trim the output matrix to the original size.
+    trim      : bool [DEPRECATED]
+        This parameter is deprecated in 0.6.0 and will be removed
+        in 0.7.0.
+
+    mode : str, {'interp', 'nearest', 'mirror', 'constant', 'wrap'}
+        Padding mode for estimating differences at the boundaries.
+
+    kwargs : additional keyword arguments
+        See `scipy.signal.savgol_filter`
 
     Returns
     -------
-    delta_data   : np.ndarray [shape=(d, t) or (d, t + window)]
-        delta matrix of `data`.
+    delta_data   : np.ndarray [shape=(d, t)]
+        delta matrix of `data` at specified order
 
     Notes
     -----
     This function caches at level 40.
+
+    See Also
+    --------
+    scipy.signal.savgol_filter
 
     Examples
     --------
@@ -53,18 +68,19 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
     >>> mfcc = librosa.feature.mfcc(y=y, sr=sr)
     >>> mfcc_delta = librosa.feature.delta(mfcc)
     >>> mfcc_delta
-    array([[  2.929e+01,   3.090e+01, ...,   0.000e+00,   0.000e+00],
-           [  2.226e+01,   2.553e+01, ...,   3.944e-31,   3.944e-31],
+    array([[  1.666e+01,   1.666e+01, ...,   1.869e-15,   1.869e-15],
+           [  1.784e+01,   1.784e+01, ...,   6.085e-31,   6.085e-31],
            ...,
-           [ -1.192e+00,  -6.099e-01, ...,   9.861e-32,   9.861e-32],
-           [ -5.349e-01,  -2.077e-01, ...,   1.183e-30,   1.183e-30]])
+           [  7.262e-01,   7.262e-01, ...,   9.259e-31,   9.259e-31],
+           [  6.578e-01,   6.578e-01, ...,   7.597e-31,   7.597e-31]])
+
     >>> mfcc_delta2 = librosa.feature.delta(mfcc, order=2)
     >>> mfcc_delta2
-    array([[  1.281e+01,   1.020e+01, ...,   0.000e+00,   0.000e+00],
-           [  2.726e+00,   3.558e+00, ...,   0.000e+00,   0.000e+00],
+    array([[ -1.703e+01,  -1.703e+01, ...,   3.834e-14,   3.834e-14],
+           [ -1.108e+01,  -1.108e+01, ...,  -1.068e-30,  -1.068e-30],
            ...,
-           [ -1.702e-01,  -1.509e-01, ...,   0.000e+00,   0.000e+00],
-           [ -9.021e-02,  -7.007e-02, ...,  -2.190e-47,  -2.190e-47]])
+           [  4.075e-01,   4.075e-01, ...,  -1.565e-30,  -1.565e-30],
+           [  1.676e-01,   1.676e-01, ...,  -2.104e-30,  -2.104e-30]])
 
     >>> import matplotlib.pyplot as plt
     >>> plt.subplot(3, 1, 1)
@@ -82,8 +98,16 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
     >>> plt.tight_layout()
 
     '''
+    if not isinstance(trim, Deprecated):
+        warn('The `trim` parameter to `delta` is deprecated in librosa 0.6.0.'
+             'It will be removed in 0.7.0.',
+             DeprecationWarning)
 
     data = np.atleast_1d(data)
+
+    if mode == 'interp' and width > data.shape[axis]:
+        raise ParameterError("when mode='interp', width={} "
+                             "cannot exceed data.shape[axis]={}".format(width, data.shape[axis]))
 
     if width < 3 or np.mod(width, 2) != 1:
         raise ParameterError('width must be an odd integer >= 3')
@@ -91,28 +115,13 @@ def delta(data, width=9, order=1, axis=-1, trim=True):
     if order <= 0 or not isinstance(order, int):
         raise ParameterError('order must be a positive integer')
 
-    half_length = 1 + int(width // 2)
-    window = np.arange(half_length - 1., -half_length, -1.)
-
-    # Normalize the window so we're scale-invariant
-    window /= np.sum(np.abs(window)**2)
-
-    # Pad out the data by repeating the border values (delta=0)
-    padding = [(0, 0)] * data.ndim
-    width = int(width)
-    padding[axis] = (width, width)
-    delta_x = np.pad(data, padding, mode='edge')
-
-    for _ in range(order):
-        delta_x = scipy.signal.lfilter(window, 1, delta_x, axis=axis)
-
-    # Cut back to the original shape of the input data
-    if trim:
-        idx = [slice(None)] * delta_x.ndim
-        idx[axis] = slice(- half_length - data.shape[axis], - half_length)
-        delta_x = delta_x[idx]
-
-    return delta_x
+    kwargs.pop('deriv', None)
+    kwargs.setdefault('polyorder', order)
+    return scipy.signal.savgol_filter(data, width,
+                                      deriv=order,
+                                      axis=axis,
+                                      mode=mode,
+                                      **kwargs)
 
 
 @cache(level=40)
