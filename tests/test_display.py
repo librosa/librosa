@@ -38,7 +38,7 @@ def get_spec(y, sr):
     return librosa.stft(y), C, sr
 
 
-__EXAMPLE_FILE = 'data/test1_22050.wav'
+__EXAMPLE_FILE = os.path.join('data', 'test1_22050.wav')
 y, sr = librosa.load(__EXAMPLE_FILE)
 S, C, sr = get_spec(y, sr)
 S_abs = np.abs(S)
@@ -244,7 +244,7 @@ def test_time_scales_auto():
 
     # sr = 22050, hop_length = 512, S.shape[1] = 198
     # 197 * 512 / 22050 ~= 4.6s
-    plt.figure()
+    plt.figure(figsize=(10, 10))
     plt.subplot(4, 1, 1)
     # sr * 10 -> ms
     librosa.display.specshow(S_abs, sr=10 * sr, x_axis='time')

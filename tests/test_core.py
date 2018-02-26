@@ -58,7 +58,7 @@ def test_load():
 
         assert np.allclose(y, DATA['y'])
 
-    for infile in files('data/core-load-*.mat'):
+    for infile in files(os.path.join('data','core-load-*.mat')):
         yield (__test, infile)
     pass
 
@@ -94,7 +94,7 @@ def test_segment_load():
 
     sample_len = 2003
     fs = 44100
-    test_file = 'data/test1_44100.wav'
+    test_file = os.path.join('data','test1_44100.wav')
     y, sr = librosa.load(test_file, sr=None, mono=False,
                          offset=0., duration=sample_len/float(fs))
 
@@ -135,10 +135,10 @@ def test_resample_mono():
         target_length = y.shape[-1] * sr_out // sr_in
         assert np.abs(y2.shape[-1] - target_length) <= 1
 
-    for infile in ['data/test1_44100.wav',
-                   'data/test1_22050.wav',
-                   'data/test2_8000.wav']:
-        y, sr_in = librosa.load(infile, sr=None, duration=5)
+    for infile in ['test1_44100.wav',
+                   'test1_22050.wav',
+                   'test2_8000.wav']:
+        y, sr_in = librosa.load(os.path.join('data', infile), sr=None, duration=5)
 
         for sr_out in [8000, 22050]:
             for res_type in ['kaiser_best', 'kaiser_fast', 'scipy']:
@@ -170,7 +170,8 @@ def test_resample_stereo():
         target_length = y.shape[-1] * sr_out // sr_in
         assert np.abs(y2.shape[-1] - target_length) <= 1
 
-    y, sr_in = librosa.load('data/test1_44100.wav', mono=False, sr=None, duration=5)
+    y, sr_in = librosa.load(os.path.join('data', 'test1_44100.wav'),
+                            mono=False, sr=None, duration=5)
 
     for sr_out in [8000, 22050]:
         for res_type in ['kaiser_fast', 'scipy']:
@@ -195,7 +196,8 @@ def test_resample_scale():
         # If it's a no-op, make sure the signal is untouched
         assert np.allclose(n_orig, n_res, atol=1e-2), (n_orig, n_res)
 
-    y, sr_in = librosa.load('data/test1_22050.wav', mono=True, sr=None, duration=3)
+    y, sr_in = librosa.load(os.path.join('data','test1_22050.wav'),
+                            mono=True, sr=None, duration=3)
 
     for res_type in ['scipy', 'kaiser_best', 'kaiser_fast']:
         for sr_out in [11025, 22050, 44100]:
@@ -231,7 +233,7 @@ def test_stft():
         # conjugate matlab stft to fix the ' vs .' bug
         assert np.allclose(D, DATA['D'].conj())
 
-    for infile in files('data/core-stft-*.mat'):
+    for infile in files(os.path.join('data', 'core-stft-*.mat')):
         yield (__test, infile)
 
 
@@ -256,13 +258,13 @@ def test_ifgram():
         # assert np.allclose(D, DATA['D'])
         assert np.allclose(F, DATA['F'], rtol=1e-1, atol=1e-1)
 
-    for infile in files('data/core-ifgram-*.mat'):
+    for infile in files(os.path.join('data', 'core-ifgram-*.mat')):
         yield (__test, infile)
 
 
 def test_ifgram_matches_stft():
 
-    y, sr = librosa.load('data/test1_22050.wav')
+    y, sr = librosa.load(os.path.join('data', 'test1_22050.wav'))
 
     def __test(n_fft, hop_length, win_length, center, norm, dtype):
         D_stft = librosa.stft(y, n_fft=n_fft, hop_length=hop_length,
@@ -294,7 +296,7 @@ def test_ifgram_matches_stft():
 
 def test_ifgram_if():
 
-    y, sr = librosa.load('data/test1_22050.wav')
+    y, sr = librosa.load(os.path.join('data', 'test1_22050.wav'))
 
     def __test(ref, clip):
 
@@ -316,7 +318,7 @@ def test_ifgram_if():
 
 
 def test_salience_basecase():
-    (y, sr) = librosa.load('data/test1_22050.wav')
+    (y, sr) = librosa.load(os.path.join('data', 'test1_22050.wav'))
     S = np.abs(librosa.stft(y))
     freqs = librosa.core.fft_frequencies(sr)
     harms = [1]
@@ -328,7 +330,7 @@ def test_salience_basecase():
 
 
 def test_salience_basecase2():
-    (y, sr) = librosa.load('data/test1_22050.wav')
+    (y, sr) = librosa.load(os.path.join('data', 'test1_22050.wav'))
     S = np.abs(librosa.stft(y))
     freqs = librosa.core.fft_frequencies(sr)
     harms = [1, 0.5, 2.0]
@@ -433,7 +435,7 @@ def test_salience_aggregate():
 
 def test_magphase():
 
-    (y, sr) = librosa.load('data/test1_22050.wav')
+    (y, sr) = librosa.load(os.path.join('data', 'test1_22050.wav'))
 
     D = librosa.stft(y)
 
@@ -472,7 +474,8 @@ def test_istft_reconstruction():
     x2 = np.sin(np.linspace(-np.pi, np.pi, 2 ** 15))
 
     # Real music signal
-    x3, sr = librosa.load('data/test1_44100.wav', sr=None, mono=True)
+    x3, sr = librosa.load(os.path.join('data', 'test1_44100.wav'),
+                          sr=None, mono=True)
     assert sr == 44100
 
     for x, atol in [(x1, 1.0e-6), (x2, 1.0e-7), (x3, 1.0e-7)]:
@@ -500,7 +503,7 @@ def test_istft_reconstruction():
 
 def test_load_options():
 
-    filename = 'data/test1_22050.wav'
+    filename = os.path.join('data', 'test1_22050.wav')
 
     def __test(offset, duration, mono, dtype):
 
@@ -550,7 +553,7 @@ def test_get_duration_wav():
         # not as precise as time-domain duration
         assert np.allclose(duration_est, duration, rtol=1e-1, atol=1e-2)
 
-    test_file = 'data/test1_22050.wav'
+    test_file = os.path.join('data', 'test1_22050.wav')
 
     for sr in [8000, 11025, 22050]:
         for duration in [1.0, 2.5]:
@@ -566,7 +569,7 @@ def test_get_duration_wav():
 
 def test_get_duration_filename():
 
-    filename = 'data/test2_8000.wav'
+    filename = os.path.join('data', 'test2_8000.wav')
     true_duration = 30.197625
 
     duration_fn = librosa.get_duration(filename=filename)
@@ -620,7 +623,7 @@ def test_to_mono():
         if mono:
             assert np.allclose(y, y_mono)
 
-    filename = 'data/test1_22050.wav'
+    filename = os.path.join('data', 'test1_22050.wav')
 
     for mono in [False, True]:
         yield __test, filename, mono
@@ -701,7 +704,7 @@ def test_piptrack_properties():
         # And everywhere else, pitch should be 0
         assert np.all(pitches[~idx] == 0)
 
-    y, sr = librosa.load('data/test1_22050.wav')
+    y, sr = librosa.load(os.path.join('data', 'test1_22050.wav'))
 
     for n_fft in [2048, 4096]:
         for hop_length in [None, n_fft // 4, n_fft // 2]:
@@ -791,7 +794,7 @@ def test_estimate_tuning():
 
 def test__spectrogram():
 
-    y, sr = librosa.load('data/test1_22050.wav')
+    y, sr = librosa.load(os.path.join('data', 'test1_22050.wav'))
 
     def __test(n_fft, hop_length, power):
 
@@ -1205,8 +1208,8 @@ def test_padding():
     # different answers for different modes.
     # Does not validate the correctness of each mode.
 
-    y, sr = librosa.load('data/test1_44100.wav', sr=None, mono=True,
-                         duration=1)
+    y, sr = librosa.load(os.path.join('data', 'test1_44100.wav'),
+                         sr=None, mono=True, duration=1)
 
     def __test_stft(center, pad_mode):
         D1 = librosa.stft(y, center=center, pad_mode='reflect')
@@ -1280,3 +1283,74 @@ def test_iirt():
     mut = librosa.iirt(y, hop_length=2205, win_length=4410)
 
     assert np.allclose(mut, gt[23:108, :mut.shape[1]], atol=1.8)
+
+
+def test_pcen():
+
+    def __test(gain, bias, power, b, time_constant, eps, ms, S, Pexp):
+
+        warnings.resetwarnings()
+        warnings.simplefilter('always')
+        with warnings.catch_warnings(record=True) as out:
+
+            P = librosa.pcen(S, gain=gain, bias=bias, power=power,
+                             time_constant=time_constant, eps=eps, b=b,
+                             max_size=ms)
+
+            if np.issubdtype(S.dtype, np.complexfloating):
+                assert len(out) > 0
+                assert 'complex' in str(out[0].message).lower()
+
+        assert P.shape == S.shape
+        assert np.all(P >= 0)
+        assert np.all(np.isfinite(P))
+
+        if Pexp is not None:
+            assert np.allclose(P, Pexp)
+
+    tf = raises(librosa.ParameterError)(__test)
+
+    srand()
+    S = np.abs(np.random.randn(9, 30))
+
+    # Bounds tests (failures):
+    #   gain < 0
+    yield tf, -1, 1, 1, 0.5, 0.5, 1e-6, 1, S, S
+
+    #   bias < 0
+    yield tf, 1, -1, 1, 0.5, 0.5, 1e-6, 1, S, S
+
+    #   power <= 0
+    yield tf, 1, 1, 0, 0.5, 0.5, 1e-6, 1, S, S
+
+    #   b < 0
+    yield tf, 1, 1, 1, -2, 0.5, 1e-6, 1, S, S
+
+    #   b > 1
+    yield tf, 1, 1, 1, 2, 0.5, 1e-6, 1, S, S
+
+    #   time_constant <= 0
+    yield tf, 1, 1, 1, 0.5, -2, 1e-6, 1, S, S
+
+    #   eps <= 0
+    yield tf, 1, 1, 1, 0.5, 0.5, 0, 1, S, S
+
+    #   max_size not int, < 1
+    yield tf, 1, 1, 1, 0.5, 0.5, 1e-6, 1.5, S, S
+    yield tf, 1, 1, 1, 0.5, 0.5, 1e-6, 0, S, S
+
+    # Edge cases:
+    #   gain=0, bias=0, power=p, b=1 => S**p
+    for p in [0.5, 1, 2]:
+        yield __test, 0, 0, p, 1.0, 0.5, 1e-6, 1, S, S**p
+
+    #   gain=1, bias=0, power=1, b=1, eps=1e-20 => ones
+    yield __test, 1, 0, 1, 1.0, 0.5, 1e-20, 1, S, np.ones_like(S)
+
+    # Catch the complex warning
+    yield __test, 1, 0, 1, 1.0, 0.5, 1e-20, 1, S * 1.j, np.ones_like(S)
+
+    #   zeros to zeros
+    Z = np.zeros_like(S)
+    yield __test, 0.98, 2.0, 0.5, None, 0.395, 1e-6, 1, Z, Z
+    yield __test, 0.98, 2.0, 0.5, None, 0.395, 1e-6, 3, Z, Z

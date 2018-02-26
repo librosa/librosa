@@ -1,5 +1,5 @@
 Tutorial
-========
+^^^^^^^^
 
 This section covers the fundamentals of developing with *librosa*, including
 a package overview, basic and advanced usage, and integration with the *scikit-learn*
@@ -7,7 +7,7 @@ package.  We will assume basic familiarity with Python and NumPy/SciPy.
 
 
 Overview
---------
+~~~~~~~~
 
 The *librosa* package is structured as collection of submodules:
 
@@ -64,7 +64,7 @@ The *librosa* package is structured as collection of submodules:
 .. _quickstart:
 
 Quickstart
-----------
+~~~~~~~~~~
 Before diving into the details, we'll walk through a brief example program
 
 .. code-block:: python
@@ -149,7 +149,7 @@ This is primarily useful for visualization purposes (e.g., using
 
 
 Advanced usage
---------------
+~~~~~~~~~~~~~~
 
 Here we'll cover a more advanced example, integrating harmonic-percussive separation,
 multiple spectral features, and beat-synchronous feature aggregation.
@@ -278,6 +278,6 @@ resulting in a feature matrix ``beat_features`` of dimension
 
 
 More examples
--------------
+~~~~~~~~~~~~~
 
-More example scripts are provided in the `example gallery <https://librosa.github.io/librosa_gallery/>`_.
+More example scripts are provided in the :ref:`advanced examples <advanced>` section.

@@ -18,7 +18,7 @@ try:
 except KeyError:
     pass
 
-__EXAMPLE_FILE = 'data/test1_22050.wav'
+__EXAMPLE_FILE = os.path.join('data', 'test1_22050.wav')
 warnings.resetwarnings()
 warnings.simplefilter('always')
 
@@ -26,37 +26,23 @@ warnings.simplefilter('always')
 # utils submodule
 def test_delta():
     # Note: this test currently only checks first-order differences
-    #       and width=3 filters
 
     def __test(width, order, axis, x):
-        # Compare trimmed and untrimmed versions
-        delta = librosa.feature.delta(x,
-                                      width=width,
-                                      order=order,
-                                      axis=axis,
-                                      trim=False)
-        delta_t = librosa.feature.delta(x,
+        delta   = librosa.feature.delta(x,
                                         width=width,
                                         order=order,
-                                        axis=axis,
-                                        trim=True)
+                                        axis=axis)
 
         # Check that trimming matches the expected shape
-        eq_(x.shape, delta_t.shape)
-
-        # Check that trimming gives the right values in the right places
-        _s = [slice(None)] * delta.ndim
-        _s[axis] = slice(- width//2 - x.shape[axis], -(width//2)-1)
-        delta_retrim = delta[_s]
-        assert np.allclose(delta_t, delta_retrim)
+        eq_(x.shape, delta.shape)
 
         # Once we're sufficiently far into the signal (ie beyond half_len)
-        # (x + delta_t)[t] should approximate x[t+1] if x is actually linear
+        # (x + delta)[t] should approximate x[t+1] if x is actually linear
         slice_orig = [slice(None)] * x.ndim
         slice_out = [slice(None)] * delta.ndim
         slice_orig[axis] = slice(width//2 + 1, -width//2 + 1)
         slice_out[axis] = slice(width//2, -width//2)
-        assert np.allclose((x + delta_t)[slice_out], x[slice_orig])
+        assert np.allclose((x + delta)[slice_out], x[slice_orig])
 
     x = np.vstack([np.arange(100.0)] * 3)
 
@@ -66,7 +52,7 @@ def test_delta():
                 for order in [0, 1]:
                     for axis in range(x.ndim):
                         tf = __test
-                        if width < 3 or np.mod(width, 2) != 1:
+                        if width < 3 or np.mod(width, 2) != 1 or width > x.shape[axis]:
                             tf = raises(librosa.ParameterError)(__test)
                         if order != 1:
                             tf = raises(librosa.ParameterError)(__test)
@@ -527,8 +513,8 @@ def test_poly_features_synthetic():
 
 def test_tonnetz():
     y, sr = librosa.load(librosa.util.example_audio_file())
-    tonnetz_chroma = np.load("data/feature-tonnetz-chroma.npy")
-    tonnetz_msaf = np.load("data/feature-tonnetz-msaf.npy")
+    tonnetz_chroma = np.load(os.path.join("data", "feature-tonnetz-chroma.npy"))
+    tonnetz_msaf = np.load(os.path.join("data", "feature-tonnetz-msaf.npy"))
 
     # Use cqt chroma
     def __audio():
@@ -757,3 +743,30 @@ def test_cens():
 
         maxdev = np.abs(ct_chroma_cens['f_CENS'] - lr_chroma_cens)
         assert np.allclose(ct_chroma_cens['f_CENS'], lr_chroma_cens, rtol=1e-15, atol=1e-15), maxdev
+
+
+def test_mfcc():
+
+    def __test(dct_type, norm, n_mfcc, S):
+
+        E_total = np.sum(S, axis=0)
+
+        mfcc = librosa.feature.mfcc(S=S, dct_type=dct_type, norm=norm, n_mfcc=n_mfcc)
+
+        assert mfcc.shape[0] == n_mfcc
+        assert mfcc.shape[1] == S.shape[1]
+
+        # In type-2 mode, DC component should be constant over all frames
+        if dct_type == 2:
+            assert np.var(mfcc[0] / E_total) <= 1e-30
+
+    S = librosa.power_to_db(np.random.randn(128, 100)**2, ref=np.max)
+
+    for n_mfcc in [13, 20]:
+        for dct_type in [1, 2, 3]:
+            for norm in [None, 'ortho']:
+                if dct_type == 1 and norm == 'ortho':
+                    tf = raises(NotImplementedError)(__test)
+                else:
+                    tf = __test
+                yield tf, dct_type, norm, n_mfcc, S

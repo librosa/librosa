@@ -5,15 +5,12 @@ A python package for music and audio analysis.
 [![PyPI](https://img.shields.io/pypi/v/librosa.svg)](https://pypi.python.org/pypi/librosa)
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/librosa/badges/version.svg)](https://anaconda.org/conda-forge/librosa)
 [![License](https://img.shields.io/pypi/l/librosa.svg)](https://github.com/librosa/librosa/blob/master/LICENSE.md)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.293021.svg)](https://doi.org/10.5281/zenodo.293021)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1174893.svg)](https://doi.org/10.5281/zenodo.1174893)
 
 [![Build Status](https://travis-ci.org/librosa/librosa.png?branch=master)](http://travis-ci.org/librosa/librosa?branch=master)
+[![Build status](https://ci.appveyor.com/api/projects/status/8i1hhr8yj78195xf?svg=true)](https://ci.appveyor.com/project/bmcfee/librosa)
 [![Coverage Status](https://coveralls.io/repos/librosa/librosa/badge.svg?branch=master)](https://coveralls.io/r/librosa/librosa?branch=master)
 [![Dependency Status](https://dependencyci.com/github/librosa/librosa/badge)](https://dependencyci.com/github/librosa/librosa)
-
-[![Linux](https://circleci.com/gh/conda-forge/librosa-feedstock.svg?style=svg)](https://circleci.com/gh/conda-forge/librosa-feedstock)
-[![OSX](https://travis-ci.org/conda-forge/librosa-feedstock.svg?branch=master)](https://travis-ci.org/conda-forge/librosa-feedstock)
-[![Windows](https://ci.appveyor.com/api/projects/status/github/conda-forge/librosa-feedstock?svg=True)](https://ci.appveyor.com/project/conda-forge/librosa-feedstock/branch/master)
 
 
 Documentation
