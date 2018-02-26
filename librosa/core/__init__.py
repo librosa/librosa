@@ -26,8 +26,10 @@ Spectral representations
     istft
     ifgram
     cqt
+    icqt
     hybrid_cqt
     pseudo_cqt
+    iirt
     fmt
 
     interp_harmonics
@@ -48,6 +50,8 @@ Magnitude scaling
 
     perceptual_weighting
     A_weighting
+
+    pcen
 
 Time and frequency conversion
 -----------------------------
@@ -95,14 +99,6 @@ Dynamic Time Warping
 
     dtw
     fill_off_diagonal
-
-
-Deprecated
-----------
-.. autosummary::
-    :toctree: generated/
-
-    logamplitude
 """
 
 from .time_frequency import *  # pylint: disable=wildcard-import
