@@ -74,7 +74,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
     dtype       : numeric type
         Complex numeric type for `D`.  Default is 64-bit complex.
 
-    mode : string
+    pad_mode : string
         If `center=True`, the padding mode to use at the edges of the signal.
         By default, STFT uses reflection padding.
 
@@ -398,7 +398,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     dtype : numeric type
         Complex numeric type for `D`.  Default is 64-bit complex.
 
-    mode : string
+    pad_mode : string
         If `center=True`, the padding mode to use at the edges of the signal.
         By default, STFT uses reflection padding.
 
