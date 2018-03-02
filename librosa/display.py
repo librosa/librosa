@@ -326,7 +326,7 @@ def __envelope(x, hop):
     return util.frame(x, hop_length=hop, frame_length=hop).max(axis=0)
 
 
-def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000,
+def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000, axes=None,
              **kwargs):
     '''Plot the amplitude envelope of a waveform.
 
@@ -355,6 +355,9 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000
 
     x_axis : str {'time', 'off', 'none'} or None
         If 'time', the x-axis is given time tick-marks.
+
+    axes : matplotlib.axes.Axes or None
+        Axes to plot on instead of the default `plt.gca()`.
 
     offset : float
         Horizontal offset (in time) to start the waveform plot
@@ -435,7 +438,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000
         y_top = y
         y_bottom = -y
 
-    axes = plt.gca()
+    axes = axes if axes is not None else plt.gca()
 
     kwargs.setdefault('color', next(axes._get_lines.prop_cycler)['color'])
 
@@ -461,6 +464,7 @@ def specshow(data, x_coords=None, y_coords=None,
              sr=22050, hop_length=512,
              fmin=None, fmax=None,
              bins_per_octave=12,
+             axes=None,
              **kwargs):
     '''Display a spectrogram/chromagram/cqt/etc.
 
@@ -541,6 +545,9 @@ def specshow(data, x_coords=None, y_coords=None,
 
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave.  Used for CQT frequency scale.
+    
+    axes : matplotlib.axes.Axes or None
+        Axes to plot on instead of the default `plt.gca()`.
 
     kwargs : additional keyword arguments
         Arguments passed through to `matplotlib.pyplot.pcolormesh`.
@@ -674,7 +681,7 @@ def specshow(data, x_coords=None, y_coords=None,
     y_coords = __mesh_coords(y_axis, y_coords, data.shape[0], **all_params)
     x_coords = __mesh_coords(x_axis, x_coords, data.shape[1], **all_params)
 
-    axes = plt.gca()
+    axes = axes if axes is not None else plt.gca()
     out = axes.pcolormesh(x_coords, y_coords, data, **kwargs)
     plt.sci(out)
 
