@@ -351,3 +351,13 @@ def test_coords():
 def test_bad_coords():
 
     librosa.display.specshow(S_abs, x_coords=np.arange(S.shape[1] // 2))
+
+def test_axes_kwarg():
+
+    fig, axs = plt.subplots(2, 2)
+    librosa.display.specshow(S_abs, x_axis='time', axes=axs[0])
+    librosa.display.specshow(S_abs, x_axis='time', axes=axs[1])
+    librosa.display.waveplot(y, axes=axs[2])
+    librosa.display.waveplot(y, axes=axs[3])
+    for ax in axs.ravel():
+        assert ax.axes.xaxis.label.get_text() == 'Time'
