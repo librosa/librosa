@@ -12,7 +12,7 @@ from numpy.lib.stride_tricks import as_strided
 from .. import cache
 from .exceptions import ParameterError
 
-from numba import jit
+import numba as nb
 
 # Constrain STFT block sizes to 256 KB
 MAX_MEM_BLOCK = 2**8 * 2**10
@@ -838,8 +838,7 @@ def match_intervals(intervals_from, intervals_to):
 
     return output
 
-
-@jit
+@nb.jit
 def match_events(events_from, events_to, left=True, right=True):
     '''Match one set of events to another.
 
@@ -923,41 +922,61 @@ def match_events(events_from, events_to, left=True, right=True):
         raise ParameterError('Cannot match events with right=False '
                              'and min(events_to) > min(events_from)')
 
-    # Pre-allocate the output array
-    output = np.empty_like(events_from, dtype=np.int)
+    # array of matched items
+    output = np.empty_like(events_from)
 
-    # Compute how many rows we can process at once within the memory block
-    n_rows = int(MAX_MEM_BLOCK / (np.prod(output.shape[1:]) * len(events_to)
-                                  * events_from.itemsize))
+    # mock dictionary for events
+    from_idx = np.argsort(events_from)
+    sorted_from = events_from[from_idx]
 
-    # Make sure we can at least make some progress
-    n_rows = max(1, n_rows)
+    to_idx = np.argsort(events_to)
+    sorted_to = events_to[to_idx]
 
-    # Iterate over blocks of the data
-    for bl_s in range(0, len(events_from), n_rows):
-        bl_t = min(bl_s + n_rows, len(events_from))
+    # find the matching indices
+    matching_indices = np.searchsorted(sorted_to, sorted_from)
 
-        event_block = events_from[bl_s:bl_t]
+    # iterate over indices in matching_indices
+    for ind in range(0, len(matching_indices)):
+        closest_ind = matching_indices[ind]
 
-        # distance[i, j] = |events_from - events_to[j]|
-        distance = np.abs(np.subtract.outer(event_block,
-                                            events_to)).astype(np.float)
+        # Nothing for not left and not right
+        # Since the two arrays need to be an exact match
+        if left and right:
+            # Get corresponding element from sorted_from
+            sorted_from_num = sorted_from[ind]
 
-        # If we can't match to the right, squash all comparisons where
-        # events_to[j] > events_from[i]
-        if not right:
-            distance[np.less.outer(event_block, events_to)] = np.nan
+            # If both left and right index have equal difference
+            # Go for the lower match
+            if closest_ind != 0:
+                left_amount = abs(sorted_from_num - sorted_to[closest_ind - 1])
+                right_amount = abs(sorted_from_num - sorted_to[closest_ind])
 
-        # If we can't match to the left, squash all comparisons where
-        # events_to[j] < events_from[i]
-        if not left:
-            distance[np.greater.outer(event_block, events_to)] = np.nan
+                if left_amount <= right_amount:
+                    closest_ind -= 1
+        elif not left:
+            # Get corresponding element from sorted_from
+            sorted_from_num = sorted_from[ind]
 
-        # Find the minimum distance point from whatever's left after squashing
-        output[bl_s:bl_t] = np.nanargmin(distance, axis=-1)
+            # keep looking for the next smaller index
+            # if closest_ind is greater than sorted_from_num
+            while sorted_to[closest_ind] < sorted_from_num:
+                closest_ind += 1
+
+        elif not right:
+            # Get corresponding element from sorted_from
+            sorted_from_num = sorted_from[ind]
+
+            # keep looking for the next smaller index
+            # if closest_ind is greater than sorted_from_num
+            while sorted_to[closest_ind] > sorted_from_num:
+                closest_ind -= 1
+
+        output[ind] = closest_ind
+
+    # undo sorting
+    output[from_idx] = output
 
     return output
-
 
 def localmax(x, axis=0):
     """Find local maxima in an array `x`.
