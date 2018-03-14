@@ -327,7 +327,7 @@ def __envelope(x, hop):
 
 
 def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000,
-             **kwargs):
+             axes=None, **kwargs):
     '''Plot the amplitude envelope of a waveform.
 
     If `y` is monophonic, a filled curve is drawn between `[-abs(y), abs(y)]`.
@@ -361,6 +361,10 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000
 
     max_sr : number > 0 [scalar]
         Maximum sampling rate for the visualization
+
+    axes : instance of Matplotlib axes | None
+        A Matplotlib axis object to use for plotting. If None is given, one
+        will be created.
 
     kwargs
         Additional keyword arguments to `matplotlib.pyplot.fill_between`
@@ -435,7 +439,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000
         y_top = y
         y_bottom = -y
 
-    axes = plt.gca()
+    axes = __check_axes(axes)
 
     kwargs.setdefault('color', next(axes._get_lines.prop_cycler)['color'])
 
@@ -460,7 +464,7 @@ def specshow(data, x_coords=None, y_coords=None,
              x_axis=None, y_axis=None,
              sr=22050, hop_length=512,
              fmin=None, fmax=None,
-             bins_per_octave=12,
+             bins_per_octave=12, axes=None,
              **kwargs):
     '''Display a spectrogram/chromagram/cqt/etc.
 
@@ -541,6 +545,10 @@ def specshow(data, x_coords=None, y_coords=None,
 
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave.  Used for CQT frequency scale.
+
+    axes : instance of Matplotlib axes | None
+        A Matplotlib axis object to use for plotting. If None is given, one
+        will be created.
 
     kwargs : additional keyword arguments
         Arguments passed through to `matplotlib.pyplot.pcolormesh`.
@@ -674,7 +682,7 @@ def specshow(data, x_coords=None, y_coords=None,
     y_coords = __mesh_coords(y_axis, y_coords, data.shape[0], **all_params)
     x_coords = __mesh_coords(x_axis, x_coords, data.shape[1], **all_params)
 
-    axes = plt.gca()
+    axes = __check_axes(axes)
     out = axes.pcolormesh(x_coords, y_coords, data, **kwargs)
     plt.sci(out)
 
@@ -888,3 +896,13 @@ def __coord_n(n, **_kwargs):
 def __coord_time(n, sr=22050, hop_length=512, **_kwargs):
     '''Get time coordinates from frames'''
     return core.frames_to_time(np.arange(n+1), sr=sr, hop_length=hop_length)
+
+
+def __check_axes(axes):
+    """Check if "axes" is an instance of an axis object. If not, use `gca`."""
+    if axes is None:
+        axes = plt.gca()
+    if not isinstance(axes, plt.Axes):
+        raise ValueError("`axes` must be an instance of plt.Axes. "
+                         "Found type {}".format(type(axes)))
+    return axes
