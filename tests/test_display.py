@@ -154,22 +154,15 @@ def test_xaxis_none_yaxis_linear():
     librosa.display.specshow(S_bin, y_axis='linear')
 
 
-@image_comparison(baseline_images=['x_none_y_linear'], extensions=['png'])
-def test_specshow_ext_fig():
-    fig = plt.figure()
-    ax1 = fig.add_subplot(3, 1, 1)
-    librosa.display.specshow(S_abs, y_axis='linear', ax=ax1)
+@image_comparison(baseline_images=['specshow_ext_axes'], extensions=['png'])
+def test_specshow_ext_axes():
+    plt.figure()
+    ax_left = plt.subplot(1, 2, 1)
+    ax_right = plt.subplot(1, 2, 2)
 
-    ax2 = fig.add_subplot(3, 1, 2)
-    librosa.display.specshow(S_signed, y_axis='linear', ax=ax2)
-
-    ax3 = fig.add_subplot(3, 1, 3)
-    librosa.display.specshow(S_bin, y_axis='linear', ax=ax3)
-
-    # make sure the right OO figure is used and not the procedural interface is used
-    fig2 = plt.figure()
-    ax21 = fig2.add_subplot(1, 1, 1)
-    librosa.display.specshow(S_bin, y_axis='linear', ax=ax21)
+    # implicitly ax_right
+    librosa.display.specshow(S_abs, cmap='gray')
+    librosa.display.specshow(S_abs, cmap='magma', ax=ax_left)
 
 
 @image_comparison(baseline_images=['x_none_y_log'], extensions=['png'])
@@ -296,22 +289,15 @@ def test_waveplot_mono():
     librosa.display.waveplot(y, sr=sr, x_axis='time')
 
 
-@image_comparison(baseline_images=['waveplot_mono'], extensions=['png'])
-def test_waveplot_ext_fig():
-    fig = plt.figure()
-    ax1 = fig.add_subplot(3, 1, 1)
-    librosa.display.waveplot(y, sr=sr, max_points=None, x_axis='off', ax=ax1)
+@image_comparison(baseline_images=['waveplot_ext_axes'], extensions=['png'])
+def test_waveplot_ext_axes():
+    plt.figure()
+    ax_left = plt.subplot(1, 2, 1)
+    ax_right = plt.subplot(1, 2, 2)
 
-    ax2 = fig.add_subplot(3, 1, 2)
-    librosa.display.waveplot(y, sr=sr, x_axis='off', ax=ax2)
-
-    ax3 = fig.add_subplot(3, 1, 3)
-    librosa.display.waveplot(y, sr=sr, x_axis='time', ax=ax3)
-
-    # make sure the right OO figure is used and not the procedural interface
-    fig2 = plt.figure()
-    ax21 = fig2.add_subplot(1, 1, 1)
-    librosa.display.waveplot(y, sr=sr, x_axis='time', ax=ax21)
+    # implicitly ax_right
+    librosa.display.waveplot(y, color='blue')
+    librosa.display.waveplot(y, color='red', ax=ax_left)
 
 
 @image_comparison(baseline_images=['waveplot_stereo'], extensions=['png'])
