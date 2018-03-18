@@ -683,7 +683,8 @@ def specshow(data, x_coords=None, y_coords=None,
 
     axes = ax if ax is not None else plt.gca()
     out = axes.pcolormesh(x_coords, y_coords, data, **kwargs)
-    plt.sci(out)
+    if ax is None:
+        plt.sci(out)
 
     axes.set_xlim(x_coords.min(), x_coords.max())
     axes.set_ylim(y_coords.min(), y_coords.max())
