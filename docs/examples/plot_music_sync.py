@@ -97,23 +97,19 @@ plt.colorbar()
 # Alternative Visualization in the Time Domain
 # --------------------------------------------
 #
-# We can also visualize the wariping path directly on our time domain signals.
+# We can also visualize the warping path directly on our time domain signals.
 # Red lines connect corresponding time positions in the input signals.
 # (Thanks to F. Zalkow for the nice visualization.)
 
-fig = plt.figure(figsize=(16, 8))
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(16, 8))
 
 # Plot x_1
-plt.subplot(2, 1, 1)
-librosa.display.waveplot(x_1, sr=fs)
-plt.title('Slower Version $X_1$')
-ax1 = plt.gca()
+librosa.display.waveplot(x_1, sr=fs, ax=ax1)
+ax1.set(title='Slower Version $X_1$')
 
 # Plot x_2
-plt.subplot(2, 1, 2)
-librosa.display.waveplot(x_2, sr=fs)
-plt.title('Slower Version $X_2$')
-ax2 = plt.gca()
+librosa.display.waveplot(x_2, sr=fs, ax=ax2)
+ax2.set(title='Slower Version $X_2$')
 
 plt.tight_layout()
 
