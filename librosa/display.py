@@ -356,7 +356,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
     x_axis : str {'time', 'off', 'none'} or None
         If 'time', the x-axis is given time tick-marks.
 
-    axes : matplotlib.axes.Axes or None
+    ax : matplotlib.axes.Axes or None
         Axes to plot on instead of the default `plt.gca()`.
 
     offset : float
@@ -438,7 +438,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
         y_top = y
         y_bottom = -y
 
-    axes = ax if ax is not None else plt.gca()
+    axes = __check_axes(ax)
 
     kwargs.setdefault('color', next(axes._get_lines.prop_cycler)['color'])
 
@@ -546,7 +546,7 @@ def specshow(data, x_coords=None, y_coords=None,
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave.  Used for CQT frequency scale.
 
-    axes : matplotlib.axes.Axes or None
+    ax : matplotlib.axes.Axes or None
         Axes to plot on instead of the default `plt.gca()`.
 
     kwargs : additional keyword arguments
@@ -681,7 +681,7 @@ def specshow(data, x_coords=None, y_coords=None,
     y_coords = __mesh_coords(y_axis, y_coords, data.shape[0], **all_params)
     x_coords = __mesh_coords(x_axis, x_coords, data.shape[1], **all_params)
 
-    axes = ax if ax is not None else plt.gca()
+    axes = __check_axes(ax)
     out = axes.pcolormesh(x_coords, y_coords, data, **kwargs)
     if ax is None:
         plt.sci(out)
@@ -729,6 +729,16 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
         raise ParameterError('Unknown axis type: {}'.format(ax_type))
 
     return coord_map[ax_type](n, **kwargs)
+
+
+def __check_axes(axes):
+    '''Check if "axes" is an instance of an axis object. If not, use `gca`.'''
+    if axes is None:
+        axes = plt.gca()
+    if not isinstance(axes, plt.Axes):
+        raise ValueError("`axes` must be an instance of plt.Axes. "
+                         "Found type {}".format(type(axes)))
+    return axes
 
 
 def __scale_axes(axes, ax_type, which):
