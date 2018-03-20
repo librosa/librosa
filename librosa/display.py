@@ -326,8 +326,8 @@ def __envelope(x, hop):
     return util.frame(x, hop_length=hop, frame_length=hop).max(axis=0)
 
 
-def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000,
-             **kwargs):
+def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
+             max_sr=1000, ax=None, **kwargs):
     '''Plot the amplitude envelope of a waveform.
 
     If `y` is monophonic, a filled curve is drawn between `[-abs(y), abs(y)]`.
@@ -355,6 +355,9 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000
 
     x_axis : str {'time', 'off', 'none'} or None
         If 'time', the x-axis is given time tick-marks.
+
+    ax : matplotlib.axes.Axes or None
+        Axes to plot on instead of the default `plt.gca()`.
 
     offset : float
         Horizontal offset (in time) to start the waveform plot
@@ -435,7 +438,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0, max_sr=1000
         y_top = y
         y_bottom = -y
 
-    axes = plt.gca()
+    axes = __check_axes(ax)
 
     kwargs.setdefault('color', next(axes._get_lines.prop_cycler)['color'])
 
@@ -461,6 +464,7 @@ def specshow(data, x_coords=None, y_coords=None,
              sr=22050, hop_length=512,
              fmin=None, fmax=None,
              bins_per_octave=12,
+             ax=None,
              **kwargs):
     '''Display a spectrogram/chromagram/cqt/etc.
 
@@ -541,6 +545,9 @@ def specshow(data, x_coords=None, y_coords=None,
 
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave.  Used for CQT frequency scale.
+
+    ax : matplotlib.axes.Axes or None
+        Axes to plot on instead of the default `plt.gca()`.
 
     kwargs : additional keyword arguments
         Arguments passed through to `matplotlib.pyplot.pcolormesh`.
@@ -674,9 +681,10 @@ def specshow(data, x_coords=None, y_coords=None,
     y_coords = __mesh_coords(y_axis, y_coords, data.shape[0], **all_params)
     x_coords = __mesh_coords(x_axis, x_coords, data.shape[1], **all_params)
 
-    axes = plt.gca()
+    axes = __check_axes(ax)
     out = axes.pcolormesh(x_coords, y_coords, data, **kwargs)
-    plt.sci(out)
+    if ax is None:
+        plt.sci(out)
 
     axes.set_xlim(x_coords.min(), x_coords.max())
     axes.set_ylim(y_coords.min(), y_coords.max())
@@ -721,6 +729,16 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
         raise ParameterError('Unknown axis type: {}'.format(ax_type))
 
     return coord_map[ax_type](n, **kwargs)
+
+
+def __check_axes(axes):
+    '''Check if "axes" is an instance of an axis object. If not, use `gca`.'''
+    if axes is None:
+        axes = plt.gca()
+    if not isinstance(axes, plt.Axes):
+        raise ValueError("`axes` must be an instance of plt.Axes. "
+                         "Found type {}".format(type(axes)))
+    return axes
 
 
 def __scale_axes(axes, ax_type, which):
