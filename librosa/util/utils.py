@@ -899,7 +899,6 @@ def match_events(events_from, events_to, left=True, right=True):
     ParameterError
         If either array of input events is not the correct shape
     '''
-
     if len(events_from) == 0 or len(events_to) == 0:
         raise ParameterError('Attempting to match empty event list')
 
@@ -923,7 +922,7 @@ def match_events(events_from, events_to, left=True, right=True):
                              'and min(events_to) > min(events_from)')
 
     # array of matched items
-    output = np.empty_like(events_from)
+    output = np.empty_like(events_from, int)
 
     # mock dictionary for events
     from_idx = np.argsort(events_from)
@@ -945,14 +944,11 @@ def match_events(events_from, events_to, left=True, right=True):
             # Get corresponding element from sorted_from
             sorted_from_num = sorted_from[ind]
 
-            # If both left and right index have equal difference
-            # Go for the lower match
-            if closest_ind != 0:
-                left_amount = abs(sorted_from_num - sorted_to[closest_ind - 1])
-                right_amount = abs(sorted_from_num - sorted_to[closest_ind])
+            if closest_ind == len(sorted_to):
+                # closest_ind is the last item in array
+                # Or only item in array
+                closest_ind -= 1
 
-                if left_amount <= right_amount:
-                    closest_ind -= 1
         elif not left:
             # Get corresponding element from sorted_from
             sorted_from_num = sorted_from[ind]
@@ -974,7 +970,8 @@ def match_events(events_from, events_to, left=True, right=True):
         output[ind] = closest_ind
 
     # undo sorting
-    output[from_idx] = output
+    solutions = np.empty_like(output)
+    solutions[from_idx] = output
 
     return output
 
