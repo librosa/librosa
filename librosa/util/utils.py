@@ -904,7 +904,7 @@ def match_events(events_from, events_to, left=True, right=True):
 
     # If we can't match left or right, then only strict equivalence
     # counts as a match.
-    if not (left or right) and not np.all(np.in1d(events_from, events_to)):
+    if not (left or right) and not set(events_from).issubset(set(events_to)):
             raise ParameterError('Cannot match events with left=right=False '
                                  'and events_from is not contained '
                                  'in events_to')
@@ -934,46 +934,123 @@ def match_events(events_from, events_to, left=True, right=True):
     # find the matching indices
     matching_indices = np.searchsorted(sorted_to, sorted_from)
 
-    # iterate over indices in matching_indices
-    for ind in range(0, len(matching_indices)):
-        closest_ind = matching_indices[ind]
+    # only one correct solution so return new array with the
+    # length of events_from with values of the single events_to
+    if len(sorted_to) == 1:
+        return np.full(len(events_from), events_to[0], int)
+    # only two options and need to check which is the better value
+    elif len(events_to) == 2:
+        first = events_to[0]
+        second = events_to[1]
 
-        # Nothing for not left and not right
-        # Since the two arrays need to be an exact match
-        if left and right:
-            # Get corresponding element from sorted_from
+        for ind in range(0, len(sorted_from)):
             sorted_from_num = sorted_from[ind]
 
+            # Nothing for not left and not right
+            # Since the two arrays need to be an exact match
+            if left and right:
+                # Check which gives smaller difference
+                if (abs(sorted_from_num - first) <=
+                        abs(sorted_from_num - second)):
+                    output[ind] = 0
+                else:
+                    output[ind] = 1
+            elif not left:
+                # Check which gives smaller difference
+                # And if its less than current number
+                if (abs(sorted_from_num - first) <=
+                        abs(sorted_from_num - second) and
+                        sorted_from_num < first):
+                    output[ind] = 0
+                else:
+                    output[ind] = 1
+            elif not right:
+                # Check which gives smaller value
+                # And if its greater than current number
+                if (abs(sorted_from_num - first) <=
+                        abs(sorted_from_num - second) and
+                        sorted_from_num > first):
+                    output[ind] = 0
+                else:
+                    output[ind] = 1
+    else:
+        # iterate over indices in matching_indices
+        for ind in range(0, len(matching_indices)):
+            closest_ind = matching_indices[ind]
+
+            # Prevent oob
             if closest_ind == len(sorted_to):
-                # closest_ind is the last item in array
-                # Or only item in array
                 closest_ind -= 1
 
-        elif not left:
-            # Get corresponding element from sorted_from
-            sorted_from_num = sorted_from[ind]
+            closest = sorted_to[closest_ind]
 
-            # keep looking for the next smaller index
-            # if closest_ind is greater than sorted_from_num
-            while sorted_to[closest_ind] < sorted_from_num:
-                closest_ind += 1
+            # Nothing for not left and not right
+            # Since the two arrays need to be an exact match
+            if left and right:
+                # Get corresponding element from sorted_from
+                sorted_from_num = sorted_from[ind]
 
-        elif not right:
-            # Get corresponding element from sorted_from
-            sorted_from_num = sorted_from[ind]
+                # Prevent oob
+                if closest_ind == 0:
+                    # if number next to the right of chosen closest is better
+                    # then replace closest_ind with the better number
+                    if (abs(sorted_from_num - sorted_to[closest_ind + 1]) <
+                            abs(sorted_from_num - closest)):
+                        closest_ind += 1
+                elif closest_ind == (len(sorted_to) - 1):
+                    # if number next to the left of chosen closest is better
+                    # then replace closest_ind with the better number
+                    if (abs(sorted_from_num - sorted_to[closest_ind - 1]) <
+                            abs(sorted_from_num - closest) and
+                            matching_indices[ind] != len(sorted_to)):
+                        # Only permit this if the original matched index
+                        # Was not the last index
+                        closest_ind -= 1
+                else:
+                    left = sorted_to[closest_ind - 1]
+                    right = sorted_to[closest_ind + 1]
 
-            # keep looking for the next smaller index
-            # if closest_ind is greater than sorted_from_num
-            while sorted_to[closest_ind] > sorted_from_num:
-                closest_ind -= 1
+                    # check if numbers around the chosen closest
+                    # are better than the original chosen closest
+                    if (abs(sorted_from_num - left) <
+                            abs(sorted_from_num - closest) and
+                            abs(sorted_from_num - left) <
+                            abs(sorted_from_num - right)):
+                        closest_ind -= 1
+                    elif (abs(sorted_from_num - right) <
+                            abs(sorted_from_num - closest)):
+                        closest_ind += 1
+            elif not left:
+                # Get corresponding element from sorted_from
+                sorted_from_num = sorted_from[ind]
 
-        output[ind] = closest_ind
+                # keep looking for the next smaller index
+                # as long as at closest_ind
+                # is greater than sorted_from_num
+                while (sorted_to[closest_ind] < sorted_from_num and
+                        closest_ind + 1 != len(sorted_to)):
+                    closest_ind += 1
+            elif not right:
+                # Get corresponding element from sorted_from
+                sorted_from_num = sorted_from[ind]
 
-    # undo sorting
+                # keep looking for the next smaller index
+                # as long as number atclosest_ind
+                # is greater than sorted_from_num
+                while (sorted_to[closest_ind] > sorted_from_num and
+                        closest_ind != 0):
+                    closest_ind -= 1
+
+            # Use to_idx to get to the
+            # Original order of unsorted events_to
+            output[ind] = to_idx[closest_ind]
+
+    # Undo sorting
     solutions = np.empty_like(output)
     solutions[from_idx] = output
 
-    return output
+    return solutions
+
 
 def localmax(x, axis=0):
     """Find local maxima in an array `x`.
