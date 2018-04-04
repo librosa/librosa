@@ -12,7 +12,7 @@ from numpy.lib.stride_tricks import as_strided
 from .. import cache
 from .exceptions import ParameterError
 
-import numba as nb
+from numba import jit
 
 # Constrain STFT block sizes to 256 KB
 MAX_MEM_BLOCK = 2**8 * 2**10
@@ -838,7 +838,7 @@ def match_intervals(intervals_from, intervals_to):
 
     return output
 
-@nb.jit
+@jit
 def match_events(events_from, events_to, left=True, right=True):
     '''Match one set of events to another.
 
