@@ -838,7 +838,7 @@ def match_intervals(intervals_from, intervals_to):
 
     return output
 
-@jit
+
 def match_events(events_from, events_to, left=True, right=True):
     '''Match one set of events to another.
 
@@ -921,6 +921,11 @@ def match_events(events_from, events_to, left=True, right=True):
         raise ParameterError('Cannot match events with right=False '
                              'and min(events_to) > min(events_from)')
 
+    return logic_match_events(events_from, events_to, left, right)
+
+
+@jit
+def logic_match_events(events_from, events_to, left=True, right=True):
     # array of matched items
     output = np.empty_like(events_from, int)
 
