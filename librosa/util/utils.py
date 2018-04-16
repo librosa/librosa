@@ -921,14 +921,14 @@ def match_events(events_from, events_to, left=True, right=True):
         raise ParameterError('Cannot match events with right=False '
                              'and min(events_to) > min(events_from)')
 
-    return logic_match_events(events_from, events_to, left, right)
-
-
-@jit
-def logic_match_events(events_from, events_to, left=True, right=True):
     # array of matched items
     output = np.empty_like(events_from, int)
 
+    return logic_match_events(output, events_from, events_to, left, right)
+
+
+@jit(nopython=True)
+def logic_match_events(output, events_from, events_to, left=True, right=True):
     # mock dictionary for events
     from_idx = np.argsort(events_from)
     sorted_from = events_from[from_idx]
@@ -939,123 +939,63 @@ def logic_match_events(events_from, events_to, left=True, right=True):
     # find the matching indices
     matching_indices = np.searchsorted(sorted_to, sorted_from)
 
-    # only one correct solution so return new array with the
-    # length of events_from with values of the single events_to
-    if len(sorted_to) == 1:
-        return np.full(len(events_from), events_to[0], int)
-    # only two options and need to check which is the better value
-    elif len(events_to) == 2:
-        first = events_to[0]
-        second = events_to[1]
+    # iterate over indices in matching_indices
+    for ind in range(0, len(matching_indices)):
+        left_ind = -1
+        right_ind = len(matching_indices)
+    
+        middle_ind = matching_indices[ind]
+        sorted_from_num = sorted_from[ind]
+        
+        # Permitted to look to the left
+        if middle_ind > 0 and left:
+            left_ind = middle_ind - 1
 
-        for ind in range(0, len(sorted_from)):
-            sorted_from_num = sorted_from[ind]
+        # Permitted to look to right
+        if middle_ind < len(matching_indices) - 1 and right:
+            right_ind = middle_ind + 1
+            
+        # TODO: left and right while loops
+        
+        # TODO: DELETE THIS
+        print('\nsorted_from number', sorted_from_num)
+        if left_ind != -1:
+            print('left', sorted_to[left_ind])
+        print('middle', sorted_to[middle_ind])
+        if right_ind != len(matching_indices):
+            print('right', sorted_to[right_ind])
+        
+        
+        # Check if left should be chosen
+        if ((left and left_ind != -1) and
+                (not right and sorted_to[middle_ind] > sorted_from_num) or
+                (abs(sorted_to[left_ind] - sorted_from_num) <
+                    abs(sorted_to[right_ind] - sorted_from_num) and
+                    abs(sorted_to[left_ind] - sorted_from_num) <
+                    abs(sorted_to[middle_ind] - sorted_from_num))):
+        
+            print('left chosen')
+            output[ind] = to_idx[left_ind]
 
-            # Nothing for not left and not right
-            # Since the two arrays need to be an exact match
-            if left and right:
-                # Check which gives smaller difference
-                if (abs(sorted_from_num - first) <=
-                        abs(sorted_from_num - second)):
-                    output[ind] = 0
-                else:
-                    output[ind] = 1
-            elif not left:
-                # Check which gives smaller difference
-                # And if its less than current number
-                if (abs(sorted_from_num - first) <=
-                        abs(sorted_from_num - second) and
-                        sorted_from_num < first):
-                    output[ind] = 0
-                else:
-                    output[ind] = 1
-            elif not right:
-                # Check which gives smaller value
-                # And if its greater than current number
-                if (abs(sorted_from_num - first) <=
-                        abs(sorted_from_num - second) and
-                        sorted_from_num > first):
-                    output[ind] = 0
-                else:
-                    output[ind] = 1
-    else:
-        # iterate over indices in matching_indices
-        for ind in range(0, len(matching_indices)):
-            closest_ind = matching_indices[ind]
+        # Check if right should be chosen
+        elif (right and right_ind != len(matching_indices) and
+                 (abs(sorted_to[right_ind] - sorted_from_num) <
+                     abs(sorted_to[middle_ind] - sorted_from_num))):
 
-            # Prevent oob
-            if closest_ind == len(sorted_to):
-                closest_ind -= 1
+            print('right chosen')
+            output[ind] = to_idx[right_ind]
 
-            closest = sorted_to[closest_ind]
+        # Selected index wins
+        else:
 
-            # Nothing for not left and not right
-            # Since the two arrays need to be an exact match
-            if left and right:
-                # Get corresponding element from sorted_from
-                sorted_from_num = sorted_from[ind]
-
-                # Prevent oob
-                if closest_ind == 0:
-                    # if number next to the right of chosen closest is better
-                    # then replace closest_ind with the better number
-                    if (abs(sorted_from_num - sorted_to[closest_ind + 1]) <
-                            abs(sorted_from_num - closest)):
-                        closest_ind += 1
-                elif closest_ind == (len(sorted_to) - 1):
-                    # if number next to the left of chosen closest is better
-                    # then replace closest_ind with the better number
-                    if (abs(sorted_from_num - sorted_to[closest_ind - 1]) <
-                            abs(sorted_from_num - closest) and
-                            matching_indices[ind] != len(sorted_to)):
-                        # Only permit this if the original matched index
-                        # Was not the last index
-                        closest_ind -= 1
-                else:
-                    left = sorted_to[closest_ind - 1]
-                    right = sorted_to[closest_ind + 1]
-
-                    # check if numbers around the chosen closest
-                    # are better than the original chosen closest
-                    if (abs(sorted_from_num - left) <
-                            abs(sorted_from_num - closest) and
-                            abs(sorted_from_num - left) <
-                            abs(sorted_from_num - right)):
-                        closest_ind -= 1
-                    elif (abs(sorted_from_num - right) <
-                            abs(sorted_from_num - closest)):
-                        closest_ind += 1
-            elif not left:
-                # Get corresponding element from sorted_from
-                sorted_from_num = sorted_from[ind]
-
-                # keep looking for the next smaller index
-                # as long as at closest_ind
-                # is greater than sorted_from_num
-                while (sorted_to[closest_ind] < sorted_from_num and
-                        closest_ind + 1 != len(sorted_to)):
-                    closest_ind += 1
-            elif not right:
-                # Get corresponding element from sorted_from
-                sorted_from_num = sorted_from[ind]
-
-                # keep looking for the next smaller index
-                # as long as number atclosest_ind
-                # is greater than sorted_from_num
-                while (sorted_to[closest_ind] > sorted_from_num and
-                        closest_ind != 0):
-                    closest_ind -= 1
-
-            # Use to_idx to get to the
-            # Original order of unsorted events_to
-            output[ind] = to_idx[closest_ind]
-
+            print('middle chosen')
+            output[ind] = to_idx[middle_ind]
+        
     # Undo sorting
     solutions = np.empty_like(output)
     solutions[from_idx] = output
 
     return solutions
-
 
 def localmax(x, axis=0):
     """Find local maxima in an array `x`.
