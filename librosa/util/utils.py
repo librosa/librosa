@@ -943,10 +943,10 @@ def logic_match_events(output, events_from, events_to, left=True, right=True):
     for ind in range(0, len(matching_indices)):
         left_ind = -1
         right_ind = len(matching_indices)
-    
+
         middle_ind = matching_indices[ind]
         sorted_from_num = sorted_from[ind]
-        
+
         # Permitted to look to the left
         if middle_ind > 0 and left:
             left_ind = middle_ind - 1
@@ -954,18 +954,7 @@ def logic_match_events(output, events_from, events_to, left=True, right=True):
         # Permitted to look to right
         if middle_ind < len(matching_indices) - 1 and right:
             right_ind = middle_ind + 1
-            
-        # TODO: left and right while loops
-        
-        # TODO: DELETE THIS
-        print('\nsorted_from number', sorted_from_num)
-        if left_ind != -1:
-            print('left', sorted_to[left_ind])
-        print('middle', sorted_to[middle_ind])
-        if right_ind != len(matching_indices):
-            print('right', sorted_to[right_ind])
-        
-        
+
         # Check if left should be chosen
         if ((left and left_ind != -1) and
                 (not right and sorted_to[middle_ind] > sorted_from_num) or
@@ -973,8 +962,7 @@ def logic_match_events(output, events_from, events_to, left=True, right=True):
                     abs(sorted_to[right_ind] - sorted_from_num) and
                     abs(sorted_to[left_ind] - sorted_from_num) <
                     abs(sorted_to[middle_ind] - sorted_from_num))):
-        
-            print('left chosen')
+
             output[ind] = to_idx[left_ind]
 
         # Check if right should be chosen
@@ -982,15 +970,13 @@ def logic_match_events(output, events_from, events_to, left=True, right=True):
                  (abs(sorted_to[right_ind] - sorted_from_num) <
                      abs(sorted_to[middle_ind] - sorted_from_num))):
 
-            print('right chosen')
             output[ind] = to_idx[right_ind]
 
         # Selected index wins
         else:
 
-            print('middle chosen')
             output[ind] = to_idx[middle_ind]
-        
+
     # Undo sorting
     solutions = np.empty_like(output)
     solutions[from_idx] = output
