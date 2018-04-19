@@ -997,11 +997,11 @@ def _multirate_fb(center_freqs=None, sample_rates=None, Q=25.0,
 
 @cache(level=10)
 def mr_frequencies(tuning):
-    r'''Helper function for generating center frequency and samplerate pairs.
+    r'''Helper function for generating center frequency and sample rate pairs.
 
-    This function will return center frequency and corresponding samplerates
+    This function will return center frequency and corresponding sample rates
     to obtain similar pitch filterbank settings as described in [1]_.
-    (Instead of starting with MIDI pitch `A0`, we start with `C0`.)
+    Instead of starting with MIDI pitch `A0`, we start with `C0`.
 
     .. [1] Müller, Meinard.
            "Information Retrieval for Music and Motion."
@@ -1011,7 +1011,8 @@ def mr_frequencies(tuning):
     Parameters
     ----------
     tuning : float in `[-0.5, +0.5)` [scalar]
-        Tuning deviation from A440 in fractions of a bin.
+        Tuning deviation from A440, measure as a fraction of the equally
+        tempered semitone (1/12 of an octave).
 
     Returns
     -------
@@ -1020,7 +1021,7 @@ def mr_frequencies(tuning):
         Also defines the number of filters in the filterbank.
 
     sample_rates : np.ndarray [shape=(n,), dtype=float]
-        Samplerate for each filter (used for multirate filterbank).
+        Sample rate for each filter, used for multirate filterbank.
 
     Notes
     -----
@@ -1043,10 +1044,21 @@ def mr_frequencies(tuning):
 
 
 def semitone_filterbank(center_freqs=None, tuning=0.0, sample_rates=None, **kwargs):
-    r'''Constructs a filterbank with 88 filters mimicing the equal-tempered scale.
-
-     When run with default parameters, a filter bank with 88 filters, each having
-     a bandwith of one semitone, is designed. For details, see [1]_.
+    r'''Constructs a multirate filterbank of infinite-impulse response (IIR)
+    band-pass filters at user-defined center frequencies and sample rates.
+    
+    By default, these center frequencies are set equal to the 88 fundamental
+    frequencies of the grand piano keyboard, according to a pitch tuning standard
+    of A440, that is, note A above middle C set to 440 Hz. The center frequencies
+    are tuned to the twelve-tone equal temperament, which means that they grow
+    exponentially at a rate of 2**(1/12), that is, twelve notes per octave.
+    
+    The A440 tuning can be changed by the user while keeping twelve-tone equal
+    temperament. While A440 is currently the international standard in the music
+    industry (ISO 16), some orchestras tune to A441-A445, whereas baroque musicians
+    tune to A415.
+    
+    See [1]_ for details.
 
     .. [1] Müller, Meinard.
            "Information Retrieval for Music and Motion."
@@ -1060,27 +1072,29 @@ def semitone_filterbank(center_freqs=None, tuning=0.0, sample_rates=None, **kwar
         Also defines the number of filters in the filterbank.
 
     tuning : float in `[-0.5, +0.5)` [scalar]
-        Tuning deviation from A440 in fractions of a bin.
+        Tuning deviation from A440 as a fraction of a semitone (1/12 of an octave
+        in equal temperament).
 
     sample_rates : np.ndarray [shape=(n,), dtype=float]
-        Samplerate for each filter (used for multirate filterbank).
+        Sample rates of each filter in the multirate filterbank.
 
     kwargs : additional keyword arguments
-        Additional arguments for `multirate_fb()`.
+        Additional arguments to the private function `_multirate_fb()`.
 
     Returns
     -------
     filterbank : list [shape=(n,), dtype=float]
-        Each list entry comprises the filter coefficients for a single filter.
+        Each list entry contains the filter coefficients for a single filter.
 
     fb_sample_rates : np.ndarray [shape=(n,), dtype=float]
-        Samplerate for each filter.
+        Sample rate for each filter.
 
     See Also
     --------
-    librosa.filters.multirate_fb
-    librosa.core.semitone_spectrogram
     librosa.core.cqt
+    librosa.core.iirt
+    librosa.filters._multirate_fb
+    librosa.filters.mr_frequencies
     scipy.signal.iirdesign
 
     Examples
