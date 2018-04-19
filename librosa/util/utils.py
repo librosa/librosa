@@ -1,4 +1,6 @@
-#!/usr/bin/env python
+from_idx] = output
+
+    return solutions!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Utility functions"""
 
@@ -947,6 +949,10 @@ def logic_match_events(output, events_from, events_to, left=True, right=True):
         middle_ind = matching_indices[ind]
         sorted_from_num = sorted_from[ind]
 
+        # Prevent oob from chosen index
+        if middle_ind == len(matching_indices):
+            middle_ind -= 1
+
         # Permitted to look to the left
         if middle_ind > 0 and left:
             left_ind = middle_ind - 1
@@ -982,6 +988,7 @@ def logic_match_events(output, events_from, events_to, left=True, right=True):
     solutions[from_idx] = output
 
     return solutions
+
 
 def localmax(x, axis=0):
     """Find local maxima in an array `x`.
