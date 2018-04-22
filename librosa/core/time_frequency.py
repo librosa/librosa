@@ -826,12 +826,44 @@ def cqt_frequencies(n_bins, fmin, bins_per_octave=12, tuning=0.0):
 
 
 def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False):
-    """Compute the center frequencies of mel bands.
+    """Compute an array of acoustic frequencies tuned to the mel scale.
+    
+    The mel scale is a quasi-logarithmic function of acoustic frequency
+    designed such that perceptually similar pitch intervals (e.g. octaves)
+    appear equal in width over the full hearing range.
+    
+    Because the definition of the mel scale is conditioned by a finite number
+    of subjective psychoaoustical experiments, several implementations coexist
+    in the audio signal processing literature [1]. By default, librosa replicates
+    the behavior of the well-established MATLAB Auditory Toolbox of Slaney [2],
+    in the conversion from Hertz to mel is linear below 1 kHz and logarithmic above
+    1 kHz. Another available implementation replicates the Hidden Markov Toolkit [3]
+    (HTK) according to the following formula: mel = 2595.0 * np.log10(1.0 + f / 700.0).
+    
+    .. [1] Umesh, S., Cohen, L., & Nelson, D. Fitting the mel scale.
+    In Proc. International Conference on Acoustics, Speech, and Signal Processing
+    (ICASSP), vol. 1, pp. 217-220, 1998.
+    
+    .. [2] Slaney, M. Auditory Toolbox: A MATLAB Toolbox for Auditory
+    Modeling Work. Technical Report, version 2, Interval Research Corporation, 1998.
+    
+    .. [3] Young, S., Evermann, G., Gales, M., Hain, T., Kershaw, D., Liu, X.,
+    Moore, G., Odell, J., Ollason, D., Povey, D., Valtchev, V., & Woodland, P.
+    The HTK book, version 3.4. Cambridge University, March 2009.
+    
+    
+    See Also
+    --------
+    hz_to_mel
+    mel_to_hz
+    librosa.feature.melspectrogram
+    librosa.feature.mfcc
+    
 
     Parameters
     ----------
     n_mels    : int > 0 [scalar]
-        number of Mel bins
+        number of mel bins
 
     fmin      : float >= 0 [scalar]
         minimum frequency (Hz)
@@ -840,7 +872,7 @@ def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False):
         maximum frequency (Hz)
 
     htk       : bool
-        use HTK formula instead of Slaney
+        use HTK formula instead of Slaney's Auditory Toolbox (see references).
 
     Returns
     -------
