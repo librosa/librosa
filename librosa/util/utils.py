@@ -948,7 +948,7 @@ def logic_match_events(output, events_from, events_to, left=True, right=True):
         sorted_from_num = sorted_from[ind]
 
         # Prevent oob from chosen index
-        if middle_ind == len(matching_indices):
+        if middle_ind == len(sorted_to):
             middle_ind -= 1
 
         # Permitted to look to the left
