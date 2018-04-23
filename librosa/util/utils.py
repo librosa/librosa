@@ -1,6 +1,4 @@
-from_idx] = output
-
-    return solutions!/usr/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Utility functions"""
 
