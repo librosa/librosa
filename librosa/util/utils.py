@@ -956,7 +956,7 @@ def logic_match_events(output, events_from, events_to, left=True, right=True):
             left_ind = middle_ind - 1
 
         # Permitted to look to right
-        if middle_ind < len(matching_indices) - 1 and right:
+        if middle_ind < len(sorted_to) - 1 and right:
             right_ind = middle_ind + 1
 
         # Check if left should be chosen
