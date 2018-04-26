@@ -834,11 +834,14 @@ def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False):
     
     Because the definition of the mel scale is conditioned by a finite number
     of subjective psychoaoustical experiments, several implementations coexist
-    in the audio signal processing literature [1]. By default, librosa replicates
-    the behavior of the well-established MATLAB Auditory Toolbox of Slaney [2],
-    in the conversion from Hertz to mel is linear below 1 kHz and logarithmic above
-    1 kHz. Another available implementation replicates the Hidden Markov Toolkit [3]
-    (HTK) according to the following formula: mel = 2595.0 * np.log10(1.0 + f / 700.0).
+    in the audio signal processing literature [1]_. By default, librosa replicates
+    the behavior of the well-established MATLAB Auditory Toolbox of Slaney [2]_.
+    According to this default implementation,  the conversion from Hertz to mel is
+    linear below 1 kHz and logarithmic above 1 kHz. Another available implementation
+    replicates the Hidden Markov Toolkit [3]_ (HTK) according to the following formula:
+    mel = 2595.0 * np.log10(1.0 + f / 700.0). The choice of implementation is determined
+    by the `htk` keyword argument: setting `htk=False` leads to the Auditory toolbox
+    implementation, whereas setting it `htk=True` leads to the HTK implementation.
     
     .. [1] Umesh, S., Cohen, L., & Nelson, D. Fitting the mel scale.
     In Proc. International Conference on Acoustics, Speech, and Signal Processing
@@ -863,21 +866,22 @@ def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False):
     Parameters
     ----------
     n_mels    : int > 0 [scalar]
-        number of mel bins
+        Number of mel bins.
 
     fmin      : float >= 0 [scalar]
-        minimum frequency (Hz)
+        Minimum frequency (Hz).
 
     fmax      : float >= 0 [scalar]
-        maximum frequency (Hz)
+        Maximum frequency (Hz).
 
     htk       : bool
-        use HTK formula instead of Slaney's Auditory Toolbox (see references).
+        If True, use HTK formula to convert Hz to mel.
+        Otherwise (False), use Slaney's Auditory Toolbox.
 
     Returns
     -------
     bin_frequencies : ndarray [shape=(n_mels,)]
-        vector of n_mels frequencies in Hz which are uniformly spaced on the Mel
+        Vector of n_mels frequencies in Hz which are uniformly spaced on the Mel
         axis.
 
     Examples
