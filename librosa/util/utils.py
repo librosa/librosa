@@ -904,7 +904,7 @@ def match_events(events_from, events_to, left=True, right=True):
 
     # If we can't match left or right, then only strict equivalence
     # counts as a match.
-    if not (left or right) and not set(events_from).issubset(set(events_to)):
+    if not (left or right) and not np.all(np.in1d(events_from, events_to)):
             raise ParameterError('Cannot match events with left=right=False '
                                  'and events_from is not contained '
                                  'in events_to')
@@ -922,13 +922,13 @@ def match_events(events_from, events_to, left=True, right=True):
                              'and min(events_to) > min(events_from)')
 
     # array of matched items
-    output = np.empty_like(events_from, int)
+    output = np.empty_like(events_from, dtype=np.int)
 
-    return logic_match_events(output, events_from, events_to, left, right)
+    return __match_events_helper(output, events_from, events_to, left, right)
 
 
 @jit(nopython=True)
-def logic_match_events(output, events_from, events_to, left=True, right=True):
+def __match_events_helper(output, events_from, events_to, left=True, right=True):
     # mock dictionary for events
     from_idx = np.argsort(events_from)
     sorted_from = events_from[from_idx]
@@ -940,9 +940,16 @@ def logic_match_events(output, events_from, events_to, left=True, right=True):
     matching_indices = np.searchsorted(sorted_to, sorted_from)
 
     # iterate over indices in matching_indices
-    for ind in range(0, len(matching_indices)):
+    for ind, middle_ind in enumerate(matching_indices):
+        left_flag = False
+        right_flag = False
+
         left_ind = -1
         right_ind = len(matching_indices)
+
+        left_diff = 0
+        right_diff = 0
+        mid_diff = 0
 
         middle_ind = matching_indices[ind]
         sorted_from_num = sorted_from[ind]
@@ -952,33 +959,33 @@ def logic_match_events(output, events_from, events_to, left=True, right=True):
             middle_ind -= 1
 
         # Permitted to look to the left
-        if middle_ind > 0 and left:
+        if left and middle_ind > 0:
             left_ind = middle_ind - 1
+            left_flag = True
 
         # Permitted to look to right
-        if middle_ind < len(sorted_to) - 1 and right:
+        if right and middle_ind < len(sorted_to) - 1:
             right_ind = middle_ind + 1
+            right_flag = True
 
-        # Check if left should be chosen
-        if ((left and left_ind != -1) and
-                (not right and sorted_to[middle_ind] > sorted_from_num) or
-                (abs(sorted_to[left_ind] - sorted_from_num) <
-                    abs(sorted_to[right_ind] - sorted_from_num) and
-                    abs(sorted_to[left_ind] - sorted_from_num) <
-                    abs(sorted_to[middle_ind] - sorted_from_num))):
+        mid_diff = abs(sorted_to[middle_ind] - sorted_from_num)
+        if left and left_flag:
+            left_diff = abs(sorted_to[left_ind] - sorted_from_num)
+        if right and right_flag:
+            right_diff = abs(sorted_to[right_ind] - sorted_from_num)
 
+        if ((left and left_flag) and
+                (not right and (sorted_to[middle_ind] > sorted_from_num) or
+                 (not right_flag and left_diff < mid_diff) or
+                 (left_diff < right_diff and left_diff < mid_diff))):
             output[ind] = to_idx[left_ind]
 
         # Check if right should be chosen
-        elif (right and right_ind != len(matching_indices) and
-                 (abs(sorted_to[right_ind] - sorted_from_num) <
-                     abs(sorted_to[middle_ind] - sorted_from_num))):
-
+        elif (right and right_flag and (right_diff < mid_diff)):
             output[ind] = to_idx[right_ind]
 
         # Selected index wins
         else:
-
             output[ind] = to_idx[middle_ind]
 
     # Undo sorting
