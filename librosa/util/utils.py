@@ -974,14 +974,14 @@ def __match_events_helper(output, events_from, events_to, left=True, right=True)
         if right and right_flag:
             right_diff = abs(sorted_to[right_ind] - sorted_from_num)
 
-        if ((left and left_flag) and
-                (not right and (sorted_to[middle_ind] > sorted_from_num) or
+        if left_flag and (not right
+                and (sorted_to[middle_ind] > sorted_from_num) or
                  (not right_flag and left_diff < mid_diff) or
-                 (left_diff < right_diff and left_diff < mid_diff))):
+                 (left_diff < right_diff and left_diff < mid_diff)):
             output[ind] = to_idx[left_ind]
 
         # Check if right should be chosen
-        elif (right and right_flag and (right_diff < mid_diff)):
+        elif right_flag and (right_diff < mid_diff):
             output[ind] = to_idx[right_ind]
 
         # Selected index wins
