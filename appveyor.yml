@@ -3,7 +3,8 @@ build: false
 environment:
   matrix:
     - PYTHON_VERSION: 3.6
-      MINICONDA: C:\Miniconda3
+      PYTHON_ARCH: "64"
+      MINICONDA: C:\Miniconda36-x64
 
 cache:
     - "%MINICONDA%\\envs -> appveyor.yml"
@@ -15,6 +16,7 @@ install:
   - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
+  - conda install -n root _license
   - conda info -a
   - "IF NOT EXIST %MINICONDA%\\envs\\test-environment-%PYTHON_VERSION% conda create -q -n test-environment-%PYTHON_VERSION% python=%PYTHON_VERSION% numpy scipy nose coverage scikit-learn!=0.19.0 numba"
   - "activate test-environment-%PYTHON_VERSION%"
