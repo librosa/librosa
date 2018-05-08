@@ -40,6 +40,23 @@ def test_dtw_global():
     assert np.array_equal(mut_D, mut_D2)
 
 
+def test_dtw_global_constrained():
+    # Example taken from:
+    # Meinard Mueller, Fundamentals of Music Processing
+    X = np.array([[1, 3, 3, 8, 1]])
+    Y = np.array([[2, 0, 0, 8, 7, 2]])
+
+    # With band_rad = 0.5, the GT distance array is
+    gt_D = np.array([[1., 2., 3., np.inf, np.inf, np.inf],
+                     [2., 4., 5., 8., np.inf, np.inf],
+                     [np.inf, 5., 7., 10., 12., np.inf],
+                     [np.inf, np.inf, 13., 7., 8., 14.],
+                     [np.inf, np.inf, np.inf, 14., 13., 9.]])
+
+    mut_D = librosa.dtw(X, Y, backtrack=False, global_constraints=True, band_rad=0.5)
+    assert np.array_equal(gt_D, mut_D)
+
+
 def test_dtw_global_supplied_distance_matrix():
     # Example taken from:
     # Meinard Mueller, Fundamentals of Music Processing
