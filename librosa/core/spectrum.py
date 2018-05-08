@@ -1284,7 +1284,7 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
 
 @cache(level=30)
 def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
-         time_constant=0.395, eps=1e-6, b=None, max_size=1):
+         time_constant=0.395, eps=1e-6, b=None, max_size=1, axis=-1, max_axis=None):
     '''Per-channel energy normalization (PCEN) [1]_
 
     This function normalizes a time-frequency representation `S` by
@@ -1327,7 +1327,7 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
 
     Parameters
     ----------
-    S : np.ndarray (non-negative) [shape=(n, m)]
+    S : np.ndarray (non-negative)
         The input (magnitude) spectrogram
 
     sr : number > 0 [scalar]
@@ -1359,6 +1359,16 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
     max_size : int > 0 [scalar]
         The width of the max filter applied to the frequency axis.
         If left as `1`, no filtering is performed.
+
+    axis : int [scalar]
+        The (time) axis of the input spectrogram.
+
+    max_axis : None or int [scalar]
+        The frequency axis of the input spectrogram.
+        If `None`, and `S` is two-dimensional, it will be inferred
+        as the opposite from `axis`.
+        If `S` is not two-dimensional, and `max_size > 1`, an error
+        will be raised.
 
     Returns
     -------
@@ -1444,9 +1454,15 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
     if max_size == 1:
         ref_spec = S
     else:
-        ref_spec = scipy.ndimage.maximum_filter1d(S, max_size, axis=0)
+        if max_axis is None:
+            if S.ndim != 2:
+                raise ParameterError('Max-filtering a {:d}-dimensional spectrogram '
+                                     'requires you to specify max_axis'.format(S.ndim))
+            max_axis = np.mod(1 - axis, 2)
 
-    S_smooth = scipy.signal.lfilter([b], [1, b - 1], ref_spec)
+        ref_spec = scipy.ndimage.maximum_filter1d(S, max_size, axis=max_axis)
+
+    S_smooth = scipy.signal.lfilter([b], [1, b - 1], ref_spec, axis=axis)
 
     # Working in log-space gives us some stability, and a slight speedup
     smooth = np.exp(-gain * (np.log(eps) + np.log1p(S_smooth / eps)))
