@@ -33,7 +33,27 @@ def test_dtw_global():
                      [10, 10., 11., 14., 13., 9.]])
 
     mut_D, _ = librosa.dtw(X, Y)
+    assert np.array_equal(gt_D, mut_D)
 
+    # Check that it works without backtracking
+    mut_D2 = librosa.dtw(X, Y, backtrack=False)
+    assert np.array_equal(mut_D, mut_D2)
+
+
+def test_dtw_global_constrained():
+    # Example taken from:
+    # Meinard Mueller, Fundamentals of Music Processing
+    X = np.array([[1, 3, 3, 8, 1]])
+    Y = np.array([[2, 0, 0, 8, 7, 2]])
+
+    # With band_rad = 0.5, the GT distance array is
+    gt_D = np.array([[1., 2., 3., np.inf, np.inf, np.inf],
+                     [2., 4., 5., 8., np.inf, np.inf],
+                     [np.inf, 5., 7., 10., 12., np.inf],
+                     [np.inf, np.inf, 13., 7., 8., 14.],
+                     [np.inf, np.inf, np.inf, 14., 13., 9.]])
+
+    mut_D = librosa.dtw(X, Y, backtrack=False, global_constraints=True, band_rad=0.5)
     assert np.array_equal(gt_D, mut_D)
 
 
@@ -67,6 +87,28 @@ def test_dtw_incompatible_args_01():
 @raises(librosa.ParameterError)
 def test_dtw_incompatible_args_02():
     librosa.dtw(C=None, X=None, Y=None)
+
+
+
+@raises(librosa.ParameterError)
+def test_dtw_incompatible_sigma_add():
+    X = np.array([[1, 3, 3, 8, 1]])
+    Y = np.array([[2, 0, 0, 8, 7, 2]])
+    librosa.dtw(X=X, Y=Y, weights_add=np.arange(10))
+
+
+@raises(librosa.ParameterError)
+def test_dtw_incompatible_sigma_mul():
+    X = np.array([[1, 3, 3, 8, 1]])
+    Y = np.array([[2, 0, 0, 8, 7, 2]])
+    librosa.dtw(X=X, Y=Y, weights_mul=np.arange(10))
+
+
+@raises(librosa.ParameterError)
+def test_dtw_incompatible_sigma_diag():
+    X = np.array([[1, 3, 3, 8, 1, 2]])
+    Y = np.array([[2, 0, 0, 8, 7]])
+    librosa.dtw(X=X, Y=Y, step_sizes_sigma=np.ones((1, 2), dtype=int))
 
 
 def test_dtw_global_diagonal():
