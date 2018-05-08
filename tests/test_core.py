@@ -1405,3 +1405,8 @@ def test_pcen_axes_nomax():
     X = np.random.randn(3, 100, 50)**2
 
     librosa.pcen(X, max_size=3)
+
+@raises(librosa.ParameterError)
+def test_pcen_max1():
+
+    librosa.pcen(np.arange(100), max_size=3)

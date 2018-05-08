@@ -1453,6 +1453,8 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
 
     if max_size == 1:
         ref_spec = S
+    elif S.ndim == 1:
+        raise ParameterError('Max-filtering cannot be applied to 1-dimensional input')
     else:
         if max_axis is None:
             if S.ndim != 2:
