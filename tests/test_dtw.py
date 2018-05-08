@@ -87,6 +87,13 @@ def test_dtw_incompatible_sigma_mul():
     librosa.dtw(X=X, Y=Y, weights_mul=np.arange(10))
 
 
+@raises(librosa.ParameterError)
+def test_dtw_incompatible_sigma_diag():
+    X = np.array([[1, 3, 3, 8, 1, 2]])
+    Y = np.array([[2, 0, 0, 8, 7]])
+    librosa.dtw(X=X, Y=Y, step_sizes_sigma=np.ones((1, 2), dtype=int))
+
+
 def test_dtw_global_diagonal():
     # query is a linear ramp
     X = np.linspace(0.1, 1, 10)
