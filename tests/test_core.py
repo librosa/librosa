@@ -1410,3 +1410,21 @@ def test_pcen_axes_nomax():
 def test_pcen_max1():
 
     librosa.pcen(np.arange(100), max_size=3)
+
+
+def test_pcen_ref():
+
+    srand()
+    # Make a power spectrogram
+    X = np.random.randn(100, 50)**2
+
+    # Edge cases:
+    #   gain=1, bias=0, power=1, b=1 => ones
+    ones = np.ones_like(X)
+
+    Y = librosa.pcen(X, gain=1, bias=0, power=1, b=1, eps=1e-20)
+    assert np.allclose(Y, ones)
+
+    # with ref=ones, we should get X / (eps + ones) == X
+    Y2 = librosa.pcen(X, gain=1, bias=0, power=1, b=1, ref=ones, eps=1e-20)
+    assert np.allclose(Y2, X)

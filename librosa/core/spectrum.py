@@ -1284,7 +1284,8 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
 
 @cache(level=30)
 def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
-         time_constant=0.395, eps=1e-6, b=None, max_size=1, axis=-1, max_axis=None):
+         time_constant=0.395, eps=1e-6, b=None, max_size=1, ref=None,
+         axis=-1, max_axis=None):
     '''Per-channel energy normalization (PCEN) [1]_
 
     This function normalizes a time-frequency representation `S` by
@@ -1359,6 +1360,10 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
     max_size : int > 0 [scalar]
         The width of the max filter applied to the frequency axis.
         If left as `1`, no filtering is performed.
+
+    ref : None or np.ndarray (shape=S.shape)
+        An optional pre-computed reference spectrum (`R` in the above).
+        If not provided it will be computed from `S`.
 
     axis : int [scalar]
         The (time) axis of the input spectrogram.
@@ -1451,20 +1456,21 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
                       'call pcen(magphase(D)[0]) instead.')
         S = np.abs(S)
 
-    if max_size == 1:
-        ref_spec = S
-    elif S.ndim == 1:
-        raise ParameterError('Max-filtering cannot be applied to 1-dimensional input')
-    else:
-        if max_axis is None:
-            if S.ndim != 2:
-                raise ParameterError('Max-filtering a {:d}-dimensional spectrogram '
-                                     'requires you to specify max_axis'.format(S.ndim))
-            max_axis = np.mod(1 - axis, 2)
+    if ref is None:
+        if max_size == 1:
+            ref = S
+        elif S.ndim == 1:
+            raise ParameterError('Max-filtering cannot be applied to 1-dimensional input')
+        else:
+            if max_axis is None:
+                if S.ndim != 2:
+                    raise ParameterError('Max-filtering a {:d}-dimensional spectrogram '
+                                         'requires you to specify max_axis'.format(S.ndim))
+                max_axis = np.mod(1 - axis, 2)
 
-        ref_spec = scipy.ndimage.maximum_filter1d(S, max_size, axis=max_axis)
+            ref = scipy.ndimage.maximum_filter1d(S, max_size, axis=max_axis)
 
-    S_smooth = scipy.signal.lfilter([b], [1, b - 1], ref_spec, axis=axis)
+    S_smooth = scipy.signal.lfilter([b], [1, b - 1], ref, axis=axis)
 
     # Working in log-space gives us some stability, and a slight speedup
     smooth = np.exp(-gain * (np.log(eps) + np.log1p(S_smooth / eps)))
