@@ -1466,6 +1466,8 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
                 if S.ndim != 2:
                     raise ParameterError('Max-filtering a {:d}-dimensional spectrogram '
                                          'requires you to specify max_axis'.format(S.ndim))
+                # if axis = 0, max_axis=1
+                # if axis = +- 1, max_axis = 0
                 max_axis = np.mod(1 - axis, 2)
 
             ref = scipy.ndimage.maximum_filter1d(S, max_size, axis=max_axis)
