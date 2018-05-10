@@ -1457,7 +1457,7 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
     if np.issubdtype(S.dtype, np.complexfloating):
         warnings.warn('pcen was called on complex input so phase '
                       'information will be discarded. To suppress this warning, '
-                      'call pcen(magphase(D)[0]) instead.')
+                      'call pcen(np.abs(D)) instead.')
         S = np.abs(S)
 
     if ref is None:
