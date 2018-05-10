@@ -1284,7 +1284,7 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
 
 @cache(level=30)
 def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
-         time_constant=0.395, eps=1e-6, b=None, max_size=1, ref=None,
+         time_constant=0.400, eps=1e-6, b=None, max_size=1, ref=None,
          axis=-1, max_axis=None):
     '''Per-channel energy normalization (PCEN) [1]_
 
@@ -1300,7 +1300,9 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
 
     If `b` is not provided, it is calculated as:
 
-        b = 1 - exp(-hop_length / (sr * time_constant))
+        b = (sqrt(1 + 4* T**2) - 1) / (2 * T**2)
+
+    where `T = time_constant * sr / hop_length`.
 
     This normalization is designed to suppress background noise and
     emphasize foreground signals, and can be used as an alternative to
@@ -1445,7 +1447,9 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
         raise ParameterError('max_size={} must be a positive integer'.format(max_size))
 
     if b is None:
-        b = 1 - np.exp(- float(hop_length) / (time_constant * sr))
+        t_frames = time_constant * sr / float(hop_length)
+
+        b = (np.sqrt(1 + 4 * t_frames**2) - 1) / (2 * t_frames**2)
 
     if not 0 <= b <= 1:
         raise ParameterError('b={} must be between 0 and 1'.format(b))
