@@ -84,3 +84,21 @@ def test_viterbi_bad_init():
     assert np.allclose(np.sum(p_init), 1)
     yield __bad_init, p_init, trans, x
 
+def test_viterbi_bad_obs():
+    @raises(librosa.ParameterError)
+    def __bad_obs(trans, x):
+        librosa.sequence.viterbi(x, trans)
+
+    srand()
+
+    x = np.random.random(size=(3, 5))
+    trans = np.ones((3, 3), dtype=float) / 3.
+
+    # x has values > 1
+    x[1, 1] = 2
+    yield __bad_obs, trans, x
+
+    # x has values < 0
+    x[1, 1] = -0.5
+    yield __bad_obs, trans, x
+
