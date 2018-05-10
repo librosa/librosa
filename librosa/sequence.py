@@ -75,7 +75,7 @@ def _viterbi(log_prob, log_trans, log_p_init, state, value, ptr):
     # Done.
 
 
-def viterbi(prob, transition, p_init=None):
+def viterbi(prob, transition, p_init=None, return_logp=False):
     '''Viterbi decoding.
 
     Given a sequence of observation likelihoods `prob[s, t]`,
@@ -99,10 +99,20 @@ def viterbi(prob, transition, p_init=None):
         Optional: initial state distribution.
         If not provided, a uniform distribution is assumed.
 
+    return_ll : bool
+        If `True`, return the log-likelihood of the state sequence.
+
     Returns
     -------
+    Either `states` or `(states, logp)`:
+
     states : np.ndarray [shape=(n_steps,)]
-        The most likely state sequence
+        The most likely state sequence.
+
+    logp : scalar [float]
+        If `return_logp=True`, the log probability of `states` given
+        the observations.
+
     '''
 
     n_states, n_steps = prob.shape
@@ -138,6 +148,9 @@ def viterbi(prob, transition, p_init=None):
     log_p_init = np.log(p_init + epsilon)
 
     _viterbi(log_prob, log_trans, log_p_init, states, values, ptr)
+
+    if return_logp:
+        return states, values[-1, states[-1]]
 
     return states
 
