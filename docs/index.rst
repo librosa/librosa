@@ -40,6 +40,7 @@ API documentation
     effects
     output
     segment
+    sequence
     util
 
 
