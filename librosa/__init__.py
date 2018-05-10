@@ -18,6 +18,7 @@ from . import filters
 from . import onset
 from . import output
 from . import segment
+from . import sequence
 from . import util
 
 # Exporting exception classes at the top level
