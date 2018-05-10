@@ -1284,7 +1284,8 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
 
 @cache(level=30)
 def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
-         time_constant=0.395, eps=1e-6, b=None, max_size=1):
+         time_constant=0.400, eps=1e-6, b=None, max_size=1, ref=None,
+         axis=-1, max_axis=None):
     '''Per-channel energy normalization (PCEN) [1]_
 
     This function normalizes a time-frequency representation `S` by
@@ -1299,7 +1300,9 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
 
     If `b` is not provided, it is calculated as:
 
-        b = 1 - exp(-hop_length / (sr * time_constant))
+        b = (sqrt(1 + 4* T**2) - 1) / (2 * T**2)
+
+    where `T = time_constant * sr / hop_length`.
 
     This normalization is designed to suppress background noise and
     emphasize foreground signals, and can be used as an alternative to
@@ -1327,7 +1330,7 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
 
     Parameters
     ----------
-    S : np.ndarray (non-negative) [shape=(n, m)]
+    S : np.ndarray (non-negative)
         The input (magnitude) spectrogram
 
     sr : number > 0 [scalar]
@@ -1359,6 +1362,20 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
     max_size : int > 0 [scalar]
         The width of the max filter applied to the frequency axis.
         If left as `1`, no filtering is performed.
+
+    ref : None or np.ndarray (shape=S.shape)
+        An optional pre-computed reference spectrum (`R` in the above).
+        If not provided it will be computed from `S`.
+
+    axis : int [scalar]
+        The (time) axis of the input spectrogram.
+
+    max_axis : None or int [scalar]
+        The frequency axis of the input spectrogram.
+        If `None`, and `S` is two-dimensional, it will be inferred
+        as the opposite from `axis`.
+        If `S` is not two-dimensional, and `max_size > 1`, an error
+        will be raised.
 
     Returns
     -------
@@ -1430,7 +1447,9 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
         raise ParameterError('max_size={} must be a positive integer'.format(max_size))
 
     if b is None:
-        b = 1 - np.exp(- float(hop_length) / (time_constant * sr))
+        t_frames = time_constant * sr / float(hop_length)
+
+        b = (np.sqrt(1 + 4 * t_frames**2) - 1) / (2 * t_frames**2)
 
     if not 0 <= b <= 1:
         raise ParameterError('b={} must be between 0 and 1'.format(b))
@@ -1438,15 +1457,26 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
     if np.issubdtype(S.dtype, np.complexfloating):
         warnings.warn('pcen was called on complex input so phase '
                       'information will be discarded. To suppress this warning, '
-                      'call pcen(magphase(D)[0]) instead.')
+                      'call pcen(np.abs(D)) instead.')
         S = np.abs(S)
 
-    if max_size == 1:
-        ref_spec = S
-    else:
-        ref_spec = scipy.ndimage.maximum_filter1d(S, max_size, axis=0)
+    if ref is None:
+        if max_size == 1:
+            ref = S
+        elif S.ndim == 1:
+            raise ParameterError('Max-filtering cannot be applied to 1-dimensional input')
+        else:
+            if max_axis is None:
+                if S.ndim != 2:
+                    raise ParameterError('Max-filtering a {:d}-dimensional spectrogram '
+                                         'requires you to specify max_axis'.format(S.ndim))
+                # if axis = 0, max_axis=1
+                # if axis = +- 1, max_axis = 0
+                max_axis = np.mod(1 - axis, 2)
 
-    S_smooth = scipy.signal.lfilter([b], [1, b - 1], ref_spec)
+            ref = scipy.ndimage.maximum_filter1d(S, max_size, axis=max_axis)
+
+    S_smooth = scipy.signal.lfilter([b], [1, b - 1], ref, axis=axis)
 
     # Working in log-space gives us some stability, and a slight speedup
     smooth = np.exp(-gain * (np.log(eps) + np.log1p(S_smooth / eps)))

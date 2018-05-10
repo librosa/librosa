@@ -1354,3 +1354,77 @@ def test_pcen():
     Z = np.zeros_like(S)
     yield __test, 0.98, 2.0, 0.5, None, 0.395, 1e-6, 1, Z, Z
     yield __test, 0.98, 2.0, 0.5, None, 0.395, 1e-6, 3, Z, Z
+
+
+def test_pcen_axes():
+
+    srand()
+    # Make a power spectrogram
+    X = np.random.randn(3, 100, 50)**2
+
+    # First, test that axis setting works
+    P1 = librosa.pcen(X[0])
+    P1a = librosa.pcen(X[0], axis=-1)
+    P2 = librosa.pcen(X[0].T, axis=0).T
+
+    assert np.allclose(P1, P2)
+    assert np.allclose(P1, P1a)
+
+    # Test that it works with max-filtering
+    P1 = librosa.pcen(X[0], max_size=3)
+    P1a = librosa.pcen(X[0], axis=-1, max_size=3)
+    P2 = librosa.pcen(X[0].T, axis=0, max_size=3).T
+
+    assert np.allclose(P1, P2)
+    assert np.allclose(P1, P1a)
+
+    # Test that it works with multi-dimensional input, no filtering
+    P0 = librosa.pcen(X[0])
+    P1 = librosa.pcen(X[1])
+    P2 = librosa.pcen(X[2])
+    Pa = librosa.pcen(X)
+
+    assert np.allclose(P0, Pa[0])
+    assert np.allclose(P1, Pa[1])
+    assert np.allclose(P2, Pa[2])
+
+    # Test that it works with multi-dimensional input, max-filtering
+    P0 = librosa.pcen(X[0], max_size=3)
+    P1 = librosa.pcen(X[1], max_size=3)
+    P2 = librosa.pcen(X[2], max_size=3)
+    Pa = librosa.pcen(X, max_size=3, max_axis=1)
+
+    assert np.allclose(P0, Pa[0])
+    assert np.allclose(P1, Pa[1])
+    assert np.allclose(P2, Pa[2])
+
+@raises(librosa.ParameterError)
+def test_pcen_axes_nomax():
+    srand()
+    # Make a power spectrogram
+    X = np.random.randn(3, 100, 50)**2
+
+    librosa.pcen(X, max_size=3)
+
+@raises(librosa.ParameterError)
+def test_pcen_max1():
+
+    librosa.pcen(np.arange(100), max_size=3)
+
+
+def test_pcen_ref():
+
+    srand()
+    # Make a power spectrogram
+    X = np.random.randn(100, 50)**2
+
+    # Edge cases:
+    #   gain=1, bias=0, power=1, b=1 => ones
+    ones = np.ones_like(X)
+
+    Y = librosa.pcen(X, gain=1, bias=0, power=1, b=1, eps=1e-20)
+    assert np.allclose(Y, ones)
+
+    # with ref=ones, we should get X / (eps + ones) == X
+    Y2 = librosa.pcen(X, gain=1, bias=0, power=1, b=1, ref=ones, eps=1e-20)
+    assert np.allclose(Y2, X)
