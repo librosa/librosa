@@ -102,3 +102,17 @@ def test_viterbi_bad_obs():
     x[1, 1] = -0.5
     yield __bad_obs, trans, x
 
+
+# Transition operator constructors
+def test_trans_uniform():
+
+    def __trans(n):
+        A = librosa.sequence.transition_uniform(n)
+        assert A.shape == (n, n)
+        assert np.allclose(A, 1./n)
+
+    for n in range(1, 4):
+        yield __trans, n
+
+    yield raises(librosa.ParameterError)(__trans), 0
+    yield raises(librosa.ParameterError)(__trans), None
