@@ -102,7 +102,7 @@ def _viterbi(log_prob, log_trans, log_p_init, state, value, ptr):
 
 
 def viterbi(prob, transition, p_init=None, return_logp=False):
-    '''Viterbi decoding.
+    '''Viterbi decoding from observation likelihoods.
 
     Given a sequence of observation likelihoods `prob[s, t]`,
     indicating the conditional likelihood of seeing the observation
@@ -125,7 +125,7 @@ def viterbi(prob, transition, p_init=None, return_logp=False):
         Optional: initial state distribution.
         If not provided, a uniform distribution is assumed.
 
-    return_ll : bool
+    return_logp : bool
         If `True`, return the log-likelihood of the state sequence.
 
     Returns
@@ -182,8 +182,113 @@ def viterbi(prob, transition, p_init=None, return_logp=False):
 
 
 # TODO
-#   viterbi_d
 #   viterbi_ml
+
+def viterbi_d(prob, transition, p_state=None, p_init=None, return_logp=False):
+    '''Viterbi decoding from discriminative state predictions.
+
+    Given a sequence of conditional state predictions `prob[s, t]`,
+    indicating the conditional likelihood of state s given the
+    observation at time `t`, and a transition matrix `transition[i, j]`
+    which encodes the conditional probability of moving from state `i`
+    to state `j`, the Viterbi algorithm computes the most likely sequence
+    of states from the observations.
+
+    This implementation uses the standard Viterbi decoding algorithm
+    for observation likelihood sequences, under the assumption that
+    `P[Obs(t) | State(t) = s]` is proportional to
+    `P[State(t) = s | Obs(t)] / P[State(t) = s]`, where the denominator
+    is the marginal probability of state `s` occurring as given by `p_state`.
+
+    Parameters
+    ----------
+    prob : np.ndarray [shape=(n_states, n_steps)], non-negative
+        `prob[s, t]` is the probability of state `s` conditional on
+        the observation at time `t`.
+        Must be non-negative and sum to 1 along each column.
+
+    transition : np.ndarray [shape=(n_states, n_states)], non-negative
+        `transition[i, j]` is the probability of a transition from i->j.
+        Each row must sum to 1.
+
+    p_state : np.ndarray [shape=(n_states,)]
+        Optional: marginal probability distribution over states.
+        must be non-negative and sum to 1.
+        If not provided, a uniform distribution is assumed.
+
+    p_init : np.ndarray [shape=(n_states,)]
+        Optional: initial state distribution.
+        If not provided, it is assumed to be equal to `p_state`.
+
+    return_logp : bool
+        If `True`, return the log-likelihood of the state sequence.
+
+    Returns
+    -------
+    Either `states` or `(states, logp)`:
+
+    states : np.ndarray [shape=(n_steps,)]
+        The most likely state sequence.
+
+    logp : scalar [float]
+        If `return_logp=True`, the log probability of `states` given
+        the observations.
+    '''
+
+    n_states, n_steps = prob.shape
+
+    if transition.shape != (n_states, n_states):
+        raise ParameterError('transition.shape={}, must be '
+                             '(n_states, n_states)={}'.format(transition.shape,
+                                                              (n_states, n_states)))
+
+    if np.any(transition < 0) or not np.allclose(transition.sum(axis=1), 1):
+        raise ParameterError('Invalid transition matrix: must be non-negative '
+                             'and sum to 1 on each row.')
+
+    if np.any(prob < 0) or not np.allclose(prob.sum(axis=1), 1):
+        raise ParameterError('Invalid probability values: each column must '
+                             'sum to 1 and be non-negative')
+
+    states = np.zeros(n_steps, dtype=int)
+    values = np.zeros((n_steps, n_states), dtype=float)
+    ptr = np.zeros((n_steps, n_states), dtype=int)
+
+    # Compute log-likelihoods while avoiding log-underflow
+    epsilon = np.finfo(prob.dtype).tiny
+
+    # Compute marginal log probabilities while avoiding underflow
+    if p_state is None:
+        p_state = np.empty(n_states)
+        p_state.fill(1./n_states)
+    elif np.any(p_state < 0) or not np.allclose(p_state.sum(), 1):
+        raise ParameterError('Invalid marginal state distribution: '
+                             'p_state={}'.format(p_init))
+
+    log_trans = np.log(transition + epsilon)
+    log_marginal = np.log(p_state + epsilon)
+
+    # By Bayes' rule, P[X | Y] * P[Y] = P[Y | X] * P[X]
+    # P[X] is constant for the sake of maximum liklihood inference
+    # and P[Y] is given by the marginal distribution p_state.
+    #
+    # So we have P[X | y] \propto P[Y | x] / P[Y]
+    log_prob = np.log(prob.T + epsilon) - log_marginal
+
+    if p_init is None:
+        p_init = p_state
+    elif np.any(p_init < 0) or not np.allclose(p_init.sum(), 1):
+        raise ParameterError('Invalid initial state distribution: '
+                             'p_init={}'.format(p_init))
+
+    log_p_init = np.log(p_init + epsilon)
+
+    _viterbi(log_prob, log_trans, log_p_init, states, values, ptr)
+
+    if return_logp:
+        return states, values[-1, states[-1]]
+
+    return states
 
 
 def transition_uniform(n_states):
