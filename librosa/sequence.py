@@ -6,7 +6,7 @@ import numpy as np
 from numba import jit
 from .util.exceptions import ParameterError
 
-__all__ = ['viterbi']
+__all__ = ['viterbi', 'transition_uniform']
 
 
 @jit(nopython=True)
@@ -163,3 +163,25 @@ def viterbi(prob, transition, p_init=None, return_logp=False):
 #       transition_loop
 #       transition_cycle
 #       transition_local
+
+
+def transition_uniform(n_states):
+    '''Construct a uniform transition matrix over `n_states`.
+
+    Parameters
+    ----------
+    n_states : int > 0
+        The number of states
+
+    Returns
+    -------
+    transition : np.ndarray, shape=(n_states, n_states)
+        `transition[i, j] = 1./n_states`
+    '''
+
+    if not isinstance(n_states, int) or n_states <= 0:
+        raise ParameterError('n_states={} must be a positive integer')
+
+    transition = np.empty((n_states, n_states), dtype=np.float)
+    transition.fill(1./n_states)
+    return transition
