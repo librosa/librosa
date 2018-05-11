@@ -254,7 +254,7 @@ def viterbi_d(prob, transition, p_state=None, p_init=None, return_logp=False):
         raise ParameterError('Invalid transition matrix: must be non-negative '
                              'and sum to 1 on each row.')
 
-    if np.any(prob < 0) or not np.allclose(prob.sum(axis=1), 1):
+    if np.any(prob < 0) or not np.allclose(prob.sum(axis=0), 1):
         raise ParameterError('Invalid probability values: each column must '
                              'sum to 1 and be non-negative')
 
