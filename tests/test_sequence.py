@@ -1,16 +1,17 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 
-import numpy as np
-
 import warnings
-warnings.resetwarnings()
-warnings.simplefilter('always')
+
+import numpy as np
 
 from nose.tools import raises
 from test_core import srand
 
 import librosa
+
+warnings.resetwarnings()
+warnings.simplefilter('always')
 
 
 def test_viterbi_example():
@@ -38,6 +39,34 @@ def test_viterbi_example():
     # True maximum likelihood state
     assert np.array_equal(path, [0, 0, 1])
     assert np.isclose(logp, np.log(0.01512))
+
+def test_viterbi_init():
+    # Example from https://en.wikipedia.org/wiki/Viterbi_algorithm#Example
+
+    # States: 0 = healthy, 1 = fever
+    p_init = np.asarray([0.5, 0.5])
+
+    # state 0 = hi, state 1 = low
+    transition = np.asarray([[0.7, 0.3],
+                             [0.4, 0.6]])
+
+    # emission likelihoods
+    emit_p = [dict(normal=0.5, cold=0.4, dizzy=0.1),
+              dict(normal=0.1, cold=0.3, dizzy=0.6)]
+
+    obs = ['normal', 'cold', 'dizzy']
+
+    prob = np.asarray([np.asarray([ep[o] for o in obs])
+                       for ep in emit_p])
+
+    path1, logp1 = librosa.sequence.viterbi(prob, transition, p_init,
+                                            return_logp=True)
+
+    path2, logp2 = librosa.sequence.viterbi(prob, transition,
+                                            return_logp=True)
+
+    assert np.array_equal(path1, path2)
+    assert logp1 == logp2
 
 def test_viterbi_bad_transition():
     @raises(librosa.ParameterError)
@@ -105,7 +134,6 @@ def test_viterbi_bad_obs():
 
 # Transition operator constructors
 def test_trans_uniform():
-
     def __trans(n):
         A = librosa.sequence.transition_uniform(n)
         assert A.shape == (n, n)
@@ -116,3 +144,74 @@ def test_trans_uniform():
 
     yield raises(librosa.ParameterError)(__trans), 0
     yield raises(librosa.ParameterError)(__trans), None
+
+
+def test_trans_loop():
+    def __trans(n, p):
+        A = librosa.sequence.transition_loop(n, p)
+
+        # Right shape
+        assert A.shape == (n, n)
+        # diag is correct
+        assert np.allclose(np.diag(A), p)
+
+        # we have well-formed distributions
+        assert np.all(A >= 0)
+        assert np.allclose(A.sum(axis=1), 1)
+
+    # Test with constant self-loops
+    for n in range(2, 4):
+        yield __trans, n, 0.5
+
+    # Test with variable self-loops
+    yield __trans, 3, [0.8, 0.7, 0.5]
+
+    # Failure if we don't have enough states
+    yield raises(librosa.ParameterError)(__trans), 1, 0.5
+
+    # Failure if n_states is wrong
+    yield raises(librosa.ParameterError)(__trans), None, 0.5
+
+    # Failure if p is not a probability
+    yield raises(librosa.ParameterError)(__trans), 3, 1.5
+    yield raises(librosa.ParameterError)(__trans), 3, -0.25
+
+    # Failure if there's a shape mismatch
+    yield raises(librosa.ParameterError)(__trans), 3, [0.5, 0.2]
+
+
+def test_trans_cycle():
+    def __trans(n, p):
+        A = librosa.sequence.transition_cycle(n, p)
+
+        # Right shape
+        assert A.shape == (n, n)
+        # diag is correct
+        assert np.allclose(np.diag(A), p)
+
+        for i in range(n):
+            assert A[i, np.mod(i + 1, n)] == 1 - A[i, i]
+
+        # we have well-formed distributions
+        assert np.all(A >= 0)
+        assert np.allclose(A.sum(axis=1), 1)
+
+    # Test with constant self-loops
+    for n in range(2, 4):
+        yield __trans, n, 0.5
+
+    # Test with variable self-loops
+    yield __trans, 3, [0.8, 0.7, 0.5]
+
+    # Failure if we don't have enough states
+    yield raises(librosa.ParameterError)(__trans), 1, 0.5
+
+    # Failure if n_states is wrong
+    yield raises(librosa.ParameterError)(__trans), None, 0.5
+
+    # Failure if p is not a probability
+    yield raises(librosa.ParameterError)(__trans), 3, 1.5
+    yield raises(librosa.ParameterError)(__trans), 3, -0.25
+
+    # Failure if there's a shape mismatch
+    yield raises(librosa.ParameterError)(__trans), 3, [0.5, 0.2]
