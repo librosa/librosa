@@ -4,6 +4,7 @@
 
 import numpy as np
 from numba import jit
+from .util import pad_center
 from .util.exceptions import ParameterError
 from .filters import get_window
 
@@ -159,7 +160,6 @@ def viterbi(prob, transition, p_init=None, return_logp=False):
 # TODO
 #   viterbi_d
 #   viterbi_ml
-#       transition_local
 
 
 def transition_uniform(n_states):
@@ -344,6 +344,13 @@ def transition_local(n_states, width, window='triangle', wrap=False):
     window : str, callable, or window specification
         The window function to determine the shape of the "local" distribution.
 
+        Any window specification supported by `filters.get_window` will work here.
+        
+        .. note:: Certain windows (e.g., 'hann') are identically 0 at the boundaries,
+            so and effectively have `width-2` non-zero values.  You may have to expand
+            `width` to get the desired behavior.
+
+
     wrap : bool
         If `True`, then state locality `|i - j|` is computed modulo `n_states`.
         If `False` (default), then locality is absolute.
@@ -356,6 +363,32 @@ def transition_local(n_states, width, window='triangle', wrap=False):
     -------
     transition : np.ndarray, shape=(n_states, n_states)
         The transition matrix
+
+    Examples
+    --------
+
+    Triangular distributions with and without wrapping
+    >>> librosa.sequence.transition_local(5, 3, window='triangle', wrap=False)
+    array([[0.667, 0.333, 0.   , 0.   , 0.   ],
+           [0.25 , 0.5  , 0.25 , 0.   , 0.   ],
+           [0.   , 0.25 , 0.5  , 0.25 , 0.   ],
+           [0.   , 0.   , 0.25 , 0.5  , 0.25 ],
+           [0.   , 0.   , 0.   , 0.333, 0.667]])
+
+    >>> librosa.sequence.transition_local(5, 3, window='triangle', wrap=True)
+    array([[0.5 , 0.25, 0.  , 0.  , 0.25],
+           [0.25, 0.5 , 0.25, 0.  , 0.  ],
+           [0.  , 0.25, 0.5 , 0.25, 0.  ],
+           [0.  , 0.  , 0.25, 0.5 , 0.25],
+           [0.25, 0.  , 0.  , 0.25, 0.5 ]])
+
+    Uniform local distributions with variable widths and no wrapping
+    >>> librosa.sequence.transition_local(5, [1, 2, 3, 3, 1], window='ones', wrap=False)
+    array([[1.   , 0.   , 0.   , 0.   , 0.   ],
+           [0.5  , 0.5  , 0.   , 0.   , 0.   ],
+           [0.   , 0.333, 0.333, 0.333, 0.   ],
+           [0.   , 0.   , 0.333, 0.333, 0.333],
+           [0.   , 0.   , 0.   , 0.   , 1.   ]])
     '''
 
     if not isinstance(n_states, int) or n_states <= 1:
@@ -373,21 +406,19 @@ def transition_local(n_states, width, window='triangle', wrap=False):
 
     transition = np.zeros((n_states, n_states), dtype=np.float)
 
-    # Fill in the widths
+    # Fill in the widths.  This is inefficient, but simple
     for i, width_i in enumerate(width):
-        trans_row = get_window(window, width_i, fftbins=False)
+        trans_row = pad_center(get_window(window, width_i, fftbins=False), n_states)
+        trans_row = np.roll(trans_row, n_states//2 + i + 1)
 
-        # if i >= width_i // 2: left side is okay
-        # otherwise, we need to truncate width_i//2 - i bins
-        # if i + width_i // 2 < n_states: right side is okay
-        # otherwise, we need to clip to at most
+        if not wrap:
+            # Knock out the off-diagonal-band elements
+            trans_row[min(n_states, i + width_i//2 + 1):] = 0
+            trans_row[:max(0, i - width_i//2)] = 0
 
-        if wrap:
-            pass
-        else:
-            _sl = slice(max(0, width_i//2 - i), min(width_i, n_states - i))
-            transition[i, max(i - width_i//2, 0):min(i + width_i//2 + 1, n_states-1)] = trans_row[_sl]
+        transition[i] = trans_row
 
+    # Row-normalize
     transition /= transition.sum(axis=1, keepdims=True)
 
     return transition
