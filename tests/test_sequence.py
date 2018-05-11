@@ -105,7 +105,6 @@ def test_viterbi_bad_obs():
 
 # Transition operator constructors
 def test_trans_uniform():
-
     def __trans(n):
         A = librosa.sequence.transition_uniform(n)
         assert A.shape == (n, n)
@@ -116,3 +115,35 @@ def test_trans_uniform():
 
     yield raises(librosa.ParameterError)(__trans), 0
     yield raises(librosa.ParameterError)(__trans), None
+
+
+def test_trans_loop():
+    def __trans(n, p):
+        A = librosa.sequence.transition_loop(n, p)
+
+        # Right shape
+        assert A.shape == (n, n)
+        # diag is correct
+        assert np.allclose(np.diag(A), p)
+
+        # we have well-formed distributions
+        assert np.all(A >= 0)
+        assert np.allclose(A.sum(axis=1), 1)
+
+    # Test with constant self-loops
+    for n in range(2, 4):
+        yield __trans, n, 0.5
+
+    # Test with variable self-loops
+    yield __trans, 3, [0.8, 0.7, 0.5]
+
+    # Failure if we don't have enough states
+    yield raises(librosa.ParameterError)(__trans), 1, 0.5
+
+    # Failure if n_states is wrong
+    yield raises(librosa.ParameterError)(__trans), None, 0.5
+
+    # Failure if p is not a probability
+    yield raises(librosa.ParameterError)(__trans), None, 1.5
+    yield raises(librosa.ParameterError)(__trans), None, -0.25
+

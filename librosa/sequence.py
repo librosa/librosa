@@ -158,8 +158,6 @@ def viterbi(prob, transition, p_init=None, return_logp=False):
 # TODO
 #   viterbi_d
 #   viterbi_ml
-#   transition generators
-#       transition_uniform
 #       transition_loop
 #       transition_cycle
 #       transition_local
@@ -177,6 +175,14 @@ def transition_uniform(n_states):
     -------
     transition : np.ndarray, shape=(n_states, n_states)
         `transition[i, j] = 1./n_states`
+
+    Examples
+    --------
+
+    >>> librosa.sequence.transition_uniform(3)
+    array([[0.333, 0.333, 0.333],
+           [0.333, 0.333, 0.333],
+           [0.333, 0.333, 0.333]])
     '''
 
     if not isinstance(n_states, int) or n_states <= 0:
@@ -184,4 +190,53 @@ def transition_uniform(n_states):
 
     transition = np.empty((n_states, n_states), dtype=np.float)
     transition.fill(1./n_states)
+    return transition
+
+
+def transition_loop(n_states, p):
+    '''Construct a self-loop transition matrix over `n_states`.
+
+    The transition matrix will have the following properties:
+
+        - `transition[i, i] = p` for all i
+        - `transition[i, j] = (1 - p) / (n_states - 1)` for all `j != i`
+
+    Parameters
+    ----------
+    n_states : int > 1
+        The number of states
+
+    p : float in [0, 1] or iterable, length=n_states
+        If a scalar, this is the probability of a self-transition.
+
+        If a vector of length `n_states`, `p[i]` is the probability of state `i`'s self-transition.
+
+    Returns
+    -------
+    transition : np.ndarray, shape=(n_states, n_states)
+        The transition matrix
+    '''
+
+    if not isinstance(n_states, int) or n_states <= 1:
+        raise ParameterError('n_states={} must be a positive integer > 1')
+
+    transition = np.empty((n_states, n_states), dtype=np.float)
+
+    # if it's a float, make it a vector
+    p = np.asarray(p, dtype=np.float)
+
+    if p.ndim == 0:
+        p = np.tile(p, n_states)
+
+    if p.shape != (n_states,):
+        raise ParameterError('p={} must have length equal to n_states={}'.format(p, n_states))
+
+    if np.any(p < 0) or np.any(p > 1):
+        raise ParameterError('p={} must have values in the range [0, 1]'.format(p))
+
+    for i, pi in enumerate(p):
+        if n_states > 1:
+            transition[i] = (1. - pi) / (n_states - 1)
+        transition[i, i] = pi
+
     return transition
