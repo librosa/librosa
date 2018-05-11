@@ -1,16 +1,17 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 
-import numpy as np
-
 import warnings
-warnings.resetwarnings()
-warnings.simplefilter('always')
+
+import numpy as np
 
 from nose.tools import raises
 from test_core import srand
 
 import librosa
+
+warnings.resetwarnings()
+warnings.simplefilter('always')
 
 
 def test_viterbi_example():
@@ -66,7 +67,6 @@ def test_viterbi_init():
 
     assert np.array_equal(path1, path2)
     assert logp1 == logp2
-
 
 def test_viterbi_bad_transition():
     @raises(librosa.ParameterError)
@@ -215,4 +215,3 @@ def test_trans_cycle():
 
     # Failure if there's a shape mismatch
     yield raises(librosa.ParameterError)(__trans), 3, [0.5, 0.2]
-

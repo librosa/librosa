@@ -5,8 +5,9 @@
 import numpy as np
 from numba import jit
 from .util.exceptions import ParameterError
+from .filters import get_window
 
-__all__ = ['viterbi', 'transition_uniform']
+__all__ = ['viterbi', 'transition_uniform', 'transition_loop', 'transition_cycle', 'transition_local']
 
 
 @jit(nopython=True)
@@ -199,6 +200,10 @@ def transition_loop(n_states, prob):
         - `transition[i, i] = p` for all i
         - `transition[i, j] = (1 - p) / (n_states - 1)` for all `j != i`
 
+    This type of transition matrix is appropriate when states tend to be
+    locally stable, and there is no additional structure between different
+    states.  This is primarily useful for de-noising frame-wise predictions.
+
     Parameters
     ----------
     n_states : int > 1
@@ -213,6 +218,18 @@ def transition_loop(n_states, prob):
     -------
     transition : np.ndarray, shape=(n_states, n_states)
         The transition matrix
+
+    Examples
+    --------
+    >>> librosa.sequence.transition_loop(3, 0.5)
+    array([[0.5 , 0.25, 0.25],
+           [0.25, 0.5 , 0.25],
+           [0.25, 0.25, 0.5 ]])
+
+    >>> librosa.sequence.transition_loop(3, [0.8, 0.5, 0.25])
+    array([[0.8  , 0.1  , 0.1  ],
+           [0.25 , 0.5  , 0.25 ],
+           [0.375, 0.375, 0.25 ]])
     '''
 
     if not isinstance(n_states, int) or n_states <= 1:
@@ -247,6 +264,11 @@ def transition_cycle(n_states, prob):
         - `transition[i, i] = p`
         - `transition[i, i + 1] = (1 - p)`
 
+    This type of transition matrix is appropriate for state spaces
+    with cyclical structure, such as metrical position within a bar.
+    For example, a song in 4/4 time has state transitions of the form
+        1->{1, 2}, 2->{2, 3}, 3->{3, 4}, 4->{4, 1}.
+
     Parameters
     ----------
     n_states : int > 1
@@ -255,12 +277,21 @@ def transition_cycle(n_states, prob):
     prob : float in [0, 1] or iterable, length=n_states
         If a scalar, this is the probability of a self-transition.
 
-        If a vector of length `n_states`, `p[i]` is the probability of state `i`'s self-transition.
+        If a vector of length `n_states`, `p[i]` is the probability of state
+        `i`'s self-transition.
 
     Returns
     -------
     transition : np.ndarray, shape=(n_states, n_states)
         The transition matrix
+
+    Examples
+    --------
+    >>> librosa.sequence.transition_cycle(4, 0.9)
+    array([[0.9, 0.1, 0. , 0. ],
+           [0. , 0.9, 0.1, 0. ],
+           [0. , 0. , 0.9, 0.1],
+           [0.1, 0. , 0. , 0.9]])
     '''
 
     if not isinstance(n_states, int) or n_states <= 1:
@@ -283,5 +314,80 @@ def transition_cycle(n_states, prob):
     for i, prob_i in enumerate(prob):
         transition[i, np.mod(i + 1, n_states)] = 1. - prob_i
         transition[i, i] = prob_i
+
+    return transition
+
+
+def transition_local(n_states, width, window='triangle', wrap=False):
+    '''Construct a localized transition matrix.
+
+    The transition matrix will have the following properties:
+
+        - `transition[i, j] = 0` if `|i - j| > width`
+        - `transition[i, i]` is maximal
+        - `transition[i, i - width//2 : i + width//2]` has shape `window`
+
+    This type of transition matrix is appropriate for state spaces
+    that discretely approximate continuous variables, such as in fundamental
+    frequency estimation.
+
+    Parameters
+    ----------
+    n_states : int > 1
+        The number of states
+
+    width : int >= 1 or iterable
+        The maximum number of states to treat as "local".
+        If iterable, it should have length equal to `n_states`,
+        and specify the width independently for each state.
+
+    window : str, callable, or window specification
+        The window function to determine the shape of the "local" distribution.
+
+    wrap : bool
+        If `True`, then state locality `|i - j|` is computed modulo `n_states`.
+        If `False` (default), then locality is absolute.
+
+    See Also
+    --------
+    filters.get_window
+
+    Returns
+    -------
+    transition : np.ndarray, shape=(n_states, n_states)
+        The transition matrix
+    '''
+
+    if not isinstance(n_states, int) or n_states <= 1:
+        raise ParameterError('n_states={} must be a positive integer > 1')
+
+    width = np.asarray(width, dtype=int)
+    if width.ndim == 0:
+        width = np.tile(width, n_states)
+
+    if width.shape != (n_states,):
+        raise ParameterError('width={} must have length equal to n_states={}'.format(width, n_states))
+
+    if np.any(width < 1):
+        raise ParameterError('width={} must be at least 1')
+
+    transition = np.zeros((n_states, n_states), dtype=np.float)
+
+    # Fill in the widths
+    for i, width_i in enumerate(width):
+        trans_row = get_window(window, width_i, fftbins=False)
+
+        # if i >= width_i // 2: left side is okay
+        # otherwise, we need to truncate width_i//2 - i bins
+        # if i + width_i // 2 < n_states: right side is okay
+        # otherwise, we need to clip to at most
+
+        if wrap:
+            pass
+        else:
+            _sl = slice(max(0, width_i//2 - i), min(width_i, n_states - i))
+            transition[i, max(i - width_i//2, 0):min(i + width_i//2 + 1, n_states-1)] = trans_row[_sl]
+
+    transition /= transition.sum(axis=1, keepdims=True)
 
     return transition
