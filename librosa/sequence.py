@@ -158,8 +158,6 @@ def viterbi(prob, transition, p_init=None, return_logp=False):
 # TODO
 #   viterbi_d
 #   viterbi_ml
-#       transition_loop
-#       transition_cycle
 #       transition_local
 
 

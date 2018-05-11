@@ -39,6 +39,35 @@ def test_viterbi_example():
     assert np.array_equal(path, [0, 0, 1])
     assert np.isclose(logp, np.log(0.01512))
 
+def test_viterbi_init():
+    # Example from https://en.wikipedia.org/wiki/Viterbi_algorithm#Example
+
+    # States: 0 = healthy, 1 = fever
+    p_init = np.asarray([0.5, 0.5])
+
+    # state 0 = hi, state 1 = low
+    transition = np.asarray([[0.7, 0.3],
+                             [0.4, 0.6]])
+
+    # emission likelihoods
+    emit_p = [dict(normal=0.5, cold=0.4, dizzy=0.1),
+              dict(normal=0.1, cold=0.3, dizzy=0.6)]
+
+    obs = ['normal', 'cold', 'dizzy']
+
+    prob = np.asarray([np.asarray([ep[o] for o in obs])
+                       for ep in emit_p])
+
+    path1, logp1 = librosa.sequence.viterbi(prob, transition, p_init,
+                                            return_logp=True)
+
+    path2, logp2 = librosa.sequence.viterbi(prob, transition,
+                                            return_logp=True)
+
+    assert np.array_equal(path1, path2)
+    assert logp1 == logp2
+
+
 def test_viterbi_bad_transition():
     @raises(librosa.ParameterError)
     def __bad_trans(trans, x):
