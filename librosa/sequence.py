@@ -8,7 +8,11 @@ from .util import pad_center
 from .util.exceptions import ParameterError
 from .filters import get_window
 
-__all__ = ['viterbi', 'transition_uniform', 'transition_loop', 'transition_cycle', 'transition_local']
+__all__ = ['viterbi',
+           'transition_uniform',
+           'transition_loop',
+           'transition_cycle',
+           'transition_local']
 
 
 @jit(nopython=True)
@@ -345,7 +349,7 @@ def transition_local(n_states, width, window='triangle', wrap=False):
         The window function to determine the shape of the "local" distribution.
 
         Any window specification supported by `filters.get_window` will work here.
-        
+
         .. note:: Certain windows (e.g., 'hann') are identically 0 at the boundaries,
             so and effectively have `width-2` non-zero values.  You may have to expand
             `width` to get the desired behavior.
