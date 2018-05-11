@@ -215,3 +215,78 @@ def test_trans_cycle():
 
     # Failure if there's a shape mismatch
     yield raises(librosa.ParameterError)(__trans), 3, [0.5, 0.2]
+
+
+def test_trans_local_nstates_fail():
+
+    @raises(librosa.ParameterError)
+    def __test(n):
+        librosa.sequence.transition_local(n, 3)
+
+    yield __test, 1.5
+    yield __test, 0
+
+
+def test_trans_local_width_fail():
+
+    @raises(librosa.ParameterError)
+    def __test(width):
+        librosa.sequence.transition_local(5, width)
+
+    yield __test, -1
+    yield __test, 0
+    yield __test, [2, 3]
+
+def test_trans_local_wrap_const():
+
+    A = librosa.sequence.transition_local(5, 3, window='triangle', wrap=True)
+
+    A_true = np.asarray([[0.5 , 0.25, 0.  , 0.  , 0.25],
+                         [0.25, 0.5 , 0.25, 0.  , 0.  ],
+                         [0.  , 0.25, 0.5 , 0.25, 0.  ],
+                         [0.  , 0.  , 0.25, 0.5 , 0.25],
+                         [0.25, 0.  , 0.  , 0.25, 0.5 ]])
+
+    assert np.allclose(A, A_true)
+
+
+def test_trans_local_nowrap_const():
+
+    A = librosa.sequence.transition_local(5, 3, window='triangle', wrap=False)
+
+    A_true = np.asarray([[2./3, 1./3, 0.  , 0.  , 0.],
+                         [0.25, 0.5 , 0.25, 0.  , 0.  ],
+                         [0.  , 0.25, 0.5 , 0.25, 0.  ],
+                         [0.  , 0.  , 0.25, 0.5 , 0.25],
+                         [0.  , 0.  , 0.  , 1./3, 2./3 ]])
+
+    assert np.allclose(A, A_true)
+
+def test_trans_local_wrap_var():
+
+    A = librosa.sequence.transition_local(5, [2, 1, 3, 3, 2],
+                                          window='ones',
+                                          wrap=True)
+
+    A_true = np.asarray([[0.5  , 0.   , 0.   , 0.   , 0.5  ],
+                         [0.   , 1.   , 0.   , 0.   , 0.   ],
+                         [0.   , 1./3 , 1./3 , 1./3 , 0.   ],
+                         [0.   , 0.   , 1./3 , 1./3 , 1./3 ],
+                         [0.   , 0.   , 0.   , 0.5  , 0.5  ]])
+
+    assert np.allclose(A, A_true)
+
+def test_trans_local_nowrap_var():
+
+    A = librosa.sequence.transition_local(5, [2, 1, 3, 3, 2],
+                                          window='ones',
+                                          wrap=False)
+
+    A_true = np.asarray([[1.   , 0.   , 0.   , 0.   , 0.   ],
+                         [0.   , 1.   , 0.   , 0.   , 0.   ],
+                         [0.   , 1./3 , 1./3 , 1./3 , 0.   ],
+                         [0.   , 0.   , 1./3 , 1./3 , 1./3 ],
+                         [0.   , 0.   , 0.   , 0.5  , 0.5  ]])
+
+    assert np.allclose(A, A_true)
+
