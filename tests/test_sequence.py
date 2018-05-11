@@ -144,6 +144,46 @@ def test_trans_loop():
     yield raises(librosa.ParameterError)(__trans), None, 0.5
 
     # Failure if p is not a probability
-    yield raises(librosa.ParameterError)(__trans), None, 1.5
-    yield raises(librosa.ParameterError)(__trans), None, -0.25
+    yield raises(librosa.ParameterError)(__trans), 3, 1.5
+    yield raises(librosa.ParameterError)(__trans), 3, -0.25
+
+    # Failure if there's a shape mismatch
+    yield raises(librosa.ParameterError)(__trans), 3, [0.5, 0.2]
+
+
+def test_trans_cycle():
+    def __trans(n, p):
+        A = librosa.sequence.transition_cycle(n, p)
+
+        # Right shape
+        assert A.shape == (n, n)
+        # diag is correct
+        assert np.allclose(np.diag(A), p)
+
+        for i in range(n):
+            assert A[i, np.mod(i + 1, n)] == 1 - A[i, i]
+
+        # we have well-formed distributions
+        assert np.all(A >= 0)
+        assert np.allclose(A.sum(axis=1), 1)
+
+    # Test with constant self-loops
+    for n in range(2, 4):
+        yield __trans, n, 0.5
+
+    # Test with variable self-loops
+    yield __trans, 3, [0.8, 0.7, 0.5]
+
+    # Failure if we don't have enough states
+    yield raises(librosa.ParameterError)(__trans), 1, 0.5
+
+    # Failure if n_states is wrong
+    yield raises(librosa.ParameterError)(__trans), None, 0.5
+
+    # Failure if p is not a probability
+    yield raises(librosa.ParameterError)(__trans), 3, 1.5
+    yield raises(librosa.ParameterError)(__trans), 3, -0.25
+
+    # Failure if there's a shape mismatch
+    yield raises(librosa.ParameterError)(__trans), 3, [0.5, 0.2]
 
