@@ -193,7 +193,7 @@ def transition_uniform(n_states):
     return transition
 
 
-def transition_loop(n_states, p):
+def transition_loop(n_states, prob):
     '''Construct a self-loop transition matrix over `n_states`.
 
     The transition matrix will have the following properties:
@@ -206,7 +206,7 @@ def transition_loop(n_states, p):
     n_states : int > 1
         The number of states
 
-    p : float in [0, 1] or iterable, length=n_states
+    prob : float in [0, 1] or iterable, length=n_states
         If a scalar, this is the probability of a self-transition.
 
         If a vector of length `n_states`, `p[i]` is the probability of state `i`'s self-transition.
@@ -223,20 +223,20 @@ def transition_loop(n_states, p):
     transition = np.empty((n_states, n_states), dtype=np.float)
 
     # if it's a float, make it a vector
-    p = np.asarray(p, dtype=np.float)
+    prob = np.asarray(prob, dtype=np.float)
 
-    if p.ndim == 0:
-        p = np.tile(p, n_states)
+    if prob.ndim == 0:
+        prob = np.tile(prob, n_states)
 
-    if p.shape != (n_states,):
-        raise ParameterError('p={} must have length equal to n_states={}'.format(p, n_states))
+    if prob.shape != (n_states,):
+        raise ParameterError('prob={} must have length equal to n_states={}'.format(prob, n_states))
 
-    if np.any(p < 0) or np.any(p > 1):
-        raise ParameterError('p={} must have values in the range [0, 1]'.format(p))
+    if np.any(prob < 0) or np.any(prob > 1):
+        raise ParameterError('prob={} must have values in the range [0, 1]'.format(prob))
 
-    for i, pi in enumerate(p):
+    for i, prob_i in enumerate(prob):
         if n_states > 1:
-            transition[i] = (1. - pi) / (n_states - 1)
-        transition[i, i] = pi
+            transition[i] = (1. - prob_i) / (n_states - 1)
+        transition[i, i] = prob_i
 
     return transition
