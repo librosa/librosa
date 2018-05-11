@@ -10,6 +10,7 @@ Viterbi decoding
     :toctree: generated/
 
     viterbi
+    viterbi_d
 
 Transition matrices
 -------------------
@@ -28,7 +29,7 @@ from .util import pad_center
 from .util.exceptions import ParameterError
 from .filters import get_window
 
-__all__ = ['viterbi',
+__all__ = ['viterbi', 'viterbi_d',
            'transition_uniform',
            'transition_loop',
            'transition_cycle',
@@ -139,6 +140,9 @@ def viterbi(prob, transition, p_init=None, return_logp=False):
         If `return_logp=True`, the log probability of `states` given
         the observations.
 
+    See Also
+    --------
+    viterbi_d : Viterbi decoding from state likelihoods
     '''
 
     n_states, n_steps = prob.shape
@@ -233,6 +237,10 @@ def viterbi_d(prob, transition, p_state=None, p_init=None, return_logp=False):
     logp : scalar [float]
         If `return_logp=True`, the log probability of `states` given
         the observations.
+
+    See Also
+    --------
+    viterbi : Viterbi decoding from observation likelihoods
     '''
 
     n_states, n_steps = prob.shape
@@ -396,6 +404,7 @@ def transition_cycle(n_states, prob):
     This type of transition matrix is appropriate for state spaces
     with cyclical structure, such as metrical position within a bar.
     For example, a song in 4/4 time has state transitions of the form
+
         1->{1, 2}, 2->{2, 3}, 3->{3, 4}, 4->{4, 1}.
 
     Parameters
