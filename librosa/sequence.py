@@ -1,6 +1,26 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
-'''Sequence model utilities'''
+'''
+Sequential modeling
+===================
+
+Viterbi decoding
+----------------
+.. autosummary::
+    :toctree: generated/
+
+    viterbi
+
+Transition matrices
+-------------------
+.. autosummary::
+    :toctree: generated/
+
+    transition_uniform
+    transition_loop
+    transition_cycle
+    transition_local
+'''
 
 import numpy as np
 from numba import jit
@@ -372,6 +392,7 @@ def transition_local(n_states, width, window='triangle', wrap=False):
     --------
 
     Triangular distributions with and without wrapping
+
     >>> librosa.sequence.transition_local(5, 3, window='triangle', wrap=False)
     array([[0.667, 0.333, 0.   , 0.   , 0.   ],
            [0.25 , 0.5  , 0.25 , 0.   , 0.   ],
@@ -387,6 +408,7 @@ def transition_local(n_states, width, window='triangle', wrap=False):
            [0.25, 0.  , 0.  , 0.25, 0.5 ]])
 
     Uniform local distributions with variable widths and no wrapping
+
     >>> librosa.sequence.transition_local(5, [1, 2, 3, 3, 1], window='ones', wrap=False)
     array([[1.   , 0.   , 0.   , 0.   , 0.   ],
            [0.5  , 0.5  , 0.   , 0.   , 0.   ],
