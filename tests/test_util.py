@@ -668,6 +668,8 @@ def test_valid_intervals():
                 else:
                     yield raises(librosa.ParameterError)(__test), ivals[slices]
 
+    # Test for issue #712: intervals must have non-negative duration
+    yield raises(librosa.ParameterError)(__test), np.asarray([[0, 1], [2, 1]])
 
 def test_warning_deprecated():
 
