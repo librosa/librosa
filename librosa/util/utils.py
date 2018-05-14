@@ -213,6 +213,7 @@ def valid_intervals(intervals):
 
         - intervals.ndim == 2
         - intervals.shape[1] == 2
+        - intervals[i, 0] <= intervals[i, 1] for all i
 
     Parameters
     ----------
@@ -227,6 +228,9 @@ def valid_intervals(intervals):
 
     if intervals.ndim != 2 or intervals.shape[-1] != 2:
         raise ParameterError('intervals must have shape (n, 2)')
+
+    if np.any(intervals[:, 0] > intervals[:, 1]):
+        raise ParameterError('intervals={} must have non-negative durations'.format(intervals))
 
     return True
 

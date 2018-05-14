@@ -123,7 +123,9 @@ def test_annotation():
     __test_fail = raises(librosa.ParameterError)(__test)
 
     srand()
-    times = np.random.randn(20, 2)
+    # Make times and durations strictly non-negative
+    times = np.random.randn(20, 2)**2
+    times = np.cumsum(times, axis=1)
 
     for annotations in [None, ['abcde'[q]
                                for q in np.random.randint(0, 5, size=len(times))], list('abcde')]:
