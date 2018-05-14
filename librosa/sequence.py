@@ -378,12 +378,12 @@ def viterbi_ml(prob, transition, p_state=None, p_init=None, return_logp=False):
     if p_state is None:
         p_state = np.empty(n_states)
         p_state.fill(0.5)
-    elif np.any(p_state < 0) or np.any(p_state > 1):
+    elif p_state.shape != (n_states,) or np.any(p_state < 0) or np.any(p_state > 1):
         raise ParameterError('Invalid marginal state distributions: p_state={}'.format(p_state))
 
     if p_init is None:
         p_init = p_state
-    elif np.any(p_init < 0) or np.any(p_init > 1):
+    elif p_init.shape != (n_states,) or np.any(p_init < 0) or np.any(p_init > 1):
         raise ParameterError('Invalid initial state distributions: p_init={}'.format(p_init))
 
     states = np.empty((n_states, n_steps), dtype=int)

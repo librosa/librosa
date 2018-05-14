@@ -14,6 +14,7 @@ warnings.resetwarnings()
 warnings.simplefilter('always')
 
 
+# Core viterbi tests
 def test_viterbi_example():
     # Example from https://en.wikipedia.org/wiki/Viterbi_algorithm#Example
 
@@ -132,6 +133,7 @@ def test_viterbi_bad_obs():
     yield __bad_obs, trans, x
 
 
+# Discriminative viterbi
 def test_viterbi_d_bad_transition():
     @raises(librosa.ParameterError)
     def __bad_trans(trans, x):
@@ -207,7 +209,7 @@ def test_viterbi_d_bad_marginal():
     yield __bad_init, p_init, trans, x
 
 
-def test_viterbi_bad_obs():
+def test_viterbi_d_bad_obs():
     @raises(librosa.ParameterError)
     def __bad_obs(x, trans):
         librosa.sequence.viterbi_d(x, trans)
@@ -225,6 +227,93 @@ def test_viterbi_bad_obs():
 
     # x has negative values < 0
     x[1, 1] = -0.5
+    yield __bad_obs, x, trans
+
+
+# Multi-label viterbi
+def test_viterbi_ml_bad_transition():
+    @raises(librosa.ParameterError)
+    def __bad_trans(trans, x):
+        librosa.sequence.viterbi_ml(x, trans)
+
+    x = np.random.random(size=(3, 5))**2
+
+    # transitions do not sum to 1
+    trans = np.ones((2, 2), dtype=float)
+    yield __bad_trans, trans, x
+
+    # bad shape
+    trans = np.ones((3, 3), dtype=float)
+    yield __bad_trans, trans, x
+    trans = np.ones((3, 5, 5), dtype=float)
+    yield __bad_trans, trans, x
+
+    # sums to 1, but negative values
+    trans = 2 * np.ones((2, 2), dtype=float)
+    trans[:, 1] = -1
+    assert np.allclose(np.sum(trans, axis=-1), 1)
+    yield __bad_trans, trans, x
+
+
+def test_viterbi_ml_bad_init():
+    @raises(librosa.ParameterError)
+    def __bad_init(init, trans, x):
+        librosa.sequence.viterbi_ml(x, trans, p_init=init)
+
+    x = np.random.random(size=(3, 5))**2
+
+    trans = np.ones((2, 2), dtype=float) / 2.
+
+    # p_init is too big
+    p_init = 2 * np.ones(3, dtype=float)
+    yield __bad_init, p_init, trans, x
+
+    # bad shape
+    p_init = np.ones(4, dtype=float)
+    yield __bad_init, p_init, trans, x
+
+    # negative values
+    p_init = -np.ones(3, dtype=float)
+    yield __bad_init, p_init, trans, x
+
+
+def test_viterbi_ml_bad_marginal():
+    @raises(librosa.ParameterError)
+    def __bad_state(state, trans, x):
+        librosa.sequence.viterbi_ml(x, trans, p_state=state)
+
+    x = np.random.random(size=(3, 5))**2
+
+    trans = np.ones((2, 2), dtype=float) / 2.
+
+    # p_init is too big
+    p_state = 2 * np.ones(3, dtype=float)
+    yield __bad_state, p_state, trans, x
+
+    # bad shape
+    p_state = np.ones(4, dtype=float)
+    yield __bad_state, p_state, trans, x
+
+    # negative values
+    p_state = -np.ones(3, dtype=float)
+    yield __bad_state, p_state, trans, x
+
+
+def test_viterbi_ml_bad_obs():
+    @raises(librosa.ParameterError)
+    def __bad_obs(x, trans):
+        librosa.sequence.viterbi_ml(x, trans)
+
+    srand()
+
+    trans = np.ones((2, 2), dtype=float) / 2.
+
+    # x is not positive
+    x = -np.ones((3, 5), dtype=float)
+    yield __bad_obs, x, trans
+
+    # x is too big
+    x = 2 * np.ones((3, 5), dtype=float)
     yield __bad_obs, x, trans
 
 
