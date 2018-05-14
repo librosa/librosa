@@ -298,10 +298,12 @@ def test_viterbi_ml_example():
 
     # And the full multi-label result
     path_c, logp_c = librosa.sequence.viterbi_ml(p_full, transition, p_state=p_init, return_logp=True)
+    path_c2 = librosa.sequence.viterbi_ml(p_full, transition, p_state=p_init, return_logp=False)
 
     # Check that the single and multilabel cases agree
     assert np.allclose(logp, logp_c[1])
     assert np.array_equal(path[0], path_c[1])
+    assert np.array_equal(path_c, path_c2)
 
     # And do an explicit multi-class comparison
     path_d, logp_d = librosa.sequence.viterbi_d(p_full, transition, p_state=p_init, return_logp=True)
