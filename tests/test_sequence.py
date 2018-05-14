@@ -141,6 +141,49 @@ def test_viterbi_bad_obs():
 
 
 # Discriminative viterbi
+def test_viterbi_d_example():
+    # A pre-baked example with coin tosses
+
+    transition = np.asarray([[0.75, 0.25], [0.25, 0.75]])
+
+    # Joint XY model
+    p_joint = np.asarray([[0.25, 0.25],
+                          [0.1 , 0.4 ]])
+
+    # marginals
+    p_obs_marginal = p_joint.sum(axis=0)
+    p_state_marginal = p_joint.sum(axis=1)
+
+    p_init = p_state_marginal
+
+    # Make the Y|X distribution
+    p_state_given_obs = (p_joint / p_obs_marginal).T
+
+    # Let's make a test observation sequence
+    seq = np.asarray([1, 1, 0, 1, 1, 1, 0, 0])
+
+    # Then our conditional probability table can be constructed directly as
+    prob_d = np.asarray([p_state_given_obs[i] for i in seq]).T
+
+    path, logp = librosa.sequence.viterbi_d(prob_d,
+                                            transition,
+                                            p_state=p_state_marginal,
+                                            p_init=p_init,
+                                            return_logp=True)
+
+    # Pre-computed optimal path, determined by brute-force search
+    assert np.array_equal(path, [1, 1, 1, 1, 1, 1, 0, 0])
+
+    # And check the second code path
+    path2 = librosa.sequence.viterbi_d(prob_d,
+                                       transition,
+                                       p_state=p_state_marginal,
+                                       p_init=p_init,
+                                       return_logp=False)
+    assert np.array_equal(path, path2)
+
+
+
 def test_viterbi_d_bad_transition():
     @raises(librosa.ParameterError)
     def __bad_trans(trans, x):
