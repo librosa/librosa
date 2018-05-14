@@ -239,6 +239,7 @@ def viterbi_d(prob, transition, p_state=None, p_init=None, return_logp=False):
     See Also
     --------
     viterbi : Viterbi decoding from observation likelihoods
+    viterbi_ml: Viterbi decoding for multi-label, conditional state likelihoods
     '''
 
     n_states, n_steps = prob.shape
