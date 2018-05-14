@@ -318,10 +318,12 @@ def viterbi_ml(prob, transition, p_state=None, p_init=None, return_logp=False):
 
     Parameters
     ----------
-    prob : np.ndarray [shape=(n_states, n_steps)], non-negative
+    prob : np.ndarray [shape=(n_steps,) or (n_states, n_steps)], non-negative
         `prob[s, t]` is the probability of state `s` being active
         conditional on the observation at time `t`.
         Must be non-negative and less than 1.
+
+        If `prob` is 1-dimensional, it is expanded to shape `(1, n_steps)`.
 
     transition : np.ndarray [shape=(2, 2) or (n_states, 2, 2)], non-negative
         If 2-dimensional, the same transition matrix is applied to each sub-problem.
@@ -361,6 +363,8 @@ def viterbi_ml(prob, transition, p_state=None, p_init=None, return_logp=False):
     viterbi_d : Viterbi decoding for discriminative (mutually exclusive) state predictions
     '''
 
+    prob = np.atleast_2d(prob)
+
     n_states, n_steps = prob.shape
 
     if transition.shape == (2, 2):
@@ -379,12 +383,18 @@ def viterbi_ml(prob, transition, p_state=None, p_init=None, return_logp=False):
     if p_state is None:
         p_state = np.empty(n_states)
         p_state.fill(0.5)
-    elif p_state.shape != (n_states,) or np.any(p_state < 0) or np.any(p_state > 1):
+    else:
+        p_state = np.atleast_1d(p_state)
+
+    if p_state.shape != (n_states,) or np.any(p_state < 0) or np.any(p_state > 1):
         raise ParameterError('Invalid marginal state distributions: p_state={}'.format(p_state))
 
     if p_init is None:
         p_init = p_state
-    elif p_init.shape != (n_states,) or np.any(p_init < 0) or np.any(p_init > 1):
+    else:
+        p_init = np.atleast_1d(p_init)
+
+    if p_init.shape != (n_states,) or np.any(p_init < 0) or np.any(p_init > 1):
         raise ParameterError('Invalid initial state distributions: p_init={}'.format(p_init))
 
     states = np.empty((n_states, n_steps), dtype=int)

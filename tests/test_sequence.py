@@ -183,7 +183,6 @@ def test_viterbi_d_example():
     assert np.array_equal(path, path2)
 
 
-
 def test_viterbi_d_bad_transition():
     @raises(librosa.ParameterError)
     def __bad_trans(trans, x):
@@ -281,6 +280,35 @@ def test_viterbi_d_bad_obs():
 
 
 # Multi-label viterbi
+def test_viterbi_ml_example():
+
+    # 0 stays 0,
+    # 1 is uninformative
+    transition = np.asarray([[0.9, 0.1], [0.5, 0.5]])
+
+    # Initial state distribution
+    p_init = np.asarray([0.25, 0.75])
+
+    p_binary = np.asarray([0.25, 0.5, 0.75, 0.1, 0.1, 0.8, 0.9])
+
+    p_full = np.vstack((1 - p_binary, p_binary))
+
+    # Compute the viterbi_ml result for one class
+    path, logp = librosa.sequence.viterbi_ml(p_binary, transition, p_state=p_init[1:], return_logp=True)
+
+    # And the full multi-label result
+    path_c, logp_c = librosa.sequence.viterbi_ml(p_full, transition, p_state=p_init, return_logp=True)
+
+    # Check that the single and multilabel cases agree
+    assert np.allclose(logp, logp_c[1])
+    assert np.array_equal(path[0], path_c[1])
+
+    # And do an explicit multi-class comparison
+    path_d, logp_d = librosa.sequence.viterbi_d(p_full, transition, p_state=p_init, return_logp=True)
+    assert np.allclose(logp[0], logp_d)
+    assert np.array_equal(path[0], path_d)
+
+
 def test_viterbi_ml_bad_transition():
     @raises(librosa.ParameterError)
     def __bad_trans(trans, x):
