@@ -47,20 +47,17 @@ plt.tight_layout()
 # As a first step, we can plot the root-mean-square energy (RMSE)
 rmse = librosa.feature.rmse(y=y)[0]
 
-# We'll normalize rmse by its peak value to expand the range
-rmse /= rmse.max()
-
 times = librosa.frames_to_time(np.arange(len(rmse)))
 
 plt.figure(figsize=(12, 4))
 plt.plot(times, rmse)
-plt.axhline(0.2, color='r', alpha=0.5)
+plt.axhline(0.02, color='r', alpha=0.5)
 plt.xlabel('Time')
 plt.ylabel('RMSE')
 plt.axis('tight')
 plt.tight_layout()
 
-# The red line at 0.2 indicates a reasonable threshold for silence detection.
+# The red line at 0.02 indicates a reasonable threshold for silence detection.
 # However, the RMSE curve occasionally dips below the threshold momentarily,
 # and we would prefer the detector to not count these brief dips as silence.
 # This is where the Viterbi algorithm comes in handy!
@@ -69,10 +66,14 @@ plt.tight_layout()
 # As a first step, we will convert the raw RMSE score
 # into a likelihood (probability) by logistic mapping
 #   :math:`P[V=1 | x] = \frac{\exp(x - \tau)}{1 + \exp(x - \tau)}`
-# where :math:`x` denotes the RMSE value and :math:`\tau=0.2` is our threshold.
+# where :math:`x` denotes the RMSE value and :math:`\tau=0.02` is our threshold.
 # The variable :math:`V` indicates whether the signal is non-silent (1) or silent (0).
+#
+# We'll normalize the RMSE by its standard deviation to expand the
+# range of the probability vector
 
-p = np.exp(rmse - 0.2) / (1 + np.exp(rmse - 0.2))
+r_normalized = (rmse - 0.02) / np.std(rmse)
+p = np.exp(r_normalized) / (1 + np.exp(r_normalized))
 
 # We can plot the probability curve over time:
 
@@ -112,7 +113,7 @@ plt.tight_layout()
 # where `transition[i, j]` is the probability of moving from state
 # `i` to state `j` in the next frame.
 
-transition = librosa.sequence.transition_loop(2, [0.5, 0.55])
+transition = librosa.sequence.transition_loop(2, [0.5, 0.6])
 print(transition)
 
 #####################################################################
@@ -129,11 +130,13 @@ print(full_p)
 
 states = librosa.sequence.viterbi_d(full_p, transition)
 
-# sphinx_gallery_thumbnail_number = 4
+# sphinx_gallery_thumbnail_number = 5
 plt.figure(figsize=(12, 6))
 ax = plt.subplot(2,1,1)
 librosa.display.specshow(librosa.amplitude_to_db(S_full, ref=np.max),
                          y_axis='log', x_axis='time', sr=sr)
+plt.xlabel('')
+ax.tick_params(labelbottom=False)
 plt.subplot(2, 1, 2, sharex=ax)
 plt.step(times, p>=0.5, label='Frame-wise')
 plt.step(times, states, linestyle='--', color='orange', label='Viterbi')
@@ -143,7 +146,9 @@ plt.ylim([0, 1.05])
 plt.legend()
 
 
-#######################################
-# Note how the Viterbi output has fewer
-# state changes than the frame-wise
-# predictor.
+#########################################################################
+# Note how the Viterbi output has fewer state changes than the frame-wise
+# predictor, and it is less sensitive to momentary dips in energy.
+# This is controlled directly by the transition matrix.
+# A higher self-transition probability means that the decoder is less
+# likely to change states.
