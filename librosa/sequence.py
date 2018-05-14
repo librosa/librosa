@@ -11,6 +11,7 @@ Viterbi decoding
 
     viterbi
     viterbi_d
+    viterbi_ml
 
 Transition matrices
 -------------------
@@ -29,7 +30,7 @@ from .util import pad_center
 from .util.exceptions import ParameterError
 from .filters import get_window
 
-__all__ = ['viterbi', 'viterbi_d',
+__all__ = ['viterbi', 'viterbi_d', 'viterbi_ml',
            'transition_uniform',
            'transition_loop',
            'transition_cycle',
@@ -185,14 +186,11 @@ def viterbi(prob, transition, p_init=None, return_logp=False):
     return states
 
 
-# TODO
-#   viterbi_ml
-
 def viterbi_d(prob, transition, p_state=None, p_init=None, return_logp=False):
     '''Viterbi decoding from discriminative state predictions.
 
     Given a sequence of conditional state predictions `prob[s, t]`,
-    indicating the conditional likelihood of state s given the
+    indicating the conditional likelihood of state `s` given the
     observation at time `t`, and a transition matrix `transition[i, j]`
     which encodes the conditional probability of moving from state `i`
     to state `j`, the Viterbi algorithm computes the most likely sequence
@@ -271,13 +269,13 @@ def viterbi_d(prob, transition, p_state=None, p_init=None, return_logp=False):
         p_state.fill(1./n_states)
     elif np.any(p_state < 0) or not np.allclose(p_state.sum(), 1):
         raise ParameterError('Invalid marginal state distribution: '
-                             'p_state={}'.format(p_init))
+                             'p_state={}'.format(p_state))
 
     log_trans = np.log(transition + epsilon)
     log_marginal = np.log(p_state + epsilon)
 
     # By Bayes' rule, P[X | Y] * P[Y] = P[Y | X] * P[X]
-    # P[X] is constant for the sake of maximum liklihood inference
+    # P[X] is constant for the sake of maximum likelihood inference
     # and P[Y] is given by the marginal distribution p_state.
     #
     # So we have P[X | y] \propto P[Y | x] / P[Y]
@@ -295,6 +293,124 @@ def viterbi_d(prob, transition, p_state=None, p_init=None, return_logp=False):
 
     if return_logp:
         return states, values[-1, states[-1]]
+
+    return states
+
+
+def viterbi_ml(prob, transition, p_state=None, p_init=None, return_logp=False):
+    '''Viterbi decoding from multi-label, discriminative state predictions.
+
+    Given a sequence of conditional state predictions `prob[s, t]`,
+    indicating the conditional likelihood of state `s` being active
+    conditional on observation at time `t`, and a 2*2 transition matrix
+    `transition` which encodes the conditional probability of moving from
+    state `s` to state `~s` (not-`s`), the Viterbi algorithm computes the
+    most likely sequence of states from the observations.
+
+    This function differs from `viterbi_d` in that it does not assume the
+    states to be mutually exclusive.  `viterbi_ml` is implemented by
+    transforming the multi-label decoding problem to a collection
+    of binary Viterbi problems (one for each *state* or label).
+
+    The output is a binary matrix `states[s, t]` indicating whether each
+    state `s` is active at time `t`.
+
+    Parameters
+    ----------
+    prob : np.ndarray [shape=(n_states, n_steps)], non-negative
+        `prob[s, t]` is the probability of state `s` being active
+        conditional on the observation at time `t`.
+        Must be non-negative and less than 1.
+
+    transition : np.ndarray [shape=(2, 2) or (n_states, 2, 2)], non-negative
+        If 2-dimensional, the same transition matrix is applied to each sub-problem.
+        `transition[0, i]` is the probability of the state going from inactive to `i`,
+        `transition[1, i]` is the probability of the state going from active to `i`.
+        Each row must sum to 1.
+
+        If 3-dimensional, `transition[s]` is interpreted as the 2x2 transition matrix
+        for state label `s`.
+
+    p_state : np.ndarray [shape=(n_states,)]
+        Optional: marginal probability for each state (between [0,1]).
+        If not provided, a uniform distribution (0.5 for each state)
+        is assumed.
+
+    p_init : np.ndarray [shape=(n_states,)]
+        Optional: initial state distribution.
+        If not provided, it is assumed to be equal to `p_state`.
+
+    return_logp : bool
+        If `True`, return the log-likelihood of the state sequence.
+
+    Returns
+    -------
+    Either `states` or `(states, logp)`:
+
+    states : np.ndarray [shape=(n_states, n_steps)]
+        The most likely state sequence.
+
+    logp : np.ndarray [shape=(n_states,)]
+        If `return_logp=True`, the log probability of each state activation
+        sequence `states`
+
+    See Also
+    --------
+    viterbi : Viterbi decoding from observation likelihoods
+    viterbi_d : Viterbi decoding for discriminative (mutually exclusive) state predictions
+    '''
+
+    n_states, n_steps = prob.shape
+
+    if transition.shape == (2, 2):
+        transition = np.tile(transition, (n_states, 1, 1))
+    elif transition.shape != (n_states, 2, 2):
+        raise ParameterError('transition.shape={}, must be (2,2) or '
+                             '(n_states, 2, 2)={}'.format(transition.shape, (n_states)))
+
+    if np.any(transition < 0) or not np.allclose(transition.sum(axis=-1), 1):
+        raise ParameterError('Invalid transition matrix: must be non-negative '
+                             'and sum to 1 on each row.')
+
+    if np.any(prob < 0) or np.any(prob > 1):
+        raise ParameterError('Invalid probability values: prob must be between [0, 1]')
+
+    if p_state is None:
+        p_state = np.empty(n_states)
+        p_state.fill(0.5)
+    elif np.any(p_state < 0) or np.any(p_state > 1):
+        raise ParameterError('Invalid marginal state distributions: p_state={}'.format(p_state))
+
+    if p_init is None:
+        p_init = p_state
+    elif np.any(p_init < 0) or np.any(p_init > 1):
+        raise ParameterError('Invalid initial state distributions: p_init={}'.format(p_init))
+
+    states = np.empty((n_states, n_steps), dtype=int)
+    logp = np.empty(n_states)
+
+    prob_binary = np.empty((2, n_steps))
+    p_state_binary = np.empty(2)
+    p_init_binary = np.empty(2)
+
+    for state in range(n_states):
+        prob_binary[0] = 1 - prob[state]
+        prob_binary[1] = prob[state]
+
+        p_state_binary[0] = 1 - p_state[state]
+        p_state_binary[1] = p_state[state]
+
+        p_init_binary[0] = 1 - p_init[state]
+        p_init_binary[1] = p_init[state]
+
+        states[state, :], logp[state] = viterbi_d(prob_binary,
+                                                  transition[state],
+                                                  p_state=p_state_binary,
+                                                  p_init=p_init_binary,
+                                                  return_logp=True)
+
+    if return_logp:
+        return states, logp
 
     return states
 
