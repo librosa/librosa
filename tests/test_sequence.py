@@ -41,6 +41,13 @@ def test_viterbi_example():
     assert np.array_equal(path, [0, 0, 1])
     assert np.isclose(logp, np.log(0.01512))
 
+    # And check the second execution path
+    path2 = librosa.sequence.viterbi(prob, transition, p_init,
+                                     return_logp=False)
+
+    assert np.array_equal(path, path2)
+
+
 def test_viterbi_init():
     # Example from https://en.wikipedia.org/wiki/Viterbi_algorithm#Example
 
