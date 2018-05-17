@@ -125,10 +125,10 @@ print(full_p)
 
 ####################################
 # Now, we're ready to decode!
-# We'll use `viterbi_d` here, since the inputs are
+# We'll use `viterbi_discriminative` here, since the inputs are
 # state likelihoods conditional on data (in our case, data is rmse).
 
-states = librosa.sequence.viterbi_d(full_p, transition)
+states = librosa.sequence.viterbi_discriminative(full_p, transition)
 
 # sphinx_gallery_thumbnail_number = 5
 plt.figure(figsize=(12, 6))

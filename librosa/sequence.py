@@ -10,8 +10,8 @@ Viterbi decoding
     :toctree: generated/
 
     viterbi
-    viterbi_d
-    viterbi_ml
+    viterbi_discriminative
+    viterbi_binary
 
 Transition matrices
 -------------------
@@ -30,7 +30,7 @@ from .util import pad_center
 from .util.exceptions import ParameterError
 from .filters import get_window
 
-__all__ = ['viterbi', 'viterbi_d', 'viterbi_ml',
+__all__ = ['viterbi', 'viterbi_discriminative', 'viterbi_binary',
            'transition_uniform',
            'transition_loop',
            'transition_cycle',
@@ -143,7 +143,7 @@ def viterbi(prob, transition, p_init=None, return_logp=False):
 
     See Also
     --------
-    viterbi_d : Viterbi decoding from state likelihoods
+    viterbi_discriminative : Viterbi decoding from state likelihoods
     '''
 
     n_states, n_steps = prob.shape
@@ -186,7 +186,7 @@ def viterbi(prob, transition, p_init=None, return_logp=False):
     return states
 
 
-def viterbi_d(prob, transition, p_state=None, p_init=None, return_logp=False):
+def viterbi_discriminative(prob, transition, p_state=None, p_init=None, return_logp=False):
     '''Viterbi decoding from discriminative state predictions.
 
     Given a sequence of conditional state predictions `prob[s, t]`,
@@ -239,7 +239,7 @@ def viterbi_d(prob, transition, p_state=None, p_init=None, return_logp=False):
     See Also
     --------
     viterbi : Viterbi decoding from observation likelihoods
-    viterbi_ml: Viterbi decoding for multi-label, conditional state likelihoods
+    viterbi_binary: Viterbi decoding for multi-label, conditional state likelihoods
     '''
 
     n_states, n_steps = prob.shape
@@ -302,8 +302,8 @@ def viterbi_d(prob, transition, p_state=None, p_init=None, return_logp=False):
     return states
 
 
-def viterbi_ml(prob, transition, p_state=None, p_init=None, return_logp=False):
-    '''Viterbi decoding from multi-label, discriminative state predictions.
+def viterbi_binary(prob, transition, p_state=None, p_init=None, return_logp=False):
+    '''Viterbi decoding from binary (multi-label), discriminative state predictions.
 
     Given a sequence of conditional state predictions `prob[s, t]`,
     indicating the conditional likelihood of state `s` being active
@@ -312,8 +312,8 @@ def viterbi_ml(prob, transition, p_state=None, p_init=None, return_logp=False):
     state `s` to state `~s` (not-`s`), the Viterbi algorithm computes the
     most likely sequence of states from the observations.
 
-    This function differs from `viterbi_d` in that it does not assume the
-    states to be mutually exclusive.  `viterbi_ml` is implemented by
+    This function differs from `viterbi_discriminative` in that it does not assume the
+    states to be mutually exclusive.  `viterbi_binary` is implemented by
     transforming the multi-label decoding problem to a collection
     of binary Viterbi problems (one for each *state* or label).
 
@@ -364,7 +364,7 @@ def viterbi_ml(prob, transition, p_state=None, p_init=None, return_logp=False):
     See Also
     --------
     viterbi : Viterbi decoding from observation likelihoods
-    viterbi_d : Viterbi decoding for discriminative (mutually exclusive) state predictions
+    viterbi_discriminative : Viterbi decoding for discriminative (mutually exclusive) state predictions
     '''
 
     prob = np.atleast_2d(prob)
@@ -419,7 +419,7 @@ def viterbi_ml(prob, transition, p_state=None, p_init=None, return_logp=False):
         p_init_binary[0] = 1 - p_init[state]
         p_init_binary[1] = p_init[state]
 
-        states[state, :], logp[state] = viterbi_d(prob_binary,
+        states[state, :], logp[state] = viterbi_discriminative(prob_binary,
                                                   transition[state],
                                                   p_state=p_state_binary,
                                                   p_init=p_init_binary,
