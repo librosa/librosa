@@ -141,7 +141,7 @@ def test_viterbi_bad_obs():
 
 
 # Discriminative viterbi
-def test_viterbi_d_example():
+def test_viterbi_discriminative_example():
     # A pre-baked example with coin tosses
 
     transition = np.asarray([[0.75, 0.25], [0.25, 0.75]])
@@ -165,7 +165,7 @@ def test_viterbi_d_example():
     # Then our conditional probability table can be constructed directly as
     prob_d = np.asarray([p_state_given_obs[i] for i in seq]).T
 
-    path, logp = librosa.sequence.viterbi_d(prob_d,
+    path, logp = librosa.sequence.viterbi_discriminative(prob_d,
                                             transition,
                                             p_state=p_state_marginal,
                                             p_init=p_init,
@@ -175,18 +175,54 @@ def test_viterbi_d_example():
     assert np.array_equal(path, [1, 1, 1, 1, 1, 1, 0, 0])
 
     # And check the second code path
-    path2 = librosa.sequence.viterbi_d(prob_d,
+    path2 = librosa.sequence.viterbi_discriminative(prob_d,
                                        transition,
                                        p_state=p_state_marginal,
                                        p_init=p_init,
                                        return_logp=False)
     assert np.array_equal(path, path2)
 
+def test_viterbi_discriminative_example_init():
+    # A pre-baked example with coin tosses
 
-def test_viterbi_d_bad_transition():
+    transition = np.asarray([[0.75, 0.25], [0.25, 0.75]])
+
+    # Joint XY model
+    p_joint = np.asarray([[0.25, 0.25],
+                          [0.1 , 0.4 ]])
+
+    # marginals
+    p_obs_marginal = p_joint.sum(axis=0)
+    p_state_marginal = p_joint.sum(axis=1)
+
+    p_init = np.asarray([0.5, 0.5])
+
+    # Make the Y|X distribution
+    p_state_given_obs = (p_joint / p_obs_marginal).T
+
+    # Let's make a test observation sequence
+    seq = np.asarray([1, 1, 0, 1, 1, 1, 0, 0])
+
+    # Then our conditional probability table can be constructed directly as
+    prob_d = np.asarray([p_state_given_obs[i] for i in seq]).T
+
+    path, logp = librosa.sequence.viterbi_discriminative(prob_d,
+                                                         transition,
+                                                         p_state=p_state_marginal,
+                                                         p_init=p_init,
+                                                         return_logp=True)
+    path2, logp2 = librosa.sequence.viterbi_discriminative(prob_d,
+                                                           transition,
+                                                           p_state=p_state_marginal,
+                                                           return_logp=True)
+    assert np.array_equal(path, path2)
+    assert np.allclose(logp, logp2)
+
+
+def test_viterbi_discriminative_bad_transition():
     @raises(librosa.ParameterError)
     def __bad_trans(trans, x):
-        librosa.sequence.viterbi_d(x, trans)
+        librosa.sequence.viterbi_discriminative(x, trans)
 
     x = np.random.random(size=(3, 5))**2
     x /= np.sum(x, axis=0, keepdims=True)
@@ -208,10 +244,10 @@ def test_viterbi_d_bad_transition():
     yield __bad_trans, trans, x
 
 
-def test_viterbi_d_bad_init():
+def test_viterbi_discriminative_bad_init():
     @raises(librosa.ParameterError)
     def __bad_init(init, trans, x):
-        librosa.sequence.viterbi_d(x, trans, p_init=init)
+        librosa.sequence.viterbi_discriminative(x, trans, p_init=init)
 
     x = np.random.random(size=(3, 5))**2
     x /= x.sum(axis=0, keepdims=True)
@@ -233,10 +269,10 @@ def test_viterbi_d_bad_init():
     yield __bad_init, p_init, trans, x
 
 
-def test_viterbi_d_bad_marginal():
+def test_viterbi_discriminative_bad_marginal():
     @raises(librosa.ParameterError)
     def __bad_init(state, trans, x):
-        librosa.sequence.viterbi_d(x, trans, p_state=state)
+        librosa.sequence.viterbi_discriminative(x, trans, p_state=state)
 
     x = np.random.random(size=(3, 5))**2
     x /= x.sum(axis=0, keepdims=True)
@@ -258,10 +294,10 @@ def test_viterbi_d_bad_marginal():
     yield __bad_init, p_init, trans, x
 
 
-def test_viterbi_d_bad_obs():
+def test_viterbi_discriminative_bad_obs():
     @raises(librosa.ParameterError)
     def __bad_obs(x, trans):
-        librosa.sequence.viterbi_d(x, trans)
+        librosa.sequence.viterbi_discriminative(x, trans)
 
     srand()
 
@@ -280,7 +316,7 @@ def test_viterbi_d_bad_obs():
 
 
 # Multi-label viterbi
-def test_viterbi_ml_example():
+def test_viterbi_binary_example():
 
     # 0 stays 0,
     # 1 is uninformative
@@ -293,12 +329,12 @@ def test_viterbi_ml_example():
 
     p_full = np.vstack((1 - p_binary, p_binary))
 
-    # Compute the viterbi_ml result for one class
-    path, logp = librosa.sequence.viterbi_ml(p_binary, transition, p_state=p_init[1:], p_init=p_init[1:], return_logp=True)
+    # Compute the viterbi_binary result for one class
+    path, logp = librosa.sequence.viterbi_binary(p_binary, transition, p_state=p_init[1:], p_init=p_init[1:], return_logp=True)
 
     # And the full multi-label result
-    path_c, logp_c = librosa.sequence.viterbi_ml(p_full, transition, p_state=p_init, p_init=p_init, return_logp=True)
-    path_c2 = librosa.sequence.viterbi_ml(p_full, transition, p_state=p_init, p_init=p_init, return_logp=False)
+    path_c, logp_c = librosa.sequence.viterbi_binary(p_full, transition, p_state=p_init, p_init=p_init, return_logp=True)
+    path_c2 = librosa.sequence.viterbi_binary(p_full, transition, p_state=p_init, p_init=p_init, return_logp=False)
 
     # Check that the single and multilabel cases agree
     assert np.allclose(logp, logp_c[1])
@@ -306,15 +342,37 @@ def test_viterbi_ml_example():
     assert np.array_equal(path_c, path_c2)
 
     # And do an explicit multi-class comparison
-    path_d, logp_d = librosa.sequence.viterbi_d(p_full, transition, p_state=p_init, p_init=p_init, return_logp=True)
+    path_d, logp_d = librosa.sequence.viterbi_discriminative(p_full, transition, p_state=p_init, p_init=p_init, return_logp=True)
     assert np.allclose(logp[0], logp_d)
     assert np.array_equal(path[0], path_d)
 
 
-def test_viterbi_ml_bad_transition():
+def test_viterbi_binary_example_init():
+
+    # 0 stays 0,
+    # 1 is uninformative
+    transition = np.asarray([[0.9, 0.1], [0.5, 0.5]])
+
+    # Initial state distribution
+    p_init = np.asarray([0.5, 0.5])
+
+    p_binary = np.asarray([0.25, 0.5, 0.75, 0.1, 0.1, 0.8, 0.9])
+
+    p_full = np.vstack((1 - p_binary, p_binary))
+
+    # And the full multi-label result
+    path_c, logp_c = librosa.sequence.viterbi_binary(p_full, transition, p_state=p_init, p_init=p_init, return_logp=True)
+    path_c2, logp_c2 = librosa.sequence.viterbi_binary(p_full, transition, p_state=p_init, return_logp=True)
+
+    # Check that the single and multilabel cases agree
+    assert np.allclose(logp_c, logp_c2)
+    assert np.array_equal(path_c, path_c2)
+
+
+def test_viterbi_binary_bad_transition():
     @raises(librosa.ParameterError)
     def __bad_trans(trans, x):
-        librosa.sequence.viterbi_ml(x, trans)
+        librosa.sequence.viterbi_binary(x, trans)
 
     x = np.random.random(size=(3, 5))**2
 
@@ -335,10 +393,10 @@ def test_viterbi_ml_bad_transition():
     yield __bad_trans, trans, x
 
 
-def test_viterbi_ml_bad_init():
+def test_viterbi_binary_bad_init():
     @raises(librosa.ParameterError)
     def __bad_init(init, trans, x):
-        librosa.sequence.viterbi_ml(x, trans, p_init=init)
+        librosa.sequence.viterbi_binary(x, trans, p_init=init)
 
     x = np.random.random(size=(3, 5))**2
 
@@ -357,10 +415,10 @@ def test_viterbi_ml_bad_init():
     yield __bad_init, p_init, trans, x
 
 
-def test_viterbi_ml_bad_marginal():
+def test_viterbi_binary_bad_marginal():
     @raises(librosa.ParameterError)
     def __bad_state(state, trans, x):
-        librosa.sequence.viterbi_ml(x, trans, p_state=state)
+        librosa.sequence.viterbi_binary(x, trans, p_state=state)
 
     x = np.random.random(size=(3, 5))**2
 
@@ -379,10 +437,10 @@ def test_viterbi_ml_bad_marginal():
     yield __bad_state, p_state, trans, x
 
 
-def test_viterbi_ml_bad_obs():
+def test_viterbi_binary_bad_obs():
     @raises(librosa.ParameterError)
     def __bad_obs(x, trans):
-        librosa.sequence.viterbi_ml(x, trans)
+        librosa.sequence.viterbi_binary(x, trans)
 
     srand()
 
