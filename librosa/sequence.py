@@ -214,13 +214,13 @@ def viterbi_d(prob, transition, p_state=None, p_init=None, return_logp=False):
         Each row must sum to 1.
 
     p_state : np.ndarray [shape=(n_states,)]
-        Optional: marginal probability distribution over states.
+        Optional: marginal probability distribution over states,
         must be non-negative and sum to 1.
         If not provided, a uniform distribution is assumed.
 
     p_init : np.ndarray [shape=(n_states,)]
         Optional: initial state distribution.
-        If not provided, it is assumed to be equal to `p_state`.
+        If not provided, it is assumed to be uniform.
 
     return_logp : bool
         If `True`, return the log-likelihood of the state sequence.
@@ -268,7 +268,10 @@ def viterbi_d(prob, transition, p_state=None, p_init=None, return_logp=False):
     if p_state is None:
         p_state = np.empty(n_states)
         p_state.fill(1./n_states)
-    elif np.any(p_state < 0) or not np.allclose(p_state.sum(), 1):
+    elif p_state.shape != (n_states,):
+        raise ParameterError('Marginal distribution p_state must have shape (n_states,). '
+                             'Got p_state.shape={}'.format(p_state.shape))
+    elif np.any(p_state < 0) or not np.allclose(p_state.sum(axis=-1), 1):
         raise ParameterError('Invalid marginal state distribution: '
                              'p_state={}'.format(p_state))
 
@@ -283,7 +286,8 @@ def viterbi_d(prob, transition, p_state=None, p_init=None, return_logp=False):
     log_prob = np.log(prob.T + epsilon) - log_marginal
 
     if p_init is None:
-        p_init = p_state
+        p_init = np.empty(n_states)
+        p_init.fill(1./n_states)
     elif np.any(p_init < 0) or not np.allclose(p_init.sum(), 1):
         raise ParameterError('Invalid initial state distribution: '
                              'p_init={}'.format(p_init))
@@ -341,7 +345,7 @@ def viterbi_ml(prob, transition, p_state=None, p_init=None, return_logp=False):
 
     p_init : np.ndarray [shape=(n_states,)]
         Optional: initial state distribution.
-        If not provided, it is assumed to be equal to `p_state`.
+        If not provided, it is assumed to be uniform.
 
     return_logp : bool
         If `True`, return the log-likelihood of the state sequence.
@@ -390,7 +394,8 @@ def viterbi_ml(prob, transition, p_state=None, p_init=None, return_logp=False):
         raise ParameterError('Invalid marginal state distributions: p_state={}'.format(p_state))
 
     if p_init is None:
-        p_init = p_state
+        p_init = np.empty(n_states)
+        p_init.fill(1./n_states)
     else:
         p_init = np.atleast_1d(p_init)
 
