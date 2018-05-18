@@ -38,7 +38,8 @@ setup(
         'joblib >= 0.7.0',
         'decorator >= 3.0.0',
         'six >= 1.3',
-        'resampy >= 0.2.0'
+        'resampy >= 0.2.0',
+        'numba >= 0.38.0',
     ],
     extras_require={
         'docs': ['numpydoc', 'sphinx!=1.3.1', 'sphinx_rtd_theme',
