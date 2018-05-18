@@ -845,7 +845,7 @@ def __num_two_factors(x):
 
 
 @jit(nopython=True)
-def __activation_fill(x, basis, activation, hop_length):
+def __activation_fill(x, basis, activation, hop_length):  # pragma: no cover
     '''Helper function for icqt time-domain reconstruction'''
 
     n = len(x)
