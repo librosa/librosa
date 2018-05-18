@@ -1125,7 +1125,7 @@ def semitone_filterbank(center_freqs=None, tuning=0.0, sample_rates=None, **kwar
 
 
 @jit(nopython=True)
-def __window_ss_fill(x, win_sq, n_frames, hop_length):
+def __window_ss_fill(x, win_sq, n_frames, hop_length):  # pragma: no cover
     '''Helper function for window sum-square calculation.'''
 
     n = len(x)
