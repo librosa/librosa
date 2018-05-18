@@ -331,52 +331,67 @@ def test_axis_sort():
                     else:
                         yield __test_fail, X, axis, index, value
 
+def test_match_intervals_empty():
 
-def test_match_intervals():
-
-    def __make_intervals(n):
-        srand()
-        return np.cumsum(np.abs(np.random.randn(n, 2)), axis=1)
-
-    def __compare(i1, i2):
-
-        return np.maximum(0, np.minimum(i1[-1], i2[-1])
-                          - np.maximum(i1[0], i2[0]))
-
-    def __is_best(y, ints1, ints2):
-
-        for i in range(len(y)):
-            values = np.asarray([__compare(ints1[i], i2) for i2 in ints2])
-            if np.any(values > values[y[i]]):
-                return False
-
-        return True
-
-    def __test(n, m):
-        ints1 = __make_intervals(n)
-        ints2 = __make_intervals(m)
-
-        y_pred = librosa.util.match_intervals(ints1, ints2)
-
-        assert __is_best(y_pred, ints1, ints2)
 
     @raises(librosa.ParameterError)
-    def __test_fail(n, m):
-        ints1 = __make_intervals(n)
-        ints2 = __make_intervals(m)
+    def __test(int_from, int_to):
+        librosa.util.match_intervals(int_from, int_to)
 
-        librosa.util.match_intervals(ints1, ints2)
+    ints = np.asarray([[0, 2],
+                       [0, 4],
+                       [3, 6]])
 
-    for n in [0, 1, 5, 20, 100]:
-        for m in [0, 1, 5, 20, 100]:
-            if n == 0 or m == 0:
-                yield __test_fail, n, m
-            else:
-                yield __test, n, m
+    # true matches for the above
+    yield __test, ints, ints[:0]
+    yield __test, ints[:0], ints
 
-    # TODO:   2015-01-20 17:04:55 by Brian McFee <brian.mcfee@nyu.edu>
-    # add coverage for shape errors
 
+def test_match_intervals_strict():
+
+
+    def __test(int_from, int_to, matches):
+        test_matches = librosa.util.match_intervals(int_from, int_to, strict=True)
+        assert np.array_equal(matches, test_matches)
+
+
+    int_from = np.asarray([[0, 3],
+                           [2, 4],
+                           [5, 7]])
+
+    int_to = np.asarray([[0, 2],
+                         [0, 4],
+                         [3, 6]])
+
+    # true matches for the above
+    matches = np.asarray([1, 1, 2])
+    yield __test, int_from, int_to, matches
+
+    # Without the [3, 6] interval, the source [5, 7] has no match
+    yield raises(librosa.ParameterError)(__test), int_from, int_to[:-1], matches
+
+def test_match_intervals_nonstrict():
+
+
+    def __test(int_from, int_to, matches):
+        test_matches = librosa.util.match_intervals(int_from, int_to, strict=False)
+        assert np.array_equal(matches, test_matches)
+
+
+    int_from = np.asarray([[0, 3],
+                           [2, 4],
+                           [5, 7]])
+
+    int_to = np.asarray([[0, 2],
+                         [0, 4],
+                         [3, 6]])
+
+    # true matches for the above
+    matches = np.asarray([1, 1, 2])
+    yield __test, int_from, int_to, matches
+
+    # Without the [3, 6] interval, the source [5, 7] should match [2, 4]
+    yield __test, int_from, int_to[:-1], np.asarray([1, 1, 1])
 
 def test_match_events():
 
