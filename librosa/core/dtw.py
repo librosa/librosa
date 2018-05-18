@@ -264,7 +264,7 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
 
 @jit(nopython=True)
 def calc_accu_cost(C, D, D_steps, step_sizes_sigma,
-                   weights_mul, weights_add, max_0, max_1):
+                   weights_mul, weights_add, max_0, max_1):  # pragma: no cover
     '''Calculate the accumulated cost matrix D.
 
     Use dynamic programming to calculate the accumulated costs.
@@ -331,7 +331,7 @@ def calc_accu_cost(C, D, D_steps, step_sizes_sigma,
 
 
 @jit(nopython=True)
-def backtracking(D_steps, step_sizes_sigma):
+def backtracking(D_steps, step_sizes_sigma):  # pragma: no cover
     '''Backtrack optimal warping path.
 
     Uses the saved step sizes from the cost accumulation
