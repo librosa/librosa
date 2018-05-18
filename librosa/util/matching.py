@@ -173,6 +173,26 @@ def match_intervals(intervals_from, intervals_to, strict=True):
 
         If `strict=True` and some element of `intervals_from` is disjoint from
         every element of `intervals_to`.
+
+    Examples
+    --------
+    >>> ints_from = np.array([[3, 5], [1, 4], [4, 5]])
+    >>> ints_to = np.array([[0, 2], [1, 3], [4, 5], [6, 7]])
+    >>> librosa.util.match_intervals(ints_from, ints_to)
+    array([2, 1, 2], dtype=uint32)
+    >>> # [3, 5] => [4, 5]  (ints_to[2])
+    >>> # [1, 4] => [1, 3]  (ints_to[1])
+    >>> # [4, 5] => [4, 5]  (ints_to[2])
+
+    The reverse matching of the above is not possible in `strict` mode
+    because `[6, 7]` is disjoint from all intervals in `ints_from`.
+    With `strict=False`, we get the following:
+    >>> librosa.util.match_intervals(ints_to, ints_from, strict=False)
+    array([1, 1, 2, 2], dtype=uint32)
+    >>> # [0, 2] => [1, 4]  (ints_from[1])
+    >>> # [1, 3] => [1, 4]  (ints_from[1])
+    >>> # [4, 5] => [4, 5]  (ints_from[2])
+    >>> # [6, 7] => [4, 5]  (ints_from[2])
     '''
 
     if len(intervals_from) == 0 or len(intervals_to) == 0:
