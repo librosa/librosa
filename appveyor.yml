@@ -7,7 +7,7 @@ environment:
       MINICONDA: C:\Miniconda36-x64
 
 cache:
-    - "%MINICONDA%\\envs -> appveyor.yml"
+    - "%MINICONDA%\\envs -> appveyor.yml, setup.py"
 
 init:
   - "ECHO %PYTHON_VERSION% %MINICONDA%"
