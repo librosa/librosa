@@ -38,7 +38,7 @@ __all__ = ['viterbi', 'viterbi_discriminative', 'viterbi_binary',
 
 
 @jit(nopython=True)
-def _viterbi(log_prob, log_trans, log_p_init, state, value, ptr):
+def _viterbi(log_prob, log_trans, log_p_init, state, value, ptr):  # pragma: no cover
     '''Core Viterbi algorithm.
 
     This is intended for internal use only.
