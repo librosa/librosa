@@ -282,6 +282,9 @@ def viterbi_discriminative(prob, transition, p_state=None, p_init=None, return_l
     This example constructs a simple, template-based discriminative chord estimator,
     using CENS chroma as input features.
 
+    .. note:: this chord model is not accurate enough to use in practice. It is only
+            intended to demonstrate how to use discriminative Viterbi decoding.
+
     >>> # Create templates for major, minor, and no-chord qualities
     >>> maj_template = np.array([1,0,0, 0,1,0, 0,1,0, 0,0,0])
     >>> min_template = np.array([1,0,0, 1,0,0, 0,1,0, 0,0,0])
