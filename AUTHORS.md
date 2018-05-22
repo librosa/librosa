@@ -29,6 +29,8 @@ Contributors
 * Siddhartha Kumar <https://github.com/siddhugolu>
 * Julia Wilkins <https://github.com/jlw365>
 * Curtis Hawthorne <https://github.com/cghawthorne>
+* Dana Lee <https://github.com/danagilliann>
+* Pius Friesch <https://github.com/pfriesch>
 
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
