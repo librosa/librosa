@@ -839,9 +839,12 @@ def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False):
     According to this default implementation,  the conversion from Hertz to mel is
     linear below 1 kHz and logarithmic above 1 kHz. Another available implementation
     replicates the Hidden Markov Toolkit [3]_ (HTK) according to the following formula:
-    mel = 2595.0 * np.log10(1.0 + f / 700.0). The choice of implementation is determined
-    by the `htk` keyword argument: setting `htk=False` leads to the Auditory toolbox
-    implementation, whereas setting it `htk=True` leads to the HTK implementation.
+
+    `mel = 2595.0 * np.log10(1.0 + f / 700.0).`
+
+    The choice of implementation is determined by the `htk` keyword argument: setting
+    `htk=False` leads to the Auditory toolbox implementation, whereas setting it `htk=True`
+    leads to the HTK implementation.
 
     .. [1] Umesh, S., Cohen, L., & Nelson, D. Fitting the mel scale.
         In Proc. International Conference on Acoustics, Speech, and Signal Processing
