@@ -65,7 +65,9 @@ plt.tight_layout()
 #####################################################
 # As a first step, we will convert the raw RMSE score
 # into a likelihood (probability) by logistic mapping
+#
 #   :math:`P[V=1 | x] = \frac{\exp(x - \tau)}{1 + \exp(x - \tau)}`
+#
 # where :math:`x` denotes the RMSE value and :math:`\tau=0.02` is our threshold.
 # The variable :math:`V` indicates whether the signal is non-silent (1) or silent (0).
 #
