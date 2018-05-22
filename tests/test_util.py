@@ -990,3 +990,42 @@ def test_optional_jit():
 
     yield __test, __func1
     yield __test, __func2
+
+def test_util_fill_off_diagonal_8_8():
+    # Case 1: Square matrix (N=M)
+    mut_x = np.ones((8, 8))
+    librosa.util.fill_off_diagonal(mut_x, 0.25)
+
+    gt_x = np.array([[1, 1, 0, 0, 0, 0, 0, 0],
+                     [1, 1, 1, 0, 0, 0, 0, 0],
+                     [0, 1, 1, 1, 0, 0, 0, 0],
+                     [0, 0, 1, 1, 1, 0, 0, 0],
+                     [0, 0, 0, 1, 1, 1, 0, 0],
+                     [0, 0, 0, 0, 1, 1, 1, 0],
+                     [0, 0, 0, 0, 0, 1, 1, 1],
+                     [0, 0, 0, 0, 0, 0, 1, 1]])
+
+    assert np.array_equal(mut_x, gt_x)
+    assert np.array_equal(mut_x, gt_x.T)
+
+def test_util_fill_off_diagonal_8_12():
+    # Case 2a: N!=M
+    mut_x = np.ones((8, 12))
+    librosa.util.fill_off_diagonal(mut_x, 0.25)
+
+    gt_x = np.array([[1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
+                     [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+                     [0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0],
+                     [0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0],
+                     [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+                     [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0],
+                     [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1],
+                     [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]])
+
+    assert np.array_equal(mut_x, gt_x)
+
+    # Case 2b: (N!=M).T
+    mut_x = np.ones((8, 12)).T
+    librosa.util.fill_off_diagonal(mut_x, 0.25)
+
+    assert np.array_equal(mut_x, gt_x.T)
