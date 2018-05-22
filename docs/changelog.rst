@@ -1,6 +1,59 @@
 Changelog
 =========
 
+v0.6.1
+------
+2018-05-22
+
+Bug fixes
+
+  - `#677`_ `util.find_files` now correctly de-duplicates files on case-insensitive platforms. *Brian McFee*
+  - `#713`_ `util.valid_intervals` now checks for non-negative durations. *Brian McFee, Dana Lee*
+  - `#714`_ `util.match_intervals` can now explicitly fail when no matches are possible. *Brian McFee, Dana Lee*
+
+New features
+
+  - `#679`_, `#708`_ `core.pcen`, per-channel energy normalization. *Vincent Lostanlen, Brian McFee*
+  - `#682`_ added different DCT modes to `feature.mfcc`. *Brian McFee*
+  - `#687`_ `display` functions now accept target axes. *Pius Friesch*
+  - `#688`_ numba-accelerated `util.match_events`. *Dana Lee*
+  - `#710`_ `sequence` module and Viterbi decoding for generative, discriminative, and multi-label hidden Markov models. *Brian McFee*
+  - `#714`_ `util.match_intervals` now supports tie-breaking for disjoint query intervals. *Brian McFee*
+
+Other changes
+
+  - `#677`_, `#705`_ added continuous integration testing for Windows. *Brian McFee*, *Ryuichi Yamamoto*
+  - `#680`_ updated display module tests to support matplotlib 2.1. *Brian McFee*
+  - `#684`_ corrected documentation for `core.stft` and `core.ifgram`. *Keunwoo Choi*
+  - `#699`_, `#701`_ corrected documentation for `filters.semitone_filterbank` and `filters.mel_frequencies`. *Vincent Lostanlen*
+  - `#704`_ eliminated unnecessary side-effects when importing `display`. *Brian McFee*
+  - `#707`_ improved test coverage for dynamic time warping. *Brian McFee*
+  - `#714`_ `util.match_intervals` matching logic has changed from raw intersection to Jaccard similarity.  *Brian McFee*
+
+
+API Changes and compatibility
+
+  - `#716`_ `core.dtw` has moved to `sequence.dtw`, and `core.fill_off_diagonal` has moved to
+    `util.fill_off_diagonal`.  *Brian McFee*
+
+.. _#716: https://github.com/librosa/librosa/pull/716
+.. _#714: https://github.com/librosa/librosa/pull/714
+.. _#713: https://github.com/librosa/librosa/pull/713
+.. _#710: https://github.com/librosa/librosa/pull/710
+.. _#708: https://github.com/librosa/librosa/pull/708
+.. _#707: https://github.com/librosa/librosa/pull/707
+.. _#705: https://github.com/librosa/librosa/pull/705
+.. _#704: https://github.com/librosa/librosa/pull/704
+.. _#701: https://github.com/librosa/librosa/pull/701
+.. _#699: https://github.com/librosa/librosa/pull/699
+.. _#688: https://github.com/librosa/librosa/pull/688
+.. _#687: https://github.com/librosa/librosa/pull/687
+.. _#684: https://github.com/librosa/librosa/pull/684
+.. _#682: https://github.com/librosa/librosa/pull/682
+.. _#680: https://github.com/librosa/librosa/pull/680
+.. _#679: https://github.com/librosa/librosa/pull/679
+.. _#677: https://github.com/librosa/librosa/pull/677
+
 v0.6.0
 ------
 2018-02-17

@@ -331,7 +331,7 @@ def onset_backtrack(events, energy):
     from a detected peak amplitude to the preceding minimum.
 
     This is most useful when using onsets to determine slice points for
-    segmentation.
+    segmentation, as described by [1]_.
 
     .. [1] Jehan, Tristan.
            "Creating music by listening"

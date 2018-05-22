@@ -165,7 +165,9 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
 @cache(level=30)
 def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
              fmin=150.0, fmax=4000.0, threshold=0.1):
-    '''Pitch tracking on thresholded parabolically-interpolated STFT
+    '''Pitch tracking on thresholded parabolically-interpolated STFT.
+
+    This implementation uses the parabolic interpolation method described by [1]_.
 
     .. [1] https://ccrma.stanford.edu/~jos/sasp/Sinusoidal_Peak_Interpolation.html
 
