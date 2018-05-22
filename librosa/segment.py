@@ -238,7 +238,7 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
     elif mode == 'affinity':
         if bandwidth is None:
             bandwidth = np.median(rec.max(axis=1).data)
-        rec.data[:] = np.exp(- rec.data / bandwidth)
+        rec.data[:] = np.exp(rec.data / (-1 * bandwidth))
 
     if not sparse:
         rec = rec.toarray()
@@ -342,8 +342,7 @@ def recurrence_to_lag(rec, pad=True, axis=-1):
 
     if sparse:
         return lag.asformat(lag_format)
-    else:
-        return np.ascontiguousarray(lag.T).T
+    return np.ascontiguousarray(lag.T).T
 
 
 def lag_to_recurrence(lag, axis=-1):
@@ -431,8 +430,7 @@ def lag_to_recurrence(lag, axis=-1):
 
     if sparse:
         return rec.asformat(lag.format)
-    else:
-        return np.ascontiguousarray(rec.T).T
+    return np.ascontiguousarray(rec.T).T
 
 
 def timelag_filter(function, pad=True, index=0):
