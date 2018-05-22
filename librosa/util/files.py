@@ -40,6 +40,7 @@ def example_audio_file():
              href="http://creativecommons.org/licenses/by/3.0/"
              >CC BY 3.0</a>
       </div>
+
     '''
 
     return pkg_resources.resource_filename(__name__, EXAMPLE_AUDIO)
