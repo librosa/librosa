@@ -55,7 +55,7 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
     '''Dynamic time warping (DTW).
 
     This function performs a DTW and path backtracking on two sequences.
-    We follow the nomenclature and algorithmic approach as described in [1].
+    We follow the nomenclature and algorithmic approach as described in [1]_.
 
     .. [1] Meinard Mueller
            Fundamentals of Music Processing — Audio, Analysis, Algorithms, Applications
@@ -126,7 +126,7 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
     >>> X = librosa.feature.chroma_cens(y=y, sr=sr)
     >>> noise = np.random.rand(X.shape[0], 200)
     >>> Y = np.concatenate((noise, noise, X, noise), axis=1)
-    >>> D, wp = librosa.dtw(X, Y, subseq=True)
+    >>> D, wp = librosa.sequence.dtw(X, Y, subseq=True)
     >>> plt.subplot(2, 1, 1)
     >>> librosa.display.specshow(D, x_axis='frames', y_axis='frames')
     >>> plt.title('Database excerpt')

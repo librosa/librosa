@@ -1589,7 +1589,7 @@ def fill_off_diagonal(x, radius, value=0):
     Examples
     --------
     >>> x = np.ones((8, 8))
-    >>> global_constraints(x, 0.25)
+    >>> librosa.util.fill_off_diagonal(x, 0.25)
     >>> x
     array([[1, 1, 0, 0, 0, 0, 0, 0],
            [1, 1, 1, 0, 0, 0, 0, 0],
@@ -1600,7 +1600,7 @@ def fill_off_diagonal(x, radius, value=0):
            [0, 0, 0, 0, 0, 1, 1, 1],
            [0, 0, 0, 0, 0, 0, 1, 1]])
     >>> x = np.ones((8, 12))
-    >>> global_constraints(x, 0.25)
+    >>> librosa.util.fill_off_diagonal(x, 0.25)
     >>> x
     array([[1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
            [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
