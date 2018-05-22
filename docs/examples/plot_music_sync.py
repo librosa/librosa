@@ -79,7 +79,7 @@ plt.tight_layout()
 # ----------------------
 # Align Chroma Sequences
 # ----------------------
-D, wp = librosa.core.dtw(X=x_1_chroma, Y=x_2_chroma, metric='cosine')
+D, wp = librosa.sequence.dtw(X=x_1_chroma, Y=x_2_chroma, metric='cosine')
 wp_s = np.asarray(wp) * hop_size / fs
 
 fig = plt.figure(figsize=(10, 10))
