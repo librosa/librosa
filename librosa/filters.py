@@ -1046,18 +1046,18 @@ def mr_frequencies(tuning):
 def semitone_filterbank(center_freqs=None, tuning=0.0, sample_rates=None, **kwargs):
     r'''Constructs a multirate filterbank of infinite-impulse response (IIR)
     band-pass filters at user-defined center frequencies and sample rates.
-    
+
     By default, these center frequencies are set equal to the 88 fundamental
     frequencies of the grand piano keyboard, according to a pitch tuning standard
     of A440, that is, note A above middle C set to 440 Hz. The center frequencies
     are tuned to the twelve-tone equal temperament, which means that they grow
     exponentially at a rate of 2**(1/12), that is, twelve notes per octave.
-    
+
     The A440 tuning can be changed by the user while keeping twelve-tone equal
     temperament. While A440 is currently the international standard in the music
     industry (ISO 16), some orchestras tune to A441-A445, whereas baroque musicians
     tune to A415.
-    
+
     See [1]_ for details.
 
     .. [1] Müller, Meinard.
@@ -1133,7 +1133,6 @@ def __window_ss_fill(x, win_sq, n_frames, hop_length):  # pragma: no cover
     for i in range(n_frames):
         sample = i * hop_length
         x[sample:min(n, sample + n_fft)] += win_sq[:max(0, min(n_fft, n - sample))]
-    pass
 
 
 def window_sumsquare(window, n_frames, hop_length=512, win_length=None, n_fft=2048,
