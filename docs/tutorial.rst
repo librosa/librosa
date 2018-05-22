@@ -57,6 +57,10 @@ The *librosa* package is structured as collection of submodules:
         construction, time-lag representation, and sequentially constrained
         clustering.
 
+    - :ref:`librosa.sequence <sequence>`
+        Functions for sequential modeling.  Various forms of Viterbi decoding,
+        and helper functions for constructing transition matrices.
+
     - :ref:`librosa.util <util>`
         Helper utilities (normalization, padding, centering, etc.)
 
