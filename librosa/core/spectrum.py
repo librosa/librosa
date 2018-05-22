@@ -1448,6 +1448,10 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
 
     if b is None:
         t_frames = time_constant * sr / float(hop_length)
+        # By default, this solves the equation for b:
+        #   b**2  + (1 - b) / t_frames  - 2 = 0
+        # which approximates the full-width half-max of the
+        # squared frequency response of the IIR low-pass filter
 
         b = (np.sqrt(1 + 4 * t_frames**2) - 1) / (2 * t_frames**2)
 
