@@ -398,7 +398,7 @@ autodoc_member_order = 'bysource'
 # Sphinx-contrib versioning
 import re
 scv_whitelist_branches = ('master',)
-scv_whitelist_tags = (re.compile(r'^v?0\.[45]\.\d+(rc\d+)?$'),)
+scv_whitelist_tags = (re.compile(r'^v?\d\.\d\.\d+(rc\d+)?$'),)
 scv_greatest_tag = True
 scv_banner_greatest_tag = True
 scv_show_banner = True
