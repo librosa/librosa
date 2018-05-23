@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>LibROSA &mdash; librosa 0.6.0 documentation</title>
+  <title>LibROSA &mdash; librosa 0.6.1rc0 documentation</title>
   
 
   
@@ -25,29 +25,20 @@
   
 
   
-  
     <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  
-
-  
-    <link rel="stylesheet" href="_static/gallery.css" type="text/css" />
-  
-    <link rel="stylesheet" href="_static/banner.css" type="text/css" />
-  
-
-  
-        <link rel="index" title="Index"
-              href="genindex.html"/>
-        <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="librosa 0.6.0 documentation" href="#"/>
-        <link rel="next" title="Installation instructions" href="install.html"/> 
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/gallery.css" type="text/css" />
+  <link rel="stylesheet" href="_static/banner.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Installation instructions" href="install.html" /> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -107,6 +98,7 @@
 <li class="toctree-l1"><a class="reference internal" href="effects.html">Effects</a></li>
 <li class="toctree-l1"><a class="reference internal" href="output.html">Output</a></li>
 <li class="toctree-l1"><a class="reference internal" href="segment.html">Temporal segmentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sequence.html">Sequential modeling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="util.html">Utilities</a></li>
 </ul>
 <ul>
@@ -129,7 +121,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="#">librosa</a>
@@ -137,9 +129,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -181,7 +174,13 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="librosa">
+  
+
+
+
+
+
+<div class="section" id="librosa">
 <h1>LibROSA<a class="headerlink" href="#librosa" title="Permalink to this headline">¶</a></h1>
 <p>LibROSA is a python package for music and audio analysis.  It provides the building
 blocks necessary to create music information retrieval systems.</p>
@@ -216,6 +215,7 @@ For bug reports and other, more technical issues, consult the <a class="referenc
 <li class="toctree-l1"><a class="reference internal" href="effects.html">Effects</a></li>
 <li class="toctree-l1"><a class="reference internal" href="output.html">Output</a></li>
 <li class="toctree-l1"><a class="reference internal" href="segment.html">Temporal segmentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sequence.html">Sequential modeling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="util.html">Utilities</a></li>
 </ul>
 </div>
@@ -228,6 +228,7 @@ For bug reports and other, more technical issues, consult the <a class="referenc
 <li class="toctree-l2"><a class="reference internal" href="filters.html#filter-bank-construction">Filter bank construction</a></li>
 <li class="toctree-l2"><a class="reference internal" href="filters.html#window-functions">Window functions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="filters.html#miscellaneous">Miscellaneous</a></li>
+<li class="toctree-l2"><a class="reference internal" href="filters.html#deprecated">Deprecated</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="cache.html">Caching</a><ul>
@@ -255,6 +256,7 @@ For bug reports and other, more technical issues, consult the <a class="referenc
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#v0-6-1">v0.6.1</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#v0-6-0">v0.6.0</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#v0-5-1">v0.5.1</a></li>
 <li class="toctree-l2"><a class="reference internal" href="changelog.html#v0-5-0">v0.5.0</a></li>
@@ -280,9 +282,7 @@ For bug reports and other, more technical issues, consult the <a class="referenc
 
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
@@ -302,7 +302,7 @@ For bug reports and other, more technical issues, consult the <a class="referenc
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -316,7 +316,7 @@ For bug reports and other, more technical issues, consult the <a class="referenc
 <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
     <span class="rst-current-version" data-toggle="rst-current-version">
         <span class="fa fa-book"> Other Versions</span>
-        v: master
+        v: 0.6.1rc0
         <span class="fa fa-caret-down"></span>
     </span>
     <div class="rst-other-versions">
@@ -335,12 +335,12 @@ For bug reports and other, more technical issues, consult the <a class="referenc
             <dd><a href="0.6.0/index.html">0.6.0</a></dd>
             <dd><a href="0.6.0rc0/index.html">0.6.0rc0</a></dd>
             <dd><a href="0.6.0rc1/index.html">0.6.0rc1</a></dd>
+            <dd><a href="0.6.1rc0/index.html">0.6.1rc0</a></dd>
             <dd><a href="v0.1.0/index.html">v0.1.0</a></dd>
             <dd><a href="v0.4.0/index.html">v0.4.0</a></dd>
         </dl>
         <dl>
             <dt>Branches</dt>
-            <dd><a href="display-bin-centering/index.html">display-bin-centering</a></dd>
             <dd><a href="master/index.html">master</a></dd>
         </dl>
     </div>
@@ -352,7 +352,8 @@ For bug reports and other, more technical issues, consult the <a class="referenc
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'0.6.0',
+            VERSION:'0.6.1rc0',
+            LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
@@ -362,7 +363,7 @@ For bug reports and other, more technical issues, consult the <a class="referenc
       <script type="text/javascript" src="_static/jquery.js"></script>
       <script type="text/javascript" src="_static/underscore.js"></script>
       <script type="text/javascript" src="_static/doctools.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 
   
 
@@ -371,14 +372,11 @@ For bug reports and other, more technical issues, consult the <a class="referenc
     <script type="text/javascript" src="_static/js/theme.js"></script>
   
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

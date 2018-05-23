@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Effects &mdash; librosa 0.6.0 documentation</title>
+  <title>Effects &mdash; librosa 0.6.1rc0 documentation</title>
   
 
   
@@ -25,30 +25,21 @@
   
 
   
-  
     <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  
-
-  
-    <link rel="stylesheet" href="_static/gallery.css" type="text/css" />
-  
-    <link rel="stylesheet" href="_static/banner.css" type="text/css" />
-  
-
-  
-        <link rel="index" title="Index"
-              href="genindex.html"/>
-        <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="librosa 0.6.0 documentation" href="index.html"/>
-        <link rel="next" title="librosa.effects.hpss" href="generated/librosa.effects.hpss.html"/>
-        <link rel="prev" title="librosa.decompose.nn_filter" href="generated/librosa.decompose.nn_filter.html"/> 
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/gallery.css" type="text/css" />
+  <link rel="stylesheet" href="_static/banner.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="librosa.effects.hpss" href="generated/librosa.effects.hpss.html" />
+    <link rel="prev" title="librosa.decompose.nn_filter" href="generated/librosa.decompose.nn_filter.html" /> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -127,6 +118,7 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="output.html">Output</a></li>
 <li class="toctree-l1"><a class="reference internal" href="segment.html">Temporal segmentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sequence.html">Sequential modeling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="util.html">Utilities</a></li>
 </ul>
 <ul>
@@ -149,7 +141,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="index.html">librosa</a>
@@ -157,9 +149,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -201,7 +194,13 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <span class="target" id="module-librosa.effects"><span id="effects"></span></span><div class="section" id="id1">
+  
+
+
+
+
+
+<span class="target" id="module-librosa.effects"><span id="effects"></span></span><div class="section" id="id1">
 <h1>Effects<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="harmonic-percussive-source-separation">
 <h2>Harmonic-percussive source separation<a class="headerlink" href="#harmonic-percussive-source-separation" title="Permalink to this headline">¶</a></h2>
@@ -211,13 +210,13 @@
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.effects.hpss.html#librosa.effects.hpss" title="librosa.effects.hpss"><code class="xref py py-obj docutils literal"><span class="pre">hpss</span></code></a>(y,&nbsp;**kwargs)</td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.effects.hpss.html#librosa.effects.hpss" title="librosa.effects.hpss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hpss</span></code></a>(y,&nbsp;**kwargs)</td>
 <td>Decompose an audio time series into harmonic and percussive components.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="generated/librosa.effects.harmonic.html#librosa.effects.harmonic" title="librosa.effects.harmonic"><code class="xref py py-obj docutils literal"><span class="pre">harmonic</span></code></a>(y,&nbsp;**kwargs)</td>
+<tr class="row-even"><td><a class="reference internal" href="generated/librosa.effects.harmonic.html#librosa.effects.harmonic" title="librosa.effects.harmonic"><code class="xref py py-obj docutils literal notranslate"><span class="pre">harmonic</span></code></a>(y,&nbsp;**kwargs)</td>
 <td>Extract harmonic elements from an audio time-series.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.effects.percussive.html#librosa.effects.percussive" title="librosa.effects.percussive"><code class="xref py py-obj docutils literal"><span class="pre">percussive</span></code></a>(y,&nbsp;**kwargs)</td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.effects.percussive.html#librosa.effects.percussive" title="librosa.effects.percussive"><code class="xref py py-obj docutils literal notranslate"><span class="pre">percussive</span></code></a>(y,&nbsp;**kwargs)</td>
 <td>Extract percussive elements from an audio time-series.</td>
 </tr>
 </tbody>
@@ -231,10 +230,10 @@
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.effects.time_stretch.html#librosa.effects.time_stretch" title="librosa.effects.time_stretch"><code class="xref py py-obj docutils literal"><span class="pre">time_stretch</span></code></a>(y,&nbsp;rate)</td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.effects.time_stretch.html#librosa.effects.time_stretch" title="librosa.effects.time_stretch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">time_stretch</span></code></a>(y,&nbsp;rate)</td>
 <td>Time-stretch an audio series by a fixed rate.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="generated/librosa.effects.pitch_shift.html#librosa.effects.pitch_shift" title="librosa.effects.pitch_shift"><code class="xref py py-obj docutils literal"><span class="pre">pitch_shift</span></code></a>(y,&nbsp;sr,&nbsp;n_steps[,&nbsp;bins_per_octave])</td>
+<tr class="row-even"><td><a class="reference internal" href="generated/librosa.effects.pitch_shift.html#librosa.effects.pitch_shift" title="librosa.effects.pitch_shift"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pitch_shift</span></code></a>(y,&nbsp;sr,&nbsp;n_steps[,&nbsp;bins_per_octave])</td>
 <td>Pitch-shift the waveform by <em class="xref py py-obj">n_steps</em> half-steps.</td>
 </tr>
 </tbody>
@@ -248,13 +247,13 @@
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.effects.remix.html#librosa.effects.remix" title="librosa.effects.remix"><code class="xref py py-obj docutils literal"><span class="pre">remix</span></code></a>(y,&nbsp;intervals[,&nbsp;align_zeros])</td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.effects.remix.html#librosa.effects.remix" title="librosa.effects.remix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remix</span></code></a>(y,&nbsp;intervals[,&nbsp;align_zeros])</td>
 <td>Remix an audio signal by re-ordering time intervals.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="generated/librosa.effects.trim.html#librosa.effects.trim" title="librosa.effects.trim"><code class="xref py py-obj docutils literal"><span class="pre">trim</span></code></a>(y[,&nbsp;top_db,&nbsp;ref,&nbsp;frame_length,&nbsp;hop_length])</td>
+<tr class="row-even"><td><a class="reference internal" href="generated/librosa.effects.trim.html#librosa.effects.trim" title="librosa.effects.trim"><code class="xref py py-obj docutils literal notranslate"><span class="pre">trim</span></code></a>(y[,&nbsp;top_db,&nbsp;ref,&nbsp;frame_length,&nbsp;hop_length])</td>
 <td>Trim leading and trailing silence from an audio signal.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.effects.split.html#librosa.effects.split" title="librosa.effects.split"><code class="xref py py-obj docutils literal"><span class="pre">split</span></code></a>(y[,&nbsp;top_db,&nbsp;ref,&nbsp;frame_length,&nbsp;hop_length])</td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.effects.split.html#librosa.effects.split" title="librosa.effects.split"><code class="xref py py-obj docutils literal notranslate"><span class="pre">split</span></code></a>(y[,&nbsp;top_db,&nbsp;ref,&nbsp;frame_length,&nbsp;hop_length])</td>
 <td>Split an audio signal into non-silent intervals.</td>
 </tr>
 </tbody>
@@ -264,9 +263,7 @@
 
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
@@ -288,7 +285,7 @@
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -302,7 +299,7 @@
 <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
     <span class="rst-current-version" data-toggle="rst-current-version">
         <span class="fa fa-book"> Other Versions</span>
-        v: master
+        v: 0.6.1rc0
         <span class="fa fa-caret-down"></span>
     </span>
     <div class="rst-other-versions">
@@ -321,12 +318,12 @@
             <dd><a href="0.6.0/effects.html">0.6.0</a></dd>
             <dd><a href="0.6.0rc0/effects.html">0.6.0rc0</a></dd>
             <dd><a href="0.6.0rc1/effects.html">0.6.0rc1</a></dd>
+            <dd><a href="0.6.1rc0/effects.html">0.6.1rc0</a></dd>
             <dd><a href="v0.1.0/index.html">v0.1.0</a></dd>
             <dd><a href="v0.4.0/effects.html">v0.4.0</a></dd>
         </dl>
         <dl>
             <dt>Branches</dt>
-            <dd><a href="display-bin-centering/effects.html">display-bin-centering</a></dd>
             <dd><a href="master/effects.html">master</a></dd>
         </dl>
     </div>
@@ -338,7 +335,8 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'0.6.0',
+            VERSION:'0.6.1rc0',
+            LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
@@ -348,7 +346,7 @@
       <script type="text/javascript" src="_static/jquery.js"></script>
       <script type="text/javascript" src="_static/underscore.js"></script>
       <script type="text/javascript" src="_static/doctools.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 
   
 
@@ -357,14 +355,11 @@
     <script type="text/javascript" src="_static/js/theme.js"></script>
   
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

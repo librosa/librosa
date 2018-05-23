@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Temporal segmentation &mdash; librosa 0.6.0 documentation</title>
+  <title>Temporal segmentation &mdash; librosa 0.6.1rc0 documentation</title>
   
 
   
@@ -25,30 +25,21 @@
   
 
   
-  
     <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  
-
-  
-    <link rel="stylesheet" href="_static/gallery.css" type="text/css" />
-  
-    <link rel="stylesheet" href="_static/banner.css" type="text/css" />
-  
-
-  
-        <link rel="index" title="Index"
-              href="genindex.html"/>
-        <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="librosa 0.6.0 documentation" href="index.html"/>
-        <link rel="next" title="librosa.segment.recurrence_matrix" href="generated/librosa.segment.recurrence_matrix.html"/>
-        <link rel="prev" title="librosa.output.write_wav" href="generated/librosa.output.write_wav.html"/> 
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/gallery.css" type="text/css" />
+  <link rel="stylesheet" href="_static/banner.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="librosa.segment.recurrence_matrix" href="generated/librosa.segment.recurrence_matrix.html" />
+    <link rel="prev" title="librosa.output.write_wav" href="generated/librosa.output.write_wav.html" /> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -122,6 +113,7 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="sequence.html">Sequential modeling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="util.html">Utilities</a></li>
 </ul>
 <ul>
@@ -144,7 +136,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="index.html">librosa</a>
@@ -152,9 +144,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -196,7 +189,13 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <span class="target" id="module-librosa.segment"><span id="segment"></span></span><div class="section" id="temporal-segmentation">
+  
+
+
+
+
+
+<span class="target" id="module-librosa.segment"><span id="segment"></span></span><div class="section" id="temporal-segmentation">
 <h1>Temporal segmentation<a class="headerlink" href="#temporal-segmentation" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="recurrence-and-self-similarity">
 <h2>Recurrence and self-similarity<a class="headerlink" href="#recurrence-and-self-similarity" title="Permalink to this headline">¶</a></h2>
@@ -206,16 +205,16 @@
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.segment.recurrence_matrix.html#librosa.segment.recurrence_matrix" title="librosa.segment.recurrence_matrix"><code class="xref py py-obj docutils literal"><span class="pre">recurrence_matrix</span></code></a>(data[,&nbsp;k,&nbsp;width,&nbsp;metric,&nbsp;...])</td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.segment.recurrence_matrix.html#librosa.segment.recurrence_matrix" title="librosa.segment.recurrence_matrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">recurrence_matrix</span></code></a>(data[,&nbsp;k,&nbsp;width,&nbsp;metric,&nbsp;…])</td>
 <td>Compute a recurrence matrix from a data matrix.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="generated/librosa.segment.recurrence_to_lag.html#librosa.segment.recurrence_to_lag" title="librosa.segment.recurrence_to_lag"><code class="xref py py-obj docutils literal"><span class="pre">recurrence_to_lag</span></code></a>(rec[,&nbsp;pad,&nbsp;axis])</td>
+<tr class="row-even"><td><a class="reference internal" href="generated/librosa.segment.recurrence_to_lag.html#librosa.segment.recurrence_to_lag" title="librosa.segment.recurrence_to_lag"><code class="xref py py-obj docutils literal notranslate"><span class="pre">recurrence_to_lag</span></code></a>(rec[,&nbsp;pad,&nbsp;axis])</td>
 <td>Convert a recurrence matrix into a lag matrix.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.segment.lag_to_recurrence.html#librosa.segment.lag_to_recurrence" title="librosa.segment.lag_to_recurrence"><code class="xref py py-obj docutils literal"><span class="pre">lag_to_recurrence</span></code></a>(lag[,&nbsp;axis])</td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.segment.lag_to_recurrence.html#librosa.segment.lag_to_recurrence" title="librosa.segment.lag_to_recurrence"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lag_to_recurrence</span></code></a>(lag[,&nbsp;axis])</td>
 <td>Convert a lag matrix into a recurrence matrix.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="generated/librosa.segment.timelag_filter.html#librosa.segment.timelag_filter" title="librosa.segment.timelag_filter"><code class="xref py py-obj docutils literal"><span class="pre">timelag_filter</span></code></a>(function[,&nbsp;pad,&nbsp;index])</td>
+<tr class="row-even"><td><a class="reference internal" href="generated/librosa.segment.timelag_filter.html#librosa.segment.timelag_filter" title="librosa.segment.timelag_filter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">timelag_filter</span></code></a>(function[,&nbsp;pad,&nbsp;index])</td>
 <td>Filtering in the time-lag domain.</td>
 </tr>
 </tbody>
@@ -229,10 +228,10 @@
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.segment.agglomerative.html#librosa.segment.agglomerative" title="librosa.segment.agglomerative"><code class="xref py py-obj docutils literal"><span class="pre">agglomerative</span></code></a>(data,&nbsp;k[,&nbsp;clusterer,&nbsp;axis])</td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.segment.agglomerative.html#librosa.segment.agglomerative" title="librosa.segment.agglomerative"><code class="xref py py-obj docutils literal notranslate"><span class="pre">agglomerative</span></code></a>(data,&nbsp;k[,&nbsp;clusterer,&nbsp;axis])</td>
 <td>Bottom-up temporal segmentation.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="generated/librosa.segment.subsegment.html#librosa.segment.subsegment" title="librosa.segment.subsegment"><code class="xref py py-obj docutils literal"><span class="pre">subsegment</span></code></a>(data,&nbsp;frames[,&nbsp;n_segments,&nbsp;axis])</td>
+<tr class="row-even"><td><a class="reference internal" href="generated/librosa.segment.subsegment.html#librosa.segment.subsegment" title="librosa.segment.subsegment"><code class="xref py py-obj docutils literal notranslate"><span class="pre">subsegment</span></code></a>(data,&nbsp;frames[,&nbsp;n_segments,&nbsp;axis])</td>
 <td>Sub-divide a segmentation by feature clustering.</td>
 </tr>
 </tbody>
@@ -242,9 +241,7 @@
 
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
@@ -266,7 +263,7 @@
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -280,7 +277,7 @@
 <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
     <span class="rst-current-version" data-toggle="rst-current-version">
         <span class="fa fa-book"> Other Versions</span>
-        v: master
+        v: 0.6.1rc0
         <span class="fa fa-caret-down"></span>
     </span>
     <div class="rst-other-versions">
@@ -299,12 +296,12 @@
             <dd><a href="0.6.0/segment.html">0.6.0</a></dd>
             <dd><a href="0.6.0rc0/segment.html">0.6.0rc0</a></dd>
             <dd><a href="0.6.0rc1/segment.html">0.6.0rc1</a></dd>
+            <dd><a href="0.6.1rc0/segment.html">0.6.1rc0</a></dd>
             <dd><a href="v0.1.0/index.html">v0.1.0</a></dd>
             <dd><a href="v0.4.0/segment.html">v0.4.0</a></dd>
         </dl>
         <dl>
             <dt>Branches</dt>
-            <dd><a href="display-bin-centering/segment.html">display-bin-centering</a></dd>
             <dd><a href="master/segment.html">master</a></dd>
         </dl>
     </div>
@@ -316,7 +313,8 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'0.6.0',
+            VERSION:'0.6.1rc0',
+            LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
@@ -326,7 +324,7 @@
       <script type="text/javascript" src="_static/jquery.js"></script>
       <script type="text/javascript" src="_static/underscore.js"></script>
       <script type="text/javascript" src="_static/doctools.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 
   
 
@@ -335,14 +333,11 @@
     <script type="text/javascript" src="_static/js/theme.js"></script>
   
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

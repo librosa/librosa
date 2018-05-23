@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Output &mdash; librosa 0.6.0 documentation</title>
+  <title>Output &mdash; librosa 0.6.1rc0 documentation</title>
   
 
   
@@ -25,30 +25,21 @@
   
 
   
-  
     <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  
-
-  
-    <link rel="stylesheet" href="_static/gallery.css" type="text/css" />
-  
-    <link rel="stylesheet" href="_static/banner.css" type="text/css" />
-  
-
-  
-        <link rel="index" title="Index"
-              href="genindex.html"/>
-        <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="librosa 0.6.0 documentation" href="index.html"/>
-        <link rel="next" title="librosa.output.annotation" href="generated/librosa.output.annotation.html"/>
-        <link rel="prev" title="librosa.effects.split" href="generated/librosa.effects.split.html"/> 
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/gallery.css" type="text/css" />
+  <link rel="stylesheet" href="_static/banner.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="librosa.output.annotation" href="generated/librosa.output.annotation.html" />
+    <link rel="prev" title="librosa.effects.split" href="generated/librosa.effects.split.html" /> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -119,6 +110,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="segment.html">Temporal segmentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sequence.html">Sequential modeling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="util.html">Utilities</a></li>
 </ul>
 <ul>
@@ -141,7 +133,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="index.html">librosa</a>
@@ -149,9 +141,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -193,7 +186,13 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <span class="target" id="module-librosa.output"><span id="output"></span></span><div class="section" id="id1">
+  
+
+
+
+
+
+<span class="target" id="module-librosa.output"><span id="output"></span></span><div class="section" id="id1">
 <h1>Output<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="text-output">
 <h2>Text output<a class="headerlink" href="#text-output" title="Permalink to this headline">¶</a></h2>
@@ -203,10 +202,10 @@
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.output.annotation.html#librosa.output.annotation" title="librosa.output.annotation"><code class="xref py py-obj docutils literal"><span class="pre">annotation</span></code></a>(path,&nbsp;intervals[,&nbsp;annotations,&nbsp;...])</td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.output.annotation.html#librosa.output.annotation" title="librosa.output.annotation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">annotation</span></code></a>(path,&nbsp;intervals[,&nbsp;annotations,&nbsp;…])</td>
 <td>Save annotations in a 3-column format:</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="generated/librosa.output.times_csv.html#librosa.output.times_csv" title="librosa.output.times_csv"><code class="xref py py-obj docutils literal"><span class="pre">times_csv</span></code></a>(path,&nbsp;times[,&nbsp;annotations,&nbsp;...])</td>
+<tr class="row-even"><td><a class="reference internal" href="generated/librosa.output.times_csv.html#librosa.output.times_csv" title="librosa.output.times_csv"><code class="xref py py-obj docutils literal notranslate"><span class="pre">times_csv</span></code></a>(path,&nbsp;times[,&nbsp;annotations,&nbsp;…])</td>
 <td>Save time steps as in CSV format.</td>
 </tr>
 </tbody>
@@ -220,7 +219,7 @@
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.output.write_wav.html#librosa.output.write_wav" title="librosa.output.write_wav"><code class="xref py py-obj docutils literal"><span class="pre">write_wav</span></code></a>(path,&nbsp;y,&nbsp;sr[,&nbsp;norm])</td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.output.write_wav.html#librosa.output.write_wav" title="librosa.output.write_wav"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_wav</span></code></a>(path,&nbsp;y,&nbsp;sr[,&nbsp;norm])</td>
 <td>Output a time series as a .wav file</td>
 </tr>
 </tbody>
@@ -230,9 +229,7 @@
 
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
@@ -254,7 +251,7 @@
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -268,7 +265,7 @@
 <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
     <span class="rst-current-version" data-toggle="rst-current-version">
         <span class="fa fa-book"> Other Versions</span>
-        v: master
+        v: 0.6.1rc0
         <span class="fa fa-caret-down"></span>
     </span>
     <div class="rst-other-versions">
@@ -287,12 +284,12 @@
             <dd><a href="0.6.0/output.html">0.6.0</a></dd>
             <dd><a href="0.6.0rc0/output.html">0.6.0rc0</a></dd>
             <dd><a href="0.6.0rc1/output.html">0.6.0rc1</a></dd>
+            <dd><a href="0.6.1rc0/output.html">0.6.1rc0</a></dd>
             <dd><a href="v0.1.0/index.html">v0.1.0</a></dd>
             <dd><a href="v0.4.0/output.html">v0.4.0</a></dd>
         </dl>
         <dl>
             <dt>Branches</dt>
-            <dd><a href="display-bin-centering/output.html">display-bin-centering</a></dd>
             <dd><a href="master/output.html">master</a></dd>
         </dl>
     </div>
@@ -304,7 +301,8 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'0.6.0',
+            VERSION:'0.6.1rc0',
+            LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
@@ -314,7 +312,7 @@
       <script type="text/javascript" src="_static/jquery.js"></script>
       <script type="text/javascript" src="_static/underscore.js"></script>
       <script type="text/javascript" src="_static/doctools.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 
   
 
@@ -323,14 +321,11 @@
     <script type="text/javascript" src="_static/js/theme.js"></script>
   
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

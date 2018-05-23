@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Filters &mdash; librosa 0.6.0 documentation</title>
+  <title>Filters &mdash; librosa 0.6.1rc0 documentation</title>
   
 
   
@@ -25,30 +25,21 @@
   
 
   
-  
     <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  
-
-  
-    <link rel="stylesheet" href="_static/gallery.css" type="text/css" />
-  
-    <link rel="stylesheet" href="_static/banner.css" type="text/css" />
-  
-
-  
-        <link rel="index" title="Index"
-              href="genindex.html"/>
-        <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="librosa 0.6.0 documentation" href="index.html"/>
-        <link rel="next" title="librosa.filters.dct" href="generated/librosa.filters.dct.html"/>
-        <link rel="prev" title="librosa.util.find_files" href="generated/librosa.util.find_files.html"/> 
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/gallery.css" type="text/css" />
+  <link rel="stylesheet" href="_static/banner.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="librosa.filters.mel" href="generated/librosa.filters.mel.html" />
+    <link rel="prev" title="librosa.util.find_files" href="generated/librosa.util.find_files.html" /> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -108,12 +99,12 @@
 <li class="toctree-l1"><a class="reference internal" href="effects.html">Effects</a></li>
 <li class="toctree-l1"><a class="reference internal" href="output.html">Output</a></li>
 <li class="toctree-l1"><a class="reference internal" href="segment.html">Temporal segmentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sequence.html">Sequential modeling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="util.html">Utilities</a></li>
 </ul>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Filters</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#filter-bank-construction">Filter bank construction</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="generated/librosa.filters.dct.html">librosa.filters.dct</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.filters.mel.html">librosa.filters.mel</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.filters.chroma.html">librosa.filters.chroma</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.filters.constant_q.html">librosa.filters.constant_q</a></li>
@@ -131,6 +122,10 @@
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.filters.cq_to_chroma.html">librosa.filters.cq_to_chroma</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.filters.mr_frequencies.html">librosa.filters.mr_frequencies</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.filters.window_sumsquare.html">librosa.filters.window_sumsquare</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#deprecated">Deprecated</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/librosa.filters.dct.html">librosa.filters.dct</a></li>
 </ul>
 </li>
 </ul>
@@ -153,7 +148,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="index.html">librosa</a>
@@ -161,9 +156,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -205,7 +201,13 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <span class="target" id="module-librosa.filters"><span id="filters"></span></span><div class="section" id="id1">
+  
+
+
+
+
+
+<span class="target" id="module-librosa.filters"><span id="filters"></span></span><div class="section" id="id1">
 <h1>Filters<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="filter-bank-construction">
 <h2>Filter bank construction<a class="headerlink" href="#filter-bank-construction" title="Permalink to this headline">¶</a></h2>
@@ -215,23 +217,20 @@
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.filters.dct.html#librosa.filters.dct" title="librosa.filters.dct"><code class="xref py py-obj docutils literal"><span class="pre">dct</span></code></a>(n_filters,&nbsp;n_input)</td>
-<td>Discrete cosine transform (DCT type-III) basis.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="generated/librosa.filters.mel.html#librosa.filters.mel" title="librosa.filters.mel"><code class="xref py py-obj docutils literal"><span class="pre">mel</span></code></a>(sr,&nbsp;n_fft[,&nbsp;n_mels,&nbsp;fmin,&nbsp;fmax,&nbsp;htk,&nbsp;norm])</td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.filters.mel.html#librosa.filters.mel" title="librosa.filters.mel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mel</span></code></a>(sr,&nbsp;n_fft[,&nbsp;n_mels,&nbsp;fmin,&nbsp;fmax,&nbsp;htk,&nbsp;norm])</td>
 <td>Create a Filterbank matrix to combine FFT bins into Mel-frequency bins</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.filters.chroma.html#librosa.filters.chroma" title="librosa.filters.chroma"><code class="xref py py-obj docutils literal"><span class="pre">chroma</span></code></a>(sr,&nbsp;n_fft[,&nbsp;n_chroma,&nbsp;A440,&nbsp;ctroct,&nbsp;...])</td>
+<tr class="row-even"><td><a class="reference internal" href="generated/librosa.filters.chroma.html#librosa.filters.chroma" title="librosa.filters.chroma"><code class="xref py py-obj docutils literal notranslate"><span class="pre">chroma</span></code></a>(sr,&nbsp;n_fft[,&nbsp;n_chroma,&nbsp;A440,&nbsp;ctroct,&nbsp;…])</td>
 <td>Create a Filterbank matrix to convert STFT to chroma</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="generated/librosa.filters.constant_q.html#librosa.filters.constant_q" title="librosa.filters.constant_q"><code class="xref py py-obj docutils literal"><span class="pre">constant_q</span></code></a>(sr[,&nbsp;fmin,&nbsp;n_bins,&nbsp;...])</td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.filters.constant_q.html#librosa.filters.constant_q" title="librosa.filters.constant_q"><code class="xref py py-obj docutils literal notranslate"><span class="pre">constant_q</span></code></a>(sr[,&nbsp;fmin,&nbsp;n_bins,&nbsp;…])</td>
 <td>Construct a constant-Q basis.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.filters._multirate_fb.html#librosa.filters._multirate_fb" title="librosa.filters._multirate_fb"><code class="xref py py-obj docutils literal"><span class="pre">_multirate_fb</span></code></a>([center_freqs,&nbsp;sample_rates,&nbsp;...])</td>
+<tr class="row-even"><td><a class="reference internal" href="generated/librosa.filters._multirate_fb.html#librosa.filters._multirate_fb" title="librosa.filters._multirate_fb"><code class="xref py py-obj docutils literal notranslate"><span class="pre">_multirate_fb</span></code></a>([center_freqs,&nbsp;sample_rates,&nbsp;…])</td>
 <td>Helper function to construct a multirate filterbank.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="generated/librosa.filters.semitone_filterbank.html#librosa.filters.semitone_filterbank" title="librosa.filters.semitone_filterbank"><code class="xref py py-obj docutils literal"><span class="pre">semitone_filterbank</span></code></a>([center_freqs,&nbsp;tuning,&nbsp;...])</td>
-<td>Constructs a filterbank with 88 filters mimicing the equal-tempered scale.</td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.filters.semitone_filterbank.html#librosa.filters.semitone_filterbank" title="librosa.filters.semitone_filterbank"><code class="xref py py-obj docutils literal notranslate"><span class="pre">semitone_filterbank</span></code></a>([center_freqs,&nbsp;tuning,&nbsp;…])</td>
+<td>Constructs a multirate filterbank of infinite-impulse response (IIR) band-pass filters at user-defined center frequencies and sample rates.</td>
 </tr>
 </tbody>
 </table>
@@ -244,10 +243,10 @@
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.filters.window_bandwidth.html#librosa.filters.window_bandwidth" title="librosa.filters.window_bandwidth"><code class="xref py py-obj docutils literal"><span class="pre">window_bandwidth</span></code></a>(window[,&nbsp;n])</td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.filters.window_bandwidth.html#librosa.filters.window_bandwidth" title="librosa.filters.window_bandwidth"><code class="xref py py-obj docutils literal notranslate"><span class="pre">window_bandwidth</span></code></a>(window[,&nbsp;n])</td>
 <td>Get the equivalent noise bandwidth of a window function.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="generated/librosa.filters.get_window.html#librosa.filters.get_window" title="librosa.filters.get_window"><code class="xref py py-obj docutils literal"><span class="pre">get_window</span></code></a>(window,&nbsp;Nx[,&nbsp;fftbins])</td>
+<tr class="row-even"><td><a class="reference internal" href="generated/librosa.filters.get_window.html#librosa.filters.get_window" title="librosa.filters.get_window"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_window</span></code></a>(window,&nbsp;Nx[,&nbsp;fftbins])</td>
 <td>Compute a window function.</td>
 </tr>
 </tbody>
@@ -261,17 +260,31 @@
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.filters.constant_q_lengths.html#librosa.filters.constant_q_lengths" title="librosa.filters.constant_q_lengths"><code class="xref py py-obj docutils literal"><span class="pre">constant_q_lengths</span></code></a>(sr,&nbsp;fmin[,&nbsp;n_bins,&nbsp;...])</td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.filters.constant_q_lengths.html#librosa.filters.constant_q_lengths" title="librosa.filters.constant_q_lengths"><code class="xref py py-obj docutils literal notranslate"><span class="pre">constant_q_lengths</span></code></a>(sr,&nbsp;fmin[,&nbsp;n_bins,&nbsp;…])</td>
 <td>Return length of each filter in a constant-Q basis.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="generated/librosa.filters.cq_to_chroma.html#librosa.filters.cq_to_chroma" title="librosa.filters.cq_to_chroma"><code class="xref py py-obj docutils literal"><span class="pre">cq_to_chroma</span></code></a>(n_input[,&nbsp;bins_per_octave,&nbsp;...])</td>
+<tr class="row-even"><td><a class="reference internal" href="generated/librosa.filters.cq_to_chroma.html#librosa.filters.cq_to_chroma" title="librosa.filters.cq_to_chroma"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cq_to_chroma</span></code></a>(n_input[,&nbsp;bins_per_octave,&nbsp;…])</td>
 <td>Convert a Constant-Q basis to Chroma.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.filters.mr_frequencies.html#librosa.filters.mr_frequencies" title="librosa.filters.mr_frequencies"><code class="xref py py-obj docutils literal"><span class="pre">mr_frequencies</span></code></a>(tuning)</td>
-<td>Helper function for generating center frequency and samplerate pairs.</td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.filters.mr_frequencies.html#librosa.filters.mr_frequencies" title="librosa.filters.mr_frequencies"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mr_frequencies</span></code></a>(tuning)</td>
+<td>Helper function for generating center frequency and sample rate pairs.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="generated/librosa.filters.window_sumsquare.html#librosa.filters.window_sumsquare" title="librosa.filters.window_sumsquare"><code class="xref py py-obj docutils literal"><span class="pre">window_sumsquare</span></code></a>(window,&nbsp;n_frames[,&nbsp;...])</td>
+<tr class="row-even"><td><a class="reference internal" href="generated/librosa.filters.window_sumsquare.html#librosa.filters.window_sumsquare" title="librosa.filters.window_sumsquare"><code class="xref py py-obj docutils literal notranslate"><span class="pre">window_sumsquare</span></code></a>(window,&nbsp;n_frames[,&nbsp;…])</td>
 <td>Compute the sum-square envelope of a window function at a given hop length.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="deprecated">
+<h2>Deprecated<a class="headerlink" href="#deprecated" title="Permalink to this headline">¶</a></h2>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.filters.dct.html#librosa.filters.dct" title="librosa.filters.dct"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dct</span></code></a>(n_filters,&nbsp;n_input)</td>
+<td>Discrete cosine transform (DCT type-II, normalized) basis.</td>
 </tr>
 </tbody>
 </table>
@@ -280,15 +293,13 @@
 
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="generated/librosa.filters.dct.html" class="btn btn-neutral float-right" title="librosa.filters.dct" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="generated/librosa.filters.mel.html" class="btn btn-neutral float-right" title="librosa.filters.mel" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="generated/librosa.util.find_files.html" class="btn btn-neutral" title="librosa.util.find_files" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
@@ -304,7 +315,7 @@
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -318,7 +329,7 @@
 <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
     <span class="rst-current-version" data-toggle="rst-current-version">
         <span class="fa fa-book"> Other Versions</span>
-        v: master
+        v: 0.6.1rc0
         <span class="fa fa-caret-down"></span>
     </span>
     <div class="rst-other-versions">
@@ -337,12 +348,12 @@
             <dd><a href="0.6.0/filters.html">0.6.0</a></dd>
             <dd><a href="0.6.0rc0/filters.html">0.6.0rc0</a></dd>
             <dd><a href="0.6.0rc1/filters.html">0.6.0rc1</a></dd>
+            <dd><a href="0.6.1rc0/filters.html">0.6.1rc0</a></dd>
             <dd><a href="v0.1.0/index.html">v0.1.0</a></dd>
             <dd><a href="v0.4.0/filters.html">v0.4.0</a></dd>
         </dl>
         <dl>
             <dt>Branches</dt>
-            <dd><a href="display-bin-centering/filters.html">display-bin-centering</a></dd>
             <dd><a href="master/filters.html">master</a></dd>
         </dl>
     </div>
@@ -354,7 +365,8 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'0.6.0',
+            VERSION:'0.6.1rc0',
+            LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
@@ -364,7 +376,7 @@
       <script type="text/javascript" src="_static/jquery.js"></script>
       <script type="text/javascript" src="_static/underscore.js"></script>
       <script type="text/javascript" src="_static/doctools.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 
   
 
@@ -373,14 +385,11 @@
     <script type="text/javascript" src="_static/js/theme.js"></script>
   
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

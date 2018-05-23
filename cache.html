@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Caching &mdash; librosa 0.6.0 documentation</title>
+  <title>Caching &mdash; librosa 0.6.1rc0 documentation</title>
   
 
   
@@ -25,30 +25,21 @@
   
 
   
-  
     <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  
-
-  
-    <link rel="stylesheet" href="_static/gallery.css" type="text/css" />
-  
-    <link rel="stylesheet" href="_static/banner.css" type="text/css" />
-  
-
-  
-        <link rel="index" title="Index"
-              href="genindex.html"/>
-        <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="librosa 0.6.0 documentation" href="index.html"/>
-        <link rel="next" title="Advanced I/O Use Cases" href="ioformats.html"/>
-        <link rel="prev" title="librosa.filters.window_sumsquare" href="generated/librosa.filters.window_sumsquare.html"/> 
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/gallery.css" type="text/css" />
+  <link rel="stylesheet" href="_static/banner.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Advanced I/O Use Cases" href="ioformats.html" />
+    <link rel="prev" title="librosa.filters.dct" href="generated/librosa.filters.dct.html" /> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -108,6 +99,7 @@
 <li class="toctree-l1"><a class="reference internal" href="effects.html">Effects</a></li>
 <li class="toctree-l1"><a class="reference internal" href="output.html">Output</a></li>
 <li class="toctree-l1"><a class="reference internal" href="segment.html">Temporal segmentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sequence.html">Sequential modeling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="util.html">Utilities</a></li>
 </ul>
 <ul class="current">
@@ -136,7 +128,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="index.html">librosa</a>
@@ -144,9 +136,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -188,7 +181,13 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="caching">
+  
+
+
+
+
+
+<div class="section" id="caching">
 <h1>Caching<a class="headerlink" href="#caching" title="Permalink to this headline">¶</a></h1>
 <p>This section covers the <em>librosa</em> function cache.  This allows you
 to store and re-use intermediate computations across sessions.</p>
@@ -197,12 +196,12 @@ to store and re-use intermediate computations across sessions.</p>
 <p>By default, caching is disabled.  To enable caching, the environment
 variable <em class="xref py py-obj">LIBROSA_CACHE_DIR</em> must be set prior to loading <em>librosa</em>.
 This can be done on the command line prior to instantiating a python interpreter:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>$ export LIBROSA_CACHE_DIR=/tmp/librosa_cache
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ export LIBROSA_CACHE_DIR=/tmp/librosa_cache
 $ ipython
 </pre></div>
 </div>
 <p>or from within python, prior to importing <em>librosa</em>:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">os</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">os</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;LIBROSA_CACHE_DIR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;/tmp/librosa_cache&#39;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">librosa</span>
 </pre></div>
@@ -212,7 +211,7 @@ $ ipython
 <p>The cache does not implement any eviction policy.  As such,
 it can grow without bound on disk if not purged.
 To purge the cache directly, call:</p>
-<div class="last highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">librosa</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+<div class="last highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">librosa</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>
@@ -224,13 +223,13 @@ The default configuration can be overridden by setting the following environment
 <blockquote>
 <div><ul class="simple">
 <li><em class="xref py py-obj">LIBROSA_CACHE_DIR</em> : path (on disk) to the cache directory</li>
-<li><em class="xref py py-obj">LIBROSA_CACHE_MMAP</em> : optional memory mapping mode <em class="xref py py-obj">{None, &#8216;r+&#8217;, &#8216;r&#8217;, &#8216;w+&#8217;, &#8216;c&#8217;}</em></li>
+<li><em class="xref py py-obj">LIBROSA_CACHE_MMAP</em> : optional memory mapping mode <em class="xref py py-obj">{None, ‘r+’, ‘r’, ‘w+’, ‘c’}</em></li>
 <li><em class="xref py py-obj">LIBROSA_CACHE_COMPRESS</em> : flag to enable compression of data on disk <em class="xref py py-obj">{0, 1}</em></li>
 <li><em class="xref py py-obj">LIBROSA_CACHE_VERBOSE</em> : controls how much debug info is displayed. <em class="xref py py-obj">{int, non-negative}</em></li>
 <li><em class="xref py py-obj">LIBROSA_CACHE_LEVEL</em> : controls the caching level: the larger this value, the more data is cached. <em class="xref py py-obj">{int}</em></li>
 </ul>
 </div></blockquote>
-<p>Please refer to the <code class="xref py py-obj docutils literal"><span class="pre">joblib.Memory</span></code> <a class="reference external" href="https://pythonhosted.org/joblib/memory.html#memory-reference">documentation</a> for a detailed explanation of these
+<p>Please refer to the <code class="xref py py-obj docutils literal notranslate"><span class="pre">joblib.Memory</span></code> <a class="reference external" href="https://pythonhosted.org/joblib/memory.html#memory-reference">documentation</a> for a detailed explanation of these
 parameters.</p>
 </div>
 <div class="section" id="cache-levels">
@@ -252,8 +251,8 @@ As a result, application code may run faster at the expense of larger disk usage
 </div>
 <div class="section" id="example">
 <h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
-<p>To demonstrate how to use the cache, we&#8217;ll first call an example script twice without caching:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>$ time -p ./estimate_tuning.py ../librosa/util/example_data/Kevin_MacLeod_-_Vibe_Ace.ogg
+<p>To demonstrate how to use the cache, we’ll first call an example script twice without caching:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ time -p ./estimate_tuning.py ../librosa/util/example_data/Kevin_MacLeod_-_Vibe_Ace.ogg
 Loading  ../librosa/util/example_data/Kevin_MacLeod_-_Vibe_Ace.ogg
 Separating harmonic component ...
 Estimating tuning ...
@@ -272,18 +271,18 @@ user 6.04
 sys 1.05
 </pre></div>
 </div>
-<p>Next, we&#8217;ll enable caching to <em class="xref py py-obj">/tmp/librosa</em>:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>$ export LIBROSA_CACHE_DIR=/tmp/librosa
+<p>Next, we’ll enable caching to <em class="xref py py-obj">/tmp/librosa</em>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ export LIBROSA_CACHE_DIR=/tmp/librosa
 </pre></div>
 </div>
 <p>and set the cache level to 50:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>$ export LIBROSA_CACHE_LEVEL=50
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ export LIBROSA_CACHE_LEVEL=50
 </pre></div>
 </div>
-<p>And now we&#8217;ll re-run the example script twice.  The first time, there will be no cached values, so the time
-should be similar to running without cache.  The second time, we&#8217;ll be able to reuse intermediate values, so
+<p>And now we’ll re-run the example script twice.  The first time, there will be no cached values, so the time
+should be similar to running without cache.  The second time, we’ll be able to reuse intermediate values, so
 it should be significantly faster.:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>$ time -p ./estimate_tuning.py ../librosa/util/example_data/Kevin_MacLeod_-_Vibe_Ace.ogg
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ time -p ./estimate_tuning.py ../librosa/util/example_data/Kevin_MacLeod_-_Vibe_Ace.ogg
 Loading  ../librosa/util/example_data/Kevin_MacLeod_-_Vibe_Ace.ogg
 Separating harmonic component ...
 Estimating tuning ...
@@ -303,7 +302,7 @@ sys 0.74
 </pre></div>
 </div>
 <p>Reducing the cache level to 20 yields an intermediate acceleration:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span>$ export LIBROSA_CACHE_LEVEL=20
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ export LIBROSA_CACHE_LEVEL=20
 
 $ time -p ./estimate_tuning.py ../librosa/util/example_data/Kevin_MacLeod_-_Vibe_Ace.ogg
 Loading  ../librosa/util/example_data/Kevin_MacLeod_-_Vibe_Ace.ogg
@@ -320,9 +319,7 @@ sys 1.22
 
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
@@ -331,7 +328,7 @@ sys 1.22
         <a href="ioformats.html" class="btn btn-neutral float-right" title="Advanced I/O Use Cases" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="generated/librosa.filters.window_sumsquare.html" class="btn btn-neutral" title="librosa.filters.window_sumsquare" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="generated/librosa.filters.dct.html" class="btn btn-neutral" title="librosa.filters.dct" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -344,7 +341,7 @@ sys 1.22
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -358,7 +355,7 @@ sys 1.22
 <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
     <span class="rst-current-version" data-toggle="rst-current-version">
         <span class="fa fa-book"> Other Versions</span>
-        v: master
+        v: 0.6.1rc0
         <span class="fa fa-caret-down"></span>
     </span>
     <div class="rst-other-versions">
@@ -377,12 +374,12 @@ sys 1.22
             <dd><a href="0.6.0/cache.html">0.6.0</a></dd>
             <dd><a href="0.6.0rc0/cache.html">0.6.0rc0</a></dd>
             <dd><a href="0.6.0rc1/cache.html">0.6.0rc1</a></dd>
+            <dd><a href="0.6.1rc0/cache.html">0.6.1rc0</a></dd>
             <dd><a href="v0.1.0/index.html">v0.1.0</a></dd>
             <dd><a href="v0.4.0/cache.html">v0.4.0</a></dd>
         </dl>
         <dl>
             <dt>Branches</dt>
-            <dd><a href="display-bin-centering/cache.html">display-bin-centering</a></dd>
             <dd><a href="master/cache.html">master</a></dd>
         </dl>
     </div>
@@ -394,7 +391,8 @@ sys 1.22
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'0.6.0',
+            VERSION:'0.6.1rc0',
+            LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
@@ -404,7 +402,7 @@ sys 1.22
       <script type="text/javascript" src="_static/jquery.js"></script>
       <script type="text/javascript" src="_static/underscore.js"></script>
       <script type="text/javascript" src="_static/doctools.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 
   
 
@@ -413,14 +411,11 @@ sys 1.22
     <script type="text/javascript" src="_static/js/theme.js"></script>
   
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

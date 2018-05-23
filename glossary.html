@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Glossary &mdash; librosa 0.6.0 documentation</title>
+  <title>Glossary &mdash; librosa 0.6.1rc0 documentation</title>
   
 
   
@@ -25,29 +25,20 @@
   
 
   
-  
     <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  
-
-  
-    <link rel="stylesheet" href="_static/gallery.css" type="text/css" />
-  
-    <link rel="stylesheet" href="_static/banner.css" type="text/css" />
-  
-
-  
-        <link rel="index" title="Index"
-              href="genindex.html"/>
-        <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="librosa 0.6.0 documentation" href="index.html"/>
-        <link rel="prev" title="Changelog" href="changelog.html"/> 
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/gallery.css" type="text/css" />
+  <link rel="stylesheet" href="_static/banner.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Changelog" href="changelog.html" /> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -107,6 +98,7 @@
 <li class="toctree-l1"><a class="reference internal" href="effects.html">Effects</a></li>
 <li class="toctree-l1"><a class="reference internal" href="output.html">Output</a></li>
 <li class="toctree-l1"><a class="reference internal" href="segment.html">Temporal segmentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sequence.html">Sequential modeling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="util.html">Utilities</a></li>
 </ul>
 <ul>
@@ -129,7 +121,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="index.html">librosa</a>
@@ -137,9 +129,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -181,16 +174,22 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="glossary">
+  
+
+
+
+
+
+<div class="section" id="glossary">
 <h1>Glossary<a class="headerlink" href="#glossary" title="Permalink to this headline">¶</a></h1>
 <dl class="glossary docutils">
 <dt id="term-time-series">time series</dt>
-<dd>Typically an audio signal, denoted by <code class="docutils literal"><span class="pre">y</span></code>, and represented as a
-one-dimensional <em>numpy.ndarray</em> of floating-point values.  <code class="docutils literal"><span class="pre">y[t]</span></code>
-corresponds to amplitude of the waveform at sample <code class="docutils literal"><span class="pre">t</span></code>.</dd>
+<dd>Typically an audio signal, denoted by <code class="docutils literal notranslate"><span class="pre">y</span></code>, and represented as a
+one-dimensional <em>numpy.ndarray</em> of floating-point values.  <code class="docutils literal notranslate"><span class="pre">y[t]</span></code>
+corresponds to amplitude of the waveform at sample <code class="docutils literal notranslate"><span class="pre">t</span></code>.</dd>
 <dt id="term-sampling-rate">sampling rate</dt>
 <dd>The (positive integer) number of samples per second of a time series.
-This is denoted by an integer variable <code class="docutils literal"><span class="pre">sr</span></code>.</dd>
+This is denoted by an integer variable <code class="docutils literal notranslate"><span class="pre">sr</span></code>.</dd>
 <dt id="term-frame">frame</dt>
 <dd>A short slice of a <a class="reference internal" href="#term-time-series"><span class="xref std std-term">time series</span></a> used for analysis purposes.  This
 usually corresponds to a single column of a spectrogram matrix.</dd>
@@ -200,23 +199,23 @@ a spectrogram.</dd>
 <dt id="term-frame-length">frame length</dt>
 <dd>The (positive integer) number of samples in an analysis window (or
 <a class="reference internal" href="#term-frame"><span class="xref std std-term">frame</span></a>).
-This is denoted by an integer variable <code class="docutils literal"><span class="pre">n_fft</span></code>.</dd>
+This is denoted by an integer variable <code class="docutils literal notranslate"><span class="pre">n_fft</span></code>.</dd>
 <dt id="term-hop-length">hop length</dt>
 <dd>The number of samples between successive frames, e.g., the columns
-of a spectrogram.  This is denoted as a positive integer <code class="docutils literal"><span class="pre">hop_length</span></code>.</dd>
+of a spectrogram.  This is denoted as a positive integer <code class="docutils literal notranslate"><span class="pre">hop_length</span></code>.</dd>
 <dt id="term-window-length">window length</dt>
 <dd>The length (width) of the window function (e.g., Hann window).  Note that this
 can be smaller than the <a class="reference internal" href="#term-frame-length"><span class="xref std std-term">frame length</span></a> used in a short-time Fourier
-transform.  Typically denoted as a positive integer variable <code class="docutils literal"><span class="pre">win_length</span></code>.</dd>
+transform.  Typically denoted as a positive integer variable <code class="docutils literal notranslate"><span class="pre">win_length</span></code>.</dd>
 <dt id="term-spectrogram">spectrogram</dt>
-<dd>A matrix <code class="docutils literal"><span class="pre">S</span></code> where the rows index frequency bins, and the columns index
+<dd>A matrix <code class="docutils literal notranslate"><span class="pre">S</span></code> where the rows index frequency bins, and the columns index
 frames (time).  Spectrograms can be either real-valued or complex-valued.  By
-convention, real-valued spectrograms are denoted as <em>numpy.ndarray</em>s <code class="docutils literal"><span class="pre">S</span></code>,
-while complex-valued STFT matrices are denoted as <code class="docutils literal"><span class="pre">D</span></code>.</dd>
+convention, real-valued spectrograms are denoted as <em>numpy.ndarray</em>s <code class="docutils literal notranslate"><span class="pre">S</span></code>,
+while complex-valued STFT matrices are denoted as <code class="docutils literal notranslate"><span class="pre">D</span></code>.</dd>
 <dt id="term-onset-strength-envelope">onset (strength) envelope</dt>
-<dd>An onset envelope <code class="docutils literal"><span class="pre">onset_env[t]</span></code> measures the strength of note onsets at
-frame <code class="docutils literal"><span class="pre">t</span></code>.  Typically stored as a one-dimensional <em>numpy.ndarray</em> of
-floating-point values <code class="docutils literal"><span class="pre">onset_envelope</span></code>.</dd>
+<dd>An onset envelope <code class="docutils literal notranslate"><span class="pre">onset_env[t]</span></code> measures the strength of note onsets at
+frame <code class="docutils literal notranslate"><span class="pre">t</span></code>.  Typically stored as a one-dimensional <em>numpy.ndarray</em> of
+floating-point values <code class="docutils literal notranslate"><span class="pre">onset_envelope</span></code>.</dd>
 <dt id="term-chroma">chroma</dt>
 <dd>Also known as pitch class profile (PCP).  Chroma representations measure the
 amount of relative energy in each pitch class (e.g., the 12 notes in the
@@ -226,9 +225,7 @@ chromatic scale) at a given frame/time.</dd>
 
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
@@ -248,7 +245,7 @@ chromatic scale) at a given frame/time.</dd>
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -262,7 +259,7 @@ chromatic scale) at a given frame/time.</dd>
 <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
     <span class="rst-current-version" data-toggle="rst-current-version">
         <span class="fa fa-book"> Other Versions</span>
-        v: master
+        v: 0.6.1rc0
         <span class="fa fa-caret-down"></span>
     </span>
     <div class="rst-other-versions">
@@ -281,12 +278,12 @@ chromatic scale) at a given frame/time.</dd>
             <dd><a href="0.6.0/glossary.html">0.6.0</a></dd>
             <dd><a href="0.6.0rc0/glossary.html">0.6.0rc0</a></dd>
             <dd><a href="0.6.0rc1/glossary.html">0.6.0rc1</a></dd>
+            <dd><a href="0.6.1rc0/glossary.html">0.6.1rc0</a></dd>
             <dd><a href="v0.1.0/index.html">v0.1.0</a></dd>
             <dd><a href="v0.4.0/glossary.html">v0.4.0</a></dd>
         </dl>
         <dl>
             <dt>Branches</dt>
-            <dd><a href="display-bin-centering/glossary.html">display-bin-centering</a></dd>
             <dd><a href="master/glossary.html">master</a></dd>
         </dl>
     </div>
@@ -298,7 +295,8 @@ chromatic scale) at a given frame/time.</dd>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'0.6.0',
+            VERSION:'0.6.1rc0',
+            LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
@@ -308,7 +306,7 @@ chromatic scale) at a given frame/time.</dd>
       <script type="text/javascript" src="_static/jquery.js"></script>
       <script type="text/javascript" src="_static/underscore.js"></script>
       <script type="text/javascript" src="_static/doctools.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 
   
 
@@ -317,14 +315,11 @@ chromatic scale) at a given frame/time.</dd>
     <script type="text/javascript" src="_static/js/theme.js"></script>
   
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>

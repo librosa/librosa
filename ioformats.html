@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Advanced I/O Use Cases &mdash; librosa 0.6.0 documentation</title>
+  <title>Advanced I/O Use Cases &mdash; librosa 0.6.1rc0 documentation</title>
   
 
   
@@ -25,30 +25,21 @@
   
 
   
-  
     <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  
-
-  
-    <link rel="stylesheet" href="_static/gallery.css" type="text/css" />
-  
-    <link rel="stylesheet" href="_static/banner.css" type="text/css" />
-  
-
-  
-        <link rel="index" title="Index"
-              href="genindex.html"/>
-        <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="librosa 0.6.0 documentation" href="index.html"/>
-        <link rel="next" title="Advanced examples" href="advanced.html"/>
-        <link rel="prev" title="Caching" href="cache.html"/> 
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/gallery.css" type="text/css" />
+  <link rel="stylesheet" href="_static/banner.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Advanced examples" href="advanced.html" />
+    <link rel="prev" title="Caching" href="cache.html" /> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -108,6 +99,7 @@
 <li class="toctree-l1"><a class="reference internal" href="effects.html">Effects</a></li>
 <li class="toctree-l1"><a class="reference internal" href="output.html">Output</a></li>
 <li class="toctree-l1"><a class="reference internal" href="segment.html">Temporal segmentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sequence.html">Sequential modeling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="util.html">Utilities</a></li>
 </ul>
 <ul class="current">
@@ -136,7 +128,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="index.html">librosa</a>
@@ -144,9 +136,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -188,7 +181,13 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="advanced-i-o-use-cases">
+  
+
+
+
+
+
+<div class="section" id="advanced-i-o-use-cases">
 <h1>Advanced I/O Use Cases<a class="headerlink" href="#advanced-i-o-use-cases" title="Permalink to this headline">¶</a></h1>
 <p>This section covers advanced use cases for input and output which go beyond the I/O
 functionality currently provided by <em>librosa</em>.</p>
@@ -200,8 +199,8 @@ functionality currently provided by <em>librosa</em>.</p>
 <p class="first admonition-title">Note</p>
 <p class="last">See installation instruction for PySoundFile <a class="reference external" href="http://pysoundfile.readthedocs.io">here</a>.</p>
 </div>
-<p>Reading audio files using PySoundFile is similmar to the method in <em>librosa</em>. One important difference is that the read data is of shape <code class="docutils literal"><span class="pre">(nb_samples,</span> <span class="pre">nb_channels)</span></code> compared to <code class="docutils literal"><span class="pre">(nb_channels,</span> <span class="pre">nb_samples)</span></code> in <code class="xref py py-func docutils literal"><span class="pre">&lt;librosa.core.load&gt;</span></code>. Also the signal is not resampled to 22050 Hz by default, hence it would need be transposed and resampled for further processing in <em>librosa</em>. The following example is equivalent to <code class="docutils literal"><span class="pre">librosa.load(librosa.util.example_audio_file())</span></code>:</p>
-<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+<p>Reading audio files using PySoundFile is similmar to the method in <em>librosa</em>. One important difference is that the read data is of shape <code class="docutils literal notranslate"><span class="pre">(nb_samples,</span> <span class="pre">nb_channels)</span></code> compared to <code class="docutils literal notranslate"><span class="pre">(nb_channels,</span> <span class="pre">nb_samples)</span></code> in <code class="xref py py-func docutils literal notranslate"><span class="pre">&lt;librosa.core.load&gt;</span></code>. Also the signal is not resampled to 22050 Hz by default, hence it would need be transposed and resampled for further processing in <em>librosa</em>. The following example is equivalent to <code class="docutils literal notranslate"><span class="pre">librosa.load(librosa.util.example_audio_file())</span></code>:</p>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
 2
 3
 4
@@ -227,7 +226,7 @@ functionality currently provided by <em>librosa</em>.</p>
 into memory. <em>PySoundFile</em> supports blockwise reading. In the following example
 a block of 1024 samples of audio are read and directly fed into the chroma
 feature extractor.</p>
-<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
  3
  4
@@ -260,7 +259,7 @@ feature extractor.</p>
 <p>If you want to read audio from file-like objects (also called <em>virtual files</em>)
 you can use <em>PySoundFile</em>, as well.</p>
 <p>E.g.: read files from zip compressed archives:</p>
-<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
 2
 3
 4
@@ -279,10 +278,10 @@ you can use <em>PySoundFile</em>, as well.</p>
 </td></tr></table></div>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
-<p class="last">This is a example does only work in python 3. For python 2 please use <code class="docutils literal"><span class="pre">from</span> <span class="pre">urllib2</span> <span class="pre">import</span> <span class="pre">urlopen</span></code>.</p>
+<p class="last">This is a example does only work in python 3. For python 2 please use <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">urllib2</span> <span class="pre">import</span> <span class="pre">urlopen</span></code>.</p>
 </div>
 <p>Download and read from URL:</p>
-<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
 2
 3
 4
@@ -302,8 +301,8 @@ you can use <em>PySoundFile</em>, as well.</p>
 </div>
 <div class="section" id="write-out-audio-files">
 <h2>Write out audio files<a class="headerlink" href="#write-out-audio-files" title="Permalink to this headline">¶</a></h2>
-<p><em>librosa</em> uses <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.io.wavfile.write.html">scipy.io.wavfile</a> to write out wav files. Please be aware, that this function uses the numpy dtype to determine the PCM subtype. For example if your processed audio array is of dtype <code class="docutils literal"><span class="pre">np.float64</span></code> (which is the default on most machines), your resulting wav file would be of type 64bit float as well. This is not considered to be a <a class="reference external" href="https://msdn.microsoft.com/en-us/library/windows/hardware/dn653308%28v=vs.85%29.aspx">standard PCM wavfile</a>. If you would like to write 16bit PCM you could convert your array before hand:</p>
-<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+<p><em>librosa</em> uses <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.io.wavfile.write.html">scipy.io.wavfile</a> to write out wav files. Please be aware, that this function uses the numpy dtype to determine the PCM subtype. For example if your processed audio array is of dtype <code class="docutils literal notranslate"><span class="pre">np.float64</span></code> (which is the default on most machines), your resulting wav file would be of type 64bit float as well. This is not considered to be a <a class="reference external" href="https://msdn.microsoft.com/en-us/library/windows/hardware/dn653308%28v=vs.85%29.aspx">standard PCM wavfile</a>. If you would like to write 16bit PCM you could convert your array before hand:</p>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
  3
  4
@@ -326,7 +325,7 @@ you can use <em>PySoundFile</em>, as well.</p>
 </td></tr></table></div>
 <p>Writing audio files using pysoundfile is similar to the method in <em>librosa</em>, however it can automatically
 convert to a given PCM subtype and additionally support several compressed formats like <em>FLAC</em> or <em>OGG</em>:</p>
-<div class="highlight-python"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
  3
  4
@@ -360,9 +359,7 @@ convert to a given PCM subtype and additionally support several compressed forma
 
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
@@ -384,7 +381,7 @@ convert to a given PCM subtype and additionally support several compressed forma
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -398,7 +395,7 @@ convert to a given PCM subtype and additionally support several compressed forma
 <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
     <span class="rst-current-version" data-toggle="rst-current-version">
         <span class="fa fa-book"> Other Versions</span>
-        v: master
+        v: 0.6.1rc0
         <span class="fa fa-caret-down"></span>
     </span>
     <div class="rst-other-versions">
@@ -417,12 +414,12 @@ convert to a given PCM subtype and additionally support several compressed forma
             <dd><a href="0.6.0/ioformats.html">0.6.0</a></dd>
             <dd><a href="0.6.0rc0/ioformats.html">0.6.0rc0</a></dd>
             <dd><a href="0.6.0rc1/ioformats.html">0.6.0rc1</a></dd>
+            <dd><a href="0.6.1rc0/ioformats.html">0.6.1rc0</a></dd>
             <dd><a href="v0.1.0/index.html">v0.1.0</a></dd>
             <dd><a href="v0.4.0/index.html">v0.4.0</a></dd>
         </dl>
         <dl>
             <dt>Branches</dt>
-            <dd><a href="display-bin-centering/ioformats.html">display-bin-centering</a></dd>
             <dd><a href="master/ioformats.html">master</a></dd>
         </dl>
     </div>
@@ -434,7 +431,8 @@ convert to a given PCM subtype and additionally support several compressed forma
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'0.6.0',
+            VERSION:'0.6.1rc0',
+            LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
@@ -444,7 +442,7 @@ convert to a given PCM subtype and additionally support several compressed forma
       <script type="text/javascript" src="_static/jquery.js"></script>
       <script type="text/javascript" src="_static/underscore.js"></script>
       <script type="text/javascript" src="_static/doctools.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 
   
 
@@ -453,14 +451,11 @@ convert to a given PCM subtype and additionally support several compressed forma
     <script type="text/javascript" src="_static/js/theme.js"></script>
   
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>
