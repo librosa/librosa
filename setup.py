@@ -4,6 +4,9 @@ import imp
 
 version = imp.load_source('librosa.version', 'librosa/version.py')
 
+with open('README.md', 'r') as fdesc:
+    long_description = fdesc.read()
+
 setup(
     name='librosa',
     version=version.version,
@@ -14,7 +17,8 @@ setup(
     download_url='http://github.com/librosa/librosa/releases',
     packages=find_packages(),
     package_data={'': ['example_data/*']},
-    long_description="""A python module for audio and music processing.""",
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     classifiers=[
         "License :: OSI Approved :: ISC License (ISCL)",
         "Programming Language :: Python",
