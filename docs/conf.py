@@ -158,7 +158,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'librosa'
-copyright = u'2013--2017, librosa development team'
+copyright = u'2013--2018, librosa development team'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -398,7 +398,8 @@ autodoc_member_order = 'bysource'
 # Sphinx-contrib versioning
 import re
 scv_whitelist_branches = ('master',)
-scv_whitelist_tags = (re.compile(r'^v?\d\.\d\.\d+(rc\d+)?$'),)
+#scv_whitelist_tags = (re.compile(r'^v?\d\.\d\.\d+(rc\d+)?$'),)  # use this for RC builds
+scv_whitelist_tags = (re.compile(r'^v?\d\.\d\.\d+$'),)  # use this for final builds
 scv_greatest_tag = True
 scv_banner_greatest_tag = True
 scv_show_banner = True
