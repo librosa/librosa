@@ -332,8 +332,9 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     S : np.ndarray [shape=(d, t)] or None
         STFT matrix, or any STFT-derived matrix (e.g., chromagram
         or mel spectrogram).
-        The duration returned using this option will only be an
-        estimated value, reconstructed using the integer frames
+        Durations calculated from spectrogram inputs are only accurate 
+        up to the frame resolution. If high precision is required, 
+        it is better to use the audio time series directly.
 
     n_fft       : int > 0 [scalar]
         FFT window size for `S`
