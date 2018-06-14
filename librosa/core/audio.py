@@ -304,7 +304,7 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     >>> # Load the example audio file
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> librosa.get_duration(y=y, sr=sr)
-    61.44
+    61.45886621315193
 
     >>> # Or directly from an audio file
     >>> librosa.get_duration(filename=librosa.util.example_audio_file())
@@ -332,6 +332,9 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     S : np.ndarray [shape=(d, t)] or None
         STFT matrix, or any STFT-derived matrix (e.g., chromagram
         or mel spectrogram).
+        Durations calculated from spectrogram inputs are only accurate 
+        up to the frame resolution. If high precision is required, 
+        it is better to use the audio time series directly.
 
     n_fft       : int > 0 [scalar]
         FFT window size for `S`
