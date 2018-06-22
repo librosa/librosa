@@ -39,7 +39,7 @@ setup(
         'numpy >= 1.8.0',
         'scipy >= 0.14.0',
         'scikit-learn >= 0.14.0, != 0.19.0',
-        'joblib >= 0.7.0',
+        'joblib >= 0.12',
         'decorator >= 3.0.0',
         'six >= 1.3',
         'resampy >= 0.2.0',
