@@ -46,7 +46,7 @@ class CacheManager(Memory):
                     func, 'return decorated(%(signature)s)',
                     dict(decorated=dec(func)), __wrapped__=func)
 
-            if self.cachedir is not None and self.level >= level:
+            if self.location is not None and self.level >= level:
                 return decorator_apply(self.cache, function)
 
             else:
