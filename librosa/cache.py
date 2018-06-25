@@ -15,8 +15,8 @@ class CacheManager(Memory):
     field, thereby allowing librosa.cache to act as a decorator function.
     '''
 
-    def __init__(self, cachedir, level=10, **kwargs):
-        super(CacheManager, self).__init__(cachedir, **kwargs)
+    def __init__(self, location, level=10, **kwargs):
+        super(CacheManager, self).__init__(location, **kwargs)
         # The level parameter controls which data we cache
         # smaller numbers mean less caching
         self.level = level
@@ -46,7 +46,7 @@ class CacheManager(Memory):
                     func, 'return decorated(%(signature)s)',
                     dict(decorated=dec(func)), __wrapped__=func)
 
-            if self.cachedir is not None and self.level >= level:
+            if self.location is not None and self.level >= level:
                 return decorator_apply(self.cache, function)
 
             else:
