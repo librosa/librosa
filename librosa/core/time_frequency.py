@@ -756,7 +756,7 @@ def octs_to_hz(octs, A440=440.0):
 
 
 def fft_frequencies(sr=22050, n_fft=2048):
-    '''Alternative implementation of `np.fft.fftfreqs`
+    '''Alternative implementation of `np.fft.fftfreq`
 
     Parameters
     ----------
