@@ -401,7 +401,13 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
 def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                      freq=None, roll_percent=0.85):
-    '''Compute roll-off frequency
+    '''Compute roll-off frequency.
+
+    The roll-off frequency is defined for each frame as the center frequency
+    for a spectrogram bin such that at least roll_percent (0.85 by default)
+    of the energy of the spectrum in this frame is contained in this bin and
+    the bins below. This can be used to, e.g., approximate the maximum (or
+    minimum) frequency by setting roll_percent to a value close to 1 (or 0).
 
     Parameters
     ----------
