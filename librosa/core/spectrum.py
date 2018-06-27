@@ -820,7 +820,7 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
 
     Compute dB relative to peak power
 
-    >>> librosa.power_to_db(S**2, ref=np.max)
+    >>> librosa.power_to_db(S_power, ref=np.max)
     array([[-80.   , -74.027, ..., -80.   , -80.   ],
            [-80.   , -72.431, ..., -80.   , -80.   ],
            ...,
@@ -830,7 +830,7 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
 
     Or compare to median power
 
-    >>> librosa.power_to_db(S**2, ref=np.median)
+    >>> librosa.power_to_db(S_power, ref=np.median)
     array([[-0.189,  5.784, ..., -0.189, -0.189],
            [-0.189,  7.381, ..., -0.189, -0.189],
            ...,
@@ -843,11 +843,11 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
     >>> plt.subplot(2, 1, 1)
-    >>> librosa.display.specshow(S**2, sr=sr, y_axis='log')
+    >>> librosa.display.specshow(S_power, sr=sr, y_axis='log')
     >>> plt.colorbar()
     >>> plt.title('Power spectrogram')
     >>> plt.subplot(2, 1, 2)
-    >>> librosa.display.specshow(librosa.power_to_db(S**2, ref=np.max),
+    >>> librosa.display.specshow(librosa.power_to_db(S_power, ref=np.max),
     ...                          sr=sr, y_axis='log', x_axis='time')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Log-Power spectrogram')
