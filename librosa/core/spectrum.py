@@ -810,8 +810,8 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
     Get a power spectrogram from a waveform ``y``
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> S = np.abs(librosa.stft(y))
-    >>> librosa.power_to_db(S**2)
+    >>> S_power = librosa.magphase(librosa.stft(y), power=2)[0]
+    >>> librosa.power_to_db(S_power)
     array([[-33.293, -27.32 , ..., -33.293, -33.293],
            [-33.293, -25.723, ..., -33.293, -33.293],
            ...,
