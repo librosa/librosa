@@ -644,8 +644,9 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
     >>> S = librosa.feature.melspectrogram(y=y, sr=sr)
+    >>> S_power = librosa.magphase(S, power=2)[0]
     >>> ax = plt.subplot(2,1,2)
-    >>> librosa.display.specshow(librosa.power_to_db(S, ref=np.max),
+    >>> librosa.display.specshow(librosa.power_to_db(S_power, ref=np.max),
     ...                          x_axis='time', y_axis='mel')
     >>> plt.subplot(2,1,1, sharex=ax)
     >>> librosa.display.waveplot(y_beat_times, sr=sr, label='Beat clicks')
