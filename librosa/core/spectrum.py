@@ -1039,9 +1039,10 @@ def perceptual_weighting(S, frequencies, **kwargs):
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> CQT = librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('A1'))
-    >>> freqs = librosa.cqt_frequencies(CQT.shape[0],
+    >>> CQT_power = librosa.magphase(CQT, power=2)[0]
+    >>> freqs = librosa.cqt_frequencies(CQT_power.shape[0],
     ...                                 fmin=librosa.note_to_hz('A1'))
-    >>> perceptual_CQT = librosa.perceptual_weighting(CQT**2,
+    >>> perceptual_CQT = librosa.perceptual_weighting(CQT_power,
     ...                                               freqs,
     ...                                               ref=np.max)
     >>> perceptual_CQT
@@ -1054,7 +1055,7 @@ def perceptual_weighting(S, frequencies, **kwargs):
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
     >>> plt.subplot(2, 1, 1)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(CQT,
+    >>> librosa.display.specshow(librosa.power_to_db(CQT_power,
     ...                                                  ref=np.max),
     ...                          fmin=librosa.note_to_hz('A1'),
     ...                          y_axis='cqt_hz')
