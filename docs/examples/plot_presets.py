@@ -61,7 +61,7 @@ librosa['n_fft'] = 4096
 filename = 'audio/Karissa_Hobbs_-_09_-_Lets_Go_Fishin.mp3'
 y, sr = librosa.load(filename, duration=5, offset=35)
 
-# Generate a complex-valued mel-frequency spectrogram:
+# Generate a complex-valued mel spectrogram:
 M = librosa.feature.melspectrogram(y=y)
 
 
