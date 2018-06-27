@@ -1467,13 +1467,12 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     Using a pre-computed power spectrogram
 
-    >>> D = np.abs(librosa.stft(y))**2
+    >>> D = np.magphase(librosa.stft(y), power=2)[0]
     >>> S = librosa.feature.melspectrogram(S=D)
 
     >>> # Passing through arguments to the Mel filters
     >>> S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128,
     ...                                     fmax=8000)
-
     >>> import matplotlib.pyplot as plt
     >>> plt.figure(figsize=(10, 4))
     >>> librosa.display.specshow(librosa.power_to_db(S,
