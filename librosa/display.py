@@ -623,7 +623,7 @@ def specshow(data, x_coords=None, y_coords=None,
     Force a grayscale colormap (white -> black)
 
     >>> plt.subplot(4, 2, 6)
-    >>> librosa.display.specshow(D, cmap='gray_r', y_axis='linear')
+    >>> librosa.display.specshow(D_dB, cmap='gray_r', y_axis='linear')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Linear power spectrogram (grayscale)')
 
@@ -631,7 +631,7 @@ def specshow(data, x_coords=None, y_coords=None,
     Draw time markers automatically
 
     >>> plt.subplot(4, 2, 7)
-    >>> librosa.display.specshow(D, x_axis='time', y_axis='log')
+    >>> librosa.display.specshow(D_dB, x_axis='time', y_axis='log')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Log power spectrogram')
 
