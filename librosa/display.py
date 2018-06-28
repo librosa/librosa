@@ -591,21 +591,22 @@ def specshow(data, x_coords=None, y_coords=None,
     Or on a logarithmic scale
 
     >>> plt.subplot(4, 2, 2)
-    >>> librosa.display.specshow(D, y_axis='log')
+    >>> librosa.display.specshow(D_dB, y_axis='log')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Log-frequency power spectrogram')
 
 
     Or use a CQT scale
 
-    >>> CQT = librosa.amplitude_to_db(librosa.cqt(y, sr=sr), ref=np.max)
+    >>> CQT = librosa.cqt(y, sr=sr)
+    >>> CQT_dB = librosa.power_to_db(librosa.magphase(CQT, power=2)[0], ref=np.max)
     >>> plt.subplot(4, 2, 3)
     >>> librosa.display.specshow(CQT, y_axis='cqt_note')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Constant-Q power spectrogram (note)')
 
     >>> plt.subplot(4, 2, 4)
-    >>> librosa.display.specshow(CQT, y_axis='cqt_hz')
+    >>> librosa.display.specshow(CQT_dB, y_axis='cqt_hz')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Constant-Q power spectrogram (Hz)')
 
