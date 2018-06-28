@@ -474,10 +474,10 @@ def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
     >>> y, sr = librosa.load(librosa.util.example_audio_file(),
     ...                      duration=10.0)
     >>> D = librosa.stft(y)
+    >>> D_dB = librosa.power_to_db(librosa.magphase(D)[0], ref=np.max)
     >>> plt.figure()
     >>> plt.subplot(2, 1, 1)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
-    ...                          y_axis='log')
+    >>> librosa.display.specshow(D_dB, y_axis='log')
     >>> plt.title('Power spectrogram')
 
     Construct a standard onset function over four sub-bands
