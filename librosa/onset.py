@@ -120,10 +120,10 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
     >>> import matplotlib.pyplot as plt
     >>> D = librosa.stft(y)
+    >>> D_dB = librosa.power_to_db(librosa.magphase(D, power=2)[0], ref=np.max)
     >>> plt.figure()
     >>> ax1 = plt.subplot(2, 1, 1)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
-    ...                          x_axis='time', y_axis='log')
+    >>> librosa.display.specshow(D_dB, x_axis='time', y_axis='log')
     >>> plt.title('Power spectrogram')
     >>> plt.subplot(2, 1, 2, sharex=ax1)
     >>> plt.plot(times, o_env, label='Onset strength')
