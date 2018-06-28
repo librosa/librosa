@@ -898,8 +898,8 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     >>> plt.figure()
     >>> ax = plt.subplot(2, 1, 2)
     >>> D = librosa.stft(y)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
-    ...                          y_axis='log', x_axis='time')
+    >>> D_dB = librosa.power_to_db(librosa.magphase(D, power=2)[0], ref=np.max)
+    >>> librosa.display.specshow(D_dB, y_axis='log', x_axis='time')
     >>> plt.subplot(2, 1, 1, sharex=ax)
     >>> plt.plot(times, onset_env, alpha=0.8, label='Onset strength')
     >>> plt.vlines(times[peaks], 0,
