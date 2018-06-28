@@ -860,9 +860,9 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
         raise ParameterError('amin must be strictly positive')
 
     if np.issubdtype(S.dtype, np.complexfloating):
-        warnings.warn('power_to_db was called on complex input so phase '
+        warnings.warn('power_to_db was called on complex input. Therefore, phase '
                       'information will be discarded. To suppress this warning, '
-                      'call power_to_db(magphase(D, power=2)[0]) instead.')
+                      'call power_to_db(magphase(S, power=2)[0]) instead.')
         magnitude = np.abs(S)
     else:
         magnitude = S
