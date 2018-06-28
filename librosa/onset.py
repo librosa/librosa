@@ -270,11 +270,11 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
     >>> y, sr = librosa.load(librosa.util.example_audio_file(),
     ...                      duration=10.0)
     >>> D = librosa.stft(y)
+    >>> D_dB = librosa.power_to_db(librosa.magphase(D, power=2)[0], ref=np.max)
     >>> times = librosa.frames_to_time(np.arange(D.shape[1]))
     >>> plt.figure()
     >>> ax1 = plt.subplot(2, 1, 1)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
-    ...                          y_axis='log', x_axis='time')
+    >>> librosa.display.specshow(D_dB, y_axis='log', x_axis='time')
     >>> plt.title('Power spectrogram')
 
     Construct a standard onset function
