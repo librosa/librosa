@@ -416,7 +416,7 @@ def test_times_like():
                                    hop_length=hop_length,
                                    axis=axis)
 
-        expected_times = np.arange(X.shape[axis])*hop_length/sr
+        expected_times = np.arange(X.shape[axis])*hop_length/float(sr)
 
         assert np.allclose(times, expected_times)
 
@@ -431,7 +431,7 @@ def test_times_like_scalar():
                                sr=sr,
                                hop_length=hop_length)
 
-    expected_times = np.arange(7)*hop_length/sr
+    expected_times = np.arange(7)*hop_length/float(sr)
 
     assert np.allclose(times, expected_times)
 
