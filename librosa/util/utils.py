@@ -1331,18 +1331,18 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     >>> subbeat_t = librosa.frames_to_time(sub_beats, sr=sr)
     >>> plt.figure()
     >>> plt.subplot(3, 1, 1)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(cqt,
+    >>> librosa.display.specshow(librosa.power_to_db(cqt,
     ...                                                  ref=np.max),
     ...                          x_axis='time')
     >>> plt.title('CQT power, shape={}'.format(cqt.shape))
     >>> plt.subplot(3, 1, 2)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(cqt_med,
+    >>> librosa.display.specshow(librosa.power_to_db(cqt_med,
     ...                                                  ref=np.max),
     ...                          x_coords=beat_t, x_axis='time')
     >>> plt.title('Beat synchronous CQT power, '
     ...           'shape={}'.format(cqt_med.shape))
     >>> plt.subplot(3, 1, 3)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(cqt_med_sub,
+    >>> librosa.display.specshow(librosa.power_to_db(cqt_med_sub,
     ...                                                  ref=np.max),
     ...                          x_coords=subbeat_t, x_axis='time')
     >>> plt.title('Sub-beat synchronous CQT power, '
