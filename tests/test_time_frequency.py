@@ -373,3 +373,65 @@ def test_A_weighting():
 
     for min_db in [None, -40, -80]:
         yield __test, min_db
+
+
+def test_samples_like():
+
+    X = np.ones((3, 4, 5))
+    hop_length = 512
+
+    for axis in (0, 1, 2, -1):
+
+        samples = librosa.samples_like(X,
+                                   hop_length=hop_length,
+                                   axis=axis)
+
+        expected_samples = np.arange(X.shape[axis])*hop_length
+
+        assert np.allclose(samples, expected_samples)
+
+
+def test_samples_like_scalar():
+
+    X = 7
+    hop_length = 512
+
+    samples = librosa.samples_like(X, hop_length=hop_length)
+
+    expected_samples = np.arange(7)*hop_length
+
+    assert np.allclose(samples, expected_samples)
+
+
+def test_times_like():
+
+    X = np.ones((3, 4, 5))
+    sr = 22050
+    hop_length = 512
+
+    for axis in (0, 1, 2, -1):
+
+        times = librosa.times_like(X,
+                                   sr=sr,
+                                   hop_length=hop_length,
+                                   axis=axis)
+
+        expected_times = np.arange(X.shape[axis])*hop_length/sr
+
+        assert np.allclose(times, expected_times)
+
+
+def test_times_like_scalar():
+
+    X = 7
+    sr = 22050
+    hop_length = 512
+
+    times = librosa.times_like(X,
+                               sr=sr,
+                               hop_length=hop_length)
+
+    expected_times = np.arange(7)*hop_length/sr
+
+    assert np.allclose(times, expected_times)
+
