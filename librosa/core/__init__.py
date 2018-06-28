@@ -82,6 +82,9 @@ Time and frequency conversion
     mel_frequencies
     tempo_frequencies
 
+    samples_like
+    times_like
+
 
 Pitch and tuning
 ----------------
