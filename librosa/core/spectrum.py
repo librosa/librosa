@@ -131,9 +131,8 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
 
 
     >>> import matplotlib.pyplot as plt
-    >>> librosa.display.specshow(librosa.amplitude_to_db(D,
-    ...                                                  ref=np.max),
-    ...                          y_axis='log', x_axis='time')
+    >>> D_dB = librosa.power_to_db(librosa.magphase(D, power=2)[0], ref=np.max)
+    >>> librosa.display.specshow(D_dB, y_axis='log', x_axis='time')
     >>> plt.title('Power spectrogram')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.tight_layout()
