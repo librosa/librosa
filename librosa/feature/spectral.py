@@ -401,7 +401,13 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
 def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                      freq=None, roll_percent=0.85):
-    '''Compute roll-off frequency
+    '''Compute roll-off frequency.
+
+    The roll-off frequency is defined for each frame as the center frequency
+    for a spectrogram bin such that at least roll_percent (0.85 by default)
+    of the energy of the spectrum in this frame is contained in this bin and
+    the bins below. This can be used to, e.g., approximate the maximum (or
+    minimum) frequency by setting roll_percent to a value close to 1 (or 0).
 
     Parameters
     ----------
@@ -441,9 +447,16 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     From time-series input
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> # Approximate maximum frequencies with roll_percent=0.85 (default)
     >>> rolloff = librosa.feature.spectral_rolloff(y=y, sr=sr)
     >>> rolloff
     array([[ 8376.416,   968.994, ...,  8925.513,  9108.545]])
+    >>> # Approximate minimum frequencies with roll_percent=0.1
+    >>> rolloff = librosa.feature.spectral_rolloff(y=y, sr=sr, roll_percent=0.1)
+    >>> rolloff
+    array([[ 75.36621094,  64.59960938,  64.59960938, ...,  75.36621094,
+         75.36621094,  64.59960938]])
+
 
     From spectrogram input
 
