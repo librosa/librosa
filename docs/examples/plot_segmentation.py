@@ -43,13 +43,14 @@ y, sr = librosa.load('audio/Karissa_Hobbs_-_09_-_Lets_Go_Fishin.mp3')
 # Next, we'll compute and plot a log-power CQT
 BINS_PER_OCTAVE = 12 * 3
 N_OCTAVES = 7
-C = librosa.amplitude_to_db(librosa.cqt(y=y, sr=sr,
-                                        bins_per_octave=BINS_PER_OCTAVE,
-                                        n_bins=N_OCTAVES * BINS_PER_OCTAVE),
-                            ref=np.max)
+C = librosa.cqt(y=y, sr=sr,
+                bins_per_octave=BINS_PER_OCTAVE,
+                n_bins=N_OCTAVES * BINS_PER_OCTAVE),
+    ref=np.max)
+C_dB = librosa.power_to_db(librosa.magphase(C, power=2)[0])
 
 plt.figure(figsize=(12, 4))
-librosa.display.specshow(C, y_axis='cqt_hz', sr=sr,
+librosa.display.specshow(C_dB, y_axis='cqt_hz', sr=sr,
                          bins_per_octave=BINS_PER_OCTAVE,
                          x_axis='time')
 plt.tight_layout()
@@ -58,7 +59,7 @@ plt.tight_layout()
 ##########################################################
 # To reduce dimensionality, we'll beat-synchronous the CQT
 tempo, beats = librosa.beat.beat_track(y=y, sr=sr, trim=False)
-Csync = librosa.util.sync(C, beats, aggregate=np.median)
+Csync_dB = librosa.util.sync(C_dB, beats, aggregate=np.median)
 
 # For plotting purposes, we'll need the timing of the beats
 # we fix_frames to include non-beat frames 0 and C.shape[1] (final frame)
@@ -68,7 +69,7 @@ beat_times = librosa.frames_to_time(librosa.util.fix_frames(beats,
                                     sr=sr)
 
 plt.figure(figsize=(12, 4))
-librosa.display.specshow(Csync, bins_per_octave=12*3,
+librosa.display.specshow(Csync_dB, bins_per_octave=12*3,
                          y_axis='cqt_hz', x_axis='time',
                          x_coords=beat_times)
 plt.tight_layout()
@@ -79,7 +80,7 @@ plt.tight_layout()
 # (Equation 1)
 # width=3 prevents links within the same bar
 # mode='affinity' here implements S_rep (after Eq. 8)
-R = librosa.segment.recurrence_matrix(Csync, width=3, mode='affinity',
+R = librosa.segment.recurrence_matrix(Csync_dB, width=3, mode='affinity',
                                       sym=True)
 
 # Enhance diagonals with a median filter (Equation 2)
@@ -230,7 +231,7 @@ freqs = librosa.cqt_frequencies(n_bins=C.shape[0],
                                 fmin=librosa.note_to_hz('C1'),
                                 bins_per_octave=BINS_PER_OCTAVE)
 
-librosa.display.specshow(C, y_axis='cqt_hz', sr=sr,
+librosa.display.specshow(C_dB, y_axis='cqt_hz', sr=sr,
                          bins_per_octave=BINS_PER_OCTAVE,
                          x_axis='time')
 ax = plt.gca()

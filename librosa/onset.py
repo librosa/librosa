@@ -120,10 +120,10 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
     >>> import matplotlib.pyplot as plt
     >>> D = librosa.stft(y)
+    >>> D_dB = librosa.power_to_db(librosa.magphase(D, power=2)[0], ref=np.max)
     >>> plt.figure()
     >>> ax1 = plt.subplot(2, 1, 1)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
-    ...                          x_axis='time', y_axis='log')
+    >>> librosa.display.specshow(D_dB, x_axis='time', y_axis='log')
     >>> plt.title('Power spectrogram')
     >>> plt.subplot(2, 1, 2, sharex=ax1)
     >>> plt.plot(times, o_env, label='Onset strength')
@@ -270,11 +270,11 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
     >>> y, sr = librosa.load(librosa.util.example_audio_file(),
     ...                      duration=10.0)
     >>> D = librosa.stft(y)
+    >>> D_dB = librosa.power_to_db(librosa.magphase(D, power=2)[0], ref=np.max)
     >>> times = librosa.frames_to_time(np.arange(D.shape[1]))
     >>> plt.figure()
     >>> ax1 = plt.subplot(2, 1, 1)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
-    ...                          y_axis='log', x_axis='time')
+    >>> librosa.display.specshow(D_dB, y_axis='log', x_axis='time')
     >>> plt.title('Power spectrogram')
 
     Construct a standard onset function
@@ -474,10 +474,10 @@ def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
     >>> y, sr = librosa.load(librosa.util.example_audio_file(),
     ...                      duration=10.0)
     >>> D = librosa.stft(y)
+    >>> D_dB = librosa.power_to_db(librosa.magphase(D)[0], ref=np.max)
     >>> plt.figure()
     >>> plt.subplot(2, 1, 1)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
-    ...                          y_axis='log')
+    >>> librosa.display.specshow(D_dB, y_axis='log')
     >>> plt.title('Power spectrogram')
 
     Construct a standard onset function over four sub-bands

@@ -55,8 +55,12 @@ S = librosa.feature.melspectrogram(y, sr=sr, n_fft=n_fft,
                                    n_mels=n_mels)
 
 
+# Extract magnitude and convert to dB
+S_dB = librosa.amplitude_to_db(librosa.magphase(S)[0], ref=np.max)
+
+
 plt.figure(figsize=(6, 4))
-librosa.display.specshow(librosa.power_to_db(S, ref=np.max),
+librosa.display.specshow(S_dB,
                          y_axis='mel', x_axis='time', sr=sr,
                          hop_length=hop_length, fmin=fmin, fmax=fmax)
 plt.tight_layout()
@@ -72,7 +76,7 @@ onset_default = librosa.onset.onset_detect(y=y, sr=sr, hop_length=hop_length,
 
 #########################################
 # And similarly with the superflux method
-odf_sf = librosa.onset.onset_strength(S=librosa.power_to_db(S, ref=np.max),
+odf_sf = librosa.onset.onset_strength(S=S_dB,
                                       sr=sr,
                                       hop_length=hop_length,
                                       lag=lag, max_size=max_size)
@@ -100,7 +104,7 @@ frame_time = librosa.frames_to_time(np.arange(len(odf_default)),
                                     hop_length=hop_length)
 
 ax = plt.subplot(2, 1, 2)
-librosa.display.specshow(librosa.power_to_db(S, ref=np.max),
+librosa.display.specshow(S_dB,
                          y_axis='mel', x_axis='time', sr=sr,
                          hop_length=hop_length, fmin=fmin, fmax=fmax)
 plt.xlim([0, 5.0])

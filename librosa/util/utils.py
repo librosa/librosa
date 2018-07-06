@@ -898,8 +898,8 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     >>> plt.figure()
     >>> ax = plt.subplot(2, 1, 2)
     >>> D = librosa.stft(y)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
-    ...                          y_axis='log', x_axis='time')
+    >>> D_dB = librosa.power_to_db(librosa.magphase(D, power=2)[0], ref=np.max)
+    >>> librosa.display.specshow(D_dB, y_axis='log', x_axis='time')
     >>> plt.subplot(2, 1, 1, sharex=ax)
     >>> plt.plot(times, onset_env, alpha=0.8, label='Onset strength')
     >>> plt.vlines(times[peaks], 0,
@@ -1305,7 +1305,7 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, trim=False)
-    >>> cqt = librosa.cqt(y=y, sr=sr)
+    >>> cqt = librosa.magphase(librosa.cqt(y=y, sr=sr), power=2)[0]
     >>> beats = librosa.util.fix_frames(beats, x_max=cqt.shape[1])
 
     By default, use mean aggregation
@@ -1331,18 +1331,18 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     >>> subbeat_t = librosa.frames_to_time(sub_beats, sr=sr)
     >>> plt.figure()
     >>> plt.subplot(3, 1, 1)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(cqt,
+    >>> librosa.display.specshow(librosa.power_to_db(cqt,
     ...                                                  ref=np.max),
     ...                          x_axis='time')
     >>> plt.title('CQT power, shape={}'.format(cqt.shape))
     >>> plt.subplot(3, 1, 2)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(cqt_med,
+    >>> librosa.display.specshow(librosa.power_to_db(cqt_med,
     ...                                                  ref=np.max),
     ...                          x_coords=beat_t, x_axis='time')
     >>> plt.title('Beat synchronous CQT power, '
     ...           'shape={}'.format(cqt_med.shape))
     >>> plt.subplot(3, 1, 3)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(cqt_med_sub,
+    >>> librosa.display.specshow(librosa.power_to_db(cqt_med_sub,
     ...                                                  ref=np.max),
     ...                          x_coords=subbeat_t, x_axis='time')
     >>> plt.title('Sub-beat synchronous CQT power, '

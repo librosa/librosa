@@ -131,9 +131,8 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
 
 
     >>> import matplotlib.pyplot as plt
-    >>> librosa.display.specshow(librosa.amplitude_to_db(D,
-    ...                                                  ref=np.max),
-    ...                          y_axis='log', x_axis='time')
+    >>> D_dB = librosa.power_to_db(librosa.magphase(D, power=2)[0], ref=np.max)
+    >>> librosa.display.specshow(D_dB, y_axis='log', x_axis='time')
     >>> plt.title('Power spectrogram')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.tight_layout()
@@ -810,8 +809,8 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
     Get a power spectrogram from a waveform ``y``
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> S = np.abs(librosa.stft(y))
-    >>> librosa.power_to_db(S**2)
+    >>> S_power = librosa.magphase(librosa.stft(y), power=2)[0]
+    >>> librosa.power_to_db(S_power)
     array([[-33.293, -27.32 , ..., -33.293, -33.293],
            [-33.293, -25.723, ..., -33.293, -33.293],
            ...,
@@ -820,7 +819,7 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
 
     Compute dB relative to peak power
 
-    >>> librosa.power_to_db(S**2, ref=np.max)
+    >>> librosa.power_to_db(S_power, ref=np.max)
     array([[-80.   , -74.027, ..., -80.   , -80.   ],
            [-80.   , -72.431, ..., -80.   , -80.   ],
            ...,
@@ -830,7 +829,7 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
 
     Or compare to median power
 
-    >>> librosa.power_to_db(S**2, ref=np.median)
+    >>> librosa.power_to_db(S_power, ref=np.median)
     array([[-0.189,  5.784, ..., -0.189, -0.189],
            [-0.189,  7.381, ..., -0.189, -0.189],
            ...,
@@ -843,11 +842,11 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
     >>> plt.subplot(2, 1, 1)
-    >>> librosa.display.specshow(S**2, sr=sr, y_axis='log')
+    >>> librosa.display.specshow(S_power, sr=sr, y_axis='log')
     >>> plt.colorbar()
     >>> plt.title('Power spectrogram')
     >>> plt.subplot(2, 1, 2)
-    >>> librosa.display.specshow(librosa.power_to_db(S**2, ref=np.max),
+    >>> librosa.display.specshow(librosa.power_to_db(S_power, ref=np.max),
     ...                          sr=sr, y_axis='log', x_axis='time')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Log-Power spectrogram')
@@ -861,9 +860,9 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
         raise ParameterError('amin must be strictly positive')
 
     if np.issubdtype(S.dtype, np.complexfloating):
-        warnings.warn('power_to_db was called on complex input so phase '
+        warnings.warn('power_to_db was called on complex input. Therefore, phase '
                       'information will be discarded. To suppress this warning, '
-                      'call power_to_db(magphase(D, power=2)[0]) instead.')
+                      'call power_to_db(magphase(S, power=2)[0]) instead.')
         magnitude = np.abs(S)
     else:
         magnitude = S
@@ -956,9 +955,9 @@ def amplitude_to_db(S, ref=1.0, amin=1e-5, top_db=80.0):
     S = np.asarray(S)
 
     if np.issubdtype(S.dtype, np.complexfloating):
-        warnings.warn('amplitude_to_db was called on complex input so phase '
+        warnings.warn('amplitude_to_db was called on complex input. Therefore, phase '
                       'information will be discarded. To suppress this warning, '
-                      'call amplitude_to_db(magphase(D)[0]) instead.')
+                      'call amplitude_to_db(np.abs(S)) instead.')
 
     magnitude = np.abs(S)
 
@@ -1039,9 +1038,10 @@ def perceptual_weighting(S, frequencies, **kwargs):
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> CQT = librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('A1'))
-    >>> freqs = librosa.cqt_frequencies(CQT.shape[0],
+    >>> CQT_power = librosa.magphase(CQT, power=2)[0]
+    >>> freqs = librosa.cqt_frequencies(CQT_power.shape[0],
     ...                                 fmin=librosa.note_to_hz('A1'))
-    >>> perceptual_CQT = librosa.perceptual_weighting(CQT**2,
+    >>> perceptual_CQT = librosa.perceptual_weighting(CQT_power,
     ...                                               freqs,
     ...                                               ref=np.max)
     >>> perceptual_CQT
@@ -1054,7 +1054,7 @@ def perceptual_weighting(S, frequencies, **kwargs):
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
     >>> plt.subplot(2, 1, 1)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(CQT,
+    >>> librosa.display.specshow(librosa.power_to_db(CQT_power,
     ...                                                  ref=np.max),
     ...                          fmin=librosa.note_to_hz('A1'),
     ...                          y_axis='cqt_hz')

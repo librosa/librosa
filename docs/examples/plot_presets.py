@@ -59,29 +59,25 @@ librosa['n_fft'] = 4096
 ######################################################################
 # Now we can load in a file and do some analysis with the new defaults
 filename = 'audio/Karissa_Hobbs_-_09_-_Lets_Go_Fishin.mp3'
-
 y, sr = librosa.load(filename, duration=5, offset=35)
 
-# Generate a Mel spectrogram:
-
+# Generate a mel spectrogram:
 M = librosa.feature.melspectrogram(y=y)
 
 # Of course, you can still override the new default manually, e.g.:
-
-M_highres = librosa.feature.melspectrogram(y=y, hop_length=512)
-
+M_hop512 = librosa.feature.melspectrogram(y=y, hop_length=512)
 
 # And plot the results
 plt.figure(figsize=(6, 6))
 ax = plt.subplot(3, 1, 1)
 
-librosa.display.specshow(librosa.power_to_db(M, ref=np.max),
+librosa.display.specshow(librosa.amplitude_to_db(M, ref=np.max),
                          y_axis='mel', x_axis='time')
 
 plt.title('44100/1024/4096')
 
 plt.subplot(3, 1, 2, sharex=ax, sharey=ax)
-librosa.display.specshow(librosa.power_to_db(M_highres, ref=np.max),
+librosa.display.specshow(librosa.amplitude_to_db(M_hop512, ref=np.max),
                          hop_length=512,
                          y_axis='mel', x_axis='time')
 plt.title('44100/512/4096')
@@ -91,10 +87,10 @@ plt.title('44100/512/4096')
 librosa['sr'] = 11025
 
 y2, sr2 = librosa.load(filename, duration=5, offset=35)
-M2 = librosa.feature.melspectrogram(y=y2, sr=sr2)
+M_11k = librosa.feature.melspectrogram(y=y2, sr=sr2)
 
 plt.subplot(3, 1, 3, sharex=ax, sharey=ax)
-librosa.display.specshow(librosa.power_to_db(M2, ref=np.max),
+librosa.display.specshow(librosa.amplitude_to_db(M_11k, ref=np.max),
                          y_axis='mel', x_axis='time')
 
 plt.title('11025/1024/4096')
