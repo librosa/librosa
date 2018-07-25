@@ -863,7 +863,7 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
     if np.issubdtype(S.dtype, np.complexfloating):
         warnings.warn('power_to_db was called on complex input so phase '
                       'information will be discarded. To suppress this warning, '
-                      'call power_to_db(magphase(D, power=2)[0]) instead.')
+                      'call power_to_db(np.abs(D)**2) instead.')
         magnitude = np.abs(S)
     else:
         magnitude = S
