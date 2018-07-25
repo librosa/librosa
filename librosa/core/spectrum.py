@@ -1038,7 +1038,7 @@ def perceptual_weighting(S, frequencies, **kwargs):
     Re-weight a CQT power spectrum, using peak power as reference
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> CQT = librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('A1'))
+    >>> CQT = np.abs(librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('A1')))
     >>> freqs = librosa.cqt_frequencies(CQT.shape[0],
     ...                                 fmin=librosa.note_to_hz('A1'))
     >>> perceptual_CQT = librosa.perceptual_weighting(CQT**2,
