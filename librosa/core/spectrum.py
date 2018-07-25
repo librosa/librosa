@@ -958,7 +958,7 @@ def amplitude_to_db(S, ref=1.0, amin=1e-5, top_db=80.0):
     if np.issubdtype(S.dtype, np.complexfloating):
         warnings.warn('amplitude_to_db was called on complex input so phase '
                       'information will be discarded. To suppress this warning, '
-                      'call amplitude_to_db(magphase(D)[0]) instead.')
+                      'call amplitude_to_db(np.abs(S)) instead.')
 
     magnitude = np.abs(S)
 
