@@ -273,19 +273,19 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
     >>> plt.subplot(3, 1, 1)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(D,
+    >>> librosa.display.specshow(librosa.amplitude_to_db(np.abs(D),
     ...                                                  ref=np.max),
     ...                          y_axis='log')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Full power spectrogram')
     >>> plt.subplot(3, 1, 2)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(H,
+    >>> librosa.display.specshow(librosa.amplitude_to_db(np.abs(H),
     ...                                                  ref=np.max),
     ...                          y_axis='log')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Harmonic power spectrogram')
     >>> plt.subplot(3, 1, 3)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(P,
+    >>> librosa.display.specshow(librosa.amplitude_to_db(np.abs(P),
     ...                                                  ref=np.max),
     ...                          y_axis='log')
     >>> plt.colorbar(format='%+2.0f dB')
