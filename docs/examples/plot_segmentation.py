@@ -43,10 +43,10 @@ y, sr = librosa.load('audio/Karissa_Hobbs_-_09_-_Lets_Go_Fishin.mp3')
 # Next, we'll compute and plot a log-power CQT
 BINS_PER_OCTAVE = 12 * 3
 N_OCTAVES = 7
-C = librosa.amplitude_to_db(librosa.cqt(y=y, sr=sr,
+C = librosa.amplitude_to_db(np.abs(librosa.cqt(y=y, sr=sr,
                                         bins_per_octave=BINS_PER_OCTAVE,
                                         n_bins=N_OCTAVES * BINS_PER_OCTAVE),
-                            ref=np.max)
+                            ref=np.max))
 
 plt.figure(figsize=(12, 4))
 librosa.display.specshow(C, y_axis='cqt_hz', sr=sr,
