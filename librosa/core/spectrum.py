@@ -102,7 +102,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
     --------
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> D = librosa.stft(y)
+    >>> D = np.abs(librosa.stft(y))
     >>> D
     array([[  2.576e-03 -0.000e+00j,   4.327e-02 -0.000e+00j, ...,
               3.189e-04 -0.000e+00j,  -5.961e-06 -0.000e+00j],
@@ -118,13 +118,13 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
     Use left-aligned frames, instead of centered frames
 
 
-    >>> D_left = librosa.stft(y, center=False)
+    >>> D_left = np.abs(librosa.stft(y, center=False))
 
 
     Use a shorter hop length
 
 
-    >>> D_short = librosa.stft(y, hop_length=64)
+    >>> D_short = np.abs(librosa.stft(y, hop_length=64))
 
 
     Display a spectrogram
