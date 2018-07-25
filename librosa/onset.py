@@ -119,7 +119,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
 
     >>> import matplotlib.pyplot as plt
-    >>> D = librosa.stft(y)
+    >>> D = np.abs(librosa.stft(y))
     >>> plt.figure()
     >>> ax1 = plt.subplot(2, 1, 1)
     >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
