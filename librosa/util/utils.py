@@ -1305,7 +1305,7 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, trim=False)
-    >>> cqt = librosa.cqt(y=y, sr=sr)
+    >>> cqt = np.abs(librosa.cqt(y=y, sr=sr))
     >>> beats = librosa.util.fix_frames(beats, x_max=cqt.shape[1])
 
     By default, use mean aggregation
