@@ -17,7 +17,7 @@ from .. import util
 from ..util.exceptions import ParameterError
 
 __all__ = ['load', 'to_mono', 'resample', 'get_duration',
-           'autocorrelate', 'zero_crossings', 'clicks']
+           'autocorrelate', 'zero_crossings', 'clicks', 'chirp']
 
 # Resampling bandwidths as percentage of Nyquist
 BW_BEST = resampy.filters.get_filter('kaiser_best')[2]
@@ -332,8 +332,8 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     S : np.ndarray [shape=(d, t)] or None
         STFT matrix, or any STFT-derived matrix (e.g., chromagram
         or mel spectrogram).
-        Durations calculated from spectrogram inputs are only accurate 
-        up to the frame resolution. If high precision is required, 
+        Durations calculated from spectrogram inputs are only accurate
+        up to the frame resolution. If high precision is required,
         it is better to use the audio time series directly.
 
     n_fft       : int > 0 [scalar]
@@ -712,3 +712,88 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
             click_signal[start:end] += click
 
     return click_signal
+
+
+def chirp(fmin, fmax, sr=22050, length=None, duration=None, linear=False):
+    """Returns a chirp signal that goes from frequency `fmin` to frequency `fmax`
+
+    Parameters
+    ----------
+    fmin : float > 0
+        initial frequency
+
+    fmax : float > 0
+        final frequency
+
+    sr : number > 0
+        desired sampling rate of the output signal
+
+    length : int > 0
+        desired number of samples in the output signal.  When both `duration` and `length` are defined, `length` would take priority.
+
+    duration : float > 0
+        desired duration in seconds. When both `duration` and `length` are defined, `length` would take priority.
+
+    linear : boolean
+        if `True`, use a linear sweep, i.e., frequency changes linearly with time; if `False`, use a exponential sweep. Default is `False`.
+
+
+    Returns
+    -------
+    chirp_signal : np.ndarray
+        Synthesized chirp signal
+
+
+    Raises
+    ------
+    ParameterError
+        - If either `fmin` or `fmax` are not provided.
+        - If neither `length` nor `duration` are provided.
+
+
+    Examples
+    --------
+    >>> # Generate a exponential chirp from A4 to A5
+    >>> exponential_chirp = librosa.chirp(440, 880, duration=1)
+
+    >>> # Or generate the same signal using `length`
+    >>> exponential_chirp = librosa.chirp(440, 880, sr=22050, length=22050)
+
+    >>> # Or generate a linear chirp instead
+    >>> linear_chirp = librosa.chirp(440, 880, duration=1, linear=True)
+
+    Display spectrogram for both exponential and linear chirps
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> S_exponential = librosa.feature.melspectrogram(y=exponential_chirp)
+    >>> ax = plt.subplot(2,1,2)
+    >>> librosa.display.specshow(librosa.power_to_db(S_exponential, ref=np.max),
+    ...                          x_axis='time', y_axis='mel')
+    >>> plt.subplot(2,1,1, sharex=ax)
+    >>> S_linear = librosa.feature.melspectrogram(y=linear_chirp)
+    >>> librosa.display.specshow(librosa.power_to_db(S_linear, ref=np.max),
+    ...                          x_axis='time', y_axis='mel')
+    >>> plt.tight_layout()
+    """
+
+    if fmin is None or fmax is None:
+        raise ParameterError('both "fmin" and "fmax" must be provided')
+
+    # Compute signal duration
+    period = 1.0 / sr
+    if length is None:
+        if duration is None:
+            raise ParameterError('either "length" or "duration" must be provided')
+    else:
+        duration = period * length
+
+    method = 'linear' if linear else 'logarithmic'
+    return scipy.signal.chirp(
+        np.arange(duration, step=period),
+        fmin,
+        duration,
+        fmax,
+        method=method,
+        phi=90,  # Make the wave start at 0
+    )
