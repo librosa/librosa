@@ -1008,6 +1008,34 @@ def test_clicks():
                     yield __test, None, test_frames, sr, hop_length, 1000, 0.1, click, length
 
 
+def test_tone():
+
+    def __test(frequency, sr, length, duration, phi):
+
+        y = librosa.tone(frequency=frequency,
+                         sr=sr,
+                         length=length,
+                         duration=duration,
+                         phi=phi)
+
+        if length is not None:
+            assert len(y) == length
+        else:
+            assert len(y) == np.ceil(duration * sr)
+
+    # Bad cases
+    yield raises(librosa.ParameterError)(__test), None, 22050, 22050, 1, 90
+    yield raises(librosa.ParameterError)(__test), 440, 22050, None, None, 90
+
+    for sr in [11025, 22050]:
+        for length in [None, 22050]:
+            for duration in [None, 0.5]:
+                for phi in [90, 0]:
+                    if length is not None or duration is not None:
+                        yield __test, 440, sr, length, duration, phi
+
+
+
 def test_fmt_scale():
     # This test constructs a single-cycle cosine wave, applies various axis scalings,
     # and tests that the FMT is preserved
