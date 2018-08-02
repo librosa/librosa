@@ -119,7 +119,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
 
     >>> import matplotlib.pyplot as plt
-    >>> D = librosa.stft(y)
+    >>> D = np.abs(librosa.stft(y))
     >>> plt.figure()
     >>> ax1 = plt.subplot(2, 1, 1)
     >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
@@ -269,7 +269,7 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
     >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.load(librosa.util.example_audio_file(),
     ...                      duration=10.0)
-    >>> D = librosa.stft(y)
+    >>> D = np.abs(librosa.stft(y))
     >>> times = librosa.frames_to_time(np.arange(D.shape[1]))
     >>> plt.figure()
     >>> ax1 = plt.subplot(2, 1, 1)
@@ -473,7 +473,7 @@ def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
     >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.load(librosa.util.example_audio_file(),
     ...                      duration=10.0)
-    >>> D = librosa.stft(y)
+    >>> D = np.abs(librosa.stft(y))
     >>> plt.figure()
     >>> plt.subplot(2, 1, 1)
     >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),

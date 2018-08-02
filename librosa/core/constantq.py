@@ -118,7 +118,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> C = librosa.cqt(y, sr=sr)
+    >>> C = np.abs(librosa.cqt(y, sr=sr))
     >>> librosa.display.specshow(librosa.amplitude_to_db(C, ref=np.max),
     ...                          sr=sr, x_axis='time', y_axis='cqt_note')
     >>> plt.colorbar(format='%+2.0f dB')
@@ -128,8 +128,8 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     Limit the frequency range
 
-    >>> C = librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('C2'),
-    ...                 n_bins=60)
+    >>> C = np.abs(librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('C2'),
+    ...                 n_bins=60))
     >>> C
     array([[  8.827e-04,   9.293e-04, ...,   3.133e-07,   2.942e-07],
            [  1.076e-03,   1.068e-03, ...,   1.153e-06,   1.148e-06],
@@ -140,8 +140,8 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     Using a higher frequency resolution
 
-    >>> C = librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('C2'),
-    ...                 n_bins=60 * 2, bins_per_octave=12 * 2)
+    >>> C = np.abs(librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('C2'),
+    ...                 n_bins=60 * 2, bins_per_octave=12 * 2))
     >>> C
     array([[  1.536e-05,   5.848e-05, ...,   3.241e-07,   2.453e-07],
            [  1.856e-03,   1.854e-03, ...,   2.397e-08,   3.549e-08],

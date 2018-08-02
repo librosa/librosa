@@ -102,33 +102,34 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
     --------
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> D = librosa.stft(y)
+    >>> D = np.abs(librosa.stft(y))
     >>> D
-    array([[  2.576e-03 -0.000e+00j,   4.327e-02 -0.000e+00j, ...,
-              3.189e-04 -0.000e+00j,  -5.961e-06 -0.000e+00j],
-           [  2.441e-03 +2.884e-19j,   5.145e-02 -5.076e-03j, ...,
-             -3.885e-04 -7.253e-05j,   7.334e-05 +3.868e-04j],
-          ...,
-           [ -7.120e-06 -1.029e-19j,  -1.951e-09 -3.568e-06j, ...,
-             -4.912e-07 -1.487e-07j,   4.438e-06 -1.448e-05j],
-           [  7.136e-06 -0.000e+00j,   3.561e-06 -0.000e+00j, ...,
-             -5.144e-07 -0.000e+00j,  -1.514e-05 -0.000e+00j]], dtype=complex64)
+    array([[2.58028018e-03, 4.32422794e-02, 6.61255598e-01, ...,
+            6.82710262e-04, 2.51654536e-04, 7.23036574e-05],
+           [2.49403086e-03, 5.15930466e-02, 6.00107312e-01, ...,
+            3.48026224e-04, 2.35853557e-04, 7.54836728e-05],
+           [7.82410789e-04, 1.05394892e-01, 4.37517226e-01, ...,
+            6.29352580e-04, 3.38571583e-04, 8.38094638e-05],
+           ...,
+           [9.48568513e-08, 4.74725084e-07, 1.50052492e-05, ...,
+            1.85637656e-08, 2.89708542e-08, 5.74304337e-09],
+           [1.25165826e-07, 8.58259284e-07, 1.11157215e-05, ...,
+            3.49099771e-08, 3.11740926e-08, 5.29926236e-09],
+           [1.70630571e-07, 8.92518756e-07, 1.23656537e-05, ...,
+            5.33256745e-08, 3.33264900e-08, 5.13272980e-09]], dtype=float32)
 
 
     Use left-aligned frames, instead of centered frames
 
-
-    >>> D_left = librosa.stft(y, center=False)
+    >>> D_left = np.abs(librosa.stft(y, center=False))
 
 
     Use a shorter hop length
 
-
-    >>> D_short = librosa.stft(y, hop_length=64)
+    >>> D_short = np.abs(librosa.stft(y, hop_length=64))
 
 
     Display a spectrogram
-
 
     >>> import matplotlib.pyplot as plt
     >>> librosa.display.specshow(librosa.amplitude_to_db(D,
@@ -706,7 +707,7 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
     --------
     >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> D = librosa.iirt(y)
+    >>> D = np.abs(librosa.iirt(y))
     >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
     ...                          y_axis='cqt_hz', x_axis='time')
     >>> plt.title('Semitone spectrogram')
@@ -863,7 +864,7 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
     if np.issubdtype(S.dtype, np.complexfloating):
         warnings.warn('power_to_db was called on complex input so phase '
                       'information will be discarded. To suppress this warning, '
-                      'call power_to_db(magphase(D, power=2)[0]) instead.')
+                      'call power_to_db(np.abs(D)**2) instead.')
         magnitude = np.abs(S)
     else:
         magnitude = S
@@ -958,7 +959,7 @@ def amplitude_to_db(S, ref=1.0, amin=1e-5, top_db=80.0):
     if np.issubdtype(S.dtype, np.complexfloating):
         warnings.warn('amplitude_to_db was called on complex input so phase '
                       'information will be discarded. To suppress this warning, '
-                      'call amplitude_to_db(magphase(D)[0]) instead.')
+                      'call amplitude_to_db(np.abs(S)) instead.')
 
     magnitude = np.abs(S)
 
@@ -1038,10 +1039,10 @@ def perceptual_weighting(S, frequencies, **kwargs):
     Re-weight a CQT power spectrum, using peak power as reference
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> CQT = librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('A1'))
-    >>> freqs = librosa.cqt_frequencies(CQT.shape[0],
+    >>> C = np.abs(librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('A1')))
+    >>> freqs = librosa.cqt_frequencies(C.shape[0],
     ...                                 fmin=librosa.note_to_hz('A1'))
-    >>> perceptual_CQT = librosa.perceptual_weighting(CQT**2,
+    >>> perceptual_CQT = librosa.perceptual_weighting(C**2,
     ...                                               freqs,
     ...                                               ref=np.max)
     >>> perceptual_CQT
@@ -1054,7 +1055,7 @@ def perceptual_weighting(S, frequencies, **kwargs):
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
     >>> plt.subplot(2, 1, 1)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(CQT,
+    >>> librosa.display.specshow(librosa.amplitude_to_db(C,
     ...                                                  ref=np.max),
     ...                          fmin=librosa.note_to_hz('A1'),
     ...                          y_axis='cqt_hz')
