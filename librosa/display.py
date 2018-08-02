@@ -580,7 +580,7 @@ def specshow(data, x_coords=None, y_coords=None,
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> plt.figure(figsize=(12, 8))
 
-    >>> D = librosa.amplitude_to_db(librosa.stft(y), ref=np.max)
+    >>> D = librosa.amplitude_to_db(np.abs(librosa.stft(y)), ref=np.max)
     >>> plt.subplot(4, 2, 1)
     >>> librosa.display.specshow(D, y_axis='linear')
     >>> plt.colorbar(format='%+2.0f dB')
@@ -597,7 +597,7 @@ def specshow(data, x_coords=None, y_coords=None,
 
     Or use a CQT scale
 
-    >>> CQT = librosa.amplitude_to_db(librosa.cqt(y, sr=sr), ref=np.max)
+    >>> CQT = librosa.amplitude_to_db(np.abs(librosa.cqt(y, sr=sr)), ref=np.max)
     >>> plt.subplot(4, 2, 3)
     >>> librosa.display.specshow(CQT, y_axis='cqt_note')
     >>> plt.colorbar(format='%+2.0f dB')
