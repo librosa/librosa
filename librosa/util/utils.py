@@ -357,7 +357,7 @@ def fix_length(data, size, axis=-1, **kwargs):
     if n > size:
         slices = [slice(None)] * data.ndim
         slices[axis] = slice(0, size)
-        return data[slices]
+        return data[tuple(slices)]
 
     elif n < size:
         lengths = [(0, 0)] * data.ndim

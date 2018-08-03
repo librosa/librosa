@@ -377,6 +377,6 @@ def harmonics_2d(harmonic_out, x, freqs, h_range, kind='linear', fill_value=0,
         idx_freq[ni_axis] = i
         idx_out[1 + ni_axis] = idx_in[ni_axis]
 
-        harmonics_1d(harmonic_out[idx_out], x[idx_in], freqs[idx_freq],
+        harmonics_1d(harmonic_out[tuple(idx_out)], x[tuple(idx_in)], freqs[tuple(idx_freq)],
                      h_range, kind=kind, fill_value=fill_value,
                      axis=axis)

@@ -42,7 +42,7 @@ def test_delta():
         slice_out = [slice(None)] * delta.ndim
         slice_orig[axis] = slice(width//2 + 1, -width//2 + 1)
         slice_out[axis] = slice(width//2, -width//2)
-        assert np.allclose((x + delta)[slice_out], x[slice_orig])
+        assert np.allclose((x + delta)[tuple(slice_out)], x[tuple(slice_orig)])
 
     x = np.vstack([np.arange(100.0)] * 3)
 
