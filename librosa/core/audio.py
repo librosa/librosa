@@ -447,7 +447,7 @@ def autocorrelate(y, max_size=None, axis=-1):
     subslice = [slice(None)] * autocorr.ndim
     subslice[axis] = slice(max_size)
 
-    autocorr = autocorr[subslice]
+    autocorr = autocorr[tuple(subslice)]
 
     if not np.iscomplexobj(y):
         autocorr = autocorr.real
@@ -574,7 +574,7 @@ def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
     padding = [(0, 0)] * y.ndim
     padding[axis] = (1, 0)
 
-    return np.pad((y_sign[slice_post] != y_sign[slice_pre]),
+    return np.pad((y_sign[tuple(slice_post)] != y_sign[tuple(slice_pre)]),
                   padding,
                   mode='constant',
                   constant_values=pad)
