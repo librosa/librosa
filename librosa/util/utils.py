@@ -823,7 +823,7 @@ def localmax(x, axis=0):
     inds2 = [slice(None)] * x.ndim
     inds2[axis] = slice(2, x_pad.shape[axis])
 
-    return (x > x_pad[inds1]) & (x >= x_pad[inds2])
+    return (x > x_pad[tuple(inds1)]) & (x >= x_pad[tuple(inds2)])
 
 
 def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
@@ -1374,7 +1374,7 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     for (i, segment) in enumerate(slices):
         idx_in[axis] = segment
         idx_agg[axis] = i
-        data_agg[idx_agg] = aggregate(data[idx_in], axis=axis)
+        data_agg[idx_agg] = aggregate(data[tuple(idx_in)], axis=axis)
 
     return data_agg
 
