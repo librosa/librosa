@@ -544,9 +544,9 @@ def axis_sort(S, axis=-1, index=False, value=None):
     sort_slice[axis] = idx
 
     if index:
-        return S[sort_slice], idx
+        return S[tuple(sort_slice)], idx
     else:
-        return S[sort_slice]
+        return S[tuple(sort_slice)]
 
 
 @cache(level=40)
