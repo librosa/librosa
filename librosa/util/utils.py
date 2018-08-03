@@ -1374,7 +1374,7 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     for (i, segment) in enumerate(slices):
         idx_in[axis] = segment
         idx_agg[axis] = i
-        data_agg[idx_agg] = aggregate(data[tuple(idx_in)], axis=axis)
+        data_agg[tuple(idx_agg)] = aggregate(data[tuple(idx_in)], axis=axis)
 
     return data_agg
 
