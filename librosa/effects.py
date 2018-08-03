@@ -374,7 +374,7 @@ def remix(y, intervals, align_zeros=True):
 
         clip[-1] = slice(interval[0], interval[1])
 
-        y_out.append(y[clip])
+        y_out.append(y[tuple(clip)])
 
     return np.concatenate(y_out, axis=-1)
 
@@ -487,7 +487,7 @@ def trim(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
     full_index = [slice(None)] * y.ndim
     full_index[-1] = slice(start, end)
 
-    return y[full_index], np.asarray([start, end])
+    return y[tuple(full_index)], np.asarray([start, end])
 
 
 def split(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
