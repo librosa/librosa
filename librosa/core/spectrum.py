@@ -1280,7 +1280,7 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
     idx[axis] = slice(0, 1 + n_fmt//2)
 
     # Truncate and length-normalize
-    return result[idx] * np.sqrt(n) / n_fmt
+    return result[tuple(idx)] * np.sqrt(n) / n_fmt
 
 
 @cache(level=30)
