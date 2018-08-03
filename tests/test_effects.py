@@ -151,7 +151,7 @@ def test_trim():
         # Test for index position
         fidx = [slice(None)] * y.ndim
         fidx[-1] = slice(*idx.tolist())
-        assert np.allclose(yt, y[fidx])
+        assert np.allclose(yt, y[tuple(fidx)])
 
         # Verify logamp
         rms = librosa.feature.rmse(y=librosa.to_mono(yt), center=False)
