@@ -357,7 +357,7 @@ def fix_length(data, size, axis=-1, **kwargs):
     if n > size:
         slices = [slice(None)] * data.ndim
         slices[axis] = slice(0, size)
-        return data[slices]
+        return data[tuple(slices)]
 
     elif n < size:
         lengths = [(0, 0)] * data.ndim
@@ -544,9 +544,9 @@ def axis_sort(S, axis=-1, index=False, value=None):
     sort_slice[axis] = idx
 
     if index:
-        return S[sort_slice], idx
+        return S[tuple(sort_slice)], idx
     else:
-        return S[sort_slice]
+        return S[tuple(sort_slice)]
 
 
 @cache(level=40)
@@ -823,7 +823,7 @@ def localmax(x, axis=0):
     inds2 = [slice(None)] * x.ndim
     inds2[axis] = slice(2, x_pad.shape[axis])
 
-    return (x > x_pad[inds1]) & (x >= x_pad[inds2])
+    return (x > x_pad[tuple(inds1)]) & (x >= x_pad[tuple(inds2)])
 
 
 def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
@@ -1374,7 +1374,7 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     for (i, segment) in enumerate(slices):
         idx_in[axis] = segment
         idx_agg[axis] = i
-        data_agg[idx_agg] = aggregate(data[idx_in], axis=axis)
+        data_agg[tuple(idx_agg)] = aggregate(data[tuple(idx_in)], axis=axis)
 
     return data_agg
 

@@ -593,7 +593,7 @@ def test_autocorrelate():
         if not np.iscomplexobj(y):
             assert not np.iscomplexobj(ac)
 
-        assert np.allclose(ac, truth[my_slice])
+        assert np.allclose(ac, truth[tuple(my_slice)])
 
     srand()
     # test with both real and complex signals
