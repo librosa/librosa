@@ -714,7 +714,7 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
     return click_signal
 
 
-def tone(frequency, sr=22050, length=None, duration=None, phi=90):
+def tone(frequency, sr=22050, length=None, duration=None, phi=None):
     """Returns a pure tone signal. The signal generated is a cosine wave.
 
     Parameters
@@ -731,12 +731,13 @@ def tone(frequency, sr=22050, length=None, duration=None, phi=90):
     duration : float > 0
         desired duration in seconds. When both `duration` and `length` are defined, `length` would take priority.
 
-    phi : Phase offset, in degrees. Default is 90.
+    phi : float or None
+        phase offset, in radians. If unspecified, defaults to `-np.pi * 0.5`.
 
 
     Returns
     -------
-    tone_signal : np.ndarray
+    tone_signal : np.ndarray [shape=(length,), dtype=float64]
         Synthesized pure sine tone signal
 
 
@@ -773,5 +774,8 @@ def tone(frequency, sr=22050, length=None, duration=None, phi=90):
             raise ParameterError('either "length" or "duration" must be provided')
         length = duration * sr
 
+    if phi is None:
+        phi = -np.pi * 0.5
+
     step = 1.0 / sr
-    return np.cos(2 * np.pi * frequency * (np.arange(step * length, step=step)) + phi * np.pi / 180)
+    return np.cos(2 * np.pi * frequency * (np.arange(step * length, step=step)) + phi)

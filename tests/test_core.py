@@ -1024,13 +1024,13 @@ def test_tone():
             assert len(y) == np.ceil(duration * sr)
 
     # Bad cases
-    yield raises(librosa.ParameterError)(__test), None, 22050, 22050, 1, 90
-    yield raises(librosa.ParameterError)(__test), 440, 22050, None, None, 90
+    yield raises(librosa.ParameterError)(__test), None, 22050, 22050, 1, None
+    yield raises(librosa.ParameterError)(__test), 440, 22050, None, None, np.pi
 
     for sr in [11025, 22050]:
         for length in [None, 22050]:
             for duration in [None, 0.5]:
-                for phi in [90, 0]:
+                for phi in [None, np.pi]:
                     if length is not None or duration is not None:
                         yield __test, 440, sr, length, duration, phi
 
