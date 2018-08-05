@@ -1010,14 +1010,15 @@ def test_clicks():
 
 def test_chirp():
 
-    def __test(fmin, fmax, sr, length, duration, linear):
+    def __test(fmin, fmax, sr, length, duration, linear, phi):
 
         y = librosa.chirp(fmin=fmin,
                           fmax=fmax,
                           sr=sr,
                           length=length,
                           duration=duration,
-                          linear=linear)
+                          linear=linear,
+                          phi=phi)
 
         if length is not None:
             assert len(y) == length
@@ -1025,17 +1026,18 @@ def test_chirp():
             assert len(y) == np.ceil(duration * sr)
 
     # Bad cases
-    yield raises(librosa.ParameterError)(__test), None, None, 22050, 22050, 1, False
-    yield raises(librosa.ParameterError)(__test), 440, None, 22050, 22050, 1, False
-    yield raises(librosa.ParameterError)(__test), None, 880, 22050, 22050, 1, False
-    yield raises(librosa.ParameterError)(__test), 440, 880, 22050, None, None, False
+    yield raises(librosa.ParameterError)(__test), None, None, 22050, 22050, 1, False, None
+    yield raises(librosa.ParameterError)(__test), 440, None, 22050, 22050, 1, False, None
+    yield raises(librosa.ParameterError)(__test), None, 880, 22050, 22050, 1, False, None
+    yield raises(librosa.ParameterError)(__test), 440, 880, 22050, None, None, False, None
 
     for sr in [11025, 22050]:
         for length in [None, 11025]:
             for duration in [None, 0.5]:
-                if length is not None or duration is not None:
-                    yield __test, 440, 880, sr, length, duration, False
-                    yield __test, 880, 440, sr, length, duration, True
+                for phi in [None, np.pi / 2]:
+                    if length is not None or duration is not None:
+                        yield __test, 440, 880, sr, length, duration, False, phi
+                        yield __test, 880, 440, sr, length, duration, True, phi
 
 
 def test_fmt_scale():

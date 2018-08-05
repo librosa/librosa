@@ -714,7 +714,7 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
     return click_signal
 
 
-def chirp(fmin, fmax, sr=22050, length=None, duration=None, linear=False):
+def chirp(fmin, fmax, sr=22050, length=None, duration=None, linear=False, phi=None):
     """Returns a chirp signal that goes from frequency `fmin` to frequency `fmax`
 
     Parameters
@@ -737,10 +737,13 @@ def chirp(fmin, fmax, sr=22050, length=None, duration=None, linear=False):
     linear : boolean
         if `True`, use a linear sweep, i.e., frequency changes linearly with time; if `False`, use a exponential sweep. Default is `False`.
 
+    phi : float or None
+        phase offset, in radians. If unspecified, defaults to `-np.pi * 0.5`.
+
 
     Returns
     -------
-    chirp_signal : np.ndarray
+    chirp_signal : np.ndarray [shape=(length,), dtype=float64]
         Synthesized chirp signal
 
 
@@ -749,6 +752,11 @@ def chirp(fmin, fmax, sr=22050, length=None, duration=None, linear=False):
     ParameterError
         - If either `fmin` or `fmax` are not provided.
         - If neither `length` nor `duration` are provided.
+
+
+    See Also
+    --------
+    scipy.signal.chirp
 
 
     Examples
@@ -767,10 +775,10 @@ def chirp(fmin, fmax, sr=22050, length=None, duration=None, linear=False):
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
     >>> S_exponential = librosa.feature.melspectrogram(y=exponential_chirp)
-    >>> ax = plt.subplot(2,1,2)
+    >>> ax = plt.subplot(2,1,1)
     >>> librosa.display.specshow(librosa.power_to_db(S_exponential, ref=np.max),
     ...                          x_axis='time', y_axis='mel')
-    >>> plt.subplot(2,1,1, sharex=ax)
+    >>> plt.subplot(2,1,2, sharex=ax)
     >>> S_linear = librosa.feature.melspectrogram(y=linear_chirp)
     >>> librosa.display.specshow(librosa.power_to_db(S_linear, ref=np.max),
     ...                          x_axis='time', y_axis='mel')
@@ -788,6 +796,9 @@ def chirp(fmin, fmax, sr=22050, length=None, duration=None, linear=False):
     else:
         duration = period * length
 
+    if phi is None:
+        phi = -np.pi * 0.5
+
     method = 'linear' if linear else 'logarithmic'
     return scipy.signal.chirp(
         np.arange(duration, step=period),
@@ -795,5 +806,5 @@ def chirp(fmin, fmax, sr=22050, length=None, duration=None, linear=False):
         duration,
         fmax,
         method=method,
-        phi=90,  # Make the wave start at 0
+        phi=phi / np.pi * 180,  # scipy.signal.chirp uses degrees for phase offset
     )
