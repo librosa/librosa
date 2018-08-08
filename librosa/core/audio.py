@@ -17,7 +17,7 @@ from .. import util
 from ..util.exceptions import ParameterError
 
 __all__ = ['load', 'to_mono', 'resample', 'get_duration',
-           'autocorrelate', 'zero_crossings', 'clicks']
+           'autocorrelate', 'zero_crossings', 'clicks', 'tone']
 
 # Resampling bandwidths as percentage of Nyquist
 BW_BEST = resampy.filters.get_filter('kaiser_best')[2]
@@ -332,8 +332,8 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     S : np.ndarray [shape=(d, t)] or None
         STFT matrix, or any STFT-derived matrix (e.g., chromagram
         or mel spectrogram).
-        Durations calculated from spectrogram inputs are only accurate 
-        up to the frame resolution. If high precision is required, 
+        Durations calculated from spectrogram inputs are only accurate
+        up to the frame resolution. If high precision is required,
         it is better to use the audio time series directly.
 
     n_fft       : int > 0 [scalar]
@@ -712,3 +712,70 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
             click_signal[start:end] += click
 
     return click_signal
+
+
+def tone(frequency, sr=22050, length=None, duration=None, phi=None):
+    """Returns a pure tone signal. The signal generated is a cosine wave.
+
+    Parameters
+    ----------
+    frequency : float > 0
+        frequency
+
+    sr : number > 0
+        desired sampling rate of the output signal
+
+    length : int > 0
+        desired number of samples in the output signal. When both `duration` and `length` are defined, `length` would take priority.
+
+    duration : float > 0
+        desired duration in seconds. When both `duration` and `length` are defined, `length` would take priority.
+
+    phi : float or None
+        phase offset, in radians. If unspecified, defaults to `-np.pi * 0.5`.
+
+
+    Returns
+    -------
+    tone_signal : np.ndarray [shape=(length,), dtype=float64]
+        Synthesized pure sine tone signal
+
+
+    Raises
+    ------
+    ParameterError
+        - If `frequency` is not provided.
+        - If neither `length` nor `duration` are provided.
+
+
+    Examples
+    --------
+    >>> # Generate a pure sine tone A4
+    >>> tone = librosa.tone(440, duration=1)
+
+    >>> # Or generate the same signal using `length`
+    >>> tone = librosa.tone(440, sr=22050, length=22050)
+
+    Display spectrogram
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> S = librosa.feature.melspectrogram(y=tone)
+    >>> librosa.display.specshow(librosa.power_to_db(S, ref=np.max),
+    ...                          x_axis='time', y_axis='mel')
+    """
+
+    if frequency is None:
+        raise ParameterError('"frequency" must be provided')
+
+    # Compute signal length
+    if length is None:
+        if duration is None:
+            raise ParameterError('either "length" or "duration" must be provided')
+        length = duration * sr
+
+    if phi is None:
+        phi = -np.pi * 0.5
+
+    step = 1.0 / sr
+    return np.cos(2 * np.pi * frequency * (np.arange(step * length, step=step)) + phi)
