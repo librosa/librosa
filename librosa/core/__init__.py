@@ -16,6 +16,7 @@ Audio processing
     autocorrelate
     zero_crossings
     clicks
+    tone
 
 Spectral representations
 ------------------------
