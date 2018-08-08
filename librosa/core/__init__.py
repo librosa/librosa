@@ -17,6 +17,7 @@ Audio processing
     zero_crossings
     clicks
     tone
+    chirp
 
 Spectral representations
 ------------------------
