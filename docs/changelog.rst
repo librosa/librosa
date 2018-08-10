@@ -14,9 +14,9 @@ New features
     - `#750`_, `#753`_ Added `core.tone` and `core.chirp` signal generators. *Ziyao Wei*
 
 Other changes
-    - `#727`_ updated documentation for `core.get_duration` http://github.com/nehz
-    - `#731`_ fixed a typo in documentation for `core.fft_frequencies` *Ziyao Wei*
-    - `#734`_ expanded documentation for `feature.spectrall_rolloff` *Ziyao Wei*
+    - `#727`_ updated documentation for `core.get_duration`. *Zhen Wang*
+    - `#731`_ fixed a typo in documentation for `core.fft_frequencies`. *Ziyao Wei*
+    - `#734`_ expanded documentation for `feature.spectrall_rolloff`. *Ziyao Wei*
     - `#751`_ fixed example documentation for proper handling of phase in dB-scaling. *Vincent Lostanlen*
     - `#755`_ forward support and future-proofing for fancy indexing with ``numpy>1.15``. *Brian McFee*
 
