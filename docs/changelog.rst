@@ -1,6 +1,35 @@
 Changelog
 =========
 
+v0.6.2
+------
+2018-08-09
+
+Bug fixes
+    - `#730`_ Fixed cache support for ``joblib>=0.12``.  *Matt Vollrath*
+
+New features
+    - `#735`_ Added `core.times_like` and `core.samples_like` to generate time and sample indices
+      corresponding to an existing feature matrix or shape specification. *Steve Tjoa*
+    - `#750`_, `#753`_ Added `core.tone` and `core.chirp` signal generators. *Ziyao Wei*
+
+Other changes
+    - `#727`_ updated documentation for `core.get_duration`. *Zhen Wang*
+    - `#731`_ fixed a typo in documentation for `core.fft_frequencies`. *Ziyao Wei*
+    - `#734`_ expanded documentation for `feature.spectrall_rolloff`. *Ziyao Wei*
+    - `#751`_ fixed example documentation for proper handling of phase in dB-scaling. *Vincent Lostanlen*
+    - `#755`_ forward support and future-proofing for fancy indexing with ``numpy>1.15``. *Brian McFee*
+
+.. _#730: https://github.com/librosa/librosa/pull/730
+.. _#735: https://github.com/librosa/librosa/pull/735
+.. _#750: https://github.com/librosa/librosa/pull/750
+.. _#753: https://github.com/librosa/librosa/pull/753
+.. _#727: https://github.com/librosa/librosa/pull/727
+.. _#731: https://github.com/librosa/librosa/pull/731
+.. _#734: https://github.com/librosa/librosa/pull/734
+.. _#751: https://github.com/librosa/librosa/pull/751
+.. _#755: https://github.com/librosa/librosa/pull/755
+
 v0.6.1
 ------
 2018-05-24
