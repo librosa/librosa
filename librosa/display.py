@@ -76,7 +76,7 @@ class TimeFormatter(Formatter):
     >>> ax.xaxis.set_major_formatter(librosa.display.TimeFormatter())
     >>> ax.set_xlabel('Time')
 
-    For specific time unit
+    For specific time unit (ex. milliseconds)
 
     >>> times = np.arange(100)
     >>> values = np.random.randn(len(times))
@@ -108,7 +108,7 @@ class TimeFormatter(Formatter):
     def __call__(self, x, pos=None):
         '''Return the time format as pos'''
 
-        dmin, dmax = self.axis.get_data_interval()
+        _, dmax = self.axis.get_data_interval()
         vmin, vmax = self.axis.get_view_interval()
 
         # In lag-time axes, anything greater than dmax / 2 is negative time
@@ -123,16 +123,16 @@ class TimeFormatter(Formatter):
             value = x
             sign = ''
 
-        if self.unit :
-            s = '{:.2g}'.format(value)
-        else :
+        if self.unit:
+            s = '{:.3g}'.format(value)
+        else:
             if vmax - vmin > 3600:
                 s = '{:d}:{:02d}:{:02d}'.format(int(value / 3600.0),
                                                 int(np.mod(value / 60.0, 60)),
                                                 int(np.mod(value, 60)))
             elif vmax - vmin > 60:
                 s = '{:d}:{:02d}'.format(int(value / 60.0),
-                                        int(np.mod(value, 60)))
+                                         int(np.mod(value, 60)))
             else:
                 s = '{:.2g}'.format(value)
 
@@ -375,14 +375,16 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
 
         If `None`, no downsampling is performed.
 
-    x_axis : str {'time', 'off', 'none'} or None
+    x_axis : str {'time', 's', 'ms', 'off', 'none'} or None
         If 'time', the x-axis is given time tick-marks.
+        If time unit is specified as 's' or 'ms', the x-axis is displayed with
+        seconds or milliseconds, respectively.
 
     ax : matplotlib.axes.Axes or None
         Axes to plot on instead of the default `plt.gca()`.
 
     offset : float
-        Horizontal offset (in time) to start the waveform plot
+        Horizontal offset (in seconds) to start the waveform plot
 
     max_sr : number > 0 [scalar]
         Maximum sampling rate for the visualization
@@ -464,19 +466,29 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
 
     kwargs.setdefault('color', next(axes._get_lines.prop_cycler)['color'])
 
-    locs = offset + core.frames_to_time(np.arange(len(y_top)),
-                                        sr=sr,
-                                        hop_length=hop_length)
-    out = axes.fill_between(locs, y_bottom, y_top, **kwargs)
-
-    axes.set_xlim([locs.min(), locs.max()])
     if x_axis == 'time':
         axes.xaxis.set_major_formatter(TimeFormatter(unit=None, lag=False))
         axes.xaxis.set_label_text('Time')
+    elif x_axis == 's':
+        axes.xaxis.set_major_formatter(TimeFormatter(unit='s', lag=False))
+        axes.xaxis.set_label_text('Time (s)')
+    elif x_axis == 'ms':
+        axes.xaxis.set_major_formatter(TimeFormatter(unit='ms', lag=False))
+        axes.xaxis.set_label_text('Time (ms)')
     elif x_axis is None or x_axis in ['off', 'none']:
         axes.set_xticks([])
     else:
         raise ParameterError('Unknown x_axis value: {}'.format(x_axis))
+
+    locs = offset + core.frames_to_time(np.arange(len(y_top)),
+                                        sr=sr,
+                                        hop_length=hop_length)
+
+    if x_axis == 'ms':
+        locs = 1000 * locs
+
+    out = axes.fill_between(locs, y_bottom, y_top, **kwargs)
+    axes.set_xlim([locs.min(), locs.max()])
 
     return out
 
@@ -753,11 +765,11 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
                  'cqt_hz': __coord_cqt_hz,
                  'cqt_note': __coord_cqt_hz,
                  'chroma': __coord_chroma,
-                 'time': __coord_seconds,
-                 's': __coord_seconds,
+                 'time': __coord_time,
+                 's': __coord_time,
                  'ms': __coord_milliseconds,
-                 'lag': __coord_seconds,
-                 'lag_s': __coord_seconds,
+                 'lag': __coord_time,
+                 'lag_s': __coord_time,
                  'lag_ms': __coord_milliseconds,
                  'tonnetz': __coord_n,
                  'off': __coord_n,
@@ -967,11 +979,11 @@ def __coord_n(n, **_kwargs):
     return np.arange(n+1)
 
 
-def __coord_seconds(n, sr=22050, hop_length=512, **_kwargs):
+def __coord_time(n, sr=22050, hop_length=512, **_kwargs):
     '''Get time coordinates in seconds from frames'''
     return core.frames_to_time(np.arange(n+1), sr=sr, hop_length=hop_length)
 
 
 def __coord_milliseconds(n, sr=22050, hop_length=512, **_kwargs):
     '''Get time coordinates in milliseconds from frames'''
-    return 1000 * __coord_seconds(n, sr, hop_length, **_kwargs)
+    return 1000 * __coord_time(n, sr, hop_length, **_kwargs)
