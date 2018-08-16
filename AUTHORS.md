@@ -31,7 +31,11 @@ Contributors
 * Curtis Hawthorne <https://github.com/cghawthorne>
 * Dana Lee <https://github.com/danagilliann>
 * Pius Friesch <https://github.com/pfriesch>
-
+* Ziyao Wei <https://github.com/ZiyaoWei>
+* Vincent Lostanlen <https://github.com/lostanlen>
+* Steve Tjoa <https://github.com/stevetjoa>
+* Matt Vollrath <https://github.com/mvollrath>
+* Zhen Wang <https://github.com/nehz>
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
 
