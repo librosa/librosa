@@ -305,6 +305,25 @@ def test_time_unit():
     plt.tight_layout()
 
 
+@image_comparison(baseline_images=['time_unit_lag'], extensions=['png'])
+def test_time_unit_lag():
+
+    plt.figure(figsize=(9, 10))
+    plt.subplot(3, 1, 1)
+    # time scale auto in lag mode
+    librosa.display.specshow(S_abs, sr=sr, x_axis='lag')
+
+    plt.subplot(3, 1, 2)
+    # time unit fixed to 's' in lag mode
+    librosa.display.specshow(S_abs, sr=sr, x_axis='lag_s')
+
+    plt.subplot(3, 1, 3)
+    # time unit fixed to 'ms' in lag mode
+    librosa.display.specshow(S_abs, sr=sr, x_axis='lag_ms')
+
+    plt.tight_layout()
+
+
 @image_comparison(baseline_images=['waveplot_mono'], extensions=['png'])
 def test_waveplot_mono():
 
