@@ -51,6 +51,15 @@ beat_t = librosa.frames_to_time(beats, sr=sr)
 Csync = librosa.util.sync(C, beats, aggregate=np.median)
 
 
+@raises(librosa.ParameterError)
+def test_unknown_time_unit():
+    times = np.arange(len(y))
+    plt.figure()
+    ax = plt.gca()
+    ax.plot(times, y)
+    ax.xaxis.set_major_formatter(librosa.display.TimeFormatter(unit='something not s or ms or None'))
+
+
 @image_comparison(baseline_images=['complex'], extensions=['png'])
 def test_complex_input():
     plt.figure()
@@ -271,6 +280,27 @@ def test_time_scales_auto():
     plt.subplot(4, 1, 4)
     # sr / (60 * 20) -> h
     librosa.display.specshow(S_abs, sr=sr // (60 * 20), x_axis='time')
+
+    plt.tight_layout()
+
+
+@image_comparison(baseline_images=['time_unit'], extensions=['png'])
+def test_time_unit():
+
+    # sr = 22050, hop_length = 512, S.shape[1] = 198
+    # 197 * 512 / 22050 ~= 4.6s
+    plt.figure(figsize=(9, 10))
+    plt.subplot(3, 1, 1)
+    # time scale auto
+    librosa.display.specshow(S_abs, sr=sr, x_axis='time')
+
+    plt.subplot(3, 1, 2)
+    # time unit fixed to 's'
+    librosa.display.specshow(S_abs, sr=sr, x_axis='s')
+
+    plt.subplot(3, 1, 3)
+    # time unit fixed to 'ms'
+    librosa.display.specshow(S_abs, sr=sr, x_axis='ms')
 
     plt.tight_layout()
 
