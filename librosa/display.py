@@ -375,10 +375,8 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
 
         If `None`, no downsampling is performed.
 
-    x_axis : str {'time', 's', 'ms', 'off', 'none'} or None
+    x_axis : str {'time', 'off', 'none'} or None
         If 'time', the x-axis is given time tick-marks.
-        If time unit is specified as 's' or 'ms', the x-axis is displayed with
-        seconds or milliseconds, respectively.
 
     ax : matplotlib.axes.Axes or None
         Axes to plot on instead of the default `plt.gca()`.
@@ -466,29 +464,20 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
 
     kwargs.setdefault('color', next(axes._get_lines.prop_cycler)['color'])
 
-    if x_axis == 'time':
-        axes.xaxis.set_major_formatter(TimeFormatter(unit=None, lag=False))
-        axes.xaxis.set_label_text('Time')
-    elif x_axis == 's':
-        axes.xaxis.set_major_formatter(TimeFormatter(unit='s', lag=False))
-        axes.xaxis.set_label_text('Time (s)')
-    elif x_axis == 'ms':
-        axes.xaxis.set_major_formatter(TimeFormatter(unit='ms', lag=False))
-        axes.xaxis.set_label_text('Time (ms)')
-    elif x_axis is None or x_axis in ['off', 'none']:
-        axes.set_xticks([])
-    else:
-        raise ParameterError('Unknown x_axis value: {}'.format(x_axis))
-
     locs = offset + core.frames_to_time(np.arange(len(y_top)),
                                         sr=sr,
                                         hop_length=hop_length)
 
-    if x_axis == 'ms':
-        locs = 1000 * locs
-
     out = axes.fill_between(locs, y_bottom, y_top, **kwargs)
+
     axes.set_xlim([locs.min(), locs.max()])
+    if x_axis == 'time':
+        axes.xaxis.set_major_formatter(TimeFormatter(lag=False))
+        axes.xaxis.set_label_text('Time')
+    elif x_axis is None or x_axis in ['off', 'none']:
+        axes.set_xticks([])
+    else:
+        raise ParameterError('Unknown x_axis value: {}'.format(x_axis))
 
     return out
 
