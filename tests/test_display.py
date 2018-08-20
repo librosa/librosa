@@ -422,3 +422,31 @@ def test_coords():
 def test_bad_coords():
 
     librosa.display.specshow(S_abs, x_coords=np.arange(S.shape[1] // 2))
+
+
+@image_comparison(baseline_images=['sharex_specshow_ms'], extensions=['png'])
+def test_sharex_specshow_ms():
+
+    # Correct time range ~= 4.6 s or 4600ms
+    # Due to shared x_axis, both plots are plotted in 's'.
+    # Bug1: Specshow is being plotted with a wrong time range. (0-4.6ms)
+    # Bug2: There should be only one x_label on the bottom plot, which is shared by both plots.
+    plt.figure(figsize=(8, 8))
+    ax = plt.subplot(2, 1, 1)
+    librosa.display.specshow(librosa.amplitude_to_db(S_abs, ref=np.max), x_axis='ms')
+    plt.subplot(2, 1, 2, sharex=ax)
+    librosa.display.waveplot(y, sr)
+
+
+@image_comparison(baseline_images=['sharex_waveplot_ms'], extensions=['png'])
+def test_sharex_waveplot_ms():
+
+    # Correct time range ~= 4.6 s or 4600ms
+    # Due to shared x_axis, both plots are plotted in 'ms'.
+    # Bug1: Waveplot is being plotted with a wrong time range (0-4600s).
+    # Bug2: There should be only one x_label on the bottom plot, which is shared by both plots.
+    plt.figure(figsize=(8, 8))
+    ax = plt.subplot(2, 1, 1)
+    librosa.display.waveplot(y, sr)
+    plt.subplot(2, 1, 2, sharex=ax)
+    librosa.display.specshow(librosa.amplitude_to_db(S_abs, ref=np.max), x_axis='ms')
