@@ -123,8 +123,10 @@ class TimeFormatter(Formatter):
             value = x
             sign = ''
 
-        if self.unit:
+        if self.unit == 's':
             s = '{:.3g}'.format(value)
+        elif self.unit == 'ms':
+            s = '{:.3g}'.format(value * 1000)
         else:
             if vmax - vmin > 3600:
                 s = '{:d}:{:02d}:{:02d}'.format(int(value / 3600.0),
@@ -756,10 +758,10 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
                  'chroma': __coord_chroma,
                  'time': __coord_time,
                  's': __coord_time,
-                 'ms': __coord_milliseconds,
+                 'ms': __coord_time,
                  'lag': __coord_time,
                  'lag_s': __coord_time,
-                 'lag_ms': __coord_milliseconds,
+                 'lag_ms': __coord_time,
                  'tonnetz': __coord_n,
                  'off': __coord_n,
                  'tempo': __coord_tempo,
@@ -969,10 +971,5 @@ def __coord_n(n, **_kwargs):
 
 
 def __coord_time(n, sr=22050, hop_length=512, **_kwargs):
-    '''Get time coordinates in seconds from frames'''
+    '''Get time coordinates from frames'''
     return core.frames_to_time(np.arange(n+1), sr=sr, hop_length=hop_length)
-
-
-def __coord_milliseconds(n, sr=22050, hop_length=512, **_kwargs):
-    '''Get time coordinates in milliseconds from frames'''
-    return 1000 * __coord_time(n, sr, hop_length, **_kwargs)
