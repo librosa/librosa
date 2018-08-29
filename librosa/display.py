@@ -48,13 +48,17 @@ class TimeFormatter(Formatter):
 
     Parameters
     ----------
-    unit : str
-        Time unit can be specified with `s` (seconds) or `ms` (milliseconds).
-        Otherwise, the unit is automatically determined by the size of the time range.
+    unit : str or None
+    	Abbreviation of the physical unit for axis labels and ticks. 
+	Either equal to `s` (seconds) or `ms` (milliseconds) or None (default). 
+	If set to None, the resulting TimeFormatter object adapts its string 
+	representation to the duration of the underlying time range: 
+	`hh:mm:ss` above 3600 seconds; `mm:ss` between 60 and 3600 seconds; 
+	and `ss` below 60 seconds. 
 
     lag : bool
         If `True`, then the time axis is interpreted in lag coordinates.
-        Anything past the mid-point will be converted to negative time.
+        Anything past the midpoint will be converted to negative time.
 
 
     See also
@@ -76,7 +80,7 @@ class TimeFormatter(Formatter):
     >>> ax.xaxis.set_major_formatter(librosa.display.TimeFormatter())
     >>> ax.set_xlabel('Time')
 
-    For specific time unit (ex. milliseconds)
+    Manually set the physical time unit of the x-axis to milliseconds
 
     >>> times = np.arange(100)
     >>> values = np.random.randn(len(times))
@@ -541,10 +545,10 @@ def specshow(data, x_coords=None, y_coords=None,
         - 's' : markers are shown as seconds.
         - 'ms' : markers are shown as milliseconds.
 
-        - 'lag' : like time, but past the half-way point counts
+        - 'lag' : like time, but past the halfway point counts
           as negative values.
-        - 'lag_s' : like lag, but in seconds.
-        - 'lag_ms' : like lag, but in milliseconds.
+        - 'lag_s' : same as lag, but in seconds.
+        - 'lag_ms' : same as lag, but in milliseconds.
 
         Other:
 

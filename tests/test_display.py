@@ -57,7 +57,7 @@ def test_unknown_time_unit():
     plt.figure()
     ax = plt.gca()
     ax.plot(times, y)
-    ax.xaxis.set_major_formatter(librosa.display.TimeFormatter(unit='something not s or ms or None'))
+    ax.xaxis.set_major_formatter(librosa.display.TimeFormatter(unit='neither s, nor ms, nor None'))
 
 
 @image_comparison(baseline_images=['complex'], extensions=['png'])
@@ -373,7 +373,7 @@ def test_waveplot_bad_maxsr():
 
 
 @raises(librosa.ParameterError)
-def test_waveplot_bad_maxploints():
+def test_waveplot_bad_maxpoints():
     plt.figure()
     librosa.display.waveplot(y, sr=sr, max_points=0)
 
