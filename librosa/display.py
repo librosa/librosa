@@ -50,7 +50,15 @@ class TimeFormatter(Formatter):
     ----------
     lag : bool
         If `True`, then the time axis is interpreted in lag coordinates.
-        Anything past the mid-point will be converted to negative time.
+        Anything past the midpoint will be converted to negative time.
+
+    unit : str or None
+    	Abbreviation of the physical unit for axis labels and ticks. 
+	Either equal to `s` (seconds) or `ms` (milliseconds) or None (default). 
+	If set to None, the resulting TimeFormatter object adapts its string 
+	representation to the duration of the underlying time range: 
+	`hh:mm:ss` above 3600 seconds; `mm:ss` between 60 and 3600 seconds; 
+	and `ss` below 60 seconds. 
 
 
     See also
@@ -72,6 +80,16 @@ class TimeFormatter(Formatter):
     >>> ax.xaxis.set_major_formatter(librosa.display.TimeFormatter())
     >>> ax.set_xlabel('Time')
 
+    Manually set the physical time unit of the x-axis to milliseconds
+
+    >>> times = np.arange(100)
+    >>> values = np.random.randn(len(times))
+    >>> plt.figure()
+    >>> ax = plt.gca()
+    >>> ax.plot(times, values)
+    >>> ax.xaxis.set_major_formatter(librosa.display.TimeFormatter(unit='ms'))
+    >>> ax.set_xlabel('Time (ms)')
+
     For lag plots
 
     >>> times = np.arange(60)
@@ -83,8 +101,12 @@ class TimeFormatter(Formatter):
     >>> ax.set_xlabel('Lag')
     '''
 
-    def __init__(self, lag=False):
+    def __init__(self, lag=False, unit=None):
 
+        if unit not in ['s', 'ms', None]:
+            raise ParameterError('Unknown time unit: {}'.format(unit))
+
+        self.unit = unit
         self.lag = lag
 
     def __call__(self, x, pos=None):
@@ -105,15 +127,20 @@ class TimeFormatter(Formatter):
             value = x
             sign = ''
 
-        if vmax - vmin > 3600:
-            s = '{:d}:{:02d}:{:02d}'.format(int(value / 3600.0),
-                                            int(np.mod(value / 60.0, 60)),
-                                            int(np.mod(value, 60)))
-        elif vmax - vmin > 60:
-            s = '{:d}:{:02d}'.format(int(value / 60.0),
-                                     int(np.mod(value, 60)))
+        if self.unit == 's':
+            s = '{:.3g}'.format(value)
+        elif self.unit == 'ms':
+            s = '{:.3g}'.format(value * 1000)
         else:
-            s = '{:.2g}'.format(value)
+            if vmax - vmin > 3600:
+                s = '{:d}:{:02d}:{:02d}'.format(int(value / 3600.0),
+                                                int(np.mod(value / 60.0, 60)),
+                                                int(np.mod(value, 60)))
+            elif vmax - vmin > 60:
+                s = '{:d}:{:02d}'.format(int(value / 60.0),
+                                         int(np.mod(value, 60)))
+            else:
+                s = '{:.2g}'.format(value)
 
         return '{:s}{:s}'.format(sign, s)
 
@@ -361,7 +388,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
         Axes to plot on instead of the default `plt.gca()`.
 
     offset : float
-        Horizontal offset (in time) to start the waveform plot
+        Horizontal offset (in seconds) to start the waveform plot
 
     max_sr : number > 0 [scalar]
         Maximum sampling rate for the visualization
@@ -446,6 +473,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
     locs = offset + core.frames_to_time(np.arange(len(y_top)),
                                         sr=sr,
                                         hop_length=hop_length)
+
     out = axes.fill_between(locs, y_bottom, y_top, **kwargs)
 
     axes.set_xlim([locs.min(), locs.max()])
@@ -509,15 +537,18 @@ def specshow(data, x_coords=None, y_coords=None,
         - 'tonnetz' : axes are labeled by Tonnetz dimensions (0-5)
         - 'frames' : markers are shown as frame counts.
 
-
         Time types:
 
         - 'time' : markers are shown as milliseconds, seconds,
-          minutes, or hours
-        - 'lag' : like time, but past the half-way point counts
-          as negative values.
+          minutes, or hours.
+          Values are plotted in units of seconds.
+        - 's' : markers are shown as seconds.
+        - 'ms' : markers are shown as milliseconds.
 
-        All time types are plotted in units of seconds.
+        - 'lag' : like time, but past the halfway point counts
+          as negative values.
+        - 'lag_s' : same as lag, but in seconds.
+        - 'lag_ms' : same as lag, but in milliseconds.
 
         Other:
 
@@ -730,7 +761,11 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
                  'cqt_note': __coord_cqt_hz,
                  'chroma': __coord_chroma,
                  'time': __coord_time,
+                 's': __coord_time,
+                 'ms': __coord_time,
                  'lag': __coord_time,
+                 'lag_s': __coord_time,
+                 'lag_ms': __coord_time,
                  'tonnetz': __coord_n,
                  'off': __coord_n,
                  'tempo': __coord_tempo,
@@ -739,7 +774,6 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
 
     if ax_type not in coord_map:
         raise ParameterError('Unknown axis type: {}'.format(ax_type))
-
     return coord_map[ax_type](n, **kwargs)
 
 
@@ -818,16 +852,40 @@ def __decorate_axis(axis, ax_type):
         axis.set_label_text('BPM')
 
     elif ax_type == 'time':
-        axis.set_major_formatter(TimeFormatter(lag=False))
+        axis.set_major_formatter(TimeFormatter(unit=None, lag=False))
         axis.set_major_locator(MaxNLocator(prune=None,
                                            steps=[1, 1.5, 5, 6, 10]))
         axis.set_label_text('Time')
 
+    elif ax_type == 's':
+        axis.set_major_formatter(TimeFormatter(unit='s', lag=False))
+        axis.set_major_locator(MaxNLocator(prune=None,
+                                           steps=[1, 1.5, 5, 6, 10]))
+        axis.set_label_text('Time (s)')
+
+    elif ax_type == 'ms':
+        axis.set_major_formatter(TimeFormatter(unit='ms', lag=False))
+        axis.set_major_locator(MaxNLocator(prune=None,
+                                           steps=[1, 1.5, 5, 6, 10]))
+        axis.set_label_text('Time (ms)')
+
     elif ax_type == 'lag':
-        axis.set_major_formatter(TimeFormatter(lag=True))
+        axis.set_major_formatter(TimeFormatter(unit=None, lag=True))
         axis.set_major_locator(MaxNLocator(prune=None,
                                            steps=[1, 1.5, 5, 6, 10]))
         axis.set_label_text('Lag')
+
+    elif ax_type == 'lag_s':
+        axis.set_major_formatter(TimeFormatter(unit='s', lag=True))
+        axis.set_major_locator(MaxNLocator(prune=None,
+                                           steps=[1, 1.5, 5, 6, 10]))
+        axis.set_label_text('Lag (s)')
+
+    elif ax_type == 'lag_ms':
+        axis.set_major_formatter(TimeFormatter(unit='ms', lag=True))
+        axis.set_major_locator(MaxNLocator(prune=None,
+                                           steps=[1, 1.5, 5, 6, 10]))
+        axis.set_label_text('Lag (ms)')
 
     elif ax_type == 'cqt_note':
         axis.set_major_formatter(NoteFormatter())
