@@ -51,6 +51,15 @@ beat_t = librosa.frames_to_time(beats, sr=sr)
 Csync = librosa.util.sync(C, beats, aggregate=np.median)
 
 
+@raises(librosa.ParameterError)
+def test_unknown_time_unit():
+    times = np.arange(len(y))
+    plt.figure()
+    ax = plt.gca()
+    ax.plot(times, y)
+    ax.xaxis.set_major_formatter(librosa.display.TimeFormatter(unit='neither s, nor ms, nor None'))
+
+
 @image_comparison(baseline_images=['complex'], extensions=['png'])
 def test_complex_input():
     plt.figure()
@@ -275,6 +284,46 @@ def test_time_scales_auto():
     plt.tight_layout()
 
 
+@image_comparison(baseline_images=['time_unit'], extensions=['png'])
+def test_time_unit():
+
+    # sr = 22050, hop_length = 512, S.shape[1] = 198
+    # 197 * 512 / 22050 ~= 4.6s
+    plt.figure(figsize=(9, 10))
+    plt.subplot(3, 1, 1)
+    # time scale auto
+    librosa.display.specshow(S_abs, sr=sr, x_axis='time')
+
+    plt.subplot(3, 1, 2)
+    # time unit fixed to 's'
+    librosa.display.specshow(S_abs, sr=sr, x_axis='s')
+
+    plt.subplot(3, 1, 3)
+    # time unit fixed to 'ms'
+    librosa.display.specshow(S_abs, sr=sr, x_axis='ms')
+
+    plt.tight_layout()
+
+
+@image_comparison(baseline_images=['time_unit_lag'], extensions=['png'])
+def test_time_unit_lag():
+
+    plt.figure(figsize=(9, 10))
+    plt.subplot(3, 1, 1)
+    # time scale auto in lag mode
+    librosa.display.specshow(S_abs, sr=sr, x_axis='lag')
+
+    plt.subplot(3, 1, 2)
+    # time unit fixed to 's' in lag mode
+    librosa.display.specshow(S_abs, sr=sr, x_axis='lag_s')
+
+    plt.subplot(3, 1, 3)
+    # time unit fixed to 'ms' in lag mode
+    librosa.display.specshow(S_abs, sr=sr, x_axis='lag_ms')
+
+    plt.tight_layout()
+
+
 @image_comparison(baseline_images=['waveplot_mono'], extensions=['png'])
 def test_waveplot_mono():
 
@@ -324,7 +373,7 @@ def test_waveplot_bad_maxsr():
 
 
 @raises(librosa.ParameterError)
-def test_waveplot_bad_maxploints():
+def test_waveplot_bad_maxpoints():
     plt.figure()
     librosa.display.waveplot(y, sr=sr, max_points=0)
 
@@ -373,3 +422,27 @@ def test_coords():
 def test_bad_coords():
 
     librosa.display.specshow(S_abs, x_coords=np.arange(S.shape[1] // 2))
+
+
+@image_comparison(baseline_images=['sharex_specshow_ms'], extensions=['png'])
+def test_sharex_specshow_ms():
+
+    # Correct time range ~= 4.6 s or 4600ms
+    # Due to shared x_axis, both plots are plotted in 's'.
+    plt.figure(figsize=(8, 8))
+    ax = plt.subplot(2, 1, 1)
+    librosa.display.specshow(librosa.amplitude_to_db(S_abs, ref=np.max), x_axis='ms')
+    plt.subplot(2, 1, 2, sharex=ax)
+    librosa.display.waveplot(y, sr)
+
+
+@image_comparison(baseline_images=['sharex_waveplot_ms'], extensions=['png'])
+def test_sharex_waveplot_ms():
+
+    # Correct time range ~= 4.6 s or 4600ms
+    # Due to shared x_axis, both plots are plotted in 'ms'.
+    plt.figure(figsize=(8, 8))
+    ax = plt.subplot(2, 1, 1)
+    librosa.display.waveplot(y, sr)
+    plt.subplot(2, 1, 2, sharex=ax)
+    librosa.display.specshow(librosa.amplitude_to_db(S_abs, ref=np.max), x_axis='ms')
