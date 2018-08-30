@@ -48,6 +48,10 @@ class TimeFormatter(Formatter):
 
     Parameters
     ----------
+    lag : bool
+        If `True`, then the time axis is interpreted in lag coordinates.
+        Anything past the midpoint will be converted to negative time.
+
     unit : str or None
     	Abbreviation of the physical unit for axis labels and ticks. 
 	Either equal to `s` (seconds) or `ms` (milliseconds) or None (default). 
@@ -55,10 +59,6 @@ class TimeFormatter(Formatter):
 	representation to the duration of the underlying time range: 
 	`hh:mm:ss` above 3600 seconds; `mm:ss` between 60 and 3600 seconds; 
 	and `ss` below 60 seconds. 
-
-    lag : bool
-        If `True`, then the time axis is interpreted in lag coordinates.
-        Anything past the midpoint will be converted to negative time.
 
 
     See also
@@ -101,7 +101,7 @@ class TimeFormatter(Formatter):
     >>> ax.set_xlabel('Lag')
     '''
 
-    def __init__(self, unit=None, lag=False):
+    def __init__(self, lag=False, unit=None):
 
         if unit not in ['s', 'ms', None]:
             raise ParameterError('Unknown time unit: {}'.format(unit))
