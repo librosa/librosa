@@ -1094,7 +1094,7 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
 def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
                 tuning=None, n_chroma=12,
                 n_octaves=7, bins_per_octave=None, cqt_mode='full', window=None,
-                norm=2, win_len_smooth=41):
+                norm=2, win_len_smooth=41, smoothing_window='hann'):
     r'''Computes the chroma variant "Chroma Energy Normalized" (CENS), following [1]_.
 
     .. [1] Meinard Müller and Sebastian Ewert
@@ -1141,9 +1141,13 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
     cqt_mode : ['full', 'hybrid']
         Constant-Q transform mode
 
-    win_len_smooth : int > 0
+    win_len_smooth : int > 0 or None
         Length of temporal smoothing window.
         Default: 41
+
+    smoothing_window : str, float or tuple
+        Type of window function for temporal smoothing. See `scipy.signal.get_window` for possible inputs.
+        Default: 'hann'
 
     Returns
     -------
@@ -1203,13 +1207,16 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
     for cur_quant_step_idx, cur_quant_step in enumerate(QUANT_STEPS):
         chroma_quant += (chroma > cur_quant_step) * QUANT_WEIGHTS[cur_quant_step_idx]
 
-    # Apply temporal smoothing
-    win = filters.get_window('hann', win_len_smooth + 2, fftbins=False)
-    win /= np.sum(win)
-    win = np.atleast_2d(win)
+    if win_len_smooth:
+        # Apply temporal smoothing
+        win = filters.get_window(smoothing_window, win_len_smooth + 2, fftbins=False)
+        win /= np.sum(win)
+        win = np.atleast_2d(win)
 
-    cens = scipy.signal.convolve2d(chroma_quant, win,
-                                   mode='same', boundary='fill')
+        cens = scipy.signal.convolve2d(chroma_quant, win,
+                                     mode='same', boundary='fill')
+    else:
+        cens = chroma_quant
 
     # L2-Normalization
     return util.normalize(cens, norm=norm, axis=0)
