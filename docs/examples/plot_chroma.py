@@ -1,21 +1,26 @@
 # coding: utf-8
 """
-===============
-Enhanced chroma
-===============
+===================================
+Enhanced chroma and chroma variants
+===================================
 
-This notebook demonstrates a variety of techniques for enhancing chroma features.
-
-Beyond the default parameter settings of librosa's chroma functions, we apply the following
-enhancements:
-
-    1. Over-sampling the frequency axis to reduce sensitivity to tuning deviations
-    2. Harmonic-percussive-residual source separation to eliminate transients.
-    3. Nearest-neighbor smoothing to eliminate passing tones and sparse noise.  This is inspired by the
-       recurrence-based smoothing technique of
-       `Cho and Bello, 2011 <http://ismir2011.ismir.net/papers/OS8-4.pdf>`_.
-    4. Local median filtering to suppress remaining discontinuities.
+This notebook demonstrates a variety of techniques for enhancing chroma features and 
+also, introduces chroma variants implemented in librosa.
 """
+
+
+###############################################################################################
+#  
+# Enhanced chroma
+# ^^^^^^^^^^^^^^^
+# Beyond the default parameter settings of librosa's chroma functions, we apply the following 
+# enhancements:
+#    1. Over-sampling the frequency axis to reduce sensitivity to tuning deviations
+#    2. Harmonic-percussive-residual source separation to eliminate transients.
+#    3. Nearest-neighbor smoothing to eliminate passing tones and sparse noise.  This is inspired by the
+#       recurrence-based smoothing technique of
+#       `Cho and Bello, 2011 <http://ismir2011.ismir.net/papers/OS8-4.pdf>`_.
+#    4. Local median filtering to suppress remaining discontinuities.
 
 # Code source: Brian McFee
 # License: ISC
@@ -164,3 +169,63 @@ plt.ylabel('Processed')
 plt.colorbar()
 plt.tight_layout()
 plt.show()
+
+
+#################################################################################################
+#   
+# Chroma variants
+# ^^^^^^^^^^^^^^^
+# There are three chroma variants implemented in librosa: `chroma_stft`, `chroma_cqt`, and `chroma_cens`.
+# `chroma_stft` and `chroma_cqt` are two alternative ways of plotting chroma.    
+# 
+# `chroma_stft` performs short-time fourier transform of an audio input and maps each STFT bin to chroma, while `chroma_cqt` uses constant-Q transform and maps each cq-bin to chroma.      
+# 
+# A comparison between the STFT and the CQT methods for chromagram. 
+chromagram_stft = librosa.feature.chroma_stft(y=y, sr=sr)
+chromagram_cqt = librosa.feature.chroma_cqt(y=y, sr=sr)
+
+
+plt.figure(figsize=(12, 4))
+
+plt.subplot(2, 1, 1)
+librosa.display.specshow(chromagram_stft[idx], y_axis='chroma')
+plt.colorbar()
+plt.ylabel('STFT')
+
+plt.subplot(2, 1, 2)
+librosa.display.specshow(chromagram_cqt[idx], y_axis='chroma', x_axis='time')
+plt.colorbar()
+plt.ylabel('CQT')
+plt.tight_layout()
+
+
+###################################################################################################
+# CENS features (`chroma_cens`) are variants of chroma features introduced in 
+# `Müller and Ewart, 2011 <http://ismir2011.ismir.net/papers/PS2-8.pdf>`_, in which 
+# additional post processing steps are performed on the constant-Q chromagram to obtain features 
+# that are invariant to dynamics and timbre.     
+# 
+# Thus, the CENS features are useful for applications, such as audio matching and retrieval.
+#  
+# Following steps are additional processing done on the chromagram, and are implemented in `chroma_cens`:  
+#   1. L1-Normalization across each chroma vector
+#   2. Quantization of the amplitudes based on "log-like" amplitude thresholds
+#   3. Smoothing with sliding window (optional parameter) 
+#   4. Downsampling (not implemented)
+#
+# A comparison between the original constant-Q chromagram and the CENS features.  
+chromagram_cens = librosa.feature.chroma_cens(y=y, sr=sr)
+
+
+plt.figure(figsize=(12, 4))
+
+plt.subplot(2, 1, 1)
+librosa.display.specshow(chromagram_cqt[idx], y_axis='chroma')
+plt.colorbar()
+plt.ylabel('Orig')
+
+plt.subplot(2, 1, 2)
+librosa.display.specshow(chromagram_cens[idx], y_axis='chroma', x_axis='time')
+plt.colorbar()
+plt.ylabel('CENS')
+plt.tight_layout()
