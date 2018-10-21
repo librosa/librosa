@@ -195,7 +195,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
 
     Converts a complex-valued spectrogram `stft_matrix` to time-series `y`
     by minimizing the mean squared error between `stft_matrix` and STFT of
-    `y` as described in [1]_.
+    `y` as described in [1]_ up to Section 2 (reconstruction from MSTFT).
 
     In general, window function, hop length and other parameters should be same
     as in stft, which mostly leads to perfect reconstruction of a signal from
