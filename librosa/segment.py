@@ -47,33 +47,30 @@ __all__ = ['cross_similarity',
            'agglomerative',
            'subsegment']
 
+
 @cache(level=30)
-def cross_similarity(data1, data2, k=None, width=1, metric='euclidean',
+def cross_similarity(data_from, data_to, k=None, metric='euclidean',
                      sparse=False, mode='connectivity', bandwidth=None):
     '''Compute cross similarity between two data sequences.
 
 
-    `xsim[i, j]` is non-zero if (`data1[:, i]`, `data2[:, j]`) are
+    `xsim[i, j]` is non-zero if (`data_from[:, i]`, `data_to[:, j]`) are
     k-nearest-neighbors and `|i - j| >= width`
 
 
     Parameters
     ----------
-    data1 : np.ndarray [shape=(K, N)]
-        A feature matrix for sequence 1
+    data_from : np.ndarray [shape=(K, N)]
+        A feature matrix for the reference sequence
 
-    data2 : np.ndarray [shape=(K, M)]
-        A feature matrix for sequence 2
+    data_to : np.ndarray [shape=(K, M)]
+        A feature matrix for the comparison sequence
 
     k : int > 0 [scalar] or None
         the number of nearest-neighbors for each sample
 
-        Default: `k = 2 * ceil(sqrt(t - 2 * width + 1))`,
-        or `k = 2` if `t <= 2 * width + 1`
-
-    width : int >= 1 [scalar]
-        only link neighbors `(data[:, i], data[:, j])`
-        if `|i - j| >= width`
+        Default: `k = 2 * ceil(sqrt(t - 1))`,
+        or `k = 2` if `t <= 3`
 
     metric : str
         Distance metric to use for nearest-neighbor calculation.
@@ -103,12 +100,12 @@ def cross_similarity(data1, data2, k=None, width=1, metric='euclidean',
 
     Returns
     -------
-    rec : np.ndarray or scipy.sparse.csr_matrix, [shape=(n_times1, n_times2)]
+    xsim : np.ndarray or scipy.sparse.csr_matrix, [shape=(n_times1, n_times2)]
         Recurrence matrix
 
     See Also
     --------
-    rec
+    librosa.segment.recurrence_matrix
     sklearn.neighbors.NearestNeighbors
     scipy.spatial.distance.cdist
     librosa.feature.stack_memory
@@ -120,72 +117,67 @@ def cross_similarity(data1, data2, k=None, width=1, metric='euclidean',
 
     Examples
     --------
-    Find nearest neighbors in MFCC space
+    Find nearest neighbors in MFCC space between two sequences
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> mfcc = librosa.feature.mfcc(y=y, sr=sr)
-    >>> R = librosa.segment.recurrence_matrix(mfcc)
+    >>> y_ref, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y_comp, sr = librosa.load(librosa.util.example_audio_file(), offset=10)
+    >>> mfcc_ref = librosa.feature.mfcc(y=y_ref, sr=sr)
+    >>> mfcc_comp = librosa.feature.mfcc(y=y_comp, sr=sr)
+    >>> xsim = librosa.segment.cross_similarity(mfcc_ref, mfcc_comp)
 
     Or fix the number of nearest neighbors to 5
 
-    >>> R = librosa.segment.recurrence_matrix(mfcc, k=5)
+    >>> xsim = librosa.segment.cross_similarity(mfcc_ref, mfcc_comp, k=5)
 
     Suppress neighbors within +- 7 samples
 
-    >>> R = librosa.segment.recurrence_matrix(mfcc, width=7)
+    >>> xsim = librosa.segment.cross_similarity(mfcc_ref, mfcc_comp, width=7)
 
     Use cosine similarity instead of Euclidean distance
 
-    >>> R = librosa.segment.recurrence_matrix(mfcc, metric='cosine')
-
-    Require mutual nearest neighbors
-
-    >>> R = librosa.segment.recurrence_matrix(mfcc, sym=True)
+    >>> xsim = librosa.segment.cross_similarity(mfcc_ref, mfcc_comp, metric='cosine')
 
     Use an affinity matrix instead of binary connectivity
 
-    >>> R_aff = librosa.segment.recurrence_matrix(mfcc, mode='affinity')
+    >>> xsim_aff = librosa.segment.cross_similarity(mfcc_ref, mfcc_comp, mode='affinity')
 
     Plot the feature and recurrence matrices
 
     >>> import matplotlib.pyplot as plt
     >>> plt.figure(figsize=(8, 4))
     >>> plt.subplot(1, 2, 1)
-    >>> librosa.display.specshow(R, x_axis='time', y_axis='time')
+    >>> librosa.display.specshow(xsim, x_axis='time', y_axis='time')
     >>> plt.title('Binary recurrence (symmetric)')
     >>> plt.subplot(1, 2, 2)
-    >>> librosa.display.specshow(R_aff, x_axis='time', y_axis='time',
+    >>> librosa.display.specshow(xsim_aff, x_axis='time', y_axis='time',
     ...                          cmap='magma_r')
     >>> plt.title('Affinity recurrence')
     >>> plt.tight_layout()
 
     '''
-    data1 = np.atleast_2d(data1)
-    data2 = np.atleast_2d(data2)
+    data_from = np.atleast_2d(data_from)
+    data_to = np.atleast_2d(data_to)
 
-    if data1.shape[0] != data2.shape[0]:
-        raise ValueError("data1 and data2 must have the same first dimension")
+    if data_from.shape[0] != data_to.shape[0]:
+        raise ValueError("data_from and data_to must have the same first dimension")
 
-    data1 = np.swapaxes(data1, -1, 0)
-    n_times1 = data1.shape[0]
-    data1 = data1.reshape((n_times1, -1))
+    # swap data axes so the feature axis is last
+    data_from = np.swapaxes(data_from, -1, 0)
+    n_times1 = data_from.shape[0]
+    data_from = data_from.reshape((n_times1, -1))
+    data_to = np.swapaxes(data_to, -1, 0)
+    n_times2 = data_to.shape[0]
+    data_to = data_to.reshape((n_times2, -1))
 
-    data2 = np.swapaxes(data2, -1, 0)
-    n_times2 = data2.shape[0]
-    data2 = data2.reshape((n_times2, -1))
-
-    n_feat = data1.shape[-1]
-
-    if width < 1:
-        raise ParameterError('width must be at least 1')
+    n_feat = data_from.shape[-1]
 
     if mode not in ['connectivity', 'distance', 'affinity']:
         raise ParameterError(("Invalid mode='{}'. Must be one of "
                               "['connectivity', 'distance', "
                               "'affinity']").format(mode))
     if k is None:
-        if n_times1 > 2 * width + 1:
-            k = 2 * np.ceil(np.sqrt(n_feat - 2 * width + 1))
+        if n_times1 > 3:
+            k = 2 * np.ceil(np.sqrt(n_feat - 3))
         else:
             k = 2
 
@@ -198,15 +190,15 @@ def cross_similarity(data1, data2, k=None, width=1, metric='euclidean',
 
     # Build the neighbor search object
     try:
-        knn = sklearn.neighbors.NearestNeighbors(n_neighbors=min(n_times1-1, k + 2 * width),
+        knn = sklearn.neighbors.NearestNeighbors(n_neighbors=min(n_times1-1, k + 2),
                                                  metric=metric,
                                                  algorithm='auto')
     except ValueError:
-        knn = sklearn.neighbors.NearestNeighbors(n_neighbors=min(n_times1-1, k + 2 * width),
+        knn = sklearn.neighbors.NearestNeighbors(n_neighbors=min(n_times1-1, k + 2),
                                                  metric=metric,
                                                  algorithm='brute')
 
-    knn.fit(data1)
+    knn.fit(data_from)
 
     # Get the knn graph
     if mode == 'affinity':
@@ -214,11 +206,7 @@ def cross_similarity(data1, data2, k=None, width=1, metric='euclidean',
     else:
         kng_mode = mode
 
-    xsim = knn.kneighbors_graph(X=data2, mode=kng_mode).tolil()
-
-    # Remove connections within width
-    for diag in range(-width + 1, width):
-        xsim.setdiag(0, diag)
+    xsim = knn.kneighbors_graph(X=data_to, mode=kng_mode).tolil()
 
     # Retain only the top-k links per point
     for i in range(n_times2):
