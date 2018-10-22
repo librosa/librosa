@@ -9,6 +9,7 @@ Recurrence and self-similarity
 .. autosummary::
     :toctree: generated/
 
+    cross_similarity
     recurrence_matrix
     recurrence_to_lag
     lag_to_recurrence
@@ -38,12 +39,212 @@ from . import cache
 from . import util
 from .util.exceptions import ParameterError
 
-__all__ = ['recurrence_matrix',
+__all__ = ['cross_similarity',
+           'recurrence_matrix',
            'recurrence_to_lag',
            'lag_to_recurrence',
            'timelag_filter',
            'agglomerative',
            'subsegment']
+
+@cache(level=30)
+def cross_similarity(data1, data2, k=None, width=1, metric='euclidean',
+                     sparse=False, mode='connectivity', bandwidth=None):
+    '''Compute cross similarity between two data sequences.
+
+
+    `xsim[i, j]` is non-zero if (`data1[:, i]`, `data2[:, j]`) are
+    k-nearest-neighbors and `|i - j| >= width`
+
+
+    Parameters
+    ----------
+    data1 : np.ndarray [shape=(K, N)]
+        A feature matrix for sequence 1
+
+    data2 : np.ndarray [shape=(K, M)]
+        A feature matrix for sequence 2
+
+    k : int > 0 [scalar] or None
+        the number of nearest-neighbors for each sample
+
+        Default: `k = 2 * ceil(sqrt(t - 2 * width + 1))`,
+        or `k = 2` if `t <= 2 * width + 1`
+
+    width : int >= 1 [scalar]
+        only link neighbors `(data[:, i], data[:, j])`
+        if `|i - j| >= width`
+
+    metric : str
+        Distance metric to use for nearest-neighbor calculation.
+
+        See `sklearn.neighbors.NearestNeighbors` for details.
+
+    sparse : bool [scalar]
+        if False, returns a dense type (ndarray)
+        if True, returns a sparse type (scipy.sparse.csr_matrix)
+
+    mode : str, {'connectivity', 'distance', 'affinity'}
+        If 'connectivity', a binary connectivity matrix is produced.
+
+        If 'distance', then a non-zero entry contains the distance between
+        points.
+
+        If 'affinity', then non-zero entries are mapped to
+        `exp( - distance(i, j) / bandwidth)` where `bandwidth` is
+        as specified below.
+
+    bandwidth : None or float > 0
+        If using ``mode='affinity'``, this can be used to set the
+        bandwidth on the affinity kernel.
+
+        If no value is provided, it is set automatically to the median
+        distance between furthest nearest neighbors.
+
+    Returns
+    -------
+    rec : np.ndarray or scipy.sparse.csr_matrix, [shape=(n_times1, n_times2)]
+        Recurrence matrix
+
+    See Also
+    --------
+    rec
+    sklearn.neighbors.NearestNeighbors
+    scipy.spatial.distance.cdist
+    librosa.feature.stack_memory
+    recurrence_to_lag
+
+    Notes
+    -----
+    This function caches at level 30.
+
+    Examples
+    --------
+    Find nearest neighbors in MFCC space
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> mfcc = librosa.feature.mfcc(y=y, sr=sr)
+    >>> R = librosa.segment.recurrence_matrix(mfcc)
+
+    Or fix the number of nearest neighbors to 5
+
+    >>> R = librosa.segment.recurrence_matrix(mfcc, k=5)
+
+    Suppress neighbors within +- 7 samples
+
+    >>> R = librosa.segment.recurrence_matrix(mfcc, width=7)
+
+    Use cosine similarity instead of Euclidean distance
+
+    >>> R = librosa.segment.recurrence_matrix(mfcc, metric='cosine')
+
+    Require mutual nearest neighbors
+
+    >>> R = librosa.segment.recurrence_matrix(mfcc, sym=True)
+
+    Use an affinity matrix instead of binary connectivity
+
+    >>> R_aff = librosa.segment.recurrence_matrix(mfcc, mode='affinity')
+
+    Plot the feature and recurrence matrices
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure(figsize=(8, 4))
+    >>> plt.subplot(1, 2, 1)
+    >>> librosa.display.specshow(R, x_axis='time', y_axis='time')
+    >>> plt.title('Binary recurrence (symmetric)')
+    >>> plt.subplot(1, 2, 2)
+    >>> librosa.display.specshow(R_aff, x_axis='time', y_axis='time',
+    ...                          cmap='magma_r')
+    >>> plt.title('Affinity recurrence')
+    >>> plt.tight_layout()
+
+    '''
+    data1 = np.atleast_2d(data1)
+    data2 = np.atleast_2d(data2)
+
+    if data1.shape[0] != data2.shape[0]:
+        raise ValueError("data1 and data2 must have the same first dimension")
+
+    data1 = np.swapaxes(data1, -1, 0)
+    n_times1 = data1.shape[0]
+    data1 = data1.reshape((n_times1, -1))
+
+    data2 = np.swapaxes(data2, -1, 0)
+    n_times2 = data2.shape[0]
+    data2 = data2.reshape((n_times2, -1))
+
+    n_feat = data1.shape[-1]
+
+    if width < 1:
+        raise ParameterError('width must be at least 1')
+
+    if mode not in ['connectivity', 'distance', 'affinity']:
+        raise ParameterError(("Invalid mode='{}'. Must be one of "
+                              "['connectivity', 'distance', "
+                              "'affinity']").format(mode))
+    if k is None:
+        if n_times1 > 2 * width + 1:
+            k = 2 * np.ceil(np.sqrt(n_feat - 2 * width + 1))
+        else:
+            k = 2
+
+    if bandwidth is not None:
+        if bandwidth <= 0:
+            raise ParameterError('Invalid bandwidth={}. '
+                                 'Must be strictly positive.'.format(bandwidth))
+
+    k = int(k)
+
+    # Build the neighbor search object
+    try:
+        knn = sklearn.neighbors.NearestNeighbors(n_neighbors=min(n_times1-1, k + 2 * width),
+                                                 metric=metric,
+                                                 algorithm='auto')
+    except ValueError:
+        knn = sklearn.neighbors.NearestNeighbors(n_neighbors=min(n_times1-1, k + 2 * width),
+                                                 metric=metric,
+                                                 algorithm='brute')
+
+    knn.fit(data1)
+
+    # Get the knn graph
+    if mode == 'affinity':
+        kng_mode = 'distance'
+    else:
+        kng_mode = mode
+
+    xsim = knn.kneighbors_graph(X=data2, mode=kng_mode).tolil()
+
+    # Remove connections within width
+    for diag in range(-width + 1, width):
+        xsim.setdiag(0, diag)
+
+    # Retain only the top-k links per point
+    for i in range(n_times2):
+        # Get the links from point i
+        links = xsim[i].nonzero()[1]
+
+        # Order them ascending
+        idx = links[np.argsort(xsim[i, links].toarray())][0]
+
+        # Everything past the kth closest gets squashed
+        xsim[i, idx[k:]] = 0
+
+    xsim = xsim.tocsr()
+    xsim.eliminate_zeros()
+
+    if mode == 'connectivity':
+        xsim = xsim.astype(np.bool)
+    elif mode == 'affinity':
+        if bandwidth is None:
+            bandwidth = np.median(xsim.max(axis=1).data)
+        xsim.data[:] = np.exp(xsim.data / (-1 * bandwidth))
+
+    if not sparse:
+        xsim = xsim.toarray()
+
+    return xsim
 
 
 @cache(level=30)
