@@ -1150,11 +1150,11 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
         Constant-Q transform mode
 
     win_len_smooth : int > 0 or None
-        Length of temporal smoothing window.
+        Length of temporal smoothing window. `None` disables temporal smoothing. 
         Default: 41
 
     smoothing_window : str, float or tuple
-        Type of window function for temporal smoothing. See `scipy.signal.get_window` for possible inputs.
+        Type of window function for temporal smoothing. See `filters.get_window` for possible inputs.
         Default: 'hann'
 
     Returns
@@ -1169,6 +1169,9 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
 
     chroma_stft
         Compute a chromagram from an STFT spectrogram or waveform.
+
+    filters.get_window
+        Compute a window function. 
 
     Examples
     --------
@@ -1192,6 +1195,9 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
     >>> plt.colorbar()
     >>> plt.tight_layout()
     '''
+    if not ((win_len_smooth is None) or (isinstance(win_len_smooth, int) and win_len_smooth > 0)):
+        raise ParameterError('win_len_smooth={} must be a positive integer or None'.format(win_len_smooth))
+
     chroma = chroma_cqt(y=y, C=C, sr=sr,
                         hop_length=hop_length,
                         fmin=fmin,
@@ -1222,7 +1228,7 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
         win = np.atleast_2d(win)
 
         cens = scipy.signal.convolve2d(chroma_quant, win,
-                                     mode='same', boundary='fill')
+                                       mode='same', boundary='fill')
     else:
         cens = chroma_quant
 
