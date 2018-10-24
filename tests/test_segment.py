@@ -36,11 +36,11 @@ def test_cross_similarity():
         D = librosa.segment.cross_similarity(data_from, data_to, k=k, metric=metric)
 
         if k is not None:
-            real_k = min(k, n - width)
+            real_k = min(k, n)
             assert not np.any(D.sum(axis=1) != real_k)
 
     for n in [20, 250]:
-        for k in [None, n//4]:
+        for k in [None, n // 4]:
             for metric in ['l2', 'cosine']:
                 tester = __test
                 yield tester, n, k, metric
