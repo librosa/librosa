@@ -27,7 +27,7 @@ warnings.simplefilter('always')
 
 def test_cross_similarity():
 
-    def __test(n, k, width, sym, metric):
+    def __test(n, k, metric):
         srand()
         # Make a data matrix
         data_from = np.random.randn(3, n)
@@ -152,7 +152,7 @@ def test_recurrence_matrix():
         assert not np.any(D)
 
     for n in [20, 250]:
-        for k in [None, n//4]:
+        for k in [None, n // 4]:
             for sym in [False, True]:
                 for width in [-1, 0, 1, 3, 5]:
                     for metric in ['l2', 'cosine']:
