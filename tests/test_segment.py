@@ -85,9 +85,11 @@ def test_cross_similarity_affinity():
                                                 bandwidth=bandwidth)
         print(rec.shape)
 
+        rec_nonzero = np.ones(rec.shape)
+        rec_nonzero[rec > 0] = rec[rec > 0]
         # i, j, vals = scipy.sparse.find(rec)
         # print(vals.shape)
-        logvals = np.log(rec)
+        logvals = np.log(rec_nonzero)
         print(logvals.shape)
 
         # After log-scaling, affinity will match distance up to a constant factor
