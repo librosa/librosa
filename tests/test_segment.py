@@ -77,7 +77,7 @@ def test_cross_similarity_affinity():
     def __test(metric, bandwidth):
         srand()
         data_from = np.ones((3, 50))
-        data_to = np.ones((3, 70)) + np.random.randn(3, 70)
+        data_to = np.ones((3, 70))
         distance = cdist(data_to.T, data_from.T, metric=metric)
         rec = librosa.segment.cross_similarity(data_from, data_to, mode='affinity',
                                                 metric=metric,
