@@ -91,6 +91,8 @@ def test_cross_similarity_affinity():
         print(logvals.shape)
 
         # After log-scaling, affinity will match distance up to a constant factor
+        distance_nonzero = np.ones(distance)
+        distance_nonzero[distance > 0] = distance[distance > 0]
         ratio = -logvals / distance
         print(ratio.shape)
         if bandwidth is None:
