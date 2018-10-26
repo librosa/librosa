@@ -97,6 +97,7 @@ def test_cross_similarity_affinity():
         if bandwidth is None:
             assert np.allclose(ratio, ratio[0])
         else:
+            print(ratio)
             assert np.allclose(ratio, bandwidth)
 
     for metric in ['sqeuclidean', 'cityblock']:
