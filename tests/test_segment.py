@@ -77,21 +77,21 @@ def test_cross_similarity_affinity():
     def __test(metric, bandwidth):
         srand()
         data_from = np.ones((3, 50))
-        data_to = np.ones((3, 70))
+        data_to = np.ones((3, 70)) + np.random.randn(3, 70)
         distance = cdist(data_from.T , data_to.T, metric=metric)       
         rec = librosa.segment.cross_similarity(data_from, data_to, mode='affinity',
                                                 metric=metric,
-                                                sparse=True,
+                                                sparse=False,
                                                 bandwidth=bandwidth)
         print(rec.shape)
 
-        i, j, vals = scipy.sparse.find(rec)
-        print(vals.shape)
-        logvals = np.log(vals)
+        # i, j, vals = scipy.sparse.find(rec)
+        # print(vals.shape)
+        logvals = np.log(rec)
         print(logvals.shape)
 
         # After log-scaling, affinity will match distance up to a constant factor
-        ratio = -logvals / distance[i, j]
+        ratio = -logvals / distance
         print(ratio.shape)
         if bandwidth is None:
             assert np.allclose(ratio, ratio[0])
