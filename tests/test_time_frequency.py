@@ -16,6 +16,7 @@ from nose.tools import raises, eq_
 
 warnings.resetwarnings()
 warnings.simplefilter('always')
+warnings.filterwarnings('module', '.*', FutureWarning, 'scipy.*')
 
 
 def test_frames_to_samples():

@@ -23,6 +23,7 @@ __EXAMPLE_FILE = os.path.join('data', 'test1_22050.wav')
 
 warnings.resetwarnings()
 warnings.simplefilter('always')
+warnings.filterwarnings('module', '.*', FutureWarning, 'scipy.*')
 
 
 def test_recurrence_matrix():

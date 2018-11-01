@@ -21,6 +21,7 @@ from test_core import srand
 
 warnings.resetwarnings()
 warnings.simplefilter('always')
+warnings.filterwarnings('module', '.*', FutureWarning, 'scipy.*')
 np.set_printoptions(precision=3)
 
 
@@ -692,8 +693,6 @@ def test_warning_deprecated():
     def __dummy():
         return True
 
-    warnings.resetwarnings()
-    warnings.simplefilter('always')
     with warnings.catch_warnings(record=True) as out:
         x = __dummy()
 
@@ -716,8 +715,6 @@ def test_warning_moved():
     def __dummy():
         return True
 
-    warnings.resetwarnings()
-    warnings.simplefilter('always')
     with warnings.catch_warnings(record=True) as out:
         x = __dummy()
 
