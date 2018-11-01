@@ -29,6 +29,7 @@ from nose.tools import nottest, raises, eq_
 from mpl_ic import image_comparison
 warnings.resetwarnings()
 warnings.simplefilter('always')
+warnings.filterwarnings('module', '.*', FutureWarning, 'scipy.*')
 
 
 @nottest

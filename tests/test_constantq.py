@@ -27,6 +27,7 @@ from test_core import srand
 
 warnings.resetwarnings()
 warnings.simplefilter('always')
+warnings.filterwarnings('module', '.*', FutureWarning, 'scipy.*')
 
 
 def __test_cqt_size(y, sr, hop_length, fmin, n_bins, bins_per_octave,

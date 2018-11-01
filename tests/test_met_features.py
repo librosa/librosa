@@ -23,6 +23,7 @@ import librosa
 __EXAMPLE_FILE = os.path.join('data', 'test1_22050.wav')
 warnings.resetwarnings()
 warnings.simplefilter('always')
+warnings.filterwarnings('module', '.*', FutureWarning, 'scipy.*')
 
 
 def met_stft(y, n_fft, hop_length, win_length, normalize):

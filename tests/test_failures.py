@@ -15,6 +15,7 @@ from nose.tools import raises
 import warnings
 warnings.resetwarnings()
 warnings.simplefilter('always')
+warnings.filterwarnings('module', '.*', FutureWarning, 'scipy.*')
 
 
 @raises(librosa.ParameterError)

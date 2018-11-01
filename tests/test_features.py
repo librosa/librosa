@@ -21,6 +21,7 @@ except KeyError:
 __EXAMPLE_FILE = os.path.join('data', 'test1_22050.wav')
 warnings.resetwarnings()
 warnings.simplefilter('always')
+warnings.filterwarnings('module', '.*', FutureWarning, 'scipy.*')
 
 
 # utils submodule
