@@ -79,7 +79,7 @@ def test_pad_center():
         eq_slice = [slice(None)] * y.ndim
         eq_slice[axis] = slice(n_pad, n_pad + n_len)
 
-        assert np.allclose(y, y_out[eq_slice])
+        assert np.allclose(y, y_out[tuple(eq_slice)])
 
     @raises(librosa.ParameterError)
     def __test_fail(y, n, axis, mode):
@@ -107,9 +107,9 @@ def test_fix_length():
         eq_slice[axis] = slice(y.shape[axis])
 
         if n > y.shape[axis]:
-            assert np.allclose(y, y_out[eq_slice])
+            assert np.allclose(y, y_out[tuple(eq_slice)])
         else:
-            assert np.allclose(y[eq_slice], y)
+            assert np.allclose(y[tuple(eq_slice)], y)
 
     for shape in [(16,), (16, 16)]:
         y = np.ones(shape)
@@ -298,7 +298,7 @@ def test_axis_sort():
             cmp_slice = [slice(None)] * X.ndim
             cmp_slice[axis] = idx
 
-            assert np.allclose(X[cmp_slice], Xsorted)
+            assert np.allclose(X[tuple(cmp_slice)], Xsorted)
 
         else:
             Xsorted = librosa.util.axis_sort(data,
@@ -679,9 +679,9 @@ def test_valid_intervals():
             for m in range(1, 3):
                 slices = [slice(m)] * d
                 if m == 2 and d == 2 and n > 1:
-                    yield __test, ivals[slices]
+                    yield __test, ivals[tuple(slices)]
                 else:
-                    yield raises(librosa.ParameterError)(__test), ivals[slices]
+                    yield raises(librosa.ParameterError)(__test), ivals[tuple(slices)]
 
     # Test for issue #712: intervals must have non-negative duration
     yield raises(librosa.ParameterError)(__test), np.asarray([[0, 1], [2, 1]])
