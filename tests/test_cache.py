@@ -15,6 +15,7 @@ from nose.tools import with_setup, eq_
 import warnings
 warnings.resetwarnings()
 warnings.simplefilter('always')
+warnings.filterwarnings('module', '.*', FutureWarning, 'scipy.*')
 
 # Disable any initial cache settings
 for key in ['DIR', 'MMAP', 'COMPRESS', 'VERBOSE', 'LEVEL']:

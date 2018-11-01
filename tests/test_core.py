@@ -25,6 +25,7 @@ from nose.tools import eq_, raises
 import warnings
 warnings.resetwarnings()
 warnings.simplefilter('always')
+warnings.filterwarnings('module', '.*', FutureWarning, 'scipy.*')
 
 
 # -- utilities --#
@@ -1347,8 +1348,6 @@ def test_pcen():
 
     def __test(gain, bias, power, b, time_constant, eps, ms, S, Pexp):
 
-        warnings.resetwarnings()
-        warnings.simplefilter('always')
         with warnings.catch_warnings(record=True) as out:
 
             P = librosa.pcen(S, gain=gain, bias=bias, power=power,

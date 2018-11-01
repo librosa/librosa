@@ -11,6 +11,7 @@ from test_core import srand
 import warnings
 warnings.resetwarnings()
 warnings.simplefilter('always')
+warnings.filterwarnings('module', '.*', FutureWarning, 'scipy.*')
 
 
 @raises(librosa.ParameterError)

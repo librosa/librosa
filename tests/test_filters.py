@@ -29,7 +29,7 @@ import librosa
 
 warnings.resetwarnings()
 warnings.simplefilter('always')
-
+warnings.filterwarnings('module', '.*', FutureWarning, 'scipy.*')
 
 # -- utilities --#
 def files(pattern):
@@ -145,8 +145,6 @@ def test_mel_gap():
     n_mels = 128
     htk = True
 
-    warnings.resetwarnings()
-    warnings.simplefilter('always')
     with warnings.catch_warnings(record=True) as out:
         librosa.filters.mel(sr, n_fft, n_mels=n_mels,
                             fmin=fmin, fmax=fmax, htk=htk)

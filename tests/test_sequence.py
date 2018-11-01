@@ -12,6 +12,7 @@ import librosa
 
 warnings.resetwarnings()
 warnings.simplefilter('always')
+warnings.filterwarnings('module', '.*', FutureWarning, 'scipy.*')
 
 
 # Core viterbi tests

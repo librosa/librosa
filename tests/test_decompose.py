@@ -22,6 +22,7 @@ from test_core import srand
 
 warnings.resetwarnings()
 warnings.simplefilter('always')
+warnings.filterwarnings('module', '.*', FutureWarning, 'scipy.*')
 
 
 def test_default_decompose():
