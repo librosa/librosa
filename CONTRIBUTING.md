@@ -87,7 +87,7 @@ following rules before submitting:
    See [Creating and highlighting code blocks](https://help.github.com/articles/creating-and-highlighting-code-blocks).
 
 -  Please include your operating system type and version number, as well
-   as your Python, scikit-learn, numpy, and scipy versions. This information
+   as your Python, librosa, numpy, and scipy versions. This information
    can be found by runnning the following code snippet:
 
   ```python
