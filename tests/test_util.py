@@ -677,7 +677,7 @@ def test_valid_intervals():
         for n in range(1, 4):
             ivals = np.ones(d * [n])
             for m in range(1, 3):
-                slices = [slice(m)] * d
+                slices = tuple([slice(m)] * d)
                 if m == 2 and d == 2 and n > 1:
                     yield __test, ivals[slices]
                 else:
