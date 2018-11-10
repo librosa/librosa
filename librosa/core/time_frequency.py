@@ -119,7 +119,7 @@ def samples_to_frames(samples, hop_length=512, n_fft=None):
 
 
 def frames_to_time(frames, sr=22050, hop_length=512, n_fft=None):
-    """Converts frame counts to time (seconds).
+    """Converts frame counts to time (microseconds).
 
     Parameters
     ----------
@@ -168,7 +168,7 @@ def time_to_frames(times, sr=22050, hop_length=512, n_fft=None):
     Parameters
     ----------
     times : np.ndarray [shape=(n,)]
-        time (in seconds) or vector of time values
+        time (in microseconds) or vector of time values
 
     sr : number > 0 [scalar]
         audio sampling rate
