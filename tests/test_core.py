@@ -47,7 +47,7 @@ def test_load():
 
     def __test(infile):
         DATA = load(infile)
-        y, sr = librosa.load(DATA['wavfile'][0],
+        y, sr = librosa.load(os.path.join('tests', DATA['wavfile'][0]),
                              sr=None,
                              mono=DATA['mono'])
 
@@ -209,7 +209,8 @@ def test_stft():
         DATA = load(infile)
 
         # Load the file
-        (y, sr) = librosa.load(DATA['wavfile'][0], sr=None, mono=True)
+        (y, sr) = librosa.load(os.path.join('tests', DATA['wavfile'][0]),
+                               sr=None, mono=True)
 
         if DATA['hann_w'][0, 0] == 0:
             # Set window to ones, swap back to nfft
@@ -240,7 +241,8 @@ def test_ifgram():
     def __test(infile):
         DATA = load(infile)
 
-        y, sr = librosa.load(DATA['wavfile'][0], sr=None, mono=True)
+        y, sr = librosa.load(os.path.join('tests', DATA['wavfile'][0]),
+                             sr=None, mono=True)
 
         # Compute the IFgram
         F, D = librosa.ifgram(y,

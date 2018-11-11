@@ -610,7 +610,7 @@ def test_sparsify_rows():
 def test_files():
 
     # Expected output
-    output = [os.path.join(os.path.abspath(os.path.curdir), 'data', s)
+    output = [os.path.join(os.path.abspath(os.path.curdir), 'tests', 'data', s)
               for s in ['test1_22050.wav',
                         'test1_44100.wav',
                         'test2_8000.wav']]
@@ -633,7 +633,8 @@ def test_files():
     else:
         cases = [False, True]
 
-    for searchdir in [os.path.curdir, os.path.join(os.path.curdir, 'data')]:
+    for searchdir in [os.path.join(os.path.curdir, 'tests'),
+                      os.path.join(os.path.curdir, 'tests', 'data')]:
         for ext in [None, 'wav', 'WAV', ['wav'], ['WAV']]:
             for recurse in [False, True]:
                 for case_sensitive in cases:
@@ -641,7 +642,7 @@ def test_files():
                         for offset in [0, 1, -1]:
                             tf = __test
 
-                            if searchdir == os.path.curdir and not recurse:
+                            if searchdir == os.path.join(os.path.curdir, 'tests') and not recurse:
                                 tf = raises(AssertionError)(__test)
 
                             if (ext is not None and case_sensitive and

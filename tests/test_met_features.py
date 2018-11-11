@@ -42,7 +42,8 @@ def test_spectral_centroid():
     def __test(infile):
         DATA = load(infile)
 
-        y, sr = librosa.load(DATA['wavfile'][0], sr=None, mono=True)
+        y, sr = librosa.load(os.path.join('tests', DATA['wavfile'][0]),
+                             sr=None, mono=True)
 
         n_fft = DATA['nfft'][0, 0].astype(int)
         hop_length = DATA['hop_length'][0, 0].astype(int)
@@ -65,7 +66,8 @@ def test_spectral_contrast():
     def __test(infile):
         DATA = load(infile)
 
-        y, sr = librosa.load(DATA['wavfile'][0], sr=None, mono=True)
+        y, sr = librosa.load(os.path.join('tests', DATA['wavfile'][0]),
+                             sr=None, mono=True)
 
         n_fft = DATA['nfft'][0, 0].astype(int)
         hop_length = DATA['hop_length'][0, 0].astype(int)
@@ -88,7 +90,8 @@ def test_spectral_rolloff():
     def __test(infile):
         DATA = load(infile)
 
-        y, sr = librosa.load(DATA['wavfile'][0], sr=None, mono=True)
+        y, sr = librosa.load(os.path.join('tests', DATA['wavfile'][0]),
+                             sr=None, mono=True)
 
         n_fft = DATA['nfft'][0, 0].astype(int)
         hop_length = DATA['hop_length'][0, 0].astype(int)
@@ -112,7 +115,8 @@ def test_spectral_bandwidth():
     def __test(infile):
         DATA = load(infile)
 
-        y, sr = librosa.load(DATA['wavfile'][0], sr=None, mono=True)
+        y, sr = librosa.load(os.path.join('tests', DATA['wavfile'][0]),
+                             sr=None, mono=True)
 
         n_fft = DATA['nfft'][0, 0].astype(int)
         hop_length = DATA['hop_length'][0, 0].astype(int)
