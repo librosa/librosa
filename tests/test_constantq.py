@@ -2,10 +2,6 @@
 """
 CREATED:2015-03-01 by Eric Battenberg <ebattenberg@gmail.com>
 unit tests for librosa core.constantq
-
-Run me as follows:
-    cd tests/
-    nosetests -v --with-coverage --cover-package=librosa
 """
 from __future__ import division
 
@@ -21,13 +17,9 @@ except KeyError:
 import librosa
 import numpy as np
 
-from nose.tools import raises, eq_
+import pytest
 
 from test_core import srand
-
-warnings.resetwarnings()
-warnings.simplefilter('always')
-warnings.filterwarnings('module', '.*', FutureWarning, 'scipy.*')
 
 
 def __test_cqt_size(y, sr, hop_length, fmin, n_bins, bins_per_octave,
@@ -44,7 +36,7 @@ def __test_cqt_size(y, sr, hop_length, fmin, n_bins, bins_per_octave,
                                     norm=norm,
                                     sparsity=sparsity))
 
-    eq_(cqt_output.shape[0], n_bins)
+    assert cqt_output.shape[0] == n_bins
 
     return cqt_output
 
@@ -77,11 +69,11 @@ def test_cqt():
     # incorrect hop length for a 6-octave analysis
     # num_octaves = 6, 2**(6-1) = 32 > 16
     for hop_length in [-1, 0, 16, 63, 65]:
-        yield (raises(librosa.ParameterError)(__test_cqt_size), y, sr, hop_length, None, 72,
+        yield (pytest.mark.xfail(__test_cqt_size, raises=librosa.ParameterError), y, sr, hop_length, None, 72,
                12, 0.0, 2, 1, 0.01)
 
     # Filters go beyond Nyquist. 500 Hz -> 4 octaves = 8000 Hz > 11000 Hz
-    yield (raises(librosa.ParameterError)(__test_cqt_size), y, sr, 512, 500, 4 * 12,
+    yield (pytest.mark.xfail(__test_cqt_size, raises=librosa.ParameterError), y, sr, 512, 500, 4 * 12,
            12, 0.0, 2, 1, 0.01)
 
     # Test with fmin near Nyquist
@@ -131,7 +123,7 @@ def test_hybrid_cqt():
                                 norm=norm,
                                 sparsity=sparsity))
 
-        eq_(C1.shape, C2.shape)
+        assert C1.shape == C2.shape
 
         # Check for numerical comparability
         idx1 = (C1 > 1e-4 * C1.max())
@@ -176,7 +168,7 @@ def test_cqt_position():
         # Find the peak
         idx = np.argmax(Cbar)
 
-        eq_(idx, 60 - note_min)
+        assert idx == 60 - note_min
 
         # Make sure that the max outside the peak is sufficiently small
         Cscale = Cbar / Cbar[idx]
@@ -190,7 +182,7 @@ def test_cqt_position():
         yield __test, note_min
 
 
-@raises(librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterError)
 def test_cqt_fail_short_early():
 
     # sampling rate is sufficiently above the top octave to trigger early downsampling
@@ -198,7 +190,7 @@ def test_cqt_fail_short_early():
     librosa.cqt(y, sr=44100, n_bins=36)
 
 
-@raises(librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterError)
 def test_cqt_fail_short_late():
 
     y = np.zeros(16)

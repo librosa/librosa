@@ -50,7 +50,7 @@ setup(
                  'matplotlib >= 2.0.0',
                  'sphinxcontrib-versioning >= 2.2.1',
                  'sphinx-gallery'],
-        'tests': ['matplotlib >= 2.1', 'pytest-mpl', 'pytest < 4'],
+        'tests': ['matplotlib >= 2.1', 'nose', 'pytest-mpl', 'pytest-cov', 'pytest < 4'],
         'display': ['matplotlib >= 1.5'],
     }
 )

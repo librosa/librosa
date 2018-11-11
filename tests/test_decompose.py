@@ -16,13 +16,9 @@ import scipy.sparse
 import librosa
 import sklearn.decomposition
 
-from nose.tools import raises
+import pytest
 
 from test_core import srand
-
-warnings.resetwarnings()
-warnings.simplefilter('always')
-warnings.filterwarnings('module', '.*', FutureWarning, 'scipy.*')
 
 
 def test_default_decompose():
@@ -64,7 +60,7 @@ def test_decompose_fit():
     assert np.allclose(W, W2)
 
 
-@raises(librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterError)
 def test_decompose_fit_false():
 
     X = np.array([[1, 2, 3, 4, 5, 6], [1, 1, 1.2, 1, 0.8, 1]])
@@ -83,7 +79,7 @@ def test_sorted_decompose():
 def test_real_hpss():
 
     # Load an audio signal
-    y, sr = librosa.load(os.path.join('data', 'test1_22050.wav'))
+    y, sr = librosa.load(os.path.join('tests', 'data', 'test1_22050.wav'))
 
     D = np.abs(librosa.stft(y))
 
@@ -109,9 +105,9 @@ def test_real_hpss():
                     yield __hpss_test, window, power, mask, margin
 
 
-@raises(librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterError)
 def test_hpss_margin_error():
-    y, sr = librosa.load(os.path.join('data', 'test1_22050.wav'))
+    y, sr = librosa.load(os.path.join('tests', 'data', 'test1_22050.wav'))
     D = np.abs(librosa.stft(y))
     H, P = librosa.decompose.hpss(D, margin=0.9)
 
@@ -119,7 +115,7 @@ def test_hpss_margin_error():
 def test_complex_hpss():
 
     # Load an audio signal
-    y, sr = librosa.load(os.path.join('data', 'test1_22050.wav'))
+    y, sr = librosa.load(os.path.join('tests', 'data', 'test1_22050.wav'))
 
     D = librosa.stft(y)
 
@@ -198,7 +194,7 @@ def test_nn_filter_avg():
 
 def test_nn_filter_badselfsim():
 
-    @raises(librosa.ParameterError)
+    @pytest.mark.xfail(raises=librosa.ParameterError)
     def __test(x, y, sparse):
         srand()
 
