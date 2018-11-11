@@ -10,7 +10,7 @@ import tempfile
 import shutil
 import numpy as np
 
-from nose.tools import with_setup, eq_
+from nose.tools import with_setup
 
 import warnings
 warnings.resetwarnings()
@@ -53,7 +53,7 @@ def test_cache_disabled():
 
     # When there's no cache directory in the environment,
     # librosa.cache is a no-op.
-    eq_(func, func_cache)
+    assert func == func_cache
 
 
 @with_setup(cache_construct, cache_teardown)

@@ -3,7 +3,7 @@
 #  unit tests for librosa.beat
 
 from __future__ import print_function
-from nose.tools import nottest, raises, eq_
+from nose.tools import nottest, raises
 
 # Disable cache
 import os
@@ -89,7 +89,7 @@ def test_beat_no_onsets():
                                            hop_length=hop_length)
 
     assert np.allclose(tempo, 0)
-    eq_(len(beats), 0)
+    assert len(beats) == 0
 
 
 def test_tempo_no_onsets():

@@ -13,7 +13,7 @@ import six
 import librosa
 import numpy as np
 import tempfile
-from nose.tools import raises, eq_
+from nose.tools import raises
 
 from test_core import srand
 import warnings

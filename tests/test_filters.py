@@ -22,7 +22,7 @@ import glob
 import numpy as np
 import scipy.io
 
-from nose.tools import eq_, raises
+from nose.tools import raises
 import warnings
 
 import librosa
@@ -103,7 +103,7 @@ def test_melfb():
                            (0, int(DATA['nfft'][0]//2 - 1))],
                      mode='constant')
 
-        eq_(wts.shape, DATA['wts'].shape)
+        assert wts.shape == DATA['wts'].shape
         assert np.allclose(wts, DATA['wts'])
 
     for infile in files(os.path.join('data', 'feature-melfb-*.mat')):
@@ -128,7 +128,7 @@ def test_melfb():
                            (0, int(DATA['nfft'][0]//2 - 1))],
                      mode='constant')
 
-        eq_(wts.shape, DATA['wts'].shape)
+        assert wts.shape == DATA['wts'].shape
         assert np.allclose(wts, DATA['wts'])
 
     for infile in files(os.path.join('data', 'feature-melfbnorm-*.mat')):
@@ -178,7 +178,7 @@ def test_chromafb():
                            (0, int(DATA['nfft'][0, 0]//2 - 1))],
                      mode='constant')
 
-        eq_(wts.shape, DATA['wts'].shape)
+        assert wts.shape == DATA['wts'].shape
         assert np.allclose(wts, DATA['wts'])
 
     for infile in files(os.path.join('data', 'feature-chromafb-*.mat')):
@@ -224,12 +224,12 @@ def test_constant_q():
 
         assert np.all(lengths <= F.shape[1])
 
-        eq_(len(F), n_bins)
+        assert len(F) == n_bins
 
         if not pad_fft:
             return
 
-        eq_(np.mod(np.log2(F.shape[1]), 1.0), 0.0)
+        assert np.mod(np.log2(F.shape[1]), 1.0) == 0.0
 
         # Check for vanishing negative frequencies
         F_fft = np.abs(np.fft.fft(F, axis=1))
@@ -281,7 +281,7 @@ def test_window_bandwidth_dynamic():
     # Test with a window constructor guaranteed to not exist in
     # the dictionary.
     # should behave like a box filter, which has enbw == 1
-    eq_(librosa.filters.window_bandwidth(lambda n: np.ones(n)), 1)
+    assert librosa.filters.window_bandwidth(lambda n: np.ones(n)) == 1
 
 
 @raises(ValueError)

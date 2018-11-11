@@ -12,7 +12,8 @@ except:
 import platform
 import numpy as np
 import scipy.sparse
-from nose.tools import raises, eq_
+import pytest
+from nose.tools import raises
 import six
 import warnings
 import librosa
@@ -742,7 +743,7 @@ def test_warning_rename_kw_pass():
     with warnings.catch_warnings(record=True) as out:
         v = librosa.util.rename_kw('old', ov, 'new', nv, '0', '1')
 
-        eq_(v, nv)
+        assert v == nv
 
         # Make sure no warning triggered
         assert len(out) == 0
@@ -759,7 +760,7 @@ def test_warning_rename_kw_fail():
     with warnings.catch_warnings(record=True) as out:
         v = librosa.util.rename_kw('old', ov, 'new', nv, '0', '1')
 
-        eq_(v, ov)
+        assert v == ov
 
         # Make sure the warning triggered
         assert len(out) > 0
@@ -783,11 +784,11 @@ def test_index_to_slice():
 
         if pad:
             if idx_min is not None:
-                eq_(slices[0].start, idx_min)
+                assert slices[0].start == idx_min
                 if idx.min() != idx_min:
                     slices = slices[1:]
             if idx_max is not None:
-                eq_(slices[-1].stop, idx_max)
+                assert slices[-1].stop == idx_max
                 if idx.max() != idx_max:
                     slices = slices[:-1]
 
@@ -798,12 +799,12 @@ def test_index_to_slice():
             idx = idx[idx <= idx_max]
 
         idx = np.unique(idx)
-        eq_(len(slices), len(idx) - 1)
+        assert len(slices) == len(idx) - 1
 
         for sl, start, stop in zip(slices, idx, idx[1:]):
-            eq_(sl.start, start)
-            eq_(sl.stop, stop)
-            eq_(sl.step, step)
+            assert sl.start == start
+            assert sl.stop == stop
+            assert sl.step == step
 
     for indices in [np.arange(10, 90, 10), np.arange(10, 90, 15)]:
         for idx_min in [None, 5, 15]:
@@ -883,7 +884,7 @@ def test_roll_sparse():
         Xs_roll = librosa.util.roll_sparse(X_sparse, shift, axis=axis)
 
         assert scipy.sparse.issparse(Xs_roll)
-        eq_(Xs_roll.format, X_sparse.format)
+        assert Xs_roll.format == X_sparse.format
 
         Xd_roll = librosa.util.roll_sparse(X_dense, shift, axis=axis)
 
@@ -958,7 +959,7 @@ def test_tiny():
 
     def __test(x, value):
 
-        eq_(value, librosa.util.tiny(x))
+        assert value == librosa.util.tiny(x)
 
     for x, value in [(1, np.finfo(np.float32).tiny),
                      (np.ones(3, dtype=int), np.finfo(np.float32).tiny),
@@ -983,7 +984,7 @@ def test_optional_jit():
 
     def __test(f):
         y = f(2)
-        eq_(y, 2**2)
+        assert y == 2**2
 
     yield __test, __func1
     yield __test, __func2

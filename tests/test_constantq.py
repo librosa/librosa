@@ -21,7 +21,7 @@ except KeyError:
 import librosa
 import numpy as np
 
-from nose.tools import raises, eq_
+from nose.tools import raises
 
 from test_core import srand
 
@@ -44,7 +44,7 @@ def __test_cqt_size(y, sr, hop_length, fmin, n_bins, bins_per_octave,
                                     norm=norm,
                                     sparsity=sparsity))
 
-    eq_(cqt_output.shape[0], n_bins)
+    assert cqt_output.shape[0] == n_bins
 
     return cqt_output
 
@@ -131,7 +131,7 @@ def test_hybrid_cqt():
                                 norm=norm,
                                 sparsity=sparsity))
 
-        eq_(C1.shape, C2.shape)
+        assert C1.shape == C2.shape
 
         # Check for numerical comparability
         idx1 = (C1 > 1e-4 * C1.max())
@@ -176,7 +176,7 @@ def test_cqt_position():
         # Find the peak
         idx = np.argmax(Cbar)
 
-        eq_(idx, 60 - note_min)
+        assert idx == 60 - note_min
 
         # Make sure that the max outside the peak is sufficiently small
         Cscale = Cbar / Cbar[idx]

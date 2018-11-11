@@ -20,7 +20,7 @@ import glob
 import numpy as np
 import scipy.io
 import six
-from nose.tools import eq_, raises
+from nose.tools import raises
 
 import warnings
 warnings.resetwarnings()
@@ -55,7 +55,7 @@ def test_load():
                              mono=DATA['mono'])
 
         # Verify that the sample rate is correct
-        eq_(sr, DATA['sr'])
+        assert sr == DATA['sr']
 
         assert np.allclose(y, DATA['y'])
 
@@ -99,7 +99,7 @@ def test_segment_load():
     y, sr = librosa.load(test_file, sr=None, mono=False,
                          offset=0., duration=sample_len/float(fs))
 
-    eq_(y.shape[-1], sample_len)
+    assert y.shape[-1] == sample_len
 
     y2, sr = librosa.load(test_file, sr=None, mono=False)
     assert np.allclose(y, y2[:, :sample_len])
@@ -108,7 +108,7 @@ def test_segment_load():
     y, sr = librosa.load(test_file, sr=None, mono=False,
                          offset=sample_offset/float(fs), duration=1.0)
 
-    eq_(y.shape[-1], fs)
+    assert y.shape[-1] == fs
 
     y2, sr = librosa.load(test_file, sr=None, mono=False)
     assert np.allclose(y, y2[:, sample_offset:sample_offset+fs])
@@ -158,7 +158,7 @@ def test_resample_stereo():
         # First, check that the audio is valid
         librosa.util.valid_audio(y2, mono=False)
 
-        eq_(y2.ndim, y.ndim)
+        assert y2.ndim == y.ndim
 
         # If it's a no-op, make sure the signal is untouched
         if sr_out == sr_in:
@@ -515,10 +515,10 @@ def test_load_options():
             assert np.allclose(y.shape[-1], int(sr * duration))
 
         if mono:
-            eq_(y.ndim, 1)
+            assert y.ndim == 1
         else:
             # This test file is stereo, so y.ndim should be 2
-            eq_(y.ndim, 2)
+            assert y.ndim == 2
 
         # Check the dtype
         assert np.issubdtype(y.dtype, dtype)
@@ -618,8 +618,8 @@ def test_to_mono():
 
         y_mono = librosa.to_mono(y)
 
-        eq_(y_mono.ndim, 1)
-        eq_(len(y_mono), y.shape[-1])
+        assert y_mono.ndim == 1
+        assert len(y_mono) == y.shape[-1]
 
         if mono:
             assert np.allclose(y, y_mono)
@@ -691,8 +691,8 @@ def test_piptrack_properties():
                                               threshold=threshold)
 
         # Shape tests
-        eq_(S.shape, pitches.shape)
-        eq_(S.shape, mags.shape)
+        assert S.shape == pitches.shape
+        assert S.shape == mags.shape
 
         # Make sure all magnitudes are positive
         assert np.all(mags >= 0)
@@ -852,7 +852,7 @@ def test_power_to_db():
                                 top_db=top_db)
 
         assert np.isrealobj(y)
-        eq_(y.shape, x.shape)
+        assert y.shape == x.shape
 
         if top_db is not None:
             assert y.min() >= y.max()-top_db
@@ -1178,8 +1178,8 @@ def test_harmonics_1d():
 
     yh = librosa.interp_harmonics(y, x, h)
 
-    eq_(yh.shape[1:], y.shape)
-    eq_(yh.shape[0], len(h))
+    assert yh.shape[1:] == y.shape
+    assert yh.shape[0] == len(h)
     for i in range(len(h)):
         if h[i] <= 1:
             # Check that subharmonics match
@@ -1202,8 +1202,8 @@ def test_harmonics_2d():
 
     yh = librosa.interp_harmonics(y, x, h, axis=0)
 
-    eq_(yh.shape[1:], y.shape)
-    eq_(yh.shape[0], len(h))
+    assert yh.shape[1:] == y.shape
+    assert yh.shape[0] == len(h)
     for i in range(len(h)):
         if h[i] <= 1:
             # Check that subharmonics match
@@ -1241,8 +1241,8 @@ def test_harmonics_2d_varying():
 
     yh = librosa.interp_harmonics(y, x, h, axis=0)
 
-    eq_(yh.shape[1:], y.shape)
-    eq_(yh.shape[0], len(h))
+    assert yh.shape[1:] == y.shape
+    assert yh.shape[0] == len(h)
     for i in range(len(h)):
         if h[i] <= 1:
             # Check that subharmonics match

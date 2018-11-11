@@ -3,7 +3,7 @@
 #  unit tests for librosa.onset
 
 from __future__ import print_function
-from nose.tools import raises, eq_
+from nose.tools import raises
 
 # Disable cache
 import os
@@ -50,7 +50,7 @@ def test_onset_strength_audio():
         if not detrend:
             assert np.all(oenv >= 0)
 
-        eq_(oenv.shape[-1], target_shape)
+        assert oenv.shape[-1] == target_shape
 
     y, sr = librosa.load(__EXAMPLE_FILE)
 
@@ -97,7 +97,7 @@ def test_onset_strength_spectrogram():
         if not detrend:
             assert np.all(oenv >= 0)
 
-        eq_(oenv.shape[-1], target_shape)
+        assert oenv.shape[-1] == target_shape
 
     y, sr = librosa.load(__EXAMPLE_FILE)
     S = librosa.feature.melspectrogram(y=y, sr=sr)
@@ -131,7 +131,7 @@ def test_onset_strength_multi():
                                                            lag=lag, max_size=1,
                                                            channels=channels)
 
-            eq_(len(odf_multi), len(channels) - 1)
+            assert len(odf_multi) == len(channels) - 1
 
             for i, (s, t) in enumerate(zip(channels, channels[1:])):
                 odf_single = librosa.onset.onset_strength(S=S[s:t],
@@ -176,7 +176,7 @@ def test_onset_detect_const():
         onsets = librosa.onset.onset_detect(y=y, sr=sr, onset_envelope=oenv,
                                             hop_length=hop_length)
 
-        eq_(len(onsets), 0)
+        assert len(onsets) == 0
 
     sr = 22050
     duration = 3.0

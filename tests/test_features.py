@@ -5,7 +5,7 @@ from __future__ import print_function
 import warnings
 import numpy as np
 
-from nose.tools import raises, eq_
+from nose.tools import raises
 
 import librosa
 
@@ -35,7 +35,7 @@ def test_delta():
                                         axis=axis)
 
         # Check that trimming matches the expected shape
-        eq_(x.shape, delta.shape)
+        assert x.shape == delta.shape
 
         # Once we're sufficiently far into the signal (ie beyond half_len)
         # (x + delta)[t] should approximate x[t+1] if x is actually linear
@@ -73,8 +73,8 @@ def test_stack_memory():
 
         d, t = data.shape
 
-        eq_(data_stack.shape[0], n_steps * d)
-        eq_(data_stack.shape[1], t)
+        assert data_stack.shape[0] == n_steps * d
+        assert data_stack.shape[1] == t
 
         assert np.allclose(data_stack[0], data[0])
 
@@ -656,9 +656,9 @@ def test_tempogram_odf():
                                               norm=norm)
 
         # Check the shape of the output
-        eq_(tempogram.shape[0], win_length)
+        assert tempogram.shape[0] == win_length
 
-        eq_(tempogram.shape[1], len(odf))
+        assert tempogram.shape[1] == len(odf)
 
         # Mean over time to wash over the boundary padding effects
         idx = np.where(librosa.util.localmax(tempogram.max(axis=1)))[0]

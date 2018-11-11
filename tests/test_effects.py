@@ -10,7 +10,7 @@ try:
 except KeyError:
     pass
 
-from nose.tools import raises, eq_
+from nose.tools import raises
 
 import librosa
 import numpy as np
@@ -51,7 +51,7 @@ def test_pitch_shift():
         new_duration = librosa.get_duration(ys, sr=sr)
 
         # We don't have to be too precise here, since this goes through an STFT
-        eq_(orig_duration, new_duration)
+        assert orig_duration == new_duration
 
     for n_steps in np.linspace(-1.5, 1.5, 5):
         for bins_per_octave in [12, 24]:
