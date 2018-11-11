@@ -29,7 +29,8 @@ install:
 script:
     - python --version
     # - nosetests --with-coverage --cover-erase --cover-package=librosa -v -w tests/
-    - nosetests --with-coverage --cover-erase --cover-package=librosa -w tests/
+    # - nosetests --with-coverage --cover-erase --cover-package=librosa -w tests/
+    - pytest 
 
 after_success:
     - coveralls
