@@ -272,8 +272,9 @@ def test_constant_q():
 
 def test_window_bandwidth():
 
-    eq_(librosa.filters.window_bandwidth('hann'),
-        librosa.filters.window_bandwidth(scipy.signal.hann))
+    hann_bw = librosa.filters.window_bandwidth('hann')
+    hann_scipy_bw = librosa.filters.window_bandwidth(scipy.signal.hann)
+    assert hann_bw == hann_scipy_bw
 
 
 def test_window_bandwidth_dynamic():
