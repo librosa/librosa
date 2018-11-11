@@ -27,10 +27,6 @@ import numpy as np
 
 import pytest
 
-warnings.resetwarnings()
-warnings.simplefilter('always')
-warnings.filterwarnings('module', '.*', FutureWarning, 'scipy.*')
-
 
 def get_spec(y, sr):
 
@@ -41,7 +37,7 @@ def get_spec(y, sr):
 @pytest.fixture
 def audio():
 
-    __EXAMPLE_FILE = os.path.join('data', 'test1_22050.wav')
+    __EXAMPLE_FILE = os.path.join('tests', 'data', 'test1_22050.wav')
     y, sr = librosa.load(__EXAMPLE_FILE)
     return y, sr
 
