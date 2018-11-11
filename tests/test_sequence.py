@@ -1,18 +1,12 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 
-import warnings
-
 import numpy as np
 
 from nose.tools import raises
 from test_core import srand
 
 import librosa
-
-warnings.resetwarnings()
-warnings.simplefilter('always')
-warnings.filterwarnings('module', '.*', FutureWarning, 'scipy.*')
 
 
 # Core viterbi tests

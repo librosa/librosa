@@ -17,16 +17,13 @@ from nose.tools import raises
 
 from test_core import srand
 import warnings
-warnings.resetwarnings()
-warnings.simplefilter('always')
-warnings.filterwarnings('module', '.*', FutureWarning, 'scipy.*')
 
 
 def test_write_wav():
 
     def __test(mono, norm):
 
-        fpath = os.path.join('data', 'test1_22050.wav')
+        fpath = os.path.join('tests', 'data', 'test1_22050.wav')
         y, sr = librosa.load(fpath, sr=None, mono=mono)
 
         _, tfname = tempfile.mkstemp()

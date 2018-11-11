@@ -16,8 +16,6 @@ import librosa
 import numpy as np
 
 __EXAMPLE_FILE = os.path.join('data', 'test1_22050.wav')
-warnings.resetwarnings()
-warnings.simplefilter('always')
 
 
 def test_time_stretch():

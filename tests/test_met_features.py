@@ -20,10 +20,7 @@ from test_core import load, files
 
 import librosa
 
-__EXAMPLE_FILE = os.path.join('data', 'test1_22050.wav')
-warnings.resetwarnings()
-warnings.simplefilter('always')
-warnings.filterwarnings('module', '.*', FutureWarning, 'scipy.*')
+__EXAMPLE_FILE = os.path.join('tests', 'data', 'test1_22050.wav')
 
 
 def met_stft(y, n_fft, hop_length, win_length, normalize):
@@ -60,7 +57,7 @@ def test_spectral_centroid():
 
         assert np.allclose(centroid, DATA['centroid'])
 
-    for infile in files(os.path.join('data', 'met-centroid-*.mat')):
+    for infile in files(os.path.join('tests', 'data', 'met-centroid-*.mat')):
         yield __test, infile
 
 
@@ -83,7 +80,7 @@ def test_spectral_contrast():
 
         assert np.allclose(contrast, DATA['contrast'], rtol=1e-3, atol=1e-2)
 
-    for infile in files(os.path.join('data', 'met-contrast-*.mat')):
+    for infile in files(os.path.join('tests', 'data', 'met-contrast-*.mat')):
         yield __test, infile
 
 
@@ -107,7 +104,7 @@ def test_spectral_rolloff():
 
         assert np.allclose(rolloff, DATA['rolloff'])
 
-    for infile in files(os.path.join('data', 'met-rolloff-*.mat')):
+    for infile in files(os.path.join('tests', 'data', 'met-rolloff-*.mat')):
         yield __test, infile
 
 
@@ -135,5 +132,5 @@ def test_spectral_bandwidth():
         # METlab implementation takes the mean, not the sum
         assert np.allclose(bw, S.shape[0] * DATA['bw'])
 
-    for infile in files(os.path.join('data', 'met-bandwidth-*.mat')):
+    for infile in files(os.path.join('tests', 'data', 'met-bandwidth-*.mat')):
         yield __test, infile

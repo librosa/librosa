@@ -18,7 +18,7 @@ try:
 except KeyError:
     pass
 
-__EXAMPLE_FILE = os.path.join('data', 'test1_22050.wav')
+__EXAMPLE_FILE = os.path.join('tests', 'data', 'test1_22050.wav')
 warnings.resetwarnings()
 warnings.simplefilter('always')
 warnings.filterwarnings('module', '.*', FutureWarning, 'scipy.*')
@@ -514,8 +514,8 @@ def test_poly_features_synthetic():
 
 def test_tonnetz():
     y, sr = librosa.load(librosa.util.example_audio_file())
-    tonnetz_chroma = np.load(os.path.join("data", "feature-tonnetz-chroma.npy"))
-    tonnetz_msaf = np.load(os.path.join("data", "feature-tonnetz-msaf.npy"))
+    tonnetz_chroma = np.load(os.path.join('tests', "data", "feature-tonnetz-chroma.npy"))
+    tonnetz_msaf = np.load(os.path.join('tests', "data", "feature-tonnetz-msaf.npy"))
 
     # Use cqt chroma
     def __audio():
@@ -716,7 +716,7 @@ def test_tempogram_odf_multi():
 
 def test_cens():
     # load CQT data from Chroma Toolbox
-    ct_cqt = load(os.path.join('data', 'features-CT-cqt.mat'))
+    ct_cqt = load(os.path.join('tests', 'data', 'features-CT-cqt.mat'))
 
     fn_ct_chroma_cens = ['features-CT-CENS_9-2.mat',
                          'features-CT-CENS_21-5.mat',
@@ -740,7 +740,7 @@ def test_cens():
         lr_chroma_cens = lr_chroma_cens[:, ::downsample_smooth]
 
         # load CENS-41-1 features
-        ct_chroma_cens = load(os.path.join('data', cur_fn_ct_chroma_cens))
+        ct_chroma_cens = load(os.path.join('tests', 'data', cur_fn_ct_chroma_cens))
 
         maxdev = np.abs(ct_chroma_cens['f_CENS'] - lr_chroma_cens)
         assert np.allclose(ct_chroma_cens['f_CENS'], lr_chroma_cens, rtol=1e-15, atol=1e-15), maxdev

@@ -8,11 +8,6 @@ from scipy.spatial.distance import cdist
 from nose.tools import raises
 from test_core import srand
 
-import warnings
-warnings.resetwarnings()
-warnings.simplefilter('always')
-warnings.filterwarnings('module', '.*', FutureWarning, 'scipy.*')
-
 
 @raises(librosa.ParameterError)
 def test_1d_input():
@@ -54,7 +49,8 @@ def test_dtw_global_constrained():
                      [np.inf, np.inf, 13., 7., 8., 14.],
                      [np.inf, np.inf, np.inf, 14., 13., 9.]])
 
-    mut_D = librosa.sequence.dtw(X, Y, backtrack=False, global_constraints=True, band_rad=0.5)
+    mut_D = librosa.sequence.dtw(X, Y, backtrack=False,
+                                 global_constraints=True, band_rad=0.5)
     assert np.array_equal(gt_D, mut_D)
 
 
@@ -90,7 +86,6 @@ def test_dtw_incompatible_args_02():
     librosa.sequence.dtw(C=None, X=None, Y=None)
 
 
-
 @raises(librosa.ParameterError)
 def test_dtw_incompatible_sigma_add():
     X = np.array([[1, 3, 3, 8, 1]])
@@ -120,8 +115,8 @@ def test_dtw_global_diagonal():
     gt_wp = list(zip(list(range(10)), list(range(10))))[::-1]
 
     mut_D, mut_wp = librosa.sequence.dtw(X, Y, subseq=True, metric='cosine',
-                                step_sizes_sigma=np.array([[1, 1]]),
-                                weights_mul=np.array([1, ]))
+                                         step_sizes_sigma=np.array([[1, 1]]),
+                                         weights_mul=np.array([1, ]))
 
     assert np.array_equal(np.asarray(gt_wp), np.asarray(mut_wp))
 

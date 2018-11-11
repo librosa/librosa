@@ -2,8 +2,6 @@
 # -*- encoding: utf-8 -*-
 # CREATED:2015-02-14 19:13:49 by Brian McFee <brian.mcfee@nyu.edu>
 '''Unit tests for time and frequency conversion'''
-import warnings
-
 import os
 try:
     os.environ.pop('LIBROSA_CACHE_DIR')
@@ -13,10 +11,6 @@ except KeyError:
 import librosa
 import numpy as np
 from nose.tools import raises
-
-warnings.resetwarnings()
-warnings.simplefilter('always')
-warnings.filterwarnings('module', '.*', FutureWarning, 'scipy.*')
 
 
 def test_frames_to_samples():

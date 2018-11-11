@@ -17,7 +17,7 @@ import librosa
 
 from test_core import files, load
 
-__EXAMPLE_FILE = os.path.join('data', 'test1_22050.wav')
+__EXAMPLE_FILE = os.path.join('tests', 'data', 'test1_22050.wav')
 
 
 def test_onset_strength():

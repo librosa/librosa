@@ -27,9 +27,6 @@ import warnings
 
 import librosa
 
-warnings.resetwarnings()
-warnings.simplefilter('always')
-warnings.filterwarnings('module', '.*', FutureWarning, 'scipy.*')
 
 # -- utilities --#
 def files(pattern):
@@ -52,7 +49,7 @@ def test_hz_to_mel():
 
         assert np.allclose(z, DATA['result'])
 
-    for infile in files(os.path.join('data', 'feature-hz_to_mel-*.mat')):
+    for infile in files(os.path.join('tests', 'data', 'feature-hz_to_mel-*.mat')):
         yield (__test_to_mel, infile)
 
     pass
@@ -66,7 +63,7 @@ def test_mel_to_hz():
 
         assert np.allclose(z, DATA['result'])
 
-    for infile in files(os.path.join('data', 'feature-mel_to_hz-*.mat')):
+    for infile in files(os.path.join('tests', 'data', 'feature-mel_to_hz-*.mat')):
         yield (__test_to_hz, infile)
 
     pass
@@ -79,7 +76,7 @@ def test_hz_to_octs():
 
         assert np.allclose(z, DATA['result'])
 
-    for infile in files(os.path.join('data', 'feature-hz_to_octs-*.mat')):
+    for infile in files(os.path.join('tests', 'data', 'feature-hz_to_octs-*.mat')):
         yield (__test_to_octs, infile)
 
     pass
@@ -106,7 +103,7 @@ def test_melfb():
         assert wts.shape == DATA['wts'].shape
         assert np.allclose(wts, DATA['wts'])
 
-    for infile in files(os.path.join('data', 'feature-melfb-*.mat')):
+    for infile in files(os.path.join('tests', 'data', 'feature-melfb-*.mat')):
         yield (__test_default_norm, infile)
 
     def __test_with_norm(infile):
@@ -131,7 +128,7 @@ def test_melfb():
         assert wts.shape == DATA['wts'].shape
         assert np.allclose(wts, DATA['wts'])
 
-    for infile in files(os.path.join('data', 'feature-melfbnorm-*.mat')):
+    for infile in files(os.path.join('tests', 'data', 'feature-melfbnorm-*.mat')):
         yield (__test_with_norm, infile)
 
 
@@ -181,7 +178,7 @@ def test_chromafb():
         assert wts.shape == DATA['wts'].shape
         assert np.allclose(wts, DATA['wts'])
 
-    for infile in files(os.path.join('data', 'feature-chromafb-*.mat')):
+    for infile in files(os.path.join('tests', 'data', 'feature-chromafb-*.mat')):
         yield (__test, infile)
 
 
@@ -396,7 +393,7 @@ def test_get_window_pre():
 def test_semitone_filterbank():
     # We test against Chroma Toolbox' elliptical semitone filterbank
     # load data from chroma toolbox
-    gt_fb = scipy.io.loadmat(os.path.join('data', 'filter-muliratefb-MIDI_FB_ellip_pitch_60_96_22050_Q25'),
+    gt_fb = scipy.io.loadmat(os.path.join('tests', 'data', 'filter-muliratefb-MIDI_FB_ellip_pitch_60_96_22050_Q25'),
                              squeeze_me=True)['h']
 
     # standard parameters reproduce settings from chroma toolbox
