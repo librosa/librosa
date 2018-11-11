@@ -25,14 +25,13 @@ import librosa
 import librosa.display
 import numpy as np
 
-from nose.tools import nottest, raises, eq_
-from mpl_ic import image_comparison
+import pytest
+
 warnings.resetwarnings()
 warnings.simplefilter('always')
 warnings.filterwarnings('module', '.*', FutureWarning, 'scipy.*')
 
 
-@nottest
 def get_spec(y, sr):
 
     C = np.abs(librosa.cqt(y, sr=sr))
@@ -52,56 +51,63 @@ beat_t = librosa.frames_to_time(beats, sr=sr)
 Csync = librosa.util.sync(C, beats, aggregate=np.median)
 
 
-@raises(librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterError)
 def test_unknown_time_unit():
     times = np.arange(len(y))
     plt.figure()
     ax = plt.gca()
     ax.plot(times, y)
     ax.xaxis.set_major_formatter(librosa.display.TimeFormatter(unit='neither s, nor ms, nor None'))
+    return plt.gcf()
 
 
-@image_comparison(baseline_images=['complex'], extensions=['png'])
+@pytest.mark.mpl_image_compare(baseline_images=['complex'], extensions=['png'])
 def test_complex_input():
     plt.figure()
     librosa.display.specshow(S)
+    return plt.gcf()
 
 
-@image_comparison(baseline_images=['abs'], extensions=['png'])
+@pytest.mark.mpl_image_compare(baseline_images=['abs'], extensions=['png'])
 def test_abs_input():
     plt.figure()
     librosa.display.specshow(S_abs)
+    return plt.gcf()
 
 
-@image_comparison(baseline_images=['cqt_note'], extensions=['png'])
+@pytest.mark.mpl_image_compare(baseline_images=['cqt_note'], extensions=['png'])
 def test_cqt_note():
     plt.figure()
     librosa.display.specshow(C, y_axis='cqt_note')
+    return plt.gcf()
 
 
-@image_comparison(baseline_images=['cqt_hz'], extensions=['png'])
+@pytest.mark.mpl_image_compare(baseline_images=['cqt_hz'], extensions=['png'])
 def test_cqt_hz():
     plt.figure()
     librosa.display.specshow(C, y_axis='cqt_hz')
+    return plt.gcf()
 
 
-@image_comparison(baseline_images=['tempo'], extensions=['png'])
+@pytest.mark.mpl_image_compare(baseline_images=['tempo'], extensions=['png'])
 def test_tempo():
     T = librosa.feature.tempogram(y=y, sr=sr)
 
     plt.figure()
     librosa.display.specshow(T, y_axis='tempo', cmap='magma')
+    return plt.gcf()
 
 
-@image_comparison(baseline_images=['tonnetz'], extensions=['png'])
+@pytest.mark.mpl_image_compare(baseline_images=['tonnetz'], extensions=['png'])
 def test_tonnetz():
     plt.figure()
     chroma = librosa.feature.chroma_cqt(C=C)
     ton = librosa.feature.tonnetz(chroma=chroma)
     librosa.display.specshow(ton, y_axis='tonnetz')
+    return plt.gcf()
 
 
-@image_comparison(baseline_images=['chroma'], extensions=['png'])
+@pytest.mark.mpl_image_compare(baseline_images=['chroma'], extensions=['png'])
 def test_chroma():
     plt.figure()
     plt.subplot(3, 1, 1)
@@ -115,43 +121,48 @@ def test_chroma():
     plt.subplot(3, 1, 3)
     chr3 = librosa.feature.chroma_stft(S=S_abs**2, sr=sr, n_chroma=3*12)
     librosa.display.specshow(chr3, y_axis='chroma', bins_per_octave=3*12)
+    return plt.gcf()
 
 
-@image_comparison(baseline_images=['double_chroma'], extensions=['png'])
+@pytest.mark.mpl_image_compare(baseline_images=['double_chroma'], extensions=['png'])
 def test_double_chroma():
     plt.figure()
 
     chr1 = librosa.feature.chroma_stft(S=S_abs**2, sr=sr)
     chr1 = np.vstack((chr1, chr1))
     librosa.display.specshow(chr1, y_axis='chroma', bins_per_octave=12)
+    return plt.gcf()
 
 
-@image_comparison(baseline_images=['x_mel'], extensions=['png'])
+@pytest.mark.mpl_image_compare(baseline_images=['x_mel'], extensions=['png'])
 def test_x_mel():
     plt.figure()
 
     M = librosa.feature.melspectrogram(S=S_abs**2)
     librosa.display.specshow(M.T, x_axis='mel')
+    return plt.gcf()
 
 
-@image_comparison(baseline_images=['y_mel'], extensions=['png'])
+@pytest.mark.mpl_image_compare(baseline_images=['y_mel'], extensions=['png'])
 def test_y_mel():
     plt.figure()
 
     M = librosa.feature.melspectrogram(S=S_abs**2)
     librosa.display.specshow(M, y_axis='mel')
+    return plt.gcf()
 
 
-@image_comparison(baseline_images=['y_mel_bounded'], extensions=['png'])
+@pytest.mark.mpl_image_compare(baseline_images=['y_mel_bounded'], extensions=['png'])
 def test_y_mel_bounded():
     plt.figure()
 
     fmin, fmax = 110, 880
     M = librosa.feature.melspectrogram(S=S_abs**2, fmin=fmin, fmax=fmax)
     librosa.display.specshow(M, y_axis='mel', fmin=fmin, fmax=fmax)
+    return plt.gcf()
 
 
-@image_comparison(baseline_images=['x_none_y_linear'], extensions=['png'])
+@pytest.mark.mpl_image_compare(baseline_images=['x_none_y_linear'], extensions=['png'])
 def test_xaxis_none_yaxis_linear():
     plt.figure()
     plt.subplot(3, 1, 1)
@@ -162,9 +173,10 @@ def test_xaxis_none_yaxis_linear():
 
     plt.subplot(3, 1, 3)
     librosa.display.specshow(S_bin, y_axis='linear')
+    return plt.gcf()
 
 
-@image_comparison(baseline_images=['specshow_ext_axes'], extensions=['png'])
+@pytest.mark.mpl_image_compare(baseline_images=['specshow_ext_axes'], extensions=['png'])
 def test_specshow_ext_axes():
     plt.figure()
     ax_left = plt.subplot(1, 2, 1)
@@ -173,9 +185,10 @@ def test_specshow_ext_axes():
     # implicitly ax_right
     librosa.display.specshow(S_abs, cmap='gray')
     librosa.display.specshow(S_abs, cmap='magma', ax=ax_left)
+    return plt.gcf()
 
 
-@image_comparison(baseline_images=['x_none_y_log'], extensions=['png'])
+@pytest.mark.mpl_image_compare(baseline_images=['x_none_y_log'], extensions=['png'])
 def test_xaxis_none_yaxis_log():
     plt.figure()
 
@@ -187,9 +200,10 @@ def test_xaxis_none_yaxis_log():
 
     plt.subplot(3, 1, 3)
     librosa.display.specshow(S_bin, y_axis='log')
+    return plt.gcf()
 
 
-@image_comparison(baseline_images=['x_linear_y_none'], extensions=['png'])
+@pytest.mark.mpl_image_compare(baseline_images=['x_linear_y_none'], extensions=['png'])
 def test_xaxis_linear_yaxis_none():
     plt.figure()
 
@@ -201,9 +215,10 @@ def test_xaxis_linear_yaxis_none():
 
     plt.subplot(3, 1, 3)
     librosa.display.specshow(S_bin.T, x_axis='linear')
+    return plt.gcf()
 
 
-@image_comparison(baseline_images=['x_log_y_none'], extensions=['png'])
+@pytest.mark.mpl_image_compare(baseline_images=['x_log_y_none'], extensions=['png'])
 def test_xaxis_log_yaxis_none():
 
     plt.figure()
@@ -216,51 +231,58 @@ def test_xaxis_log_yaxis_none():
 
     plt.subplot(3, 1, 3)
     librosa.display.specshow(S_bin.T, x_axis='log')
+    return plt.gcf()
 
 
-@image_comparison(baseline_images=['x_time_y_none'], extensions=['png'])
+@pytest.mark.mpl_image_compare(baseline_images=['x_time_y_none'], extensions=['png'])
 def test_xaxis_time_yaxis_none():
 
     plt.figure()
     librosa.display.specshow(S_abs, x_axis='time')
+    return plt.gcf()
 
 
-@image_comparison(baseline_images=['x_none_y_time'], extensions=['png'])
+@pytest.mark.mpl_image_compare(baseline_images=['x_none_y_time'], extensions=['png'])
 def test_xaxis_none_yaxis_time():
 
     plt.figure()
     librosa.display.specshow(S_abs.T, y_axis='time')
+    return plt.gcf()
 
 
-@image_comparison(baseline_images=['x_frames_y_none'], extensions=['png'])
+@pytest.mark.mpl_image_compare(baseline_images=['x_frames_y_none'], extensions=['png'])
 def test_xaxis_frames_yaxis_none():
 
     plt.figure()
     librosa.display.specshow(S_abs, x_axis='frames')
+    return plt.gcf()
 
 
-@image_comparison(baseline_images=['x_none_y_frames'], extensions=['png'])
+@pytest.mark.mpl_image_compare(baseline_images=['x_none_y_frames'], extensions=['png'])
 def test_xaxis_none_yaxis_frames():
 
     plt.figure()
     librosa.display.specshow(S_abs.T, y_axis='frames')
+    return plt.gcf()
 
 
-@image_comparison(baseline_images=['x_lag_y_none'], extensions=['png'])
+@pytest.mark.mpl_image_compare(baseline_images=['x_lag_y_none'], extensions=['png'])
 def test_xaxis_lag_yaxis_none():
 
     plt.figure()
     librosa.display.specshow(S_abs, x_axis='lag')
+    return plt.gcf()
 
 
-@image_comparison(baseline_images=['x_none_y_lag'], extensions=['png'])
+@pytest.mark.mpl_image_compare(baseline_images=['x_none_y_lag'], extensions=['png'])
 def test_xaxis_time_yaxis_lag():
 
     plt.figure()
     librosa.display.specshow(S_abs.T, y_axis='lag')
+    return plt.gcf()
 
 
-@image_comparison(baseline_images=['time_scales_auto'], extensions=['png'])
+@pytest.mark.mpl_image_compare(baseline_images=['time_scales_auto'], extensions=['png'])
 def test_time_scales_auto():
 
     # sr = 22050, hop_length = 512, S.shape[1] = 198
@@ -283,9 +305,10 @@ def test_time_scales_auto():
     librosa.display.specshow(S_abs, sr=sr // (60 * 20), x_axis='time')
 
     plt.tight_layout()
+    return plt.gcf()
 
 
-@image_comparison(baseline_images=['time_unit'], extensions=['png'])
+@pytest.mark.mpl_image_compare(baseline_images=['time_unit'], extensions=['png'])
 def test_time_unit():
 
     # sr = 22050, hop_length = 512, S.shape[1] = 198
@@ -304,9 +327,10 @@ def test_time_unit():
     librosa.display.specshow(S_abs, sr=sr, x_axis='ms')
 
     plt.tight_layout()
+    return plt.gcf()
 
 
-@image_comparison(baseline_images=['time_unit_lag'], extensions=['png'])
+@pytest.mark.mpl_image_compare(baseline_images=['time_unit_lag'], extensions=['png'])
 def test_time_unit_lag():
 
     plt.figure(figsize=(9, 10))
@@ -323,9 +347,10 @@ def test_time_unit_lag():
     librosa.display.specshow(S_abs, sr=sr, x_axis='lag_ms')
 
     plt.tight_layout()
+    return plt.gcf()
 
 
-@image_comparison(baseline_images=['waveplot_mono'], extensions=['png'])
+@pytest.mark.mpl_image_compare(baseline_images=['waveplot_mono'], extensions=['png'])
 def test_waveplot_mono():
 
     plt.figure()
@@ -337,9 +362,10 @@ def test_waveplot_mono():
 
     plt.subplot(3, 1, 3)
     librosa.display.waveplot(y, sr=sr, x_axis='time')
+    return plt.gcf()
 
 
-@image_comparison(baseline_images=['waveplot_ext_axes'], extensions=['png'])
+@pytest.mark.mpl_image_compare(baseline_images=['waveplot_ext_axes'], extensions=['png'])
 def test_waveplot_ext_axes():
     plt.figure()
     ax_left = plt.subplot(1, 2, 1)
@@ -348,40 +374,45 @@ def test_waveplot_ext_axes():
     # implicitly ax_right
     librosa.display.waveplot(y, color='blue')
     librosa.display.waveplot(y, color='red', ax=ax_left)
+    return plt.gcf()
 
 
-@image_comparison(baseline_images=['waveplot_stereo'], extensions=['png'])
+@pytest.mark.mpl_image_compare(baseline_images=['waveplot_stereo'], extensions=['png'])
 def test_waveplot_stereo():
 
     ys = np.vstack([y[np.newaxis, :], 2 * y[np.newaxis, :]])
 
     plt.figure()
     librosa.display.waveplot(ys, sr=sr)
+    return plt.gcf()
 
 
-@raises(librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterError)
 def test_unknown_wavaxis():
 
     plt.figure()
     librosa.display.waveplot(y, sr=sr, x_axis='something not in the axis map')
+    return plt.gcf()
 
 
-@raises(librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterError)
 def test_waveplot_bad_maxsr():
 
     plt.figure()
     librosa.display.waveplot(y, sr=sr, max_sr=0)
+    return plt.gcf()
 
 
-@raises(librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterError)
 def test_waveplot_bad_maxpoints():
     plt.figure()
     librosa.display.waveplot(y, sr=sr, max_points=0)
+    return plt.gcf()
 
 
 def test_unknown_axis():
 
-    @raises(librosa.ParameterError)
+    @pytest.mark.xfail(raises=librosa.ParameterError)
     def __test(axis):
         kwargs = dict()
         kwargs.setdefault(axis, 'something not in the axis map')
@@ -403,29 +434,31 @@ def test_cmap_robust():
         if isinstance(cmap1, matplotlib.colors.ListedColormap):
             assert np.allclose(cmap1.colors, cmap2.colors)
         elif isinstance(cmap1, matplotlib.colors.LinearSegmentedColormap):
-            eq_(cmap1.name, cmap2.name)
+            assert cmap1.name == cmap2.name
         else:
-            eq_(cmap1, cmap2)
+            assert cmap1 == cmap2
 
     # Inputs here are constructed to not need robust sign estimation
     for D in [1.0 + S_abs, -(1.0 + S_abs), S_signed, S_bin]:
         yield __test, D
 
 
-@image_comparison(baseline_images=['coords'], extensions=['png'])
+@pytest.mark.mpl_image_compare(baseline_images=['coords'], extensions=['png'])
 def test_coords():
 
     plt.figure()
     librosa.display.specshow(Csync, x_coords=beat_t, x_axis='time', y_axis='cqt_note')
+    return plt.gcf()
 
 
-@raises(librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterError)
 def test_bad_coords():
 
     librosa.display.specshow(S_abs, x_coords=np.arange(S.shape[1] // 2))
+    return plt.gcf()
 
 
-@image_comparison(baseline_images=['sharex_specshow_ms'], extensions=['png'])
+@pytest.mark.mpl_image_compare(baseline_images=['sharex_specshow_ms'], extensions=['png'])
 def test_sharex_specshow_ms():
 
     # Correct time range ~= 4.6 s or 4600ms
@@ -435,9 +468,10 @@ def test_sharex_specshow_ms():
     librosa.display.specshow(librosa.amplitude_to_db(S_abs, ref=np.max), x_axis='ms')
     plt.subplot(2, 1, 2, sharex=ax)
     librosa.display.waveplot(y, sr)
+    return plt.gcf()
 
 
-@image_comparison(baseline_images=['sharex_waveplot_ms'], extensions=['png'])
+@pytest.mark.mpl_image_compare(baseline_images=['sharex_waveplot_ms'], extensions=['png'])
 def test_sharex_waveplot_ms():
 
     # Correct time range ~= 4.6 s or 4600ms
@@ -447,3 +481,5 @@ def test_sharex_waveplot_ms():
     librosa.display.waveplot(y, sr)
     plt.subplot(2, 1, 2, sharex=ax)
     librosa.display.specshow(librosa.amplitude_to_db(S_abs, ref=np.max), x_axis='ms')
+    return plt.gcf()
+
