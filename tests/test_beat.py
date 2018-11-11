@@ -13,18 +13,11 @@ except:
     pass
 
 import numpy as np
-import warnings
 import librosa
 
 from test_core import files, load
 
 __EXAMPLE_FILE = os.path.join('data', 'test1_22050.wav')
-
-
-warnings.resetwarnings()
-warnings.simplefilter('always')
-warnings.simplefilter('always')
-warnings.filterwarnings('module', '.*', FutureWarning, 'scipy.*')
 
 
 def test_onset_strength():
