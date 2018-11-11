@@ -1,18 +1,12 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 
-import warnings
-
 import numpy as np
 
-from nose.tools import raises
+import pytest
 from test_core import srand
 
 import librosa
-
-warnings.resetwarnings()
-warnings.simplefilter('always')
-warnings.filterwarnings('module', '.*', FutureWarning, 'scipy.*')
 
 
 # Core viterbi tests
@@ -78,7 +72,7 @@ def test_viterbi_init():
     assert logp1 == logp2
 
 def test_viterbi_bad_transition():
-    @raises(librosa.ParameterError)
+    @pytest.mark.xfail(raises=librosa.ParameterError)
     def __bad_trans(trans, x):
         librosa.sequence.viterbi(x, trans)
 
@@ -101,7 +95,7 @@ def test_viterbi_bad_transition():
     yield __bad_trans, trans, x
 
 def test_viterbi_bad_init():
-    @raises(librosa.ParameterError)
+    @pytest.mark.xfail(raises=librosa.ParameterError)
     def __bad_init(init, trans, x):
         librosa.sequence.viterbi(x, trans, p_init=init)
 
@@ -123,7 +117,7 @@ def test_viterbi_bad_init():
     yield __bad_init, p_init, trans, x
 
 def test_viterbi_bad_obs():
-    @raises(librosa.ParameterError)
+    @pytest.mark.xfail(raises=librosa.ParameterError)
     def __bad_obs(trans, x):
         librosa.sequence.viterbi(x, trans)
 
@@ -221,7 +215,7 @@ def test_viterbi_discriminative_example_init():
 
 
 def test_viterbi_discriminative_bad_transition():
-    @raises(librosa.ParameterError)
+    @pytest.mark.xfail(raises=librosa.ParameterError)
     def __bad_trans(trans, x):
         librosa.sequence.viterbi_discriminative(x, trans)
 
@@ -246,7 +240,7 @@ def test_viterbi_discriminative_bad_transition():
 
 
 def test_viterbi_discriminative_bad_init():
-    @raises(librosa.ParameterError)
+    @pytest.mark.xfail(raises=librosa.ParameterError)
     def __bad_init(init, trans, x):
         librosa.sequence.viterbi_discriminative(x, trans, p_init=init)
 
@@ -271,7 +265,7 @@ def test_viterbi_discriminative_bad_init():
 
 
 def test_viterbi_discriminative_bad_marginal():
-    @raises(librosa.ParameterError)
+    @pytest.mark.xfail(raises=librosa.ParameterError)
     def __bad_init(state, trans, x):
         librosa.sequence.viterbi_discriminative(x, trans, p_state=state)
 
@@ -296,7 +290,7 @@ def test_viterbi_discriminative_bad_marginal():
 
 
 def test_viterbi_discriminative_bad_obs():
-    @raises(librosa.ParameterError)
+    @pytest.mark.xfail(raises=librosa.ParameterError)
     def __bad_obs(x, trans):
         librosa.sequence.viterbi_discriminative(x, trans)
 
@@ -371,7 +365,7 @@ def test_viterbi_binary_example_init():
 
 
 def test_viterbi_binary_bad_transition():
-    @raises(librosa.ParameterError)
+    @pytest.mark.xfail(raises=librosa.ParameterError)
     def __bad_trans(trans, x):
         librosa.sequence.viterbi_binary(x, trans)
 
@@ -395,7 +389,7 @@ def test_viterbi_binary_bad_transition():
 
 
 def test_viterbi_binary_bad_init():
-    @raises(librosa.ParameterError)
+    @pytest.mark.xfail(raises=librosa.ParameterError)
     def __bad_init(init, trans, x):
         librosa.sequence.viterbi_binary(x, trans, p_init=init)
 
@@ -417,7 +411,7 @@ def test_viterbi_binary_bad_init():
 
 
 def test_viterbi_binary_bad_marginal():
-    @raises(librosa.ParameterError)
+    @pytest.mark.xfail(raises=librosa.ParameterError)
     def __bad_state(state, trans, x):
         librosa.sequence.viterbi_binary(x, trans, p_state=state)
 
@@ -439,7 +433,7 @@ def test_viterbi_binary_bad_marginal():
 
 
 def test_viterbi_binary_bad_obs():
-    @raises(librosa.ParameterError)
+    @pytest.mark.xfail(raises=librosa.ParameterError)
     def __bad_obs(x, trans):
         librosa.sequence.viterbi_binary(x, trans)
 
@@ -466,8 +460,9 @@ def test_trans_uniform():
     for n in range(1, 4):
         yield __trans, n
 
-    yield raises(librosa.ParameterError)(__trans), 0
-    yield raises(librosa.ParameterError)(__trans), None
+    tf = pytest.mark.xfail(__trans, raises=librosa.ParameterError)
+    yield tf, 0
+    yield tf, None
 
 
 def test_trans_loop():
@@ -491,17 +486,18 @@ def test_trans_loop():
     yield __trans, 3, [0.8, 0.7, 0.5]
 
     # Failure if we don't have enough states
-    yield raises(librosa.ParameterError)(__trans), 1, 0.5
+    tf = pytest.mark.xfail(__trans, raises=librosa.ParameterError)
+    yield tf, 1, 0.5
 
     # Failure if n_states is wrong
-    yield raises(librosa.ParameterError)(__trans), None, 0.5
+    yield tf, None, 0.5
 
     # Failure if p is not a probability
-    yield raises(librosa.ParameterError)(__trans), 3, 1.5
-    yield raises(librosa.ParameterError)(__trans), 3, -0.25
+    yield tf, 3, 1.5
+    yield tf, 3, -0.25
 
     # Failure if there's a shape mismatch
-    yield raises(librosa.ParameterError)(__trans), 3, [0.5, 0.2]
+    yield tf, 3, [0.5, 0.2]
 
 
 def test_trans_cycle():
@@ -528,22 +524,23 @@ def test_trans_cycle():
     yield __trans, 3, [0.8, 0.7, 0.5]
 
     # Failure if we don't have enough states
-    yield raises(librosa.ParameterError)(__trans), 1, 0.5
+    tf = pytest.mark.xfail(__trans, raises=librosa.ParameterError)
+    yield tf, 1, 0.5
 
     # Failure if n_states is wrong
-    yield raises(librosa.ParameterError)(__trans), None, 0.5
+    yield tf, None, 0.5
 
     # Failure if p is not a probability
-    yield raises(librosa.ParameterError)(__trans), 3, 1.5
-    yield raises(librosa.ParameterError)(__trans), 3, -0.25
+    yield tf, 3, 1.5
+    yield tf, 3, -0.25
 
     # Failure if there's a shape mismatch
-    yield raises(librosa.ParameterError)(__trans), 3, [0.5, 0.2]
+    yield tf, 3, [0.5, 0.2]
 
 
 def test_trans_local_nstates_fail():
 
-    @raises(librosa.ParameterError)
+    @pytest.mark.xfail(raises=librosa.ParameterError)
     def __test(n):
         librosa.sequence.transition_local(n, 3)
 
@@ -553,7 +550,7 @@ def test_trans_local_nstates_fail():
 
 def test_trans_local_width_fail():
 
-    @raises(librosa.ParameterError)
+    @pytest.mark.xfail(raises=librosa.ParameterError)
     def __test(width):
         librosa.sequence.transition_local(5, width)
 

@@ -13,20 +13,16 @@ import six
 import librosa
 import numpy as np
 import tempfile
-from nose.tools import raises, eq_
 
+import pytest
 from test_core import srand
-import warnings
-warnings.resetwarnings()
-warnings.simplefilter('always')
-warnings.filterwarnings('module', '.*', FutureWarning, 'scipy.*')
 
 
 def test_write_wav():
 
     def __test(mono, norm):
 
-        fpath = os.path.join('data', 'test1_22050.wav')
+        fpath = os.path.join('tests', 'data', 'test1_22050.wav')
         y, sr = librosa.load(fpath, sr=None, mono=mono)
 
         _, tfname = tempfile.mkstemp()
@@ -81,7 +77,7 @@ def test_times_csv():
         # Remove the file
         os.unlink(tfname)
 
-    __test_fail = raises(librosa.ParameterError)(__test)
+    __test_fail = pytest.mark.xfail(__test, raises=librosa.ParameterError)
 
     srand()
     for times in [[], np.linspace(0, 10, 20)]:
@@ -121,7 +117,7 @@ def test_annotation():
         # Remove the file
         os.unlink(tfname)
 
-    __test_fail = raises(librosa.ParameterError)(__test)
+    __test_fail = pytest.mark.xfail(__test, raises=librosa.ParameterError)
 
     srand()
     # Make times and durations strictly non-negative
