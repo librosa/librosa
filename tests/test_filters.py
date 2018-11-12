@@ -23,7 +23,7 @@ import numpy as np
 import scipy.io
 
 from nose.tools import raises
-import warnings
+import pytest
 
 import librosa
 
@@ -142,13 +142,9 @@ def test_mel_gap():
     n_mels = 128
     htk = True
 
-    with warnings.catch_warnings(record=True) as out:
+    with pytest.warns(UserWarning, match='Empty filters'):
         librosa.filters.mel(sr, n_fft, n_mels=n_mels,
                             fmin=fmin, fmax=fmax, htk=htk)
-
-        assert len(out) > 0
-        assert out[0].category is UserWarning
-        assert 'empty filters' in str(out[0].message).lower()
 
 
 def test_chromafb():
