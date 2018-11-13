@@ -285,54 +285,41 @@ def test_normalize_fill():
     yield __test, None, norm, threshold, axis, np.asarray([[3., 0], [0, 4]]), np.asarray([[0.6, 0], [0, 0.8]])
 
 
-# FIXME: unskip this when we implement proper fixtures
-@pytest.mark.skip
-def test_axis_sort():
+@pytest.mark.parametrize('ndim', [pytest.mark.xfail(1, raises=librosa.ParameterError),
+                                  2,
+                                  pytest.mark.xfail(3, raises=librosa.ParameterError)])
+@pytest.mark.parametrize('axis', [0, 1, -1])
+@pytest.mark.parametrize('index', [False, True])
+@pytest.mark.parametrize('value', [None, np.min, np.mean, np.max])
+def test_axis_sort(ndim, axis, index, value):
     srand()
+    data = np.random.randn(*([10] * ndim))
+    if index:
+        Xsorted, idx = librosa.util.axis_sort(data,
+                                              axis=axis,
+                                              index=index,
+                                              value=value)
 
-    def __test_pass(data, axis, index, value):
+        cmp_slice = [slice(None)] * ndim
+        cmp_slice[axis] = idx
 
-        if index:
-            Xsorted, idx = librosa.util.axis_sort(data,
-                                                  axis=axis,
-                                                  index=index,
-                                                  value=value)
+        assert np.allclose(data[tuple(cmp_slice)], Xsorted)
 
-            cmp_slice = [slice(None)] * X.ndim
-            cmp_slice[axis] = idx
+    else:
+        Xsorted = librosa.util.axis_sort(data,
+                                         axis=axis,
+                                         index=index,
+                                         value=value)
 
-            assert np.allclose(X[tuple(cmp_slice)], Xsorted)
+    compare_axis = np.mod(1 - axis, 2)
 
-        else:
-            Xsorted = librosa.util.axis_sort(data,
-                                             axis=axis,
-                                             index=index,
-                                             value=value)
+    if value is None:
+        value = np.argmax
 
-        compare_axis = np.mod(1 - axis, 2)
+    sort_values = value(Xsorted, axis=compare_axis)
 
-        if value is None:
-            value = np.argmax
+    assert np.allclose(sort_values, np.sort(sort_values))
 
-        sort_values = value(Xsorted, axis=compare_axis)
-
-        assert np.allclose(sort_values, np.sort(sort_values))
-
-    @raises(librosa.ParameterError)
-    def __test_fail(data, axis, index, value):
-        librosa.util.axis_sort(data, axis=axis, index=index, value=value)
-
-    for ndim in [1, 2, 3]:
-        X = np.random.randn(*([10] * ndim))
-
-        for axis in [0, 1, -1]:
-            for index in [False, True]:
-                for value in [None, np.min, np.mean, np.max]:
-
-                    if ndim == 2:
-                        yield __test_pass, X, axis, index, value
-                    else:
-                        yield __test_fail, X, axis, index, value
 
 def test_match_intervals_empty():
 
