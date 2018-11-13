@@ -25,39 +25,48 @@ warnings.filterwarnings('module', '.*', FutureWarning, 'scipy.*')
 
 
 # utils submodule
-def test_delta():
+@pytest.mark.parametrize('slope', np.linspace(-2, 2, num=6))
+@pytest.mark.parametrize('xin', [np.vstack([np.arange(100.0)] * 3)])
+@pytest.mark.parametrize('order', [1, pytest.mark.xfail(0)])
+@pytest.mark.parametrize('width, axis', [pytest.mark.xfail((-1, 0)),
+                                         pytest.mark.xfail((-1, 1)),
+                                         pytest.mark.xfail((0, 0)),
+                                         pytest.mark.xfail((0, 1)),
+                                         pytest.mark.xfail((1, 0)),
+                                         pytest.mark.xfail((1, 1)),
+                                         pytest.mark.xfail((2, 0)),
+                                         pytest.mark.xfail((2, 1)),
+                                         (3, 0), (3, 1),
+                                         pytest.mark.xfail((4, 0)),
+                                         pytest.mark.xfail((4, 1)),
+                                         (5, 1), pytest.mark.xfail((5, 0)),
+                                         pytest.mark.xfail((6, 0)),
+                                         pytest.mark.xfail((6, 1)),
+                                         pytest.mark.xfail((7, 0)), (7, 1)])
+@pytest.mark.parametrize('bias', [-10, 0, 10])
+def test_delta(xin, width, slope, order, axis, bias):
+
+    x = slope * xin + bias
+
     # Note: this test currently only checks first-order differences
+#    if width < 3 or np.mod(width, 2) != 1 or width > x.shape[axis]:
+#        pytest.raises(librosa.ParameterError)
 
-    def __test(width, order, axis, x):
-        delta   = librosa.feature.delta(x,
-                                        width=width,
-                                        order=order,
-                                        axis=axis)
+    delta   = librosa.feature.delta(x,
+                                    width=width,
+                                    order=order,
+                                    axis=axis)
 
-        # Check that trimming matches the expected shape
-        assert x.shape == delta.shape
+    # Check that trimming matches the expected shape
+    assert x.shape == delta.shape
 
-        # Once we're sufficiently far into the signal (ie beyond half_len)
-        # (x + delta)[t] should approximate x[t+1] if x is actually linear
-        slice_orig = [slice(None)] * x.ndim
-        slice_out = [slice(None)] * delta.ndim
-        slice_orig[axis] = slice(width//2 + 1, -width//2 + 1)
-        slice_out[axis] = slice(width//2, -width//2)
-        assert np.allclose((x + delta)[tuple(slice_out)], x[tuple(slice_orig)])
-
-    x = np.vstack([np.arange(100.0)] * 3)
-
-    for width in range(-1, 8):
-        for slope in np.linspace(-2, 2, num=6):
-            for bias in [-10, 0, 10]:
-                for order in [0, 1]:
-                    for axis in range(x.ndim):
-                        tf = __test
-                        if width < 3 or np.mod(width, 2) != 1 or width > x.shape[axis]:
-                            tf = pytest.mark.xfail(__test, raises=librosa.ParameterError)
-                        if order != 1:
-                            tf = pytest.mark.xfail(__test, raises=librosa.ParameterError)
-                        yield tf, width, order, axis, slope * x + bias
+    # Once we're sufficiently far into the signal (ie beyond half_len)
+    # (x + delta)[t] should approximate x[t+1] if x is actually linear
+    slice_orig = [slice(None)] * x.ndim
+    slice_out = [slice(None)] * delta.ndim
+    slice_orig[axis] = slice(width//2 + 1, -width//2 + 1)
+    slice_out[axis] = slice(width//2, -width//2)
+    assert np.allclose((x + delta)[tuple(slice_out)], x[tuple(slice_orig)])
 
 
 def test_stack_memory():

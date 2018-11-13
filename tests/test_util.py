@@ -13,7 +13,6 @@ import platform
 import numpy as np
 import scipy.sparse
 import pytest
-from nose.tools import raises
 import six
 import warnings
 import librosa
@@ -48,7 +47,7 @@ def test_frame():
 
 def test_frame_fail():
 
-    __test = raises(librosa.ParameterError)(librosa.util.frame)
+    __test = pytest.mark.xfail(librosa.util.frame, raises=librosa.ParameterError)
 
     # First fail, not an ndarray
     yield __test, list(range(10)), 5, 1
@@ -80,7 +79,7 @@ def test_pad_center():
 
         assert np.allclose(y, y_out[tuple(eq_slice)])
 
-    @raises(librosa.ParameterError)
+    @pytest.mark.xfail(raises=librosa.ParameterError)
     def __test_fail(y, n, axis, mode):
         librosa.util.pad_center(y, n, axis=axis, mode=mode)
 
@@ -121,7 +120,7 @@ def test_fix_length():
 def test_fix_frames():
     srand()
 
-    @raises(librosa.ParameterError)
+    @pytest.mark.xfail(raises=librosa.ParameterError)
     def __test_fail(frames, x_min, x_max, pad):
         librosa.util.fix_frames(frames, x_min, x_max, pad)
 
@@ -156,9 +155,7 @@ def test_fix_frames():
                             yield __test_pass, frames, x_min, x_max, pad
 
 
-# FIXME: unskip this when we implement proper fixtures
-@pytest.mark.skip
-def old_test_normalize():
+def test_normalize():
     srand()
 
     def __test_pass(X, norm, axis):
@@ -187,9 +184,11 @@ def old_test_normalize():
 
         assert np.allclose(values, np.ones_like(values))
 
-    @raises(librosa.ParameterError)
-    def __test_fail(X, norm, axis):
+    @pytest.mark.xfail(raises=librosa.ParameterError)
+    def _test_fail(X, norm, axis):
         librosa.util.normalize(X, norm=norm, axis=axis)
+
+    __test_fail = pytest.mark.xfail(_test_fail, raises=librosa.ParameterError)
 
     for ndims in [1, 2, 3]:
         X = np.random.randn(* ([16] * ndims))
@@ -202,13 +201,14 @@ def old_test_normalize():
                 yield __test_fail, X, norm, axis
 
         # And test for non-finite failure
-        X[0] = np.nan
-        yield __test_fail, X, np.inf, 0
+        Xnan = X.copy()
 
-        X[0] = np.inf
-        yield __test_fail, X, np.inf, 0
-        X[0] = -np.inf
-        yield __test_fail, X, np.inf, 0
+        Xnan[0] = np.nan
+        yield __test_fail, Xnan, np.inf, 0
+
+        Xinf = X.copy()
+        Xinf[0] = np.inf
+        yield __test_fail, Xinf, np.inf, 0
 
 
 def test_normalize_threshold():
@@ -224,8 +224,9 @@ def test_normalize_threshold():
     yield __test, 2, [[0, 1, 1, 1]]
     yield __test, 3, [[0, 1, 2, 1]]
     yield __test, 4, [[0, 1, 2, 3]]
-    yield raises(librosa.ParameterError)(__test), 0, [[0, 1, 1, 1]]
-    yield raises(librosa.ParameterError)(__test), -1, [[0, 1, 1, 1]]
+    tf = pytest.mark.xfail(__test, raises=librosa.ParameterError)
+    yield tf, 0, [[0, 1, 1, 1]]
+    yield tf, -1, [[0, 1, 1, 1]]
 
 
 def test_normalize_fill():
@@ -252,7 +253,8 @@ def test_normalize_fill():
     norm = 0
     yield __test, None, norm, threshold, axis, x, [[0, 1, 2, 3]]
     yield __test, False, norm, threshold, axis, x, [[0, 0, 0, 0]]
-    yield raises(librosa.ParameterError)(__test), True, norm, threshold, axis, x, [[0, 0, 0, 0]]
+    tf = pytest.mark.xfail(__test, raises=librosa.ParameterError)
+    yield tf, True, norm, threshold, axis, x, [[0, 0, 0, 0]]
 
     # Test with l1 norm
     norm = 1
@@ -275,7 +277,7 @@ def test_normalize_fill():
     yield __test, True, norm, threshold, axis, x, [[s, s, s, s], [s, s, s, s]]
 
     # And test the bad-fill case
-    yield raises(librosa.ParameterError)(__test), 3, norm, threshold, axis, x, x
+    yield tf, 3, norm, threshold, axis, x, x
 
     # And an all-axes test
     axis = None
@@ -324,7 +326,7 @@ def test_axis_sort(ndim, axis, index, value):
 def test_match_intervals_empty():
 
 
-    @raises(librosa.ParameterError)
+    @pytest.mark.xfail(raises=librosa.ParameterError)
     def __test(int_from, int_to):
         librosa.util.match_intervals(int_from, int_to)
 
@@ -358,7 +360,8 @@ def test_match_intervals_strict():
     yield __test, int_from, int_to, matches
 
     # Without the [3, 6] interval, the source [5, 7] has no match
-    yield raises(librosa.ParameterError)(__test), int_from, int_to[:-1], matches
+    yield pytest.mark.xfail(__test, raises=librosa.ParameterError), int_from, int_to[:-1], matches
+
 
 def test_match_intervals_nonstrict():
 
@@ -383,6 +386,7 @@ def test_match_intervals_nonstrict():
     # Without the [3, 6] interval, the source [5, 7] should match [2, 4]
     yield __test, int_from, int_to[:-1], np.asarray([1, 1, 1])
 
+
 def test_match_events():
 
     def __make_events(n):
@@ -405,7 +409,7 @@ def test_match_events():
 
         assert __is_best(y_pred, ev1, ev2)
 
-    @raises(librosa.ParameterError)
+    @pytest.mark.xfail(raises=librosa.ParameterError)
     def __test_fail(n, m):
         ev1 = __make_events(n)
         ev2 = __make_events(m)
@@ -419,37 +423,41 @@ def test_match_events():
                 yield __test, n, m
 
 
-# FIXME: unskip this when we implement proper fixtures
-@pytest.mark.skip
 def test_match_events_onesided():
 
     events_from = np.asarray([5, 15, 25])
     events_to = np.asarray([0, 10, 20, 30])
 
-    def __test(left, right, target):
+    def __test(events_from, events_to, left, right, target):
         match = librosa.util.match_events(events_from, events_to,
                                           left=left, right=right)
 
         assert np.allclose(target, events_to[match])
 
-    yield __test, False, True, [10, 20, 30]
-    yield __test, True, False, [0, 10, 20]
+    yield __test, events_from, events_to, False, True, [10, 20, 30]
+    yield __test, events_from, events_to, True, False, [0, 10, 20]
 
     # Make a right-sided fail
-    events_from[0] = 40
-    yield raises(librosa.ParameterError)(__test), False, True, [10, 20, 30]
+    tf = pytest.mark.xfail(__test, raises=librosa.ParameterError)
+
+    ef = events_from.copy()
+    ef[0] = 40
+    yield tf, ef, events_to, False, True, [10, 20, 30]
 
     # Make a left-sided fail
-    events_from[0] = -1
-    yield raises(librosa.ParameterError)(__test), True, False, [10, 20, 30]
+    ef = events_from.copy()
+    ef[0] = -1
+    yield tf, ef, events_to, True, False, [10, 20, 30]
 
     # Make a two-sided fail
-    events_from[0] = -1
-    yield raises(librosa.ParameterError)(__test), False, False, [10, 20, 30]
+    ef = events_from.copy()
+    ef[0] = -1
+    yield tf, ef, events_to, False, False, [10, 20, 30]
 
     # Make a two-sided success
-    events_to[:-1] = events_from
-    yield __test, False, False, events_from
+    et = events_to.copy()
+    et[:-1] = events_from
+    yield __test, events_from, et, False, False, events_from
 
 
 def test_localmax():
@@ -517,7 +525,7 @@ def test_peak_pick():
         # Test 3: peak separation
         assert not np.any(np.diff(peaks) <= wait)
 
-    @raises(librosa.ParameterError)
+    @pytest.mark.xfail(raises=librosa.ParameterError)
     def __test_shape_fail():
         x = np.eye(10)
         librosa.util.peak_pick(x, 1, 1, 1, 1, 0.5, 1)
@@ -525,6 +533,7 @@ def test_peak_pick():
     yield __test_shape_fail
 
     win_range = [-1, 0, 1, 10]
+    __test_fail = pytest.mark.xfail(__test, raises=librosa.ParameterError)
 
     for n in [1, 5, 10, 100]:
         for pre_max in win_range:
@@ -535,17 +544,17 @@ def test_peak_pick():
                             for delta in [-1, 0.05, 100.0]:
                                 tf = __test
                                 if pre_max < 0:
-                                    tf = raises(librosa.ParameterError)(__test)
+                                    tf = __test_fail
                                 if pre_avg < 0:
-                                    tf = raises(librosa.ParameterError)(__test)
+                                    tf = __test_fail
                                 if delta < 0:
-                                    tf = raises(librosa.ParameterError)(__test)
+                                    tf = __test_fail
                                 if wait < 0:
-                                    tf = raises(librosa.ParameterError)(__test)
+                                    tf = __test_fail
                                 if post_max <= 0:
-                                    tf = raises(librosa.ParameterError)(__test)
+                                    tf = __test_fail
                                 if post_avg <= 0:
-                                    tf = raises(librosa.ParameterError)(__test)
+                                    tf = __test_fail
                                 yield (tf, n, pre_max, post_max,
                                        pre_avg, post_avg, delta, wait)
 
@@ -620,13 +629,13 @@ def test_files():
                             tf = __test
 
                             if searchdir == os.path.join(os.path.curdir, 'tests') and not recurse:
-                                tf = raises(AssertionError)(__test)
+                                tf = pytest.mark.xfail(__test, raises=AssertionError)
 
                             if (ext is not None and case_sensitive and
                                     (ext == 'WAV' or
                                      set(ext) == set(['WAV']))):
 
-                                tf = raises(AssertionError)(__test)
+                                tf = pytest.mark.xfail(__test, raises=AssertionError)
 
                             yield (tf, searchdir, ext, recurse,
                                    case_sensitive, limit, offset)
@@ -643,7 +652,7 @@ def test_valid_int():
         else:
             assert z == int(cast(x_in))
 
-    __test_fail = raises(librosa.ParameterError)(__test)
+    __test_fail = pytest.mark.xfail(__test, raises=librosa.ParameterError)
 
     for x in np.linspace(-2, 2, num=6):
         for cast in [None, np.floor, np.ceil, 7]:
@@ -658,6 +667,8 @@ def test_valid_intervals():
     def __test(intval):
         librosa.util.valid_intervals(intval)
 
+    tf = pytest.mark.xfail(__test, raises=librosa.ParameterError)
+
     for d in range(1, 4):
         for n in range(1, 4):
             ivals = np.ones(d * [n])
@@ -666,10 +677,11 @@ def test_valid_intervals():
                 if m == 2 and d == 2 and n > 1:
                     yield __test, ivals[tuple(slices)]
                 else:
-                    yield raises(librosa.ParameterError)(__test), ivals[tuple(slices)]
+                    yield tf, ivals[tuple(slices)]
 
     # Test for issue #712: intervals must have non-negative duration
-    yield raises(librosa.ParameterError)(__test), np.asarray([[0, 1], [2, 1]])
+    yield tf, np.asarray([[0, 1], [2, 1]])
+
 
 def test_warning_deprecated():
 
@@ -831,7 +843,7 @@ def test_sync():
         # Test for dtype propagation
         assert dsync.dtype == data.dtype
 
-    @raises(librosa.ParameterError)
+    @pytest.mark.xfail(raises=librosa.ParameterError)
     def __test_fail(data, idx):
         librosa.util.sync(data, idx)
 
@@ -885,7 +897,7 @@ def test_roll_sparse():
                 yield __test, fmt, shift, axis, X
 
 
-@raises(librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterError)
 def test_roll_sparse_bad_axis():
 
     X = scipy.sparse.eye(5, format='csr')
@@ -930,7 +942,7 @@ def test_softmask_int():
 
 def test_softmask_fail():
 
-    failure = raises(librosa.ParameterError)(librosa.util.softmask)
+    failure = pytest.mark.xfail(librosa.util.softmask, raises=librosa.ParameterError)
     yield failure, -np.ones(3), np.ones(3), 1, False
     yield failure, np.ones(3), -np.ones(3), 1, False
     yield failure, np.ones(3), np.ones(4), 1, False
