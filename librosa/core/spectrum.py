@@ -1264,7 +1264,7 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
     # Make sure that all sample points are unique
     # This should never happen!
     if len(np.unique(x_exp)) != len(x_exp):
-        raise RuntimeError('Redundant sample positions in FMT')
+        raise RuntimeError('Redundant sample positions in Mellin transform')
 
     # Resample the signal
     y_res = f_interp(x_exp)
