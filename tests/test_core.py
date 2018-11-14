@@ -576,6 +576,11 @@ def test_get_duration_filename():
     assert np.allclose(duration_fn, duration_y)
 
 
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_get_duration_fail():
+    librosa.get_duration(y=None, S=None, filename=None)
+
+
 def test_autocorrelate():
 
     def __test(y, truth, max_size, axis):
