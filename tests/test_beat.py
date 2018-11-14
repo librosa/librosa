@@ -3,7 +3,6 @@
 #  unit tests for librosa.beat
 
 from __future__ import print_function
-from nose.tools import nottest, raises, eq_
 
 # Disable cache
 import os
@@ -12,17 +11,14 @@ try:
 except:
     pass
 
+import pytest
+
 import numpy as np
-import warnings
 import librosa
 
 from test_core import files, load
 
-__EXAMPLE_FILE = os.path.join('data', 'test1_22050.wav')
-
-
-warnings.resetwarnings()
-warnings.simplefilter('always')
+__EXAMPLE_FILE = os.path.join('tests', 'data', 'test1_22050.wav')
 
 
 def test_onset_strength():
@@ -75,7 +71,7 @@ def test_tempo():
                         yield __test, tempo, sr, hop_length, ac_size, aggregate, y
 
 
-@raises(librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterError)
 def test_beat_no_input():
 
     librosa.beat.beat_track(y=None, onset_envelope=None)
@@ -94,7 +90,7 @@ def test_beat_no_onsets():
                                            hop_length=hop_length)
 
     assert np.allclose(tempo, 0)
-    eq_(len(beats), 0)
+    assert len(beats) == 0
 
 
 def test_tempo_no_onsets():
@@ -160,45 +156,42 @@ def test_beat():
                                  bpm is None and
                                  start_bpm <= 0)):
 
-                                tf = raises(librosa.ParameterError)(__test)
+                                tf = pytest.mark.xfail(__test, raises=librosa.ParameterError)
                             else:
                                 tf = __test
                             yield (tf, with_audio, with_tempo,
                                    start_bpm, bpm, trim, tightness)
 
 
-def test_beat_units():
+@pytest.mark.parametrize('sr', [None, 44100])
+@pytest.mark.parametrize('hop_length', [512, 1024])
+@pytest.mark.parametrize('units', ['frames', 'time', 'samples',
+                                   pytest.mark.xfail('bad units', raises=librosa.ParameterError)])
+def test_beat_units(sr, hop_length, units):
 
-    def __test(units, hop_length, y, sr):
+    y, sr = librosa.load(__EXAMPLE_FILE, sr=sr)
 
-        tempo, b1 = librosa.beat.beat_track(y=y, sr=sr, hop_length=hop_length)
-        _, b2 = librosa.beat.beat_track(y=y, sr=sr, hop_length=hop_length,
-                                        units=units)
+    tempo, b1 = librosa.beat.beat_track(y=y, sr=sr, hop_length=hop_length)
+    _, b2 = librosa.beat.beat_track(y=y, sr=sr, hop_length=hop_length,
+                                    units=units)
 
-        t1 = librosa.frames_to_time(b1, sr=sr, hop_length=hop_length)
+    t1 = librosa.frames_to_time(b1, sr=sr, hop_length=hop_length)
 
-        if units == 'time':
-            t2 = b2
+    if units == 'time':
+        t2 = b2
 
-        elif units == 'samples':
-            t2 = librosa.samples_to_time(b2, sr=sr)
+    elif units == 'samples':
+        t2 = librosa.samples_to_time(b2, sr=sr)
 
-        elif units == 'frames':
-            t2 = librosa.frames_to_time(b2, sr=sr, hop_length=hop_length)
+    elif units == 'frames':
+        t2 = librosa.frames_to_time(b2, sr=sr, hop_length=hop_length)
 
-        assert np.allclose(t1, t2)
-
-    for sr in [None, 44100]:
-        y, sr = librosa.load(__EXAMPLE_FILE, sr=sr)
-        for hop_length in [512, 1024]:
-            for units in ['frames', 'time', 'samples']:
-                yield __test, units, hop_length, y, sr
-            yield raises(librosa.ParameterError)(__test), 'bad units', hop_length, y, sr
+    assert np.allclose(t1, t2)
 
 
 # Beat tracking regression test is no longer enabled due to librosa's
 # corrections
-@nottest
+@pytest.mark.skip
 def deprecated_test_beat():
 
     def __test(infile):
