@@ -2,8 +2,6 @@
 # -*- encoding: utf-8 -*-
 # CREATED:2015-02-14 19:13:49 by Brian McFee <brian.mcfee@nyu.edu>
 '''Unit tests for time and frequency conversion'''
-import warnings
-
 import os
 try:
     os.environ.pop('LIBROSA_CACHE_DIR')
@@ -12,10 +10,7 @@ except KeyError:
 
 import librosa
 import numpy as np
-from nose.tools import raises, eq_
-
-warnings.resetwarnings()
-warnings.simplefilter('always')
+import pytest
 
 
 def test_frames_to_samples():
@@ -177,12 +172,12 @@ def test_note_to_midi():
         midi = librosa.note_to_midi(note, round_midi=round_midi)
         if round_midi:
             midi_true = np.round(midi_true)
-        eq_(midi, midi_true)
+        assert midi == midi_true
 
         midi = librosa.note_to_midi([note], round_midi=round_midi)
-        eq_(midi[0], midi_true)
+        assert midi[0] == midi_true
 
-    @raises(librosa.ParameterError)
+    @pytest.mark.xfail(raises=librosa.ParameterError)
     def __test_fail():
         librosa.note_to_midi('does not pass')
 
@@ -229,7 +224,7 @@ def test_note_to_hz():
         hz = librosa.note_to_hz([note], round_midi=round_midi)
         assert np.allclose(hz[0], hz_true)
 
-    @raises(librosa.ParameterError)
+    @pytest.mark.xfail(raises=librosa.ParameterError)
     def __test_fail():
         librosa.note_to_midi('does not pass')
 
@@ -249,13 +244,13 @@ def test_midi_to_note():
     def __test(midi_num, note, octave, cents):
         note_out = librosa.midi_to_note(midi_num, octave=octave, cents=cents)
 
-        eq_(note_out, note)
+        assert note_out == note
 
     midi_num = 24.25
 
     yield __test, midi_num, 'C', False, False
     yield __test, midi_num, 'C1', True, False
-    yield raises(librosa.ParameterError)(__test), midi_num, 'C+25', False, True
+    yield pytest.mark.xfail(__test, raises=librosa.ParameterError), midi_num, 'C+25', False, True
     yield __test, midi_num, 'C1+25', True, True
     yield __test, [midi_num], ['C'], False, False
 
@@ -276,13 +271,13 @@ def test_hz_to_note():
     def __test(hz, note, octave, cents):
         note_out = librosa.hz_to_note(hz, octave=octave, cents=cents)
 
-        eq_(note_out, note)
+        assert note_out == note
 
     hz = 440
 
     yield __test, hz, 'A', False, False
     yield __test, hz, 'A4', True, False
-    yield raises(librosa.ParameterError)(__test), hz, 'A+0', False, True
+    yield pytest.mark.xfail(__test, raises=librosa.ParameterError), hz, 'A+0', False, True
     yield __test, hz, 'A4+0', True, True
     yield __test, [hz, 2*hz], ['A4+0', 'A5+0'], True, True
 
@@ -293,10 +288,10 @@ def test_fft_frequencies():
         freqs = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
 
         # DC
-        eq_(freqs[0], 0)
+        assert freqs[0] == 0
 
         # Nyquist, positive here for more convenient display purposes
-        eq_(freqs[-1], sr / 2.0)
+        assert freqs[-1] == sr / 2.0
 
         # Ensure that the frequencies increase linearly
         dels = np.diff(freqs)
@@ -317,7 +312,7 @@ def test_cqt_frequencies():
                                         tuning=tuning)
 
         # Make sure we get the right number of bins
-        eq_(len(freqs), n_bins)
+        assert len(freqs) == n_bins
 
         # And that the first bin matches fmin by tuning
         assert np.allclose(freqs[0],
@@ -341,7 +336,7 @@ def test_tempo_frequencies():
         freqs = librosa.tempo_frequencies(n_bins, hop_length=hop_length, sr=sr)
 
         # Verify the length
-        eq_(len(freqs), n_bins)
+        assert len(freqs) == n_bins
 
         # 0-bin should be infinite
         assert not np.isfinite(freqs[0])

@@ -22,13 +22,9 @@ import glob
 import numpy as np
 import scipy.io
 
-from nose.tools import eq_, raises
-import warnings
+import pytest
 
 import librosa
-
-warnings.resetwarnings()
-warnings.simplefilter('always')
 
 
 # -- utilities --#
@@ -52,7 +48,7 @@ def test_hz_to_mel():
 
         assert np.allclose(z, DATA['result'])
 
-    for infile in files(os.path.join('data', 'feature-hz_to_mel-*.mat')):
+    for infile in files(os.path.join('tests', 'data', 'feature-hz_to_mel-*.mat')):
         yield (__test_to_mel, infile)
 
     pass
@@ -66,7 +62,7 @@ def test_mel_to_hz():
 
         assert np.allclose(z, DATA['result'])
 
-    for infile in files(os.path.join('data', 'feature-mel_to_hz-*.mat')):
+    for infile in files(os.path.join('tests', 'data', 'feature-mel_to_hz-*.mat')):
         yield (__test_to_hz, infile)
 
     pass
@@ -79,7 +75,7 @@ def test_hz_to_octs():
 
         assert np.allclose(z, DATA['result'])
 
-    for infile in files(os.path.join('data', 'feature-hz_to_octs-*.mat')):
+    for infile in files(os.path.join('tests', 'data', 'feature-hz_to_octs-*.mat')):
         yield (__test_to_octs, infile)
 
     pass
@@ -103,10 +99,10 @@ def test_melfb():
                            (0, int(DATA['nfft'][0]//2 - 1))],
                      mode='constant')
 
-        eq_(wts.shape, DATA['wts'].shape)
+        assert wts.shape == DATA['wts'].shape
         assert np.allclose(wts, DATA['wts'])
 
-    for infile in files(os.path.join('data', 'feature-melfb-*.mat')):
+    for infile in files(os.path.join('tests', 'data', 'feature-melfb-*.mat')):
         yield (__test_default_norm, infile)
 
     def __test_with_norm(infile):
@@ -128,10 +124,10 @@ def test_melfb():
                            (0, int(DATA['nfft'][0]//2 - 1))],
                      mode='constant')
 
-        eq_(wts.shape, DATA['wts'].shape)
+        assert wts.shape == DATA['wts'].shape
         assert np.allclose(wts, DATA['wts'])
 
-    for infile in files(os.path.join('data', 'feature-melfbnorm-*.mat')):
+    for infile in files(os.path.join('tests', 'data', 'feature-melfbnorm-*.mat')):
         yield (__test_with_norm, infile)
 
 
@@ -145,15 +141,9 @@ def test_mel_gap():
     n_mels = 128
     htk = True
 
-    warnings.resetwarnings()
-    warnings.simplefilter('always')
-    with warnings.catch_warnings(record=True) as out:
+    with pytest.warns(UserWarning, match='Empty filters'):
         librosa.filters.mel(sr, n_fft, n_mels=n_mels,
                             fmin=fmin, fmax=fmax, htk=htk)
-
-        assert len(out) > 0
-        assert out[0].category is UserWarning
-        assert 'empty filters' in str(out[0].message).lower()
 
 
 def test_chromafb():
@@ -180,10 +170,10 @@ def test_chromafb():
                            (0, int(DATA['nfft'][0, 0]//2 - 1))],
                      mode='constant')
 
-        eq_(wts.shape, DATA['wts'].shape)
+        assert wts.shape == DATA['wts'].shape
         assert np.allclose(wts, DATA['wts'])
 
-    for infile in files(os.path.join('data', 'feature-chromafb-*.mat')):
+    for infile in files(os.path.join('tests', 'data', 'feature-chromafb-*.mat')):
         yield (__test, infile)
 
 
@@ -226,12 +216,12 @@ def test_constant_q():
 
         assert np.all(lengths <= F.shape[1])
 
-        eq_(len(F), n_bins)
+        assert len(F) == n_bins
 
         if not pad_fft:
             return
 
-        eq_(np.mod(np.log2(F.shape[1]), 1.0), 0.0)
+        assert np.mod(np.log2(F.shape[1]), 1.0) == 0.0
 
         # Check for vanishing negative frequencies
         F_fft = np.abs(np.fft.fft(F, axis=1))
@@ -242,22 +232,23 @@ def test_constant_q():
     sr = 11025
 
     # Try to make a cq basis too close to nyquist
-    yield (raises(librosa.ParameterError)(__test), sr, sr/2.0, 1, 12, 0, 1, True, 1)
+    tf = pytest.mark.xfail(__test, raises=librosa.ParameterError)
+    yield (tf, sr, sr/2.0, 1, 12, 0, 1, True, 1)
 
     # with negative fmin
-    yield (raises(librosa.ParameterError)(__test), sr, -60, 1, 12, 0, 1, True, 1)
+    yield (tf, sr, -60, 1, 12, 0, 1, True, 1)
 
     # with negative bins_per_octave
-    yield (raises(librosa.ParameterError)(__test), sr, 60, 1, -12, 0, 1, True, 1)
+    yield (tf, sr, 60, 1, -12, 0, 1, True, 1)
 
     # with negative bins
-    yield (raises(librosa.ParameterError)(__test), sr, 60, -1, 12, 0, 1, True, 1)
+    yield (tf, sr, 60, -1, 12, 0, 1, True, 1)
 
     # with negative filter_scale
-    yield (raises(librosa.ParameterError)(__test), sr, 60, 1, 12, 0, -1, True, 1)
+    yield (tf, sr, 60, 1, 12, 0, -1, True, 1)
 
     # with negative norm
-    yield (raises(librosa.ParameterError)(__test), sr, 60, 1, 12, 0, 1, True, -1)
+    yield (tf, sr, 60, 1, 12, 0, 1, True, -1)
 
     for fmin in [None, librosa.note_to_hz('C3')]:
         for n_bins in [12, 24]:
@@ -274,8 +265,9 @@ def test_constant_q():
 
 def test_window_bandwidth():
 
-    eq_(librosa.filters.window_bandwidth('hann'),
-        librosa.filters.window_bandwidth(scipy.signal.hann))
+    hann_bw = librosa.filters.window_bandwidth('hann')
+    hann_scipy_bw = librosa.filters.window_bandwidth(scipy.signal.hann)
+    assert hann_bw == hann_scipy_bw
 
 
 def test_window_bandwidth_dynamic():
@@ -283,10 +275,10 @@ def test_window_bandwidth_dynamic():
     # Test with a window constructor guaranteed to not exist in
     # the dictionary.
     # should behave like a box filter, which has enbw == 1
-    eq_(librosa.filters.window_bandwidth(lambda n: np.ones(n)), 1)
+    assert librosa.filters.window_bandwidth(lambda n: np.ones(n)) == 1
 
 
-@raises(ValueError)
+@pytest.mark.xfail(raises=ValueError)
 def test_window_bandwidth_missing():
     librosa.filters.window_bandwidth('made up window name')
 
@@ -351,14 +343,14 @@ def test_cq_to_chroma():
                             n_bins = n_octaves * bins_per_octave
 
                             if np.mod(bins_per_octave, n_chroma) != 0:
-                                tf = raises(librosa.ParameterError)(__test)
+                                tf = pytest.mark.xfail(__test, raises=librosa.ParameterError)
                             else:
                                 tf = __test
                             yield (tf, n_bins, bins_per_octave,
                                    n_chroma, fmin, base_c, window)
 
 
-@raises(librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterError)
 def test_get_window_fail():
 
     librosa.filters.get_window(None, 32)
@@ -397,7 +389,7 @@ def test_get_window_pre():
 def test_semitone_filterbank():
     # We test against Chroma Toolbox' elliptical semitone filterbank
     # load data from chroma toolbox
-    gt_fb = scipy.io.loadmat(os.path.join('data', 'filter-muliratefb-MIDI_FB_ellip_pitch_60_96_22050_Q25'),
+    gt_fb = scipy.io.loadmat(os.path.join('tests', 'data', 'filter-muliratefb-MIDI_FB_ellip_pitch_60_96_22050_Q25'),
                              squeeze_me=True)['h']
 
     # standard parameters reproduce settings from chroma toolbox

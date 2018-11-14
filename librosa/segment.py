@@ -607,7 +607,7 @@ def subsegment(data, frames, n_segments=4, axis=-1):
 
     for seg_start, seg_end in zip(frames[:-1], frames[1:]):
         idx_slices[axis] = slice(seg_start, seg_end)
-        boundaries.extend(seg_start + agglomerative(data[idx_slices],
+        boundaries.extend(seg_start + agglomerative(data[tuple(idx_slices)],
                                                     min(seg_end - seg_start, n_segments),
                                                     axis=axis))
 
