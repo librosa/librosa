@@ -339,28 +339,15 @@ def test_match_intervals_empty():
     yield __test, ints[:0], ints
 
 
-def test_match_intervals_strict():
+@pytest.mark.parametrize('int_from', [np.asarray([[0, 3], [2, 4], [5, 7]])])
+@pytest.mark.parametrize('int_to', [np.asarray([[0, 2], [0, 4], [3, 6]]),
+                                    pytest.mark.xfail(np.asarray([[0, 2], [0, 4]]),
+                                                      raises=librosa.ParameterError)])
+@pytest.mark.parametrize('matches', [np.asarray([1, 1, 2])])
+def test_match_intervals_strict(int_from, int_to, matches):
 
-
-    def __test(int_from, int_to, matches):
-        test_matches = librosa.util.match_intervals(int_from, int_to, strict=True)
-        assert np.array_equal(matches, test_matches)
-
-
-    int_from = np.asarray([[0, 3],
-                           [2, 4],
-                           [5, 7]])
-
-    int_to = np.asarray([[0, 2],
-                         [0, 4],
-                         [3, 6]])
-
-    # true matches for the above
-    matches = np.asarray([1, 1, 2])
-    yield __test, int_from, int_to, matches
-
-    # Without the [3, 6] interval, the source [5, 7] has no match
-    yield pytest.mark.xfail(__test, raises=librosa.ParameterError), int_from, int_to[:-1], matches
+    test_matches = librosa.util.match_intervals(int_from, int_to, strict=True)
+    assert np.array_equal(matches, test_matches)
 
 
 def test_match_intervals_nonstrict():
