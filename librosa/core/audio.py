@@ -357,6 +357,19 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     -------
     d : float >= 0
         Duration (in seconds) of the input time series or spectrogram.
+
+    Raises
+    ------
+    ParameterError
+        if none of `y`, `S`, or `filename` are provided.
+
+    Notes
+    -----
+    `get_duration` can be applied to a file (`filename`), a spectrogram (`S`),
+    or audio buffer (`y, sr`).  Only one of these three options should be
+    provided.  If you do provide multiple options (e.g., `filename` and `S`),
+    then `filename` takes precedence over `S`, and `S` takes precedence over
+    `(y, sr)`.
     """
 
     if filename is not None:
@@ -364,7 +377,8 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
             return fdesc.duration
 
     if y is None:
-        assert S is not None
+        if S is None:
+            raise ParameterError('At least one of (y, sr), S, or filename must be provided')
 
         n_frames = S.shape[1]
         n_samples = n_fft + hop_length * (n_frames - 1)
