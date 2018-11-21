@@ -168,12 +168,13 @@ copyright = u'2013--2018, librosa development team'
 if sys.version_info.major == 2:
     import imp
 
-    librosa_version = imp.load_source('librosa.version', 'librosa/version.py')
+    librosa_version = imp.load_source('librosa.version',
+                                      '../librosa/version.py')
 else:
     from importlib.machinery import SourceFileLoader
 
     librosa_version = SourceFileLoader('librosa.version',
-                                       'librosa/version.py').load_module()
+                                       '../librosa/version.py').load_module()
 
 # The short X.Y version.
 version = librosa_version.short_version
