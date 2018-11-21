@@ -1,9 +1,16 @@
 from setuptools import setup, find_packages
+import sys
 
-from importlib.machinery import SourceFileLoader
 
-version = SourceFileLoader('librosa.version',
-                           'librosa/version.py').load_module()
+if sys.version_info.major == 2:
+    import imp
+
+    version = imp.load_source('librosa.version', 'librosa/version.py')
+else:
+    from importlib.machinery import SourceFileLoader
+
+    version = SourceFileLoader('librosa.version',
+                               'librosa/version.py').load_module()
 
 with open('README.md', 'r') as fdesc:
     long_description = fdesc.read()
