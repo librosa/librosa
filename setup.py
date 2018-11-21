@@ -1,8 +1,9 @@
 from setuptools import setup, find_packages
 
-import imp
+from importlib.machinery import SourceFileLoader
 
-version = imp.load_source('librosa.version', 'librosa/version.py')
+version = SourceFileLoader('librosa.version',
+                           'librosa/version.py').load_module()
 
 with open('README.md', 'r') as fdesc:
     long_description = fdesc.read()
