@@ -196,8 +196,10 @@ def write_wav(path, y, sr, norm=False):
     path : str
         path to save the output wav file
 
-    y : np.ndarray [shape=(n,) or (2,n)]
-        audio time series (mono or stereo)
+    y : np.ndarray [shape=(n,) or (2,n), dtype=np.float]
+        audio time series (mono or stereo).
+
+        Note that only floating-point values are supported.
 
     sr : int > 0 [scalar]
         sampling rate of `y`
