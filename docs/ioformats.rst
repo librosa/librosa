@@ -95,7 +95,7 @@ Download and read from URL:
 Write out audio files
 ---------------------
 
-*librosa* provides a thin wrapper around `scipy.io.wavfile <https://docs.scipy.org/doc/scipy/reference/generated/scipy.io.wavfile.write.html>`_ to write out wav files. 
+*librosa* provides a thin wrapper around `scipy.io.wavfile <https://docs.scipy.org/doc/scipy/reference/generated/scipy.io.wavfile.write.html>`_ to write out WAV files. 
 
 .. code-block:: python
     :linenos:
@@ -109,9 +109,9 @@ Write out audio files
 
 
 
-Please be aware that this function only supports floating-point inputs. For example if your processed audio array is of dtype ``np.float64`` (which is the default on most machines), your resulting wav file would be of type 64bit float as well. This is not considered to be a `standard PCM wavfile <https://msdn.microsoft.com/en-us/library/windows/hardware/dn653308%28v=vs.85%29.aspx>`_, though most wav readers should be able to load it without problems.
+Please be aware that this function only supports floating-point inputs. For example if your processed audio array is of dtype ``np.float64`` (which is the default on most machines), your resulting WAV file would be of type 64-bit float as well. This is not considered to be a `standard PCM wavfile <https://msdn.microsoft.com/en-us/library/windows/hardware/dn653308%28v=vs.85%29.aspx>`_, but most WAV readers should be able to load it without problems.
 
-Writing audio files using `PySoundFile <https://pysoundfile.readthedocs.io/en/latest/>`_ is similar to the method in *librosa*, however it can automatically convert to a given PCM subtype and additionally support several compressed formats like *FLAC* or *OGG*
+Writing audio files using `PySoundFile <https://pysoundfile.readthedocs.io/en/latest/>`_ is similar to the method in librosa. However, PySoundFile can automatically convert to a given PCM subtype and additionally support several compressed formats like FLAC or OGG vorbis.
 
 .. code-block:: python
     :linenos:
@@ -132,4 +132,4 @@ Writing audio files using `PySoundFile <https://pysoundfile.readthedocs.io/en/la
     sf.write('stereo_file.ogg', data, samplerate, format='ogg', subtype='vorbis')
 
 
-In general, we recommend using `PySoundFile` for output rather than ``librosa.output.write_wav``, which is mainly provided as a convenience function.
+In general, we recommend using `PySoundFile` for output rather than ``librosa.output.write_wav``.
