@@ -179,7 +179,6 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
     for bl_s in range(0, stft_matrix.shape[1], n_columns):
         bl_t = min(bl_s + n_columns, stft_matrix.shape[1])
 
-        # RFFT and Conjugate here to match phase from DPWE code
         stft_matrix[:, bl_s:bl_t] = fft.fft(fft_window *
                                             y_frames[:, bl_s:bl_t],
                                             axis=0)[:stft_matrix.shape[0]]
