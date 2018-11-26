@@ -14,6 +14,7 @@ Audio processing
     resample
     get_duration
     autocorrelate
+    lpc
     zero_crossings
     clicks
     tone

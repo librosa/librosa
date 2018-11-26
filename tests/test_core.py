@@ -610,6 +610,16 @@ def test_autocorrelate():
             for max_size in [None, y.shape[axis]//2, y.shape[axis], 2 * y.shape[axis]]:
                 yield __test, y, truth[axis], max_size, axis
 
+def test_lpc():
+    # filter some noise, and estimate the coefficients from
+    # the filtered noise, check equality to a generous
+    # tolerance
+    noise = np.random.randn(1000)
+    truth_a = [1, 0.5, 0.4, 0.3, 0.2, 0.1]
+    filtered = scipy.signal.lfilter([1], truth_a, noise)
+    est_a, _ = librosa.lpc(filtered, 5)
+    assert np.allclose(truth_a, est_a, atol=1e-1, rtol=0)
+
 
 def test_to_mono():
 

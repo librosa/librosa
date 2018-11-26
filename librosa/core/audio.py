@@ -11,12 +11,13 @@ import scipy.signal
 import scipy.fftpack as fft
 import resampy
 
+from numba import jit
 from .time_frequency import frames_to_samples, time_to_samples
 from .. import cache
 from .. import util
 from ..util.exceptions import ParameterError
 
-__all__ = ['load', 'to_mono', 'resample', 'get_duration',
+__all__ = ['load', 'to_mono', 'resample', 'get_duration', 'lpc',
            'autocorrelate', 'zero_crossings', 'clicks', 'tone', 'chirp']
 
 # Resampling bandwidths as percentage of Nyquist
@@ -397,7 +398,6 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     return float(n_samples) / sr
 
-
 @cache(level=20)
 def autocorrelate(y, max_size=None, axis=-1):
     """Bounded auto-correlation
@@ -467,6 +467,114 @@ def autocorrelate(y, max_size=None, axis=-1):
         autocorr = autocorr.real
 
     return autocorr
+
+
+@jit
+def lpc(y, m):
+    """Linear Predictive Coefficients via Burg's method
+
+    This function applies Burg's method to estimate coefficients of a linear
+    filter on `y` of order `m`.  Burg's method is an extension to the
+    classic Yule-Walker approach which is sometimes referred to as
+    the LPC `autocorrelation` method.
+
+    It follows the description and implementation approach described in the
+    introduction in [1].  (Note that this paper describes a different method,
+    which is not implemented here, but has been chosen for its clear
+    explanation of Burg's technique in its introduction.)
+
+    .. [1] Larry Marple
+           A New Autoregressive Spectrum Analysis Algorithm
+           IEEE Transactions on Accoustics, Speech and Signal Processing
+           Vol ASSP-28, No. 4, August 1980
+
+    Parameters
+    ----------
+    y : np.ndarray
+        Time series to fit
+
+    m : int > 0
+        Order of the linear filter
+
+    Returns
+    -------
+    a : np.ndarray of length m + 1
+        LPC filter coefficients (ie, denominator polynomial of the filter)
+    k : np.ndarray of length m
+        Reflection coefficients
+
+    Raises
+    ------
+    ParameterError
+        - If y is not real valued
+        - If m < 1 or not integer
+
+    See also
+    --------
+    scipy.signal.lfilter
+
+    Examples
+    --------
+    Compute LPC coefficients of y at order 16 on entire series
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), offset=20,
+    ...                      duration=10)
+    >>> librosa.lpc(y, 16)
+
+    Compute LPC coefficients, and plot LPC estimate of original series
+    >>> import matplotlib.pyplot as plt
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), offset=20,
+    ...                      duration=0.020)
+    >>> a, _ = librosa.lpc(y, 16)
+    >>> y_est = scipy.signal.lfilter([1], a, y)
+    >>> plt.plot(y)
+    >>> plt.plot(y_est)
+
+    """
+    if not isinstance(m, int) or m < 1:
+        raise ParameterError("m must be an integer > 0")
+
+    if not isinstance(y, np.ndarray):
+        raise ParameterError("y must be of the type np.ndarray")
+
+    if not all(np.isreal(y)):
+        raise ParameterError("y must not contain complex numbers")
+
+    fp = bp = y
+    k = np.zeros(m)
+    a = np.zeros(m+1)
+    den = 0
+    q = a[0] = 1
+
+    for i in range(m):
+        # Remove first and last element from forward and reverse
+        # prediction errors
+        fp = fp[1:]
+        bp = bp[:-1]
+
+        # Compute autocorrelation (denominator), use last result
+        # to save on computation if we have one
+        #
+        # This does cause a slight difference in the result,
+        # likely from numerical issues, but in practice it's
+        # neglible
+        if i == 0:
+            den = np.dot(fp, fp) + np.dot(bp, bp)
+        else:
+            den = q*den - bp[-1]**2 - fp[0]**2
+
+        # Compute reflection coefficient
+        k[i] = -2 * np.dot(bp, fp) / den
+        q = 1 - k[i]**2
+
+        # Levinson-Durbin recursion (note we're flipping a)
+        a[1:i+2] = a[1:i+2] + k[i]*a[i::-1]
+
+        # Forward and backward prediction error updates
+        fp_tmp = fp + k[i]*bp
+        bp = bp + k[i]*fp
+        fp = fp_tmp
+
+    return a, k
 
 
 @cache(level=20)
