@@ -1094,11 +1094,19 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
 def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
                 tuning=None, n_chroma=12,
                 n_octaves=7, bins_per_octave=None, cqt_mode='full', window=None,
-                norm=2, win_len_smooth=41):
+                norm=2, win_len_smooth=41, smoothing_window='hann'):
     r'''Computes the chroma variant "Chroma Energy Normalized" (CENS), following [1]_.
 
+    To compute CENS features, following steps are taken after obtaining chroma vectors using `chroma_cqt`:  
+    1. L-1 normalization of each chroma vector
+    2. Quantization of amplitude based on "log-like" amplitude thresholds
+    3. (optional) Smoothing with sliding window. Default window length = 41 frames 
+    4. (not implemented) Downsampling   
+
+    CENS features are robust to dynamics, timbre and articulation, thus these are commonly used in audio matching and retrieval applications.   
+
     .. [1] Meinard Müller and Sebastian Ewert
-           Chroma Toolbox: MATLAB implementations for extracting variants of chroma-based audio features
+           "Chroma Toolbox: MATLAB implementations for extracting variants of chroma-based audio features" 
            In Proceedings of the International Conference on Music Information Retrieval (ISMIR), 2011.
 
     Parameters
@@ -1141,9 +1149,13 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
     cqt_mode : ['full', 'hybrid']
         Constant-Q transform mode
 
-    win_len_smooth : int > 0
-        Length of temporal smoothing window.
+    win_len_smooth : int > 0 or None
+        Length of temporal smoothing window. `None` disables temporal smoothing. 
         Default: 41
+
+    smoothing_window : str, float or tuple
+        Type of window function for temporal smoothing. See `filters.get_window` for possible inputs.
+        Default: 'hann'
 
     Returns
     -------
@@ -1157,6 +1169,9 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
 
     chroma_stft
         Compute a chromagram from an STFT spectrogram or waveform.
+
+    filters.get_window
+        Compute a window function. 
 
     Examples
     --------
@@ -1180,6 +1195,9 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
     >>> plt.colorbar()
     >>> plt.tight_layout()
     '''
+    if not ((win_len_smooth is None) or (isinstance(win_len_smooth, int) and win_len_smooth > 0)):
+        raise ParameterError('win_len_smooth={} must be a positive integer or None'.format(win_len_smooth))
+
     chroma = chroma_cqt(y=y, C=C, sr=sr,
                         hop_length=hop_length,
                         fmin=fmin,
@@ -1203,13 +1221,16 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
     for cur_quant_step_idx, cur_quant_step in enumerate(QUANT_STEPS):
         chroma_quant += (chroma > cur_quant_step) * QUANT_WEIGHTS[cur_quant_step_idx]
 
-    # Apply temporal smoothing
-    win = filters.get_window('hann', win_len_smooth + 2, fftbins=False)
-    win /= np.sum(win)
-    win = np.atleast_2d(win)
+    if win_len_smooth:
+        # Apply temporal smoothing
+        win = filters.get_window(smoothing_window, win_len_smooth + 2, fftbins=False)
+        win /= np.sum(win)
+        win = np.atleast_2d(win)
 
-    cens = scipy.signal.convolve2d(chroma_quant, win,
-                                   mode='same', boundary='fill')
+        cens = scipy.signal.convolve2d(chroma_quant, win,
+                                       mode='same', boundary='fill')
+    else:
+        cens = chroma_quant
 
     # L2-Normalization
     return util.normalize(cens, norm=norm, axis=0)

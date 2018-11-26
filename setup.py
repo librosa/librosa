@@ -1,8 +1,16 @@
 from setuptools import setup, find_packages
+import sys
 
-import imp
 
-version = imp.load_source('librosa.version', 'librosa/version.py')
+if sys.version_info.major == 2:
+    import imp
+
+    version = imp.load_source('librosa.version', 'librosa/version.py')
+else:
+    from importlib.machinery import SourceFileLoader
+
+    version = SourceFileLoader('librosa.version',
+                               'librosa/version.py').load_module()
 
 with open('README.md', 'r') as fdesc:
     long_description = fdesc.read()
@@ -50,7 +58,10 @@ setup(
                  'matplotlib >= 2.0.0',
                  'sphinxcontrib-versioning >= 2.2.1',
                  'sphinx-gallery'],
-        'tests': ['matplotlib >= 2.1'],
+        'tests': ['matplotlib >= 2.1',
+                  'pytest-mpl',
+                  'pytest-cov',
+                  'pytest < 4'],
         'display': ['matplotlib >= 1.5'],
     }
 )

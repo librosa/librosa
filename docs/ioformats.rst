@@ -95,24 +95,23 @@ Download and read from URL:
 Write out audio files
 ---------------------
 
-*librosa* uses `scipy.io.wavfile <https://docs.scipy.org/doc/scipy/reference/generated/scipy.io.wavfile.write.html>`_ to write out wav files. Please be aware, that this function uses the numpy dtype to determine the PCM subtype. For example if your processed audio array is of dtype ``np.float64`` (which is the default on most machines), your resulting wav file would be of type 64bit float as well. This is not considered to be a `standard PCM wavfile <https://msdn.microsoft.com/en-us/library/windows/hardware/dn653308%28v=vs.85%29.aspx>`_. If you would like to write 16bit PCM you could convert your array before hand:
+*librosa* provides a thin wrapper around `scipy.io.wavfile <https://docs.scipy.org/doc/scipy/reference/generated/scipy.io.wavfile.write.html>`_ to write out WAV files. 
 
 .. code-block:: python
     :linenos:
 
     import numpy as np
-    import librosa
 
     rate = 44100
-    audio = np.random.uniform(-1, 1, size = (rate * 10, 2))
+    data = np.random.randn(2 * rate)
 
-    maxv = np.iinfo(np.int16).max
-    librosa.output.write_wav(
-        "out_int16.wav", (audio * maxv).astype(np.int16), rate
-    )
+    librosa.output.write_wav('file.wav', data, rate)
 
-Writing audio files using pysoundfile is similar to the method in *librosa*, however it can automatically
-convert to a given PCM subtype and additionally support several compressed formats like *FLAC* or *OGG*:
+
+
+Please be aware that this function only supports floating-point inputs. For example if your processed audio array is of dtype ``np.float64`` (which is the default on most machines), your resulting WAV file would be of type 64-bit float as well. This is not considered to be a `standard PCM wavfile <https://msdn.microsoft.com/en-us/library/windows/hardware/dn653308%28v=vs.85%29.aspx>`_, but most WAV readers should be able to load it without problems.
+
+Writing audio files using `PySoundFile <https://pysoundfile.readthedocs.io/en/latest/>`_ is similar to the method in librosa. However, PySoundFile can automatically convert to a given PCM subtype and additionally support several compressed formats like FLAC or OGG vorbis.
 
 .. code-block:: python
     :linenos:
@@ -121,7 +120,7 @@ convert to a given PCM subtype and additionally support several compressed forma
     import soundfile as sf
 
     rate = 44100
-    data = np.random.uniform(-1, 1, size = (rate * 10, 2))
+    data = np.random.uniform(-1, 1, size=(rate * 10, 2))
 
     # Write out audio as 24bit PCM WAV
     sf.write('stereo_file.wav', data, samplerate, subtype='PCM_24')
@@ -131,3 +130,6 @@ convert to a given PCM subtype and additionally support several compressed forma
 
     # Write out audio as 16bit OGG
     sf.write('stereo_file.ogg', data, samplerate, format='ogg', subtype='vorbis')
+
+
+In general, we recommend using `PySoundFile` for output rather than ``librosa.output.write_wav``.
