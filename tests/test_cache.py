@@ -10,11 +10,8 @@ import tempfile
 import shutil
 import numpy as np
 
-from nose.tools import with_setup, eq_
+import pytest
 
-import warnings
-warnings.resetwarnings()
-warnings.simplefilter('always')
 
 # Disable any initial cache settings
 for key in ['DIR', 'MMAP', 'COMPRESS', 'VERBOSE', 'LEVEL']:
@@ -24,16 +21,12 @@ for key in ['DIR', 'MMAP', 'COMPRESS', 'VERBOSE', 'LEVEL']:
         pass
 
 
-def cache_construct():
-    '''Make a temp directory for the librosa cache'''
+@pytest.fixture
+def local_cache():
     cache_dir = tempfile.mkdtemp()
     os.environ['LIBROSA_CACHE_DIR'] = cache_dir
-
-
-def cache_teardown():
-    '''Blow away the temp directory'''
-
-    cache_dir = os.environ.pop('LIBROSA_CACHE_DIR')
+    yield
+    os.environ.pop('LIBROSA_CACHE_DIR')
     shutil.rmtree(cache_dir)
 
 
@@ -52,11 +45,10 @@ def test_cache_disabled():
 
     # When there's no cache directory in the environment,
     # librosa.cache is a no-op.
-    eq_(func, func_cache)
+    assert func == func_cache
 
 
-@with_setup(cache_construct, cache_teardown)
-def test_cache_enabled():
+def test_cache_enabled(local_cache):
 
     sys.modules.pop('librosa.cache', None)
     import librosa.cache

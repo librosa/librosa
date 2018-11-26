@@ -14,15 +14,13 @@ import numpy as np
 import scipy
 from scipy.spatial.distance import cdist, pdist, squareform
 from nose.tools import raises
+import pytest
 
 from test_core import srand
 
 import librosa
 
-__EXAMPLE_FILE = os.path.join('data', 'test1_22050.wav')
-
-warnings.resetwarnings()
-warnings.simplefilter('always')
+__EXAMPLE_FILE = os.path.join('tests', 'data', 'test1_22050.wav')
 
 
 def test_cross_similarity():
@@ -134,14 +132,17 @@ def test_recurrence_matrix():
         # Make a data matrix
         data = np.random.randn(3, n)
 
-        D = librosa.segment.recurrence_matrix(data, k=k, width=width, sym=sym, axis=-1, metric=metric)
+        D = librosa.segment.recurrence_matrix(data, k=k, width=width, sym=sym,
+                                              axis=-1, metric=metric)
 
         # First test for symmetry
         if sym:
             assert np.allclose(D, D.T)
 
         # Test for target-axis invariance
-        D_trans = librosa.segment.recurrence_matrix(data.T, k=k, width=width, sym=sym, axis=0, metric=metric)
+        D_trans = librosa.segment.recurrence_matrix(data.T, k=k, width=width,
+                                                    sym=sym, axis=0,
+                                                    metric=metric)
         assert np.allclose(D, D_trans)
 
         # If not symmetric, test for correct number of links
@@ -164,7 +165,7 @@ def test_recurrence_matrix():
                     for metric in ['l2', 'cosine']:
                         tester = __test
                         if width < 1:
-                            tester = raises(librosa.ParameterError)(__test)
+                            tester = pytest.mark.xfail(__test, raises=librosa.ParameterError)
 
                         yield tester, n, k, width, sym, metric
 
@@ -219,7 +220,7 @@ def test_recurrence_affinity():
             yield __test, metric, bandwidth
 
 
-@raises(librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterError)
 def test_recurrence_badmode():
 
     srand()
@@ -230,7 +231,7 @@ def test_recurrence_badmode():
                                             sparse=True)
 
 
-@raises(librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterError)
 def test_recurrence_bad_bandwidth():
 
     srand()
@@ -258,7 +259,7 @@ def test_recurrence_to_lag():
         for i in range(n):
             assert np.allclose(rec[:, i], np.roll(lag[:, i], i)[x])
 
-    @raises(librosa.ParameterError)
+    @pytest.mark.xfail(raises=librosa.ParameterError)
     def __test_fail(size):
         librosa.segment.recurrence_to_lag(np.zeros(size))
 
@@ -310,7 +311,7 @@ def test_lag_to_recurrence():
         assert np.allclose(rec, rec2)
         assert np.allclose(lag, lag2)
 
-    @raises(librosa.ParameterError)
+    @pytest.mark.xfail(raises=librosa.ParameterError)
     def __test_fail(size):
         librosa.segment.lag_to_recurrence(np.zeros(size))
 
@@ -348,7 +349,7 @@ def test_lag_to_recurrence_sparse():
             yield __test, axis, L
 
 
-@raises(librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterError)
 def test_lag_to_recurrence_sparse_badaxis():
 
     srand()
@@ -411,7 +412,7 @@ def test_subsegment():
 
     for n_segments in [0, 1, 2, 3, 4, 100]:
         if n_segments < 1:
-            tf = raises(librosa.ParameterError, IndexError)(__test)
+            tf = pytest.mark.xfail(__test, raises=(librosa.ParameterError, IndexError))
         else:
             tf = __test
         yield tf, n_segments
