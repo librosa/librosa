@@ -18,13 +18,21 @@ GitHub:
           $ git clone git@github.com:YourLogin/librosa.git
           $ cd librosa 
 
-3. Create a branch to hold your changes:
+3. Remove any previously installed librosas:
+            
+          $ pip uninstall librosa
+
+and install your local copy with testing dependencies:
+
+          $ pip install -e .[tests]
+
+4. Create a branch to hold your changes:
 
           $ git checkout -b my-feature
 
    and start making changes. Never work in the ``master`` branch!
 
-4. Work on this copy on your computer using Git to do the version
+5. Work on this copy on your computer using Git to do the version
    control. When you're done editing, do:
 
           $ git add modified_files
@@ -50,10 +58,9 @@ following rules before submitting a pull request:
 You can also check for common programming errors with the following
 tools:
 
--  Code with good unittest coverage (at least 80%), check with:
+-  Code with good test coverage (at least 80%), check with:
 
-          $ pip install nose coverage
-          $ nosetests --with-coverage --cover-package=librosa -w tests/
+          $ pytest
 
 -  No pyflakes warnings, check with:
 
@@ -87,8 +94,8 @@ following rules before submitting:
    See [Creating and highlighting code blocks](https://help.github.com/articles/creating-and-highlighting-code-blocks).
 
 -  Please include your operating system type and version number, as well
-   as your Python, scikit-learn, numpy, and scipy versions. This information
-   can be found by runnning the following code snippet:
+   as your Python, librosa, numpy, and scipy versions. This information
+   can be found by running the following code snippet:
 
   ```python
   import platform; print(platform.platform())

@@ -35,14 +35,18 @@ def show_versions():
                  'joblib',
                  'decorator',
                  'six',
-                 'resampy']
+                 'resampy',
+                 'numba']
 
     extra_deps = ['numpydoc',
                   'sphinx',
                   'sphinx_rtd_theme',
                   'sphinxcontrib.versioning',
-                  'matplotlib',
-                  'numba']
+                  'sphinx-gallery',
+                  'pytest',
+                  'pytest-mpl',
+                  'pytest-cov',
+                  'matplotlib']
 
     print('INSTALLED VERSIONS')
     print('------------------')

@@ -179,7 +179,6 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
     for bl_s in range(0, stft_matrix.shape[1], n_columns):
         bl_t = min(bl_s + n_columns, stft_matrix.shape[1])
 
-        # RFFT and Conjugate here to match phase from DPWE code
         stft_matrix[:, bl_s:bl_t] = fft.fft(fft_window *
                                             y_frames[:, bl_s:bl_t],
                                             axis=0)[:stft_matrix.shape[0]]
@@ -195,7 +194,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
 
     Converts a complex-valued spectrogram `stft_matrix` to time-series `y`
     by minimizing the mean squared error between `stft_matrix` and STFT of
-    `y` as described in [1]_.
+    `y` as described in [1]_ up to Section 2 (reconstruction from MSTFT).
 
     In general, window function, hop length and other parameters should be same
     as in stft, which mostly leads to perfect reconstruction of a signal from
@@ -1262,7 +1261,9 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
         x_exp = np.clip(x_exp, float(t_min) / n, x[-1])
 
     # Make sure that all sample points are unique
-    assert len(np.unique(x_exp)) == len(x_exp)
+    # This should never happen!
+    if len(np.unique(x_exp)) != len(x_exp):
+        raise RuntimeError('Redundant sample positions in Mellin transform')
 
     # Resample the signal
     y_res = f_interp(x_exp)
