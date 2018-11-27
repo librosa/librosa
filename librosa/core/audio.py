@@ -470,11 +470,11 @@ def autocorrelate(y, max_size=None, axis=-1):
 
 
 @jit
-def lpc(y, m):
+def lpc(y, N):
     """Linear Prediction Coefficients via Burg's method
 
     This function applies Burg's method to estimate coefficients of a linear
-    filter on `y` of order `m`.  Burg's method is an extension to the
+    filter on `y` of order `N`.  Burg's method is an extension to the
     Yule-Walker approach, which are both sometimes referred to as LPC parameter
     estimation by autocorrelation.
 
@@ -493,21 +493,21 @@ def lpc(y, m):
     y : np.ndarray
         Time series to fit
 
-    m : int > 0
+    N : int > 0
         Order of the linear filter
 
     Returns
     -------
-    a : np.ndarray of length m + 1
+    a : np.ndarray of length N + 1
         LPC filter coefficients, i.e. denominator polynomial of the filter
-    k : np.ndarray of length m
+    k : np.ndarray of length N
         Reflection coefficients
 
     Raises
     ------
     ParameterError
         - If y is not real-valued
-        - If m < 1 or not integer
+        - If N < 1 or not integer
 
     See also
     --------
@@ -530,8 +530,8 @@ def lpc(y, m):
     >>> plt.plot(y_est)
 
     """
-    if not isinstance(m, int) or m < 1:
-        raise ParameterError("m must be an integer > 0")
+    if not isinstance(N, int) or N < 1:
+        raise ParameterError("N must be an integer > 0")
 
     if not isinstance(y, np.ndarray):
         raise ParameterError("y must be of the type np.ndarray")
@@ -540,12 +540,12 @@ def lpc(y, m):
         raise ParameterError("y must not contain complex numbers")
 
     fp = bp = y
-    k = np.zeros(m)
-    a = np.zeros(m+1)
+    k = np.zeros(N, dtype=y.dtype)
+    a = np.zeros(N+1, dtype=y.dtype)
     den = 0
     q = a[0] = 1
 
-    for i in range(m):
+    for i in range(N):
         # Remove first and last element from forward and reverse
         # prediction errors
         fp = fp[1:]
