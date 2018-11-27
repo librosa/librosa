@@ -17,8 +17,8 @@ from .. import cache
 from .. import util
 from ..util.exceptions import ParameterError
 
-__all__ = ['load', 'to_mono', 'resample', 'get_duration', 'lpc',
-           'autocorrelate', 'zero_crossings', 'clicks', 'tone', 'chirp']
+__all__ = ['load', 'to_mono', 'resample', 'get_duration', 'autocorrelate',
+           'lpc', 'zero_crossings', 'clicks', 'tone', 'chirp']
 
 # Resampling bandwidths as percentage of Nyquist
 BW_BEST = resampy.filters.get_filter('kaiser_best')[2]
@@ -471,22 +471,22 @@ def autocorrelate(y, max_size=None, axis=-1):
 
 @jit
 def lpc(y, m):
-    """Linear Predictive Coefficients via Burg's method
+    """Linear Prediction Coefficients via Burg's method
 
     This function applies Burg's method to estimate coefficients of a linear
     filter on `y` of order `m`.  Burg's method is an extension to the
-    classic Yule-Walker approach which is sometimes referred to as
-    the LPC `autocorrelation` method.
+    Yule-Walker approach, which are both sometimes referred to as LPC parameter
+    estimation by autocorrelation.
 
     It follows the description and implementation approach described in the
-    introduction in [1].  (Note that this paper describes a different method,
-    which is not implemented here, but has been chosen for its clear
-    explanation of Burg's technique in its introduction.)
+    introduction in [1].  N.B. This paper describes a different method, which
+    is not implemented here, but has been chosen for its clear explanation of
+    Burg's technique in its introduction.
 
     .. [1] Larry Marple
            A New Autoregressive Spectrum Analysis Algorithm
-           IEEE Transactions on Accoustics, Speech and Signal Processing
-           Vol ASSP-28, No. 4, August 1980
+           IEEE Transactions on Accoustics, Speech, and Signal Processing
+           vol 28, no. 4, 1980
 
     Parameters
     ----------
@@ -499,14 +499,14 @@ def lpc(y, m):
     Returns
     -------
     a : np.ndarray of length m + 1
-        LPC filter coefficients (ie, denominator polynomial of the filter)
+        LPC filter coefficients, i.e. denominator polynomial of the filter
     k : np.ndarray of length m
         Reflection coefficients
 
     Raises
     ------
     ParameterError
-        - If y is not real valued
+        - If y is not real-valued
         - If m < 1 or not integer
 
     See also
