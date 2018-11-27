@@ -469,7 +469,6 @@ def autocorrelate(y, max_size=None, axis=-1):
     return autocorr
 
 
-@jit
 def lpc(y, N):
     """Linear Prediction Coefficients via Burg's method
 
@@ -500,8 +499,6 @@ def lpc(y, N):
     -------
     a : np.ndarray of length N + 1
         LPC filter coefficients, i.e. denominator polynomial of the filter
-    k : np.ndarray of length N
-        Reflection coefficients
 
     Raises
     ------
@@ -536,45 +533,46 @@ def lpc(y, N):
     if not isinstance(y, np.ndarray):
         raise ParameterError("y must be of the type np.ndarray")
 
-    if not all(np.isreal(y)):
+    if not np.all(np.isreal(y)):
         raise ParameterError("y must not contain complex numbers")
 
-    fp = bp = y
+    return _lpc(y, N)
+
+
+@jit(nopython=True)
+def _lpc(y, N):
     k = np.zeros(N, dtype=y.dtype)
     a = np.zeros(N+1, dtype=y.dtype)
-    den = 0
+
     q = a[0] = 1
+    fp = y[1:]
+    bp = y[:-1]
+    den = np.dot(fp, fp) + np.dot(bp, bp)
 
     for i in range(N):
-        # Remove first and last element from forward and reverse
-        # prediction errors
-        fp = fp[1:]
-        bp = bp[:-1]
-
-        # Compute autocorrelation (denominator), use last result
-        # to save on computation if we have one
-        #
-        # This does cause a slight difference in the result,
-        # likely from numerical issues, but in practice it's
-        # neglible
-        if i == 0:
-            den = np.dot(fp, fp) + np.dot(bp, bp)
-        else:
-            den = q*den - bp[-1]**2 - fp[0]**2
-
         # Compute reflection coefficient
         k[i] = -2 * np.dot(bp, fp) / den
         q = 1 - k[i]**2
 
         # Levinson-Durbin recursion (note we're flipping a)
-        a[1:i+2] = a[1:i+2] + k[i]*a[i::-1]
+        for j in range(1, i+2):
+            a[j] = a[j] + k[i]*a[i - j + 1]
 
         # Forward and backward prediction error updates
         fp_tmp = fp + k[i]*bp
         bp = bp + k[i]*fp
         fp = fp_tmp
 
-    return a, k
+        # Remove first and last element from forward and reverse
+        # prediction errors
+        fp = fp[1:]
+        bp = bp[:-1]
+
+        # Compute autocorrelation (denominator), use last result
+        # to speed up computation
+        den = q*den - bp[-1]**2 - fp[0]**2
+
+    return a
 
 
 @cache(level=20)
