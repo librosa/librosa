@@ -749,8 +749,8 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
         # filter the signal
         cur_sr_idx = np.flatnonzero(y_srs == cur_sr)[0]
 
-        cur_filter_output = scipy.signal.filtfilt(cur_filter[0], cur_filter[1],
-                                                  y_resampled[cur_sr_idx])
+        cur_filter_output = scipy.signal.sosfiltfilt(cur_filter,
+                                                     y_resampled[cur_sr_idx])
 
         # frame the current filter output
         cur_frames = util.frame(np.ascontiguousarray(cur_filter_output),
