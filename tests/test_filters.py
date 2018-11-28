@@ -21,6 +21,7 @@ except KeyError:
 import glob
 import numpy as np
 import scipy.io
+import scipy.signal
 
 import pytest
 
@@ -393,16 +394,17 @@ def test_semitone_filterbank():
                              squeeze_me=True)['h']
 
     # standard parameters reproduce settings from chroma toolbox
-    mut_ft, mut_srs = librosa.filters.semitone_filterbank()
+    mut_ft_sos, mut_srs = librosa.filters.semitone_filterbank()
 
-    for cur_filter_id in range(len(mut_ft)):
+    for cur_filter_id in range(len(mut_ft_sos)):
         cur_filter_gt = gt_fb[cur_filter_id + 23]
-        cur_filter_mut = mut_ft[cur_filter_id]
+        cur_filter_mut_sos = mut_ft_sos[cur_filter_id]
+        cur_filter_mut_ba = scipy.signal.sos2tf(cur_filter_mut_sos)
 
         cur_a_gt = cur_filter_gt[0]
         cur_b_gt = cur_filter_gt[1]
-        cur_a_mut = cur_filter_mut[1]
-        cur_b_mut = cur_filter_mut[0]
+        cur_a_mut = cur_filter_mut_ba[1]
+        cur_b_mut = cur_filter_mut_ba[0]
 
         # we deviate from the chroma toolboxes for pitches 94 and 95
         # (filters 70 and 71) by processing them with a higher samplerate
