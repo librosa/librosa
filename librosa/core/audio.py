@@ -557,8 +557,8 @@ def __lpc(y, N):
 
         # Levinson-Durbin recursion. We're flipping a while we rewrite it
         # so we maintain two buffers
+        last = cur
         cur ^= 1
-        last = cur ^ 1
         for j in range(1, i+2):
             a[cur, j] = a[last, j] + k[i]*a[last, i - j + 1]
 
