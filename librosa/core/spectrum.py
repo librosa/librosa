@@ -634,7 +634,7 @@ def phase_vocoder(D, rate, hop_length=None):
 
 @cache(level=20)
 def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
-         tuning=0.0, pad_mode='reflect', flayout='ba', **kwargs):
+         tuning=0.0, pad_mode='reflect', flayout=None, **kwargs):
     r'''Time-frequency representation using IIR filters [1]_.
 
     This function will return a time-frequency representation
@@ -720,6 +720,11 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.tight_layout()
     '''
+
+    if flayout is None:
+        warnings.warn('Default filter layout for `iirt` is `ba`, but will be `sos` in 0.7.',
+                      FutureWarning)
+        flayout = 'ba'
 
     # check audio input
     util.valid_audio(y)
