@@ -642,7 +642,7 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
     First, `y` is resampled as needed according to the provided `sample_rates`.
     Then, a filterbank with with `n` band-pass filters is designed.
     The resampled input signals are processed by the filterbank as a whole.
-    (`scipy.signal.filtfilt` is used to make the phase linear.)
+    (`scipy.signal.sosfiltfilt` is used to make the phase linear.)
     The output of the filterbank is cut into frames.
     For each band, the short-time mean-square power (STMSP) is calculated by
     summing `win_length` subsequent filtered time samples.
@@ -700,7 +700,7 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
     librosa.filters._multirate_fb
     librosa.filters.mr_frequencies
     librosa.core.cqt
-    scipy.signal.filtfilt
+    scipy.signal.sosfiltfilt
 
     Examples
     --------
