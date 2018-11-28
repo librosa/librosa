@@ -986,11 +986,12 @@ def _multirate_fb(center_freqs=None, sample_rates=None, Q=25.0,
         passband_freqs = [cur_center_freq - 0.5 * cur_bw, cur_center_freq + 0.5 * cur_bw] / cur_nyquist
         stopband_freqs = [cur_center_freq - cur_bw, cur_center_freq + cur_bw] / cur_nyquist
 
-        cur_filter = scipy.signal.iirdesign(passband_freqs, stopband_freqs,
-                                            passband_ripple, stopband_attenuation,
-                                            analog=False, ftype=ftype, output='ba')
+        cur_filter_zpk = scipy.signal.iirdesign(passband_freqs, stopband_freqs,
+                                                passband_ripple, stopband_attenuation,
+                                                analog=False, ftype=ftype, output='zpk')
+        cur_filter_sos = scipy.signal.zpk2sos(*cur_filter_zpk)
 
-        filterbank.append(cur_filter)
+        filterbank.append(cur_filter_sos)
 
     return filterbank, sample_rates
 
