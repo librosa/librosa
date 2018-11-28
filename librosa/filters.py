@@ -909,7 +909,7 @@ def get_window(window, Nx, fftbins=True):
 
 @cache(level=10)
 def _multirate_fb(center_freqs=None, sample_rates=None, Q=25.0,
-                  passband_ripple=1, stopband_attenuation=50, ftype='ellip'):
+                  passband_ripple=1, stopband_attenuation=50, ftype='ellip', flayout='ba'):
     r'''Helper function to construct a multirate filterbank.
 
      A filter bank consists of multiple band-pass filters which divide the input signal
@@ -943,6 +943,12 @@ def _multirate_fb(center_freqs=None, sample_rates=None, Q=25.0,
     ftype : str
         The type of IIR filter to design
         See `scipy.signal.iirdesign` for details.
+
+    flayout : string
+        - If `ba`, the standard difference equation is used for filtering with `scipy.signal.filtfilt`.
+          Can be unstable for high-order filters.
+        - If `sos`, a series of second-order filters is used for filtering with `scipy.signal.sosfiltfilt`.
+          Minimizes numerical precision errors for high-order filters, but is slower.
 
     Returns
     -------
@@ -986,12 +992,17 @@ def _multirate_fb(center_freqs=None, sample_rates=None, Q=25.0,
         passband_freqs = [cur_center_freq - 0.5 * cur_bw, cur_center_freq + 0.5 * cur_bw] / cur_nyquist
         stopband_freqs = [cur_center_freq - cur_bw, cur_center_freq + cur_bw] / cur_nyquist
 
-        cur_filter_zpk = scipy.signal.iirdesign(passband_freqs, stopband_freqs,
+        if flayout == 'ba':
+            cur_filter = scipy.signal.iirdesign(passband_freqs, stopband_freqs,
                                                 passband_ripple, stopband_attenuation,
-                                                analog=False, ftype=ftype, output='zpk')
-        cur_filter_sos = scipy.signal.zpk2sos(*cur_filter_zpk)
+                                                analog=False, ftype=ftype, output='ba')
+        elif flayout == 'sos':
+            cur_filter_zpk = scipy.signal.iirdesign(passband_freqs, stopband_freqs,
+                                                    passband_ripple, stopband_attenuation,
+                                                    analog=False, ftype=ftype, output='zpk')
+            cur_filter = scipy.signal.zpk2sos(*cur_filter_zpk)
 
-        filterbank.append(cur_filter_sos)
+        filterbank.append(cur_filter)
 
     return filterbank, sample_rates
 
@@ -1044,7 +1055,7 @@ def mr_frequencies(tuning):
     return center_freqs, sample_rates
 
 
-def semitone_filterbank(center_freqs=None, tuning=0.0, sample_rates=None, **kwargs):
+def semitone_filterbank(center_freqs=None, tuning=0.0, sample_rates=None, flayout='ba', **kwargs):
     r'''Constructs a multirate filterbank of infinite-impulse response (IIR)
     band-pass filters at user-defined center frequencies and sample rates.
 
@@ -1078,6 +1089,12 @@ def semitone_filterbank(center_freqs=None, tuning=0.0, sample_rates=None, **kwar
 
     sample_rates : np.ndarray [shape=(n,), dtype=float]
         Sample rates of each filter in the multirate filterbank.
+
+    flayout : string
+        - If `ba`, the standard difference equation is used for filtering with `scipy.signal.filtfilt`.
+          Can be unstable for high-order filters.
+        - If `sos`, a series of second-order filters is used for filtering with `scipy.signal.sosfiltfilt`.
+          Minimizes numerical precision errors for high-order filters, but is slower.
 
     kwargs : additional keyword arguments
         Additional arguments to the private function `_multirate_fb()`.
@@ -1120,7 +1137,8 @@ def semitone_filterbank(center_freqs=None, tuning=0.0, sample_rates=None, **kwar
     if (center_freqs is None) and (sample_rates is None):
         center_freqs, sample_rates = mr_frequencies(tuning)
 
-    filterbank, fb_sample_rates = _multirate_fb(center_freqs=center_freqs, sample_rates=sample_rates, **kwargs)
+    filterbank, fb_sample_rates = _multirate_fb(center_freqs=center_freqs, sample_rates=sample_rates,
+                                                flayout=flayout, **kwargs)
 
     return filterbank, fb_sample_rates
 
