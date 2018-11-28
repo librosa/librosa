@@ -536,27 +536,31 @@ def lpc(y, N):
     if not np.all(np.isreal(y)):
         raise ParameterError("y must not contain complex numbers")
 
-    return _lpc(y, N)
+    return __lpc(y, N)
 
 
 @jit(nopython=True)
-def _lpc(y, N):
+def __lpc(y, N):
     k = np.zeros(N, dtype=y.dtype)
-    a = np.zeros(N+1, dtype=y.dtype)
+    a = np.zeros((2, N+1), dtype=y.dtype)
 
-    q = a[0] = 1
+    q = a[:, 0] = 1
     fp = y[1:]
     bp = y[:-1]
     den = np.dot(fp, fp) + np.dot(bp, bp)
+    cur = 0
 
     for i in range(N):
         # Compute reflection coefficient
         k[i] = -2 * np.dot(bp, fp) / den
         q = 1 - k[i]**2
 
-        # Levinson-Durbin recursion (note we're flipping a)
+        # Levinson-Durbin recursion. We're flipping a while we rewrite it
+        # so we maintain two buffers
+        cur ^= 1
+        last = cur ^ 1
         for j in range(1, i+2):
-            a[j] = a[j] + k[i]*a[i - j + 1]
+            a[cur, j] = a[last, j] + k[i]*a[last, i - j + 1]
 
         # Forward and backward prediction error updates
         fp_tmp = fp + k[i]*bp
@@ -572,7 +576,7 @@ def _lpc(y, N):
         # to speed up computation
         den = q*den - bp[-1]**2 - fp[0]**2
 
-    return a
+    return a[cur, :]
 
 
 @cache(level=20)
