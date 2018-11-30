@@ -393,19 +393,26 @@ def test_semitone_filterbank():
                              squeeze_me=True)['h']
 
     # standard parameters reproduce settings from chroma toolbox
-    mut_ft, mut_srs = librosa.filters.semitone_filterbank(flayout='ba')
+    mut_ft_ba, mut_srs_ba = librosa.filters.semitone_filterbank(flayout='ba')
+    mut_ft_sos, mut_srs_sos = librosa.filters.semitone_filterbank(flayout='sos')
 
-    for cur_filter_id in range(len(mut_ft)):
+    for cur_filter_id in range(len(mut_ft_ba)):
         cur_filter_gt = gt_fb[cur_filter_id + 23]
-        cur_filter_mut = mut_ft[cur_filter_id]
+        cur_filter_mut = mut_ft_ba[cur_filter_id]
+        cur_filter_mut_sos = scipy.signal.sos2tf(mut_ft_sos[cur_filter_id])
 
         cur_a_gt = cur_filter_gt[0]
         cur_b_gt = cur_filter_gt[1]
         cur_a_mut = cur_filter_mut[1]
         cur_b_mut = cur_filter_mut[0]
+        cur_a_mut_sos = cur_filter_mut_sos[1]
+        cur_b_mut_sos = cur_filter_mut_sos[0]
 
         # we deviate from the chroma toolboxes for pitches 94 and 95
         # (filters 70 and 71) by processing them with a higher samplerate
         if (cur_filter_id != 70) and (cur_filter_id != 71):
             assert np.allclose(cur_a_gt, cur_a_mut)
             assert np.allclose(cur_b_gt, cur_b_mut, atol=1e-4)
+
+            assert np.allclose(cur_a_gt, cur_a_mut_sos)
+            assert np.allclose(cur_b_gt, cur_b_mut_sos, atol=1e-4)
