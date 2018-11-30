@@ -945,10 +945,14 @@ def _multirate_fb(center_freqs=None, sample_rates=None, Q=25.0,
         See `scipy.signal.iirdesign` for details.
 
     flayout : string
-        - If `ba`, the standard difference equation is used for filtering with `scipy.signal.filtfilt`.
+        Valid `output` argument for `scipy.signal.iirdesign`.
+        - If `ba`, returns numerators/denominators of the transfer functions,
+          used for filtering with `scipy.signal.filtfilt`.
           Can be unstable for high-order filters.
-        - If `sos`, a series of second-order filters is used for filtering with `scipy.signal.sosfiltfilt`.
+        - If `sos`, returns a series of second-order filters,
+          used for filtering with `scipy.signal.sosfiltfilt`.
           Minimizes numerical precision errors for high-order filters, but is slower.
+        - If `zpk`, returns zeros, poles, and system gains of the transfer functions.
 
     Returns
     -------

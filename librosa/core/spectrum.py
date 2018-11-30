@@ -726,6 +726,9 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
                       FutureWarning)
         flayout = 'ba'
 
+    elif flayout not in ('ba', 'sos'):
+        raise ParameterError('Unsupported flayout={}'.format(flayout))
+
     # check audio input
     util.valid_audio(y)
 
