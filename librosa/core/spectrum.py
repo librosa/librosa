@@ -690,7 +690,6 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
           Can be unstable for high-order filters.
         - If `sos`, a series of second-order filters is used for filtering with `scipy.signal.sosfiltfilt`.
           Minimizes numerical precision errors for high-order filters, but is slower.
-        - Raises a `ParameterError` for any other string.
 
     kwargs : additional keyword arguments
         Additional arguments for `librosa.filters.semitone_filterbank()`
@@ -700,6 +699,11 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
     -------
     bands_power : np.ndarray [shape=(n, t), dtype=dtype]
         Short-time mean-square power for the input signal.
+
+    Raises
+    ------
+    ParameterError
+        If `flayout` is not None, `ba`, or `sos`.
 
     See Also
     --------
