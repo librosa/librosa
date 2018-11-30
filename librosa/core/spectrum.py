@@ -772,7 +772,7 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
         if flayout == 'ba':
             cur_filter_output = scipy.signal.filtfilt(cur_filter[0], cur_filter[1],
                                                       y_resampled[cur_sr_idx])
-        else:
+        elif flayout == 'sos':
             cur_filter_output = scipy.signal.sosfiltfilt(cur_filter,
                                                          y_resampled[cur_sr_idx])
 
