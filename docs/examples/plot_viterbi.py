@@ -44,37 +44,37 @@ plt.tight_layout()
 # non-silence throughout this recording.
 #
 
-# As a first step, we can plot the root-mean-square energy (RMSE)
-rmse = librosa.feature.rmse(y=y)[0]
+# As a first step, we can plot the root-mean-square (RMS) curve
+rms = librosa.feature.rms(y=y)[0]
 
-times = librosa.frames_to_time(np.arange(len(rmse)))
+times = librosa.frames_to_time(np.arange(len(rms)))
 
 plt.figure(figsize=(12, 4))
-plt.plot(times, rmse)
+plt.plot(times, rms)
 plt.axhline(0.02, color='r', alpha=0.5)
 plt.xlabel('Time')
-plt.ylabel('RMSE')
+plt.ylabel('RMS')
 plt.axis('tight')
 plt.tight_layout()
 
 # The red line at 0.02 indicates a reasonable threshold for silence detection.
-# However, the RMSE curve occasionally dips below the threshold momentarily,
+# However, the RMS curve occasionally dips below the threshold momentarily,
 # and we would prefer the detector to not count these brief dips as silence.
 # This is where the Viterbi algorithm comes in handy!
 
 #####################################################
-# As a first step, we will convert the raw RMSE score
+# As a first step, we will convert the raw RMS score
 # into a likelihood (probability) by logistic mapping
 #
 #   :math:`P[V=1 | x] = \frac{\exp(x - \tau)}{1 + \exp(x - \tau)}`
 #
-# where :math:`x` denotes the RMSE value and :math:`\tau=0.02` is our threshold.
+# where :math:`x` denotes the RMS value and :math:`\tau=0.02` is our threshold.
 # The variable :math:`V` indicates whether the signal is non-silent (1) or silent (0).
 #
-# We'll normalize the RMSE by its standard deviation to expand the
+# We'll normalize the RMS by its standard deviation to expand the
 # range of the probability vector
 
-r_normalized = (rmse - 0.02) / np.std(rmse)
+r_normalized = (rms - 0.02) / np.std(rms)
 p = np.exp(r_normalized) / (1 + np.exp(r_normalized))
 
 # We can plot the probability curve over time:
@@ -128,7 +128,7 @@ print(full_p)
 ####################################
 # Now, we're ready to decode!
 # We'll use `viterbi_discriminative` here, since the inputs are
-# state likelihoods conditional on data (in our case, data is rmse).
+# state likelihoods conditional on data (in our case, data is rms).
 
 states = librosa.sequence.viterbi_discriminative(full_p, transition)
 
