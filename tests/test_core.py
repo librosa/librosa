@@ -1342,9 +1342,25 @@ def test_iirt():
     gt = scipy.io.loadmat(os.path.join('tests', 'data', 'features-CT-cqt'), squeeze_me=True)['f_cqt']
 
     y, sr = librosa.load(os.path.join('tests', 'data', 'test1_44100.wav'))
-    mut = librosa.iirt(y, hop_length=2205, win_length=4410)
+    mut1 = librosa.iirt(y, hop_length=2205, win_length=4410, flayout='ba')
 
-    assert np.allclose(mut, gt[23:108, :mut.shape[1]], atol=1.8)
+    assert np.allclose(mut1, gt[23:108, :mut1.shape[1]], atol=1.8)
+
+    mut2 = librosa.iirt(y, hop_length=2205, win_length=4410, flayout='sos')
+
+    assert np.allclose(mut2, gt[23:108, :mut2.shape[1]], atol=1.8)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_iirt_flayout1():
+    y, sr = librosa.load(os.path.join('tests', 'data', 'test1_44100.wav'))
+    librosa.iirt(y, hop_length=2205, win_length=4410, flayout='foo')
+
+
+def test_iirt_flayout2():
+    y, sr = librosa.load(os.path.join('tests', 'data', 'test1_44100.wav'))
+    with pytest.warns(FutureWarning):
+        librosa.iirt(y, hop_length=2205, win_length=4410)
 
 
 def test_pcen():

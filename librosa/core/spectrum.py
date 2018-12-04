@@ -634,7 +634,7 @@ def phase_vocoder(D, rate, hop_length=None):
 
 @cache(level=20)
 def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
-         tuning=0.0, pad_mode='reflect', **kwargs):
+         tuning=0.0, pad_mode='reflect', flayout=None, **kwargs):
     r'''Time-frequency representation using IIR filters [1]_.
 
     This function will return a time-frequency representation
@@ -642,7 +642,7 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
     First, `y` is resampled as needed according to the provided `sample_rates`.
     Then, a filterbank with with `n` band-pass filters is designed.
     The resampled input signals are processed by the filterbank as a whole.
-    (`scipy.signal.filtfilt` is used to make the phase linear.)
+    (`scipy.signal.filtfilt` resp. `sosfiltfilt` is used to make the phase linear.)
     The output of the filterbank is cut into frames.
     For each band, the short-time mean-square power (STMSP) is calculated by
     summing `win_length` subsequent filtered time samples.
@@ -685,6 +685,12 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
         If `center=True`, the padding mode to use at the edges of the signal.
         By default, this function uses reflection padding.
 
+    flayout : string
+        - If `ba`, the standard difference equation is used for filtering with `scipy.signal.filtfilt`.
+          Can be unstable for high-order filters.
+        - If `sos`, a series of second-order filters is used for filtering with `scipy.signal.sosfiltfilt`.
+          Minimizes numerical precision errors for high-order filters, but is slower.
+
     kwargs : additional keyword arguments
         Additional arguments for `librosa.filters.semitone_filterbank()`
         (e.g., could be used to provide another set of `center_freqs` and `sample_rates`).
@@ -694,6 +700,11 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
     bands_power : np.ndarray [shape=(n, t), dtype=dtype]
         Short-time mean-square power for the input signal.
 
+    Raises
+    ------
+    ParameterError
+        If `flayout` is not None, `ba`, or `sos`.
+
     See Also
     --------
     librosa.filters.semitone_filterbank
@@ -701,6 +712,7 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
     librosa.filters.mr_frequencies
     librosa.core.cqt
     scipy.signal.filtfilt
+    scipy.signal.sosfiltfilt
 
     Examples
     --------
@@ -714,6 +726,14 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
     >>> plt.tight_layout()
     '''
 
+    if flayout is None:
+        warnings.warn('Default filter layout for `iirt` is `ba`, but will be `sos` in 0.7.',
+                      FutureWarning)
+        flayout = 'ba'
+
+    elif flayout not in ('ba', 'sos'):
+        raise ParameterError('Unsupported flayout={}'.format(flayout))
+
     # check audio input
     util.valid_audio(y)
 
@@ -726,7 +746,7 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
         y = np.pad(y, int(hop_length), mode=pad_mode)
 
     # get the semitone filterbank
-    filterbank_ct, sample_rates = semitone_filterbank(tuning=tuning, **kwargs)
+    filterbank_ct, sample_rates = semitone_filterbank(tuning=tuning, flayout=flayout, **kwargs)
 
     # create three downsampled versions of the audio signal
     y_resampled = []
@@ -749,8 +769,12 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
         # filter the signal
         cur_sr_idx = np.flatnonzero(y_srs == cur_sr)[0]
 
-        cur_filter_output = scipy.signal.filtfilt(cur_filter[0], cur_filter[1],
-                                                  y_resampled[cur_sr_idx])
+        if flayout == 'ba':
+            cur_filter_output = scipy.signal.filtfilt(cur_filter[0], cur_filter[1],
+                                                      y_resampled[cur_sr_idx])
+        elif flayout == 'sos':
+            cur_filter_output = scipy.signal.sosfiltfilt(cur_filter,
+                                                         y_resampled[cur_sr_idx])
 
         # frame the current filter output
         cur_frames = util.frame(np.ascontiguousarray(cur_filter_output),
