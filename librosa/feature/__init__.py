@@ -15,6 +15,7 @@ Spectral features
     chroma_cens
     melspectrogram
     mfcc
+    rms
     rmse
     spectral_centroid
     spectral_bandwidth
