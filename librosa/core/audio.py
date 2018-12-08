@@ -498,13 +498,15 @@ def lpc(y, N):
     Returns
     -------
     a : np.ndarray of length N + 1
-        LPC filter coefficients, i.e. denominator polynomial of the filter
+        LP prediction error coefficients, i.e. filter denominator polynomial
 
     Raises
     ------
     ParameterError
         - If y is not real-valued
         - If N < 1 or not integer
+    FloatingPointError
+        - If y is ill-conditioned
 
     See also
     --------
@@ -512,19 +514,25 @@ def lpc(y, N):
 
     Examples
     --------
-    Compute LPC coefficients of y at order 16 on entire series
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(), offset=20,
+    Compute LP coefficients of y at order 16 on entire series
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), offset=30,
     ...                      duration=10)
     >>> librosa.lpc(y, 16)
 
-    Compute LPC coefficients, and plot LPC estimate of original series
+    Compute LP coefficients, and plot LP estimate of original series
+
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(), offset=20,
+    >>> import scipy
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), offset=30,
     ...                      duration=0.020)
-    >>> a, _ = librosa.lpc(y, 16)
-    >>> y_est = scipy.signal.lfilter([1], a, y)
+    >>> a = librosa.lpc(y, 2)
+    >>> y_hat = scipy.signal.lfilter([0] + -1*a[1:], [1], y)
+    >>> plt.figure()
     >>> plt.plot(y)
-    >>> plt.plot(y_est)
+    >>> plt.plot(y_hat)
+    >>> plt.legend(['y', 'y_hat'])
+    >>> plt.title('LP Model Forward Prediction')
 
     """
     if not isinstance(N, int) or N < 1:
@@ -551,30 +559,32 @@ def __lpc(y, N):
     cur = 0
 
     for i in range(N):
+        if den <= 0:
+            raise FloatingPointError('numerical error, input ill-conditioned?')
+
         # Compute reflection coefficient
         k[i] = -2 * np.dot(bp, fp) / den
         q = 1 - k[i]**2
 
-        # Levinson-Durbin recursion. We're flipping a while we rewrite it
-        # so we maintain two buffers
+        # Levinson-Durbin recursion for coefficients of prediction error.
+        # We're flipping a while we rewrite it so we maintain two buffers
         last = cur
         cur ^= 1
         for j in range(1, i+2):
             a[cur, j] = a[last, j] + k[i]*a[last, i - j + 1]
 
         # Forward and backward prediction error updates
-        fp_tmp = fp + k[i]*bp
-        bp = bp + k[i]*fp
-        fp = fp_tmp
+        fp_tmp = fp
+        fp = fp + k[i]*bp
+        bp = bp + k[i]*fp_tmp
+
+        # Use last result to speed up computation
+        den = q*den - bp[-1]**2 - fp[0]**2
 
         # Remove first and last element from forward and reverse
         # prediction errors
         fp = fp[1:]
         bp = bp[:-1]
-
-        # Compute autocorrelation (denominator), use last result
-        # to speed up computation
-        den = q*den - bp[-1]**2 - fp[0]**2
 
     return a[cur, :]
 
