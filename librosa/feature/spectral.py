@@ -10,6 +10,7 @@ import scipy.fftpack
 from .. import util
 from .. import filters
 from ..util.exceptions import ParameterError
+from ..util.decorators import moved
 
 from ..core.time_frequency import fft_frequencies
 from ..core.audio import zero_crossings, to_mono
@@ -24,6 +25,7 @@ __all__ = ['spectral_centroid',
            'spectral_rolloff',
            'spectral_flatness',
            'poly_features',
+           'rms',
            'rmse',
            'zero_crossing_rate',
            'chroma_stft',
@@ -602,13 +604,13 @@ def spectral_flatness(y=None, S=None, n_fft=2048, hop_length=512,
     return gmean / amean
 
 
-def rmse(y=None, S=None, frame_length=2048, hop_length=512,
-         center=True, pad_mode='reflect'):
-    '''Compute root-mean-square (RMS) energy for each frame, either from the
+def rms(y=None, S=None, frame_length=2048, hop_length=512,
+        center=True, pad_mode='reflect'):
+    '''Compute root-mean-square (RMS) value for each frame, either from the
     audio samples `y` or from a spectrogram `S`.
 
-    Computing the energy from audio samples is faster as it doesn't require a
-    STFT calculation. However, using a spectrogram will give a more accurate
+    Computing the RMS value from audio samples is faster as it doesn't require
+    a STFT calculation. However, using a spectrogram will give a more accurate
     representation of energy over time because its frames can be windowed,
     thus prefer using `S` if it's already available.
 
@@ -646,13 +648,13 @@ def rmse(y=None, S=None, frame_length=2048, hop_length=512,
     Examples
     --------
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> librosa.feature.rmse(y=y)
+    >>> librosa.feature.rms(y=y)
     array([[ 0.   ,  0.056, ...,  0.   ,  0.   ]], dtype=float32)
 
     Or from spectrogram input
 
     >>> S, phase = librosa.magphase(librosa.stft(y))
-    >>> rms = librosa.feature.rmse(S=S)
+    >>> rms = librosa.feature.rms(S=S)
 
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
@@ -668,10 +670,10 @@ def rmse(y=None, S=None, frame_length=2048, hop_length=512,
     >>> plt.tight_layout()
 
     Use a STFT window of constant ones and no frame centering to get consistent
-    results with the RMS energy computed from the audio samples `y`
+    results with the RMS computed from the audio samples `y`
 
     >>> S = librosa.magphase(librosa.stft(y, window=np.ones, center=False))[0]
-    >>> librosa.feature.rmse(S=S)
+    >>> librosa.feature.rms(S=S)
 
     '''
     if y is not None and S is not None:
@@ -691,6 +693,9 @@ def rmse(y=None, S=None, frame_length=2048, hop_length=512,
     else:
         raise ValueError('Either `y` or `S` must be input.')
     return np.sqrt(np.mean(np.abs(x)**2, axis=0, keepdims=True))
+
+
+rmse = moved('librosa.feature.rmse', '0.6.3', '0.7.0')(rms)
 
 
 def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
