@@ -237,5 +237,5 @@ def test_onset_backtrack():
         assert np.all(energy[onsets_bt] <= energy[np.maximum(0, onsets_bt - 1)])
 
     yield __test, oenv
-    rmse = librosa.feature.rmse(y=y)
-    yield __test, rmse
+    rms = librosa.feature.rms(y=y)
+    yield __test, rms
