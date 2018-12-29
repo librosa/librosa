@@ -780,6 +780,15 @@ def normalize(S, norm=np.inf, axis=0, threshold=None, fill=None):
 def localmax(x, axis=0):
     """Find local maxima in an array `x`.
 
+    An element `x[i]` is considered a local maximum if the following
+    conditions are met:
+
+    - `x[i] > x[i-1]`
+    - `x[i] >= x[i+1]`
+
+    Note that the first condition is strict, and that the first element
+    `x[0]` will never be considered as a local maximum.
+
     Examples
     --------
     >>> x = np.array([1, 0, 1, 2, -1, 0, -2, 1])
