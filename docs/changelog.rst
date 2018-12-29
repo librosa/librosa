@@ -1,6 +1,41 @@
 Changelog
 =========
 
+v0.6.3
+------
+2018-12-31
+
+Bug fixes
+
+    - `#799`_ Enhanced stability of elliptical filter implementation in `iirt`. *Frank Zalkow*
+
+New features
+
+    - `#766`_ made smoothing optional in `feature.chroma_cens`. *Kyungyun Lee*
+    - `#760`_ allow explicit units for time axis decoration in `display`. *Kyungyun Lee*
+
+Other changes
+
+    - `#801`_ renamed `feature.rmse` to `feature.rms`. *XXX*
+    - `#793`_ updated comments in `stft`. *Dan Ellis*
+    - `#791`_ updated documentation for `write_wav`. *Brian McFee*
+    - `#790`_ removed dependency on deprecated `imp` module. *Brian McFee* 
+    - `#787`_ fixed typos in CONTRIBUTING documentation. *Vincent Lostanlen*
+    - `#785`_ removed all run-time assertions in favor of proper exceptions. *Brian McFee*
+    - `#783`_ migrated test infrastructure from `nose` to `pytest`. *Brian McFee*
+    - `#777`_ include LICENSE file in source distribution. *XXX*
+    - `#769`_ updated documentation in `core.istft`. *Shayenne Moura*
+
+.. _#799: https://github.com/librosa/librosa/issues/799
+.. _#801: https://github.com/librosa/librosa/issues/801
+.. _#793: https://github.com/librosa/librosa/issues/793
+.. _#791: https://github.com/librosa/librosa/issues/791
+.. _#787: https://github.com/librosa/librosa/issues/787
+.. _#785: https://github.com/librosa/librosa/issues/785
+.. _#783: https://github.com/librosa/librosa/issues/783
+.. _#777: https://github.com/librosa/librosa/issues/777
+.. _#769: https://github.com/librosa/librosa/issues/769
+
 v0.6.2
 ------
 2018-08-09
