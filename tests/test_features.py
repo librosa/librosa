@@ -401,15 +401,15 @@ def test_spectral_flatness_errors():
     yield __test, S, -1
 
 
-def test_rmse():
+def test_rms():
 
     def __test(n):
         S = np.ones((n, 5))
 
         # RMSE of an all-ones band is 1
-        rmse = librosa.feature.rmse(S=S)
+        rms = librosa.feature.rms(S=S)
 
-        assert np.allclose(rmse, np.ones_like(rmse))
+        assert np.allclose(rms, np.ones_like(rms))
 
     def __test_consistency(frame_length, hop_length, center):
         y, sr = librosa.load(__EXAMPLE_FILE, sr=None)
@@ -426,10 +426,10 @@ def test_rmse():
                                           center=center))[0]
 
         # Try both RMS methods.
-        rms1 = librosa.feature.rmse(S=S, frame_length=frame_length,
-                                    hop_length=hop_length)
-        rms2 = librosa.feature.rmse(y=y, frame_length=frame_length,
-                                    hop_length=hop_length, center=center)
+        rms1 = librosa.feature.rms(S=S, frame_length=frame_length,
+                                   hop_length=hop_length)
+        rms2 = librosa.feature.rms(y=y, frame_length=frame_length,
+                                   hop_length=hop_length, center=center)
 
         assert rms1.shape == rms2.shape
         # Normalize envelopes.
