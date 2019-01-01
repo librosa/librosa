@@ -747,7 +747,8 @@ def tone(frequency, sr=22050, length=None, duration=None, phi=None):
         desired sampling rate of the output signal
 
     length : int > 0
-        desired number of samples in the output signal. When both `duration` and `length` are defined, `length` would take priority.
+        desired number of samples in the output signal. When both `duration` and `length` are defined,
+        `length` would take priority.
 
     duration : float > 0
         desired duration in seconds. When both `duration` and `length` are defined, `length` would take priority.
