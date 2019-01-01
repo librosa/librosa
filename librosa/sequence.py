@@ -165,7 +165,7 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
 
         try:
             C = cdist(X.T, Y.T, metric=metric)
-        except ValueError as e:
+        except ValueError:
             msg = ('scipy.spatial.distance.cdist returned an error.\n'
                    'Please provide your input in the form X.shape=(K, N) and Y.shape=(K, M).\n'
                    '1-dimensional sequences should be reshaped to X.shape=(1, N) and Y.shape=(1, M).')
