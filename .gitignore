@@ -49,5 +49,5 @@ docs/auto_examples/
 *.swp
 
 # Testing and checkpoints
-# .ipynb_checkpoints
-# .coverage.*
+.ipynb_checkpoints
+.coverage.*
