@@ -3,7 +3,7 @@ Changelog
 
 v0.6.3
 ------
-2018-12-31
+2019-01-XX
 
 Bug fixes
 
@@ -26,15 +26,18 @@ Other changes
     - `#777`_ include LICENSE file in source distribution. *XXX*
     - `#769`_ updated documentation in `core.istft`. *Shayenne Moura*
 
-.. _#799: https://github.com/librosa/librosa/issues/799
 .. _#801: https://github.com/librosa/librosa/issues/801
+.. _#799: https://github.com/librosa/librosa/issues/799
 .. _#793: https://github.com/librosa/librosa/issues/793
 .. _#791: https://github.com/librosa/librosa/issues/791
+.. _#790: https://github.com/librosa/librosa/issues/790
 .. _#787: https://github.com/librosa/librosa/issues/787
 .. _#785: https://github.com/librosa/librosa/issues/785
 .. _#783: https://github.com/librosa/librosa/issues/783
 .. _#777: https://github.com/librosa/librosa/issues/777
 .. _#769: https://github.com/librosa/librosa/issues/769
+.. _#766: https://github.com/librosa/librosa/issues/766
+.. _#760: https://github.com/librosa/librosa/issues/760
 
 v0.6.2
 ------
