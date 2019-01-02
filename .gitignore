@@ -43,6 +43,11 @@ Thumbs.db
 # Sphinx stuff
 docs/generated/
 docs/_build/
+docs/auto_examples/
 
 # Vim
 *.swp
+
+# Testing and checkpoints
+.ipynb_checkpoints
+.coverage.*
