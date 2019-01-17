@@ -16,6 +16,7 @@ New features
 
 Other changes
 
+    - `#813`_ updated `core.load` documentation to cover bit depth truncation. *Andy Sarroff*
     - `#801`_ renamed `feature.rmse` to `feature.rms`. *XXX*
     - `#793`_ updated comments in `stft`. *Dan Ellis*
     - `#791`_ updated documentation for `write_wav`. *Brian McFee*
@@ -26,6 +27,7 @@ Other changes
     - `#777`_ include LICENSE file in source distribution. *XXX*
     - `#769`_ updated documentation in `core.istft`. *Shayenne Moura*
 
+.. _#813: https://github.com/librosa/librosa/issues/813
 .. _#801: https://github.com/librosa/librosa/issues/801
 .. _#799: https://github.com/librosa/librosa/issues/799
 .. _#793: https://github.com/librosa/librosa/issues/793
