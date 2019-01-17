@@ -22,7 +22,7 @@ def test_time_stretch():
 
     def __test(infile, rate):
         y, sr = librosa.load(infile, duration=4.0)
-        ys = librosa.effects.time_stretch(y, rate)
+        ys = librosa.effects.time_stretch(y, sr, rate)
 
         orig_duration = librosa.get_duration(y, sr=sr)
         new_duration = librosa.get_duration(ys, sr=sr)
