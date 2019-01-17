@@ -41,6 +41,7 @@ Contributors
 * Shayenne Moura <https://github.com/shayenne>
 * XXX <https://github.com/nullmightybofo>
 * XXX <https://github.com/toddrme2178>
+* Andy Sarroff <https://github.com/woodshop>
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
 
