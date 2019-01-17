@@ -186,7 +186,7 @@ def percussive(y, **kwargs):
     return y_perc
 
 
-def time_stretch(y, rate):
+def time_stretch(y, sr, rate):
     '''Time-stretch an audio series by a fixed rate.
 
 
@@ -194,6 +194,9 @@ def time_stretch(y, rate):
     ----------
     y : np.ndarray [shape=(n,)]
         audio time series
+
+    sr : number > 0 [scalar]
+        audio sampling rate of `y`
 
     rate : float > 0 [scalar]
         Stretch factor.  If `rate > 1`, then the signal is sped up.
@@ -216,25 +219,29 @@ def time_stretch(y, rate):
     Compress to be twice as fast
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> y_fast = librosa.effects.time_stretch(y, 2.0)
+    >>> y_fast = librosa.effects.time_stretch(y, sr, 2.0)
 
     Or half the original speed
 
-    >>> y_slow = librosa.effects.time_stretch(y, 0.5)
+    >>> y_slow = librosa.effects.time_stretch(y, sr, 0.5)
 
     '''
 
     if rate <= 0:
         raise ParameterError('rate must be a positive number')
 
+    # frame length: 40ms
+    n_fft = int(40 * sr / 1000)
+    hop_length = int(n_fft / 4)
+
     # Construct the stft
-    stft = core.stft(y)
+    stft = core.stft(y, n_fft, hop_length)
 
     # Stretch by phase vocoding
     stft_stretch = core.phase_vocoder(stft, rate)
 
     # Invert the stft
-    y_stretch = core.istft(stft_stretch, dtype=y.dtype)
+    y_stretch = core.istft(stft_stretch, hop_length, n_fft, dtype=y.dtype)
 
     return y_stretch
 
@@ -293,7 +300,7 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12):
     rate = 2.0 ** (-float(n_steps) / bins_per_octave)
 
     # Stretch in time, then resample
-    y_shift = core.resample(time_stretch(y, rate), float(sr) / rate, sr)
+    y_shift = core.resample(time_stretch(y, sr, rate), float(sr) / rate, sr)
 
     # Crop to the same dimension as the input
     return util.fix_length(y_shift, len(y))
