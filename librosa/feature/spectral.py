@@ -23,6 +23,7 @@ __all__ = ['spectral_centroid',
            'spectral_contrast',
            'spectral_rolloff',
            'spectral_flatness',
+           'spectral_contraction',
            'poly_features',
            'rms',
            'zero_crossing_rate',
@@ -812,12 +813,12 @@ def spectral_contraction(y=None, S=None, n_fft=2048, hop_length=512,
                              'with non-negative energies')
 
     # Sidelobe attenuation of 200 dB
-    window = signal.chebwin(n_fft, at=200)
-
-    S_thresh = np.maximum(amin, S ** power)
-    weight_spec = np.dot(S_tresh, window, axis=0, keepdims=True)
-    amean = np.mean(S_thresh, axis=0, keepdims=True)
-    return weight_spec / amean
+    window = scipy.signal.chebwin(S.shape[0], at=200)
+    S_thresh = np.transpose(np.maximum(amin, S ** power))
+    weight_spec = np.dot(S_thresh, window)
+    amean = np.mean(S_thresh, axis=1, keepdims=True)
+    print(weight_spec.shape, amean.reshape(weight_spec.shape).shape)
+    return np.divide(weight_spec, amean.reshape(weight_spec.shape))
 
 def rms(y=None, S=None, frame_length=2048, hop_length=512,
         center=True, pad_mode='reflect'):
