@@ -764,6 +764,60 @@ def spectral_flatness(y=None, S=None, n_fft=2048, hop_length=512,
     amean = np.mean(S_thresh, axis=0, keepdims=True)
     return gmean / amean
 
+def spectral_contraction(y=None, S=None, n_fft=2048, hop_length=512,
+                      amin=1e-10, power=2.0):
+    '''Compute spectral contraction
+
+        Parameters
+    ----------
+    y : np.ndarray [shape=(n,)] or None
+        audio time series
+
+    S : np.ndarray [shape=(d, t)] or None
+        (optional) pre-computed spectrogram magnitude
+
+    n_fft : int > 0 [scalar]
+        FFT window size
+
+    hop_length : int > 0 [scalar]
+        hop length for STFT. See `librosa.core.stft` for details.
+
+    amin : float > 0 [scalar]
+        minimum threshold for `S` (=added noise floor for numerical stability)
+
+    power : float > 0 [scalar]
+        Exponent for the magnitude spectrogram.
+        e.g., 1 for energy, 2 for power, etc.
+        Power spectrogram is usually used for computing spectral flatness.
+
+    Returns
+    -------
+    contraction : np.ndarray [shape=(1, t)]
+        spectral contraction for each frame.
+        The returned value is in [0, 1] and often converted to dB scale.
+
+    '''
+
+    if amin <= 0:
+        raise ParameterError('amin must be strictly positive')
+
+    S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length,
+                            power=1.)
+
+    if not np.isrealobj(S):
+        raise ParameterError('Spectral contraction is only defined '
+                             'with real-valued input')
+    elif np.any(S < 0):
+        raise ParameterError('Spectral contraction is only defined '
+                             'with non-negative energies')
+
+    # Sidelobe attenuation of 200 dB
+    window = signal.chebwin(n_fft, at=200)
+
+    S_thresh = np.maximum(amin, S ** power)
+    weight_spec = np.dot(S_tresh, window, axis=0, keepdims=True)
+    amean = np.mean(S_thresh, axis=0, keepdims=True)
+    return weight_spec / amean
 
 def rms(y=None, S=None, frame_length=2048, hop_length=512,
         center=True, pad_mode='reflect'):
