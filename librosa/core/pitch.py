@@ -154,7 +154,7 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     # from the next tone up.
     residual[residual >= 0.5] -= 1.0
 
-    bins = np.linspace(-0.5, 0.5, int(np.ceil(1./resolution)), endpoint=False)
+    bins = np.linspace(-0.5, 0.5, int(np.ceil(1. / resolution)) + 1)
 
     counts, tuning = np.histogram(residual, bins)
 
