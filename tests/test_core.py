@@ -769,11 +769,13 @@ def test_estimate_tuning():
                                              fmax=librosa.note_to_hz('G#9'))
 
         # Round to the proper number of decimals
-        deviation = np.around(np.abs(tuning - tuning_est),
-                              int(-np.log10(resolution)))
+        deviation = np.around(tuning - tuning_est, int(-np.log10(resolution)))
+
+        # Take the minimum floating point for positive and negative deviations 
+        max_dev = np.min([np.mod(deviation, 1.0), np.mod(-deviation, 1.0)])
 
         # We'll accept an answer within three bins of the resolution
-        assert deviation <= 3 * resolution
+        assert max_dev <= 3 * resolution
 
     for sr in [11025, 22050]:
         duration = 5.0
