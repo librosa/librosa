@@ -7,6 +7,7 @@ v0.6.3
 
 Bug fixes
 
+    - `#806`_ Fixed a bug in `estimate_tuning`. *@robrib, Monsij Biswal, Brian McFee*
     - `#799`_ Enhanced stability of elliptical filter implementation in `iirt`. *Frank Zalkow*
 
 New features
@@ -28,6 +29,7 @@ Other changes
     - `#769`_ updated documentation in `core.istft`. *Shayenne Moura*
 
 .. _#813: https://github.com/librosa/librosa/issues/813
+.. _#806: https://github.com/librosa/librosa/issues/806
 .. _#801: https://github.com/librosa/librosa/issues/801
 .. _#799: https://github.com/librosa/librosa/issues/799
 .. _#793: https://github.com/librosa/librosa/issues/793
