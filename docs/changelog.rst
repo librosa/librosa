@@ -18,7 +18,7 @@ New features
 Other changes
 
     - `#813`_ updated `core.load` documentation to cover bit depth truncation. *Andy Sarroff*
-    - `#801`_ renamed `feature.rmse` to `feature.rms`. *XXX*
+    - `#801`_ renamed `feature.rmse` to `feature.rms`. *nullmightybofo*
     - `#793`_ updated comments in `stft`. *Dan Ellis*
     - `#791`_ updated documentation for `write_wav`. *Brian McFee*
     - `#790`_ removed dependency on deprecated `imp` module. *Brian McFee* 
