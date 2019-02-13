@@ -1102,16 +1102,17 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
                 norm=2, win_len_smooth=41, smoothing_window='hann'):
     r'''Computes the chroma variant "Chroma Energy Normalized" (CENS), following [1]_.
 
-    To compute CENS features, following steps are taken after obtaining chroma vectors using `chroma_cqt`:  
+    To compute CENS features, following steps are taken after obtaining chroma vectors using `chroma_cqt`:
     1. L-1 normalization of each chroma vector
     2. Quantization of amplitude based on "log-like" amplitude thresholds
-    3. (optional) Smoothing with sliding window. Default window length = 41 frames 
-    4. (not implemented) Downsampling   
+    3. (optional) Smoothing with sliding window. Default window length = 41 frames
+    4. (not implemented) Downsampling
 
-    CENS features are robust to dynamics, timbre and articulation, thus these are commonly used in audio matching and retrieval applications.   
+    CENS features are robust to dynamics, timbre and articulation, thus these are commonly used in audio
+    matching and retrieval applications.
 
     .. [1] Meinard Müller and Sebastian Ewert
-           "Chroma Toolbox: MATLAB implementations for extracting variants of chroma-based audio features" 
+           "Chroma Toolbox: MATLAB implementations for extracting variants of chroma-based audio features"
            In Proceedings of the International Conference on Music Information Retrieval (ISMIR), 2011.
 
     Parameters
@@ -1155,7 +1156,7 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
         Constant-Q transform mode
 
     win_len_smooth : int > 0 or None
-        Length of temporal smoothing window. `None` disables temporal smoothing. 
+        Length of temporal smoothing window. `None` disables temporal smoothing.
         Default: 41
 
     smoothing_window : str, float or tuple
@@ -1176,7 +1177,7 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
         Compute a chromagram from an STFT spectrogram or waveform.
 
     filters.get_window
-        Compute a window function. 
+        Compute a window function.
 
     Examples
     --------
