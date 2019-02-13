@@ -40,7 +40,7 @@ Contributors
 * Frank Zalkow <https://github.com/fzalkow>
 * Shayenne Moura <https://github.com/shayenne>
 * nullmightybofo <https://github.com/nullmightybofo>
-* XXX <https://github.com/toddrme2178>
+* toddrme2178 <https://github.com/toddrme2178>
 * Andy Sarroff <https://github.com/woodshop>
 * Monsij Biswal <https://github.com/monsij>
 
