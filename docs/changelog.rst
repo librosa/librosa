@@ -1,6 +1,50 @@
 Changelog
 =========
 
+v0.6.3
+------
+2019-01-XX
+
+Bug fixes
+
+    - `#806`_ Fixed a bug in `estimate_tuning`. *@robrib, Monsij Biswal, Brian McFee*
+    - `#799`_ Enhanced stability of elliptical filter implementation in `iirt`. *Frank Zalkow*
+
+New features
+
+    - `#766`_ made smoothing optional in `feature.chroma_cens`. *Kyungyun Lee*
+    - `#760`_ allow explicit units for time axis decoration in `display`. *Kyungyun Lee*
+
+Other changes
+
+    - `#813`_ updated `core.load` documentation to cover bit depth truncation. *Andy Sarroff*
+    - `#805`_ updated documentation for `core.localmax`. *Brian McFee*
+    - `#801`_ renamed `feature.rmse` to `feature.rms`. *@nullmightybofo*
+    - `#793`_ updated comments in `stft`. *Dan Ellis*
+    - `#791`_ updated documentation for `write_wav`. *Brian McFee*
+    - `#790`_ removed dependency on deprecated `imp` module. *Brian McFee* 
+    - `#787`_ fixed typos in CONTRIBUTING documentation. *Vincent Lostanlen*
+    - `#785`_ removed all run-time assertions in favor of proper exceptions. *Brian McFee*
+    - `#783`_ migrated test infrastructure from `nose` to `pytest`. *Brian McFee*
+    - `#777`_ include LICENSE file in source distribution. *toddrme2178*
+    - `#769`_ updated documentation in `core.istft`. *Shayenne Moura*
+
+.. _#813: https://github.com/librosa/librosa/issues/813
+.. _#806: https://github.com/librosa/librosa/issues/806
+.. _#805: https://github.com/librosa/librosa/issues/805
+.. _#801: https://github.com/librosa/librosa/issues/801
+.. _#799: https://github.com/librosa/librosa/issues/799
+.. _#793: https://github.com/librosa/librosa/issues/793
+.. _#791: https://github.com/librosa/librosa/issues/791
+.. _#790: https://github.com/librosa/librosa/issues/790
+.. _#787: https://github.com/librosa/librosa/issues/787
+.. _#785: https://github.com/librosa/librosa/issues/785
+.. _#783: https://github.com/librosa/librosa/issues/783
+.. _#777: https://github.com/librosa/librosa/issues/777
+.. _#769: https://github.com/librosa/librosa/issues/769
+.. _#766: https://github.com/librosa/librosa/issues/766
+.. _#760: https://github.com/librosa/librosa/issues/760
+
 v0.6.2
 ------
 2018-08-09

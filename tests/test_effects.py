@@ -112,8 +112,8 @@ def test_hpss():
     # Make sure that the residual energy is generally small
     y_residual = y - y_harm - y_perc
 
-    rms_orig = librosa.feature.rmse(y=y)
-    rms_res = librosa.feature.rmse(y=y_residual)
+    rms_orig = librosa.feature.rms(y=y)
+    rms_res = librosa.feature.rms(y=y_residual)
 
     assert np.percentile(rms_orig, 0.01) > np.percentile(rms_res, 0.99)
 
@@ -152,12 +152,12 @@ def test_trim():
         assert np.allclose(yt, y[tuple(fidx)])
 
         # Verify logamp
-        rms = librosa.feature.rmse(y=librosa.to_mono(yt), center=False)
+        rms = librosa.feature.rms(y=librosa.to_mono(yt), center=False)
         logamp = librosa.power_to_db(rms**2, ref=ref, top_db=None)
         assert np.all(logamp > - top_db)
 
         # Verify logamp
-        rms_all = librosa.feature.rmse(y=librosa.to_mono(y)).squeeze()
+        rms_all = librosa.feature.rms(y=librosa.to_mono(y)).squeeze()
         logamp_all = librosa.power_to_db(rms_all**2, ref=ref,
                                          top_db=None)
 

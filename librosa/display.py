@@ -53,12 +53,12 @@ class TimeFormatter(Formatter):
         Anything past the midpoint will be converted to negative time.
 
     unit : str or None
-    	Abbreviation of the physical unit for axis labels and ticks. 
-	Either equal to `s` (seconds) or `ms` (milliseconds) or None (default). 
-	If set to None, the resulting TimeFormatter object adapts its string 
-	representation to the duration of the underlying time range: 
-	`hh:mm:ss` above 3600 seconds; `mm:ss` between 60 and 3600 seconds; 
-	and `ss` below 60 seconds. 
+        Abbreviation of the physical unit for axis labels and ticks.
+        Either equal to `s` (seconds) or `ms` (milliseconds) or None (default).
+        If set to None, the resulting TimeFormatter object adapts its string
+        representation to the duration of the underlying time range:
+        `hh:mm:ss` above 3600 seconds; `mm:ss` between 60 and 3600 seconds;
+        and `ss` below 60 seconds.
 
 
     See also
