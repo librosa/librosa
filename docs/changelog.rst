@@ -26,7 +26,7 @@ Other changes
     - `#787`_ fixed typos in CONTRIBUTING documentation. *Vincent Lostanlen*
     - `#785`_ removed all run-time assertions in favor of proper exceptions. *Brian McFee*
     - `#783`_ migrated test infrastructure from `nose` to `pytest`. *Brian McFee*
-    - `#777`_ include LICENSE file in source distribution. *XXX*
+    - `#777`_ include LICENSE file in source distribution. *toddrme2178*
     - `#769`_ updated documentation in `core.istft`. *Shayenne Moura*
 
 .. _#813: https://github.com/librosa/librosa/issues/813
