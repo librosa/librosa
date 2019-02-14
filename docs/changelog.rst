@@ -3,7 +3,7 @@ Changelog
 
 v0.6.3
 ------
-2019-01-XX
+2019-02-13
 
 Bug fixes
 
