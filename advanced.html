@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Advanced examples &mdash; librosa 0.6.2 documentation</title>
+  <title>Advanced examples &mdash; librosa 0.6.3 documentation</title>
   
 
   
@@ -17,13 +17,30 @@
   
 
   
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript">
+          var DOCUMENTATION_OPTIONS = {
+              URL_ROOT:'./',
+              VERSION:'0.6.3',
+              LANGUAGE:'None',
+              COLLAPSE_INDEX:false,
+              FILE_SUFFIX:'.html',
+              HAS_SOURCE:  true,
+              SOURCELINK_SUFFIX: '.txt'
+          };
+      </script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
 
-  
-  
     
 
   
-
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
   <link rel="stylesheet" href="_static/gallery.css" type="text/css" />
@@ -32,21 +49,16 @@
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Presets" href="auto_examples/plot_presets.html" />
     <link rel="prev" title="Advanced I/O Use Cases" href="ioformats.html" /> 
-
-  
-  <script src="_static/js/modernizr.min.js"></script>
-
 </head>
 
 <body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
@@ -112,7 +124,7 @@
 <li class="toctree-l2"><a class="reference internal" href="auto_examples/plot_vocal_separation.html">Vocal separation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="auto_examples/plot_hprss.html">Harmonic-percussive source separation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="auto_examples/plot_music_sync.html">Music Synchronization with Dynamic Time Warping</a></li>
-<li class="toctree-l2"><a class="reference internal" href="auto_examples/plot_chroma.html">Enhanced chroma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="auto_examples/plot_chroma.html">Enhanced chroma and chroma variants</a></li>
 <li class="toctree-l2"><a class="reference internal" href="auto_examples/plot_segmentation.html">Laplacian segmentation</a></li>
 </ul>
 </li>
@@ -238,9 +250,9 @@
 </div>
 </div><div class="toctree-wrapper compound">
 </div>
-<div class="sphx-glr-thumbcontainer" tooltip="This notebook demonstrates a variety of techniques for enhancing chroma features."><div class="figure" id="id7">
+<div class="sphx-glr-thumbcontainer" tooltip="This notebook demonstrates a variety of techniques for enhancing chroma features and  also, int..."><div class="figure" id="id7">
 <img alt="_images/sphx_glr_plot_chroma_thumb.png" src="_images/sphx_glr_plot_chroma_thumb.png" />
-<p class="caption"><span class="caption-text"><a class="reference internal" href="auto_examples/plot_chroma.html#sphx-glr-auto-examples-plot-chroma-py"><span class="std std-ref">Enhanced chroma</span></a></span></p>
+<p class="caption"><span class="caption-text"><a class="reference internal" href="auto_examples/plot_chroma.html#sphx-glr-auto-examples-plot-chroma-py"><span class="std std-ref">Enhanced chroma and chroma variants</span></a></span></p>
 </div>
 </div><div class="toctree-wrapper compound">
 </div>
@@ -250,7 +262,7 @@
 </div>
 </div><div class="toctree-wrapper compound">
 </div>
-<div style='clear:both'></div><div class="sphx-glr-footer docutils container">
+<div style='clear:both'></div><div class="sphx-glr-footer class sphx-glr-footer-gallery docutils container">
 <div class="sphx-glr-download docutils container">
 <a class="reference download internal" href="_downloads/auto_examples_python.zip" download=""><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">all</span> <span class="pre">examples</span> <span class="pre">in</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">auto_examples_python.zip</span></code></a></div>
 <div class="sphx-glr-download docutils container">
@@ -270,7 +282,7 @@
         <a href="auto_examples/plot_presets.html" class="btn btn-neutral float-right" title="Presets" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="ioformats.html" class="btn btn-neutral" title="Advanced I/O Use Cases" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="ioformats.html" class="btn btn-neutral float-left" title="Advanced I/O Use Cases" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -279,7 +291,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2013--2018, librosa development team.
+        &copy; Copyright 2013--2018, librosa development team
 
     </p>
   </div>
@@ -297,7 +309,7 @@
 <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
     <span class="rst-current-version" data-toggle="rst-current-version">
         <span class="fa fa-book"> Other Versions</span>
-        v: 0.6.2
+        v: 0.6.3
         <span class="fa fa-caret-down"></span>
     </span>
     <div class="rst-other-versions">
@@ -311,44 +323,31 @@
             <dd><a href="0.6.0/advanced.html">0.6.0</a></dd>
             <dd><a href="0.6.1/advanced.html">0.6.1</a></dd>
             <dd><a href="0.6.2/advanced.html">0.6.2</a></dd>
+            <dd><a href="0.6.3/advanced.html">0.6.3</a></dd>
             <dd><a href="v0.1.0/index.html">v0.1.0</a></dd>
             <dd><a href="v0.4.0/index.html">v0.4.0</a></dd>
         </dl>
         <dl>
             <dt>Branches</dt>
+            <dd><a href="display-bin-centering/index.html">display-bin-centering</a></dd>
             <dd><a href="master/advanced.html">master</a></dd>
+            <dd><a href="mpl-test-2.1/advanced.html">mpl-test-2.1</a></dd>
+            <dd><a href="runnning/advanced.html">runnning</a></dd>
         </dl>
     </div>
 </div>
 
 
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'./',
-            VERSION:'0.6.2',
-            LANGUAGE:'None',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="_static/jquery.js"></script>
-      <script type="text/javascript" src="_static/underscore.js"></script>
-      <script type="text/javascript" src="_static/doctools.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-
-  
-
-  <script type="text/javascript" src="_static/js/theme.js"></script>
-
   <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>

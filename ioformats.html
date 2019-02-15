@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Advanced I/O Use Cases &mdash; librosa 0.6.2 documentation</title>
+  <title>Advanced I/O Use Cases &mdash; librosa 0.6.3 documentation</title>
   
 
   
@@ -17,13 +17,30 @@
   
 
   
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript">
+          var DOCUMENTATION_OPTIONS = {
+              URL_ROOT:'./',
+              VERSION:'0.6.3',
+              LANGUAGE:'None',
+              COLLAPSE_INDEX:false,
+              FILE_SUFFIX:'.html',
+              HAS_SOURCE:  true,
+              SOURCELINK_SUFFIX: '.txt'
+          };
+      </script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
 
-  
-  
     
 
   
-
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
   <link rel="stylesheet" href="_static/gallery.css" type="text/css" />
@@ -32,21 +49,16 @@
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Advanced examples" href="advanced.html" />
     <link rel="prev" title="Caching" href="cache.html" /> 
-
-  
-  <script src="_static/js/modernizr.min.js"></script>
-
 </head>
 
 <body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
@@ -300,30 +312,22 @@ you can use <em>PySoundFile</em>, as well.</p>
 </div>
 <div class="section" id="write-out-audio-files">
 <h2>Write out audio files<a class="headerlink" href="#write-out-audio-files" title="Permalink to this headline">¶</a></h2>
-<p><em>librosa</em> uses <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.io.wavfile.write.html">scipy.io.wavfile</a> to write out wav files. Please be aware, that this function uses the numpy dtype to determine the PCM subtype. For example if your processed audio array is of dtype <code class="docutils literal notranslate"><span class="pre">np.float64</span></code> (which is the default on most machines), your resulting wav file would be of type 64bit float as well. This is not considered to be a <a class="reference external" href="https://msdn.microsoft.com/en-us/library/windows/hardware/dn653308%28v=vs.85%29.aspx">standard PCM wavfile</a>. If you would like to write 16bit PCM you could convert your array before hand:</p>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
- 2
- 3
- 4
- 5
- 6
- 7
- 8
- 9
-10</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">librosa</span>
+<p><em>librosa</em> provides a thin wrapper around <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.io.wavfile.write.html">scipy.io.wavfile</a> to write out WAV files.</p>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2
+3
+4
+5
+6</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 
 <span class="n">rate</span> <span class="o">=</span> <span class="mi">44100</span>
-<span class="n">audio</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="p">(</span><span class="n">rate</span> <span class="o">*</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">rate</span><span class="p">)</span>
 
-<span class="n">maxv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">iinfo</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int16</span><span class="p">)</span><span class="o">.</span><span class="n">max</span>
-<span class="n">librosa</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">write_wav</span><span class="p">(</span>
-    <span class="s2">&quot;out_int16.wav&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">audio</span> <span class="o">*</span> <span class="n">maxv</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int16</span><span class="p">),</span> <span class="n">rate</span>
-<span class="p">)</span>
+<span class="n">librosa</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">write_wav</span><span class="p">(</span><span class="s1">&#39;file.wav&#39;</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">rate</span><span class="p">)</span>
 </pre></div>
 </td></tr></table></div>
-<p>Writing audio files using pysoundfile is similar to the method in <em>librosa</em>, however it can automatically
-convert to a given PCM subtype and additionally support several compressed formats like <em>FLAC</em> or <em>OGG</em>:</p>
+<p>Please be aware that this function only supports floating-point inputs. For example if your processed audio array is of dtype <code class="docutils literal notranslate"><span class="pre">np.float64</span></code> (which is the default on most machines), your resulting WAV file would be of type 64-bit float as well. This is not considered to be a <a class="reference external" href="https://msdn.microsoft.com/en-us/library/windows/hardware/dn653308%28v=vs.85%29.aspx">standard PCM wavfile</a>, but most WAV readers should be able to load it without problems.</p>
+<p>Writing audio files using <a class="reference external" href="https://pysoundfile.readthedocs.io/en/latest/">PySoundFile</a> is similar to the method in librosa. However, PySoundFile can automatically convert to a given PCM subtype and additionally support several compressed formats like FLAC or OGG vorbis.</p>
 <div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
  3
@@ -341,7 +345,7 @@ convert to a given PCM subtype and additionally support several compressed forma
 <span class="kn">import</span> <span class="nn">soundfile</span> <span class="kn">as</span> <span class="nn">sf</span>
 
 <span class="n">rate</span> <span class="o">=</span> <span class="mi">44100</span>
-<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="p">(</span><span class="n">rate</span> <span class="o">*</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">rate</span> <span class="o">*</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
 
 <span class="c1"># Write out audio as 24bit PCM WAV</span>
 <span class="n">sf</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;stereo_file.wav&#39;</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">samplerate</span><span class="p">,</span> <span class="n">subtype</span><span class="o">=</span><span class="s1">&#39;PCM_24&#39;</span><span class="p">)</span>
@@ -353,6 +357,7 @@ convert to a given PCM subtype and additionally support several compressed forma
 <span class="n">sf</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;stereo_file.ogg&#39;</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">samplerate</span><span class="p">,</span> <span class="n">format</span><span class="o">=</span><span class="s1">&#39;ogg&#39;</span><span class="p">,</span> <span class="n">subtype</span><span class="o">=</span><span class="s1">&#39;vorbis&#39;</span><span class="p">)</span>
 </pre></div>
 </td></tr></table></div>
+<p>In general, we recommend using <em class="xref py py-obj">PySoundFile</em> for output rather than <code class="docutils literal notranslate"><span class="pre">librosa.output.write_wav</span></code>.</p>
 </div>
 </div>
 
@@ -367,7 +372,7 @@ convert to a given PCM subtype and additionally support several compressed forma
         <a href="advanced.html" class="btn btn-neutral float-right" title="Advanced examples" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="cache.html" class="btn btn-neutral" title="Caching" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="cache.html" class="btn btn-neutral float-left" title="Caching" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -376,7 +381,7 @@ convert to a given PCM subtype and additionally support several compressed forma
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2013--2018, librosa development team.
+        &copy; Copyright 2013--2018, librosa development team
 
     </p>
   </div>
@@ -394,7 +399,7 @@ convert to a given PCM subtype and additionally support several compressed forma
 <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
     <span class="rst-current-version" data-toggle="rst-current-version">
         <span class="fa fa-book"> Other Versions</span>
-        v: 0.6.2
+        v: 0.6.3
         <span class="fa fa-caret-down"></span>
     </span>
     <div class="rst-other-versions">
@@ -408,44 +413,31 @@ convert to a given PCM subtype and additionally support several compressed forma
             <dd><a href="0.6.0/ioformats.html">0.6.0</a></dd>
             <dd><a href="0.6.1/ioformats.html">0.6.1</a></dd>
             <dd><a href="0.6.2/ioformats.html">0.6.2</a></dd>
+            <dd><a href="0.6.3/ioformats.html">0.6.3</a></dd>
             <dd><a href="v0.1.0/index.html">v0.1.0</a></dd>
             <dd><a href="v0.4.0/index.html">v0.4.0</a></dd>
         </dl>
         <dl>
             <dt>Branches</dt>
+            <dd><a href="display-bin-centering/ioformats.html">display-bin-centering</a></dd>
             <dd><a href="master/ioformats.html">master</a></dd>
+            <dd><a href="mpl-test-2.1/ioformats.html">mpl-test-2.1</a></dd>
+            <dd><a href="runnning/ioformats.html">runnning</a></dd>
         </dl>
     </div>
 </div>
 
 
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'./',
-            VERSION:'0.6.2',
-            LANGUAGE:'None',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="_static/jquery.js"></script>
-      <script type="text/javascript" src="_static/underscore.js"></script>
-      <script type="text/javascript" src="_static/doctools.js"></script>
-      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-
-  
-
-  <script type="text/javascript" src="_static/js/theme.js"></script>
-
   <script type="text/javascript">
       jQuery(function () {
           SphinxRtdTheme.Navigation.enable(true);
       });
-  </script> 
+  </script>
+
+  
+  
+    
+   
 
 </body>
 </html>
