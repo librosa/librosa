@@ -4,7 +4,6 @@
 import warnings
 
 import numpy as np
-import numpy.fft as fft
 import scipy
 import scipy.ndimage
 import scipy.signal
@@ -14,6 +13,7 @@ import six
 from numba import jit
 
 from . import time_frequency
+from .fft import get_fftlib
 from .audio import resample
 from .. import cache
 from .. import util
@@ -174,6 +174,8 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
                            dtype=dtype,
                            order='F')
 
+    fft = get_fftlib()
+
     # how many columns can we fit within MAX_MEM_BLOCK?
     n_columns = int(util.MAX_MEM_BLOCK / (stft_matrix.shape[0] *
                                           stft_matrix.itemsize))
@@ -181,9 +183,6 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
     for bl_s in range(0, stft_matrix.shape[1], n_columns):
         bl_t = min(bl_s + n_columns, stft_matrix.shape[1])
 
-        #stft_matrix[:, bl_s:bl_t] = fft.fft(fft_window *
-        #                                    y_frames[:, bl_s:bl_t],
-        #                                    axis=0)[:stft_matrix.shape[0]]
         stft_matrix[:, bl_s:bl_t] = fft.rfft(fft_window *
                                              y_frames[:, bl_s:bl_t],
                                              axis=0)
@@ -297,6 +296,8 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
 
     n_columns = int(util.MAX_MEM_BLOCK // (stft_matrix.shape[0] *
                                            stft_matrix.itemsize))
+
+    fft = get_fftlib()
 
     frame = 0
     for bl_s in range(0, n_frames, n_columns):
@@ -1322,6 +1323,7 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
 
     # Apply the window and fft
     # Normalization is absorbed into the window here for expedience
+    fft = get_fftlib()
     return fft.rfft(y_res * ((x_exp**beta).reshape(shape) * np.sqrt(n) / n_fmt),
                     axis=axis)
 
