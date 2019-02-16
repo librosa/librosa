@@ -4,7 +4,7 @@
 import warnings
 
 import numpy as np
-import scipy.fftpack as fft
+import numpy.fft as fft
 import scipy
 import scipy.ndimage
 import scipy.signal
@@ -179,10 +179,12 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
     for bl_s in range(0, stft_matrix.shape[1], n_columns):
         bl_t = min(bl_s + n_columns, stft_matrix.shape[1])
 
-        stft_matrix[:, bl_s:bl_t] = fft.fft(fft_window *
-                                            y_frames[:, bl_s:bl_t],
-                                            axis=0)[:stft_matrix.shape[0]]
-
+        #stft_matrix[:, bl_s:bl_t] = fft.fft(fft_window *
+        #                                    y_frames[:, bl_s:bl_t],
+        #                                    axis=0)[:stft_matrix.shape[0]]
+        stft_matrix[:, bl_s:bl_t] = fft.rfft(fft_window *
+                                             y_frames[:, bl_s:bl_t],
+                                             axis=0)
     return stft_matrix
 
 
@@ -291,13 +293,12 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
     expected_signal_len = n_fft + hop_length * (n_frames - 1)
     y = np.zeros(expected_signal_len, dtype=dtype)
 
+    # TODO: make this block-sensitive
     for i in range(n_frames):
         sample = i * hop_length
-        spec = stft_matrix[:, i].flatten()
-        spec = np.concatenate((spec, spec[-2:0:-1].conj()), 0)
-        ytmp = ifft_window * fft.ifft(spec).real
+        ytmp = ifft_window * fft.irfft(stft_matrix[:, i])
 
-        y[sample:(sample + n_fft)] = y[sample:(sample + n_fft)] + ytmp
+        y[sample:(sample + n_fft)] += ytmp
 
     # Normalize by sum of squared window
     ifft_window_sum = window_sumsquare(window,
@@ -1297,15 +1298,9 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
     shape[axis] = -1
 
     # Apply the window and fft
-    result = fft.fft(y_res * (x_exp**beta).reshape(shape),
-                     axis=axis, overwrite_x=True)
-
-    # Slice out the positive-scale component
-    idx = [slice(None)] * result.ndim
-    idx[axis] = slice(0, 1 + n_fmt//2)
-
-    # Truncate and length-normalize
-    return result[tuple(idx)] * np.sqrt(n) / n_fmt
+    # Normalization is absorbed into the window here for expedience
+    return fft.rfft(y_res * ((x_exp**beta).reshape(shape) * np.sqrt(n) / n_fmt),
+                    axis=axis)
 
 
 @cache(level=30)
