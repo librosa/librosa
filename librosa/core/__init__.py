@@ -40,6 +40,9 @@ Spectral representations
     phase_vocoder
     magphase
 
+    get_fftlib
+    set_fftlib
+
 Magnitude scaling
 -----------------
 .. autosummary::
@@ -112,6 +115,7 @@ from .spectrum import *  # pylint: disable=wildcard-import
 from .pitch import *  # pylint: disable=wildcard-import
 from .constantq import *  # pylint: disable=wildcard-import
 from .harmonic import *  # pylint: disable=wildcard-import
+from .fft import *  # pylint: disable=wildcard-import
 
 from ..util.decorators import moved as _moved
 from ..util import fill_off_diagonal as _fod
