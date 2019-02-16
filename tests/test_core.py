@@ -1506,3 +1506,21 @@ def test_pcen_ref():
     # with ref=ones, we should get X / (eps + ones) == X
     Y2 = librosa.pcen(X, gain=1, bias=0, power=1, b=1, ref=ones, eps=1e-20)
     assert np.allclose(Y2, X)
+
+
+def test_get_fftlib():
+    import numpy.fft as fft
+    assert librosa.get_fftlib() is fft
+
+
+def test_set_fftlib():
+
+    librosa.set_fftlib('foo')
+    assert librosa.get_fftlib() == 'foo'
+    librosa.set_fftlib()
+
+
+def test_reset_fftlib():
+    import numpy.fft as fft
+    librosa.set_fftlib()
+    assert librosa.get_fftlib() is fft
