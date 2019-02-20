@@ -692,7 +692,7 @@ def agglomerative(data, k, clusterer=None, axis=-1):
         # Instantiate the clustering object
         clusterer = sklearn.cluster.AgglomerativeClustering(n_clusters=k,
                                                             connectivity=grid,
-                                                            memory=cache)
+                                                            memory=cache.memory)
 
     # Fit the model
     clusterer.fit(data)
