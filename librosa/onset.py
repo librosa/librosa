@@ -432,9 +432,11 @@ def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
         Function for computing time-series features, eg, scaled spectrograms.
         By default, uses `librosa.feature.melspectrogram` with `fmax=11025.0`
 
-    aggregate : function
+    aggregate : function or False
         Aggregation function to use when combining onsets
         at different frequency bins.
+
+        If `False`, then no aggregation is performed.
 
         Default: `np.mean`
 
@@ -540,10 +542,10 @@ def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
     else:
         pad = False
 
-    onset_env = util.sync(onset_env, channels,
-                          aggregate=aggregate,
-                          pad=pad,
-                          axis=0)
+    if aggregate:
+        onset_env = util.sync(onset_env, channels,
+                              aggregate=aggregate,
+                              pad=pad, axis=0)
 
     # compensate for lag
     pad_width = lag
