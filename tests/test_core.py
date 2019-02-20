@@ -1514,7 +1514,6 @@ def test_get_fftlib():
 
 
 def test_set_fftlib():
-
     librosa.set_fftlib('foo')
     assert librosa.get_fftlib() == 'foo'
     librosa.set_fftlib()
