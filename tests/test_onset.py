@@ -18,6 +18,8 @@ import warnings
 import numpy as np
 import librosa
 
+from test_core import srand
+
 __EXAMPLE_FILE = os.path.join('tests', 'data', 'test1_22050.wav')
 
 
@@ -261,3 +263,34 @@ def test_onset_backtrack():
     yield __test, oenv
     rms = librosa.feature.rms(y=y)
     yield __test, rms
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_onset_strength_noagg():
+    S = np.zeros((3,3))
+    librosa.onset.onset_strength(S=S, aggregate=False)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_onset_strength_badref():
+    S = np.zeros((3, 3))
+    librosa.onset.onset_strength(S=S, ref=S[:, :2])
+
+
+def test_onset_strength_multi_ref():
+    srand()
+
+    # Make a random positive spectrum
+    S = 1 + np.abs(np.random.randn(1025, 10))
+
+    # Test with a null reference
+    null_ref = np.zeros_like(S)
+
+    onsets = librosa.onset.onset_strength_multi(S=S,
+                                                ref=null_ref,
+                                                aggregate=False,
+                                                center=False)
+
+    # since the reference is zero everywhere, S - ref = S
+    # past the setup phase (first frame)
+    assert np.allclose(onsets[:, 1:], S[:, 1:])
