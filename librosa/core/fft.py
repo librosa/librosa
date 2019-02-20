@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-'''FFT library container'''
+'''Fast Fourier Transform (FFT) library container'''
 
 
 __all__ = ['get_fftlib', 'set_fftlib']
@@ -45,7 +45,7 @@ def get_fftlib():
     -------
     fft : module
         The FFT library currently used by librosa.
-        Should API-compatible with `numpy.fft`.
+        Must API-compatible with `numpy.fft`.
     '''
     global __FFTLIB
     return __FFTLIB
