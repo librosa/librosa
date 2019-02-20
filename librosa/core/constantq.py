@@ -5,10 +5,10 @@ from __future__ import division
 
 import warnings
 import numpy as np
-import scipy.fftpack as fft
 from numba import jit
 
 from . import audio
+from .fft import get_fftlib
 from .time_frequency import cqt_frequencies, note_to_hz
 from .spectrum import stft
 from .pitch import estimate_tuning
@@ -753,6 +753,7 @@ def __cqt_filter_fft(sr, fmin, n_bins, bins_per_octave, tuning,
     basis *= lengths[:, np.newaxis] / float(n_fft)
 
     # FFT and retain only the non-negative frequencies
+    fft = get_fftlib()
     fft_basis = fft.fft(basis, n=n_fft, axis=1)[:, :(n_fft // 2)+1]
 
     # sparsify the basis

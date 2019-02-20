@@ -8,9 +8,9 @@ import six
 import audioread
 import numpy as np
 import scipy.signal
-import scipy.fftpack as fft
 import resampy
 
+from .fft import get_fftlib
 from .time_frequency import frames_to_samples, time_to_samples
 from .. import cache
 from .. import util
@@ -459,10 +459,11 @@ def autocorrelate(y, max_size=None, axis=-1):
 
     # Compute the power spectrum along the chosen axis
     # Pad out the signal to support full-length auto-correlation.
+    fft = get_fftlib()
     powspec = np.abs(fft.fft(y, n=2 * y.shape[axis] + 1, axis=axis))**2
 
     # Convert back to time domain
-    autocorr = fft.ifft(powspec, axis=axis, overwrite_x=True)
+    autocorr = fft.ifft(powspec, axis=axis)
 
     # Slice down to max_size
     subslice = [slice(None)] * autocorr.ndim
