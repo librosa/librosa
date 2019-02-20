@@ -4,14 +4,16 @@
 import warnings
 
 import numpy as np
-import scipy.fftpack as fft
 import scipy
 import scipy.ndimage
 import scipy.signal
 import scipy.interpolate
 import six
 
+from numba import jit
+
 from . import time_frequency
+from .fft import get_fftlib
 from .audio import resample
 from .. import cache
 from .. import util
@@ -172,6 +174,8 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
                            dtype=dtype,
                            order='F')
 
+    fft = get_fftlib()
+
     # how many columns can we fit within MAX_MEM_BLOCK?
     n_columns = int(util.MAX_MEM_BLOCK / (stft_matrix.shape[0] *
                                           stft_matrix.itemsize))
@@ -179,10 +183,9 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
     for bl_s in range(0, stft_matrix.shape[1], n_columns):
         bl_t = min(bl_s + n_columns, stft_matrix.shape[1])
 
-        stft_matrix[:, bl_s:bl_t] = fft.fft(fft_window *
-                                            y_frames[:, bl_s:bl_t],
-                                            axis=0)[:stft_matrix.shape[0]]
-
+        stft_matrix[:, bl_s:bl_t] = fft.rfft(fft_window *
+                                             y_frames[:, bl_s:bl_t],
+                                             axis=0)
     return stft_matrix
 
 
@@ -284,20 +287,29 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
 
     ifft_window = get_window(window, win_length, fftbins=True)
 
-    # Pad out to match n_fft
-    ifft_window = util.pad_center(ifft_window, n_fft)
+    # Pad out to match n_fft, and add a broadcasting axis
+    ifft_window = util.pad_center(ifft_window, n_fft)[:, np.newaxis]
 
     n_frames = stft_matrix.shape[1]
     expected_signal_len = n_fft + hop_length * (n_frames - 1)
     y = np.zeros(expected_signal_len, dtype=dtype)
 
-    for i in range(n_frames):
-        sample = i * hop_length
-        spec = stft_matrix[:, i].flatten()
-        spec = np.concatenate((spec, spec[-2:0:-1].conj()), 0)
-        ytmp = ifft_window * fft.ifft(spec).real
+    n_columns = int(util.MAX_MEM_BLOCK // (stft_matrix.shape[0] *
+                                           stft_matrix.itemsize))
 
-        y[sample:(sample + n_fft)] = y[sample:(sample + n_fft)] + ytmp
+    fft = get_fftlib()
+
+    frame = 0
+    for bl_s in range(0, n_frames, n_columns):
+        bl_t = min(bl_s + n_columns, n_frames)
+
+        # invert the block and apply the window function
+        ytmp = ifft_window * fft.irfft(stft_matrix[:, bl_s:bl_t], axis=0)
+
+        # Overlap-add the istft block starting at the i'th frame
+        __overlap_add(y[frame * hop_length:], ytmp, hop_length)
+
+        frame += (bl_t - bl_s)
 
     # Normalize by sum of squared window
     ifft_window_sum = window_sumsquare(window,
@@ -329,6 +341,19 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
         y = util.fix_length(y[start:], length)
 
     return y
+
+
+@jit(nopython=True)
+def __overlap_add(y, ytmp, hop_length):
+    # numba-accelerated overlap add for inverse stft
+    # y is the pre-allocated output buffer
+    # ytmp is the windowed inverse-stft frames
+    # hop_length is the hop-length of the STFT analysis
+
+    n_fft = ytmp.shape[0]
+    for frame in range(ytmp.shape[1]):
+        sample = frame * hop_length
+        y[sample:(sample + n_fft)] += ytmp[:, frame]
 
 
 def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
@@ -1297,15 +1322,10 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
     shape[axis] = -1
 
     # Apply the window and fft
-    result = fft.fft(y_res * (x_exp**beta).reshape(shape),
-                     axis=axis, overwrite_x=True)
-
-    # Slice out the positive-scale component
-    idx = [slice(None)] * result.ndim
-    idx[axis] = slice(0, 1 + n_fmt//2)
-
-    # Truncate and length-normalize
-    return result[tuple(idx)] * np.sqrt(n) / n_fmt
+    # Normalization is absorbed into the window here for expedience
+    fft = get_fftlib()
+    return fft.rfft(y_res * ((x_exp**beta).reshape(shape) * np.sqrt(n) / n_fmt),
+                    axis=axis)
 
 
 @cache(level=30)
