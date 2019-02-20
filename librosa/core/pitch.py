@@ -7,7 +7,7 @@ import numpy as np
 
 from .spectrum import _spectrogram
 from . import time_frequency
-from .. import cache
+from .._cache import cache
 from .. import util
 
 __all__ = ['estimate_tuning', 'pitch_tuning', 'piptrack']

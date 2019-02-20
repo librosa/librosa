@@ -15,7 +15,7 @@ from numba import jit
 from . import time_frequency
 from .fft import get_fftlib
 from .audio import resample
-from .. import cache
+from .._cache import cache
 from .. import util
 from ..util.exceptions import ParameterError
 from ..filters import get_window, semitone_filterbank

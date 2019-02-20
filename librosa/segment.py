@@ -34,7 +34,7 @@ import sklearn.cluster
 import sklearn.feature_extraction
 import sklearn.neighbors
 
-from . import cache
+from ._cache import cache
 from . import util
 from .util.exceptions import ParameterError
 
@@ -692,7 +692,7 @@ def agglomerative(data, k, clusterer=None, axis=-1):
         # Instantiate the clustering object
         clusterer = sklearn.cluster.AgglomerativeClustering(n_clusters=k,
                                                             connectivity=grid,
-                                                            memory=cache)
+                                                            memory=cache.memory)
 
     # Fit the model
     clusterer.fit(data)
