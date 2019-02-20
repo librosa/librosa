@@ -6,7 +6,7 @@ from warnings import warn
 import numpy as np
 import scipy.signal
 
-from .. import cache
+from .._cache import cache
 from ..util.exceptions import ParameterError
 from ..util.deprecation import Deprecated
 __all__ = ['delta', 'stack_memory']

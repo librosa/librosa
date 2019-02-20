@@ -43,6 +43,9 @@ Please refer to the `joblib.Memory` `documentation
 <https://pythonhosted.org/joblib/memory.html#memory-reference>`_ for a detailed explanation of these
 parameters.
 
+As of 0.7, librosa's cache wraps (rather than extends) the `joblib.Memory` object.
+The memory object can be directly accessed by `librosa.cache.memory`.
+
 
 Cache levels
 ------------

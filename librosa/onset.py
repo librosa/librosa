@@ -15,7 +15,7 @@ Onset detection
 import numpy as np
 import scipy
 
-from . import cache
+from ._cache import cache
 from . import core
 from . import util
 from .util.exceptions import ParameterError
