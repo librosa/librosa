@@ -34,7 +34,7 @@ import sklearn.cluster
 import sklearn.feature_extraction
 import sklearn.neighbors
 
-from . import cache
+from ._cache import cache
 from . import util
 from .util.exceptions import ParameterError
 

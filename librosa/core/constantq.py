@@ -12,7 +12,7 @@ from .fft import get_fftlib
 from .time_frequency import cqt_frequencies, note_to_hz
 from .spectrum import stft
 from .pitch import estimate_tuning
-from .. import cache
+from .._cache import cache
 from .. import filters
 from .. import util
 from ..util.exceptions import ParameterError
