@@ -287,7 +287,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
 
     ifft_window = get_window(window, win_length, fftbins=True)
 
-    # Pad out to match n_fft, and add a dummy axis
+    # Pad out to match n_fft, and add a broadcasting axis
     ifft_window = util.pad_center(ifft_window, n_fft)[:, np.newaxis]
 
     n_frames = stft_matrix.shape[1]
