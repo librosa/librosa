@@ -9,7 +9,7 @@ import six
 import numpy as np
 from numpy.lib.stride_tricks import as_strided
 
-from .. import cache
+from .._cache import cache
 from .exceptions import ParameterError
 
 # Constrain STFT block sizes to 256 KB
