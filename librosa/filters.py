@@ -209,7 +209,7 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
 
     dtype : np.dtype
         The data type of the output basis.
-        By default, uses 32-bit floating point.
+        By default, uses 32-bit (single-precision) floating point.
 
     Returns
     -------
@@ -330,7 +330,7 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0,
 
     dtype : np.dtype
         The data type of the output basis.
-        By default, uses 32-bit floating point.
+        By default, uses 32-bit (single-precision) floating point.
 
     Returns
     -------
@@ -504,7 +504,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 
     dtype : np.dtype
         The data type of the output basis.
-        By default, uses 64-bit complex.
+        By default, uses 64-bit (single precision) complex floating point.
 
     kwargs : additional keyword arguments
         Arguments to `np.pad()` when `pad==True`.
@@ -717,7 +717,7 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
 
     dtype : np.dtype
         The data type of the output basis.
-        By default, uses 32-bit floating point.
+        By default, uses 32-bit (single-precision) floating point.
 
 
     Returns
