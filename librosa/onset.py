@@ -183,6 +183,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
 
 def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
+                   ref=None,
                    detrend=False, center=True,
                    feature=None, aggregate=None,
                    centering=None,
@@ -191,9 +192,9 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
 
     Onset strength at time `t` is determined by:
 
-    `mean_f max(0, S[f, t] - ref_S[f, t - lag])`
+    `mean_f max(0, S[f, t] - ref[f, t - lag])`
 
-    where `ref_S` is `S` after local max filtering along the frequency
+    where `ref` is `S` after local max filtering along the frequency
     axis [1]_.
 
     By default, if a time series `y` is provided, S will be the
@@ -221,6 +222,11 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
     max_size : int > 0
         size (in frequency bins) of the local max filter.
         set to `1` to disable filtering.
+
+    ref : None or np.ndarray [shape=(d, m)]
+        An optional pre-computed reference spectrum, of the same shape as `S`.
+        If not provided, it will be computed from `S`.
+        If provided, it will override any local max filtering governed by `max_size`.
 
     detrend : bool [scalar]
         Filter the onset strength to remove the DC component
@@ -308,11 +314,15 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
 
     """
 
+    if aggregate is False:
+        raise ParameterError('aggregate={} cannot be False when computing full-spectrum onset strength.')
+
     odf_all = onset_strength_multi(y=y,
                                    sr=sr,
                                    S=S,
                                    lag=lag,
                                    max_size=max_size,
+                                   ref=ref,
                                    detrend=detrend,
                                    center=center,
                                    feature=feature,
@@ -395,7 +405,7 @@ def onset_backtrack(events, energy):
 
 @cache(level=30)
 def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
-                         detrend=False, center=True, feature=None,
+                         ref=None, detrend=False, center=True, feature=None,
                          aggregate=None, channels=None, **kwargs):
     """Compute a spectral flux onset strength envelope across multiple channels.
 
@@ -422,6 +432,11 @@ def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
         size (in frequency bins) of the local max filter.
         set to `1` to disable filtering.
 
+    ref : None or np.ndarray [shape=(d, m)]
+        An optional pre-computed reference spectrum, of the same shape as `S`.
+        If not provided, it will be computed from `S`.
+        If provided, it will override any local max filtering governed by `max_size`.
+
     detrend : bool [scalar]
         Filter the onset strength to remove the DC component
 
@@ -432,9 +447,11 @@ def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
         Function for computing time-series features, eg, scaled spectrograms.
         By default, uses `librosa.feature.melspectrogram` with `fmax=11025.0`
 
-    aggregate : function
+    aggregate : function or False
         Aggregation function to use when combining onsets
         at different frequency bins.
+
+        If `False`, then no aggregation is performed.
 
         Default: `np.mean`
 
@@ -522,13 +539,16 @@ def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
     # Compute the reference spectrogram.
     # Efficiency hack: skip filtering step and pass by reference
     # if max_size will produce a no-op.
-    if max_size == 1:
-        ref_spec = S
-    else:
-        ref_spec = scipy.ndimage.maximum_filter1d(S, max_size, axis=0)
+    if ref is None:
+        if max_size == 1:
+            ref = S
+        else:
+            ref = scipy.ndimage.maximum_filter1d(S, max_size, axis=0)
+    elif ref.shape != S.shape:
+        raise ParameterError('Reference spectrum shape {} must match input spectrum {}'.format(ref.shape, S.shape))
 
     # Compute difference to the reference, spaced by lag
-    onset_env = S[:, lag:] - ref_spec[:, :-lag]
+    onset_env = S[:, lag:] - ref[:, :-lag]
 
     # Discard negatives (decreasing amplitude)
     onset_env = np.maximum(0.0, onset_env)
@@ -540,10 +560,10 @@ def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
     else:
         pad = False
 
-    onset_env = util.sync(onset_env, channels,
-                          aggregate=aggregate,
-                          pad=pad,
-                          axis=0)
+    if aggregate:
+        onset_env = util.sync(onset_env, channels,
+                              aggregate=aggregate,
+                              pad=pad, axis=0)
 
     # compensate for lag
     pad_width = lag
