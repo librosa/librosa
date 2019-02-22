@@ -178,7 +178,7 @@ def dct(n_filters, n_input):
 
 @cache(level=10)
 def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
-        norm=1):
+        norm=1, dtype=np.float32):
     """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins
 
     Parameters
@@ -206,6 +206,10 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
         if 1, divide the triangular mel weights by the width of the mel band
         (area normalization).  Otherwise, leave all the triangles aiming for
         a peak value of 1.0
+
+    dtype : np.dtype
+        The data type of the output basis.
+        By default, uses 32-bit (single-precision) floating point.
 
     Returns
     -------
@@ -254,7 +258,7 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
 
     # Initialize the weights
     n_mels = int(n_mels)
-    weights = np.zeros((n_mels, int(1 + n_fft // 2)))
+    weights = np.zeros((n_mels, int(1 + n_fft // 2)), dtype=dtype)
 
     # Center freqs of each FFT bin
     fftfreqs = fft_frequencies(sr=sr, n_fft=n_fft)
@@ -291,7 +295,7 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
 
 @cache(level=10)
 def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0,
-           octwidth=2, norm=2, base_c=True):
+           octwidth=2, norm=2, base_c=True, dtype=np.float32):
     """Create a Filterbank matrix to convert STFT to chroma
 
 
@@ -323,6 +327,10 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0,
     base_c : bool
         If True, the filter bank will start at 'C'.
         If False, the filter bank will start at 'A'.
+
+    dtype : np.dtype
+        The data type of the output basis.
+        By default, uses 32-bit (single-precision) floating point.
 
     Returns
     -------
@@ -416,7 +424,7 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0,
         wts = np.roll(wts, -3, axis=0)
 
     # remove aliasing columns, copy to ensure row-contiguity
-    return np.ascontiguousarray(wts[:, :int(1 + n_fft/2)])
+    return np.ascontiguousarray(wts[:, :int(1 + n_fft/2)], dtype=dtype)
 
 
 def __float_window(window_spec):
@@ -450,7 +458,7 @@ def __float_window(window_spec):
 @cache(level=10)
 def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
                window='hann', filter_scale=1, pad_fft=True, norm=1,
-               **kwargs):
+               dtype=np.complex64, **kwargs):
     r'''Construct a constant-Q basis.
 
     This uses the filter bank described by [1]_.
@@ -493,6 +501,10 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     norm : {inf, -inf, 0, float > 0}
         Type of norm to use for basis function normalization.
         See librosa.util.normalize
+
+    dtype : np.dtype
+        The data type of the output basis.
+        By default, uses 64-bit (single precision) complex floating point.
 
     kwargs : additional keyword arguments
         Arguments to `np.pad()` when `pad==True`.
@@ -594,7 +606,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
         max_len = int(np.ceil(max_len))
 
     filters = np.asarray([util.pad_center(filt, max_len, **kwargs)
-                          for filt in filters])
+                          for filt in filters], dtype=dtype)
 
     return filters, np.asarray(lengths)
 
@@ -676,7 +688,7 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
 
 @cache(level=10)
 def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
-                 fmin=None, window=None, base_c=True):
+                 fmin=None, window=None, base_c=True, dtype=np.float32):
     '''Convert a Constant-Q basis to Chroma.
 
 
@@ -702,6 +714,11 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
     base_c : bool
         If True, the first chroma bin will start at 'C'
         If False, the first chroma bin will start at 'A'
+
+    dtype : np.dtype
+        The data type of the output basis.
+        By default, uses 32-bit (single-precision) floating point.
+
 
     Returns
     -------
@@ -787,7 +804,7 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
     roll = int(np.round(roll * (n_chroma / 12.)))
 
     # Apply the roll
-    cq_to_ch = np.roll(cq_to_ch, roll, axis=0).astype(float)
+    cq_to_ch = np.roll(cq_to_ch, roll, axis=0).astype(dtype)
 
     if window is not None:
         cq_to_ch = scipy.signal.convolve(cq_to_ch,
