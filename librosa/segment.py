@@ -72,6 +72,8 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
         only link neighbors `(data[:, i], data[:, j])`
         if `|i - j| >= width`
 
+        `width` cannot exceed the length of the data.
+
     metric : str
         Distance metric to use for nearest-neighbor calculation.
 
@@ -171,8 +173,8 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
     t = data.shape[0]
     data = data.reshape((t, -1))
 
-    if width < 1:
-        raise ParameterError('width must be at least 1')
+    if width < 1 or width > t:
+        raise ParameterError('width={} must be at least 1 and at most data.shape[{}]={}'.format(width, axis, t))
 
     if mode not in ['connectivity', 'distance', 'affinity']:
         raise ParameterError(("Invalid mode='{}'. Must be one of "
