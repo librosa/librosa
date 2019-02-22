@@ -58,10 +58,10 @@ def test_recurrence_matrix():
     for n in [20, 250]:
         for k in [None, n//4]:
             for sym in [False, True]:
-                for width in [-1, 0, 1, 3, 5]:
+                for width in [-1, 0, 1, 3, 5, 5000]:
                     for metric in ['l2', 'cosine']:
                         tester = __test
-                        if width < 1:
+                        if width < 1 or width > n:
                             tester = pytest.mark.xfail(__test, raises=librosa.ParameterError)
 
                         yield tester, n, k, width, sym, metric
