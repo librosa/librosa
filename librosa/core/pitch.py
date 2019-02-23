@@ -164,7 +164,8 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
 
 @cache(level=30)
 def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
-             fmin=150.0, fmax=4000.0, threshold=0.1):
+             fmin=150.0, fmax=4000.0, threshold=0.1,
+             win_length=None, window='hann', center=True, pad_mode='reflect'):
     '''Pitch tracking on thresholded parabolically-interpolated STFT.
 
     This implementation uses the parabolic interpolation method described by [1]_.
@@ -198,6 +199,31 @@ def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
     fmax : float > 0 [scalar]
         upper frequency cutoff.
 
+    win_length  : int <= n_fft [scalar]
+        Each frame of audio is windowed by `window()`.
+        The window will be of length `win_length` and then padded
+        with zeros to match `n_fft`.
+
+        If unspecified, defaults to ``win_length = n_fft``.
+
+    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        - a window specification (string, tuple, or number);
+          see `scipy.signal.get_window`
+        - a window function, such as `scipy.signal.hanning`
+        - a vector or array of length `n_fft`
+
+        .. see also:: `filters.get_window`
+
+    center      : boolean
+        - If `True`, the signal `y` is padded so that frame
+          `t` is centered at `y[t * hop_length]`.
+        - If `False`, then frame `t` begins at `y[t * hop_length]`
+
+    pad_mode : string
+        If `center=True`, the padding mode to use at the edges of the signal.
+        By default, STFT uses reflection padding.
+
+
     .. note::
         One of `S` or `y` must be provided.
 
@@ -230,10 +256,9 @@ def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
     '''
 
     # Check that we received an audio time series or STFT
-    if hop_length is None:
-        hop_length = int(n_fft // 4)
-
-    S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
+    S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length,
+                            win_length=win_length, window=window,
+                            center=center, pad_mode=pad_mode)
 
     # Make sure we're dealing with magnitudes
     S = np.abs(S)
