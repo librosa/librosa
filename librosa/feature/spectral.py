@@ -38,8 +38,8 @@ __all__ = ['spectral_centroid',
 
 # -- Spectral features -- #
 def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
-                      freq=None,
-                      win_length=None, window='hann', center=True, pad_mode='reflect'):
+                      freq=None, win_length=None, window='hann', center=True,
+                      pad_mode='reflect'):
     '''Compute the spectral centroid.
 
     Each frame of a magnitude spectrogram is normalized and treated as a
@@ -70,7 +70,7 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         or a matrix of center frequencies as constructed by
         `librosa.core.ifgram`
 
-    win_length  : int <= n_fft [scalar]
+    win_length : int <= n_fft [scalar]
         Each frame of audio is windowed by `window()`.
         The window will be of length `win_length` and then padded
         with zeros to match `n_fft`.
@@ -85,7 +85,7 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
         .. see also:: `filters.get_window`
 
-    center      : boolean
+    center : boolean
         - If `True`, the signal `y` is padded so that frame
           `t` is centered at `y[t * hop_length]`.
         - If `False`, then frame `t` begins at `y[t * hop_length]`
@@ -194,7 +194,7 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     hop_length : int > 0 [scalar]
         hop length for STFT. See `librosa.core.stft` for details.
 
-    win_length  : int <= n_fft [scalar]
+    win_length : int <= n_fft [scalar]
         Each frame of audio is windowed by `window()`.
         The window will be of length `win_length` and then padded
         with zeros to match `n_fft`.
@@ -209,7 +209,7 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
         .. see also:: `filters.get_window`
 
-    center      : boolean
+    center : boolean
         - If `True`, the signal `y` is padded so that frame
           `t` is centered at `y[t * hop_length]`.
         - If `False`, then frame `t` begins at `y[t * hop_length]`
@@ -343,7 +343,7 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     hop_length : int > 0 [scalar]
         hop length for STFT. See `librosa.core.stft` for details.
 
-    win_length  : int <= n_fft [scalar]
+    win_length : int <= n_fft [scalar]
         Each frame of audio is windowed by `window()`.
         The window will be of length `win_length` and then padded
         with zeros to match `n_fft`.
@@ -358,7 +358,7 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
         .. see also:: `filters.get_window`
 
-    center      : boolean
+    center : boolean
         - If `True`, the signal `y` is padded so that frame
           `t` is centered at `y[t * hop_length]`.
         - If `False`, then frame `t` begins at `y[t * hop_length]`
@@ -511,7 +511,7 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     hop_length : int > 0 [scalar]
         hop length for STFT. See `librosa.core.stft` for details.
 
-    win_length  : int <= n_fft [scalar]
+    win_length : int <= n_fft [scalar]
         Each frame of audio is windowed by `window()`.
         The window will be of length `win_length` and then padded
         with zeros to match `n_fft`.
@@ -526,7 +526,7 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
         .. see also:: `filters.get_window`
 
-    center      : boolean
+    center : boolean
         - If `True`, the signal `y` is padded so that frame
           `t` is centered at `y[t * hop_length]`.
         - If `False`, then frame `t` begins at `y[t * hop_length]`
@@ -654,7 +654,7 @@ def spectral_flatness(y=None, S=None, n_fft=2048, hop_length=512,
     hop_length : int > 0 [scalar]
         hop length for STFT. See `librosa.core.stft` for details.
 
-    win_length  : int <= n_fft [scalar]
+    win_length : int <= n_fft [scalar]
         Each frame of audio is windowed by `window()`.
         The window will be of length `win_length` and then padded
         with zeros to match `n_fft`.
@@ -669,7 +669,7 @@ def spectral_flatness(y=None, S=None, n_fft=2048, hop_length=512,
 
         .. see also:: `filters.get_window`
 
-    center      : boolean
+    center : boolean
         - If `True`, the signal `y` is padded so that frame
           `t` is centered at `y[t * hop_length]`.
         - If `False`, then frame `t` begins at `y[t * hop_length]`
@@ -723,9 +723,8 @@ def spectral_flatness(y=None, S=None, n_fft=2048, hop_length=512,
         raise ParameterError('amin must be strictly positive')
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length,
-                            power=1.,
-                            win_length=win_length, window=window, center=center,
-                            pad_mode=pad_mode)
+                            power=1., win_length=win_length, window=window,
+                            center=center, pad_mode=pad_mode)
 
     if not np.isrealobj(S):
         raise ParameterError('Spectral flatness is only defined '
@@ -857,7 +856,7 @@ def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     hop_length : int > 0 [scalar]
         hop length for STFT. See `librosa.core.stft` for details.
 
-    win_length  : int <= n_fft [scalar]
+    win_length : int <= n_fft [scalar]
         Each frame of audio is windowed by `window()`.
         The window will be of length `win_length` and then padded
         with zeros to match `n_fft`.
@@ -872,7 +871,7 @@ def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
         .. see also:: `filters.get_window`
 
-    center      : boolean
+    center : boolean
         - If `True`, the signal `y` is padded so that frame
           `t` is centered at `y[t * hop_length]`.
         - If `False`, then frame `t` begins at `y[t * hop_length]`
@@ -1060,7 +1059,7 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
     hop_length : int > 0 [scalar]
         hop length if provided `y, sr` instead of `S`
 
-    win_length  : int <= n_fft [scalar]
+    win_length : int <= n_fft [scalar]
         Each frame of audio is windowed by `window()`.
         The window will be of length `win_length` and then padded
         with zeros to match `n_fft`.
@@ -1075,7 +1074,7 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
 
         .. see also:: `filters.get_window`
 
-    center      : boolean
+    center : boolean
         - If `True`, the signal `y` is padded so that frame
           `t` is centered at `y[t * hop_length]`.
         - If `False`, then frame `t` begins at `y[t * hop_length]`
@@ -1095,7 +1094,7 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
 
     Returns
     -------
-    chromagram  : np.ndarray [shape=(n_chroma, t)]
+    chromagram : np.ndarray [shape=(n_chroma, t)]
         Normalized energy for each chroma bin at each frame.
 
     See Also
@@ -1540,13 +1539,13 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, dct_type=2, norm='ortho', **kwargs
 
     Parameters
     ----------
-    y     : np.ndarray [shape=(n,)] or None
+    y : np.ndarray [shape=(n,)] or None
         audio time series
 
-    sr    : number > 0 [scalar]
+    sr : number > 0 [scalar]
         sampling rate of `y`
 
-    S     : np.ndarray [shape=(d, t)] or None
+    S : np.ndarray [shape=(d, t)] or None
         log-power Mel spectrogram
 
     n_mfcc: int > 0 [scalar]
@@ -1568,7 +1567,7 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, dct_type=2, norm='ortho', **kwargs
 
     Returns
     -------
-    M     : np.ndarray [shape=(n_mfcc, t)]
+    M : np.ndarray [shape=(n_mfcc, t)]
         MFCC sequence
 
     See Also
@@ -1664,7 +1663,7 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         number of samples between successive frames.
         See `librosa.core.stft`
 
-    win_length  : int <= n_fft [scalar]
+    win_length : int <= n_fft [scalar]
         Each frame of audio is windowed by `window()`.
         The window will be of length `win_length` and then padded
         with zeros to match `n_fft`.
@@ -1679,7 +1678,7 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
         .. see also:: `filters.get_window`
 
-    center      : boolean
+    center : boolean
         - If `True`, the signal `y` is padded so that frame
           `t` is centered at `y[t * hop_length]`.
         - If `False`, then frame `t` begins at `y[t * hop_length]`
