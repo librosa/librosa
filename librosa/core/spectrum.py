@@ -53,7 +53,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
         number audio of frames between STFT columns.
         If unspecified, defaults `win_length / 4`.
 
-    win_length  : int <= n_fft [scalar]
+    win_length : int <= n_fft [scalar]
         Each frame of audio is windowed by `window()`.
         The window will be of length `win_length` and then padded
         with zeros to match `n_fft`.
@@ -68,12 +68,12 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
 
         .. see also:: `filters.get_window`
 
-    center      : boolean
+    center : boolean
         - If `True`, the signal `y` is padded so that frame
           `D[:, t]` is centered at `y[t * hop_length]`.
         - If `False`, then `D[:, t]` begins at `y[t * hop_length]`
 
-    dtype       : numeric type
+    dtype : numeric type
         Complex numeric type for `D`.  Default is 64-bit complex.
 
     pad_mode : string
@@ -212,18 +212,18 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
     stft_matrix : np.ndarray [shape=(1 + n_fft/2, t)]
         STFT matrix from `stft`
 
-    hop_length  : int > 0 [scalar]
+    hop_length : int > 0 [scalar]
         Number of frames between STFT columns.
         If unspecified, defaults to `win_length / 4`.
 
-    win_length  : int <= n_fft = 2 * (stft_matrix.shape[0] - 1)
+    win_length : int <= n_fft = 2 * (stft_matrix.shape[0] - 1)
         When reconstructing the time series, each frame is windowed
         and each sample is normalized by the sum of squared window
         according to the `window` function (see below).
 
         If unspecified, defaults to `n_fft`.
 
-    window      : string, tuple, number, function, np.ndarray [shape=(n_fft,)]
+    window : string, tuple, number, function, np.ndarray [shape=(n_fft,)]
         - a window specification (string, tuple, or number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.hanning`
@@ -231,11 +231,11 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
 
         .. see also:: `filters.get_window`
 
-    center      : boolean
+    center : boolean
         - If `True`, `D` is assumed to have centered frames.
         - If `False`, `D` is assumed to have left-aligned frames.
 
-    dtype       : numeric type
+    dtype : numeric type
         Real numeric type for `y`.  Default is 32-bit float.
 
     length : int > 0, optional
@@ -403,7 +403,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     norm : bool
         Normalize the STFT.
 
-    center      : boolean
+    center : boolean
         - If `True`, the signal `y` is padded so that frame
             `D[:, t]` (and `if_gram`) is centered at `y[t * hop_length]`.
         - If `False`, then `D[:, t]` at `y[t * hop_length]`
@@ -514,7 +514,7 @@ def magphase(D, power=1):
 
     Parameters
     ----------
-    D       : np.ndarray [shape=(d, t), dtype=complex]
+    D : np.ndarray [shape=(d, t), dtype=complex]
         complex-valued spectrogram
     power : float > 0
         Exponent for the magnitude spectrogram,
@@ -523,7 +523,7 @@ def magphase(D, power=1):
 
     Returns
     -------
-    D_mag   : np.ndarray [shape=(d, t), dtype=real]
+    D_mag : np.ndarray [shape=(d, t), dtype=real]
         magnitude of `D`, raised to `power`
     D_phase : np.ndarray [shape=(d, t), dtype=complex]
         `exp(1.j * phi)` where `phi` is the phase of `D`
@@ -608,7 +608,7 @@ def phase_vocoder(D, rate, hop_length=None):
 
     Returns
     -------
-    D_stretched  : np.ndarray [shape=(d, t / rate), dtype=complex]
+    D_stretched : np.ndarray [shape=(d, t / rate), dtype=complex]
         time-stretched STFT
     """
 
@@ -839,7 +839,7 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
 
     Returns
     -------
-    S_db   : np.ndarray
+    S_db : np.ndarray
         ``S_db ~= 10 * log10(S) - 10 * log10(ref)``
 
     See Also
@@ -1533,7 +1533,8 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
     return (S * smooth + bias)**power - bias**power
 
 
-def _spectrogram(y=None, S=None, n_fft=2048, hop_length=512, power=1):
+def _spectrogram(y=None, S=None, n_fft=2048, hop_length=512, power=1,
+                 win_length=None, window='hann', center=True, pad_mode='reflect'):
     '''Helper function to retrieve a magnitude spectrogram.
 
     This is primarily used in feature extraction functions that can operate on
@@ -1558,11 +1559,36 @@ def _spectrogram(y=None, S=None, n_fft=2048, hop_length=512, power=1):
         Exponent for the magnitude spectrogram,
         e.g., 1 for energy, 2 for power, etc.
 
+    win_length : int <= n_fft [scalar]
+        Each frame of audio is windowed by `window()`.
+        The window will be of length `win_length` and then padded
+        with zeros to match `n_fft`.
+
+        If unspecified, defaults to ``win_length = n_fft``.
+
+    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        - a window specification (string, tuple, or number);
+          see `scipy.signal.get_window`
+        - a window function, such as `scipy.signal.hanning`
+        - a vector or array of length `n_fft`
+
+        .. see also:: `filters.get_window`
+
+    center : boolean
+        - If `True`, the signal `y` is padded so that frame
+          `t` is centered at `y[t * hop_length]`.
+        - If `False`, then frame `t` begins at `y[t * hop_length]`
+
+    pad_mode : string
+        If `center=True`, the padding mode to use at the edges of the signal.
+        By default, STFT uses reflection padding.
+
+
     Returns
     -------
     S_out : np.ndarray [dtype=np.float32]
         - If `S` is provided as input, then `S_out == S`
-        - Else, `S_out = |stft(y, n_fft=n_fft, hop_length=hop_length)|**power`
+        - Else, `S_out = |stft(y, ...)|**power`
 
     n_fft : int > 0
         - If `S` is provided, then `n_fft` is inferred from `S`
@@ -1574,6 +1600,8 @@ def _spectrogram(y=None, S=None, n_fft=2048, hop_length=512, power=1):
         n_fft = 2 * (S.shape[0] - 1)
     else:
         # Otherwise, compute a magnitude spectrogram from input
-        S = np.abs(stft(y, n_fft=n_fft, hop_length=hop_length))**power
+        S = np.abs(stft(y, n_fft=n_fft, hop_length=hop_length,
+                        win_length=win_length, center=center,
+                        window=window, pad_mode=pad_mode))**power
 
     return S, n_fft
