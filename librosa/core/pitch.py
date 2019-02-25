@@ -199,7 +199,7 @@ def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
     fmax : float > 0 [scalar]
         upper frequency cutoff.
 
-    win_length  : int <= n_fft [scalar]
+    win_length : int <= n_fft [scalar]
         Each frame of audio is windowed by `window()`.
         The window will be of length `win_length` and then padded
         with zeros to match `n_fft`.
@@ -214,7 +214,7 @@ def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
 
         .. see also:: `filters.get_window`
 
-    center      : boolean
+    center : boolean
         - If `True`, the signal `y` is padded so that frame
           `t` is centered at `y[t * hop_length]`.
         - If `False`, then frame `t` begins at `y[t * hop_length]`
