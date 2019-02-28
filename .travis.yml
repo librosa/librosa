@@ -13,6 +13,7 @@ python:
     - 2.7
     - 3.5
     - 3.6
+    - 3.7
 
 before_install:
     - bash .travis_dependencies.sh
@@ -28,8 +29,6 @@ install:
 
 script:
     - python --version
-    # - nosetests --with-coverage --cover-erase --cover-package=librosa -v -w tests/
-    # - nosetests --with-coverage --cover-erase --cover-package=librosa -w tests/
     - pytest 
 
 after_success:
