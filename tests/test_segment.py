@@ -313,3 +313,39 @@ def test_subsegment():
         else:
             tf = __test
         yield tf, n_segments
+
+
+
+
+@pytest.fixture
+def R_input():
+    X = np.random.randn(30, 5)
+
+    return X.dot(X.T)
+
+
+@pytest.mark.parametrize('window', ['rect', 'hann'])
+@pytest.mark.parametrize('n', [5, 9])
+@pytest.mark.parametrize('max_ratio', [1.0, 1.5, 2.0])
+@pytest.mark.parametrize('min_ratio', [None, 1.0,
+                                       pytest.mark.xfail(3.0, raises=librosa.ParameterError)])
+@pytest.mark.parametrize('n_filters', [1, 2, 5])
+@pytest.mark.parametrize('zero_mean', [False, True])
+@pytest.mark.parametrize('clip', [False, True])
+@pytest.mark.parametrize('kwargs', [dict(), dict(mode='reflect')])
+def test_path_enhance(R_input, window, n, max_ratio, min_ratio,
+                      n_filters, zero_mean, clip, kwargs):
+
+    R_smooth = librosa.segment.path_enhance(R_input, window=window,
+                                            n=n, max_ratio=max_ratio,
+                                            min_ratio=min_ratio,
+                                            n_filters=n_filters,
+                                            zero_mean=zero_mean,
+                                            clip=clip, **kwargs)
+
+    assert R_smooth.shape == R_input.shape
+    assert np.all(np.isfinite(R_smooth))
+    assert R_smooth.dtype == R_input.dtype
+
+    if clip:
+        assert np.min(R_smooth) >= 0
