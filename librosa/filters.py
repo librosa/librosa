@@ -1258,6 +1258,8 @@ def diagonal_filter(window, n, slope=1.0, angle=None, zero_mean=False):
 
         See get_window for details.
 
+        Note that the window used here should be non-negative.
+
     n : int > 0
         the length of the filter
 
@@ -1286,13 +1288,12 @@ def diagonal_filter(window, n, slope=1.0, angle=None, zero_mean=False):
     Notes
     -----
     This function caches at level 10.
-
     '''
 
     if angle is None:
         angle = np.arctan(slope)
 
-    win = np.diag(get_window(n, window, fftbins=False))
+    win = np.diag(get_window(window, n, fftbins=False))
 
     if not np.isclose(angle, np.pi/4):
         win = scipy.ndimage.rotate(win, 45 - angle * 180 / np.pi,
