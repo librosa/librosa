@@ -116,7 +116,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
     """
 
     y = []
-    with audioread.audio_open(os.path.realpath(path)) as input_file:
+    with audioread.audio_open(path) as input_file:
         sr_native = input_file.samplerate
         n_channels = input_file.channels
 
