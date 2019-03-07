@@ -1256,7 +1256,7 @@ def diagonal_filter(window, n, slope=1.0, angle=None, zero_mean=False):
     window : string, tuple, number, callable, or list-like
         The window function to use for the filter.
 
-        See get_window for details.
+        See `get_window` for details.
 
         Note that the window used here should be non-negative.
 
@@ -1267,9 +1267,9 @@ def diagonal_filter(window, n, slope=1.0, angle=None, zero_mean=False):
         The slope of the diagonal filter to produce
 
     angle : float or None
-        If given, the slope parameter is ignored, 
+        If given, the slope parameter is ignored,
         and angle directly sets the orientation of the filter (in radians).
-        Otherwise, angle is inferred as arctan(slope).
+        Otherwise, angle is inferred as `arctan(slope)`.
 
     zero_mean : bool
         If True, a zero-mean filter is used.
