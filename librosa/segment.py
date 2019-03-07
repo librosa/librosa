@@ -13,6 +13,7 @@ Recurrence and self-similarity
     recurrence_to_lag
     lag_to_recurrence
     timelag_filter
+    path_enhance
 
 Temporal clustering
 -------------------
@@ -28,6 +29,7 @@ from decorator import decorator
 import numpy as np
 import scipy
 import scipy.signal
+import scipy.ndimage
 
 import sklearn
 import sklearn.cluster
@@ -36,6 +38,7 @@ import sklearn.neighbors
 
 from ._cache import cache
 from . import util
+from .filters import diagonal_filter
 from .util.exceptions import ParameterError
 
 __all__ = ['recurrence_matrix',
@@ -43,7 +46,8 @@ __all__ = ['recurrence_matrix',
            'lag_to_recurrence',
            'timelag_filter',
            'agglomerative',
-           'subsegment']
+           'subsegment',
+           'path_enhance']
 
 
 @cache(level=30)
@@ -704,3 +708,112 @@ def agglomerative(data, k, clusterer=None, axis=-1):
     boundaries.extend(
         list(1 + np.nonzero(np.diff(clusterer.labels_))[0].astype(int)))
     return np.asarray(boundaries)
+
+
+
+def path_enhance(R, n, window='hann', max_ratio=2.0, min_ratio=None, n_filters=7,
+                 zero_mean=False, clip=True, **kwargs):
+    '''Multi-angle path enhancement for self- and cross-similarity matrices.
+
+    This function convolves multiple diagonal smoothing filters with a self-similarity (or
+    recurrence) matrix R, and aggregates the result by an element-wise maximum.
+
+    Technically, the output is a matrix R_smooth such that
+
+        R_smooth[i, j] = max_theta (R * filter_theta)[i, j]
+
+    where * denotes 2-dimensional convolution, and filter_theta is a smoothing filter at 
+    orientation theta.
+
+    This is intended to provide coherent temporal smoothing of self-similarity matrices
+    when there are changes in tempo.
+
+    Smoothing filters are generated at evenly spaced orientations between min_ratio and
+    max_ratio.
+
+    This function is inspired by the multi-angle path enhancement of [1]_, but differs by
+    modeling tempo differences in the space of similarity matrices rather than re-sampling
+    the underlying features prior to generating the self-similarity matrix.
+
+    .. [1] Müller, Meinard and Frank Kurth.
+            "Enhancing similarity matrices for music audio analysis."
+            2006 IEEE International Conference on Acoustics Speech and Signal Processing Proceedings.
+            Vol. 5. IEEE, 2006.
+
+    .. note:: if using recurrence_matrix to construct the input similarity matrix, be sure to include the main
+              diagonal by setting width=0.  Otherwise, the diagonal will be suppressed, and this is likely to
+              produce discontinuities which will pollute the smoothing filter response.
+
+    Parameters
+    ----------
+    R : np.ndarray
+        The self- or cross-similarity matrix to be smoothed.
+        Note: sparse inputs are not supported.
+
+    n : int > 0
+        The length of the smoothing filter
+
+    window : window specification
+        The type of smoothing filter to use.  See filters.get_window for more information
+        on window specification formats.
+
+    max_ratio : float > 0
+        The maximum tempo ratio to support
+
+    min_ratio : float > 0
+        The minimum tempo ratio to support.
+        If not provided, it will default to 1/max_ratio
+
+    n_filters : int >= 1
+        The number of different smoothing filters to use.
+        Use an odd integer to ensure that a ratio of 1 is included.
+
+    zero_mean : bool
+        By default, the smoothing filters are non-negative and sum to one (i.e. are averaging
+        filters).
+
+        If zero_mean=True, then the smoothing filters are made to sum to zero by subtracting
+        a constant value from the non-diagonal coordinates of the filter.  This is primarily
+        useful for suppressing blocks while enhancing diagonals.
+    
+    clip : bool
+        If True, the smoothed similarity matrix will be thresholded at 0, and will not contain
+        negative entries.
+
+    kwargs : additional keyword arguments
+        Additional arguments to pass to scipy.ndimage.convolve
+
+
+    Returns
+    -------
+    R_smooth : np.ndarray, shape=R.shape
+        The smoothed self- or cross-similarity matrix
+
+    See Also
+    --------
+    filters.diagonal_filter
+    recurrence_matrix
+
+    '''
+
+    if min_ratio is None:
+        min_ratio = 1./max_ratio
+    elif min_ratio > max_ratio:
+        raise ParameterError('min_ratio={} cannot exceed max_ratio={}'.format(min_ratio, max_ratio))
+
+    R_smooth = None
+    for ratio in np.logspace(np.log2(min_ratio), np.log2(max_ratio), num=n_filters, base=2):
+        kernel = diagonal_filter(window, n, slope=ratio, zero_mean=zero_mean)
+
+        if R_smooth is None:
+            R_smooth = scipy.ndimage.convolve(R, kernel, **kwargs)
+        else:
+            # Compute the point-wise maximum in-place
+            np.maximum(R_smooth, scipy.ndimage.convolve(R, kernel, **kwargs),
+                       out=R_smooth)
+
+    if clip:
+        # Clip the output in-place
+        np.clip(R_smooth, 0, None, out=R_smooth)
+
+    return R_smooth
