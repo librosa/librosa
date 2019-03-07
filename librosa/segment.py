@@ -53,7 +53,7 @@ __all__ = ['recurrence_matrix',
 @cache(level=30)
 def recurrence_matrix(data, k=None, width=1, metric='euclidean',
                       sym=False, sparse=False, mode='connectivity',
-                      bandwidth=None, axis=-1):
+                      bandwidth=None, self=False, axis=-1):
     '''Compute a recurrence matrix from a data matrix.
 
 
@@ -106,6 +106,12 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
 
         If no value is provided, it is set automatically to the median
         distance between furthest nearest neighbors.
+
+    self : bool
+        If `True`, then the main diagonal is populated with self-links:
+        0 if ``mode='distance'``, and 1 otherwise.
+
+        If `False`, the main diagonal is left empty.
 
     axis : int
         The axis along which to compute recurrence.
@@ -236,6 +242,17 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
     if sym:
         rec = rec.minimum(rec.T)
 
+    if self:
+        if mode == 'connectivity':
+            rec.setdiag(1)
+        elif mode == 'affinity':
+            # we need to keep the self-loop in here, but not mess up the
+            # bandwidth estimation
+            #
+            # using negative distances here preserves the structure without changing
+            # the statistics of the data
+            rec.setdiag(-1)
+
     rec = rec.tocsr()
     rec.eliminate_zeros()
 
@@ -243,7 +260,9 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
         rec = rec.astype(np.bool)
     elif mode == 'affinity':
         if bandwidth is None:
-            bandwidth = np.median(rec.max(axis=1).data)
+            bandwidth = np.nanmedian(rec.max(axis=1).data)
+        # Set all the negatives back to 0
+        rec.data[rec.data < 0] = 0.0
         rec.data[:] = np.exp(rec.data / (-1 * bandwidth))
 
     if not sparse:
@@ -720,9 +739,9 @@ def path_enhance(R, n, window='hann', max_ratio=2.0, min_ratio=None, n_filters=7
 
     Technically, the output is a matrix R_smooth such that
 
-        R_smooth[i, j] = max_theta (R * filter_theta)[i, j]
+        `R_smooth[i, j] = max_theta (R * filter_theta)[i, j]`
 
-    where * denotes 2-dimensional convolution, and filter_theta is a smoothing filter at 
+    where `*` denotes 2-dimensional convolution, and `filter_theta` is a smoothing filter at
     orientation theta.
 
     This is intended to provide coherent temporal smoothing of self-similarity matrices
@@ -741,7 +760,7 @@ def path_enhance(R, n, window='hann', max_ratio=2.0, min_ratio=None, n_filters=7
             Vol. 5. IEEE, 2006.
 
     .. note:: if using recurrence_matrix to construct the input similarity matrix, be sure to include the main
-              diagonal by setting width=0.  Otherwise, the diagonal will be suppressed, and this is likely to
+              diagonal by setting `self=True`.  Otherwise, the diagonal will be suppressed, and this is likely to
               produce discontinuities which will pollute the smoothing filter response.
 
     Parameters
@@ -754,7 +773,7 @@ def path_enhance(R, n, window='hann', max_ratio=2.0, min_ratio=None, n_filters=7
         The length of the smoothing filter
 
     window : window specification
-        The type of smoothing filter to use.  See filters.get_window for more information
+        The type of smoothing filter to use.  See `filters.get_window` for more information
         on window specification formats.
 
     max_ratio : float > 0
@@ -762,7 +781,7 @@ def path_enhance(R, n, window='hann', max_ratio=2.0, min_ratio=None, n_filters=7
 
     min_ratio : float > 0
         The minimum tempo ratio to support.
-        If not provided, it will default to 1/max_ratio
+        If not provided, it will default to `1/max_ratio`
 
     n_filters : int >= 1
         The number of different smoothing filters to use.
@@ -772,7 +791,7 @@ def path_enhance(R, n, window='hann', max_ratio=2.0, min_ratio=None, n_filters=7
         By default, the smoothing filters are non-negative and sum to one (i.e. are averaging
         filters).
 
-        If zero_mean=True, then the smoothing filters are made to sum to zero by subtracting
+        If `zero_mean=True`, then the smoothing filters are made to sum to zero by subtracting
         a constant value from the non-diagonal coordinates of the filter.  This is primarily
         useful for suppressing blocks while enhancing diagonals.
     
@@ -781,7 +800,7 @@ def path_enhance(R, n, window='hann', max_ratio=2.0, min_ratio=None, n_filters=7
         negative entries.
 
     kwargs : additional keyword arguments
-        Additional arguments to pass to scipy.ndimage.convolve
+        Additional arguments to pass to `scipy.ndimage.convolve`
 
 
     Returns
@@ -794,6 +813,27 @@ def path_enhance(R, n, window='hann', max_ratio=2.0, min_ratio=None, n_filters=7
     filters.diagonal_filter
     recurrence_matrix
 
+
+    Examples
+    --------
+    Use a 51-frame diagonal smoothing filter to enhance paths in a recurrence matrix
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=30)
+    >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
+    >>> rec = librosa.segment.recurrence_matrix(chroma, mode='affinity', self=True)
+    >>> rec_smooth = librosa.segment.path_enhance(rec, 51, window='hann', n_filters=7)
+
+    Plot the recurrence matrix before and after smoothing
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure(figsize=(8, 4))
+    >>> plt.subplot(1,2,1)
+    >>> librosa.display.specshow(rec, x_axis='time', y_axis='time')
+    >>> plt.title('Unfiltered recurrence')
+    >>> plt.subplot(1,2,2)
+    >>> librosa.display.specshow(rec_smooth, x_axis='time', y_axis='time')
+    >>> plt.title('Multi-angle enhanced recurrence')
+    >>> plt.tight_layout()
     '''
 
     if min_ratio is None:
