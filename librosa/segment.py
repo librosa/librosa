@@ -238,10 +238,6 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
         # Everything past the kth closest gets squashed
         rec[i, idx[k:]] = 0
 
-    # symmetrize
-    if sym:
-        rec = rec.minimum(rec.T)
-
     if self:
         if mode == 'connectivity':
             rec.setdiag(1)
@@ -252,6 +248,12 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
             # using negative distances here preserves the structure without changing
             # the statistics of the data
             rec.setdiag(-1)
+
+    # symmetrize
+    if sym:
+        # Note: this operation produces a CSR matrix!
+        # This is why we have to do it after filling the diagonal in self-mode
+        rec = rec.minimum(rec.T)
 
     rec = rec.tocsr()
     rec.eliminate_zeros()
