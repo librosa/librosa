@@ -34,6 +34,8 @@ Spectral representations
     iirt
     fmt
 
+    griffinlim
+
     interp_harmonics
     salience
 
