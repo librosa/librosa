@@ -40,9 +40,19 @@ Feature manipulation
 
     delta
     stack_memory
+
+
+Feature inversion
+-----------------
+
+.. autosummary::
+    :toctree: generated
+
+    inverse.mel_to_stft
 """
 from .utils import *  # pylint: disable=wildcard-import
 from .spectral import *  # pylint: disable=wildcard-import
 from .rhythm import *  # pylint: disable=wildcard-import
+from . import inverse
 
 __all__ = [_ for _ in dir() if not _.startswith('_')]

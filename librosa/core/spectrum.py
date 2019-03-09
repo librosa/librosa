@@ -1563,7 +1563,7 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
 
 
 def griffinlim(S, n_iter=32, hop_length=None, win_length=None, window='hann',
-               center=True, dtype=np.float32, length=None):
+               center=True, dtype=np.float32, length=None, pad_mode='reflect'):
     '''Approximate magnitude spectrogram inversion using the Griffin-Lim algorithm [1]_.
 
     Given a short-time Fourier transform magnitude matrix (`S`), the algorithm randomly
@@ -1600,6 +1600,10 @@ def griffinlim(S, n_iter=32, hop_length=None, win_length=None, window='hann',
     length : None or int > 0
         If provided, the output `y` is zero-padded or clipped to exactly `length`
         samples.
+
+    pad_mode : string
+        If `center=True`, the padding mode to use at the edges of the signal.
+        By default, STFT uses reflection padding.
 
 
     Returns
@@ -1657,7 +1661,8 @@ def griffinlim(S, n_iter=32, hop_length=None, win_length=None, window='hann',
 
         # Rebuild the spectrogram
         rebuilt = stft(inverse, n_fft=n_fft, hop_length=hop_length,
-                       win_length=win_length, window=window, center=center)
+                       win_length=win_length, window=window, center=center,
+                       pad_mode=pad_mode)
 
         # Update our phase estimates
         angles[:] = np.exp(1j * np.angle(rebuilt))
