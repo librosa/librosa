@@ -8,6 +8,7 @@ import scipy.fftpack
 from ..core.spectrum import griffinlim
 from ..core.spectrum import db_to_power
 from .. import filters
+from ..util import nnls
 
 
 __all__ = ['mel_to_stft', 'mel_to_audio',
@@ -81,9 +82,9 @@ def mel_to_stft(M, sr=22050, n_fft=2048, power=2.0, **kwargs):
 
     mel_basis = filters.mel(sr, n_fft, n_mels=M.shape[0], **kwargs)
 
-    # FIXME: this would be much better as a non-negative least squares problem
-    # however, scipy.optimize.nnls is not vectorized!
-    return np.clip(np.linalg.lstsq(mel_basis, M, rcond=None)[0], 0, None)**(1./power)
+    # Find the non-negative least squares solution, and apply
+    # the inverse exponent
+    return nnls(mel_basis, M)**(1./power)
 
 
 def mel_to_audio(M, sr=22050, n_fft=2048, hop_length=512, win_length=None,
