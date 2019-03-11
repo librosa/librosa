@@ -63,14 +63,16 @@ librosa (0.x.x, /path/to/librosa)
 
 ### Hints for the Installation
 
-#### audioread
+#### audioread and MP3 support
+
+`librosa` uses `soundfile` and `audioread` to load audio files.
+Note that `soundfile` does not currently support MP3, which will cause librosa to
+fall back on the `audioread` library.
+
+To fuel `audioread` with more audio-decoding power (e.g., for reading MP3 files),
+you can either install *ffmpeg* or *GStreamer*.
 
 *Note that `audioread` needs at least one of the programs to work properly.*
-
-`librosa` uses `audioread` to load audio files.
-
-To fuel `audioread` with more audio-decoding power (e. g. for reading MP3 files),
-you can either install *ffmpeg* or *GStreamer*.
 
 If you are using Anaconda, install *ffmpeg* by calling
 ```
