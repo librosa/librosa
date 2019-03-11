@@ -788,7 +788,6 @@ def test_mfcc():
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 @pytest.mark.parametrize('n_fft', [1024, 2048])
 def test_mel_to_stft(power, dtype, n_fft):
-
     srand()
 
     # Make a random mel spectrum, 4 frames
@@ -810,3 +809,58 @@ def test_mel_to_stft(power, dtype, n_fft):
 
     # Check that the approximation is good in RMSE terms
     assert np.sqrt(np.mean((mel_basis.dot(stft**power) - mels)**2)) <= 5e-2
+
+
+def test_mel_to_audio():
+    y = librosa.tone(440.0, sr=22050, duration=1)
+
+    M = librosa.feature.melspectrogram(y=y, sr=22050)
+
+    y_inv = librosa.feature.inverse.mel_to_audio(M, sr=22050, length=len(y))
+
+    # Sanity check the length
+    assert len(y) == len(y_inv)
+
+    # And that it's valid audio
+    assert librosa.util.valid_audio(y_inv)
+
+
+@pytest.mark.parametrize('n_mfcc', [13, 20])
+@pytest.mark.parametrize('n_mels', [64, 128])
+@pytest.mark.parametrize('dct_type', [2, 3])
+def test_mfcc_to_mel(n_mfcc, n_mels, dct_type):
+    y = librosa.tone(440.0, sr=22050, duration=1)
+
+    mfcc = librosa.feature.mfcc(y=y, sr=22050,
+                                n_mels=n_mels, n_mfcc=n_mfcc, dct_type=dct_type)
+
+    melspec = librosa.feature.melspectrogram(y=y, sr=22050, n_mels=n_mels)
+    
+    mel_recover = librosa.feature.inverse.mfcc_to_mel(mfcc, n_mels=n_mels,
+                                                      dct_type=dct_type)
+
+    # Quick shape check
+    assert melspec.shape == mel_recover.shape
+
+    # Check non-negativity
+    assert np.all(mel_recover >= 0)
+
+
+@pytest.mark.parametrize('n_mfcc', [13, 20])
+@pytest.mark.parametrize('n_mels', [64, 128])
+@pytest.mark.parametrize('dct_type', [2, 3])
+def test_mfcc_to_audio(n_mfcc, n_mels, dct_type):
+    y = librosa.tone(440.0, sr=22050, duration=1)
+
+    mfcc = librosa.feature.mfcc(y=y, sr=22050,
+                                n_mels=n_mels, n_mfcc=n_mfcc, dct_type=dct_type)
+
+    y_inv = librosa.feature.inverse.mfcc_to_audio(mfcc, n_mels=n_mels,
+                                                  dct_type=dct_type,
+                                                  length=len(y))
+
+    # Sanity check the length
+    assert len(y) == len(y_inv)
+
+    # And that it's valid audio
+    assert librosa.util.valid_audio(y_inv)
