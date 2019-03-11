@@ -54,8 +54,8 @@ __all__ = ['nnls']
 
 
 @jit(nopython=True)
-def _nnls(A, B, rho, eps_abs=1e-6, eps_rel=1e-4, max_iter=100):
-    '''Compute a non-negative least-squares solution to 
+def _nnls(A, B, rho, eps_abs=1e-6, eps_rel=1e-4, max_iter=250):
+    '''Compute a non-negative least-squares solution to
     min_{X>=0} \|AX - B\|_F^2
     '''
     # X* = Z + r^-1 * (I - A'(r I - AA')^-1 A) (A'B - A'A Z)
@@ -144,7 +144,7 @@ def _nnls(A, B, rho, eps_abs=1e-6, eps_rel=1e-4, max_iter=100):
     return Y
 
 
-def nnls(A, B, eps_abs=1e-6, eps_rel=1e-4, max_iter=100):
+def nnls(A, B, eps_abs=1e-6, eps_rel=1e-4, max_iter=250):
     '''Non-negative least squares.
 
     Given two matrices A and B, find a non-negative matrix X
