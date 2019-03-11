@@ -261,6 +261,6 @@ def mfcc_to_audio(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, **kwargs)
     core.griffinlim
     scipy.fftpack.dct
     '''
-    M = mfcc_to_mel(mfcc, n_mels=n_mels, dct_type=dct_type, norm=norm, ref=ref)
+    mel_spec = mfcc_to_mel(mfcc, n_mels=n_mels, dct_type=dct_type, norm=norm, ref=ref)
 
-    return mel_to_audio(M, **kwargs)
+    return mel_to_audio(mel_spec, **kwargs)
