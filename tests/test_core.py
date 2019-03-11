@@ -1604,3 +1604,43 @@ def test_reset_fftlib():
     import numpy.fft as fft
     librosa.set_fftlib()
     assert librosa.get_fftlib() is fft
+
+
+
+@pytest.fixture
+def y_chirp():
+    sr = 22050
+    y = librosa.chirp(55, 55 * 2**7, length=sr//2, sr=sr)
+    return y
+
+
+@pytest.mark.parametrize('hop_length', [None, 1024])
+@pytest.mark.parametrize('win_length', [None, 1024])
+@pytest.mark.parametrize('window', ['hann', 'rect'])
+@pytest.mark.parametrize('center', [False, True])
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+@pytest.mark.parametrize('use_length', [False, True])
+@pytest.mark.parametrize('pad_mode', ['constant', 'reflect'])
+def test_griffinlim(y_chirp, hop_length, win_length, window, center, dtype, use_length, pad_mode):
+
+    if use_length:
+        length = len(y_chirp)
+    else:
+        length = None
+
+    D = librosa.stft(y_chirp, hop_length=hop_length, win_length=win_length,
+                     window=window, center=center, dtype=dtype, pad_mode=pad_mode)
+
+    S = np.abs(D)
+
+    y_rec = librosa.griffinlim(S, hop_length=hop_length, win_length=win_length,
+                               window=window, center=center, dtype=dtype,
+                               length=length, pad_mode=pad_mode,
+                               n_iter=3)
+
+    # First, check length
+    if use_length:
+        assert len(y_rec) == length
+
+    # Next, check dtype
+    assert y_rec.dtype == dtype
