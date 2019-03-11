@@ -68,7 +68,8 @@ def mel_to_stft(M, sr=22050, n_fft=2048, power=2.0, **kwargs):
     >>> plt.colorbar()
     >>> plt.title('Original STFT')
     >>> plt.subplot(2,1,2)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(np.abs(S_inv - S), top_db=None),
+    >>> librosa.display.specshow(librosa.amplitude_to_db(np.abs(S_inv - S),
+    ...                                                  ref=S.max(), top_db=None),
     ...                          vmax=0, y_axis='log', x_axis='time', cmap='magma')
     >>> plt.title('Residual error (dB)')
     >>> plt.colorbar()
