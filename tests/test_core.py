@@ -493,10 +493,10 @@ def test_istft_reconstruction():
 @pytest.mark.parametrize('duration', [None, 0, 0.5, 1, 2])
 @pytest.mark.parametrize('mono', [False, True])
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
-def test_load_options(offset, duration, mono, dtype):
-
-    filename = os.path.join('tests', 'data', 'test1_22050.wav')
-
+@pytest.mark.parametrize('filename', files(os.path.join('tests',
+                                                        'data',
+                                                        'test1_22050.*')))
+def test_load_options(filename, offset, duration, mono, dtype):
     y, sr = librosa.load(filename, mono=mono, offset=offset,
                          duration=duration, dtype=dtype)
 
@@ -561,6 +561,18 @@ def test_get_duration_filename():
 
     assert np.allclose(duration_fn, true_duration)
     assert np.allclose(duration_fn, duration_y)
+
+
+def test_get_duration_mp3():
+    filename = os.path.join('tests', 'data', 'test1_22050.mp3')
+    true_duration = 4.587528344671202
+
+    duration_fn = librosa.get_duration(filename=filename)
+    y, sr = librosa.load(filename, sr=None)
+    duration_y = librosa.get_duration(y=y, sr=sr)
+    # mp3 duration at low sampling rate isn't too reliable
+    assert np.allclose(duration_fn, duration_y, atol=1e-1)
+    assert np.allclose(duration_fn, true_duration, atol=1e-1)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
