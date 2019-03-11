@@ -124,10 +124,13 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
                 sf_desc.seek(offset * sr_native)
             if duration:
                 frame_duration = duration * sr_native
+            else:
+                frame_duration = -1
 
             # Load the target number of frames, and transpose to match librosa form
             y = sf_desc.read(frames=frame_duration, dtype=dtype, always_2d=False).T
-    except:
+
+    except Exception as exc:
         # If soundfile failed, fall back to the audioread loader
         y, sr_native = __audioread_load(path, offset, duration, dtype)
 
