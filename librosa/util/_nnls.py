@@ -76,10 +76,15 @@ def _nnls(A, B, rho, eps_abs=1e-6, eps_rel=1e-4, max_iter=100):
     n, m = A.shape
     _, N = B.shape
 
+    # identiy matrices with dtype matching A
+    Im = np.eye(m, m, 0, A.dtype)
+
     if n <= m:
         # This will be a small matrix if A is wide
         # Say L = r^-1 * (I - A'(rI - AA')^-1 A)
-        L = rho**-1 * (np.eye(m) - np.dot(A.T, np.linalg.solve(rho * np.eye(n) + np.dot(A, A.T), A)))
+        In = np.eye(n, n, 0, A.dtype)
+        L = Im - np.dot(A.T, np.linalg.solve(rho * In + np.dot(A, A.T), A))
+        L /= rho
 
         # L is m by m
         # A' is m by n  (m >> n)
@@ -87,16 +92,17 @@ def _nnls(A, B, rho, eps_abs=1e-6, eps_rel=1e-4, max_iter=100):
 
         LAt = np.dot(L, A.T)
     else:
-        LAt = np.linalg.solve(np.dot(A.T, A) + rho * np.eye(m), A.T)
+        LAt = np.linalg.solve(np.dot(A.T, A) + rho * Im, A.T)
 
     LAtB = np.dot(LAt, B)
-    LAtApI = np.dot(LAt, A) - np.eye(m)
+    LAtApI = np.dot(LAt, A) - Im
 
     # Initialize X and Y with the (thresholded) least squares solution
     # This puts our initial iterate X into the column space of A
     # so that we have strong (local) convexity
     X = np.linalg.lstsq(A, B)[0]
-    Y = np.maximum(X, 0.0)
+    Y = np.zeros(X.shape, dtype=A.dtype)
+    np.maximum(X, 0.0, Y)
     W = X - Y
 
     residual = W.copy()
@@ -121,7 +127,7 @@ def _nnls(A, B, rho, eps_abs=1e-6, eps_rel=1e-4, max_iter=100):
         #    |res_dual|_F <= sqrt(n) * eps_absolute + eps_relative * rho * norm(W)
         #    |res_primal|_F <= sqrt(n) * eps_absolute + eps_relative * max(norm(X), norm(Y))
         #    |res_primal| <= sqrt(n) * eps_absolute / rho + eps_relative * norm(W)
-        #
+        #    
         # so convergence is when
         #    |X - Y| <= min(t1, t2)
         #    where t1 = sqrt(n) * eps_absolute + eps_relative * max(norm(X), norm(Y))
@@ -152,7 +158,7 @@ def nnls(A, B, eps_abs=1e-6, eps_rel=1e-4, max_iter=100):
         The basis matrix
 
     B : np.ndarray [shape=(m, N)]
-        The target matrix
+        The target matrix.
 
     eps_abs : number > 0
         The absolute precision threshold
@@ -182,13 +188,18 @@ def nnls(A, B, eps_abs=1e-6, eps_rel=1e-4, max_iter=100):
     if B.ndim == 1:
         return scipy.optimize.nnls(A, B)[0]
 
+    if B.size > A.size:
+        A = A.astype(B.dtype)
+    elif B.size < A.size:
+        B = B.astype(A.dtype)
+
     # Otherwise, initialize our step size
     svds = np.linalg.svd(A, compute_uv=False)
-    rho = 0.5 * svds.max() * svds.min()
 
-    # Cast up to float64 because numba isn't smart about typing
-    return _nnls(A.astype(np.float64),
-                 B.astype(np.float64),
+    # Explicitly cast to float so that numba isn't confused
+    rho = np.asanyarray(0.5 * svds.max() * svds.min(), dtype=A.dtype)
+
+    return _nnls(A, B,
                  rho=rho,
                  eps_abs=eps_abs,
                  eps_rel=eps_rel,
