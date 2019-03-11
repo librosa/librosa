@@ -5,6 +5,7 @@
 import os
 import six
 
+import soundfile as sf
 import audioread
 import numpy as np
 import scipy.signal
@@ -69,7 +70,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
             To use a faster method, set `res_type='kaiser_fast'`.
 
             To use `scipy.signal.resample`, set `res_type='scipy'`.
-            
+
         .. note::
            This uses `audioread`, which may truncate the precision of the
            audio data to 16 bits.
@@ -115,6 +116,40 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
 
     """
 
+    try:
+        with sf.SoundFile(path) as sf_desc:
+            sr_native = sf_desc.samplerate
+            if offset:
+                # Seek to the start of the target read
+                sf_desc.seek(offset * sr_native)
+            if duration:
+                frame_duration = duration * sr_native
+
+            # Load the target number of frames, and transpose to match librosa form
+            y = sf_desc.read(frames=frame_duration, dtype=dtype, always_2d=False).T
+    except:
+        # If soundfile failed, fall back to the audioread loader
+        y, sr_native = __audioread_load(path, offset, duration, dtype)
+
+    # Final cleanup for dtype and contiguity
+    if mono:
+        y = to_mono(y)
+
+    if sr is not None:
+        y = resample(y, sr_native, sr, res_type=res_type)
+
+    else:
+        sr = sr_native
+
+    return y, sr
+
+
+def __audioread_load(path, offset, duration, dtype):
+    '''Load an audio buffer using audioread.
+
+    This loads one block at a time, and then concatenates the results.
+    '''
+
     y = []
     with audioread.audio_open(path) as input_file:
         sr_native = input_file.samplerate
@@ -157,22 +192,12 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
 
     if y:
         y = np.concatenate(y)
-
         if n_channels > 1:
             y = y.reshape((-1, n_channels)).T
-            if mono:
-                y = to_mono(y)
+    else:
+        y = np.empty(0, dtype=dtype)
 
-        if sr is not None:
-            y = resample(y, sr_native, sr, res_type=res_type)
-
-        else:
-            sr = sr_native
-
-    # Final cleanup for dtype and contiguity
-    y = np.ascontiguousarray(y, dtype=dtype)
-
-    return (y, sr)
+    return y, sr_native
 
 
 @cache(level=20)
@@ -380,8 +405,11 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     """
 
     if filename is not None:
-        with audioread.audio_open(filename) as fdesc:
-            return fdesc.duration
+        try:
+            return sf.info(filename).duration
+        except:
+            with audioread.audio_open(filename) as fdesc:
+                return fdesc.duration
 
     if y is None:
         if S is None:

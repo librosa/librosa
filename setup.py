@@ -53,6 +53,7 @@ setup(
         'six >= 1.3',
         'resampy >= 0.2.0',
         'numba >= 0.38.0',
+        'soundfile >= 0.9.0',
     ],
     extras_require={
         'docs': ['numpydoc', 'sphinx!=1.3.1', 'sphinx_rtd_theme',
