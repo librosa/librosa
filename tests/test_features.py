@@ -780,3 +780,33 @@ def test_mfcc():
                 else:
                     tf = __test
                 yield tf, dct_type, norm, n_mfcc, S
+
+
+
+# -- feature inversion tests
+@pytest.mark.parametrize('power', [1, 2])
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+@pytest.mark.parametrize('n_fft', [1024, 2048])
+def test_mel_to_stft(power, dtype, n_fft):
+
+    srand()
+
+    # Make a random mel spectrum, 4 frames
+    mel_basis = librosa.filters.mel(22050, n_fft, n_mels=128, dtype=dtype)
+
+    stft_orig = np.random.randn(n_fft//2 + 1, 4) ** power
+    mels = mel_basis.dot(stft_orig.astype(dtype))
+
+    stft = librosa.feature.inverse.mel_to_stft(mels, power=power, n_fft=n_fft)
+
+    # Check precision
+    assert stft.dtype == dtype
+
+    # Check for non-negative spectrum
+    assert np.all(stft >= 0)
+
+    # Check that the shape is good
+    assert stft.shape[0] == n_fft //2 + 1
+
+    # Check that the approximation is good in RMSE terms
+    assert np.sqrt(np.mean((mel_basis.dot(stft**power) - mels)**2)) <= 5e-2
