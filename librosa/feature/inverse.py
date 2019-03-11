@@ -18,10 +18,6 @@ __all__ = ['mel_to_stft', 'mel_to_audio',
 def mel_to_stft(M, sr=22050, n_fft=2048, power=2.0, **kwargs):
     '''Approximate STFT magnitude from a Mel power spectrogram.
 
-    The magnitudes are recovered by minimizing an unconstrained least-squares
-    objective, and thresholding the solution to produce valid magnitudes.
-
-
     Parameters
     ----------
     M : np.ndarray [shape=(n_mels, n), non-negative]
@@ -52,6 +48,7 @@ def mel_to_stft(M, sr=22050, n_fft=2048, power=2.0, **kwargs):
     feature.melspectrogram
     core.stft
     filters.mel
+    util.nnls
 
 
     Examples
@@ -72,8 +69,7 @@ def mel_to_stft(M, sr=22050, n_fft=2048, power=2.0, **kwargs):
     >>> plt.title('Original STFT')
     >>> plt.subplot(2,1,2)
     >>> librosa.display.specshow(librosa.amplitude_to_db(np.abs(S_inv - S), top_db=None),
-    ...                          cmap='plasma', vmin=-120, vmax=120,
-    ...                          y_axis='log', x_axis='time')
+    ...                          vmax=0, y_axis='log', x_axis='time', cmap='magma')
     >>> plt.title('Residual error (dB)')
     >>> plt.colorbar()
     >>> plt.tight_layout()
