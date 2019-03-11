@@ -181,7 +181,28 @@ def nnls(A, B, eps_abs=1e-6, eps_rel=1e-4, max_iter=100):
 
     Examples
     --------
+    Approximate a magnitude spectrum from its mel spectrogram
 
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), offset=30, duration=10)
+    >>> S = np.abs(librosa.stft(y, n_fft=2048))
+    >>> M = librosa.feature.melspectrogram(S=S, sr=sr, power=1)
+    >>> mel_basis = librosa.filters.mel(sr, n_fft=2048, n_mels=M.shape[0])
+    >>> S_recover = librosa.util.nnls(mel_basis, M)
+
+    Plot the results
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> plt.subplot(2,1,1)
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max), y_axis='log')
+    >>> plt.colorbar()
+    >>> plt.title('Original spectrogram')
+    >>> plt.subplot(2,1,2)
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S_recover, ref=np.max),
+    ...                          y_axis='log')
+    >>> plt.colorbar()
+    >>> plt.title('Reconstructed spectrogram')
+    >>> plt.tight_layout()
     '''
 
     # If B is a single vector, punt up to the scipy method
