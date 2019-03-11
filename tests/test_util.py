@@ -1015,3 +1015,58 @@ def test_util_fill_off_diagonal_8_12():
     librosa.util.fill_off_diagonal(mut_x, 0.25)
 
     assert np.array_equal(mut_x, gt_x.T)
+
+
+@pytest.mark.parametrize('dtype_A', [np.float32, np.float64])
+@pytest.mark.parametrize('dtype_B', [np.float32, np.float64])
+def test_nnls_vector(dtype_A, dtype_B):
+    srand()
+
+    # Make a random basis
+    A = np.random.randn(5, 7).astype(dtype_A)
+
+    # Make a random latent vector
+    x = np.random.randn(A.shape[1])**2
+
+    B = A.dot(x).astype(dtype_B)
+
+    x_rec = librosa.util.nnls(A, B)
+
+    assert np.sqrt(np.mean((B - A.dot(x_rec))**2)) <= 1e-6
+
+
+@pytest.mark.parametrize('dtype_A', [np.float32, np.float64])
+@pytest.mark.parametrize('dtype_B', [np.float32, np.float64])
+def test_nnls_wide(dtype_A, dtype_B):
+    srand()
+
+    # Make a random basis
+    A = np.random.randn(5, 7).astype(dtype_A)
+
+    # Make a random latent matrix
+    x = np.random.randn(A.shape[1], 3)**2
+
+    B = A.dot(x).astype(dtype_B)
+
+    x_rec = librosa.util.nnls(A, B)
+
+    assert np.sqrt(np.mean((B - A.dot(x_rec))**2)) <= 1e-6
+
+
+@pytest.mark.parametrize('dtype_A', [np.float32, np.float64])
+@pytest.mark.parametrize('dtype_B', [np.float32, np.float64])
+def test_nnls_wide(dtype_A, dtype_B):
+    srand()
+
+    # Make a random basis
+    A = np.random.randn(7, 5).astype(dtype_A)
+
+    # Make a random latent matrix
+    x = np.random.randn(A.shape[1], 3)**2
+
+    B = A.dot(x).astype(dtype_B)
+
+    x_rec = librosa.util.nnls(A, B)
+
+    assert np.sqrt(np.mean((B - A.dot(x_rec))**2)) <= 1e-6
+
