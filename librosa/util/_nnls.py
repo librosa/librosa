@@ -79,6 +79,9 @@ def _nnls(A, B, rho, eps_abs=1e-6, eps_rel=1e-4, max_iter=500):
     # identiy matrices with dtype matching A
     Im = np.eye(m, m, 0, A.dtype)
 
+    # Pre-allocate LA' to ensure efficient ordering
+    LAt = np.zeros((m, n), A.dtype)
+
     if n <= m:
         # This will be a small matrix if A is wide
         # Say L = r^-1 * (I - A'(rI - AA')^-1 A)
@@ -90,9 +93,9 @@ def _nnls(A, B, rho, eps_abs=1e-6, eps_rel=1e-4, max_iter=500):
         # A' is m by n  (m >> n)
         # B is n by N
 
-        LAt = np.dot(L, A.T)
+        LAt[:] = np.dot(L, A.T)
     else:
-        LAt = np.linalg.solve(np.dot(A.T, A) + rho * Im, A.T)
+        LAt[:] = np.linalg.solve(np.dot(A.T, A) + rho * Im, A.T)
 
     LAtB = np.dot(LAt, B)
     LAtApI = np.dot(LAt, A) - Im
@@ -193,15 +196,20 @@ def nnls(A, B, eps_abs=1e-6, eps_rel=1e-4, max_iter=500):
 
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
-    >>> plt.subplot(2,1,1)
+    >>> plt.subplot(3,1,1)
     >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max), y_axis='log')
     >>> plt.colorbar()
-    >>> plt.title('Original spectrogram')
-    >>> plt.subplot(2,1,2)
+    >>> plt.title('Original spectrogram (1025 bins)')
+    >>> plt.subplot(3,1,2)
+    >>> librosa.display.specshow(librosa.amplitude_to_db(M, ref=np.max),
+    ...                          y_axis='mel')
+    >>> plt.title('Mel spectrogram (128 bins)')
+    >>> plt.colorbar()
+    >>> plt.subplot(3,1,3)
     >>> librosa.display.specshow(librosa.amplitude_to_db(S_recover, ref=np.max),
     ...                          y_axis='log')
     >>> plt.colorbar()
-    >>> plt.title('Reconstructed spectrogram')
+    >>> plt.title('Reconstructed spectrogram (1025 bins)')
     >>> plt.tight_layout()
     '''
 
