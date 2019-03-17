@@ -478,7 +478,7 @@ def lpc(y, N):
     estimation by autocorrelation.
 
     It follows the description and implementation approach described in the
-    introduction in [1].  N.B. This paper describes a different method, which
+    introduction in [1]_.  N.B. This paper describes a different method, which
     is not implemented here, but has been chosen for its clear explanation of
     Burg's technique in its introduction.
 
