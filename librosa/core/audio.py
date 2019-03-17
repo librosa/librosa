@@ -503,7 +503,7 @@ def lpc(y, N):
     Raises
     ------
     ParameterError
-        - If y is not real-valued
+        - If y is not valid audio as per `util.valid_audio`
         - If N < 1 or not integer
     FloatingPointError
         - If y is ill-conditioned
@@ -541,8 +541,7 @@ def lpc(y, N):
     if not isinstance(y, np.ndarray):
         raise ParameterError("y must be of the type np.ndarray")
 
-    if not np.all(np.isreal(y)):
-        raise ParameterError("y must not contain complex numbers")
+    util.valid_audio(y, mono=True)
 
     return __lpc(y, N)
 
