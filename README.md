@@ -63,11 +63,18 @@ librosa (0.x.x, /path/to/librosa)
 
 ### Hints for the Installation
 
-#### audioread and MP3 support
-
 `librosa` uses `soundfile` and `audioread` to load audio files.
 Note that `soundfile` does not currently support MP3, which will cause librosa to
 fall back on the `audioread` library.
+
+#### soundfile
+
+If you're using `conda` to install librosa, then all audio coding dependencies (except MP3) will be handled automatically.
+
+If you're using `pip` on a Linux environment, you may need to install `libsndfile`
+manually.  Please refer to the [SoundFile installation documentation](https://pysoundfile.readthedocs.io/#installation) for details.
+
+#### audioread and MP3 support
 
 To fuel `audioread` with more audio-decoding power (e.g., for reading MP3 files),
 you can either install *ffmpeg* or *GStreamer*.
