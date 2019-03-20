@@ -628,10 +628,10 @@ def icqt(C, sr=22050, hop_length=512, fmin=None, bins_per_octave=12,
                                                  sparsity=sparsity,
                                                  window=window)
 
-    if min(lengths) < 2 * hop_length:
-        warnings.warn('Minimum CQT filter length={:.3f} is less than 2 * hop_length={}.\n'
+    if min(lengths) < hop_length:
+        warnings.warn('Minimum CQT filter length={:.3f} is less than hop_length={}.\n'
                       'This will probably cause unpleasant acoustic artifacts. '
-                      'Consider decreasing your hop length or increasing the frequency resolution of your CQT.'.format(min(lengths), 2*hop_length))
+                      'Consider decreasing your hop length or increasing the frequency resolution of your CQT.'.format(min(lengths), hop_length))
 
     # The basis gets renormalized by the effective window length above;
     # This step undoes that
