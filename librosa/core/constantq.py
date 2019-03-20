@@ -165,7 +165,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     # First thing, get the freqs of the top octave
     freqs = cqt_frequencies(n_bins, fmin,
-                            bins_per_octave=bins_per_octave)[-bins_per_octave:]
+                            bins_per_octave=bins_per_octave, tuning=tuning)[-bins_per_octave:]
 
     fmin_t = np.min(freqs)
     fmax_t = np.max(freqs)
