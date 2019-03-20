@@ -39,10 +39,17 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
 
     Parameters
     ----------
-    path : string
+    path : string, int, or file-like object
         path to the input file.
 
-        Any format supported by `audioread` will work.
+        Any codec supported by `soundfile` or `audioread` will work.
+
+        If the codec is supported by `soundfile`, then `path` can also be
+        an open file descriptor (int), or any object implementing Python's
+        file interface.
+
+        If the codec is not supported by `soundfile` (e.g., MP3), then only
+        string file paths are supported.
 
     sr   : number > 0 [scalar]
         target sampling rate
@@ -72,8 +79,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
             To use `scipy.signal.resample`, set `res_type='scipy'`.
 
         .. note::
-           This uses `audioread`, which may truncate the precision of the
-           audio data to 16 bits.
+           `audioread` may truncate the precision of the audio data to 16 bits.
 
            See https://librosa.github.io/librosa/ioformats.html for alternate
            loading methods.
@@ -90,7 +96,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
 
     Examples
     --------
-    >>> # Load a wav file
+    >>> # Load an ogg vorbis file
     >>> filename = librosa.util.example_audio_file()
     >>> y, sr = librosa.load(filename)
     >>> y
@@ -98,7 +104,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
     >>> sr
     22050
 
-    >>> # Load a wav file and resample to 11 KHz
+    >>> # Load a file and resample to 11 KHz
     >>> filename = librosa.util.example_audio_file()
     >>> y, sr = librosa.load(filename, sr=11025)
     >>> y
@@ -106,7 +112,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
     >>> sr
     11025
 
-    >>> # Load 5 seconds of a wav file, starting 15 seconds in
+    >>> # Load 5 seconds of a file, starting 15 seconds in
     >>> filename = librosa.util.example_audio_file()
     >>> y, sr = librosa.load(filename, offset=15.0, duration=5.0)
     >>> y
