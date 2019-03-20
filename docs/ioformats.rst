@@ -7,12 +7,15 @@ functionality currently provided by *librosa*.
 Read specific formats
 ---------------------
 
-*librosa* uses `audioread <https://github.com/sampsyo/audioread>`_ for reading audio. While we chose this library for best flexibility and support of various compressed formats like MP3: some specific formats might not be supported. Especially specific WAV subformats like 24bit PCM or 32bit float might cause problems depending on your installed audioread codecs. *libsndfile* covers a `bunch of these formats <http://www.mega-nerd.com/libsndfile/>`_. There is a neat wrapper for
-*libsndfile* called `PySoundFile <https://github.com/bastibe/PySoundFile>`_ which makes it easy to use the library from python.
+*librosa* uses `soundfile <https://github.com/bastibe/PySoundFile>`_ and `audioread <https://github.com/sampsyo/audioread>`_ for reading audio.
+As of v0.7, librosa will use `soundfile` by default, and only fall back on `audioread` when dealing with codecs unsupported by `soundfile` (notably, MP3, and some variants of WAV).
+For a list of codecs supported by `soundfile`, see the *libsndfile* `documentation <http://www.mega-nerd.com/libsndfile/>`_.
 
 .. note:: See installation instruction for PySoundFile `here <http://pysoundfile.readthedocs.io>`_.
 
-Reading audio files using PySoundFile is similmar to the method in *librosa*. One important difference is that the read data is of shape ``(nb_samples, nb_channels)`` compared to ``(nb_channels, nb_samples)`` in :func:`<librosa.core.load>`. Also the signal is not resampled to 22050 Hz by default, hence it would need be transposed and resampled for further processing in *librosa*. The following example is equivalent to ``librosa.load(librosa.util.example_audio_file())``:
+Librosa's load function is meant for the common case where you want to load an entire (fragment of a) recording into memory, but some applications require more flexibility.
+In these cases, we recommend using `soundfile` directly.
+Reading audio files using `soundfile` is similar to the method in *librosa*. One important difference is that the read data is of shape ``(nb_samples, nb_channels)`` compared to ``(nb_channels, nb_samples)`` in :func:`<librosa.core.load>`. Also the signal is not resampled to 22050 Hz by default, hence it would need be transposed and resampled for further processing in *librosa*. The following example is equivalent to ``librosa.load(librosa.util.example_audio_file())``:
 
 .. code-block:: python
     :linenos:
@@ -31,7 +34,7 @@ Reading audio files using PySoundFile is similmar to the method in *librosa*. On
 Blockwise Reading
 -----------------
 
-For large audio signals it could be benficial to not load the whole audio file
+For large audio signals it could be benificial to not load the whole audio file
 into memory. *PySoundFile* supports blockwise reading. In the following example
 a block of 1024 samples of audio are read and directly fed into the chroma
 feature extractor.
@@ -59,7 +62,7 @@ Read file-like objects
 ----------------------
 
 If you want to read audio from file-like objects (also called *virtual files*)
-you can use *PySoundFile*, as well.
+you can use `soundfile` as well.  (This will also work with `librosa.load`, provided that the underlying codec is supported by `soundfile`.)
 
 E.g.: read files from zip compressed archives:
 
