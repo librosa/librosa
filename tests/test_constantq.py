@@ -306,7 +306,7 @@ def test_hybrid_cqt_white_noise():
 
 def test_icqt():
 
-    def __test(sr, scale, hop_length, over_sample, y):
+    def __test(sr, scale, hop_length, over_sample, length, y):
 
         bins_per_octave = over_sample * 12
         n_bins = 7 * bins_per_octave
@@ -316,26 +316,36 @@ def test_icqt():
                         scale=scale,
                         hop_length=hop_length)
 
+        if length:
+            _len = len(y)
+        else:
+            _len = None
         yinv = librosa.icqt(C, sr=sr,
                             scale=scale,
                             hop_length=hop_length,
-                            bins_per_octave=bins_per_octave)
+                            bins_per_octave=bins_per_octave,
+                            length=_len)
 
         # Only test on the middle section
-        yinv = librosa.util.fix_length(yinv, len(y))
+        if length:
+            assert len(y) == len(yinv)
+        else:
+            yinv = librosa.util.fix_length(yinv, len(y))
+
         y = y[sr//2:-sr//2]
         yinv = yinv[sr//2:-sr//2]
 
         residual = np.abs(y - yinv)
-        # We'll tolerate 11% RMSE
+        # We'll tolerate 10% RMSE
         # error is lower on more recent numpy/scipy builds
 
         resnorm = np.sqrt(np.mean(residual**2))
-        assert resnorm <= 1.1e-1, resnorm
+        assert resnorm <= 0.1, resnorm
 
     for sr in [22050, 44100]:
         y = make_signal(sr, 1.5, fmin='C2', fmax='C4')
         for over_sample in [1, 3]:
             for scale in [False, True]:
                 for hop_length in [128, 384, 512]:
-                        yield __test, sr, scale, hop_length, over_sample, y
+                    for length in [None, True]:
+                        yield __test, sr, scale, hop_length, over_sample, length, y
