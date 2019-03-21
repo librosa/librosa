@@ -56,9 +56,21 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
                       bandwidth=None, self=False, axis=-1):
     '''Compute a recurrence matrix from a data matrix.
 
-
     `rec[i, j]` is non-zero if (`data[:, i]`, `data[:, j]`) are
     k-nearest-neighbors and `|i - j| >= width`
+
+    The specific value of `rec[i, j]` can have several forms, governed
+    by the `mode` parameter below:
+
+        - Connectivity: `rec[i, j] = 1 or 0` indicates that frames `i` and `j` are repetitions
+
+        - Affinity: `rec[i, j] > 0` measures how similar frames `i` and `j` are.  This is also
+          known as a (sparse) self-similarity matrix.
+
+        - Distance: `rec[, j] > 0` measures how distant frames `i` and `j` are.  This is also
+          known as a (sparse) self-distance matrix.
+
+    The general term *recurrence matrix* can refer to any of the three forms above.
 
 
     Parameters
