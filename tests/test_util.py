@@ -584,7 +584,8 @@ def test_files():
 
     # Expected output
     output = [os.path.join(os.path.abspath(os.path.curdir), 'tests', 'data', s)
-              for s in ['test1_22050.wav',
+              for s in ['test1_22050.mp3',
+                        'test1_22050.wav',
                         'test1_44100.wav',
                         'test2_8000.wav']]
 
@@ -596,10 +597,15 @@ def test_files():
                                         limit=limit,
                                         offset=offset)
 
+        targets = output
+        if ext is not None:
+            # If we're only seeking wavs, bump off the mp3 file
+            targets = targets[1:]
+
         s1 = slice(offset, None)
         s2 = slice(limit)
 
-        assert set(files) == set(output[s1][s2]), (files, output[s1][s2])
+        assert set(files) == set(targets[s1][s2])
 
     if platform.system() == 'Windows':
         cases = [False]
