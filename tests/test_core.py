@@ -37,51 +37,43 @@ def load(infile):
     return scipy.io.loadmat(infile, chars_as_strings=True)
 
 
-def test_load():
-    # Note: this does not test resampling.
-    # That is a separate unit test.
 
-    def __test(infile):
-        DATA = load(infile)
-        y, sr = librosa.load(os.path.join('tests', DATA['wavfile'][0]),
-                             sr=None,
-                             mono=DATA['mono'])
+@pytest.mark.parametrize('infile', files(os.path.join('tests',
+                                                      'data',
+                                                      'core-load-*.mat')))
+def test_load(infile):
+    DATA = load(infile)
+    y, sr = librosa.load(os.path.join('tests', DATA['wavfile'][0]),
+                         sr=None, mono=DATA['mono'])
 
-        # Verify that the sample rate is correct
-        assert sr == DATA['sr']
+    # Verify that the sample rate is correct
+    assert sr == DATA['sr']
 
-        assert np.allclose(y, DATA['y'])
-
-    for infile in files(os.path.join('tests', 'data', 'core-load-*.mat')):
-        yield (__test, infile)
-    pass
+    assert np.allclose(y, DATA['y'])
 
 
-def test_load_resample():
+@pytest.mark.parametrize('res_type', ['kaiser_fast', 'kaiser_best', 'scipy'])
+def test_load_resample(res_type):
 
     sr_target = 16000
     offset = 10
     duration = 5
 
-    def __test(res_type):
-        y_native, sr = librosa.load(librosa.util.example_audio_file(),
-                                    sr=None,
-                                    offset=offset,
-                                    duration=duration,
-                                    res_type=res_type)
+    y_native, sr = librosa.load(librosa.util.example_audio_file(),
+                                sr=None,
+                                offset=offset,
+                                duration=duration,
+                                res_type=res_type)
 
-        y2 = librosa.resample(y_native, sr, sr_target, res_type=res_type)
+    y2 = librosa.resample(y_native, sr, sr_target, res_type=res_type)
 
-        y, _ = librosa.load(librosa.util.example_audio_file(),
-                            sr=sr_target,
-                            offset=offset,
-                            duration=duration,
-                            res_type=res_type)
+    y, _ = librosa.load(librosa.util.example_audio_file(),
+                        sr=sr_target,
+                        offset=offset,
+                        duration=duration,
+                        res_type=res_type)
 
-        assert np.allclose(y2, y)
-
-    for res_type in ['kaiser_fast', 'kaiser_best', 'scipy']:
-        yield __test, res_type
+    assert np.allclose(y2, y)
 
 
 def test_segment_load():
@@ -497,34 +489,29 @@ def test_istft_reconstruction():
         assert np.allclose(x, x_reconstructed, atol=atol)
 
 
-def test_load_options():
+@pytest.mark.parametrize('offset', [0, 1, 2])
+@pytest.mark.parametrize('duration', [None, 0, 0.5, 1, 2])
+@pytest.mark.parametrize('mono', [False, True])
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+@pytest.mark.parametrize('filename', files(os.path.join('tests',
+                                                        'data',
+                                                        'test1_22050.*')))
+def test_load_options(filename, offset, duration, mono, dtype):
+    y, sr = librosa.load(filename, mono=mono, offset=offset,
+                         duration=duration, dtype=dtype)
 
-    filename = os.path.join('tests', 'data', 'test1_22050.wav')
+    if duration is not None:
+        assert np.allclose(y.shape[-1], int(sr * duration))
 
-    def __test(offset, duration, mono, dtype):
+    if mono:
+        assert y.ndim == 1
+    else:
+        # This test file is stereo, so y.ndim should be 2
+        assert y.ndim == 2
 
-        y, sr = librosa.load(filename, mono=mono, offset=offset,
-                             duration=duration, dtype=dtype)
-
-        if duration is not None:
-            assert np.allclose(y.shape[-1], int(sr * duration))
-
-        if mono:
-            assert y.ndim == 1
-        else:
-            # This test file is stereo, so y.ndim should be 2
-            assert y.ndim == 2
-
-        # Check the dtype
-        assert np.issubdtype(y.dtype, dtype)
-        assert np.issubdtype(dtype, y.dtype)
-
-    for offset in [0, 1, 2]:
-        for duration in [None, 0, 0.5, 1, 2]:
-            for mono in [False, True]:
-                for dtype in [np.float32, np.float64]:
-                    yield __test, offset, duration, mono, dtype
-    pass
+    # Check the dtype
+    assert np.issubdtype(y.dtype, dtype)
+    assert np.issubdtype(dtype, y.dtype)
 
 
 def test_get_duration_wav():
@@ -574,6 +561,18 @@ def test_get_duration_filename():
 
     assert np.allclose(duration_fn, true_duration)
     assert np.allclose(duration_fn, duration_y)
+
+
+def test_get_duration_mp3():
+    filename = os.path.join('tests', 'data', 'test1_22050.mp3')
+    true_duration = 4.587528344671202
+
+    duration_fn = librosa.get_duration(filename=filename)
+    y, sr = librosa.load(filename, sr=None)
+    duration_y = librosa.get_duration(y=y, sr=sr)
+    # mp3 duration at low sampling rate isn't too reliable
+    assert np.allclose(duration_fn, duration_y, atol=1e-1)
+    assert np.allclose(duration_fn, true_duration, atol=1e-1)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
