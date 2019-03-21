@@ -670,7 +670,9 @@ def icqt(C, sr=22050, hop_length=512, fmin=None, bins_per_octave=12,
         if y is None:
             y = y_oct
         else:
-            y = audio.resample(y, 1, 2, scale=True, fix=False)
+            # Up-sample the previous buffer and add in the new one
+            # Scipy-resampling is fast here, since it's a power-of-two relation
+            y = audio.resample(y, 1, 2, scale=True, res_type='scipy', fix=False)
 
             y[:len(y_oct)] += y_oct
 
