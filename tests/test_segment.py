@@ -338,8 +338,6 @@ def test_subsegment():
         yield tf, n_segments
 
 
-
-
 @pytest.fixture
 def R_input():
     X = np.random.randn(30, 5)
