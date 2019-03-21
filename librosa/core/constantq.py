@@ -5,12 +5,11 @@ from __future__ import division
 
 import warnings
 import numpy as np
-from numba import jit
 
 from . import audio
 from .fft import get_fftlib
 from .time_frequency import cqt_frequencies, note_to_hz
-from .spectrum import stft
+from .spectrum import stft, istft
 from .pitch import estimate_tuning
 from .._cache import cache
 from .. import filters
@@ -165,7 +164,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     # First thing, get the freqs of the top octave
     freqs = cqt_frequencies(n_bins, fmin,
-                            bins_per_octave=bins_per_octave)[-bins_per_octave:]
+                            bins_per_octave=bins_per_octave, tuning=tuning)[-bins_per_octave:]
 
     fmin_t = np.min(freqs)
     fmax_t = np.max(freqs)
@@ -517,23 +516,13 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
 
 @cache(level=40)
-def icqt(C, sr=22050, hop_length=512, fmin=None,
-         bins_per_octave=12,
-         tuning=0.0,
-         filter_scale=1,
-         norm=1,
-         sparsity=0.01,
-         window='hann',
-         scale=True,
-         amin=1e-6):
+def icqt(C, sr=22050, hop_length=512, fmin=None, bins_per_octave=12,
+         tuning=0.0, filter_scale=1, norm=1, sparsity=0.01, window='hann',
+         scale=True, length=None, amin=util.Deprecated()):
     '''Compute the inverse constant-Q transform.
 
     Given a constant-Q transform representation `C` of an audio signal `y`,
     this function produces an approximation `y_hat`.
-
-    .. warning:: This implementation is unstable, and subject to change in
-                 future versions of librosa.  We recommend that its use be
-                 limited to sonification and diagnostic applications.
 
 
     Parameters
@@ -575,12 +564,15 @@ def icqt(C, sr=22050, hop_length=512, fmin=None,
         If `False`, do not scale the CQT. This is analogous to `norm=None`
         in FFT.
 
-    amin : float or None
-        When applying squared window normalization, sample positions with
-        coefficients below `amin` will left as is.
+    length : int > 0, optional
+        If provided, the output `y` is zero-padded or clipped to exactly
+        `length` samples.
 
-        If `None`, then `amin` is inferred as the smallest valid floating
-        point value.
+    Returns
+
+    amin : float or None [DEPRECATED]
+
+        .. note:: This parameter is deprecated in 0.7.0 and will be removed in 0.8.0.
 
     Returns
     -------
@@ -612,115 +604,78 @@ def icqt(C, sr=22050, hop_length=512, fmin=None,
     >>> y_hat = librosa.icqt(C=C, sr=sr, hop_length=hop_length,
     ...                 bins_per_octave=bins_per_octave)
     '''
-    warnings.warn('librosa.icqt is unstable, and subject to change in future versions. '
-                  'Please use with caution.')
-
-    n_bins, n_frames = C.shape
-    n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
-
-    if amin is None:
-        amin = util.tiny(C)
 
     if fmin is None:
         fmin = note_to_hz('C1')
 
-    freqs = cqt_frequencies(n_bins,
-                            fmin,
+    # Get the top octave of frequencies
+    n_bins = len(C)
+
+    freqs = cqt_frequencies(n_bins, fmin,
                             bins_per_octave=bins_per_octave,
                             tuning=tuning)[-bins_per_octave:]
 
-    fmin_t = np.min(freqs)
+    n_filters = min(n_bins, bins_per_octave)
 
-    # Make the filter bank
-    basis, lengths = filters.constant_q(sr=sr,
-                                        fmin=fmin_t,
-                                        n_bins=bins_per_octave,
-                                        bins_per_octave=bins_per_octave,
-                                        filter_scale=filter_scale,
-                                        tuning=tuning,
-                                        norm=norm,
-                                        window=window,
-                                        pad_fft=True)
-    n_fft = basis.shape[1]
+    fft_basis, n_fft, lengths = __cqt_filter_fft(sr, np.min(freqs),
+                                                 n_filters,
+                                                 bins_per_octave,
+                                                 tuning,
+                                                 filter_scale,
+                                                 norm,
+                                                 sparsity=sparsity,
+                                                 window=window)
 
-    # The extra factor of lengths**0.5 corrects for within-octave tapering
-    basis = basis * np.sqrt(lengths[:, np.newaxis])
+    if hop_length > min(lengths):
+        warnings.warn('hop_length={} exceeds minimum CQT filter length={:.3f}.\n'
+                      'This will probably cause unpleasant acoustic artifacts. '
+                      'Consider decreasing your hop length or increasing the frequency resolution of your CQT.'.format(hop_length, min(lengths)))
 
-    # Estimate the gain per filter
-    bdot = basis.conj().dot(basis.T)
-    bscale = np.sum(np.abs(bdot), axis=1)
+    # The basis gets renormalized by the effective window length above;
+    # This step undoes that
+    fft_basis = fft_basis.todense() * n_fft / lengths[:, np.newaxis]
 
-    n_trim = basis.shape[1] // 2
+    # This step conjugate-transposes the filter
+    inv_basis = fft_basis.H
 
-    if scale:
-        Cnorm = np.ones(n_bins)[:, np.newaxis]
-    else:
-        Cnorm = filters.constant_q_lengths(sr=sr,
-                                           fmin=fmin,
-                                           n_bins=n_bins,
-                                           bins_per_octave=bins_per_octave,
-                                           filter_scale=filter_scale,
-                                           tuning=tuning,
-                                           window=window)[:, np.newaxis]**0.5
+    # How many octaves do we have?
+    n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
 
     y = None
-
-    # Revised algorithm:
-    #   for each octave
-    #      upsample old octave
-    #      @--numba accelerate this loop?
-    #      for each basis
-    #         convolve with activation (valid-mode)
-    #         divide by window sumsquare
-    #         trim and add to total
-
     for octave in range(n_octaves - 1, -1, -1):
-        # Compute the slice index for the current octave
         slice_ = slice(-(octave+1) * bins_per_octave - 1,
                        -(octave) * bins_per_octave - 1)
 
-        # Project onto the basis
-        C_oct = C[slice_] / Cnorm[slice_]
-        basis_oct = basis[-C_oct.shape[0]:]
+        # Slice this octave
+        C_oct = C[slice_]
+        inv_oct = inv_basis[:, -C_oct.shape[0]:]
 
-        y_oct = None
-
-        # Make a dummy activation
         oct_hop = hop_length // 2**octave
-        n = n_fft + (C_oct.shape[1] - 1) * oct_hop
 
-        for i in range(basis_oct.shape[0]-1, -1, -1):
-            wss = filters.window_sumsquare(window,
-                                           n_frames,
-                                           hop_length=oct_hop,
-                                           win_length=int(lengths[i]),
-                                           n_fft=n_fft,
-                                           norm=norm)
+        # Apply energy corrections
+        if scale:
+            C_scale = np.sqrt(lengths[-C_oct.shape[0]:, np.newaxis]) / n_fft
+        else:
+            C_scale = lengths[-C_oct.shape[0]:, np.newaxis] * np.sqrt(2**octave) / n_fft
 
-            wss *= lengths[i]**2
+        # Inverse-project the basis for each octave
+        D_oct = inv_oct.dot(C_oct / C_scale)
 
-            # Construct the response for this filter
-            y_oct_i = np.zeros(n, dtype=C_oct.dtype)
-            __activation_fill(y_oct_i, basis_oct[i], C_oct[i], oct_hop)
-            # Retain only the real part
-            # Only do window normalization for sufficiently large window
-            # coefficients
-            y_oct_i = y_oct_i.real / np.maximum(amin, wss)
+        # Inverse-STFT that response
+        y_oct = istft(D_oct, window='ones', hop_length=oct_hop)
 
-            if y_oct is None:
-                y_oct = y_oct_i
-            else:
-                y_oct += y_oct_i
-
-        # Remove the effects of zero-padding
-        y_oct = y_oct[n_trim:-n_trim] * bscale[i]
-
+        # Up-sample that octave
         if y is None:
             y = y_oct
         else:
             # Up-sample the previous buffer and add in the new one
             # Scipy-resampling is fast here, since it's a power-of-two relation
-            y = audio.resample(y, 1, 2, scale=True, res_type='scipy') + y_oct
+            y = audio.resample(y, 1, 2, scale=True, res_type='scipy', fix=False)
+
+            y[:len(y_oct)] += y_oct
+
+    if length:
+        y = util.fix_length(y, length)
 
     return y
 
@@ -843,16 +798,3 @@ def __num_two_factors(x):
         x //= 2
 
     return num_twos
-
-
-@jit(nopython=True)
-def __activation_fill(x, basis, activation, hop_length):  # pragma: no cover
-    '''Helper function for icqt time-domain reconstruction'''
-
-    n = len(x)
-    n_fft = len(basis)
-    n_frames = len(activation)
-
-    for i in range(n_frames):
-        sample = i * hop_length
-        x[sample:min(n, sample + n_fft)] += activation[i] * basis[:max(0, min(n_fft, n - sample))]
