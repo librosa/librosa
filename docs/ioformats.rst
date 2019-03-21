@@ -34,7 +34,7 @@ Reading audio files using `soundfile` is similar to the method in *librosa*. One
 Blockwise Reading
 -----------------
 
-For large audio signals it could be benificial to not load the whole audio file
+For large audio signals it could be beneficial to not load the whole audio file
 into memory. *PySoundFile* supports blockwise reading. In the following example
 a block of 1024 samples of audio are read and directly fed into the chroma
 feature extractor.
