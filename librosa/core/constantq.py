@@ -655,10 +655,8 @@ def icqt(C, sr=22050, hop_length=512, fmin=None, bins_per_octave=12,
         # Apply energy corrections
         if scale:
             C_scale = np.sqrt(lengths[-C_oct.shape[0]:, np.newaxis]) / n_fft
-            #C_oct = C_oct / np.sqrt(lengths[-C_oct.shape[0]:, np.newaxis])
         else:
             C_scale = lengths[-C_oct.shape[0]:, np.newaxis] * np.sqrt(2**octave) / n_fft
-            #C_oct = C_oct / (lengths[-C_oct.shape[0]:, np.newaxis] * np.sqrt(2**octave))
 
         # Inverse-project the basis for each octave
         D_oct = inv_oct.dot(C_oct / C_scale)
