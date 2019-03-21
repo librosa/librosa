@@ -615,11 +615,9 @@ def icqt(C, sr=22050, hop_length=512, fmin=None, bins_per_octave=12,
                             bins_per_octave=bins_per_octave,
                             tuning=tuning)[-bins_per_octave:]
 
-    fmin_t = np.min(freqs[-bins_per_octave:])
-
     n_filters = min(n_bins, bins_per_octave)
 
-    fft_basis, n_fft, lengths = __cqt_filter_fft(sr, fmin_t,
+    fft_basis, n_fft, lengths = __cqt_filter_fft(sr, np.min(freqs),
                                                  n_filters,
                                                  bins_per_octave,
                                                  tuning,
@@ -628,17 +626,17 @@ def icqt(C, sr=22050, hop_length=512, fmin=None, bins_per_octave=12,
                                                  sparsity=sparsity,
                                                  window=window)
 
-    if min(lengths) < hop_length:
-        warnings.warn('Minimum CQT filter length={:.3f} is less than hop_length={}.\n'
+    if hop_length > min(lengths):
+        warnings.warn('hop_length={} exceeds minimum CQT filter length={:.3f}.\n'
                       'This will probably cause unpleasant acoustic artifacts. '
-                      'Consider decreasing your hop length or increasing the frequency resolution of your CQT.'.format(min(lengths), hop_length))
+                      'Consider decreasing your hop length or increasing the frequency resolution of your CQT.'.format(hop_length, min(lengths)))
 
     # The basis gets renormalized by the effective window length above;
     # This step undoes that
     fft_basis = fft_basis.todense() * n_fft / lengths[:, np.newaxis]
 
     # This step conjugate-transposes the filter
-    inv_basis = np.asanyarray(fft_basis).conj().T
+    inv_basis = fft_basis.H
 
     # How many octaves do we have?
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
@@ -654,14 +652,16 @@ def icqt(C, sr=22050, hop_length=512, fmin=None, bins_per_octave=12,
 
         oct_hop = hop_length // 2**octave
 
-        # Apply length corrections
+        # Apply energy corrections
         if scale:
-            C_oct = C_oct / np.sqrt(lengths[-C_oct.shape[0]:, np.newaxis])
+            C_scale = np.sqrt(lengths[-C_oct.shape[0]:, np.newaxis]) / n_fft
+            #C_oct = C_oct / np.sqrt(lengths[-C_oct.shape[0]:, np.newaxis])
         else:
-            C_oct = C_oct / (lengths[-C_oct.shape[0]:, np.newaxis] * np.sqrt(2**octave))
+            C_scale = lengths[-C_oct.shape[0]:, np.newaxis] * np.sqrt(2**octave) / n_fft
+            #C_oct = C_oct / (lengths[-C_oct.shape[0]:, np.newaxis] * np.sqrt(2**octave))
 
         # Inverse-project the basis for each octave
-        D_oct = inv_oct.dot(C_oct * n_fft)
+        D_oct = inv_oct.dot(C_oct / C_scale)
 
         # Inverse-STFT that response
         y_oct = istft(D_oct, window='ones', hop_length=oct_hop)
