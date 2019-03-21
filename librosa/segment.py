@@ -13,6 +13,7 @@ Recurrence and self-similarity
     recurrence_to_lag
     lag_to_recurrence
     timelag_filter
+    path_enhance
 
 Temporal clustering
 -------------------
@@ -28,6 +29,7 @@ from decorator import decorator
 import numpy as np
 import scipy
 import scipy.signal
+import scipy.ndimage
 
 import sklearn
 import sklearn.cluster
@@ -36,6 +38,7 @@ import sklearn.neighbors
 
 from ._cache import cache
 from . import util
+from .filters import diagonal_filter
 from .util.exceptions import ParameterError
 
 __all__ = ['recurrence_matrix',
@@ -43,18 +46,31 @@ __all__ = ['recurrence_matrix',
            'lag_to_recurrence',
            'timelag_filter',
            'agglomerative',
-           'subsegment']
+           'subsegment',
+           'path_enhance']
 
 
 @cache(level=30)
 def recurrence_matrix(data, k=None, width=1, metric='euclidean',
                       sym=False, sparse=False, mode='connectivity',
-                      bandwidth=None, axis=-1):
+                      bandwidth=None, self=False, axis=-1):
     '''Compute a recurrence matrix from a data matrix.
-
 
     `rec[i, j]` is non-zero if (`data[:, i]`, `data[:, j]`) are
     k-nearest-neighbors and `|i - j| >= width`
+
+    The specific value of `rec[i, j]` can have several forms, governed
+    by the `mode` parameter below:
+
+        - Connectivity: `rec[i, j] = 1 or 0` indicates that frames `i` and `j` are repetitions
+
+        - Affinity: `rec[i, j] > 0` measures how similar frames `i` and `j` are.  This is also
+          known as a (sparse) self-similarity matrix.
+
+        - Distance: `rec[, j] > 0` measures how distant frames `i` and `j` are.  This is also
+          known as a (sparse) self-distance matrix.
+
+    The general term *recurrence matrix* can refer to any of the three forms above.
 
 
     Parameters
@@ -102,6 +118,12 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
 
         If no value is provided, it is set automatically to the median
         distance between furthest nearest neighbors.
+
+    self : bool
+        If `True`, then the main diagonal is populated with self-links:
+        0 if ``mode='distance'``, and 1 otherwise.
+
+        If `False`, the main diagonal is left empty.
 
     axis : int
         The axis along which to compute recurrence.
@@ -228,8 +250,21 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
         # Everything past the kth closest gets squashed
         rec[i, idx[k:]] = 0
 
+    if self:
+        if mode == 'connectivity':
+            rec.setdiag(1)
+        elif mode == 'affinity':
+            # we need to keep the self-loop in here, but not mess up the
+            # bandwidth estimation
+            #
+            # using negative distances here preserves the structure without changing
+            # the statistics of the data
+            rec.setdiag(-1)
+
     # symmetrize
     if sym:
+        # Note: this operation produces a CSR (compressed sparse row) matrix!
+        # This is why we have to do it after filling the diagonal in self-mode
         rec = rec.minimum(rec.T)
 
     rec = rec.tocsr()
@@ -239,7 +274,11 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
         rec = rec.astype(np.bool)
     elif mode == 'affinity':
         if bandwidth is None:
-            bandwidth = np.median(rec.max(axis=1).data)
+            bandwidth = np.nanmedian(rec.max(axis=1).data)
+        # Set all the negatives back to 0
+        # Negatives are temporarily inserted above to preserve the sparsity structure
+        # of the matrix without corrupting the bandwidth calculations
+        rec.data[rec.data < 0] = 0.0
         rec.data[:] = np.exp(rec.data / (-1 * bandwidth))
 
     if not sparse:
@@ -704,3 +743,135 @@ def agglomerative(data, k, clusterer=None, axis=-1):
     boundaries.extend(
         list(1 + np.nonzero(np.diff(clusterer.labels_))[0].astype(int)))
     return np.asarray(boundaries)
+
+
+def path_enhance(R, n, window='hann', max_ratio=2.0, min_ratio=None, n_filters=7,
+                 zero_mean=False, clip=True, **kwargs):
+    '''Multi-angle path enhancement for self- and cross-similarity matrices.
+
+    This function convolves multiple diagonal smoothing filters with a self-similarity (or
+    recurrence) matrix R, and aggregates the result by an element-wise maximum.
+
+    Technically, the output is a matrix R_smooth such that
+
+        `R_smooth[i, j] = max_theta (R * filter_theta)[i, j]`
+
+    where `*` denotes 2-dimensional convolution, and `filter_theta` is a smoothing filter at
+    orientation theta.
+
+    This is intended to provide coherent temporal smoothing of self-similarity matrices
+    when there are changes in tempo.
+
+    Smoothing filters are generated at evenly spaced orientations between min_ratio and
+    max_ratio.
+
+    This function is inspired by the multi-angle path enhancement of [1]_, but differs by
+    modeling tempo differences in the space of similarity matrices rather than re-sampling
+    the underlying features prior to generating the self-similarity matrix.
+
+    .. [1] Müller, Meinard and Frank Kurth.
+            "Enhancing similarity matrices for music audio analysis."
+            2006 IEEE International Conference on Acoustics Speech and Signal Processing Proceedings.
+            Vol. 5. IEEE, 2006.
+
+    .. note:: if using recurrence_matrix to construct the input similarity matrix, be sure to include the main
+              diagonal by setting `self=True`.  Otherwise, the diagonal will be suppressed, and this is likely to
+              produce discontinuities which will pollute the smoothing filter response.
+
+    Parameters
+    ----------
+    R : np.ndarray
+        The self- or cross-similarity matrix to be smoothed.
+        Note: sparse inputs are not supported.
+
+    n : int > 0
+        The length of the smoothing filter
+
+    window : window specification
+        The type of smoothing filter to use.  See `filters.get_window` for more information
+        on window specification formats.
+
+    max_ratio : float > 0
+        The maximum tempo ratio to support
+
+    min_ratio : float > 0
+        The minimum tempo ratio to support.
+        If not provided, it will default to `1/max_ratio`
+
+    n_filters : int >= 1
+        The number of different smoothing filters to use, evenly spaced
+        between `min_ratio` and `max_ratio`.
+
+        If `min_ratio = 1/max_ratio` (the default), using an odd number
+        of filters will ensure that the main diagonal (ratio=1) is included.
+
+    zero_mean : bool
+        By default, the smoothing filters are non-negative and sum to one (i.e. are averaging
+        filters).
+
+        If `zero_mean=True`, then the smoothing filters are made to sum to zero by subtracting
+        a constant value from the non-diagonal coordinates of the filter.  This is primarily
+        useful for suppressing blocks while enhancing diagonals.
+
+    clip : bool
+        If True, the smoothed similarity matrix will be thresholded at 0, and will not contain
+        negative entries.
+
+    kwargs : additional keyword arguments
+        Additional arguments to pass to `scipy.ndimage.convolve`
+
+
+    Returns
+    -------
+    R_smooth : np.ndarray, shape=R.shape
+        The smoothed self- or cross-similarity matrix
+
+    See Also
+    --------
+    filters.diagonal_filter
+    recurrence_matrix
+
+
+    Examples
+    --------
+    Use a 51-frame diagonal smoothing filter to enhance paths in a recurrence matrix
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=30)
+    >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
+    >>> rec = librosa.segment.recurrence_matrix(chroma, mode='affinity', self=True)
+    >>> rec_smooth = librosa.segment.path_enhance(rec, 51, window='hann', n_filters=7)
+
+    Plot the recurrence matrix before and after smoothing
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure(figsize=(8, 4))
+    >>> plt.subplot(1,2,1)
+    >>> librosa.display.specshow(rec, x_axis='time', y_axis='time')
+    >>> plt.title('Unfiltered recurrence')
+    >>> plt.subplot(1,2,2)
+    >>> librosa.display.specshow(rec_smooth, x_axis='time', y_axis='time')
+    >>> plt.title('Multi-angle enhanced recurrence')
+    >>> plt.tight_layout()
+    '''
+
+    if min_ratio is None:
+        min_ratio = 1./max_ratio
+    elif min_ratio > max_ratio:
+        raise ParameterError('min_ratio={} cannot exceed max_ratio={}'.format(min_ratio, max_ratio))
+
+    R_smooth = None
+    for ratio in np.logspace(np.log2(min_ratio), np.log2(max_ratio), num=n_filters, base=2):
+        kernel = diagonal_filter(window, n, slope=ratio, zero_mean=zero_mean)
+
+        if R_smooth is None:
+            R_smooth = scipy.ndimage.convolve(R, kernel, **kwargs)
+        else:
+            # Compute the point-wise maximum in-place
+            np.maximum(R_smooth, scipy.ndimage.convolve(R, kernel, **kwargs),
+                       out=R_smooth)
+
+    if clip:
+        # Clip the output in-place
+        np.clip(R_smooth, 0, None, out=R_smooth)
+
+    return R_smooth
