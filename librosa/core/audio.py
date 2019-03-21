@@ -127,9 +127,9 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
             sr_native = sf_desc.samplerate
             if offset:
                 # Seek to the start of the target read
-                sf_desc.seek(offset * sr_native)
+                sf_desc.seek(int(offset * sr_native))
             if duration is not None:
-                frame_duration = duration * sr_native
+                frame_duration = int(duration * sr_native)
             else:
                 frame_duration = -1
 
