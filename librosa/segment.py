@@ -251,7 +251,7 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
 
     # symmetrize
     if sym:
-        # Note: this operation produces a CSR matrix!
+        # Note: this operation produces a CSR (compressed sparse row) matrix!
         # This is why we have to do it after filling the diagonal in self-mode
         rec = rec.minimum(rec.T)
 
@@ -264,6 +264,8 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
         if bandwidth is None:
             bandwidth = np.nanmedian(rec.max(axis=1).data)
         # Set all the negatives back to 0
+        # Negatives are temporarily inserted above to preserve the sparsity structure
+        # of the matrix without corrupting the bandwidth calculations
         rec.data[rec.data < 0] = 0.0
         rec.data[:] = np.exp(rec.data / (-1 * bandwidth))
 
@@ -731,7 +733,6 @@ def agglomerative(data, k, clusterer=None, axis=-1):
     return np.asarray(boundaries)
 
 
-
 def path_enhance(R, n, window='hann', max_ratio=2.0, min_ratio=None, n_filters=7,
                  zero_mean=False, clip=True, **kwargs):
     '''Multi-angle path enhancement for self- and cross-similarity matrices.
@@ -786,8 +787,11 @@ def path_enhance(R, n, window='hann', max_ratio=2.0, min_ratio=None, n_filters=7
         If not provided, it will default to `1/max_ratio`
 
     n_filters : int >= 1
-        The number of different smoothing filters to use.
-        Use an odd integer to ensure that a ratio of 1 is included.
+        The number of different smoothing filters to use, evenly spaced
+        between `min_ratio` and `max_ratio`.
+
+        If `min_ratio = 1/max_ratio` (the default), using an odd number
+        of filters will ensure that the main diagonal (ratio=1) is included.
 
     zero_mean : bool
         By default, the smoothing filters are non-negative and sum to one (i.e. are averaging
@@ -796,7 +800,7 @@ def path_enhance(R, n, window='hann', max_ratio=2.0, min_ratio=None, n_filters=7
         If `zero_mean=True`, then the smoothing filters are made to sum to zero by subtracting
         a constant value from the non-diagonal coordinates of the filter.  This is primarily
         useful for suppressing blocks while enhancing diagonals.
-    
+
     clip : bool
         If True, the smoothed similarity matrix will be thresholded at 0, and will not contain
         negative entries.
