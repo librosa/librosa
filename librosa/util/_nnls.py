@@ -53,7 +53,7 @@ from numba import jit
 __all__ = ['nnls']
 
 
-@jit(nopython=True, parallel=True, cache=True)
+@jit(nopython=True, cache=True)
 def _nnls(A, B, rho, eps_abs=1e-6, eps_rel=1e-4, max_iter=500):
     '''Compute a non-negative least-squares solution to
     min_{X>=0} \|AX - B\|_F^2
