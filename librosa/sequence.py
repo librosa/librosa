@@ -234,7 +234,7 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
         return D
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True, parallel=True)
 def __dtw_calc_accu_cost(C, D, D_steps, step_sizes_sigma,
                          weights_mul, weights_add, max_0, max_1):  # pragma: no cover
     '''Calculate the accumulated cost matrix D.
@@ -302,7 +302,7 @@ def __dtw_calc_accu_cost(C, D, D_steps, step_sizes_sigma,
     return D, D_steps
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True, parallel=True)
 def __dtw_backtracking(D_steps, step_sizes_sigma):  # pragma: no cover
     '''Backtrack optimal warping path.
 
@@ -352,7 +352,7 @@ def __dtw_backtracking(D_steps, step_sizes_sigma):  # pragma: no cover
     return wp
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True, parallel=True)
 def _viterbi(log_prob, log_trans, log_p_init, state, value, ptr):  # pragma: no cover
     '''Core Viterbi algorithm.
 
