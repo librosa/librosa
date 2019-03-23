@@ -13,7 +13,7 @@ from .utils import valid_intervals
 __all__ = ['match_intervals', 'match_events']
 
 
-@numba.jit(nopython=True)
+@numba.jit(nopython=True, cache=True, parallel=True)
 def __jaccard(int_a, int_b):  # pragma: no cover
     '''Jaccard similarity between two intervals
 
@@ -45,7 +45,7 @@ def __jaccard(int_a, int_b):  # pragma: no cover
     return 0.0
 
 
-@numba.jit(nopython=True)
+@numba.jit(nopython=True, cache=True, parallel=True)
 def __match_interval_overlaps(query, intervals_to, candidates):  # pragma: no cover
     '''Find the best Jaccard match from query to candidates'''
 
@@ -59,7 +59,7 @@ def __match_interval_overlaps(query, intervals_to, candidates):  # pragma: no co
     return best_idx
 
 
-@numba.jit(nopython=True)
+@numba.jit(nopython=True, cache=True, parallel=True)
 def __match_intervals(intervals_from, intervals_to, strict=True):  # pragma: no cover
     '''Numba-accelerated interval matching algorithm.
 
@@ -298,7 +298,7 @@ def match_events(events_from, events_to, left=True, right=True):
     return __match_events_helper(output, events_from, events_to, left, right)
 
 
-@numba.jit(nopython=True)
+@numba.jit(nopython=True, cache=True, parallel=True)
 def __match_events_helper(output, events_from, events_to, left=True, right=True):  # pragma: no cover
     # mock dictionary for events
     from_idx = np.argsort(events_from)

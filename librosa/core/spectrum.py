@@ -343,7 +343,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
     return y
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True, parallel=True)
 def __overlap_add(y, ytmp, hop_length):
     # numba-accelerated overlap add for inverse stft
     # y is the pre-allocated output buffer
