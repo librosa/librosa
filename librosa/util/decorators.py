@@ -6,8 +6,9 @@
 import warnings
 from decorator import decorator
 import six
+from numba.decorators import jit as optional_jit
 
-__all__ = ['moved', 'deprecated']
+__all__ = ['moved', 'deprecated', 'optional_jit']
 
 
 def moved(moved_from, version, version_removed):
