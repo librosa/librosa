@@ -610,6 +610,36 @@ def test_autocorrelate():
                 yield __test, y, truth[axis], max_size, axis
 
 
+def test_lpc_regress():
+
+    def __test(signal, order, true_coeffs, est_coeffs):
+        test_coeffs = librosa.lpc(signal, order)
+        assert np.allclose(test_coeffs, est_coeffs)
+
+    for infile in files(os.path.join('tests', 'data', 'core-lpcburg-*.mat')):
+        test_data = scipy.io.loadmat(infile, squeeze_me=True);
+
+        for i in range(len(test_data['signal'])):
+            yield (__test,
+                   test_data['signal'][i],
+                   test_data['order'][i],
+                   test_data['true_coeffs'][i],
+                   test_data['est_coeffs'][i])
+
+
+def test_lpc_simple():
+    srand()
+
+    n = 5000
+    est_a = np.zeros((n, 6))
+    truth_a = [1, 0.5, 0.4, 0.3, 0.2, 0.1]
+    for i in range(n):
+        noise = np.random.randn(1000)
+        filtered = scipy.signal.lfilter([1], truth_a, noise)
+        est_a[i, :] = librosa.lpc(filtered, 5)
+    assert np.allclose(truth_a, np.mean(est_a, axis=0), rtol=0, atol=1e-3)
+
+
 def test_to_mono():
 
     def __test(filename, mono):
