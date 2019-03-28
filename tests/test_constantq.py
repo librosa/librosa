@@ -349,5 +349,5 @@ def test_icqt():
             for scale in [False, True]:
                 for hop_length in [128, 384, 512]:
                     for length in [None, True]:
-                        for res_type in ['scipy', 'kaiser_fast']:
+                        for res_type in ['scipy', 'kaiser_fast', 'polyphase']:
                             yield __test, sr, scale, hop_length, over_sample, length, res_type, y
