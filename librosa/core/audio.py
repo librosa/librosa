@@ -269,7 +269,7 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
 
             To use a faster method, set `res_type='kaiser_fast'`.
 
-            To use `scipy.signal.resample`, set `res_type='fft'`.
+            To use `scipy.signal.resample`, set `res_type='fft'` or `res_type='scipy'`.
 
             To use `scipy.signal.resample_poly`, set `res_type='polyphase'`.
 
