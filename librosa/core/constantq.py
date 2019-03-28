@@ -518,7 +518,7 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 @cache(level=40)
 def icqt(C, sr=22050, hop_length=512, fmin=None, bins_per_octave=12,
          tuning=0.0, filter_scale=1, norm=1, sparsity=0.01, window='hann',
-         scale=True, length=None, amin=util.Deprecated()):
+         scale=True, length=None, amin=util.Deprecated(), res_type='scipy'):
     '''Compute the inverse constant-Q transform.
 
     Given a constant-Q transform representation `C` of an audio signal `y`,
@@ -568,11 +568,14 @@ def icqt(C, sr=22050, hop_length=512, fmin=None, bins_per_octave=12,
         If provided, the output `y` is zero-padded or clipped to exactly
         `length` samples.
 
-    Returns
-
     amin : float or None [DEPRECATED]
 
         .. note:: This parameter is deprecated in 0.7.0 and will be removed in 0.8.0.
+
+    res_type : string
+        Resampling mode.  By default, this uses `scipy` mode for high-quality reconstruction,
+        but this may be slow depending on your signal duration.
+        See `librosa.resample` for supported modes.
 
     Returns
     -------
@@ -582,6 +585,7 @@ def icqt(C, sr=22050, hop_length=512, fmin=None, bins_per_octave=12,
     See Also
     --------
     cqt
+    core.resample
 
     Notes
     -----
@@ -670,7 +674,7 @@ def icqt(C, sr=22050, hop_length=512, fmin=None, bins_per_octave=12,
         else:
             # Up-sample the previous buffer and add in the new one
             # Scipy-resampling is fast here, since it's a power-of-two relation
-            y = audio.resample(y, 1, 2, scale=True, res_type='scipy', fix=False)
+            y = audio.resample(y, 1, 2, scale=True, res_type=res_type, fix=False)
 
             y[:len(y_oct)] += y_oct
 

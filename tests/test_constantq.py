@@ -306,7 +306,7 @@ def test_hybrid_cqt_white_noise():
 
 def test_icqt():
 
-    def __test(sr, scale, hop_length, over_sample, length, y):
+    def __test(sr, scale, hop_length, over_sample, length, res_type, y):
 
         bins_per_octave = over_sample * 12
         n_bins = 7 * bins_per_octave
@@ -324,7 +324,8 @@ def test_icqt():
                             scale=scale,
                             hop_length=hop_length,
                             bins_per_octave=bins_per_octave,
-                            length=_len)
+                            length=_len,
+                            res_type=res_type)
 
         # Only test on the middle section
         if length:
@@ -348,4 +349,5 @@ def test_icqt():
             for scale in [False, True]:
                 for hop_length in [128, 384, 512]:
                     for length in [None, True]:
-                        yield __test, sr, scale, hop_length, over_sample, length, y
+                        for res_type in ['scipy', 'kaiser_fast']:
+                            yield __test, sr, scale, hop_length, over_sample, length, res_type, y
