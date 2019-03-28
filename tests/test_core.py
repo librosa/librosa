@@ -153,6 +153,7 @@ def test_resample_stereo():
         assert y2.flags['C_CONTIGUOUS']
 
         # Check that we're within one sample of the target length target_length = y.shape[-1] * sr_out // sr_in
+        target_length = y.shape[-1] * sr_out // sr_in
         assert np.abs(y2.shape[-1] - target_length) <= 1
 
     y, sr_in = librosa.load(os.path.join('tests', 'data', 'test1_44100.wav'),
