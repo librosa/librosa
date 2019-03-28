@@ -322,8 +322,19 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
 
     n_samples = int(np.ceil(y.shape[-1] * ratio))
 
-    if res_type == 'scipy':
+    if res_type in ('scipy', 'fft'):
         y_hat = scipy.signal.resample(y, n_samples, axis=-1)
+    elif res_type == 'polyphase':
+        if int(orig_sr) != orig_sr or int(target_sr) != target_sr:
+            raise ParameterError('polyphase resampling is only supported for integer-valued sampling rates.')
+
+        # For polyphase resampling, we need up- and down-sampling ratios
+        # We can get those from the greatest common divisor of the rates
+        # as long as the rates are integrable
+        orig_sr = int(orig_sr)
+        target_sr = int(target_sr)
+        gcd = np.gcd(orig_sr, target_sr)
+        y_hat = scipy.signal.resample_poly(y, target_sr // gcd, orig_sr // gcd, axis=-1)
     else:
         y_hat = resampy.resample(y, orig_sr, target_sr, filter=res_type, axis=-1)
 
