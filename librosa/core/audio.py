@@ -75,9 +75,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
         .. note::
             By default, this uses `resampy`'s high-quality mode ('kaiser_best').
 
-            To use a faster method, set `res_type='kaiser_fast'`.
-
-            To use `scipy.signal.resample`, set `res_type='scipy'`.
+            For alternative resampling modes, see `resample`
 
         .. note::
            `audioread` may truncate the precision of the audio data to 16 bits.
@@ -271,7 +269,9 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
 
             To use a faster method, set `res_type='kaiser_fast'`.
 
-            To use `scipy.signal.resample`, set `res_type='scipy'`.
+            To use `scipy.signal.resample`, set `res_type='fft'`.
+
+            To use `scipy.signal.resample_poly`, set `res_type='polyphase'`.
 
     fix : bool
         adjust the length of the resampled signal to be of size exactly
