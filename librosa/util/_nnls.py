@@ -150,7 +150,7 @@ def nnls(A, B, **kwargs):
 
     # Process in blocks:
     if B.shape[-1] <= n_columns:
-        return _nnls_lbfgs_block(A, B, **kwargs)
+        return _nnls_lbfgs_block(A, B, **kwargs).astype(A.dtype)
 
     x = np.linalg.lstsq(A, B, rcond=None)[0].astype(A.dtype)
     np.clip(x, 0, None, out=x)
