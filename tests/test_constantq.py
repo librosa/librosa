@@ -122,7 +122,7 @@ def test_hybrid_cqt():
                                 bins_per_octave=bins_per_octave,
                                 tuning=tuning, filter_scale=resolution,
                                 norm=norm,
-                                sparsity=sparsity, res_type=res_Type))
+                                sparsity=sparsity, res_type=res_type))
 
         assert C1.shape == C2.shape
 
@@ -148,7 +148,7 @@ def test_hybrid_cqt():
                             for res_type in [None, 'polyphase']:
                                 yield (__test, 512, fmin, n_bins,
                                         bins_per_octave, tuning,
-                                        resolution, norm, 0.01)
+                                        resolution, norm, 0.01, res_type)
 
 
 def test_cqt_position():
