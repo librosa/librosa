@@ -1075,4 +1075,4 @@ def test_nnls_multiblock(dtype_A, dtype_B, x_size):
     x_rec = librosa.util.nnls(A, B)
 
     assert np.all(x_rec >= 0)
-    assert np.sqrt(np.mean((B - A.dot(x_rec))**2)) <= 1e-5
+    assert np.sqrt(np.mean((B - A.dot(x_rec))**2)) <= 1e-4
