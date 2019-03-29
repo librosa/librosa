@@ -6,148 +6,83 @@
 # not generalize efficiently to matrix-valued problems.
 # We therefore provide an alternate solver here.
 #
-# The NNLS solver we implement below is based on the ADMM
-# algorithm for convex optimization.  Instead of directly
-# solving:
-#   min_{X>=0} |AX - B|^2
-# we solve a related problem:
-#   min_{X, Y>=0} |AX - B|^2 + I[X = Y]
-# where the last term is the indicator that X and Y are
-# identical.
-#
-# The X,Y problem can be solved using augmented lagrangian
-# methods, which results in a loop of the following updates:
-#
-# 1. X <- min_X |AX - B|^2 + r |X - (Y - W)|^2
-# 2. Y <- min_{Y>=0} |X - (Y - W)|^2 = max(0, X + W)
-# 3. W <- W + X - Y
-#
-# where W is the matrix of lagrangian dual variables for
-# the equality constraint, and r is a step size parameter.
-# Steps 2 and 3 are trivial, and step 1 can be viewed as
-# a generalized Tikhonov regularization problem.
-#
-# The optimal solution to step 1 is given by
-#   X <- Y - W + (A'A + rI)^-1 (A'B - A'A(Y - W))
-#
-# This is efficient to compute if A is tall (so A'A is small),
-# but for wide A, we can use the Woodbury matrix identity to
-# compute it more efficiently. The implementation given below
-# dynamically selects the more efficient method at run-time.
-#
-# A couple of additional optimizations are provided to improve
-# stability:
-#   1. The solver is warm-started by X = leastsq(A, B) and Y = X_+
-#   2. The step-size r (rho in the code) is tuned by the effective
-#      condition number of A.  This is inspired by Nishihara et al.,
-#      which assumes strong convexity of the objective (which we
-#      don't generally have).
-#   3. If the target B is a vector (not a matrix), we fall back on the
-#      scipy solver.
-
+# The vectorized solver uses the L-BFGS-B over blocks of
+# data to efficiently solve the constrained least-squares problem.
 
 import numpy as np
 import scipy.optimize
-from numba import jit
+from .utils import MAX_MEM_BLOCK
+
 
 __all__ = ['nnls']
 
 
-@jit(nopython=True, cache=True)
-def _nnls(A, B, rho, eps_abs=1e-6, eps_rel=1e-4, max_iter=500):
-    '''Compute a non-negative least-squares solution to
-    min_{X>=0} \|AX - B\|_F^2
+def _nnls_obj(x, shape, A, B):
+    '''Compute the objective and gradient for NNLS'''
+
+    # Scipy's lbfgs flattens all arrays, so we first reshape
+    # the iterate x
+    x = x.reshape(shape)
+
+    # Compute the difference matrix
+    diff = np.dot(A, x) - B
+    
+    # Compute the objective value
+    value = 0.5 * np.sum(diff**2)
+
+    # And the gradient
+    grad = np.dot(A.T, diff)
+
+    # Flatten the gradient
+    return value, grad.flatten()
+
+
+def _nnls_lbfgs_block(A, B, x_init=None, **kwargs):
+    '''Solve the constrained problem over a single block
+
+    Parameters
+    ----------
+    A : np.ndarray [shape=(m, d)]
+        The basis matrix
+
+    B : np.ndarray [shape=(m, N)]
+        The regression targets
+
+    x_init : np.ndarray [shape=(d, N)]
+        An initial guess
+
+    kwargs
+        Additional keyword arguments to `scipy.optimize.fmin_l_bfgs_b`
+
+    Returns
+    -------
+    x : np.ndarray [shape=(d, N)]
+        Non-negative matrix such that Ax ~= B
     '''
-    # X* = Z + r^-1 * (I - A'(r I - AA')^-1 A) (A'B - A'A Z)
-    #
-    # Say L = r^-1 * (I - A'(rI - AA')^-1 A)
-    #
-    # then X* <= Z + LA'B - LA'AZ
 
-    # Can we infer rho from the spectrum of A?
-    #   nishihara'15 say to use
-    #       rho* = sqrt(lambda_min(A'A) * lambda_max(A'A))
-    #
-    #   but this assumes strong convexity on f, i.e., A is full-rank.
-    #   that's not the case for us, but we do have strong convexity over A's column space
-    #   so instead, we'll initialze using the (nonzero) singular values of A:
-    #       rho* = sigma_min(A) * sigma_max(A)
+    # If we don't have an initial point, start at the projected
+    # least squares solution
+    if x_init is None:
+        x_init = np.linalg.lstsq(A, B, rcond=None)[0]
+        np.clip(x_init, 0, None, out=x_init)
 
-    n, m = A.shape
-    _, N = B.shape
+    # Adapt the hessian approximation to the dimension of the problem
+    kwargs.setdefault('m', A.shape[1])
 
-    # identiy matrices with dtype matching A
-    Im = np.eye(m, m, 0, A.dtype)
+    # Construct non-negative bounds
+    bounds = [(0, None)] * x_init.size
+    shape = x_init.shape
 
-    # Pre-allocate LA' to ensure efficient ordering
-    LAt = np.zeros((m, n), A.dtype)
-
-    if n <= m:
-        # This will be a small matrix if A is wide
-        # Say L = r^-1 * (I - A'(rI - AA')^-1 A)
-        In = np.eye(n, n, 0, A.dtype)
-        L = Im - np.dot(A.T, np.linalg.solve(rho * In + np.dot(A, A.T), A))
-        L /= rho
-
-        # L is m by m
-        # A' is m by n  (m >> n)
-        # B is n by N
-
-        LAt[:] = np.dot(L, A.T)
-    else:
-        LAt[:] = np.linalg.solve(np.dot(A.T, A) + rho * Im, A.T)
-
-    LAtB = np.dot(LAt, B)
-    LAtApI = np.dot(LAt, A) - Im
-
-    # Initialize X and Y with the (thresholded) least squares solution
-    # This puts our initial iterate X into the column space of A
-    # so that we have strong (local) convexity
-    X = np.linalg.lstsq(A, B)[0]
-    Y = np.zeros(X.shape, dtype=A.dtype)
-    np.maximum(X, 0.0, Y)
-    W = X - Y
-
-    residual = W.copy()
-
-    for _ in range(max_iter):
-        # Primal update 1: generalized tikhonov solve
-        X[:] = LAtB - np.dot(LAtApI, Y - W)
-
-        # Primal update 2: projection onto feasible set
-        np.maximum(X + W, 0, Y)
-
-        # Dual update
-        residual[:] = X - Y
-        W += residual
-
-        # Convergence criteria:
-        #    dual residual:   res_dual = rho * (W - W_prev)
-        #    primal residual: res_primal = X - Y
-        #                          but W - W_prev = X - Y
-        #    so res_dual = rho * rho_primal
-        # boyd et al suggest for stopping criteria:
-        #    |res_dual|_F <= sqrt(n) * eps_absolute + eps_relative * rho * norm(W)
-        #    |res_primal|_F <= sqrt(n) * eps_absolute + eps_relative * max(norm(X), norm(Y))
-        #    |res_primal| <= sqrt(n) * eps_absolute / rho + eps_relative * norm(W)
-        #    
-        # so convergence is when
-        #    |X - Y| <= min(t1, t2)
-        #    where t1 = sqrt(n) * eps_absolute + eps_relative * max(norm(X), norm(Y))
-        #          t2 = sqrt(n) * eps_absolute / rho + eps_relative * norm(W)
-
-        # Convergence thresholds for primal and dual variables
-        t_primal = np.sqrt(X.size) * eps_abs + eps_rel * np.sqrt(max(np.sum(X**2), np.sum(Y**2)))
-        t_dual = np.sqrt(X.size) * eps_abs / rho + eps_rel * np.sqrt(np.sum(W**2))
-
-        if np.sum(residual**2) <= min(t_primal, t_dual)**2:
-            break
-
-    # Y is the feasible point that we've found
-    return Y
+    # optimize
+    x, obj_value, diagnostics = scipy.optimize.fmin_l_bfgs_b(_nnls_obj, x_init,
+                                                             args=(shape, A, B),
+                                                             bounds=bounds,
+                                                             **kwargs)
+    # reshape the solution
+    return x.reshape(shape)
 
 
-def nnls(A, B, eps_abs=1e-6, eps_rel=1e-4, max_iter=500):
+def nnls(A, B, **kwargs):
     '''Non-negative least squares.
 
     Given two matrices A and B, find a non-negative matrix X
@@ -163,15 +98,8 @@ def nnls(A, B, eps_abs=1e-6, eps_rel=1e-4, max_iter=500):
     B : np.ndarray [shape=(m, N)]
         The target matrix.
 
-    eps_abs : number > 0
-        The absolute precision threshold
-
-    eps_rel : number > 0
-        The relative precision threshold
-
-    max_iter : int > 0
-        The maximum number of iterations for the solver
-
+    kwargs
+        Additional keyword arguments to `scipy.optimize.fmin_l_bfgs_b`
 
     Returns
     -------
@@ -181,6 +109,7 @@ def nnls(A, B, eps_abs=1e-6, eps_rel=1e-4, max_iter=500):
     See Also
     --------
     scipy.optimize.nnls
+    scipy.optimize.fmin_l_bfgs_b
 
     Examples
     --------
@@ -217,19 +146,19 @@ def nnls(A, B, eps_abs=1e-6, eps_rel=1e-4, max_iter=500):
     if B.ndim == 1:
         return scipy.optimize.nnls(A, B)[0]
 
-    if B.size > A.size:
-        A = A.astype(B.dtype)
-    elif B.size < A.size:
-        B = B.astype(A.dtype)
+    n_columns = int(MAX_MEM_BLOCK // (A.shape[-1] * A.itemsize))
 
-    # Otherwise, initialize our step size
-    svds = np.linalg.svd(A, compute_uv=False)
+    # Process in blocks:
+    if B.shape[-1] <= n_columns:
+        return _nnls_lbfgs_block(A, B, **kwargs)
 
-    # Explicitly cast to float so that numba isn't confused
-    rho = np.asanyarray(0.5 * svds.max() * svds.min(), dtype=A.dtype)
+    x = np.linalg.lstsq(A, B, rcond=None)[0].astype(A.dtype)
+    np.clip(x, 0, None, out=x)
+    x_init = x
 
-    return _nnls(A, B,
-                 rho=rho,
-                 eps_abs=eps_abs,
-                 eps_rel=eps_rel,
-                 max_iter=max_iter)
+    for bl_s in range(0, x.shape[-1], n_columns):
+        bl_t = min(bl_s + n_columns, B.shape[-1])
+        x[:, bl_s:bl_t] = _nnls_lbfgs_block(A, B[:, bl_s:bl_t],
+                                            x_init=x_init[:, bl_s:bl_t],
+                                            **kwargs)
+    return x
