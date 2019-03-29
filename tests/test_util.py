@@ -1039,7 +1039,7 @@ def test_nnls_vector(dtype_A, dtype_B):
 @pytest.mark.parametrize('dtype_A', [np.float32, np.float64])
 @pytest.mark.parametrize('dtype_B', [np.float32, np.float64])
 @pytest.mark.parametrize('x_size', [3, 30])
-def test_nnls_wide(dtype_A, dtype_B, x_size):
+def test_nnls_matrix(dtype_A, dtype_B, x_size):
     srand()
 
     # Make a random basis
@@ -1054,17 +1054,17 @@ def test_nnls_wide(dtype_A, dtype_B, x_size):
     x_rec = librosa.util.nnls(A, B)
 
     assert np.all(x_rec >= 0)
-    assert np.sqrt(np.mean((B - A.dot(x_rec))**2)) <= 1e-6
+    assert np.sqrt(np.mean((B - A.dot(x_rec))**2)) <= 1e-5
 
 
 @pytest.mark.parametrize('dtype_A', [np.float32, np.float64])
 @pytest.mark.parametrize('dtype_B', [np.float32, np.float64])
-@pytest.mark.parametrize('x_size', [3, 30])
-def test_nnls_wide(dtype_A, dtype_B, x_size):
+@pytest.mark.parametrize('x_size', [16, 64, 256])
+def test_nnls_multiblock(dtype_A, dtype_B, x_size):
     srand()
 
     # Make a random basis
-    A = np.random.randn(7, 5).astype(dtype_A)
+    A = np.random.randn(7, 1025).astype(dtype_A)
 
     # Make a random latent matrix
     #   when x_size is 3, B is 7x3 (smaller than A)
@@ -1075,4 +1075,4 @@ def test_nnls_wide(dtype_A, dtype_B, x_size):
     x_rec = librosa.util.nnls(A, B)
 
     assert np.all(x_rec >= 0)
-    assert np.sqrt(np.mean((B - A.dot(x_rec))**2)) <= 1e-6
+    assert np.sqrt(np.mean((B - A.dot(x_rec))**2)) <= 1e-5
