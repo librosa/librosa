@@ -5,6 +5,7 @@ from __future__ import division
 
 import warnings
 import numpy as np
+from numba import jit
 
 from . import audio
 from .fft import get_fftlib
@@ -23,8 +24,7 @@ __all__ = ['cqt', 'hybrid_cqt', 'pseudo_cqt', 'icqt']
 def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         bins_per_octave=12, tuning=0.0, filter_scale=1,
         norm=1, sparsity=0.01, window='hann',
-        scale=True,
-        pad_mode='reflect'):
+        scale=True, pad_mode='reflect', res_type=None):
     '''Compute the constant-Q transform of an audio signal.
 
     This implementation is based on the recursive sub-sampling method
@@ -88,6 +88,17 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         Padding mode for centered frame analysis.
 
         See also: `librosa.core.stft` and `np.pad`.
+
+    res_type : string [optional]
+        The resampling mode for recursive downsampling.
+
+        By default, `cqt` will adaptively select a resampling mode
+        which trades off accuracy at high frequencies for efficiency at low frequencies.
+
+        You can override this by specifying a resampling mode as supported by
+        `librosa.core.resample`.  For example, `res_type='fft'` will use a high-quality,
+        but potentially slow FFT-based down-sampling, while `res_type='polyphase'` will
+        use a fast, but potentially inaccurate down-sampling.
 
     Returns
     -------
@@ -173,10 +184,14 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     Q = float(filter_scale) / (2.0**(1. / bins_per_octave) - 1)
     filter_cutoff = fmax_t * (1 + 0.5 * filters.window_bandwidth(window) / Q)
     nyquist = sr / 2.0
-    if filter_cutoff < audio.BW_FASTEST * nyquist:
-        res_type = 'kaiser_fast'
-    else:
-        res_type = 'kaiser_best'
+
+    auto_resample = False
+    if not res_type:
+        auto_resample = True
+        if filter_cutoff < audio.BW_FASTEST * nyquist:
+            res_type = 'kaiser_fast'
+        else:
+            res_type = 'kaiser_best'
 
     y, sr, hop_length = __early_downsample(y, sr, hop_length,
                                            res_type,
@@ -185,7 +200,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     cqt_resp = []
 
-    if res_type != 'kaiser_fast':
+    if auto_resample and res_type != 'kaiser_fast':
 
         # Do the top octave before resampling to allow for fast resampling
         fft_basis, n_fft, _ = __cqt_filter_fft(sr, fmin_t,
@@ -237,7 +252,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                      '{:d}-octave CQT'.format(len_orig,
                                                               n_octaves))
 
-            my_y = audio.resample(my_y, my_sr, my_sr/2.0,
+            my_y = audio.resample(my_y, 2, 1,
                                   res_type=res_type,
                                   scale=True)
             # The re-scale the filters to compensate for downsampling
@@ -267,7 +282,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                bins_per_octave=12, tuning=0.0, filter_scale=1,
                norm=1, sparsity=0.01, window='hann', scale=True,
-               pad_mode='reflect'):
+               pad_mode='reflect', res_type=None):
     '''Compute the hybrid constant-Q transform of an audio signal.
 
     Here, the hybrid CQT uses the pseudo CQT for higher frequencies where
@@ -316,6 +331,9 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         Padding mode for centered frame analysis.
 
         See also: `librosa.core.stft` and `np.pad`.
+
+    res_type : string
+        Resampling mode.  See `librosa.core.cqt` for details.
 
     Returns
     -------
@@ -398,7 +416,8 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                    sparsity=sparsity,
                                    window=window,
                                    scale=scale,
-                                   pad_mode=pad_mode)))
+                                   pad_mode=pad_mode,
+                                   res_type=res_type)))
 
     return __trim_stack(cqt_resp, n_bins)
 
@@ -789,6 +808,7 @@ def __early_downsample(y, sr, hop_length, res_type, n_octaves,
     return y, sr, hop_length
 
 
+@jit(nopython=True, cache=True)
 def __num_two_factors(x):
     """Return how many times integer x can be evenly divided by 2.
 

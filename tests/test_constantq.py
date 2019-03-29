@@ -23,7 +23,7 @@ from test_core import srand
 
 
 def __test_cqt_size(y, sr, hop_length, fmin, n_bins, bins_per_octave,
-                    tuning, filter_scale, norm, sparsity):
+                    tuning, filter_scale, norm, sparsity, res_type):
 
     cqt_output = np.abs(librosa.cqt(y,
                                     sr=sr,
@@ -34,7 +34,8 @@ def __test_cqt_size(y, sr, hop_length, fmin, n_bins, bins_per_octave,
                                     tuning=tuning,
                                     filter_scale=filter_scale,
                                     norm=norm,
-                                    sparsity=sparsity))
+                                    sparsity=sparsity,
+                                    res_type=res_type))
 
     assert cqt_output.shape[0] == n_bins
 
@@ -70,18 +71,18 @@ def test_cqt():
     # num_octaves = 6, 2**(6-1) = 32 > 16
     for hop_length in [-1, 0, 16, 63, 65]:
         yield (pytest.mark.xfail(__test_cqt_size, raises=librosa.ParameterError), y, sr, hop_length, None, 72,
-               12, 0.0, 2, 1, 0.01)
+               12, 0.0, 2, 1, 0.01, None)
 
     # Filters go beyond Nyquist. 500 Hz -> 4 octaves = 8000 Hz > 11000 Hz
     yield (pytest.mark.xfail(__test_cqt_size, raises=librosa.ParameterError), y, sr, 512, 500, 4 * 12,
-           12, 0.0, 2, 1, 0.01)
+           12, 0.0, 2, 1, 0.01, None)
 
     # Test with fmin near Nyquist
     for fmin in [3000, 4800]:
         for n_bins in [1, 2]:
             for bins_per_octave in [12]:
                 yield (__test_cqt_size, y, sr, 512, fmin, n_bins,
-                       bins_per_octave, 0.0, 2, 1, 0.01)
+                       bins_per_octave, 0.0, 2, 1, 0.01, None)
 
     # Test for no errors and correct output size
     for fmin in [None, librosa.note_to_hz('C2')]:
@@ -90,9 +91,9 @@ def test_cqt():
                 for tuning in [None, 0, 0.25]:
                     for filter_scale in [1, 2]:
                         for norm in [1, 2]:
-                            yield (__test_cqt_size, y, sr, 512, fmin, n_bins,
-                                   bins_per_octave, tuning,
-                                   filter_scale, norm, 0.01)
+                            for res_type in [None, 'polyphase']:
+                                yield (__test_cqt_size, y, sr, 512, fmin, n_bins,
+                                        bins_per_octave, tuning, filter_scale, norm, 0.01, res_type)
 
 
 def test_hybrid_cqt():
@@ -105,7 +106,7 @@ def test_hybrid_cqt():
     y = make_signal(sr, duration, None)
 
     def __test(hop_length, fmin, n_bins, bins_per_octave,
-               tuning, resolution, norm, sparsity):
+               tuning, resolution, norm, sparsity, res_type):
 
         C2 = librosa.hybrid_cqt(y, sr=sr,
                                 hop_length=hop_length,
@@ -113,7 +114,7 @@ def test_hybrid_cqt():
                                 bins_per_octave=bins_per_octave,
                                 tuning=tuning, filter_scale=resolution,
                                 norm=norm,
-                                sparsity=sparsity)
+                                sparsity=sparsity, res_type=res_type)
 
         C1 = np.abs(librosa.cqt(y, sr=sr,
                                 hop_length=hop_length,
@@ -121,7 +122,7 @@ def test_hybrid_cqt():
                                 bins_per_octave=bins_per_octave,
                                 tuning=tuning, filter_scale=resolution,
                                 norm=norm,
-                                sparsity=sparsity))
+                                sparsity=sparsity, res_type=res_Type))
 
         assert C1.shape == C2.shape
 
@@ -144,9 +145,10 @@ def test_hybrid_cqt():
                 for tuning in [None, 0, 0.25]:
                     for resolution in [1, 2]:
                         for norm in [1, 2]:
-                            yield (__test, 512, fmin, n_bins,
-                                   bins_per_octave, tuning,
-                                   resolution, norm, 0.01)
+                            for res_type in [None, 'polyphase']:
+                                yield (__test, 512, fmin, n_bins,
+                                        bins_per_octave, tuning,
+                                        resolution, norm, 0.01)
 
 
 def test_cqt_position():
