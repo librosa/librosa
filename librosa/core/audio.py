@@ -273,6 +273,10 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
 
             To use `scipy.signal.resample_poly`, set `res_type='polyphase'`.
 
+        .. note::
+            When using `res_type='polyphase'`, only integer sampling rates are
+            supported.
+
     fix : bool
         adjust the length of the resampled signal to be of size exactly
         `ceil(target_sr * len(y) / orig_sr)`
@@ -290,6 +294,11 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
     y_hat : np.ndarray [shape=(n * target_sr / orig_sr,)]
         `y` resampled from `orig_sr` to `target_sr`
 
+    Raises
+    ------
+    ParameterError
+        If `res_type='polyphase'` and `orig_sr` or `target_sr` are not both
+        integer-valued.
 
     See Also
     --------
@@ -309,7 +318,6 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
     >>> y_8k = librosa.resample(y, sr, 8000)
     >>> y.shape, y_8k.shape
     ((1355168,), (491671,))
-
     """
 
     # First, validate the audio buffer
