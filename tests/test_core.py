@@ -1537,6 +1537,25 @@ def test_pcen_ref():
     assert np.allclose(Y2, X)
 
 
+@pytest.mark.parametrize('x', [np.arange(100),
+                               np.arange(100).reshape((10, 10))])
+def test_pcen_stream(x):
+
+    if x.ndim == 1:
+        x1 = x[:20]
+        x2 = x[20:]
+    else:
+        x1 = x[:, :20]
+        x2 = x[:, 20:]
+
+    p1, zf1 = librosa.pcen(x1, return_zf=True)
+    p2, zf2 = librosa.pcen(x2, zi=zf1, return_zf=True)
+
+    pfull = librosa.pcen(x)
+
+    assert np.allclose(pfull, np.hstack([p1, p2]))
+
+
 def test_get_fftlib():
     import numpy.fft as fft
     assert librosa.get_fftlib() is fft
