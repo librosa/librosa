@@ -1331,7 +1331,7 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
 @cache(level=30)
 def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
          time_constant=0.400, eps=1e-6, b=None, max_size=1, ref=None,
-         axis=-1, max_axis=None):
+         axis=-1, max_axis=None, zi=None, return_zf=False):
     '''Per-channel energy normalization (PCEN) [1]_
 
     This function normalizes a time-frequency representation `S` by
@@ -1423,10 +1423,27 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
         If `S` is not two-dimensional, and `max_size > 1`, an error
         will be raised.
 
+    zi : np.ndarray
+        The initial filter delay values.
+
+        This may be the `zf` (final delay values) of a previous call to `pcen`, or
+        computed by `scipy.signal.lfilter_zi`.
+
+    return_zf : bool
+        If `True`, return the final filter delay values along with the PCEN output `P`.
+        This is primarily useful in streaming contexts, where the final state of one
+        block of processing should be used to initialize the next block.
+
+        If `False` (default) only the PCEN values `P` are returned.
+
+
     Returns
     -------
     P : np.ndarray, non-negative [shape=(n, m)]
         The per-channel energy normalized version of `S`.
+
+    zf : np.ndarray (optional)
+        The final filter delay values.  Only returned if `return_zf=True`.
 
     See Also
     --------
@@ -1526,11 +1543,24 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
 
             ref = scipy.ndimage.maximum_filter1d(S, max_size, axis=max_axis)
 
-    S_smooth = scipy.signal.lfilter([b], [1, b - 1], ref, axis=axis)
+    if zi is None:
+        zi = scipy.signal.lfilter_zi([b], [1, b-1])
+
+    # Make sure zi matches dimension to input
+    if ref.ndim == 2:
+        zi = np.atleast_2d(zi)
+
+    S_smooth, zf = scipy.signal.lfilter([b], [1, b - 1], ref, zi=zi,
+                                        axis=axis)
 
     # Working in log-space gives us some stability, and a slight speedup
     smooth = np.exp(-gain * (np.log(eps) + np.log1p(S_smooth / eps)))
-    return (S * smooth + bias)**power - bias**power
+    S_out = (S * smooth + bias)**power - bias**power
+
+    if return_zf:
+        return S_out, zf
+    else:
+        return S_out
 
 
 def _spectrogram(y=None, S=None, n_fft=2048, hop_length=512, power=1,
