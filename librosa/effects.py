@@ -260,6 +260,7 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type='kaiser_fast'):
     res_type : string
         Resample type.
         Possible options: 'kaiser_best', 'kaiser_fast', and 'scipy'.
+        By default, 'kaiser_best' is used. Refer to core.resample for details.
 
     Returns
     -------
@@ -290,15 +291,13 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type='kaiser_fast'):
     ...                                          bins_per_octave=24)
     '''
 
-    if bins_per_octave < 1 or not np.issubdtype(type(bins_per_octave),
-                                                np.integer):
+    if bins_per_octave < 1 or not np.issubdtype(type(bins_per_octave), np.integer):
         raise ParameterError('bins_per_octave must be a positive integer.')
 
     rate = 2.0 ** (-float(n_steps) / bins_per_octave)
 
     # Stretch in time, then resample
-    y_shift = core.resample(time_stretch(y, rate), float(sr) / rate, sr,
-                            res_type=res_type)
+    y_shift = core.resample(time_stretch(y, rate), float(sr) / rate, sr, res_type=res_type)
 
     # Crop to the same dimension as the input
     return util.fix_length(y_shift, len(y))
