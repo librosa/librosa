@@ -1544,11 +1544,10 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
             ref = scipy.ndimage.maximum_filter1d(S, max_size, axis=max_axis)
 
     if zi is None:
-        zi = scipy.signal.lfilter_zi([b], [1, b-1])
-
-    # Make sure zi matches dimension to input
-    if ref.ndim == 2:
-        zi = np.atleast_2d(zi)
+        # Make sure zi matches dimension to input
+        shape = tuple([1] * ref.ndim)
+        zi = np.empty(shape)
+        zi[axis] = scipy.signal.lfilter_zi([b], [1, b - 1])[:]
 
     S_smooth, zf = scipy.signal.lfilter([b], [1, b - 1], ref, zi=zi,
                                         axis=axis)
