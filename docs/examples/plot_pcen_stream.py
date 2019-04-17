@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 import soundfile as sf
 
 import librosa as librosa
-import librosa.display as isplay
+import librosa.display as display
 
 
 ######################################################################
