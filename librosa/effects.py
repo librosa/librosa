@@ -239,7 +239,7 @@ def time_stretch(y, rate):
     return y_stretch
 
 
-def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type='kaiser_fast'):
+def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type='kaiser_best'):
     '''Pitch-shift the waveform by `n_steps` half-steps.
 
 
