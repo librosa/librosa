@@ -710,14 +710,15 @@ def test_pitch_tuning():
 
 def test_piptrack_properties():
 
-    def __test(S, n_fft, hop_length, fmin, fmax, threshold):
+    def __test(S, n_fft, hop_length, fmin, fmax, threshold, ref):
 
         pitches, mags = librosa.core.piptrack(S=S,
                                               n_fft=n_fft,
                                               hop_length=hop_length,
                                               fmin=fmin,
                                               fmax=fmax,
-                                              threshold=threshold)
+                                              threshold=threshold,
+                                              ref=ref)
 
         # Shape tests
         assert S.shape == pitches.shape
@@ -742,7 +743,8 @@ def test_piptrack_properties():
             for fmin in [0, 100]:
                 for fmax in [4000, 8000, sr // 2]:
                     for threshold in [0.1, 0.2, 0.5]:
-                        yield __test, S, n_fft, hop_length, fmin, fmax, threshold
+                        for ref in [None, 1.0, np.max]:
+                            yield __test, S, n_fft, hop_length, fmin, fmax, threshold, ref
 
 
 def test_piptrack_errors():
