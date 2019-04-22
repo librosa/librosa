@@ -75,9 +75,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
         .. note::
             By default, this uses `resampy`'s high-quality mode ('kaiser_best').
 
-            To use a faster method, set `res_type='kaiser_fast'`.
-
-            To use `scipy.signal.resample`, set `res_type='scipy'`.
+            For alternative resampling modes, see `resample`
 
         .. note::
            `audioread` may truncate the precision of the audio data to 16 bits.
@@ -271,7 +269,13 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
 
             To use a faster method, set `res_type='kaiser_fast'`.
 
-            To use `scipy.signal.resample`, set `res_type='scipy'`.
+            To use `scipy.signal.resample`, set `res_type='fft'` or `res_type='scipy'`.
+
+            To use `scipy.signal.resample_poly`, set `res_type='polyphase'`.
+
+        .. note::
+            When using `res_type='polyphase'`, only integer sampling rates are
+            supported.
 
     fix : bool
         adjust the length of the resampled signal to be of size exactly
@@ -290,6 +294,11 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
     y_hat : np.ndarray [shape=(n * target_sr / orig_sr,)]
         `y` resampled from `orig_sr` to `target_sr`
 
+    Raises
+    ------
+    ParameterError
+        If `res_type='polyphase'` and `orig_sr` or `target_sr` are not both
+        integer-valued.
 
     See Also
     --------
@@ -309,7 +318,6 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
     >>> y_8k = librosa.resample(y, sr, 8000)
     >>> y.shape, y_8k.shape
     ((1355168,), (491671,))
-
     """
 
     # First, validate the audio buffer
@@ -322,8 +330,19 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
 
     n_samples = int(np.ceil(y.shape[-1] * ratio))
 
-    if res_type == 'scipy':
+    if res_type in ('scipy', 'fft'):
         y_hat = scipy.signal.resample(y, n_samples, axis=-1)
+    elif res_type == 'polyphase':
+        if int(orig_sr) != orig_sr or int(target_sr) != target_sr:
+            raise ParameterError('polyphase resampling is only supported for integer-valued sampling rates.')
+
+        # For polyphase resampling, we need up- and down-sampling ratios
+        # We can get those from the greatest common divisor of the rates
+        # as long as the rates are integrable
+        orig_sr = int(orig_sr)
+        target_sr = int(target_sr)
+        gcd = np.gcd(orig_sr, target_sr)
+        y_hat = scipy.signal.resample_poly(y, target_sr // gcd, orig_sr // gcd, axis=-1)
     else:
         y_hat = resampy.resample(y, orig_sr, target_sr, filter=res_type, axis=-1)
 

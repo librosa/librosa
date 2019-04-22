@@ -127,7 +127,7 @@ def test_resample_mono():
         y, sr_in = librosa.load(os.path.join('tests', 'data', infile), sr=None, duration=5)
 
         for sr_out in [8000, 22050]:
-            for res_type in ['kaiser_best', 'kaiser_fast', 'scipy']:
+            for res_type in ['kaiser_best', 'kaiser_fast', 'scipy', 'fft', 'polyphase']:
                 for fix in [False, True]:
                     yield (__test, y, sr_in, sr_out, res_type, fix)
 
@@ -152,7 +152,7 @@ def test_resample_stereo():
         # Check buffer contiguity
         assert y2.flags['C_CONTIGUOUS']
 
-        # Check that we're within one sample of the target length
+        # Check that we're within one sample of the target length target_length = y.shape[-1] * sr_out // sr_in
         target_length = y.shape[-1] * sr_out // sr_in
         assert np.abs(y2.shape[-1] - target_length) <= 1
 
@@ -160,7 +160,7 @@ def test_resample_stereo():
                             mono=False, sr=None, duration=5)
 
     for sr_out in [8000, 22050]:
-        for res_type in ['kaiser_fast', 'scipy']:
+        for res_type in ['kaiser_fast', 'fft', 'polyphase']:
             for fix in [False, True]:
                 yield __test, y, sr_in, sr_out, res_type, fix
 
@@ -185,10 +185,17 @@ def test_resample_scale():
     y, sr_in = librosa.load(os.path.join('tests', 'data','test1_22050.wav'),
                             mono=True, sr=None, duration=3)
 
-    for res_type in ['scipy', 'kaiser_best', 'kaiser_fast']:
+    for res_type in ['fft', 'kaiser_best', 'kaiser_fast', 'polyphase']:
         for sr_out in [11025, 22050, 44100]:
             yield __test, sr_in, sr_out, res_type, y
             yield __test, sr_out, sr_in, res_type, y
+
+
+@pytest.mark.parametrize('sr_in, sr_out', [(100, 100.1), (100.1, 100)])
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_resample_poly_float(sr_in, sr_out):
+    y = np.empty(128)
+    librosa.resample(y, sr_in, sr_out, res_type='polyphase')
 
 
 def test_stft():
