@@ -259,8 +259,11 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type='kaiser_best'):
 
     res_type : string
         Resample type.
-        Possible options: 'kaiser_best', 'kaiser_fast', and 'scipy'.
-        By default, 'kaiser_best' is used. Refer to core.resample for details.
+        Possible options: 'kaiser_best', 'kaiser_fast', and 'scipy', 'polyphase',
+        'fft'.
+        By default, 'kaiser_best' is used.
+        
+        See `core.resample` for more information.
 
     Returns
     -------
@@ -297,7 +300,8 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type='kaiser_best'):
     rate = 2.0 ** (-float(n_steps) / bins_per_octave)
 
     # Stretch in time, then resample
-    y_shift = core.resample(time_stretch(y, rate), float(sr) / rate, sr, res_type=res_type)
+    y_shift = core.resample(time_stretch(y, rate), float(sr) / rate, sr,
+                            res_type=res_type)
 
     # Crop to the same dimension as the input
     return util.fix_length(y_shift, len(y))
