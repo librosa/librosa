@@ -226,7 +226,7 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
         wp = np.asarray(wp, dtype=int)
 
         # since we transposed in the beginning, we have to adjust the index pairs back
-        if subseq and (X.shape[1] > Y.shape[1]):
+        if subseq and (C.shape[0] > C.shape[1]):
             wp = np.fliplr(wp)
 
         return D, wp
