@@ -10,7 +10,6 @@ import scipy.fftpack
 from .. import util
 from .. import filters
 from ..util.exceptions import ParameterError
-from ..util.decorators import moved
 
 from ..core.time_frequency import fft_frequencies
 from ..core.audio import zero_crossings, to_mono
@@ -26,7 +25,6 @@ __all__ = ['spectral_centroid',
            'spectral_flatness',
            'poly_features',
            'rms',
-           'rmse',
            'zero_crossing_rate',
            'chroma_stft',
            'chroma_cqt',
@@ -828,9 +826,6 @@ def rms(y=None, S=None, frame_length=2048, hop_length=512,
     else:
         raise ValueError('Either `y` or `S` must be input.')
     return np.sqrt(np.mean(np.abs(x)**2, axis=0, keepdims=True))
-
-
-rmse = moved('librosa.feature.rmse', '0.6.3', '0.7.0')(rms)
 
 
 def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
