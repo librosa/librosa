@@ -1546,6 +1546,49 @@ def test_pcen_ref():
     assert np.allclose(Y2, X)
 
 
+@pytest.mark.parametrize('x', [np.arange(100),
+                               np.arange(100).reshape((10, 10))])
+def test_pcen_stream(x):
+
+    if x.ndim == 1:
+        x1 = x[:20]
+        x2 = x[20:]
+    else:
+        x1 = x[:, :20]
+        x2 = x[:, 20:]
+
+    p1, zf1 = librosa.pcen(x1, return_zf=True)
+    p2, zf2 = librosa.pcen(x2, zi=zf1, return_zf=True)
+
+    pfull = librosa.pcen(x)
+
+    assert np.allclose(pfull, np.hstack([p1, p2]))
+
+
+@pytest.mark.parametrize('axis', [0, 1, 2, -2, -1])
+def test_pcen_stream_multi(axis):
+    srand()
+
+    # Generate a random power spectrum
+    x = np.random.randn(20, 50, 60)**2
+
+    # Make slices along the target axis
+    slice1 = [slice(None)] * x.ndim
+    slice1[axis] = slice(0, 10)
+    slice2 = [slice(None)] * x.ndim
+    slice2[axis] = slice(10, None)
+
+    # Compute pcen piecewise
+    p1, zf1 = librosa.pcen(x[slice1], return_zf=True, axis=axis)
+    p2, zf2 = librosa.pcen(x[slice2], zi=zf1, return_zf=True, axis=axis)
+
+    # And the full pcen
+    pfull = librosa.pcen(x, axis=axis)
+
+    # Compare full to concatenated results
+    assert np.allclose(pfull, np.concatenate([p1, p2], axis=axis))
+
+
 def test_get_fftlib():
     import numpy.fft as fft
     assert librosa.get_fftlib() is fft
