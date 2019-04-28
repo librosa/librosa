@@ -33,13 +33,6 @@ Miscellaneous
     mr_frequencies
     window_sumsquare
     diagonal_filter
-
-Deprecated
-----------
-.. autosummary::
-    :toctree: generated/
-
-    dct
 """
 import warnings
 
@@ -54,13 +47,11 @@ from numba import jit
 from ._cache import cache
 from . import util
 from .util.exceptions import ParameterError
-from .util.decorators import deprecated
 
 from .core.time_frequency import note_to_hz, hz_to_midi, midi_to_hz, hz_to_octs
 from .core.time_frequency import fft_frequencies, mel_frequencies
 
-__all__ = ['dct',
-           'mel',
+__all__ = ['mel',
            'chroma',
            'constant_q',
            'constant_q_lengths',
@@ -115,67 +106,6 @@ WINDOW_BANDWIDTHS = {'bart': 1.3334961334912805,
                      'tri': 1.3331706523555851,
                      'triang': 1.3331706523555851,
                      'triangle': 1.3331706523555851}
-
-
-@deprecated('0.6.1', '0.7.0')
-def dct(n_filters, n_input):
-    """Discrete cosine transform (DCT type-II, normalized) basis.
-
-    .. [1] http://en.wikipedia.org/wiki/Discrete_cosine_transform
-
-    .. warning:: This function is deprecated in librosa 0.6.1. It will
-        be removed in 0.7.0.
-
-    Parameters
-    ----------
-    n_filters : int > 0 [scalar]
-        number of output components (DCT filters)
-
-    n_input : int > 0 [scalar]
-        number of input components (frequency bins)
-
-    Returns
-    -------
-    dct_basis: np.ndarray [shape=(n_filters, n_input)]
-        DCT (type-II) basis vectors [1]_
-
-    Notes
-    -----
-    This function caches at level 10.
-
-    See Also
-    --------
-    scipy.fftpack.dct
-
-    Examples
-    --------
-    >>> n_fft = 2048
-    >>> dct_filters = librosa.filters.dct(13, 1 + n_fft // 2)
-    >>> dct_filters
-    array([[ 0.031,  0.031, ...,  0.031,  0.031],
-           [ 0.044,  0.044, ..., -0.044, -0.044],
-           ...,
-           [ 0.044,  0.044, ..., -0.044, -0.044],
-           [ 0.044,  0.044, ...,  0.044,  0.044]])
-
-    >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> librosa.display.specshow(dct_filters, x_axis='linear')
-    >>> plt.ylabel('DCT function')
-    >>> plt.title('DCT filter bank')
-    >>> plt.colorbar()
-    >>> plt.tight_layout()
-    """
-
-    basis = np.empty((n_filters, n_input))
-    basis[0, :] = 1.0 / np.sqrt(n_input)
-
-    samples = np.arange(1, 2*n_input, 2) * np.pi / (2.0 * n_input)
-
-    for i in range(1, n_filters):
-        basis[i, :] = np.cos(i*samples) * np.sqrt(2.0/n_input)
-
-    return basis
 
 
 @cache(level=10)
