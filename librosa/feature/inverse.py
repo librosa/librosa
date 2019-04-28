@@ -82,8 +82,10 @@ def mel_to_stft(M, sr=22050, n_fft=2048, power=2.0, **kwargs):
                             **kwargs)
 
     # Find the non-negative least squares solution, and apply
-    # the inverse exponent
-    return nnls(mel_basis, M)**(1./power)
+    # the inverse exponent.
+    # We'll do the exponentiation in-place.
+    inverse = nnls(mel_basis, M)
+    return np.power(inverse, 1./power, out=inverse)
 
 
 def mel_to_audio(M, sr=22050, n_fft=2048, hop_length=512, win_length=None,
@@ -185,7 +187,7 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0):
         By default, DCT type-2 is used.
 
     norm : None or 'ortho'
-        If `dct_Type` is `2 or 3`, setting `norm='ortho'` uses an ortho-normal
+        If `dct_type` is `2 or 3`, setting `norm='ortho'` uses an orthonormal
         DCT basis.
 
         Normalization is not supported for `dct_type=1`.
@@ -234,7 +236,7 @@ def mfcc_to_audio(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, **kwargs)
         By default, DCT type-2 is used.
 
     norm : None or 'ortho'
-        If `dct_Type` is `2 or 3`, setting `norm='ortho'` uses an ortho-normal
+        If `dct_type` is `2 or 3`, setting `norm='ortho'` uses an orthonormal
         DCT basis.
 
         Normalization is not supported for `dct_type=1`.
