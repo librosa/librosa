@@ -1567,7 +1567,11 @@ def griffinlim(S, n_iter=32, hop_length=None, win_length=None, window='hann',
     '''Approximate magnitude spectrogram inversion using the Griffin-Lim algorithm [1]_.
 
     Given a short-time Fourier transform magnitude matrix (`S`), the algorithm randomly
-    initializes phase estimates, and then alternates forward- and inverse-stft operations
+    initializes phase estimates, and then alternates forward- and inverse-STFT
+    operations.
+    Note that this assumes reconstruction of a real-valued time-domain signal, and
+    that `S` contains only the non-negative frequencies (as computed by
+    `core.stft`).
 
     .. [1] D. W. Griffin and J. S. Lim,
         "Signal estimation from modified short-time Fourier transform,"
@@ -1576,7 +1580,7 @@ def griffinlim(S, n_iter=32, hop_length=None, win_length=None, window='hann',
     Parameters
     ----------
     S : np.ndarray [shape=(n_fft / 2 + 1, t), non-negative]
-        An array of short-time fourier transform magnitudes
+        An array of short-time Fourier transform magnitudes
 
     n_iter : int > 0
         The number of iterations to run
@@ -1634,17 +1638,17 @@ def griffinlim(S, n_iter=32, hop_length=None, win_length=None, window='hann',
 
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
-    >>> ax =plt.subplot(3,1,1)
+    >>> ax = plt.subplot(3,1,1)
     >>> librosa.display.waveplot(y, sr=sr, color='b')
     >>> plt.title('Original')
     >>> plt.xlabel('')
     >>> plt.subplot(3,1,2, sharex=ax, sharey=ax)
     >>> librosa.display.waveplot(y_inv, sr=sr, color='g')
-    >>> plt.title('Griffin-Lim')
+    >>> plt.title('Griffin-Lim reconstruction')
     >>> plt.xlabel('')
     >>> plt.subplot(3,1,3, sharex=ax, sharey=ax)
     >>> librosa.display.waveplot(y_istft, sr=sr, color='r')
-    >>> plt.title('Magnitude-only istft')
+    >>> plt.title('Magnitude-only istft reconstruction')
     >>> plt.tight_layout()
     '''
 
