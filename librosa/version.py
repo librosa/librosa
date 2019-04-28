@@ -35,6 +35,7 @@ def show_versions():
                  'joblib',
                  'decorator',
                  'six',
+                 'soundfile',
                  'resampy',
                  'numba']
 
