@@ -19,7 +19,7 @@ from scipy.ndimage import median_filter
 import sklearn.decomposition
 
 from . import core
-from . import cache
+from ._cache import cache
 from . import segment
 from . import util
 from .util.exceptions import ParameterError

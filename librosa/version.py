@@ -6,7 +6,7 @@ import sys
 import importlib
 
 short_version = '0.6'
-version = '0.6.2'
+version = '0.6.3'
 
 
 def __get_mod_version(modname):
@@ -35,6 +35,7 @@ def show_versions():
                  'joblib',
                  'decorator',
                  'six',
+                 'soundfile',
                  'resampy',
                  'numba']
 

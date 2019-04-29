@@ -4,10 +4,11 @@
 
 import warnings
 import numpy as np
+import six
 
 from .spectrum import _spectrogram
 from . import time_frequency
-from .. import cache
+from .._cache import cache
 from .. import util
 
 __all__ = ['estimate_tuning', 'pitch_tuning', 'piptrack']
@@ -154,7 +155,7 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     # from the next tone up.
     residual[residual >= 0.5] -= 1.0
 
-    bins = np.linspace(-0.5, 0.5, int(np.ceil(1./resolution)), endpoint=False)
+    bins = np.linspace(-0.5, 0.5, int(np.ceil(1. / resolution)) + 1)
 
     counts, tuning = np.histogram(residual, bins)
 
@@ -164,7 +165,9 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
 
 @cache(level=30)
 def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
-             fmin=150.0, fmax=4000.0, threshold=0.1):
+             fmin=150.0, fmax=4000.0, threshold=0.1,
+             win_length=None, window='hann', center=True, pad_mode='reflect',
+             ref=None):
     '''Pitch tracking on thresholded parabolically-interpolated STFT.
 
     This implementation uses the parabolic interpolation method described by [1]_.
@@ -189,14 +192,47 @@ def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
         number of samples to hop
 
     threshold : float in `(0, 1)`
-        A bin in spectrum X is considered a pitch when it is greater than
-        `threshold*X.max()`
+        A bin in spectrum `S` is considered a pitch when it is greater than
+        `threshold*ref(S)`.
+
+        By default, `ref(S)` is taken to be `max(S, axis=0)` (the maximum value in
+        each column).
 
     fmin : float > 0 [scalar]
         lower frequency cutoff.
 
     fmax : float > 0 [scalar]
         upper frequency cutoff.
+
+    win_length : int <= n_fft [scalar]
+        Each frame of audio is windowed by `window()`.
+        The window will be of length `win_length` and then padded
+        with zeros to match `n_fft`.
+
+        If unspecified, defaults to ``win_length = n_fft``.
+
+    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        - a window specification (string, tuple, or number);
+          see `scipy.signal.get_window`
+        - a window function, such as `scipy.signal.hanning`
+        - a vector or array of length `n_fft`
+
+        .. see also:: `filters.get_window`
+
+    center : boolean
+        - If `True`, the signal `y` is padded so that frame
+          `t` is centered at `y[t * hop_length]`.
+        - If `False`, then frame `t` begins at `y[t * hop_length]`
+
+    pad_mode : string
+        If `center=True`, the padding mode to use at the edges of the signal.
+        By default, STFT uses reflection padding.
+
+    ref : scalar or callable [default=np.max]
+        If scalar, the reference value against which `S` is compared for determining
+        pitches.
+
+        If callable, the reference value is computed as `ref(S, axis=0)`.
 
     .. note::
         One of `S` or `y` must be provided.
@@ -224,16 +260,28 @@ def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
 
     Examples
     --------
+    Computing pitches from a waveform input
+
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> pitches, magnitudes = librosa.piptrack(y=y, sr=sr)
+
+    Or from a spectrogram input
+
+    >>> S = np.abs(librosa.stft(y))
+    >>> pitches, magnitudes = librosa.piptrack(S=S, sr=sr)
+
+    Or with an alternate reference value for pitch detection, where
+    values above the mean spectral energy in each frame are counted as pitches
+
+    >>> pitches, magnitudes = librosa.piptrack(S=S, sr=sr, threshold=1,
+    ...                                        ref=np.mean)
 
     '''
 
     # Check that we received an audio time series or STFT
-    if hop_length is None:
-        hop_length = int(n_fft // 4)
-
-    S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length)
+    S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length,
+                            win_length=win_length, window=window,
+                            center=center, pad_mode=pad_mode)
 
     # Make sure we're dealing with magnitudes
     S = np.abs(S)
@@ -270,8 +318,15 @@ def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
 
     # Compute the column-wise local max of S after thresholding
     # Find the argmax coordinates
-    idx = np.argwhere(freq_mask &
-                      util.localmax(S * (S > (threshold * S.max(axis=0)))))
+    if ref is None:
+        ref = np.max
+
+    if six.callable(ref):
+        ref_value = threshold * ref(S, axis=0)
+    else:
+        ref_value = np.abs(ref)
+
+    idx = np.argwhere(freq_mask & util.localmax(S * (S > ref_value)))
 
     # Store pitch and magnitude
     pitches[idx[:, 0], idx[:, 1]] = ((idx[:, 0] + shift[idx[:, 0], idx[:, 1]])

@@ -9,7 +9,7 @@ import six
 import numpy as np
 from numpy.lib.stride_tricks import as_strided
 
-from .. import cache
+from .._cache import cache
 from .exceptions import ParameterError
 
 # Constrain STFT block sizes to 256 KB
@@ -780,6 +780,15 @@ def normalize(S, norm=np.inf, axis=0, threshold=None, fill=None):
 def localmax(x, axis=0):
     """Find local maxima in an array `x`.
 
+    An element `x[i]` is considered a local maximum if the following
+    conditions are met:
+
+    - `x[i] > x[i-1]`
+    - `x[i] >= x[i+1]`
+
+    Note that the first condition is strict, and that the first element
+    `x[0]` will never be considered as a local maximum.
+
     Examples
     --------
     >>> x = np.array([1, 0, 1, 2, -1, 0, -2, 1])
@@ -1346,7 +1355,7 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     ...                                                  ref=np.max),
     ...                          x_coords=subbeat_t, x_axis='time')
     >>> plt.title('Sub-beat synchronous CQT power, '
-    ...           'shape={}'.format(cqt_med_sub.shape))
+    ...           'shape={}'.format(C_med_sub.shape))
     >>> plt.tight_layout()
 
     """
