@@ -5,19 +5,21 @@
 import os
 import six
 
+import soundfile as sf
 import audioread
 import numpy as np
 import scipy.signal
-import scipy.fftpack as fft
 import resampy
 
+from numba import jit
+from .fft import get_fftlib
 from .time_frequency import frames_to_samples, time_to_samples
-from .. import cache
+from .._cache import cache
 from .. import util
 from ..util.exceptions import ParameterError
 
-__all__ = ['load', 'to_mono', 'resample', 'get_duration',
-           'autocorrelate', 'zero_crossings', 'clicks', 'tone', 'chirp']
+__all__ = ['load', 'to_mono', 'resample', 'get_duration', 'autocorrelate',
+           'lpc', 'zero_crossings', 'clicks', 'tone', 'chirp']
 
 # Resampling bandwidths as percentage of Nyquist
 BW_BEST = resampy.filters.get_filter('kaiser_best')[2]
@@ -38,10 +40,17 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
 
     Parameters
     ----------
-    path : string
+    path : string, int, or file-like object
         path to the input file.
 
-        Any format supported by `audioread` will work.
+        Any codec supported by `soundfile` or `audioread` will work.
+
+        If the codec is supported by `soundfile`, then `path` can also be
+        an open file descriptor (int), or any object implementing Python's
+        file interface.
+
+        If the codec is not supported by `soundfile` (e.g., MP3), then only
+        string file paths are supported.
 
     sr   : number > 0 [scalar]
         target sampling rate
@@ -66,9 +75,13 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
         .. note::
             By default, this uses `resampy`'s high-quality mode ('kaiser_best').
 
-            To use a faster method, set `res_type='kaiser_fast'`.
+            For alternative resampling modes, see `resample`
 
-            To use `scipy.signal.resample`, set `res_type='scipy'`.
+        .. note::
+           `audioread` may truncate the precision of the audio data to 16 bits.
+
+           See https://librosa.github.io/librosa/ioformats.html for alternate
+           loading methods.
 
 
     Returns
@@ -82,7 +95,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
 
     Examples
     --------
-    >>> # Load a wav file
+    >>> # Load an ogg vorbis file
     >>> filename = librosa.util.example_audio_file()
     >>> y, sr = librosa.load(filename)
     >>> y
@@ -90,7 +103,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
     >>> sr
     22050
 
-    >>> # Load a wav file and resample to 11 KHz
+    >>> # Load a file and resample to 11 KHz
     >>> filename = librosa.util.example_audio_file()
     >>> y, sr = librosa.load(filename, sr=11025)
     >>> y
@@ -98,7 +111,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
     >>> sr
     11025
 
-    >>> # Load 5 seconds of a wav file, starting 15 seconds in
+    >>> # Load 5 seconds of a file, starting 15 seconds in
     >>> filename = librosa.util.example_audio_file()
     >>> y, sr = librosa.load(filename, offset=15.0, duration=5.0)
     >>> y
@@ -108,8 +121,45 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
 
     """
 
+    try:
+        with sf.SoundFile(path) as sf_desc:
+            sr_native = sf_desc.samplerate
+            if offset:
+                # Seek to the start of the target read
+                sf_desc.seek(int(offset * sr_native))
+            if duration is not None:
+                frame_duration = int(duration * sr_native)
+            else:
+                frame_duration = -1
+
+            # Load the target number of frames, and transpose to match librosa form
+            y = sf_desc.read(frames=frame_duration, dtype=dtype, always_2d=False).T
+
+    except RuntimeError as exc:
+        # If soundfile failed, fall back to the audioread loader
+        y, sr_native = __audioread_load(path, offset, duration, dtype)
+
+    # Final cleanup for dtype and contiguity
+    if mono:
+        y = to_mono(y)
+
+    if sr is not None:
+        y = resample(y, sr_native, sr, res_type=res_type)
+
+    else:
+        sr = sr_native
+
+    return y, sr
+
+
+def __audioread_load(path, offset, duration, dtype):
+    '''Load an audio buffer using audioread.
+
+    This loads one block at a time, and then concatenates the results.
+    '''
+
     y = []
-    with audioread.audio_open(os.path.realpath(path)) as input_file:
+    with audioread.audio_open(path) as input_file:
         sr_native = input_file.samplerate
         n_channels = input_file.channels
 
@@ -150,22 +200,12 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
 
     if y:
         y = np.concatenate(y)
-
         if n_channels > 1:
             y = y.reshape((-1, n_channels)).T
-            if mono:
-                y = to_mono(y)
+    else:
+        y = np.empty(0, dtype=dtype)
 
-        if sr is not None:
-            y = resample(y, sr_native, sr, res_type=res_type)
-
-        else:
-            sr = sr_native
-
-    # Final cleanup for dtype and contiguity
-    y = np.ascontiguousarray(y, dtype=dtype)
-
-    return (y, sr)
+    return y, sr_native
 
 
 @cache(level=20)
@@ -229,7 +269,13 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
 
             To use a faster method, set `res_type='kaiser_fast'`.
 
-            To use `scipy.signal.resample`, set `res_type='scipy'`.
+            To use `scipy.signal.resample`, set `res_type='fft'` or `res_type='scipy'`.
+
+            To use `scipy.signal.resample_poly`, set `res_type='polyphase'`.
+
+        .. note::
+            When using `res_type='polyphase'`, only integer sampling rates are
+            supported.
 
     fix : bool
         adjust the length of the resampled signal to be of size exactly
@@ -248,6 +294,11 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
     y_hat : np.ndarray [shape=(n * target_sr / orig_sr,)]
         `y` resampled from `orig_sr` to `target_sr`
 
+    Raises
+    ------
+    ParameterError
+        If `res_type='polyphase'` and `orig_sr` or `target_sr` are not both
+        integer-valued.
 
     See Also
     --------
@@ -267,7 +318,6 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
     >>> y_8k = librosa.resample(y, sr, 8000)
     >>> y.shape, y_8k.shape
     ((1355168,), (491671,))
-
     """
 
     # First, validate the audio buffer
@@ -280,8 +330,19 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
 
     n_samples = int(np.ceil(y.shape[-1] * ratio))
 
-    if res_type == 'scipy':
+    if res_type in ('scipy', 'fft'):
         y_hat = scipy.signal.resample(y, n_samples, axis=-1)
+    elif res_type == 'polyphase':
+        if int(orig_sr) != orig_sr or int(target_sr) != target_sr:
+            raise ParameterError('polyphase resampling is only supported for integer-valued sampling rates.')
+
+        # For polyphase resampling, we need up- and down-sampling ratios
+        # We can get those from the greatest common divisor of the rates
+        # as long as the rates are integrable
+        orig_sr = int(orig_sr)
+        target_sr = int(target_sr)
+        gcd = np.gcd(orig_sr, target_sr)
+        y_hat = scipy.signal.resample_poly(y, target_sr // gcd, orig_sr // gcd, axis=-1)
     else:
         y_hat = resampy.resample(y, orig_sr, target_sr, filter=res_type, axis=-1)
 
@@ -373,8 +434,11 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     """
 
     if filename is not None:
-        with audioread.audio_open(filename) as fdesc:
-            return fdesc.duration
+        try:
+            return sf.info(filename).duration
+        except:
+            with audioread.audio_open(filename) as fdesc:
+                return fdesc.duration
 
     if y is None:
         if S is None:
@@ -396,7 +460,6 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
             n_samples = y.shape[-1]
 
     return float(n_samples) / sr
-
 
 @cache(level=20)
 def autocorrelate(y, max_size=None, axis=-1):
@@ -452,10 +515,11 @@ def autocorrelate(y, max_size=None, axis=-1):
 
     # Compute the power spectrum along the chosen axis
     # Pad out the signal to support full-length auto-correlation.
+    fft = get_fftlib()
     powspec = np.abs(fft.fft(y, n=2 * y.shape[axis] + 1, axis=axis))**2
 
     # Convert back to time domain
-    autocorr = fft.ifft(powspec, axis=axis, overwrite_x=True)
+    autocorr = fft.ifft(powspec, axis=axis)
 
     # Slice down to max_size
     subslice = [slice(None)] * autocorr.ndim
@@ -467,6 +531,163 @@ def autocorrelate(y, max_size=None, axis=-1):
         autocorr = autocorr.real
 
     return autocorr
+
+
+def lpc(y, order):
+    """Linear Prediction Coefficients via Burg's method
+
+    This function applies Burg's method to estimate coefficients of a linear
+    filter on `y` of order `order`.  Burg's method is an extension to the
+    Yule-Walker approach, which are both sometimes referred to as LPC parameter
+    estimation by autocorrelation.
+
+    It follows the description and implementation approach described in the
+    introduction in [1]_.  N.B. This paper describes a different method, which
+    is not implemented here, but has been chosen for its clear explanation of
+    Burg's technique in its introduction.
+
+    .. [1] Larry Marple
+           A New Autoregressive Spectrum Analysis Algorithm
+           IEEE Transactions on Accoustics, Speech, and Signal Processing
+           vol 28, no. 4, 1980
+
+    Parameters
+    ----------
+    y : np.ndarray
+        Time series to fit
+
+    order : int > 0
+        Order of the linear filter
+
+    Returns
+    -------
+    a : np.ndarray of length order + 1
+        LP prediction error coefficients, i.e. filter denominator polynomial
+
+    Raises
+    ------
+    ParameterError
+        - If y is not valid audio as per `util.valid_audio`
+        - If order < 1 or not integer
+    FloatingPointError
+        - If y is ill-conditioned
+
+    See also
+    --------
+    scipy.signal.lfilter
+
+    Examples
+    --------
+    Compute LP coefficients of y at order 16 on entire series
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), offset=30,
+    ...                      duration=10)
+    >>> librosa.lpc(y, 16)
+
+    Compute LP coefficients, and plot LP estimate of original series
+
+    >>> import matplotlib.pyplot as plt
+    >>> import scipy
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), offset=30,
+    ...                      duration=0.020)
+    >>> a = librosa.lpc(y, 2)
+    >>> y_hat = scipy.signal.lfilter([0] + -1*a[1:], [1], y)
+    >>> plt.figure()
+    >>> plt.plot(y)
+    >>> plt.plot(y_hat)
+    >>> plt.legend(['y', 'y_hat'])
+    >>> plt.title('LP Model Forward Prediction')
+
+    """
+    if not isinstance(order, int) or order < 1:
+        raise ParameterError("order must be an integer > 0")
+
+    util.valid_audio(y, mono=True)
+
+    return __lpc(y, order)
+
+
+@jit(nopython=True)
+def __lpc(y, order):
+    # This implementation follows the description of Burg's algorithm given in
+    # section III of Marple's paper referenced in the docstring.
+    #
+    # We use the Levinson-Durbin recursion to compute AR coefficients for each
+    # increasing model order by using those from the last. We maintain two
+    # arrays and then flip them each time we increase the model order so that
+    # we may use all the coefficients from the previous order while we compute
+    # those for the new one. These two arrays hold ar_coeffs for order M and
+    # order M-1.  (Corresponding to a_{M,k} and a_{M-1,k} in eqn 5)
+    ar_coeffs = np.zeros(order+1, dtype=y.dtype)
+    ar_coeffs[0] = 1
+    ar_coeffs_prev = np.zeros(order+1, dtype=y.dtype)
+    ar_coeffs_prev[0] = 1
+
+    # These two arrays hold the forward and backward prediction error. They
+    # correspond to f_{M-1,k} and b_{M-1,k} in eqns 10, 11, 13 and 14 of
+    # Marple. First they are used to compute the reflection coefficient at
+    # order M from M-1 then are re-used as f_{M,k} and b_{M,k} for each
+    # iteration of the below loop
+    fwd_pred_error = y[1:]
+    bwd_pred_error = y[:-1]
+
+    # DEN_{M} from eqn 16 of Marple.
+    den = np.dot(fwd_pred_error, fwd_pred_error) \
+        + np.dot(bwd_pred_error, bwd_pred_error)
+
+    for i in range(order):
+        if den <= 0:
+            raise FloatingPointError('numerical error, input ill-conditioned?')
+
+        # Eqn 15 of Marple, with fwd_pred_error and bwd_pred_error
+        # corresponding to f_{M-1,k+1} and b{M-1,k} and the result as a_{M,M}
+        reflect_coeff = -2 * np.dot(bwd_pred_error, fwd_pred_error) / den
+
+        # Now we use the reflection coefficient and the AR coefficients from
+        # the last model order to compute all of the AR coefficients for the
+        # current one.  This is the Levinson-Durbin recursion described in
+        # eqn 5.
+        # Note 1: We don't have to care about complex conjugates as our signals
+        # are all real-valued
+        # Note 2: j counts 1..order+1, i-j+1 counts order..0
+        # Note 3: The first element of ar_coeffs* is always 1, which copies in
+        # the reflection coefficient at the end of the new AR coefficient array
+        # after the preceding coefficients
+        ar_coeffs_prev, ar_coeffs = ar_coeffs, ar_coeffs_prev
+        for j in range(1, i+2):
+            ar_coeffs[j] = ar_coeffs_prev[j] + reflect_coeff*ar_coeffs_prev[i - j + 1]
+
+        # Update the forward and backward prediction errors corresponding to
+        # eqns 13 and 14.  We start with f_{M-1,k+1} and b_{M-1,k} and use them
+        # to compute f_{M,k} and b_{M,k}
+        fwd_pred_error_tmp = fwd_pred_error
+        fwd_pred_error = fwd_pred_error + reflect_coeff*bwd_pred_error
+        bwd_pred_error = bwd_pred_error + reflect_coeff*fwd_pred_error_tmp
+
+        # SNIP - we are now done with order M and advance. M-1 <- M
+
+        # Compute DEN_{M} using the recursion from eqn 17.
+        #
+        # reflect_coeff = a_{M-1,M-1}      (we have advanced M)
+        # den =  DEN_{M-1}                 (rhs)
+        # bwd_pred_error = b_{M-1,N-M+1}   (we have advanced M)
+        # fwd_pred_error = f_{M-1,k}       (we have advanced M)
+        # den <- DEN_{M}                   (lhs)
+        #
+        q = 1 - reflect_coeff**2
+        den = q*den - bwd_pred_error[-1]**2 - fwd_pred_error[0]**2
+
+        # Shift up forward error.
+        #
+        # fwd_pred_error <- f_{M-1,k+1}
+        # bwd_pred_error <- b_{M-1,k}
+        #
+        # N.B. We do this after computing the denominator using eqn 17 but
+        # before using it in the numerator in eqn 15.
+        fwd_pred_error = fwd_pred_error[1:]
+        bwd_pred_error = bwd_pred_error[:-1]
+
+    return ar_coeffs
 
 
 @cache(level=20)
@@ -740,7 +961,8 @@ def tone(frequency, sr=22050, length=None, duration=None, phi=None):
         desired sampling rate of the output signal
 
     length : int > 0
-        desired number of samples in the output signal. When both `duration` and `length` are defined, `length` would take priority.
+        desired number of samples in the output signal. When both `duration` and `length` are defined,
+        `length` would take priority.
 
     duration : float > 0
         desired duration in seconds. When both `duration` and `length` are defined, `length` would take priority.

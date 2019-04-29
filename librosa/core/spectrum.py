@@ -4,16 +4,18 @@
 import warnings
 
 import numpy as np
-import scipy.fftpack as fft
 import scipy
 import scipy.ndimage
 import scipy.signal
 import scipy.interpolate
 import six
 
+from numba import jit
+
 from . import time_frequency
+from .fft import get_fftlib
 from .audio import resample
-from .. import cache
+from .._cache import cache
 from .. import util
 from ..util.exceptions import ParameterError
 from ..filters import get_window, semitone_filterbank
@@ -51,7 +53,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
         number audio of frames between STFT columns.
         If unspecified, defaults `win_length / 4`.
 
-    win_length  : int <= n_fft [scalar]
+    win_length : int <= n_fft [scalar]
         Each frame of audio is windowed by `window()`.
         The window will be of length `win_length` and then padded
         with zeros to match `n_fft`.
@@ -66,12 +68,12 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
 
         .. see also:: `filters.get_window`
 
-    center      : boolean
+    center : boolean
         - If `True`, the signal `y` is padded so that frame
           `D[:, t]` is centered at `y[t * hop_length]`.
         - If `False`, then `D[:, t]` begins at `y[t * hop_length]`
 
-    dtype       : numeric type
+    dtype : numeric type
         Complex numeric type for `D`.  Default is 64-bit complex.
 
     pad_mode : string
@@ -172,6 +174,8 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
                            dtype=dtype,
                            order='F')
 
+    fft = get_fftlib()
+
     # how many columns can we fit within MAX_MEM_BLOCK?
     n_columns = int(util.MAX_MEM_BLOCK / (stft_matrix.shape[0] *
                                           stft_matrix.itemsize))
@@ -179,10 +183,9 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
     for bl_s in range(0, stft_matrix.shape[1], n_columns):
         bl_t = min(bl_s + n_columns, stft_matrix.shape[1])
 
-        stft_matrix[:, bl_s:bl_t] = fft.fft(fft_window *
-                                            y_frames[:, bl_s:bl_t],
-                                            axis=0)[:stft_matrix.shape[0]]
-
+        stft_matrix[:, bl_s:bl_t] = fft.rfft(fft_window *
+                                             y_frames[:, bl_s:bl_t],
+                                             axis=0)
     return stft_matrix
 
 
@@ -209,18 +212,18 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
     stft_matrix : np.ndarray [shape=(1 + n_fft/2, t)]
         STFT matrix from `stft`
 
-    hop_length  : int > 0 [scalar]
+    hop_length : int > 0 [scalar]
         Number of frames between STFT columns.
         If unspecified, defaults to `win_length / 4`.
 
-    win_length  : int <= n_fft = 2 * (stft_matrix.shape[0] - 1)
+    win_length : int <= n_fft = 2 * (stft_matrix.shape[0] - 1)
         When reconstructing the time series, each frame is windowed
         and each sample is normalized by the sum of squared window
         according to the `window` function (see below).
 
         If unspecified, defaults to `n_fft`.
 
-    window      : string, tuple, number, function, np.ndarray [shape=(n_fft,)]
+    window : string, tuple, number, function, np.ndarray [shape=(n_fft,)]
         - a window specification (string, tuple, or number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.hanning`
@@ -228,11 +231,11 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
 
         .. see also:: `filters.get_window`
 
-    center      : boolean
+    center : boolean
         - If `True`, `D` is assumed to have centered frames.
         - If `False`, `D` is assumed to have left-aligned frames.
 
-    dtype       : numeric type
+    dtype : numeric type
         Real numeric type for `y`.  Default is 32-bit float.
 
     length : int > 0, optional
@@ -284,20 +287,29 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
 
     ifft_window = get_window(window, win_length, fftbins=True)
 
-    # Pad out to match n_fft
-    ifft_window = util.pad_center(ifft_window, n_fft)
+    # Pad out to match n_fft, and add a broadcasting axis
+    ifft_window = util.pad_center(ifft_window, n_fft)[:, np.newaxis]
 
     n_frames = stft_matrix.shape[1]
     expected_signal_len = n_fft + hop_length * (n_frames - 1)
     y = np.zeros(expected_signal_len, dtype=dtype)
 
-    for i in range(n_frames):
-        sample = i * hop_length
-        spec = stft_matrix[:, i].flatten()
-        spec = np.concatenate((spec, spec[-2:0:-1].conj()), 0)
-        ytmp = ifft_window * fft.ifft(spec).real
+    n_columns = int(util.MAX_MEM_BLOCK // (stft_matrix.shape[0] *
+                                           stft_matrix.itemsize))
 
-        y[sample:(sample + n_fft)] = y[sample:(sample + n_fft)] + ytmp
+    fft = get_fftlib()
+
+    frame = 0
+    for bl_s in range(0, n_frames, n_columns):
+        bl_t = min(bl_s + n_columns, n_frames)
+
+        # invert the block and apply the window function
+        ytmp = ifft_window * fft.irfft(stft_matrix[:, bl_s:bl_t], axis=0)
+
+        # Overlap-add the istft block starting at the i'th frame
+        __overlap_add(y[frame * hop_length:], ytmp, hop_length)
+
+        frame += (bl_t - bl_s)
 
     # Normalize by sum of squared window
     ifft_window_sum = window_sumsquare(window,
@@ -329,6 +341,19 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
         y = util.fix_length(y[start:], length)
 
     return y
+
+
+@jit(nopython=True, cache=True)
+def __overlap_add(y, ytmp, hop_length):
+    # numba-accelerated overlap add for inverse stft
+    # y is the pre-allocated output buffer
+    # ytmp is the windowed inverse-stft frames
+    # hop_length is the hop-length of the STFT analysis
+
+    n_fft = ytmp.shape[0]
+    for frame in range(ytmp.shape[1]):
+        sample = frame * hop_length
+        y[sample:(sample + n_fft)] += ytmp[:, frame]
 
 
 def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
@@ -378,7 +403,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     norm : bool
         Normalize the STFT.
 
-    center      : boolean
+    center : boolean
         - If `True`, the signal `y` is padded so that frame
             `D[:, t]` (and `if_gram`) is centered at `y[t * hop_length]`.
         - If `False`, then `D[:, t]` at `y[t * hop_length]`
@@ -489,7 +514,7 @@ def magphase(D, power=1):
 
     Parameters
     ----------
-    D       : np.ndarray [shape=(d, t), dtype=complex]
+    D : np.ndarray [shape=(d, t), dtype=complex]
         complex-valued spectrogram
     power : float > 0
         Exponent for the magnitude spectrogram,
@@ -498,7 +523,7 @@ def magphase(D, power=1):
 
     Returns
     -------
-    D_mag   : np.ndarray [shape=(d, t), dtype=real]
+    D_mag : np.ndarray [shape=(d, t), dtype=real]
         magnitude of `D`, raised to `power`
     D_phase : np.ndarray [shape=(d, t), dtype=complex]
         `exp(1.j * phi)` where `phi` is the phase of `D`
@@ -583,7 +608,7 @@ def phase_vocoder(D, rate, hop_length=None):
 
     Returns
     -------
-    D_stretched  : np.ndarray [shape=(d, t / rate), dtype=complex]
+    D_stretched : np.ndarray [shape=(d, t / rate), dtype=complex]
         time-stretched STFT
     """
 
@@ -634,7 +659,7 @@ def phase_vocoder(D, rate, hop_length=None):
 
 @cache(level=20)
 def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
-         tuning=0.0, pad_mode='reflect', **kwargs):
+         tuning=0.0, pad_mode='reflect', flayout=None, **kwargs):
     r'''Time-frequency representation using IIR filters [1]_.
 
     This function will return a time-frequency representation
@@ -642,7 +667,7 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
     First, `y` is resampled as needed according to the provided `sample_rates`.
     Then, a filterbank with with `n` band-pass filters is designed.
     The resampled input signals are processed by the filterbank as a whole.
-    (`scipy.signal.filtfilt` is used to make the phase linear.)
+    (`scipy.signal.filtfilt` resp. `sosfiltfilt` is used to make the phase linear.)
     The output of the filterbank is cut into frames.
     For each band, the short-time mean-square power (STMSP) is calculated by
     summing `win_length` subsequent filtered time samples.
@@ -685,6 +710,12 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
         If `center=True`, the padding mode to use at the edges of the signal.
         By default, this function uses reflection padding.
 
+    flayout : string
+        - If `ba`, the standard difference equation is used for filtering with `scipy.signal.filtfilt`.
+          Can be unstable for high-order filters.
+        - If `sos`, a series of second-order filters is used for filtering with `scipy.signal.sosfiltfilt`.
+          Minimizes numerical precision errors for high-order filters, but is slower.
+
     kwargs : additional keyword arguments
         Additional arguments for `librosa.filters.semitone_filterbank()`
         (e.g., could be used to provide another set of `center_freqs` and `sample_rates`).
@@ -694,6 +725,11 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
     bands_power : np.ndarray [shape=(n, t), dtype=dtype]
         Short-time mean-square power for the input signal.
 
+    Raises
+    ------
+    ParameterError
+        If `flayout` is not None, `ba`, or `sos`.
+
     See Also
     --------
     librosa.filters.semitone_filterbank
@@ -701,6 +737,7 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
     librosa.filters.mr_frequencies
     librosa.core.cqt
     scipy.signal.filtfilt
+    scipy.signal.sosfiltfilt
 
     Examples
     --------
@@ -714,6 +751,14 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
     >>> plt.tight_layout()
     '''
 
+    if flayout is None:
+        warnings.warn('Default filter layout for `iirt` is `ba`, but will be `sos` in 0.7.',
+                      FutureWarning)
+        flayout = 'ba'
+
+    elif flayout not in ('ba', 'sos'):
+        raise ParameterError('Unsupported flayout={}'.format(flayout))
+
     # check audio input
     util.valid_audio(y)
 
@@ -726,7 +771,7 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
         y = np.pad(y, int(hop_length), mode=pad_mode)
 
     # get the semitone filterbank
-    filterbank_ct, sample_rates = semitone_filterbank(tuning=tuning, **kwargs)
+    filterbank_ct, sample_rates = semitone_filterbank(tuning=tuning, flayout=flayout, **kwargs)
 
     # create three downsampled versions of the audio signal
     y_resampled = []
@@ -749,8 +794,12 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
         # filter the signal
         cur_sr_idx = np.flatnonzero(y_srs == cur_sr)[0]
 
-        cur_filter_output = scipy.signal.filtfilt(cur_filter[0], cur_filter[1],
-                                                  y_resampled[cur_sr_idx])
+        if flayout == 'ba':
+            cur_filter_output = scipy.signal.filtfilt(cur_filter[0], cur_filter[1],
+                                                      y_resampled[cur_sr_idx])
+        elif flayout == 'sos':
+            cur_filter_output = scipy.signal.sosfiltfilt(cur_filter,
+                                                         y_resampled[cur_sr_idx])
 
         # frame the current filter output
         cur_frames = util.frame(np.ascontiguousarray(cur_filter_output),
@@ -790,7 +839,7 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
 
     Returns
     -------
-    S_db   : np.ndarray
+    S_db : np.ndarray
         ``S_db ~= 10 * log10(S) - 10 * log10(ref)``
 
     See Also
@@ -1273,21 +1322,16 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
     shape[axis] = -1
 
     # Apply the window and fft
-    result = fft.fft(y_res * (x_exp**beta).reshape(shape),
-                     axis=axis, overwrite_x=True)
-
-    # Slice out the positive-scale component
-    idx = [slice(None)] * result.ndim
-    idx[axis] = slice(0, 1 + n_fmt//2)
-
-    # Truncate and length-normalize
-    return result[tuple(idx)] * np.sqrt(n) / n_fmt
+    # Normalization is absorbed into the window here for expedience
+    fft = get_fftlib()
+    return fft.rfft(y_res * ((x_exp**beta).reshape(shape) * np.sqrt(n) / n_fmt),
+                    axis=axis)
 
 
 @cache(level=30)
 def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
          time_constant=0.400, eps=1e-6, b=None, max_size=1, ref=None,
-         axis=-1, max_axis=None):
+         axis=-1, max_axis=None, zi=None, return_zf=False):
     '''Per-channel energy normalization (PCEN) [1]_
 
     This function normalizes a time-frequency representation `S` by
@@ -1379,10 +1423,27 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
         If `S` is not two-dimensional, and `max_size > 1`, an error
         will be raised.
 
+    zi : np.ndarray
+        The initial filter delay values.
+
+        This may be the `zf` (final delay values) of a previous call to `pcen`, or
+        computed by `scipy.signal.lfilter_zi`.
+
+    return_zf : bool
+        If `True`, return the final filter delay values along with the PCEN output `P`.
+        This is primarily useful in streaming contexts, where the final state of one
+        block of processing should be used to initialize the next block.
+
+        If `False` (default) only the PCEN values `P` are returned.
+
+
     Returns
     -------
     P : np.ndarray, non-negative [shape=(n, m)]
         The per-channel energy normalized version of `S`.
+
+    zf : np.ndarray (optional)
+        The final filter delay values.  Only returned if `return_zf=True`.
 
     See Also
     --------
@@ -1482,14 +1543,27 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
 
             ref = scipy.ndimage.maximum_filter1d(S, max_size, axis=max_axis)
 
-    S_smooth = scipy.signal.lfilter([b], [1, b - 1], ref, axis=axis)
+    if zi is None:
+        # Make sure zi matches dimension to input
+        shape = tuple([1] * ref.ndim)
+        zi = np.empty(shape)
+        zi[:] = scipy.signal.lfilter_zi([b], [1, b - 1])[:]
+
+    S_smooth, zf = scipy.signal.lfilter([b], [1, b - 1], ref, zi=zi,
+                                        axis=axis)
 
     # Working in log-space gives us some stability, and a slight speedup
     smooth = np.exp(-gain * (np.log(eps) + np.log1p(S_smooth / eps)))
-    return (S * smooth + bias)**power - bias**power
+    S_out = (S * smooth + bias)**power - bias**power
+
+    if return_zf:
+        return S_out, zf
+    else:
+        return S_out
 
 
-def _spectrogram(y=None, S=None, n_fft=2048, hop_length=512, power=1):
+def _spectrogram(y=None, S=None, n_fft=2048, hop_length=512, power=1,
+                 win_length=None, window='hann', center=True, pad_mode='reflect'):
     '''Helper function to retrieve a magnitude spectrogram.
 
     This is primarily used in feature extraction functions that can operate on
@@ -1514,11 +1588,36 @@ def _spectrogram(y=None, S=None, n_fft=2048, hop_length=512, power=1):
         Exponent for the magnitude spectrogram,
         e.g., 1 for energy, 2 for power, etc.
 
+    win_length : int <= n_fft [scalar]
+        Each frame of audio is windowed by `window()`.
+        The window will be of length `win_length` and then padded
+        with zeros to match `n_fft`.
+
+        If unspecified, defaults to ``win_length = n_fft``.
+
+    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        - a window specification (string, tuple, or number);
+          see `scipy.signal.get_window`
+        - a window function, such as `scipy.signal.hanning`
+        - a vector or array of length `n_fft`
+
+        .. see also:: `filters.get_window`
+
+    center : boolean
+        - If `True`, the signal `y` is padded so that frame
+          `t` is centered at `y[t * hop_length]`.
+        - If `False`, then frame `t` begins at `y[t * hop_length]`
+
+    pad_mode : string
+        If `center=True`, the padding mode to use at the edges of the signal.
+        By default, STFT uses reflection padding.
+
+
     Returns
     -------
     S_out : np.ndarray [dtype=np.float32]
         - If `S` is provided as input, then `S_out == S`
-        - Else, `S_out = |stft(y, n_fft=n_fft, hop_length=hop_length)|**power`
+        - Else, `S_out = |stft(y, ...)|**power`
 
     n_fft : int > 0
         - If `S` is provided, then `n_fft` is inferred from `S`
@@ -1530,6 +1629,8 @@ def _spectrogram(y=None, S=None, n_fft=2048, hop_length=512, power=1):
         n_fft = 2 * (S.shape[0] - 1)
     else:
         # Otherwise, compute a magnitude spectrogram from input
-        S = np.abs(stft(y, n_fft=n_fft, hop_length=hop_length))**power
+        S = np.abs(stft(y, n_fft=n_fft, hop_length=hop_length,
+                        win_length=win_length, center=center,
+                        window=window, pad_mode=pad_mode))**power
 
     return S, n_fft
