@@ -6,14 +6,13 @@ from warnings import warn
 import numpy as np
 import scipy.signal
 
-from .. import cache
+from .._cache import cache
 from ..util.exceptions import ParameterError
-from ..util.deprecation import Deprecated
 __all__ = ['delta', 'stack_memory']
 
 
 @cache(level=40)
-def delta(data, width=9, order=1, axis=-1, trim=Deprecated(), mode='interp', **kwargs):
+def delta(data, width=9, order=1, axis=-1, mode='interp', **kwargs):
     r'''Compute delta features: local estimate of the derivative
     of the input data along the selected axis.
 
@@ -36,10 +35,6 @@ def delta(data, width=9, order=1, axis=-1, trim=Deprecated(), mode='interp', **k
     axis      : int [scalar]
         the axis along which to compute deltas.
         Default is -1 (columns).
-
-    trim      : bool [DEPRECATED]
-        This parameter is deprecated in 0.6.0 and will be removed
-        in 0.7.0.
 
     mode : str, {'interp', 'nearest', 'mirror', 'constant', 'wrap'}
         Padding mode for estimating differences at the boundaries.
@@ -98,10 +93,6 @@ def delta(data, width=9, order=1, axis=-1, trim=Deprecated(), mode='interp', **k
     >>> plt.tight_layout()
 
     '''
-    if not isinstance(trim, Deprecated):
-        warn('The `trim` parameter to `delta` is deprecated in librosa 0.6.0.'
-             'It will be removed in 0.7.0.',
-             DeprecationWarning)
 
     data = np.atleast_1d(data)
 

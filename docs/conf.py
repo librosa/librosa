@@ -405,8 +405,9 @@ texinfo_documents = [
 autodoc_member_order = 'bysource'
 
 # Sphinx-contrib versioning
+# sphinx-versioning -l conf.py push docs gh-pages .
 import re
-scv_whitelist_branches = ('master',)
+#scv_whitelist_branches = ('master',)
 #scv_whitelist_tags = (re.compile(r'^v?\d\.\d\.\d+(rc\d+)?$'),)  # use this for RC builds
 scv_whitelist_tags = (re.compile(r'^v?\d\.\d\.\d+$'),)  # use this for final builds
 scv_greatest_tag = True

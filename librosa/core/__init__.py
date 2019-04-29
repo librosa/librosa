@@ -14,6 +14,7 @@ Audio processing
     resample
     get_duration
     autocorrelate
+    lpc
     zero_crossings
     clicks
     tone
@@ -39,6 +40,9 @@ Spectral representations
 
     phase_vocoder
     magphase
+
+    get_fftlib
+    set_fftlib
 
 Magnitude scaling
 -----------------
@@ -96,14 +100,6 @@ Pitch and tuning
     estimate_tuning
     pitch_tuning
     piptrack
-
-Deprecated (moved)
-------------------
-.. autosummary::
-    :toctree: generated/
-
-    dtw
-    fill_off_diagonal
 """
 
 from .time_frequency import *  # pylint: disable=wildcard-import
@@ -112,12 +108,7 @@ from .spectrum import *  # pylint: disable=wildcard-import
 from .pitch import *  # pylint: disable=wildcard-import
 from .constantq import *  # pylint: disable=wildcard-import
 from .harmonic import *  # pylint: disable=wildcard-import
+from .fft import *  # pylint: disable=wildcard-import
 
-from ..util.decorators import moved as _moved
-from ..util import fill_off_diagonal as _fod
-from ..sequence import dtw as _dtw
-
-dtw = _moved('librosa.sequence.dtw', '0.6.1', '0.7')(_dtw)
-fill_off_diagonal = _moved('librosa.util.fill_off_diagonal', '0.6.1', '0.7')(_fod)
 
 __all__ = [_ for _ in dir() if not _.startswith('_')]

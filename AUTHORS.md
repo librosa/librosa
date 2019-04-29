@@ -36,6 +36,13 @@ Contributors
 * Steve Tjoa <https://github.com/stevetjoa>
 * Matt Vollrath <https://github.com/mvollrath>
 * Zhen Wang <https://github.com/nehz>
+* Kyungyun Lee <https://github.com/kyungyunlee>
+* Frank Zalkow <https://github.com/fzalkow>
+* Shayenne Moura <https://github.com/shayenne>
+* nullmightybofo <https://github.com/nullmightybofo>
+* toddrme2178 <https://github.com/toddrme2178>
+* Andy Sarroff <https://github.com/woodshop>
+* Monsij Biswal <https://github.com/monsij>
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
 

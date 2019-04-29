@@ -16,7 +16,6 @@ Array operations
     index_to_slice
     softmask
     sync
-    softmask
 
     axis_sort
     normalize
