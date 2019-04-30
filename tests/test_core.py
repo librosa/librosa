@@ -1623,7 +1623,9 @@ def y_chirp():
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 @pytest.mark.parametrize('use_length', [False, True])
 @pytest.mark.parametrize('pad_mode', ['constant', 'reflect'])
-def test_griffinlim(y_chirp, hop_length, win_length, window, center, dtype, use_length, pad_mode):
+@pytest.mark.parametrize('momentum', [0, 0.99])
+@pytest.mark.parametrize('random_state', [None, 0, np.random.RandomState()])
+def test_griffinlim(y_chirp, hop_length, win_length, window, center, dtype, use_length, pad_mode, momentum, random_state):
 
     if use_length:
         length = len(y_chirp)
@@ -1638,7 +1640,8 @@ def test_griffinlim(y_chirp, hop_length, win_length, window, center, dtype, use_
     y_rec = librosa.griffinlim(S, hop_length=hop_length, win_length=win_length,
                                window=window, center=center, dtype=dtype,
                                length=length, pad_mode=pad_mode,
-                               n_iter=3)
+                               n_iter=3, momentum=momentum,
+                               random_state=random_state)
 
     # First, check length
     if use_length:
@@ -1646,3 +1649,17 @@ def test_griffinlim(y_chirp, hop_length, win_length, window, center, dtype, use_
 
     # Next, check dtype
     assert y_rec.dtype == dtype
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_griffinlim_momentum():
+    x = np.zeros((33, 3))
+    librosa.griffinlim(x, momentum=-1)
+
+
+def test_griffinlim_momentum_warn():
+    x = np.zeros((33, 3))
+    with pytest.warns(UserWarning):
+        librosa.griffinlim(x, momentum=2)
+
+
