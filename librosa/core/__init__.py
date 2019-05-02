@@ -10,6 +10,7 @@ Audio processing
     :toctree: generated/
 
     load
+    stream
     to_mono
     resample
     get_duration
