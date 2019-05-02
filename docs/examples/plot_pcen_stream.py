@@ -29,10 +29,6 @@ import librosa.display as display
 # First, we'll start with an audio file that we want to stream
 filename = librosa.util.example_audio_file()
 
-# We can stream in blocks using soundfile
-sr = sf.info(filename).samplerate
-
-
 #####################################################################
 # Next, we'll set up the block reader to work on short segments of 
 # audio at a time.
@@ -44,18 +40,14 @@ sr = sf.info(filename).samplerate
 n_fft = 4096
 hop_length = n_fft // 2
 
-# Note that to make sure the last frame of one batch overlaps
-# properly with the first frame of the next, we'll need to tell
-# soundfile to rewind the signal after each block by using the
-# `overlap` parameter
-
 # fill_value pads out the last frame with zeros so that we have a
 # full frame at the end of the signal, even if the signal doesn't
 # divide evenly into full frames.
-blocks = sf.blocks(filename, blocksize=n_fft + 15 * hop_length,
-                   overlap=n_fft - hop_length,
-                   fill_value=0)
-
+blocks, sr = librosa.stream(filename, block_length=16,
+                            frame_length=n_fft,
+                            hop_length=hop_length,
+                            mono=True,
+                            fill_value=0)
 #####################################################################
 # For this example, we'll compute PCEN on each block, average over
 # frequency, and store the results in a list.
@@ -66,12 +58,9 @@ pcen_blocks = []
 # Initialize the PCEN filter delays to steady state
 zi = None
 
-for block in blocks:
-    # downmix frame to mono (averaging out the channel dimension)
-    y = librosa.to_mono(block.T)
-
+for y_block in blocks:
     # Compute the STFT (without padding, so center=False)
-    D = librosa.stft(y, n_fft=n_fft, hop_length=hop_length,
+    D = librosa.stft(y_block, n_fft=n_fft, hop_length=hop_length,
                      center=False)
 
     # Compute PCEN on the magnitude spectrum, using initial delays
