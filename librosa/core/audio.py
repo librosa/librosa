@@ -18,8 +18,9 @@ from .._cache import cache
 from .. import util
 from ..util.exceptions import ParameterError
 
-__all__ = ['load', 'to_mono', 'resample', 'get_duration', 'autocorrelate',
-           'lpc', 'zero_crossings', 'clicks', 'tone', 'chirp']
+__all__ = ['load', 'stream', 'to_mono', 'resample', 'get_duration',
+           'autocorrelate', 'lpc', 'zero_crossings',
+           'clicks', 'tone', 'chirp']
 
 # Resampling bandwidths as percentage of Nyquist
 BW_BEST = resampy.filters.get_filter('kaiser_best')[2]
@@ -206,6 +207,159 @@ def __audioread_load(path, offset, duration, dtype):
         y = np.empty(0, dtype=dtype)
 
     return y, sr_native
+
+
+def stream(path, block_length, frame_length=2048, hop_length=512,
+           mono=True, offset=0.0, duration=None, fill_value=None,
+           dtype=np.float32):
+    '''Stream audio in fixed-length buffers.
+
+    Instead of loading the entire audio signal into memory (as
+    in `load()`, this function produces *blocks* of audio spanning
+    a fixed number of frames at a specified frame length and hop
+    length.
+
+    This is primarily useful for processing large files that won't
+    fit entirely in memory at once.
+
+    While this function strives for similar behavior to `load`,
+    there are a few caveats that users should be aware of:
+
+        1. Automatic sample-rate conversion is not supported.
+           Audio will be streamed in its native sample rate,
+           so the default values for `frame_length` and `hop_length`
+           may not behave as expected.  Use with caution!
+        2. Many analyses require access to the entire signal
+           to behave correctly, such as `resample`, `cqt`, or
+           `beat_track`, so these methods will not be appropriate
+           for streamed data.
+        3. The `block_length` parameter specifies how many frames
+           of audio will be produced per block.  Larger values will
+           consume more memory, but will be more efficient to process
+           down-stream.  The best value will ultimately depend on your
+           application and other system constraints.
+        4. By default, most librosa analyses (e.g., short-time Fourier
+           transform) assume centered frames, which requires padding the
+           signal at the beginning and end.  This will not work correctly
+           when the signal is carved into (overlapping) blocks prior to
+           analysis.  To disable this feature, use `center=False` in all
+           frame-based analyses.
+
+
+    Parameters
+    ----------
+    path : string, int, or file-like object
+        path to the input file to stream.
+
+        Any codec supported by `soundfile` is permitted here.
+
+    block_length : int > 0
+        The number of frames to include in each block.
+
+        Note that at the end of the file, there may not be enough
+        data to fill an entire block, resulting in a shorter block
+        by default.  To pad the signal out so that blocks are always
+        full length, set `fill_value` (see below).
+
+    frame_length : int > 0
+        The number of samples per frame.
+
+    hop_length : int > 0
+        The number of samples to advance between frames.
+
+        Note that by when `hop_length < frame_length`, neighboring frames
+        will overlap.  Similarly, the last frame of one *block* will overlap
+        with the first frame of the next *block*.
+
+    mono : bool
+        Convert the signal to mono during streaming
+
+    offset : float
+        Start reading after this time (in seconds)
+
+    duration : float
+        Only load up to this much audio (in seconds)
+
+    fill_value : float [optional]
+        If padding the signal to produce constant-length blocks,
+        this value will be used at the end of the signal.
+
+        In most cases, `fill_value=0` (silence) is expected, but
+        you may specify any value here.
+
+    dtype : numeric type
+        data type of audio buffers to be produced
+
+    Returns
+    -------
+    stream : generator
+        A generator which produces blocks of audio
+
+    See Also
+    --------
+    load
+    soundfile.blocks
+
+    Examples
+    --------
+    Apply a short-term Fourier transform to blocks of 256 frames
+    at a time.  Note that streaming operation requires left-aligned
+    frames, so we must set `center=False` to avoid padding artifacts.
+
+    >>> stream, sr = librosa.stream(librosa.util.example_audio_file(), 256)
+    >>> for y_block in stream:
+    ...     D_block = librosa.stft(y_block, center=False)
+
+    Or compute a mel spectrogram over a stream, using a larger FFT window
+    and longer hop length.
+
+    >>> stream, sr = librosa.stream(librosa.util.example_audio_file(), 256,
+    ...                             frame_length=4096, hop_length=1024)
+    >>> for y_block in stream:
+    ...     m_block = librosa.feature.melspectrogram(y_block, sr=sr,
+    ...                                              n_fft=4096,
+    ...                                              hop_length=1024,
+    ...                                              center=False)
+
+    '''
+
+    # Get the sample rate from the file info
+    sr = sf.info(path).samplerate
+
+    # Construct the stream
+    block_stream = __stream(path, sr, block_length, frame_length, hop_length,
+                            mono, offset, duration, fill_value, dtype)
+
+    return block_stream, sr
+
+
+def __stream(path, sr, block_length, frame_length, hop_length,
+             mono, offset, duration, fill_value, dtype):
+    '''Private function for wrapping sf.blocks in a librosa interface.'''
+
+    if offset:
+        start = int(offset * sr)
+    else:
+        start = 0
+
+    if duration:
+        frames = int(duration * sr)
+    else:
+        frames = -1
+
+    blocks = sf.blocks(path,
+                       blocksize=frame_length + (block_length - 1) * hop_length,
+                       overlap=frame_length - hop_length,
+                       fill_value=fill_value,
+                       start=start,
+                       frames=frames,
+                       always_2d=False)
+
+    for block in blocks:
+        if mono:
+            yield to_mono(block.T)
+        else:
+            yield block.T
 
 
 @cache(level=20)
