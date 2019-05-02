@@ -18,7 +18,8 @@ from .._cache import cache
 from .. import util
 from ..util.exceptions import ParameterError
 
-__all__ = ['load', 'stream', 'to_mono', 'resample', 'get_duration',
+__all__ = ['load', 'stream', 'to_mono', 'resample',
+           'get_duration', 'get_samplerate',
            'autocorrelate', 'lpc', 'zero_crossings',
            'clicks', 'tone', 'chirp']
 
@@ -353,6 +354,7 @@ def __stream(path, sr, block_length, frame_length, hop_length,
                        fill_value=fill_value,
                        start=start,
                        frames=frames,
+                       dtype=dtype,
                        always_2d=False)
 
     for block in blocks:
@@ -568,6 +570,9 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         and is therefore useful for querying the duration of
         long files.
 
+        As in `load()`, this can also be an integer or open file-handle
+        that can be processed by `soundfile`.
+
     Returns
     -------
     d : float >= 0
@@ -590,7 +595,7 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     if filename is not None:
         try:
             return sf.info(filename).duration
-        except:
+        except RuntimeError:
             with audioread.audio_open(filename) as fdesc:
                 return fdesc.duration
 
@@ -614,6 +619,37 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
             n_samples = y.shape[-1]
 
     return float(n_samples) / sr
+
+
+def get_samplerate(path):
+    '''Get the sampling rate for a given file.
+
+    Parameters
+    ----------
+    path : string, int, or file-like
+        The path to the file to be loaded
+        As in `load()`, this can also be an integer or open file-handle
+        that can be processed by `soundfile`.
+
+    Returns
+    -------
+    sr : number > 0
+        The sampling rate of the given audio file
+
+    Examples
+    --------
+    Get the sampling rate for the included audio file
+
+    >>> path = librosa.util.example_audio_file()
+    >>> librosa.get_samplerate(path)
+    44100
+    '''
+    try:
+        return sf.info(path).samplerate
+    except RuntimeError:
+        with audioread.audio_open(path) as fdesc:
+            return fdesc.samplerate
+
 
 @cache(level=20)
 def autocorrelate(y, max_size=None, axis=-1):
