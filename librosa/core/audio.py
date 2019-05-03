@@ -326,6 +326,10 @@ def stream(path, block_length, frame_length=2048, hop_length=512,
 
     if not (isinstance(block_length, int) and block_length > 0):
         raise ParameterError('block_length={} must be a positive integer')
+    if not (isinstance(frame_length, int) and frame_length > 0):
+        raise ParameterError('frame_length={} must be a positive integer')
+    if not (isinstance(hop_length, int) and hop_length > 0):
+        raise ParameterError('hop_length={} must be a positive integer')
 
     # Get the sample rate from the file info
     sr = sf.info(path).samplerate
