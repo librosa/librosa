@@ -624,7 +624,7 @@ def test_lpc_regress():
         assert np.allclose(test_coeffs, est_coeffs)
 
     for infile in files(os.path.join('tests', 'data', 'core-lpcburg-*.mat')):
-        test_data = scipy.io.loadmat(infile, squeeze_me=True);
+        test_data = scipy.io.loadmat(infile, squeeze_me=True)
 
         for i in range(len(test_data['signal'])):
             yield (__test,
@@ -1669,3 +1669,68 @@ def test_get_samplerate(ext):
 
     sr = librosa.get_samplerate(path)
     assert sr == 22050
+
+
+@pytest.mark.parametrize('block_length', [10, 30])
+@pytest.mark.parametrize('frame_length', [1024, 2048])
+@pytest.mark.parametrize('hop_length', [512, 1024])
+@pytest.mark.parametrize('mono', [False, True])
+@pytest.mark.parametrize('offset', [0.0, 2.0])
+@pytest.mark.parametrize('duration', [None, 1.0])
+@pytest.mark.parametrize('fill_value', [None, 999.0])
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_stream(block_length, frame_length, hop_length, mono, offset,
+                duration, fill_value, dtype):
+
+    # test data is stereo, int 16
+    path = os.path.join('tests', 'data', 'test1_22050.wav')
+
+    # First, load the reference data.
+    # We'll cast to mono here to simplify checking
+    y_full, sr = librosa.load(path, sr=None, dtype=dtype, mono=True,
+                              offset=offset, duration=duration)
+
+    blocks, sr_stream = librosa.stream(path, block_length=block_length,
+                                       frame_length=frame_length,
+                                       hop_length=hop_length,
+                                       dtype=dtype, mono=mono,
+                                       offset=offset, duration=duration,
+                                       fill_value=fill_value)
+
+    # First, check the rate
+    assert sr == sr_stream
+
+    y_frame_stream = []
+    y_frame = librosa.util.frame(y_full, frame_length, hop_length)
+
+    target_length = frame_length + (block_length - 1) * hop_length
+
+    for y_block in blocks:
+        # Check the dtype
+        assert y_block.dtype == dtype
+
+        # Check for mono
+        if mono:
+            assert y_block.ndim == 1
+        else:
+            assert y_block.ndim == 2
+            assert y_block.shape[0] == 2
+
+        # Check the length
+        if fill_value is None:
+            assert y_block.shape[-1] <= target_length
+        else:
+            assert y_block.shape[-1] == target_length
+
+        # frame this for easy checking
+        y_b_mono = librosa.to_mono(y_block)
+        if len(y_b_mono) >= frame_length:
+            y_b_frame = librosa.util.frame(y_b_mono, frame_length, hop_length)
+            y_frame_stream.append(y_b_frame)
+
+    # Concatenate the framed blocks together
+    y_frame_stream = np.concatenate(y_frame_stream, axis=1)
+
+    # Raw audio will not be padded
+    n = y_frame.shape[1]
+    assert np.allclose(y_frame[:, :n], y_frame_stream[:, :n])
