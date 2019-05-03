@@ -14,6 +14,7 @@ Audio processing
     to_mono
     resample
     get_duration
+    get_samplerate
     autocorrelate
     lpc
     zero_crossings
