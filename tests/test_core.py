@@ -1661,3 +1661,11 @@ def test_griffinlim_momentum_warn():
         librosa.griffinlim(x, momentum=2)
 
 
+@pytest.mark.parametrize('ext', ['wav', 'mp3'])
+def test_get_samplerate(ext):
+
+    path = os.path.join('tests', 'data',
+                        os.path.extsep.join(['test1_22050', ext]))
+
+    sr = librosa.get_samplerate(path)
+    assert sr == 22050
