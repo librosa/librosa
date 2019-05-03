@@ -1673,9 +1673,12 @@ def test_get_samplerate(ext):
     assert sr == 22050
 
 
-@pytest.mark.parametrize('block_length', [10, 30])
-@pytest.mark.parametrize('frame_length', [1024, 2048])
-@pytest.mark.parametrize('hop_length', [512, 1024])
+@pytest.mark.parametrize('block_length', [10, 30,
+                                          pytest.mark.xfail(0, raises=librosa.ParameterError)])
+@pytest.mark.parametrize('frame_length', [1024, 2048,
+                                          pytest.mark.xfail(0, raises=librosa.ParameterError)])
+@pytest.mark.parametrize('hop_length', [512, 1024,
+                                          pytest.mark.xfail(0, raises=librosa.ParameterError)])
 @pytest.mark.parametrize('mono', [False, True])
 @pytest.mark.parametrize('offset', [0.0, 2.0])
 @pytest.mark.parametrize('duration', [None, 1.0])
@@ -1687,11 +1690,6 @@ def test_stream(block_length, frame_length, hop_length, mono, offset,
     # test data is stereo, int 16
     path = os.path.join('tests', 'data', 'test1_22050.wav')
 
-    # First, load the reference data.
-    # We'll cast to mono here to simplify checking
-    y_full, sr = librosa.load(path, sr=None, dtype=dtype, mono=True,
-                              offset=offset, duration=duration)
-
     blocks, sr_stream = librosa.stream(path, block_length=block_length,
                                        frame_length=frame_length,
                                        hop_length=hop_length,
@@ -1699,12 +1697,7 @@ def test_stream(block_length, frame_length, hop_length, mono, offset,
                                        offset=offset, duration=duration,
                                        fill_value=fill_value)
 
-    # First, check the rate
-    assert sr == sr_stream
-
     y_frame_stream = []
-    y_frame = librosa.util.frame(y_full, frame_length, hop_length)
-
     target_length = frame_length + (block_length - 1) * hop_length
 
     for y_block in blocks:
@@ -1732,6 +1725,15 @@ def test_stream(block_length, frame_length, hop_length, mono, offset,
 
     # Concatenate the framed blocks together
     y_frame_stream = np.concatenate(y_frame_stream, axis=1)
+
+    # Load the reference data.
+    # We'll cast to mono here to simplify checking
+
+    y_full, sr = librosa.load(path, sr=None, dtype=dtype, mono=True,
+                              offset=offset, duration=duration)
+    # First, check the rate
+    assert sr == sr_stream
+    y_frame = librosa.util.frame(y_full, frame_length, hop_length)
 
     # Raw audio will not be padded
     n = y_frame.shape[1]
