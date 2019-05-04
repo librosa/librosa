@@ -43,11 +43,13 @@ hop_length = n_fft // 2
 # fill_value pads out the last frame with zeros so that we have a
 # full frame at the end of the signal, even if the signal doesn't
 # divide evenly into full frames.
-blocks, sr = librosa.stream(filename, block_length=16,
-                            frame_length=n_fft,
-                            hop_length=hop_length,
-                            mono=True,
-                            fill_value=0)
+sr = librosa.get_samplerate(filename)
+
+stream = librosa.stream(filename, block_length=16,
+                        frame_length=n_fft,
+                        hop_length=hop_length,
+                        mono=True,
+                        fill_value=0)
 #####################################################################
 # For this example, we'll compute PCEN on each block, average over
 # frequency, and store the results in a list.
@@ -58,7 +60,7 @@ pcen_blocks = []
 # Initialize the PCEN filter delays to steady state
 zi = None
 
-for y_block in blocks:
+for y_block in stream:
     # Compute the STFT (without padding, so center=False)
     D = librosa.stft(y_block, n_fft=n_fft, hop_length=hop_length,
                      center=False)
@@ -71,9 +73,6 @@ for y_block in blocks:
 
     # Compute the average PCEN over frequency, and append it to our list
     pcen_blocks.extend(np.mean(P, axis=0))
-
-# Close the block reader
-blocks.close()
 
 # Cast to a numpy array for use downstream
 pcen_blocks = np.asarray(pcen_blocks)
