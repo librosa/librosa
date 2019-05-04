@@ -75,6 +75,10 @@ Time and frequency conversion
     time_to_frames
     time_to_samples
 
+    blocks_to_frames
+    blocks_to_samples
+    blocks_to_time
+
     hz_to_note
     hz_to_midi
     midi_to_hz
