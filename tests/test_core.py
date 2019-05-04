@@ -1690,17 +1690,17 @@ def test_stream(block_length, frame_length, hop_length, mono, offset,
     # test data is stereo, int 16
     path = os.path.join('tests', 'data', 'test1_22050.wav')
 
-    blocks, sr_stream = librosa.stream(path, block_length=block_length,
-                                       frame_length=frame_length,
-                                       hop_length=hop_length,
-                                       dtype=dtype, mono=mono,
-                                       offset=offset, duration=duration,
-                                       fill_value=fill_value)
+    stream = librosa.stream(path, block_length=block_length,
+                            frame_length=frame_length,
+                            hop_length=hop_length,
+                            dtype=dtype, mono=mono,
+                            offset=offset, duration=duration,
+                            fill_value=fill_value)
 
     y_frame_stream = []
     target_length = frame_length + (block_length - 1) * hop_length
 
-    for y_block in blocks:
+    for y_block in stream:
         # Check the dtype
         assert y_block.dtype == dtype
 
@@ -1732,7 +1732,6 @@ def test_stream(block_length, frame_length, hop_length, mono, offset,
     y_full, sr = librosa.load(path, sr=None, dtype=dtype, mono=True,
                               offset=offset, duration=duration)
     # First, check the rate
-    assert sr == sr_stream
     y_frame = librosa.util.frame(y_full, frame_length, hop_length)
 
     # Raw audio will not be padded
