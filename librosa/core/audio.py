@@ -210,41 +210,50 @@ def __audioread_load(path, offset, duration, dtype):
     return y, sr_native
 
 
-def stream(path, block_length, frame_length=2048, hop_length=512,
+def stream(path, block_length, frame_length, hop_length,
            mono=True, offset=0.0, duration=None, fill_value=None,
            dtype=np.float32):
     '''Stream audio in fixed-length buffers.
+
+    This is primarily useful for processing large files that won't
+    fit entirely in memory at once.
 
     Instead of loading the entire audio signal into memory (as
     in `load()`, this function produces *blocks* of audio spanning
     a fixed number of frames at a specified frame length and hop
     length.
 
-    This is primarily useful for processing large files that won't
-    fit entirely in memory at once.
-
     While this function strives for similar behavior to `load`,
     there are a few caveats that users should be aware of:
 
-        1. Automatic sample-rate conversion is not supported.
+        1. This function does not return audio buffers directly.
+           It returns a generator, which you can iterate over
+           to produce blocks of audio.  A *block*, in this context,
+           refers to a buffer of audio which spans a given number of
+           (potentially overlapping) frames.
+        2. Automatic sample-rate conversion is not supported.
            Audio will be streamed in its native sample rate,
-           so the default values for `frame_length` and `hop_length`
-           may not behave as expected.  Use with caution!
-        2. Many analyses require access to the entire signal
+           so no default values are provided for `frame_length`
+           and `hop_length`.  It is recommended that you first
+           get the sampling rate for the file in question, using
+           `get_samplerate()`, and set these parameters accordingly.
+        3. Many analyses require access to the entire signal
            to behave correctly, such as `resample`, `cqt`, or
            `beat_track`, so these methods will not be appropriate
            for streamed data.
-        3. The `block_length` parameter specifies how many frames
+        4. The `block_length` parameter specifies how many frames
            of audio will be produced per block.  Larger values will
            consume more memory, but will be more efficient to process
            down-stream.  The best value will ultimately depend on your
            application and other system constraints.
-        4. By default, most librosa analyses (e.g., short-time Fourier
+        5. By default, most librosa analyses (e.g., short-time Fourier
            transform) assume centered frames, which requires padding the
            signal at the beginning and end.  This will not work correctly
-           when the signal is carved into (overlapping) blocks prior to
-           analysis.  To disable this feature, use `center=False` in all
-           frame-based analyses.
+           when the signal is carved into blocks, because it would introduce
+           padding in the middle of the signal.  To disable this feature,
+           use `center=False` in all frame-based analyses.
+        
+    See the examples below for proper usage of this function.
 
 
     Parameters
@@ -294,11 +303,15 @@ def stream(path, block_length, frame_length=2048, hop_length=512,
     Returns
     -------
     stream : generator
-        A generator which produces blocks of audio
+        A generator which produces blocks of audio.
+
+    sr : number > 0
+        The sampling rate of the audio
 
     See Also
     --------
     load
+    get_samplerate
     soundfile.blocks
 
     Examples
@@ -307,19 +320,24 @@ def stream(path, block_length, frame_length=2048, hop_length=512,
     at a time.  Note that streaming operation requires left-aligned
     frames, so we must set `center=False` to avoid padding artifacts.
 
-    >>> stream, sr = librosa.stream(librosa.util.example_audio_file(), 256)
+    >>> stream, sr = librosa.stream(librosa.util.example_audio_file(),
+    ...                             block_length=256,
+    ...                             frame_length=4096,
+    ...                             hop_length=1024)
     >>> for y_block in stream:
     ...     D_block = librosa.stft(y_block, center=False)
 
-    Or compute a mel spectrogram over a stream, using a larger FFT window
-    and longer hop length.
+    Or compute a mel spectrogram over a stream, using a shorter frame
+    and non-overlapping windows
 
-    >>> stream, sr = librosa.stream(librosa.util.example_audio_file(), 256,
-    ...                             frame_length=4096, hop_length=1024)
+    >>> stream, sr = librosa.stream(librosa.util.example_audio_file(),
+    ...                             block_length=256,
+    ...                             frame_length=2048,
+    ...                             hop_length=2048)
     >>> for y_block in stream:
     ...     m_block = librosa.feature.melspectrogram(y_block, sr=sr,
-    ...                                              n_fft=4096,
-    ...                                              hop_length=1024,
+    ...                                              n_fft=2048,
+    ...                                              hop_length=2048,
     ...                                              center=False)
 
     '''
