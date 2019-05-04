@@ -300,13 +300,11 @@ def stream(path, block_length, frame_length, hop_length,
     dtype : numeric type
         data type of audio buffers to be produced
 
-    Returns
-    -------
-    stream : generator
-        A generator which produces blocks of audio.
-
-    sr : number > 0
-        The sampling rate of the audio
+    Yields
+    ------
+    y : np.ndarray
+        An audio buffer of (at most) 
+        `block_length * (hop_length-1) + frame_length` samples.
 
     See Also
     --------
@@ -320,20 +318,24 @@ def stream(path, block_length, frame_length, hop_length,
     at a time.  Note that streaming operation requires left-aligned
     frames, so we must set `center=False` to avoid padding artifacts.
 
-    >>> stream, sr = librosa.stream(librosa.util.example_audio_file(),
-    ...                             block_length=256,
-    ...                             frame_length=4096,
-    ...                             hop_length=1024)
+    >>> filename = librosa.util.example_audio_file()
+    >>> sr = librosa.get_samplerate(filename)
+    >>> stream librosa.stream(filename,
+    ...                       block_length=256,
+    ...                       frame_length=4096,
+    ...                       hop_length=1024)
     >>> for y_block in stream:
     ...     D_block = librosa.stft(y_block, center=False)
 
     Or compute a mel spectrogram over a stream, using a shorter frame
     and non-overlapping windows
 
-    >>> stream, sr = librosa.stream(librosa.util.example_audio_file(),
-    ...                             block_length=256,
-    ...                             frame_length=2048,
-    ...                             hop_length=2048)
+    >>> filename = librosa.util.example_audio_file()
+    >>> sr = librosa.get_samplerate(filename)
+    >>> stream = librosa.stream(filename,
+    ...                         block_length=256,
+    ...                         frame_length=2048,
+    ...                         hop_length=2048)
     >>> for y_block in stream:
     ...     m_block = librosa.feature.melspectrogram(y_block, sr=sr,
     ...                                              n_fft=2048,
@@ -353,16 +355,6 @@ def stream(path, block_length, frame_length, hop_length,
     sr = sf.info(path).samplerate
 
     # Construct the stream
-    block_stream = __stream(path, sr, block_length, frame_length, hop_length,
-                            mono, offset, duration, fill_value, dtype)
-
-    return block_stream, sr
-
-
-def __stream(path, sr, block_length, frame_length, hop_length,
-             mono, offset, duration, fill_value, dtype):
-    '''Private function for wrapping sf.blocks in a librosa interface.'''
-
     if offset:
         start = int(offset * sr)
     else:
