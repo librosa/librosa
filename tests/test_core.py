@@ -1671,11 +1671,11 @@ def test_get_samplerate(ext):
     assert sr == 22050
 
 
-@pytest.mark.parametrize('block_length', [10, 30,
+@pytest.mark.parametrize('block_length', [10, np.int64(30),
                                           pytest.mark.xfail(0, raises=librosa.ParameterError)])
-@pytest.mark.parametrize('frame_length', [1024, 2048,
+@pytest.mark.parametrize('frame_length', [1024, np.int64(2048),
                                           pytest.mark.xfail(0, raises=librosa.ParameterError)])
-@pytest.mark.parametrize('hop_length', [512, 1024,
+@pytest.mark.parametrize('hop_length', [512, np.int64(1024),
                                           pytest.mark.xfail(0, raises=librosa.ParameterError)])
 @pytest.mark.parametrize('mono', [False, True])
 @pytest.mark.parametrize('offset', [0.0, 2.0])
