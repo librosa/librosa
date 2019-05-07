@@ -1565,7 +1565,7 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
 def griffinlim(S, n_iter=32, hop_length=None, win_length=None, window='hann',
                center=True, dtype=np.float32, length=None, pad_mode='reflect',
                momentum=0.99, random_state=None):
-   
+
     '''Approximate magnitude spectrogram inversion using the "fast" Griffin-Lim algorithm [1,2]_
 
     Given a short-time Fourier transform magnitude matrix (`S`), the algorithm randomly
@@ -1576,7 +1576,7 @@ def griffinlim(S, n_iter=32, hop_length=None, win_length=None, window='hann',
     `core.stft`).
 
     .. [1] Perraudin, N., Balazs, P., & Søndergaard, P. L.
-        "A fast Griffin-Lim algorithm," 
+        "A fast Griffin-Lim algorithm,"
         IEEE Workshop on Applications of Signal Processing to Audio and Acoustics (pp. 1-4),
         Oct. 2013.
 
@@ -1684,25 +1684,24 @@ def griffinlim(S, n_iter=32, hop_length=None, win_length=None, window='hann',
         warnings.warn('Griffin-Lim with momentum={} > 1 can be unstable. Proceed with caution!'.format(momentum))
     elif momentum < 0:
         raise ParameterError('griffinlim() called with momentum={} < 0'.format(momentum))
-        
+
     # Infer n_fft from the spectrogram shape
     n_fft = 2 * (S.shape[0] - 1)
 
     # randomly initialize the phase
     angles = np.exp(2j * np.pi * rng.rand(*S.shape))
-    
+
     # And initialize the previous iterate to 0
     rebuilt = 0.
-    
+
     for _ in range(n_iter):
         # Store the previous iterate
         tprev = rebuilt
-        
+
         # Invert with our current estimate of the phases
         inverse = istft(S * angles, hop_length=hop_length, win_length=win_length,
                         window=window, center=center, dtype=dtype, length=length)
 
-        
         # Rebuild the spectrogram
         rebuilt = stft(inverse, n_fft=n_fft, hop_length=hop_length,
                        win_length=win_length, window=window, center=center,
