@@ -436,7 +436,7 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     if filename is not None:
         try:
             return sf.info(filename).duration
-        except:
+        except RuntimeWarning('Retrieving duration from soundfile.info unsuccessful. Trying audioread..'):
             with audioread.audio_open(filename) as fdesc:
                 return fdesc.duration
 
@@ -460,6 +460,7 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
             n_samples = y.shape[-1]
 
     return float(n_samples) / sr
+
 
 @cache(level=20)
 def autocorrelate(y, max_size=None, axis=-1):

@@ -8,6 +8,7 @@ __all__ = ['get_fftlib', 'set_fftlib']
 # Object to hold FFT interfaces
 __FFTLIB = None
 
+
 def set_fftlib(lib=None):
     '''Set the FFT library used by librosa.
 
