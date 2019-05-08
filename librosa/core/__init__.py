@@ -10,9 +10,11 @@ Audio processing
     :toctree: generated/
 
     load
+    stream
     to_mono
     resample
     get_duration
+    get_samplerate
     autocorrelate
     lpc
     zero_crossings
@@ -72,6 +74,10 @@ Time and frequency conversion
     samples_to_time
     time_to_frames
     time_to_samples
+
+    blocks_to_frames
+    blocks_to_samples
+    blocks_to_time
 
     hz_to_note
     hz_to_midi
