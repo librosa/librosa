@@ -430,3 +430,57 @@ def test_times_like_scalar():
 
     assert np.allclose(times, expected_times)
 
+
+@pytest.mark.parametrize('blocks', [0, 1, [10, 20]])
+@pytest.mark.parametrize('block_length', [1, 4, 8])
+def test_blocks_to_frames(blocks, block_length):
+    frames = librosa.blocks_to_frames(blocks, block_length)
+
+    # Check shape
+    assert frames.ndim == np.asarray(blocks).ndim
+    assert frames.size == np.asarray(blocks).size
+
+    # Check values
+    assert np.allclose(frames, block_length * np.asanyarray(blocks))
+
+    # Check dtype
+    assert np.issubdtype(frames.dtype, np.int)
+
+
+@pytest.mark.parametrize('blocks', [0, 1, [10, 20]])
+@pytest.mark.parametrize('block_length', [1, 4, 8])
+@pytest.mark.parametrize('hop_length', [1, 512])
+def test_blocks_to_samples(blocks, block_length, hop_length):
+    samples = librosa.blocks_to_samples(blocks, block_length,
+                                        hop_length)
+
+    # Check shape
+    assert samples.ndim == np.asarray(blocks).ndim
+    assert samples.size == np.asarray(blocks).size
+
+    # Check values
+    assert np.allclose(samples,
+                       np.asanyarray(blocks) * hop_length * block_length)
+
+    # Check dtype
+    assert np.issubdtype(samples.dtype, np.int)
+
+
+@pytest.mark.parametrize('blocks', [0, 1, [10, 20]])
+@pytest.mark.parametrize('block_length', [1, 4, 8])
+@pytest.mark.parametrize('hop_length', [1, 512])
+@pytest.mark.parametrize('sr', [22050, 44100])
+def test_blocks_to_time(blocks, block_length, hop_length, sr):
+    times = librosa.blocks_to_time(blocks, block_length,
+                                   hop_length, sr)
+
+    # Check shape
+    assert times.ndim == np.asarray(blocks).ndim
+    assert times.size == np.asarray(blocks).size
+
+    # Check values
+    assert np.allclose(times,
+                       np.asanyarray(blocks) * hop_length * block_length / float(sr))
+
+    # Check dtype
+    assert np.issubdtype(times.dtype, np.float)
