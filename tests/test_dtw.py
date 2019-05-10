@@ -149,7 +149,7 @@ def test_dtw_subseq_supplied_distance_matrix():
     costs1, path1 = librosa.sequence.dtw(C=C, subseq=True)
 
     assert np.array_equal(costs0, costs1)
-    assert np.array_equal(path1, path1)
+    assert np.array_equal(path0, path1)
 
 
 def test_dtw_subseq_sym():
