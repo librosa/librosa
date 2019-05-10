@@ -140,6 +140,18 @@ def test_dtw_subseq():
     assert np.array_equal(X, mut_X)
 
 
+def test_dtw_subseq_supplied_distance_matrix():
+    X = np.array([[0], [1], [2]])
+    Y = np.array([[1], [2], [3], [4]])
+    C = cdist(X, Y)
+
+    costs0, path0 = librosa.sequence.dtw(X.T, Y.T, subseq=True)
+    costs1, path1 = librosa.sequence.dtw(C=C, subseq=True)
+
+    assert np.array_equal(costs0, costs1)
+    assert np.array_equal(path1, path1)
+
+
 def test_dtw_subseq_sym():
     Y = np.array([10., 10., 0., 1., 2., 3., 10., 10.])
     X = np.arange(4)
