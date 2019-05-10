@@ -255,7 +255,6 @@ def stream(path, block_length, frame_length, hop_length,
         
     See the examples below for proper usage of this function.
 
-
     Parameters
     ----------
     path : string, int, or file-like object
@@ -723,7 +722,7 @@ def autocorrelate(y, max_size=None, axis=-1):
     # Compute the power spectrum along the chosen axis
     # Pad out the signal to support full-length auto-correlation.
     fft = get_fftlib()
-    powspec = np.abs(fft.fft(y, n=2 * y.shape[axis] + 1, axis=axis))**2
+    powspec = np.abs(fft.fft(y, n=2 * y.shape[axis] + 1, axis=axis)) ** 2
 
     # Convert back to time domain
     autocorr = fft.ifft(powspec, axis=axis)
@@ -825,9 +824,9 @@ def __lpc(y, order):
     # we may use all the coefficients from the previous order while we compute
     # those for the new one. These two arrays hold ar_coeffs for order M and
     # order M-1.  (Corresponding to a_{M,k} and a_{M-1,k} in eqn 5)
-    ar_coeffs = np.zeros(order+1, dtype=y.dtype)
+    ar_coeffs = np.zeros(order + 1, dtype=y.dtype)
     ar_coeffs[0] = 1
-    ar_coeffs_prev = np.zeros(order+1, dtype=y.dtype)
+    ar_coeffs_prev = np.zeros(order + 1, dtype=y.dtype)
     ar_coeffs_prev[0] = 1
 
     # These two arrays hold the forward and backward prediction error. They
@@ -840,7 +839,7 @@ def __lpc(y, order):
 
     # DEN_{M} from eqn 16 of Marple.
     den = np.dot(fwd_pred_error, fwd_pred_error) \
-        + np.dot(bwd_pred_error, bwd_pred_error)
+          + np.dot(bwd_pred_error, bwd_pred_error)
 
     for i in range(order):
         if den <= 0:
@@ -861,15 +860,15 @@ def __lpc(y, order):
         # the reflection coefficient at the end of the new AR coefficient array
         # after the preceding coefficients
         ar_coeffs_prev, ar_coeffs = ar_coeffs, ar_coeffs_prev
-        for j in range(1, i+2):
-            ar_coeffs[j] = ar_coeffs_prev[j] + reflect_coeff*ar_coeffs_prev[i - j + 1]
+        for j in range(1, i + 2):
+            ar_coeffs[j] = ar_coeffs_prev[j] + reflect_coeff * ar_coeffs_prev[i - j + 1]
 
         # Update the forward and backward prediction errors corresponding to
         # eqns 13 and 14.  We start with f_{M-1,k+1} and b_{M-1,k} and use them
         # to compute f_{M,k} and b_{M,k}
         fwd_pred_error_tmp = fwd_pred_error
-        fwd_pred_error = fwd_pred_error + reflect_coeff*bwd_pred_error
-        bwd_pred_error = bwd_pred_error + reflect_coeff*fwd_pred_error_tmp
+        fwd_pred_error = fwd_pred_error + reflect_coeff * bwd_pred_error
+        bwd_pred_error = bwd_pred_error + reflect_coeff * fwd_pred_error_tmp
 
         # SNIP - we are now done with order M and advance. M-1 <- M
 
@@ -881,8 +880,8 @@ def __lpc(y, order):
         # fwd_pred_error = f_{M-1,k}       (we have advanced M)
         # den <- DEN_{M}                   (lhs)
         #
-        q = 1 - reflect_coeff**2
-        den = q*den - bwd_pred_error[-1]**2 - fwd_pred_error[0]**2
+        q = 1 - reflect_coeff ** 2
+        den = q * den - bwd_pred_error[-1] ** 2 - fwd_pred_error[0] ** 2
 
         # Shift up forward error.
         #
