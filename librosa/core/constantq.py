@@ -592,7 +592,7 @@ def icqt(C, sr=22050, hop_length=512, fmin=None, bins_per_octave=12,
         .. note:: This parameter is deprecated in 0.7.0 and will be removed in 0.8.0.
 
     res_type : string
-        Resampling mode.  By default, this uses `fft` mode for high-quality 
+        Resampling mode.  By default, this uses `fft` mode for high-quality
         reconstruction, but this may be slow depending on your signal duration.
         See `librosa.resample` for supported modes.
 
@@ -652,7 +652,8 @@ def icqt(C, sr=22050, hop_length=512, fmin=None, bins_per_octave=12,
     if hop_length > min(lengths):
         warnings.warn('hop_length={} exceeds minimum CQT filter length={:.3f}.\n'
                       'This will probably cause unpleasant acoustic artifacts. '
-                      'Consider decreasing your hop length or increasing the frequency resolution of your CQT.'.format(hop_length, min(lengths)))
+                      'Consider decreasing your hop length or increasing the '
+                      'frequency resolution of your CQT.'.format(hop_length, min(lengths)))
 
     # The basis gets renormalized by the effective window length above;
     # This step undoes that
