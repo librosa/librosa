@@ -140,6 +140,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
     >>> plt.title('Power spectrogram')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.tight_layout()
+    >>> plt.show()
 
     """
 
