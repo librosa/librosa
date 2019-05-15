@@ -374,6 +374,7 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
     ...                          cmap='magma_r')
     >>> plt.title('Affinity recurrence')
     >>> plt.tight_layout()
+    >>> plt.show()
 
     '''
 
@@ -529,6 +530,7 @@ def recurrence_to_lag(rec, pad=True, axis=-1):
     >>> librosa.display.specshow(lag_nopad, x_axis='time')
     >>> plt.title('Lag (no padding)')
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
 
     axis = np.abs(axis)
@@ -626,6 +628,7 @@ def lag_to_recurrence(lag, axis=-1):
     >>> librosa.display.specshow(rec_nopad, x_axis='time', y_axis='time')
     >>> plt.title('Recurrence (without padding)')
     >>> plt.tight_layout()
+    >>> plt.show()
 
     '''
 
@@ -730,6 +733,7 @@ def timelag_filter(function, pad=True, index=0):
     ...                          cmap='magma_r')
     >>> plt.title('Filtered affinity matrix')
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
 
     def __my_filter(wrapped_f, *args, **kwargs):
@@ -824,6 +828,7 @@ def subsegment(data, frames, n_segments=4, axis=-1):
     >>> plt.legend(frameon=True, shadow=True)
     >>> plt.title('CQT + Beat and sub-beat markers')
     >>> plt.tight_layout()
+    >>> plt.show()
 
     '''
 
@@ -901,6 +906,7 @@ def agglomerative(data, k, clusterer=None, axis=-1):
     >>> plt.legend(frameon=True, shadow=True)
     >>> plt.title('Power spectrogram')
     >>> plt.tight_layout()
+    >>> plt.show()
 
     """
 
@@ -1041,6 +1047,7 @@ def path_enhance(R, n, window='hann', max_ratio=2.0, min_ratio=None, n_filters=7
     >>> librosa.display.specshow(rec_smooth, x_axis='time', y_axis='time')
     >>> plt.title('Multi-angle enhanced recurrence')
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
 
     if min_ratio is None:
