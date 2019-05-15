@@ -79,6 +79,7 @@ class TimeFormatter(Formatter):
     >>> ax.plot(times, values)
     >>> ax.xaxis.set_major_formatter(librosa.display.TimeFormatter())
     >>> ax.set_xlabel('Time')
+    >>> plt.show()
 
     Manually set the physical time unit of the x-axis to milliseconds
 
@@ -177,6 +178,7 @@ class NoteFormatter(Formatter):
     >>> ax2.bar(np.arange(len(values)), values)
     >>> ax2.yaxis.set_major_formatter(librosa.display.NoteFormatter())
     >>> ax2.set_ylabel('Note')
+    >>> plt.show()
     '''
     def __init__(self, octave=True, major=True):
 
@@ -227,6 +229,7 @@ class LogHzFormatter(Formatter):
     >>> ax2.bar(np.arange(len(values)), values)
     >>> ax2.yaxis.set_major_formatter(librosa.display.NoteFormatter())
     >>> ax2.set_ylabel('Note')
+    >>> plt.show()
     '''
     def __init__(self, major=True):
 
@@ -261,6 +264,7 @@ class ChromaFormatter(Formatter):
     >>> ax.plot(values)
     >>> ax.yaxis.set_major_formatter(librosa.display.ChromaFormatter())
     >>> ax.set_ylabel('Pitch class')
+    >>> plt.show()
     '''
     def __call__(self, x, pos=None):
         '''Format for chroma positions'''
@@ -283,6 +287,7 @@ class TonnetzFormatter(Formatter):
     >>> ax.plot(values)
     >>> ax.yaxis.set_major_formatter(librosa.display.TonnetzFormatter())
     >>> ax.set_ylabel('Tonnetz')
+    >>> plt.show()
     '''
     def __call__(self, x, pos=None):
         '''Format for tonnetz positions'''
@@ -435,6 +440,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
     >>> librosa.display.waveplot(y_perc, sr=sr, color='r', alpha=0.5)
     >>> plt.title('Harmonic + Percussive')
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
 
     util.valid_audio(y, mono=False)
@@ -673,6 +679,7 @@ def specshow(data, x_coords=None, y_coords=None,
     >>> plt.colorbar()
     >>> plt.title('Tempogram')
     >>> plt.tight_layout()
+    >>> plt.show()
 
 
     Draw beat-synchronous chroma in natural time
@@ -690,6 +697,7 @@ def specshow(data, x_coords=None, y_coords=None,
     ...                          x_coords=beat_t)
     >>> plt.title('Chroma (beat time)')
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
 
     if np.issubdtype(data.dtype, np.complexfloating):
