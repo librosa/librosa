@@ -77,6 +77,7 @@ def salience(S, freqs, h_range, weights=None, aggregate=None,
     >>> plt.colorbar()
     >>> plt.title('Salience spectrogram')
     >>> plt.tight_layout()
+    >>> plt.show()
     """
     if aggregate is None:
         aggregate = np.average
@@ -173,6 +174,7 @@ def interp_harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
     >>> plt.ylabel('Harmonic')
     >>> plt.xlabel('Tempo (BPM)')
     >>> plt.tight_layout()
+    >>> plt.show()
 
     We can also compute frequency harmonics for spectrograms.
     To calculate sub-harmonic energy, use values < 1.
@@ -280,6 +282,7 @@ def harmonics_1d(harmonic_out, x, freqs, h_range, kind='linear',
     >>> plt.ylabel('Harmonic')
     >>> plt.xlabel('Tempo (BPM)')
     >>> plt.tight_layout()
+    >>> plt.show()
 
     We can also compute frequency harmonics for spectrograms.
     To calculate subharmonic energy, use values < 1.
