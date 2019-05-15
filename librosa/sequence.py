@@ -138,6 +138,7 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
     >>> plt.ylim([0, 2])
     >>> plt.title('Matching cost function')
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
     # Default Parameters
     if step_sizes_sigma is None:
@@ -647,6 +648,7 @@ def viterbi_discriminative(prob, transition, p_state=None, p_init=None, return_l
     >>> plt.ylabel('Chord')
     >>> plt.colorbar()
     >>> plt.tight_layout()
+    >>> plt.show()
 
     >>> # And plot the results
     >>> plt.figure(figsize=(10, 4))
@@ -658,6 +660,7 @@ def viterbi_discriminative(prob, transition, p_state=None, p_init=None, return_l
     >>> plt.yticks(0.5 + np.unique(chords_vit), [labels[i] for i in np.unique(chords_vit)], va='center')
     >>> plt.legend(loc='best')
     >>> plt.tight_layout()
+    >>> plt.show()
 
     '''
 
