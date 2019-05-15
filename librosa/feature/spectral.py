@@ -143,6 +143,7 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     ...                          y_axis='log', x_axis='time')
     >>> plt.title('log Power spectrogram')
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length,
@@ -275,6 +276,7 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     ...                          y_axis='log', x_axis='time')
     >>> plt.title('log Power spectrogram')
     >>> plt.tight_layout()
+    >>> plt.show()
 
     '''
 
@@ -415,6 +417,7 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     >>> plt.ylabel('Frequency bands')
     >>> plt.title('Spectral contrast')
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length,
@@ -589,6 +592,7 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     ...                          y_axis='log', x_axis='time')
     >>> plt.title('log Power spectrogram')
     >>> plt.tight_layout()
+    >>> plt.show()
 
     '''
 
@@ -807,6 +811,7 @@ def rms(y=None, S=None, frame_length=2048, hop_length=512,
 
     >>> S = librosa.magphase(librosa.stft(y, window=np.ones, center=False))[0]
     >>> librosa.feature.rms(S=S)
+    >>> plt.show()
 
     '''
     if y is not None and S is not None:
@@ -937,6 +942,7 @@ def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
     ...                          y_axis='log')
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length,
@@ -1137,6 +1143,7 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
     >>> plt.colorbar()
     >>> plt.title('Chromagram')
     >>> plt.tight_layout()
+    >>> plt.show()
 
     """
 
@@ -1245,6 +1252,7 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
     >>> plt.title('chroma_cqt')
     >>> plt.colorbar()
     >>> plt.tight_layout()
+    >>> plt.show()
 
     '''
 
@@ -1384,6 +1392,7 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
     >>> plt.title('chroma_cens')
     >>> plt.colorbar()
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
     if not ((win_len_smooth is None) or (isinstance(win_len_smooth, int) and win_len_smooth > 0)):
         raise ParameterError('win_len_smooth={} must be a positive integer or None'.format(win_len_smooth))
@@ -1496,6 +1505,7 @@ def tonnetz(y=None, sr=22050, chroma=None):
     >>> plt.colorbar()
     >>> plt.title('Chroma')
     >>> plt.tight_layout()
+    >>> plt.show()
 
     '''
 
@@ -1605,6 +1615,7 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, dct_type=2, norm='ortho', **kwargs
     >>> plt.colorbar()
     >>> plt.title('MFCC')
     >>> plt.tight_layout()
+    >>> plt.show()
 
     Compare different DCT bases
 
@@ -1620,6 +1631,7 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, dct_type=2, norm='ortho', **kwargs
     >>> plt.title('HTK-style (dct_type=3)')
     >>> plt.colorbar()
     >>> plt.tight_layout()
+    >>> plt.show()
     """
 
     if S is None:
@@ -1732,6 +1744,7 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Mel spectrogram')
     >>> plt.tight_layout()
+    >>> plt.show()
     """
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length, power=power,
