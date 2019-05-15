@@ -161,6 +161,7 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Reconstructed spectrogram')
     >>> plt.tight_layout()
+    >>> plt.show()
     """
 
     if transformer is None:
@@ -291,6 +292,7 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Percussive power spectrogram')
     >>> plt.tight_layout()
+    >>> plt.show()
 
 
     Or with a narrower horizontal filter
@@ -493,6 +495,7 @@ def nn_filter(S, rec=None, aggregate=None, axis=-1, **kwargs):
     >>> plt.colorbar()
     >>> plt.title('Original - NLM')
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
     if aggregate is None:
         aggregate = np.mean
