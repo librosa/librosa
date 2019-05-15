@@ -1259,6 +1259,7 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
     >>> plt.xlabel('scale coefficients')
     >>> plt.legend(frameon=True)
     >>> plt.tight_layout()
+    >>> plt.show()
     """
 
     n = y.shape[axis]
@@ -1494,6 +1495,7 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
     >>> plt.title('Per-channel energy normalization (max_size=3)')
     >>> plt.colorbar()
     >>> plt.tight_layout()
+    >>> plt.show()
 
     '''
 
