@@ -712,7 +712,7 @@ def autocorrelate(y, max_size=None, axis=-1):
     >>> plt.plot(ac)
     >>> plt.title('Auto-correlation')
     >>> plt.xlabel('Lag (frames)')
-
+    >>> plt.show()
     """
 
     if max_size is None:
@@ -804,6 +804,7 @@ def lpc(y, order):
     >>> plt.plot(y_hat)
     >>> plt.legend(['y', 'y_hat'])
     >>> plt.title('LP Model Forward Prediction')
+    >>> plt.show()
 
     """
     if not isinstance(order, int) or order < 1:
@@ -1097,6 +1098,7 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
     >>> plt.legend()
     >>> plt.xlim(15, 30)
     >>> plt.tight_layout()
+    >>> plt.show()
     """
 
     # Compute sample positions from time or frames
@@ -1206,6 +1208,7 @@ def tone(frequency, sr=22050, length=None, duration=None, phi=None):
     >>> S = librosa.feature.melspectrogram(y=tone)
     >>> librosa.display.specshow(librosa.power_to_db(S, ref=np.max),
     ...                          x_axis='time', y_axis='mel')
+    >>> plt.show()
     """
 
     if frequency is None:
@@ -1298,6 +1301,7 @@ def chirp(fmin, fmax, sr=22050, length=None, duration=None, linear=False, phi=No
     >>> librosa.display.specshow(librosa.power_to_db(S_linear, ref=np.max),
     ...                          x_axis='time', y_axis='mel')
     >>> plt.tight_layout()
+    >>> plt.show()
     """
 
     if fmin is None or fmax is None:
