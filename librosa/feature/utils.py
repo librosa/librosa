@@ -91,6 +91,7 @@ def delta(data, width=9, order=1, axis=-1, mode='interp', **kwargs):
     >>> plt.title(r'MFCC-$\Delta^2$')
     >>> plt.colorbar()
     >>> plt.tight_layout()
+    >>> plt.show()
 
     '''
 
@@ -213,6 +214,7 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
     >>> plt.title('Time-lagged chroma')
     >>> plt.colorbar()
     >>> plt.tight_layout()
+    >>> plt.show()
     """
 
     if n_steps < 1:
