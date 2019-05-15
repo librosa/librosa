@@ -56,7 +56,7 @@ git clone https://github.com/librosa/librosa.git
 pip install -e librosa
 ```
 
-By calling `pip list` you should see `librosa` now as an installed pacakge:
+By calling `pip list` you should see `librosa` now as an installed package:
 ```
 librosa (0.x.x, /path/to/librosa)
 ```
