@@ -74,6 +74,7 @@ def mel_to_stft(M, sr=22050, n_fft=2048, power=2.0, **kwargs):
     >>> plt.title('Residual error (dB)')
     >>> plt.colorbar()
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
 
     # Construct a mel basis with dtype matching the input data
