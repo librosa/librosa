@@ -157,6 +157,7 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
     >>> plt.xlim(15, 30)
     >>> plt.gca().xaxis.set_major_formatter(librosa.display.TimeFormatter())
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
 
     # First, get the frame->beat strength profile if we don't already have one
@@ -286,6 +287,7 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
     >>> plt.title('Static tempo estimation')
     >>> plt.legend(frameon=True)
     >>> plt.axis('tight')
+    >>> plt.show()
 
     Plot dynamic tempo estimates over a tempogram
 
