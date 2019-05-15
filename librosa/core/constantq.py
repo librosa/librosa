@@ -134,6 +134,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Constant-Q power spectrum')
     >>> plt.tight_layout()
+    >>> plt.show()
 
 
     Limit the frequency range
