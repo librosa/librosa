@@ -131,6 +131,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     ...            linestyle='--', label='Onsets')
     >>> plt.axis('tight')
     >>> plt.legend(frameon=True, framealpha=0.75)
+    >>> plt.show()
 
     """
 
@@ -311,6 +312,7 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
     >>> plt.yticks([])
     >>> plt.axis('tight')
     >>> plt.tight_layout()
+    >>> plt.show()
 
     """
 
@@ -387,6 +389,7 @@ def onset_backtrack(events, energy):
     >>> plt.plot(rms[0], label='RMS')
     >>> plt.vlines(onset_bt_rms, 0, rms.max(), label='Backtracked (RMS)', color='r')
     >>> plt.legend(frameon=True, framealpha=0.75)
+    >>> plt.show()
     '''
 
     # Find points where energy is non-increasing
@@ -505,6 +508,7 @@ def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
     >>> librosa.display.specshow(onset_subbands, x_axis='time')
     >>> plt.ylabel('Sub-bands')
     >>> plt.title('Sub-band onset strength')
+    >>> plt.show()
 
     """
 

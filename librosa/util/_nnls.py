@@ -140,6 +140,7 @@ def nnls(A, B, **kwargs):
     >>> plt.colorbar()
     >>> plt.title('Reconstructed spectrogram (1025 bins)')
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
 
     # If B is a single vector, punt up to the scipy method

@@ -180,6 +180,7 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
     >>> plt.title('Mel filter bank')
     >>> plt.colorbar()
     >>> plt.tight_layout()
+    >>> plt.show()
     """
 
     if fmax is None:
@@ -315,6 +316,7 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0,
     >>> plt.title('Chroma filter bank')
     >>> plt.colorbar()
     >>> plt.tight_layout()
+    >>> plt.show()
     """
 
     wts = np.zeros((n_chroma, n_fft))
@@ -492,6 +494,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     >>> plt.ylabel('CQ filters')
     >>> plt.title('CQ filter magnitudes (frequency domain)')
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
 
     if fmin is None:
@@ -694,6 +697,7 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
     >>> plt.title('librosa.feature.chroma_stft')
     >>> plt.colorbar()
     >>> plt.tight_layout()
+    >>> plt.show()
 
     '''
 
@@ -1079,6 +1083,7 @@ def semitone_filterbank(center_freqs=None, tuning=0.0, sample_rates=None, flayou
     >>> plt.xlabel('Log-Frequency (Hz)')
     >>> plt.ylabel('Magnitude (dB)')
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
 
     if (center_freqs is None) and (sample_rates is None):
@@ -1156,6 +1161,7 @@ def window_sumsquare(window, n_frames, hop_length=512, win_length=None, n_fft=20
     >>> plt.plot(wss_1024)
     >>> plt.title('hop_length=1024')
     >>> plt.tight_layout()
+    >>> plt.show()
 
     '''
     if win_length is None:

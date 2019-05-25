@@ -128,6 +128,7 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
     >>> plt.axis('tight')
     >>> plt.grid()
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
 
     from ..onset import onset_strength
