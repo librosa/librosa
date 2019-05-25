@@ -634,16 +634,18 @@ def test_lpc_regress():
                    test_data['est_coeffs'][i])
 
 
-def test_lpc_simple():
+@pytest.mark.parametrize('dtype', [np.float64, np.float32])
+def test_lpc_simple(dtype):
     srand()
 
     n = 5000
-    est_a = np.zeros((n, 6))
-    truth_a = [1, 0.5, 0.4, 0.3, 0.2, 0.1]
+    est_a = np.zeros((n, 6), dtype=dtype)
+    truth_a = np.array([1, 0.5, 0.4, 0.3, 0.2, 0.1], dtype=dtype)
     for i in range(n):
-        noise = np.random.randn(1000)
-        filtered = scipy.signal.lfilter([1], truth_a, noise)
+        noise = np.random.randn(1000).astype(dtype)
+        filtered = scipy.signal.lfilter(dtype([1]), truth_a, noise)
         est_a[i, :] = librosa.lpc(filtered, 5)
+    assert dtype==est_a.dtype
     assert np.allclose(truth_a, np.mean(est_a, axis=0), rtol=0, atol=1e-3)
 
 
