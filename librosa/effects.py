@@ -239,7 +239,7 @@ def time_stretch(y, rate):
     return y_stretch
 
 
-def pitch_shift(y, sr, n_steps, bins_per_octave=12):
+def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type='kaiser_best'):
     '''Pitch-shift the waveform by `n_steps` half-steps.
 
 
@@ -257,6 +257,13 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12):
     bins_per_octave : float > 0 [scalar]
         how many steps per octave
 
+    res_type : string
+        Resample type.
+        Possible options: 'kaiser_best', 'kaiser_fast', and 'scipy', 'polyphase',
+        'fft'.
+        By default, 'kaiser_best' is used.
+
+        See `core.resample` for more information.
 
     Returns
     -------
@@ -293,7 +300,8 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12):
     rate = 2.0 ** (-float(n_steps) / bins_per_octave)
 
     # Stretch in time, then resample
-    y_shift = core.resample(time_stretch(y, rate), float(sr) / rate, sr)
+    y_shift = core.resample(time_stretch(y, rate), float(sr) / rate, sr,
+                            res_type=res_type)
 
     # Crop to the same dimension as the input
     return util.fix_length(y_shift, len(y))

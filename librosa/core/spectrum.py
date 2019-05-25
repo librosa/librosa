@@ -26,7 +26,7 @@ __all__ = ['stft', 'istft', 'magphase', 'iirt',
            'perceptual_weighting',
            'power_to_db', 'db_to_power',
            'amplitude_to_db', 'db_to_amplitude',
-           'fmt', 'pcen']
+           'fmt', 'pcen', 'griffinlim']
 
 
 @cache(level=20)
@@ -140,6 +140,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
     >>> plt.title('Power spectrogram')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.tight_layout()
+    >>> plt.show()
 
     """
 
@@ -749,6 +750,7 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
     >>> plt.title('Semitone spectrogram')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
 
     if flayout is None:
@@ -901,6 +903,7 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Log-Power spectrogram')
     >>> plt.tight_layout()
+    >>> plt.show()
 
     """
 
@@ -1116,6 +1119,7 @@ def perceptual_weighting(S, frequencies, **kwargs):
     >>> plt.title('Perceptually weighted log CQT')
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
 
     offset = time_frequency.A_weighting(frequencies).reshape((-1, 1))
@@ -1223,6 +1227,7 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
     >>> plt.legend(frameon=True)
     >>> plt.axis('tight')
     >>> plt.tight_layout()
+    >>> plt.show()
 
     >>> # Plot the scale transform of an onset strength autocorrelation
     >>> y, sr = librosa.load(librosa.util.example_audio_file(),
@@ -1254,6 +1259,7 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
     >>> plt.xlabel('scale coefficients')
     >>> plt.legend(frameon=True)
     >>> plt.tight_layout()
+    >>> plt.show()
     """
 
     n = y.shape[axis]
@@ -1331,7 +1337,7 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
 @cache(level=30)
 def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
          time_constant=0.400, eps=1e-6, b=None, max_size=1, ref=None,
-         axis=-1, max_axis=None):
+         axis=-1, max_axis=None, zi=None, return_zf=False):
     '''Per-channel energy normalization (PCEN) [1]_
 
     This function normalizes a time-frequency representation `S` by
@@ -1423,10 +1429,27 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
         If `S` is not two-dimensional, and `max_size > 1`, an error
         will be raised.
 
+    zi : np.ndarray
+        The initial filter delay values.
+
+        This may be the `zf` (final delay values) of a previous call to `pcen`, or
+        computed by `scipy.signal.lfilter_zi`.
+
+    return_zf : bool
+        If `True`, return the final filter delay values along with the PCEN output `P`.
+        This is primarily useful in streaming contexts, where the final state of one
+        block of processing should be used to initialize the next block.
+
+        If `False` (default) only the PCEN values `P` are returned.
+
+
     Returns
     -------
     P : np.ndarray, non-negative [shape=(n, m)]
         The per-channel energy normalized version of `S`.
+
+    zf : np.ndarray (optional)
+        The final filter delay values.  Only returned if `return_zf=True`.
 
     See Also
     --------
@@ -1457,6 +1480,7 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
     >>> plt.title('Per-channel energy normalization')
     >>> plt.colorbar()
     >>> plt.tight_layout()
+    >>> plt.show()
 
     Compare PCEN with and without max-filtering
 
@@ -1471,6 +1495,7 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
     >>> plt.title('Per-channel energy normalization (max_size=3)')
     >>> plt.colorbar()
     >>> plt.tight_layout()
+    >>> plt.show()
 
     '''
 
@@ -1526,11 +1551,178 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
 
             ref = scipy.ndimage.maximum_filter1d(S, max_size, axis=max_axis)
 
-    S_smooth = scipy.signal.lfilter([b], [1, b - 1], ref, axis=axis)
+    if zi is None:
+        # Make sure zi matches dimension to input
+        shape = tuple([1] * ref.ndim)
+        zi = np.empty(shape)
+        zi[:] = scipy.signal.lfilter_zi([b], [1, b - 1])[:]
+
+    S_smooth, zf = scipy.signal.lfilter([b], [1, b - 1], ref, zi=zi,
+                                        axis=axis)
 
     # Working in log-space gives us some stability, and a slight speedup
     smooth = np.exp(-gain * (np.log(eps) + np.log1p(S_smooth / eps)))
-    return (S * smooth + bias)**power - bias**power
+    S_out = (S * smooth + bias)**power - bias**power
+
+    if return_zf:
+        return S_out, zf
+    else:
+        return S_out
+
+
+def griffinlim(S, n_iter=32, hop_length=None, win_length=None, window='hann',
+               center=True, dtype=np.float32, length=None, pad_mode='reflect',
+               momentum=0.99, random_state=None):
+
+    '''Approximate magnitude spectrogram inversion using the "fast" Griffin-Lim algorithm [1,2]_
+
+    Given a short-time Fourier transform magnitude matrix (`S`), the algorithm randomly
+    initializes phase estimates, and then alternates forward- and inverse-STFT
+    operations.
+    Note that this assumes reconstruction of a real-valued time-domain signal, and
+    that `S` contains only the non-negative frequencies (as computed by
+    `core.stft`).
+
+    .. [1] Perraudin, N., Balazs, P., & Søndergaard, P. L.
+        "A fast Griffin-Lim algorithm,"
+        IEEE Workshop on Applications of Signal Processing to Audio and Acoustics (pp. 1-4),
+        Oct. 2013.
+
+    .. [2] D. W. Griffin and J. S. Lim,
+        "Signal estimation from modified short-time Fourier transform,"
+        IEEE Trans. ASSP, vol.32, no.2, pp.236–243, Apr. 1984.
+
+    Parameters
+    ----------
+    S : np.ndarray [shape=(n_fft / 2 + 1, t), non-negative]
+        An array of short-time Fourier transform magnitudes as produced by
+        `core.stft`.
+
+    n_iter : int > 0
+        The number of iterations to run
+
+    hop_length : None or int > 0
+        The hop length of the STFT.  If not provided, it will default to `n_fft // 4`
+
+    win_length : None or int > 0
+        The window length of the STFT.  By default, it will equal `n_fft`
+
+    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        A window specification as supported by `stft` or `istft`
+
+    center : boolean
+        If `True`, the STFT is assumed to use centered frames.
+        If `False`, the STFT is assumed to use left-aligned frames.
+
+    dtype : np.dtype
+        Real numeric type for the time-domain signal.  Default is 32-bit float.
+
+    length : None or int > 0
+        If provided, the output `y` is zero-padded or clipped to exactly `length`
+        samples.
+
+    pad_mode : string
+        If `center=True`, the padding mode to use at the edges of the signal.
+        By default, STFT uses reflection padding.
+
+    momentum : number >= 0
+        The momentum parameter for fast Griffin-Lim.
+        Setting this to 0 recovers the original Griffin-Lim method [1]_.
+        Values near 1 can lead to faster convergence, but above 1 may not converge.
+
+    random_state : None, int, or np.random.RandomState
+        If int, random_state is the seed used by the random number generator
+        for phase initialization.
+
+        If `np.random.RandomState` instance, the random number generator itself;
+
+        If `None`, defaults to the current `np.random` object.
+
+
+    Returns
+    -------
+    y : np.ndarray [shape=(n,)]
+        time-domain signal reconstructed from `S`
+
+    See Also
+    --------
+    stft
+    istft
+    magphase
+    filters.get_window
+
+    Examples
+    --------
+    A basic STFT inverse example
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=5, offset=30)
+    >>> # Get the magnitude spectrogram
+    >>> S = np.abs(librosa.stft(y))
+    >>> # Invert using Griffin-Lim
+    >>> y_inv = librosa.griffinlim(S)
+    >>> # Invert without estimating phase
+    >>> y_istft = librosa.istft(S)
+
+    Wave-plot the results
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> ax = plt.subplot(3,1,1)
+    >>> librosa.display.waveplot(y, sr=sr, color='b')
+    >>> plt.title('Original')
+    >>> plt.xlabel('')
+    >>> plt.subplot(3,1,2, sharex=ax, sharey=ax)
+    >>> librosa.display.waveplot(y_inv, sr=sr, color='g')
+    >>> plt.title('Griffin-Lim reconstruction')
+    >>> plt.xlabel('')
+    >>> plt.subplot(3,1,3, sharex=ax, sharey=ax)
+    >>> librosa.display.waveplot(y_istft, sr=sr, color='r')
+    >>> plt.title('Magnitude-only istft reconstruction')
+    >>> plt.tight_layout()
+    >>> plt.show()
+    '''
+
+    if random_state is None:
+        rng = np.random
+    elif isinstance(random_state, int):
+        rng = np.random.RandomState(seed=random_state)
+    elif isinstance(random_state, np.random.RandomState):
+        rng = random_state
+
+    if momentum > 1:
+        warnings.warn('Griffin-Lim with momentum={} > 1 can be unstable. Proceed with caution!'.format(momentum))
+    elif momentum < 0:
+        raise ParameterError('griffinlim() called with momentum={} < 0'.format(momentum))
+
+    # Infer n_fft from the spectrogram shape
+    n_fft = 2 * (S.shape[0] - 1)
+
+    # randomly initialize the phase
+    angles = np.exp(2j * np.pi * rng.rand(*S.shape))
+
+    # And initialize the previous iterate to 0
+    rebuilt = 0.
+
+    for _ in range(n_iter):
+        # Store the previous iterate
+        tprev = rebuilt
+
+        # Invert with our current estimate of the phases
+        inverse = istft(S * angles, hop_length=hop_length, win_length=win_length,
+                        window=window, center=center, dtype=dtype, length=length)
+
+        # Rebuild the spectrogram
+        rebuilt = stft(inverse, n_fft=n_fft, hop_length=hop_length,
+                       win_length=win_length, window=window, center=center,
+                       pad_mode=pad_mode)
+        
+        # Update our phase estimates
+        angles[:] = rebuilt - (momentum / (1 + momentum)) * tprev
+        angles[:] /= np.abs(angles) + 1e-16
+    
+    # Return the final phase estimates
+    return istft(S * angles, hop_length=hop_length, win_length=win_length,
+                 window=window, center=center, dtype=dtype, length=length)
 
 
 def _spectrogram(y=None, S=None, n_fft=2048, hop_length=512, power=1,

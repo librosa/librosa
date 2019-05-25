@@ -56,7 +56,7 @@ git clone https://github.com/librosa/librosa.git
 pip install -e librosa
 ```
 
-By calling `pip list` you should see `librosa` now as an installed pacakge:
+By calling `pip list` you should see `librosa` now as an installed package:
 ```
 librosa (0.x.x, /path/to/librosa)
 ```
@@ -91,9 +91,9 @@ If you are not using Anaconda, here are some common commands for different opera
 * Linux (apt-get): `apt-get install ffmpeg` or `apt-get install gstreamer1.0-plugins-base gstreamer1.0-plugins-ugly`
 * Linux (yum): `yum install ffmpeg` or `yum install gstreamer1.0-plugins-base gstreamer1.0-plugins-ugly`
 * Mac: `brew install ffmpeg` or `brew install gstreamer`
-* Windows: download binaries from the website
+* Windows: download binaries from this [website]( https://gstreamer.freedesktop.org/) 
 
-For GStreamer, you also need to install the Python bindings with
+For GStreamer, you also need to install the Python bindings with 
 ```
 pip install pygobject
 ```
