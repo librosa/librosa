@@ -496,6 +496,7 @@ def axis_sort(S, axis=-1, index=False, value=None):
     >>> librosa.display.specshow(H_sort, x_axis='time')
     >>> plt.title('H sorted')
     >>> plt.tight_layout()
+    >>> plt.show()
 
 
     Parameters
@@ -917,6 +918,7 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     >>> plt.legend(frameon=True, framealpha=0.8)
     >>> plt.axis('tight')
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
 
     if pre_max < 0:
@@ -1357,6 +1359,7 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     >>> plt.title('Sub-beat synchronous CQT power, '
     ...           'shape={}'.format(C_med_sub.shape))
     >>> plt.tight_layout()
+    >>> plt.show()
 
     """
 
