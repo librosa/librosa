@@ -1120,6 +1120,7 @@ def A_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
     >>> plt.xlabel('Frequency (Hz)')
     >>> plt.ylabel('Weighting (log10)')
     >>> plt.title('A-Weighting of CQT frequencies')
+    >>> plt.show()
 
     '''
 
