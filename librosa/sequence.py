@@ -138,6 +138,7 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
     >>> plt.ylim([0, 2])
     >>> plt.title('Matching cost function')
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
     # Default Parameters
     if step_sizes_sigma is None:
@@ -157,6 +158,8 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
     if C is not None and (X is not None or Y is not None):
         raise ParameterError('If C is supplied, both X and Y must not be supplied')
 
+    c_is_transposed = False
+
     # calculate pair-wise distances, unless already supplied.
     if C is None:
         # take care of dimensions
@@ -175,6 +178,7 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
         # if N > M, Y can be a subsequence of X
         if subseq and (X.shape[1] > Y.shape[1]):
             C = C.T
+            c_is_transposed = True
 
     C = np.atleast_2d(C)
 
@@ -226,7 +230,11 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
         wp = np.asarray(wp, dtype=int)
 
         # since we transposed in the beginning, we have to adjust the index pairs back
-        if subseq and (X.shape[1] > Y.shape[1]):
+        if subseq and (
+                (X is not None and Y is not None and X.shape[1] > Y.shape[1]) or
+                c_is_transposed or
+                C.shape[0] > C.shape[1]
+        ):
             wp = np.fliplr(wp)
 
         return D, wp
@@ -641,6 +649,7 @@ def viterbi_discriminative(prob, transition, p_state=None, p_init=None, return_l
     >>> plt.ylabel('Chord')
     >>> plt.colorbar()
     >>> plt.tight_layout()
+    >>> plt.show()
 
     >>> # And plot the results
     >>> plt.figure(figsize=(10, 4))
@@ -652,6 +661,7 @@ def viterbi_discriminative(prob, transition, p_state=None, p_init=None, return_l
     >>> plt.yticks(0.5 + np.unique(chords_vit), [labels[i] for i in np.unique(chords_vit)], va='center')
     >>> plt.legend(loc='best')
     >>> plt.tight_layout()
+    >>> plt.show()
 
     '''
 
