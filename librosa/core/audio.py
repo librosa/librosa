@@ -826,10 +826,12 @@ def __lpc(y, order):
     # we may use all the coefficients from the previous order while we compute
     # those for the new one. These two arrays hold ar_coeffs for order M and
     # order M-1.  (Corresponding to a_{M,k} and a_{M-1,k} in eqn 5)
-    ar_coeffs = np.zeros(order + 1, dtype=y.dtype)
-    ar_coeffs[0] = 1
-    ar_coeffs_prev = np.zeros(order + 1, dtype=y.dtype)
-    ar_coeffs_prev[0] = 1
+
+    dtype = y.dtype.type
+    ar_coeffs = np.zeros(order+1, dtype=dtype)
+    ar_coeffs[0] = dtype(1)
+    ar_coeffs_prev = np.zeros(order+1, dtype=dtype)
+    ar_coeffs_prev[0] = dtype(1)
 
     # These two arrays hold the forward and backward prediction error. They
     # correspond to f_{M-1,k} and b_{M-1,k} in eqns 10, 11, 13 and 14 of
@@ -849,7 +851,8 @@ def __lpc(y, order):
 
         # Eqn 15 of Marple, with fwd_pred_error and bwd_pred_error
         # corresponding to f_{M-1,k+1} and b{M-1,k} and the result as a_{M,M}
-        reflect_coeff = -2 * np.dot(bwd_pred_error, fwd_pred_error) / den
+        #reflect_coeff = dtype(-2) * np.dot(bwd_pred_error, fwd_pred_error) / dtype(den)
+        reflect_coeff = dtype(-2) * np.dot(bwd_pred_error, fwd_pred_error) / dtype(den)
 
         # Now we use the reflection coefficient and the AR coefficients from
         # the last model order to compute all of the AR coefficients for the
@@ -882,8 +885,9 @@ def __lpc(y, order):
         # fwd_pred_error = f_{M-1,k}       (we have advanced M)
         # den <- DEN_{M}                   (lhs)
         #
-        q = 1 - reflect_coeff ** 2
-        den = q * den - bwd_pred_error[-1] ** 2 - fwd_pred_error[0] ** 2
+
+        q = dtype(1) - reflect_coeff**2
+        den = q*den - bwd_pred_error[-1]**2 - fwd_pred_error[0]**2
 
         # Shift up forward error.
         #
