@@ -469,7 +469,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     # Window for discrete differentiation
     freq_angular = np.linspace(0, 2 * np.pi, n_fft, endpoint=False)
 
-    d_window = np.sin(-freq_angular) * np.pi / n_fft
+    d_window = - util.cyclic_gradient(fft_window)
 
     stft_matrix = stft(y, n_fft=n_fft, hop_length=hop_length,
                        win_length=win_length,
@@ -498,7 +498,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     if_gram = freq_angular[:n_fft//2 + 1] + bin_offset
 
     if norm:
-        stft_matrix = stft_matrix * 2.0 / fft_window.sum()
+        stft_matrix *= 2.0 / fft_window.sum()
 
     if clip:
         np.clip(if_gram, 0, np.pi, out=if_gram)
