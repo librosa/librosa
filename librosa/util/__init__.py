@@ -41,6 +41,7 @@ Miscellaneous
     localmax
     peak_pick
     nnls
+    cyclic_gradient
 
 
 Input validation
