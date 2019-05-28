@@ -1076,3 +1076,31 @@ def test_nnls_multiblock(dtype_A, dtype_B, x_size):
 
     assert np.all(x_rec >= 0)
     assert np.sqrt(np.mean((B - A.dot(x_rec))**2)) <= 1e-4
+
+
+@pytest.fixture
+def psig():
+
+    # [[0, 1, 2, 3, 4]]
+    # axis=1 or -1 ==> [-1.5, 1, 1, 1, -1.5]
+    # axis=0 ==> [0, 0, 0, 0, 0]
+    return np.arange(0, 5, dtype=float)[np.newaxis]
+
+
+@pytest.mark.parametrize('edge_order', [1, 2])
+@pytest.mark.parametrize('axis', [0, 1, -1])
+def test_cyclic_gradient(psig, edge_order, axis):
+
+
+    grad = librosa.util.cyclic_gradient(psig,
+                                        edge_order=edge_order,
+                                        axis=axis)
+
+    assert grad.shape == psig.shape
+    assert grad.dtype == psig.dtype
+
+    # Check the values
+    if axis == 0:
+        assert np.allclose(grad, 0)
+    else:
+        assert np.allclose(grad, [-1.5, 1, 1, 1, -1.5])
