@@ -28,7 +28,8 @@ __all__ = ['MAX_MEM_BLOCK',
            'sync',
            'softmask',
            'buf_to_float',
-           'tiny']
+           'tiny',
+           'cyclic_gradient']
 
 
 def frame(y, frame_length=2048, hop_length=512):
@@ -1641,3 +1642,69 @@ def fill_off_diagonal(x, radius, value=0):
     # modify input matrix
     x[idx_u] = value
     x[idx_l] = value
+
+
+def cyclic_gradient(data, edge_order=1, axis=-1):
+    '''Estimate the gradient of a function over a uniformly sampled,
+    periodic domain.
+
+    This is essentially the same as `np.gradient`, except that edge effects
+    are handled by wrapping the observations (i.e. assuming periodicity)
+    rather than extrapolation.
+
+    Parameters
+    ----------
+    data : np.ndarray
+        The function values observed at uniformly spaced positions on
+        a periodic domain
+
+    edge_order: {1, 2}
+        The order of the difference approximation used for estimating
+        the gradient
+
+    axis : int
+        The axis along which gradients are calculated.
+
+    Returns
+    -------
+    grad : np.ndarray like `data`
+        The gradient of `data` taken along the specified axis.
+
+    See Also
+    --------
+    np.gradient
+
+    Examples
+    --------
+    This example estimates the gradient of cosine (-sine) from 64
+    samples using direct (aperiodic) and periodic gradient
+    calculation.
+
+    >>> import matplotlib.pyplot as plt
+    >>> x = 2 * np.pi * np.linspace(0, 1, num=64, endpoint=False)
+    >>> y = np.cos(x)
+    >>> grad = np.gradient(y)
+    >>> cyclic_grad = librosa.util.cyclic_gradient(y)
+    >>> true_grad = -np.sin(x) * 2 * np.pi / len(x)
+    >>> plt.plot(x, true_grad, label='True gradient', linewidth=5,
+    ...          alpha=0.35)
+    >>> plt.plot(x, cyclic_grad, label='cyclic_gradient')
+    >>> plt.plot(x, grad, label='np.gradient', linestyle=':')
+    >>> plt.legend()
+    >>> # Zoom into the first part of the sequence
+    >>> plt.xlim([0, np.pi/16])
+    >>> plt.ylim([-0.025, 0.025])
+    >>> plt.show()
+    '''
+    # Wrap-pad the data along the target axis by `edge_order` on each side
+    padding = [(0, 0)] * data.ndim
+    padding[axis] = (edge_order, edge_order)
+    data_pad = np.pad(data, padding, mode='wrap')
+
+    # Compute the gradient
+    grad = np.gradient(data_pad, edge_order=edge_order, axis=axis)
+
+    # Remove the padding
+    slices = [slice(None)] * data.ndim
+    slices[axis] = slice(edge_order, -edge_order)
+    return grad[tuple(slices)]
