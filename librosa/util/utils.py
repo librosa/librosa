@@ -1696,12 +1696,15 @@ def cyclic_gradient(data, edge_order=1, axis=-1):
     >>> plt.ylim([-0.025, 0.025])
     >>> plt.show()
     '''
+    # Wrap-pad the data along the target axis by `edge_order` on each side
     padding = [(0, 0)] * data.ndim
     padding[axis] = (edge_order, edge_order)
     data_pad = np.pad(data, padding, mode='wrap')
 
+    # Compute the gradient
     grad = np.gradient(data_pad, edge_order=edge_order, axis=axis)
 
+    # Remove the padding
     slices = [slice(None)] * data.ndim
     slices[axis] = slice(edge_order, -edge_order)
     return grad[tuple(slices)]

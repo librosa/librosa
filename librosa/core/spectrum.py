@@ -467,8 +467,8 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
                                  n_fft)
 
     # Window for discrete differentiation
-    freq_angular = np.linspace(0, 2 * np.pi, n_fft, endpoint=False)
-
+    # we use a cyclic gradient calculation here to ensure that the edges of
+    # the window are handled properly
     d_window = - util.cyclic_gradient(fft_window)
 
     stft_matrix = stft(y, n_fft=n_fft, hop_length=hop_length,
@@ -490,9 +490,10 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
 
     # Pylint does not correctly infer the type here, but it's correct.
     # pylint: disable=maybe-no-member
+    freq_angular = np.linspace(0, 2 * np.pi, n_fft, endpoint=False)
     freq_angular = freq_angular.reshape((-1, 1))
-    bin_offset = (-phase * diff_stft).imag / mag
 
+    bin_offset = (-phase * diff_stft).imag / mag
     bin_offset[mag < ref_power**0.5] = 0
 
     if_gram = freq_angular[:n_fft//2 + 1] + bin_offset
