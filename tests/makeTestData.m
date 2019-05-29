@@ -306,7 +306,7 @@ function testIFGRAM(output_path)
     y           = mean(y, 2);        % Convert to mono
 
     % Test a couple of different FFT window sizes
-    P_NFFT      = [128, 256, 1024];
+    P_NFFT      = [1024];
 
     % And window sizes
 %     P_WIN       = [0.25, 0.5, 1.0];
