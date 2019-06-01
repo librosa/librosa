@@ -1355,7 +1355,7 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
 
         b = (sqrt(1 + 4* T**2) - 1) / (2 * T**2)
 
-    where `T = time_constant * sr / hop_length`.
+    where `T = time_constant * sr / hop_length`, as in [2]_.
 
     This normalization is designed to suppress background noise and
     emphasize foreground signals, and can be used as an alternative to
@@ -1380,6 +1380,11 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
        (2017, March). Trainable frontend for robust and far-field keyword spotting.
        In Acoustics, Speech and Signal Processing (ICASSP), 2017
        IEEE International Conference on (pp. 5670-5674). IEEE.
+
+    .. [2] Lostanlen, V., Salamon, J., McFee, B., Cartwright, M., Farnsworth, A.,
+       Kelling, S., and Bello, J. P. Per-Channel Energy Normalization: Why and How.
+       IEEE Signal Processing Letters, 26(1), 39-43.
+
 
     Parameters
     ----------
@@ -1716,11 +1721,11 @@ def griffinlim(S, n_iter=32, hop_length=None, win_length=None, window='hann',
         rebuilt = stft(inverse, n_fft=n_fft, hop_length=hop_length,
                        win_length=win_length, window=window, center=center,
                        pad_mode=pad_mode)
-        
+
         # Update our phase estimates
         angles[:] = rebuilt - (momentum / (1 + momentum)) * tprev
         angles[:] /= np.abs(angles) + 1e-16
-    
+
     # Return the final phase estimates
     return istft(S * angles, hop_length=hop_length, win_length=win_length,
                  window=window, center=center, dtype=dtype, length=length)
