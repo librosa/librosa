@@ -1565,11 +1565,15 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
         zi = np.empty(shape)
         zi[:] = scipy.signal.lfilter_zi([b], [1, b - 1])[:]
 
+    # Temporal integration
     S_smooth, zf = scipy.signal.lfilter([b], [1, b - 1], ref, zi=zi,
                                         axis=axis)
 
+    # Adaptive gain control
     # Working in log-space gives us some stability, and a slight speedup
     smooth = np.exp(-gain * (np.log(eps) + np.log1p(S_smooth / eps)))
+
+    # Dynamic range compression
     if power == 0:
         S_out = np.log1p(S*smooth)
     elif bias == 0:
