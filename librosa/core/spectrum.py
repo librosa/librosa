@@ -1403,9 +1403,10 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
     bias : number >= 0 [scalar]
         The bias point of the nonlinear compression (default: 2)
 
-    power : number > 0 [scalar]
-        The compression exponent.  Typical values should be between 0 and 1.
+    power : number >= 0 [scalar]
+        The compression exponent.  Typical values should be between 0 and 0.5.
         Smaller values of `power` result in stronger compression.
+        At the limit `power=0`, polynomial compression becomes logarithmic.
 
     time_constant : number > 0 [scalar]
         The time constant for IIR filtering, measured in seconds.
@@ -1506,8 +1507,8 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
 
     '''
 
-    if power <= 0:
-        raise ParameterError('power={} must be strictly positive'.format(power))
+    if power < 0:
+        raise ParameterError('power={} must be nonnegative'.format(power))
 
     if gain < 0:
         raise ParameterError('gain={} must be non-negative'.format(gain))
@@ -1569,7 +1570,12 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
 
     # Working in log-space gives us some stability, and a slight speedup
     smooth = np.exp(-gain * (np.log(eps) + np.log1p(S_smooth / eps)))
-    S_out = (S * smooth + bias)**power - bias**power
+    if power == 0:
+        S_out = np.log1p(S*smooth)
+    elif bias == 0:
+        S_out = np.exp(power * (np.log(S) + np.log(smooth)))
+    else:
+        S_out = (bias**power) * np.expm1(power * np.log1p(S*smooth/bias))
 
     if return_zf:
         return S_out, zf
