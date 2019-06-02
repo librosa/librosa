@@ -24,6 +24,7 @@ __all__ = ['frames_to_samples', 'frames_to_time',
            'cqt_frequencies',
            'mel_frequencies',
            'tempo_frequencies',
+           'fourier_tempo_frequencies',
            'A_weighting',
            'samples_like',
            'times_like']
@@ -1083,6 +1084,38 @@ def tempo_frequencies(n_bins, hop_length=512, sr=22050):
     bin_frequencies[1:] = 60.0 * sr / (hop_length * np.arange(1.0, n_bins))
 
     return bin_frequencies
+
+
+def fourier_tempo_frequencies(sr=22050, win_length=384, hop_length=512):
+    '''Compute the frequencies (in beats-per-minute) corresponding
+    to a Fourier tempogram matrix.
+
+    Parameters
+    ----------
+    sr : number > 0
+        The audio sampling rate
+
+    win_length : int > 0
+        The number of frames per analysis window
+
+    hop_length : int > 0
+        The number of samples between each bin
+
+    Returns
+    -------
+    bin_frequencies : ndarray [shape=(win_length // 2 + 1 ,)]
+        vector of bin frequencies measured in BPM.
+
+    Examples
+    --------
+    Get the tempo frequencies corresponding to a 384-bin (8-second) tempogram
+
+    >>> librosa.fourier_tempo_frequencies(384)
+    array([ 0.   ,  0.117,  0.234, ..., 22.266, 22.383, 22.5  ])
+
+    '''
+
+    return fft_frequencies(sr=sr * 60 / float(hop_length), n_fft=win_length)
 
 
 # A-weighting should be capitalized: suppress the naming warning

@@ -7,6 +7,7 @@ Beat and tempo
    :toctree: generated/
 
    beat_track
+   plp
    tempo
 """
 
@@ -17,10 +18,10 @@ from ._cache import cache
 from . import core
 from . import onset
 from . import util
-from .feature import tempogram
+from .feature import tempogram, fourier_tempogram
 from .util.exceptions import ParameterError
 
-__all__ = ['beat_track', 'tempo']
+__all__ = ['beat_track', 'tempo', 'plp']
 
 
 def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
@@ -340,6 +341,158 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
     # Wherever the best tempo is index 0, return start_bpm
     tempi[best_period == 0] = start_bpm
     return tempi
+
+
+def plp(y=None, sr=22050, onset_envelope=None, hop_length=512,
+        win_length=384, tempo_min=30, tempo_max=300):
+    '''Predominant local pulse (PLP) estimation. [1]_
+
+    The PLP method analyzes the onset strength envelope in the Frequency domain
+    to find a locally stable tempo for each frame.  These local periodicities
+    are used to synthesize local half-waves, which are combined such that peaks
+    coincide with rhythmically salient frames (e.g. beat positions).  The local
+    maxima of the pulse curve can be taken as estimated beat positions.
+
+    This method may be preferred over the dynamic programming method of `beat_track`
+    when either the tempo is expected to vary significantly over time.  Additionally,
+    since `plp` does not require the entire signal to make predictions, it may be
+    preferable when beat-tracking long recordings in a streaming setting.
+
+
+    .. [1] Grosche, P., & Muller, M. (2010).
+        "Extracting predominant local pulse information from music recordings."
+        IEEE Transactions on Audio, Speech, and Language Processing, 19(6), 1688-1701.
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(n,)] or None
+        audio time series
+
+    sr : number > 0 [scalar]
+        sampling rate of `y`
+
+    onset_envelope : np.ndarray [shape=(n,)] or None
+        (optional) pre-computed onset strength envelope
+
+    hop_length : int > 0 [scalar]
+        number of audio samples between successive `onset_envelope` values
+
+    win_length : int > 0 [scalar]
+        number of frames to use for tempogram analysis.
+        By default, 384 frames (at `sr=22050` and `hop_length=512`) corresponds
+        to about 8.9 seconds.
+
+    tempo_min, tempo_max : numbers > 0 [scalar]
+        Minimum and maximum permissible tempo values.
+
+
+    Returns
+    -------
+    pulse : np.ndarray, shape=[(n,)]
+        The estimated pulse curve.  Maxima correspond to rhythmically salient
+        points of time.
+
+    See Also
+    --------
+    beat_track
+    librosa.onset.onset_strength
+    librosa.feature.fourier_tempogram
+
+    Examples
+    --------
+    Visualize the PLP compared to an onset strength envelope.
+    Both are normalized here to make comparison easier.
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr)
+    >>> pulse = librosa.beat.plp(onset_envelope=onset_env, sr=sr)
+    >>> melspec = librosa.feature.melspectrogram(y=y, sr=sr)
+    >>> import matplotlib.pyplot as plt
+    >>> ax = plt.subplot(2,1,1)
+    >>> librosa.display.specshow(librosa.power_to_db(melspec,
+    ...                                              ref=np.max),
+    ...                          x_axis='time', y_axis='mel')
+    >>> plt.title('Mel spectrogram')
+    >>> plt.subplot(2,1,2, sharex=ax)
+    >>> plt.plot(librosa.times_like(onset_env),
+    ...          librosa.util.normalize(onset_env),
+    ...          label='Onset strength')
+    >>> plt.plot(librosa.times_like(pulse),
+    ...          librosa.util.normalize(pulse),
+    ...          label='Predominant local pulse (PLP)')
+    >>> plt.legend()
+    >>> plt.xlim([30, 35])
+    >>> plt.tight_layout()
+    >>> plt.show()
+
+
+    PLP local maxima can be used as estimates of beat positions.
+
+    >>> tempo, beats = librosa.beat.beat_track(onset_envelope=onset_env)
+    >>> beats_plp = np.flatnonzero(librosa.util.localmax(pulse))
+    >>> import matplotlib.pyplot as plt
+    >>> ax = plt.subplot(2,1,1)
+    >>> times = librosa.times_like(onset_env, sr=sr)
+    >>> plt.plot(times, librosa.util.normalize(onset_env),
+    ...          label='Onset strength')
+    >>> plt.vlines(times[beats], 0, 1, alpha=0.5, color='r',
+    ...            linestyle='--', label='Beats')
+    >>> plt.legend(frameon=True, framealpha=0.75)
+    >>> plt.title('librosa.beat.beat_track')
+    >>> # Limit the plot to a 15-second window
+    >>> plt.subplot(2,1,2, sharex=ax)
+    >>> times = librosa.times_like(pulse, sr=sr)
+    >>> plt.plot(times, librosa.util.normalize(pulse),
+    ...          label='PLP')
+    >>> plt.vlines(times[beats_plp], 0, 1, alpha=0.5, color='r',
+    ...            linestyle='--', label='PLP Beats')
+    >>> plt.legend(frameon=True, framealpha=0.75)
+    >>> plt.title('librosa.beat.plp')
+    >>> plt.xlim(30, 35)
+    >>> ax.xaxis.set_major_formatter(librosa.display.TimeFormatter())
+    >>> plt.tight_layout()
+    >>> plt.show()
+
+    '''
+
+    # Step 1: get the onset envelope
+    if onset_envelope is None:
+        onset_envelope = onset.onset_strength(y=y, sr=sr,
+                                              hop_length=hop_length,
+                                              aggregate=np.median)
+
+    # Step 2: get the fourier tempogram
+    ftgram = fourier_tempogram(onset_envelope=onset_envelope,
+                               sr=sr, hop_length=hop_length,
+                               win_length=win_length)
+
+    # Step 3: pin to the feasible tempo range
+
+    tempo_frequencies = core.fourier_tempo_frequencies(sr=sr,
+                                                       hop_length=hop_length,
+                                                       win_length=win_length)
+
+    # TODO: in the future, generalize this to support arbitrary priors
+    ftgram[tempo_frequencies < tempo_min] = 0
+    ftgram[tempo_frequencies > tempo_max] = 0
+
+    # Step 3: Discard everything below the peak
+    ftmag = np.abs(ftgram)
+    peak_values = ftmag.max(axis=0, keepdims=True)
+    ftgram[ftmag < peak_values] = 0
+
+    # Normalize to keep only phase information
+    ftgram[:] /= peak_values
+
+    # Step 5: invert the fourier tempogram to get the pulse
+    pulse = core.istft(ftgram, hop_length=1,
+                       length=len(onset_envelope))
+
+    # Step 6: retain only the positive part of the pulse cycle
+    np.clip(pulse, 0, None, pulse)
+
+    # Return the normalized pulse
+    return util.normalize(pulse)
 
 
 def __beat_tracker(onset_envelope, bpm, fft_res, tightness, trim):
