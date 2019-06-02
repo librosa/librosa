@@ -350,8 +350,8 @@ def plp(y=None, sr=22050, onset_envelope=None, hop_length=512,
     The PLP method analyzes the onset strength envelope in the Frequency domain
     to find a locally stable tempo for each frame.  These local periodicities
     are used to synthesize local half-waves, which are combined such that peaks
-    coincide with rhythmically salient frames (e.g. beat positions).  The local
-    maxima of the pulse curve can be taken as estimated beat positions.
+    coincide with rhythmically salient frames (e.g. onset events on a musical time grid).
+    The local maxima of the pulse curve can be taken as estimated beat positions.
 
     This method may be preferred over the dynamic programming method of `beat_track`
     when either the tempo is expected to vary significantly over time.  Additionally,
@@ -359,7 +359,7 @@ def plp(y=None, sr=22050, onset_envelope=None, hop_length=512,
     preferable when beat-tracking long recordings in a streaming setting.
 
 
-    .. [1] Grosche, P., & Muller, M. (2010).
+    .. [1] Grosche, P., & Muller, M. (2011).
         "Extracting predominant local pulse information from music recordings."
         IEEE Transactions on Audio, Speech, and Language Processing, 19(6), 1688-1701.
 
