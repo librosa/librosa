@@ -382,8 +382,11 @@ def plp(y=None, sr=22050, onset_envelope=None, hop_length=512,
         By default, 384 frames (at `sr=22050` and `hop_length=512`) corresponds
         to about 8.9 seconds.
 
-    tempo_min, tempo_max : numbers > 0 [scalar]
-        Minimum and maximum permissible tempo values.
+    tempo_min, tempo_max : numbers > 0 [scalar], optional
+        Minimum and maximum permissible tempo values.  `tempo_max` must be at least
+        `tempo_min`.
+
+        Set either (or both) to `None` to disable this constraint.
 
 
     Returns
@@ -461,6 +464,9 @@ def plp(y=None, sr=22050, onset_envelope=None, hop_length=512,
                                               hop_length=hop_length,
                                               aggregate=np.median)
 
+    if tempo_min is not None and tempo_max is not None and tempo_max <= tempo_min:
+        raise ParameterError('tempo_max={} must be larger than tempo_min={}'.format(tempo_max, tempo_min))
+
     # Step 2: get the fourier tempogram
     ftgram = fourier_tempogram(onset_envelope=onset_envelope,
                                sr=sr, hop_length=hop_length,
@@ -473,8 +479,10 @@ def plp(y=None, sr=22050, onset_envelope=None, hop_length=512,
                                                        win_length=win_length)
 
     # TODO: in the future, generalize this to support arbitrary priors
-    ftgram[tempo_frequencies < tempo_min] = 0
-    ftgram[tempo_frequencies > tempo_max] = 0
+    if tempo_min is not None:
+        ftgram[tempo_frequencies < tempo_min] = 0
+    if tempo_max is not None:
+        ftgram[tempo_frequencies > tempo_max] = 0
 
     # Step 3: Discard everything below the peak
     ftmag = np.abs(ftgram)
