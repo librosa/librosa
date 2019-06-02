@@ -95,6 +95,7 @@ Time and frequency conversion
     cqt_frequencies
     mel_frequencies
     tempo_frequencies
+    fourier_tempo_frequencies
 
     samples_like
     times_like

@@ -989,7 +989,9 @@ def __coord_fourier_tempo(n, sr=22050, hop_length=512, **_kwargs):
     n_fft = 2 * (n - 1)
     # The following code centers the FFT bins at their frequencies
     # and clips to the non-negative frequency range [0, nyquist]
-    basis = core.fft_frequencies(sr=sr * 60 / hop_length, n_fft=n_fft)
+    basis = core.fourier_tempo_frequencies(sr=sr,
+                                           hop_length=hop_length,
+                                           win_length=n_fft)
     fmax = basis[-1]
     basis -= 0.5 * (basis[1] - basis[0])
     basis = np.append(np.maximum(0, basis), [fmax])
