@@ -1115,6 +1115,8 @@ def fourier_tempo_frequencies(sr=22050, win_length=384, hop_length=512):
 
     '''
 
+    # sr / hop_length gets the frame rate
+    # multiplying by 60 turns frames / sec into frames / minute
     return fft_frequencies(sr=sr * 60 / float(hop_length), n_fft=win_length)
 
 
