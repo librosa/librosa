@@ -555,7 +555,6 @@ def test_tonnetz():
 
 
 def test_tempogram_fail():
-
     @pytest.mark.xfail(raises=librosa.ParameterError)
     def __test(y, sr, onset_envelope, hop_length, win_length, center, window, norm):
 
@@ -586,7 +585,6 @@ def test_tempogram_fail():
 
 
 def test_tempogram_audio():
-
     def __test(y, sr, oenv, hop_length):
 
         # Get the tempogram from audio
@@ -624,7 +622,6 @@ def test_tempogram_audio():
 
 
 def test_tempogram_odf():
-
     sr = 22050
     hop_length = 512
     duration = 8
@@ -721,6 +718,103 @@ def test_tempogram_odf_multi():
             for window in ['hann', np.ones, np.ones(win_length)]:
                 for norm in [None, 1, 2, np.inf]:
                     yield __test, center, win_length, window, norm
+
+
+def test_fourier_tempogram_fail():
+    @pytest.mark.xfail(raises=librosa.ParameterError)
+    def __test(y, sr, onset_envelope, hop_length, win_length, center, window):
+
+        librosa.feature.fourier_tempogram(y=y,
+                                          sr=sr,
+                                          onset_envelope=onset_envelope,
+                                          hop_length=hop_length,
+                                          win_length=win_length,
+                                          center=center,
+                                          window=window)
+
+    sr = 22050
+    hop_length = 512
+    duration = 10
+
+    y = np.zeros(duration * sr)
+
+    # Fail when no input is provided
+    yield __test, None, sr, None, hop_length, 384, True, 'hann'
+
+    # Fail when win_length is too small
+    for win_length in [-384, -1, 0]:
+        yield __test, y, sr, None, hop_length, win_length, True, 'hann'
+
+    # Fail when len(window) != win_length
+    yield __test, y, sr, None, hop_length, 384, True, np.ones(win_length + 1)
+
+
+def test_fourier_tempogram_audio():
+    def __test(y, sr, oenv, hop_length):
+
+        # Get the tempogram from audio
+        t1 = librosa.feature.fourier_tempogram(y=y, sr=sr,
+                                               onset_envelope=None,
+                                               hop_length=hop_length)
+
+        # Get the tempogram from oenv
+        t2 = librosa.feature.fourier_tempogram(y=None, sr=sr,
+                                               onset_envelope=oenv,
+                                               hop_length=hop_length)
+
+        # Make sure it works when both are provided
+        t3 = librosa.feature.fourier_tempogram(y=y, sr=sr,
+                                               onset_envelope=oenv,
+                                               hop_length=hop_length)
+
+        # And that oenv overrides y
+        t4 = librosa.feature.fourier_tempogram(y=0 * y, sr=sr,
+                                               onset_envelope=oenv,
+                                               hop_length=hop_length)
+
+        assert np.iscomplexobj(t1)
+        assert np.allclose(t1, t2)
+        assert np.allclose(t1, t3)
+        assert np.allclose(t1, t4)
+
+    y, sr = librosa.load(__EXAMPLE_FILE)
+
+    for hop_length in [512, 1024]:
+        oenv = librosa.onset.onset_strength(y=y,
+                                            sr=sr,
+                                            hop_length=hop_length)
+
+        yield __test, y, sr, oenv, hop_length
+
+
+@pytest.mark.parametrize('sr', [22050])
+@pytest.mark.parametrize('hop_length', [512])
+@pytest.mark.parametrize('win_length', [192, 384])
+@pytest.mark.parametrize('center', [False, True])
+@pytest.mark.parametrize('window', ['hann', np.ones])
+def test_fourier_tempogram_invert(sr, hop_length, win_length, center, window):
+    duration = 16
+    tempo = 100
+
+    odf = np.zeros(duration * sr // hop_length)
+    spacing = sr * 60. // (hop_length * tempo)
+    odf[::int(spacing)] = 1
+
+    tempogram = librosa.feature.fourier_tempogram(onset_envelope=odf,
+                                                  sr=sr,
+                                                  hop_length=hop_length,
+                                                  win_length=win_length,
+                                                  window=window,
+                                                  center=center)
+
+    if center:
+        sl = slice(None)
+    else:
+        sl = slice(win_length//2, - win_length//2)
+
+    odf_inv = librosa.istft(tempogram, hop_length=1, center=center, window=window,
+                            length=len(odf))
+    assert np.allclose(odf[sl], odf_inv[sl])
 
 
 def test_cens():
