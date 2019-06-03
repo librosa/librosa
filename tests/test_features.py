@@ -796,7 +796,7 @@ def test_fourier_tempogram_invert(sr, hop_length, win_length, center, window):
     duration = 16
     tempo = 100
 
-    odf = np.zeros(duration * sr // hop_length)
+    odf = np.zeros(duration * sr // hop_length, dtype=np.float32)
     spacing = sr * 60. // (hop_length * tempo)
     odf[::int(spacing)] = 1
 
@@ -814,7 +814,7 @@ def test_fourier_tempogram_invert(sr, hop_length, win_length, center, window):
 
     odf_inv = librosa.istft(tempogram, hop_length=1, center=center, window=window,
                             length=len(odf))
-    assert np.allclose(odf_inv[sl], odf[sl])
+    assert np.allclose(odf_inv[sl], odf[sl], atol=1e-6)
 
 
 def test_cens():
