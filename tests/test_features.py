@@ -814,7 +814,7 @@ def test_fourier_tempogram_invert(sr, hop_length, win_length, center, window):
 
     odf_inv = librosa.istft(tempogram, hop_length=1, center=center, window=window,
                             length=len(odf))
-    assert np.allclose(odf[sl], odf_inv[sl])
+    assert np.allclose(odf_inv[sl], odf[sl])
 
 
 def test_cens():
