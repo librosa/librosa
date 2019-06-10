@@ -811,7 +811,7 @@ def test_estimate_tuning():
         # Round to the proper number of decimals
         deviation = np.around(tuning - tuning_est, int(-np.log10(resolution)))
 
-        # Take the minimum floating point for positive and negative deviations 
+        # Take the minimum floating point for positive and negative deviations
         max_dev = np.min([np.mod(deviation, 1.0), np.mod(-deviation, 1.0)])
 
         # We'll accept an answer within three bins of the resolution
@@ -1438,8 +1438,8 @@ def test_pcen():
     #   bias < 0
     yield tf, 1, -1, 1, 0.5, 0.5, 1e-6, 1, S, S
 
-    #   power <= 0
-    yield tf, 1, 1, 0, 0.5, 0.5, 1e-6, 1, S, S
+    #   power < 0
+    yield tf, 1, 1, -0.1, 0.5, 0.5, 1e-6, 1, S, S
 
     #   b < 0
     yield tf, 1, 1, 1, -2, 0.5, 1e-6, 1, S, S
