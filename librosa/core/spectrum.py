@@ -1346,7 +1346,14 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
 
         P[f, t] = (S / (eps + M[f, t])**gain + bias)**power - bias**power
 
-    where `M` is the result of applying a low-pass, temporal IIR filter
+    IMPORTANT: the default values of eps, gain, bias, and power match the
+    original publication [1]_, in which M is a 40-band mel-frequency
+    spectrogram with 25 ms windowing, 10 ms frame shift, and raw audio values
+    in the interval [-2**31; 2**31-1[. If you use these default values, we
+    recommend to make sure that the raw audio is properly scaled to this
+    interval, and not to [-1, 1[ as is most often the case.
+
+    The matrix `M` is the result of applying a low-pass, temporal IIR filter
     to `S`:
 
         M[f, t] = (1 - b) * M[f, t - 1] + b * S[f, t]
