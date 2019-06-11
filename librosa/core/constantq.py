@@ -656,6 +656,10 @@ def icqt(C, sr=22050, hop_length=512, fmin=None, bins_per_octave=12,
                       'Consider decreasing your hop length or increasing the '
                       'frequency resolution of your CQT.'.format(hop_length, min(lengths)))
 
+    if length is not None:
+        n_frames = ceil((max(lengths)+C.shape[1])/hop_length)
+        C = C[:, :n_frames]
+
     # The basis gets renormalized by the effective window length above;
     # This step undoes that
     fft_basis = fft_basis.todense() * n_fft / lengths[:, np.newaxis]
