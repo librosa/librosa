@@ -291,7 +291,12 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
     # Pad out to match n_fft, and add a broadcasting axis
     ifft_window = util.pad_center(ifft_window, n_fft)[:, np.newaxis]
 
-    n_frames = stft_matrix.shape[1]
+    # For efficiency, trim STFT frames according to signal length if available
+    if length is None:
+        n_frames = stft_matrix.shape[1]
+    else:
+        n_frames = ceil(length / hop_length)
+
     expected_signal_len = n_fft + hop_length * (n_frames - 1)
     y = np.zeros(expected_signal_len, dtype=dtype)
 
