@@ -811,7 +811,7 @@ def test_estimate_tuning():
         # Round to the proper number of decimals
         deviation = np.around(tuning - tuning_est, int(-np.log10(resolution)))
 
-        # Take the minimum floating point for positive and negative deviations 
+        # Take the minimum floating point for positive and negative deviations
         max_dev = np.min([np.mod(deviation, 1.0), np.mod(-deviation, 1.0)])
 
         # We'll accept an answer within three bins of the resolution
@@ -1438,8 +1438,8 @@ def test_pcen():
     #   bias < 0
     yield tf, 1, -1, 1, 0.5, 0.5, 1e-6, 1, S, S
 
-    #   power <= 0
-    yield tf, 1, 1, 0, 0.5, 0.5, 1e-6, 1, S, S
+    #   power < 0
+    yield tf, 1, 1, -0.1, 0.5, 0.5, 1e-6, 1, S, S
 
     #   b < 0
     yield tf, 1, 1, 1, -2, 0.5, 1e-6, 1, S, S
@@ -1464,6 +1464,19 @@ def test_pcen():
 
     #   gain=1, bias=0, power=1, b=1, eps=1e-20 => ones
     yield __test, 1, 0, 1, 1.0, 0.5, 1e-20, 1, S, np.ones_like(S)
+
+    # Dynamic range compression. Disjunction of cases
+    #   gain=0, bias=1, power=0
+    P = librosa.pcen(S, gain=0.0, bias=1.0, power=0.0, eps=1e-20)
+    assert np.allclose(S, np.expm1(P))
+
+    #   gain=0, bias=0, power=1e-3
+    P = librosa.pcen(S, gain=0.0, bias=0.0, power=1e-3, eps=1e-20)
+    assert np.allclose(S, np.exp(1e3*np.log(P)))
+
+    #   gain=0, bias=1, power=1e-3
+    P = librosa.pcen(S, gain=0.0, bias=1.0, power=1e-3, eps=1e-20)
+    assert np.allclose(S, np.expm1(1e3*np.log1p(P)))
 
     # Catch the complex warning
     yield __test, 1, 0, 1, 1.0, 0.5, 1e-20, 1, S * 1.j, np.ones_like(S)

@@ -1346,7 +1346,14 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
 
         P[f, t] = (S / (eps + M[f, t])**gain + bias)**power - bias**power
 
-    where `M` is the result of applying a low-pass, temporal IIR filter
+    IMPORTANT: the default values of eps, gain, bias, and power match the
+    original publication [1]_, in which M is a 40-band mel-frequency
+    spectrogram with 25 ms windowing, 10 ms frame shift, and raw audio values
+    in the interval [-2**31; 2**31-1[. If you use these default values, we
+    recommend to make sure that the raw audio is properly scaled to this
+    interval, and not to [-1, 1[ as is most often the case.
+
+    The matrix `M` is the result of applying a low-pass, temporal IIR filter
     to `S`:
 
         M[f, t] = (1 - b) * M[f, t - 1] + b * S[f, t]
@@ -1355,7 +1362,7 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
 
         b = (sqrt(1 + 4* T**2) - 1) / (2 * T**2)
 
-    where `T = time_constant * sr / hop_length`.
+    where `T = time_constant * sr / hop_length`, as in [2]_.
 
     This normalization is designed to suppress background noise and
     emphasize foreground signals, and can be used as an alternative to
@@ -1381,6 +1388,11 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
        In Acoustics, Speech and Signal Processing (ICASSP), 2017
        IEEE International Conference on (pp. 5670-5674). IEEE.
 
+    .. [2] Lostanlen, V., Salamon, J., McFee, B., Cartwright, M., Farnsworth, A.,
+       Kelling, S., and Bello, J. P. Per-Channel Energy Normalization: Why and How.
+       IEEE Signal Processing Letters, 26(1), 39-43.
+
+
     Parameters
     ----------
     S : np.ndarray (non-negative)
@@ -1398,9 +1410,10 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
     bias : number >= 0 [scalar]
         The bias point of the nonlinear compression (default: 2)
 
-    power : number > 0 [scalar]
-        The compression exponent.  Typical values should be between 0 and 1.
+    power : number >= 0 [scalar]
+        The compression exponent.  Typical values should be between 0 and 0.5.
         Smaller values of `power` result in stronger compression.
+        At the limit `power=0`, polynomial compression becomes logarithmic.
 
     time_constant : number > 0 [scalar]
         The time constant for IIR filtering, measured in seconds.
@@ -1466,11 +1479,12 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
     >>> y, sr = librosa.load(librosa.util.example_audio_file(),
     ...                      offset=10, duration=10)
 
-    >>> # We'll use power=1 to get a magnitude spectrum
-    >>> # instead of a power spectrum
+    >>> # We recommend scaling y to the range [-2**31, 2**31[ before applying
+    >>> # PCEN's default parameters. Furthermore, we use power=1 to get a
+    >>> # magnitude spectrum instead of a power spectrum.
     >>> S = librosa.feature.melspectrogram(y, sr=sr, power=1)
     >>> log_S = librosa.amplitude_to_db(S, ref=np.max)
-    >>> pcen_S = librosa.pcen(S)
+    >>> pcen_S = librosa.pcen(S * (2**31))
     >>> plt.figure()
     >>> plt.subplot(2,1,1)
     >>> librosa.display.specshow(log_S, x_axis='time', y_axis='mel')
@@ -1485,7 +1499,7 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
 
     Compare PCEN with and without max-filtering
 
-    >>> pcen_max = librosa.pcen(S, max_size=3)
+    >>> pcen_max = librosa.pcen(S * (2**31), max_size=3)
     >>> plt.figure()
     >>> plt.subplot(2,1,1)
     >>> librosa.display.specshow(pcen_S, x_axis='time', y_axis='mel')
@@ -1500,8 +1514,8 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
 
     '''
 
-    if power <= 0:
-        raise ParameterError('power={} must be strictly positive'.format(power))
+    if power < 0:
+        raise ParameterError('power={} must be nonnegative'.format(power))
 
     if gain < 0:
         raise ParameterError('gain={} must be non-negative'.format(gain))
@@ -1558,12 +1572,21 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
         zi = np.empty(shape)
         zi[:] = scipy.signal.lfilter_zi([b], [1, b - 1])[:]
 
+    # Temporal integration
     S_smooth, zf = scipy.signal.lfilter([b], [1, b - 1], ref, zi=zi,
                                         axis=axis)
 
+    # Adaptive gain control
     # Working in log-space gives us some stability, and a slight speedup
     smooth = np.exp(-gain * (np.log(eps) + np.log1p(S_smooth / eps)))
-    S_out = (S * smooth + bias)**power - bias**power
+
+    # Dynamic range compression
+    if power == 0:
+        S_out = np.log1p(S*smooth)
+    elif bias == 0:
+        S_out = np.exp(power * (np.log(S) + np.log(smooth)))
+    else:
+        S_out = (bias**power) * np.expm1(power * np.log1p(S*smooth/bias))
 
     if return_zf:
         return S_out, zf
@@ -1716,11 +1739,11 @@ def griffinlim(S, n_iter=32, hop_length=None, win_length=None, window='hann',
         rebuilt = stft(inverse, n_fft=n_fft, hop_length=hop_length,
                        win_length=win_length, window=window, center=center,
                        pad_mode=pad_mode)
-        
+
         # Update our phase estimates
         angles[:] = rebuilt - (momentum / (1 + momentum)) * tprev
         angles[:] /= np.abs(angles) + 1e-16
-    
+
     # Return the final phase estimates
     return istft(S * angles, hop_length=hop_length, win_length=win_length,
                  window=window, center=center, dtype=dtype, length=length)
