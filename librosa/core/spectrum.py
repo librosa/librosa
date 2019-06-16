@@ -295,7 +295,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
     if length is None:
         n_frames = stft_matrix.shape[1]
     else:
-        n_frames = ceil(length / hop_length)
+        n_frames = int(np.ceil(length / hop_length))
 
     expected_signal_len = n_fft + hop_length * (n_frames - 1)
     y = np.zeros(expected_signal_len, dtype=dtype)
