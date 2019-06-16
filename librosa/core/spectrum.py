@@ -296,7 +296,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
         n_frames = stft_matrix.shape[1]
     else:
         if center:
-            padded_length = length + int(n_fft//2)
+            padded_length = length + int(n_fft)
         else:
             padded_length = length
         n_frames = int(np.ceil(padded_length / hop_length))
