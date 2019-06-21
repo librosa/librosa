@@ -347,7 +347,7 @@ def plp(y=None, sr=22050, onset_envelope=None, hop_length=512,
         win_length=384, tempo_min=30, tempo_max=300):
     '''Predominant local pulse (PLP) estimation. [1]_
 
-    The PLP method analyzes the onset strength envelope in the Frequency domain
+    The PLP method analyzes the onset strength envelope in the frequency domain
     to find a locally stable tempo for each frame.  These local periodicities
     are used to synthesize local half-waves, which are combined such that peaks
     coincide with rhythmically salient frames (e.g. onset events on a musical time grid).
@@ -473,7 +473,6 @@ def plp(y=None, sr=22050, onset_envelope=None, hop_length=512,
                                win_length=win_length)
 
     # Step 3: pin to the feasible tempo range
-
     tempo_frequencies = core.fourier_tempo_frequencies(sr=sr,
                                                        hop_length=hop_length,
                                                        win_length=win_length)
@@ -492,7 +491,7 @@ def plp(y=None, sr=22050, onset_envelope=None, hop_length=512,
     # Normalize to keep only phase information
     ftgram[:] /= peak_values
 
-    # Step 5: invert the fourier tempogram to get the pulse
+    # Step 5: invert the Fourier tempogram to get the pulse
     pulse = core.istft(ftgram, hop_length=1,
                        length=len(onset_envelope))
 
