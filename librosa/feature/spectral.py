@@ -44,6 +44,17 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     distribution over frequency bins, from which the mean (centroid) is
     extracted per frame.
 
+    More precisely, the centroid at frame `t` is defined as [1]_:
+
+        ``centroid[t] = sum_k S[k, t] * freq[k] / (sum_j S[j, t])``
+
+    where `S` is a magnitude spectrogram, and `freq` is the array of
+    frequencies (e.g., FFT frequencies in Hz) of the rows of `S`.
+
+    .. [1] Klapuri, A., & Davy, M. (Eds.). (2007). Signal processing
+        methods for music transcription, chapter 5. 
+        Springer Science & Business Media.
+
     Parameters
     ----------
     y : np.ndarray [shape=(n,)] or None
@@ -172,9 +183,15 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                        win_length=None, window='hann', center=True, pad_mode='reflect',
                        freq=None, centroid=None, norm=True, p=2):
-    '''Compute p'th-order spectral bandwidth:
+    '''Compute p'th-order spectral bandwidth.
 
-        (sum_k S[k] * (freq[k] - centroid)**p)**(1/p)
+       The spectral bandwidth at frame `t` is computed by 
+
+        (sum_k S[k, t] * (freq[k, t] - centroid[t])**p)**(1/p)
+
+    .. [1] Klapuri, A., & Davy, M. (Eds.). (2007). Signal processing
+        methods for music transcription, chapter 5. 
+        Springer Science & Business Media.
 
     Parameters
     ----------
@@ -318,6 +335,13 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                       freq=None, fmin=200.0, n_bands=6, quantile=0.02,
                       linear=False):
     '''Compute spectral contrast [1]_
+
+    Each frame of a spectrogram `S` is divided into sub-bands.
+    For each sub-band, the energy contrast is estimated by comparing
+    the mean energy in the top quantile (peak energy) to that of the 
+    bottom quantile (valley energy).  High contrast values generally
+    correspond to clear, narrow-band signals, while low contrast values
+    correspond to broad-band noise.
 
     .. [1] Jiang, Dan-Ning, Lie Lu, Hong-Jiang Zhang, Jian-Hua Tao,
            and Lian-Hong Cai.
@@ -1591,6 +1615,23 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, dct_type=2, norm='ortho', **kwargs
            ...,
            [  1.066e-14,  -7.500e+00, ...,   1.421e-14,   1.421e-14],
            [  3.109e-14,  -5.058e+00, ...,   2.931e-14,   2.931e-14]])
+
+    Using a different hop length and HTK-style Mel frequencies
+
+    >>> librosa.feature.mfcc(y=y, sr=sr, hop_length=1024, htk=True)
+    array([[-1.628e+02, -8.903e+01, -1.409e+02, ..., -1.078e+02,
+        -2.504e+02, -2.393e+02],
+       [ 1.275e+02,  9.532e+01,  1.019e+02, ...,  1.152e+02,
+         2.224e+02,  1.750e+02],
+       [ 1.139e+01,  6.155e+00,  1.266e+01, ...,  4.557e+01,
+         4.585e+01,  3.985e+01],
+       ...,
+       [ 3.462e+00,  4.032e+00, -5.694e-01, ..., -6.677e+00,
+        -1.183e-01,  1.485e+00],
+       [ 9.569e-01,  1.069e+00, -6.865e+00, ..., -9.598e+00,
+        -1.611e+00, -6.716e+00],
+       [ 8.457e+00,  3.582e+00, -1.156e-01, ..., -3.018e+00,
+        -1.456e+01, -6.991e+00]], dtype=float32)
 
     Use a pre-computed log-power Mel spectrogram
 

@@ -5,8 +5,8 @@
 import sys
 import importlib
 
-short_version = '0.6'
-version = '0.6.3'
+short_version = '0.7'
+version = '0.7.0-dev'
 
 
 def __get_mod_version(modname):
@@ -58,4 +58,3 @@ def show_versions():
     print('')
     for dep in extra_deps:
         print('{}: {}'.format(dep, __get_mod_version(dep)))
-    pass
