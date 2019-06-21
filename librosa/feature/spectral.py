@@ -44,6 +44,17 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     distribution over frequency bins, from which the mean (centroid) is
     extracted per frame.
 
+    More precisely, the centroid at frame `t` is defined as [1]_:
+
+        ``centroid[t] = sum_k S[k, t] * freq[k] / (sum_j S[j, t])``
+
+    where `S` is a magnitude spectrogram, and `freq` is the array of
+    frequencies (e.g., FFT frequencies in Hz) of the rows of `S`.
+
+    .. [1] Klapuri, A., & Davy, M. (Eds.). (2007). Signal processing
+        methods for music transcription, chapter 5. 
+        Springer Science & Business Media.
+
     Parameters
     ----------
     y : np.ndarray [shape=(n,)] or None
@@ -172,9 +183,15 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                        win_length=None, window='hann', center=True, pad_mode='reflect',
                        freq=None, centroid=None, norm=True, p=2):
-    '''Compute p'th-order spectral bandwidth:
+    '''Compute p'th-order spectral bandwidth.
 
-        (sum_k S[k] * (freq[k] - centroid)**p)**(1/p)
+       The spectral bandwidth at frame `t` is computed by 
+
+        (sum_k S[k, t] * (freq[k, t] - centroid[t])**p)**(1/p)
+
+    .. [1] Klapuri, A., & Davy, M. (Eds.). (2007). Signal processing
+        methods for music transcription, chapter 5. 
+        Springer Science & Business Media.
 
     Parameters
     ----------
@@ -318,6 +335,13 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                       freq=None, fmin=200.0, n_bands=6, quantile=0.02,
                       linear=False):
     '''Compute spectral contrast [1]_
+
+    Each frame of a spectrogram `S` is divided into sub-bands.
+    For each sub-band, the energy contrast is estimated by comparing
+    the mean energy in the top quantile (peak energy) to that of the 
+    bottom quantile (valley energy).  High contrast values generally
+    correspond to clear, narrow-band signals, while low contrast values
+    correspond to broad-band noise.
 
     .. [1] Jiang, Dan-Ning, Lie Lu, Hong-Jiang Zhang, Jian-Hua Tao,
            and Lian-Hong Cai.
