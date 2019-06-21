@@ -45,7 +45,7 @@ setup(
     license='ISC',
     install_requires=[
         'audioread >= 2.0.0',
-        'numpy >= 1.8.0',
+        'numpy >= 1.15.0',
         'scipy >= 1.0.0',
         'scikit-learn >= 0.14.0, != 0.19.0',
         'joblib >= 0.12',
