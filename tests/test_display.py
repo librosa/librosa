@@ -149,6 +149,15 @@ def test_tempo(y, sr):
     return plt.gcf()
 
 
+@pytest.mark.mpl_image_compare(baseline_images=['fourier_tempo'], extensions=['png'])
+def test_fourier_tempo(y, sr):
+    T = librosa.feature.fourier_tempogram(y=y, sr=sr)
+
+    plt.figure()
+    librosa.display.specshow(np.abs(T), y_axis='fourier_tempo', cmap='magma')
+    return plt.gcf()
+
+
 @pytest.mark.mpl_image_compare(baseline_images=['tonnetz'], extensions=['png'])
 def test_tonnetz(C):
     plt.figure()

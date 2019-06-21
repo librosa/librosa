@@ -556,10 +556,15 @@ def specshow(data, x_coords=None, y_coords=None,
         - 'lag_s' : same as lag, but in seconds.
         - 'lag_ms' : same as lag, but in milliseconds.
 
-        Other:
+        Rhythm:
 
         - 'tempo' : markers are shown as beats-per-minute (BPM)
-            using a logarithmic scale.
+            using a logarithmic scale.  This is useful for
+            visualizing the outputs of `feature.tempogram`.
+
+        - 'fourier_tempo' : same as `'tempo'`, but used when
+            tempograms are calculated in the Frequency domain
+            using `feature.fourier_tempogram`.
 
     x_coords : np.ndarray [shape=data.shape[1]+1]
     y_coords : np.ndarray [shape=data.shape[0]+1]
@@ -777,6 +782,7 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
                  'tonnetz': __coord_n,
                  'off': __coord_n,
                  'tempo': __coord_tempo,
+                 'fourier_tempo': __coord_fourier_tempo,
                  'frames': __coord_n,
                  None: __coord_n}
 
@@ -829,7 +835,7 @@ def __scale_axes(axes, ax_type, which):
         mode = 'log'
         kwargs[base] = 2
 
-    elif ax_type == 'tempo':
+    elif ax_type in ['tempo', 'fourier_tempo']:
         mode = 'log'
         kwargs[base] = 2
         limit(16, 480)
@@ -854,7 +860,7 @@ def __decorate_axis(axis, ax_type):
                                                          [0, 2, 4, 5, 7, 9, 11]).ravel()))
         axis.set_label_text('Pitch class')
 
-    elif ax_type == 'tempo':
+    elif ax_type in ['tempo', 'fourier_tempo']:
         axis.set_major_formatter(ScalarFormatter())
         axis.set_major_locator(LogLocator(base=2.0))
         axis.set_label_text('BPM')
@@ -975,6 +981,21 @@ def __coord_tempo(n, sr=22050, hop_length=512, **_kwargs):
     basis = core.tempo_frequencies(n+2, sr=sr, hop_length=hop_length)[1:]
     edges = np.arange(1, n+2)
     return basis * (edges + 0.5) / edges
+
+
+def __coord_fourier_tempo(n, sr=22050, hop_length=512, **_kwargs):
+    '''Fourier tempogram coordinates'''
+
+    n_fft = 2 * (n - 1)
+    # The following code centers the FFT bins at their frequencies
+    # and clips to the non-negative frequency range [0, nyquist]
+    basis = core.fourier_tempo_frequencies(sr=sr,
+                                           hop_length=hop_length,
+                                           win_length=n_fft)
+    fmax = basis[-1]
+    basis -= 0.5 * (basis[1] - basis[0])
+    basis = np.append(np.maximum(0, basis), [fmax])
+    return basis
 
 
 def __coord_n(n, **_kwargs):
