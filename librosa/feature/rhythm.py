@@ -244,7 +244,7 @@ def fourier_tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
     >>> oenv = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
     >>> tempogram = librosa.feature.fourier_tempogram(onset_envelope=oenv, sr=sr,
     ...                                               hop_length=hop_length)
-    >>> # compute the auto-correlation tempogram, unnormalized to make comparison easier
+    >>> # Compute the auto-correlation tempogram, unnormalized to make comparison easier
     >>> ac_tempogram = librosa.feature.tempogram(onset_envelope=oenv, sr=sr,
     ...                                          hop_length=hop_length, norm=None)
 
