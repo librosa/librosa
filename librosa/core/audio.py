@@ -825,6 +825,7 @@ def __lpc(y, order):
     # we may use all the coefficients from the previous order while we compute
     # those for the new one. These two arrays hold ar_coeffs for order M and
     # order M-1.  (Corresponding to a_{M,k} and a_{M-1,k} in eqn 5)
+
     dtype = y.dtype.type
     ar_coeffs = np.zeros(order+1, dtype=dtype)
     ar_coeffs[0] = dtype(1)
@@ -883,6 +884,7 @@ def __lpc(y, order):
         # fwd_pred_error = f_{M-1,k}       (we have advanced M)
         # den <- DEN_{M}                   (lhs)
         #
+        
         q = dtype(1) - reflect_coeff**2
         den = q*den - bwd_pred_error[-1]**2 - fwd_pred_error[0]**2
 
