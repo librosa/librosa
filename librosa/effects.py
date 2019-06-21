@@ -204,7 +204,7 @@ def time_stretch(y, rate, **kwargs):
 
     Returns
     -------
-    y_stretch : np.ndarray [shape=(rate * n,)]
+    y_stretch : np.ndarray [shape=(round(n/rate),)]
         audio time series stretched by the specified rate
 
     See Also
