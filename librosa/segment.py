@@ -58,8 +58,8 @@ def cross_similarity(data_from, data_to, k=None, metric='euclidean',
     '''Compute cross similarity between two data sequences.
 
 
-    `xsim[i, j]` is non-zero if (`data_from[:, i]`, `data_to[:, j]`) are
-    k-nearest-neighbors and `|i - j| >= width`
+    `xsim[i, j]` is non-zero if `data_to[:, j]` is a k-nearest neighbor
+    of `data_from[:, j]`.
 
 
     Parameters
@@ -104,16 +104,16 @@ def cross_similarity(data_from, data_to, k=None, metric='euclidean',
 
     Returns
     -------
-    xsim : np.ndarray or scipy.sparse.csr_matrix, [shape=(n_times1, n_times2)]
-        Recurrence matrix
+    xsim : np.ndarray or scipy.sparse.csr_matrix, [shape=(N, M)]
+        Cross-similarity matrix
 
     See Also
     --------
-    librosa.segment.recurrence_matrix
+    recurrence_matrix
+    recurrence_to_lag
+    feature.stack_memory
     sklearn.neighbors.NearestNeighbors
     scipy.spatial.distance.cdist
-    librosa.feature.stack_memory
-    recurrence_to_lag
 
     Notes
     -----
@@ -167,11 +167,11 @@ def cross_similarity(data_from, data_to, k=None, metric='euclidean',
 
     # swap data axes so the feature axis is last
     data_from = np.swapaxes(data_from, -1, 0)
-    n_times1 = data_from.shape[0]
-    data_from = data_from.reshape((n_times1, -1))
+    n_from = data_from.shape[0]
+    data_from = data_from.reshape((n_from, -1))
     data_to = np.swapaxes(data_to, -1, 0)
-    n_times2 = data_to.shape[0]
-    data_to = data_to.reshape((n_times2, -1))
+    n_to = data_to.shape[0]
+    data_to = data_to.reshape((n_to, -1))
 
     n_feat = data_from.shape[-1]
 
@@ -180,8 +180,8 @@ def cross_similarity(data_from, data_to, k=None, metric='euclidean',
                               "['connectivity', 'distance', "
                               "'affinity']").format(mode))
     if k is None:
-        if n_times1 > 3:
-            k = 2 * np.ceil(np.sqrt(n_times2 - 1))
+        if n_from > 3:
+            k = 2 * np.ceil(np.sqrt(n_to - 1))
         else:
             k = 2
 
@@ -194,11 +194,11 @@ def cross_similarity(data_from, data_to, k=None, metric='euclidean',
 
     # Build the neighbor search object
     try:
-        knn = sklearn.neighbors.NearestNeighbors(n_neighbors=min(n_times1-1, k + 2),
+        knn = sklearn.neighbors.NearestNeighbors(n_neighbors=min(n_from-1, k + 2),
                                                  metric=metric,
                                                  algorithm='auto')
     except ValueError:
-        knn = sklearn.neighbors.NearestNeighbors(n_neighbors=min(n_times1-1, k + 2),
+        knn = sklearn.neighbors.NearestNeighbors(n_neighbors=min(n_from-1, k + 2),
                                                  metric=metric,
                                                  algorithm='brute')
 
@@ -213,7 +213,7 @@ def cross_similarity(data_from, data_to, k=None, metric='euclidean',
     xsim = knn.kneighbors_graph(X=data_to, mode=kng_mode).tolil()
 
     # Retain only the top-k links per point
-    for i in range(n_times2):
+    for i in range(n_to):
         # Get the links from point i
         links = xsim[i].nonzero()[1]
 
