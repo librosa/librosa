@@ -29,23 +29,26 @@ def test_cross_similarity(n, k, metric):
 
     srand()
     # Make a data matrix
-    data_from = np.random.randn(3, n)
-    data_to = np.random.randn(3, n + 2)
+    data_ref = np.random.randn(3, n)
+    data = np.random.randn(3, n + 7)
 
-    D = librosa.segment.cross_similarity(data_from, data_to, k=k, metric=metric)
+    D = librosa.segment.cross_similarity(data, data_ref, k=k, metric=metric)
+
+    assert D.shape == (data_ref.shape[1], data.shape[1])
 
     if k is not None:
         real_k = min(k, n)
-        assert not np.any(D.sum(axis=1) != real_k)
+        assert not np.any(D.sum(axis=0) != real_k)
 
 
 def test_cross_similarity_sparse():
 
     srand()
-    data_from = np.random.randn(3, 50)
-    data_to = np.random.randn(3, 100)
-    D_sparse = librosa.segment.cross_similarity(data_from, data_to, sparse=True)
-    D_dense = librosa.segment.cross_similarity(data_from, data_to, sparse=False)
+    data_ref = np.random.randn(3, 50)
+    data = np.random.randn(3, 100)
+
+    D_sparse = librosa.segment.cross_similarity(data, data_ref, sparse=True)
+    D_dense = librosa.segment.cross_similarity(data, data_ref, sparse=False)
 
     assert scipy.sparse.isspmatrix(D_sparse)
     assert np.allclose(D_sparse.todense(), D_dense)
@@ -54,10 +57,10 @@ def test_cross_similarity_sparse():
 def test_cross_similarity_distance():
 
     srand()
-    data_from = np.random.randn(3, 50)
-    data_to = np.random.randn(3, 70)
-    distance = cdist(data_from.T , data_to.T, metric='sqeuclidean').T
-    rec = librosa.segment.cross_similarity(data_from, data_to, mode='distance',
+    data_ref = np.random.randn(3, 50)
+    data = np.random.randn(3, 70)
+    distance = cdist(data.T, data_ref.T, metric='sqeuclidean').T
+    rec = librosa.segment.cross_similarity(data, data_ref, mode='distance',
                                            metric='sqeuclidean',
                                            sparse=True)
 
@@ -70,10 +73,10 @@ def test_cross_similarity_distance():
 def test_cross_similarity_affinity(metric, bandwidth):
 
     srand()
-    data_from = np.random.randn(3, 70)
-    data_to = np.random.randn(3, 50)
-    distance = cdist(data_to.T, data_from.T, metric=metric)
-    rec = librosa.segment.cross_similarity(data_from, data_to,
+    data_ref = np.random.randn(3, 70)
+    data = np.random.randn(3, 50)
+    distance = cdist(data_ref.T, data.T, metric=metric)
+    rec = librosa.segment.cross_similarity(data, data_ref,
                                            mode='affinity',
                                            metric=metric,
                                            sparse=True,
@@ -94,10 +97,10 @@ def test_cross_similarity_affinity(metric, bandwidth):
 def test_cross_similarity_badmode():
 
     srand()
-    data_from = np.random.randn(3, 70)
-    data_to = np.random.randn(3, 50)
+    data_ref = np.random.randn(3, 70)
+    data = np.random.randn(3, 50)
 
-    rec = librosa.segment.cross_similarity(data_from, data_to, mode='NOT A MODE',
+    rec = librosa.segment.cross_similarity(data, data_ref, mode='NOT A MODE',
                                             metric='sqeuclidean',
                                             sparse=True)
 
@@ -106,9 +109,9 @@ def test_cross_similarity_badmode():
 def test_cross_similarity_bad_bandwidth():
 
     srand()
-    data_from = np.random.randn(3, 50)
-    data_to = np.random.randn(3, 70)
-    rec = librosa.segment.cross_similarity(data_from, data_to, bandwidth=-2)
+    data_ref = np.random.randn(3, 50)
+    data = np.random.randn(3, 70)
+    rec = librosa.segment.cross_similarity(data, data_ref, bandwidth=-2)
 
 
 
