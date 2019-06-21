@@ -235,8 +235,12 @@ def time_stretch(y, rate, **kwargs):
     # Stretch by phase vocoding
     stft_stretch = core.phase_vocoder(stft, rate)
 
-    # Invert the stft
-    y_stretch = core.istft(stft_stretch, dtype=y.dtype)
+    # Predict the length of y_stretch
+    len_stretch = int(round(len(y)/rate))
+
+    # Invert the STFT
+    y_stretch = core.istft(
+        stft_stretch, dtype=y.dtype, length=len_stretch, **kwargs)
 
     return y_stretch
 
