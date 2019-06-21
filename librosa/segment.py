@@ -53,28 +53,27 @@ __all__ = ['cross_similarity',
 
 
 @cache(level=30)
-def cross_similarity(data_from, data_to, k=None, metric='euclidean',
+def cross_similarity(data, data_ref, k=None, metric='euclidean',
                      sparse=False, mode='connectivity', bandwidth=None):
     '''Compute cross similarity between two data sequences.
 
-
-    `xsim[i, j]` is non-zero if `data_to[:, j]` is a k-nearest neighbor
-    of `data_from[:, j]`.
+    `xsim[i, j]` is non-zero if `data_ref[:, i]` is a k-nearest neighbor
+    of `data[:, j]`.
 
 
     Parameters
     ----------
-    data_from : np.ndarray [shape=(K, N)]
-        A feature matrix for the reference sequence
-
-    data_to : np.ndarray [shape=(K, M)]
+    data : np.ndarray [shape=(d, n)]
         A feature matrix for the comparison sequence
+
+    data_ref : np.ndarray [shape=(d, n_ref)]
+        A feature matrix for the reference sequence
 
     k : int > 0 [scalar] or None
         the number of nearest-neighbors for each sample
 
-        Default: `k = 2 * ceil(sqrt(M - 1))`,
-        or `k = 2` if `M <= 3`
+        Default: `k = 2 * ceil(sqrt(n_ref))`,
+        or `k = 2` if `n_ref <= 3`
 
     metric : str
         Distance metric to use for nearest-neighbor calculation.
@@ -104,7 +103,7 @@ def cross_similarity(data_from, data_to, k=None, metric='euclidean',
 
     Returns
     -------
-    xsim : np.ndarray or scipy.sparse.csr_matrix, [shape=(N, M)]
+    xsim : np.ndarray or scipy.sparse.csr_matrix, [shape=(n_ref, n)]
         Cross-similarity matrix
 
     See Also
@@ -127,23 +126,19 @@ def cross_similarity(data_from, data_to, k=None, metric='euclidean',
     >>> y_comp, sr = librosa.load(librosa.util.example_audio_file(), offset=10)
     >>> mfcc_ref = librosa.feature.mfcc(y=y_ref, sr=sr)
     >>> mfcc_comp = librosa.feature.mfcc(y=y_comp, sr=sr)
-    >>> xsim = librosa.segment.cross_similarity(mfcc_ref, mfcc_comp)
+    >>> xsim = librosa.segment.cross_similarity(mfcc_comp mfcc_ref)
 
     Or fix the number of nearest neighbors to 5
 
-    >>> xsim = librosa.segment.cross_similarity(mfcc_ref, mfcc_comp, k=5)
-
-    Suppress neighbors within +- 7 samples
-
-    >>> xsim = librosa.segment.cross_similarity(mfcc_ref, mfcc_comp, width=7)
+    >>> xsim = librosa.segment.cross_similarity(mfcc_comp, mfcc_ref, k=5)
 
     Use cosine similarity instead of Euclidean distance
 
-    >>> xsim = librosa.segment.cross_similarity(mfcc_ref, mfcc_comp, metric='cosine')
+    >>> xsim = librosa.segment.cross_similarity(mfcc_comp, mfcc_ref, metric='cosine')
 
     Use an affinity matrix instead of binary connectivity
 
-    >>> xsim_aff = librosa.segment.cross_similarity(mfcc_ref, mfcc_comp, mode='affinity')
+    >>> xsim_aff = librosa.segment.cross_similarity(mfcc_comp, mfcc_ref, mode='affinity')
 
     Plot the feature and recurrence matrices
 
@@ -159,50 +154,46 @@ def cross_similarity(data_from, data_to, k=None, metric='euclidean',
     >>> plt.tight_layout()
 
     '''
-    data_from = np.atleast_2d(data_from)
-    data_to = np.atleast_2d(data_to)
+    data_ref = np.atleast_2d(data_ref)
+    data = np.atleast_2d(data)
 
-    if data_from.shape[0] != data_to.shape[0]:
-        raise ValueError("data_from and data_to must have the same first dimension")
+    if data_ref.shape[0] != data.shape[0]:
+        raise ValueError("data_ref and data must have the same first dimension")
 
     # swap data axes so the feature axis is last
-    data_from = np.swapaxes(data_from, -1, 0)
-    n_from = data_from.shape[0]
-    data_from = data_from.reshape((n_from, -1))
-    data_to = np.swapaxes(data_to, -1, 0)
-    n_to = data_to.shape[0]
-    data_to = data_to.reshape((n_to, -1))
+    data_ref = np.swapaxes(data_ref, -1, 0)
+    n_ref = data_ref.shape[0]
+    data_ref = data_ref.reshape((n_ref, -1))
 
-    n_feat = data_from.shape[-1]
+    data = np.swapaxes(data, -1, 0)
+    n = data.shape[0]
+    data = data.reshape((n, -1))
 
     if mode not in ['connectivity', 'distance', 'affinity']:
         raise ParameterError(("Invalid mode='{}'. Must be one of "
                               "['connectivity', 'distance', "
                               "'affinity']").format(mode))
     if k is None:
-        if n_from > 3:
-            k = 2 * np.ceil(np.sqrt(n_to - 1))
-        else:
-            k = 2
+        k = min(n_ref, 2 * np.ceil(np.sqrt(n_ref)))
+
+    k = int(k)
 
     if bandwidth is not None:
         if bandwidth <= 0:
             raise ParameterError('Invalid bandwidth={}. '
                                  'Must be strictly positive.'.format(bandwidth))
 
-    k = int(k)
-
     # Build the neighbor search object
     try:
-        knn = sklearn.neighbors.NearestNeighbors(n_neighbors=min(n_from-1, k + 2),
+        knn = sklearn.neighbors.NearestNeighbors(n_neighbors=min(n_ref, k),
                                                  metric=metric,
                                                  algorithm='auto')
     except ValueError:
-        knn = sklearn.neighbors.NearestNeighbors(n_neighbors=min(n_from-1, k + 2),
+        knn = sklearn.neighbors.NearestNeighbors(n_neighbors=min(n_ref, k),
                                                  metric=metric,
                                                  algorithm='brute')
 
-    knn.fit(data_from)
+    knn.fit(data_ref)
 
     # Get the knn graph
     if mode == 'affinity':
@@ -210,10 +201,10 @@ def cross_similarity(data_from, data_to, k=None, metric='euclidean',
     else:
         kng_mode = mode
 
-    xsim = knn.kneighbors_graph(X=data_to, mode=kng_mode).tolil()
+    xsim = knn.kneighbors_graph(X=data, mode=kng_mode).tolil()
 
     # Retain only the top-k links per point
-    for i in range(n_to):
+    for i in range(n):
         # Get the links from point i
         links = xsim[i].nonzero()[1]
 
@@ -232,6 +223,9 @@ def cross_similarity(data_from, data_to, k=None, metric='euclidean',
         if bandwidth is None:
             bandwidth = np.nanmedian(xsim.max(axis=1).data)
         xsim.data[:] = np.exp(xsim.data / (-1 * bandwidth))
+
+    # Transpose to n_ref by n
+    xsim = xsim.T
 
     if not sparse:
         xsim = xsim.toarray()
