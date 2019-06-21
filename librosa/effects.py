@@ -186,7 +186,7 @@ def percussive(y, **kwargs):
     return y_perc
 
 
-def time_stretch(y, rate):
+def time_stretch(y, rate, **kwargs):
     '''Time-stretch an audio series by a fixed rate.
 
 
@@ -197,8 +197,10 @@ def time_stretch(y, rate):
 
     rate : float > 0 [scalar]
         Stretch factor.  If `rate > 1`, then the signal is sped up.
-
         If `rate < 1`, then the signal is slowed down.
+
+    kwargs : additional keyword arguments.
+        See `librosa.decompose.stft` for details.
 
     Returns
     -------
@@ -227,8 +229,8 @@ def time_stretch(y, rate):
     if rate <= 0:
         raise ParameterError('rate must be a positive number')
 
-    # Construct the stft
-    stft = core.stft(y)
+    # Construct the short-term Fourier transform (STFT)
+    stft = core.stft(y, **kwargs)
 
     # Stretch by phase vocoding
     stft_stretch = core.phase_vocoder(stft, rate)
