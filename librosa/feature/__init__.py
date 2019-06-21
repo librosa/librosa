@@ -31,6 +31,7 @@ Rhythm features
     :toctree: generated/
 
     tempogram
+    fourier_tempogram
 
 Feature manipulation
 --------------------
