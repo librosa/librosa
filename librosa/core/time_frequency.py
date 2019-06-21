@@ -1048,7 +1048,7 @@ def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False):
 
 
 def tempo_frequencies(n_bins, hop_length=512, sr=22050):
-    '''Compute the frequencies (in beats-per-minute) corresponding
+    '''Compute the frequencies (in beats per minute) corresponding
     to an onset auto-correlation or tempogram matrix.
 
     Parameters
@@ -1087,7 +1087,7 @@ def tempo_frequencies(n_bins, hop_length=512, sr=22050):
 
 
 def fourier_tempo_frequencies(sr=22050, win_length=384, hop_length=512):
-    '''Compute the frequencies (in beats-per-minute) corresponding
+    '''Compute the frequencies (in beats per minute) corresponding
     to a Fourier tempogram matrix.
 
     Parameters
