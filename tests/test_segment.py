@@ -58,8 +58,8 @@ def test_cross_similarity_distance():
     data_to = np.random.randn(3, 70)
     distance = cdist(data_from.T , data_to.T, metric='sqeuclidean').T
     rec = librosa.segment.cross_similarity(data_from, data_to, mode='distance',
-                                            metric='sqeuclidean',
-                                            sparse=True)
+                                           metric='sqeuclidean',
+                                           sparse=True)
 
     i, j, vals = scipy.sparse.find(rec)
     assert np.allclose(vals, distance[i, j])
