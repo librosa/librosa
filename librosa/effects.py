@@ -245,14 +245,15 @@ def time_stretch(y, rate, **kwargs):
     return y_stretch
 
 
-def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type='kaiser_best'):
-    '''Pitch-shift the waveform by `n_steps` half-steps.
+def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type='kaiser_best',
+                **kwargs):
+    '''Shift the pitch of a waveform by `n_steps` semitones.
 
 
     Parameters
     ----------
     y : np.ndarray [shape=(n,)]
-        audio time-series
+        audio time series
 
     sr : number > 0 [scalar]
         audio sampling rate of `y`
@@ -270,6 +271,9 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type='kaiser_best'):
         By default, 'kaiser_best' is used.
 
         See `core.resample` for more information.
+
+    kwargs: additional keyword arguments.
+        See `librosa.decompose.stft` for details.
 
     Returns
     -------
@@ -306,7 +310,7 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type='kaiser_best'):
     rate = 2.0 ** (-float(n_steps) / bins_per_octave)
 
     # Stretch in time, then resample
-    y_shift = core.resample(time_stretch(y, rate), float(sr) / rate, sr,
+    y_shift = core.resample(time_stretch(y, rate, **kwargs), float(sr)/rate, sr,
                             res_type=res_type)
 
     # Crop to the same dimension as the input
