@@ -73,8 +73,8 @@ def cross_similarity(data_from, data_to, k=None, metric='euclidean',
     k : int > 0 [scalar] or None
         the number of nearest-neighbors for each sample
 
-        Default: `k = 2 * ceil(sqrt(t - 1))`,
-        or `k = 2` if `t <= 3`
+        Default: `k = 2 * ceil(sqrt(M - 1))`,
+        or `k = 2` if `M <= 3`
 
     metric : str
         Distance metric to use for nearest-neighbor calculation.
@@ -181,7 +181,7 @@ def cross_similarity(data_from, data_to, k=None, metric='euclidean',
                               "'affinity']").format(mode))
     if k is None:
         if n_times1 > 3:
-            k = 2 * np.ceil(np.sqrt(n_feat - 3))
+            k = 2 * np.ceil(np.sqrt(n_times2 - 1))
         else:
             k = 2
 
@@ -230,7 +230,7 @@ def cross_similarity(data_from, data_to, k=None, metric='euclidean',
         xsim = xsim.astype(np.bool)
     elif mode == 'affinity':
         if bandwidth is None:
-            bandwidth = np.median(xsim.max(axis=1).data)
+            bandwidth = np.nanmedian(xsim.max(axis=1).data)
         xsim.data[:] = np.exp(xsim.data / (-1 * bandwidth))
 
     if not sparse:
