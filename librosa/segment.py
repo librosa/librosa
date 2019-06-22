@@ -55,10 +55,12 @@ __all__ = ['cross_similarity',
 @cache(level=30)
 def cross_similarity(data, data_ref, k=None, metric='euclidean',
                      sparse=False, mode='connectivity', bandwidth=None):
-    '''Compute cross similarity between two data sequences.
+    '''Compute cross-similarity from one data sequence to a reference sequence.
 
-    `xsim[i, j]` is non-zero if `data_ref[:, i]` is a k-nearest neighbor
-    of `data[:, j]`.
+    The output is a matrix `xsim`:
+
+        `xsim[i, j]` is non-zero if `data_ref[:, i]` is a k-nearest neighbor
+        of `data[:, j]`.
 
 
     Parameters
@@ -99,7 +101,7 @@ def cross_similarity(data, data_ref, k=None, metric='euclidean',
         bandwidth on the affinity kernel.
 
         If no value is provided, it is set automatically to the median
-        distance between furthest nearest neighbors.
+        distance to the k'th nearest neighbor of each `data[:, i]`.
 
     Returns
     -------
@@ -184,6 +186,8 @@ def cross_similarity(data, data_ref, k=None, metric='euclidean',
                                  'Must be strictly positive.'.format(bandwidth))
 
     # Build the neighbor search object
+    # `auto` mode does not work with some choices of metric.  Rather than special-case
+    # those here, we instead use a fall-back to brute force if auto fails.
     try:
         knn = sklearn.neighbors.NearestNeighbors(n_neighbors=min(n_ref, k),
                                                  metric=metric,
@@ -197,6 +201,8 @@ def cross_similarity(data, data_ref, k=None, metric='euclidean',
 
     # Get the knn graph
     if mode == 'affinity':
+        # sklearn's nearest neighbor doesn't support affinity,
+        # so we use distance here and then do the conversion post-hoc
         kng_mode = 'distance'
     else:
         kng_mode = mode
@@ -214,6 +220,7 @@ def cross_similarity(data, data_ref, k=None, metric='euclidean',
         # Everything past the kth closest gets squashed
         xsim[i, idx[k:]] = 0
 
+    # Convert a compressed sparse row (CSR) format
     xsim = xsim.tocsr()
     xsim.eliminate_zeros()
 
