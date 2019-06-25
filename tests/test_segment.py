@@ -140,7 +140,7 @@ def test_recurrence_matrix():
             real_k = min(k, n - width)
             if self:
                 real_k += 1
-            assert not np.any(D.sum(axis=1) != real_k)
+            assert not np.any(D.sum(axis=0) != real_k)
 
         if self:
             assert np.allclose(np.diag(D), True)
