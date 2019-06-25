@@ -12,7 +12,7 @@ except:
 
 import numpy as np
 import scipy
-from scipy.spatial.distance import pdist, squareform
+from scipy.spatial.distance import cdist, pdist, squareform
 import pytest
 
 from test_core import srand
@@ -20,6 +20,99 @@ from test_core import srand
 import librosa
 
 __EXAMPLE_FILE = os.path.join('tests', 'data', 'test1_22050.wav')
+
+
+@pytest.mark.parametrize('n', [20, 250])
+@pytest.mark.parametrize('k', [None, 5])
+@pytest.mark.parametrize('metric', ['l2', 'cosine'])
+def test_cross_similarity(n, k, metric):
+
+    srand()
+    # Make a data matrix
+    data_ref = np.random.randn(3, n)
+    data = np.random.randn(3, n + 7)
+
+    D = librosa.segment.cross_similarity(data, data_ref, k=k, metric=metric)
+
+    assert D.shape == (data_ref.shape[1], data.shape[1])
+
+    if k is not None:
+        real_k = min(k, n)
+        assert not np.any(D.sum(axis=0) != real_k)
+
+
+def test_cross_similarity_sparse():
+
+    srand()
+    data_ref = np.random.randn(3, 50)
+    data = np.random.randn(3, 100)
+
+    D_sparse = librosa.segment.cross_similarity(data, data_ref, sparse=True)
+    D_dense = librosa.segment.cross_similarity(data, data_ref, sparse=False)
+
+    assert scipy.sparse.isspmatrix(D_sparse)
+    assert np.allclose(D_sparse.todense(), D_dense)
+
+
+def test_cross_similarity_distance():
+
+    srand()
+    data_ref = np.random.randn(3, 50)
+    data = np.random.randn(3, 70)
+    distance = cdist(data.T, data_ref.T, metric='sqeuclidean').T
+    rec = librosa.segment.cross_similarity(data, data_ref, mode='distance',
+                                           metric='sqeuclidean',
+                                           sparse=True)
+
+    i, j, vals = scipy.sparse.find(rec)
+    assert np.allclose(vals, distance[i, j])
+
+
+@pytest.mark.parametrize('metric', ['sqeuclidean', 'cityblock'])
+@pytest.mark.parametrize('bandwidth', [None, 1])
+def test_cross_similarity_affinity(metric, bandwidth):
+
+    srand()
+    data_ref = np.random.randn(3, 70)
+    data = np.random.randn(3, 50)
+    distance = cdist(data_ref.T, data.T, metric=metric)
+    rec = librosa.segment.cross_similarity(data, data_ref,
+                                           mode='affinity',
+                                           metric=metric,
+                                           sparse=True,
+                                           bandwidth=bandwidth)
+
+    i, j, vals = scipy.sparse.find(rec)
+    logvals = np.log(vals)
+
+    ratio = -logvals / distance[i, j]
+
+    if bandwidth is None:
+        assert np.allclose(-logvals, distance[i, j] * np.nanmax(ratio))
+    else:
+        assert np.allclose(-logvals, distance[i, j] * bandwidth)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_cross_similarity_badmode():
+
+    srand()
+    data_ref = np.random.randn(3, 70)
+    data = np.random.randn(3, 50)
+
+    rec = librosa.segment.cross_similarity(data, data_ref, mode='NOT A MODE',
+                                            metric='sqeuclidean',
+                                            sparse=True)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_cross_similarity_bad_bandwidth():
+
+    srand()
+    data_ref = np.random.randn(3, 50)
+    data = np.random.randn(3, 70)
+    rec = librosa.segment.cross_similarity(data, data_ref, bandwidth=-2)
+
 
 
 def test_recurrence_matrix():
@@ -47,7 +140,7 @@ def test_recurrence_matrix():
             real_k = min(k, n - width)
             if self:
                 real_k += 1
-            assert not np.any(D.sum(axis=1) != real_k)
+            assert not np.any(D.sum(axis=0) != real_k)
 
         if self:
             assert np.allclose(np.diag(D), True)
@@ -62,7 +155,7 @@ def test_recurrence_matrix():
 
 
     for n in [20, 250]:
-        for k in [None, n//4]:
+        for k in [None, n // 4]:
             for sym in [False, True]:
                 for width in [-1, 0, 1, 3, 5, 5000]:
                     for metric in ['l2', 'cosine']:

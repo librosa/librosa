@@ -236,7 +236,6 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
                 C.shape[0] > C.shape[1]
         ):
             wp = np.fliplr(wp)
-
         return D, wp
     else:
         return D

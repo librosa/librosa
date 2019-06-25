@@ -505,7 +505,7 @@ def nn_filter(S, rec=None, aggregate=None, axis=-1, **kwargs):
         kwargs['sparse'] = True
         rec = segment.recurrence_matrix(S, axis=axis, **kwargs)
     elif not scipy.sparse.issparse(rec):
-        rec = scipy.sparse.csr_matrix(rec)
+        rec = scipy.sparse.csc_matrix(rec)
 
     if rec.shape[0] != S.shape[axis] or rec.shape[0] != rec.shape[1]:
         raise ParameterError('Invalid self-similarity matrix shape '
