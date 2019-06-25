@@ -84,7 +84,7 @@ def cross_similarity(data, data_ref, k=None, metric='euclidean',
 
     sparse : bool [scalar]
         if False, returns a dense type (ndarray)
-        if True, returns a sparse type (scipy.sparse.csr_matrix)
+        if True, returns a sparse type (scipy.sparse.csc_matrix)
 
     mode : str, {'connectivity', 'distance', 'affinity'}
         If 'connectivity', a binary connectivity matrix is produced.
@@ -105,7 +105,7 @@ def cross_similarity(data, data_ref, k=None, metric='euclidean',
 
     Returns
     -------
-    xsim : np.ndarray or scipy.sparse.csr_matrix, [shape=(n_ref, n)]
+    xsim : np.ndarray or scipy.sparse.csc_matrix, [shape=(n_ref, n)]
         Cross-similarity matrix
 
     See Also
@@ -128,7 +128,7 @@ def cross_similarity(data, data_ref, k=None, metric='euclidean',
     >>> y_comp, sr = librosa.load(librosa.util.example_audio_file(), offset=10)
     >>> mfcc_ref = librosa.feature.mfcc(y=y_ref, sr=sr)
     >>> mfcc_comp = librosa.feature.mfcc(y=y_comp, sr=sr)
-    >>> xsim = librosa.segment.cross_similarity(mfcc_comp mfcc_ref)
+    >>> xsim = librosa.segment.cross_similarity(mfcc_comp, mfcc_ref)
 
     Or fix the number of nearest neighbors to 5
 
@@ -246,7 +246,7 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
                       bandwidth=None, self=False, axis=-1):
     '''Compute a recurrence matrix from a data matrix.
 
-    `rec[i, j]` is non-zero if (`data[:, i]`, `data[:, j]`) are
+    `rec[i, j]` is non-zero if `data[:, i]` is one of `data[:, j]`'s
     k-nearest-neighbors and `|i - j| >= width`
 
     The specific value of `rec[i, j]` can have several forms, governed
@@ -257,7 +257,7 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
         - Affinity: `rec[i, j] > 0` measures how similar frames `i` and `j` are.  This is also
           known as a (sparse) self-similarity matrix.
 
-        - Distance: `rec[, j] > 0` measures how distant frames `i` and `j` are.  This is also
+        - Distance: `rec[i, j] > 0` measures how distant frames `i` and `j` are.  This is also
           known as a (sparse) self-distance matrix.
 
     The general term *recurrence matrix* can refer to any of the three forms above.
@@ -290,7 +290,7 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
 
     sparse : bool [scalar]
         if False, returns a dense type (ndarray)
-        if True, returns a sparse type (scipy.sparse.csr_matrix)
+        if True, returns a sparse type (scipy.sparse.csc_matrix)
 
     mode : str, {'connectivity', 'distance', 'affinity'}
         If 'connectivity', a binary connectivity matrix is produced.
@@ -321,7 +321,7 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
 
     Returns
     -------
-    rec : np.ndarray or scipy.sparse.csr_matrix, [shape=(t, t)]
+    rec : np.ndarray or scipy.sparse.csc_matrix, [shape=(t, t)]
         Recurrence matrix
 
     See Also
@@ -471,6 +471,9 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
         # of the matrix without corrupting the bandwidth calculations
         rec.data[rec.data < 0] = 0.0
         rec.data[:] = np.exp(rec.data / (-1 * bandwidth))
+
+    # Transpose to be column-major
+    rec = rec.T
 
     if not sparse:
         rec = rec.toarray()

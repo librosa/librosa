@@ -135,9 +135,9 @@ def test_nn_filter_mean():
     X_filtered = librosa.decompose.nn_filter(X)
 
     # Normalize the recurrence matrix so dotting computes an average
-    rec = librosa.util.normalize(rec.astype(np.float), axis=1, norm=1)
+    rec = librosa.util.normalize(rec.astype(np.float), axis=0, norm=1)
 
-    assert np.allclose(X_filtered, X.dot(rec.T))
+    assert np.allclose(X_filtered, X.dot(rec))
 
 
 def test_nn_filter_mean_rec():
@@ -149,7 +149,7 @@ def test_nn_filter_mean_rec():
     rec = librosa.segment.recurrence_matrix(X)
 
     # Knock out the first three rows of links
-    rec[:3] = False
+    rec[:, :3] = False
 
     X_filtered = librosa.decompose.nn_filter(X, rec=rec)
 
@@ -157,8 +157,8 @@ def test_nn_filter_mean_rec():
         assert np.allclose(X_filtered[:, i], X[:, i])
 
     # Normalize the recurrence matrix
-    rec = librosa.util.normalize(rec.astype(np.float), axis=1, norm=1)
-    assert np.allclose(X_filtered[:, 3:], (X.dot(rec.T))[:, 3:])
+    rec = librosa.util.normalize(rec.astype(np.float), axis=0, norm=1)
+    assert np.allclose(X_filtered[:, 3:], (X.dot(rec))[:, 3:])
 
 
 def test_nn_filter_mean_rec_sparse():
@@ -172,8 +172,8 @@ def test_nn_filter_mean_rec_sparse():
     X_filtered = librosa.decompose.nn_filter(X, rec=rec)
 
     # Normalize the recurrence matrix
-    rec = librosa.util.normalize(rec.toarray().astype(np.float), axis=1, norm=1)
-    assert np.allclose(X_filtered, (X.dot(rec.T)))
+    rec = librosa.util.normalize(rec.toarray().astype(np.float), axis=0, norm=1)
+    assert np.allclose(X_filtered, (X.dot(rec)))
 
 
 def test_nn_filter_avg():
@@ -187,9 +187,9 @@ def test_nn_filter_avg():
     X_filtered = librosa.decompose.nn_filter(X, rec=rec, aggregate=np.average)
 
     # Normalize the recurrence matrix so dotting computes an average
-    rec = librosa.util.normalize(rec, axis=1, norm=1)
+    rec = librosa.util.normalize(rec, axis=0, norm=1)
 
-    assert np.allclose(X_filtered, X.dot(rec.T))
+    assert np.allclose(X_filtered, X.dot(rec))
 
 
 def test_nn_filter_badselfsim():
