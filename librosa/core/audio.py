@@ -252,9 +252,8 @@ def stream(path, block_length, frame_length, hop_length,
            when the signal is carved into blocks, because it would introduce
            padding in the middle of the signal.  To disable this feature,
            use `center=False` in all frame-based analyses.
-
+        
     See the examples below for proper usage of this function.
-
 
     Parameters
     ----------
@@ -885,7 +884,7 @@ def __lpc(y, order):
         # fwd_pred_error = f_{M-1,k}       (we have advanced M)
         # den <- DEN_{M}                   (lhs)
         #
-
+        
         q = dtype(1) - reflect_coeff**2
         den = q*den - bwd_pred_error[-1]**2 - fwd_pred_error[0]**2
 

@@ -9,6 +9,7 @@ Recurrence and self-similarity
 .. autosummary::
     :toctree: generated/
 
+    cross_similarity
     recurrence_matrix
     recurrence_to_lag
     lag_to_recurrence
@@ -41,7 +42,8 @@ from . import util
 from .filters import diagonal_filter
 from .util.exceptions import ParameterError
 
-__all__ = ['recurrence_matrix',
+__all__ = ['cross_similarity',
+           'recurrence_matrix',
            'recurrence_to_lag',
            'lag_to_recurrence',
            'timelag_filter',
@@ -51,12 +53,200 @@ __all__ = ['recurrence_matrix',
 
 
 @cache(level=30)
+def cross_similarity(data, data_ref, k=None, metric='euclidean',
+                     sparse=False, mode='connectivity', bandwidth=None):
+    '''Compute cross-similarity from one data sequence to a reference sequence.
+
+    The output is a matrix `xsim`:
+
+        `xsim[i, j]` is non-zero if `data_ref[:, i]` is a k-nearest neighbor
+        of `data[:, j]`.
+
+
+    Parameters
+    ----------
+    data : np.ndarray [shape=(d, n)]
+        A feature matrix for the comparison sequence
+
+    data_ref : np.ndarray [shape=(d, n_ref)]
+        A feature matrix for the reference sequence
+
+    k : int > 0 [scalar] or None
+        the number of nearest-neighbors for each sample
+
+        Default: `k = 2 * ceil(sqrt(n_ref))`,
+        or `k = 2` if `n_ref <= 3`
+
+    metric : str
+        Distance metric to use for nearest-neighbor calculation.
+
+        See `sklearn.neighbors.NearestNeighbors` for details.
+
+    sparse : bool [scalar]
+        if False, returns a dense type (ndarray)
+        if True, returns a sparse type (scipy.sparse.csc_matrix)
+
+    mode : str, {'connectivity', 'distance', 'affinity'}
+        If 'connectivity', a binary connectivity matrix is produced.
+
+        If 'distance', then a non-zero entry contains the distance between
+        points.
+
+        If 'affinity', then non-zero entries are mapped to
+        `exp( - distance(i, j) / bandwidth)` where `bandwidth` is
+        as specified below.
+
+    bandwidth : None or float > 0
+        If using ``mode='affinity'``, this can be used to set the
+        bandwidth on the affinity kernel.
+
+        If no value is provided, it is set automatically to the median
+        distance to the k'th nearest neighbor of each `data[:, i]`.
+
+    Returns
+    -------
+    xsim : np.ndarray or scipy.sparse.csc_matrix, [shape=(n_ref, n)]
+        Cross-similarity matrix
+
+    See Also
+    --------
+    recurrence_matrix
+    recurrence_to_lag
+    feature.stack_memory
+    sklearn.neighbors.NearestNeighbors
+    scipy.spatial.distance.cdist
+
+    Notes
+    -----
+    This function caches at level 30.
+
+    Examples
+    --------
+    Find nearest neighbors in MFCC space between two sequences
+
+    >>> y_ref, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y_comp, sr = librosa.load(librosa.util.example_audio_file(), offset=10)
+    >>> mfcc_ref = librosa.feature.mfcc(y=y_ref, sr=sr)
+    >>> mfcc_comp = librosa.feature.mfcc(y=y_comp, sr=sr)
+    >>> xsim = librosa.segment.cross_similarity(mfcc_comp, mfcc_ref)
+
+    Or fix the number of nearest neighbors to 5
+
+    >>> xsim = librosa.segment.cross_similarity(mfcc_comp, mfcc_ref, k=5)
+
+    Use cosine similarity instead of Euclidean distance
+
+    >>> xsim = librosa.segment.cross_similarity(mfcc_comp, mfcc_ref, metric='cosine')
+
+    Use an affinity matrix instead of binary connectivity
+
+    >>> xsim_aff = librosa.segment.cross_similarity(mfcc_comp, mfcc_ref, mode='affinity')
+
+    Plot the feature and recurrence matrices
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure(figsize=(8, 4))
+    >>> plt.subplot(1, 2, 1)
+    >>> librosa.display.specshow(xsim, x_axis='time', y_axis='time')
+    >>> plt.title('Binary recurrence (symmetric)')
+    >>> plt.subplot(1, 2, 2)
+    >>> librosa.display.specshow(xsim_aff, x_axis='time', y_axis='time',
+    ...                          cmap='magma_r')
+    >>> plt.title('Affinity recurrence')
+    >>> plt.tight_layout()
+
+    '''
+    data_ref = np.atleast_2d(data_ref)
+    data = np.atleast_2d(data)
+
+    if data_ref.shape[0] != data.shape[0]:
+        raise ValueError("data_ref and data must have the same first dimension")
+
+    # swap data axes so the feature axis is last
+    data_ref = np.swapaxes(data_ref, -1, 0)
+    n_ref = data_ref.shape[0]
+    data_ref = data_ref.reshape((n_ref, -1))
+
+    data = np.swapaxes(data, -1, 0)
+    n = data.shape[0]
+    data = data.reshape((n, -1))
+
+    if mode not in ['connectivity', 'distance', 'affinity']:
+        raise ParameterError(("Invalid mode='{}'. Must be one of "
+                              "['connectivity', 'distance', "
+                              "'affinity']").format(mode))
+    if k is None:
+        k = min(n_ref, 2 * np.ceil(np.sqrt(n_ref)))
+
+    k = int(k)
+
+    if bandwidth is not None:
+        if bandwidth <= 0:
+            raise ParameterError('Invalid bandwidth={}. '
+                                 'Must be strictly positive.'.format(bandwidth))
+
+    # Build the neighbor search object
+    # `auto` mode does not work with some choices of metric.  Rather than special-case
+    # those here, we instead use a fall-back to brute force if auto fails.
+    try:
+        knn = sklearn.neighbors.NearestNeighbors(n_neighbors=min(n_ref, k),
+                                                 metric=metric,
+                                                 algorithm='auto')
+    except ValueError:
+        knn = sklearn.neighbors.NearestNeighbors(n_neighbors=min(n_ref, k),
+                                                 metric=metric,
+                                                 algorithm='brute')
+
+    knn.fit(data_ref)
+
+    # Get the knn graph
+    if mode == 'affinity':
+        # sklearn's nearest neighbor doesn't support affinity,
+        # so we use distance here and then do the conversion post-hoc
+        kng_mode = 'distance'
+    else:
+        kng_mode = mode
+
+    xsim = knn.kneighbors_graph(X=data, mode=kng_mode).tolil()
+
+    # Retain only the top-k links per point
+    for i in range(n):
+        # Get the links from point i
+        links = xsim[i].nonzero()[1]
+
+        # Order them ascending
+        idx = links[np.argsort(xsim[i, links].toarray())][0]
+
+        # Everything past the kth closest gets squashed
+        xsim[i, idx[k:]] = 0
+
+    # Convert a compressed sparse row (CSR) format
+    xsim = xsim.tocsr()
+    xsim.eliminate_zeros()
+
+    if mode == 'connectivity':
+        xsim = xsim.astype(np.bool)
+    elif mode == 'affinity':
+        if bandwidth is None:
+            bandwidth = np.nanmedian(xsim.max(axis=1).data)
+        xsim.data[:] = np.exp(xsim.data / (-1 * bandwidth))
+
+    # Transpose to n_ref by n
+    xsim = xsim.T
+
+    if not sparse:
+        xsim = xsim.toarray()
+
+    return xsim
+
+
+@cache(level=30)
 def recurrence_matrix(data, k=None, width=1, metric='euclidean',
                       sym=False, sparse=False, mode='connectivity',
                       bandwidth=None, self=False, axis=-1):
     '''Compute a recurrence matrix from a data matrix.
 
-    `rec[i, j]` is non-zero if (`data[:, i]`, `data[:, j]`) are
+    `rec[i, j]` is non-zero if `data[:, i]` is one of `data[:, j]`'s
     k-nearest-neighbors and `|i - j| >= width`
 
     The specific value of `rec[i, j]` can have several forms, governed
@@ -67,7 +257,7 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
         - Affinity: `rec[i, j] > 0` measures how similar frames `i` and `j` are.  This is also
           known as a (sparse) self-similarity matrix.
 
-        - Distance: `rec[, j] > 0` measures how distant frames `i` and `j` are.  This is also
+        - Distance: `rec[i, j] > 0` measures how distant frames `i` and `j` are.  This is also
           known as a (sparse) self-distance matrix.
 
     The general term *recurrence matrix* can refer to any of the three forms above.
@@ -100,7 +290,7 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
 
     sparse : bool [scalar]
         if False, returns a dense type (ndarray)
-        if True, returns a sparse type (scipy.sparse.csr_matrix)
+        if True, returns a sparse type (scipy.sparse.csc_matrix)
 
     mode : str, {'connectivity', 'distance', 'affinity'}
         If 'connectivity', a binary connectivity matrix is produced.
@@ -131,7 +321,7 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
 
     Returns
     -------
-    rec : np.ndarray or scipy.sparse.csr_matrix, [shape=(t, t)]
+    rec : np.ndarray or scipy.sparse.csc_matrix, [shape=(t, t)]
         Recurrence matrix
 
     See Also
@@ -281,6 +471,9 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
         # of the matrix without corrupting the bandwidth calculations
         rec.data[rec.data < 0] = 0.0
         rec.data[:] = np.exp(rec.data / (-1 * bandwidth))
+
+    # Transpose to be column-major
+    rec = rec.T
 
     if not sparse:
         rec = rec.toarray()
