@@ -484,7 +484,7 @@ def test_istft_reconstruction():
                     for length in [None, len(x) - 1000, len(x + 1000)]:
                         yield (__test, x, n_fft, hop_length, win, atol, length)
                         yield (__test, x, n_fft, hop_length, symwin, atol, length)
-                # also tests with passing widnow function itself
+                # also tests with passing window function itself
                 yield (__test, x, n_fft, n_fft // 9, window_func, atol, None)
 
         # test with default paramters
