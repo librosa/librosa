@@ -611,3 +611,90 @@ def test_trans_local_nowrap_var():
 
     assert np.allclose(A, A_true)
 
+
+@pytest.mark.parametrize('gap_onset', [1, np.inf])
+@pytest.mark.parametrize('gap_extend', [1, np.inf])
+@pytest.mark.parametrize('knight', [False, True])
+@pytest.mark.parametrize('backtrack', [False, True])
+def test_rqa_edge(gap_onset, gap_extend, knight, backtrack):
+
+    rec = np.asarray([[0, 1, 0, 0],
+                      [0, 0, 1, 0],
+                      [0, 0, 1, 1],
+                      [0, 0, 0, 1]])
+
+    out = librosa.sequence.rqa(rec,
+                               gap_onset=gap_onset,
+                               gap_extend=gap_extend,
+                               knight_moves=knight,
+                               backtrack=backtrack)
+
+    if backtrack:
+        score, path = out
+        __validate_rqa_results(rec, score, path, gap_onset, gap_extend,
+                               backtrack, knight)
+    else:
+        # without backtracking, make sure the output is just the score matrix
+        assert out.shape == rec.shape
+
+
+@pytest.mark.parametrize('gap_onset', [1, np.inf])
+@pytest.mark.parametrize('gap_extend', [1, np.inf])
+@pytest.mark.parametrize('knight', [False, True])
+def test_rqa_empty(gap_onset, gap_extend, knight):
+    rec = np.zeros((5, 5))
+
+    score, path = librosa.sequence.rqa(rec,
+                                       gap_onset=gap_onset,
+                                       gap_extend=gap_extend,
+                                       knight_moves=knight,
+                                       backtrack=True)
+
+    assert score.shape == rec.shape
+    assert np.allclose(score, 0)
+    assert path.shape == (0, 2)
+
+
+@pytest.mark.parametrize('gap_onset', [1, np.inf])
+@pytest.mark.parametrize('gap_extend', [1, np.inf])
+@pytest.mark.parametrize('knight', [False, True])
+@pytest.mark.parametrize('backtrack', [False, True])
+def test_rqa_interior(gap_onset, gap_extend, knight, backtrack):
+    rec = np.asarray([[0, 0, 0, 1],
+                      [0, 1, 0, 0],
+                      [0, 0, 1, 0],
+                      [0, 0, 0, 0]])
+
+    out = librosa.sequence.rqa(rec,
+                               gap_onset=gap_onset,
+                               gap_extend=gap_extend,
+                               knight_moves=knight,
+                               backtrack=backtrack)
+
+    if backtrack:
+        score, path = out
+        __validate_rqa_results(rec, score, path, gap_onset, gap_extend,
+                               backtrack, knight)
+    else:
+        # without backtracking, make sure the output is just the score matrix
+        assert out.shape == rec.shape
+
+
+def __validate_rqa_results(rec, score, path, gap_onset, gap_extend, backtrack, knight):
+    # Test maximal end-point
+    assert np.all(score[tuple(path[-1])] >= score)
+
+    # Test non-zero start point
+    assert rec[tuple(path[0])] > 0
+
+    # If we can't have gaps, then all values must be nonzero
+    if not np.isfinite(gap_onset) and not np.isfinite(gap_extend):
+        assert np.all([rec[tuple(i)] > 0 for i in path])
+
+    path_diff = np.diff(path, axis=0)
+    if knight:
+        for d in path_diff:
+            assert np.allclose(d, (1, 1)) or np.allclose(d, (1, 2)) or np.allclose(d, (2, 1))
+    else:
+        # Without knight moves, only diagonal steps are allowed
+        assert np.allclose(path_diff, 1)
