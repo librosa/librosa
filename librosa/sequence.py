@@ -414,10 +414,10 @@ def rqa(sim, gap_onset=1, gap_extend=1, knight_moves=True, backtrack=True):
         This can either be a recurrence matrix (self-similarity)
         or a cross-similarity matrix between two sequences.
 
-    gap_onset : float >= 0
+    gap_onset : float > 0
         Penalty for introducing a gap to an alignment sequence
 
-    gap_extend : float >= 0
+    gap_extend : float > 0
         Penalty for extending a gap in an alignment sequence
 
     knight_moves : bool
@@ -490,6 +490,11 @@ def rqa(sim, gap_onset=1, gap_extend=1, knight_moves=True, backtrack=True):
     >>> plt.legend()
     >>> plt.show()
     '''
+
+    if gap_onset < 0:
+        raise ParameterError('gap_onset={} must be strictly positive')
+    if gap_extend < 0:
+        raise ParameterError('gap_extend={} must be strictly positive')
 
     score, pointers = __rqa_dp(sim, gap_onset, gap_extend, knight_moves)
     if backtrack:
