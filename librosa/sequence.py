@@ -685,6 +685,9 @@ def __rqa_backtrack(score, pointers):
         # Otherwise, prepend this index and continue
         idx = [idx[_] + offsets[bt_index][_] for _ in range(len(idx))]
 
+    if not path:
+        return np.empty((0, 2), dtype=np.uint)
+
     return np.asarray(path, dtype=np.uint)
 
 
