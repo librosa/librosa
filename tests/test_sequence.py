@@ -680,6 +680,15 @@ def test_rqa_interior(gap_onset, gap_extend, knight, backtrack):
         assert out.shape == rec.shape
 
 
+@pytest.mark.parametrize('gap_onset', [1, np.inf,
+                                       pytest.mark.xfail(-1, raises=librosa.ParameterError)])
+@pytest.mark.parametrize('gap_extend', [1, np.inf,
+                                        pytest.mark.xfail(-1, raises=librosa.ParameterError)])
+def test_rqa_badgaps(gap_onset, gap_extend):
+    rec = np.ones((5, 5))
+    librosa.sequence.rqa(rec, gap_onset=gap_onset, gap_extend=gap_extend)
+
+
 def __validate_rqa_results(rec, score, path, gap_onset, gap_extend, backtrack, knight):
     # Test maximal end-point
     assert np.all(score[tuple(path[-1])] >= score)
