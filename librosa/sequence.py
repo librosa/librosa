@@ -366,7 +366,7 @@ def rqa(sim, gap_onset=1, gap_extend=1, knight_moves=True, backtrack=True):
 
     This function implements different forms of RQA as described by
     Serra, Serra, and Andrzejak [1]_.  These methods take as input
-    a recurrence or cross-similarity matrix `sim`, and calculate the value
+    a self- or cross-similarity matrix `sim`, and calculate the value
     of path alignments by dynamic programming.
 
     Note that unlike dynamic time warping (`dtw`), alignment paths here are
@@ -381,7 +381,8 @@ def rqa(sim, gap_onset=1, gap_extend=1, knight_moves=True, backtrack=True):
         - `score[i, j] = 0` otherwise.
 
     The second method, denoted as `S` [1]_ (equation 4), is similar to the first,
-    but allows for "knight moves" in addition to strict diagonal moves:
+    but allows for "knight moves" (as in the chess piece) in addition to strict
+    diagonal moves:
 
         - `score[i, j] = max(score[i-1, j-1], score[i-2, j-1], score[i-1, j-2]) + 1`  if `sim[i, j] > 0`
         - `score[i, j] = 0` otherwise.
@@ -390,14 +391,14 @@ def rqa(sim, gap_onset=1, gap_extend=1, knight_moves=True, backtrack=True):
     allowing gaps in the alignment that incur some cost, rather than a hard
     reset to 0 whenever `sim[i, j] == 0`.
     Gaps are penalized by two additional parameters, `gap_onset` and `gap_extend`,
-    which are deducted from the value of the alignment path every time a gap
+    which are subtracted from the value of the alignment path every time a gap
     is introduced or extended (respectively).
 
     Note that setting `gap_onset` and `gap_extend` to `np.inf` recovers the second
     method, and disabling knight moves recovers the first.
 
 
-    .. [1] Serra, Joan, Xavier Serra, and Ralph G. Andrzejak.
+    .. [1] Serrà, Joan, Xavier Serra, and Ralph G. Andrzejak.
         "Cross recurrence quantification for cover song identification."
         New Journal of Physics 11, no. 9 (2009): 093017.
 
@@ -467,11 +468,15 @@ def rqa(sim, gap_onset=1, gap_extend=1, knight_moves=True, backtrack=True):
     >>> # using infinite cost for gaps enforces strict path continuation
     >>> L_score, L_path = librosa.sequence.rqa(rec, np.inf, np.inf,
     ...                                        knight_moves=False)
+    >>> plt.figure(figsize=(10, 4))
     >>> plt.subplot(1,2,1)
     >>> librosa.display.specshow(rec, x_axis='frames', y_axis='frames')
     >>> plt.title('Recurrence matrix')
+    >>> plt.colorbar()
     >>> plt.subplot(1,2,2)
     >>> librosa.display.specshow(L_score, x_axis='frames', y_axis='frames')
+    >>> plt.title('Alignment score matrix')
+    >>> plt.colorbar()
     >>> plt.plot(L_path[:, 1], L_path[:, 0], label='Optimal path', color='c')
     >>> plt.legend()
     >>> plt.show()
@@ -480,13 +485,16 @@ def rqa(sim, gap_onset=1, gap_extend=1, knight_moves=True, backtrack=True):
 
     >>> # New gaps cost 5, extending old gaps cost 10 for each step
     >>> score, path = librosa.sequence.rqa(rec, 5, 10)
-    >>> plt.figure()
+    >>> plt.figure(figsize=(10, 4))
     >>> plt.subplot(1,2,1)
     >>> librosa.display.specshow(rec, x_axis='frames', y_axis='frames')
     >>> plt.title('Recurrence matrix')
+    >>> plt.colorbar()
     >>> plt.subplot(1,2,2)
     >>> librosa.display.specshow(score, x_axis='frames', y_axis='frames')
+    >>> plt.title('Alignment score matrix')
     >>> plt.plot(path[:, 1], path[:, 0], label='Optimal path', color='c')
+    >>> plt.colorbar()
     >>> plt.legend()
     >>> plt.show()
     '''
@@ -523,7 +531,6 @@ def __rqa_dp(sim, gap_onset, gap_extend, knight):  # pragma: no cover
     # If knight moves are disabled, then only the first entry is used.
     #
     # Using dummy vectors here makes the code a bit cleaner down below.
-    #
     sim_values = np.zeros(3)
     score_values = np.zeros(3)
     vec = np.zeros(3)
@@ -690,6 +697,8 @@ def __rqa_backtrack(score, pointers):
         # Otherwise, prepend this index and continue
         idx = [idx[_] + offsets[bt_index][_] for _ in range(len(idx))]
 
+    # If there's no alignment path at all, eg an empty cross-similarity
+    # matrix, return a properly shaped and typed array
     if not path:
         return np.empty((0, 2), dtype=np.uint)
 
