@@ -633,6 +633,7 @@ def test_rqa_edge(gap_onset, gap_extend, knight, backtrack):
         score, path = out
         __validate_rqa_results(rec, score, path, gap_onset, gap_extend,
                                backtrack, knight)
+        assert len(path) == 3
     else:
         # without backtracking, make sure the output is just the score matrix
         assert out.shape == rec.shape
@@ -675,6 +676,7 @@ def test_rqa_interior(gap_onset, gap_extend, knight, backtrack):
         score, path = out
         __validate_rqa_results(rec, score, path, gap_onset, gap_extend,
                                backtrack, knight)
+        assert len(path) == 2
     else:
         # without backtracking, make sure the output is just the score matrix
         assert out.shape == rec.shape
