@@ -587,9 +587,17 @@ def phase_vocoder(D, rate, hop_length=None):
 
     Based on the implementation provided by [1]_.
 
+    .. note: This is a simplified implementation, intended primarily for
+             reference and pedagogical purposes.  It makes no attempt to
+             handle transients, and is likely to produce many audible
+             artifacts.  For a higher quality implementation, we recommend
+             the RubberBand library [2]_ and its Python wrapper `pyrubberband`.
+
     .. [1] Ellis, D. P. W. "A phase vocoder in Matlab."
         Columbia University, 2002.
         http://www.ee.columbia.edu/~dpwe/resources/matlab/pvoc/
+
+    .. [2] https://breakfastquay.com/rubberband/
 
     Examples
     --------
@@ -622,6 +630,10 @@ def phase_vocoder(D, rate, hop_length=None):
     -------
     D_stretched : np.ndarray [shape=(d, t / rate), dtype=complex]
         time-stretched STFT
+
+    See Also
+    --------
+    pyrubberband
     """
 
     n_fft = 2 * (D.shape[0] - 1)
@@ -671,7 +683,7 @@ def phase_vocoder(D, rate, hop_length=None):
 
 @cache(level=20)
 def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
-         tuning=0.0, pad_mode='reflect', flayout=None, **kwargs):
+         tuning=0.0, pad_mode='reflect', flayout='sos', **kwargs):
     r'''Time-frequency representation using IIR filters [1]_.
 
     This function will return a time-frequency representation
@@ -723,10 +735,10 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
         By default, this function uses reflection padding.
 
     flayout : string
+        - If `sos` (default), a series of second-order filters is used for filtering with `scipy.signal.sosfiltfilt`.
+          Minimizes numerical precision errors for high-order filters, but is slower.
         - If `ba`, the standard difference equation is used for filtering with `scipy.signal.filtfilt`.
           Can be unstable for high-order filters.
-        - If `sos`, a series of second-order filters is used for filtering with `scipy.signal.sosfiltfilt`.
-          Minimizes numerical precision errors for high-order filters, but is slower.
 
     kwargs : additional keyword arguments
         Additional arguments for `librosa.filters.semitone_filterbank()`
@@ -764,12 +776,7 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
     >>> plt.show()
     '''
 
-    if flayout is None:
-        warnings.warn('Default filter layout for `iirt` is `ba`, but will be `sos` in 0.7.',
-                      FutureWarning)
-        flayout = 'ba'
-
-    elif flayout not in ('ba', 'sos'):
+    if flayout not in ('ba', 'sos'):
         raise ParameterError('Unsupported flayout={}'.format(flayout))
 
     # check audio input
