@@ -6,8 +6,8 @@
 PCEN Streaming
 ==============
 
-This notebook demonstrates how to use `soundfile` streaming IO with `librosa.pcen` 
-to do dynamic per-channel energy normalization on a spectrogram.
+This notebook demonstrates how to use streaming IO with `librosa.pcen`
+to do dynamic per-channel energy normalization on a spectrogram incrementally.
 
 This is useful when processing long audio files that are too large to load all at
 once, or when streaming data from a recording device.
