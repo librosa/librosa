@@ -4,12 +4,13 @@
 Sequential modeling
 ===================
 
-Dynamic time warping
---------------------
+Sequence alignment
+------------------
 .. autosummary::
     :toctree: generated/
 
     dtw
+    rqa
 
 Viterbi decoding
 ----------------
@@ -40,6 +41,7 @@ from .util.exceptions import ParameterError
 from .filters import get_window
 
 __all__ = ['dtw',
+           'rqa',
            'viterbi',
            'viterbi_discriminative',
            'viterbi_binary',
@@ -357,6 +359,350 @@ def __dtw_backtracking(D_steps, step_sizes_sigma):  # pragma: no cover
         wp.append((cur_idx[0], cur_idx[1]))
 
     return wp
+
+
+def rqa(sim, gap_onset=1, gap_extend=1, knight_moves=True, backtrack=True):
+    '''Recurrence quantification analysis (RQA)
+
+    This function implements different forms of RQA as described by
+    Serra, Serra, and Andrzejak [1]_.  These methods take as input
+    a self- or cross-similarity matrix `sim`, and calculate the value
+    of path alignments by dynamic programming.
+
+    Note that unlike dynamic time warping (`dtw`), alignment paths here are
+    maximized, not minimized, so the input should measure similarity rather
+    than distance.
+
+    The simplest RQA method, denoted as `L` [1]_ (equation 3) and equivalent
+    to the method described by Eckman, Kamphorst, and Ruelle [2]_, accumulates
+    the length of diagonal paths with positive values in the input:
+
+        - `score[i, j] = score[i-1, j-1] + 1`  if `sim[i, j] > 0`
+        - `score[i, j] = 0` otherwise.
+
+    The second method, denoted as `S` [1]_ (equation 4), is similar to the first,
+    but allows for "knight moves" (as in the chess piece) in addition to strict
+    diagonal moves:
+
+        - `score[i, j] = max(score[i-1, j-1], score[i-2, j-1], score[i-1, j-2]) + 1`  if `sim[i, j] > 0`
+        - `score[i, j] = 0` otherwise.
+
+    The third method, denoted as `Q` [1]_ (equations 5 and 6) extends this by
+    allowing gaps in the alignment that incur some cost, rather than a hard
+    reset to 0 whenever `sim[i, j] == 0`.
+    Gaps are penalized by two additional parameters, `gap_onset` and `gap_extend`,
+    which are subtracted from the value of the alignment path every time a gap
+    is introduced or extended (respectively).
+
+    Note that setting `gap_onset` and `gap_extend` to `np.inf` recovers the second
+    method, and disabling knight moves recovers the first.
+
+
+    .. [1] Serrà, Joan, Xavier Serra, and Ralph G. Andrzejak.
+        "Cross recurrence quantification for cover song identification."
+        New Journal of Physics 11, no. 9 (2009): 093017.
+
+    .. [2] Eckmann, J. P., S. Oliffson Kamphorst, and D. Ruelle.
+        "Recurrence plots of dynamical systems."
+        World Scientific Series on Nonlinear Science Series A 16 (1995): 441-446.
+
+
+    Parameters
+    ----------
+    sim : np.ndarray [shape=(N, M), non-negative]
+        The similarity matrix to use as input.
+
+        This can either be a recurrence matrix (self-similarity)
+        or a cross-similarity matrix between two sequences.
+
+    gap_onset : float > 0
+        Penalty for introducing a gap to an alignment sequence
+
+    gap_extend : float > 0
+        Penalty for extending a gap in an alignment sequence
+
+    knight_moves : bool
+        If `True` (default), allow for "knight moves" in the alignment,
+        e.g., `(n, m) => (n + 1, m + 2)` or `(n + 2, m + 1)`.
+
+        If `False`, only allow for diagonal moves `(n, m) => (n + 1, m + 1)`.
+
+    backtrack : bool
+        If `True`, return the alignment path.
+
+        If `False`, only return the score matrix.
+
+    Returns
+    -------
+    score : np.ndarray [shape=(N, M)]
+        The alignment score matrix.  `score[n, m]` is the cumulative value of
+        the best alignment sequence ending in frames `n` and `m`.
+
+    path : np.ndarray [shape=(k, 2)] (optional)
+        If `backtrack=True`, `path` contains a list of pairs of aligned frames
+        in the best alignment sequence.
+
+        `path[i] = [n, m]` indicates that row `n` aligns to column `m`.
+
+    See Also
+    --------
+    segment.recurrence_matrix
+    segment.cross_similarity
+    dtw
+
+    Examples
+    --------
+    Simple diagonal path enhancement (L-mode)
+
+    >>> import numpy as np
+    >>> import matplotlib.pyplot as plt
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(),
+    ...                      offset=10, duration=30)
+    >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
+    >>> # Use time-delay embedding to reduce noise
+    >>> chroma_stack = librosa.feature.stack_memory(chroma, n_steps=3)
+    >>> # Build recurrence, suppress self-loops within 1 second
+    >>> rec = librosa.segment.recurrence_matrix(chroma_stack, width=43,
+    ...                                         mode='affinity',
+    ...                                         metric='cosine')
+    >>> # using infinite cost for gaps enforces strict path continuation
+    >>> L_score, L_path = librosa.sequence.rqa(rec, np.inf, np.inf,
+    ...                                        knight_moves=False)
+    >>> plt.figure(figsize=(10, 4))
+    >>> plt.subplot(1,2,1)
+    >>> librosa.display.specshow(rec, x_axis='frames', y_axis='frames')
+    >>> plt.title('Recurrence matrix')
+    >>> plt.colorbar()
+    >>> plt.subplot(1,2,2)
+    >>> librosa.display.specshow(L_score, x_axis='frames', y_axis='frames')
+    >>> plt.title('Alignment score matrix')
+    >>> plt.colorbar()
+    >>> plt.plot(L_path[:, 1], L_path[:, 0], label='Optimal path', color='c')
+    >>> plt.legend()
+    >>> plt.show()
+
+    Full alignment using gaps and knight moves
+
+    >>> # New gaps cost 5, extending old gaps cost 10 for each step
+    >>> score, path = librosa.sequence.rqa(rec, 5, 10)
+    >>> plt.figure(figsize=(10, 4))
+    >>> plt.subplot(1,2,1)
+    >>> librosa.display.specshow(rec, x_axis='frames', y_axis='frames')
+    >>> plt.title('Recurrence matrix')
+    >>> plt.colorbar()
+    >>> plt.subplot(1,2,2)
+    >>> librosa.display.specshow(score, x_axis='frames', y_axis='frames')
+    >>> plt.title('Alignment score matrix')
+    >>> plt.plot(path[:, 1], path[:, 0], label='Optimal path', color='c')
+    >>> plt.colorbar()
+    >>> plt.legend()
+    >>> plt.show()
+    '''
+
+    if gap_onset < 0:
+        raise ParameterError('gap_onset={} must be strictly positive')
+    if gap_extend < 0:
+        raise ParameterError('gap_extend={} must be strictly positive')
+
+    score, pointers = __rqa_dp(sim, gap_onset, gap_extend, knight_moves)
+    if backtrack:
+        path = __rqa_backtrack(score, pointers)
+        return score, path
+
+    return score
+
+
+@jit(nopython=True, cache=True)
+def __rqa_dp(sim, gap_onset, gap_extend, knight):  # pragma: no cover
+    '''RQA dynamic programming implementation'''
+
+    # The output array
+    score = np.zeros(sim.shape, dtype=sim.dtype)
+
+    # The backtracking array
+    backtrack = np.zeros(sim.shape, dtype=np.int8)
+
+    # These are place-holder arrays to limit the points being considered
+    # at each step of the DP
+    #
+    # If knight moves are enabled, values are indexed according to
+    # [(-1,-1), (-1, -2), (-2, -1)]
+    #
+    # If knight moves are disabled, then only the first entry is used.
+    #
+    # Using dummy vectors here makes the code a bit cleaner down below.
+    sim_values = np.zeros(3)
+    score_values = np.zeros(3)
+    vec = np.zeros(3)
+
+    if knight:
+        # Initial limit is for the base case: diagonal + one knight
+        init_limit = 2
+
+        # Otherwise, we have 3 positions
+        limit = 3
+    else:
+        init_limit = 1
+        limit = 1
+
+    # backtracking rubric:
+    #   0 ==> diagonal move
+    #   1 ==> knight move up
+    #   2 ==> knight move left
+    #  -1 ==> reset without inclusion
+    #  -2 ==> reset with inclusion (ie positive value at init)
+
+    # Initialize the first row and column with the data
+    score[0, :] = sim[0, :]
+    score[:, 0] = sim[:, 0]
+
+    # backtracking initialization: the first row and column are all resets
+    # if there's a positive link here, it's an inclusive reset
+    for i in range(sim.shape[0]):
+        if sim[i, 0]:
+            backtrack[i, 0] = -2
+        else:
+            backtrack[i, 0] = -1
+
+    for j in range(sim.shape[1]):
+        if sim[0, j]:
+            backtrack[0, j] = -2
+        else:
+            backtrack[0, j] = -1
+
+    # Initialize the 1-1 case using only the diagonal
+    if sim[1, 1] > 0:
+        score[1, 1] = score[0, 0] + sim[1, 1]
+        backtrack[1, 1] = 0
+    else:
+        link = sim[0, 0] > 0
+        score[1, 1] = max(0, score[0, 0] - (link) * gap_onset - (~link) * gap_extend)
+        if score[1, 1] > 0:
+            backtrack[1, 1] = 0
+        else:
+            backtrack[1, 1] = -1
+
+    # Initialize the second row with diagonal and left-knight moves
+    i = 1
+    for j in range(2, sim.shape[1]):
+        score_values[:-1] = (score[i-1, j-1], score[i-1, j-2])
+        sim_values[:-1] = (sim[i-1, j-1], sim[i-1, j-2])
+        t_values = sim_values > 0
+        if sim[i, j] > 0:
+            backtrack[i, j] = np.argmax(score_values[:init_limit])
+            score[i, j] = score_values[backtrack[i, j]] + sim[i, j]  # or + 1 for binary
+        else:
+            vec[:init_limit] = (score_values[:init_limit]
+                                - t_values[:init_limit] * gap_onset
+                                - (~t_values[:init_limit]) * gap_extend)
+
+            backtrack[i, j] = np.argmax(vec[:init_limit])
+            score[i, j] = max(0, vec[backtrack[i, j]])
+            # Is it a reset?
+            if score[i, j] == 0:
+                backtrack[i, j] = -1
+
+    # Initialize the second column with diagonal and up-knight moves
+    j = 1
+    for i in range(2, sim.shape[0]):
+        score_values[:-1] = (score[i-1, j-1], score[i-2, j-1])
+        sim_values[:-1] = (sim[i-1, j-1], sim[i-2, j-1])
+        t_values = sim_values > 0
+        if sim[i, j] > 0:
+            backtrack[i, j] = np.argmax(score_values[:init_limit])
+            score[i, j] = score_values[backtrack[i, j]] + sim[i, j]  # or + 1 for binary
+
+        else:
+            vec[:init_limit] = (score_values[:init_limit]
+                                - t_values[:init_limit] * gap_onset
+                                - (~t_values[:init_limit]) * gap_extend)
+
+            backtrack[i, j] = np.argmax(vec[:init_limit])
+            score[i, j] = max(0, vec[backtrack[i, j]])
+            # Is it a reset?
+            if score[i, j] == 0:
+                backtrack[i, j] = -1
+
+    # Now fill in the rest of the table
+    for i in range(2, sim.shape[0]):
+        for j in range(2, sim.shape[1]):
+            score_values[:] = (score[i-1, j-1], score[i-1, j-2], score[i-2, j-1])
+            sim_values[:] = (sim[i-1, j-1], sim[i-1, j-2], sim[i-2, j-1])
+            t_values = sim_values > 0
+            if sim[i, j] > 0:
+                # if knight is true, it's max of (-1,-1), (-1, -2), (-2, -1)
+                # otherwise, it's just the diagonal move (-1, -1)
+                # for backtracking purposes, if the max is 0 then it's the start of a new sequence
+                # if the max is non-zero, then we extend the existing sequence
+                backtrack[i, j] = np.argmax(score_values[:limit])
+                score[i, j] = score_values[backtrack[i, j]] + sim[i, j]  # or + 1 for binary
+
+            else:
+                # if the max of our options is negative, then it's a hard reset
+                # otherwise, it's a skip move
+                vec[:limit] = (score_values[:limit]
+                               - t_values[:limit] * gap_onset
+                               - (~t_values[:limit]) * gap_extend)
+
+                backtrack[i, j] = np.argmax(vec[:limit])
+                score[i, j] = max(0, vec[backtrack[i, j]])
+                # Is it a reset?
+                if score[i, j] == 0:
+                    backtrack[i, j] = -1
+
+    return score, backtrack
+
+
+def __rqa_backtrack(score, pointers):
+    '''RQA path backtracking
+
+    Given the score matrix and backtracking index array,
+    reconstruct the optimal path.
+    '''
+
+    # backtracking rubric:
+    #   0 ==> diagonal move
+    #   1 ==> knight move up
+    #   2 ==> knight move left
+    #  -1 ==> reset (sim = 0)
+    #  -2 ==> start of sequence (sim > 0)
+
+    # This array maps the backtracking values to the
+    # relative index offsets
+    offsets = [(-1, -1), (-1, -2), (-2, -1)]
+
+    # Find the maximum to end the path
+    idx = list(np.unravel_index(np.argmax(score), score.shape))
+
+    # Construct the path
+    path = []
+    while True:
+        bt_index = pointers[tuple(idx)]
+
+        # A -1 indicates a non-inclusive reset
+        # this can only happen when sim[idx] == 0,
+        # and a reset with zero score should not be included
+        # in the path.  In this case, we're done.
+        if bt_index == -1:
+            break
+
+        # Other bt_index values are okay for inclusion
+        path.insert(0, idx)
+
+        # -2 indicates beginning of sequence,
+        # so we can't backtrack any further
+        if bt_index == -2:
+            break
+
+        # Otherwise, prepend this index and continue
+        idx = [idx[_] + offsets[bt_index][_] for _ in range(len(idx))]
+
+    # If there's no alignment path at all, eg an empty cross-similarity
+    # matrix, return a properly shaped and typed array
+    if not path:
+        return np.empty((0, 2), dtype=np.uint)
+
+    return np.asarray(path, dtype=np.uint)
 
 
 @jit(nopython=True, cache=True)
