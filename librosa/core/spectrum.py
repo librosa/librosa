@@ -1615,7 +1615,7 @@ def griffinlim(S, n_iter=32, hop_length=None, win_length=None, window='hann',
                center=True, dtype=np.float32, length=None, pad_mode='reflect',
                momentum=0.99, random_state=None):
 
-    '''Approximate magnitude spectrogram inversion using the "fast" Griffin-Lim algorithm [1,2]_
+    '''Approximate magnitude spectrogram inversion using the "fast" Griffin-Lim algorithm [1]_ [2]_.
 
     Given a short-time Fourier transform magnitude matrix (`S`), the algorithm randomly
     initializes phase estimates, and then alternates forward- and inverse-STFT
