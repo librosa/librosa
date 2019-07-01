@@ -1,6 +1,117 @@
 Changelog
 =========
 
+v0.7.0
+------
+2019-07-1
+
+Note: the 0.7 series will be the last to officially support Python 2.7.
+
+
+New features
+
+   - `#772`_ Stream generator to process long audio files into smaller pieces. *Brian McFee*
+   - `#845`_ Replaced the default audio decoder with `pysoundfile`, and only use `audioread` as backup. *Brian McFee*
+   - `#907`_ Recurrence Quantification Analysis (RQA) for sequence alignment. *Brian McFee*
+   - `#739`_ Predominant local pulse (PLP) `beat.plp` for variable-tempo beat tracking. *Brian McFee*
+   - `#894`_ Fourier Tempogram `feature.fourier_tempogram` for representing rhythm in the frequency domain. *Brian McFee*
+   - `#891`_ Per-channel energy normalization (PCEN) now allows logarithmic range compression at the limit power->0. *Vincent Lostanlen*
+   - `#863`_ `effects.pitch_shift` supports custom resampling modes. *Taewoon Kim*
+   - `#857`_ Forward and inverse constant-Q transform now support custom resampling modes. *Brian McFee*
+   - `#843`_ Addition of a new module for feature inversion, based on the Griffin-Lim phase retrieval algorithm. Includes `mel_to_audio` and `mfcc_to_audio`. *Brian McFee*
+   - `#842`_ Path enhancement `segment.path_enhance` for recurrence, self- or cross-similarity matrices. *Brian McFee*
+   - `#840`_ `recurrence_matrix` now supports a keyword argument, `self=False`. If set to `True`, the recurrence matrix includes self-loops. *Brian McFee*
+   - `#776`_ The `piptrack` now supports a keyword argument, `ref=None`, allowing users to override the reference thresholding behavior for determining which bins correspond to pitches. *Brian McFee*
+   - `#770`_ Cross-similarity function for comparing two feature sequences. *Rachel Bittner, Brian McFee*
+   - `#725`_ Linear prediction coefficients (LPC). *Adam Weiss*
+   - `#709`_ `onset_strength_multi` now supports a user-specified reference spectrum via the `ref` keyword argument. *Brian McFee*
+   - `#576`_ `resample` now supports `mode='polyphase'`. *Brian McFee*
+   - `#519`_ Setting `aggregate=False` in `onset_strength_multi` disables the aggregation of onset strengths across frequency bins. *Brian McFee*
+
+
+Bug fixes
+
+   - `#900`_ `effects.pitch_shift` preserves length. *Vincent Lostanlen*
+   - `#891`_ Dynamic range compression in PCEN is more numerically stable for small values of the exponent. *Vincent Lostanlen*
+   - `#888`_ Fixed a bug in instantaneous frequency spectrogram (ifgram) for choices of window other than `hann`. *Brian McFee*
+   - `#869`_ Fixed a bug in dynamic time warping when `subseq=True`. *Viktor Andreevitch Morozov*
+   - `#851`_ PCEN now initializes its autoregressive filtering in the steady state, not with silence. *Jan Schlüter, Brian McFee*
+   - `#833`_ `width` parameter of `recurrence_matrix` cannot exceed data length. *Brian McFee*
+   - `#825`_ Filter bank constructors `mel`, `chroma`, `constant_q`, and `cq_to_chroma` are now type-stable. *Vincent Lostanlen, Brian McFee*
+   - `#802`_ Inverse constant-Q transform has been completely rewritten and is more numerically stable. *Brian McFee*
+
+
+Removed features (deprecated in v0.6)
+
+   - Discrete cosine transform. We recommend using `scipy.fftpack.dct`
+   - The `delta` function no longer support the `trim` keyword argument. 
+   - Root mean square error (`rmse`) has been renamed to `rms`.
+   - `iirt` now uses `sos` mode by default.
+
+
+Documentation
+
+   - `#891`_ Improved the documentation of PCEN. *Vincent Lostanlen*
+   - `#884`_ Improved installation documentation. *Darío Hereñú*
+   - `#882`_ Improved code style for plot generation. *Alex Metsai*
+   - `#874`_ Improved the documentation of spectral features. *Brian McFee*
+   - `#804`_ Improved the documentation of MFCC. *Brian McFee*
+   - `#849`_ Removed a redundant link in the `util` documentation. *Keunwoo Choi*
+   - `#827`_ Improved the docstring of `recurrence_matrix`. *Brian McFee*
+   - `#813`_ Improved the docstring of `load`. *Andy Sarroff*
+
+
+Other changes
+
+   - `#878`_ More informative exception handling. *Jack Mason*
+   - `#857`_ `resample()` now supports `mode='fft'`, equivalent to the previous `scipy` mode. *Brian McFee*
+   - `#854`_ More efficient length-aware ISTFT and ICQT. *Vincent Lostanlen*
+   - `#846`_ Nine librosa functions now store jit-compiled, numba-accelerated caches across sessions. *Brian McFee*
+   - `#841`_ `core.load` no longer relies on `realpath()`. *Brian McFee*
+   - `#834`_ All spectral feature extractors now expose all STFT parameters. *Brian McFee*
+   - `#829`_ Refactored `librosa.cache`. *Brian McFee*
+   - `#818`_ Thanks to `np.fft.rfft`, functions `stft`, `istft`, `ifgram`, and `fmt` are faster and have a reduced memory footprint. *Brian McFee*
+
+.. _#772: https://github.com/librosa/librosa/issues/772
+.. _#845: https://github.com/librosa/librosa/issues/845
+.. _#907: https://github.com/librosa/librosa/issues/907
+.. _#739: https://github.com/librosa/librosa/issues/739
+.. _#894: https://github.com/librosa/librosa/issues/894
+.. _#891: https://github.com/librosa/librosa/issues/891
+.. _#863: https://github.com/librosa/librosa/issues/863
+.. _#857: https://github.com/librosa/librosa/issues/857
+.. _#843: https://github.com/librosa/librosa/issues/843
+.. _#842: https://github.com/librosa/librosa/issues/842
+.. _#840: https://github.com/librosa/librosa/issues/840
+.. _#776: https://github.com/librosa/librosa/issues/776
+.. _#770: https://github.com/librosa/librosa/issues/770
+.. _#725: https://github.com/librosa/librosa/issues/725
+.. _#709: https://github.com/librosa/librosa/issues/709
+.. _#576: https://github.com/librosa/librosa/issues/576
+.. _#519: https://github.com/librosa/librosa/issues/519
+.. _#900: https://github.com/librosa/librosa/issues/900
+.. _#888: https://github.com/librosa/librosa/issues/888
+.. _#869: https://github.com/librosa/librosa/issues/869
+.. _#851: https://github.com/librosa/librosa/issues/851
+.. _#833: https://github.com/librosa/librosa/issues/833
+.. _#825: https://github.com/librosa/librosa/issues/825
+.. _#802: https://github.com/librosa/librosa/issues/802
+.. _#884: https://github.com/librosa/librosa/issues/884
+.. _#882: https://github.com/librosa/librosa/issues/882
+.. _#874: https://github.com/librosa/librosa/issues/874
+.. _#804: https://github.com/librosa/librosa/issues/804
+.. _#849: https://github.com/librosa/librosa/issues/849
+.. _#827: https://github.com/librosa/librosa/issues/827
+.. _#813: https://github.com/librosa/librosa/issues/813
+.. _#878: https://github.com/librosa/librosa/issues/878
+.. _#857: https://github.com/librosa/librosa/issues/857
+.. _#854: https://github.com/librosa/librosa/issues/854
+.. _#846: https://github.com/librosa/librosa/issues/846
+.. _#841: https://github.com/librosa/librosa/issues/841
+.. _#834: https://github.com/librosa/librosa/issues/834
+.. _#829: https://github.com/librosa/librosa/issues/829
+.. _#818: https://github.com/librosa/librosa/issues/818
+
 v0.6.3
 ------
 2019-02-13

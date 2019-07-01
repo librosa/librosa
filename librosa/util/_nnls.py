@@ -26,7 +26,7 @@ def _nnls_obj(x, shape, A, B):
 
     # Compute the difference matrix
     diff = np.dot(A, x) - B
-    
+
     # Compute the objective value
     value = 0.5 * np.sum(diff**2)
 
@@ -88,7 +88,7 @@ def nnls(A, B, **kwargs):
     Given two matrices A and B, find a non-negative matrix X
     that minimizes the sum squared error:
 
-        err(X) = sum_i,j ((AX)[i,j] - B[i, j])^2
+        `err(X) = sum_i,j ((AX)[i,j] - B[i, j])^2`
 
     Parameters
     ----------
