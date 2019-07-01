@@ -800,7 +800,7 @@ def lpc(y, order):
     >>> y_hat = scipy.signal.lfilter([0] + -1*a[1:], [1], y)
     >>> plt.figure()
     >>> plt.plot(y)
-    >>> plt.plot(y_hat)
+    >>> plt.plot(y_hat, linestyle='--')
     >>> plt.legend(['y', 'y_hat'])
     >>> plt.title('LP Model Forward Prediction')
     >>> plt.show()
