@@ -211,7 +211,7 @@ def time_stretch(y, rate, **kwargs):
     --------
     pitch_shift : pitch shifting
     librosa.core.phase_vocoder : spectrogram phase vocoder
-
+    pyrubberband.pyrb.time_stretch : high-quality time stretching using RubberBand
 
     Examples
     --------
@@ -249,7 +249,6 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type='kaiser_best',
                 **kwargs):
     '''Shift the pitch of a waveform by `n_steps` semitones.
 
-
     Parameters
     ----------
     y : np.ndarray [shape=(n,)]
@@ -285,7 +284,7 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type='kaiser_best',
     --------
     time_stretch : time stretching
     librosa.core.phase_vocoder : spectrogram phase vocoder
-
+    pyrubberband.pyrb.pitch_shift : high-quality pitch shifting using RubberBand
 
     Examples
     --------
