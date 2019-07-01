@@ -104,7 +104,7 @@ def nnls(A, B, **kwargs):
     Returns
     -------
     X : np.ndarray [shape=(n, N), non-negative]
-        A minimizing solution to |AX - B|^2
+        A minimizing solution to `|AX - B|^2`
 
     See Also
     --------

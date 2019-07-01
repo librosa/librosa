@@ -587,7 +587,7 @@ def phase_vocoder(D, rate, hop_length=None):
 
     Based on the implementation provided by [1]_.
 
-    .. note: This is a simplified implementation, intended primarily for
+    .. note:: This is a simplified implementation, intended primarily for
              reference and pedagogical purposes.  It makes no attempt to
              handle transients, and is likely to produce many audible
              artifacts.  For a higher quality implementation, we recommend
