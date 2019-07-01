@@ -2,9 +2,9 @@ build: false
 
 environment:
   matrix:
-    - PYTHON_VERSION: 3.7
+    - PYTHON_VERSION: 3.6
       PYTHON_ARCH: "64"
-      MINICONDA: C:\Miniconda37-x64
+      MINICONDA: C:\Miniconda36-x64
 
 cache:
     - "%MINICONDA%\\envs -> appveyor.yml, setup.py"
