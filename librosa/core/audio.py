@@ -1255,6 +1255,7 @@ def chirp(fmin, fmax, sr=22050, length=None, duration=None, linear=False, phi=No
     linear : boolean
         - If `True`, use a linear sweep, i.e., frequency changes linearly with time
         - If `False`, use a exponential sweep.
+
         Default is `False`.
 
     phi : float or None

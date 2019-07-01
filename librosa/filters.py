@@ -862,7 +862,7 @@ def get_window(window, Nx, fftbins=True):
 
 @cache(level=10)
 def _multirate_fb(center_freqs=None, sample_rates=None, Q=25.0,
-                  passband_ripple=1, stopband_attenuation=50, ftype='ellip', flayout='ba'):
+                  passband_ripple=1, stopband_attenuation=50, ftype='ellip', flayout='sos'):
     r'''Helper function to construct a multirate filterbank.
 
      A filter bank consists of multiple band-pass filters which divide the input signal
@@ -899,13 +899,17 @@ def _multirate_fb(center_freqs=None, sample_rates=None, Q=25.0,
 
     flayout : string
         Valid `output` argument for `scipy.signal.iirdesign`.
+
         - If `ba`, returns numerators/denominators of the transfer functions,
           used for filtering with `scipy.signal.filtfilt`.
           Can be unstable for high-order filters.
+
         - If `sos`, returns a series of second-order filters,
           used for filtering with `scipy.signal.sosfiltfilt`.
           Minimizes numerical precision errors for high-order filters, but is slower.
+
         - If `zpk`, returns zeros, poles, and system gains of the transfer functions.
+
 
     Returns
     -------
