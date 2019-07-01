@@ -1,22 +1,125 @@
 Changelog
 =========
 
+v0.7.0
+------
+2019-07-1
+
+Note: the 0.7 series will be the last to officially support Python 2.7.
+
+
+New features
+   - `#772`_ Stream generator to process long audio files into smaller pieces. *Brian McFee*
+   - `#845`_ Replaced the default audio decoder with `pysoundfile`, and only use `audioread` as backup. *Brian McFee*
+   - `#907`_ Recurrence Quantification Analysis (RQA) for sequence alignment. *Brian McFee*
+   - `#739`_ Predominant local pulse (PLP) `beat.plp` for variable-tempo beat tracking. *Brian McFee*
+   - `#894`_ Fourier Tempogram `feature.fourier_tempogram` for representing rhythm in the frequency domain. *Brian McFee*
+   - `#891`_ Per-channel energy normalization (PCEN) now allows logarithmic range compression at the limit power->0. *Vincent Lostanlen*
+   - `#863`_ `effects.pitch_shift` supports custom resampling modes. *Taewoon Kim*
+   - `#857`_ Forward and inverse constant-Q transform now support custom resampling modes. *Brian McFee*
+   - `#843`_ Addition of a new module for feature inversion, based on the Griffin-Lim phase retrieval algorithm. Includes `mel_to_audio` and `mfcc_to_audio`. *Brian McFee*
+   - `#842`_ Path enhancement `segment.path_enhance` for recurrence, self- or cross-similarity matrices. *Brian McFee*
+   - `#840`_ `recurrence_matrix` now supports a keyword argument, `self=False`. If set to `True`, the recurrence matrix includes self-loops. *Brian McFee*
+   - `#776`_ The `piptrack` now supports a keyword argument, `ref=None`, allowing users to override the reference thresholding behavior for determining which bins correspond to pitches. *Brian McFee*
+   - `#770`_ Cross-similarity function for comparing two feature sequences. *Rachel Bittner, Brian McFee*
+   - `#725`_ Linear prediction coefficients (LPC). *Adam Weiss*
+   - `#709`_ `onset_strength_multi` now supports a user-specified reference spectrum via the `ref` keyword argument. *Brian McFee*
+   - `#576`_ `resample` now supports `mode='polyphase'`. *Brian McFee*
+   - `#519`_ Setting `aggregate=False` in `onset_strength_multi` disables the aggregation of onset strengths across frequency bins. *Brian McFee*
+
+
+Bug fixes
+   - `#900`_ `effects.pitch_shift` preserves length. *Vincent Lostanlen*
+   - `#891`_ Dynamic range compression in PCEN is more numerically stable for small values of the exponent. *Vincent Lostanlen*
+   - `#888`_ Fixed a bug in instantaneous frequency spectrogram (ifgram) for choices of window other than `hann`. *Brian McFee*
+   - `#869`_ Fixed a bug in dynamic time warping when `subseq=True`. *Viktor Andreevitch Morozov*
+   - `#851`_ PCEN now initializes its autoregressive filtering in the steady state, not with silence. *Jan Schlüter, Brian McFee*
+   - `#833`_ `width` parameter of `recurrence_matrix` cannot exceed data length. *Brian McFee*
+   - `#825`_ Filter bank constructors `mel`, `chroma`, `constant_q`, and `cq_to_chroma` are now type-stable. *Vincent Lostanlen, Brian McFee*
+   - `#802`_ Inverse constant-Q transform has been completely rewritten and is more numerically stable. *Brian McFee*
+
+
+Removed features (deprecated in v0.6)
+   - Discrete cosine transform. We recommend using `scipy.fftpack.dct`
+   - The `delta` function no longer support the `trim` keyword argument. 
+   - Root mean square error (`rmse`) has been renamed to `rms`.
+   - `iirt` now uses `sos` mode by default.
+
+
+Documentation
+   - `#891`_ Improved the documentation of PCEN. *Vincent Lostanlen*
+   - `#884`_ Improved installation documentation. *Darío Hereñú*
+   - `#882`_ Improved code style for plot generation. *Alex Metsai*
+   - `#874`_ Improved the documentation of spectral features. *Brian McFee*
+   - `#804`_ Improved the documentation of MFCC. *Brian McFee*
+   - `#849`_ Removed a redundant link in the `util` documentation. *Keunwoo Choi*
+   - `#827`_ Improved the docstring of `recurrence_matrix`. *Brian McFee*
+   - `#813`_ Improved the docstring of `load`. *Andy Sarroff*
+
+
+Other changes
+   - `#878`_ More informative exception handling. *Jack Mason*
+   - `#857`_ `resample()` now supports `mode='fft'`, equivalent to the previous `scipy` mode. *Brian McFee*
+   - `#854`_ More efficient length-aware ISTFT and ICQT. *Vincent Lostanlen*
+   - `#846`_ Nine librosa functions now store jit-compiled, numba-accelerated caches across sessions. *Brian McFee*
+   - `#841`_ `core.load` no longer relies on `realpath()`. *Brian McFee*
+   - `#834`_ All spectral feature extractors now expose all STFT parameters. *Brian McFee*
+   - `#829`_ Refactored `librosa.cache`. *Brian McFee*
+   - `#818`_ Thanks to `np.fft.rfft`, functions `stft`, `istft`, `ifgram`, and `fmt` are faster and have a reduced memory footprint. *Brian McFee*
+
+.. _#772: https://github.com/librosa/librosa/issues/772
+.. _#845: https://github.com/librosa/librosa/issues/845
+.. _#907: https://github.com/librosa/librosa/issues/907
+.. _#739: https://github.com/librosa/librosa/issues/739
+.. _#894: https://github.com/librosa/librosa/issues/894
+.. _#891: https://github.com/librosa/librosa/issues/891
+.. _#863: https://github.com/librosa/librosa/issues/863
+.. _#857: https://github.com/librosa/librosa/issues/857
+.. _#843: https://github.com/librosa/librosa/issues/843
+.. _#842: https://github.com/librosa/librosa/issues/842
+.. _#840: https://github.com/librosa/librosa/issues/840
+.. _#776: https://github.com/librosa/librosa/issues/776
+.. _#770: https://github.com/librosa/librosa/issues/770
+.. _#725: https://github.com/librosa/librosa/issues/725
+.. _#709: https://github.com/librosa/librosa/issues/709
+.. _#576: https://github.com/librosa/librosa/issues/576
+.. _#519: https://github.com/librosa/librosa/issues/519
+.. _#900: https://github.com/librosa/librosa/issues/900
+.. _#888: https://github.com/librosa/librosa/issues/888
+.. _#869: https://github.com/librosa/librosa/issues/869
+.. _#851: https://github.com/librosa/librosa/issues/851
+.. _#833: https://github.com/librosa/librosa/issues/833
+.. _#825: https://github.com/librosa/librosa/issues/825
+.. _#802: https://github.com/librosa/librosa/issues/802
+.. _#884: https://github.com/librosa/librosa/issues/884
+.. _#882: https://github.com/librosa/librosa/issues/882
+.. _#874: https://github.com/librosa/librosa/issues/874
+.. _#804: https://github.com/librosa/librosa/issues/804
+.. _#849: https://github.com/librosa/librosa/issues/849
+.. _#827: https://github.com/librosa/librosa/issues/827
+.. _#813: https://github.com/librosa/librosa/issues/813
+.. _#878: https://github.com/librosa/librosa/issues/878
+.. _#857: https://github.com/librosa/librosa/issues/857
+.. _#854: https://github.com/librosa/librosa/issues/854
+.. _#846: https://github.com/librosa/librosa/issues/846
+.. _#841: https://github.com/librosa/librosa/issues/841
+.. _#834: https://github.com/librosa/librosa/issues/834
+.. _#829: https://github.com/librosa/librosa/issues/829
+.. _#818: https://github.com/librosa/librosa/issues/818
+
 v0.6.3
 ------
 2019-02-13
 
 Bug fixes
-
     - `#806`_ Fixed a bug in `estimate_tuning`. *@robrib, Monsij Biswal, Brian McFee*
     - `#799`_ Enhanced stability of elliptical filter implementation in `iirt`. *Frank Zalkow*
 
 New features
-
     - `#766`_ made smoothing optional in `feature.chroma_cens`. *Kyungyun Lee*
     - `#760`_ allow explicit units for time axis decoration in `display`. *Kyungyun Lee*
 
 Other changes
-
     - `#813`_ updated `core.load` documentation to cover bit depth truncation. *Andy Sarroff*
     - `#805`_ updated documentation for `core.localmax`. *Brian McFee*
     - `#801`_ renamed `feature.rmse` to `feature.rms`. *@nullmightybofo*
@@ -79,13 +182,11 @@ v0.6.1
 2018-05-24
 
 Bug fixes
-
   - `#677`_ `util.find_files` now correctly de-duplicates files on case-insensitive platforms. *Brian McFee*
   - `#713`_ `util.valid_intervals` now checks for non-negative durations. *Brian McFee, Dana Lee*
   - `#714`_ `util.match_intervals` can now explicitly fail when no matches are possible. *Brian McFee, Dana Lee*
 
 New features
-
   - `#679`_, `#708`_ `core.pcen`, per-channel energy normalization. *Vincent Lostanlen, Brian McFee*
   - `#682`_ added different DCT modes to `feature.mfcc`. *Brian McFee*
   - `#687`_ `display` functions now accept target axes. *Pius Friesch*
@@ -94,7 +195,6 @@ New features
   - `#714`_ `util.match_intervals` now supports tie-breaking for disjoint query intervals. *Brian McFee*
 
 Other changes
-
   - `#677`_, `#705`_ added continuous integration testing for Windows. *Brian McFee*, *Ryuichi Yamamoto*
   - `#680`_ updated display module tests to support matplotlib 2.1. *Brian McFee*
   - `#684`_ corrected documentation for `core.stft` and `core.ifgram`. *Keunwoo Choi*
@@ -105,7 +205,6 @@ Other changes
 
 
 API Changes and compatibility
-
   - `#716`_ `core.dtw` has moved to `sequence.dtw`, and `core.fill_off_diagonal` has moved to
     `util.fill_off_diagonal`.  *Brian McFee*
 
@@ -145,7 +244,6 @@ Bug fixes
   - `#587`_ `show_versions` now shows correct module names. *Ryuichi Yamamoto*
 
 New features
-
   - `#648`_ `feature.spectral_flatness`. *Keunwoo Choi*
   - `#633`_ `feature.tempogram` now supports multi-band analysis. *Brian McFee*
   - `#439`_ `core.iirt` implements the multi-rate filterbank from Chroma Toolbox. *Stefan Balke*
@@ -170,7 +268,6 @@ Other changes
   - `#574`_ `dtw` now supports pre-computed distance matrices. *Curtis Hawthorne*
 
 API changes and compatibility
-
   - `#627`_ The following functions and features have been removed:
       - `real=` parameter in `cqt`
       - `core.logamplitude` (replaced by `amplitude_to_db`)
@@ -229,7 +326,6 @@ Bug fixes
   - `#539`_ fix `chroma_cens` to support scipy >=0.19. *Brian McFee*
 
 New features
-
   - `#565`_ `feature.stack_memory` now supports negative delay. *Brian McFee*
   - `#563`_ expose padding mode in `stft/ifgram/cqt`. *Brian McFee*
   - `#559`_ explicit length option for `istft`. *Brian McFee*
@@ -237,7 +333,6 @@ New features
   - `#551`_ add `norm=` option to `filters.mel`. *Dan Ellis*
 
 Other changes
-
   - `#569`_ `feature.rmse` now centers frames in the time-domain by default. *Brian McFee*
   - `#564`_ `display.specshow` now rasterizes images by default. *Brian McFee*
   - `#558`_ updated contributing documentation and issue templates. *Brian McFee*
@@ -266,7 +361,6 @@ v0.5.0
 2017-02-17
 
 Bug fixes
-
   - `#371`_ preserve integer hop lengths in constant-Q transforms. *Brian McFee*
   - `#386`_ fixed a length check in ``librosa.util.frame``. *Brian McFee*
   - `#416`_ ``librosa.output.write_wav`` only normalizes floating point, and normalization is disabled by
@@ -278,7 +372,6 @@ Bug fixes
   - `#501`_ fixed a numpy 1.12 compatibility error in ``pitch_tuning``. *Hojin Lee*
 
 New features
-
   - `#323`_ ``librosa.dtw`` dynamic time warping. *Stefan Balke*
   - `#404`_ ``librosa.cache`` now supports priority levels, analogous to logging levels. *Brian McFee*
   - `#405`_ ``librosa.interp_harmonics`` for estimating harmonics of time-frequency representations. *Brian
@@ -300,7 +393,6 @@ New features
   
 
 Other changes
-
   - `#352`_ removed ``seaborn`` integration. *Brian McFee*
   - `#368`_ rewrite of the ``librosa.display`` submodule.  All plots are now in natural coordinates. *Brian
     McFee*
@@ -315,7 +407,6 @@ Other changes
   - `#480`_ expanded documentation for advanced IO use-cases. *Fabian Robert-Stoeter*
 
 API changes and compatibility
-
   - The following functions have permanently moved:
         - ``core.peak_peak`` to ``util.peak_pick``
         - ``core.localmax`` to ``util.localmax``
@@ -498,7 +589,6 @@ New features
   - ``librosa.fmt`` implements the Fast Mellin Transform
 
 Other changes
-
   - Rewrote ``display.waveplot`` for improved efficiency
   - ``decompose.deompose()`` now supports pre-trained transformation objects
   - Nullified side-effects of optional seaborn dependency
@@ -524,303 +614,239 @@ v0.4.0
 2015-07-08
 
 Bug fixes
-
--  Fixed alignment errors with ``offset`` and ``duration`` in ``load()``
--  Fixed an edge-padding issue with ``decompose.hpss()`` which resulted
-   in
-   percussive noise leaking into the harmonic component.
--  Fixed stability issues with ``ifgram()``, added options to suppress
-   negative frequencies.
--  Fixed scaling and padding errors in ``feature.delta()``
--  Fixed some errors in ``note_to_hz()`` string parsing
--  Added robust range detection for ``display.cmap``
--  Fixed tick placement in ``display.specshow``
--  Fixed a low-frequency filter alignment error in ``cqt``
--  Added aliasing checks for ``cqt`` filterbanks
--  Fixed corner cases in ``peak_pick``
--  Fixed bugs in ``find_files()`` with negative slicing
--  Fixed tuning estimation errors
--  Fixed octave numbering in to conform to scientific pitch notation
+   -  Fixed alignment errors with ``offset`` and ``duration`` in ``load()``
+   -  Fixed an edge-padding issue with ``decompose.hpss()`` which resulted in percussive noise leaking into the harmonic component.
+   -  Fixed stability issues with ``ifgram()``, added options to suppress negative frequencies.
+   -  Fixed scaling and padding errors in ``feature.delta()``
+   -  Fixed some errors in ``note_to_hz()`` string parsing
+   -  Added robust range detection for ``display.cmap``
+   -  Fixed tick placement in ``display.specshow``
+   -  Fixed a low-frequency filter alignment error in ``cqt``
+   -  Added aliasing checks for ``cqt`` filterbanks
+   -  Fixed corner cases in ``peak_pick``
+   -  Fixed bugs in ``find_files()`` with negative slicing
+   -  Fixed tuning estimation errors
+   -  Fixed octave numbering in to conform to scientific pitch notation
 
 New features
-
--  python 3 compatibility
--  Deprecation and moved-function warnings
--  added ``norm=None`` option to ``util.normalize()``
--  ``segment.recurrence_to_lag``, ``lag_to_recurrence``
--  ``core.hybrid_cqt()`` and ``core.pseudo_cqt()``
--  ``segment.timelag_filter``
--  Efficiency enhancements for ``cqt``
--  Major rewrite and reformatting of documentation
--  Improvements to ``display.specshow``:
-
-   -  added the ``lag`` axis format
-   -  added the ``tonnetz`` axis format
-   -  allow any combination of axis formats
-
--  ``effects.remix()``
--  Added new time and frequency converters:
-
-   -  ``note_to_hz()``, ``hz_to_note()``
-   -  ``frames_to_samples()``, ``samples_to_frames()``
-   -  ``time_to_samples()``, ``samples_to_time()``
-
--  ``core.zero_crossings``
--  ``util.match_events()``
--  ``segment.subsegment()`` for segmentation refinement
--  Functional examples in almost all docstrings
--  improved numerical stability in ``normalize()``
--  audio validation checks
--  ``to_mono()``
--  ``librosa.cache`` for storing pre-computed features
--  Stereo output support in ``write_wav``
--  Added new feature extraction functions:
-
-   -  ``feature.spectral_contrast``
-   -  ``feature.spectral_bandwidth``
-   -  ``feature.spectral_centroid``
-   -  ``feature.spectral_rolloff``
-   -  ``feature.poly_features``
-   -  ``feature.rmse``
-   -  ``feature.zero_crossing_rate``
-   -  ``feature.tonnetz``
-
-- Added ``display.waveplot``
+   -  python 3 compatibility
+   -  Deprecation and moved-function warnings
+   -  added ``norm=None`` option to ``util.normalize()``
+   -  ``segment.recurrence_to_lag``, ``lag_to_recurrence``
+   -  ``core.hybrid_cqt()`` and ``core.pseudo_cqt()``
+   -  ``segment.timelag_filter``
+   -  Efficiency enhancements for ``cqt``
+   -  Major rewrite and reformatting of documentation
+   -  Improvements to ``display.specshow``:
+      -  added the ``lag`` axis format
+      -  added the ``tonnetz`` axis format
+      -  allow any combination of axis formats
+   -  ``effects.remix()``
+   -  Added new time and frequency converters:
+      -  ``note_to_hz()``, ``hz_to_note()``
+      -  ``frames_to_samples()``, ``samples_to_frames()``
+      -  ``time_to_samples()``, ``samples_to_time()``
+   -  ``core.zero_crossings``
+   -  ``util.match_events()``
+   -  ``segment.subsegment()`` for segmentation refinement
+   -  Functional examples in almost all docstrings
+   -  improved numerical stability in ``normalize()``
+   -  audio validation checks
+   -  ``to_mono()``
+   -  ``librosa.cache`` for storing pre-computed features
+   -  Stereo output support in ``write_wav``
+   -  Added new feature extraction functions:
+      -  ``feature.spectral_contrast``
+      -  ``feature.spectral_bandwidth``
+      -  ``feature.spectral_centroid``
+      -  ``feature.spectral_rolloff``
+      -  ``feature.poly_features``
+      -  ``feature.rmse``
+      -  ``feature.zero_crossing_rate``
+      -  ``feature.tonnetz``
+   - Added ``display.waveplot``
 
 Other changes
-
--  Internal refactoring and restructuring of submodules
--  Removed the ``chord`` module
--  input validation and better exception reporting for most functions
--  Changed the default colormaps in ``display``
--  Changed default parameters in onset detection, beat tracking
--  Changed default parameters in ``cqt``
--  ``filters.constant_q`` now returns filter lengths
--  Chroma now starts at ``C`` by default, instead of ``A``
--  ``pad_center`` supports multi-dimensional input and ``axis``
-   parameter
-- switched from ``np.fft`` to ``scipy.fftpack`` for FFT operations
-- changed all librosa-generated exception to a new class librosa.ParameterError
+   -  Internal refactoring and restructuring of submodules
+   -  Removed the ``chord`` module
+   -  input validation and better exception reporting for most functions
+   -  Changed the default colormaps in ``display``
+   -  Changed default parameters in onset detection, beat tracking
+   -  Changed default parameters in ``cqt``
+   -  ``filters.constant_q`` now returns filter lengths
+   -  Chroma now starts at ``C`` by default, instead of ``A``
+   -  ``pad_center`` supports multi-dimensional input and ``axis`` parameter
+   - switched from ``np.fft`` to ``scipy.fftpack`` for FFT operations
+   - changed all librosa-generated exception to a new class librosa.ParameterError
 
 Deprecated functions
-
--  ``util.buf_to_int``
--  ``output.frames_csv``
--  ``segment.structure_feature``
--  ``filters.logfrequency``
--  ``feature.logfsgram``
+   -  ``util.buf_to_int``
+   -  ``output.frames_csv``
+   -  ``segment.structure_feature``
+   -  ``filters.logfrequency``
+   -  ``feature.logfsgram``
 
 v0.3.1
 ------
 2015-02-18
 
 Bug fixes
-
--  Fixed bug #117: ``librosa.segment.agglomerative`` now returns a
-   numpy.ndarray instead of a list
--  Fixed bug #115: off-by-one error in ``librosa.core.load`` with fixed
-   duration
--  Fixed numerical underflow errors in ``librosa.decompose.hpss``
--  Fixed bug #104: ``librosa.decompose.hpss`` failed with silent,
-   complex-valued input
--  Fixed bug #103: ``librosa.feature.estimate_tuning`` fails when no
-   bins exceed the threshold
+   -  Fixed bug #117: ``librosa.segment.agglomerative`` now returns a numpy.ndarray instead of a list
+   -  Fixed bug #115: off-by-one error in ``librosa.core.load`` with fixed duration
+   -  Fixed numerical underflow errors in ``librosa.decompose.hpss``
+   -  Fixed bug #104: ``librosa.decompose.hpss`` failed with silent, complex-valued input
+   -  Fixed bug #103: ``librosa.feature.estimate_tuning`` fails when no bins exceed the threshold
 
 Features
-
--  New function ``librosa.core.get_duration()`` computes the duration of
-   an audio signal
-   or spectrogram-like input matrix
--  ``librosa.util.pad_center`` now accepts multi-dimensional input
+   -  New function ``librosa.core.get_duration()`` computes the duration of an audio signal or spectrogram-like input matrix
+   -  ``librosa.util.pad_center`` now accepts multi-dimensional input
 
 Other changes
-
--  Adopted the ISC license
--  Python 3 compatibility via futurize
--  Fixed issue #102: segment.agglomerative no longer depends on the
-   deprecated
-   Ward module of sklearn; it now depends on the newer Agglomerative
-   module.
--  Issue #108: set character encoding on all source files
--  Added dtype persistence for resample, stft, istft, and effects
-   functions
+   -  Adopted the ISC license
+   -  Python 3 compatibility via futurize
+   -  Fixed issue #102: segment.agglomerative no longer depends on the deprecated Ward module of sklearn; it now depends on the newer Agglomerative module.
+   -  Issue #108: set character encoding on all source files
+   -  Added dtype persistence for resample, stft, istft, and effects functions
 
 v0.3.0
 ------
 2014-06-30
 
 Bug fixes
-
--  Fixed numpy array indices to force integer values
--  ``librosa.util.frame`` now warns if the input data is non-contiguous
--  Fixed a formatting error in ``librosa.display.time_ticks()``
--  Added a warning if ``scikits.samplerate`` is not detected
+   -  Fixed numpy array indices to force integer values
+   -  ``librosa.util.frame`` now warns if the input data is non-contiguous
+   -  Fixed a formatting error in ``librosa.display.time_ticks()``
+   -  Added a warning if ``scikits.samplerate`` is not detected
 
 Features
-
--  New module ``librosa.chord`` for training chord recognition models
--  Parabolic interpolation piptracking ``librosa.feature.piptrack()``
--  ``librosa.localmax()`` now supports multi-dimensional slicing
--  New example scripts
--  Improved documentation
--  Added the ``librosa.util.FeatureExtractor`` class, which allows
-   librosa functions
-   to act as feature extraction stages in ``sklearn``
--  New module ``librosa.effects`` for time-domain audio processing
--  Added demo notebooks for the ``librosa.effects`` and
-   ``librosa.util.FeatureExtractor``
--  Added a full-track audio example,
-   ``librosa.util.example_audio_file()``
--  Added peak-frequency sorting of basis elements in
-   ``librosa.decompose.decompose()``
+   -  New module ``librosa.chord`` for training chord recognition models
+   -  Parabolic interpolation piptracking ``librosa.feature.piptrack()``
+   -  ``librosa.localmax()`` now supports multi-dimensional slicing
+   -  New example scripts
+   -  Improved documentation
+   -  Added the ``librosa.util.FeatureExtractor`` class, which allows librosa functions to act as feature extraction stages in ``sklearn``
+   -  New module ``librosa.effects`` for time-domain audio processing
+   -  Added demo notebooks for the ``librosa.effects`` and ``librosa.util.FeatureExtractor``
+   -  Added a full-track audio example, ``librosa.util.example_audio_file()``
+   -  Added peak-frequency sorting of basis elements in ``librosa.decompose.decompose()``
 
 Other changes
-
--  Spectrogram frames are now centered, rather than left-aligned. This
-   removes the
-   need for window correction in ``librosa.frames_to_time()``
--  Accelerated constant-Q transform ``librosa.cqt()``
--  PEP8 compliance
--  Removed normalization from ``librosa.feature.logfsgram()``
--  Efficiency improvements by ensuring memory contiguity
--  ``librosa.logamplitude()`` now supports functional reference power,
-   in addition
-   to scalar values
--  Improved ``librosa.feature.delta()``
--  Additional padding options to ``librosa.feature.stack_memory()``
--  ``librosa.cqt`` and ``librosa.feature.logfsgram`` now use the same
-   parameter
-   formats ``(fmin, n_bins, bins_per_octave)``.
--  Updated demo notebook(s) to IPython 2.0
--  Moved ``perceptual_weighting()`` from ``librosa.feature`` into
-   ``librosa.core``
--  Moved ``stack_memory()`` from ``librosa.segment`` into
-   ``librosa.feature``
--  Standardized ``librosa.output.annotation`` input format to match
-   ``mir_eval``
--  Standardized variable names (e.g., ``onset_envelope``).
+   -  Spectrogram frames are now centered, rather than left-aligned. This removes the need for window correction in ``librosa.frames_to_time()``
+   -  Accelerated constant-Q transform ``librosa.cqt()``
+   -  PEP8 compliance
+   -  Removed normalization from ``librosa.feature.logfsgram()``
+   -  Efficiency improvements by ensuring memory contiguity
+   -  ``librosa.logamplitude()`` now supports functional reference power, in addition to scalar values
+   -  Improved ``librosa.feature.delta()``
+   -  Additional padding options to ``librosa.feature.stack_memory()``
+   -  ``librosa.cqt`` and ``librosa.feature.logfsgram`` now use the same parameter formats ``(fmin, n_bins, bins_per_octave)``.
+   -  Updated demo notebook(s) to IPython 2.0
+   -  Moved ``perceptual_weighting()`` from ``librosa.feature`` into ``librosa.core``
+   -  Moved ``stack_memory()`` from ``librosa.segment`` into ``librosa.feature``
+   -  Standardized ``librosa.output.annotation`` input format to match ``mir_eval``
+   -  Standardized variable names (e.g., ``onset_envelope``).
 
 v0.2.1
 ------
 2014-01-21
 
 Bug fixes
-
--  fixed an off-by-one error in ``librosa.onset.onset_strength()``
--  fixed a sign-flip error in ``librosa.output.write_wav()``
--  removed all mutable object default parameters
+   -  fixed an off-by-one error in ``librosa.onset.onset_strength()``
+   -  fixed a sign-flip error in ``librosa.output.write_wav()``
+   -  removed all mutable object default parameters
 
 Features
-
--  added option ``centering`` to ``librosa.onset.onset_strength()`` to
-   resolve frame-centering issues with sliding window STFT
--  added frame-center correction to ``librosa.core.frames_to_time()``
-   and ``librosa.core.time_to_frames()``
--  added ``librosa.util.pad_center()``
--  added ``librosa.output.annotation()``
--  added ``librosa.output.times_csv()``
--  accelerated ``librosa.core.stft()`` and ``ifgram()``
--  added ``librosa.util.frame`` for in-place signal framing
--  ``librosa.beat.beat_track`` now supports user-supplied tempo
--  added ``librosa.util.normalize()``
--  added ``librosa.util.find_files()``
--  added ``librosa.util.axis_sort()``
--  new module: ``librosa.util()``
--  ``librosa.filters.constant_q`` now support padding
--  added boolean input support for ``librosa.display.cmap()``
--  speedup in ``librosa.core.cqt()``
+   -  added option ``centering`` to ``librosa.onset.onset_strength()`` to resolve frame-centering issues with sliding window STFT
+   -  added frame-center correction to ``librosa.core.frames_to_time()`` and ``librosa.core.time_to_frames()``
+   -  added ``librosa.util.pad_center()``
+   -  added ``librosa.output.annotation()``
+   -  added ``librosa.output.times_csv()``
+   -  accelerated ``librosa.core.stft()`` and ``ifgram()``
+   -  added ``librosa.util.frame`` for in-place signal framing
+   -  ``librosa.beat.beat_track`` now supports user-supplied tempo
+   -  added ``librosa.util.normalize()``
+   -  added ``librosa.util.find_files()``
+   -  added ``librosa.util.axis_sort()``
+   -  new module: ``librosa.util()``
+   -  ``librosa.filters.constant_q`` now support padding
+   -  added boolean input support for ``librosa.display.cmap()``
+   -  speedup in ``librosa.core.cqt()``
 
 Other changes
-
--  optimized default parameters for ``librosa.onset.onset_detect``
--  set ``librosa.filters.mel`` parameter ``n_mels=128`` by default
--  ``librosa.feature.chromagram()`` and ``logfsgram()`` now use power
-   instead of energy
--  ``librosa.display.specshow()`` with ``y_axis='chroma'`` now labels as
-   ``pitch class``
--  set ``librosa.core.cqt`` parameter ``resolution=2`` by default
--  set ``librosa.feature.chromagram`` parameter ``octwidth=2`` by
-   default
+   -  optimized default parameters for ``librosa.onset.onset_detect``
+   -  set ``librosa.filters.mel`` parameter ``n_mels=128`` by default
+   -  ``librosa.feature.chromagram()`` and ``logfsgram()`` now use power instead of energy
+   -  ``librosa.display.specshow()`` with ``y_axis='chroma'`` now labels as ``pitch class``
+   -  set ``librosa.core.cqt`` parameter ``resolution=2`` by default
+   -  set ``librosa.feature.chromagram`` parameter ``octwidth=2`` by default
 
 v0.2.0
 ------
 2013-12-14
 
 Bug fixes
-
--  fixed default ``librosa.core.stft, istft, ifgram`` to match
-   specification
--  fixed a float->int bug in peak\_pick
--  better memory efficiency
--  ``librosa.segment.recurrence_matrix`` corrects for width suppression
--  fixed a divide-by-0 error in the beat tracker
--  fixed a bug in tempo estimation with short windows
--  ``librosa.feature.sync`` now supports 1d arrays
--  fixed a bug in beat trimming
--  fixed a bug in ``librosa.core.stft`` when calculating window size
--  fixed ``librosa.core.resample`` to support stereo signals
+   -  fixed default ``librosa.core.stft, istft, ifgram`` to match specification
+   -  fixed a float->int bug in peak\_pick
+   -  better memory efficiency
+   -  ``librosa.segment.recurrence_matrix`` corrects for width suppression
+   -  fixed a divide-by-0 error in the beat tracker
+   -  fixed a bug in tempo estimation with short windows
+   -  ``librosa.feature.sync`` now supports 1d arrays
+   -  fixed a bug in beat trimming
+   -  fixed a bug in ``librosa.core.stft`` when calculating window size
+   -  fixed ``librosa.core.resample`` to support stereo signals
 
 Features
-
--  added filters option to cqt
--  added window function support to istft
--  added an IPython notebook demo
--  added ``librosa.features.delta`` for computing temporal difference
-   features
--  new ``examples`` scripts: tuning, hpss
--  added optional trimming to ``librosa.segment.stack_memory``
--  ``librosa.onset.onset_strength`` now takes generic spectrogram
-   function ``feature``
--  compute reference power directly in ``librosa.core.logamplitude``
--  color-blind-friendly default color maps in ``librosa.display.cmap``
--  ``librosa.core.onset_strength`` now accepts an aggregator
--  added ``librosa.feature.perceptual_weighting``
--  added tuning estimation to ``librosa.feature.chromagram``
--  added ``librosa.core.A_weighting``
--  vectorized frequency converters
--  added ``librosa.core.cqt_frequencies`` to get CQT frequencies
--  ``librosa.core.cqt`` basic constant-Q transform implementation
--  ``librosa.filters.cq_to_chroma`` to convert log-frequency to chroma
--  added ``librosa.core.fft_frequencies``
--  ``librosa.decompose.hpss`` can now return masking matrices
--  added reversal for ``librosa.segment.structure_feature``
--  added ``librosa.core.time_to_frames``
--  added cent notation to ``librosa.core.midi_to_note``
--  added time-series or spectrogram input options to ``chromagram``,
-   ``logfsgram``, ``melspectrogram``, and ``mfcc``
--  new module: ``librosa.display``
--  ``librosa.output.segment_csv`` => ``librosa.output.frames_csv``
--  migrated frequency converters to ``librosa.core``
--  new module: ``librosa.filters``
--  ``librosa.decompose.hpss`` now supports complex-valued STFT matrices
--  ``librosa.decompose.decompose()`` supports ``sklearn`` decomposition
-   objects
--  added ``librosa.core.phase_vocoder``
--  new module: ``librosa.onset``; migrated onset strength from
-   ``librosa.beat``
--  added ``librosa.core.pick_peaks``
--  ``librosa.core.load()`` supports offset and duration parameters
--  ``librosa.core.magphase()`` to separate magnitude and phase from a
-   complex matrix
--  new module: ``librosa.segment``
+   -  added filters option to cqt
+   -  added window function support to istft
+   -  added an IPython notebook demo
+   -  added ``librosa.features.delta`` for computing temporal difference features
+   -  new ``examples`` scripts: tuning, hpss
+   -  added optional trimming to ``librosa.segment.stack_memory``
+   -  ``librosa.onset.onset_strength`` now takes generic spectrogram function ``feature``
+   -  compute reference power directly in ``librosa.core.logamplitude``
+   -  color-blind-friendly default color maps in ``librosa.display.cmap``
+   -  ``librosa.core.onset_strength`` now accepts an aggregator
+   -  added ``librosa.feature.perceptual_weighting``
+   -  added tuning estimation to ``librosa.feature.chromagram``
+   -  added ``librosa.core.A_weighting``
+   -  vectorized frequency converters
+   -  added ``librosa.core.cqt_frequencies`` to get CQT frequencies
+   -  ``librosa.core.cqt`` basic constant-Q transform implementation
+   -  ``librosa.filters.cq_to_chroma`` to convert log-frequency to chroma
+   -  added ``librosa.core.fft_frequencies``
+   -  ``librosa.decompose.hpss`` can now return masking matrices
+   -  added reversal for ``librosa.segment.structure_feature``
+   -  added ``librosa.core.time_to_frames``
+   -  added cent notation to ``librosa.core.midi_to_note``
+   -  added time-series or spectrogram input options to ``chromagram``, ``logfsgram``, ``melspectrogram``, and ``mfcc``
+   -  new module: ``librosa.display``
+   -  ``librosa.output.segment_csv`` => ``librosa.output.frames_csv``
+   -  migrated frequency converters to ``librosa.core``
+   -  new module: ``librosa.filters``
+   -  ``librosa.decompose.hpss`` now supports complex-valued STFT matrices
+   -  ``librosa.decompose.decompose()`` supports ``sklearn`` decomposition objects
+   -  added ``librosa.core.phase_vocoder``
+   -  new module: ``librosa.onset``; migrated onset strength from ``librosa.beat``
+   -  added ``librosa.core.pick_peaks``
+   -  ``librosa.core.load()`` supports offset and duration parameters
+   -  ``librosa.core.magphase()`` to separate magnitude and phase from a complex matrix
+   -  new module: ``librosa.segment``
 
 Other changes
-
--  ``onset_estimate_bpm => estimate_tempo``
--  removed ``n_fft`` from ``librosa.core.istft()``
--  ``librosa.core.mel_frequencies`` returns ``n_mels`` values by default
--  changed default ``librosa.decompose.hpss`` window to 31
--  disabled onset de-trending by default in
-   ``librosa.onset.onset_strength``
--  added complex-value warning to ``librosa.display.specshow``
--  broke compatibilty with ``ifgram.m``; ``librosa.core.ifgram`` now
-   matches ``stft``
--  changed default beat tracker settings
--  migrated ``hpss`` into ``librosa.decompose``
--  changed default ``librosa.decompose.hpss`` power parameter to ``2.0``
--  ``librosa.core.load()`` now returns single-precision by default
--  standardized ``n_fft=2048``, ``hop_length=512`` for most functions
--  refactored tempo estimator
+   -  ``onset_estimate_bpm => estimate_tempo``
+   -  removed ``n_fft`` from ``librosa.core.istft()``
+   -  ``librosa.core.mel_frequencies`` returns ``n_mels`` values by default
+   -  changed default ``librosa.decompose.hpss`` window to 31
+   -  disabled onset de-trending by default in ``librosa.onset.onset_strength``
+   -  added complex-value warning to ``librosa.display.specshow``
+   -  broke compatibilty with ``ifgram.m``; ``librosa.core.ifgram`` now matches ``stft``
+   -  changed default beat tracker settings
+   -  migrated ``hpss`` into ``librosa.decompose``
+   -  changed default ``librosa.decompose.hpss`` power parameter to ``2.0``
+   -  ``librosa.core.load()`` now returns single-precision by default
+   -  standardized ``n_fft=2048``, ``hop_length=512`` for most functions
+   -  refactored tempo estimator
 
 v0.1.0
 ------

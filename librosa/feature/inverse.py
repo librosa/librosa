@@ -170,9 +170,8 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0):
 
     This inversion proceeds in two steps:
 
-    1. The inverse DCT is applied to the MFCCs
-    2. `core.db_to_power` is applied to map the dB-scaled result to a power
-    spectrogram
+        1. The inverse DCT is applied to the MFCCs
+        2. `core.db_to_power` is applied to map the dB-scaled result to a power spectrogram
 
 
     Parameters
