@@ -1399,12 +1399,6 @@ def test_iirt_flayout1():
     librosa.iirt(y, hop_length=2205, win_length=4410, flayout='foo')
 
 
-def test_iirt_flayout2():
-    y, sr = librosa.load(os.path.join('tests', 'data', 'test1_44100.wav'))
-    with pytest.warns(FutureWarning):
-        librosa.iirt(y, hop_length=2205, win_length=4410)
-
-
 def test_pcen():
 
     def __test(gain, bias, power, b, time_constant, eps, ms, S, Pexp):

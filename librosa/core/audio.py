@@ -800,7 +800,7 @@ def lpc(y, order):
     >>> y_hat = scipy.signal.lfilter([0] + -1*a[1:], [1], y)
     >>> plt.figure()
     >>> plt.plot(y)
-    >>> plt.plot(y_hat)
+    >>> plt.plot(y_hat, linestyle='--')
     >>> plt.legend(['y', 'y_hat'])
     >>> plt.title('LP Model Forward Prediction')
     >>> plt.show()
@@ -1255,6 +1255,7 @@ def chirp(fmin, fmax, sr=22050, length=None, duration=None, linear=False, phi=No
     linear : boolean
         - If `True`, use a linear sweep, i.e., frequency changes linearly with time
         - If `False`, use a exponential sweep.
+
         Default is `False`.
 
     phi : float or None

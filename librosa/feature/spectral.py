@@ -185,12 +185,12 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                        freq=None, centroid=None, norm=True, p=2):
     '''Compute p'th-order spectral bandwidth.
 
-       The spectral bandwidth at frame `t` is computed by 
+       The spectral bandwidth [1]_ at frame `t` is computed by
 
         (sum_k S[k, t] * (freq[k, t] - centroid[t])**p)**(1/p)
 
     .. [1] Klapuri, A., & Davy, M. (Eds.). (2007). Signal processing
-        methods for music transcription, chapter 5. 
+        methods for music transcription, chapter 5.
         Springer Science & Business Media.
 
     Parameters
