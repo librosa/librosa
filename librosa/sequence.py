@@ -1004,7 +1004,7 @@ def viterbi_discriminative(prob, transition, p_state=None, p_init=None, return_l
     >>> plt.scatter(times, chords_ind + 0.75, color='lime', alpha=0.5, marker='+', s=15, label='Independent')
     >>> plt.scatter(times, chords_vit + 0.25, color='deeppink', alpha=0.5, marker='o', s=15, label='Viterbi')
     >>> plt.yticks(0.5 + np.unique(chords_vit), [labels[i] for i in np.unique(chords_vit)], va='center')
-    >>> plt.legend(loc='best')
+    >>> plt.legend()
     >>> plt.tight_layout()
     >>> plt.show()
 
