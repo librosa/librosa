@@ -823,7 +823,7 @@ def rms(y=None, S=None, frame_length=2048, hop_length=512,
     >>> plt.semilogy(rms.T, label='RMS Energy')
     >>> plt.xticks([])
     >>> plt.xlim([0, rms.shape[-1]])
-    >>> plt.legend(loc='best')
+    >>> plt.legend()
     >>> plt.subplot(2, 1, 2)
     >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
     ...                          y_axis='log', x_axis='time')
