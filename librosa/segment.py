@@ -124,10 +124,11 @@ def cross_similarity(data, data_ref, k=None, metric='euclidean',
     --------
     Find nearest neighbors in MFCC space between two sequences
 
+    >>> hop_length = 1024
     >>> y_ref, sr = librosa.load(librosa.util.example_audio_file())
     >>> y_comp, sr = librosa.load(librosa.util.example_audio_file(), offset=10)
-    >>> mfcc_ref = librosa.feature.mfcc(y=y_ref, sr=sr)
-    >>> mfcc_comp = librosa.feature.mfcc(y=y_comp, sr=sr)
+    >>> mfcc_ref = librosa.feature.mfcc(y=y_ref, sr=sr, hop_length=hop_length)
+    >>> mfcc_comp = librosa.feature.mfcc(y=y_comp, sr=sr, hop_length=hop_length)
     >>> xsim = librosa.segment.cross_similarity(mfcc_comp, mfcc_ref)
 
     Or fix the number of nearest neighbors to 5
@@ -147,11 +148,11 @@ def cross_similarity(data, data_ref, k=None, metric='euclidean',
     >>> import matplotlib.pyplot as plt
     >>> plt.figure(figsize=(8, 4))
     >>> plt.subplot(1, 2, 1)
-    >>> librosa.display.specshow(xsim, x_axis='time', y_axis='time')
+    >>> librosa.display.specshow(xsim, x_axis='time', y_axis='time', hop_length=hop_length)
     >>> plt.title('Binary recurrence (symmetric)')
     >>> plt.subplot(1, 2, 2)
     >>> librosa.display.specshow(xsim_aff, x_axis='time', y_axis='time',
-    ...                          cmap='magma_r')
+    ...                          cmap='magma_r', hop_length=hop_length)
     >>> plt.title('Affinity recurrence')
     >>> plt.tight_layout()
 
@@ -340,14 +341,15 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
     Find nearest neighbors in MFCC space
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> mfcc = librosa.feature.mfcc(y=y, sr=sr)
+    >>> hop_length = 1024
+    >>> mfcc = librosa.feature.mfcc(y=y, sr=sr, hop_length=hop_length)
     >>> R = librosa.segment.recurrence_matrix(mfcc)
 
     Or fix the number of nearest neighbors to 5
 
     >>> R = librosa.segment.recurrence_matrix(mfcc, k=5)
 
-    Suppress neighbors within +- 7 samples
+    Suppress neighbors within +- 7 frames
 
     >>> R = librosa.segment.recurrence_matrix(mfcc, width=7)
 
@@ -368,11 +370,11 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
     >>> import matplotlib.pyplot as plt
     >>> plt.figure(figsize=(8, 4))
     >>> plt.subplot(1, 2, 1)
-    >>> librosa.display.specshow(R, x_axis='time', y_axis='time')
+    >>> librosa.display.specshow(R, x_axis='time', y_axis='time', hop_length=hop_length)
     >>> plt.title('Binary recurrence (symmetric)')
     >>> plt.subplot(1, 2, 2)
     >>> librosa.display.specshow(R_aff, x_axis='time', y_axis='time',
-    ...                          cmap='magma_r')
+    ...                          hop_length=hop_length, cmap='magma_r')
     >>> plt.title('Affinity recurrence')
     >>> plt.tight_layout()
     >>> plt.show()
@@ -520,7 +522,8 @@ def recurrence_to_lag(rec, pad=True, axis=-1):
     Examples
     --------
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> mfccs = librosa.feature.mfcc(y=y, sr=sr)
+    >>> hop_length = 1024
+    >>> mfccs = librosa.feature.mfcc(y=y, sr=sr, hop_length=hop_length)
     >>> recurrence = librosa.segment.recurrence_matrix(mfccs)
     >>> lag_pad = librosa.segment.recurrence_to_lag(recurrence, pad=True)
     >>> lag_nopad = librosa.segment.recurrence_to_lag(recurrence, pad=False)
@@ -528,10 +531,11 @@ def recurrence_to_lag(rec, pad=True, axis=-1):
     >>> import matplotlib.pyplot as plt
     >>> plt.figure(figsize=(8, 4))
     >>> plt.subplot(1, 2, 1)
-    >>> librosa.display.specshow(lag_pad, x_axis='time', y_axis='lag')
+    >>> librosa.display.specshow(lag_pad, x_axis='time', y_axis='lag',
+    ...                          hop_length=hop_length)
     >>> plt.title('Lag (zero-padded)')
     >>> plt.subplot(1, 2, 2)
-    >>> librosa.display.specshow(lag_nopad, x_axis='time')
+    >>> librosa.display.specshow(lag_nopad, x_axis='time', hop_length=hop_length)
     >>> plt.title('Lag (no padding)')
     >>> plt.tight_layout()
     >>> plt.show()
@@ -610,7 +614,8 @@ def lag_to_recurrence(lag, axis=-1):
     Examples
     --------
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> mfccs = librosa.feature.mfcc(y=y, sr=sr)
+    >>> hop_length = 1024
+    >>> mfccs = librosa.feature.mfcc(y=y, sr=sr, hop_length=hop_length)
     >>> recurrence = librosa.segment.recurrence_matrix(mfccs)
     >>> lag_pad = librosa.segment.recurrence_to_lag(recurrence, pad=True)
     >>> lag_nopad = librosa.segment.recurrence_to_lag(recurrence, pad=False)
@@ -620,16 +625,20 @@ def lag_to_recurrence(lag, axis=-1):
     >>> import matplotlib.pyplot as plt
     >>> plt.figure(figsize=(8, 4))
     >>> plt.subplot(2, 2, 1)
-    >>> librosa.display.specshow(lag_pad, x_axis='time', y_axis='lag')
+    >>> librosa.display.specshow(lag_pad, x_axis='time', y_axis='lag',
+    ...                          hop_length=hop_length)
     >>> plt.title('Lag (zero-padded)')
     >>> plt.subplot(2, 2, 2)
-    >>> librosa.display.specshow(lag_nopad, x_axis='time', y_axis='time')
+    >>> librosa.display.specshow(lag_nopad, x_axis='time', y_axis='time',
+    ...                          hop_length=hop_length)
     >>> plt.title('Lag (no padding)')
     >>> plt.subplot(2, 2, 3)
-    >>> librosa.display.specshow(rec_pad, x_axis='time', y_axis='time')
+    >>> librosa.display.specshow(rec_pad, x_axis='time', y_axis='time',
+    ...                          hop_length=hop_length)
     >>> plt.title('Recurrence (with padding)')
     >>> plt.subplot(2, 2, 4)
-    >>> librosa.display.specshow(rec_nopad, x_axis='time', y_axis='time')
+    >>> librosa.display.specshow(rec_nopad, x_axis='time', y_axis='time',
+    ...                          hop_length=hop_length)
     >>> plt.title('Recurrence (without padding)')
     >>> plt.tight_layout()
     >>> plt.show()
@@ -1036,7 +1045,8 @@ def path_enhance(R, n, window='hann', max_ratio=2.0, min_ratio=None, n_filters=7
     Use a 51-frame diagonal smoothing filter to enhance paths in a recurrence matrix
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=30)
-    >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
+    >>> hop_length = 1024
+    >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=hop_length)
     >>> rec = librosa.segment.recurrence_matrix(chroma, mode='affinity', self=True)
     >>> rec_smooth = librosa.segment.path_enhance(rec, 51, window='hann', n_filters=7)
 
@@ -1045,10 +1055,12 @@ def path_enhance(R, n, window='hann', max_ratio=2.0, min_ratio=None, n_filters=7
     >>> import matplotlib.pyplot as plt
     >>> plt.figure(figsize=(8, 4))
     >>> plt.subplot(1,2,1)
-    >>> librosa.display.specshow(rec, x_axis='time', y_axis='time')
+    >>> librosa.display.specshow(rec, x_axis='time', y_axis='time',
+    ...                          hop_length=hop_length)
     >>> plt.title('Unfiltered recurrence')
     >>> plt.subplot(1,2,2)
-    >>> librosa.display.specshow(rec_smooth, x_axis='time', y_axis='time')
+    >>> librosa.display.specshow(rec_smooth, x_axis='time', y_axis='time',
+    ...                          hop_length=hop_length)
     >>> plt.title('Multi-angle enhanced recurrence')
     >>> plt.tight_layout()
     >>> plt.show()
