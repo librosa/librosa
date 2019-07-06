@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Sequential modeling &mdash; librosa 0.6.3 documentation</title>
+  <title>Sequential modeling &mdash; librosa 0.7.0rc1 documentation</title>
   
 
   
@@ -23,7 +23,7 @@
       <script type="text/javascript">
           var DOCUMENTATION_OPTIONS = {
               URL_ROOT:'./',
-              VERSION:'0.6.3',
+              VERSION:'0.7.0rc1',
               LANGUAGE:'None',
               COLLAPSE_INDEX:false,
               FILE_SUFFIX:'.html',
@@ -72,7 +72,7 @@
             
             
               <div class="version">
-                0.6
+                0.7
               </div>
             
           
@@ -111,8 +111,9 @@
 <li class="toctree-l1"><a class="reference internal" href="output.html">Output</a></li>
 <li class="toctree-l1"><a class="reference internal" href="segment.html">Temporal segmentation</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Sequential modeling</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#dynamic-time-warping">Dynamic time warping</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#sequence-alignment">Sequence alignment</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.sequence.dtw.html">librosa.sequence.dtw</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/librosa.sequence.rqa.html">librosa.sequence.rqa</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#viterbi-decoding">Viterbi decoding</a><ul>
@@ -213,8 +214,8 @@
 
 <span class="target" id="module-librosa.sequence"><span id="sequence"></span></span><div class="section" id="sequential-modeling">
 <h1>Sequential modeling<a class="headerlink" href="#sequential-modeling" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="dynamic-time-warping">
-<h2>Dynamic time warping<a class="headerlink" href="#dynamic-time-warping" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="sequence-alignment">
+<h2>Sequence alignment<a class="headerlink" href="#sequence-alignment" title="Permalink to this headline">¶</a></h2>
 <table border="1" class="longtable docutils">
 <colgroup>
 <col width="10%" />
@@ -223,6 +224,9 @@
 <tbody valign="top">
 <tr class="row-odd"><td><a class="reference internal" href="generated/librosa.sequence.dtw.html#librosa.sequence.dtw" title="librosa.sequence.dtw"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dtw</span></code></a>([X,&nbsp;Y,&nbsp;C,&nbsp;metric,&nbsp;step_sizes_sigma,&nbsp;…])</td>
 <td>Dynamic time warping (DTW).</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/librosa.sequence.rqa.html#librosa.sequence.rqa" title="librosa.sequence.rqa"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rqa</span></code></a>(sim[,&nbsp;gap_onset,&nbsp;gap_extend,&nbsp;…])</td>
+<td>Recurrence quantification analysis (RQA)</td>
 </tr>
 </tbody>
 </table>
@@ -310,7 +314,7 @@
 <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
     <span class="rst-current-version" data-toggle="rst-current-version">
         <span class="fa fa-book"> Other Versions</span>
-        v: 0.6.3
+        v: 0.7.0rc1
         <span class="fa fa-caret-down"></span>
     </span>
     <div class="rst-other-versions">
@@ -325,15 +329,13 @@
             <dd><a href="0.6.1/sequence.html">0.6.1</a></dd>
             <dd><a href="0.6.2/sequence.html">0.6.2</a></dd>
             <dd><a href="0.6.3/sequence.html">0.6.3</a></dd>
+            <dd><a href="0.7.0rc1/sequence.html">0.7.0rc1</a></dd>
             <dd><a href="v0.1.0/index.html">v0.1.0</a></dd>
             <dd><a href="v0.4.0/index.html">v0.4.0</a></dd>
         </dl>
         <dl>
             <dt>Branches</dt>
-            <dd><a href="display-bin-centering/index.html">display-bin-centering</a></dd>
             <dd><a href="master/sequence.html">master</a></dd>
-            <dd><a href="mpl-test-2.1/index.html">mpl-test-2.1</a></dd>
-            <dd><a href="runnning/sequence.html">runnning</a></dd>
         </dl>
     </div>
 </div>

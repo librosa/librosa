@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Beat and tempo &mdash; librosa 0.6.3 documentation</title>
+  <title>Beat and tempo &mdash; librosa 0.7.0rc1 documentation</title>
   
 
   
@@ -23,7 +23,7 @@
       <script type="text/javascript">
           var DOCUMENTATION_OPTIONS = {
               URL_ROOT:'./',
-              VERSION:'0.6.3',
+              VERSION:'0.7.0rc1',
               LANGUAGE:'None',
               COLLAPSE_INDEX:false,
               FILE_SUFFIX:'.html',
@@ -72,7 +72,7 @@
             
             
               <div class="version">
-                0.6
+                0.7
               </div>
             
           
@@ -107,6 +107,7 @@
 <li class="toctree-l1"><a class="reference internal" href="onset.html">Onset detection</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Beat and tempo</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="generated/librosa.beat.beat_track.html">librosa.beat.beat_track</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/librosa.beat.plp.html">librosa.beat.plp</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated/librosa.beat.tempo.html">librosa.beat.tempo</a></li>
 </ul>
 </li>
@@ -207,7 +208,10 @@
 <tr class="row-odd"><td><a class="reference internal" href="generated/librosa.beat.beat_track.html#librosa.beat.beat_track" title="librosa.beat.beat_track"><code class="xref py py-obj docutils literal notranslate"><span class="pre">beat_track</span></code></a>([y,&nbsp;sr,&nbsp;onset_envelope,&nbsp;…])</td>
 <td>Dynamic programming beat tracker.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="generated/librosa.beat.tempo.html#librosa.beat.tempo" title="librosa.beat.tempo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tempo</span></code></a>([y,&nbsp;sr,&nbsp;onset_envelope,&nbsp;hop_length,&nbsp;…])</td>
+<tr class="row-even"><td><a class="reference internal" href="generated/librosa.beat.plp.html#librosa.beat.plp" title="librosa.beat.plp"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plp</span></code></a>([y,&nbsp;sr,&nbsp;onset_envelope,&nbsp;hop_length,&nbsp;…])</td>
+<td>Predominant local pulse (PLP) estimation.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.beat.tempo.html#librosa.beat.tempo" title="librosa.beat.tempo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tempo</span></code></a>([y,&nbsp;sr,&nbsp;onset_envelope,&nbsp;hop_length,&nbsp;…])</td>
 <td>Estimate the tempo (beats per minute)</td>
 </tr>
 </tbody>
@@ -252,7 +256,7 @@
 <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
     <span class="rst-current-version" data-toggle="rst-current-version">
         <span class="fa fa-book"> Other Versions</span>
-        v: 0.6.3
+        v: 0.7.0rc1
         <span class="fa fa-caret-down"></span>
     </span>
     <div class="rst-other-versions">
@@ -267,15 +271,13 @@
             <dd><a href="0.6.1/beat.html">0.6.1</a></dd>
             <dd><a href="0.6.2/beat.html">0.6.2</a></dd>
             <dd><a href="0.6.3/beat.html">0.6.3</a></dd>
+            <dd><a href="0.7.0rc1/beat.html">0.7.0rc1</a></dd>
             <dd><a href="v0.1.0/index.html">v0.1.0</a></dd>
             <dd><a href="v0.4.0/beat.html">v0.4.0</a></dd>
         </dl>
         <dl>
             <dt>Branches</dt>
-            <dd><a href="display-bin-centering/beat.html">display-bin-centering</a></dd>
             <dd><a href="master/beat.html">master</a></dd>
-            <dd><a href="mpl-test-2.1/beat.html">mpl-test-2.1</a></dd>
-            <dd><a href="runnning/beat.html">runnning</a></dd>
         </dl>
     </div>
 </div>

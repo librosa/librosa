@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Temporal segmentation &mdash; librosa 0.6.3 documentation</title>
+  <title>Temporal segmentation &mdash; librosa 0.7.0rc1 documentation</title>
   
 
   
@@ -23,7 +23,7 @@
       <script type="text/javascript">
           var DOCUMENTATION_OPTIONS = {
               URL_ROOT:'./',
-              VERSION:'0.6.3',
+              VERSION:'0.7.0rc1',
               LANGUAGE:'None',
               COLLAPSE_INDEX:false,
               FILE_SUFFIX:'.html',
@@ -47,7 +47,7 @@
   <link rel="stylesheet" href="_static/banner.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="librosa.segment.recurrence_matrix" href="generated/librosa.segment.recurrence_matrix.html" />
+    <link rel="next" title="librosa.segment.cross_similarity" href="generated/librosa.segment.cross_similarity.html" />
     <link rel="prev" title="librosa.output.write_wav" href="generated/librosa.output.write_wav.html" /> 
 </head>
 
@@ -72,7 +72,7 @@
             
             
               <div class="version">
-                0.6
+                0.7
               </div>
             
           
@@ -111,10 +111,12 @@
 <li class="toctree-l1"><a class="reference internal" href="output.html">Output</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Temporal segmentation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#recurrence-and-self-similarity">Recurrence and self-similarity</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/librosa.segment.cross_similarity.html">librosa.segment.cross_similarity</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.segment.recurrence_matrix.html">librosa.segment.recurrence_matrix</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.segment.recurrence_to_lag.html">librosa.segment.recurrence_to_lag</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.segment.lag_to_recurrence.html">librosa.segment.lag_to_recurrence</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.segment.timelag_filter.html">librosa.segment.timelag_filter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/librosa.segment.path_enhance.html">librosa.segment.path_enhance</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#temporal-clustering">Temporal clustering</a><ul>
@@ -216,17 +218,23 @@
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.segment.recurrence_matrix.html#librosa.segment.recurrence_matrix" title="librosa.segment.recurrence_matrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">recurrence_matrix</span></code></a>(data[,&nbsp;k,&nbsp;width,&nbsp;metric,&nbsp;…])</td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.segment.cross_similarity.html#librosa.segment.cross_similarity" title="librosa.segment.cross_similarity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cross_similarity</span></code></a>(data,&nbsp;data_ref[,&nbsp;k,&nbsp;…])</td>
+<td>Compute cross-similarity from one data sequence to a reference sequence.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/librosa.segment.recurrence_matrix.html#librosa.segment.recurrence_matrix" title="librosa.segment.recurrence_matrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">recurrence_matrix</span></code></a>(data[,&nbsp;k,&nbsp;width,&nbsp;metric,&nbsp;…])</td>
 <td>Compute a recurrence matrix from a data matrix.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="generated/librosa.segment.recurrence_to_lag.html#librosa.segment.recurrence_to_lag" title="librosa.segment.recurrence_to_lag"><code class="xref py py-obj docutils literal notranslate"><span class="pre">recurrence_to_lag</span></code></a>(rec[,&nbsp;pad,&nbsp;axis])</td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.segment.recurrence_to_lag.html#librosa.segment.recurrence_to_lag" title="librosa.segment.recurrence_to_lag"><code class="xref py py-obj docutils literal notranslate"><span class="pre">recurrence_to_lag</span></code></a>(rec[,&nbsp;pad,&nbsp;axis])</td>
 <td>Convert a recurrence matrix into a lag matrix.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.segment.lag_to_recurrence.html#librosa.segment.lag_to_recurrence" title="librosa.segment.lag_to_recurrence"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lag_to_recurrence</span></code></a>(lag[,&nbsp;axis])</td>
+<tr class="row-even"><td><a class="reference internal" href="generated/librosa.segment.lag_to_recurrence.html#librosa.segment.lag_to_recurrence" title="librosa.segment.lag_to_recurrence"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lag_to_recurrence</span></code></a>(lag[,&nbsp;axis])</td>
 <td>Convert a lag matrix into a recurrence matrix.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="generated/librosa.segment.timelag_filter.html#librosa.segment.timelag_filter" title="librosa.segment.timelag_filter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">timelag_filter</span></code></a>(function[,&nbsp;pad,&nbsp;index])</td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.segment.timelag_filter.html#librosa.segment.timelag_filter" title="librosa.segment.timelag_filter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">timelag_filter</span></code></a>(function[,&nbsp;pad,&nbsp;index])</td>
 <td>Filtering in the time-lag domain.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="generated/librosa.segment.path_enhance.html#librosa.segment.path_enhance" title="librosa.segment.path_enhance"><code class="xref py py-obj docutils literal notranslate"><span class="pre">path_enhance</span></code></a>(R,&nbsp;n[,&nbsp;window,&nbsp;max_ratio,&nbsp;…])</td>
+<td>Multi-angle path enhancement for self- and cross-similarity matrices.</td>
 </tr>
 </tbody>
 </table>
@@ -258,7 +266,7 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="generated/librosa.segment.recurrence_matrix.html" class="btn btn-neutral float-right" title="librosa.segment.recurrence_matrix" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="generated/librosa.segment.cross_similarity.html" class="btn btn-neutral float-right" title="librosa.segment.cross_similarity" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="generated/librosa.output.write_wav.html" class="btn btn-neutral float-left" title="librosa.output.write_wav" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
@@ -288,7 +296,7 @@
 <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
     <span class="rst-current-version" data-toggle="rst-current-version">
         <span class="fa fa-book"> Other Versions</span>
-        v: 0.6.3
+        v: 0.7.0rc1
         <span class="fa fa-caret-down"></span>
     </span>
     <div class="rst-other-versions">
@@ -303,15 +311,13 @@
             <dd><a href="0.6.1/segment.html">0.6.1</a></dd>
             <dd><a href="0.6.2/segment.html">0.6.2</a></dd>
             <dd><a href="0.6.3/segment.html">0.6.3</a></dd>
+            <dd><a href="0.7.0rc1/segment.html">0.7.0rc1</a></dd>
             <dd><a href="v0.1.0/index.html">v0.1.0</a></dd>
             <dd><a href="v0.4.0/segment.html">v0.4.0</a></dd>
         </dl>
         <dl>
             <dt>Branches</dt>
-            <dd><a href="display-bin-centering/segment.html">display-bin-centering</a></dd>
             <dd><a href="master/segment.html">master</a></dd>
-            <dd><a href="mpl-test-2.1/segment.html">mpl-test-2.1</a></dd>
-            <dd><a href="runnning/segment.html">runnning</a></dd>
         </dl>
     </div>
 </div>

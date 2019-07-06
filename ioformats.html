@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Advanced I/O Use Cases &mdash; librosa 0.6.3 documentation</title>
+  <title>Advanced I/O Use Cases &mdash; librosa 0.7.0rc1 documentation</title>
   
 
   
@@ -23,7 +23,7 @@
       <script type="text/javascript">
           var DOCUMENTATION_OPTIONS = {
               URL_ROOT:'./',
-              VERSION:'0.6.3',
+              VERSION:'0.7.0rc1',
               LANGUAGE:'None',
               COLLAPSE_INDEX:false,
               FILE_SUFFIX:'.html',
@@ -72,7 +72,7 @@
             
             
               <div class="version">
-                0.6
+                0.7
               </div>
             
           
@@ -204,13 +204,16 @@
 functionality currently provided by <em>librosa</em>.</p>
 <div class="section" id="read-specific-formats">
 <h2>Read specific formats<a class="headerlink" href="#read-specific-formats" title="Permalink to this headline">¶</a></h2>
-<p><em>librosa</em> uses <a class="reference external" href="https://github.com/sampsyo/audioread">audioread</a> for reading audio. While we chose this library for best flexibility and support of various compressed formats like MP3: some specific formats might not be supported. Especially specific WAV subformats like 24bit PCM or 32bit float might cause problems depending on your installed audioread codecs. <em>libsndfile</em> covers a <a class="reference external" href="http://www.mega-nerd.com/libsndfile/">bunch of these formats</a>. There is a neat wrapper for
-<em>libsndfile</em> called <a class="reference external" href="https://github.com/bastibe/PySoundFile">PySoundFile</a> which makes it easy to use the library from python.</p>
+<p><em>librosa</em> uses <a class="reference external" href="https://github.com/bastibe/PySoundFile">soundfile</a> and <a class="reference external" href="https://github.com/sampsyo/audioread">audioread</a> for reading audio.
+As of v0.7, librosa uses <a class="reference external" href="https://pysoundfile.readthedocs.io/en/latest/index.html#module-soundfile" title="(in PySoundFile)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">soundfile</span></code></a> by default, and falls back on <code class="xref py py-obj docutils literal notranslate"><span class="pre">audioread</span></code> only when dealing with codecs unsupported by <a class="reference external" href="https://pysoundfile.readthedocs.io/en/latest/index.html#module-soundfile" title="(in PySoundFile)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">soundfile</span></code></a> (notably, MP3, and some variants of WAV).
+For a list of codecs supported by <a class="reference external" href="https://pysoundfile.readthedocs.io/en/latest/index.html#module-soundfile" title="(in PySoundFile)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">soundfile</span></code></a>, see the <em>libsndfile</em> <a class="reference external" href="http://www.mega-nerd.com/libsndfile/">documentation</a>.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">See installation instruction for PySoundFile <a class="reference external" href="http://pysoundfile.readthedocs.io">here</a>.</p>
 </div>
-<p>Reading audio files using PySoundFile is similmar to the method in <em>librosa</em>. One important difference is that the read data is of shape <code class="docutils literal notranslate"><span class="pre">(nb_samples,</span> <span class="pre">nb_channels)</span></code> compared to <code class="docutils literal notranslate"><span class="pre">(nb_channels,</span> <span class="pre">nb_samples)</span></code> in <code class="xref py py-func docutils literal notranslate"><span class="pre">&lt;librosa.core.load&gt;</span></code>. Also the signal is not resampled to 22050 Hz by default, hence it would need be transposed and resampled for further processing in <em>librosa</em>. The following example is equivalent to <code class="docutils literal notranslate"><span class="pre">librosa.load(librosa.util.example_audio_file())</span></code>:</p>
+<p>Librosa’s load function is meant for the common case where you want to load an entire (fragment of a) recording into memory, but some applications require more flexibility.
+In these cases, we recommend using <a class="reference external" href="https://pysoundfile.readthedocs.io/en/latest/index.html#module-soundfile" title="(in PySoundFile)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">soundfile</span></code></a> directly.
+Reading audio files using <a class="reference external" href="https://pysoundfile.readthedocs.io/en/latest/index.html#module-soundfile" title="(in PySoundFile)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">soundfile</span></code></a> is similar to the method in <em>librosa</em>. One important difference is that the read data is of shape <code class="docutils literal notranslate"><span class="pre">(nb_samples,</span> <span class="pre">nb_channels)</span></code> compared to <code class="docutils literal notranslate"><span class="pre">(nb_channels,</span> <span class="pre">nb_samples)</span></code> in <a class="reference internal" href="generated/librosa.core.load.html#librosa.core.load" title="librosa.core.load"><code class="xref py py-func docutils literal notranslate"><span class="pre">librosa.core.load</span></code></a>. Also the signal is not resampled to 22050 Hz by default, hence it would need be transposed and resampled for further processing in <em>librosa</em>. The following example is equivalent to <code class="docutils literal notranslate"><span class="pre">librosa.load(librosa.util.example_audio_file())</span></code>:</p>
 <div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
 2
 3
@@ -233,10 +236,11 @@ functionality currently provided by <em>librosa</em>.</p>
 </div>
 <div class="section" id="blockwise-reading">
 <h2>Blockwise Reading<a class="headerlink" href="#blockwise-reading" title="Permalink to this headline">¶</a></h2>
-<p>For large audio signals it could be benficial to not load the whole audio file
-into memory. <em>PySoundFile</em> supports blockwise reading. In the following example
-a block of 1024 samples of audio are read and directly fed into the chroma
-feature extractor.</p>
+<p>For large audio signals it could be beneficial to not load the whole audio file
+into memory.  Librosa 0.7 introduces a streaming interface, which can be used to
+work on short fragments of audio sequentially.  <a class="reference internal" href="generated/librosa.core.stream.html#librosa.core.stream" title="librosa.core.stream"><code class="xref py py-func docutils literal notranslate"><span class="pre">librosa.core.stream</span></code></a> cuts an input
+file into <em>blocks</em> of audio, which correspond to a given number of <em>frames</em>,
+which can be iterated over as in the following example:</p>
 <div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
  3
@@ -249,26 +253,51 @@ feature extractor.</p>
 10
 11
 12
-13</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">soundfile</span> <span class="kn">as</span> <span class="nn">sf</span>
-<span class="kn">from</span> <span class="nn">librosa.feature</span> <span class="kn">import</span> <span class="n">chroma_stft</span>
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">librosa</span>
 
-<span class="n">block_gen</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">blocks</span><span class="p">(</span><span class="s1">&#39;stereo_file.wav&#39;</span><span class="p">,</span> <span class="n">blocksize</span><span class="o">=</span><span class="mi">1024</span><span class="p">)</span>
-<span class="n">rate</span> <span class="o">=</span> <span class="n">sf</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;stereo_file.wav&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">samplerate</span>
+<span class="n">sr</span> <span class="o">=</span> <span class="n">librosa</span><span class="o">.</span><span class="n">get_samplerate</span><span class="p">(</span><span class="s1">&#39;/path/to/file.wav&#39;</span><span class="p">)</span>
+
+<span class="c1"># Set the frame parameters to be equivalent to the librosa defaults</span>
+<span class="c1"># in the file&#39;s native sampling rate</span>
+<span class="n">frame_length</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2048</span> <span class="o">*</span> <span class="n">sr</span><span class="p">)</span> <span class="o">//</span> <span class="mi">22050</span>
+<span class="n">hop_length</span> <span class="o">=</span> <span class="p">(</span><span class="mi">512</span> <span class="o">*</span> <span class="n">sr</span><span class="p">)</span> <span class="o">//</span> <span class="mi">22050</span>
+
+<span class="c1"># Stream the data, working on 128 frames at a time</span>
+<span class="n">stream</span> <span class="o">=</span> <span class="n">librosa</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="s1">&#39;path/to/file.wav&#39;</span><span class="p">,</span>
+                        <span class="n">block_length</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
+                        <span class="n">frame_length</span><span class="o">=</span><span class="n">frame_length</span><span class="p">,</span>
+                        <span class="n">hop_length</span><span class="o">=</span><span class="n">hop_length</span><span class="p">)</span>
 
 <span class="n">chromas</span> <span class="o">=</span> <span class="p">[]</span>
-<span class="k">for</span> <span class="n">bl</span> <span class="ow">in</span> <span class="n">block_gen</span><span class="p">:</span>
-    <span class="c1"># downmix frame to mono (averaging out the channel dimension)</span>
-    <span class="n">y</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">bl</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="c1"># compute chroma feature</span>
-    <span class="n">chromas</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chroma_stft</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">sr</span><span class="o">=</span><span class="n">rate</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">stream</span><span class="p">:</span>
+   <span class="n">chroma_block</span> <span class="o">=</span> <span class="n">librosa</span><span class="o">.</span><span class="n">feature</span><span class="o">.</span><span class="n">chroma_stft</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">sr</span><span class="o">=</span><span class="n">sr</span><span class="p">,</span>
+                                              <span class="n">n_fft</span><span class="o">=</span><span class="n">frame_length</span><span class="p">,</span>
+                                              <span class="n">hop_length</span><span class="o">=</span><span class="n">hop_length</span><span class="p">,</span>
+                                              <span class="n">center</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+   <span class="n">chromas</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chromas</span><span class="p">)</span>
 </pre></div>
 </td></tr></table></div>
+<p>In this example, each audio fragment <code class="docutils literal notranslate"><span class="pre">y</span></code> will consist of 128 frames worth of samples,
+or more specifically, <code class="docutils literal notranslate"><span class="pre">len(y)</span> <span class="pre">==</span> <span class="pre">frame_length</span> <span class="pre">+</span> <span class="pre">(block_length</span> <span class="pre">-</span> <span class="pre">1)</span> <span class="pre">*</span> <span class="pre">hop_length</span></code>.
+Each fragment <code class="docutils literal notranslate"><span class="pre">y</span></code> will overlap with the subsequent fragment by <code class="docutils literal notranslate"><span class="pre">frame_length</span> <span class="pre">-</span> <span class="pre">hop_length</span></code>
+samples, which ensures that stream processing will provide equivalent results to if the entire
+sequence was processed in one step (assuming padding / centering is disabled).</p>
+<p>For more details about the streaming interface, refer to <a class="reference internal" href="generated/librosa.core.stream.html#librosa.core.stream" title="librosa.core.stream"><code class="xref py py-func docutils literal notranslate"><span class="pre">librosa.core.stream</span></code></a>.</p>
 </div>
 <div class="section" id="read-file-like-objects">
 <h2>Read file-like objects<a class="headerlink" href="#read-file-like-objects" title="Permalink to this headline">¶</a></h2>
 <p>If you want to read audio from file-like objects (also called <em>virtual files</em>)
-you can use <em>PySoundFile</em>, as well.</p>
+you can use <a class="reference external" href="https://pysoundfile.readthedocs.io/en/latest/index.html#module-soundfile" title="(in PySoundFile)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">soundfile</span></code></a> as well.  (This will also work with <a class="reference internal" href="generated/librosa.core.load.html#librosa.core.load" title="librosa.core.load"><code class="xref py py-func docutils literal notranslate"><span class="pre">librosa.core.load</span></code></a> and <a class="reference internal" href="generated/librosa.core.stream.html#librosa.core.stream" title="librosa.core.stream"><code class="xref py py-func docutils literal notranslate"><span class="pre">librosa.core.stream</span></code></a>, provided
+that the underlying codec is supported by <a class="reference external" href="https://pysoundfile.readthedocs.io/en/latest/index.html#module-soundfile" title="(in PySoundFile)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">soundfile</span></code></a>.)</p>
 <p>E.g.: read files from zip compressed archives:</p>
 <div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
 2
@@ -399,7 +428,7 @@ you can use <em>PySoundFile</em>, as well.</p>
 <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
     <span class="rst-current-version" data-toggle="rst-current-version">
         <span class="fa fa-book"> Other Versions</span>
-        v: 0.6.3
+        v: 0.7.0rc1
         <span class="fa fa-caret-down"></span>
     </span>
     <div class="rst-other-versions">
@@ -414,15 +443,13 @@ you can use <em>PySoundFile</em>, as well.</p>
             <dd><a href="0.6.1/ioformats.html">0.6.1</a></dd>
             <dd><a href="0.6.2/ioformats.html">0.6.2</a></dd>
             <dd><a href="0.6.3/ioformats.html">0.6.3</a></dd>
+            <dd><a href="0.7.0rc1/ioformats.html">0.7.0rc1</a></dd>
             <dd><a href="v0.1.0/index.html">v0.1.0</a></dd>
             <dd><a href="v0.4.0/index.html">v0.4.0</a></dd>
         </dl>
         <dl>
             <dt>Branches</dt>
-            <dd><a href="display-bin-centering/ioformats.html">display-bin-centering</a></dd>
             <dd><a href="master/ioformats.html">master</a></dd>
-            <dd><a href="mpl-test-2.1/ioformats.html">mpl-test-2.1</a></dd>
-            <dd><a href="runnning/ioformats.html">runnning</a></dd>
         </dl>
     </div>
 </div>

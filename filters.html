@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Filters &mdash; librosa 0.6.3 documentation</title>
+  <title>Filters &mdash; librosa 0.7.0rc1 documentation</title>
   
 
   
@@ -23,7 +23,7 @@
       <script type="text/javascript">
           var DOCUMENTATION_OPTIONS = {
               URL_ROOT:'./',
-              VERSION:'0.6.3',
+              VERSION:'0.7.0rc1',
               LANGUAGE:'None',
               COLLAPSE_INDEX:false,
               FILE_SUFFIX:'.html',
@@ -72,7 +72,7 @@
             
             
               <div class="version">
-                0.6
+                0.7
               </div>
             
           
@@ -133,10 +133,7 @@
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.filters.cq_to_chroma.html">librosa.filters.cq_to_chroma</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.filters.mr_frequencies.html">librosa.filters.mr_frequencies</a></li>
 <li class="toctree-l3"><a class="reference internal" href="generated/librosa.filters.window_sumsquare.html">librosa.filters.window_sumsquare</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#deprecated">Deprecated</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="generated/librosa.filters.dct.html">librosa.filters.dct</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/librosa.filters.diagonal_filter.html">librosa.filters.diagonal_filter</a></li>
 </ul>
 </li>
 </ul>
@@ -228,7 +225,7 @@
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.filters.mel.html#librosa.filters.mel" title="librosa.filters.mel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mel</span></code></a>(sr,&nbsp;n_fft[,&nbsp;n_mels,&nbsp;fmin,&nbsp;fmax,&nbsp;htk,&nbsp;norm])</td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.filters.mel.html#librosa.filters.mel" title="librosa.filters.mel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mel</span></code></a>(sr,&nbsp;n_fft[,&nbsp;n_mels,&nbsp;fmin,&nbsp;fmax,&nbsp;htk,&nbsp;…])</td>
 <td>Create a Filterbank matrix to combine FFT bins into Mel-frequency bins</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="generated/librosa.filters.chroma.html#librosa.filters.chroma" title="librosa.filters.chroma"><code class="xref py py-obj docutils literal notranslate"><span class="pre">chroma</span></code></a>(sr,&nbsp;n_fft[,&nbsp;n_chroma,&nbsp;A440,&nbsp;ctroct,&nbsp;…])</td>
@@ -283,19 +280,8 @@
 <tr class="row-even"><td><a class="reference internal" href="generated/librosa.filters.window_sumsquare.html#librosa.filters.window_sumsquare" title="librosa.filters.window_sumsquare"><code class="xref py py-obj docutils literal notranslate"><span class="pre">window_sumsquare</span></code></a>(window,&nbsp;n_frames[,&nbsp;…])</td>
 <td>Compute the sum-square envelope of a window function at a given hop length.</td>
 </tr>
-</tbody>
-</table>
-</div>
-<div class="section" id="deprecated">
-<h2>Deprecated<a class="headerlink" href="#deprecated" title="Permalink to this headline">¶</a></h2>
-<table border="1" class="longtable docutils">
-<colgroup>
-<col width="10%" />
-<col width="90%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.filters.dct.html#librosa.filters.dct" title="librosa.filters.dct"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dct</span></code></a>(n_filters,&nbsp;n_input)</td>
-<td>Discrete cosine transform (DCT type-II, normalized) basis.</td>
+<tr class="row-odd"><td><a class="reference internal" href="generated/librosa.filters.diagonal_filter.html#librosa.filters.diagonal_filter" title="librosa.filters.diagonal_filter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">diagonal_filter</span></code></a>(window,&nbsp;n[,&nbsp;slope,&nbsp;angle,&nbsp;…])</td>
+<td>Build a two-dimensional diagonal filter.</td>
 </tr>
 </tbody>
 </table>
@@ -340,7 +326,7 @@
 <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
     <span class="rst-current-version" data-toggle="rst-current-version">
         <span class="fa fa-book"> Other Versions</span>
-        v: 0.6.3
+        v: 0.7.0rc1
         <span class="fa fa-caret-down"></span>
     </span>
     <div class="rst-other-versions">
@@ -355,15 +341,13 @@
             <dd><a href="0.6.1/filters.html">0.6.1</a></dd>
             <dd><a href="0.6.2/filters.html">0.6.2</a></dd>
             <dd><a href="0.6.3/filters.html">0.6.3</a></dd>
+            <dd><a href="0.7.0rc1/filters.html">0.7.0rc1</a></dd>
             <dd><a href="v0.1.0/index.html">v0.1.0</a></dd>
             <dd><a href="v0.4.0/filters.html">v0.4.0</a></dd>
         </dl>
         <dl>
             <dt>Branches</dt>
-            <dd><a href="display-bin-centering/filters.html">display-bin-centering</a></dd>
             <dd><a href="master/filters.html">master</a></dd>
-            <dd><a href="mpl-test-2.1/filters.html">mpl-test-2.1</a></dd>
-            <dd><a href="runnning/filters.html">runnning</a></dd>
         </dl>
     </div>
 </div>
