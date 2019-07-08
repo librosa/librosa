@@ -13,7 +13,7 @@ from .utils import valid_intervals
 __all__ = ['match_intervals', 'match_events']
 
 
-@numba.jit(nopython=True)
+@numba.jit(nopython=True, cache=True)
 def __jaccard(int_a, int_b):  # pragma: no cover
     '''Jaccard similarity between two intervals
 
@@ -45,7 +45,7 @@ def __jaccard(int_a, int_b):  # pragma: no cover
     return 0.0
 
 
-@numba.jit(nopython=True)
+@numba.jit(nopython=True, cache=True)
 def __match_interval_overlaps(query, intervals_to, candidates):  # pragma: no cover
     '''Find the best Jaccard match from query to candidates'''
 
@@ -59,7 +59,7 @@ def __match_interval_overlaps(query, intervals_to, candidates):  # pragma: no co
     return best_idx
 
 
-@numba.jit(nopython=True)
+@numba.jit(nopython=True, cache=True)
 def __match_intervals(intervals_from, intervals_to, strict=True):  # pragma: no cover
     '''Numba-accelerated interval matching algorithm.
 
@@ -187,6 +187,7 @@ def match_intervals(intervals_from, intervals_to, strict=True):
     The reverse matching of the above is not possible in `strict` mode
     because `[6, 7]` is disjoint from all intervals in `ints_from`.
     With `strict=False`, we get the following:
+
     >>> librosa.util.match_intervals(ints_to, ints_from, strict=False)
     array([1, 1, 2, 2], dtype=uint32)
     >>> # [0, 2] => [1, 4]  (ints_from[1])
@@ -204,8 +205,10 @@ def match_intervals(intervals_from, intervals_to, strict=True):
 
     try:
         return __match_intervals(intervals_from, intervals_to, strict=strict)
-    except ParameterError as exc:
-        six.reraise(ParameterError, ParameterError('Unable to match intervals with strict={}'.format(strict)), sys.exc_info()[2])
+    except ParameterError:
+        six.reraise(ParameterError,
+                    ParameterError('Unable to match intervals with strict={}'.format(strict)),
+                    sys.exc_info()[2])
 
 
 def match_events(events_from, events_to, left=True, right=True):
@@ -296,7 +299,7 @@ def match_events(events_from, events_to, left=True, right=True):
     return __match_events_helper(output, events_from, events_to, left, right)
 
 
-@numba.jit(nopython=True)
+@numba.jit(nopython=True, cache=True)
 def __match_events_helper(output, events_from, events_to, left=True, right=True):  # pragma: no cover
     # mock dictionary for events
     from_idx = np.argsort(events_from)

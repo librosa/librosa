@@ -186,7 +186,7 @@ def percussive(y, **kwargs):
     return y_perc
 
 
-def time_stretch(y, rate):
+def time_stretch(y, rate, **kwargs):
     '''Time-stretch an audio series by a fixed rate.
 
 
@@ -197,19 +197,21 @@ def time_stretch(y, rate):
 
     rate : float > 0 [scalar]
         Stretch factor.  If `rate > 1`, then the signal is sped up.
-
         If `rate < 1`, then the signal is slowed down.
+
+    kwargs : additional keyword arguments.
+        See `librosa.decompose.stft` for details.
 
     Returns
     -------
-    y_stretch : np.ndarray [shape=(rate * n,)]
+    y_stretch : np.ndarray [shape=(round(n/rate),)]
         audio time series stretched by the specified rate
 
     See Also
     --------
     pitch_shift : pitch shifting
     librosa.core.phase_vocoder : spectrogram phase vocoder
-
+    pyrubberband.pyrb.time_stretch : high-quality time stretching using RubberBand
 
     Examples
     --------
@@ -227,26 +229,30 @@ def time_stretch(y, rate):
     if rate <= 0:
         raise ParameterError('rate must be a positive number')
 
-    # Construct the stft
-    stft = core.stft(y)
+    # Construct the short-term Fourier transform (STFT)
+    stft = core.stft(y, **kwargs)
 
     # Stretch by phase vocoding
     stft_stretch = core.phase_vocoder(stft, rate)
 
-    # Invert the stft
-    y_stretch = core.istft(stft_stretch, dtype=y.dtype)
+    # Predict the length of y_stretch
+    len_stretch = int(round(len(y)/rate))
+
+    # Invert the STFT
+    y_stretch = core.istft(
+        stft_stretch, dtype=y.dtype, length=len_stretch, **kwargs)
 
     return y_stretch
 
 
-def pitch_shift(y, sr, n_steps, bins_per_octave=12):
-    '''Pitch-shift the waveform by `n_steps` half-steps.
-
+def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type='kaiser_best',
+                **kwargs):
+    '''Shift the pitch of a waveform by `n_steps` semitones.
 
     Parameters
     ----------
     y : np.ndarray [shape=(n,)]
-        audio time-series
+        audio time series
 
     sr : number > 0 [scalar]
         audio sampling rate of `y`
@@ -257,6 +263,16 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12):
     bins_per_octave : float > 0 [scalar]
         how many steps per octave
 
+    res_type : string
+        Resample type.
+        Possible options: 'kaiser_best', 'kaiser_fast', and 'scipy', 'polyphase',
+        'fft'.
+        By default, 'kaiser_best' is used.
+
+        See `core.resample` for more information.
+
+    kwargs: additional keyword arguments.
+        See `librosa.decompose.stft` for details.
 
     Returns
     -------
@@ -268,7 +284,7 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12):
     --------
     time_stretch : time stretching
     librosa.core.phase_vocoder : spectrogram phase vocoder
-
+    pyrubberband.pyrb.pitch_shift : high-quality pitch shifting using RubberBand
 
     Examples
     --------
@@ -293,7 +309,8 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12):
     rate = 2.0 ** (-float(n_steps) / bins_per_octave)
 
     # Stretch in time, then resample
-    y_shift = core.resample(time_stretch(y, rate), float(sr) / rate, sr)
+    y_shift = core.resample(time_stretch(y, rate, **kwargs), float(sr)/rate, sr,
+                            res_type=res_type)
 
     # Crop to the same dimension as the input
     return util.fix_length(y_shift, len(y))

@@ -43,6 +43,9 @@ Please refer to the `joblib.Memory` `documentation
 <https://pythonhosted.org/joblib/memory.html#memory-reference>`_ for a detailed explanation of these
 parameters.
 
+As of 0.7, librosa's cache wraps (rather than extends) the `joblib.Memory` object.
+The memory object can be directly accessed by `librosa.cache.memory`.
+
 
 Cache levels
 ------------
@@ -54,7 +57,7 @@ As a result, application code may run faster at the expense of larger disk usage
 
 The caching levels are described as follows:
 
-    - 10: filter bases, independent of audio data (dct, mel, chroma, constant-q)
+    - 10: filter bases, independent of audio data (mel, chroma, constant-q)
     - 20: low-level features (cqt, stft, zero-crossings, etc)
     - 30: high-level features (tempo, beats, decomposition, recurrence, etc)
     - 40: post-processing (delta, stack_memory, normalize, sync)

@@ -584,7 +584,8 @@ def test_files():
 
     # Expected output
     output = [os.path.join(os.path.abspath(os.path.curdir), 'tests', 'data', s)
-              for s in ['test1_22050.wav',
+              for s in ['test1_22050.mp3',
+                        'test1_22050.wav',
                         'test1_44100.wav',
                         'test2_8000.wav']]
 
@@ -596,10 +597,15 @@ def test_files():
                                         limit=limit,
                                         offset=offset)
 
+        targets = output
+        if ext is not None:
+            # If we're only seeking wavs, bump off the mp3 file
+            targets = targets[1:]
+
         s1 = slice(offset, None)
         s2 = slice(limit)
 
-        assert set(files) == set(output[s1][s2]), (files, output[s1][s2])
+        assert set(files) == set(targets[s1][s2])
 
     if platform.system() == 'Windows':
         cases = [False]
@@ -1009,3 +1015,92 @@ def test_util_fill_off_diagonal_8_12():
     librosa.util.fill_off_diagonal(mut_x, 0.25)
 
     assert np.array_equal(mut_x, gt_x.T)
+
+
+@pytest.mark.parametrize('dtype_A', [np.float32, np.float64])
+@pytest.mark.parametrize('dtype_B', [np.float32, np.float64])
+def test_nnls_vector(dtype_A, dtype_B):
+    srand()
+
+    # Make a random basis
+    A = np.random.randn(5, 7).astype(dtype_A)
+
+    # Make a random latent vector
+    x = np.random.randn(A.shape[1])**2
+
+    B = A.dot(x).astype(dtype_B)
+
+    x_rec = librosa.util.nnls(A, B)
+
+    assert np.all(x_rec >= 0)
+    assert np.sqrt(np.mean((B - A.dot(x_rec))**2)) <= 1e-6
+
+
+@pytest.mark.parametrize('dtype_A', [np.float32, np.float64])
+@pytest.mark.parametrize('dtype_B', [np.float32, np.float64])
+@pytest.mark.parametrize('x_size', [3, 30])
+def test_nnls_matrix(dtype_A, dtype_B, x_size):
+    srand()
+
+    # Make a random basis
+    A = np.random.randn(5, 7).astype(dtype_A)
+
+    # Make a random latent matrix
+    #   when x_size is 3, B is 7x3 (smaller than A)
+    x = np.random.randn(A.shape[1], x_size)**2
+
+    B = A.dot(x).astype(dtype_B)
+
+    x_rec = librosa.util.nnls(A, B)
+
+    assert np.all(x_rec >= 0)
+    assert np.sqrt(np.mean((B - A.dot(x_rec))**2)) <= 1e-5
+
+
+@pytest.mark.parametrize('dtype_A', [np.float32, np.float64])
+@pytest.mark.parametrize('dtype_B', [np.float32, np.float64])
+@pytest.mark.parametrize('x_size', [16, 64, 256])
+def test_nnls_multiblock(dtype_A, dtype_B, x_size):
+    srand()
+
+    # Make a random basis
+    A = np.random.randn(7, 1025).astype(dtype_A)
+
+    # Make a random latent matrix
+    #   when x_size is 3, B is 7x3 (smaller than A)
+    x = np.random.randn(A.shape[1], x_size)**2
+
+    B = A.dot(x).astype(dtype_B)
+
+    x_rec = librosa.util.nnls(A, B)
+
+    assert np.all(x_rec >= 0)
+    assert np.sqrt(np.mean((B - A.dot(x_rec))**2)) <= 1e-4
+
+
+@pytest.fixture
+def psig():
+
+    # [[0, 1, 2, 3, 4]]
+    # axis=1 or -1 ==> [-1.5, 1, 1, 1, -1.5]
+    # axis=0 ==> [0, 0, 0, 0, 0]
+    return np.arange(0, 5, dtype=float)[np.newaxis]
+
+
+@pytest.mark.parametrize('edge_order', [1, 2])
+@pytest.mark.parametrize('axis', [0, 1, -1])
+def test_cyclic_gradient(psig, edge_order, axis):
+
+
+    grad = librosa.util.cyclic_gradient(psig,
+                                        edge_order=edge_order,
+                                        axis=axis)
+
+    assert grad.shape == psig.shape
+    assert grad.dtype == psig.dtype
+
+    # Check the values
+    if axis == 0:
+        assert np.allclose(grad, 0)
+    else:
+        assert np.allclose(grad, [-1.5, 1, 1, 1, -1.5])

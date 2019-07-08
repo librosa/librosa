@@ -189,6 +189,40 @@ def test_beat_units(sr, hop_length, units):
     assert np.allclose(t1, t2)
 
 
+@pytest.mark.parametrize('sr', [22050])
+@pytest.mark.parametrize('hop_length', [256, 512])
+@pytest.mark.parametrize('win_length', [192, 384])
+@pytest.mark.parametrize('use_onset', [False, True])
+@pytest.mark.parametrize('tempo_min, tempo_max', [(30, 300), 
+                                                  (None, 240),
+                                                  (60, None),
+                                                  pytest.mark.xfail((120, 80),
+                                                      raises=librosa.ParameterError)])
+def test_plp(sr, hop_length, win_length, tempo_min, tempo_max, use_onset):
+
+    y, sr = librosa.load(__EXAMPLE_FILE, sr=sr)
+
+    oenv = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
+
+    if use_onset:
+        pulse = librosa.beat.plp(y=y, sr=sr, onset_envelope=oenv,
+                                 hop_length=hop_length,
+                                 win_length=win_length,
+                                 tempo_min=tempo_min,
+                                 tempo_max=tempo_max)
+    else:
+        pulse = librosa.beat.plp(y=y, sr=sr,
+                                 hop_length=hop_length,
+                                 win_length=win_length,
+                                 tempo_min=tempo_min,
+                                 tempo_max=tempo_max)
+
+    assert len(pulse) == len(oenv)
+
+    assert np.all(pulse >= 0)
+    assert np.all(pulse <= 1)
+
+
 # Beat tracking regression test is no longer enabled due to librosa's
 # corrections
 @pytest.mark.skip

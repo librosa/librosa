@@ -61,6 +61,9 @@ function testData(source_path, output_path)
     display('beat');
     testBeat(output_path);
 
+    display('lpcburg');
+    testLPCBurg(output_path);
+
     %% Done!
     display('Done.');
 end
@@ -303,7 +306,7 @@ function testIFGRAM(output_path)
     y           = mean(y, 2);        % Convert to mono
 
     % Test a couple of different FFT window sizes
-    P_NFFT      = [128, 256, 1024];
+    P_NFFT      = [1024];
 
     % And window sizes
 %     P_WIN       = [0.25, 0.5, 1.0];
@@ -401,6 +404,50 @@ function testBeat(output_path)
     display(['  `-- saving ', filename]);
     save(filename, 'wavfile', 'beats', 'onsetenv');
 
+end
+
+function testLPCBurg(output_path)
+    rng(1);
+
+    output_counter = 1;
+    for m=3:20
+        signal = {};
+        est_coeffs = {};
+        order = {};
+        true_coeffs = {};
+
+        i=1;
+        for l=pow2(6:16)
+            if l < m*2
+                continue
+            end
+
+            % Generate random, but stable filters
+            while 1
+                % 0.25... Let's not play the stable filter
+                % lottery forever
+                coeffs = rand(1, m-1) .* 0.25;
+                % Keep away from the edge
+                if all(abs(roots([1 coeffs])) < 1-10*eps)
+                    break
+                end
+            end
+
+            % Filter some noise with them and store them for testing
+            noise = randn(l,1);
+            signal{i} = filter(1, [1 coeffs], noise);
+            est_coeffs{i} = arburg(signal{i}, m);
+            order{i} = m;
+            true_coeffs{i} = [1 coeffs];
+
+            i=i+1;
+        end
+
+        filename = sprintf('%s/core-lpcburg-%03d.mat', output_path, output_counter);
+        display(['  `-- saving ', filename]);
+        save(filename, 'signal', 'est_coeffs', 'order', 'true_coeffs');
+        output_counter = output_counter + 1;
+    end
 end
 
 function testChromafb(output_path)

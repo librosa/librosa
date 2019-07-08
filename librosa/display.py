@@ -53,12 +53,12 @@ class TimeFormatter(Formatter):
         Anything past the midpoint will be converted to negative time.
 
     unit : str or None
-    	Abbreviation of the physical unit for axis labels and ticks. 
-	Either equal to `s` (seconds) or `ms` (milliseconds) or None (default). 
-	If set to None, the resulting TimeFormatter object adapts its string 
-	representation to the duration of the underlying time range: 
-	`hh:mm:ss` above 3600 seconds; `mm:ss` between 60 and 3600 seconds; 
-	and `ss` below 60 seconds. 
+        Abbreviation of the physical unit for axis labels and ticks.
+        Either equal to `s` (seconds) or `ms` (milliseconds) or None (default).
+        If set to None, the resulting TimeFormatter object adapts its string
+        representation to the duration of the underlying time range:
+        `hh:mm:ss` above 3600 seconds; `mm:ss` between 60 and 3600 seconds;
+        and `ss` below 60 seconds.
 
 
     See also
@@ -79,6 +79,7 @@ class TimeFormatter(Formatter):
     >>> ax.plot(times, values)
     >>> ax.xaxis.set_major_formatter(librosa.display.TimeFormatter())
     >>> ax.set_xlabel('Time')
+    >>> plt.show()
 
     Manually set the physical time unit of the x-axis to milliseconds
 
@@ -177,6 +178,7 @@ class NoteFormatter(Formatter):
     >>> ax2.bar(np.arange(len(values)), values)
     >>> ax2.yaxis.set_major_formatter(librosa.display.NoteFormatter())
     >>> ax2.set_ylabel('Note')
+    >>> plt.show()
     '''
     def __init__(self, octave=True, major=True):
 
@@ -227,6 +229,7 @@ class LogHzFormatter(Formatter):
     >>> ax2.bar(np.arange(len(values)), values)
     >>> ax2.yaxis.set_major_formatter(librosa.display.NoteFormatter())
     >>> ax2.set_ylabel('Note')
+    >>> plt.show()
     '''
     def __init__(self, major=True):
 
@@ -261,6 +264,7 @@ class ChromaFormatter(Formatter):
     >>> ax.plot(values)
     >>> ax.yaxis.set_major_formatter(librosa.display.ChromaFormatter())
     >>> ax.set_ylabel('Pitch class')
+    >>> plt.show()
     '''
     def __call__(self, x, pos=None):
         '''Format for chroma positions'''
@@ -283,6 +287,7 @@ class TonnetzFormatter(Formatter):
     >>> ax.plot(values)
     >>> ax.yaxis.set_major_formatter(librosa.display.TonnetzFormatter())
     >>> ax.set_ylabel('Tonnetz')
+    >>> plt.show()
     '''
     def __call__(self, x, pos=None):
         '''Format for tonnetz positions'''
@@ -435,6 +440,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
     >>> librosa.display.waveplot(y_perc, sr=sr, color='r', alpha=0.5)
     >>> plt.title('Harmonic + Percussive')
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
 
     util.valid_audio(y, mono=False)
@@ -550,10 +556,15 @@ def specshow(data, x_coords=None, y_coords=None,
         - 'lag_s' : same as lag, but in seconds.
         - 'lag_ms' : same as lag, but in milliseconds.
 
-        Other:
+        Rhythm:
 
         - 'tempo' : markers are shown as beats-per-minute (BPM)
-            using a logarithmic scale.
+            using a logarithmic scale.  This is useful for
+            visualizing the outputs of `feature.tempogram`.
+
+        - 'fourier_tempo' : same as `'tempo'`, but used when
+            tempograms are calculated in the Frequency domain
+            using `feature.fourier_tempogram`.
 
     x_coords : np.ndarray [shape=data.shape[1]+1]
     y_coords : np.ndarray [shape=data.shape[0]+1]
@@ -673,6 +684,7 @@ def specshow(data, x_coords=None, y_coords=None,
     >>> plt.colorbar()
     >>> plt.title('Tempogram')
     >>> plt.tight_layout()
+    >>> plt.show()
 
 
     Draw beat-synchronous chroma in natural time
@@ -690,6 +702,7 @@ def specshow(data, x_coords=None, y_coords=None,
     ...                          x_coords=beat_t)
     >>> plt.title('Chroma (beat time)')
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
 
     if np.issubdtype(data.dtype, np.complexfloating):
@@ -769,6 +782,7 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
                  'tonnetz': __coord_n,
                  'off': __coord_n,
                  'tempo': __coord_tempo,
+                 'fourier_tempo': __coord_fourier_tempo,
                  'frames': __coord_n,
                  None: __coord_n}
 
@@ -821,7 +835,7 @@ def __scale_axes(axes, ax_type, which):
         mode = 'log'
         kwargs[base] = 2
 
-    elif ax_type == 'tempo':
+    elif ax_type in ['tempo', 'fourier_tempo']:
         mode = 'log'
         kwargs[base] = 2
         limit(16, 480)
@@ -846,7 +860,7 @@ def __decorate_axis(axis, ax_type):
                                                          [0, 2, 4, 5, 7, 9, 11]).ravel()))
         axis.set_label_text('Pitch class')
 
-    elif ax_type == 'tempo':
+    elif ax_type in ['tempo', 'fourier_tempo']:
         axis.set_major_formatter(ScalarFormatter())
         axis.set_major_locator(LogLocator(base=2.0))
         axis.set_label_text('BPM')
@@ -967,6 +981,21 @@ def __coord_tempo(n, sr=22050, hop_length=512, **_kwargs):
     basis = core.tempo_frequencies(n+2, sr=sr, hop_length=hop_length)[1:]
     edges = np.arange(1, n+2)
     return basis * (edges + 0.5) / edges
+
+
+def __coord_fourier_tempo(n, sr=22050, hop_length=512, **_kwargs):
+    '''Fourier tempogram coordinates'''
+
+    n_fft = 2 * (n - 1)
+    # The following code centers the FFT bins at their frequencies
+    # and clips to the non-negative frequency range [0, nyquist]
+    basis = core.fourier_tempo_frequencies(sr=sr,
+                                           hop_length=hop_length,
+                                           win_length=n_fft)
+    fmax = basis[-1]
+    basis -= 0.5 * (basis[1] - basis[0])
+    basis = np.append(np.maximum(0, basis), [fmax])
+    return basis
 
 
 def __coord_n(n, **_kwargs):

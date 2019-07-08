@@ -283,7 +283,6 @@ def test_hz_to_note():
 
 
 def test_fft_frequencies():
-
     def __test(sr, n_fft):
         freqs = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
 
@@ -351,6 +350,26 @@ def test_tempo_frequencies():
         for hop_length in [256, 512, 1024]:
             for sr in [11025, 22050, 44100]:
                 yield __test, n_bins, hop_length, sr
+
+
+@pytest.mark.parametrize('sr', [8000, 22050])
+@pytest.mark.parametrize('hop_length', [256, 512])
+@pytest.mark.parametrize('win_length', [192, 384])
+def test_fourier_tempo_frequencies(sr, hop_length, win_length):
+    freqs = librosa.fourier_tempo_frequencies(sr=sr,
+                                              hop_length=hop_length,
+                                              win_length=win_length)
+
+    # DC
+    assert freqs[0] == 0
+
+    # Nyquist, positive here for more convenient display purposes
+    assert freqs[-1] == sr * 60 / 2.0 / hop_length
+
+    # Ensure that the frequencies increase linearly
+    dels = np.diff(freqs)
+    assert np.allclose(dels, dels[0])
+
 
 
 def test_A_weighting():
@@ -430,3 +449,57 @@ def test_times_like_scalar():
 
     assert np.allclose(times, expected_times)
 
+
+@pytest.mark.parametrize('blocks', [0, 1, [10, 20]])
+@pytest.mark.parametrize('block_length', [1, 4, 8])
+def test_blocks_to_frames(blocks, block_length):
+    frames = librosa.blocks_to_frames(blocks, block_length)
+
+    # Check shape
+    assert frames.ndim == np.asarray(blocks).ndim
+    assert frames.size == np.asarray(blocks).size
+
+    # Check values
+    assert np.allclose(frames, block_length * np.asanyarray(blocks))
+
+    # Check dtype
+    assert np.issubdtype(frames.dtype, np.int)
+
+
+@pytest.mark.parametrize('blocks', [0, 1, [10, 20]])
+@pytest.mark.parametrize('block_length', [1, 4, 8])
+@pytest.mark.parametrize('hop_length', [1, 512])
+def test_blocks_to_samples(blocks, block_length, hop_length):
+    samples = librosa.blocks_to_samples(blocks, block_length,
+                                        hop_length)
+
+    # Check shape
+    assert samples.ndim == np.asarray(blocks).ndim
+    assert samples.size == np.asarray(blocks).size
+
+    # Check values
+    assert np.allclose(samples,
+                       np.asanyarray(blocks) * hop_length * block_length)
+
+    # Check dtype
+    assert np.issubdtype(samples.dtype, np.int)
+
+
+@pytest.mark.parametrize('blocks', [0, 1, [10, 20]])
+@pytest.mark.parametrize('block_length', [1, 4, 8])
+@pytest.mark.parametrize('hop_length', [1, 512])
+@pytest.mark.parametrize('sr', [22050, 44100])
+def test_blocks_to_time(blocks, block_length, hop_length, sr):
+    times = librosa.blocks_to_time(blocks, block_length,
+                                   hop_length, sr)
+
+    # Check shape
+    assert times.ndim == np.asarray(blocks).ndim
+    assert times.size == np.asarray(blocks).size
+
+    # Check values
+    assert np.allclose(times,
+                       np.asanyarray(blocks) * hop_length * block_length / float(sr))
+
+    # Check dtype
+    assert np.issubdtype(times.dtype, np.float)

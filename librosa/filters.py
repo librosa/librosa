@@ -23,7 +23,6 @@ Window functions
     window_bandwidth
     get_window
 
-
 Miscellaneous
 -------------
 .. autosummary::
@@ -33,33 +32,26 @@ Miscellaneous
     cq_to_chroma
     mr_frequencies
     window_sumsquare
-
-Deprecated
-----------
-.. autosummary::
-    :toctree: generated/
-
-    dct
+    diagonal_filter
 """
 import warnings
 
 import numpy as np
 import scipy
 import scipy.signal
+import scipy.ndimage
 import six
 
 from numba import jit
 
-from . import cache
+from ._cache import cache
 from . import util
 from .util.exceptions import ParameterError
-from .util.decorators import deprecated
 
 from .core.time_frequency import note_to_hz, hz_to_midi, midi_to_hz, hz_to_octs
 from .core.time_frequency import fft_frequencies, mel_frequencies
 
-__all__ = ['dct',
-           'mel',
+__all__ = ['mel',
            'chroma',
            'constant_q',
            'constant_q_lengths',
@@ -68,7 +60,8 @@ __all__ = ['dct',
            'get_window',
            'mr_frequencies',
            'semitone_filterbank',
-           'window_sumsquare']
+           'window_sumsquare',
+           'diagonal_filter']
 
 
 # Dictionary of window function bandwidths
@@ -115,70 +108,9 @@ WINDOW_BANDWIDTHS = {'bart': 1.3334961334912805,
                      'triangle': 1.3331706523555851}
 
 
-@deprecated('0.6.1', '0.7.0')
-def dct(n_filters, n_input):
-    """Discrete cosine transform (DCT type-II, normalized) basis.
-
-    .. [1] http://en.wikipedia.org/wiki/Discrete_cosine_transform
-
-    .. warning:: This function is deprecated in librosa 0.6.1. It will
-        be removed in 0.7.0.
-
-    Parameters
-    ----------
-    n_filters : int > 0 [scalar]
-        number of output components (DCT filters)
-
-    n_input : int > 0 [scalar]
-        number of input components (frequency bins)
-
-    Returns
-    -------
-    dct_basis: np.ndarray [shape=(n_filters, n_input)]
-        DCT (type-II) basis vectors [1]_
-
-    Notes
-    -----
-    This function caches at level 10.
-
-    See Also
-    --------
-    scipy.fftpack.dct
-
-    Examples
-    --------
-    >>> n_fft = 2048
-    >>> dct_filters = librosa.filters.dct(13, 1 + n_fft // 2)
-    >>> dct_filters
-    array([[ 0.031,  0.031, ...,  0.031,  0.031],
-           [ 0.044,  0.044, ..., -0.044, -0.044],
-           ...,
-           [ 0.044,  0.044, ..., -0.044, -0.044],
-           [ 0.044,  0.044, ...,  0.044,  0.044]])
-
-    >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> librosa.display.specshow(dct_filters, x_axis='linear')
-    >>> plt.ylabel('DCT function')
-    >>> plt.title('DCT filter bank')
-    >>> plt.colorbar()
-    >>> plt.tight_layout()
-    """
-
-    basis = np.empty((n_filters, n_input))
-    basis[0, :] = 1.0 / np.sqrt(n_input)
-
-    samples = np.arange(1, 2*n_input, 2) * np.pi / (2.0 * n_input)
-
-    for i in range(1, n_filters):
-        basis[i, :] = np.cos(i*samples) * np.sqrt(2.0/n_input)
-
-    return basis
-
-
 @cache(level=10)
 def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
-        norm=1):
+        norm=1, dtype=np.float32):
     """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins
 
     Parameters
@@ -206,6 +138,10 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
         if 1, divide the triangular mel weights by the width of the mel band
         (area normalization).  Otherwise, leave all the triangles aiming for
         a peak value of 1.0
+
+    dtype : np.dtype
+        The data type of the output basis.
+        By default, uses 32-bit (single-precision) floating point.
 
     Returns
     -------
@@ -244,6 +180,7 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
     >>> plt.title('Mel filter bank')
     >>> plt.colorbar()
     >>> plt.tight_layout()
+    >>> plt.show()
     """
 
     if fmax is None:
@@ -254,7 +191,7 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
 
     # Initialize the weights
     n_mels = int(n_mels)
-    weights = np.zeros((n_mels, int(1 + n_fft // 2)))
+    weights = np.zeros((n_mels, int(1 + n_fft // 2)), dtype=dtype)
 
     # Center freqs of each FFT bin
     fftfreqs = fft_frequencies(sr=sr, n_fft=n_fft)
@@ -291,7 +228,7 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
 
 @cache(level=10)
 def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0,
-           octwidth=2, norm=2, base_c=True):
+           octwidth=2, norm=2, base_c=True, dtype=np.float32):
     """Create a Filterbank matrix to convert STFT to chroma
 
 
@@ -323,6 +260,10 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0,
     base_c : bool
         If True, the filter bank will start at 'C'.
         If False, the filter bank will start at 'A'.
+
+    dtype : np.dtype
+        The data type of the output basis.
+        By default, uses 32-bit (single-precision) floating point.
 
     Returns
     -------
@@ -375,6 +316,7 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0,
     >>> plt.title('Chroma filter bank')
     >>> plt.colorbar()
     >>> plt.tight_layout()
+    >>> plt.show()
     """
 
     wts = np.zeros((n_chroma, n_fft))
@@ -416,7 +358,7 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0,
         wts = np.roll(wts, -3, axis=0)
 
     # remove aliasing columns, copy to ensure row-contiguity
-    return np.ascontiguousarray(wts[:, :int(1 + n_fft/2)])
+    return np.ascontiguousarray(wts[:, :int(1 + n_fft/2)], dtype=dtype)
 
 
 def __float_window(window_spec):
@@ -450,7 +392,7 @@ def __float_window(window_spec):
 @cache(level=10)
 def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
                window='hann', filter_scale=1, pad_fft=True, norm=1,
-               **kwargs):
+               dtype=np.complex64, **kwargs):
     r'''Construct a constant-Q basis.
 
     This uses the filter bank described by [1]_.
@@ -493,6 +435,10 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     norm : {inf, -inf, 0, float > 0}
         Type of norm to use for basis function normalization.
         See librosa.util.normalize
+
+    dtype : np.dtype
+        The data type of the output basis.
+        By default, uses 64-bit (single precision) complex floating point.
 
     kwargs : additional keyword arguments
         Arguments to `np.pad()` when `pad==True`.
@@ -548,6 +494,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     >>> plt.ylabel('CQ filters')
     >>> plt.title('CQ filter magnitudes (frequency domain)')
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
 
     if fmin is None:
@@ -594,7 +541,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
         max_len = int(np.ceil(max_len))
 
     filters = np.asarray([util.pad_center(filt, max_len, **kwargs)
-                          for filt in filters])
+                          for filt in filters], dtype=dtype)
 
     return filters, np.asarray(lengths)
 
@@ -676,7 +623,7 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
 
 @cache(level=10)
 def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
-                 fmin=None, window=None, base_c=True):
+                 fmin=None, window=None, base_c=True, dtype=np.float32):
     '''Convert a Constant-Q basis to Chroma.
 
 
@@ -702,6 +649,11 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
     base_c : bool
         If True, the first chroma bin will start at 'C'
         If False, the first chroma bin will start at 'A'
+
+    dtype : np.dtype
+        The data type of the output basis.
+        By default, uses 32-bit (single-precision) floating point.
+
 
     Returns
     -------
@@ -745,6 +697,7 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
     >>> plt.title('librosa.feature.chroma_stft')
     >>> plt.colorbar()
     >>> plt.tight_layout()
+    >>> plt.show()
 
     '''
 
@@ -787,7 +740,7 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
     roll = int(np.round(roll * (n_chroma / 12.)))
 
     # Apply the roll
-    cq_to_ch = np.roll(cq_to_ch, roll, axis=0).astype(float)
+    cq_to_ch = np.roll(cq_to_ch, roll, axis=0).astype(dtype)
 
     if window is not None:
         cq_to_ch = scipy.signal.convolve(cq_to_ch,
@@ -909,7 +862,7 @@ def get_window(window, Nx, fftbins=True):
 
 @cache(level=10)
 def _multirate_fb(center_freqs=None, sample_rates=None, Q=25.0,
-                  passband_ripple=1, stopband_attenuation=50, ftype='ellip', flayout='ba'):
+                  passband_ripple=1, stopband_attenuation=50, ftype='ellip', flayout='sos'):
     r'''Helper function to construct a multirate filterbank.
 
      A filter bank consists of multiple band-pass filters which divide the input signal
@@ -946,13 +899,17 @@ def _multirate_fb(center_freqs=None, sample_rates=None, Q=25.0,
 
     flayout : string
         Valid `output` argument for `scipy.signal.iirdesign`.
+
         - If `ba`, returns numerators/denominators of the transfer functions,
           used for filtering with `scipy.signal.filtfilt`.
           Can be unstable for high-order filters.
+
         - If `sos`, returns a series of second-order filters,
           used for filtering with `scipy.signal.sosfiltfilt`.
           Minimizes numerical precision errors for high-order filters, but is slower.
+
         - If `zpk`, returns zeros, poles, and system gains of the transfer functions.
+
 
     Returns
     -------
@@ -1130,6 +1087,7 @@ def semitone_filterbank(center_freqs=None, tuning=0.0, sample_rates=None, flayou
     >>> plt.xlabel('Log-Frequency (Hz)')
     >>> plt.ylabel('Magnitude (dB)')
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
 
     if (center_freqs is None) and (sample_rates is None):
@@ -1141,7 +1099,7 @@ def semitone_filterbank(center_freqs=None, tuning=0.0, sample_rates=None, flayou
     return filterbank, fb_sample_rates
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True)
 def __window_ss_fill(x, win_sq, n_frames, hop_length):  # pragma: no cover
     '''Helper function for window sum-square calculation.'''
 
@@ -1207,6 +1165,7 @@ def window_sumsquare(window, n_frames, hop_length=512, win_length=None, n_fft=20
     >>> plt.plot(wss_1024)
     >>> plt.title('hop_length=1024')
     >>> plt.tight_layout()
+    >>> plt.show()
 
     '''
     if win_length is None:
@@ -1224,3 +1183,66 @@ def window_sumsquare(window, n_frames, hop_length=512, win_length=None, n_fft=20
     __window_ss_fill(x, win_sq, n_frames, hop_length)
 
     return x
+
+
+@cache(level=10)
+def diagonal_filter(window, n, slope=1.0, angle=None, zero_mean=False):
+    '''Build a two-dimensional diagonal filter.
+
+    This is primarily used for smoothing recurrence or self-similarity matrices.
+
+    Parameters
+    ----------
+    window : string, tuple, number, callable, or list-like
+        The window function to use for the filter.
+
+        See `get_window` for details.
+
+        Note that the window used here should be non-negative.
+
+    n : int > 0
+        the length of the filter
+
+    slope : float
+        The slope of the diagonal filter to produce
+
+    angle : float or None
+        If given, the slope parameter is ignored,
+        and angle directly sets the orientation of the filter (in radians).
+        Otherwise, angle is inferred as `arctan(slope)`.
+
+    zero_mean : bool
+        If True, a zero-mean filter is used.
+        Otherwise, a non-negative averaging filter is used.
+
+        This should be enabled if you want to enhance paths and suppress
+        blocks.
+
+
+    Returns
+    -------
+    kernel : np.ndarray, shape=[(m, m)]
+        The 2-dimensional filter kernel
+
+
+    Notes
+    -----
+    This function caches at level 10.
+    '''
+
+    if angle is None:
+        angle = np.arctan(slope)
+
+    win = np.diag(get_window(window, n, fftbins=False))
+
+    if not np.isclose(angle, np.pi/4):
+        win = scipy.ndimage.rotate(win, 45 - angle * 180 / np.pi,
+                                   order=5, prefilter=False)
+
+    np.clip(win, 0, None, out=win)
+    win /= win.sum()
+
+    if zero_mean:
+        win -= win.mean()
+
+    return win
