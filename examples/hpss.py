@@ -8,6 +8,7 @@ from __future__ import print_function
 import argparse
 import sys
 import librosa
+import soundfile as sf
 
 
 def hpss_demo(input_file, output_harmonic, output_percussive):
@@ -33,10 +34,10 @@ def hpss_demo(input_file, output_harmonic, output_percussive):
 
     # 5. Save the results
     print('Saving harmonic audio to: ', output_harmonic)
-    librosa.output.write_wav(output_harmonic, y_harmonic, sr)
+    sf.write(output_harmonic, y_harmonic, sr)
 
     print('Saving percussive audio to: ', output_percussive)
-    librosa.output.write_wav(output_percussive, y_percussive, sr)
+    sf.write(output_percussive, y_percussive, sr)
 
 
 def process_arguments(args):
@@ -50,11 +51,11 @@ def process_arguments(args):
 
     parser.add_argument('output_harmonic',
                         action='store',
-                        help='path to the harmonic output (wav)')
+                        help='path to save the harmonic output')
 
     parser.add_argument('output_percussive',
                         action='store',
-                        help='path to the percussive output (wav)')
+                        help='path to save the percussive output')
 
     return vars(parser.parse_args(args))
 
