@@ -50,7 +50,7 @@ The *librosa* package is structured as collection of submodules:
         Onset detection and onset strength computation.
 
     - :ref:`librosa.output <output>`
-        Text- and wav-file output.
+        Text- and wav-file output. *(Deprecated)*
 
     - :ref:`librosa.segment <segment>`
         Functions useful for structural segmentation, such as recurrence matrix
@@ -93,9 +93,6 @@ Before diving into the details, we'll walk through a brief example program
     # 4. Convert the frame indices of beat events into timestamps
     beat_times = librosa.frames_to_time(beat_frames, sr=sr)
 
-    print('Saving output to beat_times.csv')
-    librosa.output.times_csv('beat_times.csv', beat_times)
-
 
 The first step of the program::
 
@@ -134,22 +131,13 @@ The next operation converts the frame numbers ``beat_frames`` into timings::
 Now, ``beat_times`` will be an array of timestamps (in seconds) corresponding to
 detected beat events.
 
-Finally, we can store the detected beat timestamps as a comma-separated values (CSV)
-file::
-
-    librosa.output.times_csv('beat_times.csv', beat_times)
-
-The contents of ``beat_times.csv`` should look something like this::
+The contents of ``beat_times`` should look something like this::
 
     7.43
     8.29
     9.218
     10.124
     ...
-
-This is primarily useful for visualization purposes (e.g., using 
-`Sonic Visualiser <http://www.sonicvisualiser.org>`_) or evaluation (e.g., using
-`mir_eval <https://github.com/craffel/mir_eval>`_).
 
 
 Advanced usage

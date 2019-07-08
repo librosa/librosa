@@ -6,7 +6,7 @@ import sys
 import importlib
 
 short_version = '0.7'
-version = '0.7.0rc1'
+version = '0.7.0'
 
 
 def __get_mod_version(modname):
@@ -47,7 +47,8 @@ def show_versions():
                   'pytest',
                   'pytest-mpl',
                   'pytest-cov',
-                  'matplotlib']
+                  'matplotlib',
+                  'presets']
 
     print('INSTALLED VERSIONS')
     print('------------------')

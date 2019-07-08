@@ -3,6 +3,9 @@
 """
 Output
 ======
+Note: the `librosa.output` module is deprecated as of version 0.7.0, and
+it will be removed entirely in version 0.8.
+
 
 Text output
 -----------
@@ -28,11 +31,12 @@ import scipy.io.wavfile
 
 from . import util
 from .util.exceptions import ParameterError
-
+from .util.decorators import deprecated
 
 __all__ = ['annotation', 'times_csv', 'write_wav']
 
 
+@deprecated('0.7.0', '0.8')
 def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
     r'''Save annotations in a 3-column format::
 
@@ -42,6 +46,9 @@ def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
         ...
 
     This can be used for segment or chord annotations.
+
+    .. warning:: This function is deprecated in librosa 0.7.0.
+        It will be removed in 0.8.
 
     Parameters
     ----------
@@ -117,6 +124,7 @@ def annotation(path, intervals, annotations=None, delimiter=',', fmt='%0.3f'):
                 writer.writerow([fmt % t_int[0], fmt % t_int[1], lab])
 
 
+@deprecated('0.7.0', '0.8')
 def times_csv(path, times, annotations=None, delimiter=',', fmt='%0.3f'):
     r"""Save time steps as in CSV format.  This can be used to store the output
     of a beat-tracker or segmentation algorithm.
@@ -137,6 +145,8 @@ def times_csv(path, times, annotations=None, delimiter=',', fmt='%0.3f'):
         times[2],annotations[2]\n
         ...
 
+    .. warning:: This function is deprecated in librosa 0.7.0.
+        It will be removed in 0.8.
 
     Parameters
     ----------
@@ -184,12 +194,16 @@ def times_csv(path, times, annotations=None, delimiter=',', fmt='%0.3f'):
                 writer.writerow([(fmt % t), lab])
 
 
+@deprecated('0.7.0', '0.8')
 def write_wav(path, y, sr, norm=False):
     """Output a time series as a .wav file
 
     Note: only mono or stereo, floating-point data is supported.
-        For more advanced and flexible output options, refer to
-        `soundfile`.
+
+    .. warning:: This function is deprecated in librosa 0.7.0.
+        It will be removed in 0.8.  Usage of `write_wav` should
+        be replaced by `soundfile.write`.
+
 
     Parameters
     ----------

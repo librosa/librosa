@@ -187,6 +187,7 @@ def match_intervals(intervals_from, intervals_to, strict=True):
     The reverse matching of the above is not possible in `strict` mode
     because `[6, 7]` is disjoint from all intervals in `ints_from`.
     With `strict=False`, we get the following:
+
     >>> librosa.util.match_intervals(ints_to, ints_from, strict=False)
     array([1, 1, 2, 2], dtype=uint32)
     >>> # [0, 2] => [1, 4]  (ints_from[1])

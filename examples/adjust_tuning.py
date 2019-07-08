@@ -10,6 +10,7 @@ from __future__ import print_function
 import argparse
 import sys
 import librosa
+import soundfile as sf
 
 
 def adjust_tuning(input_file, output_file):
@@ -29,7 +30,7 @@ def adjust_tuning(input_file, output_file):
     y_tuned = librosa.effects.pitch_shift(y, sr, -tuning)
 
     print('Saving tuned audio to: ', output_file)
-    librosa.output.write_wav(output_file, y_tuned, sr)
+    sf.write(output_file, y_tuned, sr)
 
 
 def process_arguments(args):
@@ -43,7 +44,7 @@ def process_arguments(args):
 
     parser.add_argument('output_file',
                         action='store',
-                        help='path to store the output wav')
+                        help='path to store the output signal')
 
     return vars(parser.parse_args(args))
 
