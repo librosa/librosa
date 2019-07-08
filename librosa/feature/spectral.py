@@ -16,6 +16,7 @@ from ..core.audio import zero_crossings, to_mono
 from ..core.spectrum import power_to_db, _spectrogram
 from ..core.constantq import cqt, hybrid_cqt
 from ..core.pitch import estimate_tuning
+from ..core import midi_to_hz, hz_to_midi
 
 
 __all__ = ['spectral_centroid',
@@ -23,6 +24,8 @@ __all__ = ['spectral_centroid',
            'spectral_contrast',
            'spectral_rolloff',
            'spectral_flatness',
+           'spectral_contraction',
+           'bandwise_contraction',
            'poly_features',
            'rms',
            'zero_crossing_rate',
@@ -764,6 +767,92 @@ def spectral_flatness(y=None, S=None, n_fft=2048, hop_length=512,
     amean = np.mean(S_thresh, axis=0, keepdims=True)
     return gmean / amean
 
+def spectral_contraction(y=None, S=None, n_fft=2048, hop_length=512,
+                      amin=1e-10, power=2.0):
+    '''Compute spectral contraction
+
+        Parameters
+    ----------
+    y : np.ndarray [shape=(n,)] or None
+        audio time series
+
+    S : np.ndarray [shape=(d, t)] or None
+        (optional) pre-computed spectrogram magnitude
+
+    n_fft : int > 0 [scalar]
+        FFT window size
+
+    hop_length : int > 0 [scalar]
+        hop length for STFT. See `librosa.core.stft` for details.
+
+    amin : float > 0 [scalar]
+        minimum threshold for `S` (=added noise floor for numerical stability)
+
+    power : float > 0 [scalar]
+        Exponent for the magnitude spectrogram.
+        e.g., 1 for energy, 2 for power, etc.
+        Power spectrogram is usually used for computing spectral flatness.
+
+    Returns
+    -------
+    contraction : np.ndarray [shape=(1, t)]
+        spectral contraction for each frame.
+        The returned value is in [0, 1] and often converted to dB scale.
+
+    '''
+
+    if amin <= 0:
+        raise ParameterError('amin must be strictly positive')
+
+    S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length,
+                            power=1.)
+
+    if not np.isrealobj(S):
+        raise ParameterError('Spectral contraction is only defined '
+                             'with real-valued input')
+    elif np.any(S < 0):
+        raise ParameterError('Spectral contraction is only defined '
+                             'with non-negative energies')
+
+    # Sidelobe attenuation of 200 dB
+    window = scipy.signal.chebwin(S.shape[0], at=200)
+    if S.ndim > 1:
+        window = np.tile(window, (S.shape[1],1)).T
+
+    S_thresh = np.maximum(amin, S ** power)
+    weight_spec = np.sum(S_thresh * window, axis=0)
+    amean = np.mean(S_thresh, axis=0, keepdims=True)
+
+    return np.divide(weight_spec, amean)
+
+def bandwise_contraction(X_log, sr, f_start=233, f_end=5274, n_bands=11, bandwith=240, bands_offset=30):
+        # Stefan Balke reference  <<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        # get indices for frequency range A#3 (233 Hz) to E8 (5274 Hz)
+
+        freq_ax_log = midi_to_hz(np.arange(hz_to_midi(1), hz_to_midi(sr/2)))
+        print(hz_to_midi(1), hz_to_midi(sr/2))
+        print(np.arange(hz_to_midi(1), hz_to_midi(sr/2)))
+        print(freq_ax_log)
+
+        f_start_idx = np.argmin(np.abs(freq_ax_log - f_start))
+        f_end_idx = np.argmin(np.abs(freq_ax_log - f_end))
+        X_log = X_log[f_start_idx:f_end_idx+1, :]
+
+        bw_contraction = np.zeros((n_bands, X_log.shape[1]))
+
+        # extract the subbands
+        for cur_band_idx in np.arange(n_bands):
+            cur_band_start = cur_band_idx * bands_offset
+            cur_band_end = cur_band_start + bandwith
+
+            # assign the subbands
+            cur_band = X_log[cur_band_start:cur_band_end, :].copy()
+
+            # Call standard spectral contraction for each band
+            print(cur_band.shape)
+            bw_contraction[cur_band_idx, :] = spectral_contraction(S=cur_band)
+
+        return bw_contraction
 
 def rms(y=None, S=None, frame_length=2048, hop_length=512,
         center=True, pad_mode='reflect'):
