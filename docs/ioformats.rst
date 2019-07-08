@@ -117,24 +117,7 @@ Download and read from URL:
 
 Write out audio files
 ---------------------
-
-*librosa* provides a thin wrapper around `scipy.io.wavfile <https://docs.scipy.org/doc/scipy/reference/generated/scipy.io.wavfile.write.html>`_ to write out WAV files. 
-
-.. code-block:: python
-    :linenos:
-
-    import numpy as np
-
-    rate = 44100
-    data = np.random.randn(2 * rate)
-
-    librosa.output.write_wav('file.wav', data, rate)
-
-
-
-Please be aware that this function only supports floating-point inputs. For example if your processed audio array is of dtype ``np.float64`` (which is the default on most machines), your resulting WAV file would be of type 64-bit float as well. This is not considered to be a `standard PCM wavfile <https://msdn.microsoft.com/en-us/library/windows/hardware/dn653308%28v=vs.85%29.aspx>`_, but most WAV readers should be able to load it without problems.
-
-Writing audio files using `PySoundFile <https://pysoundfile.readthedocs.io/en/latest/>`_ is similar to the method in librosa. However, PySoundFile can automatically convert to a given PCM subtype and additionally support several compressed formats like FLAC or OGG vorbis.
+`PySoundFile <https://pysoundfile.readthedocs.io/en/latest/>`_ provides output functionality that can be used directly with numpy array audio buffers:
 
 .. code-block:: python
     :linenos:
@@ -154,5 +137,3 @@ Writing audio files using `PySoundFile <https://pysoundfile.readthedocs.io/en/la
     # Write out audio as 16bit OGG
     sf.write('stereo_file.ogg', data, samplerate, format='ogg', subtype='vorbis')
 
-
-In general, we recommend using `PySoundFile` for output rather than ``librosa.output.write_wav``.
