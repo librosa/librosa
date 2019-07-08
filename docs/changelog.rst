@@ -9,34 +9,35 @@ Note: the 0.7 series will be the last to officially support Python 2.7.
 
 
 New features
-   - `#772`_ Stream generator to process long audio files into smaller pieces. *Brian McFee*
-   - `#845`_ Replaced the default audio decoder with `pysoundfile`, and only use `audioread` as backup. *Brian McFee*
-   - `#907`_ Recurrence Quantification Analysis (RQA) for sequence alignment. *Brian McFee*
-   - `#739`_ Predominant local pulse (PLP) `beat.plp` for variable-tempo beat tracking. *Brian McFee*
-   - `#894`_ Fourier Tempogram `feature.fourier_tempogram` for representing rhythm in the frequency domain. *Brian McFee*
-   - `#891`_ Per-channel energy normalization (PCEN) now allows logarithmic range compression at the limit power->0. *Vincent Lostanlen*
-   - `#863`_ `effects.pitch_shift` supports custom resampling modes. *Taewoon Kim*
-   - `#857`_ Forward and inverse constant-Q transform now support custom resampling modes. *Brian McFee*
-   - `#843`_ Addition of a new module for feature inversion, based on the Griffin-Lim phase retrieval algorithm. Includes `mel_to_audio` and `mfcc_to_audio`. *Brian McFee*
-   - `#842`_ Path enhancement `segment.path_enhance` for recurrence, self- or cross-similarity matrices. *Brian McFee*
-   - `#840`_ `recurrence_matrix` now supports a keyword argument, `self=False`. If set to `True`, the recurrence matrix includes self-loops. *Brian McFee*
-   - `#776`_ The `piptrack` now supports a keyword argument, `ref=None`, allowing users to override the reference thresholding behavior for determining which bins correspond to pitches. *Brian McFee*
-   - `#770`_ Cross-similarity function for comparing two feature sequences. *Rachel Bittner, Brian McFee*
-   - `#725`_ Linear prediction coefficients (LPC). *Adam Weiss*
-   - `#709`_ `onset_strength_multi` now supports a user-specified reference spectrum via the `ref` keyword argument. *Brian McFee*
-   - `#576`_ `resample` now supports `mode='polyphase'`. *Brian McFee*
-   - `#519`_ Setting `aggregate=False` in `onset_strength_multi` disables the aggregation of onset strengths across frequency bins. *Brian McFee*
+   - `#772`_ `librosa.core.stream`: Stream generator to process long audio files into smaller pieces. *Brian McFee*
+   - `#845`_ `librosa.core.load`: Replaced the default audio decoder with `pysoundfile`, and only use `audioread` as backup. *Brian McFee*
+   - `#843`_ `librosa.core.griffinlim`: Phase retrieval from magnitude spectrograms using the (accelerated) Griffin-Lim method. *Brian McFee*
+   - `#843`_ `librosa.feature.inverse`: New module for feature inversion, based on the Griffin-Lim phase retrieval algorithm. Includes `mel_to_audio` and `mfcc_to_audio`. *Brian McFee*
+   - `#725`_ `librosa.core.lpc`: Linear prediction coefficients (LPC). *Adam Weiss*
+   - `#907`_ `librosa.sequence.rqa`: Recurrence Quantification Analysis (RQA) for sequence alignment. *Brian McFee*
+   - `#739`_ `librosa.beat.plp`: Predominant local pulse (PLP) for variable-tempo beat tracking. *Brian McFee*
+   - `#894`_ `librosa.feature.fourier_tempogram`: Fourier Tempogram for representing rhythm in the frequency domain. *Brian McFee*
+   - `#891`_ `librosa.core.pcen` Per-channel energy normalization (PCEN) now allows logarithmic range compression at the limit power->0. *Vincent Lostanlen*
+   - `#863`_ `librosa.effects.pitch_shift` supports custom resampling modes. *Taewoon Kim*
+   - `#857`_ `librosa.core.cqt` and `librosa.core.icqt` Forward and inverse constant-Q transform now support custom resampling modes. *Brian McFee*
+   - `#842`_ `librosa.segment.path_enhance`: Near-diagonal path enhancement for recurrence, self- or cross-similarity matrices. *Brian McFee*
+   - `#840`_ `librosa.segment.recurrence_matrix` now supports a keyword argument, `self=False`. If set to `True`, the recurrence matrix includes self-loops. *Brian McFee*
+   - `#776`_ `librosa.core.piptrack` now supports a keyword argument, `ref=None`, allowing users to override the reference thresholding behavior for determining which bins correspond to pitches. *Brian McFee*
+   - `#770`_ `librosa.segment.cross_similarity`: Cross-similarity function for comparing two feature sequences. *Rachel Bittner, Brian McFee*
+   - `#709`_ `librosa.onset.onset_strength_multi` now supports a user-specified reference spectrum via the `ref` keyword argument. *Brian McFee*
+   - `#576`_ `librosa.core.resample` now supports `mode='polyphase'`. *Brian McFee*
+   - `#519`_ `librosa.onset.onset_strength_multi`: Setting `aggregate=False` disables the aggregation of onset strengths across frequency bins. *Brian McFee*
 
 
 Bug fixes
-   - `#900`_ `effects.pitch_shift` preserves length. *Vincent Lostanlen*
-   - `#891`_ Dynamic range compression in PCEN is more numerically stable for small values of the exponent. *Vincent Lostanlen*
-   - `#888`_ Fixed a bug in instantaneous frequency spectrogram (ifgram) for choices of window other than `hann`. *Brian McFee*
-   - `#869`_ Fixed a bug in dynamic time warping when `subseq=True`. *Viktor Andreevitch Morozov*
-   - `#851`_ PCEN now initializes its autoregressive filtering in the steady state, not with silence. *Jan Schlüter, Brian McFee*
-   - `#833`_ `width` parameter of `recurrence_matrix` cannot exceed data length. *Brian McFee*
+   - `#900`_ `librosa.effects.pitch_shift` now preserves length. *Vincent Lostanlen*
+   - `#891`_ `librosa.core.pcen` Dynamic range compression in PCEN is more numerically stable for small values of the exponent. *Vincent Lostanlen*
+   - `#888`_ `librosa.core.ifgram` Instantaneous frequency spectrogram now correctly estimates center frequencies when using windows other than `hann`. *Brian McFee*
+   - `#869`_ `librosa.sequence.dtw` Fixed a bug in dynamic time warping when `subseq=True`. *Viktor Andreevitch Morozov*
+   - `#851`_ `librosa.core.pcen` now initializes its autoregressive filtering in the steady state, not with silence. *Jan Schlüter, Brian McFee*
+   - `#833`_ `librosa.segment.recurrence_matrix`: `width` parameter now cannot exceed data length. *Brian McFee*
    - `#825`_ Filter bank constructors `mel`, `chroma`, `constant_q`, and `cq_to_chroma` are now type-stable. *Vincent Lostanlen, Brian McFee*
-   - `#802`_ Inverse constant-Q transform has been completely rewritten and is more numerically stable. *Brian McFee*
+   - `#802`_ `librosa.core.icqt` Inverse constant-Q transform has been completely rewritten and is more numerically stable. *Brian McFee*
 
 
 Removed features (deprecated in v0.6)
@@ -58,11 +59,12 @@ Documentation
 
 
 Other changes
+   - `#917`_ The `output` module is now deprecated, and will be removed in version 0.8.
    - `#878`_ More informative exception handling. *Jack Mason*
-   - `#857`_ `resample()` now supports `mode='fft'`, equivalent to the previous `scipy` mode. *Brian McFee*
+   - `#857`_ `librosa.core.resample()` now supports `mode='fft'`, equivalent to the previous `scipy` mode. *Brian McFee*
    - `#854`_ More efficient length-aware ISTFT and ICQT. *Vincent Lostanlen*
    - `#846`_ Nine librosa functions now store jit-compiled, numba-accelerated caches across sessions. *Brian McFee*
-   - `#841`_ `core.load` no longer relies on `realpath()`. *Brian McFee*
+   - `#841`_ `librosa.core.load` no longer relies on `realpath()`. *Brian McFee*
    - `#834`_ All spectral feature extractors now expose all STFT parameters. *Brian McFee*
    - `#829`_ Refactored `librosa.cache`. *Brian McFee*
    - `#818`_ Thanks to `np.fft.rfft`, functions `stft`, `istft`, `ifgram`, and `fmt` are faster and have a reduced memory footprint. *Brian McFee*
@@ -106,6 +108,7 @@ Other changes
 .. _#834: https://github.com/librosa/librosa/issues/834
 .. _#829: https://github.com/librosa/librosa/issues/829
 .. _#818: https://github.com/librosa/librosa/issues/818
+.. _#917: https://github.com/librosa/librosa/issues/917
 
 v0.6.3
 ------
