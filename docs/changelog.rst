@@ -59,6 +59,7 @@ Documentation
 
 
 Other changes
+   - `#917`_ The `output` module is now deprecated, and will be removed in version 0.8.
    - `#878`_ More informative exception handling. *Jack Mason*
    - `#857`_ `librosa.core.resample()` now supports `mode='fft'`, equivalent to the previous `scipy` mode. *Brian McFee*
    - `#854`_ More efficient length-aware ISTFT and ICQT. *Vincent Lostanlen*
@@ -107,6 +108,7 @@ Other changes
 .. _#834: https://github.com/librosa/librosa/issues/834
 .. _#829: https://github.com/librosa/librosa/issues/829
 .. _#818: https://github.com/librosa/librosa/issues/818
+.. _#917: https://github.com/librosa/librosa/issues/917
 
 v0.6.3
 ------

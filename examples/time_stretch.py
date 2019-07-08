@@ -8,6 +8,7 @@ from __future__ import print_function
 import argparse
 import sys
 import librosa
+import soundfile as sf
 
 
 def stretch_demo(input_file, output_file, speed):
@@ -33,7 +34,7 @@ def stretch_demo(input_file, output_file, speed):
     y_stretch = librosa.effects.time_stretch(y, speed)
 
     print('Saving stretched audio to: ', output_file)
-    librosa.output.write_wav(output_file, y_stretch, sr)
+    sf.write(output_file, y_stretch, sr)
 
 
 def process_arguments(args):
@@ -47,7 +48,7 @@ def process_arguments(args):
 
     parser.add_argument('output_file',
                         action='store',
-                        help='path to the stretched output (wav)')
+                        help='path to save the stretched output')
 
     parser.add_argument('-s', '--speed',
                         action='store',
