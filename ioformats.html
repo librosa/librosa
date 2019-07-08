@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Advanced I/O Use Cases &mdash; librosa 0.7.0rc1 documentation</title>
+  <title>Advanced I/O Use Cases &mdash; librosa 0.7.0 documentation</title>
   
 
   
@@ -23,7 +23,7 @@
       <script type="text/javascript">
           var DOCUMENTATION_OPTIONS = {
               URL_ROOT:'./',
-              VERSION:'0.7.0rc1',
+              VERSION:'0.7.0',
               LANGUAGE:'None',
               COLLAPSE_INDEX:false,
               FILE_SUFFIX:'.html',
@@ -341,22 +341,7 @@ that the underlying codec is supported by <a class="reference external" href="ht
 </div>
 <div class="section" id="write-out-audio-files">
 <h2>Write out audio files<a class="headerlink" href="#write-out-audio-files" title="Permalink to this headline">¶</a></h2>
-<p><em>librosa</em> provides a thin wrapper around <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.io.wavfile.write.html">scipy.io.wavfile</a> to write out WAV files.</p>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
-2
-3
-4
-5
-6</pre></div></td><td class="code"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
-
-<span class="n">rate</span> <span class="o">=</span> <span class="mi">44100</span>
-<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">rate</span><span class="p">)</span>
-
-<span class="n">librosa</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">write_wav</span><span class="p">(</span><span class="s1">&#39;file.wav&#39;</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">rate</span><span class="p">)</span>
-</pre></div>
-</td></tr></table></div>
-<p>Please be aware that this function only supports floating-point inputs. For example if your processed audio array is of dtype <code class="docutils literal notranslate"><span class="pre">np.float64</span></code> (which is the default on most machines), your resulting WAV file would be of type 64-bit float as well. This is not considered to be a <a class="reference external" href="https://msdn.microsoft.com/en-us/library/windows/hardware/dn653308%28v=vs.85%29.aspx">standard PCM wavfile</a>, but most WAV readers should be able to load it without problems.</p>
-<p>Writing audio files using <a class="reference external" href="https://pysoundfile.readthedocs.io/en/latest/">PySoundFile</a> is similar to the method in librosa. However, PySoundFile can automatically convert to a given PCM subtype and additionally support several compressed formats like FLAC or OGG vorbis.</p>
+<p><a class="reference external" href="https://pysoundfile.readthedocs.io/en/latest/">PySoundFile</a> provides output functionality that can be used directly with numpy array audio buffers:</p>
 <div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
  3
@@ -386,7 +371,6 @@ that the underlying codec is supported by <a class="reference external" href="ht
 <span class="n">sf</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;stereo_file.ogg&#39;</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">samplerate</span><span class="p">,</span> <span class="n">format</span><span class="o">=</span><span class="s1">&#39;ogg&#39;</span><span class="p">,</span> <span class="n">subtype</span><span class="o">=</span><span class="s1">&#39;vorbis&#39;</span><span class="p">)</span>
 </pre></div>
 </td></tr></table></div>
-<p>In general, we recommend using <em class="xref py py-obj">PySoundFile</em> for output rather than <code class="docutils literal notranslate"><span class="pre">librosa.output.write_wav</span></code>.</p>
 </div>
 </div>
 
@@ -410,7 +394,7 @@ that the underlying codec is supported by <a class="reference external" href="ht
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2013--2018, librosa development team
+        &copy; Copyright 2013--2019, librosa development team
 
     </p>
   </div>
@@ -428,7 +412,7 @@ that the underlying codec is supported by <a class="reference external" href="ht
 <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
     <span class="rst-current-version" data-toggle="rst-current-version">
         <span class="fa fa-book"> Other Versions</span>
-        v: 0.7.0rc1
+        v: 0.7.0
         <span class="fa fa-caret-down"></span>
     </span>
     <div class="rst-other-versions">
@@ -443,7 +427,7 @@ that the underlying codec is supported by <a class="reference external" href="ht
             <dd><a href="0.6.1/ioformats.html">0.6.1</a></dd>
             <dd><a href="0.6.2/ioformats.html">0.6.2</a></dd>
             <dd><a href="0.6.3/ioformats.html">0.6.3</a></dd>
-            <dd><a href="0.7.0rc1/ioformats.html">0.7.0rc1</a></dd>
+            <dd><a href="0.7.0/ioformats.html">0.7.0</a></dd>
             <dd><a href="v0.1.0/index.html">v0.1.0</a></dd>
             <dd><a href="v0.4.0/index.html">v0.4.0</a></dd>
         </dl>
