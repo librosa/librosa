@@ -9,8 +9,8 @@ Usage: ./hpss_beats.py [-h] input_audio.mp3 output_beats.csv
 from __future__ import print_function
 
 import argparse
-import numpy as np
 import sys
+import numpy as np
 import librosa
 
 # Some magic number defaults, FFT window and hop length
@@ -59,7 +59,7 @@ def hpss_beats(input_file, output_csv):
 
     # Save the output
     print('Saving beats to ', output_csv)
-    librosa.output.times_csv(output_csv, beat_times)
+    np.savetxt(output_csv, beat_times, delimiter=',')
 
 
 def process_arguments(args):
