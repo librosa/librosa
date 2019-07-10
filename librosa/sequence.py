@@ -224,10 +224,10 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
         if subseq:
             # search for global minimum in last row of D-matrix
             wp_end_idx = np.argmin(D[-1, :]) + 1
-            wp = __dtw_backtracking(D_steps[:, :wp_end_idx], step_sizes_sigma)
+            wp = __dtw_backtracking(D_steps[:, :wp_end_idx], step_sizes_sigma, subseq)
         else:
             # perform warping path backtracking
-            wp = __dtw_backtracking(D_steps, step_sizes_sigma)
+            wp = __dtw_backtracking(D_steps, step_sizes_sigma, subseq)
 
         wp = np.asarray(wp, dtype=int)
 
@@ -312,7 +312,7 @@ def __dtw_calc_accu_cost(C, D, D_steps, step_sizes_sigma,
 
 
 @jit(nopython=True, cache=True)
-def __dtw_backtracking(D_steps, step_sizes_sigma):  # pragma: no cover
+def __dtw_backtracking(D_steps, step_sizes_sigma, subseq):  # pragma: no cover
     '''Backtrack optimal warping path.
 
     Uses the saved step sizes from the cost accumulation
@@ -327,6 +327,9 @@ def __dtw_backtracking(D_steps, step_sizes_sigma):  # pragma: no cover
 
     step_sizes_sigma : np.ndarray [shape=[n, 2]]
         Specifies allowed step sizes as used by the dtw.
+
+    subseq : binary
+        Enable subsequence DTW, e.g., for retrieval tasks.
 
     Returns
     -------
@@ -348,7 +351,7 @@ def __dtw_backtracking(D_steps, step_sizes_sigma):  # pragma: no cover
     # Stop criteria:
     # Setting it to (0, 0) does not work for the subsequence dtw,
     # so we only ask to reach the first row of the matrix.
-    while cur_idx[0] > 0:
+    while (subseq and cur_idx[0] > 0) or (not subseq and cur_idx != (0, 0)):
         cur_step_idx = D_steps[(cur_idx[0], cur_idx[1])]
 
         # save tuple with minimal acc. cost in path
