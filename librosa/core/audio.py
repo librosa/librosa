@@ -1027,7 +1027,7 @@ def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
 
 
 def clicks(times=None, frames=None, sr=22050, hop_length=512,
-           click_freq=1000.0, click_duration=0.1, click=None, length=None):
+           click_freq=1000.0, click_duration=0.1, click=None, length=None, click_samples=[]):
     """Returns a signal with the signal `click` placed at each specified time
 
     Parameters
@@ -1114,6 +1114,10 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
         # Convert times to positions
         positions = time_to_samples(times, sr=sr)
 
+    if click_samples is not []:
+        for sample in click_samples:
+            util.valid_audio(sample, mono=True)
+
     if click is not None:
         # Check that we have a well-formed audio buffer
         util.valid_audio(click, mono=True)
@@ -1148,7 +1152,9 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
     click_signal = np.zeros(length, dtype=np.float32)
 
     # Place clicks
-    for start in positions:
+    for index, start in enumerate(positions):
+        if click_samples is not []:
+            click = click_samples[index]
         # Compute the end-point of this click
         end = start + click.shape[0]
 
