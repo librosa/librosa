@@ -17,6 +17,7 @@ import numpy as np
 import scipy.io
 import six
 import pytest
+import unittest.mock
 
 import warnings
 
@@ -310,6 +311,133 @@ def test_ifgram_if():
                 tf = pytest.mark.xfail(__test, raises=librosa.ParameterError)
 
             yield tf, ref, clip
+
+
+# results for FFT bins containing multiple components will be unstable, as when
+# using higher sampling rates or shorter windows with this test signal
+@pytest.mark.parametrize('sr', [256, 512, 2000, 2048])
+@pytest.mark.parametrize('n_fft', [128, 255, 256, 512, 1280])
+def test_reassign_frequencies(sr, n_fft):
+    x = np.linspace(0, 5, 5 * sr, endpoint=False)
+    y = np.sin(17 * x * 2 * np.pi) + np.sin(103 * x * 2 * np.pi)
+
+    freqs, S = librosa.reassign_frequencies(
+        y=y, sr=sr, n_fft=n_fft, hop_length=n_fft
+    )
+    S_db = librosa.amplitude_to_db(np.abs(S), ref=np.max)
+
+    # frequencies should be reassigned to the closest component within 3 Hz
+    # ignore reassigned estimates with low support
+    lower = freqs[(freqs > 0) & (freqs < 60) & (S_db > -30)]
+    assert np.allclose(lower, 17, atol=3)
+
+    upper = freqs[(freqs >= 60) & (freqs < sr // 2) & (S_db > -30)]
+    assert np.allclose(upper, 103, atol=3)
+
+
+# regression tests originally for `ifgram`
+@pytest.mark.parametrize(
+    'infile', files(os.path.join('tests', 'data', 'core-ifgram-*.mat'))
+)
+def test_reassign_frequencies_regress(infile):
+    DATA = load(infile)
+
+    y, sr = librosa.load(
+        os.path.join('tests', DATA['wavfile'][0]), sr=None, mono=True
+    )
+
+    F, D = librosa.reassign_frequencies(
+        y=y,
+        sr=DATA['sr'][0, 0].astype(int),
+        n_fft=DATA['nfft'][0, 0].astype(int),
+        hop_length=DATA['hop_length'][0, 0].astype(int),
+        win_length=DATA['hann_w'][0, 0].astype(int),
+    )
+
+    # D fails to match here because of fftshift()
+    # assert np.allclose(D, DATA['D'])
+    assert np.allclose(F, DATA['F'], rtol=1e-3, atol=1e-3)
+
+
+# results for longer windows containing multiple impulses will be unstable
+@pytest.mark.parametrize('sr', [1, 512, 2048, 22050])
+@pytest.mark.parametrize('n_fft', [128, 256, 1024, 2099])
+def test_reassign_times(sr, n_fft):
+    y = np.zeros(4096)
+    y[[263, 2633]] = 1
+
+    # frames with no energy will have all NaN time reassignments
+    expected_frames = librosa.util.frame(y, n_fft, hop_length=n_fft)
+    expected = np.full((n_fft // 2 + 1, expected_frames.shape[1]), np.nan)
+
+    # find the impulses again; needed if the signal is truncated by framing
+    impulse_indices = np.nonzero(expected_frames.ravel("F"))[0]
+
+    # find the frames that the impulses should be placed into
+    expected_bins = librosa.samples_to_frames(
+        impulse_indices, hop_length=n_fft
+    )
+
+    # in each frame that contains an impulse, the energy in every frequency bin
+    # should be reassigned to the original sample time
+    expected_times = librosa.samples_to_time(impulse_indices, sr=sr)
+    expected[:, expected_bins] = np.tile(expected_times, (n_fft // 2 + 1, 1))
+
+    # ignore divide-by-zero warnings for frames with no energy
+    with warnings.catch_warnings(record=True):
+        times, S = librosa.reassign_times(
+            y=y, sr=sr, n_fft=n_fft, hop_length=n_fft
+        )
+
+    # times should be reassigned within 5% of the window duration
+    assert np.allclose(times, expected, atol=0.05 * n_fft / sr, equal_nan=True)
+
+
+@pytest.mark.parametrize('ref_power', [0.0, 1e-6, np.max])
+@pytest.mark.parametrize('clip', [False, True])
+@unittest.mock.patch('librosa.core.spectrum.reassign_times')
+@unittest.mock.patch('librosa.core.spectrum.reassign_frequencies')
+def test_reassigned_spectrogram(mock_reassign_frequencies,
+                                mock_reassign_times, ref_power, clip):
+    mock_freqs = np.ones((3, 4))
+    mock_freqs[0, 1] = -1
+    mock_freqs[0, 2] = 513
+
+    mock_times = np.ones((3, 4))
+    mock_times[1, 2] = -1
+    mock_times[2, 2] = 3
+
+    mock_mags = np.ones((3, 4))
+    mock_mags[1, 1] = 0
+
+    mock_reassign_frequencies.return_value = mock_freqs, mock_mags
+    mock_reassign_times.return_value = mock_times, mock_mags
+
+    freqs, times, mags = librosa.reassigned_spectrogram(
+        y=np.zeros(2048), sr=1024, clip=clip, ref_power=ref_power
+        )
+
+    # freqs and times outside the spectrogram bounds
+    if clip:
+        assert np.isnan(freqs[0, 1])
+        assert np.isnan(freqs[0, 2])
+        assert np.isnan(times[1, 2])
+        assert np.isnan(times[2, 2])
+
+    else:
+        assert freqs[0, 1] == -1
+        assert freqs[0, 2] == 513
+        assert times[1, 2] == -1
+        assert times[2, 2] == 3
+
+    # zero magnitude
+    if six.callable(ref_power) or ref_power > 0.0:
+        assert np.isnan(freqs[1, 1])
+        assert np.isnan(times[1, 1])
+
+    else:
+        assert freqs[1, 1] == 1
+        assert times[1, 1] == 1
 
 
 def test_salience_basecase():
