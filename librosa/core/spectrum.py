@@ -21,8 +21,9 @@ from ..util.exceptions import ParameterError
 from ..filters import get_window, semitone_filterbank
 from ..filters import window_sumsquare
 
-__all__ = ['stft', 'istft', 'magphase', 'iirt',
-           'ifgram', 'phase_vocoder',
+__all__ = ['stft', 'istft', 'magphase', 'iirt', 'ifgram',
+           'reassign_frequencies', 'reassign_times', 'reassigned_spectrogram',
+           'phase_vocoder',
            'perceptual_weighting',
            'power_to_db', 'db_to_power',
            'amplitude_to_db', 'db_to_amplitude',
@@ -517,6 +518,450 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     if_gram *= float(sr) * 0.5 / np.pi
 
     return if_gram, stft_matrix
+
+
+def reassign_frequencies(y, sr=22050, n_fft=2048, hop_length=None,
+                         win_length=None, window="hann", dtype=np.complex64):
+    """Instantaneous frequencies based on a spectrogram representation.
+
+    The reassignment vector is calculated using equation 5.20 in Flandrin,
+    Auger, & Chassande-Mottin 2002:
+
+    .. math:: \omega - \Im(\frac{S_{dh}}{S_h})
+
+    where `S_h` is the complex STFT calculated using the original window, and
+    `S_dh` is the complex STFT calculated using the derivative of the original
+    window.
+
+    See `reassigned_spectrogram` for references.
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(n,)], real-valued
+        audio time series
+
+    sr : number > 0 [scalar]
+        sampling rate of `y`
+
+    n_fft : int > 0 [scalar]
+        FFT window size
+
+    hop_length : int > 0 [scalar]
+        hop length, number samples between subsequent frames.
+        If not supplied, defaults to `win_length / 4`.
+
+    win_length : int > 0, <= n_fft
+        Window length. Defaults to `n_fft`.
+        See `stft` for details.
+
+    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        - a window specification (string, tuple, number);
+          see `scipy.signal.get_window`
+        - a window function, such as `scipy.signal.hanning`
+        - a user-specified window vector of length `n_fft`
+
+        See `stft` for details.
+
+        .. see also:: `filters.get_window`
+
+    dtype : numeric type
+        Complex numeric type for `S`. Default is 64-bit complex.
+
+    Returns
+    -------
+    freqs : np.ndarray [shape=(1 + n_fft/2, t), dtype=real]
+        Instantaneous frequencies:
+        `freqs[f, t]` is the frequency for bin `f`, frame `t`
+
+    S : np.ndarray [shape=(1 + n_fft/2, t), dtype=complex]
+        Short-time Fourier transform
+
+    Warns
+    --------
+    RuntimeWarning
+        Frequencies with zero support will produce a divide-by-zero warning and
+        will be returned as `np.nan`.
+
+    See Also
+    --------
+    stft : Short-time Fourier Transform
+    reassign_times : Estimate time reassignments
+    reassigned_spectrogram : Time-frequency reassigned spectrogram
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> frequencies, S = librosa.reassign_frequencies(y, sr=sr)
+    >>> frequencies
+    array([[  0.000e+00, 0.000e+00, ..., 0.000e+00, 0.000e+00],
+           [  9.863e+00, 9.653e+00, ..., 1.046e+01, 8.072e+01],
+           ...,
+           [  1.101e+04, 1.101e+04, ..., 1.102e+04, 1.102e+04],
+           [  1.102e+04, 1.102e+04, ..., 1.102e+04, 1.102e+04]])
+
+    """
+
+    # retrieve window samples if needed so that the window derivative can be
+    # calculated
+    if win_length is None:
+        win_length = n_fft
+
+    window = get_window(window, win_length, fftbins=True)
+    window = util.pad_center(window, n_fft)
+
+    # center is always False for consistency with `reassign_times`
+    S_h = stft(
+        y=y,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        window=window,
+        center=False,
+        dtype=dtype,
+    )
+
+    # cyclic gradient to correctly handle edges of a periodic window
+    window_derivative = util.cyclic_gradient(window)
+
+    S_dh = stft(
+        y=y,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        window=window_derivative,
+        center=False,
+        dtype=dtype,
+    )
+
+    # equation 5.20 of Flandrin, Auger, & Chassande-Mottin 2002
+    # the sign of the correction is reversed in some papers - see Plante,
+    # Meyer, & Ainsworth 1998 pp. 283-284
+    correction = -np.imag(S_dh / S_h)
+
+    freqs = time_frequency.fft_frequencies(sr=sr, n_fft=n_fft).reshape((-1, 1))
+    freqs = freqs + correction * (0.5 * sr / np.pi)
+
+    return freqs, S_h
+
+
+def reassign_times(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
+                   window="hann", dtype=np.complex64):
+    """Time reassignments based on a spectrogram representation.
+
+    The reassignment vector is calculated using equation 5.23 in Flandrin,
+    Auger, & Chassande-Mottin 2002:
+
+    .. math:: t + \Re(\frac{S_{th}}{S_h})
+
+    where `S_h` is the complex STFT calculated using the original window, and
+    `S_th` is the complex STFT calculated using the original window multiplied
+    by the time offset from the window center.
+
+    See `reassigned_spectrogram` for references.
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(n,)], real-valued
+        audio time series
+
+    sr : number > 0 [scalar]
+        sampling rate of `y`
+
+    n_fft : int > 0 [scalar]
+        FFT window size
+
+    hop_length : int > 0 [scalar]
+        hop length, number samples between subsequent frames.
+        If not supplied, defaults to `win_length / 4`.
+
+    win_length : int > 0, <= n_fft
+        Window length. Defaults to `n_fft`.
+        See `stft` for details.
+
+    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        - a window specification (string, tuple, number);
+          see `scipy.signal.get_window`
+        - a window function, such as `scipy.signal.hanning`
+        - a user-specified window vector of length `n_fft`
+
+        See `stft` for details.
+
+        .. see also:: `filters.get_window`
+
+    dtype : numeric type
+        Complex numeric type for `S`. Default is 64-bit complex.
+
+    Returns
+    -------
+    times : np.ndarray [shape=(1 + n_fft/2, t), dtype=real]
+        Reassigned times:
+        `times[f, t]` is the time for bin `f`, frame `t`
+
+    S : np.ndarray [shape=(1 + n_fft/2, t), dtype=complex]
+        Short-time Fourier transform
+
+    Warns
+    --------
+    RuntimeWarning
+        Time estimates with zero support will produce a divide-by-zero warning
+        and will be returned as `np.nan`.
+
+    See Also
+    --------
+    stft : Short-time Fourier Transform
+    reassign_frequencies : Estimate frequency reassignments
+    reassigned_spectrogram : Time-frequency reassigned spectrogram
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> times, S = librosa.reassign_times(y, sr=sr)
+    >>> times
+    array([[ 0.077,  0.079,  ..., 61.362, 61.388],
+           [ 0.078,  0.077,  ..., 61.366, 61.538],
+           [ 0.088,  0.08 ,  ..., 61.358, 61.399],
+           ...,
+           [ 0.078,  0.077,  ..., 61.378, 61.372],
+           [ 0.082,  0.077,  ..., 61.371, 61.38 ],
+           [ 0.075,  0.076,  ..., 61.374, 61.385]])
+
+    """
+
+    # retrieve window samples if needed so that the time-weighted window can be
+    # calculated
+    if win_length is None:
+        win_length = n_fft
+
+    window = get_window(window, win_length, fftbins=True)
+    window = util.pad_center(window, n_fft)
+
+    # retrieve hop length if needed so that the frame times can be calculated
+    # here
+    if hop_length is None:
+        hop_length = int(win_length // 4)
+
+    # center is always False because padding will duplicate impulse components
+    # at the edges, which invalidates reassignment for edge frames
+    S_h = stft(
+        y=y,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        window=window,
+        center=False,
+        dtype=dtype,
+    )
+
+    # calculate window weighted by time
+    half_width = n_fft // 2
+
+    if n_fft % 2:
+        window_times = np.arange(-half_width, half_width + 1)
+
+    else:
+        window_times = np.arange(0.5 - half_width, half_width)
+
+    window_time_weighted = window * window_times / sr
+
+    S_th = stft(
+        y=y,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        window=window_time_weighted,
+        center=False,
+        dtype=dtype,
+    )
+
+    # equation 5.23 of Flandrin, Auger, & Chassande-Mottin 2002
+    # the sign of the correction is reversed in some papers - see Plante,
+    # Meyer, & Ainsworth 1998 pp. 283-284
+    correction = np.real(S_th / S_h)
+
+    times = time_frequency.frames_to_time(
+        np.arange(S_h.shape[1]), sr=sr, hop_length=hop_length, n_fft=n_fft
+    ).reshape((1, -1))
+
+    times = times + correction
+
+    return times, S_h
+
+
+def reassigned_spectrogram(y, sr=22050, n_fft=2048, hop_length=None,
+                           win_length=None, window="hann", ref_power=1e-6,
+                           clip=True, dtype=np.complex64):
+    """Time-frequency reassigned spectrogram.
+
+    The reassignment vectors are calculated using equations 5.20 and 5.23 in
+    [1]_:
+
+    .. math::
+
+        \hat{\omega} = \omega - \Im(\frac{S_{dh}}{S_h}) \\
+        \hat{t} = t + \Re(\frac{S_{th}}{S_h})
+
+    where `S_h` is the complex STFT calculated using the original window,
+    `S_dh` is the complex STFT calculated using the derivative of the original
+    window, and `S_th` is the complex STFT calculated using the original window
+    window multipled by the time offset from the window center. See [2]_ for
+    additional algorithms, and [3]_ and [4]_ for history and discussion of the
+    method.
+
+    .. [1] Flandrin, P., Auger, F., & Chassande-Mottin, E. (2002).
+    Time-Frequency reassignment: From principles to algorithms. In Applications
+    in Time-Frequency Signal Processing (Vol. 10, pp. 179-204). CRC Press.
+
+    .. [2] Fulop, S. A., & Fitz, K. (2006). Algorithms for computing the
+    time-corrected instantaneous frequency (reassigned) spectrogram, with
+    applications. The Journal of the Acoustical Society of America, 119(1),
+    360. doi:10.1121/1.2133000
+
+    .. [3] Auger, F., Flandrin, P., Lin, Y.-T., McLaughlin, S., Meignen, S.,
+    Oberlin, T., & Wu, H.-T. (2013). Time-Frequency Reassignment and
+    Synchrosqueezing: An Overview. IEEE Signal Processing Magazine, 30(6),
+    32-41. doi:10.1109/MSP.2013.2265316
+
+    .. [4] Hainsworth, S., Macleod, M. (2003). Time-frequency reassignment: a
+    review and analysis. Tech. Rep. CUED/FINFENG/TR.459, Cambridge University
+    Engineering Department
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(n,)], real-valued
+        audio time series
+
+    sr : number > 0 [scalar]
+        sampling rate of `y`
+
+    n_fft : int > 0 [scalar]
+        FFT window size
+
+    hop_length : int > 0 [scalar]
+        hop length, number samples between subsequent frames.
+        If not supplied, defaults to `win_length / 4`.
+
+    win_length : int > 0, <= n_fft
+        Window length. Defaults to `n_fft`.
+        See `stft` for details.
+
+    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        - a window specification (string, tuple, number);
+          see `scipy.signal.get_window`
+        - a window function, such as `scipy.signal.hanning`
+        - a user-specified window vector of length `n_fft`
+
+        See `stft` for details.
+
+        .. see also:: `filters.get_window`
+
+    ref_power : float >= 0 or callable
+        Minimum power threshold for estimating time-frequency reassignments.
+        Any bin with `np.abs(S[f, t])**2 < ref_power` will be returned as
+        `np.nan` in both frequency and time.
+
+    clip : boolean
+        - If `True`, estimated frequencies outside the range `[0, 0.5 * sr]`
+          or times outside the range `[0, len(y) / sr]` will be returned as
+          `np.nan`.
+        - If `False`, estimated frequencies and times beyond the domain and
+          range of the spectrogram may be returned.
+
+    dtype : numeric type
+        Complex numeric type for `S`. Default is 64-bit complex.
+
+    Returns
+    -------
+    freqs : np.ndarray [shape=(1 + n_fft/2, t), dtype=real]
+        Instantaneous frequencies:
+        `freqs[f, t]` is the frequency for bin `f`, frame `t`
+
+    times : np.ndarray [shape=(1 + n_fft/2, t), dtype=real]
+        Reassigned times:
+        `times[f, t]` is the time for bin `f`, frame `t`
+
+    mags : np.ndarray [shape=(1 + n_fft/2, t), dtype=real]
+        Magnitudes from short-time Fourier transform:
+        `mags[f, t]` is the magnitude for bin `f`, frame `t`
+
+    Warns
+    --------
+    RuntimeWarning
+        Frequency or time estimates with zero support will produce a
+        divide-by-zero warning and will be returned as `np.nan`.
+
+    See Also
+    --------
+    stft : Short-time Fourier Transform
+    reassign_frequencies : Estimate frequency reassignments
+    reassign_times : Estimate time reassignments
+
+    Examples
+    --------
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y_zoom = y[27 * sr : 29 * sr]
+
+    >>> freqs, times, mags = librosa.reassigned_spectrogram(
+    ...     y=y_zoom, sr=sr, hop_length=16, n_fft=64, ref_power=1e-4
+    ... )
+    >>> db = librosa.amplitude_to_db(mags, ref=np.max)
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> plt.subplot(2, 1, 1)
+    >>> librosa.display.specshow(
+    ...     db, x_axis="s", y_axis="linear", sr=sr, hop_length=16
+    ... )
+    >>> plt.title("Spectrogram")
+    >>> plt.subplot(2, 1, 2)
+    >>> plt.scatter(times, freqs, c=db, s=0.1, cmap="magma")
+    >>> plt.title("Reassigned spectrogram")
+    >>> plt.xlim([0, 2])
+    >>> plt.xticks([0, 0.5, 1, 1.5])
+    >>> plt.ylabel("Hz")
+    >>> plt.subplots_adjust(
+    ...     left=0.1, bottom=0.05, right=0.95, top=0.95, hspace=0.5
+    ... )
+    >>> plt.show()
+
+    """
+
+    freqs, S = reassign_frequencies(
+        y,
+        sr=sr,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        win_length=win_length,
+        window=window,
+        dtype=dtype,
+    )
+
+    times, S = reassign_times(
+        y,
+        sr=sr,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        win_length=win_length,
+        window=window,
+        dtype=dtype,
+    )
+
+    mags = np.abs(S)
+
+    if six.callable(ref_power):
+        ref_power = ref_power(mags ** 2)
+
+    elif ref_power < 0:
+        raise ParameterError("ref_power must be non-negative or callable.")
+
+    # remove estimates outside the spectrogram
+    if clip:
+        freqs[(freqs < 0) | (freqs > sr // 2)] = np.nan
+        times[(times < 0) | (times > len(y) / sr)] = np.nan
+
+    # remove estimates with low support
+    if ref_power > 0:
+        mags_nan = np.less(mags, ref_power ** 0.5, where=~np.isnan(mags))
+
+        freqs[mags_nan] = np.nan
+        times[mags_nan] = np.nan
+
+    return freqs, times, mags
 
 
 def magphase(D, power=1):
