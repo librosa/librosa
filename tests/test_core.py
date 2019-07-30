@@ -322,7 +322,7 @@ def test_reassign_frequencies(sr, n_fft):
     y = np.sin(17 * x * 2 * np.pi) + np.sin(103 * x * 2 * np.pi)
 
     freqs, S = librosa.reassign_frequencies(
-        y=y, sr=sr, n_fft=n_fft, hop_length=n_fft
+        y=y, sr=sr, n_fft=n_fft, hop_length=n_fft, center=False
     )
     S_db = librosa.amplitude_to_db(np.abs(S), ref=np.max)
 
@@ -352,6 +352,7 @@ def test_reassign_frequencies_regress(infile):
         n_fft=DATA['nfft'][0, 0].astype(int),
         hop_length=DATA['hop_length'][0, 0].astype(int),
         win_length=DATA['hann_w'][0, 0].astype(int),
+        center=False,
     )
 
     # D fails to match here because of fftshift()
@@ -386,11 +387,32 @@ def test_reassign_times(sr, n_fft):
     # ignore divide-by-zero warnings for frames with no energy
     with warnings.catch_warnings(record=True):
         times, S = librosa.reassign_times(
-            y=y, sr=sr, n_fft=n_fft, hop_length=n_fft
+            y=y, sr=sr, n_fft=n_fft, hop_length=n_fft, center=False
         )
 
     # times should be reassigned within 5% of the window duration
     assert np.allclose(times, expected, atol=0.05 * n_fft / sr, equal_nan=True)
+
+
+def test_reassign_times_center():
+    y = np.zeros(4096)
+    y[2049] = 1
+
+    sr = 4000
+    win_length = 2048
+
+    # ignore divide-by-zero warnings for frames with no energy
+    with warnings.catch_warnings(record=True):
+        times, S = librosa.reassign_times(
+        y=y, sr=sr, hop_length=win_length, win_length=win_length, center=True
+    )
+
+    expected = np.full_like(times, np.nan)
+    expected[:, 1] = 2049 / sr
+
+    assert np.allclose(
+        times, expected, atol=0.05 * win_length / sr, equal_nan=True
+    )
 
 
 @pytest.mark.parametrize('ref_power', [0.0, 1e-6, np.max])
@@ -414,8 +436,8 @@ def test_reassigned_spectrogram(mock_reassign_frequencies,
     mock_reassign_times.return_value = mock_times, mock_mags
 
     freqs, times, mags = librosa.reassigned_spectrogram(
-        y=np.zeros(2048), sr=1024, clip=clip, ref_power=ref_power
-        )
+        y=np.zeros(2048), sr=1024, clip=clip, center=False, ref_power=ref_power
+    )
 
     # freqs and times outside the spectrogram bounds
     if clip:
@@ -438,6 +460,13 @@ def test_reassigned_spectrogram(mock_reassign_frequencies,
     else:
         assert freqs[1, 1] == 1
         assert times[1, 1] == 1
+
+
+def test_reassigned_spectrogram_ref_power():
+    with pytest.raises(librosa.ParameterError):
+        freqs, times, mags = librosa.reassigned_spectrogram(
+            y=np.zeros(2048), sr=1024, clip=False, center=False, ref_power=-1
+        )
 
 
 def test_salience_basecase():
