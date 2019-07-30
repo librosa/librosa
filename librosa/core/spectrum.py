@@ -521,7 +521,8 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
 
 
 def reassign_frequencies(y, sr=22050, n_fft=2048, hop_length=None,
-                         win_length=None, window="hann", dtype=np.complex64):
+                         win_length=None, window="hann", center=True,
+                         dtype=np.complex64, pad_mode="reflect"):
     """Instantaneous frequencies based on a spectrogram representation.
 
     The reassignment vector is calculated using equation 5.20 in Flandrin,
@@ -534,6 +535,12 @@ def reassign_frequencies(y, sr=22050, n_fft=2048, hop_length=None,
     window.
 
     See `reassigned_spectrogram` for references.
+
+    It is recommended to use `pad_mode="wrap"` or else `center=False`, rather
+    than the defaults. Frequency reassignment assumes that the energy in each
+    FFT bin is associated with exactly one signal component. Reflection padding
+    at the edges of the signal invalidates the reassigned estimates in the edge
+    frames.
 
     Parameters
     ----------
@@ -564,8 +571,17 @@ def reassign_frequencies(y, sr=22050, n_fft=2048, hop_length=None,
 
         .. see also:: `filters.get_window`
 
+    center : boolean
+        - If `True`, the signal `y` is padded so that frame
+          `S[:, t]` is centered at `y[t * hop_length]`.
+        - If `False`, then `S[:, t]` begins at `y[t * hop_length]`
+
     dtype : numeric type
         Complex numeric type for `S`. Default is 64-bit complex.
+
+    pad_mode : string
+        If `center=True`, the padding mode to use at the edges of the signal.
+        By default, STFT uses reflection padding.
 
     Returns
     -------
@@ -609,14 +625,14 @@ def reassign_frequencies(y, sr=22050, n_fft=2048, hop_length=None,
     window = get_window(window, win_length, fftbins=True)
     window = util.pad_center(window, n_fft)
 
-    # center is always False for consistency with `reassign_times`
     S_h = stft(
         y=y,
         n_fft=n_fft,
         hop_length=hop_length,
         window=window,
-        center=False,
+        center=center,
         dtype=dtype,
+        pad_mode=pad_mode,
     )
 
     # cyclic gradient to correctly handle edges of a periodic window
@@ -627,8 +643,9 @@ def reassign_frequencies(y, sr=22050, n_fft=2048, hop_length=None,
         n_fft=n_fft,
         hop_length=hop_length,
         window=window_derivative,
-        center=False,
+        center=center,
         dtype=dtype,
+        pad_mode=pad_mode,
     )
 
     # equation 5.20 of Flandrin, Auger, & Chassande-Mottin 2002
@@ -643,7 +660,8 @@ def reassign_frequencies(y, sr=22050, n_fft=2048, hop_length=None,
 
 
 def reassign_times(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
-                   window="hann", dtype=np.complex64):
+                   window="hann", center=True, dtype=np.complex64,
+                   pad_mode="reflect"):
     """Time reassignments based on a spectrogram representation.
 
     The reassignment vector is calculated using equation 5.23 in Flandrin,
@@ -656,6 +674,12 @@ def reassign_times(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     by the time offset from the window center.
 
     See `reassigned_spectrogram` for references.
+
+    It is recommended to use `pad_mode="constant"` or else `center=False`,
+    rather than the defaults. Time reassignment assumes that the energy in each
+    FFT bin is associated with exactly one impulse event. Reflection padding
+    at the edges of the signal invalidates the reassigned estimates in the edge
+    frames.
 
     Parameters
     ----------
@@ -686,8 +710,17 @@ def reassign_times(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
 
         .. see also:: `filters.get_window`
 
+    center : boolean
+        - If `True`, the signal `y` is padded so that frame
+          `D[:, t]` is centered at `y[t * hop_length]`.
+        - If `False`, then `D[:, t]` begins at `y[t * hop_length]`
+
     dtype : numeric type
         Complex numeric type for `S`. Default is 64-bit complex.
+
+    pad_mode : string
+        If `center=True`, the padding mode to use at the edges of the signal.
+        By default, STFT uses reflection padding.
 
     Returns
     -------
@@ -738,15 +771,14 @@ def reassign_times(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     if hop_length is None:
         hop_length = int(win_length // 4)
 
-    # center is always False because padding will duplicate impulse components
-    # at the edges, which invalidates reassignment for edge frames
     S_h = stft(
         y=y,
         n_fft=n_fft,
         hop_length=hop_length,
         window=window,
-        center=False,
+        center=center,
         dtype=dtype,
+        pad_mode=pad_mode,
     )
 
     # calculate window weighted by time
@@ -765,8 +797,9 @@ def reassign_times(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
         n_fft=n_fft,
         hop_length=hop_length,
         window=window_time_weighted,
-        center=False,
+        center=center,
         dtype=dtype,
+        pad_mode=pad_mode,
     )
 
     # equation 5.23 of Flandrin, Auger, & Chassande-Mottin 2002
@@ -774,8 +807,14 @@ def reassign_times(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     # Meyer, & Ainsworth 1998 pp. 283-284
     correction = np.real(S_th / S_h)
 
+    if center:
+        pad_length = None
+
+    else:
+        pad_length = n_fft
+
     times = time_frequency.frames_to_time(
-        np.arange(S_h.shape[1]), sr=sr, hop_length=hop_length, n_fft=n_fft
+        np.arange(S_h.shape[1]), sr=sr, hop_length=hop_length, n_fft=pad_length
     ).reshape((1, -1))
 
     times = times + correction
@@ -784,8 +823,9 @@ def reassign_times(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
 
 
 def reassigned_spectrogram(y, sr=22050, n_fft=2048, hop_length=None,
-                           win_length=None, window="hann", ref_power=1e-6,
-                           clip=True, dtype=np.complex64):
+                           win_length=None, window="hann", center=True,
+                           ref_power=1e-6, clip=True, dtype=np.complex64,
+                           pad_mode="reflect"):
     """Time-frequency reassigned spectrogram.
 
     The reassignment vectors are calculated using equations 5.20 and 5.23 in
@@ -802,6 +842,10 @@ def reassigned_spectrogram(y, sr=22050, n_fft=2048, hop_length=None,
     window multipled by the time offset from the window center. See [2]_ for
     additional algorithms, and [3]_ and [4]_ for history and discussion of the
     method.
+
+    It is recommended to use `center=False` rather than the default `True`, to
+    avoid invalidating the reassigned estimates in the edge frames (see
+    `reassign_frequencies` and `reassign_times`).
 
     .. [1] Flandrin, P., Auger, F., & Chassande-Mottin, E. (2002).
     Time-Frequency reassignment: From principles to algorithms. In Applications
@@ -850,6 +894,11 @@ def reassigned_spectrogram(y, sr=22050, n_fft=2048, hop_length=None,
 
         .. see also:: `filters.get_window`
 
+    center : boolean
+        - If `True`, the signal `y` is padded so that frame
+          `D[:, t]` is centered at `y[t * hop_length]`.
+        - If `False`, then `D[:, t]` begins at `y[t * hop_length]`
+
     ref_power : float >= 0 or callable
         Minimum power threshold for estimating time-frequency reassignments.
         Any bin with `np.abs(S[f, t])**2 < ref_power` will be returned as
@@ -864,6 +913,10 @@ def reassigned_spectrogram(y, sr=22050, n_fft=2048, hop_length=None,
 
     dtype : numeric type
         Complex numeric type for `S`. Default is 64-bit complex.
+
+    pad_mode : string
+        If `center=True`, the padding mode to use at the edges of the signal.
+        By default, STFT uses reflection padding.
 
     Returns
     -------
@@ -921,6 +974,9 @@ def reassigned_spectrogram(y, sr=22050, n_fft=2048, hop_length=None,
 
     """
 
+    if not six.callable(ref_power) and ref_power < 0:
+        raise ParameterError("ref_power must be non-negative or callable.")
+
     freqs, S = reassign_frequencies(
         y,
         sr=sr,
@@ -928,7 +984,9 @@ def reassigned_spectrogram(y, sr=22050, n_fft=2048, hop_length=None,
         hop_length=hop_length,
         win_length=win_length,
         window=window,
+        center=center,
         dtype=dtype,
+        pad_mode=pad_mode,
     )
 
     times, S = reassign_times(
@@ -938,23 +996,22 @@ def reassigned_spectrogram(y, sr=22050, n_fft=2048, hop_length=None,
         hop_length=hop_length,
         win_length=win_length,
         window=window,
+        center=center,
         dtype=dtype,
+        pad_mode=pad_mode,
     )
 
     mags = np.abs(S)
 
+    # remove estimates outside the spectrogram
+    if clip:
+        freqs[(freqs < 0) | (freqs > sr / 2.0)] = np.nan
+        times[(times < 0) | (times > len(y) / float(sr))] = np.nan
+
+    # remove estimates with low support
     if six.callable(ref_power):
         ref_power = ref_power(mags ** 2)
 
-    elif ref_power < 0:
-        raise ParameterError("ref_power must be non-negative or callable.")
-
-    # remove estimates outside the spectrogram
-    if clip:
-        freqs[(freqs < 0) | (freqs > sr // 2)] = np.nan
-        times[(times < 0) | (times > len(y) / sr)] = np.nan
-
-    # remove estimates with low support
     if ref_power > 0:
         mags_nan = np.less(mags, ref_power ** 0.5, where=~np.isnan(mags))
 
