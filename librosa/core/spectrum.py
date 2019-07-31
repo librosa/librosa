@@ -520,7 +520,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     return if_gram, stft_matrix
 
 
-def reassign_frequencies(y, sr=22050, n_fft=2048, hop_length=None,
+def reassign_frequencies(y, sr=22050, S=None, n_fft=2048, hop_length=None,
                          win_length=None, window="hann", center=True,
                          dtype=np.complex64, pad_mode="reflect"):
     """Instantaneous frequencies based on a spectrogram representation.
@@ -549,6 +549,10 @@ def reassign_frequencies(y, sr=22050, n_fft=2048, hop_length=None,
 
     sr : number > 0 [scalar]
         sampling rate of `y`
+
+    S : np.ndarray [shape=(d, t)] or None
+        (optional) complex STFT calculated using the other arguments provided
+        to `reassign_frequencies`
 
     n_fft : int > 0 [scalar]
         FFT window size
@@ -625,15 +629,19 @@ def reassign_frequencies(y, sr=22050, n_fft=2048, hop_length=None,
     window = get_window(window, win_length, fftbins=True)
     window = util.pad_center(window, n_fft)
 
-    S_h = stft(
-        y=y,
-        n_fft=n_fft,
-        hop_length=hop_length,
-        window=window,
-        center=center,
-        dtype=dtype,
-        pad_mode=pad_mode,
-    )
+    if S is None:
+        S_h = stft(
+            y=y,
+            n_fft=n_fft,
+            hop_length=hop_length,
+            window=window,
+            center=center,
+            dtype=dtype,
+            pad_mode=pad_mode,
+        )
+
+    else:
+        S_h = S
 
     # cyclic gradient to correctly handle edges of a periodic window
     window_derivative = util.cyclic_gradient(window)
@@ -659,9 +667,9 @@ def reassign_frequencies(y, sr=22050, n_fft=2048, hop_length=None,
     return freqs, S_h
 
 
-def reassign_times(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
-                   window="hann", center=True, dtype=np.complex64,
-                   pad_mode="reflect"):
+def reassign_times(y, sr=22050, S=None, n_fft=2048, hop_length=None,
+                   win_length=None, window="hann", center=True,
+                   dtype=np.complex64, pad_mode="reflect"):
     """Time reassignments based on a spectrogram representation.
 
     The reassignment vector is calculated using equation 5.23 in Flandrin,
@@ -688,6 +696,10 @@ def reassign_times(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
 
     sr : number > 0 [scalar]
         sampling rate of `y`
+
+    S : np.ndarray [shape=(d, t)] or None
+        (optional) complex STFT calculated using the other arguments provided
+        to `reassign_times`
 
     n_fft : int > 0 [scalar]
         FFT window size
@@ -771,15 +783,19 @@ def reassign_times(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     if hop_length is None:
         hop_length = int(win_length // 4)
 
-    S_h = stft(
-        y=y,
-        n_fft=n_fft,
-        hop_length=hop_length,
-        window=window,
-        center=center,
-        dtype=dtype,
-        pad_mode=pad_mode,
-    )
+    if S is None:
+        S_h = stft(
+            y=y,
+            n_fft=n_fft,
+            hop_length=hop_length,
+            window=window,
+            center=center,
+            dtype=dtype,
+            pad_mode=pad_mode,
+        )
+
+    else:
+        S_h = S
 
     # calculate window weighted by time
     half_width = n_fft // 2
@@ -822,7 +838,7 @@ def reassign_times(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     return times, S_h
 
 
-def reassigned_spectrogram(y, sr=22050, n_fft=2048, hop_length=None,
+def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
                            win_length=None, window="hann", center=True,
                            ref_power=1e-6, clip=True, dtype=np.complex64,
                            pad_mode="reflect"):
@@ -872,6 +888,10 @@ def reassigned_spectrogram(y, sr=22050, n_fft=2048, hop_length=None,
 
     sr : number > 0 [scalar]
         sampling rate of `y`
+
+    S : np.ndarray [shape=(d, t)] or None
+        (optional) complex STFT calculated using the other arguments provided
+        to `reassigned_spectrogram`
 
     n_fft : int > 0 [scalar]
         FFT window size
@@ -980,6 +1000,7 @@ def reassigned_spectrogram(y, sr=22050, n_fft=2048, hop_length=None,
     freqs, S = reassign_frequencies(
         y,
         sr=sr,
+        S=S,
         n_fft=n_fft,
         hop_length=hop_length,
         win_length=win_length,
@@ -992,6 +1013,7 @@ def reassigned_spectrogram(y, sr=22050, n_fft=2048, hop_length=None,
     times, S = reassign_times(
         y,
         sr=sr,
+        S=S,
         n_fft=n_fft,
         hop_length=hop_length,
         win_length=win_length,
