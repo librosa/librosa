@@ -17,9 +17,14 @@ import numpy as np
 import scipy.io
 import six
 import pytest
-import unittest.mock
-
 import warnings
+
+try:
+    # Python >= 3.3
+    from unittest import mock
+
+except ImportError:
+    import mock
 
 
 # -- utilities --#
@@ -315,15 +320,22 @@ def test_ifgram_if():
 
 # results for FFT bins containing multiple components will be unstable, as when
 # using higher sampling rates or shorter windows with this test signal
+@pytest.mark.parametrize('center', [False, True])
 @pytest.mark.parametrize('sr', [256, 512, 2000, 2048])
 @pytest.mark.parametrize('n_fft', [128, 255, 256, 512, 1280])
-def test_reassign_frequencies(sr, n_fft):
+def test_reassign_frequencies(sr, n_fft, center):
     x = np.linspace(0, 5, 5 * sr, endpoint=False)
     y = np.sin(17 * x * 2 * np.pi) + np.sin(103 * x * 2 * np.pi)
 
     freqs, S = librosa.reassign_frequencies(
-        y=y, sr=sr, n_fft=n_fft, hop_length=n_fft, center=False
+        y=y,
+        sr=sr,
+        n_fft=n_fft,
+        hop_length=n_fft,
+        center=center,
+        pad_mode="wrap"
     )
+
     S_db = librosa.amplitude_to_db(np.abs(S), ref=np.max)
 
     # frequencies should be reassigned to the closest component within 3 Hz
@@ -399,26 +411,24 @@ def test_reassign_times_center():
     y[2049] = 1
 
     sr = 4000
-    win_length = 2048
+    n_fft = 2048
 
     # ignore divide-by-zero warnings for frames with no energy
     with warnings.catch_warnings(record=True):
         times, S = librosa.reassign_times(
-        y=y, sr=sr, hop_length=win_length, win_length=win_length, center=True
+        y=y, sr=sr, hop_length=n_fft, win_length=n_fft, center=True
     )
 
     expected = np.full_like(times, np.nan)
     expected[:, 1] = 2049 / sr
 
-    assert np.allclose(
-        times, expected, atol=0.05 * win_length / sr, equal_nan=True
-    )
+    assert np.allclose(times, expected, atol=0.05 * n_fft / sr, equal_nan=True)
 
 
 @pytest.mark.parametrize('ref_power', [0.0, 1e-6, np.max])
 @pytest.mark.parametrize('clip', [False, True])
-@unittest.mock.patch('librosa.core.spectrum.reassign_times')
-@unittest.mock.patch('librosa.core.spectrum.reassign_frequencies')
+@mock.patch('librosa.core.spectrum.reassign_times')
+@mock.patch('librosa.core.spectrum.reassign_frequencies')
 def test_reassigned_spectrogram(mock_reassign_frequencies,
                                 mock_reassign_times, ref_power, clip):
     mock_freqs = np.ones((3, 4))
@@ -436,7 +446,7 @@ def test_reassigned_spectrogram(mock_reassign_frequencies,
     mock_reassign_times.return_value = mock_times, mock_mags
 
     freqs, times, mags = librosa.reassigned_spectrogram(
-        y=np.zeros(2048), sr=1024, clip=clip, center=False, ref_power=ref_power
+        y=np.zeros(2048), sr=1024, clip=clip, ref_power=ref_power
     )
 
     # freqs and times outside the spectrogram bounds
@@ -465,7 +475,7 @@ def test_reassigned_spectrogram(mock_reassign_frequencies,
 def test_reassigned_spectrogram_ref_power():
     with pytest.raises(librosa.ParameterError):
         freqs, times, mags = librosa.reassigned_spectrogram(
-            y=np.zeros(2048), sr=1024, clip=False, center=False, ref_power=-1
+            y=np.zeros(2048), sr=1024, ref_power=-1
         )
 
 
