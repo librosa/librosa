@@ -420,7 +420,7 @@ def test_reassign_times_center():
     )
 
     expected = np.full_like(times, np.nan)
-    expected[:, 1] = 2049 / sr
+    expected[:, 1] = 2049 / float(sr)
 
     assert np.allclose(times, expected, atol=0.05 * n_fft / sr, equal_nan=True)
 
