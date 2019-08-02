@@ -847,8 +847,8 @@ def hz_to_octs(frequencies, tuning=0.0, bins_per_octave=12, A440=Deprecated()):
     frequencies   : number >0 or np.ndarray [shape=(n,)] or float
         scalar or vector of frequencies
 
-    tuning        : number in [-0.5, 0.5)
-        Tuning deviation from A440 in bins per octave.
+    tuning        : float
+        Tuning deviation from A440 in (fractional) bins per octave.
 
     bins_per_octave : int > 0
         Number of bins per octave.
@@ -895,7 +895,14 @@ def octs_to_hz(octs, tuning=0.0, bins_per_octave=12, A440=Deprecated()):
     ----------
     octaves       : np.ndarray [shape=(n,)] or float
         octave number for each frequency
-    A440          : float
+
+    tuning : float
+        Tuning deviation from A440 in (fractional) bins per octave.
+
+    bins_per_octave : int > 0
+        Number of bins per octave.
+
+    A440          : float <DEPRECATED>
         frequency of A440
 
     Returns
@@ -972,8 +979,8 @@ def cqt_frequencies(n_bins, fmin, bins_per_octave=12, tuning=0.0):
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
 
-    tuning : float in `[-0.5, +0.5)`
-        Deviation from A440 tuning in fractional bins (cents)
+    tuning : float
+        Deviation from A440 tuning in fractional bins
 
     Returns
     -------
