@@ -55,9 +55,12 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         Number of bins per octave
 
     tuning : None or float in `[-0.5, 0.5)`
-        Tuning offset in fractions of a bin (cents).
+        Tuning offset in fractions of a bin.
 
         If `None`, tuning will be automatically estimated from the signal.
+
+        The minimum frequency of the resulting CQT will be modified to
+        `fmin * 2**(tuning / bins_per_octave)`.
 
     filter_scale : float > 0
         Filter scale factor. Small values (<1) use shorter windows
@@ -172,11 +175,14 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         fmin = note_to_hz('C1')
 
     if tuning is None:
-        tuning = estimate_tuning(y=y, sr=sr)
+        tuning = estimate_tuning(y=y, sr=sr, bins_per_octave=bins_per_octave)
+
+    # Apply tuning correction
+    fmin = fmin * 2.0**(tuning / bins_per_octave)
 
     # First thing, get the freqs of the top octave
     freqs = cqt_frequencies(n_bins, fmin,
-                            bins_per_octave=bins_per_octave, tuning=tuning)[-bins_per_octave:]
+                            bins_per_octave=bins_per_octave)[-bins_per_octave:]
 
     fmin_t = np.min(freqs)
     fmax_t = np.max(freqs)
@@ -207,7 +213,6 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         fft_basis, n_fft, _ = __cqt_filter_fft(sr, fmin_t,
                                                n_filters,
                                                bins_per_octave,
-                                               tuning,
                                                filter_scale,
                                                norm,
                                                sparsity,
@@ -235,7 +240,6 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     fft_basis, n_fft, _ = __cqt_filter_fft(sr, fmin_t,
                                            n_filters,
                                            bins_per_octave,
-                                           tuning,
                                            filter_scale,
                                            norm,
                                            sparsity,
@@ -271,7 +275,6 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         lengths = filters.constant_q_lengths(sr, fmin,
                                              n_bins=n_bins,
                                              bins_per_octave=bins_per_octave,
-                                             tuning=tuning,
                                              window=window,
                                              filter_scale=filter_scale)
         C /= np.sqrt(lengths[:, np.newaxis])
@@ -311,9 +314,12 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         Number of bins per octave
 
     tuning : None or float in `[-0.5, 0.5)`
-        Tuning offset in fractions of a bin (cents).
+        Tuning offset in fractions of a bin.
 
         If `None`, tuning will be automatically estimated from the signal.
+
+        The minimum frequency of the resulting CQT will be modified to
+        `fmin * 2**(tuning / bins_per_octave)`.
 
     filter_scale : float > 0
         Filter filter_scale factor. Larger values use longer windows.
@@ -365,18 +371,19 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         fmin = note_to_hz('C1')
 
     if tuning is None:
-        tuning = estimate_tuning(y=y, sr=sr)
+        tuning = estimate_tuning(y=y, sr=sr, bins_per_octave=bins_per_octave)
+
+    # Apply tuning correction
+    fmin = fmin * 2.0**(tuning / bins_per_octave)
 
     # Get all CQT frequencies
     freqs = cqt_frequencies(n_bins, fmin,
-                            bins_per_octave=bins_per_octave,
-                            tuning=tuning)
+                            bins_per_octave=bins_per_octave)
 
     # Compute the length of each constant-Q basis function
     lengths = filters.constant_q_lengths(sr, fmin,
                                          n_bins=n_bins,
                                          bins_per_octave=bins_per_octave,
-                                         tuning=tuning,
                                          filter_scale=filter_scale,
                                          window=window)
 
@@ -397,7 +404,6 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                    fmin=fmin_pseudo,
                                    n_bins=n_bins_pseudo,
                                    bins_per_octave=bins_per_octave,
-                                   tuning=tuning,
                                    filter_scale=filter_scale,
                                    norm=norm,
                                    sparsity=sparsity,
@@ -411,7 +417,6 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                    fmin=fmin,
                                    n_bins=n_bins_full,
                                    bins_per_octave=bins_per_octave,
-                                   tuning=tuning,
                                    filter_scale=filter_scale,
                                    norm=norm,
                                    sparsity=sparsity,
@@ -457,9 +462,12 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         Number of bins per octave
 
     tuning : None or float in `[-0.5, 0.5)`
-        Tuning offset in fractions of a bin (cents).
+        Tuning offset in fractions of a bin.
 
         If `None`, tuning will be automatically estimated from the signal.
+
+        The minimum frequency of the resulting CQT will be modified to
+        `fmin * 2**(tuning / bins_per_octave)`.
 
     filter_scale : float > 0
         Filter filter_scale factor. Larger values use longer windows.
@@ -503,11 +511,14 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         fmin = note_to_hz('C1')
 
     if tuning is None:
-        tuning = estimate_tuning(y=y, sr=sr)
+        tuning = estimate_tuning(y=y, sr=sr, bins_per_octave=bins_per_octave)
+
+    # Apply tuning correction
+    fmin = fmin * 2.0**(tuning / bins_per_octave)
 
     fft_basis, n_fft, _ = __cqt_filter_fft(sr, fmin, n_bins,
                                            bins_per_octave,
-                                           tuning, filter_scale,
+                                           filter_scale,
                                            norm, sparsity,
                                            hop_length=hop_length,
                                            window=window)
@@ -526,7 +537,6 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         lengths = filters.constant_q_lengths(sr, fmin,
                                              n_bins=n_bins,
                                              bins_per_octave=bins_per_octave,
-                                             tuning=tuning,
                                              window=window,
                                              filter_scale=filter_scale)
 
@@ -557,7 +567,10 @@ def icqt(C, sr=22050, hop_length=512, fmin=None, bins_per_octave=12,
         Minimum frequency. Defaults to C1 ~= 32.70 Hz
 
     tuning : float in `[-0.5, 0.5)` [scalar]
-        Tuning offset in fractions of a bin (cents).
+        Tuning offset in fractions of a bin.
+
+        The minimum frequency of the CQT will be modified to
+        `fmin * 2**(tuning / bins_per_octave)`.
 
     filter_scale : float > 0 [scalar]
         Filter scale factor. Small values (<1) use shorter windows
@@ -632,19 +645,20 @@ def icqt(C, sr=22050, hop_length=512, fmin=None, bins_per_octave=12,
     if fmin is None:
         fmin = note_to_hz('C1')
 
+    # Apply tuning correction
+    fmin = fmin * 2.0**(tuning / bins_per_octave)
+
     # Get the top octave of frequencies
     n_bins = len(C)
 
     freqs = cqt_frequencies(n_bins, fmin,
-                            bins_per_octave=bins_per_octave,
-                            tuning=tuning)[-bins_per_octave:]
+                            bins_per_octave=bins_per_octave)[-bins_per_octave:]
 
     n_filters = min(n_bins, bins_per_octave)
 
     fft_basis, n_fft, lengths = __cqt_filter_fft(sr, np.min(freqs),
                                                  n_filters,
                                                  bins_per_octave,
-                                                 tuning,
                                                  filter_scale,
                                                  norm,
                                                  sparsity=sparsity,
@@ -710,7 +724,7 @@ def icqt(C, sr=22050, hop_length=512, fmin=None, bins_per_octave=12,
 
 
 @cache(level=10)
-def __cqt_filter_fft(sr, fmin, n_bins, bins_per_octave, tuning,
+def __cqt_filter_fft(sr, fmin, n_bins, bins_per_octave,
                      filter_scale, norm, sparsity, hop_length=None,
                      window='hann'):
     '''Generate the frequency domain constant-Q filter basis.'''
@@ -719,7 +733,6 @@ def __cqt_filter_fft(sr, fmin, n_bins, bins_per_octave, tuning,
                                         fmin=fmin,
                                         n_bins=n_bins,
                                         bins_per_octave=bins_per_octave,
-                                        tuning=tuning,
                                         filter_scale=filter_scale,
                                         norm=norm,
                                         pad_fft=True,
