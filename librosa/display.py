@@ -498,6 +498,7 @@ def specshow(data, x_coords=None, y_coords=None,
              x_axis=None, y_axis=None,
              sr=22050, hop_length=512,
              fmin=None, fmax=None,
+             tuning=0.0,
              bins_per_octave=12,
              ax=None,
              **kwargs):
@@ -585,6 +586,12 @@ def specshow(data, x_coords=None, y_coords=None,
 
     fmax : float > 0 [scalar] or None
         Used for setting the Mel frequency scales
+
+    tuning : float in [-0.5, 0.5)
+        Tuning deviation from A440, in fractions of a bin.
+
+        This is used for CQT frequency scales, so that `fmin` is adjusted
+        to `fmin * 2**(tuning / bins_per_octave)`.
 
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave.  Used for CQT frequency scale.
@@ -719,6 +726,7 @@ def specshow(data, x_coords=None, y_coords=None,
                       sr=sr,
                       fmin=fmin,
                       fmax=fmax,
+                      tuning=tuning,
                       bins_per_octave=bins_per_octave,
                       hop_length=hop_length)
 
@@ -964,6 +972,9 @@ def __coord_cqt_hz(n, fmin=None, bins_per_octave=12, **_kwargs):
     '''Get CQT bin frequencies'''
     if fmin is None:
         fmin = core.note_to_hz('C1')
+
+    # Apply tuning correction
+    fmin = fmin * 2.0**(_kwargs.get('tuning', 0.0) / bins_per_octave)
 
     # we drop by half a bin so that CQT bins are centered vertically
     return core.cqt_frequencies(n+1,
