@@ -8,6 +8,7 @@ try:
 except KeyError:
     pass
 
+import warnings
 import librosa
 import numpy as np
 import pytest
@@ -123,27 +124,52 @@ def test_time_to_frames():
                 yield __test, sr, hop_length, n_fft
 
 
-def test_octs_to_hz():
-    def __test(a440):
+@pytest.mark.parametrize('tuning', [0.0, -0.2, 0.1])
+@pytest.mark.parametrize('bins_per_octave', [12, 24, 36])
+def test_octs_to_hz(tuning, bins_per_octave):
+    freq = np.asarray([55, 110, 220, 440]) * (2.0**(tuning / bins_per_octave))
+    freq_out = librosa.octs_to_hz([1, 2, 3, 4],
+                                  tuning=tuning,
+                                  bins_per_octave=bins_per_octave)
+
+    assert np.allclose(freq, freq_out)
+
+
+@pytest.mark.parametrize('tuning', [0.0, -0.2, 0.1])
+@pytest.mark.parametrize('bins_per_octave', [12, 24, 36])
+def test_hz_to_octs(tuning, bins_per_octave):
+    freq = np.asarray([55, 110, 220, 440]) * (2.0**(tuning / bins_per_octave))
+    octs = [1, 2, 3, 4]
+    oct_out = librosa.hz_to_octs(freq,
+                                 tuning=tuning,
+                                 bins_per_octave=bins_per_octave)
+
+    assert np.allclose(octs, oct_out)
+
+
+
+@pytest.mark.parametrize('a440', [415, 430, 435, 440, 466])
+def test_octs_to_hz_dep(a440):
+    with warnings.catch_warnings(record=True) as out:
         freq = np.asarray([55, 110, 220, 440]) * (float(a440) / 440.0)
         freq_out = librosa.octs_to_hz([1, 2, 3, 4], A440=a440)
 
         assert np.allclose(freq, freq_out)
+        # And that it says the right thing (roughly)
+        assert 'deprecated' in str(out[0].message).lower()
 
-    for a440 in [415, 430, 435, 440, 466]:
-        yield __test, a440
 
-
-def test_hz_to_octs():
-    def __test(a440):
+@pytest.mark.parametrize('a440', [415, 430, 435, 440, 466])
+def test_hz_to_octs_dep(a440):
+    with warnings.catch_warnings(record=True) as out:
         freq = np.asarray([55, 110, 220, 440]) * (float(a440) / 440.0)
         octs = [1, 2, 3, 4]
         oct_out = librosa.hz_to_octs(freq, A440=a440)
 
         assert np.allclose(octs, oct_out)
 
-    for a440 in [415, 430, 435, 440, 466]:
-        yield __test, a440
+        # And that it says the right thing (roughly)
+        assert 'deprecated' in str(out[0].message).lower()
 
 
 def test_note_to_midi():
