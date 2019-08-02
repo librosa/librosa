@@ -54,7 +54,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
 
-    tuning : None or float in `[-0.5, 0.5)`
+    tuning : None or float
         Tuning offset in fractions of a bin.
 
         If `None`, tuning will be automatically estimated from the signal.
@@ -313,7 +313,7 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
 
-    tuning : None or float in `[-0.5, 0.5)`
+    tuning : None or float
         Tuning offset in fractions of a bin.
 
         If `None`, tuning will be automatically estimated from the signal.
@@ -461,7 +461,7 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
 
-    tuning : None or float in `[-0.5, 0.5)`
+    tuning : None or float
         Tuning offset in fractions of a bin.
 
         If `None`, tuning will be automatically estimated from the signal.
@@ -566,7 +566,7 @@ def icqt(C, sr=22050, hop_length=512, fmin=None, bins_per_octave=12,
     fmin : float > 0 [scalar]
         Minimum frequency. Defaults to C1 ~= 32.70 Hz
 
-    tuning : float in `[-0.5, 0.5)` [scalar]
+    tuning : float [scalar]
         Tuning offset in fractions of a bin.
 
         The minimum frequency of the CQT will be modified to
