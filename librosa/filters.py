@@ -244,7 +244,7 @@ def chroma(sr, n_fft, n_chroma=12, tuning=0.0, A440=Deprecated(), ctroct=5.0,
     n_chroma  : int > 0 [scalar]
         number of chroma bins
 
-    tuning : number in [-0.5, 0.5)
+    tuning : float
         Tuning deviation from A440 in fractions of a chroma bin.
 
     A440      : float > 0 [scalar] <Deprecated>
@@ -425,7 +425,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=Deprecated()
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
 
-    tuning : float in `[-0.5, +0.5)` [scalar] <DEPRECATED>
+    tuning : float [scalar] <DEPRECATED>
         Tuning deviation from A440 in fractions of a bin
 
         .. note:: This parameter is deprecated in 0.7.1.  It will be removed in
@@ -515,7 +515,8 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=Deprecated()
     if isinstance(tuning, Deprecated):
         tuning = 0.0
     else:
-        warnings.warn('The `tuning` parameter to `filters.constant_q` is deprecated in librosa 0.7.1.'
+        warnings.warn('The `tuning` parameter to `filters.constant_q` '
+                      'is deprecated in librosa 0.7.1. '
                       'It will be removed in 0.8.0.', DeprecationWarning)
 
     # Apply tuning correction
@@ -582,7 +583,7 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
 
-    tuning : float in `[-0.5, +0.5)` [scalar]
+    tuning : float [scalar] <DEPRECATED>
         Tuning deviation from A440 in fractions of a bin
 
         .. note:: This parameter is deprecated in 0.7.1.  It will be removed in
@@ -1002,7 +1003,7 @@ def mr_frequencies(tuning):
 
     Parameters
     ----------
-    tuning : float in `[-0.5, +0.5)` [scalar]
+    tuning : float [scalar]
         Tuning deviation from A440, measure as a fraction of the equally
         tempered semitone (1/12 of an octave).
 
@@ -1063,7 +1064,7 @@ def semitone_filterbank(center_freqs=None, tuning=0.0, sample_rates=None, flayou
         Center frequencies of the filter kernels.
         Also defines the number of filters in the filterbank.
 
-    tuning : float in `[-0.5, +0.5)` [scalar]
+    tuning : float [scalar]
         Tuning deviation from A440 as a fraction of a semitone (1/12 of an octave
         in equal temperament).
 

@@ -587,7 +587,7 @@ def specshow(data, x_coords=None, y_coords=None,
     fmax : float > 0 [scalar] or None
         Used for setting the Mel frequency scales
 
-    tuning : float in [-0.5, 0.5)
+    tuning : float
         Tuning deviation from A440, in fractions of a bin.
 
         This is used for CQT frequency scales, so that `fmin` is adjusted

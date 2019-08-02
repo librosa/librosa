@@ -1108,8 +1108,7 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
         If `center=True`, the padding mode to use at the edges of the signal.
         By default, STFT uses reflection padding.
 
-
-    tuning : float in `[-0.5, 0.5)` [scalar] or None.
+    tuning : float [scalar] or None.
         Deviation from A440 tuning in fractional chroma bins.
         If `None`, it is automatically estimated.
 
