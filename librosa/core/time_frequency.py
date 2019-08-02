@@ -3,11 +3,13 @@
 '''Time and frequency utilities'''
 
 import re
+import warnings
 
 import numpy as np
 import six
 
 from ..util.exceptions import ParameterError
+from ..util.deprecation import Deprecated
 
 __all__ = ['frames_to_samples', 'frames_to_time',
            'samples_to_frames', 'samples_to_time',
@@ -830,7 +832,7 @@ def mel_to_hz(mels, htk=False):
     return freqs
 
 
-def hz_to_octs(frequencies, A440=440.0):
+def hz_to_octs(frequencies, tuning=0.0, bins_per_octave=12, A440=Deprecated()):
     """Convert frequencies (Hz) to (fractional) octave numbers.
 
     Examples
@@ -844,8 +846,18 @@ def hz_to_octs(frequencies, A440=440.0):
     ----------
     frequencies   : number >0 or np.ndarray [shape=(n,)] or float
         scalar or vector of frequencies
-    A440          : float
+
+    tuning        : number in [-0.5, 0.5)
+        Tuning deviation from A440 in bins per octave.
+
+    bins_per_octave : int > 0
+        Number of bins per octave.
+
+    A440          : float <DEPRECATED>
         frequency of A440 (in Hz)
+
+        .. note:: This parameter is deprecated in 0.7.1 and will be removed
+                  in version 0.8.0.  Use `tuning=` instead.
 
     Returns
     -------
@@ -856,10 +868,18 @@ def hz_to_octs(frequencies, A440=440.0):
     --------
     octs_to_hz
     """
+
+    if isinstance(A440, Deprecated):
+        A440 = 440.0 * 2.0**(tuning / bins_per_octave)
+    else:
+        warnings.warn('Parameter A440={} in hz_to_octs is deprecated in 0.7.1. '
+                      'It will be removed in 0.8.0. '
+                      'Use tuning= instead.'.format(A440), DeprecationWarning)
+
     return np.log2(np.asanyarray(frequencies) / (float(A440) / 16))
 
 
-def octs_to_hz(octs, A440=440.0):
+def octs_to_hz(octs, tuning=0.0, bins_per_octave=12, A440=Deprecated()):
     """Convert octaves numbers to frequencies.
 
     Octaves are counted relative to A.
@@ -887,6 +907,13 @@ def octs_to_hz(octs, A440=440.0):
     --------
     hz_to_octs
     """
+    if isinstance(A440, Deprecated):
+        A440 = 440.0 * 2.0**(tuning / bins_per_octave)
+    else:
+        warnings.warn('Parameter A440={} in octs_to_hz is deprecated in 0.7.1. '
+                      'It will be removed in 0.8.0. '
+                      'Use tuning= instead.'.format(A440), DeprecationWarning)
+
     return (float(A440) / 16)*(2.0**np.asanyarray(octs))
 
 

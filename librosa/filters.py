@@ -228,7 +228,7 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
 
 
 @cache(level=10)
-def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0,
+def chroma(sr, n_fft, n_chroma=12, tuning=0.0, A440=Deprecated(), ctroct=5.0,
            octwidth=2, norm=2, base_c=True, dtype=np.float32):
     """Create a Filterbank matrix to convert STFT to chroma
 
@@ -244,8 +244,14 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0,
     n_chroma  : int > 0 [scalar]
         number of chroma bins
 
-    A440      : float > 0 [scalar]
+    tuning : number in [-0.5, 0.5)
+        Tuning deviation from A440 in fractions of a chroma bin.
+
+    A440      : float > 0 [scalar] <Deprecated>
         Reference frequency for A440
+
+        .. note:: This parameter is deprecated in version 0.7.1.
+                  It will be removed in 0.8.0.  Use `tuning=` instead.
 
     ctroct    : float > 0 [scalar]
 
@@ -325,7 +331,9 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0,
     # Get the FFT bins, not counting the DC component
     frequencies = np.linspace(0, sr, n_fft, endpoint=False)[1:]
 
-    frqbins = n_chroma * hz_to_octs(frequencies, A440)
+    frqbins = n_chroma * hz_to_octs(frequencies,
+                                    tuning=tuning,
+                                    bins_per_octave=n_chroma)
 
     # make up a value for the 0 Hz bin = 1.5 octaves below bin 1
     # (so chroma is 50% rotated from bin 1, and bin width is broad)
