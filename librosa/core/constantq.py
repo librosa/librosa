@@ -17,7 +17,8 @@ from .. import filters
 from .. import util
 from ..util.exceptions import ParameterError
 
-__all__ = ['cqt', 'hybrid_cqt', 'pseudo_cqt', 'icqt']
+__all__ = ['cqt', 'hybrid_cqt', 'pseudo_cqt',
+           'icqt', 'griffinlim_cqt']
 
 
 @cache(level=20)
@@ -841,3 +842,204 @@ def __num_two_factors(x):
         x //= 2
 
     return num_twos
+
+
+def griffinlim_cqt(C, n_iter=32, sr=22050, hop_length=512, fmin=None, bins_per_octave=12, tuning=0.0,
+                   filter_scale=1, norm=1, sparsity=0.01, window='hann', scale=True,
+                   pad_mode='reflect', res_type='kaiser_fast', 
+                   length=None, momentum=0.99, random_state=None):
+    '''Approximate constant-Q magnitude spectrogram inversion using the "fast" Griffin-Lim
+    algorithm [1]_ [2]_.
+
+    Given the magnitude of a constant-Q spectrogram (`C`), the algorithm randomly initializes
+    phase estimates, and then alternates forward- and inverse-CQT operations.
+
+    This implementation is based on the Griffin-Lim method for Short-time Fourier Transforms,
+    but adapted for use with constant-Q spectrograms.
+
+    .. [1] Perraudin, N., Balazs, P., & Søndergaard, P. L.
+        "A fast Griffin-Lim algorithm,"
+        IEEE Workshop on Applications of Signal Processing to Audio and Acoustics (pp. 1-4),
+        Oct. 2013.
+
+    .. [2] D. W. Griffin and J. S. Lim,
+        "Signal estimation from modified short-time Fourier transform,"
+        IEEE Trans. ASSP, vol.32, no.2, pp.236–243, Apr. 1984.
+
+    Parameters
+    ----------
+    C : np.ndarray [shape=(n_bins, n_frames)]
+        The constant-Q magnitude spectrogram
+
+    n_iter : int > 0
+        The number of iterations to run
+
+    sr : number > 0
+        Audio sampling rate
+
+    hop_length : int > 0
+        The hop length of the CQT
+
+    fmin : number > 0 
+        Minimum frequency for the CQT.
+
+        If not provided, it defaults to C1.
+
+    bins_per_octave : int > 0
+        Number of bins per octave
+
+    tuning : float
+        Tuning deviation from A440, in fractions of a bin
+
+    filter_scale : float > 0
+        Filter scale factor. Small values (<1) use shorter windows
+        for improved time resolution.
+
+    norm : {inf, -inf, 0, float > 0}
+        Type of norm to use for basis function normalization.
+        See `librosa.util.normalize`.
+
+    sparsity : float in [0, 1)
+        Sparsify the CQT basis by discarding up to `sparsity`
+        fraction of the energy in each basis.
+
+        Set `sparsity=0` to disable sparsification.
+
+    window : str, tuple, or function
+        Window specification for the basis filters.
+        See `filters.get_window` for details.
+
+    scale : bool
+        If `True`, scale the CQT response by square-root the length
+        of each channel's filter.  This is analogous to `norm='ortho'`
+        in FFT.
+
+        If `False`, do not scale the CQT. This is analogous to `norm=None`
+        in FFT.
+
+    pad_mode : string
+        Padding mode for centered frame analysis.
+
+        See also: `librosa.core.stft` and `np.pad`
+
+    res_type : string
+        The resampling mode for recursive downsampling.
+
+        By default, CQT uses an adaptive mode selection to
+        trade accuracy at high frequencies for efficiency at low
+        frequencies.
+
+        Griffin-Lim uses the efficient (fast) resampling mode by default.
+
+        See `librosa.core.resample` for a list of available options.
+
+    length : int > 0, optional
+        If provided, the output `y` is zero-padded or clipped to exactly
+        `length` samples.
+
+    momentum : float > 0
+        The momentum parameter for fast Griffin-Lim.
+        Setting this to 0 recovers the original Griffin-Lim method [1]_.
+        Values near 1 can lead to faster convergence, but above 1 may not converge.
+
+    random_state : None, int, or np.random.RandomState
+        If int, random_state is the seed used by the random number generator
+        for phase initialization.
+
+        If `np.random.RandomState` instance, the random number generator itself.
+        
+        If `None`, defaults to the current `np.random` object.
+
+
+    Returns
+    -------
+    y : np.ndarray [shape=(n,)]
+        time-domain signal reconstructed from `C`
+
+
+    See Also
+    --------
+    cqt
+    icqt
+    griffinlim
+    filters.get_window
+    resample
+
+    Examples
+    --------
+    A basis CQT inverse example
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=5, offset=30, sr=None)
+    >>> # Get the CQT magnitude, 7 octaves at 36 bins per octave
+    >>> C = np.abs(librosa.cqt(y=y, sr=sr, bins_per_octave=36, n_bins=7*36))
+    >>> # Invert using Griffin-Lim
+    >>> y_inv = librosa.griffinlim_cqt(C, sr=sr, bins_per_octave=36)
+    >>> # And invert without estimating phase
+    >>> y_icqt = librosa.icqt(C, sr=sr, bins_per_octave=36)
+
+    Wave-plot the results
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure()
+    >>> ax = plt.subplot(3,1,1)
+    >>> librosa.display.waveplot(y, sr=sr, color='b')
+    >>> plt.title('Original')
+    >>> plt.xlabel('')
+    >>> plt.subplot(3,1,2, sharex=ax, sharey=ax)
+    >>> librosa.display.waveplot(y_inv, sr=sr, color='g')
+    >>> plt.title('Griffin-Lim reconstruction')
+    >>> plt.xlabel('')
+    >>> plt.subplot(3,1,3, sharex=ax, sharey=ax)
+    >>> librosa.display.waveplot(y_icqt, sr=sr, color='r')
+    >>> plt.title('Magnitude-only icqt reconstruction')
+    >>> plt.tight_layout()
+    >>> plt.show()
+    '''
+    if fmin is None:
+        fmin = note_to_hz('C1')
+
+    if random_state is None:
+        rng = np.random
+    elif isinstance(random_state, int):
+        rng = np.random.RandomState(seed=random_state)
+    elif isinstance(random_state, np.random.RandomState):
+        rng = random_state
+
+    if momentum > 1:
+        warnings.warn('Griffin-Lim with momentum={} > 1 can be unstable. '
+                      'Proceed with caution!'.format(momentum))
+    elif momentum < 0:
+        raise ParameterError('griffinlim_cqt() called with momentum={} < 0'.format(momentum))
+
+    # randomly initialize the phase
+    angles = np.exp(2j * np.pi * rng.rand(*C.shape))
+
+    # And initialize the previous iterate to 0
+    rebuilt = 0.
+
+    for _ in range(n_iter):
+        # Store the previous iterate
+        tprev = rebuilt
+
+        # Invert with our current estimate of the phases
+        inverse = icqt(C * angles, sr=sr, hop_length=hop_length, bins_per_octave=bins_per_octave,
+                       fmin=fmin, tuning=tuning, window=window, length=length, res_type=res_type)
+
+        # Rebuild the spectrogram
+        rebuilt = cqt(inverse, sr=sr, bins_per_octave=bins_per_octave, n_bins=C.shape[0],
+                      hop_length=hop_length, fmin=fmin, tuning=tuning,
+                      window=window, res_type=res_type)
+
+        # Update our phase estimates
+        angles[:] = rebuilt - (momentum / (1 + momentum)) * tprev
+        angles[:] /= np.abs(angles) + 1e-16
+
+    # Return the final phase estimates
+    return icqt(C * angles,
+                sr=sr, hop_length=hop_length,
+                bins_per_octave=bins_per_octave,
+                tuning=tuning,
+                fmin=fmin,
+                window=window,
+                length=length,
+                res_type=res_type)

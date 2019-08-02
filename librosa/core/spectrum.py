@@ -1675,7 +1675,8 @@ def griffinlim(S, n_iter=32, hop_length=None, win_length=None, window='hann',
         If int, random_state is the seed used by the random number generator
         for phase initialization.
 
-        If `np.random.RandomState` instance, the random number generator itself;
+        If `np.random.RandomState` instance, the random number
+        generator itself.
 
         If `None`, defaults to the current `np.random` object.
 
