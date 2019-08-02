@@ -155,10 +155,15 @@ def test_chromafb():
         if octwidth == 0:
             octwidth = None
 
+        # Convert A440 parameter to tuning parameter
+        A440 = DATA['a440'][0, 0]
+
+        tuning = DATA['nchroma'][0, 0] * (np.log2(A440) - np.log2(440.0))
+
         wts = librosa.filters.chroma(DATA['sr'][0, 0],
                                      DATA['nfft'][0, 0],
                                      DATA['nchroma'][0, 0],
-                                     A440=DATA['a440'][0, 0],
+                                     tuning=tuning,
                                      ctroct=DATA['ctroct'][0, 0],
                                      octwidth=octwidth,
                                      norm=2,
