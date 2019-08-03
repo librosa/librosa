@@ -846,7 +846,7 @@ def __num_two_factors(x):
 
 def griffinlim_cqt(C, n_iter=32, sr=22050, hop_length=512, fmin=None, bins_per_octave=12, tuning=0.0,
                    filter_scale=1, norm=1, sparsity=0.01, window='hann', scale=True,
-                   pad_mode='reflect', res_type='kaiser_fast', 
+                   pad_mode='reflect', res_type='kaiser_fast',
                    length=None, momentum=0.99, random_state=None):
     '''Approximate constant-Q magnitude spectrogram inversion using the "fast" Griffin-Lim
     algorithm [1]_ [2]_.
@@ -947,7 +947,7 @@ def griffinlim_cqt(C, n_iter=32, sr=22050, hop_length=512, fmin=None, bins_per_o
         for phase initialization.
 
         If `np.random.RandomState` instance, the random number generator itself.
-        
+
         If `None`, defaults to the current `np.random` object.
 
 
