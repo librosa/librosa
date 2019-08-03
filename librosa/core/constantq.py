@@ -549,7 +549,8 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 @cache(level=40)
 def icqt(C, sr=22050, hop_length=512, fmin=None, bins_per_octave=12,
          tuning=0.0, filter_scale=1, norm=1, sparsity=0.01, window='hann',
-         scale=True, length=None, amin=util.Deprecated(), res_type='fft'):
+         scale=True, length=None, amin=util.Deprecated(), res_type='fft',
+         dtype=np.float32):
     '''Compute the inverse constant-Q transform.
 
     Given a constant-Q transform representation `C` of an audio signal `y`,
@@ -610,6 +611,9 @@ def icqt(C, sr=22050, hop_length=512, fmin=None, bins_per_octave=12,
         Resampling mode.  By default, this uses `fft` mode for high-quality
         reconstruction, but this may be slow depending on your signal duration.
         See `librosa.resample` for supported modes.
+
+    dtype : numeric type
+        Real numeric type for `y`.  Default is 32-bit float.
 
     Returns
     -------
@@ -706,7 +710,7 @@ def icqt(C, sr=22050, hop_length=512, fmin=None, bins_per_octave=12,
         D_oct = inv_oct.dot(C_oct / C_scale)
 
         # Inverse-STFT that response
-        y_oct = istft(D_oct, window='ones', hop_length=oct_hop)
+        y_oct = istft(D_oct, window='ones', hop_length=oct_hop, dtype=dtype)
 
         # Up-sample that octave
         if y is None:
@@ -846,7 +850,7 @@ def __num_two_factors(x):
 
 def griffinlim_cqt(C, n_iter=32, sr=22050, hop_length=512, fmin=None, bins_per_octave=12, tuning=0.0,
                    filter_scale=1, norm=1, sparsity=0.01, window='hann', scale=True,
-                   pad_mode='reflect', res_type='kaiser_fast',
+                   pad_mode='reflect', res_type='kaiser_fast', dtype=np.float32,
                    length=None, momentum=0.99, random_state=None):
     '''Approximate constant-Q magnitude spectrogram inversion using the "fast" Griffin-Lim
     algorithm [1]_ [2]_.
@@ -932,6 +936,9 @@ def griffinlim_cqt(C, n_iter=32, sr=22050, hop_length=512, fmin=None, bins_per_o
         Griffin-Lim uses the efficient (fast) resampling mode by default.
 
         See `librosa.core.resample` for a list of available options.
+
+    dtype : numeric type
+        Real numeric type for `y`.  Default is 32-bit float.
 
     length : int > 0, optional
         If provided, the output `y` is zero-padded or clipped to exactly
@@ -1023,7 +1030,7 @@ def griffinlim_cqt(C, n_iter=32, sr=22050, hop_length=512, fmin=None, bins_per_o
 
         # Invert with our current estimate of the phases
         inverse = icqt(C * angles, sr=sr, hop_length=hop_length, bins_per_octave=bins_per_octave,
-                       fmin=fmin, tuning=tuning, window=window, length=length, res_type=res_type)
+                       fmin=fmin, tuning=tuning, window=window, length=length, res_type=res_type, dtype=dtype)
 
         # Rebuild the spectrogram
         rebuilt = cqt(inverse, sr=sr, bins_per_octave=bins_per_octave, n_bins=C.shape[0],
@@ -1042,4 +1049,5 @@ def griffinlim_cqt(C, n_iter=32, sr=22050, hop_length=512, fmin=None, bins_per_o
                 fmin=fmin,
                 window=window,
                 length=length,
-                res_type=res_type)
+                res_type=res_type,
+                dtype=dtype)
