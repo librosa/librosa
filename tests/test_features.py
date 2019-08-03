@@ -400,6 +400,48 @@ def test_spectral_flatness_errors():
     # negative amin
     yield __test, S, -1
 
+def test_spectral_contraction_synthetic():
+
+    # to construct a spectrogram
+    n_fft = 2048
+    def __test(y, S, contraction_ref):
+        contraction = librosa.feature.spectral_contraction(y=y,
+                                                     S=S,
+                                                     n_fft=2048,
+                                                     hop_length=512)
+        assert np.allclose(contraction, contraction_ref)
+
+    # comparison to a manual calculation result
+    S = np.array([[1, 3], [2, 1], [1, 2]])
+    contraction_ref = np.array([[0.7937005259, 0.7075558390]])
+    yield __test, None, S, contraction_ref
+
+    # ones
+    S = np.ones((1 + n_fft // 2, 10))
+    contraction_ones = np.ones((1, 10))
+    yield __test, None, S, contraction_ones
+
+    # zeros
+    S = np.zeros((1 + n_fft // 2, 10))
+    contraction_zeros = np.ones((1, 10))
+    yield __test, None, S, contraction_zeros
+
+
+def test_spectral_contraction_errors():
+
+    @pytest.mark.xfail(raises=librosa.ParameterError)
+    def __test(S, amin):
+        librosa.feature.spectral_contraction(S=S,
+                                          amin=amin)
+
+    S = np.ones((1025, 10))
+
+    # zero amin
+    yield __test, S, 0
+
+    # negative amin
+    yield __test, S, -1
+
 
 def test_rms():
 
