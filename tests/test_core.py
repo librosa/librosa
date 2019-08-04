@@ -323,11 +323,11 @@ def test_ifgram_if():
 @pytest.mark.parametrize('center', [False, True])
 @pytest.mark.parametrize('sr', [256, 512, 2000, 2048])
 @pytest.mark.parametrize('n_fft', [128, 255, 256, 512, 1280])
-def test_reassign_frequencies(sr, n_fft, center):
+def test___reassign_frequencies(sr, n_fft, center):
     x = np.linspace(0, 5, 5 * sr, endpoint=False)
     y = np.sin(17 * x * 2 * np.pi) + np.sin(103 * x * 2 * np.pi)
 
-    freqs, S = librosa.reassign_frequencies(
+    freqs, S = librosa.core.spectrum.__reassign_frequencies(
         y=y,
         sr=sr,
         n_fft=n_fft,
@@ -351,14 +351,14 @@ def test_reassign_frequencies(sr, n_fft, center):
 @pytest.mark.parametrize(
     'infile', files(os.path.join('tests', 'data', 'core-ifgram-*.mat'))
 )
-def test_reassign_frequencies_regress(infile):
+def test___reassign_frequencies_regress(infile):
     DATA = load(infile)
 
     y, sr = librosa.load(
         os.path.join('tests', DATA['wavfile'][0]), sr=None, mono=True
     )
 
-    F, D = librosa.reassign_frequencies(
+    F, D = librosa.core.spectrum.__reassign_frequencies(
         y=y,
         sr=DATA['sr'][0, 0].astype(int),
         n_fft=DATA['nfft'][0, 0].astype(int),
@@ -375,7 +375,7 @@ def test_reassign_frequencies_regress(infile):
 # results for longer windows containing multiple impulses will be unstable
 @pytest.mark.parametrize('sr', [1, 512, 2048, 22050])
 @pytest.mark.parametrize('n_fft', [128, 256, 1024, 2099])
-def test_reassign_times(sr, n_fft):
+def test___reassign_times(sr, n_fft):
     y = np.zeros(4096)
     y[[263, 2633]] = 1
 
@@ -398,15 +398,17 @@ def test_reassign_times(sr, n_fft):
 
     # ignore divide-by-zero warnings for frames with no energy
     with warnings.catch_warnings(record=True):
-        times, S = librosa.reassign_times(
+        times, S = librosa.core.spectrum.__reassign_times(
             y=y, sr=sr, n_fft=n_fft, hop_length=n_fft, center=False
         )
 
-    # times should be reassigned within 5% of the window duration
-    assert np.allclose(times, expected, atol=0.05 * n_fft / sr, equal_nan=True)
+    # times should be reassigned within 0.5% of the window duration
+    assert np.allclose(
+        times, expected, atol=0.005 * n_fft / sr, equal_nan=True
+    )
 
 
-def test_reassign_times_center():
+def test___reassign_times_center():
     y = np.zeros(4096)
     y[2049] = 1
 
@@ -415,67 +417,192 @@ def test_reassign_times_center():
 
     # ignore divide-by-zero warnings for frames with no energy
     with warnings.catch_warnings(record=True):
-        times, S = librosa.reassign_times(
-        y=y, sr=sr, hop_length=n_fft, win_length=n_fft, center=True
-    )
+        times, S = librosa.core.spectrum.__reassign_times(
+            y=y, sr=sr, hop_length=n_fft, win_length=n_fft, center=True
+        )
 
     expected = np.full_like(times, np.nan)
     expected[:, 1] = 2049 / float(sr)
 
-    assert np.allclose(times, expected, atol=0.05 * n_fft / sr, equal_nan=True)
+    assert np.allclose(
+        times, expected, atol=0.005 * n_fft / sr, equal_nan=True
+    )
 
 
-@pytest.mark.parametrize('ref_power', [0.0, 1e-6, np.max])
 @pytest.mark.parametrize('clip', [False, True])
-@mock.patch('librosa.core.spectrum.reassign_times')
-@mock.patch('librosa.core.spectrum.reassign_frequencies')
-def test_reassigned_spectrogram(mock_reassign_frequencies,
-                                mock_reassign_times, ref_power, clip):
-    mock_freqs = np.ones((3, 4))
-    mock_freqs[0, 1] = -1
-    mock_freqs[0, 2] = 513
+@mock.patch('librosa.core.spectrum.__reassign_times')
+@mock.patch('librosa.core.spectrum.__reassign_frequencies')
+def test_reassigned_spectrogram_clip(mock_reassign_frequencies,
+                                     mock_reassign_times, clip):
+    mock_freqs = np.ones((5, 17))
+    mock_freqs[0, 0] = -1
+    mock_freqs[0, 1] = 33
 
-    mock_times = np.ones((3, 4))
-    mock_times[1, 2] = -1
-    mock_times[2, 2] = 3
+    mock_times = np.ones((5, 17))
+    mock_times[1, 0] = -1
+    mock_times[1, 1] = 3
 
-    mock_mags = np.ones((3, 4))
-    mock_mags[1, 1] = 0
+    mock_mags = np.ones((5, 17))
 
     mock_reassign_frequencies.return_value = mock_freqs, mock_mags
     mock_reassign_times.return_value = mock_times, mock_mags
 
     freqs, times, mags = librosa.reassigned_spectrogram(
-        y=np.zeros(2048), sr=1024, clip=clip, ref_power=ref_power
+        y=np.zeros(128), sr=64, n_fft=8, hop_length=8, clip=clip
     )
 
     # freqs and times outside the spectrogram bounds
     if clip:
-        assert np.isnan(freqs[0, 1])
-        assert np.isnan(freqs[0, 2])
-        assert np.isnan(times[1, 2])
-        assert np.isnan(times[2, 2])
+        assert freqs[0, 0] == 0
+        assert freqs[0, 1] == 32
+        assert times[1, 0] == 0
+        assert times[1, 1] == 2
 
     else:
-        assert freqs[0, 1] == -1
-        assert freqs[0, 2] == 513
-        assert times[1, 2] == -1
-        assert times[2, 2] == 3
+        assert freqs[0, 0] == -1
+        assert freqs[0, 1] == 33
+        assert times[1, 0] == -1
+        assert times[1, 1] == 3
 
-    # zero magnitude
-    if six.callable(ref_power) or ref_power > 0.0:
-        assert np.isnan(freqs[1, 1])
-        assert np.isnan(times[1, 1])
+    assert freqs[2, 0] == 1
+    assert times[2, 1] == 1
+
+
+@pytest.mark.parametrize('ref_power', [0.0, 1e-6, np.max])
+@mock.patch('librosa.core.spectrum.__reassign_times')
+@mock.patch('librosa.core.spectrum.__reassign_frequencies')
+def test_reassigned_spectrogram_ref_power(mock_reassign_frequencies,
+                                          mock_reassign_times, ref_power):
+    mock_freqs = np.ones((5, 17))
+    mock_times = np.ones((5, 17))
+
+    mock_mags = np.ones((5, 17))
+    mock_mags[2, 0] = 0
+    mock_mags[2, 1] = 0.1
+
+    mock_reassign_frequencies.return_value = mock_freqs, mock_mags
+    mock_reassign_times.return_value = mock_times, mock_mags
+
+    freqs, times, mags = librosa.reassigned_spectrogram(
+        y=np.zeros(128), sr=64, n_fft=8, hop_length=8, ref_power=ref_power
+    )
+
+    if ref_power is np.max:
+        assert np.isnan(freqs[2, 0])
+        assert np.isnan(freqs[2, 1])
+        assert np.isnan(times[2, 0])
+        assert np.isnan(times[2, 1])
+
+    elif ref_power == 1e-6:
+        assert np.isnan(freqs[2, 0])
+        assert freqs[2, 1] == 1
+        assert np.isnan(times[2, 0])
+        assert times[2, 1] == 1
+
+    elif ref_power == 0:
+        assert freqs[2, 0] == 1
+        assert freqs[2, 1] == 1
+        assert times[2, 0] == 1
+        assert times[2, 1] == 1
+
+    assert freqs[2, 2] == 1
+    assert times[2, 2] == 1
+
+
+@pytest.mark.parametrize('fill_nan', [False, True])
+@mock.patch('librosa.core.spectrum.__reassign_times')
+@mock.patch('librosa.core.spectrum.__reassign_frequencies')
+def test_reassigned_spectrogram_fill_nan(mock_reassign_frequencies,
+                                         mock_reassign_times, fill_nan):
+    mock_freqs = np.ones((5, 17))
+    mock_times = np.ones((5, 17))
+
+    # mock divide by zero
+    mock_freqs[3, 0] = np.nan
+    mock_times[3, 0] = np.nan
+
+    # mock below default ref_power threshold (<1e-6)
+    mock_mags = np.ones((5, 17))
+    mock_mags[3, 1] = 0
+
+    mock_reassign_frequencies.return_value = mock_freqs, mock_mags
+    mock_reassign_times.return_value = mock_times, mock_mags
+
+    freqs, times, mags = librosa.reassigned_spectrogram(
+        y=np.zeros(128),
+        sr=64,
+        n_fft=8,
+        hop_length=8,
+        center=False,
+        fill_nan=fill_nan
+    )
+
+    if fill_nan:
+        # originally NaN due to divide-by-zero
+        assert freqs[3, 0] == 24
+        assert times[3, 0] == 0.0625
+
+        # originally NaN due to low power
+        assert freqs[3, 1] == 24
+        assert times[3, 1] == 0.1875
 
     else:
-        assert freqs[1, 1] == 1
-        assert times[1, 1] == 1
+        assert np.isnan(freqs[3, 0])
+        assert np.isnan(times[3, 0])
+
+        assert np.isnan(freqs[3, 1])
+        assert np.isnan(times[3, 1])
+
+    assert mags[3, 1] == 0
+
+    assert freqs[3, 2] == 1
+    assert times[3, 2] == 1
 
 
-def test_reassigned_spectrogram_ref_power():
+@pytest.mark.parametrize('center', [False, True])
+@pytest.mark.parametrize('reassign_times', [False, True])
+@pytest.mark.parametrize('reassign_frequencies', [False, True])
+def test_reassigned_spectrogram_flags(reassign_frequencies, reassign_times,
+                                      center):
+
+    if not reassign_frequencies and not reassign_times:
+        return
+
+    freqs, times, mags = librosa.reassigned_spectrogram(
+        y=np.zeros(2048),
+        center=center,
+        reassign_frequencies=reassign_frequencies,
+        reassign_times=reassign_times
+    )
+
+    if reassign_frequencies:
+        assert np.all(np.isnan(freqs))
+
+    else:
+        bin_freqs = librosa.fft_frequencies()
+        assert np.array_equiv(freqs, bin_freqs[:, np.newaxis])
+
+    if reassign_times:
+        assert np.all(np.isnan(times))
+
+    else:
+        frame_times = librosa.frames_to_time(np.arange(freqs.shape[1]))
+
+        if not center:
+            frame_times = frame_times + (2048. / 22050. / 2.)
+
+        assert np.array_equiv(times, frame_times[np.newaxis, :])
+
+
+def test_reassigned_spectrogram_parameters():
     with pytest.raises(librosa.ParameterError):
         freqs, times, mags = librosa.reassigned_spectrogram(
-            y=np.zeros(2048), sr=1024, ref_power=-1
+            y=np.zeros(2048), ref_power=-1
+        )
+
+    with pytest.raises(librosa.ParameterError):
+        freqs, times, mags = librosa.reassigned_spectrogram(
+            y=np.zeros(2048), reassign_frequencies=False, reassign_times=False
         )
 
 
