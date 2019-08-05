@@ -76,6 +76,32 @@ def test_dtw_global_supplied_distance_matrix():
     assert np.array_equal(gt_D, mut_D)
 
 
+def test_dtw_gobal_boundary():
+    # Verify that boundary condition is fulfilled for subseq=False.
+    # See https://github.com/librosa/librosa/pull/920
+    X = np.array([1, 2, 3, 4, 5])
+    Y = np.array([1, 1, 1, 2, 4, 5, 6, 5, 5])
+    gt_wp = np.array([[0, 0], [0, 1], [0, 2], [1, 3], [2, 3], [3, 4], [4, 5],
+                      [4, 6], [4, 7], [4, 8]])
+
+    D, wp = librosa.sequence.dtw(X, Y, subseq=False)
+    wp = wp[::-1]
+    assert np.array_equal(gt_wp, wp)
+
+
+def test_dtw_subseq_boundary():
+    # Verify that boundary condition doesn't have to be fulfilled for
+    # subseq=True.
+    # See https://github.com/librosa/librosa/pull/920
+    X = np.array([1, 2, 3, 4, 5])
+    Y = np.array([1, 1, 1, 2, 4, 5, 6, 5, 5])
+    gt_wp = np.array([[0, 2], [1, 3], [2, 3], [3, 4], [4, 5]])
+
+    D, wp = librosa.sequence.dtw(X, Y, subseq=True)
+    wp = wp[::-1]
+    assert np.array_equal(gt_wp, wp)
+
+
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_dtw_incompatible_args_01():
     librosa.sequence.dtw(C=1, X=1, Y=1)
