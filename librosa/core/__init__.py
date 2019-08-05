@@ -38,6 +38,7 @@ Spectral representations
     fmt
 
     griffinlim
+    griffinlim_cqt
 
     interp_harmonics
     salience

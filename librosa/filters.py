@@ -50,6 +50,7 @@ from .util.exceptions import ParameterError
 
 from .core.time_frequency import note_to_hz, hz_to_midi, midi_to_hz, hz_to_octs
 from .core.time_frequency import fft_frequencies, mel_frequencies
+from .util.deprecation import Deprecated
 
 __all__ = ['mel',
            'chroma',
@@ -227,7 +228,7 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
 
 
 @cache(level=10)
-def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0,
+def chroma(sr, n_fft, n_chroma=12, tuning=0.0, A440=Deprecated(), ctroct=5.0,
            octwidth=2, norm=2, base_c=True, dtype=np.float32):
     """Create a Filterbank matrix to convert STFT to chroma
 
@@ -243,8 +244,14 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0,
     n_chroma  : int > 0 [scalar]
         number of chroma bins
 
-    A440      : float > 0 [scalar]
+    tuning : float
+        Tuning deviation from A440 in fractions of a chroma bin.
+
+    A440      : float > 0 [scalar] <Deprecated>
         Reference frequency for A440
+
+        .. note:: This parameter is deprecated in version 0.7.1.
+                  It will be removed in 0.8.0.  Use `tuning=` instead.
 
     ctroct    : float > 0 [scalar]
 
@@ -324,7 +331,9 @@ def chroma(sr, n_fft, n_chroma=12, A440=440.0, ctroct=5.0,
     # Get the FFT bins, not counting the DC component
     frequencies = np.linspace(0, sr, n_fft, endpoint=False)[1:]
 
-    frqbins = n_chroma * hz_to_octs(frequencies, A440)
+    frqbins = n_chroma * hz_to_octs(frequencies,
+                                    tuning=tuning,
+                                    bins_per_octave=n_chroma)
 
     # make up a value for the 0 Hz bin = 1.5 octaves below bin 1
     # (so chroma is 50% rotated from bin 1, and bin width is broad)
@@ -390,7 +399,7 @@ def __float_window(window_spec):
 
 
 @cache(level=10)
-def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
+def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=Deprecated(),
                window='hann', filter_scale=1, pad_fft=True, norm=1,
                dtype=np.complex64, **kwargs):
     r'''Construct a constant-Q basis.
@@ -416,8 +425,11 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
 
-    tuning : float in `[-0.5, +0.5)` [scalar]
+    tuning : float [scalar] <DEPRECATED>
         Tuning deviation from A440 in fractions of a bin
+
+        .. note:: This parameter is deprecated in 0.7.1.  It will be removed in
+                  version 0.8.
 
     window : string, tuple, number, or function
         Windowing function to apply to filters.
@@ -500,17 +512,23 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
     if fmin is None:
         fmin = note_to_hz('C1')
 
-    # Pass-through parameters to get the filter lengths
-    lengths = constant_q_lengths(sr, fmin,
-                                 n_bins=n_bins,
-                                 bins_per_octave=bins_per_octave,
-                                 tuning=tuning,
-                                 window=window,
-                                 filter_scale=filter_scale)
+    if isinstance(tuning, Deprecated):
+        tuning = 0.0
+    else:
+        warnings.warn('The `tuning` parameter to `filters.constant_q` '
+                      'is deprecated in librosa 0.7.1. '
+                      'It will be removed in 0.8.0.', DeprecationWarning)
 
     # Apply tuning correction
     correction = 2.0**(float(tuning) / bins_per_octave)
     fmin = correction * fmin
+
+    # Pass-through parameters to get the filter lengths
+    lengths = constant_q_lengths(sr, fmin,
+                                 n_bins=n_bins,
+                                 bins_per_octave=bins_per_octave,
+                                 window=window,
+                                 filter_scale=filter_scale)
 
     # Q should be capitalized here, so we suppress the name warning
     # pylint: disable=invalid-name
@@ -548,7 +566,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=0.0,
 
 @cache(level=10)
 def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
-                       tuning=0.0, window='hann', filter_scale=1):
+                       tuning=Deprecated(), window='hann', filter_scale=1):
     r'''Return length of each filter in a constant-Q basis.
 
     Parameters
@@ -565,8 +583,11 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
 
-    tuning : float in `[-0.5, +0.5)` [scalar]
+    tuning : float [scalar] <DEPRECATED>
         Tuning deviation from A440 in fractions of a bin
+
+        .. note:: This parameter is deprecated in 0.7.1.  It will be removed in
+                  version 0.8.
 
     window : str or callable
         Window function to use on filters
@@ -601,8 +622,13 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
     if n_bins <= 0 or not isinstance(n_bins, int):
         raise ParameterError('n_bins must be a positive integer')
 
-    correction = 2.0**(float(tuning) / bins_per_octave)
+    if isinstance(tuning, Deprecated):
+        tuning = 0.0
+    else:
+        warnings.warn('The `tuning` parameter to `filters.constant_q_lengths` is deprecated in librosa 0.7.1.'
+                      'It will be removed in 0.8.0.', DeprecationWarning)
 
+    correction = 2.0**(float(tuning) / bins_per_octave)
     fmin = correction * fmin
 
     # Q should be capitalized here, so we suppress the name warning
@@ -977,7 +1003,7 @@ def mr_frequencies(tuning):
 
     Parameters
     ----------
-    tuning : float in `[-0.5, +0.5)` [scalar]
+    tuning : float [scalar]
         Tuning deviation from A440, measure as a fraction of the equally
         tempered semitone (1/12 of an octave).
 
@@ -1038,7 +1064,7 @@ def semitone_filterbank(center_freqs=None, tuning=0.0, sample_rates=None, flayou
         Center frequencies of the filter kernels.
         Also defines the number of filters in the filterbank.
 
-    tuning : float in `[-0.5, +0.5)` [scalar]
+    tuning : float [scalar]
         Tuning deviation from A440 as a fraction of a semitone (1/12 of an octave
         in equal temperament).
 

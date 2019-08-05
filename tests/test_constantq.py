@@ -308,7 +308,7 @@ def test_hybrid_cqt_white_noise():
 
 def test_icqt():
 
-    def __test(sr, scale, hop_length, over_sample, length, res_type, y):
+    def __test(sr, scale, hop_length, over_sample, length, res_type, dtype, y):
 
         bins_per_octave = over_sample * 12
         n_bins = 7 * bins_per_octave
@@ -327,7 +327,10 @@ def test_icqt():
                             hop_length=hop_length,
                             bins_per_octave=bins_per_octave,
                             length=_len,
-                            res_type=res_type)
+                            res_type=res_type,
+                            dtype=dtype)
+
+        assert yinv.dtype == dtype
 
         # Only test on the middle section
         if length:
@@ -349,7 +352,85 @@ def test_icqt():
         y = make_signal(sr, 1.5, fmin='C2', fmax='C4')
         for over_sample in [1, 3]:
             for scale in [False, True]:
-                for hop_length in [128, 384, 512]:
+                for hop_length in [384, 512]:
                     for length in [None, True]:
                         for res_type in ['scipy', 'kaiser_fast', 'polyphase']:
-                            yield __test, sr, scale, hop_length, over_sample, length, res_type, y
+                            for dtype in [np.float32, np.float64]:
+                                yield __test, sr, scale, hop_length, over_sample, length, res_type, dtype, y
+
+
+
+@pytest.fixture
+def y_chirp():
+    sr = 22050
+    y = librosa.chirp(55, 55 * 2**3, length=sr//4, sr=sr)
+    return y
+
+
+@pytest.mark.parametrize('hop_length', [512, 1024])
+@pytest.mark.parametrize('window', ['hann', 'hamming'])
+@pytest.mark.parametrize('use_length', [False, True])
+@pytest.mark.parametrize('over_sample', [1, 3])
+@pytest.mark.parametrize('res_type', ['polyphase'])
+@pytest.mark.parametrize('pad_mode', ['reflect'])
+@pytest.mark.parametrize('scale', [False, True])
+@pytest.mark.parametrize('momentum', [0, 0.99])
+@pytest.mark.parametrize('random_state', [None, 0, np.random.RandomState()])
+@pytest.mark.parametrize('fmin', [40.0])
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_griffinlim_cqt(y_chirp, hop_length, window, use_length, over_sample, fmin,
+                        res_type, pad_mode, scale, momentum, random_state, dtype):
+
+    if use_length:
+        length = len(y_chirp)
+    else:
+        length = None
+
+    sr = 22050
+    bins_per_octave = 12 * over_sample
+    n_bins = 6 * bins_per_octave
+    C = librosa.cqt(y_chirp, sr=sr, hop_length=hop_length, window=window, fmin=fmin,
+                    bins_per_octave=bins_per_octave, n_bins=n_bins,
+                    scale=scale,
+                    pad_mode=pad_mode,
+                    res_type=res_type)
+
+    Cmag = np.abs(C)
+
+    y_rec = librosa.griffinlim_cqt(Cmag, hop_length=hop_length, window=window,
+                                   sr=sr,
+                                   fmin=fmin,
+                                   bins_per_octave=bins_per_octave,
+                                   scale=scale,
+                                   pad_mode=pad_mode,
+                                   n_iter=3,
+                                   momentum=momentum,
+                                   random_state=random_state,
+                                   length=length,
+                                   res_type=res_type,
+                                   dtype=dtype)
+
+    y_inv = librosa.icqt(Cmag, sr=sr, fmin=fmin, hop_length=hop_length,
+                         window=window, bins_per_octave=bins_per_octave, scale=scale,
+                         length=length, res_type=res_type)
+
+    # First check for length
+    if use_length:
+        assert len(y_rec) == length
+
+    assert y_rec.dtype == dtype
+
+    # Check that the data is okay
+    assert np.all(np.isfinite(y_rec))
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_griffinlim_cqt_momentum():
+    x = np.zeros((33, 3))
+    librosa.griffinlim_cqt(x, momentum=-1)
+
+
+def test_griffinlim_cqt_momentum_warn():
+    x = np.zeros((33, 3))
+    with pytest.warns(UserWarning):
+        librosa.griffinlim_cqt(x, momentum=2)
