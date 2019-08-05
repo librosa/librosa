@@ -1108,9 +1108,8 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
         If `center=True`, the padding mode to use at the edges of the signal.
         By default, STFT uses reflection padding.
 
-
-    tuning : float in `[-0.5, 0.5)` [scalar] or None.
-        Deviation from A440 tuning in fractional bins (cents).
+    tuning : float [scalar] or None.
+        Deviation from A440 tuning in fractional chroma bins.
         If `None`, it is automatically estimated.
 
     kwargs : additional keyword arguments
@@ -1181,10 +1180,7 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
         tuning = estimate_tuning(S=S, sr=sr, bins_per_octave=n_chroma)
 
     # Get the filter bank
-    if 'A440' not in kwargs:
-        kwargs['A440'] = 440.0 * 2.0**(float(tuning) / n_chroma)
-
-    chromafb = filters.chroma(sr, n_fft, **kwargs)
+    chromafb = filters.chroma(sr, n_fft, tuning=tuning, **kwargs)
 
     # Compute raw chroma
     raw_chroma = np.dot(chromafb, S)
@@ -1224,7 +1220,7 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
         threshold are discarded, resulting in a sparse chromagram.
 
     tuning : float
-        Deviation (in cents) from A440 tuning
+        Deviation (in fractions of a CQT bin) from A440 tuning
 
     n_chroma : int > 0
         Number of chroma bins to produce
@@ -1353,7 +1349,7 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
         Column-wise normalization of the chromagram.
 
     tuning : float
-        Deviation (in cents) from A440 tuning
+        Deviation (in fractions of a CQT bin) from A440 tuning
 
     n_chroma : int > 0
         Number of chroma bins to produce

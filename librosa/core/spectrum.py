@@ -727,7 +727,7 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
           `D[:, t]` is centered at `y[t * hop_length]`.
         - If `False`, then `D[:, t]` begins at `y[t * hop_length]`
 
-    tuning : float in `[-0.5, +0.5)` [scalar]
+    tuning : float [scalar]
         Tuning deviation from A440 in fractions of a bin.
 
     pad_mode : string
@@ -1675,7 +1675,8 @@ def griffinlim(S, n_iter=32, hop_length=None, win_length=None, window='hann',
         If int, random_state is the seed used by the random number generator
         for phase initialization.
 
-        If `np.random.RandomState` instance, the random number generator itself;
+        If `np.random.RandomState` instance, the random number
+        generator itself.
 
         If `None`, defaults to the current `np.random` object.
 
