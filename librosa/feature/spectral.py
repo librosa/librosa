@@ -1763,10 +1763,13 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
            [  3.668e-09,   2.029e-08, ...,   3.208e-09,   2.864e-09],
            [  2.561e-10,   2.096e-09, ...,   7.543e-10,   6.101e-10]])
 
-    Using a pre-computed power spectrogram
+    Using a pre-computed power spectrogram would give the same result:
 
-    >>> D = np.abs(librosa.stft(y))**2
-    >>> S = librosa.feature.melspectrogram(S=D)
+    >>> D = np.abs(librosa.stft(y, sr=sr))**2
+    >>> S = librosa.feature.melspectrogram(S=D, sr=sr)
+    
+    Display of mel-frequency spectrogram coefficients, with custom
+    arguments for mel filterbank construction (default is fmax=sr/2):
 
     >>> # Passing through arguments to the Mel filters
     >>> S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128,
