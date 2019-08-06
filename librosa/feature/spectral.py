@@ -1765,7 +1765,7 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     Using a pre-computed power spectrogram would give the same result:
 
-    >>> D = np.abs(librosa.stft(y, sr=sr))**2
+    >>> D = np.abs(librosa.stft(y))**2
     >>> S = librosa.feature.melspectrogram(S=D, sr=sr)
     
     Display of mel-frequency spectrogram coefficients, with custom
