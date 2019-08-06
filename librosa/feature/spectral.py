@@ -1559,7 +1559,7 @@ def tonnetz(y=None, sr=22050, chroma=None):
 
 
 # -- Mel spectrogram and MFCCs -- #
-def mfcc(y=None, sr=22050, S=None, n_mfcc=20, dct_type=2, norm='ortho', **kwargs):
+def mfcc(y=None, sr=22050, S=None, n_mfcc=20, dct_type=2, norm='ortho', lifter=0, **kwargs):
     """Mel-frequency cepstral coefficients (MFCCs)
 
     Parameters
@@ -1585,6 +1585,14 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, dct_type=2, norm='ortho', **kwargs
         DCT basis.
 
         Normalization is not supported for `dct_type=1`.
+
+    lifter : number >= 0
+        If `lifter>0`, apply *liftering* (cepstral filtering) to the MFCCs:
+
+        `M[n, :] <- M[n, :] * (1 + sin(pi * (n + 1) / lifter)) * lifter / 2`
+
+        Setting `lifter >= 2 * n_mfcc` emphasizes the higher-order coefficients.
+        As `lifter` increases, the coefficient weighting becomes approximately linear.
 
     kwargs : additional keyword arguments
         Arguments to `melspectrogram`, if operating
@@ -1674,7 +1682,15 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, dct_type=2, norm='ortho', **kwargs
     if S is None:
         S = power_to_db(melspectrogram(y=y, sr=sr, **kwargs))
 
-    return scipy.fftpack.dct(S, axis=0, type=dct_type, norm=norm)[:n_mfcc]
+    M = scipy.fftpack.dct(S, axis=0, type=dct_type, norm=norm)[:n_mfcc]
+
+    if lifter > 0:
+        M *= 1 + (lifter / 2) * np.sin(np.pi * np.arange(1, 1 + n_mfcc, dtype=M.dtype) / lifter)[:, np.newaxis]
+        return M
+    elif lifter == 0:
+        return M
+    else:
+        raise ParameterError('MFCC lifter={} must be a non-negative number'.format(lifter))
 
 
 def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,

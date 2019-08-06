@@ -851,30 +851,38 @@ def test_cens():
 
 def test_mfcc():
 
-    def __test(dct_type, norm, n_mfcc, S):
+    def __test(dct_type, norm, n_mfcc, lifter, S):
 
         E_total = np.sum(S, axis=0)
 
-        mfcc = librosa.feature.mfcc(S=S, dct_type=dct_type, norm=norm, n_mfcc=n_mfcc)
+        mfcc = librosa.feature.mfcc(S=S, dct_type=dct_type, norm=norm,
+                                    n_mfcc=n_mfcc, lifter=lifter)
 
         assert mfcc.shape[0] == n_mfcc
         assert mfcc.shape[1] == S.shape[1]
 
         # In type-2 mode, DC component should be constant over all frames
         if dct_type == 2:
-            assert np.var(mfcc[0] / E_total) <= 1e-30
+            assert np.var(mfcc[0] / E_total) <= 1e-29
 
     S = librosa.power_to_db(np.random.randn(128, 100)**2, ref=np.max)
 
-    for n_mfcc in [13, 20]:
-        for dct_type in [1, 2, 3]:
-            for norm in [None, 'ortho']:
-                if dct_type == 1 and norm == 'ortho':
-                    tf = pytest.mark.xfail(__test, raises=NotImplementedError)
-                else:
-                    tf = __test
-                yield tf, dct_type, norm, n_mfcc, S
+    for dct_type in [1, 2, 3]:
+        for norm in [None, 'ortho']:
+            if dct_type == 1 and norm == 'ortho':
+                tf = pytest.mark.xfail(__test, raises=NotImplementedError)
+            else:
+                tf = __test
+            for n_mfcc in [13, 20]:
+                for lifter in [0, n_mfcc]:
+                    yield tf, dct_type, norm, n_mfcc, lifter, S
 
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('lifter', [-1, np.nan])
+def test_mfcc_badlifter(lifter):
+    S = np.random.randn(128, 100)**2
+    librosa.feature.mfcc(S=S, lifter=lifter)
 
 
 # -- feature inversion tests
