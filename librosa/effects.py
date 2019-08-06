@@ -635,12 +635,14 @@ def preemphasis(y, coef=0.97, zi=None, return_zf=False):
     True
 
     '''
-    b = [1, -coef]
+    b = np.asarray([1.0, -coef], dtype=y.dtype)
+    a = np.asarray([1.0], dtype=y.dtype)
 
     if zi is None:
-        zi = scipy.signal.lfilter_zi(b, 1)
+        zi = scipy.signal.lfilter_zi(b, a)
 
-    y_out, z_f = scipy.signal.lfilter(b, 1, y, zi=zi)
+    y_out, z_f = scipy.signal.lfilter(b, a, y,
+                                      zi=np.asarray(zi, dtype=y.dtype))
 
     if return_zf:
         return y_out, z_f
