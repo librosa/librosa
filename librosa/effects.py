@@ -573,7 +573,7 @@ def split(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
 
 
 def preemphasis(y, coef=0.97, zi=None, return_zf=False):
-    '''Pre-emphasize (high-pass filter) an audio signal:
+    '''Pre-emphasize an audio signal with a first-order auto-regressive filter:
 
         y[n] -> y[n] - coef * y[n-1]
 
@@ -584,7 +584,11 @@ def preemphasis(y, coef=0.97, zi=None, return_zf=False):
         Audio signal
 
     coef : positive number
-        Pre-emphasis coefficient.  Larger values provide sharper filtering.
+        Pre-emphasis coefficient.  Typical values of `coef` are between 0 and 1.
+
+        At the limit `coef=0`, the signal is unchanged.
+
+        At `coef=1`, the result is the first-order difference of the signal.
 
     zi : number
         Initial filter state
@@ -622,10 +626,11 @@ def preemphasis(y, coef=0.97, zi=None, return_zf=False):
     >>> plt.tight_layout();
 
 
-    Apply pre-emphasis in pieces for block streaming
+    Apply pre-emphasis in pieces for block streaming.  Note that the second block
+    initializes `zi` with the final state `zf` returned by the first call.
 
     >>> y_filt_1, zf = librosa.effects.preemphasis(y[:1000], return_zf=True)
-    >>> y_filt_2, zf = librosa.effects.preemphasis(y[1000:], zi=y_filt_2, return_zf=True)
+    >>> y_filt_2, zf = librosa.effects.preemphasis(y[1000:], zi=zf, return_zf=True)
     >>> np.allclose(y_filt, np.concatenate([y_filt_1, y_filt_2]))
     True
 
@@ -635,9 +640,9 @@ def preemphasis(y, coef=0.97, zi=None, return_zf=False):
     if zi is None:
         zi = scipy.signal.lfilter_zi(b, 1)
 
-    yout, z_f = scipy.signal.lfilter(b, 1, y, zi=zi)
+    y_out, z_f = scipy.signal.lfilter(b, 1, y, zi=zi)
 
     if return_zf:
-        return yout, z_f
+        return y_out, z_f
 
-    return yout
+    return y_out
