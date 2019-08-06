@@ -879,9 +879,10 @@ def test_mfcc():
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
-def test_mfcc_badlifter():
+@pytest.mark.parametrize('lifter', [-1, np.nan])
+def test_mfcc_badlifter(lifter):
     S = np.random.randn(128, 100)**2
-    librosa.feature.mfcc(S=S, lifter=-1)
+    librosa.feature.mfcc(S=S, lifter=lifter)
 
 
 # -- feature inversion tests

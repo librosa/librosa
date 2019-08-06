@@ -1686,10 +1686,11 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, dct_type=2, norm='ortho', lifter=0
 
     if lifter > 0:
         M *= 1 + (lifter / 2) * np.sin(np.pi * np.arange(1, 1 + n_mfcc) / lifter)[:, np.newaxis]
-    elif lifter < 0:
+        return M
+    elif lifter == 0:
+        return M
+    else:
         raise ParameterError('MFCC lifter={} must be a non-negative number'.format(lifter))
-
-    return M
 
 
 def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
