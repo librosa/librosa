@@ -29,9 +29,11 @@ Miscellaneous
     remix
     trim
     split
+    preemphasis
 """
 
 import numpy as np
+import scipy.signal
 
 from . import core
 from . import decompose
@@ -568,3 +570,74 @@ def split(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
 
     # Stack the results back as an ndarray
     return edges.reshape((-1, 2))
+
+
+def preemphasis(y, coef=0.97, zi=None, return_zf=False):
+    '''Pre-emphasize (high-pass filter) an audio signal:
+
+        y[n] -> y[n] - coef * y[n-1]
+
+
+    Parameters
+    ----------
+    y : np.ndarray
+        Audio signal
+
+    coef : number in [0, 1)
+        Pre-emphasis coefficient.  Larger values 
+
+    zi : number
+        Initial filter state
+
+    return_zf : boolean
+        If `True`, return the final filter state.  
+        If `False`, only return the pre-emphasized signal.
+
+    Returns
+    -------
+    `y_out` : np.ndarray
+        pre-emphasized signal
+
+    zf : number
+        if `return_zf=True`, the final filter state is also returned
+
+    Examples
+    --------
+    Apply a standard pre-emphasis filter
+
+    >>> import matplotlib.pyplot as plt
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), offset=30, duration=10)
+    >>> y_filt = librosa.effects.preemphasis(y)
+    >>> # and plot the results for comparison
+    >>> S_orig = librosa.amplitude_to_db(np.abs(librosa.stft(y)), ref=np.max)
+    >>> S_preemph = librosa.amplitude_to_db(np.abs(librosa.stft(y_filt)), ref=np.max)
+    >>> plt.subplot(2,1,1)
+    >>> librosa.display.specshow(S_orig, y_axis='log', x_axis='time')
+    >>> plt.title('Original signal')
+    >>> plt.colorbar()
+    >>> plt.subplot(2,1,2)
+    >>> librosa.display.specshow(S_preemph, y_axis='log', x_axis='time')
+    >>> plt.title('Pre-emphasized signal')
+    >>> plt.colorbar()
+    >>> plt.tight_layout();
+
+
+    Apply pre-emphasis in pieces for block streaming
+
+    >>> y_filt_1, zf = librosa.effects.preemphasis(y[:1000], return_zf=True)
+    >>> y_filt_2, zf = librosa.effects.preemphasis(y[1000:], zi=y_filt_2, return_zf=True)
+    >>> np.allclose(y_filt, np.concatenate([y_filt_1, y_filt_2]))
+    True
+
+    '''
+    b = [1, -coef]
+
+    if zi is None:
+        zi = scipy.signal.lfilter_zi(b, 1)
+
+    yout, z_f = scipy.signal.lfilter(b, 1, y, zi=zi)
+
+    if return_zf:
+        return yout, z_f
+
+    return yout
