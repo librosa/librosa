@@ -1777,12 +1777,12 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     >>> import matplotlib.pyplot as plt
     >>> plt.figure(figsize=(10, 4))
-    >>> librosa.display.specshow(librosa.power_to_db(S,
-    ...                                              ref=np.max),
-    ...                          y_axis='mel', fmax=8000,
-    ...                          x_axis='time')
+    >>> S_dB = librosa.power_to_db(S, ref=np.max)
+    >>> librosa.display.specshow(S_dB, x_axis='time',
+    ...                          y_axis='mel', sr=sr,
+    ...                          fmax=8000)
     >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.title('Mel spectrogram')
+    >>> plt.title('Mel-frequency spectrogram')
     >>> plt.tight_layout()
     >>> plt.show()
     """
