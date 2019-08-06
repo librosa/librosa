@@ -261,3 +261,31 @@ def test_split():
         for hop_length in [256, 512, 1024]:
             for top_db in [20, 60, 80]:
                 yield __test, hop_length, frame_length, top_db
+
+
+@pytest.mark.parametrize('coef', [0.5, 0.99])
+@pytest.mark.parametrize('zi', [None, [0]])
+@pytest.mark.parametrize('return_zf', [False, True])
+def test_preemphasis(coef, zi, return_zf):
+    x = np.arange(10)
+
+    y = librosa.effects.preemphasis(x, coef=coef, zi=zi, return_zf=return_zf)
+
+    if return_zf:
+        y, zf = y
+
+    assert np.allclose(y[1:], x[1:] - coef * x[:-1])
+
+
+def test_preemphasis_continue():
+
+    # Compare pre-emphasis computed in parts to that of the whole sequence in one go
+    x = np.arange(64)
+
+    y1, zf1 = librosa.effects.preemphasis(x[:32], return_zf=True)
+    y2, zf2 = librosa.effects.preemphasis(x[32:], return_zf=True, zi=zf1)
+
+    y_all, zf_all = librosa.effects.preemphasis(x, return_zf=True)
+
+    assert np.allclose(y_all, np.concatenate([y1, y2]))
+    assert np.allclose(zf2, zf_all)

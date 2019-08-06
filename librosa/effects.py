@@ -583,8 +583,8 @@ def preemphasis(y, coef=0.97, zi=None, return_zf=False):
     y : np.ndarray
         Audio signal
 
-    coef : number in [0, 1)
-        Pre-emphasis coefficient.  Larger values 
+    coef : positive number
+        Pre-emphasis coefficient.  Larger values provide sharper filtering.
 
     zi : number
         Initial filter state
