@@ -266,8 +266,9 @@ def test_split():
 @pytest.mark.parametrize('coef', [0.5, 0.99])
 @pytest.mark.parametrize('zi', [None, [0]])
 @pytest.mark.parametrize('return_zf', [False, True])
-def test_preemphasis(coef, zi, return_zf):
-    x = np.arange(10)
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_preemphasis(coef, zi, return_zf, dtype):
+    x = np.arange(10, dtype=dtype)
 
     y = librosa.effects.preemphasis(x, coef=coef, zi=zi, return_zf=return_zf)
 
@@ -275,12 +276,14 @@ def test_preemphasis(coef, zi, return_zf):
         y, zf = y
 
     assert np.allclose(y[1:], x[1:] - coef * x[:-1])
+    assert x.dtype == y.dtype
 
 
-def test_preemphasis_continue():
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_preemphasis_continue(dtype):
 
     # Compare pre-emphasis computed in parts to that of the whole sequence in one go
-    x = np.arange(64)
+    x = np.arange(64, dtype=dtype)
 
     y1, zf1 = librosa.effects.preemphasis(x[:32], return_zf=True)
     y2, zf2 = librosa.effects.preemphasis(x[32:], return_zf=True, zi=zf1)
@@ -289,3 +292,4 @@ def test_preemphasis_continue():
 
     assert np.allclose(y_all, np.concatenate([y1, y2]))
     assert np.allclose(zf2, zf_all)
+    assert x.dtype == y_all.dtype
