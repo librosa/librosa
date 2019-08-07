@@ -353,6 +353,10 @@ def stream(path, block_length, frame_length, hop_length,
     # Get the sample rate from the file info
     sr = sf.info(path).samplerate
 
+    # If the input is a file handle, rewind its read position after `sf.info`
+    if not isinstance(path, str) and not isinstance(path, int):
+        path.seek(0)
+
     # Construct the stream
     if offset:
         start = int(offset * sr)
