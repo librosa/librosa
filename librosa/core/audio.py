@@ -354,7 +354,7 @@ def stream(path, block_length, frame_length, hop_length,
     sr = sf.info(path).samplerate
 
     # If the input is a file handle, rewind its read position after `sf.info`
-    if not isinstance(path, str) and not isinstance(path, int):
+    if hasattr(path, 'seek'):
         path.seek(0)
 
     # Construct the stream
