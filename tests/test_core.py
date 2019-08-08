@@ -1985,11 +1985,15 @@ def test_get_samplerate(ext):
 @pytest.mark.parametrize('duration', [None, 1.0])
 @pytest.mark.parametrize('fill_value', [None, 999.0])
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
+@pytest.mark.parametrize('as_file_object', [False, True])
 def test_stream(block_length, frame_length, hop_length, mono, offset,
-                duration, fill_value, dtype):
+                duration, fill_value, dtype, as_file_object):
 
     # test data is stereo, int 16
     path = os.path.join('tests', 'data', 'test1_22050.wav')
+
+    if as_file_object:
+        path = open(path, 'rb')
 
     stream = librosa.stream(path, block_length=block_length,
                             frame_length=frame_length,
