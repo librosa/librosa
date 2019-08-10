@@ -33,59 +33,89 @@ __all__ = ['stft', 'istft', 'magphase', 'iirt', 'ifgram',
 @cache(level=20)
 def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
          center=True, dtype=np.complex64, pad_mode='reflect'):
-    """Short-time Fourier transform (STFT)
+    """Short-time Fourier transform (STFT). [1, chapter 2]
+    
+    The STFT represents a signal in the time-frequency domain by
+    computing discrete Fourier transforms (DFT) over short overlapping
+    windows.
 
-    Returns a complex-valued matrix D such that
+    This function returns a complex-valued matrix D such that
         `np.abs(D[f, t])` is the magnitude of frequency bin `f`
         at frame `t`
-
+    and
         `np.angle(D[f, t])` is the phase of frequency bin `f`
-        at frame `t`
+        at frame `t`.
+        
+    The integers `t` and `f` can be converted to physical units by means
+    of the utility functions `frames_to_sample` and `fft_frequencies`.
+        
+    .. [1] M. Müller. "Fundamentals of Music Processing." Springer, 2015
+         
 
     Parameters
     ----------
     y : np.ndarray [shape=(n,)], real-valued
-        the input signal (audio time series)
+        input signal
 
     n_fft : int > 0 [scalar]
-        FFT window size
+        length of the windowed signal after padding with zeros.
+        The number of rows in the STFT matrix `D` is (1 + n_fft/2).
+        We recommend setting `n_fft` to a power of two for optimizing
+        the speed of the fast Fourier transform algorithm.
 
     hop_length : int > 0 [scalar]
-        number audio of frames between STFT columns.
-        If unspecified, defaults `win_length / 4`.
+        number of audio samples between adjacent STFT columns.
+        Smaller values increase the number of columns in `D` without
+        affecting its temporal resolution.
+        If unspecified, defaults to `win_length / 4`.
 
     win_length : int <= n_fft [scalar]
-        Each frame of audio is windowed by `window()`.
-        The window will be of length `win_length` and then padded
-        with zeros to match `n_fft`.
-
+        Each frame of audio is windowed by `window()` of length `win_length`
+        and then padded with zeros to match `n_fft`.
+        Smaller values lead to improved temporal resolution at the expense
+        of frequency resolution, and vice versa.
         If unspecified, defaults to ``win_length = n_fft``.
 
     window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        Either:
         - a window specification (string, tuple, or number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.hanning`
         - a vector or array of length `n_fft`
+        Defaults to a raised cosine window ("hann"), which is adequate for
+        most applications in audio signal processing.
 
         .. see also:: `filters.get_window`
 
     center : boolean
-        - If `True`, the signal `y` is padded so that frame
+        If `True`, the signal `y` is padded so that frame
           `D[:, t]` is centered at `y[t * hop_length]`.
-        - If `False`, then `D[:, t]` begins at `y[t * hop_length]`
+        If `False`, then `D[:, t]` begins at `y[t * hop_length]`.
+        Defaults to `True`,  which simplifies the alignment of `D` onto a
+        time grid by means of `librosa.core.frames_to_samples`.
+        Note, however, that `center` must be set to `False` when analyzing
+        signals with `librosa.stream`. See the librosa blog for more details:
+        https://librosa.github.io/blog/2019/07/29/stream-processing/#stream-processing
 
     dtype : numeric type
-        Complex numeric type for `D`.  Default is 64-bit complex.
+        Complex numeric type for `D`.  Default is single-precision
+        floating-point complex (`np.complex64`).
 
-    pad_mode : string
-        If `center=True`, the padding mode to use at the edges of the signal.
-        By default, STFT uses reflection padding.
+    pad_mode : string or function
+        If `center=True`, this argument is passed to `np.pad` for padding
+        the edges of the signal `y`. By default (`pad_mode="reflect"`),
+        `y` is padded on both sides with its own reflection, mirrored around
+        its first and last sample respectively.
+        If `center=False`,  this argument is ignored.
+        
+        .. see also:: `np.pad`
 
 
     Returns
     -------
-    D : np.ndarray [shape=(1 + n_fft/2, t), dtype=dtype]
-        STFT matrix
+    D : np.ndarray [shape=(1 + n_fft/2, n_frames), dtype=dtype]
+        Complex-valued matrix of short-term Fourier transform
+        coefficients.
 
 
     See Also
@@ -94,7 +124,6 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
 
     ifgram : Instantaneous frequency spectrogram
 
-    np.pad : array padding
 
     Notes
     -----
