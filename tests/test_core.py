@@ -1974,6 +1974,19 @@ def test_get_samplerate(ext):
     assert sr == 22050
 
 
+@pytest.fixture(params=['as_file', 'as_string'])
+def path(request):
+
+    # test data is stereo, int 16
+    path = os.path.join('tests', 'data', 'test1_22050.wav')
+
+    if request.param == 'as_string':
+        yield path
+    elif request.param == 'as_file':
+        with open(path, 'rb') as f:
+            yield f
+
+
 @pytest.mark.parametrize('block_length', [10, np.int64(30),
                                           pytest.mark.xfail(0, raises=librosa.ParameterError)])
 @pytest.mark.parametrize('frame_length', [1024, np.int64(2048),
@@ -1985,15 +1998,8 @@ def test_get_samplerate(ext):
 @pytest.mark.parametrize('duration', [None, 1.0])
 @pytest.mark.parametrize('fill_value', [None, 999.0])
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
-@pytest.mark.parametrize('as_file_object', [False, True])
-def test_stream(block_length, frame_length, hop_length, mono, offset,
-                duration, fill_value, dtype, as_file_object):
-
-    # test data is stereo, int 16
-    path = os.path.join('tests', 'data', 'test1_22050.wav')
-
-    if as_file_object:
-        path = open(path, 'rb')
+def test_stream(path, block_length, frame_length, hop_length, mono, offset,
+                duration, fill_value, dtype):
 
     stream = librosa.stream(path, block_length=block_length,
                             frame_length=frame_length,
