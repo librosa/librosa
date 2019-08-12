@@ -2040,6 +2040,10 @@ def test_stream(path, block_length, frame_length, hop_length, mono, offset,
     # Load the reference data.
     # We'll cast to mono here to simplify checking
 
+    # File objects have to be reset before loading
+    if hasattr(path, 'seek'):
+        path.seek(0)
+
     y_full, sr = librosa.load(path, sr=None, dtype=dtype, mono=True,
                               offset=offset, duration=duration)
     # First, check the rate
