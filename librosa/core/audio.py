@@ -4,6 +4,7 @@
 
 import os
 import six
+import logging
 
 import soundfile as sf
 import audioread
@@ -22,6 +23,8 @@ __all__ = ['load', 'stream', 'to_mono', 'resample',
            'get_duration', 'get_samplerate',
            'autocorrelate', 'lpc', 'zero_crossings',
            'clicks', 'tone', 'chirp']
+
+logger = logging.getLogger(__name__)
 
 # Resampling bandwidths as percentage of Nyquist
 BW_BEST = resampy.filters.get_filter('kaiser_best')[2]
@@ -139,8 +142,8 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
 
     except RuntimeError as exc:
         # If soundfile failed, fall back to the audioread loader
-        if hasattr(path, 'name'):
-            path = path.name
+        logger.warning('PySoundFile failed. Trying audioread instead.',
+                       exc_info=exc)
         y, sr_native = __audioread_load(path, offset, duration, dtype)
 
     # Final cleanup for dtype and contiguity
@@ -890,7 +893,7 @@ def __lpc(y, order):
         # fwd_pred_error = f_{M-1,k}       (we have advanced M)
         # den <- DEN_{M}                   (lhs)
         #
-        
+
         q = dtype(1) - reflect_coeff**2
         den = q*den - bwd_pred_error[-1]**2 - fwd_pred_error[0]**2
 
