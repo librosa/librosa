@@ -139,6 +139,8 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
 
     except RuntimeError as exc:
         # If soundfile failed, fall back to the audioread loader
+        if hasattr(path, 'name'):
+            path = path.name
         y, sr_native = __audioread_load(path, offset, duration, dtype)
 
     # Final cleanup for dtype and contiguity
