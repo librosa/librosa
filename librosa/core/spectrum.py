@@ -60,20 +60,29 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
     n_fft : int > 0 [scalar]
         length of the windowed signal after padding with zeros.
         The number of rows in the STFT matrix `D` is (1 + n_fft/2).
-        We recommend setting `n_fft` to a power of two for optimizing
-        the speed of the fast Fourier transform algorithm.
+        The default value, n_fft=2048 samples, corresponds to a physical
+        duration of 93 milliseconds at a sample rate of 22050 Hz, i.e. the
+        default sample rate in librosa. This value is well adapted for music 
+        signals. However, in speech processing, the recommended value is 512,
+        corresponding to 23 milliseconds at a sample rate of 22050 Hz.
+        In any case, we recommend setting `n_fft` to a power of two for
+        optimizing the speed of the fast Fourier transform (FFT) algorithm.
 
     hop_length : int > 0 [scalar]
         number of audio samples between adjacent STFT columns.
         Smaller values increase the number of columns in `D` without
-        affecting its temporal resolution.
-        If unspecified, defaults to `win_length / 4`.
+        affecting the frequency resolution of the STFT.
+        If unspecified, defaults to `win_length / 4` (see below).
 
     win_length : int <= n_fft [scalar]
         Each frame of audio is windowed by `window()` of length `win_length`
         and then padded with zeros to match `n_fft`.
-        Smaller values lead to improved temporal resolution at the expense
-        of frequency resolution, and vice versa.
+        Smaller values improve the temporal resolution of the STFT (i.e. the
+        ability to discriminate impulses that are closely spaced in time)
+        at the expense of frequency resolution (i.e. the ability to discriminate
+        pure tones that are closely spaced in frequency). This effect is known
+        as the time-frequency localization tradeoff and needs to be adjusted
+        according to the properties of the input signal `y`.
         If unspecified, defaults to ``win_length = n_fft``.
 
     window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
