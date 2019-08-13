@@ -518,6 +518,7 @@ def recurrence_to_lag(rec, pad=True, axis=-1):
     --------
     recurrence_matrix
     lag_to_recurrence
+    util.shear
 
     Examples
     --------
@@ -549,40 +550,30 @@ def recurrence_to_lag(rec, pad=True, axis=-1):
 
     sparse = scipy.sparse.issparse(rec)
 
-    roll_ax = None
     if sparse:
-        roll_ax = 1 - axis
-        lag_format = rec.format
-        if axis == 0:
-            rec = rec.tocsc()
-        elif axis in (-1, 1):
-            rec = rec.tocsr()
+        fmt = rec.format
 
     t = rec.shape[axis]
 
-    if sparse:
-        if pad:
+    if pad:
+        if sparse:
             kron = np.asarray([[1, 0]]).swapaxes(axis, 0)
-            lag = scipy.sparse.kron(kron.astype(rec.dtype), rec, format='lil')
+            if axis == 0:
+                rec_fmt = 'csr'
+            else:
+                rec_fmt = 'csc'
+            rec = scipy.sparse.kron(kron.astype(rec.dtype), rec, format=rec_fmt)
         else:
-            lag = scipy.sparse.lil_matrix(rec)
-    else:
-        if pad:
             padding = [(0, 0), (0, 0)]
             padding[(1-axis)] = (0, t)
-            lag = np.pad(rec, padding, mode='constant')
-        else:
-            lag = rec.copy()
+            rec = np.pad(rec, padding, mode='constant')
 
-    idx_slice = [slice(None)] * lag.ndim
-
-    for i in range(1, t):
-        idx_slice[axis] = i
-        lag[tuple(idx_slice)] = util.roll_sparse(lag[tuple(idx_slice)], -i, axis=roll_ax)
+    lag = util.shear(rec, factor=-1, axis=axis)
 
     if sparse:
-        return lag.asformat(lag_format)
-    return np.ascontiguousarray(lag.T).T
+        lag = lag.asformat(fmt)
+
+    return lag
 
 
 def lag_to_recurrence(lag, axis=-1):
@@ -658,25 +649,12 @@ def lag_to_recurrence(lag, axis=-1):
     t = lag.shape[axis]
 
     sparse = scipy.sparse.issparse(lag)
-    if sparse:
-        rec = scipy.sparse.lil_matrix(lag)
-        roll_ax = 1 - axis
-    else:
-        rec = lag.copy()
-        roll_ax = None
 
-    idx_slice = [slice(None)] * lag.ndim
-    for i in range(1, t):
-        idx_slice[axis] = i
-        rec[tuple(idx_slice)] = util.roll_sparse(lag[tuple(idx_slice)], i, axis=roll_ax)
+    rec = util.shear(lag, factor=+1, axis=axis)
 
     sub_slice = [slice(None)] * rec.ndim
     sub_slice[1 - axis] = slice(t)
-    rec = rec[tuple(sub_slice)]
-
-    if sparse:
-        return rec.asformat(lag.format)
-    return np.ascontiguousarray(rec.T).T
+    return rec[tuple(sub_slice)]
 
 
 def timelag_filter(function, pad=True, index=0):
