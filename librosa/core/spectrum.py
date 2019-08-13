@@ -150,7 +150,6 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
            [1.70630571e-07, 8.92518756e-07, 1.23656537e-05, ...,
             5.33256745e-08, 3.33264900e-08, 5.13272980e-09]], dtype=float32)
 
-
     Use left-aligned frames, instead of centered frames
 
     >>> D_left = np.abs(librosa.stft(y, center=False))
