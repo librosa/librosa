@@ -141,10 +141,13 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
             y = sf_desc.read(frames=frame_duration, dtype=dtype, always_2d=False).T
 
     except RuntimeError as exc:
-        # If soundfile failed, fall back to the audioread loader
-        logger.warning('PySoundFile failed. Trying audioread instead.',
-                       exc_info=exc)
-        y, sr_native = __audioread_load(path, offset, duration, dtype)
+
+        # If soundfile failed, try audioread instead
+        if isinstance(path, six.string_types()):
+            logger.warning('PySoundFile failed. Trying audioread instead.')
+            y, sr_native = __audioread_load(path, offset, duration, dtype)
+        else:
+            raise exc
 
     # Final cleanup for dtype and contiguity
     if mono:
