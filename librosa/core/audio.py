@@ -142,7 +142,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
     except RuntimeError as exc:
 
         # If soundfile failed, try audioread instead
-        if isinstance(path, six.string_types()):
+        if isinstance(path, six.string_types):
             warnings.warn('PySoundFile failed. Trying audioread instead.')
             y, sr_native = __audioread_load(path, offset, duration, dtype)
         else:
