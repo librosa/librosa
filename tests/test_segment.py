@@ -252,61 +252,51 @@ def test_recurrence_bad_bandwidth():
     rec = librosa.segment.recurrence_matrix(data, bandwidth=-2)
 
 
-def test_recurrence_to_lag():
-
-    def __test(n, pad):
-        srand()
-        data = np.random.randn(17, n)
-
-        rec = librosa.segment.recurrence_matrix(data)
-
-        lag = librosa.segment.recurrence_to_lag(rec, pad=pad, axis=-1)
-        lag2 = librosa.segment.recurrence_to_lag(rec.T, pad=pad, axis=0).T
-
-        assert np.allclose(lag, lag2)
-
-        x = Ellipsis
-        if pad:
-            x = slice(n)
-
-        for i in range(n):
-            assert np.allclose(rec[:, i], np.roll(lag[:, i], i)[x])
-
-    @pytest.mark.xfail(raises=librosa.ParameterError)
-    def __test_fail(size):
-        librosa.segment.recurrence_to_lag(np.zeros(size))
-
-    for n in [10, 100, 1000]:
-        for pad in [False, True]:
-            yield __test, n, pad
-
-    yield __test_fail, (17,)
-    yield __test_fail, (17, 34)
-    yield __test_fail, (17, 17, 17)
-
-
-def test_recurrence_to_lag_sparse():
+@pytest.mark.parametrize('n', [10, 100, 500])
+@pytest.mark.parametrize('pad', [False, True])
+def test_recurrence_to_lag(n, pad):
 
     srand()
+    data = np.random.randn(17, n)
 
-    def __test(pad, axis, rec):
+    rec = librosa.segment.recurrence_matrix(data)
 
-        rec_dense = rec.toarray()
+    lag = librosa.segment.recurrence_to_lag(rec, pad=pad, axis=-1)
+    lag2 = librosa.segment.recurrence_to_lag(rec.T, pad=pad, axis=0)
 
-        lag_sparse = librosa.segment.recurrence_to_lag(rec, pad=pad, axis=axis)
-        lag_dense = librosa.segment.recurrence_to_lag(rec_dense, pad=pad, axis=axis)
+    assert np.allclose(lag, lag2.T)
 
-        assert scipy.sparse.issparse(lag_sparse)
-        assert rec.format == lag_sparse.format
-        assert rec.dtype == lag_sparse.dtype
-        assert np.allclose(lag_sparse.toarray(), lag_dense)
+    x = Ellipsis
+    if pad:
+        x = slice(n)
 
-    data = np.random.randn(3, 100)
-    R_sparse = librosa.segment.recurrence_matrix(data, sparse=True)
+    for i in range(n):
+        assert np.allclose(rec[:, i], np.roll(lag[:, i], i)[x])
 
-    for pad in [False, True]:
-        for axis in [0, 1, -1]:
-            yield __test, pad, axis, R_sparse
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('size', [(17,), (17, 34), (17, 17, 17)])
+def test_recurrence_to_lag_fail(size):
+    librosa.segment.recurrence_to_lag(np.zeros(size))
+
+
+@pytest.mark.parametrize('pad', [False, True])
+@pytest.mark.parametrize('axis', [0, 1, -1])
+@pytest.mark.parametrize('rec', [librosa.segment.recurrence_matrix(np.random.randn(3, 100), sparse=True)])
+@pytest.mark.parametrize('fmt', ['csc', 'csr', 'lil', 'bsr', 'dia'])
+def test_recurrence_to_lag_sparse(pad, axis, rec, fmt):
+
+    rec_dense = rec.toarray()
+
+    rec = rec.asformat(fmt)
+
+    lag_sparse = librosa.segment.recurrence_to_lag(rec, pad=pad, axis=axis)
+    lag_dense = librosa.segment.recurrence_to_lag(rec_dense, pad=pad, axis=axis)
+
+    assert scipy.sparse.issparse(lag_sparse)
+    assert rec.format == lag_sparse.format
+    assert rec.dtype == lag_sparse.dtype
+    assert np.allclose(lag_sparse.toarray(), lag_dense)
 
 
 def test_lag_to_recurrence():
