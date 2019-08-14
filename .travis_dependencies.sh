@@ -39,6 +39,10 @@ if [ ! -d "$src" ]; then
 
         conda install -c conda-forge ffmpeg pysoundfile python-coveralls
 
+        if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" ]]; then
+            conda install -c numba numba
+        fi
+
         source deactivate
     popd
 else
