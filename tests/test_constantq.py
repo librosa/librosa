@@ -363,7 +363,7 @@ def test_icqt():
 @pytest.fixture
 def y_chirp():
     sr = 22050
-    y = librosa.chirp(55, 55 * 2**3, length=sr//4, sr=sr)
+    y = librosa.chirp(55, 55 * 2**3, length=sr//8, sr=sr)
     return y
 
 
@@ -378,8 +378,9 @@ def y_chirp():
 @pytest.mark.parametrize('random_state', [None, 0, np.random.RandomState()])
 @pytest.mark.parametrize('fmin', [40.0])
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
+@pytest.mark.parametrize('init', [None, 'random'])
 def test_griffinlim_cqt(y_chirp, hop_length, window, use_length, over_sample, fmin,
-                        res_type, pad_mode, scale, momentum, random_state, dtype):
+                        res_type, pad_mode, scale, momentum, init, random_state, dtype):
 
     if use_length:
         length = len(y_chirp)
@@ -408,6 +409,7 @@ def test_griffinlim_cqt(y_chirp, hop_length, window, use_length, over_sample, fm
                                    random_state=random_state,
                                    length=length,
                                    res_type=res_type,
+                                   init=init,
                                    dtype=dtype)
 
     y_inv = librosa.icqt(Cmag, sr=sr, fmin=fmin, hop_length=hop_length,
@@ -422,6 +424,12 @@ def test_griffinlim_cqt(y_chirp, hop_length, window, use_length, over_sample, fm
 
     # Check that the data is okay
     assert np.all(np.isfinite(y_rec))
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_griffinlim_cqt_badinit():
+    x = np.zeros((33, 3))
+    librosa.griffinlim_cqt(x, init='garbage')
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)

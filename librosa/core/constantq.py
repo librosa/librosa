@@ -851,7 +851,7 @@ def __num_two_factors(x):
 def griffinlim_cqt(C, n_iter=32, sr=22050, hop_length=512, fmin=None, bins_per_octave=12, tuning=0.0,
                    filter_scale=1, norm=1, sparsity=0.01, window='hann', scale=True,
                    pad_mode='reflect', res_type='kaiser_fast', dtype=np.float32,
-                   length=None, momentum=0.99, random_state=None):
+                   length=None, momentum=0.99, init='random', random_state=None):
     '''Approximate constant-Q magnitude spectrogram inversion using the "fast" Griffin-Lim
     algorithm [1]_ [2]_.
 
@@ -949,6 +949,15 @@ def griffinlim_cqt(C, n_iter=32, sr=22050, hop_length=512, fmin=None, bins_per_o
         Setting this to 0 recovers the original Griffin-Lim method [1]_.
         Values near 1 can lead to faster convergence, but above 1 may not converge.
 
+    init : None or 'random' [default]
+        If 'random' (the default), then phase values are initialized randomly
+        according to `random_state`.  This is recommended when the input `C` is
+        a magnitude spectrogram with no initial phase estimates.
+
+        If `None`, then the phase is initialized from `C`.  This is useful when
+        an initial guess for phase can be provided, or when you want to resume
+        Griffin-Lim from a previous output.
+
     random_state : None, int, or np.random.RandomState
         If int, random_state is the seed used by the random number generator
         for phase initialization.
@@ -1018,8 +1027,16 @@ def griffinlim_cqt(C, n_iter=32, sr=22050, hop_length=512, fmin=None, bins_per_o
     elif momentum < 0:
         raise ParameterError('griffinlim_cqt() called with momentum={} < 0'.format(momentum))
 
-    # randomly initialize the phase
-    angles = np.exp(2j * np.pi * rng.rand(*C.shape))
+    # using complex64 will keep the result to minimal necessary precision
+    angles = np.empty(C.shape, dtype=np.complex64)
+    if init == 'random':
+        # randomly initialize the phase
+        angles[:] = np.exp(2j * np.pi * rng.rand(*C.shape))
+    elif init is None:
+        # Initialize an all ones complex matrix
+        angles[:] = 1.0
+    else:
+        raise ParameterError("init={} must either None or 'random'".format(init))
 
     # And initialize the previous iterate to 0
     rebuilt = 0.
@@ -1029,8 +1046,10 @@ def griffinlim_cqt(C, n_iter=32, sr=22050, hop_length=512, fmin=None, bins_per_o
         tprev = rebuilt
 
         # Invert with our current estimate of the phases
-        inverse = icqt(C * angles, sr=sr, hop_length=hop_length, bins_per_octave=bins_per_octave,
-                       fmin=fmin, tuning=tuning, window=window, length=length, res_type=res_type, dtype=dtype)
+        inverse = icqt(C * angles, sr=sr, hop_length=hop_length,
+                       bins_per_octave=bins_per_octave, fmin=fmin,
+                       tuning=tuning, window=window, length=length,
+                       res_type=res_type, dtype=dtype)
 
         # Rebuild the spectrogram
         rebuilt = cqt(inverse, sr=sr, bins_per_octave=bins_per_octave, n_bins=C.shape[0],
