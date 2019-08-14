@@ -1913,7 +1913,7 @@ def test_reset_fftlib():
 @pytest.fixture
 def y_chirp():
     sr = 22050
-    y = librosa.chirp(55, 55 * 2**7, length=sr//2, sr=sr)
+    y = librosa.chirp(55, 55 * 2**7, length=sr//8, sr=sr)
     return y
 
 
@@ -1926,7 +1926,8 @@ def y_chirp():
 @pytest.mark.parametrize('pad_mode', ['constant', 'reflect'])
 @pytest.mark.parametrize('momentum', [0, 0.99])
 @pytest.mark.parametrize('random_state', [None, 0, np.random.RandomState()])
-def test_griffinlim(y_chirp, hop_length, win_length, window, center, dtype, use_length, pad_mode, momentum, random_state):
+@pytest.mark.parametrize('init', [None, 'random'])
+def test_griffinlim(y_chirp, hop_length, win_length, window, center, dtype, use_length, pad_mode, momentum, init, random_state):
 
     if use_length:
         length = len(y_chirp)
@@ -1942,6 +1943,7 @@ def test_griffinlim(y_chirp, hop_length, win_length, window, center, dtype, use_
                                window=window, center=center, dtype=dtype,
                                length=length, pad_mode=pad_mode,
                                n_iter=3, momentum=momentum,
+                               init=init,
                                random_state=random_state)
 
     # First, check length
@@ -1950,6 +1952,11 @@ def test_griffinlim(y_chirp, hop_length, win_length, window, center, dtype, use_
 
     # Next, check dtype
     assert y_rec.dtype == dtype
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_griffinlim_badinit():
+    x = np.zeros((33, 3))
+    librosa.griffinlim(x, init='garbage')
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
