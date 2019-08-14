@@ -1146,3 +1146,7 @@ def test_shear_sparse(fmt):
     assert np.allclose(E_shear.toarray(),
                        np.asarray([[1, 0, 0], [1, 0, 0], [1, 0, 0]]))
 
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_shear_badfactor():
+    librosa.util.shear(np.eye(3), factor=None)
