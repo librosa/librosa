@@ -4,7 +4,7 @@
 
 import os
 import six
-import logging
+import warnings
 
 import soundfile as sf
 import audioread
@@ -23,8 +23,6 @@ __all__ = ['load', 'stream', 'to_mono', 'resample',
            'get_duration', 'get_samplerate',
            'autocorrelate', 'lpc', 'zero_crossings',
            'clicks', 'tone', 'chirp']
-
-logger = logging.getLogger(__name__)
 
 # Resampling bandwidths as percentage of Nyquist
 BW_BEST = resampy.filters.get_filter('kaiser_best')[2]
@@ -144,7 +142,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
 
         # If soundfile failed, try audioread instead
         if isinstance(path, six.string_types()):
-            logger.warning('PySoundFile failed. Trying audioread instead.')
+            warnings.warn('PySoundFile failed. Trying audioread instead.')
             y, sr_native = __audioread_load(path, offset, duration, dtype)
         else:
             raise exc
