@@ -29,7 +29,8 @@ Spectral representations
 
     stft
     istft
-    ifgram
+    reassigned_spectrogram
+
     cqt
     icqt
     hybrid_cqt
@@ -110,6 +111,13 @@ Pitch and tuning
     estimate_tuning
     pitch_tuning
     piptrack
+
+Deprecated
+----------
+.. autosummary::
+    :toctree: generated/
+
+    ifgram
 """
 
 from .time_frequency import *  # pylint: disable=wildcard-import
