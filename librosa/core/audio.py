@@ -4,6 +4,7 @@
 
 import os
 import six
+import sys
 import warnings
 
 import soundfile as sf
@@ -145,7 +146,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
             warnings.warn('PySoundFile failed. Trying audioread instead.')
             y, sr_native = __audioread_load(path, offset, duration, dtype)
         else:
-            raise exc
+            six.reraise(*sys.exc_info())
 
     # Final cleanup for dtype and contiguity
     if mono:
