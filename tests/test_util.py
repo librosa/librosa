@@ -1090,8 +1090,6 @@ def psig():
 @pytest.mark.parametrize('edge_order', [1, 2])
 @pytest.mark.parametrize('axis', [0, 1, -1])
 def test_cyclic_gradient(psig, edge_order, axis):
-
-
     grad = librosa.util.cyclic_gradient(psig,
                                         edge_order=edge_order,
                                         axis=axis)
@@ -1104,3 +1102,51 @@ def test_cyclic_gradient(psig, edge_order, axis):
         assert np.allclose(grad, 0)
     else:
         assert np.allclose(grad, [-1.5, 1, 1, 1, -1.5])
+
+
+
+def test_shear_dense():
+
+    E = np.eye(3)
+
+    E_shear = librosa.util.shear(E, factor=1, axis=0)
+    assert np.allclose(E_shear, np.asarray([[1, 0, 0], [0, 0, 1], [0, 1, 0]]))
+
+    E_shear = librosa.util.shear(E, factor=1, axis=1)
+    assert np.allclose(E_shear, np.asarray([[1, 0, 0], [0, 0, 1], [0, 1, 0]]))
+
+    E_shear = librosa.util.shear(E, factor=-1, axis=1)
+    assert np.allclose(E_shear, np.asarray([[1, 1, 1], [0, 0, 0], [0, 0, 0]]))
+
+    E_shear = librosa.util.shear(E, factor=-1, axis=0)
+    assert np.allclose(E_shear, np.asarray([[1, 0, 0], [1, 0, 0], [1, 0, 0]]))
+
+
+@pytest.mark.parametrize('fmt', ['csc', 'csr', 'lil', 'dok'])
+def test_shear_sparse(fmt):
+    E = scipy.sparse.identity(3, format=fmt)
+
+    E_shear = librosa.util.shear(E, factor=1, axis=0)
+    assert E_shear.format == fmt
+    assert np.allclose(E_shear.toarray(),
+                       np.asarray([[1, 0, 0], [0, 0, 1], [0, 1, 0]]))
+
+    E_shear = librosa.util.shear(E, factor=1, axis=1)
+    assert E_shear.format == fmt
+    assert np.allclose(E_shear.toarray(),
+                       np.asarray([[1, 0, 0], [0, 0, 1], [0, 1, 0]]))
+
+    E_shear = librosa.util.shear(E, factor=-1, axis=1)
+    assert E_shear.format == fmt
+    assert np.allclose(E_shear.toarray(),
+                       np.asarray([[1, 1, 1], [0, 0, 0], [0, 0, 0]]))
+
+    E_shear = librosa.util.shear(E, factor=-1, axis=0)
+    assert E_shear.format == fmt
+    assert np.allclose(E_shear.toarray(),
+                       np.asarray([[1, 0, 0], [1, 0, 0], [1, 0, 0]]))
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_shear_badfactor():
+    librosa.util.shear(np.eye(3), factor=None)

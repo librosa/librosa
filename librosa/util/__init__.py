@@ -19,7 +19,7 @@ Array operations
 
     axis_sort
     normalize
-    roll_sparse
+    shear
     sparsify_rows
 
     buf_to_float
@@ -63,6 +63,14 @@ File operations
     example_audio_file
     find_files
 
+
+Deprecated
+----------
+
+.. autosummary::
+    :toctree: generated/
+
+    roll_sparse
 """
 
 from .utils import *  # pylint: disable=wildcard-import
