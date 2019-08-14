@@ -17,7 +17,7 @@ def salience(S, freqs, h_range, weights=None, aggregate=None,
     Parameters
     ----------
     S : np.ndarray [shape=(d, n)]
-        input time frequency magnitude representation (stft, ifgram, etc).
+        input time frequency magnitude representation (e.g. STFT or CQT magnitudes).
         Must be real-valued and non-negative.
     freqs : np.ndarray, shape=(S.shape[axis])
         The frequency values corresponding to S's elements along the
