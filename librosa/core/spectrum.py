@@ -103,8 +103,9 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
         Defaults to `True`,  which simplifies the alignment of `D` onto a
         time grid by means of `librosa.core.frames_to_samples`.
         Note, however, that `center` must be set to `False` when analyzing
-        signals with `librosa.stream`. See the librosa blog for more details:
-        https://librosa.github.io/blog/2019/07/29/stream-processing/#stream-processing
+        signals with `librosa.stream`.
+        
+        .. see also:: `stream`
 
     dtype : numeric type
         Complex numeric type for `D`.  Default is single-precision
