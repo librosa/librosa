@@ -133,7 +133,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
     --------
     istft : Inverse STFT
 
-    reassigned_spectrogram : Time-frequency reassigned STFT
+    reassigned_spectrogram : Time-frequency reassigned spectrogram
 
 
     Notes
@@ -426,7 +426,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
 
     .. warning:: This function is deprecated in version 0.7.1, and will be removed
                  in version 0.8.0.  The function `reassigned_spectrogram` provides
-                 equivalent functionality, and should be used instead of `ifgram`.
+                 comparable functionality, and should be used instead of `ifgram`.
 
     Parameters
     ----------
