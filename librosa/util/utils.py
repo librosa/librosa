@@ -7,10 +7,12 @@ import scipy.sparse
 import six
 
 import numpy as np
+import numba
 from numpy.lib.stride_tricks import as_strided
 
 from .._cache import cache
 from .exceptions import ParameterError
+from .decorators import deprecated
 
 # Constrain STFT block sizes to 256 KB
 MAX_MEM_BLOCK = 2**8 * 2**10
@@ -23,6 +25,7 @@ __all__ = ['MAX_MEM_BLOCK',
            'peak_pick',
            'sparsify_rows',
            'roll_sparse',
+           'shear',
            'fill_off_diagonal',
            'index_to_slice',
            'sync',
@@ -1101,10 +1104,14 @@ def sparsify_rows(x, quantile=0.01):
     return x_sparse.tocsr()
 
 
+@deprecated('0.7.1', '0.8.0')
 def roll_sparse(x, shift, axis=0):
     '''Sparse matrix roll
 
     This operation is equivalent to ``numpy.roll``, but operates on sparse matrices.
+
+    .. warning:: This function is deprecated in version 0.7.1.
+                 It will be removed in version 0.8.0.
 
     Parameters
     ----------
@@ -1708,3 +1715,104 @@ def cyclic_gradient(data, edge_order=1, axis=-1):
     slices = [slice(None)] * data.ndim
     slices[axis] = slice(edge_order, -edge_order)
     return grad[tuple(slices)]
+
+
+@numba.jit(nopython=True, cache=True)
+def __shear_dense(X, factor=+1, axis=-1):
+    '''Numba-accelerated shear for dense (ndarray) arrays'''
+
+    if axis == 0:
+        X = X.T
+
+    X_shear = np.empty_like(X)
+
+    for i in range(X.shape[1]):
+        X_shear[:, i] = np.roll(X[:, i], factor * i)
+
+    if axis == 0:
+        X_shear = X_shear.T
+
+    return X_shear
+
+
+def __shear_sparse(X, factor=+1, axis=-1):
+    '''Fast shearing for sparse matrices
+
+    Shearing is performed using CSC array indices,
+    and the result is converted back to whatever sparse format
+    the data was originally provided in.
+    '''
+    fmt = X.format
+    if axis == 0:
+        X = X.T
+
+    # Now we're definitely rolling on the correct axis
+    X_shear = X.tocsc(copy=True)
+
+    # The idea here is to repeat the shear amount (factor * range)
+    # by the number of non-zeros for each column.
+    # The number of non-zeros is computed by diffing the index pointer array
+    roll = np.repeat(factor * np.arange(X_shear.shape[1]), np.diff(X_shear.indptr))
+
+    # In-place roll
+    np.mod(X_shear.indices + roll, X_shear.shape[0], out=X_shear.indices)
+
+    if axis == 0:
+        X_shear = X_shear.T
+
+    # And convert back to the input format
+    return X_shear.asformat(fmt)
+
+
+def shear(X, factor=1, axis=-1):
+    '''Shear a matrix by a given factor.
+
+    The `n`th column `X[:, n]` will be displaced (rolled)
+    by `factor * n`.
+
+    This is primarily useful for converting between lag and recurrence
+    representations: shearing with `factor=-1` converts the main diagonal
+    to a horizontal.  Shearing with `factor=1` converts a horizontal to
+    a diagonal.
+
+
+    Parameters
+    ----------
+    X : np.ndarray [ndim=2] or scipy.sparse matrix
+        The array to be sheared
+
+    factor : integer
+        The shear factor: `X[:, n] -> np.roll(X[:, n], factor * n)`
+
+    axis : integer
+        The axis along which to shear
+
+    Returns
+    -------
+    X_shear : same type as `X`
+        The sheared matrix
+
+    Examples
+    --------
+    >>> E = np.eye(3)
+    >>> librosa.util.shear(E, factor=-1, axis=-1)
+    array([[1., 1., 1.],
+           [0., 0., 0.],
+           [0., 0., 0.]])
+    >>> librosa.util.shear(E, factor=-1, axis=0)
+    array([[1., 0., 0.],
+           [1., 0., 0.],
+           [1., 0., 0.]])
+    >>> librosa.util.shear(E, factor=1, axis=-1)
+    array([[1., 0., 0.],
+           [0., 0., 1.],
+           [0., 1., 0.]])
+    '''
+
+    if not np.issubdtype(type(factor), np.integer):
+        raise ParameterError('factor={} must be integer-valued'.format(factor))
+
+    if scipy.sparse.isspmatrix(X):
+        return __shear_sparse(X, factor=factor, axis=axis)
+    else:
+        return __shear_dense(X, factor=factor, axis=axis)

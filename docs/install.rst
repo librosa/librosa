@@ -26,6 +26,10 @@ If you use conda/Anaconda environments, librosa can be installed from the
 
     conda install -c conda-forge librosa
 
+If you're using a Python 3.5 environment in conda, you may run into trouble with the `numba` dependency.
+This can be avoided by installing from the `numba` conda channel before installing librosa::
+
+   conda install -c numba numba
 
 Source
 ~~~~~~
