@@ -1974,6 +1974,19 @@ def test_get_samplerate(ext):
     assert sr == 22050
 
 
+@pytest.fixture(params=['as_file', 'as_string'])
+def path(request):
+
+    # test data is stereo, int 16
+    path = os.path.join('tests', 'data', 'test1_22050.wav')
+
+    if request.param == 'as_string':
+        yield path
+    elif request.param == 'as_file':
+        with open(path, 'rb') as f:
+            yield f
+
+
 @pytest.mark.parametrize('block_length', [10, np.int64(30),
                                           pytest.mark.xfail(0, raises=librosa.ParameterError)])
 @pytest.mark.parametrize('frame_length', [1024, np.int64(2048),
@@ -1985,11 +1998,8 @@ def test_get_samplerate(ext):
 @pytest.mark.parametrize('duration', [None, 1.0])
 @pytest.mark.parametrize('fill_value', [None, 999.0])
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
-def test_stream(block_length, frame_length, hop_length, mono, offset,
+def test_stream(path, block_length, frame_length, hop_length, mono, offset,
                 duration, fill_value, dtype):
-
-    # test data is stereo, int 16
-    path = os.path.join('tests', 'data', 'test1_22050.wav')
 
     stream = librosa.stream(path, block_length=block_length,
                             frame_length=frame_length,
@@ -2029,6 +2039,10 @@ def test_stream(block_length, frame_length, hop_length, mono, offset,
 
     # Load the reference data.
     # We'll cast to mono here to simplify checking
+
+    # File objects have to be reset before loading
+    if hasattr(path, 'seek'):
+        path.seek(0)
 
     y_full, sr = librosa.load(path, sr=None, dtype=dtype, mono=True,
                               offset=offset, duration=duration)

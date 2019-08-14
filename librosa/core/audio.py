@@ -4,6 +4,8 @@
 
 import os
 import six
+import sys
+import warnings
 
 import soundfile as sf
 import audioread
@@ -138,8 +140,13 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
             y = sf_desc.read(frames=frame_duration, dtype=dtype, always_2d=False).T
 
     except RuntimeError as exc:
-        # If soundfile failed, fall back to the audioread loader
-        y, sr_native = __audioread_load(path, offset, duration, dtype)
+
+        # If soundfile failed, try audioread instead
+        if isinstance(path, six.string_types):
+            warnings.warn('PySoundFile failed. Trying audioread instead.')
+            y, sr_native = __audioread_load(path, offset, duration, dtype)
+        else:
+            six.reraise(*sys.exc_info())
 
     # Final cleanup for dtype and contiguity
     if mono:
@@ -352,6 +359,10 @@ def stream(path, block_length, frame_length, hop_length,
 
     # Get the sample rate from the file info
     sr = sf.info(path).samplerate
+
+    # If the input is a file handle, rewind its read position after `sf.info`
+    if hasattr(path, 'seek'):
+        path.seek(0)
 
     # Construct the stream
     if offset:
@@ -884,7 +895,7 @@ def __lpc(y, order):
         # fwd_pred_error = f_{M-1,k}       (we have advanced M)
         # den <- DEN_{M}                   (lhs)
         #
-        
+
         q = dtype(1) - reflect_coeff**2
         den = q*den - bwd_pred_error[-1]**2 - fwd_pred_error[0]**2
 
