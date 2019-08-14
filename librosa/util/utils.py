@@ -1717,21 +1717,21 @@ def cyclic_gradient(data, edge_order=1, axis=-1):
     return grad[tuple(slices)]
 
 
-@numba.jit(nopython=True)
+@numba.jit(nopython=True, cache=True)
 def __shear_dense(X, factor=+1, axis=-1):
     '''Numba-accelerated shear for dense (ndarray) arrays'''
 
     if axis == 0:
         X = X.T
-    
+
     X_shear = np.empty_like(X)
-    
+
     for i in range(X.shape[1]):
         X_shear[:, i] = np.roll(X[:, i], factor * i)
-        
+
     if axis == 0:
         X_shear = X_shear.T
-        
+
     return X_shear
 
 
@@ -1745,10 +1745,10 @@ def __shear_sparse(X, factor=+1, axis=-1):
     fmt = X.format
     if axis == 0:
         X = X.T
-        
+
     # Now we're definitely rolling on the correct axis
-    X_shear = X.tocsc(copy=True) 
-    
+    X_shear = X.tocsc(copy=True)
+
     # The idea here is to repeat the shear amount (factor * range)
     # by the number of non-zeros for each column.
     # The number of non-zeros is computed by diffing the index pointer array
@@ -1756,10 +1756,10 @@ def __shear_sparse(X, factor=+1, axis=-1):
 
     # In-place roll
     np.mod(X_shear.indices + roll, X_shear.shape[0], out=X_shear.indices)
-    
+
     if axis == 0:
         X_shear = X_shear.T
-    
+
     # And convert back to the input format
     return X_shear.asformat(fmt)
 
@@ -1808,6 +1808,9 @@ def shear(X, factor=1, axis=-1):
            [0., 0., 1.],
            [0., 1., 0.]])
     '''
+
+    if not np.issubdtype(type(factor), np.integer):
+        raise ParameterError('factor={} must be integer-valued'.format(factor))
 
     if scipy.sparse.isspmatrix(X):
         return __shear_sparse(X, factor=factor, axis=axis)
