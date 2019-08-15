@@ -1055,31 +1055,30 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> y_zoom = y[27 * sr : 29 * sr]
-
-    >>> freqs, times, mags = librosa.reassigned_spectrogram(
-    ...     y=y_zoom, sr=sr, hop_length=16, n_fft=64, ref_power=1e-4
-    ... )
-    >>> db = librosa.amplitude_to_db(mags, ref=np.max)
-
-    >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> plt.subplot(2, 1, 1)
-    >>> librosa.display.specshow(
-    ...     db, x_axis="s", y_axis="linear", sr=sr, hop_length=16
-    ... )
+    >>> amin = 1e-10
+    >>> n_fft = 64
+    >>> sr = 4000
+    >>> y = 1e-3 * librosa.clicks(times=[0.3], sr=sr, click_duration=1.0,
+    ...                           click_freq=1200.0, length=8000) +\
+    ...     1e-3 * librosa.clicks(times=[1.5], sr=sr, click_duration=0.5,
+    ...                           click_freq=400.0, length=8000) +\
+    ...     1e-3 * librosa.chirp(200, 1600, sr=sr, duration=2.0) +\
+    ...     1e-6 * np.random.randn(2*sr)
+    >>> freqs, times, mags = librosa.reassigned_spectrogram(y=y, sr=sr, n_fft=n_fft)
+    >>> mags_db = librosa.power_to_db(mags, amin=amin)
+    >>> background = np.zeros_like(mags) - 10*np.log10(amin)
+    >>> ax = plt.subplot(2, 1, 1)
+    >>> librosa.display.specshow(mags_db, x_axis="s", y_axis="linear", sr=sr,
+                                 hop_length=n_fft//4, cmap="gray_r")
     >>> plt.title("Spectrogram")
-    >>> plt.subplot(2, 1, 2)
-    >>> plt.scatter(times, freqs, c=db, s=0.1, cmap="magma")
-    >>> plt.title("Reassigned spectrogram")
-    >>> plt.xlim([0, 2])
-    >>> plt.xticks([0, 0.5, 1, 1.5, 2])
-    >>> plt.ylabel("Hz")
-    >>> plt.subplots_adjust(
-    ...     left=0.1, bottom=0.05, right=0.95, top=0.95, hspace=0.5
-    ... )
-    >>> plt.show()
+    >>> plt.tick_params(axis='x', labelbottom=False)
+    >>> plt.xlabel("")
+    >>> plt.subplot(2, 1, 2, sharex=ax)
+    >>> librosa.display.specshow(background, x_axis="s", y_axis="linear",
+                                 cmap="gray_r", sr=sr, hop_length=n_fft//4)
+    >>> plt.scatter(times, freqs, c=mags_db, alpha=0.05, cmap="gray_r")
+    >>> plt.clim(10*np.log10(amin), np.max(mags_db))
+    >>> plt.title("Reassigned spectrogram"))
     """
 
     if not six.callable(ref_power) and ref_power < 0:
