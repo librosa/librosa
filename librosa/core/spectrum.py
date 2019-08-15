@@ -1069,13 +1069,13 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     >>> background = np.zeros_like(mags) - 10*np.log10(amin)
     >>> ax = plt.subplot(2, 1, 1)
     >>> librosa.display.specshow(mags_db, x_axis="s", y_axis="linear", sr=sr,
-                                 hop_length=n_fft//4, cmap="gray_r")
+    ...                          hop_length=n_fft//4, cmap="gray_r")
     >>> plt.title("Spectrogram")
     >>> plt.tick_params(axis='x', labelbottom=False)
     >>> plt.xlabel("")
     >>> plt.subplot(2, 1, 2, sharex=ax)
     >>> librosa.display.specshow(background, x_axis="s", y_axis="linear",
-                                 cmap="gray_r", sr=sr, hop_length=n_fft//4)
+    ...                          cmap="gray_r", sr=sr, hop_length=n_fft//4)
     >>> plt.scatter(times, freqs, c=mags_db, alpha=0.05, cmap="gray_r")
     >>> plt.clim(10*np.log10(amin), np.max(mags_db))
     >>> plt.title("Reassigned spectrogram"))
