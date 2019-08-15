@@ -976,9 +976,11 @@ def viterbi_discriminative(prob, transition, p_state=None, p_init=None, return_l
 
     >>> # Load in audio and make features
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> # Suppress percussive elements
+    >>> y = librosa.effects.harmonic(y, margin=4)
     >>> chroma = librosa.feature.chroma_cens(y=y, sr=sr, bins_per_octave=36)
     >>> # Map chroma (observations) to class (state) likelihoods
-    >>> probs = np.exp(weights.dot(chroma))  # P[class | chroma] proportional to exp(template' chroma)
+    >>> probs = np.exp(weights.dot(chroma))  # P[class | chroma] ~= exp(template' chroma)
     >>> probs /= probs.sum(axis=0, keepdims=True)  # probabilities must sum to 1 in each column
     >>> # Compute independent frame-wise estimates
     >>> chords_ind = np.argmax(probs, axis=0)
@@ -1003,10 +1005,13 @@ def viterbi_discriminative(prob, transition, p_state=None, p_init=None, return_l
     >>> plt.figure(figsize=(10, 4))
     >>> librosa.display.specshow(probs, x_axis='time', cmap='gray')
     >>> plt.colorbar()
-    >>> times = librosa.frames_to_time(np.arange(len(chords_vit)))
-    >>> plt.scatter(times, chords_ind + 0.75, color='lime', alpha=0.5, marker='+', s=15, label='Independent')
-    >>> plt.scatter(times, chords_vit + 0.25, color='deeppink', alpha=0.5, marker='o', s=15, label='Viterbi')
-    >>> plt.yticks(0.5 + np.unique(chords_vit), [labels[i] for i in np.unique(chords_vit)], va='center')
+    >>> times = librosa.times_like(chords_vit)
+    >>> plt.scatter(times, chords_ind + 0.75, color='lime', alpha=0.5, marker='+',
+    ...             s=15, label='Independent')
+    >>> plt.scatter(times, chords_vit + 0.25, color='deeppink', alpha=0.5, marker='o',
+    ...             s=15, label='Viterbi')
+    >>> plt.yticks(0.5 + np.unique(chords_vit),
+    ...            [labels[i] for i in np.unique(chords_vit)], va='center')
     >>> plt.legend()
     >>> plt.tight_layout()
     >>> plt.show()

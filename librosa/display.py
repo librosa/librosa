@@ -476,9 +476,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
 
     kwargs.setdefault('color', next(axes._get_lines.prop_cycler)['color'])
 
-    locs = offset + core.frames_to_time(np.arange(len(y_top)),
-                                        sr=sr,
-                                        hop_length=hop_length)
+    locs = offset + core.times_like(y_top, sr=sr, hop_length=hop_length)
 
     out = axes.fill_between(locs, y_bottom, y_top, **kwargs)
 
