@@ -18,6 +18,7 @@ from .audio import resample
 from .._cache import cache
 from .. import util
 from ..util.exceptions import ParameterError
+from ..util.decorators import deprecated
 from ..filters import get_window, semitone_filterbank
 from ..filters import window_sumsquare
 
@@ -132,7 +133,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
     --------
     istft : Inverse STFT
 
-    ifgram : Instantaneous frequency spectrogram
+    reassigned_spectrogram : Time-frequency reassigned spectrogram
 
 
     Notes
@@ -406,6 +407,7 @@ def __overlap_add(y, ytmp, hop_length):
         y[sample:(sample + n_fft)] += ytmp[:, frame]
 
 
+@deprecated('0.7.1', '0.8.0')
 def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
            window='hann', norm=False, center=True, ref_power=1e-6,
            clip=True, dtype=np.complex64, pad_mode='reflect'):
@@ -420,6 +422,11 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
         frequency."
         International Conference on Acoustics, Speech, and Signal Processing,
         ICASSP-95., Vol. 1. IEEE, 1995.
+
+
+    .. warning:: This function is deprecated in version 0.7.1, and will be removed
+                 in version 0.8.0.  The function `reassigned_spectrogram` provides
+                 comparable functionality, and should be used instead of `ifgram`.
 
     Parameters
     ----------
@@ -490,6 +497,7 @@ def ifgram(y, sr=22050, n_fft=2048, hop_length=None, win_length=None,
     See Also
     --------
     stft : Short-time Fourier Transform
+    reassigned_spectrogram : Time-frequency reassigned spectrogram
 
     Examples
     --------
