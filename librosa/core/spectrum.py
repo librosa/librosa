@@ -34,24 +34,25 @@ __all__ = ['stft', 'istft', 'magphase', 'iirt', 'ifgram',
 @cache(level=20)
 def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
          center=True, dtype=np.complex64, pad_mode='reflect'):
-    """Short-time Fourier transform (STFT). [1, chapter 2]
-    
+    """Short-time Fourier transform (STFT). [1]_ (chapter 2)
+
     The STFT represents a signal in the time-frequency domain by
     computing discrete Fourier transforms (DFT) over short overlapping
     windows.
 
     This function returns a complex-valued matrix D such that
-        `np.abs(D[f, t])` is the magnitude of frequency bin `f`
-        at frame `t`
-    and
-        `np.angle(D[f, t])` is the phase of frequency bin `f`
-        at frame `t`.
-        
+
+    - `np.abs(D[f, t])` is the magnitude of frequency bin `f`
+      at frame `t`, and
+
+    - `np.angle(D[f, t])` is the phase of frequency bin `f`
+      at frame `t`.
+
     The integers `t` and `f` can be converted to physical units by means
     of the utility functions `frames_to_sample` and `fft_frequencies`.
-        
+
     .. [1] M. Müller. "Fundamentals of Music Processing." Springer, 2015
-         
+
 
     Parameters
     ----------
@@ -63,7 +64,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
         The number of rows in the STFT matrix `D` is (1 + n_fft/2).
         The default value, n_fft=2048 samples, corresponds to a physical
         duration of 93 milliseconds at a sample rate of 22050 Hz, i.e. the
-        default sample rate in librosa. This value is well adapted for music 
+        default sample rate in librosa. This value is well adapted for music
         signals. However, in speech processing, the recommended value is 512,
         corresponding to 23 milliseconds at a sample rate of 22050 Hz.
         In any case, we recommend setting `n_fft` to a power of two for
@@ -71,27 +72,36 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
 
     hop_length : int > 0 [scalar]
         number of audio samples between adjacent STFT columns.
+
         Smaller values increase the number of columns in `D` without
         affecting the frequency resolution of the STFT.
+
         If unspecified, defaults to `win_length / 4` (see below).
 
     win_length : int <= n_fft [scalar]
         Each frame of audio is windowed by `window()` of length `win_length`
         and then padded with zeros to match `n_fft`.
+
         Smaller values improve the temporal resolution of the STFT (i.e. the
         ability to discriminate impulses that are closely spaced in time)
         at the expense of frequency resolution (i.e. the ability to discriminate
         pure tones that are closely spaced in frequency). This effect is known
         as the time-frequency localization tradeoff and needs to be adjusted
         according to the properties of the input signal `y`.
+
         If unspecified, defaults to ``win_length = n_fft``.
 
     window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
         Either:
+
         - a window specification (string, tuple, or number);
           see `scipy.signal.get_window`
+
         - a window function, such as `scipy.signal.hanning`
+
         - a vector or array of length `n_fft`
+
+
         Defaults to a raised cosine window ("hann"), which is adequate for
         most applications in audio signal processing.
 
@@ -105,7 +115,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
         time grid by means of `librosa.core.frames_to_samples`.
         Note, however, that `center` must be set to `False` when analyzing
         signals with `librosa.stream`.
-        
+
         .. see also:: `stream`
 
     dtype : numeric type
@@ -118,7 +128,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
         `y` is padded on both sides with its own reflection, mirrored around
         its first and last sample respectively.
         If `center=False`,  this argument is ignored.
-        
+
         .. see also:: `np.pad`
 
 
@@ -181,7 +191,6 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.tight_layout()
     >>> plt.show()
-
     """
 
     # By default, use the entire frame
@@ -886,15 +895,16 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
                            reassign_frequencies=True, reassign_times=True,
                            ref_power=1e-6, fill_nan=False, clip=True,
                            dtype=np.complex64, pad_mode="reflect"):
-    """Time-frequency reassigned spectrogram.
+    r"""Time-frequency reassigned spectrogram.
 
     The reassignment vectors are calculated using equations 5.20 and 5.23 in
     [1]_:
 
     .. math::
 
-        \hat{\omega} = \omega - \Im(\frac{S_{dh}}{S_h}) \\
-        \hat{t} = t + \Re(\frac{S_{th}}{S_h})
+        \hat{\omega} = \omega - \Im\left(\frac{S_{dh}}{S_h}\right) \\
+        \hat{t} = t + \Re\left(\frac{S_{th}}{S_h}\right)
+
 
     where `S_h` is the complex STFT calculated using the original window,
     `S_dh` is the complex STFT calculated using the derivative of the original
@@ -919,22 +929,22 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     boundary frames.
 
     .. [1] Flandrin, P., Auger, F., & Chassande-Mottin, E. (2002).
-    Time-Frequency reassignment: From principles to algorithms. In Applications
-    in Time-Frequency Signal Processing (Vol. 10, pp. 179-204). CRC Press.
+        Time-Frequency reassignment: From principles to algorithms. In Applications
+        in Time-Frequency Signal Processing (Vol. 10, pp. 179-204). CRC Press.
 
     .. [2] Fulop, S. A., & Fitz, K. (2006). Algorithms for computing the
-    time-corrected instantaneous frequency (reassigned) spectrogram, with
-    applications. The Journal of the Acoustical Society of America, 119(1),
-    360. doi:10.1121/1.2133000
+        time-corrected instantaneous frequency (reassigned) spectrogram, with
+        applications. The Journal of the Acoustical Society of America, 119(1),
+        360. doi:10.1121/1.2133000
 
     .. [3] Auger, F., Flandrin, P., Lin, Y.-T., McLaughlin, S., Meignen, S.,
-    Oberlin, T., & Wu, H.-T. (2013). Time-Frequency Reassignment and
-    Synchrosqueezing: An Overview. IEEE Signal Processing Magazine, 30(6),
-    32-41. doi:10.1109/MSP.2013.2265316
+        Oberlin, T., & Wu, H.-T. (2013). Time-Frequency Reassignment and
+        Synchrosqueezing: An Overview. IEEE Signal Processing Magazine, 30(6),
+        32-41. doi:10.1109/MSP.2013.2265316
 
     .. [4] Hainsworth, S., Macleod, M. (2003). Time-frequency reassignment: a
-    review and analysis. Tech. Rep. CUED/FINFENG/TR.459, Cambridge University
-    Engineering Department
+        review and analysis. Tech. Rep. CUED/FINFENG/TR.459, Cambridge University
+        Engineering Department
 
     Parameters
     ----------
@@ -1070,7 +1080,6 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     ...     left=0.1, bottom=0.05, right=0.95, top=0.95, hspace=0.5
     ... )
     >>> plt.show()
-
     """
 
     if not six.callable(ref_power) and ref_power < 0:
