@@ -907,8 +907,7 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
            510, 525, 536, 555, 570, 590, 609, 625, 639])
 
     >>> import matplotlib.pyplot as plt
-    >>> times = librosa.frames_to_time(np.arange(len(onset_env)),
-    ...                                sr=sr, hop_length=512)
+    >>> times = librosa.times_like(onset_env, sr=sr, hop_length=512)
     >>> plt.figure()
     >>> ax = plt.subplot(2, 1, 2)
     >>> D = librosa.stft(y)
