@@ -390,8 +390,18 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
 
         If `None`, no downsampling is performed.
 
-    x_axis : str {'time', 'off', 'none'} or None
-        If 'time', the x-axis is given time tick-marks.
+    x_axis : str or None
+        Display of the x-axis ticks and tick markers. Accepted values are:
+        - 'time' : markers are shown as milliseconds, seconds,
+          minutes, or hours.
+          Values are plotted in units of seconds.
+        - 's' : markers are shown as seconds.
+        - 'ms' : markers are shown as milliseconds.
+        - 'lag' : like time, but past the halfway point counts
+          as negative values.
+        - 'lag_s' : same as lag, but in seconds.
+        - 'lag_ms' : same as lag, but in milliseconds.
+        - `None`, 'none', or 'off': ticks and tick markers are hidden.
 
     ax : matplotlib.axes.Axes or None
         Axes to plot on instead of the default `plt.gca()`.
@@ -483,13 +493,9 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
     out = axes.fill_between(locs, y_bottom, y_top, **kwargs)
 
     axes.set_xlim([locs.min(), locs.max()])
-    if x_axis == 'time':
-        axes.xaxis.set_major_formatter(TimeFormatter(lag=False))
-        axes.xaxis.set_label_text('Time')
-    elif x_axis is None or x_axis in ['off', 'none']:
-        axes.set_xticks([])
-    else:
-        raise ParameterError('Unknown x_axis value: {}'.format(x_axis))
+
+    # Construct tickers and locators
+    __decorate_axis(axes.xaxis, x_axis)
 
     return out
 
