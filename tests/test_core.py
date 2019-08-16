@@ -105,70 +105,68 @@ def test_segment_load():
     assert np.allclose(y, y2[:, sample_offset:sample_offset+fs])
 
 
-def test_resample_mono():
-
-    def __test(y, sr_in, sr_out, res_type, fix):
-
-        y2 = librosa.resample(y, sr_in, sr_out,
-                              res_type=res_type,
-                              fix=fix)
-
-        # First, check that the audio is valid
-        librosa.util.valid_audio(y2, mono=True)
-
-        # If it's a no-op, make sure the signal is untouched
-        if sr_out == sr_in:
-            assert np.allclose(y, y2)
-
-        # Check buffer contiguity
-        assert y2.flags['C_CONTIGUOUS']
-
-        # Check that we're within one sample of the target length
-        target_length = y.shape[-1] * sr_out // sr_in
-        assert np.abs(y2.shape[-1] - target_length) <= 1
-
-    for infile in ['test1_44100.wav',
-                   'test1_22050.wav',
-                   'test2_8000.wav']:
-        y, sr_in = librosa.load(os.path.join('tests', 'data', infile), sr=None, duration=5)
-
-        for sr_out in [8000, 22050]:
-            for res_type in ['kaiser_best', 'kaiser_fast', 'scipy', 'fft', 'polyphase']:
-                for fix in [False, True]:
-                    yield (__test, y, sr_in, sr_out, res_type, fix)
+@pytest.fixture(scope='module', params=['test1_44100.wav', 'test1_22050.wav', 'test2_8000.wav'])
+def resample_audio(request):
+    infile = request.param
+    y, sr_in = librosa.load(os.path.join('tests', 'data', infile), sr=None, duration=5, mono=False)
+    yield (y, sr_in)
 
 
-def test_resample_stereo():
+@pytest.mark.parametrize('sr_out', [8000, 22050])
+@pytest.mark.parametrize('res_type', ['kaiser_best', 'kaiser_fast', 'scipy', 'fft', 'polyphase'])
+@pytest.mark.parametrize('fix', [False, True])
+def test_resample_mono(resample_audio, sr_out, res_type, fix):
 
-    def __test(y, sr_in, sr_out, res_type, fix):
+    y, sr_in = resample_audio
+    y = librosa.to_mono(y)
 
-        y2 = librosa.resample(y, sr_in, sr_out,
-                              res_type=res_type,
-                              fix=fix)
+    y2 = librosa.resample(y, sr_in, sr_out,
+                          res_type=res_type,
+                          fix=fix)
 
-        # First, check that the audio is valid
-        librosa.util.valid_audio(y2, mono=False)
+    # First, check that the audio is valid
+    librosa.util.valid_audio(y2, mono=True)
 
-        assert y2.ndim == y.ndim
+    # If it's a no-op, make sure the signal is untouched
+    if sr_out == sr_in:
+        assert np.allclose(y, y2)
 
-        # If it's a no-op, make sure the signal is untouched
-        if sr_out == sr_in:
-            assert np.allclose(y, y2)
+    # Check buffer contiguity
+    assert y2.flags['C_CONTIGUOUS'] == y.flags['C_CONTIGUOUS']
+    assert y2.flags['F_CONTIGUOUS'] == y.flags['F_CONTIGUOUS']
 
-        # Check buffer contiguity
-        assert y2.flags['C_CONTIGUOUS']
+    # Check that we're within one sample of the target length
+    target_length = y.shape[-1] * sr_out // sr_in
+    assert np.abs(y2.shape[-1] - target_length) <= 1
 
-        # Check that we're within one sample of the target length target_length = y.shape[-1] * sr_out // sr_in
-        target_length = y.shape[-1] * sr_out // sr_in
-        assert np.abs(y2.shape[-1] - target_length) <= 1
 
-    y, sr_in = librosa.load(os.path.join('tests', 'data', 'test1_44100.wav'),
-                            mono=False, sr=None, duration=5)
+@pytest.mark.parametrize('sr_out', [8000, 22050])
+@pytest.mark.parametrize('res_type', ['kaiser_best', 'kaiser_fast', 'scipy', 'fft', 'polyphase'])
+@pytest.mark.parametrize('fix', [False, True])
+def test_resample_stereo(resample_audio, sr_out, res_type, fix):
 
-    for sr_out in [8000, 22050]:
-        for res_type in ['kaiser_fast', 'fft', 'polyphase']:
-            for fix in [False, True]:
-                yield __test, y, sr_in, sr_out, res_type, fix
+    y, sr_in = resample_audio
+
+    y2 = librosa.resample(y, sr_in, sr_out,
+                          res_type=res_type,
+                          fix=fix)
+
+    # First, check that the audio is valid
+    librosa.util.valid_audio(y2, mono=False)
+
+    assert y2.ndim == y.ndim
+
+    # If it's a no-op, make sure the signal is untouched
+    if sr_out == sr_in:
+        assert np.allclose(y, y2)
+
+    # Check buffer contiguity
+    assert y2.flags['C_CONTIGUOUS'] == y.flags['C_CONTIGUOUS']
+    assert y2.flags['F_CONTIGUOUS'] == y.flags['F_CONTIGUOUS']
+
+    # Check that we're within one sample of target_length = y.shape[-1] * sr_out // sr_in
+    target_length = y.shape[-1] * sr_out // sr_in
+    assert np.abs(y2.shape[-1] - target_length) <= 1
 
 
 def test_resample_scale():
