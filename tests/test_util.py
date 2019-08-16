@@ -1204,7 +1204,7 @@ def test_stack_fail_shape():
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_stack_fail_empty():
-    librosa.util.stack()
+    librosa.util.stack([])
 
 
 @pytest.mark.parametrize('axis', [0, 1, -1])
