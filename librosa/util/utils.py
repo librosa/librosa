@@ -191,7 +191,7 @@ def frame(x, frame_length=2048, hop_length=512, axis=-1):
             raise ParameterError('Input array must be C-contiguous '
                                  'for framing along axis={}'.format(axis))
 
-        shape = list(x.shape)[1:] + [n_frames, frame_length]
+        shape = [n_frames, frame_length] + list(x.shape)[1:]
         strides = [hop_length * np.prod(strides // x.itemsize) * x.itemsize] + list(strides)
     else:
         raise ParameterError('Frame axis={} must be either 0 or -1'.format(axis))
