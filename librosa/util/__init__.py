@@ -15,6 +15,7 @@ Array operations
     fix_frames
     index_to_slice
     softmask
+    stack
     sync
 
     axis_sort

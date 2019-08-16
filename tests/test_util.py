@@ -1182,3 +1182,35 @@ def test_shear_sparse(fmt):
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_shear_badfactor():
     librosa.util.shear(np.eye(3), factor=None)
+
+
+def test_stack_contig():
+    x1 = np.ones(3)
+    x2 = -np.ones(3)
+
+    xs = librosa.util.stack(x1, x2, axis=0)
+
+    assert xs.flags['F_CONTIGUOUS']
+    assert np.allclose(xs, [[1,1,1], [-1,-1,-1]])
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_stack_fail_shape():
+    x1 = np.ones(3)
+
+    x2 = np.ones(2)
+    librosa.util.stack(x1, x2)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_stack_fail_empty():
+    librosa.util.stack()
+
+
+@pytest.mark.parametrize('axis', [0, 1, -1])
+@pytest.mark.parametrize('x', [np.random.randn(5, 10, 20)])
+def test_stack_consistent(x, axis):
+    xs = librosa.util.stack(x, x, axis=axis)
+    xsnp = np.stack([x, x], axis=axis)
+
+    assert np.allclose(xs, xsnp)
