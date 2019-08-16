@@ -27,42 +27,74 @@ def test_example_audio_file():
     assert os.path.exists(librosa.util.example_audio_file())
 
 
-def test_frame():
+@pytest.mark.parametrize('frame_length', [4, 8])
+@pytest.mark.parametrize('hop_length', [2, 4])
+@pytest.mark.parametrize('y', [np.random.randn(32)])
+@pytest.mark.parametrize('axis', [0, -1])
+def test_frame1d(frame_length, hop_length, axis, y):
 
-    # Generate a random time series
-    def __test(P):
-        srand()
-        frame, hop = P
+    y_frame = librosa.util.frame(y, frame_length=frame_length,
+                                 hop_length=hop_length,
+                                 axis=axis)
 
-        y = np.random.randn(8000)
-        y_frame = librosa.util.frame(y, frame_length=frame, hop_length=hop)
+    if axis == -1:
+        y_frame = y_frame.T
 
-        for i in range(y_frame.shape[1]):
-            assert np.allclose(y_frame[:, i], y[i * hop:(i * hop + frame)])
-
-    for frame in [256, 1024, 2048]:
-        for hop_length in [64, 256, 512]:
-            yield (__test, [frame, hop_length])
+    for i in range(y_frame.shape[0]):
+        assert np.allclose(y_frame[i],
+                           y[i * hop_length:(i * hop_length + frame_length)])
 
 
-def test_frame_fail():
+@pytest.mark.parametrize('frame_length', [4, 8])
+@pytest.mark.parametrize('hop_length', [2, 4])
+@pytest.mark.parametrize('y, axis',
+                         [(np.asfortranarray(np.random.randn(16, 32)), -1),
+                          (np.ascontiguousarray(np.random.randn(16, 32)), 0)])
+def test_frame2d(frame_length, hop_length, axis, y):
 
-    __test = pytest.mark.xfail(librosa.util.frame, raises=librosa.ParameterError)
+    y_frame = librosa.util.frame(y, frame_length=frame_length,
+                                 hop_length=hop_length,
+                                 axis=axis)
+    print(y.shape)
+    print(y_frame.shape)
 
-    # First fail, not an ndarray
-    yield __test, list(range(10)), 5, 1
+    if axis == -1:
+        y_frame = y_frame.T
+        y = y.T
 
-    # Second fail: wrong ndims
-    yield __test, np.zeros((10, 10)), 5, 1
+    for i in range(y_frame.shape[0]):
+        assert np.allclose(y_frame[i],
+                           y[i * hop_length:(i * hop_length + frame_length)])
 
-    # Third fail: too short
-    yield __test, np.zeros(10), 20, 1
 
-    # Fourth fail: bad hop length
-    yield __test, np.zeros(10), 20, -1
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_frame_badtype():
+    librosa.util.frame([1,2,3,4], frame_length=2, hop_length=1)
 
-    # Fifth fail: discontiguous input
-    yield __test, np.zeros(20)[::2], 10, 1
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('axis', [0, -1])
+@pytest.mark.parametrize('x', [np.arange(16)])
+def test_frame_too_short(x, axis):
+    librosa.util.frame(x, frame_length=17, hop_length=1, axis=axis)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_frame_bad_hop():
+    librosa.util.frame(np.arange(16), frame_length=4, hop_length=0)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('axis', [1, 2])
+def test_frame_bad_axis(axis):
+    librosa.util.frame(np.zeros((3,3,3)), frame_length=2, hop_length=1, axis=axis)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('x, axis', [(np.zeros((4, 4), order='C'), -1),
+                                     (np.zeros((4, 4), order='F'), 0)])
+def test_frame_bad_contiguity(x, axis):
+    librosa.util.frame(x, frame_length=2, hop_length=1, axis=axis)
 
 
 def test_pad_center():
