@@ -535,7 +535,7 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
     if scale:
         y_hat /= np.sqrt(ratio)
 
-    return np.asfortranarray(y_hat)
+    return np.asfortranarray(y_hat, dtype=y.dtype)
 
 
 def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
