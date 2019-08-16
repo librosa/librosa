@@ -51,7 +51,7 @@ setup(
         'joblib >= 0.12',
         'decorator >= 3.0.0',
         'six >= 1.3',
-        'resampy >= 0.2.0',
+        'resampy >= 0.2.2',
         'numba >= 0.43.0',
         'soundfile >= 0.9.0',
     ],
