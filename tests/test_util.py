@@ -1214,3 +1214,5 @@ def test_stack_consistent(x, axis):
     xsnp = np.stack([x, x], axis=axis)
 
     assert np.allclose(xs, xsnp)
+    if axis != 0:
+        assert xs.flags['C_CONTIGUOUS']
