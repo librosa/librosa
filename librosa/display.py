@@ -457,7 +457,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
 
     # Pad an extra channel dimension, if necessary
     if y.ndim == 1:
-        y = util.stack(y, axis=0)
+        y = util.stack([y], axis=0)
 
     if max_points is not None:
         if max_points <= 0:
