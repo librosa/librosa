@@ -25,7 +25,7 @@ __all__ = ['MAX_MEM_BLOCK',
            'peak_pick',
            'sparsify_rows',
            'roll_sparse',
-           'shear',
+           'shear', 'stack',
            'fill_off_diagonal',
            'index_to_slice',
            'sync',
@@ -1903,3 +1903,102 @@ def shear(X, factor=1, axis=-1):
         return __shear_sparse(X, factor=factor, axis=axis)
     else:
         return __shear_dense(X, factor=factor, axis=axis)
+
+
+def stack(*arrays, axis=0):
+    '''Stack one or more arrays along a target axis.
+
+    This function is similar to `np.stack`, except that memory contiguity is
+    retained when stacking along the first dimension.
+
+    This is useful when combining multiple monophonic audio signals into a
+    multi-channel signal
+
+    Parameters
+    ----------
+    arrays 
+        one or more `np.ndarray`s
+
+    axis : integer
+        The target axis along which to stack.  `axis=0` creates a new first axis,
+        and `axis=-1` creates a new last axis.
+
+
+    Returns
+    -------
+    arr_stack : np.ndarray [shape=(len(arrays), array_shape) or shape=(array_shape, len(arrays))]
+        The input arrays, stacked along the target dimension
+
+    Raises
+    ------
+    ParameterError
+
+        - If `arrays` do not all have the same shape
+        - If no `arrays` are given
+
+    See Also
+    --------
+    np.stack
+
+    Examples
+    --------
+    Combine two buffers into a contiguous arrays
+
+    >>> y_left = np.ones(5)
+    >>> y_right = -np.ones(5)
+    >>> y_stereo = librosa.util.stack(y_left, y_right, axis=0)
+    >>> y_stereo
+    array([[ 1.,  1.,  1.,  1.,  1.],
+           [-1., -1., -1., -1., -1.]])
+    >>> y_stereo.flags
+      C_CONTIGUOUS : False
+      F_CONTIGUOUS : True
+      OWNDATA : True
+      WRITEABLE : True
+      ALIGNED : True
+      WRITEBACKIFCOPY : False
+      UPDATEIFCOPY : False
+
+    Or along the trailing axis
+
+    >>> y_stereo = librosa.util.stack(y_left, y_right, axis=-1)
+    >>> y_stereo
+    array([[ 1., -1.],
+           [ 1., -1.],
+           [ 1., -1.],
+           [ 1., -1.],
+           [ 1., -1.]])
+    >>> y_stereo.flags
+      C_CONTIGUOUS : True
+      F_CONTIGUOUS : False
+      OWNDATA : True
+      WRITEABLE : True
+      ALIGNED : True
+      WRITEBACKIFCOPY : False
+      UPDATEIFCOPY : False
+    '''
+
+    shapes = {arr.shape for arr in arrays}
+    if len(shapes) > 1:
+        raise ParameterError('all input arrays must have the same shape')
+    elif len(shapes) < 1:
+        raise ParameterError('at least one input arrays must be provided for stack')
+
+    shape_in = shapes.pop()
+
+    if axis != 0:
+        return np.stack(arrays, axis=axis)
+    else:
+        # If axis is 0, enforce F-ordering
+        shape = tuple([len(arrays)] + list(shape_in))
+
+        # Find the common dtype for all inputs
+        dtype = np.find_common_type([arr.dtype for arr in arrays], [])
+
+        # Allocate an empty array of the right shape and type
+        result = np.empty(shape, dtype=dtype, order='F')
+
+        # Stack into the preallocated buffer
+        np.stack(arrays, axis=axis, out=result)
+
+        return result
