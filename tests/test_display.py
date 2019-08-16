@@ -440,7 +440,7 @@ def test_waveplot_ext_axes(y):
 @pytest.mark.mpl_image_compare(baseline_images=['waveplot_stereo'], extensions=['png'])
 def test_waveplot_stereo(y, sr):
 
-    ys = librosa.util.stack(y, 2 * y)
+    ys = librosa.util.stack([y, 2 * y])
 
     plt.figure()
     librosa.display.waveplot(ys, sr=sr)

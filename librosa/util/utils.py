@@ -1905,7 +1905,7 @@ def shear(X, factor=1, axis=-1):
         return __shear_dense(X, factor=factor, axis=axis)
 
 
-def stack(*arrays, axis=0):
+def stack(arrays, axis=0):
     '''Stack one or more arrays along a target axis.
 
     This function is similar to `np.stack`, except that memory contiguity is
@@ -1917,7 +1917,7 @@ def stack(*arrays, axis=0):
 
     Parameters
     ----------
-    arrays 
+    arrays : list
         one or more `np.ndarray`s
 
     axis : integer
@@ -1953,7 +1953,7 @@ def stack(*arrays, axis=0):
 
     >>> y_left = np.ones(5)
     >>> y_right = -np.ones(5)
-    >>> y_stereo = librosa.util.stack(y_left, y_right, axis=0)
+    >>> y_stereo = librosa.util.stack([y_left, y_right], axis=0)
     >>> y_stereo
     array([[ 1.,  1.,  1.,  1.,  1.],
            [-1., -1., -1., -1., -1.]])
@@ -1968,7 +1968,7 @@ def stack(*arrays, axis=0):
 
     Or along the trailing axis
 
-    >>> y_stereo = librosa.util.stack(y_left, y_right, axis=-1)
+    >>> y_stereo = librosa.util.stack([y_left, y_right], axis=-1)
     >>> y_stereo
     array([[ 1., -1.],
            [ 1., -1.],
