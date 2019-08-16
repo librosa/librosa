@@ -1912,7 +1912,8 @@ def stack(*arrays, axis=0):
     retained when stacking along the first dimension.
 
     This is useful when combining multiple monophonic audio signals into a
-    multi-channel signal
+    multi-channel signal, or when stacking multiple feature representations
+    to form a multi-dimensional array.
 
     Parameters
     ----------
@@ -1927,7 +1928,11 @@ def stack(*arrays, axis=0):
     Returns
     -------
     arr_stack : np.ndarray [shape=(len(arrays), array_shape) or shape=(array_shape, len(arrays))]
-        The input arrays, stacked along the target dimension
+        The input arrays, stacked along the target dimension.
+
+        If `axis=0`, then `arr_stack` will be F-contiguous.
+        Otherwise, `arr_stack` will be C-contiguous by default, as computed by
+        `np.stack`.
 
     Raises
     ------
@@ -1939,6 +1944,8 @@ def stack(*arrays, axis=0):
     See Also
     --------
     np.stack
+    np.ndarray.flags
+    frame
 
     Examples
     --------
