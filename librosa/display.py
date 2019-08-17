@@ -355,9 +355,9 @@ def cmap(data, robust=True, cmap_seq='magma', cmap_bool='gray_r', cmap_div='cool
 
 
 def __envelope(x, hop):
-    '''Compute the max-envelope of x at a stride/frame length of h
+    '''Compute the max-envelope of non-overlapping frames of x at length hop
 
-    x is assumed to be two-dimensional (multi-channel).
+    x is assumed to be multi-channel, of shape (n_channels, n_samples).
     '''
     x_frame = np.abs(util.frame(x, frame_length=hop, hop_length=hop))
     return x_frame.max(axis=1)
@@ -457,7 +457,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
 
     # Pad an extra channel dimension, if necessary
     if y.ndim == 1:
-        y = util.stack([y], axis=0)
+        y = y[np.newaxis, :]
 
     if max_points is not None:
         if max_points <= 0:

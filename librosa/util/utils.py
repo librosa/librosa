@@ -43,14 +43,14 @@ def frame(x, frame_length=2048, hop_length=512, axis=-1):
     is a new view of the input data.
 
     For example, a one-dimensional input `x = [0, 1, 2, 3, 4, 5, 6]`
-    can be framed with frame-length 3 and hop length 2 in two ways.
+    can be framed with frame length 3 and hop length 2 in two ways.
     The first (`axis=-1`), results in the array `x_frames`:
 
         `[[0, 2, 4],
           [1, 3, 5],
           [2, 4, 6]]`
 
-    where each column `x_frames[:, i]` contains a contiguous slice of 
+    where each column `x_frames[:, i]` contains a contiguous slice of
     the input `x[i * hop_length : i * hop_length + frame_length]`.
 
     The second way (`axis=0`) results in the array `x_frames`:
@@ -150,17 +150,20 @@ def frame(x, frame_length=2048, hop_length=512, axis=-1):
     >>> frames = librosa.util.frame(y, frame_length=2048, hop_length=64)
     (2, 2048, 21143)
 
-    Carve an STFT into fixed-length patches of 32 frames with no overlap
+    Carve an STFT into fixed-length patches of 32 frames with 50% overlap
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> S = np.abs(librosa.stft(y))
     >>> S.shape
     (1025, 2647)
-    >>> S_patch = librosa.util.frame(S, frame_length=32, hop_length=32)
+    >>> S_patch = librosa.util.frame(S, frame_length=32, hop_length=16)
     >>> S_patch.shape
     (1025, 32, 82)
-    >>> # The first patch is equivalent to the first 32 frames of S
+    >>> # The first patch contains the first 32 frames of S
     >>> np.allclose(S_patch[:, :, 0], S[:, :32])
+    True
+    >>> # The second patch contains frames 16 to 16+32=48, and so on
+    >>> np.allclose(S_patch[:, :, 1], S[:, 16:48])
     True
     '''
 
@@ -1989,7 +1992,7 @@ def stack(arrays, axis=0):
     if len(shapes) > 1:
         raise ParameterError('all input arrays must have the same shape')
     elif len(shapes) < 1:
-        raise ParameterError('at least one input arrays must be provided for stack')
+        raise ParameterError('at least one input array must be provided for stack')
 
     shape_in = shapes.pop()
 
