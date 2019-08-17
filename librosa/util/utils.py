@@ -181,13 +181,15 @@ def frame(x, frame_length=2048, hop_length=512, axis=-1):
     n_frames = 1 + (x.shape[axis] - frame_length) // hop_length
     strides = np.asarray(x.strides)
 
+    new_stride = np.prod(strides[strides > 0] // x.itemsize) * x.itemsize
+
     if axis == -1:
         if not x.flags['F_CONTIGUOUS']:
             raise ParameterError('Input array must be F-contiguous '
                                  'for framing along axis={}'.format(axis))
 
         shape = list(x.shape)[:-1] + [frame_length, n_frames]
-        strides = list(strides) + [hop_length * np.prod(strides // x.itemsize) * x.itemsize]
+        strides = list(strides) + [hop_length * new_stride]
 
     elif axis == 0:
         if not x.flags['C_CONTIGUOUS']:
@@ -195,7 +197,7 @@ def frame(x, frame_length=2048, hop_length=512, axis=-1):
                                  'for framing along axis={}'.format(axis))
 
         shape = [n_frames, frame_length] + list(x.shape)[1:]
-        strides = [hop_length * np.prod(strides // x.itemsize) * x.itemsize] + list(strides)
+        strides = [hop_length * new_stride] + list(strides)
     else:
         raise ParameterError('Frame axis={} must be either 0 or -1'.format(axis))
 
