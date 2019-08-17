@@ -67,6 +67,20 @@ def test_frame2d(frame_length, hop_length, axis, y):
                            y[i * hop_length:(i * hop_length + frame_length)])
 
 
+def test_frame_0stride():
+    x = np.arange(10)
+    xpad = x[np.newaxis]
+
+    xpad2 = np.atleast_2d(x)
+
+    xf = librosa.util.frame(x, 3, 1)
+    xfpad = librosa.util.frame(xpad, 3, 1)
+    xfpad2 = librosa.util.frame(xpad2, 3, 1)
+
+    assert np.allclose(xf, xfpad)
+    assert np.allclose(xf, xfpad2)
+
+
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_frame_badtype():
     librosa.util.frame([1,2,3,4], frame_length=2, hop_length=1)
