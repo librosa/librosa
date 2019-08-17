@@ -241,6 +241,7 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
 
     history = data
 
+    # TODO: this could be more efficient
     for i in range(1, n_steps):
         history = np.vstack([np.roll(data, -i * delay, axis=1), history])
 
@@ -251,4 +252,4 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
         history = history[:, -t:]
 
     # Make contiguous
-    return np.ascontiguousarray(history.T).T
+    return np.asfortranarray(history)
