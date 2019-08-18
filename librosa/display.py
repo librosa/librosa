@@ -355,8 +355,12 @@ def cmap(data, robust=True, cmap_seq='magma', cmap_bool='gray_r', cmap_div='cool
 
 
 def __envelope(x, hop):
-    '''Compute the max-envelope of x at a stride/frame length of h'''
-    return util.frame(x, hop_length=hop, frame_length=hop).max(axis=0)
+    '''Compute the max-envelope of non-overlapping frames of x at length hop
+
+    x is assumed to be multi-channel, of shape (n_channels, n_samples).
+    '''
+    x_frame = np.abs(util.frame(x, frame_length=hop, hop_length=hop))
+    return x_frame.max(axis=1)
 
 
 def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
@@ -451,6 +455,10 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
     target_sr = sr
     hop_length = 1
 
+    # Pad an extra channel dimension, if necessary
+    if y.ndim == 1:
+        y = y[np.newaxis, :]
+
     if max_points is not None:
         if max_points <= 0:
             raise ParameterError('max_points must be strictly positive')
@@ -460,17 +468,11 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
 
         hop_length = sr // target_sr
 
-        if y.ndim == 1:
-            y = __envelope(y, hop_length)
-        else:
-            y = np.vstack([__envelope(_, hop_length) for _ in y])
+    # Reduce by envelope calculation
+    y = __envelope(y, hop_length)
 
-    if y.ndim > 1:
-        y_top = y[0]
-        y_bottom = -y[1]
-    else:
-        y_top = y
-        y_bottom = -y
+    y_top = y[0]
+    y_bottom = -y[-1]
 
     axes = __check_axes(ax)
 
