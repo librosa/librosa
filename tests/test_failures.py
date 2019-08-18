@@ -88,6 +88,20 @@ def test_valid_audio_ndim():
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
+def test_valid_audio_strided():
+    '''valid_audio: strided'''
+    y = np.zeros(1000)[::2]
+    librosa.util.valid_audio(y)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_valid_audio_clang():
+    '''valid_audio: C-contiguous'''
+    y = np.zeros(1000).reshape(2, 500)
+    librosa.util.valid_audio(y, mono=False)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
 def test_frame_hop():
     '''frame: hop_length=0'''
     y = np.zeros(128)
