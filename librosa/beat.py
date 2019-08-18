@@ -320,12 +320,12 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
     bpms = core.tempo_frequencies(tg.shape[0], hop_length=hop_length, sr=sr)
 
     # Weight the autocorrelation by a log-normal distribution
-    prior = np.exp(-0.5 * ((np.log2(bpms) - np.log2(start_bpm)) / std_bpm)**2)
+    logprior = -0.5 * ((np.log2(bpms) - np.log2(start_bpm)) / std_bpm)**2
 
     # Kill everything above the max tempo
     if max_tempo is not None:
         max_idx = np.argmax(bpms < max_tempo)
-        prior[:max_idx] = 0
+        logprior[:max_idx] = -np.inf
 
     # Really, instead of multiplying by the prior, we should set up a
     # probabilistic model for tempo and add log-probabilities.
@@ -334,7 +334,7 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
     # it would also make time aggregation much more natural
 
     # Get the maximum, weighted by the prior
-    best_period = np.argmax(tg * prior[:, np.newaxis], axis=0)
+    best_period = np.argmax(np.log(tg + 1e-10) + logprior[:, np.newaxis], axis=0)
 
     tempi = bpms[best_period]
     # Wherever the best tempo is index 0, return start_bpm
