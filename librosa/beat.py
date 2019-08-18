@@ -13,6 +13,7 @@ Beat and tempo
 
 import numpy as np
 import scipy
+import scipy.stats
 
 from ._cache import cache
 from . import core
@@ -25,7 +26,7 @@ __all__ = ['beat_track', 'tempo', 'plp']
 
 
 def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
-               start_bpm=120.0, tightness=100, trim=True, bpm=None,
+               start_bpm=120.0, tightness=100, trim=True, bpm=None, prior=None,
                units='frames'):
     r'''Dynamic programming beat tracker.
 
@@ -50,7 +51,7 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
         sampling rate of `y`
 
     onset_envelope : np.ndarray [shape=(n,)] or None
-        (optional) pre-computed onset strength envelope.
+        ((optional) pre-computed onset strength envelope.
 
     hop_length : int > 0 [scalar]
         number of audio samples between successive `onset_envelope` values
@@ -67,6 +68,11 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
     bpm        : float [scalar]
         (optional) If provided, use `bpm` as the tempo instead of
         estimating it from `onsets`.
+
+    prior      : scipy.stats.rv_continuous [optional]
+        An optional prior distribution over tempo.
+
+        If provided, `start_bpm` will be ignored.
 
     units : {'frames', 'samples', 'time'}
         The units to encode detected beat events in.
@@ -179,7 +185,8 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
         bpm = tempo(onset_envelope=onset_envelope,
                     sr=sr,
                     hop_length=hop_length,
-                    start_bpm=start_bpm)[0]
+                    start_bpm=start_bpm,
+                    prior=prior)[0]
 
     # Then, run the tracker
     beats = __beat_tracker(onset_envelope,
@@ -202,7 +209,7 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
 @cache(level=30)
 def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
-          std_bpm=1.0, ac_size=8.0, max_tempo=320.0, aggregate=np.mean):
+          std_bpm=1.0, ac_size=8.0, max_tempo=320.0, aggregate=np.mean, prior=None):
     """Estimate the tempo (beats per minute)
 
     Parameters
@@ -235,6 +242,12 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
         Aggregation function for estimating global tempo.
         If `None`, then tempo is estimated independently for each frame.
 
+    prior : scipy.stats.rv_continuous [optional]
+        A prior distribution over tempo (in beats per minute).
+        By default, a pseudo-log-normal prior is used.
+
+        If given, `start_bpm` and `std_bpm` will be ignored.
+
     Returns
     -------
     tempo : np.ndarray [scalar]
@@ -258,6 +271,13 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
     >>> tempo
     array([129.199])
 
+    >>> # Or a static tempo with a uniform prior instead
+    >>> import scipy.stats
+    >>> prior = scipy.stats.uniform(30, 300)  # uniform over 30-300 BPM
+    >>> utempo = librosa.beat.tempo(onset_envelope=onset_env, sr=sr, prior=prior)
+    >>> utempo
+    array([64.6])
+
     >>> # Or a dynamic tempo
     >>> dtempo = librosa.beat.tempo(onset_envelope=onset_env, sr=sr,
     ...                             aggregate=None)
@@ -265,12 +285,21 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
     array([ 143.555,  143.555,  143.555, ...,  161.499,  161.499,
             172.266])
 
+    >>> # Dynamic tempo with a proper log-normal prior
+    >>> prior_lognorm = scipy.stats.lognorm(loc=np.log(120), scale=120, s=1)
+    >>> dtempo_lognorm = librosa.beat.tempo(onset_envelope=onset_env, sr=sr,
+    ...                                     aggregate=None,
+    ...                                     prior=prior_lognorm)
+    >>> dtempo_lognorm
+    array([ 86.133,  86.133, ..., 129.199, 129.199])
+
 
     Plot the estimated tempo against the onset autocorrelation
 
     >>> import matplotlib.pyplot as plt
     >>> # Convert to scalar
     >>> tempo = np.asscalar(tempo)
+    >>> utempo = np.asscalar(utempo)
     >>> # Compute 2-second windowed autocorrelation
     >>> hop_length = 512
     >>> ac = librosa.autocorrelate(onset_env, 2 * sr // hop_length)
@@ -281,7 +310,9 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
     >>> plt.semilogx(freqs[1:], librosa.util.normalize(ac)[1:],
     ...              label='Onset autocorrelation', basex=2)
     >>> plt.axvline(tempo, 0, 1, color='r', alpha=0.75, linestyle='--',
-    ...            label='Tempo: {:.2f} BPM'.format(tempo))
+    ...             label='Tempo (default prior): {:.2f} BPM'.format(tempo))
+    >>> plt.axvline(utempo, 0, 1, color='y', alpha=0.75, linestyle=':',
+    ...             label='Tempo (uniform prior): {:.2f} BPM'.format(utempo))
     >>> plt.xlabel('Tempo (BPM)')
     >>> plt.grid()
     >>> plt.title('Static tempo estimation')
@@ -296,7 +327,10 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
     ...                                hop_length=hop_length)
     >>> librosa.display.specshow(tg, x_axis='time', y_axis='tempo')
     >>> plt.plot(librosa.times_like(dtempo), dtempo,
-    ...          color='w', linewidth=1.5, label='Tempo estimate')
+    ...          color='w', linewidth=1.5, label='Tempo estimate (default prior)')
+    >>> plt.plot(librosa.times_like(dtempo_lognorm), dtempo_lognorm,
+    ...          color='c', linewidth=1.5, linestyle='--',
+    ...          label='Tempo estimate (lognorm prior)')
     >>> plt.title('Dynamic tempo estimation')
     >>> plt.legend(frameon=True, framealpha=0.75)
     """
@@ -320,30 +354,24 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
     bpms = core.tempo_frequencies(tg.shape[0], hop_length=hop_length, sr=sr)
 
     # Weight the autocorrelation by a log-normal distribution
-    logprior = -0.5 * ((np.log2(bpms) - np.log2(start_bpm)) / std_bpm)**2
+    if prior is None:
+        logprior = -0.5 * ((np.log2(bpms) - np.log2(start_bpm)) / std_bpm)**2
+    else:
+        logprior = prior.logpdf(bpms)
 
     # Kill everything above the max tempo
     if max_tempo is not None:
         max_idx = np.argmax(bpms < max_tempo)
         logprior[:max_idx] = -np.inf
 
-    # Really, instead of multiplying by the prior, we should set up a
-    # probabilistic model for tempo and add log-probabilities.
-    # This would give us a chance to recover from null signals and
-    # rely on the prior.
-    # it would also make time aggregation much more natural
-
     # Get the maximum, weighted by the prior
     best_period = np.argmax(np.log(tg + 1e-10) + logprior[:, np.newaxis], axis=0)
 
-    tempi = bpms[best_period]
-    # Wherever the best tempo is index 0, return start_bpm
-    tempi[best_period == 0] = start_bpm
-    return tempi
+    return bpms[best_period]
 
 
 def plp(y=None, sr=22050, onset_envelope=None, hop_length=512,
-        win_length=384, tempo_min=30, tempo_max=300):
+        win_length=384, tempo_min=30, tempo_max=300, prior=None):
     '''Predominant local pulse (PLP) estimation. [1]_
 
     The PLP method analyzes the onset strength envelope in the frequency domain
@@ -387,6 +415,9 @@ def plp(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
         Set either (or both) to `None` to disable this constraint.
 
+    prior : scipy.stats.rv_continuous [optional]
+        A prior distribution over tempo (in beats per minute).
+        By default, a uniform prior over `[tempo_min, tempo_max]` is used.
 
     Returns
     -------
@@ -408,20 +439,34 @@ def plp(y=None, sr=22050, onset_envelope=None, hop_length=512,
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr)
     >>> pulse = librosa.beat.plp(onset_envelope=onset_env, sr=sr)
+    >>> # Or compute pulse with an alternate prior, like log-normal
+    >>> import scipy.stats
+    >>> prior = scipy.stats.lognorm(loc=np.log(120), scale=120, s=1)
+    >>> pulse_lognorm = librosa.beat.plp(onset_envelope=onset_env, sr=sr,
+    ...                                  prior=prior)
     >>> melspec = librosa.feature.melspectrogram(y=y, sr=sr)
     >>> import matplotlib.pyplot as plt
-    >>> ax = plt.subplot(2,1,1)
+    >>> ax = plt.subplot(3,1,1)
     >>> librosa.display.specshow(librosa.power_to_db(melspec,
     ...                                              ref=np.max),
     ...                          x_axis='time', y_axis='mel')
     >>> plt.title('Mel spectrogram')
-    >>> plt.subplot(2,1,2, sharex=ax)
+    >>> plt.subplot(3,1,2, sharex=ax)
     >>> plt.plot(librosa.times_like(onset_env),
     ...          librosa.util.normalize(onset_env),
     ...          label='Onset strength')
     >>> plt.plot(librosa.times_like(pulse),
     ...          librosa.util.normalize(pulse),
     ...          label='Predominant local pulse (PLP)')
+    >>> plt.title('Uniform tempo prior [30, 300]')
+    >>> plt.subplot(3,1,3, sharex=ax)
+    >>> plt.plot(librosa.times_like(onset_env),
+    ...          librosa.util.normalize(onset_env),
+    ...          label='Onset strength')
+    >>> plt.plot(librosa.times_like(pulse_lognorm),
+    ...          librosa.util.normalize(pulse_lognorm),
+    ...          label='Predominant local pulse (PLP)')
+    >>> plt.title('Log-normal tempo prior, mean=120')
     >>> plt.legend()
     >>> plt.xlim([30, 35])
     >>> plt.tight_layout()
@@ -476,19 +521,21 @@ def plp(y=None, sr=22050, onset_envelope=None, hop_length=512,
                                                        hop_length=hop_length,
                                                        win_length=win_length)
 
-    # TODO: in the future, generalize this to support arbitrary priors
     if tempo_min is not None:
         ftgram[tempo_frequencies < tempo_min] = 0
     if tempo_max is not None:
         ftgram[tempo_frequencies > tempo_max] = 0
 
     # Step 3: Discard everything below the peak
-    ftmag = np.abs(ftgram)
+    ftmag = np.log(1e-10 + np.abs(ftgram))
+    if prior is not None:
+        ftmag += prior.logpdf(tempo_frequencies)[:, np.newaxis]
+
     peak_values = ftmag.max(axis=0, keepdims=True)
     ftgram[ftmag < peak_values] = 0
 
     # Normalize to keep only phase information
-    ftgram[:] /= peak_values
+    ftgram /= (util.tiny(ftgram)**0.5 + np.abs(ftgram.max(axis=0, keepdims=True)))
 
     # Step 5: invert the Fourier tempogram to get the pulse
     pulse = core.istft(ftgram, hop_length=1,
