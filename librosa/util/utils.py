@@ -132,12 +132,13 @@ def valid_audio(y, mono=True):
     Raises
     ------
     ParameterError
-        If `y` fails to meet the following criteria:
-            - `type(y)` is `np.ndarray`
-            - `y.dtype` is floating-point
+        In either of these cases:
+            - `type(y)` is not `np.ndarray`
+            - `y.dtype` is not floating-point
             - `mono == True` and `y.ndim` is not 1
             - `mono == False` and `y.ndim` is not 1 or 2
-            - `np.isfinite(y).all()` is not True
+            - `np.isfinite(y).all()` is False
+            - `y.flags["F_CONTIGUOUS"]` is False
 
     Notes
     -----
@@ -145,33 +146,44 @@ def valid_audio(y, mono=True):
 
     Examples
     --------
-    >>> # Only allow monophonic signals
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> librosa.util.valid_audio(y)
+    >>> # By default, valid_audio allows only mono signals
+    >>> filepath = librosa.util.example_audio_file()
+    >>> y_mono, sr = librosa.load(filepath, mono=True)
+    >>> y_stereo, _ = librosa.load(filepath, mono=False)
+    >>> librosa.util.valid_audio(y_mono), librosa.util.valid_audio(y_stereo)
+    True, False
+
+    >>> # To allow stereo signals, set mono=False
+    >>> librosa.util.valid_audio(y_stereo, mono=False)
     True
 
-    >>> # If we want to allow stereo signals
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(), mono=False)
-    >>> librosa.util.valid_audio(y, mono=False)
-    True
+    See also
+    --------
+    stack
+    numpy.asfortranarray
+    numpy.float32
     '''
 
     if not isinstance(y, np.ndarray):
-        raise ParameterError('data must be of type numpy.ndarray')
+        raise ParameterError('Audio data must be of type numpy.ndarray')
 
     if not np.issubdtype(y.dtype, np.floating):
-        raise ParameterError('data must be floating-point')
+        raise ParameterError('Audio data must be floating-point')
 
     if mono and y.ndim != 1:
         raise ParameterError('Invalid shape for monophonic audio: '
                              'ndim={:d}, shape={}'.format(y.ndim, y.shape))
 
     elif y.ndim > 2 or y.ndim == 0:
-        raise ParameterError('Audio must have shape (samples,) or (channels, samples). '
+        raise ParameterError('Audio data must have shape (samples,) or (channels, samples). '
                              'Received shape={}'.format(y.shape))
 
     if not np.isfinite(y).all():
         raise ParameterError('Audio buffer is not finite everywhere')
+
+    if not y.flags["F_CONTIGUOUS"]:
+        raise ParameterError('Audio buffer is not Fortran-contiguous. '
+            'Use numpy.asfortranarray to ensure Fortran contiguity.')
 
     return True
 
