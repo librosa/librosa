@@ -774,7 +774,7 @@ def __trim_stack(cqt_resp, n_bins):
 
     # Finally, clip out any bottom frequencies that we don't really want
     # Transpose magic here to ensure column-contiguity
-    return np.ascontiguousarray(cqt_resp[-n_bins:].T).T
+    return np.asfortranarray(cqt_resp[-n_bins:])
 
 
 def __cqt_response(y, n_fft, hop_length, fft_basis, mode):
