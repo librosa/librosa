@@ -974,7 +974,7 @@ def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
             True, False,  True, False,  True, False, False,  True,
            False,  True, False,  True], dtype=bool)
     >>> # Stack y against the zero-crossing indicator
-    >>> np.vstack([y, z]).T
+    >>> librosa.util.stack([y, z], axis=-1)
     array([[  0.000e+00,   1.000e+00],
            [  9.694e-01,   0.000e+00],
            [  4.759e-01,   0.000e+00],
