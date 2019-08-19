@@ -7,7 +7,6 @@ import six
 import sys
 import warnings
 
-import soundfile as sf
 import audioread
 import numpy as np
 import scipy.signal
@@ -124,29 +123,38 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
     22050
 
     """
-
     try:
-        with sf.SoundFile(path) as sf_desc:
-            sr_native = sf_desc.samplerate
-            if offset:
-                # Seek to the start of the target read
-                sf_desc.seek(int(offset * sr_native))
-            if duration is not None:
-                frame_duration = int(duration * sr_native)
+        import soundfile as sf
+    except OSError:
+        # soundfile raises OSError at import time if libsndfile is not available
+        sf = None
+
+    if sf is None:
+        # try audioread
+        y, sr_native = __audioread_load(path, offset, duration, dtype)
+    else:
+        try:
+            with sf.SoundFile(path) as sf_desc:
+                sr_native = sf_desc.samplerate
+                if offset:
+                    # Seek to the start of the target read
+                    sf_desc.seek(int(offset * sr_native))
+                if duration is not None:
+                    frame_duration = int(duration * sr_native)
+                else:
+                    frame_duration = -1
+
+                # Load the target number of frames, and transpose to match librosa form
+                y = sf_desc.read(frames=frame_duration, dtype=dtype, always_2d=False).T
+
+        except RuntimeError as exc:
+
+            # If soundfile failed, try audioread instead
+            if isinstance(path, six.string_types):
+                warnings.warn('PySoundFile failed. Trying audioread instead.')
+                y, sr_native = __audioread_load(path, offset, duration, dtype)
             else:
-                frame_duration = -1
-
-            # Load the target number of frames, and transpose to match librosa form
-            y = sf_desc.read(frames=frame_duration, dtype=dtype, always_2d=False).T
-
-    except (RuntimeError, OSError) as exc:
-
-        # If soundfile failed, try audioread instead
-        if isinstance(path, six.string_types):
-            warnings.warn('PySoundFile failed. Trying audioread instead.')
-            y, sr_native = __audioread_load(path, offset, duration, dtype)
-        else:
-            six.reraise(*sys.exc_info())
+                six.reraise(*sys.exc_info())
 
     # Final cleanup for dtype and contiguity
     if mono:
@@ -356,6 +364,8 @@ def stream(path, block_length, frame_length, hop_length,
         raise ParameterError('frame_length={} must be a positive integer')
     if not (np.issubdtype(type(hop_length), np.integer) and hop_length > 0):
         raise ParameterError('hop_length={} must be a positive integer')
+
+    import soundfile as sf
 
     # Get the sample rate from the file info
     sr = sf.info(path).samplerate
@@ -621,8 +631,9 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     if filename is not None:
         try:
+            import soundfile as sf
             return sf.info(filename).duration
-        except RuntimeError:
+        except (RuntimeError, OSError):
             with audioread.audio_open(filename) as fdesc:
                 return fdesc.duration
 
@@ -672,8 +683,9 @@ def get_samplerate(path):
     44100
     '''
     try:
+        import soundfile as sf
         return sf.info(path).samplerate
-    except RuntimeError:
+    except (RuntimeError, OSError):
         with audioread.audio_open(path) as fdesc:
             return fdesc.samplerate
 
