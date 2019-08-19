@@ -110,7 +110,7 @@ def test_beat():
 
     onset_env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
 
-    def __test(with_audio, with_tempo, start_bpm, bpm, trim, tightness):
+    def __test(with_audio, with_tempo, start_bpm, bpm, trim, tightness, prior):
         if with_audio:
             _y = y
             _ons = None
@@ -125,7 +125,8 @@ def test_beat():
                                                start_bpm=start_bpm,
                                                tightness=tightness,
                                                trim=trim,
-                                               bpm=bpm)
+                                               bpm=bpm,
+                                               prior=prior)
 
         assert tempo >= 0
 
@@ -139,18 +140,17 @@ def test_beat():
                 for start_bpm in [-20, 0, 60, 120, 240]:
                     for bpm in [-20, 0, None, 150, 360]:
                         for tightness in [0, 100, 10000]:
+                            for prior in [None, scipy.stats.uniform(60, 240)]:
+                                if (tightness <= 0 or
+                                       (bpm is not None and bpm <= 0) or
+                                       (start_bpm is not None and
+                                       bpm is None and start_bpm <= 0)):
 
-                            if (tightness <= 0 or
-                                (bpm is not None and bpm <= 0) or
-                                (start_bpm is not None and
-                                 bpm is None and
-                                 start_bpm <= 0)):
-
-                                tf = pytest.mark.xfail(__test, raises=librosa.ParameterError)
-                            else:
-                                tf = __test
-                            yield (tf, with_audio, with_tempo,
-                                   start_bpm, bpm, trim, tightness)
+                                    tf = pytest.mark.xfail(__test, raises=librosa.ParameterError)
+                                else:
+                                    tf = __test
+                                yield (tf, with_audio, with_tempo,
+                                        start_bpm, bpm, trim, tightness, prior)
 
 
 @pytest.mark.parametrize('sr', [None, 44100])
