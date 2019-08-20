@@ -336,3 +336,166 @@ def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
                                   + dskew[idx[:, 0], idx[:, 1]])
 
     return pitches, mags
+
+
+def yin(y, sr=22050, frame_length=512, hop_length=None, fmin=40, fmax=None,
+        cumulative=False, interpolate=True,
+        threshold_1=0.1, threshold_2=0.2, pad_mode='reflect'):
+    '''Fundamental frequency (F0) estimation. [1]_
+
+
+    .. [1] De Cheveigné, A., & Kawahara, H. (2002).
+        "YIN, a fundamental frequency estimator for speech and music."
+        The Journal of the Acoustical Society of America, 111(4), 1917-1930.
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(n,)]
+        audio time series
+
+    sr : number > 0 [scalar]
+        sampling rate of `y` in Hertz
+
+    frame_length : int [scalar]
+        length of the frame in samples.
+        By default, frame_length=512 corresponds to a time scale of 23 ms at
+        a sampling rate of 22050 Hz. This is close to the default of the
+        original publication.
+        We recommend setting `frame_length` to a power of two for optimizing
+        the speed of the fast Fourier transform (FFT) algorithm.
+
+    hop_length : None or int > 0 [scalar]
+        number of audio samples between adjacent YIN predictions.
+        If `None`, defaults to `frame_length // 4`.
+
+    fmin: number > 0 [scalar]
+        minimum frequency in Hertz
+
+    fmax: None or number > 0 [scalar]
+        maximum frequency in Hertz. If `None`, defaults to fmax = sr / 4.0
+
+    threshold_1: number >= 0 [scalar]
+        absolute threshold for peak estimation
+
+    threshold_2: number >= 0 [scalar]
+        absolute threshold for aperiodicity estimation
+        NB: we recommend setting threshold_2 >= threshold_1.
+
+    pad_mode: string or function
+        This argument is passed to `np.pad` for centering frames before
+        computing autocorrelation.
+        By default (`pad_mode="reflect"`), `y` is padded on both sides with its
+        own reflection, mirrored around its first and last sample respectively.
+
+    Returns
+    -------
+    f0: np.ndarray [shape=(n_frames,)]
+        time series of fundamental frequencies in Hertz.
+        Null values represent the absence of a perceptible fundamental frequency.
+
+    See also
+    --------
+    piptrack: sinusoidal peak interpolation
+
+    Examples
+    --------
+    Computing a fundamental frequency curve from an audio input:
+
+    >>> y = librosa.chirp(440, 880, duration=7.0)
+    >>> yin(y)
+    array([  0.        ,   0.        , 222.62295321, ..., 877.12362404,
+       885.76086659, 886.80491703])
+    '''
+    # Set the maximal frequency.
+    if fmax is None:
+        fmax = sr / 4
+
+    # Set the default hop, if it's not already specified.
+    if hop_length is None:
+        hop_length = int(frame_length // 4)
+
+    # Check that audio is valid.
+    util.valid_audio(y, mono=True)
+
+    # Pad the time series so that frames are centered.
+    y = np.pad(y, int(frame_length // 2), mode=pad_mode)
+
+    # Compute autocorrelation in each frame.
+    y_frames = util.frame(y, frame_length=frame_length, hop_length=hop_length)
+    n_frames = y_frames.shape[1]
+    acf_frames = librosa.autocorrelate(y_frames, axis=0)
+
+    # Difference function.
+    min_period = np.maximum(int(np.floor(sr/fmax)), 2)
+    max_period = np.minimum(int(np.ceil(sr/fmin)), frame_length-1)
+    boxcar_window = scipy.signal.windows.boxcar(frame_length)
+    energy = np.convolve(y*y, boxcar_window, mode="same")
+    energy_frames = util.frame(
+        energy, frame_length=frame_length, hop_length=hop_length)
+    energy_0 = energy_frames[0, :]
+    energy_tau = energy_frames[(min_period-1):(max_period+1), :]
+    acf_tau = acf_frames[(min_period-1):(max_period+1), :]
+    yin_frames = energy_0 + energy_frames - 2*acf_frames
+
+    # Cumulative mean normalized difference function.
+    # NB: Equation 8 in de Cheveigné and Kawahara JASA 2002 seems to imply that
+    # the denominator is: cumsum(difference_fames)/tau_range, not
+    # cumsum(difference_frames/tau_range) as we implement it.
+    # However, going back to line 48 of the MATLAB code by AdC, we find the line:
+    # dd= d(2:end) ./ (cumsum(d(2:end)) ./ (1:(p.maxprd)));
+    # in which the parentheses indicate that the division by tau must happen
+    # before the cumulative summation, not after.
+    # Therefore, in this implementation, we purposefully diverge from Equation 8
+    # and follow the MATLAB reference implementation instead.
+    if cumulative:
+        yin_numerator = yin_frames[(min_period-1):(max_period+1), :]
+        tau_range = np.arange(1, frame_length)[:, np.newaxis]
+        cumulative_mean = np.cumsum(yin_frames[1:, :]/tau_range, axis=0)
+        epsilon = np.finfo(y.dtype).eps
+        yin_denominator = epsilon + cumulative_mean[(min_period-2):max_period, :]
+        yin_frames = yin_numerator / yin_denominator
+
+    # Parabolic interpolation.
+    # NB: perhaps these operations can be fused to alleviate memory allocation?
+    if interpolate:
+        parabola_a =\
+            (yin_frames[:-2, :]+yin_frames[2:, :]-2*yin_frames[1:-1, :]) / 2
+        parabola_b = (yin_frames[2:, :]-yin_frames[:-2, :]) / 2
+        parabolic_shifts = -parabola_b / (2*parabola_a)
+        parabolic_values =\
+            yin_frames[1:-1, :] - parabola_b*parabola_b/(4*parabola_a)
+        is_trough = np.logical_and(
+            yin_frames[1:-1, :]<yin_frames[:-2, :],
+            yin_frames[1:-1, :]<yin_frames[2:, :])
+        yin_frames = yin_frames[1:-1, :]
+        yin_frames[is_trough] = parabolic_values[is_trough]
+    else:
+        yin_frames = yin_frames[1:-1, :]
+
+    # Absolute threshold
+    # "The solution we propose is to set an absolute threshold and choose the
+    # smallest value of tau that gives a minimum of d' deeper than
+    # this threshold. If none is found, the global minimum is chosen instead."
+    yin_period = np.argmin(yin_frames, axis=0)
+    if threshold_1 > 0:
+        lower_bound = (yin_frames<threshold_1).argmax(axis=0)
+        upper_bound = np.minimum(2*lower_bound, max_period-min_period-1)
+        for frame_id in range(n_frames):
+            if lower_bound[frame_id]>0:
+                bounded_frame = yin_frames[
+                    lower_bound[frame_id]:upper_bound[frame_id], frame_id]
+                new_argmin = np.argmin(bounded_frame, axis=0)
+                yin_period[frame_id] = lower_bound[frame_id] + new_argmin
+    yin_aperiodicity = yin_frames[yin_period, range(n_frames)]
+    yin_period = min_period + yin_period
+
+    # Refine peak by parabolic interpolation
+    if interpolate:
+        yin_period = yin_period + parabolic_shifts[yin_period, range(n_frames)]
+
+    # Convert period to fundamental frequency (f0)
+    f0 = sr / yin_period
+    f0[yin_aperiodicity > threshold_2] = 0
+    f0[f0<fmin] = 0
+    f0[f0>fmax] = 0
+    return f0
