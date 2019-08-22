@@ -408,7 +408,7 @@ def yin(y, sr=22050, frame_length=2048, hop_length=None, fmin=40, fmax=None,
     '''
     # Set the maximal frequency.
     if fmax is None:
-        fmax = sr / 4
+        fmax = sr / 4.0
 
     # Set the default hop, if it's not already specified.
     if hop_length is None:
