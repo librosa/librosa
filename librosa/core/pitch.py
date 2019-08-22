@@ -4,6 +4,7 @@
 
 import warnings
 import numpy as np
+import scipy.signal
 import six
 
 from .spectrum import _spectrogram
@@ -429,7 +430,7 @@ def yin(y, sr=22050, frame_length=2048, hop_length=None, fmin=40, fmax=None,
     min_period = np.maximum(int(np.floor(sr/fmax)), 2)
     max_period = np.minimum(int(np.ceil(sr/fmin)), frame_length-1)
     boxcar_window = scipy.signal.windows.boxcar(frame_length)
-    energy = np.convolve(y*y, boxcar_window, mode="same")
+    energy = scipy.signal.convolve(y*y, boxcar_window, mode="same")
     energy_frames = util.frame(
         energy, frame_length=frame_length, hop_length=hop_length)
     energy_0 = energy_frames[0, :]
