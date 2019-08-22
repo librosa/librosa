@@ -338,7 +338,7 @@ def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
     return pitches, mags
 
 
-def yin(y, sr=22050, frame_length=512, hop_length=None, fmin=40, fmax=None,
+def yin(y, sr=22050, frame_length=2048, hop_length=None, fmin=40, fmax=None,
         cumulative=False, interpolate=True,
         threshold_1=0.1, threshold_2=0.2, pad_mode='reflect'):
     '''Fundamental frequency (F0) estimation. [1]_
@@ -358,9 +358,9 @@ def yin(y, sr=22050, frame_length=512, hop_length=None, fmin=40, fmax=None,
 
     frame_length : int [scalar]
         length of the frame in samples.
-        By default, frame_length=512 corresponds to a time scale of 23 ms at
-        a sampling rate of 22050 Hz. This is close to the default of the
-        original publication.
+        By default, frame_length=2048 corresponds to a time scale of 93 ms at
+        a sampling rate of 22050 Hz. In comparison, the time scale of the
+        original publication [1]_ is equal to 25 milliseconds.
         We recommend setting `frame_length` to a power of two for optimizing
         the speed of the fast Fourier transform (FFT) algorithm.
 
