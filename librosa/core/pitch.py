@@ -340,7 +340,7 @@ def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
 
 def yin(y, sr=22050, frame_length=2048, hop_length=None, fmin=40, fmax=None,
         cumulative=False, interpolate=True,
-        threshold_1=0.1, threshold_2=0.2, pad_mode='reflect'):
+        peak_threshold=0.1, periodicity_threshold=0.2, pad_mode='reflect'):
     '''Fundamental frequency (F0) estimation. [1]_
 
 
@@ -374,10 +374,10 @@ def yin(y, sr=22050, frame_length=2048, hop_length=None, fmin=40, fmax=None,
     fmax: None or number > 0 [scalar]
         maximum frequency in Hertz. If `None`, defaults to fmax = sr / 4.0
 
-    threshold_1: number >= 0 [scalar]
+    peak_threshold: number >= 0 [scalar]
         absolute threshold for peak estimation
 
-    threshold_2: number >= 0 [scalar]
+    periodicity_threshold: number >= 0 [scalar]
         absolute threshold for aperiodicity estimation
         NB: we recommend setting threshold_2 >= threshold_1.
 
@@ -477,8 +477,8 @@ def yin(y, sr=22050, frame_length=2048, hop_length=None, fmin=40, fmax=None,
     # smallest value of tau that gives a minimum of d' deeper than
     # this threshold. If none is found, the global minimum is chosen instead."
     yin_period = np.argmin(yin_frames, axis=0)
-    if threshold_1 > 0:
-        lower_bound = (yin_frames<threshold_1).argmax(axis=0)
+    if peak_threshold > 0:
+        lower_bound = (yin_frames<peak_threshold).argmax(axis=0)
         upper_bound = np.minimum(2*lower_bound, max_period-min_period-1)
         for frame_id in range(n_frames):
             if lower_bound[frame_id]>0:
@@ -495,7 +495,7 @@ def yin(y, sr=22050, frame_length=2048, hop_length=None, fmin=40, fmax=None,
 
     # Convert period to fundamental frequency (f0)
     f0 = sr / yin_period
-    f0[yin_aperiodicity > threshold_2] = 0
+    f0[yin_aperiodicity > periodicity_threshold] = 0
     f0[f0<fmin] = 0
     f0[f0>fmax] = 0
     return f0
