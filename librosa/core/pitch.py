@@ -457,7 +457,6 @@ def yin(y, sr=22050, frame_length=2048, hop_length=None, fmin=40, fmax=None,
         yin_frames = yin_numerator / yin_denominator
 
     # Parabolic interpolation.
-    # NB: perhaps these operations can be fused to alleviate memory allocation?
     if interpolate:
         parabola_a =\
             (yin_frames[:-2, :]+yin_frames[2:, :]-2*yin_frames[1:-1, :]) / 2
