@@ -439,19 +439,10 @@ def yin(y, sr=22050, frame_length=2048, hop_length=None, fmin=40, fmax=None,
     yin_frames = energy_0 + energy_frames - 2*acf_frames
 
     # Cumulative mean normalized difference function.
-    # NB: Equation 8 in de Cheveigné and Kawahara JASA 2002 seems to imply that
-    # the denominator is: cumsum(difference_fames)/tau_range, not
-    # cumsum(difference_frames/tau_range) as we implement it.
-    # However, going back to line 48 of the MATLAB code by AdC, we find the line:
-    # dd= d(2:end) ./ (cumsum(d(2:end)) ./ (1:(p.maxprd)));
-    # in which the parentheses indicate that the division by tau must happen
-    # before the cumulative summation, not after.
-    # Therefore, in this implementation, we purposefully diverge from Equation 8
-    # and follow the MATLAB reference implementation instead.
     if cumulative:
         yin_numerator = yin_frames[(min_period-1):(max_period+1), :]
         tau_range = np.arange(1, frame_length)[:, np.newaxis]
-        cumulative_mean = np.cumsum(yin_frames[1:, :]/tau_range, axis=0)
+        cumulative_mean = np.cumsum(yin_frames[1:, :], axis=0) / tau_range
         epsilon = np.finfo(y.dtype).eps
         yin_denominator = epsilon + cumulative_mean[(min_period-2):max_period, :]
         yin_frames = yin_numerator / yin_denominator
