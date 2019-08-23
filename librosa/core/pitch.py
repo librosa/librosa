@@ -339,9 +339,9 @@ def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
     return pitches, mags
 
 
-def yin(y, sr=22050, frame_length=2048, hop_length=None, fmin=40, fmax=None,
-        cumulative=False, interpolate=True,
-        peak_threshold=0.1, periodicity_threshold=0.2, pad_mode='reflect'):
+def yin(y, sr=22050, win_length=2048, hop_length=None, window='hann',
+        pad_mode='reflect', fmin=40, fmax=None, cumulative=False,
+        peak_threshold=0.1, periodicity_threshold=0.2):
     '''Fundamental frequency (F0) estimation. [1]_
 
 
@@ -357,7 +357,7 @@ def yin(y, sr=22050, frame_length=2048, hop_length=None, fmin=40, fmax=None,
     sr : number > 0 [scalar]
         sampling rate of `y` in Hertz
 
-    frame_length : int [scalar]
+    win_length : int [scalar]
         length of the frame in samples.
         By default, frame_length=2048 corresponds to a time scale of 93 ms at
         a sampling rate of 22050 Hz. In comparison, the time scale of the
@@ -419,20 +419,20 @@ def yin(y, sr=22050, frame_length=2048, hop_length=None, fmin=40, fmax=None,
     util.valid_audio(y, mono=True)
 
     # Pad the time series so that frames are centered.
-    y = np.pad(y, int(frame_length // 2), mode=pad_mode)
+    y = np.pad(y, int(win_length // 2), mode=pad_mode)
 
     # Compute autocorrelation in each frame.
-    y_frames = util.frame(y, frame_length=frame_length, hop_length=hop_length)
+    y_frames = util.frame(y, frame_length=win_length, hop_length=hop_length)
     n_frames = y_frames.shape[1]
     acf_frames = librosa.autocorrelate(y_frames, axis=0)
 
     # Difference function.
     min_period = np.maximum(int(np.floor(sr/fmax)), 2)
-    max_period = np.minimum(int(np.ceil(sr/fmin)), frame_length-1)
-    boxcar_window = scipy.signal.windows.boxcar(frame_length)
+    max_period = np.minimum(int(np.ceil(sr/fmin)), win_length-1)
+    boxcar_window = scipy.signal.windows.boxcar(win_length)
     energy = scipy.signal.convolve(y*y, boxcar_window, mode="same")
     energy_frames = util.frame(
-        energy, frame_length=frame_length, hop_length=hop_length)
+        energy, frame_length=win_length, hop_length=hop_length)
     energy_0 = energy_frames[0, :]
     energy_tau = energy_frames[(min_period-1):(max_period+1), :]
     acf_tau = acf_frames[(min_period-1):(max_period+1), :]
