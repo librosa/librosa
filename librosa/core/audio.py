@@ -393,7 +393,7 @@ def stream(path, block_length, frame_length, hop_length,
 
 @cache(level=20)
 def to_mono(y):
-    '''Force an audio signal down to mono.
+    '''Force an audio signal down to mono by averaging samples across channels.
 
     Parameters
     ----------
