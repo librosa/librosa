@@ -419,6 +419,9 @@ def to_mono(y):
     (1355168,)
 
     '''
+    # Ensure Fortran contiguity.
+    if not np.isfortran(y):
+        y = np.asfortranarray(y)
 
     # Validate the buffer.  Stereo is ok here.
     util.valid_audio(y, mono=False)
