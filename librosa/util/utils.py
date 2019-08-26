@@ -274,7 +274,7 @@ def valid_audio(y, mono=True):
     if not np.isfinite(y).all():
         raise ParameterError('Audio buffer is not finite everywhere')
 
-    if not y.flags["F_CONTIGUOUS"]:
+    if not y.flags["F_CONTIGUOUS"]:
         raise ParameterError('Audio buffer is not Fortran-contiguous. '
             'Use numpy.asfortranarray to ensure Fortran contiguity.')
 
