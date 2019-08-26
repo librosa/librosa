@@ -259,7 +259,7 @@ def stream(path, block_length, frame_length, hop_length,
            when the signal is carved into blocks, because it would introduce
            padding in the middle of the signal.  To disable this feature,
            use `center=False` in all frame-based analyses.
-        
+
     See the examples below for proper usage of this function.
 
     Parameters
@@ -309,7 +309,7 @@ def stream(path, block_length, frame_length, hop_length,
     Yields
     ------
     y : np.ndarray
-        An audio buffer of (at most) 
+        An audio buffer of (at most)
         `block_length * (hop_length-1) + frame_length` samples.
 
     See Also
@@ -326,7 +326,7 @@ def stream(path, block_length, frame_length, hop_length,
 
     >>> filename = librosa.util.example_audio_file()
     >>> sr = librosa.get_samplerate(filename)
-    >>> stream librosa.stream(filename,
+    >>> stream = librosa.stream(filename,
     ...                       block_length=256,
     ...                       frame_length=4096,
     ...                       hop_length=1024)
