@@ -373,9 +373,6 @@ def remix(y, intervals, align_zeros=True):
     >>> y_out = librosa.effects.remix(y, intervals[::-1])
     '''
 
-    # Validate the audio buffer
-    util.valid_audio(y, mono=False)
-
     y_out = []
 
     if align_zeros:
@@ -395,7 +392,12 @@ def remix(y, intervals, align_zeros=True):
 
         y_out.append(y[tuple(clip)])
 
-    return np.concatenate(y_out, axis=-1)
+    y_out = np.concatenate(y_out, axis=-1)
+
+    # Validate the output audio buffer
+    util.valid_audio(y_out, mono=False)
+
+    return y_out
 
 
 def _signal_to_frame_nonsilent(y, frame_length=2048, hop_length=512, top_db=60,
@@ -594,7 +596,7 @@ def preemphasis(y, coef=0.97, zi=None, return_zf=False):
         Initial filter state
 
     return_zf : boolean
-        If `True`, return the final filter state.  
+        If `True`, return the final filter state.
         If `False`, only return the pre-emphasized signal.
 
     Returns
