@@ -392,7 +392,7 @@ def remix(y, intervals, align_zeros=True):
 
         y_out.append(y[tuple(clip)])
 
-    y_out = np.concatenate(y_out, axis=-1)
+    y_out = np.asfortranarray(np.concatenate(y_out, axis=-1))
 
     # Validate the output audio buffer
     util.valid_audio(y_out, mono=False)
