@@ -409,7 +409,7 @@ def test_rms():
         # RMSE of an all-ones band is 1
         rms = librosa.feature.rms(S=S)
 
-        assert np.allclose(rms, np.ones_like(rms))
+        assert np.allclose(rms, np.ones_like(rms) / np.sqrt(2 * (n - 1)), atol=1e-2)
 
     def __test_consistency(frame_length, hop_length, center):
         y, sr = librosa.load(__EXAMPLE_FILE, sr=None)
@@ -432,12 +432,9 @@ def test_rms():
                                    hop_length=hop_length, center=center)
 
         assert rms1.shape == rms2.shape
-        # Normalize envelopes.
-        rms1 /= rms1.max()
-        rms2 /= rms2.max()
 
         # Ensure results are similar.
-        np.testing.assert_allclose(rms1, rms2, rtol=5e-2)
+        np.testing.assert_allclose(rms1, rms2, atol=5e-4)
 
     for frame_length in [2048, 4096]:
         for hop_length in [128, 512, 1024]:
