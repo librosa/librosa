@@ -641,8 +641,7 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     else:
         # Ensure Fortran contiguity.
-        if not np.isfortran(y):
-            y = np.asfortranarray(y)
+        y = np.asfortranarray(y)
 
         # Validate the audio buffer.  Stereo is okay here.
         util.valid_audio(y, mono=False)
