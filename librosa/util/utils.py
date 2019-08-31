@@ -225,7 +225,7 @@ def valid_audio(y, mono=True):
     Raises
     ------
     ParameterError
-        In either of these cases:
+        In any of these cases:
             - `type(y)` is not `np.ndarray`
             - `y.dtype` is not floating-point
             - `mono == True` and `y.ndim` is not 1
