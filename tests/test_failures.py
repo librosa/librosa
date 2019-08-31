@@ -17,7 +17,7 @@ import pytest
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_mono_valid_stereo():
     '''valid_audio: mono=True,  y.ndim==2'''
-    y = np.zeros((2, 1000))
+    y = np.zeros((1000, 2)).T
     librosa.util.valid_audio(y, mono=True)
 
 
@@ -47,7 +47,7 @@ def test_valid_mono():
 
 def test_valid_stereo():
     '''valid_audio: mono=False, y.ndim==2'''
-    y = np.zeros((2, 1000))
+    y = np.zeros((1000, 2)).T
     librosa.util.valid_audio(y, mono=False)
 
 
