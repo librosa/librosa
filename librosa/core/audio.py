@@ -393,7 +393,7 @@ def stream(path, block_length, frame_length, hop_length,
 
 @cache(level=20)
 def to_mono(y):
-    '''Force an audio signal down to mono.
+    '''Force an audio signal down to mono by averaging samples across channels.
 
     Parameters
     ----------
@@ -419,6 +419,8 @@ def to_mono(y):
     (1355168,)
 
     '''
+    # Ensure Fortran contiguity.
+    y = np.asfortranarray(y)
 
     # Validate the buffer.  Stereo is ok here.
     util.valid_audio(y, mono=False)
@@ -638,6 +640,9 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
             n_samples = n_samples - 2 * int(n_fft / 2)
 
     else:
+        # Ensure Fortran contiguity.
+        y = np.asfortranarray(y)
+
         # Validate the audio buffer.  Stereo is okay here.
         util.valid_audio(y, mono=False)
         if y.ndim == 1:
