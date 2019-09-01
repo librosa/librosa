@@ -848,13 +848,20 @@ def rms(y=None, S=None, frame_length=2048, hop_length=512,
         x = util.frame(y,
                        frame_length=frame_length,
                        hop_length=hop_length)
+
+        # No normalization is necessary for time-domain input
+        norm = 1
     elif S is not None:
         x, _ = _spectrogram(y=y, S=S,
                             n_fft=frame_length,
                             hop_length=hop_length)
+
+        # FFT introduces a scaling of n_fft to energy calculations
+        norm = 2 * (x.shape[0] - 1)
     else:
         raise ValueError('Either `y` or `S` must be input.')
-    return np.sqrt(np.mean(np.abs(x)**2, axis=0, keepdims=True))
+
+    return np.sqrt(np.mean(np.abs(x)**2, axis=0, keepdims=True) / norm)
 
 
 def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
