@@ -526,9 +526,11 @@ def test_sharex_specshow_ms(S_abs, y, sr):
     # Due to shared x_axis, both plots are plotted in 's'.
     plt.figure(figsize=(8, 8))
     ax = plt.subplot(2, 1, 1)
-    librosa.display.specshow(librosa.amplitude_to_db(S_abs, ref=np.max), x_axis='ms')
+    librosa.display.specshow(librosa.amplitude_to_db(S_abs, ref=np.max), x_axis='time')
+    plt.xlabel('')  # hide the x label here, which is not propagated automatically
     plt.subplot(2, 1, 2, sharex=ax)
-    librosa.display.waveplot(y, sr)
+    librosa.display.waveplot(y, sr, x_axis='ms')
+    plt.xlabel('')  # hide the x label here, which is not propagated automatically
     return plt.gcf()
 
 
@@ -540,6 +542,8 @@ def test_sharex_waveplot_ms(y, sr, S_abs):
     plt.figure(figsize=(8, 8))
     ax = plt.subplot(2, 1, 1)
     librosa.display.waveplot(y, sr)
+    plt.xlabel('')  # hide the x label here, which is not propagated automatically
     plt.subplot(2, 1, 2, sharex=ax)
     librosa.display.specshow(librosa.amplitude_to_db(S_abs, ref=np.max), x_axis='ms')
+    plt.xlabel('')  # hide the x label here, which is not propagated automatically
     return plt.gcf()
