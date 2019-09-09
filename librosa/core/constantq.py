@@ -1048,12 +1048,12 @@ def griffinlim_cqt(C, n_iter=32, sr=22050, hop_length=512, fmin=None, bins_per_o
         # Invert with our current estimate of the phases
         inverse = icqt(C * angles, sr=sr, hop_length=hop_length,
                        bins_per_octave=bins_per_octave, fmin=fmin,
-                       tuning=tuning, window=window, length=length,
+                       tuning=tuning,filter_scale=filter_scale, window=window, length=length,
                        res_type=res_type, dtype=dtype)
 
         # Rebuild the spectrogram
         rebuilt = cqt(inverse, sr=sr, bins_per_octave=bins_per_octave, n_bins=C.shape[0],
-                      hop_length=hop_length, fmin=fmin, tuning=tuning,
+                      hop_length=hop_length, fmin=fmin, tuning=tuning, filter_scale=filter_scale,
                       window=window, res_type=res_type)
 
         # Update our phase estimates
@@ -1065,6 +1065,7 @@ def griffinlim_cqt(C, n_iter=32, sr=22050, hop_length=512, fmin=None, bins_per_o
                 sr=sr, hop_length=hop_length,
                 bins_per_octave=bins_per_octave,
                 tuning=tuning,
+                filter_scale=filter_scale,
                 fmin=fmin,
                 window=window,
                 length=length,
