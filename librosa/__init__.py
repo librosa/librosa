@@ -28,10 +28,6 @@ from .util.exceptions import *  # pylint: disable=wildcard-import
 # Exporting all core functions is okay here: suppress the import warning
 from .core import *  # pylint: disable=wildcard-import
 
-warnings.filterwarnings('always',
-                        category=DeprecationWarning,
-                        module='^{0}'.format(re.escape(__name__)))
-
 # Throw a deprecation warning if we're on legacy python
 if sys.version_info < (3,):
     warnings.warn('You are using librosa with Python 2. '
