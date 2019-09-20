@@ -201,14 +201,6 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
     if hop_length is None:
         hop_length = int(win_length // 4)
 
-    fft_window = get_window(window, win_length, fftbins=True)
-
-    # Pad the window out to n_fft size
-    fft_window = util.pad_center(fft_window, n_fft)
-
-    # Reshape so that the window can be broadcast
-    fft_window = fft_window.reshape((-1, 1))
-
     # Check audio is valid
     util.valid_audio(y)
 
@@ -230,14 +222,25 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
     n_columns = int(util.MAX_MEM_BLOCK / (stft_matrix.shape[0] *
                                           stft_matrix.itemsize))
 
-    for bl_s in range(0, stft_matrix.shape[1], n_columns):
-        bl_t = min(bl_s + n_columns, stft_matrix.shape[1])
+    if window == "ones" :
+        for bl_s in range(0, stft_matrix.shape[1], n_columns):
+            bl_t = min(bl_s + n_columns, stft_matrix.shape[1])
+            stft_matrix[:, bl_s:bl_t] = fft.rfft(y_frames[:, bl_s:bl_t], axis=0)
+    else:
+        fft_window = get_window(window, win_length, fftbins=True)
 
-        stft_matrix[:, bl_s:bl_t] = fft.rfft(fft_window *
-                                             y_frames[:, bl_s:bl_t],
-                                             axis=0)
+        # Pad the window out to n_fft size
+        fft_window = util.pad_center(fft_window, n_fft)
+
+        # Reshape so that the window can be broadcast
+        fft_window = fft_window.reshape((-1, 1))
+
+        for bl_s in range(0, stft_matrix.shape[1], n_columns):
+            bl_t = min(bl_s + n_columns, stft_matrix.shape[1])
+            stft_matrix[:, bl_s:bl_t] = fft.rfft(fft_window *
+                                                 y_frames[:, bl_s:bl_t],
+                                                 axis=0)
     return stft_matrix
-
 
 @cache(level=30)
 def istft(stft_matrix, hop_length=None, win_length=None, window='hann',

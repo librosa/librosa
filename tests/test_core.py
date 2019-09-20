@@ -213,7 +213,7 @@ def test_stft():
 
         if DATA['hann_w'][0, 0] == 0:
             # Set window to ones, swap back to nfft
-            window = np.ones
+            window = 'ones'
             win_length = None
 
         else:
