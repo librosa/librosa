@@ -222,10 +222,11 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
     n_columns = int(util.MAX_MEM_BLOCK / (stft_matrix.shape[0] *
                                           stft_matrix.itemsize))
 
-    if window == "ones" :
+    if window in ['boxcar', 'box', 'ones', 'rect', 'rectangular']:
         for bl_s in range(0, stft_matrix.shape[1], n_columns):
             bl_t = min(bl_s + n_columns, stft_matrix.shape[1])
-            stft_matrix[:, bl_s:bl_t] = fft.rfft(y_frames[:, bl_s:bl_t], axis=0)
+            stft_matrix[:, bl_s:bl_t] = fft.rfft(y_frames[:, bl_s:bl_t],
+                                                 axis=0)
     else:
         fft_window = get_window(window, win_length, fftbins=True)
 
@@ -241,6 +242,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
                                                  y_frames[:, bl_s:bl_t],
                                                  axis=0)
     return stft_matrix
+
 
 @cache(level=30)
 def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
