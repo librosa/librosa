@@ -51,7 +51,7 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
         sampling rate of `y`
 
     onset_envelope : np.ndarray [shape=(n,)] or None
-        ((optional) pre-computed onset strength envelope.
+        (optional) pre-computed onset strength envelope.
 
     hop_length : int > 0 [scalar]
         number of audio samples between successive `onset_envelope` values
@@ -71,7 +71,6 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
     prior      : scipy.stats.rv_continuous [optional]
         An optional prior distribution over tempo.
-
         If provided, `start_bpm` will be ignored.
 
     units : {'frames', 'samples', 'time'}
@@ -97,8 +96,7 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
     Raises
     ------
     ParameterError
-        if neither `y` nor `onset_envelope` are provided
-
+        if neither `y` nor `onset_envelope` are provided,
         or if `units` is not one of 'frames', 'samples', or 'time'
 
     See Also
@@ -245,7 +243,6 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
     prior : scipy.stats.rv_continuous [optional]
         A prior distribution over tempo (in beats per minute).
         By default, a pseudo-log-normal prior is used.
-
         If given, `start_bpm` and `std_bpm` will be ignored.
 
     Returns
@@ -365,7 +362,8 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
         logprior[:max_idx] = -np.inf
 
     # Get the maximum, weighted by the prior
-    best_period = np.argmax(np.log(tg + 1e-10) + logprior[:, np.newaxis], axis=0)
+    # Using log1p here for numerical stability
+    best_period = np.argmax(np.log1p(1e6 * tg) + logprior[:, np.newaxis], axis=0)
 
     return bpms[best_period]
 
@@ -527,7 +525,7 @@ def plp(y=None, sr=22050, onset_envelope=None, hop_length=512,
         ftgram[tempo_frequencies > tempo_max] = 0
 
     # Step 3: Discard everything below the peak
-    ftmag = np.log(1e-10 + np.abs(ftgram))
+    ftmag = np.log1p(1e6 * np.abs(ftgram))
     if prior is not None:
         ftmag += prior.logpdf(tempo_frequencies)[:, np.newaxis]
 
