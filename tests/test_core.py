@@ -58,6 +58,41 @@ def test_load(infile):
     assert np.allclose(y, DATA['y'])
 
 
+def test_load_parameters():
+
+    file = librosa.util.example_audio_file()
+
+    # Duration
+    with pytest.raises(librosa.ParameterError):
+        y, sr = librosa.load(file, duration="1")
+
+    with pytest.raises(librosa.ParameterError):
+        y, sr = librosa.load(file, duration=-1)
+
+    with pytest.raises(librosa.ParameterError):
+        y, sr = librosa.load(file, duration=-1.2)
+
+    # Offset
+    with pytest.raises(librosa.ParameterError):
+        y, sr = librosa.load(file, offset="1")
+
+    with pytest.raises(librosa.ParameterError):
+        y, sr = librosa.load(file, offset=-1)
+
+    with pytest.raises(librosa.ParameterError):
+        y, sr = librosa.load(file, offset=-1.2)
+
+    # Sample Rate
+    with pytest.raises(librosa.ParameterError):
+        y, sr = librosa.load(file, sr="1")
+
+    with pytest.raises(librosa.ParameterError):
+        y, sr = librosa.load(file, sr=-1)
+
+    with pytest.raises(librosa.ParameterError):
+        y, sr = librosa.load(file, sr=-1.2)
+
+
 @pytest.mark.parametrize('res_type', ['kaiser_fast', 'kaiser_best', 'scipy'])
 def test_load_resample(res_type):
 
