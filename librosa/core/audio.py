@@ -168,10 +168,10 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
 
 
 def __audioread_load(path, offset, duration, dtype):
-    '''Load an audio buffer using audioread.
+    """Load an audio buffer using audioread.
 
     This loads one block at a time, and then concatenates the results.
-    '''
+    """
 
     y = []
     with audioread.audio_open(path) as input_file:
@@ -226,7 +226,7 @@ def __audioread_load(path, offset, duration, dtype):
 def stream(path, block_length, frame_length, hop_length,
            mono=True, offset=0.0, duration=None, fill_value=None,
            dtype=np.float32):
-    '''Stream audio in fixed-length buffers.
+    """Stream audio in fixed-length buffers.
 
     This is primarily useful for processing large files that won't
     fit entirely in memory at once.
@@ -354,7 +354,7 @@ def stream(path, block_length, frame_length, hop_length,
     ...                                              hop_length=2048,
     ...                                              center=False)
 
-    '''
+    """
 
     if not (np.issubdtype(type(block_length), np.integer) and block_length > 0):
         raise ParameterError('block_length={} must be a positive integer')
@@ -399,7 +399,7 @@ def stream(path, block_length, frame_length, hop_length,
 
 @cache(level=20)
 def to_mono(y):
-    '''Force an audio signal down to mono by averaging samples across channels.
+    """Force an audio signal down to mono by averaging samples across channels.
 
     Parameters
     ----------
@@ -424,7 +424,7 @@ def to_mono(y):
     >>> y_mono.shape
     (1355168,)
 
-    '''
+    """
     # Ensure Fortran contiguity.
     y = np.asfortranarray(y)
 
@@ -660,7 +660,7 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
 
 def get_samplerate(path):
-    '''Get the sampling rate for a given file.
+    """Get the sampling rate for a given file.
 
     Parameters
     ----------
@@ -681,7 +681,7 @@ def get_samplerate(path):
     >>> path = librosa.util.example_audio_file()
     >>> librosa.get_samplerate(path)
     44100
-    '''
+    """
     try:
         return sf.info(path).samplerate
     except RuntimeError:
@@ -926,7 +926,7 @@ def __lpc(y, order):
 @cache(level=20)
 def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
                    zero_pos=True, axis=-1):
-    '''Find the zero-crossings of a signal `y`: indices `i` such that
+    """Find the zero-crossings of a signal `y`: indices `i` such that
     `sign(y[i]) != sign(y[j])`.
 
     If `y` is multi-dimensional, then zero-crossings are computed along
@@ -1009,7 +1009,7 @@ def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
     >>> # Find the indices of zero-crossings
     >>> np.nonzero(z)
     (array([ 0,  3,  5,  8, 10, 12, 15, 17, 19]),)
-    '''
+    """
 
     # Clip within the threshold
     if threshold is None:
