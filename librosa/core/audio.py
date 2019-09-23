@@ -129,9 +129,13 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
         with sf.SoundFile(path) as sf_desc:
             sr_native = sf_desc.samplerate
             if offset:
+                if type(offset) != 'float' or offset <= 0.0:
+                    raise TypeError("Parameter 'offset' must have a positive float value.")
                 # Seek to the start of the target read
                 sf_desc.seek(int(offset * sr_native))
             if duration is not None:
+                if type(duration) != 'float' or duration <= 0.0:
+                    raise TypeError("Parameter 'duration' must have a positive float value.")
                 frame_duration = int(duration * sr_native)
             else:
                 frame_duration = -1
@@ -153,6 +157,8 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
         y = to_mono(y)
 
     if sr is not None:
+        if type(sr) != 'int' or sr <= 0:
+            raise TypeError("Parameter 'sr' must have a positive integer value")
         y = resample(y, sr_native, sr, res_type=res_type)
 
     else:
