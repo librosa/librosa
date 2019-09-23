@@ -315,6 +315,49 @@ def valid_int(x, cast=None):
     return int(cast(x))
 
 
+def valid_num(x, positive=False):
+    """This function checks if x is a number type and if it's positive
+
+    It is not the same as np.isscalar() since it does not approve of strings
+    with numerical values.
+
+    Parameters
+    ----------
+    x: any -- The variable that we want to test
+    positive: bool -- True if we want to test for positive number
+
+    Raises
+    ------
+
+    ParameterError
+        If the parameter is not a numeric type
+        If positive=True and the parameter has negative value
+
+    Returns
+    -------
+    True if x is a number
+    True if x is a positive number (positive=True)
+
+    Examples
+    --------
+
+    >>> librosa.utils.isnum("1")
+    ParameterError("Paramter is not a numeric type")
+
+    >>> librosa.utils.isnum(1)
+    True
+
+    >>> librosa.utils.isnum(-1.1)
+    True
+
+    """
+    if not (isinstance(x, (int, float)) and not isinstance(x, bool)):
+        raise ParameterError("Parameter is not a numeric type")
+    if positive and x <= 0:
+        raise ParameterError("Parameter is not a positive number")
+    return True
+
+
 def valid_intervals(intervals):
     '''Ensure that an array is a valid representation of time intervals:
 
