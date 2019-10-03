@@ -34,3 +34,7 @@ if sys.version_info < (3,):
                   'Please note that librosa 0.7 will be the last version to support '
                   'Python 2, after which it will require Python 3 or later.',
                   DeprecationWarning)
+
+warnings.filterwarnings('always',
+                        category=DeprecationWarning,
+                        module='^{0}'.format(re.escape(__name__)))
