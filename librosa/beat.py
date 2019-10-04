@@ -295,8 +295,8 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
 
     >>> import matplotlib.pyplot as plt
     >>> # Convert to scalar
-    >>> tempo = np.asscalar(tempo)
-    >>> utempo = np.asscalar(utempo)
+    >>> tempo = tempo.item()
+    >>> utempo = utempo.item()
     >>> # Compute 2-second windowed autocorrelation
     >>> hop_length = 512
     >>> ac = librosa.autocorrelate(onset_env, 2 * sr // hop_length)
@@ -335,8 +335,8 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
     if start_bpm <= 0:
         raise ParameterError('start_bpm must be strictly positive')
 
-    win_length = np.asscalar(core.time_to_frames(ac_size, sr=sr,
-                                                 hop_length=hop_length))
+    win_length = core.time_to_frames(
+        ac_size, sr=sr, hop_length=hop_length).item()
 
     tg = tempogram(y=y, sr=sr,
                    onset_envelope=onset_envelope,
