@@ -49,7 +49,7 @@ def test_onset_strength(infile):
 def test_tempo(tempo, sr, hop_length, ac_size, aggregate, prior):
 
     y = np.zeros(20 * sr)
-    delay = np.asscalar(librosa.time_to_samples(60./tempo, sr=sr))
+    delay = librosa.time_to_samples(60./tempo, sr=sr).item()
     y[::delay] = 1
 
     tempo_est = librosa.beat.tempo(y=y, sr=sr, hop_length=hop_length,
