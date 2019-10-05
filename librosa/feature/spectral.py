@@ -806,7 +806,6 @@ def spectral_contraction(y=None, S=None, n_fft=2048, hop_length=512,
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length,
                             power=1.)
-    print(S)
 
     if not np.isrealobj(S):
         raise ParameterError('Spectral contraction is only defined '
@@ -819,6 +818,7 @@ def spectral_contraction(y=None, S=None, n_fft=2048, hop_length=512,
     window = scipy.signal.chebwin(S.shape[0], at=200)
     if S.ndim > 1:
         window = np.tile(window, (S.shape[1],1)).T
+
 
     # S_thresh = np.maximum(amin, S ** power)
     # weight_spec = np.sum(S_thresh * window, axis=0)
@@ -833,6 +833,7 @@ def bandwise_contraction(X_log, sr, f_start=233, f_end=5274, n_bands=11, bandwit
         # get indices for frequency range A#3 (233 Hz) to E8 (5274 Hz)
 
         freq_ax_log = midi_to_hz(np.arange(hz_to_midi(1), hz_to_midi(sr/2)))
+
         #print(hz_to_midi(1), hz_to_midi(sr/2))
         #print(np.arange(hz_to_midi(1), hz_to_midi(sr/2)))
         #print(freq_ax_log)
@@ -852,10 +853,12 @@ def bandwise_contraction(X_log, sr, f_start=233, f_end=5274, n_bands=11, bandwit
             cur_band = X_log[cur_band_start:cur_band_end, :].copy()
 
             # Call standard spectral contraction for each band
+            
             #print(cur_band.shape)
             bw_contraction[cur_band_idx, :] = spectral_contraction(S=cur_band)
 
         return None#bw_contraction
+
 
 def rms(y=None, S=None, frame_length=2048, hop_length=512,
         center=True, pad_mode='reflect'):
