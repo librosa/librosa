@@ -1059,7 +1059,8 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True,
 # -- Chroma --#
 def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
                 hop_length=512, win_length=None, window='hann', center=True,
-                pad_mode='reflect', tuning=None, **kwargs):
+                pad_mode='reflect', tuning=None, n_chroma=12,
+                **kwargs):
     """Compute a chromagram from a waveform or power spectrogram.
 
     This implementation is derived from `chromagram_E` [1]_
@@ -1118,6 +1119,9 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
     tuning : float [scalar] or None.
         Deviation from A440 tuning in fractional chroma bins.
         If `None`, it is automatically estimated.
+
+    n_chroma : int > 0 [scalar]
+        Number of chroma bins to produce (12 by default).
 
     kwargs : additional keyword arguments
         Arguments to parameterize chroma filters.
@@ -1181,13 +1185,11 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
                             win_length=win_length, window=window, center=center,
                             pad_mode=pad_mode)
 
-    n_chroma = kwargs.get('n_chroma', 12)
-
     if tuning is None:
         tuning = estimate_tuning(S=S, sr=sr, bins_per_octave=n_chroma)
 
     # Get the filter bank
-    chromafb = filters.chroma(sr, n_fft, tuning=tuning, **kwargs)
+    chromafb = filters.chroma(sr, n_fft, tuning=tuning, n_chroma=n_chroma, **kwargs)
 
     # Compute raw chroma
     raw_chroma = np.dot(chromafb, S)
