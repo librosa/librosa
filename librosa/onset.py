@@ -407,9 +407,9 @@ def onset_backtrack(events, energy):
 
 
 @cache(level=30)
-def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
-                         ref=None, detrend=False, center=True, feature=None,
-                         aggregate=None, channels=None, **kwargs):
+def onset_strength_multi(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
+                         lag=1, max_size=1, ref=None, detrend=False, center=True,
+                         feature=None, aggregate=None, channels=None, **kwargs):
     """Compute a spectral flux onset strength envelope across multiple channels.
 
     Onset strength for channel `i` at time `t` is determined by:
@@ -427,6 +427,12 @@ def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
 
     S        : np.ndarray [shape=(d, m)]
         pre-computed (log-power) spectrogram
+
+    n_fft : int > 0 [scalar]
+        FFT window size for use in `feature()` if `S` is not provided.
+
+    hop_length : int > 0 [scalar]
+        hop length for use in `feature()` if `S` is not provided.
 
     lag      : int > 0
         time lag for computing differences
@@ -527,15 +533,10 @@ def onset_strength_multi(y=None, sr=22050, S=None, lag=1, max_size=1,
 
     # First, compute mel spectrogram
     if S is None:
-        S = np.abs(feature(y=y, sr=sr, **kwargs))
+        S = np.abs(feature(y=y, sr=sr, n_fft=n_fft, hop_length=hop_length, **kwargs))
 
         # Convert to dBs
         S = core.power_to_db(S)
-
-    # Retrieve the n_fft and hop_length,
-    # or default values for onsets if not provided
-    n_fft = kwargs.get('n_fft', 2048)
-    hop_length = kwargs.get('hop_length', 512)
 
     # Ensure that S is at least 2-d
     S = np.atleast_2d(S)
