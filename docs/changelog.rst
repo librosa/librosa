@@ -7,7 +7,6 @@ v0.7.1
 
 
 New Features
-
    - `#966`_ `util.frame` now supports multidimensional data. Includes a new helper function `util.stack` for contiguous concatenation. *Brian McFee*
    - `#934`_ `core.griffinlim_cqt`: Phase retrieval from constant-Q magnitude spectra. *Brian McFee*
    - `#940`_ Enhanced compatibility with HTK's MFCC implementation: `effects.preemphasis` and `lifter=` parameter in MFCC.  *Brian McFee*
@@ -16,8 +15,6 @@ New Features
 
 
 Bug fixes
-
-     McFee*
    - `#983`_ Added a missing parameter to `griffinlim_cqt`. *Voodoohop*
    - `#978`_ Correct FFT normalization discrepancy in rms calculation. *Brian McFee*
    - `#930`_ Corrected an error in automatic tuning correction for CQT. *Brian McFee*
@@ -26,7 +23,6 @@ Bug fixes
 
 
 Documentation
-
    - `#976`_ Fixed a typo in `stream` documentation. *Alastair Porter*
    - `#958`_ Visualization of reassigned spectrograms. *Vincent Lostanlen*
    - `#943`_ Improved documentation for `core.stft`. *Vincent Lostanlen*
@@ -34,7 +30,6 @@ Documentation
 
 
 Other changes
-   
    - `#1004`_ Expose frame parameters in `onset` and `chroma_stft` functions. *Brian McFee*
    - `#1003`_ Removed warning filter reset, and changed the Python2 deprecation
      warning to class `FutureWarning`. *Brian McFee, Fabian Keller*
