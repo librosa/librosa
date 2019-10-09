@@ -46,18 +46,18 @@ def frame(x, frame_length=2048, hop_length=512, axis=-1):
     can be framed with frame length 3 and hop length 2 in two ways.
     The first (`axis=-1`), results in the array `x_frames`:
 
-        `[[0, 2, 4],
-          [1, 3, 5],
-          [2, 4, 6]]`
+    [[0, 2, 4],
+     [1, 3, 5],
+     [2, 4, 6]]
 
     where each column `x_frames[:, i]` contains a contiguous slice of
     the input `x[i * hop_length : i * hop_length + frame_length]`.
 
     The second way (`axis=0`) results in the array `x_frames`:
 
-        `[[0, 1, 2],
-          [2, 3, 4],
-          [4, 5, 6]]`
+    [[0, 1, 2],
+     [2, 3, 4],
+     [4, 5, 6]]
 
     where each row `x_frames[i]` contains a contiguous slice of the input.
 
@@ -1935,7 +1935,7 @@ def stack(arrays, axis=0):
     Parameters
     ----------
     arrays : list
-        one or more `np.ndarray`s
+        one or more `np.ndarray`
 
     axis : integer
         The target axis along which to stack.  `axis=0` creates a new first axis,

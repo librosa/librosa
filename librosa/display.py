@@ -392,16 +392,22 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
 
     x_axis : str or None
         Display of the x-axis ticks and tick markers. Accepted values are:
-        - 'time' : markers are shown as milliseconds, seconds,
-          minutes, or hours.
-          Values are plotted in units of seconds.
+
+        - 'time' : markers are shown as milliseconds, seconds, minutes, or hours.
+            Values are plotted in units of seconds.
+
         - 's' : markers are shown as seconds.
+
         - 'ms' : markers are shown as milliseconds.
-        - 'lag' : like time, but past the halfway point counts
-          as negative values.
+
+        - 'lag' : like time, but past the halfway point counts as negative values.
+
         - 'lag_s' : same as lag, but in seconds.
+
         - 'lag_ms' : same as lag, but in milliseconds.
+
         - `None`, 'none', or 'off': ticks and tick markers are hidden.
+
 
     ax : matplotlib.axes.Axes or None
         Axes to plot on instead of the default `plt.gca()`.
@@ -552,14 +558,11 @@ def specshow(data, x_coords=None, y_coords=None,
 
         Time types:
 
-        - 'time' : markers are shown as milliseconds, seconds,
-          minutes, or hours.
-          Values are plotted in units of seconds.
+        - 'time' : markers are shown as milliseconds, seconds, minutes, or hours.  
+                Values are plotted in units of seconds.
         - 's' : markers are shown as seconds.
         - 'ms' : markers are shown as milliseconds.
-
-        - 'lag' : like time, but past the halfway point counts
-          as negative values.
+        - 'lag' : like time, but past the halfway point counts as negative values.
         - 'lag_s' : same as lag, but in seconds.
         - 'lag_ms' : same as lag, but in milliseconds.
 
