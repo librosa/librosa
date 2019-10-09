@@ -6,7 +6,7 @@ import sys
 import importlib
 
 short_version = '0.7'
-version = '0.7.0'
+version = '0.7.1'
 
 
 def __get_mod_version(modname):

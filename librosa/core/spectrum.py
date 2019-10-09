@@ -109,8 +109,10 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
 
     center : boolean
         If `True`, the signal `y` is padded so that frame
-          `D[:, t]` is centered at `y[t * hop_length]`.
+        `D[:, t]` is centered at `y[t * hop_length]`.
+
         If `False`, then `D[:, t]` begins at `y[t * hop_length]`.
+
         Defaults to `True`,  which simplifies the alignment of `D` onto a
         time grid by means of `librosa.core.frames_to_samples`.
         Note, however, that `center` must be set to `False` when analyzing
