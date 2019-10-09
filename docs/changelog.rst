@@ -1,9 +1,78 @@
 Changelog
 =========
 
+v0.7.1
+------
+2019-10-09
+
+
+New Features
+   - `#966`_ `util.frame` now supports multidimensional data. Includes a new helper function `util.stack` for contiguous concatenation. *Brian McFee*
+   - `#934`_ `core.griffinlim_cqt`: Phase retrieval from constant-Q magnitude spectra. *Brian McFee*
+   - `#940`_ Enhanced compatibility with HTK's MFCC implementation: `effects.preemphasis` and `lifter=` parameter in MFCC.  *Brian McFee*
+   - `#949`_ `util.shear` utility for shear-transforming 2D arrays. *Brian McFee*
+   - `#926`_ `core.reassigned_spectrogram`: time-frequency reassigned spectrogram.  *Scott Seyfarth*
+
+
+Bug fixes
+   - `#983`_ Added a missing parameter to `griffinlim_cqt`. *Voodoohop*
+   - `#978`_ Correct FFT normalization discrepancy in rms calculation. *Brian McFee*
+   - `#930`_ Corrected an error in automatic tuning correction for CQT. *Brian McFee*
+   - `#942`_ Fixed seeking behavior in `librosa.stream` when operating on file-handle inputs. *Carl Thome*
+   - `#920`_ Fixed a boundary condition check in full-sequence DTW. *Frank Zalkow*
+
+
+Documentation
+   - `#976`_ Fixed a typo in `stream` documentation. *Alastair Porter*
+   - `#958`_ Visualization of reassigned spectrograms. *Vincent Lostanlen*
+   - `#943`_ Improved documentation for `core.stft`. *Vincent Lostanlen*
+   - `#939`_ Expanded documentation of `feature.melspectrogram`. *Vincent Lostanlen*
+
+
+Other changes
+   - `#1004`_ Expose frame parameters in `onset` and `chroma_stft` functions. *Brian McFee*
+   - `#1003`_ Removed warning filter reset, and changed the Python2 deprecation
+     warning to class `FutureWarning`. *Brian McFee, Fabian Keller*
+   - `#1000`_ Fixed an upstream deprecation warning from `np.asscalar()`. *Vincent Lostanlen*
+   - `#971`_ Beat and tempo estimation now support prior distributions. *Brian McFee*
+   - `#968`_ `util.valid_audio` now enforces memory contiguity. *Vincent Lostanlen*
+   - `#963`_ Improved x-axis decoration types in `display.waveplot`. *Vincent Lostanlen*
+   - `#960`_ Ensure memory contiguity of audio buffers after resampling. *Brian McFee*
+   - `#957`_ Code-base audit for proper usage of `times_like`. *Brian McFee*
+   - `#953`_ Deprecated `core.ifgram` in favor of `reassigned_spectrogram`. *Brian McFee*
+   - `#950`_ Allow initial phase estimates for `griffinlim` methods. *Brian McFee*
+   - `#949`_ Accelerated `segment.lag_to_recurrence` and `segment.recurrence_to_lag`. Deprecated `util.roll_sparse`. *Brian McFee*
+   - `#930`_ `A440=` parameter has been deprecated across the library in favor of a standardized `tuning=` parameter.  *Brian McFee*
+
+.. _#966: https://github.com/librosa/librosa/issues/966
+.. _#934: https://github.com/librosa/librosa/issues/934
+.. _#940: https://github.com/librosa/librosa/issues/940
+.. _#949: https://github.com/librosa/librosa/issues/949
+.. _#926: https://github.com/librosa/librosa/issues/926
+.. _#983: https://github.com/librosa/librosa/issues/983
+.. _#978: https://github.com/librosa/librosa/issues/978
+.. _#930: https://github.com/librosa/librosa/issues/930
+.. _#942: https://github.com/librosa/librosa/issues/942
+.. _#920: https://github.com/librosa/librosa/issues/920
+.. _#976: https://github.com/librosa/librosa/issues/976
+.. _#958: https://github.com/librosa/librosa/issues/958
+.. _#943: https://github.com/librosa/librosa/issues/943
+.. _#939: https://github.com/librosa/librosa/issues/939
+.. _#1004: https://github.com/librosa/librosa/issues/1004
+.. _#1003: https://github.com/librosa/librosa/issues/1003
+.. _#1000: https://github.com/librosa/librosa/issues/1000
+.. _#971: https://github.com/librosa/librosa/issues/971
+.. _#968: https://github.com/librosa/librosa/issues/968
+.. _#963: https://github.com/librosa/librosa/issues/963
+.. _#960: https://github.com/librosa/librosa/issues/960
+.. _#957: https://github.com/librosa/librosa/issues/957
+.. _#953: https://github.com/librosa/librosa/issues/953
+.. _#950: https://github.com/librosa/librosa/issues/950
+
+
 v0.7.0
 ------
-2019-07-1
+2019-07-07
 
 Note: the 0.7 series will be the last to officially support Python 2.7.
 
