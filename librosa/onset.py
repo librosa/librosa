@@ -303,8 +303,8 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
 
     Constant-Q spectrogram instead of Mel
 
-    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr,
-    ...                                          feature=librosa.cqt)
+    >>> C = np.abs(librosa.cqt(y=y, sr=sr))
+    >>> onset_env = librosa.onset.onset_strength(sr=sr, S=librosa.amplitude_to_db(C, ref=np.max))
     >>> plt.plot(times, onset_env / onset_env.max(), alpha=0.8,
     ...          label='Mean (CQT)')
     >>> plt.legend(frameon=True, framealpha=0.75)
@@ -455,6 +455,8 @@ def onset_strength_multi(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     feature : function
         Function for computing time-series features, eg, scaled spectrograms.
         By default, uses `librosa.feature.melspectrogram` with `fmax=11025.0`
+
+        Must support arguments: `y, sr, n_fft, hop_length`
 
     aggregate : function or False
         Aggregation function to use when combining onsets
