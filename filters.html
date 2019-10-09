@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Filters &mdash; librosa 0.7.0 documentation</title>
+  <title>Filters &mdash; librosa 0.7.1 documentation</title>
   
 
   
@@ -23,7 +23,7 @@
       <script type="text/javascript">
           var DOCUMENTATION_OPTIONS = {
               URL_ROOT:'./',
-              VERSION:'0.7.0',
+              VERSION:'0.7.1',
               LANGUAGE:'None',
               COLLAPSE_INDEX:false,
               FILE_SUFFIX:'.html',
@@ -48,7 +48,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="librosa.filters.mel" href="generated/librosa.filters.mel.html" />
-    <link rel="prev" title="librosa.util.find_files" href="generated/librosa.util.find_files.html" /> 
+    <link rel="prev" title="librosa.util.roll_sparse" href="generated/librosa.util.roll_sparse.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -228,7 +228,7 @@
 <tr class="row-odd"><td><a class="reference internal" href="generated/librosa.filters.mel.html#librosa.filters.mel" title="librosa.filters.mel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mel</span></code></a>(sr,&nbsp;n_fft[,&nbsp;n_mels,&nbsp;fmin,&nbsp;fmax,&nbsp;htk,&nbsp;…])</td>
 <td>Create a Filterbank matrix to combine FFT bins into Mel-frequency bins</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="generated/librosa.filters.chroma.html#librosa.filters.chroma" title="librosa.filters.chroma"><code class="xref py py-obj docutils literal notranslate"><span class="pre">chroma</span></code></a>(sr,&nbsp;n_fft[,&nbsp;n_chroma,&nbsp;A440,&nbsp;ctroct,&nbsp;…])</td>
+<tr class="row-even"><td><a class="reference internal" href="generated/librosa.filters.chroma.html#librosa.filters.chroma" title="librosa.filters.chroma"><code class="xref py py-obj docutils literal notranslate"><span class="pre">chroma</span></code></a>(sr,&nbsp;n_fft[,&nbsp;n_chroma,&nbsp;tuning,&nbsp;A440,&nbsp;…])</td>
 <td>Create a Filterbank matrix to convert STFT to chroma</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="generated/librosa.filters.constant_q.html#librosa.filters.constant_q" title="librosa.filters.constant_q"><code class="xref py py-obj docutils literal notranslate"><span class="pre">constant_q</span></code></a>(sr[,&nbsp;fmin,&nbsp;n_bins,&nbsp;…])</td>
@@ -299,7 +299,7 @@
         <a href="generated/librosa.filters.mel.html" class="btn btn-neutral float-right" title="librosa.filters.mel" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="generated/librosa.util.find_files.html" class="btn btn-neutral float-left" title="librosa.util.find_files" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="generated/librosa.util.roll_sparse.html" class="btn btn-neutral float-left" title="librosa.util.roll_sparse" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -326,7 +326,7 @@
 <div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
     <span class="rst-current-version" data-toggle="rst-current-version">
         <span class="fa fa-book"> Other Versions</span>
-        v: 0.7.0
+        v: 0.7.1
         <span class="fa fa-caret-down"></span>
     </span>
     <div class="rst-other-versions">
@@ -342,6 +342,7 @@
             <dd><a href="0.6.2/filters.html">0.6.2</a></dd>
             <dd><a href="0.6.3/filters.html">0.6.3</a></dd>
             <dd><a href="0.7.0/filters.html">0.7.0</a></dd>
+            <dd><a href="0.7.1/filters.html">0.7.1</a></dd>
             <dd><a href="v0.1.0/index.html">v0.1.0</a></dd>
             <dd><a href="v0.4.0/filters.html">v0.4.0</a></dd>
         </dl>
