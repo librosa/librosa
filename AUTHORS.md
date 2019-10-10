@@ -50,7 +50,10 @@ Contributors
 * Darío Hereñú <https://github.com/kant>
 * Alex Metsai <https://github.com/AlexMetsai>
 * Jack Mason <https://github.com/jack-alexander-ie>
-
+* Scott Seyfarth <https://github.com/scjs>
+* Voodoohop <https://github.com/voodoohop>
+* Alastair Porter <https://github.com/alastair>
+* Fabian Keller <https://github.com/bluenote10>
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
 
