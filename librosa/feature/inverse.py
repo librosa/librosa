@@ -256,6 +256,10 @@ def mfcc_to_audio(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, inv_lifte
     ref : number or callable
         Reference power for (inverse) decibel calculation
 
+    inv_lifter : number >= 0
+        If `inv_lifter>0`, apply *inverse-liftering* (inverse cepstral filtering):
+        `M[n, :] <- M[n, :] / (1 + sin(pi * (n + 1) / inv_lifter)) * inv_lifter / 2`
+
     kwargs : additional keyword arguments
         Parameters to pass through to `mel_to_audio`
 
