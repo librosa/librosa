@@ -164,7 +164,7 @@ def mel_to_audio(M, sr=22050, n_fft=2048, hop_length=512, win_length=None,
                       pad_mode=pad_mode)
 
 
-def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0):
+def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, inv_lifter=0):
     '''Invert Mel-frequency cepstral coefficients to approximate a Mel power
     spectrogram.
 
@@ -195,12 +195,19 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0):
     ref : number or callable
         Reference power for (inverse) decibel calculation
 
+    inv_lifter : number >= 0
+        If `inv_lifter>0`, apply *inverse-liftering* (inverse cepstral filtering):
+        `M[n, :] <- M[n, :] / (1 + sin(pi * (n + 1) / inv_lifter)) * inv_lifter / 2`
 
     Returns
     -------
     M : np.ndarray [shape=(n_mels, n)]
         An approximate Mel power spectrum recovered from `mfcc`
 
+    Warns
+    --------
+    RuntimeWarning
+        divide by zero encountered during inverse-liftering.
 
     See Also
     --------
@@ -208,13 +215,18 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0):
     melspectrogram
     scipy.fftpack.dct
     '''
+    if inv_lifter > 0:
+        mfcc /= 1 + (inv_lifter / 2) \
+                * np.sin(np.pi * np.arange(1, 1 + n_mels, dtype=mfcc.dtype) / inv_lifter)[:, np.newaxis]
+    elif inv_lifter != 0:
+        raise ParameterError('MFCC to MEL inv_lifter={} must be a non-negative number'.format(inv_lifter))
 
     logmel = scipy.fftpack.idct(mfcc, axis=0, type=dct_type, norm=norm, n=n_mels)
 
     return db_to_power(logmel, ref=ref)
 
 
-def mfcc_to_audio(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, **kwargs):
+def mfcc_to_audio(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, inv_lifter=0, **kwargs):
     '''Convert Mel-frequency cepstral coefficients to a time-domain audio signal
 
     This function is primarily a convenience wrapper for the following steps:
@@ -260,6 +272,7 @@ def mfcc_to_audio(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, **kwargs)
     core.griffinlim
     scipy.fftpack.dct
     '''
-    mel_spec = mfcc_to_mel(mfcc, n_mels=n_mels, dct_type=dct_type, norm=norm, ref=ref)
+    mel_spec = mfcc_to_mel(mfcc, n_mels=n_mels, dct_type=dct_type, norm=norm,
+                           ref=ref, inv_lifter=inv_lifter)
 
     return mel_to_audio(mel_spec, **kwargs)
