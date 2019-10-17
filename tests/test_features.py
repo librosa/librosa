@@ -52,10 +52,10 @@ def test_delta(xin, width, slope, order, axis, bias):
 #    if width < 3 or np.mod(width, 2) != 1 or width > x.shape[axis]:
 #        pytest.raises(librosa.ParameterError)
 
-    delta   = librosa.feature.delta(x,
-                                    width=width,
-                                    order=order,
-                                    axis=axis)
+    delta = librosa.feature.delta(x,
+                                  width=width,
+                                  order=order,
+                                  axis=axis)
 
     # Check that trimming matches the expected shape
     assert x.shape == delta.shape
@@ -64,8 +64,8 @@ def test_delta(xin, width, slope, order, axis, bias):
     # (x + delta)[t] should approximate x[t+1] if x is actually linear
     slice_orig = [slice(None)] * x.ndim
     slice_out = [slice(None)] * delta.ndim
-    slice_orig[axis] = slice(width//2 + 1, -width//2 + 1)
-    slice_out[axis] = slice(width//2, -width//2)
+    slice_orig[axis] = slice(width // 2 + 1, -width // 2 + 1)
+    slice_out[axis] = slice(width // 2, -width // 2)
     assert np.allclose((x + delta)[tuple(slice_out)], x[tuple(slice_orig)])
 
 
@@ -334,7 +334,7 @@ def test_spectral_contrast_errors():
     yield __test, S, 0, 200, 6, 0.02
 
     # ill-shaped frequency set: wrong-length vector
-    yield __test, S, np.zeros((S.shape[0]+1,)), 200, 6, 0.02
+    yield __test, S, np.zeros((S.shape[0] + 1,)), 200, 6, 0.02
 
     # ill-shaped frequency set: matrix
     yield __test, S, np.zeros(S.shape), 200, 6, 0.02
@@ -362,6 +362,7 @@ def test_spectral_flatness_synthetic():
 
     # to construct a spectrogram
     n_fft = 2048
+
     def __test(y, S, flatness_ref):
         flatness = librosa.feature.spectral_flatness(y=y,
                                                      S=S,
@@ -455,7 +456,7 @@ def test_zcr_synthetic():
 
         # We don't care too much about the edges if there's padding
         if center:
-            zcr = zcr[:, frame_length//2:-frame_length//2]
+            zcr = zcr[:, frame_length // 2:-frame_length // 2]
 
         # We'll allow 1% relative error
         assert np.allclose(zcr, rate, rtol=1e-2)
@@ -465,7 +466,7 @@ def test_zcr_synthetic():
         y = np.ones(sr)
         y[::period] = -1
         # Every sign flip induces two crossings
-        rate = 2./period
+        rate = 2. / period
         # 1+2**k so that we get both sides of the last crossing
         for frame_length in [513, 2049]:
             for hop_length in [128, 256]:
@@ -498,7 +499,7 @@ def test_poly_features_synthetic():
 
     for order in range(1, 3):
         freq = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
-        coeffs = np.atleast_1d(np.arange(1, 1+order))
+        coeffs = np.atleast_1d(np.arange(1, 1 + order))
 
         # First test: vanilla
         S = __make_data(coeffs, freq)
@@ -513,7 +514,7 @@ def test_poly_features_synthetic():
         yield __test, S, coeffs, freq
 
         # And multi-dimensional
-        freq = np.cumsum(np.abs(np.random.randn(1 + n_fft//2, 2)), axis=0)
+        freq = np.cumsum(np.abs(np.random.randn(1 + n_fft // 2, 2)), axis=0)
         S = __make_data(coeffs, freq)
         yield __test, S, coeffs, freq
 
@@ -640,7 +641,7 @@ def test_tempogram_odf():
 
         idx = 0
         if center:
-            idx = len(odf)//2
+            idx = len(odf) // 2
 
         assert np.allclose(odf_ac, tempogram[:, idx])
 
@@ -807,7 +808,7 @@ def test_fourier_tempogram_invert(sr, hop_length, win_length, center, window):
     if center:
         sl = slice(None)
     else:
-        sl = slice(win_length//2, - win_length//2)
+        sl = slice(win_length // 2, - win_length // 2)
 
     odf_inv = librosa.istft(tempogram, hop_length=1, center=center, window=window,
                             length=len(odf))
@@ -892,7 +893,7 @@ def test_mel_to_stft(power, dtype, n_fft):
     # Make a random mel spectrum, 4 frames
     mel_basis = librosa.filters.mel(22050, n_fft, n_mels=128, dtype=dtype)
 
-    stft_orig = np.random.randn(n_fft//2 + 1, 4) ** power
+    stft_orig = np.random.randn(n_fft // 2 + 1, 4) ** power
     mels = mel_basis.dot(stft_orig.astype(dtype))
 
     stft = librosa.feature.inverse.mel_to_stft(mels, power=power, n_fft=n_fft)
@@ -904,7 +905,7 @@ def test_mel_to_stft(power, dtype, n_fft):
     assert np.all(stft >= 0)
 
     # Check that the shape is good
-    assert stft.shape[0] == n_fft //2 + 1
+    assert stft.shape[0] == n_fft // 2 + 1
 
     # Check that the approximation is good in RMSE terms
     assert np.sqrt(np.mean((mel_basis.dot(stft**power) - mels)**2)) <= 5e-2
@@ -934,7 +935,7 @@ def test_mfcc_to_mel(n_mfcc, n_mels, dct_type):
                                 n_mels=n_mels, n_mfcc=n_mfcc, dct_type=dct_type)
 
     melspec = librosa.feature.melspectrogram(y=y, sr=22050, n_mels=n_mels)
-    
+
     mel_recover = librosa.feature.inverse.mfcc_to_mel(mfcc, n_mels=n_mels,
                                                       dct_type=dct_type)
 
@@ -943,6 +944,24 @@ def test_mfcc_to_mel(n_mfcc, n_mels, dct_type):
 
     # Check non-negativity
     assert np.all(mel_recover >= 0)
+
+    # check lifter Parameter error
+    with pytest.raises(librosa.ParameterError):
+        mel_recover = librosa.feature.inverse.mfcc_to_mel(mfcc, n_mels=n_mels,
+                                                          dct_type=dct_type,
+                                                          lifter=-1)
+
+    # check that runtime warnings are triggered when appropriate
+    with pytest.warns(RuntimeWarning):
+        librosa.feature.inverse.mfcc_to_mel(mfcc * 10**3,
+                                            n_mels=n_mels,
+                                            dct_type=dct_type,
+                                            lifter=10**-3)
+
+    # check if mfcc_to_mel it works correctly with lifter
+    librosa.feature.inverse.mfcc_to_mel(mfcc, n_mels=n_mels,
+                                        dct_type=dct_type,
+                                        lifter=1)
 
 
 @pytest.mark.parametrize('n_mfcc', [13, 20])
