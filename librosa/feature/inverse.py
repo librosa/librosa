@@ -5,6 +5,7 @@
 import numpy as np
 import scipy.fftpack
 
+from ..util.exceptions import ParameterError
 from ..core.spectrum import griffinlim
 from ..core.spectrum import db_to_power
 from .. import filters
@@ -86,7 +87,7 @@ def mel_to_stft(M, sr=22050, n_fft=2048, power=2.0, **kwargs):
     # the inverse exponent.
     # We'll do the exponentiation in-place.
     inverse = nnls(mel_basis, M)
-    return np.power(inverse, 1./power, out=inverse)
+    return np.power(inverse, 1. / power, out=inverse)
 
 
 def mel_to_audio(M, sr=22050, n_fft=2048, hop_length=512, win_length=None,
@@ -164,7 +165,7 @@ def mel_to_audio(M, sr=22050, n_fft=2048, hop_length=512, win_length=None,
                       pad_mode=pad_mode)
 
 
-def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, inv_lifter=0):
+def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0):
     '''Invert Mel-frequency cepstral coefficients to approximate a Mel power
     spectrogram.
 
@@ -195,9 +196,9 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, inv_lifter=
     ref : number or callable
         Reference power for (inverse) decibel calculation
 
-    inv_lifter : number >= 0
-        If `inv_lifter>0`, apply *inverse-liftering* (inverse cepstral filtering):
-        `M[n, :] <- M[n, :] / (1 + sin(pi * (n + 1) / inv_lifter)) * inv_lifter / 2`
+    lifter : number >= 0
+        If `lifter>0`, apply *inverse-liftering* (inverse cepstral filtering):
+        `M[n, :] <- M[n, :] / (1 + sin(pi * (n + 1) / lifter)) * lifter / 2`
 
     Returns
     -------
@@ -207,6 +208,7 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, inv_lifter=
     Warns
     --------
     RuntimeWarning
+        overflow encountered in power or
         divide by zero encountered during inverse-liftering.
 
     See Also
@@ -215,18 +217,20 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, inv_lifter=
     melspectrogram
     scipy.fftpack.dct
     '''
-    if inv_lifter > 0:
-        mfcc /= 1 + (inv_lifter / 2) \
-                * np.sin(np.pi * np.arange(1, 1 + n_mels, dtype=mfcc.dtype) / inv_lifter)[:, np.newaxis]
-    elif inv_lifter != 0:
-        raise ParameterError('MFCC to MEL inv_lifter={} must be a non-negative number'.format(inv_lifter))
+    if lifter > 0:
+        mfcc = mfcc.copy()
+        n_mfcc = mfcc.shape[0]
+        mfcc /= 1 + (lifter / 2) \
+            * np.sin(np.pi * np.arange(1, 1 + n_mfcc, dtype=mfcc.dtype) / lifter)[:, np.newaxis]
+    elif lifter != 0:
+        raise ParameterError('MFCC to MEL inv_lifter={} must be a non-negative number'.format(lifter))
 
     logmel = scipy.fftpack.idct(mfcc, axis=0, type=dct_type, norm=norm, n=n_mels)
 
     return db_to_power(logmel, ref=ref)
 
 
-def mfcc_to_audio(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, inv_lifter=0, **kwargs):
+def mfcc_to_audio(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0, **kwargs):
     '''Convert Mel-frequency cepstral coefficients to a time-domain audio signal
 
     This function is primarily a convenience wrapper for the following steps:
@@ -256,9 +260,9 @@ def mfcc_to_audio(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, inv_lifte
     ref : number or callable
         Reference power for (inverse) decibel calculation
 
-    inv_lifter : number >= 0
-        If `inv_lifter>0`, apply *inverse-liftering* (inverse cepstral filtering):
-        `M[n, :] <- M[n, :] / (1 + sin(pi * (n + 1) / inv_lifter)) * inv_lifter / 2`
+    lifter : number >= 0
+        If `lifter>0`, apply *inverse-liftering* (inverse cepstral filtering):
+        `M[n, :] <- M[n, :] / (1 + sin(pi * (n + 1) / lifter)) * lifter / 2`
 
     kwargs : additional keyword arguments
         Parameters to pass through to `mel_to_audio`
@@ -277,6 +281,6 @@ def mfcc_to_audio(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, inv_lifte
     scipy.fftpack.dct
     '''
     mel_spec = mfcc_to_mel(mfcc, n_mels=n_mels, dct_type=dct_type, norm=norm,
-                           ref=ref, inv_lifter=inv_lifter)
+                           ref=ref, lifter=lifter)
 
     return mel_to_audio(mel_spec, **kwargs)
