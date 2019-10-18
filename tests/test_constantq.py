@@ -46,6 +46,29 @@ def __test_cqt_size(y, sr, hop_length, fmin, n_bins, bins_per_octave, tuning, fi
     return cqt_output
 
 
+def __test_vqt_size(y, sr, hop_length, fmin, n_bins, gamma, bins_per_octave,
+                    tuning, filter_scale, norm, sparsity, res_type):
+
+    vqt_output = np.abs(
+        librosa.vqt(
+            y,
+            sr=sr,
+            hop_length=hop_length,
+            fmin=fmin,
+            n_bins=n_bins,
+            gamma=gamma,
+            bins_per_octave=bins_per_octave,
+            tuning=tuning,
+            filter_scale=filter_scale,
+            norm=norm,
+            sparsity=sparsity,
+            res_type=res_type))
+
+    assert vqt_output.shape[0] == n_bins
+
+    return vqt_output
+
+
 def make_signal(sr, duration, fmin="C1", fmax="C8"):
     """ Generates a linear sine sweep """
 
@@ -105,6 +128,41 @@ def test_cqt(y_cqt, sr_cqt, hop_length, fmin, n_bins, bins_per_octave, tuning, f
         hop_length=hop_length,
         fmin=fmin,
         n_bins=n_bins,
+        bins_per_octave=bins_per_octave,
+        tuning=tuning,
+        filter_scale=filter_scale,
+        norm=norm,
+        sparsity=sparsity,
+        res_type=res_type,
+    )
+
+    # type is complex
+    assert np.iscomplexobj(C)
+
+    # number of bins is correct
+    assert C.shape[0] == n_bins
+
+
+@pytest.mark.parametrize("fmin", [None, librosa.note_to_hz("C2")])
+@pytest.mark.parametrize("n_bins", [1, 12, 24, 76])
+@pytest.mark.parametrize("gamma", [None, 0, 2.5])
+@pytest.mark.parametrize("bins_per_octave", [12, 24])
+@pytest.mark.parametrize("tuning", [None, 0, 0.25])
+@pytest.mark.parametrize("filter_scale", [1, 2])
+@pytest.mark.parametrize("norm", [1, 2])
+@pytest.mark.parametrize("res_type", [None, "polyphase"])
+@pytest.mark.parametrize("sparsity", [0.01])
+@pytest.mark.parametrize("hop_length", [256, 512])
+def test_vqt(y_cqt, sr_cqt, hop_length, fmin, n_bins, gamma,
+             bins_per_octave, tuning, filter_scale, norm, res_type, sparsity):
+
+    C = librosa.vqt(
+        y=y_cqt,
+        sr=sr_cqt,
+        hop_length=hop_length,
+        fmin=fmin,
+        n_bins=n_bins,
+        gamma=gamma,
         bins_per_octave=bins_per_octave,
         tuning=tuning,
         filter_scale=filter_scale,
@@ -210,6 +268,30 @@ def test_cqt_position(y, sr, note_min):
     assert np.nanmax(Cscale) < 5e-2, Cscale
 
 
+@pytest.mark.parametrize("note_min", [12, 18, 24, 30, 36])
+@pytest.mark.parametrize("sr", [22050])
+@pytest.mark.parametrize("y", [np.sin(2 * np.pi * librosa.midi_to_hz(60) * np.arange(2 * 22050) / 22050.0)])
+def test_vqt_position(y, sr, note_min):
+
+    C = np.abs(librosa.vqt(y, sr=sr, fmin=librosa.midi_to_hz(note_min)))**2
+
+    # Average over time
+    Cbar = np.median(C, axis=1)
+
+    # Find the peak
+    idx = np.argmax(Cbar)
+
+    assert idx == 60 - note_min
+
+    # Make sure that the max outside the peak is sufficiently small
+    Cscale = Cbar / Cbar[idx]
+    Cscale[idx] = np.nan
+    assert np.nanmax(Cscale) < 7.5e-1, Cscale
+
+    Cscale[idx-1:idx+2] = np.nan
+    assert np.nanmax(Cscale) < 2.5e-1, Cscale
+
+
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_cqt_fail_short_early():
 
@@ -219,10 +301,25 @@ def test_cqt_fail_short_early():
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
+def test_vqt_fail_short_early():
+
+    # sampling rate is sufficiently above the top octave to trigger early downsampling
+    y = np.zeros(16)
+    librosa.vqt(y, sr=44100, n_bins=36)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
 def test_cqt_fail_short_late():
 
     y = np.zeros(16)
     librosa.cqt(y, sr=22050)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_vqt_fail_short_late():
+
+    y = np.zeros(16)
+    librosa.vqt(y, sr=22050)
 
 
 @pytest.fixture(scope="module", params=[11025, 16384, 22050, 32000, 44100])
@@ -257,6 +354,17 @@ def test_cqt_impulse(y_impulse, sr_impulse, hop_impulse):
     assert np.max(continuity) < 5e-4, continuity
 
 
+def test_vqt_impulse(y_impulse, sr_impulse, hop_impulse):
+
+    C = np.abs(librosa.vqt(y=y_impulse, sr=sr_impulse, hop_length=hop_impulse))
+
+    response = np.mean(C ** 2, axis=1)
+
+    continuity = np.abs(np.diff(response))
+
+    # Test that integrated energy is approximately constant
+    assert np.max(continuity) < 5e-4, continuity
+
 def test_hybrid_cqt_impulse(y_impulse, sr_impulse, hop_impulse):
     # Test to resolve issue #341
     # Updated in #417 to use integrated energy instead of pointwise max
@@ -290,6 +398,24 @@ def test_cqt_white_noise(y_white, sr_white, fmin, n_bins, scale):
 
     if not scale:
         lengths = librosa.filters.constant_q_lengths(sr_white, fmin, n_bins=n_bins)
+        C /= np.sqrt(lengths[:, np.newaxis])
+
+    # Only compare statistics across the time dimension
+    # we want ~ constant mean and variance across frequencies
+    assert np.allclose(np.mean(C, axis=1), 1.0, atol=2.5e-1), np.mean(C, axis=1)
+    assert np.allclose(np.std(C, axis=1), 0.5, atol=5e-1), np.std(C, axis=1)
+
+
+@pytest.mark.parametrize("scale", [False, True])
+@pytest.mark.parametrize("fmin", list(librosa.note_to_hz(["C1", "C2"])))
+@pytest.mark.parametrize("n_bins", [24, 36])
+@pytest.mark.parametrize("gamma", [2.5])
+def test_vqt_white_noise(y_white, sr_white, fmin, n_bins, gamma, scale):
+
+    C = np.abs(librosa.vqt(y=y_white, sr=sr_white, fmin=fmin, n_bins=n_bins, gamma=gamma, scale=scale))
+
+    if not scale:
+        lengths = librosa.filters.constant_q_lengths(sr_white, fmin, n_bins=n_bins, gamma=gamma)
         C /= np.sqrt(lengths[:, np.newaxis])
 
     # Only compare statistics across the time dimension

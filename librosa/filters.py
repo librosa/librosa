@@ -62,7 +62,6 @@ __all__ = ['mel',
            'window_sumsquare',
            'diagonal_filter']
 
-
 # Dictionary of window function bandwidths
 
 WINDOW_BANDWIDTHS = {'bart': 1.3334961334912805,
@@ -136,7 +135,7 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
     norm : {None, 1, 'slaney', np.inf} [scalar]
         If 1 or 'slaney', divide the triangular mel weights by the width of the mel band
         (area normalization).
-        
+
         .. warning:: `norm=1` and `norm=np.inf` behavior will change in version 0.8.0.
 
         Otherwise, leave all the triangles aiming for a peak value of 1.0
@@ -216,16 +215,15 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
     for i in range(n_mels):
         # lower and upper slopes for all bins
         lower = -ramps[i] / fdiff[i]
-        upper = ramps[i+2] / fdiff[i+1]
+        upper = ramps[i + 2] / fdiff[i + 1]
 
         # .. then intersect them with each other and zero
         weights[i] = np.maximum(0, np.minimum(lower, upper))
 
     if norm in (1, 'slaney'):
         # Slaney-style mel is scaled to be approx constant energy per channel
-        enorm = 2.0 / (mel_f[2:n_mels+2] - mel_f[:n_mels])
+        enorm = 2.0 / (mel_f[2:n_mels + 2] - mel_f[:n_mels])
         weights *= enorm[:, np.newaxis]
-
 
     # Only check weights if f_mel[0] is positive
     if not np.all((mel_f[:-2] == 0) | (weights.max(axis=1) > 0)):
@@ -354,10 +352,10 @@ def chroma(sr, n_fft, n_chroma=12, tuning=0.0, ctroct=5.0,
     # Project into range -n_chroma/2 .. n_chroma/2
     # add on fixed offset of 10*n_chroma to ensure all values passed to
     # rem are positive
-    D = np.remainder(D + n_chroma2 + 10*n_chroma, n_chroma) - n_chroma2
+    D = np.remainder(D + n_chroma2 + 10 * n_chroma, n_chroma) - n_chroma2
 
     # Gaussian bumps - 2*D to make them narrower
-    wts = np.exp(-0.5 * (2*D / np.tile(binwidthbins, (n_chroma, 1)))**2)
+    wts = np.exp(-0.5 * (2 * D / np.tile(binwidthbins, (n_chroma, 1))) ** 2)
 
     # normalize each column
     wts = util.normalize(wts, norm=norm, axis=0)
@@ -365,14 +363,14 @@ def chroma(sr, n_fft, n_chroma=12, tuning=0.0, ctroct=5.0,
     # Maybe apply scaling for fft bins
     if octwidth is not None:
         wts *= np.tile(
-            np.exp(-0.5 * (((frqbins/n_chroma - ctroct)/octwidth)**2)),
+            np.exp(-0.5 * (((frqbins / n_chroma - ctroct) / octwidth) ** 2)),
             (n_chroma, 1))
 
     if base_c:
         wts = np.roll(wts, -3, axis=0)
 
     # remove aliasing columns, copy to ensure row-contiguity
-    return np.ascontiguousarray(wts[:, :int(1 + n_fft/2)], dtype=dtype)
+    return np.ascontiguousarray(wts[:, :int(1 + n_fft / 2)], dtype=dtype)
 
 
 def __float_window(window_spec):
@@ -529,7 +527,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, window='hann',
     filters = []
     for ilen, freq in zip(lengths, freqs):
         # Build the filter: note, length will be ceil(ilen)
-        sig = np.exp(np.arange(-ilen//2, ilen//2, dtype=float) * 1j * 2 * np.pi * freq / sr)
+        sig = np.exp(np.arange(-ilen // 2, ilen // 2, dtype=float) * 1j * 2 * np.pi * freq / sr)
 
         # Apply the windowing function
         sig = sig * __float_window(window)(len(sig))
@@ -542,7 +540,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, window='hann',
     # Pad and stack
     max_len = max(lengths)
     if pad_fft:
-        max_len = int(2.0**(np.ceil(np.log2(max_len))))
+        max_len = int(2.0 ** (np.ceil(np.log2(max_len))))
     else:
         max_len = int(np.ceil(max_len))
 
@@ -606,7 +604,7 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
 
     # Q should be capitalized here, so we suppress the name warning
     # pylint: disable=invalid-name
-    alpha = 2.0**(1. / bins_per_octave) - 1.0
+    alpha = 2.0 ** (1. / bins_per_octave) - 1.0
     Q = float(filter_scale) / alpha
 
     # Q = float(filter_scale) / (2.0**(1. / bins_per_octave) - 2.0**(-1./bins_per_octave))
@@ -791,7 +789,7 @@ def window_bandwidth(window, n=1000):
 
     if key not in WINDOW_BANDWIDTHS:
         win = get_window(window, n)
-        WINDOW_BANDWIDTHS[key] = n * np.sum(win**2) / np.sum(np.abs(win))**2
+        WINDOW_BANDWIDTHS[key] = n * np.sum(win ** 2) / np.sum(np.abs(win)) ** 2
 
     return WINDOW_BANDWIDTHS[key]
 
@@ -1177,7 +1175,7 @@ def window_sumsquare(window, n_frames, hop_length=512, win_length=None, n_fft=20
 
     # Compute the squared window at the desired length
     win_sq = get_window(window, win_length)
-    win_sq = util.normalize(win_sq, norm=norm)**2
+    win_sq = util.normalize(win_sq, norm=norm) ** 2
     win_sq = util.pad_center(win_sq, n_fft)
 
     # Fill the envelope
@@ -1236,7 +1234,7 @@ def diagonal_filter(window, n, slope=1.0, angle=None, zero_mean=False):
 
     win = np.diag(get_window(window, n, fftbins=False))
 
-    if not np.isclose(angle, np.pi/4):
+    if not np.isclose(angle, np.pi / 4):
         win = scipy.ndimage.rotate(win, 45 - angle * 180 / np.pi,
                                    order=5, prefilter=False)
 
