@@ -18,7 +18,9 @@ from .. import util
 from ..util.exceptions import ParameterError
 
 __all__ = ['cqt', 'hybrid_cqt', 'pseudo_cqt',
-           'icqt', 'griffinlim_cqt']
+           'icqt', 'griffinlim_cqt', 'vqt']
+
+# TODO: ivqt, griffinlim_vqt
 
 
 @cache(level=20)
@@ -723,10 +725,259 @@ def icqt(C, sr=22050, hop_length=512, fmin=None, bins_per_octave=12,
     return y
 
 
+@cache(level=20)
+def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=100,
+        bins_per_octave=12, tuning=0.0, filter_scale=1,
+        norm=1, sparsity=0.01, window='hann',
+        scale=True, pad_mode='reflect', res_type=None):
+    '''Compute the variable-Q transform of an audio signal.
+
+    This implementation is based on the recursive sub-sampling method
+    described by [1]_.
+
+    .. [1] Schörkhuber, Christian, Anssi Klapuri, Nicki Holighaus, and Monika Dörfler.
+        "A Matlab toolbox for efficient perfect reconstruction time-frequency transforms with log-frequency resolution."
+        In Audio Engineering Society Conference: 53rd International Conference: Semantic Audio.
+        Audio Engineering Society, 2014.
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(n,)]
+        audio time series
+
+    sr : number > 0 [scalar]
+        sampling rate of `y`
+
+    hop_length : int > 0 [scalar]
+        number of samples between successive CQT columns.
+
+    fmin : float > 0 [scalar]
+        Minimum frequency. Defaults to C1 ~= 32.70 Hz
+
+    n_bins : int > 0 [scalar]
+        Number of frequency bins, starting at `fmin`
+
+    gamma : number > 0 [scalar]
+        Bandwidth offset for determining filter lengths.
+        `gamma=0` produces the constant-Q transform.
+
+    bins_per_octave : int > 0 [scalar]
+        Number of bins per octave
+
+    tuning : None or float
+        Tuning offset in fractions of a bin.
+
+        If `None`, tuning will be automatically estimated from the signal.
+
+        The minimum frequency of the resulting CQT will be modified to
+        `fmin * 2**(tuning / bins_per_octave)`.
+
+    filter_scale : float > 0
+        Filter scale factor. Small values (<1) use shorter windows
+        for improved time resolution.
+
+    norm : {inf, -inf, 0, float > 0}
+        Type of norm to use for basis function normalization.
+        See `librosa.util.normalize`.
+
+    sparsity : float in [0, 1)
+        Sparsify the CQT basis by discarding up to `sparsity`
+        fraction of the energy in each basis.
+
+        Set `sparsity=0` to disable sparsification.
+
+    window : str, tuple, number, or function
+        Window specification for the basis filters.
+        See `filters.get_window` for details.
+
+    scale : bool
+        If `True`, scale the CQT response by square-root the length of
+        each channel's filter.  This is analogous to `norm='ortho'` in FFT.
+
+        If `False`, do not scale the CQT. This is analogous to
+        `norm=None` in FFT.
+
+    pad_mode : string
+        Padding mode for centered frame analysis.
+
+        See also: `librosa.core.stft` and `np.pad`.
+
+    res_type : string [optional]
+        The resampling mode for recursive downsampling.
+
+        By default, `cqt` will adaptively select a resampling mode
+        which trades off accuracy at high frequencies for efficiency at low frequencies.
+
+        You can override this by specifying a resampling mode as supported by
+        `librosa.core.resample`.  For example, `res_type='fft'` will use a high-quality,
+        but potentially slow FFT-based down-sampling, while `res_type='polyphase'` will
+        use a fast, but potentially inaccurate down-sampling.
+
+    Returns
+    -------
+    CQT : np.ndarray [shape=(n_bins, t), dtype=np.complex or np.float]
+        Constant-Q value each frequency at each time.
+
+    Raises
+    ------
+    ParameterError
+        If `hop_length` is not an integer multiple of
+        `2**(n_bins / bins_per_octave)`
+
+        Or if `y` is too short to support the frequency range of the CQT.
+
+    See Also
+    --------
+    cqt
+
+    Notes
+    -----
+    This function caches at level 20.
+
+    Examples
+    --------
+    Generate and plot a variable-Q power spectrum
+
+    >>> import matplotlib.pyplot as plt
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> V = np.abs(librosa.vqt(y, sr=sr))
+    >>> librosa.display.specshow(librosa.amplitude_to_db(V, ref=np.max),
+    ...                          sr=sr, x_axis='time', y_axis='cqt_note')
+    >>> plt.colorbar(format='%+2.0f dB')
+    >>> plt.title('Variable-Q power spectrum')
+    >>> plt.tight_layout()
+    >>> plt.show()
+    '''
+
+    # How many octaves are we dealing with?
+    n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
+    n_filters = min(bins_per_octave, n_bins)
+
+    len_orig = len(y)
+
+    if fmin is None:
+        # C1 by default
+        fmin = note_to_hz('C1')
+
+    if tuning is None:
+        tuning = estimate_tuning(y=y, sr=sr, bins_per_octave=bins_per_octave)
+
+    # TODO:
+    #   if gamma is None, set it to cancel the bandwidth
+
+    # Apply tuning correction
+    fmin = fmin * 2.0**(tuning / bins_per_octave)
+
+    # First thing, get the freqs of the top octave
+    freqs = cqt_frequencies(n_bins, fmin,
+                            bins_per_octave=bins_per_octave)[-bins_per_octave:]
+
+    fmin_t = np.min(freqs)
+    fmax_t = np.max(freqs)
+
+    # Determine required resampling quality
+    Q = float(filter_scale) / (2.0**(1. / bins_per_octave) - 1)
+    filter_cutoff = (fmax_t + gamma) * (1 + 0.5 * filters.window_bandwidth(window) / Q)
+    nyquist = sr / 2.0
+
+    auto_resample = False
+    if not res_type:
+        auto_resample = True
+        if filter_cutoff < audio.BW_FASTEST * nyquist:
+            res_type = 'kaiser_fast'
+        else:
+            res_type = 'kaiser_best'
+
+    y, sr, hop_length = __early_downsample(y, sr, hop_length,
+                                           res_type,
+                                           n_octaves,
+                                           nyquist, filter_cutoff, scale)
+
+    vqt_resp = []
+
+    # Skip this block for now
+    if auto_resample and res_type != 'kaiser_fast':
+
+        # Do the top octave before resampling to allow for fast resampling
+        fft_basis, n_fft, _ = __cqt_filter_fft(sr, fmin_t,
+                                               n_filters,
+                                               bins_per_octave,
+                                               filter_scale,
+                                               norm,
+                                               sparsity,
+                                               window=window,
+                                               gamma=gamma)
+
+        # Compute the VQT filter response and append it to the stack
+        vqt_resp.append(__cqt_response(y, n_fft, hop_length, fft_basis, pad_mode))
+
+        fmin_t /= 2
+        fmax_t /= 2
+        n_octaves -= 1
+
+        filter_cutoff = fmax_t * (1 + 0.5 * filters.window_bandwidth(window) / Q)
+
+        res_type = 'kaiser_fast'
+
+    # Make sure our hop is long enough to support the bottom octave
+    num_twos = __num_two_factors(hop_length)
+    if num_twos < n_octaves - 1:
+        raise ParameterError('hop_length must be a positive integer '
+                             'multiple of 2^{0:d} for {1:d}-octave VQT'
+                             .format(n_octaves - 1, n_octaves))
+
+    # Now do the recursive bit
+    my_y, my_sr, my_hop = y, sr, hop_length
+
+    # Iterate down the octaves
+    for i in range(n_octaves):
+        # Resample (except first time)
+        if i > 0:
+            if len(my_y) < 2:
+                raise ParameterError('Input signal length={} is too short for '
+                                     '{:d}-octave VQT'.format(len_orig,
+                                                              n_octaves))
+
+            my_y = audio.resample(my_y, 2, 1,
+                                  res_type=res_type,
+                                  scale=True)
+            #fft_basis[:] *= np.sqrt(2)
+
+            my_sr /= 2.0
+            my_hop //= 2
+
+        fft_basis, n_fft, _ = __cqt_filter_fft(my_sr, fmin_t * 2.0**(-i),
+                                               n_filters,
+                                               bins_per_octave,
+                                               filter_scale,
+                                               norm,
+                                               sparsity,
+                                               window=window,
+                                               gamma=gamma)
+        # Re-scale the filters to compensate for downsampling
+        fft_basis[:] *= np.sqrt(2**i)
+
+        # Compute the vqt filter response and append to the stack
+        vqt_resp.append(__cqt_response(my_y, n_fft, my_hop, fft_basis, pad_mode))
+
+    V = __trim_stack(vqt_resp, n_bins)
+
+    if scale:
+        lengths = filters.constant_q_lengths(sr, fmin,
+                                             n_bins=n_bins,
+                                             bins_per_octave=bins_per_octave,
+                                             window=window,
+                                             filter_scale=filter_scale,
+                                             gamma=gamma)
+        V /= np.sqrt(lengths[:, np.newaxis])
+
+    return V
+
+
 @cache(level=10)
 def __cqt_filter_fft(sr, fmin, n_bins, bins_per_octave,
                      filter_scale, norm, sparsity, hop_length=None,
-                     window='hann'):
+                     window='hann', gamma=0.):
     '''Generate the frequency domain constant-Q filter basis.'''
 
     basis, lengths = filters.constant_q(sr,
@@ -736,7 +987,8 @@ def __cqt_filter_fft(sr, fmin, n_bins, bins_per_octave,
                                         filter_scale=filter_scale,
                                         norm=norm,
                                         pad_fft=True,
-                                        window=window)
+                                        window=window,
+                                        gamma=gamma)
 
     # Filters are padded up to the nearest integral power of 2
     n_fft = basis.shape[1]
