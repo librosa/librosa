@@ -400,7 +400,7 @@ def __float_window(window_spec):
 
 @cache(level=10)
 def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=Deprecated(),
-               window='hann', filter_scale=1, pad_fft=True, norm=1,
+               window='hann', filter_scale=1, pad_fft=True, norm=1, gamma=0,
                dtype=np.complex64, **kwargs):
     r'''Construct a constant-Q basis.
 
@@ -447,6 +447,10 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=Deprecated()
     norm : {inf, -inf, 0, float > 0}
         Type of norm to use for basis function normalization.
         See librosa.util.normalize
+
+    gamma : number >= 0
+        Bandwidth offset for variable-Q transforms.
+        `gamma=0` produces a constant-Q filterbank.
 
     dtype : np.dtype
         The data type of the output basis.
@@ -528,14 +532,10 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=Deprecated()
                                  n_bins=n_bins,
                                  bins_per_octave=bins_per_octave,
                                  window=window,
-                                 filter_scale=filter_scale)
+                                 filter_scale=filter_scale,
+                                 gamma=gamma)
 
-    # Q should be capitalized here, so we suppress the name warning
-    # pylint: disable=invalid-name
-    Q = float(filter_scale) / (2.0**(1. / bins_per_octave) - 1)
-
-    # Convert lengths back to frequencies
-    freqs = Q * sr / lengths
+    freqs = fmin * (2.0 ** (np.arange(n_bins, dtype=float) / bins_per_octave))
 
     # Build the filters
     filters = []
@@ -566,7 +566,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=Deprecated()
 
 @cache(level=10)
 def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
-                       tuning=Deprecated(), window='hann', filter_scale=1):
+                       tuning=Deprecated(), window='hann', filter_scale=1, gamma=0):
     r'''Return length of each filter in a constant-Q basis.
 
     Parameters
@@ -634,6 +634,7 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
     # Q should be capitalized here, so we suppress the name warning
     # pylint: disable=invalid-name
     Q = float(filter_scale) / (2.0**(1. / bins_per_octave) - 1)
+    # Q = float(filter_scale) / (2.0**(1. / bins_per_octave) - 2.0**(-1./bins_per_octave))
 
     # Compute the frequencies
     freq = fmin * (2.0 ** (np.arange(n_bins, dtype=float) / bins_per_octave))
@@ -642,7 +643,7 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
         raise ParameterError('Filter pass-band lies beyond Nyquist')
 
     # Convert frequencies to filter lengths
-    lengths = Q * sr / freq
+    lengths = Q * sr / (freq + gamma)
 
     return lengths
 
