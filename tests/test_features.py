@@ -6,7 +6,6 @@ import warnings
 import numpy as np
 
 import pytest
-
 import librosa
 
 from test_core import load, srand
@@ -928,7 +927,8 @@ def test_mel_to_audio():
 @pytest.mark.parametrize('n_mfcc', [13, 20])
 @pytest.mark.parametrize('n_mels', [64, 128])
 @pytest.mark.parametrize('dct_type', [2, 3])
-def test_mfcc_to_mel(n_mfcc, n_mels, dct_type):
+@pytest.mark.parametrize('lifter', [1, 2, 3])
+def test_mfcc_to_mel(n_mfcc, n_mels, dct_type, lifter):
     y = librosa.tone(440.0, sr=22050, duration=1)
 
     mfcc = librosa.feature.mfcc(y=y, sr=22050,
@@ -958,10 +958,21 @@ def test_mfcc_to_mel(n_mfcc, n_mels, dct_type):
                                             dct_type=dct_type,
                                             lifter=10**-3)
 
-    # check if mfcc_to_mel it works correctly with lifter
-    librosa.feature.inverse.mfcc_to_mel(mfcc, n_mels=n_mels,
-                                        dct_type=dct_type,
-                                        lifter=1)
+    # check if mfcc_to_mel works correctly with lifter
+    ones = np.ones(mfcc.shape)
+    negate_lifter_vec = 1 + (lifter / 2) * np.sin(np.pi * np.arange(1, 1 +
+                                                                    n_mfcc, dtype=mfcc.dtype) / lifter)[:, np.newaxis]
+
+    mel_recover = librosa.feature.inverse.mfcc_to_mel(ones * negate_lifter_vec,
+                                                      n_mels=n_mels,
+                                                      dct_type=dct_type,
+                                                      lifter=lifter)
+    mel_expected = librosa.feature.inverse.mfcc_to_mel(ones,
+                                                       n_mels=n_mels,
+                                                       dct_type=dct_type,
+                                                       lifter=0)
+
+    np.testing.assert_almost_equal(mel_recover, mel_expected, 3)
 
 
 @pytest.mark.parametrize('n_mfcc', [13, 20])
