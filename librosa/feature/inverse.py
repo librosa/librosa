@@ -224,7 +224,7 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0):
             * np.sin(np.pi * np.arange(1, 1 + n_mfcc, dtype=mfcc.dtype) / lifter)[:, np.newaxis]
 
         # avoid division of zero by zero errors
-        mfcc = np.nan_to_num(mfcc, nan=1.)
+        mfcc[np.isnan(mfcc)] = 1.
 
     elif lifter != 0:
         raise ParameterError('MFCC to MEL lifter={} must be a non-negative number'.format(lifter))
