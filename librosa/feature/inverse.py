@@ -222,11 +222,14 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0):
         n_mfcc = mfcc.shape[0]
         mfcc /= 1 + (lifter / 2) \
             * np.sin(np.pi * np.arange(1, 1 + n_mfcc, dtype=mfcc.dtype) / lifter)[:, np.newaxis]
+
+        # avoid division of zero by zero errors
+        mfcc = np.nan_to_num(mfcc, nan=1.)
+
     elif lifter != 0:
-        raise ParameterError('MFCC to MEL inv_lifter={} must be a non-negative number'.format(lifter))
+        raise ParameterError('MFCC to MEL lifter={} must be a non-negative number'.format(lifter))
 
     logmel = scipy.fftpack.idct(mfcc, axis=0, type=dct_type, norm=norm, n=n_mels)
-
     return db_to_power(logmel, ref=ref)
 
 
