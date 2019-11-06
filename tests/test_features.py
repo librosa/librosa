@@ -987,9 +987,9 @@ def test_mfcc_to_mel(n_mfcc, n_mels, dct_type, lifter):
     # check if mfcc_to_mel works correctly with lifter
     ones = np.ones(mfcc.shape)
     idx = np.arange(1, 1 + n_mfcc, dtype=mfcc.dtype)
-    lifter_vec = 1 + (lifter / 2) * np.sin(np.pi * idx / lifter)[:, np.newaxis]
+    lifter_sine = 1 + (lifter / 2) * np.sin(np.pi * idx / lifter)[:, np.newaxis]
 
-    mel_recover = librosa.feature.inverse.mfcc_to_mel(ones * lifter_vec,
+    mel_recover = librosa.feature.inverse.mfcc_to_mel(ones * lifter_sine,
                                                       n_mels=n_mels,
                                                       dct_type=dct_type,
                                                       lifter=lifter)

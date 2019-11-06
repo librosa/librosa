@@ -197,7 +197,7 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0):
         Reference power for (inverse) decibel calculation
 
     lifter : number >= 0
-        If `lifter>0`, apply *inverse-liftering* (inverse cepstral filtering):
+        If `lifter>0`, apply inverse liftering (inverse cepstral filtering):
         `M[n, :] <- M[n, :] / (1 + sin(pi * (n + 1) / lifter)) * lifter / 2`
 
     Returns
@@ -209,7 +209,7 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0):
     --------
     RuntimeWarning
         overflow encountered in power or
-        divide by zero encountered during inverse-liftering.
+        divide by zero encountered during inverse liftering.
 
     See Also
     --------
@@ -218,16 +218,14 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0):
     scipy.fftpack.dct
     '''
     if lifter > 0:
-        mfcc = mfcc.copy()
         n_mfcc = mfcc.shape[0]
-        mfcc /= 1 + (lifter / 2) \
-            * np.sin(np.pi * np.arange(1, 1 + n_mfcc, dtype=mfcc.dtype) / lifter)[:, np.newaxis]
-
-        # avoid division of zero by zero errors
-        mfcc[np.isnan(mfcc)] = 1.
+        idx = np.arange(1, 1 + n_mfcc, dtype=mfcc.dtype)
+        lifter_sine = 1 + (lifter / 2) * np.sin(np.pi * idx / lifter)[:, np.newaxis]
+        liftered_mfcc = np.where(mfcc == 0, np.finfo(float).eps, mfcc) / lifter_sine
+        mfcc = liftered_mfcc
 
     elif lifter != 0:
-        raise ParameterError('MFCC to MEL lifter={} must be a non-negative number'.format(lifter))
+        raise ParameterError('MFCC to mel lifter={} must be a non-negative number'.format(lifter))
 
     logmel = scipy.fftpack.idct(mfcc, axis=0, type=dct_type, norm=norm, n=n_mels)
     return db_to_power(logmel, ref=ref)
@@ -264,7 +262,7 @@ def mfcc_to_audio(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0,
         Reference power for (inverse) decibel calculation
 
     lifter : number >= 0
-        If `lifter>0`, apply *inverse-liftering* (inverse cepstral filtering):
+        If `lifter>0`, apply inverse liftering (inverse cepstral filtering):
         `M[n, :] <- M[n, :] / (1 + sin(pi * (n + 1) / lifter)) * lifter / 2`
 
     kwargs : additional keyword arguments
