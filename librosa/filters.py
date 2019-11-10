@@ -399,7 +399,7 @@ def __float_window(window_spec):
 
 
 @cache(level=10)
-def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=Deprecated(),
+def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, gamma = 0, tuning=Deprecated(),
                window='hann', filter_scale=1, pad_fft=True, norm=1,
                dtype=np.complex64, **kwargs):
     r'''Construct a constant-Q basis.
@@ -424,6 +424,9 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=Deprecated()
 
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
+
+    gamma : int > 0 [scalar]
+        Variable q-factor (0-> constant-q)
 
     tuning : float [scalar] <DEPRECATED>
         Tuning deviation from A440 in fractions of a bin
@@ -537,6 +540,15 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=Deprecated()
     # Convert lengths back to frequencies
     freqs = Q * sr / lengths
 
+    if gamma:
+        # Recalculate the lengths in case gamma is nonzero (variable-q)
+        lengths = constant_q_lengths(sr, fmin,
+                                     n_bins=n_bins,
+                                     bins_per_octave=bins_per_octave,
+                                     gamma=gamma,
+                                     window=window,
+                                     filter_scale=filter_scale)
+
     # Build the filters
     filters = []
     for ilen, freq in zip(lengths, freqs):
@@ -565,9 +577,9 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=Deprecated()
 
 
 @cache(level=10)
-def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
+def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12, gamma = 0,
                        tuning=Deprecated(), window='hann', filter_scale=1):
-    r'''Return length of each filter in a constant-Q basis.
+    r'''Return length of each filter in a variable or constant-Q basis.
 
     Parameters
     ----------
@@ -582,6 +594,9 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
 
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
+
+    gamma : int > 0 [scalar]
+        Variable q-factor (0-> constant-q)
 
     tuning : float [scalar] <DEPRECATED>
         Tuning deviation from A440 in fractions of a bin
@@ -616,6 +631,9 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
     if bins_per_octave <= 0:
         raise ParameterError('bins_per_octave must be positive')
 
+    if gamma < 0:
+        raise ParameterError('gamma must be positive or zero')
+
     if filter_scale <= 0:
         raise ParameterError('filter_scale must be positive')
 
@@ -640,6 +658,9 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
 
     if freq[-1] * (1 + 0.5 * window_bandwidth(window) / Q) > sr / 2.0:
         raise ParameterError('Filter pass-band lies beyond Nyquist')
+
+    # Calculate the varied Q factor of each frequency channel
+    Q = freq * float(filter_scale) / ((2.0**(1. / bins_per_octave) - 1) * freq + gamma)
 
     # Convert frequencies to filter lengths
     lengths = Q * sr / freq

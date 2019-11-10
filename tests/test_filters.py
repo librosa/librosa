@@ -207,13 +207,14 @@ def test__window():
 
 def test_constant_q():
 
-    def __test(sr, fmin, n_bins, bins_per_octave, tuning, filter_scale,
+    def __test(sr, fmin, n_bins, bins_per_octave, gamma, tuning, filter_scale,
                pad_fft, norm):
 
         F, lengths = librosa.filters.constant_q(sr,
                                                 fmin=fmin,
                                                 n_bins=n_bins,
                                                 bins_per_octave=bins_per_octave,
+                                                gamma=gamma,
                                                 tuning=tuning,
                                                 filter_scale=filter_scale,
                                                 pad_fft=pad_fft,
@@ -241,31 +242,36 @@ def test_constant_q():
     yield (tf, sr, sr/2.0, 1, 12, 0, 1, True, 1)
 
     # with negative fmin
-    yield (tf, sr, -60, 1, 12, 0, 1, True, 1)
+    yield (tf, sr, -60, 1, 12, 0, 0, 1, True, 1)
 
     # with negative bins_per_octave
-    yield (tf, sr, 60, 1, -12, 0, 1, True, 1)
+    yield (tf, sr, 60, 1, -12, 0, 0, 1, True, 1)
+
+    # with negative gamma
+    yield (tf, sr, 60, 1, 12, -1, 0, 1, True, 1)
 
     # with negative bins
-    yield (tf, sr, 60, -1, 12, 0, 1, True, 1)
+    yield (tf, sr, 60, -1, 12, 0, 0, 1, True, 1)
 
     # with negative filter_scale
-    yield (tf, sr, 60, 1, 12, 0, -1, True, 1)
+    yield (tf, sr, 60, 1, 12, 0, 0, -1, True, 1)
 
     # with negative norm
-    yield (tf, sr, 60, 1, 12, 0, 1, True, -1)
+    yield (tf, sr, 60, 1, 12, 0, 0, 1, True, -1)
 
     for fmin in [None, librosa.note_to_hz('C3')]:
         for n_bins in [12, 24]:
             for bins_per_octave in [12, 24]:
-                for tuning in [0, 0.25]:
-                    for filter_scale in [1, 2]:
-                        for norm in [1, 2]:
-                            for pad_fft in [False, True]:
-                                yield (__test, sr, fmin, n_bins,
-                                       bins_per_octave, tuning,
-                                       filter_scale, pad_fft,
-                                       norm)
+                for gamma in [0, 2]:
+                    for tuning in [0, 0.25]:
+                        for filter_scale in [1, 2]:
+                            for norm in [1, 2]:
+                                for pad_fft in [False, True]:
+                                    yield (__test, sr, fmin, n_bins,
+                                           bins_per_octave, gamma,
+                                           tuning, filter_scale,
+                                           pad_fft,
+                                           norm)
 
 
 def test_window_bandwidth():
