@@ -221,7 +221,9 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0):
         n_mfcc = mfcc.shape[0]
         idx = np.arange(1, 1 + n_mfcc, dtype=mfcc.dtype)
         lifter_sine = 1 + (lifter / 2) * np.sin(np.pi * idx / lifter)[:, np.newaxis]
-        liftered_mfcc = np.where(mfcc == 0, np.finfo(float).eps, mfcc) / lifter_sine
+        lifter_sine = np.where(lifter_sine == 0, np.finfo(float).eps, lifter_sine)
+        mfcc = np.where(mfcc == 0, np.finfo(float).eps, mfcc) 
+        liftered_mfcc = mfcc / lifter_sine
         mfcc = liftered_mfcc
 
     elif lifter != 0:
