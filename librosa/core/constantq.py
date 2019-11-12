@@ -915,6 +915,7 @@ def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=None,
     if auto_resample and res_type != 'kaiser_fast':
 
         # Do the top octave before resampling to allow for fast resampling
+        # TODO: scale gamma as well
         fft_basis, n_fft, _ = __cqt_filter_fft(sr, fmin_t,
                                                n_filters,
                                                bins_per_octave,
@@ -961,7 +962,7 @@ def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=None,
             my_sr /= 2.0
             my_hop //= 2
 
-        fft_basis, n_fft, _ = __cqt_filter_fft(my_sr, fmin_t * 2.0**(-i),
+        fft_basis, n_fft, _ = __cqt_filter_fft(my_sr, fmin_t * 2.0**-i,
                                                n_filters,
                                                bins_per_octave,
                                                filter_scale,
