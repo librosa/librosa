@@ -726,7 +726,7 @@ def icqt(C, sr=22050, hop_length=512, fmin=None, bins_per_octave=12,
 
 
 @cache(level=20)
-def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=100,
+def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=None,
         bins_per_octave=12, tuning=0.0, filter_scale=1,
         norm=1, sparsity=0.01, window='hann',
         scale=True, pad_mode='reflect', res_type=None):
@@ -862,9 +862,6 @@ def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=100,
     if tuning is None:
         tuning = estimate_tuning(y=y, sr=sr, bins_per_octave=bins_per_octave)
 
-    # TODO:
-    #   if gamma is None, set it to cancel the bandwidth
-
     # Apply tuning correction
     fmin = fmin * 2.0**(tuning / bins_per_octave)
 
@@ -877,6 +874,7 @@ def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=100,
 
     # Determine required resampling quality
     Q = float(filter_scale) / (2.0**(1. / bins_per_octave) - 1)
+
     filter_cutoff = (fmax_t + gamma) * (1 + 0.5 * filters.window_bandwidth(window) / Q)
     nyquist = sr / 2.0
 
@@ -899,6 +897,7 @@ def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=100,
     if auto_resample and res_type != 'kaiser_fast':
 
         # Do the top octave before resampling to allow for fast resampling
+        # TODO: scale gamma as well
         fft_basis, n_fft, _ = __cqt_filter_fft(sr, fmin_t,
                                                n_filters,
                                                bins_per_octave,
@@ -941,12 +940,11 @@ def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=100,
             my_y = audio.resample(my_y, 2, 1,
                                   res_type=res_type,
                                   scale=True)
-            #fft_basis[:] *= np.sqrt(2)
 
             my_sr /= 2.0
             my_hop //= 2
 
-        fft_basis, n_fft, _ = __cqt_filter_fft(my_sr, fmin_t * 2.0**(-i),
+        fft_basis, n_fft, _ = __cqt_filter_fft(my_sr, fmin_t * 2.0**-i,
                                                n_filters,
                                                bins_per_octave,
                                                filter_scale,

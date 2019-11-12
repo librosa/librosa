@@ -606,7 +606,9 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
 
     # Q should be capitalized here, so we suppress the name warning
     # pylint: disable=invalid-name
-    Q = float(filter_scale) / (2.0**(1. / bins_per_octave) - 1)
+    alpha = 2.0**(1. / bins_per_octave) - 1.0
+    Q = float(filter_scale) / alpha
+
     # Q = float(filter_scale) / (2.0**(1. / bins_per_octave) - 2.0**(-1./bins_per_octave))
 
     # Compute the frequencies
@@ -616,7 +618,7 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
         raise ParameterError('Filter pass-band lies beyond Nyquist')
 
     # Convert frequencies to filter lengths
-    lengths = Q * sr / (freq + gamma)
+    lengths = Q * sr / (freq + gamma / alpha)
 
     return lengths
 
