@@ -873,9 +873,9 @@ def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=None,
     fmax_t = np.max(freqs)
 
     # Determine required resampling quality
-    Q = float(filter_scale) / (2.0**(1. / bins_per_octave) - 1)
-
-    filter_cutoff = (fmax_t + gamma) * (1 + 0.5 * filters.window_bandwidth(window) / Q)
+    alpha = (2.0**(1. / bins_per_octave) - 1)
+    Q = float(filter_scale) / alpha
+    filter_cutoff = fmax_t * (1 + 0.5 * filters.window_bandwidth(window) / Q) + 0.5 * gamma
     nyquist = sr / 2.0
 
     auto_resample = False
