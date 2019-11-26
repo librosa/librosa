@@ -21,6 +21,8 @@ Audio processing
     clicks
     tone
     chirp
+    mu_compress
+    mu_expand
 
 Spectral representations
 ------------------------
