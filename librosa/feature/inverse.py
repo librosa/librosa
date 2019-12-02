@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 '''Feature inversion'''
 
+import warnings
 import numpy as np
 import scipy.fftpack
 
