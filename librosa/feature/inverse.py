@@ -221,10 +221,13 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0):
         n_mfcc = mfcc.shape[0]
         idx = np.arange(1, 1 + n_mfcc, dtype=mfcc.dtype)
         lifter_sine = 1 + (lifter / 2) * np.sin(np.pi * idx / lifter)[:, np.newaxis]
-        lifter_sine = np.where(lifter_sine == 0, np.finfo(float).eps, lifter_sine)
-        mfcc = np.where(mfcc == 0, np.finfo(float).eps, mfcc) 
-        liftered_mfcc = mfcc / lifter_sine
-        mfcc = liftered_mfcc
+
+        # check lifter array for critical values
+        if (lifter_sine == 0).any():
+            warnings.warn("Warning: lifter array includes critial values that will likely to invoke underflow.")
+
+        # lifter mfcc values
+        mfcc = mfcc / lifter_sine
 
     elif lifter != 0:
         raise ParameterError('MFCC to mel lifter={} must be a non-negative number'.format(lifter))
