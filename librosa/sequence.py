@@ -163,7 +163,9 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
     c_is_transposed = False
 
     # calculate pair-wise distances, unless already supplied.
+    C_local = False
     if C is None:
+        C_local = True
         # take care of dimensions
         X = np.atleast_2d(X)
         Y = np.atleast_2d(Y)
@@ -195,6 +197,9 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
 
     if global_constraints:
         # Apply global constraints to the cost matrix
+        if not C_local:
+            # If C was provided as input, make a copy here
+            C = np.copy(C)
         fill_off_diagonal(C, band_rad, value=np.inf)
 
     # initialize whole matrix with infinity values
@@ -351,6 +356,7 @@ def __dtw_backtracking(D_steps, step_sizes_sigma, subseq):  # pragma: no cover
     # Stop criteria:
     # Setting it to (0, 0) does not work for the subsequence dtw,
     # so we only ask to reach the first row of the matrix.
+
     while (subseq and cur_idx[0] > 0) or (not subseq and cur_idx != (0, 0)):
         cur_step_idx = D_steps[(cur_idx[0], cur_idx[1])]
 

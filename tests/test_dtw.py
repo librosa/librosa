@@ -190,3 +190,15 @@ def test_dtw_subseq_sym():
 
     assert np.array_equal(gt_wp_XY, mut_wp_XY)
     assert np.array_equal(gt_wp_YX, mut_wp_YX)
+
+
+def test_dtw_global_constraint_destructive():
+
+    # Issue #1029, dtw with global constraints inserts nans
+    # into the cost matrix.  This is fine when the cost is computed
+    # locally, but if passed by reference, it's destructive.
+    # This test checks that the cost matrix is unmodified.
+    C1 = np.ones((20, 20))
+    C2 = np.copy(C1)
+    librosa.sequence.dtw(C=C1, global_constraints=True)
+    assert np.array_equal(C1, C2)
