@@ -244,6 +244,9 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
         else:
             # perform warping path backtracking
             wp = __dtw_backtracking(D_steps, step_sizes_sigma, subseq)
+            if wp[-1] != (0, 0):
+                # TODO: what should we do here?
+                pass
 
         wp = np.asarray(wp, dtype=int)
 
@@ -327,7 +330,7 @@ def __dtw_calc_accu_cost(C, D, D_steps, step_sizes_sigma,
     return D, D_steps
 
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def __dtw_backtracking(D_steps, step_sizes_sigma, subseq):  # pragma: no cover
     '''Backtrack optimal warping path.
 
@@ -374,6 +377,10 @@ def __dtw_backtracking(D_steps, step_sizes_sigma, subseq):  # pragma: no cover
         # save tuple with minimal acc. cost in path
         cur_idx = (cur_idx[0] - step_sizes_sigma[cur_step_idx][0],
                    cur_idx[1] - step_sizes_sigma[cur_step_idx][1])
+
+        # If we run off the side of the cost matrix, break here
+        if min(cur_idx) < 0:
+            break
 
         # append to warping path
         wp.append((cur_idx[0], cur_idx[1]))
