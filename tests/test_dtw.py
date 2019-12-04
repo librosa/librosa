@@ -202,3 +202,10 @@ def test_dtw_global_constraint_destructive():
     C2 = np.copy(C1)
     librosa.sequence.dtw(C=C1, global_constraints=True)
     assert np.array_equal(C1, C2)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_dtw_nan_fail():
+    C = np.ones((10, 10))
+    C[4, 6] = np.nan
+    librosa.sequence.dtw(C=C)
