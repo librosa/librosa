@@ -49,12 +49,11 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
 
         Any codec supported by `soundfile` or `audioread` will work.
 
-        If the codec is supported by `soundfile`, then `path` can also be
-        an open file descriptor (int), or any object implementing Python's
-        file interface.
+        Any string file paths, or any object implementing Python's
+        file interface (e.g. `pathlib.Path`) are supported as `path`.
 
-        If the codec is not supported by `soundfile` (e.g., MP3), then only
-        string file paths are supported.
+        If the codec is supported by `soundfile`, then `path` can also be
+        an open file descriptor (int).
 
     sr   : number > 0 [scalar]
         target sampling rate
