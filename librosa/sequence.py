@@ -116,9 +116,12 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
     Raises
     ------
     ParameterError
-        If you are doing diagonal matching and Y is shorter than X or if an incompatible
-        combination of X, Y, and C are supplied.
+        If you are doing diagonal matching and Y is shorter than X or if an
+        incompatible combination of X, Y, and C are supplied.
+
         If your input dimensions are incompatible.
+
+        If the cost matrix has NaN values.
 
     Examples
     --------
@@ -195,6 +198,10 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
     max_0 = step_sizes_sigma[:, 0].max()
     max_1 = step_sizes_sigma[:, 1].max()
 
+    # check C here for nans before building global constraints
+    if np.any(np.isnan(C)):
+        raise ParameterError('DTW cost matrix C has NaN values. ')
+
     if global_constraints:
         # Apply global constraints to the cost matrix
         if not C_local:
@@ -213,7 +220,11 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
 
     # initialize step matrix with -1
     # will be filled in calc_accu_cost() with indices from step_sizes_sigma
-    D_steps = -1 * np.ones(D.shape, dtype=np.int)
+    D_steps = np.zeros(D.shape, dtype=np.int)
+    # TODO: replace these with steps that correspond to left (first row)
+    # and up (first column)
+    D_steps[0, :] = 1
+    D_steps[:, 0] = 2
 
     # calculate accumulated cost matrix
     D, D_steps = __dtw_calc_accu_cost(C, D, D_steps,
@@ -316,7 +327,7 @@ def __dtw_calc_accu_cost(C, D, D_steps, step_sizes_sigma,
     return D, D_steps
 
 
-@jit(nopython=True, cache=True)
+#@jit(nopython=True, cache=True)
 def __dtw_backtracking(D_steps, step_sizes_sigma, subseq):  # pragma: no cover
     '''Backtrack optimal warping path.
 
