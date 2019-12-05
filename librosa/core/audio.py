@@ -44,17 +44,16 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
 
     Parameters
     ----------
-    path : string, int, or file-like object
+    path : string, int, pathlib.Path or file-like object
         path to the input file.
 
         Any codec supported by `soundfile` or `audioread` will work.
 
-        If the codec is supported by `soundfile`, then `path` can also be
-        an open file descriptor (int), or any object implementing Python's
-        file interface.
+        Any string file paths, or any object implementing Python's
+        file interface (e.g. `pathlib.Path`) are supported as `path`.
 
-        If the codec is not supported by `soundfile` (e.g., MP3), then only
-        string file paths are supported.
+        If the codec is supported by `soundfile`, then `path` can also be
+        an open file descriptor (int).
 
     sr   : number > 0 [scalar]
         target sampling rate
@@ -141,7 +140,22 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
 
     except RuntimeError as exc:
 
+        # Convert pathlib paths to strings
+        if sys.version_info >= (3, 4):
+            import pathlib
+
+            # check if a Path object is passed by the user
+            if isinstance(path, pathlib.PurePath):
+                # Recommended way of converting to string
+                if sys.version_info >= (3, 6):
+                    path = os.fspath(path)
+                else:
+                    path = str(path)
+
         # If soundfile failed, try audioread instead
+        # TODO From Librosa 0.8 `isinstance` accepts tuples:
+        # isinstance(path, (six.string_types, pathlib.PurePath))
+        # and remove above String conversion
         if isinstance(path, six.string_types):
             warnings.warn('PySoundFile failed. Trying audioread instead.')
             y, sr_native = __audioread_load(path, offset, duration, dtype)
