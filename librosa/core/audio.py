@@ -44,7 +44,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
 
     Parameters
     ----------
-    path : string, int, or file-like object
+    path : string, int, pathlib.Path or file-like object
         path to the input file.
 
         Any codec supported by `soundfile` or `audioread` will work.
