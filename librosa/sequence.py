@@ -216,9 +216,10 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
                                       weights_mul, weights_add,
                                       max_0, max_1)
 
-    if subseq is False and np.isinf(D[-1, -1]):
-        raise RuntimeError('No valid warping path could be computed for the given step sizes')
-    elif subseq is True and np.all(np.isinf(D[-1, :])):
+    # check for a valid accumulated cost matrix:
+    # 1. for full dtw, the upper right cell (-1, -1) has to be non-inf
+    # 2. for subseq dtw, the upper row has to contain a non-inf cell
+    if np.isinf(D[-1, -1]) and (not subseq or np.all(np.isinf(D[-1, :]))):
         raise RuntimeError('No valid warping path could be computed for the given step sizes')
 
     # delete infinity rows and columns
