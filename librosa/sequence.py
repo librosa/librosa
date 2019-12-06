@@ -190,23 +190,6 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
         raise ParameterError('For diagonal matching: Y.shape[1] >= X.shape[1] '
                              '(C.shape[1] >= C.shape[0])')
 
-    # given the step sizes, check of the shape of C is valid
-    with np.errstate(divide='ignore'):
-        step_sizes_ratio = step_sizes_sigma[:, 0] / step_sizes_sigma[:, 1]
-
-    most_horizontal_step_idx = np.argmin(step_sizes_ratio)
-    most_vertical_step_idx = np.argmax(step_sizes_ratio)
-    most_horizontal_step = step_sizes_sigma[most_horizontal_step_idx]
-    most_vertical_step = step_sizes_sigma[most_vertical_step_idx]
-
-    if subseq is False and most_horizontal_step[0] != 0:
-        assert (C.shape[0] / most_horizontal_step[0]) > (C.shape[1] / most_horizontal_step[1]),\
-            'Sequence lengths does not match step sizes'
-
-    if most_vertical_step[1] != 0:
-        assert (C.shape[0] / most_vertical_step[0]) < (C.shape[1] / most_vertical_step[1]),\
-            'Sequence lengths does not match step sizes'
-
     max_0 = step_sizes_sigma[:, 0].max()
     max_1 = step_sizes_sigma[:, 1].max()
 
@@ -232,6 +215,11 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
                                       step_sizes_sigma,
                                       weights_mul, weights_add,
                                       max_0, max_1)
+
+    if subseq is False and np.isinf(D[-1, -1]):
+        raise RuntimeError('No valid warping path could be computed for the given step sizes')
+    elif subseq is True and np.all(np.isinf(D[-1, :])):
+        raise RuntimeError('No valid warping path could be computed for the given step sizes')
 
     # delete infinity rows and columns
     D = D[max_0:, max_1:]
