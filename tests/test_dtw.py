@@ -209,3 +209,11 @@ def test_dtw_nan_fail():
     C = np.ones((10, 10))
     C[4, 6] = np.nan
     librosa.sequence.dtw(C=C)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('steps', [np.array([[1, -1]]), np.array([[-1, 1]]), np.array([[-1, -1]])])
+def test_dtw_negative_steps(steps):
+    C = np.ones((10, 10))
+    librosa.sequence.dtw(C=C, step_sizes_sigma=steps)
+
