@@ -146,12 +146,40 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
     >>> plt.show()
     '''
     # Default Parameters
+    default_steps = np.array([[1, 1], [0, 1], [1, 0]], dtype=np.int)
+    default_weights_add = np.zeros(3, dtype=np.float)
+    default_weights_mul = np.ones(3, dtype=np.float)
+
     if step_sizes_sigma is None:
-        step_sizes_sigma = np.array([[1, 1], [0, 1], [1, 0]])
-    if weights_add is None:
-        weights_add = np.zeros(len(step_sizes_sigma))
-    if weights_mul is None:
-        weights_mul = np.ones(len(step_sizes_sigma))
+        # Use the default steps
+        step_sizes_sigma = default_steps
+
+        # Use default weights if none are provided
+        if weights_add is None:
+            weights_add = default_weights_add
+
+        if weights_mul is None:
+            weights_mul = default_weights_mul
+    else:
+        # If we have custom steps but no weights, construct them here
+        if weights_add is None:
+            weights_add = np.zeros(len(step_sizes_sigma), dtype=np.float)
+
+        if weights_mul is None:
+            weights_mul = np.ones(len(step_sizes_sigma), dtype=np.float)
+
+        # Make the default step weights infinite so that they are never
+        # preferred over custom steps
+        default_weights_add.fill(np.inf)
+        default_weights_mul.fill(np.inf)
+
+        # Append custom steps and weights to our defaults
+        step_sizes_sigma = np.concatenate((default_steps, step_sizes_sigma))
+        weights_add = np.concatenate((default_weights_add, weights_add))
+        weights_mul = np.concatenate((default_weights_mul, weights_mul))
+
+    if np.any(step_sizes_sigma < 0):
+        raise ParameterError('step_sizes_sigma cannot contain negative values')
 
     if len(step_sizes_sigma) != len(weights_add):
         raise ParameterError('len(weights_add) must be equal to len(step_sizes_sigma)')
@@ -166,6 +194,8 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
     c_is_transposed = False
 
     # calculate pair-wise distances, unless already supplied.
+    # C_local will keep track of whether the distance matrix was supplied
+    # by the user (False) or constructed locally (True)
     C_local = False
     if C is None:
         C_local = True
@@ -221,8 +251,8 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
     # initialize step matrix with -1
     # will be filled in calc_accu_cost() with indices from step_sizes_sigma
     D_steps = np.zeros(D.shape, dtype=np.int)
-    # TODO: replace these with steps that correspond to left (first row)
-    # and up (first column)
+
+    # these steps correspond to left- (first row) and up-(first column) moves
     D_steps[0, :] = 1
     D_steps[:, 0] = 2
 
