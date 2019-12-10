@@ -1364,7 +1364,7 @@ def chirp(fmin, fmax, sr=22050, length=None, duration=None, linear=False, phi=No
     )
 
 
-def mu_compress(x, mu=255, quantize=False):
+def mu_compress(x, mu=255, quantize=True):
     '''mu-law compression
 
     Given an input signal `-1 <= x <= 1`, the mu-law compression
@@ -1383,8 +1383,10 @@ def mu_compress(x, mu=255, quantize=False):
         (e.g., 15, 31, 63, etc.) are most common.
 
     quantize : bool
-        +If `True`, quantize the compressed values into `1 + mu`
+        If `True`, quantize the compressed values into `1 + mu`
         distinct integer values.
+
+        If `False`, mu-compression is applied without quantization.
 
     Returns
     -------
@@ -1411,7 +1413,7 @@ def mu_compress(x, mu=255, quantize=False):
            -0.33333333, -0.2       , -0.06666667,  0.06666667,  0.2       ,
             0.33333333,  0.46666667,  0.6       ,  0.73333333,  0.86666667,
             1.        ])
-    >>> y = librosa.mu_compress(x)
+    >>> y = librosa.mu_compress(x, quantize=False)
     >>> y
     array([-1.        , -0.97430198, -0.94432361, -0.90834832, -0.86336132,
            -0.80328309, -0.71255496, -0.52124063,  0.52124063,  0.71255496,
@@ -1451,7 +1453,7 @@ def mu_compress(x, mu=255, quantize=False):
     return x_comp
 
 
-def mu_expand(x, mu=255.0, quantize=False):
+def mu_expand(x, mu=255.0, quantize=True):
     '''mu-law expansion
 
     This function is the inverse of `mu_compress`. Given a mu-compressed
@@ -1463,7 +1465,7 @@ def mu_expand(x, mu=255.0, quantize=False):
     ----------
     x : np.ndarray
         The compressed signal.
-        If `quantize=False`, values must be in the range [-1, +1].
+        If `quantize=True`, values must be in the range [-1, +1].
 
     mu : positive number
         The compression parameter.  Values of the form `2**n - 1`
@@ -1498,13 +1500,13 @@ def mu_expand(x, mu=255.0, quantize=False):
            -0.33333333, -0.2       , -0.06666667,  0.06666667,  0.2       ,
             0.33333333,  0.46666667,  0.6       ,  0.73333333,  0.86666667,
             1.        ])
-    >>> y = librosa.mu_compress(x)
+    >>> y = librosa.mu_compress(x, quantize=False)
     >>> y
     array([-1.        , -0.97430198, -0.94432361, -0.90834832, -0.86336132,
            -0.80328309, -0.71255496, -0.52124063,  0.52124063,  0.71255496,
             0.80328309,  0.86336132,  0.90834832,  0.94432361,  0.97430198,
             1.        ])
-    >>> z = librosa.mu_compress(y)
+    >>> z = librosa.mu_expand(y, quantize=False)
     >>> z
     array([-1.        , -0.86666667, -0.73333333, -0.6       , -0.46666667,
            -0.33333333, -0.2       , -0.06666667,  0.06666667,  0.2       ,
