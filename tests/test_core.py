@@ -2057,3 +2057,66 @@ def test_stream(path, block_length, frame_length, hop_length, mono, offset,
     # Raw audio will not be padded
     n = y_frame.shape[1]
     assert np.allclose(y_frame[:, :n], y_frame_stream[:, :n])
+
+
+
+@pytest.mark.parametrize('mu', [15, 31, 255])
+@pytest.mark.parametrize('quantize', [False, True])
+def test_mu_compress(mu, quantize):
+
+    x = np.linspace(-1, 1, num=5, endpoint=True)
+    y = librosa.mu_compress(x, mu=mu, quantize=quantize)
+
+    # Do we preserve sign?
+    assert np.all(np.sign(y) == np.sign(x))
+
+    if quantize:
+        # Check that y is between -(mu+1) and mu
+        assert np.all(y >= -(mu + 1)) and np.all(y <= mu)
+        assert np.issubdtype(y.dtype, np.integer)
+    else:
+        assert np.all(y >= -1) and np.all(y <= 1)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_mu_compress_badmu():
+    x = np.linspace(-1, 1, num=5)
+    librosa.mu_compress(x, mu=-1)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('x', [np.linspace(-2, 1, num=5, endpoint=True),
+                               np.linspace(-1, 2, num=5, endpoint=True)])
+def test_mu_compress_badx(x):
+    librosa.mu_compress(x)
+
+
+@pytest.mark.parametrize('mu', [15, 31, 255])
+@pytest.mark.parametrize('quantize', [False, True])
+def test_mu_expand(mu, quantize):
+    # Really this is an integration test for companding. YOLO
+
+    x = np.linspace(-1, 1, num=5, endpoint=True)
+    y = librosa.mu_compress(x, mu=mu, quantize=quantize)
+
+    z = librosa.mu_expand(y, mu=mu, quantize=quantize)
+
+    assert np.all(z <= 1) and np.all(z >= -1)
+    assert np.all(np.sign(z) == np.sign(x))
+
+    if not quantize:
+        # Without quantization, companding should be exact
+        assert np.allclose(x, z)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_mu_expand_badmu():
+    x = np.linspace(-1, 1, num=5)
+    librosa.mu_expand(x, mu=-1)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('x', [np.linspace(-2, 1, num=5, endpoint=True),
+                               np.linspace(-1, 2, num=5, endpoint=True)])
+def test_mu_expand_badx(x):
+    librosa.mu_expand(x, quantize=False)

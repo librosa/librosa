@@ -23,7 +23,8 @@ from ..util.exceptions import ParameterError
 __all__ = ['load', 'stream', 'to_mono', 'resample',
            'get_duration', 'get_samplerate',
            'autocorrelate', 'lpc', 'zero_crossings',
-           'clicks', 'tone', 'chirp']
+           'clicks', 'tone', 'chirp',
+           'mu_compress', 'mu_expand']
 
 # Resampling bandwidths as percentage of Nyquist
 BW_BEST = resampy.filters.get_filter('kaiser_best')[2]
@@ -1361,3 +1362,177 @@ def chirp(fmin, fmax, sr=22050, length=None, duration=None, linear=False, phi=No
         method=method,
         phi=phi / np.pi * 180,  # scipy.signal.chirp uses degrees for phase offset
     )
+
+
+def mu_compress(x, mu=255, quantize=False):
+    '''mu-law compression
+
+    Given an input signal `-1 <= x <= 1`, the mu-law compression
+    is calculated by
+
+        sign(x) * ln(1 + mu * |x|) /  ln(1 + mu)
+
+
+    Parameters
+    ----------
+    x : np.ndarray with values in [-1, +1]
+        The input signal to compress
+
+    mu : positive number
+        The compression parameter.  Values of the form `2**n - 1`
+        (e.g., 15, 31, 63, etc.) are most common.
+
+    quantize : bool
+        +If `True`, quantize the compressed values into `1 + mu`
+        distinct integer values.
+
+    Returns
+    -------
+    x_compressed : np.ndarray
+        The compressed signal.
+
+    Raises
+    ------
+    ParameterError
+        If `x` has values outside the range [-1, +1]
+        If `mu <= 0`
+
+    See Also
+    --------
+    mu_expand
+
+    Examples
+    --------
+    Compression without quantization
+
+    >>> x = np.linspace(-1, 1, num=16)
+    >>> x
+    array([-1.        , -0.86666667, -0.73333333, -0.6       , -0.46666667,
+           -0.33333333, -0.2       , -0.06666667,  0.06666667,  0.2       ,
+            0.33333333,  0.46666667,  0.6       ,  0.73333333,  0.86666667,
+            1.        ])
+    >>> y = librosa.mu_compress(x)
+    >>> y
+    array([-1.        , -0.97430198, -0.94432361, -0.90834832, -0.86336132,
+           -0.80328309, -0.71255496, -0.52124063,  0.52124063,  0.71255496,
+            0.80328309,  0.86336132,  0.90834832,  0.94432361,  0.97430198,
+            1.        ])
+
+    Compression with quantization
+
+    >>> y = librosa.mu_compress(x, quantize=True)
+    >>> y
+    array([-128, -124, -120, -116, -110, -102,  -91,  -66,   66,   91,  102,
+           110,  116,  120,  124,  127])
+
+    Compression with quantization and a smaller range
+
+    >>> y = librosa.mu_compress(x, mu=15, quantize=True)
+    >>> y
+    array([-8, -7, -7, -6, -6, -5, -4, -2,  2,  4,  5,  6,  6,  7,  7,  7])
+
+    '''
+
+    if mu <= 0:
+        raise ParameterError('mu-law compression parameter mu={} '
+                             'must be strictly positive.'.format(mu))
+
+    if np.any(x < -1) or np.any(x > 1):
+        raise ParameterError('mu-law input x={} must be in the '
+                             'range [-1, +1].'.format(x))
+
+    x_comp = np.sign(x) * np.log1p(mu * np.abs(x)) / np.log1p(mu)
+
+    if quantize:
+        return np.digitize(x_comp,
+                           np.linspace(-1, 1, num=int(1+mu), endpoint=True),
+                           right=True) - int(mu + 1)//2
+
+    return x_comp
+
+
+def mu_expand(x, mu=255.0, quantize=False):
+    '''mu-law expansion
+
+    This function is the inverse of `mu_compress`. Given a mu-compressed
+    signal `-1 <= x <= 1`, the mu-expansion is calculated by
+
+        sign(x) * (1 / mu) * ((1 + mu)**(|x|) - 1)
+
+    Parameters
+    ----------
+    x : np.ndarray
+        The compressed signal.
+        If `quantize=False`, values must be in the range [-1, +1].
+
+    mu : positive number
+        The compression parameter.  Values of the form `2**n - 1`
+        (e.g., 15, 31, 63, etc.) are most common.
+
+    quantize : boolean
+        If `True`, the input is assumed to be quantized to
+        `1 + mu` distinct integer values.
+
+    Returns
+    -------
+    x_expanded : np.ndarray with values in the range [-1, +1]
+        The mu-expanded signal.
+
+    Raises
+    ------
+    ParameterError
+        If `x` has values outside the range [-1, +1] and `quantize=False`
+        If `mu <= 0`
+
+    See Also
+    --------
+    mu_compress
+
+    Examples
+    --------
+    Compress and expand without quantization
+
+    >>> x = np.linspace(-1, 1, num=16)
+    >>> x
+    array([-1.        , -0.86666667, -0.73333333, -0.6       , -0.46666667,
+           -0.33333333, -0.2       , -0.06666667,  0.06666667,  0.2       ,
+            0.33333333,  0.46666667,  0.6       ,  0.73333333,  0.86666667,
+            1.        ])
+    >>> y = librosa.mu_compress(x)
+    >>> y
+    array([-1.        , -0.97430198, -0.94432361, -0.90834832, -0.86336132,
+           -0.80328309, -0.71255496, -0.52124063,  0.52124063,  0.71255496,
+            0.80328309,  0.86336132,  0.90834832,  0.94432361,  0.97430198,
+            1.        ])
+    >>> z = librosa.mu_compress(y)
+    >>> z
+    array([-1.        , -0.86666667, -0.73333333, -0.6       , -0.46666667,
+           -0.33333333, -0.2       , -0.06666667,  0.06666667,  0.2       ,
+            0.33333333,  0.46666667,  0.6       ,  0.73333333,  0.86666667,
+            1.        ])
+
+    Compress and expand with quantization.  Note that this necessarily
+    incurs quantization error, particularly for values near +-1.
+
+    >>> y = librosa.mu_compress(x, quantize=True)
+    >>> y
+    array([-128, -124, -120, -116, -110, -102,  -91,  -66,   66,   91,  102,
+            110,  116,  120,  124,  127])
+    >>> z = librosa.mu_expand(y, quantize=True)
+    array([-1.        , -0.84027248, -0.70595818, -0.59301377, -0.4563785 ,
+           -0.32155973, -0.19817918, -0.06450245,  0.06450245,  0.19817918,
+            0.32155973,  0.4563785 ,  0.59301377,  0.70595818,  0.84027248,
+            0.95743702])
+    '''
+    if mu <= 0:
+        raise ParameterError('Inverse mu-law compression parameter '
+                             'mu={} must be strictly positive.'.format(mu))
+
+    if quantize:
+        x = x * 2.0 / (1 + mu)
+
+    if np.any(x < -1) or np.any(x > 1):
+        raise ParameterError('Inverse mu-law input x={} must be '
+                             'in the range [-1, +1].'.format(x))
+
+    return np.sign(x) / mu * (np.power(1 + mu, np.abs(x)) - 1)
