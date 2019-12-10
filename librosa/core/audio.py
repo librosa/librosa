@@ -1386,7 +1386,7 @@ def mu_compress(x, mu=255, quantize=True):
         If `True`, quantize the compressed values into `1 + mu`
         distinct integer values.
 
-        If `False`, mu-compression is applied without quantization.
+        If `False`, mu-law compression is applied without quantization.
 
     Returns
     -------
@@ -1456,8 +1456,8 @@ def mu_compress(x, mu=255, quantize=True):
 def mu_expand(x, mu=255.0, quantize=True):
     '''mu-law expansion
 
-    This function is the inverse of `mu_compress`. Given a mu-compressed
-    signal `-1 <= x <= 1`, the mu-expansion is calculated by
+    This function is the inverse of `mu_compress`. Given a mu-law compressed
+    signal `-1 <= x <= 1`, the mu-law expansion is calculated by
 
         sign(x) * (1 / mu) * ((1 + mu)**(|x|) - 1)
 
@@ -1478,7 +1478,7 @@ def mu_expand(x, mu=255.0, quantize=True):
     Returns
     -------
     x_expanded : np.ndarray with values in the range [-1, +1]
-        The mu-expanded signal.
+        The mu-law expanded signal.
 
     Raises
     ------
