@@ -584,8 +584,8 @@ def __reassign_frequencies(y, sr=22050, S=None, n_fft=2048, hop_length=None,
 
     The reassignment vector is calculated using equation 5.20 in Flandrin,
     Auger, & Chassande-Mottin 2002:
-
-    .. math:: \omega - \Im(\frac{S_{dh}}{S_h})
+    
+    `omega_reassigned = omega - np.imag(S_dh/S_h)`
 
     where `S_h` is the complex STFT calculated using the original window, and
     `S_dh` is the complex STFT calculated using the derivative of the original
@@ -730,8 +730,8 @@ def __reassign_times(y, sr=22050, S=None, n_fft=2048, hop_length=None,
 
     The reassignment vector is calculated using equation 5.23 in Flandrin,
     Auger, & Chassande-Mottin 2002:
-
-    .. math:: t + \Re(\frac{S_{th}}{S_h})
+    
+    `t_reassigned = t + np.real(S_th/S_h)`
 
     where `S_h` is the complex STFT calculated using the original window, and
     `S_th` is the complex STFT calculated using the original window multiplied
@@ -902,11 +902,8 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     The reassignment vectors are calculated using equations 5.20 and 5.23 in
     [1]_:
 
-    .. math::
-
-        \hat{\omega} = \omega - \Im\left(\frac{S_{dh}}{S_h}\right) \\
-        \hat{t} = t + \Re\left(\frac{S_{th}}{S_h}\right)
-
+        `t_reassigned = t + np.real(S_th/S_h)`
+        `omega_reassigned = omega - np.imag(S_df/S_h)`
 
     where `S_h` is the complex STFT calculated using the original window,
     `S_dh` is the complex STFT calculated using the derivative of the original
