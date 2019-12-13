@@ -766,7 +766,7 @@ def spectral_flatness(y=None, S=None, n_fft=2048, hop_length=512,
 
 
 def rms(y=None, S=None, frame_length=2048, hop_length=512,
-        center=True, pad_mode='reflect'):
+        center=True, pad_mode='reflect', odd_n_fft=False):
     '''Compute root-mean-square (RMS) value for each frame, either from the
     audio samples `y` or from a spectrogram `S`.
 
@@ -799,6 +799,12 @@ def rms(y=None, S=None, frame_length=2048, hop_length=512,
     pad_mode : str
         Padding mode for centered analysis.  See `np.pad` for valid
         values.
+
+    odd_n_fft : bool
+        This parameter is used on frequency-domain input (`S`).
+        If an odd number is given as `n_fft` for calculating `S`,
+        set `odd_n_fft = True`.
+        By defaults, `odd_n_fft = False`.
 
     Returns
     -------
@@ -849,19 +855,26 @@ def rms(y=None, S=None, frame_length=2048, hop_length=512,
                        frame_length=frame_length,
                        hop_length=hop_length)
 
-        # No normalization is necessary for time-domain input
-        norm = 1
+        # Calculate power
+        power = np.mean(np.abs(x)**2, axis=0, keepdims=True)
     elif S is not None:
         x, _ = _spectrogram(y=y, S=S,
                             n_fft=frame_length,
                             hop_length=hop_length)
+        # power spectrogram
+        x = np.abs(x) ** 2
 
-        # FFT introduces a scaling of n_fft to energy calculations
-        norm = 2 * (x.shape[0] - 1)
+        # Recover negative frequency bins' power
+        end = None if odd_n_fft else -1
+        x[1:end] *= 2
+
+        # Calculate power
+        n_fft = x.shape[0]*2 - 1 if odd_n_fft else x.shape[0]*2 - 2
+        power = np.sum(x, axis=0, keepdims=True, dtype=np.float64) / n_fft**2
     else:
         raise ValueError('Either `y` or `S` must be input.')
 
-    return np.sqrt(np.mean(np.abs(x)**2, axis=0, keepdims=True) / norm)
+    return np.sqrt(power)
 
 
 def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
