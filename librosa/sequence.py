@@ -77,7 +77,7 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
 
     metric : str
         Identifier for the cost-function as documented
-        in `scipy.spatial.cdist()`
+        in `scipy.spatial.distance.cdist()`
 
     step_sizes_sigma : np.ndarray [shape=[n, 2]]
         Specifies allowed step sizes as used by the dtw.
