@@ -635,7 +635,7 @@ def __reassign_frequencies(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     center : boolean
         - If `True`, the signal `y` is padded so that frame
           `S[:, t]` is centered at `y[t * hop_length]`.
-        - If `False`, then `S[:, t]` begins at `y[t * hop_length]`
+        - If `False`, then `S[:, t]` begins at `y[t * hop_length]`.
 
     dtype : numeric type
         Complex numeric type for `S`. Default is 64-bit complex.
@@ -648,7 +648,7 @@ def __reassign_frequencies(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     -------
     freqs : np.ndarray [shape=(1 + n_fft/2, t), dtype=real]
         Instantaneous frequencies:
-        `freqs[f, t]` is the frequency for bin `f`, frame `t`
+        `freqs[f, t]` is the frequency for bin `f`, frame `t`.
 
     S : np.ndarray [shape=(1 + n_fft/2, t), dtype=complex]
         Short-time Fourier transform
@@ -781,7 +781,7 @@ def __reassign_times(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     center : boolean
         - If `True`, the signal `y` is padded so that frame
           `D[:, t]` is centered at `y[t * hop_length]`.
-        - If `False`, then `D[:, t]` begins at `y[t * hop_length]`
+        - If `False`, then `D[:, t]` begins at `y[t * hop_length]`.
 
     dtype : numeric type
         Complex numeric type for `S`. Default is 64-bit complex.
@@ -794,7 +794,7 @@ def __reassign_times(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     -------
     times : np.ndarray [shape=(1 + n_fft/2, t), dtype=real]
         Reassigned times:
-        `times[f, t]` is the time for bin `f`, frame `t`
+        `times[f, t]` is the time for bin `f`, frame `t`.
 
     S : np.ndarray [shape=(1 + n_fft/2, t), dtype=complex]
         Short-time Fourier transform
@@ -903,7 +903,7 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     [1]_:
 
         `t_reassigned = t + np.real(S_th/S_h)`
-        `omega_reassigned = omega - np.imag(S_df/S_h)`
+        `omega_reassigned = omega - np.imag(S_dh/S_h)`
 
     where `S_h` is the complex STFT calculated using the original window,
     `S_dh` is the complex STFT calculated using the derivative of the original
@@ -981,7 +981,7 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     center : boolean
         - If `True` (default), the signal `y` is padded so that frame
           `D[:, t]` is centered at `y[t * hop_length]`.
-        - If `False`, then `D[:, t]` begins at `y[t * hop_length]`
+        - If `False`, then `D[:, t]` begins at `y[t * hop_length]`.
 
     reassign_frequencies : boolean
         - If `True` (default), the returned frequencies will be instantaneous
@@ -1027,19 +1027,19 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     -------
     freqs : np.ndarray [shape=(1 + n_fft/2, t), dtype=real]
         Instantaneous frequencies:
-        `freqs[f, t]` is the frequency for bin `f`, frame `t`
+        `freqs[f, t]` is the frequency for bin `f`, frame `t`.
         If `reassign_frequencies=False`, this will instead be a read-only array
         of the same shape containing the bin center frequencies for all frames.
 
     times : np.ndarray [shape=(1 + n_fft/2, t), dtype=real]
         Reassigned times:
-        `times[f, t]` is the time for bin `f`, frame `t`
+        `times[f, t]` is the time for bin `f`, frame `t`.
         If `reassign_times=False`, this will instead be a read-only array of
         the same shape containing the frame times for all bins.
 
     mags : np.ndarray [shape=(1 + n_fft/2, t), dtype=real]
         Magnitudes from short-time Fourier transform:
-        `mags[f, t]` is the magnitude for bin `f`, frame `t`
+        `mags[f, t]` is the magnitude for bin `f`, frame `t`.
 
     Warns
     --------
