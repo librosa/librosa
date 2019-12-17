@@ -912,21 +912,6 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     additional algorithms, and [3]_ and [4]_ for history and discussion of the
     method.
 
-    It is recommended to use `center=False` with this function rather than the
-    librosa default `True`. Unlike `stft`, reassigned times are not aligned to
-    the left or center of each frame, so padding the signal does not affect the
-    meaning of the reassigned times. However, reassignment assumes that the
-    energy in each FFT bin is associated with exactly one signal component and
-    impulse event. The default `center=True` with reflection padding can thus
-    invalidate the reassigned estimates in the half-reflected frames at the
-    beginning and end of the signal.
-
-    If `reassign_times` is `False`, the frame times that are returned will be
-    aligned to the left or center of the frame, depending on the value of
-    `center`. In this case, if `center` is `True`, then `pad_mode="wrap"` is
-    recommended for valid estimation of the instantaneous frequencies in the
-    boundary frames.
-
     .. [1] Flandrin, P., Auger, F., & Chassande-Mottin, E. (2002).
         Time-Frequency reassignment: From principles to algorithms. In Applications
         in Time-Frequency Signal Processing (Vol. 10, pp. 179-204). CRC Press.
@@ -1051,6 +1036,23 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     See Also
     --------
     stft : Short-time Fourier Transform
+
+    Notes
+    -----
+    It is recommended to use `center=False` with this function rather than the
+    librosa default `True`. Unlike `stft`, reassigned times are not aligned to
+    the left or center of each frame, so padding the signal does not affect the
+    meaning of the reassigned times. However, reassignment assumes that the
+    energy in each FFT bin is associated with exactly one signal component and
+    impulse event. The default `center=True` with reflection padding can thus
+    invalidate the reassigned estimates in the half-reflected frames at the
+    beginning and end of the signal.
+
+    If `reassign_times` is `False`, the frame times that are returned will be
+    aligned to the left or center of the frame, depending on the value of
+    `center`. In this case, if `center` is `True`, then `pad_mode="wrap"` is
+    recommended for valid estimation of the instantaneous frequencies in the
+    boundary frames.
 
     Examples
     --------
