@@ -407,11 +407,11 @@ def test_rms():
         S = np.ones((n, 5))
 
         # RMSE of an all-ones band is 1
-        rms = librosa.feature.rms(S=S)
+        frame_length = 2 * (n - 1)
+        rms = librosa.feature.rms(S=S, frame_length=frame_length)
+        assert np.allclose(rms, np.ones_like(rms) / np.sqrt(frame_length), atol=1e-2)
 
-        assert np.allclose(rms, np.ones_like(rms) / np.sqrt(2 * (n - 1)), atol=1e-2)
-
-    def __test_consistency(frame_length, hop_length, center, odd_n_fft):
+    def __test_consistency(frame_length, hop_length, center):
         y1, sr = librosa.load(__EXAMPLE_FILE, sr=None)
         np.random.seed(0)
         y2 = np.random.rand(100000)  # The mean value, i.e. DC component, is about 0.5
@@ -436,11 +436,11 @@ def test_rms():
 
         # Try both RMS methods.
         rms1 = librosa.feature.rms(S=S1, frame_length=frame_length,
-                                   hop_length=hop_length, odd_n_fft=odd_n_fft)
+                                   hop_length=hop_length)
         rms2 = librosa.feature.rms(y=y1, frame_length=frame_length,
                                    hop_length=hop_length, center=center)
         rms3 = librosa.feature.rms(S=S2, frame_length=frame_length,
-                                   hop_length=hop_length, odd_n_fft=odd_n_fft)
+                                   hop_length=hop_length)
         rms4 = librosa.feature.rms(y=y2, frame_length=frame_length,
                                    hop_length=hop_length, center=center)
 
@@ -454,8 +454,7 @@ def test_rms():
     for frame_length in [2048, 2049, 4096, 4097]:
         for hop_length in [128, 512, 1024]:
             for center in [False, True]:
-                odd_n_fft = True if frame_length % 2 else False
-                yield __test_consistency, frame_length, hop_length, center, odd_n_fft
+                yield __test_consistency, frame_length, hop_length, center
 
     for n in range(10, 100, 10):
         yield __test, n
