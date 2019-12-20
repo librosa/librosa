@@ -800,12 +800,6 @@ def rms(y=None, S=None, frame_length=2048, hop_length=512,
         Padding mode for centered analysis.  See `np.pad` for valid
         values.
 
-    odd_n_fft : bool
-        This parameter is used on frequency-domain input (`S`).
-        If an odd number is given as `n_fft` for calculating `S`,
-        set `odd_n_fft = True`.
-        By defaults, `odd_n_fft = False`.
-
     Returns
     -------
     rms : np.ndarray [shape=(1, t)]
@@ -858,19 +852,25 @@ def rms(y=None, S=None, frame_length=2048, hop_length=512,
         # Calculate power
         power = np.mean(np.abs(x)**2, axis=0, keepdims=True)
     elif S is not None:
-        x, _ = _spectrogram(y=y, S=S,
-                            n_fft=frame_length,
-                            hop_length=hop_length)
+        # Check the frame length
+        if S.shape[0] != frame_length // 2 + 1:
+            raise ParameterError(
+                    'Since S.shape[0] is {}, '
+                    'frame_length is expected to be {} or {}; '
+                    'found {}'.format(
+                            S.shape[0],
+                            S.shape[0] * 2 - 2, S.shape[0] * 2 - 1,
+                            frame_length))
+
         # power spectrogram
-        x = np.abs(x) ** 2
+        x = np.abs(S) ** 2
 
         # Recover negative frequency bins' power
-        end = None if odd_n_fft else -1
+        end = None if frame_length % 2 else -1
         x[1:end] *= 2
 
         # Calculate power
-        n_fft = x.shape[0]*2 - 1 if odd_n_fft else x.shape[0]*2 - 2
-        power = np.sum(x, axis=0, keepdims=True, dtype=np.float64) / n_fft**2
+        power = np.sum(x, axis=0, keepdims=True) / frame_length**2
     else:
         raise ValueError('Either `y` or `S` must be input.')
 
