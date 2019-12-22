@@ -766,7 +766,7 @@ def spectral_flatness(y=None, S=None, n_fft=2048, hop_length=512,
 
 
 def rms(y=None, S=None, frame_length=2048, hop_length=512,
-        center=True, pad_mode='reflect', odd_n_fft=False):
+        center=True, pad_mode='reflect'):
     '''Compute root-mean-square (RMS) value for each frame, either from the
     audio samples `y` or from a spectrogram `S`.
 
