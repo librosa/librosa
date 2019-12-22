@@ -865,12 +865,13 @@ def rms(y=None, S=None, frame_length=2048, hop_length=512,
         # power spectrogram
         x = np.abs(S) ** 2
 
-        # Recover negative frequency bins' power
-        end = None if frame_length % 2 else -1
-        x[1:end] *= 2
+        # Adjust the DC and sr/2 component
+        x[0] *= 0.5
+        if frame_length % 2 == 0:
+            x[-1] *= 0.5
 
         # Calculate power
-        power = np.sum(x, axis=0, keepdims=True) / frame_length**2
+        power = 2 * np.sum(x, axis=0, keepdims=True) / frame_length**2
     else:
         raise ValueError('Either `y` or `S` must be input.')
 
