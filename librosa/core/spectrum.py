@@ -584,7 +584,7 @@ def __reassign_frequencies(y, sr=22050, S=None, n_fft=2048, hop_length=None,
 
     The reassignment vector is calculated using equation 5.20 in Flandrin,
     Auger, & Chassande-Mottin 2002:
-    
+
     `omega_reassigned = omega - np.imag(S_dh/S_h)`
 
     where `S_h` is the complex STFT calculated using the original window, and
@@ -730,7 +730,7 @@ def __reassign_times(y, sr=22050, S=None, n_fft=2048, hop_length=None,
 
     The reassignment vector is calculated using equation 5.23 in Flandrin,
     Auger, & Chassande-Mottin 2002:
-    
+
     `t_reassigned = t + np.real(S_th/S_h)`
 
     where `S_h` is the complex STFT calculated using the original window, and
@@ -780,8 +780,8 @@ def __reassign_times(y, sr=22050, S=None, n_fft=2048, hop_length=None,
 
     center : boolean
         - If `True`, the signal `y` is padded so that frame
-          `D[:, t]` is centered at `y[t * hop_length]`.
-        - If `False`, then `D[:, t]` begins at `y[t * hop_length]`.
+          `S[:, t]` is centered at `y[t * hop_length]`.
+        - If `False`, then `S[:, t]` begins at `y[t * hop_length]`.
 
     dtype : numeric type
         Complex numeric type for `S`. Default is 64-bit complex.
@@ -913,8 +913,9 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     method.
 
     .. [1] Flandrin, P., Auger, F., & Chassande-Mottin, E. (2002).
-        Time-Frequency reassignment: From principles to algorithms. In Applications
-        in Time-Frequency Signal Processing (Vol. 10, pp. 179-204). CRC Press.
+        Time-Frequency reassignment: From principles to algorithms. In
+        Applications in Time-Frequency Signal Processing (Vol. 10, pp.
+        179-204). CRC Press.
 
     .. [2] Fulop, S. A., & Fitz, K. (2006). Algorithms for computing the
         time-corrected instantaneous frequency (reassigned) spectrogram, with
@@ -927,8 +928,8 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
         32-41. doi:10.1109/MSP.2013.2265316
 
     .. [4] Hainsworth, S., Macleod, M. (2003). Time-frequency reassignment: a
-        review and analysis. Tech. Rep. CUED/FINFENG/TR.459, Cambridge University
-        Engineering Department
+        review and analysis. Tech. Rep. CUED/FINFENG/TR.459, Cambridge
+        University Engineering Department
 
     Parameters
     ----------
@@ -965,8 +966,9 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
 
     center : boolean
         - If `True` (default), the signal `y` is padded so that frame
-          `D[:, t]` is centered at `y[t * hop_length]`.
-        - If `False`, then `D[:, t]` begins at `y[t * hop_length]`.
+          `S[:, t]` is centered at `y[t * hop_length]`. See `Notes` for
+          recommended usage in this function.
+        - If `False`, then `S[:, t]` begins at `y[t * hop_length]`.
 
     reassign_frequencies : boolean
         - If `True` (default), the returned frequencies will be instantaneous
@@ -1065,7 +1067,8 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     ...                           click_freq=400.0, length=8000) +\
     ...     1e-3 * librosa.chirp(200, 1600, sr=sr, duration=2.0) +\
     ...     1e-6 * np.random.randn(2*sr)
-    >>> freqs, times, mags = librosa.reassigned_spectrogram(y=y, sr=sr, n_fft=n_fft)
+    >>> freqs, times, mags = librosa.reassigned_spectrogram(y=y, sr=sr,
+    ...                                                     n_fft=n_fft)
     >>> mags_db = librosa.power_to_db(mags, amin=amin)
     >>> ax = plt.subplot(2, 1, 1)
     >>> librosa.display.specshow(mags_db, x_axis="s", y_axis="linear", sr=sr,
