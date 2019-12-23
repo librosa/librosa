@@ -1079,7 +1079,7 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     >>> plt.subplot(2, 1, 2, sharex=ax, sharey=ax)
     >>> plt.scatter(times, freqs, c=mags_db, alpha=0.05, cmap="gray_r")
     >>> plt.clim(10*np.log10(amin), np.max(mags_db))
-    >>> plt.title("Reassigned spectrogram"))
+    >>> plt.title("Reassigned spectrogram")
     """
 
     if not six.callable(ref_power) and ref_power < 0:
