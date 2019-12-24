@@ -860,12 +860,17 @@ def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=None,
 
     len_orig = len(y)
 
+    alpha = (2.0**(1. / bins_per_octave) - 1)
+
     if fmin is None:
         # C1 by default
         fmin = note_to_hz('C1')
 
     if tuning is None:
         tuning = estimate_tuning(y=y, sr=sr, bins_per_octave=bins_per_octave)
+
+    if gamma is None:
+        gamma = 24.7 * alpha / 0.108
 
     # Apply tuning correction
     fmin = fmin * 2.0**(tuning / bins_per_octave)
@@ -878,7 +883,6 @@ def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=None,
     fmax_t = np.max(freqs)
 
     # Determine required resampling quality
-    alpha = (2.0**(1. / bins_per_octave) - 1)
     Q = float(filter_scale) / alpha
     filter_cutoff = fmax_t * (1 + 0.5 * filters.window_bandwidth(window) / Q) + 0.5 * gamma
     nyquist = sr / 2.0
