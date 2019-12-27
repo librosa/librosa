@@ -584,7 +584,7 @@ def __reassign_frequencies(y, sr=22050, S=None, n_fft=2048, hop_length=None,
 
     The reassignment vector is calculated using equation 5.20 in Flandrin,
     Auger, & Chassande-Mottin 2002:
-    
+
     `omega_reassigned = omega - np.imag(S_dh/S_h)`
 
     where `S_h` is the complex STFT calculated using the original window, and
@@ -635,7 +635,7 @@ def __reassign_frequencies(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     center : boolean
         - If `True`, the signal `y` is padded so that frame
           `S[:, t]` is centered at `y[t * hop_length]`.
-        - If `False`, then `S[:, t]` begins at `y[t * hop_length]`
+        - If `False`, then `S[:, t]` begins at `y[t * hop_length]`.
 
     dtype : numeric type
         Complex numeric type for `S`. Default is 64-bit complex.
@@ -648,7 +648,7 @@ def __reassign_frequencies(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     -------
     freqs : np.ndarray [shape=(1 + n_fft/2, t), dtype=real]
         Instantaneous frequencies:
-        `freqs[f, t]` is the frequency for bin `f`, frame `t`
+        `freqs[f, t]` is the frequency for bin `f`, frame `t`.
 
     S : np.ndarray [shape=(1 + n_fft/2, t), dtype=complex]
         Short-time Fourier transform
@@ -730,7 +730,7 @@ def __reassign_times(y, sr=22050, S=None, n_fft=2048, hop_length=None,
 
     The reassignment vector is calculated using equation 5.23 in Flandrin,
     Auger, & Chassande-Mottin 2002:
-    
+
     `t_reassigned = t + np.real(S_th/S_h)`
 
     where `S_h` is the complex STFT calculated using the original window, and
@@ -780,8 +780,8 @@ def __reassign_times(y, sr=22050, S=None, n_fft=2048, hop_length=None,
 
     center : boolean
         - If `True`, the signal `y` is padded so that frame
-          `D[:, t]` is centered at `y[t * hop_length]`.
-        - If `False`, then `D[:, t]` begins at `y[t * hop_length]`
+          `S[:, t]` is centered at `y[t * hop_length]`.
+        - If `False`, then `S[:, t]` begins at `y[t * hop_length]`.
 
     dtype : numeric type
         Complex numeric type for `S`. Default is 64-bit complex.
@@ -794,7 +794,7 @@ def __reassign_times(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     -------
     times : np.ndarray [shape=(1 + n_fft/2, t), dtype=real]
         Reassigned times:
-        `times[f, t]` is the time for bin `f`, frame `t`
+        `times[f, t]` is the time for bin `f`, frame `t`.
 
     S : np.ndarray [shape=(1 + n_fft/2, t), dtype=complex]
         Short-time Fourier transform
@@ -903,7 +903,7 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     [1]_:
 
         `t_reassigned = t + np.real(S_th/S_h)`
-        `omega_reassigned = omega - np.imag(S_df/S_h)`
+        `omega_reassigned = omega - np.imag(S_dh/S_h)`
 
     where `S_h` is the complex STFT calculated using the original window,
     `S_dh` is the complex STFT calculated using the derivative of the original
@@ -912,24 +912,10 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     additional algorithms, and [3]_ and [4]_ for history and discussion of the
     method.
 
-    It is recommended to use `center=False` with this function rather than the
-    librosa default `True`. Unlike `stft`, reassigned times are not aligned to
-    the left or center of each frame, so padding the signal does not affect the
-    meaning of the reassigned times. However, reassignment assumes that the
-    energy in each FFT bin is associated with exactly one signal component and
-    impulse event. The default `center=True` with reflection padding can thus
-    invalidate the reassigned estimates in the half-reflected frames at the
-    beginning and end of the signal.
-
-    If `reassign_times` is `False`, the frame times that are returned will be
-    aligned to the left or center of the frame, depending on the value of
-    `center`. In this case, if `center` is `True`, then `pad_mode="wrap"` is
-    recommended for valid estimation of the instantaneous frequencies in the
-    boundary frames.
-
     .. [1] Flandrin, P., Auger, F., & Chassande-Mottin, E. (2002).
-        Time-Frequency reassignment: From principles to algorithms. In Applications
-        in Time-Frequency Signal Processing (Vol. 10, pp. 179-204). CRC Press.
+        Time-Frequency reassignment: From principles to algorithms. In
+        Applications in Time-Frequency Signal Processing (Vol. 10, pp.
+        179-204). CRC Press.
 
     .. [2] Fulop, S. A., & Fitz, K. (2006). Algorithms for computing the
         time-corrected instantaneous frequency (reassigned) spectrogram, with
@@ -942,8 +928,8 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
         32-41. doi:10.1109/MSP.2013.2265316
 
     .. [4] Hainsworth, S., Macleod, M. (2003). Time-frequency reassignment: a
-        review and analysis. Tech. Rep. CUED/FINFENG/TR.459, Cambridge University
-        Engineering Department
+        review and analysis. Tech. Rep. CUED/FINFENG/TR.459, Cambridge
+        University Engineering Department
 
     Parameters
     ----------
@@ -980,8 +966,9 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
 
     center : boolean
         - If `True` (default), the signal `y` is padded so that frame
-          `D[:, t]` is centered at `y[t * hop_length]`.
-        - If `False`, then `D[:, t]` begins at `y[t * hop_length]`
+          `S[:, t]` is centered at `y[t * hop_length]`. See `Notes` for
+          recommended usage in this function.
+        - If `False`, then `S[:, t]` begins at `y[t * hop_length]`.
 
     reassign_frequencies : boolean
         - If `True` (default), the returned frequencies will be instantaneous
@@ -1027,19 +1014,19 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     -------
     freqs : np.ndarray [shape=(1 + n_fft/2, t), dtype=real]
         Instantaneous frequencies:
-        `freqs[f, t]` is the frequency for bin `f`, frame `t`
+        `freqs[f, t]` is the frequency for bin `f`, frame `t`.
         If `reassign_frequencies=False`, this will instead be a read-only array
         of the same shape containing the bin center frequencies for all frames.
 
     times : np.ndarray [shape=(1 + n_fft/2, t), dtype=real]
         Reassigned times:
-        `times[f, t]` is the time for bin `f`, frame `t`
+        `times[f, t]` is the time for bin `f`, frame `t`.
         If `reassign_times=False`, this will instead be a read-only array of
         the same shape containing the frame times for all bins.
 
     mags : np.ndarray [shape=(1 + n_fft/2, t), dtype=real]
         Magnitudes from short-time Fourier transform:
-        `mags[f, t]` is the magnitude for bin `f`, frame `t`
+        `mags[f, t]` is the magnitude for bin `f`, frame `t`.
 
     Warns
     --------
@@ -1052,6 +1039,23 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     --------
     stft : Short-time Fourier Transform
 
+    Notes
+    -----
+    It is recommended to use `center=False` with this function rather than the
+    librosa default `True`. Unlike `stft`, reassigned times are not aligned to
+    the left or center of each frame, so padding the signal does not affect the
+    meaning of the reassigned times. However, reassignment assumes that the
+    energy in each FFT bin is associated with exactly one signal component and
+    impulse event. The default `center=True` with reflection padding can thus
+    invalidate the reassigned estimates in the half-reflected frames at the
+    beginning and end of the signal.
+
+    If `reassign_times` is `False`, the frame times that are returned will be
+    aligned to the left or center of the frame, depending on the value of
+    `center`. In this case, if `center` is `True`, then `pad_mode="wrap"` is
+    recommended for valid estimation of the instantaneous frequencies in the
+    boundary frames.
+
     Examples
     --------
     >>> amin = 1e-10
@@ -1063,7 +1067,8 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     ...                           click_freq=400.0, length=8000) +\
     ...     1e-3 * librosa.chirp(200, 1600, sr=sr, duration=2.0) +\
     ...     1e-6 * np.random.randn(2*sr)
-    >>> freqs, times, mags = librosa.reassigned_spectrogram(y=y, sr=sr, n_fft=n_fft)
+    >>> freqs, times, mags = librosa.reassigned_spectrogram(y=y, sr=sr,
+    ...                                                     n_fft=n_fft)
     >>> mags_db = librosa.power_to_db(mags, amin=amin)
     >>> ax = plt.subplot(2, 1, 1)
     >>> librosa.display.specshow(mags_db, x_axis="s", y_axis="linear", sr=sr,
@@ -1074,7 +1079,7 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     >>> plt.subplot(2, 1, 2, sharex=ax, sharey=ax)
     >>> plt.scatter(times, freqs, c=mags_db, alpha=0.05, cmap="gray_r")
     >>> plt.clim(10*np.log10(amin), np.max(mags_db))
-    >>> plt.title("Reassigned spectrogram"))
+    >>> plt.title("Reassigned spectrogram")
     """
 
     if not six.callable(ref_power) and ref_power < 0:
