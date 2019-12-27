@@ -165,7 +165,6 @@ def mel_to_audio(M, sr=22050, n_fft=2048, hop_length=512, win_length=None,
                       window=window, center=center, dtype=dtype, length=length,
                       pad_mode=pad_mode)
 
-
 def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0):
     '''Invert Mel-frequency cepstral coefficients to approximate a Mel power
     spectrogram.
@@ -208,9 +207,8 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0):
 
     Warns
     --------
-    RuntimeWarning
-        overflow encountered in power or
-        divide by zero encountered during inverse liftering.
+    UserWarning
+        due to critical values in lifter array that invokes underflow.
 
     See Also
     --------
@@ -221,21 +219,21 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0):
     if lifter > 0:
         n_mfcc = mfcc.shape[0]
         idx = np.arange(1, 1 + n_mfcc, dtype=mfcc.dtype)
-        lifter_sine = 1 + (lifter / 2) * np.sin(np.pi * idx / lifter)[:, np.newaxis]
-
-        # check lifter array for critical values
-        if (lifter_sine == 0).any():
-            warnings.warn("Warning: lifter array includes critial values that will likely to invoke underflow.")
-
+        lifter_sine = 1 + lifter * 0.5 * np.sin(np.pi * idx / lifter)[:, np.newaxis]
+        
+        # raise a UserWarning if lifter array includes critical values
+        if np.any(np.abs(lifter_sine) < np.finfo(lifter_sine.dtype).eps):
+            warnings.warn(message="lifter array includes critial values that may invoke underflow.", 
+                          category=UserWarning)
+        
         # lifter mfcc values
         mfcc = mfcc / lifter_sine
-
+        
     elif lifter != 0:
-        raise ParameterError('MFCC to mel lifter={} must be a non-negative number'.format(lifter))
-
+        raise ParameterError('MFCC to mel lifter must be a non-negative number.')
+    
     logmel = scipy.fftpack.idct(mfcc, axis=0, type=dct_type, norm=norm, n=n_mels)
     return db_to_power(logmel, ref=ref)
-
 
 def mfcc_to_audio(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0, **kwargs):
     '''Convert Mel-frequency cepstral coefficients to a time-domain audio signal
