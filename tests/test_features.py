@@ -407,36 +407,51 @@ def test_rms():
         S = np.ones((n, 5))
 
         # RMSE of an all-ones band is 1
-        rms = librosa.feature.rms(S=S)
-
-        assert np.allclose(rms, np.ones_like(rms) / np.sqrt(2 * (n - 1)), atol=1e-2)
+        frame_length = 2 * (n - 1)
+        rms = librosa.feature.rms(S=S, frame_length=frame_length)
+        assert np.allclose(rms, np.ones_like(rms) / np.sqrt(frame_length), atol=1e-2)
 
     def __test_consistency(frame_length, hop_length, center):
-        y, sr = librosa.load(__EXAMPLE_FILE, sr=None)
+        y1, sr = librosa.load(__EXAMPLE_FILE, sr=None)
+        np.random.seed(0)
+        y2 = np.random.rand(100000)  # The mean value, i.e. DC component, is about 0.5
 
         # Ensure audio is divisible into frame size.
-        y = librosa.util.fix_length(y, y.size - y.size % frame_length)
-        assert y.size % frame_length == 0
+        y1 = librosa.util.fix_length(y1, y1.size - y1.size % frame_length)
+        y2 = librosa.util.fix_length(y2, y2.size - y2.size % frame_length)
+        assert y1.size % frame_length == 0
+        assert y2.size % frame_length == 0
 
         # STFT magnitudes with a constant windowing function and no centering.
-        S = librosa.magphase(librosa.stft(y,
+        S1 = librosa.magphase(librosa.stft(y1,
+                                          n_fft=frame_length,
+                                          hop_length=hop_length,
+                                          window=np.ones,
+                                          center=center))[0]
+        S2 = librosa.magphase(librosa.stft(y2,
                                           n_fft=frame_length,
                                           hop_length=hop_length,
                                           window=np.ones,
                                           center=center))[0]
 
         # Try both RMS methods.
-        rms1 = librosa.feature.rms(S=S, frame_length=frame_length,
+        rms1 = librosa.feature.rms(S=S1, frame_length=frame_length,
                                    hop_length=hop_length)
-        rms2 = librosa.feature.rms(y=y, frame_length=frame_length,
+        rms2 = librosa.feature.rms(y=y1, frame_length=frame_length,
+                                   hop_length=hop_length, center=center)
+        rms3 = librosa.feature.rms(S=S2, frame_length=frame_length,
+                                   hop_length=hop_length)
+        rms4 = librosa.feature.rms(y=y2, frame_length=frame_length,
                                    hop_length=hop_length, center=center)
 
         assert rms1.shape == rms2.shape
+        assert rms3.shape == rms4.shape
 
         # Ensure results are similar.
         np.testing.assert_allclose(rms1, rms2, atol=5e-4)
+        np.testing.assert_allclose(rms3, rms4, atol=5e-4)
 
-    for frame_length in [2048, 4096]:
+    for frame_length in [2048, 2049, 4096, 4097]:
         for hop_length in [128, 512, 1024]:
             for center in [False, True]:
                 yield __test_consistency, frame_length, hop_length, center
