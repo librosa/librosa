@@ -945,6 +945,7 @@ def test_mel_to_audio():
     assert librosa.util.valid_audio(y_inv)
 
 
+@pytest.mark.xfail(raises=FloatingPointError)
 @pytest.mark.parametrize('n_mfcc', [13, 20])
 @pytest.mark.parametrize('n_mels', [64, 128])
 @pytest.mark.parametrize('dct_type', [2, 3])
