@@ -9,6 +9,7 @@ import scipy.fftpack
 from ..util.exceptions import ParameterError
 from ..core.spectrum import griffinlim
 from ..core.spectrum import db_to_power
+from ..util.utils import tiny
 from .. import filters
 from ..util import nnls
 
@@ -227,7 +228,7 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0):
                           category=UserWarning)
         
         # lifter mfcc values
-        mfcc = mfcc / lifter_sine
+        mfcc = mfcc / (lifter_sine + tiny(mfcc))
         
     elif lifter != 0:
         raise ParameterError('MFCC to mel lifter must be a non-negative number.')
