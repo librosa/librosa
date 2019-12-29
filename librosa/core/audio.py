@@ -455,6 +455,11 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
 
             To use `scipy.signal.resample_poly`, set `res_type='polyphase'`.
 
+            To use `samplerate.resample`, use the following:
+                - `linear`: linear interpolation
+                - `zero_order_hold`: zero-order hold sampling
+                - `sinc_best`, `sinc_medium`, `sinc_fastest`: for high, medium, and low-quality sinc interpolation
+
         .. note::
             When using `res_type='polyphase'`, only integer sampling rates are
             supported.
@@ -487,6 +492,7 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
     librosa.util.fix_length
     scipy.signal.resample
     resampy.resample
+    samplerate.resample
 
     Notes
     -----
@@ -525,6 +531,10 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
         target_sr = int(target_sr)
         gcd = np.gcd(orig_sr, target_sr)
         y_hat = scipy.signal.resample_poly(y, target_sr // gcd, orig_sr // gcd, axis=-1)
+    elif res_type in ('linear', 'zero_order_hold', 'sinc_best', 'sinc_fastest', 'sinc_medium'):
+        import samplerate
+        # We have to transpose here to match libsamplerate
+        y_hat = samplerate.resample(y.T, ratio, converter_type=res_type).T
     else:
         y_hat = resampy.resample(y, orig_sr, target_sr, filter=res_type, axis=-1)
 

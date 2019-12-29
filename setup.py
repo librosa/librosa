@@ -57,7 +57,8 @@ setup(
                   'pytest-mpl',
                   'pytest-cov',
                   'pytest',
-                  'contextlib2'],
+                  'contextlib2',
+                  'samplerate'],
         'display': ['matplotlib >= 1.5'],
     }
 )
