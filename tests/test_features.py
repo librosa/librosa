@@ -942,28 +942,74 @@ def test_mel_to_audio():
 @pytest.mark.parametrize('n_mfcc', [13, 20])
 @pytest.mark.parametrize('n_mels', [64, 128])
 @pytest.mark.parametrize('dct_type', [2, 3])
-def test_mfcc_to_mel(n_mfcc, n_mels, dct_type):
+@pytest.mark.parametrize('lifter', [-1, 0, 1, 2, 3])
+def test_mfcc_to_mel(n_mfcc, n_mels, dct_type, lifter):
     y = librosa.tone(440.0, sr=22050, duration=1)
+    mfcc = librosa.feature.mfcc(y=y,
+                                sr=22050,
+                                n_mels=n_mels,
+                                n_mfcc=n_mfcc,
+                                dct_type=dct_type)
 
-    mfcc = librosa.feature.mfcc(y=y, sr=22050,
-                                n_mels=n_mels, n_mfcc=n_mfcc, dct_type=dct_type)
 
-    melspec = librosa.feature.melspectrogram(y=y, sr=22050, n_mels=n_mels)
-    
-    mel_recover = librosa.feature.inverse.mfcc_to_mel(mfcc, n_mels=n_mels,
-                                                      dct_type=dct_type)
+    # check lifter parameter error
+    if lifter < 0:
+        with pytest.raises(librosa.ParameterError):
+            librosa.feature.inverse.mfcc_to_mel(mfcc * 10**3,
+                                                n_mels=n_mels,
+                                                dct_type=dct_type,
+                                                lifter=lifter)
 
-    # Quick shape check
-    assert melspec.shape == mel_recover.shape
+    # check no lifter computations
+    elif lifter == 0:
+            melspec = librosa.feature.melspectrogram(y=y, sr=22050,
+                                                      n_mels=n_mels)
 
-    # Check non-negativity
-    assert np.all(mel_recover >= 0)
+            mel_recover = librosa.feature.inverse.mfcc_to_mel(mfcc,
+                                                              n_mels=n_mels,
+                                                              dct_type=dct_type)
+            # Quick shape check
+            assert melspec.shape == mel_recover.shape
+
+            # Check non-negativity
+            assert np.all(mel_recover >= 0)
+
+    # check that runtime warnings are triggered when appropriate
+    elif lifter == 2:
+        with pytest.warns(UserWarning):
+            librosa.feature.inverse.mfcc_to_mel(mfcc * 10**3,
+                                                n_mels=n_mels,
+                                                dct_type=dct_type,
+                                                lifter=lifter)
+
+    # check if mfcc_to_mel works correctly with lifter
+    else:
+        ones = np.ones(mfcc.shape, dtype=mfcc.dtype)
+        n_mfcc = mfcc.shape[0]
+        idx = np.arange(1, 1 + n_mfcc, dtype=mfcc.dtype)
+        lifter_sine = 1 + lifter * 0.5 * np.sin(np.pi * idx / lifter)[:, np.newaxis]
+
+        # compute the recovered mel
+        mel_recover = librosa.feature.inverse.mfcc_to_mel(ones * lifter_sine,
+                                                          n_mels=n_mels,
+                                                          dct_type=dct_type,
+                                                          lifter=lifter)
+        
+        # compute the expected mel
+        mel_expected = librosa.feature.inverse.mfcc_to_mel(ones,
+                                                           n_mels=n_mels,
+                                                           dct_type=dct_type,
+                                                           lifter=0)
+
+        # assert equality of expected and recovered mels
+        np.testing.assert_almost_equal(mel_recover, mel_expected, 3)
 
 
 @pytest.mark.parametrize('n_mfcc', [13, 20])
 @pytest.mark.parametrize('n_mels', [64, 128])
 @pytest.mark.parametrize('dct_type', [2, 3])
-def test_mfcc_to_audio(n_mfcc, n_mels, dct_type):
+@pytest.mark.parametrize('lifter', [0, 3])
+def test_mfcc_to_audio(n_mfcc, n_mels, dct_type, lifter):
     y = librosa.tone(440.0, sr=22050, duration=1)
 
     mfcc = librosa.feature.mfcc(y=y, sr=22050,
@@ -971,6 +1017,7 @@ def test_mfcc_to_audio(n_mfcc, n_mels, dct_type):
 
     y_inv = librosa.feature.inverse.mfcc_to_audio(mfcc, n_mels=n_mels,
                                                   dct_type=dct_type,
+                                                  lifter=lifter,
                                                   length=len(y))
 
     # Sanity check the length
