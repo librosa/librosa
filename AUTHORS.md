@@ -54,6 +54,7 @@ Contributors
 * Voodoohop <https://github.com/voodoohop>
 * Alastair Porter <https://github.com/alastair>
 * Fabian Keller <https://github.com/bluenote10>
+* Ayoub Malek <https://github.com/SuperKogito>
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
 
