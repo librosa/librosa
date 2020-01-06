@@ -767,8 +767,13 @@ def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=None,
 
         If `gamma=0`, produces the constant-Q transform.
 
-        If 'gamma=None', gamma will be calculated such that filter bandwidths are
-        equal to a constant fraction of the equivalent rectangular bandwidths (ERB) [2]_.
+        If 'gamma=None', gamma will be calculated such that filter bandwidths are equal to a
+        constant fraction of the equivalent rectangular bandwidths (ERB). This is accomplished
+        by solving for the gamma which gives B_k = alpha * f_k + gamma = C * ERB(f_k), where
+        B_k is the bandwidth of filter k with center frequency f_k, alpha is the inverse of
+        what would be the constant Q-factor, and C = alpha / 0.108 is the constant fraction
+        across all filters. Here we use ERB(f_k) = 24.7 + 0.108 * f_k, the best-fit curve derived
+        from experimental data in [2]_.
 
         .. [2] Glasberg, Brian R., and Brian CJ Moore.
             "Derivation of auditory filter shapes from notched-noise data."
