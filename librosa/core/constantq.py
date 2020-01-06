@@ -764,7 +764,15 @@ def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=None,
 
     gamma : number > 0 [scalar]
         Bandwidth offset for determining filter lengths.
-        `gamma=0` produces the constant-Q transform.
+
+        If `gamma=0`, produces the constant-Q transform.
+
+        If 'gamma=None', gamma will be calculated such that filter bandwidths are
+        equal to a constant fraction of the equivalent rectangular bandwidths (ERB) [2]_.
+
+        .. [2] Glasberg, Brian R., and Brian CJ Moore.
+            "Derivation of auditory filter shapes from notched-noise data."
+            Hearing research 47.1-2 (1990): 103-138.
 
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
@@ -860,6 +868,7 @@ def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=None,
 
     len_orig = len(y)
 
+    # Alpha is the inverse of the constant Q-factor
     alpha = (2.0**(1. / bins_per_octave) - 1)
 
     if fmin is None:
