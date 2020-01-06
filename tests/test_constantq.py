@@ -46,23 +46,21 @@ def __test_cqt_size(y, sr, hop_length, fmin, n_bins, bins_per_octave, tuning, fi
     return cqt_output
 
 
-def __test_vqt_size(y, sr, hop_length, fmin, n_bins, gamma, bins_per_octave,
-                    tuning, filter_scale, norm, sparsity, res_type):
+def __test_vqt_size(y, sr, hop_length, fmin, n_bins, bins_per_octave,
+                    tuning, filter_scale, norm, sparsity, res_type, gamma):
 
-    vqt_output = np.abs(
-        librosa.vqt(
-            y,
-            sr=sr,
-            hop_length=hop_length,
-            fmin=fmin,
-            n_bins=n_bins,
-            gamma=gamma,
-            bins_per_octave=bins_per_octave,
-            tuning=tuning,
-            filter_scale=filter_scale,
-            norm=norm,
-            sparsity=sparsity,
-            res_type=res_type))
+    vqt_output = np.abs(librosa.vqt(y,
+                                    sr=sr,
+                                    hop_length=hop_length,
+                                    fmin=fmin,
+                                    n_bins=n_bins,
+                                    bins_per_octave=bins_per_octave,
+                                    tuning=tuning,
+                                    filter_scale=filter_scale,
+                                    norm=norm,
+                                    sparsity=sparsity,
+                                    res_type=res_type,
+                                    gamma=gamma))
 
     assert vqt_output.shape[0] == n_bins
 
@@ -290,6 +288,39 @@ def test_vqt_position(y, sr, note_min):
 
     Cscale[idx-1:idx+2] = np.nan
     assert np.nanmax(Cscale) < 2.5e-1, Cscale
+
+
+def test_vqt_position():
+
+    # synthesize a two second sine wave at midi note 60
+
+    sr = 22050
+    freq = librosa.midi_to_hz(60)
+
+    y = np.sin(2 * np.pi * freq * np.linspace(0, 2.0, 2 * sr))
+
+    def __test(note_min):
+
+        C = np.abs(librosa.vqt(y, sr=sr, fmin=librosa.midi_to_hz(note_min)))**2
+
+        # Average over time
+        Cbar = np.median(C, axis=1)
+
+        # Find the peak
+        idx = np.argmax(Cbar)
+
+        assert idx == 60 - note_min
+
+        # Make sure that the max outside the peak is sufficiently small
+        Cscale = Cbar / Cbar[idx]
+        Cscale[idx] = np.nan
+        assert np.nanmax(Cscale) < 6e-1, Cscale
+
+        Cscale[idx-1:idx+2] = np.nan
+        assert np.nanmax(Cscale) < 5e-2, Cscale
+
+    for note_min in [12, 18, 24, 30, 36]:
+        yield __test, note_min
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
