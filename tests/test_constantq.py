@@ -46,21 +46,21 @@ def __test_cqt_size(y, sr, hop_length, fmin, n_bins, bins_per_octave, tuning, fi
     return cqt_output
 
 
-def __test_vqt_size(y, sr, hop_length, fmin, n_bins, bins_per_octave,
-                    tuning, filter_scale, norm, sparsity, res_type, gamma):
+def __test_vqt_size(y, sr, hop_length, fmin, n_bins, gamma, bins_per_octave,
+                    tuning, filter_scale, norm, sparsity, res_type):
 
     vqt_output = np.abs(librosa.vqt(y,
                                     sr=sr,
                                     hop_length=hop_length,
                                     fmin=fmin,
                                     n_bins=n_bins,
+                                    gamma=gamma,
                                     bins_per_octave=bins_per_octave,
                                     tuning=tuning,
                                     filter_scale=filter_scale,
                                     norm=norm,
                                     sparsity=sparsity,
-                                    res_type=res_type,
-                                    gamma=gamma))
+                                    res_type=res_type))
 
     assert vqt_output.shape[0] == n_bins
 
