@@ -1257,8 +1257,7 @@ def tone(frequency, sr=22050, length=None, duration=None, phi=None):
     if phi is None:
         phi = -np.pi * 0.5
 
-    step = 1.0 / sr
-    return np.cos(2 * np.pi * frequency * (np.arange(step * length, step=step)) + phi)
+    return np.cos(2 * np.pi * frequency * np.arange(length) / sr + phi)
 
 
 def chirp(fmin, fmax, sr=22050, length=None, duration=None, linear=False, phi=None):
