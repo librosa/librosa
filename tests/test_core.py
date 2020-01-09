@@ -1364,8 +1364,8 @@ def test_tone():
     yield tf, None, 22050, 22050, 1, None
     yield tf, 440, 22050, None, None, np.pi
 
-    for sr in [11025, 22050]:
-        for length in [None, 22050]:
+    for sr in [11025, 22050, 44100]:
+        for length in [None, 1740, 22050]:
             for duration in [None, 0.5]:
                 for phi in [None, np.pi]:
                     if length is not None or duration is not None:
