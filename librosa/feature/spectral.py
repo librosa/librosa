@@ -1599,7 +1599,7 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, dct_type=2, norm='ortho', lifter=0
     n_mfcc: int > 0 [scalar]
         number of MFCCs to return
 
-    dct_type : None, or {1, 2, 3}
+    dct_type : {1, 2, 3}
         Discrete cosine transform (DCT) type.
         By default, DCT type-2 is used.
 

@@ -184,7 +184,7 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0):
     n_mels : int > 0
         The number of Mel frequencies
 
-    dct_type : None or {1, 2, 3}
+    dct_type : {1, 2, 3}
         Discrete cosine transform (DCT) type
         By default, DCT type-2 is used.
 
@@ -236,6 +236,7 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0):
     logmel = scipy.fftpack.idct(mfcc, axis=0, type=dct_type, norm=norm, n=n_mels)
     return db_to_power(logmel, ref=ref)
 
+
 def mfcc_to_audio(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0, **kwargs):
     '''Convert Mel-frequency cepstral coefficients to a time-domain audio signal
 
@@ -253,7 +254,7 @@ def mfcc_to_audio(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0,
     n_mels : int > 0
         The number of Mel frequencies
 
-    dct_type : None or {1, 2, 3}
+    dct_type : {1, 2, 3}
         Discrete cosine transform (DCT) type
         By default, DCT type-2 is used.
 
