@@ -42,21 +42,21 @@ def __test_cqt_size(y, sr, hop_length, fmin, n_bins, bins_per_octave,
     return cqt_output
 
 
-def __test_vqt_size(y, sr, hop_length, fmin, n_bins, bins_per_octave,
-                    tuning, filter_scale, norm, sparsity, res_type, gamma):
+def __test_vqt_size(y, sr, hop_length, fmin, n_bins, gamma, bins_per_octave,
+                    tuning, filter_scale, norm, sparsity, res_type):
 
     vqt_output = np.abs(librosa.vqt(y,
                                     sr=sr,
                                     hop_length=hop_length,
                                     fmin=fmin,
                                     n_bins=n_bins,
+                                    gamma=gamma,
                                     bins_per_octave=bins_per_octave,
                                     tuning=tuning,
                                     filter_scale=filter_scale,
                                     norm=norm,
                                     sparsity=sparsity,
-                                    res_type=res_type,
-                                    gamma=gamma))
+                                    res_type=res_type))
 
     assert vqt_output.shape[0] == n_bins
 
@@ -128,17 +128,17 @@ def test_vqt():
     # num_octaves = 6, 2**(6-1) = 32 > 16
     for hop_length in [-1, 0, 16, 63, 65]:
         yield (pytest.mark.xfail(__test_vqt_size, raises=librosa.ParameterError), y, sr, hop_length, None, 72,
-               12, 0.0, 2, 1, 0.01, None)
+               None, 12, 0.0, 2, 1, 0.01, None)
 
     # Filters go beyond Nyquist. 500 Hz -> 4 octaves = 8000 Hz > 11000 Hz
     yield (pytest.mark.xfail(__test_vqt_size, raises=librosa.ParameterError), y, sr, 512, 500, 4 * 12,
-           12, 0.0, 2, 1, 0.01, None)
+           None, 12, 0.0, 2, 1, 0.01, None)
 
     # Test with fmin near Nyquist
     for fmin in [3000, 4800]:
         for n_bins in [1, 2]:
             for bins_per_octave in [12]:
-                yield (__test_vqt_size, y, sr, 512, fmin, n_bins,
+                yield (__test_vqt_size, y, sr, 512, fmin, n_bins, None,
                        bins_per_octave, 0.0, 2, 1, 0.01, None)
 
     # Test for no errors and correct output size
