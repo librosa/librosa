@@ -213,7 +213,7 @@ def test_dtw_global_inf():
     # Construct a cost matrix where full alignment is impossible
     C = np.zeros((4, 4), dtype=np.float)
     C[-1, -1] = np.inf
-    with pytest.raises(librosa.LibrosaError):
+    with pytest.raises(librosa.ParameterError):
         librosa.sequence.dtw(C=C, subseq=False)
 
 
@@ -222,7 +222,7 @@ def test_dtw_subseq_inf():
     C = np.zeros((4, 4), dtype=np.float)
     C[-1, :] = np.inf
 
-    with pytest.raises(librosa.LibrosaError):
+    with pytest.raises(librosa.ParameterError):
         librosa.sequence.dtw(C=C, subseq=True)
 
 def test_dtw_subseq_pass():
