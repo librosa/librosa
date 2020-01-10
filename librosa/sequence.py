@@ -268,15 +268,22 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
 
     if backtrack:
         if subseq:
+            if np.all(np.isinf(D[-1])):
+                raise ParameterError('No valid sub-sequence warping path could '
+                                     'be constructed with the given step sizes.')
             # search for global minimum in last row of D-matrix
             wp_end_idx = np.argmin(D[-1, :]) + 1
             wp = __dtw_backtracking(D_steps[:, :wp_end_idx], step_sizes_sigma, subseq)
         else:
             # perform warping path backtracking
+            if np.isinf(D[-1, -1]):
+                raise ParameterError('No valid sub-sequence warping path could '
+                                     'be constructed with the given step sizes.')
+
             wp = __dtw_backtracking(D_steps, step_sizes_sigma, subseq)
             if wp[-1] != (0, 0):
-                # TODO: what should we do here?
-                pass
+                raise ParameterError('Unable to compute a full DTW warping path. '
+                                     'You may want to try again with subseq=True.')
 
         wp = np.asarray(wp, dtype=int)
 
