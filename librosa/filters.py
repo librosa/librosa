@@ -111,7 +111,7 @@ WINDOW_BANDWIDTHS = {'bart': 1.3334961334912805,
 
 @cache(level=10)
 def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
-        norm=1, dtype=np.float32):
+        norm='slaney', dtype=np.float32):
     """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins
 
     Parameters
@@ -135,10 +135,13 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
     htk       : bool [scalar]
         use HTK formula instead of Slaney
 
-    norm : {None, 1, np.inf} [scalar]
-        if 1, divide the triangular mel weights by the width of the mel band
-        (area normalization).  Otherwise, leave all the triangles aiming for
-        a peak value of 1.0
+    norm : {None, 1, 'slaney', np.inf} [scalar]
+        If 1 or 'slaney', divide the triangular mel weights by the width of the mel band
+        (area normalization).
+        
+        .. warning:: `norm=1` and `norm=np.inf` behavior will change in version 0.8.0.
+
+        Otherwise, leave all the triangles aiming for a peak value of 1.0
 
     dtype : np.dtype
         The data type of the output basis.
@@ -187,8 +190,17 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
     if fmax is None:
         fmax = float(sr) / 2
 
-    if norm is not None and norm != 1 and norm != np.inf:
-        raise ParameterError('Unsupported norm: {}'.format(repr(norm)))
+    if norm == 1:
+        warnings.warn('norm=1 behavior will change in librosa 0.8.0. '
+                      "To maintain forward compatibility, use norm='slaney' instead.",
+                      FutureWarning)
+    elif norm == np.inf:
+        warnings.warn('norm=np.inf behavior will change in librosa 0.8.0. '
+                      "To maintain forward compatibility, use norm=None instead.",
+                      FutureWarning)
+
+    elif norm not in (None, 1, 'slaney', np.inf):
+        raise ParameterError("Unsupported norm={}, must be one of: {None, 1, 'slaney', np.inf}".format(repr(norm)))
 
     # Initialize the weights
     n_mels = int(n_mels)
@@ -211,10 +223,11 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
         # .. then intersect them with each other and zero
         weights[i] = np.maximum(0, np.minimum(lower, upper))
 
-    if norm == 1:
+    if norm in (1, 'slaney'):
         # Slaney-style mel is scaled to be approx constant energy per channel
         enorm = 2.0 / (mel_f[2:n_mels+2] - mel_f[:n_mels])
         weights *= enorm[:, np.newaxis]
+
 
     # Only check weights if f_mel[0] is positive
     if not np.all((mel_f[:-2] == 0) | (weights.max(axis=1) > 0)):
