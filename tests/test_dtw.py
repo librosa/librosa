@@ -204,6 +204,34 @@ def test_dtw_global_constraint_destructive():
     assert np.array_equal(C1, C2)
 
 
+def test_dtw_global_inf():
+    # What should we do if backtracking fails in full sequence mode?
+    # This will happen if the inner loop of bt aborts prematurely
+    # by walking off the edge of the cost array instead of
+    # path-following to (0, 0)
+
+    # Construct a cost matrix where full alignment is impossible
+    C = np.zeros((4, 4), dtype=np.float)
+    C[-1, -1] = np.inf
+    with pytest.raises(librosa.LibrosaError):
+        librosa.sequence.dtw(C=C, subseq=False)
+
+
+def test_dtw_subseq_inf():
+    # Construct a cost matrix where partial alignment is impossible
+    C = np.zeros((4, 4), dtype=np.float)
+    C[-1, :] = np.inf
+
+    with pytest.raises(librosa.LibrosaError):
+        librosa.sequence.dtw(C=C, subseq=True)
+
+def test_dtw_subseq_pass():
+    # Construct a cost matrix where partial alignment is possible
+    C = np.zeros((4, 4), dtype=np.float)
+    C[-1, 2:] = np.inf
+    librosa.sequence.dtw(C=C, subseq=True)
+
+
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_dtw_nan_fail():
     C = np.ones((10, 10))
