@@ -112,6 +112,8 @@ def test_melfb():
             norm = None
         else:
             norm = DATA['norm'][0, 0]
+            if norm == 1:
+                norm = 'slaney'
         wts = librosa.filters.mel(DATA['sr'][0, 0],
                                   DATA['nfft'][0, 0],
                                   n_mels=DATA['nfilts'][0, 0],
@@ -129,6 +131,15 @@ def test_melfb():
 
     for infile in files(os.path.join('tests', 'data', 'feature-melfbnorm-*.mat')):
         yield (__test_with_norm, infile)
+
+
+@pytest.mark.parametrize('norm', [1, np.inf])
+def test_mel_norm1(norm):
+
+    # Check that calling with norm=1 triggers a warning
+    # This should be removed in 0.8.0
+    with pytest.warns(FutureWarning, match='compatibility'):
+        librosa.filters.mel(22050, 2048, norm=norm)
 
 
 def test_mel_gap():
