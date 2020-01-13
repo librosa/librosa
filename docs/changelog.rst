@@ -1,6 +1,47 @@
 Changelog
 =========
 
+v0.7.2
+------
+2020-01-13
+
+New Features
+   - `#1008`_ added liftering support to MFCC inversion. *Ayoub Malek*
+   - `#1021`_ added `pathlib` support to `core.load`. *Stef van der Struijk*
+   - `#1022`_ added "mu-law" compression and expansion (companding). *Brian McFee*
+
+Bug fixes
+   - `#1031`_ fixed errors in dynamic time warping with `NaN` inputs and detection
+     of invalid warping paths. *Frank Zalkow, Brian McFee*
+   - `#1041`_ fixed frame-length normalization in spectrogram-based RMS energy
+     calculation. *Shunsuke Hidaka*
+   - `#1054`_ fixed the length of signals produced by `core.tone`. *Brian McFee*
+
+
+Documentation
+   - `#1038`_ removed math formatting from documentation. *Vincent Lostanlen*
+   - `#1042`_ corrected documentation for DTW. *Eric Semeniuc*
+   - `#1043`_ corrected typos in time-frequency reassignment spectrogram
+     documentation. *Scott Seyfarth*
+   - `#1055`_ removed `dct_type=None` as an option in MFCC documentation. *Brian McFee*
+
+
+Other changes
+   - `#1050`_ expanded normalization modes in Mel basis construction. *Brian McFee*
+
+.. _#1008: https://github.com/librosa/librosa/issues/1008
+.. _#1021: https://github.com/librosa/librosa/issues/1021
+.. _#1022: https://github.com/librosa/librosa/issues/1022
+.. _#1031: https://github.com/librosa/librosa/issues/1031
+.. _#1041: https://github.com/librosa/librosa/issues/1041
+.. _#1054: https://github.com/librosa/librosa/issues/1054
+.. _#1038: https://github.com/librosa/librosa/issues/1038
+.. _#1042: https://github.com/librosa/librosa/issues/1042
+.. _#1043: https://github.com/librosa/librosa/issues/1043
+.. _#1055: https://github.com/librosa/librosa/issues/1055
+.. _#1050: https://github.com/librosa/librosa/issues/1050
+
+
 v0.7.1
 ------
 2019-10-09
