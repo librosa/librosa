@@ -1369,7 +1369,7 @@ def mu_compress(x, mu=255, quantize=True):
     Given an input signal `-1 <= x <= 1`, the mu-law compression
     is calculated by
 
-        sign(x) * ln(1 + mu * |x|) /  ln(1 + mu)
+        sign(x) * ln(1 + mu * abs(x)) /  ln(1 + mu)
 
 
     Parameters
@@ -1458,7 +1458,7 @@ def mu_expand(x, mu=255.0, quantize=True):
     This function is the inverse of `mu_compress`. Given a mu-law compressed
     signal `-1 <= x <= 1`, the mu-law expansion is calculated by
 
-        sign(x) * (1 / mu) * ((1 + mu)**(|x|) - 1)
+        sign(x) * (1 / mu) * ((1 + mu)**abs(x) - 1)
 
     Parameters
     ----------
