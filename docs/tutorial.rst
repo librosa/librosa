@@ -49,9 +49,6 @@ The *librosa* package is structured as collection of submodules:
     - :ref:`librosa.onset <onset>`
         Onset detection and onset strength computation.
 
-    - :ref:`librosa.output <output>`
-        Text- and wav-file output. *(Deprecated)*
-
     - :ref:`librosa.segment <segment>`
         Functions useful for structural segmentation, such as recurrence matrix
         construction, time-lag representation, and sequentially constrained
