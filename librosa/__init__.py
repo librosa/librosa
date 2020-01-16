@@ -16,7 +16,6 @@ from . import effects
 from . import feature
 from . import filters
 from . import onset
-from . import output
 from . import segment
 from . import sequence
 from . import util
