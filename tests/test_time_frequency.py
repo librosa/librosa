@@ -147,31 +147,6 @@ def test_hz_to_octs(tuning, bins_per_octave):
     assert np.allclose(octs, oct_out)
 
 
-
-@pytest.mark.parametrize('a440', [415, 430, 435, 440, 466])
-def test_octs_to_hz_dep(a440):
-    with warnings.catch_warnings(record=True) as out:
-        freq = np.asarray([55, 110, 220, 440]) * (float(a440) / 440.0)
-        freq_out = librosa.octs_to_hz([1, 2, 3, 4], A440=a440)
-
-        assert np.allclose(freq, freq_out)
-        # And that it says the right thing (roughly)
-        assert 'deprecated' in str(out[0].message).lower()
-
-
-@pytest.mark.parametrize('a440', [415, 430, 435, 440, 466])
-def test_hz_to_octs_dep(a440):
-    with warnings.catch_warnings(record=True) as out:
-        freq = np.asarray([55, 110, 220, 440]) * (float(a440) / 440.0)
-        octs = [1, 2, 3, 4]
-        oct_out = librosa.hz_to_octs(freq, A440=a440)
-
-        assert np.allclose(octs, oct_out)
-
-        # And that it says the right thing (roughly)
-        assert 'deprecated' in str(out[0].message).lower()
-
-
 def test_note_to_midi():
 
     def __test(tuning, accidental, octave, round_midi):
