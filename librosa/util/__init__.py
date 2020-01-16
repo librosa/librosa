@@ -63,15 +63,6 @@ File operations
 
     example_audio_file
     find_files
-
-
-Deprecated
-----------
-
-.. autosummary::
-    :toctree: generated/
-
-    roll_sparse
 """
 
 from .utils import *  # pylint: disable=wildcard-import
