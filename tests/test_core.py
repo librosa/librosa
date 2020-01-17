@@ -15,7 +15,6 @@ import librosa
 import glob
 import numpy as np
 import scipy.io
-import six
 import pytest
 import warnings
 
@@ -690,7 +689,7 @@ def test_istft_reconstruction():
                 win = window_func(n_fft, sym=False)
                 symwin = window_func(n_fft, sym=True)
                 # tests with pre-computed window fucntions
-                for hop_length_denom in six.moves.range(2, 9):
+                for hop_length_denom in range(2, 9):
                     hop_length = n_fft // hop_length_denom
                     for length in [None, len(x) - 1000, len(x + 1000)]:
                         yield (__test, x, n_fft, hop_length, win, atol, length)

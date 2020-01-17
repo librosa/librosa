@@ -146,16 +146,13 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
         # check if a Path object is passed by the user
         if isinstance(path, pathlib.PurePath):
             # Recommended way of converting to string
-            if sys.version_info >= (3, 6):
-                path = os.fspath(path)
-            else:
-                path = str(path)
+            path = os.fspath(path)
 
         # If soundfile failed, try audioread instead
         # TODO From Librosa 0.8 `isinstance` accepts tuples:
         # isinstance(path, (six.string_types, pathlib.PurePath))
         # and remove above String conversion
-        if isinstance(path, six.string_types):
+        if isinstance(path, str):
             warnings.warn('PySoundFile failed. Trying audioread instead.')
             y, sr_native = __audioread_load(path, offset, duration, dtype)
         else:
@@ -1022,7 +1019,7 @@ def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
     if threshold is None:
         threshold = 0.0
 
-    if six.callable(ref_magnitude):
+    if callable(ref_magnitude):
         threshold = threshold * ref_magnitude(np.abs(y))
 
     elif ref_magnitude is not None:

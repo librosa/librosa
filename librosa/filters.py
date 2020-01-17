@@ -40,7 +40,6 @@ import numpy as np
 import scipy
 import scipy.signal
 import scipy.ndimage
-import six
 
 from numba import jit
 
@@ -842,11 +841,10 @@ def get_window(window, Nx, fftbins=True):
         If `window` is supplied as a vector of length != `n_fft`,
         or is otherwise mis-specified.
     '''
-    if six.callable(window):
+    if callable(window):
         return window(Nx)
 
-    elif (isinstance(window, (six.string_types, tuple)) or
-          np.isscalar(window)):
+    elif (isinstance(window, (str, tuple)) or np.isscalar(window)):
         # TODO: if we add custom window functions in librosa, call them here
 
         return scipy.signal.get_window(window, Nx, fftbins=fftbins)
