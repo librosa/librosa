@@ -2,9 +2,6 @@
 # -*- coding: utf-8 -*-
 """Core IO, DSP and utility functions."""
 
-import os
-import six
-import sys
 import pathlib
 import warnings
 
@@ -141,22 +138,12 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
             y = sf_desc.read(frames=frame_duration, dtype=dtype, always_2d=False).T
 
     except RuntimeError as exc:
-
-        # Convert pathlib paths to strings
-        # check if a Path object is passed by the user
-        if isinstance(path, pathlib.PurePath):
-            # Recommended way of converting to string
-            path = os.fspath(path)
-
         # If soundfile failed, try audioread instead
-        # TODO From Librosa 0.8 `isinstance` accepts tuples:
-        # isinstance(path, (six.string_types, pathlib.PurePath))
-        # and remove above String conversion
-        if isinstance(path, str):
+        if isinstance(path, (str, pathlib.PurePath)):
             warnings.warn('PySoundFile failed. Trying audioread instead.')
             y, sr_native = __audioread_load(path, offset, duration, dtype)
         else:
-            six.reraise(*sys.exc_info())
+            raise(exc)
 
     # Final cleanup for dtype and contiguity
     if mono:
