@@ -34,7 +34,6 @@ Transition matrices
 
 import numpy as np
 from scipy.spatial.distance import cdist
-import six
 from numba import jit
 from .util import pad_center, fill_off_diagonal
 from .util.exceptions import ParameterError
@@ -205,11 +204,11 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
 
         try:
             C = cdist(X.T, Y.T, metric=metric)
-        except ValueError:
-            msg = ('scipy.spatial.distance.cdist returned an error.\n'
-                   'Please provide your input in the form X.shape=(K, N) and Y.shape=(K, M).\n'
-                   '1-dimensional sequences should be reshaped to X.shape=(1, N) and Y.shape=(1, M).')
-            six.reraise(ParameterError, ParameterError(msg))
+        except ValueError as exc:
+            raise ParameterError('scipy.spatial.distance.cdist returned an error.\n'
+                                 'Please provide your input in the form X.shape=(K, N) '
+                                 'and Y.shape=(K, M).\n 1-dimensional sequences should '
+                                 'be reshaped to X.shape=(1, N) and Y.shape=(1, M).') from exc
 
         # for subsequence matching:
         # if N > M, Y can be a subsequence of X

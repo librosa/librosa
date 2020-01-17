@@ -4,7 +4,6 @@
 
 import warnings
 import numpy as np
-import six
 
 from .spectrum import _spectrogram
 from . import time_frequency
@@ -321,7 +320,7 @@ def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
     if ref is None:
         ref = np.max
 
-    if six.callable(ref):
+    if callable(ref):
         ref_value = threshold * ref(S, axis=0)
     else:
         ref_value = np.abs(ref)

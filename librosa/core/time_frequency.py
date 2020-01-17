@@ -3,13 +3,8 @@
 '''Time and frequency utilities'''
 
 import re
-import warnings
-
 import numpy as np
-import six
-
 from ..util.exceptions import ParameterError
-from ..util.deprecation import Deprecated
 
 __all__ = ['frames_to_samples', 'frames_to_time',
            'samples_to_frames', 'samples_to_time',
