@@ -4,7 +4,6 @@
 
 import scipy.ndimage
 import scipy.sparse
-import six
 
 import numpy as np
 import numba
@@ -308,7 +307,7 @@ def valid_int(x, cast=None):
     if cast is None:
         cast = np.floor
 
-    if not six.callable(cast):
+    if not callable(cast):
         raise ParameterError('cast parameter must be callable')
 
     return int(cast(x))

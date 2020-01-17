@@ -8,7 +8,6 @@ import scipy
 import scipy.ndimage
 import scipy.signal
 import scipy.interpolate
-import six
 
 from numba import jit
 
@@ -923,7 +922,7 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     >>> plt.title("Reassigned spectrogram")
     """
 
-    if not six.callable(ref_power) and ref_power < 0:
+    if not callable(ref_power) and ref_power < 0:
         raise ParameterError("ref_power must be non-negative or callable.")
 
     if not reassign_frequencies and not reassign_times:
@@ -990,7 +989,7 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
 
     # find bins below the power threshold
     # reassigned bins with zero power will already be NaN
-    if six.callable(ref_power):
+    if callable(ref_power):
         ref_power = ref_power(mags ** 2)
 
     mags_low = np.less(mags, ref_power ** 0.5, where=~np.isnan(mags))
@@ -1452,7 +1451,7 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
     else:
         magnitude = S
 
-    if six.callable(ref):
+    if callable(ref):
         # User supplied a function to calculate reference power
         ref_value = ref(magnitude)
     else:
@@ -1546,7 +1545,7 @@ def amplitude_to_db(S, ref=1.0, amin=1e-5, top_db=80.0):
 
     magnitude = np.abs(S)
 
-    if six.callable(ref):
+    if callable(ref):
         # User supplied a function to calculate reference power
         ref_value = ref(magnitude)
     else:

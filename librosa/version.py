@@ -34,7 +34,6 @@ def show_versions():
                  'sklearn',
                  'joblib',
                  'decorator',
-                 'six',
                  'soundfile',
                  'resampy',
                  'numba']
