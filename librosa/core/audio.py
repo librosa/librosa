@@ -5,6 +5,7 @@
 import os
 import six
 import sys
+import pathlib
 import warnings
 
 import soundfile as sf
@@ -142,16 +143,13 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
     except RuntimeError as exc:
 
         # Convert pathlib paths to strings
-        if sys.version_info >= (3, 4):
-            import pathlib
-
-            # check if a Path object is passed by the user
-            if isinstance(path, pathlib.PurePath):
-                # Recommended way of converting to string
-                if sys.version_info >= (3, 6):
-                    path = os.fspath(path)
-                else:
-                    path = str(path)
+        # check if a Path object is passed by the user
+        if isinstance(path, pathlib.PurePath):
+            # Recommended way of converting to string
+            if sys.version_info >= (3, 6):
+                path = os.fspath(path)
+            else:
+                path = str(path)
 
         # If soundfile failed, try audioread instead
         # TODO From Librosa 0.8 `isinstance` accepts tuples:
