@@ -17,9 +17,6 @@ matrix:
     include:
         - python: 3.7
           dist: xenial
-        - python: 3.8
-          dist: xenial
-
 
 before_install:
     - bash .travis_dependencies.sh
