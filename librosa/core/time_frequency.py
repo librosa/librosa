@@ -502,7 +502,7 @@ def note_to_midi(note, round_midi=True):
 
     '''
 
-    if not isinstance(note, six.string_types):
+    if not isinstance(note, str):
         return np.array([note_to_midi(n, round_midi=round_midi) for n in note])
 
     pitch_map = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}

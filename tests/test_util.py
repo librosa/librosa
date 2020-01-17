@@ -13,7 +13,6 @@ import platform
 import numpy as np
 import scipy.sparse
 import pytest
-import six
 import warnings
 import librosa
 
@@ -695,7 +694,7 @@ def test_valid_int():
 
     for x in np.linspace(-2, 2, num=6):
         for cast in [None, np.floor, np.ceil, 7]:
-            if cast is None or six.callable(cast):
+            if cast is None or callable(cast):
                 yield __test, x, cast
             else:
                 yield __test_fail, x, cast
