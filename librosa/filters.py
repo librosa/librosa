@@ -40,7 +40,6 @@ import numpy as np
 import scipy
 import scipy.signal
 import scipy.ndimage
-import six
 
 from numba import jit
 
@@ -241,7 +240,7 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
 
 
 @cache(level=10)
-def chroma(sr, n_fft, n_chroma=12, tuning=0.0, A440=Deprecated(), ctroct=5.0,
+def chroma(sr, n_fft, n_chroma=12, tuning=0.0, ctroct=5.0,
            octwidth=2, norm=2, base_c=True, dtype=np.float32):
     """Create a Filterbank matrix to convert STFT to chroma
 
@@ -259,12 +258,6 @@ def chroma(sr, n_fft, n_chroma=12, tuning=0.0, A440=Deprecated(), ctroct=5.0,
 
     tuning : float
         Tuning deviation from A440 in fractions of a chroma bin.
-
-    A440      : float > 0 [scalar] <Deprecated>
-        Reference frequency for A440
-
-        .. note:: This parameter is deprecated in version 0.7.1.
-                  It will be removed in 0.8.0.  Use `tuning=` instead.
 
     ctroct    : float > 0 [scalar]
 
@@ -412,9 +405,9 @@ def __float_window(window_spec):
 
 
 @cache(level=10)
-def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=Deprecated(),
-               window='hann', filter_scale=1, pad_fft=True, norm=1,
-               dtype=np.complex64, **kwargs):
+def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, window='hann',
+               filter_scale=1, pad_fft=True, norm=1, dtype=np.complex64,
+               **kwargs):
     r'''Construct a constant-Q basis.
 
     This uses the filter bank described by [1]_.
@@ -437,12 +430,6 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=Deprecated()
 
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
-
-    tuning : float [scalar] <DEPRECATED>
-        Tuning deviation from A440 in fractions of a bin
-
-        .. note:: This parameter is deprecated in 0.7.1.  It will be removed in
-                  version 0.8.
 
     window : string, tuple, number, or function
         Windowing function to apply to filters.
@@ -525,17 +512,6 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=Deprecated()
     if fmin is None:
         fmin = note_to_hz('C1')
 
-    if isinstance(tuning, Deprecated):
-        tuning = 0.0
-    else:
-        warnings.warn('The `tuning` parameter to `filters.constant_q` '
-                      'is deprecated in librosa 0.7.1. '
-                      'It will be removed in 0.8.0.', DeprecationWarning)
-
-    # Apply tuning correction
-    correction = 2.0**(float(tuning) / bins_per_octave)
-    fmin = correction * fmin
-
     # Pass-through parameters to get the filter lengths
     lengths = constant_q_lengths(sr, fmin,
                                  n_bins=n_bins,
@@ -579,7 +555,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=Deprecated()
 
 @cache(level=10)
 def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
-                       tuning=Deprecated(), window='hann', filter_scale=1):
+                       window='hann', filter_scale=1):
     r'''Return length of each filter in a constant-Q basis.
 
     Parameters
@@ -595,12 +571,6 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
 
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
-
-    tuning : float [scalar] <DEPRECATED>
-        Tuning deviation from A440 in fractions of a bin
-
-        .. note:: This parameter is deprecated in 0.7.1.  It will be removed in
-                  version 0.8.
 
     window : str or callable
         Window function to use on filters
@@ -634,15 +604,6 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
 
     if n_bins <= 0 or not isinstance(n_bins, int):
         raise ParameterError('n_bins must be a positive integer')
-
-    if isinstance(tuning, Deprecated):
-        tuning = 0.0
-    else:
-        warnings.warn('The `tuning` parameter to `filters.constant_q_lengths` is deprecated in librosa 0.7.1.'
-                      'It will be removed in 0.8.0.', DeprecationWarning)
-
-    correction = 2.0**(float(tuning) / bins_per_octave)
-    fmin = correction * fmin
 
     # Q should be capitalized here, so we suppress the name warning
     # pylint: disable=invalid-name
@@ -880,11 +841,10 @@ def get_window(window, Nx, fftbins=True):
         If `window` is supplied as a vector of length != `n_fft`,
         or is otherwise mis-specified.
     '''
-    if six.callable(window):
+    if callable(window):
         return window(Nx)
 
-    elif (isinstance(window, (six.string_types, tuple)) or
-          np.isscalar(window)):
+    elif (isinstance(window, (str, tuple)) or np.isscalar(window)):
         # TODO: if we add custom window functions in librosa, call them here
 
         return scipy.signal.get_window(window, Nx, fftbins=fftbins)

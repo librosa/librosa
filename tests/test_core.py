@@ -15,7 +15,6 @@ import librosa
 import glob
 import numpy as np
 import scipy.io
-import six
 import pytest
 import warnings
 
@@ -233,87 +232,6 @@ def test_stft():
 
     for infile in files(os.path.join('tests', 'data', 'core-stft-*.mat')):
         yield (__test, infile)
-
-
-def test_ifgram():
-
-    def __test(infile):
-        DATA = load(infile)
-
-        y, sr = librosa.load(os.path.join('tests', DATA['wavfile'][0]),
-                             sr=None, mono=True)
-
-        # Compute the IFgram
-        F, D = librosa.ifgram(y,
-                              n_fft=DATA['nfft'][0, 0].astype(int),
-                              hop_length=DATA['hop_length'][0, 0].astype(int),
-                              win_length=DATA['hann_w'][0, 0].astype(int),
-                              sr=DATA['sr'][0, 0].astype(int),
-                              ref_power=0.0,
-                              clip=False,
-                              center=False)
-
-        # D fails to match here because of fftshift()
-        # assert np.allclose(D, DATA['D'])
-        assert np.allclose(F, DATA['F'], rtol=1e-1, atol=1e-1)
-
-    for infile in files(os.path.join('tests', 'data', 'core-ifgram-*.mat')):
-        yield (__test, infile)
-
-
-def test_ifgram_matches_stft():
-
-    y, sr = librosa.load(os.path.join('tests', 'data', 'test1_22050.wav'))
-
-    def __test(n_fft, hop_length, win_length, center, norm, dtype):
-        D_stft = librosa.stft(y, n_fft=n_fft, hop_length=hop_length,
-                              win_length=win_length, center=center,
-                              dtype=dtype)
-
-        _, D_ifgram = librosa.ifgram(y, sr, n_fft=n_fft,
-                                     hop_length=hop_length,
-                                     win_length=win_length, center=center,
-                                     norm=norm, dtype=dtype)
-
-        if norm:
-            # STFT doesn't do window normalization;
-            # let's just ignore the relative scale to make this easy
-            D_stft = librosa.util.normalize(D_stft, axis=0)
-            D_ifgram = librosa.util.normalize(D_ifgram, axis=0)
-
-        assert np.allclose(D_stft, D_ifgram)
-
-    for n_fft in [1024, 2048]:
-        for hop_length in [None, n_fft // 2, n_fft // 4]:
-            for win_length in [None, n_fft // 2, n_fft // 4]:
-                for center in [False, True]:
-                    for norm in [False, True]:
-                        for dtype in [np.complex64, np.complex128]:
-                            yield (__test, n_fft, hop_length, win_length,
-                                   center, norm, dtype)
-
-
-def test_ifgram_if():
-
-    y, sr = librosa.load(os.path.join('tests', 'data', 'test1_22050.wav'))
-
-    def __test(ref, clip):
-
-        F, D = librosa.ifgram(y, sr=sr, ref_power=ref, clip=clip)
-
-        if clip:
-            assert np.all(0 <= F) and np.all(F <= 0.5 * sr)
-
-        assert np.all(np.isfinite(F))
-
-    for ref in [-10, 0.0, 1e-6, np.max]:
-        for clip in [False, True]:
-            if six.callable(ref) or ref >= 0.0:
-                tf = __test
-            else:
-                tf = pytest.mark.xfail(__test, raises=librosa.ParameterError)
-
-            yield tf, ref, clip
 
 
 # results for FFT bins containing multiple components will be unstable, as when
@@ -771,7 +689,7 @@ def test_istft_reconstruction():
                 win = window_func(n_fft, sym=False)
                 symwin = window_func(n_fft, sym=True)
                 # tests with pre-computed window fucntions
-                for hop_length_denom in six.moves.range(2, 9):
+                for hop_length_denom in range(2, 9):
                     hop_length = n_fft // hop_length_denom
                     for length in [None, len(x) - 1000, len(x + 1000)]:
                         yield (__test, x, n_fft, hop_length, win, atol, length)
@@ -1618,18 +1536,6 @@ def test_padding():
         else:
             assert np.allclose(D1, D2)
 
-    def __test_ifgram(center, pad_mode):
-        D1, F1 = librosa.ifgram(y, center=center, pad_mode='reflect')
-        D2, F2 = librosa.ifgram(y, center=center, pad_mode=pad_mode)
-
-        assert D1.shape == D2.shape
-
-        if center and pad_mode != 'reflect':
-            assert not np.allclose(D1, D2)
-        else:
-            assert np.allclose(D1, D2)
-            assert np.allclose(F1, F2)
-
     def __test_cqt(pad_mode):
         D1 = librosa.cqt(y, pad_mode='reflect')
         D2 = librosa.cqt(y, pad_mode=pad_mode)
@@ -1669,7 +1575,6 @@ def test_padding():
         yield __test_pseudo_cqt, pad_mode
         for center in [False, True]:
             yield __test_stft, center, pad_mode
-            yield __test_ifgram, center, pad_mode
 
 
 def test_iirt():
