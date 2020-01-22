@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 '''Matching functions'''
 
-import sys
-import six
 import numpy as np
 import numba
 
@@ -205,10 +203,8 @@ def match_intervals(intervals_from, intervals_to, strict=True):
 
     try:
         return __match_intervals(intervals_from, intervals_to, strict=strict)
-    except ParameterError:
-        six.reraise(ParameterError,
-                    ParameterError('Unable to match intervals with strict={}'.format(strict)),
-                    sys.exc_info()[2])
+    except ParameterError as exc:
+        raise ParameterError('Unable to match intervals with strict={}'.format(strict)) from exc
 
 
 def match_events(events_from, events_to, left=True, right=True):

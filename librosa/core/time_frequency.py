@@ -3,13 +3,8 @@
 '''Time and frequency utilities'''
 
 import re
-import warnings
-
 import numpy as np
-import six
-
 from ..util.exceptions import ParameterError
-from ..util.deprecation import Deprecated
 
 __all__ = ['frames_to_samples', 'frames_to_time',
            'samples_to_frames', 'samples_to_time',
@@ -502,7 +497,7 @@ def note_to_midi(note, round_midi=True):
 
     '''
 
-    if not isinstance(note, six.string_types):
+    if not isinstance(note, str):
         return np.array([note_to_midi(n, round_midi=round_midi) for n in note])
 
     pitch_map = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
@@ -832,7 +827,7 @@ def mel_to_hz(mels, htk=False):
     return freqs
 
 
-def hz_to_octs(frequencies, tuning=0.0, bins_per_octave=12, A440=Deprecated()):
+def hz_to_octs(frequencies, tuning=0.0, bins_per_octave=12):
     """Convert frequencies (Hz) to (fractional) octave numbers.
 
     Examples
@@ -853,12 +848,6 @@ def hz_to_octs(frequencies, tuning=0.0, bins_per_octave=12, A440=Deprecated()):
     bins_per_octave : int > 0
         Number of bins per octave.
 
-    A440          : float <DEPRECATED>
-        frequency of A440 (in Hz)
-
-        .. note:: This parameter is deprecated in 0.7.1 and will be removed
-                  in version 0.8.0.  Use `tuning=` instead.
-
     Returns
     -------
     octaves       : number or np.ndarray [shape=(n,)]
@@ -869,17 +858,12 @@ def hz_to_octs(frequencies, tuning=0.0, bins_per_octave=12, A440=Deprecated()):
     octs_to_hz
     """
 
-    if isinstance(A440, Deprecated):
-        A440 = 440.0 * 2.0**(tuning / bins_per_octave)
-    else:
-        warnings.warn('Parameter A440={} in hz_to_octs is deprecated in 0.7.1. '
-                      'It will be removed in 0.8.0. '
-                      'Use tuning= instead.'.format(A440), DeprecationWarning)
+    A440 = 440.0 * 2.0**(tuning / bins_per_octave)
 
     return np.log2(np.asanyarray(frequencies) / (float(A440) / 16))
 
 
-def octs_to_hz(octs, tuning=0.0, bins_per_octave=12, A440=Deprecated()):
+def octs_to_hz(octs, tuning=0.0, bins_per_octave=12):
     """Convert octaves numbers to frequencies.
 
     Octaves are counted relative to A.
@@ -902,9 +886,6 @@ def octs_to_hz(octs, tuning=0.0, bins_per_octave=12, A440=Deprecated()):
     bins_per_octave : int > 0
         Number of bins per octave.
 
-    A440          : float <DEPRECATED>
-        frequency of A440
-
     Returns
     -------
     frequencies   : number or np.ndarray [shape=(n,)]
@@ -914,12 +895,7 @@ def octs_to_hz(octs, tuning=0.0, bins_per_octave=12, A440=Deprecated()):
     --------
     hz_to_octs
     """
-    if isinstance(A440, Deprecated):
-        A440 = 440.0 * 2.0**(tuning / bins_per_octave)
-    else:
-        warnings.warn('Parameter A440={} in octs_to_hz is deprecated in 0.7.1. '
-                      'It will be removed in 0.8.0. '
-                      'Use tuning= instead.'.format(A440), DeprecationWarning)
+    A440 = 440.0 * 2.0**(tuning / bins_per_octave)
 
     return (float(A440) / 16)*(2.0**np.asanyarray(octs))
 

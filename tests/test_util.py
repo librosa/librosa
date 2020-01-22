@@ -13,7 +13,6 @@ import platform
 import numpy as np
 import scipy.sparse
 import pytest
-import six
 import warnings
 import librosa
 
@@ -695,7 +694,7 @@ def test_valid_int():
 
     for x in np.linspace(-2, 2, num=6):
         for cast in [None, np.floor, np.ceil, 7]:
-            if cast is None or six.callable(cast):
+            if cast is None or callable(cast):
                 yield __test, x, cast
             else:
                 yield __test_fail, x, cast
@@ -905,42 +904,6 @@ def test_sync():
 
     for bad_idx in [['foo', 'bar'], [None], [slice(None), None]]:
         yield __test_fail, data, bad_idx
-
-
-def test_roll_sparse():
-    srand()
-
-    def __test(fmt, shift, axis, X):
-
-        X_sparse = X.asformat(fmt)
-        X_dense = X.toarray()
-
-        Xs_roll = librosa.util.roll_sparse(X_sparse, shift, axis=axis)
-
-        assert scipy.sparse.issparse(Xs_roll)
-        assert Xs_roll.format == X_sparse.format
-
-        Xd_roll = librosa.util.roll_sparse(X_dense, shift, axis=axis)
-
-        assert np.allclose(Xs_roll.toarray(), Xd_roll), (X_dense, Xs_roll.toarray(), Xd_roll)
-
-        Xd_roll_np = np.roll(X_dense, shift, axis=axis)
-
-        assert np.allclose(Xd_roll, Xd_roll_np)
-
-    X = scipy.sparse.lil_matrix(np.random.randint(0, high=10, size=(16, 16)))
-
-    for fmt in ['csr', 'csc', 'lil', 'dok', 'coo']:
-        for shift in [0, 8, -8, 20, -20]:
-            for axis in [0, 1, -1]:
-                yield __test, fmt, shift, axis, X
-
-
-@pytest.mark.xfail(raises=librosa.ParameterError)
-def test_roll_sparse_bad_axis():
-
-    X = scipy.sparse.eye(5, format='csr')
-    librosa.util.roll_sparse(X, 3, axis=2)
 
 
 def test_softmask():
