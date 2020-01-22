@@ -1,16 +1,10 @@
 from setuptools import setup, find_packages
 import sys
 
+from importlib.machinery import SourceFileLoader
 
-if sys.version_info.major == 2:
-    import imp
-
-    version = imp.load_source('librosa.version', 'librosa/version.py')
-else:
-    from importlib.machinery import SourceFileLoader
-
-    version = SourceFileLoader('librosa.version',
-                               'librosa/version.py').load_module()
+version = SourceFileLoader('librosa.version',
+                           'librosa/version.py').load_module()
 
 with open('README.md', 'r') as fdesc:
     long_description = fdesc.read()
@@ -33,13 +27,12 @@ setup(
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
         "Topic :: Multimedia :: Sound/Audio :: Analysis",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
     ],
     keywords='audio music sound',
     license='ISC',
@@ -50,7 +43,6 @@ setup(
         'scikit-learn >= 0.14.0, != 0.19.0',
         'joblib >= 0.12',
         'decorator >= 3.0.0',
-        'six >= 1.3',
         'resampy >= 0.2.2',
         'numba >= 0.43.0',
         'soundfile >= 0.9.0',

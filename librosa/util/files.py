@@ -6,8 +6,6 @@ import os
 import glob
 import pkg_resources
 
-import six
-
 EXAMPLE_AUDIO = 'example_data/Kevin_MacLeod_-_Vibe_Ace.ogg'
 
 
@@ -103,7 +101,7 @@ def find_files(directory, ext=None, recurse=True, case_sensitive=False,
     if ext is None:
         ext = ['aac', 'au', 'flac', 'm4a', 'mp3', 'ogg', 'wav']
 
-    elif isinstance(ext, six.string_types):
+    elif isinstance(ext, str):
         ext = [ext]
 
     # Cast into a set
