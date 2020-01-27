@@ -57,7 +57,8 @@ setup(
                   'mock',
                   'pytest-mpl',
                   'pytest-cov',
-                  'pytest'],
+                  'pytest',
+                  'contextlib2'],
         'display': ['matplotlib >= 1.5'],
     }
 )

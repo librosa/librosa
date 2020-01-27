@@ -244,4 +244,3 @@ def test_dtw_nan_fail():
 def test_dtw_negative_steps(steps):
     C = np.ones((10, 10))
     librosa.sequence.dtw(C=C, step_sizes_sigma=steps)
-
