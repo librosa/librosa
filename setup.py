@@ -57,7 +57,7 @@ setup(
                   'mock',
                   'pytest-mpl',
                   'pytest-cov',
-                  'pytest < 4'],
+                  'pytest'],
         'display': ['matplotlib >= 1.5'],
     }
 )
