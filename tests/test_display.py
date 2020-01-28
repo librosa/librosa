@@ -3,8 +3,6 @@
 # CREATED:2015-02-14 22:51:01 by Brian McFee <brian.mcfee@nyu.edu>
 '''Unit tests for display module'''
 
-import warnings
-
 # Disable cache
 import os
 try:
@@ -26,12 +24,6 @@ import librosa.display
 import numpy as np
 
 import pytest
-
-
-def get_spec(y, sr):
-
-    C = np.abs(librosa.cqt(y, sr=sr))
-    return librosa.stft(y), C, sr
 
 
 @pytest.fixture
@@ -480,7 +472,6 @@ def test_unknown_axis(S_abs, axis):
     librosa.display.specshow(S_abs, **kwargs)
 
 
-#@pytest.mark.parametrize("data", [S_abs1p, S_abs1pm, S_signed, S_bin])
 @pytest.mark.parametrize("data", [np.arange(1, 10.0),   # strictly positive
                                   -np.arange(1, 10.0),  # strictly negative
                                   np.arange(-3, 4.),    # signed,
@@ -498,10 +489,6 @@ def test_cmap_robust(data):
         assert cmap1.name == cmap2.name
     else:
         assert cmap1 == cmap2
-
-    # Inputs here are constructed to not need robust sign estimation
-#    for D in [1.0 + S_abs, -(1.0 + S_abs), S_signed, S_bin]:
-#        yield __test, D
 
 
 @pytest.mark.mpl_image_compare(baseline_images=['coords'], extensions=['png'], tolerance=6)

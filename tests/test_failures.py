@@ -74,17 +74,13 @@ def test_valid_audio_inf():
     librosa.util.valid_audio(y)
 
 
-def test_valid_audio_ndim():
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('mono', [False, True])
+@pytest.mark.parametrize('y', [np.zeros((3, 10, 10))])
+def test_valid_audio_ndim(y, mono):
     '''valid_audio: y.ndim > 2'''
 
-    y = np.zeros((3, 10, 10))
-
-    @pytest.mark.xfail(raises=librosa.ParameterError)
-    def __test(mono):
-        librosa.util.valid_audio(y, mono=mono)
-
-    for mono in [False, True]:
-        yield __test, mono
+    librosa.util.valid_audio(y, mono=mono)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
