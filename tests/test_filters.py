@@ -18,6 +18,7 @@ try:
 except KeyError:
     pass
 
+from contextlib2 import nullcontext as dnr
 import glob
 import numpy as np
 import scipy.io
@@ -41,96 +42,77 @@ def load(infile):
 
 
 # -- Tests     --#
-def test_hz_to_mel():
-    def __test_to_mel(infile):
-        DATA = load(infile)
-        z = librosa.hz_to_mel(DATA['f'], DATA['htk'])
+@pytest.mark.parametrize('infile', files(os.path.join('tests', 'data', 'feature-hz_to_mel-*.mat')))
+def test_hz_to_mel(infile):
+    DATA = load(infile)
+    z = librosa.hz_to_mel(DATA['f'], DATA['htk'])
 
-        assert np.allclose(z, DATA['result'])
-
-    for infile in files(os.path.join('tests', 'data', 'feature-hz_to_mel-*.mat')):
-        yield (__test_to_mel, infile)
-
-    pass
+    assert np.allclose(z, DATA['result'])
 
 
-def test_mel_to_hz():
+@pytest.mark.parametrize('infile', files(os.path.join('tests', 'data', 'feature-mel_to_hz-*.mat')))
+def test_mel_to_hz(infile):
 
-    def __test_to_hz(infile):
-        DATA = load(infile)
-        z = librosa.mel_to_hz(DATA['f'], DATA['htk'])
+    DATA = load(infile)
+    z = librosa.mel_to_hz(DATA['f'], DATA['htk'])
 
-        assert np.allclose(z, DATA['result'])
-
-    for infile in files(os.path.join('tests', 'data', 'feature-mel_to_hz-*.mat')):
-        yield (__test_to_hz, infile)
-
-    pass
+    assert np.allclose(z, DATA['result'])
 
 
-def test_hz_to_octs():
-    def __test_to_octs(infile):
-        DATA = load(infile)
-        z = librosa.hz_to_octs(DATA['f'])
+@pytest.mark.parametrize('infile', files(os.path.join('tests', 'data', 'feature-hz_to_octs-*.mat')))
+def test_hz_to_octs(infile):
+    DATA = load(infile)
+    z = librosa.hz_to_octs(DATA['f'])
 
-        assert np.allclose(z, DATA['result'])
-
-    for infile in files(os.path.join('tests', 'data', 'feature-hz_to_octs-*.mat')):
-        yield (__test_to_octs, infile)
-
-    pass
+    assert np.allclose(z, DATA['result'])
 
 
-def test_melfb():
+@pytest.mark.parametrize('infile', files(os.path.join('tests', 'data', 'feature-melfb-*.mat')))
+def test_melfb(infile):
 
-    def __test_default_norm(infile):
-        DATA = load(infile)
+    DATA = load(infile)
 
-        wts = librosa.filters.mel(DATA['sr'][0, 0],
-                                  DATA['nfft'][0, 0],
-                                  n_mels=DATA['nfilts'][0, 0],
-                                  fmin=DATA['fmin'][0, 0],
-                                  fmax=DATA['fmax'][0, 0],
-                                  htk=DATA['htk'][0, 0])
+    wts = librosa.filters.mel(DATA['sr'][0, 0],
+                              DATA['nfft'][0, 0],
+                              n_mels=DATA['nfilts'][0, 0],
+                              fmin=DATA['fmin'][0, 0],
+                              fmax=DATA['fmax'][0, 0],
+                              htk=DATA['htk'][0, 0])
 
-        # Our version only returns the real-valued part.
-        # Pad out.
-        wts = np.pad(wts, [(0, 0),
-                           (0, int(DATA['nfft'][0]//2 - 1))],
-                     mode='constant')
+    # Our version only returns the real-valued part.
+    # Pad out.
+    wts = np.pad(wts, [(0, 0),
+                       (0, int(DATA['nfft'][0]//2 - 1))],
+                 mode='constant')
 
-        assert wts.shape == DATA['wts'].shape
-        assert np.allclose(wts, DATA['wts'])
+    assert wts.shape == DATA['wts'].shape
+    assert np.allclose(wts, DATA['wts'])
 
-    for infile in files(os.path.join('tests', 'data', 'feature-melfb-*.mat')):
-        yield (__test_default_norm, infile)
 
-    def __test_with_norm(infile):
-        DATA = load(infile)
-        # if DATA['norm'] is empty, pass None.
-        if DATA['norm'].shape[-1] == 0:
-            norm = None
-        else:
-            norm = DATA['norm'][0, 0]
-            if norm == 1:
-                norm = 'slaney'
-        wts = librosa.filters.mel(DATA['sr'][0, 0],
-                                  DATA['nfft'][0, 0],
-                                  n_mels=DATA['nfilts'][0, 0],
-                                  fmin=DATA['fmin'][0, 0],
-                                  fmax=DATA['fmax'][0, 0],
-                                  htk=DATA['htk'][0, 0],
-                                  norm=norm)
-        # Pad out.
-        wts = np.pad(wts, [(0, 0),
-                           (0, int(DATA['nfft'][0]//2 - 1))],
-                     mode='constant')
+@pytest.mark.parametrize('infile', files(os.path.join('tests', 'data', 'feature-melfbnorm-*.mat')))
+def test_melfbnorm(infile):
+    DATA = load(infile)
+    # if DATA['norm'] is empty, pass None.
+    if DATA['norm'].shape[-1] == 0:
+        norm = None
+    else:
+        norm = DATA['norm'][0, 0]
+        if norm == 1:
+            norm = 'slaney'
+    wts = librosa.filters.mel(DATA['sr'][0, 0],
+                              DATA['nfft'][0, 0],
+                              n_mels=DATA['nfilts'][0, 0],
+                              fmin=DATA['fmin'][0, 0],
+                              fmax=DATA['fmax'][0, 0],
+                              htk=DATA['htk'][0, 0],
+                              norm=norm)
+    # Pad out.
+    wts = np.pad(wts, [(0, 0),
+                       (0, int(DATA['nfft'][0]//2 - 1))],
+                 mode='constant')
 
-        assert wts.shape == DATA['wts'].shape
-        assert np.allclose(wts, DATA['wts'])
-
-    for infile in files(os.path.join('tests', 'data', 'feature-melfbnorm-*.mat')):
-        yield (__test_with_norm, infile)
+    assert wts.shape == DATA['wts'].shape
+    assert np.allclose(wts, DATA['wts'])
 
 
 @pytest.mark.parametrize('norm', [1, np.inf])
@@ -157,123 +139,106 @@ def test_mel_gap():
                             fmin=fmin, fmax=fmax, htk=htk)
 
 
-def test_chromafb():
+@pytest.mark.parametrize('infile', files(os.path.join('tests', 'data', 'feature-chromafb-*.mat')))
+def test_chromafb(infile):
 
-    def __test(infile):
-        DATA = load(infile)
+    DATA = load(infile)
 
-        octwidth = DATA['octwidth'][0, 0]
-        if octwidth == 0:
-            octwidth = None
+    octwidth = DATA['octwidth'][0, 0]
+    if octwidth == 0:
+        octwidth = None
 
-        # Convert A440 parameter to tuning parameter
-        A440 = DATA['a440'][0, 0]
+    # Convert A440 parameter to tuning parameter
+    A440 = DATA['a440'][0, 0]
 
-        tuning = DATA['nchroma'][0, 0] * (np.log2(A440) - np.log2(440.0))
+    tuning = DATA['nchroma'][0, 0] * (np.log2(A440) - np.log2(440.0))
 
-        wts = librosa.filters.chroma(DATA['sr'][0, 0],
-                                     DATA['nfft'][0, 0],
-                                     DATA['nchroma'][0, 0],
-                                     tuning=tuning,
-                                     ctroct=DATA['ctroct'][0, 0],
-                                     octwidth=octwidth,
-                                     norm=2,
-                                     base_c=False)
+    wts = librosa.filters.chroma(DATA['sr'][0, 0],
+                                 DATA['nfft'][0, 0],
+                                 DATA['nchroma'][0, 0],
+                                 tuning=tuning,
+                                 ctroct=DATA['ctroct'][0, 0],
+                                 octwidth=octwidth,
+                                 norm=2,
+                                 base_c=False)
 
-        # Our version only returns the real-valued part.
-        # Pad out.
-        wts = np.pad(wts, [(0, 0),
-                           (0, int(DATA['nfft'][0, 0]//2 - 1))],
-                     mode='constant')
+    # Our version only returns the real-valued part.
+    # Pad out.
+    wts = np.pad(wts, [(0, 0),
+                       (0, int(DATA['nfft'][0, 0]//2 - 1))],
+                 mode='constant')
 
-        assert wts.shape == DATA['wts'].shape
-        assert np.allclose(wts, DATA['wts'])
-
-    for infile in files(os.path.join('tests', 'data', 'feature-chromafb-*.mat')):
-        yield (__test, infile)
+    assert wts.shape == DATA['wts'].shape
+    assert np.allclose(wts, DATA['wts'])
 
 
-def test__window():
+@pytest.mark.parametrize('n', [16, 16.0, 16.25, 16.75])
+@pytest.mark.parametrize('window_name', ['barthann', 'bartlett', 'blackman',
+                                         'blackmanharris', 'bohman', 'boxcar', 'cosine',
+                                         'flattop', 'hamming', 'hann', 'hanning',
+                                         'nuttall', 'parzen', 'triang'])
+def test__window(n, window_name):
 
-    def __test(n, window):
+    window = getattr(scipy.signal.windows, window_name)
 
-        wdec = librosa.filters.__float_window(window)
+    wdec = librosa.filters.__float_window(window)
 
-        if n == int(n):
-            n = int(n)
-            assert np.allclose(wdec(n), window(n))
-        else:
-            wf = wdec(n)
-            fn = int(np.floor(n))
-            assert not np.any(wf[fn:])
-
-    for n in [16, 16.0, 16.25, 16.75]:
-        for window_name in ['barthann', 'bartlett', 'blackman',
-                            'blackmanharris', 'bohman', 'boxcar', 'cosine',
-                            'flattop', 'hamming', 'hann', 'hanning',
-                            'nuttall', 'parzen', 'triang']:
-            window = getattr(scipy.signal.windows, window_name)
-            yield __test, n, window
+    if n == int(n):
+        n = int(n)
+        assert np.allclose(wdec(n), window(n))
+    else:
+        wf = wdec(n)
+        fn = int(np.floor(n))
+        assert not np.any(wf[fn:])
 
 
-def test_constant_q():
+@pytest.mark.parametrize('sr', [11025])
+@pytest.mark.parametrize('fmin', [None, librosa.note_to_hz('C3')])
+@pytest.mark.parametrize('n_bins', [12, 24])
+@pytest.mark.parametrize('bins_per_octave', [12, 24])
+@pytest.mark.parametrize('filter_scale', [1, 2])
+@pytest.mark.parametrize('norm', [1, 2])
+@pytest.mark.parametrize('pad_fft', [False, True])
+def test_constant_q(sr, fmin, n_bins, bins_per_octave, filter_scale, pad_fft, norm):
 
-    def __test(sr, fmin, n_bins, bins_per_octave, filter_scale,
-               pad_fft, norm):
+    F, lengths = librosa.filters.constant_q(sr,
+                                            fmin=fmin,
+                                            n_bins=n_bins,
+                                            bins_per_octave=bins_per_octave,
+                                            filter_scale=filter_scale,
+                                            pad_fft=pad_fft,
+                                            norm=norm)
 
-        F, lengths = librosa.filters.constant_q(sr,
-                                                fmin=fmin,
-                                                n_bins=n_bins,
-                                                bins_per_octave=bins_per_octave,
-                                                filter_scale=filter_scale,
-                                                pad_fft=pad_fft,
-                                                norm=norm)
+    assert np.all(lengths <= F.shape[1])
 
-        assert np.all(lengths <= F.shape[1])
+    assert len(F) == n_bins
 
-        assert len(F) == n_bins
+    if not pad_fft:
+        return
 
-        if not pad_fft:
-            return
+    assert np.mod(np.log2(F.shape[1]), 1.0) == 0.0
 
-        assert np.mod(np.log2(F.shape[1]), 1.0) == 0.0
+    # Check for vanishing negative frequencies
+    F_fft = np.abs(np.fft.fft(F, axis=1))
+    # Normalize by row-wise peak
+    F_fft = F_fft / np.max(F_fft, axis=1, keepdims=True)
+    assert not np.any(F_fft[:, -F_fft.shape[1]//2:] > 1e-4)
 
-        # Check for vanishing negative frequencies
-        F_fft = np.abs(np.fft.fft(F, axis=1))
-        # Normalize by row-wise peak
-        F_fft = F_fft / np.max(F_fft, axis=1, keepdims=True)
-        assert not np.any(F_fft[:, -F_fft.shape[1]//2:] > 1e-4)
 
-    sr = 11025
-
-    # Try to make a cq basis too close to nyquist
-    tf = pytest.mark.xfail(__test, raises=librosa.ParameterError)
-    yield (tf, sr, sr/2.0, 1, 12, 1, True, 1)
-
-    # with negative fmin
-    yield (tf, sr, -60, 1, 12, 1, True, 1)
-
-    # with negative bins_per_octave
-    yield (tf, sr, 60, 1, -12, 1, True, 1)
-
-    # with negative bins
-    yield (tf, sr, 60, -1, 12, 1, True, 1)
-
-    # with negative filter_scale
-    yield (tf, sr, 60, 1, 12, -1, True, 1)
-
-    # with negative norm
-    yield (tf, sr, 60, 1, 12, 1, True, -1)
-
-    for fmin in [None, librosa.note_to_hz('C3')]:
-        for n_bins in [12, 24]:
-            for bins_per_octave in [12, 24]:
-                for filter_scale in [1, 2]:
-                    for norm in [1, 2]:
-                        for pad_fft in [False, True]:
-                            yield (__test, sr, fmin, n_bins,
-                                    bins_per_octave, filter_scale, pad_fft,
-                                    norm)
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('sr,fmin,n_bins,bins_per_octave,filter_scale,norm',
+                         [(11025, 11025/2.0, 1, 12, 1, 1),
+                          (11025, -60, 1, 12, 1, 1),
+                          (11025, 60, 1, -12, 1, 1),
+                          (11025, 60, -1, 12, 1, 1),
+                          (11025, 60, 1, 12, -1, 1),
+                          (11025, 60, 1, 12, 1, -1)])
+def test_constant_q_badparams(sr, fmin, n_bins, bins_per_octave, filter_scale, norm):
+    librosa.filters.constant_q(sr, fmin=fmin, n_bins=n_bins,
+                               bins_per_octave=bins_per_octave,
+                               filter_scale=filter_scale,
+                               pad_fft=True,
+                               norm=norm)
 
 
 def test_window_bandwidth():
@@ -307,9 +272,23 @@ def binstr(m):
     return '\n'.join(out)
 
 
-def test_cq_to_chroma():
+@pytest.mark.parametrize('n_octaves', [2, 3, 4])
+@pytest.mark.parametrize('semitones', [1, 3])
+@pytest.mark.parametrize('n_chroma', [12, 24, 36])
+@pytest.mark.parametrize('fmin', [None] + list(librosa.midi_to_hz(range(48, 61))))
+@pytest.mark.parametrize('base_c', [False, True])
+@pytest.mark.parametrize('window', [None, [1]])
+def test_cq_to_chroma(n_octaves, semitones, n_chroma, fmin, base_c, window):
 
-    def __test(n_bins, bins_per_octave, n_chroma, fmin, base_c, window):
+    bins_per_octave = 12 * semitones
+    n_bins = n_octaves * bins_per_octave
+
+    if np.mod(bins_per_octave, n_chroma) != 0:
+        ctx = pytest.raises(librosa.ParameterError)
+    else:
+        ctx = dnr()
+
+    with ctx:
         # Fake up a cqt matrix with the corresponding midi notes
 
         if fmin is None:
@@ -346,22 +325,6 @@ def test_cq_to_chroma():
             resid = np.round(resid * n_chroma / 12.0)
             assert np.allclose(np.mod(i - resid, 12), 0.0), i-resid
 
-    for n_octaves in [2, 3, 4]:
-        for semitones in [1, 3]:
-            for n_chroma in 12 * np.arange(1, 1 + semitones):
-                for fmin in [None] + list(librosa.midi_to_hz(range(48, 61))):
-                    for base_c in [False, True]:
-                        for window in [None, [1]]:
-                            bins_per_octave = 12 * semitones
-                            n_bins = n_octaves * bins_per_octave
-
-                            if np.mod(bins_per_octave, n_chroma) != 0:
-                                tf = pytest.mark.xfail(__test, raises=librosa.ParameterError)
-                            else:
-                                tf = __test
-                            yield (tf, n_bins, bins_per_octave,
-                                   n_chroma, fmin, base_c, window)
-
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_get_window_fail():
@@ -369,17 +332,13 @@ def test_get_window_fail():
     librosa.filters.get_window(None, 32)
 
 
-def test_get_window():
+@pytest.mark.parametrize('window', ['hann', u'hann', 4.0, ('kaiser', 4.0)])
+def test_get_window(window):
 
-    def __test(window):
+    w1 = librosa.filters.get_window(window, 32)
+    w2 = scipy.signal.get_window(window, 32)
 
-        w1 = librosa.filters.get_window(window, 32)
-        w2 = scipy.signal.get_window(window, 32)
-
-        assert np.allclose(w1, w2)
-
-    for window in ['hann', u'hann', 4.0, ('kaiser', 4.0)]:
-        yield __test, window
+    assert np.allclose(w1, w2)
 
 
 def test_get_window_func():
@@ -389,14 +348,10 @@ def test_get_window_func():
     assert np.allclose(w1, w2)
 
 
-def test_get_window_pre():
-    def __test(pre_win):
-        win = librosa.filters.get_window(pre_win, len(pre_win))
-        assert np.allclose(win, pre_win)
-
-    yield __test, scipy.signal.hann(16)
-    yield __test, list(scipy.signal.hann(16))
-    yield __test, [1, 1, 1]
+@pytest.mark.parametrize('pre_win', [scipy.signal.hann(16), list(scipy.signal.hann(16)), [1, 1, 1]])
+def test_get_window_pre(pre_win):
+    win = librosa.filters.get_window(pre_win, len(pre_win))
+    assert np.allclose(win, pre_win)
 
 
 def test_semitone_filterbank():
