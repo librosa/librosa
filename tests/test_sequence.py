@@ -71,68 +71,36 @@ def test_viterbi_init():
     assert np.array_equal(path1, path2)
     assert logp1 == logp2
 
-def test_viterbi_bad_transition():
-    @pytest.mark.xfail(raises=librosa.ParameterError)
-    def __bad_trans(trans, x):
-        librosa.sequence.viterbi(x, trans)
 
-    x = np.random.random(size=(3, 5))
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('x', [np.random.random(size=(3, 5))])
+@pytest.mark.parametrize('trans', [np.ones((3,3),dtype=float),
+                                   np.ones((3,2),dtype=float),
+                                   np.ones((2,2),dtype=float),
+                                   np.asarray([[1,1,-1],[1,1,-1],[1,1,-1]], dtype=float)],
+                        ids=['sum!=1', 'not square', 'too small', 'negative'])
+def test_viterbi_bad_transition(trans, x):
+    librosa.sequence.viterbi(x, trans)
 
-    # transitions do not sum to 1
-    trans = np.ones((3, 3), dtype=float)
-    yield __bad_trans, trans, x
 
-    # bad shape
-    trans = np.ones((3, 2), dtype=float)
-    yield __bad_trans, trans, x
-    trans = np.ones((2, 2), dtype=float)
-    yield __bad_trans, trans, x
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('x', [np.random.random(size=(3, 5))])
+@pytest.mark.parametrize('trans', [np.ones((3,3), dtype=float) / 3.])
+@pytest.mark.parametrize('p_init', [np.ones(3, dtype=float),
+                                    np.ones(4, dtype=float)/4.,
+                                    np.asarray([1,1,-1], dtype=float)],
+                        ids=['sum!=1', 'wrong size', 'negative'])
+def test_viterbi_bad_init(x, trans, p_init):
+    librosa.sequence.viterbi(x, trans, p_init=p_init)
 
-    # sums to 1, but negative values
-    trans = np.ones((3, 3), dtype=float)
-    trans[:, 1] = -1
-    assert np.allclose(np.sum(trans, axis=1), 1)
-    yield __bad_trans, trans, x
 
-def test_viterbi_bad_init():
-    @pytest.mark.xfail(raises=librosa.ParameterError)
-    def __bad_init(init, trans, x):
-        librosa.sequence.viterbi(x, trans, p_init=init)
-
-    x = np.random.random(size=(3, 5))
-    trans = np.ones((3, 3), dtype=float) / 3.
-
-    # p_init does not sum to 1
-    p_init = np.ones(3, dtype=float)
-    yield __bad_init, p_init, trans, x
-
-    # bad shape
-    p_init = np.ones(4, dtype=float)
-    yield __bad_init, p_init, trans, x
-
-    # sums to 1, but negative values
-    p_init = np.ones(3, dtype=float)
-    p_init[1] = -1
-    assert np.allclose(np.sum(p_init), 1)
-    yield __bad_init, p_init, trans, x
-
-def test_viterbi_bad_obs():
-    @pytest.mark.xfail(raises=librosa.ParameterError)
-    def __bad_obs(trans, x):
-        librosa.sequence.viterbi(x, trans)
-
-    srand()
-
-    x = np.random.random(size=(3, 5))
-    trans = np.ones((3, 3), dtype=float) / 3.
-
-    # x has values > 1
-    x[1, 1] = 2
-    yield __bad_obs, trans, x
-
-    # x has values < 0
-    x[1, 1] = -0.5
-    yield __bad_obs, trans, x
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('trans', [np.ones((3,3),dtype=float)/3])
+@pytest.mark.parametrize('x', [np.random.random(size=(3,5)) + 2,
+                                np.random.random(size=(3, 5)) - 1],
+                        ids=['p>1', 'p<0'])
+def test_viterbi_bad_obs(trans, x):
+    librosa.sequence.viterbi(x, trans)
 
 
 # Discriminative viterbi
@@ -214,100 +182,52 @@ def test_viterbi_discriminative_example_init():
     assert np.allclose(logp, logp2)
 
 
-def test_viterbi_discriminative_bad_transition():
-    @pytest.mark.xfail(raises=librosa.ParameterError)
-    def __bad_trans(trans, x):
-        librosa.sequence.viterbi_discriminative(x, trans)
-
-    x = np.random.random(size=(3, 5))**2
-    x /= np.sum(x, axis=0, keepdims=True)
-
-    # transitions do not sum to 1
-    trans = np.ones((3, 3), dtype=float)
-    yield __bad_trans, trans, x
-
-    # bad shape
-    trans = np.ones((3, 2), dtype=float)
-    yield __bad_trans, trans, x
-    trans = np.ones((2, 2), dtype=float)
-    yield __bad_trans, trans, x
-
-    # sums to 1, but negative values
-    trans = np.ones((3, 3), dtype=float)
-    trans[:, 1] = -1
-    assert np.allclose(np.sum(trans, axis=1), 1)
-    yield __bad_trans, trans, x
-
-
-def test_viterbi_discriminative_bad_init():
-    @pytest.mark.xfail(raises=librosa.ParameterError)
-    def __bad_init(init, trans, x):
-        librosa.sequence.viterbi_discriminative(x, trans, p_init=init)
-
-    x = np.random.random(size=(3, 5))**2
-    x /= x.sum(axis=0, keepdims=True)
-
-    trans = np.ones((3, 3), dtype=float) / 3.
-
-    # p_init does not sum to 1
-    p_init = np.ones(3, dtype=float)
-    yield __bad_init, p_init, trans, x
-
-    # bad shape
-    p_init = np.ones(4, dtype=float)
-    yield __bad_init, p_init, trans, x
-
-    # sums to 1, but negative values
-    p_init = np.ones(3, dtype=float)
-    p_init[1] = -1
-    assert np.allclose(np.sum(p_init), 1)
-    yield __bad_init, p_init, trans, x
-
-
-def test_viterbi_discriminative_bad_marginal():
-    @pytest.mark.xfail(raises=librosa.ParameterError)
-    def __bad_init(state, trans, x):
-        librosa.sequence.viterbi_discriminative(x, trans, p_state=state)
-
-    x = np.random.random(size=(3, 5))**2
-    x /= x.sum(axis=0, keepdims=True)
-
-    trans = np.ones((3, 3), dtype=float) / 3.
-
-    # p_init does not sum to 1
-    p_init = np.ones(3, dtype=float)
-    yield __bad_init, p_init, trans, x
-
-    # bad shape
-    p_init = np.ones(4, dtype=float)
-    yield __bad_init, p_init, trans, x
-
-    # sums to 1, but negative values
-    p_init = np.ones(3, dtype=float)
-    p_init[1] = -1
-    assert np.allclose(np.sum(p_init), 1)
-    yield __bad_init, p_init, trans, x
-
-
-def test_viterbi_discriminative_bad_obs():
-    @pytest.mark.xfail(raises=librosa.ParameterError)
-    def __bad_obs(x, trans):
-        librosa.sequence.viterbi_discriminative(x, trans)
-
+@pytest.fixture(scope='module')
+def x_disc():
     srand()
+    x = np.random.random(size=(3, 5))**2
+    x /= x.sum(axis=0, keepdims=True)
+    return x
 
-    trans = np.ones((3, 3), dtype=float) / 3.
 
-    # x does not sum to 1
-    x = np.zeros((3, 5), dtype=float)
-    yield __bad_obs, x, trans
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('trans', [np.ones((3,3),dtype=float),
+                                   np.ones((3,2),dtype=float)*0.5,
+                                   np.ones((2,2),dtype=float)*0.5,
+                                   np.asarray([[1,1,-1],[1,1,-1],[1,1,-1]],dtype=float)],
+                        ids=['sum>1', 'bad shape', 'too small', 'negative'])
+def test_viterbi_discriminative_bad_transition(x_disc, trans):
+    librosa.sequence.viterbi_discriminative(x_disc, trans)
 
-    x = np.ones((3, 5), dtype=float)
-    yield __bad_obs, x, trans
 
-    # x has negative values < 0
-    x[1, 1] = -0.5
-    yield __bad_obs, x, trans
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('trans', [np.ones((3,3),dtype=float)/3])
+@pytest.mark.parametrize('p_init', [np.ones(3, dtype=float),
+                                    np.ones(4, dtype=float)/4.,
+                                    np.asarray([1,1,-1],dtype=float)],
+                        ids=['sum>1','too many states', 'negative'])
+def test_viterbi_discriminative_bad_init(p_init, trans, x_disc):
+    librosa.sequence.viterbi_discriminative(x_disc, trans, p_init=p_init)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('trans', [np.ones((3,3),dtype=float)/3])
+@pytest.mark.parametrize('p_state', [np.ones(3, dtype=float),
+                                     np.ones(4, dtype=float)/4.,
+                                     np.asarray([1,1,-1],dtype=float)],
+                        ids=['sum>1','too many states', 'negative'])
+def test_viterbi_discriminative_bad_marginal(x_disc, trans, p_state):
+    librosa.sequence.viterbi_discriminative(x_disc, trans, p_state=p_state)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('trans', [np.ones((3,3),dtype=float)/3])
+@pytest.mark.parametrize('x', [np.zeros((3, 5), dtype=float),
+                               np.ones((3, 5), dtype=float),
+                               np.asarray([[1,1,-1], [0,0,1], [0,0,0]], dtype=float)],
+                         ids=['zeros', 'ones', 'neg'])
+def test_viterbi_discriminative_bad_obs(x, trans):
+    librosa.sequence.viterbi_discriminative(x, trans)
 
 
 # Multi-label viterbi
@@ -364,199 +284,119 @@ def test_viterbi_binary_example_init():
     assert np.array_equal(path_c, path_c2)
 
 
-def test_viterbi_binary_bad_transition():
-    @pytest.mark.xfail(raises=librosa.ParameterError)
-    def __bad_trans(trans, x):
-        librosa.sequence.viterbi_binary(x, trans)
-
-    x = np.random.random(size=(3, 5))**2
-
-    # transitions do not sum to 1
-    trans = np.ones((2, 2), dtype=float)
-    yield __bad_trans, trans, x
-
-    # bad shape
-    trans = np.ones((3, 3), dtype=float)
-    yield __bad_trans, trans, x
-    trans = np.ones((3, 5, 5), dtype=float)
-    yield __bad_trans, trans, x
-
-    # sums to 1, but negative values
-    trans = 2 * np.ones((2, 2), dtype=float)
-    trans[:, 1] = -1
-    assert np.allclose(np.sum(trans, axis=-1), 1)
-    yield __bad_trans, trans, x
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('x', [np.random.random(size=(3,5))**2])
+@pytest.mark.parametrize('trans', [np.ones((2,2),dtype=float),
+                                    np.ones((3,3),dtype=float)/3,
+                                    np.ones((3,5,5),dtype=float),
+                                    np.asarray([[2,-1],[2,-1]])],
+                        ids=['sum>1','wrong size','wrong shape','negative'])
+def test_viterbi_binary_bad_transition(x, trans):
+    librosa.sequence.viterbi_binary(x, trans)
 
 
-def test_viterbi_binary_bad_init():
-    @pytest.mark.xfail(raises=librosa.ParameterError)
-    def __bad_init(init, trans, x):
-        librosa.sequence.viterbi_binary(x, trans, p_init=init)
-
-    x = np.random.random(size=(3, 5))**2
-
-    trans = np.ones((2, 2), dtype=float) / 2.
-
-    # p_init is too big
-    p_init = 2 * np.ones(3, dtype=float)
-    yield __bad_init, p_init, trans, x
-
-    # bad shape
-    p_init = np.ones(4, dtype=float)
-    yield __bad_init, p_init, trans, x
-
-    # negative values
-    p_init = -np.ones(3, dtype=float)
-    yield __bad_init, p_init, trans, x
+@pytest.mark.parametrize('x', [np.random.random(size=(3,5))**2])
+@pytest.mark.parametrize('trans', [np.ones((2,2), dtype=float)*0.5])
+@pytest.mark.parametrize('p_init', [2 * np.ones(3,dtype=float),
+                                    np.ones(4, dtype=float),
+                                    -np.ones(3,dtype=float)],
+                                    ids=['too big', 'wrong shape', 'negative'])
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_viterbi_binary_bad_init(x, trans, p_init):
+    librosa.sequence.viterbi_binary(x, trans, p_init=p_init)
 
 
-def test_viterbi_binary_bad_marginal():
-    @pytest.mark.xfail(raises=librosa.ParameterError)
-    def __bad_state(state, trans, x):
-        librosa.sequence.viterbi_binary(x, trans, p_state=state)
-
-    x = np.random.random(size=(3, 5))**2
-
-    trans = np.ones((2, 2), dtype=float) / 2.
-
-    # p_init is too big
-    p_state = 2 * np.ones(3, dtype=float)
-    yield __bad_state, p_state, trans, x
-
-    # bad shape
-    p_state = np.ones(4, dtype=float)
-    yield __bad_state, p_state, trans, x
-
-    # negative values
-    p_state = -np.ones(3, dtype=float)
-    yield __bad_state, p_state, trans, x
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('x', [np.random.random(size=(3, 5))**2])
+@pytest.mark.parametrize('trans', [np.ones((2,2), dtype=float) * 0.5])
+@pytest.mark.parametrize('p_state', [   2 * np.ones(3, dtype=float),
+                                        np.ones(4, dtype=float),
+                                        -np.ones(3, dtype=float)],
+                        ids=['too big', 'bad shape', 'negative'])
+def test_viterbi_binary_bad_marginal(p_state, trans, x):
+    librosa.sequence.viterbi_binary(x, trans, p_state=p_state)
 
 
-def test_viterbi_binary_bad_obs():
-    @pytest.mark.xfail(raises=librosa.ParameterError)
-    def __bad_obs(x, trans):
-        librosa.sequence.viterbi_binary(x, trans)
-
-    srand()
-
-    trans = np.ones((2, 2), dtype=float) / 2.
-
-    # x is not positive
-    x = -np.ones((3, 5), dtype=float)
-    yield __bad_obs, x, trans
-
-    # x is too big
-    x = 2 * np.ones((3, 5), dtype=float)
-    yield __bad_obs, x, trans
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('trans', [np.ones((2, 2), dtype=float) * 0.5])
+@pytest.mark.parametrize('x', [-np.ones((3, 5), dtype=float),
+                                2 * np.ones((3, 5), dtype=float)],
+                        ids=['non-positive', 'too big'])
+def test_viterbi_binary_bad_obs(x, trans):
+    librosa.sequence.viterbi_binary(x, trans)
 
 
 # Transition operator constructors
-def test_trans_uniform():
-    def __trans(n):
-        A = librosa.sequence.transition_uniform(n)
-        assert A.shape == (n, n)
-        assert np.allclose(A, 1./n)
-
-    for n in range(1, 4):
-        yield __trans, n
-
-    tf = pytest.mark.xfail(__trans, raises=librosa.ParameterError)
-    yield tf, 0
-    yield tf, None
+@pytest.mark.parametrize('n', range(1, 4))
+def test_trans_uniform(n):
+    A = librosa.sequence.transition_uniform(n)
+    assert A.shape == (n, n)
+    assert np.allclose(A, 1./n)
 
 
-def test_trans_loop():
-    def __trans(n, p):
-        A = librosa.sequence.transition_loop(n, p)
-
-        # Right shape
-        assert A.shape == (n, n)
-        # diag is correct
-        assert np.allclose(np.diag(A), p)
-
-        # we have well-formed distributions
-        assert np.all(A >= 0)
-        assert np.allclose(A.sum(axis=1), 1)
-
-    # Test with constant self-loops
-    for n in range(2, 4):
-        yield __trans, n, 0.5
-
-    # Test with variable self-loops
-    yield __trans, 3, [0.8, 0.7, 0.5]
-
-    # Failure if we don't have enough states
-    tf = pytest.mark.xfail(__trans, raises=librosa.ParameterError)
-    yield tf, 1, 0.5
-
-    # Failure if n_states is wrong
-    yield tf, None, 0.5
-
-    # Failure if p is not a probability
-    yield tf, 3, 1.5
-    yield tf, 3, -0.25
-
-    # Failure if there's a shape mismatch
-    yield tf, 3, [0.5, 0.2]
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('n', [0, None])
+def test_trans_uniform_badshape(n):
+    librosa.sequence.transition_uniform(n)
 
 
-def test_trans_cycle():
-    def __trans(n, p):
-        A = librosa.sequence.transition_cycle(n, p)
+@pytest.mark.parametrize('n,p', [(2, 0.5), (3, 0.5), (3, [0.8,0.7,0.5])])
+def test_trans_loop(n, p):
+    A = librosa.sequence.transition_loop(n, p)
 
-        # Right shape
-        assert A.shape == (n, n)
-        # diag is correct
-        assert np.allclose(np.diag(A), p)
+    # Right shape
+    assert A.shape == (n, n)
+    # diag is correct
+    assert np.allclose(np.diag(A), p)
 
-        for i in range(n):
-            assert A[i, np.mod(i + 1, n)] == 1 - A[i, i]
-
-        # we have well-formed distributions
-        assert np.all(A >= 0)
-        assert np.allclose(A.sum(axis=1), 1)
-
-    # Test with constant self-loops
-    for n in range(2, 4):
-        yield __trans, n, 0.5
-
-    # Test with variable self-loops
-    yield __trans, 3, [0.8, 0.7, 0.5]
-
-    # Failure if we don't have enough states
-    tf = pytest.mark.xfail(__trans, raises=librosa.ParameterError)
-    yield tf, 1, 0.5
-
-    # Failure if n_states is wrong
-    yield tf, None, 0.5
-
-    # Failure if p is not a probability
-    yield tf, 3, 1.5
-    yield tf, 3, -0.25
-
-    # Failure if there's a shape mismatch
-    yield tf, 3, [0.5, 0.2]
+    # we have well-formed distributions
+    assert np.all(A >= 0)
+    assert np.allclose(A.sum(axis=1), 1)
 
 
-def test_trans_local_nstates_fail():
-
-    @pytest.mark.xfail(raises=librosa.ParameterError)
-    def __test(n):
-        librosa.sequence.transition_local(n, 3)
-
-    yield __test, 1.5
-    yield __test, 0
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('n,p', [(1, 0.5), (None, 0.5), (3, 1.5), (3, -0.25), (3, [0.5, 0.2])],
+                         ids=['missing states', 'wrong states', 'not probability', 'neg prob', 'shape mismatch'])
+def test_trans_loop_fail(n, p):
+    librosa.sequence.transition_loop(n, p)
 
 
-def test_trans_local_width_fail():
+@pytest.mark.parametrize('n,p', [(2, 0.5), (3, 0.5), (3, [0.8, 0.7, 0.5])])
+def test_trans_cycle(n, p):
+    A = librosa.sequence.transition_cycle(n, p)
 
-    @pytest.mark.xfail(raises=librosa.ParameterError)
-    def __test(width):
-        librosa.sequence.transition_local(5, width)
+    # Right shape
+    assert A.shape == (n, n)
+    # diag is correct
+    assert np.allclose(np.diag(A), p)
 
-    yield __test, -1
-    yield __test, 0
-    yield __test, [2, 3]
+    for i in range(n):
+        assert A[i, np.mod(i + 1, n)] == 1 - A[i, i]
+
+    # we have well-formed distributions
+    assert np.all(A >= 0)
+    assert np.allclose(A.sum(axis=1), 1)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('n,p', [(1, 0.5), (None, 0.5), (3, 1.5), (3, -0.25), (3,
+    [0.5, 0.2])],
+    ids=['too few states', 'wrong n_states', 'p>1', 'p<0', 'shape mismatch'])
+def test_trans_cycle_fail(n, p):
+    librosa.sequence.transition_cycle(n, p)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('n', [1.5, 0])
+def test_trans_local_nstates_fail(n):
+    librosa.sequence.transition_local(n, 3)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('width', [-1, 0, [2,3]])
+def test_trans_local_width_fail(width):
+    librosa.sequence.transition_local(5, width)
+
 
 def test_trans_local_wrap_const():
 
@@ -682,13 +522,22 @@ def test_rqa_interior(gap_onset, gap_extend, knight, backtrack):
         assert out.shape == rec.shape
 
 
-@pytest.mark.parametrize('gap_onset', [1, np.inf,
-                                       pytest.mark.xfail(-1, raises=librosa.ParameterError)])
-@pytest.mark.parametrize('gap_extend', [1, np.inf,
-                                        pytest.mark.xfail(-1, raises=librosa.ParameterError)])
-def test_rqa_badgaps(gap_onset, gap_extend):
+@pytest.mark.parametrize('gap_onset', [1, np.inf])
+@pytest.mark.parametrize('gap_extend', [1, np.inf])
+def test_rqa_gaps(gap_onset, gap_extend):
     rec = np.ones((5, 5))
     librosa.sequence.rqa(rec, gap_onset=gap_onset, gap_extend=gap_extend)
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_rqa_bad_onset():
+    rec = np.ones((5,5))
+    librosa.sequence.rqa(rec, gap_onset=-1)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_rqa_bad_extend():
+    rec = np.ones((5,5))
+    librosa.sequence.rqa(rec, gap_extend=-1)
 
 
 def __validate_rqa_results(rec, score, path, gap_onset, gap_extend, backtrack, knight):
