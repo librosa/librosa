@@ -3,6 +3,7 @@
 """Core IO, DSP and utility functions."""
 
 import pathlib
+import tempfile
 import warnings
 
 import soundfile as sf
@@ -51,8 +52,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
         Any string file paths, or any object implementing Python's
         file interface (e.g. `pathlib.Path`) are supported as `path`.
 
-        If the codec is supported by `soundfile`, then `path` can also be
-        an open file descriptor (int).
+        `path` can also be an open file descriptor (int).
 
     sr   : number > 0 [scalar]
         target sampling rate
@@ -139,9 +139,15 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
 
     except RuntimeError as exc:
         # If soundfile failed, try audioread instead
+        warnings.warn('PySoundFile failed. Trying audioread instead.')
         if isinstance(path, (str, pathlib.PurePath)):
-            warnings.warn('PySoundFile failed. Trying audioread instead.')
             y, sr_native = __audioread_load(path, offset, duration, dtype)
+        elif hasattr(path, 'read'):
+            # Write file-object to a temporary file for audioread to work
+            with tempfile.NamedTemporaryFile() as f:
+                f.write(path.read())
+                path = f.name
+                y, sr_native = __audioread_load(path, offset, duration, dtype)
         else:
             raise(exc)
 
