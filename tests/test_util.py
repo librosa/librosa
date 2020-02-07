@@ -54,8 +54,6 @@ def test_frame2d(frame_length, hop_length, axis, y):
     y_frame = librosa.util.frame(y, frame_length=frame_length,
                                  hop_length=hop_length,
                                  axis=axis)
-    print(y.shape)
-    print(y_frame.shape)
 
     if axis == -1:
         y_frame = y_frame.T
@@ -110,56 +108,48 @@ def test_frame_bad_contiguity(x, axis):
     librosa.util.frame(x, frame_length=2, hop_length=1, axis=axis)
 
 
-def test_pad_center():
+@pytest.mark.parametrize('y', [np.ones((16,)), np.ones((16,16))])
+@pytest.mark.parametrize('m', [0, 10])
+@pytest.mark.parametrize('axis', [0, -1])
+@pytest.mark.parametrize('mode', ['constant', 'edge', 'reflect'])
+def test_pad_center(y, m, axis, mode):
 
-    def __test(y, n, axis, mode):
+    n = m + y.shape[axis]
+    y_out = librosa.util.pad_center(y, n, axis=axis, mode=mode)
 
-        y_out = librosa.util.pad_center(y, n, axis=axis, mode=mode)
+    n_len = y.shape[axis]
+    n_pad = int((n - n_len) / 2)
 
-        n_len = y.shape[axis]
-        n_pad = int((n - n_len) / 2)
+    eq_slice = [slice(None)] * y.ndim
+    eq_slice[axis] = slice(n_pad, n_pad + n_len)
 
-        eq_slice = [slice(None)] * y.ndim
-        eq_slice[axis] = slice(n_pad, n_pad + n_len)
+    assert np.allclose(y, y_out[tuple(eq_slice)])
 
+
+@pytest.mark.parametrize('y', [np.ones((16,)), np.ones((16,16))])
+@pytest.mark.parametrize('n', [0, 10])
+@pytest.mark.parametrize('axis', [0, -1])
+@pytest.mark.parametrize('mode', ['constant', 'edge', 'reflect'])
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_pad_center_fail(y, n, axis, mode):
+    librosa.util.pad_center(y, n, axis=axis, mode=mode)
+
+
+@pytest.mark.parametrize('y', [np.ones((16,)), np.ones((16,16))])
+@pytest.mark.parametrize('m', [-5, 0, 5])
+@pytest.mark.parametrize('axis', [0, -1])
+def test_fix_length(y, m, axis):
+    n = m + y.shape[axis]
+
+    y_out = librosa.util.fix_length(y, n, axis=axis)
+
+    eq_slice = [slice(None)] * y.ndim
+    eq_slice[axis] = slice(y.shape[axis])
+
+    if n > y.shape[axis]:
         assert np.allclose(y, y_out[tuple(eq_slice)])
-
-    @pytest.mark.xfail(raises=librosa.ParameterError)
-    def __test_fail(y, n, axis, mode):
-        librosa.util.pad_center(y, n, axis=axis, mode=mode)
-
-    for shape in [(16,), (16, 16)]:
-        y = np.ones(shape)
-
-        for axis in [0, -1]:
-            for mode in ['constant', 'edge', 'reflect']:
-                for n in [0, 10]:
-                    yield __test, y, n + y.shape[axis], axis, mode
-
-                for n in [0, 10]:
-                    yield __test_fail, y, n, axis, mode
-
-
-def test_fix_length():
-
-    def __test(y, n, axis):
-
-        y_out = librosa.util.fix_length(y, n, axis=axis)
-
-        eq_slice = [slice(None)] * y.ndim
-        eq_slice[axis] = slice(y.shape[axis])
-
-        if n > y.shape[axis]:
-            assert np.allclose(y, y_out[tuple(eq_slice)])
-        else:
-            assert np.allclose(y[tuple(eq_slice)], y)
-
-    for shape in [(16,), (16, 16)]:
-        y = np.ones(shape)
-
-        for axis in [0, -1]:
-            for n in [-5, 0, 5]:
-                yield __test, y, n + y.shape[axis], axis
+    else:
+        assert np.allclose(y[tuple(eq_slice)], y)
 
 
 def test_fix_frames():
@@ -256,22 +246,22 @@ def test_normalize():
         yield __test_fail, Xinf, np.inf, 0
 
 
-def test_normalize_threshold():
+@pytest.mark.parametrize('x', [np.asarray([[0,1,2,3]])])
+@pytest.mark.parametrize('threshold, result', [(None, [[0, 1, 1, 1]]),
+                                                (1, [[0, 1, 1, 1]]),
+                                                (2, [[0, 1, 1, 1]]),
+                                                (3, [[0, 1, 2, 1]]),
+                                                (4, [[0, 1, 2, 3]])])
+def test_normalize_threshold(x, threshold, result):
+    assert np.allclose(librosa.util.normalize(x, threshold=threshold),
+                       result)
 
-    x = np.asarray([[0, 1, 2, 3]])
 
-    def __test(threshold, result):
-        assert np.allclose(librosa.util.normalize(x, threshold=threshold),
-                           result)
-
-    yield __test, None, [[0, 1, 1, 1]]
-    yield __test, 1, [[0, 1, 1, 1]]
-    yield __test, 2, [[0, 1, 1, 1]]
-    yield __test, 3, [[0, 1, 2, 1]]
-    yield __test, 4, [[0, 1, 2, 3]]
-    tf = pytest.mark.xfail(__test, raises=librosa.ParameterError)
-    yield tf, 0, [[0, 1, 1, 1]]
-    yield tf, -1, [[0, 1, 1, 1]]
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('x', [np.asarray([[0,1,2,3]])])
+@pytest.mark.parametrize('threshold', [0, -1])
+def test_normalize_threshold_fail(x, threshold):
+    librosa.util.normalize(x, threshold=threshold)
 
 
 def test_normalize_fill():
@@ -368,20 +358,13 @@ def test_axis_sort(ndim, axis, index, value):
     assert np.allclose(sort_values, np.sort(sort_values))
 
 
-def test_match_intervals_empty():
-
-
-    @pytest.mark.xfail(raises=librosa.ParameterError)
-    def __test(int_from, int_to):
-        librosa.util.match_intervals(int_from, int_to)
-
-    ints = np.asarray([[0, 2],
-                       [0, 4],
-                       [3, 6]])
-
-    # true matches for the above
-    yield __test, ints, ints[:0]
-    yield __test, ints[:0], ints
+@pytest.mark.parametrize('int_from, int_to', [(np.asarray([[0, 2], [0, 4], [3, 6]]),
+                                                np.empty((0, 2), dtype=int)),
+                                              (np.empty((0, 2), dtype=int),
+                                                np.asarray([[0, 2], [0, 4], [3, 6]]))])
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_match_intervals_empty(int_from, int_to):
+    librosa.util.match_intervals(int_from, int_to)
 
 
 @pytest.mark.parametrize('int_from', [np.asarray([[0, 3], [2, 4], [5, 7]])])
@@ -492,34 +475,29 @@ def test_match_events_onesided():
     yield __test, events_from, et, False, False, events_from
 
 
-def test_localmax():
+@pytest.mark.parametrize('ndim, axis', [(n, m) for n in range(1, 5) for m in range(n)])
+def test_localmax(ndim, axis):
 
-    def __test(ndim, axis):
-        srand()
+    srand()
 
-        data = np.random.randn(*([20] * ndim))
+    data = np.random.randn(*([7] * ndim))
+    lm = librosa.util.localmax(data, axis=axis)
 
-        lm = librosa.util.localmax(data, axis=axis)
+    for hits in np.argwhere(lm):
+        for offset in [-1, 1]:
+            compare_idx = hits.copy()
+            compare_idx[axis] += offset
 
-        for hits in np.argwhere(lm):
-            for offset in [-1, 1]:
-                compare_idx = hits.copy()
-                compare_idx[axis] += offset
+            if compare_idx[axis] < 0:
+                continue
 
-                if compare_idx[axis] < 0:
-                    continue
+            if compare_idx[axis] >= data.shape[axis]:
+                continue
 
-                if compare_idx[axis] >= data.shape[axis]:
-                    continue
-
-                if offset < 0:
-                    assert data[tuple(hits)] > data[tuple(compare_idx)]
-                else:
-                    assert data[tuple(hits)] >= data[tuple(compare_idx)]
-
-    for ndim in range(1, 5):
-        for axis in range(ndim):
-            yield __test, ndim, axis
+            if offset < 0:
+                assert data[tuple(hits)] > data[tuple(compare_idx)]
+            else:
+                assert data[tuple(hits)] >= data[tuple(compare_idx)]
 
 
 def test_peak_pick():
@@ -679,25 +657,25 @@ def test_files():
                                    case_sensitive, limit, offset)
 
 
-def test_valid_int():
+@pytest.mark.parametrize('x_in', np.linspace(-2, 2, num=6))
+@pytest.mark.parametrize('cast', [None, np.floor, np.ceil])
+def test_valid_int(x_in, cast):
 
-    def __test(x_in, cast):
-        z = librosa.util.valid_int(x_in, cast)
+    z = librosa.util.valid_int(x_in, cast)
 
-        assert isinstance(z, int)
-        if cast is None:
-            assert z == int(np.floor(x_in))
-        else:
-            assert z == int(cast(x_in))
+    assert isinstance(z, int)
+    if cast is None:
+        assert z == int(np.floor(x_in))
+    else:
+        assert z == int(cast(x_in))
 
-    __test_fail = pytest.mark.xfail(__test, raises=librosa.ParameterError)
 
-    for x in np.linspace(-2, 2, num=6):
-        for cast in [None, np.floor, np.ceil, 7]:
-            if cast is None or callable(cast):
-                yield __test, x, cast
-            else:
-                yield __test_fail, x, cast
+@pytest.mark.parametrize('x', np.linspace(-2, 2, num=3))
+@pytest.mark.parametrize('cast', [7])
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_valid_int_fail(x, cast):
+    # Test with a non-callable cast operator
+    librosa.util.valid_int(x, cast)
 
 
 def test_valid_intervals():
@@ -717,8 +695,12 @@ def test_valid_intervals():
                 else:
                     yield tf, ivals[tuple(slices)]
 
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('intval', [np.asarray([[0, 1], [2, 1]])])
+def test_valid_intervals_fail(intval):
     # Test for issue #712: intervals must have non-negative duration
-    yield tf, np.asarray([[0, 1], [2, 1]])
+    librosa.util.valid_intervals(intval)
 
 
 def test_warning_deprecated():
@@ -877,10 +859,6 @@ def test_sync():
         # Test for dtype propagation
         assert dsync.dtype == data.dtype
 
-    @pytest.mark.xfail(raises=librosa.ParameterError)
-    def __test_fail(data, idx):
-        librosa.util.sync(data, idx)
-
     for ndim in [1, 2, 3]:
         shaper = [1] * ndim
         shaper[-1] = -1
@@ -898,8 +876,12 @@ def test_sync():
             # Test with list of slices
             yield __test_pass, axis, data, slices
 
-    for bad_idx in [['foo', 'bar'], [None], [slice(None), None]]:
-        yield __test_fail, data, bad_idx
+
+@pytest.mark.parametrize('data', [np.mod(np.arange(135), 5)])
+@pytest.mark.parametrize('idx', [['foo', 'bar'], [None], [slice(None), None]])
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_sync_fail(data, idx):
+    librosa.util.sync(data, idx)
 
 
 @pytest.mark.parametrize('power', [1, 2, 50, 100, np.inf])
