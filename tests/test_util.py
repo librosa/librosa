@@ -805,46 +805,42 @@ def test_warning_rename_kw_fail():
         assert 'renamed' in str(out[0].message).lower()
 
 
-def test_index_to_slice():
+@pytest.mark.parametrize('idx', [np.arange(10, 90, 10), np.arange(10, 90, 15)])
+@pytest.mark.parametrize('idx_min', [None, 5, 15])
+@pytest.mark.parametrize('idx_max', [None, 85, 100])
+@pytest.mark.parametrize('step', [None, 2])
+@pytest.mark.parametrize('pad', [False, True])
+def test_index_to_slice(idx, idx_min, idx_max, step, pad):
 
-    def __test(idx, idx_min, idx_max, step, pad):
+    slices = librosa.util.index_to_slice(idx,
+                                         idx_min=idx_min,
+                                         idx_max=idx_max,
+                                         step=step,
+                                         pad=pad)
 
-        slices = librosa.util.index_to_slice(idx,
-                                             idx_min=idx_min,
-                                             idx_max=idx_max,
-                                             step=step,
-                                             pad=pad)
-
-        if pad:
-            if idx_min is not None:
-                assert slices[0].start == idx_min
-                if idx.min() != idx_min:
-                    slices = slices[1:]
-            if idx_max is not None:
-                assert slices[-1].stop == idx_max
-                if idx.max() != idx_max:
-                    slices = slices[:-1]
-
+    if pad:
         if idx_min is not None:
-            idx = idx[idx >= idx_min]
-
+            assert slices[0].start == idx_min
+            if idx.min() != idx_min:
+                slices = slices[1:]
         if idx_max is not None:
-            idx = idx[idx <= idx_max]
+            assert slices[-1].stop == idx_max
+            if idx.max() != idx_max:
+                slices = slices[:-1]
 
-        idx = np.unique(idx)
-        assert len(slices) == len(idx) - 1
+    if idx_min is not None:
+        idx = idx[idx >= idx_min]
 
-        for sl, start, stop in zip(slices, idx, idx[1:]):
-            assert sl.start == start
-            assert sl.stop == stop
-            assert sl.step == step
+    if idx_max is not None:
+        idx = idx[idx <= idx_max]
 
-    for indices in [np.arange(10, 90, 10), np.arange(10, 90, 15)]:
-        for idx_min in [None, 5, 15]:
-            for idx_max in [None, 85, 100]:
-                for step in [None, 2]:
-                    for pad in [False, True]:
-                        yield __test, indices, idx_min, idx_max, step, pad
+    idx = np.unique(idx)
+    assert len(slices) == len(idx) - 1
+
+    for sl, start, stop in zip(slices, idx, idx[1:]):
+        assert sl.start == start
+        assert sl.stop == stop
+        assert sl.step == step
 
 
 def test_sync():
@@ -906,30 +902,27 @@ def test_sync():
         yield __test_fail, data, bad_idx
 
 
-def test_softmask():
+@pytest.mark.parametrize('power', [1, 2, 50, 100, np.inf])
+@pytest.mark.parametrize('split_zeros', [False, True])
+def test_softmask(power, split_zeros):
 
-    def __test(power, split_zeros):
-        srand()
+    srand()
 
-        X = np.abs(np.random.randn(10, 10))
-        X_ref = np.abs(np.random.randn(10, 10))
+    X = np.abs(np.random.randn(10, 10))
+    X_ref = np.abs(np.random.randn(10, 10))
 
-        # Zero out some rows
-        X[3, :] = 0
-        X_ref[3, :] = 0
+    # Zero out some rows
+    X[3, :] = 0
+    X_ref[3, :] = 0
 
-        M = librosa.util.softmask(X, X_ref, power=power, split_zeros=split_zeros)
+    M = librosa.util.softmask(X, X_ref, power=power, split_zeros=split_zeros)
 
-        assert np.all(0 <= M) and np.all(M <= 1)
+    assert np.all(0 <= M) and np.all(M <= 1)
 
-        if split_zeros and np.isfinite(power):
-            assert np.allclose(M[3, :], 0.5)
-        else:
-            assert not np.any(M[3, :]), M[3]
-
-    for power in [1, 2, 50, 100, np.inf]:
-        for split_zeros in [False, True]:
-            yield __test, power, split_zeros
+    if split_zeros and np.isfinite(power):
+        assert np.allclose(M[3, :], 0.5)
+    else:
+        assert not np.any(M[3, :]), M[3]
 
 
 def test_softmask_int():
@@ -942,49 +935,27 @@ def test_softmask_int():
     assert np.allclose(M1 + M2, 1)
 
 
-def test_softmask_fail():
-
-    failure = pytest.mark.xfail(librosa.util.softmask, raises=librosa.ParameterError)
-    yield failure, -np.ones(3), np.ones(3), 1, False
-    yield failure, np.ones(3), -np.ones(3), 1, False
-    yield failure, np.ones(3), np.ones(4), 1, False
-    yield failure, np.ones(3), np.ones(3), 0, False
-    yield failure, np.ones(3), np.ones(3), -1, False
-
-
-def test_tiny():
-
-    def __test(x, value):
-
-        assert value == librosa.util.tiny(x)
-
-    for x, value in [(1, np.finfo(np.float32).tiny),
-                     (np.ones(3, dtype=int), np.finfo(np.float32).tiny),
-                     (np.ones(3, dtype=np.float32), np.finfo(np.float32).tiny),
-                     (1.0, np.finfo(np.float64).tiny),
-                     (np.ones(3, dtype=np.float64), np.finfo(np.float64).tiny),
-                     (1j, np.finfo(np.complex128).tiny),
-                     (np.ones(3, dtype=np.complex64), np.finfo(np.complex64).tiny),
-                     (np.ones(3, dtype=np.complex128), np.finfo(np.complex128).tiny)]:
-        yield __test, x, value
+@pytest.mark.parametrize('x,x_ref,power,split_zeros', [(-np.ones(3), np.ones(3), 1, False),
+                                                       (np.ones(3), -np.ones(3), 1, False),
+                                                       (np.ones(3), np.ones(4), 1, False),
+                                                       (np.ones(3), np.ones(3), 0, False),
+                                                       (np.ones(3), np.ones(3), -1, False)])
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_softmask_fail(x, x_ref, power, split_zeros):
+    librosa.util.softmask(x, x_ref, power=power, split_zeros=split_zeros)
 
 
-def test_optional_jit():
+@pytest.mark.parametrize('x,value', [(1, np.finfo(np.float32).tiny),
+                                     (np.ones(3, dtype=int), np.finfo(np.float32).tiny),
+                                     (np.ones(3, dtype=np.float32), np.finfo(np.float32).tiny),
+                                     (1.0, np.finfo(np.float64).tiny),
+                                     (np.ones(3, dtype=np.float64), np.finfo(np.float64).tiny),
+                                     (1j, np.finfo(np.complex128).tiny),
+                                     (np.ones(3, dtype=np.complex64), np.finfo(np.complex64).tiny),
+                                     (np.ones(3, dtype=np.complex128), np.finfo(np.complex128).tiny)])
+def test_tiny(x, value):
+    assert value == librosa.util.tiny(x)
 
-    @librosa.util.decorators.optional_jit(nopython=True)
-    def __func1(x):
-        return x**2
-
-    @librosa.util.decorators.optional_jit
-    def __func2(x):
-        return x**2
-
-    def __test(f):
-        y = f(2)
-        assert y == 2**2
-
-    yield __test, __func1
-    yield __test, __func2
 
 def test_util_fill_off_diagonal_8_8():
     # Case 1: Square matrix (N=M)

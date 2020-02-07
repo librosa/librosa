@@ -17,13 +17,7 @@ import numpy as np
 import scipy.io
 import pytest
 import warnings
-
-try:
-    # Python >= 3.3
-    from unittest import mock
-
-except ImportError:
-    import mock
+from unittest import mock
 
 
 # -- utilities --#
@@ -108,15 +102,22 @@ def test_segment_load():
 def resample_audio(request):
     infile = request.param
     y, sr_in = librosa.load(os.path.join('tests', 'data', infile), sr=None, duration=5, mono=False)
-    yield (y, sr_in)
+    return (y, sr_in)
+
+
+@pytest.fixture(scope='module')
+def resample_mono(resample_audio):
+    y, sr = resample_audio
+    y = librosa.to_mono(y)
+    return (y, sr)
 
 
 @pytest.mark.parametrize('sr_out', [8000, 22050])
 @pytest.mark.parametrize('res_type', ['kaiser_best', 'kaiser_fast', 'scipy', 'fft', 'polyphase'])
 @pytest.mark.parametrize('fix', [False, True])
-def test_resample_mono(resample_audio, sr_out, res_type, fix):
+def test_resample_mono(resample_mono, sr_out, res_type, fix):
 
-    y, sr_in = resample_audio
+    y, sr_in = resample_mono
     y = librosa.to_mono(y)
 
     y2 = librosa.resample(y, sr_in, sr_out,
@@ -168,30 +169,24 @@ def test_resample_stereo(resample_audio, sr_out, res_type, fix):
     assert np.abs(y2.shape[-1] - target_length) <= 1
 
 
-def test_resample_scale():
+@pytest.mark.parametrize('res_type', ['fft', 'kaiser_best', 'kaiser_fast', 'polyphase'])
+@pytest.mark.parametrize('sr_out', [11025, 22050, 44100])
+def test_resample_scale(resample_mono, res_type, sr_out):
 
-    def __test(sr_in, sr_out, res_type, y):
+    y, sr_in = resample_mono
 
-        y2 = librosa.resample(y, sr_in, sr_out,
-                              res_type=res_type,
-                              scale=True)
+    y2 = librosa.resample(y, sr_in, sr_out,
+                          res_type=res_type,
+                          scale=True)
 
-        # First, check that the audio is valid
-        librosa.util.valid_audio(y2, mono=True)
+    # First, check that the audio is valid
+    librosa.util.valid_audio(y2, mono=True)
 
-        n_orig = np.sqrt(np.sum(np.abs(y)**2))
-        n_res = np.sqrt(np.sum(np.abs(y2)**2))
+    n_orig = np.sqrt(np.sum(np.abs(y)**2))
+    n_res = np.sqrt(np.sum(np.abs(y2)**2))
 
-        # If it's a no-op, make sure the signal is untouched
-        assert np.allclose(n_orig, n_res, atol=1e-2), (n_orig, n_res)
-
-    y, sr_in = librosa.load(os.path.join('tests', 'data','test1_22050.wav'),
-                            mono=True, sr=None, duration=3)
-
-    for res_type in ['fft', 'kaiser_best', 'kaiser_fast', 'polyphase']:
-        for sr_out in [11025, 22050, 44100]:
-            yield __test, sr_in, sr_out, res_type, y
-            yield __test, sr_out, sr_in, res_type, y
+    # If it's a no-op, make sure the signal is untouched
+    assert np.allclose(n_orig, n_res, atol=1e-2), (n_orig, n_res)
 
 
 @pytest.mark.parametrize('sr_in, sr_out', [(100, 100.1), (100.1, 100)])
@@ -201,37 +196,34 @@ def test_resample_poly_float(sr_in, sr_out):
     librosa.resample(y, sr_in, sr_out, res_type='polyphase')
 
 
-def test_stft():
+@pytest.mark.parametrize('infile', files(os.path.join('tests', 'data', 'core-stft-*.mat')))
+def test_stft(infile):
 
-    def __test(infile):
-        DATA = load(infile)
+    DATA = load(infile)
 
-        # Load the file
-        (y, sr) = librosa.load(os.path.join('tests', DATA['wavfile'][0]),
-                               sr=None, mono=True)
+    # Load the file
+    (y, sr) = librosa.load(os.path.join('tests', DATA['wavfile'][0]),
+                           sr=None, mono=True)
 
-        if DATA['hann_w'][0, 0] == 0:
-            # Set window to ones, swap back to nfft
-            window = np.ones
-            win_length = None
+    if DATA['hann_w'][0, 0] == 0:
+        # Set window to ones, swap back to nfft
+        window = np.ones
+        win_length = None
 
-        else:
-            window = 'hann'
-            win_length = DATA['hann_w'][0, 0]
+    else:
+        window = 'hann'
+        win_length = DATA['hann_w'][0, 0]
 
-        # Compute the STFT
-        D = librosa.stft(y,
-                         n_fft=DATA['nfft'][0, 0].astype(int),
-                         hop_length=DATA['hop_length'][0, 0].astype(int),
-                         win_length=win_length,
-                         window=window,
-                         center=False)
+    # Compute the STFT
+    D = librosa.stft(y,
+                     n_fft=DATA['nfft'][0, 0].astype(int),
+                     hop_length=DATA['hop_length'][0, 0].astype(int),
+                     win_length=win_length,
+                     window=window,
+                     center=False)
 
-        # conjugate matlab stft to fix the ' vs .' bug
-        assert np.allclose(D, DATA['D'].conj())
-
-    for infile in files(os.path.join('tests', 'data', 'core-stft-*.mat')):
-        yield (__test, infile)
+    # conjugate matlab stft to fix the ' vs .' bug
+    assert np.allclose(D, DATA['D'].conj())
 
 
 # results for FFT bins containing multiple components will be unstable, as when
@@ -878,9 +870,12 @@ def test_to_mono():
         yield __test, filename, mono
 
 
-def test_zero_crossings():
-
-    def __test(data, threshold, ref_magnitude, pad, zp):
+@pytest.mark.parametrize('data', [np.random.randn(32)])
+@pytest.mark.parametrize('threshold', [None, 0, 1e-10])
+@pytest.mark.parametrize('ref_magnitude', [None, 0.1, np.max])
+@pytest.mark.parametrize('pad', [False, True])
+@pytest.mark.parametrize('zp', [False, True])
+def test_zero_crossings(data, threshold, ref_magnitude, pad, zp):
 
         zc = librosa.zero_crossings(y=data,
                                     threshold=threshold,
@@ -895,16 +890,6 @@ def test_zero_crossings():
 
         for i in idx:
             assert np.sign(data[i]) != np.sign(data[i-1])
-
-    srand()
-    data = np.random.randn(32)
-
-    for threshold in [None, 0, 1e-10]:
-        for ref_magnitude in [None, 0.1, np.max]:
-            for pad in [False, True]:
-                for zero_pos in [False, True]:
-
-                    yield __test, data, threshold, ref_magnitude, pad, zero_pos
 
 
 def test_pitch_tuning():
