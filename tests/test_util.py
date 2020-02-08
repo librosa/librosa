@@ -152,42 +152,35 @@ def test_fix_length(y, m, axis):
         assert np.allclose(y[tuple(eq_slice)], y)
 
 
-def test_fix_frames():
-    srand()
+@pytest.mark.parametrize('frames', [np.arange(20, 100, step=15)])
+@pytest.mark.parametrize('x_min', [0, 20])
+@pytest.mark.parametrize('x_max', [20, 70, 120])
+@pytest.mark.parametrize('pad', [False, True])
+def test_fix_frames(frames, x_min, x_max, pad):
 
-    @pytest.mark.xfail(raises=librosa.ParameterError)
-    def __test_fail(frames, x_min, x_max, pad):
-        librosa.util.fix_frames(frames, x_min, x_max, pad)
+    f_fix = librosa.util.fix_frames(frames,
+                                    x_min=x_min,
+                                    x_max=x_max,
+                                    pad=pad)
 
-    def __test_pass(frames, x_min, x_max, pad):
+    if x_min is not None:
+        if pad:
+            assert f_fix[0] == x_min
+        assert np.all(f_fix >= x_min)
 
-        f_fix = librosa.util.fix_frames(frames,
-                                        x_min=x_min,
-                                        x_max=x_max,
-                                        pad=pad)
+    if x_max is not None:
+        if pad:
+            assert f_fix[-1] == x_max
+        assert np.all(f_fix <= x_max)
 
-        if x_min is not None:
-            if pad:
-                assert f_fix[0] == x_min
-            assert np.all(f_fix >= x_min)
 
-        if x_max is not None:
-            if pad:
-                assert f_fix[-1] == x_max
-            assert np.all(f_fix <= x_max)
-
-    for low in [-20, 0, 20]:
-        for high in [low + 20, low + 50, low + 100]:
-
-            frames = np.random.randint(low, high=high, size=15)
-
-            for x_min in [None, 0, 20]:
-                for x_max in [None, 20, 100]:
-                    for pad in [False, True]:
-                        if np.any(frames < 0):
-                            yield __test_fail, frames, x_min, x_max, pad
-                        else:
-                            yield __test_pass, frames, x_min, x_max, pad
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('frames', [np.arange(-20, 100)])
+@pytest.mark.parametrize('x_min', [None, 0, 20])
+@pytest.mark.parametrize('x_max', [None, 0, 20])
+@pytest.mark.parametrize('pad', [False, True])
+def test_fix_frames_fail_negative(frames, x_min, x_max, pad):
+    librosa.util.fix_frames(frames, x_min, x_max, pad)
 
 
 def test_normalize():
@@ -280,22 +273,23 @@ def test_normalize_fill():
     norm = np.inf
     threshold = 2
     # Test with inf norm
-    yield __test, None, norm, threshold, axis, x, [[0, 1, 1, 1]]
-    yield __test, False, norm, threshold, axis, x, [[0, 0, 1, 1]]
-    yield __test, True, norm, threshold, axis, x, [[1, 1, 1, 1]]
+    yield __test, None, np.inf, 2, 0, x, [[0, 1, 1, 1]]
+    yield __test, False, np.inf, 2, 0, x, [[0, 0, 1, 1]]
+    yield __test, True, np.inf, 2, 0, x, [[1, 1, 1, 1]]
 
     # Test with l0 norm
     norm = 0
-    yield __test, None, norm, threshold, axis, x, [[0, 1, 2, 3]]
-    yield __test, False, norm, threshold, axis, x, [[0, 0, 0, 0]]
+    yield __test, None, 0, 2, 0, x, [[0, 1, 2, 3]]
+    yield __test, False, 0, 2, 0, x, [[0, 0, 0, 0]]
+
     tf = pytest.mark.xfail(__test, raises=librosa.ParameterError)
-    yield tf, True, norm, threshold, axis, x, [[0, 0, 0, 0]]
+    yield tf, True, 0, 2, 0, x, [[0, 0, 0, 0]]
 
     # Test with l1 norm
     norm = 1
-    yield __test, None, norm, threshold, axis, x, [[0, 1, 1, 1]]
-    yield __test, False, norm, threshold, axis, x, [[0, 0, 1, 1]]
-    yield __test, True, norm, threshold, axis, x, [[1, 1, 1, 1]]
+    yield __test, None, 1, 2, 0, x, [[0, 1, 1, 1]]
+    yield __test, False, 1, 2, 0, x, [[0, 0, 1, 1]]
+    yield __test, True, 1, 2, 0, x, [[1, 1, 1, 1]]
 
     # And with l2 norm
     norm = 2
@@ -303,23 +297,23 @@ def test_normalize_fill():
     s = np.sqrt(2)/2
 
     # First two columns are left as is, second two map to sqrt(2)/2
-    yield __test, None, norm, threshold, axis, x, [[0, 1, s, s], [0, 1, s, s]]
+    yield __test, None, 2, 2, 0, x, [[0, 1, s, s], [0, 1, s, s]]
 
     # First two columns are zeroed, second two map to sqrt(2)/2
-    yield __test, False, norm, threshold, axis, x, [[0, 0, s, s], [0, 0, s, s]]
+    yield __test, False, 2, 2, 0, x, [[0, 0, s, s], [0, 0, s, s]]
 
     # All columns map to sqrt(2)/2
-    yield __test, True, norm, threshold, axis, x, [[s, s, s, s], [s, s, s, s]]
+    yield __test, True, 2, 2, 0, x, [[s, s, s, s], [s, s, s, s]]
 
     # And test the bad-fill case
-    yield tf, 3, norm, threshold, axis, x, x
+    yield tf, 3, 2, 2, 0, x, x
 
     # And an all-axes test
     axis = None
     threshold = None
     norm = 2
-    yield __test, None, norm, threshold, axis, np.asarray([[3, 0], [0, 4]]), np.asarray([[0, 0], [0, 0]])
-    yield __test, None, norm, threshold, axis, np.asarray([[3., 0], [0, 4]]), np.asarray([[0.6, 0], [0, 0.8]])
+    yield __test, None, 2, None, None, np.asarray([[3, 0], [0, 4]]), np.asarray([[0, 0], [0, 0]])
+    yield __test, None, 2, None, None, np.asarray([[3., 0], [0, 4]]), np.asarray([[0.6, 0], [0, 0.8]])
 
 
 @pytest.mark.parametrize('ndim', [pytest.mark.xfail(1, raises=librosa.ParameterError),
@@ -378,28 +372,12 @@ def test_match_intervals_strict(int_from, int_to, matches):
     assert np.array_equal(matches, test_matches)
 
 
-def test_match_intervals_nonstrict():
-
-
-    def __test(int_from, int_to, matches):
-        test_matches = librosa.util.match_intervals(int_from, int_to, strict=False)
-        assert np.array_equal(matches, test_matches)
-
-
-    int_from = np.asarray([[0, 3],
-                           [2, 4],
-                           [5, 7]])
-
-    int_to = np.asarray([[0, 2],
-                         [0, 4],
-                         [3, 6]])
-
-    # true matches for the above
-    matches = np.asarray([1, 1, 2])
-    yield __test, int_from, int_to, matches
-
-    # Without the [3, 6] interval, the source [5, 7] should match [2, 4]
-    yield __test, int_from, int_to[:-1], np.asarray([1, 1, 1])
+@pytest.mark.parametrize('int_from', [np.asarray([[0, 3], [2, 4], [5, 7]])])
+@pytest.mark.parametrize('int_to,matches', [(np.asarray([[0, 2], [0, 4], [3, 6]]), np.asarray([1,1,2])),
+                                            (np.asarray([[0, 2], [0, 4]]), np.asarray([1,1,1]))])
+def test_match_intervals_nonstrict(int_from, int_to, matches):
+    test_matches = librosa.util.match_intervals(int_from, int_to, strict=False)
+    assert np.array_equal(matches, test_matches)
 
 
 def test_match_events():
@@ -500,73 +478,62 @@ def test_localmax(ndim, axis):
                 assert data[tuple(hits)] >= data[tuple(compare_idx)]
 
 
-def test_peak_pick():
+@pytest.mark.parametrize('x', [np.random.randn(_)**2 for _ in [1, 5, 10, 100]])
+@pytest.mark.parametrize('pre_max', [0, 1, 10])
+@pytest.mark.parametrize('post_max', [1, 10])
+@pytest.mark.parametrize('pre_avg', [0, 1, 10])
+@pytest.mark.parametrize('post_avg', [1, 10])
+@pytest.mark.parametrize('wait', [0, 1, 10])
+@pytest.mark.parametrize('delta', [0.05, 100.0])
+def test_peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
+    peaks = librosa.util.peak_pick(x,
+                                   pre_max, post_max,
+                                   pre_avg, post_avg,
+                                   delta, wait)
 
-    def __test(n, pre_max, post_max, pre_avg, post_avg, delta, wait):
-        srand()
+    for i in peaks:
+        # Test 1: is it a peak in this window?
+        s = i - pre_max
+        if s < 0:
+            s = 0
+        t = i + post_max
 
-        # Generate a test signal
-        x = np.random.randn(n)**2
+        diff = x[i] - np.max(x[s:t])
+        assert diff > 0 or np.isclose(diff, 0, rtol=1e-3, atol=1e-4)
 
-        peaks = librosa.util.peak_pick(x,
-                                       pre_max, post_max,
-                                       pre_avg, post_avg,
-                                       delta, wait)
+        # Test 2: is it a big enough peak to count?
+        s = i - pre_avg
+        if s < 0:
+            s = 0
+        t = i + post_avg
 
-        for i in peaks:
-            # Test 1: is it a peak in this window?
-            s = i - pre_max
-            if s < 0:
-                s = 0
-            t = i + post_max
+        diff = x[i] - (delta + np.mean(x[s:t]))
+        assert diff > 0 or np.isclose(diff, 0, rtol=1e-3, atol=1e-4)
 
-            diff = x[i] - np.max(x[s:t])
-            assert diff > 0 or np.isclose(diff, 0, rtol=1e-3, atol=1e-4)
+    # Test 3: peak separation
+    assert not np.any(np.diff(peaks) <= wait)
 
-            # Test 2: is it a big enough peak to count?
-            s = i - pre_avg
-            if s < 0:
-                s = 0
-            t = i + post_avg
 
-            diff = x[i] - (delta + np.mean(x[s:t]))
-            assert diff > 0 or np.isclose(diff, 0, rtol=1e-3, atol=1e-4)
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('x', [np.random.randn(_)**2 for _ in [1, 5, 10, 100]])
+@pytest.mark.parametrize('pre_max,post_max,pre_avg,post_avg,delta,wait',
+                        [(-1, 1, 1, 1, 0.05, 1), # negative pre-max
+                         (1, -1, 1, 1, 0.05, 1), # negative post-max
+                         (1, 0, 1, 1, 0.05, 1), # 0 post-max
+                         (1, 1, -1, 1, 0.05, 1), # negative pre-avg
+                         (1, 1, 1, -1, 0.05, 1), # negative post-avg
+                         (1, 1, 1, 0, 0.05, 1), # zero post-avg
+                         (1, 1, 1, 1, -0.05, 1), # negative delta
+                         (1, 1, 1, 1, 0.05, -1), # negative wait
+                         ])
+def test_peak_pick_fail(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
+    librosa.util.peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait)
 
-        # Test 3: peak separation
-        assert not np.any(np.diff(peaks) <= wait)
 
-    @pytest.mark.xfail(raises=librosa.ParameterError)
-    def __test_shape_fail():
-        x = np.eye(10)
-        librosa.util.peak_pick(x, 1, 1, 1, 1, 0.5, 1)
-
-    yield __test_shape_fail
-
-    win_range = [-1, 0, 1, 10]
-    __test_fail = pytest.mark.xfail(__test, raises=librosa.ParameterError)
-
-    for n in [1, 5, 10, 100]:
-        for pre_max in win_range:
-            for post_max in win_range:
-                for pre_avg in win_range:
-                    for post_avg in win_range:
-                        for wait in win_range:
-                            for delta in [-1, 0.05, 100.0]:
-                                tf = __test
-                                if pre_max < 0:
-                                    tf = __test_fail
-                                if pre_avg < 0:
-                                    tf = __test_fail
-                                if delta < 0:
-                                    tf = __test_fail
-                                if wait < 0:
-                                    tf = __test_fail
-                                if post_max <= 0:
-                                    tf = __test_fail
-                                if post_avg <= 0:
-                                    tf = __test_fail
-                                yield (tf, n, pre_max, post_max,
-                                       pre_avg, post_avg, delta, wait)
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_peak_pick_shape_fail():
+    # Can't pick peaks on 2d inputs
+    librosa.util.peak_pick(np.eye(2), 1, 1, 1, 1, 0.5, 1)
 
 
 @pytest.mark.parametrize('ndim', [1, 2, pytest.mark.xfail(3, raises=librosa.ParameterError)])
