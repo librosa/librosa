@@ -183,60 +183,51 @@ def test_fix_frames_fail_negative(frames, x_min, x_max, pad):
     librosa.util.fix_frames(frames, x_min, x_max, pad)
 
 
-def test_normalize():
+@pytest.mark.parametrize('norm', [np.inf, -np.inf, 0, 0.5, 1.0, 2.0, None])
+@pytest.mark.parametrize('ndims,axis', [(1, 0), (1, -1), (2, 0), (2, 1), (2, -1),
+                                        (3, 0), (3, 1), (3, 2), (3, -1)])
+def test_normalize(ndims, norm, axis):
     srand()
+    X = np.random.randn(*([4] * ndims))
+    X_norm = librosa.util.normalize(X, norm=norm, axis=axis)
 
-    def __test_pass(X, norm, axis):
-        X_norm = librosa.util.normalize(X, norm=norm, axis=axis)
+    # Shape and dtype checks
+    assert X_norm.dtype == X.dtype
+    assert X_norm.shape == X.shape
 
-        # Shape and dtype checks
-        assert X_norm.dtype == X.dtype
-        assert X_norm.shape == X.shape
+    if norm is None:
+        assert np.allclose(X, X_norm)
+        return
 
-        if norm is None:
-            assert np.allclose(X, X_norm)
-            return
+    X_norm = np.abs(X_norm)
 
-        X_norm = np.abs(X_norm)
+    if norm == np.inf:
+        values = np.max(X_norm, axis=axis)
+    elif norm == -np.inf:
+        values = np.min(X_norm, axis=axis)
+    elif norm == 0:
+        # XXX: normalization here isn't quite right
+        values = np.ones(1)
 
-        if norm == np.inf:
-            values = np.max(X_norm, axis=axis)
-        elif norm == -np.inf:
-            values = np.min(X_norm, axis=axis)
-        elif norm == 0:
-            # XXX: normalization here isn't quite right
-            values = np.ones(1)
+    else:
+        values = np.sum(X_norm**norm, axis=axis)**(1./norm)
 
-        else:
-            values = np.sum(X_norm**norm, axis=axis)**(1./norm)
+    assert np.allclose(values, np.ones_like(values))
 
-        assert np.allclose(values, np.ones_like(values))
 
-    @pytest.mark.xfail(raises=librosa.ParameterError)
-    def _test_fail(X, norm, axis):
-        librosa.util.normalize(X, norm=norm, axis=axis)
+@pytest.mark.parametrize('norm', ['inf', -0.5, -2])
+@pytest.mark.parametrize('X', [np.ones((3,3))])
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_normalize_badnorm(X, norm):
+    librosa.util.normalize(X, norm=norm)
 
-    __test_fail = pytest.mark.xfail(_test_fail, raises=librosa.ParameterError)
 
-    for ndims in [1, 2, 3]:
-        X = np.random.randn(* ([16] * ndims))
-
-        for axis in range(X.ndim):
-            for norm in [np.inf, -np.inf, 0, 0.5, 1.0, 2.0, None]:
-                yield __test_pass, X, norm, axis
-
-            for norm in ['inf', -0.5, -2]:
-                yield __test_fail, X, norm, axis
-
-        # And test for non-finite failure
-        Xnan = X.copy()
-
-        Xnan[0] = np.nan
-        yield __test_fail, Xnan, np.inf, 0
-
-        Xinf = X.copy()
-        Xinf[0] = np.inf
-        yield __test_fail, Xinf, np.inf, 0
+@pytest.mark.parametrize('badval', [np.nan, np.inf, -np.inf])
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_normalize_bad_input(badval):
+    X = np.ones((3, 3))
+    X[0] = badval
+    librosa.util.normalize(X, norm=np.inf, axis=0)
 
 
 @pytest.mark.parametrize('x', [np.asarray([[0,1,2,3]])])
@@ -380,40 +371,26 @@ def test_match_intervals_nonstrict(int_from, int_to, matches):
     assert np.array_equal(matches, test_matches)
 
 
-def test_match_events():
+@pytest.mark.parametrize('n', [1, 5, 20, 100])
+@pytest.mark.parametrize('m', [1, 5, 20, 100])
+def test_match_events(n, m):
 
-    def __make_events(n):
-        srand()
-        return np.abs(np.random.randn(n))
+    srand()
+    ev1 = np.abs(np.random.randn(n))
+    ev2 = np.abs(np.random.randn(m))
 
-    def __is_best(y, ev1, ev2):
-        for i in range(len(y)):
-            values = np.asarray([np.abs(ev1[i] - e2) for e2 in ev2])
-            if np.any(values < values[y[i]]):
-                return False
+    match = librosa.util.match_events(ev1, ev2)
 
-        return True
+    for i in range(len(match)):
+        values = np.asarray([np.abs(ev1[i] - e2) for e2 in ev2])
+        assert not np.any(values < values[match[i]])
 
-    def __test(n, m):
-        ev1 = __make_events(n)
-        ev2 = __make_events(m)
 
-        y_pred = librosa.util.match_events(ev1, ev2)
-
-        assert __is_best(y_pred, ev1, ev2)
-
-    @pytest.mark.xfail(raises=librosa.ParameterError)
-    def __test_fail(n, m):
-        ev1 = __make_events(n)
-        ev2 = __make_events(m)
-        librosa.util.match_events(ev1, ev2)
-
-    for n in [0, 1, 5, 20, 100]:
-        for m in [0, 1, 5, 20, 100]:
-            if n == 0 or m == 0:
-                yield __test_fail, n, m
-            else:
-                yield __test, n, m
+@pytest.mark.parametrize('ev1,ev2', [(np.array([]), np.arange(5)),
+                                     (np.arange(5), np.array([]))])
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_match_events_failempty(ev1, ev2):
+    librosa.util.match_events(ev1, ev2)
 
 
 def test_match_events_onesided():
@@ -645,22 +622,21 @@ def test_valid_int_fail(x, cast):
     librosa.util.valid_int(x, cast)
 
 
-def test_valid_intervals():
+@pytest.mark.parametrize('ivals', [np.asarray([[0, 1], [1, 2]]),
+                                    np.asarray([[0, 0], [1, 1]]),
+                                    np.asarray([[0, 2], [1, 2]])])
+def test_valid_intervals(ivals):
+    librosa.util.valid_intervals(ivals)
 
-    def __test(intval):
-        librosa.util.valid_intervals(intval)
 
-    tf = pytest.mark.xfail(__test, raises=librosa.ParameterError)
-
-    for d in range(1, 4):
-        for n in range(1, 4):
-            ivals = np.ones(d * [n])
-            for m in range(1, 3):
-                slices = [slice(m)] * d
-                if m == 2 and d == 2 and n > 1:
-                    yield __test, ivals[tuple(slices)]
-                else:
-                    yield tf, ivals[tuple(slices)]
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('ivals', [np.asarray([]),   # ndim=0
+                                   np.arange(2),     # ndim=1
+                                   np.ones((2,2,2)), # ndim=3
+                                   np.ones((2, 3))])   # ndim=2, shape[1] != 2
+def test_valid_intervals_badshape(ivals):
+    #   fail if ndim != 2 or shape[1] != 2
+    librosa.util.valid_intervals(ivals)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
