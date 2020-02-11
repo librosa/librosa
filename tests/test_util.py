@@ -230,6 +230,13 @@ def test_normalize_bad_input(badval):
     librosa.util.normalize(X, norm=np.inf, axis=0)
 
 
+@pytest.mark.parametrize('fill', [7, 'foo'])
+@pytest.mark.parametrize('X', [np.ones((2,2))])
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_normalize_badfill(X, fill):
+    librosa.util.normalize(X, fill=fill)
+
+
 @pytest.mark.parametrize('x', [np.asarray([[0,1,2,3]])])
 @pytest.mark.parametrize('threshold, result', [(None, [[0, 1, 1, 1]]),
                                                 (1, [[0, 1, 1, 1]]),
@@ -248,63 +255,18 @@ def test_normalize_threshold_fail(x, threshold):
     librosa.util.normalize(x, threshold=threshold)
 
 
-def test_normalize_fill():
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_normalize_fill_l0():
+    X = np.ones((2,2))
+    librosa.util.normalize(X, fill=True, norm=0)
 
-    def __test(fill, norm, threshold, axis, x, result):
-        xn = librosa.util.normalize(x,
-                                    axis=axis,
-                                    fill=fill,
-                                    threshold=threshold,
-                                    norm=norm)
-        assert np.allclose(xn, result), (xn, np.asarray(result))
 
-    x = np.asarray([[0, 1, 2, 3]], dtype=np.float32)
-
-    axis = 0
-    norm = np.inf
-    threshold = 2
-    # Test with inf norm
-    yield __test, None, np.inf, 2, 0, x, [[0, 1, 1, 1]]
-    yield __test, False, np.inf, 2, 0, x, [[0, 0, 1, 1]]
-    yield __test, True, np.inf, 2, 0, x, [[1, 1, 1, 1]]
-
-    # Test with l0 norm
-    norm = 0
-    yield __test, None, 0, 2, 0, x, [[0, 1, 2, 3]]
-    yield __test, False, 0, 2, 0, x, [[0, 0, 0, 0]]
-
-    tf = pytest.mark.xfail(__test, raises=librosa.ParameterError)
-    yield tf, True, 0, 2, 0, x, [[0, 0, 0, 0]]
-
-    # Test with l1 norm
-    norm = 1
-    yield __test, None, 1, 2, 0, x, [[0, 1, 1, 1]]
-    yield __test, False, 1, 2, 0, x, [[0, 0, 1, 1]]
-    yield __test, True, 1, 2, 0, x, [[1, 1, 1, 1]]
-
-    # And with l2 norm
-    norm = 2
-    x = np.repeat(x, 2, axis=0)
-    s = np.sqrt(2)/2
-
-    # First two columns are left as is, second two map to sqrt(2)/2
-    yield __test, None, 2, 2, 0, x, [[0, 1, s, s], [0, 1, s, s]]
-
-    # First two columns are zeroed, second two map to sqrt(2)/2
-    yield __test, False, 2, 2, 0, x, [[0, 0, s, s], [0, 0, s, s]]
-
-    # All columns map to sqrt(2)/2
-    yield __test, True, 2, 2, 0, x, [[s, s, s, s], [s, s, s, s]]
-
-    # And test the bad-fill case
-    yield tf, 3, 2, 2, 0, x, x
-
-    # And an all-axes test
-    axis = None
-    threshold = None
-    norm = 2
-    yield __test, None, 2, None, None, np.asarray([[3, 0], [0, 4]]), np.asarray([[0, 0], [0, 0]])
-    yield __test, None, 2, None, None, np.asarray([[3., 0], [0, 4]]), np.asarray([[0.6, 0], [0, 0.8]])
+@pytest.mark.parametrize('X', [np.asarray([[0., 1], [0, 1]])])
+@pytest.mark.parametrize('norm,value', [(1, 0.5), (2, np.sqrt(2)/2), (np.inf, 1)])
+@pytest.mark.parametrize('threshold', [0.5, 2])
+def test_normalize_fill(X, threshold, norm, value):
+    Xn = librosa.util.normalize(X, fill=True, norm=norm, threshold=threshold)
+    assert np.allclose(Xn, value)
 
 
 @pytest.mark.parametrize('ndim', [pytest.mark.xfail(1, raises=librosa.ParameterError),
@@ -393,41 +355,38 @@ def test_match_events_failempty(ev1, ev2):
     librosa.util.match_events(ev1, ev2)
 
 
-def test_match_events_onesided():
+@pytest.mark.parametrize('events_from', [np.asarray([5, 15, 25])])
+@pytest.mark.parametrize('events_to', [np.asarray([0, 10, 20, 30])])
+@pytest.mark.parametrize('left,right,target', [(False, True, [10, 20, 30]),
+                                               (True, False, [0, 10, 20])])
+def test_match_events_onesided(events_from, events_to, left, right, target):
 
+    events_from = np.asarray(events_from)
+    events_to = np.asarray(events_to)
+    match = librosa.util.match_events(events_from, events_to,
+                                      left=left, right=right)
+
+    assert np.allclose(target, events_to[match])
+
+
+def test_match_events_twosided():
     events_from = np.asarray([5, 15, 25])
-    events_to = np.asarray([0, 10, 20, 30])
+    events_to = np.asarray([5, 15, 25, 30])
+    match = librosa.util.match_events(events_from, events_to,
+                                      left=False, right=False)
+    assert np.allclose(match, [0, 1, 2])
 
-    def __test(events_from, events_to, left, right, target):
-        match = librosa.util.match_events(events_from, events_to,
-                                          left=left, right=right)
 
-        assert np.allclose(target, events_to[match])
-
-    yield __test, events_from, events_to, False, True, [10, 20, 30]
-    yield __test, events_from, events_to, True, False, [0, 10, 20]
-
-    # Make a right-sided fail
-    tf = pytest.mark.xfail(__test, raises=librosa.ParameterError)
-
-    ef = events_from.copy()
-    ef[0] = 40
-    yield tf, ef, events_to, False, True, [10, 20, 30]
-
-    # Make a left-sided fail
-    ef = events_from.copy()
-    ef[0] = -1
-    yield tf, ef, events_to, True, False, [10, 20, 30]
-
-    # Make a two-sided fail
-    ef = events_from.copy()
-    ef[0] = -1
-    yield tf, ef, events_to, False, False, [10, 20, 30]
-
-    # Make a two-sided success
-    et = events_to.copy()
-    et[:-1] = events_from
-    yield __test, events_from, et, False, False, events_from
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('events_from,events_to,left,right',
+                        [([40, 15, 25], [0, 10, 20, 30], False, True),  # right-sided fail
+                         ([-1, 15, 25], [0, 10, 20, 30], True, False),  # left-sided fail
+                         ([-1, 15, 25], [0, 10, 20, 30], False, False), # two-sided fail
+                         ])
+def test_match_events_onesided_fail(events_from, events_to, left, right):
+    events_from = np.asarray(events_from)
+    events_to = np.asarray(events_to)
+    librosa.util.match_events(events_from, events_to, left=left, right=right)
 
 
 @pytest.mark.parametrize('ndim, axis', [(n, m) for n in range(1, 5) for m in range(n)])
@@ -547,58 +506,54 @@ def test_sparsify_rows(ndim, d, q):
     assert np.all(v_out >= (1.0 - q) * v_in)
 
 
-def test_files():
+@pytest.mark.parametrize('searchdir', [os.path.join(os.path.curdir, 'tests'),
+                                       os.path.join(os.path.curdir, 'tests', 'data')])
+@pytest.mark.parametrize('ext', [None, 'wav', 'WAV', ['wav'], ['WAV']])
+@pytest.mark.parametrize('recurse', [True])
+@pytest.mark.parametrize('case_sensitive', list({False} | {platform.system() != 'Windows'}))
+@pytest.mark.parametrize('limit', [None, 1, 2])
+@pytest.mark.parametrize('offset', [0, 1, -1])
+@pytest.mark.parametrize('output', [[os.path.join(os.path.abspath(os.path.curdir), 'tests', 'data', s)
+                                     for s in ['test1_22050.mp3',
+                                               'test1_22050.wav',
+                                               'test1_44100.wav',
+                                               'test2_8000.wav']]])
+def test_find_files(searchdir, ext, recurse, case_sensitive, limit, offset, output):
+    files = librosa.util.find_files(searchdir,
+                                    ext=ext,
+                                    recurse=recurse,
+                                    case_sensitive=case_sensitive,
+                                    limit=limit,
+                                    offset=offset)
 
-    # Expected output
-    output = [os.path.join(os.path.abspath(os.path.curdir), 'tests', 'data', s)
-              for s in ['test1_22050.mp3',
-                        'test1_22050.wav',
-                        'test1_44100.wav',
-                        'test2_8000.wav']]
+    targets = output
+    if ext is not None:
+        # If we're only seeking wavs, bump off the mp3 file
+        targets = targets[1:]
 
-    def __test(searchdir, ext, recurse, case_sensitive, limit, offset):
-        files = librosa.util.find_files(searchdir,
-                                        ext=ext,
-                                        recurse=recurse,
-                                        case_sensitive=case_sensitive,
-                                        limit=limit,
-                                        offset=offset)
+    s1 = slice(offset, None)
+    s2 = slice(limit)
 
-        targets = output
-        if ext is not None:
-            # If we're only seeking wavs, bump off the mp3 file
-            targets = targets[1:]
-
-        s1 = slice(offset, None)
-        s2 = slice(limit)
-
+    if case_sensitive and ext not in (None, 'wav', ['wav']):
+        assert len(files) == 0
+    else:
         assert set(files) == set(targets[s1][s2])
 
-    if platform.system() == 'Windows':
-        cases = [False]
-    else:
-        cases = [False, True]
 
-    for searchdir in [os.path.join(os.path.curdir, 'tests'),
-                      os.path.join(os.path.curdir, 'tests', 'data')]:
-        for ext in [None, 'wav', 'WAV', ['wav'], ['WAV']]:
-            for recurse in [False, True]:
-                for case_sensitive in cases:
-                    for limit in [None, 1, 2]:
-                        for offset in [0, 1, -1]:
-                            tf = __test
+def test_find_files_nonrecurse():
+    files = librosa.util.find_files(os.path.join(os.path.curdir, 'tests'),
+                                    recurse=False)
+    assert len(files) == 0
 
-                            if searchdir == os.path.join(os.path.curdir, 'tests') and not recurse:
-                                tf = pytest.mark.xfail(__test, raises=AssertionError)
 
-                            if (ext is not None and case_sensitive and
-                                    (ext == 'WAV' or
-                                     set(ext) == set(['WAV']))):
-
-                                tf = pytest.mark.xfail(__test, raises=AssertionError)
-
-                            yield (tf, searchdir, ext, recurse,
-                                   case_sensitive, limit, offset)
+# fail if ext is not none, we're case-sensitive, and looking for WAV
+@pytest.mark.parametrize('ext', ['WAV', ['WAV']])
+def test_find_files_case_sensitive(ext):
+    files = librosa.util.find_files(os.path.join(os.path.curdir, 'tests'),
+                                    ext=ext, case_sensitive=True)
+    # On windows, this test won't work
+    if platform.system() != 'Windows':
+        assert len(files) == 0
 
 
 @pytest.mark.parametrize('x_in', np.linspace(-2, 2, num=6))
