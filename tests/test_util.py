@@ -261,6 +261,23 @@ def test_normalize_fill_l0():
     librosa.util.normalize(X, fill=True, norm=0)
 
 
+@pytest.mark.parametrize('norm', [1, 2, np.inf])
+@pytest.mark.parametrize('X', [np.zeros((3,3))])
+def test_normalize_fill_allaxes(X, norm):
+    Xn = librosa.util.normalize(X, fill=True, axis=None, norm=norm)
+    if norm is np.inf:
+        assert np.allclose(Xn, 1)
+    else:
+        assert np.allclose(np.sum(Xn**norm)**(1./norm), 1)
+
+
+@pytest.mark.parametrize('norm', [1, 2, np.inf])
+@pytest.mark.parametrize('X', [np.zeros((3,3))])
+def test_normalize_nofill(X, norm):
+    Xn = librosa.util.normalize(X, fill=False, norm=norm)
+    assert np.allclose(Xn, 0)
+
+
 @pytest.mark.parametrize('X', [np.asarray([[0., 1], [0, 1]])])
 @pytest.mark.parametrize('norm,value', [(1, 0.5), (2, np.sqrt(2)/2), (np.inf, 1)])
 @pytest.mark.parametrize('threshold', [0.5, 2])
@@ -269,9 +286,17 @@ def test_normalize_fill(X, threshold, norm, value):
     assert np.allclose(Xn, value)
 
 
-@pytest.mark.parametrize('ndim', [pytest.mark.xfail(1, raises=librosa.ParameterError),
-                                  2,
-                                  pytest.mark.xfail(3, raises=librosa.ParameterError)])
+@pytest.mark.parametrize('ndim', [1, 3])
+@pytest.mark.parametrize('axis', [0, 1, -1])
+@pytest.mark.parametrize('index', [False, True])
+@pytest.mark.parametrize('value', [None, np.min, np.mean, np.max])
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_axis_sort_badndim(ndim, axis, index, value):
+    data = np.zeros([2] * ndim)
+    librosa.util.axis_sort(data, axis=axis, index=index, value=value)
+
+
+@pytest.mark.parametrize('ndim', [2])
 @pytest.mark.parametrize('axis', [0, 1, -1])
 @pytest.mark.parametrize('index', [False, True])
 @pytest.mark.parametrize('value', [None, np.min, np.mean, np.max])
@@ -314,10 +339,16 @@ def test_match_intervals_empty(int_from, int_to):
     librosa.util.match_intervals(int_from, int_to)
 
 
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_match_intervals_strict_fail():
+    int_from = np.asarray([[0, 3], [2, 4], [5, 7]])
+    int_to = np.asarray([[0, 2], [0, 4]])
+    librosa.util.match_intervals(int_from, int_to, strict=True)
+
+
 @pytest.mark.parametrize('int_from', [np.asarray([[0, 3], [2, 4], [5, 7]])])
-@pytest.mark.parametrize('int_to', [np.asarray([[0, 2], [0, 4], [3, 6]]),
-                                    pytest.mark.xfail(np.asarray([[0, 2], [0, 4]]),
-                                                      raises=librosa.ParameterError)])
+@pytest.mark.parametrize('int_to', [np.asarray([[0, 2], [0, 4], [3, 6]])])
 @pytest.mark.parametrize('matches', [np.asarray([1, 1, 2])])
 def test_match_intervals_strict(int_from, int_to, matches):
 
@@ -472,12 +503,23 @@ def test_peak_pick_shape_fail():
     librosa.util.peak_pick(np.eye(2), 1, 1, 1, 1, 0.5, 1)
 
 
-@pytest.mark.parametrize('ndim', [1, 2, pytest.mark.xfail(3, raises=librosa.ParameterError)])
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('ndim', [3, 4])
+def test_sparsify_rows_ndimfail(ndim):
+    X = np.zeros([2] * ndim)
+    librosa.util.sparsify_rows(X)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('quantile', [1.0, -1, 2.0])
+@pytest.mark.parametrize('X', [np.ones((3, 3))])
+def test_sparsify_rows_badquantile(X, quantile):
+    librosa.util.sparsify_rows(X, quantile=quantile)
+
+
+@pytest.mark.parametrize('ndim', [1, 2])
 @pytest.mark.parametrize('d', [1, 5, 10, 100])
-@pytest.mark.parametrize('q', [0., 0.01, 0.25, 0.5, 0.99,
-                               pytest.mark.xfail(1.0, raises=librosa.ParameterError),
-                               pytest.mark.xfail(-1, raises=librosa.ParameterError),
-                               pytest.mark.xfail(2.0, raises=librosa.ParameterError)])
+@pytest.mark.parametrize('q', [0., 0.01, 0.25, 0.5, 0.99])
 def test_sparsify_rows(ndim, d, q):
     srand()
 
@@ -723,7 +765,7 @@ def test_index_to_slice(idx, idx_min, idx_max, step, pad):
         assert sl.step == step
 
 
-def test_sync():
+def not_test_sync():
 
     def __test_pass(axis, data, idx):
         # By default, mean aggregation
