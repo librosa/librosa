@@ -4,13 +4,14 @@
 
 import scipy.ndimage
 import scipy.sparse
-import six
 
 import numpy as np
+import numba
 from numpy.lib.stride_tricks import as_strided
 
 from .._cache import cache
 from .exceptions import ParameterError
+from .decorators import deprecated
 
 # Constrain STFT block sizes to 256 KB
 MAX_MEM_BLOCK = 2**8 * 2**10
@@ -22,89 +23,183 @@ __all__ = ['MAX_MEM_BLOCK',
            'axis_sort', 'localmax', 'normalize',
            'peak_pick',
            'sparsify_rows',
-           'roll_sparse',
+           'shear', 'stack',
            'fill_off_diagonal',
            'index_to_slice',
            'sync',
            'softmask',
            'buf_to_float',
-           'tiny']
+           'tiny',
+           'cyclic_gradient']
 
 
-def frame(y, frame_length=2048, hop_length=512):
-    '''Slice a time series into overlapping frames.
+def frame(x, frame_length=2048, hop_length=512, axis=-1):
+    '''Slice a data array into (overlapping) frames.
 
     This implementation uses low-level stride manipulation to avoid
-    redundant copies of the time series data.
+    making a copy of the data.  The resulting frame representation
+    is a new view of the input data.
+
+    For example, a one-dimensional input `x = [0, 1, 2, 3, 4, 5, 6]`
+    can be framed with frame length 3 and hop length 2 in two ways.
+    The first (`axis=-1`), results in the array `x_frames`:
+
+    [[0, 2, 4],
+     [1, 3, 5],
+     [2, 4, 6]]
+
+    where each column `x_frames[:, i]` contains a contiguous slice of
+    the input `x[i * hop_length : i * hop_length + frame_length]`.
+
+    The second way (`axis=0`) results in the array `x_frames`:
+
+    [[0, 1, 2],
+     [2, 3, 4],
+     [4, 5, 6]]
+
+    where each row `x_frames[i]` contains a contiguous slice of the input.
+
+    This generalizes to higher dimensional inputs, as shown in the examples below.
+    In general, the framing operation increments by 1 the number of dimensions,
+    adding a new "frame axis" either to the end of the array (`axis=-1`)
+    or the beginning of the array (`axis=0`).
+
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        Time series to frame. Must be one-dimensional and contiguous
-        in memory.
+    x : np.ndarray
+        Time series to frame. Must be contiguous in memory, see the "Raises"
+        section below for more information.
 
     frame_length : int > 0 [scalar]
-        Length of the frame in samples
+        Length of the frame
 
     hop_length : int > 0 [scalar]
-        Number of samples to hop between frames
+        Number of steps to advance between frames
+
+    axis : 0 or -1
+        The axis along which to frame.
+
+        If `axis=-1` (the default), then `x` is framed along its last dimension.
+        `x` must be "F-contiguous" in this case.
+
+        If `axis=0`, then `x` is framed along its first dimension.
+        `x` must be "C-contiguous" in this case.
 
     Returns
     -------
-    y_frames : np.ndarray [shape=(frame_length, N_FRAMES)]
-        An array of frames sampled from `y`:
-        `y_frames[i, j] == y[j * hop_length + i]`
+    x_frames : np.ndarray [shape=(..., frame_length, N_FRAMES) or (N_FRAMES, frame_length, ...)]
+        A framed view of `x`, for example with `axis=-1` (framing on the last dimension):
+        `x_frames[..., j] == x[..., j * hop_length : j * hop_length + frame_length]`
+
+        If `axis=0` (framing on the first dimension), then:
+        `x_frames[j] = x[j * hop_length : j * hop_length + frame_length]`
 
     Raises
     ------
     ParameterError
-        If `y` is not contiguous in memory, not an `np.ndarray`, or
-        not one-dimensional.  See `np.ascontiguous()` for details.
+        If `x` is not contiguous in memory or not an `np.ndarray`.
+
+        If `x.shape[axis] < frame_length`, there is not enough data to fill one frame.
 
         If `hop_length < 1`, frames cannot advance.
 
-        If `len(y) < frame_length`.
+        If `axis` is not 0 or -1.  Framing is only supported along the first or last axis.
+            If `axis=-1` (the default), then `x` must be "F-contiguous".
+            If `axis=0`, then `x` must be "C-contiguous".
+
+        If the contiguity of `x` is incompatible with the framing axis.
+
+    See Also
+    --------
+    np.asfortranarray : Convert data to F-contiguous representation
+    np.ascontiguousarray : Convert data to C-contiguous representation
+    np.ndarray.flags : information about the memory layout of a numpy `ndarray`.
 
     Examples
     --------
-    Extract 2048-sample frames from `y` with a hop of 64 samples per frame
+    Extract 2048-sample frames from monophonic `y` with a hop of 64 samples per frame
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> librosa.util.frame(y, frame_length=2048, hop_length=64)
-    array([[ -9.216e-06,   7.710e-06, ...,  -2.117e-06,  -4.362e-07],
-           [  2.518e-06,  -6.294e-06, ...,  -1.775e-05,  -6.365e-06],
+    >>> frames = librosa.util.frame(y, frame_length=2048, hop_length=64)
+    >>> frames
+    array([[ 0.000e+00,  0.000e+00, ..., -2.448e-06, -6.789e-07],
+           [ 0.000e+00,  0.000e+00, ..., -1.399e-05,  1.004e-06],
            ...,
-           [ -7.429e-04,   5.173e-03, ...,   1.105e-05,  -5.074e-06],
-           [  2.169e-03,   4.867e-03, ...,   3.666e-06,  -5.571e-06]], dtype=float32)
+           [-7.352e-04,  5.162e-03, ...,  0.000e+00,  0.000e+00],
+           [ 2.168e-03,  4.870e-03, ...,  0.000e+00,  0.000e+00]],
+          dtype=float32)
+    >>> y.shape
+    (1355168,)
+    >>> frames.shape
+    (2048, 21143)
 
+    Or frame along the first axis instead of the last:
+
+    >>> frames = librosa.util.frame(y, frame_length=2048, hop_length=64, axis=0)
+    >>> frames.shape
+    (21143, 2048)
+
+    Frame a stereo signal:
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), mono=False)
+    >>> y.shape
+    (2, 1355168)
+    >>> frames = librosa.util.frame(y, frame_length=2048, hop_length=64)
+    (2, 2048, 21143)
+
+    Carve an STFT into fixed-length patches of 32 frames with 50% overlap
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> S = np.abs(librosa.stft(y))
+    >>> S.shape
+    (1025, 2647)
+    >>> S_patch = librosa.util.frame(S, frame_length=32, hop_length=16)
+    >>> S_patch.shape
+    (1025, 32, 82)
+    >>> # The first patch contains the first 32 frames of S
+    >>> np.allclose(S_patch[:, :, 0], S[:, :32])
+    True
+    >>> # The second patch contains frames 16 to 16+32=48, and so on
+    >>> np.allclose(S_patch[:, :, 1], S[:, 16:48])
+    True
     '''
 
-    if not isinstance(y, np.ndarray):
+    if not isinstance(x, np.ndarray):
         raise ParameterError('Input must be of type numpy.ndarray, '
-                             'given type(y)={}'.format(type(y)))
+                             'given type(x)={}'.format(type(x)))
 
-    if y.ndim != 1:
-        raise ParameterError('Input must be one-dimensional, '
-                             'given y.ndim={}'.format(y.ndim))
-
-    if len(y) < frame_length:
-        raise ParameterError('Buffer is too short (n={:d})'
-                             ' for frame_length={:d}'.format(len(y), frame_length))
+    if x.shape[axis] < frame_length:
+        raise ParameterError('Input is too short (n={:d})'
+                             ' for frame_length={:d}'.format(x.shape[axis], frame_length))
 
     if hop_length < 1:
         raise ParameterError('Invalid hop_length: {:d}'.format(hop_length))
 
-    if not y.flags['C_CONTIGUOUS']:
-        raise ParameterError('Input buffer must be contiguous.')
+    n_frames = 1 + (x.shape[axis] - frame_length) // hop_length
+    strides = np.asarray(x.strides)
 
-    # Compute the number of frames that will fit. The end may get truncated.
-    n_frames = 1 + int((len(y) - frame_length) / hop_length)
+    new_stride = np.prod(strides[strides > 0] // x.itemsize) * x.itemsize
 
-    # Vertical stride is one sample
-    # Horizontal stride is `hop_length` samples
-    y_frames = as_strided(y, shape=(frame_length, n_frames),
-                          strides=(y.itemsize, hop_length * y.itemsize))
-    return y_frames
+    if axis == -1:
+        if not x.flags['F_CONTIGUOUS']:
+            raise ParameterError('Input array must be F-contiguous '
+                                 'for framing along axis={}'.format(axis))
+
+        shape = list(x.shape)[:-1] + [frame_length, n_frames]
+        strides = list(strides) + [hop_length * new_stride]
+
+    elif axis == 0:
+        if not x.flags['C_CONTIGUOUS']:
+            raise ParameterError('Input array must be C-contiguous '
+                                 'for framing along axis={}'.format(axis))
+
+        shape = [n_frames, frame_length] + list(x.shape)[1:]
+        strides = [hop_length * new_stride] + list(strides)
+    else:
+        raise ParameterError('Frame axis={} must be either 0 or -1'.format(axis))
+
+    return as_strided(x, shape=shape, strides=strides)
 
 
 @cache(level=20)
@@ -128,12 +223,13 @@ def valid_audio(y, mono=True):
     Raises
     ------
     ParameterError
-        If `y` fails to meet the following criteria:
-            - `type(y)` is `np.ndarray`
-            - `y.dtype` is floating-point
+        In any of these cases:
+            - `type(y)` is not `np.ndarray`
+            - `y.dtype` is not floating-point
             - `mono == True` and `y.ndim` is not 1
             - `mono == False` and `y.ndim` is not 1 or 2
-            - `np.isfinite(y).all()` is not True
+            - `np.isfinite(y).all()` is False
+            - `y.flags["F_CONTIGUOUS"]` is False
 
     Notes
     -----
@@ -141,33 +237,44 @@ def valid_audio(y, mono=True):
 
     Examples
     --------
-    >>> # Only allow monophonic signals
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> librosa.util.valid_audio(y)
+    >>> # By default, valid_audio allows only mono signals
+    >>> filepath = librosa.util.example_audio_file()
+    >>> y_mono, sr = librosa.load(filepath, mono=True)
+    >>> y_stereo, _ = librosa.load(filepath, mono=False)
+    >>> librosa.util.valid_audio(y_mono), librosa.util.valid_audio(y_stereo)
+    True, False
+
+    >>> # To allow stereo signals, set mono=False
+    >>> librosa.util.valid_audio(y_stereo, mono=False)
     True
 
-    >>> # If we want to allow stereo signals
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(), mono=False)
-    >>> librosa.util.valid_audio(y, mono=False)
-    True
+    See also
+    --------
+    stack
+    numpy.asfortranarray
+    numpy.float32
     '''
 
     if not isinstance(y, np.ndarray):
-        raise ParameterError('data must be of type numpy.ndarray')
+        raise ParameterError('Audio data must be of type numpy.ndarray')
 
     if not np.issubdtype(y.dtype, np.floating):
-        raise ParameterError('data must be floating-point')
+        raise ParameterError('Audio data must be floating-point')
 
     if mono and y.ndim != 1:
         raise ParameterError('Invalid shape for monophonic audio: '
                              'ndim={:d}, shape={}'.format(y.ndim, y.shape))
 
     elif y.ndim > 2 or y.ndim == 0:
-        raise ParameterError('Audio must have shape (samples,) or (channels, samples). '
+        raise ParameterError('Audio data must have shape (samples,) or (channels, samples). '
                              'Received shape={}'.format(y.shape))
 
     if not np.isfinite(y).all():
         raise ParameterError('Audio buffer is not finite everywhere')
+
+    if not y.flags["F_CONTIGUOUS"]:
+        raise ParameterError('Audio buffer is not Fortran-contiguous. '
+            'Use numpy.asfortranarray to ensure Fortran contiguity.')
 
     return True
 
@@ -200,7 +307,7 @@ def valid_int(x, cast=None):
     if cast is None:
         cast = np.floor
 
-    if not six.callable(cast):
+    if not callable(cast):
         raise ParameterError('cast parameter must be callable')
 
     return int(cast(x))
@@ -496,6 +603,7 @@ def axis_sort(S, axis=-1, index=False, value=None):
     >>> librosa.display.specshow(H_sort, x_axis='time')
     >>> plt.title('H sorted')
     >>> plt.tight_layout()
+    >>> plt.show()
 
 
     Parameters
@@ -902,8 +1010,7 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
            510, 525, 536, 555, 570, 590, 609, 625, 639])
 
     >>> import matplotlib.pyplot as plt
-    >>> times = librosa.frames_to_time(np.arange(len(onset_env)),
-    ...                                sr=sr, hop_length=512)
+    >>> times = librosa.times_like(onset_env, sr=sr, hop_length=512)
     >>> plt.figure()
     >>> ax = plt.subplot(2, 1, 2)
     >>> D = librosa.stft(y)
@@ -917,6 +1024,7 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     >>> plt.legend(frameon=True, framealpha=0.8)
     >>> plt.axis('tight')
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
 
     if pre_max < 0:
@@ -1096,75 +1204,6 @@ def sparsify_rows(x, quantile=0.01):
         x_sparse[i, idx] = x[i, idx]
 
     return x_sparse.tocsr()
-
-
-def roll_sparse(x, shift, axis=0):
-    '''Sparse matrix roll
-
-    This operation is equivalent to ``numpy.roll``, but operates on sparse matrices.
-
-    Parameters
-    ----------
-    x : scipy.sparse.spmatrix or np.ndarray
-        The sparse matrix input
-
-    shift : int
-        The number of positions to roll the specified axis
-
-    axis : (0, 1, -1)
-        The axis along which to roll.
-
-    Returns
-    -------
-    x_rolled : same type as `x`
-        The rolled matrix, with the same format as `x`
-
-    See Also
-    --------
-    numpy.roll
-
-    Examples
-    --------
-    >>> # Generate a random sparse binary matrix
-    >>> X = scipy.sparse.lil_matrix(np.random.randint(0, 2, size=(5,5)))
-    >>> X_roll = roll_sparse(X, 2, axis=0)  # Roll by 2 on the first axis
-    >>> X_dense_r = roll_sparse(X.toarray(), 2, axis=0)  # Equivalent dense roll
-    >>> np.allclose(X_roll, X_dense_r.toarray())
-    True
-    '''
-    if not scipy.sparse.isspmatrix(x):
-        return np.roll(x, shift, axis=axis)
-
-    # shift-mod-length lets us have shift > x.shape[axis]
-    if axis not in [0, 1, -1]:
-        raise ParameterError('axis must be one of (0, 1, -1)')
-
-    shift = np.mod(shift, x.shape[axis])
-
-    if shift == 0:
-        return x.copy()
-
-    fmt = x.format
-    if axis == 0:
-        x = x.tocsc()
-    elif axis in (-1, 1):
-        x = x.tocsr()
-
-    # lil matrix to start
-    x_r = scipy.sparse.lil_matrix(x.shape, dtype=x.dtype)
-
-    idx_in = [slice(None)] * x.ndim
-    idx_out = [slice(None)] * x_r.ndim
-
-    idx_in[axis] = slice(0, -shift)
-    idx_out[axis] = slice(shift, None)
-    x_r[tuple(idx_out)] = x[tuple(idx_in)]
-
-    idx_out[axis] = slice(0, shift)
-    idx_in[axis] = slice(-shift, None)
-    x_r[tuple(idx_out)] = x[tuple(idx_in)]
-
-    return x_r.asformat(fmt)
 
 
 def buf_to_float(x, n_bytes=2, dtype=np.float32):
@@ -1357,6 +1396,7 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     >>> plt.title('Sub-beat synchronous CQT power, '
     ...           'shape={}'.format(C_med_sub.shape))
     >>> plt.tight_layout()
+    >>> plt.show()
 
     """
 
@@ -1638,3 +1678,276 @@ def fill_off_diagonal(x, radius, value=0):
     # modify input matrix
     x[idx_u] = value
     x[idx_l] = value
+
+
+def cyclic_gradient(data, edge_order=1, axis=-1):
+    '''Estimate the gradient of a function over a uniformly sampled,
+    periodic domain.
+
+    This is essentially the same as `np.gradient`, except that edge effects
+    are handled by wrapping the observations (i.e. assuming periodicity)
+    rather than extrapolation.
+
+    Parameters
+    ----------
+    data : np.ndarray
+        The function values observed at uniformly spaced positions on
+        a periodic domain
+
+    edge_order: {1, 2}
+        The order of the difference approximation used for estimating
+        the gradient
+
+    axis : int
+        The axis along which gradients are calculated.
+
+    Returns
+    -------
+    grad : np.ndarray like `data`
+        The gradient of `data` taken along the specified axis.
+
+    See Also
+    --------
+    np.gradient
+
+    Examples
+    --------
+    This example estimates the gradient of cosine (-sine) from 64
+    samples using direct (aperiodic) and periodic gradient
+    calculation.
+
+    >>> import matplotlib.pyplot as plt
+    >>> x = 2 * np.pi * np.linspace(0, 1, num=64, endpoint=False)
+    >>> y = np.cos(x)
+    >>> grad = np.gradient(y)
+    >>> cyclic_grad = librosa.util.cyclic_gradient(y)
+    >>> true_grad = -np.sin(x) * 2 * np.pi / len(x)
+    >>> plt.plot(x, true_grad, label='True gradient', linewidth=5,
+    ...          alpha=0.35)
+    >>> plt.plot(x, cyclic_grad, label='cyclic_gradient')
+    >>> plt.plot(x, grad, label='np.gradient', linestyle=':')
+    >>> plt.legend()
+    >>> # Zoom into the first part of the sequence
+    >>> plt.xlim([0, np.pi/16])
+    >>> plt.ylim([-0.025, 0.025])
+    >>> plt.show()
+    '''
+    # Wrap-pad the data along the target axis by `edge_order` on each side
+    padding = [(0, 0)] * data.ndim
+    padding[axis] = (edge_order, edge_order)
+    data_pad = np.pad(data, padding, mode='wrap')
+
+    # Compute the gradient
+    grad = np.gradient(data_pad, edge_order=edge_order, axis=axis)
+
+    # Remove the padding
+    slices = [slice(None)] * data.ndim
+    slices[axis] = slice(edge_order, -edge_order)
+    return grad[tuple(slices)]
+
+
+@numba.jit(nopython=True, cache=True)
+def __shear_dense(X, factor=+1, axis=-1):
+    '''Numba-accelerated shear for dense (ndarray) arrays'''
+
+    if axis == 0:
+        X = X.T
+
+    X_shear = np.empty_like(X)
+
+    for i in range(X.shape[1]):
+        X_shear[:, i] = np.roll(X[:, i], factor * i)
+
+    if axis == 0:
+        X_shear = X_shear.T
+
+    return X_shear
+
+
+def __shear_sparse(X, factor=+1, axis=-1):
+    '''Fast shearing for sparse matrices
+
+    Shearing is performed using CSC array indices,
+    and the result is converted back to whatever sparse format
+    the data was originally provided in.
+    '''
+    fmt = X.format
+    if axis == 0:
+        X = X.T
+
+    # Now we're definitely rolling on the correct axis
+    X_shear = X.tocsc(copy=True)
+
+    # The idea here is to repeat the shear amount (factor * range)
+    # by the number of non-zeros for each column.
+    # The number of non-zeros is computed by diffing the index pointer array
+    roll = np.repeat(factor * np.arange(X_shear.shape[1]), np.diff(X_shear.indptr))
+
+    # In-place roll
+    np.mod(X_shear.indices + roll, X_shear.shape[0], out=X_shear.indices)
+
+    if axis == 0:
+        X_shear = X_shear.T
+
+    # And convert back to the input format
+    return X_shear.asformat(fmt)
+
+
+def shear(X, factor=1, axis=-1):
+    '''Shear a matrix by a given factor.
+
+    The `n`th column `X[:, n]` will be displaced (rolled)
+    by `factor * n`.
+
+    This is primarily useful for converting between lag and recurrence
+    representations: shearing with `factor=-1` converts the main diagonal
+    to a horizontal.  Shearing with `factor=1` converts a horizontal to
+    a diagonal.
+
+
+    Parameters
+    ----------
+    X : np.ndarray [ndim=2] or scipy.sparse matrix
+        The array to be sheared
+
+    factor : integer
+        The shear factor: `X[:, n] -> np.roll(X[:, n], factor * n)`
+
+    axis : integer
+        The axis along which to shear
+
+    Returns
+    -------
+    X_shear : same type as `X`
+        The sheared matrix
+
+    Examples
+    --------
+    >>> E = np.eye(3)
+    >>> librosa.util.shear(E, factor=-1, axis=-1)
+    array([[1., 1., 1.],
+           [0., 0., 0.],
+           [0., 0., 0.]])
+    >>> librosa.util.shear(E, factor=-1, axis=0)
+    array([[1., 0., 0.],
+           [1., 0., 0.],
+           [1., 0., 0.]])
+    >>> librosa.util.shear(E, factor=1, axis=-1)
+    array([[1., 0., 0.],
+           [0., 0., 1.],
+           [0., 1., 0.]])
+    '''
+
+    if not np.issubdtype(type(factor), np.integer):
+        raise ParameterError('factor={} must be integer-valued'.format(factor))
+
+    if scipy.sparse.isspmatrix(X):
+        return __shear_sparse(X, factor=factor, axis=axis)
+    else:
+        return __shear_dense(X, factor=factor, axis=axis)
+
+
+def stack(arrays, axis=0):
+    '''Stack one or more arrays along a target axis.
+
+    This function is similar to `np.stack`, except that memory contiguity is
+    retained when stacking along the first dimension.
+
+    This is useful when combining multiple monophonic audio signals into a
+    multi-channel signal, or when stacking multiple feature representations
+    to form a multi-dimensional array.
+
+    Parameters
+    ----------
+    arrays : list
+        one or more `np.ndarray`
+
+    axis : integer
+        The target axis along which to stack.  `axis=0` creates a new first axis,
+        and `axis=-1` creates a new last axis.
+
+
+    Returns
+    -------
+    arr_stack : np.ndarray [shape=(len(arrays), array_shape) or shape=(array_shape, len(arrays))]
+        The input arrays, stacked along the target dimension.
+
+        If `axis=0`, then `arr_stack` will be F-contiguous.
+        Otherwise, `arr_stack` will be C-contiguous by default, as computed by
+        `np.stack`.
+
+    Raises
+    ------
+    ParameterError
+
+        - If `arrays` do not all have the same shape
+        - If no `arrays` are given
+
+    See Also
+    --------
+    np.stack
+    np.ndarray.flags
+    frame
+
+    Examples
+    --------
+    Combine two buffers into a contiguous arrays
+
+    >>> y_left = np.ones(5)
+    >>> y_right = -np.ones(5)
+    >>> y_stereo = librosa.util.stack([y_left, y_right], axis=0)
+    >>> y_stereo
+    array([[ 1.,  1.,  1.,  1.,  1.],
+           [-1., -1., -1., -1., -1.]])
+    >>> y_stereo.flags
+      C_CONTIGUOUS : False
+      F_CONTIGUOUS : True
+      OWNDATA : True
+      WRITEABLE : True
+      ALIGNED : True
+      WRITEBACKIFCOPY : False
+      UPDATEIFCOPY : False
+
+    Or along the trailing axis
+
+    >>> y_stereo = librosa.util.stack([y_left, y_right], axis=-1)
+    >>> y_stereo
+    array([[ 1., -1.],
+           [ 1., -1.],
+           [ 1., -1.],
+           [ 1., -1.],
+           [ 1., -1.]])
+    >>> y_stereo.flags
+      C_CONTIGUOUS : True
+      F_CONTIGUOUS : False
+      OWNDATA : True
+      WRITEABLE : True
+      ALIGNED : True
+      WRITEBACKIFCOPY : False
+      UPDATEIFCOPY : False
+    '''
+
+    shapes = {arr.shape for arr in arrays}
+    if len(shapes) > 1:
+        raise ParameterError('all input arrays must have the same shape')
+    elif len(shapes) < 1:
+        raise ParameterError('at least one input array must be provided for stack')
+
+    shape_in = shapes.pop()
+
+    if axis != 0:
+        return np.stack(arrays, axis=axis)
+    else:
+        # If axis is 0, enforce F-ordering
+        shape = tuple([len(arrays)] + list(shape_in))
+
+        # Find the common dtype for all inputs
+        dtype = np.find_common_type([arr.dtype for arr in arrays], [])
+
+        # Allocate an empty array of the right shape and type
+        result = np.empty(shape, dtype=dtype, order='F')
+
+        # Stack into the preallocated buffer
+        np.stack(arrays, axis=axis, out=result)
+
+        return result

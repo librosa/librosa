@@ -57,7 +57,7 @@ As a result, application code may run faster at the expense of larger disk usage
 
 The caching levels are described as follows:
 
-    - 10: filter bases, independent of audio data (dct, mel, chroma, constant-q)
+    - 10: filter bases, independent of audio data (mel, chroma, constant-q)
     - 20: low-level features (cqt, stft, zero-crossings, etc)
     - 30: high-level features (tempo, beats, decomposition, recurrence, etc)
     - 40: post-processing (delta, stack_memory, normalize, sync)

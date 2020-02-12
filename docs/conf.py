@@ -69,9 +69,10 @@ sphinx_gallery_conf = {
             'numpy': 'http://docs.scipy.org/doc/numpy/',
             'np': 'http://docs.scipy.org/doc/numpy/',
             'scipy': 'http://docs.scipy.org/doc/scipy/reference',
-            'matplotlib': 'http://matplotlib.org/',
-            'sklearn': 'http://scikit-learn.org/stable',
+            'matplotlib': 'https://matplotlib.org/',
+            'sklearn': 'https://scikit-learn.org/stable',
             'resampy': 'https://resampy.readthedocs.io/en/latest/',
+            'pyrubberband': 'https://pyrubberband.readthedocs.io/en/stable/',
         }
     }
 
@@ -138,10 +139,12 @@ intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
                        'numpy': ('https://docs.scipy.org/doc/numpy/', None),
                        'np': ('https://docs.scipy.org/doc/numpy/', None),
                        'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
-                       'matplotlib': ('http://matplotlib.org/', None),
-                       'sklearn': ('http://scikit-learn.org/stable/', None),
-                       'resampy': ('http://resampy.readthedocs.io/en/latest/', None),
+                       'matplotlib': ('https://matplotlib.org/', None),
+                       'sklearn': ('https://scikit-learn.org/stable/', None),
+                       'resampy': ('https://resampy.readthedocs.io/en/latest/', None),
                        'soundfile': ('https://pysoundfile.readthedocs.io/en/latest', None),
+                       'pyrubberband': ('https://pyrubberband.readthedocs.io/en/stable/', None),
+
                        'librosa_gallery': ('https://librosa.github.io/librosa_gallery/', None)}
 
 # Add any paths that contain templates here, relative to this directory.
@@ -158,7 +161,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'librosa'
-copyright = u'2013--2018, librosa development team'
+copyright = u'2013--2019, librosa development team'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -215,34 +218,11 @@ pygments_style = 'sphinx'
 # A list of ignored prefixes for module index sorting.
 # modindex_common_prefix = []
 
-# -- RTD cruft ---
-
-import six
-
-if six.PY3:
-    from unittest.mock import MagicMock
-else:
-    from mock import Mock as MagicMock
-
-
-class Mock(MagicMock):
-    @classmethod
-    def __getattr__(cls, name):
-            return Mock()
-
-
 # -- Options for HTML output -------------------------------------------------
+import sphinx_rtd_theme
+html_theme = 'sphinx_rtd_theme'
+html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
-
-on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
-if on_rtd:
-    html_theme = 'default'
-    MOCK_MODULES = ['argparse', 'numpy', 'scipy', 'freetype', 'matplotlib']
-    sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
-else:
-    import sphinx_rtd_theme
-    html_theme = 'sphinx_rtd_theme'
-    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 # import sphinx_bootstrap_theme
@@ -279,7 +259,7 @@ else:
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+#html_static_path = ['_static']
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
@@ -407,9 +387,10 @@ autodoc_member_order = 'bysource'
 # Sphinx-contrib versioning
 # sphinx-versioning -l conf.py push docs gh-pages .
 import re
-#scv_whitelist_branches = ('master',)
-#scv_whitelist_tags = (re.compile(r'^v?\d\.\d\.\d+(rc\d+)?$'),)  # use this for RC builds
+scv_whitelist_branches = ('master',)
+#scv_whitelist_tags = (re.compile(r'^v?\d\.\d\.\d+(\.?rc\d+)?$'),)  # use this for RC builds
 scv_whitelist_tags = (re.compile(r'^v?\d\.\d\.\d+$'),)  # use this for final builds
+#scv_whitelist_tags = (re.compile(r'^v?\d\.\d\.\d+$'), re.compile(r'^0\.7\.0.*?'))  # use this for final builds
 scv_greatest_tag = True
 scv_banner_greatest_tag = True
 scv_show_banner = True

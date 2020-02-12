@@ -29,9 +29,11 @@ Miscellaneous
     remix
     trim
     split
+    preemphasis
 """
 
 import numpy as np
+import scipy.signal
 
 from . import core
 from . import decompose
@@ -186,7 +188,7 @@ def percussive(y, **kwargs):
     return y_perc
 
 
-def time_stretch(y, rate):
+def time_stretch(y, rate, **kwargs):
     '''Time-stretch an audio series by a fixed rate.
 
 
@@ -197,19 +199,21 @@ def time_stretch(y, rate):
 
     rate : float > 0 [scalar]
         Stretch factor.  If `rate > 1`, then the signal is sped up.
-
         If `rate < 1`, then the signal is slowed down.
+
+    kwargs : additional keyword arguments.
+        See `librosa.decompose.stft` for details.
 
     Returns
     -------
-    y_stretch : np.ndarray [shape=(rate * n,)]
+    y_stretch : np.ndarray [shape=(round(n/rate),)]
         audio time series stretched by the specified rate
 
     See Also
     --------
     pitch_shift : pitch shifting
     librosa.core.phase_vocoder : spectrogram phase vocoder
-
+    pyrubberband.pyrb.time_stretch : high-quality time stretching using RubberBand
 
     Examples
     --------
@@ -227,26 +231,30 @@ def time_stretch(y, rate):
     if rate <= 0:
         raise ParameterError('rate must be a positive number')
 
-    # Construct the stft
-    stft = core.stft(y)
+    # Construct the short-term Fourier transform (STFT)
+    stft = core.stft(y, **kwargs)
 
     # Stretch by phase vocoding
     stft_stretch = core.phase_vocoder(stft, rate)
 
-    # Invert the stft
-    y_stretch = core.istft(stft_stretch, dtype=y.dtype)
+    # Predict the length of y_stretch
+    len_stretch = int(round(len(y)/rate))
+
+    # Invert the STFT
+    y_stretch = core.istft(
+        stft_stretch, dtype=y.dtype, length=len_stretch, **kwargs)
 
     return y_stretch
 
 
-def pitch_shift(y, sr, n_steps, bins_per_octave=12):
-    '''Pitch-shift the waveform by `n_steps` half-steps.
-
+def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type='kaiser_best',
+                **kwargs):
+    '''Shift the pitch of a waveform by `n_steps` semitones.
 
     Parameters
     ----------
     y : np.ndarray [shape=(n,)]
-        audio time-series
+        audio time series
 
     sr : number > 0 [scalar]
         audio sampling rate of `y`
@@ -257,6 +265,16 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12):
     bins_per_octave : float > 0 [scalar]
         how many steps per octave
 
+    res_type : string
+        Resample type.
+        Possible options: 'kaiser_best', 'kaiser_fast', and 'scipy', 'polyphase',
+        'fft'.
+        By default, 'kaiser_best' is used.
+
+        See `core.resample` for more information.
+
+    kwargs: additional keyword arguments.
+        See `librosa.decompose.stft` for details.
 
     Returns
     -------
@@ -268,7 +286,7 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12):
     --------
     time_stretch : time stretching
     librosa.core.phase_vocoder : spectrogram phase vocoder
-
+    pyrubberband.pyrb.pitch_shift : high-quality pitch shifting using RubberBand
 
     Examples
     --------
@@ -293,7 +311,8 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12):
     rate = 2.0 ** (-float(n_steps) / bins_per_octave)
 
     # Stretch in time, then resample
-    y_shift = core.resample(time_stretch(y, rate), float(sr) / rate, sr)
+    y_shift = core.resample(time_stretch(y, rate, **kwargs), float(sr)/rate, sr,
+                            res_type=res_type)
 
     # Crop to the same dimension as the input
     return util.fix_length(y_shift, len(y))
@@ -354,9 +373,6 @@ def remix(y, intervals, align_zeros=True):
     >>> y_out = librosa.effects.remix(y, intervals[::-1])
     '''
 
-    # Validate the audio buffer
-    util.valid_audio(y, mono=False)
-
     y_out = []
 
     if align_zeros:
@@ -376,7 +392,12 @@ def remix(y, intervals, align_zeros=True):
 
         y_out.append(y[tuple(clip)])
 
-    return np.concatenate(y_out, axis=-1)
+    y_out = np.asfortranarray(np.concatenate(y_out, axis=-1))
+
+    # Validate the output audio buffer
+    util.valid_audio(y_out, mono=False)
+
+    return y_out
 
 
 def _signal_to_frame_nonsilent(y, frame_length=2048, hop_length=512, top_db=60,
@@ -551,3 +572,81 @@ def split(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
 
     # Stack the results back as an ndarray
     return edges.reshape((-1, 2))
+
+
+def preemphasis(y, coef=0.97, zi=None, return_zf=False):
+    '''Pre-emphasize an audio signal with a first-order auto-regressive filter:
+
+        y[n] -> y[n] - coef * y[n-1]
+
+
+    Parameters
+    ----------
+    y : np.ndarray
+        Audio signal
+
+    coef : positive number
+        Pre-emphasis coefficient.  Typical values of `coef` are between 0 and 1.
+
+        At the limit `coef=0`, the signal is unchanged.
+
+        At `coef=1`, the result is the first-order difference of the signal.
+
+    zi : number
+        Initial filter state
+
+    return_zf : boolean
+        If `True`, return the final filter state.
+        If `False`, only return the pre-emphasized signal.
+
+    Returns
+    -------
+    `y_out` : np.ndarray
+        pre-emphasized signal
+
+    zf : number
+        if `return_zf=True`, the final filter state is also returned
+
+    Examples
+    --------
+    Apply a standard pre-emphasis filter
+
+    >>> import matplotlib.pyplot as plt
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), offset=30, duration=10)
+    >>> y_filt = librosa.effects.preemphasis(y)
+    >>> # and plot the results for comparison
+    >>> S_orig = librosa.amplitude_to_db(np.abs(librosa.stft(y)), ref=np.max)
+    >>> S_preemph = librosa.amplitude_to_db(np.abs(librosa.stft(y_filt)), ref=np.max)
+    >>> plt.subplot(2,1,1)
+    >>> librosa.display.specshow(S_orig, y_axis='log', x_axis='time')
+    >>> plt.title('Original signal')
+    >>> plt.colorbar()
+    >>> plt.subplot(2,1,2)
+    >>> librosa.display.specshow(S_preemph, y_axis='log', x_axis='time')
+    >>> plt.title('Pre-emphasized signal')
+    >>> plt.colorbar()
+    >>> plt.tight_layout();
+
+
+    Apply pre-emphasis in pieces for block streaming.  Note that the second block
+    initializes `zi` with the final state `zf` returned by the first call.
+
+    >>> y_filt_1, zf = librosa.effects.preemphasis(y[:1000], return_zf=True)
+    >>> y_filt_2, zf = librosa.effects.preemphasis(y[1000:], zi=zf, return_zf=True)
+    >>> np.allclose(y_filt, np.concatenate([y_filt_1, y_filt_2]))
+    True
+
+    '''
+    b = np.asarray([1.0, -coef], dtype=y.dtype)
+    a = np.asarray([1.0], dtype=y.dtype)
+
+    if zi is None:
+        zi = scipy.signal.lfilter_zi(b, a)
+
+    y_out, z_f = scipy.signal.lfilter(b, a, y,
+                                      zi=np.asarray(zi, dtype=y.dtype))
+
+    if return_zf:
+        return y_out, z_f
+
+    return y_out

@@ -10,7 +10,6 @@ import scipy.fftpack
 from .. import util
 from .. import filters
 from ..util.exceptions import ParameterError
-from ..util.decorators import moved
 
 from ..core.time_frequency import fft_frequencies
 from ..core.audio import zero_crossings, to_mono
@@ -26,7 +25,6 @@ __all__ = ['spectral_centroid',
            'spectral_flatness',
            'poly_features',
            'rms',
-           'rmse',
            'zero_crossing_rate',
            'chroma_stft',
            'chroma_cqt',
@@ -45,6 +43,17 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     Each frame of a magnitude spectrogram is normalized and treated as a
     distribution over frequency bins, from which the mean (centroid) is
     extracted per frame.
+
+    More precisely, the centroid at frame `t` is defined as [1]_:
+
+        ``centroid[t] = sum_k S[k, t] * freq[k] / (sum_j S[j, t])``
+
+    where `S` is a magnitude spectrogram, and `freq` is the array of
+    frequencies (e.g., FFT frequencies in Hz) of the rows of `S`.
+
+    .. [1] Klapuri, A., & Davy, M. (Eds.). (2007). Signal processing
+        methods for music transcription, chapter 5. 
+        Springer Science & Business Media.
 
     Parameters
     ----------
@@ -145,6 +154,7 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     ...                          y_axis='log', x_axis='time')
     >>> plt.title('log Power spectrogram')
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length,
@@ -173,9 +183,15 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                        win_length=None, window='hann', center=True, pad_mode='reflect',
                        freq=None, centroid=None, norm=True, p=2):
-    '''Compute p'th-order spectral bandwidth:
+    '''Compute p'th-order spectral bandwidth.
 
-        (sum_k S[k] * (freq[k] - centroid)**p)**(1/p)
+       The spectral bandwidth [1]_ at frame `t` is computed by
+
+        (sum_k S[k, t] * (freq[k, t] - centroid[t])**p)**(1/p)
+
+    .. [1] Klapuri, A., & Davy, M. (Eds.). (2007). Signal processing
+        methods for music transcription, chapter 5.
+        Springer Science & Business Media.
 
     Parameters
     ----------
@@ -277,6 +293,7 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     ...                          y_axis='log', x_axis='time')
     >>> plt.title('log Power spectrogram')
     >>> plt.tight_layout()
+    >>> plt.show()
 
     '''
 
@@ -318,6 +335,13 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                       freq=None, fmin=200.0, n_bands=6, quantile=0.02,
                       linear=False):
     '''Compute spectral contrast [1]_
+
+    Each frame of a spectrogram `S` is divided into sub-bands.
+    For each sub-band, the energy contrast is estimated by comparing
+    the mean energy in the top quantile (peak energy) to that of the 
+    bottom quantile (valley energy).  High contrast values generally
+    correspond to clear, narrow-band signals, while low contrast values
+    correspond to broad-band noise.
 
     .. [1] Jiang, Dan-Ning, Lie Lu, Hong-Jiang Zhang, Jian-Hua Tao,
            and Lian-Hong Cai.
@@ -417,6 +441,7 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     >>> plt.ylabel('Frequency bands')
     >>> plt.title('Spectral contrast')
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length,
@@ -591,6 +616,7 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     ...                          y_axis='log', x_axis='time')
     >>> plt.title('log Power spectrogram')
     >>> plt.tight_layout()
+    >>> plt.show()
 
     '''
 
@@ -797,7 +823,7 @@ def rms(y=None, S=None, frame_length=2048, hop_length=512,
     >>> plt.semilogy(rms.T, label='RMS Energy')
     >>> plt.xticks([])
     >>> plt.xlim([0, rms.shape[-1]])
-    >>> plt.legend(loc='best')
+    >>> plt.legend()
     >>> plt.subplot(2, 1, 2)
     >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
     ...                          y_axis='log', x_axis='time')
@@ -809,6 +835,7 @@ def rms(y=None, S=None, frame_length=2048, hop_length=512,
 
     >>> S = librosa.magphase(librosa.stft(y, window=np.ones, center=False))[0]
     >>> librosa.feature.rms(S=S)
+    >>> plt.show()
 
     '''
     if y is not None and S is not None:
@@ -821,16 +848,34 @@ def rms(y=None, S=None, frame_length=2048, hop_length=512,
         x = util.frame(y,
                        frame_length=frame_length,
                        hop_length=hop_length)
+
+        # Calculate power
+        power = np.mean(np.abs(x)**2, axis=0, keepdims=True)
     elif S is not None:
-        x, _ = _spectrogram(y=y, S=S,
-                            n_fft=frame_length,
-                            hop_length=hop_length)
+        # Check the frame length
+        if S.shape[0] != frame_length // 2 + 1:
+            raise ParameterError(
+                    'Since S.shape[0] is {}, '
+                    'frame_length is expected to be {} or {}; '
+                    'found {}'.format(
+                            S.shape[0],
+                            S.shape[0] * 2 - 2, S.shape[0] * 2 - 1,
+                            frame_length))
+
+        # power spectrogram
+        x = np.abs(S) ** 2
+
+        # Adjust the DC and sr/2 component
+        x[0] *= 0.5
+        if frame_length % 2 == 0:
+            x[-1] *= 0.5
+
+        # Calculate power
+        power = 2 * np.sum(x, axis=0, keepdims=True) / frame_length**2
     else:
         raise ValueError('Either `y` or `S` must be input.')
-    return np.sqrt(np.mean(np.abs(x)**2, axis=0, keepdims=True))
 
-
-rmse = moved('librosa.feature.rmse', '0.6.3', '0.7.0')(rms)
+    return np.sqrt(power)
 
 
 def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
@@ -942,6 +987,7 @@ def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
     ...                          y_axis='log')
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length,
@@ -1027,7 +1073,8 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True,
 # -- Chroma --#
 def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
                 hop_length=512, win_length=None, window='hann', center=True,
-                pad_mode='reflect', tuning=None, **kwargs):
+                pad_mode='reflect', tuning=None, n_chroma=12,
+                **kwargs):
     """Compute a chromagram from a waveform or power spectrogram.
 
     This implementation is derived from `chromagram_E` [1]_
@@ -1083,10 +1130,12 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
         If `center=True`, the padding mode to use at the edges of the signal.
         By default, STFT uses reflection padding.
 
-
-    tuning : float in `[-0.5, 0.5)` [scalar] or None.
-        Deviation from A440 tuning in fractional bins (cents).
+    tuning : float [scalar] or None.
+        Deviation from A440 tuning in fractional chroma bins.
         If `None`, it is automatically estimated.
+
+    n_chroma : int > 0 [scalar]
+        Number of chroma bins to produce (12 by default).
 
     kwargs : additional keyword arguments
         Arguments to parameterize chroma filters.
@@ -1142,6 +1191,7 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
     >>> plt.colorbar()
     >>> plt.title('Chromagram')
     >>> plt.tight_layout()
+    >>> plt.show()
 
     """
 
@@ -1149,16 +1199,11 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
                             win_length=win_length, window=window, center=center,
                             pad_mode=pad_mode)
 
-    n_chroma = kwargs.get('n_chroma', 12)
-
     if tuning is None:
         tuning = estimate_tuning(S=S, sr=sr, bins_per_octave=n_chroma)
 
     # Get the filter bank
-    if 'A440' not in kwargs:
-        kwargs['A440'] = 440.0 * 2.0**(float(tuning) / n_chroma)
-
-    chromafb = filters.chroma(sr, n_fft, **kwargs)
+    chromafb = filters.chroma(sr, n_fft, tuning=tuning, n_chroma=n_chroma, **kwargs)
 
     # Compute raw chroma
     raw_chroma = np.dot(chromafb, S)
@@ -1198,7 +1243,7 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
         threshold are discarded, resulting in a sparse chromagram.
 
     tuning : float
-        Deviation (in cents) from A440 tuning
+        Deviation (in fractions of a CQT bin) from A440 tuning
 
     n_chroma : int > 0
         Number of chroma bins to produce
@@ -1250,6 +1295,7 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
     >>> plt.title('chroma_cqt')
     >>> plt.colorbar()
     >>> plt.tight_layout()
+    >>> plt.show()
 
     '''
 
@@ -1326,7 +1372,7 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
         Column-wise normalization of the chromagram.
 
     tuning : float
-        Deviation (in cents) from A440 tuning
+        Deviation (in fractions of a CQT bin) from A440 tuning
 
     n_chroma : int > 0
         Number of chroma bins to produce
@@ -1389,6 +1435,7 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
     >>> plt.title('chroma_cens')
     >>> plt.colorbar()
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
     if not ((win_len_smooth is None) or (isinstance(win_len_smooth, int) and win_len_smooth > 0)):
         raise ParameterError('win_len_smooth={} must be a positive integer or None'.format(win_len_smooth))
@@ -1501,6 +1548,7 @@ def tonnetz(y=None, sr=22050, chroma=None):
     >>> plt.colorbar()
     >>> plt.title('Chroma')
     >>> plt.tight_layout()
+    >>> plt.show()
 
     '''
 
@@ -1534,7 +1582,7 @@ def tonnetz(y=None, sr=22050, chroma=None):
 
 
 # -- Mel spectrogram and MFCCs -- #
-def mfcc(y=None, sr=22050, S=None, n_mfcc=20, dct_type=2, norm='ortho', **kwargs):
+def mfcc(y=None, sr=22050, S=None, n_mfcc=20, dct_type=2, norm='ortho', lifter=0, **kwargs):
     """Mel-frequency cepstral coefficients (MFCCs)
 
     Parameters
@@ -1551,7 +1599,7 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, dct_type=2, norm='ortho', **kwargs
     n_mfcc: int > 0 [scalar]
         number of MFCCs to return
 
-    dct_type : None, or {1, 2, 3}
+    dct_type : {1, 2, 3}
         Discrete cosine transform (DCT) type.
         By default, DCT type-2 is used.
 
@@ -1560,6 +1608,14 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, dct_type=2, norm='ortho', **kwargs
         DCT basis.
 
         Normalization is not supported for `dct_type=1`.
+
+    lifter : number >= 0
+        If `lifter>0`, apply *liftering* (cepstral filtering) to the MFCCs:
+
+        `M[n, :] <- M[n, :] * (1 + sin(pi * (n + 1) / lifter)) * lifter / 2`
+
+        Setting `lifter >= 2 * n_mfcc` emphasizes the higher-order coefficients.
+        As `lifter` increases, the coefficient weighting becomes approximately linear.
 
     kwargs : additional keyword arguments
         Arguments to `melspectrogram`, if operating
@@ -1587,6 +1643,23 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, dct_type=2, norm='ortho', **kwargs
            [  1.066e-14,  -7.500e+00, ...,   1.421e-14,   1.421e-14],
            [  3.109e-14,  -5.058e+00, ...,   2.931e-14,   2.931e-14]])
 
+    Using a different hop length and HTK-style Mel frequencies
+
+    >>> librosa.feature.mfcc(y=y, sr=sr, hop_length=1024, htk=True)
+    array([[-1.628e+02, -8.903e+01, -1.409e+02, ..., -1.078e+02,
+        -2.504e+02, -2.393e+02],
+       [ 1.275e+02,  9.532e+01,  1.019e+02, ...,  1.152e+02,
+         2.224e+02,  1.750e+02],
+       [ 1.139e+01,  6.155e+00,  1.266e+01, ...,  4.557e+01,
+         4.585e+01,  3.985e+01],
+       ...,
+       [ 3.462e+00,  4.032e+00, -5.694e-01, ..., -6.677e+00,
+        -1.183e-01,  1.485e+00],
+       [ 9.569e-01,  1.069e+00, -6.865e+00, ..., -9.598e+00,
+        -1.611e+00, -6.716e+00],
+       [ 8.457e+00,  3.582e+00, -1.156e-01, ..., -3.018e+00,
+        -1.456e+01, -6.991e+00]], dtype=float32)
+
     Use a pre-computed log-power Mel spectrogram
 
     >>> S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128,
@@ -1610,6 +1683,7 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, dct_type=2, norm='ortho', **kwargs
     >>> plt.colorbar()
     >>> plt.title('MFCC')
     >>> plt.tight_layout()
+    >>> plt.show()
 
     Compare different DCT bases
 
@@ -1625,12 +1699,21 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, dct_type=2, norm='ortho', **kwargs
     >>> plt.title('HTK-style (dct_type=3)')
     >>> plt.colorbar()
     >>> plt.tight_layout()
+    >>> plt.show()
     """
 
     if S is None:
         S = power_to_db(melspectrogram(y=y, sr=sr, **kwargs))
 
-    return scipy.fftpack.dct(S, axis=0, type=dct_type, norm=norm)[:n_mfcc]
+    M = scipy.fftpack.dct(S, axis=0, type=dct_type, norm=norm)[:n_mfcc]
+
+    if lifter > 0:
+        M *= 1 + (lifter / 2) * np.sin(np.pi * np.arange(1, 1 + n_mfcc, dtype=M.dtype) / lifter)[:, np.newaxis]
+        return M
+    elif lifter == 0:
+        return M
+    else:
+        raise ParameterError('MFCC lifter={} must be a non-negative number'.format(lifter))
 
 
 def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
@@ -1719,10 +1802,13 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
            [  3.668e-09,   2.029e-08, ...,   3.208e-09,   2.864e-09],
            [  2.561e-10,   2.096e-09, ...,   7.543e-10,   6.101e-10]])
 
-    Using a pre-computed power spectrogram
+    Using a pre-computed power spectrogram would give the same result:
 
     >>> D = np.abs(librosa.stft(y))**2
-    >>> S = librosa.feature.melspectrogram(S=D)
+    >>> S = librosa.feature.melspectrogram(S=D, sr=sr)
+    
+    Display of mel-frequency spectrogram coefficients, with custom
+    arguments for mel filterbank construction (default is fmax=sr/2):
 
     >>> # Passing through arguments to the Mel filters
     >>> S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128,
@@ -1730,13 +1816,14 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     >>> import matplotlib.pyplot as plt
     >>> plt.figure(figsize=(10, 4))
-    >>> librosa.display.specshow(librosa.power_to_db(S,
-    ...                                              ref=np.max),
-    ...                          y_axis='mel', fmax=8000,
-    ...                          x_axis='time')
+    >>> S_dB = librosa.power_to_db(S, ref=np.max)
+    >>> librosa.display.specshow(S_dB, x_axis='time',
+    ...                          y_axis='mel', sr=sr,
+    ...                          fmax=8000)
     >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.title('Mel spectrogram')
+    >>> plt.title('Mel-frequency spectrogram')
     >>> plt.tight_layout()
+    >>> plt.show()
     """
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length, power=power,

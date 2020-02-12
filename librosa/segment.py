@@ -9,10 +9,12 @@ Recurrence and self-similarity
 .. autosummary::
     :toctree: generated/
 
+    cross_similarity
     recurrence_matrix
     recurrence_to_lag
     lag_to_recurrence
     timelag_filter
+    path_enhance
 
 Temporal clustering
 -------------------
@@ -28,6 +30,7 @@ from decorator import decorator
 import numpy as np
 import scipy
 import scipy.signal
+import scipy.ndimage
 
 import sklearn
 import sklearn.cluster
@@ -36,25 +39,229 @@ import sklearn.neighbors
 
 from ._cache import cache
 from . import util
+from .filters import diagonal_filter
 from .util.exceptions import ParameterError
 
-__all__ = ['recurrence_matrix',
+__all__ = ['cross_similarity',
+           'recurrence_matrix',
            'recurrence_to_lag',
            'lag_to_recurrence',
            'timelag_filter',
            'agglomerative',
-           'subsegment']
+           'subsegment',
+           'path_enhance']
+
+
+@cache(level=30)
+def cross_similarity(data, data_ref, k=None, metric='euclidean',
+                     sparse=False, mode='connectivity', bandwidth=None):
+    '''Compute cross-similarity from one data sequence to a reference sequence.
+
+    The output is a matrix `xsim`:
+
+        `xsim[i, j]` is non-zero if `data_ref[:, i]` is a k-nearest neighbor
+        of `data[:, j]`.
+
+
+    Parameters
+    ----------
+    data : np.ndarray [shape=(d, n)]
+        A feature matrix for the comparison sequence
+
+    data_ref : np.ndarray [shape=(d, n_ref)]
+        A feature matrix for the reference sequence
+
+    k : int > 0 [scalar] or None
+        the number of nearest-neighbors for each sample
+
+        Default: `k = 2 * ceil(sqrt(n_ref))`,
+        or `k = 2` if `n_ref <= 3`
+
+    metric : str
+        Distance metric to use for nearest-neighbor calculation.
+
+        See `sklearn.neighbors.NearestNeighbors` for details.
+
+    sparse : bool [scalar]
+        if False, returns a dense type (ndarray)
+        if True, returns a sparse type (scipy.sparse.csc_matrix)
+
+    mode : str, {'connectivity', 'distance', 'affinity'}
+        If 'connectivity', a binary connectivity matrix is produced.
+
+        If 'distance', then a non-zero entry contains the distance between
+        points.
+
+        If 'affinity', then non-zero entries are mapped to
+        `exp( - distance(i, j) / bandwidth)` where `bandwidth` is
+        as specified below.
+
+    bandwidth : None or float > 0
+        If using ``mode='affinity'``, this can be used to set the
+        bandwidth on the affinity kernel.
+
+        If no value is provided, it is set automatically to the median
+        distance to the k'th nearest neighbor of each `data[:, i]`.
+
+    Returns
+    -------
+    xsim : np.ndarray or scipy.sparse.csc_matrix, [shape=(n_ref, n)]
+        Cross-similarity matrix
+
+    See Also
+    --------
+    recurrence_matrix
+    recurrence_to_lag
+    feature.stack_memory
+    sklearn.neighbors.NearestNeighbors
+    scipy.spatial.distance.cdist
+
+    Notes
+    -----
+    This function caches at level 30.
+
+    Examples
+    --------
+    Find nearest neighbors in MFCC space between two sequences
+
+    >>> hop_length = 1024
+    >>> y_ref, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y_comp, sr = librosa.load(librosa.util.example_audio_file(), offset=10)
+    >>> mfcc_ref = librosa.feature.mfcc(y=y_ref, sr=sr, hop_length=hop_length)
+    >>> mfcc_comp = librosa.feature.mfcc(y=y_comp, sr=sr, hop_length=hop_length)
+    >>> xsim = librosa.segment.cross_similarity(mfcc_comp, mfcc_ref)
+
+    Or fix the number of nearest neighbors to 5
+
+    >>> xsim = librosa.segment.cross_similarity(mfcc_comp, mfcc_ref, k=5)
+
+    Use cosine similarity instead of Euclidean distance
+
+    >>> xsim = librosa.segment.cross_similarity(mfcc_comp, mfcc_ref, metric='cosine')
+
+    Use an affinity matrix instead of binary connectivity
+
+    >>> xsim_aff = librosa.segment.cross_similarity(mfcc_comp, mfcc_ref, mode='affinity')
+
+    Plot the feature and recurrence matrices
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure(figsize=(8, 4))
+    >>> plt.subplot(1, 2, 1)
+    >>> librosa.display.specshow(xsim, x_axis='time', y_axis='time', hop_length=hop_length)
+    >>> plt.title('Binary recurrence (symmetric)')
+    >>> plt.subplot(1, 2, 2)
+    >>> librosa.display.specshow(xsim_aff, x_axis='time', y_axis='time',
+    ...                          cmap='magma_r', hop_length=hop_length)
+    >>> plt.title('Affinity recurrence')
+    >>> plt.tight_layout()
+
+    '''
+    data_ref = np.atleast_2d(data_ref)
+    data = np.atleast_2d(data)
+
+    if data_ref.shape[0] != data.shape[0]:
+        raise ValueError("data_ref and data must have the same first dimension")
+
+    # swap data axes so the feature axis is last
+    data_ref = np.swapaxes(data_ref, -1, 0)
+    n_ref = data_ref.shape[0]
+    data_ref = data_ref.reshape((n_ref, -1))
+
+    data = np.swapaxes(data, -1, 0)
+    n = data.shape[0]
+    data = data.reshape((n, -1))
+
+    if mode not in ['connectivity', 'distance', 'affinity']:
+        raise ParameterError(("Invalid mode='{}'. Must be one of "
+                              "['connectivity', 'distance', "
+                              "'affinity']").format(mode))
+    if k is None:
+        k = min(n_ref, 2 * np.ceil(np.sqrt(n_ref)))
+
+    k = int(k)
+
+    if bandwidth is not None:
+        if bandwidth <= 0:
+            raise ParameterError('Invalid bandwidth={}. '
+                                 'Must be strictly positive.'.format(bandwidth))
+
+    # Build the neighbor search object
+    # `auto` mode does not work with some choices of metric.  Rather than special-case
+    # those here, we instead use a fall-back to brute force if auto fails.
+    try:
+        knn = sklearn.neighbors.NearestNeighbors(n_neighbors=min(n_ref, k),
+                                                 metric=metric,
+                                                 algorithm='auto')
+    except ValueError:
+        knn = sklearn.neighbors.NearestNeighbors(n_neighbors=min(n_ref, k),
+                                                 metric=metric,
+                                                 algorithm='brute')
+
+    knn.fit(data_ref)
+
+    # Get the knn graph
+    if mode == 'affinity':
+        # sklearn's nearest neighbor doesn't support affinity,
+        # so we use distance here and then do the conversion post-hoc
+        kng_mode = 'distance'
+    else:
+        kng_mode = mode
+
+    xsim = knn.kneighbors_graph(X=data, mode=kng_mode).tolil()
+
+    # Retain only the top-k links per point
+    for i in range(n):
+        # Get the links from point i
+        links = xsim[i].nonzero()[1]
+
+        # Order them ascending
+        idx = links[np.argsort(xsim[i, links].toarray())][0]
+
+        # Everything past the kth closest gets squashed
+        xsim[i, idx[k:]] = 0
+
+    # Convert a compressed sparse row (CSR) format
+    xsim = xsim.tocsr()
+    xsim.eliminate_zeros()
+
+    if mode == 'connectivity':
+        xsim = xsim.astype(np.bool)
+    elif mode == 'affinity':
+        if bandwidth is None:
+            bandwidth = np.nanmedian(xsim.max(axis=1).data)
+        xsim.data[:] = np.exp(xsim.data / (-1 * bandwidth))
+
+    # Transpose to n_ref by n
+    xsim = xsim.T
+
+    if not sparse:
+        xsim = xsim.toarray()
+
+    return xsim
 
 
 @cache(level=30)
 def recurrence_matrix(data, k=None, width=1, metric='euclidean',
                       sym=False, sparse=False, mode='connectivity',
-                      bandwidth=None, axis=-1):
+                      bandwidth=None, self=False, axis=-1):
     '''Compute a recurrence matrix from a data matrix.
 
-
-    `rec[i, j]` is non-zero if (`data[:, i]`, `data[:, j]`) are
+    `rec[i, j]` is non-zero if `data[:, i]` is one of `data[:, j]`'s
     k-nearest-neighbors and `|i - j| >= width`
+
+    The specific value of `rec[i, j]` can have several forms, governed
+    by the `mode` parameter below:
+
+        - Connectivity: `rec[i, j] = 1 or 0` indicates that frames `i` and `j` are repetitions
+
+        - Affinity: `rec[i, j] > 0` measures how similar frames `i` and `j` are.  This is also
+          known as a (sparse) self-similarity matrix.
+
+        - Distance: `rec[i, j] > 0` measures how distant frames `i` and `j` are.  This is also
+          known as a (sparse) self-distance matrix.
+
+    The general term *recurrence matrix* can refer to any of the three forms above.
 
 
     Parameters
@@ -84,7 +291,7 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
 
     sparse : bool [scalar]
         if False, returns a dense type (ndarray)
-        if True, returns a sparse type (scipy.sparse.csr_matrix)
+        if True, returns a sparse type (scipy.sparse.csc_matrix)
 
     mode : str, {'connectivity', 'distance', 'affinity'}
         If 'connectivity', a binary connectivity matrix is produced.
@@ -103,13 +310,19 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
         If no value is provided, it is set automatically to the median
         distance between furthest nearest neighbors.
 
+    self : bool
+        If `True`, then the main diagonal is populated with self-links:
+        0 if ``mode='distance'``, and 1 otherwise.
+
+        If `False`, the main diagonal is left empty.
+
     axis : int
         The axis along which to compute recurrence.
         By default, the last index (-1) is taken.
 
     Returns
     -------
-    rec : np.ndarray or scipy.sparse.csr_matrix, [shape=(t, t)]
+    rec : np.ndarray or scipy.sparse.csc_matrix, [shape=(t, t)]
         Recurrence matrix
 
     See Also
@@ -128,14 +341,15 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
     Find nearest neighbors in MFCC space
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> mfcc = librosa.feature.mfcc(y=y, sr=sr)
+    >>> hop_length = 1024
+    >>> mfcc = librosa.feature.mfcc(y=y, sr=sr, hop_length=hop_length)
     >>> R = librosa.segment.recurrence_matrix(mfcc)
 
     Or fix the number of nearest neighbors to 5
 
     >>> R = librosa.segment.recurrence_matrix(mfcc, k=5)
 
-    Suppress neighbors within +- 7 samples
+    Suppress neighbors within +- 7 frames
 
     >>> R = librosa.segment.recurrence_matrix(mfcc, width=7)
 
@@ -156,13 +370,14 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
     >>> import matplotlib.pyplot as plt
     >>> plt.figure(figsize=(8, 4))
     >>> plt.subplot(1, 2, 1)
-    >>> librosa.display.specshow(R, x_axis='time', y_axis='time')
+    >>> librosa.display.specshow(R, x_axis='time', y_axis='time', hop_length=hop_length)
     >>> plt.title('Binary recurrence (symmetric)')
     >>> plt.subplot(1, 2, 2)
     >>> librosa.display.specshow(R_aff, x_axis='time', y_axis='time',
-    ...                          cmap='magma_r')
+    ...                          hop_length=hop_length, cmap='magma_r')
     >>> plt.title('Affinity recurrence')
     >>> plt.tight_layout()
+    >>> plt.show()
 
     '''
 
@@ -228,8 +443,21 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
         # Everything past the kth closest gets squashed
         rec[i, idx[k:]] = 0
 
+    if self:
+        if mode == 'connectivity':
+            rec.setdiag(1)
+        elif mode == 'affinity':
+            # we need to keep the self-loop in here, but not mess up the
+            # bandwidth estimation
+            #
+            # using negative distances here preserves the structure without changing
+            # the statistics of the data
+            rec.setdiag(-1)
+
     # symmetrize
     if sym:
+        # Note: this operation produces a CSR (compressed sparse row) matrix!
+        # This is why we have to do it after filling the diagonal in self-mode
         rec = rec.minimum(rec.T)
 
     rec = rec.tocsr()
@@ -239,8 +467,15 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
         rec = rec.astype(np.bool)
     elif mode == 'affinity':
         if bandwidth is None:
-            bandwidth = np.median(rec.max(axis=1).data)
+            bandwidth = np.nanmedian(rec.max(axis=1).data)
+        # Set all the negatives back to 0
+        # Negatives are temporarily inserted above to preserve the sparsity structure
+        # of the matrix without corrupting the bandwidth calculations
+        rec.data[rec.data < 0] = 0.0
         rec.data[:] = np.exp(rec.data / (-1 * bandwidth))
+
+    # Transpose to be column-major
+    rec = rec.T
 
     if not sparse:
         rec = rec.toarray()
@@ -283,11 +518,13 @@ def recurrence_to_lag(rec, pad=True, axis=-1):
     --------
     recurrence_matrix
     lag_to_recurrence
+    util.shear
 
     Examples
     --------
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> mfccs = librosa.feature.mfcc(y=y, sr=sr)
+    >>> hop_length = 1024
+    >>> mfccs = librosa.feature.mfcc(y=y, sr=sr, hop_length=hop_length)
     >>> recurrence = librosa.segment.recurrence_matrix(mfccs)
     >>> lag_pad = librosa.segment.recurrence_to_lag(recurrence, pad=True)
     >>> lag_nopad = librosa.segment.recurrence_to_lag(recurrence, pad=False)
@@ -295,12 +532,14 @@ def recurrence_to_lag(rec, pad=True, axis=-1):
     >>> import matplotlib.pyplot as plt
     >>> plt.figure(figsize=(8, 4))
     >>> plt.subplot(1, 2, 1)
-    >>> librosa.display.specshow(lag_pad, x_axis='time', y_axis='lag')
+    >>> librosa.display.specshow(lag_pad, x_axis='time', y_axis='lag',
+    ...                          hop_length=hop_length)
     >>> plt.title('Lag (zero-padded)')
     >>> plt.subplot(1, 2, 2)
-    >>> librosa.display.specshow(lag_nopad, x_axis='time')
+    >>> librosa.display.specshow(lag_nopad, x_axis='time', hop_length=hop_length)
     >>> plt.title('Lag (no padding)')
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
 
     axis = np.abs(axis)
@@ -311,40 +550,30 @@ def recurrence_to_lag(rec, pad=True, axis=-1):
 
     sparse = scipy.sparse.issparse(rec)
 
-    roll_ax = None
     if sparse:
-        roll_ax = 1 - axis
-        lag_format = rec.format
-        if axis == 0:
-            rec = rec.tocsc()
-        elif axis in (-1, 1):
-            rec = rec.tocsr()
+        fmt = rec.format
 
     t = rec.shape[axis]
 
-    if sparse:
-        if pad:
-            kron = np.asarray([[1, 0]]).swapaxes(axis, 0)
-            lag = scipy.sparse.kron(kron.astype(rec.dtype), rec, format='lil')
+    if pad:
+        if sparse:
+            padding = np.asarray([[1, 0]], dtype=rec.dtype).swapaxes(axis, 0)
+            if axis == 0:
+                rec_fmt = 'csr'
+            else:
+                rec_fmt = 'csc'
+            rec = scipy.sparse.kron(padding, rec, format=rec_fmt)
         else:
-            lag = scipy.sparse.lil_matrix(rec)
-    else:
-        if pad:
             padding = [(0, 0), (0, 0)]
             padding[(1-axis)] = (0, t)
-            lag = np.pad(rec, padding, mode='constant')
-        else:
-            lag = rec.copy()
+            rec = np.pad(rec, padding, mode='constant')
 
-    idx_slice = [slice(None)] * lag.ndim
-
-    for i in range(1, t):
-        idx_slice[axis] = i
-        lag[tuple(idx_slice)] = util.roll_sparse(lag[tuple(idx_slice)], -i, axis=roll_ax)
+    lag = util.shear(rec, factor=-1, axis=axis)
 
     if sparse:
-        return lag.asformat(lag_format)
-    return np.ascontiguousarray(lag.T).T
+        lag = lag.asformat(fmt)
+
+    return lag
 
 
 def lag_to_recurrence(lag, axis=-1):
@@ -376,7 +605,8 @@ def lag_to_recurrence(lag, axis=-1):
     Examples
     --------
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> mfccs = librosa.feature.mfcc(y=y, sr=sr)
+    >>> hop_length = 1024
+    >>> mfccs = librosa.feature.mfcc(y=y, sr=sr, hop_length=hop_length)
     >>> recurrence = librosa.segment.recurrence_matrix(mfccs)
     >>> lag_pad = librosa.segment.recurrence_to_lag(recurrence, pad=True)
     >>> lag_nopad = librosa.segment.recurrence_to_lag(recurrence, pad=False)
@@ -386,18 +616,23 @@ def lag_to_recurrence(lag, axis=-1):
     >>> import matplotlib.pyplot as plt
     >>> plt.figure(figsize=(8, 4))
     >>> plt.subplot(2, 2, 1)
-    >>> librosa.display.specshow(lag_pad, x_axis='time', y_axis='lag')
+    >>> librosa.display.specshow(lag_pad, x_axis='time', y_axis='lag',
+    ...                          hop_length=hop_length)
     >>> plt.title('Lag (zero-padded)')
     >>> plt.subplot(2, 2, 2)
-    >>> librosa.display.specshow(lag_nopad, x_axis='time', y_axis='time')
+    >>> librosa.display.specshow(lag_nopad, x_axis='time', y_axis='time',
+    ...                          hop_length=hop_length)
     >>> plt.title('Lag (no padding)')
     >>> plt.subplot(2, 2, 3)
-    >>> librosa.display.specshow(rec_pad, x_axis='time', y_axis='time')
+    >>> librosa.display.specshow(rec_pad, x_axis='time', y_axis='time',
+    ...                          hop_length=hop_length)
     >>> plt.title('Recurrence (with padding)')
     >>> plt.subplot(2, 2, 4)
-    >>> librosa.display.specshow(rec_nopad, x_axis='time', y_axis='time')
+    >>> librosa.display.specshow(rec_nopad, x_axis='time', y_axis='time',
+    ...                          hop_length=hop_length)
     >>> plt.title('Recurrence (without padding)')
     >>> plt.tight_layout()
+    >>> plt.show()
 
     '''
 
@@ -414,25 +649,12 @@ def lag_to_recurrence(lag, axis=-1):
     t = lag.shape[axis]
 
     sparse = scipy.sparse.issparse(lag)
-    if sparse:
-        rec = scipy.sparse.lil_matrix(lag)
-        roll_ax = 1 - axis
-    else:
-        rec = lag.copy()
-        roll_ax = None
 
-    idx_slice = [slice(None)] * lag.ndim
-    for i in range(1, t):
-        idx_slice[axis] = i
-        rec[tuple(idx_slice)] = util.roll_sparse(lag[tuple(idx_slice)], i, axis=roll_ax)
+    rec = util.shear(lag, factor=+1, axis=axis)
 
     sub_slice = [slice(None)] * rec.ndim
     sub_slice[1 - axis] = slice(t)
-    rec = rec[tuple(sub_slice)]
-
-    if sparse:
-        return rec.asformat(lag.format)
-    return np.ascontiguousarray(rec.T).T
+    return rec[tuple(sub_slice)]
 
 
 def timelag_filter(function, pad=True, index=0):
@@ -502,6 +724,7 @@ def timelag_filter(function, pad=True, index=0):
     ...                          cmap='magma_r')
     >>> plt.title('Filtered affinity matrix')
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
 
     def __my_filter(wrapped_f, *args, **kwargs):
@@ -596,6 +819,7 @@ def subsegment(data, frames, n_segments=4, axis=-1):
     >>> plt.legend(frameon=True, shadow=True)
     >>> plt.title('CQT + Beat and sub-beat markers')
     >>> plt.tight_layout()
+    >>> plt.show()
 
     '''
 
@@ -673,6 +897,7 @@ def agglomerative(data, k, clusterer=None, axis=-1):
     >>> plt.legend(frameon=True, shadow=True)
     >>> plt.title('Power spectrogram')
     >>> plt.tight_layout()
+    >>> plt.show()
 
     """
 
@@ -704,3 +929,139 @@ def agglomerative(data, k, clusterer=None, axis=-1):
     boundaries.extend(
         list(1 + np.nonzero(np.diff(clusterer.labels_))[0].astype(int)))
     return np.asarray(boundaries)
+
+
+def path_enhance(R, n, window='hann', max_ratio=2.0, min_ratio=None, n_filters=7,
+                 zero_mean=False, clip=True, **kwargs):
+    '''Multi-angle path enhancement for self- and cross-similarity matrices.
+
+    This function convolves multiple diagonal smoothing filters with a self-similarity (or
+    recurrence) matrix R, and aggregates the result by an element-wise maximum.
+
+    Technically, the output is a matrix R_smooth such that
+
+        `R_smooth[i, j] = max_theta (R * filter_theta)[i, j]`
+
+    where `*` denotes 2-dimensional convolution, and `filter_theta` is a smoothing filter at
+    orientation theta.
+
+    This is intended to provide coherent temporal smoothing of self-similarity matrices
+    when there are changes in tempo.
+
+    Smoothing filters are generated at evenly spaced orientations between min_ratio and
+    max_ratio.
+
+    This function is inspired by the multi-angle path enhancement of [1]_, but differs by
+    modeling tempo differences in the space of similarity matrices rather than re-sampling
+    the underlying features prior to generating the self-similarity matrix.
+
+    .. [1] Müller, Meinard and Frank Kurth.
+            "Enhancing similarity matrices for music audio analysis."
+            2006 IEEE International Conference on Acoustics Speech and Signal Processing Proceedings.
+            Vol. 5. IEEE, 2006.
+
+    .. note:: if using recurrence_matrix to construct the input similarity matrix, be sure to include the main
+              diagonal by setting `self=True`.  Otherwise, the diagonal will be suppressed, and this is likely to
+              produce discontinuities which will pollute the smoothing filter response.
+
+    Parameters
+    ----------
+    R : np.ndarray
+        The self- or cross-similarity matrix to be smoothed.
+        Note: sparse inputs are not supported.
+
+    n : int > 0
+        The length of the smoothing filter
+
+    window : window specification
+        The type of smoothing filter to use.  See `filters.get_window` for more information
+        on window specification formats.
+
+    max_ratio : float > 0
+        The maximum tempo ratio to support
+
+    min_ratio : float > 0
+        The minimum tempo ratio to support.
+        If not provided, it will default to `1/max_ratio`
+
+    n_filters : int >= 1
+        The number of different smoothing filters to use, evenly spaced
+        between `min_ratio` and `max_ratio`.
+
+        If `min_ratio = 1/max_ratio` (the default), using an odd number
+        of filters will ensure that the main diagonal (ratio=1) is included.
+
+    zero_mean : bool
+        By default, the smoothing filters are non-negative and sum to one (i.e. are averaging
+        filters).
+
+        If `zero_mean=True`, then the smoothing filters are made to sum to zero by subtracting
+        a constant value from the non-diagonal coordinates of the filter.  This is primarily
+        useful for suppressing blocks while enhancing diagonals.
+
+    clip : bool
+        If True, the smoothed similarity matrix will be thresholded at 0, and will not contain
+        negative entries.
+
+    kwargs : additional keyword arguments
+        Additional arguments to pass to `scipy.ndimage.convolve`
+
+
+    Returns
+    -------
+    R_smooth : np.ndarray, shape=R.shape
+        The smoothed self- or cross-similarity matrix
+
+    See Also
+    --------
+    filters.diagonal_filter
+    recurrence_matrix
+
+
+    Examples
+    --------
+    Use a 51-frame diagonal smoothing filter to enhance paths in a recurrence matrix
+
+    >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=30)
+    >>> hop_length = 1024
+    >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=hop_length)
+    >>> rec = librosa.segment.recurrence_matrix(chroma, mode='affinity', self=True)
+    >>> rec_smooth = librosa.segment.path_enhance(rec, 51, window='hann', n_filters=7)
+
+    Plot the recurrence matrix before and after smoothing
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure(figsize=(8, 4))
+    >>> plt.subplot(1,2,1)
+    >>> librosa.display.specshow(rec, x_axis='time', y_axis='time',
+    ...                          hop_length=hop_length)
+    >>> plt.title('Unfiltered recurrence')
+    >>> plt.subplot(1,2,2)
+    >>> librosa.display.specshow(rec_smooth, x_axis='time', y_axis='time',
+    ...                          hop_length=hop_length)
+    >>> plt.title('Multi-angle enhanced recurrence')
+    >>> plt.tight_layout()
+    >>> plt.show()
+    '''
+
+    if min_ratio is None:
+        min_ratio = 1./max_ratio
+    elif min_ratio > max_ratio:
+        raise ParameterError('min_ratio={} cannot exceed max_ratio={}'.format(min_ratio, max_ratio))
+
+    R_smooth = None
+    for ratio in np.logspace(np.log2(min_ratio), np.log2(max_ratio), num=n_filters, base=2):
+        kernel = diagonal_filter(window, n, slope=ratio, zero_mean=zero_mean)
+
+        if R_smooth is None:
+            R_smooth = scipy.ndimage.convolve(R, kernel, **kwargs)
+        else:
+            # Compute the point-wise maximum in-place
+            np.maximum(R_smooth, scipy.ndimage.convolve(R, kernel, **kwargs),
+                       out=R_smooth)
+
+    if clip:
+        # Clip the output in-place
+        np.clip(R_smooth, 0, None, out=R_smooth)
+
+    return R_smooth
