@@ -112,6 +112,8 @@ def test_melfb():
             norm = None
         else:
             norm = DATA['norm'][0, 0]
+            if norm == 1:
+                norm = 'slaney'
         wts = librosa.filters.mel(DATA['sr'][0, 0],
                                   DATA['nfft'][0, 0],
                                   n_mels=DATA['nfilts'][0, 0],
@@ -129,6 +131,15 @@ def test_melfb():
 
     for infile in files(os.path.join('tests', 'data', 'feature-melfbnorm-*.mat')):
         yield (__test_with_norm, infile)
+
+
+@pytest.mark.parametrize('norm', [1, np.inf])
+def test_mel_norm1(norm):
+
+    # Check that calling with norm=1 triggers a warning
+    # This should be removed in 0.8.0
+    with pytest.warns(FutureWarning, match='compatibility'):
+        librosa.filters.mel(22050, 2048, norm=norm)
 
 
 def test_mel_gap():
@@ -155,10 +166,15 @@ def test_chromafb():
         if octwidth == 0:
             octwidth = None
 
+        # Convert A440 parameter to tuning parameter
+        A440 = DATA['a440'][0, 0]
+
+        tuning = DATA['nchroma'][0, 0] * (np.log2(A440) - np.log2(440.0))
+
         wts = librosa.filters.chroma(DATA['sr'][0, 0],
                                      DATA['nfft'][0, 0],
                                      DATA['nchroma'][0, 0],
-                                     A440=DATA['a440'][0, 0],
+                                     tuning=tuning,
                                      ctroct=DATA['ctroct'][0, 0],
                                      octwidth=octwidth,
                                      norm=2,
@@ -202,14 +218,13 @@ def test__window():
 
 def test_constant_q():
 
-    def __test(sr, fmin, n_bins, bins_per_octave, tuning, filter_scale,
+    def __test(sr, fmin, n_bins, bins_per_octave, filter_scale,
                pad_fft, norm):
 
         F, lengths = librosa.filters.constant_q(sr,
                                                 fmin=fmin,
                                                 n_bins=n_bins,
                                                 bins_per_octave=bins_per_octave,
-                                                tuning=tuning,
                                                 filter_scale=filter_scale,
                                                 pad_fft=pad_fft,
                                                 norm=norm)
@@ -233,34 +248,32 @@ def test_constant_q():
 
     # Try to make a cq basis too close to nyquist
     tf = pytest.mark.xfail(__test, raises=librosa.ParameterError)
-    yield (tf, sr, sr/2.0, 1, 12, 0, 1, True, 1)
+    yield (tf, sr, sr/2.0, 1, 12, 1, True, 1)
 
     # with negative fmin
-    yield (tf, sr, -60, 1, 12, 0, 1, True, 1)
+    yield (tf, sr, -60, 1, 12, 1, True, 1)
 
     # with negative bins_per_octave
-    yield (tf, sr, 60, 1, -12, 0, 1, True, 1)
+    yield (tf, sr, 60, 1, -12, 1, True, 1)
 
     # with negative bins
-    yield (tf, sr, 60, -1, 12, 0, 1, True, 1)
+    yield (tf, sr, 60, -1, 12, 1, True, 1)
 
     # with negative filter_scale
-    yield (tf, sr, 60, 1, 12, 0, -1, True, 1)
+    yield (tf, sr, 60, 1, 12, -1, True, 1)
 
     # with negative norm
-    yield (tf, sr, 60, 1, 12, 0, 1, True, -1)
+    yield (tf, sr, 60, 1, 12, 1, True, -1)
 
     for fmin in [None, librosa.note_to_hz('C3')]:
         for n_bins in [12, 24]:
             for bins_per_octave in [12, 24]:
-                for tuning in [0, 0.25]:
-                    for filter_scale in [1, 2]:
-                        for norm in [1, 2]:
-                            for pad_fft in [False, True]:
-                                yield (__test, sr, fmin, n_bins,
-                                       bins_per_octave, tuning,
-                                       filter_scale, pad_fft,
-                                       norm)
+                for filter_scale in [1, 2]:
+                    for norm in [1, 2]:
+                        for pad_fft in [False, True]:
+                            yield (__test, sr, fmin, n_bins,
+                                    bins_per_octave, filter_scale, pad_fft,
+                                    norm)
 
 
 def test_window_bandwidth():
@@ -416,3 +429,46 @@ def test_semitone_filterbank():
 
             assert np.allclose(cur_a_gt, cur_a_mut_sos)
             assert np.allclose(cur_b_gt, cur_b_mut_sos, atol=1e-4)
+
+
+@pytest.mark.parametrize('n', [9, 17])
+@pytest.mark.parametrize('window', ['hann', 'rect'])
+@pytest.mark.parametrize('angle', [None, np.pi/4, np.pi/6])
+@pytest.mark.parametrize('slope', [1, 2, 0.5])
+@pytest.mark.parametrize('zero_mean', [False, True])
+def test_diagonal_filter(n, window, angle, slope, zero_mean):
+
+    kernel = librosa.filters.diagonal_filter(window, n,
+                                             slope=slope,
+                                             angle=angle,
+                                             zero_mean=zero_mean)
+
+    # In the no-rotation case, check that the filter is shaped correctly
+    if angle == np.pi / 4 and not zero_mean:
+        win_unnorm = librosa.filters.get_window(window, n, fftbins=False)
+        win_unnorm /= win_unnorm.sum()
+        assert np.allclose(np.diag(kernel), win_unnorm)
+
+    # First check: zero-mean
+    if zero_mean:
+        assert np.isclose(kernel.sum(), 0)
+    else:
+        assert np.isclose(kernel.sum(), 1) and np.all(kernel >= 0)
+
+    # Now check if the angle transposes correctly
+    if angle is None:
+        # If we're using the slope API, then the transposed kernel
+        # will have slope 1/slope
+        k2 = librosa.filters.diagonal_filter(window, n,
+                                             slope=1./slope,
+                                             angle=angle,
+                                             zero_mean=zero_mean)
+    else:
+        # If we're using the angle API, then the transposed kernel
+        # will have angle pi/2 - angle
+        k2 = librosa.filters.diagonal_filter(window, n,
+                                             slope=slope,
+                                             angle=np.pi/2 - angle,
+                                             zero_mean=zero_mean)
+
+    assert np.allclose(k2, kernel.T)

@@ -8,6 +8,7 @@ try:
 except KeyError:
     pass
 
+import warnings
 import librosa
 import numpy as np
 import pytest
@@ -123,27 +124,27 @@ def test_time_to_frames():
                 yield __test, sr, hop_length, n_fft
 
 
-def test_octs_to_hz():
-    def __test(a440):
-        freq = np.asarray([55, 110, 220, 440]) * (float(a440) / 440.0)
-        freq_out = librosa.octs_to_hz([1, 2, 3, 4], A440=a440)
+@pytest.mark.parametrize('tuning', [0.0, -0.2, 0.1])
+@pytest.mark.parametrize('bins_per_octave', [12, 24, 36])
+def test_octs_to_hz(tuning, bins_per_octave):
+    freq = np.asarray([55, 110, 220, 440]) * (2.0**(tuning / bins_per_octave))
+    freq_out = librosa.octs_to_hz([1, 2, 3, 4],
+                                  tuning=tuning,
+                                  bins_per_octave=bins_per_octave)
 
-        assert np.allclose(freq, freq_out)
-
-    for a440 in [415, 430, 435, 440, 466]:
-        yield __test, a440
+    assert np.allclose(freq, freq_out)
 
 
-def test_hz_to_octs():
-    def __test(a440):
-        freq = np.asarray([55, 110, 220, 440]) * (float(a440) / 440.0)
-        octs = [1, 2, 3, 4]
-        oct_out = librosa.hz_to_octs(freq, A440=a440)
+@pytest.mark.parametrize('tuning', [0.0, -0.2, 0.1])
+@pytest.mark.parametrize('bins_per_octave', [12, 24, 36])
+def test_hz_to_octs(tuning, bins_per_octave):
+    freq = np.asarray([55, 110, 220, 440]) * (2.0**(tuning / bins_per_octave))
+    octs = [1, 2, 3, 4]
+    oct_out = librosa.hz_to_octs(freq,
+                                 tuning=tuning,
+                                 bins_per_octave=bins_per_octave)
 
-        assert np.allclose(octs, oct_out)
-
-    for a440 in [415, 430, 435, 440, 466]:
-        yield __test, a440
+    assert np.allclose(octs, oct_out)
 
 
 def test_note_to_midi():
@@ -283,7 +284,6 @@ def test_hz_to_note():
 
 
 def test_fft_frequencies():
-
     def __test(sr, n_fft):
         freqs = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
 
@@ -351,6 +351,26 @@ def test_tempo_frequencies():
         for hop_length in [256, 512, 1024]:
             for sr in [11025, 22050, 44100]:
                 yield __test, n_bins, hop_length, sr
+
+
+@pytest.mark.parametrize('sr', [8000, 22050])
+@pytest.mark.parametrize('hop_length', [256, 512])
+@pytest.mark.parametrize('win_length', [192, 384])
+def test_fourier_tempo_frequencies(sr, hop_length, win_length):
+    freqs = librosa.fourier_tempo_frequencies(sr=sr,
+                                              hop_length=hop_length,
+                                              win_length=win_length)
+
+    # DC
+    assert freqs[0] == 0
+
+    # Nyquist, positive here for more convenient display purposes
+    assert freqs[-1] == sr * 60 / 2.0 / hop_length
+
+    # Ensure that the frequencies increase linearly
+    dels = np.diff(freqs)
+    assert np.allclose(dels, dels[0])
+
 
 
 def test_A_weighting():
@@ -430,3 +450,57 @@ def test_times_like_scalar():
 
     assert np.allclose(times, expected_times)
 
+
+@pytest.mark.parametrize('blocks', [0, 1, [10, 20]])
+@pytest.mark.parametrize('block_length', [1, 4, 8])
+def test_blocks_to_frames(blocks, block_length):
+    frames = librosa.blocks_to_frames(blocks, block_length)
+
+    # Check shape
+    assert frames.ndim == np.asarray(blocks).ndim
+    assert frames.size == np.asarray(blocks).size
+
+    # Check values
+    assert np.allclose(frames, block_length * np.asanyarray(blocks))
+
+    # Check dtype
+    assert np.issubdtype(frames.dtype, np.int)
+
+
+@pytest.mark.parametrize('blocks', [0, 1, [10, 20]])
+@pytest.mark.parametrize('block_length', [1, 4, 8])
+@pytest.mark.parametrize('hop_length', [1, 512])
+def test_blocks_to_samples(blocks, block_length, hop_length):
+    samples = librosa.blocks_to_samples(blocks, block_length,
+                                        hop_length)
+
+    # Check shape
+    assert samples.ndim == np.asarray(blocks).ndim
+    assert samples.size == np.asarray(blocks).size
+
+    # Check values
+    assert np.allclose(samples,
+                       np.asanyarray(blocks) * hop_length * block_length)
+
+    # Check dtype
+    assert np.issubdtype(samples.dtype, np.int)
+
+
+@pytest.mark.parametrize('blocks', [0, 1, [10, 20]])
+@pytest.mark.parametrize('block_length', [1, 4, 8])
+@pytest.mark.parametrize('hop_length', [1, 512])
+@pytest.mark.parametrize('sr', [22050, 44100])
+def test_blocks_to_time(blocks, block_length, hop_length, sr):
+    times = librosa.blocks_to_time(blocks, block_length,
+                                   hop_length, sr)
+
+    # Check shape
+    assert times.ndim == np.asarray(blocks).ndim
+    assert times.size == np.asarray(blocks).size
+
+    # Check values
+    assert np.allclose(times,
+                       np.asanyarray(blocks) * hop_length * block_length / float(sr))
+
+    # Check dtype
+    assert np.issubdtype(times.dtype, np.float)

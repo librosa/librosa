@@ -43,6 +43,21 @@ Contributors
 * toddrme2178 <https://github.com/toddrme2178>
 * Andy Sarroff <https://github.com/woodshop>
 * Monsij Biswal <https://github.com/monsij>
+* Taewoon Kim <https://github.com/tae898>
+* Adam Weiss <https://github.com/ajweiss>
+* Viktor Andreevitch Morozov <https://github.com/viktorAndreevichMorozov>
+* Jan Schlüter <https://github.com/f0k>
+* Darío Hereñú <https://github.com/kant>
+* Alex Metsai <https://github.com/AlexMetsai>
+* Jack Mason <https://github.com/jack-alexander-ie>
+* Scott Seyfarth <https://github.com/scjs>
+* Voodoohop <https://github.com/voodoohop>
+* Alastair Porter <https://github.com/alastair>
+* Fabian Keller <https://github.com/bluenote10>
+* Ayoub Malek <https://github.com/SuperKogito>
+* Stef van der Struijk <https://github.com/NumesSanguis>
+* Shunsuke Hidaka <https://github.com/onkyo14taro>
+* Eric Semeniuc <https://github.com/esemeniuc>
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
 

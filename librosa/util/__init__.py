@@ -15,12 +15,12 @@ Array operations
     fix_frames
     index_to_slice
     softmask
+    stack
     sync
-    softmask
 
     axis_sort
     normalize
-    roll_sparse
+    shear
     sparsify_rows
 
     buf_to_float
@@ -41,6 +41,8 @@ Miscellaneous
 
     localmax
     peak_pick
+    nnls
+    cyclic_gradient
 
 
 Input validation
@@ -61,13 +63,13 @@ File operations
 
     example_audio_file
     find_files
-
 """
 
 from .utils import *  # pylint: disable=wildcard-import
 from .files import *  # pylint: disable=wildcard-import
 from .matching import *  # pylint: disable=wildcard-import
 from .deprecation import *  # pylint: disable=wildcard-import
+from ._nnls import *  # pylint: disable=wildcard-import
 from . import decorators
 from . import exceptions
 

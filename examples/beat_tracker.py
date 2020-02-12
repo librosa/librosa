@@ -10,6 +10,7 @@ from __future__ import print_function
 
 import argparse
 import sys
+import numpy as np
 import librosa
 
 
@@ -41,7 +42,7 @@ def beat_track(input_file, output_csv):
     beat_times = librosa.frames_to_time(beats, sr=sr, hop_length=hop_length)
 
     print('Saving output to ', output_csv)
-    librosa.output.times_csv(output_csv, beat_times)
+    np.savetxt(output_csv, beat_times, delimiter=',')
     print('done!')
 
 
