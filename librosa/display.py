@@ -79,6 +79,7 @@ class TimeFormatter(Formatter):
     >>> ax.plot(times, values)
     >>> ax.xaxis.set_major_formatter(librosa.display.TimeFormatter())
     >>> ax.set_xlabel('Time')
+    >>> plt.show()
 
     Manually set the physical time unit of the x-axis to milliseconds
 
@@ -177,6 +178,7 @@ class NoteFormatter(Formatter):
     >>> ax2.bar(np.arange(len(values)), values)
     >>> ax2.yaxis.set_major_formatter(librosa.display.NoteFormatter())
     >>> ax2.set_ylabel('Note')
+    >>> plt.show()
     '''
     def __init__(self, octave=True, major=True):
 
@@ -227,6 +229,7 @@ class LogHzFormatter(Formatter):
     >>> ax2.bar(np.arange(len(values)), values)
     >>> ax2.yaxis.set_major_formatter(librosa.display.NoteFormatter())
     >>> ax2.set_ylabel('Note')
+    >>> plt.show()
     '''
     def __init__(self, major=True):
 
@@ -261,6 +264,7 @@ class ChromaFormatter(Formatter):
     >>> ax.plot(values)
     >>> ax.yaxis.set_major_formatter(librosa.display.ChromaFormatter())
     >>> ax.set_ylabel('Pitch class')
+    >>> plt.show()
     '''
     def __call__(self, x, pos=None):
         '''Format for chroma positions'''
@@ -283,6 +287,7 @@ class TonnetzFormatter(Formatter):
     >>> ax.plot(values)
     >>> ax.yaxis.set_major_formatter(librosa.display.TonnetzFormatter())
     >>> ax.set_ylabel('Tonnetz')
+    >>> plt.show()
     '''
     def __call__(self, x, pos=None):
         '''Format for tonnetz positions'''
@@ -350,8 +355,12 @@ def cmap(data, robust=True, cmap_seq='magma', cmap_bool='gray_r', cmap_div='cool
 
 
 def __envelope(x, hop):
-    '''Compute the max-envelope of x at a stride/frame length of h'''
-    return util.frame(x, hop_length=hop, frame_length=hop).max(axis=0)
+    '''Compute the max-envelope of non-overlapping frames of x at length hop
+
+    x is assumed to be multi-channel, of shape (n_channels, n_samples).
+    '''
+    x_frame = np.abs(util.frame(x, frame_length=hop, hop_length=hop))
+    return x_frame.max(axis=1)
 
 
 def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
@@ -381,8 +390,24 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
 
         If `None`, no downsampling is performed.
 
-    x_axis : str {'time', 'off', 'none'} or None
-        If 'time', the x-axis is given time tick-marks.
+    x_axis : str or None
+        Display of the x-axis ticks and tick markers. Accepted values are:
+
+        - 'time' : markers are shown as milliseconds, seconds, minutes, or hours.
+            Values are plotted in units of seconds.
+
+        - 's' : markers are shown as seconds.
+
+        - 'ms' : markers are shown as milliseconds.
+
+        - 'lag' : like time, but past the halfway point counts as negative values.
+
+        - 'lag_s' : same as lag, but in seconds.
+
+        - 'lag_ms' : same as lag, but in milliseconds.
+
+        - `None`, 'none', or 'off': ticks and tick markers are hidden.
+
 
     ax : matplotlib.axes.Axes or None
         Axes to plot on instead of the default `plt.gca()`.
@@ -435,6 +460,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
     >>> librosa.display.waveplot(y_perc, sr=sr, color='r', alpha=0.5)
     >>> plt.title('Harmonic + Percussive')
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
 
     util.valid_audio(y, mono=False)
@@ -445,6 +471,10 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
     target_sr = sr
     hop_length = 1
 
+    # Pad an extra channel dimension, if necessary
+    if y.ndim == 1:
+        y = y[np.newaxis, :]
+
     if max_points is not None:
         if max_points <= 0:
             raise ParameterError('max_points must be strictly positive')
@@ -454,36 +484,24 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
 
         hop_length = sr // target_sr
 
-        if y.ndim == 1:
-            y = __envelope(y, hop_length)
-        else:
-            y = np.vstack([__envelope(_, hop_length) for _ in y])
+    # Reduce by envelope calculation
+    y = __envelope(y, hop_length)
 
-    if y.ndim > 1:
-        y_top = y[0]
-        y_bottom = -y[1]
-    else:
-        y_top = y
-        y_bottom = -y
+    y_top = y[0]
+    y_bottom = -y[-1]
 
     axes = __check_axes(ax)
 
     kwargs.setdefault('color', next(axes._get_lines.prop_cycler)['color'])
 
-    locs = offset + core.frames_to_time(np.arange(len(y_top)),
-                                        sr=sr,
-                                        hop_length=hop_length)
+    locs = offset + core.times_like(y_top, sr=sr, hop_length=hop_length)
 
     out = axes.fill_between(locs, y_bottom, y_top, **kwargs)
 
     axes.set_xlim([locs.min(), locs.max()])
-    if x_axis == 'time':
-        axes.xaxis.set_major_formatter(TimeFormatter(lag=False))
-        axes.xaxis.set_label_text('Time')
-    elif x_axis is None or x_axis in ['off', 'none']:
-        axes.set_xticks([])
-    else:
-        raise ParameterError('Unknown x_axis value: {}'.format(x_axis))
+
+    # Construct tickers and locators
+    __decorate_axis(axes.xaxis, x_axis)
 
     return out
 
@@ -492,6 +510,7 @@ def specshow(data, x_coords=None, y_coords=None,
              x_axis=None, y_axis=None,
              sr=22050, hop_length=512,
              fmin=None, fmax=None,
+             tuning=0.0,
              bins_per_octave=12,
              ax=None,
              **kwargs):
@@ -539,21 +558,23 @@ def specshow(data, x_coords=None, y_coords=None,
 
         Time types:
 
-        - 'time' : markers are shown as milliseconds, seconds,
-          minutes, or hours.
-          Values are plotted in units of seconds.
+        - 'time' : markers are shown as milliseconds, seconds, minutes, or hours.  
+                Values are plotted in units of seconds.
         - 's' : markers are shown as seconds.
         - 'ms' : markers are shown as milliseconds.
-
-        - 'lag' : like time, but past the halfway point counts
-          as negative values.
+        - 'lag' : like time, but past the halfway point counts as negative values.
         - 'lag_s' : same as lag, but in seconds.
         - 'lag_ms' : same as lag, but in milliseconds.
 
-        Other:
+        Rhythm:
 
         - 'tempo' : markers are shown as beats-per-minute (BPM)
-            using a logarithmic scale.
+            using a logarithmic scale.  This is useful for
+            visualizing the outputs of `feature.tempogram`.
+
+        - 'fourier_tempo' : same as `'tempo'`, but used when
+            tempograms are calculated in the Frequency domain
+            using `feature.fourier_tempogram`.
 
     x_coords : np.ndarray [shape=data.shape[1]+1]
     y_coords : np.ndarray [shape=data.shape[0]+1]
@@ -574,6 +595,12 @@ def specshow(data, x_coords=None, y_coords=None,
 
     fmax : float > 0 [scalar] or None
         Used for setting the Mel frequency scales
+
+    tuning : float
+        Tuning deviation from A440, in fractions of a bin.
+
+        This is used for CQT frequency scales, so that `fmin` is adjusted
+        to `fmin * 2**(tuning / bins_per_octave)`.
 
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave.  Used for CQT frequency scale.
@@ -673,6 +700,7 @@ def specshow(data, x_coords=None, y_coords=None,
     >>> plt.colorbar()
     >>> plt.title('Tempogram')
     >>> plt.tight_layout()
+    >>> plt.show()
 
 
     Draw beat-synchronous chroma in natural time
@@ -690,6 +718,7 @@ def specshow(data, x_coords=None, y_coords=None,
     ...                          x_coords=beat_t)
     >>> plt.title('Chroma (beat time)')
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
 
     if np.issubdtype(data.dtype, np.complexfloating):
@@ -706,6 +735,7 @@ def specshow(data, x_coords=None, y_coords=None,
                       sr=sr,
                       fmin=fmin,
                       fmax=fmax,
+                      tuning=tuning,
                       bins_per_octave=bins_per_octave,
                       hop_length=hop_length)
 
@@ -769,6 +799,7 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
                  'tonnetz': __coord_n,
                  'off': __coord_n,
                  'tempo': __coord_tempo,
+                 'fourier_tempo': __coord_fourier_tempo,
                  'frames': __coord_n,
                  None: __coord_n}
 
@@ -821,7 +852,7 @@ def __scale_axes(axes, ax_type, which):
         mode = 'log'
         kwargs[base] = 2
 
-    elif ax_type == 'tempo':
+    elif ax_type in ['tempo', 'fourier_tempo']:
         mode = 'log'
         kwargs[base] = 2
         limit(16, 480)
@@ -846,7 +877,7 @@ def __decorate_axis(axis, ax_type):
                                                          [0, 2, 4, 5, 7, 9, 11]).ravel()))
         axis.set_label_text('Pitch class')
 
-    elif ax_type == 'tempo':
+    elif ax_type in ['tempo', 'fourier_tempo']:
         axis.set_major_formatter(ScalarFormatter())
         axis.set_major_locator(LogLocator(base=2.0))
         axis.set_label_text('BPM')
@@ -951,6 +982,9 @@ def __coord_cqt_hz(n, fmin=None, bins_per_octave=12, **_kwargs):
     if fmin is None:
         fmin = core.note_to_hz('C1')
 
+    # Apply tuning correction
+    fmin = fmin * 2.0**(_kwargs.get('tuning', 0.0) / bins_per_octave)
+
     # we drop by half a bin so that CQT bins are centered vertically
     return core.cqt_frequencies(n+1,
                                 fmin=fmin / 2.0**(0.5/bins_per_octave),
@@ -967,6 +1001,21 @@ def __coord_tempo(n, sr=22050, hop_length=512, **_kwargs):
     basis = core.tempo_frequencies(n+2, sr=sr, hop_length=hop_length)[1:]
     edges = np.arange(1, n+2)
     return basis * (edges + 0.5) / edges
+
+
+def __coord_fourier_tempo(n, sr=22050, hop_length=512, **_kwargs):
+    '''Fourier tempogram coordinates'''
+
+    n_fft = 2 * (n - 1)
+    # The following code centers the FFT bins at their frequencies
+    # and clips to the non-negative frequency range [0, nyquist]
+    basis = core.fourier_tempo_frequencies(sr=sr,
+                                           hop_length=hop_length,
+                                           win_length=n_fft)
+    fmax = basis[-1]
+    basis -= 0.5 * (basis[1] - basis[0])
+    basis = np.append(np.maximum(0, basis), [fmax])
+    return basis
 
 
 def __coord_n(n, **_kwargs):

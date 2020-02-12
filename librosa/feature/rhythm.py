@@ -7,11 +7,12 @@ import numpy as np
 from .. import util
 
 from ..core.audio import autocorrelate
+from ..core.spectrum import stft
 from ..util.exceptions import ParameterError
 from ..filters import get_window
 
 
-__all__ = ['tempogram']
+__all__ = ['tempogram', 'fourier_tempogram']
 
 
 # -- Rhythmic features -- #
@@ -72,6 +73,7 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
     See Also
     --------
+    fourier_tempogram
     librosa.onset.onset_strength
     librosa.util.normalize
     librosa.core.stft
@@ -128,6 +130,7 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
     >>> plt.axis('tight')
     >>> plt.grid()
     >>> plt.tight_layout()
+    >>> plt.show()
     '''
 
     from ..onset import onset_strength
@@ -176,3 +179,109 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
     return util.normalize(autocorrelate(odf_frame * ac_window[:, np.newaxis],
                                         axis=0),
                           norm=norm, axis=0)
+
+
+def fourier_tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
+                      win_length=384, center=True, window='hann'):
+    '''Compute the Fourier tempogram: the short-time Fourier transform of the
+    onset strength envelope. [1]_
+
+    .. [1] Grosche, Peter, Meinard Müller, and Frank Kurth.
+        "Cyclic tempogram - A mid-level tempo representation for music signals."
+        ICASSP, 2010.
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(n,)] or None
+        Audio time series.
+
+    sr : number > 0 [scalar]
+        sampling rate of `y`
+
+    onset_envelope : np.ndarray [shape=(n,)] or None
+        Optional pre-computed onset strength envelope as provided by
+        `onset.onset_strength`.
+
+    hop_length : int > 0
+        number of audio samples between successive onset measurements
+
+    win_length : int > 0
+        length of the onset window (in frames/onset measurements)
+        The default settings (384) corresponds to `384 * hop_length / sr ~= 8.9s`.
+
+    center : bool
+        If `True`, onset windows are centered.
+        If `False`, windows are left-aligned.
+
+    window : string, function, number, tuple, or np.ndarray [shape=(win_length,)]
+        A window specification as in `core.stft`.
+
+    Returns
+    -------
+    tempogram : np.ndarray [shape=(win_length // 2 + 1, n)]
+        Complex short-time Fourier transform of the onset envelope.
+
+    Raises
+    ------
+    ParameterError
+        if neither `y` nor `onset_envelope` are provided
+
+        if `win_length < 1`
+
+    See Also
+    --------
+    tempogram
+    librosa.onset.onset_strength
+    librosa.util.normalize
+    librosa.core.stft
+
+
+    Examples
+    --------
+    >>> # Compute local onset autocorrelation
+    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> hop_length = 512
+    >>> oenv = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
+    >>> tempogram = librosa.feature.fourier_tempogram(onset_envelope=oenv, sr=sr,
+    ...                                               hop_length=hop_length)
+    >>> # Compute the auto-correlation tempogram, unnormalized to make comparison easier
+    >>> ac_tempogram = librosa.feature.tempogram(onset_envelope=oenv, sr=sr,
+    ...                                          hop_length=hop_length, norm=None)
+
+    >>> import matplotlib.pyplot as plt
+    >>> plt.figure(figsize=(8, 8))
+    >>> plt.subplot(3, 1, 1)
+    >>> plt.plot(oenv, label='Onset strength')
+    >>> plt.xticks([])
+    >>> plt.legend(frameon=True)
+    >>> plt.axis('tight')
+    >>> plt.subplot(3, 1, 2)
+    >>> librosa.display.specshow(np.abs(tempogram), sr=sr, hop_length=hop_length,
+    >>>                          x_axis='time', y_axis='fourier_tempo', cmap='magma')
+    >>> plt.title('Fourier tempogram')
+    >>> plt.subplot(3, 1, 3)
+    >>> librosa.display.specshow(ac_tempogram, sr=sr, hop_length=hop_length,
+    >>>                          x_axis='time', y_axis='tempo', cmap='magma')
+    >>> plt.title('Autocorrelation tempogram')
+    >>> plt.tight_layout()
+    >>> plt.show()
+    '''
+
+    from ..onset import onset_strength
+
+    if win_length < 1:
+        raise ParameterError('win_length must be a positive integer')
+
+    if onset_envelope is None:
+        if y is None:
+            raise ParameterError('Either y or onset_envelope must be provided')
+
+        onset_envelope = onset_strength(y=y, sr=sr, hop_length=hop_length)
+
+    else:
+        # Force row-contiguity to avoid framing errors below
+        onset_envelope = np.ascontiguousarray(onset_envelope)
+
+    # Generate the short-time Fourier transform
+    return stft(onset_envelope, n_fft=win_length, hop_length=1,
+                center=center, window=window)

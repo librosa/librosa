@@ -10,7 +10,6 @@ A python package for music and audio analysis.
 [![Build Status](https://travis-ci.org/librosa/librosa.png?branch=master)](http://travis-ci.org/librosa/librosa?branch=master)
 [![Build status](https://ci.appveyor.com/api/projects/status/8i1hhr8yj78195xf?svg=true)](https://ci.appveyor.com/project/bmcfee/librosa)
 [![Coverage Status](https://coveralls.io/repos/librosa/librosa/badge.svg?branch=master)](https://coveralls.io/r/librosa/librosa?branch=master)
-[![Dependency Status](https://dependencyci.com/github/librosa/librosa/badge)](https://dependencyci.com/github/librosa/librosa)
 
 
 Documentation
@@ -56,21 +55,30 @@ git clone https://github.com/librosa/librosa.git
 pip install -e librosa
 ```
 
-By calling `pip list` you should see `librosa` now as an installed pacakge:
+By calling `pip list` you should see `librosa` now as an installed package:
 ```
 librosa (0.x.x, /path/to/librosa)
 ```
 
 ### Hints for the Installation
 
-#### audioread
+`librosa` uses `soundfile` and `audioread` to load audio files.
+Note that `soundfile` does not currently support MP3, which will cause librosa to
+fall back on the `audioread` library.
 
-*Note that `audioread` needs at least one of the programs to work properly.*
+#### soundfile
 
-`librosa` uses `audioread` to load audio files.
+If you're using `conda` to install librosa, then most audio coding dependencies (except MP3) will be handled automatically.
 
-To fuel `audioread` with more audio-decoding power (e. g. for reading MP3 files),
-you can either install *ffmpeg* or *GStreamer*.
+If you're using `pip` on a Linux environment, you may need to install `libsndfile`
+manually.  Please refer to the [SoundFile installation documentation](https://pysoundfile.readthedocs.io/#installation) for details.
+
+#### audioread and MP3 support
+
+To fuel `audioread` with more audio-decoding power (e.g., for reading MP3 files),
+you may need to install either *ffmpeg* or *GStreamer*.
+
+*Note that on some platforms, `audioread` needs at least one of the programs to work properly.*
 
 If you are using Anaconda, install *ffmpeg* by calling
 ```
@@ -82,9 +90,9 @@ If you are not using Anaconda, here are some common commands for different opera
 * Linux (apt-get): `apt-get install ffmpeg` or `apt-get install gstreamer1.0-plugins-base gstreamer1.0-plugins-ugly`
 * Linux (yum): `yum install ffmpeg` or `yum install gstreamer1.0-plugins-base gstreamer1.0-plugins-ugly`
 * Mac: `brew install ffmpeg` or `brew install gstreamer`
-* Windows: download binaries from the website
+* Windows: download binaries from this [website]( https://gstreamer.freedesktop.org/) 
 
-For GStreamer, you also need to install the Python bindings with
+For GStreamer, you also need to install the Python bindings with 
 ```
 pip install pygobject
 ```
