@@ -765,56 +765,73 @@ def test_index_to_slice(idx, idx_min, idx_max, step, pad):
         assert sl.step == step
 
 
-def not_test_sync():
+@pytest.mark.parametrize('aggregate', [None, np.mean, np.sum])
+@pytest.mark.parametrize('ndim,axis', [(1, 0), (1, -1), (2, 0), (2, 1), (2, -1), (3, 0), (3, 2), (3, -1)])
+def test_sync(aggregate, ndim, axis):
+    data = np.ones([6] * ndim, dtype=np.float)
 
-    def __test_pass(axis, data, idx):
-        # By default, mean aggregation
-        dsync = librosa.util.sync(data, idx, axis=axis)
-        if data.ndim == 1 or axis == -1:
-            assert np.allclose(dsync, 2 * np.ones_like(dsync))
-        else:
-            assert np.allclose(dsync, data)
+    # Make some slices that don't fill the entire dimension
+    slices = [slice(1, 3), slice(3, 4)]
+    dsync = librosa.util.sync(data, slices, aggregate=aggregate, axis=axis)
 
-        # Explicit mean aggregation
-        dsync = librosa.util.sync(data, idx, aggregate=np.mean, axis=axis)
-        if data.ndim == 1 or axis == -1:
-            assert np.allclose(dsync, 2 * np.ones_like(dsync))
-        else:
-            assert np.allclose(dsync, data)
+    # Check the axis shapes
+    assert dsync.shape[axis] == len(slices)
 
-        # Max aggregation
-        dsync = librosa.util.sync(data, idx, aggregate=np.max, axis=axis)
-        if data.ndim == 1 or axis == -1:
-            assert np.allclose(dsync, 4 * np.ones_like(dsync))
-        else:
-            assert np.allclose(dsync, data)
+    s_test = list(dsync.shape)
+    del s_test[axis]
+    s_orig = list(data.shape)
+    del s_orig[axis]
+    assert s_test == s_orig
 
-        # Min aggregation
-        dsync = librosa.util.sync(data, idx, aggregate=np.min, axis=axis)
-        if data.ndim == 1 or axis == -1:
-            assert np.allclose(dsync, np.zeros_like(dsync))
-        else:
-            assert np.allclose(dsync, data)
+    # The first slice will sum to 2 and have mean 1
+    idx = [slice(None)] * ndim
+    idx[axis] = 0
+    if aggregate is np.sum:
+        assert np.allclose(dsync[idx], 2)
+    else:
+        assert np.allclose(dsync[idx], 1)
 
-        # Test for dtype propagation
-        assert dsync.dtype == data.dtype
+    # The second slice will sum to 1 and have mean 1
+    idx[axis] = 1
+    assert np.allclose(dsync[idx], 1)
 
-    for ndim in [1, 2, 3]:
-        shaper = [1] * ndim
-        shaper[-1] = -1
 
-        data = np.mod(np.arange(135), 5)
-        frames = np.flatnonzero(data[0] == 0)
-        slices = [slice(start, stop) for (start, stop) in zip(frames, frames[1:])]
-        data = np.reshape(data, shaper)
+@pytest.mark.parametrize('aggregate', [np.mean, np.max])
+def test_sync_slices(aggregate):
+    x = np.arange(8, dtype=float)
+    slices = [slice(0, 2), slice(2, 4), slice(4, 6), slice(6, 8)]
+    xsync = librosa.util.sync(x, slices, aggregate=aggregate)
+    if aggregate is np.mean:
+        assert np.allclose(xsync, [0.5, 2.5, 4.5, 6.5])
+    elif aggregate is np.max:
+        assert np.allclose(xsync, [1, 3, 5, 7])
+    else:
+        assert False
+    
 
-        for axis in [0, -1]:
-            # Test with list of indices
-            yield __test_pass, axis, data, list(frames)
-            # Test with ndarray of indices
-            yield __test_pass, axis, data, frames
-            # Test with list of slices
-            yield __test_pass, axis, data, slices
+@pytest.mark.parametrize('aggregate', [np.mean, np.max])
+@pytest.mark.parametrize('atype', [list, np.asarray])
+def test_sync_frames(aggregate, atype):
+    x = np.arange(8, dtype=float)
+    frames = atype([0, 2, 4, 6, 8])
+    xsync = librosa.util.sync(x, frames, aggregate=aggregate)
+    if aggregate is np.mean:
+        assert np.allclose(xsync, [0.5, 2.5, 4.5, 6.5])
+    elif aggregate is np.max:
+        assert np.allclose(xsync, [1, 3, 5, 7])
+    else:
+        assert False
+
+@pytest.mark.parametrize('atype', [list, np.asarray])
+@pytest.mark.parametrize('pad', [False, True])
+def test_sync_frames_pad(atype, pad):
+    x = np.arange(8, dtype=float)
+    frames = atype([2, 4, 6])
+    xsync = librosa.util.sync(x, frames, pad=pad)
+    if pad:
+        assert np.allclose(xsync, [0.5, 2.5, 4.5, 6.5])
+    else:
+        assert np.allclose(xsync, [2.5, 4.5])
 
 
 @pytest.mark.parametrize('data', [np.mod(np.arange(135), 5)])
