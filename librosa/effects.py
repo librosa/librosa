@@ -249,7 +249,8 @@ def time_stretch(y, rate, **kwargs):
 
 def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type='kaiser_best',
                 **kwargs):
-    '''Shift the pitch of a waveform by `n_steps` semitones.
+    '''Shift the pitch of a waveform by `n_steps` steps. A step is equal to 
+    a semitone if `bins_per_octave` is set to 12.
 
     Parameters
     ----------
@@ -260,7 +261,7 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type='kaiser_best',
         audio sampling rate of `y`
 
     n_steps : float [scalar]
-        how many (fractional) half-steps to shift `y`
+        how many (fractional) steps to shift `y`
 
     bins_per_octave : float > 0 [scalar]
         how many steps per octave
@@ -290,12 +291,12 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type='kaiser_best',
 
     Examples
     --------
-    Shift up by a major third (four half-steps)
+    Shift up by a major third (four steps if `bins_per_octave` is 12)
 
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> y_third = librosa.effects.pitch_shift(y, sr, n_steps=4)
 
-    Shift down by a tritone (six half-steps)
+    Shift down by a tritone (six steps if `bins_per_octave` is 12)
 
     >>> y_tritone = librosa.effects.pitch_shift(y, sr, n_steps=-6)
 
