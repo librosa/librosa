@@ -644,7 +644,7 @@ def y_44100():
 
 def test_magphase(y_22050):
 
-    D = librosa.stft(y)
+    D = librosa.stft(y_22050)
 
     S, P = librosa.magphase(D)
 
@@ -1229,66 +1229,56 @@ def test_chirp_fail(fmin, fmax, length, duration):
     librosa.chirp(fmin=fmin, fmax=fmax, sr=22050, length=length, duration=duration)
 
 
-def test_fmt_scale():
-    # This test constructs a single-cycle cosine wave, applies various axis scalings,
-    # and tests that the FMT is preserved
+@pytest.fixture(scope='module', params=[1, 2, 3])
+def OVER_SAMPLE(request):
+    return request.param
 
-    def __test(scale, n_fmt, over_sample, kind, y_orig, y_res, atol):
 
-        # Make sure our signals preserve energy
-        assert np.allclose(np.sum(y_orig**2), np.sum(y_res**2))
+@pytest.fixture(scope='module', params=[1, 2, 3./2, 5./4, 9./8])
+def SCALE(request):
+    return request.param
 
-        # Scale-transform the original
-        f_orig = librosa.fmt(y_orig,
-                             t_min=0.5,
-                             n_fmt=n_fmt,
-                             over_sample=over_sample,
-                             kind=kind)
 
-        # Force to the same length
-        n_fmt_res = 2 * len(f_orig) - 2
+@pytest.fixture(scope='module')
+def y_res(SCALE):
+    y = np.sin(2 * np.pi * np.linspace(0, 1, num=int(SCALE * 256), endpoint=False))
+    y /= np.sqrt(SCALE)
+    return y
 
-        # Scale-transform the new signal to match
-        f_res = librosa.fmt(y_res,
-                            t_min=scale * 0.5,
-                            n_fmt=n_fmt_res,
-                            over_sample=over_sample,
-                            kind=kind)
+@pytest.fixture(scope='module')
+def y_orig():
+    return np.sin(2 * np.pi * np.linspace(0, 1, num=256, endpoint=False))
 
-        # Due to sampling alignment, we'll get some phase deviation here
-        # The shape of the spectrum should be approximately preserved though.
-        assert np.allclose(np.abs(f_orig), np.abs(f_res), atol=atol, rtol=1e-7)
 
-    # Our test signal is a single-cycle sine wave
-    def f(x):
-        freq = 1
-        return np.sin(2 * np.pi * freq * x)
+@pytest.mark.parametrize('kind,atol', [('slinear', 1e-4),
+                                       ('quadratic', 1e-5),
+                                       ('cubic', 1e-6)])
+@pytest.mark.parametrize('n_fmt', [None, 64, 128, 256, 512])
+def test_fmt_scale(y_orig, y_res, n_fmt, kind, atol, SCALE, OVER_SAMPLE):
 
-    bounds = [0, 1.0]
-    num = 2**8
+    # Make sure our signals preserve energy
+    assert np.allclose(np.sum(y_orig**2), np.sum(y_res**2))
 
-    x = np.linspace(bounds[0], bounds[1], num=num, endpoint=False)
+    # Scale-transform the original
+    f_orig = librosa.fmt(y_orig,
+                         t_min=0.5,
+                         n_fmt=n_fmt,
+                         over_sample=OVER_SAMPLE,
+                         kind=kind)
 
-    y_orig = f(x)
+    # Force to the same length
+    n_fmt_res = 2 * len(f_orig) - 2
 
-    atol = {'slinear': 1e-4, 'quadratic': 1e-5, 'cubic': 1e-6}
+    # Scale-transform the new signal to match
+    f_res = librosa.fmt(y_res,
+                        t_min=SCALE * 0.5,
+                        n_fmt=n_fmt_res,
+                        over_sample=OVER_SAMPLE,
+                        kind=kind)
 
-    for scale in [2, 3./2, 5./4, 9./8]:
-
-        # Scale the time axis
-        x_res = np.linspace(bounds[0], bounds[1], num=int(scale * num), endpoint=False)
-        y_res = f(x_res)
-
-        # Re-normalize the energy to match that of y_orig
-        y_res /= np.sqrt(scale)
-
-        for kind in ['slinear', 'quadratic', 'cubic']:
-            for n_fmt in [None, 64, 128, 256, 512]:
-                for cur_os in [1, 2, 3]:
-                    yield __test, scale, n_fmt, cur_os, kind, y_orig, y_res, atol[kind]
-
-                # Over-sampling with down-scaling gets dicey at the end-points
-                yield __test, 1./scale, n_fmt, 1, kind, y_res, y_orig, atol[kind]
+    # Due to sampling alignment, we'll get some phase deviation here
+    # The shape of the spectrum should be approximately preserved though.
+    assert np.allclose(np.abs(f_orig), np.abs(f_res), atol=atol, rtol=1e-7)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -1410,16 +1400,17 @@ def test_show_versions():
     librosa.show_versions()
 
 
-def test_iirt(y_44100):
+def test_iirt():
     gt = scipy.io.loadmat(os.path.join('tests', 'data', 'features-CT-cqt'), squeeze_me=True)['f_cqt']
 
-    sr = 44100
-    y = y_44100
-    mut1 = librosa.iirt(y, hop_length=2205, win_length=4410, flayout='ba')
+    # There shouldn't be a load here, but test1_44100 was resampled for this fixture :\
+    y, sr = librosa.load(os.path.join('tests', 'data', 'test1_44100.wav'))
+
+    mut1 = librosa.iirt(y, sr=sr, hop_length=2205, win_length=4410, flayout='ba')
 
     assert np.allclose(mut1, gt[23:108, :mut1.shape[1]], atol=1.8)
 
-    mut2 = librosa.iirt(y, hop_length=2205, win_length=4410, flayout='sos')
+    mut2 = librosa.iirt(y, sr=sr, hop_length=2205, win_length=4410, flayout='sos')
 
     assert np.allclose(mut2, gt[23:108, :mut2.shape[1]], atol=1.8)
 
@@ -1431,86 +1422,90 @@ def test_iirt_flayout1(y_44100):
     librosa.iirt(y, hop_length=2205, win_length=4410, flayout='foo')
 
 
-def test_pcen():
+@pytest.fixture(scope='module')
+def S_pcen():
+    return np.abs(np.random.randn(9, 30))
 
-    def __test(gain, bias, power, b, time_constant, eps, ms, S, Pexp):
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('gain,bias,power,b,time_constant,eps,ms',
+        [
+            (-1, 1, 1, 0.5, 0.5, 1e-6, 1), #   gain < 0 
+            (1, -1, 1, 0.5, 0.5, 1e-6, 1), #   bias < 0 
+            (1, 1, -0.1, 0.5, 0.5, 1e-6, 1), #   power < 0 
+            (1, 1, 1, -2, 0.5, 1e-6, 1), #   b < 0 
+            (1, 1, 1, 2, 0.5, 1e-6, 1), #   b > 1 
+            (1, 1, 1, 0.5, -2, 1e-6, 1), #   time_constant <= 0 
+            (1, 1, 1, 0.5, 0.5, 0, 1), #   eps <= 0 
+            (1, 1, 1, 0.5, 0.5, 1e-6, 1.5),
+            (1, 1, 1, 0.5, 0.5, 1e-6, 0) #   max_size not int, < 1
+        ])
+def test_pcen_failures(gain, bias, power, b, time_constant, eps, ms, S_pcen):
+    librosa.pcen(S_pcen, gain=gain, bias=bias, power=power,
+                 time_constant=time_constant, eps=eps, b=b, max_size=ms)
 
-        with warnings.catch_warnings(record=True) as out:
 
-            P = librosa.pcen(S, gain=gain, bias=bias, power=power,
-                             time_constant=time_constant, eps=eps, b=b,
-                             max_size=ms)
 
-            if np.issubdtype(S.dtype, np.complexfloating):
-                assert len(out) > 0
-                assert 'complex' in str(out[0].message).lower()
+@pytest.mark.parametrize('p', [0.5, 1, 2])
+def test_pcen_power(S_pcen, p):
+    # when b=1, gain=0, bias=0, all filtering is disabled;
+    # this test just checks that power calculations work as expected
+    P = librosa.pcen(S_pcen, gain=0, bias=0, power=p, b=1,
+                     time_constant=0.5, eps=1e-6, max_size=1)
+    assert np.allclose(P, S_pcen**p)
 
-        assert P.shape == S.shape
-        assert np.all(P >= 0)
-        assert np.all(np.isfinite(P))
 
-        if Pexp is not None:
-            assert np.allclose(P, Pexp)
+def test_pcen_ones(S_pcen):
+    # when gain=1, bias=0, power=1, b=1, eps=1e-20, we should get all ones
+    P = librosa.pcen(S_pcen, gain=1, bias=0, power=1, b=1,
+                     time_constant=0.5, eps=1e-20, max_size=1)
+    assert np.allclose(P, np.ones_like(S_pcen))
 
-    tf = pytest.mark.xfail(__test, raises=librosa.ParameterError)
 
-    srand()
-    S = np.abs(np.random.randn(9, 30))
+@pytest.mark.parametrize('power', [0, 1e-3])
+@pytest.mark.parametrize('bias', [0, 1])
+def test_pcen_drc(S_pcen, bias, power):
+    P = librosa.pcen(S_pcen, gain=0.0, bias=bias, power=power, eps=1e-20)
+    if power == 0:
+        ref = np.expm1(P)
+    else:
+        if bias == 0:
+            ref = np.exp(1./power * np.log(P))
+        else:
+            ref = np.expm1(1./power * np.log1p(P))
 
-    # Bounds tests (failures):
-    #   gain < 0
-    yield tf, -1, 1, 1, 0.5, 0.5, 1e-6, 1, S, S
+    assert np.allclose(S_pcen, ref)
 
-    #   bias < 0
-    yield tf, 1, -1, 1, 0.5, 0.5, 1e-6, 1, S, S
 
-    #   power < 0
-    yield tf, 1, 1, -0.1, 0.5, 0.5, 1e-6, 1, S, S
+def test_pcen_complex():
+    S = np.ones((9, 30), dtype=np.complex)
+    Pexp = np.ones((9, 30))
 
-    #   b < 0
-    yield tf, 1, 1, 1, -2, 0.5, 1e-6, 1, S, S
+    with warnings.catch_warnings(record=True) as out:
 
-    #   b > 1
-    yield tf, 1, 1, 1, 2, 0.5, 1e-6, 1, S, S
+        P = librosa.pcen(S, gain=1, bias=0, power=1,
+                         time_constant=0.5, eps=1e-20, b=1,
+                         max_size=1)
 
-    #   time_constant <= 0
-    yield tf, 1, 1, 1, 0.5, -2, 1e-6, 1, S, S
+        if np.issubdtype(S.dtype, np.complexfloating):
+            assert len(out) > 0
+            assert 'complex' in str(out[0].message).lower()
 
-    #   eps <= 0
-    yield tf, 1, 1, 1, 0.5, 0.5, 0, 1, S, S
+    assert P.shape == S.shape
+    assert np.all(P >= 0)
+    assert np.all(np.isfinite(P))
 
-    #   max_size not int, < 1
-    yield tf, 1, 1, 1, 0.5, 0.5, 1e-6, 1.5, S, S
-    yield tf, 1, 1, 1, 0.5, 0.5, 1e-6, 0, S, S
+    if Pexp is not None:
+        assert np.allclose(P, Pexp)
 
-    # Edge cases:
-    #   gain=0, bias=0, power=p, b=1 => S**p
-    for p in [0.5, 1, 2]:
-        yield __test, 0, 0, p, 1.0, 0.5, 1e-6, 1, S, S**p
 
-    #   gain=1, bias=0, power=1, b=1, eps=1e-20 => ones
-    yield __test, 1, 0, 1, 1.0, 0.5, 1e-20, 1, S, np.ones_like(S)
+@pytest.mark.parametrize('max_size', [1, 3])
+@pytest.mark.parametrize('Z', [np.zeros((9, 30))])
+def test_pcen_zeros(max_size, Z):
+    P = librosa.pcen(Z, gain=0.98, bias=2.0, power=0.5, b=None,
+                     time_constant=0.395, eps=1e-6, max_size=max_size)
 
-    # Dynamic range compression. Disjunction of cases
-    #   gain=0, bias=1, power=0
-    P = librosa.pcen(S, gain=0.0, bias=1.0, power=0.0, eps=1e-20)
-    assert np.allclose(S, np.expm1(P))
-
-    #   gain=0, bias=0, power=1e-3
-    P = librosa.pcen(S, gain=0.0, bias=0.0, power=1e-3, eps=1e-20)
-    assert np.allclose(S, np.exp(1e3*np.log(P)))
-
-    #   gain=0, bias=1, power=1e-3
-    P = librosa.pcen(S, gain=0.0, bias=1.0, power=1e-3, eps=1e-20)
-    assert np.allclose(S, np.expm1(1e3*np.log1p(P)))
-
-    # Catch the complex warning
-    yield __test, 1, 0, 1, 1.0, 0.5, 1e-20, 1, S * 1.j, np.ones_like(S)
-
-    #   zeros to zeros
-    Z = np.zeros_like(S)
-    yield __test, 0.98, 2.0, 0.5, None, 0.395, 1e-6, 1, Z, Z
-    yield __test, 0.98, 2.0, 0.5, None, 0.395, 1e-6, 3, Z, Z
+    # PCEN should map zeros to zeros
+    assert np.allclose(P, Z)
 
 
 def test_pcen_axes():
