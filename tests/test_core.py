@@ -651,61 +651,27 @@ def test_magphase(y_22050):
     assert np.allclose(S * P, D)
 
 
-def test_istft_reconstruction():
-    from scipy.signal import bartlett, hann, hamming, blackman, blackmanharris
+@pytest.fixture(scope='module', params=[22050, 44100])
+def y_chirp_istft(request):
+    sr = request.param
+    return (librosa.chirp(32, 8192, sr=sr, duration=2.0), sr)
 
-    def __test(x, n_fft, hop_length, window, atol, length):
-        S = librosa.core.stft(
-            x, n_fft=n_fft, hop_length=hop_length, window=window)
-        x_reconstructed = librosa.core.istft(
-            S, hop_length=hop_length, window=window, length=length)
 
-        if length is not None:
-            assert len(x_reconstructed) == length
+@pytest.mark.parametrize('n_fft', [1024, 2048, 4096])
+@pytest.mark.parametrize('window', ['hann', 'blackmanharris'])
+@pytest.mark.parametrize('hop_length', [128, 256, 512])
+def test_istft_reconstruction(y_chirp_istft, n_fft, hop_length, window):
 
-        L = min(len(x), len(x_reconstructed))
-        x = np.resize(x, L)
-        x_reconstructed = np.resize(x_reconstructed, L)
+    x, sr = y_chirp_istft
+    S = librosa.core.stft(x, n_fft=n_fft, hop_length=hop_length, window=window)
+    x_reconstructed = librosa.core.istft(S, hop_length=hop_length,
+                                         window=window, length=len(x))
 
-        # NaN/Inf/-Inf should not happen
-        assert np.all(np.isfinite(x_reconstructed))
+    # NaN/Inf/-Inf should not happen
+    assert np.all(np.isfinite(x_reconstructed))
 
-        # should be almost approximately reconstucted
-        assert np.allclose(x, x_reconstructed, atol=atol)
-
-    srand()
-    # White noise
-    x1 = np.random.randn(2 ** 15)
-
-    # Sin wave
-    x2 = np.sin(np.linspace(-np.pi, np.pi, 2 ** 15))
-
-    # Real music signal
-    x3, sr = librosa.load(os.path.join('tests', 'data', 'test1_44100.wav'),
-                          sr=None, mono=True)
-    assert sr == 44100
-
-    for x, atol in [(x1, 1.0e-6), (x2, 1.0e-7), (x3, 1.0e-7)]:
-        for window_func in [bartlett, hann, hamming, blackman, blackmanharris]:
-            for n_fft in [512, 1024, 2048, 4096]:
-                win = window_func(n_fft, sym=False)
-                symwin = window_func(n_fft, sym=True)
-                # tests with pre-computed window fucntions
-                for hop_length_denom in range(2, 9):
-                    hop_length = n_fft // hop_length_denom
-                    for length in [None, len(x) - 1000, len(x + 1000)]:
-                        yield (__test, x, n_fft, hop_length, win, atol, length)
-                        yield (__test, x, n_fft, hop_length, symwin, atol, length)
-                # also tests with passing window function itself
-                yield (__test, x, n_fft, n_fft // 9, window_func, atol, None)
-
-        # test with default paramters
-        x_reconstructed = librosa.core.istft(librosa.core.stft(x))
-        L = min(len(x), len(x_reconstructed))
-        x = np.resize(x, L)
-        x_reconstructed = np.resize(x_reconstructed, L)
-
-        assert np.allclose(x, x_reconstructed, atol=atol)
+    # should be almost approximately reconstructed
+    assert np.allclose(x, x_reconstructed, atol=1e-6)
 
 
 @pytest.mark.parametrize('offset', [0, 1, 2])
