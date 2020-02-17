@@ -1124,48 +1124,54 @@ def test_db_to_amplitude():
     assert np.allclose(x, x2)
 
 
-def test_clicks():
+@pytest.mark.parametrize('times', [np.linspace(0, 10.0, num=5)])
+@pytest.mark.parametrize('sr', [11025, 22050])
+@pytest.mark.parametrize('hop_length', [512, 1024])
+@pytest.mark.parametrize('click', [None, np.ones(1000)])
+@pytest.mark.parametrize('use_frames', [False, True])
+@pytest.mark.parametrize('click_freq', [1000])
+@pytest.mark.parametrize('click_duration', [0.1])
+@pytest.mark.parametrize('length', [None, 5 * 22050])
+def test_clicks(times, sr, hop_length, click_freq, click_duration, click, length, use_frames):
+    if use_frames:
+        frames = librosa.time_to_frames(times, sr=sr, hop_length=hop_length)
+        times = None
+    else:
+        frames = None
 
-    def __test(times, frames, sr, hop_length, click_freq, click_duration, click, length):
+    y = librosa.clicks(times=times,
+                       frames=frames,
+                       sr=sr,
+                       hop_length=hop_length,
+                       click_freq=click_freq,
+                       click_duration=click_duration,
+                       click=click,
+                       length=length)
 
-        y = librosa.clicks(times=times,
-                           frames=frames,
-                           sr=sr,
-                           hop_length=hop_length,
-                           click_freq=click_freq,
-                           click_duration=click_duration,
-                           click=click,
-                           length=length)
+    if times is not None:
+        nmax = librosa.time_to_samples(times, sr=sr).max()
+    else:
+        nmax = librosa.frames_to_samples(frames, hop_length=hop_length).max()
 
-        if times is not None:
-            nmax = librosa.time_to_samples(times, sr=sr).max()
-        else:
-            nmax = librosa.frames_to_samples(frames, hop_length=hop_length).max()
+    if length is not None: 
+        assert len(y) == length
+    elif click is not None:
+        assert len(y) == nmax + len(click)
 
-        if length is not None:
-            assert len(y) == length
-        elif click is not None:
-            assert len(y) == nmax + len(click)
 
-    test_times = np.linspace(0, 10.0, num=5)
-
-    # Bad cases
-    tf = pytest.mark.xfail(__test, raises=librosa.ParameterError)
-    yield tf, None, None, 22050, 512, 1000, 0.1, None, None
-    yield tf, test_times, None, 22050, 512, 1000, 0.1, np.ones((2, 10)), None
-    yield tf, test_times, None, 22050, 512, 1000, 0.1, None, 0
-    yield tf, test_times, None, 22050, 512, 0, 0.1, None, None
-    yield tf, test_times, None, 22050, 512, 1000, 0, None, None
-
-    for sr in [11025, 22050]:
-        for hop_length in [512, 1024]:
-            test_frames = librosa.time_to_frames(test_times, sr=sr, hop_length=hop_length)
-
-            for click in [None, np.ones(sr // 10)]:
-
-                for length in [None, 5 * sr, 15 * sr]:
-                    yield __test, test_times, None, sr, hop_length, 1000, 0.1, click, length
-                    yield __test, None, test_frames, sr, hop_length, 1000, 0.1, click, length
+@pytest.mark.parametrize('times,click_freq,click_duration,click,length',
+                            [(None,         1000, 0.1, None,                None),
+                             ([0, 2, 4, 8],   1000, 0.1, np.ones((2, 10)),    None),
+                             ([0, 2, 4, 8],   1000, 0.1, None,                0),
+                             ([0, 2, 4, 8],   0,    0.1, None,                None),
+                             ([0, 2, 4, 8],   1000, 0,   None,                None)])
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_clicks_fail(times, click_freq, click_duration, click, length):
+    librosa.clicks(times=times, frames=None, sr=22050, hop_length=512,
+                   click_freq=click_freq,
+                   click_duration=click_duration,
+                   click=click,
+                   length=length)
 
 
 @pytest.mark.parametrize('frequency', [440])
