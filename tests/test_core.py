@@ -1721,7 +1721,7 @@ def path(request):
     path = os.path.join('tests', 'data', 'test1_22050.wav')
 
     if request.param == 'as_string':
-        return path
+        yield path
     elif request.param == 'as_file':
         with open(path, 'rb') as f:
             yield f
