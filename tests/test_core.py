@@ -1724,7 +1724,7 @@ def path(request):
         return path
     elif request.param == 'as_file':
         with open(path, 'rb') as f:
-            return f
+            yield f
 
 
 @pytest.mark.parametrize('block_length,frame_length,hop_length', [(0, 1024, 512),
