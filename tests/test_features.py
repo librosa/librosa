@@ -222,45 +222,25 @@ def test_spectral_contrast_log(y_ex):
     assert not np.any(contrast < 0)
 
 
-def test_spectral_contrast_errors():
+@pytest.mark.parametrize('S', [np.ones((1025, 10))])
+@pytest.mark.parametrize('freq,fmin,n_bands,quantile', 
+                         [(0, 200, 6, 0.02),
+                          (np.zeros(1+1025), 200, 6, 0.02),
+                          (np.zeros((1025,10)), 200, 6, 0.02),
+                          (None, -1, 6, 0.02),
+                          (None, 0, 6, 0.02),
+                          (None, 200, -1, 0.02),
+                          (None, 200, 6, -1),
+                          (None, 200, 6, 2),
+                          (None, 200, 7, 0.02)])
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_spectral_contrast_errors(S, freq, fmin, n_bands, quantile):
 
-    @pytest.mark.xfail(raises=librosa.ParameterError)
-    def __test(S, freq, fmin, n_bands, quantile):
-        librosa.feature.spectral_contrast(S=S,
-                                          freq=freq,
-                                          fmin=fmin,
-                                          n_bands=n_bands,
-                                          quantile=quantile)
-
-    S = np.ones((1025, 10))
-
-    # ill-shaped frequency set: scalar
-    yield __test, S, 0, 200, 6, 0.02
-
-    # ill-shaped frequency set: wrong-length vector
-    yield __test, S, np.zeros((S.shape[0]+1,)), 200, 6, 0.02
-
-    # ill-shaped frequency set: matrix
-    yield __test, S, np.zeros(S.shape), 200, 6, 0.02
-
-    # negative fmin
-    yield __test, S, None, -1, 6, 0.02
-
-    # zero fmin
-    yield __test, S, None, 0, 6, 0.02
-
-    # negative n_bands
-    yield __test, S, None, 200, -1, 0.02
-
-    # bad quantile
-    yield __test, S, None, 200, 6, -1
-
-    # bad quantile
-    yield __test, S, None, 200, 6, 2
-
-    # bands exceed nyquist
-    yield __test, S, None, 200, 7, 0.02
-
+    librosa.feature.spectral_contrast(S=S,
+                                      freq=freq,
+                                      fmin=fmin,
+                                      n_bands=n_bands,
+                                      quantile=quantile)
 
 
 @pytest.mark.parametrize('S,flatness_ref', [
@@ -279,91 +259,87 @@ def test_spectral_flatness_errors(S, amin):
     librosa.feature.spectral_flatness(S=S, amin=amin)
 
 
-def test_rms():
 
-    def __test(n):
-        S = np.ones((n, 5))
+@pytest.mark.parametrize('n', range(10, 100, 10))
+def test_rms_const(n):
+    S = np.ones((n, 5))
 
-        # RMSE of an all-ones band is 1
-        frame_length = 2 * (n - 1)
-        rms = librosa.feature.rms(S=S, frame_length=frame_length)
-        assert np.allclose(rms, np.ones_like(rms) / np.sqrt(frame_length), atol=1e-2)
-
-    def __test_consistency(frame_length, hop_length, center):
-        y1, sr = librosa.load(__EXAMPLE_FILE, sr=None)
-        np.random.seed(0)
-        y2 = np.random.rand(100000)  # The mean value, i.e. DC component, is about 0.5
-
-        # Ensure audio is divisible into frame size.
-        y1 = librosa.util.fix_length(y1, y1.size - y1.size % frame_length)
-        y2 = librosa.util.fix_length(y2, y2.size - y2.size % frame_length)
-        assert y1.size % frame_length == 0
-        assert y2.size % frame_length == 0
-
-        # STFT magnitudes with a constant windowing function and no centering.
-        S1 = librosa.magphase(librosa.stft(y1,
-                                          n_fft=frame_length,
-                                          hop_length=hop_length,
-                                          window=np.ones,
-                                          center=center))[0]
-        S2 = librosa.magphase(librosa.stft(y2,
-                                          n_fft=frame_length,
-                                          hop_length=hop_length,
-                                          window=np.ones,
-                                          center=center))[0]
-
-        # Try both RMS methods.
-        rms1 = librosa.feature.rms(S=S1, frame_length=frame_length,
-                                   hop_length=hop_length)
-        rms2 = librosa.feature.rms(y=y1, frame_length=frame_length,
-                                   hop_length=hop_length, center=center)
-        rms3 = librosa.feature.rms(S=S2, frame_length=frame_length,
-                                   hop_length=hop_length)
-        rms4 = librosa.feature.rms(y=y2, frame_length=frame_length,
-                                   hop_length=hop_length, center=center)
-
-        assert rms1.shape == rms2.shape
-        assert rms3.shape == rms4.shape
-
-        # Ensure results are similar.
-        np.testing.assert_allclose(rms1, rms2, atol=5e-4)
-        np.testing.assert_allclose(rms3, rms4, atol=5e-4)
-
-    for frame_length in [2048, 2049, 4096, 4097]:
-        for hop_length in [128, 512, 1024]:
-            for center in [False, True]:
-                yield __test_consistency, frame_length, hop_length, center
-
-    for n in range(10, 100, 10):
-        yield __test, n
+    # RMSE of an all-ones band is 1
+    frame_length = 2 * (n - 1)
+    rms = librosa.feature.rms(S=S, frame_length=frame_length)
+    assert np.allclose(rms, np.ones_like(rms) / np.sqrt(frame_length), atol=1e-2)
 
 
-def test_zcr_synthetic():
+@pytest.mark.parametrize('frame_length', [2048, 2049, 4096, 4097])
+@pytest.mark.parametrize('hop_length', [128, 512, 1024])
+@pytest.mark.parametrize('center', [False, True])
+@pytest.mark.parametrize('y2', [np.random.randn(100000)])
+def test_rms(y_ex, y2, frame_length, hop_length, center):
+    y1, sr = y_ex
+    # Ensure audio is divisible into frame size.
+    y1 = librosa.util.fix_length(y1, y1.size - y1.size % frame_length)
+    y2 = librosa.util.fix_length(y2, y2.size - y2.size % frame_length)
+    assert y1.size % frame_length == 0
+    assert y2.size % frame_length == 0
 
-    def __test_zcr(rate, y, frame_length, hop_length, center):
-        zcr = librosa.feature.zero_crossing_rate(y,
-                                                 frame_length=frame_length,
-                                                 hop_length=hop_length,
-                                                 center=center)
+    # STFT magnitudes with a constant windowing function and no centering.
+    S1 = librosa.magphase(librosa.stft(y1,
+                                      n_fft=frame_length,
+                                      hop_length=hop_length,
+                                      window=np.ones,
+                                      center=center))[0]
+    S2 = librosa.magphase(librosa.stft(y2,
+                                      n_fft=frame_length,
+                                      hop_length=hop_length,
+                                      window=np.ones,
+                                      center=center))[0]
 
-        # We don't care too much about the edges if there's padding
-        if center:
-            zcr = zcr[:, frame_length//2:-frame_length//2]
+    # Try both RMS methods.
+    rms1 = librosa.feature.rms(S=S1, frame_length=frame_length,
+                               hop_length=hop_length)
+    rms2 = librosa.feature.rms(y=y1, frame_length=frame_length,
+                               hop_length=hop_length, center=center)
+    rms3 = librosa.feature.rms(S=S2, frame_length=frame_length,
+                               hop_length=hop_length)
+    rms4 = librosa.feature.rms(y=y2, frame_length=frame_length,
+                               hop_length=hop_length, center=center)
 
-        # We'll allow 1% relative error
-        assert np.allclose(zcr, rate, rtol=1e-2)
+    assert rms1.shape == rms2.shape
+    assert rms3.shape == rms4.shape
 
+    # Ensure results are similar.
+    np.testing.assert_allclose(rms1, rms2, atol=5e-4)
+    np.testing.assert_allclose(rms3, rms4, atol=5e-4)
+
+
+
+@pytest.fixture(params=[32, 16, 8, 4, 2], scope='module')
+def y_zcr(request):
     sr = 16384
-    for period in [32, 16, 8, 4, 2]:
-        y = np.ones(sr)
-        y[::period] = -1
-        # Every sign flip induces two crossings
-        rate = 2./period
-        # 1+2**k so that we get both sides of the last crossing
-        for frame_length in [513, 2049]:
-            for hop_length in [128, 256]:
-                for center in [False, True]:
-                    yield __test_zcr, rate, y, frame_length, hop_length, center
+    period = request.param
+    y = np.ones(sr)
+    y[::period] = -1
+    rate = 2./period
+    return y, sr, rate
+
+
+@pytest.mark.parametrize('frame_length', [513, 2049])
+@pytest.mark.parametrize('hop_length', [128, 256])
+@pytest.mark.parametrize('center', [False, True])
+def test_zcr_synthetic(y_zcr, frame_length, hop_length, center):
+
+    y, sr, rate = y_zcr
+    zcr = librosa.feature.zero_crossing_rate(y,
+                                             frame_length=frame_length,
+                                             hop_length=hop_length,
+                                             center=center)
+
+    # We don't care too much about the edges if there's padding
+    if center:
+        zcr = zcr[:, frame_length//2:-frame_length//2]
+
+    # We'll allow 1% relative error
+    assert np.allclose(zcr, rate, rtol=1e-2)
 
 
 def test_poly_features_synthetic():
@@ -411,67 +387,45 @@ def test_poly_features_synthetic():
         yield __test, S, coeffs, freq
 
 
-def test_tonnetz():
-    y, sr = librosa.load(librosa.util.example_audio_file())
+def test_tonnetz_audio(y_ex):
+    y, sr = y_ex
+    tonnetz = librosa.feature.tonnetz(y=y, sr=sr)
+    assert tonnetz.shape[0] == 6
+
+
+def test_tonnetz_cqt(y_ex):
+    y, sr = y_ex
+    chroma_cqt = librosa.feature.chroma_cqt(y=y, sr=sr, n_chroma=24)
+    tonnetz = librosa.feature.tonnetz(chroma=chroma_cqt, sr=sr)
+    assert tonnetz.shape[1] == chroma_cqt.shape[1]
+    assert tonnetz.shape[0] == 6
+
+
+def test_tonnetz_msaf():
+    # Use pre-computed chroma
     tonnetz_chroma = np.load(os.path.join('tests', "data", "feature-tonnetz-chroma.npy"))
     tonnetz_msaf = np.load(os.path.join('tests', "data", "feature-tonnetz-msaf.npy"))
 
-    # Use cqt chroma
-    def __audio():
-        tonnetz = librosa.feature.tonnetz(y=y, sr=sr)
-        assert tonnetz.shape[0] == 6
-
-    # Use pre-computed chroma
-    def __stft():
-        tonnetz = librosa.feature.tonnetz(chroma=tonnetz_chroma)
-        assert tonnetz.shape[1] == tonnetz_chroma.shape[1]
-        assert tonnetz.shape[0] == 6
-        assert np.allclose(tonnetz_msaf, tonnetz)
-
-    def __cqt():
-        # Use high resolution cqt chroma
-        chroma_cqt = librosa.feature.chroma_cqt(y=y, sr=sr, n_chroma=24)
-        tonnetz = librosa.feature.tonnetz(chroma=chroma_cqt)
-        assert tonnetz.shape[1] == chroma_cqt.shape[1]
-        assert tonnetz.shape[0] == 6
-        # Using stft chroma won't generally match cqt chroma
-        # skip the equivalence check
-
-    # Call the function with not enough parameters
-    yield pytest.mark.xfail(librosa.feature.tonnetz, raises=librosa.ParameterError)
-    yield __audio
-    yield __stft
-    yield __cqt
+    tonnetz = librosa.feature.tonnetz(chroma=tonnetz_chroma)
+    assert tonnetz.shape[1] == tonnetz_chroma.shape[1]
+    assert tonnetz.shape[0] == 6
+    assert np.allclose(tonnetz_msaf, tonnetz)
 
 
-def test_tempogram_fail():
-    @pytest.mark.xfail(raises=librosa.ParameterError)
-    def __test(y, sr, onset_envelope, hop_length, win_length, center, window, norm):
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_tempogram_fail_noinput():
+    librosa.feature.tempogram(y=None, onset_envelope=None)
 
-        librosa.feature.tempogram(y=y,
-                                  sr=sr,
-                                  onset_envelope=onset_envelope,
-                                  hop_length=hop_length,
-                                  win_length=win_length,
-                                  center=center,
-                                  window=window,
-                                  norm=norm)
-
-    sr = 22050
-    hop_length = 512
-    duration = 10
-
-    y = np.zeros(duration * sr)
-
-    # Fail when no input is provided
-    yield __test, None, sr, None, hop_length, 384, True, 'hann', np.inf
-
-    # Fail when win_length is too small
-    for win_length in [-384, -1, 0]:
-        yield __test, y, sr, None, hop_length, win_length, True, 'hann', np.inf
-
-    # Fail when len(window) != win_length
-    yield __test, y, sr, None, hop_length, 384, True, np.ones(win_length + 1), np.inf
+@pytest.mark.parametrize('y', [np.zeros(10 * 1000)])
+@pytest.mark.parametrize('sr', [1000])
+@pytest.mark.parametrize('win_length,window', [(-384, 'hann'),
+                                               (0, 'hann'),
+                                               (384, np.ones(3))])
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_tempogram_fail_badwin(y, sr, win_length, window):
+    librosa.feature.tempogram(y=y, sr=sr,
+                              win_length=win_length,
+                              window=window)
 
 
 @pytest.mark.parametrize('hop_length', [512, 1024])
@@ -508,132 +462,115 @@ def test_tempogram_audio(y_ex, hop_length):
     assert np.allclose(t1, t4)
 
 
-def test_tempogram_odf():
+@pytest.mark.parametrize('tempo', [60, 120, 200])
+@pytest.mark.parametrize('center', [False, True])
+def test_tempogram_odf_equiv(tempo, center):
     sr = 22050
     hop_length = 512
     duration = 8
 
-    def __test_equiv(tempo, center):
-        odf = np.zeros(duration * sr // hop_length)
-        spacing = sr * 60. // (hop_length * tempo)
-        odf[::int(spacing)] = 1
+    odf = np.zeros(duration * sr // hop_length)
+    spacing = sr * 60. // (hop_length * tempo)
+    odf[::int(spacing)] = 1
 
-        odf_ac = librosa.autocorrelate(odf)
+    odf_ac = librosa.autocorrelate(odf)
 
-        tempogram = librosa.feature.tempogram(onset_envelope=odf,
-                                              sr=sr,
-                                              hop_length=hop_length,
-                                              win_length=len(odf),
-                                              window=np.ones,
-                                              center=center,
-                                              norm=None)
-
-        idx = 0
-        if center:
-            idx = len(odf)//2
-
-        assert np.allclose(odf_ac, tempogram[:, idx])
-
-    # Generate a synthetic onset envelope
-    def __test_peaks(tempo, win_length, window, norm):
-        # Generate an evenly-spaced pulse train
-        odf = np.zeros(duration * sr // hop_length)
-        spacing = sr * 60. // (hop_length * tempo)
-        odf[::int(spacing)] = 1
-
-        tempogram = librosa.feature.tempogram(onset_envelope=odf,
-                                              sr=sr,
-                                              hop_length=hop_length,
-                                              win_length=win_length,
-                                              window=window,
-                                              norm=norm)
-
-        # Check the shape of the output
-        assert tempogram.shape[0] == win_length
-
-        assert tempogram.shape[1] == len(odf)
-
-        # Mean over time to wash over the boundary padding effects
-        idx = np.where(librosa.util.localmax(tempogram.max(axis=1)))[0]
-
-        # Indices should all be non-zero integer multiples of spacing
-        assert np.allclose(idx, spacing * np.arange(1, 1 + len(idx)))
-
-    for tempo in [60, 90, 120, 160, 200]:
-        for center in [False, True]:
-            yield __test_equiv, tempo, center
-
-        for win_length in [192, 384]:
-            for window in ['hann', np.ones, np.ones(win_length)]:
-                for norm in [None, 1, 2, np.inf]:
-                    yield __test_peaks, tempo, win_length, window, norm
-
-
-def test_tempogram_odf_multi():
-
-    sr = 22050
-    hop_length = 512
-    duration = 8
-
-    # Generate a synthetic onset envelope
-    def __test(center, win_length, window, norm):
-        # Generate an evenly-spaced pulse train
-        odf = np.zeros((10, duration * sr // hop_length))
-        for i in range(10):
-            spacing = sr * 60. // (hop_length * (60 + 12 * i))
-            odf[i, ::int(spacing)] = 1
-
-        tempogram = librosa.feature.tempogram(onset_envelope=odf,
-                                              sr=sr,
-                                              hop_length=hop_length,
-                                              win_length=win_length,
-                                              window=window,
-                                              norm=norm)
-
-        for i in range(10):
-            tg_local = librosa.feature.tempogram(onset_envelope=odf[i],
-                                                 sr=sr,
-                                                 hop_length=hop_length,
-                                                 win_length=win_length,
-                                                 window=window,
-                                                 norm=norm)
-
-            assert np.allclose(tempogram[i], tg_local)
-
-    for center in [False, True]:
-        for win_length in [192, 384]:
-            for window in ['hann', np.ones, np.ones(win_length)]:
-                for norm in [None, 1, 2, np.inf]:
-                    yield __test, center, win_length, window, norm
-
-
-def test_fourier_tempogram_fail():
-    @pytest.mark.xfail(raises=librosa.ParameterError)
-    def __test(y, sr, onset_envelope, hop_length, win_length, center, window):
-
-        librosa.feature.fourier_tempogram(y=y,
+    tempogram = librosa.feature.tempogram(onset_envelope=odf,
                                           sr=sr,
-                                          onset_envelope=onset_envelope,
+                                          hop_length=hop_length,
+                                          win_length=len(odf),
+                                          window=np.ones,
+                                          center=center,
+                                          norm=None)
+
+    idx = 0
+    if center:
+        idx = len(odf)//2
+
+    assert np.allclose(odf_ac, tempogram[:, idx])
+
+
+@pytest.mark.parametrize('tempo', [60, 90, 200])
+@pytest.mark.parametrize('win_length', [192, 384])
+@pytest.mark.parametrize('window', ['hann', np.ones])
+@pytest.mark.parametrize('norm', [None, 1, 2, np.inf])
+def test_tempogram_odf_peak(tempo, win_length, window, norm):
+    sr = 22050
+    hop_length = 512
+    duration = 8
+
+    # Generate an evenly-spaced pulse train
+    odf = np.zeros(duration * sr // hop_length)
+    spacing = sr * 60. // (hop_length * tempo)
+    odf[::int(spacing)] = 1
+
+    tempogram = librosa.feature.tempogram(onset_envelope=odf,
+                                          sr=sr,
                                           hop_length=hop_length,
                                           win_length=win_length,
-                                          center=center,
-                                          window=window)
+                                          window=window,
+                                          norm=norm)
+
+    # Check the shape of the output
+    assert tempogram.shape[0] == win_length
+
+    assert tempogram.shape[1] == len(odf)
+
+    # Mean over time to wash over the boundary padding effects
+    idx = np.where(librosa.util.localmax(tempogram.max(axis=1)))[0]
+
+    # Indices should all be non-zero integer multiples of spacing
+    assert np.allclose(idx, spacing * np.arange(1, 1 + len(idx)))
+
+
+@pytest.mark.parametrize('center', [False, True])
+@pytest.mark.parametrize('win_length', [192, 384])
+@pytest.mark.parametrize('window', ['hann', np.ones])
+@pytest.mark.parametrize('norm', [None, 1, 2, np.inf])
+def test_tempogram_odf_multi(center, win_length, window, norm):
 
     sr = 22050
     hop_length = 512
-    duration = 10
+    duration = 8
 
-    y = np.zeros(duration * sr)
+    # Generate an evenly-spaced pulse train
+    odf = np.zeros((10, duration * sr // hop_length))
+    for i in range(10):
+        spacing = sr * 60. // (hop_length * (60 + 12 * i))
+        odf[i, ::int(spacing)] = 1
 
-    # Fail when no input is provided
-    yield __test, None, sr, None, hop_length, 384, True, 'hann'
+    tempogram = librosa.feature.tempogram(onset_envelope=odf,
+                                          sr=sr,
+                                          hop_length=hop_length,
+                                          win_length=win_length,
+                                          window=window,
+                                          norm=norm)
 
-    # Fail when win_length is too small
-    for win_length in [-384, -1, 0]:
-        yield __test, y, sr, None, hop_length, win_length, True, 'hann'
+    for i in range(10):
+        tg_local = librosa.feature.tempogram(onset_envelope=odf[i],
+                                             sr=sr,
+                                             hop_length=hop_length,
+                                             win_length=win_length,
+                                             window=window,
+                                             norm=norm)
 
-    # Fail when len(window) != win_length
-    yield __test, y, sr, None, hop_length, 384, True, np.ones(win_length + 1)
+        assert np.allclose(tempogram[i], tg_local) 
+
+@pytest.mark.parametrize('y', [np.zeros(10 * 1000)])
+@pytest.mark.parametrize('sr', [1000])
+@pytest.mark.parametrize('win_length,window', [(-384, 'hann'),
+                                               (0, 'hann'),
+                                               (384, np.ones(3))])
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_fourier_tempogram_fail_badwin(y, sr, win_length, window):
+    librosa.feature.fourier_tempogram(y=y, sr=sr,
+                                      win_length=win_length,
+                                      window=window)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_fourier_tempogram_fail_noinput():
+    librosa.feature.fourier_tempogram(y=None, onset_envelope=None)
 
 
 @pytest.mark.parametrize('hop_length', [512, 1024])
@@ -786,7 +723,7 @@ def test_mel_to_stft(power, dtype, n_fft):
     assert np.all(stft >= 0)
 
     # Check that the shape is good
-    assert stft.shape[0] == n_fft //2 + 1
+    assert stft.shape[0] == 1 + n_fft // 2 
 
     # Check that the approximation is good in RMSE terms
     assert np.sqrt(np.mean((mel_basis.dot(stft**power) - mels)**2)) <= 5e-2
