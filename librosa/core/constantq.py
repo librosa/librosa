@@ -873,7 +873,7 @@ def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=None,
 
     len_orig = len(y)
 
-    # Alpha is the inverse of the constant Q-factor
+    # Relative difference in frequency between any two consecutive bands
     alpha = (2.0**(1. / bins_per_octave) - 1)
 
     if fmin is None:
