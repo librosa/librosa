@@ -317,7 +317,7 @@ def test_vqt_position():
         assert np.nanmax(Cscale) < 7.3e-1, Cscale
 
         Cscale[idx-1:idx+2] = np.nan
-        assert np.nanmax(Cscale) < 23e-2, Cscale
+        assert np.nanmax(Cscale) < 2.3e-1, Cscale
 
     for note_min in [12, 18, 24, 30, 36]:
         yield __test, note_min
