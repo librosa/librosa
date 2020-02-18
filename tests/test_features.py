@@ -342,49 +342,49 @@ def test_zcr_synthetic(y_zcr, frame_length, hop_length, center):
     assert np.allclose(zcr, rate, rtol=1e-2)
 
 
-def test_poly_features_synthetic():
+@pytest.fixture(scope='module', params=[1, 2])
+def poly_order(request):
+    return request.param
 
+@pytest.fixture(scope='module')
+def poly_coeffs(poly_order):
+    return np.atleast_1d(np.arange(1, 1+poly_order))
+
+@pytest.fixture(scope='module', params=[None, 1, 2, -1])
+def poly_freq(request):
     srand()
+    freq = librosa.fft_frequencies()
+
+    if request.param in (1, 2):
+        return freq**request.param
+
+    elif request.param == -1:
+        return np.cumsum(np.abs(np.random.randn(1 + 2048//2)), axis=0)
+    else:
+        return None
+
+
+@pytest.fixture(scope='module')
+def poly_S(poly_coeffs, poly_freq):
+    if poly_freq is None:
+        poly_freq = librosa.fft_frequencies()
+
+    S = np.zeros_like(poly_freq)
+    for i, c in enumerate(poly_coeffs):
+        S += c * poly_freq**i
+
+    return S.reshape((poly_freq.shape[0], -1))
+
+
+def test_poly_features_synthetic(poly_S, poly_coeffs, poly_freq):
     sr = 22050
     n_fft = 2048
+    order = poly_coeffs.shape[0] - 1
+    p = librosa.feature.poly_features(S=poly_S, sr=sr, n_fft=n_fft,
+                                      order=order, freq=poly_freq)
 
-    def __test(S, coeffs, freq):
-
-        order = coeffs.shape[0] - 1
-        p = librosa.feature.poly_features(S=S, sr=sr, n_fft=n_fft,
-                                          order=order, freq=freq)
-
-        for i in range(S.shape[-1]):
-            assert np.allclose(coeffs, p[::-1, i].squeeze())
-
-    def __make_data(coeffs, freq):
-        S = np.zeros_like(freq)
-        for i, c in enumerate(coeffs):
-            S = S + c * freq**i
-
-        S = S.reshape((freq.shape[0], -1))
-        return S
-
-    for order in range(1, 3):
-        freq = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
-        coeffs = np.atleast_1d(np.arange(1, 1+order))
-
-        # First test: vanilla
-        S = __make_data(coeffs, freq)
-        yield __test, S, coeffs, None
-
-        # And with explicit frequencies
-        yield __test, S, coeffs, freq
-
-        # And with alternate frequencies
-        freq = freq**2.0
-        S = __make_data(coeffs, freq)
-        yield __test, S, coeffs, freq
-
-        # And multi-dimensional
-        freq = np.cumsum(np.abs(np.random.randn(1 + n_fft//2, 2)), axis=0)
-        S = __make_data(coeffs, freq)
-        yield __test, S, coeffs, freq
+    for i in range(poly_S.shape[-1]):
+        assert np.allclose(poly_coeffs, p[::-1, i].squeeze())
 
 
 def test_tonnetz_audio(y_ex):
