@@ -8,6 +8,7 @@ conda_create ()
 
     hash -r
     conda init bash
+    source $HOME/.bashrc
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
     conda config --add channels pypi
@@ -18,7 +19,7 @@ conda_create ()
     conda update --all
 }
 
-src="$HOME/env/miniconda-$TRAVIS_OS_NAME-$TRAVIS_PYTHON_VERSION"
+src="$HOME/env/miniconda-$TRAVIS_OS_NAME$TRAVIS_PYTHON_VERSION"
 if [ ! -d "$src" ]; then
     mkdir -p $HOME/env
     pushd $HOME/env
