@@ -161,7 +161,7 @@ def cross_similarity(data, data_ref, k=None, metric='euclidean',
     data = np.atleast_2d(data)
 
     if data_ref.shape[0] != data.shape[0]:
-        raise ValueError("data_ref and data must have the same first dimension")
+        raise ParameterError("data_ref and data must have the same first dimension")
 
     # swap data axes so the feature axis is last
     data_ref = np.swapaxes(data_ref, -1, 0)

@@ -133,6 +133,12 @@ def test_dtw_incompatible_sigma_diag():
     librosa.sequence.dtw(X=X, Y=Y, step_sizes_sigma=np.ones((1, 2), dtype=int))
 
 
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_dtw_incompatible_sigma_diag_precomp():
+    C = np.ones((5, 3))
+    librosa.sequence.dtw(C=C, step_sizes_sigma=[[1,1]])
+
+
 def test_dtw_global_diagonal():
     # query is a linear ramp
     X = np.linspace(0.1, 1, 10)

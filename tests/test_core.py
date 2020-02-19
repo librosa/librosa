@@ -1060,7 +1060,6 @@ def test_power_to_db_inv(erp, k):
 
 
 def test_amplitude_to_db():
-
     srand()
 
     NOISE_FLOOR = 1e-6
@@ -1069,6 +1068,24 @@ def test_amplitude_to_db():
     x = np.abs(np.random.randn(1000)) + NOISE_FLOOR
 
     db1 = librosa.amplitude_to_db(x, top_db=None)
+    db2 = librosa.power_to_db(x**2, top_db=None)
+
+    assert np.allclose(db1, db2)
+
+
+def test_amplitude_to_db_complex():
+    srand()
+
+    NOISE_FLOOR = 1e-6
+
+    # Make some noise
+    x = np.abs(np.random.randn(1000)) + NOISE_FLOOR
+
+    with warnings.catch_warnings(record=True) as out:
+        db1 = librosa.amplitude_to_db(x.astype(np.complex), top_db=None)
+        assert len(out) > 0
+        assert 'complex' in str(out[0].message).lower()
+
     db2 = librosa.power_to_db(x**2, top_db=None)
 
     assert np.allclose(db1, db2)

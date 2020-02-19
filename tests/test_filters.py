@@ -55,8 +55,11 @@ def test_mel_to_hz(infile):
 
     DATA = load(infile)
     z = librosa.mel_to_hz(DATA['f'], DATA['htk'])
-
     assert np.allclose(z, DATA['result'])
+
+    # Test for scalar conversion too
+    z0 = librosa.mel_to_hz(DATA['f'][0], DATA['htk'])
+    assert np.allclose(z0, DATA['result'][0])
 
 
 @pytest.mark.parametrize('infile', files(os.path.join('tests', 'data', 'feature-hz_to_octs-*.mat')))
@@ -122,6 +125,11 @@ def test_mel_norm1(norm):
     # This should be removed in 0.8.0
     with pytest.warns(FutureWarning, match='compatibility'):
         librosa.filters.mel(22050, 2048, norm=norm)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_mel_badnorm():
+    librosa.filters.mel(22050, 2048, norm='garbage')
 
 
 def test_mel_gap():

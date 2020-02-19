@@ -259,6 +259,11 @@ def test_spectral_flatness_errors(S, amin):
     librosa.feature.spectral_flatness(S=S, amin=amin)
 
 
+@pytest.mark.parametrize('S', [-np.ones((1025, 2)), -np.ones((1025,2)) * 1.j])
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_spectral_flatness_badtype(S):
+    librosa.feature.spectral_flatness(S=S)
+
 
 @pytest.mark.parametrize('n', range(10, 100, 10))
 def test_rms_const(n):
@@ -312,6 +317,16 @@ def test_rms(y_ex, y2, frame_length, hop_length, center):
     np.testing.assert_allclose(rms3, rms4, atol=5e-4)
 
 
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_rms_noinput():
+    librosa.feature.rms(y=None, S=None)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_rms_badshape():
+    S = np.empty((100, 3))
+    librosa.feature.rms(S=S, frame_length=100)
+
 
 @pytest.fixture(params=[32, 16, 8, 4, 2], scope='module')
 def y_zcr(request):
@@ -350,7 +365,7 @@ def poly_order(request):
 def poly_coeffs(poly_order):
     return np.atleast_1d(np.arange(1, 1+poly_order))
 
-@pytest.fixture(scope='module', params=[None, 1, 2, -1])
+@pytest.fixture(scope='module', params=[None, 1, 2, -1, 'varying'])
 def poly_freq(request):
     srand()
     freq = librosa.fft_frequencies()
@@ -360,6 +375,8 @@ def poly_freq(request):
 
     elif request.param == -1:
         return np.cumsum(np.abs(np.random.randn(1 + 2048//2)), axis=0)
+    elif request.param == 'varying':
+        return np.cumsum(np.abs(np.random.randn(1 + 2048//2, 5)), axis=0)
     else:
         return None
 
@@ -385,6 +402,11 @@ def test_poly_features_synthetic(poly_S, poly_coeffs, poly_freq):
 
     for i in range(poly_S.shape[-1]):
         assert np.allclose(poly_coeffs, p[::-1, i].squeeze())
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_tonnetz_fail_empty():
+    librosa.feature.tonnetz(y=None, chroma=None)
 
 
 def test_tonnetz_audio(y_ex):
@@ -665,6 +687,13 @@ def test_cens():
 
         maxdev = np.abs(ct_chroma_cens['f_CENS'] - lr_chroma_cens)
         assert np.allclose(ct_chroma_cens['f_CENS'], lr_chroma_cens, rtol=1e-15, atol=1e-15), maxdev
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('win_len_smooth', [-1, 0, 1.5, 'foo'])
+def test_cens_fail(y_ex, win_len_smooth):
+    y, sr = y_ex
+    librosa.feature.chroma_cens(y=y, sr=sr, win_len_smooth=win_len_smooth)
 
 
 @pytest.mark.parametrize('S', [librosa.power_to_db(np.random.randn(128, 1)**2, ref=np.max)])

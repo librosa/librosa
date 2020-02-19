@@ -114,6 +114,12 @@ def test_cross_similarity_bad_bandwidth():
     rec = librosa.segment.cross_similarity(data, data_ref, bandwidth=-2)
 
 
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_cross_similarity_fail_mismatch():
+    D1 = np.zeros((3, 3))
+    D2 = np.zeros((2, 3))
+    librosa.segment.cross_similarity(D1, D2)
+
 
 @pytest.mark.parametrize('n', [20, 250])
 @pytest.mark.parametrize('k', [None, 5])
