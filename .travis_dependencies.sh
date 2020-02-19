@@ -7,6 +7,7 @@ conda_create ()
 {
 
     hash -r
+    conda init bash
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
     conda config --add channels pypi
