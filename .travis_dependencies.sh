@@ -17,7 +17,7 @@ conda_create ()
     conda update --all
 }
 
-src="$HOME/env/miniconda$TRAVIS_PYTHON_VERSION"
+src="$HOME/env/miniconda-$TRAVIS_OS_NAME-$TRAVIS_PYTHON_VERSION"
 if [ ! -d "$src" ]; then
     mkdir -p $HOME/env
     pushd $HOME/env
