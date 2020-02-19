@@ -7,9 +7,6 @@ language: python
 notifications:
   email: false
 
-python:
-    - 3.6
-
 jobs:
     include:
         - python: 3.6
@@ -18,9 +15,7 @@ jobs:
         - python: 3.7
           os: linux
           dist: xenial
-        - python: 3.6
-          os: osx
-
+        - os: osx
 
 before_install:
     - bash .travis_dependencies.sh
