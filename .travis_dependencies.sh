@@ -7,8 +7,6 @@ conda_create ()
 {
 
     hash -r
-    conda init bash
-    source $HOME/.bashrc
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
     conda config --add channels pypi
@@ -37,11 +35,11 @@ if [ ! -d "$src" ]; then
         export PATH="$src/bin:$PATH"
         conda_create
 
-        conda activate $ENV_NAME
+        source activate $ENV_NAME
 
         conda install -c conda-forge ffmpeg pysoundfile coveralls
 
-        conda deactivate
+        source deactivate
     popd
 else
     echo "Using cached dependencies"

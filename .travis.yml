@@ -23,7 +23,7 @@ before_install:
     - bash .travis_dependencies.sh
     - export PATH="$HOME/env/miniconda$TRAVIS_PYTHON_VERSION/bin:$PATH";
     - hash -r
-    - conda activate test-environment
+    - source activate test-environment
     - conda list
 
 install:
