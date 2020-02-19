@@ -21,7 +21,7 @@ jobs:
 
 before_install:
     - bash .travis_dependencies.sh
-    - export PATH="$HOME/env/miniconda$TRAVIS_PYTHON_VERSION/bin:$PATH";
+    - export PATH="$HOME/env/miniconda-$TRAVIS_OS_NAME$TRAVIS_PYTHON_VERSION/bin:$PATH";
     - hash -r
     - source activate test-environment
     - conda list
