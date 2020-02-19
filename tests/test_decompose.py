@@ -4,8 +4,9 @@
 
 # Disable cache
 import os
+
 try:
-    os.environ.pop('LIBROSA_CACHE_DIR')
+    os.environ.pop("LIBROSA_CACHE_DIR")
 except:
     pass
 
@@ -52,7 +53,7 @@ def test_decompose_fit():
     (W, H) = librosa.decompose.decompose(X, transformer=D, fit=True)
 
     # Make random data and decompose with the same basis
-    X = np.random.randn(*X.shape)**2
+    X = np.random.randn(*X.shape) ** 2
     (W2, H2) = librosa.decompose.decompose(X, transformer=D, fit=False)
 
     # Make sure the basis hasn't changed
@@ -77,7 +78,7 @@ def test_sorted_decompose():
 
 @pytest.fixture
 def y22050():
-    y, _ = librosa.load(os.path.join('tests', 'data', 'test1_22050.wav'))
+    y, _ = librosa.load(os.path.join("tests", "data", "test1_22050.wav"))
     return y
 
 
@@ -85,21 +86,18 @@ def y22050():
 def D22050(y22050):
     return librosa.stft(y22050)
 
+
 @pytest.fixture
 def S22050(D22050):
     return np.abs(D22050)
 
 
-@pytest.mark.parametrize('window', [31, (5, 5)])
-@pytest.mark.parametrize('power', [1, 2, 10])
-@pytest.mark.parametrize('mask', [False, True])
-@pytest.mark.parametrize('margin', [1.0, 3.0, (1.0, 1.0), (9.0, 10.0)])
+@pytest.mark.parametrize("window", [31, (5, 5)])
+@pytest.mark.parametrize("power", [1, 2, 10])
+@pytest.mark.parametrize("mask", [False, True])
+@pytest.mark.parametrize("margin", [1.0, 3.0, (1.0, 1.0), (9.0, 10.0)])
 def test_real_hpss(S22050, window, power, mask, margin):
-    H, P = librosa.decompose.hpss(S22050,
-                                  kernel_size=window,
-                                  power=power,
-                                  mask=mask,
-                                  margin=margin)
+    H, P = librosa.decompose.hpss(S22050, kernel_size=window, power=power, mask=mask, margin=margin)
 
     if margin == 1.0 or margin == (1.0, 1.0):
         if mask:
@@ -181,7 +179,7 @@ def test_nn_filter_avg():
     X = np.random.randn(10, 100)
 
     # Build a recurrence matrix, just for testing purposes
-    rec = librosa.segment.recurrence_matrix(X, mode='affinity')
+    rec = librosa.segment.recurrence_matrix(X, mode="affinity")
 
     X_filtered = librosa.decompose.nn_filter(X, rec=rec, aggregate=np.average)
 
@@ -192,10 +190,9 @@ def test_nn_filter_avg():
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
-@pytest.mark.parametrize('x,y', [(10, 10), (100, 20), (20, 100),
-                                 (100, 101), (101, 101)])
-@pytest.mark.parametrize('sparse', [False, True])
-@pytest.mark.parametrize('data', [np.empty((10, 100))])
+@pytest.mark.parametrize("x,y", [(10, 10), (100, 20), (20, 100), (100, 101), (101, 101)])
+@pytest.mark.parametrize("sparse", [False, True])
+@pytest.mark.parametrize("data", [np.empty((10, 100))])
 def test_nn_filter_badselfsim(data, x, y, sparse):
 
     srand()

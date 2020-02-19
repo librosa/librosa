@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
-'''Unit tests for the effects module'''
+"""Unit tests for the effects module"""
 import warnings
 
 # Disable cache
 import os
+
 try:
-    os.environ.pop('LIBROSA_CACHE_DIR')
+    os.environ.pop("LIBROSA_CACHE_DIR")
 except KeyError:
     pass
 
@@ -16,18 +17,26 @@ import pytest
 
 import librosa
 
-__EXAMPLE_FILE = os.path.join('tests', 'data', 'test1_22050.wav')
+__EXAMPLE_FILE = os.path.join("tests", "data", "test1_22050.wav")
 
 
-@pytest.fixture(scope='module', params=[22050, 44100])
+@pytest.fixture(scope="module", params=[22050, 44100])
 def ysr(request):
     return librosa.load(__EXAMPLE_FILE, sr=request.param)
 
 
-@pytest.mark.parametrize('rate,ctx', [(0.25, dnr()), (0.25, dnr()), (1.0, dnr()),
-                                      (2.0, dnr()), (4.0, dnr()),
-                                      (-1, pytest.raises(librosa.ParameterError)),
-                                      (0, pytest.raises(librosa.ParameterError))])
+@pytest.mark.parametrize(
+    "rate,ctx",
+    [
+        (0.25, dnr()),
+        (0.25, dnr()),
+        (1.0, dnr()),
+        (2.0, dnr()),
+        (4.0, dnr()),
+        (-1, pytest.raises(librosa.ParameterError)),
+        (0, pytest.raises(librosa.ParameterError)),
+    ],
+)
 def test_time_stretch(ysr, rate, ctx):
 
     with ctx:
@@ -38,21 +47,19 @@ def test_time_stretch(ysr, rate, ctx):
         new_duration = librosa.get_duration(ys, sr=sr)
 
         # We don't have to be too precise here, since this goes through an STFT
-        assert np.allclose(orig_duration, rate * new_duration,
-                           rtol=1e-2, atol=1e-3)
+        assert np.allclose(orig_duration, rate * new_duration, rtol=1e-2, atol=1e-3)
 
 
-
-@pytest.mark.parametrize('n_steps', [-1.5, 1.5, 5])
-@pytest.mark.parametrize('bins_per_octave,ctx', [(12, dnr()), (24, dnr()),
-                                                 (-1, pytest.raises(librosa.ParameterError)),
-                                                 (0, pytest.raises(librosa.ParameterError))])
+@pytest.mark.parametrize("n_steps", [-1.5, 1.5, 5])
+@pytest.mark.parametrize(
+    "bins_per_octave,ctx",
+    [(12, dnr()), (24, dnr()), (-1, pytest.raises(librosa.ParameterError)), (0, pytest.raises(librosa.ParameterError))],
+)
 def test_pitch_shift(ysr, n_steps, bins_per_octave, ctx):
 
     with ctx:
         y, sr = ysr
-        ys = librosa.effects.pitch_shift(y, sr, n_steps,
-                                         bins_per_octave=bins_per_octave)
+        ys = librosa.effects.pitch_shift(y, sr, n_steps, bins_per_octave=bins_per_octave)
 
         orig_duration = librosa.get_duration(y, sr=sr)
         new_duration = librosa.get_duration(ys, sr=sr)
@@ -61,24 +68,19 @@ def test_pitch_shift(ysr, n_steps, bins_per_octave, ctx):
         assert orig_duration == new_duration
 
 
-@pytest.mark.parametrize('align_zeros', [False, True])
+@pytest.mark.parametrize("align_zeros", [False, True])
 def test_remix_mono(align_zeros):
 
     # without zc alignment
     y = np.asarray([1, 1, -1, -1, 2, 2, -1, -1, 1, 1], dtype=np.float)
     y_t = np.asarray([-1, -1, -1, -1, 1, 1, 1, 1, 2, 2], dtype=np.float)
-    intervals = np.asarray([[2, 4],
-                            [6, 8],
-                            [0, 2],
-                            [8, 10],
-                            [4, 6]])
+    intervals = np.asarray([[2, 4], [6, 8], [0, 2], [8, 10], [4, 6]])
 
-    y_out = librosa.effects.remix(y, intervals,
-                                  align_zeros=align_zeros)
+    y_out = librosa.effects.remix(y, intervals, align_zeros=align_zeros)
     assert np.allclose(y_out, y_t)
 
 
-@pytest.mark.parametrize('align_zeros', [False, True])
+@pytest.mark.parametrize("align_zeros", [False, True])
 def test_remix_stereo(align_zeros):
 
     # without zc alignment
@@ -87,11 +89,7 @@ def test_remix_stereo(align_zeros):
     y = np.vstack([y, y])
     y_t = np.vstack([y_t, y_t])
 
-    intervals = np.asarray([[2, 4],
-                            [6, 8],
-                            [0, 2],
-                            [8, 10],
-                            [4, 6]])
+    intervals = np.asarray([[2, 4], [6, 8], [0, 2], [8, 10], [4, 6]])
 
     y_out = librosa.effects.remix(y, intervals, align_zeros=align_zeros)
     assert np.allclose(y_out, y_t)
@@ -134,14 +132,14 @@ def test_harmonic(ysr):
     assert np.allclose(yh1, yh2)
 
 
-@pytest.fixture(scope='module', params=[False, True], ids=['mono', 'stereo'])
+@pytest.fixture(scope="module", params=[False, True], ids=["mono", "stereo"])
 def y_trim(request):
     # construct 5 seconds of stereo silence
     # Stick a sine wave in the middle three seconds
 
     sr = float(22050)
     trim_duration = 3.0
-    y = np.sin(2 * np.pi * 440. * np.arange(0, trim_duration * sr) / sr)
+    y = np.sin(2 * np.pi * 440.0 * np.arange(0, trim_duration * sr) / sr)
     y = librosa.util.pad_center(y, 5 * sr)
 
     if request.param:
@@ -149,9 +147,9 @@ def y_trim(request):
     return y
 
 
-@pytest.mark.parametrize('top_db', [60, 40, 20])
-@pytest.mark.parametrize('ref', [1, np.max])
-@pytest.mark.parametrize('trim_duration', [3.0])
+@pytest.mark.parametrize("top_db", [60, 40, 20])
+@pytest.mark.parametrize("ref", [1, np.max])
+@pytest.mark.parametrize("trim_duration", [3.0])
 def test_trim(y_trim, top_db, ref, trim_duration):
 
     yt, idx = librosa.effects.trim(y_trim, top_db=top_db, ref=ref)
@@ -163,17 +161,17 @@ def test_trim(y_trim, top_db, ref, trim_duration):
 
     # Verify logamp
     rms = librosa.feature.rms(y=librosa.to_mono(yt), center=False)
-    logamp = librosa.power_to_db(rms**2, ref=ref, top_db=None)
-    assert np.all(logamp > - top_db)
+    logamp = librosa.power_to_db(rms ** 2, ref=ref, top_db=None)
+    assert np.all(logamp > -top_db)
 
     # Verify logamp
     rms_all = librosa.feature.rms(y=librosa.to_mono(y_trim)).squeeze()
-    logamp_all = librosa.power_to_db(rms_all**2, ref=ref, top_db=None)
+    logamp_all = librosa.power_to_db(rms_all ** 2, ref=ref, top_db=None)
 
     start = int(librosa.samples_to_frames(idx[0]))
     stop = int(librosa.samples_to_frames(idx[1]))
-    assert np.all(logamp_all[:start] <= - top_db)
-    assert np.all(logamp_all[stop:] <= - top_db)
+    assert np.all(logamp_all[:start] <= -top_db)
+    assert np.all(logamp_all[stop:] <= -top_db)
 
     # Verify duration
     duration = librosa.get_duration(yt)
@@ -191,9 +189,7 @@ def test_trim_empty():
     assert idx[1] == 0
 
 
-@pytest.fixture(scope='module',
-                params=[0, 1, 2, 3],
-                ids=['constant', 'end-silent', 'full-signal', 'gaps'])
+@pytest.fixture(scope="module", params=[0, 1, 2, 3], ids=["constant", "end-silent", "full-signal", "gaps"])
 def y_split_idx(request):
 
     sr = 8192
@@ -206,7 +202,7 @@ def y_split_idx(request):
     elif request.param == 1:
         # end-silent
         y[::2] *= -1
-        y[4*sr:] = 0
+        y[4 * sr :] = 0
         idx_true = np.asarray([[0, 4 * sr]])
 
     elif request.param == 2:
@@ -219,26 +215,23 @@ def y_split_idx(request):
 
         # Zero out all but two intervals
         y[:sr] = 0
-        y[2 * sr:3 * sr] = 0
-        y[4 * sr:] = 0
+        y[2 * sr : 3 * sr] = 0
+        y[4 * sr :] = 0
 
         # The true non-silent intervals
-        idx_true = np.asarray([[sr, 2 * sr], [3 * sr, 4*sr]])
+        idx_true = np.asarray([[sr, 2 * sr], [3 * sr, 4 * sr]])
 
     return y, idx_true
 
 
-@pytest.mark.parametrize('frame_length', [1024, 2048, 4096])
-@pytest.mark.parametrize('hop_length', [256, 512, 1024])
-@pytest.mark.parametrize('top_db', [20, 60, 80])
+@pytest.mark.parametrize("frame_length", [1024, 2048, 4096])
+@pytest.mark.parametrize("hop_length", [256, 512, 1024])
+@pytest.mark.parametrize("top_db", [20, 60, 80])
 def test_split(y_split_idx, frame_length, hop_length, top_db):
 
     y, idx_true = y_split_idx
 
-    intervals = librosa.effects.split(y,
-                                      top_db=top_db,
-                                      frame_length=frame_length,
-                                      hop_length=hop_length)
+    intervals = librosa.effects.split(y, top_db=top_db, frame_length=frame_length, hop_length=hop_length)
 
     assert np.all(intervals <= y.shape[-1])
 
@@ -250,10 +243,10 @@ def test_split(y_split_idx, frame_length, hop_length, top_db):
         assert np.all(np.abs(i_true - intervals[i]) <= frame_length), intervals[i]
 
 
-@pytest.mark.parametrize('coef', [0.5, 0.99])
-@pytest.mark.parametrize('zi', [None, [0]])
-@pytest.mark.parametrize('return_zf', [False, True])
-@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+@pytest.mark.parametrize("coef", [0.5, 0.99])
+@pytest.mark.parametrize("zi", [None, [0]])
+@pytest.mark.parametrize("return_zf", [False, True])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_preemphasis(coef, zi, return_zf, dtype):
     x = np.arange(10, dtype=dtype)
 
@@ -266,7 +259,7 @@ def test_preemphasis(coef, zi, return_zf, dtype):
     assert x.dtype == y.dtype
 
 
-@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_preemphasis_continue(dtype):
 
     # Compare pre-emphasis computed in parts to that of the whole sequence in one go

@@ -2,7 +2,7 @@
 # -*- encoding: utf-8 -*-
 # CREATED:2015-02-14 16:20:25 by Brian McFee <brian.mcfee@nyu.edu>
 #   unit tests for librosa cache
-'''Tests for librosa.cache'''
+"""Tests for librosa.cache"""
 
 import os
 import sys
@@ -15,9 +15,9 @@ import librosa._cache
 
 
 # Disable any initial cache settings
-for key in ['DIR', 'MMAP', 'COMPRESS', 'VERBOSE', 'LEVEL']:
+for key in ["DIR", "MMAP", "COMPRESS", "VERBOSE", "LEVEL"]:
     try:
-        os.environ.pop('LIBROSA_CACHE_{:s}'.format(key))
+        os.environ.pop("LIBROSA_CACHE_{:s}".format(key))
     except KeyError:
         pass
 

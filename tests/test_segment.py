@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
-'''Tests for segmentation functions'''
+"""Tests for segmentation functions"""
 import warnings
 
 # Disable cache
 import os
+
 try:
-    os.environ.pop('LIBROSA_CACHE_DIR')
+    os.environ.pop("LIBROSA_CACHE_DIR")
 except:
     pass
 
@@ -19,12 +20,12 @@ from test_core import srand
 
 import librosa
 
-__EXAMPLE_FILE = os.path.join('tests', 'data', 'test1_22050.wav')
+__EXAMPLE_FILE = os.path.join("tests", "data", "test1_22050.wav")
 
 
-@pytest.mark.parametrize('n', [20, 250])
-@pytest.mark.parametrize('k', [None, 5])
-@pytest.mark.parametrize('metric', ['l2', 'cosine'])
+@pytest.mark.parametrize("n", [20, 250])
+@pytest.mark.parametrize("k", [None, 5])
+@pytest.mark.parametrize("metric", ["l2", "cosine"])
 def test_cross_similarity(n, k, metric):
 
     srand()
@@ -59,28 +60,24 @@ def test_cross_similarity_distance():
     srand()
     data_ref = np.random.randn(3, 50)
     data = np.random.randn(3, 70)
-    distance = cdist(data.T, data_ref.T, metric='sqeuclidean').T
-    rec = librosa.segment.cross_similarity(data, data_ref, mode='distance',
-                                           metric='sqeuclidean',
-                                           sparse=True)
+    distance = cdist(data.T, data_ref.T, metric="sqeuclidean").T
+    rec = librosa.segment.cross_similarity(data, data_ref, mode="distance", metric="sqeuclidean", sparse=True)
 
     i, j, vals = scipy.sparse.find(rec)
     assert np.allclose(vals, distance[i, j])
 
 
-@pytest.mark.parametrize('metric', ['sqeuclidean', 'cityblock'])
-@pytest.mark.parametrize('bandwidth', [None, 1])
+@pytest.mark.parametrize("metric", ["sqeuclidean", "cityblock"])
+@pytest.mark.parametrize("bandwidth", [None, 1])
 def test_cross_similarity_affinity(metric, bandwidth):
 
     srand()
     data_ref = np.random.randn(3, 70)
     data = np.random.randn(3, 50)
     distance = cdist(data_ref.T, data.T, metric=metric)
-    rec = librosa.segment.cross_similarity(data, data_ref,
-                                           mode='affinity',
-                                           metric=metric,
-                                           sparse=True,
-                                           bandwidth=bandwidth)
+    rec = librosa.segment.cross_similarity(
+        data, data_ref, mode="affinity", metric=metric, sparse=True, bandwidth=bandwidth
+    )
 
     i, j, vals = scipy.sparse.find(rec)
     logvals = np.log(vals)
@@ -100,9 +97,7 @@ def test_cross_similarity_badmode():
     data_ref = np.random.randn(3, 70)
     data = np.random.randn(3, 50)
 
-    rec = librosa.segment.cross_similarity(data, data_ref, mode='NOT A MODE',
-                                            metric='sqeuclidean',
-                                            sparse=True)
+    rec = librosa.segment.cross_similarity(data, data_ref, mode="NOT A MODE", metric="sqeuclidean", sparse=True)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -121,29 +116,26 @@ def test_cross_similarity_fail_mismatch():
     librosa.segment.cross_similarity(D1, D2)
 
 
-@pytest.mark.parametrize('n', [20, 250])
-@pytest.mark.parametrize('k', [None, 5])
-@pytest.mark.parametrize('sym', [False, True])
-@pytest.mark.parametrize('width', [1, 3])
-@pytest.mark.parametrize('metric', ['l2', 'cosine'])
-@pytest.mark.parametrize('self', [False, True])
+@pytest.mark.parametrize("n", [20, 250])
+@pytest.mark.parametrize("k", [None, 5])
+@pytest.mark.parametrize("sym", [False, True])
+@pytest.mark.parametrize("width", [1, 3])
+@pytest.mark.parametrize("metric", ["l2", "cosine"])
+@pytest.mark.parametrize("self", [False, True])
 def test_recurrence_matrix(n, k, width, sym, metric, self):
 
     srand()
     # Make a data matrix
     data = np.random.randn(3, n)
 
-    D = librosa.segment.recurrence_matrix(data, k=k, width=width, sym=sym,
-                                          axis=-1, metric=metric, self=self)
+    D = librosa.segment.recurrence_matrix(data, k=k, width=width, sym=sym, axis=-1, metric=metric, self=self)
 
     # First test for symmetry
     if sym:
         assert np.allclose(D, D.T)
 
     # Test for target-axis invariance
-    D_trans = librosa.segment.recurrence_matrix(data.T, k=k, width=width,
-                                                sym=sym, axis=0,
-                                                metric=metric, self=self)
+    D_trans = librosa.segment.recurrence_matrix(data.T, k=k, width=width, sym=sym, axis=0, metric=metric, self=self)
     assert np.allclose(D, D_trans)
 
     # If not symmetric, test for correct number of links
@@ -166,13 +158,13 @@ def test_recurrence_matrix(n, k, width, sym, metric, self):
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
-@pytest.mark.parametrize('data', [np.ones((3, 10))])
-@pytest.mark.parametrize('width', [-1, 0, 11])
+@pytest.mark.parametrize("data", [np.ones((3, 10))])
+@pytest.mark.parametrize("width", [-1, 0, 11])
 def test_recurrence_badwidth(data, width):
     librosa.segment.recurrence_matrix(data, width=width)
 
 
-@pytest.mark.parametrize('self', [False, True])
+@pytest.mark.parametrize("self", [False, True])
 def test_recurrence_sparse(self):
 
     srand()
@@ -189,34 +181,30 @@ def test_recurrence_sparse(self):
         assert np.allclose(D_sparse.diagonal(), False)
 
 
-@pytest.mark.parametrize('self', [False, True])
+@pytest.mark.parametrize("self", [False, True])
 def test_recurrence_distance(self):
 
     srand()
     data = np.random.randn(3, 100)
-    distance = squareform(pdist(data.T, metric='sqeuclidean'))
-    rec = librosa.segment.recurrence_matrix(data, mode='distance',
-                                            metric='sqeuclidean',
-                                            sparse=True, self=self)
+    distance = squareform(pdist(data.T, metric="sqeuclidean"))
+    rec = librosa.segment.recurrence_matrix(data, mode="distance", metric="sqeuclidean", sparse=True, self=self)
 
     i, j, vals = scipy.sparse.find(rec)
     assert np.allclose(vals, distance[i, j])
     assert np.allclose(rec.diagonal(), 0.0)
 
 
-@pytest.mark.parametrize('metric', ['sqeuclidean', 'cityblock'])
-@pytest.mark.parametrize('bandwidth', [None, 1])
-@pytest.mark.parametrize('self', [False, True])
+@pytest.mark.parametrize("metric", ["sqeuclidean", "cityblock"])
+@pytest.mark.parametrize("bandwidth", [None, 1])
+@pytest.mark.parametrize("self", [False, True])
 def test_recurrence_affinity(metric, bandwidth, self):
 
     srand()
     data = np.random.randn(3, 100)
     distance = squareform(pdist(data.T, metric=metric))
-    rec = librosa.segment.recurrence_matrix(data, mode='affinity',
-                                            metric=metric,
-                                            sparse=True,
-                                            bandwidth=bandwidth,
-                                            self=self)
+    rec = librosa.segment.recurrence_matrix(
+        data, mode="affinity", metric=metric, sparse=True, bandwidth=bandwidth, self=self
+    )
 
     if self:
         assert np.allclose(rec.diagonal(), 1.0)
@@ -241,9 +229,7 @@ def test_recurrence_badmode():
     srand()
     data = np.random.randn(3, 100)
 
-    rec = librosa.segment.recurrence_matrix(data, mode='NOT A MODE',
-                                            metric='sqeuclidean',
-                                            sparse=True)
+    rec = librosa.segment.recurrence_matrix(data, mode="NOT A MODE", metric="sqeuclidean", sparse=True)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -254,8 +240,8 @@ def test_recurrence_bad_bandwidth():
     rec = librosa.segment.recurrence_matrix(data, bandwidth=-2)
 
 
-@pytest.mark.parametrize('n', [10, 100, 500])
-@pytest.mark.parametrize('pad', [False, True])
+@pytest.mark.parametrize("n", [10, 100, 500])
+@pytest.mark.parametrize("pad", [False, True])
 def test_recurrence_to_lag(n, pad):
 
     srand()
@@ -277,15 +263,15 @@ def test_recurrence_to_lag(n, pad):
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
-@pytest.mark.parametrize('size', [(17,), (17, 34), (17, 17, 17)])
+@pytest.mark.parametrize("size", [(17,), (17, 34), (17, 17, 17)])
 def test_recurrence_to_lag_fail(size):
     librosa.segment.recurrence_to_lag(np.zeros(size))
 
 
-@pytest.mark.parametrize('pad', [False, True])
-@pytest.mark.parametrize('axis', [0, 1, -1])
-@pytest.mark.parametrize('rec', [librosa.segment.recurrence_matrix(np.random.randn(3, 100), sparse=True)])
-@pytest.mark.parametrize('fmt', ['csc', 'csr', 'lil', 'bsr', 'dia'])
+@pytest.mark.parametrize("pad", [False, True])
+@pytest.mark.parametrize("axis", [0, 1, -1])
+@pytest.mark.parametrize("rec", [librosa.segment.recurrence_matrix(np.random.randn(3, 100), sparse=True)])
+@pytest.mark.parametrize("fmt", ["csc", "csr", "lil", "bsr", "dia"])
 def test_recurrence_to_lag_sparse(pad, axis, rec, fmt):
 
     rec_dense = rec.toarray()
@@ -301,8 +287,8 @@ def test_recurrence_to_lag_sparse(pad, axis, rec, fmt):
     assert np.allclose(lag_sparse.toarray(), lag_dense)
 
 
-@pytest.mark.parametrize('n', [10, 100])
-@pytest.mark.parametrize('pad', [False, True])
+@pytest.mark.parametrize("n", [10, 100])
+@pytest.mark.parametrize("pad", [False, True])
 def test_lag_to_recurrence(n, pad):
 
     srand()
@@ -319,13 +305,13 @@ def test_lag_to_recurrence(n, pad):
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
-@pytest.mark.parametrize('size', [(17,), (17, 35), (17, 17, 17)])
+@pytest.mark.parametrize("size", [(17,), (17, 35), (17, 17, 17)])
 def test_lag_to_recurrence_badsize(size):
     librosa.segment.lag_to_recurrence(np.zeros(size))
 
 
-@pytest.mark.parametrize('axis', [0, 1, -1])
-@pytest.mark.parametrize('pad', [False, True])
+@pytest.mark.parametrize("axis", [0, 1, -1])
+@pytest.mark.parametrize("pad", [False, True])
 def test_lag_to_recurrence_sparse(axis, pad):
 
     srand()
@@ -361,6 +347,7 @@ def test_timelag_filter():
     d_pos0 = librosa.segment.timelag_filter(lambda X: X)
     assert np.allclose(X, d_pos0(X))
 
+
 def test_timelag_filter_pos1():
     srand()
     X = np.random.randn(15, 15)
@@ -368,25 +355,25 @@ def test_timelag_filter_pos1():
     assert np.allclose(X, d_pos1(None, X))
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def ysr():
     return librosa.load(__EXAMPLE_FILE)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def mfcc(ysr):
     y, sr = ysr
     return librosa.feature.mfcc(y=y, sr=sr)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def beats(ysr):
     y, sr = ysr
     tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
     return beats
 
 
-@pytest.mark.parametrize('n_segments', [1, 2, 3, 4, 100])
+@pytest.mark.parametrize("n_segments", [1, 2, 3, 4, 100])
 def test_subsegment(mfcc, beats, n_segments):
 
     subseg = librosa.segment.subsegment(mfcc, beats, n_segments=n_segments, axis=-1)
@@ -411,7 +398,7 @@ def test_subsegment(mfcc, beats, n_segments):
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
-@pytest.mark.parametrize('n_segments', [-1, 0])
+@pytest.mark.parametrize("n_segments", [-1, 0])
 def test_subsegment_badn(mfcc, beats, n_segments):
     librosa.segment.subsegment(mfcc, beats, n_segments=n_segments, axis=-1)
 
@@ -423,23 +410,27 @@ def R_input():
     return X.dot(X.T)
 
 
-@pytest.mark.parametrize('window', ['rect', 'hann'])
-@pytest.mark.parametrize('n', [5, 9])
-@pytest.mark.parametrize('max_ratio', [1.0, 1.5, 2.0])
-@pytest.mark.parametrize('min_ratio', [None, 1.0])
-@pytest.mark.parametrize('n_filters', [1, 2, 5])
-@pytest.mark.parametrize('zero_mean', [False, True])
-@pytest.mark.parametrize('clip', [False, True])
-@pytest.mark.parametrize('kwargs', [dict(), dict(mode='reflect')])
-def test_path_enhance(R_input, window, n, max_ratio, min_ratio,
-                      n_filters, zero_mean, clip, kwargs):
+@pytest.mark.parametrize("window", ["rect", "hann"])
+@pytest.mark.parametrize("n", [5, 9])
+@pytest.mark.parametrize("max_ratio", [1.0, 1.5, 2.0])
+@pytest.mark.parametrize("min_ratio", [None, 1.0])
+@pytest.mark.parametrize("n_filters", [1, 2, 5])
+@pytest.mark.parametrize("zero_mean", [False, True])
+@pytest.mark.parametrize("clip", [False, True])
+@pytest.mark.parametrize("kwargs", [dict(), dict(mode="reflect")])
+def test_path_enhance(R_input, window, n, max_ratio, min_ratio, n_filters, zero_mean, clip, kwargs):
 
-    R_smooth = librosa.segment.path_enhance(R_input, window=window,
-                                            n=n, max_ratio=max_ratio,
-                                            min_ratio=min_ratio,
-                                            n_filters=n_filters,
-                                            zero_mean=zero_mean,
-                                            clip=clip, **kwargs)
+    R_smooth = librosa.segment.path_enhance(
+        R_input,
+        window=window,
+        n=n,
+        max_ratio=max_ratio,
+        min_ratio=min_ratio,
+        n_filters=n_filters,
+        zero_mean=zero_mean,
+        clip=clip,
+        **kwargs,
+    )
 
     assert R_smooth.shape == R_input.shape
     assert np.all(np.isfinite(R_smooth))
