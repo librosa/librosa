@@ -1,5 +1,3 @@
-sudo: false
-
 cache:
   directories:
   - $HOME/env
@@ -12,10 +10,15 @@ notifications:
 python:
     - 3.6
 
-matrix:
+jobs:
     include:
-        - python: 3.7
+        - python: 3.6
+          os: linux
           dist: xenial
+        - python: 3.7
+          os: linux
+          dist: xenial
+
 
 before_install:
     - bash .travis_dependencies.sh
