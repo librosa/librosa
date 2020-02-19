@@ -16,6 +16,7 @@ jobs:
           os: linux
           dist: xenial
         - os: osx
+          language: generic
           osx_image: xcode11
 
 before_install:
