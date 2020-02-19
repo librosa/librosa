@@ -16,6 +16,7 @@ jobs:
           os: linux
           dist: xenial
         - os: osx
+          osx_image: xcode11
 
 before_install:
     - bash .travis_dependencies.sh
