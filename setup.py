@@ -54,10 +54,10 @@ setup(
                  'sphinx-gallery',
                  'presets'],
         'tests': ['matplotlib >= 2.1',
-                  'mock',
                   'pytest-mpl',
                   'pytest-cov',
-                  'pytest < 4'],
+                  'pytest',
+                  'contextlib2'],
         'display': ['matplotlib >= 1.5'],
     }
 )

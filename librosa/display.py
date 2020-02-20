@@ -950,6 +950,9 @@ def __decorate_axis(axis, ax_type):
         axis.set_label_text('')
         axis.set_ticks([])
 
+    else:
+        raise ParameterError('Unsupported axis type: {}'.format(ax_type))
+
 
 def __coord_fft_hz(n, sr=22050, **_kwargs):
     '''Get the frequencies for FFT bins'''
