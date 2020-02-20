@@ -54,7 +54,6 @@ setup(
                  'sphinx-gallery',
                  'presets'],
         'tests': ['matplotlib >= 2.1',
-                  'mock',
                   'pytest-mpl',
                   'pytest-cov',
                   'pytest',
