@@ -939,7 +939,7 @@ def viterbi(prob, transition, p_init=None, return_logp=False):
     if p_init is None:
         p_init = np.empty(n_states)
         p_init.fill(1./n_states)
-    elif np.any(p_init < 0) or not np.allclose(p_init.sum(), 1):
+    elif np.any(p_init < 0) or not np.allclose(p_init.sum(), 1) or p_init.shape != (n_states,):
         raise ParameterError('Invalid initial state distribution: '
                              'p_init={}'.format(p_init))
 
@@ -1126,7 +1126,7 @@ def viterbi_discriminative(prob, transition, p_state=None, p_init=None, return_l
     if p_init is None:
         p_init = np.empty(n_states)
         p_init.fill(1./n_states)
-    elif np.any(p_init < 0) or not np.allclose(p_init.sum(), 1):
+    elif np.any(p_init < 0) or not np.allclose(p_init.sum(), 1) or p_init.shape != (n_states,):
         raise ParameterError('Invalid initial state distribution: '
                              'p_init={}'.format(p_init))
 
