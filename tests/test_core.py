@@ -681,7 +681,7 @@ def test_lpc_regress(infile):
     test_data = scipy.io.loadmat(infile, squeeze_me=True)
     for i in range(len(test_data["signal"])):
         signal = test_data["signal"][i]
-        order = test_data["order"][i]
+        order = int(test_data["order"][i])
         true_coeffs = test_data["true_coeffs"][i]
         est_coeffs = test_data["est_coeffs"][i]
 
