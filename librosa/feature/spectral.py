@@ -838,8 +838,6 @@ def rms(y=None, S=None, frame_length=2048, hop_length=512,
     >>> plt.show()
 
     '''
-    if y is not None and S is not None:
-        raise ValueError('Either `y` or `S` should be input.')
     if y is not None:
         y = to_mono(y)
         if center:
@@ -873,7 +871,7 @@ def rms(y=None, S=None, frame_length=2048, hop_length=512,
         # Calculate power
         power = 2 * np.sum(x, axis=0, keepdims=True) / frame_length**2
     else:
-        raise ValueError('Either `y` or `S` must be input.')
+        raise ParameterError('Either `y` or `S` must be input.')
 
     return np.sqrt(power)
 

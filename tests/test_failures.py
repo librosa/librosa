@@ -4,8 +4,9 @@
 
 # Disable cache
 import os
+
 try:
-    os.environ.pop('LIBROSA_CACHE_DIR')
+    os.environ.pop("LIBROSA_CACHE_DIR")
 except:
     pass
 
@@ -16,7 +17,7 @@ import pytest
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_mono_valid_stereo():
-    '''valid_audio: mono=True,  y.ndim==2'''
+    """valid_audio: mono=True,  y.ndim==2"""
     y = np.zeros((1000, 2)).T
     librosa.util.valid_audio(y, mono=True)
 
@@ -34,33 +35,33 @@ def test_valid_audio_scalar():
 
 
 def test_valid_stereo_or_mono():
-    '''valid_audio: mono=False, y.ndim==1'''
+    """valid_audio: mono=False, y.ndim==1"""
     y = np.zeros(1000)
     librosa.util.valid_audio(y, mono=False)
 
 
 def test_valid_mono():
-    '''valid_audio: mono=True,  y.ndim==1'''
+    """valid_audio: mono=True,  y.ndim==1"""
     y = np.zeros(1000)
     librosa.util.valid_audio(y, mono=True)
 
 
 def test_valid_stereo():
-    '''valid_audio: mono=False, y.ndim==2'''
+    """valid_audio: mono=False, y.ndim==2"""
     y = np.zeros((1000, 2)).T
     librosa.util.valid_audio(y, mono=False)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_valid_audio_type():
-    '''valid_audio: list input'''
+    """valid_audio: list input"""
     y = list(np.zeros(1000))
     librosa.util.valid_audio(y)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_valid_audio_nan():
-    '''valid_audio: NaN'''
+    """valid_audio: NaN"""
     y = np.zeros(1000)
     y[10] = np.NaN
     librosa.util.valid_audio(y)
@@ -68,55 +69,51 @@ def test_valid_audio_nan():
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_valid_audio_inf():
-    '''valid_audio: Inf'''
+    """valid_audio: Inf"""
     y = np.zeros(1000)
     y[10] = np.inf
     librosa.util.valid_audio(y)
 
 
-def test_valid_audio_ndim():
-    '''valid_audio: y.ndim > 2'''
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize("mono", [False, True])
+@pytest.mark.parametrize("y", [np.zeros((3, 10, 10))])
+def test_valid_audio_ndim(y, mono):
+    """valid_audio: y.ndim > 2"""
 
-    y = np.zeros((3, 10, 10))
-
-    @pytest.mark.xfail(raises=librosa.ParameterError)
-    def __test(mono):
-        librosa.util.valid_audio(y, mono=mono)
-
-    for mono in [False, True]:
-        yield __test, mono
+    librosa.util.valid_audio(y, mono=mono)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_valid_audio_strided():
-    '''valid_audio: strided'''
+    """valid_audio: strided"""
     y = np.zeros(1000)[::2]
     librosa.util.valid_audio(y)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_valid_audio_clang():
-    '''valid_audio: C-contiguous'''
+    """valid_audio: C-contiguous"""
     y = np.zeros(1000).reshape(2, 500)
     librosa.util.valid_audio(y, mono=False)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_frame_hop():
-    '''frame: hop_length=0'''
+    """frame: hop_length=0"""
     y = np.zeros(128)
     librosa.util.frame(y, frame_length=10, hop_length=0)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_frame_discontiguous():
-    '''frame: discontiguous input'''
+    """frame: discontiguous input"""
     y = np.zeros((128, 2)).T
     librosa.util.frame(y[0], frame_length=64, hop_length=64)
 
 
 def test_frame_contiguous():
-    '''frame: discontiguous input'''
+    """frame: discontiguous input"""
     y = np.zeros((2, 128))
     librosa.util.frame(y[0], frame_length=64, hop_length=64)
 

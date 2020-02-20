@@ -199,7 +199,7 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
                       FutureWarning)
 
     elif norm not in (None, 1, 'slaney', np.inf):
-        raise ParameterError("Unsupported norm={}, must be one of: {None, 1, 'slaney', np.inf}".format(repr(norm)))
+        raise ParameterError("Unsupported norm={}, must be one of: None, 1, 'slaney', np.inf".format(repr(norm)))
 
     # Initialize the weights
     n_mels = int(n_mels)
