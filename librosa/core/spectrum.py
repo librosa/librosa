@@ -16,7 +16,7 @@ from .fft import get_fftlib
 from .audio import resample
 from .._cache import cache
 from .. import util
-from ..util.exceptions import ParameterErrors
+from ..util.exceptions import ParameterError
 from ..filters import get_window, semitone_filterbank
 from ..filters import window_sumsquare
 
