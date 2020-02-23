@@ -18,22 +18,40 @@ from .._cache import cache
 from .. import util
 from ..util.exceptions import ParameterError
 
-__all__ = ['load', 'stream', 'to_mono', 'resample',
-           'get_duration', 'get_samplerate',
-           'autocorrelate', 'lpc', 'zero_crossings',
-           'clicks', 'tone', 'chirp',
-           'mu_compress', 'mu_expand']
+__all__ = [
+    "load",
+    "stream",
+    "to_mono",
+    "resample",
+    "get_duration",
+    "get_samplerate",
+    "autocorrelate",
+    "lpc",
+    "zero_crossings",
+    "clicks",
+    "tone",
+    "chirp",
+    "mu_compress",
+    "mu_expand",
+]
 
 # Resampling bandwidths as percentage of Nyquist
-BW_BEST = resampy.filters.get_filter('kaiser_best')[2]
-BW_FASTEST = resampy.filters.get_filter('kaiser_fast')[2]
+BW_BEST = resampy.filters.get_filter("kaiser_best")[2]
+BW_FASTEST = resampy.filters.get_filter("kaiser_fast")[2]
 
 
 # -- CORE ROUTINES --#
 # Load should never be cached, since we cannot verify that the contents of
 # 'path' are unchanged across calls.
-def load(path, sr=22050, mono=True, offset=0.0, duration=None,
-         dtype=np.float32, res_type='kaiser_best'):
+def load(
+    path,
+    sr=22050,
+    mono=True,
+    offset=0.0,
+    duration=None,
+    dtype=np.float32,
+    res_type="kaiser_best",
+):
     """Load an audio file as a floating point time series.
 
     Audio will be automatically resampled to the given rate
@@ -140,10 +158,10 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
     except RuntimeError as exc:
         # If soundfile failed, try audioread instead
         if isinstance(path, (str, pathlib.PurePath)):
-            warnings.warn('PySoundFile failed. Trying audioread instead.')
+            warnings.warn("PySoundFile failed. Trying audioread instead.")
             y, sr_native = __audioread_load(path, offset, duration, dtype)
         else:
-            raise(exc)
+            raise (exc)
 
     # Final cleanup for dtype and contiguity
     if mono:
@@ -159,10 +177,10 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
 
 
 def __audioread_load(path, offset, duration, dtype):
-    '''Load an audio buffer using audioread.
+    """Load an audio buffer using audioread.
 
     This loads one block at a time, and then concatenates the results.
-    '''
+    """
 
     y = []
     with audioread.audio_open(path) as input_file:
@@ -174,8 +192,7 @@ def __audioread_load(path, offset, duration, dtype):
         if duration is None:
             s_end = np.inf
         else:
-            s_end = s_start + (int(np.round(sr_native * duration))
-                               * n_channels)
+            s_end = s_start + (int(np.round(sr_native * duration)) * n_channels)
 
         n = 0
 
@@ -195,11 +212,11 @@ def __audioread_load(path, offset, duration, dtype):
 
             if s_end < n:
                 # the end is in this frame.  crop.
-                frame = frame[:s_end - n_prev]
+                frame = frame[: s_end - n_prev]
 
             if n_prev <= s_start <= n:
                 # beginning is in this frame
-                frame = frame[(s_start - n_prev):]
+                frame = frame[(s_start - n_prev) :]
 
             # tack on the current frame
             y.append(frame)
@@ -214,10 +231,18 @@ def __audioread_load(path, offset, duration, dtype):
     return y, sr_native
 
 
-def stream(path, block_length, frame_length, hop_length,
-           mono=True, offset=0.0, duration=None, fill_value=None,
-           dtype=np.float32):
-    '''Stream audio in fixed-length buffers.
+def stream(
+    path,
+    block_length,
+    frame_length,
+    hop_length,
+    mono=True,
+    offset=0.0,
+    duration=None,
+    fill_value=None,
+    dtype=np.float32,
+):
+    """Stream audio in fixed-length buffers.
 
     This is primarily useful for processing large files that won't
     fit entirely in memory at once.
@@ -345,20 +370,20 @@ def stream(path, block_length, frame_length, hop_length,
     ...                                              hop_length=2048,
     ...                                              center=False)
 
-    '''
+    """
 
     if not (np.issubdtype(type(block_length), np.integer) and block_length > 0):
-        raise ParameterError('block_length={} must be a positive integer')
+        raise ParameterError("block_length={} must be a positive integer")
     if not (np.issubdtype(type(frame_length), np.integer) and frame_length > 0):
-        raise ParameterError('frame_length={} must be a positive integer')
+        raise ParameterError("frame_length={} must be a positive integer")
     if not (np.issubdtype(type(hop_length), np.integer) and hop_length > 0):
-        raise ParameterError('hop_length={} must be a positive integer')
+        raise ParameterError("hop_length={} must be a positive integer")
 
     # Get the sample rate from the file info
     sr = sf.info(path).samplerate
 
     # If the input is a file handle, rewind its read position after `sf.info`
-    if hasattr(path, 'seek'):
+    if hasattr(path, "seek"):
         path.seek(0)
 
     # Construct the stream
@@ -372,14 +397,16 @@ def stream(path, block_length, frame_length, hop_length,
     else:
         frames = -1
 
-    blocks = sf.blocks(path,
-                       blocksize=frame_length + (block_length - 1) * hop_length,
-                       overlap=frame_length - hop_length,
-                       fill_value=fill_value,
-                       start=start,
-                       frames=frames,
-                       dtype=dtype,
-                       always_2d=False)
+    blocks = sf.blocks(
+        path,
+        blocksize=frame_length + (block_length - 1) * hop_length,
+        overlap=frame_length - hop_length,
+        fill_value=fill_value,
+        start=start,
+        frames=frames,
+        dtype=dtype,
+        always_2d=False,
+    )
 
     for block in blocks:
         if mono:
@@ -390,7 +417,7 @@ def stream(path, block_length, frame_length, hop_length,
 
 @cache(level=20)
 def to_mono(y):
-    '''Force an audio signal down to mono by averaging samples across channels.
+    """Force an audio signal down to mono by averaging samples across channels.
 
     Parameters
     ----------
@@ -415,7 +442,7 @@ def to_mono(y):
     >>> y_mono.shape
     (1355168,)
 
-    '''
+    """
     # Ensure Fortran contiguity.
     y = np.asfortranarray(y)
 
@@ -429,7 +456,9 @@ def to_mono(y):
 
 
 @cache(level=20)
-def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=False, **kwargs):
+def resample(
+    y, orig_sr, target_sr, res_type="kaiser_best", fix=True, scale=False, **kwargs
+):
     """Resample a time series from orig_sr to target_sr
 
     Parameters
@@ -512,11 +541,13 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
 
     n_samples = int(np.ceil(y.shape[-1] * ratio))
 
-    if res_type in ('scipy', 'fft'):
+    if res_type in ("scipy", "fft"):
         y_hat = scipy.signal.resample(y, n_samples, axis=-1)
-    elif res_type == 'polyphase':
+    elif res_type == "polyphase":
         if int(orig_sr) != orig_sr or int(target_sr) != target_sr:
-            raise ParameterError('polyphase resampling is only supported for integer-valued sampling rates.')
+            raise ParameterError(
+                "polyphase resampling is only supported for integer-valued sampling rates."
+            )
 
         # For polyphase resampling, we need up- and down-sampling ratios
         # We can get those from the greatest common divisor of the rates
@@ -537,8 +568,9 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
     return np.asfortranarray(y_hat, dtype=y.dtype)
 
 
-def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
-                 center=True, filename=None):
+def get_duration(
+    y=None, sr=22050, S=None, n_fft=2048, hop_length=512, center=True, filename=None
+):
     """Compute the duration (in seconds) of an audio time series,
     feature matrix, or filename.
 
@@ -627,7 +659,9 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     if y is None:
         if S is None:
-            raise ParameterError('At least one of (y, sr), S, or filename must be provided')
+            raise ParameterError(
+                "At least one of (y, sr), S, or filename must be provided"
+            )
 
         n_frames = S.shape[1]
         n_samples = n_fft + hop_length * (n_frames - 1)
@@ -651,7 +685,7 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
 
 def get_samplerate(path):
-    '''Get the sampling rate for a given file.
+    """Get the sampling rate for a given file.
 
     Parameters
     ----------
@@ -672,7 +706,7 @@ def get_samplerate(path):
     >>> path = librosa.util.example_audio_file()
     >>> librosa.get_samplerate(path)
     44100
-    '''
+    """
     try:
         return sf.info(path).samplerate
     except RuntimeError:
@@ -840,9 +874,9 @@ def __lpc(y, order):
     # order M-1.  (Corresponding to a_{M,k} and a_{M-1,k} in eqn 5)
 
     dtype = y.dtype.type
-    ar_coeffs = np.zeros(order+1, dtype=dtype)
+    ar_coeffs = np.zeros(order + 1, dtype=dtype)
     ar_coeffs[0] = dtype(1)
-    ar_coeffs_prev = np.zeros(order+1, dtype=dtype)
+    ar_coeffs_prev = np.zeros(order + 1, dtype=dtype)
     ar_coeffs_prev[0] = dtype(1)
 
     # These two arrays hold the forward and backward prediction error. They
@@ -854,16 +888,17 @@ def __lpc(y, order):
     bwd_pred_error = y[:-1]
 
     # DEN_{M} from eqn 16 of Marple.
-    den = np.dot(fwd_pred_error, fwd_pred_error) \
-          + np.dot(bwd_pred_error, bwd_pred_error)
+    den = np.dot(fwd_pred_error, fwd_pred_error) + np.dot(
+        bwd_pred_error, bwd_pred_error
+    )
 
     for i in range(order):
         if den <= 0:
-            raise FloatingPointError('numerical error, input ill-conditioned?')
+            raise FloatingPointError("numerical error, input ill-conditioned?")
 
         # Eqn 15 of Marple, with fwd_pred_error and bwd_pred_error
         # corresponding to f_{M-1,k+1} and b{M-1,k} and the result as a_{M,M}
-        #reflect_coeff = dtype(-2) * np.dot(bwd_pred_error, fwd_pred_error) / dtype(den)
+        # reflect_coeff = dtype(-2) * np.dot(bwd_pred_error, fwd_pred_error) / dtype(den)
         reflect_coeff = dtype(-2) * np.dot(bwd_pred_error, fwd_pred_error) / dtype(den)
 
         # Now we use the reflection coefficient and the AR coefficients from
@@ -898,8 +933,8 @@ def __lpc(y, order):
         # den <- DEN_{M}                   (lhs)
         #
 
-        q = dtype(1) - reflect_coeff**2
-        den = q*den - bwd_pred_error[-1]**2 - fwd_pred_error[0]**2
+        q = dtype(1) - reflect_coeff ** 2
+        den = q * den - bwd_pred_error[-1] ** 2 - fwd_pred_error[0] ** 2
 
         # Shift up forward error.
         #
@@ -915,9 +950,10 @@ def __lpc(y, order):
 
 
 @cache(level=20)
-def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
-                   zero_pos=True, axis=-1):
-    '''Find the zero-crossings of a signal `y`: indices `i` such that
+def zero_crossings(
+    y, threshold=1e-10, ref_magnitude=None, pad=True, zero_pos=True, axis=-1
+):
+    """Find the zero-crossings of a signal `y`: indices `i` such that
     `sign(y[i]) != sign(y[j])`.
 
     If `y` is multi-dimensional, then zero-crossings are computed along
@@ -1000,7 +1036,7 @@ def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
     >>> # Find the indices of zero-crossings
     >>> np.nonzero(z)
     (array([ 0,  3,  5,  8, 10, 12, 15, 17, 19]),)
-    '''
+    """
 
     # Clip within the threshold
     if threshold is None:
@@ -1033,14 +1069,24 @@ def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
     padding = [(0, 0)] * y.ndim
     padding[axis] = (1, 0)
 
-    return np.pad((y_sign[tuple(slice_post)] != y_sign[tuple(slice_pre)]),
-                  padding,
-                  mode='constant',
-                  constant_values=pad)
+    return np.pad(
+        (y_sign[tuple(slice_post)] != y_sign[tuple(slice_pre)]),
+        padding,
+        mode="constant",
+        constant_values=pad,
+    )
 
 
-def clicks(times=None, frames=None, sr=22050, hop_length=512,
-           click_freq=1000.0, click_duration=0.1, click=None, length=None):
+def clicks(
+    times=None,
+    frames=None,
+    sr=22050,
+    hop_length=512,
+    click_freq=1000.0,
+    click_duration=0.1,
+    click=None,
+    length=None,
+):
     """Returns a signal with the signal `click` placed at each specified time
 
     Parameters
@@ -1134,16 +1180,14 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
     else:
         # Create default click signal
         if click_duration <= 0:
-            raise ParameterError('click_duration must be strictly positive')
+            raise ParameterError("click_duration must be strictly positive")
 
         if click_freq <= 0:
-            raise ParameterError('click_freq must be strictly positive')
+            raise ParameterError("click_freq must be strictly positive")
 
         angular_freq = 2 * np.pi * click_freq / float(sr)
 
-        click = np.logspace(0, -10,
-                            num=int(np.round(sr * click_duration)),
-                            base=2.0)
+        click = np.logspace(0, -10, num=int(np.round(sr * click_duration)), base=2.0)
 
         click *= np.sin(angular_freq * np.arange(len(click)))
 
@@ -1152,7 +1196,7 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
         length = positions.max() + click.shape[0]
     else:
         if length < 1:
-            raise ParameterError('length must be a positive integer')
+            raise ParameterError("length must be a positive integer")
 
         # Filter out any positions past the length boundary
         positions = positions[positions < length]
@@ -1166,7 +1210,7 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
         end = start + click.shape[0]
 
         if end >= length:
-            click_signal[start:] += click[:length - start]
+            click_signal[start:] += click[: length - start]
         else:
             # Normally, just add a click here
             click_signal[start:end] += click
@@ -1334,7 +1378,7 @@ def chirp(fmin, fmax, sr=22050, length=None, duration=None, linear=False, phi=No
     if phi is None:
         phi = -np.pi * 0.5
 
-    method = 'linear' if linear else 'logarithmic'
+    method = "linear" if linear else "logarithmic"
     return scipy.signal.chirp(
         np.arange(duration, step=period),
         fmin,
@@ -1346,7 +1390,7 @@ def chirp(fmin, fmax, sr=22050, length=None, duration=None, linear=False, phi=No
 
 
 def mu_compress(x, mu=255, quantize=True):
-    '''mu-law compression
+    """mu-law compression
 
     Given an input signal `-1 <= x <= 1`, the mu-law compression
     is calculated by
@@ -1414,28 +1458,34 @@ def mu_compress(x, mu=255, quantize=True):
     >>> y
     array([-8, -7, -7, -6, -6, -5, -4, -2,  2,  4,  5,  6,  6,  7,  7,  7])
 
-    '''
+    """
 
     if mu <= 0:
-        raise ParameterError('mu-law compression parameter mu={} '
-                             'must be strictly positive.'.format(mu))
+        raise ParameterError(
+            "mu-law compression parameter mu={} "
+            "must be strictly positive.".format(mu)
+        )
 
     if np.any(x < -1) or np.any(x > 1):
-        raise ParameterError('mu-law input x={} must be in the '
-                             'range [-1, +1].'.format(x))
+        raise ParameterError(
+            "mu-law input x={} must be in the " "range [-1, +1].".format(x)
+        )
 
     x_comp = np.sign(x) * np.log1p(mu * np.abs(x)) / np.log1p(mu)
 
     if quantize:
-        return np.digitize(x_comp,
-                           np.linspace(-1, 1, num=int(1+mu), endpoint=True),
-                           right=True) - int(mu + 1)//2
+        return (
+            np.digitize(
+                x_comp, np.linspace(-1, 1, num=int(1 + mu), endpoint=True), right=True
+            )
+            - int(mu + 1) // 2
+        )
 
     return x_comp
 
 
 def mu_expand(x, mu=255.0, quantize=True):
-    '''mu-law expansion
+    """mu-law expansion
 
     This function is the inverse of `mu_compress`. Given a mu-law compressed
     signal `-1 <= x <= 1`, the mu-law expansion is calculated by
@@ -1506,16 +1556,19 @@ def mu_expand(x, mu=255.0, quantize=True):
            -0.32155973, -0.19817918, -0.06450245,  0.06450245,  0.19817918,
             0.32155973,  0.4563785 ,  0.59301377,  0.70595818,  0.84027248,
             0.95743702])
-    '''
+    """
     if mu <= 0:
-        raise ParameterError('Inverse mu-law compression parameter '
-                             'mu={} must be strictly positive.'.format(mu))
+        raise ParameterError(
+            "Inverse mu-law compression parameter "
+            "mu={} must be strictly positive.".format(mu)
+        )
 
     if quantize:
         x = x * 2.0 / (1 + mu)
 
     if np.any(x < -1) or np.any(x > 1):
-        raise ParameterError('Inverse mu-law input x={} must be '
-                             'in the range [-1, +1].'.format(x))
+        raise ParameterError(
+            "Inverse mu-law input x={} must be " "in the range [-1, +1].".format(x)
+        )
 
     return np.sign(x) / mu * (np.power(1 + mu, np.abs(x)) - 1)
