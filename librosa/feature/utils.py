@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """Feature manipulation utilities"""
 
-from warnings import warn
 import numpy as np
 import scipy.signal
 

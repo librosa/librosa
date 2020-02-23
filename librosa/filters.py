@@ -49,7 +49,6 @@ from .util.exceptions import ParameterError
 
 from .core.time_frequency import note_to_hz, hz_to_midi, midi_to_hz, hz_to_octs
 from .core.time_frequency import fft_frequencies, mel_frequencies
-from .util.deprecation import Deprecated
 
 __all__ = ['mel',
            'chroma',

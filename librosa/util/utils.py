@@ -11,7 +11,6 @@ from numpy.lib.stride_tricks import as_strided
 
 from .._cache import cache
 from .exceptions import ParameterError
-from .decorators import deprecated
 
 # Constrain STFT block sizes to 256 KB
 MAX_MEM_BLOCK = 2**8 * 2**10
