@@ -648,8 +648,6 @@ def lag_to_recurrence(lag, axis=-1):
     # Since lag must be 2-dimensional, abs(axis) = axis
     t = lag.shape[axis]
 
-    sparse = scipy.sparse.issparse(lag)
-
     rec = util.shear(lag, factor=+1, axis=axis)
 
     sub_slice = [slice(None)] * rec.ndim
