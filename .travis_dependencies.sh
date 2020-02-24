@@ -30,6 +30,7 @@ if [ ! -d "$src" ]; then
         fi
         if [ "$TRAVIS_OS_NAME" = "linux" ]; then
             wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+            brew install libsamplerate
         fi
         # Install both environments
         bash miniconda.sh -b -p $src
