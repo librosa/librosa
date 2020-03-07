@@ -969,16 +969,16 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
         input signal to peak picks from
 
     pre_max   : int >= 0 [scalar]
-        number of samples before `n` over which max is computed
+        number of samples before the current over which max will be computed
 
     post_max  : int >= 1 [scalar]
-        number of samples after `n` over which max is computed
+        number of samples after the current over which max will be computed
 
     pre_avg   : int >= 0 [scalar]
-        number of samples before `n` over which mean is computed
+        number of samples before the current over which mean will be computed
 
     post_avg  : int >= 1 [scalar]
-        number of samples after `n` over which mean is computed
+        number of samples after the current over which mean will be computed
 
     delta     : float >= 0 [scalar]
         threshold offset for mean
