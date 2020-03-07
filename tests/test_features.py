@@ -69,9 +69,9 @@ def test_delta_badwidthaxis(x, width, axis):
     librosa.feature.delta(x, width=width, axis=axis)
 
 
-@pytest.mark.parametrize("data", [np.random.randn(5), np.random.randn(5, 5)])
+@pytest.mark.parametrize("data", [np.random.randn(5), np.random.randn(5, 5), np.remainder(np.arange(10000), 24)])
 @pytest.mark.parametrize("delay", [-4, -2, -1, 1, 2, 4])
-@pytest.mark.parametrize("n_steps", [1, 2, 3])
+@pytest.mark.parametrize("n_steps", [1, 2, 3, 300])
 def test_stack_memory(data, n_steps, delay):
 
     data_stack = librosa.feature.stack_memory(data, n_steps=n_steps, delay=delay)
@@ -90,9 +90,11 @@ def test_stack_memory(data, n_steps, delay):
     for i in range(d):
         for step in range(1, n_steps):
             if delay > 0:
-                assert np.allclose(data[i, : -step * delay], data_stack[step * d + i, step * delay :])
+                assert np.allclose(data[i, : -step * delay], data_stack[step * d + i, step * delay:])
             else:
-                assert np.allclose(data[i, -step * delay :], data_stack[step * d + i, : step * delay])
+                assert np.allclose(data[i, -step * delay:], data_stack[step * d + i, : step * delay])
+    assert np.max(data) + 1e-7 >= np.max(data_stack)
+    assert np.min(data) - 1e-7 <= np.min(data_stack)
 
 
 @pytest.mark.parametrize("n_steps,delay", [(0, 1), (-1, 1), (1, 0)])
@@ -299,8 +301,10 @@ def test_rms(y_ex, y2, frame_length, hop_length, center):
     assert y2.size % frame_length == 0
 
     # STFT magnitudes with a constant windowing function and no centering.
-    S1 = librosa.magphase(librosa.stft(y1, n_fft=frame_length, hop_length=hop_length, window=np.ones, center=center))[0]
-    S2 = librosa.magphase(librosa.stft(y2, n_fft=frame_length, hop_length=hop_length, window=np.ones, center=center))[0]
+    S1 = librosa.magphase(librosa.stft(y1, n_fft=frame_length,
+                                       hop_length=hop_length, window=np.ones, center=center))[0]
+    S2 = librosa.magphase(librosa.stft(y2, n_fft=frame_length,
+                                       hop_length=hop_length, window=np.ones, center=center))[0]
 
     # Try both RMS methods.
     rms1 = librosa.feature.rms(S=S1, frame_length=frame_length, hop_length=hop_length)
@@ -347,7 +351,7 @@ def test_zcr_synthetic(y_zcr, frame_length, hop_length, center):
 
     # We don't care too much about the edges if there's padding
     if center:
-        zcr = zcr[:, frame_length // 2 : -frame_length // 2]
+        zcr = zcr[:, frame_length // 2: -frame_length // 2]
 
     # We'll allow 1% relative error
     assert np.allclose(zcr, rate, rtol=1e-2)
