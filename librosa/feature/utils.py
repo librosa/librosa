@@ -238,11 +238,7 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
 
     data = np.pad(data, [(0, 0), padding], **kwargs)
 
-    history = data
-
-    # TODO: this could be more efficient
-    for i in range(1, n_steps):
-        history = np.vstack([np.roll(data, -i * delay, axis=1), history])
+    history = np.vstack([np.roll(data, -i * delay, axis=1) for i in range(n_steps)[::-1]])
 
     # Trim to original width
     if delay > 0:
