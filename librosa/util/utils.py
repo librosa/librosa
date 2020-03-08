@@ -945,14 +945,14 @@ def localmax(x, axis=0):
 def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     '''Uses a flexible heuristic to pick peaks in a signal.
 
-    A sample n is selected as an peak if the corresponding x[n]
+    A sample i is selected as an peak if the corresponding x[i]
     fulfills the following three conditions:
 
-    1. `x[n] == max(x[n - pre_max:n + post_max])`
-    2. `x[n] >= mean(x[n - pre_avg:n + post_avg]) + delta`
-    3. `n - previous_n > wait`
+    1. `x[i] == max(x[i - pre_max:i + post_max])`
+    2. `x[i] >= mean(x[i - pre_avg:i + post_avg]) + delta`
+    3. `i - previous_i > wait`
 
-    where `previous_n` is the last sample picked as a peak (greedily).
+    where `previous_i` is the last sample picked as a peak (greedily).
 
     This implementation is based on [1]_ and [2]_.
 
@@ -969,16 +969,16 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
         input signal to peak picks from
 
     pre_max   : int >= 0 [scalar]
-        number of samples before the current over which max will be computed
+        number of samples before `i` over which max will be computed
 
     post_max  : int >= 1 [scalar]
-        number of samples after the current over which max will be computed
+        number of samples after `i` over which max will be computed
 
     pre_avg   : int >= 0 [scalar]
-        number of samples before the current over which mean will be computed
+        number of samples before `i` over which mean will be computed
 
     post_avg  : int >= 1 [scalar]
-        number of samples after the current over which mean will be computed
+        number of samples after `i` over which mean will be computed
 
     delta     : float >= 0 [scalar]
         threshold offset for mean
