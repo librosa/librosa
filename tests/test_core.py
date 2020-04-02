@@ -214,6 +214,7 @@ def test_stft(infile):
 
 
 def test_stft_winsizes():
+    # Test for issue #1095
     x = np.empty(1000000)
 
     for power in range(12, 17):
