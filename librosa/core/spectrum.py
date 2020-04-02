@@ -227,8 +227,8 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
     fft = get_fftlib()
 
     # how many columns can we fit within MAX_MEM_BLOCK?
-    n_columns = int(util.MAX_MEM_BLOCK / (stft_matrix.shape[0] *
-                                          stft_matrix.itemsize))
+    n_columns = util.MAX_MEM_BLOCK // (stft_matrix.shape[0] *
+                                       stft_matrix.itemsize)
     n_columns = max(n_columns, 1)
 
     for bl_s in range(0, stft_matrix.shape[1], n_columns):
