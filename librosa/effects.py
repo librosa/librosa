@@ -306,17 +306,34 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type='kaiser_best',
     ...                                          bins_per_octave=24)
     '''
 
+    # Allocate new space for the shifted audio
+    y_shift = y.copy()
+
     if bins_per_octave < 1 or not np.issubdtype(type(bins_per_octave), np.integer):
         raise ParameterError('bins_per_octave must be a positive integer.')
 
     rate = 2.0 ** (-float(n_steps) / bins_per_octave)
 
-    # Stretch in time, then resample
-    y_shift = core.resample(time_stretch(y, rate, **kwargs), float(sr)/rate, sr,
-                            res_type=res_type)
+    # Determine the number of channels present in the audio
+    num_channels = y.shape[0] if len(y.shape) > 1 else 1
 
-    # Crop to the same dimension as the input
-    return util.fix_length(y_shift, len(y))
+    for i in range(0, num_channels):
+        # Pull out the i'th channel
+        channel = np.asfortranarray(y_shift[i])
+
+        # Stretch the audio in time, transforming the pitch
+        channel = time_stretch(channel, rate, **kwargs) 
+
+        # Resample the stretched audio to the original sample rate
+        channel = core.resample(channel, float(sr)/rate, sr, res_type=res_type)
+
+        # Crop/pad the resampled audio to its original length, as needed
+        channel = util.fix_length(channel, len(y_shift[i]))
+
+        # Save the pitch-shifted channel back to the output buffer
+        y_shift[i] = channel
+
+    return y_shift
 
 
 def remix(y, intervals, align_zeros=True):
