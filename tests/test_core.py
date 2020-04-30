@@ -213,6 +213,16 @@ def test_stft(infile):
     assert np.allclose(D, DATA["D"].conj())
 
 
+def test_stft_winsizes():
+    # Test for issue #1095
+    x = np.empty(1000000)
+
+    for power in range(12, 17):
+        N = 2 ** power
+        H = N // 2
+        librosa.stft(x, n_fft=N, hop_length=H, win_length=N)
+
+
 # results for FFT bins containing multiple components will be unstable, as when
 # using higher sampling rates or shorter windows with this test signal
 @pytest.mark.parametrize("center", [False, True])

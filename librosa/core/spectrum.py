@@ -227,8 +227,9 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
     fft = get_fftlib()
 
     # how many columns can we fit within MAX_MEM_BLOCK?
-    n_columns = int(util.MAX_MEM_BLOCK / (stft_matrix.shape[0] *
-                                          stft_matrix.itemsize))
+    n_columns = util.MAX_MEM_BLOCK // (stft_matrix.shape[0] *
+                                       stft_matrix.itemsize)
+    n_columns = max(n_columns, 1)
 
     for bl_s in range(0, stft_matrix.shape[1], n_columns):
         bl_t = min(bl_s + n_columns, stft_matrix.shape[1])
@@ -354,8 +355,9 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
     expected_signal_len = n_fft + hop_length * (n_frames - 1)
     y = np.zeros(expected_signal_len, dtype=dtype)
 
-    n_columns = int(util.MAX_MEM_BLOCK // (stft_matrix.shape[0] *
-                                           stft_matrix.itemsize))
+    n_columns = util.MAX_MEM_BLOCK // (stft_matrix.shape[0] *
+                                       stft_matrix.itemsize)
+    n_columns = max(n_columns, 1)
 
     fft = get_fftlib()
 
