@@ -26,10 +26,12 @@ if [ ! -d "$src" ]; then
         if [ "$TRAVIS_OS_NAME" = "osx" ]; then
             wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh;
             # Platform-specific dependencies
+            brew update
             brew install libsamplerate
         fi
         if [ "$TRAVIS_OS_NAME" = "linux" ]; then
             wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+            sudo apt update
             sudo apt install libsamplerate0
         fi
         # Install both environments
