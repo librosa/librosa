@@ -5,7 +5,11 @@
 
 import warnings
 from decorator import decorator
-from numba.decorators import jit as optional_jit
+import numba
+if (numba.__version__ < '0.49.0'):
+    from numba.decorators import jit as optional_jit
+else:
+    from numba.core.decorators import jit as optional_jit
 
 __all__ = ['moved', 'deprecated', 'optional_jit']
 
