@@ -455,10 +455,10 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
 
             To use `scipy.signal.resample_poly`, set `res_type='polyphase'`.
 
-            To use `samplerate.resample`, use the following:
-                - `linear`: linear interpolation
-                - `zero_order_hold`: zero-order hold sampling
-                - `sinc_best`, `sinc_medium`, `sinc_fastest`: for high, medium, and low-quality sinc interpolation
+            To use `samplerate.resample`, set any of the following:
+                - `res_type='linear'`: linear interpolation
+                - `res_type='zero_order_hold'`: zero-order hold sampling
+                - `res_type='sinc_best'`, `'sinc_medium'`, or `'sinc_fastest'`: for high, medium, and low-quality sinc interpolation
 
         .. note::
             When using `res_type='polyphase'`, only integer sampling rates are
