@@ -11,10 +11,10 @@ jobs:
     include:
         - python: 3.6
           os: linux
-          dist: xenial
+          dist: bionic
         - python: 3.7
           os: linux
-          dist: xenial
+          dist: bionic
         - os: osx
           language: generic
           osx_image: xcode11

@@ -21,7 +21,6 @@ install:
   - conda info -a
   - conda install -c conda-forge ffmpeg
   - pip install -e .[tests]
-  - conda install freetype==2.9
 
 test_script:
   - pytest

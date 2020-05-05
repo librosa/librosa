@@ -105,7 +105,21 @@ def resample_mono(resample_audio):
 
 
 @pytest.mark.parametrize("sr_out", [8000, 22050])
-@pytest.mark.parametrize("res_type", ["kaiser_best", "kaiser_fast", "scipy", "fft", "polyphase"])
+@pytest.mark.parametrize(
+    "res_type",
+    [
+        "kaiser_best",
+        "kaiser_fast",
+        "scipy",
+        "fft",
+        "polyphase",
+        "linear",
+        "sinc_best",
+        "sinc_fastest",
+        "sinc_medium",
+        "zero_order_hold",
+    ],
+)
 @pytest.mark.parametrize("fix", [False, True])
 def test_resample_mono(resample_mono, sr_out, res_type, fix):
 
@@ -131,7 +145,21 @@ def test_resample_mono(resample_mono, sr_out, res_type, fix):
 
 
 @pytest.mark.parametrize("sr_out", [8000, 22050])
-@pytest.mark.parametrize("res_type", ["kaiser_best", "kaiser_fast", "scipy", "fft", "polyphase"])
+@pytest.mark.parametrize(
+    "res_type",
+    [
+        "kaiser_best",
+        "kaiser_fast",
+        "scipy",
+        "fft",
+        "polyphase",
+        "linear",
+        "sinc_best",
+        "sinc_fastest",
+        "sinc_medium",
+        "zero_order_hold",
+    ],
+)
 @pytest.mark.parametrize("fix", [False, True])
 def test_resample_stereo(resample_audio, sr_out, res_type, fix):
 
@@ -157,7 +185,9 @@ def test_resample_stereo(resample_audio, sr_out, res_type, fix):
     assert np.abs(y2.shape[-1] - target_length) <= 1
 
 
-@pytest.mark.parametrize("res_type", ["fft", "kaiser_best", "kaiser_fast", "polyphase"])
+@pytest.mark.parametrize(
+    "res_type", ["fft", "kaiser_best", "kaiser_fast", "polyphase", "sinc_best", "sinc_fastest", "sinc_medium"]
+)
 @pytest.mark.parametrize("sr_out", [11025, 22050, 44100])
 def test_resample_scale(resample_mono, res_type, sr_out):
 
