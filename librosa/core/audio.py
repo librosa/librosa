@@ -432,6 +432,10 @@ def to_mono(y):
 def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=False, **kwargs):
     """Resample a time series from orig_sr to target_sr
 
+    By default, this uses a high-quality (but relatively slow) method ('kaiser_best')
+    for band-limited sinc interpolation.  The alternate `res_type` values listed below
+    offer different trade-offs of speed and quality.
+
     Parameters
     ----------
     y : np.ndarray [shape=(n,) or shape=(2, n)]
@@ -451,14 +455,15 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
 
             To use a faster method, set `res_type='kaiser_fast'`.
 
-            To use `scipy.signal.resample`, set `res_type='fft'` or `res_type='scipy'`.
+            To use `scipy.signal.resample`, set `res_type='fft'` or `res_type='scipy'`. (slow)
 
-            To use `scipy.signal.resample_poly`, set `res_type='polyphase'`.
+            To use `scipy.signal.resample_poly`, set `res_type='polyphase'`. (fast)
 
             To use `samplerate.resample`, set any of the following:
-                - `res_type='linear'`: linear interpolation
-                - `res_type='zero_order_hold'`: zero-order hold sampling
-                - `res_type='sinc_best'`, `'sinc_medium'`, or `'sinc_fastest'`: for high, medium, and low-quality sinc interpolation
+                - `res_type='linear'`: linear interpolation (fast)
+                - `res_type='zero_order_hold'`: repeat the last value between samples (very fast)
+                - `res_type='sinc_best'`, `'sinc_medium'`, or `'sinc_fastest'`: for high-, medium-,
+                    and low-quality sinc interpolation
 
         .. note::
             When using `res_type='polyphase'`, only integer sampling rates are
