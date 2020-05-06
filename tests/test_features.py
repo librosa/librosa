@@ -69,7 +69,7 @@ def test_delta_badwidthaxis(x, width, axis):
     librosa.feature.delta(x, width=width, axis=axis)
 
 
-@pytest.mark.parametrize("data", [np.random.randn(5), np.random.randn(5, 5), np.remainder(np.arange(10000), 24)])
+@pytest.mark.parametrize("data", [np.arange(5.), np.arange(5, 5), np.remainder(np.arange(10000), 24)])
 @pytest.mark.parametrize("delay", [-4, -2, -1, 1, 2, 4])
 @pytest.mark.parametrize("n_steps", [1, 2, 3, 300])
 def test_stack_memory(data, n_steps, delay):
@@ -102,6 +102,11 @@ def test_stack_memory(data, n_steps, delay):
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_stack_memory_fail(data, n_steps, delay):
     librosa.feature.stack_memory(data, n_steps=n_steps, delay=delay)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_stack_memory_ndim_toobig():
+    librosa.feature.stack_memory(np.zeros((2,2,2)), n_steps=3, delay=1)
 
 
 @pytest.fixture(scope="module")
