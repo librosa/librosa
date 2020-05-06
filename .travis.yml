@@ -22,6 +22,20 @@ jobs:
           language: generic
           osx_image: xcode11
 
+addons:
+    apt:
+        packages:
+        - libsamplerate0
+
+    brew:
+        packages:
+        - libsamplerate
+
+cache:
+    apt: True
+    brew: True
+
+
 before_install:
     - bash .travis_dependencies.sh
     - export PATH="$HOME/env/miniconda-$TRAVIS_OS_NAME$TRAVIS_PYTHON_VERSION/bin:$PATH";
