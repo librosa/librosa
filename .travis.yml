@@ -27,7 +27,7 @@ addons:
         packages:
         - libsamplerate0
 
-    brew:
+    homebrew:
         packages:
         - libsamplerate
 
