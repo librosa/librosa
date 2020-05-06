@@ -221,7 +221,7 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
         raise ParameterError('n_steps must be a positive integer')
 
     if data.ndim > 2:
-        raise ParameterError('Input must be 2-dimensional. '
+        raise ParameterError('Input must be at most 2-dimensional. '
                              'Given data.shape={}'.format(data.shape))
 
     if delay == 0:
@@ -229,6 +229,10 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
 
     data = np.atleast_2d(data)
     t = data.shape[-1]
+    
+    if t < 1:
+        raise ParameterError('Cannot stack memory when input data has '
+                             'no columns. Given data.shape={}'.format(data.shape))
     kwargs.setdefault('mode', 'constant')
 
     if kwargs['mode'] == 'constant':
