@@ -1,4 +1,6 @@
 cache:
+  apt: True
+  homebrew: True
   directories:
   - $HOME/env
 
@@ -30,11 +32,6 @@ addons:
     homebrew:
         packages:
         - libsamplerate
-
-cache:
-    apt: True
-    brew: True
-
 
 before_install:
     - bash .travis_dependencies.sh
