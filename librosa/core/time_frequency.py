@@ -17,6 +17,8 @@ __all__ = ['frames_to_samples', 'frames_to_time',
            'hz_to_mel', 'hz_to_octs',
            'mel_to_hz',
            'octs_to_hz',
+           'A4_to_tuning',
+           'tuning_to_A4',
            'fft_frequencies',
            'cqt_frequencies',
            'mel_frequencies',
@@ -307,7 +309,7 @@ def blocks_to_frames(blocks, block_length):
 
     >>> filename = librosa.util.example_audio_file()
     >>> sr = librosa.get_samplerate(filename)
-    >>> stream = librosa.stream(filename, block_length=16, 
+    >>> stream = librosa.stream(filename, block_length=16,
     ...                         frame_length=2048, hop_length=512)
     >>> for n, y in enumerate(stream):
     ...     n_frame = librosa.blocks_to_frames(n, block_length=16)
@@ -350,7 +352,7 @@ def blocks_to_samples(blocks, block_length, hop_length):
 
     >>> filename = librosa.util.example_audio_file()
     >>> sr = librosa.get_samplerate(filename)
-    >>> stream = librosa.stream(filename, block_length=16, 
+    >>> stream = librosa.stream(filename, block_length=16,
     ...                         frame_length=2048, hop_length=512)
     >>> for n, y in enumerate(stream):
     ...     n_sample = librosa.blocks_to_samples(n, block_length=16,
@@ -381,10 +383,10 @@ def blocks_to_time(blocks, block_length, hop_length, sr):
     Returns
     -------
     times : np.ndarray [shape=samples.shape]
-        The time index or indices (in seconds) corresponding to the 
+        The time index or indices (in seconds) corresponding to the
         beginning of each provided block.
 
-        Note that these correspond to the time of the *first* sample 
+        Note that these correspond to the time of the *first* sample
         in each block, and are not frame-centered.
 
     See Also
@@ -398,7 +400,7 @@ def blocks_to_time(blocks, block_length, hop_length, sr):
 
     >>> filename = librosa.util.example_audio_file()
     >>> sr = librosa.get_samplerate(filename)
-    >>> stream = librosa.stream(filename, block_length=16, 
+    >>> stream = librosa.stream(filename, block_length=16,
     ...                         frame_length=2048, hop_length=512)
     >>> for n, y in enumerate(stream):
     ...     n_time = librosa.blocks_to_time(n, block_length=16,
@@ -898,6 +900,70 @@ def octs_to_hz(octs, tuning=0.0, bins_per_octave=12):
     A440 = 440.0 * 2.0**(tuning / bins_per_octave)
 
     return (float(A440) / 16)*(2.0**np.asanyarray(octs))
+
+
+def A4_to_tuning(A, bins_per_octave=12):
+    """Convert reference frequencies to cents (bin fractions).
+
+    Examples
+    --------
+    >>> librosa.A4_to_tuning()
+    0.
+    >>> librosa.A4_to_tuning(432.0)
+    -0.318
+    >>> librosa.A4_to_tuning([440.0, 444.0], 24)
+    array([   0.,   0.313   ])
+
+    Parameters
+    ----------
+    A: float or np.ndarray [shape=(n,), dtype=float]
+        Reference frequency(s) corresponding to A4.
+
+    bins_per_octave : int > 0
+        Number of bins per octave.
+
+    Returns
+    -------
+    tuning   : float or np.ndarray [shape=(n,), dtype=float]
+        Tuning deviation from A440 in (fractional) bins per octave.
+
+    See Also
+    --------
+    tuning_to_A4
+    """
+    return bins_per_octave * (np.log2(np.asanyarray(A)) - np.log2(440.0))
+
+
+def tuning_to_A4(tuning, bins_per_octave=12):
+    """Convert cents (bin fractions) to reference frequencies.
+
+    Examples
+    --------
+    >>> librosa.tuning_to_A4()
+    440.
+    >>> librosa.tuning_to_A4(-0.318)
+    431.992
+    >>> librosa.tuning_to_A4([0.1, 0.2, -0.1], 36)
+    array([   440.848,    441.698   439.154])
+
+    Parameters
+    ----------
+    tuning : float or np.ndarray [shape=(n,), dtype=float]
+        Tuning deviation from A440 in (fractional) bins per octave.
+
+    bins_per_octave : int > 0
+        Number of bins per octave.
+
+    Returns
+    -------
+    A  : float or np.ndarray [shape=(n,), dtype=float]
+        Reference frequency corresponding to A4.
+
+    See Also
+    --------
+    A4_to_tuning
+    """
+    return 440.0 * 2.0**(np.asanyarray(tuning) / bins_per_octave)
 
 
 def fft_frequencies(sr=22050, n_fft=2048):
