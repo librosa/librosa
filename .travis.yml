@@ -1,6 +1,8 @@
 cache:
+  apt: True
   directories:
   - $HOME/env
+  - $HOME/Library/Caches/Homebrew
 
 language: python
 
@@ -22,12 +24,24 @@ jobs:
           language: generic
           osx_image: xcode11
 
+addons:
+    apt:
+        packages:
+        - libsamplerate0
+
+    homebrew:
+        packages:
+        - libsamplerate
+
 before_install:
     - bash .travis_dependencies.sh
     - export PATH="$HOME/env/miniconda-$TRAVIS_OS_NAME$TRAVIS_PYTHON_VERSION/bin:$PATH";
     - hash -r
     - source activate test-environment
     - conda list
+
+before_cache:
+    - brew cleanup
 
 install:
     # install your own package into the environment
