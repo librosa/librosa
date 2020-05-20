@@ -32,7 +32,7 @@ __all__ = ['MAX_MEM_BLOCK',
            'cyclic_gradient']
 
 
-def frame(x, frame_length=2048, hop_length=512, axis=-1):
+def frame(x, frame_length, hop_length, axis=-1):
     '''Slice a data array into (overlapping) frames.
 
     This implementation uses low-level stride manipulation to avoid
