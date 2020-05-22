@@ -113,7 +113,7 @@ def test_hz_to_octs(tuning, bins_per_octave):
 
 
 @pytest.mark.parametrize(
-    "A,bins_per_octave,tuning",
+    "A4,bins_per_octave,tuning",
     [
         (440.0, 12, 0.0),
         ([440.0, 444.0], 24, [0.0, 0.31335]),
@@ -121,8 +121,8 @@ def test_hz_to_octs(tuning, bins_per_octave):
         (432.0, 36, -0.953)
     ],
 )
-def test_A4_to_tuning(A, bins_per_octave, tuning):
-    tuning_out = librosa.A4_to_tuning(A=A, bins_per_octave=bins_per_octave)
+def test_A4_to_tuning(A4, bins_per_octave, tuning):
+    tuning_out = librosa.A4_to_tuning(A4=A4, bins_per_octave=bins_per_octave)
     assert np.allclose(np.asarray(tuning), tuning_out)
 
 
