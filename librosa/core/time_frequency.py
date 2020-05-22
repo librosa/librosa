@@ -902,21 +902,36 @@ def octs_to_hz(octs, tuning=0.0, bins_per_octave=12):
     return (float(A440) / 16)*(2.0**np.asanyarray(octs))
 
 
-def A4_to_tuning(A, bins_per_octave=12):
-    """Convert reference frequencies to cents (bin fractions).
+def A4_to_tuning(A4, bins_per_octave=12):
+    """Convert a reference pitch frequency (e.g., `A4=435`) to a tuning
+    estimation, in fractions of a bin per octave.
+
+    This is useful for determining the tuning deviation relative to
+    A440 of a given frequency, assuming equal temperament. By default,
+    12 bins per octave are used.
+
+    This method is the inverse of  `tuning_to_A4`.
 
     Examples
     --------
-    >>> librosa.A4_to_tuning()
+    The base case of this method in which A440 yields 0 tuning offset
+    from itself.
+    >>> librosa.A4_to_tuning(440.0)
     0.
+
+    Convert a non-A440 frequency to a tuning offset relative
+    to A440 using the default of 12 bins per octave.
     >>> librosa.A4_to_tuning(432.0)
     -0.318
-    >>> librosa.A4_to_tuning([440.0, 444.0], 24)
+
+    Convert two reference pitch frequencies to corresponding
+    tuning estimations at once, but using 24 bins per octave.
+    >>> librosa.A4_to_tuning([440.0, 444.0], bins_per_octave=24)
     array([   0.,   0.313   ])
 
     Parameters
     ----------
-    A: float or np.ndarray [shape=(n,), dtype=float]
+    A4: float or np.ndarray [shape=(n,), dtype=float]
         Reference frequency(s) corresponding to A4.
 
     bins_per_octave : int > 0
@@ -931,32 +946,48 @@ def A4_to_tuning(A, bins_per_octave=12):
     --------
     tuning_to_A4
     """
-    return bins_per_octave * (np.log2(np.asanyarray(A)) - np.log2(440.0))
+    return bins_per_octave * (np.log2(np.asanyarray(A4)) - np.log2(440.0))
 
 
 def tuning_to_A4(tuning, bins_per_octave=12):
-    """Convert cents (bin fractions) to reference frequencies.
+    """Convert a tuning deviation (from 0) in fractions of a bin per
+    octave (e.g., `tuning=-0.1`) to a reference pitch frequency
+    relative to A440.
+
+    This is useful if you are working in a non-A440 tuning system
+    to determine the reference pitch frequency given a tuning
+    offset and assuming equal temperament. By default, 12 bins per
+    octave are used.
+
+    This method is the inverse of  `A4_to_tuning`.
 
     Examples
     --------
-    >>> librosa.tuning_to_A4()
+    The base case of this method in which a tuning deviation of 0
+    gets us to our A440 reference pitch.
+    >>> librosa.tuning_to_A4(0.0)
     440.
+
+    Convert a nonzero tuning offset to its reference pitch frequency.
     >>> librosa.tuning_to_A4(-0.318)
     431.992
-    >>> librosa.tuning_to_A4([0.1, 0.2, -0.1], 36)
+
+    Convert 3 tuning deviations at once to respective reference
+    pitch frequencies, using 36 bins per octave.
+    >>> librosa.tuning_to_A4([0.1, 0.2, -0.1], bins_per_octave=36)
     array([   440.848,    441.698   439.154])
 
     Parameters
     ----------
     tuning : float or np.ndarray [shape=(n,), dtype=float]
-        Tuning deviation from A440 in (fractional) bins per octave.
+        Tuning deviation from A440 in fractional bins per octave.
 
     bins_per_octave : int > 0
         Number of bins per octave.
 
     Returns
     -------
-    A  : float or np.ndarray [shape=(n,), dtype=float]
+    A4  : float or np.ndarray [shape=(n,), dtype=float]
         Reference frequency corresponding to A4.
 
     See Also
