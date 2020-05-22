@@ -17,6 +17,8 @@ __all__ = ['frames_to_samples', 'frames_to_time',
            'hz_to_mel', 'hz_to_octs',
            'mel_to_hz',
            'octs_to_hz',
+           'A4_to_tuning',
+           'tuning_to_A4',
            'fft_frequencies',
            'cqt_frequencies',
            'mel_frequencies',
@@ -307,7 +309,7 @@ def blocks_to_frames(blocks, block_length):
 
     >>> filename = librosa.util.example_audio_file()
     >>> sr = librosa.get_samplerate(filename)
-    >>> stream = librosa.stream(filename, block_length=16, 
+    >>> stream = librosa.stream(filename, block_length=16,
     ...                         frame_length=2048, hop_length=512)
     >>> for n, y in enumerate(stream):
     ...     n_frame = librosa.blocks_to_frames(n, block_length=16)
@@ -350,7 +352,7 @@ def blocks_to_samples(blocks, block_length, hop_length):
 
     >>> filename = librosa.util.example_audio_file()
     >>> sr = librosa.get_samplerate(filename)
-    >>> stream = librosa.stream(filename, block_length=16, 
+    >>> stream = librosa.stream(filename, block_length=16,
     ...                         frame_length=2048, hop_length=512)
     >>> for n, y in enumerate(stream):
     ...     n_sample = librosa.blocks_to_samples(n, block_length=16,
@@ -381,10 +383,10 @@ def blocks_to_time(blocks, block_length, hop_length, sr):
     Returns
     -------
     times : np.ndarray [shape=samples.shape]
-        The time index or indices (in seconds) corresponding to the 
+        The time index or indices (in seconds) corresponding to the
         beginning of each provided block.
 
-        Note that these correspond to the time of the *first* sample 
+        Note that these correspond to the time of the *first* sample
         in each block, and are not frame-centered.
 
     See Also
@@ -398,7 +400,7 @@ def blocks_to_time(blocks, block_length, hop_length, sr):
 
     >>> filename = librosa.util.example_audio_file()
     >>> sr = librosa.get_samplerate(filename)
-    >>> stream = librosa.stream(filename, block_length=16, 
+    >>> stream = librosa.stream(filename, block_length=16,
     ...                         frame_length=2048, hop_length=512)
     >>> for n, y in enumerate(stream):
     ...     n_time = librosa.blocks_to_time(n, block_length=16,
@@ -898,6 +900,101 @@ def octs_to_hz(octs, tuning=0.0, bins_per_octave=12):
     A440 = 440.0 * 2.0**(tuning / bins_per_octave)
 
     return (float(A440) / 16)*(2.0**np.asanyarray(octs))
+
+
+def A4_to_tuning(A4, bins_per_octave=12):
+    """Convert a reference pitch frequency (e.g., `A4=435`) to a tuning
+    estimation, in fractions of a bin per octave.
+
+    This is useful for determining the tuning deviation relative to
+    A440 of a given frequency, assuming equal temperament. By default,
+    12 bins per octave are used.
+
+    This method is the inverse of  `tuning_to_A4`.
+
+    Examples
+    --------
+    The base case of this method in which A440 yields 0 tuning offset
+    from itself.
+    >>> librosa.A4_to_tuning(440.0)
+    0.
+
+    Convert a non-A440 frequency to a tuning offset relative
+    to A440 using the default of 12 bins per octave.
+    >>> librosa.A4_to_tuning(432.0)
+    -0.318
+
+    Convert two reference pitch frequencies to corresponding
+    tuning estimations at once, but using 24 bins per octave.
+    >>> librosa.A4_to_tuning([440.0, 444.0], bins_per_octave=24)
+    array([   0.,   0.313   ])
+
+    Parameters
+    ----------
+    A4: float or np.ndarray [shape=(n,), dtype=float]
+        Reference frequency(s) corresponding to A4.
+
+    bins_per_octave : int > 0
+        Number of bins per octave.
+
+    Returns
+    -------
+    tuning   : float or np.ndarray [shape=(n,), dtype=float]
+        Tuning deviation from A440 in (fractional) bins per octave.
+
+    See Also
+    --------
+    tuning_to_A4
+    """
+    return bins_per_octave * (np.log2(np.asanyarray(A4)) - np.log2(440.0))
+
+
+def tuning_to_A4(tuning, bins_per_octave=12):
+    """Convert a tuning deviation (from 0) in fractions of a bin per
+    octave (e.g., `tuning=-0.1`) to a reference pitch frequency
+    relative to A440.
+
+    This is useful if you are working in a non-A440 tuning system
+    to determine the reference pitch frequency given a tuning
+    offset and assuming equal temperament. By default, 12 bins per
+    octave are used.
+
+    This method is the inverse of  `A4_to_tuning`.
+
+    Examples
+    --------
+    The base case of this method in which a tuning deviation of 0
+    gets us to our A440 reference pitch.
+    >>> librosa.tuning_to_A4(0.0)
+    440.
+
+    Convert a nonzero tuning offset to its reference pitch frequency.
+    >>> librosa.tuning_to_A4(-0.318)
+    431.992
+
+    Convert 3 tuning deviations at once to respective reference
+    pitch frequencies, using 36 bins per octave.
+    >>> librosa.tuning_to_A4([0.1, 0.2, -0.1], bins_per_octave=36)
+    array([   440.848,    441.698   439.154])
+
+    Parameters
+    ----------
+    tuning : float or np.ndarray [shape=(n,), dtype=float]
+        Tuning deviation from A440 in fractional bins per octave.
+
+    bins_per_octave : int > 0
+        Number of bins per octave.
+
+    Returns
+    -------
+    A4  : float or np.ndarray [shape=(n,), dtype=float]
+        Reference frequency corresponding to A4.
+
+    See Also
+    --------
+    A4_to_tuning
+    """
+    return 440.0 * 2.0**(np.asanyarray(tuning) / bins_per_octave)
 
 
 def fft_frequencies(sr=22050, n_fft=2048):
