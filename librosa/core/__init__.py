@@ -95,6 +95,9 @@ Time and frequency conversion
     mel_to_hz
     octs_to_hz
 
+    A4_to_tuning
+    tuning_to_A4
+
     fft_frequencies
     cqt_frequencies
     mel_frequencies
