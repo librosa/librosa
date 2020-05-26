@@ -31,12 +31,7 @@ A clear and concise description of what you expected to happen.
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
-**Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
-
-**Smartphone (please complete the following information):**
+**Software versions***
 <!--
 Please run the following Python code snippet and paste the output below.
 ```
@@ -45,6 +40,8 @@ import sys; print("Python", sys.version)
 import numpy; print("NumPy", numpy.__version__)
 import scipy; print("SciPy", scipy.__version__)
 import librosa; print("librosa", librosa.__version__)
+
+librosa.show_versions()
 ```
 -->
 
