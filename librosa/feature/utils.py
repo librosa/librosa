@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 """Feature manipulation utilities"""
 
-from warnings import warn
 import numpy as np
 import scipy.signal
+from numba import jit
 
 from .._cache import cache
 from ..util.exceptions import ParameterError
@@ -136,7 +136,7 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
 
     Parameters
     ----------
-    data : np.ndarray [shape=(t,) or (d, t)]
+    data : np.ndarray [shape=(d, t)]
         Input data matrix.  If `data` is a vector (`data.ndim == 1`),
         it will be interpreted as a row matrix and reshaped to `(1, t)`.
 
@@ -220,12 +220,19 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
     if n_steps < 1:
         raise ParameterError('n_steps must be a positive integer')
 
+    if data.ndim > 2:
+        raise ParameterError('Input must be at most 2-dimensional. '
+                             'Given data.shape={}'.format(data.shape))
+
     if delay == 0:
         raise ParameterError('delay must be a non-zero integer')
 
     data = np.atleast_2d(data)
-
-    t = data.shape[1]
+    t = data.shape[-1]
+    
+    if t < 1:
+        raise ParameterError('Cannot stack memory when input data has '
+                             'no columns. Given data.shape={}'.format(data.shape))
     kwargs.setdefault('mode', 'constant')
 
     if kwargs['mode'] == 'constant':
@@ -239,17 +246,56 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
 
     data = np.pad(data, [(0, 0), padding], **kwargs)
 
-    history = data
+    # Construct the shape of the target array
+    shape = list(data.shape)
+    shape[0] = shape[0] * n_steps
+    shape[1] = t
+    shape = tuple(shape)
 
-    # TODO: this could be more efficient
-    for i in range(1, n_steps):
-        history = np.vstack([np.roll(data, -i * delay, axis=1), history])
+    # Construct the output array to match layout and dtype of input
+    history = np.empty_like(data, shape=shape)
 
-    # Trim to original width
+    # Populate the output array
+    __stack(history, data, n_steps, delay)
+
+    return history
+
+
+@jit(nopython=True, cache=True)
+def __stack(history, data, n_steps, delay):
+    '''Memory-stacking helper function.
+
+    Parameters
+    ----------
+    history : output array (2-dimensional)
+
+    data : pre-padded input array (2-dimensional)
+
+    n_steps : int > 0, the number of steps to stack
+
+    delay : int != 0, the amount of delay between steps
+
+    Returns
+    -------
+    None
+        Output is stored directly in the history array
+    '''
+    # Dimension of each copy of the data
+    d = data.shape[0]
+
+    # Total number of time-steps to output
+    t = history.shape[1]
+
     if delay > 0:
-        history = history[:, :t]
+        for step in range(n_steps):
+            q = n_steps - 1 - step
+            # nth block is original shifted left by n*delay steps
+            history[step * d:(step + 1) * d] = data[:, q*delay:q*delay+t]
     else:
-        history = history[:, -t:]
+        # Handle the last block separately to avoid -t:0 empty slices
+        history[-d:, :] = data[:, -t:]
 
-    # Make contiguous
-    return np.asfortranarray(history)
+        for step in range(n_steps-1):
+            # nth block is original shifted right by n*delay steps
+            q = n_steps - 1 - step
+            history[step * d:(step + 1) * d] = data[:, -t + q*delay:q*delay]

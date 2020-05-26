@@ -1,31 +1,47 @@
-sudo: false
-
 cache:
+  apt: True
   directories:
   - $HOME/env
+  - $HOME/Library/Caches/Homebrew
 
 language: python
 
 notifications:
   email: false
 
-python:
-    - 2.7
-    - 3.5
-    - 3.6
-
-matrix:
+jobs:
     include:
+        - python: 3.6
+          os: linux
+          dist: bionic
         - python: 3.7
-          dist: xenial
+          os: linux
+          dist: bionic
+        - python: 3.8
+          os: linux
+          dist: bionic
+        - os: osx
+          language: generic
+          osx_image: xcode11
 
+addons:
+    apt:
+        packages:
+        - libsamplerate0
+
+    homebrew:
+        packages:
+        - libsamplerate
 
 before_install:
     - bash .travis_dependencies.sh
-    - export PATH="$HOME/env/miniconda$TRAVIS_PYTHON_VERSION/bin:$PATH";
+    - export PATH="$HOME/env/miniconda-$TRAVIS_OS_NAME$TRAVIS_PYTHON_VERSION/bin:$PATH";
     - hash -r
     - source activate test-environment
     - conda list
+
+before_cache:
+    - brew cleanup
 
 install:
     # install your own package into the environment

@@ -838,8 +838,6 @@ def rms(y=None, S=None, frame_length=2048, hop_length=512,
     >>> plt.show()
 
     '''
-    if y is not None and S is not None:
-        raise ValueError('Either `y` or `S` should be input.')
     if y is not None:
         y = to_mono(y)
         if center:
@@ -849,19 +847,33 @@ def rms(y=None, S=None, frame_length=2048, hop_length=512,
                        frame_length=frame_length,
                        hop_length=hop_length)
 
-        # No normalization is necessary for time-domain input
-        norm = 1
+        # Calculate power
+        power = np.mean(np.abs(x)**2, axis=0, keepdims=True)
     elif S is not None:
-        x, _ = _spectrogram(y=y, S=S,
-                            n_fft=frame_length,
-                            hop_length=hop_length)
+        # Check the frame length
+        if S.shape[0] != frame_length // 2 + 1:
+            raise ParameterError(
+                    'Since S.shape[0] is {}, '
+                    'frame_length is expected to be {} or {}; '
+                    'found {}'.format(
+                            S.shape[0],
+                            S.shape[0] * 2 - 2, S.shape[0] * 2 - 1,
+                            frame_length))
 
-        # FFT introduces a scaling of n_fft to energy calculations
-        norm = 2 * (x.shape[0] - 1)
+        # power spectrogram
+        x = np.abs(S) ** 2
+
+        # Adjust the DC and sr/2 component
+        x[0] *= 0.5
+        if frame_length % 2 == 0:
+            x[-1] *= 0.5
+
+        # Calculate power
+        power = 2 * np.sum(x, axis=0, keepdims=True) / frame_length**2
     else:
-        raise ValueError('Either `y` or `S` must be input.')
+        raise ParameterError('Either `y` or `S` must be input.')
 
-    return np.sqrt(np.mean(np.abs(x)**2, axis=0, keepdims=True) / norm)
+    return np.sqrt(power)
 
 
 def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
@@ -1585,7 +1597,7 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, dct_type=2, norm='ortho', lifter=0
     n_mfcc: int > 0 [scalar]
         number of MFCCs to return
 
-    dct_type : None, or {1, 2, 3}
+    dct_type : {1, 2, 3}
         Discrete cosine transform (DCT) type.
         By default, DCT type-2 is used.
 

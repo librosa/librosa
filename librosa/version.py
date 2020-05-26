@@ -5,8 +5,8 @@
 import sys
 import importlib
 
-short_version = '0.7'
-version = '0.7.1'
+short_version = '0.8'
+version = '0.8.0-dev'
 
 
 def __get_mod_version(modname):
@@ -34,7 +34,6 @@ def show_versions():
                  'sklearn',
                  'joblib',
                  'decorator',
-                 'six',
                  'soundfile',
                  'resampy',
                  'numba']

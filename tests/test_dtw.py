@@ -22,11 +22,15 @@ def test_dtw_global():
     X = np.array([[1, 3, 3, 8, 1]])
     Y = np.array([[2, 0, 0, 8, 7, 2]])
 
-    gt_D = np.array([[1., 2., 3., 10., 16., 17.],
-                     [2., 4., 5., 8., 12., 13.],
-                     [3., 5., 7., 10., 12., 13.],
-                     [9., 11., 13., 7., 8., 14.],
-                     [10, 10., 11., 14., 13., 9.]])
+    gt_D = np.array(
+        [
+            [1.0, 2.0, 3.0, 10.0, 16.0, 17.0],
+            [2.0, 4.0, 5.0, 8.0, 12.0, 13.0],
+            [3.0, 5.0, 7.0, 10.0, 12.0, 13.0],
+            [9.0, 11.0, 13.0, 7.0, 8.0, 14.0],
+            [10, 10.0, 11.0, 14.0, 13.0, 9.0],
+        ]
+    )
 
     mut_D, _ = librosa.sequence.dtw(X, Y)
     assert np.array_equal(gt_D, mut_D)
@@ -43,14 +47,17 @@ def test_dtw_global_constrained():
     Y = np.array([[2, 0, 0, 8, 7, 2]])
 
     # With band_rad = 0.5, the GT distance array is
-    gt_D = np.array([[1., 2., 3., np.inf, np.inf, np.inf],
-                     [2., 4., 5., 8., np.inf, np.inf],
-                     [np.inf, 5., 7., 10., 12., np.inf],
-                     [np.inf, np.inf, 13., 7., 8., 14.],
-                     [np.inf, np.inf, np.inf, 14., 13., 9.]])
+    gt_D = np.array(
+        [
+            [1.0, 2.0, 3.0, np.inf, np.inf, np.inf],
+            [2.0, 4.0, 5.0, 8.0, np.inf, np.inf],
+            [np.inf, 5.0, 7.0, 10.0, 12.0, np.inf],
+            [np.inf, np.inf, 13.0, 7.0, 8.0, 14.0],
+            [np.inf, np.inf, np.inf, 14.0, 13.0, 9.0],
+        ]
+    )
 
-    mut_D = librosa.sequence.dtw(X, Y, backtrack=False,
-                                 global_constraints=True, band_rad=0.5)
+    mut_D = librosa.sequence.dtw(X, Y, backtrack=False, global_constraints=True, band_rad=0.5)
     assert np.array_equal(gt_D, mut_D)
 
 
@@ -61,17 +68,21 @@ def test_dtw_global_supplied_distance_matrix():
     Y = np.array([[2, 0, 0, 8, 7, 2]])
 
     # Precompute distance matrix.
-    C = cdist(X.T, Y.T, metric='euclidean')
+    C = cdist(X.T, Y.T, metric="euclidean")
 
-    gt_D = np.array([[1., 2., 3., 10., 16., 17.],
-                     [2., 4., 5., 8., 12., 13.],
-                     [3., 5., 7., 10., 12., 13.],
-                     [9., 11., 13., 7., 8., 14.],
-                     [10, 10., 11., 14., 13., 9.]])
+    gt_D = np.array(
+        [
+            [1.0, 2.0, 3.0, 10.0, 16.0, 17.0],
+            [2.0, 4.0, 5.0, 8.0, 12.0, 13.0],
+            [3.0, 5.0, 7.0, 10.0, 12.0, 13.0],
+            [9.0, 11.0, 13.0, 7.0, 8.0, 14.0],
+            [10, 10.0, 11.0, 14.0, 13.0, 9.0],
+        ]
+    )
 
     # Supply precomputed distance matrix and specify an invalid distance
     # metric to verify that it isn't used.
-    mut_D, _ = librosa.sequence.dtw(C=C, metric='invalid')
+    mut_D, _ = librosa.sequence.dtw(C=C, metric="invalid")
 
     assert np.array_equal(gt_D, mut_D)
 
@@ -81,8 +92,7 @@ def test_dtw_gobal_boundary():
     # See https://github.com/librosa/librosa/pull/920
     X = np.array([1, 2, 3, 4, 5])
     Y = np.array([1, 1, 1, 2, 4, 5, 6, 5, 5])
-    gt_wp = np.array([[0, 0], [0, 1], [0, 2], [1, 3], [2, 3], [3, 4], [4, 5],
-                      [4, 6], [4, 7], [4, 8]])
+    gt_wp = np.array([[0, 0], [0, 1], [0, 2], [1, 3], [2, 3], [3, 4], [4, 5], [4, 6], [4, 7], [4, 8]])
 
     D, wp = librosa.sequence.dtw(X, Y, subseq=False)
     wp = wp[::-1]
@@ -133,6 +143,12 @@ def test_dtw_incompatible_sigma_diag():
     librosa.sequence.dtw(X=X, Y=Y, step_sizes_sigma=np.ones((1, 2), dtype=int))
 
 
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_dtw_incompatible_sigma_diag_precomp():
+    C = np.ones((5, 3))
+    librosa.sequence.dtw(C=C, step_sizes_sigma=[[1, 1]])
+
+
 def test_dtw_global_diagonal():
     # query is a linear ramp
     X = np.linspace(0.1, 1, 10)
@@ -140,9 +156,9 @@ def test_dtw_global_diagonal():
 
     gt_wp = list(zip(list(range(10)), list(range(10))))[::-1]
 
-    mut_D, mut_wp = librosa.sequence.dtw(X, Y, subseq=True, metric='cosine',
-                                         step_sizes_sigma=np.array([[1, 1]]),
-                                         weights_mul=np.array([1, ]))
+    mut_D, mut_wp = librosa.sequence.dtw(
+        X, Y, subseq=True, metric="cosine", step_sizes_sigma=np.array([[1, 1]]), weights_mul=np.array([1])
+    )
 
     assert np.array_equal(np.asarray(gt_wp), np.asarray(mut_wp))
 
@@ -162,7 +178,7 @@ def test_dtw_subseq():
 
     # estimated sequence has to match original sequence
     # note the +1 due to python indexing
-    mut_X = Y[mut_wp[-1][1]:mut_wp[0][1] + 1]
+    mut_X = Y[mut_wp[-1][1] : mut_wp[0][1] + 1]
     assert np.array_equal(X, mut_X)
 
 
@@ -179,7 +195,7 @@ def test_dtw_subseq_supplied_distance_matrix():
 
 
 def test_dtw_subseq_sym():
-    Y = np.array([10., 10., 0., 1., 2., 3., 10., 10.])
+    Y = np.array([10.0, 10.0, 0.0, 1.0, 2.0, 3.0, 10.0, 10.0])
     X = np.arange(4)
 
     gt_wp_XY = np.array([[3, 5], [2, 4], [1, 3], [0, 2]])
@@ -190,3 +206,58 @@ def test_dtw_subseq_sym():
 
     assert np.array_equal(gt_wp_XY, mut_wp_XY)
     assert np.array_equal(gt_wp_YX, mut_wp_YX)
+
+
+def test_dtw_global_constraint_destructive():
+
+    # Issue #1029, dtw with global constraints inserts nans
+    # into the cost matrix.  This is fine when the cost is computed
+    # locally, but if passed by reference, it's destructive.
+    # This test checks that the cost matrix is unmodified.
+    C1 = np.ones((20, 20))
+    C2 = np.copy(C1)
+    librosa.sequence.dtw(C=C1, global_constraints=True)
+    assert np.array_equal(C1, C2)
+
+
+def test_dtw_global_inf():
+    # What should we do if backtracking fails in full sequence mode?
+    # This will happen if the inner loop of bt aborts prematurely
+    # by walking off the edge of the cost array instead of
+    # path-following to (0, 0)
+
+    # Construct a cost matrix where full alignment is impossible
+    C = np.zeros((4, 4), dtype=np.float)
+    C[-1, -1] = np.inf
+    with pytest.raises(librosa.ParameterError):
+        librosa.sequence.dtw(C=C, subseq=False)
+
+
+def test_dtw_subseq_inf():
+    # Construct a cost matrix where partial alignment is impossible
+    C = np.zeros((4, 4), dtype=np.float)
+    C[-1, :] = np.inf
+
+    with pytest.raises(librosa.ParameterError):
+        librosa.sequence.dtw(C=C, subseq=True)
+
+
+def test_dtw_subseq_pass():
+    # Construct a cost matrix where partial alignment is possible
+    C = np.zeros((4, 4), dtype=np.float)
+    C[-1, 2:] = np.inf
+    librosa.sequence.dtw(C=C, subseq=True)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_dtw_nan_fail():
+    C = np.ones((10, 10))
+    C[4, 6] = np.nan
+    librosa.sequence.dtw(C=C)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize("steps", [np.array([[1, -1]]), np.array([[-1, 1]]), np.array([[-1, -1]])])
+def test_dtw_negative_steps(steps):
+    C = np.ones((10, 10))
+    librosa.sequence.dtw(C=C, step_sizes_sigma=steps)

@@ -34,7 +34,6 @@ Transition matrices
 
 import numpy as np
 from scipy.spatial.distance import cdist
-import six
 from numba import jit
 from .util import pad_center, fill_off_diagonal
 from .util.exceptions import ParameterError
@@ -77,7 +76,7 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
 
     metric : str
         Identifier for the cost-function as documented
-        in `scipy.spatial.cdist()`
+        in `scipy.spatial.distance.cdist()`
 
     step_sizes_sigma : np.ndarray [shape=[n, 2]]
         Specifies allowed step sizes as used by the dtw.
@@ -116,9 +115,12 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
     Raises
     ------
     ParameterError
-        If you are doing diagonal matching and Y is shorter than X or if an incompatible
-        combination of X, Y, and C are supplied.
+        If you are doing diagonal matching and Y is shorter than X or if an
+        incompatible combination of X, Y, and C are supplied.
+
         If your input dimensions are incompatible.
+
+        If the cost matrix has NaN values.
 
     Examples
     --------
@@ -143,12 +145,40 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
     >>> plt.show()
     '''
     # Default Parameters
+    default_steps = np.array([[1, 1], [0, 1], [1, 0]], dtype=np.int)
+    default_weights_add = np.zeros(3, dtype=np.float)
+    default_weights_mul = np.ones(3, dtype=np.float)
+
     if step_sizes_sigma is None:
-        step_sizes_sigma = np.array([[1, 1], [0, 1], [1, 0]])
-    if weights_add is None:
-        weights_add = np.zeros(len(step_sizes_sigma))
-    if weights_mul is None:
-        weights_mul = np.ones(len(step_sizes_sigma))
+        # Use the default steps
+        step_sizes_sigma = default_steps
+
+        # Use default weights if none are provided
+        if weights_add is None:
+            weights_add = default_weights_add
+
+        if weights_mul is None:
+            weights_mul = default_weights_mul
+    else:
+        # If we have custom steps but no weights, construct them here
+        if weights_add is None:
+            weights_add = np.zeros(len(step_sizes_sigma), dtype=np.float)
+
+        if weights_mul is None:
+            weights_mul = np.ones(len(step_sizes_sigma), dtype=np.float)
+
+        # Make the default step weights infinite so that they are never
+        # preferred over custom steps
+        default_weights_add.fill(np.inf)
+        default_weights_mul.fill(np.inf)
+
+        # Append custom steps and weights to our defaults
+        step_sizes_sigma = np.concatenate((default_steps, step_sizes_sigma))
+        weights_add = np.concatenate((default_weights_add, weights_add))
+        weights_mul = np.concatenate((default_weights_mul, weights_mul))
+
+    if np.any(step_sizes_sigma < 0):
+        raise ParameterError('step_sizes_sigma cannot contain negative values')
 
     if len(step_sizes_sigma) != len(weights_add):
         raise ParameterError('len(weights_add) must be equal to len(step_sizes_sigma)')
@@ -163,18 +193,22 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
     c_is_transposed = False
 
     # calculate pair-wise distances, unless already supplied.
+    # C_local will keep track of whether the distance matrix was supplied
+    # by the user (False) or constructed locally (True)
+    C_local = False
     if C is None:
+        C_local = True
         # take care of dimensions
         X = np.atleast_2d(X)
         Y = np.atleast_2d(Y)
 
         try:
             C = cdist(X.T, Y.T, metric=metric)
-        except ValueError:
-            msg = ('scipy.spatial.distance.cdist returned an error.\n'
-                   'Please provide your input in the form X.shape=(K, N) and Y.shape=(K, M).\n'
-                   '1-dimensional sequences should be reshaped to X.shape=(1, N) and Y.shape=(1, M).')
-            six.reraise(ParameterError, ParameterError(msg))
+        except ValueError as exc:
+            raise ParameterError('scipy.spatial.distance.cdist returned an error.\n'
+                                 'Please provide your input in the form X.shape=(K, N) '
+                                 'and Y.shape=(K, M).\n 1-dimensional sequences should '
+                                 'be reshaped to X.shape=(1, N) and Y.shape=(1, M).') from exc
 
         # for subsequence matching:
         # if N > M, Y can be a subsequence of X
@@ -193,8 +227,15 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
     max_0 = step_sizes_sigma[:, 0].max()
     max_1 = step_sizes_sigma[:, 1].max()
 
+    # check C here for nans before building global constraints
+    if np.any(np.isnan(C)):
+        raise ParameterError('DTW cost matrix C has NaN values. ')
+
     if global_constraints:
         # Apply global constraints to the cost matrix
+        if not C_local:
+            # If C was provided as input, make a copy here
+            C = np.copy(C)
         fill_off_diagonal(C, band_rad, value=np.inf)
 
     # initialize whole matrix with infinity values
@@ -208,7 +249,11 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
 
     # initialize step matrix with -1
     # will be filled in calc_accu_cost() with indices from step_sizes_sigma
-    D_steps = -1 * np.ones(D.shape, dtype=np.int)
+    D_steps = np.zeros(D.shape, dtype=np.int)
+
+    # these steps correspond to left- (first row) and up-(first column) moves
+    D_steps[0, :] = 1
+    D_steps[:, 0] = 2
 
     # calculate accumulated cost matrix
     D, D_steps = __dtw_calc_accu_cost(C, D, D_steps,
@@ -222,12 +267,22 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
 
     if backtrack:
         if subseq:
+            if np.all(np.isinf(D[-1])):
+                raise ParameterError('No valid sub-sequence warping path could '
+                                     'be constructed with the given step sizes.')
             # search for global minimum in last row of D-matrix
             wp_end_idx = np.argmin(D[-1, :]) + 1
             wp = __dtw_backtracking(D_steps[:, :wp_end_idx], step_sizes_sigma, subseq)
         else:
             # perform warping path backtracking
+            if np.isinf(D[-1, -1]):
+                raise ParameterError('No valid sub-sequence warping path could '
+                                     'be constructed with the given step sizes.')
+
             wp = __dtw_backtracking(D_steps, step_sizes_sigma, subseq)
+            if wp[-1] != (0, 0):
+                raise ParameterError('Unable to compute a full DTW warping path. '
+                                     'You may want to try again with subseq=True.')
 
         wp = np.asarray(wp, dtype=int)
 
@@ -351,12 +406,17 @@ def __dtw_backtracking(D_steps, step_sizes_sigma, subseq):  # pragma: no cover
     # Stop criteria:
     # Setting it to (0, 0) does not work for the subsequence dtw,
     # so we only ask to reach the first row of the matrix.
+
     while (subseq and cur_idx[0] > 0) or (not subseq and cur_idx != (0, 0)):
         cur_step_idx = D_steps[(cur_idx[0], cur_idx[1])]
 
         # save tuple with minimal acc. cost in path
         cur_idx = (cur_idx[0] - step_sizes_sigma[cur_step_idx][0],
                    cur_idx[1] - step_sizes_sigma[cur_step_idx][1])
+
+        # If we run off the side of the cost matrix, break here
+        if min(cur_idx) < 0:
+            break
 
         # append to warping path
         wp.append((cur_idx[0], cur_idx[1]))
@@ -879,7 +939,7 @@ def viterbi(prob, transition, p_init=None, return_logp=False):
     if p_init is None:
         p_init = np.empty(n_states)
         p_init.fill(1./n_states)
-    elif np.any(p_init < 0) or not np.allclose(p_init.sum(), 1):
+    elif np.any(p_init < 0) or not np.allclose(p_init.sum(), 1) or p_init.shape != (n_states,):
         raise ParameterError('Invalid initial state distribution: '
                              'p_init={}'.format(p_init))
 
@@ -1066,7 +1126,7 @@ def viterbi_discriminative(prob, transition, p_state=None, p_init=None, return_l
     if p_init is None:
         p_init = np.empty(n_states)
         p_init.fill(1./n_states)
-    elif np.any(p_init < 0) or not np.allclose(p_init.sum(), 1):
+    elif np.any(p_init < 0) or not np.allclose(p_init.sum(), 1) or p_init.shape != (n_states,):
         raise ParameterError('Invalid initial state distribution: '
                              'p_init={}'.format(p_init))
 

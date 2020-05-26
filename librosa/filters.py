@@ -40,7 +40,6 @@ import numpy as np
 import scipy
 import scipy.signal
 import scipy.ndimage
-import six
 
 from numba import jit
 
@@ -50,7 +49,6 @@ from .util.exceptions import ParameterError
 
 from .core.time_frequency import note_to_hz, hz_to_midi, midi_to_hz, hz_to_octs
 from .core.time_frequency import fft_frequencies, mel_frequencies
-from .util.deprecation import Deprecated
 
 __all__ = ['mel',
            'chroma',
@@ -63,7 +61,6 @@ __all__ = ['mel',
            'semitone_filterbank',
            'window_sumsquare',
            'diagonal_filter']
-
 
 # Dictionary of window function bandwidths
 
@@ -111,7 +108,7 @@ WINDOW_BANDWIDTHS = {'bart': 1.3334961334912805,
 
 @cache(level=10)
 def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
-        norm=1, dtype=np.float32):
+        norm='slaney', dtype=np.float32):
     """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins
 
     Parameters
@@ -135,10 +132,13 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
     htk       : bool [scalar]
         use HTK formula instead of Slaney
 
-    norm : {None, 1, np.inf} [scalar]
-        if 1, divide the triangular mel weights by the width of the mel band
-        (area normalization).  Otherwise, leave all the triangles aiming for
-        a peak value of 1.0
+    norm : {None, 1, 'slaney', np.inf} [scalar]
+        If 1 or 'slaney', divide the triangular mel weights by the width of the mel band
+        (area normalization).
+
+        .. warning:: `norm=1` and `norm=np.inf` behavior will change in version 0.8.0.
+
+        Otherwise, leave all the triangles aiming for a peak value of 1.0
 
     dtype : np.dtype
         The data type of the output basis.
@@ -187,8 +187,17 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
     if fmax is None:
         fmax = float(sr) / 2
 
-    if norm is not None and norm != 1 and norm != np.inf:
-        raise ParameterError('Unsupported norm: {}'.format(repr(norm)))
+    if norm == 1:
+        warnings.warn('norm=1 behavior will change in librosa 0.8.0. '
+                      "To maintain forward compatibility, use norm='slaney' instead.",
+                      FutureWarning)
+    elif norm == np.inf:
+        warnings.warn('norm=np.inf behavior will change in librosa 0.8.0. '
+                      "To maintain forward compatibility, use norm=None instead.",
+                      FutureWarning)
+
+    elif norm not in (None, 1, 'slaney', np.inf):
+        raise ParameterError("Unsupported norm={}, must be one of: None, 1, 'slaney', np.inf".format(repr(norm)))
 
     # Initialize the weights
     n_mels = int(n_mels)
@@ -206,14 +215,14 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
     for i in range(n_mels):
         # lower and upper slopes for all bins
         lower = -ramps[i] / fdiff[i]
-        upper = ramps[i+2] / fdiff[i+1]
+        upper = ramps[i + 2] / fdiff[i + 1]
 
         # .. then intersect them with each other and zero
         weights[i] = np.maximum(0, np.minimum(lower, upper))
 
-    if norm == 1:
+    if norm in (1, 'slaney'):
         # Slaney-style mel is scaled to be approx constant energy per channel
-        enorm = 2.0 / (mel_f[2:n_mels+2] - mel_f[:n_mels])
+        enorm = 2.0 / (mel_f[2:n_mels + 2] - mel_f[:n_mels])
         weights *= enorm[:, np.newaxis]
 
     # Only check weights if f_mel[0] is positive
@@ -228,7 +237,7 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
 
 
 @cache(level=10)
-def chroma(sr, n_fft, n_chroma=12, tuning=0.0, A440=Deprecated(), ctroct=5.0,
+def chroma(sr, n_fft, n_chroma=12, tuning=0.0, ctroct=5.0,
            octwidth=2, norm=2, base_c=True, dtype=np.float32):
     """Create a Filterbank matrix to convert STFT to chroma
 
@@ -246,12 +255,6 @@ def chroma(sr, n_fft, n_chroma=12, tuning=0.0, A440=Deprecated(), ctroct=5.0,
 
     tuning : float
         Tuning deviation from A440 in fractions of a chroma bin.
-
-    A440      : float > 0 [scalar] <Deprecated>
-        Reference frequency for A440
-
-        .. note:: This parameter is deprecated in version 0.7.1.
-                  It will be removed in 0.8.0.  Use `tuning=` instead.
 
     ctroct    : float > 0 [scalar]
 
@@ -349,10 +352,10 @@ def chroma(sr, n_fft, n_chroma=12, tuning=0.0, A440=Deprecated(), ctroct=5.0,
     # Project into range -n_chroma/2 .. n_chroma/2
     # add on fixed offset of 10*n_chroma to ensure all values passed to
     # rem are positive
-    D = np.remainder(D + n_chroma2 + 10*n_chroma, n_chroma) - n_chroma2
+    D = np.remainder(D + n_chroma2 + 10 * n_chroma, n_chroma) - n_chroma2
 
     # Gaussian bumps - 2*D to make them narrower
-    wts = np.exp(-0.5 * (2*D / np.tile(binwidthbins, (n_chroma, 1)))**2)
+    wts = np.exp(-0.5 * (2 * D / np.tile(binwidthbins, (n_chroma, 1))) ** 2)
 
     # normalize each column
     wts = util.normalize(wts, norm=norm, axis=0)
@@ -360,14 +363,14 @@ def chroma(sr, n_fft, n_chroma=12, tuning=0.0, A440=Deprecated(), ctroct=5.0,
     # Maybe apply scaling for fft bins
     if octwidth is not None:
         wts *= np.tile(
-            np.exp(-0.5 * (((frqbins/n_chroma - ctroct)/octwidth)**2)),
+            np.exp(-0.5 * (((frqbins / n_chroma - ctroct) / octwidth) ** 2)),
             (n_chroma, 1))
 
     if base_c:
         wts = np.roll(wts, -3, axis=0)
 
     # remove aliasing columns, copy to ensure row-contiguity
-    return np.ascontiguousarray(wts[:, :int(1 + n_fft/2)], dtype=dtype)
+    return np.ascontiguousarray(wts[:, :int(1 + n_fft / 2)], dtype=dtype)
 
 
 def __float_window(window_spec):
@@ -399,9 +402,9 @@ def __float_window(window_spec):
 
 
 @cache(level=10)
-def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=Deprecated(),
-               window='hann', filter_scale=1, pad_fft=True, norm=1, gamma=0,
-               dtype=np.complex64, **kwargs):
+def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, window='hann',
+               filter_scale=1, pad_fft=True, norm=1, dtype=np.complex64,
+               gamma=0, **kwargs):
     r'''Construct a constant-Q basis.
 
     This uses the filter bank described by [1]_.
@@ -424,12 +427,6 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=Deprecated()
 
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
-
-    tuning : float [scalar] <DEPRECATED>
-        Tuning deviation from A440 in fractions of a bin
-
-        .. note:: This parameter is deprecated in 0.7.1.  It will be removed in
-                  version 0.8.
 
     window : string, tuple, number, or function
         Windowing function to apply to filters.
@@ -516,17 +513,6 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=Deprecated()
     if fmin is None:
         fmin = note_to_hz('C1')
 
-    if isinstance(tuning, Deprecated):
-        tuning = 0.0
-    else:
-        warnings.warn('The `tuning` parameter to `filters.constant_q` '
-                      'is deprecated in librosa 0.7.1. '
-                      'It will be removed in 0.8.0.', DeprecationWarning)
-
-    # Apply tuning correction
-    correction = 2.0**(float(tuning) / bins_per_octave)
-    fmin = correction * fmin
-
     # Pass-through parameters to get the filter lengths
     lengths = constant_q_lengths(sr, fmin,
                                  n_bins=n_bins,
@@ -541,7 +527,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=Deprecated()
     filters = []
     for ilen, freq in zip(lengths, freqs):
         # Build the filter: note, length will be ceil(ilen)
-        sig = np.exp(np.arange(-ilen//2, ilen//2, dtype=float) * 1j * 2 * np.pi * freq / sr)
+        sig = np.exp(np.arange(-ilen // 2, ilen // 2, dtype=float) * 1j * 2 * np.pi * freq / sr)
 
         # Apply the windowing function
         sig = sig * __float_window(window)(len(sig))
@@ -554,7 +540,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=Deprecated()
     # Pad and stack
     max_len = max(lengths)
     if pad_fft:
-        max_len = int(2.0**(np.ceil(np.log2(max_len))))
+        max_len = int(2.0 ** (np.ceil(np.log2(max_len))))
     else:
         max_len = int(np.ceil(max_len))
 
@@ -566,7 +552,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, tuning=Deprecated()
 
 @cache(level=10)
 def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
-                       tuning=Deprecated(), window='hann', filter_scale=1, gamma=0):
+                       window='hann', filter_scale=1, gamma=0):
     r'''Return length of each filter in a constant-Q basis.
 
     Parameters
@@ -582,12 +568,6 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
 
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
-
-    tuning : float [scalar] <DEPRECATED>
-        Tuning deviation from A440 in fractions of a bin
-
-        .. note:: This parameter is deprecated in 0.7.1.  It will be removed in
-                  version 0.8.
 
     window : str or callable
         Window function to use on filters
@@ -622,18 +602,9 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
     if n_bins <= 0 or not isinstance(n_bins, int):
         raise ParameterError('n_bins must be a positive integer')
 
-    if isinstance(tuning, Deprecated):
-        tuning = 0.0
-    else:
-        warnings.warn('The `tuning` parameter to `filters.constant_q_lengths` is deprecated in librosa 0.7.1.'
-                      'It will be removed in 0.8.0.', DeprecationWarning)
-
-    correction = 2.0**(float(tuning) / bins_per_octave)
-    fmin = correction * fmin
-
     # Q should be capitalized here, so we suppress the name warning
     # pylint: disable=invalid-name
-    alpha = 2.0**(1. / bins_per_octave) - 1.0
+    alpha = 2.0 ** (1. / bins_per_octave) - 1.0
     Q = float(filter_scale) / alpha
 
     # Q = float(filter_scale) / (2.0**(1. / bins_per_octave) - 2.0**(-1./bins_per_octave))
@@ -818,7 +789,7 @@ def window_bandwidth(window, n=1000):
 
     if key not in WINDOW_BANDWIDTHS:
         win = get_window(window, n)
-        WINDOW_BANDWIDTHS[key] = n * np.sum(win**2) / np.sum(np.abs(win))**2
+        WINDOW_BANDWIDTHS[key] = n * np.sum(win ** 2) / np.sum(np.abs(win)) ** 2
 
     return WINDOW_BANDWIDTHS[key]
 
@@ -870,11 +841,10 @@ def get_window(window, Nx, fftbins=True):
         If `window` is supplied as a vector of length != `n_fft`,
         or is otherwise mis-specified.
     '''
-    if six.callable(window):
+    if callable(window):
         return window(Nx)
 
-    elif (isinstance(window, (six.string_types, tuple)) or
-          np.isscalar(window)):
+    elif (isinstance(window, (str, tuple)) or np.isscalar(window)):
         # TODO: if we add custom window functions in librosa, call them here
 
         return scipy.signal.get_window(window, Nx, fftbins=fftbins)
@@ -1205,7 +1175,7 @@ def window_sumsquare(window, n_frames, hop_length=512, win_length=None, n_fft=20
 
     # Compute the squared window at the desired length
     win_sq = get_window(window, win_length)
-    win_sq = util.normalize(win_sq, norm=norm)**2
+    win_sq = util.normalize(win_sq, norm=norm) ** 2
     win_sq = util.pad_center(win_sq, n_fft)
 
     # Fill the envelope
@@ -1264,7 +1234,7 @@ def diagonal_filter(window, n, slope=1.0, angle=None, zero_mean=False):
 
     win = np.diag(get_window(window, n, fftbins=False))
 
-    if not np.isclose(angle, np.pi/4):
+    if not np.isclose(angle, np.pi / 4):
         win = scipy.ndimage.rotate(win, 45 - angle * 180 / np.pi,
                                    order=5, prefilter=False)
 

@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 """Utility functions"""
 
+import warnings
 import scipy.ndimage
 import scipy.sparse
-import six
 
 import numpy as np
 import numba
@@ -12,7 +12,6 @@ from numpy.lib.stride_tricks import as_strided
 
 from .._cache import cache
 from .exceptions import ParameterError
-from .decorators import deprecated
 
 # Constrain STFT block sizes to 256 KB
 MAX_MEM_BLOCK = 2**8 * 2**10
@@ -24,7 +23,6 @@ __all__ = ['MAX_MEM_BLOCK',
            'axis_sort', 'localmax', 'normalize',
            'peak_pick',
            'sparsify_rows',
-           'roll_sparse',
            'shear', 'stack',
            'fill_off_diagonal',
            'index_to_slice',
@@ -35,12 +33,16 @@ __all__ = ['MAX_MEM_BLOCK',
            'cyclic_gradient']
 
 
-def frame(x, frame_length=2048, hop_length=512, axis=-1):
+def frame(x, frame_length, hop_length, axis=-1):
     '''Slice a data array into (overlapping) frames.
 
     This implementation uses low-level stride manipulation to avoid
     making a copy of the data.  The resulting frame representation
-    is a new view of the input data.
+    is a new view of the same input data.
+
+    However, if the input data is not contiguous in memory, a warning
+    will be issued and the output will be a full copy, rather than
+    a view of the input data.
 
     For example, a one-dimensional input `x = [0, 1, 2, 3, 4, 5, 6]`
     can be framed with frame length 3 and hop length 2 in two ways.
@@ -70,8 +72,7 @@ def frame(x, frame_length=2048, hop_length=512, axis=-1):
     Parameters
     ----------
     x : np.ndarray
-        Time series to frame. Must be contiguous in memory, see the "Raises"
-        section below for more information.
+        Array to frame
 
     frame_length : int > 0 [scalar]
         Length of the frame
@@ -100,17 +101,14 @@ def frame(x, frame_length=2048, hop_length=512, axis=-1):
     Raises
     ------
     ParameterError
-        If `x` is not contiguous in memory or not an `np.ndarray`.
+        If `x` is not an `np.ndarray`.
 
         If `x.shape[axis] < frame_length`, there is not enough data to fill one frame.
 
         If `hop_length < 1`, frames cannot advance.
 
         If `axis` is not 0 or -1.  Framing is only supported along the first or last axis.
-            If `axis=-1` (the default), then `x` must be "F-contiguous".
-            If `axis=0`, then `x` must be "C-contiguous".
 
-        If the contiguity of `x` is incompatible with the framing axis.
 
     See Also
     --------
@@ -178,26 +176,28 @@ def frame(x, frame_length=2048, hop_length=512, axis=-1):
     if hop_length < 1:
         raise ParameterError('Invalid hop_length: {:d}'.format(hop_length))
 
+    if axis == -1 and not x.flags['F_CONTIGUOUS']:
+        warnings.warn('librosa.util.frame called with axis={} '
+                      'on a non-contiguous input. This will result in a copy.'.format(axis))
+        x = np.asfortranarray(x)
+    elif axis == 0 and not x.flags['C_CONTIGUOUS']:
+        warnings.warn('librosa.util.frame called with axis={} '
+                      'on a non-contiguous input. This will result in a copy.'.format(axis))
+        x = np.ascontiguousarray(x)
+
     n_frames = 1 + (x.shape[axis] - frame_length) // hop_length
     strides = np.asarray(x.strides)
 
     new_stride = np.prod(strides[strides > 0] // x.itemsize) * x.itemsize
 
     if axis == -1:
-        if not x.flags['F_CONTIGUOUS']:
-            raise ParameterError('Input array must be F-contiguous '
-                                 'for framing along axis={}'.format(axis))
-
         shape = list(x.shape)[:-1] + [frame_length, n_frames]
         strides = list(strides) + [hop_length * new_stride]
 
     elif axis == 0:
-        if not x.flags['C_CONTIGUOUS']:
-            raise ParameterError('Input array must be C-contiguous '
-                                 'for framing along axis={}'.format(axis))
-
         shape = [n_frames, frame_length] + list(x.shape)[1:]
         strides = [hop_length * new_stride] + list(strides)
+
     else:
         raise ParameterError('Frame axis={} must be either 0 or -1'.format(axis))
 
@@ -309,7 +309,7 @@ def valid_int(x, cast=None):
     if cast is None:
         cast = np.floor
 
-    if not six.callable(cast):
+    if not callable(cast):
         raise ParameterError('cast parameter must be callable')
 
     return int(cast(x))
@@ -1206,79 +1206,6 @@ def sparsify_rows(x, quantile=0.01):
         x_sparse[i, idx] = x[i, idx]
 
     return x_sparse.tocsr()
-
-
-@deprecated('0.7.1', '0.8.0')
-def roll_sparse(x, shift, axis=0):
-    '''Sparse matrix roll
-
-    This operation is equivalent to ``numpy.roll``, but operates on sparse matrices.
-
-    .. warning:: This function is deprecated in version 0.7.1.
-                 It will be removed in version 0.8.0.
-
-    Parameters
-    ----------
-    x : scipy.sparse.spmatrix or np.ndarray
-        The sparse matrix input
-
-    shift : int
-        The number of positions to roll the specified axis
-
-    axis : (0, 1, -1)
-        The axis along which to roll.
-
-    Returns
-    -------
-    x_rolled : same type as `x`
-        The rolled matrix, with the same format as `x`
-
-    See Also
-    --------
-    numpy.roll
-
-    Examples
-    --------
-    >>> # Generate a random sparse binary matrix
-    >>> X = scipy.sparse.lil_matrix(np.random.randint(0, 2, size=(5,5)))
-    >>> X_roll = roll_sparse(X, 2, axis=0)  # Roll by 2 on the first axis
-    >>> X_dense_r = roll_sparse(X.toarray(), 2, axis=0)  # Equivalent dense roll
-    >>> np.allclose(X_roll, X_dense_r.toarray())
-    True
-    '''
-    if not scipy.sparse.isspmatrix(x):
-        return np.roll(x, shift, axis=axis)
-
-    # shift-mod-length lets us have shift > x.shape[axis]
-    if axis not in [0, 1, -1]:
-        raise ParameterError('axis must be one of (0, 1, -1)')
-
-    shift = np.mod(shift, x.shape[axis])
-
-    if shift == 0:
-        return x.copy()
-
-    fmt = x.format
-    if axis == 0:
-        x = x.tocsc()
-    elif axis in (-1, 1):
-        x = x.tocsr()
-
-    # lil matrix to start
-    x_r = scipy.sparse.lil_matrix(x.shape, dtype=x.dtype)
-
-    idx_in = [slice(None)] * x.ndim
-    idx_out = [slice(None)] * x_r.ndim
-
-    idx_in[axis] = slice(0, -shift)
-    idx_out[axis] = slice(shift, None)
-    x_r[tuple(idx_out)] = x[tuple(idx_in)]
-
-    idx_out[axis] = slice(0, shift)
-    idx_in[axis] = slice(-shift, None)
-    x_r[tuple(idx_out)] = x[tuple(idx_in)]
-
-    return x_r.asformat(fmt)
 
 
 def buf_to_float(x, n_bytes=2, dtype=np.float32):

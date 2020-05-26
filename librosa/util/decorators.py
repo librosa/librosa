@@ -4,9 +4,13 @@
 '''Helpful tools for deprecation'''
 
 import warnings
+from packaging import version
 from decorator import decorator
-import six
-from numba.decorators import jit as optional_jit
+import numba
+if version.parse(numba.__version__) < version.parse('0.49.0'):
+    from numba.decorators import jit as optional_jit
+else:
+    from numba.core.decorators import jit as optional_jit
 
 __all__ = ['moved', 'deprecated', 'optional_jit']
 
@@ -20,7 +24,7 @@ def moved(moved_from, version, version_removed):
 
     def __wrapper(func, *args, **kwargs):
         '''Warn the user, and then proceed.'''
-        code = six.get_function_code(func)
+        code = func.__code__
         warnings.warn_explicit(
             "{:s}\n\tThis function was moved to '{:s}.{:s}' in "
             "librosa version {:s}."
@@ -45,7 +49,7 @@ def deprecated(version, version_removed):
 
     def __wrapper(func, *args, **kwargs):
         '''Warn the user, and then proceed.'''
-        code = six.get_function_code(func)
+        code = func.__code__
         warnings.warn_explicit(
             "{:s}.{:s}\n\tDeprecated as of librosa version {:s}."
             "\n\tIt will be removed in librosa version {:s}."

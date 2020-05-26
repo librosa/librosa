@@ -2,11 +2,14 @@
 # -*- coding: utf-8 -*-
 '''Feature inversion'''
 
+import warnings
 import numpy as np
 import scipy.fftpack
 
+from ..util.exceptions import ParameterError
 from ..core.spectrum import griffinlim
 from ..core.spectrum import db_to_power
+from ..util.utils import tiny
 from .. import filters
 from ..util import nnls
 
@@ -86,7 +89,7 @@ def mel_to_stft(M, sr=22050, n_fft=2048, power=2.0, **kwargs):
     # the inverse exponent.
     # We'll do the exponentiation in-place.
     inverse = nnls(mel_basis, M)
-    return np.power(inverse, 1./power, out=inverse)
+    return np.power(inverse, 1. / power, out=inverse)
 
 
 def mel_to_audio(M, sr=22050, n_fft=2048, hop_length=512, win_length=None,
@@ -163,8 +166,7 @@ def mel_to_audio(M, sr=22050, n_fft=2048, hop_length=512, win_length=None,
                       window=window, center=center, dtype=dtype, length=length,
                       pad_mode=pad_mode)
 
-
-def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0):
+def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0):
     '''Invert Mel-frequency cepstral coefficients to approximate a Mel power
     spectrogram.
 
@@ -182,7 +184,7 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0):
     n_mels : int > 0
         The number of Mel frequencies
 
-    dct_type : None or {1, 2, 3}
+    dct_type : {1, 2, 3}
         Discrete cosine transform (DCT) type
         By default, DCT type-2 is used.
 
@@ -195,12 +197,19 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0):
     ref : number or callable
         Reference power for (inverse) decibel calculation
 
+    lifter : number >= 0
+        If `lifter>0`, apply inverse liftering (inverse cepstral filtering):
+        `M[n, :] <- M[n, :] / (1 + sin(pi * (n + 1) / lifter)) * lifter / 2`
 
     Returns
     -------
     M : np.ndarray [shape=(n_mels, n)]
         An approximate Mel power spectrum recovered from `mfcc`
 
+    Warns
+    --------
+    UserWarning
+        due to critical values in lifter array that invokes underflow.
 
     See Also
     --------
@@ -208,13 +217,27 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0):
     melspectrogram
     scipy.fftpack.dct
     '''
-
+    if lifter > 0:
+        n_mfcc = mfcc.shape[0]
+        idx = np.arange(1, 1 + n_mfcc, dtype=mfcc.dtype)
+        lifter_sine = 1 + lifter * 0.5 * np.sin(np.pi * idx / lifter)[:, np.newaxis]
+        
+        # raise a UserWarning if lifter array includes critical values
+        if np.any(np.abs(lifter_sine) < np.finfo(lifter_sine.dtype).eps):
+            warnings.warn(message="lifter array includes critial values that may invoke underflow.", 
+                          category=UserWarning)
+        
+        # lifter mfcc values
+        mfcc = mfcc / (lifter_sine + tiny(mfcc))
+        
+    elif lifter != 0:
+        raise ParameterError('MFCC to mel lifter must be a non-negative number.')
+    
     logmel = scipy.fftpack.idct(mfcc, axis=0, type=dct_type, norm=norm, n=n_mels)
-
     return db_to_power(logmel, ref=ref)
 
 
-def mfcc_to_audio(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, **kwargs):
+def mfcc_to_audio(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0, **kwargs):
     '''Convert Mel-frequency cepstral coefficients to a time-domain audio signal
 
     This function is primarily a convenience wrapper for the following steps:
@@ -231,7 +254,7 @@ def mfcc_to_audio(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, **kwargs)
     n_mels : int > 0
         The number of Mel frequencies
 
-    dct_type : None or {1, 2, 3}
+    dct_type : {1, 2, 3}
         Discrete cosine transform (DCT) type
         By default, DCT type-2 is used.
 
@@ -243,6 +266,10 @@ def mfcc_to_audio(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, **kwargs)
 
     ref : number or callable
         Reference power for (inverse) decibel calculation
+
+    lifter : number >= 0
+        If `lifter>0`, apply inverse liftering (inverse cepstral filtering):
+        `M[n, :] <- M[n, :] / (1 + sin(pi * (n + 1) / lifter)) * lifter / 2`
 
     kwargs : additional keyword arguments
         Parameters to pass through to `mel_to_audio`
@@ -260,6 +287,7 @@ def mfcc_to_audio(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, **kwargs)
     core.griffinlim
     scipy.fftpack.dct
     '''
-    mel_spec = mfcc_to_mel(mfcc, n_mels=n_mels, dct_type=dct_type, norm=norm, ref=ref)
+    mel_spec = mfcc_to_mel(mfcc, n_mels=n_mels, dct_type=dct_type, norm=norm,
+                           ref=ref, lifter=lifter)
 
     return mel_to_audio(mel_spec, **kwargs)

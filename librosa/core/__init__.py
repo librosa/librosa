@@ -21,6 +21,8 @@ Audio processing
     clicks
     tone
     chirp
+    mu_compress
+    mu_expand
 
 Spectral representations
 ------------------------
@@ -96,6 +98,9 @@ Time and frequency conversion
     mel_to_hz
     octs_to_hz
 
+    A4_to_tuning
+    tuning_to_A4
+
     fft_frequencies
     cqt_frequencies
     mel_frequencies
@@ -114,13 +119,6 @@ Pitch and tuning
     estimate_tuning
     pitch_tuning
     piptrack
-
-Deprecated
-----------
-.. autosummary::
-    :toctree: generated/
-
-    ifgram
 """
 
 from .time_frequency import *  # pylint: disable=wildcard-import
