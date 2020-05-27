@@ -212,7 +212,7 @@ def valid_audio(y, mono=True):
     `(N,)` (number of samples).
 
     If `mono=False`, then `y` may be either monophonic, or have shape
-    `(2, N)` (stereo).
+    `(2, N)` (stereo) or `(K, N)` for `K>=2` for general multi-channel.
 
 
     Parameters
