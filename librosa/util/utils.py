@@ -276,7 +276,7 @@ def valid_audio(y, mono=True):
     elif y.ndim > 2 or y.ndim == 0:
         raise ParameterError('Audio data must have shape (samples,) or (channels, samples). '
                              'Received shape={}'.format(y.shape))
-    elif y.shape[0] < 2:
+    elif y.ndim == 2 and y.shape[0] < 2:
         raise ParameterError('Mono data must have shape (samples,). '
                              'Received shape={}'.format(y.shape))
 
