@@ -1474,6 +1474,7 @@ WEIGHTING_FUNCTIONS = {
     'C': C_weighting,
     'D': D_weighting,
     'Z': Z_weighting,
+    None: Z_weighting,
 }
 
 
