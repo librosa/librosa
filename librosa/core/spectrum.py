@@ -1587,7 +1587,7 @@ def db_to_amplitude(S_db, ref=1.0):
 
 
 @cache(level=30)
-def perceptual_weighting(S, frequencies, **kwargs):
+def perceptual_weighting(S, frequencies, kind='A', **kwargs):
     '''Perceptual weighting of a power spectrogram:
 
     `S_p[f] = A_weighting(f) + 10*log(S[f] / ref)`
@@ -1654,7 +1654,8 @@ def perceptual_weighting(S, frequencies, **kwargs):
     >>> plt.show()
     '''
 
-    offset = time_frequency.A_weighting(frequencies).reshape((-1, 1))
+    offset = time_frequency.frequency_weighting(
+        frequencies, kind=kind).reshape((-1, 1))
 
     return offset + power_to_db(S, **kwargs)
 
