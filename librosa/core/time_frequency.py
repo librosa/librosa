@@ -1518,7 +1518,9 @@ def frequency_weighting(frequencies, kind='A', **kw):
     >>> plt.show()
 
     '''
-    return WEIGHTING_FUNCTIONS[kind.upper()](frequencies, **kw)
+    if isinstance(kind, str):
+        kind = kind.upper()
+    return WEIGHTING_FUNCTIONS[kind](frequencies, **kw)
 
 
 def multi_frequency_weighting(frequencies, kinds='ZAC', **kw):
