@@ -1590,7 +1590,7 @@ def db_to_amplitude(S_db, ref=1.0):
 def perceptual_weighting(S, frequencies, kind='A', **kwargs):
     '''Perceptual weighting of a power spectrogram:
 
-    `S_p[f] = A_weighting(f) + 10*log(S[f] / ref)`
+    `S_p[f] = frequency_weighting(f, 'A') + 10*log(S[f] / ref)`
 
     Parameters
     ----------
@@ -1599,6 +1599,10 @@ def perceptual_weighting(S, frequencies, kind='A', **kwargs):
 
     frequencies : np.ndarray [shape=(d,)]
         Center frequency for each row of `S`
+
+    kind : str
+        The frequency weighting curve to use.
+        e.g. `'A'`, `'B'`, `'C'`, `'D'`, `None or 'Z'`
 
     kwargs : additional keyword arguments
         Additional keyword arguments to `power_to_db`.
