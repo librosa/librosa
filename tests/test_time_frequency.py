@@ -357,6 +357,76 @@ def test_A_weighting(min_db):
         assert not np.any(a_range < min_db)
 
 
+@pytest.mark.parametrize("min_db", [None, -40, -80])
+def test_B_weighting(min_db):
+
+    # Check that 1KHz is around 0dB
+    b_khz = librosa.B_weighting(1000.0, min_db=min_db)
+    assert np.allclose(b_khz, 0, atol=1e-3)
+
+    b_range = librosa.B_weighting(np.linspace(2e1, 2e4), min_db=min_db)
+    # Check that the db cap works
+    if min_db is not None:
+        assert not np.any(b_range < min_db)
+
+
+@pytest.mark.parametrize("min_db", [None, -40, -80])
+def test_C_weighting(min_db):
+
+    # Check that 1KHz is around 0dB
+    c_khz = librosa.C_weighting(1000.0, min_db=min_db)
+    assert np.allclose(c_khz, 0, atol=1e-3)
+
+    c_range = librosa.B_weighting(np.linspace(2e1, 2e4), min_db=min_db)
+    # Check that the db cap works
+    if min_db is not None:
+        assert not np.any(c_range < min_db)
+
+
+@pytest.mark.parametrize("min_db", [None, -40, -80])
+def test_D_weighting(min_db):
+
+    # Check that 1KHz is around 0dB
+    d_khz = librosa.D_weighting(1000.0, min_db=min_db)
+    assert np.allclose(d_khz, 0, atol=1e-3)
+
+    d_range = librosa.D_weighting(np.linspace(2e1, 2e4), min_db=min_db)
+    # Check that the db cap works
+    if min_db is not None:
+        assert not np.any(d_range < min_db)
+
+
+@pytest.mark.parametrize("min_db", [None, -40, -80])
+def test_Z_weighting(min_db):
+    # Check that 1KHz is around 0dB
+    d_khz = librosa.Z_weighting(np.linspace(2e1, 2e4), min_db=min_db)
+    assert np.allclose(d_khz, 0, atol=1e-3)
+
+
+@pytest.mark.parametrize(
+    "kind", list(librosa.core.time_frequency.WEIGHTING_FUNCTIONS))
+def test_frequency_weighting(kind):
+    freq = np.linspace(2e1, 2e4)
+    assert np.allclose(
+        librosa.frequency_weighting(freq, kind),
+        librosa.core.time_frequency.WEIGHTING_FUNCTIONS[kind](freq),
+        0, atol=1e-3)
+
+
+@pytest.mark.parametrize(
+    "kinds", ['AZC', ['A', 'Z', 'C']])
+def test_multi_frequency_weighting(kinds):
+    freq = np.linspace(2e1, 2e4)
+    assert np.allclose(
+        librosa.multi_frequency_weighting(freq, kinds),
+        np.stack([
+            librosa.A_weighting(freq),
+            librosa.Z_weighting(freq),
+            librosa.C_weighting(freq),
+        ]),
+        0, atol=1e-3)
+
+
 def test_samples_like():
 
     X = np.ones((3, 4, 5))
