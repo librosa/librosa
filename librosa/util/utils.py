@@ -206,7 +206,13 @@ def frame(x, frame_length, hop_length, axis=-1):
 
 @cache(level=20)
 def valid_audio(y, mono=True):
-    '''Validate whether a variable contains valid, mono audio data.
+    '''Validate whether a variable contains valid audio data.
+
+    If `mono=True`, then `y` is only considered valid if it has shape
+    `(N,)` (number of samples).
+
+    If `mono=False`, then `y` may be either monophonic, or have shape
+    `(2, N)` (stereo) or `(K, N)` for `K>=2` for general multi-channel.
 
 
     Parameters
@@ -215,7 +221,7 @@ def valid_audio(y, mono=True):
       The input data to validate
 
     mono : bool
-      Whether or not to force monophonic audio
+      Whether or not to require monophonic audio
 
     Returns
     -------
@@ -269,6 +275,9 @@ def valid_audio(y, mono=True):
 
     elif y.ndim > 2 or y.ndim == 0:
         raise ParameterError('Audio data must have shape (samples,) or (channels, samples). '
+                             'Received shape={}'.format(y.shape))
+    elif y.ndim == 2 and y.shape[0] < 2:
+        raise ParameterError('Mono data must have shape (samples,). '
                              'Received shape={}'.format(y.shape))
 
     if not np.isfinite(y).all():
