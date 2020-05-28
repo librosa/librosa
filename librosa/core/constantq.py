@@ -518,9 +518,6 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     if tuning is None:
         tuning = estimate_tuning(y=y, sr=sr, bins_per_octave=bins_per_octave)
 
-    if gamma is None:
-        gamma = 24.7 * alpha / 0.108
-
     # Apply tuning correction
     fmin = fmin * 2.0**(tuning / bins_per_octave)
 
