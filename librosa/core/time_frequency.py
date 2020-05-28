@@ -3,7 +3,6 @@
 '''Time and frequency utilities'''
 
 import re
-import functools
 import numpy as np
 from ..util.exceptions import ParameterError
 
@@ -1234,23 +1233,8 @@ def fourier_tempo_frequencies(sr=22050, win_length=384, hop_length=512):
     return fft_frequencies(sr=sr * 60 / float(hop_length), n_fft=win_length)
 
 
-def _weighting_function(func):
-    @functools.wraps(func)
-    def inner(frequencies, min_db=-80.0):
-        # Vectorize to make our lives easier
-        frequencies = np.asanyarray(frequencies)
-
-        # Call weighting function (with pre-computed squared frequency)
-        weights = func(frequencies**2.0)
-        if min_db is not None:
-            weights = np.maximum(min_db, weights)
-        return weights
-    return inner
-
-
 # A-weighting should be capitalized: suppress the naming warning
-@_weighting_function
-def A_weighting(f_sq):     # pylint: disable=invalid-name
+def A_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
     '''Compute the A-weighting of a set of frequencies.
 
     Parameters
@@ -1292,9 +1276,10 @@ def A_weighting(f_sq):     # pylint: disable=invalid-name
     >>> plt.show()
 
     '''
-    # https://en.wikipedia.org/wiki/A-weighting
+    f_sq = np.asanyarray(frequencies) ** 2.
+
     const = np.array([12200, 20.6, 107.7, 737.9]) ** 2.
-    return 2.0 + 20.0 * (
+    weights = 2.0 + 20.0 * (
         np.log10(const[0])
         + 2 * np.log10(f_sq)
         - np.log10(f_sq + const[0])
@@ -1302,9 +1287,10 @@ def A_weighting(f_sq):     # pylint: disable=invalid-name
         - 0.5 * np.log10(f_sq + const[2])
         - 0.5 * np.log10(f_sq + const[3]))
 
+    return weights if min_db is None else np.maximum(min_db, weights)
 
-@_weighting_function
-def B_weighting(f_sq):     # pylint: disable=invalid-name
+
+def B_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
     '''Compute the B-weighting of a set of frequencies.
 
     Parameters
@@ -1346,17 +1332,20 @@ def B_weighting(f_sq):     # pylint: disable=invalid-name
     >>> plt.show()
 
     '''
+    f_sq = np.asanyarray(frequencies) ** 2.
+
     const = np.array([12194, 20.6, 158.5]) ** 2.
-    return 0.17 + 20.0 * (
+    weights = 0.17 + 20.0 * (
         np.log10(const[0])
         + 1.5 * np.log10(f_sq)
         - np.log10(f_sq + const[0])
         - np.log10(f_sq + const[1])
         - 0.5 * np.log10(f_sq + const[2]))
 
+    return weights if min_db is None else np.maximum(min_db, weights)
 
-@_weighting_function
-def C_weighting(f_sq):     # pylint: disable=invalid-name
+
+def C_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
     '''Compute the C-weighting of a set of frequencies.
 
     Parameters
@@ -1398,16 +1387,19 @@ def C_weighting(f_sq):     # pylint: disable=invalid-name
     >>> plt.show()
 
     '''
+    f_sq = np.asanyarray(frequencies) ** 2.
+
     const = np.array([12194, 20.6]) ** 2.
-    return 0.062 + 20.0 * (
+    weights = 0.062 + 20.0 * (
         np.log10(const[0])
         + np.log10(f_sq)
         - np.log10(f_sq + const[0])
         - np.log10(f_sq + const[1]))
 
+    return weights if min_db is None else np.maximum(min_db, weights)
 
-@_weighting_function
-def D_weighting(f_sq):     # pylint: disable=invalid-name
+
+def D_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
     '''Compute the D-weighting of a set of frequencies.
 
     Parameters
@@ -1449,10 +1441,11 @@ def D_weighting(f_sq):     # pylint: disable=invalid-name
     >>> plt.show()
 
     '''
+    f_sq = np.asanyarray(frequencies) ** 2.
+
     const = np.array([
         8.3046305e-3, 1018.7, 1039.6, 3136.5, 3424, 282.7, 1160]) ** 2.
-
-    return 20.0 * (
+    weights = 20.0 * (
         0.5 * np.log10(f_sq)
         - np.log10(const[0])
         + 0.5 * (
@@ -1462,10 +1455,12 @@ def D_weighting(f_sq):     # pylint: disable=invalid-name
             - np.log10(const[6] + f_sq)
         ))
 
+    return weights if min_db is None else np.maximum(min_db, weights)
 
-@_weighting_function
-def Z_weighting(fsq):     # pylint: disable=invalid-name
-    return np.zeros(len(fsq))
+
+def Z_weighting(frequencies, min_db=None):     # pylint: disable=invalid-name
+    weights = np.zeros(len(frequencies))
+    return weights if min_db is None else np.maximum(min_db, weights)
 
 
 WEIGHTING_FUNCTIONS = {
@@ -1501,7 +1496,6 @@ def frequency_weighting(frequencies, kind='A', **kw):
     See Also
     --------
     perceptual_weighting
-    frequency_weighting
     multi_frequency_weighting
     A_weighting
     B_weighting
@@ -1549,7 +1543,6 @@ def multi_frequency_weighting(frequencies, kinds='ZAC', **kw):
     --------
     perceptual_weighting
     frequency_weighting
-    multi_frequency_weighting
     A_weighting
     B_weighting
     C_weighting
@@ -1559,7 +1552,7 @@ def multi_frequency_weighting(frequencies, kinds='ZAC', **kw):
     Examples
     --------
 
-    Get the D-weighting for CQT frequencies
+    Get the A, B, C, D, and Z weightings for CQT frequencies
 
     >>> import matplotlib.pyplot as plt
     >>> freqs = librosa.cqt_frequencies(108, librosa.note_to_hz('C1'))
