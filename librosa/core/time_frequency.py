@@ -3,6 +3,7 @@
 '''Time and frequency utilities'''
 
 import re
+import functools
 import numpy as np
 from ..util.exceptions import ParameterError
 
@@ -25,6 +26,12 @@ __all__ = ['frames_to_samples', 'frames_to_time',
            'tempo_frequencies',
            'fourier_tempo_frequencies',
            'A_weighting',
+           'B_weighting',
+           'C_weighting',
+           'D_weighting',
+           'Z_weighting',
+           'frequency_weighting',
+           'multi_frequency_weighting',
            'samples_like',
            'times_like']
 
@@ -1227,8 +1234,23 @@ def fourier_tempo_frequencies(sr=22050, win_length=384, hop_length=512):
     return fft_frequencies(sr=sr * 60 / float(hop_length), n_fft=win_length)
 
 
+def _weighting_function(func):
+    @functools.wraps(func)
+    def inner(frequencies, min_db=-80.0):
+        # Vectorize to make our lives easier
+        frequencies = np.asanyarray(frequencies)
+
+        # Call weighting function (with pre-computed squared frequency)
+        weights = func(frequencies**2.0)
+        if min_db is not None:
+            weights = np.maximum(min_db, weights)
+        return weights
+    return inner
+
+
 # A-weighting should be capitalized: suppress the naming warning
-def A_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
+@_weighting_function
+def A_weighting(f_sq):     # pylint: disable=invalid-name
     '''Compute the A-weighting of a set of frequencies.
 
     Parameters
@@ -1248,6 +1270,11 @@ def A_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
     See Also
     --------
     perceptual_weighting
+    frequency_weighting
+    multi_frequency_weighting
+    B_weighting
+    C_weighting
+    D_weighting
 
 
     Examples
@@ -1257,33 +1284,298 @@ def A_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
 
     >>> import matplotlib.pyplot as plt
     >>> freqs = librosa.cqt_frequencies(108, librosa.note_to_hz('C1'))
-    >>> aw = librosa.A_weighting(freqs)
-    >>> plt.plot(freqs, aw)
+    >>> weights = librosa.A_weighting(freqs)
+    >>> plt.plot(freqs, weights)
     >>> plt.xlabel('Frequency (Hz)')
     >>> plt.ylabel('Weighting (log10)')
     >>> plt.title('A-Weighting of CQT frequencies')
     >>> plt.show()
 
     '''
+    # https://en.wikipedia.org/wiki/A-weighting
+    const = np.array([12200, 20.6, 107.7, 737.9]) ** 2.
+    return 2.0 + 20.0 * (
+        np.log10(const[0])
+        + 2 * np.log10(f_sq)
+        - np.log10(f_sq + const[0])
+        - np.log10(f_sq + const[1])
+        - 0.5 * np.log10(f_sq + const[2])
+        - 0.5 * np.log10(f_sq + const[3]))
 
-    # Vectorize to make our lives easier
-    frequencies = np.asanyarray(frequencies)
 
-    # Pre-compute squared frequency
-    f_sq = frequencies**2.0
+@_weighting_function
+def B_weighting(f_sq):     # pylint: disable=invalid-name
+    '''Compute the B-weighting of a set of frequencies.
 
-    const = np.array([12200, 20.6, 107.7, 737.9])**2.0
+    Parameters
+    ----------
+    frequencies : scalar or np.ndarray [shape=(n,)]
+        One or more frequencies (in Hz)
 
-    weights = 2.0 + 20.0 * (np.log10(const[0]) + 4 * np.log10(frequencies)
-                            - np.log10(f_sq + const[0])
-                            - np.log10(f_sq + const[1])
-                            - 0.5 * np.log10(f_sq + const[2])
-                            - 0.5 * np.log10(f_sq + const[3]))
+    min_db : float [scalar] or None
+        Clip weights below this threshold.
+        If `None`, no clipping is performed.
 
-    if min_db is not None:
-        weights = np.maximum(min_db, weights)
+    Returns
+    -------
+    B_weighting : scalar or np.ndarray [shape=(n,)]
+        `B_weighting[i]` is the B-weighting of `frequencies[i]`
 
-    return weights
+    See Also
+    --------
+    perceptual_weighting
+    frequency_weighting
+    multi_frequency_weighting
+    A_weighting
+    C_weighting
+    D_weighting
+
+
+    Examples
+    --------
+
+    Get the B-weighting for CQT frequencies
+
+    >>> import matplotlib.pyplot as plt
+    >>> freqs = librosa.cqt_frequencies(108, librosa.note_to_hz('C1'))
+    >>> weights = librosa.B_weighting(freqs)
+    >>> plt.plot(freqs, weights)
+    >>> plt.xlabel('Frequency (Hz)')
+    >>> plt.ylabel('Weighting (log10)')
+    >>> plt.title('B-Weighting of CQT frequencies')
+    >>> plt.show()
+
+    '''
+    const = np.array([12200, 20.6, 158.5]) ** 2.
+    return 0.17 + 20.0 * (
+        np.log10(const[0])
+        + 1.5 * np.log10(f_sq)
+        - np.log10(f_sq + const[0])
+        - np.log10(f_sq + const[1])
+        - 0.5 * np.log10(f_sq + const[2]))
+
+
+@_weighting_function
+def C_weighting(f_sq):     # pylint: disable=invalid-name
+    '''Compute the C-weighting of a set of frequencies.
+
+    Parameters
+    ----------
+    frequencies : scalar or np.ndarray [shape=(n,)]
+        One or more frequencies (in Hz)
+
+    min_db : float [scalar] or None
+        Clip weights below this threshold.
+        If `None`, no clipping is performed.
+
+    Returns
+    -------
+    C_weighting : scalar or np.ndarray [shape=(n,)]
+        `C_weighting[i]` is the C-weighting of `frequencies[i]`
+
+    See Also
+    --------
+    perceptual_weighting
+    frequency_weighting
+    multi_frequency_weighting
+    A_weighting
+    B_weighting
+    D_weighting
+
+
+    Examples
+    --------
+
+    Get the C-weighting for CQT frequencies
+
+    >>> import matplotlib.pyplot as plt
+    >>> freqs = librosa.cqt_frequencies(108, librosa.note_to_hz('C1'))
+    >>> weights = librosa.C_weighting(freqs)
+    >>> plt.plot(freqs, weights)
+    >>> plt.xlabel('Frequency (Hz)')
+    >>> plt.ylabel('Weighting (log10)')
+    >>> plt.title('C-Weighting of CQT frequencies')
+    >>> plt.show()
+
+    '''
+    const = np.array([12194, 20.6]) ** 2.
+    return 0.062 + 20.0 * (
+        np.log10(const[0])
+        + np.log10(f_sq)
+        - np.log10(f_sq + const[0])
+        - np.log10(f_sq + const[1]))
+
+
+@_weighting_function
+def D_weighting(f_sq):     # pylint: disable=invalid-name
+    '''Compute the D-weighting of a set of frequencies.
+
+    Parameters
+    ----------
+    frequencies : scalar or np.ndarray [shape=(n,)]
+        One or more frequencies (in Hz)
+
+    min_db : float [scalar] or None
+        Clip weights below this threshold.
+        If `None`, no clipping is performed.
+
+    Returns
+    -------
+    D_weighting : scalar or np.ndarray [shape=(n,)]
+        `D_weighting[i]` is the D-weighting of `frequencies[i]`
+
+    See Also
+    --------
+    perceptual_weighting
+    frequency_weighting
+    multi_frequency_weighting
+    A_weighting
+    B_weighting
+    C_weighting
+
+
+    Examples
+    --------
+
+    Get the D-weighting for CQT frequencies
+
+    >>> import matplotlib.pyplot as plt
+    >>> freqs = librosa.cqt_frequencies(108, librosa.note_to_hz('C1'))
+    >>> weights = librosa.D_weighting(freqs)
+    >>> plt.plot(freqs, weights)
+    >>> plt.xlabel('Frequency (Hz)')
+    >>> plt.ylabel('Weighting (log10)')
+    >>> plt.title('D-Weighting of CQT frequencies')
+    >>> plt.show()
+
+    '''
+    const = np.array([
+        8.3046305e-3, 1018.7, 1039.6, 3136.5, 3424, 282.7, 1160]) ** 2.
+
+    return 20.0 * (
+        0.5 * np.log10(f_sq)
+        - np.log10(const[0])
+        + 0.5 * (
+            + np.log10((const[1] - f_sq) ** 2 + const[2] * f_sq)
+            - np.log10((const[3] - f_sq) ** 2 + const[4] * f_sq)
+            - np.log10(const[5] + f_sq)
+            - np.log10(const[6] + f_sq)
+        ))
+
+
+@_weighting_function
+def Z_weighting(fsq):     # pylint: disable=invalid-name
+    return np.zeros(len(fsq))
+
+
+WEIGHTING_FUNCTIONS = {
+    'A': A_weighting,
+    'B': B_weighting,
+    'C': C_weighting,
+    'D': D_weighting,
+    'Z': Z_weighting,
+}
+
+
+def frequency_weighting(frequencies, kind='A', **kw):
+    '''Compute the weighting of a set of frequencies.
+
+    Parameters
+    ----------
+    frequencies : scalar or np.ndarray [shape=(n,)]
+        One or more frequencies (in Hz)
+
+    kind : str in
+        The weighting kind. e.g. `'A'`, `'B'`, `'C'`, `'D'`, `'Z'`
+
+    min_db : float [scalar] or None
+        Clip weights below this threshold.
+        If `None`, no clipping is performed.
+
+    Returns
+    -------
+    weighting : scalar or np.ndarray [shape=(n,)]
+        `weighting[i]` is the weighting of `frequencies[i]`
+
+    See Also
+    --------
+    perceptual_weighting
+    frequency_weighting
+    multi_frequency_weighting
+    A_weighting
+    B_weighting
+    C_weighting
+    D_weighting
+
+
+    Examples
+    --------
+
+    Get the A-weighting for CQT frequencies
+
+    >>> import matplotlib.pyplot as plt
+    >>> freqs = librosa.cqt_frequencies(108, librosa.note_to_hz('C1'))
+    >>> weights = librosa.frequency_weighting(freqs, 'A')
+    >>> plt.plot(freqs, weights)
+    >>> plt.xlabel('Frequency (Hz)')
+    >>> plt.ylabel('Weighting (log10)')
+    >>> plt.title('A-Weighting of CQT frequencies')
+    >>> plt.show()
+
+    '''
+    return WEIGHTING_FUNCTIONS[kind.upper()](frequencies, **kw)
+
+
+def multi_frequency_weighting(frequencies, kinds='ZAC', **kw):
+    '''Compute multiple weightings of a set of frequencies.
+
+    Parameters
+    ----------
+    frequencies : scalar or np.ndarray [shape=(n,)]
+        One or more frequencies (in Hz)
+
+    kinds : list or tuple or str
+        An iterable of weighting kinds. e.g. `('Z', 'B')`, `'ZAD'`, `'C'`
+
+    **kw : keywords to pass to the weighting function.
+
+    Returns
+    -------
+    weighting : scalar or np.ndarray [shape=(len(kinds), n)]
+        `weighting[i]` is the weighting of `frequencies[i]`
+
+    See Also
+    --------
+    perceptual_weighting
+    frequency_weighting
+    multi_frequency_weighting
+    A_weighting
+    B_weighting
+    C_weighting
+    D_weighting
+
+
+    Examples
+    --------
+
+    Get the D-weighting for CQT frequencies
+
+    >>> import matplotlib.pyplot as plt
+    >>> freqs = librosa.cqt_frequencies(108, librosa.note_to_hz('C1'))
+    >>> weightings = 'ABCDZ'
+    >>> weights = librosa.multi_frequency_weighting(freqs, weightings)
+    >>> for label, w in zip(weightings, weights):
+    ...     plt.plot(freqs, w, label=label)
+    >>> plt.xlabel('Frequency (Hz)')
+    >>> plt.ylabel('Weighting (log10)')
+    >>> plt.title('Weightings of CQT frequencies')
+    >>> plt.legend()
+    >>> plt.show()
+
+    '''
+    return np.stack([
+        frequency_weighting(frequencies, k, **kw)
+        for k in kinds], axis=0)
 
 
 def times_like(X, sr=22050, hop_length=512, n_fft=None, axis=-1):
