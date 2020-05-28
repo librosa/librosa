@@ -121,6 +121,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
 
     See Also
     --------
+    vqt
     librosa.core.resample
     librosa.util.normalize
 
@@ -167,124 +168,13 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
            [  4.896e-08,   5.407e-07, ...,   9.176e-08,   1.051e-07]])
     '''
 
-    # How many octaves are we dealing with?
-    n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
-    n_filters = min(bins_per_octave, n_bins)
-
-    len_orig = len(y)
-
-    alpha = (2.0**(1. / bins_per_octave) - 1)
-
-    if fmin is None:
-        # C1 by default
-        fmin = note_to_hz('C1')
-
-    if tuning is None:
-        tuning = estimate_tuning(y=y, sr=sr, bins_per_octave=bins_per_octave)
-
-    # Apply tuning correction
-    fmin = fmin * 2.0**(tuning / bins_per_octave)
-
-    # First thing, get the freqs of the top octave
-    freqs = cqt_frequencies(n_bins, fmin,
-                            bins_per_octave=bins_per_octave)[-bins_per_octave:]
-
-    fmin_t = np.min(freqs)
-    fmax_t = np.max(freqs)
-
-    # Determine required resampling quality
-    Q = float(filter_scale) / (2.0**(1. / bins_per_octave) - 1)
-    filter_cutoff = fmax_t * (1 + 0.5 * filters.window_bandwidth(window) / Q)
-    nyquist = sr / 2.0
-
-    auto_resample = False
-    if not res_type:
-        auto_resample = True
-        if filter_cutoff < audio.BW_FASTEST * nyquist:
-            res_type = 'kaiser_fast'
-        else:
-            res_type = 'kaiser_best'
-
-    y, sr, hop_length = __early_downsample(y, sr, hop_length,
-                                           res_type,
-                                           n_octaves,
-                                           nyquist, filter_cutoff, scale)
-
-    cqt_resp = []
-
-    if auto_resample and res_type != 'kaiser_fast':
-
-        # Do the top octave before resampling to allow for fast resampling
-        fft_basis, n_fft, _ = __cqt_filter_fft(sr, fmin_t,
-                                               n_filters,
-                                               bins_per_octave,
-                                               filter_scale,
-                                               norm,
-                                               sparsity,
-                                               window=window)
-
-        # Compute the CQT filter response and append it to the stack
-        cqt_resp.append(__cqt_response(y, n_fft, hop_length, fft_basis, pad_mode))
-
-        fmin_t /= 2
-        fmax_t /= 2
-        n_octaves -= 1
-
-        filter_cutoff = fmax_t * (1 + 0.5 * filters.window_bandwidth(window) / Q)
-
-        res_type = 'kaiser_fast'
-
-    # Make sure our hop is long enough to support the bottom octave
-    num_twos = __num_two_factors(hop_length)
-    if num_twos < n_octaves - 1:
-        raise ParameterError('hop_length must be a positive integer '
-                             'multiple of 2^{0:d} for {1:d}-octave CQT'
-                             .format(n_octaves - 1, n_octaves))
-
-    # Now do the recursive bit
-    fft_basis, n_fft, _ = __cqt_filter_fft(sr, fmin_t,
-                                           n_filters,
-                                           bins_per_octave,
-                                           filter_scale,
-                                           norm,
-                                           sparsity,
-                                           window=window)
-
-    my_y, my_sr, my_hop = y, sr, hop_length
-
-    # Iterate down the octaves
-    for i in range(n_octaves):
-
-        # Resample (except first time)
-        if i > 0:
-            if len(my_y) < 2:
-                raise ParameterError('Input signal length={} is too short for '
-                                     '{:d}-octave CQT'.format(len_orig,
-                                                              n_octaves))
-
-            my_y = audio.resample(my_y, 2, 1,
-                                  res_type=res_type,
-                                  scale=True)
-            # The re-scale the filters to compensate for downsampling
-            fft_basis[:] *= np.sqrt(2)
-
-            my_sr /= 2.0
-            my_hop //= 2
-
-        # Compute the cqt filter response and append to the stack
-        cqt_resp.append(__cqt_response(my_y, n_fft, my_hop, fft_basis, pad_mode))
-
-    C = __trim_stack(cqt_resp, n_bins)
-
-    if scale:
-        lengths = filters.constant_q_lengths(sr, fmin,
-                                             n_bins=n_bins,
-                                             bins_per_octave=bins_per_octave,
-                                             window=window,
-                                             filter_scale=filter_scale)
-        C /= np.sqrt(lengths[:, np.newaxis])
-
-    return C
+    # CQT is the special case of VQT with gamma=0
+    return vqt(y=y, sr=sr, hop_length=hop_length,
+               fmin=fmin, n_bins=n_bins, gamma=0,
+               bins_per_octave=bins_per_octave,
+               tuning=tuning, filter_scale=filter_scale,
+               norm=norm, sparsity=sparsity, window=window, scale=scale,
+               pad_mode=pad_mode, res_type=res_type)
 
 
 @cache(level=20)
@@ -751,7 +641,7 @@ def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=None,
         sampling rate of `y`
 
     hop_length : int > 0 [scalar]
-        number of samples between successive CQT columns.
+        number of samples between successive VQT columns.
 
     fmin : float > 0 [scalar]
         Minimum frequency. Defaults to C1 ~= 32.70 Hz
@@ -784,7 +674,7 @@ def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=None,
 
         If `None`, tuning will be automatically estimated from the signal.
 
-        The minimum frequency of the resulting CQT will be modified to
+        The minimum frequency of the resulting VQT will be modified to
         `fmin * 2**(tuning / bins_per_octave)`.
 
     filter_scale : float > 0
@@ -806,10 +696,10 @@ def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=None,
         See `filters.get_window` for details.
 
     scale : bool
-        If `True`, scale the CQT response by square-root the length of
+        If `True`, scale the VQT response by square-root the length of
         each channel's filter.  This is analogous to `norm='ortho'` in FFT.
 
-        If `False`, do not scale the CQT. This is analogous to
+        If `False`, do not scale the VQT. This is analogous to
         `norm=None` in FFT.
 
     pad_mode : string
@@ -830,8 +720,8 @@ def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=None,
 
     Returns
     -------
-    CQT : np.ndarray [shape=(n_bins, t), dtype=np.complex or np.float]
-        Constant-Q value each frequency at each time.
+    VQT : np.ndarray [shape=(n_bins, t), dtype=np.complex or np.float]
+        Variable-Q value each frequency at each time.
 
     Raises
     ------
@@ -839,7 +729,7 @@ def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=None,
         If `hop_length` is not an integer multiple of
         `2**(n_bins / bins_per_octave)`
 
-        Or if `y` is too short to support the frequency range of the CQT.
+        Or if `y` is too short to support the frequency range of the VQT.
 
     See Also
     --------
@@ -917,7 +807,6 @@ def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=None,
     if auto_resample and res_type != 'kaiser_fast':
 
         # Do the top octave before resampling to allow for fast resampling
-        # TODO: scale gamma as well
         fft_basis, n_fft, _ = __cqt_filter_fft(sr, fmin_t,
                                                n_filters,
                                                bins_per_octave,
@@ -942,7 +831,7 @@ def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=None,
     num_twos = __num_two_factors(hop_length)
     if num_twos < n_octaves - 1:
         raise ParameterError('hop_length must be a positive integer '
-                             'multiple of 2^{0:d} for {1:d}-octave VQT'
+                             'multiple of 2^{0:d} for {1:d}-octave CQT/VQT'
                              .format(n_octaves - 1, n_octaves))
 
     # Now do the recursive bit
@@ -954,7 +843,7 @@ def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=None,
         if i > 0:
             if len(my_y) < 2:
                 raise ParameterError('Input signal length={} is too short for '
-                                     '{:d}-octave VQT'.format(len_orig,
+                                     '{:d}-octave CQT/VQT'.format(len_orig,
                                                               n_octaves))
 
             my_y = audio.resample(my_y, 2, 1,
