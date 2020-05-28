@@ -362,7 +362,6 @@ def test_B_weighting(min_db):
 
     # Check that 1KHz is around 0dB
     b_khz = librosa.B_weighting(1000.0, min_db=min_db)
-    print(b_khz)
     assert np.allclose(b_khz, 0, atol=1e-3)
 
     b_range = librosa.B_weighting(np.linspace(2e1, 2e4), min_db=min_db)
@@ -376,7 +375,6 @@ def test_C_weighting(min_db):
 
     # Check that 1KHz is around 0dB
     c_khz = librosa.C_weighting(1000.0, min_db=min_db)
-    print(c_khz)
     assert np.allclose(c_khz, 0, atol=1e-3)
 
     c_range = librosa.B_weighting(np.linspace(2e1, 2e4), min_db=min_db)
@@ -390,7 +388,6 @@ def test_D_weighting(min_db):
 
     # Check that 1KHz is around 0dB
     d_khz = librosa.D_weighting(1000.0, min_db=min_db)
-    print(d_khz)
     assert np.allclose(d_khz, 0, atol=1e-3)
 
     d_range = librosa.D_weighting(np.linspace(2e1, 2e4), min_db=min_db)
@@ -418,7 +415,7 @@ def test_frequency_weighting(kind):
 
 @pytest.mark.parametrize(
     "kinds", ['AZC', ['A', 'Z', 'C']])
-def test_frequency_weighting(kinds):
+def test_multi_frequency_weighting(kinds):
     freq = np.linspace(2e1, 2e4)
     assert np.allclose(
         librosa.multi_frequency_weighting(freq, kinds),
