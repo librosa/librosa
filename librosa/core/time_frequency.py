@@ -1346,7 +1346,7 @@ def B_weighting(f_sq):     # pylint: disable=invalid-name
     >>> plt.show()
 
     '''
-    const = np.array([12200, 20.6, 158.5]) ** 2.
+    const = np.array([12194, 20.6, 158.5]) ** 2.
     return 0.17 + 20.0 * (
         np.log10(const[0])
         + 1.5 * np.log10(f_sq)
