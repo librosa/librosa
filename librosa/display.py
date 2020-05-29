@@ -783,6 +783,7 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
         return coords
 
     coord_map = {'linear': __coord_fft_hz,
+                 'fft': __coord_fft_hz,
                  'hz': __coord_fft_hz,
                  'log': __coord_fft_hz,
                  'mel': __coord_mel_hz,
