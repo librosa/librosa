@@ -56,7 +56,6 @@ def test_cache_enabled(local_cache):
     # issue three calls to func - they should all be the same
     for i in range(3):
         assert np.allclose(func_cache(5), y)
-        assert len(local_cache.memory.store_backend.get_items()) == 1
 
     # overflow the cache so that the value for func_cache(5) will change
     for i in range(6, 500):
