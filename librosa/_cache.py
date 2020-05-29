@@ -17,7 +17,7 @@ class CacheManager(object):
     preference for speed vs. storage usage.
     '''
 
-    def __init__(self, *args, cache_resize_interval=None, level=10, **kwargs):
+    def __init__(self, *args, cache_resize_interval=20, level=10, **kwargs):
         # Initialize the memory object
         self.memory = Memory(*args, **kwargs)
         # The level parameter controls which data we cache
@@ -26,6 +26,7 @@ class CacheManager(object):
         # call reduce_size no more frequently than cache_resize_interval
         self._throttled_reduce_size = throttle(
             self.reduce_size, cache_resize_interval)
+        self._throttled_reduce_size()
 
     def __call__(self, level):
         '''Example usage:
@@ -69,7 +70,8 @@ class CacheManager(object):
 
 def throttle(func, interval):
     '''Don't call a function if it has been called in the last `interval` seconds.'''
-    interval = interval or 0
+    if not interval:
+        return func
     @functools.wraps(func)
     def inner(*a, _ignore_cache=False, **kw):
         # rerun function
@@ -86,8 +88,8 @@ def throttle(func, interval):
 # Instantiate the cache from the environment
 cache = CacheManager(
     os.environ.get('LIBROSA_CACHE_DIR', None),
-    bytes_limit=os.environ.get('LIBROSA_CACHE_BYTES_LIMIT', None),
-    cache_resize_interval=os.environ.get('LIBROSA_CACHE_RESIZE_INTERVAL', 5*60),
+    bytes_limit=float(os.environ.get('LIBROSA_CACHE_BYTES_LIMIT', 0)) or None,
+    cache_resize_interval=float(os.environ.get('LIBROSA_CACHE_RESIZE_INTERVAL', 20)),
     mmap_mode=os.environ.get('LIBROSA_CACHE_MMAP', None),
     compress=os.environ.get('LIBROSA_CACHE_COMPRESS', False),
     verbose=int(os.environ.get('LIBROSA_CACHE_VERBOSE', 0)),
