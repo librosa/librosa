@@ -542,3 +542,16 @@ def test_sharex_waveplot_ms(y, sr, S_abs):
     librosa.display.specshow(librosa.amplitude_to_db(S_abs, ref=np.max), x_axis="ms")
     plt.xlabel("")  # hide the x label here, which is not propagated automatically
     return plt.gcf()
+
+
+@pytest.mark.parametrize('format_str', ['cqt_hz', 'cqt_note'])
+def test_axis_bound_warning(format_str):
+    
+    with pytest.warns(UserWarning):
+        # set sr=22050
+        # fmin= 11025
+        # 72 bins
+        # 12 bins per octave
+
+        librosa.display.specshow(np.zeros((72, 3)), y_axis=format_str,
+                                 fmin=11025, sr=22050, bins_per_octave=12)

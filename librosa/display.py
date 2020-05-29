@@ -548,6 +548,10 @@ def specshow(data, x_coords=None, y_coords=None,
 
         All frequency types are plotted in units of Hz.
 
+        Any spectrogram parameters (hop_length, sr, bins_per_octave, etc.)
+        used to generate the input data should also be provided when
+        calling `specshow`.
+
         Categorical types:
 
         - 'chroma' : pitches are determined by the chroma filters.
@@ -981,7 +985,7 @@ def __coord_mel_hz(n, fmin=0, fmax=11025.0, **_kwargs):
     return basis
 
 
-def __coord_cqt_hz(n, fmin=None, bins_per_octave=12, **_kwargs):
+def __coord_cqt_hz(n, fmin=None, bins_per_octave=12, sr=22050, **_kwargs):
     '''Get CQT bin frequencies'''
     if fmin is None:
         fmin = core.note_to_hz('C1')
@@ -990,9 +994,15 @@ def __coord_cqt_hz(n, fmin=None, bins_per_octave=12, **_kwargs):
     fmin = fmin * 2.0**(_kwargs.get('tuning', 0.0) / bins_per_octave)
 
     # we drop by half a bin so that CQT bins are centered vertically
-    return core.cqt_frequencies(n+1,
-                                fmin=fmin / 2.0**(0.5/bins_per_octave),
-                                bins_per_octave=bins_per_octave)
+    freqs = core.cqt_frequencies(n+1,
+                                 fmin=fmin / 2.0**(0.5/bins_per_octave),
+                                 bins_per_octave=bins_per_octave)
+
+    if np.any(freqs > 0.5 * sr):
+        warnings.warn('Frequency axis exceeds Nyquist. '
+                      'Did you remember to set all spectrogram parameters in specshow?')
+
+    return freqs
 
 
 def __coord_chroma(n, bins_per_octave=12, **_kwargs):
