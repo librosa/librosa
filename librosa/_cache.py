@@ -17,7 +17,6 @@ class CacheManager(object):
     preference for speed vs. storage usage.
     '''
 
-    last_resized_at = 0
     def __init__(self, *args, cache_resize_interval=None, level=10, **kwargs):
         # Initialize the memory object
         self.memory = Memory(*args, **kwargs)
