@@ -3,6 +3,8 @@
 """Function caching"""
 
 import os
+import time
+import functools
 from joblib import Memory
 
 
@@ -15,15 +17,16 @@ class CacheManager(object):
     preference for speed vs. storage usage.
     '''
 
-    def __init__(self, *args, **kwargs):
-
-        level = kwargs.pop('level', 10)
-
+    last_resized_at = 0
+    def __init__(self, *args, cache_resize_interval=None, level=10, **kwargs):
         # Initialize the memory object
         self.memory = Memory(*args, **kwargs)
         # The level parameter controls which data we cache
         # smaller numbers mean less caching
         self.level = level
+        # call reduce_size no more frequently than cache_resize_interval
+        self._throttled_reduce_size = throttle(
+            self.reduce_size, cache_resize_interval)
 
     def __call__(self, level):
         '''Example usage:
@@ -36,25 +39,17 @@ class CacheManager(object):
             '''Decorator function.  Adds an input/output cache to
             the specified function.'''
 
-            from decorator import FunctionMaker
-
-            def decorator_apply(dec, func):
-                """Decorate a function by preserving the signature even if dec
-                is not a signature-preserving decorator.
-
-                This recipe is derived from
-                http://micheles.googlecode.com/hg/decorator/documentation.html#id14
-                """
-
-                return FunctionMaker.create(
-                    func, 'return decorated(%(signature)s)',
-                    dict(decorated=dec(func)), __wrapped__=func)
-
             if self.memory.location is not None and self.level >= level:
-                return decorator_apply(self.memory.cache, function)
+                cached_function = self.memory.cache(function)
 
-            else:
-                return function
+                def inner(*a, **kw):
+                    '''Call function and maybe resize cache.'''
+                    _ = cached_function(*a, **kw)
+                    self._throttled_reduce_size()
+                    return _
+
+                return functools.wraps(function)(inner)
+            return function
         return wrapper
 
     def clear(self, *args, **kwargs):
@@ -73,9 +68,28 @@ class CacheManager(object):
         return self.memory.warn(*args, **kwargs)
 
 
+def throttle(func, interval):
+    '''Don't call a function if it has been called in the last `interval` seconds.'''
+    interval = interval or 0
+    @functools.wraps(func)
+    def inner(*a, _ignore_cache=False, **kw):
+        # rerun function
+        tnow = time.time()
+        if _ignore_cache or (tnow - inner.last_ran) > interval:
+            inner.last_result = func(*a, **kw)
+            inner.last_ran = tnow
+
+        return inner.last_result
+    inner.last_ran = 0
+    inner.last_result = None
+    return inner
+
 # Instantiate the cache from the environment
-cache = CacheManager(os.environ.get('LIBROSA_CACHE_DIR', None),
-                     mmap_mode=os.environ.get('LIBROSA_CACHE_MMAP', None),
-                     compress=os.environ.get('LIBROSA_CACHE_COMPRESS', False),
-                     verbose=int(os.environ.get('LIBROSA_CACHE_VERBOSE', 0)),
-                     level=int(os.environ.get('LIBROSA_CACHE_LEVEL', 10)))
+cache = CacheManager(
+    os.environ.get('LIBROSA_CACHE_DIR', None),
+    bytes_limit=os.environ.get('LIBROSA_CACHE_BYTES_LIMIT', None),
+    cache_resize_interval=os.environ.get('LIBROSA_CACHE_RESIZE_INTERVAL', 5*60),
+    mmap_mode=os.environ.get('LIBROSA_CACHE_MMAP', None),
+    compress=os.environ.get('LIBROSA_CACHE_COMPRESS', False),
+    verbose=int(os.environ.get('LIBROSA_CACHE_VERBOSE', 0)),
+    level=int(os.environ.get('LIBROSA_CACHE_LEVEL', 10)))
