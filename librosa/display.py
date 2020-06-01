@@ -636,7 +636,7 @@ def specshow(data, x_coords=None, y_coords=None,
 
     Examples
     --------
-    Visualize an STFT power spectrum
+    Visualize an STFT power spectrum using default parameters
 
     >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
@@ -644,15 +644,18 @@ def specshow(data, x_coords=None, y_coords=None,
 
     >>> D = librosa.amplitude_to_db(np.abs(librosa.stft(y)), ref=np.max)
     >>> plt.subplot(4, 2, 1)
-    >>> librosa.display.specshow(D, y_axis='linear')
+    >>> librosa.display.specshow(D, y_axis='linear', sr=sr)
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Linear-frequency power spectrogram')
 
 
-    Or on a logarithmic scale
+    Or on a logarithmic scale, and using a larger hop
 
+    >>> hop_length = 1024
+    >>> D = librosa.amplitude_to_db(np.abs(librosa.stft(y, hop_length=hop_length)),
+    ...                             ref=np.max)
     >>> plt.subplot(4, 2, 2)
-    >>> librosa.display.specshow(D, y_axis='log')
+    >>> librosa.display.specshow(D, y_axis='log', sr=sr, hop_length=hop_length)
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Log-frequency power spectrogram')
 
