@@ -236,8 +236,8 @@ def valid_audio(y, mono=True):
             - `y.dtype` is not floating-point
             - `mono == True` and `y.ndim` is not 1
             - `mono == False` and `y.ndim` is not 1 or 2
+            - `mono == False` and `y.ndim == 2` but `y.shape[0] == 1`
             - `np.isfinite(y).all()` is False
-            - `y.flags["F_CONTIGUOUS"]` is False
 
     Notes
     -----
@@ -258,8 +258,6 @@ def valid_audio(y, mono=True):
 
     See also
     --------
-    stack
-    numpy.asfortranarray
     numpy.float32
     '''
 
@@ -276,16 +274,13 @@ def valid_audio(y, mono=True):
     elif y.ndim > 2 or y.ndim == 0:
         raise ParameterError('Audio data must have shape (samples,) or (channels, samples). '
                              'Received shape={}'.format(y.shape))
+
     elif y.ndim == 2 and y.shape[0] < 2:
         raise ParameterError('Mono data must have shape (samples,). '
                              'Received shape={}'.format(y.shape))
 
     if not np.isfinite(y).all():
         raise ParameterError('Audio buffer is not finite everywhere')
-
-    if not y.flags["F_CONTIGUOUS"]:
-        raise ParameterError('Audio buffer is not Fortran-contiguous. '
-            'Use numpy.asfortranarray to ensure Fortran contiguity.')
 
     return True
 
