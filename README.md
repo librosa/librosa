@@ -8,7 +8,7 @@ A python package for music and audio analysis.
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.591533.svg)](https://doi.org/10.5281/zenodo.591533)
 
 [![Build Status](https://travis-ci.com/librosa/librosa.svg?branch=master)](https://travis-ci.com/librosa/librosa)
-[![Build status](https://ci.appveyor.com/api/projects/status/5vvyesq0ys3oje67?svg=true)](https://ci.appveyor.com/project/librosa/librosa)
+[![Build status](https://ci.appveyor.com/api/projects/status/63lxuac60tojq2vm/branch/master?svg=true)](https://ci.appveyor.com/project/librosa/librosa/branch/master)
 [![Coverage Status](https://coveralls.io/repos/librosa/librosa/badge.svg?branch=master)](https://coveralls.io/r/librosa/librosa?branch=master)
 
 
