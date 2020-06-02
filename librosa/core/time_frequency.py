@@ -4,6 +4,7 @@
 
 import re
 import numpy as np
+from .._cache import cache
 from ..util.exceptions import ParameterError
 
 __all__ = ['frames_to_samples', 'frames_to_time',
@@ -32,7 +33,9 @@ __all__ = ['frames_to_samples', 'frames_to_time',
            'frequency_weighting',
            'multi_frequency_weighting',
            'samples_like',
-           'times_like']
+           'times_like',
+           'key_to_notes',
+           'key_to_degrees']
 
 
 def frames_to_samples(frames, hop_length=512, n_fft=None):
@@ -493,12 +496,22 @@ def note_to_midi(note, round_midi=True):
     12
     >>> librosa.note_to_midi('C#3')
     49
+    >>> librosa.note_to_midi('C♯3')  # Using unicode sharp
+    49
+    >>> librosa.note_to_midi('C♭3')  # Using unicode flat
+    47
     >>> librosa.note_to_midi('f4')
     65
     >>> librosa.note_to_midi('Bb-1')
     10
     >>> librosa.note_to_midi('A!8')
     116
+    >>> librosa.note_to_midi('G𝄪6')  # Double-sharp
+    93
+    >>> librosa.note_to_midi('B𝄫6')  # Double-flat
+    93
+    >>> librosa.note_to_midi('C♭𝄫5')  # Triple-flats also work
+    69
     >>> # Lists of notes also work
     >>> librosa.note_to_midi(['C', 'E', 'G'])
     array([12, 16, 19])
@@ -509,10 +522,10 @@ def note_to_midi(note, round_midi=True):
         return np.array([note_to_midi(n, round_midi=round_midi) for n in note])
 
     pitch_map = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
-    acc_map = {'#': 1, '': 0, 'b': -1, '!': -1}
+    acc_map = {'#': 1, '': 0, 'b': -1, '!': -1, '♯': 1, '𝄪': 2, '♭': -1, '𝄫': -2, '♮': 0}
 
     match = re.match(r'^(?P<note>[A-Ga-g])'
-                     r'(?P<accidental>[#b!]*)'
+                     r'(?P<accidental>[#♯𝄪b!♭𝄫♮]*)'
                      r'(?P<octave>[+-]?\d+)?'
                      r'(?P<cents>[+-]\d+)?$',
                      note)
@@ -542,27 +555,39 @@ def note_to_midi(note, round_midi=True):
     return note_value
 
 
-def midi_to_note(midi, octave=True, cents=False):
+def midi_to_note(midi, octave=True, cents=False, key='C:maj', unicode=True):
     '''Convert one or more MIDI numbers to note strings.
 
     MIDI numbers will be rounded to the nearest integer.
 
-    Notes will be of the format 'C0', 'C#0', 'D0', ...
+    Notes will be of the format 'C0', 'C♯0', 'D0', ...
 
     Examples
     --------
     >>> librosa.midi_to_note(0)
     'C-1'
+
     >>> librosa.midi_to_note(37)
+    'C♯2'
+    
+    >>> librosa.midi_to_note(37, unicode=False)
     'C#2'
+    
     >>> librosa.midi_to_note(-2)
-    'A#-2'
+    'A♯-2'
+    
     >>> librosa.midi_to_note(104.7)
     'A7'
+    
     >>> librosa.midi_to_note(104.7, cents=True)
     'A7-30'
+    
     >>> librosa.midi_to_note(list(range(12, 24)))
-    ['C0', 'C#0', 'D0', 'D#0', 'E0', 'F0', 'F#0', 'G0', 'G#0', 'A0', 'A#0', 'B0']
+    ['C0', 'C♯0', 'D0', 'D♯0', 'E0', 'F0', 'F♯0', 'G0', 'G♯0', 'A0', 'A♯0', 'B0']
+
+    Use a key signature to resolve enharmonic equivalences
+    >>> librosa.midi_to_note(range(12), key='G♯:maj', octave=False)
+    ['B♯', 'C♯', 'D', 'D♯', 'E', 'E♯', 'F♯', 'F𝄪', 'G♯', 'A', 'A♯', 'B']
 
     Parameters
     ----------
@@ -575,6 +600,13 @@ def midi_to_note(midi, octave=True, cents=False):
     cents: bool
         If true, cent markers will be appended for fractional notes.
         Eg, `midi_to_note(69.3, cents=True)` == `A4+03`
+
+    key : str
+        A key signature to use when resolving enharmonic equivalences.
+
+    unicode: bool
+        If `True` (default), accidentals will use unicode notation: ♭ or ♯ 
+        If `False`, accidentals will use ASCII-compatible notation: b or #
 
     Returns
     -------
@@ -591,17 +623,16 @@ def midi_to_note(midi, octave=True, cents=False):
     midi_to_hz
     note_to_midi
     hz_to_note
+    key_to_note
     '''
 
     if cents and not octave:
         raise ParameterError('Cannot encode cents without octave information.')
 
     if not np.isscalar(midi):
-        return [midi_to_note(x, octave=octave, cents=cents) for x in midi]
+        return [midi_to_note(x, octave=octave, cents=cents, key=key, unicode=unicode) for x in midi]
 
-    note_map = ['C', 'C#', 'D', 'D#',
-                'E', 'F', 'F#', 'G',
-                'G#', 'A', 'A#', 'B']
+    note_map = key_to_notes(key=key, unicode=unicode)
 
     note_num = int(np.round(midi))
     note_cents = int(100 * np.around(midi - note_num, 2))
@@ -1682,3 +1713,222 @@ def samples_like(X, hop_length=512, n_fft=None, axis=-1):
     else:
         frames = np.arange(X.shape[axis])
     return frames_to_samples(frames, hop_length=hop_length, n_fft=n_fft)
+
+
+@cache(level=10)
+def key_to_notes(key, unicode=True): 
+    '''Construct the names for 12 chromatic notes for a given key.
+
+    This function exists to resolve enharmonic equivalences between different
+    spellings for the same pitch (e.g. C♯ vs D♭), and is primarily useful when producing
+    human-readable outputs (e.g. plotting) for pitch content.
+
+    Note names are decided by the following rules:
+
+    1. If the tonic of the key has an accidental (sharp or flat), that accidental will be
+       used consistently for all notes.
+
+    2. If the tonic does not have an accidental, accidentals will be inferred to minimize
+       the total number used for diatonic scale degrees.
+
+    3. If there is a tie (e.g., in the case of C:maj vs A:min), sharps will be preferred
+       for major keys, and flats will be preferred for minor keys.
+
+    Parameters
+    ----------
+    key : string
+        Must be in the form TONIC:key.  Tonic must be upper case (`CDEFGAB`),
+        key must be lower-case (`maj` or `min`).
+
+        Single accidentals (`b!♭` for flat, or `#♯` for sharp) are supported.
+
+        Examples: C:maj, Db:min, A♭:min.
+
+    unicode: bool
+        If `True` (default), use unicode symbols (♯𝄪♭𝄫)for accidentals
+        If `False`, unicode symbols will be mapped to low-order ascii representations:
+            ♯ -> #, 𝄪 -> ##, ♭ -> b, 𝄫 -> bb
+
+    Returns
+    -------
+    notes : list
+        `notes[k]` is the name for the k'th semitone (starting from C)
+        under the given key.  All chromatic notes (0 through 11) are
+        included.
+
+    See Also
+    --------
+    midi_to_note
+
+    Examples
+    --------
+    `C:maj` will use all sharps
+    >>> librosa.key_to_notes('C:maj')
+    ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
+
+    `A:min` will use all flats
+    >>> librosa.key_to_notes('A:min')
+    ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B']
+
+    `A♯:min` will use sharps, but spell note 0 (`C`) as `B♯`
+    >>> librosa.key_to_notes('A#:min')
+    ['B♯', 'C♯', 'D', 'D♯', 'E', 'E♯', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
+
+    `G♯:maj` will use a double-sharp to spell note 7 (`G`) as an `F𝄪`:
+    >>> librosa.key_to_notes('G#:maj')
+    ['B♯', 'C♯', 'D', 'D♯', 'E', 'E♯', 'F♯', 'F𝄪', 'G♯', 'A', 'A♯', 'B']
+
+    `F♭:min` will use double-flats
+    >>> librosa.key_to_notes('Fb:min')
+    ['D𝄫', 'D♭', 'E𝄫', 'E♭', 'F♭', 'F', 'G♭', 'A𝄫', 'A♭', 'B𝄫', 'B♭', 'C♭']
+    '''
+
+    # Parse the key signature
+    match = re.match(r'^(?P<tonic>[A-Ga-g])'
+                     r'(?P<accidental>[#♯b!♭]?)'
+                     r':(?P<scale>(maj|min)(or)?)$',
+                     key)
+    if not match:
+        raise ParameterError('Improper key format: {:s}'.format(key))
+
+    pitch_map = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
+    acc_map = {'#': 1, '': 0, 'b': -1, '!': -1, '♯': 1, '♭': -1}
+
+    tonic = match.group('tonic').upper()
+    accidental = match.group('accidental')
+    offset = acc_map[accidental]
+
+    scale = match.group('scale')[:3].lower()
+
+    # Determine major or minor
+    major = (scale == 'maj')
+
+    # calculate how many clockwise steps we are on CoF (== # sharps)
+    if major:
+        tonic_number = ((pitch_map[tonic] + offset) * 7) % 12
+    else:
+        tonic_number = ((pitch_map[tonic] + offset) * 7 + 9) % 12
+
+    # Decide if using flats or sharps
+    # Logic here is as follows:
+    #   1. respect the given notation for the tonic.
+    #      Sharp tonics will always use sharps, likewise flats.
+    #   2. If no accidental in the tonic, try to minimize accidentals.
+    #   3. If there's a tie for accidentals, use sharp for major and flat for minor.
+
+    if offset < 0:
+        # use flats explicitly
+        use_sharps = False
+
+    elif offset > 0:
+        # use sharps explicitly
+        use_sharps = True
+
+    elif 0 < tonic_number < 6:
+        use_sharps = True
+
+    elif tonic_number > 6:
+        use_sharps = False
+
+    else:
+        # Equal numbers of sharps and flats for tonics 0 and 6
+        # break ties for major => sharp, minor => flat
+        use_sharps = major
+
+    # Basic note sequences for simple keys
+    notes_sharp = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
+    notes_flat = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B']
+
+    # These apply when we have >= 6 sharps
+    sharp_corrections = [(5, 'E♯'), (0, 'B♯'), (7, 'F𝄪'),
+                         (2, 'C𝄪'), (9, 'G𝄪'), (4, 'D𝄪'), (11, 'A𝄪')]
+
+    # These apply when we have >= 6 flats
+    flat_corrections = [(11, 'C♭'), (4, 'F♭'), (9, 'B𝄫'),
+                        (2, 'E𝄫'), (7, 'A𝄫'), (0, 'D𝄫')]  # last would be (5, 'G𝄫')
+
+    # Apply a mod-12 correction to distinguish B#:maj from C:maj
+    n_sharps = tonic_number
+    if tonic_number == 0 and tonic == 'B':
+        n_sharps = 12
+
+    if use_sharps:
+        # This will only execute if n_sharps >= 6
+        for n in range(0, n_sharps - 6 + 1):
+            index, name = sharp_corrections[n]
+            notes_sharp[index] = name
+
+        notes = notes_sharp
+    else:
+        n_flats = (12 - tonic_number) % 12
+
+        # This will only execute if tonic_number <= 6
+        for n in range(0, n_flats - 6 + 1):
+            index, name = flat_corrections[n]
+            notes_flat[index] = name
+
+        notes = notes_flat
+
+    # Finally, apply any unicode down-translation if necessary
+    if not unicode:
+        translations = str.maketrans({'♯': '#', '𝄪': '##', '♭': 'b', '𝄫': 'bb'})
+        notes = list([n.translate(translations) for n in notes])
+
+    return notes
+
+
+def key_to_degrees(key):
+    """Construct the diatonic scale degrees for a given key.
+
+    Parameters
+    ----------
+    key : str
+        Must be in the form TONIC:key.  Tonic must be upper case (`CDEFGAB`),
+        key must be lower-case (`maj` or `min`).
+
+        Single accidentals (`b!♭` for flat, or `#♯` for sharp) are supported.
+
+        Examples: C:maj, Db:min, A♭:min.
+
+    Returns
+    -------
+    degrees : np.ndarray
+        An array containing the semitone numbers (0=C, 1=C#, ... 11=B)
+        for each of the seven scale degrees in the given key, starting
+        from the tonic.
+
+    See Also
+    --------
+    key_to_notes
+
+    Examples
+    --------
+    >>> librosa.key_to_degrees('C:maj')
+    array([ 0,  2,  4,  5,  7,  9, 11])
+
+    >>> librosa.key_to_degrees('C#:maj')
+    array([ 1,  3,  5,  6,  8, 10,  0])
+
+    >>> librosa.key_to_degrees('A:min')
+    array([ 9, 11,  0,  2,  4,  5,  7])
+
+    """
+    notes = dict(maj=np.array([0, 2, 4, 5, 7, 9, 11]),
+                 min=np.array([0, 2, 3, 5, 7, 8, 10]))
+
+    match = re.match(r'^(?P<tonic>[A-Ga-g])'
+                     r'(?P<accidental>[#♯b!♭]?)'
+                     r':(?P<scale>(maj|min)(or)?)$',
+                     key)
+    if not match:
+        raise ParameterError('Improper key format: {:s}'.format(key))
+
+    pitch_map = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
+    acc_map = {'#': 1, '': 0, 'b': -1, '!': -1, '♯': 1, '♭': -1}
+    tonic = match.group('tonic').upper()
+    accidental = match.group('accidental')
+    offset = acc_map[accidental]
+
+    scale = match.group('scale')[:3].lower()
+
+    return (notes[scale] + pitch_map[tonic] + offset) % 12
