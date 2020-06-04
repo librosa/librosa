@@ -125,8 +125,8 @@ def cross_similarity(data, data_ref, k=None, metric='euclidean',
     Find nearest neighbors in MFCC space between two sequences
 
     >>> hop_length = 1024
-    >>> y_ref, sr = librosa.load(librosa.util.example_audio_file())
-    >>> y_comp, sr = librosa.load(librosa.util.example_audio_file(), offset=10)
+    >>> y_ref, sr = librosa.load(librosa.ex('nutcracker'))
+    >>> y_comp, sr = librosa.load(librosa.ex('nutcracker'), offset=30)
     >>> mfcc_ref = librosa.feature.mfcc(y=y_ref, sr=sr, hop_length=hop_length)
     >>> mfcc_comp = librosa.feature.mfcc(y=y_comp, sr=sr, hop_length=hop_length)
     >>> xsim = librosa.segment.cross_similarity(mfcc_comp, mfcc_ref)
@@ -340,7 +340,7 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
     --------
     Find nearest neighbors in MFCC space
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('nutcracker'))
     >>> hop_length = 1024
     >>> mfcc = librosa.feature.mfcc(y=y, sr=sr, hop_length=hop_length)
     >>> R = librosa.segment.recurrence_matrix(mfcc)
@@ -522,7 +522,7 @@ def recurrence_to_lag(rec, pad=True, axis=-1):
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('nutcracker'))
     >>> hop_length = 1024
     >>> mfccs = librosa.feature.mfcc(y=y, sr=sr, hop_length=hop_length)
     >>> recurrence = librosa.segment.recurrence_matrix(mfccs)
@@ -604,7 +604,7 @@ def lag_to_recurrence(lag, axis=-1):
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('nutcracker'))
     >>> hop_length = 1024
     >>> mfccs = librosa.feature.mfcc(y=y, sr=sr, hop_length=hop_length)
     >>> recurrence = librosa.segment.recurrence_matrix(mfccs)
@@ -693,7 +693,7 @@ def timelag_filter(function, pad=True, index=0):
 
     Apply a 5-bin median filter to the diagonal of a recurrence matrix
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('nutcracker'), duration=30)
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     >>> rec = librosa.segment.recurrence_matrix(chroma)
     >>> from scipy.ndimage import median_filter
@@ -790,19 +790,24 @@ def subsegment(data, frames, n_segments=4, axis=-1):
     --------
     Load audio, detect beat frames, and subdivide in twos by CQT
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=8)
+    >>> y, sr = librosa.load(librosa.ex('choice'))
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, hop_length=512)
     >>> beat_times = librosa.frames_to_time(beats, sr=sr, hop_length=512)
     >>> cqt = np.abs(librosa.cqt(y, sr=sr, hop_length=512))
     >>> subseg = librosa.segment.subsegment(cqt, beats, n_segments=2)
     >>> subseg_t = librosa.frames_to_time(subseg, sr=sr, hop_length=512)
     >>> subseg
-    array([  0,   2,   4,  21,  23,  26,  43,  55,  63,  72,  83,
-            97, 102, 111, 122, 137, 142, 153, 162, 180, 182, 185,
-           202, 210, 221, 231, 241, 256, 261, 271, 281, 296, 301,
-           310, 320, 339, 341, 344, 361, 368, 382, 389, 401, 416,
-           420, 430, 436, 451, 456, 465, 476, 489, 496, 503, 515,
-           527, 535, 544, 553, 558, 571, 578, 590, 607, 609, 638])
+    array([   0,    1,    3,    8,   21,   36,   40,   48,   59,   75,
+             78,   80,   96,  114,  116,  131,  135,  151,  154,  157,
+            173,  182,  192,  201,  211,  218,  230,  238,  249,  257,
+            268,  274,  287,  303,  306,  311,  325,  333,  344,  353,
+            363,  378,  382,  384,  401,  408,  420,  434,  439,  456,
+            458,  466,  476,  485,  495,  504,  515,  522,  534,  544,
+            553,  556,  572,  581,  591,  606,  610,  612,  629,  635,
+            647,  656,  667,  683,  686,  688,  705,  711,  724,  738,
+            743,  758,  762,  767,  780,  788,  799,  806,  819,  826,
+            838,  853,  857,  859,  876,  881,  895,  910,  914,  923,
+            933,  941,  951,  958,  971,  986,  990,  992, 1008, 1044])
 
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
@@ -874,15 +879,14 @@ def agglomerative(data, k, clusterer=None, axis=-1):
     --------
     Cluster by chroma similarity, break into 20 segments
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=15)
+    >>> y, sr = librosa.load(librosa.ex('waller'), duration=15)
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     >>> bounds = librosa.segment.agglomerative(chroma, 20)
     >>> bound_times = librosa.frames_to_time(bounds, sr=sr)
     >>> bound_times
-    array([  0.   ,   1.672,   2.322,   2.624,   3.251,   3.506,
-             4.18 ,   5.387,   6.014,   6.293,   6.943,   7.198,
-             7.848,   9.033,   9.706,   9.961,  10.635,  10.89 ,
-            11.54 ,  12.539])
+    array([ 0.   ,  0.163,  0.511,  2.067,  3.204,  4.156,  4.992,
+            5.364,  6.409,  7.709,  9.265,  9.543, 10.031, 10.797,
+           11.564, 12.469, 13.096, 13.839, 14.118, 14.838])
 
     Plot the segmentation over the chromagram
 
@@ -1020,7 +1024,7 @@ def path_enhance(R, n, window='hann', max_ratio=2.0, min_ratio=None, n_filters=7
     --------
     Use a 51-frame diagonal smoothing filter to enhance paths in a recurrence matrix
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=30)
+    >>> y, sr = librosa.load(librosa.ex('brahms'), duration=30)
     >>> hop_length = 1024
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=hop_length)
     >>> rec = librosa.segment.recurrence_matrix(chroma, mode='affinity', self=True)
