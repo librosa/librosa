@@ -13,7 +13,7 @@ from .._cache import cache
 from .. import util
 from .. import sequence
 
-__all__ = ['estimate_tuning', 'pitch_tuning', 'piptrack']
+__all__ = ['estimate_tuning', 'pitch_tuning', 'piptrack', 'yin', 'pyin']
 
 
 def estimate_tuning(y=None, sr=22050, S=None, n_fft=2048,
@@ -338,7 +338,7 @@ def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
     return pitches, mags
 
 
-def yin(y, sr=22050, win_length=1024, hop_length=None, fmin=55, fmax=890, peak_threshold=0.1):
+def yin(y, sr=22050, win_length=1024, hop_length=None, fmin=55, fmax=900, peak_threshold=0.1):
     '''Fundamental frequency (F0) estimation. [1]_
 
     .. [1] De Cheveigné, A., & Kawahara, H. (2002).
@@ -450,7 +450,7 @@ def yin(y, sr=22050, win_length=1024, hop_length=None, fmin=55, fmax=890, peak_t
     return f0
 
 
-def pyin(y, sr=22050, win_length=1024, hop_length=None, fmin=55, fmax=890, n_thresholds=100, n_bins_per_semitone=10):
+def pyin(y, sr=22050, win_length=1024, hop_length=None, fmin=55, fmax=900):
     '''Fundamental frequency (F0) estimation. [1]_
 
     .. [1] Mauch, M., & Dixon, S. (2014).
@@ -479,13 +479,6 @@ def pyin(y, sr=22050, win_length=1024, hop_length=None, fmin=55, fmax=890, n_thr
 
     fmax: number > 0 [scalar]
         maximum frequency in Hertz.
-
-    n_thresholds : int [scalar]
-        number of thresholds for peak estimation.
-
-    n_bins_per_semitone : int [scalar]
-        number of bins per semitone for discretizing the pitch space
-        between fmin and fmax.
 
     Returns
     -------
@@ -546,33 +539,41 @@ def pyin(y, sr=22050, win_length=1024, hop_length=None, fmin=55, fmax=890, n_thr
     # The implementation here follows the official pYIN software which
     # differs from the method described in the paper.
     # 1. Define the prior over the thresholds.
-    peak_thresholds = np.linspace(0, 1, n_thresholds + 1)
-    beta_cdf = scipy.stats.beta.cdf(peak_thresholds, 2, 18)
+    n_thresholds = 100  # number of thresholds for peak estimation.
+    thresholds = np.linspace(0, 1, n_thresholds + 1)
+    beta_cdf = scipy.stats.beta.cdf(thresholds, 2, 18)
     beta_probs = np.diff(beta_cdf)
 
     yin_probs = np.zeros_like(yin_frames)
     for i, yin_frame in enumerate(yin_frames.T):
         # 2. For each frame find the troughs.
-        troughs, properties = scipy.signal.find_peaks(-yin_frame, height=-1)
+        is_trough = np.logical_and(
+            yin_frame[1:-1] < yin_frame[:-2],
+            yin_frame[1:-1] < yin_frame[2:])
+        trough_index, = np.nonzero(is_trough)
 
-        if troughs.size == 0:
+        if len(trough_index) == 0:
             continue
 
-        heights = -properties["peak_heights"]
-        global_min = np.argmin(heights)
-        probs = np.zeros_like(heights)
+        # 3. Find the troughs below each threshold.
+        trough_heights = yin_frame[trough_index + 1]
+        trough_thresholds = trough_heights[:, None] < thresholds[None, 1:]
 
-        for threshold, beta_prob in zip(peak_thresholds[1:], beta_probs):
-            threshold_troughs, = np.nonzero(heights < threshold)
-            # 3. For each threshold add probability to global minimum if no trough is below threshold,
-            # else add probability to each trough below threshold biased by prior.
-            if threshold_troughs.size == 0:
-                probs[global_min] += 0.01*beta_prob
-            else:
-                peak_prior = scipy.stats.boltzmann.pmf(
-                    np.arange(threshold_troughs.size), 10, threshold_troughs.size)
-                probs[threshold_troughs] += peak_prior * beta_prob
-        yin_probs[troughs, i] = probs
+        # 4. Define the prior over the troughs.
+        # Smaller periods are weighted more.
+        trough_positions = np.cumsum(trough_thresholds, axis=0) - 1
+        n_troughs = np.count_nonzero(trough_thresholds, axis=0)
+        trough_prior = scipy.stats.boltzmann.pmf(trough_positions, 10, n_troughs)
+        trough_prior[~trough_thresholds] = 0
+
+        # 5. For each threshold add probability to global minimum if no trough is below threshold,
+        # else add probability to each trough below threshold biased by prior.
+        probs = np.sum(trough_prior * beta_probs, axis=1)
+        global_min = np.argmin(trough_heights)
+        n_thresholds_below_min = np.count_nonzero(~trough_thresholds[global_min, :])
+        probs[global_min] += 0.01 * np.sum(beta_probs[:n_thresholds_below_min])
+
+        yin_probs[trough_index + 1, i] = probs
 
     yin_period, frame_index = np.nonzero(yin_probs)
 
@@ -581,6 +582,7 @@ def pyin(y, sr=22050, win_length=1024, hop_length=None, fmin=55, fmax=890, n_thr
     period_candidates = period_candidates + parabolic_shifts[yin_period, frame_index]
     f0_candidates = sr / period_candidates
 
+    n_bins_per_semitone = 10  # bins for discretizing the pitch space between fmin and fmax.
     n_pitch_bins = int(np.log2(fmax / fmin) * 12 * n_bins_per_semitone)
 
     # Construct transition matrix.
