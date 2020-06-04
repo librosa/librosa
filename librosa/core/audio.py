@@ -1127,7 +1127,6 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
     >>> plt.subplot(2,1,1, sharex=ax)
     >>> librosa.display.waveplot(y_beat_times, sr=sr, label='Beat clicks')
     >>> plt.legend()
-    >>> plt.xlim(15, 30)
     >>> plt.tight_layout()
     >>> plt.show()
     """
