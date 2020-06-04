@@ -8,6 +8,7 @@ environment:
 
 cache:
     - "%MINICONDA%\\envs -> appveyor.yml, setup.py"
+    - "%HOMEPATH%\\AppData\Local"
 
 init:
   - "ECHO %PYTHON_VERSION% %MINICONDA%"
