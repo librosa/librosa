@@ -14,7 +14,7 @@ from .exceptions import ParameterError
 from .decorators import deprecated
 
 
-__all__ = ['example_audio_file', 'find_files', 'example', 'ex', 'list_examples']
+__all__ = ['example_audio_file', 'find_files', 'example', 'ex', 'list_examples', 'example_info']
 
 
 # Instantiate the pooch
@@ -97,11 +97,49 @@ def list_examples():
     See Also
     --------
     util.example
+    util.example_info
     """
     print('AVAILABLE EXAMPLES')
     print('-' * 68)
     for key in sorted(__TRACKMAP.keys()):
         print('{:10}\t{}'.format(key, __TRACKMAP[key]['desc']))
+
+
+def example_info(key):
+    """Display licensing and metadata information for the given example recording.
+
+    The first time an example is requested, it will be downloaded from
+    the remote repository over HTTPS.
+    All subsequent requests will use a locally cached copy of the recording.
+
+    For a list of examples (and their keys), see `librosa.util.list_examples`.
+
+    By default, local files will be cached in the directory given by
+    `pooch.os_cache('librosa')`.  You can override this by setting
+    an environment variable `LIBROSA_DATA_DIR` prior to importing librosa.
+
+    Parameters
+    ----------
+    key : str
+        The identifier for the recording (see `list_examples`)
+
+    See Also
+    --------
+    util.example
+    util.list_examples
+    pooch.os_cache
+    """
+
+    if key not in __TRACKMAP:
+        raise ParameterError('Unknown example key: {}'.format(key))
+
+    license = __GOODBOY.fetch(__TRACKMAP[key]['path'] + '.txt')
+
+    with open(license, 'r') as fdesc:
+        print('{:10s}\t{:s}'.format(key, __TRACKMAP[key]['desc']))
+        print('-' * 68)
+        for line in fdesc:
+            print(line)
 
 
 @deprecated('0.8', '0.9')
