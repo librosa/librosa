@@ -496,9 +496,9 @@ def note_to_midi(note, round_midi=True):
     12
     >>> librosa.note_to_midi('C#3')
     49
-    >>> librosa.note_to_midi('C♯3')  # Using unicode sharp
+    >>> librosa.note_to_midi('C♯3')  # Using Unicode sharp
     49
-    >>> librosa.note_to_midi('C♭3')  # Using unicode flat
+    >>> librosa.note_to_midi('C♭3')  # Using Unicode flat
     47
     >>> librosa.note_to_midi('f4')
     65
@@ -586,8 +586,8 @@ def midi_to_note(midi, octave=True, cents=False, key='C:maj', unicode=True):
     ['C0', 'C♯0', 'D0', 'D♯0', 'E0', 'F0', 'F♯0', 'G0', 'G♯0', 'A0', 'A♯0', 'B0']
 
     Use a key signature to resolve enharmonic equivalences
-    >>> librosa.midi_to_note(range(12), key='G♯:maj', octave=False)
-    ['B♯', 'C♯', 'D', 'D♯', 'E', 'E♯', 'F♯', 'F𝄪', 'G♯', 'A', 'A♯', 'B']
+    >>> librosa.midi_to_note(range(12), key='A:min')
+    ['C0', 'D♭0', 'D0', 'E♭0', 'E0', 'F0', 'G♭0', 'G0', 'A♭0', 'A0', 'B♭0', 'B0']
 
     Parameters
     ----------
@@ -605,7 +605,7 @@ def midi_to_note(midi, octave=True, cents=False, key='C:maj', unicode=True):
         A key signature to use when resolving enharmonic equivalences.
 
     unicode: bool
-        If `True` (default), accidentals will use unicode notation: ♭ or ♯ 
+        If `True` (default), accidentals will use Unicode notation: ♭ or ♯ 
         If `False`, accidentals will use ASCII-compatible notation: b or #
 
     Returns
@@ -1745,8 +1745,8 @@ def key_to_notes(key, unicode=True):
         Examples: C:maj, Db:min, A♭:min.
 
     unicode: bool
-        If `True` (default), use unicode symbols (♯𝄪♭𝄫)for accidentals
-        If `False`, unicode symbols will be mapped to low-order ascii representations:
+        If `True` (default), use Unicode symbols (♯𝄪♭𝄫)for accidentals
+        If `False`, Unicode symbols will be mapped to low-order ascii representations:
             ♯ -> #, 𝄪 -> ##, ♭ -> b, 𝄫 -> bb
 
     Returns
@@ -1774,7 +1774,7 @@ def key_to_notes(key, unicode=True):
     >>> librosa.key_to_notes('A#:min')
     ['B♯', 'C♯', 'D', 'D♯', 'E', 'E♯', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
 
-    `G♯:maj` will use a double-sharp to spell note 7 (`G`) as an `F𝄪`:
+    `G♯:maj` will use a double-sharp to spell note 7 (`G`) as `F𝄪`:
     >>> librosa.key_to_notes('G#:maj')
     ['B♯', 'C♯', 'D', 'D♯', 'E', 'E♯', 'F♯', 'F𝄪', 'G♯', 'A', 'A♯', 'B']
 
@@ -1872,7 +1872,7 @@ def key_to_notes(key, unicode=True):
     # Finally, apply any unicode down-translation if necessary
     if not unicode:
         translations = str.maketrans({'♯': '#', '𝄪': '##', '♭': 'b', '𝄫': 'bb'})
-        notes = list([n.translate(translations) for n in notes])
+        notes = list(n.translate(translations) for n in notes)
 
     return notes
 
