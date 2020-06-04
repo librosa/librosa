@@ -55,16 +55,13 @@ def test_load_resample(res_type):
     sr_target = 16000
     offset = 10
     duration = 5
+    fn = librosa.ex('trumpet')
 
-    y_native, sr = librosa.load(
-        librosa.util.example_audio_file(), sr=None, offset=offset, duration=duration, res_type=res_type
-    )
+    y_native, sr = librosa.load(fn, sr=None, offset=offset, duration=duration, res_type=res_type)
 
     y2 = librosa.resample(y_native, sr, sr_target, res_type=res_type)
 
-    y, _ = librosa.load(
-        librosa.util.example_audio_file(), sr=sr_target, offset=offset, duration=duration, res_type=res_type
-    )
+    y, _ = librosa.load(fn, sr=sr_target, offset=offset, duration=duration, res_type=res_type)
 
     assert np.allclose(y2, y)
 

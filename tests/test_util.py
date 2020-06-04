@@ -22,6 +22,7 @@ from test_core import srand
 np.set_printoptions(precision=3)
 
 
+# TODO: remove at 0.9
 def test_example_audio_file():
 
     assert os.path.exists(librosa.util.example_audio_file())
@@ -1116,3 +1117,26 @@ def test_stack_consistent(x, axis):
     assert np.allclose(xs, xsnp)
     if axis != 0:
         assert xs.flags["C_CONTIGUOUS"]
+
+
+@pytest.mark.parametrize('key', ['trumpet', 'waller', 'brahms', 'nutcracker', 'choice'])
+@pytest.mark.parametrize('hq', [False, True])
+def test_example(key, hq):
+
+    fn = librosa.example(key, hq=hq)
+    assert os.path.exists(fn)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_example_fail():
+    librosa.example('no such track')
+
+
+@pytest.mark.parametrize('key', ['trumpet', 'waller', 'brahms', 'nutcracker', 'choice'])
+def test_example_info(key):
+
+    librosa.util.example_info(key)
+
+
+def test_show_examples():
+    librosa.util.show_examples()
