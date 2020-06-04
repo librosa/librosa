@@ -154,37 +154,30 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
     Examples
     --------
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> D = np.abs(librosa.stft(y))
-    >>> D
-    array([[2.58028018e-03, 4.32422794e-02, 6.61255598e-01, ...,
-            6.82710262e-04, 2.51654536e-04, 7.23036574e-05],
-           [2.49403086e-03, 5.15930466e-02, 6.00107312e-01, ...,
-            3.48026224e-04, 2.35853557e-04, 7.54836728e-05],
-           [7.82410789e-04, 1.05394892e-01, 4.37517226e-01, ...,
-            6.29352580e-04, 3.38571583e-04, 8.38094638e-05],
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> S = np.abs(librosa.stft(y))
+    >>> S
+    array([[5.395e-03, 3.332e-03, ..., 9.862e-07, 1.201e-05],
+           [3.244e-03, 2.690e-03, ..., 9.536e-07, 1.201e-05],
            ...,
-           [9.48568513e-08, 4.74725084e-07, 1.50052492e-05, ...,
-            1.85637656e-08, 2.89708542e-08, 5.74304337e-09],
-           [1.25165826e-07, 8.58259284e-07, 1.11157215e-05, ...,
-            3.49099771e-08, 3.11740926e-08, 5.29926236e-09],
-           [1.70630571e-07, 8.92518756e-07, 1.23656537e-05, ...,
-            5.33256745e-08, 3.33264900e-08, 5.13272980e-09]], dtype=float32)
+           [7.523e-05, 3.722e-05, ..., 1.188e-04, 1.031e-03],
+           [7.640e-05, 3.944e-05, ..., 5.180e-04, 1.346e-03]],
+          dtype=float32)
 
     Use left-aligned frames, instead of centered frames
 
-    >>> D_left = np.abs(librosa.stft(y, center=False))
+    >>> S_left = librosa.stft(y, center=False)
 
 
     Use a shorter hop length
 
-    >>> D_short = np.abs(librosa.stft(y, hop_length=64))
+    >>> D_short = librosa.stft(y, hop_length=64)
 
 
     Display a spectrogram
 
     >>> import matplotlib.pyplot as plt
-    >>> librosa.display.specshow(librosa.amplitude_to_db(D,
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S,
     ...                                                  ref=np.max),
     ...                          y_axis='log', x_axis='time')
     >>> plt.title('Power spectrogram')
@@ -308,11 +301,12 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> D = librosa.stft(y)
     >>> y_hat = librosa.istft(D)
     >>> y_hat
-    array([ -4.812e-06,  -4.267e-06, ...,   6.271e-06,   2.827e-07], dtype=float32)
+    array([-1.407e-03, -4.461e-04, ...,  5.131e-06, -1.417e-05],
+          dtype=float32)
 
     Exactly preserving length of the input signal requires explicit padding.
     Otherwise, a partial frame at the end of `y` will not be represented.
@@ -323,7 +317,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
     >>> D = librosa.stft(y_pad, n_fft=n_fft)
     >>> y_out = librosa.istft(D, length=n)
     >>> np.max(np.abs(y - y_out))
-    1.4901161e-07
+    8.940697e-08
     """
 
     n_fft = 2 * (stft_matrix.shape[0] - 1)
@@ -507,14 +501,14 @@ def __reassign_frequencies(y, sr=22050, S=None, n_fft=2048, hop_length=None,
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> frequencies, S = librosa.core.spectrum.__reassign_frequencies(y, sr=sr)
     >>> frequencies
-    array([[  0.000e+00, 0.000e+00, ..., 0.000e+00, 0.000e+00],
-           [  9.863e+00, 9.653e+00, ..., 1.046e+01, 8.072e+01],
+    array([[0.000e+00, 0.000e+00, ..., 0.000e+00, 0.000e+00],
+           [3.628e+00, 4.698e+00, ..., 1.239e+01, 1.072e+01],
            ...,
-           [  1.101e+04, 1.101e+04, ..., 1.102e+04, 1.102e+04],
-           [  1.102e+04, 1.102e+04, ..., 1.102e+04, 1.102e+04]])
+           [1.101e+04, 1.102e+04, ..., 1.105e+04, 1.102e+04],
+           [1.102e+04, 1.102e+04, ..., 1.102e+04, 1.102e+04]])
 
     """
 
@@ -653,16 +647,14 @@ def __reassign_times(y, sr=22050, S=None, n_fft=2048, hop_length=None,
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> times, S = librosa.core.spectrum.__reassign_times(y, sr=sr)
     >>> times
-    array([[ 0.077,  0.079,  ..., 61.362, 61.388],
-           [ 0.078,  0.077,  ..., 61.366, 61.538],
-           [ 0.088,  0.08 ,  ..., 61.358, 61.399],
+    array([[ 2.268e-05,  1.144e-02, ...,  5.332e+00,  5.333e+00],
+           [ 2.268e-05,  1.451e-02, ...,  5.334e+00,  5.333e+00],
            ...,
-           [ 0.078,  0.077,  ..., 61.378, 61.372],
-           [ 0.082,  0.077,  ..., 61.371, 61.38 ],
-           [ 0.075,  0.076,  ..., 61.374, 61.385]])
+           [ 2.268e-05, -6.177e-04, ...,  5.368e+00,  5.327e+00],
+           [ 2.268e-05,  1.420e-03, ...,  5.307e+00,  5.328e+00]])
 
     """
 
@@ -899,6 +891,7 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
 
     Examples
     --------
+    >>> import matplotlib.pyplot as plt
     >>> amin = 1e-10
     >>> n_fft = 64
     >>> sr = 4000
@@ -1057,35 +1050,36 @@ def magphase(D, power=1):
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> D = librosa.stft(y)
     >>> magnitude, phase = librosa.magphase(D)
     >>> magnitude
-    array([[  2.524e-03,   4.329e-02, ...,   3.217e-04,   3.520e-05],
-           [  2.645e-03,   5.152e-02, ...,   3.283e-04,   3.432e-04],
+    array([[5.395e-03, 3.332e-03, ..., 9.862e-07, 1.201e-05],
+           [3.244e-03, 2.690e-03, ..., 9.536e-07, 1.201e-05],
            ...,
-           [  1.966e-05,   9.828e-06, ...,   3.164e-07,   9.370e-06],
-           [  1.966e-05,   9.830e-06, ...,   3.161e-07,   9.366e-06]], dtype=float32)
+           [7.523e-05, 3.722e-05, ..., 1.188e-04, 1.031e-03],
+           [7.640e-05, 3.944e-05, ..., 5.180e-04, 1.346e-03]],
+          dtype=float32)
     >>> phase
-    array([[  1.000e+00 +0.000e+00j,   1.000e+00 +0.000e+00j, ...,
-             -1.000e+00 +8.742e-08j,  -1.000e+00 +8.742e-08j],
-           [  1.000e+00 +1.615e-16j,   9.950e-01 -1.001e-01j, ...,
-              9.794e-01 +2.017e-01j,   1.492e-02 -9.999e-01j],
+    array([[ 1.   +0.000e+00j,  1.   +0.000e+00j, ...,
+            -1.   -8.742e-08j, -1.   -8.742e-08j],
+           [-1.   -8.742e-08j, -0.775-6.317e-01j, ...,
+            -0.885-4.648e-01j,  0.472-8.815e-01j],
            ...,
-           [  1.000e+00 -5.609e-15j,  -5.081e-04 +1.000e+00j, ...,
-             -9.549e-01 -2.970e-01j,   2.938e-01 -9.559e-01j],
-           [ -1.000e+00 +8.742e-08j,  -1.000e+00 +8.742e-08j, ...,
-             -1.000e+00 +8.742e-08j,  -1.000e+00 +8.742e-08j]], dtype=complex64)
-
+           [ 1.   -4.342e-12j,  0.028-9.996e-01j, ...,
+            -0.222-9.751e-01j, -0.75 -6.610e-01j],
+           [-1.   -8.742e-08j, -1.   -8.742e-08j, ...,
+             1.   +0.000e+00j,  1.   +0.000e+00j]], dtype=complex64)
 
     Or get the phase angle (in radians)
 
     >>> np.angle(phase)
-    array([[  0.000e+00,   0.000e+00, ...,   3.142e+00,   3.142e+00],
-           [  1.615e-16,  -1.003e-01, ...,   2.031e-01,  -1.556e+00],
+    array([[ 0.000e+00,  0.000e+00, ..., -3.142e+00, -3.142e+00],
+           [-3.142e+00, -2.458e+00, ..., -2.658e+00, -1.079e+00],
            ...,
-           [ -5.609e-15,   1.571e+00, ...,  -2.840e+00,  -1.273e+00],
-           [  3.142e+00,   3.142e+00, ...,   3.142e+00,   3.142e+00]], dtype=float32)
+           [-4.342e-12, -1.543e+00, ..., -1.794e+00, -2.419e+00],
+           [-3.142e+00, -3.142e+00, ...,  0.000e+00,  0.000e+00]],
+          dtype=float32)
 
     """
 
@@ -1116,13 +1110,13 @@ def phase_vocoder(D, rate, hop_length=None):
     Examples
     --------
     >>> # Play at double speed
-    >>> y, sr   = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr   = librosa.load(librosa.ex('trumpet'))
     >>> D       = librosa.stft(y, n_fft=2048, hop_length=512)
     >>> D_fast  = librosa.phase_vocoder(D, 2.0, hop_length=512)
     >>> y_fast  = librosa.istft(D_fast, hop_length=512)
 
     >>> # Or play at 1/3 speed
-    >>> y, sr   = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr   = librosa.load(librosa.ex('trumpet'))
     >>> D       = librosa.stft(y, n_fft=2048, hop_length=512)
     >>> D_slow  = librosa.phase_vocoder(D, 1./3, hop_length=512)
     >>> y_slow  = librosa.istft(D_slow, hop_length=512)
@@ -1280,7 +1274,7 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
     Examples
     --------
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> D = np.abs(librosa.iirt(y))
     >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
     ...                          y_axis='cqt_hz', x_axis='time')
@@ -1401,33 +1395,32 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
     --------
     Get a power spectrogram from a waveform ``y``
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> S = np.abs(librosa.stft(y))
     >>> librosa.power_to_db(S**2)
-    array([[-33.293, -27.32 , ..., -33.293, -33.293],
-           [-33.293, -25.723, ..., -33.293, -33.293],
+    array([[-41.809, -41.809, ..., -41.809, -41.809],
+           [-41.809, -41.809, ..., -41.809, -41.809],
            ...,
-           [-33.293, -33.293, ..., -33.293, -33.293],
-           [-33.293, -33.293, ..., -33.293, -33.293]], dtype=float32)
+           [-41.809, -41.809, ..., -41.809, -41.809],
+           [-41.809, -41.809, ..., -41.809, -41.809]], dtype=float32)
 
     Compute dB relative to peak power
 
     >>> librosa.power_to_db(S**2, ref=np.max)
-    array([[-80.   , -74.027, ..., -80.   , -80.   ],
-           [-80.   , -72.431, ..., -80.   , -80.   ],
+    array([[-80., -80., ..., -80., -80.],
+           [-80., -80., ..., -80., -80.],
            ...,
-           [-80.   , -80.   , ..., -80.   , -80.   ],
-           [-80.   , -80.   , ..., -80.   , -80.   ]], dtype=float32)
-
+           [-80., -80., ..., -80., -80.],
+           [-80., -80., ..., -80., -80.]], dtype=float32)
 
     Or compare to median power
 
     >>> librosa.power_to_db(S**2, ref=np.median)
-    array([[-0.189,  5.784, ..., -0.189, -0.189],
-           [-0.189,  7.381, ..., -0.189, -0.189],
+    array([[16.578, 16.578, ..., 16.578, 16.578],
+           [16.578, 16.578, ..., 16.578, 16.578],
            ...,
-           [-0.189, -0.189, ..., -0.189, -0.189],
-           [-0.189, -0.189, ..., -0.189, -0.189]], dtype=float32)
+           [16.578, 16.578, ..., 16.578, 16.578],
+           [16.578, 16.578, ..., 16.578, 16.578]], dtype=float32)
 
 
     And plot the results
@@ -1634,7 +1627,7 @@ def perceptual_weighting(S, frequencies, kind='A', **kwargs):
     --------
     Re-weight a CQT power spectrum, using peak power as reference
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> C = np.abs(librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('A1')))
     >>> freqs = librosa.cqt_frequencies(C.shape[0],
     ...                                 fmin=librosa.note_to_hz('A1'))
@@ -1642,11 +1635,11 @@ def perceptual_weighting(S, frequencies, kind='A', **kwargs):
     ...                                               freqs,
     ...                                               ref=np.max)
     >>> perceptual_CQT
-    array([[ -80.076,  -80.049, ..., -104.735, -104.735],
-           [ -78.344,  -78.555, ..., -103.725, -103.725],
+    array([[ -96.528,  -97.101, ..., -108.561, -108.561],
+           [ -95.88 ,  -96.479, ..., -107.551, -107.551],
            ...,
-           [ -76.272,  -76.272, ...,  -76.272,  -76.272],
-           [ -76.485,  -76.485, ...,  -76.485,  -76.485]])
+           [ -65.142,  -53.256, ...,  -80.098,  -80.098],
+           [ -71.542,  -53.197, ...,  -80.311,  -80.311]])
 
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
@@ -1747,7 +1740,7 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
     >>> scale = 1.25
     >>> freq = 3.0
     >>> x1 = np.linspace(0, 1, num=1024, endpoint=False)
-    >>> x2 = np.linspace(0, 1, num=scale * len(x1), endpoint=False)
+    >>> x2 = np.linspace(0, 1, num=int(scale * len(x1)), endpoint=False)
     >>> y1 = np.sin(2 * np.pi * freq * x1)
     >>> y2 = np.sin(2 * np.pi * freq * x2) / np.sqrt(scale)
     >>> # Verify that the two signals have the same energy
@@ -1776,8 +1769,7 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
     >>> plt.show()
 
     >>> # Plot the scale transform of an onset strength autocorrelation
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(),
-    ...                      offset=10.0, duration=30.0)
+    >>> y, sr = librosa.load(librosa.ex('choice'))
     >>> odf = librosa.onset.onset_strength(y=y, sr=sr)
     >>> # Auto-correlate with up to 10 seconds lag
     >>> odf_ac = librosa.autocorrelate(odf, max_size=10 * sr // 512)
@@ -2021,8 +2013,7 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
     Compare PCEN to log amplitude (dB) scaling on Mel spectra
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(),
-    ...                      offset=10, duration=10)
+    >>> y, sr = librosa.load(librosa.ex('choice'))
 
     >>> # We recommend scaling y to the range [-2**31, 2**31[ before applying
     >>> # PCEN's default parameters. Furthermore, we use power=1 to get a
@@ -2234,7 +2225,7 @@ def griffinlim(S, n_iter=32, hop_length=None, win_length=None, window='hann',
     --------
     A basic STFT inverse example
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=5, offset=30)
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> # Get the magnitude spectrogram
     >>> S = np.abs(librosa.stft(y))
     >>> # Invert using Griffin-Lim

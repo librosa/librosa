@@ -98,26 +98,28 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
     Examples
     --------
     >>> # Load an ogg vorbis file
-    >>> filename = librosa.util.example_audio_file()
+    >>> filename = librosa.ex('trumpet')
     >>> y, sr = librosa.load(filename)
     >>> y
-    array([ -4.756e-06,  -6.020e-06, ...,  -1.040e-06,   0.000e+00], dtype=float32)
+    array([-1.407e-03, -4.461e-04, ..., -3.042e-05,  1.277e-05],
+          dtype=float32)
     >>> sr
     22050
 
     >>> # Load a file and resample to 11 KHz
-    >>> filename = librosa.util.example_audio_file()
+    >>> filename = librosa.ex('trumpet')
     >>> y, sr = librosa.load(filename, sr=11025)
     >>> y
-    array([ -2.077e-06,  -2.928e-06, ...,  -4.395e-06,   0.000e+00], dtype=float32)
+    array([-8.746e-04, -3.363e-04, ..., -1.301e-05,  0.000e+00],
+          dtype=float32)
     >>> sr
     11025
 
     >>> # Load 5 seconds of a file, starting 15 seconds in
-    >>> filename = librosa.util.example_audio_file()
+    >>> filename = librosa.ex('waller')
     >>> y, sr = librosa.load(filename, offset=15.0, duration=5.0)
     >>> y
-    array([ 0.069,  0.1  , ..., -0.101,  0.   ], dtype=float32)
+    array([ 0.107,  0.134, ..., -0.026, -0.025], dtype=float32)
     >>> sr
     22050
 
@@ -321,7 +323,7 @@ def stream(path, block_length, frame_length, hop_length,
     at a time.  Note that streaming operation requires left-aligned
     frames, so we must set `center=False` to avoid padding artifacts.
 
-    >>> filename = librosa.util.example_audio_file()
+    >>> filename = librosa.ex('brahms')
     >>> sr = librosa.get_samplerate(filename)
     >>> stream = librosa.stream(filename,
     ...                       block_length=256,
@@ -333,7 +335,7 @@ def stream(path, block_length, frame_length, hop_length,
     Or compute a mel spectrogram over a stream, using a shorter frame
     and non-overlapping windows
 
-    >>> filename = librosa.util.example_audio_file()
+    >>> filename = librosa.ex('brahms')
     >>> sr = librosa.get_samplerate(filename)
     >>> stream = librosa.stream(filename,
     ...                         block_length=256,
@@ -408,12 +410,12 @@ def to_mono(y):
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(), mono=False)
+    >>> y, sr = librosa.load(librosa.ex('trumpet', hq=True), mono=False)
     >>> y.shape
-    (2, 1355168)
+    (2, 117601)
     >>> y_mono = librosa.to_mono(y)
     >>> y_mono.shape
-    (1355168,)
+    (117601,)
 
     '''
     # Ensure Fortran contiguity.
@@ -507,10 +509,10 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
     --------
     Downsample from 22 KHz to 8 KHz
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(), sr=22050)
+    >>> y, sr = librosa.load(librosa.ex('trumpet'), sr=22050)
     >>> y_8k = librosa.resample(y, sr, 8000)
     >>> y.shape, y_8k.shape
-    ((1355168,), (491671,))
+    ((117601,), (42668,))
     """
 
     # First, validate the audio buffer
@@ -559,25 +561,25 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     Examples
     --------
-    >>> # Load the example audio file
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> # Load an example audio file
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> librosa.get_duration(y=y, sr=sr)
-    61.45886621315193
+    5.333378684807256
 
     >>> # Or directly from an audio file
-    >>> librosa.get_duration(filename=librosa.util.example_audio_file())
-    61.4
+    >>> librosa.get_duration(filename=librosa.ex('trumpet'))
+    5.333378684807256
 
     >>> # Or compute duration from an STFT matrix
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> S = librosa.stft(y)
     >>> librosa.get_duration(S=S, sr=sr)
-    61.44
+    5.317369614512471
 
     >>> # Or a non-centered STFT matrix
     >>> S_left = librosa.stft(y, center=False)
     >>> librosa.get_duration(S=S_left, sr=sr)
-    61.3471201814059
+    5.224489795918367
 
     Parameters
     ----------
@@ -684,9 +686,9 @@ def get_samplerate(path):
     --------
     Get the sampling rate for the included audio file
 
-    >>> path = librosa.util.example_audio_file()
+    >>> path = librosa.ex('trumpet')
     >>> librosa.get_samplerate(path)
-    44100
+    22050
     '''
     try:
         return sf.info(path).samplerate
@@ -727,9 +729,9 @@ def autocorrelate(y, max_size=None, axis=-1):
     --------
     Compute full autocorrelation of y
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(), offset=20, duration=10)
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> librosa.autocorrelate(y)
-    array([  3.226e+03,   3.217e+03, ...,   8.277e-04,   3.575e-04], dtype=float32)
+    array([ 6.899e+02,  6.236e+02, ...,  3.710e-08, -1.796e-08])
 
     Compute onset strength auto-correlation up to 4 seconds
 
@@ -814,16 +816,14 @@ def lpc(y, order):
     --------
     Compute LP coefficients of y at order 16 on entire series
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(), offset=30,
-    ...                      duration=10)
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> librosa.lpc(y, 16)
 
     Compute LP coefficients, and plot LP estimate of original series
 
     >>> import matplotlib.pyplot as plt
     >>> import scipy
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(), offset=30,
-    ...                      duration=0.020)
+    >>> y, sr = librosa.load(librosa.ex('trumpet'), duration=0.020)
     >>> a = librosa.lpc(y, 2)
     >>> y_hat = scipy.signal.lfilter([0] + -1*a[1:], [1], y)
     >>> plt.figure()
@@ -1101,7 +1101,7 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
     Examples
     --------
     >>> # Sonify detected beat events
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('choice'))
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
     >>> y_beats = librosa.clicks(frames=beats, sr=sr)
 
