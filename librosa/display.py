@@ -548,6 +548,10 @@ def specshow(data, x_coords=None, y_coords=None,
 
         All frequency types are plotted in units of Hz.
 
+        Any spectrogram parameters (hop_length, sr, bins_per_octave, etc.)
+        used to generate the input data should also be provided when
+        calling `specshow`.
+
         Categorical types:
 
         - 'chroma' : pitches are determined by the chroma filters.
@@ -632,7 +636,7 @@ def specshow(data, x_coords=None, y_coords=None,
 
     Examples
     --------
-    Visualize an STFT power spectrum
+    Visualize an STFT power spectrum using default parameters
 
     >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.load(librosa.util.example_audio_file())
@@ -640,15 +644,18 @@ def specshow(data, x_coords=None, y_coords=None,
 
     >>> D = librosa.amplitude_to_db(np.abs(librosa.stft(y)), ref=np.max)
     >>> plt.subplot(4, 2, 1)
-    >>> librosa.display.specshow(D, y_axis='linear')
+    >>> librosa.display.specshow(D, y_axis='linear', sr=sr)
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Linear-frequency power spectrogram')
 
 
-    Or on a logarithmic scale
+    Or on a logarithmic scale, and using a larger hop
 
+    >>> hop_length = 1024
+    >>> D = librosa.amplitude_to_db(np.abs(librosa.stft(y, hop_length=hop_length)),
+    ...                             ref=np.max)
     >>> plt.subplot(4, 2, 2)
-    >>> librosa.display.specshow(D, y_axis='log')
+    >>> librosa.display.specshow(D, y_axis='log', sr=sr, hop_length=hop_length)
     >>> plt.colorbar(format='%+2.0f dB')
     >>> plt.title('Log-frequency power spectrogram')
 
@@ -783,6 +790,7 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
         return coords
 
     coord_map = {'linear': __coord_fft_hz,
+                 'fft': __coord_fft_hz,
                  'hz': __coord_fft_hz,
                  'log': __coord_fft_hz,
                  'mel': __coord_mel_hz,
@@ -980,7 +988,7 @@ def __coord_mel_hz(n, fmin=0, fmax=11025.0, **_kwargs):
     return basis
 
 
-def __coord_cqt_hz(n, fmin=None, bins_per_octave=12, **_kwargs):
+def __coord_cqt_hz(n, fmin=None, bins_per_octave=12, sr=22050, **_kwargs):
     '''Get CQT bin frequencies'''
     if fmin is None:
         fmin = core.note_to_hz('C1')
@@ -989,9 +997,15 @@ def __coord_cqt_hz(n, fmin=None, bins_per_octave=12, **_kwargs):
     fmin = fmin * 2.0**(_kwargs.get('tuning', 0.0) / bins_per_octave)
 
     # we drop by half a bin so that CQT bins are centered vertically
-    return core.cqt_frequencies(n+1,
-                                fmin=fmin / 2.0**(0.5/bins_per_octave),
-                                bins_per_octave=bins_per_octave)
+    freqs = core.cqt_frequencies(n+1,
+                                 fmin=fmin / 2.0**(0.5/bins_per_octave),
+                                 bins_per_octave=bins_per_octave)
+
+    if np.any(freqs > 0.5 * sr):
+        warnings.warn('Frequency axis exceeds Nyquist. '
+                      'Did you remember to set all spectrogram parameters in specshow?')
+
+    return freqs
 
 
 def __coord_chroma(n, bins_per_octave=12, **_kwargs):
