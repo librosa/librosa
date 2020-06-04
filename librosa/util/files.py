@@ -104,8 +104,12 @@ def list_examples():
         print('{:10}\t{}'.format(key, __TRACKMAP[key]['desc']))
 
 
+@deprecated('0.8', '0.9')
 def example_audio_file():
     '''Get the path to an included audio example file.
+
+    .. warning:: This function is deprecated in 0.8, and will be removed in 0.9.
+                 Instead, use `librosa.example`.
 
     .. raw:: html
        
