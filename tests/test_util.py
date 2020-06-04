@@ -1138,5 +1138,5 @@ def test_example_info(key):
     librosa.util.example_info(key)
 
 
-def test_show_examples():
-    librosa.util.show_examples()
+def test_list_examples():
+    librosa.util.list_examples()
