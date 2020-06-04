@@ -59,10 +59,12 @@ def example(key, hq=False):
     Examples
     --------
     Load "Ain't Misbehavin'" by Fats Waller
+
     >>> y, sr = librosa.load(librosa.example('waller'))
 
     Load "Vibe Ace" by Kevin MacLeod (the example previously packaged with librosa)
     in high-quality mode
+    
     >>> y, sr = librosa.load(librosa.example('vibeace', hq=True))
 
     See Also

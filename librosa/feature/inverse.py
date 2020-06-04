@@ -56,7 +56,7 @@ def mel_to_stft(M, sr=22050, n_fft=2048, power=2.0, **kwargs):
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=5, offset=10)
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> S = np.abs(librosa.stft(y))
     >>> mel_spec = librosa.feature.melspectrogram(S=S, sr=sr)
     >>> S_inv = librosa.feature.inverse.mel_to_stft(mel_spec, sr=sr)
