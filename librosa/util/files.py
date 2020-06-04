@@ -4,12 +4,104 @@
 
 import os
 import glob
-import pkg_resources
+import json
+from pathlib import Path
 
-EXAMPLE_AUDIO = 'example_data/Kevin_MacLeod_-_Vibe_Ace.ogg'
+from pkg_resources import resource_filename
+import pooch
+
+from .exceptions import ParameterError
+from .decorators import deprecated
 
 
-__all__ = ['example_audio_file', 'find_files']
+__all__ = ['example_audio_file', 'find_files', 'example', 'ex', 'list_examples']
+
+
+# Instantiate the pooch
+__data_path = os.environ.get('LIBROSA_DATA_DIR', pooch.os_cache('librosa'))
+__GOODBOY = pooch.create(__data_path,
+                         base_url="https://github.com/librosa/librosa-data/raw/master/audio/", # TODO: fix this
+                         registry=None)
+
+__GOODBOY.load_registry(resource_filename(__name__, str(Path('example_data') / 'registry.txt')))
+
+with open(resource_filename(__name__, str(Path('example_data') / 'index.json')), 'r') as fdesc:
+    __TRACKMAP = json.load(fdesc)
+
+
+def example(key, hq=False):
+    """Retrieve the example recording identified by 'key'.
+
+    The first time an example is requested, it will be downloaded from
+    the remote repository over HTTPS.
+    All subsequent requests will use a locally cached copy of the recording.
+
+    For a list of examples (and their keys), see `librosa.util.list_examples`.
+
+    By default, local files will be cached in the directory given by
+    `pooch.os_cache('librosa')`.  You can override this by setting
+    an environment variable `LIBROSA_DATA_DIR` prior to importing librosa.
+
+    Parameters
+    ----------
+    key : str
+        The identifier for the track to load
+
+    hq : bool
+        If `True`, return the high-quality version of the recording.
+        If `False`, return the 22KHz mono version of the recording.
+
+    Returns
+    -------
+    path : str
+        The path to the requested example file
+
+    Examples
+    --------
+    Load "Ain't Misbehavin'" by Fats Waller
+    >>> y, sr = librosa.load(librosa.example('waller'))
+
+    Load "Vibe Ace" by Kevin MacLeod (the example previously packaged with librosa)
+    in high-quality mode
+    >>> y, sr = librosa.load(librosa.example('vibeace', hq=True))
+
+    See Also
+    --------
+    util.list_examples
+    pooch.os_cache
+    """
+
+    if key not in __TRACKMAP:
+        raise ParameterError('Unknown example key: {}'.format(key))
+
+    if hq:
+        ext = '.hq.ogg'
+    else:
+        ext = '.ogg'
+
+    return __GOODBOY.fetch(__TRACKMAP[key]['path'] + ext)
+
+
+ex = example
+'''Alias for example'''
+
+
+def list_examples():
+    """List the available audio recordings included with librosa.
+
+    Each recording is given a unique identifier (e.g., "brahms" or "waller"),
+    listed in the first column of the output.
+
+    A brief description is provided in the second column.
+
+    See Also
+    --------
+    util.example
+    """
+    print('AVAILABLE EXAMPLES')
+    print('-' * 68)
+    for key in sorted(__TRACKMAP.keys()):
+        print('{:10}\t{}'.format(key, __TRACKMAP[key]['desc']))
 
 
 def example_audio_file():
@@ -38,7 +130,8 @@ def example_audio_file():
         Path to the audio example file included with librosa
     '''
 
-    return pkg_resources.resource_filename(__name__, EXAMPLE_AUDIO)
+    # hq=True recovers our original example file
+    return example('vibeace', hq=True)
 
 
 def find_files(directory, ext=None, recurse=True, case_sensitive=False,
