@@ -40,7 +40,12 @@ def example(key, hq=False):
 
     By default, local files will be cached in the directory given by
     `pooch.os_cache('librosa')`.  You can override this by setting
-    an environment variable `LIBROSA_DATA_DIR` prior to importing librosa.
+    an environment variable `LIBROSA_DATA_DIR` prior to importing librosa:
+
+    >>> import os
+    >>> os.environ['LIBROSA_DATA_DIR'] = '/path/to/store/data'
+    >>> import librosa
+
 
     Parameters
     ----------
