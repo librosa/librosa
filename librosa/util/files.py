@@ -63,9 +63,9 @@ def example(key, hq=False):
 
     Examples
     --------
-    Load "Ain't Misbehavin'" by Fats Waller
+    Load "Hungarian Dance #5" by Johannes Brahms
 
-    >>> y, sr = librosa.load(librosa.example('waller'))
+    >>> y, sr = librosa.load(librosa.example('brahms'))
 
     Load "Vibe Ace" by Kevin MacLeod (the example previously packaged with librosa)
     in high-quality mode
@@ -96,7 +96,7 @@ ex = example
 def list_examples():
     """List the available audio recordings included with librosa.
 
-    Each recording is given a unique identifier (e.g., "brahms" or "waller"),
+    Each recording is given a unique identifier (e.g., "brahms" or "nutcracker"),
     listed in the first column of the output.
 
     A brief description is provided in the second column.

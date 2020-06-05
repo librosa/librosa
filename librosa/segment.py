@@ -879,14 +879,14 @@ def agglomerative(data, k, clusterer=None, axis=-1):
     --------
     Cluster by chroma similarity, break into 20 segments
 
-    >>> y, sr = librosa.load(librosa.ex('waller'), duration=15)
+    >>> y, sr = librosa.load(librosa.ex('brahms'), duration=15)
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     >>> bounds = librosa.segment.agglomerative(chroma, 20)
     >>> bound_times = librosa.frames_to_time(bounds, sr=sr)
     >>> bound_times
-    array([ 0.   ,  0.163,  0.511,  2.067,  3.204,  4.156,  4.992,
-            5.364,  6.409,  7.709,  9.265,  9.543, 10.031, 10.797,
-           11.564, 12.469, 13.096, 13.839, 14.118, 14.838])
+    array([ 0.   ,  0.65 ,  1.091,  1.927,  2.438,  2.902,  3.924,
+            4.783,  5.294,  5.712,  6.13 ,  7.314,  8.522,  8.916,
+            9.66 , 10.844, 11.238, 12.028, 12.492, 14.095])
 
     Plot the segmentation over the chromagram
 

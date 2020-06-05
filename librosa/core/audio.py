@@ -116,10 +116,10 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
     11025
 
     >>> # Load 5 seconds of a file, starting 15 seconds in
-    >>> filename = librosa.ex('waller')
+    >>> filename = librosa.ex('brahms')
     >>> y, sr = librosa.load(filename, offset=15.0, duration=5.0)
     >>> y
-    array([ 0.107,  0.134, ..., -0.026, -0.025], dtype=float32)
+    array([0.146, 0.144, ..., 0.128, 0.015], dtype=float32)
     >>> sr
     22050
 

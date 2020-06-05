@@ -458,7 +458,7 @@ def nn_filter(S, rec=None, aggregate=None, axis=-1, **kwargs):
     By default this would use euclidean distance to select neighbors,
     but this can be overridden directly by setting the `metric` parameter.
 
-    >>> y, sr = librosa.load(librosa.ex('waller'),
+    >>> y, sr = librosa.load(librosa.ex('brahms'),
     ...                      offset=30, duration=10)
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     >>> chroma_med = librosa.decompose.nn_filter(chroma,
