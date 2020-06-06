@@ -4,12 +4,12 @@ A python package for music and audio analysis.
 
 [![PyPI](https://img.shields.io/pypi/v/librosa.svg)](https://pypi.python.org/pypi/librosa)
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/librosa/badges/version.svg)](https://anaconda.org/conda-forge/librosa)
-[![License](https://img.shields.io/pypi/l/librosa.svg)](https://github.com/librosa/librosa/blob/master/LICENSE.md)
+[![License](https://img.shields.io/pypi/l/librosa.svg)](https://github.com/librosa/librosa/blob/main/LICENSE.md)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.591533.svg)](https://doi.org/10.5281/zenodo.591533)
 
-[![Build Status](https://travis-ci.com/librosa/librosa.svg?branch=master)](https://travis-ci.com/librosa/librosa)
-[![Build status](https://ci.appveyor.com/api/projects/status/63lxuac60tojq2vm/branch/master?svg=true)](https://ci.appveyor.com/project/librosa/librosa/branch/master)
-[![Coverage Status](https://coveralls.io/repos/librosa/librosa/badge.svg?branch=master)](https://coveralls.io/r/librosa/librosa?branch=master)
+[![Build Status](https://travis-ci.com/librosa/librosa.svg?branch=main)](https://travis-ci.com/librosa/librosa)
+[![Build status](https://ci.appveyor.com/api/projects/status/63lxuac60tojq2vm/branch/main?svg=true)](https://ci.appveyor.com/project/librosa/librosa/branch/main)
+[![Coverage Status](https://coveralls.io/repos/librosa/librosa/badge.svg?branch=main)](https://coveralls.io/r/librosa/librosa?branch=main)
 
 
 Documentation
@@ -21,8 +21,8 @@ Demonstration notebooks
 -----------------------
 What does librosa do?  Here are some quick demonstrations:
 
-* [Introduction notebook](http://nbviewer.ipython.org/github/librosa/librosa/blob/master/examples/LibROSA%20demo.ipynb): a brief introduction to some commonly used features.
-* [Decomposition and IPython integration](http://nbviewer.ipython.org/github/librosa/librosa/blob/master/examples/LibROSA%20audio%20effects%20and%20playback.ipynb): an intermediate demonstration, illustrating how to process and play back sound
+* [Introduction notebook](http://nbviewer.ipython.org/github/librosa/librosa/blob/main/examples/LibROSA%20demo.ipynb): a brief introduction to some commonly used features.
+* [Decomposition and IPython integration](http://nbviewer.ipython.org/github/librosa/librosa/blob/main/examples/LibROSA%20audio%20effects%20and%20playback.ipynb): an intermediate demonstration, illustrating how to process and play back sound
 
 
 Installation
