@@ -20,7 +20,7 @@ __all__ = ['example_audio_file', 'find_files', 'example', 'ex', 'list_examples',
 # Instantiate the pooch
 __data_path = os.environ.get('LIBROSA_DATA_DIR', pooch.os_cache('librosa'))
 __GOODBOY = pooch.create(__data_path,
-                         base_url="https://github.com/librosa/librosa-data/raw/master/audio/", # TODO: fix this
+                         base_url="https://github.com/librosa/librosa-data/raw/main/audio/", # TODO: fix this
                          registry=None)
 
 __GOODBOY.load_registry(resource_filename(__name__, str(Path('example_data') / 'registry.txt')))
