@@ -1,6 +1,6 @@
 <!--
 Thanks for contributing a pull request! Please ensure you have taken a look at
-the contribution guidelines: https://github.com/librosa/librosa/blob/master/CONTRIBUTING.md#how-to-contribute
+the contribution guidelines: https://github.com/librosa/librosa/blob/main/CONTRIBUTING.md#how-to-contribute
 -->
 #### Reference Issue
 <!-- Example: Fixes #123 -->
