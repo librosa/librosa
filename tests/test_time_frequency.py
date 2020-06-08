@@ -540,7 +540,7 @@ def test_key_to_notes_badkey():
 @pytest.mark.parametrize('key,ref_notes', [
                                         # Test for implicit accidentals, ties
                                         ('C:maj', ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']),
-                                        ('A:min', ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']),
+                                        ('A:min', ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']),
                                         # Test for implicit accidentals, unambiguous
                                         ('D:maj', ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']),
                                         ('F:min', ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']),

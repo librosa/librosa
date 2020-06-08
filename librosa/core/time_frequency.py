@@ -569,24 +569,24 @@ def midi_to_note(midi, octave=True, cents=False, key='C:maj', unicode=True):
 
     >>> librosa.midi_to_note(37)
     'C♯2'
-    
+
     >>> librosa.midi_to_note(37, unicode=False)
     'C#2'
-    
+
     >>> librosa.midi_to_note(-2)
     'A♯-2'
-    
+
     >>> librosa.midi_to_note(104.7)
     'A7'
-    
+
     >>> librosa.midi_to_note(104.7, cents=True)
     'A7-30'
-    
+
     >>> librosa.midi_to_note(list(range(12, 24)))
     ['C0', 'C♯0', 'D0', 'D♯0', 'E0', 'F0', 'F♯0', 'G0', 'G♯0', 'A0', 'A♯0', 'B0']
 
     Use a key signature to resolve enharmonic equivalences
-    >>> librosa.midi_to_note(range(12), key='A:min')
+    >>> librosa.midi_to_note(range(12, 24), key='F:min')
     ['C0', 'D♭0', 'D0', 'E♭0', 'E0', 'F0', 'G♭0', 'G0', 'A♭0', 'A0', 'B♭0', 'B0']
 
     Parameters
@@ -623,7 +623,7 @@ def midi_to_note(midi, octave=True, cents=False, key='C:maj', unicode=True):
     midi_to_hz
     note_to_midi
     hz_to_note
-    key_to_note
+    key_to_notes
     '''
 
     if cents and not octave:
@@ -1716,8 +1716,9 @@ def samples_like(X, hop_length=512, n_fft=None, axis=-1):
 
 
 @cache(level=10)
-def key_to_notes(key, unicode=True): 
-    '''Construct the names for 12 chromatic notes for a given key.
+def key_to_notes(key, unicode=True):
+    '''Lists all 12 note names in the chromatic scale, as spelled according to
+    a given key (major or minor).
 
     This function exists to resolve enharmonic equivalences between different
     spellings for the same pitch (e.g. C♯ vs D♭), and is primarily useful when producing
@@ -1731,8 +1732,7 @@ def key_to_notes(key, unicode=True):
     2. If the tonic does not have an accidental, accidentals will be inferred to minimize
        the total number used for diatonic scale degrees.
 
-    3. If there is a tie (e.g., in the case of C:maj vs A:min), sharps will be preferred
-       for major keys, and flats will be preferred for minor keys.
+    3. If there is a tie (e.g., in the case of C:maj vs A:min), sharps will be preferred.
 
     Parameters
     ----------
@@ -1766,9 +1766,9 @@ def key_to_notes(key, unicode=True):
     >>> librosa.key_to_notes('C:maj')
     ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
 
-    `A:min` will use all flats
+    `A:min` has the same notes
     >>> librosa.key_to_notes('A:min')
-    ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B']
+    ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
 
     `A♯:min` will use sharps, but spell note 0 (`C`) as `B♯`
     >>> librosa.key_to_notes('A#:min')
@@ -1824,16 +1824,11 @@ def key_to_notes(key, unicode=True):
         # use sharps explicitly
         use_sharps = True
 
-    elif 0 < tonic_number < 6:
+    elif 0 <= tonic_number < 6:
         use_sharps = True
 
     elif tonic_number > 6:
         use_sharps = False
-
-    else:
-        # Equal numbers of sharps and flats for tonics 0 and 6
-        # break ties for major => sharp, minor => flat
-        use_sharps = major
 
     # Basic note sequences for simple keys
     notes_sharp = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
