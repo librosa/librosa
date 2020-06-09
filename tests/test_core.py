@@ -1350,6 +1350,29 @@ def test_iirt_flayout1(y_44100):
     librosa.iirt(y, hop_length=2205, win_length=4410, flayout="foo")
 
 
+def test_iirt_peaks():
+    # Test for PR #1157
+
+    Fs = 22050
+    length = 180
+    click_times = [10, 50, 90, 130, 170]
+
+    x = np.zeros(length * Fs)
+    for click in click_times:
+        x[click * Fs] = 1
+
+    win_length = 2048
+    hop_length = 512
+    X = librosa.iirt(x, win_length=win_length, hop_length=hop_length)
+
+    for cur_band in X:
+        cur_peaks = scipy.signal.find_peaks(cur_band, prominence=1e-5)[0]
+        assert len(cur_peaks) == 5
+
+        cur_peak_times = cur_peaks * 512 / Fs
+        assert all(abs(cur_peak_times - click_times) < (win_length / Fs))
+
+
 @pytest.fixture(scope="module")
 def S_pcen():
     return np.abs(np.random.randn(9, 30))
