@@ -1369,7 +1369,7 @@ def test_iirt_peaks():
         cur_peaks = scipy.signal.find_peaks(cur_band, prominence=1e-5)[0]
         assert len(cur_peaks) == 5
 
-        cur_peak_times = cur_peaks * 512 / Fs
+        cur_peak_times = cur_peaks * hop_length / Fs
         assert all(abs(cur_peak_times - click_times) < (win_length / Fs))
 
 
