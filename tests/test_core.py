@@ -851,13 +851,13 @@ def test_piptrack_errors():
 @pytest.mark.parametrize('freq', [110, 220, 440, 880])
 def test_yin_tone(freq):
     y = librosa.tone(freq, duration=1.0)
-    f0 = librosa.yin(y)
+    f0 = librosa.yin(y, center=False)
     assert np.allclose(np.log2(f0), np.log2(freq), rtol=0, atol=1e-2)
 
 
 def test_yin_chirp():
-    y = librosa.chirp(220, 640, duration=3.0)
-    f0 = librosa.yin(y)
+    y = librosa.chirp(220, 640, duration=1.0)
+    f0 = librosa.yin(y, center=False)
     target_f0 = np.load(os.path.join('tests', 'data', 'pitch-yin.npy'))
     assert np.allclose(np.log2(f0), np.log2(target_f0), rtol=0, atol=1e-2)
 
@@ -865,14 +865,14 @@ def test_yin_chirp():
 @pytest.mark.parametrize('freq', [110, 220, 440, 880])
 def test_pyin_tone(freq):
     y = librosa.tone(freq, duration=1.0)
-    f0, _ = librosa.pyin(y)
+    f0, _ = librosa.pyin(y, center=False)
     assert np.allclose(np.log2(f0), np.log2(freq), rtol=0, atol=1e-2)
 
 
 def test_pyin_chirp():
     y = librosa.chirp(220, 640, duration=1.0)
     y = np.pad(y, (22050,))
-    f0, _ = librosa.pyin(y)
+    f0, _ = librosa.pyin(y, center=False)
     target_f0 = np.load(os.path.join('tests', 'data', 'pitch-pyin.npy'))
     # test if correct frames are voiced
     assert np.array_equal(f0 > 0, target_f0 > 0)

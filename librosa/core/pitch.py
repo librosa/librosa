@@ -5,6 +5,7 @@
 import warnings
 import numpy as np
 import scipy
+import math
 
 
 from .spectrum import _spectrogram
@@ -12,6 +13,7 @@ from . import time_frequency
 from .._cache import cache
 from .. import util
 from .. import sequence
+from ..util.exceptions import ParameterError
 
 __all__ = ['estimate_tuning', 'pitch_tuning', 'piptrack', 'yin', 'pyin']
 
@@ -338,82 +340,139 @@ def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
     return pitches, mags
 
 
-def yin(y, sr=22050, win_length=1024, hop_length=None, fmin=55, fmax=900, peak_threshold=0.1):
+def _cumulative_mean_normalized_difference(y_frames, frame_length, win_length, min_period, max_period):
+    '''Cumulative mean normalized difference function (equation (8) in [1]_)
+
+    .. [1] De Cheveigné, A., & Kawahara, H. (2002).
+        "YIN, a fundamental frequency estimator for speech and music."
+        The Journal of the Acoustical Society of America, 111(4), 1917-1930.
+
+    Parameters
+    ----------
+    y_frames : np.ndarray [shape=(frame_length, n_frames)]
+        framed audio time series.
+
+    frame_length : int > 0 [scalar]
+         length of the frames in samples.
+
+    win_length : int > 0 [scalar]
+        length of the window for calculating autocorrelation in samples.
+
+    hop_length : int > 0 [scalar]
+         number of audio samples between adjacent predictions.
+
+    min_period : int > 0 [scalar]
+        minimum period.
+
+    max_period : int > 0 [scalar]
+        maximum period.
+
+    Returns
+    -------
+    yin_frames : np.ndarray [shape=(max_period-min_period+2,n_frames)]
+        Cumulative mean normalized difference function for each frame.
+    '''
+    # Autocorrelation.
+    a = np.fft.rfft(y_frames, frame_length, axis=0)
+    b = np.fft.rfft(y_frames[win_length::-1, :], frame_length, axis=0)
+    acf_frames = np.fft.irfft(a*b, frame_length, axis=0)[win_length:]
+    acf_frames[np.abs(acf_frames) < 1e-6] = 0
+
+    # Energy terms.
+    energy_frames = np.cumsum(y_frames ** 2, axis=0)
+    energy_frames = energy_frames[win_length:, :] - energy_frames[:-win_length, :]
+    energy_frames[np.abs(energy_frames) < 1e-6] = 0
+
+    # Difference function.
+    yin_frames = energy_frames[0, :] + energy_frames - 2*acf_frames
+
+    # Cumulative mean normalized difference function.
+    yin_numerator = yin_frames[min_period-1:max_period+1, :]
+    tau_range = np.arange(1, max_period+1)[:, None]
+    cumulative_mean = np.cumsum(yin_frames[1:max_period+1, :], axis=0) / tau_range
+    yin_denominator = cumulative_mean[min_period-2:max_period, :]
+    yin_frames = yin_numerator / (yin_denominator + util.tiny(yin_denominator))
+    return yin_frames
+
+
+def yin(y, sr=22050, frame_length=2048, win_length=1024, hop_length=None,
+        fmin=None, fmax=880, peak_threshold=0.1, center=True, pad_mode='reflect'):
     '''Fundamental frequency (F0) estimation. [1]_
 
     .. [1] De Cheveigné, A., & Kawahara, H. (2002).
         "YIN, a fundamental frequency estimator for speech and music."
         The Journal of the Acoustical Society of America, 111(4), 1917-1930.
 
-     Parameters
-     ----------
-     y : np.ndarray [shape=(n,)]
-         audio time series.
+    Parameters
+    ----------
+    y : np.ndarray [shape=(n,)]
+        audio time series.
 
-     sr : number > 0 [scalar]
-         sampling rate of `y` in Hertz.
+    sr : number > 0 [scalar]
+        sampling rate of `y` in Hertz.
 
-     win_length : int [scalar]
-         length of the window in samples.
-         By default, win_length=1024 corresponds to a time scale of 46 ms at
+    frame_length : int > 0 [scalar]
+         length of the frames in samples.
+         By default, win_length=2048 corresponds to a time scale of about 93 ms at
          a sampling rate of 22050 Hz.
 
-     hop_length : None or int > 0 [scalar]
-         number of audio samples between adjacent pYIN predictions.
+    win_length : int > 0 [scalar]
+        length of the window for calculating autocorrelation in samples.
+
+    hop_length : None or int > 0 [scalar]
+         number of audio samples between adjacent YIN predictions.
          If `None`, defaults to `frame_length // 4`.
 
-     fmin: number > 0 [scalar]
-         minimum frequency in Hertz.
+    fmin: number > 0 [scalar]
+        Minimum frequency. Defaults to C1 ~= 32.70 Hz.
 
-     fmax: number > 0 [scalar]
-         maximum frequency in Hertz.
+    fmax: number > 0 [scalar]
+        maximum frequency in Hertz.
 
-     peak_threshold: number > 0 [scalar]
-         absolute threshold for peak estimation.
+    peak_threshold: number > 0 [scalar]
+        absolute threshold for peak estimation.
 
-     Returns
-     -------
-     f0: np.ndarray [shape=(n_frames,)]
-         time series of fundamental frequencies in Hertz.
+    Returns
+    -------
+    f0: np.ndarray [shape=(n_frames,)]
+        time series of fundamental frequencies in Hertz.
 
-     Examples
-     --------
-     Computing a fundamental frequency curve from an audio input:
-     >>> y = librosa.chirp(440, 880, duration=7.0)
-     >>> yin(y)
-     array([441.15076669, 441.6640896 , 442.16219657, ...,
-        871.59470743, 872.63699131, 873.66696896])
-     '''
+    Examples
+    --------
+    Computing a fundamental frequency curve from an audio input:
+    >>> y = librosa.chirp(440, 880, duration=7.0)
+    >>> librosa.yin(y)
+    array([442.22108738, 441.7332485 , 441.15272224, ...,
+        873.5946698 ,875.75331159, 877.79219557])
+    '''
+    if win_length > frame_length:
+        raise ParameterError('win_length cannot exceed frame_length')
+
     # Set the default hop if it is not already specified.
     if hop_length is None:
-        hop_length = int(win_length // 4)
+        hop_length = int(frame_length // 4)
+
+    if fmin is None:
+        # C1 by default
+        fmin = time_frequency.note_to_hz('C1')
 
     # Check that audio is valid.
     util.valid_audio(y, mono=True)
 
-    # Autocorrelation.
-    y_frames = util.frame(y, frame_length=2*win_length, hop_length=hop_length)
-    n_frames = y_frames.shape[-1]
-    a = np.fft.fft(y_frames, 2*win_length, axis=0)
-    b = np.fft.fft(y_frames[win_length::-1, :], 2*win_length, axis=0)
-    acf_frames = np.fft.ifft(a*b, 2*win_length, axis=0).real[win_length:]
+    # Pad the time series so that frames are centered
+    if center:
+        y = np.pad(y, frame_length // 2, mode=pad_mode)
 
-    # Energy terms.
-    window = scipy.signal.windows.boxcar(win_length + 1)
-    energy_frames = scipy.signal.fftconvolve(
-        y_frames ** 2, window[:, None], mode="valid", axes=0)
+    # Frame audio.
+    y_frames = util.frame(y, frame_length=frame_length, hop_length=hop_length)
 
-    # Difference function.
-    yin_frames = energy_frames[0, :] + energy_frames - 2*acf_frames
+    # Calculate minimum and maximum periods
+    min_period = max(math.floor(sr / fmax), 2)
+    max_period = min(math.ceil(sr / fmin), frame_length-win_length-1)
 
-    # Cumulative mean normalized difference function.
-    min_period = np.maximum(int(np.floor(sr / fmax)), 2)
-    max_period = np.minimum(int(np.ceil(sr / fmin)), win_length - 1)
-    yin_numerator = yin_frames[min_period-1:max_period+1, :]
-    tau_range = np.arange(1, max_period+1)[:, None]
-    cumulative_mean = np.cumsum(yin_frames[1:max_period+1, :], axis=0) / tau_range
-    yin_denominator = cumulative_mean[min_period-2:max_period, :]
-    yin_frames = yin_numerator / (yin_denominator + util.tiny(yin_denominator))
+    # Calculate cumulative mean normalized difference function.
+    yin_frames = _cumulative_mean_normalized_difference(
+        y_frames, frame_length, win_length, min_period, max_period)
 
     # Parabolic interpolation.
     parabola_a = (yin_frames[:-2, :] + yin_frames[2:, :] - 2*yin_frames[1:-1, :]) / 2
@@ -422,10 +481,8 @@ def yin(y, sr=22050, win_length=1024, hop_length=None, fmin=55, fmax=900, peak_t
     parabolic_shifts[np.abs(parabolic_shifts) > 1] = 0
 
     # Find local minima.
-    is_trough = np.logical_and(
-        yin_frames[1:-1, :] < yin_frames[:-2, :],
-        yin_frames[1:-1, :] < yin_frames[2:, :])
-
+    is_trough = util.localmax(-yin_frames, axis=0)
+    is_trough = is_trough[1:-1, :]
     yin_frames = yin_frames[1:-1, :]
 
     # Find minima below peak threshold.
@@ -443,14 +500,16 @@ def yin(y, sr=22050, win_length=1024, hop_length=None, fmin=55, fmax=900, peak_t
     yin_period = min_period + yin_period
 
     # Refine peak by parabolic interpolation.
-    yin_period = yin_period + parabolic_shifts[yin_period - min_period, range(n_frames)]
+    yin_period = yin_period + parabolic_shifts[yin_period - min_period, range(yin_frames.shape[1])]
 
     # Convert period to fundamental frequency.
     f0 = sr / yin_period
     return f0
 
 
-def pyin(y, sr=22050, win_length=1024, hop_length=None, fmin=55, fmax=900):
+def pyin(y, sr=22050, frame_length=2048, win_length=1024, hop_length=None, fmin=None, fmax=880,
+         n_thresholds=100, beta_parameters=(2, 18), boltzmann_parameter=3, resolution=0.1,
+         maximum_transition_rate=10, switch_prob=0.01, no_trough_prob=0.01, center=True, pad_mode='reflect'):
     '''Fundamental frequency (F0) estimation. [1]_
 
     .. [1] Mauch, M., & Dixon, S. (2014).
@@ -465,20 +524,46 @@ def pyin(y, sr=22050, win_length=1024, hop_length=None, fmin=55, fmax=900):
     sr : number > 0 [scalar]
         sampling rate of `y` in Hertz.
 
-    win_length : int [scalar]
-        length of the window in samples.
-        By default, win_length=1024 corresponds to a time scale of 46 ms at
-        a sampling rate of 22050 Hz.
+    frame_length : int > 0 [scalar]
+         length of the frames in samples.
+         By default, win_length=2048 corresponds to a time scale of about 93 ms at
+         a sampling rate of 22050 Hz.
+
+    win_length : int > 0 [scalar]
+        length of the window for calculating autocorrelation in samples.
 
     hop_length : None or int > 0 [scalar]
         number of audio samples between adjacent pYIN predictions.
         If `None`, defaults to `frame_length // 4`.
 
-    fmin: number > 0 [scalar]
-        minimum frequency in Hertz.
+    fmin : number > 0 [scalar]
+        Minimum frequency. Defaults to C1 ~= 32.70 Hz.
 
-    fmax: number > 0 [scalar]
+    fmax : number > 0 [scalar]
         maximum frequency in Hertz.
+
+    n_thresholds : int > 0 [scalar]
+        number of thresholds for peak estimation.
+
+    beta_parameters : tuple
+        shape parameters for the beta distribution prior over thresholds.
+
+    boltzmann_parameter: number > 0 [scalar]
+        shape parameter for the Boltzmann distribution prior over troughs.
+        Larger values will assign more mass to smaller periods.
+
+    resolution : float in `(0, 1)`
+        Resolution of the pitch bins.
+        0.01 corresponds to cents.
+
+    maximum_transition_rate : float > 0
+        maximum pitch transition rate in semitones per frame.
+
+    switch_prob : float in `(0, 1)`
+        probability of switching from voiced to unvoiced or vice versa.
+
+    no_trough_prob : float in `(0, 1)`
+        maximum probability to add to global minimum if no trough is below threshold.
 
     Returns
     -------
@@ -493,77 +578,73 @@ def pyin(y, sr=22050, win_length=1024, hop_length=None, fmin=55, fmax=900):
     --------
     Computing a fundamental frequency curve from an audio input:
     >>> y = librosa.chirp(440, 880, duration=7.0)
-    >>> f0, voiced_prob = pyin(y)
+    >>> f0, voiced_prob = librosa.pyin(y)
     '''
+    if win_length > frame_length:
+        raise ParameterError('win_length cannot exceed frame_length')
+
     # Set the default hop if it is not already specified.
     if hop_length is None:
-        hop_length = int(win_length // 4)
+        hop_length = int(frame_length // 4)
+
+    if fmin is None:
+        # C1 by default
+        fmin = time_frequency.note_to_hz('C1')
 
     # Check that audio is valid.
     util.valid_audio(y, mono=True)
 
-    # Autocorrelation.
-    y_frames = util.frame(y, frame_length=2*win_length, hop_length=hop_length)
-    n_frames = y_frames.shape[-1]
-    a = np.fft.fft(y_frames, 2*win_length, axis=0)
-    b = np.fft.fft(y_frames[win_length::-1, :], 2*win_length, axis=0)
-    acf_frames = np.fft.ifft(a*b, 2*win_length, axis=0).real[win_length:]
-    acf_frames[np.abs(acf_frames) < 1e-6] = 0
+    # Pad the time series so that frames are centered
+    if center:
+        y = np.pad(y, frame_length // 2, mode=pad_mode)
 
-    # Energy terms.
-    window = scipy.signal.windows.boxcar(win_length + 1)
-    energy_frames = scipy.signal.fftconvolve(
-        y_frames**2, window[:, None], mode="valid", axes=0)
-    energy_frames[np.abs(energy_frames) < 1e-6] = 0
+    # Frame audio.
+    y_frames = util.frame(y, frame_length=frame_length, hop_length=hop_length)
 
-    # Difference function.
-    yin_frames = energy_frames[0, :] + energy_frames - 2*acf_frames
+    # Calculate minimum and maximum periods
+    min_period = max(math.floor(sr / fmax), 2)
+    max_period = min(math.ceil(sr / fmin), frame_length-win_length-1)
 
-    # Cumulative mean normalized difference function.
-    min_period = np.maximum(int(np.floor(sr / fmax)), 2)
-    max_period = np.minimum(int(np.ceil(sr / fmin)), win_length-1)
-    yin_numerator = yin_frames[min_period-1:max_period+1, :]
-    tau_range = np.arange(1, max_period+1)[:, None]
-    cumulative_mean = np.cumsum(yin_frames[1:max_period+1, :], axis=0) / tau_range
-    yin_denominator = cumulative_mean[min_period-2:max_period, :]
-    yin_frames = yin_numerator / (yin_denominator + util.tiny(yin_denominator))
+    # Calculate cumulative mean normalized difference function.
+    yin_frames = _cumulative_mean_normalized_difference(
+        y_frames, frame_length, win_length, min_period, max_period)
 
     # Parabolic interpolation.
     parabola_a = (yin_frames[:-2, :] + yin_frames[2:, :] - 2*yin_frames[1:-1, :]) / 2
     parabola_b = (yin_frames[2:, :] - yin_frames[:-2, :]) / 2
     parabolic_shifts = -parabola_b / (2*parabola_a + util.tiny(parabola_a))
     parabolic_shifts[np.abs(parabolic_shifts) > 1] = 0
-    yin_frames = yin_frames[1:-1, :]
 
     # Find Yin candidates and probabilities.
     # The implementation here follows the official pYIN software which
     # differs from the method described in the paper.
     # 1. Define the prior over the thresholds.
-    n_thresholds = 100  # number of thresholds for peak estimation.
     thresholds = np.linspace(0, 1, n_thresholds + 1)
-    beta_cdf = scipy.stats.beta.cdf(thresholds, 2, 18)
+    beta_cdf = scipy.stats.beta.cdf(
+        thresholds, beta_parameters[0], beta_parameters[1])
     beta_probs = np.diff(beta_cdf)
 
-    yin_probs = np.zeros_like(yin_frames)
+    yin_probs = np.zeros((yin_frames.shape[0]-2, yin_frames.shape[1]))
     for i, yin_frame in enumerate(yin_frames.T):
         # 2. For each frame find the troughs.
-        is_trough = np.logical_and(
-            yin_frame[1:-1] < yin_frame[:-2],
-            yin_frame[1:-1] < yin_frame[2:])
+        is_trough = util.localmax(-yin_frame, axis=0)
+        is_trough = is_trough[1:-1]
+        yin_frame = yin_frame[1:-1]
         trough_index, = np.nonzero(is_trough)
 
         if len(trough_index) == 0:
             continue
 
         # 3. Find the troughs below each threshold.
-        trough_heights = yin_frame[trough_index + 1]
+        trough_heights = yin_frame[trough_index]
         trough_thresholds = trough_heights[:, None] < thresholds[None, 1:]
 
         # 4. Define the prior over the troughs.
         # Smaller periods are weighted more.
         trough_positions = np.cumsum(trough_thresholds, axis=0) - 1
         n_troughs = np.count_nonzero(trough_thresholds, axis=0)
-        trough_prior = scipy.stats.boltzmann.pmf(trough_positions, 10, n_troughs)
+        trough_prior = scipy.stats.boltzmann.pmf(
+            trough_positions, boltzmann_parameter, n_troughs)
         trough_prior[~trough_thresholds] = 0
 
         # 5. For each threshold add probability to global minimum if no trough is below threshold,
@@ -571,9 +652,9 @@ def pyin(y, sr=22050, win_length=1024, hop_length=None, fmin=55, fmax=900):
         probs = np.sum(trough_prior * beta_probs, axis=1)
         global_min = np.argmin(trough_heights)
         n_thresholds_below_min = np.count_nonzero(~trough_thresholds[global_min, :])
-        probs[global_min] += 0.01 * np.sum(beta_probs[:n_thresholds_below_min])
+        probs[global_min] += no_trough_prob*np.sum(beta_probs[:n_thresholds_below_min])
 
-        yin_probs[trough_index + 1, i] = probs
+        yin_probs[trough_index, i] = probs
 
     yin_period, frame_index = np.nonzero(yin_probs)
 
@@ -582,23 +663,23 @@ def pyin(y, sr=22050, win_length=1024, hop_length=None, fmin=55, fmax=900):
     period_candidates = period_candidates + parabolic_shifts[yin_period, frame_index]
     f0_candidates = sr / period_candidates
 
-    n_bins_per_semitone = 10  # bins for discretizing the pitch space between fmin and fmax.
-    n_pitch_bins = int(np.log2(fmax / fmin) * 12 * n_bins_per_semitone)
+    n_bins_per_semitone = math.ceil(1. / resolution)
+    n_pitch_bins = math.floor(12*n_bins_per_semitone*np.log2(fmax / fmin)) + 1
 
     # Construct transition matrix.
-    transition_width = 10 * (n_bins_per_semitone // 2) + 1
+    transition_width = maximum_transition_rate*n_bins_per_semitone + 1
     transition = sequence.transition_local(
         n_pitch_bins, transition_width, window='triangle', wrap=False)
     transition = np.block(
-        [[0.99 * transition, 0.01 * transition],
-         [0.01 * transition, 0.99 * transition]])
+        [[(1-switch_prob)*transition, switch_prob*transition],
+         [switch_prob*transition, (1-switch_prob)*transition]])
 
     # Find pitch bin corresponding to each f0 candidate.
-    bin_index = 12 * n_bins_per_semitone * np.log2(f0_candidates / fmin)
-    bin_index = np.clip(np.round(bin_index), 0, n_pitch_bins - 1).astype(int)
+    bin_index = 12*n_bins_per_semitone*np.log2(f0_candidates / fmin)
+    bin_index = np.clip(np.round(bin_index), 0, n_pitch_bins).astype(int)
 
     # Observation probabilities.
-    observation_probs = np.zeros((2*n_pitch_bins, n_frames))
+    observation_probs = np.zeros((2*n_pitch_bins, yin_frames.shape[1]))
     observation_probs[bin_index, frame_index] = yin_probs[yin_period, frame_index]
     voiced_prob = np.clip(np.sum(observation_probs, axis=0), 0, 1)
     observation_probs[n_pitch_bins:, :] = (1 - voiced_prob[None, :]) / n_pitch_bins
