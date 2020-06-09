@@ -180,10 +180,11 @@ class NoteFormatter(Formatter):
     >>> ax2.set_ylabel('Note')
     >>> plt.show()
     '''
-    def __init__(self, octave=True, major=True):
+    def __init__(self, octave=True, major=True, key='C:maj'):
 
         self.octave = octave
         self.major = major
+        self.key = key
 
     def __call__(self, x, pos=None):
 
@@ -198,7 +199,7 @@ class NoteFormatter(Formatter):
 
         cents = vmax <= 2 * max(1, vmin)
 
-        return core.hz_to_note(int(x), octave=self.octave, cents=cents)
+        return core.hz_to_note(int(x), octave=self.octave, cents=cents, key=self.key)
 
 
 class LogHzFormatter(Formatter):
@@ -266,9 +267,12 @@ class ChromaFormatter(Formatter):
     >>> ax.set_ylabel('Pitch class')
     >>> plt.show()
     '''
+    def __init__(self, key='C:maj'):
+        self.key = key
+
     def __call__(self, x, pos=None):
         '''Format for chroma positions'''
-        return core.midi_to_note(int(x), octave=False, cents=False)
+        return core.midi_to_note(int(x), octave=False, cents=False, key=self.key)
 
 
 class TonnetzFormatter(Formatter):
@@ -512,6 +516,7 @@ def specshow(data, x_coords=None, y_coords=None,
              fmin=None, fmax=None,
              tuning=0.0,
              bins_per_octave=12,
+             key='C:maj',
              ax=None,
              **kwargs):
     '''Display a spectrogram/chromagram/cqt/etc.
@@ -608,6 +613,9 @@ def specshow(data, x_coords=None, y_coords=None,
 
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave.  Used for CQT frequency scale.
+
+    key : str
+        The reference key to use when using note axes (`cqt_note`, `chroma`).
 
     ax : matplotlib.axes.Axes or None
         Axes to plot on instead of the default `plt.gca()`.
@@ -744,7 +752,8 @@ def specshow(data, x_coords=None, y_coords=None,
                       fmax=fmax,
                       tuning=tuning,
                       bins_per_octave=bins_per_octave,
-                      hop_length=hop_length)
+                      hop_length=hop_length,
+                      key=key)
 
     # Get the x and y coordinates
     y_coords = __mesh_coords(y_axis, y_coords, data.shape[0], **all_params)
@@ -762,8 +771,8 @@ def specshow(data, x_coords=None, y_coords=None,
     __scale_axes(axes, y_axis, 'y')
 
     # Construct tickers and locators
-    __decorate_axis(axes.xaxis, x_axis)
-    __decorate_axis(axes.yaxis, y_axis)
+    __decorate_axis(axes.xaxis, x_axis, key=key)
+    __decorate_axis(axes.yaxis, y_axis, key=key)
 
     return axes
 
@@ -870,7 +879,7 @@ def __scale_axes(axes, ax_type, which):
     scaler(mode, **kwargs)
 
 
-def __decorate_axis(axis, ax_type):
+def __decorate_axis(axis, ax_type, key='C:maj'):
     '''Configure axis tickers, locators, and labels'''
 
     if ax_type == 'tonnetz':
@@ -879,10 +888,11 @@ def __decorate_axis(axis, ax_type):
         axis.set_label_text('Tonnetz')
 
     elif ax_type == 'chroma':
-        axis.set_major_formatter(ChromaFormatter())
+        axis.set_major_formatter(ChromaFormatter(key=key))
+        degrees = core.key_to_degrees(key)
         axis.set_major_locator(FixedLocator(0.5 +
                                             np.add.outer(12 * np.arange(10),
-                                                         [0, 2, 4, 5, 7, 9, 11]).ravel()))
+                                                         degrees).ravel()))
         axis.set_label_text('Pitch class')
 
     elif ax_type in ['tempo', 'fourier_tempo']:
@@ -927,9 +937,9 @@ def __decorate_axis(axis, ax_type):
         axis.set_label_text('Lag (ms)')
 
     elif ax_type == 'cqt_note':
-        axis.set_major_formatter(NoteFormatter())
+        axis.set_major_formatter(NoteFormatter(key=key))
         axis.set_major_locator(LogLocator(base=2.0))
-        axis.set_minor_formatter(NoteFormatter(major=False))
+        axis.set_minor_formatter(NoteFormatter(key=key, major=False))
         axis.set_minor_locator(LogLocator(base=2.0,
                                           subs=2.0**(np.arange(1, 12)/12.0)))
         axis.set_label_text('Note')
