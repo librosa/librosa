@@ -1336,6 +1336,8 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
         hop_length_STMSP = hop_length / factor
         win_length_STMSP_round = int(round(win_length / factor))
 
+        # hop_length_STMSP is used here as a floating-point number.
+        # The discretization happens at the end to avoid accumulated rounding errors.
         start_idx = np.arange(0, len(cur_filter_output)-win_length_STMSP_round, hop_length_STMSP)
         if len(start_idx) < n_frames:
             min_length = int(np.ceil(n_frames * hop_length_STMSP)) + win_length_STMSP_round
