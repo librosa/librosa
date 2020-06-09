@@ -1316,7 +1316,7 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
         y_resampled.append(resample(y, sr, cur_sr))
 
     # Compute the number of frames that will fit. The end may get truncated.
-    n_frames = 1 + (len(y) - win_length) // hop_length
+    n_frames = int(1 + (len(y) - win_length) // hop_length)
 
     bands_power = []
 
