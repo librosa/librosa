@@ -395,6 +395,26 @@ def _cumulative_mean_normalized_difference(y_frames, frame_length, win_length, m
     return yin_frames
 
 
+def _parabolic_interpolation(y_frames):
+    '''Piecewise parabolic interpolation for yin and pyin.
+
+    Parameters
+    ----------
+    y_frames : np.ndarray [shape=(frame_length, n_frames)]
+        framed audio time series.
+
+    Returns
+    -------
+    parabolic_shifts : np.ndarray [shape=(frame_length-2, n_frames)]
+        position of the parabola optima
+    '''
+    parabola_a = (y_frames[:-2, :] + y_frames[2:, :] - 2*y_frames[1:-1, :]) / 2
+    parabola_b = (y_frames[2:, :] - y_frames[:-2, :]) / 2
+    parabolic_shifts = -parabola_b / (2*parabola_a + util.tiny(parabola_a))
+    parabolic_shifts[np.abs(parabolic_shifts) > 1] = 0
+    return parabolic_shifts
+
+
 def yin(y, sr=22050, frame_length=2048, win_length=1024, hop_length=None,
         fmin=None, fmax=880, peak_threshold=0.1, center=True, pad_mode='reflect'):
     '''Fundamental frequency (F0) estimation. [1]_
@@ -431,6 +451,21 @@ def yin(y, sr=22050, frame_length=2048, win_length=1024, hop_length=None,
 
     peak_threshold: number > 0 [scalar]
         absolute threshold for peak estimation.
+
+    center : boolean
+        If `True`, the signal `y` is padded so that frame
+        `D[:, t]` is centered at `y[t * hop_length]`.
+        If `False`, then `D[:, t]` begins at `y[t * hop_length]`.
+        Defaults to `True`,  which simplifies the alignment of `D` onto a
+        time grid by means of `librosa.core.frames_to_samples`.
+
+    pad_mode : string or function
+        If `center=True`, this argument is passed to `np.pad` for padding
+        the edges of the signal `y`. By default (`pad_mode="reflect"`),
+        `y` is padded on both sides with its own reflection, mirrored around
+        its first and last sample respectively.
+        If `center=False`,  this argument is ignored.
+        .. see also:: `np.pad`
 
     Returns
     -------
@@ -475,10 +510,7 @@ def yin(y, sr=22050, frame_length=2048, win_length=1024, hop_length=None,
         y_frames, frame_length, win_length, min_period, max_period)
 
     # Parabolic interpolation.
-    parabola_a = (yin_frames[:-2, :] + yin_frames[2:, :] - 2*yin_frames[1:-1, :]) / 2
-    parabola_b = (yin_frames[2:, :] - yin_frames[:-2, :]) / 2
-    parabolic_shifts = -parabola_b / (2*parabola_a + util.tiny(parabola_a))
-    parabolic_shifts[np.abs(parabolic_shifts) > 1] = 0
+    parabolic_shifts = _parabolic_interpolation(yin_frames)
 
     # Find local minima.
     is_trough = util.localmax(-yin_frames, axis=0)
@@ -509,7 +541,7 @@ def yin(y, sr=22050, frame_length=2048, win_length=1024, hop_length=None,
 
 def pyin(y, sr=22050, frame_length=2048, win_length=1024, hop_length=None, fmin=None, fmax=880,
          n_thresholds=100, beta_parameters=(2, 18), boltzmann_parameter=3, resolution=0.1,
-         maximum_transition_rate=10, switch_prob=0.01, no_trough_prob=0.01, center=True, pad_mode='reflect'):
+         max_transition_rate=35.92, switch_prob=0.01, no_trough_prob=0.01, center=True, pad_mode='reflect'):
     '''Fundamental frequency (F0) estimation. [1]_
 
     .. [1] Mauch, M., & Dixon, S. (2014).
@@ -556,14 +588,29 @@ def pyin(y, sr=22050, frame_length=2048, win_length=1024, hop_length=None, fmin=
         Resolution of the pitch bins.
         0.01 corresponds to cents.
 
-    maximum_transition_rate : float > 0
-        maximum pitch transition rate in semitones per frame.
+    max_transition_rate : float > 0
+        maximum pitch transition rate in octaves per second.
 
     switch_prob : float in `(0, 1)`
         probability of switching from voiced to unvoiced or vice versa.
 
     no_trough_prob : float in `(0, 1)`
         maximum probability to add to global minimum if no trough is below threshold.
+
+    center : boolean
+        If `True`, the signal `y` is padded so that frame
+        `D[:, t]` is centered at `y[t * hop_length]`.
+        If `False`, then `D[:, t]` begins at `y[t * hop_length]`.
+        Defaults to `True`,  which simplifies the alignment of `D` onto a
+        time grid by means of `librosa.core.frames_to_samples`.
+
+    pad_mode : string or function
+        If `center=True`, this argument is passed to `np.pad` for padding
+        the edges of the signal `y`. By default (`pad_mode="reflect"`),
+        `y` is padded on both sides with its own reflection, mirrored around
+        its first and last sample respectively.
+        If `center=False`,  this argument is ignored.
+        .. see also:: `np.pad`
 
     Returns
     -------
@@ -610,10 +657,7 @@ def pyin(y, sr=22050, frame_length=2048, win_length=1024, hop_length=None, fmin=
         y_frames, frame_length, win_length, min_period, max_period)
 
     # Parabolic interpolation.
-    parabola_a = (yin_frames[:-2, :] + yin_frames[2:, :] - 2*yin_frames[1:-1, :]) / 2
-    parabola_b = (yin_frames[2:, :] - yin_frames[:-2, :]) / 2
-    parabolic_shifts = -parabola_b / (2*parabola_a + util.tiny(parabola_a))
-    parabolic_shifts[np.abs(parabolic_shifts) > 1] = 0
+    parabolic_shifts = _parabolic_interpolation(yin_frames)
 
     # Find Yin candidates and probabilities.
     # The implementation here follows the official pYIN software which
@@ -667,7 +711,8 @@ def pyin(y, sr=22050, frame_length=2048, win_length=1024, hop_length=None, fmin=
     n_pitch_bins = math.floor(12*n_bins_per_semitone*np.log2(fmax / fmin)) + 1
 
     # Construct transition matrix.
-    transition_width = maximum_transition_rate*n_bins_per_semitone + 1
+    max_semitones_per_frame = round(max_transition_rate * 12 * hop_length / sr)
+    transition_width = max_semitones_per_frame*n_bins_per_semitone + 1
     transition = sequence.transition_local(
         n_pitch_bins, transition_width, window='triangle', wrap=False)
     transition = np.block(
