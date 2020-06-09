@@ -1363,10 +1363,10 @@ def test_iirt_peaks():
 
     win_length = 200
     hop_length = 50
-    center_freqs = librosa.midi_to_hz(np.arange(30, 85))
-    sample_rates = np.asarray(len(np.arange(30, 36)) * [1000, ] +
-                                  len(np.arange(36, 70)) * [1750, ] +
-                                  len(np.arange(70, 85)) * [4000, ])
+    center_freqs = librosa.midi_to_hz(np.arange(40, 95))
+    sample_rates = np.asarray(len(np.arange(40, 46)) * [1000, ] +
+                                  len(np.arange(46, 80)) * [1750, ] +
+                                  len(np.arange(80, 95)) * [4000, ])
 
     X = librosa.iirt(x, center_freqs=center_freqs, sample_rates=sample_rates,
                      win_length=win_length, hop_length=hop_length)
