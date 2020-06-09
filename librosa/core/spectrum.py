@@ -1298,7 +1298,7 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
 
     # Set the default hop, if it's not already specified
     if hop_length is None:
-        hop_length = int(win_length // 4)
+        hop_length = win_length // 4
 
     # Pad the time series so that frames are centered
     if center:
@@ -1316,14 +1316,11 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
         y_resampled.append(resample(y, sr, cur_sr))
 
     # Compute the number of frames that will fit. The end may get truncated.
-    n_frames = 1 + int((len(y) - win_length) // float(hop_length))
+    n_frames = int(1 + (len(y) - win_length) // hop_length)
 
     bands_power = []
 
     for cur_sr, cur_filter in zip(sample_rates, filterbank_ct):
-        factor = float(sr) / float(cur_sr)
-        win_length_STMSP = int(np.round(win_length / factor))
-        hop_length_STMSP = int(np.round(hop_length / factor))
 
         # filter the signal
         cur_sr_idx = np.flatnonzero(y_srs == cur_sr)[0]
@@ -1335,12 +1332,24 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
             cur_filter_output = scipy.signal.sosfiltfilt(cur_filter,
                                                          y_resampled[cur_sr_idx])
 
-        # frame the current filter output
-        cur_frames = util.frame(np.ascontiguousarray(cur_filter_output),
-                                frame_length=win_length_STMSP,
-                                hop_length=hop_length_STMSP)
+        factor = sr / cur_sr
+        hop_length_STMSP = hop_length / factor
+        win_length_STMSP_round = int(round(win_length / factor))
 
-        bands_power.append(factor * np.sum(cur_frames**2, axis=0)[:n_frames])
+        # hop_length_STMSP is used here as a floating-point number.
+        # The discretization happens at the end to avoid accumulated rounding errors.
+        start_idx = np.arange(0, len(cur_filter_output)-win_length_STMSP_round, hop_length_STMSP)
+        if len(start_idx) < n_frames:
+            min_length = int(np.ceil(n_frames * hop_length_STMSP)) + win_length_STMSP_round
+            cur_filter_output = util.fix_length(cur_filter_output, min_length)
+            start_idx = np.arange(0, len(cur_filter_output)-win_length_STMSP_round, hop_length_STMSP)
+
+        start_idx = np.round(start_idx).astype(int)[:n_frames]
+        idx = np.tile(np.arange(win_length_STMSP_round),
+                      (len(start_idx), 1)) + start_idx[:, np.newaxis]
+
+        cur_band_power = factor * np.sum(cur_filter_output[idx] ** 2, axis=-1)
+        bands_power.append(cur_band_power)
 
     return np.asfortranarray(bands_power)
 
