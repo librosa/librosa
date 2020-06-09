@@ -1298,7 +1298,7 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
 
     # Set the default hop, if it's not already specified
     if hop_length is None:
-        hop_length = int(win_length // 4)
+        hop_length = win_length // 4
 
     # Pad the time series so that frames are centered
     if center:
@@ -1316,7 +1316,7 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
         y_resampled.append(resample(y, sr, cur_sr))
 
     # Compute the number of frames that will fit. The end may get truncated.
-    n_frames = 1 + int((len(y) - win_length) // float(hop_length))
+    n_frames = 1 + (len(y) - win_length) // hop_length
 
     bands_power = []
 
@@ -1332,7 +1332,7 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
             cur_filter_output = scipy.signal.sosfiltfilt(cur_filter,
                                                          y_resampled[cur_sr_idx])
 
-        factor = float(sr) / float(cur_sr)
+        factor = sr / cur_sr
         hop_length_STMSP = hop_length / factor
         win_length_STMSP_round = int(round(win_length / factor))
 
