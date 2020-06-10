@@ -38,7 +38,6 @@ API documentation
     beat
     decompose
     effects
-    output
     segment
     sequence
     util

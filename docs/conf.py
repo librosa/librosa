@@ -63,14 +63,14 @@ else:
 sphinx_gallery_conf = {
         'examples_dirs': 'examples/',
         'gallery_dirs': 'auto_examples',
-        'backreferences_dir': False,
+        'backreferences_dir': None,
         'reference_url': {
             'sphinx_gallery': None,
-            'numpy': 'http://docs.scipy.org/doc/numpy/',
-            'np': 'http://docs.scipy.org/doc/numpy/',
+            'numpy': 'http://numpy.org/doc/stable/',
+            'np': 'http://numpy.org/doc/stable/',
             'scipy': 'http://docs.scipy.org/doc/scipy/reference',
             'matplotlib': 'https://matplotlib.org/',
-            'sklearn': 'https://scikit-learn.org/stable',
+            'sklearn': 'https://scikit-learn.org/stable/',
             'resampy': 'https://resampy.readthedocs.io/en/latest/',
             'pyrubberband': 'https://pyrubberband.readthedocs.io/en/stable/',
             'samplerate': 'https://python-samplerate.readthedocs.io/en/latest/',
@@ -163,7 +163,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'librosa'
-copyright = u'2013--2019, librosa development team'
+copyright = u'2013--2020, librosa development team'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
