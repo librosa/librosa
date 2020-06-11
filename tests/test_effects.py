@@ -244,7 +244,7 @@ def test_split(y_split_idx, frame_length, hop_length, top_db):
 
 
 @pytest.mark.parametrize("coef", [0.5, 0.99])
-@pytest.mark.parametrize("zi", [None, [0]])
+@pytest.mark.parametrize("zi", [None, 0, [0]])
 @pytest.mark.parametrize("return_zf", [False, True])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_preemphasis(coef, zi, return_zf, dtype):
