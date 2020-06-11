@@ -138,16 +138,15 @@ if not use_matplotlib_plot_directive:
 numpydoc_show_class_members = False
 
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
-                       'numpy': ('https://docs.scipy.org/doc/numpy/', None),
-                       'np': ('https://docs.scipy.org/doc/numpy/', None),
+                       'numpy': ('https://numpy.org/doc/stable/', None),
+                       'np': ('https://numpy.org/doc/stable/', None),
                        'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
                        'matplotlib': ('https://matplotlib.org/', None),
                        'sklearn': ('https://scikit-learn.org/stable/', None),
                        'resampy': ('https://resampy.readthedocs.io/en/latest/', None),
                        'soundfile': ('https://pysoundfile.readthedocs.io/en/latest', None),
-                       'pyrubberband': ('https://pyrubberband.readthedocs.io/en/stable/', None),
+                       'pyrubberband': ('https://pyrubberband.readthedocs.io/en/stable/', None)}
 
-                       'librosa_gallery': ('https://librosa.github.io/librosa_gallery/', None)}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -170,16 +169,9 @@ copyright = u'2013--2020, librosa development team'
 # built documents.
 #
 
-if sys.version_info.major == 2:
-    import imp
-
-    librosa_version = imp.load_source('librosa.version',
-                                      '../librosa/version.py')
-else:
-    from importlib.machinery import SourceFileLoader
-
-    librosa_version = SourceFileLoader('librosa.version',
-                                       '../librosa/version.py').load_module()
+from importlib.machinery import SourceFileLoader
+librosa_version = SourceFileLoader('librosa.version',
+                                   '../librosa/version.py').load_module()
 
 # The short X.Y version.
 version = librosa_version.short_version
