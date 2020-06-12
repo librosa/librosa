@@ -407,12 +407,15 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, window='hann',
                gamma=0, **kwargs):
     r'''Construct a constant-Q basis.
 
-    This uses the filter bank described by [1]_.
+    This function constructs a filter bank similar to Morlet wavelets,
+    where complex exponentials are windowed to different lengths
+    such that the number of cycles remains fixed for all frequencies.
 
-    .. [1] McVicar, Matthew.
-            "A machine learning approach to automatic chord extraction."
-            Dissertation, University of Bristol. 2013.
+    By default, a Hann window (rather than the Gaussian window of Morlet wavelets)
+    is used, but this can be controlled by the `window` parameter.
 
+    Frequencies are spaced geometrically, increasing by a factor of
+    `(2**(1./bins_per_octave))` at each successive band.
 
     Parameters
     ----------
@@ -472,6 +475,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, window='hann',
     --------
     constant_q_lengths
     librosa.core.cqt
+    librosa.core.vqt
     librosa.util.normalize
 
 
@@ -606,8 +610,6 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
     # pylint: disable=invalid-name
     alpha = 2.0 ** (1. / bins_per_octave) - 1.0
     Q = float(filter_scale) / alpha
-
-    # Q = float(filter_scale) / (2.0**(1. / bins_per_octave) - 2.0**(-1./bins_per_octave))
 
     # Compute the frequencies
     freq = fmin * (2.0 ** (np.arange(n_bins, dtype=float) / bins_per_octave))
