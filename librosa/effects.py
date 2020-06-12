@@ -593,9 +593,15 @@ def preemphasis(y, coef=0.97, zi=None, return_zf=False):
 
         At `coef=1`, the result is the first-order difference of the signal.
 
+        The default (0.97) matches the pre-emphasis filter used in the HTK
+        implementation of MFCCs [1]_.
+
+        .. [1] http://htk.eng.cam.ac.uk/
+
     zi : number
         Initial filter state.  When making successive calls to non-overlapping
         frames, this can be set to the `zf` returned from the previous call.
+        (See example below.)
 
         By default `zi` is initialized as `2*y[0] - y[1]`.
 
