@@ -36,7 +36,7 @@ import librosa.display
 
 #############################
 # First, we'll load in a song
-y, sr = librosa.load('audio/Karissa_Hobbs_-_09_-_Lets_Go_Fishin.mp3')
+y, sr = librosa.load(librosa.ex('fishin'))
 
 
 ##############################################

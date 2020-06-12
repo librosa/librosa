@@ -24,7 +24,7 @@ import librosa.display
 
 #############################################
 # Load an example signal
-y, sr = librosa.load('audio/sir_duke_slow.mp3')
+y, sr = librosa.load(librosa.ex('trumpet'))
 
 
 # And compute the spectrogram magnitude and phase

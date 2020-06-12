@@ -1132,7 +1132,7 @@ def test_example_fail():
     librosa.example('no such track')
 
 
-@pytest.mark.parametrize('key', ['trumpet', 'brahms', 'nutcracker', 'choice'])
+@pytest.mark.parametrize('key', ['trumpet', 'brahms', 'nutcracker', 'choice', 'fishin'])
 def test_example_info(key):
 
     librosa.util.example_info(key)
