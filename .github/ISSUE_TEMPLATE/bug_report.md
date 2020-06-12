@@ -7,8 +7,13 @@ assignees: ''
 
 ---
 
+
+***BEFORE POSTING A BUG REPORT*** Please look through [existing issues (both open and closed)](https://github.com/librosa/librosa/issues?q=is%3Aissue) to see if it's already been reported or fixed!
+
+
 **Describe the bug**
 A clear and concise description of what the bug is.
+
 
 **To Reproduce**
 <!--
