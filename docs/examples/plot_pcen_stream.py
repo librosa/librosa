@@ -27,7 +27,8 @@ import librosa.display as display
 
 ######################################################################
 # First, we'll start with an audio file that we want to stream
-filename = librosa.ex('brahms')
+# We'll use an example track at 44.1 KHz
+filename = librosa.ex('brahms', hq=True)
 
 #####################################################################
 # Next, we'll set up the block reader to work on short segments of 
