@@ -593,8 +593,17 @@ def preemphasis(y, coef=0.97, zi=None, return_zf=False):
 
         At `coef=1`, the result is the first-order difference of the signal.
 
+        The default (0.97) matches the pre-emphasis filter used in the HTK
+        implementation of MFCCs [1]_.
+
+        .. [1] http://htk.eng.cam.ac.uk/
+
     zi : number
-        Initial filter state
+        Initial filter state.  When making successive calls to non-overlapping
+        frames, this can be set to the `zf` returned from the previous call.
+        (See example below.)
+
+        By default `zi` is initialized as `2*y[0] - y[1]`.
 
     return_zf : boolean
         If `True`, return the final filter state.
@@ -642,7 +651,10 @@ def preemphasis(y, coef=0.97, zi=None, return_zf=False):
     a = np.asarray([1.0], dtype=y.dtype)
 
     if zi is None:
-        zi = scipy.signal.lfilter_zi(b, a)
+        # Initialize the filter to implement linear extrapolation
+        zi = 2*y[..., 0] - y[..., 1]
+
+    zi = np.atleast_1d(zi)
 
     y_out, z_f = scipy.signal.lfilter(b, a, y,
                                       zi=np.asarray(zi, dtype=y.dtype))
