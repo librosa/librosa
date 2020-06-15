@@ -4,13 +4,8 @@
 '''Helpful tools for deprecation'''
 
 import warnings
-from packaging import version
 from decorator import decorator
-import numba
-if version.parse(numba.__version__) < version.parse('0.49.0'):
-    from numba.decorators import jit as optional_jit
-else:
-    from numba.core.decorators import jit as optional_jit
+from numba import jit as optional_jit
 
 __all__ = ['moved', 'deprecated', 'optional_jit']
 
