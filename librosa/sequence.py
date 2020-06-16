@@ -88,21 +88,22 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
     weights_mul : np.ndarray [shape=[n, ]]
         Multiplicative weights to penalize certain step sizes.
 
-    subseq : binary
+    subseq : bool
         Enable subsequence DTW, e.g., for retrieval tasks.
 
-    backtrack : binary
+    backtrack : bool
         Enable backtracking in accumulated cost matrix.
 
-    global_constraints : binary
+    global_constraints : bool
         Applies global constraints to the cost matrix ``C`` (Sakoe-Chiba band).
 
     band_rad : float
         The Sakoe-Chiba band radius (1/2 of the width) will be
         ``int(radius*min(C.shape))``.
 
-    return_D_steps : binary
-        Returns ``D_steps``
+    return_D_steps : bool
+        If true, the functions returns ``D_steps``, the step matrix,
+        containg the indices of the used steps from the cost accumulation step.
 
     Returns
     -------
@@ -117,7 +118,8 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
         Only returned when ``backtrack`` is True.
 
     D_steps : np.ndarray [shape=(N,M)]
-        Step matrix, containg the indices of the used steps
+        Step matrix, containg the indices of the used steps from the cost
+        accumulation step.
         Only returned when ``return_D_steps`` is True.
 
     Raises
@@ -278,8 +280,8 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
             if np.all(np.isinf(D[-1])):
                 raise ParameterError('No valid sub-sequence warping path could '
                                      'be constructed with the given step sizes.')
-            start_m = np.argmin(D[-1, :])
-            wp = __dtw_backtracking(D_steps, step_sizes_sigma, subseq, start_m)
+            start = np.argmin(D[-1, :])
+            wp = __dtw_backtracking(D_steps, step_sizes_sigma, subseq, start)
         else:
             # perform warping path backtracking
             if np.isinf(D[-1, -1]):
@@ -330,7 +332,8 @@ def __dtw_calc_accu_cost(C, D, D_steps, step_sizes_sigma,
         accumulated cost matrix
 
     D_steps : np.ndarray [shape=(N, M)]
-        steps which were used for calculating D
+        Step matrix, containg the indices of the used steps from the cost
+        accumulation step.
 
     step_sizes_sigma : np.ndarray [shape=[n, 2]]
         Specifies allowed step sizes as used by the dtw.
@@ -355,7 +358,8 @@ def __dtw_calc_accu_cost(C, D, D_steps, step_sizes_sigma,
         When doing subsequence DTW, D[N,:] indicates a matching function.
 
     D_steps : np.ndarray [shape=(N,M)]
-        steps which were used for calculating D.
+        Step matrix, containg the indices of the used steps from the cost
+        accumulation step.
 
     See Also
     --------
@@ -383,7 +387,7 @@ def __dtw_calc_accu_cost(C, D, D_steps, step_sizes_sigma,
 
 
 @jit(nopython=True, cache=True)
-def __dtw_backtracking(D_steps, step_sizes_sigma, subseq, start_m=None):  # pragma: no cover
+def __dtw_backtracking(D_steps, step_sizes_sigma, subseq, start=None):  # pragma: no cover
     '''Backtrack optimal warping path.
 
     Uses the saved step sizes from the cost accumulation
@@ -394,15 +398,16 @@ def __dtw_backtracking(D_steps, step_sizes_sigma, subseq, start_m=None):  # prag
     Parameters
     ----------
     D_steps : np.ndarray [shape=(N, M)]
-        Saved indices of the used steps used in the calculation of D.
+        Step matrix, containg the indices of the used steps from the cost
+        accumulation step.
 
     step_sizes_sigma : np.ndarray [shape=[n, 2]]
         Specifies allowed step sizes as used by the dtw.
 
-    subseq : binary
+    subseq : bool
         Enable subsequence DTW, e.g., for retrieval tasks.
 
-    start_m : int
+    start : int
         Start column index for backtraing (only allowed for ``subseq=True``)
 
     Returns
@@ -416,11 +421,10 @@ def __dtw_backtracking(D_steps, step_sizes_sigma, subseq, start_m=None):  # prag
     --------
     dtw
     '''
-    if start_m is None:
+    if start is None:
         cur_idx = (D_steps.shape[0] - 1, D_steps.shape[1] - 1)
     else:
-        assert subseq
-        cur_idx = (D_steps.shape[0] - 1, start_m)
+        cur_idx = (D_steps.shape[0] - 1, start)
 
     wp = []
     # Set starting point D(N,M) and append it to the path
@@ -448,27 +452,26 @@ def __dtw_backtracking(D_steps, step_sizes_sigma, subseq, start_m=None):  # prag
     return wp
 
 
-def dtw_backtracking(D_steps, step_sizes_sigma=None, subseq=False, start_m=None):
-    '''Backtrack optimal warping path.
+def dtw_backtracking(D_steps, step_sizes_sigma=None, subseq=False, start=None):
+    '''Backtrack a warping path.
 
-    Wrapper for ``__dtw_backtracking``.
     Uses the saved step sizes from the cost accumulation
-    step to backtrack the index pairs for an optimal
-    warping path.
+    step to backtrack the index pairs for a warping path.
 
 
     Parameters
     ----------
     D_steps : np.ndarray [shape=(N, M)]
-        Saved indices of the used steps used in the calculation of D.
+        Step matrix, containg the indices of the used steps from the cost
+        accumulation step.
 
     step_sizes_sigma : np.ndarray [shape=[n, 2]]
         Specifies allowed step sizes as used by the dtw.
 
-    subseq : binary
+    subseq : bool
         Enable subsequence DTW, e.g., for retrieval tasks.
 
-    start_m : int
+    start : int
         Start column index for backtraing (only allowed for ``subseq=True``)
 
     Returns
@@ -482,6 +485,10 @@ def dtw_backtracking(D_steps, step_sizes_sigma=None, subseq=False, start_m=None)
     --------
     dtw
     '''
+    if subseq is False and start is not None:
+        raise ParameterError('start is only allowed to be set if subseq is True '
+                             '(start={}, subseq={})'.format(start, subseq))
+
     # Default Parameters
     default_steps = np.array([[1, 1], [0, 1], [1, 0]], dtype=np.int)
 
@@ -492,7 +499,7 @@ def dtw_backtracking(D_steps, step_sizes_sigma=None, subseq=False, start_m=None)
         # Append custom steps and weights to our defaults
         step_sizes_sigma = np.concatenate((default_steps, step_sizes_sigma))
 
-    wp = __dtw_backtracking(D_steps, step_sizes_sigma, subseq, start_m)
+    wp = __dtw_backtracking(D_steps, step_sizes_sigma, subseq, start)
     return np.asarray(wp, dtype=int)
 
 
