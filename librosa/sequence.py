@@ -307,8 +307,10 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
     if return_D_steps:
         return_values.append(D_steps)
 
-    return tuple(return_values)
-
+    if len(return_values) > 1:
+        return tuple(return_values)
+    else:
+        return return_values[0]
 
 
 
