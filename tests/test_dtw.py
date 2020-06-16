@@ -112,6 +112,38 @@ def test_dtw_subseq_boundary():
     assert np.array_equal(gt_wp, wp)
 
 
+def test_dtw_subseq_steps():
+    # Verify that the same warping path is computed for backtracking
+    # within the dtw function and manually outside by the user
+    # See https://github.com/librosa/librosa/pull/1166
+    X = np.array([1, 2, 3, 4, 5])
+    Y = np.array([1, 1, 1, 2, 4, 5, 6, 5, 5])
+    gt_wp = np.array([[0, 2], [1, 3], [2, 3], [3, 4], [4, 5]])
+
+    D1, wp1 = librosa.sequence.dtw(X, Y, subseq=True, backtrack=True)
+    wp1 = wp1[::-1]
+
+    D2, steps = librosa.sequence.dtw(X, Y, subseq=True, backtrack=False, return_steps=True)
+    start_idx = np.argmin(D2[-1, :])
+    wp2 = librosa.sequence.dtw_backtracking(steps, subseq=True, start=start_idx)
+    wp2 = wp2[::-1]
+
+    assert np.array_equal(D1, D2)
+    assert np.array_equal(gt_wp, wp1)
+    assert np.array_equal(wp1, wp2)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_dtw_backtracking_incompatible_args_01():
+    # See https://github.com/librosa/librosa/pull/1166
+    X = np.array([1, 2, 3, 4, 5])
+    Y = np.array([1, 1, 1, 2, 4, 5, 6, 5, 5])
+
+    D, steps = librosa.sequence.dtw(X, Y, subseq=True, backtrack=False, return_steps=True)
+    start_idx = np.argmin(D[-1, :])
+    librosa.sequence.dtw_backtracking(steps, subseq=False, start=start_idx)
+
+
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_dtw_incompatible_args_01():
     librosa.sequence.dtw(C=1, X=1, Y=1)
