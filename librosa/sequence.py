@@ -107,17 +107,17 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
 
     Returns
     -------
-    D : np.ndarray [shape=(N,M)]
+    D : np.ndarray [shape=(N, M)]
         accumulated cost matrix.
-        D[N,M] is the total alignment cost.
+        D[N, M] is the total alignment cost.
         When doing subsequence DTW, D[N,:] indicates a matching function.
 
-    wp : np.ndarray [shape=(N,2)]
+    wp : np.ndarray [shape=(N, 2)]
         Warping path with index pairs.
-        Each row of the array contains an index pair n,m).
+        Each row of the array contains an index pair (n, m).
         Only returned when ``backtrack`` is True.
 
-    steps : np.ndarray [shape=(N,M)]
+    steps : np.ndarray [shape=(N, M)]
         Step matrix, containing the indices of the used steps from the cost
         accumulation step.
         Only returned when ``return_steps`` is True.
@@ -351,12 +351,12 @@ def __dtw_calc_accu_cost(C, D, steps, step_sizes_sigma,
 
     Returns
     -------
-    D : np.ndarray [shape=(N,M)]
+    D : np.ndarray [shape=(N, M)]
         accumulated cost matrix.
-        D[N,M] is the total alignment cost.
+        D[N, M] is the total alignment cost.
         When doing subsequence DTW, D[N,:] indicates a matching function.
 
-    steps : np.ndarray [shape=(N,M)]
+    steps : np.ndarray [shape=(N, M)]
         Step matrix, containing the indices of the used steps from the cost
         accumulation step.
 
@@ -414,7 +414,7 @@ def __dtw_backtracking(steps, step_sizes_sigma, subseq, start=None):  # pragma: 
     wp : list [shape=(N,)]
         Warping path with index pairs.
         Each list entry contains an index pair
-        (n,m) as a tuple
+        (n, m) as a tuple
 
     See Also
     --------
@@ -426,7 +426,7 @@ def __dtw_backtracking(steps, step_sizes_sigma, subseq, start=None):  # pragma: 
         cur_idx = (steps.shape[0] - 1, start)
 
     wp = []
-    # Set starting point D(N,M) and append it to the path
+    # Set starting point D(N, M) and append it to the path
     wp.append((cur_idx[0], cur_idx[1]))
 
     # Loop backwards.
@@ -478,7 +478,7 @@ def dtw_backtracking(steps, step_sizes_sigma=None, subseq=False, start=None):
     wp : list [shape=(N,)]
         Warping path with index pairs.
         Each list entry contains an index pair
-        (n,m) as a tuple
+        (n, m) as a tuple
 
     See Also
     --------
@@ -1308,7 +1308,7 @@ def viterbi_binary(prob, transition, p_state=None, p_init=None, return_logp=Fals
     if transition.shape == (2, 2):
         transition = np.tile(transition, (n_states, 1, 1))
     elif transition.shape != (n_states, 2, 2):
-        raise ParameterError('transition.shape={}, must be (2,2) or '
+        raise ParameterError('transition.shape={}, must be (2, 2) or '
                              '(n_states, 2, 2)={}'.format(transition.shape, (n_states)))
 
     if np.any(transition < 0) or not np.allclose(transition.sum(axis=-1), 1):
