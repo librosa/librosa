@@ -102,8 +102,8 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
         ``int(radius*min(C.shape))``.
 
     return_D_steps : bool
-        If true, the functions returns ``D_steps``, the step matrix,
-        containg the indices of the used steps from the cost accumulation step.
+        If true, the function returns ``D_steps``, the step matrix, containing
+        the indices of the used steps from the cost accumulation step.
 
     Returns
     -------
@@ -118,7 +118,7 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
         Only returned when ``backtrack`` is True.
 
     D_steps : np.ndarray [shape=(N,M)]
-        Step matrix, containg the indices of the used steps from the cost
+        Step matrix, containing the indices of the used steps from the cost
         accumulation step.
         Only returned when ``return_D_steps`` is True.
 
@@ -332,7 +332,7 @@ def __dtw_calc_accu_cost(C, D, D_steps, step_sizes_sigma,
         accumulated cost matrix
 
     D_steps : np.ndarray [shape=(N, M)]
-        Step matrix, containg the indices of the used steps from the cost
+        Step matrix, containing the indices of the used steps from the cost
         accumulation step.
 
     step_sizes_sigma : np.ndarray [shape=[n, 2]]
@@ -358,7 +358,7 @@ def __dtw_calc_accu_cost(C, D, D_steps, step_sizes_sigma,
         When doing subsequence DTW, D[N,:] indicates a matching function.
 
     D_steps : np.ndarray [shape=(N,M)]
-        Step matrix, containg the indices of the used steps from the cost
+        Step matrix, containing the indices of the used steps from the cost
         accumulation step.
 
     See Also
@@ -398,7 +398,7 @@ def __dtw_backtracking(D_steps, step_sizes_sigma, subseq, start=None):  # pragma
     Parameters
     ----------
     D_steps : np.ndarray [shape=(N, M)]
-        Step matrix, containg the indices of the used steps from the cost
+        Step matrix, containing the indices of the used steps from the cost
         accumulation step.
 
     step_sizes_sigma : np.ndarray [shape=[n, 2]]
@@ -462,7 +462,7 @@ def dtw_backtracking(D_steps, step_sizes_sigma=None, subseq=False, start=None):
     Parameters
     ----------
     D_steps : np.ndarray [shape=(N, M)]
-        Step matrix, containg the indices of the used steps from the cost
+        Step matrix, containing the indices of the used steps from the cost
         accumulation step.
 
     step_sizes_sigma : np.ndarray [shape=[n, 2]]
