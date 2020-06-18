@@ -54,6 +54,7 @@ Advanced topics
     cache
     ioformats
     advanced
+    recordings
 
 Reference
 ---------
