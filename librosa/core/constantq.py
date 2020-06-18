@@ -134,7 +134,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     Generate and plot a constant-Q power spectrum
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> C = np.abs(librosa.cqt(y, sr=sr))
     >>> librosa.display.specshow(librosa.amplitude_to_db(C, ref=np.max),
     ...                          sr=sr, x_axis='time', y_axis='cqt_note')
@@ -149,23 +149,22 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     >>> C = np.abs(librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('C2'),
     ...                 n_bins=60))
     >>> C
-    array([[  8.827e-04,   9.293e-04, ...,   3.133e-07,   2.942e-07],
-           [  1.076e-03,   1.068e-03, ...,   1.153e-06,   1.148e-06],
+    array([[6.830e-04, 6.361e-04, ..., 7.362e-09, 9.102e-09],
+           [5.366e-04, 4.818e-04, ..., 8.953e-09, 1.067e-08],
            ...,
-           [  1.042e-07,   4.087e-07, ...,   1.612e-07,   1.928e-07],
-           [  2.363e-07,   5.329e-07, ...,   1.294e-07,   1.611e-07]])
-
+           [4.288e-02, 4.580e-01, ..., 1.529e-05, 5.572e-06],
+           [2.965e-03, 1.508e-01, ..., 8.965e-06, 1.455e-05]])
 
     Using a higher frequency resolution
 
     >>> C = np.abs(librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('C2'),
     ...                 n_bins=60 * 2, bins_per_octave=12 * 2))
     >>> C
-    array([[  1.536e-05,   5.848e-05, ...,   3.241e-07,   2.453e-07],
-           [  1.856e-03,   1.854e-03, ...,   2.397e-08,   3.549e-08],
+    array([[5.468e-04, 5.382e-04, ..., 5.911e-09, 6.105e-09],
+           [4.118e-04, 4.014e-04, ..., 7.788e-09, 8.160e-09],
            ...,
-           [  2.034e-07,   4.245e-07, ...,   6.213e-08,   1.463e-07],
-           [  4.896e-08,   5.407e-07, ...,   9.176e-08,   1.051e-07]])
+           [2.780e-03, 1.424e-01, ..., 4.225e-06, 2.388e-05],
+           [5.147e-02, 6.959e-02, ..., 1.694e-05, 5.811e-06]])
     '''
 
     # CQT is the special case of VQT with gamma=0
@@ -522,7 +521,7 @@ def icqt(C, sr=22050, hop_length=512, fmin=None, bins_per_octave=12,
     --------
     Using default parameters
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=15)
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> C = librosa.cqt(y=y, sr=sr)
     >>> y_hat = librosa.icqt(C=C, sr=sr)
 
@@ -744,7 +743,7 @@ def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=None,
     Generate and plot a variable-Q power spectrum
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> V = np.abs(librosa.vqt(y, sr=sr))
     >>> librosa.display.specshow(librosa.amplitude_to_db(V, ref=np.max),
     ...                          sr=sr, x_axis='time', y_axis='cqt_note')
@@ -1139,7 +1138,7 @@ def griffinlim_cqt(C, n_iter=32, sr=22050, hop_length=512, fmin=None, bins_per_o
     --------
     A basis CQT inverse example
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=5, offset=30, sr=None)
+    >>> y, sr = librosa.load(librosa.ex('trumpet', hq=True), sr=None)
     >>> # Get the CQT magnitude, 7 octaves at 36 bins per octave
     >>> C = np.abs(librosa.cqt(y=y, sr=sr, bins_per_octave=36, n_bins=7*36))
     >>> # Invert using Griffin-Lim
