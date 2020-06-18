@@ -120,6 +120,41 @@ def test_cqt(y_cqt, sr_cqt, hop_length, fmin, n_bins, bins_per_octave, tuning, f
     assert C.shape[0] == n_bins
 
 
+@pytest.mark.parametrize("fmin", [None, librosa.note_to_hz("C2")])
+@pytest.mark.parametrize("n_bins", [12, 24])
+@pytest.mark.parametrize("gamma", [None, 0, 2.5])
+@pytest.mark.parametrize("bins_per_octave", [12, 24])
+@pytest.mark.parametrize("tuning", [0])
+@pytest.mark.parametrize("filter_scale", [1])
+@pytest.mark.parametrize("norm", [1])
+@pytest.mark.parametrize("res_type", ["polyphase"])
+@pytest.mark.parametrize("sparsity", [0.01])
+@pytest.mark.parametrize("hop_length", [512])
+def test_vqt(y_cqt, sr_cqt, hop_length, fmin, n_bins, gamma,
+             bins_per_octave, tuning, filter_scale, norm, res_type, sparsity):
+
+    C = librosa.vqt(
+        y=y_cqt,
+        sr=sr_cqt,
+        hop_length=hop_length,
+        fmin=fmin,
+        n_bins=n_bins,
+        gamma=gamma,
+        bins_per_octave=bins_per_octave,
+        tuning=tuning,
+        filter_scale=filter_scale,
+        norm=norm,
+        sparsity=sparsity,
+        res_type=res_type,
+    )
+
+    # type is complex
+    assert np.iscomplexobj(C)
+
+    # number of bins is correct
+    assert C.shape[0] == n_bins
+
+
 @pytest.fixture(scope="module")
 def y_hybrid():
     return make_signal(11025, 5.0, None)
