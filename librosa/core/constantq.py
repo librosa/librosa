@@ -960,9 +960,10 @@ def __trim_stack(cqt_resp, n_bins, dtype):
         # If the whole octave is more than we can fit,
         # take the highest bins from c_i
         if end < n_oct:
-            n_oct = n_oct - end
+            cqt_out[:end] = c_i[-end:, :max_col]
+        else:
+            cqt_out[end - n_oct:end] = c_i[:, :max_col]
 
-        cqt_out[end - n_oct:end] = c_i[-n_oct:, :max_col]
         end -= n_oct
 
     return cqt_out
