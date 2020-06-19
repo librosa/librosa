@@ -82,7 +82,7 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
     Examples
     --------
     >>> # Compute local onset autocorrelation
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('brahms'))
     >>> hop_length = 512
     >>> oenv = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
     >>> tempogram = librosa.feature.tempogram(onset_envelope=oenv, sr=sr,
@@ -239,7 +239,7 @@ def fourier_tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
     Examples
     --------
     >>> # Compute local onset autocorrelation
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('brahms'))
     >>> hop_length = 512
     >>> oenv = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
     >>> tempogram = librosa.feature.fourier_tempogram(onset_envelope=oenv, sr=sr,

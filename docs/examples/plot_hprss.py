@@ -23,8 +23,8 @@ import librosa
 import librosa.display
 
 ########################
-# Load the example clip.
-y, sr = librosa.load('audio/Karissa_Hobbs_-_09_-_Lets_Go_Fishin.mp3', offset=40, duration=10)
+# Load an example clip with harmonics and percussives
+y, sr = librosa.load(librosa.ex('choice'))
 
 
 ###############################################

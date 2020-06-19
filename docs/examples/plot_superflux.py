@@ -28,7 +28,7 @@ import librosa.display
 # noticeable vocal vibrato.
 # The method works fine for longer signals, but the
 # results are harder to visualize.
-y, sr = librosa.load('audio/Karissa_Hobbs_-_09_-_Lets_Go_Fishin.mp3',
+y, sr = librosa.load(librosa.ex('fishin', hq=True),
                      sr=44100,
                      duration=5,
                      offset=35)

@@ -675,7 +675,7 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
     --------
     Get a CQT, and wrap bins to chroma
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> CQT = np.abs(librosa.cqt(y, sr=sr))
     >>> chroma_map = librosa.filters.cq_to_chroma(CQT.shape[0])
     >>> chromagram = chroma_map.dot(CQT)

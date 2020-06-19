@@ -120,43 +120,44 @@ def frame(x, frame_length, hop_length, axis=-1):
     --------
     Extract 2048-sample frames from monophonic `y` with a hop of 64 samples per frame
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> frames = librosa.util.frame(y, frame_length=2048, hop_length=64)
     >>> frames
-    array([[ 0.000e+00,  0.000e+00, ..., -2.448e-06, -6.789e-07],
-           [ 0.000e+00,  0.000e+00, ..., -1.399e-05,  1.004e-06],
+    array([[-1.407e-03, -2.604e-02, ..., -1.795e-05, -8.108e-06],
+           [-4.461e-04, -3.721e-02, ..., -1.573e-05, -1.652e-05],
            ...,
-           [-7.352e-04,  5.162e-03, ...,  0.000e+00,  0.000e+00],
-           [ 2.168e-03,  4.870e-03, ...,  0.000e+00,  0.000e+00]],
+           [ 7.960e-02, -2.335e-01, ..., -6.815e-06,  1.266e-05],
+           [ 9.568e-02, -1.252e-01, ...,  7.397e-06, -1.921e-05]],
           dtype=float32)
     >>> y.shape
-    (1355168,)
+    (117601,)
+
     >>> frames.shape
-    (2048, 21143)
+    (2048, 1806)
 
     Or frame along the first axis instead of the last:
 
     >>> frames = librosa.util.frame(y, frame_length=2048, hop_length=64, axis=0)
     >>> frames.shape
-    (21143, 2048)
+    (1806, 2048)
 
     Frame a stereo signal:
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(), mono=False)
+    >>> y, sr = librosa.load(librosa.ex('trumpet', hq=True), mono=False)
     >>> y.shape
-    (2, 1355168)
+    (2, 117601)
     >>> frames = librosa.util.frame(y, frame_length=2048, hop_length=64)
-    (2, 2048, 21143)
+    (2, 2048, 1806)
 
     Carve an STFT into fixed-length patches of 32 frames with 50% overlap
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> S = np.abs(librosa.stft(y))
     >>> S.shape
-    (1025, 2647)
+    (1025, 230)
     >>> S_patch = librosa.util.frame(S, frame_length=32, hop_length=16)
     >>> S_patch.shape
-    (1025, 32, 82)
+    (1025, 32, 13)
     >>> # The first patch contains the first 32 frames of S
     >>> np.allclose(S_patch[:, :, 0], S[:, :32])
     True
@@ -246,7 +247,7 @@ def valid_audio(y, mono=True):
     Examples
     --------
     >>> # By default, valid_audio allows only mono signals
-    >>> filepath = librosa.util.example_audio_file()
+    >>> filepath = librosa.ex('trumpet', hq=True)
     >>> y_mono, sr = librosa.load(filepath, mono=True)
     >>> y_stereo, _ = librosa.load(filepath, mono=False)
     >>> librosa.util.valid_audio(y_mono), librosa.util.valid_audio(y_stereo)
@@ -573,7 +574,7 @@ def axis_sort(S, axis=-1, index=False, value=None):
     Visualize NMF output for a spectrogram S
 
     >>> # Sort the columns of W by peak frequency bin
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> S = np.abs(librosa.stft(y))
     >>> W, H = librosa.decompose.decompose(S, n_components=32)
     >>> W_sort = librosa.util.axis_sort(W)
@@ -1005,15 +1006,13 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=15)
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr,
     ...                                          hop_length=512,
     ...                                          aggregate=np.median)
     >>> peaks = librosa.util.peak_pick(onset_env, 3, 3, 3, 5, 0.5, 10)
     >>> peaks
-    array([  4,  23,  73, 102, 142, 162, 182, 211, 261, 301, 320,
-           331, 348, 368, 382, 396, 411, 431, 446, 461, 476, 491,
-           510, 525, 536, 555, 570, 590, 609, 625, 639])
+    array([  3,  27,  40,  61,  72,  88, 103])
 
     >>> import matplotlib.pyplot as plt
     >>> times = librosa.times_like(onset_env, sr=sr, hop_length=512)
@@ -1357,7 +1356,7 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     --------
     Beat-synchronous CQT spectra
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('choice'))
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, trim=False)
     >>> C = np.abs(librosa.cqt(y=y, sr=sr))
     >>> beats = librosa.util.fix_frames(beats, x_max=C.shape[1])

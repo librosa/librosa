@@ -104,12 +104,10 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     --------
     Get onset times from a signal
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(),
-    ...                      offset=30, duration=2.0)
-    >>> onset_frames = librosa.onset.onset_detect(y=y, sr=sr)
-    >>> librosa.frames_to_time(onset_frames, sr=sr)
-    array([ 0.07 ,  0.395,  0.511,  0.627,  0.766,  0.975,
-            1.207,  1.324,  1.44 ,  1.788,  1.881])
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> librosa.onset.onset_detect(y=y, sr=sr, units='time')      
+    array([0.07 , 0.232, 0.395, 0.604, 0.743, 0.929, 1.045, 1.115,
+           1.416, 1.672, 1.881, 2.043, 2.206, 2.368, 2.554, 3.019])
 
     Or use a pre-computed onset envelope
 
@@ -274,8 +272,7 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
     First, load some audio and plot the spectrogram
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(),
-    ...                      duration=10.0)
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> D = np.abs(librosa.stft(y))
     >>> times = librosa.times_like(D)
     >>> plt.figure()
@@ -365,8 +362,7 @@ def onset_backtrack(events, energy):
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(),
-    ...                      offset=30, duration=2.0)
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> oenv = librosa.onset.onset_strength(y=y, sr=sr)
     >>> # Detect events without backtracking
     >>> onset_raw = librosa.onset.onset_detect(onset_envelope=oenv,
@@ -499,8 +495,7 @@ def onset_strength_multi(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     First, load some audio and plot the spectrogram
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(),
-    ...                      duration=10.0)
+    >>> y, sr = librosa.load(librosa.ex('choice'))
     >>> D = np.abs(librosa.stft(y))
     >>> plt.figure()
     >>> plt.subplot(2, 1, 1)

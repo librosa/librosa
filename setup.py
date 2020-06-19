@@ -46,6 +46,7 @@ setup(
         'resampy >= 0.2.2',
         'numba >= 0.43.0',
         'soundfile >= 0.9.0',
+        'pooch >= 1.0'
     ],
     python_requires='>=3.6',
     extras_require={
