@@ -330,7 +330,8 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                    res_type=res_type,
                                    dtype=dtype)))
 
-    return __trim_stack(cqt_resp, n_bins, dtype)
+    # Propagate dtype from the last component
+    return __trim_stack(cqt_resp, n_bins, cqt_resp[-1].dtype)
 
 
 @cache(level=20)
@@ -948,8 +949,8 @@ def __cqt_filter_fft(sr, fmin, n_bins, bins_per_octave,
 def __trim_stack(cqt_resp, n_bins, dtype):
     '''Helper function to trim and stack a collection of CQT responses'''
 
-    max_col = min(x.shape[1] for x in cqt_resp)
-    cqt_out = np.zeros((n_bins, max_col), dtype=dtype, order='F')
+    max_col = min(c_i.shape[-1] for c_i in cqt_resp)
+    cqt_out = np.empty((n_bins, max_col), dtype=dtype, order='F')
 
     # Copy per-octave data into output array
     n = 0
