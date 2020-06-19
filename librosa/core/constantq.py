@@ -954,7 +954,7 @@ def __trim_stack(cqt_resp, n_bins, dtype):
     # Copy per-octave data into output array
     n = 0
     for c_i in cqt_resp[::-1]:
-        cqt_out[n:min(n + c_i.shape[0], n_bins)] = c_i[:min(c_i.shape[0], n_bins - n)]
+        cqt_out[n:min(n + c_i.shape[0], n_bins)] = c_i[:min(c_i.shape[0], n_bins - n), :max_col]
         n += c_i.shape[0]
 
     return cqt_out
