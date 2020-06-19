@@ -330,7 +330,7 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
                                    res_type=res_type,
                                    dtype=dtype)))
 
-    return __trim_stack(cqt_resp, n_bins, dtype=dtype)
+    return __trim_stack(cqt_resp, n_bins, dtype)
 
 
 @cache(level=20)
@@ -894,7 +894,7 @@ def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=None,
         # Compute the vqt filter response and append to the stack
         vqt_resp.append(__cqt_response(my_y, n_fft, my_hop, fft_basis, pad_mode, dtype=dtype))
 
-    V = __trim_stack(vqt_resp, n_bins, dtype=dtype)
+    V = __trim_stack(vqt_resp, n_bins, dtype)
 
     if scale:
         lengths = filters.constant_q_lengths(sr, fmin,
@@ -945,17 +945,19 @@ def __cqt_filter_fft(sr, fmin, n_bins, bins_per_octave,
     return fft_basis, n_fft, lengths
 
 
-def __trim_stack(cqt_resp, n_bins, dtype=None):
+def __trim_stack(cqt_resp, n_bins, dtype):
     '''Helper function to trim and stack a collection of CQT responses'''
 
-    # cleanup any framing errors at the boundaries
     max_col = min(x.shape[1] for x in cqt_resp)
+    cqt_out = np.zeros((n_bins, max_col), dtype=dtype, order='F')
 
-    cqt_resp = np.vstack([x[:, :max_col] for x in cqt_resp][::-1])
+    # Copy per-octave data into output array
+    n = 0
+    for c_i in cqt_resp[::-1]:
+        cqt_out[n:min(n + c_i.shape[0], n_bins)] = c_i
+        n += c_i.shape[0]
 
-    # Finally, clip out any bottom frequencies that we don't really want
-    # Transpose magic here to ensure column-contiguity
-    return np.asfortranarray(cqt_resp[-n_bins:])
+    return cqt_out
 
 
 def __cqt_response(y, n_fft, hop_length, fft_basis, mode, dtype=None):
