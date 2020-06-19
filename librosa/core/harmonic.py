@@ -60,15 +60,14 @@ def salience(S, freqs, h_range, weights=None, aggregate=None,
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(),
-    ...                      duration=15, offset=30)
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> S = np.abs(librosa.stft(y))
     >>> freqs = librosa.core.fft_frequencies(sr)
     >>> harms = [1, 2, 3, 4]
     >>> weights = [1.0, 0.5, 0.33, 0.25]
     >>> S_sal = librosa.salience(S, freqs, harms, weights, fill_value=0)
     >>> print(S_sal.shape)
-    (1025, 646)
+    (1025, 115)
     >>> import matplotlib.pyplot as plt
     >>> plt.figure()
     >>> librosa.display.specshow(librosa.amplitude_to_db(S_sal,
@@ -153,8 +152,7 @@ def interp_harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
     --------
     Estimate the harmonics of a time-averaged tempogram
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(),
-    ...                      duration=15, offset=30)
+    >>> y, sr = librosa.load(librosa.ex('choice'))
     >>> # Compute the time-varying tempogram and average over time
     >>> tempi = np.mean(librosa.feature.tempogram(y=y, sr=sr), axis=1)
     >>> # We'll measure the first five harmonics
@@ -261,8 +259,7 @@ def harmonics_1d(harmonic_out, x, freqs, h_range, kind='linear',
     --------
     Estimate the harmonics of a time-averaged tempogram
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(),
-    ...                      duration=15, offset=30)
+    >>> y, sr = librosa.load(librosa.ex('choice'))
     >>> # Compute the time-varying tempogram and average over time
     >>> tempi = np.mean(librosa.feature.tempogram(y=y, sr=sr), axis=1)
     >>> # We'll measure the first five harmonics

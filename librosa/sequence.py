@@ -136,7 +136,7 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
     --------
     >>> import numpy as np
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(), offset=10, duration=15)
+    >>> y, sr = librosa.load(librosa.ex('brahms'), offset=10, duration=15)
     >>> X = librosa.feature.chroma_cens(y=y, sr=sr)
     >>> noise = np.random.rand(X.shape[0], 200)
     >>> Y = np.concatenate((noise, noise, X, noise), axis=1)
@@ -597,8 +597,7 @@ def rqa(sim, gap_onset=1, gap_extend=1, knight_moves=True, backtrack=True):
 
     >>> import numpy as np
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(),
-    ...                      offset=10, duration=30)
+    >>> y, sr = librosa.load(librosa.ex('choice'))
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     >>> # Use time-delay embedding to reduce noise
     >>> chroma_stack = librosa.feature.stack_memory(chroma, n_steps=3)
@@ -1113,7 +1112,7 @@ def viterbi_discriminative(prob, transition, p_state=None, p_init=None, return_l
     >>> trans = librosa.sequence.transition_loop(25, 0.9)
 
     >>> # Load in audio and make features
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('nutcracker'))
     >>> # Suppress percussive elements
     >>> y = librosa.effects.harmonic(y, margin=4)
     >>> chroma = librosa.feature.chroma_cens(y=y, sr=sr, bins_per_octave=36)

@@ -31,7 +31,7 @@ import librosa.display
 
 #############################################
 # Load an example with vocals.
-y, sr = librosa.load('audio/Cheese_N_Pot-C_-_16_-_The_Raps_Well_Clean_Album_Version.mp3', duration=120)
+y, sr = librosa.load(librosa.ex('fishin'), duration=120)
 
 
 # And compute the spectrogram magnitude and phase

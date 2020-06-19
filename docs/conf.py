@@ -73,7 +73,8 @@ sphinx_gallery_conf = {
             'sklearn': 'https://scikit-learn.org/stable',
             'resampy': 'https://resampy.readthedocs.io/en/latest/',
             'pyrubberband': 'https://pyrubberband.readthedocs.io/en/stable/',
-            'samplerate': 'https://python-samplerate.readthedocs.io/en/latest/'
+            'samplerate': 'https://python-samplerate.readthedocs.io/en/latest/',
+            'pooch': 'https://www.fatiando.org/pooch/latest/'
         }
     }
 

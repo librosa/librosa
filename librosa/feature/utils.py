@@ -59,23 +59,25 @@ def delta(data, width=9, order=1, axis=-1, mode='interp', **kwargs):
     --------
     Compute MFCC deltas, delta-deltas
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> mfcc = librosa.feature.mfcc(y=y, sr=sr)
     >>> mfcc_delta = librosa.feature.delta(mfcc)
     >>> mfcc_delta
-    array([[  1.666e+01,   1.666e+01, ...,   1.869e-15,   1.869e-15],
-           [  1.784e+01,   1.784e+01, ...,   6.085e-31,   6.085e-31],
+    array([[-1.610e+01, -1.610e+01, ...,  3.980e-14,  3.980e-14],
+           [ 2.067e+00,  2.067e+00, ...,  0.000e+00,  0.000e+00],
            ...,
-           [  7.262e-01,   7.262e-01, ...,   9.259e-31,   9.259e-31],
-           [  6.578e-01,   6.578e-01, ...,   7.597e-31,   7.597e-31]])
+           [ 2.073e+00,  2.073e+00, ...,  0.000e+00,  0.000e+00],
+           [-2.241e+00, -2.241e+00, ...,  0.000e+00,  0.000e+00]],
+          dtype=float32)
 
     >>> mfcc_delta2 = librosa.feature.delta(mfcc, order=2)
     >>> mfcc_delta2
-    array([[ -1.703e+01,  -1.703e+01, ...,   3.834e-14,   3.834e-14],
-           [ -1.108e+01,  -1.108e+01, ...,  -1.068e-30,  -1.068e-30],
+    array([[1.088e+01, 1.088e+01, ..., 3.146e-14, 3.146e-14],
+           [8.505e+00, 8.505e+00, ..., 0.000e+00, 0.000e+00],
            ...,
-           [  4.075e-01,   4.075e-01, ...,  -1.565e-30,  -1.565e-30],
-           [  1.676e-01,   1.676e-01, ...,  -2.104e-30,  -2.104e-30]])
+           [1.059e+00, 1.059e+00, ..., 0.000e+00, 0.000e+00],
+           [3.197e+00, 3.197e+00, ..., 0.000e+00, 0.000e+00]],
+          dtype=float32)
 
     >>> import matplotlib.pyplot as plt
     >>> plt.subplot(3, 1, 1)
@@ -196,7 +198,7 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
 
     Stack time-lagged beat-synchronous chroma edge padding
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('choice'))
     >>> chroma = librosa.feature.chroma_stft(y=y, sr=sr)
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, hop_length=512)
     >>> beats = librosa.util.fix_frames(beats, x_min=0, x_max=chroma.shape[1])

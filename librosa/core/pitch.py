@@ -54,26 +54,23 @@ def estimate_tuning(y=None, sr=22050, S=None, n_fft=2048,
     Examples
     --------
     >>> # With time-series input
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> librosa.estimate_tuning(y=y, sr=sr)
-    0.089999999999999969
+    -0.08000000000000002
 
     >>> # In tenths of a cent
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> librosa.estimate_tuning(y=y, sr=sr, resolution=1e-3)
-    0.093999999999999972
+    -0.016000000000000014
 
     >>> # Using spectrogram input
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> S = np.abs(librosa.stft(y))
     >>> librosa.estimate_tuning(S=S, sr=sr)
-    0.089999999999999969
+    -0.08000000000000002
 
     >>> # Using pass-through arguments to `librosa.piptrack`
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
     >>> librosa.estimate_tuning(y=y, sr=sr, n_fft=8192,
     ...                         fmax=librosa.note_to_hz('G#9'))
-    0.070000000000000062
+    -0.08000000000000002
 
     '''
 
@@ -127,12 +124,13 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     0.25
 
     >>> # Track frequencies from a real spectrogram
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-    >>> pitches, magnitudes, stft = librosa.ifptrack(y, sr)
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> freqs, times, mags = librosa.reassigned_spectrogram(y, sr,
+    ...                                                     fill_nan=True)
     >>> # Select out pitches with high energy
-    >>> pitches = pitches[magnitudes > np.median(magnitudes)]
-    >>> librosa.pitch_tuning(pitches)
-    0.089999999999999969
+    >>> freqs = freqs[mags > np.median(mags)]
+    >>> librosa.pitch_tuning(freqs)
+    -0.07
 
     '''
 
@@ -261,7 +259,7 @@ def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
     --------
     Computing pitches from a waveform input
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> pitches, magnitudes = librosa.piptrack(y=y, sr=sr)
 
     Or from a spectrogram input

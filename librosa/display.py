@@ -441,7 +441,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
     Plot a monophonic waveform
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=10)
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> plt.figure()
     >>> plt.subplot(3, 1, 1)
     >>> librosa.display.waveplot(y, sr=sr)
@@ -449,15 +449,14 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
 
     Or a stereo waveform
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(),
-    ...                      mono=False, duration=10)
+    >>> y, sr = librosa.load(librosa.ex('trumpet', hq=True), mono=False)
     >>> plt.subplot(3, 1, 2)
     >>> librosa.display.waveplot(y, sr=sr)
     >>> plt.title('Stereo')
 
     Or harmonic and percussive components with transparency
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(), duration=10)
+    >>> y, sr = librosa.load(librosa.ex('choice'), duration=10)
     >>> y_harm, y_perc = librosa.effects.hpss(y)
     >>> plt.subplot(3, 1, 3)
     >>> librosa.display.waveplot(y_harm, sr=sr, alpha=0.25)
@@ -647,7 +646,7 @@ def specshow(data, x_coords=None, y_coords=None,
     Visualize an STFT power spectrum using default parameters
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> plt.figure(figsize=(12, 8))
 
     >>> D = librosa.amplitude_to_db(np.abs(librosa.stft(y)), ref=np.max)

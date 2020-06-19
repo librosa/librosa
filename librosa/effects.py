@@ -79,7 +79,7 @@ def hpss(y, **kwargs):
     Examples
     --------
     >>> # Extract harmonic and percussive components
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('choice'))
     >>> y_harmonic, y_percussive = librosa.effects.hpss(y)
 
     >>> # Get a more isolated percussive component by widening its margin
@@ -124,7 +124,7 @@ def harmonic(y, **kwargs):
     Examples
     --------
     >>> # Extract harmonic component
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('choice'))
     >>> y_harmonic = librosa.effects.harmonic(y)
 
     >>> # Use a margin > 1.0 for greater harmonic separation
@@ -168,7 +168,7 @@ def percussive(y, **kwargs):
     Examples
     --------
     >>> # Extract percussive component
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('choice'))
     >>> y_percussive = librosa.effects.percussive(y)
 
     >>> # Use a margin > 1.0 for greater percussive separation
@@ -219,7 +219,7 @@ def time_stretch(y, rate, **kwargs):
     --------
     Compress to be twice as fast
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('choice'))
     >>> y_fast = librosa.effects.time_stretch(y, 2.0)
 
     Or half the original speed
@@ -293,7 +293,7 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type='kaiser_best',
     --------
     Shift up by a major third (four steps if `bins_per_octave` is 12)
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('choice'))
     >>> y_third = librosa.effects.pitch_shift(y, sr, n_steps=4)
 
     Shift down by a tritone (six steps if `bins_per_octave` is 12)
@@ -349,7 +349,7 @@ def remix(y, intervals, align_zeros=True):
     --------
     Load in the example track and reverse the beats
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('choice'))
 
 
     Compute beats
@@ -479,12 +479,12 @@ def trim(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
     Examples
     --------
     >>> # Load some audio
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('choice'))
     >>> # Trim the beginning and ending silence
     >>> yt, index = librosa.effects.trim(y)
     >>> # Print the durations
     >>> print(librosa.get_duration(y), librosa.get_duration(yt))
-    61.45886621315193 60.58086167800454
+    25.025986394557822 25.007891156462584
     '''
 
     non_silent = _signal_to_frame_nonsilent(y,
@@ -622,7 +622,7 @@ def preemphasis(y, coef=0.97, zi=None, return_zf=False):
     Apply a standard pre-emphasis filter
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.util.example_audio_file(), offset=30, duration=10)
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> y_filt = librosa.effects.preemphasis(y)
     >>> # and plot the results for comparison
     >>> S_orig = librosa.amplitude_to_db(np.abs(librosa.stft(y)), ref=np.max)

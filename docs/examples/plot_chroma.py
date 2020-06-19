@@ -38,7 +38,8 @@ import librosa.display
 
 #######################################################################
 # We'll use a track that has harmonic, melodic, and percussive elements
-y, sr = librosa.load('audio/Karissa_Hobbs_-_09_-_Lets_Go_Fishin.mp3')
+#  Karissa Hobbs - Let's Go Fishin'
+y, sr = librosa.load(librosa.ex('fishin'))
 
 
 #######################################
