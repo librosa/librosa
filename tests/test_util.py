@@ -525,6 +525,18 @@ def test_sparsify_rows_badquantile(X, quantile):
     librosa.util.sparsify_rows(X, quantile=quantile)
 
 
+@pytest.mark.parametrize('dtype', [None, np.float32, np.float64])
+@pytest.mark.parametrize('ref_dtype', [np.float32, np.float64])
+def test_sparsify_rows_dtype(dtype, ref_dtype):
+    x = np.ones(10, dtype=ref_dtype)
+    xs = librosa.util.sparsify_rows(x, dtype=dtype)
+
+    if dtype is None:
+        assert xs.dtype == x.dtype
+    else:
+        assert xs.dtype == dtype
+
+
 @pytest.mark.parametrize("ndim", [1, 2])
 @pytest.mark.parametrize("d", [1, 5, 10, 100])
 @pytest.mark.parametrize("q", [0.0, 0.01, 0.25, 0.5, 0.99])

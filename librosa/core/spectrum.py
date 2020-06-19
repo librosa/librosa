@@ -31,7 +31,7 @@ __all__ = ['stft', 'istft', 'magphase', 'iirt',
 
 @cache(level=20)
 def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
-         center=True, dtype=np.complex64, pad_mode='reflect'):
+         center=True, dtype=None, pad_mode='reflect'):
     """Short-time Fourier transform (STFT). [1]_ (chapter 2)
 
     The STFT represents a signal in the time-frequency domain by
@@ -118,9 +118,9 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
 
         .. see also:: `stream`
 
-    dtype : numeric type
-        Complex numeric type for `D`.  Default is single-precision
-        floating-point complex (`np.complex64`).
+    dtype : np.dtype, optional
+        Complex numeric type for `D`.  Default is inferred to match the
+        precision of the input signal.
 
     pad_mode : string or function
         If `center=True`, this argument is passed to `np.pad` for padding
@@ -212,6 +212,9 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
     # Window the time series.
     y_frames = util.frame(y, frame_length=n_fft, hop_length=hop_length)
 
+    if dtype is None:
+        dtype = util.dtype_r2c(y.dtype)
+
     # Pre-allocate the STFT matrix
     stft_matrix = np.empty((int(1 + n_fft // 2), y_frames.shape[1]),
                            dtype=dtype,
@@ -235,7 +238,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
 
 @cache(level=30)
 def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
-          center=True, dtype=np.float32, length=None):
+          center=True, dtype=None, length=None):
     """
     Inverse short-time Fourier transform (ISTFT).
 
@@ -280,7 +283,8 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
         - If `False`, `D` is assumed to have left-aligned frames.
 
     dtype : numeric type
-        Real numeric type for `y`.  Default is 32-bit float.
+        Real numeric type for `y`.  Default is to match the numerical
+        precision of the input spectrogram.
 
     length : int > 0, optional
         If provided, the output `y` is zero-padded or clipped to exactly
@@ -347,6 +351,10 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
         n_frames = stft_matrix.shape[1]
 
     expected_signal_len = n_fft + hop_length * (n_frames - 1)
+
+    if dtype is None:
+        dtype = util.dtype_c2r(stft_matrix.dtype)
+
     y = np.zeros(expected_signal_len, dtype=dtype)
 
     n_columns = util.MAX_MEM_BLOCK // (stft_matrix.shape[0] *
@@ -414,7 +422,7 @@ def __overlap_add(y, ytmp, hop_length):
 
 def __reassign_frequencies(y, sr=22050, S=None, n_fft=2048, hop_length=None,
                            win_length=None, window="hann", center=True,
-                           dtype=np.complex64, pad_mode="reflect"):
+                           dtype=None, pad_mode="reflect"):
     """Instantaneous frequencies based on a spectrogram representation.
 
     The reassignment vector is calculated using equation 5.20 in Flandrin,
@@ -473,7 +481,8 @@ def __reassign_frequencies(y, sr=22050, S=None, n_fft=2048, hop_length=None,
         - If `False`, then `S[:, t]` begins at `y[t * hop_length]`.
 
     dtype : numeric type
-        Complex numeric type for `S`. Default is 64-bit complex.
+        Complex numeric type for `S`. Default is inferred to match
+        the numerical precision of the input signal.
 
     pad_mode : string
         If `center=True`, the padding mode to use at the edges of the signal.
@@ -521,6 +530,9 @@ def __reassign_frequencies(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     window = util.pad_center(window, n_fft)
 
     if S is None:
+        if dtype is None:
+            dtype = util.dtype_r2c(y.dtype)
+
         S_h = stft(
             y=y,
             n_fft=n_fft,
@@ -532,6 +544,9 @@ def __reassign_frequencies(y, sr=22050, S=None, n_fft=2048, hop_length=None,
         )
 
     else:
+        if dtype is None:
+            dtype = S.dtype
+
         S_h = S
 
     # cyclic gradient to correctly handle edges of a periodic window
@@ -560,7 +575,7 @@ def __reassign_frequencies(y, sr=22050, S=None, n_fft=2048, hop_length=None,
 
 def __reassign_times(y, sr=22050, S=None, n_fft=2048, hop_length=None,
                      win_length=None, window="hann", center=True,
-                     dtype=np.complex64, pad_mode="reflect"):
+                     dtype=None, pad_mode="reflect"):
     """Time reassignments based on a spectrogram representation.
 
     The reassignment vector is calculated using equation 5.23 in Flandrin,
@@ -619,7 +634,8 @@ def __reassign_times(y, sr=22050, S=None, n_fft=2048, hop_length=None,
         - If `False`, then `S[:, t]` begins at `y[t * hop_length]`.
 
     dtype : numeric type
-        Complex numeric type for `S`. Default is 64-bit complex.
+        Complex numeric type for `S`. Default is inferred to match
+        the precision of the input signal.
 
     pad_mode : string
         If `center=True`, the padding mode to use at the edges of the signal.
@@ -671,6 +687,8 @@ def __reassign_times(y, sr=22050, S=None, n_fft=2048, hop_length=None,
         hop_length = int(win_length // 4)
 
     if S is None:
+        if dtype is None:
+            dtype = util.dtype_r2c(y.dtype)
         S_h = stft(
             y=y,
             n_fft=n_fft,
@@ -682,6 +700,8 @@ def __reassign_times(y, sr=22050, S=None, n_fft=2048, hop_length=None,
         )
 
     else:
+        if dtype is None:
+            dtype = S.dtype
         S_h = S
 
     # calculate window weighted by time
@@ -729,7 +749,7 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
                            win_length=None, window="hann", center=True,
                            reassign_frequencies=True, reassign_times=True,
                            ref_power=1e-6, fill_nan=False, clip=True,
-                           dtype=np.complex64, pad_mode="reflect"):
+                           dtype=None, pad_mode="reflect"):
     r"""Time-frequency reassigned spectrogram.
 
     The reassignment vectors are calculated using equations 5.20 and 5.23 in
@@ -837,7 +857,8 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
           spectrogram may be returned.
 
     dtype : numeric type
-        Complex numeric type for STFT calculation. Default is 64-bit complex.
+        Complex numeric type for STFT calculation. Default is inferred to match
+        the precision of the input signal.
 
     pad_mode : string
         If `center=True`, the padding mode to use at the edges of the signal.
@@ -2131,7 +2152,7 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
 
 
 def griffinlim(S, n_iter=32, hop_length=None, win_length=None, window='hann',
-               center=True, dtype=np.float32, length=None, pad_mode='reflect',
+               center=True, dtype=None, length=None, pad_mode='reflect',
                momentum=0.99, init='random', random_state=None):
 
     '''Approximate magnitude spectrogram inversion using the "fast" Griffin-Lim algorithm [1]_ [2]_.
@@ -2175,7 +2196,8 @@ def griffinlim(S, n_iter=32, hop_length=None, win_length=None, window='hann',
         If `False`, the STFT is assumed to use left-aligned frames.
 
     dtype : np.dtype
-        Real numeric type for the time-domain signal.  Default is 32-bit float.
+        Real numeric type for the time-domain signal.  Default is inferred
+        to match the precision of the input spectrogram.
 
     length : None or int > 0
         If provided, the output `y` is zero-padded or clipped to exactly `length`

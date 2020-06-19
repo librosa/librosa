@@ -1121,7 +1121,7 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
 
 
 @cache(level=40)
-def sparsify_rows(x, quantile=0.01):
+def sparsify_rows(x, quantile=0.01, dtype=None):
     '''
     Return a row-sparse matrix approximating the input `x`.
 
@@ -1132,6 +1132,10 @@ def sparsify_rows(x, quantile=0.01):
 
     quantile : float in [0, 1.0)
         Percentage of magnitude to discard in each row of `x`
+
+    dtype : np.dtype, optional
+        The dtype of the output array.
+        If not provided, then `x.dtype` will be used.
 
     Returns
     -------
@@ -1196,7 +1200,10 @@ def sparsify_rows(x, quantile=0.01):
     if not 0.0 <= quantile < 1:
         raise ParameterError('Invalid quantile {:.2f}'.format(quantile))
 
-    x_sparse = scipy.sparse.lil_matrix(x.shape, dtype=x.dtype)
+    if dtype is None:
+        dtype = x.dtype
+
+    x_sparse = scipy.sparse.lil_matrix(x.shape, dtype=dtype)
 
     mags = np.abs(x)
     norms = np.sum(mags, axis=1, keepdims=True)
