@@ -3,6 +3,8 @@ cache:
   directories:
   - $HOME/env
   - $HOME/Library/Caches/Homebrew
+  - $HOME/.cache
+  - $HOME/Library/Caches/librosa
 
 language: python
 

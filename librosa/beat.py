@@ -108,28 +108,35 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
     --------
     Track beats using time series input
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('choice'))
 
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
     >>> tempo
-    64.599609375
+    135.99917763157896
 
 
-    Print the first 20 beat frames
+    Print the frames corresponding to beats
 
-    >>> beats[:20]
-    array([ 320,  357,  397,  436,  480,  525,  569,  609,  658,
-            698,  737,  777,  817,  857,  896,  936,  976, 1016,
-           1055, 1095])
+    >>> beats
+    array([   3,   21,   40,   59,   78,   96,  116,  135,  154,  173,
+            192,  211,  230,  249,  268,  287,  306,  325,  344,  363,
+            382,  401,  420,  439,  458,  476,  495,  515,  534,  553,
+            572,  591,  610,  629,  647,  667,  686,  705,  724,  743,
+            762,  780,  799,  819,  838,  857,  876,  895,  914,  933,
+            951,  971,  990, 1008])
 
 
     Or print them as timestamps
 
-    >>> librosa.frames_to_time(beats[:20], sr=sr)
-    array([  7.43 ,   8.29 ,   9.218,  10.124,  11.146,  12.19 ,
-            13.212,  14.141,  15.279,  16.208,  17.113,  18.042,
-            18.971,  19.9  ,  20.805,  21.734,  22.663,  23.591,
-            24.497,  25.426])
+    >>> librosa.frames_to_time(beats, sr=sr)
+    array([ 0.07 ,  0.488,  0.929,  1.37 ,  1.811,  2.229,  2.694,
+            3.135,  3.576,  4.017,  4.458,  4.899,  5.341,  5.782,
+            6.223,  6.664,  7.105,  7.546,  7.988,  8.429,  8.87 ,
+            9.311,  9.752, 10.194, 10.635, 11.053, 11.494, 11.958,
+           12.399, 12.841, 13.282, 13.723, 14.164, 14.605, 15.023,
+           15.488, 15.929, 16.37 , 16.811, 17.252, 17.694, 18.112,
+           18.553, 19.017, 19.458, 19.9  , 20.341, 20.782, 21.223,
+           21.664, 22.082, 22.547, 22.988, 23.406])
 
 
     Track beats using a pre-computed onset envelope
@@ -139,11 +146,14 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
     >>> tempo, beats = librosa.beat.beat_track(onset_envelope=onset_env,
     ...                                        sr=sr)
     >>> tempo
-    64.599609375
-    >>> beats[:20]
-    array([ 320,  357,  397,  436,  480,  525,  569,  609,  658,
-            698,  737,  777,  817,  857,  896,  936,  976, 1016,
-           1055, 1095])
+    135.99917763157896
+    >>> beats
+    array([   3,   21,   40,   59,   78,   96,  116,  135,  154,  173,
+            192,  211,  230,  249,  268,  287,  306,  325,  344,  363,
+            382,  401,  420,  439,  458,  476,  495,  515,  534,  553,
+            572,  591,  610,  629,  647,  667,  686,  705,  724,  743,
+            762,  780,  799,  819,  838,  857,  876,  895,  914,  933,
+            951,  971,  990, 1008])
 
 
     Plot the beat events against the onset strength envelope
@@ -158,7 +168,6 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
     ...            linestyle='--', label='Beats')
     >>> plt.legend(frameon=True, framealpha=0.75)
     >>> # Limit the plot to a 15-second window
-    >>> plt.xlim(15, 30)
     >>> plt.gca().xaxis.set_major_formatter(librosa.display.TimeFormatter())
     >>> plt.tight_layout()
     >>> plt.show()
@@ -262,25 +271,24 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
     Examples
     --------
     >>> # Estimate a static tempo
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('nutcracker'))
     >>> onset_env = librosa.onset.onset_strength(y, sr=sr)
     >>> tempo = librosa.beat.tempo(onset_envelope=onset_env, sr=sr)
     >>> tempo
-    array([129.199])
+    array([143.555])
 
     >>> # Or a static tempo with a uniform prior instead
     >>> import scipy.stats
     >>> prior = scipy.stats.uniform(30, 300)  # uniform over 30-300 BPM
     >>> utempo = librosa.beat.tempo(onset_envelope=onset_env, sr=sr, prior=prior)
     >>> utempo
-    array([64.6])
+    array([161.499])
 
     >>> # Or a dynamic tempo
     >>> dtempo = librosa.beat.tempo(onset_envelope=onset_env, sr=sr,
     ...                             aggregate=None)
     >>> dtempo
-    array([ 143.555,  143.555,  143.555, ...,  161.499,  161.499,
-            172.266])
+    array([ 89.103,  89.103,  89.103, ..., 123.047, 123.047, 123.047])
 
     >>> # Dynamic tempo with a proper log-normal prior
     >>> prior_lognorm = scipy.stats.lognorm(loc=np.log(120), scale=120, s=1)
@@ -288,8 +296,7 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
     ...                                     aggregate=None,
     ...                                     prior=prior_lognorm)
     >>> dtempo_lognorm
-    array([ 86.133,  86.133, ..., 129.199, 129.199])
-
+    array([ 89.103,  89.103,  89.103, ..., 123.047, 123.047, 123.047])
 
     Plot the estimated tempo against the onset autocorrelation
 
@@ -322,7 +329,7 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
     >>> plt.figure()
     >>> tg = librosa.feature.tempogram(onset_envelope=onset_env, sr=sr,
     ...                                hop_length=hop_length)
-    >>> librosa.display.specshow(tg, x_axis='time', y_axis='tempo')
+    >>> librosa.display.specshow(tg, x_axis='time', y_axis='tempo', cmap='magma')
     >>> plt.plot(librosa.times_like(dtempo), dtempo,
     ...          color='w', linewidth=1.5, label='Tempo estimate (default prior)')
     >>> plt.plot(librosa.times_like(dtempo_lognorm), dtempo_lognorm,
@@ -434,7 +441,7 @@ def plp(y=None, sr=22050, onset_envelope=None, hop_length=512,
     Visualize the PLP compared to an onset strength envelope.
     Both are normalized here to make comparison easier.
 
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
+    >>> y, sr = librosa.load(librosa.ex('brahms'))
     >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr)
     >>> pulse = librosa.beat.plp(onset_envelope=onset_env, sr=sr)
     >>> # Or compute pulse with an alternate prior, like log-normal
@@ -466,7 +473,7 @@ def plp(y=None, sr=22050, onset_envelope=None, hop_length=512,
     ...          label='Predominant local pulse (PLP)')
     >>> plt.title('Log-normal tempo prior, mean=120')
     >>> plt.legend()
-    >>> plt.xlim([30, 35])
+    >>> plt.xlim([5, 20])
     >>> plt.tight_layout()
     >>> plt.show()
 
@@ -493,7 +500,7 @@ def plp(y=None, sr=22050, onset_envelope=None, hop_length=512,
     ...            linestyle='--', label='PLP Beats')
     >>> plt.legend(frameon=True, framealpha=0.75)
     >>> plt.title('librosa.beat.plp')
-    >>> plt.xlim(30, 35)
+    >>> plt.xlim([5, 20])
     >>> ax.xaxis.set_major_formatter(librosa.display.TimeFormatter())
     >>> plt.tight_layout()
     >>> plt.show()

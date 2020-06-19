@@ -58,7 +58,7 @@ librosa['n_fft'] = 4096
 
 ######################################################################
 # Now we can load in a file and do some analysis with the new defaults
-filename = 'audio/Karissa_Hobbs_-_09_-_Lets_Go_Fishin.mp3'
+filename = librosa.ex('fishin')
 
 y, sr = librosa.load(filename, duration=5, offset=35)
 
