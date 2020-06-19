@@ -30,7 +30,9 @@ __all__ = ['MAX_MEM_BLOCK',
            'softmask',
            'buf_to_float',
            'tiny',
-           'cyclic_gradient']
+           'cyclic_gradient',
+           'dtype_r2c',
+           'dtype_c2r']
 
 
 def frame(x, frame_length, hop_length, axis=-1):
@@ -1956,3 +1958,118 @@ def stack(arrays, axis=0):
         np.stack(arrays, axis=axis, out=result)
 
         return result
+
+
+def dtype_r2c(d, default=np.complex64):
+    '''Find the complex numpy dtype corresponding to a real dtype.
+
+    This is used to maintain numerical precision and memory footprint
+    when constructing complex arrays from real-valued data
+    (e.g. in a Fourier transform).
+
+    A `float32` (single-precision) type maps to `complex64`,
+    while a `float64` (double-precision) maps to `complex128`.
+
+
+    Parameters
+    ----------
+    d : np.dtype
+        The real-valued dtype to convert to complex.
+        If `d` is a complex type already, it will be returned.
+
+    default : np.dtype, optional
+        The default complex target type, if `d` does not match a
+        known dtype
+
+    Returns
+    -------
+    d_c : np.dtype
+        The complex dtype
+
+    See Also
+    --------
+    dtype_c2r
+    np.dtype
+
+    Examples
+    --------
+    >>> librosa.util.dtype_r2c(np.float32)
+    dtype('complex64')
+
+    >>> librosa.util.dtype_r2c(np.int16)
+    dtype('complex64')
+
+    >>> librosa.util.dtype_r2c(np.complex128)
+    dtype('complex128')
+    '''
+    mapping = {np.dtype(np.float32): np.complex64,
+               np.dtype(np.float64): np.complex128,
+               np.dtype(np.float): np.complex}
+
+    # If we're given a complex type already, return it
+    dt = np.dtype(d)
+    if dt.kind == 'c':
+        return dt
+
+    # Otherwise, try to map the dtype.
+    # If no match is found, return the default.
+    return np.dtype(mapping.get(dt, default))
+
+
+def dtype_c2r(d, default=np.float32):
+    '''Find the real numpy dtype corresponding to a complex dtype.
+
+    This is used to maintain numerical precision and memory footprint
+    when constructing real arrays from complex-valued data
+    (e.g. in an inverse Fourier transform).
+
+    A `complex64` (single-precision) type maps to `float32`,
+    while a `complex128` (double-precision) maps to `float64`.
+
+
+    Parameters
+    ----------
+    d : np.dtype
+        The complex-valued dtype to convert to real.
+        If `d` is a real (float) type already, it will be returned.
+
+    default : np.dtype, optional
+        The default real target type, if `d` does not match a
+        known dtype
+
+    Returns
+    -------
+    d_r : np.dtype
+        The real dtype
+
+    See Also
+    --------
+    dtype_r2c
+    np.dtype
+
+    Examples
+    --------
+    >>> librosa.util.dtype_r2c(np.complex64)
+    dtype('float32')
+
+    >>> librosa.util.dtype_r2c(np.float32)
+    dtype('float32')
+
+    >>> librosa.util.dtype_r2c(np.int16)
+    dtype('float32')
+
+    >>> librosa.util.dtype_r2c(np.complex128)
+    dtype('float64')
+    '''
+    mapping = {np.dtype(np.complex64): np.float32,
+               np.dtype(np.complex128): np.float64,
+               np.dtype(np.complex): np.float}
+
+    # If we're given a real type already, return it
+    dt = np.dtype(d)
+    if dt.kind == 'f':
+        return dt
+
+    # Otherwise, try to map the dtype.
+    # If no match is found, return the default.
+    return np.dtype(mapping.get(np.dtype(d), default))

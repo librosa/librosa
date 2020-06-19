@@ -1140,3 +1140,18 @@ def test_example_info(key):
 
 def test_list_examples():
     librosa.util.list_examples()
+
+
+@pytest.mark.parametrize('dtype,target', [(np.float32, np.complex64), (np.float64, np.complex128), (np.int32, np.complex64), (np.complex128, np.complex128)])
+def test_dtype_r2c(dtype, target):
+    inf_type = librosa.util.dtype_r2c(dtype)
+
+    # better to do a bidirectional subtype test than strict equality here
+    assert np.issubdtype(inf_type, target) and np.issubdtype(target, inf_type)
+
+@pytest.mark.parametrize('dtype,target', [(np.float32, np.float32), (np.complex64, np.float32), (np.int32, np.float32), (np.complex128, np.float64)])
+def test_dtype_c2r(dtype, target):
+    inf_type = librosa.util.dtype_c2r(dtype)
+
+    # better to do a bidirectional subtype test than strict equality here
+    assert np.issubdtype(inf_type, target) and np.issubdtype(target, inf_type)
