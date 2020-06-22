@@ -132,11 +132,11 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
     htk       : bool [scalar]
         use HTK formula instead of Slaney
 
-    norm : {None, 1, 'slaney', np.inf} [scalar]
-        If 1 or 'slaney', divide the triangular mel weights by the width of the mel band
+    norm : {None, 'slaney', or non-negative number} [scalar]
+        If 'slaney', divide the triangular mel weights by the width of the mel band
         (area normalization).
 
-        .. warning:: `norm=1` and `norm=np.inf` behavior will change in version 0.8.0.
+        If numeric, use `util.normalize` to normalize each filter by to unit l_p norm.
 
         Otherwise, leave all the triangles aiming for a peak value of 1.0
 
@@ -148,6 +148,10 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
     -------
     M         : np.ndarray [shape=(n_mels, 1 + n_fft/2)]
         Mel transform matrix
+
+    See also
+    --------
+    util.normalize
 
     Notes
     -----
@@ -187,17 +191,9 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
     if fmax is None:
         fmax = float(sr) / 2
 
-    if norm == 1:
-        warnings.warn('norm=1 behavior will change in librosa 0.8.0. '
-                      "To maintain forward compatibility, use norm='slaney' instead.",
-                      FutureWarning)
-    elif norm == np.inf:
-        warnings.warn('norm=np.inf behavior will change in librosa 0.8.0. '
-                      "To maintain forward compatibility, use norm=None instead.",
-                      FutureWarning)
-
-    elif norm not in (None, 1, 'slaney', np.inf):
-        raise ParameterError("Unsupported norm={}, must be one of: None, 1, 'slaney', np.inf".format(repr(norm)))
+    if not (norm in (None, 'slaney') or np.isreal(norm)):
+        raise ParameterError("Unsupported norm={}, must be one of: None, 'slaney', "
+                             "or non-negative number".format(repr(norm)))
 
     # Initialize the weights
     n_mels = int(n_mels)
@@ -220,10 +216,12 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
         # .. then intersect them with each other and zero
         weights[i] = np.maximum(0, np.minimum(lower, upper))
 
-    if norm in (1, 'slaney'):
+    if norm == 'slaney':
         # Slaney-style mel is scaled to be approx constant energy per channel
         enorm = 2.0 / (mel_f[2:n_mels + 2] - mel_f[:n_mels])
         weights *= enorm[:, np.newaxis]
+    else:
+        weights = util.normalize(weights, norm=norm, axis=-1)
 
     # Only check weights if f_mel[0] is positive
     if not np.all((mel_f[:-2] == 0) | (weights.max(axis=1) > 0)):
