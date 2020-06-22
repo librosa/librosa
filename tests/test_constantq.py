@@ -69,7 +69,7 @@ def sr_cqt():
 
 @pytest.fixture(scope="module")
 def y_cqt(sr_cqt):
-    return make_signal(sr_cqt, 5.0)
+    return make_signal(sr_cqt, 2.0)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -313,7 +313,7 @@ def sr_white():
 @pytest.fixture(scope="module")
 def y_white(sr_white):
     srand()
-    return np.random.randn(30 * sr_white)
+    return np.random.randn(10 * sr_white)
 
 
 @pytest.mark.parametrize("scale", [False, True])
@@ -520,3 +520,9 @@ def test_griffinlim_cqt_momentum_warn():
     x = np.zeros((33, 3))
     with pytest.warns(UserWarning):
         librosa.griffinlim_cqt(x, momentum=2)
+
+
+@pytest.mark.parametrize('dtype', [np.complex64, np.complex128])
+def test_cqt_precision(y_cqt, sr_cqt, dtype):
+    C = librosa.cqt(y=y_cqt, sr=sr_cqt, dtype=dtype)
+    assert np.dtype(C.dtype) == np.dtype(dtype)

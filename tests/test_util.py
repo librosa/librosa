@@ -525,6 +525,18 @@ def test_sparsify_rows_badquantile(X, quantile):
     librosa.util.sparsify_rows(X, quantile=quantile)
 
 
+@pytest.mark.parametrize('dtype', [None, np.float32, np.float64])
+@pytest.mark.parametrize('ref_dtype', [np.float32, np.float64])
+def test_sparsify_rows_dtype(dtype, ref_dtype):
+    x = np.ones(10, dtype=ref_dtype)
+    xs = librosa.util.sparsify_rows(x, dtype=dtype)
+
+    if dtype is None:
+        assert xs.dtype == x.dtype
+    else:
+        assert xs.dtype == dtype
+
+
 @pytest.mark.parametrize("ndim", [1, 2])
 @pytest.mark.parametrize("d", [1, 5, 10, 100])
 @pytest.mark.parametrize("q", [0.0, 0.01, 0.25, 0.5, 0.99])
@@ -1140,3 +1152,18 @@ def test_example_info(key):
 
 def test_list_examples():
     librosa.util.list_examples()
+
+
+@pytest.mark.parametrize('dtype,target', [(np.float32, np.complex64), (np.float64, np.complex128), (np.int32, np.complex64), (np.complex128, np.complex128)])
+def test_dtype_r2c(dtype, target):
+    inf_type = librosa.util.dtype_r2c(dtype)
+
+    # better to do a bidirectional subtype test than strict equality here
+    assert np.issubdtype(inf_type, target) and np.issubdtype(target, inf_type)
+
+@pytest.mark.parametrize('dtype,target', [(np.float32, np.float32), (np.complex64, np.float32), (np.int32, np.float32), (np.complex128, np.float64)])
+def test_dtype_c2r(dtype, target):
+    inf_type = librosa.util.dtype_c2r(dtype)
+
+    # better to do a bidirectional subtype test than strict equality here
+    assert np.issubdtype(inf_type, target) and np.issubdtype(target, inf_type)
