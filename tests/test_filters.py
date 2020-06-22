@@ -122,15 +122,15 @@ def test_melfbnorm(infile):
 
 
 @pytest.mark.parametrize("norm", [1, 2, np.inf])
-def test_mel_norm1(norm):
+def test_mel_norm(norm):
 
     M = librosa.filters.mel(22050, 2048, norm=norm)
     if norm == 1:
-        assert np.allclose(np.sum(np.abs(M, axis=1)), 1)
+        assert np.allclose(np.sum(np.abs(M), axis=1), 1)
     elif norm == 2:
-        assert np.allclose(np.sum(np.abs(M**2, axis=1)), 1)
+        assert np.allclose(np.sum(np.abs(M**2), axis=1), 1)
     elif norm == np.inf:
-        assert np.allclose(np.max(np.abs(M, axis=1)), 1)
+        assert np.allclose(np.max(np.abs(M), axis=1), 1)
 
 
 
