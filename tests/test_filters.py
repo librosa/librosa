@@ -103,8 +103,6 @@ def test_melfbnorm(infile):
         norm = None
     else:
         norm = DATA["norm"][0, 0]
-        if norm == 1:
-            norm = "slaney"
     wts = librosa.filters.mel(
         DATA["sr"][0, 0],
         DATA["nfft"][0, 0],
