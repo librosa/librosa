@@ -103,8 +103,6 @@ def test_melfbnorm(infile):
         norm = None
     else:
         norm = DATA["norm"][0, 0]
-        if norm == 1:
-            norm = "slaney"
     wts = librosa.filters.mel(
         DATA["sr"][0, 0],
         DATA["nfft"][0, 0],
@@ -121,13 +119,17 @@ def test_melfbnorm(infile):
     assert np.allclose(wts, DATA["wts"])
 
 
-@pytest.mark.parametrize("norm", [1, np.inf])
-def test_mel_norm1(norm):
+@pytest.mark.parametrize("norm", [1, 2, np.inf])
+def test_mel_norm(norm):
 
-    # Check that calling with norm=1 triggers a warning
-    # This should be removed in 0.8.0
-    with pytest.warns(FutureWarning, match="compatibility"):
-        librosa.filters.mel(22050, 2048, norm=norm)
+    M = librosa.filters.mel(22050, 2048, norm=norm)
+    if norm == 1:
+        assert np.allclose(np.sum(np.abs(M), axis=1), 1)
+    elif norm == 2:
+        assert np.allclose(np.sum(np.abs(M**2), axis=1), 1)
+    elif norm == np.inf:
+        assert np.allclose(np.max(np.abs(M), axis=1), 1)
+
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
