@@ -43,6 +43,8 @@ Miscellaneous
     peak_pick
     nnls
     cyclic_gradient
+    dtype_c2r
+    dtype_r2c
 
 
 Input validation
