@@ -193,10 +193,6 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
     if fmax is None:
         fmax = float(sr) / 2
 
-    if not (norm in (None, 'slaney') or np.isreal(norm)):
-        raise ParameterError("Unsupported norm={}, must be one of: None, 'slaney', "
-                             "or supported by librosa.util.normalize.".format(repr(norm)))
-
     # Initialize the weights
     n_mels = int(n_mels)
     weights = np.zeros((n_mels, int(1 + n_fft // 2)), dtype=dtype)
