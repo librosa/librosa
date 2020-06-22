@@ -132,11 +132,13 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
     htk       : bool [scalar]
         use HTK formula instead of Slaney
 
-    norm : {None, 'slaney', or non-negative number} [scalar]
+    norm : {None, 'slaney', or number} [scalar]
         If 'slaney', divide the triangular mel weights by the width of the mel band
         (area normalization).
 
         If numeric, use `util.normalize` to normalize each filter by to unit l_p norm.
+        See `util.normalize` for a full description of supported norm values
+        (including `+-np.inf`).
 
         Otherwise, leave all the triangles aiming for a peak value of 1.0
 
@@ -193,7 +195,7 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
 
     if not (norm in (None, 'slaney') or np.isreal(norm)):
         raise ParameterError("Unsupported norm={}, must be one of: None, 'slaney', "
-                             "or non-negative number".format(repr(norm)))
+                             "or supported by librosa.util.normalize.".format(repr(norm)))
 
     # Initialize the weights
     n_mels = int(n_mels)
