@@ -75,8 +75,9 @@ Before diving into the details, we'll walk through a brief example program
     from __future__ import print_function
     import librosa
 
-    # 1. Get the file path to the included audio example
-    filename = librosa.util.example_audio_file()
+    # 1. Get the file path to an included audio example
+    filename = librosa.example('nutcracker')
+
 
     # 2. Load the audio as a waveform `y`
     #    Store the sampling rate as `sr`
@@ -93,12 +94,10 @@ Before diving into the details, we'll walk through a brief example program
 
 The first step of the program::
 
-    filename = librosa.util.example_audio_file()
+    filename = librosa.example('nutcracker')
 
-gets the path to the audio example file included with *librosa*.  After this step,
+gets the path to an audio example file included with *librosa*.  After this step,
 ``filename`` will be a string variable containing the path to the example audio file.
-The example is encoded in OGG Vorbis format, so you will need the appropriate codec
-installed for `audioread <https://github.com/sampsyo/audioread>`_.
 
 The second step::
 
@@ -151,7 +150,7 @@ multiple spectral features, and beat-synchronous feature aggregation.
     import librosa
 
     # Load the example clip
-    y, sr = librosa.load(librosa.util.example_audio_file())
+    y, sr = librosa.load(librosa.ex('nutcracker'))
 
     # Set the hop length; at 22050 Hz, 512 samples ~= 23ms
     hop_length = 512
