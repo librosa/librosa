@@ -140,13 +140,10 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> C = np.abs(librosa.cqt(y, sr=sr))
+    >>> fig, ax = plt.subplots()
     >>> librosa.display.specshow(librosa.amplitude_to_db(C, ref=np.max),
-    ...                          sr=sr, x_axis='time', y_axis='cqt_note')
-    >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.title('Constant-Q power spectrum')
-    >>> plt.tight_layout()
-    >>> plt.show()
-
+    ...                          sr=sr, x_axis='time', y_axis='cqt_note', ax=ax)
+    >>> ax.set_title('Constant-Q power spectrum')
 
     Limit the frequency range
 
@@ -768,14 +765,17 @@ def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=None,
     Generate and plot a variable-Q power spectrum
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.load(librosa.ex('choice'), duration=5)
+    >>> C = np.abs(librosa.cqt(y, sr=sr))
     >>> V = np.abs(librosa.vqt(y, sr=sr))
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+    >>> librosa.display.specshow(librosa.amplitude_to_db(C, ref=np.max),
+    ...                          sr=sr, x_axis='time', y_axis='cqt_note', ax=ax[0])
+    >>> ax[0].set(title='Constant-Q power spectrum', xlabel=None)
+    >>> ax[0].label_outer()
     >>> librosa.display.specshow(librosa.amplitude_to_db(V, ref=np.max),
-    ...                          sr=sr, x_axis='time', y_axis='cqt_note')
-    >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.title('Variable-Q power spectrum')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    ...                          sr=sr, x_axis='time', y_axis='cqt_note', ax=ax[1])
+    >>> ax[1].set_title('Variable-Q power spectrum')
     '''
 
     # How many octaves are we dealing with?
@@ -1190,20 +1190,15 @@ def griffinlim_cqt(C, n_iter=32, sr=22050, hop_length=512, fmin=None, bins_per_o
     Wave-plot the results
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> ax = plt.subplot(3,1,1)
-    >>> librosa.display.waveplot(y, sr=sr, color='b')
-    >>> plt.title('Original')
-    >>> plt.xlabel('')
-    >>> plt.subplot(3,1,2, sharex=ax, sharey=ax)
-    >>> librosa.display.waveplot(y_inv, sr=sr, color='g')
-    >>> plt.title('Griffin-Lim reconstruction')
-    >>> plt.xlabel('')
-    >>> plt.subplot(3,1,3, sharex=ax, sharey=ax)
-    >>> librosa.display.waveplot(y_icqt, sr=sr, color='r')
-    >>> plt.title('Magnitude-only icqt reconstruction')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
+    >>> librosa.display.waveplot(y, sr=sr, color='b', ax=ax[0])
+    >>> ax[0].set(title='Original', xlabel=None)
+    >>> ax[0].label_outer()
+    >>> librosa.display.waveplot(y_inv, sr=sr, color='g', ax=ax[1])
+    >>> ax[1].set(title='Griffin-Lim reconstruction', xlabel=None)
+    >>> ax[1].label_outer()
+    >>> librosa.display.waveplot(y_icqt, sr=sr, color='r', ax=ax[2])
+    >>> ax[2].set(title='Magnitude-only icqt reconstruction')
     '''
     if fmin is None:
         fmin = note_to_hz('C1')

@@ -69,14 +69,11 @@ def salience(S, freqs, h_range, weights=None, aggregate=None,
     >>> print(S_sal.shape)
     (1025, 115)
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
+    >>> fig, ax = plt.subplots()
     >>> librosa.display.specshow(librosa.amplitude_to_db(S_sal,
     ...                                                  ref=np.max),
-    ...                          sr=sr, y_axis='log', x_axis='time')
-    >>> plt.colorbar()
-    >>> plt.title('Salience spectrogram')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    ...                          sr=sr, y_axis='log', x_axis='time', ax=ax)
+    >>> ax.set(title='Salience spectrogram')
     """
     if aggregate is None:
         aggregate = np.average
@@ -165,18 +162,16 @@ def interp_harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
 
     >>> # And plot the results
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> librosa.display.specshow(t_harmonics, x_axis='tempo', sr=sr)
-    >>> plt.yticks(0.5 + np.arange(len(h_range)),
-    ...            ['{:.3g}'.format(_) for _ in h_range])
-    >>> plt.ylabel('Harmonic')
-    >>> plt.xlabel('Tempo (BPM)')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    >>> fig, ax = plt.subplots()
+    >>> librosa.display.specshow(t_harmonics, x_axis='tempo', sr=sr, ax=ax)
+    >>> ax.set(yticks=0.5 + np.arange(len(h_range)),
+    ...        yticklabels=['{:.3g}'.format(_) for _ in h_range],
+    ...        ylabel='Harmonic', xlabel='Tempo (BPM)')
 
     We can also compute frequency harmonics for spectrograms.
     To calculate sub-harmonic energy, use values < 1.
 
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> h_range = [1./3, 1./2, 1, 2, 3, 4]
     >>> S = np.abs(librosa.stft(y))
     >>> fft_freqs = librosa.fft_frequencies(sr=sr)
@@ -184,15 +179,14 @@ def interp_harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
     >>> print(S_harm.shape)
     (6, 1025, 646)
 
-    >>> plt.figure()
-    >>> for i, _sh in enumerate(S_harm, 1):
-    ...     plt.subplot(3, 2, i)
+    >>> fig, ax = plt.subplots(nrows=3, ncols=2, sharex=True, sharey=True)
+    >>> for i, _sh in enumerate(S_harm):
     ...     librosa.display.specshow(librosa.amplitude_to_db(_sh,
     ...                                                      ref=S.max()),
-    ...                              sr=sr, y_axis='log')
-    ...     plt.title('h={:.3g}'.format(h_range[i-1]))
-    ...     plt.yticks([])
-    >>> plt.tight_layout()
+    ...                              sr=sr, y_axis='log', x_axis='time',
+    ...                              ax=ax.flat[i])
+    ...     ax.flat[i].set(title='h={:.3g}'.format(h_range[i]))
+    ...     ax.flat[i].label_outer()
     '''
 
     # X_out will be the same shape as X, plus a leading

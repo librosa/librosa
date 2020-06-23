@@ -953,16 +953,19 @@ def A4_to_tuning(A4, bins_per_octave=12):
     --------
     The base case of this method in which A440 yields 0 tuning offset
     from itself.
+
     >>> librosa.A4_to_tuning(440.0)
     0.
 
     Convert a non-A440 frequency to a tuning offset relative
     to A440 using the default of 12 bins per octave.
+
     >>> librosa.A4_to_tuning(432.0)
     -0.318
 
     Convert two reference pitch frequencies to corresponding
     tuning estimations at once, but using 24 bins per octave.
+
     >>> librosa.A4_to_tuning([440.0, 444.0], bins_per_octave=24)
     array([   0.,   0.313   ])
 
@@ -1002,15 +1005,18 @@ def tuning_to_A4(tuning, bins_per_octave=12):
     --------
     The base case of this method in which a tuning deviation of 0
     gets us to our A440 reference pitch.
+
     >>> librosa.tuning_to_A4(0.0)
     440.
 
     Convert a nonzero tuning offset to its reference pitch frequency.
+
     >>> librosa.tuning_to_A4(-0.318)
     431.992
 
     Convert 3 tuning deviations at once to respective reference
     pitch frequencies, using 36 bins per octave.
+
     >>> librosa.tuning_to_A4([0.1, 0.2, -0.1], bins_per_octave=36)
     array([   440.848,    441.698   439.154])
 
@@ -1300,12 +1306,11 @@ def A_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
     >>> import matplotlib.pyplot as plt
     >>> freqs = librosa.cqt_frequencies(108, librosa.note_to_hz('C1'))
     >>> weights = librosa.A_weighting(freqs)
-    >>> plt.plot(freqs, weights)
-    >>> plt.xlabel('Frequency (Hz)')
-    >>> plt.ylabel('Weighting (log10)')
-    >>> plt.title('A-Weighting of CQT frequencies')
-    >>> plt.show()
-
+    >>> fig, ax = plt.subplots()
+    >>> ax.plot(freqs, weights)
+    >>> ax.set(xlabel='Frequency (Hz)',
+    ...        ylabel='Weighting (log10)',
+    ...        title='A-Weighting of CQT frequencies')
     '''
     f_sq = np.asanyarray(frequencies) ** 2.
 
@@ -1356,12 +1361,11 @@ def B_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
     >>> import matplotlib.pyplot as plt
     >>> freqs = librosa.cqt_frequencies(108, librosa.note_to_hz('C1'))
     >>> weights = librosa.B_weighting(freqs)
-    >>> plt.plot(freqs, weights)
-    >>> plt.xlabel('Frequency (Hz)')
-    >>> plt.ylabel('Weighting (log10)')
-    >>> plt.title('B-Weighting of CQT frequencies')
-    >>> plt.show()
-
+    >>> fig, ax = plt.subplots()
+    >>> ax.plot(freqs, weights)
+    >>> ax.set(xlabel='Frequency (Hz)',
+    ...        ylabel='Weighting (log10)',
+    ...        title='B-Weighting of CQT frequencies')
     '''
     f_sq = np.asanyarray(frequencies) ** 2.
 
@@ -1411,12 +1415,10 @@ def C_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
     >>> import matplotlib.pyplot as plt
     >>> freqs = librosa.cqt_frequencies(108, librosa.note_to_hz('C1'))
     >>> weights = librosa.C_weighting(freqs)
-    >>> plt.plot(freqs, weights)
-    >>> plt.xlabel('Frequency (Hz)')
-    >>> plt.ylabel('Weighting (log10)')
-    >>> plt.title('C-Weighting of CQT frequencies')
-    >>> plt.show()
-
+    >>> fig, ax = plt.subplots()
+    >>> ax.plot(freqs, weights)
+    >>> ax.set(xlabel='Frequency (Hz)', ylabel='Weighting (log10)',
+    ...        title='C-Weighting of CQT frequencies')
     '''
     f_sq = np.asanyarray(frequencies) ** 2.
 
@@ -1465,12 +1467,10 @@ def D_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
     >>> import matplotlib.pyplot as plt
     >>> freqs = librosa.cqt_frequencies(108, librosa.note_to_hz('C1'))
     >>> weights = librosa.D_weighting(freqs)
-    >>> plt.plot(freqs, weights)
-    >>> plt.xlabel('Frequency (Hz)')
-    >>> plt.ylabel('Weighting (log10)')
-    >>> plt.title('D-Weighting of CQT frequencies')
-    >>> plt.show()
-
+    >>> fig, ax = plt.subplots()
+    >>> ax.plot(freqs, weights)
+    >>> ax.set(xlabel='Frequency (Hz)', ylabel='Weighting (log10)',
+    ...        title='D-Weighting of CQT frequencies')
     '''
     f_sq = np.asanyarray(frequencies) ** 2.
 
@@ -1542,12 +1542,10 @@ def frequency_weighting(frequencies, kind='A', **kw):
     >>> import matplotlib.pyplot as plt
     >>> freqs = librosa.cqt_frequencies(108, librosa.note_to_hz('C1'))
     >>> weights = librosa.frequency_weighting(freqs, 'A')
-    >>> plt.plot(freqs, weights)
-    >>> plt.xlabel('Frequency (Hz)')
-    >>> plt.ylabel('Weighting (log10)')
-    >>> plt.title('A-Weighting of CQT frequencies')
-    >>> plt.show()
-
+    >>> fig, ax = plt.subplots()
+    >>> ax.plot(freqs, weights)
+    >>> ax.set(xlabel='Frequency (Hz)', ylabel='Weighting (log10)',
+    ...        title='A-Weighting of CQT frequencies')
     '''
     if isinstance(kind, str):
         kind = kind.upper()
@@ -1591,14 +1589,12 @@ def multi_frequency_weighting(frequencies, kinds='ZAC', **kw):
     >>> freqs = librosa.cqt_frequencies(108, librosa.note_to_hz('C1'))
     >>> weightings = 'ABCDZ'
     >>> weights = librosa.multi_frequency_weighting(freqs, weightings)
+    >>> fig, ax = plt.subplots()
     >>> for label, w in zip(weightings, weights):
-    ...     plt.plot(freqs, w, label=label)
-    >>> plt.xlabel('Frequency (Hz)')
-    >>> plt.ylabel('Weighting (log10)')
-    >>> plt.title('Weightings of CQT frequencies')
-    >>> plt.legend()
-    >>> plt.show()
-
+    ...     ax.plot(freqs, w, label=label)
+    >>> ax.set(xlabel='Frequency (Hz)', ylabel='Weighting (log10)',
+    ...        title='Weightings of CQT frequencies')
+    >>> ax.legend()
     '''
     return np.stack([
         frequency_weighting(frequencies, k, **kw)
@@ -1745,7 +1741,8 @@ def key_to_notes(key, unicode=True):
 
     unicode: bool
         If `True` (default), use Unicode symbols (♯𝄪♭𝄫)for accidentals
-        If `False`, Unicode symbols will be mapped to low-order ascii representations:
+        If `False`, Unicode symbols will be mapped to low-order ascii representations::
+
             ♯ -> #, 𝄪 -> ##, ♭ -> b, 𝄫 -> bb
 
     Returns
@@ -1762,22 +1759,27 @@ def key_to_notes(key, unicode=True):
     Examples
     --------
     `C:maj` will use all sharps
+
     >>> librosa.key_to_notes('C:maj')
     ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
 
     `A:min` has the same notes
+
     >>> librosa.key_to_notes('A:min')
     ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
 
     `A♯:min` will use sharps, but spell note 0 (`C`) as `B♯`
+
     >>> librosa.key_to_notes('A#:min')
     ['B♯', 'C♯', 'D', 'D♯', 'E', 'E♯', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
 
     `G♯:maj` will use a double-sharp to spell note 7 (`G`) as `F𝄪`:
+
     >>> librosa.key_to_notes('G#:maj')
     ['B♯', 'C♯', 'D', 'D♯', 'E', 'E♯', 'F♯', 'F𝄪', 'G♯', 'A', 'A♯', 'B']
 
     `F♭:min` will use double-flats
+
     >>> librosa.key_to_notes('Fb:min')
     ['D𝄫', 'D♭', 'E𝄫', 'E♭', 'F♭', 'F', 'G♭', 'A𝄫', 'A♭', 'B𝄫', 'B♭', 'C♭']
     '''

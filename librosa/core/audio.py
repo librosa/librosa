@@ -827,12 +827,11 @@ def lpc(y, order):
     >>> a = librosa.lpc(y, 2)
     >>> b = np.hstack([[0], -1 * a[1:]])
     >>> y_hat = scipy.signal.lfilter(b, [1], y)
-    >>> plt.figure()
-    >>> plt.plot(y)
-    >>> plt.plot(y_hat, linestyle='--')
-    >>> plt.legend(['y', 'y_hat'])
-    >>> plt.title('LP Model Forward Prediction')
-    >>> plt.show()
+    >>> fig, ax = plt.subplots()
+    >>> ax.plot(y)
+    >>> ax.plot(y_hat, linestyle='--')
+    >>> ax.legend(['y', 'y_hat'])
+    >>> ax.set_title('LP Model Forward Prediction')
 
     """
     if not isinstance(order, int) or order < 1:
@@ -991,6 +990,7 @@ def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
     array([ True, False, False,  True, False,  True, False, False,
             True, False,  True, False,  True, False, False,  True,
            False,  True, False,  True], dtype=bool)
+    
     >>> # Stack y against the zero-crossing indicator
     >>> librosa.util.stack([y, z], axis=-1)
     array([[  0.000e+00,   1.000e+00],
@@ -1013,6 +1013,7 @@ def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
            [ -4.759e-01,   1.000e+00],
            [ -9.694e-01,   0.000e+00],
            [ -9.797e-16,   1.000e+00]])
+
     >>> # Find the indices of zero-crossings
     >>> np.nonzero(z)
     (array([ 0,  3,  5,  8, 10, 12, 15, 17, 19]),)
@@ -1102,7 +1103,7 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
     Examples
     --------
     >>> # Sonify detected beat events
-    >>> y, sr = librosa.load(librosa.ex('choice'))
+    >>> y, sr = librosa.load(librosa.ex('choice'), duration=10)
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
     >>> y_beats = librosa.clicks(frames=beats, sr=sr)
 
@@ -1120,16 +1121,15 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
     Display click waveform next to the spectrogram
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True)
     >>> S = librosa.feature.melspectrogram(y=y, sr=sr)
-    >>> ax = plt.subplot(2,1,2)
     >>> librosa.display.specshow(librosa.power_to_db(S, ref=np.max),
-    ...                          x_axis='time', y_axis='mel')
-    >>> plt.subplot(2,1,1, sharex=ax)
-    >>> librosa.display.waveplot(y_beat_times, sr=sr, label='Beat clicks')
-    >>> plt.legend()
-    >>> plt.tight_layout()
-    >>> plt.show()
+    ...                          x_axis='time', y_axis='mel', ax=ax[0])
+    >>> librosa.display.waveplot(y_beat_times, sr=sr, label='Beat clicks',
+    ...                          ax=ax[1])
+    >>> ax[1].legend()
+    >>> ax[0].label_outer()
+    >>> ax[0].set_title(None)
     """
 
     # Compute sample positions from time or frames
@@ -1235,11 +1235,10 @@ def tone(frequency, sr=22050, length=None, duration=None, phi=None):
     Display spectrogram
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
+    >>> fig, ax = plt.subplots()
     >>> S = librosa.feature.melspectrogram(y=tone)
     >>> librosa.display.specshow(librosa.power_to_db(S, ref=np.max),
-    ...                          x_axis='time', y_axis='mel')
-    >>> plt.show()
+    ...                          x_axis='time', y_axis='mel', ax=ax)
     """
 
     if frequency is None:
@@ -1310,29 +1309,30 @@ def chirp(fmin, fmax, sr=22050, length=None, duration=None, linear=False, phi=No
 
     Examples
     --------
-    >>> # Generate a exponential chirp from A4 to A5
-    >>> exponential_chirp = librosa.chirp(440, 880, duration=1)
+    >>> # Generate a exponential chirp from A2 to A8
+    >>> exponential_chirp = librosa.chirp(110, 110*64, duration=1)
 
     >>> # Or generate the same signal using `length`
-    >>> exponential_chirp = librosa.chirp(440, 880, sr=22050, length=22050)
+    >>> exponential_chirp = librosa.chirp(110, 110*64, sr=22050, length=22050)
 
     >>> # Or generate a linear chirp instead
-    >>> linear_chirp = librosa.chirp(440, 880, duration=1, linear=True)
+    >>> linear_chirp = librosa.chirp(110, 110*64, duration=1, linear=True)
 
-    Display spectrogram for both exponential and linear chirps
+    Display spectrogram for both exponential and linear chirps.
+    Note that these plots use a logarithmic frequency axis, so "exponential" chirps
+    will appear as a straight line.
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> S_exponential = librosa.feature.melspectrogram(y=exponential_chirp)
-    >>> ax = plt.subplot(2,1,1)
-    >>> librosa.display.specshow(librosa.power_to_db(S_exponential, ref=np.max),
-    ...                          x_axis='time', y_axis='mel')
-    >>> plt.subplot(2,1,2, sharex=ax)
-    >>> S_linear = librosa.feature.melspectrogram(y=linear_chirp)
-    >>> librosa.display.specshow(librosa.power_to_db(S_linear, ref=np.max),
-    ...                          x_axis='time', y_axis='mel')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+    >>> S_exponential = np.abs(librosa.stft(y=exponential_chirp))
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S_exponential, ref=np.max),
+    ...                          x_axis='time', y_axis='log', ax=ax[0])
+    >>> ax[0].set(title='Exponential chirp', xlabel=None)
+    >>> ax[0].label_outer()
+    >>> S_linear = np.abs(librosa.stft(y=linear_chirp))
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S_linear, ref=np.max),
+    ...                          x_axis='time', y_axis='log', ax=ax[1])
+    >>> ax[1].set(title='Linear chirp')
     """
 
     if fmin is None or fmax is None:
