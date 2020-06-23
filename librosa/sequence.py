@@ -141,18 +141,15 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
     >>> noise = np.random.rand(X.shape[0], 200)
     >>> Y = np.concatenate((noise, noise, X, noise), axis=1)
     >>> D, wp = librosa.sequence.dtw(X, Y, subseq=True)
-    >>> plt.subplot(2, 1, 1)
-    >>> librosa.display.specshow(D, x_axis='frames', y_axis='frames')
-    >>> plt.title('Database excerpt')
-    >>> plt.plot(wp[:, 1], wp[:, 0], label='Optimal path', color='y')
-    >>> plt.legend()
-    >>> plt.subplot(2, 1, 2)
-    >>> plt.plot(D[-1, :] / wp.shape[0])
-    >>> plt.xlim([0, Y.shape[1]])
-    >>> plt.ylim([0, 2])
-    >>> plt.title('Matching cost function')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True)
+    >>> librosa.display.specshow(D, x_axis='frames', y_axis='frames', ax=ax[0])
+    >>> ax[0].set(title='Database excerpt')
+    >>> ax[0].plot(wp[:, 1], wp[:, 0], label='Optimal path', color='y')
+    >>> ax[0].legend()
+    >>> ax[0].label_outer()
+    >>> ax[1].plot(D[-1, :] / wp.shape[0])
+    >>> ax[1].set(xlim=[0, Y.shape[1]], ylim=[0, 2],
+    ...           title='Matching cost function')
     '''
     # Default Parameters
     default_steps = np.array([[1, 1], [0, 1], [1, 0]], dtype=np.int)
@@ -608,35 +605,27 @@ def rqa(sim, gap_onset=1, gap_extend=1, knight_moves=True, backtrack=True):
     >>> # using infinite cost for gaps enforces strict path continuation
     >>> L_score, L_path = librosa.sequence.rqa(rec, np.inf, np.inf,
     ...                                        knight_moves=False)
-    >>> plt.figure(figsize=(10, 4))
-    >>> plt.subplot(1,2,1)
-    >>> librosa.display.specshow(rec, x_axis='frames', y_axis='frames')
-    >>> plt.title('Recurrence matrix')
-    >>> plt.colorbar()
-    >>> plt.subplot(1,2,2)
-    >>> librosa.display.specshow(L_score, x_axis='frames', y_axis='frames')
-    >>> plt.title('Alignment score matrix')
-    >>> plt.colorbar()
-    >>> plt.plot(L_path[:, 1], L_path[:, 0], label='Optimal path', color='c')
-    >>> plt.legend()
-    >>> plt.show()
+    >>> fig, ax = plt.subplots(ncols=2)
+    >>> librosa.display.specshow(rec, x_axis='frames', y_axis='frames', ax=ax[0])
+    >>> ax[0].set(title='Recurrence matrix')
+    >>> librosa.display.specshow(L_score, x_axis='frames', y_axis='frames', ax=ax[1])
+    >>> ax[1].set(title='Alignment score matrix')
+    >>> ax[1].plot(L_path[:, 1], L_path[:, 0], label='Optimal path', color='c')
+    >>> ax[1].legend()
+    >>> ax[1].label_outer()
 
     Full alignment using gaps and knight moves
 
     >>> # New gaps cost 5, extending old gaps cost 10 for each step
     >>> score, path = librosa.sequence.rqa(rec, 5, 10)
-    >>> plt.figure(figsize=(10, 4))
-    >>> plt.subplot(1,2,1)
-    >>> librosa.display.specshow(rec, x_axis='frames', y_axis='frames')
-    >>> plt.title('Recurrence matrix')
-    >>> plt.colorbar()
-    >>> plt.subplot(1,2,2)
-    >>> librosa.display.specshow(score, x_axis='frames', y_axis='frames')
-    >>> plt.title('Alignment score matrix')
-    >>> plt.plot(path[:, 1], path[:, 0], label='Optimal path', color='c')
-    >>> plt.colorbar()
-    >>> plt.legend()
-    >>> plt.show()
+    >>> fig, ax = plt.subplots(ncols=2, sharex=True, sharey=True)
+    >>> librosa.display.specshow(rec, x_axis='frames', y_axis='frames', ax=ax[0])
+    >>> ax[0].set(title='Recurrence matrix')
+    >>> librosa.display.specshow(score, x_axis='frames', y_axis='frames', ax=ax[1])
+    >>> ax[1].set(title='Alignment score matrix')
+    >>> ax[1].plot(path[:, 1], path[:, 0], label='Optimal path', color='c')
+    >>> ax[1].legend()
+    >>> ax[1].label_outer()
     '''
 
     if gap_onset < 0:
@@ -1126,33 +1115,22 @@ def viterbi_discriminative(prob, transition, p_state=None, p_init=None, return_l
 
     >>> # Plot the features and prediction map
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure(figsize=(10, 6))
-    >>> plt.subplot(2,1,1)
-    >>> librosa.display.specshow(chroma, x_axis='time', y_axis='chroma')
-    >>> plt.colorbar()
-    >>> plt.subplot(2,1,2)
-    >>> librosa.display.specshow(weights, x_axis='chroma')
-    >>> plt.yticks(np.arange(25) + 0.5, labels)
-    >>> plt.ylabel('Chord')
-    >>> plt.colorbar()
-    >>> plt.tight_layout()
-    >>> plt.show()
+    >>> fig, ax = plt.subplots(nrows=2)
+    >>> librosa.display.specshow(chroma, x_axis='time', y_axis='chroma', ax=ax[0])
+    >>> librosa.display.specshow(weights, x_axis='chroma', ax=ax[1])
+    >>> ax[1].set(yticks=np.arange(25) + 0.5, yticklabels=labels, ylabel='Chord')
 
     >>> # And plot the results
-    >>> plt.figure(figsize=(10, 4))
-    >>> librosa.display.specshow(probs, x_axis='time', cmap='gray')
-    >>> plt.colorbar()
+    >>> fig, ax = plt.subplots()
+    >>> librosa.display.specshow(probs, x_axis='time', cmap='gray', ax=ax)
     >>> times = librosa.times_like(chords_vit)
-    >>> plt.scatter(times, chords_ind + 0.75, color='lime', alpha=0.5, marker='+',
-    ...             s=15, label='Independent')
-    >>> plt.scatter(times, chords_vit + 0.25, color='deeppink', alpha=0.5, marker='o',
-    ...             s=15, label='Viterbi')
-    >>> plt.yticks(0.5 + np.unique(chords_vit),
-    ...            [labels[i] for i in np.unique(chords_vit)], va='center')
-    >>> plt.legend()
-    >>> plt.tight_layout()
-    >>> plt.show()
-
+    >>> ax.scatter(times, chords_ind + 0.75, color='lime', alpha=0.5, marker='+',
+    ...            s=15, label='Independent')
+    >>> ax.scatter(times, chords_vit + 0.25, color='deeppink', alpha=0.5, marker='o',
+    ...            s=15, label='Viterbi')
+    >>> ax.set(yticks=0.5 + np.unique(chords_vit),
+    ...        yticklabels=[labels[i] for i in np.unique(chords_vit)])
+    >>> ax.legend()
     '''
 
     n_states, n_steps = prob.shape
