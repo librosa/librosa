@@ -181,13 +181,9 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
 
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> librosa.display.specshow(melfb, x_axis='linear')
-    >>> plt.ylabel('Mel filter')
-    >>> plt.title('Mel filter bank')
-    >>> plt.colorbar()
-    >>> plt.tight_layout()
-    >>> plt.show()
+    >>> fig, ax = plt.subplots()
+    >>> librosa.display.specshow(melfb, x_axis='linear', ax=ax)
+    >>> ax.set(ylabel='Mel filter', title='Mel filter bank')
     """
 
     if fmax is None:
@@ -316,13 +312,9 @@ def chroma(sr, n_fft, n_chroma=12, tuning=0.0, ctroct=5.0,
            [  2.953e-01,   2.888e-01, ...,   7.768e-10,   8.629e-10]])
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> librosa.display.specshow(chromafb, x_axis='linear')
-    >>> plt.ylabel('Chroma filter')
-    >>> plt.title('Chroma filter bank')
-    >>> plt.colorbar()
-    >>> plt.tight_layout()
-    >>> plt.show()
+    >>> fig, ax = plt.subplots()
+    >>> librosa.display.specshow(chromafb, x_axis='linear', ax=ax)
+    >>> ax.set(ylabel='Chroma filter', title='Chroma filter bank')
     """
 
     wts = np.zeros((n_chroma, n_fft))
@@ -485,29 +477,22 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, window='hann',
 
     >>> import matplotlib.pyplot as plt
     >>> basis, lengths = librosa.filters.constant_q(22050)
-    >>> plt.figure(figsize=(10, 6))
-    >>> plt.subplot(2, 1, 1)
+    >>> fig, ax = plt.subplots(nrows=2, figsize=(10, 6))
     >>> notes = librosa.midi_to_note(np.arange(24, 24 + len(basis)))
     >>> for i, (f, n) in enumerate(zip(basis, notes[:12])):
     ...     f_scale = librosa.util.normalize(f) / 2
-    ...     plt.plot(i + f_scale.real)
-    ...     plt.plot(i + f_scale.imag, linestyle=':')
-    >>> plt.axis('tight')
-    >>> plt.yticks(np.arange(len(notes[:12])), notes[:12])
-    >>> plt.ylabel('CQ filters')
-    >>> plt.title('CQ filters (one octave, time domain)')
-    >>> plt.xlabel('Time (samples at 22050 Hz)')
-    >>> plt.legend(['Real', 'Imaginary'], frameon=True, framealpha=0.8)
-    >>> plt.subplot(2, 1, 2)
+    ...     ax[0].plot(i + f_scale.real)
+    ...     ax[0].plot(i + f_scale.imag, linestyle=':')
+    >>> ax[0].set(yticks=np.arange(len(notes[:12])), yticklabels=notes[:12],
+    ...           ylabel='CQ filters',
+    ...           title='CQ filters (one octave, time domain)',
+    ...           xlabel='Time (samples at 22050 Hz)')
+    >>> ax[0].legend(['Real', 'Imaginary'], frameon=True, framealpha=0.8)
     >>> F = np.abs(np.fft.fftn(basis, axes=[-1]))
     >>> # Keep only the positive frequencies
     >>> F = F[:, :(1 + F.shape[1] // 2)]
-    >>> librosa.display.specshow(F, x_axis='linear')
-    >>> plt.yticks(np.arange(len(notes))[::12], notes[::12])
-    >>> plt.ylabel('CQ filters')
-    >>> plt.title('CQ filter magnitudes (frequency domain)')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    >>> librosa.display.specshow(F, x_axis='linear', y_axis='cqt_note', ax=ax[1])
+    >>> ax[1].set(ylabel='CQ filters', title='CQ filter magnitudes (frequency domain)')
     '''
 
     if fmin is None:
@@ -679,24 +664,20 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
     >>> chromagram = librosa.util.normalize(chromagram, axis=0)
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.subplot(3, 1, 1)
+    >>> fig, ax = plt.subplots(nrows=3, sharex=True)
     >>> librosa.display.specshow(librosa.amplitude_to_db(CQT,
     ...                                                  ref=np.max),
-    ...                          y_axis='cqt_note')
-    >>> plt.title('CQT Power')
-    >>> plt.colorbar()
-    >>> plt.subplot(3, 1, 2)
-    >>> librosa.display.specshow(chromagram, y_axis='chroma')
-    >>> plt.title('Chroma (wrapped CQT)')
-    >>> plt.colorbar()
-    >>> plt.subplot(3, 1, 3)
+    ...                          y_axis='cqt_note', x_axis='time',
+    ...                          ax=ax[0])
+    >>> ax[0].set(title='CQT Power')
+    >>> ax[0].label_outer()
+    >>> librosa.display.specshow(chromagram, y_axis='chroma', x_axis='time',
+    ...                          ax=ax[1])
+    >>> ax[1].set(title='Chroma (wrapped CQT)')
+    >>> ax[1].label_outer()
     >>> chroma = librosa.feature.chroma_stft(y=y, sr=sr)
-    >>> librosa.display.specshow(chroma, y_axis='chroma', x_axis='time')
-    >>> plt.title('librosa.feature.chroma_stft')
-    >>> plt.colorbar()
-    >>> plt.tight_layout()
-    >>> plt.show()
-
+    >>> librosa.display.specshow(chroma, y_axis='chroma', x_axis='time', ax=ax[2])
+    >>> ax[2].set(title='librosa.feature.chroma_stft')
     '''
 
     # How many fractional bins are we merging?
@@ -1073,18 +1054,12 @@ def semitone_filterbank(center_freqs=None, tuning=0.0, sample_rates=None, flayou
     >>> import numpy as np
     >>> import scipy.signal
     >>> semitone_filterbank, sample_rates = librosa.filters.semitone_filterbank()
-    >>> plt.figure(figsize=(10, 6))
+    >>> fig, ax = plt.subplots()
     >>> for cur_sr, cur_filter in zip(sample_rates, semitone_filterbank):
     ...    w, h = scipy.signal.freqz(cur_filter[0], cur_filter[1], worN=2000)
-    ...    plt.plot((cur_sr / (2 * np.pi)) * w, 20 * np.log10(abs(h)))
-    >>> plt.semilogx()
-    >>> plt.xlim([20, 10e3])
-    >>> plt.ylim([-60, 3])
-    >>> plt.title('Magnitude Responses of the Pitch Filterbank')
-    >>> plt.xlabel('Log-Frequency (Hz)')
-    >>> plt.ylabel('Magnitude (dB)')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    ...    ax.semilogx((cur_sr / (2 * np.pi)) * w, 20 * np.log10(abs(h)))
+    >>> ax.set(xlim=[20, 10e3], ylim=[-60, 3], title='Magnitude Responses of the Pitch Filterbank',
+    ...        xlabel='Log-Frequency (Hz)', ylabel='Magnitude (dB)')
     '''
 
     if (center_freqs is None) and (sample_rates is None):
@@ -1151,19 +1126,13 @@ def window_sumsquare(window, n_frames, hop_length=512, win_length=None, n_fft=20
     >>> wss_1024 = librosa.filters.window_sumsquare('hann', n_frames, hop_length=1024)
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> plt.subplot(3,1,1)
-    >>> plt.plot(wss_256)
-    >>> plt.title('hop_length=256')
-    >>> plt.subplot(3,1,2)
-    >>> plt.plot(wss_512)
-    >>> plt.title('hop_length=512')
-    >>> plt.subplot(3,1,3)
-    >>> plt.plot(wss_1024)
-    >>> plt.title('hop_length=1024')
-    >>> plt.tight_layout()
-    >>> plt.show()
-
+    >>> fig, ax = plt.subplots(nrows=3, sharey=True)
+    >>> ax[0].plot(wss_256)
+    >>> ax[0].set(title='hop_length=256')
+    >>> ax[1].plot(wss_512)
+    >>> ax[1].set(title='hop_length=512')
+    >>> ax[2].plot(wss_1024)
+    >>> ax[2].set(title='hop_length=1024')
     '''
     if win_length is None:
         win_length = n_fft
