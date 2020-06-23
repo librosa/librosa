@@ -1,6 +1,60 @@
 Changelog
 =========
 
+v0.8.0
+------
+2020-XX-XX
+
+New Features
+    - `#974`_ Variable-Q transform `core.vqt`. *Brian McFee, Frank Cwitkowitz*
+    - `#1059`_ `libsamplerate` support in `core.resample`. *Brian McFee*
+    - `#1134`_ perceptual loudness weighting for B, C, D, and Z-weighting. *Bea Steers*
+    - `#1149`_ key support and note-spelling in pitch<=>note conversion. *Brian
+      McFee*
+    - `#1150`_ new data loader, and expanded collection of example recordings.
+      *Brian McFee*
+    - `#1166`_ `sequence.dtw` can now return the step matrix. *Frank Zaklow*
+    - `#1171`_ automatic precision inference for spectral transforms (stft, cqt) and
+      explicit control for `cqt`. *Brian McFee*
+
+Removed features and API changes
+    - `#1062`_ 
+        - Removed support for python < 3.6.
+        - Removed the deprecated `output` module.
+        - Removed deprecated `ifgram` function.
+        - Removed deprecated `amin` parameter from `core.icqt`
+        - Removed deprecated `A440` parameter from `hz_to_octs`, `octs_to_hz`, and
+          `chroma` features
+        - Removed deprecated `tuning=` parameter in CQT filter constructors
+        - Removed deprecated `util.roll_sparse` function
+    - `#1050`_ implemented changes to Mel filter normalization
+    - `#1165`_ removed deprecated `optional_jit` decorator
+
+New deprecations
+    - 
+
+Bug fixes
+    - `#1078`_ fixed edge-padding errors in `feature.stack_memory`. *???*
+    - `#1091`_ fixed joblib version requirements. *Thor Whalen*
+    - `#1094`_ fixed STFT bug when using large window sizes. *Frank Zalkow*
+    - `#1157`_ fixed an alignment bug in `core.iirt`. *Frank Zalkow*
+    - `#1159`_ fixed a warm-up glitch in `effects.preemphasis`. *Brian McFee*
+
+Documentation
+    - `#1068`_ Corrections to `effects.pitch_shift` documentation. *Keunwoo Choi*
+
+Other changes
+    - `#1064`_ unit test suite modernized to support latest `pytest`. *Brian McFee*
+    - `#1112`_ numba accelerated `stack_memory`. *Brian McFee*
+    - `#1120`_ added reference tuning for pitch conversion utilities. *Julia Wilkins*
+    - `#1123`_ fixed Python requirement definition in installation script. *Stefan
+      Sullivan*
+    - `#1125`_ updates to `util.frame` to remove default parameters and relax
+      contiguity restrictions. *Brian McFee*
+    - `#1131`_ more stringent shape requirements on `valid_audio`. *Brian McFee*
+    - `#1140`_ removed contiguity requirement for `valid_audio`. *Brian McFee*
+    - `#1147`_ updates to `display.specshow` documentation. *Brian McFee*
+
 v0.7.2
 ------
 2020-01-13
