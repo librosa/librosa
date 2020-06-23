@@ -185,7 +185,6 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
                    ref=None,
                    detrend=False, center=True,
                    feature=None, aggregate=None,
-                   centering=None,
                    **kwargs):
     """Compute a spectral flux onset strength envelope.
 
@@ -231,7 +230,9 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
         Filter the onset strength to remove the DC component
 
     center : bool [scalar]
-        Shift the onset function by `n_fft / (2 * hop_length)` frames
+        Shift the onset function by `n_fft / (2 * hop_length)` frames.
+        This corresponds to using a centered frame analysis in the short-time Fourier
+        transform.
 
     feature : function
         Function for computing time-series features, eg, scaled spectrograms.
