@@ -41,6 +41,7 @@ Spectral representations
     vqt
 
     iirt
+
     fmt
 
     griffinlim
@@ -66,7 +67,12 @@ Magnitude scaling
     db_to_power
 
     perceptual_weighting
+    frequency_weighting
+    multi_frequency_weighting
     A_weighting
+    B_weighting
+    C_weighting
+    D_weighting
 
     pcen
 
@@ -92,6 +98,9 @@ Time and frequency conversion
     midi_to_note
     note_to_hz
     note_to_midi
+
+    key_to_notes
+    key_to_degrees
 
     hz_to_mel
     hz_to_octs
