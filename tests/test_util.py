@@ -335,8 +335,8 @@ def test_axis_sort(ndim, axis, index, value):
 @pytest.mark.parametrize(
     "int_from, int_to",
     [
-        (np.asarray([[0, 2], [0, 4], [3, 6]]), np.empty((0, 2), dtype=int)),
-        (np.empty((0, 2), dtype=int), np.asarray([[0, 2], [0, 4], [3, 6]])),
+        (np.asarray([[0, 2], [0, 4], [3, 6]]), np.zeros((0, 2), dtype=int)),
+        (np.zeros((0, 2), dtype=int), np.asarray([[0, 2], [0, 4], [3, 6]])),
     ],
 )
 @pytest.mark.xfail(raises=librosa.ParameterError)
