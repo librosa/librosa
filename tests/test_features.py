@@ -339,7 +339,7 @@ def test_rms_noinput():
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_rms_badshape():
-    S = np.empty((100, 3))
+    S = np.zeros((100, 3))
     librosa.feature.rms(S=S, frame_length=100)
 
 
