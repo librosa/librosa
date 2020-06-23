@@ -447,7 +447,9 @@ def onset_strength_multi(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         Filter the onset strength to remove the DC component
 
     center : bool [scalar]
-        Shift the onset function by `n_fft / (2 * hop_length)` frames
+        Shift the onset function by `n_fft / (2 * hop_length)` frames.
+        This corresponds to using a centered frame analysis in the short-time Fourier
+        transform.
 
     feature : function
         Function for computing time-series features, eg, scaled spectrograms.
