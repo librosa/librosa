@@ -203,7 +203,7 @@ def test_resample_scale(resample_mono, res_type, sr_out):
 @pytest.mark.parametrize("sr_in, sr_out", [(100, 100.1), (100.1, 100)])
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_resample_poly_float(sr_in, sr_out):
-    y = np.empty(128)
+    y = np.zeros(128)
     librosa.resample(y, sr_in, sr_out, res_type="polyphase")
 
 
@@ -240,7 +240,7 @@ def test_stft(infile):
 
 def test_stft_winsizes():
     # Test for issue #1095
-    x = np.empty(1000000)
+    x = np.zeros(1000000)
 
     for power in range(12, 17):
         N = 2 ** power
@@ -643,7 +643,7 @@ def test_get_duration_buffer(sr, dur):
 @pytest.mark.parametrize("n_fft", [512, 2048])
 @pytest.mark.parametrize("hop_length", [256, 512])
 def test_get_duration_specgram(sr, dur, n_fft, hop_length, center):
-    z = np.empty(int(sr * dur))
+    z = np.zeros(int(sr * dur))
     S = librosa.util.frame(z, frame_length=(n_fft // 2 + 1), hop_length=hop_length)
 
     dur_est = librosa.get_duration(S=S, sr=sr, n_fft=n_fft, hop_length=hop_length, center=center)

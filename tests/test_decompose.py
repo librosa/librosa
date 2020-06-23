@@ -192,7 +192,7 @@ def test_nn_filter_avg():
 @pytest.mark.xfail(raises=librosa.ParameterError)
 @pytest.mark.parametrize("x,y", [(10, 10), (100, 20), (20, 100), (100, 101), (101, 101)])
 @pytest.mark.parametrize("sparse", [False, True])
-@pytest.mark.parametrize("data", [np.empty((10, 100))])
+@pytest.mark.parametrize("data", [np.zeros((10, 100))])
 def test_nn_filter_badselfsim(data, x, y, sparse):
 
     srand()
