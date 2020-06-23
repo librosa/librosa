@@ -23,41 +23,24 @@ sys.path.insert(0, os.path.abspath('../'))
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-if sphinx.__version__ < "1.4":
-    raise RuntimeError("Sphinx 1.4 or newer is required")
+if sphinx.__version__ < "2.0":
+    raise RuntimeError("Sphinx 2.0 or newer is required")
 
-needs_sphinx = '1.4'
+needs_sphinx = '2.0'
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.viewcode',
               'sphinx.ext.intersphinx',
-              'sphinx.ext.doctest',
               'sphinx.ext.mathjax',
               'sphinx_gallery.gen_gallery',
               'numpydoc',
-              'sphinx.ext.autosummary']
+              'sphinx.ext.autosummary',
+              'matplotlib.sphinxext.plot_directive']
 
 
-autosummary_generate = True 
-
-# Determine if the matplotlib has a recent enough version of the
-# plot_directive.
-try:
-    from matplotlib.sphinxext import plot_directive
-except ImportError:
-    use_matplotlib_plot_directive = False
-else:
-    try:
-        use_matplotlib_plot_directive = (plot_directive.__version__ >= 2)
-    except AttributeError:
-        use_matplotlib_plot_directive = False
-
-if use_matplotlib_plot_directive:
-    extensions.append('matplotlib.sphinxext.plot_directive')
-else:
-    raise RuntimeError("You need a recent enough version of matplotlib")
+autosummary_generate = True
 
 # Galley
 sphinx_gallery_conf = {
@@ -97,15 +80,11 @@ np.set_printoptions(precision=3, linewidth=64, edgeitems=2, threshold=200)
 #------------------------------------------------------------------------------
 # Plot
 #------------------------------------------------------------------------------
-plot_pre_code = """
-import numpy as np
-import librosa
+plot_pre_code = doctest_global_setup + """
 import librosa.display
-np.random.seed(123)
-np.set_printoptions(precision=3, linewidth=64, edgeitems=2, threshold=200)
 """
 plot_include_source = True
-plot_formats = [('png', 100)]
+plot_formats = [('png', 100), ('pdf', 100)]
 plot_html_show_formats = False
 
 font_size = 12  # 13*72/96.0  # 13 px
@@ -125,15 +104,7 @@ plot_rcparams = {
     'figure.subplot.top': 0.85,
     'figure.subplot.wspace': 0.4,
     'text.usetex': False,
-    'font.family': 'monospace',
-    'font.monospace': ['Source Code Pro', 'Courier',
-                       'Fixed', 'Terminal', 'monospace'],
 }
-
-if not use_matplotlib_plot_directive:
-    import matplotlib
-    matplotlib.rcParams.update(plot_rcparams)
-
 
 numpydoc_show_class_members = False
 
@@ -145,6 +116,7 @@ intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
                        'sklearn': ('https://scikit-learn.org/stable/', None),
                        'resampy': ('https://resampy.readthedocs.io/en/latest/', None),
                        'soundfile': ('https://pysoundfile.readthedocs.io/en/latest', None),
+                       'samplerate': ('https://python-samplerate.readthedocs.io/en/latest/', None),
                        'pyrubberband': ('https://pyrubberband.readthedocs.io/en/stable/', None)}
 
 
