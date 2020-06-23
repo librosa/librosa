@@ -595,25 +595,18 @@ def axis_sort(S, axis=-1, index=False, value=None):
     >>> H_sort = H[idx, :]
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> plt.subplot(2, 2, 1)
+    >>> fig, ax = plt.subplots(nrows=2, ncols=2)
     >>> librosa.display.specshow(librosa.amplitude_to_db(W, ref=np.max),
-    ...                          y_axis='log')
-    >>> plt.title('W')
-    >>> plt.subplot(2, 2, 2)
-    >>> librosa.display.specshow(H, x_axis='time')
-    >>> plt.title('H')
-    >>> plt.subplot(2, 2, 3)
+    ...                          y_axis='log', ax=ax[0, 0])
+    >>> ax[0, 0].set(title='W')
+    >>> librosa.display.specshow(H, x_axis='time', ax=ax[0, 1])
+    >>> ax[0, 1].set(title='H')
     >>> librosa.display.specshow(librosa.amplitude_to_db(W_sort,
     ...                                                  ref=np.max),
-    ...                          y_axis='log')
-    >>> plt.title('W sorted')
-    >>> plt.subplot(2, 2, 4)
-    >>> librosa.display.specshow(H_sort, x_axis='time')
-    >>> plt.title('H sorted')
-    >>> plt.tight_layout()
-    >>> plt.show()
-
+    ...                          y_axis='log', ax=ax[1, 0])
+    >>> ax[1, 0].set(title='W sorted')
+    >>> librosa.display.specshow(H_sort, x_axis='time', ax=ax[1, 1])
+    >>> ax[1, 1].set(title='H sorted')
 
     Parameters
     ----------
@@ -1018,20 +1011,16 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
 
     >>> import matplotlib.pyplot as plt
     >>> times = librosa.times_like(onset_env, sr=sr, hop_length=512)
-    >>> plt.figure()
-    >>> ax = plt.subplot(2, 1, 2)
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True)
     >>> D = librosa.stft(y)
     >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
-    ...                          y_axis='log', x_axis='time')
-    >>> plt.subplot(2, 1, 1, sharex=ax)
-    >>> plt.plot(times, onset_env, alpha=0.8, label='Onset strength')
-    >>> plt.vlines(times[peaks], 0,
-    ...            onset_env.max(), color='r', alpha=0.8,
-    ...            label='Selected peaks')
-    >>> plt.legend(frameon=True, framealpha=0.8)
-    >>> plt.axis('tight')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    ...                          y_axis='log', x_axis='time', ax=ax[1])
+    >>> ax[0].plot(times, onset_env, alpha=0.8, label='Onset strength')
+    >>> ax[0].vlines(times[peaks], 0,
+    ...              onset_env.max(), color='r', alpha=0.8,
+    ...              label='Selected peaks')
+    >>> ax[0].legend(frameon=True, framealpha=0.8)
+    >>> ax[0].label_outer()
     '''
 
     if pre_max < 0:
@@ -1391,27 +1380,23 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     >>> import matplotlib.pyplot as plt
     >>> beat_t = librosa.frames_to_time(beats, sr=sr)
     >>> subbeat_t = librosa.frames_to_time(sub_beats, sr=sr)
-    >>> plt.figure()
-    >>> plt.subplot(3, 1, 1)
+    >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
     >>> librosa.display.specshow(librosa.amplitude_to_db(C,
     ...                                                  ref=np.max),
-    ...                          x_axis='time')
-    >>> plt.title('CQT power, shape={}'.format(C.shape))
-    >>> plt.subplot(3, 1, 2)
+    ...                          x_axis='time', ax=ax[0])
+    >>> ax[0].set(title='CQT power, shape={}'.format(C.shape))
+    >>> ax[0].label_outer()
     >>> librosa.display.specshow(librosa.amplitude_to_db(C_med,
     ...                                                  ref=np.max),
-    ...                          x_coords=beat_t, x_axis='time')
-    >>> plt.title('Beat synchronous CQT power, '
-    ...           'shape={}'.format(C_med.shape))
-    >>> plt.subplot(3, 1, 3)
+    ...                          x_coords=beat_t, x_axis='time', ax=ax[1])
+    >>> ax[1].set(title='Beat synchronous CQT power, '
+    ...                 'shape={}'.format(C_med.shape))
+    >>> ax[1].label_outer()
     >>> librosa.display.specshow(librosa.amplitude_to_db(C_med_sub,
     ...                                                  ref=np.max),
-    ...                          x_coords=subbeat_t, x_axis='time')
-    >>> plt.title('Sub-beat synchronous CQT power, '
-    ...           'shape={}'.format(C_med_sub.shape))
-    >>> plt.tight_layout()
-    >>> plt.show()
-
+    ...                          x_coords=subbeat_t, x_axis='time', ax=ax[2])
+    >>> ax[2].set(title='Sub-beat synchronous CQT power, '
+    ...                 'shape={}'.format(C_med_sub.shape))
     """
 
     if aggregate is None:
@@ -1736,15 +1721,14 @@ def cyclic_gradient(data, edge_order=1, axis=-1):
     >>> grad = np.gradient(y)
     >>> cyclic_grad = librosa.util.cyclic_gradient(y)
     >>> true_grad = -np.sin(x) * 2 * np.pi / len(x)
-    >>> plt.plot(x, true_grad, label='True gradient', linewidth=5,
+    >>> fig, ax = plt.subplots()
+    >>> ax.plot(x, true_grad, label='True gradient', linewidth=5,
     ...          alpha=0.35)
-    >>> plt.plot(x, cyclic_grad, label='cyclic_gradient')
-    >>> plt.plot(x, grad, label='np.gradient', linestyle=':')
-    >>> plt.legend()
+    >>> ax.plot(x, cyclic_grad, label='cyclic_gradient')
+    >>> ax.plot(x, grad, label='np.gradient', linestyle=':')
+    >>> ax.legend()
     >>> # Zoom into the first part of the sequence
-    >>> plt.xlim([0, np.pi/16])
-    >>> plt.ylim([-0.025, 0.025])
-    >>> plt.show()
+    >>> ax.set(xlim=[0, np.pi/16], ylim=[-0.025, 0.025])
     '''
     # Wrap-pad the data along the target axis by `edge_order` on each side
     padding = [(0, 0)] * data.ndim

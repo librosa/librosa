@@ -124,23 +124,18 @@ def nnls(A, B, **kwargs):
     Plot the results
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> plt.subplot(3,1,1)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max), y_axis='log')
-    >>> plt.colorbar()
-    >>> plt.title('Original spectrogram (1025 bins)')
-    >>> plt.subplot(3,1,2)
+    >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max), 
+    ...                          y_axis='log', x_axis='time', ax=ax[0])
+    >>> ax[0].set(title='Original spectrogram (1025 bins)')
+    >>> ax[0].label_outer()
     >>> librosa.display.specshow(librosa.amplitude_to_db(M, ref=np.max),
-    ...                          y_axis='mel')
-    >>> plt.title('Mel spectrogram (128 bins)')
-    >>> plt.colorbar()
-    >>> plt.subplot(3,1,3)
+    ...                          y_axis='mel', x_axis='time', ax=ax[1])
+    >>> ax[1].set(title='Mel spectrogram (128 bins)')
+    >>> ax[1].label_outer()
     >>> librosa.display.specshow(librosa.amplitude_to_db(S_recover, ref=np.max),
-    ...                          y_axis='log')
-    >>> plt.colorbar()
-    >>> plt.title('Reconstructed spectrogram (1025 bins)')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    ...                          y_axis='log', x_axis='time', ax=ax[2])
+    >>> ax[2].set(title='Reconstructed spectrogram (1025 bins)')
     '''
 
     # If B is a single vector, punt up to the scipy method
