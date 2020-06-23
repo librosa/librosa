@@ -825,7 +825,8 @@ def lpc(y, order):
     >>> import scipy
     >>> y, sr = librosa.load(librosa.ex('trumpet'), duration=0.020)
     >>> a = librosa.lpc(y, 2)
-    >>> y_hat = scipy.signal.lfilter([0] + -1*a[1:], [1], y)
+    >>> b = np.hstack([[0], -1 * a[1:]])
+    >>> y_hat = scipy.signal.lfilter(b, [1], y)
     >>> plt.figure()
     >>> plt.plot(y)
     >>> plt.plot(y_hat, linestyle='--')
