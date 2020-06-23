@@ -266,14 +266,12 @@ def harmonics_1d(harmonic_out, x, freqs, h_range, kind='linear',
 
     >>> # And plot the results
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> librosa.display.specshow(t_harmonics, x_axis='tempo', sr=sr)
-    >>> plt.yticks(0.5 + np.arange(len(h_range)),
-    ...            ['{:.3g}'.format(_) for _ in h_range])
-    >>> plt.ylabel('Harmonic')
-    >>> plt.xlabel('Tempo (BPM)')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    >>> fig, ax = plt.subplots()
+    >>> librosa.display.specshow(t_harmonics, x_axis='tempo', sr=sr, ax=ax)
+    >>> ax.set(yticks=0.5 + np.arange(len(h_range)),
+    ...        yticklabels=['{:.3g}'.format(_) for _ in h_range],
+    ...        ylabel='Harmonic')
+    ...        xlabel='Tempo (BPM)')
 
     We can also compute frequency harmonics for spectrograms.
     To calculate subharmonic energy, use values < 1.
@@ -285,15 +283,13 @@ def harmonics_1d(harmonic_out, x, freqs, h_range, kind='linear',
     >>> print(S_harm.shape)
     (6, 1025, 646)
 
-    >>> plt.figure()
-    >>> for i, _sh in enumerate(S_harm, 1):
-    ...     plt.subplot(3,2,i)
+    >>> fig, ax = plt.subplots(nrows=3, ncols=2, sharex=True, sharey=True)
+    >>> for i, _sh in enumerate(S_harm):
     ...     librosa.display.specshow(librosa.amplitude_to_db(_sh,
     ...                                                      ref=S.max()),
-    ...                              sr=sr, y_axis='log')
-    ...     plt.title('h={:.3g}'.format(h_range[i-1]))
-    ...     plt.yticks([])
-    >>> plt.tight_layout()
+    ...                              sr=sr, y_axis='log', x_axis='time', ax=ax.flat[i])
+    ...     ax.flat[i].set(title='h={:.3g}'.format(h_range[i]))
+    ...     ax.flat[i].label_outer()
     '''
 
     # Note: this only works for fixed-grid, 1d interpolation

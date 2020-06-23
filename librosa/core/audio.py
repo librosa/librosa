@@ -738,10 +738,9 @@ def autocorrelate(y, max_size=None, axis=-1):
     >>> import matplotlib.pyplot as plt
     >>> odf = librosa.onset.onset_strength(y=y, sr=sr, hop_length=512)
     >>> ac = librosa.autocorrelate(odf, max_size=4* sr / 512)
-    >>> plt.plot(ac)
-    >>> plt.title('Auto-correlation')
-    >>> plt.xlabel('Lag (frames)')
-    >>> plt.show()
+    >>> fig, ax = plt.subplots()
+    >>> ax.plot(ac)
+    >>> ax.set(title='Auto-correlation', xlabel='Lag (frames)')
     """
 
     if max_size is None:
