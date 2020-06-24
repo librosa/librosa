@@ -1248,9 +1248,11 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
 
     bins_per_octave : int > 0, optional
         Number of bins per octave in the CQT.
+        Must be an integer multiple of `n_chroma`.
         Default: 36 (3 bins per semitone)
 
         If `None`, it will match `n_chroma`.
+
 
     cqt_mode : ['full', 'hybrid']
         Constant-Q transform mode
@@ -1296,6 +1298,9 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
 
     if bins_per_octave is None:
         bins_per_octave = n_chroma
+    elif np.remainder(bins_per_octave, n_chroma) != 0:
+        raise ParameterError('bins_per_octave={} must be an integer '
+                             'multiple of n_chroma={}'.format(bins_per_octave, n_chroma))
 
     # Build the CQT if we don't have one already
     if C is None:
