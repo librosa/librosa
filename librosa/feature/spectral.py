@@ -1246,9 +1246,11 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
     window : None or np.ndarray
         Optional window parameter to `filters.cq_to_chroma`
 
-    bins_per_octave : int > 0
+    bins_per_octave : int > 0, optional
         Number of bins per octave in the CQT.
-        Default: matches 36 (3 bins per semitone)
+        Default: 36 (3 bins per semitone)
+
+        If `None`, it will match `n_chroma`.
 
     cqt_mode : ['full', 'hybrid']
         Constant-Q transform mode
