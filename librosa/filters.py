@@ -182,8 +182,9 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> librosa.display.specshow(melfb, x_axis='linear', ax=ax)
+    >>> img = librosa.display.specshow(melfb, x_axis='linear', ax=ax)
     >>> ax.set(ylabel='Mel filter', title='Mel filter bank')
+    >>> fig.colorbar(img, ax=ax)
     """
 
     if fmax is None:
@@ -313,8 +314,9 @@ def chroma(sr, n_fft, n_chroma=12, tuning=0.0, ctroct=5.0,
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> librosa.display.specshow(chromafb, x_axis='linear', ax=ax)
+    >>> img = librosa.display.specshow(chromafb, x_axis='linear', ax=ax)
     >>> ax.set(ylabel='Chroma filter', title='Chroma filter bank')
+    >>> fig.colorbar(img, ax=ax)
     """
 
     wts = np.zeros((n_chroma, n_fft))
@@ -665,10 +667,10 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharex=True)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(CQT,
-    ...                                                  ref=np.max),
-    ...                          y_axis='cqt_note', x_axis='time',
-    ...                          ax=ax[0])
+    >>> imgcq = librosa.display.specshow(librosa.amplitude_to_db(CQT,
+    ...                                                         ref=np.max),
+    ...                                  y_axis='cqt_note', x_axis='time',
+    ...                                  ax=ax[0])
     >>> ax[0].set(title='CQT Power')
     >>> ax[0].label_outer()
     >>> librosa.display.specshow(chromagram, y_axis='chroma', x_axis='time',
@@ -676,7 +678,7 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
     >>> ax[1].set(title='Chroma (wrapped CQT)')
     >>> ax[1].label_outer()
     >>> chroma = librosa.feature.chroma_stft(y=y, sr=sr)
-    >>> librosa.display.specshow(chroma, y_axis='chroma', x_axis='time', ax=ax[2])
+    >>> imgchroma = librosa.display.specshow(chroma, y_axis='chroma', x_axis='time', ax=ax[2])
     >>> ax[2].set(title='librosa.feature.chroma_stft')
     '''
 
