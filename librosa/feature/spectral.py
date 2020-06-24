@@ -1206,7 +1206,7 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
 
 def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
                norm=np.inf, threshold=0.0, tuning=None, n_chroma=12,
-               n_octaves=7, window=None, bins_per_octave=None, cqt_mode='full'):
+               n_octaves=7, window=None, bins_per_octave=36, cqt_mode='full'):
     r'''Constant-Q chromagram
 
     Parameters
@@ -1248,7 +1248,7 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
 
     bins_per_octave : int > 0
         Number of bins per octave in the CQT.
-        Default: matches `n_chroma`
+        Default: matches 36 (3 bins per semitone)
 
     cqt_mode : ['full', 'hybrid']
         Constant-Q transform mode
@@ -1468,7 +1468,7 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
     return util.normalize(cens, norm=norm, axis=0)
 
 
-def tonnetz(y=None, sr=22050, chroma=None):
+def tonnetz(y=None, sr=22050, chroma=None, **kwargs):
     '''Computes the tonal centroid features (tonnetz), following the method of
     [1]_.
 
@@ -1489,6 +1489,10 @@ def tonnetz(y=None, sr=22050, chroma=None):
         Normalized energy for each chroma bin at each frame.
 
         If `None`, a cqt chromagram is performed.
+
+    kwargs
+        Additional keyword arguments to `chroma_cqt`, if `chroma` is not
+        pre-computed.
 
     Returns
     -------
@@ -1547,7 +1551,7 @@ def tonnetz(y=None, sr=22050, chroma=None):
                              'passed as an argument.')
 
     if chroma is None:
-        chroma = chroma_cqt(y=y, sr=sr)
+        chroma = chroma_cqt(y=y, sr=sr, **kwargs)
 
     # Generate Transformation matrix
     dim_map = np.linspace(0, 12, num=chroma.shape[0], endpoint=False)
