@@ -64,20 +64,15 @@ def mel_to_stft(M, sr=22050, n_fft=2048, power=2.0, **kwargs):
     Compare the results visually
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> plt.subplot(2,1,1)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max, top_db=None),
-    ...                          y_axis='log', x_axis='time')
-    >>> plt.colorbar()
-    >>> plt.title('Original STFT')
-    >>> plt.subplot(2,1,2)
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+    >>> img = librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max, top_db=None),
+    ...                          y_axis='log', x_axis='time', ax=ax[0])
+    >>> ax[0].set(title='Original STFT')
     >>> librosa.display.specshow(librosa.amplitude_to_db(np.abs(S_inv - S),
     ...                                                  ref=S.max(), top_db=None),
-    ...                          vmax=0, y_axis='log', x_axis='time', cmap='magma')
-    >>> plt.title('Residual error (dB)')
-    >>> plt.colorbar()
-    >>> plt.tight_layout()
-    >>> plt.show()
+    ...                          vmax=0, y_axis='log', x_axis='time', cmap='magma', ax=ax[1])
+    >>> ax[1].set(title='Residual error (dB)')
+    >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
     '''
 
     # Construct a mel basis with dtype matching the input data

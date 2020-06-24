@@ -80,21 +80,18 @@ def delta(data, width=9, order=1, axis=-1, mode='interp', **kwargs):
           dtype=float32)
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.subplot(3, 1, 1)
-    >>> librosa.display.specshow(mfcc)
-    >>> plt.title('MFCC')
-    >>> plt.colorbar()
-    >>> plt.subplot(3, 1, 2)
-    >>> librosa.display.specshow(mfcc_delta)
-    >>> plt.title(r'MFCC-$\Delta$')
-    >>> plt.colorbar()
-    >>> plt.subplot(3, 1, 3)
-    >>> librosa.display.specshow(mfcc_delta2, x_axis='time')
-    >>> plt.title(r'MFCC-$\Delta^2$')
-    >>> plt.colorbar()
-    >>> plt.tight_layout()
-    >>> plt.show()
-
+    >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
+    >>> img1 = librosa.display.specshow(mfcc, ax=ax[0], x_axis='time')
+    >>> ax[0].set(title='MFCC')
+    >>> ax[0].label_outer()
+    >>> img2 = librosa.display.specshow(mfcc_delta, ax=ax[1], x_axis='time')
+    >>> ax[1].set(title=r'MFCC-$\Delta$')
+    >>> ax[1].label_outer()
+    >>> img3 = librosa.display.specshow(mfcc_delta2, ax=ax[2], x_axis='time')
+    >>> ax[2].set(title=r'MFCC-$\Delta^2$')
+    >>> fig.colorbar(img1, ax=[ax[0]])
+    >>> fig.colorbar(img2, ax=[ax[1]])
+    >>> fig.colorbar(img3, ax=[ax[2]])
     '''
 
     data = np.atleast_1d(data)
@@ -209,14 +206,13 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
     Plot the result
 
     >>> import matplotlib.pyplot as plt
+    >>> fig, ax = plt.subplots()
     >>> beat_times = librosa.frames_to_time(beats, sr=sr, hop_length=512)
     >>> librosa.display.specshow(chroma_lag, y_axis='chroma', x_axis='time',
-    ...                          x_coords=beat_times)
-    >>> plt.yticks([0, 12, 24], ['Lag=0', 'Lag=1', 'Lag=2'])
-    >>> plt.title('Time-lagged chroma')
-    >>> plt.colorbar()
-    >>> plt.tight_layout()
-    >>> plt.show()
+    ...                          x_coords=beat_times, ax=ax)
+    >>> ax.set(yticks=[0, 12, 24], yticklabels=['Lag=0', 'Lag=1', 'Lag=2'],
+    ...           title='Time-lagged chroma')
+    >>> ax.hlines([0, 12, 24], beat_times.min(), beat_times.max(), color='w')
     """
 
     if n_steps < 1:
