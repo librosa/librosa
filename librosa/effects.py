@@ -625,18 +625,15 @@ def preemphasis(y, coef=0.97, zi=None, return_zf=False):
     >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> y_filt = librosa.effects.preemphasis(y)
     >>> # and plot the results for comparison
-    >>> S_orig = librosa.amplitude_to_db(np.abs(librosa.stft(y)), ref=np.max)
-    >>> S_preemph = librosa.amplitude_to_db(np.abs(librosa.stft(y_filt)), ref=np.max)
-    >>> plt.subplot(2,1,1)
-    >>> librosa.display.specshow(S_orig, y_axis='log', x_axis='time')
-    >>> plt.title('Original signal')
-    >>> plt.colorbar()
-    >>> plt.subplot(2,1,2)
-    >>> librosa.display.specshow(S_preemph, y_axis='log', x_axis='time')
-    >>> plt.title('Pre-emphasized signal')
-    >>> plt.colorbar()
-    >>> plt.tight_layout();
-
+    >>> S_orig = librosa.amplitude_to_db(np.abs(librosa.stft(y)), ref=np.max, top_db=None)
+    >>> S_preemph = librosa.amplitude_to_db(np.abs(librosa.stft(y_filt)), ref=np.max, top_db=None)
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+    >>> librosa.display.specshow(S_orig, y_axis='log', x_axis='time', ax=ax[0])
+    >>> ax[0].set(title='Original signal')
+    >>> ax[0].label_outer()
+    >>> img = librosa.display.specshow(S_preemph, y_axis='log', x_axis='time', ax=ax[1])
+    >>> ax[1].set(title='Pre-emphasized signal')
+    >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
 
     Apply pre-emphasis in pieces for block streaming.  Note that the second block
     initializes `zi` with the final state `zf` returned by the first call.

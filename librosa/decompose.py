@@ -135,33 +135,23 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
     >>> scomps, sacts = librosa.decompose.decompose(S, transformer=T, sort=True)
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure(figsize=(10,8))
-    >>> plt.subplot(3, 1, 1)
+    >>> fig, ax = plt.subplots(nrows=3, ncols=2, figsize=(10,8))
     >>> librosa.display.specshow(librosa.amplitude_to_db(S,
     ...                                                  ref=np.max),
-    ...                          y_axis='log', x_axis='time')
-    >>> plt.title('Input spectrogram')
-    >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.subplot(3, 2, 3)
+    ...                          y_axis='log', x_axis='time', ax=ax[0, 1])
+    >>> ax[0, 1].set(title='Input spectrogram')
+    >>> ax[0, 1].label_outer()
     >>> librosa.display.specshow(librosa.amplitude_to_db(comps,
     ...                                                  ref=np.max),
-    ...                          y_axis='log')
-    >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.title('Components')
-    >>> plt.subplot(3, 2, 4)
-    >>> librosa.display.specshow(acts, x_axis='time')
-    >>> plt.ylabel('Components')
-    >>> plt.title('Activations')
-    >>> plt.colorbar()
-    >>> plt.subplot(3, 1, 3)
+    ...                          y_axis='log', ax=ax[1, 0])
+    >>> ax[1, 0].set(title='Components')
+    >>> librosa.display.specshow(acts, x_axis='time', ax=ax[1, 1])
+    >>> ax[1, 1].set(ylabel='Components', title='Activations')
     >>> S_approx = comps.dot(acts)
     >>> librosa.display.specshow(librosa.amplitude_to_db(S_approx,
     ...                                                  ref=np.max),
-    ...                          y_axis='log', x_axis='time')
-    >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.title('Reconstructed spectrogram')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    ...                          y_axis='log', x_axis='time', ax=ax[2, 1])
+    >>> ax[2, 1].set(title='Reconstructed spectrogram')
     """
 
     if transformer is None:
@@ -267,32 +257,27 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
     --------
     Separate into harmonic and percussive
 
-    >>> y, sr = librosa.load(librosa.ex('choice'))
+    >>> y, sr = librosa.load(librosa.ex('choice'), duration=5)
     >>> D = librosa.stft(y)
     >>> H, P = librosa.decompose.hpss(D)
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> plt.subplot(3, 1, 1)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(np.abs(D),
-    ...                                                  ref=np.max),
-    ...                          y_axis='log')
-    >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.title('Full power spectrogram')
-    >>> plt.subplot(3, 1, 2)
+    >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
+    >>> img = librosa.display.specshow(librosa.amplitude_to_db(np.abs(D),
+    ...                                                        ref=np.max),
+    ...                          y_axis='log', x_axis='time', ax=ax[0])
+    >>> ax[0].set(title='Full power spectrogram')
+    >>> ax[0].label_outer()
     >>> librosa.display.specshow(librosa.amplitude_to_db(np.abs(H),
-    ...                                                  ref=np.max),
-    ...                          y_axis='log')
-    >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.title('Harmonic power spectrogram')
-    >>> plt.subplot(3, 1, 3)
+    ...                                                  ref=np.max(np.abs(D))),
+    ...                          y_axis='log', x_axis='time', ax=ax[1])
+    >>> ax[1].set(title='Harmonic power spectrogram')
+    >>> ax[1].label_outer()
     >>> librosa.display.specshow(librosa.amplitude_to_db(np.abs(P),
-    ...                                                  ref=np.max),
-    ...                          y_axis='log')
-    >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.title('Percussive power spectrogram')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    ...                                                  ref=np.max(np.abs(D))),
+    ...                          y_axis='log', x_axis='time', ax=ax[2])
+    >>> ax[2].set(title='Percussive power spectrogram')
+    >>> fig.colorbar(img, ax=ax, format='%+2.0f dB')
 
 
     Or with a narrower horizontal filter
@@ -473,32 +458,29 @@ def nn_filter(S, rec=None, aggregate=None, axis=-1, **kwargs):
     ...                                          aggregate=np.average)
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure(figsize=(10, 8))
-    >>> plt.subplot(5, 1, 1)
-    >>> librosa.display.specshow(chroma, y_axis='chroma')
-    >>> plt.colorbar()
-    >>> plt.title('Unfiltered')
-    >>> plt.subplot(5, 1, 2)
-    >>> librosa.display.specshow(chroma_med, y_axis='chroma')
-    >>> plt.colorbar()
-    >>> plt.title('Median-filtered')
-    >>> plt.subplot(5, 1, 3)
-    >>> librosa.display.specshow(chroma_nlm, y_axis='chroma')
-    >>> plt.colorbar()
-    >>> plt.title('Non-local means')
-    >>> plt.subplot(5, 1, 4)
-    >>> librosa.display.specshow(chroma - chroma_med,
-    ...                          y_axis='chroma')
-    >>> plt.colorbar()
-    >>> plt.title('Original - median')
-    >>> plt.subplot(5, 1, 5)
-    >>> librosa.display.specshow(chroma - chroma_nlm,
-    ...                          y_axis='chroma', x_axis='time')
-    >>> plt.colorbar()
-    >>> plt.title('Original - NLM')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    >>> fig, ax = plt.subplots(nrows=5, sharex=True, sharey=True, figsize=(10, 10))
+    >>> librosa.display.specshow(chroma, y_axis='chroma', x_axis='time', ax=ax[0])
+    >>> ax[0].set(title='Unfiltered')
+    >>> ax[0].label_outer()
+    >>> librosa.display.specshow(chroma_med, y_axis='chroma', x_axis='time', ax=ax[1])
+    >>> ax[1].set(title='Median-filtered')
+    >>> ax[1].label_outer()
+    >>> imgc = librosa.display.specshow(chroma_nlm, y_axis='chroma', x_axis='time', ax=ax[2])
+    >>> ax[2].set(title='Non-local means')
+    >>> ax[2].label_outer()
+    >>> imgr1 = librosa.display.specshow(chroma - chroma_med,
+    ...                          y_axis='chroma', x_axis='time', ax=ax[3])
+    >>> ax[3].set(title='Original - median')
+    >>> ax[3].label_outer()
+    >>> imgr2 = librosa.display.specshow(chroma - chroma_nlm,
+    ...                          y_axis='chroma', x_axis='time', ax=ax[4])
+    >>> ax[4].label_outer()
+    >>> ax[4].set(title='Original - NLM')
+    >>> fig.colorbar(imgc, ax=ax[:3])
+    >>> fig.colorbar(imgr1, ax=[ax[3]])
+    >>> fig.colorbar(imgr2, ax=[ax[4]])
     '''
+
     if aggregate is None:
         aggregate = np.mean
 
