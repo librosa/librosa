@@ -126,15 +126,15 @@ def nnls(A, B, **kwargs):
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
     >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
-    ...                          y_axis='log', x_axis='time', ax=ax[0])
+    ...                          y_axis='log', x_axis='time', ax=ax[2])
     >>> ax[2].set(title='Original spectrogram (1025 bins)')
     >>> ax[2].label_outer()
     >>> librosa.display.specshow(librosa.amplitude_to_db(M, ref=np.max),
-    ...                          y_axis='mel', x_axis='time', ax=ax[1])
+    ...                          y_axis='mel', x_axis='time', ax=ax[0])
     >>> ax[0].set(title='Mel spectrogram (128 bins)')
     >>> ax[0].label_outer()
     >>> img = librosa.display.specshow(librosa.amplitude_to_db(S_recover, ref=np.max(S)),
-    ...                          y_axis='log', x_axis='time', ax=ax[2])
+    ...                          y_axis='log', x_axis='time', ax=ax[1])
     >>> ax[1].set(title='Reconstructed spectrogram (1025 bins)')
     >>> ax[1].label_outer()
     >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
