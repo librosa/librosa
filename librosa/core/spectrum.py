@@ -178,10 +178,11 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S,
-    ...                                                  ref=np.max),
-    ...                          y_axis='log', x_axis='time', ax=ax)
+    >>> img = librosa.display.specshow(librosa.amplitude_to_db(S,
+    ...                                                        ref=np.max),
+    ...                                y_axis='log', x_axis='time', ax=ax)
     >>> ax.set_title('Power spectrogram')
+    >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
     """
 
     # By default, use the entire frame
@@ -1297,12 +1298,18 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
     Examples
     --------
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.load(librosa.ex('trumpet'), duration=3)
     >>> D = np.abs(librosa.iirt(y))
-    >>> fig, ax = plt.subplots()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
-    ...                          y_axis='cqt_hz', x_axis='time', ax=ax)
-    >>> ax.set_title('Semitone spectrogram')
+    >>> C = librosa.cqt(y=y, sr=sr)
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+    >>> img = librosa.display.specshow(librosa.amplitude_to_db(C, ref=np.max),
+    ...                                y_axis='cqt_hz', x_axis='time', ax=ax[0])
+    >>> ax[0].set(title='Constant-Q transform')
+    >>> ax[0].label_outer()
+    >>> img = librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
+    ...                                y_axis='cqt_hz', x_axis='time', ax=ax[1])
+    >>> ax[1].set_title('Semitone spectrogram (iirt)')
+    >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
     '''
 
     if flayout not in ('ba', 'sos'):
@@ -1448,14 +1455,15 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
-    >>> librosa.display.specshow(S**2, sr=sr, y_axis='log', x_axis='time',
-    ...                          ax=ax[0])
+    >>> imgpow = librosa.display.specshow(S**2, sr=sr, y_axis='log', x_axis='time',
+    ...                                   ax=ax[0])
     >>> ax[0].set(title='Power spectrogram')
     >>> ax[0].label_outer()
-    >>> librosa.display.specshow(librosa.power_to_db(S**2, ref=np.max),
-    ...                          sr=sr, y_axis='log', x_axis='time', ax=ax[1])
+    >>> imgdb = librosa.display.specshow(librosa.power_to_db(S**2, ref=np.max),
+    ...                                  sr=sr, y_axis='log', x_axis='time', ax=ax[1])
     >>> ax[1].set(title='Log-Power spectrogram')
-
+    >>> fig.colorbar(imgpow, ax=ax[0])
+    >>> fig.colorbar(imgdb, ax=ax[1], format="%+2.0f dB")
     """
 
     S = np.asarray(S)
@@ -1660,17 +1668,19 @@ def perceptual_weighting(S, frequencies, kind='A', **kwargs):
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(C,
-    ...                                                  ref=np.max),
-    ...                          fmin=librosa.note_to_hz('A1'),
-    ...                          y_axis='cqt_hz', x_axis='time',
-    ...                          ax=ax[0])
+    >>> img = librosa.display.specshow(librosa.amplitude_to_db(C,
+    ...                                                        ref=np.max),
+    ...                                fmin=librosa.note_to_hz('A1'),
+    ...                                y_axis='cqt_hz', x_axis='time',
+    ...                                ax=ax[0])
     >>> ax[0].set(title='Log CQT power')
     >>> ax[0].label_outer()
-    >>> librosa.display.specshow(perceptual_CQT, y_axis='cqt_hz',
-    ...                          fmin=librosa.note_to_hz('A1'),
-    ...                          x_axis='time', ax=ax[1])
+    >>> imgp = librosa.display.specshow(perceptual_CQT, y_axis='cqt_hz',
+    ...                                 fmin=librosa.note_to_hz('A1'),
+    ...                                 x_axis='time', ax=ax[1])
     >>> ax[1].set(title='Perceptually weighted log CQT')
+    >>> fig.colorbar(img, ax=ax[0], format="%+2.0f dB")
+    >>> fig.colorbar(imgp, ax=ax[1], format="%+2.0f dB")
     '''
 
     offset = time_frequency.frequency_weighting(
@@ -2015,11 +2025,13 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
     >>> log_S = librosa.amplitude_to_db(S, ref=np.max)
     >>> pcen_S = librosa.pcen(S * (2**31))
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
-    >>> librosa.display.specshow(log_S, x_axis='time', y_axis='mel', ax=ax[0])
+    >>> img = librosa.display.specshow(log_S, x_axis='time', y_axis='mel', ax=ax[0])
     >>> ax[0].set(title='log amplitude (dB)', xlabel=None)
     >>> ax[0].label_outer()
-    >>> librosa.display.specshow(pcen_S, x_axis='time', y_axis='mel', ax=ax[1])
+    >>> imgpcen = librosa.display.specshow(pcen_S, x_axis='time', y_axis='mel', ax=ax[1])
     >>> ax[1].set(title='Per-channel energy normalization')
+    >>> fig.colorbar(img, ax=ax[0], format="%+2.0f dB")
+    >>> fig.colorbar(imgpcen, ax=ax[1])
 
     Compare PCEN with and without max-filtering
 
@@ -2028,8 +2040,9 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
     >>> librosa.display.specshow(pcen_S, x_axis='time', y_axis='mel', ax=ax[0])
     >>> ax[0].set(title='Per-channel energy normalization (no max-filter)')
     >>> ax[0].label_outer()
-    >>> librosa.display.specshow(pcen_max, x_axis='time', y_axis='mel', ax=ax[1])
+    >>> img = librosa.display.specshow(pcen_max, x_axis='time', y_axis='mel', ax=ax[1])
     >>> ax[1].set(title='Per-channel energy normalization (max_size=3)')
+    >>> fig.colorbar(img, ax=ax)
     '''
 
     if power < 0:

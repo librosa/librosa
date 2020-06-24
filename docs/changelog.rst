@@ -54,6 +54,7 @@ Other changes
     - `#1131`_ more stringent shape requirements on `valid_audio`. *Brian McFee*
     - `#1140`_ removed contiguity requirement for `valid_audio`. *Brian McFee*
     - `#1147`_ updates to `display.specshow` documentation. *Brian McFee*
+    - `#1182`_ `display.specshow` now returns a `QuadMesh` object, rather than the axes handle. *Brian McFee*
 
 v0.7.2
 ------

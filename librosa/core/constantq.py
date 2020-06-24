@@ -141,9 +141,10 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> C = np.abs(librosa.cqt(y, sr=sr))
     >>> fig, ax = plt.subplots()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(C, ref=np.max),
-    ...                          sr=sr, x_axis='time', y_axis='cqt_note', ax=ax)
+    >>> img = librosa.display.specshow(librosa.amplitude_to_db(C, ref=np.max),
+    ...                                sr=sr, x_axis='time', y_axis='cqt_note', ax=ax)
     >>> ax.set_title('Constant-Q power spectrum')
+    >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
 
     Limit the frequency range
 
@@ -773,9 +774,10 @@ def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=None,
     ...                          sr=sr, x_axis='time', y_axis='cqt_note', ax=ax[0])
     >>> ax[0].set(title='Constant-Q power spectrum', xlabel=None)
     >>> ax[0].label_outer()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(V, ref=np.max),
-    ...                          sr=sr, x_axis='time', y_axis='cqt_note', ax=ax[1])
+    >>> img = librosa.display.specshow(librosa.amplitude_to_db(V, ref=np.max),
+    ...                                sr=sr, x_axis='time', y_axis='cqt_note', ax=ax[1])
     >>> ax[1].set_title('Variable-Q power spectrum')
+    >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
     '''
 
     # How many octaves are we dealing with?

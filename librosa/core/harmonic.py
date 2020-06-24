@@ -60,7 +60,7 @@ def salience(S, freqs, h_range, weights=None, aggregate=None,
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.load(librosa.ex('trumpet'), duration=3)
     >>> S = np.abs(librosa.stft(y))
     >>> freqs = librosa.core.fft_frequencies(sr)
     >>> harms = [1, 2, 3, 4]
@@ -69,11 +69,16 @@ def salience(S, freqs, h_range, weights=None, aggregate=None,
     >>> print(S_sal.shape)
     (1025, 115)
     >>> import matplotlib.pyplot as plt
-    >>> fig, ax = plt.subplots()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S_sal,
-    ...                                                  ref=np.max),
-    ...                          sr=sr, y_axis='log', x_axis='time', ax=ax)
-    >>> ax.set(title='Salience spectrogram')
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    ...                          sr=sr, y_axis='log', x_axis='time', ax=ax[0])
+    >>> ax[0].set(title='Magnitude spectrogram')
+    >>> ax[0].label_outer()
+    >>> img = librosa.display.specshow(librosa.amplitude_to_db(S_sal,
+    ...                                                        ref=np.max),
+    ...                                sr=sr, y_axis='log', x_axis='time', ax=ax[1])
+    >>> ax[1].set(title='Salience spectrogram')
+    >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
     """
     if aggregate is None:
         aggregate = np.average
