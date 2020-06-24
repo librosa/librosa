@@ -74,32 +74,28 @@ class TimeFormatter(Formatter):
     >>> import matplotlib.pyplot as plt
     >>> times = np.arange(30)
     >>> values = np.random.randn(len(times))
-    >>> plt.figure()
-    >>> ax = plt.gca()
+    >>> fig, ax = plt.subplots()
     >>> ax.plot(times, values)
     >>> ax.xaxis.set_major_formatter(librosa.display.TimeFormatter())
-    >>> ax.set_xlabel('Time')
-    >>> plt.show()
+    >>> ax.set(xlabel='Time')
 
     Manually set the physical time unit of the x-axis to milliseconds
 
     >>> times = np.arange(100)
     >>> values = np.random.randn(len(times))
-    >>> plt.figure()
-    >>> ax = plt.gca()
+    >>> fig, ax = plt.subplots()
     >>> ax.plot(times, values)
     >>> ax.xaxis.set_major_formatter(librosa.display.TimeFormatter(unit='ms'))
-    >>> ax.set_xlabel('Time (ms)')
+    >>> ax.set(xlabel='Time (ms)')
 
     For lag plots
 
     >>> times = np.arange(60)
     >>> values = np.random.randn(len(times))
-    >>> plt.figure()
-    >>> ax = plt.gca()
+    >>> fig, ax = plt.subplots()
     >>> ax.plot(times, values)
     >>> ax.xaxis.set_major_formatter(librosa.display.TimeFormatter(lag=True))
-    >>> ax.set_xlabel('Lag')
+    >>> ax.set(xlabel='Lag')
     '''
 
     def __init__(self, lag=False, unit=None):
@@ -170,15 +166,12 @@ class NoteFormatter(Formatter):
     --------
     >>> import matplotlib.pyplot as plt
     >>> values = librosa.midi_to_hz(np.arange(48, 72))
-    >>> plt.figure()
-    >>> ax1 = plt.subplot(2,1,1)
-    >>> ax1.bar(np.arange(len(values)), values)
-    >>> ax1.set_ylabel('Hz')
-    >>> ax2 = plt.subplot(2,1,2)
-    >>> ax2.bar(np.arange(len(values)), values)
-    >>> ax2.yaxis.set_major_formatter(librosa.display.NoteFormatter())
-    >>> ax2.set_ylabel('Note')
-    >>> plt.show()
+    >>> fig, ax = plt.subplots(nrows=2)
+    >>> ax[0].bar(np.arange(len(values)), values)
+    >>> ax[0].set(ylabel='Hz')
+    >>> ax[1].bar(np.arange(len(values)), values)
+    >>> ax[1].yaxis.set_major_formatter(librosa.display.NoteFormatter())
+    >>> ax[1].set(ylabel='Note')
     '''
     def __init__(self, octave=True, major=True, key='C:maj'):
 
@@ -221,16 +214,13 @@ class LogHzFormatter(Formatter):
     --------
     >>> import matplotlib.pyplot as plt
     >>> values = librosa.midi_to_hz(np.arange(48, 72))
-    >>> plt.figure()
-    >>> ax1 = plt.subplot(2,1,1)
-    >>> ax1.bar(np.arange(len(values)), values)
-    >>> ax1.yaxis.set_major_formatter(librosa.display.LogHzFormatter())
-    >>> ax1.set_ylabel('Hz')
-    >>> ax2 = plt.subplot(2,1,2)
-    >>> ax2.bar(np.arange(len(values)), values)
-    >>> ax2.yaxis.set_major_formatter(librosa.display.NoteFormatter())
-    >>> ax2.set_ylabel('Note')
-    >>> plt.show()
+    >>> fig, ax = plt.subplots(nrows=2)
+    >>> ax[0].bar(np.arange(len(values)), values)
+    >>> ax[0].yaxis.set_major_formatter(librosa.display.LogHzFormatter())
+    >>> ax[0].set(ylabel='Hz')
+    >>> ax[1].bar(np.arange(len(values)), values)
+    >>> ax[1].yaxis.set_major_formatter(librosa.display.NoteFormatter())
+    >>> ax[1].set(ylabel='Note')
     '''
     def __init__(self, major=True):
 
@@ -260,12 +250,10 @@ class ChromaFormatter(Formatter):
     --------
     >>> import matplotlib.pyplot as plt
     >>> values = np.arange(12)
-    >>> plt.figure()
-    >>> ax = plt.gca()
+    >>> fig, ax = plt.subplots()
     >>> ax.plot(values)
     >>> ax.yaxis.set_major_formatter(librosa.display.ChromaFormatter())
-    >>> ax.set_ylabel('Pitch class')
-    >>> plt.show()
+    >>> ax.set(ylabel='Pitch class')
     '''
     def __init__(self, key='C:maj'):
         self.key = key
@@ -286,12 +274,10 @@ class TonnetzFormatter(Formatter):
     --------
     >>> import matplotlib.pyplot as plt
     >>> values = np.arange(6)
-    >>> plt.figure()
-    >>> ax = plt.gca()
+    >>> fig, ax = plt.subplots()
     >>> ax.plot(values)
     >>> ax.yaxis.set_major_formatter(librosa.display.TonnetzFormatter())
-    >>> ax.set_ylabel('Tonnetz')
-    >>> plt.show()
+    >>> ax.set(ylabel='Tonnetz')
     '''
     def __call__(self, x, pos=None):
         '''Format for tonnetz positions'''
@@ -440,29 +426,26 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
     Plot a monophonic waveform
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
-    >>> plt.figure()
-    >>> plt.subplot(3, 1, 1)
-    >>> librosa.display.waveplot(y, sr=sr)
-    >>> plt.title('Monophonic')
+    >>> y, sr = librosa.load(librosa.ex('choice'), duration=10)
+    >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
+    >>> librosa.display.waveplot(y, sr=sr, ax=ax[0])
+    >>> ax[0].set(title='Monophonic')
+    >>> ax[0].label_outer()
 
     Or a stereo waveform
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet', hq=True), mono=False)
-    >>> plt.subplot(3, 1, 2)
-    >>> librosa.display.waveplot(y, sr=sr)
-    >>> plt.title('Stereo')
+    >>> y, sr = librosa.load(librosa.ex('choice', hq=True), mono=False, duration=10)
+    >>> librosa.display.waveplot(y, sr=sr, ax=ax[1])
+    >>> ax[1].set(title='Stereo')
+    >>> ax[1].label_outer()
 
     Or harmonic and percussive components with transparency
 
     >>> y, sr = librosa.load(librosa.ex('choice'), duration=10)
     >>> y_harm, y_perc = librosa.effects.hpss(y)
-    >>> plt.subplot(3, 1, 3)
-    >>> librosa.display.waveplot(y_harm, sr=sr, alpha=0.25)
-    >>> librosa.display.waveplot(y_perc, sr=sr, color='r', alpha=0.5)
-    >>> plt.title('Harmonic + Percussive')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    >>> librosa.display.waveplot(y_harm, sr=sr, alpha=0.25, ax=ax[2])
+    >>> librosa.display.waveplot(y_perc, sr=sr, color='r', alpha=0.5, ax=ax[2])
+    >>> ax[2].set(title='Harmonic + Percussive')
     '''
 
     util.valid_audio(y, mono=False)
@@ -531,9 +514,7 @@ def specshow(data, x_coords=None, y_coords=None,
     hop_length : int > 0 [scalar]
         Hop length, also used to determine time scale in x-axis
 
-    x_axis : None or str
-
-    y_axis : None or str
+    x_axis, y_axis : None or str
         Range for the x- and y-axes.
 
         Valid types are:
@@ -583,8 +564,7 @@ def specshow(data, x_coords=None, y_coords=None,
             tempograms are calculated in the Frequency domain
             using `feature.fourier_tempogram`.
 
-    x_coords : np.ndarray [shape=data.shape[1]+1]
-    y_coords : np.ndarray [shape=data.shape[0]+1]
+    x_coords, y_coords : np.ndarray [shape=data.shape[0 or 1]+1]
 
         Optional positioning coordinates of the input data.
         These can be use to explicitly set the location of each
@@ -645,14 +625,13 @@ def specshow(data, x_coords=None, y_coords=None,
     Visualize an STFT power spectrum using default parameters
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
-    >>> plt.figure(figsize=(12, 8))
-
+    >>> y, sr = librosa.load(librosa.ex('choice'), duration=15)
+    >>> fig, ax = plt.subplots(nrows=4, ncols=2, sharex=True)
     >>> D = librosa.amplitude_to_db(np.abs(librosa.stft(y)), ref=np.max)
-    >>> plt.subplot(4, 2, 1)
-    >>> librosa.display.specshow(D, y_axis='linear', sr=sr)
-    >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.title('Linear-frequency power spectrogram')
+    >>> img = librosa.display.specshow(D, y_axis='linear', x_axis='time',
+    ...                                sr=sr, ax=ax[0, 0])
+    >>> ax[0, 0].set(title='Linear-frequency power spectrogram')
+    >>> ax[0, 0].label_outer()
 
 
     Or on a logarithmic scale, and using a larger hop
@@ -660,78 +639,73 @@ def specshow(data, x_coords=None, y_coords=None,
     >>> hop_length = 1024
     >>> D = librosa.amplitude_to_db(np.abs(librosa.stft(y, hop_length=hop_length)),
     ...                             ref=np.max)
-    >>> plt.subplot(4, 2, 2)
-    >>> librosa.display.specshow(D, y_axis='log', sr=sr, hop_length=hop_length)
-    >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.title('Log-frequency power spectrogram')
-
+    >>> librosa.display.specshow(D, y_axis='log', sr=sr, hop_length=hop_length,
+    ...                          x_axis='time', ax=ax[0, 1])
+    >>> ax[0, 1].set(title='Log-frequency power spectrogram')
+    >>> ax[0, 1].label_outer()
 
     Or use a CQT scale
 
-    >>> CQT = librosa.amplitude_to_db(np.abs(librosa.cqt(y, sr=sr)), ref=np.max)
-    >>> plt.subplot(4, 2, 3)
-    >>> librosa.display.specshow(CQT, y_axis='cqt_note')
-    >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.title('Constant-Q power spectrogram (note)')
+    >>> CQT = librosa.amplitude_to_db(np.abs(librosa.cqt(y, sr=sr, hop_length=hop_length)), ref=np.max)
+    >>> librosa.display.specshow(CQT, y_axis='cqt_note', sr=sr, hop_length=hop_length,
+    ...                          x_axis='time', ax=ax[1, 0])
+    >>> ax[1, 0].set(title='Constant-Q power spectrogram (note)')
+    >>> ax[1, 0].label_outer()
 
-    >>> plt.subplot(4, 2, 4)
-    >>> librosa.display.specshow(CQT, y_axis='cqt_hz')
-    >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.title('Constant-Q power spectrogram (Hz)')
+    >>> librosa.display.specshow(CQT, y_axis='cqt_hz', sr=sr, hop_length=hop_length,
+    ...                          x_axis='time', ax=ax[1, 1])
+    >>> ax[1, 1].set(title='Constant-Q power spectrogram (Hz)')
+    >>> ax[1, 1].label_outer()
 
 
     Draw a chromagram with pitch classes
 
-    >>> C = librosa.feature.chroma_cqt(y=y, sr=sr)
-    >>> plt.subplot(4, 2, 5)
-    >>> librosa.display.specshow(C, y_axis='chroma')
-    >>> plt.colorbar()
-    >>> plt.title('Chromagram')
+    >>> C = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=hop_length)
+    >>> librosa.display.specshow(C, y_axis='chroma', sr=sr, hop_length=hop_length,
+    ...                          x_axis='time', ax=ax[2, 0])
+    >>> ax[2, 0].set(title='Chromagram')
+    >>> ax[2, 0].label_outer()
 
 
     Force a grayscale colormap (white -> black)
 
-    >>> plt.subplot(4, 2, 6)
-    >>> librosa.display.specshow(D, cmap='gray_r', y_axis='linear')
-    >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.title('Linear power spectrogram (grayscale)')
+    >>> librosa.display.specshow(D, cmap='gray_r', y_axis='linear',
+    ...                          sr=sr, hop_length=hop_length,
+    ...                          x_axis='time', ax=ax[2, 1])
+    >>> ax[2, 1].set(title='Grayscale colormap')
+    >>> ax[2, 1].label_outer()
 
 
     Draw time markers automatically
 
-    >>> plt.subplot(4, 2, 7)
-    >>> librosa.display.specshow(D, x_axis='time', y_axis='log')
-    >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.title('Log power spectrogram')
+    >>> librosa.display.specshow(D, x_axis='time', sr=sr, hop_length=hop_length,
+    ...                          y_axis='log', ax=ax[3, 0])
+    >>> ax[3, 0].set(title='Log-power spectrogram')
+    >>> ax[3, 0].label_outer()
 
 
     Draw a tempogram with BPM markers
 
-    >>> plt.subplot(4, 2, 8)
     >>> Tgram = librosa.feature.tempogram(y=y, sr=sr)
-    >>> librosa.display.specshow(Tgram, x_axis='time', y_axis='tempo')
-    >>> plt.colorbar()
-    >>> plt.title('Tempogram')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    >>> librosa.display.specshow(Tgram, x_axis='time', sr=sr, hop_length=hop_length,
+    ...                          y_axis='tempo', ax=ax[3, 1])
+    >>> ax[3, 1].set(title='Tempogram')
+    >>> ax[3, 1].label_outer()
 
 
     Draw beat-synchronous chroma in natural time
 
-    >>> plt.figure()
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
     >>> tempo, beat_f = librosa.beat.beat_track(y=y, sr=sr, trim=False)
     >>> beat_f = librosa.util.fix_frames(beat_f, x_max=C.shape[1])
     >>> Csync = librosa.util.sync(C, beat_f, aggregate=np.median)
     >>> beat_t = librosa.frames_to_time(beat_f, sr=sr)
-    >>> ax1 = plt.subplot(2,1,1)
-    >>> librosa.display.specshow(C, y_axis='chroma', x_axis='time')
-    >>> plt.title('Chroma (linear time)')
-    >>> ax2 = plt.subplot(2,1,2, sharex=ax1)
+    >>> librosa.display.specshow(C, y_axis='chroma', x_axis='time', ax=ax[0])
+    >>> ax[0].set(title='Chroma (linear time)')
+    >>> ax[0].label_outer()
     >>> librosa.display.specshow(Csync, y_axis='chroma', x_axis='time',
-    ...                          x_coords=beat_t)
-    >>> plt.title('Chroma (beat time)')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    ...                          x_coords=beat_t, ax=ax[1])
+    >>> ax[1].set(title='Chroma (beat time)')
     '''
 
     if np.issubdtype(data.dtype, np.complexfloating):
