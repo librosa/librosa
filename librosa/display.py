@@ -630,8 +630,8 @@ def specshow(data, x_coords=None, y_coords=None,
 
     Returns
     -------
-    axes
-        The axis handle for the figure.
+    colormesh : `matplotlib.collections.QuadMesh`
+        The color mesh object produced by `matplotlib.pyplot.pcolormesh`
 
 
     See Also
@@ -773,7 +773,7 @@ def specshow(data, x_coords=None, y_coords=None,
     __decorate_axis(axes.xaxis, x_axis, key=key)
     __decorate_axis(axes.yaxis, y_axis, key=key)
 
-    return axes
+    return out
 
 
 def __set_current_image(ax, img):
