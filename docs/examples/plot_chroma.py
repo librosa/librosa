@@ -16,12 +16,11 @@ also, introduces chroma variants implemented in librosa.
 # Beyond the default parameter settings of librosa's chroma functions, we apply the following 
 # enhancements:
 #
-#    1. Over-sampling the frequency axis to reduce sensitivity to tuning deviations
-#    2. Harmonic-percussive-residual source separation to eliminate transients.
-#    3. Nearest-neighbor smoothing to eliminate passing tones and sparse noise.  This is inspired by the
+#    1. Harmonic-percussive-residual source separation to eliminate transients.
+#    2. Nearest-neighbor smoothing to eliminate passing tones and sparse noise.  This is inspired by the
 #       recurrence-based smoothing technique of
 #       `Cho and Bello, 2011 <http://ismir2011.ismir.net/papers/OS8-4.pdf>`_.
-#    4. Local median filtering to suppress remaining discontinuities.
+#    3. Local median filtering to suppress remaining discontinuities.
 
 # Code source: Brian McFee
 # License: ISC
@@ -65,10 +64,11 @@ plt.ylabel('Original')
 plt.tight_layout()
 
 
-###########################################################
-# We can correct for minor tuning deviations by using 3 CQT
-# bins per semi-tone, instead of one
-chroma_os = librosa.feature.chroma_cqt(y=y, sr=sr, bins_per_octave=12*3)
+########################################################
+# We can do better by isolating the harmonic component of the audio signal
+# We'll use a large margin for separating harmonics from percussives
+y_harm = librosa.effects.harmonic(y=y, margin=8)
+chroma_harm = librosa.feature.chroma_cqt(y=y_harm, sr=sr)
 
 
 plt.figure(figsize=(12, 4))
@@ -76,33 +76,10 @@ plt.figure(figsize=(12, 4))
 plt.subplot(2, 1, 1)
 librosa.display.specshow(chroma_orig[idx], y_axis='chroma')
 plt.colorbar()
-plt.ylabel('Original')
-
-
-plt.subplot(2, 1, 2)
-librosa.display.specshow(chroma_os[idx], y_axis='chroma', x_axis='time')
-plt.colorbar()
-plt.ylabel('3x-over')
-plt.tight_layout()
-
-
-########################################################
-# That cleaned up some rough edges, but we can do better
-# by isolating the harmonic component.
-# We'll use a large margin for separating harmonics from percussives
-y_harm = librosa.effects.harmonic(y=y, margin=8)
-chroma_os_harm = librosa.feature.chroma_cqt(y=y_harm, sr=sr, bins_per_octave=12*3)
-
-
-plt.figure(figsize=(12, 4))
-
-plt.subplot(2, 1, 1)
-librosa.display.specshow(chroma_os[idx], y_axis='chroma')
-plt.colorbar()
 plt.ylabel('3x-over')
 
 plt.subplot(2, 1, 2)
-librosa.display.specshow(chroma_os_harm[idx], y_axis='chroma', x_axis='time')
+librosa.display.specshow(chroma_harm[idx], y_axis='chroma', x_axis='time')
 plt.colorbar()
 plt.ylabel('Harmonic')
 plt.tight_layout()
@@ -112,8 +89,8 @@ plt.tight_layout()
 # There's still some noise in there though.
 # We can clean it up using non-local filtering.
 # This effectively removes any sparse additive noise from the features.
-chroma_filter = np.minimum(chroma_os_harm,
-                           librosa.decompose.nn_filter(chroma_os_harm,
+chroma_filter = np.minimum(chroma_harm,
+                           librosa.decompose.nn_filter(chroma_harm,
                                                        aggregate=np.median,
                                                        metric='cosine'))
 
@@ -121,7 +98,7 @@ chroma_filter = np.minimum(chroma_os_harm,
 plt.figure(figsize=(12, 4))
 
 plt.subplot(2, 1, 1)
-librosa.display.specshow(chroma_os_harm[idx], y_axis='chroma')
+librosa.display.specshow(chroma_harm[idx], y_axis='chroma')
 plt.colorbar()
 plt.ylabel('Harmonic')
 
