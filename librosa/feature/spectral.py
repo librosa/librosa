@@ -141,19 +141,13 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     Plot the result
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> plt.subplot(2, 1, 1)
-    >>> plt.semilogy(cent.T, label='Spectral centroid')
-    >>> plt.ylabel('Hz')
-    >>> plt.xticks([])
-    >>> plt.xlim([0, cent.shape[-1]])
-    >>> plt.legend()
-    >>> plt.subplot(2, 1, 2)
+    >>> times = librosa.times_like(cent)
+    >>> fig, ax = plt.subplots()
     >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
-    ...                          y_axis='log', x_axis='time')
-    >>> plt.title('log Power spectrogram')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    ...                          y_axis='log', x_axis='time', ax=ax)
+    >>> ax.plot(times, cent.T, label='Spectral centroid', color='w')
+    >>> ax.legend(loc='upper right')
+    >>> ax.set(title='log Power spectrogram')
     '''
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length,
@@ -280,20 +274,20 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     Plot the result
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> plt.subplot(2, 1, 1)
-    >>> plt.semilogy(spec_bw.T, label='Spectral bandwidth')
-    >>> plt.ylabel('Hz')
-    >>> plt.xticks([])
-    >>> plt.xlim([0, spec_bw.shape[-1]])
-    >>> plt.legend()
-    >>> plt.subplot(2, 1, 2)
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True)
+    >>> times = librosa.times_like(spec_bw)
+    >>> centroid = librosa.feature.spectral_centroid(S=S)
+    >>> ax[0].semilogy(times, spec_bw[0], label='Spectral bandwidth')
+    >>> ax[0].set(ylabel='Hz', xticks=[], xlim=[times.min(), times.max()])
+    >>> ax[0].legend()
+    >>> ax[0].label_outer()
     >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
-    ...                          y_axis='log', x_axis='time')
-    >>> plt.title('log Power spectrogram')
-    >>> plt.tight_layout()
-    >>> plt.show()
-
+    ...                          y_axis='log', x_axis='time', ax=ax[1])
+    >>> ax[1].set(title='log Power spectrogram')
+    >>> ax[1].fill_between(times, centroid[0] - spec_bw[0], centroid[0] + spec_bw[0],
+    ...                 alpha=0.5, label='Centroid +- bandwidth')
+    >>> ax[1].plot(times, centroid[0], label='Spectral centroid', color='w')
+    >>> ax[1].legend(loc='lower right')
     '''
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length,
@@ -427,20 +421,16 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     >>> contrast = librosa.feature.spectral_contrast(S=S, sr=sr)
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> plt.subplot(2, 1, 1)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S,
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True)
+    >>> img1 = librosa.display.specshow(librosa.amplitude_to_db(S,
     ...                                                  ref=np.max),
-    ...                          y_axis='log')
-    >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.title('Power spectrogram')
-    >>> plt.subplot(2, 1, 2)
-    >>> librosa.display.specshow(contrast, x_axis='time')
-    >>> plt.colorbar()
-    >>> plt.ylabel('Frequency bands')
-    >>> plt.title('Spectral contrast')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    ...                          y_axis='log', x_axis='time', ax=ax[0])
+    >>> fig.colorbar(img1, ax=[ax[0]], format='%+2.0f dB')
+    >>> ax[0].set(title='Power spectrogram')
+    >>> ax[0].label_outer()
+    >>> img2 = librosa.display.specshow(contrast, x_axis='time', ax=ax[1])
+    >>> fig.colorbar(img2, ax=[ax[1]])
+    >>> ax[1].set(ylabel='Frequency bands', title='Spectral contrast')
     '''
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length,
@@ -581,13 +571,16 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> # Approximate maximum frequencies with roll_percent=0.85 (default)
-    >>> rolloff = librosa.feature.spectral_rolloff(y=y, sr=sr)
-    >>> rolloff
+    >>> librosa.feature.spectral_rolloff(y=y, sr=sr)
     array([[2583.984, 3036.182, ..., 9173.145, 9248.511]])
-    >>> # Approximate minimum frequencies with roll_percent=0.1
-    >>> rolloff = librosa.feature.spectral_rolloff(y=y, sr=sr, roll_percent=0.1)
+    >>> # Approximate maximum frequencies with roll_percent=0.99
+    >>> rolloff = librosa.feature.spectral_rolloff(y=y, sr=sr, roll_percent=0.99)
     >>> rolloff
-    array([[ 624.463,  624.463, ..., 1550.391, 1507.324]])
+    array([[ 7192.09 ,  6739.893, ..., 10960.4  , 10992.7  ]])
+    >>> # Approximate minimum frequencies with roll_percent=0.01
+    >>> rolloff_min = librosa.feature.spectral_rolloff(y=y, sr=sr, roll_percent=0.01)
+    >>> rolloff_min
+    array([[516.797, 538.33 , ..., 764.429, 764.429]])
 
     From spectrogram input
 
@@ -600,20 +593,14 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     array([[ 3919.043,  3994.409, ..., 10443.604, 10594.336]])
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> plt.subplot(2, 1, 1)
-    >>> plt.semilogy(rolloff.T, label='Roll-off frequency')
-    >>> plt.ylabel('Hz')
-    >>> plt.xticks([])
-    >>> plt.xlim([0, rolloff.shape[-1]])
-    >>> plt.legend()
-    >>> plt.subplot(2, 1, 2)
+    >>> fig, ax = plt.subplots()
     >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
-    ...                          y_axis='log', x_axis='time')
-    >>> plt.title('log Power spectrogram')
-    >>> plt.tight_layout()
-    >>> plt.show()
-
+    ...                          y_axis='log', x_axis='time', ax=ax)
+    >>> ax.plot(librosa.times_like(rolloff), rolloff[0], label='Roll-off frequency (0.99)')
+    >>> ax.plot(librosa.times_like(rolloff), rolloff_min[0], color='w',
+    ...         label='Roll-off frequency (0.01)')
+    >>> ax.legend(loc='lower right')
+    >>> ax.set(title='log Power spectrogram')
     '''
 
     if not 0.0 < roll_percent < 1.0:
@@ -812,17 +799,15 @@ def rms(y=None, S=None, frame_length=2048, hop_length=512,
     >>> rms = librosa.feature.rms(S=S)
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> plt.subplot(2, 1, 1)
-    >>> plt.semilogy(rms.T, label='RMS Energy')
-    >>> plt.xticks([])
-    >>> plt.xlim([0, rms.shape[-1]])
-    >>> plt.legend()
-    >>> plt.subplot(2, 1, 2)
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True)
+    >>> times = librosa.times_like(rms)
+    >>> ax[0].semilogy(times, rms[0], label='RMS Energy')
+    >>> ax[0].set(xticks=[])
+    >>> ax[0].legend()
+    >>> ax[0].label_outer()
     >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
-    ...                          y_axis='log', x_axis='time')
-    >>> plt.title('log Power spectrogram')
-    >>> plt.tight_layout()
+    ...                          y_axis='log', x_axis='time', ax=ax[1])
+    >>> ax[1].set(title='log Power spectrogram')
 
     Use a STFT window of constant ones and no frame centering to get consistent
     results with the RMS computed from the audio samples `y`
@@ -958,28 +943,25 @@ def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     Plot the results for comparison
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure(figsize=(8, 8))
-    >>> ax = plt.subplot(4,1,1)
-    >>> plt.plot(p2[2], label='order=2', alpha=0.8)
-    >>> plt.plot(p1[1], label='order=1', alpha=0.8)
-    >>> plt.plot(p0[0], label='order=0', alpha=0.8)
-    >>> plt.xticks([])
-    >>> plt.ylabel('Constant')
-    >>> plt.legend()
-    >>> plt.subplot(4,1,2, sharex=ax)
-    >>> plt.plot(p2[1], label='order=2', alpha=0.8)
-    >>> plt.plot(p1[0], label='order=1', alpha=0.8)
-    >>> plt.xticks([])
-    >>> plt.ylabel('Linear')
-    >>> plt.subplot(4,1,3, sharex=ax)
-    >>> plt.plot(p2[0], label='order=2', alpha=0.8)
-    >>> plt.xticks([])
-    >>> plt.ylabel('Quadratic')
-    >>> plt.subplot(4,1,4, sharex=ax)
+    >>> fig, ax = plt.subplots(nrows=4, sharex=True, figsize=(8, 8))
+    >>> times = librosa.times_like(p0)
+    >>> ax[0].plot(times, p0[0], label='order=0', alpha=0.8)
+    >>> ax[0].plot(times, p1[1], label='order=1', alpha=0.8)
+    >>> ax[0].plot(times, p2[2], label='order=2', alpha=0.8)
+    >>> ax[0].legend()
+    >>> ax[0].label_outer()
+    >>> ax[0].set(ylabel='Constant term ')
+    >>> ax[1].legend()
+    >>> ax[1].plot(times, p1[0], label='order=1', alpha=0.8)
+    >>> ax[1].plot(times, p2[1], label='order=2', alpha=0.8)
+    >>> ax[1].set(ylabel='Linear term')
+    >>> ax[1].label_outer()
+    >>> ax[1].legend()
+    >>> ax[2].plot(times, p2[0], label='order=2', alpha=0.8)
+    >>> ax[2].set(ylabel='Quadratic term')
+    >>> ax[2].legend()
     >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
-    ...                          y_axis='log')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    ...                          y_axis='log', x_axis='time', ax=ax[3])
     '''
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length,
@@ -1147,7 +1129,7 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.ex('nutcracker'))
+    >>> y, sr = librosa.load(librosa.ex('nutcracker'), duration=15)
     >>> librosa.feature.chroma_stft(y=y, sr=sr)
     array([[1.   , 0.962, ..., 0.143, 0.278],
            [0.688, 0.745, ..., 0.103, 0.162],
@@ -1178,13 +1160,10 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
            [0.743, 0.937, ..., 0.684, 0.815]], dtype=float32)
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure(figsize=(10, 4))
-    >>> librosa.display.specshow(chroma, y_axis='chroma', x_axis='time')
-    >>> plt.colorbar()
-    >>> plt.title('Chromagram')
-    >>> plt.tight_layout()
-    >>> plt.show()
-
+    >>> fig, ax = plt.subplots()
+    >>> img = librosa.display.specshow(chroma, y_axis='chroma', x_axis='time', ax=ax)
+    >>> fig.colorbar(img, ax=ax)
+    >>> ax.set(title='Chromagram')
     """
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length, power=2,
@@ -1280,18 +1259,13 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
     >>> chroma_cq = librosa.feature.chroma_cqt(y=y, sr=sr)
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> plt.subplot(2,1,1)
-    >>> librosa.display.specshow(chroma_stft, y_axis='chroma')
-    >>> plt.title('chroma_stft')
-    >>> plt.colorbar()
-    >>> plt.subplot(2,1,2)
-    >>> librosa.display.specshow(chroma_cq, y_axis='chroma', x_axis='time')
-    >>> plt.title('chroma_cqt')
-    >>> plt.colorbar()
-    >>> plt.tight_layout()
-    >>> plt.show()
-
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+    >>> librosa.display.specshow(chroma_stft, y_axis='chroma', x_axis='time', ax=ax[0])
+    >>> ax[0].set(title='chroma_stft')
+    >>> ax[0].label_outer()
+    >>> img = librosa.display.specshow(chroma_cq, y_axis='chroma', x_axis='time', ax=ax[1])
+    >>> ax[1].set(title='chroma_cqt')
+    >>> fig.colorbar(img, ax=ax)
     '''
 
     cqt_func = {'full': cqt, 'hybrid': hybrid_cqt}
@@ -1422,18 +1396,15 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
     >>> chroma_cq = librosa.feature.chroma_cqt(y=y, sr=sr)
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> plt.subplot(2,1,1)
-    >>> librosa.display.specshow(chroma_cq, y_axis='chroma')
-    >>> plt.title('chroma_cq')
-    >>> plt.colorbar()
-    >>> plt.subplot(2,1,2)
-    >>> librosa.display.specshow(chroma_cens, y_axis='chroma', x_axis='time')
-    >>> plt.title('chroma_cens')
-    >>> plt.colorbar()
-    >>> plt.tight_layout()
-    >>> plt.show()
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+    >>> img = librosa.display.specshow(chroma_cq, y_axis='chroma', x_axis='time', ax=ax[0])
+    >>> ax[0].set(title='chroma_cq')
+    >>> ax[0].label_outer()
+    >>> librosa.display.specshow(chroma_cens, y_axis='chroma', x_axis='time', ax=ax[1])
+    >>> ax[1].set(title='chroma_cens')
+    >>> fig.colorbar(img, ax=ax)
     '''
+
     if not ((win_len_smooth is None) or (isinstance(win_len_smooth, int) and win_len_smooth > 0)):
         raise ParameterError('win_len_smooth={} must be a positive integer or None'.format(win_len_smooth))
 
@@ -1526,7 +1497,7 @@ def tonnetz(y=None, sr=22050, chroma=None, **kwargs):
     --------
     Compute tonnetz features from the harmonic component of a song
 
-    >>> y, sr = librosa.load(librosa.ex('nutcracker'))
+    >>> y, sr = librosa.load(librosa.ex('nutcracker'), duration=10, offset=10)
     >>> y = librosa.effects.harmonic(y)
     >>> tonnetz = librosa.feature.tonnetz(y=y, sr=sr)
     >>> tonnetz
@@ -1539,18 +1510,16 @@ def tonnetz(y=None, sr=22050, chroma=None, **kwargs):
     Compare the tonnetz features to `chroma_cqt`
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.subplot(2, 1, 1)
-    >>> librosa.display.specshow(tonnetz, y_axis='tonnetz')
-    >>> plt.colorbar()
-    >>> plt.title('Tonal Centroids (Tonnetz)')
-    >>> plt.subplot(2, 1, 2)
-    >>> librosa.display.specshow(librosa.feature.chroma_cqt(y, sr=sr),
-    ...                          y_axis='chroma', x_axis='time')
-    >>> plt.colorbar()
-    >>> plt.title('Chroma')
-    >>> plt.tight_layout()
-    >>> plt.show()
-
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True)
+    >>> img1 = librosa.display.specshow(tonnetz,
+    ...                                 y_axis='tonnetz', x_axis='time', ax=ax[0])
+    >>> ax[0].set(title='Tonal Centroids (Tonnetz)')
+    >>> ax[0].label_outer()
+    >>> img2 = librosa.display.specshow(librosa.feature.chroma_cqt(y, sr=sr),
+    ...                                 y_axis='chroma', x_axis='time', ax=ax[1])
+    >>> ax[1].set(title='Chroma')
+    >>> fig.colorbar(img1, ax=[ax[0]])
+    >>> fig.colorbar(img2, ax=[ax[1]])
     '''
 
     if y is None and chroma is None:
@@ -1674,28 +1643,22 @@ def mfcc(y=None, sr=22050, S=None, n_mfcc=20, dct_type=2, norm='ortho', lifter=0
     Visualize the MFCC series
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure(figsize=(10, 4))
-    >>> librosa.display.specshow(mfccs, x_axis='time')
-    >>> plt.colorbar()
-    >>> plt.title('MFCC')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    >>> fig, ax = plt.subplots()
+    >>> img = librosa.display.specshow(mfccs, x_axis='time', ax=ax)
+    >>> fig.colorbar(img, ax=ax)
+    >>> ax.set(title='MFCC')
 
     Compare different DCT bases
 
     >>> m_slaney = librosa.feature.mfcc(y=y, sr=sr, dct_type=2)
     >>> m_htk = librosa.feature.mfcc(y=y, sr=sr, dct_type=3)
-    >>> plt.figure(figsize=(10, 6))
-    >>> plt.subplot(2, 1, 1)
-    >>> librosa.display.specshow(m_slaney, x_axis='time')
-    >>> plt.title('RASTAMAT / Auditory toolbox (dct_type=2)')
-    >>> plt.colorbar()
-    >>> plt.subplot(2, 1, 2)
-    >>> librosa.display.specshow(m_htk, x_axis='time')
-    >>> plt.title('HTK-style (dct_type=3)')
-    >>> plt.colorbar()
-    >>> plt.tight_layout()
-    >>> plt.show()
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+    >>> img1 = librosa.display.specshow(m_slaney, x_axis='time', ax=ax[0])
+    >>> ax[0].set(title='RASTAMAT / Auditory toolbox (dct_type=2)')
+    >>> fig.colorbar(img, ax=[ax[0]])
+    >>> img2 = librosa.display.specshow(m_htk, x_axis='time', ax=ax[1])
+    >>> ax[1].set(title='HTK-style (dct_type=3)')
+    >>> fig.colorbar(img2, ax=[ax[1]])
     """
 
     if S is None:
@@ -1812,15 +1775,13 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     ...                                     fmax=8000)
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure(figsize=(10, 4))
+    >>> fig, ax = plt.subplots()
     >>> S_dB = librosa.power_to_db(S, ref=np.max)
-    >>> librosa.display.specshow(S_dB, x_axis='time',
+    >>> img = librosa.display.specshow(S_dB, x_axis='time',
     ...                          y_axis='mel', sr=sr,
-    ...                          fmax=8000)
-    >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.title('Mel-frequency spectrogram')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    ...                          fmax=8000, ax=ax)
+    >>> fig.colorbar(img, ax=ax, format='%+2.0f dB')
+    >>> ax.set(title='Mel-frequency spectrogram')
     """
 
     S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length, power=power,
