@@ -172,7 +172,7 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
     ...          label='Onset strength')
     >>> ax[1].vlines(times[beats], 0, 1, alpha=0.5, color='r',
     ...            linestyle='--', label='Beats')
-    >>> ax[1].legend(frameon=True, framealpha=0.75)
+    >>> ax[1].legend()
     '''
 
     # First, get the frame->beat strength profile if we don't already have one
@@ -321,7 +321,7 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
     ...             label='Tempo (uniform prior): {:.2f} BPM'.format(utempo))
     >>> ax.set(xlabel='Tempo (BPM)', title='Static tempo estimation')
     >>> ax.grid(True)
-    >>> ax.legend(frameon=True)
+    >>> ax.legend()
 
     Plot dynamic tempo estimates over a tempogram
 
@@ -335,7 +335,7 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
     ...          color='r', linewidth=1.5, linestyle='--',
     ...          label='Tempo estimate (lognorm prior)')
     >>> ax.set(title='Dynamic tempo estimation')
-    >>> ax.legend(frameon=True, framealpha=0.75)
+    >>> ax.legend()
     """
 
     if start_bpm <= 0:
@@ -486,7 +486,7 @@ def plp(y=None, sr=22050, onset_envelope=None, hop_length=512,
     ...          label='Onset strength')
     >>> ax[0].vlines(times[beats], 0, 1, alpha=0.5, color='r',
     ...            linestyle='--', label='Beats')
-    >>> ax[0].legend(frameon=True, framealpha=0.75)
+    >>> ax[0].legend()
     >>> ax[0].set(title='librosa.beat.beat_track')
     >>> ax[0].label_outer()
     >>> # Limit the plot to a 15-second window
@@ -495,7 +495,7 @@ def plp(y=None, sr=22050, onset_envelope=None, hop_length=512,
     ...          label='PLP')
     >>> ax[1].vlines(times[beats_plp], 0, 1, alpha=0.5, color='r',
     ...            linestyle='--', label='PLP Beats')
-    >>> ax[1].legend(frameon=True, framealpha=0.75)
+    >>> ax[1].legend()
     >>> ax[1].set(title='librosa.beat.plp', xlim=[5, 20])
     >>> ax[1].xaxis.set_major_formatter(librosa.display.TimeFormatter())
 

@@ -489,7 +489,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, window='hann',
     ...           ylabel='CQ filters',
     ...           title='CQ filters (one octave, time domain)',
     ...           xlabel='Time (samples at 22050 Hz)')
-    >>> ax[0].legend(['Real', 'Imaginary'], frameon=True, framealpha=0.8)
+    >>> ax[0].legend(['Real', 'Imaginary'])
     >>> F = np.abs(np.fft.fftn(basis, axes=[-1]))
     >>> # Keep only the positive frequencies
     >>> F = F[:, :(1 + F.shape[1] // 2)]

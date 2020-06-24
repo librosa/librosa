@@ -797,7 +797,7 @@ def subsegment(data, frames, n_segments=4, axis=-1):
     ...            linewidth=2, label='Beats')
     >>> ax.vlines(subseg_t, lims[0], lims[1], color='linen', linestyle='--',
     ...            linewidth=1.5, alpha=0.5, label='Sub-beats')
-    >>> ax.legend(frameon=True, shadow=True)
+    >>> ax.legend()
     >>> ax.set(title='CQT + Beat and sub-beat markers')
     '''
 
@@ -870,7 +870,7 @@ def agglomerative(data, k, clusterer=None, axis=-1):
     >>> librosa.display.specshow(chroma, y_axis='chroma', x_axis='time', ax=ax)
     >>> ax.vlines(bound_times, 0, chroma.shape[0], color='linen', linestyle='--',
     ...           linewidth=2, alpha=0.9, label='Segment boundaries')
-    >>> ax.legend(frameon=True, shadow=True)
+    >>> ax.legend()
     >>> ax.set(title='Power spectrogram')
     """
 

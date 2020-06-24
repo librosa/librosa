@@ -96,6 +96,9 @@ font_size = 12  # 13*72/96.0  # 13 px
 
 plot_rcparams = {
     "font.size": font_size,
+    "legend.loc": "upper right",
+    "legend.frameon": True,
+    "legend.framealpha": 0.95,
     "axes.xmargin": 0,
     "axes.ymargin": 0,
     "axes.titlesize": font_size,

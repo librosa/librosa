@@ -1779,11 +1779,11 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
     >>> ax[0].plot(y1, label='Original')
     >>> ax[0].plot(y2, linestyle='--', label='Stretched')
     >>> ax[0].set(xlabel='time (samples)', title='Input signals')
-    >>> ax[0].legend(frameon=True)
+    >>> ax[0].legend()
     >>> ax[1].semilogy(np.abs(scale1), label='Original')
     >>> ax[1].semilogy(np.abs(scale2), linestyle='--', label='Stretched')
     >>> ax[1].set(xlabel='scale coefficients', title='Scale transform magnitude')
-    >>> ax[1].legend(frameon=True)
+    >>> ax[1].legend()
 
     >>> # Plot the scale transform of an onset strength autocorrelation
     >>> y, sr = librosa.load(librosa.ex('choice'))

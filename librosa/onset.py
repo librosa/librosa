@@ -126,7 +126,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     >>> ax[1].plot(times, o_env, label='Onset strength')
     >>> ax[1].vlines(times[onset_frames], 0, o_env.max(), color='r', alpha=0.9,
     ...            linestyle='--', label='Onsets')
-    >>> ax[1].legend(frameon=True, framealpha=0.75)
+    >>> ax[1].legend()
     """
 
     # First, get the frame->beat strength profile if we don't already have one
@@ -300,7 +300,7 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
     >>> onset_env = librosa.onset.onset_strength(sr=sr, S=librosa.amplitude_to_db(C, ref=np.max))
     >>> ax[1].plot(times, onset_env / onset_env.max(), alpha=0.8,
     ...          label='Mean (CQT)')
-    >>> ax[1].legend(frameon=True, framealpha=0.75)
+    >>> ax[1].legend()
     >>> ax[1].set(ylabel='Normalized strength', yticks=[])
     """
 
@@ -370,10 +370,10 @@ def onset_backtrack(events, energy):
     >>> ax[0].plot(oenv, label='Onset strength')
     >>> ax[0].vlines(onset_raw, 0, oenv.max(), label='Raw onsets')
     >>> ax[0].vlines(onset_bt, 0, oenv.max(), label='Backtracked', color='r')
-    >>> ax[0].legend(frameon=True, framealpha=0.95)
+    >>> ax[0].legend()
     >>> ax[1].plot(rms[0], label='RMS')
     >>> ax[1].vlines(onset_bt_rms, 0, rms.max(), label='Backtracked (RMS)', color='r')
-    >>> ax[1].legend(frameon=True, framealpha=0.95)
+    >>> ax[1].legend()
     '''
 
     # Find points where energy is non-increasing
