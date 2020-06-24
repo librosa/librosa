@@ -115,7 +115,7 @@ def nnls(A, B, **kwargs):
     --------
     Approximate a magnitude spectrum from its mel spectrogram
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.load(librosa.ex('trumpet'), duration=3)
     >>> S = np.abs(librosa.stft(y, n_fft=2048))
     >>> M = librosa.feature.melspectrogram(S=S, sr=sr, power=1)
     >>> mel_basis = librosa.filters.mel(sr, n_fft=2048, n_mels=M.shape[0])
@@ -125,17 +125,19 @@ def nnls(A, B, **kwargs):
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max), 
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
     ...                          y_axis='log', x_axis='time', ax=ax[0])
-    >>> ax[0].set(title='Original spectrogram (1025 bins)')
-    >>> ax[0].label_outer()
+    >>> ax[2].set(title='Original spectrogram (1025 bins)')
+    >>> ax[2].label_outer()
     >>> librosa.display.specshow(librosa.amplitude_to_db(M, ref=np.max),
     ...                          y_axis='mel', x_axis='time', ax=ax[1])
-    >>> ax[1].set(title='Mel spectrogram (128 bins)')
-    >>> ax[1].label_outer()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S_recover, ref=np.max),
+    >>> ax[0].set(title='Mel spectrogram (128 bins)')
+    >>> ax[0].label_outer()
+    >>> img = librosa.display.specshow(librosa.amplitude_to_db(S_recover, ref=np.max(S)),
     ...                          y_axis='log', x_axis='time', ax=ax[2])
-    >>> ax[2].set(title='Reconstructed spectrogram (1025 bins)')
+    >>> ax[1].set(title='Reconstructed spectrogram (1025 bins)')
+    >>> ax[1].label_outer()
+    >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
     '''
 
     # If B is a single vector, punt up to the scipy method
