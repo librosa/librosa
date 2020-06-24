@@ -929,15 +929,16 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     ...     1e-6 * np.random.randn(2*sr)
     >>> freqs, times, mags = librosa.reassigned_spectrogram(y=y, sr=sr,
     ...                                                     n_fft=n_fft)
-    >>> mags_db = librosa.power_to_db(mags, amin=amin)
+    >>> mags_db = librosa.power_to_db(mags, ref=np.max)
 
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
-    >>> librosa.display.specshow(mags_db, x_axis="s", y_axis="linear", sr=sr,
-    ...                          hop_length=n_fft//4, cmap="gray_r", ax=ax[0])
+    >>> img = librosa.display.specshow(mags_db, x_axis="s", y_axis="linear", sr=sr,
+    ...                          hop_length=n_fft//4, ax=ax[0])
     >>> ax[0].set(title="Spectrogram", xlabel=None)
     >>> ax[0].label_outer()
-    >>> ax[1].scatter(times, freqs, c=mags_db, alpha=0.05, cmap="gray_r")
+    >>> ax[1].scatter(times, freqs, c=mags_db, cmap="magma", alpha=0.1, s=5)
     >>> ax[1].set_title("Reassigned spectrogram")
+    >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
     """
 
     if not callable(ref_power) and ref_power < 0:

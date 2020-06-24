@@ -176,7 +176,7 @@ def interp_harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
     We can also compute frequency harmonics for spectrograms.
     To calculate sub-harmonic energy, use values < 1.
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.load(librosa.ex('trumpet'), duration=3)
     >>> h_range = [1./3, 1./2, 1, 2, 3, 4]
     >>> S = np.abs(librosa.stft(y))
     >>> fft_freqs = librosa.fft_frequencies(sr=sr)
@@ -186,12 +186,13 @@ def interp_harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
 
     >>> fig, ax = plt.subplots(nrows=3, ncols=2, sharex=True, sharey=True)
     >>> for i, _sh in enumerate(S_harm):
-    ...     librosa.display.specshow(librosa.amplitude_to_db(_sh,
+    ...     img = librosa.display.specshow(librosa.amplitude_to_db(_sh,
     ...                                                      ref=S.max()),
     ...                              sr=sr, y_axis='log', x_axis='time',
     ...                              ax=ax.flat[i])
     ...     ax.flat[i].set(title='h={:.3g}'.format(h_range[i]))
     ...     ax.flat[i].label_outer()
+    >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
     '''
 
     # X_out will be the same shape as X, plus a leading

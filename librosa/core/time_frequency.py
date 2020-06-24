@@ -515,7 +515,6 @@ def note_to_midi(note, round_midi=True):
     >>> # Lists of notes also work
     >>> librosa.note_to_midi(['C', 'E', 'G'])
     array([12, 16, 19])
-
     '''
 
     if not isinstance(note, str):
@@ -586,8 +585,10 @@ def midi_to_note(midi, octave=True, cents=False, key='C:maj', unicode=True):
     ['C0', 'C♯0', 'D0', 'D♯0', 'E0', 'F0', 'F♯0', 'G0', 'G♯0', 'A0', 'A♯0', 'B0']
 
     Use a key signature to resolve enharmonic equivalences
+
     >>> librosa.midi_to_note(range(12, 24), key='F:min')
     ['C0', 'D♭0', 'D0', 'E♭0', 'E0', 'F0', 'G♭0', 'G0', 'A♭0', 'A0', 'B♭0', 'B0']
+
 
     Parameters
     ----------

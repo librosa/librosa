@@ -578,7 +578,7 @@ def axis_sort(S, axis=-1, index=False, value=None):
     >>> # Sort the columns of W by peak frequency bin
     >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> S = np.abs(librosa.stft(y))
-    >>> W, H = librosa.decompose.decompose(S, n_components=32)
+    >>> W, H = librosa.decompose.decompose(S, n_components=64)
     >>> W_sort = librosa.util.axis_sort(W)
 
     Or sort by the lowest frequency bin
@@ -596,17 +596,22 @@ def axis_sort(S, axis=-1, index=False, value=None):
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, ncols=2)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(W, ref=np.max),
-    ...                          y_axis='log', ax=ax[0, 0])
+    >>> img_w = librosa.display.specshow(librosa.amplitude_to_db(W, ref=np.max),
+    ...                                  y_axis='log', ax=ax[0, 0])
     >>> ax[0, 0].set(title='W')
-    >>> librosa.display.specshow(H, x_axis='time', ax=ax[0, 1])
+    >>> ax[0, 0].label_outer()
+    >>> img_act = librosa.display.specshow(H, x_axis='time', ax=ax[0, 1])
     >>> ax[0, 1].set(title='H')
+    >>> ax[0, 1].label_outer()
     >>> librosa.display.specshow(librosa.amplitude_to_db(W_sort,
     ...                                                  ref=np.max),
     ...                          y_axis='log', ax=ax[1, 0])
     >>> ax[1, 0].set(title='W sorted')
     >>> librosa.display.specshow(H_sort, x_axis='time', ax=ax[1, 1])
     >>> ax[1, 1].set(title='H sorted')
+    >>> ax[1, 1].label_outer()
+    >>> fig.colorbar(img_w, ax=ax[:, 0], orientation='h')
+    >>> fig.colorbar(img_act, ax=ax[:, 1], orientation='h')
 
     Parameters
     ----------

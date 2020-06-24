@@ -147,13 +147,15 @@ def cross_similarity(data, data_ref, k=None, metric='euclidean',
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(ncols=2, sharex=True, sharey=True)
-    >>> librosa.display.specshow(xsim, x_axis='time', y_axis='time',
+    >>> imgsim = librosa.display.specshow(xsim, x_axis='time', y_axis='time',
     ...                          hop_length=hop_length, ax=ax[0])
     >>> ax[0].set(title='Binary recurrence (symmetric)')
-    >>> librosa.display.specshow(xsim_aff, x_axis='time', y_axis='time',
+    >>> imgaff = librosa.display.specshow(xsim_aff, x_axis='time', y_axis='time',
     ...                          cmap='magma_r', hop_length=hop_length, ax=ax[1])
     >>> ax[1].set(title='Affinity recurrence')
     >>> ax[1].label_outer()
+    >>> fig.colorbar(imgsim, ax=ax[0])
+    >>> fig.colorbar(imgaff, ax=ax[1])
     '''
     data_ref = np.atleast_2d(data_ref)
     data = np.atleast_2d(data)
@@ -367,13 +369,15 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(ncols=2, sharex=True, sharey=True)
-    >>> librosa.display.specshow(R, x_axis='time', y_axis='time',
+    >>> imgsim = librosa.display.specshow(R, x_axis='time', y_axis='time',
     ...                          hop_length=hop_length, ax=ax[0])
     >>> ax[0].set(title='Binary recurrence (symmetric)')
-    >>> librosa.display.specshow(R_aff, x_axis='time', y_axis='time',
+    >>> imgaff = librosa.display.specshow(R_aff, x_axis='time', y_axis='time',
     ...                          hop_length=hop_length, cmap='magma_r', ax=ax[1])
     >>> ax[1].set(title='Affinity recurrence')
     >>> ax[1].label_outer()
+    >>> fig.colorbar(imgsim, ax=ax[0])
+    >>> fig.colorbar(imgaff, ax=ax[1])
     '''
 
     data = np.atleast_2d(data)
@@ -1001,13 +1005,15 @@ def path_enhance(R, n, window='hann', max_ratio=2.0, min_ratio=None, n_filters=7
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(ncols=2, sharex=True, sharey=True)
-    >>> librosa.display.specshow(rec, x_axis='time', y_axis='time',
+    >>> img = librosa.display.specshow(rec, x_axis='time', y_axis='time',
     ...                          hop_length=hop_length, ax=ax[0])
     >>> ax[0].set(title='Unfiltered recurrence')
-    >>> librosa.display.specshow(rec_smooth, x_axis='time', y_axis='time',
+    >>> imgpe = librosa.display.specshow(rec_smooth, x_axis='time', y_axis='time',
     ...                          hop_length=hop_length, ax=ax[1])
     >>> ax[1].set(title='Multi-angle enhanced recurrence')
     >>> ax[1].label_outer()
+    >>> fig.colorbar(img, ax=ax[0], orientation='h')
+    >>> fig.colorbar(imgpe, ax=ax[1], orientation='h')
     '''
 
     if min_ratio is None:
