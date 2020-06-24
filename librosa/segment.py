@@ -125,23 +125,23 @@ def cross_similarity(data, data_ref, k=None, metric='euclidean',
     Find nearest neighbors in MFCC space between two sequences
 
     >>> hop_length = 1024
-    >>> y_ref, sr = librosa.load(librosa.ex('brahms'))
-    >>> y_comp, sr = librosa.load(librosa.ex('brahms'), offset=10)
-    >>> mfcc_ref = librosa.feature.mfcc(y=y_ref, sr=sr, hop_length=hop_length)
-    >>> mfcc_comp = librosa.feature.mfcc(y=y_comp, sr=sr, hop_length=hop_length)
-    >>> xsim = librosa.segment.cross_similarity(mfcc_comp, mfcc_ref)
+    >>> y_ref, sr = librosa.load(librosa.ex('nutcracker'))
+    >>> y_comp, sr = librosa.load(librosa.ex('nutcracker'), offset=10)
+    >>> chroma_ref = librosa.feature.chroma_cqt(y=y_ref, sr=sr, hop_length=hop_length)
+    >>> chroma_comp = librosa.feature.chroma_cqt(y=y_comp, sr=sr, hop_length=hop_length)
+    >>> xsim = librosa.segment.cross_similarity(chroma_comp, chroma_ref)
 
     Or fix the number of nearest neighbors to 5
 
-    >>> xsim = librosa.segment.cross_similarity(mfcc_comp, mfcc_ref, k=5)
+    >>> xsim = librosa.segment.cross_similarity(chroma_comp, chroma_ref, k=5)
 
     Use cosine similarity instead of Euclidean distance
 
-    >>> xsim = librosa.segment.cross_similarity(mfcc_comp, mfcc_ref, metric='cosine')
+    >>> xsim = librosa.segment.cross_similarity(chroma_comp, chroma_ref, metric='cosine')
 
     Use an affinity matrix instead of binary connectivity
 
-    >>> xsim_aff = librosa.segment.cross_similarity(mfcc_comp, mfcc_ref, mode='affinity')
+    >>> xsim_aff = librosa.segment.cross_similarity(chroma_comp, chroma_ref, mode='affinity')
 
     Plot the feature and recurrence matrices
 
@@ -154,8 +154,8 @@ def cross_similarity(data, data_ref, k=None, metric='euclidean',
     ...                          cmap='magma_r', hop_length=hop_length, ax=ax[1])
     >>> ax[1].set(title='Affinity recurrence')
     >>> ax[1].label_outer()
-    >>> fig.colorbar(imgsim, ax=ax[0])
-    >>> fig.colorbar(imgaff, ax=ax[1])
+    >>> fig.colorbar(imgsim, ax=ax[0], orientation='h')
+    >>> fig.colorbar(imgaff, ax=ax[1], orientation='h')
     '''
     data_ref = np.atleast_2d(data_ref)
     data = np.atleast_2d(data)
@@ -340,30 +340,30 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
     --------
     Find nearest neighbors in MFCC space
 
-    >>> y, sr = librosa.load(librosa.ex('brahms'))
+    >>> y, sr = librosa.load(librosa.ex('nutcracker'))
     >>> hop_length = 1024
-    >>> mfcc = librosa.feature.mfcc(y=y, sr=sr, hop_length=hop_length)
-    >>> R = librosa.segment.recurrence_matrix(mfcc)
+    >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=hop_length)
+    >>> R = librosa.segment.recurrence_matrix(chroma)
 
     Or fix the number of nearest neighbors to 5
 
-    >>> R = librosa.segment.recurrence_matrix(mfcc, k=5)
+    >>> R = librosa.segment.recurrence_matrix(chroma, k=5)
 
     Suppress neighbors within +- 7 frames
 
-    >>> R = librosa.segment.recurrence_matrix(mfcc, width=7)
+    >>> R = librosa.segment.recurrence_matrix(chroma, width=7)
 
     Use cosine similarity instead of Euclidean distance
 
-    >>> R = librosa.segment.recurrence_matrix(mfcc, metric='cosine')
+    >>> R = librosa.segment.recurrence_matrix(chroma, metric='cosine')
 
     Require mutual nearest neighbors
 
-    >>> R = librosa.segment.recurrence_matrix(mfcc, sym=True)
+    >>> R = librosa.segment.recurrence_matrix(chroma, sym=True)
 
     Use an affinity matrix instead of binary connectivity
 
-    >>> R_aff = librosa.segment.recurrence_matrix(mfcc, mode='affinity')
+    >>> R_aff = librosa.segment.recurrence_matrix(chroma, mode='affinity')
 
     Plot the feature and recurrence matrices
 
@@ -376,8 +376,8 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
     ...                          hop_length=hop_length, cmap='magma_r', ax=ax[1])
     >>> ax[1].set(title='Affinity recurrence')
     >>> ax[1].label_outer()
-    >>> fig.colorbar(imgsim, ax=ax[0])
-    >>> fig.colorbar(imgaff, ax=ax[1])
+    >>> fig.colorbar(imgsim, ax=ax[0], orientation='h')
+    >>> fig.colorbar(imgaff, ax=ax[1], orientation='h')
     '''
 
     data = np.atleast_2d(data)
@@ -854,7 +854,7 @@ def agglomerative(data, k, clusterer=None, axis=-1):
     --------
     Cluster by chroma similarity, break into 20 segments
 
-    >>> y, sr = librosa.load(librosa.ex('brahms'), duration=15)
+    >>> y, sr = librosa.load(librosa.ex('nutcracker'), duration=15)
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     >>> bounds = librosa.segment.agglomerative(chroma, 20)
     >>> bound_times = librosa.frames_to_time(bounds, sr=sr)
