@@ -135,23 +135,25 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
     >>> scomps, sacts = librosa.decompose.decompose(S, transformer=T, sort=True)
 
     >>> import matplotlib.pyplot as plt
-    >>> fig, ax = plt.subplots(nrows=3, ncols=2, figsize=(10,8))
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S,
-    ...                                                  ref=np.max),
-    ...                          y_axis='log', x_axis='time', ax=ax[0, 1])
-    >>> ax[0, 1].set(title='Input spectrogram')
-    >>> ax[0, 1].label_outer()
+    >>> fig, ax = plt.subplots(nrows=1, ncols=2)
     >>> librosa.display.specshow(librosa.amplitude_to_db(comps,
     ...                                                  ref=np.max),
-    ...                          y_axis='log', ax=ax[1, 0])
-    >>> ax[1, 0].set(title='Components')
-    >>> librosa.display.specshow(acts, x_axis='time', ax=ax[1, 1])
-    >>> ax[1, 1].set(ylabel='Components', title='Activations')
+    ...                          y_axis='log', ax=ax[0])
+    >>> ax[0].set(title='Components')
+    >>> librosa.display.specshow(acts, x_axis='time', ax=ax[1])
+    >>> ax[1].set(ylabel='Components', title='Activations')
+
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    ...                          y_axis='log', x_axis='time', ax=ax[0])
+    >>> ax[0].set(title='Input spectrogram')
+    >>> ax[0].label_outer()
     >>> S_approx = comps.dot(acts)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S_approx,
+    >>> img = librosa.display.specshow(librosa.amplitude_to_db(S_approx,
     ...                                                  ref=np.max),
-    ...                          y_axis='log', x_axis='time', ax=ax[2, 1])
-    >>> ax[2, 1].set(title='Reconstructed spectrogram')
+    ...                          y_axis='log', x_axis='time', ax=ax[1])
+    >>> ax[1].set(title='Reconstructed spectrogram')
+    >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
     """
 
     if transformer is None:
