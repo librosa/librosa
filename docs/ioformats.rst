@@ -98,8 +98,6 @@ E.g.: read files from zip compressed archives:
             tmp = io.BytesIO(myfile.read())
             data, samplerate = sf.read(tmp)
 
-.. warning:: This is a example does only work in python 3. For python 2 please use ``from urllib2 import urlopen``.
-
 Download and read from URL:
 
 .. code-block:: python

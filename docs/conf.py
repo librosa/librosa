@@ -245,7 +245,7 @@ html_use_modindex = True
 # Output file base name for HTML help builder.
 htmlhelp_basename = "librosadoc"
 
-html_logo = 'img/librosa_logo_text.png'
+html_logo = 'img/librosa_logo_text.svg'
 
 html_theme_options = {
     'logo_only': True,
@@ -260,18 +260,17 @@ html_css_files = [
 
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
-    #'papersize': 'letterpaper',
+    'papersize': 'letterpaper',
     # The font size ('10pt', '11pt' or '12pt').
-    #'pointsize': '10pt',
+    'pointsize': '10pt',
     # Additional stuff for the LaTeX preamble.
     #'preamble': '',
     'maxlistdepth' : '12',
     'fontpkg': r'''
-%\usepackage{mathpazo}
-\usepackage{mathpazo} % math & rm
-\linespread{1.05}        % Palatino needs more leading (space between lines)
 \usepackage[scaled]{helvet} % ss
 \usepackage{courier} % tt
+\usepackage{mathpazo} % math & rm
+\linespread{1.05}        % Palatino needs more leading (space between lines)
 \normalfont
 \usepackage[T1]{fontenc}
 ''',
@@ -291,7 +290,7 @@ latex_documents = [
 latex_engine = 'xelatex'
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
-latex_logo = 'img/librosa_logo_text.png'
+latex_logo = 'img/librosa_logo_text.svg'
 
 # For "manual" documents, if this is true, then toplevel headings are parts,
 # not chapters.

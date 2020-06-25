@@ -68,6 +68,7 @@ def mel_to_stft(M, sr=22050, n_fft=2048, power=2.0, **kwargs):
     >>> img = librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max, top_db=None),
     ...                          y_axis='log', x_axis='time', ax=ax[0])
     >>> ax[0].set(title='Original STFT')
+    >>> ax[0].label_outer()
     >>> librosa.display.specshow(librosa.amplitude_to_db(np.abs(S_inv - S),
     ...                                                  ref=S.max(), top_db=None),
     ...                          vmax=0, y_axis='log', x_axis='time', cmap='magma', ax=ax[1])

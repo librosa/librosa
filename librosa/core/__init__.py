@@ -4,8 +4,8 @@
 Core IO and DSP
 ===============
 
-Audio processing
-----------------
+Audio loading
+-------------
 .. autosummary::
     :toctree: generated/
 
@@ -15,14 +15,26 @@ Audio processing
     resample
     get_duration
     get_samplerate
+
+Time-domain processing
+----------------------
+.. autosummary::
+    :toctree: generated/
+
     autocorrelate
     lpc
     zero_crossings
+    mu_compress
+    mu_expand
+
+Signal generation
+-----------------
+.. autosummary::
+    :toctree: generated/
+
     clicks
     tone
     chirp
-    mu_compress
-    mu_expand
 
 Spectral representations
 ------------------------
@@ -44,17 +56,27 @@ Spectral representations
 
     fmt
 
+    magphase
+
+Phase recovery
+--------------
+.. autosummary::
+    :toctree: generated/
+
     griffinlim
     griffinlim_cqt
+
+
+Harmonics
+---------
+.. autosummary::
+    :toctree: generated/
 
     interp_harmonics
     salience
 
     phase_vocoder
-    magphase
 
-    get_fftlib
-    set_fftlib
 
 Magnitude scaling
 -----------------
@@ -76,8 +98,8 @@ Magnitude scaling
 
     pcen
 
-Time and frequency conversion
------------------------------
+Time unit conversion
+--------------------
 .. autosummary::
     :toctree: generated/
 
@@ -91,6 +113,11 @@ Time and frequency conversion
     blocks_to_frames
     blocks_to_samples
     blocks_to_time
+
+Frequency unit conversion
+-------------------------
+.. autosummary::
+    :toctree: generated/
 
     hz_to_note
     hz_to_midi
@@ -110,14 +137,17 @@ Time and frequency conversion
     A4_to_tuning
     tuning_to_A4
 
+
+Frequency range generation
+--------------------------
+.. autosummary::
+    :toctree: generated/
+
     fft_frequencies
     cqt_frequencies
     mel_frequencies
     tempo_frequencies
     fourier_tempo_frequencies
-
-    samples_like
-    times_like
 
 
 Pitch and tuning
@@ -128,6 +158,18 @@ Pitch and tuning
     estimate_tuning
     pitch_tuning
     piptrack
+
+
+Miscellaneous
+-------------
+.. autosummary::
+    :toctree: generated/
+
+    samples_like
+    times_like
+
+    get_fftlib
+    set_fftlib
 """
 
 from .time_frequency import *  # pylint: disable=wildcard-import
