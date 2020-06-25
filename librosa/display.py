@@ -340,7 +340,7 @@ def cmap(data, robust=True, cmap_seq='magma', cmap_bool='gray_r', cmap_div='cool
     data = np.atleast_1d(data)
 
     if data.dtype == 'bool':
-        return get_cmap(cmap_bool)
+        return get_cmap(cmap_bool, lut=2)
 
     data = data[np.isfinite(data)]
 
@@ -349,8 +349,7 @@ def cmap(data, robust=True, cmap_seq='magma', cmap_bool='gray_r', cmap_div='cool
     else:
         min_p, max_p = 0, 100
 
-    max_val = np.percentile(data, max_p)
-    min_val = np.percentile(data, min_p)
+    min_val, max_val = np.percentile(data, [min_p, max_p])
 
     if min_val >= 0 or max_val <= 0:
         return get_cmap(cmap_seq)
