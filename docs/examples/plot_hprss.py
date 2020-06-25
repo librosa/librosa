@@ -23,7 +23,7 @@ import librosa.display
 
 ########################
 # Load an example clip with harmonics and percussives
-y, sr = librosa.load(librosa.ex('choice'), duration=5)
+y, sr = librosa.load(librosa.ex('fishin'), duration=5, offset=10)
 
 
 ###############################################
@@ -85,8 +85,6 @@ D_harmonic16, D_percussive16 = librosa.decompose.hpss(D, margin=16)
 #############################################################################
 # In the plots below, note that vibrato has been suppressed from the harmonic
 # components, and vocals have been suppressed in the percussive components.
-plt.figure(figsize=(10, 10))
-
 fig, ax = plt.subplots(nrows=5, ncols=2, sharex=True, sharey=True, figsize=(10, 10))
 librosa.display.specshow(librosa.amplitude_to_db(np.abs(D_harmonic), ref=rp),
                          y_axis='log', x_axis='time', ax=ax[0, 0])

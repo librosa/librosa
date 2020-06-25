@@ -1,5 +1,9 @@
+*********
 Changelog
-=========
+*********
+
+v0.8
+====
 
 v0.8.0
 ------
@@ -55,6 +59,10 @@ Other changes
     - `#1140`_ removed contiguity requirement for `valid_audio`. *Brian McFee*
     - `#1147`_ updates to `display.specshow` documentation. *Brian McFee*
     - `#1182`_ `display.specshow` now returns a `QuadMesh` object, rather than the axes handle. *Brian McFee*
+
+
+v0.7
+====
 
 v0.7.2
 ------
@@ -275,6 +283,9 @@ Other changes
 .. _#818: https://github.com/librosa/librosa/issues/818
 .. _#917: https://github.com/librosa/librosa/issues/917
 
+v0.6
+====
+
 v0.6.3
 ------
 2019-02-13
@@ -483,6 +494,9 @@ API changes and compatibility
 .. _#574: https://github.com/librosa/librosa/pull/574
 .. _#627: https://github.com/librosa/librosa/pull/627
 
+v0.5
+====
+
 v0.5.1
 ------
 2017-05-08
@@ -656,7 +670,8 @@ API changes and compatibility
 .. _#368: https://github.com/librosa/librosa/pull/368
 .. _#352: https://github.com/librosa/librosa/pull/352
 
-
+v0.4
+====
 
 v0.4.3
 ------
@@ -854,6 +869,9 @@ Deprecated functions
    -  ``filters.logfrequency``
    -  ``feature.logfsgram``
 
+v0.3
+====
+
 v0.3.1
 ------
 2015-02-18
@@ -913,6 +931,10 @@ Other changes
    -  Moved ``stack_memory()`` from ``librosa.segment`` into ``librosa.feature``
    -  Standardized ``librosa.output.annotation`` input format to match ``mir_eval``
    -  Standardized variable names (e.g., ``onset_envelope``).
+
+
+v0.2
+====
 
 v0.2.1
 ------
@@ -1016,7 +1038,7 @@ Other changes
    -  standardized ``n_fft=2048``, ``hop_length=512`` for most functions
    -  refactored tempo estimator
 
-v0.1.0
-------
+v0.1
+====
 
 Initial public release.

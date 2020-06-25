@@ -1,3 +1,8 @@
 div.wy-side-nav-search .version {
     color: #404040;
+    font-weight: bold;
+}
+
+span.caption-text {
+    color: #cc4878;
 }

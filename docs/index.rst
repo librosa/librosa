@@ -1,5 +1,6 @@
+*******
 LibROSA
-=======
+*******
 LibROSA is a python package for music and audio analysis.  It provides the building
 blocks necessary to create music information retrieval systems.
 
@@ -8,9 +9,8 @@ For a more advanced introduction which describes the package design principles, 
 `librosa paper <http://conference.scipy.org/proceedings/scipy2015/pdfs/brian_mcfee.pdf>`_ at
 `SciPy 2015 <http://scipy2015.scipy.org>`_.
 
-Getting started
----------------
 .. toctree::
+    :caption: Getting started
     :maxdepth: 1
 
     install
@@ -18,17 +18,16 @@ Getting started
 
 
 Troubleshooting
----------------
+===============
 
 If you have questions about how to use librosa, please consult the `discussion forum
 <https://groups.google.com/forum/#!forum/librosa>`_.
 For bug reports and other, more technical issues, consult the `github issues
 <https://github.com/librosa/librosa/issues>`_.
 
-API documentation
------------------
 
 .. toctree::
+    :caption: API documentation
     :maxdepth: 1
 
     core
@@ -43,10 +42,8 @@ API documentation
     util
 
 
-Advanced topics
----------------
-
 .. toctree::
+    :caption: Advanced topics
     :maxdepth: 2
 
     filters
@@ -55,11 +52,9 @@ Advanced topics
     advanced
     recordings
 
-Reference
----------
-
 .. toctree::
-    :maxdepth: 2
+    :caption: Reference
+    :maxdepth: 1
 
     changelog
     glossary

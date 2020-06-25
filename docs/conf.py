@@ -167,7 +167,7 @@ librosa_version = SourceFileLoader(
 ).load_module()
 
 # The short X.Y version.
-version = librosa_version.short_version
+version = librosa_version.version
 # The full version, including alpha/beta/rc tags.
 release = librosa_version.version
 
@@ -290,7 +290,7 @@ latex_documents = [
 latex_engine = 'xelatex'
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
-latex_logo = 'img/librosa_logo_text.svg'
+latex_logo = 'img/librosa_logo_text.png'
 
 # For "manual" documents, if this is true, then toplevel headings are parts,
 # not chapters.
