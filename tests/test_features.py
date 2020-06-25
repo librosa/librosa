@@ -428,9 +428,15 @@ def test_tonnetz_audio(y_ex):
     assert tonnetz.shape[0] == 6
 
 
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_chroma_cqt_badcombo(y_ex):
+    y, sr = y_ex
+    librosa.feature.chroma_cqt(y=y, sr=sr, n_chroma=24, bins_per_octave=36)
+
+
 def test_tonnetz_cqt(y_ex):
     y, sr = y_ex
-    chroma_cqt = librosa.feature.chroma_cqt(y=y, sr=sr, n_chroma=24)
+    chroma_cqt = librosa.feature.chroma_cqt(y=y, sr=sr, n_chroma=36)
     tonnetz = librosa.feature.tonnetz(chroma=chroma_cqt, sr=sr)
     assert tonnetz.shape[1] == chroma_cqt.shape[1]
     assert tonnetz.shape[0] == 6
