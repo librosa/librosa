@@ -3,18 +3,33 @@
 """
 Display
 =======
+
+Data visualization
+------------------
 .. autosummary::
     :toctree: generated/
 
     specshow
     waveplot
-    cmap
+
+Axis formatting
+---------------
+.. autosummary::
+    :toctree: generated/
 
     TimeFormatter
     NoteFormatter
     LogHzFormatter
     ChromaFormatter
     TonnetzFormatter
+
+Miscellaneous
+-------------
+.. autosummary::
+    :toctree: generated/
+
+    cmap
+
 """
 
 import warnings

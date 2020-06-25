@@ -15,7 +15,6 @@ once, or when streaming data from a recording device.
 
 ##################################################
 # We'll need numpy and matplotlib for this example
-from __future__ import print_function
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -97,23 +96,19 @@ pcen_full = np.mean(P, axis=0)
 #####################################################################
 # Plot the PCEN spectrum and the resulting magnitudes
 
-plt.figure()
 # First, plot the spectrum
-ax = plt.subplot(2,1,1)
-librosa.display.specshow(P, sr=sr, hop_length=hop_length, x_axis='time', y_axis='log')
-plt.title('PCEN spectrum')
+fig, ax = plt.subplots(nrows=2, sharex=True)
+librosa.display.specshow(P, sr=sr, hop_length=hop_length,
+                         x_axis='time', y_axis='log', ax=ax[0])
+ax[0].set(title='PCEN spectrum')
+ax[0].label_outer()
 
 # Now we'll plot the pcen curves
-plt.subplot(2,1,2, sharex=ax)
 times = librosa.times_like(pcen_full, sr=sr, hop_length=hop_length)
-plt.plot(times, pcen_full, linewidth=3, alpha=0.25, label='Full signal PCEN')
+ax[1].plot(times, pcen_full, linewidth=3, alpha=0.25, label='Full signal PCEN')
 times = librosa.times_like(pcen_blocks, sr=sr, hop_length=hop_length)
-plt.plot(times, pcen_blocks, linestyle=':', label='Block-wise PCEN')
-plt.legend()
+ax[1].plot(times, pcen_blocks, linestyle=':', label='Block-wise PCEN')
+ax[1].legend()
 
 # Zoom in to a short patch to see the fine details
-plt.xlim([30, 40])
-
-# render the plot
-plt.tight_layout()
-plt.show()
+ax[1].set(xlim=[30, 40]);

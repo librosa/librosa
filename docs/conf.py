@@ -43,30 +43,6 @@ extensions = [
 
 
 autosummary_generate = True
-
-# Galley
-sphinx_gallery_conf = {
-    "examples_dirs": "examples/",
-    "gallery_dirs": "auto_examples",
-    "backreferences_dir": None,
-    "reference_url": {
-        "sphinx_gallery": None,
-        "numpy": "http://numpy.org/doc/stable/",
-        "np": "http://numpy.org/doc/stable/",
-        "scipy": "http://docs.scipy.org/doc/scipy/reference",
-        "matplotlib": "https://matplotlib.org/",
-        "sklearn": "https://scikit-learn.org/stable/",
-        "resampy": "https://resampy.readthedocs.io/en/latest/",
-        "pyrubberband": "https://pyrubberband.readthedocs.io/en/stable/",
-        "samplerate": "https://python-samplerate.readthedocs.io/en/latest/",
-        "pooch": "https://www.fatiando.org/pooch/latest/",
-    },
-}
-
-# Generate plots for example sections
-numpydoc_use_plots = True
-
-
 # --------
 # Doctest
 # --------
@@ -78,6 +54,9 @@ import librosa
 np.random.seed(123)
 np.set_printoptions(precision=3, linewidth=64, edgeitems=2, threshold=200)
 """
+
+
+numpydoc_show_class_members = False
 
 # ------------------------------------------------------------------------------
 # Plot
@@ -115,7 +94,35 @@ plot_rcparams = {
     "figure.constrained_layout.use": True
 }
 
-numpydoc_show_class_members = False
+def reset_mpl(gallery_conf, fname):
+    global plot_rcparams
+    import matplotlib
+    matplotlib.rcParams.update(**plot_rcparams)
+
+# Gallery
+sphinx_gallery_conf = {
+    "examples_dirs": "examples/",
+    "gallery_dirs": "auto_examples",
+    "backreferences_dir": None,
+    "reference_url": {
+        "sphinx_gallery": None,
+        "numpy": "http://numpy.org/doc/stable/",
+        "np": "http://numpy.org/doc/stable/",
+        "scipy": "http://docs.scipy.org/doc/scipy/reference",
+        "matplotlib": "https://matplotlib.org/",
+        "sklearn": "https://scikit-learn.org/stable/",
+        "resampy": "https://resampy.readthedocs.io/en/latest/",
+        "pyrubberband": "https://pyrubberband.readthedocs.io/en/stable/",
+        "samplerate": "https://python-samplerate.readthedocs.io/en/latest/",
+        "pooch": "https://www.fatiando.org/pooch/latest/",
+    },
+    "reset_modules": (reset_mpl,),
+}
+
+# Generate plots for example sections
+numpydoc_use_plots = True
+
+
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
@@ -258,6 +265,15 @@ latex_elements = {
     # Additional stuff for the LaTeX preamble.
     #'preamble': '',
     'maxlistdepth' : '12',
+    'fontpkg': r'''
+%\usepackage{mathpazo}
+\usepackage{mathpazo} % math & rm
+\linespread{1.05}        % Palatino needs more leading (space between lines)
+\usepackage[scaled]{helvet} % ss
+\usepackage{courier} % tt
+\normalfont
+\usepackage[T1]{fontenc}
+''',
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
