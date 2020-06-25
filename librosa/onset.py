@@ -31,8 +31,7 @@ __all__ = ['onset_detect',
 def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
                  backtrack=False, energy=None,
                  units='frames', **kwargs):
-    """Basic onset detector.  Locate note onset events by picking peaks in an
-    onset strength envelope.
+    """Locate note onset events by picking peaks in an onset strength envelope.
 
     The `peak_pick` parameters were chosen by large-scale hyper-parameter
     optimization over the dataset provided by [1]_.

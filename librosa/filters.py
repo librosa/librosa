@@ -12,7 +12,6 @@ Filter bank construction
     mel
     chroma
     constant_q
-    _multirate_fb
     semitone_filterbank
 
 Window functions
@@ -109,7 +108,10 @@ WINDOW_BANDWIDTHS = {'bart': 1.3334961334912805,
 @cache(level=10)
 def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
         norm='slaney', dtype=np.float32):
-    """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins
+    """Create a Mel filter-bank.
+
+    This produces a linear transformation matrix to project 
+    FFT bins onto Mel-frequency bins.
 
     Parameters
     ----------
@@ -232,7 +234,10 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
 @cache(level=10)
 def chroma(sr, n_fft, n_chroma=12, tuning=0.0, ctroct=5.0,
            octwidth=2, norm=2, base_c=True, dtype=np.float32):
-    """Create a Filterbank matrix to convert STFT to chroma
+    """Create a chroma filter bank.
+
+    This creates a linear transformation matrix to project
+    FFT bins onto chroma bins (i.e. pitch classes).
 
 
     Parameters
@@ -609,7 +614,8 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
 @cache(level=10)
 def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
                  fmin=None, window=None, base_c=True, dtype=np.float32):
-    '''Convert a Constant-Q basis to Chroma.
+    '''Construct a linear transformation matrix to map Constant-Q bins
+    onto chroma bins (i.e., pitch classes).
 
 
     Parameters
@@ -991,7 +997,7 @@ def mr_frequencies(tuning):
 
 
 def semitone_filterbank(center_freqs=None, tuning=0.0, sample_rates=None, flayout='ba', **kwargs):
-    r'''Constructs a multirate filterbank of infinite-impulse response (IIR)
+    r'''Construct a multi-rate bank of infinite-impulse response (IIR)
     band-pass filters at user-defined center frequencies and sample rates.
 
     By default, these center frequencies are set equal to the 88 fundamental
@@ -1086,11 +1092,10 @@ def __window_ss_fill(x, win_sq, n_frames, hop_length):  # pragma: no cover
 
 def window_sumsquare(window, n_frames, hop_length=512, win_length=None, n_fft=2048,
                      dtype=np.float32, norm=None):
-    '''
-    Compute the sum-square envelope of a window function at a given hop length.
+    '''Compute the sum-square envelope of a window function at a given hop length.
 
     This is used to estimate modulation effects induced by windowing observations
-    in short-time fourier transforms.
+    in short-time Fourier transforms.
 
     Parameters
     ----------

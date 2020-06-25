@@ -209,7 +209,7 @@ def frame(x, frame_length, hop_length, axis=-1):
 
 @cache(level=20)
 def valid_audio(y, mono=True):
-    '''Validate whether a variable contains valid audio data.
+    '''Determine whether a variable contains valid audio data.
 
     If `mono=True`, then `y` is only considered valid if it has shape
     `(N,)` (number of samples).
@@ -350,8 +350,10 @@ def valid_intervals(intervals):
 
 
 def pad_center(data, size, axis=-1, **kwargs):
-    '''Wrapper for np.pad to automatically center an array prior to padding.
-    This is analogous to `str.center()`
+    '''Pad an array to a target length along a target axis.
+
+    This differs from `np.pad` by centering the data prior to padding,
+    analogous to `str.center()`
 
     Examples
     --------
@@ -423,7 +425,7 @@ def pad_center(data, size, axis=-1, **kwargs):
 
 
 def fix_length(data, size, axis=-1, **kwargs):
-    '''Fix the length an array `data` to exactly `size`.
+    '''Fix the length an array `data` to exactly `size` along a target axis.
 
     If `data.shape[axis] < n`, pad according to the provided kwargs.
     By default, `data` is padded with trailing zeros.
@@ -1258,8 +1260,7 @@ def index_to_slice(idx, idx_min=None, idx_max=None, step=None, pad=True):
     idx : list-like
         Array of index boundaries
 
-    idx_min : None or int
-    idx_max : None or int
+    idx_min, idx_max : None or int
         Minimum and maximum allowed indices
 
     step : None or int
@@ -1433,7 +1434,7 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
 
 
 def softmask(X, X_ref, power=1, split_zeros=False):
-    '''Robustly compute a softmask operation.
+    '''Robustly compute a soft-mask operation.
 
         `M = X**power / (X**power + X_ref**power)`
 

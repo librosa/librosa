@@ -392,7 +392,7 @@ def stream(path, block_length, frame_length, hop_length,
 
 @cache(level=20)
 def to_mono(y):
-    '''Force an audio signal down to mono by averaging samples across channels.
+    '''Convert an audio signal to mono by averaging samples across channels.
 
     Parameters
     ----------
@@ -699,7 +699,7 @@ def get_samplerate(path):
 
 @cache(level=20)
 def autocorrelate(y, max_size=None, axis=-1):
-    """Bounded auto-correlation
+    """Bounded-lag auto-correlation
 
     Parameters
     ----------
@@ -1057,7 +1057,10 @@ def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
 
 def clicks(times=None, frames=None, sr=22050, hop_length=512,
            click_freq=1000.0, click_duration=0.1, click=None, length=None):
-    """Returns a signal with the signal `click` placed at each specified time
+    """Construct a "click track".
+
+    This returns a signal with the signal `click` sound placed at
+    each specified time.
 
     Parameters
     ----------
@@ -1189,7 +1192,7 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
 
 
 def tone(frequency, sr=22050, length=None, duration=None, phi=None):
-    """Returns a pure tone signal. The signal generated is a cosine wave.
+    """Construct a pure tone (cosine) signal at a given frequency.
 
     Parameters
     ----------
@@ -1256,7 +1259,9 @@ def tone(frequency, sr=22050, length=None, duration=None, phi=None):
 
 
 def chirp(fmin, fmax, sr=22050, length=None, duration=None, linear=False, phi=None):
-    """Returns a chirp signal that goes from frequency `fmin` to frequency `fmax`
+    """Construct a "chirp" or "sine-sweep" signal.
+
+    The chirp sweeps from frequency `fmin` to `fmax` (in Hz).
 
     Parameters
     ----------
