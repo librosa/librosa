@@ -34,8 +34,8 @@ Removed features and API changes
     - `#1050`_ implemented changes to Mel filter normalization
     - `#1165`_ removed deprecated `optional_jit` decorator
 
-New deprecations
-    - 
+Deprecations to be removed in 0.9
+    - `util.example_audio_file` is now deprecated in favor of `librosa.example`.
 
 Bug fixes
     - `#1078`_ fixed edge-padding errors in `feature.stack_memory`. *???*
@@ -43,6 +43,7 @@ Bug fixes
     - `#1094`_ fixed STFT bug when using large window sizes. *Frank Zalkow*
     - `#1157`_ fixed an alignment bug in `core.iirt`. *Frank Zalkow*
     - `#1159`_ fixed a warm-up glitch in `effects.preemphasis`. *Brian McFee*
+    - `#1179`_ fixed memory initialization in unit tests. *Brian McFee*
 
 Documentation
     - `#1068`_ Corrections to `effects.pitch_shift` documentation. *Keunwoo Choi*
@@ -59,6 +60,9 @@ Other changes
     - `#1140`_ removed contiguity requirement for `valid_audio`. *Brian McFee*
     - `#1147`_ updates to `display.specshow` documentation. *Brian McFee*
     - `#1182`_ `display.specshow` now returns a `QuadMesh` object, rather than the axes handle. *Brian McFee*
+    - `#1183`_ `feature.chroma_cqt` now uses higher CQT resolution by default. *Brian McFee*
+    - `#1183`_ `feature.tonnetz` can now pass-through arguments to `chroma_cqt`. *Brian McFee*
+    - `#1186`_ `display.cmap` now returns binary colormaps for boolean data. *Brian McFee*
 
 
 v0.7

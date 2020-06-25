@@ -1102,10 +1102,10 @@ def viterbi_discriminative(prob, transition, p_state=None, p_init=None, return_l
     >>> trans = librosa.sequence.transition_loop(25, 0.9)
 
     >>> # Load in audio and make features
-    >>> y, sr = librosa.load(librosa.ex('nutcracker'))
+    >>> y, sr = librosa.load(librosa.ex('nutcracker'), duration=30)
     >>> # Suppress percussive elements
     >>> y = librosa.effects.harmonic(y, margin=4)
-    >>> chroma = librosa.feature.chroma_cens(y=y, sr=sr, bins_per_octave=36)
+    >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     >>> # Map chroma (observations) to class (state) likelihoods
     >>> probs = np.exp(weights.dot(chroma))  # P[class | chroma] ~= exp(template' chroma)
     >>> probs /= probs.sum(axis=0, keepdims=True)  # probabilities must sum to 1 in each column

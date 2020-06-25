@@ -1016,7 +1016,7 @@ def path_enhance(R, n, window='hann', max_ratio=2.0, min_ratio=None, n_filters=7
     --------
     Use a 51-frame diagonal smoothing filter to enhance paths in a recurrence matrix
 
-    >>> y, sr = librosa.load(librosa.ex('nutcracker'), duration=30)
+    >>> y, sr = librosa.load(librosa.ex('nutcracker'))
     >>> hop_length = 1024
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=hop_length)
     >>> chroma_stack = librosa.feature.stack_memory(chroma, n_steps=10, delay=3)
@@ -1027,10 +1027,10 @@ def path_enhance(R, n, window='hann', max_ratio=2.0, min_ratio=None, n_filters=7
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(ncols=2, sharex=True, sharey=True)
-    >>> img = librosa.display.specshow(rec, x_axis='time', y_axis='time',
+    >>> img = librosa.display.specshow(rec, x_axis='s', y_axis='time',
     ...                          hop_length=hop_length, ax=ax[0])
     >>> ax[0].set(title='Unfiltered recurrence')
-    >>> imgpe = librosa.display.specshow(rec_smooth, x_axis='time', y_axis='time',
+    >>> imgpe = librosa.display.specshow(rec_smooth, x_axis='s', y_axis='time',
     ...                          hop_length=hop_length, ax=ax[1])
     >>> ax[1].set(title='Multi-angle enhanced recurrence')
     >>> ax[1].label_outer()
