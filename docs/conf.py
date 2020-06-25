@@ -355,7 +355,8 @@ import re
 
 scv_whitelist_branches = ("main",)
 # scv_whitelist_tags = (re.compile(r'^v?\d\.\d\.\d+(\.?rc\d+)?$'),)  # use this for RC builds
-scv_whitelist_tags = (re.compile(r"^v?\d\.\d\.\d+$"),)  # use this for final builds
+#scv_whitelist_tags = (re.compile(r"^v?\d\.\d\.\d+$"),)  # use this for final builds
+scv_whitelist_tags = (re.compile(r"^v?\d\.[78]\.\d+$"),)  # use this for final builds
 # scv_whitelist_tags = (re.compile(r'^v?\d\.\d\.\d+$'), re.compile(r'^0\.7\.0.*?'))  # use this for final builds
 scv_greatest_tag = True
 scv_banner_greatest_tag = True
