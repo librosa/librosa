@@ -1,7 +1,7 @@
 *******
-LibROSA
+librosa
 *******
-LibROSA is a python package for music and audio analysis.  It provides the building
+`librosa` is a python package for music and audio analysis.  It provides the building
 blocks necessary to create music information retrieval systems.
 
 For a quick introduction to using librosa, please refer to the :doc:`tutorial`.
@@ -15,15 +15,7 @@ For a more advanced introduction which describes the package design principles, 
 
     install
     tutorial
-
-
-Troubleshooting
-===============
-
-If you have questions about how to use librosa, please consult the `discussion forum
-<https://groups.google.com/forum/#!forum/librosa>`_.
-For bug reports and other, more technical issues, consult the `github issues
-<https://github.com/librosa/librosa/issues>`_.
+    troubleshooting
 
 
 .. toctree::
