@@ -114,15 +114,15 @@ A = mu * Rf + (1 - mu) * R_path
 ###########################################################
 # Plot the resulting graphs (Figure 1, left and center)
 fig, ax = plt.subplots(ncols=3, sharex=True, sharey=True, figsize=(10, 4))
-librosa.display.specshow(Rf, cmap='inferno_r', y_axis='time', x_axis='time',
+librosa.display.specshow(Rf, cmap='inferno_r', y_axis='time', x_axis='s',
                          y_coords=beat_times, x_coords=beat_times, ax=ax[0])
 ax[0].set(title='Recurrence similarity')
 ax[0].label_outer()
-librosa.display.specshow(R_path, cmap='inferno_r', y_axis='time', x_axis='time',
+librosa.display.specshow(R_path, cmap='inferno_r', y_axis='time', x_axis='s',
                          y_coords=beat_times, x_coords=beat_times, ax=ax[1])
 ax[1].set(title='Path similarity')
 ax[1].label_outer()
-librosa.display.specshow(A, cmap='inferno_r', y_axis='time', x_axis='time',
+librosa.display.specshow(A, cmap='inferno_r', y_axis='time', x_axis='s',
                          y_coords=beat_times, x_coords=beat_times, ax=ax[2])
 ax[2].set(title='Combined graph')
 ax[2].label_outer()

@@ -92,37 +92,30 @@ fig.colorbar(img, ax=ax)
 # We can also visualize the warping path directly on our time domain signals.
 # Red lines connect corresponding time positions in the input signals.
 # (Thanks to F. Zalkow for the nice visualization.)
+from matplotlib.patches import ConnectionPatch
 
-fig, (ax1, ax2) = plt.subplots(nrows=2, sharey=True)
+fig, (ax1, ax2) = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(8, 4))
+
+# Plot x_2
+librosa.display.waveplot(x_2, sr=fs, ax=ax2)
+ax2.set(title='Faster Version $X_2$')
 
 # Plot x_1
 librosa.display.waveplot(x_1, sr=fs, ax=ax1)
 ax1.set(title='Slower Version $X_1$')
-
-# Plot x_2
-librosa.display.waveplot(x_2, sr=fs, ax=ax2)
-ax2.set(title='Slower Version $X_2$')
+ax1.label_outer()
 
 
-trans_figure = fig.transFigure.inverted()
-lines = []
-arrows = 30
-points_idx = np.int16(np.round(np.linspace(0, wp.shape[0] - 1, arrows)))
-
-# for tp1, tp2 in zip((wp[points_idx, 0]) * hop_length, (wp[points_idx, 1]) * hop_length):
-for tp1, tp2 in wp_s[points_idx]:
-    # get position on axis for a given index-pair
-    coord1 = trans_figure.transform(ax1.transData.transform([tp1, 0]))
-    coord2 = trans_figure.transform(ax2.transData.transform([tp2, 0]))
-
-    # draw a line
-    line = matplotlib.lines.Line2D((coord1[0], coord2[0]),
-                                   (coord1[1], coord2[1]),
-                                   transform=fig.transFigure,
-                                   color='r')
-    lines.append(line)
-
-fig.lines = lines
+n_arrows = 20
+for tp1, tp2 in wp_s[::len(wp_s)//n_arrows]:
+    # Create a connection patch between the aligned time points
+    # in each subplot
+    con = ConnectionPatch(xyA=(tp1, 0), xyB=(tp2, 0),
+                          axesA=ax1, axesB=ax2,
+                          coordsA='data', coordsB='data',
+                          color='r', linestyle='--',
+                          alpha=0.5)
+    ax2.add_artist(con)
 
 ###########################################################
 # -------------

@@ -24,7 +24,7 @@ also, introduces chroma variants implemented in librosa.
 
 # Code source: Brian McFee
 # License: ISC
-# sphinx_gallery_thumbnail_number = 6
+# sphinx_gallery_thumbnail_number = 5
 
 import numpy as np
 import scipy
