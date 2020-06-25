@@ -64,6 +64,36 @@ Other changes
     - `#1183`_ `feature.tonnetz` can now pass-through arguments to `chroma_cqt`. *Brian McFee*
     - `#1186`_ `display.cmap` now returns binary colormaps for boolean data. *Brian McFee*
 
+.. _#974: https://github.com/librosa/librosa/issues/974
+.. _#1059: https://github.com/librosa/librosa/issues/1059
+.. _#1134: https://github.com/librosa/librosa/issues/1134
+.. _#1149: https://github.com/librosa/librosa/issues/1149
+.. _#1150: https://github.com/librosa/librosa/issues/1150
+.. _#1166: https://github.com/librosa/librosa/issues/1166
+.. _#1171: https://github.com/librosa/librosa/issues/1171
+.. _#1062: https://github.com/librosa/librosa/issues/1062
+.. _#1050: https://github.com/librosa/librosa/issues/1050
+.. _#1165: https://github.com/librosa/librosa/issues/1165
+.. _#1078: https://github.com/librosa/librosa/issues/1078
+.. _#1091: https://github.com/librosa/librosa/issues/1091
+.. _#1094: https://github.com/librosa/librosa/issues/1094
+.. _#1157: https://github.com/librosa/librosa/issues/1157
+.. _#1159: https://github.com/librosa/librosa/issues/1159
+.. _#1179: https://github.com/librosa/librosa/issues/1179
+.. _#1068: https://github.com/librosa/librosa/issues/1068
+.. _#1064: https://github.com/librosa/librosa/issues/1064
+.. _#1112: https://github.com/librosa/librosa/issues/1112
+.. _#1120: https://github.com/librosa/librosa/issues/1120
+.. _#1123: https://github.com/librosa/librosa/issues/1123
+.. _#1125: https://github.com/librosa/librosa/issues/1125
+.. _#1131: https://github.com/librosa/librosa/issues/1131
+.. _#1140: https://github.com/librosa/librosa/issues/1140
+.. _#1147: https://github.com/librosa/librosa/issues/1147
+.. _#1182: https://github.com/librosa/librosa/issues/1182
+.. _#1183: https://github.com/librosa/librosa/issues/1183
+.. _#1186: https://github.com/librosa/librosa/issues/1186
+
+
 
 v0.7
 ====

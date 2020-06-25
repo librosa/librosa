@@ -6,12 +6,10 @@ If you have questions about how to use librosa, please consult the `discussion f
 For bug reports and other, more technical issues, consult the `github issues
 <https://github.com/librosa/librosa/issues>`_.
 
-
-Common problems
-^^^^^^^^^^^^^^^
+Here are a few of the most common problems that users encounter.
 
 no attribute 'display'
-~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^
 
 If you're trying to run some example code, and encounter the following error
 message::
@@ -33,7 +31,7 @@ To fix the problem, add the line
 to the beginning of your program.
 
 PySoundFile failed
-~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^
 
 If you're loading an audio file, and see the following message::
 
