@@ -50,13 +50,12 @@ ax[1].set(title='Faster Version $X_2$')
 # -----------------------
 # Extract Chroma Features
 # -----------------------
-n_fft = 4410
-hop_length = 2205
+hop_length = 1024
 
-x_1_chroma = librosa.feature.chroma_stft(y=x_1, sr=fs, tuning=0, norm=2,
-                                         hop_length=hop_length, n_fft=n_fft)
-x_2_chroma = librosa.feature.chroma_stft(y=x_2, sr=fs, tuning=0, norm=2,
-                                         hop_length=hop_length, n_fft=n_fft)
+x_1_chroma = librosa.feature.chroma_cqt(y=x_1, sr=fs,
+                                         hop_length=hop_length)
+x_2_chroma = librosa.feature.chroma_cqt(y=x_2, sr=fs,
+                                         hop_length=hop_length)
 
 fig, ax = plt.subplots(nrows=2, sharey=True)
 img = librosa.display.specshow(x_1_chroma, x_axis='time',
