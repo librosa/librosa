@@ -39,7 +39,7 @@ S_full, phase = librosa.magphase(librosa.stft(y))
 
 #######################################
 # Plot a 5-second slice of the spectrum
-idx = slice(*librosa.time_to_frames([30, 35], sr=sr))
+idx = slice(*librosa.time_to_frames([10, 15], sr=sr))
 fig, ax = plt.subplots()
 img = librosa.display.specshow(librosa.amplitude_to_db(S_full[:, idx], ref=np.max),
                          y_axis='log', x_axis='time', sr=sr, ax=ax)

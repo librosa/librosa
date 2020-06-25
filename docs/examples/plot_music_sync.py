@@ -34,9 +34,9 @@ import librosa.display
 # Load Audio Recordings
 # ---------------------
 # First, let's load a first version of our audio recordings.
-x_1, fs = librosa.load('audio/sir_duke_slow.mp3')
+x_1, fs = librosa.load('audio/sir_duke_slow.ogg')
 # And a second version, slightly faster.
-x_2, fs = librosa.load('audio/sir_duke_fast.mp3')
+x_2, fs = librosa.load('audio/sir_duke_fast.ogg')
 
 fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
 librosa.display.waveplot(x_1, sr=fs, ax=ax[0])

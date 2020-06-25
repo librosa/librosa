@@ -106,6 +106,7 @@ sphinx_gallery_conf = {
     "backreferences_dir": None,
     "reference_url": {
         "sphinx_gallery": None,
+        "librosa": None,
         "numpy": "http://numpy.org/doc/stable/",
         "np": "http://numpy.org/doc/stable/",
         "scipy": "http://docs.scipy.org/doc/scipy/reference",
@@ -117,11 +118,11 @@ sphinx_gallery_conf = {
         "pooch": "https://www.fatiando.org/pooch/latest/",
     },
     "reset_modules": (reset_mpl,),
+    'capture_repr': ('_repr_html_'),
 }
 
 # Generate plots for example sections
 numpydoc_use_plots = True
-
 
 
 intersphinx_mapping = {

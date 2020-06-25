@@ -594,10 +594,10 @@ def rqa(sim, gap_onset=1, gap_extend=1, knight_moves=True, backtrack=True):
 
     >>> import numpy as np
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.ex('choice'))
+    >>> y, sr = librosa.load(librosa.ex('nutcracker'), duration=30)
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     >>> # Use time-delay embedding to reduce noise
-    >>> chroma_stack = librosa.feature.stack_memory(chroma, n_steps=3)
+    >>> chroma_stack = librosa.feature.stack_memory(chroma, n_steps=10, delay=3)
     >>> # Build recurrence, suppress self-loops within 1 second
     >>> rec = librosa.segment.recurrence_matrix(chroma_stack, width=43,
     ...                                         mode='affinity',

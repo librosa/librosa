@@ -330,9 +330,9 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
     ...                                hop_length=hop_length)
     >>> librosa.display.specshow(tg, x_axis='time', y_axis='tempo', cmap='magma', ax=ax)
     >>> ax.plot(librosa.times_like(dtempo), dtempo,
-    ...          color='r', linewidth=1.5, label='Tempo estimate (default prior)')
+    ...          color='c', linewidth=1.5, label='Tempo estimate (default prior)')
     >>> ax.plot(librosa.times_like(dtempo_lognorm), dtempo_lognorm,
-    ...          color='r', linewidth=1.5, linestyle='--',
+    ...          color='c', linewidth=1.5, linestyle='--',
     ...          label='Tempo estimate (lognorm prior)')
     >>> ax.set(title='Dynamic tempo estimation')
     >>> ax.legend()
