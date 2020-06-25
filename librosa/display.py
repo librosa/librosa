@@ -641,12 +641,12 @@ def specshow(data, x_coords=None, y_coords=None,
 
     >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.load(librosa.ex('choice'), duration=15)
-    >>> fig, ax = plt.subplots(nrows=4, ncols=2, sharex=True)
+    >>> fig, ax = plt.subplots(nrows=2, ncols=1, sharex=True)
     >>> D = librosa.amplitude_to_db(np.abs(librosa.stft(y)), ref=np.max)
     >>> img = librosa.display.specshow(D, y_axis='linear', x_axis='time',
-    ...                                sr=sr, ax=ax[0, 0])
-    >>> ax[0, 0].set(title='Linear-frequency power spectrogram')
-    >>> ax[0, 0].label_outer()
+    ...                                sr=sr, ax=ax[0])
+    >>> ax[0].set(title='Linear-frequency power spectrogram')
+    >>> ax[0].label_outer()
 
 
     Or on a logarithmic scale, and using a larger hop
@@ -655,72 +655,10 @@ def specshow(data, x_coords=None, y_coords=None,
     >>> D = librosa.amplitude_to_db(np.abs(librosa.stft(y, hop_length=hop_length)),
     ...                             ref=np.max)
     >>> librosa.display.specshow(D, y_axis='log', sr=sr, hop_length=hop_length,
-    ...                          x_axis='time', ax=ax[0, 1])
-    >>> ax[0, 1].set(title='Log-frequency power spectrogram')
-    >>> ax[0, 1].label_outer()
-
-    Or use a CQT scale
-
-    >>> CQT = librosa.amplitude_to_db(np.abs(librosa.cqt(y, sr=sr, hop_length=hop_length)), ref=np.max)
-    >>> librosa.display.specshow(CQT, y_axis='cqt_note', sr=sr, hop_length=hop_length,
-    ...                          x_axis='time', ax=ax[1, 0])
-    >>> ax[1, 0].set(title='Constant-Q power spectrogram (note)')
-    >>> ax[1, 0].label_outer()
-
-    >>> librosa.display.specshow(CQT, y_axis='cqt_hz', sr=sr, hop_length=hop_length,
-    ...                          x_axis='time', ax=ax[1, 1])
-    >>> ax[1, 1].set(title='Constant-Q power spectrogram (Hz)')
-    >>> ax[1, 1].label_outer()
-
-
-    Draw a chromagram with pitch classes
-
-    >>> C = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=hop_length)
-    >>> librosa.display.specshow(C, y_axis='chroma', sr=sr, hop_length=hop_length,
-    ...                          x_axis='time', ax=ax[2, 0])
-    >>> ax[2, 0].set(title='Chromagram')
-    >>> ax[2, 0].label_outer()
-
-
-    Force a grayscale colormap (white -> black)
-
-    >>> librosa.display.specshow(D, cmap='gray_r', y_axis='linear',
-    ...                          sr=sr, hop_length=hop_length,
-    ...                          x_axis='time', ax=ax[2, 1])
-    >>> ax[2, 1].set(title='Grayscale colormap')
-    >>> ax[2, 1].label_outer()
-
-
-    Draw time markers automatically
-
-    >>> librosa.display.specshow(D, x_axis='time', sr=sr, hop_length=hop_length,
-    ...                          y_axis='log', ax=ax[3, 0])
-    >>> ax[3, 0].set(title='Log-power spectrogram')
-    >>> ax[3, 0].label_outer()
-
-
-    Draw a tempogram with BPM markers
-
-    >>> Tgram = librosa.feature.tempogram(y=y, sr=sr)
-    >>> librosa.display.specshow(Tgram, x_axis='time', sr=sr, hop_length=hop_length,
-    ...                          y_axis='tempo', ax=ax[3, 1])
-    >>> ax[3, 1].set(title='Tempogram')
-    >>> ax[3, 1].label_outer()
-
-
-    Draw beat-synchronous chroma in natural time
-
-    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
-    >>> tempo, beat_f = librosa.beat.beat_track(y=y, sr=sr, trim=False)
-    >>> beat_f = librosa.util.fix_frames(beat_f, x_max=C.shape[1])
-    >>> Csync = librosa.util.sync(C, beat_f, aggregate=np.median)
-    >>> beat_t = librosa.frames_to_time(beat_f, sr=sr)
-    >>> librosa.display.specshow(C, y_axis='chroma', x_axis='time', ax=ax[0])
-    >>> ax[0].set(title='Chroma (linear time)')
-    >>> ax[0].label_outer()
-    >>> librosa.display.specshow(Csync, y_axis='chroma', x_axis='time',
-    ...                          x_coords=beat_t, ax=ax[1])
-    >>> ax[1].set(title='Chroma (beat time)')
+    ...                          x_axis='time', ax=ax[1])
+    >>> ax[1].set(title='Log-frequency power spectrogram')
+    >>> ax[1].label_outer()
+    >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
     '''
 
     if np.issubdtype(data.dtype, np.complexfloating):

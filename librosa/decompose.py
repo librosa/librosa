@@ -105,22 +105,9 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
     --------
     Decompose a magnitude spectrogram into 32 components with NMF
 
-    >>> y, sr = librosa.load(librosa.ex('choice'))
+    >>> y, sr = librosa.load(librosa.ex('choice'), duration=5)
     >>> S = np.abs(librosa.stft(y))
     >>> comps, acts = librosa.decompose.decompose(S, n_components=8)
-    >>> comps
-    array([[  1.876e-01,   5.559e-02, ...,   1.687e-01,   4.907e-02],
-           [  3.148e-01,   1.719e-01, ...,   2.314e-01,   9.493e-02],
-           ...,
-           [  1.561e-07,   8.564e-08, ...,   7.167e-08,   4.997e-08],
-           [  1.531e-07,   7.880e-08, ...,   5.632e-08,   4.028e-08]])
-    >>> acts
-    array([[  4.197e-05,   8.512e-03, ...,   3.056e-05,   9.159e-06],
-           [  9.568e-06,   1.718e-02, ...,   3.322e-05,   7.869e-06],
-           ...,
-           [  5.982e-05,   1.311e-02, ...,  -0.000e+00,   6.323e-06],
-           [  3.782e-05,   7.056e-03, ...,   3.290e-05,  -0.000e+00]])
-
 
     Sort components by ascending peak frequency
 
