@@ -214,7 +214,7 @@ def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
     window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
         - a window specification (string, tuple, or number);
           see `scipy.signal.get_window`
-        - a window function, such as `scipy.signal.hanning`
+        - a window function, such as `scipy.signal.windows.hann`
         - a vector or array of length ``n_fft``
 
         .. see also:: `filters.get_window`

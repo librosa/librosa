@@ -90,7 +90,7 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
         - a window specification (string, tuple, or number);
           see `scipy.signal.get_window`
-        - a window function, such as `scipy.signal.hanning`
+        - a window function, such as `scipy.signal.windows.hann`
         - a vector or array of length ``n_fft``
 
         .. see also:: `librosa.filters.get_window`
@@ -214,7 +214,7 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
         - a window specification (string, tuple, or number);
           see `scipy.signal.get_window`
-        - a window function, such as `scipy.signal.hanning`
+        - a window function, such as `scipy.signal.windows.hann`
         - a vector or array of length ``n_fft``
 
         .. see also:: `librosa.filters.get_window`
@@ -372,7 +372,7 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
         - a window specification (string, tuple, or number);
           see `scipy.signal.get_window`
-        - a window function, such as `scipy.signal.hanning`
+        - a window function, such as `scipy.signal.windows.hann`
         - a vector or array of length ``n_fft``
 
         .. see also:: `librosa.filters.get_window`
@@ -538,7 +538,7 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
         - a window specification (string, tuple, or number);
           see `scipy.signal.get_window`
-        - a window function, such as `scipy.signal.hanning`
+        - a window function, such as `scipy.signal.windows.hann`
         - a vector or array of length ``n_fft``
 
         .. see also:: `librosa.filters.get_window`
@@ -676,7 +676,7 @@ def spectral_flatness(y=None, S=None, n_fft=2048, hop_length=512,
     window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
         - a window specification (string, tuple, or number);
           see `scipy.signal.get_window`
-        - a window function, such as `scipy.signal.hanning`
+        - a window function, such as `scipy.signal.windows.hann`
         - a vector or array of length ``n_fft``
 
         .. see also:: `librosa.filters.get_window`
@@ -891,7 +891,7 @@ def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
         - a window specification (string, tuple, or number);
           see `scipy.signal.get_window`
-        - a window function, such as `scipy.signal.hanning`
+        - a window function, such as `scipy.signal.windows.hann`
         - a vector or array of length ``n_fft``
 
         .. see also:: `librosa.filters.get_window`
@@ -1093,7 +1093,7 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
     window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
         - a window specification (string, tuple, or number);
           see `scipy.signal.get_window`
-        - a window function, such as `scipy.signal.hanning`
+        - a window function, such as `scipy.signal.windows.hann`
         - a vector or array of length ``n_fft``
 
         .. see also:: `librosa.filters.get_window`
@@ -1725,7 +1725,7 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
         - a window specification (string, tuple, or number);
           see `scipy.signal.get_window`
-        - a window function, such as `scipy.signal.hanning`
+        - a window function, such as `scipy.signal.windows.hann`
         - a vector or array of length ``n_fft``
 
         .. see also:: `librosa.filters.get_window`

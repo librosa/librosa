@@ -92,7 +92,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
 
         - a window specification (string, tuple, or number);
           see `scipy.signal.get_window`
-        - a window function, such as `scipy.signal.hanning`
+        - a window function, such as `scipy.signal.windows.hann`
         - a vector or array of length ``n_fft``
 
         Defaults to a raised cosine window (`'hann'`), which is adequate for
@@ -273,7 +273,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
     window : string, tuple, number, function, np.ndarray [shape=(n_fft,)]
         - a window specification (string, tuple, or number);
           see `scipy.signal.get_window`
-        - a window function, such as `scipy.signal.hanning`
+        - a window function, such as `scipy.signal.windows.hann`
         - a user-specified window vector of length ``n_fft``
 
         .. see also:: `filters.get_window`
@@ -468,7 +468,7 @@ def __reassign_frequencies(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
         - a window specification (string, tuple, number);
           see `scipy.signal.get_window`
-        - a window function, such as `scipy.signal.hanning`
+        - a window function, such as `scipy.signal.windows.hann`
         - a user-specified window vector of length ``n_fft``
 
         See `stft` for details.
@@ -621,7 +621,7 @@ def __reassign_times(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
         - a window specification (string, tuple, number);
           see `scipy.signal.get_window`
-        - a window function, such as `scipy.signal.hanning`
+        - a window function, such as `scipy.signal.windows.hann`
         - a user-specified window vector of length ``n_fft``
 
         See `stft` for details.
@@ -810,7 +810,7 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
         - a window specification (string, tuple, number);
           see `scipy.signal.get_window`
-        - a window function, such as `scipy.signal.hanning`
+        - a window function, such as `scipy.signal.windows.hann`
         - a user-specified window vector of length ``n_fft``
 
         See `stft` for details.
@@ -2330,7 +2330,7 @@ def _spectrogram(y=None, S=None, n_fft=2048, hop_length=512, power=1,
     window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
         - a window specification (string, tuple, or number);
           see `scipy.signal.get_window`
-        - a window function, such as `scipy.signal.hanning`
+        - a window function, such as `scipy.signal.windows.hann`
         - a vector or array of length ``n_fft``
 
         .. see also:: `filters.get_window`
