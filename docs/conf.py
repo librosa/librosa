@@ -95,10 +95,12 @@ plot_rcparams = {
     "figure.constrained_layout.use": True
 }
 
+
 def reset_mpl(gallery_conf, fname):
     global plot_rcparams
     import matplotlib
     matplotlib.rcParams.update(**plot_rcparams)
+
 
 # Gallery
 sphinx_gallery_conf = {
@@ -147,7 +149,7 @@ templates_path = ["_templates"]
 source_suffix = ".rst"
 
 # The encoding of source files.
-# source_encoding = 'utf-8-sig'
+source_encoding = 'utf-8-sig'
 
 # The master toctree document.
 master_doc = "index"

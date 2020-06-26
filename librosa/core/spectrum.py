@@ -1118,17 +1118,18 @@ def phase_vocoder(D, rate, hop_length=None):
 
     Based on the implementation provided by [#]_.
 
-    .. note:: This is a simplified implementation, intended primarily for
-             reference and pedagogical purposes.  It makes no attempt to
-             handle transients, and is likely to produce many audible
-             artifacts.  For a higher quality implementation, we recommend
-             the RubberBand library [#]_ and its Python wrapper `pyrubberband`.
+    This is a simplified implementation, intended primarily for
+    reference and pedagogical purposes.  It makes no attempt to
+    handle transients, and is likely to produce many audible
+    artifacts.  For a higher quality implementation, we recommend
+    the RubberBand library [#]_ and its Python wrapper `pyrubberband`.
 
     .. [#] Ellis, D. P. W. "A phase vocoder in Matlab."
         Columbia University, 2002.
         http://www.ee.columbia.edu/~dpwe/resources/matlab/pvoc/
 
     .. [#] https://breakfastquay.com/rubberband/
+
 
     Examples
     --------
@@ -1901,7 +1902,7 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
 
         b = (sqrt(1 + 4* T**2) - 1) / (2 * T**2)
 
-    where `T = time_constant * sr / hop_length`, as in [#]_.
+    where `T = time_constant * sr / hop_length`. [#]_
 
     This normalization is designed to suppress background noise and
     emphasize foreground signals, and can be used as an alternative to
@@ -2128,7 +2129,7 @@ def griffinlim(S, n_iter=32, hop_length=None, win_length=None, window='hann',
                center=True, dtype=None, length=None, pad_mode='reflect',
                momentum=0.99, init='random', random_state=None):
 
-    '''Approximate magnitude spectrogram inversion using the "fast" Griffin-Lim algorithm [#]_ [#]_.
+    '''Approximate magnitude spectrogram inversion using the "fast" Griffin-Lim algorithm. [#]_ [#]_
 
     Given a short-time Fourier transform magnitude matrix (`S`), the algorithm randomly
     initializes phase estimates, and then alternates forward- and inverse-STFT

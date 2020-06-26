@@ -67,6 +67,5 @@ If you want to cite librosa in a scholarly work, there are two ways to do it.
     :maxdepth: 1
 
     changelog
+    genindex
     glossary
-
-* :ref:`genindex`
