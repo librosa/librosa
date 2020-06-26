@@ -17,7 +17,7 @@ For a list of codecs supported by `soundfile`, see the *libsndfile* `documentati
 
 Librosa's load function is meant for the common case where you want to load an entire (fragment of a) recording into memory, but some applications require more flexibility.
 In these cases, we recommend using `soundfile` directly.
-Reading audio files using `soundfile` is similar to the method in *librosa*. One important difference is that the read data is of shape ``(nb_samples, nb_channels)`` compared to ``(nb_channels, nb_samples)`` in :func:`librosa.core.load`. Also the signal is not resampled to 22050 Hz by default, hence it would need be transposed and resampled for further processing in *librosa*. The following example is equivalent to ``librosa.load(librosa.util.example_audio_file())``:
+Reading audio files using `soundfile` is similar to the method in *librosa*. One important difference is that the read data is of shape ``(nb_samples, nb_channels)`` compared to ``(nb_channels, nb_samples)`` in :func:`librosa.core.load`. Also the signal is not resampled to 22050 Hz by default, hence it would need be transposed and resampled for further processing in *librosa*. The following example is equivalent to ``librosa.load(librosa.util.ex('trumpet'))``:
 
 .. code-block:: python
     :linenos:
@@ -26,7 +26,7 @@ Reading audio files using `soundfile` is similar to the method in *librosa*. One
     import soundfile as sf
 
     # Get example audio file
-    filename = librosa.util.example_audio_file()
+    filename = librosa.ex('trumpet')
 
     data, samplerate = sf.read(filename, dtype='float32')
     data = data.T
