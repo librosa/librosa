@@ -1331,7 +1331,7 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
 
 def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
                 tuning=None, n_chroma=12,
-                n_octaves=7, bins_per_octave=None, cqt_mode='full', window=None,
+                n_octaves=7, bins_per_octave=36, cqt_mode='full', window=None,
                 norm=2, win_len_smooth=41, smoothing_window='hann'):
     r'''Computes the chroma variant "Chroma Energy Normalized" (CENS), following [1]_.
 
