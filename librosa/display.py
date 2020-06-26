@@ -517,6 +517,7 @@ def specshow(data, x_coords=None, y_coords=None,
              **kwargs):
     '''Display a spectrogram/chromagram/cqt/etc.
 
+    For a detailed overview of this function, see :ref:`sphx_glr_auto_examples_plot_display.py`
 
     Parameters
     ----------

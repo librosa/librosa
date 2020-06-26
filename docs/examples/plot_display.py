@@ -219,7 +219,6 @@ ax.set(title='Chroma covariance')
 fig.colorbar(img, ax=ax)
 
 
-
 # %%
 # Color maps
 # ----------

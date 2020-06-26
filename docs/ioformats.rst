@@ -1,3 +1,5 @@
+.. _ioformats:
+
 Advanced I/O Use Cases
 ^^^^^^^^^^^^^^^^^^^^^^
 

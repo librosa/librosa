@@ -82,8 +82,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
         .. note::
            `audioread` may truncate the precision of the audio data to 16 bits.
 
-           See https://librosa.github.io/librosa/ioformats.html for alternate
-           loading methods.
+           See :ref:`ioformats` for alternate loading methods.
 
 
     Returns
