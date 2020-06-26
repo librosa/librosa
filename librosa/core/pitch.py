@@ -415,8 +415,8 @@ def _parabolic_interpolation(y_frames):
     return parabolic_shifts
 
 
-def yin(y, sr=22050, frame_length=2048, win_length=1024, hop_length=None,
-        fmin=None, fmax=880, peak_threshold=0.1, center=True, pad_mode='reflect'):
+def yin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=1024, hop_length=None,
+        peak_threshold=0.1, center=True, pad_mode='reflect'):
     '''Fundamental frequency (F0) estimation. [1]_
 
     .. [1] De Cheveigné, A., & Kawahara, H. (2002).
@@ -427,6 +427,16 @@ def yin(y, sr=22050, frame_length=2048, win_length=1024, hop_length=None,
     ----------
     y : np.ndarray [shape=(n,)]
         audio time series.
+
+    fmin: number > 0 [scalar]
+        minimum frequency in Hertz.
+        The recomended minimum is librosa.note_to_hz('C2') (~65 Hz)
+        though lower values may be feasible.
+
+    fmax: number > 0 [scalar]
+        maximum frequency in Hertz.
+        The recomended maximum is librosa.note_to_hz('C7') (~2093 Hz)
+        though higher values may be feasible.
 
     sr : number > 0 [scalar]
         sampling rate of `y` in Hertz.
@@ -442,12 +452,6 @@ def yin(y, sr=22050, frame_length=2048, win_length=1024, hop_length=None,
     hop_length : None or int > 0 [scalar]
          number of audio samples between adjacent YIN predictions.
          If `None`, defaults to `frame_length // 4`.
-
-    fmin: number > 0 [scalar]
-        Minimum frequency. Defaults to C1 ~= 32.70 Hz.
-
-    fmax: number > 0 [scalar]
-        maximum frequency in Hertz.
 
     peak_threshold: number > 0 [scalar]
         absolute threshold for peak estimation.
@@ -486,10 +490,6 @@ def yin(y, sr=22050, frame_length=2048, win_length=1024, hop_length=None,
     # Set the default hop if it is not already specified.
     if hop_length is None:
         hop_length = int(frame_length // 4)
-
-    if fmin is None:
-        # C1 by default
-        fmin = time_frequency.note_to_hz('C1')
 
     # Check that audio is valid.
     util.valid_audio(y, mono=True)
@@ -539,7 +539,7 @@ def yin(y, sr=22050, frame_length=2048, win_length=1024, hop_length=None,
     return f0
 
 
-def pyin(y, sr=22050, frame_length=2048, win_length=1024, hop_length=None, fmin=None, fmax=880,
+def pyin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=1024, hop_length=None,
          n_thresholds=100, beta_parameters=(2, 18), boltzmann_parameter=3, resolution=0.1,
          max_transition_rate=35.92, switch_prob=0.01, no_trough_prob=0.01, center=True, pad_mode='reflect'):
     '''Fundamental frequency (F0) estimation. [1]_
@@ -552,6 +552,16 @@ def pyin(y, sr=22050, frame_length=2048, win_length=1024, hop_length=None, fmin=
     ----------
     y : np.ndarray [shape=(n,)]
         audio time series.
+
+    fmin: number > 0 [scalar]
+        minimum frequency in Hertz.
+        The recomended minimum is librosa.note_to_hz('C2') (~65 Hz)
+        though lower values may be feasible.
+
+    fmax: number > 0 [scalar]
+        maximum frequency in Hertz.
+        The recomended maximum is librosa.note_to_hz('C7') (~2093 Hz)
+        though higher values may be feasible.
 
     sr : number > 0 [scalar]
         sampling rate of `y` in Hertz.
@@ -567,12 +577,6 @@ def pyin(y, sr=22050, frame_length=2048, win_length=1024, hop_length=None, fmin=
     hop_length : None or int > 0 [scalar]
         number of audio samples between adjacent pYIN predictions.
         If `None`, defaults to `frame_length // 4`.
-
-    fmin : number > 0 [scalar]
-        Minimum frequency. Defaults to C1 ~= 32.70 Hz.
-
-    fmax : number > 0 [scalar]
-        maximum frequency in Hertz.
 
     n_thresholds : int > 0 [scalar]
         number of thresholds for peak estimation.
@@ -617,6 +621,9 @@ def pyin(y, sr=22050, frame_length=2048, win_length=1024, hop_length=None, fmin=
     f0: np.ndarray [shape=(n_frames,)]
         time series of fundamental frequencies in Hertz.
 
+    voiced_flag: np.ndarray [shape=(n_frames,)]
+        time series containing boolean flags indicating whether a frame is voiced or not.
+
     voiced_prob: np.ndarray [shape=(n_frames,)]
         time series containing the probability that a frame is voiced.
 
@@ -633,10 +640,6 @@ def pyin(y, sr=22050, frame_length=2048, win_length=1024, hop_length=None, fmin=
     # Set the default hop if it is not already specified.
     if hop_length is None:
         hop_length = int(frame_length // 4)
-
-    if fmin is None:
-        # C1 by default
-        fmin = time_frequency.note_to_hz('C1')
 
     # Check that audio is valid.
     util.valid_audio(y, mono=True)
@@ -713,8 +716,10 @@ def pyin(y, sr=22050, frame_length=2048, win_length=1024, hop_length=None, fmin=
     # Construct transition matrix.
     max_semitones_per_frame = round(max_transition_rate * 12 * hop_length / sr)
     transition_width = max_semitones_per_frame*n_bins_per_semitone + 1
+    # Construct the within voicing transition probabilities
     transition = sequence.transition_local(
         n_pitch_bins, transition_width, window='triangle', wrap=False)
+    # Include across voicing transition probabilities
     transition = np.block(
         [[(1-switch_prob)*transition, switch_prob*transition],
          [switch_prob*transition, (1-switch_prob)*transition]])
@@ -739,4 +744,4 @@ def pyin(y, sr=22050, frame_length=2048, win_length=1024, hop_length=None, fmin=
     freqs = fmin * 2**(np.arange(n_pitch_bins) / (12*n_bins_per_semitone))
     freqs = np.concatenate((freqs, -freqs))
     f0 = freqs[states]
-    return f0, voiced_prob
+    return np.abs(f0), f0 > 0, voiced_prob
