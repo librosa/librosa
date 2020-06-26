@@ -178,14 +178,14 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
     If `margin > 1.0`, decomposes an input spectrogram `S = H + P + R`
     where `R` contains residual components not included in `H` or `P`.
 
-    This implementation is based upon the algorithm described by [1]_ and [2]_.
+    This implementation is based upon the algorithm described by [#]_ and [#]_.
 
-    .. [1] Fitzgerald, Derry.
+    .. [#] Fitzgerald, Derry.
         "Harmonic/percussive separation using median filtering."
         13th International Conference on Digital Audio Effects (DAFX10),
         Graz, Austria, 2010.
 
-    .. [2] Driedger, Müller, Disch.
+    .. [#] Driedger, Müller, Disch.
         "Extending harmonic-percussive separation of audio."
         15th International Society for Music Information Retrieval Conference (ISMIR 2014),
         Taipei, Taiwan, 2014.
@@ -362,18 +362,18 @@ def nn_filter(S, rec=None, aggregate=None, axis=-1, **kwargs):
 
     This can be useful for de-noising a spectrogram or feature matrix.
 
-    The non-local means method [1]_ can be recovered by providing a
+    The non-local means method [#]_ can be recovered by providing a
     weighted recurrence matrix as input and specifying `aggregate=np.average`.
 
     Similarly, setting `aggregate=np.median` produces sparse de-noising
-    as in REPET-SIM [2]_.
+    as in REPET-SIM [#]_.
 
-    .. [1] Buades, A., Coll, B., & Morel, J. M.
+    .. [#] Buades, A., Coll, B., & Morel, J. M.
         (2005, June). A non-local algorithm for image denoising.
         In Computer Vision and Pattern Recognition, 2005.
         CVPR 2005. IEEE Computer Society Conference on (Vol. 2, pp. 60-65). IEEE.
 
-    .. [2] Rafii, Z., & Pardo, B.
+    .. [#] Rafii, Z., & Pardo, B.
         (2012, October).  "Music/Voice Separation Using the Similarity Matrix."
         International Society for Music Information Retrieval Conference, 2012.
 

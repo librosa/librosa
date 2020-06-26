@@ -30,13 +30,14 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
                units='frames'):
     r'''Dynamic programming beat tracker.
 
-    Beats are detected in three stages, following the method of [1]_:
+    Beats are detected in three stages, following the method of [#]_:
+
       1. Measure onset strength
       2. Estimate tempo from onset correlation
       3. Pick peaks in onset strength approximately consistent with estimated
          tempo
 
-    .. [1] Ellis, Daniel PW. "Beat tracking by dynamic programming."
+    .. [#] Ellis, Daniel PW. "Beat tracking by dynamic programming."
            Journal of New Music Research 36.1 (2007): 51-60.
            http://labrosa.ee.columbia.edu/projects/beattrack/
 
@@ -362,7 +363,7 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
 
 def plp(y=None, sr=22050, onset_envelope=None, hop_length=512,
         win_length=384, tempo_min=30, tempo_max=300, prior=None):
-    '''Predominant local pulse (PLP) estimation. [1]_
+    '''Predominant local pulse (PLP) estimation. [#]_
 
     The PLP method analyzes the onset strength envelope in the frequency domain
     to find a locally stable tempo for each frame.  These local periodicities
@@ -376,7 +377,7 @@ def plp(y=None, sr=22050, onset_envelope=None, hop_length=512,
     preferable when beat-tracking long recordings in a streaming setting.
 
 
-    .. [1] Grosche, P., & Muller, M. (2011).
+    .. [#] Grosche, P., & Muller, M. (2011).
         "Extracting predominant local pulse information from music recordings."
         IEEE Transactions on Audio, Speech, and Language Processing, 19(6), 1688-1701.
 

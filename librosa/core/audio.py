@@ -462,10 +462,11 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
             To use `scipy.signal.resample_poly`, set `res_type='polyphase'`. (fast)
 
             To use `samplerate.resample`, set any of the following:
+
                 - `res_type='linear'`: linear interpolation (fast)
                 - `res_type='zero_order_hold'`: repeat the last value between samples (very fast)
                 - `res_type='sinc_best'`, `'sinc_medium'`, or `'sinc_fastest'`: for high-, medium-,
-                    and low-quality sinc interpolation
+                  and low-quality sinc interpolation
 
         .. note::
             When using `res_type='polyphase'`, only integer sampling rates are
@@ -777,14 +778,14 @@ def lpc(y, order):
     estimation by autocorrelation.
 
     It follows the description and implementation approach described in the
-    introduction in [1]_.  N.B. This paper describes a different method, which
+    introduction by Marple. [#]_  N.B. This paper describes a different method, which
     is not implemented here, but has been chosen for its clear explanation of
     Burg's technique in its introduction.
 
-    .. [1] Larry Marple
-           A New Autoregressive Spectrum Analysis Algorithm
+    .. [#] Larry Marple.
+           A New Autoregressive Spectrum Analysis Algorithm.
            IEEE Transactions on Accoustics, Speech, and Signal Processing
-           vol 28, no. 4, 1980
+           vol 28, no. 4, 1980.
 
     Parameters
     ----------

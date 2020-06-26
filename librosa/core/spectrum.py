@@ -32,7 +32,7 @@ __all__ = ['stft', 'istft', 'magphase', 'iirt',
 @cache(level=20)
 def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
          center=True, dtype=None, pad_mode='reflect'):
-    """Short-time Fourier transform (STFT). [1]_ (chapter 2)
+    """Short-time Fourier transform (STFT).
 
     The STFT represents a signal in the time-frequency domain by
     computing discrete Fourier transforms (DFT) over short overlapping
@@ -48,8 +48,6 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
 
     The integers `t` and `f` can be converted to physical units by means
     of the utility functions `frames_to_sample` and `fft_frequencies`.
-
-    .. [1] M. Müller. "Fundamentals of Music Processing." Springer, 2015
 
 
     Parameters
@@ -249,13 +247,13 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
 
     Converts a complex-valued spectrogram `stft_matrix` to time-series `y`
     by minimizing the mean squared error between `stft_matrix` and STFT of
-    `y` as described in [1]_ up to Section 2 (reconstruction from MSTFT).
+    `y` as described in [#]_ up to Section 2 (reconstruction from MSTFT).
 
     In general, window function, hop length and other parameters should be same
     as in stft, which mostly leads to perfect reconstruction of a signal from
     unmodified `stft_matrix`.
 
-    .. [1] D. W. Griffin and J. S. Lim,
+    .. [#] D. W. Griffin and J. S. Lim,
         "Signal estimation from modified short-time Fourier transform,"
         IEEE Trans. ASSP, vol.32, no.2, pp.236–243, Apr. 1984.
 
@@ -758,7 +756,7 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     r"""Time-frequency reassigned spectrogram.
 
     The reassignment vectors are calculated using equations 5.20 and 5.23 in
-    [1]_:
+    [#]_:
 
         `t_reassigned = t + np.real(S_th/S_h)`
         `omega_reassigned = omega - np.imag(S_dh/S_h)`
@@ -766,26 +764,26 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     where `S_h` is the complex STFT calculated using the original window,
     `S_dh` is the complex STFT calculated using the derivative of the original
     window, and `S_th` is the complex STFT calculated using the original window
-    multiplied by the time offset from the window center. See [2]_ for
-    additional algorithms, and [3]_ and [4]_ for history and discussion of the
+    multiplied by the time offset from the window center. See [#]_ for
+    additional algorithms, and [#]_ and [#]_ for history and discussion of the
     method.
 
-    .. [1] Flandrin, P., Auger, F., & Chassande-Mottin, E. (2002).
+    .. [#] Flandrin, P., Auger, F., & Chassande-Mottin, E. (2002).
         Time-Frequency reassignment: From principles to algorithms. In
         Applications in Time-Frequency Signal Processing (Vol. 10, pp.
         179-204). CRC Press.
 
-    .. [2] Fulop, S. A., & Fitz, K. (2006). Algorithms for computing the
+    .. [#] Fulop, S. A., & Fitz, K. (2006). Algorithms for computing the
         time-corrected instantaneous frequency (reassigned) spectrogram, with
         applications. The Journal of the Acoustical Society of America, 119(1),
         360. doi:10.1121/1.2133000
 
-    .. [3] Auger, F., Flandrin, P., Lin, Y.-T., McLaughlin, S., Meignen, S.,
+    .. [#] Auger, F., Flandrin, P., Lin, Y.-T., McLaughlin, S., Meignen, S.,
         Oberlin, T., & Wu, H.-T. (2013). Time-Frequency Reassignment and
         Synchrosqueezing: An Overview. IEEE Signal Processing Magazine, 30(6),
         32-41. doi:10.1109/MSP.2013.2265316
 
-    .. [4] Hainsworth, S., Macleod, M. (2003). Time-frequency reassignment: a
+    .. [#] Hainsworth, S., Macleod, M. (2003). Time-frequency reassignment: a
         review and analysis. Tech. Rep. CUED/FINFENG/TR.459, Cambridge
         University Engineering Department
 
@@ -1118,19 +1116,19 @@ def magphase(D, power=1):
 def phase_vocoder(D, rate, hop_length=None):
     """Phase vocoder.  Given an STFT matrix D, speed up by a factor of `rate`
 
-    Based on the implementation provided by [1]_.
+    Based on the implementation provided by [#]_.
 
     .. note:: This is a simplified implementation, intended primarily for
              reference and pedagogical purposes.  It makes no attempt to
              handle transients, and is likely to produce many audible
              artifacts.  For a higher quality implementation, we recommend
-             the RubberBand library [2]_ and its Python wrapper `pyrubberband`.
+             the RubberBand library [#]_ and its Python wrapper `pyrubberband`.
 
-    .. [1] Ellis, D. P. W. "A phase vocoder in Matlab."
+    .. [#] Ellis, D. P. W. "A phase vocoder in Matlab."
         Columbia University, 2002.
         http://www.ee.columbia.edu/~dpwe/resources/matlab/pvoc/
 
-    .. [2] https://breakfastquay.com/rubberband/
+    .. [#] https://breakfastquay.com/rubberband/
 
     Examples
     --------
@@ -1217,7 +1215,7 @@ def phase_vocoder(D, rate, hop_length=None):
 @cache(level=20)
 def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
          tuning=0.0, pad_mode='reflect', flayout='sos', **kwargs):
-    r'''Time-frequency representation using IIR filters [1]_.
+    r'''Time-frequency representation using IIR filters [#]_.
 
     This function will return a time-frequency representation
     using a multirate filter bank consisting of IIR filters.
@@ -1230,12 +1228,12 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
     summing `win_length` subsequent filtered time samples.
 
     When called with the default set of parameters, it will generate the TF-representation
-    as described in [1]_ (pitch filterbank):
+    (pitch filterbank):
 
         * 85 filters with MIDI pitches [24, 108] as `center_freqs`.
         * each filter having a bandwith of one semitone.
 
-    .. [1] Müller, Meinard.
+    .. [#] Müller, Meinard.
            "Information Retrieval for Music and Motion."
            Springer Verlag. 2007.
 
@@ -1692,19 +1690,19 @@ def perceptual_weighting(S, frequencies, kind='A', **kwargs):
 
 @cache(level=30)
 def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1):
-    """The fast Mellin transform (FMT) [1]_ of a uniformly sampled signal y.
+    """The fast Mellin transform (FMT) [#]_ of a uniformly sampled signal y.
 
-    When the Mellin parameter (beta) is 1/2, it is also known as the scale transform [2]_.
+    When the Mellin parameter (beta) is 1/2, it is also known as the scale transform [#]_.
     The scale transform can be useful for audio analysis because its magnitude is invariant
     to scaling of the domain (e.g., time stretching or compression).  This is analogous
     to the magnitude of the Fourier transform being invariant to shifts in the input domain.
 
 
-    .. [1] De Sena, Antonio, and Davide Rocchesso.
+    .. [#] De Sena, Antonio, and Davide Rocchesso.
         "A fast Mellin and scale transform."
         EURASIP Journal on Applied Signal Processing 2007.1 (2007): 75-75.
 
-    .. [2] Cohen, L.
+    .. [#] Cohen, L.
         "The scale representation."
         IEEE Transactions on Signal Processing 41, no. 12 (1993): 3275-3292.
 
@@ -1880,7 +1878,7 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
 def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
          time_constant=0.400, eps=1e-6, b=None, max_size=1, ref=None,
          axis=-1, max_axis=None, zi=None, return_zf=False):
-    '''Per-channel energy normalization (PCEN) [1]_
+    '''Per-channel energy normalization (PCEN) [#]_
 
     This function normalizes a time-frequency representation `S` by
     performing automatic gain control, followed by nonlinear compression:
@@ -1888,7 +1886,7 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
         P[f, t] = (S / (eps + M[f, t])**gain + bias)**power - bias**power
 
     IMPORTANT: the default values of eps, gain, bias, and power match the
-    original publication [1]_, in which M is a 40-band mel-frequency
+    original publication, in which M is a 40-band mel-frequency
     spectrogram with 25 ms windowing, 10 ms frame shift, and raw audio values
     in the interval [-2**31; 2**31-1[. If you use these default values, we
     recommend to make sure that the raw audio is properly scaled to this
@@ -1903,7 +1901,7 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
 
         b = (sqrt(1 + 4* T**2) - 1) / (2 * T**2)
 
-    where `T = time_constant * sr / hop_length`, as in [2]_.
+    where `T = time_constant * sr / hop_length`, as in [#]_.
 
     This normalization is designed to suppress background noise and
     emphasize foreground signals, and can be used as an alternative to
@@ -1924,12 +1922,12 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
     or span multiple frequency bans, which may be desirable for spectrograms
     with high frequency resolution.
 
-    .. [1] Wang, Y., Getreuer, P., Hughes, T., Lyon, R. F., & Saurous, R. A.
+    .. [#] Wang, Y., Getreuer, P., Hughes, T., Lyon, R. F., & Saurous, R. A.
        (2017, March). Trainable frontend for robust and far-field keyword spotting.
        In Acoustics, Speech and Signal Processing (ICASSP), 2017
        IEEE International Conference on (pp. 5670-5674). IEEE.
 
-    .. [2] Lostanlen, V., Salamon, J., McFee, B., Cartwright, M., Farnsworth, A.,
+    .. [#] Lostanlen, V., Salamon, J., McFee, B., Cartwright, M., Farnsworth, A.,
        Kelling, S., and Bello, J. P. Per-Channel Energy Normalization: Why and How.
        IEEE Signal Processing Letters, 26(1), 39-43.
 
@@ -2130,7 +2128,7 @@ def griffinlim(S, n_iter=32, hop_length=None, win_length=None, window='hann',
                center=True, dtype=None, length=None, pad_mode='reflect',
                momentum=0.99, init='random', random_state=None):
 
-    '''Approximate magnitude spectrogram inversion using the "fast" Griffin-Lim algorithm [1]_ [2]_.
+    '''Approximate magnitude spectrogram inversion using the "fast" Griffin-Lim algorithm [#]_ [#]_.
 
     Given a short-time Fourier transform magnitude matrix (`S`), the algorithm randomly
     initializes phase estimates, and then alternates forward- and inverse-STFT
@@ -2139,12 +2137,12 @@ def griffinlim(S, n_iter=32, hop_length=None, win_length=None, window='hann',
     that `S` contains only the non-negative frequencies (as computed by
     `core.stft`).
 
-    .. [1] Perraudin, N., Balazs, P., & Søndergaard, P. L.
+    .. [#] Perraudin, N., Balazs, P., & Søndergaard, P. L.
         "A fast Griffin-Lim algorithm,"
         IEEE Workshop on Applications of Signal Processing to Audio and Acoustics (pp. 1-4),
         Oct. 2013.
 
-    .. [2] D. W. Griffin and J. S. Lim,
+    .. [#] D. W. Griffin and J. S. Lim,
         "Signal estimation from modified short-time Fourier transform,"
         IEEE Trans. ASSP, vol.32, no.2, pp.236–243, Apr. 1984.
 

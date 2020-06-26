@@ -496,9 +496,9 @@ def recurrence_to_lag(rec, pad=True, axis=-1):
     This transformation turns diagonal structures in the recurrence matrix
     into horizontal structures in the lag matrix.
     These horizontal structures can be used to infer changes in the repetition
-    structure of a piece, e.g., the beginning of a new section as done in [1]_.
+    structure of a piece, e.g., the beginning of a new section as done in [#]_.
 
-    .. [1] Serra, J., Müller, M., Grosche, P., & Arcos, J. L. (2014).
+    .. [#] Serra, J., Müller, M., Grosche, P., & Arcos, J. L. (2014).
            Unsupervised music structure annotation by time series structure
            features and segment similarity.
            IEEE Transactions on Multimedia, 16(5), 1229-1240.
@@ -945,11 +945,11 @@ def path_enhance(R, n, window='hann', max_ratio=2.0, min_ratio=None, n_filters=7
     Smoothing filters are generated at evenly spaced orientations between min_ratio and
     max_ratio.
 
-    This function is inspired by the multi-angle path enhancement of [1]_, but differs by
+    This function is inspired by the multi-angle path enhancement of [#]_, but differs by
     modeling tempo differences in the space of similarity matrices rather than re-sampling
     the underlying features prior to generating the self-similarity matrix.
 
-    .. [1] Müller, Meinard and Frank Kurth.
+    .. [#] Müller, Meinard and Frank Kurth.
             "Enhancing similarity matrices for music audio analysis."
             2006 IEEE International Conference on Acoustics Speech and Signal Processing Proceedings.
             Vol. 5. IEEE, 2006.

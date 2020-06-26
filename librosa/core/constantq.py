@@ -31,9 +31,9 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     '''Compute the constant-Q transform of an audio signal.
 
     This implementation is based on the recursive sub-sampling method
-    described by [1]_.
+    described by [#]_.
 
-    .. [1] Schoerkhuber, Christian, and Anssi Klapuri.
+    .. [#] Schoerkhuber, Christian, and Anssi Klapuri.
         "Constant-Q transform toolbox for music processing."
         7th Sound and Music Computing Conference, Barcelona, Spain. 2010.
 
@@ -643,9 +643,9 @@ def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=None,
     '''Compute the variable-Q transform of an audio signal.
 
     This implementation is based on the recursive sub-sampling method
-    described by [1]_.
+    described by [#]_.
 
-    .. [1] Schörkhuber, Christian, Anssi Klapuri, Nicki Holighaus, and Monika Dörfler.
+    .. [#] Schörkhuber, Christian, Anssi Klapuri, Nicki Holighaus, and Monika Dörfler.
         "A Matlab toolbox for efficient perfect reconstruction time-frequency transforms with log-frequency resolution."
         In Audio Engineering Society Conference: 53rd International Conference: Semantic Audio.
         Audio Engineering Society, 2014.
@@ -678,9 +678,9 @@ def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=None,
         B_k is the bandwidth of filter k with center frequency f_k, alpha is the inverse of
         what would be the constant Q-factor, and C = alpha / 0.108 is the constant fraction
         across all filters. Here we use ERB(f_k) = 24.7 + 0.108 * f_k, the best-fit curve derived
-        from experimental data in [2]_.
+        from experimental data in [#]_.
 
-        .. [2] Glasberg, Brian R., and Brian CJ Moore.
+        .. [#] Glasberg, Brian R., and Brian CJ Moore.
             "Derivation of auditory filter shapes from notched-noise data."
             Hearing research 47.1-2 (1990): 103-138.
 
@@ -1048,7 +1048,7 @@ def griffinlim_cqt(C, n_iter=32, sr=22050, hop_length=512, fmin=None, bins_per_o
                    pad_mode='reflect', res_type='kaiser_fast', dtype=None,
                    length=None, momentum=0.99, init='random', random_state=None):
     '''Approximate constant-Q magnitude spectrogram inversion using the "fast" Griffin-Lim
-    algorithm [1]_ [2]_.
+    algorithm [#]_ [#]_.
 
     Given the magnitude of a constant-Q spectrogram (`C`), the algorithm randomly initializes
     phase estimates, and then alternates forward- and inverse-CQT operations.
@@ -1056,12 +1056,12 @@ def griffinlim_cqt(C, n_iter=32, sr=22050, hop_length=512, fmin=None, bins_per_o
     This implementation is based on the Griffin-Lim method for Short-time Fourier Transforms,
     but adapted for use with constant-Q spectrograms.
 
-    .. [1] Perraudin, N., Balazs, P., & Søndergaard, P. L.
+    .. [#] Perraudin, N., Balazs, P., & Søndergaard, P. L.
         "A fast Griffin-Lim algorithm,"
         IEEE Workshop on Applications of Signal Processing to Audio and Acoustics (pp. 1-4),
         Oct. 2013.
 
-    .. [2] D. W. Griffin and J. S. Lim,
+    .. [#] D. W. Griffin and J. S. Lim,
         "Signal estimation from modified short-time Fourier transform,"
         IEEE Trans. ASSP, vol.32, no.2, pp.236–243, Apr. 1984.
 
@@ -1142,7 +1142,7 @@ def griffinlim_cqt(C, n_iter=32, sr=22050, hop_length=512, fmin=None, bins_per_o
 
     momentum : float > 0
         The momentum parameter for fast Griffin-Lim.
-        Setting this to 0 recovers the original Griffin-Lim method [1]_.
+        Setting this to 0 recovers the original Griffin-Lim method.
         Values near 1 can lead to faster convergence, but above 1 may not converge.
 
     init : None or 'random' [default]

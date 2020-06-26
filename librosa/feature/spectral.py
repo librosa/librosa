@@ -44,14 +44,14 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     distribution over frequency bins, from which the mean (centroid) is
     extracted per frame.
 
-    More precisely, the centroid at frame `t` is defined as [1]_:
+    More precisely, the centroid at frame `t` is defined as [#]_:
 
         ``centroid[t] = sum_k S[k, t] * freq[k] / (sum_j S[j, t])``
 
     where `S` is a magnitude spectrogram, and `freq` is the array of
     frequencies (e.g., FFT frequencies in Hz) of the rows of `S`.
 
-    .. [1] Klapuri, A., & Davy, M. (Eds.). (2007). Signal processing
+    .. [#] Klapuri, A., & Davy, M. (Eds.). (2007). Signal processing
         methods for music transcription, chapter 5. 
         Springer Science & Business Media.
 
@@ -178,11 +178,11 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                        freq=None, centroid=None, norm=True, p=2):
     '''Compute p'th-order spectral bandwidth.
 
-       The spectral bandwidth [1]_ at frame `t` is computed by
+       The spectral bandwidth [#]_ at frame `t` is computed by
 
         (sum_k S[k, t] * (freq[k, t] - centroid[t])**p)**(1/p)
 
-    .. [1] Klapuri, A., & Davy, M. (Eds.). (2007). Signal processing
+    .. [#] Klapuri, A., & Davy, M. (Eds.). (2007). Signal processing
         methods for music transcription, chapter 5.
         Springer Science & Business Media.
 
@@ -327,16 +327,16 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                       win_length=None, window='hann', center=True, pad_mode='reflect',
                       freq=None, fmin=200.0, n_bands=6, quantile=0.02,
                       linear=False):
-    '''Compute spectral contrast [1]_
+    '''Compute spectral contrast [#]_
 
     Each frame of a spectrogram `S` is divided into sub-bands.
     For each sub-band, the energy contrast is estimated by comparing
-    the mean energy in the top quantile (peak energy) to that of the 
+    the mean energy in the top quantile (peak energy) to that of the
     bottom quantile (valley energy).  High contrast values generally
     correspond to clear, narrow-band signals, while low contrast values
     correspond to broad-band noise.
 
-    .. [1] Jiang, Dan-Ning, Lie Lu, Hong-Jiang Zhang, Jian-Hua Tao,
+    .. [#] Jiang, Dan-Ning, Lie Lu, Hong-Jiang Zhang, Jian-Hua Tao,
            and Lian-Hong Cai.
            "Music type classification by spectral contrast feature."
            In Multimedia and Expo, 2002. ICME'02. Proceedings.
@@ -641,11 +641,11 @@ def spectral_flatness(y=None, S=None, n_fft=2048, hop_length=512,
 
     Spectral flatness (or tonality coefficient) is a measure to
     quantify how much noise-like a sound is, as opposed to being
-    tone-like [1]_. A high spectral flatness (closer to 1.0)
+    tone-like [#]_. A high spectral flatness (closer to 1.0)
     indicates the spectrum is similar to white noise.
     It is often converted to decibel.
 
-    .. [1] Dubnov, Shlomo  "Generalization of spectral flatness
+    .. [#] Dubnov, Shlomo  "Generalization of spectral flatness
            measure for non-gaussian linear processes"
            IEEE Signal Processing Letters, 2004, Vol. 11.
 
@@ -1051,9 +1051,9 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
                 **kwargs):
     """Compute a chromagram from a waveform or power spectrogram.
 
-    This implementation is derived from `chromagram_E` [1]_
+    This implementation is derived from `chromagram_E` [#]_
 
-    .. [1] Ellis, Daniel P.W.  "Chroma feature analysis and synthesis"
+    .. [#] Ellis, Daniel P.W.  "Chroma feature analysis and synthesis"
            2007/04/21
            http://labrosa.ee.columbia.edu/matlab/chroma-ansyn/
 
@@ -1307,18 +1307,19 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
                 tuning=None, n_chroma=12,
                 n_octaves=7, bins_per_octave=36, cqt_mode='full', window=None,
                 norm=2, win_len_smooth=41, smoothing_window='hann'):
-    r'''Computes the chroma variant "Chroma Energy Normalized" (CENS), following [1]_.
+    r'''Computes the chroma variant "Chroma Energy Normalized" (CENS), following [#]_.
 
     To compute CENS features, following steps are taken after obtaining chroma vectors using `chroma_cqt`:
-    1. L-1 normalization of each chroma vector
-    2. Quantization of amplitude based on "log-like" amplitude thresholds
-    3. (optional) Smoothing with sliding window. Default window length = 41 frames
-    4. (not implemented) Downsampling
+
+        1. L-1 normalization of each chroma vector
+        2. Quantization of amplitude based on "log-like" amplitude thresholds
+        3. (optional) Smoothing with sliding window. Default window length = 41 frames
+        4. (not implemented) Downsampling
 
     CENS features are robust to dynamics, timbre and articulation, thus these are commonly used in audio
     matching and retrieval applications.
 
-    .. [1] Meinard Müller and Sebastian Ewert
+    .. [#] Meinard Müller and Sebastian Ewert
            "Chroma Toolbox: MATLAB implementations for extracting variants of chroma-based audio features"
            In Proceedings of the International Conference on Music Information Retrieval (ISMIR), 2011.
 
@@ -1448,9 +1449,9 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
 
 def tonnetz(y=None, sr=22050, chroma=None, **kwargs):
     '''Computes the tonal centroid features (tonnetz), following the method of
-    [1]_.
+    [#]_.
 
-    .. [1] Harte, C., Sandler, M., & Gasser, M. (2006). "Detecting Harmonic
+    .. [#] Harte, C., Sandler, M., & Gasser, M. (2006). "Detecting Harmonic
            Change in Musical Audio." In Proceedings of the 1st ACM Workshop
            on Audio and Music Computing Multimedia (pp. 21-26).
            Santa Barbara, CA, USA: ACM Press. doi:10.1145/1178723.1178727.

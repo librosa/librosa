@@ -48,20 +48,20 @@ def frame(x, frame_length, hop_length, axis=-1):
 
     For example, a one-dimensional input `x = [0, 1, 2, 3, 4, 5, 6]`
     can be framed with frame length 3 and hop length 2 in two ways.
-    The first (`axis=-1`), results in the array `x_frames`:
+    The first (`axis=-1`), results in the array `x_frames`::
 
-    [[0, 2, 4],
-     [1, 3, 5],
-     [2, 4, 6]]
+        [[0, 2, 4],
+         [1, 3, 5],
+         [2, 4, 6]]
 
     where each column `x_frames[:, i]` contains a contiguous slice of
     the input `x[i * hop_length : i * hop_length + frame_length]`.
 
-    The second way (`axis=0`) results in the array `x_frames`:
+    The second way (`axis=0`) results in the array `x_frames`::
 
-    [[0, 1, 2],
-     [2, 3, 4],
-     [4, 5, 6]]
+        [[0, 1, 2],
+         [2, 3, 4],
+         [4, 5, 6]]
 
     where each row `x_frames[i]` contains a contiguous slice of the input.
 
@@ -964,13 +964,13 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
 
     where `previous_n` is the last sample picked as a peak (greedily).
 
-    This implementation is based on [1]_ and [2]_.
+    This implementation is based on [#]_ and [#]_.
 
-    .. [1] Boeck, Sebastian, Florian Krebs, and Markus Schedl.
+    .. [#] Boeck, Sebastian, Florian Krebs, and Markus Schedl.
         "Evaluating the Online Capabilities of Onset Detection Methods." ISMIR.
         2012.
 
-    .. [2] https://github.com/CPJKU/onset_detection/blob/master/onset_program.py
+    .. [#] https://github.com/CPJKU/onset_detection/blob/master/onset_program.py
 
 
     Parameters

@@ -34,9 +34,9 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     """Locate note onset events by picking peaks in an onset strength envelope.
 
     The `peak_pick` parameters were chosen by large-scale hyper-parameter
-    optimization over the dataset provided by [1]_.
+    optimization over the dataset provided by [#]_.
 
-    .. [1] https://github.com/CPJKU/onset_db
+    .. [#] https://github.com/CPJKU/onset_db
 
 
     Parameters
@@ -188,12 +188,12 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
     `mean_f max(0, S[f, t] - ref[f, t - lag])`
 
     where `ref` is `S` after local max filtering along the frequency
-    axis [1]_.
+    axis [#]_.
 
     By default, if a time series `y` is provided, S will be the
     log-power Mel spectrogram.
 
-    .. [1] Böck, Sebastian, and Gerhard Widmer.
+    .. [#] Böck, Sebastian, and Gerhard Widmer.
            "Maximum filter vibrato suppression for onset detection."
            16th International Conference on Digital Audio Effects,
            Maynooth, Ireland. 2013.
@@ -330,9 +330,9 @@ def onset_backtrack(events, energy):
     from a detected peak amplitude to the preceding minimum.
 
     This is most useful when using onsets to determine slice points for
-    segmentation, as described by [1]_.
+    segmentation, as described by [#]_.
 
-    .. [1] Jehan, Tristan.
+    .. [#] Jehan, Tristan.
            "Creating music by listening"
            Doctoral dissertation
            Massachusetts Institute of Technology, 2005.

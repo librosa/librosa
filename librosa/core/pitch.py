@@ -167,9 +167,9 @@ def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
              ref=None):
     '''Pitch tracking on thresholded parabolically-interpolated STFT.
 
-    This implementation uses the parabolic interpolation method described by [1]_.
+    This implementation uses the parabolic interpolation method described by [#]_.
 
-    .. [1] https://ccrma.stanford.edu/~jos/sasp/Sinusoidal_Peak_Interpolation.html
+    .. [#] https://ccrma.stanford.edu/~jos/sasp/Sinusoidal_Peak_Interpolation.html
 
     Parameters
     ----------

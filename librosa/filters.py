@@ -953,10 +953,10 @@ def mr_frequencies(tuning):
     r'''Helper function for generating center frequency and sample rate pairs.
 
     This function will return center frequency and corresponding sample rates
-    to obtain similar pitch filterbank settings as described in [1]_.
+    to obtain similar pitch filterbank settings as described in [#]_.
     Instead of starting with MIDI pitch `A0`, we start with `C0`.
 
-    .. [1] Müller, Meinard.
+    .. [#] Müller, Meinard.
            "Information Retrieval for Music and Motion."
            Springer Verlag. 2007.
 
@@ -1011,9 +1011,9 @@ def semitone_filterbank(center_freqs=None, tuning=0.0, sample_rates=None, flayou
     industry (ISO 16), some orchestras tune to A441-A445, whereas baroque musicians
     tune to A415.
 
-    See [1]_ for details.
+    See [#]_ for details.
 
-    .. [1] Müller, Meinard.
+    .. [#] Müller, Meinard.
            "Information Retrieval for Music and Motion."
            Springer Verlag. 2007.
 

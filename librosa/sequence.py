@@ -57,9 +57,9 @@ def dtw(X=None, Y=None, C=None, metric='euclidean', step_sizes_sigma=None,
     '''Dynamic time warping (DTW).
 
     This function performs a DTW and path backtracking on two sequences.
-    We follow the nomenclature and algorithmic approach as described in [1]_.
+    We follow the nomenclature and algorithmic approach as described in [#]_.
 
-    .. [1] Meinard Mueller
+    .. [#] Meinard Mueller
            Fundamentals of Music Processing — Audio, Analysis, Algorithms, Applications
            Springer Verlag, ISBN: 978-3-319-21944-8, 2015.
 
@@ -504,7 +504,7 @@ def rqa(sim, gap_onset=1, gap_extend=1, knight_moves=True, backtrack=True):
     '''Recurrence quantification analysis (RQA)
 
     This function implements different forms of RQA as described by
-    Serra, Serra, and Andrzejak [1]_.  These methods take as input
+    Serra, Serra, and Andrzejak (SSA). [#]_  These methods take as input
     a self- or cross-similarity matrix `sim`, and calculate the value
     of path alignments by dynamic programming.
 
@@ -512,21 +512,21 @@ def rqa(sim, gap_onset=1, gap_extend=1, knight_moves=True, backtrack=True):
     maximized, not minimized, so the input should measure similarity rather
     than distance.
 
-    The simplest RQA method, denoted as `L` [1]_ (equation 3) and equivalent
-    to the method described by Eckman, Kamphorst, and Ruelle [2]_, accumulates
+    The simplest RQA method, denoted as `L` (SSA equation 3) and equivalent
+    to the method described by Eckman, Kamphorst, and Ruelle [#]_, accumulates
     the length of diagonal paths with positive values in the input:
 
         - `score[i, j] = score[i-1, j-1] + 1`  if `sim[i, j] > 0`
         - `score[i, j] = 0` otherwise.
 
-    The second method, denoted as `S` [1]_ (equation 4), is similar to the first,
+    The second method, denoted as `S` (SSA equation 4), is similar to the first,
     but allows for "knight moves" (as in the chess piece) in addition to strict
     diagonal moves:
 
         - `score[i, j] = max(score[i-1, j-1], score[i-2, j-1], score[i-1, j-2]) + 1`  if `sim[i, j] > 0`
         - `score[i, j] = 0` otherwise.
 
-    The third method, denoted as `Q` [1]_ (equations 5 and 6) extends this by
+    The third method, denoted as `Q` (SSA equations 5 and 6) extends this by
     allowing gaps in the alignment that incur some cost, rather than a hard
     reset to 0 whenever `sim[i, j] == 0`.
     Gaps are penalized by two additional parameters, `gap_onset` and `gap_extend`,
@@ -537,11 +537,11 @@ def rqa(sim, gap_onset=1, gap_extend=1, knight_moves=True, backtrack=True):
     method, and disabling knight moves recovers the first.
 
 
-    .. [1] Serrà, Joan, Xavier Serra, and Ralph G. Andrzejak.
+    .. [#] Serrà, Joan, Xavier Serra, and Ralph G. Andrzejak.
         "Cross recurrence quantification for cover song identification."
         New Journal of Physics 11, no. 9 (2009): 093017.
 
-    .. [2] Eckmann, J. P., S. Oliffson Kamphorst, and D. Ruelle.
+    .. [#] Eckmann, J. P., S. Oliffson Kamphorst, and D. Ruelle.
         "Recurrence plots of dynamical systems."
         World Scientific Series on Nonlinear Science Series A 16 (1995): 441-446.
 
@@ -908,10 +908,10 @@ def viterbi(prob, transition, p_init=None, return_logp=False):
     indicating the conditional likelihood of seeing the observation
     at time `t` from state `s`, and a transition matrix
     `transition[i, j]` which encodes the conditional probability of
-    moving from state `i` to state `j`, the Viterbi algorithm [1]_ computes
+    moving from state `i` to state `j`, the Viterbi algorithm [#]_ computes
     the most likely sequence of states from the observations.
 
-    .. [1] Viterbi, Andrew. "Error bounds for convolutional codes and an
+    .. [#] Viterbi, Andrew. "Error bounds for convolutional codes and an
         asymptotically optimum decoding algorithm."
         IEEE transactions on Information Theory 13.2 (1967): 260-269.
 

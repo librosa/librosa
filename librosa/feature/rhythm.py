@@ -18,9 +18,9 @@ __all__ = ['tempogram', 'fourier_tempogram']
 # -- Rhythmic features -- #
 def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
               win_length=384, center=True, window='hann', norm=np.inf):
-    '''Compute the tempogram: local autocorrelation of the onset strength envelope. [1]_
+    '''Compute the tempogram: local autocorrelation of the onset strength envelope. [#]_
 
-    .. [1] Grosche, Peter, Meinard Müller, and Frank Kurth.
+    .. [#] Grosche, Peter, Meinard Müller, and Frank Kurth.
         "Cyclic tempogram - A mid-level tempo representation for music signals."
         ICASSP, 2010.
 
@@ -176,9 +176,9 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
 def fourier_tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
                       win_length=384, center=True, window='hann'):
     '''Compute the Fourier tempogram: the short-time Fourier transform of the
-    onset strength envelope. [1]_
+    onset strength envelope. [#]_
 
-    .. [1] Grosche, Peter, Meinard Müller, and Frank Kurth.
+    .. [#] Grosche, Peter, Meinard Müller, and Frank Kurth.
         "Cyclic tempogram - A mid-level tempo representation for music signals."
         ICASSP, 2010.
 
