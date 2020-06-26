@@ -1248,7 +1248,7 @@ def griffinlim_cqt(C, n_iter=32, sr=22050, hop_length=512, fmin=None, bins_per_o
         # Rebuild the spectrogram
         rebuilt = cqt(inverse, sr=sr, bins_per_octave=bins_per_octave, n_bins=C.shape[0],
                       hop_length=hop_length, fmin=fmin, tuning=tuning, filter_scale=filter_scale,
-                      window=window, res_type=res_type, dtype=C.dtype)
+                      window=window, res_type=res_type)
 
         # Update our phase estimates
         angles[:] = rebuilt - (momentum / (1 + momentum)) * tprev
