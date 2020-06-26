@@ -208,12 +208,14 @@ fig.colorbar(img, ax=ax)
 # %%
 # In this example, notice that we used 'time' for both axis labels.
 # In general, any of the supported modes can be used for either axis.
-# For example, we could also plot the spectral covariance plot:
+# For example, we could also plot the chroma covariance plot with
+# chroma decorations on each axis:
 
-speccov = np.cov(np.abs(D))
+ccov = np.cov(chroma)
 fig, ax = plt.subplots()
-img = librosa.display.specshow(speccov, y_axis='log', x_axis='log', ax=ax)
-ax.set(title='Spectral covariance')
+img = librosa.display.specshow(ccov, y_axis='chroma', x_axis='chroma',
+                               key='Eb:maj', ax=ax)
+ax.set(title='Chroma covariance')
 fig.colorbar(img, ax=ax)
 
 
@@ -232,9 +234,9 @@ fig.colorbar(img, ax=ax)
 #     colormap.
 #
 # The default sequential colormap is 'magma', which is perceptually uniform and
-# converts gracefully to grayscale. 
+# converts gracefully to grayscale.
 #
-# You can always override this automatic colormap selection by setting an 
+# You can always override this automatic colormap selection by setting an
 # explicit `cmap`:
 
 fig, ax = plt.subplots()
@@ -249,11 +251,12 @@ fig.colorbar(img, ax=ax, format="%+2.f dB")
 # This can be helpful when centering divergent colormaps around 0 (or some other
 # reference point).
 
-max_var = np.max(np.abs(speccov))
+max_var = np.max(np.abs(ccov))
 fig, ax = plt.subplots()
-img = librosa.display.specshow(speccov, vmin=-max_var, vmax=max_var,
-                               y_axis='log', x_axis='log', ax=ax)
-ax.set(title='Spectral covariance')
+img = librosa.display.specshow(ccov, vmin=-max_var, vmax=max_var,
+                               y_axis='chroma', x_axis='chroma',
+                               key='Eb:maj', ax=ax)
+ax.set(title='Chroma covariance')
 fig.colorbar(img, ax=ax)
 
 # %%
