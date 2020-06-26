@@ -19,39 +19,48 @@ def salience(S, freqs, h_range, weights=None, aggregate=None,
     S : np.ndarray [shape=(d, n)]
         input time frequency magnitude representation (e.g. STFT or CQT magnitudes).
         Must be real-valued and non-negative.
+
     freqs : np.ndarray, shape=(S.shape[axis])
         The frequency values corresponding to S's elements along the
         chosen axis.
+
     h_range : list-like, non-negative
         Harmonics to include in salience computation.  The first harmonic (1)
-        corresponds to `S` itself. Values less than one (e.g., 1/2) correspond
+        corresponds to ``S`` itself. Values less than one (e.g., 1/2) correspond
         to sub-harmonics.
+
     weights : list-like
         The weight to apply to each harmonic in the summation. (default:
-        uniform weights). Must be the same length as `harmonics`.
+        uniform weights). Must be the same length as ``harmonics``.
+
     aggregate : function
         aggregation function (default: `np.average`)
-        If `aggregate=np.average`, then a weighted average is
+
+        If ``aggregate=np.average``, then a weighted average is
         computed per-harmonic according to the specified weights.
         For all other aggregation functions, all harmonics
         are treated equally.
+
     filter_peaks : bool
         If true, returns harmonic summation only on frequencies of peak
         magnitude. Otherwise returns harmonic summation over the full spectrum.
         Defaults to True.
+
     fill_value : float
         The value to fill non-peaks in the output representation. (default:
-        np.nan) Only used if `filter_peaks == True`.
+        `np.nan`) Only used if ``filter_peaks == True``.
+
     kind : str
         Interpolation type for harmonic estimation.
         See `scipy.interpolate.interp1d`.
+
     axis : int
         The axis along which to compute harmonics
 
     Returns
     -------
     S_sal : np.ndarray, shape=(len(h_range), [x.shape])
-        `S_sal` will have the same shape as `S`, and measure
+        ``S_sal`` will have the same shape as ``S``, and measure
         the overal harmonic energy at each frequency.
 
     See Also
@@ -125,7 +134,7 @@ def interp_harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
         chosen axis.
 
     h_range : list-like, non-negative
-        Harmonics to compute.  The first harmonic (1) corresponds to `x`
+        Harmonics to compute.  The first harmonic (1) corresponds to ``x``
         itself.
         Values less than one (e.g., 1/2) correspond to sub-harmonics.
 
@@ -142,8 +151,8 @@ def interp_harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
     Returns
     -------
     x_harm : np.ndarray, shape=(len(h_range), [x.shape])
-        `x_harm[i]` will have the same shape as `x`, and measure
-        the energy at the `h_range[i]` harmonic of each frequency.
+        ``x_harm[i]`` will have the same shape as ``x``, and measure
+        the energy at the ``h_range[i]`` harmonic of each frequency.
 
     See Also
     --------
@@ -235,7 +244,7 @@ def harmonics_1d(harmonic_out, x, freqs, h_range, kind='linear',
         chosen axis.
 
     h_range : list-like, non-negative
-        Harmonics to compute.  The first harmonic (1) corresponds to `x`
+        Harmonics to compute.  The first harmonic (1) corresponds to ``x``
         itself.
         Values less than one (e.g., 1/2) correspond to sub-harmonics.
 
@@ -338,10 +347,10 @@ def harmonics_2d(harmonic_out, x, freqs, h_range, kind='linear', fill_value=0,
         The input energy
 
     freqs : np.ndarray, shape=x.shape
-        The frequency values corresponding to each element of `x`
+        The frequency values corresponding to each element of ``x``
 
     h_range : list-like, non-negative
-        Harmonics to compute.  The first harmonic (1) corresponds to `x`
+        Harmonics to compute.  The first harmonic (1) corresponds to ``x``
         itself.  Values less than one (e.g., 1/2) correspond to
         sub-harmonics.
 
