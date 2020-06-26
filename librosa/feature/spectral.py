@@ -1345,7 +1345,7 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
 
     fmin : float > 0
         minimum frequency to analyze in the CQT.
-        Default: 'C1' ~= 32.7 Hz
+        Default: `C1 ~= 32.7 Hz`
 
     norm : int > 0, +-np.inf, or None
         Column-wise normalization of the chromagram.
@@ -1365,7 +1365,7 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
     bins_per_octave : int > 0
         Number of bins per octave in the CQT.
 
-        Default: matches ``n_chroma``
+        Default: 36
 
     cqt_mode : ['full', 'hybrid']
         Constant-Q transform mode
@@ -1380,7 +1380,7 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
 
     Returns
     -------
-    chroma_cens : np.ndarray [shape=(n_chroma, t)]
+    cens : np.ndarray [shape=(n_chroma, t)]
         The output cens-chromagram
 
     See Also
