@@ -505,7 +505,7 @@ def rqa(sim, gap_onset=1, gap_extend=1, knight_moves=True, backtrack=True):
 
     This function implements different forms of RQA as described by
     Serra, Serra, and Andrzejak (SSA). [#]_  These methods take as input
-    a self- or cross-similarity matrix `sim`, and calculate the value
+    a self- or cross-similarity matrix ``sim``, and calculate the value
     of path alignments by dynamic programming.
 
     Note that unlike dynamic time warping (`dtw`), alignment paths here are
@@ -516,24 +516,25 @@ def rqa(sim, gap_onset=1, gap_extend=1, knight_moves=True, backtrack=True):
     to the method described by Eckman, Kamphorst, and Ruelle [#]_, accumulates
     the length of diagonal paths with positive values in the input:
 
-        - `score[i, j] = score[i-1, j-1] + 1`  if `sim[i, j] > 0`
-        - `score[i, j] = 0` otherwise.
+        - ``score[i, j] = score[i-1, j-1] + 1``  if ``sim[i, j] > 0``
+        - ``score[i, j] = 0`` otherwise.
 
     The second method, denoted as `S` (SSA equation 4), is similar to the first,
     but allows for "knight moves" (as in the chess piece) in addition to strict
     diagonal moves:
 
-        - `score[i, j] = max(score[i-1, j-1], score[i-2, j-1], score[i-1, j-2]) + 1`  if `sim[i, j] > 0`
-        - `score[i, j] = 0` otherwise.
+        - ``score[i, j] = max(score[i-1, j-1], score[i-2, j-1], score[i-1, j-2]) + 1``  if ``sim[i, j] >
+          0``
+        - ``score[i, j] = 0`` otherwise.
 
     The third method, denoted as `Q` (SSA equations 5 and 6) extends this by
     allowing gaps in the alignment that incur some cost, rather than a hard
-    reset to 0 whenever `sim[i, j] == 0`.
-    Gaps are penalized by two additional parameters, `gap_onset` and `gap_extend`,
+    reset to 0 whenever ``sim[i, j] == 0``.
+    Gaps are penalized by two additional parameters, ``gap_onset`` and ``gap_extend``,
     which are subtracted from the value of the alignment path every time a gap
     is introduced or extended (respectively).
 
-    Note that setting `gap_onset` and `gap_extend` to `np.inf` recovers the second
+    Note that setting ``gap_onset`` and ``gap_extend`` to `np.inf` recovers the second
     method, and disabling knight moves recovers the first.
 
 
@@ -561,27 +562,27 @@ def rqa(sim, gap_onset=1, gap_extend=1, knight_moves=True, backtrack=True):
         Penalty for extending a gap in an alignment sequence
 
     knight_moves : bool
-        If `True` (default), allow for "knight moves" in the alignment,
-        e.g., `(n, m) => (n + 1, m + 2)` or `(n + 2, m + 1)`.
+        If ``True`` (default), allow for "knight moves" in the alignment,
+        e.g., ``(n, m) => (n + 1, m + 2)`` or ``(n + 2, m + 1)``.
 
-        If `False`, only allow for diagonal moves `(n, m) => (n + 1, m + 1)`.
+        If ``False``, only allow for diagonal moves ``(n, m) => (n + 1, m + 1)``.
 
     backtrack : bool
-        If `True`, return the alignment path.
+        If ``True``, return the alignment path.
 
-        If `False`, only return the score matrix.
+        If ``False``, only return the score matrix.
 
     Returns
     -------
     score : np.ndarray [shape=(N, M)]
-        The alignment score matrix.  `score[n, m]` is the cumulative value of
-        the best alignment sequence ending in frames `n` and `m`.
+        The alignment score matrix.  ``score[n, m]`` is the cumulative value of
+        the best alignment sequence ending in frames ``n`` and ``m``.
 
     path : np.ndarray [shape=(k, 2)] (optional)
-        If `backtrack=True`, `path` contains a list of pairs of aligned frames
+        If ``backtrack=True``, ``path`` contains a list of pairs of aligned frames
         in the best alignment sequence.
 
-        `path[i] = [n, m]` indicates that row `n` aligns to column `m`.
+        ``path[i] = [n, m]`` indicates that row ``n`` aligns to column ``m``.
 
     See Also
     --------
@@ -844,12 +845,12 @@ def _viterbi(log_prob, log_trans, log_p_init, state, value, ptr):  # pragma: no 
     Parameters
     ----------
     log_prob : np.ndarray [shape=(T, m)]
-        `log_prob[t, s]` is the conditional log-likelihood
-        log P[X = X(t) | State(t) = s]
+        ``log_prob[t, s]`` is the conditional log-likelihood
+        ``log P[X = X(t) | State(t) = s]``
 
     log_trans : np.ndarray [shape=(m, m)]
         The log transition matrix
-        `log_trans[i, j]` = log P[State(t+1) = j | State(t) = i]
+        ``log_trans[i, j] = log P[State(t+1) = j | State(t) = i]``
 
     log_p_init : np.ndarray [shape=(m,)]
         log of the initial state distribution
@@ -866,7 +867,7 @@ def _viterbi(log_prob, log_trans, log_p_init, state, value, ptr):  # pragma: no 
     Returns
     -------
     None
-        All computations are performed in-place on `state, value, ptr`.
+        All computations are performed in-place on ``state, value, ptr``.
     '''
     n_steps, n_states = log_prob.shape
 
@@ -904,11 +905,11 @@ def _viterbi(log_prob, log_trans, log_p_init, state, value, ptr):  # pragma: no 
 def viterbi(prob, transition, p_init=None, return_logp=False):
     '''Viterbi decoding from observation likelihoods.
 
-    Given a sequence of observation likelihoods `prob[s, t]`,
+    Given a sequence of observation likelihoods ``prob[s, t]``,
     indicating the conditional likelihood of seeing the observation
-    at time `t` from state `s`, and a transition matrix
-    `transition[i, j]` which encodes the conditional probability of
-    moving from state `i` to state `j`, the Viterbi algorithm [#]_ computes
+    at time ``t`` from state ``s``, and a transition matrix
+    ``transition[i, j]`` which encodes the conditional probability of
+    moving from state ``i`` to state ``j``, the Viterbi algorithm [#]_ computes
     the most likely sequence of states from the observations.
 
     .. [#] Viterbi, Andrew. "Error bounds for convolutional codes and an
@@ -918,11 +919,11 @@ def viterbi(prob, transition, p_init=None, return_logp=False):
     Parameters
     ----------
     prob : np.ndarray [shape=(n_states, n_steps), non-negative]
-        `prob[s, t]` is the probability of observation at time `t`
-        being generated by state `s`.
+        ``prob[s, t]`` is the probability of observation at time ``t``
+        being generated by state ``s``.
 
     transition : np.ndarray [shape=(n_states, n_states), non-negative]
-        `transition[i, j]` is the probability of a transition from i->j.
+        ``transition[i, j]`` is the probability of a transition from i->j.
         Each row must sum to 1.
 
     p_init : np.ndarray [shape=(n_states,)]
@@ -930,17 +931,17 @@ def viterbi(prob, transition, p_init=None, return_logp=False):
         If not provided, a uniform distribution is assumed.
 
     return_logp : bool
-        If `True`, return the log-likelihood of the state sequence.
+        If ``True``, return the log-likelihood of the state sequence.
 
     Returns
     -------
-    Either `states` or `(states, logp)`:
+    Either ``states`` or ``(states, logp)``:
 
     states : np.ndarray [shape=(n_steps,)]
         The most likely state sequence.
 
     logp : scalar [float]
-        If `return_logp=True`, the log probability of `states` given
+        If ``return_logp=True``, the log probability of ``states`` given
         the observations.
 
     See Also
@@ -1023,28 +1024,28 @@ def viterbi(prob, transition, p_init=None, return_logp=False):
 def viterbi_discriminative(prob, transition, p_state=None, p_init=None, return_logp=False):
     '''Viterbi decoding from discriminative state predictions.
 
-    Given a sequence of conditional state predictions `prob[s, t]`,
-    indicating the conditional likelihood of state `s` given the
-    observation at time `t`, and a transition matrix `transition[i, j]`
-    which encodes the conditional probability of moving from state `i`
-    to state `j`, the Viterbi algorithm computes the most likely sequence
+    Given a sequence of conditional state predictions ``prob[s, t]``,
+    indicating the conditional likelihood of state ``s`` given the
+    observation at time ``t``, and a transition matrix ``transition[i, j]``
+    which encodes the conditional probability of moving from state ``i``
+    to state ``j``, the Viterbi algorithm computes the most likely sequence
     of states from the observations.
 
     This implementation uses the standard Viterbi decoding algorithm
     for observation likelihood sequences, under the assumption that
-    `P[Obs(t) | State(t) = s]` is proportional to
-    `P[State(t) = s | Obs(t)] / P[State(t) = s]`, where the denominator
-    is the marginal probability of state `s` occurring as given by `p_state`.
+    ``P[Obs(t) | State(t) = s]`` is proportional to
+    ``P[State(t) = s | Obs(t)] / P[State(t) = s]``, where the denominator
+    is the marginal probability of state ``s`` occurring as given by ``p_state``.
 
     Parameters
     ----------
     prob : np.ndarray [shape=(n_states, n_steps), non-negative]
-        `prob[s, t]` is the probability of state `s` conditional on
-        the observation at time `t`.
+        ``prob[s, t]`` is the probability of state ``s`` conditional on
+        the observation at time ``t``.
         Must be non-negative and sum to 1 along each column.
 
     transition : np.ndarray [shape=(n_states, n_states), non-negative]
-        `transition[i, j]` is the probability of a transition from i->j.
+        ``transition[i, j]`` is the probability of a transition from i->j.
         Each row must sum to 1.
 
     p_state : np.ndarray [shape=(n_states,)]
@@ -1057,17 +1058,17 @@ def viterbi_discriminative(prob, transition, p_state=None, p_init=None, return_l
         If not provided, it is assumed to be uniform.
 
     return_logp : bool
-        If `True`, return the log-likelihood of the state sequence.
+        If ``True``, return the log-likelihood of the state sequence.
 
     Returns
     -------
-    Either `states` or `(states, logp)`:
+    Either ``states`` or ``(states, logp)``:
 
     states : np.ndarray [shape=(n_steps,)]
         The most likely state sequence.
 
     logp : scalar [float]
-        If `return_logp=True`, the log probability of `states` given
+        If ``return_logp=True``, the log probability of ``states`` given
         the observations.
 
     See Also
@@ -1199,11 +1200,11 @@ def viterbi_discriminative(prob, transition, p_state=None, p_init=None, return_l
 def viterbi_binary(prob, transition, p_state=None, p_init=None, return_logp=False):
     '''Viterbi decoding from binary (multi-label), discriminative state predictions.
 
-    Given a sequence of conditional state predictions `prob[s, t]`,
-    indicating the conditional likelihood of state `s` being active
-    conditional on observation at time `t`, and a 2*2 transition matrix
-    `transition` which encodes the conditional probability of moving from
-    state `s` to state `~s` (not-`s`), the Viterbi algorithm computes the
+    Given a sequence of conditional state predictions ``prob[s, t]``,
+    indicating the conditional likelihood of state ``s`` being active
+    conditional on observation at time ``t``, and a 2*2 transition matrix
+    ``transition`` which encodes the conditional probability of moving from
+    state ``s`` to state ``~s`` (not-``s``), the Viterbi algorithm computes the
     most likely sequence of states from the observations.
 
     This function differs from `viterbi_discriminative` in that it does not assume the
@@ -1211,26 +1212,26 @@ def viterbi_binary(prob, transition, p_state=None, p_init=None, return_logp=Fals
     transforming the multi-label decoding problem to a collection
     of binary Viterbi problems (one for each *state* or label).
 
-    The output is a binary matrix `states[s, t]` indicating whether each
-    state `s` is active at time `t`.
+    The output is a binary matrix ``states[s, t]`` indicating whether each
+    state ``s`` is active at time ``t``.
 
     Parameters
     ----------
     prob : np.ndarray [shape=(n_steps,) or (n_states, n_steps)], non-negative
-        `prob[s, t]` is the probability of state `s` being active
-        conditional on the observation at time `t`.
+        ``prob[s, t]`` is the probability of state ``s`` being active
+        conditional on the observation at time ``t``.
         Must be non-negative and less than 1.
 
-        If `prob` is 1-dimensional, it is expanded to shape `(1, n_steps)`.
+        If ``prob`` is 1-dimensional, it is expanded to shape ``(1, n_steps)``.
 
     transition : np.ndarray [shape=(2, 2) or (n_states, 2, 2)], non-negative
         If 2-dimensional, the same transition matrix is applied to each sub-problem.
-        `transition[0, i]` is the probability of the state going from inactive to `i`,
-        `transition[1, i]` is the probability of the state going from active to `i`.
+        ``transition[0, i]`` is the probability of the state going from inactive to ``i``,
+        ``transition[1, i]`` is the probability of the state going from active to ``i``.
         Each row must sum to 1.
 
-        If 3-dimensional, `transition[s]` is interpreted as the 2x2 transition matrix
-        for state label `s`.
+        If 3-dimensional, ``transition[s]`` is interpreted as the 2x2 transition matrix
+        for state label ``s``.
 
     p_state : np.ndarray [shape=(n_states,)]
         Optional: marginal probability for each state (between [0,1]).
@@ -1242,18 +1243,18 @@ def viterbi_binary(prob, transition, p_state=None, p_init=None, return_logp=Fals
         If not provided, it is assumed to be uniform.
 
     return_logp : bool
-        If `True`, return the log-likelihood of the state sequence.
+        If ``True``, return the log-likelihood of the state sequence.
 
     Returns
     -------
-    Either `states` or `(states, logp)`:
+    Either ``states`` or ``(states, logp)``:
 
     states : np.ndarray [shape=(n_states, n_steps)]
         The most likely state sequence.
 
     logp : np.ndarray [shape=(n_states,)]
-        If `return_logp=True`, the log probability of each state activation
-        sequence `states`
+        If ``return_logp=True``, the log probability of each state activation
+        sequence ``states``
 
     See Also
     --------
@@ -1344,7 +1345,7 @@ def viterbi_binary(prob, transition, p_state=None, p_init=None, return_logp=Fals
 
 
 def transition_uniform(n_states):
-    '''Construct a uniform transition matrix over `n_states`.
+    '''Construct a uniform transition matrix over ``n_states``.
 
     Parameters
     ----------
@@ -1354,7 +1355,7 @@ def transition_uniform(n_states):
     Returns
     -------
     transition : np.ndarray [shape=(n_states, n_states)]
-        `transition[i, j] = 1./n_states`
+        ``transition[i, j] = 1./n_states``
 
     Examples
     --------
@@ -1374,12 +1375,12 @@ def transition_uniform(n_states):
 
 
 def transition_loop(n_states, prob):
-    '''Construct a self-loop transition matrix over `n_states`.
+    '''Construct a self-loop transition matrix over ``n_states``.
 
     The transition matrix will have the following properties:
 
-        - `transition[i, i] = p` for all i
-        - `transition[i, j] = (1 - p) / (n_states - 1)` for all `j != i`
+        - ``transition[i, i] = p`` for all ``i``
+        - ``transition[i, j] = (1 - p) / (n_states - 1)`` for all ``j != i``
 
     This type of transition matrix is appropriate when states tend to be
     locally stable, and there is no additional structure between different
@@ -1393,7 +1394,7 @@ def transition_loop(n_states, prob):
     prob : float in [0, 1] or iterable, length=n_states
         If a scalar, this is the probability of a self-transition.
 
-        If a vector of length `n_states`, `p[i]` is the probability of state `i`'s self-transition.
+        If a vector of length ``n_states``, ``p[i]`` is the probability of self-transition in state ``i`` 
 
     Returns
     -------
@@ -1438,12 +1439,12 @@ def transition_loop(n_states, prob):
 
 
 def transition_cycle(n_states, prob):
-    '''Construct a cyclic transition matrix over `n_states`.
+    '''Construct a cyclic transition matrix over ``n_states``.
 
     The transition matrix will have the following properties:
 
-        - `transition[i, i] = p`
-        - `transition[i, i + 1] = (1 - p)`
+        - ``transition[i, i] = p``
+        - ``transition[i, i + 1] = (1 - p)``
 
     This type of transition matrix is appropriate for state spaces
     with cyclical structure, such as metrical position within a bar.
@@ -1459,8 +1460,8 @@ def transition_cycle(n_states, prob):
     prob : float in [0, 1] or iterable, length=n_states
         If a scalar, this is the probability of a self-transition.
 
-        If a vector of length `n_states`, `p[i]` is the probability of state
-        `i`'s self-transition.
+        If a vector of length ``n_states``, ``p[i]`` is the probability of
+        self-transition in state ``i``
 
     Returns
     -------
@@ -1505,9 +1506,9 @@ def transition_local(n_states, width, window='triangle', wrap=False):
 
     The transition matrix will have the following properties:
 
-        - `transition[i, j] = 0` if `|i - j| > width`
-        - `transition[i, i]` is maximal
-        - `transition[i, i - width//2 : i + width//2]` has shape `window`
+        - ``transition[i, j] = 0`` if ``|i - j| > width``
+        - ``transition[i, i]`` is maximal
+        - ``transition[i, i - width//2 : i + width//2]`` has shape ``window``
 
     This type of transition matrix is appropriate for state spaces
     that discretely approximate continuous variables, such as in fundamental
@@ -1520,7 +1521,7 @@ def transition_local(n_states, width, window='triangle', wrap=False):
 
     width : int >= 1 or iterable
         The maximum number of states to treat as "local".
-        If iterable, it should have length equal to `n_states`,
+        If iterable, it should have length equal to ``n_states``,
         and specify the width independently for each state.
 
     window : str, callable, or window specification
@@ -1529,13 +1530,13 @@ def transition_local(n_states, width, window='triangle', wrap=False):
         Any window specification supported by `filters.get_window` will work here.
 
         .. note:: Certain windows (e.g., 'hann') are identically 0 at the boundaries,
-            so and effectively have `width-2` non-zero values.  You may have to expand
-            `width` to get the desired behavior.
+            so and effectively have ``width-2`` non-zero values.  You may have to expand
+            ``width`` to get the desired behavior.
 
 
     wrap : bool
-        If `True`, then state locality `|i - j|` is computed modulo `n_states`.
-        If `False` (default), then locality is absolute.
+        If ``True``, then state locality ``|i - j|`` is computed modulo ``n_states``.
+        If ``False`` (default), then locality is absolute.
 
     See Also
     --------

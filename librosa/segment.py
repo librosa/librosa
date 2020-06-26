@@ -57,10 +57,8 @@ def cross_similarity(data, data_ref, k=None, metric='euclidean',
                      sparse=False, mode='connectivity', bandwidth=None):
     '''Compute cross-similarity from one data sequence to a reference sequence.
 
-    The output is a matrix `xsim`:
-
-        `xsim[i, j]` is non-zero if `data_ref[:, i]` is a k-nearest neighbor
-        of `data[:, j]`.
+    The output is a matrix ``xsim``, where ``xsim[i, j]`` is non-zero 
+    if ``data_ref[:, i]`` is a k-nearest neighbor of ``data[:, j]``.
 
 
     Parameters
@@ -74,8 +72,8 @@ def cross_similarity(data, data_ref, k=None, metric='euclidean',
     k : int > 0 [scalar] or None
         the number of nearest-neighbors for each sample
 
-        Default: `k = 2 * ceil(sqrt(n_ref))`,
-        or `k = 2` if `n_ref <= 3`
+        Default: ``k = 2 * ceil(sqrt(n_ref))``,
+        or ``k = 2`` if ``n_ref <= 3``
 
     metric : str
         Distance metric to use for nearest-neighbor calculation.
@@ -93,7 +91,7 @@ def cross_similarity(data, data_ref, k=None, metric='euclidean',
         points.
 
         If 'affinity', then non-zero entries are mapped to
-        `exp( - distance(i, j) / bandwidth)` where `bandwidth` is
+        ``exp( - distance(i, j) / bandwidth)`` where ``bandwidth`` is
         as specified below.
 
     bandwidth : None or float > 0
@@ -101,7 +99,7 @@ def cross_similarity(data, data_ref, k=None, metric='euclidean',
         bandwidth on the affinity kernel.
 
         If no value is provided, it is set automatically to the median
-        distance to the k'th nearest neighbor of each `data[:, i]`.
+        distance to the k'th nearest neighbor of each ``data[:, i]``.
 
     Returns
     -------
@@ -250,18 +248,18 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
                       bandwidth=None, self=False, axis=-1):
     '''Compute a recurrence matrix from a data matrix.
 
-    `rec[i, j]` is non-zero if `data[:, i]` is one of `data[:, j]`'s
-    k-nearest-neighbors and `|i - j| >= width`
+    ``rec[i, j]`` is non-zero if ``data[:, i]`` is a k-nearest neighbor
+    of ``data[:, j]`` and ``|i - j| >= width``
 
-    The specific value of `rec[i, j]` can have several forms, governed
-    by the `mode` parameter below:
+    The specific value of ``rec[i, j]`` can have several forms, governed
+    by the ``mode`` parameter below:
 
-        - Connectivity: `rec[i, j] = 1 or 0` indicates that frames `i` and `j` are repetitions
+        - Connectivity: ``rec[i, j] = 1 or 0`` indicates that frames ``i`` and ``j`` are repetitions
 
-        - Affinity: `rec[i, j] > 0` measures how similar frames `i` and `j` are.  This is also
+        - Affinity: ``rec[i, j] > 0`` measures how similar frames ``i`` and ``j`` are.  This is also
           known as a (sparse) self-similarity matrix.
 
-        - Distance: `rec[i, j] > 0` measures how distant frames `i` and `j` are.  This is also
+        - Distance: ``rec[i, j] > 0`` measures how distant frames ``i`` and ``j`` are.  This is also
           known as a (sparse) self-distance matrix.
 
     The general term *recurrence matrix* can refer to any of the three forms above.
@@ -275,14 +273,14 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
     k : int > 0 [scalar] or None
         the number of nearest-neighbors for each sample
 
-        Default: `k = 2 * ceil(sqrt(t - 2 * width + 1))`,
-        or `k = 2` if `t <= 2 * width + 1`
+        Default: ``k = 2 * ceil(sqrt(t - 2 * width + 1))``,
+        or ``k = 2`` if ``t <= 2 * width + 1``
 
     width : int >= 1 [scalar]
-        only link neighbors `(data[:, i], data[:, j])`
-        if `|i - j| >= width`
+        only link neighbors ``(data[:, i], data[:, j])``
+        if ``|i - j| >= width``
 
-        `width` cannot exceed the length of the data.
+        ``width`` cannot exceed the length of the data.
 
     metric : str
         Distance metric to use for nearest-neighbor calculation.
@@ -290,7 +288,7 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
         See `sklearn.neighbors.NearestNeighbors` for details.
 
     sym : bool [scalar]
-        set `sym=True` to only link mutual nearest-neighbors
+        set ``sym=True`` to only link mutual nearest-neighbors
 
     sparse : bool [scalar]
         if False, returns a dense type (ndarray)
@@ -303,7 +301,7 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
         points.
 
         If 'affinity', then non-zero entries are mapped to
-        `exp( - distance(i, j) / bandwidth)` where `bandwidth` is
+        ``exp( - distance(i, j) / bandwidth)`` where ``bandwidth`` is
         as specified below.
 
     bandwidth : None or float > 0
@@ -314,10 +312,10 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
         distance between furthest nearest neighbors.
 
     self : bool
-        If `True`, then the main diagonal is populated with self-links:
+        If ``True``, then the main diagonal is populated with self-links:
         0 if ``mode='distance'``, and 1 otherwise.
 
-        If `False`, the main diagonal is left empty.
+        If ``False``, the main diagonal is left empty.
 
     axis : int
         The axis along which to compute recurrence.
@@ -491,7 +489,7 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
 def recurrence_to_lag(rec, pad=True, axis=-1):
     '''Convert a recurrence matrix into a lag matrix.
 
-        `lag[i, j] == rec[i+j, j]`
+        ``lag[i, j] == rec[i+j, j]``
 
     This transformation turns diagonal structures in the recurrence matrix
     into horizontal structures in the lag matrix.
@@ -509,25 +507,25 @@ def recurrence_to_lag(rec, pad=True, axis=-1):
         A (binary) recurrence matrix, as returned by `recurrence_matrix`
 
     pad : bool
-        If False, `lag` matrix is square, which is equivalent to
+        If False, ``lag`` matrix is square, which is equivalent to
         assuming that the signal repeats itself indefinitely.
 
-        If True, `lag` is padded with `n` zeros, which eliminates
+        If True, ``lag`` is padded with ``n`` zeros, which eliminates
         the assumption of repetition.
 
     axis : int
-        The axis to keep as the `time` axis.
+        The axis to keep as the ``time`` axis.
         The alternate axis will be converted to lag coordinates.
 
     Returns
     -------
     lag : np.ndarray
-        The recurrence matrix in (lag, time) (if `axis=1`)
-        or (time, lag) (if `axis=0`) coordinates
+        The recurrence matrix in (lag, time) (if ``axis=1``)
+        or (time, lag) (if ``axis=0``) coordinates
 
     Raises
     ------
-    ParameterError : if `rec` is non-square
+    ParameterError : if ``rec`` is non-square
 
     See Also
     --------
@@ -596,7 +594,7 @@ def lag_to_recurrence(lag, axis=-1):
     Parameters
     ----------
     lag : np.ndarray or scipy.sparse.spmatrix
-        A lag matrix, as produced by `recurrence_to_lag`
+        A lag matrix, as produced by ``recurrence_to_lag``
 
     axis : int
         The axis corresponding to the time dimension.
@@ -606,11 +604,11 @@ def lag_to_recurrence(lag, axis=-1):
     -------
     rec : np.ndarray or scipy.sparse.spmatrix [shape=(n, n)]
         A recurrence matrix in (time, time) coordinates
-        For sparse matrices, format will match that of `lag`.
+        For sparse matrices, format will match that of ``lag``.
 
     Raises
     ------
-    ParameterError : if `lag` does not have the correct shape
+    ParameterError : if ``lag`` does not have the correct shape
 
     See Also
     --------
@@ -688,8 +686,8 @@ def timelag_filter(function, pad=True, index=0):
         Whether to zero-pad the structure feature matrix
 
     index : int >= 0
-        If `function` accepts input data as a positional argument, it should be
-        indexed by `index`
+        If ``function`` accepts input data as a positional argument, it should be
+        indexed by ``index``
 
 
     Returns
@@ -756,12 +754,12 @@ def timelag_filter(function, pad=True, index=0):
 def subsegment(data, frames, n_segments=4, axis=-1):
     '''Sub-divide a segmentation by feature clustering.
 
-    Given a set of frame boundaries (`frames`), and a data matrix (`data`),
-    each successive interval defined by `frames` is partitioned into
-    `n_segments` by constrained agglomerative clustering.
+    Given a set of frame boundaries (``frames``), and a data matrix (``data``),
+    each successive interval defined by ``frames`` is partitioned into
+    ``n_segments`` by constrained agglomerative clustering.
 
     .. note::
-        If an interval spans fewer than `n_segments` frames, then each
+        If an interval spans fewer than ``n_segments`` frames, then each
         frame becomes a sub-segment.
 
     Parameters
@@ -843,7 +841,7 @@ def agglomerative(data, k, clusterer=None, axis=-1):
     """Bottom-up temporal segmentation.
 
     Use a temporally-constrained agglomerative clustering routine to partition
-    `data` into `k` contiguous segments.
+    ``data`` into ``k`` contiguous segments.
 
     Parameters
     ----------
@@ -932,11 +930,11 @@ def path_enhance(R, n, window='hann', max_ratio=2.0, min_ratio=None, n_filters=7
     This function convolves multiple diagonal smoothing filters with a self-similarity (or
     recurrence) matrix R, and aggregates the result by an element-wise maximum.
 
-    Technically, the output is a matrix R_smooth such that
+    Technically, the output is a matrix R_smooth such that::
 
-        `R_smooth[i, j] = max_theta (R * filter_theta)[i, j]`
+        R_smooth[i, j] = max_theta (R * filter_theta)[i, j]
 
-    where `*` denotes 2-dimensional convolution, and `filter_theta` is a smoothing filter at
+    where `*` denotes 2-dimensional convolution, and ``filter_theta`` is a smoothing filter at
     orientation theta.
 
     This is intended to provide coherent temporal smoothing of self-similarity matrices
@@ -955,7 +953,7 @@ def path_enhance(R, n, window='hann', max_ratio=2.0, min_ratio=None, n_filters=7
             Vol. 5. IEEE, 2006.
 
     .. note:: if using recurrence_matrix to construct the input similarity matrix, be sure to include the main
-              diagonal by setting `self=True`.  Otherwise, the diagonal will be suppressed, and this is likely to
+              diagonal by setting ``self=True``.  Otherwise, the diagonal will be suppressed, and this is likely to
               produce discontinuities which will pollute the smoothing filter response.
 
     Parameters
@@ -976,20 +974,20 @@ def path_enhance(R, n, window='hann', max_ratio=2.0, min_ratio=None, n_filters=7
 
     min_ratio : float > 0
         The minimum tempo ratio to support.
-        If not provided, it will default to `1/max_ratio`
+        If not provided, it will default to ``1/max_ratio``
 
     n_filters : int >= 1
         The number of different smoothing filters to use, evenly spaced
-        between `min_ratio` and `max_ratio`.
+        between ``min_ratio`` and ``max_ratio``.
 
-        If `min_ratio = 1/max_ratio` (the default), using an odd number
+        If ``min_ratio = 1/max_ratio`` (the default), using an odd number
         of filters will ensure that the main diagonal (ratio=1) is included.
 
     zero_mean : bool
         By default, the smoothing filters are non-negative and sum to one (i.e. are averaging
         filters).
 
-        If `zero_mean=True`, then the smoothing filters are made to sum to zero by subtracting
+        If ``zero_mean=True``, then the smoothing filters are made to sum to zero by subtracting
         a constant value from the non-diagonal coordinates of the filter.  This is primarily
         useful for suppressing blocks while enhancing diagonals.
 

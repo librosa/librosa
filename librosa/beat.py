@@ -49,13 +49,13 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
         audio time series
 
     sr : number > 0 [scalar]
-        sampling rate of `y`
+        sampling rate of ``y``
 
     onset_envelope : np.ndarray [shape=(n,)] or None
         (optional) pre-computed onset strength envelope.
 
     hop_length : int > 0 [scalar]
-        number of audio samples between successive `onset_envelope` values
+        number of audio samples between successive ``onset_envelope`` values
 
     start_bpm  : float > 0 [scalar]
         initial guess for the tempo estimator (in beats per minute)
@@ -67,12 +67,12 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
         trim leading/trailing beats with weak onsets
 
     bpm        : float [scalar]
-        (optional) If provided, use `bpm` as the tempo instead of
-        estimating it from `onsets`.
+        (optional) If provided, use ``bpm`` as the tempo instead of
+        estimating it from ``onsets``.
 
     prior      : scipy.stats.rv_continuous [optional]
         An optional prior distribution over tempo.
-        If provided, `start_bpm` will be ignored.
+        If provided, ``start_bpm`` will be ignored.
 
     units : {'frames', 'samples', 'time'}
         The units to encode detected beat events in.
@@ -97,8 +97,8 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
     Raises
     ------
     ParameterError
-        if neither `y` nor `onset_envelope` are provided,
-        or if `units` is not one of 'frames', 'samples', or 'time'
+        if neither ``y`` nor ``onset_envelope`` are provided,
+        or if ``units`` is not one of 'frames', 'samples', or 'time'
 
     See Also
     --------
@@ -241,7 +241,7 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
     prior : scipy.stats.rv_continuous [optional]
         A prior distribution over tempo (in beats per minute).
         By default, a pseudo-log-normal prior is used.
-        If given, `start_bpm` and `std_bpm` will be ignored.
+        If given, ``start_bpm`` and ``std_bpm`` will be ignored.
 
     Returns
     -------
@@ -387,28 +387,28 @@ def plp(y=None, sr=22050, onset_envelope=None, hop_length=512,
         audio time series
 
     sr : number > 0 [scalar]
-        sampling rate of `y`
+        sampling rate of ``y``
 
     onset_envelope : np.ndarray [shape=(n,)] or None
         (optional) pre-computed onset strength envelope
 
     hop_length : int > 0 [scalar]
-        number of audio samples between successive `onset_envelope` values
+        number of audio samples between successive ``onset_envelope`` values
 
     win_length : int > 0 [scalar]
         number of frames to use for tempogram analysis.
-        By default, 384 frames (at `sr=22050` and `hop_length=512`) corresponds
+        By default, 384 frames (at ``sr=22050`` and ``hop_length=512``) corresponds
         to about 8.9 seconds.
 
     tempo_min, tempo_max : numbers > 0 [scalar], optional
-        Minimum and maximum permissible tempo values.  `tempo_max` must be at least
-        `tempo_min`.
+        Minimum and maximum permissible tempo values.  ``tempo_max`` must be at least
+        ``tempo_min``.
 
         Set either (or both) to `None` to disable this constraint.
 
     prior : scipy.stats.rv_continuous [optional]
         A prior distribution over tempo (in beats per minute).
-        By default, a uniform prior over `[tempo_min, tempo_max]` is used.
+        By default, a uniform prior over ``[tempo_min, tempo_max]`` is used.
 
     Returns
     -------

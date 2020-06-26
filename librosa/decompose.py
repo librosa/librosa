@@ -30,8 +30,8 @@ __all__ = ['decompose', 'hpss', 'nn_filter']
 def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kwargs):
     """Decompose a feature matrix.
 
-    Given a spectrogram `S`, produce a decomposition into `components`
-    and `activations` such that `S ~= components.dot(activations)`.
+    Given a spectrogram ``S``, produce a decomposition into ``components``
+    and ``activations`` such that ``S ~= components.dot(activations)``.
 
     By default, this is done with with non-negative matrix factorization (NMF),
     but any `sklearn.decomposition`-type object will work.
@@ -45,30 +45,31 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
     n_components : int > 0 [scalar] or None
         number of desired components
 
-        if None, then `n_features` components are used
+        if None, then ``n_features`` components are used
 
     transformer : None or object
         If None, use `sklearn.decomposition.NMF`
 
         Otherwise, any object with a similar interface to NMF should work.
-        `transformer` must follow the scikit-learn convention, where
-        input data is `(n_samples, n_features)`.
+        ``transformer`` must follow the scikit-learn convention, where
+        input data is ``(n_samples, n_features)``.
 
-        `transformer.fit_transform()` will be run on `S.T` (not `S`),
-        the return value of which is stored (transposed) as `activations`
+        `transformer.fit_transform()` will be run on ``S.T`` (not ``S``),
+        the return value of which is stored (transposed) as ``activations``
 
-        The components will be retrieved as `transformer.components_.T`
+        The components will be retrieved as ``transformer.components_.T``::
 
-        `S ~= np.dot(activations, transformer.components_).T`
+            S ~= np.dot(activations, transformer.components_).T
 
-        or equivalently:
-        `S ~= np.dot(transformer.components_.T, activations.T)`
+        or equivalently::
+
+            S ~= np.dot(transformer.components_.T, activations.T)
 
     sort : bool
-        If `True`, components are sorted by ascending peak frequency.
+        If ``True``, components are sorted by ascending peak frequency.
 
-        .. note:: If used with `transformer`, sorting is applied to copies
-            of the decomposition parameters, and not to `transformer`'s
+        .. note:: If used with ``transformer``, sorting is applied to copies
+            of the decomposition parameters, and not to ``transformer``
             internal parameters.
 
     fit : bool
@@ -93,7 +94,7 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
     Raises
     ------
     ParameterError
-        if `fit` is False and no `transformer` object is provided.
+        if ``fit`` is False and no ``transformer`` object is provided.
 
 
     See Also
@@ -171,12 +172,12 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
 def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
     """Median-filtering harmonic percussive source separation (HPSS).
 
-    If `margin = 1.0`, decomposes an input spectrogram `S = H + P`
-    where `H` contains the harmonic components,
-    and `P` contains the percussive components.
+    If ``margin = 1.0``, decomposes an input spectrogram ``S = H + P``
+    where ``H`` contains the harmonic components,
+    and ``P`` contains the percussive components.
 
-    If `margin > 1.0`, decomposes an input spectrogram `S = H + P + R`
-    where `R` contains residual components not included in `H` or `P`.
+    If ``margin > 1.0``, decomposes an input spectrogram ``S = H + P + R``
+    where ``R`` contains residual components not included in ``H`` or ``P``.
 
     This implementation is based upon the algorithm described by [#]_ and [#]_.
 
@@ -210,11 +211,11 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
         Return the masking matrices instead of components.
 
         Masking matrices contain non-negative real values that
-        can be used to measure the assignment of energy from `S`
+        can be used to measure the assignment of energy from ``S``
         into harmonic or percussive components.
 
-        Components can be recovered by multiplying `S * mask_H`
-        or `S * mask_P`.
+        Components can be recovered by multiplying ``S * mask_H``
+        or ``S * mask_P``.
 
 
     margin : float or tuple (margin_harmonic, margin_percussive)
@@ -363,9 +364,9 @@ def nn_filter(S, rec=None, aggregate=None, axis=-1, **kwargs):
     This can be useful for de-noising a spectrogram or feature matrix.
 
     The non-local means method [#]_ can be recovered by providing a
-    weighted recurrence matrix as input and specifying `aggregate=np.average`.
+    weighted recurrence matrix as input and specifying ``aggregate=np.average``.
 
-    Similarly, setting `aggregate=np.median` produces sparse de-noising
+    Similarly, setting ``aggregate=np.median`` produces sparse de-noising
     as in REPET-SIM [#]_.
 
     .. [#] Buades, A., Coll, B., & Morel, J. M.
@@ -389,8 +390,8 @@ def nn_filter(S, rec=None, aggregate=None, axis=-1, **kwargs):
     aggregate : function
         aggregation function (default: `np.mean`)
 
-        If `aggregate=np.average`, then a weighted average is
-        computed according to the (per-row) weights in `rec`.
+        If ``aggregate=np.average``, then a weighted average is
+        computed according to the (per-row) weights in ``rec``.
 
         For all other aggregation functions, all neighbors
         are treated equally.
@@ -401,7 +402,7 @@ def nn_filter(S, rec=None, aggregate=None, axis=-1, **kwargs):
 
     kwargs
         Additional keyword arguments provided to
-        `librosa.segment.recurrence_matrix` if `rec` is not provided
+        `librosa.segment.recurrence_matrix` if ``rec`` is not provided
 
     Returns
     -------
@@ -411,7 +412,7 @@ def nn_filter(S, rec=None, aggregate=None, axis=-1, **kwargs):
     Raises
     ------
     ParameterError
-        if `rec` is provided and its shape is incompatible with `S`.
+        if ``rec`` is provided and its shape is incompatible with ``S``.
 
     See also
     --------
@@ -430,7 +431,7 @@ def nn_filter(S, rec=None, aggregate=None, axis=-1, **kwargs):
 
     De-noise a chromagram by non-local median filtering.
     By default this would use euclidean distance to select neighbors,
-    but this can be overridden directly by setting the `metric` parameter.
+    but this can be overridden directly by setting the ``metric`` parameter.
 
     >>> y, sr = librosa.load(librosa.ex('brahms'),
     ...                      offset=30, duration=10)
@@ -439,7 +440,7 @@ def nn_filter(S, rec=None, aggregate=None, axis=-1, **kwargs):
     ...                                          aggregate=np.median,
     ...                                          metric='cosine')
 
-    To use non-local means, provide an affinity matrix and `aggregate=np.average`.
+    To use non-local means, provide an affinity matrix and ``aggregate=np.average``.
 
     >>> rec = librosa.segment.recurrence_matrix(chroma, mode='affinity',
     ...                                         metric='cosine', sparse=True)
@@ -500,7 +501,7 @@ def __nn_filter_helper(R_data, R_indices, R_ptr, S, aggregate):
     Parameters
     ----------
     R_data, R_indices, R_ptr : np.ndarrays
-        The `data`, `indices`, and `indptr` of a scipy.sparse matrix
+        The ``data``, ``indices``, and ``indptr`` of a scipy.sparse matrix
 
     S : np.ndarray
         The observation data to filter

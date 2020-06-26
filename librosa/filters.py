@@ -129,7 +129,7 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
 
     fmax      : float >= 0 [scalar]
         highest frequency (in Hz).
-        If `None`, use `fmax = sr / 2.0`
+        If `None`, use ``fmax = sr / 2.0``
 
     htk       : bool [scalar]
         use HTK formula instead of Slaney
@@ -257,10 +257,11 @@ def chroma(sr, n_fft, n_chroma=12, tuning=0.0, ctroct=5.0,
     ctroct    : float > 0 [scalar]
 
     octwidth  : float > 0 or None [scalar]
-        `ctroct` and `octwidth` specify a dominance window -
-        a Gaussian weighting centered on `ctroct` (in octs, A0 = 27.5Hz)
-        and with a gaussian half-width of `octwidth`.
-        Set `octwidth` to `None` to use a flat weighting.
+        ``ctroct`` and ``octwidth`` specify a dominance window:
+        a Gaussian weighting centered on ``ctroct`` (in octs, A0 = 27.5Hz)
+        and with a gaussian half-width of ``octwidth``.
+
+        Set ``octwidth`` to `None` to use a flat weighting.
 
     norm : float > 0 or np.inf
         Normalization factor for each filter
@@ -371,12 +372,12 @@ def chroma(sr, n_fft, n_chroma=12, tuning=0.0, ctroct=5.0,
 def __float_window(window_spec):
     '''Decorator function for windows with fractional input.
 
-    This function guarantees that for fractional `x`, the following hold:
+    This function guarantees that for fractional ``x``, the following hold:
 
-    1. `__float_window(window_function)(x)` has length `np.ceil(x)`
-    2. all values from `np.floor(x)` are set to 0.
+    1. ``__float_window(window_function)(x)`` has length ``np.ceil(x)``
+    2. all values from ``np.floor(x)`` are set to 0.
 
-    For integer-valued `x`, there should be no change in behavior.
+    For integer-valued ``x``, there should be no change in behavior.
     '''
 
     def _wrap(n, *args, **kwargs):
@@ -407,10 +408,10 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, window='hann',
     such that the number of cycles remains fixed for all frequencies.
 
     By default, a Hann window (rather than the Gaussian window of Morlet wavelets)
-    is used, but this can be controlled by the `window` parameter.
+    is used, but this can be controlled by the ``window`` parameter.
 
     Frequencies are spaced geometrically, increasing by a factor of
-    `(2**(1./bins_per_octave))` at each successive band.
+    ``(2**(1./bins_per_octave))`` at each successive band.
 
     Parameters
     ----------
@@ -437,7 +438,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, window='hann',
         Center-pad all filters up to the nearest integral power of 2.
 
         By default, padding is done with zeros, but this can be overridden
-        by setting the `mode=` field in *kwargs*.
+        by setting the ``mode=`` field in *kwargs*.
 
     norm : {inf, -inf, 0, float > 0}
         Type of norm to use for basis function normalization.
@@ -445,21 +446,21 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, window='hann',
 
     gamma : number >= 0
         Bandwidth offset for variable-Q transforms.
-        `gamma=0` produces a constant-Q filterbank.
+        ``gamma=0`` produces a constant-Q filterbank.
 
     dtype : np.dtype
         The data type of the output basis.
         By default, uses 64-bit (single precision) complex floating point.
 
     kwargs : additional keyword arguments
-        Arguments to `np.pad()` when `pad==True`.
+        Arguments to `np.pad()` when ``pad==True``.
 
     Returns
     -------
-    filters : np.ndarray, `len(filters) == n_bins`
-        `filters[i]` is `i`\ th time-domain CQT basis filter
+    filters : np.ndarray, ``len(filters) == n_bins``
+        ``filters[i]`` is ``i``\ th time-domain CQT basis filter
 
-    lengths : np.ndarray, `len(lengths) == n_bins`
+    lengths : np.ndarray, ``len(lengths) == n_bins``
         The (fractional) length of each filter
 
     Notes
@@ -635,7 +636,7 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
 
     window : None or np.ndarray
         If provided, the cq_to_chroma filter bank will be
-        convolved with `window`.
+        convolved with ``window``.
 
     base_c : bool
         If True, the first chroma bin will start at 'C'
@@ -649,12 +650,12 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
     Returns
     -------
     cq_to_chroma : np.ndarray [shape=(n_chroma, n_input)]
-        Transformation matrix: `Chroma = np.dot(cq_to_chroma, CQT)`
+        Transformation matrix: ``Chroma = np.dot(cq_to_chroma, CQT)``
 
     Raises
     ------
     ParameterError
-        If `n_input` is not an integer multiple of `n_chroma`
+        If ``n_input`` is not an integer multiple of ``n_chroma``
 
     Notes
     -----
@@ -916,9 +917,9 @@ def _multirate_fb(center_freqs=None, sample_rates=None, Q=25.0,
     Raises
     ------
     ParameterError
-        If `center_freqs` is `None`.
-        If `sample_rates` is `None`.
-        If `center_freqs.shape` does not match `sample_rates.shape`.
+        If ``center_freqs`` is ``None``.
+        If ``sample_rates`` is ``None``.
+        If ``center_freqs.shape`` does not match ``sample_rates.shape``.
     '''
 
     if center_freqs is None:
@@ -1107,7 +1108,7 @@ def window_sumsquare(window, n_frames, hop_length=512, win_length=None, n_fft=20
         The number of samples to advance between frames
 
     win_length : [optional]
-        The length of the window function.  By default, this matches `n_fft`.
+        The length of the window function.  By default, this matches ``n_fft``.
 
     n_fft : int > 0
         The length of each analysis frame.
@@ -1117,7 +1118,7 @@ def window_sumsquare(window, n_frames, hop_length=512, win_length=None, n_fft=20
 
     Returns
     -------
-    wss : np.ndarray, shape=`(n_fft + hop_length * (n_frames - 1))`
+    wss : np.ndarray, shape=``(n_fft + hop_length * (n_frames - 1))``
         The sum-squared envelope of the window function
 
     Examples

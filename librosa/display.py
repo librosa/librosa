@@ -64,7 +64,7 @@ class TimeFormatter(Formatter):
     Parameters
     ----------
     lag : bool
-        If `True`, then the time axis is interpreted in lag coordinates.
+        If ``True``, then the time axis is interpreted in lag coordinates.
         Anything past the midpoint will be converted to negative time.
 
     unit : str or None
@@ -163,14 +163,14 @@ class NoteFormatter(Formatter):
     Parameters
     ----------
     octave : bool
-        If `True`, display the octave number along with the note name.
+        If ``True``, display the octave number along with the note name.
 
         Otherwise, only show the note name (and cent deviation)
 
     major : bool
-        If `True`, ticks are always labeled.
+        If ``True``, ticks are always labeled.
 
-        If `False`, ticks are only labeled if the span is less than 2 octaves
+        If ``False``, ticks are only labeled if the span is less than 2 octaves
 
     See also
     --------
@@ -216,9 +216,9 @@ class LogHzFormatter(Formatter):
     Parameters
     ----------
     major : bool
-        If `True`, ticks are always labeled.
+        If ``True``, ticks are always labeled.
 
-        If `False`, ticks are only labeled if the span is less than 2 octaves
+        If ``False``, ticks are only labeled if the span is less than 2 octaves
 
     See also
     --------
@@ -331,7 +331,7 @@ def cmap(data, robust=True, cmap_seq='magma', cmap_bool='gray_r', cmap_div='cool
     Returns
     -------
     cmap : matplotlib.colors.Colormap
-        The colormap to use for `data`
+        The colormap to use for ``data``
 
     See Also
     --------
@@ -371,14 +371,14 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
              max_sr=1000, ax=None, **kwargs):
     '''Plot the amplitude envelope of a waveform.
 
-    If `y` is monophonic, a filled curve is drawn between `[-abs(y), abs(y)]`.
+    If ``y`` is monophonic, a filled curve is drawn between ``[-abs(y), abs(y)]``.
 
-    If `y` is stereo, the curve is drawn between `[-abs(y[1]), abs(y[0])]`,
+    If ``y`` is stereo, the curve is drawn between ``[-abs(y[1]), abs(y[0])]``,
     so that the left and right channels are drawn above and below the axis,
     respectively.
 
-    Long signals (`duration >= max_points`) are down-sampled to at
-    most `max_sr` before plotting.
+    Long signals (``duration >= max_points``) are down-sampled to at
+    most ``max_sr`` before plotting.
 
     Parameters
     ----------
@@ -386,11 +386,11 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
         audio time series (mono or stereo)
 
     sr : number > 0 [scalar]
-        sampling rate of `y`
+        sampling rate of ``y``
 
     max_points : postive number or None
-        Maximum number of time-points to plot: if `max_points` exceeds
-        the duration of `y`, then `y` is downsampled.
+        Maximum number of time-points to plot: if ``max_points`` exceeds
+        the duration of ``y``, then ``y`` is downsampled.
 
         If `None`, no downsampling is performed.
 
@@ -584,17 +584,17 @@ def specshow(data, x_coords=None, y_coords=None,
 
         Optional positioning coordinates of the input data.
         These can be use to explicitly set the location of each
-        element `data[i, j]`, e.g., for displaying beat-synchronous
+        element ``data[i, j]``, e.g., for displaying beat-synchronous
         features in natural time coordinates.
 
-        If not provided, they are inferred from `x_axis` and `y_axis`.
+        If not provided, they are inferred from ``x_axis`` and ``y_axis``.
 
     fmin : float > 0 [scalar] or None
         Frequency of the lowest spectrogram bin.  Used for Mel and CQT
         scales.
 
-        If `y_axis` is `cqt_hz` or `cqt_note` and `fmin` is not given,
-        it is set by default to `note_to_hz('C1')`.
+        If ``y_axis`` is `cqt_hz` or `cqt_note` and ``fmin`` is not given,
+        it is set by default to ``note_to_hz('C1')``.
 
     fmax : float > 0 [scalar] or None
         Used for setting the Mel frequency scales
@@ -602,8 +602,8 @@ def specshow(data, x_coords=None, y_coords=None,
     tuning : float
         Tuning deviation from A440, in fractions of a bin.
 
-        This is used for CQT frequency scales, so that `fmin` is adjusted
-        to `fmin * 2**(tuning / bins_per_octave)`.
+        This is used for CQT frequency scales, so that ``fmin`` is adjusted
+        to ``fmin * 2**(tuning / bins_per_octave)``.
 
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave.  Used for CQT frequency scale.
@@ -619,9 +619,9 @@ def specshow(data, x_coords=None, y_coords=None,
 
         By default, the following options are set:
 
-            - `rasterized=True`
-            - `shading='flat'`
-            - `edgecolors='None'`
+            - ``rasterized=True``
+            - ``shading='flat'``
+            - ``edgecolors='None'``
 
     Returns
     -------
@@ -706,7 +706,7 @@ def specshow(data, x_coords=None, y_coords=None,
 def __set_current_image(ax, img):
     '''Helper to set the current image in pyplot mode.
 
-    If the provided `ax` is not `None`, then we assume that the user is using the object API.
+    If the provided ``ax`` is not `None`, then we assume that the user is using the object API.
     In this case, the pyplot current image is not set.
     '''
 
