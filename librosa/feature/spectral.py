@@ -92,7 +92,7 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         - a window function, such as `scipy.signal.hanning`
         - a vector or array of length `n_fft`
 
-        .. see also:: `filters.get_window`
+        .. see also:: `librosa.filters.get_window`
 
     center : boolean
         - If `True`, the signal `y` is padded so that frame
@@ -216,7 +216,7 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         - a window function, such as `scipy.signal.hanning`
         - a vector or array of length `n_fft`
 
-        .. see also:: `filters.get_window`
+        .. see also:: `librosa.filters.get_window`
 
     center : boolean
         - If `True`, the signal `y` is padded so that frame
@@ -373,7 +373,7 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         - a window function, such as `scipy.signal.hanning`
         - a vector or array of length `n_fft`
 
-        .. see also:: `filters.get_window`
+        .. see also:: `librosa.filters.get_window`
 
     center : boolean
         - If `True`, the signal `y` is padded so that frame
@@ -538,7 +538,7 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         - a window function, such as `scipy.signal.hanning`
         - a vector or array of length `n_fft`
 
-        .. see also:: `filters.get_window`
+        .. see also:: `librosa.filters.get_window`
 
     center : boolean
         - If `True`, the signal `y` is padded so that frame
@@ -676,7 +676,7 @@ def spectral_flatness(y=None, S=None, n_fft=2048, hop_length=512,
         - a window function, such as `scipy.signal.hanning`
         - a vector or array of length `n_fft`
 
-        .. see also:: `filters.get_window`
+        .. see also:: `librosa.filters.get_window`
 
     center : boolean
         - If `True`, the signal `y` is padded so that frame
@@ -891,7 +891,7 @@ def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         - a window function, such as `scipy.signal.hanning`
         - a vector or array of length `n_fft`
 
-        .. see also:: `filters.get_window`
+        .. see also:: `librosa.filters.get_window`
 
     center : boolean
         - If `True`, the signal `y` is padded so that frame
@@ -1093,7 +1093,7 @@ def chroma_stft(y=None, sr=22050, S=None, norm=np.inf, n_fft=2048,
         - a window function, such as `scipy.signal.hanning`
         - a vector or array of length `n_fft`
 
-        .. see also:: `filters.get_window`
+        .. see also:: `librosa.filters.get_window`
 
     center : boolean
         - If `True`, the signal `y` is padded so that frame
@@ -1368,7 +1368,7 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
         Default: 41
 
     smoothing_window : str, float or tuple
-        Type of window function for temporal smoothing. See `filters.get_window` for possible inputs.
+        Type of window function for temporal smoothing. See `librosa.filters.get_window` for possible inputs.
         Default: 'hann'
 
     Returns
@@ -1384,7 +1384,7 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
     chroma_stft
         Compute a chromagram from an STFT spectrogram or waveform.
 
-    filters.get_window
+    librosa.filters.get_window
         Compute a window function.
 
     Examples
@@ -1719,7 +1719,7 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         - a window function, such as `scipy.signal.hanning`
         - a vector or array of length `n_fft`
 
-        .. see also:: `filters.get_window`
+        .. see also:: `librosa.filters.get_window`
 
     center : boolean
         - If `True`, the signal `y` is padded so that frame

@@ -138,8 +138,8 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
         If 'slaney', divide the triangular mel weights by the width of the mel band
         (area normalization).
 
-        If numeric, use `util.normalize` to normalize each filter by to unit l_p norm.
-        See `util.normalize` for a full description of supported norm values
+        If numeric, use `librosa.util.normalize` to normalize each filter by to unit l_p norm.
+        See `librosa.util.normalize` for a full description of supported norm values
         (including `+-np.inf`).
 
         Otherwise, leave all the triangles aiming for a peak value of 1.0
@@ -155,7 +155,7 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
 
     See also
     --------
-    util.normalize
+    librosa.util.normalize
 
     Notes
     -----
@@ -280,8 +280,8 @@ def chroma(sr, n_fft, n_chroma=12, tuning=0.0, ctroct=5.0,
 
     See Also
     --------
-    util.normalize
-    feature.chroma_stft
+    librosa.util.normalize
+    librosa.feature.chroma_stft
 
     Notes
     -----
@@ -984,7 +984,6 @@ def mr_frequencies(tuning):
     See Also
     --------
     librosa.filters.semitone_filterbank
-    librosa.filters._multirate_fb
     '''
 
     center_freqs = midi_to_hz(np.arange(24 + tuning, 109 + tuning))
@@ -1052,7 +1051,6 @@ def semitone_filterbank(center_freqs=None, tuning=0.0, sample_rates=None, flayou
     --------
     librosa.cqt
     librosa.iirt
-    librosa.filters._multirate_fb
     librosa.filters.mr_frequencies
     scipy.signal.iirdesign
 

@@ -460,7 +460,7 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
 
             To use `scipy.signal.resample_poly`, set `res_type='polyphase'`. (fast)
 
-            To use `samplerate.resample`, set any of the following:
+            To use `samplerate.converters.resample`, set any of the following:
 
                 - `res_type='linear'`: linear interpolation (fast)
                 - `res_type='zero_order_hold'`: repeat the last value between samples (very fast)
@@ -498,8 +498,8 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
     --------
     librosa.util.fix_length
     scipy.signal.resample
-    resampy.resample
-    samplerate.resample
+    resampy
+    samplerate.converters.resample
 
     Notes
     -----

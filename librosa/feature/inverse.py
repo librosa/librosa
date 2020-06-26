@@ -209,8 +209,8 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0):
 
     See Also
     --------
-    mfcc
-    melspectrogram
+    librosa.feature.mfcc
+    librosa.feature.melspectrogram
     scipy.fftpack.dct
     '''
     if lifter > 0:

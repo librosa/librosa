@@ -114,9 +114,9 @@ def frame(x, frame_length, hop_length, axis=-1):
 
     See Also
     --------
-    np.asfortranarray : Convert data to F-contiguous representation
-    np.ascontiguousarray : Convert data to C-contiguous representation
-    np.ndarray.flags : information about the memory layout of a numpy `ndarray`.
+    numpy.asfortranarray : Convert data to F-contiguous representation
+    numpy.ascontiguousarray : Convert data to C-contiguous representation
+    numpy.ndarray.flags : information about the memory layout of a numpy `ndarray`.
 
     Examples
     --------
@@ -1221,10 +1221,6 @@ def buf_to_float(x, n_bytes=2, dtype=np.float32):
     This is primarily useful when loading integer-valued wav data
     into numpy arrays.
 
-    See Also
-    --------
-    buf_to_float
-
     Parameters
     ----------
     x : np.ndarray [dtype=int]
@@ -1713,7 +1709,7 @@ def cyclic_gradient(data, edge_order=1, axis=-1):
 
     See Also
     --------
-    np.gradient
+    numpy.gradient
 
     Examples
     --------
@@ -1889,8 +1885,8 @@ def stack(arrays, axis=0):
 
     See Also
     --------
-    np.stack
-    np.ndarray.flags
+    numpy.stack
+    numpy.ndarray.flags
     frame
 
     Examples
@@ -1986,7 +1982,7 @@ def dtype_r2c(d, default=np.complex64):
     See Also
     --------
     dtype_c2r
-    np.dtype
+    numpy.dtype
 
     Examples
     --------
@@ -2042,7 +2038,7 @@ def dtype_c2r(d, default=np.float32):
     See Also
     --------
     dtype_r2c
-    np.dtype
+    numpy.dtype
 
     Examples
     --------

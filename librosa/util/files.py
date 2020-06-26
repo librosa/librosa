@@ -74,7 +74,7 @@ def example(key, hq=False):
 
     See Also
     --------
-    util.list_examples
+    librosa.util.list_examples
     pooch.os_cache
     """
 
@@ -132,8 +132,8 @@ def example_info(key):
 
     See Also
     --------
-    util.example
-    util.list_examples
+    librosa.util.example
+    librosa.util.list_examples
     pooch.os_cache
     """
 
@@ -154,10 +154,10 @@ def example_audio_file():
     '''Get the path to an included audio example file.
 
     .. warning:: This function is deprecated in 0.8, and will be removed in 0.9.
-                 Instead, use `librosa.example`.
+                 Instead, use `librosa.util.example`.
 
     .. raw:: html
-       
+
        <div xmlns:cc="http://creativecommons.org/ns#"
           xmlns:dct="http://purl.org/dc/terms/"
              about="http://freemusicarchive.org/music/Kevin_MacLeod/Jazz_Sampler/Vibe_Ace_1278">

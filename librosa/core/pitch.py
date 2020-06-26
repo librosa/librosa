@@ -231,16 +231,13 @@ def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
 
         If callable, the reference value is computed as `ref(S, axis=0)`.
 
-    .. note::
-        One of `S` or `y` must be provided.
-
-        If `S` is not given, it is computed from `y` using
-        the default parameters of `librosa.stft`.
+    .. note:: One of `S` or `y` must be provided.
+              If `S` is not given, it is computed from `y` using
+              the default parameters of `librosa.stft`.
 
     Returns
     -------
-    pitches : np.ndarray [shape=(d, t)]
-    magnitudes : np.ndarray [shape=(d,t)]
+    pitches, magnitudes : np.ndarray [shape=(d, t)]
         Where `d` is the subset of FFT bins within `fmin` and `fmax`.
 
         `pitches[f, t]` contains instantaneous frequency at bin

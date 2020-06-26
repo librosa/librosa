@@ -585,8 +585,8 @@ def rqa(sim, gap_onset=1, gap_extend=1, knight_moves=True, backtrack=True):
 
     See Also
     --------
-    segment.recurrence_matrix
-    segment.cross_similarity
+    librosa.segment.recurrence_matrix
+    librosa.segment.cross_similarity
     dtw
 
     Examples
@@ -1539,7 +1539,7 @@ def transition_local(n_states, width, window='triangle', wrap=False):
 
     See Also
     --------
-    filters.get_window
+    librosa.filters.get_window
 
     Returns
     -------

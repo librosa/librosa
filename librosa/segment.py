@@ -112,7 +112,7 @@ def cross_similarity(data, data_ref, k=None, metric='euclidean',
     --------
     recurrence_matrix
     recurrence_to_lag
-    feature.stack_memory
+    librosa.feature.stack_memory
     sklearn.neighbors.NearestNeighbors
     scipy.spatial.distance.cdist
 
@@ -157,7 +157,7 @@ def cross_similarity(data, data_ref, k=None, metric='euclidean',
     ...                          cmap='magma_r', hop_length=hop_length, ax=ax[1])
     >>> ax[1].set(title='Affinity recurrence')
     >>> ax[1].label_outer()
-    >>> fig.colorbar(imgsim, ax=ax[0], orientation='h')
+    >>> fig.colorbar(imgsim, ax=ax[0], orientation='h', ticks=[0, 1])
     >>> fig.colorbar(imgaff, ax=ax[1], orientation='h')
     '''
     data_ref = np.atleast_2d(data_ref)
@@ -382,7 +382,7 @@ def recurrence_matrix(data, k=None, width=1, metric='euclidean',
     ...                          hop_length=hop_length, cmap='magma_r', ax=ax[1])
     >>> ax[1].set(title='Affinity recurrence')
     >>> ax[1].label_outer()
-    >>> fig.colorbar(imgsim, ax=ax[0], orientation='h')
+    >>> fig.colorbar(imgsim, ax=ax[0], orientation='h', ticks=[0, 1])
     >>> fig.colorbar(imgaff, ax=ax[1], orientation='h')
     '''
 
@@ -1008,7 +1008,7 @@ def path_enhance(R, n, window='hann', max_ratio=2.0, min_ratio=None, n_filters=7
 
     See Also
     --------
-    filters.diagonal_filter
+    librosa.filters.diagonal_filter
     recurrence_matrix
 
 

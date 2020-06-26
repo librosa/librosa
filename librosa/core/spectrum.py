@@ -1289,7 +1289,6 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
     See Also
     --------
     librosa.filters.semitone_filterbank
-    librosa.filters._multirate_fb
     librosa.filters.mr_frequencies
     librosa.cqt
     scipy.signal.filtfilt
