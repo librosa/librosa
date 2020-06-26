@@ -110,10 +110,10 @@ def mel_to_audio(M, sr=22050, n_fft=2048, hop_length=512, win_length=None,
         number of FFT components in the resulting STFT
 
     hop_length : None or int > 0
-        The hop length of the STFT.  If not provided, it will default to `n_fft // 4`
+        The hop length of the STFT.  If not provided, it will default to ``n_fft // 4``
 
     win_length : None or int > 0
-        The window length of the STFT.  By default, it will equal `n_fft`
+        The window length of the STFT.  By default, it will equal ``n_fft``
 
     window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
         A window specification as supported by `stft` or `istft`
@@ -123,7 +123,7 @@ def mel_to_audio(M, sr=22050, n_fft=2048, hop_length=512, win_length=None,
         If `False`, the STFT is assumed to use left-aligned frames.
 
     pad_mode : string
-        If `center=True`, the padding mode to use at the edges of the signal.
+        If ``center=True``, the padding mode to use at the edges of the signal.
         By default, STFT uses reflection padding.
 
     power : float > 0 [scalar]
@@ -133,7 +133,7 @@ def mel_to_audio(M, sr=22050, n_fft=2048, hop_length=512, win_length=None,
         The number of iterations for Griffin-Lim
 
     length : None or int > 0
-        If provided, the output `y` is zero-padded or clipped to exactly `length`
+        If provided, the output ``y`` is zero-padded or clipped to exactly ``length``
         samples.
 
     dtype : np.dtype
@@ -146,7 +146,7 @@ def mel_to_audio(M, sr=22050, n_fft=2048, hop_length=512, win_length=None,
     Returns
     -------
     y : np.ndarray [shape(n,)]
-        time-domain signal reconstructed from `M`
+        time-domain signal reconstructed from ``M``
 
     See Also
     --------
@@ -185,7 +185,7 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0):
         By default, DCT type-2 is used.
 
     norm : None or 'ortho'
-        If `dct_type` is `2 or 3`, setting `norm='ortho'` uses an orthonormal
+        If ``dct_type`` is `2 or 3`, setting ``norm='ortho'`` uses an orthonormal
         DCT basis.
 
         Normalization is not supported for `dct_type=1`.
@@ -194,13 +194,14 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0):
         Reference power for (inverse) decibel calculation
 
     lifter : number >= 0
-        If `lifter>0`, apply inverse liftering (inverse cepstral filtering):
-        `M[n, :] <- M[n, :] / (1 + sin(pi * (n + 1) / lifter)) * lifter / 2`
+        If ``lifter>0``, apply inverse liftering (inverse cepstral filtering)::
+
+            M[n, :] <- M[n, :] / (1 + sin(pi * (n + 1) / lifter)) * lifter / 2
 
     Returns
     -------
     M : np.ndarray [shape=(n_mels, n)]
-        An approximate Mel power spectrum recovered from `mfcc`
+        An approximate Mel power spectrum recovered from ``mfcc``
 
     Warns
     --------
@@ -217,18 +218,18 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0):
         n_mfcc = mfcc.shape[0]
         idx = np.arange(1, 1 + n_mfcc, dtype=mfcc.dtype)
         lifter_sine = 1 + lifter * 0.5 * np.sin(np.pi * idx / lifter)[:, np.newaxis]
-        
+
         # raise a UserWarning if lifter array includes critical values
         if np.any(np.abs(lifter_sine) < np.finfo(lifter_sine.dtype).eps):
-            warnings.warn(message="lifter array includes critial values that may invoke underflow.", 
+            warnings.warn(message="lifter array includes critial values that may invoke underflow.",
                           category=UserWarning)
-        
+
         # lifter mfcc values
         mfcc = mfcc / (lifter_sine + tiny(mfcc))
-        
+
     elif lifter != 0:
         raise ParameterError('MFCC to mel lifter must be a non-negative number.')
-    
+
     logmel = scipy.fftpack.idct(mfcc, axis=0, type=dct_type, norm=norm, n=n_mels)
     return db_to_power(logmel, ref=ref)
 
@@ -255,17 +256,18 @@ def mfcc_to_audio(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0,
         By default, DCT type-2 is used.
 
     norm : None or 'ortho'
-        If `dct_type` is `2 or 3`, setting `norm='ortho'` uses an orthonormal
+        If ``dct_type`` is `2 or 3`, setting ``norm='ortho'`` uses an orthonormal
         DCT basis.
 
-        Normalization is not supported for `dct_type=1`.
+        Normalization is not supported for ``dct_type=1``.
 
     ref : number or callable
         Reference power for (inverse) decibel calculation
 
     lifter : number >= 0
-        If `lifter>0`, apply inverse liftering (inverse cepstral filtering):
-        `M[n, :] <- M[n, :] / (1 + sin(pi * (n + 1) / lifter)) * lifter / 2`
+        If ``lifter>0``, apply inverse liftering (inverse cepstral filtering)::
+
+            M[n, :] <- M[n, :] / (1 + sin(pi * (n + 1) / lifter)) * lifter / 2
 
     kwargs : additional keyword arguments
         Parameters to pass through to `mel_to_audio`

@@ -30,11 +30,11 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
         Audio time series.
 
     sr : number > 0 [scalar]
-        sampling rate of `y`
+        sampling rate of ``y``
 
     onset_envelope : np.ndarray [shape=(n,) or (m, n)] or None
         Optional pre-computed onset strength envelope as provided by
-        `onset.onset_strength`.
+        `librosa.onset.onset_strength`.
 
         If multi-dimensional, tempograms are computed independently for each
         band (first dimension).
@@ -44,7 +44,7 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
     win_length : int > 0
         length of the onset autocorrelation window (in frames/onset measurements)
-        The default settings (384) corresponds to `384 * hop_length / sr ~= 8.9s`.
+        The default settings (384) corresponds to ``384 * hop_length / sr ~= 8.9s``.
 
     center : bool
         If `True`, onset autocorrelation windows are centered.
@@ -61,15 +61,15 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
     tempogram : np.ndarray [shape=(win_length, n) or (m, win_length, n)]
         Localized autocorrelation of the onset strength envelope.
 
-        If given multi-band input (`onset_envelope.shape==(m,n)`) then
-        `tempogram[i]` is the tempogram of `onset_envelope[i]`.
+        If given multi-band input (``onset_envelope.shape==(m,n)``) then
+        ``tempogram[i]`` is the tempogram of ``onset_envelope[i]``.
 
     Raises
     ------
     ParameterError
-        if neither `y` nor `onset_envelope` are provided
+        if neither ``y`` nor ``onset_envelope`` are provided
 
-        if `win_length < 1`
+        if ``win_length < 1``
 
     See Also
     --------
@@ -188,18 +188,18 @@ def fourier_tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
         Audio time series.
 
     sr : number > 0 [scalar]
-        sampling rate of `y`
+        sampling rate of ``y``
 
     onset_envelope : np.ndarray [shape=(n,)] or None
         Optional pre-computed onset strength envelope as provided by
-        `onset.onset_strength`.
+        ``librosa.onset.onset_strength``.
 
     hop_length : int > 0
         number of audio samples between successive onset measurements
 
     win_length : int > 0
         length of the onset window (in frames/onset measurements)
-        The default settings (384) corresponds to `384 * hop_length / sr ~= 8.9s`.
+        The default settings (384) corresponds to ``384 * hop_length / sr ~= 8.9s``.
 
     center : bool
         If `True`, onset windows are centered.
@@ -216,9 +216,9 @@ def fourier_tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
     Raises
     ------
     ParameterError
-        if neither `y` nor `onset_envelope` are provided
+        if neither ``y`` nor ``onset_envelope`` are provided
 
-        if `win_length < 1`
+        if ``win_length < 1``
 
     See Also
     --------

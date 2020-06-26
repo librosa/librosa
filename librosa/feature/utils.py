@@ -25,8 +25,9 @@ def delta(data, width=9, order=1, axis=-1, mode='interp', **kwargs):
 
     width     : int, positive, odd [scalar]
         Number of frames over which to compute the delta features.
-        Cannot exceed the length of `data` along the specified axis.
-        If `mode='interp'`, then `width` must be at least `data.shape[axis]`.
+        Cannot exceed the length of ``data`` along the specified axis.
+
+        If ``mode='interp'``, then ``width`` must be at least ``data.shape[axis]``.
 
     order     : int > 0 [scalar]
         the order of the difference operator.
@@ -45,7 +46,7 @@ def delta(data, width=9, order=1, axis=-1, mode='interp', **kwargs):
     Returns
     -------
     delta_data   : np.ndarray [shape=(d, t)]
-        delta matrix of `data` at specified order
+        delta matrix of ``data`` at specified order
 
     Notes
     -----
@@ -120,14 +121,14 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
     """Short-term history embedding: vertically concatenate a data
     vector or matrix with delayed copies of itself.
 
-    Each column `data[:, i]` is mapped to::
+    Each column ``data[:, i]`` is mapped to::
 
         data[:, i] ->  [data[:, i],
                         data[:, i - delay],
                         ...
                         data[:, i - (n_steps-1)*delay]]
 
-    For columns `i < (n_steps - 1) * delay` , the data will be padded.
+    For columns ``i < (n_steps - 1) * delay``, the data will be padded.
     By default, the data is padded with zeros, but this behavior can be
     overridden by supplying additional keyword arguments which are passed
     to `np.pad()`.
@@ -136,8 +137,8 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
     Parameters
     ----------
     data : np.ndarray [shape=(d, t)]
-        Input data matrix.  If `data` is a vector (`data.ndim == 1`),
-        it will be interpreted as a row matrix and reshaped to `(1, t)`.
+        Input data matrix.  If ``data`` is a vector (``data.ndim == 1``),
+        it will be interpreted as a row matrix and reshaped to ``(1, t)``.
 
     n_steps : int > 0 [scalar]
         embedding dimension, the number of steps back in time to stack
@@ -150,13 +151,13 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
         Negative values embed from the future (subsequent columns).
 
     kwargs : additional keyword arguments
-      Additional arguments to pass to `np.pad`.
+      Additional arguments to pass to `numpy.pad`
 
     Returns
     -------
     data_history : np.ndarray [shape=(m * d, t)]
         data augmented with lagged copies of itself,
-        where `m == n_steps - 1`.
+        where ``m == n_steps - 1``.
 
     Notes
     -----
@@ -227,7 +228,7 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
 
     data = np.atleast_2d(data)
     t = data.shape[-1]
-    
+
     if t < 1:
         raise ParameterError('Cannot stack memory when input data has '
                              'no columns. Given data.shape={}'.format(data.shape))

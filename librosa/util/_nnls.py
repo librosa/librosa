@@ -86,9 +86,9 @@ def nnls(A, B, **kwargs):
     '''Non-negative least squares.
 
     Given two matrices A and B, find a non-negative matrix X
-    that minimizes the sum squared error:
+    that minimizes the sum squared error::
 
-        `err(X) = sum_i,j ((AX)[i,j] - B[i, j])^2`
+        err(X) = sum_i,j ((AX)[i,j] - B[i, j])^2
 
     Parameters
     ----------
@@ -104,7 +104,7 @@ def nnls(A, B, **kwargs):
     Returns
     -------
     X : np.ndarray [shape=(n, N), non-negative]
-        A minimizing solution to `|AX - B|^2`
+        A minimizing solution to ``|AX - B|^2``
 
     See Also
     --------
