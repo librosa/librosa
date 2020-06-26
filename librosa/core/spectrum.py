@@ -1692,7 +1692,7 @@ def perceptual_weighting(S, frequencies, kind='A', **kwargs):
 def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1):
     """The fast Mellin transform (FMT) [#]_ of a uniformly sampled signal y.
 
-    When the Mellin parameter (beta) is 1/2, it is also known as the scale transform [#]_.
+    When the Mellin parameter (beta) is 1/2, it is also known as the scale transform. [#]_
     The scale transform can be useful for audio analysis because its magnitude is invariant
     to scaling of the domain (e.g., time stretching or compression).  This is analogous
     to the magnitude of the Fourier transform being invariant to shifts in the input domain.

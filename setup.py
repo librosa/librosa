@@ -54,6 +54,7 @@ setup(
                  'matplotlib >= 2.0.0',
                  'sphinxcontrib-versioning >= 2.2.1',
                  'sphinx-gallery',
+                 'sphinxcontrib-svg2pdfconverter',
                  'presets'],
         'tests': ['matplotlib >= 2.1',
                   'pytest-mpl',

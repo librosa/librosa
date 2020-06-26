@@ -39,6 +39,7 @@ extensions = [
     "numpydoc",
     "sphinx.ext.autosummary",
     "matplotlib.sphinxext.plot_directive",
+    "sphinxcontrib.inkscapeconverter"
 ]
 
 
