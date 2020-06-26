@@ -62,7 +62,7 @@ def salience(S, freqs, h_range, weights=None, aggregate=None,
     --------
     >>> y, sr = librosa.load(librosa.ex('trumpet'), duration=3)
     >>> S = np.abs(librosa.stft(y))
-    >>> freqs = librosa.core.fft_frequencies(sr)
+    >>> freqs = librosa.fft_frequencies(sr)
     >>> harms = [1, 2, 3, 4]
     >>> weights = [1.0, 0.5, 0.33, 0.25]
     >>> S_sal = librosa.salience(S, freqs, harms, weights, fill_value=0)

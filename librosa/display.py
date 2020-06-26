@@ -398,7 +398,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
         Display of the x-axis ticks and tick markers. Accepted values are:
 
         - 'time' : markers are shown as milliseconds, seconds, minutes, or hours.
-            Values are plotted in units of seconds.
+                    Values are plotted in units of seconds.
 
         - 's' : markers are shown as seconds.
 
@@ -432,7 +432,7 @@ def waveplot(y, sr=22050, max_points=5e4, x_axis='time', offset=0.0,
 
     See also
     --------
-    librosa.core.resample
+    librosa.resample
     matplotlib.pyplot.fill_between
 
 

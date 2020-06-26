@@ -70,14 +70,14 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         FFT window size
 
     hop_length : int > 0 [scalar]
-        hop length for STFT. See `librosa.core.stft` for details.
+        hop length for STFT. See `librosa.stft` for details.
 
     freq : None or np.ndarray [shape=(d,) or shape=(d, t)]
         Center frequencies for spectrogram bins.
         If `None`, then FFT bin center frequencies are used.
         Otherwise, it can be a single array of `d` center frequencies,
         or a matrix of center frequencies as constructed by
-        `librosa.core.ifgram`
+        `librosa.reassigned_spectrogram`
 
     win_length : int <= n_fft [scalar]
         Each frame of audio is windowed by `window()`.
@@ -111,11 +111,11 @@ def spectral_centroid(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     See Also
     --------
-    librosa.core.stft
+    librosa.stft
         Short-time Fourier Transform
 
-    librosa.core.ifgram
-        Instantaneous-frequency spectrogram
+    librosa.reassigned_spectrogram
+        Time-frequency reassigned spectrogram
 
     Examples
     --------
@@ -201,7 +201,7 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         FFT window size
 
     hop_length : int > 0 [scalar]
-        hop length for STFT. See `librosa.core.stft` for details.
+        hop length for STFT. See `librosa.stft` for details.
 
     win_length : int <= n_fft [scalar]
         Each frame of audio is windowed by `window()`.
@@ -232,7 +232,7 @@ def spectral_bandwidth(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         If `None`, then FFT bin center frequencies are used.
         Otherwise, it can be a single array of `d` center frequencies,
         or a matrix of center frequencies as constructed by
-        `librosa.core.ifgram`
+        `librosa.reassigned_spectrogram`
 
     centroid : None or np.ndarray [shape=(1, t)]
         pre-computed centroid frequencies
@@ -358,7 +358,7 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         FFT window size
 
     hop_length : int > 0 [scalar]
-        hop length for STFT. See `librosa.core.stft` for details.
+        hop length for STFT. See `librosa.stft` for details.
 
     win_length : int <= n_fft [scalar]
         Each frame of audio is windowed by `window()`.
@@ -523,7 +523,7 @@ def spectral_rolloff(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         FFT window size
 
     hop_length : int > 0 [scalar]
-        hop length for STFT. See `librosa.core.stft` for details.
+        hop length for STFT. See `librosa.stft` for details.
 
     win_length : int <= n_fft [scalar]
         Each frame of audio is windowed by `window()`.
@@ -661,7 +661,7 @@ def spectral_flatness(y=None, S=None, n_fft=2048, hop_length=512,
         FFT window size
 
     hop_length : int > 0 [scalar]
-        hop length for STFT. See `librosa.core.stft` for details.
+        hop length for STFT. See `librosa.stft` for details.
 
     win_length : int <= n_fft [scalar]
         Each frame of audio is windowed by `window()`.
@@ -768,7 +768,7 @@ def rms(y=None, S=None, frame_length=2048, hop_length=512,
         length of analysis frame (in samples) for energy calculation
 
     hop_length : int > 0 [scalar]
-        hop length for STFT. See `librosa.core.stft` for details.
+        hop length for STFT. See `librosa.stft` for details.
 
     center : bool
         If `True` and operating on time-domain input (`y`), pad the signal
@@ -876,7 +876,7 @@ def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         FFT window size
 
     hop_length : int > 0 [scalar]
-        hop length for STFT. See `librosa.core.stft` for details.
+        hop length for STFT. See `librosa.stft` for details.
 
     win_length : int <= n_fft [scalar]
         Each frame of audio is windowed by `window()`.
@@ -910,7 +910,7 @@ def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         If `None`, then FFT bin center frequencies are used.
         Otherwise, it can be a single array of `d` center frequencies,
         or a matrix of center frequencies as constructed by
-        `librosa.core.ifgram`
+        `librosa.reassigned_spectrogram`
 
     Returns
     -------
@@ -1000,15 +1000,15 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True,
 
     center : bool
         If `True`, frames are centered by padding the edges of `y`.
-        This is similar to the padding in `librosa.core.stft`,
+        This is similar to the padding in `librosa.stft`,
         but uses edge-value copies instead of reflection.
 
     kwargs : additional keyword arguments
-        See `librosa.core.zero_crossings`
+        See `librosa.zero_crossings`
 
         .. note:: By default, the `pad` parameter is set to `False`, which
             differs from the default specified by
-            `librosa.core.zero_crossings`.
+            `librosa.zero_crossings`.
 
     Returns
     -------
@@ -1018,7 +1018,7 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True,
 
     See Also
     --------
-    librosa.core.zero_crossings
+    librosa.zero_crossings
         Compute zero-crossings in a time-series
 
     Examples
@@ -1244,8 +1244,8 @@ def chroma_cqt(y=None, sr=22050, C=None, hop_length=512, fmin=None,
     See Also
     --------
     librosa.util.normalize
-    librosa.core.cqt
-    librosa.core.hybrid_cqt
+    librosa.cqt
+    librosa.hybrid_cqt
     chroma_stft
 
     Examples
@@ -1704,7 +1704,7 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     hop_length : int > 0 [scalar]
         number of samples between successive frames.
-        See `librosa.core.stft`
+        See `librosa.stft`
 
     win_length : int <= n_fft [scalar]
         Each frame of audio is windowed by `window()`.
@@ -1748,7 +1748,7 @@ def melspectrogram(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     librosa.filters.mel
         Mel filter bank construction
 
-    librosa.core.stft
+    librosa.stft
         Short-time Fourier Transform
 
 

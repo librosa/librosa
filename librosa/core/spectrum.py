@@ -110,7 +110,7 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
         If `False`, then `D[:, t]` begins at `y[t * hop_length]`.
 
         Defaults to `True`,  which simplifies the alignment of `D` onto a
-        time grid by means of `librosa.core.frames_to_samples`.
+        time grid by means of `librosa.frames_to_samples`.
         Note, however, that `center` must be set to `False` when analyzing
         signals with `librosa.stream`.
 
@@ -1291,7 +1291,7 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
     librosa.filters.semitone_filterbank
     librosa.filters._multirate_fb
     librosa.filters.mr_frequencies
-    librosa.core.cqt
+    librosa.cqt
     scipy.signal.filtfilt
     scipy.signal.sosfiltfilt
 
@@ -2136,7 +2136,7 @@ def griffinlim(S, n_iter=32, hop_length=None, win_length=None, window='hann',
     operations.
     Note that this assumes reconstruction of a real-valued time-domain signal, and
     that `S` contains only the non-negative frequencies (as computed by
-    `core.stft`).
+    `stft`).
 
     .. [#] Perraudin, N., Balazs, P., & Søndergaard, P. L.
         "A fast Griffin-Lim algorithm,"
@@ -2151,7 +2151,7 @@ def griffinlim(S, n_iter=32, hop_length=None, win_length=None, window='hann',
     ----------
     S : np.ndarray [shape=(n_fft / 2 + 1, t), non-negative]
         An array of short-time Fourier transform magnitudes as produced by
-        `core.stft`.
+        `stft`.
 
     n_iter : int > 0
         The number of iterations to run

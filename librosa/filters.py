@@ -469,8 +469,8 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, window='hann',
     See Also
     --------
     constant_q_lengths
-    librosa.core.cqt
-    librosa.core.vqt
+    librosa.cqt
+    librosa.vqt
     librosa.util.normalize
 
 
@@ -579,7 +579,7 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
     See Also
     --------
     constant_q
-    librosa.core.cqt
+    librosa.cqt
     '''
 
     if fmin <= 0:
@@ -1050,8 +1050,8 @@ def semitone_filterbank(center_freqs=None, tuning=0.0, sample_rates=None, flayou
 
     See Also
     --------
-    librosa.core.cqt
-    librosa.core.iirt
+    librosa.cqt
+    librosa.iirt
     librosa.filters._multirate_fb
     librosa.filters.mr_frequencies
     scipy.signal.iirdesign

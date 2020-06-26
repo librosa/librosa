@@ -236,7 +236,7 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
 
     See Also
     --------
-    util.softmask
+    librosa.util.softmask
 
     Notes
     -----
@@ -295,9 +295,9 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
 
     >>> H, P = librosa.decompose.hpss(D, margin=3.0)
     >>> R = D - (H+P)
-    >>> y_harm = librosa.core.istft(H)
-    >>> y_perc = librosa.core.istft(P)
-    >>> y_resi = librosa.core.istft(R)
+    >>> y_harm = librosa.istft(H)
+    >>> y_perc = librosa.istft(P)
+    >>> y_resi = librosa.istft(R)
 
 
     Get a more isolated percussive component by widening its margin

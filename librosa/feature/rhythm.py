@@ -51,7 +51,7 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
         If `False`, windows are left-aligned.
 
     window : string, function, number, tuple, or np.ndarray [shape=(win_length,)]
-        A window specification as in `core.stft`.
+        A window specification as in `stft`.
 
     norm : {np.inf, -np.inf, 0, float > 0, None}
         Normalization mode.  Set to `None` to disable normalization.
@@ -76,7 +76,7 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
     fourier_tempogram
     librosa.onset.onset_strength
     librosa.util.normalize
-    librosa.core.stft
+    librosa.stft
 
 
     Examples
@@ -206,7 +206,7 @@ def fourier_tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
         If `False`, windows are left-aligned.
 
     window : string, function, number, tuple, or np.ndarray [shape=(win_length,)]
-        A window specification as in `core.stft`.
+        A window specification as in `stft`.
 
     Returns
     -------
@@ -225,7 +225,7 @@ def fourier_tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
     tempogram
     librosa.onset.onset_strength
     librosa.util.normalize
-    librosa.core.stft
+    librosa.stft
 
 
     Examples

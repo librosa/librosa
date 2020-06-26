@@ -93,7 +93,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     pad_mode : string
         Padding mode for centered frame analysis.
 
-        See also: `librosa.core.stft` and `np.pad`.
+        See also: `librosa.stft` and `np.pad`.
 
     res_type : string [optional]
         The resampling mode for recursive downsampling.
@@ -102,7 +102,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
         which trades off accuracy at high frequencies for efficiency at low frequencies.
 
         You can override this by specifying a resampling mode as supported by
-        `librosa.core.resample`.  For example, `res_type='fft'` will use a high-quality,
+        `librosa.resample`.  For example, `res_type='fft'` will use a high-quality,
         but potentially slow FFT-based down-sampling, while `res_type='polyphase'` will
         use a fast, but potentially inaccurate down-sampling.
 
@@ -126,7 +126,7 @@ def cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     See Also
     --------
     vqt
-    librosa.core.resample
+    librosa.resample
     librosa.util.normalize
 
     Notes
@@ -233,10 +233,10 @@ def hybrid_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     pad_mode : string
         Padding mode for centered frame analysis.
 
-        See also: `librosa.core.stft` and `np.pad`.
+        See also: `librosa.stft` and `np.pad`.
 
     res_type : string
-        Resampling mode.  See `librosa.core.cqt` for details.
+        Resampling mode.  See `librosa.cqt` for details.
 
     dtype : np.dtype, optional
         The complex dtype to use for computing the CQT.
@@ -389,7 +389,7 @@ def pseudo_cqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84,
     pad_mode : string
         Padding mode for centered frame analysis.
 
-        See also: `librosa.core.stft` and `np.pad`.
+        See also: `librosa.stft` and `np.pad`.
 
     dtype : np.dtype, optional
         The complex data type for CQT calculations.  
@@ -470,7 +470,7 @@ def icqt(C, sr=22050, hop_length=512, fmin=None, bins_per_octave=12,
     Parameters
     ----------
     C : np.ndarray, [shape=(n_bins, n_frames)]
-        Constant-Q representation as produced by `core.cqt`
+        Constant-Q representation as produced by `cqt`
 
     hop_length : int > 0 [scalar]
         number of samples between successive frames
@@ -530,7 +530,7 @@ def icqt(C, sr=22050, hop_length=512, fmin=None, bins_per_octave=12,
     See Also
     --------
     cqt
-    core.resample
+    librosa.resample
 
     Notes
     -----
@@ -723,7 +723,7 @@ def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=None,
     pad_mode : string
         Padding mode for centered frame analysis.
 
-        See also: `librosa.core.stft` and `np.pad`.
+        See also: `librosa.stft` and `np.pad`.
 
     res_type : string [optional]
         The resampling mode for recursive downsampling.
@@ -732,7 +732,7 @@ def vqt(y, sr=22050, hop_length=512, fmin=None, n_bins=84, gamma=None,
         which trades off accuracy at high frequencies for efficiency at low frequencies.
 
         You can override this by specifying a resampling mode as supported by
-        `librosa.core.resample`.  For example, `res_type='fft'` will use a high-quality,
+        `librosa.resample`.  For example, `res_type='fft'` will use a high-quality,
         but potentially slow FFT-based down-sampling, while `res_type='polyphase'` will
         use a fast, but potentially inaccurate down-sampling.
 
@@ -1119,7 +1119,7 @@ def griffinlim_cqt(C, n_iter=32, sr=22050, hop_length=512, fmin=None, bins_per_o
     pad_mode : string
         Padding mode for centered frame analysis.
 
-        See also: `librosa.core.stft` and `np.pad`
+        See also: `librosa.stft` and `np.pad`
 
     res_type : string
         The resampling mode for recursive downsampling.
@@ -1130,7 +1130,7 @@ def griffinlim_cqt(C, n_iter=32, sr=22050, hop_length=512, fmin=None, bins_per_o
 
         Griffin-Lim uses the efficient (fast) resampling mode by default.
 
-        See `librosa.core.resample` for a list of available options.
+        See `librosa.resample` for a list of available options.
 
     dtype : numeric type
         Real numeric type for `y`.  Default is inferred to match the precision

@@ -212,7 +212,7 @@ def time_stretch(y, rate, **kwargs):
     See Also
     --------
     pitch_shift : pitch shifting
-    librosa.core.phase_vocoder : spectrogram phase vocoder
+    librosa.phase_vocoder : spectrogram phase vocoder
     pyrubberband.pyrb.time_stretch : high-quality time stretching using RubberBand
 
     Examples
@@ -272,7 +272,7 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type='kaiser_best',
         'fft'.
         By default, 'kaiser_best' is used.
 
-        See `core.resample` for more information.
+        See `librosa.resample` for more information.
 
     kwargs: additional keyword arguments.
         See `librosa.decompose.stft` for details.
@@ -286,7 +286,7 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type='kaiser_best',
     See Also
     --------
     time_stretch : time stretching
-    librosa.core.phase_vocoder : spectrogram phase vocoder
+    librosa.phase_vocoder : spectrogram phase vocoder
     pyrubberband.pyrb.pitch_shift : high-quality pitch shifting using RubberBand
 
     Examples

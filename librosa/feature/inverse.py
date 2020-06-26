@@ -48,10 +48,10 @@ def mel_to_stft(M, sr=22050, n_fft=2048, power=2.0, **kwargs):
 
     See Also
     --------
-    feature.melspectrogram
-    core.stft
-    filters.mel
-    util.nnls
+    librosa.feature.melspectrogram
+    librosa.stft
+    librosa.filters.mel
+    librosa.util.nnls
 
 
     Examples
@@ -150,10 +150,10 @@ def mel_to_audio(M, sr=22050, n_fft=2048, hop_length=512, win_length=None,
 
     See Also
     --------
-    core.griffinlim
-    feature.melspectrogram
-    filters.mel
-    feature.inverse.mel_to_stft
+    librosa.griffinlim
+    librosa.feature.melspectrogram
+    librosa.filters.mel
+    librosa.feature.inverse.mel_to_stft
     """
 
     stft = mel_to_stft(M, sr=sr, n_fft=n_fft, power=power, **kwargs)
@@ -169,7 +169,7 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0):
     This inversion proceeds in two steps:
 
         1. The inverse DCT is applied to the MFCCs
-        2. `core.db_to_power` is applied to map the dB-scaled result to a power spectrogram
+        2. `librosa.db_to_power` is applied to map the dB-scaled result to a power spectrogram
 
 
     Parameters
@@ -279,8 +279,8 @@ def mfcc_to_audio(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0,
     --------
     mfcc_to_mel
     mel_to_audio
-    feature.mfcc
-    core.griffinlim
+    librosa.feature.mfcc
+    librosa.griffinlim
     scipy.fftpack.dct
     '''
     mel_spec = mfcc_to_mel(mfcc, n_mels=n_mels, dct_type=dct_type, norm=norm,

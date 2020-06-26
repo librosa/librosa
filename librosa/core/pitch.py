@@ -235,7 +235,7 @@ def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
         One of `S` or `y` must be provided.
 
         If `S` is not given, it is computed from `y` using
-        the default parameters of `librosa.core.stft`.
+        the default parameters of `librosa.stft`.
 
     Returns
     -------
