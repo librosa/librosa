@@ -37,8 +37,8 @@ Blockwise Reading
 -----------------
 
 For large audio signals it could be beneficial to not load the whole audio file
-into memory.  Librosa 0.7 introduces a streaming interface, which can be used to
-work on short fragments of audio sequentially.  :func:`librosa.core.stream` cuts an input
+into memory. Librosa 0.7 introduced a streaming interface, which can be used to
+work on short fragments of audio sequentially.  :func:`librosa.stream` cuts an input
 file into *blocks* of audio, which correspond to a given number of *frames*,
 which can be iterated over as in the following example:
 
@@ -70,20 +70,20 @@ which can be iterated over as in the following example:
       chromas.append(chromas)
                                                 
 
-In this example, each audio fragment `y` will consist of 128 frames worth of samples,
-or more specifically, `len(y) == frame_length + (block_length - 1) * hop_length`.
-Each fragment `y` will overlap with the subsequent fragment by `frame_length - hop_length`
+In this example, each audio fragment ``y`` will consist of 128 frames worth of samples,
+or more specifically, ``len(y) == frame_length + (block_length - 1) * hop_length``.
+Each fragment ``y`` will overlap with the subsequent fragment by ``frame_length - hop_length``
 samples, which ensures that stream processing will provide equivalent results to if the entire
 sequence was processed in one step (assuming padding / centering is disabled).
 
-For more details about the streaming interface, refer to :func:`librosa.core.stream`.
+For more details about the streaming interface, refer to :func:`librosa.stream`.
 
 
 Read file-like objects
 ----------------------
 
 If you want to read audio from file-like objects (also called *virtual files*)
-you can use `soundfile` as well.  (This will also work with :func:`librosa.core.load` and :func:`librosa.core.stream`, provided
+you can use `soundfile` as well.  (This will also work with :func:`librosa.load` and :func:`librosa.stream`, provided
 that the underlying codec is supported by `soundfile`.)
 
 E.g.: read files from zip compressed archives:
@@ -136,4 +136,3 @@ Write out audio files
 
     # Write out audio as 16bit OGG
     sf.write('stereo_file.ogg', data, samplerate, format='ogg', subtype='vorbis')
-
