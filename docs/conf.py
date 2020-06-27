@@ -11,6 +11,11 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+#
+# To build multi-versions, run the following at the base directory
+#   $ sphinx-multiversion docs/ build/html/
+#
+
 import os
 import sys
 import sphinx
@@ -39,7 +44,8 @@ extensions = [
     "numpydoc",
     "sphinx.ext.autosummary",
     "matplotlib.sphinxext.plot_directive",
-    "sphinxcontrib.inkscapeconverter"
+    "sphinxcontrib.inkscapeconverter",
+    "sphinx_multiversion"
 ]
 
 
@@ -143,7 +149,12 @@ intersphinx_mapping = {
 
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ["_templates"]
+templates_path = [
+    "_templates",
+]
+
+html_sidebars = {'*': ["versions.html"]}
+
 
 # The suffix of source filenames.
 source_suffix = ".rst"
@@ -356,11 +367,10 @@ autodoc_member_order = "bysource"
 # sphinx-versioning -l conf.py push docs gh-pages .
 import re
 
-scv_whitelist_branches = ("main",)
-# scv_whitelist_tags = (re.compile(r'^v?\d\.\d\.\d+(\.?rc\d+)?$'),)  # use this for RC builds
-#scv_whitelist_tags = (re.compile(r"^v?\d\.\d\.\d+$"),)  # use this for final builds
-scv_whitelist_tags = (re.compile(r"^v?\d\.[78]\.\d+$"),)  # use this for final builds
-# scv_whitelist_tags = (re.compile(r'^v?\d\.\d\.\d+$'), re.compile(r'^0\.7\.0.*?'))  # use this for final builds
-scv_greatest_tag = True
-scv_banner_greatest_tag = True
-scv_show_banner = True
+smv_branch_whitelist = r"^main$"
+smv_tag_whitelist = r"^0\.[678]\.\d+$"  # use this for final builds
+smv_remote_whitelist = None
+smv_greatest_tag = True
+smv_banner_greatest_tag = True
+smv_show_banner = True
+smv_prefer_remote_refs = False
