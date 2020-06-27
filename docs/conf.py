@@ -19,11 +19,15 @@
 import os
 import sys
 import sphinx
+from pathlib import Path
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.abspath("../"))
+# sys.path.insert(0, os.path.abspath("../"))
+
+# This song and dance enables builds from outside the docs directory
+sys.path.insert(0, os.path.abspath(Path(os.path.dirname(__file__)) / '..'))
 
 # -- General configuration -----------------------------------------------------
 
@@ -363,12 +367,8 @@ texinfo_documents = [
 
 autodoc_member_order = "bysource"
 
-# Sphinx-contrib versioning
-# sphinx-versioning -l conf.py push docs gh-pages .
-import re
-
-smv_branch_whitelist = r"^main$"
-smv_tag_whitelist = r"^0\.[678]\.\d+$"  # use this for final builds
+smv_branch_whitelist = r"^main|(doc.*)$"
+smv_tag_whitelist = r"^(0\.6\.3)|(0\.7\.2)|(0\.[8]\.\d+)$"  # use this for final builds
 smv_remote_whitelist = None
 smv_greatest_tag = True
 smv_banner_greatest_tag = True
