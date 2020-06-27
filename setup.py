@@ -52,7 +52,7 @@ setup(
     extras_require={
         'docs': ['numpydoc', 'sphinx!=1.3.1', 'sphinx_rtd_theme',
                  'matplotlib >= 2.0.0',
-                 'sphinxcontrib-multiversion >= 0.2.3',
+                 'sphinx-multiversion >= 0.2.3',
                  'sphinx-gallery',
                  'sphinxcontrib-svg2pdfconverter',
                  'presets'],
