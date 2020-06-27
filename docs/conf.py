@@ -283,6 +283,7 @@ html_logo = 'img/librosa_logo_text.svg'
 html_theme_options = {
     'logo_only': True,
     'style_nav_header_background': 'white',
+    'analytics_id': 'UA-171031946-1',
 }
 html_static_path = ['_static']
 html_css_files = [
@@ -383,9 +384,9 @@ texinfo_documents = [
 autodoc_member_order = "bysource"
 
 #smv_branch_whitelist = r"^main|(doc.*)$"
-smv_branch_whitelist = r"^doc-modernize$"
 #smv_tag_whitelist = r"^(0\.6\.3)|(0\.7\.2)|(0\.[8]\.\d+)$"  # use this for final builds
-smv_tag_whitelist = r"^(0\.6\.4)$|^(0\.7\.\d+)$|^(0\.[8]\.\d+)$"  # use this for final builds
+smv_branch_whitelist = r"^doc-modernize$"
+smv_tag_whitelist = r"^(0\.7\.[12])$|^(0\.[8]\.\d+)$"
 smv_released_pattern = r'.*tags.*'
 smv_remote_whitelist = None
 smv_greatest_tag = True
