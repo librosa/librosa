@@ -69,8 +69,8 @@ Example
 -------
 To demonstrate how to use the cache, we'll first call an example script twice without caching::
 
-    $ time -p ./estimate_tuning.py ../librosa/util/example_data/Kevin_MacLeod_-_Vibe_Ace.ogg 
-    Loading  ../librosa/util/example_data/Kevin_MacLeod_-_Vibe_Ace.ogg
+    $ time -p ./estimate_tuning.py Kevin_MacLeod_-_Vibe_Ace.ogg 
+    Loading  Kevin_MacLeod_-_Vibe_Ace.ogg
     Separating harmonic component ... 
     Estimating tuning ... 
     +9.00 cents
@@ -78,8 +78,8 @@ To demonstrate how to use the cache, we'll first call an example script twice wi
     user 6.03
     sys 1.09
 
-    $ time -p ./estimate_tuning.py ../librosa/util/example_data/Kevin_MacLeod_-_Vibe_Ace.ogg 
-    Loading  ../librosa/util/example_data/Kevin_MacLeod_-_Vibe_Ace.ogg
+    $ time -p ./estimate_tuning.py Kevin_MacLeod_-_Vibe_Ace.ogg 
+    Loading  Kevin_MacLeod_-_Vibe_Ace.ogg
     Separating harmonic component ... 
     Estimating tuning ... 
     +9.00 cents
@@ -100,8 +100,8 @@ And now we'll re-run the example script twice.  The first time, there will be no
 should be similar to running without cache.  The second time, we'll be able to reuse intermediate values, so
 it should be significantly faster.::
 
-    $ time -p ./estimate_tuning.py ../librosa/util/example_data/Kevin_MacLeod_-_Vibe_Ace.ogg 
-    Loading  ../librosa/util/example_data/Kevin_MacLeod_-_Vibe_Ace.ogg
+    $ time -p ./estimate_tuning.py Kevin_MacLeod_-_Vibe_Ace.ogg 
+    Loading  Kevin_MacLeod_-_Vibe_Ace.ogg
     Separating harmonic component ... 
     Estimating tuning ... 
     +9.00 cents
@@ -109,8 +109,8 @@ it should be significantly faster.::
     user 6.79
     sys 1.15
 
-    $ time -p ./estimate_tuning.py ../librosa/util/example_data/Kevin_MacLeod_-_Vibe_Ace.ogg 
-    Loading  ../librosa/util/example_data/Kevin_MacLeod_-_Vibe_Ace.ogg
+    $ time -p ./estimate_tuning.py Kevin_MacLeod_-_Vibe_Ace.ogg 
+    Loading  Kevin_MacLeod_-_Vibe_Ace.ogg
     Separating harmonic component ... 
     Estimating tuning ... 
     +9.00 cents
@@ -122,8 +122,8 @@ Reducing the cache level to 20 yields an intermediate acceleration::
 
     $ export LIBROSA_CACHE_LEVEL=20
 
-    $ time -p ./estimate_tuning.py ../librosa/util/example_data/Kevin_MacLeod_-_Vibe_Ace.ogg 
-    Loading  ../librosa/util/example_data/Kevin_MacLeod_-_Vibe_Ace.ogg
+    $ time -p ./estimate_tuning.py Kevin_MacLeod_-_Vibe_Ace.ogg 
+    Loading  Kevin_MacLeod_-_Vibe_Ace.ogg
     Separating harmonic component ... 
     Estimating tuning ... 
     +9.00 cents

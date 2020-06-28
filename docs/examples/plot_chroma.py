@@ -24,9 +24,8 @@ also, introduces chroma variants implemented in librosa.
 
 # Code source: Brian McFee
 # License: ISC
-# sphinx_gallery_thumbnail_number = 6
+# sphinx_gallery_thumbnail_number = 5
 
-from __future__ import print_function
 import numpy as np
 import scipy
 import matplotlib.pyplot as plt
@@ -52,16 +51,16 @@ idx = tuple([slice(None), slice(*list(librosa.time_to_frames([45, 60])))])
 C = np.abs(librosa.cqt(y=y, sr=sr, bins_per_octave=12*3, n_bins=7*12*3))
 
 
-plt.figure(figsize=(12, 4))
-plt.subplot(2, 1, 1)
-librosa.display.specshow(librosa.amplitude_to_db(C, ref=np.max)[idx],
-                         y_axis='cqt_note', bins_per_octave=12*3)
-plt.colorbar()
-plt.subplot(2, 1, 2)
-librosa.display.specshow(chroma_orig[idx], y_axis='chroma')
-plt.colorbar()
-plt.ylabel('Original')
-plt.tight_layout()
+fig, ax = plt.subplots(nrows=2, sharex=True)
+img1 = librosa.display.specshow(librosa.amplitude_to_db(C, ref=np.max)[idx],
+                                y_axis='cqt_note', x_axis='time', bins_per_octave=12*3,
+                                ax=ax[0])
+fig.colorbar(img1, ax=[ax[0]], format="%+2.f dB")
+ax[0].label_outer()
+
+img2 = librosa.display.specshow(chroma_orig[idx], y_axis='chroma', x_axis='time', ax=ax[1])
+fig.colorbar(img2, ax=[ax[1]])
+ax[1].set(ylabel='Default chroma')
 
 
 ########################################################
@@ -71,18 +70,13 @@ y_harm = librosa.effects.harmonic(y=y, margin=8)
 chroma_harm = librosa.feature.chroma_cqt(y=y_harm, sr=sr)
 
 
-plt.figure(figsize=(12, 4))
+fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+librosa.display.specshow(chroma_orig[idx], y_axis='chroma', x_axis='time', ax=ax[0])
+ax[0].set(ylabel='Default chroma')
+ax[0].label_outer()
 
-plt.subplot(2, 1, 1)
-librosa.display.specshow(chroma_orig[idx], y_axis='chroma')
-plt.colorbar()
-plt.ylabel('3x-over')
-
-plt.subplot(2, 1, 2)
-librosa.display.specshow(chroma_harm[idx], y_axis='chroma', x_axis='time')
-plt.colorbar()
-plt.ylabel('Harmonic')
-plt.tight_layout()
+librosa.display.specshow(chroma_harm[idx], y_axis='chroma', x_axis='time', ax=ax[1])
+ax[1].set(ylabel='Harmonic')
 
 
 ###########################################
@@ -95,18 +89,13 @@ chroma_filter = np.minimum(chroma_harm,
                                                        metric='cosine'))
 
 
-plt.figure(figsize=(12, 4))
+fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+librosa.display.specshow(chroma_harm[idx], y_axis='chroma', x_axis='time', ax=ax[0])
+ax[0].set(ylabel='Harmonic')
+ax[0].label_outer()
 
-plt.subplot(2, 1, 1)
-librosa.display.specshow(chroma_harm[idx], y_axis='chroma')
-plt.colorbar()
-plt.ylabel('Harmonic')
-
-plt.subplot(2, 1, 2)
-librosa.display.specshow(chroma_filter[idx], y_axis='chroma', x_axis='time')
-plt.colorbar()
-plt.ylabel('Non-local')
-plt.tight_layout()
+librosa.display.specshow(chroma_filter[idx], y_axis='chroma', x_axis='time', ax=ax[1])
+ax[1].set(ylabel='Non-local')
 
 
 ###########################################################
@@ -115,39 +104,29 @@ plt.tight_layout()
 chroma_smooth = scipy.ndimage.median_filter(chroma_filter, size=(1, 9))
 
 
-plt.figure(figsize=(12, 4))
+fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+librosa.display.specshow(chroma_filter[idx], y_axis='chroma', x_axis='time', ax=ax[0])
+ax[0].set(ylabel='Non-local')
+ax[0].label_outer()
 
-plt.subplot(2, 1, 1)
-librosa.display.specshow(chroma_filter[idx], y_axis='chroma')
-plt.colorbar()
-plt.ylabel('Non-local')
-
-plt.subplot(2, 1, 2)
-librosa.display.specshow(chroma_smooth[idx], y_axis='chroma', x_axis='time')
-plt.colorbar()
-plt.ylabel('Median-filtered')
-plt.tight_layout()
+librosa.display.specshow(chroma_smooth[idx], y_axis='chroma', x_axis='time', ax=ax[1])
+ax[1].set(ylabel='Median-filtered')
 
 
 #########################################################
 # A final comparison between the CQT, original chromagram
 # and the result of our filtering.
-plt.figure(figsize=(12, 8))
-plt.subplot(3, 1, 1)
+fig, ax = plt.subplots(nrows=3, sharex=True)
 librosa.display.specshow(librosa.amplitude_to_db(C, ref=np.max)[idx],
-                         y_axis='cqt_note', bins_per_octave=12*3)
-plt.colorbar()
-plt.ylabel('CQT')
-plt.subplot(3, 1, 2)
-librosa.display.specshow(chroma_orig[idx], y_axis='chroma')
-plt.ylabel('Original')
-plt.colorbar()
-plt.subplot(3, 1, 3)
-librosa.display.specshow(chroma_smooth[idx], y_axis='chroma', x_axis='time')
-plt.ylabel('Processed')
-plt.colorbar()
-plt.tight_layout()
-plt.show()
+                         y_axis='cqt_note', x_axis='time',
+                         bins_per_octave=12*3, ax=ax[0])
+ax[0].set(ylabel='CQT')
+ax[0].label_outer()
+librosa.display.specshow(chroma_orig[idx], y_axis='chroma', x_axis='time', ax=ax[1])
+ax[1].set(ylabel='Default chroma')
+ax[1].label_outer()
+librosa.display.specshow(chroma_smooth[idx], y_axis='chroma', x_axis='time', ax=ax[2])
+ax[2].set(ylabel='Processed')
 
 
 #################################################################################################
@@ -164,47 +143,36 @@ chromagram_stft = librosa.feature.chroma_stft(y=y, sr=sr)
 chromagram_cqt = librosa.feature.chroma_cqt(y=y, sr=sr)
 
 
-plt.figure(figsize=(12, 4))
+fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+librosa.display.specshow(chromagram_stft[idx], y_axis='chroma', x_axis='time', ax=ax[0])
+ax[0].set(ylabel='STFT')
+ax[0].label_outer()
 
-plt.subplot(2, 1, 1)
-librosa.display.specshow(chromagram_stft[idx], y_axis='chroma')
-plt.colorbar()
-plt.ylabel('STFT')
-
-plt.subplot(2, 1, 2)
-librosa.display.specshow(chromagram_cqt[idx], y_axis='chroma', x_axis='time')
-plt.colorbar()
-plt.ylabel('CQT')
-plt.tight_layout()
+librosa.display.specshow(chromagram_cqt[idx], y_axis='chroma', x_axis='time', ax=ax[1])
+ax[1].set(ylabel='CQT')
 
 
 ###################################################################################################
-# CENS features (`chroma_cens`) are variants of chroma features introduced in 
-# `Müller and Ewart, 2011 <http://ismir2011.ismir.net/papers/PS2-8.pdf>`_, in which 
-# additional post processing steps are performed on the constant-Q chromagram to obtain features 
-# that are invariant to dynamics and timbre.     
-# 
+# CENS features (`chroma_cens`) are variants of chroma features introduced in
+# `Müller and Ewart, 2011 <http://ismir2011.ismir.net/papers/PS2-8.pdf>`_, in which
+# additional post processing steps are performed on the constant-Q chromagram to obtain features
+# that are invariant to dynamics and timbre.
+#
 # Thus, the CENS features are useful for applications, such as audio matching and retrieval.
-#  
-# Following steps are additional processing done on the chromagram, and are implemented in `chroma_cens`:  
+#
+# Following steps are additional processing done on the chromagram, and are implemented in `chroma_cens`:
 #   1. L1-Normalization across each chroma vector
 #   2. Quantization of the amplitudes based on "log-like" amplitude thresholds
-#   3. Smoothing with sliding window (optional parameter) 
+#   3. Smoothing with sliding window (optional parameter)
 #   4. Downsampling (not implemented)
 #
-# A comparison between the original constant-Q chromagram and the CENS features.  
+# A comparison between the original constant-Q chromagram and the CENS features.
 chromagram_cens = librosa.feature.chroma_cens(y=y, sr=sr)
 
 
-plt.figure(figsize=(12, 4))
+fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+librosa.display.specshow(chromagram_cqt[idx], y_axis='chroma', x_axis='time', ax=ax[0])
+ax[0].set(ylabel='Orig')
 
-plt.subplot(2, 1, 1)
-librosa.display.specshow(chromagram_cqt[idx], y_axis='chroma')
-plt.colorbar()
-plt.ylabel('Orig')
-
-plt.subplot(2, 1, 2)
-librosa.display.specshow(chromagram_cens[idx], y_axis='chroma', x_axis='time')
-plt.colorbar()
-plt.ylabel('CENS')
-plt.tight_layout()
+librosa.display.specshow(chromagram_cens[idx], y_axis='chroma', x_axis='time', ax=ax[1])
+ax[1].set(ylabel='CENS')

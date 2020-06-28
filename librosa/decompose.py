@@ -30,8 +30,8 @@ __all__ = ['decompose', 'hpss', 'nn_filter']
 def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kwargs):
     """Decompose a feature matrix.
 
-    Given a spectrogram `S`, produce a decomposition into `components`
-    and `activations` such that `S ~= components.dot(activations)`.
+    Given a spectrogram ``S``, produce a decomposition into ``components``
+    and ``activations`` such that ``S ~= components.dot(activations)``.
 
     By default, this is done with with non-negative matrix factorization (NMF),
     but any `sklearn.decomposition`-type object will work.
@@ -45,30 +45,31 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
     n_components : int > 0 [scalar] or None
         number of desired components
 
-        if None, then `n_features` components are used
+        if None, then ``n_features`` components are used
 
     transformer : None or object
         If None, use `sklearn.decomposition.NMF`
 
         Otherwise, any object with a similar interface to NMF should work.
-        `transformer` must follow the scikit-learn convention, where
-        input data is `(n_samples, n_features)`.
+        ``transformer`` must follow the scikit-learn convention, where
+        input data is ``(n_samples, n_features)``.
 
-        `transformer.fit_transform()` will be run on `S.T` (not `S`),
-        the return value of which is stored (transposed) as `activations`
+        `transformer.fit_transform()` will be run on ``S.T`` (not ``S``),
+        the return value of which is stored (transposed) as ``activations``
 
-        The components will be retrieved as `transformer.components_.T`
+        The components will be retrieved as ``transformer.components_.T``::
 
-        `S ~= np.dot(activations, transformer.components_).T`
+            S ~= np.dot(activations, transformer.components_).T
 
-        or equivalently:
-        `S ~= np.dot(transformer.components_.T, activations.T)`
+        or equivalently::
+
+            S ~= np.dot(transformer.components_.T, activations.T)
 
     sort : bool
-        If `True`, components are sorted by ascending peak frequency.
+        If ``True``, components are sorted by ascending peak frequency.
 
-        .. note:: If used with `transformer`, sorting is applied to copies
-            of the decomposition parameters, and not to `transformer`'s
+        .. note:: If used with ``transformer``, sorting is applied to copies
+            of the decomposition parameters, and not to ``transformer``
             internal parameters.
 
     fit : bool
@@ -93,7 +94,7 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
     Raises
     ------
     ParameterError
-        if `fit` is False and no `transformer` object is provided.
+        if ``fit`` is False and no ``transformer`` object is provided.
 
 
     See Also
@@ -105,22 +106,9 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
     --------
     Decompose a magnitude spectrogram into 32 components with NMF
 
-    >>> y, sr = librosa.load(librosa.ex('choice'))
+    >>> y, sr = librosa.load(librosa.ex('choice'), duration=5)
     >>> S = np.abs(librosa.stft(y))
     >>> comps, acts = librosa.decompose.decompose(S, n_components=8)
-    >>> comps
-    array([[  1.876e-01,   5.559e-02, ...,   1.687e-01,   4.907e-02],
-           [  3.148e-01,   1.719e-01, ...,   2.314e-01,   9.493e-02],
-           ...,
-           [  1.561e-07,   8.564e-08, ...,   7.167e-08,   4.997e-08],
-           [  1.531e-07,   7.880e-08, ...,   5.632e-08,   4.028e-08]])
-    >>> acts
-    array([[  4.197e-05,   8.512e-03, ...,   3.056e-05,   9.159e-06],
-           [  9.568e-06,   1.718e-02, ...,   3.322e-05,   7.869e-06],
-           ...,
-           [  5.982e-05,   1.311e-02, ...,  -0.000e+00,   6.323e-06],
-           [  3.782e-05,   7.056e-03, ...,   3.290e-05,  -0.000e+00]])
-
 
     Sort components by ascending peak frequency
 
@@ -135,33 +123,25 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
     >>> scomps, sacts = librosa.decompose.decompose(S, transformer=T, sort=True)
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure(figsize=(10,8))
-    >>> plt.subplot(3, 1, 1)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S,
-    ...                                                  ref=np.max),
-    ...                          y_axis='log', x_axis='time')
-    >>> plt.title('Input spectrogram')
-    >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.subplot(3, 2, 3)
+    >>> fig, ax = plt.subplots(nrows=1, ncols=2)
     >>> librosa.display.specshow(librosa.amplitude_to_db(comps,
     ...                                                  ref=np.max),
-    ...                          y_axis='log')
-    >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.title('Components')
-    >>> plt.subplot(3, 2, 4)
-    >>> librosa.display.specshow(acts, x_axis='time')
-    >>> plt.ylabel('Components')
-    >>> plt.title('Activations')
-    >>> plt.colorbar()
-    >>> plt.subplot(3, 1, 3)
+    ...                          y_axis='log', ax=ax[0])
+    >>> ax[0].set(title='Components')
+    >>> librosa.display.specshow(acts, x_axis='time', ax=ax[1])
+    >>> ax[1].set(ylabel='Components', title='Activations')
+
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    ...                          y_axis='log', x_axis='time', ax=ax[0])
+    >>> ax[0].set(title='Input spectrogram')
+    >>> ax[0].label_outer()
     >>> S_approx = comps.dot(acts)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S_approx,
+    >>> img = librosa.display.specshow(librosa.amplitude_to_db(S_approx,
     ...                                                  ref=np.max),
-    ...                          y_axis='log', x_axis='time')
-    >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.title('Reconstructed spectrogram')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    ...                          y_axis='log', x_axis='time', ax=ax[1])
+    >>> ax[1].set(title='Reconstructed spectrogram')
+    >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
     """
 
     if transformer is None:
@@ -192,21 +172,21 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
 def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
     """Median-filtering harmonic percussive source separation (HPSS).
 
-    If `margin = 1.0`, decomposes an input spectrogram `S = H + P`
-    where `H` contains the harmonic components,
-    and `P` contains the percussive components.
+    If ``margin = 1.0``, decomposes an input spectrogram ``S = H + P``
+    where ``H`` contains the harmonic components,
+    and ``P`` contains the percussive components.
 
-    If `margin > 1.0`, decomposes an input spectrogram `S = H + P + R`
-    where `R` contains residual components not included in `H` or `P`.
+    If ``margin > 1.0``, decomposes an input spectrogram ``S = H + P + R``
+    where ``R`` contains residual components not included in ``H`` or ``P``.
 
-    This implementation is based upon the algorithm described by [1]_ and [2]_.
+    This implementation is based upon the algorithm described by [#]_ and [#]_.
 
-    .. [1] Fitzgerald, Derry.
+    .. [#] Fitzgerald, Derry.
         "Harmonic/percussive separation using median filtering."
         13th International Conference on Digital Audio Effects (DAFX10),
         Graz, Austria, 2010.
 
-    .. [2] Driedger, Müller, Disch.
+    .. [#] Driedger, Müller, Disch.
         "Extending harmonic-percussive separation of audio."
         15th International Society for Music Information Retrieval Conference (ISMIR 2014),
         Taipei, Taiwan, 2014.
@@ -231,11 +211,11 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
         Return the masking matrices instead of components.
 
         Masking matrices contain non-negative real values that
-        can be used to measure the assignment of energy from `S`
+        can be used to measure the assignment of energy from ``S``
         into harmonic or percussive components.
 
-        Components can be recovered by multiplying `S * mask_H`
-        or `S * mask_P`.
+        Components can be recovered by multiplying ``S * mask_H``
+        or ``S * mask_P``.
 
 
     margin : float or tuple (margin_harmonic, margin_percussive)
@@ -257,7 +237,7 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
 
     See Also
     --------
-    util.softmask
+    librosa.util.softmask
 
     Notes
     -----
@@ -267,32 +247,27 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
     --------
     Separate into harmonic and percussive
 
-    >>> y, sr = librosa.load(librosa.ex('choice'))
+    >>> y, sr = librosa.load(librosa.ex('choice'), duration=5)
     >>> D = librosa.stft(y)
     >>> H, P = librosa.decompose.hpss(D)
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> plt.subplot(3, 1, 1)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(np.abs(D),
-    ...                                                  ref=np.max),
-    ...                          y_axis='log')
-    >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.title('Full power spectrogram')
-    >>> plt.subplot(3, 1, 2)
+    >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
+    >>> img = librosa.display.specshow(librosa.amplitude_to_db(np.abs(D),
+    ...                                                        ref=np.max),
+    ...                          y_axis='log', x_axis='time', ax=ax[0])
+    >>> ax[0].set(title='Full power spectrogram')
+    >>> ax[0].label_outer()
     >>> librosa.display.specshow(librosa.amplitude_to_db(np.abs(H),
-    ...                                                  ref=np.max),
-    ...                          y_axis='log')
-    >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.title('Harmonic power spectrogram')
-    >>> plt.subplot(3, 1, 3)
+    ...                                                  ref=np.max(np.abs(D))),
+    ...                          y_axis='log', x_axis='time', ax=ax[1])
+    >>> ax[1].set(title='Harmonic power spectrogram')
+    >>> ax[1].label_outer()
     >>> librosa.display.specshow(librosa.amplitude_to_db(np.abs(P),
-    ...                                                  ref=np.max),
-    ...                          y_axis='log')
-    >>> plt.colorbar(format='%+2.0f dB')
-    >>> plt.title('Percussive power spectrogram')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    ...                                                  ref=np.max(np.abs(D))),
+    ...                          y_axis='log', x_axis='time', ax=ax[2])
+    >>> ax[2].set(title='Percussive power spectrogram')
+    >>> fig.colorbar(img, ax=ax, format='%+2.0f dB')
 
 
     Or with a narrower horizontal filter
@@ -321,9 +296,9 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
 
     >>> H, P = librosa.decompose.hpss(D, margin=3.0)
     >>> R = D - (H+P)
-    >>> y_harm = librosa.core.istft(H)
-    >>> y_perc = librosa.core.istft(P)
-    >>> y_resi = librosa.core.istft(R)
+    >>> y_harm = librosa.istft(H)
+    >>> y_perc = librosa.istft(P)
+    >>> y_resi = librosa.istft(R)
 
 
     Get a more isolated percussive component by widening its margin
@@ -388,18 +363,18 @@ def nn_filter(S, rec=None, aggregate=None, axis=-1, **kwargs):
 
     This can be useful for de-noising a spectrogram or feature matrix.
 
-    The non-local means method [1]_ can be recovered by providing a
-    weighted recurrence matrix as input and specifying `aggregate=np.average`.
+    The non-local means method [#]_ can be recovered by providing a
+    weighted recurrence matrix as input and specifying ``aggregate=np.average``.
 
-    Similarly, setting `aggregate=np.median` produces sparse de-noising
-    as in REPET-SIM [2]_.
+    Similarly, setting ``aggregate=np.median`` produces sparse de-noising
+    as in REPET-SIM [#]_.
 
-    .. [1] Buades, A., Coll, B., & Morel, J. M.
+    .. [#] Buades, A., Coll, B., & Morel, J. M.
         (2005, June). A non-local algorithm for image denoising.
         In Computer Vision and Pattern Recognition, 2005.
         CVPR 2005. IEEE Computer Society Conference on (Vol. 2, pp. 60-65). IEEE.
 
-    .. [2] Rafii, Z., & Pardo, B.
+    .. [#] Rafii, Z., & Pardo, B.
         (2012, October).  "Music/Voice Separation Using the Similarity Matrix."
         International Society for Music Information Retrieval Conference, 2012.
 
@@ -415,8 +390,8 @@ def nn_filter(S, rec=None, aggregate=None, axis=-1, **kwargs):
     aggregate : function
         aggregation function (default: `np.mean`)
 
-        If `aggregate=np.average`, then a weighted average is
-        computed according to the (per-row) weights in `rec`.
+        If ``aggregate=np.average``, then a weighted average is
+        computed according to the (per-row) weights in ``rec``.
 
         For all other aggregation functions, all neighbors
         are treated equally.
@@ -427,7 +402,7 @@ def nn_filter(S, rec=None, aggregate=None, axis=-1, **kwargs):
 
     kwargs
         Additional keyword arguments provided to
-        `librosa.segment.recurrence_matrix` if `rec` is not provided
+        `librosa.segment.recurrence_matrix` if ``rec`` is not provided
 
     Returns
     -------
@@ -437,7 +412,7 @@ def nn_filter(S, rec=None, aggregate=None, axis=-1, **kwargs):
     Raises
     ------
     ParameterError
-        if `rec` is provided and its shape is incompatible with `S`.
+        if ``rec`` is provided and its shape is incompatible with ``S``.
 
     See also
     --------
@@ -456,7 +431,7 @@ def nn_filter(S, rec=None, aggregate=None, axis=-1, **kwargs):
 
     De-noise a chromagram by non-local median filtering.
     By default this would use euclidean distance to select neighbors,
-    but this can be overridden directly by setting the `metric` parameter.
+    but this can be overridden directly by setting the ``metric`` parameter.
 
     >>> y, sr = librosa.load(librosa.ex('brahms'),
     ...                      offset=30, duration=10)
@@ -465,7 +440,7 @@ def nn_filter(S, rec=None, aggregate=None, axis=-1, **kwargs):
     ...                                          aggregate=np.median,
     ...                                          metric='cosine')
 
-    To use non-local means, provide an affinity matrix and `aggregate=np.average`.
+    To use non-local means, provide an affinity matrix and ``aggregate=np.average``.
 
     >>> rec = librosa.segment.recurrence_matrix(chroma, mode='affinity',
     ...                                         metric='cosine', sparse=True)
@@ -473,32 +448,29 @@ def nn_filter(S, rec=None, aggregate=None, axis=-1, **kwargs):
     ...                                          aggregate=np.average)
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure(figsize=(10, 8))
-    >>> plt.subplot(5, 1, 1)
-    >>> librosa.display.specshow(chroma, y_axis='chroma')
-    >>> plt.colorbar()
-    >>> plt.title('Unfiltered')
-    >>> plt.subplot(5, 1, 2)
-    >>> librosa.display.specshow(chroma_med, y_axis='chroma')
-    >>> plt.colorbar()
-    >>> plt.title('Median-filtered')
-    >>> plt.subplot(5, 1, 3)
-    >>> librosa.display.specshow(chroma_nlm, y_axis='chroma')
-    >>> plt.colorbar()
-    >>> plt.title('Non-local means')
-    >>> plt.subplot(5, 1, 4)
-    >>> librosa.display.specshow(chroma - chroma_med,
-    ...                          y_axis='chroma')
-    >>> plt.colorbar()
-    >>> plt.title('Original - median')
-    >>> plt.subplot(5, 1, 5)
-    >>> librosa.display.specshow(chroma - chroma_nlm,
-    ...                          y_axis='chroma', x_axis='time')
-    >>> plt.colorbar()
-    >>> plt.title('Original - NLM')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    >>> fig, ax = plt.subplots(nrows=5, sharex=True, sharey=True, figsize=(10, 10))
+    >>> librosa.display.specshow(chroma, y_axis='chroma', x_axis='time', ax=ax[0])
+    >>> ax[0].set(title='Unfiltered')
+    >>> ax[0].label_outer()
+    >>> librosa.display.specshow(chroma_med, y_axis='chroma', x_axis='time', ax=ax[1])
+    >>> ax[1].set(title='Median-filtered')
+    >>> ax[1].label_outer()
+    >>> imgc = librosa.display.specshow(chroma_nlm, y_axis='chroma', x_axis='time', ax=ax[2])
+    >>> ax[2].set(title='Non-local means')
+    >>> ax[2].label_outer()
+    >>> imgr1 = librosa.display.specshow(chroma - chroma_med,
+    ...                          y_axis='chroma', x_axis='time', ax=ax[3])
+    >>> ax[3].set(title='Original - median')
+    >>> ax[3].label_outer()
+    >>> imgr2 = librosa.display.specshow(chroma - chroma_nlm,
+    ...                          y_axis='chroma', x_axis='time', ax=ax[4])
+    >>> ax[4].label_outer()
+    >>> ax[4].set(title='Original - NLM')
+    >>> fig.colorbar(imgc, ax=ax[:3])
+    >>> fig.colorbar(imgr1, ax=[ax[3]])
+    >>> fig.colorbar(imgr2, ax=[ax[4]])
     '''
+
     if aggregate is None:
         aggregate = np.mean
 
@@ -529,7 +501,7 @@ def __nn_filter_helper(R_data, R_indices, R_ptr, S, aggregate):
     Parameters
     ----------
     R_data, R_indices, R_ptr : np.ndarrays
-        The `data`, `indices`, and `indptr` of a scipy.sparse matrix
+        The ``data``, ``indices``, and ``indptr`` of a scipy.sparse matrix
 
     S : np.ndarray
         The observation data to filter

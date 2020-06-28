@@ -18,9 +18,9 @@ __all__ = ['tempogram', 'fourier_tempogram']
 # -- Rhythmic features -- #
 def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
               win_length=384, center=True, window='hann', norm=np.inf):
-    '''Compute the tempogram: local autocorrelation of the onset strength envelope. [1]_
+    '''Compute the tempogram: local autocorrelation of the onset strength envelope. [#]_
 
-    .. [1] Grosche, Peter, Meinard Müller, and Frank Kurth.
+    .. [#] Grosche, Peter, Meinard Müller, and Frank Kurth.
         "Cyclic tempogram - A mid-level tempo representation for music signals."
         ICASSP, 2010.
 
@@ -30,11 +30,11 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
         Audio time series.
 
     sr : number > 0 [scalar]
-        sampling rate of `y`
+        sampling rate of ``y``
 
     onset_envelope : np.ndarray [shape=(n,) or (m, n)] or None
         Optional pre-computed onset strength envelope as provided by
-        `onset.onset_strength`.
+        `librosa.onset.onset_strength`.
 
         If multi-dimensional, tempograms are computed independently for each
         band (first dimension).
@@ -44,14 +44,14 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
     win_length : int > 0
         length of the onset autocorrelation window (in frames/onset measurements)
-        The default settings (384) corresponds to `384 * hop_length / sr ~= 8.9s`.
+        The default settings (384) corresponds to ``384 * hop_length / sr ~= 8.9s``.
 
     center : bool
         If `True`, onset autocorrelation windows are centered.
         If `False`, windows are left-aligned.
 
     window : string, function, number, tuple, or np.ndarray [shape=(win_length,)]
-        A window specification as in `core.stft`.
+        A window specification as in `stft`.
 
     norm : {np.inf, -np.inf, 0, float > 0, None}
         Normalization mode.  Set to `None` to disable normalization.
@@ -61,28 +61,28 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
     tempogram : np.ndarray [shape=(win_length, n) or (m, win_length, n)]
         Localized autocorrelation of the onset strength envelope.
 
-        If given multi-band input (`onset_envelope.shape==(m,n)`) then
-        `tempogram[i]` is the tempogram of `onset_envelope[i]`.
+        If given multi-band input (``onset_envelope.shape==(m,n)``) then
+        ``tempogram[i]`` is the tempogram of ``onset_envelope[i]``.
 
     Raises
     ------
     ParameterError
-        if neither `y` nor `onset_envelope` are provided
+        if neither ``y`` nor ``onset_envelope`` are provided
 
-        if `win_length < 1`
+        if ``win_length < 1``
 
     See Also
     --------
     fourier_tempogram
     librosa.onset.onset_strength
     librosa.util.normalize
-    librosa.core.stft
+    librosa.stft
 
 
     Examples
     --------
     >>> # Compute local onset autocorrelation
-    >>> y, sr = librosa.load(librosa.ex('brahms'))
+    >>> y, sr = librosa.load(librosa.ex('nutcracker'), duration=30)
     >>> hop_length = 512
     >>> oenv = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
     >>> tempogram = librosa.feature.tempogram(onset_envelope=oenv, sr=sr,
@@ -95,42 +95,34 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
     ...                            hop_length=hop_length)[0]
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure(figsize=(8, 8))
-    >>> plt.subplot(4, 1, 1)
-    >>> plt.plot(oenv, label='Onset strength')
-    >>> plt.xticks([])
-    >>> plt.legend(frameon=True)
-    >>> plt.axis('tight')
-    >>> plt.subplot(4, 1, 2)
-    >>> # We'll truncate the display to a narrower range of tempi
+    >>> fig, ax = plt.subplots(nrows=4, figsize=(10, 10))
+    >>> times = librosa.times_like(oenv, sr=sr, hop_length=hop_length)
+    >>> ax[0].plot(times, oenv, label='Onset strength')
+    >>> ax[0].label_outer()
+    >>> ax[0].legend(frameon=True)
     >>> librosa.display.specshow(tempogram, sr=sr, hop_length=hop_length,
-    >>>                          x_axis='time', y_axis='tempo')
-    >>> plt.axhline(tempo, color='w', linestyle='--', alpha=1,
+    >>>                          x_axis='time', y_axis='tempo', cmap='magma',
+    ...                          ax=ax[1])
+    >>> ax[1].axhline(tempo, color='w', linestyle='--', alpha=1,
     ...             label='Estimated tempo={:g}'.format(tempo))
-    >>> plt.legend(frameon=True, framealpha=0.75)
-    >>> plt.subplot(4, 1, 3)
+    >>> ax[1].legend(loc='upper right')
+    >>> ax[1].set(title='Tempogram')
     >>> x = np.linspace(0, tempogram.shape[0] * float(hop_length) / sr,
     ...                 num=tempogram.shape[0])
-    >>> plt.plot(x, np.mean(tempogram, axis=1), label='Mean local autocorrelation')
-    >>> plt.plot(x, ac_global, '--', alpha=0.75, label='Global autocorrelation')
-    >>> plt.xlabel('Lag (seconds)')
-    >>> plt.axis('tight')
-    >>> plt.legend(frameon=True)
-    >>> plt.subplot(4,1,4)
-    >>> # We can also plot on a BPM axis
+    >>> ax[2].plot(x, np.mean(tempogram, axis=1), label='Mean local autocorrelation')
+    >>> ax[2].plot(x, ac_global, '--', alpha=0.75, label='Global autocorrelation')
+    >>> ax[2].set(xlabel='Lag (seconds)')
+    >>> ax[2].legend(frameon=True)
     >>> freqs = librosa.tempo_frequencies(tempogram.shape[0], hop_length=hop_length, sr=sr)
-    >>> plt.semilogx(freqs[1:], np.mean(tempogram[1:], axis=1),
+    >>> ax[3].semilogx(freqs[1:], np.mean(tempogram[1:], axis=1),
     ...              label='Mean local autocorrelation', basex=2)
-    >>> plt.semilogx(freqs[1:], ac_global[1:], '--', alpha=0.75,
+    >>> ax[3].semilogx(freqs[1:], ac_global[1:], '--', alpha=0.75,
     ...              label='Global autocorrelation', basex=2)
-    >>> plt.axvline(tempo, color='black', linestyle='--', alpha=.8,
+    >>> ax[3].axvline(tempo, color='black', linestyle='--', alpha=.8,
     ...             label='Estimated tempo={:g}'.format(tempo))
-    >>> plt.legend(frameon=True)
-    >>> plt.xlabel('BPM')
-    >>> plt.axis('tight')
-    >>> plt.grid()
-    >>> plt.tight_layout()
-    >>> plt.show()
+    >>> ax[3].legend(frameon=True)
+    >>> ax[3].set(xlabel='BPM')
+    >>> ax[3].grid(True)
     '''
 
     from ..onset import onset_strength
@@ -184,9 +176,9 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
 def fourier_tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
                       win_length=384, center=True, window='hann'):
     '''Compute the Fourier tempogram: the short-time Fourier transform of the
-    onset strength envelope. [1]_
+    onset strength envelope. [#]_
 
-    .. [1] Grosche, Peter, Meinard Müller, and Frank Kurth.
+    .. [#] Grosche, Peter, Meinard Müller, and Frank Kurth.
         "Cyclic tempogram - A mid-level tempo representation for music signals."
         ICASSP, 2010.
 
@@ -196,25 +188,25 @@ def fourier_tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
         Audio time series.
 
     sr : number > 0 [scalar]
-        sampling rate of `y`
+        sampling rate of ``y``
 
     onset_envelope : np.ndarray [shape=(n,)] or None
         Optional pre-computed onset strength envelope as provided by
-        `onset.onset_strength`.
+        ``librosa.onset.onset_strength``.
 
     hop_length : int > 0
         number of audio samples between successive onset measurements
 
     win_length : int > 0
         length of the onset window (in frames/onset measurements)
-        The default settings (384) corresponds to `384 * hop_length / sr ~= 8.9s`.
+        The default settings (384) corresponds to ``384 * hop_length / sr ~= 8.9s``.
 
     center : bool
         If `True`, onset windows are centered.
         If `False`, windows are left-aligned.
 
     window : string, function, number, tuple, or np.ndarray [shape=(win_length,)]
-        A window specification as in `core.stft`.
+        A window specification as in `stft`.
 
     Returns
     -------
@@ -224,22 +216,22 @@ def fourier_tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
     Raises
     ------
     ParameterError
-        if neither `y` nor `onset_envelope` are provided
+        if neither ``y`` nor ``onset_envelope`` are provided
 
-        if `win_length < 1`
+        if ``win_length < 1``
 
     See Also
     --------
     tempogram
     librosa.onset.onset_strength
     librosa.util.normalize
-    librosa.core.stft
+    librosa.stft
 
 
     Examples
     --------
     >>> # Compute local onset autocorrelation
-    >>> y, sr = librosa.load(librosa.ex('brahms'))
+    >>> y, sr = librosa.load(librosa.ex('nutcracker'))
     >>> hop_length = 512
     >>> oenv = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
     >>> tempogram = librosa.feature.fourier_tempogram(onset_envelope=oenv, sr=sr,
@@ -249,22 +241,19 @@ def fourier_tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
     ...                                          hop_length=hop_length, norm=None)
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure(figsize=(8, 8))
-    >>> plt.subplot(3, 1, 1)
-    >>> plt.plot(oenv, label='Onset strength')
-    >>> plt.xticks([])
-    >>> plt.legend(frameon=True)
-    >>> plt.axis('tight')
-    >>> plt.subplot(3, 1, 2)
+    >>> fig, ax = plt.subplots(nrows=3, sharex=True)
+    >>> ax[0].plot(librosa.times_like(oenv), oenv, label='Onset strength')
+    >>> ax[0].legend(frameon=True)
+    >>> ax[0].label_outer()
     >>> librosa.display.specshow(np.abs(tempogram), sr=sr, hop_length=hop_length,
-    >>>                          x_axis='time', y_axis='fourier_tempo', cmap='magma')
-    >>> plt.title('Fourier tempogram')
-    >>> plt.subplot(3, 1, 3)
+    >>>                          x_axis='time', y_axis='fourier_tempo', cmap='magma',
+    ...                          ax=ax[1])
+    >>> ax[1].set(title='Fourier tempogram')
+    >>> ax[1].label_outer()
     >>> librosa.display.specshow(ac_tempogram, sr=sr, hop_length=hop_length,
-    >>>                          x_axis='time', y_axis='tempo', cmap='magma')
-    >>> plt.title('Autocorrelation tempogram')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    >>>                          x_axis='time', y_axis='tempo', cmap='magma',
+    ...                          ax=ax[2])
+    >>> ax[2].set(title='Autocorrelation tempogram')
     '''
 
     from ..onset import onset_strength

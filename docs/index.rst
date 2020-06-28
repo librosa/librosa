@@ -1,6 +1,7 @@
-LibROSA
-=======
-LibROSA is a python package for music and audio analysis.  It provides the building
+*******
+librosa
+*******
+`librosa` is a python package for music and audio analysis.  It provides the building
 blocks necessary to create music information retrieval systems.
 
 For a quick introduction to using librosa, please refer to the :doc:`tutorial`.
@@ -8,27 +9,35 @@ For a more advanced introduction which describes the package design principles, 
 `librosa paper <http://conference.scipy.org/proceedings/scipy2015/pdfs/brian_mcfee.pdf>`_ at
 `SciPy 2015 <http://scipy2015.scipy.org>`_.
 
-Getting started
----------------
+Citing librosa
+==============
+
+If you want to cite librosa in a scholarly work, there are two ways to do it.
+
+- If you are using the library for your work, for the sake of reproducibility, please cite the version you used by retrieving the appropriate DOI and citation information from Zenodo:
+
+.. image:: https://zenodo.org/badge/6309729.svg
+   :target: https://zenodo.org/badge/latestdoi/6309729
+
+- If you wish to cite librosa for its design, motivation etc., please cite the paper
+  published at SciPy 2015. [#]_
+
+.. [#] McFee, Brian, Colin Raffel, Dawen Liang, Daniel PW Ellis, Matt McVicar, Eric Battenberg, and Oriol Nieto.
+    "librosa: Audio and music signal analysis in python."
+    In Proceedings of the 14th python in science conference, pp. 18-25. 2015.
+
+
 .. toctree::
+    :caption: Getting started
     :maxdepth: 1
 
     install
     tutorial
+    troubleshooting
 
-
-Troubleshooting
----------------
-
-If you have questions about how to use librosa, please consult the `discussion forum
-<https://groups.google.com/forum/#!forum/librosa>`_.
-For bug reports and other, more technical issues, consult the `github issues
-<https://github.com/librosa/librosa/issues>`_.
-
-API documentation
------------------
 
 .. toctree::
+    :caption: API documentation
     :maxdepth: 1
 
     core
@@ -38,16 +47,13 @@ API documentation
     beat
     decompose
     effects
-    output
     segment
     sequence
     util
 
 
-Advanced topics
----------------
-
 .. toctree::
+    :caption: Advanced topics
     :maxdepth: 2
 
     filters
@@ -56,13 +62,10 @@ Advanced topics
     advanced
     recordings
 
-Reference
----------
-
 .. toctree::
-    :maxdepth: 2
+    :caption: Reference
+    :maxdepth: 1
 
     changelog
+    genindex
     glossary
-
-* :ref:`genindex`
