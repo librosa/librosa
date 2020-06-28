@@ -23,8 +23,6 @@ helpful to read along.
 #   - matplotlib for visualization
 #   - sklearn.cluster for K-Means
 #
-from __future__ import print_function
-
 import numpy as np
 import scipy
 import matplotlib.pyplot as plt
@@ -48,11 +46,10 @@ C = librosa.amplitude_to_db(np.abs(librosa.cqt(y=y, sr=sr,
                                         n_bins=N_OCTAVES * BINS_PER_OCTAVE)),
                             ref=np.max)
 
-plt.figure(figsize=(12, 4))
+fig, ax = plt.subplots()
 librosa.display.specshow(C, y_axis='cqt_hz', sr=sr,
                          bins_per_octave=BINS_PER_OCTAVE,
-                         x_axis='time')
-plt.tight_layout()
+                         x_axis='time', ax=ax)
 
 
 ##########################################################
@@ -67,11 +64,10 @@ beat_times = librosa.frames_to_time(librosa.util.fix_frames(beats,
                                                             x_max=C.shape[1]),
                                     sr=sr)
 
-plt.figure(figsize=(12, 4))
+fig, ax = plt.subplots()
 librosa.display.specshow(Csync, bins_per_octave=12*3,
                          y_axis='cqt_hz', x_axis='time',
-                         x_coords=beat_times)
-plt.tight_layout()
+                         x_coords=beat_times, ax=ax)
 
 
 #####################################################################
@@ -117,18 +113,19 @@ A = mu * Rf + (1 - mu) * R_path
 
 ###########################################################
 # Plot the resulting graphs (Figure 1, left and center)
-plt.figure(figsize=(8, 4))
-plt.subplot(1, 3, 1)
-librosa.display.specshow(Rf, cmap='inferno_r', y_axis='time',
-                         y_coords=beat_times)
-plt.title('Recurrence similarity')
-plt.subplot(1, 3, 2)
-librosa.display.specshow(R_path, cmap='inferno_r')
-plt.title('Path similarity')
-plt.subplot(1, 3, 3)
-librosa.display.specshow(A, cmap='inferno_r')
-plt.title('Combined graph')
-plt.tight_layout()
+fig, ax = plt.subplots(ncols=3, sharex=True, sharey=True, figsize=(10, 4))
+librosa.display.specshow(Rf, cmap='inferno_r', y_axis='time', x_axis='s',
+                         y_coords=beat_times, x_coords=beat_times, ax=ax[0])
+ax[0].set(title='Recurrence similarity')
+ax[0].label_outer()
+librosa.display.specshow(R_path, cmap='inferno_r', y_axis='time', x_axis='s',
+                         y_coords=beat_times, x_coords=beat_times, ax=ax[1])
+ax[1].set(title='Path similarity')
+ax[1].label_outer()
+librosa.display.specshow(A, cmap='inferno_r', y_axis='time', x_axis='s',
+                         y_coords=beat_times, x_coords=beat_times, ax=ax[2])
+ax[2].set(title='Combined graph')
+ax[2].label_outer()
 
 
 #####################################################
@@ -158,17 +155,16 @@ X = evecs[:, :k] / Cnorm[:, k-1:k]
 
 # Plot the resulting representation (Figure 1, center and right)
 
-plt.figure(figsize=(8, 4))
-plt.subplot(1, 2, 2)
-librosa.display.specshow(Rf, cmap='inferno_r')
-plt.title('Recurrence matrix')
+fig, ax = plt.subplots(ncols=2, sharey=True, figsize=(10, 5))
+librosa.display.specshow(Rf, cmap='inferno_r', y_axis='time', x_axis='time',
+                         y_coords=beat_times, x_coords=beat_times, ax=ax[1])
+ax[1].set(title='Recurrence similarity')
+ax[1].label_outer()
 
-plt.subplot(1, 2, 1)
 librosa.display.specshow(X,
                          y_axis='time',
-                         y_coords=beat_times)
-plt.title('Structure components')
-plt.tight_layout()
+                         y_coords=beat_times, ax=ax[0])
+ax[0].set(title='Structure components')
 
 
 #############################################################
@@ -180,22 +176,24 @@ seg_ids = KM.fit_predict(X)
 
 
 # and plot the results
-plt.figure(figsize=(12, 4))
+fig, ax = plt.subplots(ncols=3, sharey=True, figsize=(10, 4))
 colors = plt.get_cmap('Paired', k)
 
-plt.subplot(1, 3, 2)
-librosa.display.specshow(Rf, cmap='inferno_r')
-plt.title('Recurrence matrix')
-plt.subplot(1, 3, 1)
+librosa.display.specshow(Rf, cmap='inferno_r', y_axis='time',
+                         y_coords=beat_times, ax=ax[1])
+ax[1].set(title='Recurrence matrix')
+ax[1].label_outer()
+
 librosa.display.specshow(X,
                          y_axis='time',
-                         y_coords=beat_times)
-plt.title('Structure components')
-plt.subplot(1, 3, 3)
-librosa.display.specshow(np.atleast_2d(seg_ids).T, cmap=colors)
-plt.title('Estimated segments')
-plt.colorbar(ticks=range(k))
-plt.tight_layout()
+                         y_coords=beat_times, ax=ax[0])
+ax[0].set(title='Structure components')
+
+img = librosa.display.specshow(np.atleast_2d(seg_ids).T, cmap=colors,
+                         y_axis='time', y_coords=beat_times, ax=ax[2])
+ax[2].set(title='Estimated segments')
+ax[2].label_outer()
+fig.colorbar(img, ax=[ax[2]], ticks=range(k))
 
 
 ###############################################################
@@ -223,17 +221,15 @@ bound_frames = librosa.util.fix_frames(bound_frames,
 # sphinx_gallery_thumbnail_number = 5
 
 import matplotlib.patches as patches
-plt.figure(figsize=(12, 4))
-
 bound_times = librosa.frames_to_time(bound_frames)
 freqs = librosa.cqt_frequencies(n_bins=C.shape[0],
                                 fmin=librosa.note_to_hz('C1'),
                                 bins_per_octave=BINS_PER_OCTAVE)
 
+fig, ax = plt.subplots()
 librosa.display.specshow(C, y_axis='cqt_hz', sr=sr,
                          bins_per_octave=BINS_PER_OCTAVE,
-                         x_axis='time')
-ax = plt.gca()
+                         x_axis='time', ax=ax)
 
 for interval, label in zip(zip(bound_times, bound_times[1:]), bound_segs):
     ax.add_patch(patches.Rectangle((interval[0], freqs[0]),
@@ -241,6 +237,3 @@ for interval, label in zip(zip(bound_times, bound_times[1:]), bound_segs):
                                    freqs[-1],
                                    facecolor=colors(label),
                                    alpha=0.50))
-
-plt.tight_layout()
-plt.show()

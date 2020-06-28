@@ -16,7 +16,6 @@ This algorithm improves onset detection accuracy in the presence of vibrato.
 
 ##################################################
 # We'll need numpy and matplotlib for this example
-from __future__ import print_function
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -24,14 +23,10 @@ import librosa
 import librosa.display
 
 ######################################################
-# We'll load in a five-second clip of a track that has
-# noticeable vocal vibrato.
 # The method works fine for longer signals, but the
 # results are harder to visualize.
-y, sr = librosa.load(librosa.ex('fishin', hq=True),
-                     sr=44100,
-                     duration=5,
-                     offset=35)
+y, sr = librosa.load(librosa.ex('trumpet', hq=True),
+                     sr=44100)
 
 
 ####################################################
@@ -55,11 +50,10 @@ S = librosa.feature.melspectrogram(y, sr=sr, n_fft=n_fft,
                                    n_mels=n_mels)
 
 
-plt.figure(figsize=(6, 4))
+fig, ax = plt.subplots()
 librosa.display.specshow(librosa.power_to_db(S, ref=np.max),
                          y_axis='mel', x_axis='time', sr=sr,
-                         hop_length=hop_length, fmin=fmin, fmax=fmax)
-plt.tight_layout()
+                         hop_length=hop_length, fmin=fmin, fmax=fmax, ax=ax)
 
 
 ################################################################
@@ -93,32 +87,25 @@ onset_sf = librosa.onset.onset_detect(onset_envelope=odf_sf,
 
 
 # sphinx_gallery_thumbnail_number = 2
-plt.figure(figsize=(6, 6))
+fig, ax = plt.subplots(nrows=3, sharex=True)
 
 frame_time = librosa.frames_to_time(np.arange(len(odf_default)),
                                     sr=sr,
                                     hop_length=hop_length)
 
-ax = plt.subplot(2, 1, 2)
 librosa.display.specshow(librosa.power_to_db(S, ref=np.max),
                          y_axis='mel', x_axis='time', sr=sr,
-                         hop_length=hop_length, fmin=fmin, fmax=fmax)
-plt.xlim([0, 5.0])
-plt.axis('tight')
+                         hop_length=hop_length, fmin=fmin, fmax=fmax, ax=ax[2])
+ax[2].set(xlim=[0, 5.0])
 
 
-plt.subplot(4, 1, 1, sharex=ax)
-plt.plot(frame_time, odf_default, label='Spectral flux')
-plt.vlines(onset_default, 0, odf_default.max(), label='Onsets')
-plt.xlim([0, 5.0])
-plt.legend()
+ax[0].plot(frame_time, odf_default, label='Spectral flux')
+ax[0].vlines(onset_default, 0, odf_default.max(), label='Onsets')
+ax[0].legend()
+ax[0].label_outer()
 
+ax[1].plot(frame_time, odf_sf, color='g', label='Superflux')
+ax[1].vlines(onset_sf, 0, odf_sf.max(), label='Onsets')
+ax[1].legend()
+ax[0].label_outer()
 
-plt.subplot(4, 1, 2, sharex=ax)
-plt.plot(frame_time, odf_sf, color='g', label='Superflux')
-plt.vlines(onset_sf, 0, odf_sf.max(), label='Onsets')
-plt.xlim([0, 5.0])
-plt.legend()
-
-plt.tight_layout()
-plt.show()

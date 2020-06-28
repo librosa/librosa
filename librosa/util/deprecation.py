@@ -35,12 +35,12 @@ def rename_kw(old_name, old_value, new_name, new_value,
     Returns
     -------
     value
-        - `new_value` if `old_value` of type `Deprecated`
-        - `old_value` otherwise
+        - ``new_value`` if ``old_value`` of type `Deprecated`
+        - ``old_value`` otherwise
 
     Warnings
     --------
-    if `old_value` is not of type `Deprecated`
+    if ``old_value`` is not of type `Deprecated`
 
     '''
     if isinstance(old_value, Deprecated):

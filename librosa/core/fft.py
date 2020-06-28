@@ -16,7 +16,7 @@ def set_fftlib(lib=None):
     ----------
     lib : None or module
         Must implement an interface compatible with `numpy.fft`.
-        If `None`, reverts to `numpy.fft`.
+        If ``None``, reverts to `numpy.fft`.
 
     Examples
     --------

@@ -1,3 +1,3 @@
 .. _core:
 
-.. automodule:: librosa.core
+.. automodule:: librosa

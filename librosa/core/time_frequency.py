@@ -51,14 +51,15 @@ def frames_to_samples(frames, hop_length=512, n_fft=None):
 
     n_fft : None or int > 0 [scalar]
         Optional: length of the FFT window.
-        If given, time conversion will include an offset of `n_fft / 2`
+        If given, time conversion will include an offset of ``n_fft // 2``
         to counteract windowing effects when using a non-centered STFT.
 
     Returns
     -------
     times : number or np.ndarray
-        time (in samples) of each given frame number:
-        `times[i] = frames[i] * hop_length`
+        time (in samples) of each given frame number::
+
+            times[i] = frames[i] * hop_length
 
     See Also
     --------
@@ -104,7 +105,7 @@ def samples_to_frames(samples, hop_length=512, n_fft=None):
 
     n_fft : None or int > 0 [scalar]
         Optional: length of the FFT window.
-        If given, time conversion will include an offset of `- n_fft / 2`
+        If given, time conversion will include an offset of ``- n_fft // 2``
         to counteract windowing effects in STFT.
 
         .. note:: This may result in negative frame indices.
@@ -112,8 +113,9 @@ def samples_to_frames(samples, hop_length=512, n_fft=None):
     Returns
     -------
     frames : int or np.ndarray [shape=(n,), dtype=int]
-        Frame numbers corresponding to the given times:
-        `frames[i] = floor( samples[i] / hop_length )`
+        Frame numbers corresponding to the given times::
+
+            frames[i] = floor( samples[i] / hop_length )
 
     See Also
     --------
@@ -145,14 +147,15 @@ def frames_to_time(frames, sr=22050, hop_length=512, n_fft=None):
 
     n_fft : None or int > 0 [scalar]
         Optional: length of the FFT window.
-        If given, time conversion will include an offset of `n_fft / 2`
+        If given, time conversion will include an offset of ``n_fft // 2``
         to counteract windowing effects when using a non-centered STFT.
 
     Returns
     -------
     times : np.ndarray [shape=(n,)]
-        time (in seconds) of each given frame number:
-        `times[i] = frames[i] * hop_length / sr`
+        time (in seconds) of each given frame number::
+
+            times[i] = frames[i] * hop_length / sr
 
     See Also
     --------
@@ -189,7 +192,7 @@ def time_to_frames(times, sr=22050, hop_length=512, n_fft=None):
 
     n_fft : None or int > 0 [scalar]
         Optional: length of the FFT window.
-        If given, time conversion will include an offset of `- n_fft / 2`
+        If given, time conversion will include an offset of ``- n_fft // 2``
         to counteract windowing effects in STFT.
 
         .. note:: This may result in negative frame indices.
@@ -197,8 +200,9 @@ def time_to_frames(times, sr=22050, hop_length=512, n_fft=None):
     Returns
     -------
     frames : np.ndarray [shape=(n,), dtype=int]
-        Frame numbers corresponding to the given times:
-        `frames[i] = floor( times[i] * sr / hop_length )`
+        Frame numbers corresponding to the given times::
+
+            frames[i] = floor( times[i] * sr / hop_length )
 
     See Also
     --------
@@ -234,7 +238,7 @@ def time_to_samples(times, sr=22050):
     Returns
     -------
     samples : int or np.ndarray [shape=times.shape, dtype=int]
-        Sample indices corresponding to values in `times`
+        Sample indices corresponding to values in ``times``
 
     See Also
     --------
@@ -266,7 +270,7 @@ def samples_to_time(samples, sr=22050):
     Returns
     -------
     times : np.ndarray [shape=samples.shape]
-        Time values corresponding to `samples` (in seconds)
+        Time values corresponding to ``samples`` (in seconds)
 
     See Also
     --------
@@ -446,7 +450,7 @@ def note_to_hz(note, **kwargs):
     Returns
     -------
     frequencies : number or np.ndarray [shape=(len(note),)]
-        Array of frequencies (in Hz) corresponding to `note`
+        Array of frequencies (in Hz) corresponding to ``note``
 
     See Also
     --------
@@ -472,7 +476,7 @@ def note_to_midi(note, round_midi=True):
         One or more note names.
 
     round_midi : bool
-        - If `True`, allow for fractional midi notes
+        - If ``True``, allow for fractional midi notes
         - Otherwise, round cent deviations to the nearest note
 
     Returns
@@ -515,7 +519,6 @@ def note_to_midi(note, round_midi=True):
     >>> # Lists of notes also work
     >>> librosa.note_to_midi(['C', 'E', 'G'])
     array([12, 16, 19])
-
     '''
 
     if not isinstance(note, str):
@@ -586,8 +589,10 @@ def midi_to_note(midi, octave=True, cents=False, key='C:maj', unicode=True):
     ['C0', 'C♯0', 'D0', 'D♯0', 'E0', 'F0', 'F♯0', 'G0', 'G♯0', 'A0', 'A♯0', 'B0']
 
     Use a key signature to resolve enharmonic equivalences
+
     >>> librosa.midi_to_note(range(12, 24), key='F:min')
     ['C0', 'D♭0', 'D0', 'E♭0', 'E0', 'F0', 'G♭0', 'G0', 'A♭0', 'A0', 'B♭0', 'B0']
+
 
     Parameters
     ----------
@@ -599,14 +604,15 @@ def midi_to_note(midi, octave=True, cents=False, key='C:maj', unicode=True):
 
     cents: bool
         If true, cent markers will be appended for fractional notes.
-        Eg, `midi_to_note(69.3, cents=True)` == `A4+03`
+        Eg, ``midi_to_note(69.3, cents=True) == 'A4+03'``
 
     key : str
         A key signature to use when resolving enharmonic equivalences.
 
     unicode: bool
-        If `True` (default), accidentals will use Unicode notation: ♭ or ♯ 
-        If `False`, accidentals will use ASCII-compatible notation: b or #
+        If ``True`` (default), accidentals will use Unicode notation: ♭ or ♯
+
+        If ``False``, accidentals will use ASCII-compatible notation: b or #
 
     Returns
     -------
@@ -616,7 +622,7 @@ def midi_to_note(midi, octave=True, cents=False, key='C:maj', unicode=True):
     Raises
     ------
     ParameterError
-        if `cents` is True and `octave` is False
+        if ``cents`` is True and ``octave`` is False
 
     See Also
     --------
@@ -668,7 +674,7 @@ def midi_to_hz(notes):
     Returns
     -------
     frequency   : number or np.ndarray [shape=(n,), dtype=float]
-        frequency (frequencies) of `notes` in Hz
+        frequency (frequencies) of ``notes`` in Hz
 
     See Also
     --------
@@ -697,7 +703,7 @@ def hz_to_midi(frequencies):
     Returns
     -------
     note_nums     : number or np.ndarray [shape=(n,), dtype=float]
-        MIDI notes to `frequencies`
+        MIDI notes to ``frequencies``
 
     See Also
     --------
@@ -724,8 +730,8 @@ def hz_to_note(frequencies, **kwargs):
     Returns
     -------
     notes : list of str
-        `notes[i]` is the closest note name to `frequency[i]`
-        (or `frequency` if the input is scalar)
+        ``notes[i]`` is the closest note name to ``frequency[i]``
+        (or ``frequency`` if the input is scalar)
 
 
     See Also
@@ -940,29 +946,32 @@ def octs_to_hz(octs, tuning=0.0, bins_per_octave=12):
 
 
 def A4_to_tuning(A4, bins_per_octave=12):
-    """Convert a reference pitch frequency (e.g., `A4=435`) to a tuning
+    """Convert a reference pitch frequency (e.g., ``A4=435``) to a tuning
     estimation, in fractions of a bin per octave.
 
     This is useful for determining the tuning deviation relative to
     A440 of a given frequency, assuming equal temperament. By default,
     12 bins per octave are used.
 
-    This method is the inverse of  `tuning_to_A4`.
+    This method is the inverse of `tuning_to_A4`.
 
     Examples
     --------
     The base case of this method in which A440 yields 0 tuning offset
     from itself.
+
     >>> librosa.A4_to_tuning(440.0)
     0.
 
     Convert a non-A440 frequency to a tuning offset relative
     to A440 using the default of 12 bins per octave.
+
     >>> librosa.A4_to_tuning(432.0)
     -0.318
 
     Convert two reference pitch frequencies to corresponding
     tuning estimations at once, but using 24 bins per octave.
+
     >>> librosa.A4_to_tuning([440.0, 444.0], bins_per_octave=24)
     array([   0.,   0.313   ])
 
@@ -988,7 +997,7 @@ def A4_to_tuning(A4, bins_per_octave=12):
 
 def tuning_to_A4(tuning, bins_per_octave=12):
     """Convert a tuning deviation (from 0) in fractions of a bin per
-    octave (e.g., `tuning=-0.1`) to a reference pitch frequency
+    octave (e.g., ``tuning=-0.1``) to a reference pitch frequency
     relative to A440.
 
     This is useful if you are working in a non-A440 tuning system
@@ -1002,15 +1011,18 @@ def tuning_to_A4(tuning, bins_per_octave=12):
     --------
     The base case of this method in which a tuning deviation of 0
     gets us to our A440 reference pitch.
+
     >>> librosa.tuning_to_A4(0.0)
     440.
 
     Convert a nonzero tuning offset to its reference pitch frequency.
+
     >>> librosa.tuning_to_A4(-0.318)
     431.992
 
     Convert 3 tuning deviations at once to respective reference
     pitch frequencies, using 36 bins per octave.
+
     >>> librosa.tuning_to_A4([0.1, 0.2, -0.1], bins_per_octave=36)
     array([   440.848,    441.698   439.154])
 
@@ -1049,7 +1061,7 @@ def fft_frequencies(sr=22050, n_fft=2048):
     Returns
     -------
     freqs : np.ndarray [shape=(1 + n_fft/2,)]
-        Frequencies `(0, sr/n_fft, 2*sr/n_fft, ..., sr/2)`
+        Frequencies ``(0, sr/n_fft, 2*sr/n_fft, ..., sr/2)``
 
 
     Examples
@@ -1113,26 +1125,26 @@ def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False):
 
     Because the definition of the mel scale is conditioned by a finite number
     of subjective psychoaoustical experiments, several implementations coexist
-    in the audio signal processing literature [1]_. By default, librosa replicates
-    the behavior of the well-established MATLAB Auditory Toolbox of Slaney [2]_.
+    in the audio signal processing literature [#]_. By default, librosa replicates
+    the behavior of the well-established MATLAB Auditory Toolbox of Slaney [#]_.
     According to this default implementation,  the conversion from Hertz to mel is
     linear below 1 kHz and logarithmic above 1 kHz. Another available implementation
-    replicates the Hidden Markov Toolkit [3]_ (HTK) according to the following formula:
+    replicates the Hidden Markov Toolkit [#]_ (HTK) according to the following formula::
 
-    `mel = 2595.0 * np.log10(1.0 + f / 700.0).`
+        mel = 2595.0 * np.log10(1.0 + f / 700.0).
 
-    The choice of implementation is determined by the `htk` keyword argument: setting
-    `htk=False` leads to the Auditory toolbox implementation, whereas setting it `htk=True`
+    The choice of implementation is determined by the ``htk`` keyword argument: setting
+    ``htk=False`` leads to the Auditory toolbox implementation, whereas setting it ``htk=True``
     leads to the HTK implementation.
 
-    .. [1] Umesh, S., Cohen, L., & Nelson, D. Fitting the mel scale.
+    .. [#] Umesh, S., Cohen, L., & Nelson, D. Fitting the mel scale.
         In Proc. International Conference on Acoustics, Speech, and Signal Processing
         (ICASSP), vol. 1, pp. 217-220, 1998.
 
-    .. [2] Slaney, M. Auditory Toolbox: A MATLAB Toolbox for Auditory
+    .. [#] Slaney, M. Auditory Toolbox: A MATLAB Toolbox for Auditory
         Modeling Work. Technical Report, version 2, Interval Research Corporation, 1998.
 
-    .. [3] Young, S., Evermann, G., Gales, M., Hain, T., Kershaw, D., Liu, X.,
+    .. [#] Young, S., Evermann, G., Gales, M., Hain, T., Kershaw, D., Liu, X.,
         Moore, G., Odell, J., Ollason, D., Povey, D., Valtchev, V., & Woodland, P.
         The HTK book, version 3.4. Cambridge University, March 2009.
 
@@ -1163,7 +1175,7 @@ def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False):
     Returns
     -------
     bin_frequencies : ndarray [shape=(n_mels,)]
-        Vector of n_mels frequencies in Hz which are uniformly spaced on the Mel
+        Vector of ``n_mels`` frequencies in Hz which are uniformly spaced on the Mel
         axis.
 
     Examples
@@ -1211,7 +1223,7 @@ def tempo_frequencies(n_bins, hop_length=512, sr=22050):
     bin_frequencies : ndarray [shape=(n_bins,)]
         vector of bin frequencies measured in BPM.
 
-        .. note:: `bin_frequencies[0] = +np.inf` corresponds to 0-lag
+        .. note:: ``bin_frequencies[0] = +np.inf`` corresponds to 0-lag
 
     Examples
     --------
@@ -1280,7 +1292,7 @@ def A_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
     Returns
     -------
     A_weighting : scalar or np.ndarray [shape=(n,)]
-        `A_weighting[i]` is the A-weighting of `frequencies[i]`
+        ``A_weighting[i]`` is the A-weighting of ``frequencies[i]``
 
     See Also
     --------
@@ -1300,12 +1312,11 @@ def A_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
     >>> import matplotlib.pyplot as plt
     >>> freqs = librosa.cqt_frequencies(108, librosa.note_to_hz('C1'))
     >>> weights = librosa.A_weighting(freqs)
-    >>> plt.plot(freqs, weights)
-    >>> plt.xlabel('Frequency (Hz)')
-    >>> plt.ylabel('Weighting (log10)')
-    >>> plt.title('A-Weighting of CQT frequencies')
-    >>> plt.show()
-
+    >>> fig, ax = plt.subplots()
+    >>> ax.plot(freqs, weights)
+    >>> ax.set(xlabel='Frequency (Hz)',
+    ...        ylabel='Weighting (log10)',
+    ...        title='A-Weighting of CQT frequencies')
     '''
     f_sq = np.asanyarray(frequencies) ** 2.
 
@@ -1336,7 +1347,7 @@ def B_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
     Returns
     -------
     B_weighting : scalar or np.ndarray [shape=(n,)]
-        `B_weighting[i]` is the B-weighting of `frequencies[i]`
+        ``B_weighting[i]`` is the B-weighting of ``frequencies[i]``
 
     See Also
     --------
@@ -1356,12 +1367,11 @@ def B_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
     >>> import matplotlib.pyplot as plt
     >>> freqs = librosa.cqt_frequencies(108, librosa.note_to_hz('C1'))
     >>> weights = librosa.B_weighting(freqs)
-    >>> plt.plot(freqs, weights)
-    >>> plt.xlabel('Frequency (Hz)')
-    >>> plt.ylabel('Weighting (log10)')
-    >>> plt.title('B-Weighting of CQT frequencies')
-    >>> plt.show()
-
+    >>> fig, ax = plt.subplots()
+    >>> ax.plot(freqs, weights)
+    >>> ax.set(xlabel='Frequency (Hz)',
+    ...        ylabel='Weighting (log10)',
+    ...        title='B-Weighting of CQT frequencies')
     '''
     f_sq = np.asanyarray(frequencies) ** 2.
 
@@ -1391,7 +1401,7 @@ def C_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
     Returns
     -------
     C_weighting : scalar or np.ndarray [shape=(n,)]
-        `C_weighting[i]` is the C-weighting of `frequencies[i]`
+        ``C_weighting[i]`` is the C-weighting of ``frequencies[i]``
 
     See Also
     --------
@@ -1411,12 +1421,10 @@ def C_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
     >>> import matplotlib.pyplot as plt
     >>> freqs = librosa.cqt_frequencies(108, librosa.note_to_hz('C1'))
     >>> weights = librosa.C_weighting(freqs)
-    >>> plt.plot(freqs, weights)
-    >>> plt.xlabel('Frequency (Hz)')
-    >>> plt.ylabel('Weighting (log10)')
-    >>> plt.title('C-Weighting of CQT frequencies')
-    >>> plt.show()
-
+    >>> fig, ax = plt.subplots()
+    >>> ax.plot(freqs, weights)
+    >>> ax.set(xlabel='Frequency (Hz)', ylabel='Weighting (log10)',
+    ...        title='C-Weighting of CQT frequencies')
     '''
     f_sq = np.asanyarray(frequencies) ** 2.
 
@@ -1445,7 +1453,7 @@ def D_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
     Returns
     -------
     D_weighting : scalar or np.ndarray [shape=(n,)]
-        `D_weighting[i]` is the D-weighting of `frequencies[i]`
+        ``D_weighting[i]`` is the D-weighting of ``frequencies[i]``
 
     See Also
     --------
@@ -1465,12 +1473,10 @@ def D_weighting(frequencies, min_db=-80.0):     # pylint: disable=invalid-name
     >>> import matplotlib.pyplot as plt
     >>> freqs = librosa.cqt_frequencies(108, librosa.note_to_hz('C1'))
     >>> weights = librosa.D_weighting(freqs)
-    >>> plt.plot(freqs, weights)
-    >>> plt.xlabel('Frequency (Hz)')
-    >>> plt.ylabel('Weighting (log10)')
-    >>> plt.title('D-Weighting of CQT frequencies')
-    >>> plt.show()
-
+    >>> fig, ax = plt.subplots()
+    >>> ax.plot(freqs, weights)
+    >>> ax.set(xlabel='Frequency (Hz)', ylabel='Weighting (log10)',
+    ...        title='D-Weighting of CQT frequencies')
     '''
     f_sq = np.asanyarray(frequencies) ** 2.
 
@@ -1522,7 +1528,7 @@ def frequency_weighting(frequencies, kind='A', **kw):
     Returns
     -------
     weighting : scalar or np.ndarray [shape=(n,)]
-        `weighting[i]` is the weighting of `frequencies[i]`
+        ``weighting[i]`` is the weighting of ``frequencies[i]``
 
     See Also
     --------
@@ -1542,12 +1548,10 @@ def frequency_weighting(frequencies, kind='A', **kw):
     >>> import matplotlib.pyplot as plt
     >>> freqs = librosa.cqt_frequencies(108, librosa.note_to_hz('C1'))
     >>> weights = librosa.frequency_weighting(freqs, 'A')
-    >>> plt.plot(freqs, weights)
-    >>> plt.xlabel('Frequency (Hz)')
-    >>> plt.ylabel('Weighting (log10)')
-    >>> plt.title('A-Weighting of CQT frequencies')
-    >>> plt.show()
-
+    >>> fig, ax = plt.subplots()
+    >>> ax.plot(freqs, weights)
+    >>> ax.set(xlabel='Frequency (Hz)', ylabel='Weighting (log10)',
+    ...        title='A-Weighting of CQT frequencies')
     '''
     if isinstance(kind, str):
         kind = kind.upper()
@@ -1570,7 +1574,8 @@ def multi_frequency_weighting(frequencies, kinds='ZAC', **kw):
     Returns
     -------
     weighting : scalar or np.ndarray [shape=(len(kinds), n)]
-        `weighting[i]` is the weighting of `frequencies[i]`
+        ``weighting[i, j]`` is the weighting of ``frequencies[j]``
+        using the curve determined by ``kinds[i]``.
 
     See Also
     --------
@@ -1591,14 +1596,12 @@ def multi_frequency_weighting(frequencies, kinds='ZAC', **kw):
     >>> freqs = librosa.cqt_frequencies(108, librosa.note_to_hz('C1'))
     >>> weightings = 'ABCDZ'
     >>> weights = librosa.multi_frequency_weighting(freqs, weightings)
+    >>> fig, ax = plt.subplots()
     >>> for label, w in zip(weightings, weights):
-    ...     plt.plot(freqs, w, label=label)
-    >>> plt.xlabel('Frequency (Hz)')
-    >>> plt.ylabel('Weighting (log10)')
-    >>> plt.title('Weightings of CQT frequencies')
-    >>> plt.legend()
-    >>> plt.show()
-
+    ...     ax.plot(freqs, w, label=label)
+    >>> ax.set(xlabel='Frequency (Hz)', ylabel='Weighting (log10)',
+    ...        title='Weightings of CQT frequencies')
+    >>> ax.legend()
     '''
     return np.stack([
         frequency_weighting(frequencies, k, **kw)
@@ -1622,7 +1625,7 @@ def times_like(X, sr=22050, hop_length=512, n_fft=None, axis=-1):
 
     n_fft : None or int > 0 [scalar]
         Optional: length of the FFT window.
-        If given, time conversion will include an offset of `n_fft / 2`
+        If given, time conversion will include an offset of ``n_fft // 2``
         to counteract windowing effects when using a non-centered STFT.
 
     axis : int [scalar]
@@ -1674,17 +1677,17 @@ def samples_like(X, hop_length=512, n_fft=None, axis=-1):
 
     n_fft : None or int > 0 [scalar]
         Optional: length of the FFT window.
-        If given, time conversion will include an offset of `n_fft / 2`
+        If given, time conversion will include an offset of ``n_fft // 2``
         to counteract windowing effects when using a non-centered STFT.
 
     axis : int [scalar]
-        The axis representing the time axis of X.
+        The axis representing the time axis of ``X``.
         By default, the last axis (-1) is taken.
 
     Returns
     -------
     samples : np.ndarray [shape=(n,)]
-        ndarray of sample indices corresponding to each frame of X.
+        ndarray of sample indices corresponding to each frame of ``X``.
 
     See Also
     --------
@@ -1736,22 +1739,24 @@ def key_to_notes(key, unicode=True):
     Parameters
     ----------
     key : string
-        Must be in the form TONIC:key.  Tonic must be upper case (`CDEFGAB`),
-        key must be lower-case (`maj` or `min`).
+        Must be in the form TONIC:key.  Tonic must be upper case (``CDEFGAB``),
+        key must be lower-case (``maj`` or ``min``).
 
-        Single accidentals (`b!♭` for flat, or `#♯` for sharp) are supported.
+        Single accidentals (``b!♭`` for flat, or ``#♯`` for sharp) are supported.
 
-        Examples: C:maj, Db:min, A♭:min.
+        Examples: ``C:maj, Db:min, A♭:min``.
 
     unicode: bool
-        If `True` (default), use Unicode symbols (♯𝄪♭𝄫)for accidentals
-        If `False`, Unicode symbols will be mapped to low-order ascii representations:
+        If ``True`` (default), use Unicode symbols (♯𝄪♭𝄫)for accidentals.
+
+        If ``False``, Unicode symbols will be mapped to low-order ASCII representations::
+
             ♯ -> #, 𝄪 -> ##, ♭ -> b, 𝄫 -> bb
 
     Returns
     -------
     notes : list
-        `notes[k]` is the name for the k'th semitone (starting from C)
+        ``notes[k]`` is the name for semitone ``k`` (starting from C)
         under the given key.  All chromatic notes (0 through 11) are
         included.
 
@@ -1762,22 +1767,27 @@ def key_to_notes(key, unicode=True):
     Examples
     --------
     `C:maj` will use all sharps
+
     >>> librosa.key_to_notes('C:maj')
     ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
 
     `A:min` has the same notes
+
     >>> librosa.key_to_notes('A:min')
     ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
 
     `A♯:min` will use sharps, but spell note 0 (`C`) as `B♯`
+
     >>> librosa.key_to_notes('A#:min')
     ['B♯', 'C♯', 'D', 'D♯', 'E', 'E♯', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
 
     `G♯:maj` will use a double-sharp to spell note 7 (`G`) as `F𝄪`:
+
     >>> librosa.key_to_notes('G#:maj')
     ['B♯', 'C♯', 'D', 'D♯', 'E', 'E♯', 'F♯', 'F𝄪', 'G♯', 'A', 'A♯', 'B']
 
     `F♭:min` will use double-flats
+
     >>> librosa.key_to_notes('Fb:min')
     ['D𝄫', 'D♭', 'E𝄫', 'E♭', 'F♭', 'F', 'G♭', 'A𝄫', 'A♭', 'B𝄫', 'B♭', 'C♭']
     '''
@@ -1877,12 +1887,12 @@ def key_to_degrees(key):
     Parameters
     ----------
     key : str
-        Must be in the form TONIC:key.  Tonic must be upper case (`CDEFGAB`),
-        key must be lower-case (`maj` or `min`).
+        Must be in the form TONIC:key.  Tonic must be upper case (``CDEFGAB``),
+        key must be lower-case (``maj`` or ``min``).
 
-        Single accidentals (`b!♭` for flat, or `#♯` for sharp) are supported.
+        Single accidentals (``b!♭`` for flat, or ``#♯`` for sharp) are supported.
 
-        Examples: C:maj, Db:min, A♭:min.
+        Examples: ``C:maj, Db:min, A♭:min``.
 
     Returns
     -------

@@ -1,3 +1,5 @@
+.. _ioformats:
+
 Advanced I/O Use Cases
 ^^^^^^^^^^^^^^^^^^^^^^
 
@@ -15,7 +17,7 @@ For a list of codecs supported by `soundfile`, see the *libsndfile* `documentati
 
 Librosa's load function is meant for the common case where you want to load an entire (fragment of a) recording into memory, but some applications require more flexibility.
 In these cases, we recommend using `soundfile` directly.
-Reading audio files using `soundfile` is similar to the method in *librosa*. One important difference is that the read data is of shape ``(nb_samples, nb_channels)`` compared to ``(nb_channels, nb_samples)`` in :func:`librosa.core.load`. Also the signal is not resampled to 22050 Hz by default, hence it would need be transposed and resampled for further processing in *librosa*. The following example is equivalent to ``librosa.load(librosa.util.example_audio_file())``:
+Reading audio files using `soundfile` is similar to the method in *librosa*. One important difference is that the read data is of shape `(nb_samples, nb_channels)` compared to `(nb_channels, nb_samples)` in :func:`librosa.core.load`. Also the signal is not resampled to 22050 Hz by default, hence it would need be transposed and resampled for further processing in *librosa*. The following example is equivalent to `librosa.load(librosa.util.ex('trumpet'))`:
 
 .. code-block:: python
     :linenos:
@@ -24,7 +26,7 @@ Reading audio files using `soundfile` is similar to the method in *librosa*. One
     import soundfile as sf
 
     # Get example audio file
-    filename = librosa.util.example_audio_file()
+    filename = librosa.ex('trumpet')
 
     data, samplerate = sf.read(filename, dtype='float32')
     data = data.T
@@ -35,8 +37,8 @@ Blockwise Reading
 -----------------
 
 For large audio signals it could be beneficial to not load the whole audio file
-into memory.  Librosa 0.7 introduces a streaming interface, which can be used to
-work on short fragments of audio sequentially.  :func:`librosa.core.stream` cuts an input
+into memory. Librosa 0.7 introduced a streaming interface, which can be used to
+work on short fragments of audio sequentially.  :func:`librosa.stream` cuts an input
 file into *blocks* of audio, which correspond to a given number of *frames*,
 which can be iterated over as in the following example:
 
@@ -74,14 +76,14 @@ Each fragment ``y`` will overlap with the subsequent fragment by ``frame_length 
 samples, which ensures that stream processing will provide equivalent results to if the entire
 sequence was processed in one step (assuming padding / centering is disabled).
 
-For more details about the streaming interface, refer to :func:`librosa.core.stream`.
+For more details about the streaming interface, refer to :func:`librosa.stream`.
 
 
 Read file-like objects
 ----------------------
 
 If you want to read audio from file-like objects (also called *virtual files*)
-you can use `soundfile` as well.  (This will also work with :func:`librosa.core.load` and :func:`librosa.core.stream`, provided
+you can use `soundfile` as well.  (This will also work with :func:`librosa.load` and :func:`librosa.stream`, provided
 that the underlying codec is supported by `soundfile`.)
 
 E.g.: read files from zip compressed archives:
@@ -97,8 +99,6 @@ E.g.: read files from zip compressed archives:
         with myzip.open('stereo_file.wav') as myfile:
             tmp = io.BytesIO(myfile.read())
             data, samplerate = sf.read(tmp)
-
-.. warning:: This is a example does only work in python 3. For python 2 please use ``from urllib2 import urlopen``.
 
 Download and read from URL:
 
@@ -136,4 +136,3 @@ Write out audio files
 
     # Write out audio as 16bit OGG
     sf.write('stereo_file.ogg', data, samplerate, format='ogg', subtype='vorbis')
-

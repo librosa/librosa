@@ -20,7 +20,7 @@ The *librosa* package is structured as collection of submodules:
         Core functionality includes functions to load audio from disk, compute various
         spectrogram representations, and a variety of commonly used tools for
         music analysis.  For convenience, all functionality in this submodule is
-        directly accessible from the top-level ``librosa.*`` namespace.
+        directly accessible from the top-level `librosa.*` namespace.
         
     - :ref:`librosa.decompose <decompose>`
         Functions for harmonic-percussive source separation (HPSS) and generic
@@ -37,10 +37,9 @@ The *librosa* package is structured as collection of submodules:
 
     - :ref:`librosa.feature <feature>`
         Feature extraction and manipulation.  This includes low-level feature
-        extraction, such as chromagrams, pseudo-constant-Q (log-frequency) transforms,
-        Mel spectrogram, MFCC, and tuning estimation.  Also provided are feature
-        manipulation methods, such as delta features, memory embedding, and
-        event-synchronous feature alignment.
+        extraction, such as chromagrams, Mel spectrogram, MFCC, and various other
+        spectral and rhythmic features.  Also provided are feature manipulation
+        methods, such as delta features and memory embedding.
 
     - :ref:`librosa.filters <filters>`
         Filter-bank generation (chroma, pseudo-CQT, CQT, etc.).  These are primarily
@@ -72,11 +71,11 @@ Before diving into the details, we'll walk through a brief example program
     :linenos:
 
     # Beat tracking example
-    from __future__ import print_function
     import librosa
 
-    # 1. Get the file path to the included audio example
-    filename = librosa.util.example_audio_file()
+    # 1. Get the file path to an included audio example
+    filename = librosa.example('nutcracker')
+
 
     # 2. Load the audio as a waveform `y`
     #    Store the sampling rate as `sr`
@@ -93,22 +92,20 @@ Before diving into the details, we'll walk through a brief example program
 
 The first step of the program::
 
-    filename = librosa.util.example_audio_file()
+    filename = librosa.example('nutcracker')
 
-gets the path to the audio example file included with *librosa*.  After this step,
+gets the path to an audio example file included with *librosa*.  After this step,
 ``filename`` will be a string variable containing the path to the example audio file.
-The example is encoded in OGG Vorbis format, so you will need the appropriate codec
-installed for `audioread <https://github.com/sampsyo/audioread>`_.
 
 The second step::
 
     y, sr = librosa.load(filename)
     
 loads and decodes the audio as a :term:`time series` ``y``, represented as a one-dimensional
-NumPy floating point array.  The variable ``sr`` contains the :term:`sampling rate` of
+NumPy floating point array.  The variable `sr` contains the :term:`sampling rate` of
 ``y``, that is, the number of samples per second of audio.  By default, all audio is
 mixed to mono and resampled to 22050 Hz at load time.  This behavior can be overridden
-by supplying additional arguments to ``librosa.load()``.
+by supplying additional arguments to `librosa.load`.
 
 Next, we run the beat tracker::
 
@@ -118,7 +115,7 @@ The output of the beat tracker is an estimate of the tempo (in beats per minute)
 and an array of frame numbers corresponding to detected beat events.
 
 :term:`Frames <frame>` here correspond to short windows of the signal (``y``), each 
-separated by ``hop_length = 512`` samples.  Since v0.3, *librosa* uses centered frames, so 
+separated by ``hop_length = 512`` samples.  *librosa* uses centered frames, so 
 that the *k*\ th frame is centered around sample ``k * hop_length``.
 
 The next operation converts the frame numbers ``beat_frames`` into timings::
@@ -151,7 +148,7 @@ multiple spectral features, and beat-synchronous feature aggregation.
     import librosa
 
     # Load the example clip
-    y, sr = librosa.load(librosa.util.example_audio_file())
+    y, sr = librosa.load(librosa.ex('nutcracker'))
 
     # Set the hop length; at 22050 Hz, 512 samples ~= 23ms
     hop_length = 512
@@ -212,9 +209,9 @@ cepstral coefficients from the raw signal ``y``::
 
     mfcc = librosa.feature.mfcc(y=y, sr=sr, hop_length=hop_length, n_mfcc=13)
 
-The output of this function is the matrix ``mfcc``, which is an *numpy.ndarray* of
-size ``(n_mfcc, T)`` (where ``T`` denotes the track duration in frames).  Note that we 
-use the same ``hop_length`` here as in the beat tracker, so the detected ``beat_frames`` 
+The output of this function is the matrix ``mfcc``, which is a `numpy.ndarray` of
+shape ``(n_mfcc, T)`` (where ``T`` denotes the track duration in :term:`frames <frame>`).
+Note that we use the same ``hop_length`` here as in the beat tracker, so the detected ``beat_frames`` 
 values correspond to columns of ``mfcc``.
 
 The first type of feature manipulation we introduce is ``delta``, which computes
@@ -242,7 +239,7 @@ Next, we compute a chromagram using just the harmonic component::
     chromagram = librosa.feature.chroma_cqt(y=y_harmonic, 
                                             sr=sr)
 
-After this line, ``chromagram`` will be a *numpy.ndarray* of size ``(12, T)``, and 
+After this line, ``chromagram`` will be a `numpy.ndarray` of shape ``(12, T)``, and 
 each row corresponds to a pitch class (e.g., *C*, *C#*, etc.).  Each column of 
 ``chromagram`` is normalized by its peak value, though this behavior can be overridden 
 by setting the ``norm`` parameter.
@@ -256,13 +253,13 @@ between beat events::
 
 This time, we've replaced the default aggregate operation (*average*, as used above
 for MFCCs) with the *median*.  In general, any statistical summarization function can
-be supplied here, including `np.max()`, `np.min()`, `np.std()`, etc.
+be supplied here, including ``np.max()``, ``np.min()``, ``np.std()``, etc.
 
 Finally, the all features are vertically stacked again::
 
     beat_features = np.vstack([beat_chroma, beat_mfcc_delta])
 
-resulting in a feature matrix ``beat_features`` of dimension 
+resulting in a feature matrix ``beat_features`` of shape
 ``(12 + 13 + 13, # beat intervals)``.
 
 
