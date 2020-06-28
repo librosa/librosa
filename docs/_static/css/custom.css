@@ -3,6 +3,10 @@ div.wy-side-nav-search .version {
     font-weight: bold;
 }
 
+nav.wy-nav-top {
+    background: #AA2396;
+}
+
 div.wy-nav-content {
     max-width: 1000px;
 }
