@@ -1333,19 +1333,17 @@ def chirp(fmin, fmax, sr=22050, length=None, duration=None, linear=False, phi=No
     >>> linear_chirp = librosa.chirp(110, 110*64, duration=1, linear=True)
 
     Display spectrogram for both exponential and linear chirps.
-    Note that these plots use a logarithmic frequency axis, so "exponential" chirps
-    will appear as a straight line.
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
     >>> S_exponential = np.abs(librosa.stft(y=exponential_chirp))
     >>> librosa.display.specshow(librosa.amplitude_to_db(S_exponential, ref=np.max),
-    ...                          x_axis='time', y_axis='log', ax=ax[0])
+    ...                          x_axis='time', y_axis='linear', ax=ax[0])
     >>> ax[0].set(title='Exponential chirp', xlabel=None)
     >>> ax[0].label_outer()
     >>> S_linear = np.abs(librosa.stft(y=linear_chirp))
     >>> librosa.display.specshow(librosa.amplitude_to_db(S_linear, ref=np.max),
-    ...                          x_axis='time', y_axis='log', ax=ax[1])
+    ...                          x_axis='time', y_axis='linear', ax=ax[1])
     >>> ax[1].set(title='Linear chirp')
     """
 

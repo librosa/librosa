@@ -1211,10 +1211,10 @@ def phase_vocoder(D, rate, hop_length=None):
 @cache(level=20)
 def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
          tuning=0.0, pad_mode='reflect', flayout='sos', **kwargs):
-    r'''Time-frequency representation using IIR filters [#]_.
+    r'''Time-frequency representation using IIR filters
 
     This function will return a time-frequency representation
-    using a multirate filter bank consisting of IIR filters.
+    using a multirate filter bank consisting of IIR filters. [#]_
 
     First, ``y`` is resampled as needed according to the provided ``sample_rates``.
 
@@ -1297,7 +1297,7 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
     >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.load(librosa.ex('trumpet'), duration=3)
     >>> D = np.abs(librosa.iirt(y))
-    >>> C = librosa.cqt(y=y, sr=sr)
+    >>> C = np.abs(librosa.cqt(y=y, sr=sr))
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
     >>> img = librosa.display.specshow(librosa.amplitude_to_db(C, ref=np.max),
     ...                                y_axis='cqt_hz', x_axis='time', ax=ax[0])
@@ -1690,7 +1690,10 @@ def perceptual_weighting(S, frequencies, kind='A', **kwargs):
 
 @cache(level=30)
 def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1):
-    """The fast Mellin transform (FMT) [#]_ of a uniformly sampled signal y.
+    """The fast Mellin transform (FMT)
+
+    The Mellin of a signal `y` is performed by interpolating `y` on an exponential time
+    axis, applying a polynomial window, and then taking the discrete Fourier transform.
 
     When the Mellin parameter (beta) is 1/2, it is also known as the scale transform. [#]_
     The scale transform can be useful for audio analysis because its magnitude is invariant
@@ -1878,10 +1881,10 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
 def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
          time_constant=0.400, eps=1e-6, b=None, max_size=1, ref=None,
          axis=-1, max_axis=None, zi=None, return_zf=False):
-    '''Per-channel energy normalization (PCEN) [#]_
+    '''Per-channel energy normalization (PCEN)
 
     This function normalizes a time-frequency representation ``S`` by
-    performing automatic gain control, followed by nonlinear compression::
+    performing automatic gain control, followed by nonlinear compression [#]_ ::
 
         P[f, t] = (S / (eps + M[f, t])**gain + bias)**power - bias**power
 
@@ -2128,23 +2131,26 @@ def griffinlim(S, n_iter=32, hop_length=None, win_length=None, window='hann',
                center=True, dtype=None, length=None, pad_mode='reflect',
                momentum=0.99, init='random', random_state=None):
 
-    '''Approximate magnitude spectrogram inversion using the "fast" Griffin-Lim algorithm. [#]_ [#]_
+    '''Approximate magnitude spectrogram inversion using the "fast" Griffin-Lim algorithm.
 
     Given a short-time Fourier transform magnitude matrix (``S``), the algorithm randomly
     initializes phase estimates, and then alternates forward- and inverse-STFT
-    operations.
+    operations. [#]_
+
     Note that this assumes reconstruction of a real-valued time-domain signal, and
     that ``S`` contains only the non-negative frequencies (as computed by
     `stft`).
+
+    The "fast" GL method [#]_ uses a momentum parameter to accelerate convergence.
+
+    .. [#] D. W. Griffin and J. S. Lim,
+        "Signal estimation from modified short-time Fourier transform,"
+        IEEE Trans. ASSP, vol.32, no.2, pp.236–243, Apr. 1984.
 
     .. [#] Perraudin, N., Balazs, P., & Søndergaard, P. L.
         "A fast Griffin-Lim algorithm,"
         IEEE Workshop on Applications of Signal Processing to Audio and Acoustics (pp. 1-4),
         Oct. 2013.
-
-    .. [#] D. W. Griffin and J. S. Lim,
-        "Signal estimation from modified short-time Fourier transform,"
-        IEEE Trans. ASSP, vol.32, no.2, pp.236–243, Apr. 1984.
 
     Parameters
     ----------

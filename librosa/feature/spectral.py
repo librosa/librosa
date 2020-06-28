@@ -329,14 +329,14 @@ def spectral_contrast(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
                       win_length=None, window='hann', center=True, pad_mode='reflect',
                       freq=None, fmin=200.0, n_bands=6, quantile=0.02,
                       linear=False):
-    '''Compute spectral contrast [#]_
+    '''Compute spectral contrast
 
     Each frame of a spectrogram ``S`` is divided into sub-bands.
     For each sub-band, the energy contrast is estimated by comparing
     the mean energy in the top quantile (peak energy) to that of the
     bottom quantile (valley energy).  High contrast values generally
     correspond to clear, narrow-band signals, while low contrast values
-    correspond to broad-band noise.
+    correspond to broad-band noise. [#]_
 
     .. [#] Jiang, Dan-Ning, Lie Lu, Hong-Jiang Zhang, Jian-Hua Tao,
            and Lian-Hong Cai.
@@ -954,7 +954,6 @@ def poly_features(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     >>> ax[0].legend()
     >>> ax[0].label_outer()
     >>> ax[0].set(ylabel='Constant term ')
-    >>> ax[1].legend()
     >>> ax[1].plot(times, p1[0], label='order=1', alpha=0.8)
     >>> ax[1].plot(times, p2[1], label='order=2', alpha=0.8)
     >>> ax[1].set(ylabel='Linear term')
@@ -1312,10 +1311,10 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
                 tuning=None, n_chroma=12,
                 n_octaves=7, bins_per_octave=36, cqt_mode='full', window=None,
                 norm=2, win_len_smooth=41, smoothing_window='hann'):
-    r'''Computes the chroma variant "Chroma Energy Normalized" (CENS), following [#]_.
+    r'''Computes the chroma variant "Chroma Energy Normalized" (CENS)
 
     To compute CENS features, following steps are taken after obtaining chroma vectors
-    using `chroma_cqt`:
+    using `chroma_cqt`: [#]_.
 
         1. L-1 normalization of each chroma vector
         2. Quantization of amplitude based on "log-like" amplitude thresholds
@@ -1455,8 +1454,11 @@ def chroma_cens(y=None, sr=22050, C=None, hop_length=512, fmin=None,
 
 
 def tonnetz(y=None, sr=22050, chroma=None, **kwargs):
-    '''Computes the tonal centroid features (tonnetz), following the method of
-    [#]_.
+    '''Computes the tonal centroid features (tonnetz)
+
+    This representation uses the method of [#]_ to project chroma features
+    onto a 6-dimensional basis representing the perfect fifth, minor third,
+    and major third each as two-dimensional coordinates.
 
     .. [#] Harte, C., Sandler, M., & Gasser, M. (2006). "Detecting Harmonic
            Change in Musical Audio." In Proceedings of the 1st ACM Workshop

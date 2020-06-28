@@ -1053,22 +1053,22 @@ def griffinlim_cqt(C, n_iter=32, sr=22050, hop_length=512, fmin=None, bins_per_o
                    pad_mode='reflect', res_type='kaiser_fast', dtype=None,
                    length=None, momentum=0.99, init='random', random_state=None):
     '''Approximate constant-Q magnitude spectrogram inversion using the "fast" Griffin-Lim
-    algorithm [#]_ [#]_.
+    algorithm.
 
     Given the magnitude of a constant-Q spectrogram (``C``), the algorithm randomly initializes
-    phase estimates, and then alternates forward- and inverse-CQT operations.
+    phase estimates, and then alternates forward- and inverse-CQT operations. [#]_ 
 
-    This implementation is based on the Griffin-Lim method for Short-time Fourier Transforms,
+    This implementation is based on the (fast) Griffin-Lim method for Short-time Fourier Transforms, [#]_
     but adapted for use with constant-Q spectrograms.
+
+    .. [#] D. W. Griffin and J. S. Lim,
+        "Signal estimation from modified short-time Fourier transform,"
+        IEEE Trans. ASSP, vol.32, no.2, pp.236–243, Apr. 1984.
 
     .. [#] Perraudin, N., Balazs, P., & Søndergaard, P. L.
         "A fast Griffin-Lim algorithm,"
         IEEE Workshop on Applications of Signal Processing to Audio and Acoustics (pp. 1-4),
         Oct. 2013.
-
-    .. [#] D. W. Griffin and J. S. Lim,
-        "Signal estimation from modified short-time Fourier transform,"
-        IEEE Trans. ASSP, vol.32, no.2, pp.236–243, Apr. 1984.
 
     Parameters
     ----------

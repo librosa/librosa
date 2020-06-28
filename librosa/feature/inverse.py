@@ -64,15 +64,19 @@ def mel_to_stft(M, sr=22050, n_fft=2048, power=2.0, **kwargs):
     Compare the results visually
 
     >>> import matplotlib.pyplot as plt
-    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+    >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
     >>> img = librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max, top_db=None),
     ...                          y_axis='log', x_axis='time', ax=ax[0])
     >>> ax[0].set(title='Original STFT')
     >>> ax[0].label_outer()
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S_inv, ref=np.max, top_db=None),
+    ...                          y_axis='log', x_axis='time', ax=ax[1])
+    >>> ax[1].set(title='Reconstructed STFT')
+    >>> ax[1].label_outer()
     >>> librosa.display.specshow(librosa.amplitude_to_db(np.abs(S_inv - S),
     ...                                                  ref=S.max(), top_db=None),
-    ...                          vmax=0, y_axis='log', x_axis='time', cmap='magma', ax=ax[1])
-    >>> ax[1].set(title='Residual error (dB)')
+    ...                          vmax=0, y_axis='log', x_axis='time', cmap='magma', ax=ax[2])
+    >>> ax[2].set(title='Residual error (dB)')
     >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
     '''
 
