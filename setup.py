@@ -50,10 +50,10 @@ setup(
     ],
     python_requires='>=3.6',
     extras_require={
-        'docs': ['numpydoc', 'sphinx!=1.3.1', 'sphinx_rtd_theme',
+        'docs': ['numpydoc', 'sphinx!=1.3.1', 'sphinx_rtd_theme==0.5.*',
                  'matplotlib >= 2.0.0',
-                 'sphinx-multiversion >= 0.2.3',
-                 'sphinx-gallery',
+                 'sphinx-multiversion==0.2.3',
+                 'sphinx-gallery>=0.7',
                  'sphinxcontrib-svg2pdfconverter',
                  'presets'],
         'tests': ['matplotlib >= 2.1',
