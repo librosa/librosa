@@ -19,39 +19,48 @@ def salience(S, freqs, h_range, weights=None, aggregate=None,
     S : np.ndarray [shape=(d, n)]
         input time frequency magnitude representation (e.g. STFT or CQT magnitudes).
         Must be real-valued and non-negative.
+
     freqs : np.ndarray, shape=(S.shape[axis])
         The frequency values corresponding to S's elements along the
         chosen axis.
+
     h_range : list-like, non-negative
         Harmonics to include in salience computation.  The first harmonic (1)
-        corresponds to `S` itself. Values less than one (e.g., 1/2) correspond
+        corresponds to ``S`` itself. Values less than one (e.g., 1/2) correspond
         to sub-harmonics.
+
     weights : list-like
         The weight to apply to each harmonic in the summation. (default:
-        uniform weights). Must be the same length as `harmonics`.
+        uniform weights). Must be the same length as ``harmonics``.
+
     aggregate : function
         aggregation function (default: `np.average`)
-        If `aggregate=np.average`, then a weighted average is
+
+        If ``aggregate=np.average``, then a weighted average is
         computed per-harmonic according to the specified weights.
         For all other aggregation functions, all harmonics
         are treated equally.
+
     filter_peaks : bool
         If true, returns harmonic summation only on frequencies of peak
         magnitude. Otherwise returns harmonic summation over the full spectrum.
         Defaults to True.
+
     fill_value : float
         The value to fill non-peaks in the output representation. (default:
-        np.nan) Only used if `filter_peaks == True`.
+        `np.nan`) Only used if ``filter_peaks == True``.
+
     kind : str
         Interpolation type for harmonic estimation.
         See `scipy.interpolate.interp1d`.
+
     axis : int
         The axis along which to compute harmonics
 
     Returns
     -------
     S_sal : np.ndarray, shape=(len(h_range), [x.shape])
-        `S_sal` will have the same shape as `S`, and measure
+        ``S_sal`` will have the same shape as ``S``, and measure
         the overal harmonic energy at each frequency.
 
     See Also
@@ -60,23 +69,25 @@ def salience(S, freqs, h_range, weights=None, aggregate=None,
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.load(librosa.ex('trumpet'), duration=3)
     >>> S = np.abs(librosa.stft(y))
-    >>> freqs = librosa.core.fft_frequencies(sr)
+    >>> freqs = librosa.fft_frequencies(sr)
     >>> harms = [1, 2, 3, 4]
     >>> weights = [1.0, 0.5, 0.33, 0.25]
     >>> S_sal = librosa.salience(S, freqs, harms, weights, fill_value=0)
     >>> print(S_sal.shape)
     (1025, 115)
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S_sal,
-    ...                                                  ref=np.max),
-    ...                          sr=sr, y_axis='log', x_axis='time')
-    >>> plt.colorbar()
-    >>> plt.title('Salience spectrogram')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    ...                          sr=sr, y_axis='log', x_axis='time', ax=ax[0])
+    >>> ax[0].set(title='Magnitude spectrogram')
+    >>> ax[0].label_outer()
+    >>> img = librosa.display.specshow(librosa.amplitude_to_db(S_sal,
+    ...                                                        ref=np.max),
+    ...                                sr=sr, y_axis='log', x_axis='time', ax=ax[1])
+    >>> ax[1].set(title='Salience spectrogram')
+    >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
     """
     if aggregate is None:
         aggregate = np.average
@@ -123,7 +134,7 @@ def interp_harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
         chosen axis.
 
     h_range : list-like, non-negative
-        Harmonics to compute.  The first harmonic (1) corresponds to `x`
+        Harmonics to compute.  The first harmonic (1) corresponds to ``x``
         itself.
         Values less than one (e.g., 1/2) correspond to sub-harmonics.
 
@@ -140,8 +151,8 @@ def interp_harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
     Returns
     -------
     x_harm : np.ndarray, shape=(len(h_range), [x.shape])
-        `x_harm[i]` will have the same shape as `x`, and measure
-        the energy at the `h_range[i]` harmonic of each frequency.
+        ``x_harm[i]`` will have the same shape as ``x``, and measure
+        the energy at the ``h_range[i]`` harmonic of each frequency.
 
     See Also
     --------
@@ -165,18 +176,16 @@ def interp_harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
 
     >>> # And plot the results
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> librosa.display.specshow(t_harmonics, x_axis='tempo', sr=sr)
-    >>> plt.yticks(0.5 + np.arange(len(h_range)),
-    ...            ['{:.3g}'.format(_) for _ in h_range])
-    >>> plt.ylabel('Harmonic')
-    >>> plt.xlabel('Tempo (BPM)')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    >>> fig, ax = plt.subplots()
+    >>> librosa.display.specshow(t_harmonics, x_axis='tempo', sr=sr, ax=ax)
+    >>> ax.set(yticks=0.5 + np.arange(len(h_range)),
+    ...        yticklabels=['{:.3g}'.format(_) for _ in h_range],
+    ...        ylabel='Harmonic', xlabel='Tempo (BPM)')
 
     We can also compute frequency harmonics for spectrograms.
     To calculate sub-harmonic energy, use values < 1.
 
+    >>> y, sr = librosa.load(librosa.ex('trumpet'), duration=3)
     >>> h_range = [1./3, 1./2, 1, 2, 3, 4]
     >>> S = np.abs(librosa.stft(y))
     >>> fft_freqs = librosa.fft_frequencies(sr=sr)
@@ -184,15 +193,15 @@ def interp_harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
     >>> print(S_harm.shape)
     (6, 1025, 646)
 
-    >>> plt.figure()
-    >>> for i, _sh in enumerate(S_harm, 1):
-    ...     plt.subplot(3, 2, i)
-    ...     librosa.display.specshow(librosa.amplitude_to_db(_sh,
+    >>> fig, ax = plt.subplots(nrows=3, ncols=2, sharex=True, sharey=True)
+    >>> for i, _sh in enumerate(S_harm):
+    ...     img = librosa.display.specshow(librosa.amplitude_to_db(_sh,
     ...                                                      ref=S.max()),
-    ...                              sr=sr, y_axis='log')
-    ...     plt.title('h={:.3g}'.format(h_range[i-1]))
-    ...     plt.yticks([])
-    >>> plt.tight_layout()
+    ...                              sr=sr, y_axis='log', x_axis='time',
+    ...                              ax=ax.flat[i])
+    ...     ax.flat[i].set(title='h={:.3g}'.format(h_range[i]))
+    ...     ax.flat[i].label_outer()
+    >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
     '''
 
     # X_out will be the same shape as X, plus a leading
@@ -235,7 +244,7 @@ def harmonics_1d(harmonic_out, x, freqs, h_range, kind='linear',
         chosen axis.
 
     h_range : list-like, non-negative
-        Harmonics to compute.  The first harmonic (1) corresponds to `x`
+        Harmonics to compute.  The first harmonic (1) corresponds to ``x``
         itself.
         Values less than one (e.g., 1/2) correspond to sub-harmonics.
 
@@ -272,14 +281,12 @@ def harmonics_1d(harmonic_out, x, freqs, h_range, kind='linear',
 
     >>> # And plot the results
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> librosa.display.specshow(t_harmonics, x_axis='tempo', sr=sr)
-    >>> plt.yticks(0.5 + np.arange(len(h_range)),
-    ...            ['{:.3g}'.format(_) for _ in h_range])
-    >>> plt.ylabel('Harmonic')
-    >>> plt.xlabel('Tempo (BPM)')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    >>> fig, ax = plt.subplots()
+    >>> librosa.display.specshow(t_harmonics, x_axis='tempo', sr=sr, ax=ax)
+    >>> ax.set(yticks=0.5 + np.arange(len(h_range)),
+    ...        yticklabels=['{:.3g}'.format(_) for _ in h_range],
+    ...        ylabel='Harmonic')
+    ...        xlabel='Tempo (BPM)')
 
     We can also compute frequency harmonics for spectrograms.
     To calculate subharmonic energy, use values < 1.
@@ -291,15 +298,13 @@ def harmonics_1d(harmonic_out, x, freqs, h_range, kind='linear',
     >>> print(S_harm.shape)
     (6, 1025, 646)
 
-    >>> plt.figure()
-    >>> for i, _sh in enumerate(S_harm, 1):
-    ...     plt.subplot(3,2,i)
+    >>> fig, ax = plt.subplots(nrows=3, ncols=2, sharex=True, sharey=True)
+    >>> for i, _sh in enumerate(S_harm):
     ...     librosa.display.specshow(librosa.amplitude_to_db(_sh,
     ...                                                      ref=S.max()),
-    ...                              sr=sr, y_axis='log')
-    ...     plt.title('h={:.3g}'.format(h_range[i-1]))
-    ...     plt.yticks([])
-    >>> plt.tight_layout()
+    ...                              sr=sr, y_axis='log', x_axis='time', ax=ax.flat[i])
+    ...     ax.flat[i].set(title='h={:.3g}'.format(h_range[i]))
+    ...     ax.flat[i].label_outer()
     '''
 
     # Note: this only works for fixed-grid, 1d interpolation
@@ -342,10 +347,10 @@ def harmonics_2d(harmonic_out, x, freqs, h_range, kind='linear', fill_value=0,
         The input energy
 
     freqs : np.ndarray, shape=x.shape
-        The frequency values corresponding to each element of `x`
+        The frequency values corresponding to each element of ``x``
 
     h_range : list-like, non-negative
-        Harmonics to compute.  The first harmonic (1) corresponds to `x`
+        Harmonics to compute.  The first harmonic (1) corresponds to ``x``
         itself.  Values less than one (e.g., 1/2) correspond to
         sub-harmonics.
 

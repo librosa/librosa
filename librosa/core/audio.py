@@ -37,9 +37,9 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
     """Load an audio file as a floating point time series.
 
     Audio will be automatically resampled to the given rate
-    (default `sr=22050`).
+    (default ``sr=22050``).
 
-    To preserve the native sampling rate of the file, use `sr=None`.
+    To preserve the native sampling rate of the file, use ``sr=None``.
 
     Parameters
     ----------
@@ -69,7 +69,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
         only load up to this much audio (in seconds)
 
     dtype : numeric type
-        data type of `y`
+        data type of ``y``
 
     res_type : str
         resample type (see note)
@@ -82,8 +82,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
         .. note::
            `audioread` may truncate the precision of the audio data to 16 bits.
 
-           See https://librosa.github.io/librosa/ioformats.html for alternate
-           loading methods.
+           See :ref:`ioformats` for alternate loading methods.
 
 
     Returns
@@ -92,7 +91,7 @@ def load(path, sr=22050, mono=True, offset=0.0, duration=None,
         audio time series
 
     sr   : number > 0 [scalar]
-        sampling rate of `y`
+        sampling rate of ``y``
 
 
     Examples
@@ -225,7 +224,7 @@ def stream(path, block_length, frame_length, hop_length,
     fit entirely in memory at once.
 
     Instead of loading the entire audio signal into memory (as
-    in `load()`, this function produces *blocks* of audio spanning
+    in `load`, this function produces *blocks* of audio spanning
     a fixed number of frames at a specified frame length and hop
     length.
 
@@ -239,15 +238,15 @@ def stream(path, block_length, frame_length, hop_length,
            (potentially overlapping) frames.
         2. Automatic sample-rate conversion is not supported.
            Audio will be streamed in its native sample rate,
-           so no default values are provided for `frame_length`
-           and `hop_length`.  It is recommended that you first
+           so no default values are provided for ``frame_length``
+           and ``hop_length``.  It is recommended that you first
            get the sampling rate for the file in question, using
-           `get_samplerate()`, and set these parameters accordingly.
+           `get_samplerate`, and set these parameters accordingly.
         3. Many analyses require access to the entire signal
            to behave correctly, such as `resample`, `cqt`, or
            `beat_track`, so these methods will not be appropriate
            for streamed data.
-        4. The `block_length` parameter specifies how many frames
+        4. The ``block_length`` parameter specifies how many frames
            of audio will be produced per block.  Larger values will
            consume more memory, but will be more efficient to process
            down-stream.  The best value will ultimately depend on your
@@ -257,7 +256,7 @@ def stream(path, block_length, frame_length, hop_length,
            signal at the beginning and end.  This will not work correctly
            when the signal is carved into blocks, because it would introduce
            padding in the middle of the signal.  To disable this feature,
-           use `center=False` in all frame-based analyses.
+           use ``center=False`` in all frame-based analyses.
 
     See the examples below for proper usage of this function.
 
@@ -274,7 +273,7 @@ def stream(path, block_length, frame_length, hop_length,
         Note that at the end of the file, there may not be enough
         data to fill an entire block, resulting in a shorter block
         by default.  To pad the signal out so that blocks are always
-        full length, set `fill_value` (see below).
+        full length, set ``fill_value`` (see below).
 
     frame_length : int > 0
         The number of samples per frame.
@@ -282,7 +281,7 @@ def stream(path, block_length, frame_length, hop_length,
     hop_length : int > 0
         The number of samples to advance between frames.
 
-        Note that by when `hop_length < frame_length`, neighboring frames
+        Note that by when ``hop_length < frame_length``, neighboring frames
         will overlap.  Similarly, the last frame of one *block* will overlap
         with the first frame of the next *block*.
 
@@ -299,7 +298,7 @@ def stream(path, block_length, frame_length, hop_length,
         If padding the signal to produce constant-length blocks,
         this value will be used at the end of the signal.
 
-        In most cases, `fill_value=0` (silence) is expected, but
+        In most cases, ``fill_value=0`` (silence) is expected, but
         you may specify any value here.
 
     dtype : numeric type
@@ -309,7 +308,7 @@ def stream(path, block_length, frame_length, hop_length,
     ------
     y : np.ndarray
         An audio buffer of (at most)
-        `block_length * (hop_length-1) + frame_length` samples.
+        ``block_length * (hop_length-1) + frame_length`` samples.
 
     See Also
     --------
@@ -321,7 +320,7 @@ def stream(path, block_length, frame_length, hop_length,
     --------
     Apply a short-term Fourier transform to blocks of 256 frames
     at a time.  Note that streaming operation requires left-aligned
-    frames, so we must set `center=False` to avoid padding artifacts.
+    frames, so we must set ``center=False`` to avoid padding artifacts.
 
     >>> filename = librosa.ex('brahms')
     >>> sr = librosa.get_samplerate(filename)
@@ -392,7 +391,7 @@ def stream(path, block_length, frame_length, hop_length,
 
 @cache(level=20)
 def to_mono(y):
-    '''Force an audio signal down to mono by averaging samples across channels.
+    '''Convert an audio signal to mono by averaging samples across channels.
 
     Parameters
     ----------
@@ -402,7 +401,7 @@ def to_mono(y):
     Returns
     -------
     y_mono : np.ndarray [shape=(n,)]
-        `y` as a monophonic time-series
+        ``y`` as a monophonic time-series
 
     Notes
     -----
@@ -435,7 +434,7 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
     """Resample a time series from orig_sr to target_sr
 
     By default, this uses a high-quality (but relatively slow) method ('kaiser_best')
-    for band-limited sinc interpolation.  The alternate `res_type` values listed below
+    for band-limited sinc interpolation.  The alternate ``res_type`` values listed below
     offer different trade-offs of speed and quality.
 
     Parameters
@@ -444,7 +443,7 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
         audio time series.  Can be mono or stereo.
 
     orig_sr : number > 0 [scalar]
-        original sampling rate of `y`
+        original sampling rate of ``y``
 
     target_sr : number > 0 [scalar]
         target sampling rate
@@ -455,51 +454,52 @@ def resample(y, orig_sr, target_sr, res_type='kaiser_best', fix=True, scale=Fals
         .. note::
             By default, this uses `resampy`'s high-quality mode ('kaiser_best').
 
-            To use a faster method, set `res_type='kaiser_fast'`.
+            To use a faster method, set ``res_type='kaiser_fast'``.
 
-            To use `scipy.signal.resample`, set `res_type='fft'` or `res_type='scipy'`. (slow)
+            To use `scipy.signal.resample`, set ``res_type='fft'`` or ``res_type='scipy'``. (slow)
 
-            To use `scipy.signal.resample_poly`, set `res_type='polyphase'`. (fast)
+            To use `scipy.signal.resample_poly`, set ``res_type='polyphase'``. (fast)
 
-            To use `samplerate.resample`, set any of the following:
-                - `res_type='linear'`: linear interpolation (fast)
-                - `res_type='zero_order_hold'`: repeat the last value between samples (very fast)
-                - `res_type='sinc_best'`, `'sinc_medium'`, or `'sinc_fastest'`: for high-, medium-,
-                    and low-quality sinc interpolation
+            To use `samplerate.converters.resample`, set any of the following:
+
+                - ``res_type='linear'``: linear interpolation (fast)
+                - ``res_type='zero_order_hold'``: repeat the last value between samples (very fast)
+                - ``res_type='sinc_best'``, ``'sinc_medium'``, or ``'sinc_fastest'``: for high-, medium-,
+                  and low-quality sinc interpolation
 
         .. note::
-            When using `res_type='polyphase'`, only integer sampling rates are
+            When using ``res_type='polyphase'``, only integer sampling rates are
             supported.
 
     fix : bool
         adjust the length of the resampled signal to be of size exactly
-        `ceil(target_sr * len(y) / orig_sr)`
+        ``ceil(target_sr * len(y) / orig_sr)``
 
     scale : bool
-        Scale the resampled signal so that `y` and `y_hat` have approximately
+        Scale the resampled signal so that ``y`` and ``y_hat`` have approximately
         equal total energy.
 
     kwargs : additional keyword arguments
-        If `fix==True`, additional keyword arguments to pass to
+        If ``fix==True``, additional keyword arguments to pass to
         `librosa.util.fix_length`.
 
     Returns
     -------
     y_hat : np.ndarray [shape=(n * target_sr / orig_sr,)]
-        `y` resampled from `orig_sr` to `target_sr`
+        ``y`` resampled from ``orig_sr`` to ``target_sr``
 
     Raises
     ------
     ParameterError
-        If `res_type='polyphase'` and `orig_sr` or `target_sr` are not both
+        If ``res_type='polyphase'`` and ``orig_sr`` or ``target_sr`` are not both
         integer-valued.
 
     See Also
     --------
     librosa.util.fix_length
     scipy.signal.resample
-    resampy.resample
-    samplerate.resample
+    resampy
+    samplerate.converters.resample
 
     Notes
     -----
@@ -587,7 +587,7 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         audio time series
 
     sr : number > 0 [scalar]
-        audio sampling rate of `y`
+        audio sampling rate of ``y``
 
     S : np.ndarray [shape=(d, t)] or None
         STFT matrix, or any STFT-derived matrix (e.g., chromagram
@@ -597,14 +597,14 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         it is better to use the audio time series directly.
 
     n_fft       : int > 0 [scalar]
-        FFT window size for `S`
+        FFT window size for ``S``
 
     hop_length  : int > 0 [ scalar]
-        number of audio samples between columns of `S`
+        number of audio samples between columns of ``S``
 
     center  : boolean
-        - If `True`, `S[:, t]` is centered at `y[t * hop_length]`
-        - If `False`, then `S[:, t]` begins at `y[t * hop_length]`
+        - If ``True``, ``S[:, t]`` is centered at ``y[t * hop_length]``
+        - If ``False``, then ``S[:, t]`` begins at ``y[t * hop_length]``
 
     filename : str
         If provided, all other parameters are ignored, and the
@@ -613,8 +613,8 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         and is therefore useful for querying the duration of
         long files.
 
-        As in `load()`, this can also be an integer or open file-handle
-        that can be processed by `soundfile`.
+        As in ``load``, this can also be an integer or open file-handle
+        that can be processed by ``soundfile``.
 
     Returns
     -------
@@ -624,15 +624,15 @@ def get_duration(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
     Raises
     ------
     ParameterError
-        if none of `y`, `S`, or `filename` are provided.
+        if none of ``y``, ``S``, or ``filename`` are provided.
 
     Notes
     -----
-    `get_duration` can be applied to a file (`filename`), a spectrogram (`S`),
-    or audio buffer (`y, sr`).  Only one of these three options should be
-    provided.  If you do provide multiple options (e.g., `filename` and `S`),
-    then `filename` takes precedence over `S`, and `S` takes precedence over
-    `(y, sr)`.
+    `get_duration` can be applied to a file (``filename``), a spectrogram (``S``),
+    or audio buffer (``y, sr``).  Only one of these three options should be
+    provided.  If you do provide multiple options (e.g., ``filename`` and ``S``),
+    then ``filename`` takes precedence over ``S``, and ``S`` takes precedence over
+    ``(y, sr)``.
     """
 
     if filename is not None:
@@ -674,7 +674,7 @@ def get_samplerate(path):
     ----------
     path : string, int, or file-like
         The path to the file to be loaded
-        As in `load()`, this can also be an integer or open file-handle
+        As in ``load``, this can also be an integer or open file-handle
         that can be processed by `soundfile`.
 
     Returns
@@ -699,7 +699,7 @@ def get_samplerate(path):
 
 @cache(level=20)
 def autocorrelate(y, max_size=None, axis=-1):
-    """Bounded auto-correlation
+    """Bounded-lag auto-correlation
 
     Parameters
     ----------
@@ -708,7 +708,7 @@ def autocorrelate(y, max_size=None, axis=-1):
 
     max_size  : int > 0 or None
         maximum correlation lag.
-        If unspecified, defaults to `y.shape[axis]` (unbounded)
+        If unspecified, defaults to ``y.shape[axis]`` (unbounded)
 
     axis : int
         The axis along which to autocorrelate.
@@ -717,9 +717,9 @@ def autocorrelate(y, max_size=None, axis=-1):
     Returns
     -------
     z : np.ndarray
-        truncated autocorrelation `y*y` along the specified axis.
-        If `max_size` is specified, then `z.shape[axis]` is bounded
-        to `max_size`.
+        truncated autocorrelation ``y*y`` along the specified axis.
+        If ``max_size`` is specified, then ``z.shape[axis]`` is bounded
+        to ``max_size``.
 
     Notes
     -----
@@ -727,7 +727,7 @@ def autocorrelate(y, max_size=None, axis=-1):
 
     Examples
     --------
-    Compute full autocorrelation of y
+    Compute full autocorrelation of ``y``
 
     >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> librosa.autocorrelate(y)
@@ -738,10 +738,9 @@ def autocorrelate(y, max_size=None, axis=-1):
     >>> import matplotlib.pyplot as plt
     >>> odf = librosa.onset.onset_strength(y=y, sr=sr, hop_length=512)
     >>> ac = librosa.autocorrelate(odf, max_size=4* sr / 512)
-    >>> plt.plot(ac)
-    >>> plt.title('Auto-correlation')
-    >>> plt.xlabel('Lag (frames)')
-    >>> plt.show()
+    >>> fig, ax = plt.subplots()
+    >>> ax.plot(ac)
+    >>> ax.set(title='Auto-correlation', xlabel='Lag (frames)')
     """
 
     if max_size is None:
@@ -773,19 +772,19 @@ def lpc(y, order):
     """Linear Prediction Coefficients via Burg's method
 
     This function applies Burg's method to estimate coefficients of a linear
-    filter on `y` of order `order`.  Burg's method is an extension to the
+    filter on ``y`` of order ``order``.  Burg's method is an extension to the
     Yule-Walker approach, which are both sometimes referred to as LPC parameter
     estimation by autocorrelation.
 
     It follows the description and implementation approach described in the
-    introduction in [1]_.  N.B. This paper describes a different method, which
+    introduction by Marple. [#]_  N.B. This paper describes a different method, which
     is not implemented here, but has been chosen for its clear explanation of
     Burg's technique in its introduction.
 
-    .. [1] Larry Marple
-           A New Autoregressive Spectrum Analysis Algorithm
+    .. [#] Larry Marple.
+           A New Autoregressive Spectrum Analysis Algorithm.
            IEEE Transactions on Accoustics, Speech, and Signal Processing
-           vol 28, no. 4, 1980
+           vol 28, no. 4, 1980.
 
     Parameters
     ----------
@@ -797,16 +796,16 @@ def lpc(y, order):
 
     Returns
     -------
-    a : np.ndarray of length order + 1
+    a : np.ndarray of length ``order + 1``
         LP prediction error coefficients, i.e. filter denominator polynomial
 
     Raises
     ------
     ParameterError
-        - If y is not valid audio as per `util.valid_audio`
-        - If order < 1 or not integer
+        - If ``y`` is not valid audio as per `librosa.util.valid_audio`
+        - If ``order < 1`` or not integer
     FloatingPointError
-        - If y is ill-conditioned
+        - If ``y`` is ill-conditioned
 
     See also
     --------
@@ -825,13 +824,13 @@ def lpc(y, order):
     >>> import scipy
     >>> y, sr = librosa.load(librosa.ex('trumpet'), duration=0.020)
     >>> a = librosa.lpc(y, 2)
-    >>> y_hat = scipy.signal.lfilter([0] + -1*a[1:], [1], y)
-    >>> plt.figure()
-    >>> plt.plot(y)
-    >>> plt.plot(y_hat, linestyle='--')
-    >>> plt.legend(['y', 'y_hat'])
-    >>> plt.title('LP Model Forward Prediction')
-    >>> plt.show()
+    >>> b = np.hstack([[0], -1 * a[1:]])
+    >>> y_hat = scipy.signal.lfilter(b, [1], y)
+    >>> fig, ax = plt.subplots()
+    >>> ax.plot(y)
+    >>> ax.plot(y_hat, linestyle='--')
+    >>> ax.legend(['y', 'y_hat'])
+    >>> ax.set_title('LP Model Forward Prediction')
 
     """
     if not isinstance(order, int) or order < 1:
@@ -932,11 +931,11 @@ def __lpc(y, order):
 @cache(level=20)
 def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
                    zero_pos=True, axis=-1):
-    '''Find the zero-crossings of a signal `y`: indices `i` such that
-    `sign(y[i]) != sign(y[j])`.
+    '''Find the zero-crossings of a signal ``y``: indices ``i`` such that
+    ``sign(y[i]) != sign(y[j])``.
 
-    If `y` is multi-dimensional, then zero-crossings are computed along
-    the specified `axis`.
+    If ``y`` is multi-dimensional, then zero-crossings are computed along
+    the specified ``axis``.
 
 
     Parameters
@@ -945,22 +944,22 @@ def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
         The input array
 
     threshold : float > 0 or None
-        If specified, values where `-threshold <= y <= threshold` are
+        If specified, values where ``-threshold <= y <= threshold`` are
         clipped to 0.
 
     ref_magnitude : float > 0 or callable
-        If numeric, the threshold is scaled relative to `ref_magnitude`.
+        If numeric, the threshold is scaled relative to ``ref_magnitude``.
 
         If callable, the threshold is scaled relative to
-        `ref_magnitude(np.abs(y))`.
+        ``ref_magnitude(np.abs(y))``.
 
     pad : boolean
-        If `True`, then `y[0]` is considered a valid zero-crossing.
+        If ``True``, then ``y[0]`` is considered a valid zero-crossing.
 
     zero_pos : boolean
-        If `True` then the value 0 is interpreted as having positive sign.
+        If ``True`` then the value 0 is interpreted as having positive sign.
 
-        If `False`, then 0, -1, and +1 all have distinct signs.
+        If ``False``, then 0, -1, and +1 all have distinct signs.
 
     axis : int
         Axis along which to compute zero-crossings.
@@ -968,7 +967,7 @@ def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
     Returns
     -------
     zero_crossings : np.ndarray [shape=y.shape, dtype=boolean]
-        Indicator array of zero-crossings in `y` along the selected axis.
+        Indicator array of zero-crossings in ``y`` along the selected axis.
 
     Notes
     -----
@@ -990,6 +989,7 @@ def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
     array([ True, False, False,  True, False,  True, False, False,
             True, False,  True, False,  True, False, False,  True,
            False,  True, False,  True], dtype=bool)
+
     >>> # Stack y against the zero-crossing indicator
     >>> librosa.util.stack([y, z], axis=-1)
     array([[  0.000e+00,   1.000e+00],
@@ -1012,6 +1012,7 @@ def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
            [ -4.759e-01,   1.000e+00],
            [ -9.694e-01,   0.000e+00],
            [ -9.797e-16,   1.000e+00]])
+
     >>> # Find the indices of zero-crossings
     >>> np.nonzero(z)
     (array([ 0,  3,  5,  8, 10, 12, 15, 17, 19]),)
@@ -1056,7 +1057,10 @@ def zero_crossings(y, threshold=1e-10, ref_magnitude=None, pad=True,
 
 def clicks(times=None, frames=None, sr=22050, hop_length=512,
            click_freq=1000.0, click_duration=0.1, click=None, length=None):
-    """Returns a signal with the signal `click` placed at each specified time
+    """Construct a "click track".
+
+    This returns a signal with the signal ``click`` sound placed at
+    each specified time.
 
     Parameters
     ----------
@@ -1070,7 +1074,7 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
         desired sampling rate of the output signal
 
     hop_length : int > 0
-        if positions are specified by `frames`, the number of samples between frames.
+        if positions are specified by ``frames``, the number of samples between frames.
 
     click_freq : float > 0
         frequency (in Hz) of the default click signal.  Default is 1KHz.
@@ -1079,7 +1083,7 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
         duration (in seconds) of the default click signal.  Default is 100ms.
 
     click : np.ndarray or None
-        optional click signal sample to use instead of the default blip.
+        optional click signal sample to use instead of the default click.
 
     length : int > 0
         desired number of samples in the output signal
@@ -1094,14 +1098,14 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
     Raises
     ------
     ParameterError
-        - If neither `times` nor `frames` are provided.
-        - If any of `click_freq`, `click_duration`, or `length` are out of range.
+        - If neither ``times`` nor ``frames`` are provided.
+        - If any of ``click_freq``, ``click_duration``, or ``length`` are out of range.
 
 
     Examples
     --------
     >>> # Sonify detected beat events
-    >>> y, sr = librosa.load(librosa.ex('choice'))
+    >>> y, sr = librosa.load(librosa.ex('choice'), duration=10)
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
     >>> y_beats = librosa.clicks(frames=beats, sr=sr)
 
@@ -1119,16 +1123,15 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
     Display click waveform next to the spectrogram
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True)
     >>> S = librosa.feature.melspectrogram(y=y, sr=sr)
-    >>> ax = plt.subplot(2,1,2)
     >>> librosa.display.specshow(librosa.power_to_db(S, ref=np.max),
-    ...                          x_axis='time', y_axis='mel')
-    >>> plt.subplot(2,1,1, sharex=ax)
-    >>> librosa.display.waveplot(y_beat_times, sr=sr, label='Beat clicks')
-    >>> plt.legend()
-    >>> plt.tight_layout()
-    >>> plt.show()
+    ...                          x_axis='time', y_axis='mel', ax=ax[0])
+    >>> librosa.display.waveplot(y_beat_times, sr=sr, label='Beat clicks',
+    ...                          ax=ax[1])
+    >>> ax[1].legend()
+    >>> ax[0].label_outer()
+    >>> ax[0].set_title(None)
     """
 
     # Compute sample positions from time or frames
@@ -1189,7 +1192,7 @@ def clicks(times=None, frames=None, sr=22050, hop_length=512,
 
 
 def tone(frequency, sr=22050, length=None, duration=None, phi=None):
-    """Returns a pure tone signal. The signal generated is a cosine wave.
+    """Construct a pure tone (cosine) signal at a given frequency.
 
     Parameters
     ----------
@@ -1200,14 +1203,17 @@ def tone(frequency, sr=22050, length=None, duration=None, phi=None):
         desired sampling rate of the output signal
 
     length : int > 0
-        desired number of samples in the output signal. When both `duration` and `length` are defined,
-        `length` would take priority.
+        desired number of samples in the output signal.
+        When both ``duration`` and ``length`` are defined,
+        ``length`` takes priority.
 
     duration : float > 0
-        desired duration in seconds. When both `duration` and `length` are defined, `length` would take priority.
+        desired duration in seconds.
+        When both ``duration`` and ``length`` are defined,
+        ``length`` takes priority.
 
     phi : float or None
-        phase offset, in radians. If unspecified, defaults to `-np.pi * 0.5`.
+        phase offset, in radians. If unspecified, defaults to ``-np.pi * 0.5``.
 
 
     Returns
@@ -1219,26 +1225,27 @@ def tone(frequency, sr=22050, length=None, duration=None, phi=None):
     Raises
     ------
     ParameterError
-        - If `frequency` is not provided.
-        - If neither `length` nor `duration` are provided.
+        - If ``frequency`` is not provided.
+        - If neither ``length`` nor ``duration`` are provided.
 
 
     Examples
     --------
-    >>> # Generate a pure sine tone A4
+    Generate a pure sine tone A4
+
     >>> tone = librosa.tone(440, duration=1)
 
-    >>> # Or generate the same signal using `length`
+    Or generate the same signal using `length`
+
     >>> tone = librosa.tone(440, sr=22050, length=22050)
 
     Display spectrogram
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
+    >>> fig, ax = plt.subplots()
     >>> S = librosa.feature.melspectrogram(y=tone)
     >>> librosa.display.specshow(librosa.power_to_db(S, ref=np.max),
-    ...                          x_axis='time', y_axis='mel')
-    >>> plt.show()
+    ...                          x_axis='time', y_axis='mel', ax=ax)
     """
 
     if frequency is None:
@@ -1257,7 +1264,9 @@ def tone(frequency, sr=22050, length=None, duration=None, phi=None):
 
 
 def chirp(fmin, fmax, sr=22050, length=None, duration=None, linear=False, phi=None):
-    """Returns a chirp signal that goes from frequency `fmin` to frequency `fmax`
+    """Construct a "chirp" or "sine-sweep" signal.
+
+    The chirp sweeps from frequency ``fmin`` to ``fmax`` (in Hz).
 
     Parameters
     ----------
@@ -1272,21 +1281,23 @@ def chirp(fmin, fmax, sr=22050, length=None, duration=None, linear=False, phi=No
 
     length : int > 0
         desired number of samples in the output signal.
-        When both `duration` and `length` are defined, `length` would take priority.
+        When both ``duration`` and ``length`` are defined,
+        ``length`` takes priority.
 
     duration : float > 0
         desired duration in seconds.
-        When both `duration` and `length` are defined, `length` would take priority.
+        When both ``duration`` and ``length`` are defined,
+        ``length`` takes priority.
 
     linear : boolean
-        - If `True`, use a linear sweep, i.e., frequency changes linearly with time
-        - If `False`, use a exponential sweep.
+        - If ``True``, use a linear sweep, i.e., frequency changes linearly with time
+        - If ``False``, use a exponential sweep.
 
-        Default is `False`.
+        Default is ``False``.
 
     phi : float or None
         phase offset, in radians.
-        If unspecified, defaults to `-np.pi * 0.5`.
+        If unspecified, defaults to ``-np.pi * 0.5``.
 
 
     Returns
@@ -1298,8 +1309,8 @@ def chirp(fmin, fmax, sr=22050, length=None, duration=None, linear=False, phi=No
     Raises
     ------
     ParameterError
-        - If either `fmin` or `fmax` are not provided.
-        - If neither `length` nor `duration` are provided.
+        - If either ``fmin`` or ``fmax`` are not provided.
+        - If neither ``length`` nor ``duration`` are provided.
 
 
     See Also
@@ -1309,29 +1320,33 @@ def chirp(fmin, fmax, sr=22050, length=None, duration=None, linear=False, phi=No
 
     Examples
     --------
-    >>> # Generate a exponential chirp from A4 to A5
-    >>> exponential_chirp = librosa.chirp(440, 880, duration=1)
+    Generate a exponential chirp from A2 to A8
 
-    >>> # Or generate the same signal using `length`
-    >>> exponential_chirp = librosa.chirp(440, 880, sr=22050, length=22050)
+    >>> exponential_chirp = librosa.chirp(110, 110*64, duration=1)
 
-    >>> # Or generate a linear chirp instead
-    >>> linear_chirp = librosa.chirp(440, 880, duration=1, linear=True)
+    Or generate the same signal using ``length``
 
-    Display spectrogram for both exponential and linear chirps
+    >>> exponential_chirp = librosa.chirp(110, 110*64, sr=22050, length=22050)
+
+    Or generate a linear chirp instead
+
+    >>> linear_chirp = librosa.chirp(110, 110*64, duration=1, linear=True)
+
+    Display spectrogram for both exponential and linear chirps.
+    Note that these plots use a logarithmic frequency axis, so "exponential" chirps
+    will appear as a straight line.
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> S_exponential = librosa.feature.melspectrogram(y=exponential_chirp)
-    >>> ax = plt.subplot(2,1,1)
-    >>> librosa.display.specshow(librosa.power_to_db(S_exponential, ref=np.max),
-    ...                          x_axis='time', y_axis='mel')
-    >>> plt.subplot(2,1,2, sharex=ax)
-    >>> S_linear = librosa.feature.melspectrogram(y=linear_chirp)
-    >>> librosa.display.specshow(librosa.power_to_db(S_linear, ref=np.max),
-    ...                          x_axis='time', y_axis='mel')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+    >>> S_exponential = np.abs(librosa.stft(y=exponential_chirp))
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S_exponential, ref=np.max),
+    ...                          x_axis='time', y_axis='log', ax=ax[0])
+    >>> ax[0].set(title='Exponential chirp', xlabel=None)
+    >>> ax[0].label_outer()
+    >>> S_linear = np.abs(librosa.stft(y=linear_chirp))
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S_linear, ref=np.max),
+    ...                          x_axis='time', y_axis='log', ax=ax[1])
+    >>> ax[1].set(title='Linear chirp')
     """
 
     if fmin is None or fmax is None:
@@ -1362,8 +1377,8 @@ def chirp(fmin, fmax, sr=22050, length=None, duration=None, linear=False, phi=No
 def mu_compress(x, mu=255, quantize=True):
     '''mu-law compression
 
-    Given an input signal `-1 <= x <= 1`, the mu-law compression
-    is calculated by
+    Given an input signal ``-1 <= x <= 1``, the mu-law compression
+    is calculated by::
 
         sign(x) * ln(1 + mu * abs(x)) /  ln(1 + mu)
 
@@ -1374,14 +1389,14 @@ def mu_compress(x, mu=255, quantize=True):
         The input signal to compress
 
     mu : positive number
-        The compression parameter.  Values of the form `2**n - 1`
+        The compression parameter.  Values of the form ``2**n - 1``
         (e.g., 15, 31, 63, etc.) are most common.
 
     quantize : bool
-        If `True`, quantize the compressed values into `1 + mu`
+        If ``True``, quantize the compressed values into ``1 + mu``
         distinct integer values.
 
-        If `False`, mu-law compression is applied without quantization.
+        If ``False``, mu-law compression is applied without quantization.
 
     Returns
     -------
@@ -1391,8 +1406,8 @@ def mu_compress(x, mu=255, quantize=True):
     Raises
     ------
     ParameterError
-        If `x` has values outside the range [-1, +1]
-        If `mu <= 0`
+        If ``x`` has values outside the range [-1, +1]
+        If ``mu <= 0``
 
     See Also
     --------
@@ -1451,8 +1466,8 @@ def mu_compress(x, mu=255, quantize=True):
 def mu_expand(x, mu=255.0, quantize=True):
     '''mu-law expansion
 
-    This function is the inverse of `mu_compress`. Given a mu-law compressed
-    signal `-1 <= x <= 1`, the mu-law expansion is calculated by
+    This function is the inverse of ``mu_compress``. Given a mu-law compressed
+    signal ``-1 <= x <= 1``, the mu-law expansion is calculated by::
 
         sign(x) * (1 / mu) * ((1 + mu)**abs(x) - 1)
 
@@ -1460,15 +1475,15 @@ def mu_expand(x, mu=255.0, quantize=True):
     ----------
     x : np.ndarray
         The compressed signal.
-        If `quantize=True`, values must be in the range [-1, +1].
+        If ``quantize=True``, values must be in the range [-1, +1].
 
     mu : positive number
-        The compression parameter.  Values of the form `2**n - 1`
+        The compression parameter.  Values of the form ``2**n - 1``
         (e.g., 15, 31, 63, etc.) are most common.
 
     quantize : boolean
-        If `True`, the input is assumed to be quantized to
-        `1 + mu` distinct integer values.
+        If ``True``, the input is assumed to be quantized to
+        ``1 + mu`` distinct integer values.
 
     Returns
     -------
@@ -1478,8 +1493,8 @@ def mu_expand(x, mu=255.0, quantize=True):
     Raises
     ------
     ParameterError
-        If `x` has values outside the range [-1, +1] and `quantize=False`
-        If `mu <= 0`
+        If ``x`` has values outside the range [-1, +1] and ``quantize=False``
+        If ``mu <= 0``
 
     See Also
     --------

@@ -13,7 +13,6 @@ default parameters for librosa.
 
 ##################################################
 # We'll need numpy and matplotlib for this example
-from __future__ import print_function
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -72,19 +71,19 @@ M_highres = librosa.feature.melspectrogram(y=y, hop_length=512)
 
 
 # And plot the results
-plt.figure(figsize=(6, 6))
-ax = plt.subplot(3, 1, 1)
+fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
 
 librosa.display.specshow(librosa.power_to_db(M, ref=np.max),
-                         y_axis='mel', x_axis='time')
+                         y_axis='mel', x_axis='time', ax=ax[0])
 
-plt.title('44100/1024/4096')
+ax[0].set(title='44100/1024/4096')
+ax[0].label_outer()
 
-plt.subplot(3, 1, 2, sharex=ax, sharey=ax)
 librosa.display.specshow(librosa.power_to_db(M_highres, ref=np.max),
                          hop_length=512,
-                         y_axis='mel', x_axis='time')
-plt.title('44100/512/4096')
+                         y_axis='mel', x_axis='time', ax=ax[1])
+ax[1].set(title='44100/512/4096')
+ax[1].label_outer()
 
 # We can repeat the whole process with different defaults, just by
 # updating the parameter entries
@@ -93,11 +92,7 @@ librosa['sr'] = 11025
 y2, sr2 = librosa.load(filename, duration=5, offset=35)
 M2 = librosa.feature.melspectrogram(y=y2, sr=sr2)
 
-plt.subplot(3, 1, 3, sharex=ax, sharey=ax)
 librosa.display.specshow(librosa.power_to_db(M2, ref=np.max),
-                         y_axis='mel', x_axis='time')
+                         y_axis='mel', x_axis='time', ax=ax[2])
 
-plt.title('11025/1024/4096')
-
-plt.tight_layout()
-plt.show()
+ax[2].set(title='11025/1024/4096')

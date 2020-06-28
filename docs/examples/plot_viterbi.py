@@ -15,7 +15,6 @@ Our working example will be the problem of silence/non-silence detection.
 
 ##################
 # Standard imports
-from __future__ import print_function
 import numpy as np
 import matplotlib.pyplot as plt
 import librosa
@@ -33,11 +32,10 @@ S_full, phase = librosa.magphase(librosa.stft(y))
 
 ###################
 # Plot the spectrum
-plt.figure(figsize=(12, 4))
-librosa.display.specshow(librosa.amplitude_to_db(S_full, ref=np.max),
-                         y_axis='log', x_axis='time', sr=sr)
-plt.colorbar()
-plt.tight_layout()
+fig, ax = plt.subplots()
+img = librosa.display.specshow(librosa.amplitude_to_db(S_full, ref=np.max),
+                               y_axis='log', x_axis='time', sr=sr, ax=ax)
+fig.colorbar(img, ax=ax);
 
 ###########################################################
 # As you can see, there are periods of silence and
@@ -49,14 +47,12 @@ rms = librosa.feature.rms(y=y)[0]
 
 times = librosa.frames_to_time(np.arange(len(rms)))
 
-plt.figure(figsize=(12, 4))
-plt.plot(times, rms)
-plt.axhline(0.02, color='r', alpha=0.5)
-plt.xlabel('Time')
-plt.ylabel('RMS')
-plt.axis('tight')
-plt.tight_layout()
+fig, ax = plt.subplots()
+ax.plot(times, rms)
+ax.axhline(0.02, color='r', alpha=0.5)
+ax.set(xlabel='Time', ylabel='RMS');
 
+##############################################################################
 # The red line at 0.02 indicates a reasonable threshold for silence detection.
 # However, the RMS curve occasionally dips below the threshold momentarily,
 # and we would prefer the detector to not count these brief dips as silence.
@@ -77,15 +73,14 @@ plt.tight_layout()
 r_normalized = (rms - 0.02) / np.std(rms)
 p = np.exp(r_normalized) / (1 + np.exp(r_normalized))
 
+##############################################
 # We can plot the probability curve over time:
 
-plt.figure(figsize=(12, 4))
-plt.plot(times, p, label='P[V=1|x]')
-plt.axhline(0.5, color='r', alpha=0.5, label='Descision threshold')
-plt.xlabel('Time')
-plt.axis('tight')
-plt.legend()
-plt.tight_layout()
+fig, ax = plt.subplots()
+ax.plot(times, p, label='P[V=1|x]')
+ax.axhline(0.5, color='r', alpha=0.5, label='Descision threshold')
+ax.set(xlabel='Time')
+ax.legend();
 
 #######################################################################
 # which looks much like the first plot, but with the decision threshold
@@ -94,16 +89,13 @@ plt.tight_layout()
 
 
 plt.figure(figsize=(12, 6))
-ax = plt.subplot(2,1,1)
+fig, ax = plt.subplots(nrows=2, sharex=True)
 librosa.display.specshow(librosa.amplitude_to_db(S_full, ref=np.max),
-                         y_axis='log', x_axis='time', sr=sr)
-plt.subplot(2,1,2, sharex=ax)
-plt.step(times, p>=0.5, label='Non-silent')
-plt.xlabel('Time')
-plt.axis('tight')
-plt.ylim([0, 1.05])
-plt.legend()
-plt.tight_layout()
+                         y_axis='log', x_axis='time', sr=sr, ax=ax[0])
+ax[0].label_outer()
+ax[1].step(times, p>=0.5, label='Non-silent')
+ax[1].set(ylim=[0, 1.05])
+ax[1].legend()
 
 ###############################################
 # We can do better using the Viterbi algorithm.
@@ -133,19 +125,14 @@ print(full_p)
 states = librosa.sequence.viterbi_discriminative(full_p, transition)
 
 # sphinx_gallery_thumbnail_number = 5
-plt.figure(figsize=(12, 6))
-ax = plt.subplot(2,1,1)
+fig, ax = plt.subplots(nrows=2, sharex=True)
 librosa.display.specshow(librosa.amplitude_to_db(S_full, ref=np.max),
-                         y_axis='log', x_axis='time', sr=sr)
-plt.xlabel('')
-ax.tick_params(labelbottom=False)
-plt.subplot(2, 1, 2, sharex=ax)
-plt.step(times, p>=0.5, label='Frame-wise')
-plt.step(times, states, linestyle='--', color='orange', label='Viterbi')
-plt.xlabel('Time')
-plt.axis('tight')
-plt.ylim([0, 1.05])
-plt.legend()
+                         y_axis='log', x_axis='time', sr=sr, ax=ax[0])
+ax[0].label_outer()
+ax[1].step(times, p>=0.5, label='Frame-wise')
+ax[1].step(times, states, linestyle='--', color='orange', label='Viterbi')
+ax[1].set(ylim=[0, 1.05])
+ax[1].legend()
 
 
 #########################################################################

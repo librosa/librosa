@@ -12,7 +12,6 @@ Filter bank construction
     mel
     chroma
     constant_q
-    _multirate_fb
     semitone_filterbank
 
 Window functions
@@ -109,7 +108,10 @@ WINDOW_BANDWIDTHS = {'bart': 1.3334961334912805,
 @cache(level=10)
 def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
         norm='slaney', dtype=np.float32):
-    """Create a Filterbank matrix to combine FFT bins into Mel-frequency bins
+    """Create a Mel filter-bank.
+
+    This produces a linear transformation matrix to project 
+    FFT bins onto Mel-frequency bins.
 
     Parameters
     ----------
@@ -127,7 +129,7 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
 
     fmax      : float >= 0 [scalar]
         highest frequency (in Hz).
-        If `None`, use `fmax = sr / 2.0`
+        If `None`, use ``fmax = sr / 2.0``
 
     htk       : bool [scalar]
         use HTK formula instead of Slaney
@@ -136,8 +138,8 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
         If 'slaney', divide the triangular mel weights by the width of the mel band
         (area normalization).
 
-        If numeric, use `util.normalize` to normalize each filter by to unit l_p norm.
-        See `util.normalize` for a full description of supported norm values
+        If numeric, use `librosa.util.normalize` to normalize each filter by to unit l_p norm.
+        See `librosa.util.normalize` for a full description of supported norm values
         (including `+-np.inf`).
 
         Otherwise, leave all the triangles aiming for a peak value of 1.0
@@ -153,7 +155,7 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
 
     See also
     --------
-    util.normalize
+    librosa.util.normalize
 
     Notes
     -----
@@ -181,13 +183,10 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
 
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> librosa.display.specshow(melfb, x_axis='linear')
-    >>> plt.ylabel('Mel filter')
-    >>> plt.title('Mel filter bank')
-    >>> plt.colorbar()
-    >>> plt.tight_layout()
-    >>> plt.show()
+    >>> fig, ax = plt.subplots()
+    >>> img = librosa.display.specshow(melfb, x_axis='linear', ax=ax)
+    >>> ax.set(ylabel='Mel filter', title='Mel filter bank')
+    >>> fig.colorbar(img, ax=ax)
     """
 
     if fmax is None:
@@ -235,7 +234,10 @@ def mel(sr, n_fft, n_mels=128, fmin=0.0, fmax=None, htk=False,
 @cache(level=10)
 def chroma(sr, n_fft, n_chroma=12, tuning=0.0, ctroct=5.0,
            octwidth=2, norm=2, base_c=True, dtype=np.float32):
-    """Create a Filterbank matrix to convert STFT to chroma
+    """Create a chroma filter bank.
+
+    This creates a linear transformation matrix to project
+    FFT bins onto chroma bins (i.e. pitch classes).
 
 
     Parameters
@@ -255,10 +257,11 @@ def chroma(sr, n_fft, n_chroma=12, tuning=0.0, ctroct=5.0,
     ctroct    : float > 0 [scalar]
 
     octwidth  : float > 0 or None [scalar]
-        `ctroct` and `octwidth` specify a dominance window -
-        a Gaussian weighting centered on `ctroct` (in octs, A0 = 27.5Hz)
-        and with a gaussian half-width of `octwidth`.
-        Set `octwidth` to `None` to use a flat weighting.
+        ``ctroct`` and ``octwidth`` specify a dominance window:
+        a Gaussian weighting centered on ``ctroct`` (in octs, A0 = 27.5Hz)
+        and with a gaussian half-width of ``octwidth``.
+
+        Set ``octwidth`` to `None` to use a flat weighting.
 
     norm : float > 0 or np.inf
         Normalization factor for each filter
@@ -278,8 +281,8 @@ def chroma(sr, n_fft, n_chroma=12, tuning=0.0, ctroct=5.0,
 
     See Also
     --------
-    util.normalize
-    feature.chroma_stft
+    librosa.util.normalize
+    librosa.feature.chroma_stft
 
     Notes
     -----
@@ -316,13 +319,10 @@ def chroma(sr, n_fft, n_chroma=12, tuning=0.0, ctroct=5.0,
            [  2.953e-01,   2.888e-01, ...,   7.768e-10,   8.629e-10]])
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> librosa.display.specshow(chromafb, x_axis='linear')
-    >>> plt.ylabel('Chroma filter')
-    >>> plt.title('Chroma filter bank')
-    >>> plt.colorbar()
-    >>> plt.tight_layout()
-    >>> plt.show()
+    >>> fig, ax = plt.subplots()
+    >>> img = librosa.display.specshow(chromafb, x_axis='linear', ax=ax)
+    >>> ax.set(ylabel='Chroma filter', title='Chroma filter bank')
+    >>> fig.colorbar(img, ax=ax)
     """
 
     wts = np.zeros((n_chroma, n_fft))
@@ -372,12 +372,12 @@ def chroma(sr, n_fft, n_chroma=12, tuning=0.0, ctroct=5.0,
 def __float_window(window_spec):
     '''Decorator function for windows with fractional input.
 
-    This function guarantees that for fractional `x`, the following hold:
+    This function guarantees that for fractional ``x``, the following hold:
 
-    1. `__float_window(window_function)(x)` has length `np.ceil(x)`
-    2. all values from `np.floor(x)` are set to 0.
+    1. ``__float_window(window_function)(x)`` has length ``np.ceil(x)``
+    2. all values from ``np.floor(x)`` are set to 0.
 
-    For integer-valued `x`, there should be no change in behavior.
+    For integer-valued ``x``, there should be no change in behavior.
     '''
 
     def _wrap(n, *args, **kwargs):
@@ -408,10 +408,10 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, window='hann',
     such that the number of cycles remains fixed for all frequencies.
 
     By default, a Hann window (rather than the Gaussian window of Morlet wavelets)
-    is used, but this can be controlled by the `window` parameter.
+    is used, but this can be controlled by the ``window`` parameter.
 
     Frequencies are spaced geometrically, increasing by a factor of
-    `(2**(1./bins_per_octave))` at each successive band.
+    ``(2**(1./bins_per_octave))`` at each successive band.
 
     Parameters
     ----------
@@ -438,7 +438,7 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, window='hann',
         Center-pad all filters up to the nearest integral power of 2.
 
         By default, padding is done with zeros, but this can be overridden
-        by setting the `mode=` field in *kwargs*.
+        by setting the ``mode=`` field in *kwargs*.
 
     norm : {inf, -inf, 0, float > 0}
         Type of norm to use for basis function normalization.
@@ -446,21 +446,21 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, window='hann',
 
     gamma : number >= 0
         Bandwidth offset for variable-Q transforms.
-        `gamma=0` produces a constant-Q filterbank.
+        ``gamma=0`` produces a constant-Q filterbank.
 
     dtype : np.dtype
         The data type of the output basis.
         By default, uses 64-bit (single precision) complex floating point.
 
     kwargs : additional keyword arguments
-        Arguments to `np.pad()` when `pad==True`.
+        Arguments to `np.pad()` when ``pad==True``.
 
     Returns
     -------
-    filters : np.ndarray, `len(filters) == n_bins`
-        `filters[i]` is `i`\ th time-domain CQT basis filter
+    filters : np.ndarray, ``len(filters) == n_bins``
+        ``filters[i]`` is ``i``\ th time-domain CQT basis filter
 
-    lengths : np.ndarray, `len(lengths) == n_bins`
+    lengths : np.ndarray, ``len(lengths) == n_bins``
         The (fractional) length of each filter
 
     Notes
@@ -470,8 +470,8 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, window='hann',
     See Also
     --------
     constant_q_lengths
-    librosa.core.cqt
-    librosa.core.vqt
+    librosa.cqt
+    librosa.vqt
     librosa.util.normalize
 
 
@@ -485,29 +485,22 @@ def constant_q(sr, fmin=None, n_bins=84, bins_per_octave=12, window='hann',
 
     >>> import matplotlib.pyplot as plt
     >>> basis, lengths = librosa.filters.constant_q(22050)
-    >>> plt.figure(figsize=(10, 6))
-    >>> plt.subplot(2, 1, 1)
+    >>> fig, ax = plt.subplots(nrows=2, figsize=(10, 6))
     >>> notes = librosa.midi_to_note(np.arange(24, 24 + len(basis)))
     >>> for i, (f, n) in enumerate(zip(basis, notes[:12])):
     ...     f_scale = librosa.util.normalize(f) / 2
-    ...     plt.plot(i + f_scale.real)
-    ...     plt.plot(i + f_scale.imag, linestyle=':')
-    >>> plt.axis('tight')
-    >>> plt.yticks(np.arange(len(notes[:12])), notes[:12])
-    >>> plt.ylabel('CQ filters')
-    >>> plt.title('CQ filters (one octave, time domain)')
-    >>> plt.xlabel('Time (samples at 22050 Hz)')
-    >>> plt.legend(['Real', 'Imaginary'], frameon=True, framealpha=0.8)
-    >>> plt.subplot(2, 1, 2)
+    ...     ax[0].plot(i + f_scale.real)
+    ...     ax[0].plot(i + f_scale.imag, linestyle=':')
+    >>> ax[0].set(yticks=np.arange(len(notes[:12])), yticklabels=notes[:12],
+    ...           ylabel='CQ filters',
+    ...           title='CQ filters (one octave, time domain)',
+    ...           xlabel='Time (samples at 22050 Hz)')
+    >>> ax[0].legend(['Real', 'Imaginary'])
     >>> F = np.abs(np.fft.fftn(basis, axes=[-1]))
     >>> # Keep only the positive frequencies
     >>> F = F[:, :(1 + F.shape[1] // 2)]
-    >>> librosa.display.specshow(F, x_axis='linear')
-    >>> plt.yticks(np.arange(len(notes))[::12], notes[::12])
-    >>> plt.ylabel('CQ filters')
-    >>> plt.title('CQ filter magnitudes (frequency domain)')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    >>> librosa.display.specshow(F, x_axis='linear', y_axis='cqt_note', ax=ax[1])
+    >>> ax[1].set(ylabel='CQ filters', title='CQ filter magnitudes (frequency domain)')
     '''
 
     if fmin is None:
@@ -587,7 +580,7 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
     See Also
     --------
     constant_q
-    librosa.core.cqt
+    librosa.cqt
     '''
 
     if fmin <= 0:
@@ -622,7 +615,8 @@ def constant_q_lengths(sr, fmin, n_bins=84, bins_per_octave=12,
 @cache(level=10)
 def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
                  fmin=None, window=None, base_c=True, dtype=np.float32):
-    '''Convert a Constant-Q basis to Chroma.
+    '''Construct a linear transformation matrix to map Constant-Q bins
+    onto chroma bins (i.e., pitch classes).
 
 
     Parameters
@@ -642,7 +636,7 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
 
     window : None or np.ndarray
         If provided, the cq_to_chroma filter bank will be
-        convolved with `window`.
+        convolved with ``window``.
 
     base_c : bool
         If True, the first chroma bin will start at 'C'
@@ -656,12 +650,12 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
     Returns
     -------
     cq_to_chroma : np.ndarray [shape=(n_chroma, n_input)]
-        Transformation matrix: `Chroma = np.dot(cq_to_chroma, CQT)`
+        Transformation matrix: ``Chroma = np.dot(cq_to_chroma, CQT)``
 
     Raises
     ------
     ParameterError
-        If `n_input` is not an integer multiple of `n_chroma`
+        If ``n_input`` is not an integer multiple of ``n_chroma``
 
     Notes
     -----
@@ -679,24 +673,20 @@ def cq_to_chroma(n_input, bins_per_octave=12, n_chroma=12,
     >>> chromagram = librosa.util.normalize(chromagram, axis=0)
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.subplot(3, 1, 1)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(CQT,
-    ...                                                  ref=np.max),
-    ...                          y_axis='cqt_note')
-    >>> plt.title('CQT Power')
-    >>> plt.colorbar()
-    >>> plt.subplot(3, 1, 2)
-    >>> librosa.display.specshow(chromagram, y_axis='chroma')
-    >>> plt.title('Chroma (wrapped CQT)')
-    >>> plt.colorbar()
-    >>> plt.subplot(3, 1, 3)
+    >>> fig, ax = plt.subplots(nrows=3, sharex=True)
+    >>> imgcq = librosa.display.specshow(librosa.amplitude_to_db(CQT,
+    ...                                                         ref=np.max),
+    ...                                  y_axis='cqt_note', x_axis='time',
+    ...                                  ax=ax[0])
+    >>> ax[0].set(title='CQT Power')
+    >>> ax[0].label_outer()
+    >>> librosa.display.specshow(chromagram, y_axis='chroma', x_axis='time',
+    ...                          ax=ax[1])
+    >>> ax[1].set(title='Chroma (wrapped CQT)')
+    >>> ax[1].label_outer()
     >>> chroma = librosa.feature.chroma_stft(y=y, sr=sr)
-    >>> librosa.display.specshow(chroma, y_axis='chroma', x_axis='time')
-    >>> plt.title('librosa.feature.chroma_stft')
-    >>> plt.colorbar()
-    >>> plt.tight_layout()
-    >>> plt.show()
-
+    >>> imgchroma = librosa.display.specshow(chroma, y_axis='chroma', x_axis='time', ax=ax[2])
+    >>> ax[2].set(title='librosa.feature.chroma_stft')
     '''
 
     # How many fractional bins are we merging?
@@ -927,9 +917,9 @@ def _multirate_fb(center_freqs=None, sample_rates=None, Q=25.0,
     Raises
     ------
     ParameterError
-        If `center_freqs` is `None`.
-        If `sample_rates` is `None`.
-        If `center_freqs.shape` does not match `sample_rates.shape`.
+        If ``center_freqs`` is ``None``.
+        If ``sample_rates`` is ``None``.
+        If ``center_freqs.shape`` does not match ``sample_rates.shape``.
     '''
 
     if center_freqs is None:
@@ -964,10 +954,10 @@ def mr_frequencies(tuning):
     r'''Helper function for generating center frequency and sample rate pairs.
 
     This function will return center frequency and corresponding sample rates
-    to obtain similar pitch filterbank settings as described in [1]_.
+    to obtain similar pitch filterbank settings as described in [#]_.
     Instead of starting with MIDI pitch `A0`, we start with `C0`.
 
-    .. [1] Müller, Meinard.
+    .. [#] Müller, Meinard.
            "Information Retrieval for Music and Motion."
            Springer Verlag. 2007.
 
@@ -995,7 +985,6 @@ def mr_frequencies(tuning):
     See Also
     --------
     librosa.filters.semitone_filterbank
-    librosa.filters._multirate_fb
     '''
 
     center_freqs = midi_to_hz(np.arange(24 + tuning, 109 + tuning))
@@ -1008,7 +997,7 @@ def mr_frequencies(tuning):
 
 
 def semitone_filterbank(center_freqs=None, tuning=0.0, sample_rates=None, flayout='ba', **kwargs):
-    r'''Constructs a multirate filterbank of infinite-impulse response (IIR)
+    r'''Construct a multi-rate bank of infinite-impulse response (IIR)
     band-pass filters at user-defined center frequencies and sample rates.
 
     By default, these center frequencies are set equal to the 88 fundamental
@@ -1022,9 +1011,9 @@ def semitone_filterbank(center_freqs=None, tuning=0.0, sample_rates=None, flayou
     industry (ISO 16), some orchestras tune to A441-A445, whereas baroque musicians
     tune to A415.
 
-    See [1]_ for details.
+    See [#]_ for details.
 
-    .. [1] Müller, Meinard.
+    .. [#] Müller, Meinard.
            "Information Retrieval for Music and Motion."
            Springer Verlag. 2007.
 
@@ -1061,9 +1050,8 @@ def semitone_filterbank(center_freqs=None, tuning=0.0, sample_rates=None, flayou
 
     See Also
     --------
-    librosa.core.cqt
-    librosa.core.iirt
-    librosa.filters._multirate_fb
+    librosa.cqt
+    librosa.iirt
     librosa.filters.mr_frequencies
     scipy.signal.iirdesign
 
@@ -1073,18 +1061,12 @@ def semitone_filterbank(center_freqs=None, tuning=0.0, sample_rates=None, flayou
     >>> import numpy as np
     >>> import scipy.signal
     >>> semitone_filterbank, sample_rates = librosa.filters.semitone_filterbank()
-    >>> plt.figure(figsize=(10, 6))
+    >>> fig, ax = plt.subplots()
     >>> for cur_sr, cur_filter in zip(sample_rates, semitone_filterbank):
     ...    w, h = scipy.signal.freqz(cur_filter[0], cur_filter[1], worN=2000)
-    ...    plt.plot((cur_sr / (2 * np.pi)) * w, 20 * np.log10(abs(h)))
-    >>> plt.semilogx()
-    >>> plt.xlim([20, 10e3])
-    >>> plt.ylim([-60, 3])
-    >>> plt.title('Magnitude Responses of the Pitch Filterbank')
-    >>> plt.xlabel('Log-Frequency (Hz)')
-    >>> plt.ylabel('Magnitude (dB)')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    ...    ax.semilogx((cur_sr / (2 * np.pi)) * w, 20 * np.log10(abs(h)))
+    >>> ax.set(xlim=[20, 10e3], ylim=[-60, 3], title='Magnitude Responses of the Pitch Filterbank',
+    ...        xlabel='Log-Frequency (Hz)', ylabel='Magnitude (dB)')
     '''
 
     if (center_freqs is None) and (sample_rates is None):
@@ -1109,11 +1091,10 @@ def __window_ss_fill(x, win_sq, n_frames, hop_length):  # pragma: no cover
 
 def window_sumsquare(window, n_frames, hop_length=512, win_length=None, n_fft=2048,
                      dtype=np.float32, norm=None):
-    '''
-    Compute the sum-square envelope of a window function at a given hop length.
+    '''Compute the sum-square envelope of a window function at a given hop length.
 
     This is used to estimate modulation effects induced by windowing observations
-    in short-time fourier transforms.
+    in short-time Fourier transforms.
 
     Parameters
     ----------
@@ -1127,7 +1108,7 @@ def window_sumsquare(window, n_frames, hop_length=512, win_length=None, n_fft=20
         The number of samples to advance between frames
 
     win_length : [optional]
-        The length of the window function.  By default, this matches `n_fft`.
+        The length of the window function.  By default, this matches ``n_fft``.
 
     n_fft : int > 0
         The length of each analysis frame.
@@ -1137,7 +1118,7 @@ def window_sumsquare(window, n_frames, hop_length=512, win_length=None, n_fft=20
 
     Returns
     -------
-    wss : np.ndarray, shape=`(n_fft + hop_length * (n_frames - 1))`
+    wss : np.ndarray, shape=``(n_fft + hop_length * (n_frames - 1))``
         The sum-squared envelope of the window function
 
     Examples
@@ -1151,19 +1132,13 @@ def window_sumsquare(window, n_frames, hop_length=512, win_length=None, n_fft=20
     >>> wss_1024 = librosa.filters.window_sumsquare('hann', n_frames, hop_length=1024)
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> plt.subplot(3,1,1)
-    >>> plt.plot(wss_256)
-    >>> plt.title('hop_length=256')
-    >>> plt.subplot(3,1,2)
-    >>> plt.plot(wss_512)
-    >>> plt.title('hop_length=512')
-    >>> plt.subplot(3,1,3)
-    >>> plt.plot(wss_1024)
-    >>> plt.title('hop_length=1024')
-    >>> plt.tight_layout()
-    >>> plt.show()
-
+    >>> fig, ax = plt.subplots(nrows=3, sharey=True)
+    >>> ax[0].plot(wss_256)
+    >>> ax[0].set(title='hop_length=256')
+    >>> ax[1].plot(wss_512)
+    >>> ax[1].set(title='hop_length=512')
+    >>> ax[2].plot(wss_1024)
+    >>> ax[2].set(title='hop_length=1024')
     '''
     if win_length is None:
         win_length = n_fft

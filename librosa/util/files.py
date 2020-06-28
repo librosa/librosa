@@ -40,7 +40,7 @@ def example(key, hq=False):
 
     By default, local files will be cached in the directory given by
     `pooch.os_cache('librosa')`.  You can override this by setting
-    an environment variable `LIBROSA_DATA_DIR` prior to importing librosa:
+    an environment variable ``LIBROSA_DATA_DIR`` prior to importing librosa:
 
     >>> import os
     >>> os.environ['LIBROSA_DATA_DIR'] = '/path/to/store/data'
@@ -53,8 +53,8 @@ def example(key, hq=False):
         The identifier for the track to load
 
     hq : bool
-        If `True`, return the high-quality version of the recording.
-        If `False`, return the 22KHz mono version of the recording.
+        If ``True``, return the high-quality version of the recording.
+        If ``False``, return the 22KHz mono version of the recording.
 
     Returns
     -------
@@ -69,12 +69,12 @@ def example(key, hq=False):
 
     Load "Vibe Ace" by Kevin MacLeod (the example previously packaged with librosa)
     in high-quality mode
-    
+
     >>> y, sr = librosa.load(librosa.example('vibeace', hq=True))
 
     See Also
     --------
-    util.list_examples
+    librosa.util.list_examples
     pooch.os_cache
     """
 
@@ -123,7 +123,7 @@ def example_info(key):
 
     By default, local files will be cached in the directory given by
     `pooch.os_cache('librosa')`.  You can override this by setting
-    an environment variable `LIBROSA_DATA_DIR` prior to importing librosa.
+    an environment variable ``LIBROSA_DATA_DIR`` prior to importing librosa.
 
     Parameters
     ----------
@@ -132,8 +132,8 @@ def example_info(key):
 
     See Also
     --------
-    util.example
-    util.list_examples
+    librosa.util.example
+    librosa.util.list_examples
     pooch.os_cache
     """
 
@@ -154,10 +154,10 @@ def example_audio_file():
     '''Get the path to an included audio example file.
 
     .. warning:: This function is deprecated in 0.8, and will be removed in 0.9.
-                 Instead, use `librosa.example`.
+                 Instead, use `librosa.util.example`.
 
     .. raw:: html
-       
+
        <div xmlns:cc="http://creativecommons.org/ns#"
           xmlns:dct="http://purl.org/dc/terms/"
              about="http://freemusicarchive.org/music/Kevin_MacLeod/Jazz_Sampler/Vibe_Ace_1278">
@@ -215,22 +215,22 @@ def find_files(directory, ext=None, recurse=True, case_sensitive=False,
     ext : str or list of str
         A file extension or list of file extensions to include in the search.
 
-        Default: `['aac', 'au', 'flac', 'm4a', 'mp3', 'ogg', 'wav']`
+        Default: ``['aac', 'au', 'flac', 'm4a', 'mp3', 'ogg', 'wav']``
 
     recurse : boolean
-        If `True`, then all subfolders of `directory` will be searched.
+        If ``True``, then all subfolders of ``directory`` will be searched.
 
-        Otherwise, only `directory` will be searched.
+        Otherwise, only ``directory`` will be searched.
 
     case_sensitive : boolean
-        If `False`, files matching upper-case version of
+        If ``False``, files matching upper-case version of
         extensions will be included.
 
     limit : int > 0 or None
-        Return at most `limit` files. If `None`, all files are returned.
+        Return at most ``limit`` files. If ``None``, all files are returned.
 
     offset : int
-        Return files starting at `offset` within the list.
+        Return files starting at ``offset`` within the list.
 
         Use negative values to offset from the end of the list.
 

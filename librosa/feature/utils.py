@@ -25,8 +25,9 @@ def delta(data, width=9, order=1, axis=-1, mode='interp', **kwargs):
 
     width     : int, positive, odd [scalar]
         Number of frames over which to compute the delta features.
-        Cannot exceed the length of `data` along the specified axis.
-        If `mode='interp'`, then `width` must be at least `data.shape[axis]`.
+        Cannot exceed the length of ``data`` along the specified axis.
+
+        If ``mode='interp'``, then ``width`` must be at least ``data.shape[axis]``.
 
     order     : int > 0 [scalar]
         the order of the difference operator.
@@ -45,7 +46,7 @@ def delta(data, width=9, order=1, axis=-1, mode='interp', **kwargs):
     Returns
     -------
     delta_data   : np.ndarray [shape=(d, t)]
-        delta matrix of `data` at specified order
+        delta matrix of ``data`` at specified order
 
     Notes
     -----
@@ -80,21 +81,18 @@ def delta(data, width=9, order=1, axis=-1, mode='interp', **kwargs):
           dtype=float32)
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.subplot(3, 1, 1)
-    >>> librosa.display.specshow(mfcc)
-    >>> plt.title('MFCC')
-    >>> plt.colorbar()
-    >>> plt.subplot(3, 1, 2)
-    >>> librosa.display.specshow(mfcc_delta)
-    >>> plt.title(r'MFCC-$\Delta$')
-    >>> plt.colorbar()
-    >>> plt.subplot(3, 1, 3)
-    >>> librosa.display.specshow(mfcc_delta2, x_axis='time')
-    >>> plt.title(r'MFCC-$\Delta^2$')
-    >>> plt.colorbar()
-    >>> plt.tight_layout()
-    >>> plt.show()
-
+    >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
+    >>> img1 = librosa.display.specshow(mfcc, ax=ax[0], x_axis='time')
+    >>> ax[0].set(title='MFCC')
+    >>> ax[0].label_outer()
+    >>> img2 = librosa.display.specshow(mfcc_delta, ax=ax[1], x_axis='time')
+    >>> ax[1].set(title=r'MFCC-$\Delta$')
+    >>> ax[1].label_outer()
+    >>> img3 = librosa.display.specshow(mfcc_delta2, ax=ax[2], x_axis='time')
+    >>> ax[2].set(title=r'MFCC-$\Delta^2$')
+    >>> fig.colorbar(img1, ax=[ax[0]])
+    >>> fig.colorbar(img2, ax=[ax[1]])
+    >>> fig.colorbar(img3, ax=[ax[2]])
     '''
 
     data = np.atleast_1d(data)
@@ -123,14 +121,14 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
     """Short-term history embedding: vertically concatenate a data
     vector or matrix with delayed copies of itself.
 
-    Each column `data[:, i]` is mapped to::
+    Each column ``data[:, i]`` is mapped to::
 
         data[:, i] ->  [data[:, i],
                         data[:, i - delay],
                         ...
                         data[:, i - (n_steps-1)*delay]]
 
-    For columns `i < (n_steps - 1) * delay` , the data will be padded.
+    For columns ``i < (n_steps - 1) * delay``, the data will be padded.
     By default, the data is padded with zeros, but this behavior can be
     overridden by supplying additional keyword arguments which are passed
     to `np.pad()`.
@@ -139,8 +137,8 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
     Parameters
     ----------
     data : np.ndarray [shape=(d, t)]
-        Input data matrix.  If `data` is a vector (`data.ndim == 1`),
-        it will be interpreted as a row matrix and reshaped to `(1, t)`.
+        Input data matrix.  If ``data`` is a vector (``data.ndim == 1``),
+        it will be interpreted as a row matrix and reshaped to ``(1, t)``.
 
     n_steps : int > 0 [scalar]
         embedding dimension, the number of steps back in time to stack
@@ -153,13 +151,13 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
         Negative values embed from the future (subsequent columns).
 
     kwargs : additional keyword arguments
-      Additional arguments to pass to `np.pad`.
+      Additional arguments to pass to `numpy.pad`
 
     Returns
     -------
     data_history : np.ndarray [shape=(m * d, t)]
         data augmented with lagged copies of itself,
-        where `m == n_steps - 1`.
+        where ``m == n_steps - 1``.
 
     Notes
     -----
@@ -209,14 +207,13 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
     Plot the result
 
     >>> import matplotlib.pyplot as plt
+    >>> fig, ax = plt.subplots()
     >>> beat_times = librosa.frames_to_time(beats, sr=sr, hop_length=512)
     >>> librosa.display.specshow(chroma_lag, y_axis='chroma', x_axis='time',
-    ...                          x_coords=beat_times)
-    >>> plt.yticks([0, 12, 24], ['Lag=0', 'Lag=1', 'Lag=2'])
-    >>> plt.title('Time-lagged chroma')
-    >>> plt.colorbar()
-    >>> plt.tight_layout()
-    >>> plt.show()
+    ...                          x_coords=beat_times, ax=ax)
+    >>> ax.set(yticks=[0, 12, 24], yticklabels=['Lag=0', 'Lag=1', 'Lag=2'],
+    ...           title='Time-lagged chroma')
+    >>> ax.hlines([0, 12, 24], beat_times.min(), beat_times.max(), color='w')
     """
 
     if n_steps < 1:
@@ -231,7 +228,7 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
 
     data = np.atleast_2d(data)
     t = data.shape[-1]
-    
+
     if t < 1:
         raise ParameterError('Cannot stack memory when input data has '
                              'no columns. Given data.shape={}'.format(data.shape))

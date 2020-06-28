@@ -46,29 +46,29 @@ def frame(x, frame_length, hop_length, axis=-1):
     will be issued and the output will be a full copy, rather than
     a view of the input data.
 
-    For example, a one-dimensional input `x = [0, 1, 2, 3, 4, 5, 6]`
+    For example, a one-dimensional input ``x = [0, 1, 2, 3, 4, 5, 6]``
     can be framed with frame length 3 and hop length 2 in two ways.
-    The first (`axis=-1`), results in the array `x_frames`:
+    The first (``axis=-1``), results in the array ``x_frames``::
 
-    [[0, 2, 4],
-     [1, 3, 5],
-     [2, 4, 6]]
+        [[0, 2, 4],
+         [1, 3, 5],
+         [2, 4, 6]]
 
-    where each column `x_frames[:, i]` contains a contiguous slice of
-    the input `x[i * hop_length : i * hop_length + frame_length]`.
+    where each column ``x_frames[:, i]`` contains a contiguous slice of
+    the input ``x[i * hop_length : i * hop_length + frame_length]``.
 
-    The second way (`axis=0`) results in the array `x_frames`:
+    The second way (``axis=0``) results in the array ``x_frames``::
 
-    [[0, 1, 2],
-     [2, 3, 4],
-     [4, 5, 6]]
+        [[0, 1, 2],
+         [2, 3, 4],
+         [4, 5, 6]]
 
-    where each row `x_frames[i]` contains a contiguous slice of the input.
+    where each row ``x_frames[i]`` contains a contiguous slice of the input.
 
     This generalizes to higher dimensional inputs, as shown in the examples below.
     In general, the framing operation increments by 1 the number of dimensions,
-    adding a new "frame axis" either to the end of the array (`axis=-1`)
-    or the beginning of the array (`axis=0`).
+    adding a new "frame axis" either to the end of the array (``axis=-1``)
+    or the beginning of the array (``axis=0``).
 
 
     Parameters
@@ -85,42 +85,44 @@ def frame(x, frame_length, hop_length, axis=-1):
     axis : 0 or -1
         The axis along which to frame.
 
-        If `axis=-1` (the default), then `x` is framed along its last dimension.
-        `x` must be "F-contiguous" in this case.
+        If ``axis=-1`` (the default), then ``x`` is framed along its last dimension.
+        ``x`` must be "F-contiguous" in this case.
 
-        If `axis=0`, then `x` is framed along its first dimension.
-        `x` must be "C-contiguous" in this case.
+        If ``axis=0``, then ``x`` is framed along its first dimension.
+        ``x`` must be "C-contiguous" in this case.
 
     Returns
     -------
     x_frames : np.ndarray [shape=(..., frame_length, N_FRAMES) or (N_FRAMES, frame_length, ...)]
-        A framed view of `x`, for example with `axis=-1` (framing on the last dimension):
-        `x_frames[..., j] == x[..., j * hop_length : j * hop_length + frame_length]`
+        A framed view of ``x``, for example with ``axis=-1`` (framing on the last dimension)::
 
-        If `axis=0` (framing on the first dimension), then:
-        `x_frames[j] = x[j * hop_length : j * hop_length + frame_length]`
+            x_frames[..., j] == x[..., j * hop_length : j * hop_length + frame_length]
+
+        If ``axis=0`` (framing on the first dimension), then::
+
+            x_frames[j] = x[j * hop_length : j * hop_length + frame_length]
 
     Raises
     ------
     ParameterError
-        If `x` is not an `np.ndarray`.
+        If ``x`` is not an `np.ndarray`.
 
-        If `x.shape[axis] < frame_length`, there is not enough data to fill one frame.
+        If ``x.shape[axis] < frame_length``, there is not enough data to fill one frame.
 
-        If `hop_length < 1`, frames cannot advance.
+        If ``hop_length < 1``, frames cannot advance.
 
-        If `axis` is not 0 or -1.  Framing is only supported along the first or last axis.
+        If ``axis`` is not 0 or -1.  Framing is only supported along the first or last axis.
 
 
     See Also
     --------
-    np.asfortranarray : Convert data to F-contiguous representation
-    np.ascontiguousarray : Convert data to C-contiguous representation
-    np.ndarray.flags : information about the memory layout of a numpy `ndarray`.
+    numpy.asfortranarray : Convert data to F-contiguous representation
+    numpy.ascontiguousarray : Convert data to C-contiguous representation
+    numpy.ndarray.flags : information about the memory layout of a numpy `ndarray`.
 
     Examples
     --------
-    Extract 2048-sample frames from monophonic `y` with a hop of 64 samples per frame
+    Extract 2048-sample frames from monophonic signal with a hop of 64 samples per frame
 
     >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> frames = librosa.util.frame(y, frame_length=2048, hop_length=64)
@@ -209,13 +211,13 @@ def frame(x, frame_length, hop_length, axis=-1):
 
 @cache(level=20)
 def valid_audio(y, mono=True):
-    '''Validate whether a variable contains valid audio data.
+    '''Determine whether a variable contains valid audio data.
 
-    If `mono=True`, then `y` is only considered valid if it has shape
-    `(N,)` (number of samples).
+    If ``mono=True``, then ``y`` is only considered valid if it has shape
+    ``(N,)`` (number of samples).
 
-    If `mono=False`, then `y` may be either monophonic, or have shape
-    `(2, N)` (stereo) or `(K, N)` for `K>=2` for general multi-channel.
+    If ``mono=False``, then ``y`` may be either monophonic, or have shape
+    ``(2, N)`` (stereo) or ``(K, N)`` for ``K>=2`` for general multi-channel.
 
 
     Parameters
@@ -235,12 +237,12 @@ def valid_audio(y, mono=True):
     ------
     ParameterError
         In any of these cases:
-            - `type(y)` is not `np.ndarray`
-            - `y.dtype` is not floating-point
-            - `mono == True` and `y.ndim` is not 1
-            - `mono == False` and `y.ndim` is not 1 or 2
-            - `mono == False` and `y.ndim == 2` but `y.shape[0] == 1`
-            - `np.isfinite(y).all()` is False
+            - ``type(y)`` is not ``np.ndarray``
+            - ``y.dtype`` is not floating-point
+            - ``mono == True`` and ``y.ndim`` is not 1
+            - ``mono == False`` and ``y.ndim`` is not 1 or 2
+            - ``mono == False`` and ``y.ndim == 2`` but ``y.shape[0] == 1``
+            - ``np.isfinite(y).all()`` is False
 
     Notes
     -----
@@ -299,18 +301,18 @@ def valid_int(x, cast=None):
         A scalar value to be cast to int
 
     cast : function [optional]
-        A function to modify `x` before casting.
+        A function to modify ``x`` before casting.
         Default: `np.floor`
 
     Returns
     -------
     x_int : int
-        `x_int = int(cast(x))`
+        ``x_int = int(cast(x))``
 
     Raises
     ------
     ParameterError
-        If `cast` is provided and is not callable.
+        If ``cast`` is provided and is not callable.
     '''
 
     if cast is None:
@@ -337,7 +339,7 @@ def valid_intervals(intervals):
     Returns
     -------
     valid : bool
-        True if `intervals` passes validation.
+        True if ``intervals`` passes validation.
     '''
 
     if intervals.ndim != 2 or intervals.shape[-1] != 2:
@@ -350,8 +352,10 @@ def valid_intervals(intervals):
 
 
 def pad_center(data, size, axis=-1, **kwargs):
-    '''Wrapper for np.pad to automatically center an array prior to padding.
-    This is analogous to `str.center()`
+    '''Pad an array to a target length along a target axis.
+
+    This differs from `np.pad` by centering the data prior to padding,
+    analogous to `str.center`
 
     Examples
     --------
@@ -382,24 +386,24 @@ def pad_center(data, size, axis=-1, **kwargs):
         Vector to be padded and centered
 
     size : int >= len(data) [scalar]
-        Length to pad `data`
+        Length to pad ``data``
 
     axis : int
         Axis along which to pad and center the data
 
     kwargs : additional keyword arguments
-      arguments passed to `np.pad()`
+      arguments passed to `np.pad`
 
     Returns
     -------
     data_padded : np.ndarray
-        `data` centered and padded to length `size` along the
+        ``data`` centered and padded to length ``size`` along the
         specified axis
 
     Raises
     ------
     ParameterError
-        If `size < data.shape[axis]`
+        If ``size < data.shape[axis]``
 
     See Also
     --------
@@ -423,10 +427,10 @@ def pad_center(data, size, axis=-1, **kwargs):
 
 
 def fix_length(data, size, axis=-1, **kwargs):
-    '''Fix the length an array `data` to exactly `size`.
+    '''Fix the length an array ``data`` to exactly ``size`` along a target axis.
 
-    If `data.shape[axis] < n`, pad according to the provided kwargs.
-    By default, `data` is padded with trailing zeros.
+    If ``data.shape[axis] < n``, pad according to the provided kwargs.
+    By default, ``data`` is padded with trailing zeros.
 
     Examples
     --------
@@ -453,12 +457,12 @@ def fix_length(data, size, axis=-1, **kwargs):
       axis along which to fix length
 
     kwargs : additional keyword arguments
-        Parameters to `np.pad()`
+        Parameters to ``np.pad``
 
     Returns
     -------
     data_fixed : np.ndarray [shape=data.shape]
-        `data` either trimmed or padded to length `size`
+        ``data`` either trimmed or padded to length ``size``
         along the specified axis.
 
     See Also
@@ -529,8 +533,8 @@ def fix_frames(frames, x_min=0, x_max=None, pad=True):
         Maximum allowed frame index
 
     pad : boolean
-        If `True`, then `frames` is expanded to span the full range
-        `[x_min, x_max]`
+        If ``True``, then ``frames`` is expanded to span the full range
+        ``[x_min, x_max]``
 
     Returns
     -------
@@ -540,7 +544,7 @@ def fix_frames(frames, x_min=0, x_max=None, pad=True):
     Raises
     ------
     ParameterError
-        If `frames` contains negative values
+        If ``frames`` contains negative values
     '''
 
     frames = np.asarray(frames)
@@ -578,7 +582,7 @@ def axis_sort(S, axis=-1, index=False, value=None):
     >>> # Sort the columns of W by peak frequency bin
     >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> S = np.abs(librosa.stft(y))
-    >>> W, H = librosa.decompose.decompose(S, n_components=32)
+    >>> W, H = librosa.decompose.decompose(S, n_components=64)
     >>> W_sort = librosa.util.axis_sort(W)
 
     Or sort by the lowest frequency bin
@@ -595,25 +599,23 @@ def axis_sort(S, axis=-1, index=False, value=None):
     >>> H_sort = H[idx, :]
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> plt.subplot(2, 2, 1)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(W, ref=np.max),
-    ...                          y_axis='log')
-    >>> plt.title('W')
-    >>> plt.subplot(2, 2, 2)
-    >>> librosa.display.specshow(H, x_axis='time')
-    >>> plt.title('H')
-    >>> plt.subplot(2, 2, 3)
+    >>> fig, ax = plt.subplots(nrows=2, ncols=2)
+    >>> img_w = librosa.display.specshow(librosa.amplitude_to_db(W, ref=np.max),
+    ...                                  y_axis='log', ax=ax[0, 0])
+    >>> ax[0, 0].set(title='W')
+    >>> ax[0, 0].label_outer()
+    >>> img_act = librosa.display.specshow(H, x_axis='time', ax=ax[0, 1])
+    >>> ax[0, 1].set(title='H')
+    >>> ax[0, 1].label_outer()
     >>> librosa.display.specshow(librosa.amplitude_to_db(W_sort,
     ...                                                  ref=np.max),
-    ...                          y_axis='log')
-    >>> plt.title('W sorted')
-    >>> plt.subplot(2, 2, 4)
-    >>> librosa.display.specshow(H_sort, x_axis='time')
-    >>> plt.title('H sorted')
-    >>> plt.tight_layout()
-    >>> plt.show()
-
+    ...                          y_axis='log', ax=ax[1, 0])
+    >>> ax[1, 0].set(title='W sorted')
+    >>> librosa.display.specshow(H_sort, x_axis='time', ax=ax[1, 1])
+    >>> ax[1, 1].set(title='H sorted')
+    >>> ax[1, 1].label_outer()
+    >>> fig.colorbar(img_w, ax=ax[:, 0], orientation='h')
+    >>> fig.colorbar(img_act, ax=ax[:, 1], orientation='h')
 
     Parameters
     ----------
@@ -623,8 +625,8 @@ def axis_sort(S, axis=-1, index=False, value=None):
     axis : int [scalar]
         The axis along which to compute the sorting values
 
-        - `axis=0` to sort rows by peak column index
-        - `axis=1` to sort columns by peak row index
+        - ``axis=0`` to sort rows by peak column index
+        - ``axis=1`` to sort columns by peak row index
 
     index : boolean [scalar]
         If true, returns the index array as well as the permuted data.
@@ -636,16 +638,16 @@ def axis_sort(S, axis=-1, index=False, value=None):
     Returns
     -------
     S_sort : np.ndarray [shape=(d, n)]
-        `S` with the columns or rows permuted in sorting order
+        ``S`` with the columns or rows permuted in sorting order
 
     idx : np.ndarray (optional) [shape=(d,) or (n,)]
-        If `index == True`, the sorting index used to permute `S`.
-        Length of `idx` corresponds to the selected `axis`.
+        If ``index == True``, the sorting index used to permute ``S``.
+        Length of ``idx`` corresponds to the selected ``axis``.
 
     Raises
     ------
     ParameterError
-        If `S` does not have exactly 2 dimensions (`S.ndim != 2`)
+        If ``S`` does not have exactly 2 dimensions (``S.ndim != 2``)
     '''
 
     if value is None:
@@ -671,17 +673,17 @@ def normalize(S, norm=np.inf, axis=0, threshold=None, fill=None):
     '''Normalize an array along a chosen axis.
 
     Given a norm (described below) and a target axis, the input
-    array is scaled so that
+    array is scaled so that::
 
-        `norm(S, axis=axis) == 1`
+        norm(S, axis=axis) == 1
 
-    For example, `axis=0` normalizes each column of a 2-d array
+    For example, ``axis=0`` normalizes each column of a 2-d array
     by aggregating over the rows (0-axis).
-    Similarly, `axis=1` normalizes each row of a 2-d array.
+    Similarly, ``axis=1`` normalizes each row of a 2-d array.
 
     This function also supports thresholding small-norm slices:
     any slice (i.e., row or column) with norm below a specified
-    `threshold` can be left un-normalized, set to all-zeros, or
+    ``threshold`` can be left un-normalized, set to all-zeros, or
     filled with uniform non-zero values that normalize to 1.
 
     Note: the semantics of this function differ from
@@ -706,23 +708,23 @@ def normalize(S, norm=np.inf, axis=0, threshold=None, fill=None):
         Axis along which to compute the norm.
 
     threshold : number > 0 [optional]
-        Only the columns (or rows) with norm at least `threshold` are
+        Only the columns (or rows) with norm at least ``threshold`` are
         normalized.
 
         By default, the threshold is determined from
-        the numerical precision of `S.dtype`.
+        the numerical precision of ``S.dtype``.
 
     fill : None or bool
-        If None, then columns (or rows) with norm below `threshold`
+        If None, then columns (or rows) with norm below ``threshold``
         are left as is.
 
-        If False, then columns (rows) with norm below `threshold`
+        If False, then columns (rows) with norm below ``threshold``
         are set to 0.
 
-        If True, then columns (rows) with norm below `threshold`
+        If True, then columns (rows) with norm below ``threshold``
         are filled uniformly such that the corresponding norm is 1.
 
-        .. note:: `fill=True` is incompatible with `norm=0` because
+        .. note:: ``fill=True`` is incompatible with ``norm=0`` because
             no uniform vector exists with l0 "norm" equal to 1.
 
     Returns
@@ -733,11 +735,11 @@ def normalize(S, norm=np.inf, axis=0, threshold=None, fill=None):
     Raises
     ------
     ParameterError
-        If `norm` is not among the valid types defined above
+        If ``norm`` is not among the valid types defined above
 
-        If `S` is not finite
+        If ``S`` is not finite
 
-        If `fill=True` and `norm=0`
+        If ``fill=True`` and ``norm=0``
 
     See Also
     --------
@@ -895,16 +897,16 @@ def normalize(S, norm=np.inf, axis=0, threshold=None, fill=None):
 
 
 def localmax(x, axis=0):
-    """Find local maxima in an array `x`.
+    """Find local maxima in an array
 
-    An element `x[i]` is considered a local maximum if the following
+    An element ``x[i]`` is considered a local maximum if the following
     conditions are met:
 
-    - `x[i] > x[i-1]`
-    - `x[i] >= x[i+1]`
+    - ``x[i] > x[i-1]``
+    - ``x[i] >= x[i+1]``
 
     Note that the first condition is strict, and that the first element
-    `x[0]` will never be considered as a local maximum.
+    ``x[0]`` will never be considered as a local maximum.
 
     Examples
     --------
@@ -934,7 +936,7 @@ def localmax(x, axis=0):
     Returns
     -------
     m     : np.ndarray [shape=x.shape, dtype=bool]
-        indicator array of local maximality along `axis`
+        indicator array of local maximality along ``axis``
 
     """
 
@@ -955,22 +957,22 @@ def localmax(x, axis=0):
 def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     '''Uses a flexible heuristic to pick peaks in a signal.
 
-    A sample n is selected as an peak if the corresponding x[n]
+    A sample n is selected as an peak if the corresponding ``x[n]``
     fulfills the following three conditions:
 
-    1. `x[n] == max(x[n - pre_max:n + post_max])`
-    2. `x[n] >= mean(x[n - pre_avg:n + post_avg]) + delta`
-    3. `n - previous_n > wait`
+    1. ``x[n] == max(x[n - pre_max:n + post_max])``
+    2. ``x[n] >= mean(x[n - pre_avg:n + post_avg]) + delta``
+    3. ``n - previous_n > wait``
 
-    where `previous_n` is the last sample picked as a peak (greedily).
+    where ``previous_n`` is the last sample picked as a peak (greedily).
 
-    This implementation is based on [1]_ and [2]_.
+    This implementation is based on [#]_ and [#]_.
 
-    .. [1] Boeck, Sebastian, Florian Krebs, and Markus Schedl.
+    .. [#] Boeck, Sebastian, Florian Krebs, and Markus Schedl.
         "Evaluating the Online Capabilities of Onset Detection Methods." ISMIR.
         2012.
 
-    .. [2] https://github.com/CPJKU/onset_detection/blob/master/onset_program.py
+    .. [#] https://github.com/CPJKU/onset_detection/blob/master/onset_program.py
 
 
     Parameters
@@ -979,16 +981,16 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
         input signal to peak picks from
 
     pre_max   : int >= 0 [scalar]
-        number of samples before `n` over which max is computed
+        number of samples before ``n`` over which max is computed
 
     post_max  : int >= 1 [scalar]
-        number of samples after `n` over which max is computed
+        number of samples after ``n`` over which max is computed
 
     pre_avg   : int >= 0 [scalar]
-        number of samples before `n` over which mean is computed
+        number of samples before ``n`` over which mean is computed
 
     post_avg  : int >= 1 [scalar]
-        number of samples after `n` over which mean is computed
+        number of samples after ``n`` over which mean is computed
 
     delta     : float >= 0 [scalar]
         threshold offset for mean
@@ -999,7 +1001,7 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     Returns
     -------
     peaks     : np.ndarray [shape=(n_peaks,), dtype=int]
-        indices of peaks in `x`
+        indices of peaks in ``x``
 
     Raises
     ------
@@ -1018,20 +1020,16 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
 
     >>> import matplotlib.pyplot as plt
     >>> times = librosa.times_like(onset_env, sr=sr, hop_length=512)
-    >>> plt.figure()
-    >>> ax = plt.subplot(2, 1, 2)
-    >>> D = librosa.stft(y)
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True)
+    >>> D = np.abs(librosa.stft(y))
     >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
-    ...                          y_axis='log', x_axis='time')
-    >>> plt.subplot(2, 1, 1, sharex=ax)
-    >>> plt.plot(times, onset_env, alpha=0.8, label='Onset strength')
-    >>> plt.vlines(times[peaks], 0,
-    ...            onset_env.max(), color='r', alpha=0.8,
-    ...            label='Selected peaks')
-    >>> plt.legend(frameon=True, framealpha=0.8)
-    >>> plt.axis('tight')
-    >>> plt.tight_layout()
-    >>> plt.show()
+    ...                          y_axis='log', x_axis='time', ax=ax[1])
+    >>> ax[0].plot(times, onset_env, alpha=0.8, label='Onset strength')
+    >>> ax[0].vlines(times[peaks], 0,
+    ...              onset_env.max(), color='r', alpha=0.8,
+    ...              label='Selected peaks')
+    >>> ax[0].legend(frameon=True, framealpha=0.8)
+    >>> ax[0].label_outer()
     '''
 
     if pre_max < 0:
@@ -1122,8 +1120,7 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
 
 @cache(level=40)
 def sparsify_rows(x, quantile=0.01, dtype=None):
-    '''
-    Return a row-sparse matrix approximating the input `x`.
+    '''Return a row-sparse matrix approximating the input
 
     Parameters
     ----------
@@ -1131,26 +1128,26 @@ def sparsify_rows(x, quantile=0.01, dtype=None):
         The input matrix to sparsify.
 
     quantile : float in [0, 1.0)
-        Percentage of magnitude to discard in each row of `x`
+        Percentage of magnitude to discard in each row of ``x``
 
     dtype : np.dtype, optional
         The dtype of the output array.
-        If not provided, then `x.dtype` will be used.
+        If not provided, then ``x.dtype`` will be used.
 
     Returns
     -------
-    x_sparse : `scipy.sparse.csr_matrix` [shape=x.shape]
-        Row-sparsified approximation of `x`
+    x_sparse : ``scipy.sparse.csr_matrix`` [shape=x.shape]
+        Row-sparsified approximation of ``x``
 
-        If `x.ndim == 1`, then `x` is interpreted as a row vector,
-        and `x_sparse.shape == (1, len(x))`.
+        If ``x.ndim == 1``, then ``x`` is interpreted as a row vector,
+        and ``x_sparse.shape == (1, len(x))``.
 
     Raises
     ------
     ParameterError
-        If `x.ndim > 2`
+        If ``x.ndim > 2``
 
-        If `quantile` lies outside `[0, 1.0)`
+        If ``quantile`` lies outside ``[0, 1.0)``
 
     Notes
     -----
@@ -1225,17 +1222,13 @@ def buf_to_float(x, n_bytes=2, dtype=np.float32):
     This is primarily useful when loading integer-valued wav data
     into numpy arrays.
 
-    See Also
-    --------
-    buf_to_float
-
     Parameters
     ----------
     x : np.ndarray [dtype=int]
         The integer-valued data buffer
 
     n_bytes : int [1, 2, 4]
-        The number of bytes per sample in `x`
+        The number of bytes per sample in ``x``
 
     dtype : numeric type
         The target output type (default: 32-bit float)
@@ -1264,8 +1257,7 @@ def index_to_slice(idx, idx_min=None, idx_max=None, step=None, pad=True):
     idx : list-like
         Array of index boundaries
 
-    idx_min : None or int
-    idx_max : None or int
+    idx_min, idx_max : None or int
         Minimum and maximum allowed indices
 
     step : None or int
@@ -1273,7 +1265,7 @@ def index_to_slice(idx, idx_min=None, idx_max=None, step=None, pad=True):
         step of 1 is used.
 
     pad : boolean
-        If `True`, pad `idx` to span the range `idx_min:idx_max`.
+        If `True`, pad ``idx`` to span the range ``idx_min:idx_max``.
 
     Returns
     -------
@@ -1281,7 +1273,7 @@ def index_to_slice(idx, idx_min=None, idx_max=None, step=None, pad=True):
         ``slices[i] = slice(idx[i], idx[i+1], step)``
         Additional slice objects may be added at the beginning or end,
         depending on whether ``pad==True`` and the supplied values for
-        `idx_min` and `idx_max`.
+        ``idx_min`` and ``idx_max``.
 
     See Also
     --------
@@ -1318,7 +1310,7 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
 
     .. note::
         In order to ensure total coverage, boundary points may be added
-        to `idx`.
+        to ``idx``.
 
         If synchronizing a feature matrix against beat tracker output, ensure
         that frame index numbers are properly aligned and use the same hop length.
@@ -1337,7 +1329,7 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
         aggregation function (default: `np.mean`)
 
     pad : boolean
-        If `True`, `idx` is padded to span the full range `[0, data.shape[axis]]`
+        If `True`, ``idx`` is padded to span the full range ``[0, data.shape[axis]]``
 
     axis : int
         The axis along which to aggregate data
@@ -1345,12 +1337,12 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     Returns
     -------
     data_sync : ndarray
-        `data_sync` will have the same dimension as `data`, except that the `axis`
-        coordinate will be reduced according to `idx`.
+        ``data_sync`` will have the same dimension as ``data``, except that the ``axis``
+        coordinate will be reduced according to ``idx``.
 
-        For example, a 2-dimensional `data` with `axis=-1` should satisfy
+        For example, a 2-dimensional ``data`` with ``axis=-1`` should satisfy::
 
-        `data_sync[:, i] = aggregate(data[:, idx[i-1]:idx[i]], axis=-1)`
+            data_sync[:, i] = aggregate(data[:, idx[i-1]:idx[i]], axis=-1)
 
     Raises
     ------
@@ -1391,27 +1383,23 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     >>> import matplotlib.pyplot as plt
     >>> beat_t = librosa.frames_to_time(beats, sr=sr)
     >>> subbeat_t = librosa.frames_to_time(sub_beats, sr=sr)
-    >>> plt.figure()
-    >>> plt.subplot(3, 1, 1)
+    >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
     >>> librosa.display.specshow(librosa.amplitude_to_db(C,
     ...                                                  ref=np.max),
-    ...                          x_axis='time')
-    >>> plt.title('CQT power, shape={}'.format(C.shape))
-    >>> plt.subplot(3, 1, 2)
+    ...                          x_axis='time', ax=ax[0])
+    >>> ax[0].set(title='CQT power, shape={}'.format(C.shape))
+    >>> ax[0].label_outer()
     >>> librosa.display.specshow(librosa.amplitude_to_db(C_med,
     ...                                                  ref=np.max),
-    ...                          x_coords=beat_t, x_axis='time')
-    >>> plt.title('Beat synchronous CQT power, '
-    ...           'shape={}'.format(C_med.shape))
-    >>> plt.subplot(3, 1, 3)
+    ...                          x_coords=beat_t, x_axis='time', ax=ax[1])
+    >>> ax[1].set(title='Beat synchronous CQT power, '
+    ...                 'shape={}'.format(C_med.shape))
+    >>> ax[1].label_outer()
     >>> librosa.display.specshow(librosa.amplitude_to_db(C_med_sub,
     ...                                                  ref=np.max),
-    ...                          x_coords=subbeat_t, x_axis='time')
-    >>> plt.title('Sub-beat synchronous CQT power, '
-    ...           'shape={}'.format(C_med_sub.shape))
-    >>> plt.tight_layout()
-    >>> plt.show()
-
+    ...                          x_coords=subbeat_t, x_axis='time', ax=ax[2])
+    >>> ax[2].set(title='Sub-beat synchronous CQT power, '
+    ...                 'shape={}'.format(C_med_sub.shape))
     """
 
     if aggregate is None:
@@ -1443,9 +1431,9 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
 
 
 def softmask(X, X_ref, power=1, split_zeros=False):
-    '''Robustly compute a softmask operation.
+    '''Robustly compute a soft-mask operation.
 
-        `M = X**power / (X**power + X_ref**power)`
+        ``M = X**power / (X**power + X_ref**power)``
 
 
     Parameters
@@ -1455,17 +1443,17 @@ def softmask(X, X_ref, power=1, split_zeros=False):
 
     X_ref : np.ndarray
         The (non-negative) array of reference or background elements.
-        Must have the same shape as `X`.
+        Must have the same shape as ``X``.
 
     power : number > 0 or np.inf
         If finite, returns the soft mask computed in a numerically stable way
 
-        If infinite, returns a hard (binary) mask equivalent to `X > X_ref`.
-        Note: for hard masks, ties are always broken in favor of `X_ref` (`mask=0`).
+        If infinite, returns a hard (binary) mask equivalent to ``X > X_ref``.
+        Note: for hard masks, ties are always broken in favor of ``X_ref`` (``mask=0``).
 
 
     split_zeros : bool
-        If `True`, entries where `X` and X`_ref` are both small (close to 0)
+        If `True`, entries where ``X`` and ``X_ref`` are both small (close to 0)
         will receive mask values of 0.5.
 
         Otherwise, the mask is set to 0 for these entries.
@@ -1473,17 +1461,17 @@ def softmask(X, X_ref, power=1, split_zeros=False):
 
     Returns
     -------
-    mask : np.ndarray, shape=`X.shape`
+    mask : np.ndarray, shape=X.shape
         The output mask array
 
     Raises
     ------
     ParameterError
-        If `X` and `X_ref` have different shapes.
+        If ``X`` and ``X_ref`` have different shapes.
 
-        If `X` or `X_ref` are negative anywhere
+        If ``X`` or ``X_ref`` are negative anywhere
 
-        If `power <= 0`
+        If ``power <= 0``
 
     Examples
     --------
@@ -1564,8 +1552,8 @@ def softmask(X, X_ref, power=1, split_zeros=False):
 def tiny(x):
     '''Compute the tiny-value corresponding to an input's data type.
 
-    This is the smallest "usable" number representable in `x`'s
-    data type (e.g., float32).
+    This is the smallest "usable" number representable in ``x.dtype``
+    (e.g., float32).
 
     This is primarily useful for determining a threshold for
     numerical underflow in division or multiplication operations.
@@ -1574,13 +1562,13 @@ def tiny(x):
     ----------
     x : number or np.ndarray
         The array to compute the tiny-value for.
-        All that matters here is `x.dtype`.
+        All that matters here is ``x.dtype``
 
     Returns
     -------
     tiny_value : float
-        The smallest positive usable number for the type of `x`.
-        If `x` is integer-typed, then the tiny value for `np.float32`
+        The smallest positive usable number for the type of ``x``.
+        If ``x`` is integer-typed, then the tiny value for ``np.float32``
         is returned instead.
 
     See Also
@@ -1631,9 +1619,11 @@ def tiny(x):
 def fill_off_diagonal(x, radius, value=0):
     """Sets all cells of a matrix to a given ``value``
     if they lie outside a constraint region.
+
     In this case, the constraint region is the
     Sakoe-Chiba band which runs with a fixed ``radius``
     along the main diagonal.
+
     When ``x.shape[0] != x.shape[1]``, the radius will be
     expanded so that ``x[-1, -1] = 1`` always.
 
@@ -1645,7 +1635,7 @@ def fill_off_diagonal(x, radius, value=0):
         Input matrix, will be modified in place.
     radius : float
         The band radius (1/2 of the width) will be
-        ``int(radius*min(x.shape))``.
+        ``int(radius*min(x.shape))``
     value : int
         ``x[n, m] = value`` when ``(n, m)`` lies outside the band.
 
@@ -1717,12 +1707,12 @@ def cyclic_gradient(data, edge_order=1, axis=-1):
 
     Returns
     -------
-    grad : np.ndarray like `data`
-        The gradient of `data` taken along the specified axis.
+    grad : np.ndarray like ``data``
+        The gradient of ``data`` taken along the specified axis.
 
     See Also
     --------
-    np.gradient
+    numpy.gradient
 
     Examples
     --------
@@ -1736,15 +1726,14 @@ def cyclic_gradient(data, edge_order=1, axis=-1):
     >>> grad = np.gradient(y)
     >>> cyclic_grad = librosa.util.cyclic_gradient(y)
     >>> true_grad = -np.sin(x) * 2 * np.pi / len(x)
-    >>> plt.plot(x, true_grad, label='True gradient', linewidth=5,
+    >>> fig, ax = plt.subplots()
+    >>> ax.plot(x, true_grad, label='True gradient', linewidth=5,
     ...          alpha=0.35)
-    >>> plt.plot(x, cyclic_grad, label='cyclic_gradient')
-    >>> plt.plot(x, grad, label='np.gradient', linestyle=':')
-    >>> plt.legend()
+    >>> ax.plot(x, cyclic_grad, label='cyclic_gradient')
+    >>> ax.plot(x, grad, label='np.gradient', linestyle=':')
+    >>> ax.legend()
     >>> # Zoom into the first part of the sequence
-    >>> plt.xlim([0, np.pi/16])
-    >>> plt.ylim([-0.025, 0.025])
-    >>> plt.show()
+    >>> ax.set(xlim=[0, np.pi/16], ylim=[-0.025, 0.025])
     '''
     # Wrap-pad the data along the target axis by `edge_order` on each side
     padding = [(0, 0)] * data.ndim
@@ -1810,12 +1799,12 @@ def __shear_sparse(X, factor=+1, axis=-1):
 def shear(X, factor=1, axis=-1):
     '''Shear a matrix by a given factor.
 
-    The `n`th column `X[:, n]` will be displaced (rolled)
-    by `factor * n`.
+    The column ``X[:, n]`` will be displaced (rolled)
+    by ``factor * n``
 
     This is primarily useful for converting between lag and recurrence
-    representations: shearing with `factor=-1` converts the main diagonal
-    to a horizontal.  Shearing with `factor=1` converts a horizontal to
+    representations: shearing with ``factor=-1`` converts the main diagonal
+    to a horizontal.  Shearing with ``factor=1`` converts a horizontal to
     a diagonal.
 
 
@@ -1825,14 +1814,14 @@ def shear(X, factor=1, axis=-1):
         The array to be sheared
 
     factor : integer
-        The shear factor: `X[:, n] -> np.roll(X[:, n], factor * n)`
+        The shear factor: ``X[:, n] -> np.roll(X[:, n], factor * n)``
 
     axis : integer
         The axis along which to shear
 
     Returns
     -------
-    X_shear : same type as `X`
+    X_shear : same type as ``X``
         The sheared matrix
 
     Examples
@@ -1877,8 +1866,8 @@ def stack(arrays, axis=0):
         one or more `np.ndarray`
 
     axis : integer
-        The target axis along which to stack.  `axis=0` creates a new first axis,
-        and `axis=-1` creates a new last axis.
+        The target axis along which to stack.  ``axis=0`` creates a new first axis,
+        and ``axis=-1`` creates a new last axis.
 
 
     Returns
@@ -1886,21 +1875,21 @@ def stack(arrays, axis=0):
     arr_stack : np.ndarray [shape=(len(arrays), array_shape) or shape=(array_shape, len(arrays))]
         The input arrays, stacked along the target dimension.
 
-        If `axis=0`, then `arr_stack` will be F-contiguous.
-        Otherwise, `arr_stack` will be C-contiguous by default, as computed by
+        If ``axis=0``, then ``arr_stack`` will be F-contiguous.
+        Otherwise, ``arr_stack`` will be C-contiguous by default, as computed by
         `np.stack`.
 
     Raises
     ------
     ParameterError
 
-        - If `arrays` do not all have the same shape
-        - If no `arrays` are given
+        - If ``arrays`` do not all have the same shape
+        - If no ``arrays`` are given
 
     See Also
     --------
-    np.stack
-    np.ndarray.flags
+    numpy.stack
+    numpy.ndarray.flags
     frame
 
     Examples
@@ -1982,10 +1971,10 @@ def dtype_r2c(d, default=np.complex64):
     ----------
     d : np.dtype
         The real-valued dtype to convert to complex.
-        If `d` is a complex type already, it will be returned.
+        If ``d`` is a complex type already, it will be returned.
 
     default : np.dtype, optional
-        The default complex target type, if `d` does not match a
+        The default complex target type, if ``d`` does not match a
         known dtype
 
     Returns
@@ -1996,7 +1985,7 @@ def dtype_r2c(d, default=np.complex64):
     See Also
     --------
     dtype_c2r
-    np.dtype
+    numpy.dtype
 
     Examples
     --------
@@ -2038,10 +2027,10 @@ def dtype_c2r(d, default=np.float32):
     ----------
     d : np.dtype
         The complex-valued dtype to convert to real.
-        If `d` is a real (float) type already, it will be returned.
+        If ``d`` is a real (float) type already, it will be returned.
 
     default : np.dtype, optional
-        The default real target type, if `d` does not match a
+        The default real target type, if ``d`` does not match a
         known dtype
 
     Returns
@@ -2052,7 +2041,7 @@ def dtype_c2r(d, default=np.float32):
     See Also
     --------
     dtype_r2c
-    np.dtype
+    numpy.dtype
 
     Examples
     --------

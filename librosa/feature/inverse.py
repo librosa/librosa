@@ -48,10 +48,10 @@ def mel_to_stft(M, sr=22050, n_fft=2048, power=2.0, **kwargs):
 
     See Also
     --------
-    feature.melspectrogram
-    core.stft
-    filters.mel
-    util.nnls
+    librosa.feature.melspectrogram
+    librosa.stft
+    librosa.filters.mel
+    librosa.util.nnls
 
 
     Examples
@@ -64,20 +64,16 @@ def mel_to_stft(M, sr=22050, n_fft=2048, power=2.0, **kwargs):
     Compare the results visually
 
     >>> import matplotlib.pyplot as plt
-    >>> plt.figure()
-    >>> plt.subplot(2,1,1)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max, top_db=None),
-    ...                          y_axis='log', x_axis='time')
-    >>> plt.colorbar()
-    >>> plt.title('Original STFT')
-    >>> plt.subplot(2,1,2)
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+    >>> img = librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max, top_db=None),
+    ...                          y_axis='log', x_axis='time', ax=ax[0])
+    >>> ax[0].set(title='Original STFT')
+    >>> ax[0].label_outer()
     >>> librosa.display.specshow(librosa.amplitude_to_db(np.abs(S_inv - S),
     ...                                                  ref=S.max(), top_db=None),
-    ...                          vmax=0, y_axis='log', x_axis='time', cmap='magma')
-    >>> plt.title('Residual error (dB)')
-    >>> plt.colorbar()
-    >>> plt.tight_layout()
-    >>> plt.show()
+    ...                          vmax=0, y_axis='log', x_axis='time', cmap='magma', ax=ax[1])
+    >>> ax[1].set(title='Residual error (dB)')
+    >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
     '''
 
     # Construct a mel basis with dtype matching the input data
@@ -114,10 +110,10 @@ def mel_to_audio(M, sr=22050, n_fft=2048, hop_length=512, win_length=None,
         number of FFT components in the resulting STFT
 
     hop_length : None or int > 0
-        The hop length of the STFT.  If not provided, it will default to `n_fft // 4`
+        The hop length of the STFT.  If not provided, it will default to ``n_fft // 4``
 
     win_length : None or int > 0
-        The window length of the STFT.  By default, it will equal `n_fft`
+        The window length of the STFT.  By default, it will equal ``n_fft``
 
     window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
         A window specification as supported by `stft` or `istft`
@@ -127,7 +123,7 @@ def mel_to_audio(M, sr=22050, n_fft=2048, hop_length=512, win_length=None,
         If `False`, the STFT is assumed to use left-aligned frames.
 
     pad_mode : string
-        If `center=True`, the padding mode to use at the edges of the signal.
+        If ``center=True``, the padding mode to use at the edges of the signal.
         By default, STFT uses reflection padding.
 
     power : float > 0 [scalar]
@@ -137,7 +133,7 @@ def mel_to_audio(M, sr=22050, n_fft=2048, hop_length=512, win_length=None,
         The number of iterations for Griffin-Lim
 
     length : None or int > 0
-        If provided, the output `y` is zero-padded or clipped to exactly `length`
+        If provided, the output ``y`` is zero-padded or clipped to exactly ``length``
         samples.
 
     dtype : np.dtype
@@ -150,14 +146,14 @@ def mel_to_audio(M, sr=22050, n_fft=2048, hop_length=512, win_length=None,
     Returns
     -------
     y : np.ndarray [shape(n,)]
-        time-domain signal reconstructed from `M`
+        time-domain signal reconstructed from ``M``
 
     See Also
     --------
-    core.griffinlim
-    feature.melspectrogram
-    filters.mel
-    feature.inverse.mel_to_stft
+    librosa.griffinlim
+    librosa.feature.melspectrogram
+    librosa.filters.mel
+    librosa.feature.inverse.mel_to_stft
     """
 
     stft = mel_to_stft(M, sr=sr, n_fft=n_fft, power=power, **kwargs)
@@ -173,7 +169,7 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0):
     This inversion proceeds in two steps:
 
         1. The inverse DCT is applied to the MFCCs
-        2. `core.db_to_power` is applied to map the dB-scaled result to a power spectrogram
+        2. `librosa.db_to_power` is applied to map the dB-scaled result to a power spectrogram
 
 
     Parameters
@@ -189,7 +185,7 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0):
         By default, DCT type-2 is used.
 
     norm : None or 'ortho'
-        If `dct_type` is `2 or 3`, setting `norm='ortho'` uses an orthonormal
+        If ``dct_type`` is `2 or 3`, setting ``norm='ortho'`` uses an orthonormal
         DCT basis.
 
         Normalization is not supported for `dct_type=1`.
@@ -198,13 +194,14 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0):
         Reference power for (inverse) decibel calculation
 
     lifter : number >= 0
-        If `lifter>0`, apply inverse liftering (inverse cepstral filtering):
-        `M[n, :] <- M[n, :] / (1 + sin(pi * (n + 1) / lifter)) * lifter / 2`
+        If ``lifter>0``, apply inverse liftering (inverse cepstral filtering)::
+
+            M[n, :] <- M[n, :] / (1 + sin(pi * (n + 1) / lifter)) * lifter / 2
 
     Returns
     -------
     M : np.ndarray [shape=(n_mels, n)]
-        An approximate Mel power spectrum recovered from `mfcc`
+        An approximate Mel power spectrum recovered from ``mfcc``
 
     Warns
     --------
@@ -213,26 +210,26 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0):
 
     See Also
     --------
-    mfcc
-    melspectrogram
+    librosa.feature.mfcc
+    librosa.feature.melspectrogram
     scipy.fftpack.dct
     '''
     if lifter > 0:
         n_mfcc = mfcc.shape[0]
         idx = np.arange(1, 1 + n_mfcc, dtype=mfcc.dtype)
         lifter_sine = 1 + lifter * 0.5 * np.sin(np.pi * idx / lifter)[:, np.newaxis]
-        
+
         # raise a UserWarning if lifter array includes critical values
         if np.any(np.abs(lifter_sine) < np.finfo(lifter_sine.dtype).eps):
-            warnings.warn(message="lifter array includes critial values that may invoke underflow.", 
+            warnings.warn(message="lifter array includes critial values that may invoke underflow.",
                           category=UserWarning)
-        
+
         # lifter mfcc values
         mfcc = mfcc / (lifter_sine + tiny(mfcc))
-        
+
     elif lifter != 0:
         raise ParameterError('MFCC to mel lifter must be a non-negative number.')
-    
+
     logmel = scipy.fftpack.idct(mfcc, axis=0, type=dct_type, norm=norm, n=n_mels)
     return db_to_power(logmel, ref=ref)
 
@@ -259,17 +256,18 @@ def mfcc_to_audio(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0,
         By default, DCT type-2 is used.
 
     norm : None or 'ortho'
-        If `dct_type` is `2 or 3`, setting `norm='ortho'` uses an orthonormal
+        If ``dct_type`` is `2 or 3`, setting ``norm='ortho'`` uses an orthonormal
         DCT basis.
 
-        Normalization is not supported for `dct_type=1`.
+        Normalization is not supported for ``dct_type=1``.
 
     ref : number or callable
         Reference power for (inverse) decibel calculation
 
     lifter : number >= 0
-        If `lifter>0`, apply inverse liftering (inverse cepstral filtering):
-        `M[n, :] <- M[n, :] / (1 + sin(pi * (n + 1) / lifter)) * lifter / 2`
+        If ``lifter>0``, apply inverse liftering (inverse cepstral filtering)::
+
+            M[n, :] <- M[n, :] / (1 + sin(pi * (n + 1) / lifter)) * lifter / 2
 
     kwargs : additional keyword arguments
         Parameters to pass through to `mel_to_audio`
@@ -283,8 +281,8 @@ def mfcc_to_audio(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0,
     --------
     mfcc_to_mel
     mel_to_audio
-    feature.mfcc
-    core.griffinlim
+    librosa.feature.mfcc
+    librosa.griffinlim
     scipy.fftpack.dct
     '''
     mel_spec = mfcc_to_mel(mfcc, n_mels=n_mels, dct_type=dct_type, norm=norm,

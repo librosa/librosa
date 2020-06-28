@@ -30,13 +30,14 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
                units='frames'):
     r'''Dynamic programming beat tracker.
 
-    Beats are detected in three stages, following the method of [1]_:
+    Beats are detected in three stages, following the method of [#]_:
+
       1. Measure onset strength
       2. Estimate tempo from onset correlation
       3. Pick peaks in onset strength approximately consistent with estimated
          tempo
 
-    .. [1] Ellis, Daniel PW. "Beat tracking by dynamic programming."
+    .. [#] Ellis, Daniel PW. "Beat tracking by dynamic programming."
            Journal of New Music Research 36.1 (2007): 51-60.
            http://labrosa.ee.columbia.edu/projects/beattrack/
 
@@ -48,13 +49,13 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
         audio time series
 
     sr : number > 0 [scalar]
-        sampling rate of `y`
+        sampling rate of ``y``
 
     onset_envelope : np.ndarray [shape=(n,)] or None
         (optional) pre-computed onset strength envelope.
 
     hop_length : int > 0 [scalar]
-        number of audio samples between successive `onset_envelope` values
+        number of audio samples between successive ``onset_envelope`` values
 
     start_bpm  : float > 0 [scalar]
         initial guess for the tempo estimator (in beats per minute)
@@ -66,12 +67,12 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
         trim leading/trailing beats with weak onsets
 
     bpm        : float [scalar]
-        (optional) If provided, use `bpm` as the tempo instead of
-        estimating it from `onsets`.
+        (optional) If provided, use ``bpm`` as the tempo instead of
+        estimating it from ``onsets``.
 
     prior      : scipy.stats.rv_continuous [optional]
         An optional prior distribution over tempo.
-        If provided, `start_bpm` will be ignored.
+        If provided, ``start_bpm`` will be ignored.
 
     units : {'frames', 'samples', 'time'}
         The units to encode detected beat events in.
@@ -96,8 +97,8 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
     Raises
     ------
     ParameterError
-        if neither `y` nor `onset_envelope` are provided,
-        or if `units` is not one of 'frames', 'samples', or 'time'
+        if neither ``y`` nor ``onset_envelope`` are provided,
+        or if ``units`` is not one of 'frames', 'samples', or 'time'
 
     See Also
     --------
@@ -108,7 +109,7 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
     --------
     Track beats using time series input
 
-    >>> y, sr = librosa.load(librosa.ex('choice'))
+    >>> y, sr = librosa.load(librosa.ex('choice'), duration=10)
 
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
     >>> tempo
@@ -118,26 +119,16 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
     Print the frames corresponding to beats
 
     >>> beats
-    array([   3,   21,   40,   59,   78,   96,  116,  135,  154,  173,
-            192,  211,  230,  249,  268,  287,  306,  325,  344,  363,
-            382,  401,  420,  439,  458,  476,  495,  515,  534,  553,
-            572,  591,  610,  629,  647,  667,  686,  705,  724,  743,
-            762,  780,  799,  819,  838,  857,  876,  895,  914,  933,
-            951,  971,  990, 1008])
+    array([  3,  21,  40,  59,  78,  96, 116, 135, 154, 173, 192, 211,
+           230, 249, 268, 287, 306, 325, 344, 363])
 
 
     Or print them as timestamps
 
     >>> librosa.frames_to_time(beats, sr=sr)
-    array([ 0.07 ,  0.488,  0.929,  1.37 ,  1.811,  2.229,  2.694,
-            3.135,  3.576,  4.017,  4.458,  4.899,  5.341,  5.782,
-            6.223,  6.664,  7.105,  7.546,  7.988,  8.429,  8.87 ,
-            9.311,  9.752, 10.194, 10.635, 11.053, 11.494, 11.958,
-           12.399, 12.841, 13.282, 13.723, 14.164, 14.605, 15.023,
-           15.488, 15.929, 16.37 , 16.811, 17.252, 17.694, 18.112,
-           18.553, 19.017, 19.458, 19.9  , 20.341, 20.782, 21.223,
-           21.664, 22.082, 22.547, 22.988, 23.406])
-
+    array([0.07 , 0.488, 0.929, 1.37 , 1.811, 2.229, 2.694, 3.135,
+           3.576, 4.017, 4.458, 4.899, 5.341, 5.782, 6.223, 6.664,
+           7.105, 7.546, 7.988, 8.429])
 
     Track beats using a pre-computed onset envelope
 
@@ -148,29 +139,27 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
     >>> tempo
     135.99917763157896
     >>> beats
-    array([   3,   21,   40,   59,   78,   96,  116,  135,  154,  173,
-            192,  211,  230,  249,  268,  287,  306,  325,  344,  363,
-            382,  401,  420,  439,  458,  476,  495,  515,  534,  553,
-            572,  591,  610,  629,  647,  667,  686,  705,  724,  743,
-            762,  780,  799,  819,  838,  857,  876,  895,  914,  933,
-            951,  971,  990, 1008])
+    array([  3,  21,  40,  59,  78,  96, 116, 135, 154, 173, 192, 211,
+           230, 249, 268, 287, 306, 325, 344, 363])
 
 
     Plot the beat events against the onset strength envelope
 
     >>> import matplotlib.pyplot as plt
     >>> hop_length = 512
-    >>> plt.figure(figsize=(8, 4))
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True)
     >>> times = librosa.times_like(onset_env, sr=sr, hop_length=hop_length)
-    >>> plt.plot(times, librosa.util.normalize(onset_env),
+    >>> M = librosa.feature.melspectrogram(y=y, sr=sr, hop_length=hop_length)
+    >>> librosa.display.specshow(librosa.power_to_db(M, ref=np.max),
+    ...                          y_axis='mel', x_axis='time', hop_length=hop_length,
+    ...                          ax=ax[0])
+    >>> ax[0].label_outer()
+    >>> ax[0].set(title='Mel spectrogram')
+    >>> ax[1].plot(times, librosa.util.normalize(onset_env),
     ...          label='Onset strength')
-    >>> plt.vlines(times[beats], 0, 1, alpha=0.5, color='r',
+    >>> ax[1].vlines(times[beats], 0, 1, alpha=0.5, color='r',
     ...            linestyle='--', label='Beats')
-    >>> plt.legend(frameon=True, framealpha=0.75)
-    >>> # Limit the plot to a 15-second window
-    >>> plt.gca().xaxis.set_major_formatter(librosa.display.TimeFormatter())
-    >>> plt.tight_layout()
-    >>> plt.show()
+    >>> ax[1].legend()
     '''
 
     # First, get the frame->beat strength profile if we don't already have one
@@ -252,7 +241,7 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
     prior : scipy.stats.rv_continuous [optional]
         A prior distribution over tempo (in beats per minute).
         By default, a pseudo-log-normal prior is used.
-        If given, `start_bpm` and `std_bpm` will be ignored.
+        If given, ``start_bpm`` and ``std_bpm`` will be ignored.
 
     Returns
     -------
@@ -271,7 +260,7 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
     Examples
     --------
     >>> # Estimate a static tempo
-    >>> y, sr = librosa.load(librosa.ex('nutcracker'))
+    >>> y, sr = librosa.load(librosa.ex('nutcracker'), duration=30)
     >>> onset_env = librosa.onset.onset_strength(y, sr=sr)
     >>> tempo = librosa.beat.tempo(onset_envelope=onset_env, sr=sr)
     >>> tempo
@@ -310,33 +299,30 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
     >>> freqs = librosa.tempo_frequencies(len(ac), sr=sr,
     ...                                   hop_length=hop_length)
     >>> # Plot on a BPM axis.  We skip the first (0-lag) bin.
-    >>> plt.figure(figsize=(8,4))
-    >>> plt.semilogx(freqs[1:], librosa.util.normalize(ac)[1:],
+    >>> fig, ax = plt.subplots()
+    >>> ax.semilogx(freqs[1:], librosa.util.normalize(ac)[1:],
     ...              label='Onset autocorrelation', basex=2)
-    >>> plt.axvline(tempo, 0, 1, color='r', alpha=0.75, linestyle='--',
+    >>> ax.axvline(tempo, 0, 1, alpha=0.75, linestyle='--', color='r',
     ...             label='Tempo (default prior): {:.2f} BPM'.format(tempo))
-    >>> plt.axvline(utempo, 0, 1, color='y', alpha=0.75, linestyle=':',
+    >>> ax.axvline(utempo, 0, 1, alpha=0.75, linestyle=':', color='g',
     ...             label='Tempo (uniform prior): {:.2f} BPM'.format(utempo))
-    >>> plt.xlabel('Tempo (BPM)')
-    >>> plt.grid()
-    >>> plt.title('Static tempo estimation')
-    >>> plt.legend(frameon=True)
-    >>> plt.axis('tight')
-    >>> plt.show()
+    >>> ax.set(xlabel='Tempo (BPM)', title='Static tempo estimation')
+    >>> ax.grid(True)
+    >>> ax.legend()
 
     Plot dynamic tempo estimates over a tempogram
 
-    >>> plt.figure()
+    >>> fig, ax = plt.subplots()
     >>> tg = librosa.feature.tempogram(onset_envelope=onset_env, sr=sr,
     ...                                hop_length=hop_length)
-    >>> librosa.display.specshow(tg, x_axis='time', y_axis='tempo', cmap='magma')
-    >>> plt.plot(librosa.times_like(dtempo), dtempo,
-    ...          color='w', linewidth=1.5, label='Tempo estimate (default prior)')
-    >>> plt.plot(librosa.times_like(dtempo_lognorm), dtempo_lognorm,
+    >>> librosa.display.specshow(tg, x_axis='time', y_axis='tempo', cmap='magma', ax=ax)
+    >>> ax.plot(librosa.times_like(dtempo), dtempo,
+    ...          color='c', linewidth=1.5, label='Tempo estimate (default prior)')
+    >>> ax.plot(librosa.times_like(dtempo_lognorm), dtempo_lognorm,
     ...          color='c', linewidth=1.5, linestyle='--',
     ...          label='Tempo estimate (lognorm prior)')
-    >>> plt.title('Dynamic tempo estimation')
-    >>> plt.legend(frameon=True, framealpha=0.75)
+    >>> ax.set(title='Dynamic tempo estimation')
+    >>> ax.legend()
     """
 
     if start_bpm <= 0:
@@ -377,7 +363,7 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
 
 def plp(y=None, sr=22050, onset_envelope=None, hop_length=512,
         win_length=384, tempo_min=30, tempo_max=300, prior=None):
-    '''Predominant local pulse (PLP) estimation. [1]_
+    '''Predominant local pulse (PLP) estimation. [#]_
 
     The PLP method analyzes the onset strength envelope in the frequency domain
     to find a locally stable tempo for each frame.  These local periodicities
@@ -391,7 +377,7 @@ def plp(y=None, sr=22050, onset_envelope=None, hop_length=512,
     preferable when beat-tracking long recordings in a streaming setting.
 
 
-    .. [1] Grosche, P., & Muller, M. (2011).
+    .. [#] Grosche, P., & Muller, M. (2011).
         "Extracting predominant local pulse information from music recordings."
         IEEE Transactions on Audio, Speech, and Language Processing, 19(6), 1688-1701.
 
@@ -401,28 +387,28 @@ def plp(y=None, sr=22050, onset_envelope=None, hop_length=512,
         audio time series
 
     sr : number > 0 [scalar]
-        sampling rate of `y`
+        sampling rate of ``y``
 
     onset_envelope : np.ndarray [shape=(n,)] or None
         (optional) pre-computed onset strength envelope
 
     hop_length : int > 0 [scalar]
-        number of audio samples between successive `onset_envelope` values
+        number of audio samples between successive ``onset_envelope`` values
 
     win_length : int > 0 [scalar]
         number of frames to use for tempogram analysis.
-        By default, 384 frames (at `sr=22050` and `hop_length=512`) corresponds
+        By default, 384 frames (at ``sr=22050`` and ``hop_length=512``) corresponds
         to about 8.9 seconds.
 
     tempo_min, tempo_max : numbers > 0 [scalar], optional
-        Minimum and maximum permissible tempo values.  `tempo_max` must be at least
-        `tempo_min`.
+        Minimum and maximum permissible tempo values.  ``tempo_max`` must be at least
+        ``tempo_min``.
 
         Set either (or both) to `None` to disable this constraint.
 
     prior : scipy.stats.rv_continuous [optional]
         A prior distribution over tempo (in beats per minute).
-        By default, a uniform prior over `[tempo_min, tempo_max]` is used.
+        By default, a uniform prior over ``[tempo_min, tempo_max]`` is used.
 
     Returns
     -------
@@ -450,32 +436,30 @@ def plp(y=None, sr=22050, onset_envelope=None, hop_length=512,
     >>> pulse_lognorm = librosa.beat.plp(onset_envelope=onset_env, sr=sr,
     ...                                  prior=prior)
     >>> melspec = librosa.feature.melspectrogram(y=y, sr=sr)
+
     >>> import matplotlib.pyplot as plt
-    >>> ax = plt.subplot(3,1,1)
+    >>> fig, ax = plt.subplots(nrows=3, sharex=True)
     >>> librosa.display.specshow(librosa.power_to_db(melspec,
     ...                                              ref=np.max),
-    ...                          x_axis='time', y_axis='mel')
-    >>> plt.title('Mel spectrogram')
-    >>> plt.subplot(3,1,2, sharex=ax)
-    >>> plt.plot(librosa.times_like(onset_env),
+    ...                          x_axis='time', y_axis='mel', ax=ax[0])
+    >>> ax[0].set(title='Mel spectrogram')
+    >>> ax[0].label_outer()
+    >>> ax[1].plot(librosa.times_like(onset_env),
     ...          librosa.util.normalize(onset_env),
     ...          label='Onset strength')
-    >>> plt.plot(librosa.times_like(pulse),
+    >>> ax[1].plot(librosa.times_like(pulse),
     ...          librosa.util.normalize(pulse),
     ...          label='Predominant local pulse (PLP)')
-    >>> plt.title('Uniform tempo prior [30, 300]')
-    >>> plt.subplot(3,1,3, sharex=ax)
-    >>> plt.plot(librosa.times_like(onset_env),
+    >>> ax[1].set(title='Uniform tempo prior [30, 300]')
+    >>> ax[1].label_outer()
+    >>> ax[2].plot(librosa.times_like(onset_env),
     ...          librosa.util.normalize(onset_env),
     ...          label='Onset strength')
-    >>> plt.plot(librosa.times_like(pulse_lognorm),
+    >>> ax[2].plot(librosa.times_like(pulse_lognorm),
     ...          librosa.util.normalize(pulse_lognorm),
     ...          label='Predominant local pulse (PLP)')
-    >>> plt.title('Log-normal tempo prior, mean=120')
-    >>> plt.legend()
-    >>> plt.xlim([5, 20])
-    >>> plt.tight_layout()
-    >>> plt.show()
+    >>> ax[2].set(title='Log-normal tempo prior, mean=120', xlim=[5, 20])
+    >>> ax[2].legend()
 
 
     PLP local maxima can be used as estimates of beat positions.
@@ -483,27 +467,24 @@ def plp(y=None, sr=22050, onset_envelope=None, hop_length=512,
     >>> tempo, beats = librosa.beat.beat_track(onset_envelope=onset_env)
     >>> beats_plp = np.flatnonzero(librosa.util.localmax(pulse))
     >>> import matplotlib.pyplot as plt
-    >>> ax = plt.subplot(2,1,1)
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
     >>> times = librosa.times_like(onset_env, sr=sr)
-    >>> plt.plot(times, librosa.util.normalize(onset_env),
+    >>> ax[0].plot(times, librosa.util.normalize(onset_env),
     ...          label='Onset strength')
-    >>> plt.vlines(times[beats], 0, 1, alpha=0.5, color='r',
+    >>> ax[0].vlines(times[beats], 0, 1, alpha=0.5, color='r',
     ...            linestyle='--', label='Beats')
-    >>> plt.legend(frameon=True, framealpha=0.75)
-    >>> plt.title('librosa.beat.beat_track')
+    >>> ax[0].legend()
+    >>> ax[0].set(title='librosa.beat.beat_track')
+    >>> ax[0].label_outer()
     >>> # Limit the plot to a 15-second window
-    >>> plt.subplot(2,1,2, sharex=ax)
     >>> times = librosa.times_like(pulse, sr=sr)
-    >>> plt.plot(times, librosa.util.normalize(pulse),
+    >>> ax[1].plot(times, librosa.util.normalize(pulse),
     ...          label='PLP')
-    >>> plt.vlines(times[beats_plp], 0, 1, alpha=0.5, color='r',
+    >>> ax[1].vlines(times[beats_plp], 0, 1, alpha=0.5, color='r',
     ...            linestyle='--', label='PLP Beats')
-    >>> plt.legend(frameon=True, framealpha=0.75)
-    >>> plt.title('librosa.beat.plp')
-    >>> plt.xlim([5, 20])
-    >>> ax.xaxis.set_major_formatter(librosa.display.TimeFormatter())
-    >>> plt.tight_layout()
-    >>> plt.show()
+    >>> ax[1].legend()
+    >>> ax[1].set(title='librosa.beat.plp', xlim=[5, 20])
+    >>> ax[1].xaxis.set_major_formatter(librosa.display.TimeFormatter())
 
     '''
 
