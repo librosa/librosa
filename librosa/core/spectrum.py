@@ -1321,7 +1321,7 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
 
     # Pad the time series so that frames are centered
     if center:
-        y = np.pad(y, int(hop_length), mode=pad_mode)
+        y = np.pad(y, int(win_length // 2), mode=pad_mode)
 
     # get the semitone filterbank
     filterbank_ct, sample_rates = semitone_filterbank(tuning=tuning, flayout=flayout, **kwargs)
