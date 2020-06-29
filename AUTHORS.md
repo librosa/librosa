@@ -58,6 +58,12 @@ Contributors
 * Stef van der Struijk <https://github.com/NumesSanguis>
 * Shunsuke Hidaka <https://github.com/onkyo14taro>
 * Eric Semeniuc <https://github.com/esemeniuc>
+* Frank Cwitkowitz <https://github.com/cwitkowitz>
+* Bea Steers <https://github.com/beasteers>
+* beantowel <https://github.com/beantowel>
+* Thor Whalen <https://github.com/thorwhalen>
+* Stefan Sullivan <https://github.com/stefansjs>
+
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
 

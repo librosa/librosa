@@ -10,7 +10,7 @@ v0.8.0
 2020-XX-XX
 
 New Features
-    - `#974`_ Variable-Q transform `librosa.vqt`. *Brian McFee, Frank Cwitkowitz*
+    - `#1018`_ Variable-Q transform `librosa.vqt`. *Brian McFee, Frank Cwitkowitz*
     - `#1059`_ `libsamplerate` support in `librosa.resample`. *Brian McFee*
     - `#1134`_ perceptual loudness weighting for B, C, D, and Z-weighting. *Bea Steers*
     - `#1149`_ key support and note-spelling in pitch<=>note conversion. *Brian
@@ -38,7 +38,7 @@ Deprecations to be removed in 0.9
     - `librosa.util.example_audio_file` is now deprecated in favor of `librosa.util.example`.
 
 Bug fixes
-    - `#1078`_ fixed edge-padding errors in `librosa.feature.stack_memory`. *???*
+    - `#1078`_ fixed edge-padding errors in `librosa.feature.stack_memory`. *beantowel*
     - `#1091`_ fixed joblib version requirements. *Thor Whalen*
     - `#1094`_ fixed STFT bug when using large window sizes. *Frank Zalkow*
     - `#1157`_ fixed an alignment bug in `librosa.iirt`. *Frank Zalkow*
@@ -64,7 +64,7 @@ Other changes
     - `#1183`_ `librosa.feature.tonnetz` can now pass-through arguments to `librosa.feature.chroma_cqt`. *Brian McFee*
     - `#1186`_ `librosa.display.cmap` now returns binary colormaps for boolean data. *Brian McFee*
 
-.. _#974: https://github.com/librosa/librosa/issues/974
+.. _#1018: https://github.com/librosa/librosa/issues/1018
 .. _#1059: https://github.com/librosa/librosa/issues/1059
 .. _#1134: https://github.com/librosa/librosa/issues/1134
 .. _#1149: https://github.com/librosa/librosa/issues/1149
