@@ -41,7 +41,7 @@ Bug fixes
     - `#1078`_ fixed edge-padding errors in `librosa.feature.stack_memory`. *beantowel*
     - `#1091`_ fixed joblib version requirements. *Thor Whalen*
     - `#1094`_ fixed STFT bug when using large window sizes. *Frank Zalkow*
-    - `#1157`_ fixed an alignment bug in `librosa.iirt`. *Frank Zalkow*
+    - `#1157`_, `#1196`_ fixed an alignment bug in `librosa.iirt`. *Frank Zalkow*
     - `#1159`_ fixed a warm-up glitch in `librosa.effects.preemphasis`. *Brian McFee*
     - `#1179`_ fixed memory initialization in unit tests. *Brian McFee*
 
@@ -92,6 +92,7 @@ Other changes
 .. _#1182: https://github.com/librosa/librosa/issues/1182
 .. _#1183: https://github.com/librosa/librosa/issues/1183
 .. _#1186: https://github.com/librosa/librosa/issues/1186
+.. _#1196: https://github.com/librosa/librosa/issues/1196
 
 
 
