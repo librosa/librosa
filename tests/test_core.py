@@ -1387,6 +1387,20 @@ def test_iirt_peaks():
         assert all(abs(cur_peak_times - click_times) < (2 * win_length / Fs))
 
 
+def test_iirt_padding():
+    Fs = 22050
+    x = np.zeros(Fs)
+    H = 512
+    num_frames = np.empty(5)
+
+    for i in range(1, 6):
+        N = i * H
+        X = librosa.iirt(x, sr=Fs, hop_length=H, win_length=N, center=True)
+        num_frames[i-1] = X.shape[1]
+
+    assert np.all(num_frames == num_frames[0])
+
+
 @pytest.fixture(scope="module")
 def S_pcen():
     return np.abs(np.random.randn(9, 30))
