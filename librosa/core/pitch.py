@@ -341,11 +341,11 @@ def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
 
 
 def _cumulative_mean_normalized_difference(y_frames, frame_length, win_length, min_period, max_period):
-    '''Cumulative mean normalized difference function (equation (8) in [1]_)
+    '''Cumulative mean normalized difference function (equation 8 in [#]_)
 
-    .. [1] De Cheveigné, A., & Kawahara, H. (2002).
+    .. [#] De Cheveigné, Alain, and Hideki Kawahara.
         "YIN, a fundamental frequency estimator for speech and music."
-        The Journal of the Acoustical Society of America, 111(4), 1917-1930.
+        The Journal of the Acoustical Society of America 111.4 (2002): 1917-1930.
 
     Parameters
     ----------
@@ -357,9 +357,6 @@ def _cumulative_mean_normalized_difference(y_frames, frame_length, win_length, m
 
     win_length : int > 0 [scalar]
         length of the window for calculating autocorrelation in samples.
-
-    hop_length : int > 0 [scalar]
-         number of audio samples between adjacent predictions.
 
     min_period : int > 0 [scalar]
         minimum period.
@@ -416,12 +413,19 @@ def _parabolic_interpolation(y_frames):
 
 
 def yin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=1024, hop_length=None,
-        peak_threshold=0.1, center=True, pad_mode='reflect'):
-    '''Fundamental frequency (F0) estimation. [1]_
+        trough_threshold=0.1, center=True, pad_mode='reflect'):
+    '''Fundamental frequency (F0) estimation using the YIN algorithm.
 
-    .. [1] De Cheveigné, A., & Kawahara, H. (2002).
+    YIN is an autocorrelation based method for fundamental frequency estimation [#]_.
+    First, a normalized difference function is computed over short (overlapping) frames of audio.
+    Next, the first minimum in the difference function below ``trough_threshold`` is selected as
+    an estimate of the signal's period.
+    Finally, the estimated period is refined using parabolic interpolation before converting
+    into the corresponding frequency.
+
+    .. [#] De Cheveigné, Alain, and Hideki Kawahara.
         "YIN, a fundamental frequency estimator for speech and music."
-        The Journal of the Acoustical Society of America, 111(4), 1917-1930.
+        The Journal of the Acoustical Society of America 111.4 (2002): 1917-1930.
 
     Parameters
     ----------
@@ -430,20 +434,20 @@ def yin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=1024, hop_length=
 
     fmin: number > 0 [scalar]
         minimum frequency in Hertz.
-        The recomended minimum is librosa.note_to_hz('C2') (~65 Hz)
+        The recomended minimum is ``librosa.note_to_hz('C2')`` (~65 Hz)
         though lower values may be feasible.
 
     fmax: number > 0 [scalar]
         maximum frequency in Hertz.
-        The recomended maximum is librosa.note_to_hz('C7') (~2093 Hz)
+        The recomended maximum is ``librosa.note_to_hz('C7')`` (~2093 Hz)
         though higher values may be feasible.
 
     sr : number > 0 [scalar]
-        sampling rate of `y` in Hertz.
+        sampling rate of ``y`` in Hertz.
 
     frame_length : int > 0 [scalar]
          length of the frames in samples.
-         By default, win_length=2048 corresponds to a time scale of about 93 ms at
+         By default, ``win_length=2048`` corresponds to a time scale of about 93 ms at
          a sampling rate of 22050 Hz.
 
     win_length : int > 0 [scalar]
@@ -451,24 +455,24 @@ def yin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=1024, hop_length=
 
     hop_length : None or int > 0 [scalar]
          number of audio samples between adjacent YIN predictions.
-         If `None`, defaults to `frame_length // 4`.
+         If ``None``, defaults to ``frame_length // 4``.
 
-    peak_threshold: number > 0 [scalar]
+    trough_threshold: number > 0 [scalar]
         absolute threshold for peak estimation.
 
     center : boolean
-        If `True`, the signal `y` is padded so that frame
-        `D[:, t]` is centered at `y[t * hop_length]`.
-        If `False`, then `D[:, t]` begins at `y[t * hop_length]`.
-        Defaults to `True`,  which simplifies the alignment of `D` onto a
-        time grid by means of `librosa.core.frames_to_samples`.
+        If ``True``, the signal `y` is padded so that frame
+        ``D[:, t]`` is centered at `y[t * hop_length]`.
+        If ``False``, then ``D[:, t]`` begins at ``y[t * hop_length]``.
+        Defaults to ``True``,  which simplifies the alignment of ``D`` onto a
+        time grid by means of ``librosa.core.frames_to_samples``.
 
     pad_mode : string or function
-        If `center=True`, this argument is passed to `np.pad` for padding
-        the edges of the signal `y`. By default (`pad_mode="reflect"`),
-        `y` is padded on both sides with its own reflection, mirrored around
+        If ``center=True``, this argument is passed to ``np.pad`` for padding
+        the edges of the signal ``y``. By default (``pad_mode="reflect"``),
+        ``y`` is padded on both sides with its own reflection, mirrored around
         its first and last sample respectively.
-        If `center=False`,  this argument is ignored.
+        If ``center=False``,  this argument is ignored.
         .. see also:: `np.pad`
 
     Returns
@@ -476,13 +480,19 @@ def yin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=1024, hop_length=
     f0: np.ndarray [shape=(n_frames,)]
         time series of fundamental frequencies in Hertz.
 
+    See Also
+    --------
+    librosa.pyin
+        Fundamental frequency (F0) estimation using probabilistic YIN (pYIN).
+
     Examples
     --------
-    Computing a fundamental frequency curve from an audio input:
-    >>> y = librosa.chirp(440, 880, duration=7.0)
-    >>> librosa.yin(y)
-    array([442.22108738, 441.7332485 , 441.15272224, ...,
-        873.5946698 ,875.75331159, 877.79219557])
+    Computing a fundamental frequency (F0) curve from an audio input
+
+    >>> y = librosa.chirp(440, 880, duration=5.0)
+    >>> librosa.yin(y, 440, 880)
+    array([442.66354675, 441.95299983, 441.58010963, ...,
+        871.161732  , 873.99001454, 877.04297681])
     '''
     if win_length > frame_length:
         raise ParameterError('win_length cannot exceed frame_length')
@@ -519,7 +529,7 @@ def yin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=1024, hop_length=
 
     # Find minima below peak threshold.
     is_threshold_trough = np.logical_and(
-        is_trough, yin_frames < peak_threshold)
+        is_trough, yin_frames < trough_threshold)
 
     # Absolute threshold.
     # "The solution we propose is to set an absolute threshold and choose the
@@ -529,10 +539,9 @@ def yin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=1024, hop_length=
     yin_period = np.argmax(is_threshold_trough, axis=0)
     no_trough_below_threshold = np.all(~is_threshold_trough, axis=0)
     yin_period[no_trough_below_threshold] = global_min[no_trough_below_threshold]
-    yin_period = min_period + yin_period
 
     # Refine peak by parabolic interpolation.
-    yin_period = yin_period + parabolic_shifts[yin_period - min_period, range(yin_frames.shape[1])]
+    yin_period = min_period + yin_period + parabolic_shifts[yin_period, range(yin_frames.shape[1])]
 
     # Convert period to fundamental frequency.
     f0 = sr / yin_period
@@ -542,11 +551,20 @@ def yin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=1024, hop_length=
 def pyin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=1024, hop_length=None,
          n_thresholds=100, beta_parameters=(2, 18), boltzmann_parameter=3, resolution=0.1,
          max_transition_rate=35.92, switch_prob=0.01, no_trough_prob=0.01, center=True, pad_mode='reflect'):
-    '''Fundamental frequency (F0) estimation. [1]_
+    '''Fundamental frequency (F0) estimation using probabilistic YIN (pYIN).
 
-    .. [1] Mauch, M., & Dixon, S. (2014).
+    pYIN [#]_ is a modificatin of the YIN algorithm [#]_ for fundamental frequency (F0) estimation.
+    In the first step of pYIN, F0 candidates and their probabilities are computed using the YIN algorithm.
+    In the second step, Viterbi decoding is used to estimate the most likely F0 sequence and voicing flags.
+
+    .. [#] Mauch, Matthias, and Simon Dixon.
         "pYIN: A fundamental frequency estimator using probabilistic threshold distributions."
-        In 2014 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP), 659-663.
+        2014 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP). IEEE, 2014.
+
+    .. [#] De Cheveigné, Alain, and Hideki Kawahara.
+        "YIN, a fundamental frequency estimator for speech and music."
+        The Journal of the Acoustical Society of America 111.4 (2002): 1917-1930.
+
 
     Parameters
     ----------
@@ -555,20 +573,20 @@ def pyin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=1024, hop_length
 
     fmin: number > 0 [scalar]
         minimum frequency in Hertz.
-        The recomended minimum is librosa.note_to_hz('C2') (~65 Hz)
+        The recomended minimum is ``librosa.note_to_hz('C2')`` (~65 Hz)
         though lower values may be feasible.
 
     fmax: number > 0 [scalar]
         maximum frequency in Hertz.
-        The recomended maximum is librosa.note_to_hz('C7') (~2093 Hz)
+        The recomended maximum is ``librosa.note_to_hz('C7')`` (~2093 Hz)
         though higher values may be feasible.
 
     sr : number > 0 [scalar]
-        sampling rate of `y` in Hertz.
+        sampling rate of ``y`` in Hertz.
 
     frame_length : int > 0 [scalar]
          length of the frames in samples.
-         By default, win_length=2048 corresponds to a time scale of about 93 ms at
+         By default, ``win_length=2048`` corresponds to a time scale of about 93 ms at
          a sampling rate of 22050 Hz.
 
     win_length : int > 0 [scalar]
@@ -576,7 +594,7 @@ def pyin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=1024, hop_length
 
     hop_length : None or int > 0 [scalar]
         number of audio samples between adjacent pYIN predictions.
-        If `None`, defaults to `frame_length // 4`.
+        If ``None``, defaults to ``frame_length // 4``.
 
     n_thresholds : int > 0 [scalar]
         number of thresholds for peak estimation.
@@ -595,25 +613,25 @@ def pyin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=1024, hop_length
     max_transition_rate : float > 0
         maximum pitch transition rate in octaves per second.
 
-    switch_prob : float in `(0, 1)`
+    switch_prob : float in ``(0, 1)``
         probability of switching from voiced to unvoiced or vice versa.
 
-    no_trough_prob : float in `(0, 1)`
+    no_trough_prob : float in ``(0, 1)``
         maximum probability to add to global minimum if no trough is below threshold.
 
     center : boolean
-        If `True`, the signal `y` is padded so that frame
-        `D[:, t]` is centered at `y[t * hop_length]`.
-        If `False`, then `D[:, t]` begins at `y[t * hop_length]`.
-        Defaults to `True`,  which simplifies the alignment of `D` onto a
-        time grid by means of `librosa.core.frames_to_samples`.
+        If ``True``, the signal ``y`` is padded so that frame
+        ``D[:, t]`` is centered at ``y[t * hop_length]``.
+        If ``False``, then ``D[:, t]`` begins at ``y[t * hop_length]``.
+        Defaults to ``True``,  which simplifies the alignment of ``D`` onto a
+        time grid by means of ``librosa.core.frames_to_samples``.
 
     pad_mode : string or function
-        If `center=True`, this argument is passed to `np.pad` for padding
-        the edges of the signal `y`. By default (`pad_mode="reflect"`),
-        `y` is padded on both sides with its own reflection, mirrored around
+        If ``center=True``, this argument is passed to ``np.pad`` for padding
+        the edges of the signal ``y``. By default (``pad_mode="reflect"``),
+        ``y`` is padded on both sides with its own reflection, mirrored around
         its first and last sample respectively.
-        If `center=False`,  this argument is ignored.
+        If ``center=False``,  this argument is ignored.
         .. see also:: `np.pad`
 
     Returns
@@ -627,12 +645,30 @@ def pyin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=1024, hop_length
     voiced_prob: np.ndarray [shape=(n_frames,)]
         time series containing the probability that a frame is voiced.
 
+    See Also
+    --------
+    librosa.yin
+        Fundamental frequency (F0) estimation using the YIN algorithm.
 
     Examples
     --------
-    Computing a fundamental frequency curve from an audio input:
-    >>> y = librosa.chirp(440, 880, duration=7.0)
-    >>> f0, voiced_prob = librosa.pyin(y)
+    Computing a fundamental frequency (F0) curve from an audio input
+
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> f0, voiced_flag, voiced_probs = librosa.pyin(y, fmin=librosa.note_to_hz('C2'), fmax=librosa.note_to_hz('C7'))
+    >>> times = librosa.times_like(f0)
+
+
+    Overlay F0 over a spectrogram
+
+    >>> import matplotlib.pyplot as plt
+    >>> D = librosa.amplitude_to_db(np.abs(librosa.stft(y)), ref=np.max)
+    >>> fig, ax = plt.subplots()
+    >>> img = librosa.display.specshow(D, x_axis='time', y_axis='log', ax=ax)
+    >>> ax.set(title='pYIN fundamental frequency estimation')
+    >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
+    >>> ax.plot(times, np.where(voiced_flag, f0, np.nan), label='f0', color='w')  # mask unvoiced frames with np.nan
+    >>> ax.legend(loc='upper right')
     '''
     if win_length > frame_length:
         raise ParameterError('win_length cannot exceed frame_length')
