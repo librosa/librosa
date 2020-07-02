@@ -20,6 +20,7 @@ New Features
     - `#1166`_ `librosa.sequence.dtw` can now return the step matrix. *Frank Zaklow*
     - `#1171`_ automatic precision inference for spectral transforms (stft, cqt) and
       explicit control for `librosa.cqt`. *Brian McFee*
+    - `#1198`_ `librosa.util.localmin` for computing local minima. *Brian McFee*
 
 Removed features and API changes
     - `#1062`_ 
@@ -93,6 +94,7 @@ Other changes
 .. _#1183: https://github.com/librosa/librosa/issues/1183
 .. _#1186: https://github.com/librosa/librosa/issues/1186
 .. _#1196: https://github.com/librosa/librosa/issues/1196
+.. _#1198: https://github.com/librosa/librosa/issues/1198
 
 
 
