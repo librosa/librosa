@@ -5,7 +5,6 @@
 import warnings
 import numpy as np
 import scipy
-import math
 
 
 from .spectrum import _spectrogram
@@ -412,7 +411,7 @@ def _parabolic_interpolation(y_frames):
     return parabolic_shifts
 
 
-def yin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=1024, hop_length=None,
+def yin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=None, hop_length=None,
         trough_threshold=0.1, center=True, pad_mode='reflect'):
     '''Fundamental frequency (F0) estimation using the YIN algorithm.
 
@@ -447,11 +446,12 @@ def yin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=1024, hop_length=
 
     frame_length : int > 0 [scalar]
          length of the frames in samples.
-         By default, ``win_length=2048`` corresponds to a time scale of about 93 ms at
+         By default, ``frame_length=2048`` corresponds to a time scale of about 93 ms at
          a sampling rate of 22050 Hz.
 
-    win_length : int > 0 [scalar]
+    win_length : None or int > 0 [scalar]
         length of the window for calculating autocorrelation in samples.
+        If ``None``, defaults to ``frame_length // 2``
 
     hop_length : None or int > 0 [scalar]
          number of audio samples between adjacent YIN predictions.
@@ -494,12 +494,16 @@ def yin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=1024, hop_length=
     array([442.66354675, 441.95299983, 441.58010963, ...,
         871.161732  , 873.99001454, 877.04297681])
     '''
+    # Set the default window length if it is not already specified.
+    if win_length is None:
+        win_length = frame_length // 2
+
     if win_length > frame_length:
         raise ParameterError('win_length cannot exceed frame_length')
 
     # Set the default hop if it is not already specified.
     if hop_length is None:
-        hop_length = int(frame_length // 4)
+        hop_length = frame_length // 4
 
     # Check that audio is valid.
     util.valid_audio(y, mono=True)
@@ -512,8 +516,8 @@ def yin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=1024, hop_length=
     y_frames = util.frame(y, frame_length=frame_length, hop_length=hop_length)
 
     # Calculate minimum and maximum periods
-    min_period = max(math.floor(sr / fmax), 2)
-    max_period = min(math.ceil(sr / fmin), frame_length-win_length-1)
+    min_period = max(int(np.floor(sr / fmax)), 2)
+    max_period = min(int(np.ceil(sr / fmin)), frame_length-win_length-1)
 
     # Calculate cumulative mean normalized difference function.
     yin_frames = _cumulative_mean_normalized_difference(
@@ -548,7 +552,7 @@ def yin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=1024, hop_length=
     return f0
 
 
-def pyin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=1024, hop_length=None,
+def pyin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=None, hop_length=None,
          n_thresholds=100, beta_parameters=(2, 18), boltzmann_parameter=3, resolution=0.1,
          max_transition_rate=35.92, switch_prob=0.01, no_trough_prob=0.01, center=True, pad_mode='reflect'):
     '''Fundamental frequency (F0) estimation using probabilistic YIN (pYIN).
@@ -586,11 +590,12 @@ def pyin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=1024, hop_length
 
     frame_length : int > 0 [scalar]
          length of the frames in samples.
-         By default, ``win_length=2048`` corresponds to a time scale of about 93 ms at
+         By default, ``frame_length=2048`` corresponds to a time scale of about 93 ms at
          a sampling rate of 22050 Hz.
 
-    win_length : int > 0 [scalar]
+    win_length : None or int > 0 [scalar]
         length of the window for calculating autocorrelation in samples.
+        If ``None``, defaults to ``frame_length // 2``
 
     hop_length : None or int > 0 [scalar]
         number of audio samples between adjacent pYIN predictions.
@@ -670,12 +675,16 @@ def pyin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=1024, hop_length
     >>> ax.plot(times, np.where(voiced_flag, f0, np.nan), label='f0', color='w')  # mask unvoiced frames with np.nan
     >>> ax.legend(loc='upper right')
     '''
+    # Set the default window length if it is not already specified.
+    if win_length is None:
+        win_length = frame_length // 2
+
     if win_length > frame_length:
         raise ParameterError('win_length cannot exceed frame_length')
 
     # Set the default hop if it is not already specified.
     if hop_length is None:
-        hop_length = int(frame_length // 4)
+        hop_length = frame_length // 4
 
     # Check that audio is valid.
     util.valid_audio(y, mono=True)
@@ -688,8 +697,8 @@ def pyin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=1024, hop_length
     y_frames = util.frame(y, frame_length=frame_length, hop_length=hop_length)
 
     # Calculate minimum and maximum periods
-    min_period = max(math.floor(sr / fmax), 2)
-    max_period = min(math.ceil(sr / fmin), frame_length-win_length-1)
+    min_period = max(int(np.floor(sr / fmax)), 2)
+    max_period = min(int(np.ceil(sr / fmin)), frame_length-win_length-1)
 
     # Calculate cumulative mean normalized difference function.
     yin_frames = _cumulative_mean_normalized_difference(
@@ -746,8 +755,8 @@ def pyin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=1024, hop_length
     period_candidates = period_candidates + parabolic_shifts[yin_period, frame_index]
     f0_candidates = sr / period_candidates
 
-    n_bins_per_semitone = math.ceil(1. / resolution)
-    n_pitch_bins = math.floor(12*n_bins_per_semitone*np.log2(fmax / fmin)) + 1
+    n_bins_per_semitone = int(np.ceil(1. / resolution))
+    n_pitch_bins = int(np.floor(12*n_bins_per_semitone*np.log2(fmax / fmin))) + 1
 
     # Construct transition matrix.
     max_semitones_per_frame = round(max_transition_rate * 12 * hop_length / sr)
