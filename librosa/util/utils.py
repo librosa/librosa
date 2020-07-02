@@ -20,7 +20,8 @@ __all__ = ['MAX_MEM_BLOCK',
            'frame', 'pad_center', 'fix_length',
            'valid_audio', 'valid_int', 'valid_intervals',
            'fix_frames',
-           'axis_sort', 'localmax', 'normalize',
+           'axis_sort', 'localmax', 'localmin',
+           'normalize',
            'peak_pick',
            'sparsify_rows',
            'shear', 'stack',
@@ -938,6 +939,9 @@ def localmax(x, axis=0):
     m     : np.ndarray [shape=x.shape, dtype=bool]
         indicator array of local maximality along ``axis``
 
+    See Also
+    --------
+    localmin
     """
 
     paddings = [(0, 0)] * x.ndim
@@ -952,6 +956,68 @@ def localmax(x, axis=0):
     inds2[axis] = slice(2, x_pad.shape[axis])
 
     return (x > x_pad[tuple(inds1)]) & (x >= x_pad[tuple(inds2)])
+
+
+def localmin(x, axis=0):
+    """Find local minima in an array
+
+    An element ``x[i]`` is considered a local minimum if the following
+    conditions are met:
+
+    - ``x[i] < x[i-1]``
+    - ``x[i] <= x[i+1]``
+
+    Note that the first condition is strict, and that the first element
+    ``x[0]`` will never be considered as a local minimum.
+
+    Examples
+    --------
+    >>> x = np.array([1, 0, 1, 2, -1, 0, -2, 1])
+    >>> librosa.util.localmin(x)
+    array([False,  True, False, False,  True, False,  True, False])
+
+    >>> # Two-dimensional example
+    >>> x = np.array([[1,0,1], [2, -1, 0], [2, 1, 3]])
+    >>> librosa.util.localmin(x, axis=0)
+    array([[False, False, False],
+           [False,  True,  True],
+           [False, False, False]])
+
+    >>> librosa.util.localmin(x, axis=1)
+    array([[False,  True, False],
+           [False,  True, False],
+           [False,  True, False]])
+
+    Parameters
+    ----------
+    x     : np.ndarray [shape=(d1,d2,...)]
+      input vector or array
+
+    axis : int
+      axis along which to compute local minimality
+
+    Returns
+    -------
+    m     : np.ndarray [shape=x.shape, dtype=bool]
+        indicator array of local minimality along ``axis``
+
+    See Also
+    --------
+    localmax
+    """
+
+    paddings = [(0, 0)] * x.ndim
+    paddings[axis] = (1, 1)
+
+    x_pad = np.pad(x, paddings, mode='edge')
+
+    inds1 = [slice(None)] * x.ndim
+    inds1[axis] = slice(0, -2)
+
+    inds2 = [slice(None)] * x.ndim
+    inds2[axis] = slice(2, x_pad.shape[axis])
+
+    return (x < x_pad[tuple(inds1)]) & (x <= x_pad[tuple(inds2)])
 
 
 def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):

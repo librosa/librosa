@@ -40,6 +40,7 @@ Miscellaneous
     :toctree: generated/
 
     localmax
+    localmin
     peak_pick
     nnls
     cyclic_gradient

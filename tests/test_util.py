@@ -453,6 +453,31 @@ def test_localmax(ndim, axis):
                 assert data[tuple(hits)] >= data[tuple(compare_idx)]
 
 
+@pytest.mark.parametrize("ndim, axis", [(n, m) for n in range(1, 5) for m in range(n)])
+def test_localmin(ndim, axis):
+
+    srand()
+
+    data = np.random.randn(*([7] * ndim))
+    lm = librosa.util.localmin(data, axis=axis)
+
+    for hits in np.argwhere(lm):
+        for offset in [-1, 1]:
+            compare_idx = hits.copy()
+            compare_idx[axis] += offset
+
+            if compare_idx[axis] < 0:
+                continue
+
+            if compare_idx[axis] >= data.shape[axis]:
+                continue
+
+            if offset < 0:
+                assert data[tuple(hits)] < data[tuple(compare_idx)]
+            else:
+                assert data[tuple(hits)] <= data[tuple(compare_idx)]
+
+
 @pytest.mark.parametrize("x", [np.random.randn(_) ** 2 for _ in [1, 5, 10, 100]])
 @pytest.mark.parametrize("pre_max", [0, 1, 10])
 @pytest.mark.parametrize("post_max", [1, 10])
