@@ -1936,3 +1936,183 @@ def key_to_degrees(key):
     scale = match.group('scale')[:3].lower()
 
     return (notes[scale] + pitch_map[tonic] + offset) % 12
+
+
+def midi_to_svara_h(midi, Sa=60, abbr=True, octave=True, unicode=True):
+    """Convert MIDI numbers to Hindustani svara
+
+    Parameters
+    ----------
+    midi : numeric
+        The MIDI numbers to convert
+
+    Sa : number > 0
+        MIDI number of the reference Sa.
+
+        Default: 60 (261.6 Hz, `C4`)
+
+    abbr : bool
+        If `True` (default) return abbreviated names ('S', 'r', 'R', 'g', 'G', ...)
+
+        If `False`, return long-form names ('Sa', 're', 'Re', 'ga', 'Ga', ...)
+
+    octave : bool
+        If `True`, decorate svara in neighboring octaves with over- or under-dots.
+
+        If `False`, ignore octave height information.
+
+    unicode : bool
+        If `True`, use unicode symbols to decorate octave information.
+
+        If `False`, use low-order ASCII (' and ,) for octave decorations.
+
+        This only takes effect if `octave=True`.
+
+    Returns
+    -------
+    svara : str or list of str
+        The svara corresponding to the given MIDI number
+
+    See Also
+    --------
+    hz_to_svara_h
+    note_to_svara_h
+    svara_h_to_note
+
+    Examples
+    --------
+    """
+
+    SVARA_MAP_LONG = ['Sa', 're', 'Re', 'ga', 'Ga', 'ma', 'Ma',
+                      'Pa', 'dha', 'Dha', 'ni', 'Ni']
+
+    SVARA_MAP_SHORT = list('SrRgGmMPdDnN')
+
+    if not np.isscalar(midi):
+        return [midi_to_svara_h(m, Sa=Sa, abbr=abbr, octave=octave, unicode=unicode)
+                for m in midi]
+
+    svara_num = int(np.round(midi - Sa))
+
+    if abbr:
+        svara = SVARA_MAP_SHORT[svara_num % 12]
+    else:
+        svara = SVARA_MAP_LONG[svara_num % 12]
+
+    if octave:
+        if 24 > svara_num >= 12:
+            if unicode:
+                svara = svara[0] + "\u0307" + svara[1:]
+            else:
+                svara += "'"
+        elif -12 <= svara_num < 0:
+            if unicode:
+                svara = svara[0] + "\u0323" + svara[1:]
+            else:
+                svara += ","
+
+    return svara
+
+
+def hz_to_svara_h(frequencies, Sa=None, abbr=True, octave=True, unicode=True):
+    '''Convert frequencies (in Hz) to Hindustani svara
+
+    Note that this conversion assumes 12-tone equal temperament.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
+    See Also
+    --------
+    midi_to_svara_h
+
+    Examples
+    --------
+    '''
+
+    if Sa is None:
+        Sa = note_to_hz('C2')
+
+    midis = hz_to_midi(frequencies)
+    return midi_to_svara_h(midis, Sa=hz_to_midi(Sa),
+                           abbr=abbr, octave=octave, unicode=unicode)
+
+
+def note_to_svara_h(notes, Sa=None, abbr=True, octave=True, unicode=True):
+    '''Convert western notes to Hindustani svara
+
+    Note that this conversion assumes 12-tone equal temperament.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
+    See Also
+    --------
+
+    Examples
+    --------
+    '''
+    if Sa is None:
+        Sa = 'C2'
+
+    midis = note_to_midi(notes, round_midi=False)
+
+    return midi_to_svara_h(midis, Sa=note_to_midi(Sa), abbr=abbr, octave=octave,
+                           unicode=unicode)
+
+
+# TODO: maybe we need to put a reference sa here?
+# depends on if this is used for absolute or relative indexing
+def thaat_to_degrees(thaat):
+    '''Construct the svara indices (degrees) for a given thaat
+    '''
+
+    THAAT_MAP = dict(bilaval    =[0, 2, 4, 5, 7, 9, 11],
+                     khamaj     =[0, 2, 4, 5, 7, 9, 10],
+                     kafi       =[0, 2, 3, 5, 7, 9, 10],
+                     asavari    =[0, 2, 3, 5, 7, 8, 10],
+                     bhairavi   =[0, 1, 3, 5, 7, 8, 10],
+                     kalyan     =[0, 2, 4, 6, 7, 9, 11],
+                     marva      =[0, 1, 4, 6, 7, 9, 11],
+                     poorvi     =[0, 1, 4, 6, 7, 8, 11],
+                     todi       =[0, 1, 3, 6, 7, 8, 11],
+                     bhairav    =[0, 1, 4, 5, 7, 8, 11])
+
+    return np.asarray(THAAT_MAP[thaat.tolower()])
+
+
+# Carnatic notes
+
+# melas < 36
+#   M1
+# melas >= 36
+#   M2
+
+# p = m % 36
+# R1, G1 ==> 0 <= p < 6
+# R1, G2 ==> 6 <= p < 12
+# R1, G3 ==> 12 <= p < 18
+# R2, G1 XXX
+# R2, G2 ==> 18 <= p < 24
+# R2, G3 ==> 24 <= p < 30
+# R3, G1 XXX
+# R3, G2 XXX
+# R3, G3 ==> 30 <= p < 36
+
+# q = m % 6
+# D1, N1    q == 1
+# D1, N2    q == 2
+# D1, N3    q == 3
+# D2, N1    XXX
+# D2, N2    q == 4
+# D2, N3    q == 5
+# D3, N1    XXX
+# D3, N2    XXX
+# D3, N3    q == 0
+
