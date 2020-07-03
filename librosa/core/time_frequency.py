@@ -35,7 +35,12 @@ __all__ = ['frames_to_samples', 'frames_to_time',
            'samples_like',
            'times_like',
            'key_to_notes',
-           'key_to_degrees']
+           'key_to_degrees',
+           'midi_to_svara_h', 'midi_to_svara_c',
+           'note_to_svara_h', 'note_to_svara_c',
+           'hz_to_svara_h', 'hz_to_svara_c',
+           'thaat_to_degrees',
+           'mela_to_svara', 'mela_to_degrees']
 
 
 def frames_to_samples(frames, hop_length=512, n_fft=None):
@@ -1971,22 +1976,21 @@ def midi_to_svara_h(midi, Sa=60, abbr=True, octave=True, unicode=True):
     Returns
     -------
     svara : str or list of str
-        The svara corresponding to the given MIDI number
+        The svara corresponding to the given MIDI number(s)
 
     See Also
     --------
     hz_to_svara_h
     note_to_svara_h
-    svara_h_to_note
 
     Examples
     --------
     """
 
-    SVARA_MAP_LONG = ['Sa', 're', 'Re', 'ga', 'Ga', 'ma', 'Ma',
-                      'Pa', 'dha', 'Dha', 'ni', 'Ni']
+    SVARA_MAP = ['Sa', 're', 'Re', 'ga', 'Ga', 'ma', 'Ma',
+                 'Pa', 'dha', 'Dha', 'ni', 'Ni']
 
-    SVARA_MAP_SHORT = list('SrRgGmMPdDnN')
+    SVARA_MAP_SHORT = list(s[0] for s in SVARA_MAP)
 
     if not np.isscalar(midi):
         return [midi_to_svara_h(m, Sa=Sa, abbr=abbr, octave=octave, unicode=unicode)
@@ -1997,7 +2001,7 @@ def midi_to_svara_h(midi, Sa=60, abbr=True, octave=True, unicode=True):
     if abbr:
         svara = SVARA_MAP_SHORT[svara_num % 12]
     else:
-        svara = SVARA_MAP_LONG[svara_num % 12]
+        svara = SVARA_MAP[svara_num % 12]
 
     if octave:
         if 24 > svara_num >= 12:
@@ -2067,52 +2071,400 @@ def note_to_svara_h(notes, Sa=None, abbr=True, octave=True, unicode=True):
                            unicode=unicode)
 
 
-# TODO: maybe we need to put a reference sa here?
-# depends on if this is used for absolute or relative indexing
+THAAT_MAP = dict(bilaval    =    [0, 2, 4, 5, 7, 9, 11],
+                 khamaj     =    [0, 2, 4, 5, 7, 9, 10],
+                 kafi       =    [0, 2, 3, 5, 7, 9, 10],
+                 asavari    =    [0, 2, 3, 5, 7, 8, 10],
+                 bhairavi   =    [0, 1, 3, 5, 7, 8, 10],
+                 kalyan     =    [0, 2, 4, 6, 7, 9, 11],
+                 marva      =    [0, 1, 4, 6, 7, 9, 11],
+                 poorvi     =    [0, 1, 4, 6, 7, 8, 11],
+                 todi       =    [0, 1, 3, 6, 7, 8, 11],
+                 bhairav    =    [0, 1, 4, 5, 7, 8, 11])
 def thaat_to_degrees(thaat):
     '''Construct the svara indices (degrees) for a given thaat
+
+    Parameters
+    ----------
+    thaat : str
+        The name of the thaat
+
+    Returns
+    -------
+    indices : np.ndarray
+        A list of the seven svara indicies (starting from 0=Sa)
+        contained in the specified thaat
+
+    See Also
+    --------
+    key_to_degrees
+    mela_to_degrees
+    '''
+    return np.asarray(THAAT_MAP[thaat.lower()])
+
+
+def midi_to_svara_c(midi, mela, Sa=60, abbr=True, octave=True, unicode=True):
+    '''Convert MIDI numbers to Carnatic svara within a given melakarta raga
+
+    Parameters
+    ----------
+    midi : numeric
+        The MIDI numbers to convert
+
+    mela : int or str
+        The name or index of the melakarta raga
+
+    Sa : number > 0
+        MIDI number of the reference Sa.
+
+        Default: 60 (261.6 Hz, `C4`)
+
+    abbr : bool
+        If `True` (default) return abbreviated names ('S', 'R1', 'R2', 'G1', 'G2', ...)
+
+        If `False`, return long-form names ('Sa', 'Ri1', 'Ri2', 'Ga1', 'Ga2', ...)
+
+    octave : bool
+        If `True`, decorate svara in neighboring octaves with over- or under-dots.
+
+        If `False`, ignore octave height information.
+
+    unicode : bool
+        If `True`, use unicode symbols to decorate octave information and subscript
+        numbers.
+
+        If `False`, use low-order ASCII (' and ,) for octave decorations.
+
+    Returns
+    -------
+    svara : str or list of str
+        The svara corresponding to the given MIDI number(s)
+
+    See Also
+    --------
+    hz_to_svara_c
+    note_to_svara_c
+    mela_to_degrees
+    mela_to_svara
+    '''
+    if not np.isscalar(midi):
+        return [midi_to_svara_c(m, mela, Sa=Sa, abbr=abbr,
+                                octave=octave, unicode=unicode)
+                for m in midi]
+
+    svara_num = int(np.round(midi - Sa))
+
+    svara_map = mela_to_svara(mela, abbr=abbr, unicode=unicode)
+
+    svara = svara_map[svara_num % 12]
+
+    if octave:
+        if 24 > svara_num >= 12:
+            if unicode:
+                svara = svara[0] + "\u0307" + svara[1:]
+            else:
+                svara += "'"
+        elif -12 <= svara_num < 0:
+            if unicode:
+                svara = svara[0] + "\u0323" + svara[1:]
+            else:
+                svara += ","
+
+    return svara
+
+
+def hz_to_svara_c(frequencies, mela, Sa=None, abbr=True, octave=True, unicode=True):
+    '''Convert frequencies (in Hz) to Carnatic svara
+
+    Note that this conversion assumes 12-tone equal temperament.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
+    See Also
+    --------
+    midi_to_svara_c
+
+    Examples
+    --------
     '''
 
-    THAAT_MAP = dict(bilaval    =[0, 2, 4, 5, 7, 9, 11],
-                     khamaj     =[0, 2, 4, 5, 7, 9, 10],
-                     kafi       =[0, 2, 3, 5, 7, 9, 10],
-                     asavari    =[0, 2, 3, 5, 7, 8, 10],
-                     bhairavi   =[0, 1, 3, 5, 7, 8, 10],
-                     kalyan     =[0, 2, 4, 6, 7, 9, 11],
-                     marva      =[0, 1, 4, 6, 7, 9, 11],
-                     poorvi     =[0, 1, 4, 6, 7, 8, 11],
-                     todi       =[0, 1, 3, 6, 7, 8, 11],
-                     bhairav    =[0, 1, 4, 5, 7, 8, 11])
+    if Sa is None:
+        Sa = note_to_hz('C2')
 
-    return np.asarray(THAAT_MAP[thaat.tolower()])
+    midis = hz_to_midi(frequencies)
+    return midi_to_svara_c(midis, mela=mela, Sa=hz_to_midi(Sa),
+                           abbr=abbr, octave=octave, unicode=unicode)
 
 
-# Carnatic notes
+def note_to_svara_c(notes, mela Sa=None, abbr=True, octave=True, unicode=True):
+    '''Convert western notes to Carnatic svara
 
-# melas < 36
-#   M1
-# melas >= 36
-#   M2
+    Note that this conversion assumes 12-tone equal temperament.
 
-# p = m % 36
-# R1, G1 ==> 0 <= p < 6
-# R1, G2 ==> 6 <= p < 12
-# R1, G3 ==> 12 <= p < 18
-# R2, G1 XXX
-# R2, G2 ==> 18 <= p < 24
-# R2, G3 ==> 24 <= p < 30
-# R3, G1 XXX
-# R3, G2 XXX
-# R3, G3 ==> 30 <= p < 36
+    Parameters
+    ----------
 
-# q = m % 6
-# D1, N1    q == 1
-# D1, N2    q == 2
-# D1, N3    q == 3
-# D2, N1    XXX
-# D2, N2    q == 4
-# D2, N3    q == 5
-# D3, N1    XXX
-# D3, N2    XXX
-# D3, N3    q == 0
+    Returns
+    -------
 
+    See Also
+    --------
+
+    Examples
+    --------
+    '''
+    if Sa is None:
+        Sa = 'C2'
+
+    midis = note_to_midi(notes, round_midi=False)
+
+    return midi_to_svara_c(midis, mela, Sa=note_to_midi(Sa),
+                           abbr=abbr, octave=octave,
+                           unicode=unicode)
+
+
+MELAKARTA_MAP = {k: i
+                 for i, k in enumerate(['kanakanki', 'ratnangi', 'ganamurti',
+                                        'vanaspati', 'manavati', 'tanarupi',
+                                        'senavati', 'hanumatodi', 'dhenuka',
+                                        'natakapriya', 'kokilapriya', 'rupavati',
+                                        'gayakapriya', 'vakulabharanam', 'mayamalavagoulai',
+                                        'chakravaham', 'suryakantam', 'hatakambhari',
+                                        'jhankaradhwani', 'natabhairavi', 'keeravani',
+                                        'kharaharapriya', 'gowrimanohari', 'varunapriya',
+                                        'mararanjani', 'charukesi', 'sarasangi',
+                                        'harikambhoji', 'dheerasankarabharanam', 'naganandini',
+                                        'yagapriya', 'ragavardhini', 'gangeyabhusani',
+                                        'vagadheeswari', 'sulini', 'chalanattai',
+                                        'salagam', 'jalarnavam', 'jhalavarali',
+                                        'navaneetam', 'pavani', 'raghupriya',
+                                        'gavambodhi', 'bhavapriya', 'subhapantuvarali',
+                                        'shadvigamargini', 'suvarnangi', 'divyamani',
+                                        'dhavalambari', 'namanarayani', 'kamavardhini',
+                                        'ramapriya', 'gamanasrama', 'viswambhari',
+                                        'syamalangi', 'shanmukhapriya', 'simhendramadhyamam',
+                                        'hemavati', 'dharmavati', 'nitimati',
+                                        'kantamani', 'rishabhapriya', 'latangi',
+                                        'vachaspati', 'mechakalyani', 'chitrambhari',
+                                        'sucharitra', 'jyotiswarupini', 'dhatuvardhini',
+                                        'nasikabhushani', 'kasalam', 'rasikapriya'])}
+
+def mela_to_degrees(mela):
+    '''Construct the svara indices (degrees) for a given melakarta raga
+
+    Parameters
+    ----------
+    mela : str or int
+        Either the name or integer index ([0, 71]) of the melakarta raga
+
+    Returns
+    -------
+    degrees : np.ndarray
+        
+    '''
+
+    if isinstance(mela, str):
+        index = MELAKARTA_MAP[mela.lower()]
+    elif 0 <= mela < 72:
+        index = mela
+    else:
+        raise ParameterError('mela={} must be in range [0, 72['.format(mela))
+
+    # always have Sa [0]
+    degrees = [0]
+
+    # Fill in Ri and Ga
+    lower = index % 36
+    if 0 <= lower < 6:
+        # Ri1, Ga1
+        degrees.extend([1, 2])
+    elif 6 <= lower < 12:
+        # Ri1, Ga2
+        degrees.extend([1, 3])
+    elif 12 <= lower < 18:
+        # Ri1, Ga3
+        degrees.extend([1, 4])
+    elif 18 <= lower < 24:
+        # Ri2, Ga2
+        degrees.extend([2, 3])
+    elif 24 <= lower < 30:
+        # Ri2, Ga3
+        degrees.extend([2, 4])
+    else:
+        # Ri3, Ga3
+        degrees.extend([3, 4])
+
+    # Determine Ma
+    if index < 36:
+        # Ma1
+        degrees.append(5)
+    else:
+        # Ma2
+        degrees.append(6)
+
+    # always have Pa [7]
+    degrees.append(7)
+
+    # Determine Dha and Ni
+    upper = index % 6
+    if upper == 0:
+        # Dha1, Ni1
+        degrees.extend([8, 9])
+    elif upper == 1:
+        # Dha1, Ni2
+        degrees.extend([8, 10])
+    elif upper == 2:
+        # Dha1, Ni3
+        degrees.extend([8, 11])
+    elif upper == 3:
+        # Dha2, Ni2
+        degrees.extend([9, 10])
+    elif upper == 4:
+        # Dha2, Ni3
+        degrees.extend([9, 11])
+    else:
+        # Dha3, Ni3
+        degrees.extend([10, 11])
+
+    return np.array(degrees)
+
+
+@cache(level=10)
+def mela_to_svara(mela, abbr=True, unicode=True):
+    '''Spell the Carnatic svara names for a given melakarta raga
+
+    This function exists to resolve enharmonic equivalences between
+    pitch classes:
+
+        - Ri2 / Ga1
+        - Ri3 / Ga2
+        - Dha2 / Ni1
+        - Dha3 / Ni2
+
+    For svara outside the raga, names are chosen to preserve orderings
+    so that all Ri precede all Ga, and all Dha precede all Ni.
+
+    Parameters
+    ----------
+    mela : str or int
+        the name or numerical index of the melakarta raga
+
+    abbr : bool
+        If `True`, use single-letter svara names: S, R, G, ...
+
+        If `False`, use full names: Sa, Ri, Ga, ...
+
+    unicode : bool
+        If `True`, use unicode symbols for numberings, e.g., Ri\u2081
+
+        If `False`, use low-order ASCII, e.g., Ri1.
+
+    Returns
+    -------
+    svara : list of strings
+
+        The svara names for each of the 12 pitch classes.
+
+    See Also
+    --------
+    key_to_notes
+    mela_to_degrees
+
+    Examples
+    --------
+    Melakarta #0 (Kanakanki) uses R1, G1, D1, N1
+
+    >>> librosa.mela_to_svara(0)
+    ['S', 'R₁', 'G₁', 'G₂', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'N₁', 'N₂', 'N₃']
+
+    #18 (Jhankaradhwani) uses R2 and G2 so the third svara are Ri:
+
+    >>> librosa.mela_to_svara(18)
+    ['S', 'R₁', 'R₂', 'G₂', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'N₁', 'N₂', 'N₃']
+
+    #30 (Yagapriya) uses R3 and G3, so third and fourth svara are Ri:
+
+    >>> librosa.mela_to_svara(30)
+    ['S', 'R₁', 'R₂', 'R₃', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'N₁', 'N₂', 'N₃']
+
+    #33 (Vagadheeswari) uses D2 and N2, so Ni1 becomes Dha2:
+
+    >>> librosa.mela_to_svara(33)
+    ['S', 'R₁', 'R₂', 'R₃', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'D₂', 'N₂', 'N₃']
+
+    #35 (Chalanattai) uses D3 and N3, so Ni2 becomes Dha3:
+
+    >>> librosa.mela_to_svara(35)
+    ['S', 'R₁', 'R₂', 'R₃', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'D₂', 'D₃', 'N₃']
+    '''
+
+    # The following will be constant for all ragas
+    svara_map = ['Sa', 'Ri\u2081',
+                 None,  # Ri2/Ga1
+                 None,  # Ri3/Ga2
+                 'Ga\u2083',
+                 'Ma\u2081', 'Ma\u2082',
+                 'Pa',
+                 'Dha\u2081',
+                 None,  # Dha2/Ni1
+                 None,  # Dha3/Ni2
+                 'Ni\u2083']
+
+    if isinstance(mela, str):
+        mela_idx = MELAKARTA_MAP[mela.lower()]
+    elif 0 <= mela < 72:
+        mela_idx = mela
+    else:
+        raise ParameterError('mela={} must be in range [0, 72['.format(mela))
+
+    # Determine Ri2/Ga1
+    lower = mela_idx % 36
+    if lower < 6:
+        # First six will have Ri1/Ga1
+        svara_map[2] = 'Ga\u2081'
+    else:
+        # All others have either Ga2/Ga3
+        # So we'll call this Ri2
+        svara_map[2] = 'Ri\u2082'
+
+    # Determine Ri3/Ga2
+    if lower < 30:
+        # First thirty should get Ga2
+        svara_map[3] = 'Ga\u2082'
+    else:
+        # Only the last six have Ri3
+        svara_map[3] = 'Ri\u2083'
+
+    upper = mela_idx % 6
+
+    # Determine Dha2/Ni1
+    if upper == 0:
+        # these are the only ones with Ni1
+        svara_map[9] = 'Ni\u2081'
+    else:
+        # Everyone else has Dha2
+        svara_map[9] = 'Dha\u2082'
+
+    # Determine Dha3/Ni2
+    if upper == 5:
+        # This one has Dha3
+        svara_map[10] = 'Dha\u2083'
+    else:
+        # Everyone else has Ni2
+        svara_map[10] = 'Ni\u2082'
+
+    if abbr:
+        svara_map = [s.translate(str.maketrans({'a': '', 'h': '', 'i': ''}))
+                     for s in svara_map]
+
+    if not unicode:
+        svara_map = [s.translate(str.maketrans({'\u2081': '1',
+                                                '\u2082': '2',
+                                                '\u2083': '3'}))
+                     for s in svara_map]
+
+    return list(svara_map)
