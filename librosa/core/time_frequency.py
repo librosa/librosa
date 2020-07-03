@@ -2200,7 +2200,7 @@ def hz_to_svara_c(frequencies, mela, Sa=None, abbr=True, octave=True, unicode=Tr
                            abbr=abbr, octave=octave, unicode=unicode)
 
 
-def note_to_svara_c(notes, mela Sa=None, abbr=True, octave=True, unicode=True):
+def note_to_svara_c(notes, mela, Sa=None, abbr=True, octave=True, unicode=True):
     '''Convert western notes to Carnatic svara
 
     Note that this conversion assumes 12-tone equal temperament.
