@@ -946,10 +946,13 @@ def __decorate_axis(axis, ax_type, key='C:maj', Sa=None, mela=None):
 
     elif ax_type == 'cqt_svara':
         axis.set_major_formatter(SvaraFormatter(Sa=Sa, mela=mela))
-        axis.set_major_locator(LogLocator(base=2.0))
+        # Find the offset of Sa relative to 2**k Hz
+        sa_offset = 2.0**(np.log2(Sa) - np.floor(np.log2(Sa)))
+
+        axis.set_major_locator(LogLocator(base=2.0, subs=(sa_offset,)))
         axis.set_minor_formatter(SvaraFormatter(Sa=Sa, mela=mela, major=False))
         axis.set_minor_locator(LogLocator(base=2.0,
-                                          subs=2.0**(np.arange(1, 12)/12.0)))
+                                          subs=sa_offset * 2.0**(np.arange(1, 12)/12.0)))
         axis.set_label_text('Svara')
 
     elif ax_type in ['cqt_hz']:
