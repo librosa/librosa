@@ -365,7 +365,7 @@ def _cumulative_mean_normalized_difference(y_frames, frame_length, win_length, m
 
     Returns
     -------
-    yin_frames : np.ndarray [shape=(max_period-min_period+2,n_frames)]
+    yin_frames : np.ndarray [shape=(max_period-min_period+1,n_frames)]
         Cumulative mean normalized difference function for each frame.
     '''
     # Autocorrelation.
@@ -383,10 +383,10 @@ def _cumulative_mean_normalized_difference(y_frames, frame_length, win_length, m
     yin_frames = energy_frames[0, :] + energy_frames - 2*acf_frames
 
     # Cumulative mean normalized difference function.
-    yin_numerator = yin_frames[min_period-1:max_period+1, :]
+    yin_numerator = yin_frames[min_period:max_period+1, :]
     tau_range = np.arange(1, max_period+1)[:, None]
     cumulative_mean = np.cumsum(yin_frames[1:max_period+1, :], axis=0) / tau_range
-    yin_denominator = cumulative_mean[min_period-2:max_period, :]
+    yin_denominator = cumulative_mean[min_period-1:max_period, :]
     yin_frames = yin_numerator / (yin_denominator + util.tiny(yin_denominator))
     return yin_frames
 
@@ -401,12 +401,13 @@ def _parabolic_interpolation(y_frames):
 
     Returns
     -------
-    parabolic_shifts : np.ndarray [shape=(frame_length-2, n_frames)]
+    parabolic_shifts : np.ndarray [shape=(frame_length, n_frames)]
         position of the parabola optima
     '''
+    parabolic_shifts = np.zeros_like(y_frames)
     parabola_a = (y_frames[:-2, :] + y_frames[2:, :] - 2*y_frames[1:-1, :]) / 2
     parabola_b = (y_frames[2:, :] - y_frames[:-2, :]) / 2
-    parabolic_shifts = -parabola_b / (2*parabola_a + util.tiny(parabola_a))
+    parabolic_shifts[1:-1, :] = -parabola_b / (2*parabola_a + util.tiny(parabola_a))
     parabolic_shifts[np.abs(parabolic_shifts) > 1] = 0
     return parabolic_shifts
 
@@ -516,7 +517,7 @@ def yin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=None, hop_length=
     y_frames = util.frame(y, frame_length=frame_length, hop_length=hop_length)
 
     # Calculate minimum and maximum periods
-    min_period = max(int(np.floor(sr / fmax)), 2)
+    min_period = max(int(np.floor(sr / fmax)), 1)
     max_period = min(int(np.ceil(sr / fmin)), frame_length-win_length-1)
 
     # Calculate cumulative mean normalized difference function.
@@ -527,9 +528,8 @@ def yin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=None, hop_length=
     parabolic_shifts = _parabolic_interpolation(yin_frames)
 
     # Find local minima.
-    is_trough = util.localmax(-yin_frames, axis=0)
-    is_trough = is_trough[1:-1, :]
-    yin_frames = yin_frames[1:-1, :]
+    is_trough = util.localmin(yin_frames, axis=0)
+    is_trough[0, :] = yin_frames[0, :] < yin_frames[1, :]
 
     # Find minima below peak threshold.
     is_threshold_trough = np.logical_and(
@@ -554,7 +554,8 @@ def yin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=None, hop_length=
 
 def pyin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=None, hop_length=None,
          n_thresholds=100, beta_parameters=(2, 18), boltzmann_parameter=3, resolution=0.1,
-         max_transition_rate=35.92, switch_prob=0.01, no_trough_prob=0.01, center=True, pad_mode='reflect'):
+         max_transition_rate=35.92, switch_prob=0.01, no_trough_prob=0.01, fill_na=np.nan,
+         center=True, pad_mode='reflect'):
     '''Fundamental frequency (F0) estimation using probabilistic YIN (pYIN).
 
     pYIN [#]_ is a modificatin of the YIN algorithm [#]_ for fundamental frequency (F0) estimation.
@@ -624,6 +625,10 @@ def pyin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=None, hop_length
     no_trough_prob : float in ``(0, 1)``
         maximum probability to add to global minimum if no trough is below threshold.
 
+    fill_na : None, float, or ``np.nan``
+        default value for unvoiced frames of ``f0``.
+        If ``None``, the unvoiced frames will contain a best guess value.
+
     center : boolean
         If ``True``, the signal ``y`` is padded so that frame
         ``D[:, t]`` is centered at ``y[t * hop_length]``.
@@ -672,7 +677,7 @@ def pyin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=None, hop_length
     >>> img = librosa.display.specshow(D, x_axis='time', y_axis='log', ax=ax)
     >>> ax.set(title='pYIN fundamental frequency estimation')
     >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
-    >>> ax.plot(times, np.where(voiced_flag, f0, np.nan), label='f0', color='w')  # mask unvoiced frames with np.nan
+    >>> ax.plot(times, f0, label='f0', color='w')
     >>> ax.legend(loc='upper right')
     '''
     # Set the default window length if it is not already specified.
@@ -697,7 +702,7 @@ def pyin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=None, hop_length
     y_frames = util.frame(y, frame_length=frame_length, hop_length=hop_length)
 
     # Calculate minimum and maximum periods
-    min_period = max(int(np.floor(sr / fmax)), 2)
+    min_period = max(int(np.floor(sr / fmax)), 1)
     max_period = min(int(np.ceil(sr / fmin)), frame_length-win_length-1)
 
     # Calculate cumulative mean normalized difference function.
@@ -716,12 +721,11 @@ def pyin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=None, hop_length
         thresholds, beta_parameters[0], beta_parameters[1])
     beta_probs = np.diff(beta_cdf)
 
-    yin_probs = np.zeros((yin_frames.shape[0]-2, yin_frames.shape[1]))
+    yin_probs = np.zeros_like(yin_frames)
     for i, yin_frame in enumerate(yin_frames.T):
         # 2. For each frame find the troughs.
-        is_trough = util.localmax(-yin_frame, axis=0)
-        is_trough = is_trough[1:-1]
-        yin_frame = yin_frame[1:-1]
+        is_trough = util.localmin(yin_frame, axis=0)
+        is_trough[0] = yin_frame[0] < yin_frame[1]
         trough_index, = np.nonzero(is_trough)
 
         if len(trough_index) == 0:
@@ -776,7 +780,7 @@ def pyin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=None, hop_length
     # Observation probabilities.
     observation_probs = np.zeros((2*n_pitch_bins, yin_frames.shape[1]))
     observation_probs[bin_index, frame_index] = yin_probs[yin_period, frame_index]
-    voiced_prob = np.clip(np.sum(observation_probs, axis=0), 0, 1)
+    voiced_prob = np.clip(np.sum(observation_probs[:n_pitch_bins, :], axis=0), 0, 1)
     observation_probs[n_pitch_bins:, :] = (1 - voiced_prob[None, :]) / n_pitch_bins
 
     p_init = np.zeros(2*n_pitch_bins)
@@ -787,6 +791,8 @@ def pyin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=None, hop_length
 
     # Find f0 corresponding to each decoded pitch bin.
     freqs = fmin * 2**(np.arange(n_pitch_bins) / (12*n_bins_per_semitone))
-    freqs = np.concatenate((freqs, -freqs))
-    f0 = freqs[states]
-    return np.abs(f0), f0 > 0, voiced_prob
+    f0 = freqs[states % n_pitch_bins]
+    voiced_flag = states < n_pitch_bins
+    if fill_na is not None:
+        f0[~voiced_flag] = fill_na
+    return f0, voiced_flag, voiced_prob
