@@ -2222,7 +2222,7 @@ def note_to_svara_c(notes, Sa, mela, abbr=True, octave=True, unicode=True):
 
     midis = note_to_midi(notes, round_midi=False)
 
-    return midi_to_svara_c(midis, note_to_midi(Sa), mela
+    return midi_to_svara_c(midis, note_to_midi(Sa), mela,
                            abbr=abbr, octave=octave,
                            unicode=unicode)
 
