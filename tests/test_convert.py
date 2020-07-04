@@ -404,12 +404,12 @@ def test_Z_weighting(min_db):
 
 
 @pytest.mark.parametrize(
-    "kind", list(librosa.core.time_frequency.WEIGHTING_FUNCTIONS))
+    "kind", list(librosa.core.convert.WEIGHTING_FUNCTIONS))
 def test_frequency_weighting(kind):
     freq = np.linspace(2e1, 2e4)
     assert np.allclose(
         librosa.frequency_weighting(freq, kind),
-        librosa.core.time_frequency.WEIGHTING_FUNCTIONS[kind](freq),
+        librosa.core.convert.WEIGHTING_FUNCTIONS[kind](freq),
         0, atol=1e-3)
 
 

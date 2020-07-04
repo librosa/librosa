@@ -46,8 +46,8 @@ from ._cache import cache
 from . import util
 from .util.exceptions import ParameterError
 
-from .core.time_frequency import note_to_hz, hz_to_midi, midi_to_hz, hz_to_octs
-from .core.time_frequency import fft_frequencies, mel_frequencies
+from .core.convert import note_to_hz, hz_to_midi, midi_to_hz, hz_to_octs
+from .core.convert import fft_frequencies, mel_frequencies
 
 __all__ = ['mel',
            'chroma',

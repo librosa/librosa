@@ -16,6 +16,7 @@ Audio loading
     get_duration
     get_samplerate
 
+
 Time-domain processing
 ----------------------
 .. autosummary::
@@ -27,6 +28,7 @@ Time-domain processing
     mu_compress
     mu_expand
 
+
 Signal generation
 -----------------
 .. autosummary::
@@ -35,6 +37,7 @@ Signal generation
     clicks
     tone
     chirp
+
 
 Spectral representations
 ------------------------
@@ -57,6 +60,7 @@ Spectral representations
     fmt
 
     magphase
+
 
 Phase recovery
 --------------
@@ -98,6 +102,7 @@ Magnitude scaling
 
     pcen
 
+
 Time unit conversion
 --------------------
 .. autosummary::
@@ -114,6 +119,7 @@ Time unit conversion
     blocks_to_samples
     blocks_to_time
 
+
 Frequency unit conversion
 -------------------------
 .. autosummary::
@@ -121,13 +127,16 @@ Frequency unit conversion
 
     hz_to_note
     hz_to_midi
+    hz_to_svara_h
+    hz_to_svara_c
     midi_to_hz
     midi_to_note
+    midi_to_svara_h
+    midi_to_svara_c
     note_to_hz
     note_to_midi
-
-    key_to_notes
-    key_to_degrees
+    note_to_svara_h
+    note_to_svara_c
 
     hz_to_mel
     hz_to_octs
@@ -136,6 +145,20 @@ Frequency unit conversion
 
     A4_to_tuning
     tuning_to_A4
+
+
+Music notation
+--------------
+.. autosummary::
+    :toctree: generated/
+
+    key_to_notes
+    key_to_degrees
+
+    mela_to_svara
+    mela_to_degrees
+
+    thaat_to_degrees
 
 
 Frequency range generation

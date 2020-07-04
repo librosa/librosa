@@ -9,7 +9,7 @@ from numba import jit
 
 from . import audio
 from .fft import get_fftlib
-from .time_frequency import cqt_frequencies, note_to_hz
+from .convert import cqt_frequencies, note_to_hz
 from .spectrum import stft, istft
 from .pitch import estimate_tuning
 from .._cache import cache

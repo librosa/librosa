@@ -8,7 +8,7 @@ import scipy
 
 
 from .spectrum import _spectrogram
-from . import time_frequency
+from . import convert
 from .._cache import cache
 from .. import util
 from .. import sequence
@@ -152,7 +152,7 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
 
     # Compute the residual relative to the number of bins
     residual = np.mod(bins_per_octave *
-                      time_frequency.hz_to_octs(frequencies), 1.0)
+                      convert.hz_to_octs(frequencies), 1.0)
 
     # Are we on the wrong side of the semitone?
     # A residual of 0.95 is more likely to be a deviation of -0.05
@@ -291,7 +291,7 @@ def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
     fmin = np.maximum(fmin, 0)
     fmax = np.minimum(fmax, float(sr) / 2)
 
-    fft_freqs = time_frequency.fft_frequencies(sr=sr, n_fft=n_fft)
+    fft_freqs = convert.fft_frequencies(sr=sr, n_fft=n_fft)
 
     # Do the parabolic interpolation everywhere,
     # then figure out where the peaks are
