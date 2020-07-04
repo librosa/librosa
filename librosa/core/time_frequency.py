@@ -1943,7 +1943,7 @@ def key_to_degrees(key):
     return (notes[scale] + pitch_map[tonic] + offset) % 12
 
 
-def midi_to_svara_h(midi, Sa=60, abbr=True, octave=True, unicode=True):
+def midi_to_svara_h(midi, Sa, abbr=True, octave=True, unicode=True):
     """Convert MIDI numbers to Hindustani svara
 
     Parameters
@@ -1993,7 +1993,7 @@ def midi_to_svara_h(midi, Sa=60, abbr=True, octave=True, unicode=True):
     SVARA_MAP_SHORT = list(s[0] for s in SVARA_MAP)
 
     if not np.isscalar(midi):
-        return [midi_to_svara_h(m, Sa=Sa, abbr=abbr, octave=octave, unicode=unicode)
+        return [midi_to_svara_h(m, Sa, abbr=abbr, octave=octave, unicode=unicode)
                 for m in midi]
 
     svara_num = int(np.round(midi - Sa))
@@ -2018,7 +2018,7 @@ def midi_to_svara_h(midi, Sa=60, abbr=True, octave=True, unicode=True):
     return svara
 
 
-def hz_to_svara_h(frequencies, Sa=None, abbr=True, octave=True, unicode=True):
+def hz_to_svara_h(frequencies, Sa, abbr=True, octave=True, unicode=True):
     '''Convert frequencies (in Hz) to Hindustani svara
 
     Note that this conversion assumes 12-tone equal temperament.
@@ -2041,11 +2041,11 @@ def hz_to_svara_h(frequencies, Sa=None, abbr=True, octave=True, unicode=True):
         Sa = note_to_hz('C2')
 
     midis = hz_to_midi(frequencies)
-    return midi_to_svara_h(midis, Sa=hz_to_midi(Sa),
+    return midi_to_svara_h(midis, hz_to_midi(Sa),
                            abbr=abbr, octave=octave, unicode=unicode)
 
 
-def note_to_svara_h(notes, Sa=None, abbr=True, octave=True, unicode=True):
+def note_to_svara_h(notes, Sa, abbr=True, octave=True, unicode=True):
     '''Convert western notes to Hindustani svara
 
     Note that this conversion assumes 12-tone equal temperament.
@@ -2067,7 +2067,7 @@ def note_to_svara_h(notes, Sa=None, abbr=True, octave=True, unicode=True):
 
     midis = note_to_midi(notes, round_midi=False)
 
-    return midi_to_svara_h(midis, Sa=note_to_midi(Sa), abbr=abbr, octave=octave,
+    return midi_to_svara_h(midis, note_to_midi(Sa), abbr=abbr, octave=octave,
                            unicode=unicode)
 
 
@@ -2103,7 +2103,7 @@ def thaat_to_degrees(thaat):
     return np.asarray(THAAT_MAP[thaat.lower()])
 
 
-def midi_to_svara_c(midi, mela, Sa=60, abbr=True, octave=True, unicode=True):
+def midi_to_svara_c(midi, mela, Sa, abbr=True, octave=True, unicode=True):
     '''Convert MIDI numbers to Carnatic svara within a given melakarta raga
 
     Parameters
@@ -2148,7 +2148,7 @@ def midi_to_svara_c(midi, mela, Sa=60, abbr=True, octave=True, unicode=True):
     mela_to_svara
     '''
     if not np.isscalar(midi):
-        return [midi_to_svara_c(m, mela, Sa=Sa, abbr=abbr,
+        return [midi_to_svara_c(m, Sa, mela, abbr=abbr,
                                 octave=octave, unicode=unicode)
                 for m in midi]
 
@@ -2173,7 +2173,7 @@ def midi_to_svara_c(midi, mela, Sa=60, abbr=True, octave=True, unicode=True):
     return svara
 
 
-def hz_to_svara_c(frequencies, mela, Sa=None, abbr=True, octave=True, unicode=True):
+def hz_to_svara_c(frequencies, Sa, mela, abbr=True, octave=True, unicode=True):
     '''Convert frequencies (in Hz) to Carnatic svara
 
     Note that this conversion assumes 12-tone equal temperament.
@@ -2196,11 +2196,11 @@ def hz_to_svara_c(frequencies, mela, Sa=None, abbr=True, octave=True, unicode=Tr
         Sa = note_to_hz('C2')
 
     midis = hz_to_midi(frequencies)
-    return midi_to_svara_c(midis, mela=mela, Sa=hz_to_midi(Sa),
+    return midi_to_svara_c(midis, hz_to_midi(Sa), mela,
                            abbr=abbr, octave=octave, unicode=unicode)
 
 
-def note_to_svara_c(notes, mela, Sa=None, abbr=True, octave=True, unicode=True):
+def note_to_svara_c(notes, Sa, mela, abbr=True, octave=True, unicode=True):
     '''Convert western notes to Carnatic svara
 
     Note that this conversion assumes 12-tone equal temperament.
@@ -2222,7 +2222,7 @@ def note_to_svara_c(notes, mela, Sa=None, abbr=True, octave=True, unicode=True):
 
     midis = note_to_midi(notes, round_midi=False)
 
-    return midi_to_svara_c(midis, mela, Sa=note_to_midi(Sa),
+    return midi_to_svara_c(midis, note_to_midi(Sa), mela
                            abbr=abbr, octave=octave,
                            unicode=unicode)
 

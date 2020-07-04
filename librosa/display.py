@@ -278,7 +278,7 @@ class SvaraFormatter(Formatter):
         if self.mela is None:
             return core.hz_to_svara_h(x, self.Sa, octave=self.octave, abbr=self.abbr)
         else:
-            return core.hz_to_svara_c(x, self.mela, Sa=self.Sa, octave=self.octave, abbr=self.abbr)
+            return core.hz_to_svara_c(x, self.Sa, self.mela, octave=self.octave, abbr=self.abbr)
 
 
 class LogHzFormatter(Formatter):
