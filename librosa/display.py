@@ -938,7 +938,10 @@ def __decorate_axis(axis, ax_type, key='C:maj', Sa=None, mela=None):
 
     elif ax_type == 'cqt_note':
         axis.set_major_formatter(NoteFormatter(key=key))
-        axis.set_major_locator(LogLocator(base=2.0))
+        # Where is C1 relative to 2**k hz?
+        log_C1 = np.log2(core.note_to_hz('C1'))
+        C_offset = 2.0**(log_C1 - np.floor(log_C1))
+        axis.set_major_locator(LogLocator(base=2.0, subs=(C_offset,)))
         axis.set_minor_formatter(NoteFormatter(key=key, major=False))
         axis.set_minor_locator(LogLocator(base=2.0,
                                           subs=2.0**(np.arange(1, 12)/12.0)))
@@ -957,6 +960,9 @@ def __decorate_axis(axis, ax_type, key='C:maj', Sa=None, mela=None):
 
     elif ax_type in ['cqt_hz']:
         axis.set_major_formatter(LogHzFormatter())
+        log_C1 = np.log2(core.note_to_hz('C1'))
+        C_offset = 2.0**(log_C1 - np.floor(log_C1))
+        axis.set_major_locator(LogLocator(base=2.0, subs=(C_offset,)))
         axis.set_major_locator(LogLocator(base=2.0))
         axis.set_minor_formatter(LogHzFormatter(major=False))
         axis.set_minor_locator(LogLocator(base=2.0,
