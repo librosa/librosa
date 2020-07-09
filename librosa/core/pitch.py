@@ -495,12 +495,17 @@ def yin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=None, hop_length=
     array([442.66354675, 441.95299983, 441.58010963, ...,
         871.161732  , 873.99001454, 877.04297681])
     '''
+
+    if fmin is None or fmax is None:
+        raise ParameterError('both "fmin" and "fmax" must be provided')
+
     # Set the default window length if it is not already specified.
     if win_length is None:
         win_length = frame_length // 2
 
-    if win_length > frame_length:
-        raise ParameterError('win_length cannot exceed frame_length')
+    if win_length >= frame_length:
+        raise ParameterError(
+            'win_length={} cannot exceed given frame_length={}'.format(win_length, frame_length))
 
     # Set the default hop if it is not already specified.
     if hop_length is None:
@@ -553,7 +558,7 @@ def yin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=None, hop_length=
 
 
 def pyin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=None, hop_length=None,
-         n_thresholds=100, beta_parameters=(2, 18), boltzmann_parameter=3, resolution=0.1,
+         n_thresholds=100, beta_parameters=(2, 18), boltzmann_parameter=2, resolution=0.1,
          max_transition_rate=35.92, switch_prob=0.01, no_trough_prob=0.01, fill_na=np.nan,
          center=True, pad_mode='reflect'):
     '''Fundamental frequency (F0) estimation using probabilistic YIN (pYIN).
@@ -680,12 +685,17 @@ def pyin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=None, hop_length
     >>> ax.plot(times, f0, label='f0', color='w')
     >>> ax.legend(loc='upper right')
     '''
+
+    if fmin is None or fmax is None:
+        raise ParameterError('both "fmin" and "fmax" must be provided')
+
     # Set the default window length if it is not already specified.
     if win_length is None:
         win_length = frame_length // 2
 
-    if win_length > frame_length:
-        raise ParameterError('win_length cannot exceed frame_length')
+    if win_length >= frame_length:
+        raise ParameterError(
+            'win_length={} cannot exceed given frame_length={}'.format(win_length, frame_length))
 
     # Set the default hop if it is not already specified.
     if hop_length is None:
