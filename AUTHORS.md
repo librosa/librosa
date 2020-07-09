@@ -63,6 +63,7 @@ Contributors
 * beantowel <https://github.com/beantowel>
 * Thor Whalen <https://github.com/thorwhalen>
 * Stefan Sullivan <https://github.com/stefansjs>
+* Benjamin van Niekirk <https://github.com/bshall>
 
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.

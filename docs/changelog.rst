@@ -10,6 +10,8 @@ v0.8.0
 2020-XX-XX
 
 New Features
+    - `#1064`_ `librosa.yin` and `librosa.pyin` for fundamental frequency
+      estimation. *Benjamin van Niekirk*
     - `#1018`_ Variable-Q transform `librosa.vqt`. *Brian McFee, Frank Cwitkowitz*
     - `#1059`_ `libsamplerate` support in `librosa.resample`. *Brian McFee*
     - `#1134`_ perceptual loudness weighting for B, C, D, and Z-weighting. *Bea Steers*
@@ -95,6 +97,7 @@ Other changes
 .. _#1186: https://github.com/librosa/librosa/issues/1186
 .. _#1196: https://github.com/librosa/librosa/issues/1196
 .. _#1198: https://github.com/librosa/librosa/issues/1198
+.. _#1063: https://github.com/librosa/librosa/issues/1063
 
 
 
