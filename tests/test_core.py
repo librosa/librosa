@@ -849,6 +849,68 @@ def test_piptrack_errors():
 
 
 @pytest.mark.parametrize("freq", [110, 220, 440, 880])
+def test_yin_tone(freq):
+    y = librosa.tone(freq, duration=1.0)
+    f0 = librosa.yin(y, fmin=110, fmax=880, center=False)
+    assert np.allclose(np.log2(f0), np.log2(freq), rtol=0, atol=1e-2)
+
+
+def test_yin_chirp():
+    y = librosa.chirp(220, 640, duration=1.0)
+    f0 = librosa.yin(y, fmin=110, fmax=880, center=False)
+    target_f0 = np.load(os.path.join('tests', 'data', 'pitch-yin.npy'))
+    assert np.allclose(np.log2(f0), np.log2(target_f0), rtol=0, atol=1e-2)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize(
+    "fmin,fmax,win_length,frame_length",
+    [
+        (None, None, None, 2048),
+        (110, None, None, 2048),
+        (None, 880, None, 2048),
+        (110, 880, 2049, 2048)
+    ]
+)
+def test_yin_fail(fmin, fmax, win_length, frame_length):
+    y = librosa.tone(110, duration=1.0)
+    librosa.yin(y, fmin=fmin, fmax=fmax, win_length=win_length, frame_length=frame_length)
+
+
+@pytest.mark.parametrize("freq", [110, 220, 440, 880])
+def test_pyin_tone(freq):
+    y = librosa.tone(freq, duration=1.0)
+    f0, _, _ = librosa.pyin(y, fmin=110, fmax=880, center=False)
+    assert np.allclose(np.log2(f0), np.log2(freq), rtol=0, atol=1e-2)
+
+
+def test_pyin_chirp():
+    y = librosa.chirp(220, 640, duration=1.0)
+    y = np.pad(y, (22050,))
+    f0, voiced_flag, _ = librosa.pyin(y, fmin=110, fmax=880, center=False)
+    target_f0 = np.load(os.path.join('tests', 'data', 'pitch-pyin.npy'))
+    # test if correct frames are voiced
+    assert np.array_equal(voiced_flag, target_f0 > 0)
+    # test voiced frames are within one cent of the target
+    assert np.allclose(np.log2(f0[voiced_flag]), np.log2(target_f0[target_f0 > 0]), rtol=0, atol=1e-2)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize(
+    "fmin,fmax,win_length,frame_length",
+    [
+        (None, None, None, 2048),
+        (110, None, None, 2048),
+        (None, 880, None, 2048),
+        (110, 880, 2049, 2048)
+    ]
+)
+def test_pyin_fail(fmin, fmax, win_length, frame_length):
+    y = librosa.tone(110, duration=1.0)
+    librosa.pyin(y, fmin=fmin, fmax=fmax, win_length=win_length, frame_length=frame_length)
+
+
+@pytest.mark.parametrize("freq", [110, 220, 440, 880])
 @pytest.mark.parametrize("n_fft", [1024, 2048, 4096])
 def test_piptrack(freq, n_fft):
 
