@@ -47,7 +47,7 @@ MELAKARTA_MAP = {k: i
                                         'kantamani', 'rishabhapriya', 'latangi',
                                         'vachaspati', 'mechakalyani', 'chitrambhari',
                                         'sucharitra', 'jyotiswarupini', 'dhatuvardhini',
-                                        'nasikabhushani', 'kasalam', 'rasikapriya'], 1)}
+                                        'nasikabhushani', 'kosalam', 'rasikapriya'], 1)}
 
 
 def thaat_to_degrees(thaat):
