@@ -22,6 +22,7 @@ THAAT_MAP = dict(bilaval    =    [0, 2, 4, 5, 7, 9, 11],
                  todi       =    [0, 1, 3, 6, 7, 8, 11],
                  bhairav    =    [0, 1, 4, 5, 7, 8, 11])
 
+# Enumeration will start from 1
 MELAKARTA_MAP = {k: i
                  for i, k in enumerate(['kanakanki', 'ratnangi', 'ganamurti',
                                         'vanaspati', 'manavati', 'tanarupi',
@@ -46,7 +47,7 @@ MELAKARTA_MAP = {k: i
                                         'kantamani', 'rishabhapriya', 'latangi',
                                         'vachaspati', 'mechakalyani', 'chitrambhari',
                                         'sucharitra', 'jyotiswarupini', 'dhatuvardhini',
-                                        'nasikabhushani', 'kasalam', 'rasikapriya'])}
+                                        'nasikabhushani', 'kasalam', 'rasikapriya'], 1)}
 
 
 def thaat_to_degrees(thaat):
@@ -77,7 +78,7 @@ def mela_to_degrees(mela):
     Parameters
     ----------
     mela : str or int
-        Either the name or integer index ([0, 71]) of the melakarta raga
+        Either the name or integer index ([1, 2, ..., 72]) of the melakarta raga
 
     Returns
     -------
@@ -86,11 +87,11 @@ def mela_to_degrees(mela):
     '''
 
     if isinstance(mela, str):
-        index = MELAKARTA_MAP[mela.lower()]
-    elif 0 <= mela < 72:
-        index = mela
+        index = MELAKARTA_MAP[mela.lower()] - 1
+    elif 0 < mela <= 72:
+        index = mela - 1
     else:
-        raise ParameterError('mela={} must be in range [0, 72['.format(mela))
+        raise ParameterError('mela={} must be in range [1, 72]'.format(mela))
 
     # always have Sa [0]
     degrees = [0]
@@ -194,29 +195,29 @@ def mela_to_svara(mela, abbr=True, unicode=True):
 
     Examples
     --------
-    Melakarta #0 (Kanakanki) uses R1, G1, D1, N1
+    Melakarta #1 (Kanakanki) uses R1, G1, D1, N1
 
-    >>> librosa.mela_to_svara(0)
+    >>> librosa.mela_to_svara(1)
     ['S', 'R₁', 'G₁', 'G₂', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'N₁', 'N₂', 'N₃']
 
-    #18 (Jhankaradhwani) uses R2 and G2 so the third svara are Ri:
+    #19 (Jhankaradhwani) uses R2 and G2 so the third svara are Ri:
 
-    >>> librosa.mela_to_svara(18)
+    >>> librosa.mela_to_svara(19)
     ['S', 'R₁', 'R₂', 'G₂', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'N₁', 'N₂', 'N₃']
 
-    #30 (Yagapriya) uses R3 and G3, so third and fourth svara are Ri:
+    #31 (Yagapriya) uses R3 and G3, so third and fourth svara are Ri:
 
-    >>> librosa.mela_to_svara(30)
+    >>> librosa.mela_to_svara(31)
     ['S', 'R₁', 'R₂', 'R₃', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'N₁', 'N₂', 'N₃']
 
-    #33 (Vagadheeswari) uses D2 and N2, so Ni1 becomes Dha2:
+    #34 (Vagadheeswari) uses D2 and N2, so Ni1 becomes Dha2:
 
-    >>> librosa.mela_to_svara(33)
+    >>> librosa.mela_to_svara(34)
     ['S', 'R₁', 'R₂', 'R₃', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'D₂', 'N₂', 'N₃']
 
-    #35 (Chalanattai) uses D3 and N3, so Ni2 becomes Dha3:
+    #36 (Chalanattai) uses D3 and N3, so Ni2 becomes Dha3:
 
-    >>> librosa.mela_to_svara(35)
+    >>> librosa.mela_to_svara(36)
     ['S', 'R₁', 'R₂', 'R₃', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'D₂', 'D₃', 'N₃']
     '''
 
@@ -233,11 +234,11 @@ def mela_to_svara(mela, abbr=True, unicode=True):
                  'Ni\u2083']
 
     if isinstance(mela, str):
-        mela_idx = MELAKARTA_MAP[mela.lower()]
-    elif 0 <= mela < 72:
-        mela_idx = mela
+        mela_idx = MELAKARTA_MAP[mela.lower()] - 1
+    elif 0 < mela <= 72:
+        mela_idx = mela - 1
     else:
-        raise ParameterError('mela={} must be in range [0, 72['.format(mela))
+        raise ParameterError('mela={} must be in range [1, 72]'.format(mela))
 
     # Determine Ri2/Ga1
     lower = mela_idx % 36
