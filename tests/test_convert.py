@@ -530,3 +530,45 @@ def test_blocks_to_time(blocks, block_length, hop_length, sr):
 
     # Check dtype
     assert np.issubdtype(times.dtype, np.float)
+
+
+
+@pytest.mark.parametrize('abbr', [False, True])
+@pytest.mark.parametrize('octave', [False, True])
+@pytest.mark.parametrize('unicode', [False, True])
+@pytest.mark.parametrize('midi', [list(range(36))])
+@pytest.mark.parametrize('Sa', [12])
+def test_midi_to_svara_h(midi, Sa, abbr, octave, unicode):
+
+    svara = librosa.midi_to_svara_h(midi, Sa,
+                                    abbr=abbr,
+                                    octave=octave,
+                                    unicode=unicode)
+
+    svara = np.asarray(svara)
+    assert len(svara) == len(midi)
+
+    if abbr:
+        assert svara[Sa] == 'S'
+    else:
+        assert svara[Sa] == 'Sa'
+
+    if not unicode:
+        for s in svara:
+            assert s.isascii()
+
+    if not abbr:
+        for s in svara:
+            assert 0 < len(s) < 5
+    else:
+        for s in svara:
+            assert 0 < len(s) < 3
+
+    # Octave decorations should separate out per octave
+    if octave:
+        assert not np.all(svara[:12] == svara[12:24])
+        assert not np.all(svara[12:24] == svara[24:])
+    else:
+        assert np.all(svara[:12] == svara[12:24])
+        assert np.all(svara[:12] == svara[24:])
+
