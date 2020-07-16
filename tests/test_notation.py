@@ -70,3 +70,96 @@ def test_key_to_degrees(key, ref_degrees):
     for (d, rd) in zip(degrees, ref_degrees):
         assert d == rd
 
+
+
+def test_list_thaat():
+    thaat = librosa.list_thaat()
+    assert len(thaat) == 10
+
+
+def test_list_mela():
+    melas = librosa.list_mela()
+    assert len(melas) == 72
+    for k in melas:
+        assert 1 <= melas[k] <= 72
+
+
+@pytest.mark.parametrize('thaat', librosa.list_thaat())
+def test_thaat_to_degrees(thaat):
+    degrees = librosa.thaat_to_degrees(thaat)
+    assert len(degrees) == 7
+    assert np.all(degrees >= 0) and np.all(degrees < 12)
+
+
+@pytest.mark.parametrize('mela, idx', librosa.list_mela().items())
+def test_mela_to_degrees(mela, idx):
+    degrees = librosa.mela_to_degrees(mela)
+    assert np.allclose(degrees, librosa.mela_to_degrees(idx))
+    assert len(degrees) == 7
+    assert np.all(degrees >= 0) and np.all(degrees < 12)
+
+    if idx < 37:
+        # check shuddha
+        assert np.isin(5, degrees)
+    else:
+        # check prati
+        assert np.isin(6, degrees)
+
+    # Other checks??
+
+
+@pytest.mark.parametrize('mela, svara',
+        # This list doesn't cover all 72, but it does cover the edge cases
+        [   ( 1 , ['S', 'R₁', 'G₁', 'G₂', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'N₁', 'N₂', 'N₃'] ),
+            ( 8 , ['S', 'R₁', 'R₂', 'G₂', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'D₂', 'N₂', 'N₃'] ),
+            ( 15 , ['S', 'R₁', 'R₂', 'G₂', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'D₂', 'N₂', 'N₃'] ),
+            ( 22 , ['S', 'R₁', 'R₂', 'G₂', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'D₂', 'N₂', 'N₃'] ),
+            ( 29 , ['S', 'R₁', 'R₂', 'G₂', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'D₂', 'N₂', 'N₃'] ),
+            ( 36 , ['S', 'R₁', 'R₂', 'R₃', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'D₂', 'D₃', 'N₃'] ),
+            ( 43 , ['S', 'R₁', 'R₂', 'G₂', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'N₁', 'N₂', 'N₃'] ),
+            ( 50 , ['S', 'R₁', 'R₂', 'G₂', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'D₂', 'N₂', 'N₃'] ),
+            ( 57 , ['S', 'R₁', 'R₂', 'G₂', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'D₂', 'N₂', 'N₃'] ),
+            ( 64 , ['S', 'R₁', 'R₂', 'G₂', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'D₂', 'N₂', 'N₃'] ),
+            ( 71 , ['S', 'R₁', 'R₂', 'R₃', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'D₂', 'N₂', 'N₃'] )])
+@pytest.mark.parametrize('abbr', [False, True])
+@pytest.mark.parametrize('unicode', [False, True])
+def test_mela_to_svara(mela, svara, abbr, unicode):
+    svara_est = librosa.mela_to_svara(mela, abbr=abbr, unicode=unicode)
+
+    for (s1, s2) in zip(svara_est, svara):
+        assert s1[0] == s2[0]
+
+    if abbr:
+        for s in svara_est:
+            assert len(s) in (1, 2)
+    else:
+        for s in svara_est:
+            assert 0 < len(s) < 5
+
+    if not unicode:
+        # If we're in non-unicode mode, this shouldn't raise an exception
+        for s in svara_est:
+            assert s.isascii()
+
+
+@pytest.mark.xfail(raises=KeyError)
+def test_mela_to_degrees_badmela():
+    librosa.mela_to_degrees('some garbage')
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_mela_to_degrees_badidx():
+    librosa.mela_to_degrees(0)
+
+
+@pytest.mark.xfail(raises=KeyError)
+def test_mela_to_svara_badmela():
+    librosa.mela_to_svara('some garbage')
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_mela_to_svara_badidx():
+    librosa.mela_to_svara(0)
+
+
+
