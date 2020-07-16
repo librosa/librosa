@@ -574,3 +574,30 @@ def test_midi_to_svara_h(midi, Sa, abbr, octave, unicode):
         assert np.all(svara[:12] == svara[12:24])
         assert np.all(svara[:12] == svara[24:])
 
+
+@pytest.mark.parametrize('f,Sa,abbr,octave,unicode,result', [
+    (440, 440, False, False, True, 'Sa'),
+    (880, 440, False, False, True, 'Sa'),
+    (880, 440, True, False, True, 'S'),
+    (880, 440, True, True, False, "S'"),
+    (880, 440, True, True, True, "Ṡ"),
+    (880, 440, False, True, True, "Ṡa"),
+    (220, 440, False, True, True, "Ṣa"),
+    (660, 440, True, True, True, "P")])
+def test_hz_to_svara_h(f, Sa, abbr, octave, unicode, result):
+    s = librosa.hz_to_svara_h(f, Sa, abbr=abbr, octave=octave, unicode=unicode)
+    assert s == result
+
+
+@pytest.mark.parametrize('note,Sa,abbr,octave,unicode,result', [
+    ('A4', 'A4', False, False, True, 'Sa'),
+    ('A5', 'A4', False, False, True, 'Sa'),
+    ('A5', 'A4', True, False, True, 'S'),
+    ('A5', 'A4', True, True, False, "S'"),
+    ('A5', 'A4', True, True, True, "Ṡ"),
+    ('A5', 'A4', False, True, True, "Ṡa"),
+    ('A3', 'A4', False, True, True, "Ṣa"),
+    ('E5', 'A4', True, True, True, "P")])
+def test_note_to_svara_h(note, Sa, abbr, octave, unicode, result):
+    s = librosa.note_to_svara_h(note, Sa, abbr=abbr, octave=octave, unicode=unicode)
+    assert s == result
