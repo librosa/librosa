@@ -22,6 +22,7 @@ Axis formatting
     SvaraFormatter
     LogHzFormatter
     ChromaFormatter
+    ChromaSvaraFormatter
     TonnetzFormatter
 
 Miscellaneous
@@ -349,6 +350,37 @@ class ChromaFormatter(Formatter):
         return core.midi_to_note(int(x), octave=False, cents=False, key=self.key)
 
 
+class ChromaSvaraFormatter(Formatter):
+    '''A formatter for chroma axes with svara instead of notes.
+
+    If mela is given, Carnatic svara names will be used.
+
+    Otherwise, Hindustani svara names will be used.
+
+    If `Sa` is not given, it will default to 0 (equivalent to `C`).
+
+    See Also
+    --------
+    ChromaFormatter
+
+    '''
+    def __init__(self, Sa=None, mela=None, abbr=True):
+        if Sa is None:
+            Sa = 0
+        self.Sa = Sa
+        self.mela = mela
+        self.abbr = abbr
+
+    def __call__(self, x, pos=None):
+        '''Format for chroma positions'''
+        if self.mela is not None:
+            return core.midi_to_svara_c(int(x), Sa=self.Sa, mela=self.mela,
+                                        octave=False, abbr=self.abbr)
+        else:
+            return core.midi_to_svara_h(int(x), Sa=self.Sa,
+                                        octave=False, abbr=self.abbr)
+
+
 class TonnetzFormatter(Formatter):
     '''A formatter for tonnetz axes
 
@@ -584,7 +616,7 @@ def specshow(data, x_coords=None, y_coords=None,
              tuning=0.0,
              bins_per_octave=12,
              key='C:maj',
-             Sa=None, mela=None,
+             Sa=None, mela=None, thaat=None,
              ax=None,
              **kwargs):
     '''Display a spectrogram/chromagram/cqt/etc.
@@ -628,7 +660,12 @@ def specshow(data, x_coords=None, y_coords=None,
         Categorical types:
 
         - 'chroma' : pitches are determined by the chroma filters.
-          Pitch classes are arranged at integer locations (0-11).
+          Pitch classes are arranged at integer locations (0-11) according to
+          a given key.
+
+        - `chroma_h`, `chroma_c`: pitches are determined by chroma filters,
+          and labeled as svara in the Hindustani (`chroma_h`) or Carnatic (`chroma_c`)
+          according to a given thaat (Hindustani) or melakarta raga (Carnatic).
 
         - 'tonnetz' : axes are labeled by Tonnetz dimensions (0-5)
         - 'frames' : markers are shown as frame counts.
@@ -683,6 +720,20 @@ def specshow(data, x_coords=None, y_coords=None,
 
     key : str
         The reference key to use when using note axes (`cqt_note`, `chroma`).
+
+    Sa : float or int
+        If using Hindustani or Carnatic svara axis decorations, specify Sa.
+
+        For `cqt_svara`, ``Sa`` should be specified as a frequency in Hz.
+
+        For `chroma_c` or `chroma_h`, ``Sa`` should correspond to the position
+        of Sa within the chromagram.
+
+    mela : str or int, optional
+        If using `chroma_c` or `cqt_svara` display mode, specify the melakarta raga.
+
+    thaat : str, optional
+        If using `chroma_h` display mode, specify the parent thaat.
 
     ax : matplotlib.axes.Axes or None
         Axes to plot on instead of the default `plt.gca()`.
@@ -770,8 +821,8 @@ def specshow(data, x_coords=None, y_coords=None,
     __scale_axes(axes, y_axis, 'y')
 
     # Construct tickers and locators
-    __decorate_axis(axes.xaxis, x_axis, key=key, Sa=Sa, mela=mela)
-    __decorate_axis(axes.yaxis, y_axis, key=key, Sa=Sa, mela=mela)
+    __decorate_axis(axes.xaxis, x_axis, key=key, Sa=Sa, mela=mela, thaat=thaat)
+    __decorate_axis(axes.yaxis, y_axis, key=key, Sa=Sa, mela=mela, thaat=thaat)
 
     return out
 
@@ -807,6 +858,8 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
                  'cqt_note': __coord_cqt_hz,
                  'cqt_svara': __coord_cqt_hz,
                  'chroma': __coord_chroma,
+                 'chroma_c': __coord_chroma,
+                 'chroma_h': __coord_chroma,
                  'time': __coord_time,
                  's': __coord_time,
                  'ms': __coord_time,
@@ -879,7 +932,7 @@ def __scale_axes(axes, ax_type, which):
     scaler(mode, **kwargs)
 
 
-def __decorate_axis(axis, ax_type, key='C:maj', Sa=None, mela=None):
+def __decorate_axis(axis, ax_type, key='C:maj', Sa=None, mela=None, thaat=None):
     '''Configure axis tickers, locators, and labels'''
 
     if ax_type == 'tonnetz':
@@ -894,6 +947,28 @@ def __decorate_axis(axis, ax_type, key='C:maj', Sa=None, mela=None):
                                             np.add.outer(12 * np.arange(10),
                                                          degrees).ravel()))
         axis.set_label_text('Pitch class')
+
+    elif ax_type == 'chroma_h':
+        axis.set_major_formatter(ChromaSvaraFormatter(Sa=Sa))
+        if thaat is None:
+            # If no thaat is given, show all svara
+            degrees = np.arange(12)
+        else:
+            degrees = core.thaat_to_degrees(thaat)
+        # Rotate degrees relative to Sa
+        degrees = np.mod(degrees + Sa, 12)
+        axis.set_major_locator(FixedLocator(0.5 + np.add.outer(12 * np.arange(10),
+                                                               degrees).ravel()))
+        axis.set_label_text('Svara')
+
+    elif ax_type == 'chroma_c':
+        axis.set_major_formatter(ChromaSvaraFormatter(Sa=Sa, mela=mela))
+        degrees = core.mela_to_degrees(mela)
+        # Rotate degrees relative to Sa
+        degrees = np.mod(degrees + Sa, 12)
+        axis.set_major_locator(FixedLocator(0.5 + np.add.outer(12 * np.arange(10),
+                                                               degrees).ravel()))
+        axis.set_label_text('Svara')
 
     elif ax_type in ['tempo', 'fourier_tempo']:
         axis.set_major_formatter(ScalarFormatter())
