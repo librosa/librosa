@@ -1889,6 +1889,7 @@ def midi_to_svara_c(midi, mela, Sa, abbr=True, octave=True, unicode=True):
     note_to_svara_c
     mela_to_degrees
     mela_to_svara
+    list_mela
     '''
     if not np.isscalar(midi):
         return [midi_to_svara_c(m, Sa, mela, abbr=abbr,
@@ -1956,6 +1957,7 @@ def note_to_svara_c(notes, Sa, mela, abbr=True, octave=True, unicode=True):
 
     See Also
     --------
+    list_mela
 
     Examples
     --------

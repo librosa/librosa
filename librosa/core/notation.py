@@ -9,7 +9,8 @@ from ..util.exceptions import ParameterError
 
 __all__ = ['key_to_degrees', 'key_to_notes',
            'mela_to_degrees', 'mela_to_svara',
-           'thaat_to_degrees']
+           'thaat_to_degrees',
+           'list_mela', 'list_thaat']
 
 THAAT_MAP = dict(bilaval    =    [0, 2, 4, 5, 7, 9, 11],
                  khamaj     =    [0, 2, 4, 5, 7, 9, 10],
@@ -83,7 +84,12 @@ def mela_to_degrees(mela):
     Returns
     -------
     degrees : np.ndarray
-        
+        A list of the seven svara indicies (starting from 0=Sa)
+        contained in the specified raga
+
+    Examples
+    --------
+    >>>
     '''
 
     if isinstance(mela, str):
@@ -192,6 +198,7 @@ def mela_to_svara(mela, abbr=True, unicode=True):
     --------
     key_to_notes
     mela_to_degrees
+    list_mela
 
     Examples
     --------
@@ -218,6 +225,11 @@ def mela_to_svara(mela, abbr=True, unicode=True):
     #36 (Chalanattai) uses D3 and N3, so Ni2 becomes Dha3:
 
     >>> librosa.mela_to_svara(36)
+    ['S', 'R₁', 'R₂', 'R₃', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'D₂', 'D₃', 'N₃']
+
+    # You can also query by raga name instead of index:
+
+    >>> librosa.mela_to_svara('chalanattai')
     ['S', 'R₁', 'R₂', 'R₃', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'D₂', 'D₃', 'N₃']
     '''
 
@@ -287,6 +299,62 @@ def mela_to_svara(mela, abbr=True, unicode=True):
                      for s in svara_map]
 
     return list(svara_map)
+
+
+def list_mela():
+    """List melakarta ragas by name and index.
+
+    Returns
+    -------
+    mela_map : dict
+        A dictionary mapping melakarta raga names to indices (1, 2, ..., 72)
+
+    Examples
+    --------
+    >>> librosa.list_mela()
+    {'kanakanki': 1,
+     'ratnangi': 2,
+     'ganamurti': 3,
+     'vanaspati': 4,
+     ...}
+
+    See Also
+    --------
+    mela_to_degrees
+    mela_to_svara
+    list_thaat
+    """
+    return MELAKARTA_MAP.copy()
+
+
+def list_thaat():
+    """List supported thaats by name.
+
+    Returns
+    -------
+    thaats : list
+        A list of supported thaats
+
+    Examples
+    --------
+    >>> librosa.list_thaat()
+    ['bilaval',
+     'khamaj',
+     'kafi',
+     'asavari',
+     'bhairavi',
+     'kalyan',
+     'marva',
+     'poorvi',
+     'todi',
+     'bhairav']
+
+    See Also
+    --------
+    list_mela
+    thaat_to_degrees
+    """
+    return list(THAAT_MAP.keys())
 
 
 @cache(level=10)
