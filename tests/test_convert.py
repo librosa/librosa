@@ -3,6 +3,7 @@
 # CREATED:2015-02-14 19:13:49 by Brian McFee <brian.mcfee@nyu.edu>
 """Unit tests for time and frequency conversion"""
 import os
+import sys
 
 try:
     os.environ.pop("LIBROSA_CACHE_DIR")
@@ -553,9 +554,10 @@ def test_midi_to_svara_h(midi, Sa, abbr, octave, unicode):
     else:
         assert svara[Sa] == 'Sa'
 
-    if not unicode:
-        for s in svara:
-            assert s.isascii()
+    if sys.version >= '3.7':
+        if not unicode:
+            for s in svara:
+                assert s.isascii()
 
     if not abbr:
         for s in svara:
