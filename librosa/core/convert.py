@@ -1931,7 +1931,7 @@ def note_to_svara_h(notes, Sa, abbr=True, octave=True, unicode=True):
                            unicode=unicode)
 
 
-def midi_to_svara_c(midi, mela, Sa, abbr=True, octave=True, unicode=True):
+def midi_to_svara_c(midi, Sa, mela, abbr=True, octave=True, unicode=True):
     '''Convert MIDI numbers to Carnatic svara within a given melakarta raga
 
     Parameters
@@ -1939,13 +1939,13 @@ def midi_to_svara_c(midi, mela, Sa, abbr=True, octave=True, unicode=True):
     midi : numeric
         The MIDI numbers to convert
 
-    mela : int or str
-        The name or index of the melakarta raga
-
     Sa : number > 0
         MIDI number of the reference Sa.
 
         Default: 60 (261.6 Hz, `C4`)
+
+    mela : int or str
+        The name or index of the melakarta raga
 
     abbr : bool
         If `True` (default) return abbreviated names ('S', 'R1', 'R2', 'G1', 'G2', ...)
