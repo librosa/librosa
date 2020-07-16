@@ -1723,13 +1723,11 @@ def midi_to_svara_h(midi, Sa, abbr=True, octave=True, unicode=True):
 
     Parameters
     ----------
-    midi : numeric
-        The MIDI numbers to convert
+    midi : numeric or np.ndarray
+        The MIDI number or numbers to convert
 
     Sa : number > 0
         MIDI number of the reference Sa.
-
-        Default: 60 (261.6 Hz, `C4`)
 
     abbr : bool
         If `True` (default) return abbreviated names ('S', 'r', 'R', 'g', 'G', ...)
@@ -1757,9 +1755,30 @@ def midi_to_svara_h(midi, Sa, abbr=True, octave=True, unicode=True):
     --------
     hz_to_svara_h
     note_to_svara_h
+    midi_to_svara_c
+    midi_to_note
 
     Examples
     --------
+    The first three svara with Sa at midi number 60:
+
+    >>> librosa.midi_svara_h([60, 61, 62], Sa=60)
+    ['S', 'r', 'R']
+
+    With Sa=67, midi 60-62 are in the octave below:
+
+    >>> librosa.midi_to_svara_h([60, 61, 62], Sa=67)
+    ['ṃ', 'Ṃ', 'P̣']
+
+    Or without unicode decoration:
+
+    >>> librosa.midi_to_svara_h([60, 61, 62], Sa=67, unicode=False)
+    ['m,', 'M,', 'P,']
+
+    Or going up an octave, with Sa=60, and using unabbreviated notes
+
+    >>> librosa.midi_to_svara_h([72, 73, 74], Sa=60, abbr=False)
+    ['Ṡa', 'ṙe', 'Ṙe']
     """
 
     SVARA_MAP = ['Sa', 're', 'Re', 'ga', 'Ga', 'ma', 'Ma',
@@ -1800,20 +1819,54 @@ def hz_to_svara_h(frequencies, Sa, abbr=True, octave=True, unicode=True):
 
     Parameters
     ----------
+    frequencies : positive number or np.ndarray
+        The frequencies (in Hz) to convert
+
+    Sa : positive number
+        Frequency (in Hz) of the reference Sa.
+
+    abbr : bool
+        If `True` (default) return abbreviated names ('S', 'r', 'R', 'g', 'G', ...)
+
+        If `False`, return long-form names ('Sa', 're', 'Re', 'ga', 'Ga', ...)
+
+    octave : bool
+        If `True`, decorate svara in neighboring octaves with over- or under-dots.
+
+        If `False`, ignore octave height information.
+
+    unicode : bool
+        If `True`, use unicode symbols to decorate octave information.
+
+        If `False`, use low-order ASCII (' and ,) for octave decorations.
+
+        This only takes effect if `octave=True`.
 
     Returns
     -------
+    svara : str or list of str
+        The svara corresponding to the given frequency/frequencies
 
     See Also
     --------
     midi_to_svara_h
+    note_to_svara_h
+    hz_to_svara_c
+    hz_to_note
 
     Examples
     --------
-    '''
+    Convert Sa in three octaves:
 
-    if Sa is None:
-        Sa = note_to_hz('C2')
+    >>> librosa.hz_to_svara_h([261/2, 261, 261*2], Sa=261)
+    ['Ṣ', 'S', 'Ṡ']
+
+    Convert one octave worth of frequencies with full names:
+
+    >>> freqs = librosa.cqt_frequencies(12, fmin=261)
+    >>> librosa.hz_to_svara_h(freqs, Sa=freqs[0], abbr=False)
+    ['Sa', 're', 'Re', 'ga', 'Ga', 'ma', 'Ma', 'Pa', 'dha', 'Dha', 'ni', 'Ni']
+    '''
 
     midis = hz_to_midi(frequencies)
     return midi_to_svara_h(midis, hz_to_midi(Sa),
@@ -1827,18 +1880,50 @@ def note_to_svara_h(notes, Sa, abbr=True, octave=True, unicode=True):
 
     Parameters
     ----------
+    notes : str or list of str
+        Notes to convert (e.g., `'C#'` or `['C4', 'Db4', 'D4']`
+
+    Sa : str
+        Note corresponding to Sa (e.g., `'C'` or `'C5'`).
+
+        If no octave information is provided, it will default to octave 0
+        (``C0`` ~= 16 Hz)
+
+    abbr : bool
+        If `True` (default) return abbreviated names ('S', 'r', 'R', 'g', 'G', ...)
+
+        If `False`, return long-form names ('Sa', 're', 'Re', 'ga', 'Ga', ...)
+
+    octave : bool
+        If `True`, decorate svara in neighboring octaves with over- or under-dots.
+
+        If `False`, ignore octave height information.
+
+    unicode : bool
+        If `True`, use unicode symbols to decorate octave information.
+
+        If `False`, use low-order ASCII (' and ,) for octave decorations.
+
+        This only takes effect if `octave=True`.
 
     Returns
     -------
+    svara : str or list of str
+        The svara corresponding to the given notes
 
     See Also
     --------
+    midi_to_svara_h
+    hz_to_svara_h
+    note_to_svara_c
+    note_to_midi
+    note_to_hz
 
     Examples
     --------
+    >>> librosa.note_to_svara_h(['C4', 'G4', 'C5', 'G5'], Sa='C5')
+    ['Ṣ', 'P̣', 'S', 'P']
     '''
-    if Sa is None:
-        Sa = 'C2'
 
     midis = note_to_midi(notes, round_midi=False)
 
@@ -1924,20 +2009,58 @@ def hz_to_svara_c(frequencies, Sa, mela, abbr=True, octave=True, unicode=True):
 
     Parameters
     ----------
+    frequencies : positive number or np.ndarray
+        The frequencies (in Hz) to convert
+
+    Sa : positive number
+        Frequency (in Hz) of the reference Sa.
+
+    mela : int [1, 72] or string
+        The melakarta raga to use.
+
+    abbr : bool
+        If `True` (default) return abbreviated names ('S', 'R1', 'R2', 'G1', 'G2', ...)
+
+        If `False`, return long-form names ('Sa', 'Ri1', 'Ri2', 'Ga1', 'Ga2', ...)
+
+    octave : bool
+        If `True`, decorate svara in neighboring octaves with over- or under-dots.
+
+        If `False`, ignore octave height information.
+
+    unicode : bool
+        If `True`, use unicode symbols to decorate octave information.
+
+        If `False`, use low-order ASCII (' and ,) for octave decorations.
+
+        This only takes effect if `octave=True`.
 
     Returns
     -------
+    svara : str or list of str
+        The svara corresponding to the given frequency/frequencies
 
     See Also
     --------
+    note_to_svara_c
     midi_to_svara_c
+    hz_to_svara_h
+    hz_to_note
+    list_mela
 
     Examples
     --------
-    '''
+    Convert Sa in three octaves:
 
-    if Sa is None:
-        Sa = note_to_hz('C2')
+    >>> librosa.hz_to_svara_c([261/2, 261, 261*2], Sa=261, mela='kanakanki')
+    ['Ṣ', 'S', 'Ṡ']
+
+    Convert one octave worth of frequencies using melakarta #36:
+
+    >>> freqs = librosa.cqt_frequencies(12, fmin=261)
+    >>> librosa.hz_to_svara_c(freqs, Sa=freqs[0], mela=36)
+    ['S', 'R₁', 'R₂', 'R₃', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'D₂', 'D₃', 'N₃']
+    '''
 
     midis = hz_to_midi(frequencies)
     return midi_to_svara_c(midis, hz_to_midi(Sa), mela,
@@ -1951,20 +2074,54 @@ def note_to_svara_c(notes, Sa, mela, abbr=True, octave=True, unicode=True):
 
     Parameters
     ----------
+    notes : str or list of str
+        Notes to convert (e.g., `'C#'` or `['C4', 'Db4', 'D4']`
+
+    Sa : str
+        Note corresponding to Sa (e.g., `'C'` or `'C5'`).
+
+        If no octave information is provided, it will default to octave 0
+        (``C0`` ~= 16 Hz)
+
+    mela : str or int [1, 72]
+        Melakarta raga name or index
+
+    abbr : bool
+        If `True` (default) return abbreviated names ('S', 'R1', 'R2', 'G1', 'G2', ...)
+
+        If `False`, return long-form names ('Sa', 'Ri1', 'Ri2', 'Ga1', 'Ga2', ...)
+
+    octave : bool
+        If `True`, decorate svara in neighboring octaves with over- or under-dots.
+
+        If `False`, ignore octave height information.
+
+    unicode : bool
+        If `True`, use unicode symbols to decorate octave information.
+
+        If `False`, use low-order ASCII (' and ,) for octave decorations.
+
+        This only takes effect if `octave=True`.
 
     Returns
     -------
+    svara : str or list of str
+        The svara corresponding to the given notes
 
     See Also
     --------
+    midi_to_svara_c
+    hz_to_svara_c
+    note_to_svara_h
+    note_to_midi
+    note_to_hz
     list_mela
 
     Examples
     --------
+    >>> librosa.note_to_svara_h(['C4', 'G4', 'C5', 'D5', 'G5'], Sa='C5', mela=1)
+    ['Ṣ', 'P̣', 'S', 'G₁', 'P']
     '''
-    if Sa is None:
-        Sa = 'C2'
-
     midis = note_to_midi(notes, round_midi=False)
 
     return midi_to_svara_c(midis, note_to_midi(Sa), mela,
