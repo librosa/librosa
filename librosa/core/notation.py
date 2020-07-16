@@ -69,6 +69,15 @@ def thaat_to_degrees(thaat):
     --------
     key_to_degrees
     mela_to_degrees
+    list_thaat
+
+    Examples
+    --------
+    >>> librosa.thaat_to_degrees('bilaval')
+    array([ 0,  2,  4,  5,  7,  9, 11])
+
+    >>> librosa.thaat_to_degrees('todi')
+    array([ 0,  1,  3,  6,  7,  8, 11])
     '''
     return np.asarray(THAAT_MAP[thaat.lower()])
 
@@ -87,9 +96,23 @@ def mela_to_degrees(mela):
         A list of the seven svara indicies (starting from 0=Sa)
         contained in the specified raga
 
+    See Also
+    --------
+    thaat_to_degrees
+    key_to_degres
+    list_mela
+
     Examples
     --------
-    >>>
+    Melakarta #1 (kanakanki):
+
+    >>> librosa.mela_to_degrees(1)
+    array([0, 1, 2, 5, 7, 8, 9])
+
+    Or using a name directly:
+
+    >>> librosa.mela_to_degrees('kanakanki')
+    array([0, 1, 2, 5, 7, 8, 9])
     '''
 
     if isinstance(mela, str):
