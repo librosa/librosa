@@ -728,6 +728,7 @@ def specshow(data, x_coords=None, y_coords=None,
 
         For `chroma_c` or `chroma_h`, ``Sa`` should correspond to the position
         of Sa within the chromagram.
+        If not provided, Sa will default to 0 (equivalent to `C`)
 
     mela : str or int, optional
         If using `chroma_c` or `cqt_svara` display mode, specify the melakarta raga.
@@ -949,6 +950,8 @@ def __decorate_axis(axis, ax_type, key='C:maj', Sa=None, mela=None, thaat=None):
         axis.set_label_text('Pitch class')
 
     elif ax_type == 'chroma_h':
+        if Sa is None:
+            Sa = 0
         axis.set_major_formatter(ChromaSvaraFormatter(Sa=Sa))
         if thaat is None:
             # If no thaat is given, show all svara
@@ -962,6 +965,8 @@ def __decorate_axis(axis, ax_type, key='C:maj', Sa=None, mela=None, thaat=None):
         axis.set_label_text('Svara')
 
     elif ax_type == 'chroma_c':
+        if Sa is None:
+            Sa = 0
         axis.set_major_formatter(ChromaSvaraFormatter(Sa=Sa, mela=mela))
         degrees = core.mela_to_degrees(mela)
         # Rotate degrees relative to Sa
