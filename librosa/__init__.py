@@ -160,6 +160,9 @@ Music notation
 
     thaat_to_degrees
 
+    list_mela
+    list_thaat
+
 
 Frequency range generation
 --------------------------
@@ -218,7 +221,6 @@ from .util.exceptions import *  # pylint: disable=wildcard-import
 
 # Exporting data loader at the top level
 from .util.files import example, ex
-
 
 # Exporting all core functions is okay here: suppress the import warning
 from .core import *  # pylint: disable=wildcard-import
