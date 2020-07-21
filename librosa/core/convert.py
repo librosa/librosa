@@ -2052,7 +2052,7 @@ def hz_to_svara_c(frequencies, Sa, mela, abbr=True, octave=True, unicode=True):
     --------
     Convert Sa in three octaves:
 
-    >>> librosa.hz_to_svara_c([261/2, 261, 261*2], Sa=261, mela='kanakanki')
+    >>> librosa.hz_to_svara_c([261/2, 261, 261*2], Sa=261, mela='kanakangi')
     ['Ṣ', 'S', 'Ṡ']
 
     Convert one octave worth of frequencies using melakarta #36:

@@ -25,29 +25,29 @@ THAAT_MAP = dict(bilaval    =    [0, 2, 4, 5, 7, 9, 11],
 
 # Enumeration will start from 1
 MELAKARTA_MAP = {k: i
-                 for i, k in enumerate(['kanakanki', 'ratnangi', 'ganamurti',
-                                        'vanaspati', 'manavati', 'tanarupi',
-                                        'senavati', 'hanumatodi', 'dhenuka',
-                                        'natakapriya', 'kokilapriya', 'rupavati',
-                                        'gayakapriya', 'vakulabharanam', 'mayamalavagoulai',
-                                        'chakravaham', 'suryakantam', 'hatakambhari',
+                 for i, k in enumerate(['kanakangi', 'ratnangi', 'ganamurthi',
+                                        'vanaspathi', 'manavathi', 'tanarupi',
+                                        'senavathi', 'hanumathodi', 'dhenuka',
+                                        'natakapriya', 'kokilapriya', 'rupavathi',
+                                        'gayakapriya', 'vakulabharanam', 'mayamalavagaula',
+                                        'chakravakom', 'suryakantham', 'hatakambari',
                                         'jhankaradhwani', 'natabhairavi', 'keeravani',
-                                        'kharaharapriya', 'gowrimanohari', 'varunapriya',
-                                        'mararanjani', 'charukesi', 'sarasangi',
+                                        'kharaharapriya', 'gaurimanohari', 'varunapriya',
+                                        'mararanjini', 'charukesi', 'sarasangi',
                                         'harikambhoji', 'dheerasankarabharanam', 'naganandini',
-                                        'yagapriya', 'ragavardhini', 'gangeyabhusani',
-                                        'vagadheeswari', 'sulini', 'chalanattai',
+                                        'yagapriya', 'ragavardhini', 'gangeyabhushani',
+                                        'vagadheeswari', 'sulini', 'chalanatta',
                                         'salagam', 'jalarnavam', 'jhalavarali',
-                                        'navaneetam', 'pavani', 'raghupriya',
-                                        'gavambodhi', 'bhavapriya', 'subhapantuvarali',
-                                        'shadvigamargini', 'suvarnangi', 'divyamani',
+                                        'navaneetham', 'pavani', 'raghupriya',
+                                        'gavambodhi', 'bhavapriya', 'subhapanthuvarali',
+                                        'shadvidhamargini', 'suvarnangi', 'divyamani',
                                         'dhavalambari', 'namanarayani', 'kamavardhini',
                                         'ramapriya', 'gamanasrama', 'viswambhari',
                                         'syamalangi', 'shanmukhapriya', 'simhendramadhyamam',
-                                        'hemavati', 'dharmavati', 'nitimati',
-                                        'kantamani', 'rishabhapriya', 'latangi',
-                                        'vachaspati', 'mechakalyani', 'chitrambhari',
-                                        'sucharitra', 'jyotiswarupini', 'dhatuvardhini',
+                                        'hemavathi', 'dharmavathi', 'neethimathi',
+                                        'kanthamani', 'rishabhapriya', 'latangi',
+                                        'vachaspathi', 'mechakalyani', 'chitrambari',
+                                        'sucharitra', 'jyotisvarupini', 'dhatuvardhini',
                                         'nasikabhushani', 'kosalam', 'rasikapriya'], 1)}
 
 
@@ -104,14 +104,14 @@ def mela_to_degrees(mela):
 
     Examples
     --------
-    Melakarta #1 (kanakanki):
+    Melakarta #1 (kanakangi):
 
     >>> librosa.mela_to_degrees(1)
     array([0, 1, 2, 5, 7, 8, 9])
 
     Or using a name directly:
 
-    >>> librosa.mela_to_degrees('kanakanki')
+    >>> librosa.mela_to_degrees('kanakangi')
     array([0, 1, 2, 5, 7, 8, 9])
     '''
 
@@ -225,7 +225,7 @@ def mela_to_svara(mela, abbr=True, unicode=True):
 
     Examples
     --------
-    Melakarta #1 (Kanakanki) uses R1, G1, D1, N1
+    Melakarta #1 (Kanakangi) uses R1, G1, D1, N1
 
     >>> librosa.mela_to_svara(1)
     ['S', 'R₁', 'G₁', 'G₂', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'N₁', 'N₂', 'N₃']
@@ -245,14 +245,14 @@ def mela_to_svara(mela, abbr=True, unicode=True):
     >>> librosa.mela_to_svara(34)
     ['S', 'R₁', 'R₂', 'R₃', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'D₂', 'N₂', 'N₃']
 
-    #36 (Chalanattai) uses D3 and N3, so Ni2 becomes Dha3:
+    #36 (Chalanatta) uses D3 and N3, so Ni2 becomes Dha3:
 
     >>> librosa.mela_to_svara(36)
     ['S', 'R₁', 'R₂', 'R₃', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'D₂', 'D₃', 'N₃']
 
     # You can also query by raga name instead of index:
 
-    >>> librosa.mela_to_svara('chalanattai')
+    >>> librosa.mela_to_svara('chalanatta')
     ['S', 'R₁', 'R₂', 'R₃', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'D₂', 'D₃', 'N₃']
     '''
 
@@ -327,6 +327,13 @@ def mela_to_svara(mela, abbr=True, unicode=True):
 def list_mela():
     """List melakarta ragas by name and index.
 
+    Melakarta raga names are transcribed from [#]_, with the exception of #45
+    (subhapanthuvarali).
+
+    .. [#] Bhagyalekshmy, S. (1990).
+        Ragas in Carnatic music.
+        South Asia Books.
+
     Returns
     -------
     mela_map : dict
@@ -335,10 +342,10 @@ def list_mela():
     Examples
     --------
     >>> librosa.list_mela()
-    {'kanakanki': 1,
+    {'kanakangi': 1,
      'ratnangi': 2,
-     'ganamurti': 3,
-     'vanaspati': 4,
+     'ganamurthi': 3,
+     'vanaspathi': 4,
      ...}
 
     See Also
