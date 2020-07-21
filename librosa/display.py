@@ -885,8 +885,8 @@ def __check_axes(axes):
         import matplotlib.pyplot as plt
         axes = plt.gca()
     elif not isinstance(axes, Axes):
-        raise ValueError("`axes` must be an instance of matplotlib.axes.Axes. "
-                         "Found type(axes)={}".format(type(axes)))
+        raise ParameterError("`axes` must be an instance of matplotlib.axes.Axes. "
+                             "Found type(axes)={}".format(type(axes)))
     return axes
 
 
