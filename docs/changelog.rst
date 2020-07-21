@@ -7,7 +7,7 @@ v0.8
 
 v0.8.0
 ------
-2020-XX-XX
+2020-07-22
 
 New Features
     - `#1203`_ Support for Carnatic and Hindustani notations. *Brian McFee, Kaushik Sripathi Hatti, Kaustuv Kanti Ganguli*
