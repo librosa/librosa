@@ -10,6 +10,12 @@ v0.8.0
 2020-XX-XX
 
 New Features
+    - `#1203`_ Support for Carnatic and Hindustani notations. *Brian McFee, Kaushik Sripathi Hatti, Kaustuv Kanti Ganguli*
+        - `librosa.hz_to_svara_c`, `librosa.hz_to_svara_h`
+        - `librosa.midi_to_svara_c`, `librosa.midi_to_svara_h`
+        - `librosa.note_to_svara_c`, `librosa.note_to_svara_h`
+        - `librosa.list_mela`, `librosa.list_thaat`
+        - and `librosa.display.specshow` support.
     - `#1064`_ `librosa.yin` and `librosa.pyin` for fundamental frequency
       estimation. *Benjamin van Niekirk*
     - `#1018`_ Variable-Q transform `librosa.vqt`. *Brian McFee, Frank Cwitkowitz*
@@ -67,6 +73,7 @@ Other changes
     - `#1183`_ `librosa.feature.tonnetz` can now pass-through arguments to `librosa.feature.chroma_cqt`. *Brian McFee*
     - `#1186`_ `librosa.display.cmap` now returns binary colormaps for boolean data. *Brian McFee*
 
+.. _#1203: https://github.com/librosa/librosa/issues/1203
 .. _#1018: https://github.com/librosa/librosa/issues/1018
 .. _#1059: https://github.com/librosa/librosa/issues/1059
 .. _#1134: https://github.com/librosa/librosa/issues/1134
