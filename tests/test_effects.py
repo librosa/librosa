@@ -53,13 +53,20 @@ def test_time_stretch(ysr, rate, ctx):
 @pytest.mark.parametrize("n_steps", [-1.5, 1.5, 5])
 @pytest.mark.parametrize(
     "bins_per_octave,ctx",
-    [(12, dnr()), (24, dnr()), (-1, pytest.raises(librosa.ParameterError)), (0, pytest.raises(librosa.ParameterError))],
+    [
+        (12, dnr()),
+        (24, dnr()),
+        (-1, pytest.raises(librosa.ParameterError)),
+        (0, pytest.raises(librosa.ParameterError)),
+    ],
 )
 def test_pitch_shift(ysr, n_steps, bins_per_octave, ctx):
 
     with ctx:
         y, sr = ysr
-        ys = librosa.effects.pitch_shift(y, sr, n_steps, bins_per_octave=bins_per_octave)
+        ys = librosa.effects.pitch_shift(
+            y, sr, n_steps, bins_per_octave=bins_per_octave
+        )
 
         orig_duration = librosa.get_duration(y, sr=sr)
         new_duration = librosa.get_duration(ys, sr=sr)
@@ -189,7 +196,11 @@ def test_trim_empty():
     assert idx[1] == 0
 
 
-@pytest.fixture(scope="module", params=[0, 1, 2, 3], ids=["constant", "end-silent", "full-signal", "gaps"])
+@pytest.fixture(
+    scope="module",
+    params=[0, 1, 2, 3],
+    ids=["constant", "end-silent", "full-signal", "gaps"],
+)
 def y_split_idx(request):
 
     sr = 8192
@@ -231,7 +242,9 @@ def test_split(y_split_idx, frame_length, hop_length, top_db):
 
     y, idx_true = y_split_idx
 
-    intervals = librosa.effects.split(y, top_db=top_db, frame_length=frame_length, hop_length=hop_length)
+    intervals = librosa.effects.split(
+        y, top_db=top_db, frame_length=frame_length, hop_length=hop_length
+    )
 
     assert np.all(intervals <= y.shape[-1])
 

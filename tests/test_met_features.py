@@ -27,7 +27,12 @@ def met_stft(y, n_fft, hop_length, win_length, normalize):
 
     S = np.abs(
         librosa.stft(
-            y, n_fft=n_fft, hop_length=hop_length, win_length=win_length, window=scipy.signal.hamming, center=False
+            y,
+            n_fft=n_fft,
+            hop_length=hop_length,
+            win_length=win_length,
+            window=scipy.signal.hamming,
+            center=False,
         )
     )
 
@@ -37,7 +42,9 @@ def met_stft(y, n_fft, hop_length, win_length, normalize):
     return S
 
 
-@pytest.mark.parametrize("infile", files(os.path.join("tests", "data", "met-centroid-*.mat")))
+@pytest.mark.parametrize(
+    "infile", files(os.path.join("tests", "data", "met-centroid-*.mat"))
+)
 def test_spectral_centroid(infile):
     DATA = load(infile)
 
@@ -49,12 +56,16 @@ def test_spectral_centroid(infile):
     # spectralCentroid uses normalized spectra
     S = met_stft(y, n_fft, hop_length, n_fft, True)
 
-    centroid = librosa.feature.spectral_centroid(S=S, sr=sr, n_fft=n_fft, hop_length=hop_length)
+    centroid = librosa.feature.spectral_centroid(
+        S=S, sr=sr, n_fft=n_fft, hop_length=hop_length
+    )
 
     assert np.allclose(centroid, DATA["centroid"])
 
 
-@pytest.mark.parametrize("infile", files(os.path.join("tests", "data", "met-contrast-*.mat")))
+@pytest.mark.parametrize(
+    "infile", files(os.path.join("tests", "data", "met-contrast-*.mat"))
+)
 def test_spectral_contrast(infile):
     DATA = load(infile)
 
@@ -66,12 +77,16 @@ def test_spectral_contrast(infile):
     # spectralContrast uses normalized spectra
     S = met_stft(y, n_fft, hop_length, n_fft, True)
 
-    contrast = librosa.feature.spectral_contrast(S=S, sr=sr, n_fft=n_fft, hop_length=hop_length, linear=True)
+    contrast = librosa.feature.spectral_contrast(
+        S=S, sr=sr, n_fft=n_fft, hop_length=hop_length, linear=True
+    )
 
     assert np.allclose(contrast, DATA["contrast"], rtol=1e-3, atol=1e-2)
 
 
-@pytest.mark.parametrize("infile", files(os.path.join("tests", "data", "met-rolloff-*.mat")))
+@pytest.mark.parametrize(
+    "infile", files(os.path.join("tests", "data", "met-rolloff-*.mat"))
+)
 def test_spectral_rolloff(infile):
     DATA = load(infile)
 
@@ -84,12 +99,16 @@ def test_spectral_rolloff(infile):
     # spectralRolloff uses normalized spectra
     S = met_stft(y, n_fft, hop_length, n_fft, True)
 
-    rolloff = librosa.feature.spectral_rolloff(S=S, sr=sr, n_fft=n_fft, hop_length=hop_length, roll_percent=pct)
+    rolloff = librosa.feature.spectral_rolloff(
+        S=S, sr=sr, n_fft=n_fft, hop_length=hop_length, roll_percent=pct
+    )
 
     assert np.allclose(rolloff, DATA["rolloff"])
 
 
-@pytest.mark.parametrize("infile", files(os.path.join("tests", "data", "met-bandwidth-*.mat")))
+@pytest.mark.parametrize(
+    "infile", files(os.path.join("tests", "data", "met-bandwidth-*.mat"))
+)
 def test_spectral_bandwidth(infile):
     DATA = load(infile)
 
@@ -104,7 +123,13 @@ def test_spectral_bandwidth(infile):
     # normalized
     # metlab uses p=1, other folks use p=2
     bw = librosa.feature.spectral_bandwidth(
-        S=S, sr=sr, n_fft=n_fft, hop_length=hop_length, centroid=DATA["centroid"], norm=False, p=1
+        S=S,
+        sr=sr,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        centroid=DATA["centroid"],
+        norm=False,
+        p=1,
     )
 
     # METlab implementation takes the mean, not the sum
