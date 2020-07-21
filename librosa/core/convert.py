@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-'''Time and frequency utilities'''
+'''Unit conversion utilities'''
 
 import re
 import numpy as np
-from .._cache import cache
+from . import notation
 from ..util.exceptions import ParameterError
 
 __all__ = ['frames_to_samples', 'frames_to_time',
@@ -34,8 +34,9 @@ __all__ = ['frames_to_samples', 'frames_to_time',
            'multi_frequency_weighting',
            'samples_like',
            'times_like',
-           'key_to_notes',
-           'key_to_degrees']
+           'midi_to_svara_h', 'midi_to_svara_c',
+           'note_to_svara_h', 'note_to_svara_c',
+           'hz_to_svara_h', 'hz_to_svara_c']
 
 
 def frames_to_samples(frames, hop_length=512, n_fft=None):
@@ -638,7 +639,7 @@ def midi_to_note(midi, octave=True, cents=False, key='C:maj', unicode=True):
     if not np.isscalar(midi):
         return [midi_to_note(x, octave=octave, cents=cents, key=key, unicode=unicode) for x in midi]
 
-    note_map = key_to_notes(key=key, unicode=unicode)
+    note_map = notation.key_to_notes(key=key, unicode=unicode)
 
     note_num = int(np.round(midi))
     note_cents = int(100 * np.around(midi - note_num, 2))
@@ -1717,222 +1718,412 @@ def samples_like(X, hop_length=512, n_fft=None, axis=-1):
     return frames_to_samples(frames, hop_length=hop_length, n_fft=n_fft)
 
 
-@cache(level=10)
-def key_to_notes(key, unicode=True):
-    '''Lists all 12 note names in the chromatic scale, as spelled according to
-    a given key (major or minor).
-
-    This function exists to resolve enharmonic equivalences between different
-    spellings for the same pitch (e.g. C♯ vs D♭), and is primarily useful when producing
-    human-readable outputs (e.g. plotting) for pitch content.
-
-    Note names are decided by the following rules:
-
-    1. If the tonic of the key has an accidental (sharp or flat), that accidental will be
-       used consistently for all notes.
-
-    2. If the tonic does not have an accidental, accidentals will be inferred to minimize
-       the total number used for diatonic scale degrees.
-
-    3. If there is a tie (e.g., in the case of C:maj vs A:min), sharps will be preferred.
+def midi_to_svara_h(midi, Sa, abbr=True, octave=True, unicode=True):
+    """Convert MIDI numbers to Hindustani svara
 
     Parameters
     ----------
-    key : string
-        Must be in the form TONIC:key.  Tonic must be upper case (``CDEFGAB``),
-        key must be lower-case (``maj`` or ``min``).
+    midi : numeric or np.ndarray
+        The MIDI number or numbers to convert
 
-        Single accidentals (``b!♭`` for flat, or ``#♯`` for sharp) are supported.
+    Sa : number > 0
+        MIDI number of the reference Sa.
 
-        Examples: ``C:maj, Db:min, A♭:min``.
+    abbr : bool
+        If `True` (default) return abbreviated names ('S', 'r', 'R', 'g', 'G', ...)
 
-    unicode: bool
-        If ``True`` (default), use Unicode symbols (♯𝄪♭𝄫)for accidentals.
+        If `False`, return long-form names ('Sa', 're', 'Re', 'ga', 'Ga', ...)
 
-        If ``False``, Unicode symbols will be mapped to low-order ASCII representations::
+    octave : bool
+        If `True`, decorate svara in neighboring octaves with over- or under-dots.
 
-            ♯ -> #, 𝄪 -> ##, ♭ -> b, 𝄫 -> bb
+        If `False`, ignore octave height information.
+
+    unicode : bool
+        If `True`, use unicode symbols to decorate octave information.
+
+        If `False`, use low-order ASCII (' and ,) for octave decorations.
+
+        This only takes effect if `octave=True`.
 
     Returns
     -------
-    notes : list
-        ``notes[k]`` is the name for semitone ``k`` (starting from C)
-        under the given key.  All chromatic notes (0 through 11) are
-        included.
+    svara : str or list of str
+        The svara corresponding to the given MIDI number(s)
 
     See Also
     --------
+    hz_to_svara_h
+    note_to_svara_h
+    midi_to_svara_c
     midi_to_note
 
     Examples
     --------
-    `C:maj` will use all sharps
+    The first three svara with Sa at midi number 60:
 
-    >>> librosa.key_to_notes('C:maj')
-    ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
+    >>> librosa.midi_svara_h([60, 61, 62], Sa=60)
+    ['S', 'r', 'R']
 
-    `A:min` has the same notes
+    With Sa=67, midi 60-62 are in the octave below:
 
-    >>> librosa.key_to_notes('A:min')
-    ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
+    >>> librosa.midi_to_svara_h([60, 61, 62], Sa=67)
+    ['ṃ', 'Ṃ', 'P̣']
 
-    `A♯:min` will use sharps, but spell note 0 (`C`) as `B♯`
+    Or without unicode decoration:
 
-    >>> librosa.key_to_notes('A#:min')
-    ['B♯', 'C♯', 'D', 'D♯', 'E', 'E♯', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
+    >>> librosa.midi_to_svara_h([60, 61, 62], Sa=67, unicode=False)
+    ['m,', 'M,', 'P,']
 
-    `G♯:maj` will use a double-sharp to spell note 7 (`G`) as `F𝄪`:
+    Or going up an octave, with Sa=60, and using unabbreviated notes
 
-    >>> librosa.key_to_notes('G#:maj')
-    ['B♯', 'C♯', 'D', 'D♯', 'E', 'E♯', 'F♯', 'F𝄪', 'G♯', 'A', 'A♯', 'B']
+    >>> librosa.midi_to_svara_h([72, 73, 74], Sa=60, abbr=False)
+    ['Ṡa', 'ṙe', 'Ṙe']
+    """
 
-    `F♭:min` will use double-flats
+    SVARA_MAP = ['Sa', 're', 'Re', 'ga', 'Ga', 'ma', 'Ma',
+                 'Pa', 'dha', 'Dha', 'ni', 'Ni']
 
-    >>> librosa.key_to_notes('Fb:min')
-    ['D𝄫', 'D♭', 'E𝄫', 'E♭', 'F♭', 'F', 'G♭', 'A𝄫', 'A♭', 'B𝄫', 'B♭', 'C♭']
-    '''
+    SVARA_MAP_SHORT = list(s[0] for s in SVARA_MAP)
 
-    # Parse the key signature
-    match = re.match(r'^(?P<tonic>[A-Ga-g])'
-                     r'(?P<accidental>[#♯b!♭]?)'
-                     r':(?P<scale>(maj|min)(or)?)$',
-                     key)
-    if not match:
-        raise ParameterError('Improper key format: {:s}'.format(key))
+    if not np.isscalar(midi):
+        return [midi_to_svara_h(m, Sa, abbr=abbr, octave=octave, unicode=unicode)
+                for m in midi]
 
-    pitch_map = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
-    acc_map = {'#': 1, '': 0, 'b': -1, '!': -1, '♯': 1, '♭': -1}
+    svara_num = int(np.round(midi - Sa))
 
-    tonic = match.group('tonic').upper()
-    accidental = match.group('accidental')
-    offset = acc_map[accidental]
-
-    scale = match.group('scale')[:3].lower()
-
-    # Determine major or minor
-    major = (scale == 'maj')
-
-    # calculate how many clockwise steps we are on CoF (== # sharps)
-    if major:
-        tonic_number = ((pitch_map[tonic] + offset) * 7) % 12
+    if abbr:
+        svara = SVARA_MAP_SHORT[svara_num % 12]
     else:
-        tonic_number = ((pitch_map[tonic] + offset) * 7 + 9) % 12
+        svara = SVARA_MAP[svara_num % 12]
 
-    # Decide if using flats or sharps
-    # Logic here is as follows:
-    #   1. respect the given notation for the tonic.
-    #      Sharp tonics will always use sharps, likewise flats.
-    #   2. If no accidental in the tonic, try to minimize accidentals.
-    #   3. If there's a tie for accidentals, use sharp for major and flat for minor.
+    if octave:
+        if 24 > svara_num >= 12:
+            if unicode:
+                svara = svara[0] + "\u0307" + svara[1:]
+            else:
+                svara += "'"
+        elif -12 <= svara_num < 0:
+            if unicode:
+                svara = svara[0] + "\u0323" + svara[1:]
+            else:
+                svara += ","
 
-    if offset < 0:
-        # use flats explicitly
-        use_sharps = False
-
-    elif offset > 0:
-        # use sharps explicitly
-        use_sharps = True
-
-    elif 0 <= tonic_number < 6:
-        use_sharps = True
-
-    elif tonic_number > 6:
-        use_sharps = False
-
-    # Basic note sequences for simple keys
-    notes_sharp = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
-    notes_flat = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B']
-
-    # These apply when we have >= 6 sharps
-    sharp_corrections = [(5, 'E♯'), (0, 'B♯'), (7, 'F𝄪'),
-                         (2, 'C𝄪'), (9, 'G𝄪'), (4, 'D𝄪'), (11, 'A𝄪')]
-
-    # These apply when we have >= 6 flats
-    flat_corrections = [(11, 'C♭'), (4, 'F♭'), (9, 'B𝄫'),
-                        (2, 'E𝄫'), (7, 'A𝄫'), (0, 'D𝄫')]  # last would be (5, 'G𝄫')
-
-    # Apply a mod-12 correction to distinguish B#:maj from C:maj
-    n_sharps = tonic_number
-    if tonic_number == 0 and tonic == 'B':
-        n_sharps = 12
-
-    if use_sharps:
-        # This will only execute if n_sharps >= 6
-        for n in range(0, n_sharps - 6 + 1):
-            index, name = sharp_corrections[n]
-            notes_sharp[index] = name
-
-        notes = notes_sharp
-    else:
-        n_flats = (12 - tonic_number) % 12
-
-        # This will only execute if tonic_number <= 6
-        for n in range(0, n_flats - 6 + 1):
-            index, name = flat_corrections[n]
-            notes_flat[index] = name
-
-        notes = notes_flat
-
-    # Finally, apply any unicode down-translation if necessary
-    if not unicode:
-        translations = str.maketrans({'♯': '#', '𝄪': '##', '♭': 'b', '𝄫': 'bb'})
-        notes = list(n.translate(translations) for n in notes)
-
-    return notes
+    return svara
 
 
-def key_to_degrees(key):
-    """Construct the diatonic scale degrees for a given key.
+def hz_to_svara_h(frequencies, Sa, abbr=True, octave=True, unicode=True):
+    '''Convert frequencies (in Hz) to Hindustani svara
+
+    Note that this conversion assumes 12-tone equal temperament.
 
     Parameters
     ----------
-    key : str
-        Must be in the form TONIC:key.  Tonic must be upper case (``CDEFGAB``),
-        key must be lower-case (``maj`` or ``min``).
+    frequencies : positive number or np.ndarray
+        The frequencies (in Hz) to convert
 
-        Single accidentals (``b!♭`` for flat, or ``#♯`` for sharp) are supported.
+    Sa : positive number
+        Frequency (in Hz) of the reference Sa.
 
-        Examples: ``C:maj, Db:min, A♭:min``.
+    abbr : bool
+        If `True` (default) return abbreviated names ('S', 'r', 'R', 'g', 'G', ...)
+
+        If `False`, return long-form names ('Sa', 're', 'Re', 'ga', 'Ga', ...)
+
+    octave : bool
+        If `True`, decorate svara in neighboring octaves with over- or under-dots.
+
+        If `False`, ignore octave height information.
+
+    unicode : bool
+        If `True`, use unicode symbols to decorate octave information.
+
+        If `False`, use low-order ASCII (' and ,) for octave decorations.
+
+        This only takes effect if `octave=True`.
 
     Returns
     -------
-    degrees : np.ndarray
-        An array containing the semitone numbers (0=C, 1=C#, ... 11=B)
-        for each of the seven scale degrees in the given key, starting
-        from the tonic.
+    svara : str or list of str
+        The svara corresponding to the given frequency/frequencies
 
     See Also
     --------
-    key_to_notes
+    midi_to_svara_h
+    note_to_svara_h
+    hz_to_svara_c
+    hz_to_note
 
     Examples
     --------
-    >>> librosa.key_to_degrees('C:maj')
-    array([ 0,  2,  4,  5,  7,  9, 11])
+    Convert Sa in three octaves:
 
-    >>> librosa.key_to_degrees('C#:maj')
-    array([ 1,  3,  5,  6,  8, 10,  0])
+    >>> librosa.hz_to_svara_h([261/2, 261, 261*2], Sa=261)
+    ['Ṣ', 'S', 'Ṡ']
 
-    >>> librosa.key_to_degrees('A:min')
-    array([ 9, 11,  0,  2,  4,  5,  7])
+    Convert one octave worth of frequencies with full names:
 
-    """
-    notes = dict(maj=np.array([0, 2, 4, 5, 7, 9, 11]),
-                 min=np.array([0, 2, 3, 5, 7, 8, 10]))
+    >>> freqs = librosa.cqt_frequencies(12, fmin=261)
+    >>> librosa.hz_to_svara_h(freqs, Sa=freqs[0], abbr=False)
+    ['Sa', 're', 'Re', 'ga', 'Ga', 'ma', 'Ma', 'Pa', 'dha', 'Dha', 'ni', 'Ni']
+    '''
 
-    match = re.match(r'^(?P<tonic>[A-Ga-g])'
-                     r'(?P<accidental>[#♯b!♭]?)'
-                     r':(?P<scale>(maj|min)(or)?)$',
-                     key)
-    if not match:
-        raise ParameterError('Improper key format: {:s}'.format(key))
+    midis = hz_to_midi(frequencies)
+    return midi_to_svara_h(midis, hz_to_midi(Sa),
+                           abbr=abbr, octave=octave, unicode=unicode)
 
-    pitch_map = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
-    acc_map = {'#': 1, '': 0, 'b': -1, '!': -1, '♯': 1, '♭': -1}
-    tonic = match.group('tonic').upper()
-    accidental = match.group('accidental')
-    offset = acc_map[accidental]
 
-    scale = match.group('scale')[:3].lower()
+def note_to_svara_h(notes, Sa, abbr=True, octave=True, unicode=True):
+    '''Convert western notes to Hindustani svara
 
-    return (notes[scale] + pitch_map[tonic] + offset) % 12
+    Note that this conversion assumes 12-tone equal temperament.
+
+    Parameters
+    ----------
+    notes : str or list of str
+        Notes to convert (e.g., `'C#'` or `['C4', 'Db4', 'D4']`
+
+    Sa : str
+        Note corresponding to Sa (e.g., `'C'` or `'C5'`).
+
+        If no octave information is provided, it will default to octave 0
+        (``C0`` ~= 16 Hz)
+
+    abbr : bool
+        If `True` (default) return abbreviated names ('S', 'r', 'R', 'g', 'G', ...)
+
+        If `False`, return long-form names ('Sa', 're', 'Re', 'ga', 'Ga', ...)
+
+    octave : bool
+        If `True`, decorate svara in neighboring octaves with over- or under-dots.
+
+        If `False`, ignore octave height information.
+
+    unicode : bool
+        If `True`, use unicode symbols to decorate octave information.
+
+        If `False`, use low-order ASCII (' and ,) for octave decorations.
+
+        This only takes effect if `octave=True`.
+
+    Returns
+    -------
+    svara : str or list of str
+        The svara corresponding to the given notes
+
+    See Also
+    --------
+    midi_to_svara_h
+    hz_to_svara_h
+    note_to_svara_c
+    note_to_midi
+    note_to_hz
+
+    Examples
+    --------
+    >>> librosa.note_to_svara_h(['C4', 'G4', 'C5', 'G5'], Sa='C5')
+    ['Ṣ', 'P̣', 'S', 'P']
+    '''
+
+    midis = note_to_midi(notes, round_midi=False)
+
+    return midi_to_svara_h(midis, note_to_midi(Sa), abbr=abbr, octave=octave,
+                           unicode=unicode)
+
+
+def midi_to_svara_c(midi, Sa, mela, abbr=True, octave=True, unicode=True):
+    '''Convert MIDI numbers to Carnatic svara within a given melakarta raga
+
+    Parameters
+    ----------
+    midi : numeric
+        The MIDI numbers to convert
+
+    Sa : number > 0
+        MIDI number of the reference Sa.
+
+        Default: 60 (261.6 Hz, `C4`)
+
+    mela : int or str
+        The name or index of the melakarta raga
+
+    abbr : bool
+        If `True` (default) return abbreviated names ('S', 'R1', 'R2', 'G1', 'G2', ...)
+
+        If `False`, return long-form names ('Sa', 'Ri1', 'Ri2', 'Ga1', 'Ga2', ...)
+
+    octave : bool
+        If `True`, decorate svara in neighboring octaves with over- or under-dots.
+
+        If `False`, ignore octave height information.
+
+    unicode : bool
+        If `True`, use unicode symbols to decorate octave information and subscript
+        numbers.
+
+        If `False`, use low-order ASCII (' and ,) for octave decorations.
+
+    Returns
+    -------
+    svara : str or list of str
+        The svara corresponding to the given MIDI number(s)
+
+    See Also
+    --------
+    hz_to_svara_c
+    note_to_svara_c
+    mela_to_degrees
+    mela_to_svara
+    list_mela
+    '''
+    if not np.isscalar(midi):
+        return [midi_to_svara_c(m, Sa, mela, abbr=abbr,
+                                octave=octave, unicode=unicode)
+                for m in midi]
+
+    svara_num = int(np.round(midi - Sa))
+
+    svara_map = notation.mela_to_svara(mela, abbr=abbr, unicode=unicode)
+
+    svara = svara_map[svara_num % 12]
+
+    if octave:
+        if 24 > svara_num >= 12:
+            if unicode:
+                svara = svara[0] + "\u0307" + svara[1:]
+            else:
+                svara += "'"
+        elif -12 <= svara_num < 0:
+            if unicode:
+                svara = svara[0] + "\u0323" + svara[1:]
+            else:
+                svara += ","
+
+    return svara
+
+
+def hz_to_svara_c(frequencies, Sa, mela, abbr=True, octave=True, unicode=True):
+    '''Convert frequencies (in Hz) to Carnatic svara
+
+    Note that this conversion assumes 12-tone equal temperament.
+
+    Parameters
+    ----------
+    frequencies : positive number or np.ndarray
+        The frequencies (in Hz) to convert
+
+    Sa : positive number
+        Frequency (in Hz) of the reference Sa.
+
+    mela : int [1, 72] or string
+        The melakarta raga to use.
+
+    abbr : bool
+        If `True` (default) return abbreviated names ('S', 'R1', 'R2', 'G1', 'G2', ...)
+
+        If `False`, return long-form names ('Sa', 'Ri1', 'Ri2', 'Ga1', 'Ga2', ...)
+
+    octave : bool
+        If `True`, decorate svara in neighboring octaves with over- or under-dots.
+
+        If `False`, ignore octave height information.
+
+    unicode : bool
+        If `True`, use unicode symbols to decorate octave information.
+
+        If `False`, use low-order ASCII (' and ,) for octave decorations.
+
+        This only takes effect if `octave=True`.
+
+    Returns
+    -------
+    svara : str or list of str
+        The svara corresponding to the given frequency/frequencies
+
+    See Also
+    --------
+    note_to_svara_c
+    midi_to_svara_c
+    hz_to_svara_h
+    hz_to_note
+    list_mela
+
+    Examples
+    --------
+    Convert Sa in three octaves:
+
+    >>> librosa.hz_to_svara_c([261/2, 261, 261*2], Sa=261, mela='kanakangi')
+    ['Ṣ', 'S', 'Ṡ']
+
+    Convert one octave worth of frequencies using melakarta #36:
+
+    >>> freqs = librosa.cqt_frequencies(12, fmin=261)
+    >>> librosa.hz_to_svara_c(freqs, Sa=freqs[0], mela=36)
+    ['S', 'R₁', 'R₂', 'R₃', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'D₂', 'D₃', 'N₃']
+    '''
+
+    midis = hz_to_midi(frequencies)
+    return midi_to_svara_c(midis, hz_to_midi(Sa), mela,
+                           abbr=abbr, octave=octave, unicode=unicode)
+
+
+def note_to_svara_c(notes, Sa, mela, abbr=True, octave=True, unicode=True):
+    '''Convert western notes to Carnatic svara
+
+    Note that this conversion assumes 12-tone equal temperament.
+
+    Parameters
+    ----------
+    notes : str or list of str
+        Notes to convert (e.g., `'C#'` or `['C4', 'Db4', 'D4']`
+
+    Sa : str
+        Note corresponding to Sa (e.g., `'C'` or `'C5'`).
+
+        If no octave information is provided, it will default to octave 0
+        (``C0`` ~= 16 Hz)
+
+    mela : str or int [1, 72]
+        Melakarta raga name or index
+
+    abbr : bool
+        If `True` (default) return abbreviated names ('S', 'R1', 'R2', 'G1', 'G2', ...)
+
+        If `False`, return long-form names ('Sa', 'Ri1', 'Ri2', 'Ga1', 'Ga2', ...)
+
+    octave : bool
+        If `True`, decorate svara in neighboring octaves with over- or under-dots.
+
+        If `False`, ignore octave height information.
+
+    unicode : bool
+        If `True`, use unicode symbols to decorate octave information.
+
+        If `False`, use low-order ASCII (' and ,) for octave decorations.
+
+        This only takes effect if `octave=True`.
+
+    Returns
+    -------
+    svara : str or list of str
+        The svara corresponding to the given notes
+
+    See Also
+    --------
+    midi_to_svara_c
+    hz_to_svara_c
+    note_to_svara_h
+    note_to_midi
+    note_to_hz
+    list_mela
+
+    Examples
+    --------
+    >>> librosa.note_to_svara_h(['C4', 'G4', 'C5', 'D5', 'G5'], Sa='C5', mela=1)
+    ['Ṣ', 'P̣', 'S', 'G₁', 'P']
+    '''
+    midis = note_to_midi(notes, round_midi=False)
+
+    return midi_to_svara_c(midis, note_to_midi(Sa), mela,
+                           abbr=abbr, octave=octave,
+                           unicode=unicode)

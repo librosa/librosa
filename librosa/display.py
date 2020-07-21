@@ -19,8 +19,10 @@ Axis formatting
 
     TimeFormatter
     NoteFormatter
+    SvaraFormatter
     LogHzFormatter
     ChromaFormatter
+    ChromaSvaraFormatter
     TonnetzFormatter
 
 Miscellaneous
@@ -210,6 +212,76 @@ class NoteFormatter(Formatter):
         return core.hz_to_note(int(x), octave=self.octave, cents=cents, key=self.key)
 
 
+class SvaraFormatter(Formatter):
+    '''Ticker formatter for Svara
+
+    Parameters
+    ----------
+    octave : bool
+        If ``True``, display the octave number along with the note name.
+
+        Otherwise, only show the note name (and cent deviation)
+
+    major : bool
+        If ``True``, ticks are always labeled.
+
+        If ``False``, ticks are only labeled if the span is less than 2 octaves
+
+    Sa : number > 0
+        Frequency (in Hz) of Sa
+
+    mela : str or int
+        For Carnatic svara, the index or name of the melakarta raga in question
+
+        To use Hindustani svara, set ``mela=None``
+
+    See also
+    --------
+    NoteFormatter
+    matplotlib.ticker.Formatter
+    librosa.hz_to_svara_c
+    librosa.hz_to_svara_h
+
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> values = librosa.midi_to_hz(np.arange(48, 72))
+    >>> fig, ax = plt.subplots(nrows=2)
+    >>> ax[0].bar(np.arange(len(values)), values)
+    >>> ax[0].set(ylabel='Hz')
+    >>> ax[1].bar(np.arange(len(values)), values)
+    >>> ax[1].yaxis.set_major_formatter(librosa.display.SvaraFormatter(261))
+    >>> ax[1].set(ylabel='Note')
+    '''
+    def __init__(self, Sa, octave=True, major=True, abbr=False, mela=None):
+
+        if Sa is None:
+            raise ParameterError('Sa frequency is required for svara display formatting')
+
+        self.Sa = Sa
+        self.octave = octave
+        self.major = major
+        self.abbr = abbr
+        self.mela = mela
+
+    def __call__(self, x, pos=None):
+
+        if x <= 0:
+            return ''
+
+        # Only use cent precision if our vspan is less than an octave
+        vmin, vmax = self.axis.get_view_interval()
+
+        if not self.major and vmax > 4 * max(1, vmin):
+            return ''
+
+        if self.mela is None:
+            return core.hz_to_svara_h(x, self.Sa, octave=self.octave, abbr=self.abbr)
+        else:
+            return core.hz_to_svara_c(x, self.Sa, self.mela, octave=self.octave, abbr=self.abbr)
+
+
 class LogHzFormatter(Formatter):
     '''Ticker formatter for logarithmic frequency
 
@@ -276,6 +348,37 @@ class ChromaFormatter(Formatter):
     def __call__(self, x, pos=None):
         '''Format for chroma positions'''
         return core.midi_to_note(int(x), octave=False, cents=False, key=self.key)
+
+
+class ChromaSvaraFormatter(Formatter):
+    '''A formatter for chroma axes with svara instead of notes.
+
+    If mela is given, Carnatic svara names will be used.
+
+    Otherwise, Hindustani svara names will be used.
+
+    If `Sa` is not given, it will default to 0 (equivalent to `C`).
+
+    See Also
+    --------
+    ChromaFormatter
+
+    '''
+    def __init__(self, Sa=None, mela=None, abbr=True):
+        if Sa is None:
+            Sa = 0
+        self.Sa = Sa
+        self.mela = mela
+        self.abbr = abbr
+
+    def __call__(self, x, pos=None):
+        '''Format for chroma positions'''
+        if self.mela is not None:
+            return core.midi_to_svara_c(int(x), Sa=self.Sa, mela=self.mela,
+                                        octave=False, abbr=self.abbr)
+        else:
+            return core.midi_to_svara_h(int(x), Sa=self.Sa,
+                                        octave=False, abbr=self.abbr)
 
 
 class TonnetzFormatter(Formatter):
@@ -513,6 +616,7 @@ def specshow(data, x_coords=None, y_coords=None,
              tuning=0.0,
              bins_per_octave=12,
              key='C:maj',
+             Sa=None, mela=None, thaat=None,
              ax=None,
              **kwargs):
     '''Display a spectrogram/chromagram/cqt/etc.
@@ -545,6 +649,7 @@ def specshow(data, x_coords=None, y_coords=None,
         - 'mel' : frequencies are determined by the mel scale.
         - 'cqt_hz' : frequencies are determined by the CQT scale.
         - 'cqt_note' : pitches are determined by the CQT scale.
+        - `cqt_svara` : like `cqt_note` but using Hindustani or Carnatic svara
 
         All frequency types are plotted in units of Hz.
 
@@ -555,7 +660,12 @@ def specshow(data, x_coords=None, y_coords=None,
         Categorical types:
 
         - 'chroma' : pitches are determined by the chroma filters.
-          Pitch classes are arranged at integer locations (0-11).
+          Pitch classes are arranged at integer locations (0-11) according to
+          a given key.
+
+        - `chroma_h`, `chroma_c`: pitches are determined by chroma filters,
+          and labeled as svara in the Hindustani (`chroma_h`) or Carnatic (`chroma_c`)
+          according to a given thaat (Hindustani) or melakarta raga (Carnatic).
 
         - 'tonnetz' : axes are labeled by Tonnetz dimensions (0-5)
         - 'frames' : markers are shown as frame counts.
@@ -610,6 +720,21 @@ def specshow(data, x_coords=None, y_coords=None,
 
     key : str
         The reference key to use when using note axes (`cqt_note`, `chroma`).
+
+    Sa : float or int
+        If using Hindustani or Carnatic svara axis decorations, specify Sa.
+
+        For `cqt_svara`, ``Sa`` should be specified as a frequency in Hz.
+
+        For `chroma_c` or `chroma_h`, ``Sa`` should correspond to the position
+        of Sa within the chromagram.
+        If not provided, Sa will default to 0 (equivalent to `C`)
+
+    mela : str or int, optional
+        If using `chroma_c` or `cqt_svara` display mode, specify the melakarta raga.
+
+    thaat : str, optional
+        If using `chroma_h` display mode, specify the parent thaat.
 
     ax : matplotlib.axes.Axes or None
         Axes to plot on instead of the default `plt.gca()`.
@@ -697,8 +822,8 @@ def specshow(data, x_coords=None, y_coords=None,
     __scale_axes(axes, y_axis, 'y')
 
     # Construct tickers and locators
-    __decorate_axis(axes.xaxis, x_axis, key=key)
-    __decorate_axis(axes.yaxis, y_axis, key=key)
+    __decorate_axis(axes.xaxis, x_axis, key=key, Sa=Sa, mela=mela, thaat=thaat)
+    __decorate_axis(axes.yaxis, y_axis, key=key, Sa=Sa, mela=mela, thaat=thaat)
 
     return out
 
@@ -732,7 +857,10 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
                  'cqt': __coord_cqt_hz,
                  'cqt_hz': __coord_cqt_hz,
                  'cqt_note': __coord_cqt_hz,
+                 'cqt_svara': __coord_cqt_hz,
                  'chroma': __coord_chroma,
+                 'chroma_c': __coord_chroma,
+                 'chroma_h': __coord_chroma,
                  'time': __coord_time,
                  's': __coord_time,
                  'ms': __coord_time,
@@ -791,7 +919,7 @@ def __scale_axes(axes, ax_type, which):
         kwargs[thresh] = core.note_to_hz('C2')
         kwargs[scale] = 0.5
 
-    elif ax_type in ['cqt', 'cqt_hz', 'cqt_note']:
+    elif ax_type in ['cqt', 'cqt_hz', 'cqt_note', 'cqt_svara']:
         mode = 'log'
         kwargs[base] = 2
 
@@ -805,7 +933,7 @@ def __scale_axes(axes, ax_type, which):
     scaler(mode, **kwargs)
 
 
-def __decorate_axis(axis, ax_type, key='C:maj'):
+def __decorate_axis(axis, ax_type, key='C:maj', Sa=None, mela=None, thaat=None):
     '''Configure axis tickers, locators, and labels'''
 
     if ax_type == 'tonnetz':
@@ -820,6 +948,32 @@ def __decorate_axis(axis, ax_type, key='C:maj'):
                                             np.add.outer(12 * np.arange(10),
                                                          degrees).ravel()))
         axis.set_label_text('Pitch class')
+
+    elif ax_type == 'chroma_h':
+        if Sa is None:
+            Sa = 0
+        axis.set_major_formatter(ChromaSvaraFormatter(Sa=Sa))
+        if thaat is None:
+            # If no thaat is given, show all svara
+            degrees = np.arange(12)
+        else:
+            degrees = core.thaat_to_degrees(thaat)
+        # Rotate degrees relative to Sa
+        degrees = np.mod(degrees + Sa, 12)
+        axis.set_major_locator(FixedLocator(0.5 + np.add.outer(12 * np.arange(10),
+                                                               degrees).ravel()))
+        axis.set_label_text('Svara')
+
+    elif ax_type == 'chroma_c':
+        if Sa is None:
+            Sa = 0
+        axis.set_major_formatter(ChromaSvaraFormatter(Sa=Sa, mela=mela))
+        degrees = core.mela_to_degrees(mela)
+        # Rotate degrees relative to Sa
+        degrees = np.mod(degrees + Sa, 12)
+        axis.set_major_locator(FixedLocator(0.5 + np.add.outer(12 * np.arange(10),
+                                                               degrees).ravel()))
+        axis.set_label_text('Svara')
 
     elif ax_type in ['tempo', 'fourier_tempo']:
         axis.set_major_formatter(ScalarFormatter())
@@ -864,14 +1018,31 @@ def __decorate_axis(axis, ax_type, key='C:maj'):
 
     elif ax_type == 'cqt_note':
         axis.set_major_formatter(NoteFormatter(key=key))
-        axis.set_major_locator(LogLocator(base=2.0))
+        # Where is C1 relative to 2**k hz?
+        log_C1 = np.log2(core.note_to_hz('C1'))
+        C_offset = 2.0**(log_C1 - np.floor(log_C1))
+        axis.set_major_locator(LogLocator(base=2.0, subs=(C_offset,)))
         axis.set_minor_formatter(NoteFormatter(key=key, major=False))
         axis.set_minor_locator(LogLocator(base=2.0,
                                           subs=2.0**(np.arange(1, 12)/12.0)))
         axis.set_label_text('Note')
 
+    elif ax_type == 'cqt_svara':
+        axis.set_major_formatter(SvaraFormatter(Sa=Sa, mela=mela))
+        # Find the offset of Sa relative to 2**k Hz
+        sa_offset = 2.0**(np.log2(Sa) - np.floor(np.log2(Sa)))
+
+        axis.set_major_locator(LogLocator(base=2.0, subs=(sa_offset,)))
+        axis.set_minor_formatter(SvaraFormatter(Sa=Sa, mela=mela, major=False))
+        axis.set_minor_locator(LogLocator(base=2.0,
+                                          subs=sa_offset * 2.0**(np.arange(1, 12)/12.0)))
+        axis.set_label_text('Svara')
+
     elif ax_type in ['cqt_hz']:
         axis.set_major_formatter(LogHzFormatter())
+        log_C1 = np.log2(core.note_to_hz('C1'))
+        C_offset = 2.0**(log_C1 - np.floor(log_C1))
+        axis.set_major_locator(LogLocator(base=2.0, subs=(C_offset,)))
         axis.set_major_locator(LogLocator(base=2.0))
         axis.set_minor_formatter(LogHzFormatter(major=False))
         axis.set_minor_locator(LogLocator(base=2.0,
