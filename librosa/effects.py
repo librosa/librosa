@@ -41,13 +41,20 @@ from . import feature
 from . import util
 from .util.exceptions import ParameterError
 
-__all__ = ['hpss', 'harmonic', 'percussive',
-           'time_stretch', 'pitch_shift',
-           'remix', 'trim', 'split']
+__all__ = [
+    "hpss",
+    "harmonic",
+    "percussive",
+    "time_stretch",
+    "pitch_shift",
+    "remix",
+    "trim",
+    "split",
+]
 
 
 def hpss(y, **kwargs):
-    '''Decompose an audio time series into harmonic and percussive components.
+    """Decompose an audio time series into harmonic and percussive components.
 
     This function automates the STFT->HPSS->ISTFT pipeline, and ensures that
     the output waveforms have equal length to the input waveform ``y``.
@@ -86,7 +93,7 @@ def hpss(y, **kwargs):
     >>> # Get a more isolated percussive component by widening its margin
     >>> y_harmonic, y_percussive = librosa.effects.hpss(y, margin=(1.0,5.0))
 
-    '''
+    """
 
     # Compute the STFT matrix
     stft = core.stft(y)
@@ -102,7 +109,7 @@ def hpss(y, **kwargs):
 
 
 def harmonic(y, **kwargs):
-    '''Extract harmonic elements from an audio time-series.
+    """Extract harmonic elements from an audio time-series.
 
     Parameters
     ----------
@@ -132,7 +139,7 @@ def harmonic(y, **kwargs):
     >>> # Use a margin > 1.0 for greater harmonic separation
     >>> y_harmonic = librosa.effects.harmonic(y, margin=3.0)
 
-    '''
+    """
 
     # Compute the STFT matrix
     stft = core.stft(y)
@@ -147,7 +154,7 @@ def harmonic(y, **kwargs):
 
 
 def percussive(y, **kwargs):
-    '''Extract percussive elements from an audio time-series.
+    """Extract percussive elements from an audio time-series.
 
     Parameters
     ----------
@@ -177,7 +184,7 @@ def percussive(y, **kwargs):
     >>> # Use a margin > 1.0 for greater percussive separation
     >>> y_percussive = librosa.effects.percussive(y, margin=3.0)
 
-    '''
+    """
 
     # Compute the STFT matrix
     stft = core.stft(y)
@@ -192,7 +199,7 @@ def percussive(y, **kwargs):
 
 
 def time_stretch(y, rate, **kwargs):
-    '''Time-stretch an audio series by a fixed rate.
+    """Time-stretch an audio series by a fixed rate.
 
 
     Parameters
@@ -229,10 +236,10 @@ def time_stretch(y, rate, **kwargs):
 
     >>> y_slow = librosa.effects.time_stretch(y, 0.5)
 
-    '''
+    """
 
     if rate <= 0:
-        raise ParameterError('rate must be a positive number')
+        raise ParameterError("rate must be a positive number")
 
     # Construct the short-term Fourier transform (STFT)
     stft = core.stft(y, **kwargs)
@@ -241,18 +248,16 @@ def time_stretch(y, rate, **kwargs):
     stft_stretch = core.phase_vocoder(stft, rate)
 
     # Predict the length of y_stretch
-    len_stretch = int(round(len(y)/rate))
+    len_stretch = int(round(len(y) / rate))
 
     # Invert the STFT
-    y_stretch = core.istft(
-        stft_stretch, dtype=y.dtype, length=len_stretch, **kwargs)
+    y_stretch = core.istft(stft_stretch, dtype=y.dtype, length=len_stretch, **kwargs)
 
     return y_stretch
 
 
-def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type='kaiser_best',
-                **kwargs):
-    '''Shift the pitch of a waveform by ``n_steps`` steps.
+def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type="kaiser_best", **kwargs):
+    """Shift the pitch of a waveform by ``n_steps`` steps.
 
     A step is equal to a semitone if ``bins_per_octave`` is set to 12.
 
@@ -308,23 +313,24 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type='kaiser_best',
 
     >>> y_three_qt = librosa.effects.pitch_shift(y, sr, n_steps=3,
     ...                                          bins_per_octave=24)
-    '''
+    """
 
     if bins_per_octave < 1 or not np.issubdtype(type(bins_per_octave), np.integer):
-        raise ParameterError('bins_per_octave must be a positive integer.')
+        raise ParameterError("bins_per_octave must be a positive integer.")
 
     rate = 2.0 ** (-float(n_steps) / bins_per_octave)
 
     # Stretch in time, then resample
-    y_shift = core.resample(time_stretch(y, rate, **kwargs), float(sr)/rate, sr,
-                            res_type=res_type)
+    y_shift = core.resample(
+        time_stretch(y, rate, **kwargs), float(sr) / rate, sr, res_type=res_type
+    )
 
     # Crop to the same dimension as the input
     return util.fix_length(y_shift, len(y))
 
 
 def remix(y, intervals, align_zeros=True):
-    '''Remix an audio signal by re-ordering time intervals.
+    """Remix an audio signal by re-ordering time intervals.
 
 
     Parameters
@@ -376,7 +382,7 @@ def remix(y, intervals, align_zeros=True):
     Reverse the beat intervals
 
     >>> y_out = librosa.effects.remix(y, intervals[::-1])
-    '''
+    """
 
     y_out = []
 
@@ -405,9 +411,10 @@ def remix(y, intervals, align_zeros=True):
     return y_out
 
 
-def _signal_to_frame_nonsilent(y, frame_length=2048, hop_length=512, top_db=60,
-                               ref=np.max):
-    '''Frame-wise non-silent indicator for audio input.
+def _signal_to_frame_nonsilent(
+    y, frame_length=2048, hop_length=512, top_db=60, ref=np.max
+):
+    """Frame-wise non-silent indicator for audio input.
 
     This is a helper function for `trim` and `split`.
 
@@ -433,22 +440,18 @@ def _signal_to_frame_nonsilent(y, frame_length=2048, hop_length=512, top_db=60,
     -------
     non_silent : np.ndarray, shape=(m,), dtype=bool
         Indicator of non-silent frames
-    '''
+    """
     # Convert to mono
     y_mono = core.to_mono(y)
 
     # Compute the MSE for the signal
-    mse = feature.rms(y=y_mono,
-                      frame_length=frame_length,
-                      hop_length=hop_length)**2
+    mse = feature.rms(y=y_mono, frame_length=frame_length, hop_length=hop_length) ** 2
 
-    return (core.power_to_db(mse.squeeze(),
-                             ref=ref,
-                             top_db=None) > - top_db)
+    return core.power_to_db(mse.squeeze(), ref=ref, top_db=None) > -top_db
 
 
 def trim(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
-    '''Trim leading and trailing silence from an audio signal.
+    """Trim leading and trailing silence from an audio signal.
 
     Parameters
     ----------
@@ -489,13 +492,11 @@ def trim(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
     >>> # Print the durations
     >>> print(librosa.get_duration(y), librosa.get_duration(yt))
     25.025986394557822 25.007891156462584
-    '''
+    """
 
-    non_silent = _signal_to_frame_nonsilent(y,
-                                            frame_length=frame_length,
-                                            hop_length=hop_length,
-                                            ref=ref,
-                                            top_db=top_db)
+    non_silent = _signal_to_frame_nonsilent(
+        y, frame_length=frame_length, hop_length=hop_length, ref=ref, top_db=top_db
+    )
 
     nonzero = np.flatnonzero(non_silent)
 
@@ -503,8 +504,7 @@ def trim(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
         # Compute the start and end positions
         # End position goes one frame past the last non-zero
         start = int(core.frames_to_samples(nonzero[0], hop_length))
-        end = min(y.shape[-1],
-                  int(core.frames_to_samples(nonzero[-1] + 1, hop_length)))
+        end = min(y.shape[-1], int(core.frames_to_samples(nonzero[-1] + 1, hop_length)))
     else:
         # The signal only contains zeros
         start, end = 0, 0
@@ -517,7 +517,7 @@ def trim(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
 
 
 def split(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
-    '''Split an audio signal into non-silent intervals.
+    """Split an audio signal into non-silent intervals.
 
     Parameters
     ----------
@@ -544,13 +544,11 @@ def split(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
         ``intervals[i] == (start_i, end_i)`` are the start and end time
         (in samples) of non-silent interval ``i``.
 
-    '''
+    """
 
-    non_silent = _signal_to_frame_nonsilent(y,
-                                            frame_length=frame_length,
-                                            hop_length=hop_length,
-                                            ref=ref,
-                                            top_db=top_db)
+    non_silent = _signal_to_frame_nonsilent(
+        y, frame_length=frame_length, hop_length=hop_length, ref=ref, top_db=top_db
+    )
 
     # Interval slicing, adapted from
     # https://stackoverflow.com/questions/2619413/efficiently-finding-the-interval-with-non-zeros-in-scipy-numpy-in-python
@@ -569,8 +567,7 @@ def split(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
         edges.append([len(non_silent)])
 
     # Convert from frames to samples
-    edges = core.frames_to_samples(np.concatenate(edges),
-                                   hop_length=hop_length)
+    edges = core.frames_to_samples(np.concatenate(edges), hop_length=hop_length)
 
     # Clip to the signal duration
     edges = np.minimum(edges, y.shape[-1])
@@ -580,7 +577,7 @@ def split(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
 
 
 def preemphasis(y, coef=0.97, zi=None, return_zf=False):
-    '''Pre-emphasize an audio signal with a first-order auto-regressive filter:
+    """Pre-emphasize an audio signal with a first-order auto-regressive filter:
 
         y[n] -> y[n] - coef * y[n-1]
 
@@ -647,18 +644,17 @@ def preemphasis(y, coef=0.97, zi=None, return_zf=False):
     >>> np.allclose(y_filt, np.concatenate([y_filt_1, y_filt_2]))
     True
 
-    '''
+    """
     b = np.asarray([1.0, -coef], dtype=y.dtype)
     a = np.asarray([1.0], dtype=y.dtype)
 
     if zi is None:
         # Initialize the filter to implement linear extrapolation
-        zi = 2*y[..., 0] - y[..., 1]
+        zi = 2 * y[..., 0] - y[..., 1]
 
     zi = np.atleast_1d(zi)
 
-    y_out, z_f = scipy.signal.lfilter(b, a, y,
-                                      zi=np.asarray(zi, dtype=y.dtype))
+    y_out, z_f = scipy.signal.lfilter(b, a, y, zi=np.asarray(zi, dtype=y.dtype))
 
     if return_zf:
         return y_out, z_f

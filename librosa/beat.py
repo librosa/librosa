@@ -22,13 +22,22 @@ from . import util
 from .feature import tempogram, fourier_tempogram
 from .util.exceptions import ParameterError
 
-__all__ = ['beat_track', 'tempo', 'plp']
+__all__ = ["beat_track", "tempo", "plp"]
 
 
-def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
-               start_bpm=120.0, tightness=100, trim=True, bpm=None, prior=None,
-               units='frames'):
-    r'''Dynamic programming beat tracker.
+def beat_track(
+    y=None,
+    sr=22050,
+    onset_envelope=None,
+    hop_length=512,
+    start_bpm=120.0,
+    tightness=100,
+    trim=True,
+    bpm=None,
+    prior=None,
+    units="frames",
+):
+    r"""Dynamic programming beat tracker.
 
     Beats are detected in three stages, following the method of [#]_:
 
@@ -160,17 +169,16 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
     >>> ax[1].vlines(times[beats], 0, 1, alpha=0.5, color='r',
     ...            linestyle='--', label='Beats')
     >>> ax[1].legend()
-    '''
+    """
 
     # First, get the frame->beat strength profile if we don't already have one
     if onset_envelope is None:
         if y is None:
-            raise ParameterError('y or onset_envelope must be provided')
+            raise ParameterError("y or onset_envelope must be provided")
 
-        onset_envelope = onset.onset_strength(y=y,
-                                              sr=sr,
-                                              hop_length=hop_length,
-                                              aggregate=np.median)
+        onset_envelope = onset.onset_strength(
+            y=y, sr=sr, hop_length=hop_length, aggregate=np.median
+        )
 
     # Do we have any onsets to grab?
     if not onset_envelope.any():
@@ -178,34 +186,42 @@ def beat_track(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
     # Estimate BPM if one was not provided
     if bpm is None:
-        bpm = tempo(onset_envelope=onset_envelope,
-                    sr=sr,
-                    hop_length=hop_length,
-                    start_bpm=start_bpm,
-                    prior=prior)[0]
+        bpm = tempo(
+            onset_envelope=onset_envelope,
+            sr=sr,
+            hop_length=hop_length,
+            start_bpm=start_bpm,
+            prior=prior,
+        )[0]
 
     # Then, run the tracker
-    beats = __beat_tracker(onset_envelope,
-                           bpm,
-                           float(sr) / hop_length,
-                           tightness,
-                           trim)
+    beats = __beat_tracker(onset_envelope, bpm, float(sr) / hop_length, tightness, trim)
 
-    if units == 'frames':
+    if units == "frames":
         pass
-    elif units == 'samples':
+    elif units == "samples":
         beats = core.frames_to_samples(beats, hop_length=hop_length)
-    elif units == 'time':
+    elif units == "time":
         beats = core.frames_to_time(beats, hop_length=hop_length, sr=sr)
     else:
-        raise ParameterError('Invalid unit type: {}'.format(units))
+        raise ParameterError("Invalid unit type: {}".format(units))
 
     return (bpm, beats)
 
 
 @cache(level=30)
-def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
-          std_bpm=1.0, ac_size=8.0, max_tempo=320.0, aggregate=np.mean, prior=None):
+def tempo(
+    y=None,
+    sr=22050,
+    onset_envelope=None,
+    hop_length=512,
+    start_bpm=120,
+    std_bpm=1.0,
+    ac_size=8.0,
+    max_tempo=320.0,
+    aggregate=np.mean,
+    prior=None,
+):
     """Estimate the tempo (beats per minute)
 
     Parameters
@@ -326,15 +342,17 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
     """
 
     if start_bpm <= 0:
-        raise ParameterError('start_bpm must be strictly positive')
+        raise ParameterError("start_bpm must be strictly positive")
 
-    win_length = core.time_to_frames(
-        ac_size, sr=sr, hop_length=hop_length).item()
+    win_length = core.time_to_frames(ac_size, sr=sr, hop_length=hop_length).item()
 
-    tg = tempogram(y=y, sr=sr,
-                   onset_envelope=onset_envelope,
-                   hop_length=hop_length,
-                   win_length=win_length)
+    tg = tempogram(
+        y=y,
+        sr=sr,
+        onset_envelope=onset_envelope,
+        hop_length=hop_length,
+        win_length=win_length,
+    )
 
     # Eventually, we want this to work for time-varying tempo
     if aggregate is not None:
@@ -345,7 +363,7 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
 
     # Weight the autocorrelation by a log-normal distribution
     if prior is None:
-        logprior = -0.5 * ((np.log2(bpms) - np.log2(start_bpm)) / std_bpm)**2
+        logprior = -0.5 * ((np.log2(bpms) - np.log2(start_bpm)) / std_bpm) ** 2
     else:
         logprior = prior.logpdf(bpms)
 
@@ -361,9 +379,17 @@ def tempo(y=None, sr=22050, onset_envelope=None, hop_length=512, start_bpm=120,
     return bpms[best_period]
 
 
-def plp(y=None, sr=22050, onset_envelope=None, hop_length=512,
-        win_length=384, tempo_min=30, tempo_max=300, prior=None):
-    '''Predominant local pulse (PLP) estimation. [#]_
+def plp(
+    y=None,
+    sr=22050,
+    onset_envelope=None,
+    hop_length=512,
+    win_length=384,
+    tempo_min=30,
+    tempo_max=300,
+    prior=None,
+):
+    """Predominant local pulse (PLP) estimation. [#]_
 
     The PLP method analyzes the onset strength envelope in the frequency domain
     to find a locally stable tempo for each frame.  These local periodicities
@@ -486,26 +512,31 @@ def plp(y=None, sr=22050, onset_envelope=None, hop_length=512,
     >>> ax[1].set(title='librosa.beat.plp', xlim=[5, 20])
     >>> ax[1].xaxis.set_major_formatter(librosa.display.TimeFormatter())
 
-    '''
+    """
 
     # Step 1: get the onset envelope
     if onset_envelope is None:
-        onset_envelope = onset.onset_strength(y=y, sr=sr,
-                                              hop_length=hop_length,
-                                              aggregate=np.median)
+        onset_envelope = onset.onset_strength(
+            y=y, sr=sr, hop_length=hop_length, aggregate=np.median
+        )
 
     if tempo_min is not None and tempo_max is not None and tempo_max <= tempo_min:
-        raise ParameterError('tempo_max={} must be larger than tempo_min={}'.format(tempo_max, tempo_min))
+        raise ParameterError(
+            "tempo_max={} must be larger than tempo_min={}".format(tempo_max, tempo_min)
+        )
 
     # Step 2: get the fourier tempogram
-    ftgram = fourier_tempogram(onset_envelope=onset_envelope,
-                               sr=sr, hop_length=hop_length,
-                               win_length=win_length)
+    ftgram = fourier_tempogram(
+        onset_envelope=onset_envelope,
+        sr=sr,
+        hop_length=hop_length,
+        win_length=win_length,
+    )
 
     # Step 3: pin to the feasible tempo range
-    tempo_frequencies = core.fourier_tempo_frequencies(sr=sr,
-                                                       hop_length=hop_length,
-                                                       win_length=win_length)
+    tempo_frequencies = core.fourier_tempo_frequencies(
+        sr=sr, hop_length=hop_length, win_length=win_length
+    )
 
     if tempo_min is not None:
         ftgram[tempo_frequencies < tempo_min] = 0
@@ -521,11 +552,10 @@ def plp(y=None, sr=22050, onset_envelope=None, hop_length=512,
     ftgram[ftmag < peak_values] = 0
 
     # Normalize to keep only phase information
-    ftgram /= (util.tiny(ftgram)**0.5 + np.abs(ftgram.max(axis=0, keepdims=True)))
+    ftgram /= util.tiny(ftgram) ** 0.5 + np.abs(ftgram.max(axis=0, keepdims=True))
 
     # Step 5: invert the Fourier tempogram to get the pulse
-    pulse = core.istft(ftgram, hop_length=1,
-                       length=len(onset_envelope))
+    pulse = core.istft(ftgram, hop_length=1, length=len(onset_envelope))
 
     # Step 6: retain only the positive part of the pulse cycle
     np.clip(pulse, 0, None, pulse)
@@ -561,7 +591,7 @@ def __beat_tracker(onset_envelope, bpm, fft_res, tightness, trim):
     """
 
     if bpm <= 0:
-        raise ParameterError('bpm must be strictly positive')
+        raise ParameterError("bpm must be strictly positive")
 
     # convert bpm to a sample period for searching
     period = round(60.0 * fft_res / bpm)
@@ -591,7 +621,7 @@ def __beat_tracker(onset_envelope, bpm, fft_res, tightness, trim):
 
 # -- Helper functions for beat tracking
 def __normalize_onsets(onsets):
-    '''Maps onset strength function into the range [0, 1]'''
+    """Maps onset strength function into the range [0, 1]"""
 
     norm = onsets.std(ddof=1)
     if norm > 0:
@@ -600,12 +630,10 @@ def __normalize_onsets(onsets):
 
 
 def __beat_local_score(onset_envelope, period):
-    '''Construct the local score for an onset envlope and given period'''
+    """Construct the local score for an onset envlope and given period"""
 
-    window = np.exp(-0.5 * (np.arange(-period, period+1)*32.0/period)**2)
-    return scipy.signal.convolve(__normalize_onsets(onset_envelope),
-                                 window,
-                                 'same')
+    window = np.exp(-0.5 * (np.arange(-period, period + 1) * 32.0 / period) ** 2)
+    return scipy.signal.convolve(__normalize_onsets(onset_envelope), window, "same")
 
 
 def __beat_track_dp(localscore, period, tightness):
@@ -619,7 +647,7 @@ def __beat_track_dp(localscore, period, tightness):
 
     # Make a score window, which begins biased toward start_bpm and skewed
     if tightness <= 0:
-        raise ParameterError('tightness must be strictly positive')
+        raise ParameterError("tightness must be strictly positive")
 
     txwt = -tightness * (np.log(-window / period) ** 2)
 
@@ -628,7 +656,7 @@ def __beat_track_dp(localscore, period, tightness):
     for i, score_i in enumerate(localscore):
 
         # Are we reaching back before time 0?
-        z_pad = np.maximum(0, min(- window[0], len(window)))
+        z_pad = np.maximum(0, min(-window[0], len(window)))
 
         # Search over all possible predecessors
         candidates = txwt.copy()
@@ -666,15 +694,13 @@ def __last_beat(cumscore):
 def __trim_beats(localscore, beats, trim):
     """Final post-processing: throw out spurious leading/trailing beats"""
 
-    smooth_boe = scipy.signal.convolve(localscore[beats],
-                                       scipy.signal.hann(5),
-                                       'same')
+    smooth_boe = scipy.signal.convolve(localscore[beats], scipy.signal.hann(5), "same")
 
     if trim:
-        threshold = 0.5 * ((smooth_boe**2).mean()**0.5)
+        threshold = 0.5 * ((smooth_boe ** 2).mean() ** 0.5)
     else:
         threshold = 0.0
 
     valid = np.argwhere(smooth_boe > threshold)
 
-    return beats[valid.min():valid.max()]
+    return beats[valid.min() : valid.max()]
