@@ -161,7 +161,7 @@ def mela_to_degrees(mela):
     See Also
     --------
     thaat_to_degrees
-    key_to_degres
+    key_to_degrees
     list_mela
 
     Examples

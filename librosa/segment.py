@@ -164,8 +164,8 @@ def cross_similarity(
     ...                          cmap='magma_r', hop_length=hop_length, ax=ax[1])
     >>> ax[1].set(title='Affinity recurrence')
     >>> ax[1].label_outer()
-    >>> fig.colorbar(imgsim, ax=ax[0], orientation='h', ticks=[0, 1])
-    >>> fig.colorbar(imgaff, ax=ax[1], orientation='h')
+    >>> fig.colorbar(imgsim, ax=ax[0], orientation='horizontal', ticks=[0, 1])
+    >>> fig.colorbar(imgaff, ax=ax[1], orientation='horizontal')
     """
     data_ref = np.atleast_2d(data_ref)
     data = np.atleast_2d(data)
@@ -403,8 +403,8 @@ def recurrence_matrix(
     ...                          hop_length=hop_length, cmap='magma_r', ax=ax[1])
     >>> ax[1].set(title='Affinity recurrence')
     >>> ax[1].label_outer()
-    >>> fig.colorbar(imgsim, ax=ax[0], orientation='h', ticks=[0, 1])
-    >>> fig.colorbar(imgaff, ax=ax[1], orientation='h')
+    >>> fig.colorbar(imgsim, ax=ax[0], orientation='horizontal', ticks=[0, 1])
+    >>> fig.colorbar(imgaff, ax=ax[1], orientation='horizontal')
     """
 
     data = np.atleast_2d(data)
@@ -1076,8 +1076,8 @@ def path_enhance(
     ...                          hop_length=hop_length, ax=ax[1])
     >>> ax[1].set(title='Multi-angle enhanced recurrence')
     >>> ax[1].label_outer()
-    >>> fig.colorbar(img, ax=ax[0], orientation='h')
-    >>> fig.colorbar(imgpe, ax=ax[1], orientation='h')
+    >>> fig.colorbar(img, ax=ax[0], orientation='horizontal')
+    >>> fig.colorbar(imgpe, ax=ax[1], orientation='horizontal')
     """
 
     if min_ratio is None:
