@@ -13,7 +13,7 @@ import resampy
 
 from numba import jit
 from .fft import get_fftlib
-from .time_frequency import frames_to_samples, time_to_samples
+from .convert import frames_to_samples, time_to_samples
 from .._cache import cache
 from .. import util
 from ..util.exceptions import ParameterError

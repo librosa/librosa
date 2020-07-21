@@ -179,6 +179,32 @@ def test_chroma(S_abs, sr):
     return plt.gcf()
 
 
+@pytest.mark.mpl_image_compare(baseline_images=['chroma_svara'], extensions=['png'], tolerance=6)
+def test_chroma_svara(C, sr):
+
+    chroma = librosa.feature.chroma_cqt(C=C, sr=sr, threshold=0.9)
+
+    fig, (ax1, ax2, ax3, ax4) = plt.subplots(nrows=4, sharex=True, figsize=(10, 10))
+
+    # Hindustani, no thaat
+    librosa.display.specshow(chroma, y_axis='chroma_h', Sa=5, ax=ax1)
+
+    # Hindustani, kafi thaat
+    librosa.display.specshow(chroma, y_axis='chroma_h', Sa=5, ax=ax2, thaat='kafi')
+
+    # Carnatic, mela 22
+    librosa.display.specshow(chroma, y_axis='chroma_c', Sa=5, ax=ax3, mela=22)
+
+    # Carnatic, mela 1
+    librosa.display.specshow(chroma, y_axis='chroma_c', Sa=7, ax=ax4, mela=1)
+
+    ax1.label_outer()
+    ax2.label_outer()
+    ax3.label_outer()
+
+    return fig
+
+
 @pytest.mark.mpl_image_compare(baseline_images=["double_chroma"], extensions=["png"], tolerance=6)
 def test_double_chroma(S_abs, sr):
     plt.figure()
@@ -555,3 +581,25 @@ def test_axis_bound_warning(format_str):
 
         librosa.display.specshow(np.zeros((72, 3)), y_axis=format_str,
                                  fmin=11025, sr=22050, bins_per_octave=12)
+
+
+@pytest.mark.mpl_image_compare(baseline_images=['cqt_svara'], extensions=['png'], tolerance=6)
+def test_display_cqt_svara(C, sr):
+
+    Camp = librosa.amplitude_to_db(C, ref=np.max)
+    fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(nrows=5, sharex=True, figsize=(10, 10))
+
+    librosa.display.specshow(Camp, y_axis='cqt_svara', Sa=261, ax=ax1)
+    librosa.display.specshow(Camp, y_axis='cqt_svara', Sa=440, ax=ax2)
+    librosa.display.specshow(Camp, y_axis='cqt_svara', Sa=261, ax=ax3)
+    librosa.display.specshow(Camp, y_axis='cqt_svara', Sa=261, mela=1, ax=ax4)
+    librosa.display.specshow(Camp, y_axis='cqt_svara', Sa=261, mela=1, ax=ax5)
+
+    ax3.set_ylim([440, 880])
+    ax5.set_ylim([440, 880])
+    ax1.label_outer()
+    ax2.label_outer()
+    ax3.label_outer()
+    ax4.label_outer()
+
+    return fig
