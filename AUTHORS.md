@@ -64,6 +64,8 @@ Contributors
 * Thor Whalen <https://github.com/thorwhalen>
 * Stefan Sullivan <https://github.com/stefansjs>
 * Benjamin van Niekirk <https://github.com/bshall>
+* Kaushik Sripathi Hatti <https://github.com/hskaushik>
+* Kaustuv Kanti Ganguli <https://github.com/kaustuvkanti>
 
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
