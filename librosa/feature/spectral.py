@@ -11,7 +11,7 @@ from .. import util
 from .. import filters
 from ..util.exceptions import ParameterError
 
-from ..core.time_frequency import fft_frequencies
+from ..core.convert import fft_frequencies
 from ..core.audio import zero_crossings, to_mono
 from ..core.spectrum import power_to_db, _spectrogram
 from ..core.constantq import cqt, hybrid_cqt

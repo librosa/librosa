@@ -11,7 +11,7 @@ import scipy.interpolate
 
 from numba import jit
 
-from . import time_frequency
+from . import convert
 from .fft import get_fftlib
 from .audio import resample
 from .._cache import cache
@@ -567,7 +567,7 @@ def __reassign_frequencies(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     # Meyer, & Ainsworth 1998 pp. 283-284
     correction = -np.imag(S_dh / S_h)
 
-    freqs = time_frequency.fft_frequencies(sr=sr, n_fft=n_fft)
+    freqs = convert.fft_frequencies(sr=sr, n_fft=n_fft)
     freqs = freqs[:, np.newaxis] + correction * (0.5 * sr / np.pi)
 
     return freqs, S_h
@@ -736,7 +736,7 @@ def __reassign_times(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     else:
         pad_length = n_fft
 
-    times = time_frequency.frames_to_time(
+    times = convert.frames_to_time(
         np.arange(S_h.shape[1]), sr=sr, hop_length=hop_length, n_fft=pad_length
     )
 
@@ -990,9 +990,9 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
         else:
             pad_length = n_fft
 
-        bin_freqs = time_frequency.fft_frequencies(sr=sr, n_fft=n_fft)
+        bin_freqs = convert.fft_frequencies(sr=sr, n_fft=n_fft)
 
-        frame_times = time_frequency.frames_to_time(
+        frame_times = convert.frames_to_time(
             frames=np.arange(S.shape[1]),
             sr=sr,
             hop_length=hop_length,
@@ -1682,7 +1682,7 @@ def perceptual_weighting(S, frequencies, kind='A', **kwargs):
     >>> fig.colorbar(imgp, ax=ax[1], format="%+2.0f dB")
     '''
 
-    offset = time_frequency.frequency_weighting(
+    offset = convert.frequency_weighting(
         frequencies, kind=kind).reshape((-1, 1))
 
     return offset + power_to_db(S, **kwargs)
