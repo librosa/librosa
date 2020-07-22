@@ -14,16 +14,7 @@ A python package for music and audio analysis.
 
 Documentation
 -------------
-See http://librosa.github.io/librosa/ for a complete reference manual and introductory tutorials.
-
-
-Demonstration notebooks
------------------------
-What does librosa do?  Here are some quick demonstrations:
-
-* [Introduction notebook](http://nbviewer.ipython.org/github/librosa/librosa/blob/main/examples/LibROSA%20demo.ipynb): a brief introduction to some commonly used features.
-* [Decomposition and IPython integration](http://nbviewer.ipython.org/github/librosa/librosa/blob/main/examples/LibROSA%20audio%20effects%20and%20playback.ipynb): an intermediate demonstration, illustrating how to process and play back sound
-
+See https://librosa.org/doc/ for a complete reference manual and introductory tutorials.
 
 Installation
 ------------
