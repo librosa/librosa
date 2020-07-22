@@ -1,58 +1,120 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-'''Music notation utilties'''
+"""Music notation utilties"""
 
 import re
 import numpy as np
 from .._cache import cache
 from ..util.exceptions import ParameterError
 
-__all__ = ['key_to_degrees', 'key_to_notes',
-           'mela_to_degrees', 'mela_to_svara',
-           'thaat_to_degrees',
-           'list_mela', 'list_thaat']
+__all__ = [
+    "key_to_degrees",
+    "key_to_notes",
+    "mela_to_degrees",
+    "mela_to_svara",
+    "thaat_to_degrees",
+    "list_mela",
+    "list_thaat",
+]
 
-THAAT_MAP = dict(bilaval    =    [0, 2, 4, 5, 7, 9, 11],
-                 khamaj     =    [0, 2, 4, 5, 7, 9, 10],
-                 kafi       =    [0, 2, 3, 5, 7, 9, 10],
-                 asavari    =    [0, 2, 3, 5, 7, 8, 10],
-                 bhairavi   =    [0, 1, 3, 5, 7, 8, 10],
-                 kalyan     =    [0, 2, 4, 6, 7, 9, 11],
-                 marva      =    [0, 1, 4, 6, 7, 9, 11],
-                 poorvi     =    [0, 1, 4, 6, 7, 8, 11],
-                 todi       =    [0, 1, 3, 6, 7, 8, 11],
-                 bhairav    =    [0, 1, 4, 5, 7, 8, 11])
+THAAT_MAP = dict(
+    bilaval=[0, 2, 4, 5, 7, 9, 11],
+    khamaj=[0, 2, 4, 5, 7, 9, 10],
+    kafi=[0, 2, 3, 5, 7, 9, 10],
+    asavari=[0, 2, 3, 5, 7, 8, 10],
+    bhairavi=[0, 1, 3, 5, 7, 8, 10],
+    kalyan=[0, 2, 4, 6, 7, 9, 11],
+    marva=[0, 1, 4, 6, 7, 9, 11],
+    poorvi=[0, 1, 4, 6, 7, 8, 11],
+    todi=[0, 1, 3, 6, 7, 8, 11],
+    bhairav=[0, 1, 4, 5, 7, 8, 11],
+)
 
 # Enumeration will start from 1
-MELAKARTA_MAP = {k: i
-                 for i, k in enumerate(['kanakangi', 'ratnangi', 'ganamurthi',
-                                        'vanaspathi', 'manavathi', 'tanarupi',
-                                        'senavathi', 'hanumathodi', 'dhenuka',
-                                        'natakapriya', 'kokilapriya', 'rupavathi',
-                                        'gayakapriya', 'vakulabharanam', 'mayamalavagaula',
-                                        'chakravakom', 'suryakantham', 'hatakambari',
-                                        'jhankaradhwani', 'natabhairavi', 'keeravani',
-                                        'kharaharapriya', 'gaurimanohari', 'varunapriya',
-                                        'mararanjini', 'charukesi', 'sarasangi',
-                                        'harikambhoji', 'dheerasankarabharanam', 'naganandini',
-                                        'yagapriya', 'ragavardhini', 'gangeyabhushani',
-                                        'vagadheeswari', 'sulini', 'chalanatta',
-                                        'salagam', 'jalarnavam', 'jhalavarali',
-                                        'navaneetham', 'pavani', 'raghupriya',
-                                        'gavambodhi', 'bhavapriya', 'subhapanthuvarali',
-                                        'shadvidhamargini', 'suvarnangi', 'divyamani',
-                                        'dhavalambari', 'namanarayani', 'kamavardhini',
-                                        'ramapriya', 'gamanasrama', 'viswambhari',
-                                        'syamalangi', 'shanmukhapriya', 'simhendramadhyamam',
-                                        'hemavathi', 'dharmavathi', 'neethimathi',
-                                        'kanthamani', 'rishabhapriya', 'latangi',
-                                        'vachaspathi', 'mechakalyani', 'chitrambari',
-                                        'sucharitra', 'jyotisvarupini', 'dhatuvardhini',
-                                        'nasikabhushani', 'kosalam', 'rasikapriya'], 1)}
+MELAKARTA_MAP = {
+    k: i
+    for i, k in enumerate(
+        [
+            "kanakangi",
+            "ratnangi",
+            "ganamurthi",
+            "vanaspathi",
+            "manavathi",
+            "tanarupi",
+            "senavathi",
+            "hanumathodi",
+            "dhenuka",
+            "natakapriya",
+            "kokilapriya",
+            "rupavathi",
+            "gayakapriya",
+            "vakulabharanam",
+            "mayamalavagaula",
+            "chakravakom",
+            "suryakantham",
+            "hatakambari",
+            "jhankaradhwani",
+            "natabhairavi",
+            "keeravani",
+            "kharaharapriya",
+            "gaurimanohari",
+            "varunapriya",
+            "mararanjini",
+            "charukesi",
+            "sarasangi",
+            "harikambhoji",
+            "dheerasankarabharanam",
+            "naganandini",
+            "yagapriya",
+            "ragavardhini",
+            "gangeyabhushani",
+            "vagadheeswari",
+            "sulini",
+            "chalanatta",
+            "salagam",
+            "jalarnavam",
+            "jhalavarali",
+            "navaneetham",
+            "pavani",
+            "raghupriya",
+            "gavambodhi",
+            "bhavapriya",
+            "subhapanthuvarali",
+            "shadvidhamargini",
+            "suvarnangi",
+            "divyamani",
+            "dhavalambari",
+            "namanarayani",
+            "kamavardhini",
+            "ramapriya",
+            "gamanasrama",
+            "viswambhari",
+            "syamalangi",
+            "shanmukhapriya",
+            "simhendramadhyamam",
+            "hemavathi",
+            "dharmavathi",
+            "neethimathi",
+            "kanthamani",
+            "rishabhapriya",
+            "latangi",
+            "vachaspathi",
+            "mechakalyani",
+            "chitrambari",
+            "sucharitra",
+            "jyotisvarupini",
+            "dhatuvardhini",
+            "nasikabhushani",
+            "kosalam",
+            "rasikapriya",
+        ],
+        1,
+    )
+}
 
 
 def thaat_to_degrees(thaat):
-    '''Construct the svara indices (degrees) for a given thaat
+    """Construct the svara indices (degrees) for a given thaat
 
     Parameters
     ----------
@@ -78,12 +140,12 @@ def thaat_to_degrees(thaat):
 
     >>> librosa.thaat_to_degrees('todi')
     array([ 0,  1,  3,  6,  7,  8, 11])
-    '''
+    """
     return np.asarray(THAAT_MAP[thaat.lower()])
 
 
 def mela_to_degrees(mela):
-    '''Construct the svara indices (degrees) for a given melakarta raga
+    """Construct the svara indices (degrees) for a given melakarta raga
 
     Parameters
     ----------
@@ -99,7 +161,7 @@ def mela_to_degrees(mela):
     See Also
     --------
     thaat_to_degrees
-    key_to_degres
+    key_to_degrees
     list_mela
 
     Examples
@@ -113,14 +175,14 @@ def mela_to_degrees(mela):
 
     >>> librosa.mela_to_degrees('kanakangi')
     array([0, 1, 2, 5, 7, 8, 9])
-    '''
+    """
 
     if isinstance(mela, str):
         index = MELAKARTA_MAP[mela.lower()] - 1
     elif 0 < mela <= 72:
         index = mela - 1
     else:
-        raise ParameterError('mela={} must be in range [1, 72]'.format(mela))
+        raise ParameterError("mela={} must be in range [1, 72]".format(mela))
 
     # always have Sa [0]
     degrees = [0]
@@ -183,7 +245,7 @@ def mela_to_degrees(mela):
 
 @cache(level=10)
 def mela_to_svara(mela, abbr=True, unicode=True):
-    '''Spell the Carnatic svara names for a given melakarta raga
+    """Spell the Carnatic svara names for a given melakarta raga
 
     This function exists to resolve enharmonic equivalences between
     pitch classes:
@@ -254,72 +316,77 @@ def mela_to_svara(mela, abbr=True, unicode=True):
 
     >>> librosa.mela_to_svara('chalanatta')
     ['S', 'R₁', 'R₂', 'R₃', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'D₂', 'D₃', 'N₃']
-    '''
+    """
 
     # The following will be constant for all ragas
-    svara_map = ['Sa', 'Ri\u2081',
-                 None,  # Ri2/Ga1
-                 None,  # Ri3/Ga2
-                 'Ga\u2083',
-                 'Ma\u2081', 'Ma\u2082',
-                 'Pa',
-                 'Dha\u2081',
-                 None,  # Dha2/Ni1
-                 None,  # Dha3/Ni2
-                 'Ni\u2083']
+    svara_map = [
+        "Sa",
+        "Ri\u2081",
+        None,  # Ri2/Ga1
+        None,  # Ri3/Ga2
+        "Ga\u2083",
+        "Ma\u2081",
+        "Ma\u2082",
+        "Pa",
+        "Dha\u2081",
+        None,  # Dha2/Ni1
+        None,  # Dha3/Ni2
+        "Ni\u2083",
+    ]
 
     if isinstance(mela, str):
         mela_idx = MELAKARTA_MAP[mela.lower()] - 1
     elif 0 < mela <= 72:
         mela_idx = mela - 1
     else:
-        raise ParameterError('mela={} must be in range [1, 72]'.format(mela))
+        raise ParameterError("mela={} must be in range [1, 72]".format(mela))
 
     # Determine Ri2/Ga1
     lower = mela_idx % 36
     if lower < 6:
         # First six will have Ri1/Ga1
-        svara_map[2] = 'Ga\u2081'
+        svara_map[2] = "Ga\u2081"
     else:
         # All others have either Ga2/Ga3
         # So we'll call this Ri2
-        svara_map[2] = 'Ri\u2082'
+        svara_map[2] = "Ri\u2082"
 
     # Determine Ri3/Ga2
     if lower < 30:
         # First thirty should get Ga2
-        svara_map[3] = 'Ga\u2082'
+        svara_map[3] = "Ga\u2082"
     else:
         # Only the last six have Ri3
-        svara_map[3] = 'Ri\u2083'
+        svara_map[3] = "Ri\u2083"
 
     upper = mela_idx % 6
 
     # Determine Dha2/Ni1
     if upper == 0:
         # these are the only ones with Ni1
-        svara_map[9] = 'Ni\u2081'
+        svara_map[9] = "Ni\u2081"
     else:
         # Everyone else has Dha2
-        svara_map[9] = 'Dha\u2082'
+        svara_map[9] = "Dha\u2082"
 
     # Determine Dha3/Ni2
     if upper == 5:
         # This one has Dha3
-        svara_map[10] = 'Dha\u2083'
+        svara_map[10] = "Dha\u2083"
     else:
         # Everyone else has Ni2
-        svara_map[10] = 'Ni\u2082'
+        svara_map[10] = "Ni\u2082"
 
     if abbr:
-        svara_map = [s.translate(str.maketrans({'a': '', 'h': '', 'i': ''}))
-                     for s in svara_map]
+        svara_map = [
+            s.translate(str.maketrans({"a": "", "h": "", "i": ""})) for s in svara_map
+        ]
 
     if not unicode:
-        svara_map = [s.translate(str.maketrans({'\u2081': '1',
-                                                '\u2082': '2',
-                                                '\u2083': '3'}))
-                     for s in svara_map]
+        svara_map = [
+            s.translate(str.maketrans({"\u2081": "1", "\u2082": "2", "\u2083": "3"}))
+            for s in svara_map
+        ]
 
     return list(svara_map)
 
@@ -389,7 +456,7 @@ def list_thaat():
 
 @cache(level=10)
 def key_to_notes(key, unicode=True):
-    '''Lists all 12 note names in the chromatic scale, as spelled according to
+    """Lists all 12 note names in the chromatic scale, as spelled according to
     a given key (major or minor).
 
     This function exists to resolve enharmonic equivalences between different
@@ -460,27 +527,29 @@ def key_to_notes(key, unicode=True):
 
     >>> librosa.key_to_notes('Fb:min')
     ['D𝄫', 'D♭', 'E𝄫', 'E♭', 'F♭', 'F', 'G♭', 'A𝄫', 'A♭', 'B𝄫', 'B♭', 'C♭']
-    '''
+    """
 
     # Parse the key signature
-    match = re.match(r'^(?P<tonic>[A-Ga-g])'
-                     r'(?P<accidental>[#♯b!♭]?)'
-                     r':(?P<scale>(maj|min)(or)?)$',
-                     key)
+    match = re.match(
+        r"^(?P<tonic>[A-Ga-g])"
+        r"(?P<accidental>[#♯b!♭]?)"
+        r":(?P<scale>(maj|min)(or)?)$",
+        key,
+    )
     if not match:
-        raise ParameterError('Improper key format: {:s}'.format(key))
+        raise ParameterError("Improper key format: {:s}".format(key))
 
-    pitch_map = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
-    acc_map = {'#': 1, '': 0, 'b': -1, '!': -1, '♯': 1, '♭': -1}
+    pitch_map = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
+    acc_map = {"#": 1, "": 0, "b": -1, "!": -1, "♯": 1, "♭": -1}
 
-    tonic = match.group('tonic').upper()
-    accidental = match.group('accidental')
+    tonic = match.group("tonic").upper()
+    accidental = match.group("accidental")
     offset = acc_map[accidental]
 
-    scale = match.group('scale')[:3].lower()
+    scale = match.group("scale")[:3].lower()
 
     # Determine major or minor
-    major = (scale == 'maj')
+    major = scale == "maj"
 
     # calculate how many clockwise steps we are on CoF (== # sharps)
     if major:
@@ -510,20 +579,33 @@ def key_to_notes(key, unicode=True):
         use_sharps = False
 
     # Basic note sequences for simple keys
-    notes_sharp = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
-    notes_flat = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B']
+    notes_sharp = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"]
+    notes_flat = ["C", "D♭", "D", "E♭", "E", "F", "G♭", "G", "A♭", "A", "B♭", "B"]
 
     # These apply when we have >= 6 sharps
-    sharp_corrections = [(5, 'E♯'), (0, 'B♯'), (7, 'F𝄪'),
-                         (2, 'C𝄪'), (9, 'G𝄪'), (4, 'D𝄪'), (11, 'A𝄪')]
+    sharp_corrections = [
+        (5, "E♯"),
+        (0, "B♯"),
+        (7, "F𝄪"),
+        (2, "C𝄪"),
+        (9, "G𝄪"),
+        (4, "D𝄪"),
+        (11, "A𝄪"),
+    ]
 
     # These apply when we have >= 6 flats
-    flat_corrections = [(11, 'C♭'), (4, 'F♭'), (9, 'B𝄫'),
-                        (2, 'E𝄫'), (7, 'A𝄫'), (0, 'D𝄫')]  # last would be (5, 'G𝄫')
+    flat_corrections = [
+        (11, "C♭"),
+        (4, "F♭"),
+        (9, "B𝄫"),
+        (2, "E𝄫"),
+        (7, "A𝄫"),
+        (0, "D𝄫"),
+    ]  # last would be (5, 'G𝄫')
 
     # Apply a mod-12 correction to distinguish B#:maj from C:maj
     n_sharps = tonic_number
-    if tonic_number == 0 and tonic == 'B':
+    if tonic_number == 0 and tonic == "B":
         n_sharps = 12
 
     if use_sharps:
@@ -545,7 +627,7 @@ def key_to_notes(key, unicode=True):
 
     # Finally, apply any unicode down-translation if necessary
     if not unicode:
-        translations = str.maketrans({'♯': '#', '𝄪': '##', '♭': 'b', '𝄫': 'bb'})
+        translations = str.maketrans({"♯": "#", "𝄪": "##", "♭": "b", "𝄫": "bb"})
         notes = list(n.translate(translations) for n in notes)
 
     return notes
@@ -587,22 +669,25 @@ def key_to_degrees(key):
     array([ 9, 11,  0,  2,  4,  5,  7])
 
     """
-    notes = dict(maj=np.array([0, 2, 4, 5, 7, 9, 11]),
-                 min=np.array([0, 2, 3, 5, 7, 8, 10]))
+    notes = dict(
+        maj=np.array([0, 2, 4, 5, 7, 9, 11]), min=np.array([0, 2, 3, 5, 7, 8, 10])
+    )
 
-    match = re.match(r'^(?P<tonic>[A-Ga-g])'
-                     r'(?P<accidental>[#♯b!♭]?)'
-                     r':(?P<scale>(maj|min)(or)?)$',
-                     key)
+    match = re.match(
+        r"^(?P<tonic>[A-Ga-g])"
+        r"(?P<accidental>[#♯b!♭]?)"
+        r":(?P<scale>(maj|min)(or)?)$",
+        key,
+    )
     if not match:
-        raise ParameterError('Improper key format: {:s}'.format(key))
+        raise ParameterError("Improper key format: {:s}".format(key))
 
-    pitch_map = {'C': 0, 'D': 2, 'E': 4, 'F': 5, 'G': 7, 'A': 9, 'B': 11}
-    acc_map = {'#': 1, '': 0, 'b': -1, '!': -1, '♯': 1, '♭': -1}
-    tonic = match.group('tonic').upper()
-    accidental = match.group('accidental')
+    pitch_map = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
+    acc_map = {"#": 1, "": 0, "b": -1, "!": -1, "♯": 1, "♭": -1}
+    tonic = match.group("tonic").upper()
+    accidental = match.group("accidental")
     offset = acc_map[accidental]
 
-    scale = match.group('scale')[:3].lower()
+    scale = match.group("scale")[:3].lower()
 
     return (notes[scale] + pitch_map[tonic] + offset) % 12

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-'''Non-negative least squares'''
+"""Non-negative least squares"""
 
 # The scipy library provides an nnls solver, but it does
 # not generalize efficiently to matrix-valued problems.
@@ -14,11 +14,11 @@ import scipy.optimize
 from .utils import MAX_MEM_BLOCK
 
 
-__all__ = ['nnls']
+__all__ = ["nnls"]
 
 
 def _nnls_obj(x, shape, A, B):
-    '''Compute the objective and gradient for NNLS'''
+    """Compute the objective and gradient for NNLS"""
 
     # Scipy's lbfgs flattens all arrays, so we first reshape
     # the iterate x
@@ -28,7 +28,7 @@ def _nnls_obj(x, shape, A, B):
     diff = np.dot(A, x) - B
 
     # Compute the objective value
-    value = 0.5 * np.sum(diff**2)
+    value = 0.5 * np.sum(diff ** 2)
 
     # And the gradient
     grad = np.dot(A.T, diff)
@@ -38,7 +38,7 @@ def _nnls_obj(x, shape, A, B):
 
 
 def _nnls_lbfgs_block(A, B, x_init=None, **kwargs):
-    '''Solve the constrained problem over a single block
+    """Solve the constrained problem over a single block
 
     Parameters
     ----------
@@ -58,7 +58,7 @@ def _nnls_lbfgs_block(A, B, x_init=None, **kwargs):
     -------
     x : np.ndarray [shape=(d, N)]
         Non-negative matrix such that Ax ~= B
-    '''
+    """
 
     # If we don't have an initial point, start at the projected
     # least squares solution
@@ -67,23 +67,22 @@ def _nnls_lbfgs_block(A, B, x_init=None, **kwargs):
         np.clip(x_init, 0, None, out=x_init)
 
     # Adapt the hessian approximation to the dimension of the problem
-    kwargs.setdefault('m', A.shape[1])
+    kwargs.setdefault("m", A.shape[1])
 
     # Construct non-negative bounds
     bounds = [(0, None)] * x_init.size
     shape = x_init.shape
 
     # optimize
-    x, obj_value, diagnostics = scipy.optimize.fmin_l_bfgs_b(_nnls_obj, x_init,
-                                                             args=(shape, A, B),
-                                                             bounds=bounds,
-                                                             **kwargs)
+    x, obj_value, diagnostics = scipy.optimize.fmin_l_bfgs_b(
+        _nnls_obj, x_init, args=(shape, A, B), bounds=bounds, **kwargs
+    )
     # reshape the solution
     return x.reshape(shape)
 
 
 def nnls(A, B, **kwargs):
-    '''Non-negative least squares.
+    """Non-negative least squares.
 
     Given two matrices A and B, find a non-negative matrix X
     that minimizes the sum squared error::
@@ -138,7 +137,7 @@ def nnls(A, B, **kwargs):
     >>> ax[1].set(title='Reconstructed spectrogram (1025 bins)')
     >>> ax[1].label_outer()
     >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
-    '''
+    """
 
     # If B is a single vector, punt up to the scipy method
     if B.ndim == 1:
@@ -157,7 +156,7 @@ def nnls(A, B, **kwargs):
 
     for bl_s in range(0, x.shape[-1], n_columns):
         bl_t = min(bl_s + n_columns, B.shape[-1])
-        x[:, bl_s:bl_t] = _nnls_lbfgs_block(A, B[:, bl_s:bl_t],
-                                            x_init=x_init[:, bl_s:bl_t],
-                                            **kwargs)
+        x[:, bl_s:bl_t] = _nnls_lbfgs_block(
+            A, B[:, bl_s:bl_t], x_init=x_init[:, bl_s:bl_t], **kwargs
+        )
     return x

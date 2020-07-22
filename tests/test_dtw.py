@@ -57,7 +57,9 @@ def test_dtw_global_constrained():
         ]
     )
 
-    mut_D = librosa.sequence.dtw(X, Y, backtrack=False, global_constraints=True, band_rad=0.5)
+    mut_D = librosa.sequence.dtw(
+        X, Y, backtrack=False, global_constraints=True, band_rad=0.5
+    )
     assert np.array_equal(gt_D, mut_D)
 
 
@@ -92,7 +94,9 @@ def test_dtw_gobal_boundary():
     # See https://github.com/librosa/librosa/pull/920
     X = np.array([1, 2, 3, 4, 5])
     Y = np.array([1, 1, 1, 2, 4, 5, 6, 5, 5])
-    gt_wp = np.array([[0, 0], [0, 1], [0, 2], [1, 3], [2, 3], [3, 4], [4, 5], [4, 6], [4, 7], [4, 8]])
+    gt_wp = np.array(
+        [[0, 0], [0, 1], [0, 2], [1, 3], [2, 3], [3, 4], [4, 5], [4, 6], [4, 7], [4, 8]]
+    )
 
     D, wp = librosa.sequence.dtw(X, Y, subseq=False)
     wp = wp[::-1]
@@ -123,7 +127,9 @@ def test_dtw_subseq_steps():
     D1, wp1 = librosa.sequence.dtw(X, Y, subseq=True, backtrack=True)
     wp1 = wp1[::-1]
 
-    D2, steps = librosa.sequence.dtw(X, Y, subseq=True, backtrack=False, return_steps=True)
+    D2, steps = librosa.sequence.dtw(
+        X, Y, subseq=True, backtrack=False, return_steps=True
+    )
     start_idx = np.argmin(D2[-1, :])
     wp2 = librosa.sequence.dtw_backtracking(steps, subseq=True, start=start_idx)
     wp2 = wp2[::-1]
@@ -139,7 +145,9 @@ def test_dtw_backtracking_incompatible_args_01():
     X = np.array([1, 2, 3, 4, 5])
     Y = np.array([1, 1, 1, 2, 4, 5, 6, 5, 5])
 
-    D, steps = librosa.sequence.dtw(X, Y, subseq=True, backtrack=False, return_steps=True)
+    D, steps = librosa.sequence.dtw(
+        X, Y, subseq=True, backtrack=False, return_steps=True
+    )
     start_idx = np.argmin(D[-1, :])
     librosa.sequence.dtw_backtracking(steps, subseq=False, start=start_idx)
 
@@ -189,7 +197,12 @@ def test_dtw_global_diagonal():
     gt_wp = list(zip(list(range(10)), list(range(10))))[::-1]
 
     mut_D, mut_wp = librosa.sequence.dtw(
-        X, Y, subseq=True, metric="cosine", step_sizes_sigma=np.array([[1, 1]]), weights_mul=np.array([1])
+        X,
+        Y,
+        subseq=True,
+        metric="cosine",
+        step_sizes_sigma=np.array([[1, 1]]),
+        weights_mul=np.array([1]),
     )
 
     assert np.array_equal(np.asarray(gt_wp), np.asarray(mut_wp))
@@ -289,7 +302,9 @@ def test_dtw_nan_fail():
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
-@pytest.mark.parametrize("steps", [np.array([[1, -1]]), np.array([[-1, 1]]), np.array([[-1, -1]])])
+@pytest.mark.parametrize(
+    "steps", [np.array([[1, -1]]), np.array([[-1, 1]]), np.array([[-1, -1]])]
+)
 def test_dtw_negative_steps(steps):
     C = np.ones((10, 10))
     librosa.sequence.dtw(C=C, step_sizes_sigma=steps)

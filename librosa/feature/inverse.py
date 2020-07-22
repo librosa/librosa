@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-'''Feature inversion'''
+"""Feature inversion"""
 
 import warnings
 import numpy as np
@@ -14,12 +14,11 @@ from .. import filters
 from ..util import nnls
 
 
-__all__ = ['mel_to_stft', 'mel_to_audio',
-           'mfcc_to_mel', 'mfcc_to_audio']
+__all__ = ["mel_to_stft", "mel_to_audio", "mfcc_to_mel", "mfcc_to_audio"]
 
 
 def mel_to_stft(M, sr=22050, n_fft=2048, power=2.0, **kwargs):
-    '''Approximate STFT magnitude from a Mel power spectrogram.
+    """Approximate STFT magnitude from a Mel power spectrogram.
 
     Parameters
     ----------
@@ -64,33 +63,47 @@ def mel_to_stft(M, sr=22050, n_fft=2048, power=2.0, **kwargs):
     Compare the results visually
 
     >>> import matplotlib.pyplot as plt
-    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+    >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
     >>> img = librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max, top_db=None),
     ...                          y_axis='log', x_axis='time', ax=ax[0])
     >>> ax[0].set(title='Original STFT')
     >>> ax[0].label_outer()
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S_inv, ref=np.max, top_db=None),
+    ...                          y_axis='log', x_axis='time', ax=ax[1])
+    >>> ax[1].set(title='Reconstructed STFT')
+    >>> ax[1].label_outer()
     >>> librosa.display.specshow(librosa.amplitude_to_db(np.abs(S_inv - S),
     ...                                                  ref=S.max(), top_db=None),
-    ...                          vmax=0, y_axis='log', x_axis='time', cmap='magma', ax=ax[1])
-    >>> ax[1].set(title='Residual error (dB)')
+    ...                          vmax=0, y_axis='log', x_axis='time', cmap='magma', ax=ax[2])
+    >>> ax[2].set(title='Residual error (dB)')
     >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
-    '''
+    """
 
     # Construct a mel basis with dtype matching the input data
-    mel_basis = filters.mel(sr, n_fft, n_mels=M.shape[0],
-                            dtype=M.dtype,
-                            **kwargs)
+    mel_basis = filters.mel(sr, n_fft, n_mels=M.shape[0], dtype=M.dtype, **kwargs)
 
     # Find the non-negative least squares solution, and apply
     # the inverse exponent.
     # We'll do the exponentiation in-place.
     inverse = nnls(mel_basis, M)
-    return np.power(inverse, 1. / power, out=inverse)
+    return np.power(inverse, 1.0 / power, out=inverse)
 
 
-def mel_to_audio(M, sr=22050, n_fft=2048, hop_length=512, win_length=None,
-                 window='hann', center=True, pad_mode='reflect', power=2.0, n_iter=32,
-                 length=None, dtype=np.float32, **kwargs):
+def mel_to_audio(
+    M,
+    sr=22050,
+    n_fft=2048,
+    hop_length=512,
+    win_length=None,
+    window="hann",
+    center=True,
+    pad_mode="reflect",
+    power=2.0,
+    n_iter=32,
+    length=None,
+    dtype=np.float32,
+    **kwargs,
+):
     """Invert a mel power spectrogram to audio using Griffin-Lim.
 
     This is primarily a convenience wrapper for:
@@ -158,12 +171,21 @@ def mel_to_audio(M, sr=22050, n_fft=2048, hop_length=512, win_length=None,
 
     stft = mel_to_stft(M, sr=sr, n_fft=n_fft, power=power, **kwargs)
 
-    return griffinlim(stft, n_iter=n_iter, hop_length=hop_length, win_length=win_length,
-                      window=window, center=center, dtype=dtype, length=length,
-                      pad_mode=pad_mode)
+    return griffinlim(
+        stft,
+        n_iter=n_iter,
+        hop_length=hop_length,
+        win_length=win_length,
+        window=window,
+        center=center,
+        dtype=dtype,
+        length=length,
+        pad_mode=pad_mode,
+    )
 
-def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0):
-    '''Invert Mel-frequency cepstral coefficients to approximate a Mel power
+
+def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm="ortho", ref=1.0, lifter=0):
+    """Invert Mel-frequency cepstral coefficients to approximate a Mel power
     spectrogram.
 
     This inversion proceeds in two steps:
@@ -213,7 +235,7 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0):
     librosa.feature.mfcc
     librosa.feature.melspectrogram
     scipy.fftpack.dct
-    '''
+    """
     if lifter > 0:
         n_mfcc = mfcc.shape[0]
         idx = np.arange(1, 1 + n_mfcc, dtype=mfcc.dtype)
@@ -221,21 +243,25 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0):
 
         # raise a UserWarning if lifter array includes critical values
         if np.any(np.abs(lifter_sine) < np.finfo(lifter_sine.dtype).eps):
-            warnings.warn(message="lifter array includes critial values that may invoke underflow.",
-                          category=UserWarning)
+            warnings.warn(
+                message="lifter array includes critial values that may invoke underflow.",
+                category=UserWarning,
+            )
 
         # lifter mfcc values
         mfcc = mfcc / (lifter_sine + tiny(mfcc))
 
     elif lifter != 0:
-        raise ParameterError('MFCC to mel lifter must be a non-negative number.')
+        raise ParameterError("MFCC to mel lifter must be a non-negative number.")
 
     logmel = scipy.fftpack.idct(mfcc, axis=0, type=dct_type, norm=norm, n=n_mels)
     return db_to_power(logmel, ref=ref)
 
 
-def mfcc_to_audio(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0, **kwargs):
-    '''Convert Mel-frequency cepstral coefficients to a time-domain audio signal
+def mfcc_to_audio(
+    mfcc, n_mels=128, dct_type=2, norm="ortho", ref=1.0, lifter=0, **kwargs
+):
+    """Convert Mel-frequency cepstral coefficients to a time-domain audio signal
 
     This function is primarily a convenience wrapper for the following steps:
 
@@ -284,8 +310,9 @@ def mfcc_to_audio(mfcc, n_mels=128, dct_type=2, norm='ortho', ref=1.0, lifter=0,
     librosa.feature.mfcc
     librosa.griffinlim
     scipy.fftpack.dct
-    '''
-    mel_spec = mfcc_to_mel(mfcc, n_mels=n_mels, dct_type=dct_type, norm=norm,
-                           ref=ref, lifter=lifter)
+    """
+    mel_spec = mfcc_to_mel(
+        mfcc, n_mels=n_mels, dct_type=dct_type, norm=norm, ref=ref, lifter=lifter
+    )
 
     return mel_to_audio(mel_spec, **kwargs)

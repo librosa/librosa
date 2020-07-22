@@ -14,18 +14,29 @@ from .exceptions import ParameterError
 from .decorators import deprecated
 
 
-__all__ = ['example_audio_file', 'find_files', 'example', 'ex', 'list_examples', 'example_info']
+__all__ = [
+    "example_audio_file",
+    "find_files",
+    "example",
+    "ex",
+    "list_examples",
+    "example_info",
+]
 
 
 # Instantiate the pooch
-__data_path = os.environ.get('LIBROSA_DATA_DIR', pooch.os_cache('librosa'))
-__GOODBOY = pooch.create(__data_path,
-                         base_url="https://librosa.org/data/audio/",
-                         registry=None)
+__data_path = os.environ.get("LIBROSA_DATA_DIR", pooch.os_cache("librosa"))
+__GOODBOY = pooch.create(
+    __data_path, base_url="https://librosa.org/data/audio/", registry=None
+)
 
-__GOODBOY.load_registry(resource_filename(__name__, str(Path('example_data') / 'registry.txt')))
+__GOODBOY.load_registry(
+    resource_filename(__name__, str(Path("example_data") / "registry.txt"))
+)
 
-with open(resource_filename(__name__, str(Path('example_data') / 'index.json')), 'r') as fdesc:
+with open(
+    resource_filename(__name__, str(Path("example_data") / "index.json")), "r"
+) as fdesc:
     __TRACKMAP = json.load(fdesc)
 
 
@@ -79,18 +90,18 @@ def example(key, hq=False):
     """
 
     if key not in __TRACKMAP:
-        raise ParameterError('Unknown example key: {}'.format(key))
+        raise ParameterError("Unknown example key: {}".format(key))
 
     if hq:
-        ext = '.hq.ogg'
+        ext = ".hq.ogg"
     else:
-        ext = '.ogg'
+        ext = ".ogg"
 
-    return __GOODBOY.fetch(__TRACKMAP[key]['path'] + ext)
+    return __GOODBOY.fetch(__TRACKMAP[key]["path"] + ext)
 
 
 ex = example
-'''Alias for example'''
+"""Alias for example"""
 
 
 def list_examples():
@@ -106,10 +117,10 @@ def list_examples():
     util.example
     util.example_info
     """
-    print('AVAILABLE EXAMPLES')
-    print('-' * 68)
+    print("AVAILABLE EXAMPLES")
+    print("-" * 68)
     for key in sorted(__TRACKMAP.keys()):
-        print('{:10}\t{}'.format(key, __TRACKMAP[key]['desc']))
+        print("{:10}\t{}".format(key, __TRACKMAP[key]["desc"]))
 
 
 def example_info(key):
@@ -138,20 +149,20 @@ def example_info(key):
     """
 
     if key not in __TRACKMAP:
-        raise ParameterError('Unknown example key: {}'.format(key))
+        raise ParameterError("Unknown example key: {}".format(key))
 
-    license = __GOODBOY.fetch(__TRACKMAP[key]['path'] + '.txt')
+    license = __GOODBOY.fetch(__TRACKMAP[key]["path"] + ".txt")
 
-    with open(license, 'r') as fdesc:
-        print('{:10s}\t{:s}'.format(key, __TRACKMAP[key]['desc']))
-        print('-' * 68)
+    with open(license, "r") as fdesc:
+        print("{:10s}\t{:s}".format(key, __TRACKMAP[key]["desc"]))
+        print("-" * 68)
         for line in fdesc:
             print(line)
 
 
-@deprecated('0.8', '0.9')
+@deprecated("0.8", "0.9")
 def example_audio_file():
-    '''Get the path to an included audio example file.
+    """Get the path to an included audio example file.
 
     .. warning:: This function is deprecated in 0.8, and will be removed in 0.9.
                  Instead, use `librosa.util.example`.
@@ -177,15 +188,16 @@ def example_audio_file():
     -------
     filename : str
         Path to the audio example file included with librosa
-    '''
+    """
 
     # hq=True recovers our original example file
-    return example('vibeace', hq=True)
+    return example("vibeace", hq=True)
 
 
-def find_files(directory, ext=None, recurse=True, case_sensitive=False,
-               limit=None, offset=0):
-    '''Get a sorted list of (audio) files in a directory or directory sub-tree.
+def find_files(
+    directory, ext=None, recurse=True, case_sensitive=False, limit=None, offset=0
+):
+    """Get a sorted list of (audio) files in a directory or directory sub-tree.
 
     Examples
     --------
@@ -238,10 +250,10 @@ def find_files(directory, ext=None, recurse=True, case_sensitive=False,
     -------
     files : list of str
         The list of audio files.
-    '''
+    """
 
     if ext is None:
-        ext = ['aac', 'au', 'flac', 'm4a', 'mp3', 'ogg', 'wav']
+        ext = ["aac", "au", "flac", "m4a", "mp3", "ogg", "wav"]
 
     elif isinstance(ext, str):
         ext = [ext]
@@ -274,7 +286,7 @@ def find_files(directory, ext=None, recurse=True, case_sensitive=False,
 
 
 def __get_files(dir_name, extensions):
-    '''Helper function to get files in a single directory'''
+    """Helper function to get files in a single directory"""
 
     # Expand out the directory
     dir_name = os.path.abspath(os.path.expanduser(dir_name))
@@ -282,7 +294,7 @@ def __get_files(dir_name, extensions):
     myfiles = set()
 
     for sub_ext in extensions:
-        globstr = os.path.join(dir_name, '*' + os.path.extsep + sub_ext)
+        globstr = os.path.join(dir_name, "*" + os.path.extsep + sub_ext)
         myfiles |= set(glob.glob(globstr))
 
     return myfiles

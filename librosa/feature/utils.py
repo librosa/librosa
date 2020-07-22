@@ -8,12 +8,13 @@ from numba import jit
 
 from .._cache import cache
 from ..util.exceptions import ParameterError
-__all__ = ['delta', 'stack_memory']
+
+__all__ = ["delta", "stack_memory"]
 
 
 @cache(level=40)
-def delta(data, width=9, order=1, axis=-1, mode='interp', **kwargs):
-    r'''Compute delta features: local estimate of the derivative
+def delta(data, width=9, order=1, axis=-1, mode="interp", **kwargs):
+    r"""Compute delta features: local estimate of the derivative
     of the input data along the selected axis.
 
     Delta features are computed Savitsky-Golay filtering.
@@ -93,27 +94,27 @@ def delta(data, width=9, order=1, axis=-1, mode='interp', **kwargs):
     >>> fig.colorbar(img1, ax=[ax[0]])
     >>> fig.colorbar(img2, ax=[ax[1]])
     >>> fig.colorbar(img3, ax=[ax[2]])
-    '''
+    """
 
     data = np.atleast_1d(data)
 
-    if mode == 'interp' and width > data.shape[axis]:
-        raise ParameterError("when mode='interp', width={} "
-                             "cannot exceed data.shape[axis]={}".format(width, data.shape[axis]))
+    if mode == "interp" and width > data.shape[axis]:
+        raise ParameterError(
+            "when mode='interp', width={} "
+            "cannot exceed data.shape[axis]={}".format(width, data.shape[axis])
+        )
 
     if width < 3 or np.mod(width, 2) != 1:
-        raise ParameterError('width must be an odd integer >= 3')
+        raise ParameterError("width must be an odd integer >= 3")
 
     if order <= 0 or not isinstance(order, int):
-        raise ParameterError('order must be a positive integer')
+        raise ParameterError("order must be a positive integer")
 
-    kwargs.pop('deriv', None)
-    kwargs.setdefault('polyorder', order)
-    return scipy.signal.savgol_filter(data, width,
-                                      deriv=order,
-                                      axis=axis,
-                                      mode=mode,
-                                      **kwargs)
+    kwargs.pop("deriv", None)
+    kwargs.setdefault("polyorder", order)
+    return scipy.signal.savgol_filter(
+        data, width, deriv=order, axis=axis, mode=mode, **kwargs
+    )
 
 
 @cache(level=40)
@@ -217,25 +218,29 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
     """
 
     if n_steps < 1:
-        raise ParameterError('n_steps must be a positive integer')
+        raise ParameterError("n_steps must be a positive integer")
 
     if data.ndim > 2:
-        raise ParameterError('Input must be at most 2-dimensional. '
-                             'Given data.shape={}'.format(data.shape))
+        raise ParameterError(
+            "Input must be at most 2-dimensional. "
+            "Given data.shape={}".format(data.shape)
+        )
 
     if delay == 0:
-        raise ParameterError('delay must be a non-zero integer')
+        raise ParameterError("delay must be a non-zero integer")
 
     data = np.atleast_2d(data)
     t = data.shape[-1]
 
     if t < 1:
-        raise ParameterError('Cannot stack memory when input data has '
-                             'no columns. Given data.shape={}'.format(data.shape))
-    kwargs.setdefault('mode', 'constant')
+        raise ParameterError(
+            "Cannot stack memory when input data has "
+            "no columns. Given data.shape={}".format(data.shape)
+        )
+    kwargs.setdefault("mode", "constant")
 
-    if kwargs['mode'] == 'constant':
-        kwargs.setdefault('constant_values', [0])
+    if kwargs["mode"] == "constant":
+        kwargs.setdefault("constant_values", [0])
 
     # Pad the end with zeros, which will roll to the front below
     if delay > 0:
@@ -262,7 +267,7 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
 
 @jit(nopython=True, cache=True)
 def __stack(history, data, n_steps, delay):
-    '''Memory-stacking helper function.
+    """Memory-stacking helper function.
 
     Parameters
     ----------
@@ -278,7 +283,7 @@ def __stack(history, data, n_steps, delay):
     -------
     None
         Output is stored directly in the history array
-    '''
+    """
     # Dimension of each copy of the data
     d = data.shape[0]
 
@@ -289,12 +294,12 @@ def __stack(history, data, n_steps, delay):
         for step in range(n_steps):
             q = n_steps - 1 - step
             # nth block is original shifted left by n*delay steps
-            history[step * d:(step + 1) * d] = data[:, q*delay:q*delay+t]
+            history[step * d : (step + 1) * d] = data[:, q * delay : q * delay + t]
     else:
         # Handle the last block separately to avoid -t:0 empty slices
         history[-d:, :] = data[:, -t:]
 
-        for step in range(n_steps-1):
+        for step in range(n_steps - 1):
             # nth block is original shifted right by n*delay steps
             q = n_steps - 1 - step
-            history[step * d:(step + 1) * d] = data[:, -t + q*delay:q*delay]
+            history[step * d : (step + 1) * d] = data[:, -t + q * delay : q * delay]

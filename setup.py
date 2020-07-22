@@ -38,7 +38,6 @@ setup(
     install_requires=[
         'audioread >= 2.0.0',
         'numpy >= 1.15.0',
-        'packaging >= 18',
         'scipy >= 1.0.0',
         'scikit-learn >= 0.14.0, != 0.19.0',
         'joblib >= 0.14',
@@ -50,10 +49,11 @@ setup(
     ],
     python_requires='>=3.6',
     extras_require={
-        'docs': ['numpydoc', 'sphinx!=1.3.1', 'sphinx_rtd_theme',
-                 'matplotlib >= 2.0.0',
-                 'sphinx-multiversion >= 0.2.3',
-                 'sphinx-gallery',
+        'docs': ['numpydoc', 'sphinx!=1.3.1', 'sphinx_rtd_theme==0.5.*',
+                 'numba < 0.50',
+                 'matplotlib >= 2.0.0, < 3.3',
+                 'sphinx-multiversion==0.2.3',
+                 'sphinx-gallery>=0.7',
                  'sphinxcontrib-svg2pdfconverter',
                  'presets'],
         'tests': ['matplotlib >= 2.1',

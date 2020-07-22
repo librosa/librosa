@@ -1,20 +1,22 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
-'''Deprecation utilities'''
+"""Deprecation utilities"""
 
 import inspect
 import warnings
 
 
 class Deprecated(object):
-    '''A dummy class to catch usage of deprecated variable names'''
+    """A dummy class to catch usage of deprecated variable names"""
+
     def __repr__(self):
-        return '<DEPRECATED parameter>'
+        return "<DEPRECATED parameter>"
 
 
-def rename_kw(old_name, old_value, new_name, new_value,
-              version_deprecated, version_removed):
-    '''Handle renamed arguments.
+def rename_kw(
+    old_name, old_value, new_name, new_value, version_deprecated, version_removed
+):
+    """Handle renamed arguments.
 
     Parameters
     ----------
@@ -42,7 +44,7 @@ def rename_kw(old_name, old_value, new_name, new_value,
     --------
     if ``old_value`` is not of type `Deprecated`
 
-    '''
+    """
     if isinstance(old_value, Deprecated):
         return new_value
     else:
@@ -50,15 +52,16 @@ def rename_kw(old_name, old_value, new_name, new_value,
         dep_func = stack[1]
         caller = stack[2]
 
-        warnings.warn_explicit("{:s}() keyword argument '{:s}' has been "
-                               "renamed to '{:s}' in version {:}."
-                               "\n\tThis alias will be removed in version "
-                               "{:}.".format(dep_func[3],
-                                             old_name, new_name,
-                                             version_deprecated,
-                                             version_removed),
-                               category=DeprecationWarning,
-                               filename=caller[1],
-                               lineno=caller[2])
+        warnings.warn_explicit(
+            "{:s}() keyword argument '{:s}' has been "
+            "renamed to '{:s}' in version {:}."
+            "\n\tThis alias will be removed in version "
+            "{:}.".format(
+                dep_func[3], old_name, new_name, version_deprecated, version_removed
+            ),
+            category=DeprecationWarning,
+            filename=caller[1],
+            lineno=caller[2],
+        )
 
         return old_value

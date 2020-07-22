@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-'''Rhythmic feature extraction'''
+"""Rhythmic feature extraction"""
 
 import numpy as np
 
@@ -12,13 +12,21 @@ from ..util.exceptions import ParameterError
 from ..filters import get_window
 
 
-__all__ = ['tempogram', 'fourier_tempogram']
+__all__ = ["tempogram", "fourier_tempogram"]
 
 
 # -- Rhythmic features -- #
-def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
-              win_length=384, center=True, window='hann', norm=np.inf):
-    '''Compute the tempogram: local autocorrelation of the onset strength envelope. [#]_
+def tempogram(
+    y=None,
+    sr=22050,
+    onset_envelope=None,
+    hop_length=512,
+    win_length=384,
+    center=True,
+    window="hann",
+    norm=np.inf,
+):
+    """Compute the tempogram: local autocorrelation of the onset strength envelope. [#]_
 
     .. [#] Grosche, Peter, Meinard Müller, and Frank Kurth.
         "Cyclic tempogram - A mid-level tempo representation for music signals."
@@ -123,18 +131,18 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
     >>> ax[3].legend(frameon=True)
     >>> ax[3].set(xlabel='BPM')
     >>> ax[3].grid(True)
-    '''
+    """
 
     from ..onset import onset_strength
 
     if win_length < 1:
-        raise ParameterError('win_length must be a positive integer')
+        raise ParameterError("win_length must be a positive integer")
 
     ac_window = get_window(window, win_length, fftbins=True)
 
     if onset_envelope is None:
         if y is None:
-            raise ParameterError('Either y or onset_envelope must be provided')
+            raise ParameterError("Either y or onset_envelope must be provided")
 
         onset_envelope = onset_strength(y=y, sr=sr, hop_length=hop_length)
 
@@ -144,38 +152,51 @@ def tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
     if onset_envelope.ndim > 1:
         # If we have multi-band input, iterate over rows
-        return np.asarray([tempogram(onset_envelope=oe_subband,
-                                     hop_length=hop_length,
-                                     win_length=win_length,
-                                     center=center,
-                                     window=window,
-                                     norm=norm) for oe_subband in onset_envelope])
+        return np.asarray(
+            [
+                tempogram(
+                    onset_envelope=oe_subband,
+                    hop_length=hop_length,
+                    win_length=win_length,
+                    center=center,
+                    window=window,
+                    norm=norm,
+                )
+                for oe_subband in onset_envelope
+            ]
+        )
 
     # Center the autocorrelation windows
     n = len(onset_envelope)
 
     if center:
-        onset_envelope = np.pad(onset_envelope, int(win_length // 2),
-                                mode='linear_ramp', end_values=[0, 0])
+        onset_envelope = np.pad(
+            onset_envelope, int(win_length // 2), mode="linear_ramp", end_values=[0, 0]
+        )
 
     # Carve onset envelope into frames
-    odf_frame = util.frame(onset_envelope,
-                           frame_length=win_length,
-                           hop_length=1)
+    odf_frame = util.frame(onset_envelope, frame_length=win_length, hop_length=1)
 
     # Truncate to the length of the original signal
     if center:
         odf_frame = odf_frame[:, :n]
 
     # Window, autocorrelate, and normalize
-    return util.normalize(autocorrelate(odf_frame * ac_window[:, np.newaxis],
-                                        axis=0),
-                          norm=norm, axis=0)
+    return util.normalize(
+        autocorrelate(odf_frame * ac_window[:, np.newaxis], axis=0), norm=norm, axis=0
+    )
 
 
-def fourier_tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
-                      win_length=384, center=True, window='hann'):
-    '''Compute the Fourier tempogram: the short-time Fourier transform of the
+def fourier_tempogram(
+    y=None,
+    sr=22050,
+    onset_envelope=None,
+    hop_length=512,
+    win_length=384,
+    center=True,
+    window="hann",
+):
+    """Compute the Fourier tempogram: the short-time Fourier transform of the
     onset strength envelope. [#]_
 
     .. [#] Grosche, Peter, Meinard Müller, and Frank Kurth.
@@ -254,16 +275,16 @@ def fourier_tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
     >>>                          x_axis='time', y_axis='tempo', cmap='magma',
     ...                          ax=ax[2])
     >>> ax[2].set(title='Autocorrelation tempogram')
-    '''
+    """
 
     from ..onset import onset_strength
 
     if win_length < 1:
-        raise ParameterError('win_length must be a positive integer')
+        raise ParameterError("win_length must be a positive integer")
 
     if onset_envelope is None:
         if y is None:
-            raise ParameterError('Either y or onset_envelope must be provided')
+            raise ParameterError("Either y or onset_envelope must be provided")
 
         onset_envelope = onset_strength(y=y, sr=sr, hop_length=hop_length)
 
@@ -272,5 +293,6 @@ def fourier_tempogram(y=None, sr=22050, onset_envelope=None, hop_length=512,
         onset_envelope = np.ascontiguousarray(onset_envelope)
 
     # Generate the short-time Fourier transform
-    return stft(onset_envelope, n_fft=win_length, hop_length=1,
-                center=center, window=window)
+    return stft(
+        onset_envelope, n_fft=win_length, hop_length=1, center=center, window=window
+    )

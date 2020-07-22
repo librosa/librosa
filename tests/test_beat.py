@@ -36,7 +36,14 @@ def test_onset_strength(infile):
 
     # Compute onset envelope using the same spectrogram
     onsets = librosa.onset.onset_strength(
-        y=None, sr=8000, S=DATA["D"], lag=1, max_size=1, center=False, detrend=True, aggregate=np.mean
+        y=None,
+        sr=8000,
+        S=DATA["D"],
+        lag=1,
+        max_size=1,
+        center=False,
+        detrend=True,
+        aggregate=np.mean,
     )
 
     assert np.allclose(onsets[1:], DATA["onsetenv"][0])
@@ -54,7 +61,14 @@ def test_tempo(tempo, sr, hop_length, ac_size, aggregate, prior):
     delay = librosa.time_to_samples(60.0 / tempo, sr=sr).item()
     y[::delay] = 1
 
-    tempo_est = librosa.beat.tempo(y=y, sr=sr, hop_length=hop_length, ac_size=ac_size, aggregate=aggregate, prior=prior)
+    tempo_est = librosa.beat.tempo(
+        y=y,
+        sr=sr,
+        hop_length=hop_length,
+        ac_size=ac_size,
+        aggregate=aggregate,
+        prior=prior,
+    )
 
     # Being within 5% for the stable frames is close enough
     if aggregate is None:
@@ -78,7 +92,9 @@ def test_beat_no_onsets():
 
     onsets = np.zeros(duration * sr // hop_length)
 
-    tempo, beats = librosa.beat.beat_track(onset_envelope=onsets, sr=sr, hop_length=hop_length)
+    tempo, beats = librosa.beat.beat_track(
+        onset_envelope=onsets, sr=sr, hop_length=hop_length
+    )
 
     assert np.allclose(tempo, 0)
     assert len(beats) == 0
@@ -92,7 +108,11 @@ def test_beat_no_onsets():
 def test_tempo_no_onsets(start_bpm, aggregate, onsets, sr, hop_length):
 
     tempo = librosa.beat.tempo(
-        onset_envelope=onsets, sr=sr, hop_length=hop_length, start_bpm=start_bpm, aggregate=aggregate
+        onset_envelope=onsets,
+        sr=sr,
+        hop_length=hop_length,
+        start_bpm=start_bpm,
+        aggregate=aggregate,
     )
     # Depending on bin resolution, we might not be able to match exactly
     assert np.allclose(tempo, start_bpm, atol=1e0)
@@ -116,7 +136,9 @@ def oenv(ysr, hop):
 @pytest.mark.parametrize("bpm", [None, 150, 360])
 @pytest.mark.parametrize("tightness", [1e2, 1e4])
 @pytest.mark.parametrize("prior", [None, scipy.stats.uniform(60, 240)])
-def test_beat(ysr, hop, oenv, with_audio, with_tempo, start_bpm, bpm, trim, tightness, prior):
+def test_beat(
+    ysr, hop, oenv, with_audio, with_tempo, start_bpm, bpm, trim, tightness, prior
+):
 
     y, sr = ysr
 
@@ -170,7 +192,12 @@ def test_beat_bad_start_bpm(ysr, start_bpm):
 @pytest.mark.parametrize("hop_length", [512, 1024])
 @pytest.mark.parametrize(
     "units,ctx",
-    [("frames", dnr()), ("time", dnr()), ("samples", dnr()), ("bad units", pytest.raises(librosa.ParameterError))],
+    [
+        ("frames", dnr()),
+        ("time", dnr()),
+        ("samples", dnr()),
+        ("bad units", pytest.raises(librosa.ParameterError)),
+    ],
 )
 def test_beat_units(ysr, hop_length, units, ctx):
 
@@ -197,9 +224,16 @@ def test_beat_units(ysr, hop_length, units, ctx):
 @pytest.mark.parametrize("use_onset", [False, True])
 @pytest.mark.parametrize(
     "tempo_min,tempo_max,ctx",
-    [(30, 300, dnr()), (None, 240, dnr()), (60, None, dnr()), (120, 80, pytest.raises(librosa.ParameterError))],
+    [
+        (30, 300, dnr()),
+        (None, 240, dnr()),
+        (60, None, dnr()),
+        (120, 80, pytest.raises(librosa.ParameterError)),
+    ],
 )
-@pytest.mark.parametrize("prior", [None, scipy.stats.lognorm(s=1, loc=np.log(120), scale=120)])
+@pytest.mark.parametrize(
+    "prior", [None, scipy.stats.lognorm(s=1, loc=np.log(120), scale=120)]
+)
 def test_plp(ysr, hop_length, win_length, tempo_min, tempo_max, use_onset, prior, ctx):
 
     y, sr = ysr
@@ -242,7 +276,9 @@ def deprecated_test_beat(infile):
 
     DATA = load(infile)
 
-    (bpm, beats) = librosa.beat.beat_track(y=None, sr=8000, hop_length=32, onset_envelope=DATA["onsetenv"][0])
+    (bpm, beats) = librosa.beat.beat_track(
+        y=None, sr=8000, hop_length=32, onset_envelope=DATA["onsetenv"][0]
+    )
 
     beat_times = librosa.frames_to_time(beats, sr=8000, hop_length=32)
     assert np.allclose(beat_times, DATA["beats"])
