@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-'''Matching functions'''
+"""Matching functions"""
 
 import numpy as np
 import numba
@@ -8,12 +8,12 @@ import numba
 from .exceptions import ParameterError
 from .utils import valid_intervals
 
-__all__ = ['match_intervals', 'match_events']
+__all__ = ["match_intervals", "match_events"]
 
 
 @numba.jit(nopython=True, cache=True)
 def __jaccard(int_a, int_b):  # pragma: no cover
-    '''Jaccard similarity between two intervals
+    """Jaccard similarity between two intervals
 
     Parameters
     ----------
@@ -22,7 +22,7 @@ def __jaccard(int_a, int_b):  # pragma: no cover
     Returns
     -------
     Jaccard similarity between intervals
-    '''
+    """
     ends = [int_a[1], int_b[1]]
     if ends[1] < ends[0]:
         ends.reverse()
@@ -33,7 +33,7 @@ def __jaccard(int_a, int_b):  # pragma: no cover
 
     intersection = ends[0] - starts[1]
     if intersection < 0:
-        intersection = 0.
+        intersection = 0.0
 
     union = ends[1] - starts[0]
 
@@ -45,7 +45,7 @@ def __jaccard(int_a, int_b):  # pragma: no cover
 
 @numba.jit(nopython=True, cache=True)
 def __match_interval_overlaps(query, intervals_to, candidates):  # pragma: no cover
-    '''Find the best Jaccard match from query to candidates'''
+    """Find the best Jaccard match from query to candidates"""
 
     best_score = -1
     best_idx = -1
@@ -59,9 +59,9 @@ def __match_interval_overlaps(query, intervals_to, candidates):  # pragma: no co
 
 @numba.jit(nopython=True, cache=True)
 def __match_intervals(intervals_from, intervals_to, strict=True):  # pragma: no cover
-    '''Numba-accelerated interval matching algorithm.
+    """Numba-accelerated interval matching algorithm.
 
-    '''
+    """
     # sort index of the interval starts
     start_index = np.argsort(intervals_to[:, 0])
 
@@ -73,8 +73,8 @@ def __match_intervals(intervals_from, intervals_to, strict=True):  # pragma: no 
     # and ends
     end_sorted = intervals_to[end_index, 1]
 
-    search_ends = np.searchsorted(start_sorted, intervals_from[:, 1], side='right')
-    search_starts = np.searchsorted(end_sorted, intervals_from[:, 0], side='left')
+    search_ends = np.searchsorted(start_sorted, intervals_from[:, 1], side="right")
+    search_starts = np.searchsorted(end_sorted, intervals_from[:, 0], side="left")
 
     output = np.empty(len(intervals_from), dtype=numba.uint32)
     for i in range(len(intervals_from)):
@@ -101,18 +101,18 @@ def __match_intervals(intervals_from, intervals_to, strict=True):  # pragma: no 
             dist_before = np.inf
             dist_after = np.inf
             if search_starts[i] > 0:
-                dist_before = query[0] - end_sorted[search_starts[i]-1]
+                dist_before = query[0] - end_sorted[search_starts[i] - 1]
             if search_ends[i] + 1 < len(intervals_to):
-                dist_after = start_sorted[search_ends[i]+1] - query[1]
+                dist_after = start_sorted[search_ends[i] + 1] - query[1]
             if dist_before < dist_after:
-                output[i] = end_index[search_starts[i]-1]
+                output[i] = end_index[search_starts[i] - 1]
             else:
-                output[i] = start_index[search_ends[i]+1]
+                output[i] = start_index[search_ends[i] + 1]
     return output
 
 
 def match_intervals(intervals_from, intervals_to, strict=True):
-    '''Match one set of time intervals to another.
+    """Match one set of time intervals to another.
 
     This can be useful for tasks such as mapping beat timings
     to segments.
@@ -192,10 +192,10 @@ def match_intervals(intervals_from, intervals_to, strict=True):
     >>> # [1, 3] => [1, 4]  (ints_from[1])
     >>> # [4, 5] => [4, 5]  (ints_from[2])
     >>> # [6, 7] => [4, 5]  (ints_from[2])
-    '''
+    """
 
     if len(intervals_from) == 0 or len(intervals_to) == 0:
-        raise ParameterError('Attempting to match empty interval list')
+        raise ParameterError("Attempting to match empty interval list")
 
     # Verify that the input intervals has correct shape and size
     valid_intervals(intervals_from)
@@ -204,11 +204,13 @@ def match_intervals(intervals_from, intervals_to, strict=True):
     try:
         return __match_intervals(intervals_from, intervals_to, strict=strict)
     except ParameterError as exc:
-        raise ParameterError('Unable to match intervals with strict={}'.format(strict)) from exc
+        raise ParameterError(
+            "Unable to match intervals with strict={}".format(strict)
+        ) from exc
 
 
 def match_events(events_from, events_to, left=True, right=True):
-    '''Match one set of events to another.
+    """Match one set of events to another.
 
     This is useful for tasks such as matching beats to the nearest
     detected onsets, or frame-aligned events to the nearest zero-crossing.
@@ -266,28 +268,34 @@ def match_events(events_from, events_to, left=True, right=True):
     ------
     ParameterError
         If either array of input events is not the correct shape
-    '''
+    """
     if len(events_from) == 0 or len(events_to) == 0:
-        raise ParameterError('Attempting to match empty event list')
+        raise ParameterError("Attempting to match empty event list")
 
     # If we can't match left or right, then only strict equivalence
     # counts as a match.
     if not (left or right) and not np.all(np.in1d(events_from, events_to)):
-        raise ParameterError('Cannot match events with left=right=False '
-                             'and events_from is not contained '
-                             'in events_to')
+        raise ParameterError(
+            "Cannot match events with left=right=False "
+            "and events_from is not contained "
+            "in events_to"
+        )
 
     # If we can't match to the left, then there should be at least one
     # target event greater-equal to every source event
     if (not left) and max(events_to) < max(events_from):
-        raise ParameterError('Cannot match events with left=False '
-                             'and max(events_to) < max(events_from)')
+        raise ParameterError(
+            "Cannot match events with left=False "
+            "and max(events_to) < max(events_from)"
+        )
 
     # If we can't match to the right, then there should be at least one
     # target event less-equal to every source event
     if (not right) and min(events_to) > min(events_from):
-        raise ParameterError('Cannot match events with right=False '
-                             'and min(events_to) > min(events_from)')
+        raise ParameterError(
+            "Cannot match events with right=False "
+            "and min(events_to) > min(events_from)"
+        )
 
     # array of matched items
     output = np.empty_like(events_from, dtype=np.int)
@@ -296,7 +304,9 @@ def match_events(events_from, events_to, left=True, right=True):
 
 
 @numba.jit(nopython=True, cache=True)
-def __match_events_helper(output, events_from, events_to, left=True, right=True):  # pragma: no cover
+def __match_events_helper(
+    output, events_from, events_to, left=True, right=True
+):  # pragma: no cover
     # mock dictionary for events
     from_idx = np.argsort(events_from)
     sorted_from = events_from[from_idx]
@@ -342,9 +352,12 @@ def __match_events_helper(output, events_from, events_to, left=True, right=True)
         if right and right_flag:
             right_diff = abs(sorted_to[right_ind] - sorted_from_num)
 
-        if left_flag and (not right and (sorted_to[middle_ind] > sorted_from_num) or
-                          (not right_flag and left_diff < mid_diff) or
-                          (left_diff < right_diff and left_diff < mid_diff)):
+        if left_flag and (
+            not right
+            and (sorted_to[middle_ind] > sorted_from_num)
+            or (not right_flag and left_diff < mid_diff)
+            or (left_diff < right_diff and left_diff < mid_diff)
+        ):
             output[ind] = to_idx[left_ind]
 
         # Check if right should be chosen

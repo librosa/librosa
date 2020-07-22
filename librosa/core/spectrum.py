@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-'''Utilities for spectral processing'''
+"""Utilities for spectral processing"""
 import warnings
 
 import numpy as np
@@ -20,18 +20,35 @@ from ..util.exceptions import ParameterError
 from ..filters import get_window, semitone_filterbank
 from ..filters import window_sumsquare
 
-__all__ = ['stft', 'istft', 'magphase', 'iirt',
-           'reassigned_spectrogram',
-           'phase_vocoder',
-           'perceptual_weighting',
-           'power_to_db', 'db_to_power',
-           'amplitude_to_db', 'db_to_amplitude',
-           'fmt', 'pcen', 'griffinlim']
+__all__ = [
+    "stft",
+    "istft",
+    "magphase",
+    "iirt",
+    "reassigned_spectrogram",
+    "phase_vocoder",
+    "perceptual_weighting",
+    "power_to_db",
+    "db_to_power",
+    "amplitude_to_db",
+    "db_to_amplitude",
+    "fmt",
+    "pcen",
+    "griffinlim",
+]
 
 
 @cache(level=20)
-def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
-         center=True, dtype=None, pad_mode='reflect'):
+def stft(
+    y,
+    n_fft=2048,
+    hop_length=None,
+    win_length=None,
+    window="hann",
+    center=True,
+    dtype=None,
+    pad_mode="reflect",
+):
     """Short-time Fourier transform (STFT).
 
     The STFT represents a signal in the time-frequency domain by
@@ -202,12 +219,20 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
     # Pad the time series so that frames are centered
     if center:
         if n_fft > y.shape[-1]:
-            warnings.warn('n_fft={} is too small for input signal of length={}'.format(n_fft, y.shape[-1]))
+            warnings.warn(
+                "n_fft={} is too small for input signal of length={}".format(
+                    n_fft, y.shape[-1]
+                )
+            )
 
         y = np.pad(y, int(n_fft // 2), mode=pad_mode)
 
     elif n_fft > y.shape[-1]:
-        raise ParameterError('n_fft={} is too small for input signal of length={}'.format(n_fft, y.shape[-1]))
+        raise ParameterError(
+            "n_fft={} is too small for input signal of length={}".format(
+                n_fft, y.shape[-1]
+            )
+        )
 
     # Window the time series.
     y_frames = util.frame(y, frame_length=n_fft, hop_length=hop_length)
@@ -216,29 +241,35 @@ def stft(y, n_fft=2048, hop_length=None, win_length=None, window='hann',
         dtype = util.dtype_r2c(y.dtype)
 
     # Pre-allocate the STFT matrix
-    stft_matrix = np.empty((int(1 + n_fft // 2), y_frames.shape[1]),
-                           dtype=dtype,
-                           order='F')
+    stft_matrix = np.empty(
+        (int(1 + n_fft // 2), y_frames.shape[1]), dtype=dtype, order="F"
+    )
 
     fft = get_fftlib()
 
     # how many columns can we fit within MAX_MEM_BLOCK?
-    n_columns = util.MAX_MEM_BLOCK // (stft_matrix.shape[0] *
-                                       stft_matrix.itemsize)
+    n_columns = util.MAX_MEM_BLOCK // (stft_matrix.shape[0] * stft_matrix.itemsize)
     n_columns = max(n_columns, 1)
 
     for bl_s in range(0, stft_matrix.shape[1], n_columns):
         bl_t = min(bl_s + n_columns, stft_matrix.shape[1])
 
-        stft_matrix[:, bl_s:bl_t] = fft.rfft(fft_window *
-                                             y_frames[:, bl_s:bl_t],
-                                             axis=0)
+        stft_matrix[:, bl_s:bl_t] = fft.rfft(
+            fft_window * y_frames[:, bl_s:bl_t], axis=0
+        )
     return stft_matrix
 
 
 @cache(level=30)
-def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
-          center=True, dtype=None, length=None):
+def istft(
+    stft_matrix,
+    hop_length=None,
+    win_length=None,
+    window="hann",
+    center=True,
+    dtype=None,
+    length=None,
+):
     """
     Inverse short-time Fourier transform (ISTFT).
 
@@ -345,8 +376,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
             padded_length = length + int(n_fft)
         else:
             padded_length = length
-        n_frames = min(
-            stft_matrix.shape[1], int(np.ceil(padded_length / hop_length)))
+        n_frames = min(stft_matrix.shape[1], int(np.ceil(padded_length / hop_length)))
     else:
         n_frames = stft_matrix.shape[1]
 
@@ -357,8 +387,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
 
     y = np.zeros(expected_signal_len, dtype=dtype)
 
-    n_columns = util.MAX_MEM_BLOCK // (stft_matrix.shape[0] *
-                                       stft_matrix.itemsize)
+    n_columns = util.MAX_MEM_BLOCK // (stft_matrix.shape[0] * stft_matrix.itemsize)
     n_columns = max(n_columns, 1)
 
     fft = get_fftlib()
@@ -371,17 +400,19 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
         ytmp = ifft_window * fft.irfft(stft_matrix[:, bl_s:bl_t], axis=0)
 
         # Overlap-add the istft block starting at the i'th frame
-        __overlap_add(y[frame * hop_length:], ytmp, hop_length)
+        __overlap_add(y[frame * hop_length :], ytmp, hop_length)
 
-        frame += (bl_t - bl_s)
+        frame += bl_t - bl_s
 
     # Normalize by sum of squared window
-    ifft_window_sum = window_sumsquare(window,
-                                       n_frames,
-                                       win_length=win_length,
-                                       n_fft=n_fft,
-                                       hop_length=hop_length,
-                                       dtype=dtype)
+    ifft_window_sum = window_sumsquare(
+        window,
+        n_frames,
+        win_length=win_length,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        dtype=dtype,
+    )
 
     approx_nonzero_indices = ifft_window_sum > util.tiny(ifft_window_sum)
     y[approx_nonzero_indices] /= ifft_window_sum[approx_nonzero_indices]
@@ -390,7 +421,7 @@ def istft(stft_matrix, hop_length=None, win_length=None, window='hann',
         # If we don't need to control length, just do the usual center trimming
         # to eliminate padded data
         if center:
-            y = y[int(n_fft // 2):-int(n_fft // 2)]
+            y = y[int(n_fft // 2) : -int(n_fft // 2)]
     else:
         if center:
             # If we're centering, crop off the first n_fft//2 samples
@@ -417,12 +448,21 @@ def __overlap_add(y, ytmp, hop_length):
     n_fft = ytmp.shape[0]
     for frame in range(ytmp.shape[1]):
         sample = frame * hop_length
-        y[sample:(sample + n_fft)] += ytmp[:, frame]
+        y[sample : (sample + n_fft)] += ytmp[:, frame]
 
 
-def __reassign_frequencies(y, sr=22050, S=None, n_fft=2048, hop_length=None,
-                           win_length=None, window="hann", center=True,
-                           dtype=None, pad_mode="reflect"):
+def __reassign_frequencies(
+    y,
+    sr=22050,
+    S=None,
+    n_fft=2048,
+    hop_length=None,
+    win_length=None,
+    window="hann",
+    center=True,
+    dtype=None,
+    pad_mode="reflect",
+):
     """Instantaneous frequencies based on a spectrogram representation.
 
     The reassignment vector is calculated using equation 5.20 in Flandrin,
@@ -573,9 +613,18 @@ def __reassign_frequencies(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     return freqs, S_h
 
 
-def __reassign_times(y, sr=22050, S=None, n_fft=2048, hop_length=None,
-                     win_length=None, window="hann", center=True,
-                     dtype=None, pad_mode="reflect"):
+def __reassign_times(
+    y,
+    sr=22050,
+    S=None,
+    n_fft=2048,
+    hop_length=None,
+    win_length=None,
+    window="hann",
+    center=True,
+    dtype=None,
+    pad_mode="reflect",
+):
     """Time reassignments based on a spectrogram representation.
 
     The reassignment vector is calculated using equation 5.23 in Flandrin,
@@ -745,11 +794,23 @@ def __reassign_times(y, sr=22050, S=None, n_fft=2048, hop_length=None,
     return times, S_h
 
 
-def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
-                           win_length=None, window="hann", center=True,
-                           reassign_frequencies=True, reassign_times=True,
-                           ref_power=1e-6, fill_nan=False, clip=True,
-                           dtype=None, pad_mode="reflect"):
+def reassigned_spectrogram(
+    y,
+    sr=22050,
+    S=None,
+    n_fft=2048,
+    hop_length=None,
+    win_length=None,
+    window="hann",
+    center=True,
+    reassign_frequencies=True,
+    reassign_times=True,
+    ref_power=1e-6,
+    fill_nan=False,
+    clip=True,
+    dtype=None,
+    pad_mode="reflect",
+):
     r"""Time-frequency reassigned spectrogram.
 
     The reassignment vectors are calculated using equations 5.20 and 5.23 in
@@ -938,9 +999,7 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
         raise ParameterError("ref_power must be non-negative or callable.")
 
     if not reassign_frequencies and not reassign_times:
-        raise ParameterError(
-            "reassign_frequencies or reassign_times must be True."
-        )
+        raise ParameterError("reassign_frequencies or reassign_times must be True.")
 
     if win_length is None:
         win_length = n_fft
@@ -993,10 +1052,7 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
         bin_freqs = convert.fft_frequencies(sr=sr, n_fft=n_fft)
 
         frame_times = convert.frames_to_time(
-            frames=np.arange(S.shape[1]),
-            sr=sr,
-            hop_length=hop_length,
-            n_fft=pad_length
+            frames=np.arange(S.shape[1]), sr=sr, hop_length=hop_length, n_fft=pad_length
         )
 
     # find bins below the power threshold
@@ -1014,9 +1070,7 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
             freqs[mags_low] = np.nan
 
         if fill_nan:
-            freqs = np.where(
-                np.isnan(freqs), bin_freqs[:, np.newaxis], freqs
-            )
+            freqs = np.where(np.isnan(freqs), bin_freqs[:, np.newaxis], freqs)
 
         if clip:
             np.clip(freqs, 0, sr / 2.0, out=freqs)
@@ -1031,9 +1085,7 @@ def reassigned_spectrogram(y, sr=22050, S=None, n_fft=2048, hop_length=None,
             times[mags_low] = np.nan
 
         if fill_nan:
-            times = np.where(
-                np.isnan(times), frame_times[np.newaxis, :], times
-            )
+            times = np.where(np.isnan(times), frame_times[np.newaxis, :], times)
 
         if clip:
             np.clip(times, 0, len(y) / float(sr), out=times)
@@ -1103,7 +1155,7 @@ def magphase(D, power=1):
 
     mag = np.abs(D)
     mag **= power
-    phase = np.exp(1.j * np.angle(D))
+    phase = np.exp(1.0j * np.angle(D))
 
     return mag, phase
 
@@ -1171,7 +1223,7 @@ def phase_vocoder(D, rate, hop_length=None):
     time_steps = np.arange(0, D.shape[1], rate, dtype=np.float)
 
     # Create an empty output array
-    d_stretch = np.zeros((D.shape[0], len(time_steps)), D.dtype, order='F')
+    d_stretch = np.zeros((D.shape[0], len(time_steps)), D.dtype, order="F")
 
     # Expected phase advance in each bin
     phi_advance = np.linspace(0, np.pi * hop_length, D.shape[0])
@@ -1180,24 +1232,21 @@ def phase_vocoder(D, rate, hop_length=None):
     phase_acc = np.angle(D[:, 0])
 
     # Pad 0 columns to simplify boundary logic
-    D = np.pad(D, [(0, 0), (0, 2)], mode='constant')
+    D = np.pad(D, [(0, 0), (0, 2)], mode="constant")
 
     for (t, step) in enumerate(time_steps):
 
-        columns = D[:, int(step):int(step + 2)]
+        columns = D[:, int(step) : int(step + 2)]
 
         # Weighting for linear magnitude interpolation
         alpha = np.mod(step, 1.0)
-        mag = ((1.0 - alpha) * np.abs(columns[:, 0])
-               + alpha * np.abs(columns[:, 1]))
+        mag = (1.0 - alpha) * np.abs(columns[:, 0]) + alpha * np.abs(columns[:, 1])
 
         # Store to output array
-        d_stretch[:, t] = mag * np.exp(1.j * phase_acc)
+        d_stretch[:, t] = mag * np.exp(1.0j * phase_acc)
 
         # Compute phase advance
-        dphase = (np.angle(columns[:, 1])
-                  - np.angle(columns[:, 0])
-                  - phi_advance)
+        dphase = np.angle(columns[:, 1]) - np.angle(columns[:, 0]) - phi_advance
 
         # Wrap to -pi:pi range
         dphase = dphase - 2.0 * np.pi * np.round(dphase / (2.0 * np.pi))
@@ -1209,12 +1258,21 @@ def phase_vocoder(D, rate, hop_length=None):
 
 
 @cache(level=20)
-def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
-         tuning=0.0, pad_mode='reflect', flayout='sos', **kwargs):
-    r'''Time-frequency representation using IIR filters [#]_.
+def iirt(
+    y,
+    sr=22050,
+    win_length=2048,
+    hop_length=None,
+    center=True,
+    tuning=0.0,
+    pad_mode="reflect",
+    flayout="sos",
+    **kwargs,
+):
+    r"""Time-frequency representation using IIR filters
 
     This function will return a time-frequency representation
-    using a multirate filter bank consisting of IIR filters.
+    using a multirate filter bank consisting of IIR filters. [#]_
 
     First, ``y`` is resampled as needed according to the provided ``sample_rates``.
 
@@ -1297,7 +1355,7 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
     >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.load(librosa.ex('trumpet'), duration=3)
     >>> D = np.abs(librosa.iirt(y))
-    >>> C = librosa.cqt(y=y, sr=sr)
+    >>> C = np.abs(librosa.cqt(y=y, sr=sr))
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
     >>> img = librosa.display.specshow(librosa.amplitude_to_db(C, ref=np.max),
     ...                                y_axis='cqt_hz', x_axis='time', ax=ax[0])
@@ -1307,10 +1365,10 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
     ...                                y_axis='cqt_hz', x_axis='time', ax=ax[1])
     >>> ax[1].set_title('Semitone spectrogram (iirt)')
     >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
-    '''
+    """
 
-    if flayout not in ('ba', 'sos'):
-        raise ParameterError('Unsupported flayout={}'.format(flayout))
+    if flayout not in ("ba", "sos"):
+        raise ParameterError("Unsupported flayout={}".format(flayout))
 
     # check audio input
     util.valid_audio(y)
@@ -1324,7 +1382,9 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
         y = np.pad(y, int(win_length // 2), mode=pad_mode)
 
     # get the semitone filterbank
-    filterbank_ct, sample_rates = semitone_filterbank(tuning=tuning, flayout=flayout, **kwargs)
+    filterbank_ct, sample_rates = semitone_filterbank(
+        tuning=tuning, flayout=flayout, **kwargs
+    )
 
     # create three downsampled versions of the audio signal
     y_resampled = []
@@ -1344,12 +1404,14 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
         # filter the signal
         cur_sr_idx = np.flatnonzero(y_srs == cur_sr)[0]
 
-        if flayout == 'ba':
-            cur_filter_output = scipy.signal.filtfilt(cur_filter[0], cur_filter[1],
-                                                      y_resampled[cur_sr_idx])
-        elif flayout == 'sos':
-            cur_filter_output = scipy.signal.sosfiltfilt(cur_filter,
-                                                         y_resampled[cur_sr_idx])
+        if flayout == "ba":
+            cur_filter_output = scipy.signal.filtfilt(
+                cur_filter[0], cur_filter[1], y_resampled[cur_sr_idx]
+            )
+        elif flayout == "sos":
+            cur_filter_output = scipy.signal.sosfiltfilt(
+                cur_filter, y_resampled[cur_sr_idx]
+            )
 
         factor = sr / cur_sr
         hop_length_STMSP = hop_length / factor
@@ -1357,15 +1419,23 @@ def iirt(y, sr=22050, win_length=2048, hop_length=None, center=True,
 
         # hop_length_STMSP is used here as a floating-point number.
         # The discretization happens at the end to avoid accumulated rounding errors.
-        start_idx = np.arange(0, len(cur_filter_output)-win_length_STMSP_round, hop_length_STMSP)
+        start_idx = np.arange(
+            0, len(cur_filter_output) - win_length_STMSP_round, hop_length_STMSP
+        )
         if len(start_idx) < n_frames:
-            min_length = int(np.ceil(n_frames * hop_length_STMSP)) + win_length_STMSP_round
+            min_length = (
+                int(np.ceil(n_frames * hop_length_STMSP)) + win_length_STMSP_round
+            )
             cur_filter_output = util.fix_length(cur_filter_output, min_length)
-            start_idx = np.arange(0, len(cur_filter_output)-win_length_STMSP_round, hop_length_STMSP)
+            start_idx = np.arange(
+                0, len(cur_filter_output) - win_length_STMSP_round, hop_length_STMSP
+            )
 
         start_idx = np.round(start_idx).astype(int)[:n_frames]
-        idx = np.tile(np.arange(win_length_STMSP_round),
-                      (len(start_idx), 1)) + start_idx[:, np.newaxis]
+        idx = (
+            np.tile(np.arange(win_length_STMSP_round), (len(start_idx), 1))
+            + start_idx[:, np.newaxis]
+        )
 
         cur_band_power = factor * np.sum(cur_filter_output[idx] ** 2, axis=-1)
         bands_power.append(cur_band_power)
@@ -1468,12 +1538,14 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
     S = np.asarray(S)
 
     if amin <= 0:
-        raise ParameterError('amin must be strictly positive')
+        raise ParameterError("amin must be strictly positive")
 
     if np.issubdtype(S.dtype, np.complexfloating):
-        warnings.warn('power_to_db was called on complex input so phase '
-                      'information will be discarded. To suppress this warning, '
-                      'call power_to_db(np.abs(D)**2) instead.')
+        warnings.warn(
+            "power_to_db was called on complex input so phase "
+            "information will be discarded. To suppress this warning, "
+            "call power_to_db(np.abs(D)**2) instead."
+        )
         magnitude = np.abs(S)
     else:
         magnitude = S
@@ -1489,7 +1561,7 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
 
     if top_db is not None:
         if top_db < 0:
-            raise ParameterError('top_db must be non-negative')
+            raise ParameterError("top_db must be non-negative")
         log_spec = np.maximum(log_spec, log_spec.max() - top_db)
 
     return log_spec
@@ -1497,7 +1569,7 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
 
 @cache(level=30)
 def db_to_power(S_db, ref=1.0):
-    '''Convert a dB-scale spectrogram to a power spectrogram.
+    """Convert a dB-scale spectrogram to a power spectrogram.
 
     This effectively inverts ``power_to_db``::
 
@@ -1519,13 +1591,13 @@ def db_to_power(S_db, ref=1.0):
     Notes
     -----
     This function caches at level 30.
-    '''
+    """
     return ref * np.power(10.0, 0.1 * S_db)
 
 
 @cache(level=30)
 def amplitude_to_db(S, ref=1.0, amin=1e-5, top_db=80.0):
-    '''Convert an amplitude spectrogram to dB-scaled spectrogram.
+    """Convert an amplitude spectrogram to dB-scaled spectrogram.
 
     This is equivalent to ``power_to_db(S**2)``, but is provided for convenience.
 
@@ -1561,14 +1633,16 @@ def amplitude_to_db(S, ref=1.0, amin=1e-5, top_db=80.0):
     Notes
     -----
     This function caches at level 30.
-    '''
+    """
 
     S = np.asarray(S)
 
     if np.issubdtype(S.dtype, np.complexfloating):
-        warnings.warn('amplitude_to_db was called on complex input so phase '
-                      'information will be discarded. To suppress this warning, '
-                      'call amplitude_to_db(np.abs(S)) instead.')
+        warnings.warn(
+            "amplitude_to_db was called on complex input so phase "
+            "information will be discarded. To suppress this warning, "
+            "call amplitude_to_db(np.abs(S)) instead."
+        )
 
     magnitude = np.abs(S)
 
@@ -1580,13 +1654,12 @@ def amplitude_to_db(S, ref=1.0, amin=1e-5, top_db=80.0):
 
     power = np.square(magnitude, out=magnitude)
 
-    return power_to_db(power, ref=ref_value**2, amin=amin**2,
-                       top_db=top_db)
+    return power_to_db(power, ref=ref_value ** 2, amin=amin ** 2, top_db=top_db)
 
 
 @cache(level=30)
 def db_to_amplitude(S_db, ref=1.0):
-    '''Convert a dB-scaled spectrogram to an amplitude spectrogram.
+    """Convert a dB-scaled spectrogram to an amplitude spectrogram.
 
     This effectively inverts `amplitude_to_db`::
 
@@ -1608,13 +1681,13 @@ def db_to_amplitude(S_db, ref=1.0):
     Notes
     -----
     This function caches at level 30.
-    '''
-    return db_to_power(S_db, ref=ref**2)**0.5
+    """
+    return db_to_power(S_db, ref=ref ** 2) ** 0.5
 
 
 @cache(level=30)
-def perceptual_weighting(S, frequencies, kind='A', **kwargs):
-    '''Perceptual weighting of a power spectrogram::
+def perceptual_weighting(S, frequencies, kind="A", **kwargs):
+    """Perceptual weighting of a power spectrogram::
 
         S_p[f] = frequency_weighting(f, 'A') + 10*log(S[f] / ref)
 
@@ -1680,17 +1753,19 @@ def perceptual_weighting(S, frequencies, kind='A', **kwargs):
     >>> ax[1].set(title='Perceptually weighted log CQT')
     >>> fig.colorbar(img, ax=ax[0], format="%+2.0f dB")
     >>> fig.colorbar(imgp, ax=ax[1], format="%+2.0f dB")
-    '''
+    """
 
-    offset = convert.frequency_weighting(
-        frequencies, kind=kind).reshape((-1, 1))
+    offset = convert.frequency_weighting(frequencies, kind=kind).reshape((-1, 1))
 
     return offset + power_to_db(S, **kwargs)
 
 
 @cache(level=30)
-def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1):
-    """The fast Mellin transform (FMT) [#]_ of a uniformly sampled signal y.
+def fmt(y, t_min=0.5, n_fmt=None, kind="cubic", beta=0.5, over_sample=1, axis=-1):
+    """The fast Mellin transform (FMT)
+
+    The Mellin of a signal `y` is performed by interpolating `y` on an exponential time
+    axis, applying a polynomial window, and then taking the discrete Fourier transform.
 
     When the Mellin parameter (beta) is 1/2, it is also known as the scale transform. [#]_
     The scale transform can be useful for audio analysis because its magnitude is invariant
@@ -1805,14 +1880,14 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
     n = y.shape[axis]
 
     if n < 3:
-        raise ParameterError('y.shape[{:}]=={:} < 3'.format(axis, n))
+        raise ParameterError("y.shape[{:}]=={:} < 3".format(axis, n))
 
     if t_min <= 0:
-        raise ParameterError('t_min must be a positive number')
+        raise ParameterError("t_min must be a positive number")
 
     if n_fmt is None:
         if over_sample < 1:
-            raise ParameterError('over_sample must be >= 1')
+            raise ParameterError("over_sample must be >= 1")
 
         # The base is the maximum ratio between adjacent samples
         # Since the sample spacing is increasing, this is simply the
@@ -1822,12 +1897,12 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
         n_fmt = int(np.ceil(over_sample * (np.log(n - 1) - np.log(t_min)) / log_base))
 
     elif n_fmt < 3:
-        raise ParameterError('n_fmt=={:} < 3'.format(n_fmt))
+        raise ParameterError("n_fmt=={:} < 3".format(n_fmt))
     else:
         log_base = (np.log(n_fmt - 1) - np.log(n_fmt - 2)) / over_sample
 
     if not np.all(np.isfinite(y)):
-        raise ParameterError('y must be finite everywhere')
+        raise ParameterError("y must be finite everywhere")
 
     base = np.exp(log_base)
     # original grid: signal covers [0, 1).  This range is arbitrary, but convenient.
@@ -1844,11 +1919,13 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
     # To keep the spacing consistent, we over-sample by n_over, and then
     # trim the final samples.
     n_over = int(np.ceil(over_sample))
-    x_exp = np.logspace((np.log(t_min) - np.log(n)) / log_base,
-                        0,
-                        num=n_fmt + n_over,
-                        endpoint=False,
-                        base=base)[:-n_over]
+    x_exp = np.logspace(
+        (np.log(t_min) - np.log(n)) / log_base,
+        0,
+        num=n_fmt + n_over,
+        endpoint=False,
+        base=base,
+    )[:-n_over]
 
     # Clean up any rounding errors at the boundaries of the interpolation
     # The interpolator gets angry if we try to extrapolate, so clipping is necessary here.
@@ -1858,7 +1935,7 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
     # Make sure that all sample points are unique
     # This should never happen!
     if len(np.unique(x_exp)) != len(x_exp):
-        raise RuntimeError('Redundant sample positions in Mellin transform')
+        raise ParameterError("Redundant sample positions in Mellin transform")
 
     # Resample the signal
     y_res = f_interp(x_exp)
@@ -1870,18 +1947,33 @@ def fmt(y, t_min=0.5, n_fmt=None, kind='cubic', beta=0.5, over_sample=1, axis=-1
     # Apply the window and fft
     # Normalization is absorbed into the window here for expedience
     fft = get_fftlib()
-    return fft.rfft(y_res * ((x_exp**beta).reshape(shape) * np.sqrt(n) / n_fmt),
-                    axis=axis)
+    return fft.rfft(
+        y_res * ((x_exp ** beta).reshape(shape) * np.sqrt(n) / n_fmt), axis=axis
+    )
 
 
 @cache(level=30)
-def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
-         time_constant=0.400, eps=1e-6, b=None, max_size=1, ref=None,
-         axis=-1, max_axis=None, zi=None, return_zf=False):
-    '''Per-channel energy normalization (PCEN) [#]_
+def pcen(
+    S,
+    sr=22050,
+    hop_length=512,
+    gain=0.98,
+    bias=2,
+    power=0.5,
+    time_constant=0.400,
+    eps=1e-6,
+    b=None,
+    max_size=1,
+    ref=None,
+    axis=-1,
+    max_axis=None,
+    zi=None,
+    return_zf=False,
+):
+    """Per-channel energy normalization (PCEN)
 
     This function normalizes a time-frequency representation ``S`` by
-    performing automatic gain control, followed by nonlinear compression::
+    performing automatic gain control, followed by nonlinear compression [#]_ ::
 
         P[f, t] = (S / (eps + M[f, t])**gain + bias)**power - bias**power
 
@@ -2042,25 +2134,27 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
     >>> img = librosa.display.specshow(pcen_max, x_axis='time', y_axis='mel', ax=ax[1])
     >>> ax[1].set(title='Per-channel energy normalization (max_size=3)')
     >>> fig.colorbar(img, ax=ax)
-    '''
+    """
 
     if power < 0:
-        raise ParameterError('power={} must be nonnegative'.format(power))
+        raise ParameterError("power={} must be nonnegative".format(power))
 
     if gain < 0:
-        raise ParameterError('gain={} must be non-negative'.format(gain))
+        raise ParameterError("gain={} must be non-negative".format(gain))
 
     if bias < 0:
-        raise ParameterError('bias={} must be non-negative'.format(bias))
+        raise ParameterError("bias={} must be non-negative".format(bias))
 
     if eps <= 0:
-        raise ParameterError('eps={} must be strictly positive'.format(eps))
+        raise ParameterError("eps={} must be strictly positive".format(eps))
 
     if time_constant <= 0:
-        raise ParameterError('time_constant={} must be strictly positive'.format(time_constant))
+        raise ParameterError(
+            "time_constant={} must be strictly positive".format(time_constant)
+        )
 
     if max_size < 1 or not isinstance(max_size, int):
-        raise ParameterError('max_size={} must be a positive integer'.format(max_size))
+        raise ParameterError("max_size={} must be a positive integer".format(max_size))
 
     if b is None:
         t_frames = time_constant * sr / float(hop_length)
@@ -2069,27 +2163,33 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
         # which approximates the full-width half-max of the
         # squared frequency response of the IIR low-pass filter
 
-        b = (np.sqrt(1 + 4 * t_frames**2) - 1) / (2 * t_frames**2)
+        b = (np.sqrt(1 + 4 * t_frames ** 2) - 1) / (2 * t_frames ** 2)
 
     if not 0 <= b <= 1:
-        raise ParameterError('b={} must be between 0 and 1'.format(b))
+        raise ParameterError("b={} must be between 0 and 1".format(b))
 
     if np.issubdtype(S.dtype, np.complexfloating):
-        warnings.warn('pcen was called on complex input so phase '
-                      'information will be discarded. To suppress this warning, '
-                      'call pcen(np.abs(D)) instead.')
+        warnings.warn(
+            "pcen was called on complex input so phase "
+            "information will be discarded. To suppress this warning, "
+            "call pcen(np.abs(D)) instead."
+        )
         S = np.abs(S)
 
     if ref is None:
         if max_size == 1:
             ref = S
         elif S.ndim == 1:
-            raise ParameterError('Max-filtering cannot be applied to 1-dimensional input')
+            raise ParameterError(
+                "Max-filtering cannot be applied to 1-dimensional input"
+            )
         else:
             if max_axis is None:
                 if S.ndim != 2:
-                    raise ParameterError('Max-filtering a {:d}-dimensional spectrogram '
-                                         'requires you to specify max_axis'.format(S.ndim))
+                    raise ParameterError(
+                        "Max-filtering a {:d}-dimensional spectrogram "
+                        "requires you to specify max_axis".format(S.ndim)
+                    )
                 # if axis = 0, max_axis=1
                 # if axis = +- 1, max_axis = 0
                 max_axis = np.mod(1 - axis, 2)
@@ -2103,8 +2203,7 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
         zi[:] = scipy.signal.lfilter_zi([b], [1, b - 1])[:]
 
     # Temporal integration
-    S_smooth, zf = scipy.signal.lfilter([b], [1, b - 1], ref, zi=zi,
-                                        axis=axis)
+    S_smooth, zf = scipy.signal.lfilter([b], [1, b - 1], ref, zi=zi, axis=axis)
 
     # Adaptive gain control
     # Working in log-space gives us some stability, and a slight speedup
@@ -2112,11 +2211,11 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
 
     # Dynamic range compression
     if power == 0:
-        S_out = np.log1p(S*smooth)
+        S_out = np.log1p(S * smooth)
     elif bias == 0:
         S_out = np.exp(power * (np.log(S) + np.log(smooth)))
     else:
-        S_out = (bias**power) * np.expm1(power * np.log1p(S*smooth/bias))
+        S_out = (bias ** power) * np.expm1(power * np.log1p(S * smooth / bias))
 
     if return_zf:
         return S_out, zf
@@ -2124,27 +2223,41 @@ def pcen(S, sr=22050, hop_length=512, gain=0.98, bias=2, power=0.5,
         return S_out
 
 
-def griffinlim(S, n_iter=32, hop_length=None, win_length=None, window='hann',
-               center=True, dtype=None, length=None, pad_mode='reflect',
-               momentum=0.99, init='random', random_state=None):
+def griffinlim(
+    S,
+    n_iter=32,
+    hop_length=None,
+    win_length=None,
+    window="hann",
+    center=True,
+    dtype=None,
+    length=None,
+    pad_mode="reflect",
+    momentum=0.99,
+    init="random",
+    random_state=None,
+):
 
-    '''Approximate magnitude spectrogram inversion using the "fast" Griffin-Lim algorithm. [#]_ [#]_
+    """Approximate magnitude spectrogram inversion using the "fast" Griffin-Lim algorithm.
 
     Given a short-time Fourier transform magnitude matrix (``S``), the algorithm randomly
     initializes phase estimates, and then alternates forward- and inverse-STFT
-    operations.
+    operations. [#]_
+
     Note that this assumes reconstruction of a real-valued time-domain signal, and
     that ``S`` contains only the non-negative frequencies (as computed by
     `stft`).
+
+    The "fast" GL method [#]_ uses a momentum parameter to accelerate convergence.
+
+    .. [#] D. W. Griffin and J. S. Lim,
+        "Signal estimation from modified short-time Fourier transform,"
+        IEEE Trans. ASSP, vol.32, no.2, pp.236–243, Apr. 1984.
 
     .. [#] Perraudin, N., Balazs, P., & Søndergaard, P. L.
         "A fast Griffin-Lim algorithm,"
         IEEE Workshop on Applications of Signal Processing to Audio and Acoustics (pp. 1-4),
         Oct. 2013.
-
-    .. [#] D. W. Griffin and J. S. Lim,
-        "Signal estimation from modified short-time Fourier transform,"
-        IEEE Trans. ASSP, vol.32, no.2, pp.236–243, Apr. 1984.
 
     Parameters
     ----------
@@ -2240,7 +2353,7 @@ def griffinlim(S, n_iter=32, hop_length=None, win_length=None, window='hann',
     >>> ax[1].label_outer()
     >>> librosa.display.waveplot(y_istft, sr=sr, color='r', ax=ax[2])
     >>> ax[2].set_title('Magnitude-only istft reconstruction')
-    '''
+    """
 
     if random_state is None:
         rng = np.random
@@ -2250,17 +2363,21 @@ def griffinlim(S, n_iter=32, hop_length=None, win_length=None, window='hann',
         rng = random_state
 
     if momentum > 1:
-        warnings.warn('Griffin-Lim with momentum={} > 1 can be unstable. '
-                      'Proceed with caution!'.format(momentum))
+        warnings.warn(
+            "Griffin-Lim with momentum={} > 1 can be unstable. "
+            "Proceed with caution!".format(momentum)
+        )
     elif momentum < 0:
-        raise ParameterError('griffinlim() called with momentum={} < 0'.format(momentum))
+        raise ParameterError(
+            "griffinlim() called with momentum={} < 0".format(momentum)
+        )
 
     # Infer n_fft from the spectrogram shape
     n_fft = 2 * (S.shape[0] - 1)
 
     # using complex64 will keep the result to minimal necessary precision
     angles = np.empty(S.shape, dtype=np.complex64)
-    if init == 'random':
+    if init == "random":
         # randomly initialize the phase
         angles[:] = np.exp(2j * np.pi * rng.rand(*S.shape))
     elif init is None:
@@ -2270,33 +2387,62 @@ def griffinlim(S, n_iter=32, hop_length=None, win_length=None, window='hann',
         raise ParameterError("init={} must either None or 'random'".format(init))
 
     # And initialize the previous iterate to 0
-    rebuilt = 0.
+    rebuilt = 0.0
 
     for _ in range(n_iter):
         # Store the previous iterate
         tprev = rebuilt
 
         # Invert with our current estimate of the phases
-        inverse = istft(S * angles, hop_length=hop_length, win_length=win_length,
-                        window=window, center=center, dtype=dtype, length=length)
+        inverse = istft(
+            S * angles,
+            hop_length=hop_length,
+            win_length=win_length,
+            window=window,
+            center=center,
+            dtype=dtype,
+            length=length,
+        )
 
         # Rebuild the spectrogram
-        rebuilt = stft(inverse, n_fft=n_fft, hop_length=hop_length,
-                       win_length=win_length, window=window, center=center,
-                       pad_mode=pad_mode)
+        rebuilt = stft(
+            inverse,
+            n_fft=n_fft,
+            hop_length=hop_length,
+            win_length=win_length,
+            window=window,
+            center=center,
+            pad_mode=pad_mode,
+        )
 
         # Update our phase estimates
         angles[:] = rebuilt - (momentum / (1 + momentum)) * tprev
         angles[:] /= np.abs(angles) + 1e-16
 
     # Return the final phase estimates
-    return istft(S * angles, hop_length=hop_length, win_length=win_length,
-                 window=window, center=center, dtype=dtype, length=length)
+    return istft(
+        S * angles,
+        hop_length=hop_length,
+        win_length=win_length,
+        window=window,
+        center=center,
+        dtype=dtype,
+        length=length,
+    )
 
 
-def _spectrogram(y=None, S=None, n_fft=2048, hop_length=512, power=1,
-                 win_length=None, window='hann', center=True, pad_mode='reflect'):
-    '''Helper function to retrieve a magnitude spectrogram.
+def _spectrogram(
+    y=None,
+    S=None,
+    n_fft=2048,
+    hop_length=512,
+    power=1,
+    win_length=None,
+    window="hann",
+    center=True,
+    pad_mode="reflect",
+):
+    """Helper function to retrieve a magnitude spectrogram.
 
     This is primarily used in feature extraction functions that can operate on
     either audio time-series or spectrogram input.
@@ -2354,15 +2500,26 @@ def _spectrogram(y=None, S=None, n_fft=2048, hop_length=512, power=1,
     n_fft : int > 0
         - If ``S`` is provided, then ``n_fft`` is inferred from ``S``
         - Else, copied from input
-    '''
+    """
 
     if S is not None:
         # Infer n_fft from spectrogram shape
         n_fft = 2 * (S.shape[0] - 1)
     else:
         # Otherwise, compute a magnitude spectrogram from input
-        S = np.abs(stft(y, n_fft=n_fft, hop_length=hop_length,
-                        win_length=win_length, center=center,
-                        window=window, pad_mode=pad_mode))**power
+        S = (
+            np.abs(
+                stft(
+                    y,
+                    n_fft=n_fft,
+                    hop_length=hop_length,
+                    win_length=win_length,
+                    center=center,
+                    window=window,
+                    pad_mode=pad_mode,
+                )
+            )
+            ** power
+        )
 
     return S, n_fft

@@ -45,7 +45,9 @@ def load(infile):
 
 
 # -- Tests     --#
-@pytest.mark.parametrize("infile", files(os.path.join("tests", "data", "feature-hz_to_mel-*.mat")))
+@pytest.mark.parametrize(
+    "infile", files(os.path.join("tests", "data", "feature-hz_to_mel-*.mat"))
+)
 def test_hz_to_mel(infile):
     DATA = load(infile)
     z = librosa.hz_to_mel(DATA["f"], DATA["htk"])
@@ -53,7 +55,9 @@ def test_hz_to_mel(infile):
     assert np.allclose(z, DATA["result"])
 
 
-@pytest.mark.parametrize("infile", files(os.path.join("tests", "data", "feature-mel_to_hz-*.mat")))
+@pytest.mark.parametrize(
+    "infile", files(os.path.join("tests", "data", "feature-mel_to_hz-*.mat"))
+)
 def test_mel_to_hz(infile):
 
     DATA = load(infile)
@@ -65,7 +69,9 @@ def test_mel_to_hz(infile):
     assert np.allclose(z0, DATA["result"][0])
 
 
-@pytest.mark.parametrize("infile", files(os.path.join("tests", "data", "feature-hz_to_octs-*.mat")))
+@pytest.mark.parametrize(
+    "infile", files(os.path.join("tests", "data", "feature-hz_to_octs-*.mat"))
+)
 def test_hz_to_octs(infile):
     DATA = load(infile)
     z = librosa.hz_to_octs(DATA["f"])
@@ -73,7 +79,9 @@ def test_hz_to_octs(infile):
     assert np.allclose(z, DATA["result"])
 
 
-@pytest.mark.parametrize("infile", files(os.path.join("tests", "data", "feature-melfb-*.mat")))
+@pytest.mark.parametrize(
+    "infile", files(os.path.join("tests", "data", "feature-melfb-*.mat"))
+)
 def test_melfb(infile):
 
     DATA = load(infile)
@@ -95,7 +103,9 @@ def test_melfb(infile):
     assert np.allclose(wts, DATA["wts"])
 
 
-@pytest.mark.parametrize("infile", files(os.path.join("tests", "data", "feature-melfbnorm-*.mat")))
+@pytest.mark.parametrize(
+    "infile", files(os.path.join("tests", "data", "feature-melfbnorm-*.mat"))
+)
 def test_melfbnorm(infile):
     DATA = load(infile)
     # if DATA['norm'] is empty, pass None.
@@ -126,10 +136,9 @@ def test_mel_norm(norm):
     if norm == 1:
         assert np.allclose(np.sum(np.abs(M), axis=1), 1)
     elif norm == 2:
-        assert np.allclose(np.sum(np.abs(M**2), axis=1), 1)
+        assert np.allclose(np.sum(np.abs(M ** 2), axis=1), 1)
     elif norm == np.inf:
         assert np.allclose(np.max(np.abs(M), axis=1), 1)
-
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -151,7 +160,9 @@ def test_mel_gap():
         librosa.filters.mel(sr, n_fft, n_mels=n_mels, fmin=fmin, fmax=fmax, htk=htk)
 
 
-@pytest.mark.parametrize("infile", files(os.path.join("tests", "data", "feature-chromafb-*.mat")))
+@pytest.mark.parametrize(
+    "infile", files(os.path.join("tests", "data", "feature-chromafb-*.mat"))
+)
 def test_chromafb(infile):
 
     DATA = load(infile)
@@ -333,7 +344,12 @@ def test_cq_to_chroma(n_octaves, semitones, n_chroma, fmin, base_c, window):
         else:
             midi_base = librosa.hz_to_midi(fmin)
 
-        midi_notes = np.linspace(midi_base, midi_base + n_bins * 12.0 / bins_per_octave, endpoint=False, num=n_bins)
+        midi_notes = np.linspace(
+            midi_base,
+            midi_base + n_bins * 12.0 / bins_per_octave,
+            endpoint=False,
+            num=n_bins,
+        )
         #  We don't care past 2 decimals here.
         # the log2 inside hz_to_midi can cause problems though.
         midi_notes = np.around(midi_notes, decimals=2)
@@ -384,7 +400,9 @@ def test_get_window_func():
     assert np.allclose(w1, w2)
 
 
-@pytest.mark.parametrize("pre_win", [scipy.signal.hann(16), list(scipy.signal.hann(16)), [1, 1, 1]])
+@pytest.mark.parametrize(
+    "pre_win", [scipy.signal.hann(16), list(scipy.signal.hann(16)), [1, 1, 1]]
+)
 def test_get_window_pre(pre_win):
     win = librosa.filters.get_window(pre_win, len(pre_win))
     assert np.allclose(win, pre_win)
@@ -394,7 +412,10 @@ def test_semitone_filterbank():
     # We test against Chroma Toolbox' elliptical semitone filterbank
     # load data from chroma toolbox
     gt_fb = scipy.io.loadmat(
-        os.path.join("tests", "data", "filter-muliratefb-MIDI_FB_ellip_pitch_60_96_22050_Q25"), squeeze_me=True
+        os.path.join(
+            "tests", "data", "filter-muliratefb-MIDI_FB_ellip_pitch_60_96_22050_Q25"
+        ),
+        squeeze_me=True,
     )["h"]
 
     # standard parameters reproduce settings from chroma toolbox
@@ -430,7 +451,9 @@ def test_semitone_filterbank():
 @pytest.mark.parametrize("zero_mean", [False, True])
 def test_diagonal_filter(n, window, angle, slope, zero_mean):
 
-    kernel = librosa.filters.diagonal_filter(window, n, slope=slope, angle=angle, zero_mean=zero_mean)
+    kernel = librosa.filters.diagonal_filter(
+        window, n, slope=slope, angle=angle, zero_mean=zero_mean
+    )
 
     # In the no-rotation case, check that the filter is shaped correctly
     if angle == np.pi / 4 and not zero_mean:
@@ -448,10 +471,14 @@ def test_diagonal_filter(n, window, angle, slope, zero_mean):
     if angle is None:
         # If we're using the slope API, then the transposed kernel
         # will have slope 1/slope
-        k2 = librosa.filters.diagonal_filter(window, n, slope=1.0 / slope, angle=angle, zero_mean=zero_mean)
+        k2 = librosa.filters.diagonal_filter(
+            window, n, slope=1.0 / slope, angle=angle, zero_mean=zero_mean
+        )
     else:
         # If we're using the angle API, then the transposed kernel
         # will have angle pi/2 - angle
-        k2 = librosa.filters.diagonal_filter(window, n, slope=slope, angle=np.pi / 2 - angle, zero_mean=zero_mean)
+        k2 = librosa.filters.diagonal_filter(
+            window, n, slope=slope, angle=np.pi / 2 - angle, zero_mean=zero_mean
+        )
 
     assert np.allclose(k2, kernel.T)

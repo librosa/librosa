@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-'''Pitch-tracking and tuning estimation'''
+"""Pitch-tracking and tuning estimation"""
 
 import warnings
 import numpy as np
@@ -14,12 +14,13 @@ from .. import util
 from .. import sequence
 from ..util.exceptions import ParameterError
 
-__all__ = ['estimate_tuning', 'pitch_tuning', 'piptrack', 'yin', 'pyin']
+__all__ = ["estimate_tuning", "pitch_tuning", "piptrack", "yin", "pyin"]
 
 
-def estimate_tuning(y=None, sr=22050, S=None, n_fft=2048,
-                    resolution=0.01, bins_per_octave=12, **kwargs):
-    '''Estimate the tuning of an audio time series or spectrogram input.
+def estimate_tuning(
+    y=None, sr=22050, S=None, n_fft=2048, resolution=0.01, bins_per_octave=12, **kwargs
+):
+    """Estimate the tuning of an audio time series or spectrogram input.
 
     Parameters
     ----------
@@ -79,7 +80,7 @@ def estimate_tuning(y=None, sr=22050, S=None, n_fft=2048,
     >>> librosa.estimate_tuning(y=y, sr=sr, n_fft=8192,
     ...                         fmax=librosa.note_to_hz('G#9'))
     -0.08000000000000002
-    '''
+    """
 
     pitch, mag = piptrack(y=y, sr=sr, S=S, n_fft=n_fft, **kwargs)
 
@@ -91,13 +92,15 @@ def estimate_tuning(y=None, sr=22050, S=None, n_fft=2048,
     else:
         threshold = 0.0
 
-    return pitch_tuning(pitch[(mag >= threshold) & pitch_mask],
-                        resolution=resolution,
-                        bins_per_octave=bins_per_octave)
+    return pitch_tuning(
+        pitch[(mag >= threshold) & pitch_mask],
+        resolution=resolution,
+        bins_per_octave=bins_per_octave,
+    )
 
 
 def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
-    '''Given a collection of pitches, estimate its tuning offset
+    """Given a collection of pitches, estimate its tuning offset
     (in fractions of a bin) relative to A440=440.0Hz.
 
     Parameters
@@ -139,7 +142,7 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     >>> librosa.pitch_tuning(freqs)
     -0.07
 
-    '''
+    """
 
     frequencies = np.atleast_1d(frequencies)
 
@@ -147,19 +150,18 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     frequencies = frequencies[frequencies > 0]
 
     if not np.any(frequencies):
-        warnings.warn('Trying to estimate tuning from empty frequency set.')
+        warnings.warn("Trying to estimate tuning from empty frequency set.")
         return 0.0
 
     # Compute the residual relative to the number of bins
-    residual = np.mod(bins_per_octave *
-                      convert.hz_to_octs(frequencies), 1.0)
+    residual = np.mod(bins_per_octave * convert.hz_to_octs(frequencies), 1.0)
 
     # Are we on the wrong side of the semitone?
     # A residual of 0.95 is more likely to be a deviation of -0.05
     # from the next tone up.
     residual[residual >= 0.5] -= 1.0
 
-    bins = np.linspace(-0.5, 0.5, int(np.ceil(1. / resolution)) + 1)
+    bins = np.linspace(-0.5, 0.5, int(np.ceil(1.0 / resolution)) + 1)
 
     counts, tuning = np.histogram(residual, bins)
 
@@ -168,11 +170,22 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
 
 
 @cache(level=30)
-def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
-             fmin=150.0, fmax=4000.0, threshold=0.1,
-             win_length=None, window='hann', center=True, pad_mode='reflect',
-             ref=None):
-    '''Pitch tracking on thresholded parabolically-interpolated STFT.
+def piptrack(
+    y=None,
+    sr=22050,
+    S=None,
+    n_fft=2048,
+    hop_length=None,
+    fmin=150.0,
+    fmax=4000.0,
+    threshold=0.1,
+    win_length=None,
+    window="hann",
+    center=True,
+    pad_mode="reflect",
+    ref=None,
+):
+    """Pitch tracking on thresholded parabolically-interpolated STFT.
 
     This implementation uses the parabolic interpolation method described by [#]_.
 
@@ -277,12 +290,19 @@ def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
     >>> pitches, magnitudes = librosa.piptrack(S=S, sr=sr, threshold=1,
     ...                                        ref=np.mean)
 
-    '''
+    """
 
     # Check that we received an audio time series or STFT
-    S, n_fft = _spectrogram(y=y, S=S, n_fft=n_fft, hop_length=hop_length,
-                            win_length=win_length, window=window,
-                            center=center, pad_mode=pad_mode)
+    S, n_fft = _spectrogram(
+        y=y,
+        S=S,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        win_length=win_length,
+        window=window,
+        center=center,
+        pad_mode=pad_mode,
+    )
 
     # Make sure we're dealing with magnitudes
     S = np.abs(S)
@@ -305,8 +325,8 @@ def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
     shift = avg / (shift + (np.abs(shift) < util.tiny(shift)))
 
     # Pad back up to the same shape as S
-    avg = np.pad(avg, ([1, 1], [0, 0]), mode='constant')
-    shift = np.pad(shift, ([1, 1], [0, 0]), mode='constant')
+    avg = np.pad(avg, ([1, 1], [0, 0]), mode="constant")
+    shift = np.pad(shift, ([1, 1], [0, 0]), mode="constant")
 
     dskew = 0.5 * avg * shift
 
@@ -330,17 +350,19 @@ def piptrack(y=None, sr=22050, S=None, n_fft=2048, hop_length=None,
     idx = np.argwhere(freq_mask & util.localmax(S * (S > ref_value)))
 
     # Store pitch and magnitude
-    pitches[idx[:, 0], idx[:, 1]] = ((idx[:, 0] + shift[idx[:, 0], idx[:, 1]])
-                                     * float(sr) / n_fft)
+    pitches[idx[:, 0], idx[:, 1]] = (
+        (idx[:, 0] + shift[idx[:, 0], idx[:, 1]]) * float(sr) / n_fft
+    )
 
-    mags[idx[:, 0], idx[:, 1]] = (S[idx[:, 0], idx[:, 1]]
-                                  + dskew[idx[:, 0], idx[:, 1]])
+    mags[idx[:, 0], idx[:, 1]] = S[idx[:, 0], idx[:, 1]] + dskew[idx[:, 0], idx[:, 1]]
 
     return pitches, mags
 
 
-def _cumulative_mean_normalized_difference(y_frames, frame_length, win_length, min_period, max_period):
-    '''Cumulative mean normalized difference function (equation 8 in [#]_)
+def _cumulative_mean_normalized_difference(
+    y_frames, frame_length, win_length, min_period, max_period
+):
+    """Cumulative mean normalized difference function (equation 8 in [#]_)
 
     .. [#] De Cheveigné, Alain, and Hideki Kawahara.
         "YIN, a fundamental frequency estimator for speech and music."
@@ -367,11 +389,11 @@ def _cumulative_mean_normalized_difference(y_frames, frame_length, win_length, m
     -------
     yin_frames : np.ndarray [shape=(max_period-min_period+1,n_frames)]
         Cumulative mean normalized difference function for each frame.
-    '''
+    """
     # Autocorrelation.
     a = np.fft.rfft(y_frames, frame_length, axis=0)
     b = np.fft.rfft(y_frames[win_length::-1, :], frame_length, axis=0)
-    acf_frames = np.fft.irfft(a*b, frame_length, axis=0)[win_length:]
+    acf_frames = np.fft.irfft(a * b, frame_length, axis=0)[win_length:]
     acf_frames[np.abs(acf_frames) < 1e-6] = 0
 
     # Energy terms.
@@ -380,19 +402,19 @@ def _cumulative_mean_normalized_difference(y_frames, frame_length, win_length, m
     energy_frames[np.abs(energy_frames) < 1e-6] = 0
 
     # Difference function.
-    yin_frames = energy_frames[0, :] + energy_frames - 2*acf_frames
+    yin_frames = energy_frames[0, :] + energy_frames - 2 * acf_frames
 
     # Cumulative mean normalized difference function.
-    yin_numerator = yin_frames[min_period:max_period+1, :]
-    tau_range = np.arange(1, max_period+1)[:, None]
-    cumulative_mean = np.cumsum(yin_frames[1:max_period+1, :], axis=0) / tau_range
-    yin_denominator = cumulative_mean[min_period-1:max_period, :]
+    yin_numerator = yin_frames[min_period : max_period + 1, :]
+    tau_range = np.arange(1, max_period + 1)[:, None]
+    cumulative_mean = np.cumsum(yin_frames[1 : max_period + 1, :], axis=0) / tau_range
+    yin_denominator = cumulative_mean[min_period - 1 : max_period, :]
     yin_frames = yin_numerator / (yin_denominator + util.tiny(yin_denominator))
     return yin_frames
 
 
 def _parabolic_interpolation(y_frames):
-    '''Piecewise parabolic interpolation for yin and pyin.
+    """Piecewise parabolic interpolation for yin and pyin.
 
     Parameters
     ----------
@@ -403,18 +425,28 @@ def _parabolic_interpolation(y_frames):
     -------
     parabolic_shifts : np.ndarray [shape=(frame_length, n_frames)]
         position of the parabola optima
-    '''
+    """
     parabolic_shifts = np.zeros_like(y_frames)
-    parabola_a = (y_frames[:-2, :] + y_frames[2:, :] - 2*y_frames[1:-1, :]) / 2
+    parabola_a = (y_frames[:-2, :] + y_frames[2:, :] - 2 * y_frames[1:-1, :]) / 2
     parabola_b = (y_frames[2:, :] - y_frames[:-2, :]) / 2
-    parabolic_shifts[1:-1, :] = -parabola_b / (2*parabola_a + util.tiny(parabola_a))
+    parabolic_shifts[1:-1, :] = -parabola_b / (2 * parabola_a + util.tiny(parabola_a))
     parabolic_shifts[np.abs(parabolic_shifts) > 1] = 0
     return parabolic_shifts
 
 
-def yin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=None, hop_length=None,
-        trough_threshold=0.1, center=True, pad_mode='reflect'):
-    '''Fundamental frequency (F0) estimation using the YIN algorithm.
+def yin(
+    y,
+    fmin,
+    fmax,
+    sr=22050,
+    frame_length=2048,
+    win_length=None,
+    hop_length=None,
+    trough_threshold=0.1,
+    center=True,
+    pad_mode="reflect",
+):
+    """Fundamental frequency (F0) estimation using the YIN algorithm.
 
     YIN is an autocorrelation based method for fundamental frequency estimation [#]_.
     First, a normalized difference function is computed over short (overlapping) frames of audio.
@@ -494,7 +526,7 @@ def yin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=None, hop_length=
     >>> librosa.yin(y, 440, 880)
     array([442.66354675, 441.95299983, 441.58010963, ...,
         871.161732  , 873.99001454, 877.04297681])
-    '''
+    """
 
     if fmin is None or fmax is None:
         raise ParameterError('both "fmin" and "fmax" must be provided')
@@ -505,7 +537,10 @@ def yin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=None, hop_length=
 
     if win_length >= frame_length:
         raise ParameterError(
-            'win_length={} cannot exceed given frame_length={}'.format(win_length, frame_length))
+            "win_length={} cannot exceed given frame_length={}".format(
+                win_length, frame_length
+            )
+        )
 
     # Set the default hop if it is not already specified.
     if hop_length is None:
@@ -523,11 +558,12 @@ def yin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=None, hop_length=
 
     # Calculate minimum and maximum periods
     min_period = max(int(np.floor(sr / fmax)), 1)
-    max_period = min(int(np.ceil(sr / fmin)), frame_length-win_length-1)
+    max_period = min(int(np.ceil(sr / fmin)), frame_length - win_length - 1)
 
     # Calculate cumulative mean normalized difference function.
     yin_frames = _cumulative_mean_normalized_difference(
-        y_frames, frame_length, win_length, min_period, max_period)
+        y_frames, frame_length, win_length, min_period, max_period
+    )
 
     # Parabolic interpolation.
     parabolic_shifts = _parabolic_interpolation(yin_frames)
@@ -537,8 +573,7 @@ def yin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=None, hop_length=
     is_trough[0, :] = yin_frames[0, :] < yin_frames[1, :]
 
     # Find minima below peak threshold.
-    is_threshold_trough = np.logical_and(
-        is_trough, yin_frames < trough_threshold)
+    is_threshold_trough = np.logical_and(is_trough, yin_frames < trough_threshold)
 
     # Absolute threshold.
     # "The solution we propose is to set an absolute threshold and choose the
@@ -550,18 +585,37 @@ def yin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=None, hop_length=
     yin_period[no_trough_below_threshold] = global_min[no_trough_below_threshold]
 
     # Refine peak by parabolic interpolation.
-    yin_period = min_period + yin_period + parabolic_shifts[yin_period, range(yin_frames.shape[1])]
+    yin_period = (
+        min_period
+        + yin_period
+        + parabolic_shifts[yin_period, range(yin_frames.shape[1])]
+    )
 
     # Convert period to fundamental frequency.
     f0 = sr / yin_period
     return f0
 
 
-def pyin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=None, hop_length=None,
-         n_thresholds=100, beta_parameters=(2, 18), boltzmann_parameter=2, resolution=0.1,
-         max_transition_rate=35.92, switch_prob=0.01, no_trough_prob=0.01, fill_na=np.nan,
-         center=True, pad_mode='reflect'):
-    '''Fundamental frequency (F0) estimation using probabilistic YIN (pYIN).
+def pyin(
+    y,
+    fmin,
+    fmax,
+    sr=22050,
+    frame_length=2048,
+    win_length=None,
+    hop_length=None,
+    n_thresholds=100,
+    beta_parameters=(2, 18),
+    boltzmann_parameter=2,
+    resolution=0.1,
+    max_transition_rate=35.92,
+    switch_prob=0.01,
+    no_trough_prob=0.01,
+    fill_na=np.nan,
+    center=True,
+    pad_mode="reflect",
+):
+    """Fundamental frequency (F0) estimation using probabilistic YIN (pYIN).
 
     pYIN [#]_ is a modificatin of the YIN algorithm [#]_ for fundamental frequency (F0) estimation.
     In the first step of pYIN, F0 candidates and their probabilities are computed using the YIN algorithm.
@@ -682,9 +736,9 @@ def pyin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=None, hop_length
     >>> img = librosa.display.specshow(D, x_axis='time', y_axis='log', ax=ax)
     >>> ax.set(title='pYIN fundamental frequency estimation')
     >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
-    >>> ax.plot(times, f0, label='f0', color='w')
+    >>> ax.plot(times, f0, label='f0', color='cyan', linewidth=3)
     >>> ax.legend(loc='upper right')
-    '''
+    """
 
     if fmin is None or fmax is None:
         raise ParameterError('both "fmin" and "fmax" must be provided')
@@ -695,7 +749,10 @@ def pyin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=None, hop_length
 
     if win_length >= frame_length:
         raise ParameterError(
-            'win_length={} cannot exceed given frame_length={}'.format(win_length, frame_length))
+            "win_length={} cannot exceed given frame_length={}".format(
+                win_length, frame_length
+            )
+        )
 
     # Set the default hop if it is not already specified.
     if hop_length is None:
@@ -713,11 +770,12 @@ def pyin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=None, hop_length
 
     # Calculate minimum and maximum periods
     min_period = max(int(np.floor(sr / fmax)), 1)
-    max_period = min(int(np.ceil(sr / fmin)), frame_length-win_length-1)
+    max_period = min(int(np.ceil(sr / fmin)), frame_length - win_length - 1)
 
     # Calculate cumulative mean normalized difference function.
     yin_frames = _cumulative_mean_normalized_difference(
-        y_frames, frame_length, win_length, min_period, max_period)
+        y_frames, frame_length, win_length, min_period, max_period
+    )
 
     # Parabolic interpolation.
     parabolic_shifts = _parabolic_interpolation(yin_frames)
@@ -727,8 +785,7 @@ def pyin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=None, hop_length
     # differs from the method described in the paper.
     # 1. Define the prior over the thresholds.
     thresholds = np.linspace(0, 1, n_thresholds + 1)
-    beta_cdf = scipy.stats.beta.cdf(
-        thresholds, beta_parameters[0], beta_parameters[1])
+    beta_cdf = scipy.stats.beta.cdf(thresholds, beta_parameters[0], beta_parameters[1])
     beta_probs = np.diff(beta_cdf)
 
     yin_probs = np.zeros_like(yin_frames)
@@ -736,7 +793,7 @@ def pyin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=None, hop_length
         # 2. For each frame find the troughs.
         is_trough = util.localmin(yin_frame, axis=0)
         is_trough[0] = yin_frame[0] < yin_frame[1]
-        trough_index, = np.nonzero(is_trough)
+        (trough_index,) = np.nonzero(is_trough)
 
         if len(trough_index) == 0:
             continue
@@ -750,7 +807,8 @@ def pyin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=None, hop_length
         trough_positions = np.cumsum(trough_thresholds, axis=0) - 1
         n_troughs = np.count_nonzero(trough_thresholds, axis=0)
         trough_prior = scipy.stats.boltzmann.pmf(
-            trough_positions, boltzmann_parameter, n_troughs)
+            trough_positions, boltzmann_parameter, n_troughs
+        )
         trough_prior[~trough_thresholds] = 0
 
         # 5. For each threshold add probability to global minimum if no trough is below threshold,
@@ -758,7 +816,9 @@ def pyin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=None, hop_length
         probs = np.sum(trough_prior * beta_probs, axis=1)
         global_min = np.argmin(trough_heights)
         n_thresholds_below_min = np.count_nonzero(~trough_thresholds[global_min, :])
-        probs[global_min] += no_trough_prob*np.sum(beta_probs[:n_thresholds_below_min])
+        probs[global_min] += no_trough_prob * np.sum(
+            beta_probs[:n_thresholds_below_min]
+        )
 
         yin_probs[trough_index, i] = probs
 
@@ -769,38 +829,42 @@ def pyin(y, fmin, fmax, sr=22050, frame_length=2048, win_length=None, hop_length
     period_candidates = period_candidates + parabolic_shifts[yin_period, frame_index]
     f0_candidates = sr / period_candidates
 
-    n_bins_per_semitone = int(np.ceil(1. / resolution))
-    n_pitch_bins = int(np.floor(12*n_bins_per_semitone*np.log2(fmax / fmin))) + 1
+    n_bins_per_semitone = int(np.ceil(1.0 / resolution))
+    n_pitch_bins = int(np.floor(12 * n_bins_per_semitone * np.log2(fmax / fmin))) + 1
 
     # Construct transition matrix.
     max_semitones_per_frame = round(max_transition_rate * 12 * hop_length / sr)
-    transition_width = max_semitones_per_frame*n_bins_per_semitone + 1
+    transition_width = max_semitones_per_frame * n_bins_per_semitone + 1
     # Construct the within voicing transition probabilities
     transition = sequence.transition_local(
-        n_pitch_bins, transition_width, window='triangle', wrap=False)
+        n_pitch_bins, transition_width, window="triangle", wrap=False
+    )
     # Include across voicing transition probabilities
     transition = np.block(
-        [[(1-switch_prob)*transition, switch_prob*transition],
-         [switch_prob*transition, (1-switch_prob)*transition]])
+        [
+            [(1 - switch_prob) * transition, switch_prob * transition],
+            [switch_prob * transition, (1 - switch_prob) * transition],
+        ]
+    )
 
     # Find pitch bin corresponding to each f0 candidate.
-    bin_index = 12*n_bins_per_semitone*np.log2(f0_candidates / fmin)
+    bin_index = 12 * n_bins_per_semitone * np.log2(f0_candidates / fmin)
     bin_index = np.clip(np.round(bin_index), 0, n_pitch_bins).astype(int)
 
     # Observation probabilities.
-    observation_probs = np.zeros((2*n_pitch_bins, yin_frames.shape[1]))
+    observation_probs = np.zeros((2 * n_pitch_bins, yin_frames.shape[1]))
     observation_probs[bin_index, frame_index] = yin_probs[yin_period, frame_index]
     voiced_prob = np.clip(np.sum(observation_probs[:n_pitch_bins, :], axis=0), 0, 1)
     observation_probs[n_pitch_bins:, :] = (1 - voiced_prob[None, :]) / n_pitch_bins
 
-    p_init = np.zeros(2*n_pitch_bins)
+    p_init = np.zeros(2 * n_pitch_bins)
     p_init[n_pitch_bins:] = 1 / n_pitch_bins
 
     # Viterbi decoding.
     states = sequence.viterbi(observation_probs, transition, p_init=p_init)
 
     # Find f0 corresponding to each decoded pitch bin.
-    freqs = fmin * 2**(np.arange(n_pitch_bins) / (12*n_bins_per_semitone))
+    freqs = fmin * 2 ** (np.arange(n_pitch_bins) / (12 * n_bins_per_semitone))
     f0 = freqs[states % n_pitch_bins]
     voiced_flag = states < n_pitch_bins
     if fill_na is not None:

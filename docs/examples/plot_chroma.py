@@ -64,8 +64,8 @@ ax[1].set(ylabel='Default chroma')
 
 
 ########################################################
-# We can do better by isolating the harmonic component of the audio signal
-# We'll use a large margin for separating harmonics from percussives
+# We can do better by isolating the harmonic component of the audio signal.
+# We'll use a large margin for separating harmonics from percussives:
 y_harm = librosa.effects.harmonic(y=y, margin=8)
 chroma_harm = librosa.feature.chroma_cqt(y=y_harm, sr=sr)
 
@@ -130,15 +130,13 @@ ax[2].set(ylabel='Processed')
 
 
 #################################################################################################
-#   
 # Chroma variants
 # ^^^^^^^^^^^^^^^
 # There are three chroma variants implemented in librosa: `chroma_stft`, `chroma_cqt`, and `chroma_cens`.
-# `chroma_stft` and `chroma_cqt` are two alternative ways of plotting chroma.    
-# 
+# `chroma_stft` and `chroma_cqt` are two alternative ways of plotting chroma.
 # `chroma_stft` performs short-time fourier transform of an audio input and maps each STFT bin to chroma, while `chroma_cqt` uses constant-Q transform and maps each cq-bin to chroma.      
-# 
-# A comparison between the STFT and the CQT methods for chromagram. 
+#
+# A comparison between the STFT and the CQT methods for chromagram.
 chromagram_stft = librosa.feature.chroma_stft(y=y, sr=sr)
 chromagram_cqt = librosa.feature.chroma_cqt(y=y, sr=sr)
 

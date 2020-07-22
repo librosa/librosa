@@ -5,8 +5,8 @@
 import sys
 import importlib
 
-short_version = '0.8'
-version = '0.8.0-dev'
+short_version = "0.8"
+version = "0.8.0"
 
 
 def __get_mod_version(modname):
@@ -19,42 +19,46 @@ def __get_mod_version(modname):
         try:
             return mod.__version__
         except AttributeError:
-            return 'installed, no version number available'
+            return "installed, no version number available"
 
     except ImportError:
         return None
 
 
 def show_versions():
-    '''Return the version information for all librosa dependencies.'''
+    """Return the version information for all librosa dependencies."""
 
-    core_deps = ['audioread',
-                 'numpy',
-                 'scipy',
-                 'sklearn',
-                 'joblib',
-                 'decorator',
-                 'soundfile',
-                 'resampy',
-                 'numba']
+    core_deps = [
+        "audioread",
+        "numpy",
+        "scipy",
+        "sklearn",
+        "joblib",
+        "decorator",
+        "soundfile",
+        "resampy",
+        "numba",
+    ]
 
-    extra_deps = ['numpydoc',
-                  'sphinx',
-                  'sphinx_rtd_theme',
-                  'sphinxcontrib.versioning',
-                  'sphinx-gallery',
-                  'pytest',
-                  'pytest-mpl',
-                  'pytest-cov',
-                  'matplotlib',
-                  'presets']
+    extra_deps = [
+        "numpydoc",
+        "sphinx",
+        "sphinx_rtd_theme",
+        "sphinxcontrib.versioning",
+        "sphinx-gallery",
+        "pytest",
+        "pytest-mpl",
+        "pytest-cov",
+        "matplotlib",
+        "presets",
+    ]
 
-    print('INSTALLED VERSIONS')
-    print('------------------')
-    print('python: {}\n'.format(sys.version))
-    print('librosa: {}\n'.format(version))
+    print("INSTALLED VERSIONS")
+    print("------------------")
+    print("python: {}\n".format(sys.version))
+    print("librosa: {}\n".format(version))
     for dep in core_deps:
-        print('{}: {}'.format(dep, __get_mod_version(dep)))
-    print('')
+        print("{}: {}".format(dep, __get_mod_version(dep)))
+    print("")
     for dep in extra_deps:
-        print('{}: {}'.format(dep, __get_mod_version(dep)))
+        print("{}: {}".format(dep, __get_mod_version(dep)))

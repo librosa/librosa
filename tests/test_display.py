@@ -103,11 +103,15 @@ def test_unknown_time_unit(y):
     plt.figure()
     ax = plt.gca()
     ax.plot(times, y)
-    ax.xaxis.set_major_formatter(librosa.display.TimeFormatter(unit="neither s, nor ms, nor None"))
+    ax.xaxis.set_major_formatter(
+        librosa.display.TimeFormatter(unit="neither s, nor ms, nor None")
+    )
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["complex"], extensions=["png"], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["complex"], extensions=["png"], tolerance=6
+)
 def test_complex_input(S):
     plt.figure()
     librosa.display.specshow(S)
@@ -121,21 +125,27 @@ def test_abs_input(S_abs):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["cqt_note"], extensions=["png"], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["cqt_note"], extensions=["png"], tolerance=6
+)
 def test_cqt_note(C):
     plt.figure()
     librosa.display.specshow(C, y_axis="cqt_note")
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["cqt_hz"], extensions=["png"], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["cqt_hz"], extensions=["png"], tolerance=6
+)
 def test_cqt_hz(C):
     plt.figure()
     librosa.display.specshow(C, y_axis="cqt_hz")
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["tempo"], extensions=["png"], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["tempo"], extensions=["png"], tolerance=6
+)
 def test_tempo(y, sr):
     T = librosa.feature.tempogram(y=y, sr=sr)
 
@@ -144,7 +154,9 @@ def test_tempo(y, sr):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["fourier_tempo"], extensions=["png"], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["fourier_tempo"], extensions=["png"], tolerance=6
+)
 def test_fourier_tempo(y, sr):
     T = librosa.feature.fourier_tempogram(y=y, sr=sr)
 
@@ -153,7 +165,9 @@ def test_fourier_tempo(y, sr):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["tonnetz"], extensions=["png"], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["tonnetz"], extensions=["png"], tolerance=6
+)
 def test_tonnetz(C):
     plt.figure()
     chroma = librosa.feature.chroma_cqt(C=C)
@@ -162,7 +176,9 @@ def test_tonnetz(C):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["chroma"], extensions=["png"], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["chroma"], extensions=["png"], tolerance=6
+)
 def test_chroma(S_abs, sr):
     plt.figure()
     plt.subplot(3, 1, 1)
@@ -179,7 +195,9 @@ def test_chroma(S_abs, sr):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(baseline_images=['chroma_svara'], extensions=['png'], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["chroma_svara"], extensions=["png"], tolerance=6
+)
 def test_chroma_svara(C, sr):
 
     chroma = librosa.feature.chroma_cqt(C=C, sr=sr, threshold=0.9)
@@ -187,16 +205,16 @@ def test_chroma_svara(C, sr):
     fig, (ax1, ax2, ax3, ax4) = plt.subplots(nrows=4, sharex=True, figsize=(10, 10))
 
     # Hindustani, no thaat
-    librosa.display.specshow(chroma, y_axis='chroma_h', Sa=5, ax=ax1)
+    librosa.display.specshow(chroma, y_axis="chroma_h", Sa=5, ax=ax1)
 
     # Hindustani, kafi thaat
-    librosa.display.specshow(chroma, y_axis='chroma_h', Sa=5, ax=ax2, thaat='kafi')
+    librosa.display.specshow(chroma, y_axis="chroma_h", Sa=5, ax=ax2, thaat="kafi")
 
     # Carnatic, mela 22
-    librosa.display.specshow(chroma, y_axis='chroma_c', Sa=5, ax=ax3, mela=22)
+    librosa.display.specshow(chroma, y_axis="chroma_c", Sa=5, ax=ax3, mela=22)
 
     # Carnatic, mela 1
-    librosa.display.specshow(chroma, y_axis='chroma_c', Sa=7, ax=ax4, mela=1)
+    librosa.display.specshow(chroma, y_axis="chroma_c", Sa=7, ax=ax4, mela=1)
 
     ax1.label_outer()
     ax2.label_outer()
@@ -205,7 +223,9 @@ def test_chroma_svara(C, sr):
     return fig
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["double_chroma"], extensions=["png"], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["double_chroma"], extensions=["png"], tolerance=6
+)
 def test_double_chroma(S_abs, sr):
     plt.figure()
 
@@ -215,7 +235,9 @@ def test_double_chroma(S_abs, sr):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["x_mel"], extensions=["png"], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["x_mel"], extensions=["png"], tolerance=6
+)
 def test_x_mel(S_abs):
     plt.figure()
 
@@ -224,7 +246,9 @@ def test_x_mel(S_abs):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["y_mel"], extensions=["png"], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["y_mel"], extensions=["png"], tolerance=6
+)
 def test_y_mel(S_abs):
     plt.figure()
 
@@ -233,7 +257,9 @@ def test_y_mel(S_abs):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["y_mel_bounded"], extensions=["png"], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["y_mel_bounded"], extensions=["png"], tolerance=6
+)
 def test_y_mel_bounded(S_abs):
     plt.figure()
 
@@ -243,7 +269,9 @@ def test_y_mel_bounded(S_abs):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["x_none_y_linear"], extensions=["png"], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["x_none_y_linear"], extensions=["png"], tolerance=6
+)
 def test_xaxis_none_yaxis_linear(S_abs, S_signed, S_bin):
     plt.figure()
     plt.subplot(3, 1, 1)
@@ -257,7 +285,9 @@ def test_xaxis_none_yaxis_linear(S_abs, S_signed, S_bin):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["specshow_ext_axes"], extensions=["png"], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["specshow_ext_axes"], extensions=["png"], tolerance=6
+)
 def test_specshow_ext_axes(S_abs):
     plt.figure()
     ax_left = plt.subplot(1, 2, 1)
@@ -269,7 +299,9 @@ def test_specshow_ext_axes(S_abs):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["x_none_y_log"], extensions=["png"], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["x_none_y_log"], extensions=["png"], tolerance=6
+)
 def test_xaxis_none_yaxis_log(S_abs, S_signed, S_bin):
     plt.figure()
 
@@ -284,7 +316,9 @@ def test_xaxis_none_yaxis_log(S_abs, S_signed, S_bin):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["x_linear_y_none"], extensions=["png"], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["x_linear_y_none"], extensions=["png"], tolerance=6
+)
 def test_xaxis_linear_yaxis_none(S_abs, S_signed, S_bin):
     plt.figure()
 
@@ -299,7 +333,9 @@ def test_xaxis_linear_yaxis_none(S_abs, S_signed, S_bin):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["x_log_y_none"], extensions=["png"], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["x_log_y_none"], extensions=["png"], tolerance=6
+)
 def test_xaxis_log_yaxis_none(S_abs, S_signed, S_bin):
 
     plt.figure()
@@ -315,7 +351,9 @@ def test_xaxis_log_yaxis_none(S_abs, S_signed, S_bin):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["x_time_y_none"], extensions=["png"], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["x_time_y_none"], extensions=["png"], tolerance=6
+)
 def test_xaxis_time_yaxis_none(S_abs):
 
     plt.figure()
@@ -323,7 +361,9 @@ def test_xaxis_time_yaxis_none(S_abs):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["x_none_y_time"], extensions=["png"], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["x_none_y_time"], extensions=["png"], tolerance=6
+)
 def test_xaxis_none_yaxis_time(S_abs):
 
     plt.figure()
@@ -331,7 +371,9 @@ def test_xaxis_none_yaxis_time(S_abs):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["x_frames_y_none"], extensions=["png"], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["x_frames_y_none"], extensions=["png"], tolerance=6
+)
 def test_xaxis_frames_yaxis_none(S_abs):
 
     plt.figure()
@@ -339,7 +381,9 @@ def test_xaxis_frames_yaxis_none(S_abs):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["x_none_y_frames"], extensions=["png"], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["x_none_y_frames"], extensions=["png"], tolerance=6
+)
 def test_xaxis_none_yaxis_frames(S_abs):
 
     plt.figure()
@@ -347,7 +391,9 @@ def test_xaxis_none_yaxis_frames(S_abs):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["x_lag_y_none"], extensions=["png"], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["x_lag_y_none"], extensions=["png"], tolerance=6
+)
 def test_xaxis_lag_yaxis_none(S_abs):
 
     plt.figure()
@@ -355,7 +401,9 @@ def test_xaxis_lag_yaxis_none(S_abs):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["x_none_y_lag"], extensions=["png"], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["x_none_y_lag"], extensions=["png"], tolerance=6
+)
 def test_xaxis_time_yaxis_lag(S_abs):
 
     plt.figure()
@@ -363,7 +411,9 @@ def test_xaxis_time_yaxis_lag(S_abs):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["time_scales_auto"], extensions=["png"], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["time_scales_auto"], extensions=["png"], tolerance=6
+)
 def test_time_scales_auto(S_abs, sr):
 
     # sr = 22050, hop_length = 512, S.shape[1] = 198
@@ -389,7 +439,9 @@ def test_time_scales_auto(S_abs, sr):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["time_unit"], extensions=["png"], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["time_unit"], extensions=["png"], tolerance=6
+)
 def test_time_unit(S_abs, sr):
 
     # sr = 22050, hop_length = 512, S.shape[1] = 198
@@ -411,7 +463,9 @@ def test_time_unit(S_abs, sr):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["time_unit_lag"], extensions=["png"], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["time_unit_lag"], extensions=["png"], tolerance=6
+)
 def test_time_unit_lag(S_abs, sr):
 
     plt.figure(figsize=(9, 10))
@@ -431,7 +485,9 @@ def test_time_unit_lag(S_abs, sr):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["waveplot_mono"], extensions=["png"], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["waveplot_mono"], extensions=["png"], tolerance=6
+)
 def test_waveplot_mono(y, sr):
 
     plt.figure()
@@ -446,7 +502,9 @@ def test_waveplot_mono(y, sr):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["waveplot_ext_axes"], extensions=["png"], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["waveplot_ext_axes"], extensions=["png"], tolerance=6
+)
 def test_waveplot_ext_axes(y):
     plt.figure()
     ax_left = plt.subplot(1, 2, 1)
@@ -458,7 +516,9 @@ def test_waveplot_ext_axes(y):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["waveplot_stereo"], extensions=["png"], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["waveplot_stereo"], extensions=["png"], tolerance=6
+)
 def test_waveplot_stereo(y, sr):
 
     ys = librosa.util.stack([y, 2 * y])
@@ -525,7 +585,9 @@ def test_cmap_robust(data):
         assert cmap1 == cmap2
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["coords"], extensions=["png"], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["coords"], extensions=["png"], tolerance=6
+)
 def test_coords(Csync, beat_t):
 
     plt.figure()
@@ -540,7 +602,9 @@ def test_bad_coords(S_abs):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["sharex_specshow_ms"], extensions=["png"], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["sharex_specshow_ms"], extensions=["png"], tolerance=6
+)
 def test_sharex_specshow_ms(S_abs, y, sr):
 
     # Correct time range ~= 4.6 s or 4600ms
@@ -555,7 +619,9 @@ def test_sharex_specshow_ms(S_abs, y, sr):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["sharex_waveplot_ms"], extensions=["png"], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["sharex_waveplot_ms"], extensions=["png"], tolerance=6
+)
 def test_sharex_waveplot_ms(y, sr, S_abs):
 
     # Correct time range ~= 4.6 s or 4600ms
@@ -570,30 +636,39 @@ def test_sharex_waveplot_ms(y, sr, S_abs):
     return plt.gcf()
 
 
-@pytest.mark.parametrize('format_str', ['cqt_hz', 'cqt_note'])
+@pytest.mark.parametrize("format_str", ["cqt_hz", "cqt_note"])
 def test_axis_bound_warning(format_str):
-    
+
     with pytest.warns(UserWarning):
         # set sr=22050
         # fmin= 11025
         # 72 bins
         # 12 bins per octave
 
-        librosa.display.specshow(np.zeros((72, 3)), y_axis=format_str,
-                                 fmin=11025, sr=22050, bins_per_octave=12)
+        librosa.display.specshow(
+            np.zeros((72, 3)),
+            y_axis=format_str,
+            fmin=11025,
+            sr=22050,
+            bins_per_octave=12,
+        )
 
 
-@pytest.mark.mpl_image_compare(baseline_images=['cqt_svara'], extensions=['png'], tolerance=6)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["cqt_svara"], extensions=["png"], tolerance=6
+)
 def test_display_cqt_svara(C, sr):
 
     Camp = librosa.amplitude_to_db(C, ref=np.max)
-    fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(nrows=5, sharex=True, figsize=(10, 10))
+    fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(
+        nrows=5, sharex=True, figsize=(10, 10)
+    )
 
-    librosa.display.specshow(Camp, y_axis='cqt_svara', Sa=261, ax=ax1)
-    librosa.display.specshow(Camp, y_axis='cqt_svara', Sa=440, ax=ax2)
-    librosa.display.specshow(Camp, y_axis='cqt_svara', Sa=261, ax=ax3)
-    librosa.display.specshow(Camp, y_axis='cqt_svara', Sa=261, mela=1, ax=ax4)
-    librosa.display.specshow(Camp, y_axis='cqt_svara', Sa=261, mela=1, ax=ax5)
+    librosa.display.specshow(Camp, y_axis="cqt_svara", Sa=261, ax=ax1)
+    librosa.display.specshow(Camp, y_axis="cqt_svara", Sa=440, ax=ax2)
+    librosa.display.specshow(Camp, y_axis="cqt_svara", Sa=261, ax=ax3)
+    librosa.display.specshow(Camp, y_axis="cqt_svara", Sa=261, mela=1, ax=ax4)
+    librosa.display.specshow(Camp, y_axis="cqt_svara", Sa=261, mela=1, ax=ax5)
 
     ax3.set_ylim([440, 880])
     ax5.set_ylim([440, 880])

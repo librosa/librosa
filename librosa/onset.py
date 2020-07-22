@@ -22,15 +22,19 @@ from .util.exceptions import ParameterError
 
 from .feature.spectral import melspectrogram
 
-__all__ = ['onset_detect',
-           'onset_strength',
-           'onset_strength_multi',
-           'onset_backtrack']
+__all__ = ["onset_detect", "onset_strength", "onset_strength_multi", "onset_backtrack"]
 
 
-def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
-                 backtrack=False, energy=None,
-                 units='frames', **kwargs):
+def onset_detect(
+    y=None,
+    sr=22050,
+    onset_envelope=None,
+    hop_length=512,
+    backtrack=False,
+    energy=None,
+    units="frames",
+    **kwargs,
+):
     """Locate note onset events by picking peaks in an onset strength envelope.
 
     The `peak_pick` parameters were chosen by large-scale hyper-parameter
@@ -131,7 +135,7 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     # First, get the frame->beat strength profile if we don't already have one
     if onset_envelope is None:
         if y is None:
-            raise ParameterError('y or onset_envelope must be provided')
+            raise ParameterError("y or onset_envelope must be provided")
 
         onset_envelope = onset_strength(y=y, sr=sr, hop_length=hop_length)
 
@@ -147,12 +151,12 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
     onset_envelope /= onset_envelope.max()
 
     # These parameter settings found by large-scale search
-    kwargs.setdefault('pre_max', 0.03*sr//hop_length)       # 30ms
-    kwargs.setdefault('post_max', 0.00*sr//hop_length + 1)  # 0ms
-    kwargs.setdefault('pre_avg', 0.10*sr//hop_length)       # 100ms
-    kwargs.setdefault('post_avg', 0.10*sr//hop_length + 1)  # 100ms
-    kwargs.setdefault('wait', 0.03*sr//hop_length)          # 30ms
-    kwargs.setdefault('delta', 0.07)
+    kwargs.setdefault("pre_max", 0.03 * sr // hop_length)  # 30ms
+    kwargs.setdefault("post_max", 0.00 * sr // hop_length + 1)  # 0ms
+    kwargs.setdefault("pre_avg", 0.10 * sr // hop_length)  # 100ms
+    kwargs.setdefault("post_avg", 0.10 * sr // hop_length + 1)  # 100ms
+    kwargs.setdefault("wait", 0.03 * sr // hop_length)  # 30ms
+    kwargs.setdefault("delta", 0.07)
 
     # Peak pick the onset envelope
     onsets = util.peak_pick(onset_envelope, **kwargs)
@@ -164,23 +168,31 @@ def onset_detect(y=None, sr=22050, onset_envelope=None, hop_length=512,
 
         onsets = onset_backtrack(onsets, energy)
 
-    if units == 'frames':
+    if units == "frames":
         pass
-    elif units == 'samples':
+    elif units == "samples":
         onsets = core.frames_to_samples(onsets, hop_length=hop_length)
-    elif units == 'time':
+    elif units == "time":
         onsets = core.frames_to_time(onsets, hop_length=hop_length, sr=sr)
     else:
-        raise ParameterError('Invalid unit type: {}'.format(units))
+        raise ParameterError("Invalid unit type: {}".format(units))
 
     return onsets
 
 
-def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
-                   ref=None,
-                   detrend=False, center=True,
-                   feature=None, aggregate=None,
-                   **kwargs):
+def onset_strength(
+    y=None,
+    sr=22050,
+    S=None,
+    lag=1,
+    max_size=1,
+    ref=None,
+    detrend=False,
+    center=True,
+    feature=None,
+    aggregate=None,
+    **kwargs,
+):
     """Compute a spectral flux onset strength envelope.
 
     Onset strength at time ``t`` is determined by::
@@ -304,26 +316,30 @@ def onset_strength(y=None, sr=22050, S=None, lag=1, max_size=1,
     """
 
     if aggregate is False:
-        raise ParameterError('aggregate={} cannot be False when computing full-spectrum onset strength.')
+        raise ParameterError(
+            "aggregate={} cannot be False when computing full-spectrum onset strength."
+        )
 
-    odf_all = onset_strength_multi(y=y,
-                                   sr=sr,
-                                   S=S,
-                                   lag=lag,
-                                   max_size=max_size,
-                                   ref=ref,
-                                   detrend=detrend,
-                                   center=center,
-                                   feature=feature,
-                                   aggregate=aggregate,
-                                   channels=None,
-                                   **kwargs)
+    odf_all = onset_strength_multi(
+        y=y,
+        sr=sr,
+        S=S,
+        lag=lag,
+        max_size=max_size,
+        ref=ref,
+        detrend=detrend,
+        center=center,
+        feature=feature,
+        aggregate=aggregate,
+        channels=None,
+        **kwargs,
+    )
 
     return odf_all[0]
 
 
 def onset_backtrack(events, energy):
-    '''Backtrack detected onset events to the nearest preceding local
+    """Backtrack detected onset events to the nearest preceding local
     minimum of an energy function.
 
     This function can be used to roll back the timing of detected onsets
@@ -383,13 +399,12 @@ def onset_backtrack(events, energy):
     >>> ax[2].plot(times, rms[0], label='RMS')
     >>> ax[2].vlines(librosa.frames_to_time(onset_bt_rms), 0, rms.max(), label='Backtracked (RMS)', color='r')
     >>> ax[2].legend()
-    '''
+    """
 
     # Find points where energy is non-increasing
     # all points:  energy[i] <= energy[i-1]
     # tail points: energy[i] < energy[i+1]
-    minima = np.flatnonzero((energy[1:-1] <= energy[:-2]) &
-                            (energy[1:-1] < energy[2:]))
+    minima = np.flatnonzero((energy[1:-1] <= energy[:-2]) & (energy[1:-1] < energy[2:]))
 
     # Pad on a 0, just in case we have onsets with no preceding minimum
     # Shift by one to account for slicing in minima detection
@@ -400,9 +415,22 @@ def onset_backtrack(events, energy):
 
 
 @cache(level=30)
-def onset_strength_multi(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
-                         lag=1, max_size=1, ref=None, detrend=False, center=True,
-                         feature=None, aggregate=None, channels=None, **kwargs):
+def onset_strength_multi(
+    y=None,
+    sr=22050,
+    S=None,
+    n_fft=2048,
+    hop_length=512,
+    lag=1,
+    max_size=1,
+    ref=None,
+    detrend=False,
+    center=True,
+    feature=None,
+    aggregate=None,
+    channels=None,
+    **kwargs,
+):
     """Compute a spectral flux onset strength envelope across multiple channels.
 
     Onset strength for channel ``i`` at time ``t`` is determined by::
@@ -514,16 +542,16 @@ def onset_strength_multi(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
 
     if feature is None:
         feature = melspectrogram
-        kwargs.setdefault('fmax', 11025.0)
+        kwargs.setdefault("fmax", 11025.0)
 
     if aggregate is None:
         aggregate = np.mean
 
     if lag < 1 or not isinstance(lag, int):
-        raise ParameterError('lag must be a positive integer')
+        raise ParameterError("lag must be a positive integer")
 
     if max_size < 1 or not isinstance(max_size, int):
-        raise ParameterError('max_size must be a positive integer')
+        raise ParameterError("max_size must be a positive integer")
 
     # First, compute mel spectrogram
     if S is None:
@@ -544,7 +572,11 @@ def onset_strength_multi(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         else:
             ref = scipy.ndimage.maximum_filter1d(S, max_size, axis=0)
     elif ref.shape != S.shape:
-        raise ParameterError('Reference spectrum shape {} must match input spectrum {}'.format(ref.shape, S.shape))
+        raise ParameterError(
+            "Reference spectrum shape {} must match input spectrum {}".format(
+                ref.shape, S.shape
+            )
+        )
 
     # Compute difference to the reference, spaced by lag
     onset_env = S[:, lag:] - ref[:, :-lag]
@@ -560,9 +592,7 @@ def onset_strength_multi(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         pad = False
 
     if aggregate:
-        onset_env = util.sync(onset_env, channels,
-                              aggregate=aggregate,
-                              pad=pad, axis=0)
+        onset_env = util.sync(onset_env, channels, aggregate=aggregate, pad=pad, axis=0)
 
     # compensate for lag
     pad_width = lag
@@ -570,16 +600,14 @@ def onset_strength_multi(y=None, sr=22050, S=None, n_fft=2048, hop_length=512,
         # Counter-act framing effects. Shift the onsets by n_fft / hop_length
         pad_width += n_fft // (2 * hop_length)
 
-    onset_env = np.pad(onset_env, ([0, 0], [int(pad_width), 0]),
-                       mode='constant')
+    onset_env = np.pad(onset_env, ([0, 0], [int(pad_width), 0]), mode="constant")
 
     # remove the DC component
     if detrend:
-        onset_env = scipy.signal.lfilter([1.0, -1.0], [1.0, -0.99],
-                                         onset_env, axis=-1)
+        onset_env = scipy.signal.lfilter([1.0, -1.0], [1.0, -0.99], onset_env, axis=-1)
 
     # Trim to match the input duration
     if center:
-        onset_env = onset_env[:, :S.shape[1]]
+        onset_env = onset_env[:, : S.shape[1]]
 
     return onset_env
