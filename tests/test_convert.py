@@ -16,7 +16,9 @@ import numpy as np
 import pytest
 
 
-@pytest.mark.parametrize("frames", [100, np.arange(10.0), np.ones((3, 3))], ids=["0d", "1d", "2d"])
+@pytest.mark.parametrize(
+    "frames", [100, np.arange(10.0), np.ones((3, 3))], ids=["0d", "1d", "2d"]
+)
 @pytest.mark.parametrize("hop_length", [512, 1024])
 @pytest.mark.parametrize("n_fft", [None, 1024])
 def test_frames_to_samples(frames, hop_length, n_fft):
@@ -32,7 +34,9 @@ def test_frames_to_samples(frames, hop_length, n_fft):
 
 
 @pytest.mark.parametrize(
-    "samples", [1024 * 100, 1024 * np.arange(10.0), 1024 * np.ones((3, 3))], ids=["0d", "1d", "2d"]
+    "samples",
+    [1024 * 100, 1024 * np.arange(10.0), 1024 * np.ones((3, 3))],
+    ids=["0d", "1d", "2d"],
 )
 @pytest.mark.parametrize("hop_length", [512, 1024])
 @pytest.mark.parametrize("n_fft", [None, 1024])
@@ -98,7 +102,9 @@ def test_time_to_frames(sr, hop_length, n_fft):
 @pytest.mark.parametrize("bins_per_octave", [12, 24, 36])
 def test_octs_to_hz(tuning, bins_per_octave):
     freq = np.asarray([55, 110, 220, 440]) * (2.0 ** (tuning / bins_per_octave))
-    freq_out = librosa.octs_to_hz([1, 2, 3, 4], tuning=tuning, bins_per_octave=bins_per_octave)
+    freq_out = librosa.octs_to_hz(
+        [1, 2, 3, 4], tuning=tuning, bins_per_octave=bins_per_octave
+    )
 
     assert np.allclose(freq, freq_out)
 
@@ -119,7 +125,7 @@ def test_hz_to_octs(tuning, bins_per_octave):
         (440.0, 12, 0.0),
         ([440.0, 444.0], 24, [0.0, 0.31335]),
         ([432.0], 12, [-0.317667]),
-        (432.0, 36, -0.953)
+        (432.0, 36, -0.953),
     ],
 )
 def test_A4_to_tuning(A4, bins_per_octave, tuning):
@@ -133,7 +139,7 @@ def test_A4_to_tuning(A4, bins_per_octave, tuning):
         (0.0, 12, 440.0),
         ([-0.2], 24, [437.466]),
         ([0.1, 0.9], 36, [440.848, 447.691]),
-        (0.0, 24, 440.0)
+        (0.0, 24, 440.0),
     ],
 )
 def test_tuning_to_A4(tuning, bins_per_octave, A4):
@@ -143,7 +149,18 @@ def test_tuning_to_A4(tuning, bins_per_octave, A4):
 
 @pytest.mark.parametrize(
     "tuning,octave",
-    [(None, None), (None, 1), (None, 2), (None, 3), (-25, 1), (-25, 2), (-25, 3), (0, 1), (0, 2), (0, 3)],
+    [
+        (None, None),
+        (None, 1),
+        (None, 2),
+        (None, 3),
+        (-25, 1),
+        (-25, 2),
+        (-25, 3),
+        (0, 1),
+        (0, 2),
+        (0, 3),
+    ],
 )
 @pytest.mark.parametrize("accidental", ["", "#", "b", "!"])
 @pytest.mark.parametrize("round_midi", [False, True])
@@ -184,7 +201,18 @@ def test_note_to_midi_badnote():
 
 @pytest.mark.parametrize(
     "tuning,octave",
-    [(None, None), (None, 1), (None, 2), (None, 3), (-25, 1), (-25, 2), (-25, 3), (0, 1), (0, 2), (0, 3)],
+    [
+        (None, None),
+        (None, 1),
+        (None, 2),
+        (None, 3),
+        (-25, 1),
+        (-25, 2),
+        (-25, 3),
+        (0, 1),
+        (0, 2),
+        (0, 3),
+    ],
 )
 @pytest.mark.parametrize("accidental", ["", "#", "b", "!"])
 @pytest.mark.parametrize("round_midi", [False, True])
@@ -295,7 +323,9 @@ def test_fft_frequencies(sr, n_fft):
 @pytest.mark.parametrize("tuning", [-0.25, 0.0, 0.25])
 def test_cqt_frequencies(n_bins, fmin, bins_per_octave, tuning):
 
-    freqs = librosa.cqt_frequencies(n_bins, fmin, bins_per_octave=bins_per_octave, tuning=tuning)
+    freqs = librosa.cqt_frequencies(
+        n_bins, fmin, bins_per_octave=bins_per_octave, tuning=tuning
+    )
 
     # Make sure we get the right number of bins
     assert len(freqs) == n_bins
@@ -332,7 +362,9 @@ def test_tempo_frequencies(n_bins, hop_length, sr):
 @pytest.mark.parametrize("hop_length", [256, 512])
 @pytest.mark.parametrize("win_length", [192, 384])
 def test_fourier_tempo_frequencies(sr, hop_length, win_length):
-    freqs = librosa.fourier_tempo_frequencies(sr=sr, hop_length=hop_length, win_length=win_length)
+    freqs = librosa.fourier_tempo_frequencies(
+        sr=sr, hop_length=hop_length, win_length=win_length
+    )
 
     # DC
     assert freqs[0] == 0
@@ -404,28 +436,32 @@ def test_Z_weighting(min_db):
     assert np.allclose(d_khz, 0, atol=1e-3)
 
 
-@pytest.mark.parametrize(
-    "kind", list(librosa.core.convert.WEIGHTING_FUNCTIONS))
+@pytest.mark.parametrize("kind", list(librosa.core.convert.WEIGHTING_FUNCTIONS))
 def test_frequency_weighting(kind):
     freq = np.linspace(2e1, 2e4)
     assert np.allclose(
         librosa.frequency_weighting(freq, kind),
         librosa.core.convert.WEIGHTING_FUNCTIONS[kind](freq),
-        0, atol=1e-3)
+        0,
+        atol=1e-3,
+    )
 
 
-@pytest.mark.parametrize(
-    "kinds", ['AZC', ['A', 'Z', 'C']])
+@pytest.mark.parametrize("kinds", ["AZC", ["A", "Z", "C"]])
 def test_multi_frequency_weighting(kinds):
     freq = np.linspace(2e1, 2e4)
     assert np.allclose(
         librosa.multi_frequency_weighting(freq, kinds),
-        np.stack([
-            librosa.A_weighting(freq),
-            librosa.Z_weighting(freq),
-            librosa.C_weighting(freq),
-        ]),
-        0, atol=1e-3)
+        np.stack(
+            [
+                librosa.A_weighting(freq),
+                librosa.Z_weighting(freq),
+                librosa.C_weighting(freq),
+            ]
+        ),
+        0,
+        atol=1e-3,
+    )
 
 
 def test_samples_like():
@@ -527,34 +563,32 @@ def test_blocks_to_time(blocks, block_length, hop_length, sr):
     assert times.size == np.asarray(blocks).size
 
     # Check values
-    assert np.allclose(times, np.asanyarray(blocks) * hop_length * block_length / float(sr))
+    assert np.allclose(
+        times, np.asanyarray(blocks) * hop_length * block_length / float(sr)
+    )
 
     # Check dtype
     assert np.issubdtype(times.dtype, np.float)
 
 
-
-@pytest.mark.parametrize('abbr', [False, True])
-@pytest.mark.parametrize('octave', [False, True])
-@pytest.mark.parametrize('unicode', [False, True])
-@pytest.mark.parametrize('midi', [list(range(36))])
-@pytest.mark.parametrize('Sa', [12])
+@pytest.mark.parametrize("abbr", [False, True])
+@pytest.mark.parametrize("octave", [False, True])
+@pytest.mark.parametrize("unicode", [False, True])
+@pytest.mark.parametrize("midi", [list(range(36))])
+@pytest.mark.parametrize("Sa", [12])
 def test_midi_to_svara_h(midi, Sa, abbr, octave, unicode):
 
-    svara = librosa.midi_to_svara_h(midi, Sa,
-                                    abbr=abbr,
-                                    octave=octave,
-                                    unicode=unicode)
+    svara = librosa.midi_to_svara_h(midi, Sa, abbr=abbr, octave=octave, unicode=unicode)
 
     svara = np.asarray(svara)
     assert len(svara) == len(midi)
 
     if abbr:
-        assert svara[Sa] == 'S'
+        assert svara[Sa] == "S"
     else:
-        assert svara[Sa] == 'Sa'
+        assert svara[Sa] == "Sa"
 
-    if sys.version >= '3.7':
+    if sys.version >= "3.7":
         if not unicode:
             for s in svara:
                 assert s.isascii()
@@ -575,56 +609,63 @@ def test_midi_to_svara_h(midi, Sa, abbr, octave, unicode):
         assert np.all(svara[:12] == svara[24:])
 
 
-@pytest.mark.parametrize('f,Sa,abbr,octave,unicode,result', [
-    (440, 440, False, False, True, 'Sa'),
-    (880, 440, False, False, True, 'Sa'),
-    (880, 440, True, False, True, 'S'),
-    (880, 440, True, True, False, "S'"),
-    (880, 440, True, True, True, "Ṡ"),
-    (880, 440, False, True, True, "Ṡa"),
-    (220, 440, False, True, True, "Ṣa"),
-    (660, 440, True, True, True, "P")])
+@pytest.mark.parametrize(
+    "f,Sa,abbr,octave,unicode,result",
+    [
+        (440, 440, False, False, True, "Sa"),
+        (880, 440, False, False, True, "Sa"),
+        (880, 440, True, False, True, "S"),
+        (880, 440, True, True, False, "S'"),
+        (880, 440, True, True, True, "Ṡ"),
+        (880, 440, False, True, True, "Ṡa"),
+        (220, 440, False, True, True, "Ṣa"),
+        (660, 440, True, True, True, "P"),
+    ],
+)
 def test_hz_to_svara_h(f, Sa, abbr, octave, unicode, result):
     s = librosa.hz_to_svara_h(f, Sa, abbr=abbr, octave=octave, unicode=unicode)
     assert s == result
 
 
-@pytest.mark.parametrize('note,Sa,abbr,octave,unicode,result', [
-    ('A4', 'A4', False, False, True, 'Sa'),
-    ('A5', 'A4', False, False, True, 'Sa'),
-    ('A5', 'A4', True, False, True, 'S'),
-    ('A5', 'A4', True, True, False, "S'"),
-    ('A5', 'A4', True, True, True, "Ṡ"),
-    ('A5', 'A4', False, True, True, "Ṡa"),
-    ('A3', 'A4', False, True, True, "Ṣa"),
-    ('E5', 'A4', True, True, True, "P")])
+@pytest.mark.parametrize(
+    "note,Sa,abbr,octave,unicode,result",
+    [
+        ("A4", "A4", False, False, True, "Sa"),
+        ("A5", "A4", False, False, True, "Sa"),
+        ("A5", "A4", True, False, True, "S"),
+        ("A5", "A4", True, True, False, "S'"),
+        ("A5", "A4", True, True, True, "Ṡ"),
+        ("A5", "A4", False, True, True, "Ṡa"),
+        ("A3", "A4", False, True, True, "Ṣa"),
+        ("E5", "A4", True, True, True, "P"),
+    ],
+)
 def test_note_to_svara_h(note, Sa, abbr, octave, unicode, result):
     s = librosa.note_to_svara_h(note, Sa, abbr=abbr, octave=octave, unicode=unicode)
     assert s == result
 
 
-@pytest.mark.parametrize('abbr', [False, True])
-@pytest.mark.parametrize('octave', [False, True])
-@pytest.mark.parametrize('unicode', [False, True])
-@pytest.mark.parametrize('midi', [list(range(36))])
-@pytest.mark.parametrize('Sa', [12])
-@pytest.mark.parametrize('mela', range(1, 72, 7))
+@pytest.mark.parametrize("abbr", [False, True])
+@pytest.mark.parametrize("octave", [False, True])
+@pytest.mark.parametrize("unicode", [False, True])
+@pytest.mark.parametrize("midi", [list(range(36))])
+@pytest.mark.parametrize("Sa", [12])
+@pytest.mark.parametrize("mela", range(1, 72, 7))
 def test_midi_to_svara_c(midi, Sa, mela, abbr, octave, unicode):
 
-    svara = librosa.midi_to_svara_c(midi, Sa, mela,
-                                    abbr=abbr,
-                                    octave=octave,
-                                    unicode=unicode)
+    svara = librosa.midi_to_svara_c(
+        midi, Sa, mela, abbr=abbr, octave=octave, unicode=unicode
+    )
 
     svara = np.asarray(svara)
     assert len(svara) == len(midi)
 
     if abbr:
-        assert svara[Sa] == 'S'
+        assert svara[Sa] == "S"
     else:
-        assert svara[Sa] == 'Sa'
+        assert svara[Sa] == "Sa"
 
-    if sys.version >= '3.7':
+    if sys.version >= "3.7":
         if not unicode:
             for s in svara:
                 assert s.isascii()
@@ -647,35 +688,43 @@ def test_midi_to_svara_c(midi, Sa, mela, abbr, octave, unicode):
         assert np.all(svara[:12] == svara[24:])
 
 
-@pytest.mark.parametrize('freq,Sa,mela,abbr,octave,unicode,result', [
-    (440, 440, 1, False, False, True, 'Sa'),
-    (466, 440, 1, False, False, True, 'Ri₁'),
-    (493, 440, 1, False, False, True, 'Ga₁'),
-    (880, 440, 1, True, False, True, 'S'),
-    (880, 440, 1, True, True, False, "S'"),
-    (880, 440, 1, True, True, True, "Ṡ"),
-    (880, 440, 1, False, True, True, "Ṡa"),
-    (220, 440, 1, False, True, True, "Ṣa"),
-    (740, 440, 1, True, True, True, "N₁"),
-    (740, 440, 2, True, True, True, "D₂")])
+@pytest.mark.parametrize(
+    "freq,Sa,mela,abbr,octave,unicode,result",
+    [
+        (440, 440, 1, False, False, True, "Sa"),
+        (466, 440, 1, False, False, True, "Ri₁"),
+        (493, 440, 1, False, False, True, "Ga₁"),
+        (880, 440, 1, True, False, True, "S"),
+        (880, 440, 1, True, True, False, "S'"),
+        (880, 440, 1, True, True, True, "Ṡ"),
+        (880, 440, 1, False, True, True, "Ṡa"),
+        (220, 440, 1, False, True, True, "Ṣa"),
+        (740, 440, 1, True, True, True, "N₁"),
+        (740, 440, 2, True, True, True, "D₂"),
+    ],
+)
 def test_hz_to_svara_c(freq, Sa, mela, abbr, octave, unicode, result):
-    s = librosa.hz_to_svara_c(freq, Sa, mela,
-                              abbr=abbr, octave=octave, unicode=unicode)
+    s = librosa.hz_to_svara_c(freq, Sa, mela, abbr=abbr, octave=octave, unicode=unicode)
     assert s == result
 
 
-@pytest.mark.parametrize('note,Sa,mela,abbr,octave,unicode,result', [
-    ('C4', 'C4', 1, False, False, True, 'Sa'),
-    ('C#4', 'C4', 1, False, False, True, 'Ri₁'),
-    ('D4', 'C4', 1, False, False, True, 'Ga₁'),
-    ('C5', 'C4', 1, True, False, True, 'S'),
-    ('C5', 'C4', 1, True, True, False, "S'"),
-    ('C5', 'C4', 1, True, True, True, "Ṡ"),
-    ('C5', 'C4', 1, False, True, True, "Ṡa"),
-    ('C3', 'C4', 1, False, True, True, "Ṣa"),
-    ('A4', 'C4', 1, True, True, True, "N₁"),
-    ('A4', 'C4', 2, True, True, True, "D₂")])
+@pytest.mark.parametrize(
+    "note,Sa,mela,abbr,octave,unicode,result",
+    [
+        ("C4", "C4", 1, False, False, True, "Sa"),
+        ("C#4", "C4", 1, False, False, True, "Ri₁"),
+        ("D4", "C4", 1, False, False, True, "Ga₁"),
+        ("C5", "C4", 1, True, False, True, "S"),
+        ("C5", "C4", 1, True, True, False, "S'"),
+        ("C5", "C4", 1, True, True, True, "Ṡ"),
+        ("C5", "C4", 1, False, True, True, "Ṡa"),
+        ("C3", "C4", 1, False, True, True, "Ṣa"),
+        ("A4", "C4", 1, True, True, True, "N₁"),
+        ("A4", "C4", 2, True, True, True, "D₂"),
+    ],
+)
 def test_note_to_svara_c(note, Sa, mela, abbr, octave, unicode, result):
-    s = librosa.note_to_svara_c(note, Sa, mela,
-                                abbr=abbr, octave=octave, unicode=unicode)
+    s = librosa.note_to_svara_c(
+        note, Sa, mela, abbr=abbr, octave=octave, unicode=unicode
+    )
     assert s == result

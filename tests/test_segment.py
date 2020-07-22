@@ -61,7 +61,9 @@ def test_cross_similarity_distance():
     data_ref = np.random.randn(3, 50)
     data = np.random.randn(3, 70)
     distance = cdist(data.T, data_ref.T, metric="sqeuclidean").T
-    rec = librosa.segment.cross_similarity(data, data_ref, mode="distance", metric="sqeuclidean", sparse=True)
+    rec = librosa.segment.cross_similarity(
+        data, data_ref, mode="distance", metric="sqeuclidean", sparse=True
+    )
 
     i, j, vals = scipy.sparse.find(rec)
     assert np.allclose(vals, distance[i, j])
@@ -97,7 +99,9 @@ def test_cross_similarity_badmode():
     data_ref = np.random.randn(3, 70)
     data = np.random.randn(3, 50)
 
-    rec = librosa.segment.cross_similarity(data, data_ref, mode="NOT A MODE", metric="sqeuclidean", sparse=True)
+    rec = librosa.segment.cross_similarity(
+        data, data_ref, mode="NOT A MODE", metric="sqeuclidean", sparse=True
+    )
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -128,14 +132,18 @@ def test_recurrence_matrix(n, k, width, sym, metric, self):
     # Make a data matrix
     data = np.random.randn(3, n)
 
-    D = librosa.segment.recurrence_matrix(data, k=k, width=width, sym=sym, axis=-1, metric=metric, self=self)
+    D = librosa.segment.recurrence_matrix(
+        data, k=k, width=width, sym=sym, axis=-1, metric=metric, self=self
+    )
 
     # First test for symmetry
     if sym:
         assert np.allclose(D, D.T)
 
     # Test for target-axis invariance
-    D_trans = librosa.segment.recurrence_matrix(data.T, k=k, width=width, sym=sym, axis=0, metric=metric, self=self)
+    D_trans = librosa.segment.recurrence_matrix(
+        data.T, k=k, width=width, sym=sym, axis=0, metric=metric, self=self
+    )
     assert np.allclose(D, D_trans)
 
     # If not symmetric, test for correct number of links
@@ -187,7 +195,9 @@ def test_recurrence_distance(self):
     srand()
     data = np.random.randn(3, 100)
     distance = squareform(pdist(data.T, metric="sqeuclidean"))
-    rec = librosa.segment.recurrence_matrix(data, mode="distance", metric="sqeuclidean", sparse=True, self=self)
+    rec = librosa.segment.recurrence_matrix(
+        data, mode="distance", metric="sqeuclidean", sparse=True, self=self
+    )
 
     i, j, vals = scipy.sparse.find(rec)
     assert np.allclose(vals, distance[i, j])
@@ -203,7 +213,12 @@ def test_recurrence_affinity(metric, bandwidth, self):
     data = np.random.randn(3, 100)
     distance = squareform(pdist(data.T, metric=metric))
     rec = librosa.segment.recurrence_matrix(
-        data, mode="affinity", metric=metric, sparse=True, bandwidth=bandwidth, self=self
+        data,
+        mode="affinity",
+        metric=metric,
+        sparse=True,
+        bandwidth=bandwidth,
+        self=self,
     )
 
     if self:
@@ -229,7 +244,9 @@ def test_recurrence_badmode():
     srand()
     data = np.random.randn(3, 100)
 
-    rec = librosa.segment.recurrence_matrix(data, mode="NOT A MODE", metric="sqeuclidean", sparse=True)
+    rec = librosa.segment.recurrence_matrix(
+        data, mode="NOT A MODE", metric="sqeuclidean", sparse=True
+    )
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -270,7 +287,9 @@ def test_recurrence_to_lag_fail(size):
 
 @pytest.mark.parametrize("pad", [False, True])
 @pytest.mark.parametrize("axis", [0, 1, -1])
-@pytest.mark.parametrize("rec", [librosa.segment.recurrence_matrix(np.random.randn(3, 100), sparse=True)])
+@pytest.mark.parametrize(
+    "rec", [librosa.segment.recurrence_matrix(np.random.randn(3, 100), sparse=True)]
+)
 @pytest.mark.parametrize("fmt", ["csc", "csr", "lil", "bsr", "dia"])
 def test_recurrence_to_lag_sparse(pad, axis, rec, fmt):
 
@@ -418,7 +437,9 @@ def R_input():
 @pytest.mark.parametrize("zero_mean", [False, True])
 @pytest.mark.parametrize("clip", [False, True])
 @pytest.mark.parametrize("kwargs", [dict(), dict(mode="reflect")])
-def test_path_enhance(R_input, window, n, max_ratio, min_ratio, n_filters, zero_mean, clip, kwargs):
+def test_path_enhance(
+    R_input, window, n, max_ratio, min_ratio, n_filters, zero_mean, clip, kwargs
+):
 
     R_smooth = librosa.segment.path_enhance(
         R_input,

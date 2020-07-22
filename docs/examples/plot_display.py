@@ -191,6 +191,59 @@ fig.colorbar(img, ax=ax)
 # %%
 # This will also work for 'cqt_note' mode.
 
+# %%
+# Indian notation systems
+# -----------------------
+
+# The examples above use Western music notation to identify pitch classes, but we can
+# also decorate axes with either Hindustani or Carnatic svara classes.
+#
+# These are specified by using `y_axis='chroma_h'` or `'chroma_c'`, respectively.
+#
+# Just as with key identification in the chroma example above, you can specify the
+# thaat (Hindustani) or melakarta number or name (Carnatic) to notate the plot.
+
+# %%
+# For example, the example above is in Eb:maj (or, more accurately, F:dorian),
+# which we can also represent in Hindustani notation as Sa=5 (F) and 'kafi' thaat:
+
+fig, ax = plt.subplots()
+img = librosa.display.specshow(chroma, y_axis='chroma_h', x_axis='time',
+                               Sa=5, thaat='kafi', ax=ax)
+ax.set(title='Chromagram with Hindustani notation')
+fig.colorbar(img, ax=ax)
+
+# %%
+# In Carnatic notation, we would use melakarta #22.
+# Note: `thaat` is optional for Hindustani notation, but `mela` is required for
+# Carnatic.
+
+fig, ax = plt.subplots()
+img = librosa.display.specshow(chroma, y_axis='chroma_c', x_axis='time',
+                               Sa=5, mela=22, ax=ax)
+ax.set(title='Chromagram with Carnatic notation')
+fig.colorbar(img, ax=ax)
+
+# %%
+# These notation schemes can also be used in cqt plots by specifying
+# `y_axis='cqt_svara'`.
+#
+# In this mode, `Sa` must be specified in Hz.  Carnatic notation is used
+# if `mela` is provided, and Hindustani is used if not.
+#
+# Individual svara are only notated if the display range is sufficiently small,
+# so we'll zoom into a single octave for this example.
+
+Sa = librosa.note_to_hz('F4')
+fig, ax = plt.subplots()
+librosa.display.specshow(C_db, y_axis='cqt_svara', Sa=Sa, x_axis='time', ax=ax)
+ax.set(title='Hindustani decoration',
+       ylim=[Sa, 2*Sa])
+
+fig, ax = plt.subplots()
+librosa.display.specshow(C_db, y_axis='cqt_svara', Sa=Sa, mela=22, x_axis='time', ax=ax)
+ax.set(title='Carnatic decoration',
+       ylim=[Sa, 2*Sa])
 
 # %%
 # Non-spectral data

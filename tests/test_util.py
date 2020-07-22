@@ -34,30 +34,42 @@ def test_example_audio_file():
 @pytest.mark.parametrize("axis", [0, -1])
 def test_frame1d(frame_length, hop_length, axis, y):
 
-    y_frame = librosa.util.frame(y, frame_length=frame_length, hop_length=hop_length, axis=axis)
+    y_frame = librosa.util.frame(
+        y, frame_length=frame_length, hop_length=hop_length, axis=axis
+    )
 
     if axis == -1:
         y_frame = y_frame.T
 
     for i in range(y_frame.shape[0]):
-        assert np.allclose(y_frame[i], y[i * hop_length : (i * hop_length + frame_length)])
+        assert np.allclose(
+            y_frame[i], y[i * hop_length : (i * hop_length + frame_length)]
+        )
 
 
 @pytest.mark.parametrize("frame_length", [4, 8])
 @pytest.mark.parametrize("hop_length", [2, 4])
 @pytest.mark.parametrize(
-    "y, axis", [(np.asfortranarray(np.random.randn(16, 32)), -1), (np.ascontiguousarray(np.random.randn(16, 32)), 0)]
+    "y, axis",
+    [
+        (np.asfortranarray(np.random.randn(16, 32)), -1),
+        (np.ascontiguousarray(np.random.randn(16, 32)), 0),
+    ],
 )
 def test_frame2d(frame_length, hop_length, axis, y):
 
-    y_frame = librosa.util.frame(y, frame_length=frame_length, hop_length=hop_length, axis=axis)
+    y_frame = librosa.util.frame(
+        y, frame_length=frame_length, hop_length=hop_length, axis=axis
+    )
 
     if axis == -1:
         y_frame = y_frame.T
         y = y.T
 
     for i in range(y_frame.shape[0]):
-        assert np.allclose(y_frame[i], y[i * hop_length : (i * hop_length + frame_length)])
+        assert np.allclose(
+            y_frame[i], y[i * hop_length : (i * hop_length + frame_length)]
+        )
 
 
 def test_frame_0stride():
@@ -97,9 +109,10 @@ def test_frame_bad_axis(axis):
     librosa.util.frame(np.zeros((3, 3, 3)), frame_length=2, hop_length=1, axis=axis)
 
 
-@pytest.mark.parametrize("x_bad, axis", 
-                        [(np.zeros((4, 10), order="C"), -1), 
-                         (np.zeros((4, 10), order="F"), 0)])
+@pytest.mark.parametrize(
+    "x_bad, axis",
+    [(np.zeros((4, 10), order="C"), -1), (np.zeros((4, 10), order="F"), 0)],
+)
 def test_frame_bad_contiguity(x_bad, axis):
     # Populate fixture with random data
     x_bad += np.random.randn(*x_bad.shape)
@@ -195,7 +208,10 @@ def test_fix_frames_fail_negative(frames, x_min, x_max, pad):
 
 
 @pytest.mark.parametrize("norm", [np.inf, -np.inf, 0, 0.5, 1.0, 2.0, None])
-@pytest.mark.parametrize("ndims,axis", [(1, 0), (1, -1), (2, 0), (2, 1), (2, -1), (3, 0), (3, 1), (3, 2), (3, -1)])
+@pytest.mark.parametrize(
+    "ndims,axis",
+    [(1, 0), (1, -1), (2, 0), (2, 1), (2, -1), (3, 0), (3, 1), (3, 2), (3, -1)],
+)
 def test_normalize(ndims, norm, axis):
     srand()
     X = np.random.randn(*([4] * ndims))
@@ -250,7 +266,13 @@ def test_normalize_badfill(X, fill):
 @pytest.mark.parametrize("x", [np.asarray([[0, 1, 2, 3]])])
 @pytest.mark.parametrize(
     "threshold, result",
-    [(None, [[0, 1, 1, 1]]), (1, [[0, 1, 1, 1]]), (2, [[0, 1, 1, 1]]), (3, [[0, 1, 2, 1]]), (4, [[0, 1, 2, 3]])],
+    [
+        (None, [[0, 1, 1, 1]]),
+        (1, [[0, 1, 1, 1]]),
+        (2, [[0, 1, 1, 1]]),
+        (3, [[0, 1, 2, 1]]),
+        (4, [[0, 1, 2, 3]]),
+    ],
 )
 def test_normalize_threshold(x, threshold, result):
     assert np.allclose(librosa.util.normalize(x, threshold=threshold), result)
@@ -388,7 +410,9 @@ def test_match_events(n, m):
         assert not np.any(values < values[match[i]])
 
 
-@pytest.mark.parametrize("ev1,ev2", [(np.array([]), np.arange(5)), (np.arange(5), np.array([]))])
+@pytest.mark.parametrize(
+    "ev1,ev2", [(np.array([]), np.arange(5)), (np.arange(5), np.array([]))]
+)
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_match_events_failempty(ev1, ev2):
     librosa.util.match_events(ev1, ev2)
@@ -396,7 +420,9 @@ def test_match_events_failempty(ev1, ev2):
 
 @pytest.mark.parametrize("events_from", [np.asarray([5, 15, 25])])
 @pytest.mark.parametrize("events_to", [np.asarray([0, 10, 20, 30])])
-@pytest.mark.parametrize("left,right,target", [(False, True, [10, 20, 30]), (True, False, [0, 10, 20])])
+@pytest.mark.parametrize(
+    "left,right,target", [(False, True, [10, 20, 30]), (True, False, [0, 10, 20])]
+)
 def test_match_events_onesided(events_from, events_to, left, right, target):
 
     events_from = np.asarray(events_from)
@@ -550,8 +576,8 @@ def test_sparsify_rows_badquantile(X, quantile):
     librosa.util.sparsify_rows(X, quantile=quantile)
 
 
-@pytest.mark.parametrize('dtype', [None, np.float32, np.float64])
-@pytest.mark.parametrize('ref_dtype', [np.float32, np.float64])
+@pytest.mark.parametrize("dtype", [None, np.float32, np.float64])
+@pytest.mark.parametrize("ref_dtype", [np.float32, np.float64])
 def test_sparsify_rows_dtype(dtype, ref_dtype):
     x = np.ones(10, dtype=ref_dtype)
     xs = librosa.util.sparsify_rows(x, dtype=dtype)
@@ -594,11 +620,17 @@ def test_sparsify_rows(ndim, d, q):
 
 
 @pytest.mark.parametrize(
-    "searchdir", [os.path.join(os.path.curdir, "tests"), os.path.join(os.path.curdir, "tests", "data")]
+    "searchdir",
+    [
+        os.path.join(os.path.curdir, "tests"),
+        os.path.join(os.path.curdir, "tests", "data"),
+    ],
 )
 @pytest.mark.parametrize("ext", [None, "wav", "WAV", ["wav"], ["WAV"]])
 @pytest.mark.parametrize("recurse", [True])
-@pytest.mark.parametrize("case_sensitive", list({False} | {platform.system() != "Windows"}))
+@pytest.mark.parametrize(
+    "case_sensitive", list({False} | {platform.system() != "Windows"})
+)
 @pytest.mark.parametrize("limit", [None, 1, 2])
 @pytest.mark.parametrize("offset", [0, 1, -1])
 @pytest.mark.parametrize(
@@ -606,13 +638,23 @@ def test_sparsify_rows(ndim, d, q):
     [
         [
             os.path.join(os.path.abspath(os.path.curdir), "tests", "data", s)
-            for s in ["test1_22050.mp3", "test1_22050.wav", "test1_44100.wav", "test2_8000.wav"]
+            for s in [
+                "test1_22050.mp3",
+                "test1_22050.wav",
+                "test1_44100.wav",
+                "test2_8000.wav",
+            ]
         ]
     ],
 )
 def test_find_files(searchdir, ext, recurse, case_sensitive, limit, offset, output):
     files = librosa.util.find_files(
-        searchdir, ext=ext, recurse=recurse, case_sensitive=case_sensitive, limit=limit, offset=offset
+        searchdir,
+        ext=ext,
+        recurse=recurse,
+        case_sensitive=case_sensitive,
+        limit=limit,
+        offset=offset,
     )
 
     targets = output
@@ -630,14 +672,18 @@ def test_find_files(searchdir, ext, recurse, case_sensitive, limit, offset, outp
 
 
 def test_find_files_nonrecurse():
-    files = librosa.util.find_files(os.path.join(os.path.curdir, "tests"), recurse=False)
+    files = librosa.util.find_files(
+        os.path.join(os.path.curdir, "tests"), recurse=False
+    )
     assert len(files) == 0
 
 
 # fail if ext is not none, we're case-sensitive, and looking for WAV
 @pytest.mark.parametrize("ext", ["WAV", ["WAV"]])
 def test_find_files_case_sensitive(ext):
-    files = librosa.util.find_files(os.path.join(os.path.curdir, "tests"), ext=ext, case_sensitive=True)
+    files = librosa.util.find_files(
+        os.path.join(os.path.curdir, "tests"), ext=ext, case_sensitive=True
+    )
     # On windows, this test won't work
     if platform.system() != "Windows":
         assert len(files) == 0
@@ -665,7 +711,12 @@ def test_valid_int_fail(x, cast):
 
 
 @pytest.mark.parametrize(
-    "ivals", [np.asarray([[0, 1], [1, 2]]), np.asarray([[0, 0], [1, 1]]), np.asarray([[0, 2], [1, 2]])]
+    "ivals",
+    [
+        np.asarray([[0, 1], [1, 2]]),
+        np.asarray([[0, 0], [1, 1]]),
+        np.asarray([[0, 2], [1, 2]]),
+    ],
 )
 def test_valid_intervals(ivals):
     librosa.util.valid_intervals(ivals)
@@ -673,7 +724,13 @@ def test_valid_intervals(ivals):
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 @pytest.mark.parametrize(
-    "ivals", [np.asarray([]), np.arange(2), np.ones((2, 2, 2)), np.ones((2, 3))]  # ndim=0  # ndim=1  # ndim=3
+    "ivals",
+    [
+        np.asarray([]),
+        np.arange(2),
+        np.ones((2, 2, 2)),
+        np.ones((2, 3)),
+    ],  # ndim=0  # ndim=1  # ndim=3
 )  # ndim=2, shape[1] != 2
 def test_valid_intervals_badshape(ivals):
     #   fail if ndim != 2 or shape[1] != 2
@@ -776,7 +833,9 @@ def test_warning_rename_kw_fail():
 @pytest.mark.parametrize("pad", [False, True])
 def test_index_to_slice(idx, idx_min, idx_max, step, pad):
 
-    slices = librosa.util.index_to_slice(idx, idx_min=idx_min, idx_max=idx_max, step=step, pad=pad)
+    slices = librosa.util.index_to_slice(
+        idx, idx_min=idx_min, idx_max=idx_max, step=step, pad=pad
+    )
 
     if pad:
         if idx_min is not None:
@@ -804,7 +863,9 @@ def test_index_to_slice(idx, idx_min, idx_max, step, pad):
 
 
 @pytest.mark.parametrize("aggregate", [None, np.mean, np.sum])
-@pytest.mark.parametrize("ndim,axis", [(1, 0), (1, -1), (2, 0), (2, 1), (2, -1), (3, 0), (3, 2), (3, -1)])
+@pytest.mark.parametrize(
+    "ndim,axis", [(1, 0), (1, -1), (2, 0), (2, 1), (2, -1), (3, 0), (3, 2), (3, -1)]
+)
 def test_sync(aggregate, ndim, axis):
     data = np.ones([6] * ndim, dtype=np.float)
 
@@ -1156,8 +1217,8 @@ def test_stack_consistent(x, axis):
         assert xs.flags["C_CONTIGUOUS"]
 
 
-@pytest.mark.parametrize('key', ['trumpet', 'brahms', 'nutcracker', 'choice'])
-@pytest.mark.parametrize('hq', [False, True])
+@pytest.mark.parametrize("key", ["trumpet", "brahms", "nutcracker", "choice"])
+@pytest.mark.parametrize("hq", [False, True])
 def test_example(key, hq):
 
     fn = librosa.example(key, hq=hq)
@@ -1166,10 +1227,10 @@ def test_example(key, hq):
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_example_fail():
-    librosa.example('no such track')
+    librosa.example("no such track")
 
 
-@pytest.mark.parametrize('key', ['trumpet', 'brahms', 'nutcracker', 'choice', 'fishin'])
+@pytest.mark.parametrize("key", ["trumpet", "brahms", "nutcracker", "choice", "fishin"])
 def test_example_info(key):
 
     librosa.util.example_info(key)
@@ -1179,14 +1240,31 @@ def test_list_examples():
     librosa.util.list_examples()
 
 
-@pytest.mark.parametrize('dtype,target', [(np.float32, np.complex64), (np.float64, np.complex128), (np.int32, np.complex64), (np.complex128, np.complex128)])
+@pytest.mark.parametrize(
+    "dtype,target",
+    [
+        (np.float32, np.complex64),
+        (np.float64, np.complex128),
+        (np.int32, np.complex64),
+        (np.complex128, np.complex128),
+    ],
+)
 def test_dtype_r2c(dtype, target):
     inf_type = librosa.util.dtype_r2c(dtype)
 
     # better to do a bidirectional subtype test than strict equality here
     assert np.issubdtype(inf_type, target) and np.issubdtype(target, inf_type)
 
-@pytest.mark.parametrize('dtype,target', [(np.float32, np.float32), (np.complex64, np.float32), (np.int32, np.float32), (np.complex128, np.float64)])
+
+@pytest.mark.parametrize(
+    "dtype,target",
+    [
+        (np.float32, np.float32),
+        (np.complex64, np.float32),
+        (np.int32, np.float32),
+        (np.complex128, np.float64),
+    ],
+)
 def test_dtype_c2r(dtype, target):
     inf_type = librosa.util.dtype_c2r(dtype)
 

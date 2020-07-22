@@ -7,10 +7,18 @@ v0.8
 
 v0.8.0
 ------
-2020-XX-XX
+2020-07-22
 
 New Features
-    - `#974`_ Variable-Q transform `librosa.vqt`. *Brian McFee, Frank Cwitkowitz*
+    - `#1203`_ Support for Carnatic and Hindustani notations. *Brian McFee, Kaushik Sripathi Hatti, Kaustuv Kanti Ganguli*
+        - `librosa.hz_to_svara_c`, `librosa.hz_to_svara_h`
+        - `librosa.midi_to_svara_c`, `librosa.midi_to_svara_h`
+        - `librosa.note_to_svara_c`, `librosa.note_to_svara_h`
+        - `librosa.list_mela`, `librosa.list_thaat`
+        - and `librosa.display.specshow` support.
+    - `#1064`_ `librosa.yin` and `librosa.pyin` for fundamental frequency
+      estimation. *Benjamin van Niekirk*
+    - `#1018`_ Variable-Q transform `librosa.vqt`. *Brian McFee, Frank Cwitkowitz*
     - `#1059`_ `libsamplerate` support in `librosa.resample`. *Brian McFee*
     - `#1134`_ perceptual loudness weighting for B, C, D, and Z-weighting. *Bea Steers*
     - `#1149`_ key support and note-spelling in pitch<=>note conversion. *Brian
@@ -20,6 +28,7 @@ New Features
     - `#1166`_ `librosa.sequence.dtw` can now return the step matrix. *Frank Zaklow*
     - `#1171`_ automatic precision inference for spectral transforms (stft, cqt) and
       explicit control for `librosa.cqt`. *Brian McFee*
+    - `#1198`_ `librosa.util.localmin` for computing local minima. *Brian McFee*
 
 Removed features and API changes
     - `#1062`_ 
@@ -38,10 +47,10 @@ Deprecations to be removed in 0.9
     - `librosa.util.example_audio_file` is now deprecated in favor of `librosa.util.example`.
 
 Bug fixes
-    - `#1078`_ fixed edge-padding errors in `librosa.feature.stack_memory`. *???*
+    - `#1078`_ fixed edge-padding errors in `librosa.feature.stack_memory`. *beantowel*
     - `#1091`_ fixed joblib version requirements. *Thor Whalen*
     - `#1094`_ fixed STFT bug when using large window sizes. *Frank Zalkow*
-    - `#1157`_ fixed an alignment bug in `librosa.iirt`. *Frank Zalkow*
+    - `#1157`_, `#1196`_ fixed an alignment bug in `librosa.iirt`. *Frank Zalkow*
     - `#1159`_ fixed a warm-up glitch in `librosa.effects.preemphasis`. *Brian McFee*
     - `#1179`_ fixed memory initialization in unit tests. *Brian McFee*
 
@@ -64,7 +73,8 @@ Other changes
     - `#1183`_ `librosa.feature.tonnetz` can now pass-through arguments to `librosa.feature.chroma_cqt`. *Brian McFee*
     - `#1186`_ `librosa.display.cmap` now returns binary colormaps for boolean data. *Brian McFee*
 
-.. _#974: https://github.com/librosa/librosa/issues/974
+.. _#1203: https://github.com/librosa/librosa/issues/1203
+.. _#1018: https://github.com/librosa/librosa/issues/1018
 .. _#1059: https://github.com/librosa/librosa/issues/1059
 .. _#1134: https://github.com/librosa/librosa/issues/1134
 .. _#1149: https://github.com/librosa/librosa/issues/1149
@@ -92,6 +102,9 @@ Other changes
 .. _#1182: https://github.com/librosa/librosa/issues/1182
 .. _#1183: https://github.com/librosa/librosa/issues/1183
 .. _#1186: https://github.com/librosa/librosa/issues/1186
+.. _#1196: https://github.com/librosa/librosa/issues/1196
+.. _#1198: https://github.com/librosa/librosa/issues/1198
+.. _#1063: https://github.com/librosa/librosa/issues/1063
 
 
 

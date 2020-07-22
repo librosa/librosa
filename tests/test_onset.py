@@ -30,7 +30,9 @@ def ysr():
     return librosa.load(__EXAMPLE_FILE)
 
 
-@pytest.mark.parametrize("feature", [None, librosa.feature.melspectrogram, librosa.feature.chroma_stft])
+@pytest.mark.parametrize(
+    "feature", [None, librosa.feature.melspectrogram, librosa.feature.chroma_stft]
+)
 @pytest.mark.parametrize("n_fft", [512, 2048])
 @pytest.mark.parametrize("hop_length", [256, 512])
 @pytest.mark.parametrize("lag", [1, 2])
@@ -38,7 +40,9 @@ def ysr():
 @pytest.mark.parametrize("detrend", [False, True])
 @pytest.mark.parametrize("center", [False, True])
 @pytest.mark.parametrize("aggregate", [None, np.mean, np.max])
-def test_onset_strength_audio(ysr, feature, n_fft, hop_length, lag, max_size, detrend, center, aggregate):
+def test_onset_strength_audio(
+    ysr, feature, n_fft, hop_length, lag, max_size, detrend, center, aggregate
+):
 
     y, sr = ysr
     oenv = librosa.onset.onset_strength(
@@ -91,13 +95,17 @@ def melspec_sr(ysr):
     return S, sr
 
 
-@pytest.mark.parametrize("feature", [None, librosa.feature.melspectrogram, librosa.feature.chroma_stft])
+@pytest.mark.parametrize(
+    "feature", [None, librosa.feature.melspectrogram, librosa.feature.chroma_stft]
+)
 @pytest.mark.parametrize("n_fft", [512, 2048])
 @pytest.mark.parametrize("hop_length", [256, 512])
 @pytest.mark.parametrize("detrend", [False, True])
 @pytest.mark.parametrize("center", [False, True])
 @pytest.mark.parametrize("aggregate", [None, np.mean, np.max])
-def test_onset_strength_spectrogram(melspec_sr, feature, n_fft, hop_length, detrend, center, aggregate):
+def test_onset_strength_spectrogram(
+    melspec_sr, feature, n_fft, hop_length, detrend, center, aggregate
+):
     S, sr = melspec_sr
     oenv = librosa.onset.onset_strength(
         y=None,
@@ -127,8 +135,12 @@ def test_onset_strength_multi_noagg(melspec_sr, lag, aggregate):
 
     S, sr = melspec_sr
     # We only test with max_size=1 here to make the sub-band slicing test simple
-    odf_multi = librosa.onset.onset_strength_multi(S=S, lag=lag, max_size=1, aggregate=False)
-    odf_mean = librosa.onset.onset_strength_multi(S=S, lag=lag, max_size=1, aggregate=aggregate)
+    odf_multi = librosa.onset.onset_strength_multi(
+        S=S, lag=lag, max_size=1, aggregate=False
+    )
+    odf_mean = librosa.onset.onset_strength_multi(
+        S=S, lag=lag, max_size=1, aggregate=aggregate
+    )
 
     # With no aggregation, output shape should = input shape
     assert odf_multi.shape == S.shape
@@ -148,7 +160,9 @@ def test_onset_strength_multi(melspec_sr, lag, channels):
 
     S, sr = melspec_sr
     # We only test with max_size=1 here to make the sub-band slicing test simple
-    odf_multi = librosa.onset.onset_strength_multi(S=S, lag=lag, max_size=1, channels=channels)
+    odf_multi = librosa.onset.onset_strength_multi(
+        S=S, lag=lag, max_size=1, channels=channels
+    )
 
     assert len(odf_multi) == len(channels) - 1
 
@@ -176,7 +190,9 @@ def oenv(ysr, hop, request):
 def test_onset_detect_real(ysr, oenv, hop, bt):
 
     y, sr = ysr
-    onsets = librosa.onset.onset_detect(y=y, sr=sr, onset_envelope=oenv, hop_length=hop, backtrack=bt)
+    onsets = librosa.onset.onset_detect(
+        y=y, sr=sr, onset_envelope=oenv, hop_length=hop, backtrack=bt
+    )
     if bt:
         assert np.all(onsets >= 0)
     else:
@@ -197,14 +213,21 @@ def test_onset_detect_nosignal():
 @pytest.mark.parametrize("hop_length", [64, 512, 2048])
 def test_onset_detect_const(y, sr, hop_length):
 
-    onsets = librosa.onset.onset_detect(y=y, sr=sr, onset_envelope=None, hop_length=hop_length)
+    onsets = librosa.onset.onset_detect(
+        y=y, sr=sr, onset_envelope=None, hop_length=hop_length
+    )
 
     assert len(onsets) == 0
 
 
 @pytest.mark.parametrize(
     "units, ctx",
-    [("frames", dnr()), ("time", dnr()), ("samples", dnr()), ("bad units", pytest.raises(librosa.ParameterError))],
+    [
+        ("frames", dnr()),
+        ("time", dnr()),
+        ("samples", dnr()),
+        ("bad units", pytest.raises(librosa.ParameterError)),
+    ],
 )
 @pytest.mark.parametrize("hop_length", [512, 1024])
 def test_onset_units(ysr, hop_length, units, ctx):
@@ -241,7 +264,9 @@ def energy(ysr, hop, request):
 def test_onset_backtrack(ysr, oenv, hop, energy):
     y, sr = ysr
 
-    onsets = librosa.onset.onset_detect(y=y, sr=sr, onset_envelope=oenv, hop_length=hop, backtrack=False)
+    onsets = librosa.onset.onset_detect(
+        y=y, sr=sr, onset_envelope=oenv, hop_length=hop, backtrack=False
+    )
 
     # Test backtracking
     onsets_bt = librosa.onset.onset_backtrack(onsets, energy)
@@ -277,7 +302,9 @@ def test_onset_strength_multi_ref():
     # Test with a null reference
     null_ref = np.zeros_like(S)
 
-    onsets = librosa.onset.onset_strength_multi(S=S, ref=null_ref, aggregate=False, center=False)
+    onsets = librosa.onset.onset_strength_multi(
+        S=S, ref=null_ref, aggregate=False, center=False
+    )
 
     # since the reference is zero everywhere, S - ref = S
     # past the setup phase (first frame)

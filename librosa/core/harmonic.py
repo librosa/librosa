@@ -1,17 +1,26 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-'''Harmonic calculations for frequency representations'''
+"""Harmonic calculations for frequency representations"""
 
 import numpy as np
 import scipy.interpolate
 import scipy.signal
 from ..util.exceptions import ParameterError
 
-__all__ = ['salience', 'interp_harmonics']
+__all__ = ["salience", "interp_harmonics"]
 
 
-def salience(S, freqs, h_range, weights=None, aggregate=None,
-             filter_peaks=True, fill_value=np.nan,  kind='linear', axis=0):
+def salience(
+    S,
+    freqs,
+    h_range,
+    weights=None,
+    aggregate=None,
+    filter_peaks=True,
+    fill_value=np.nan,
+    kind="linear",
+    axis=0,
+):
     """Harmonic salience function.
 
     Parameters
@@ -93,7 +102,7 @@ def salience(S, freqs, h_range, weights=None, aggregate=None,
         aggregate = np.average
 
     if weights is None:
-        weights = np.ones((len(h_range), ))
+        weights = np.ones((len(h_range),))
     else:
         weights = np.array(weights, dtype=float)
 
@@ -115,8 +124,8 @@ def salience(S, freqs, h_range, weights=None, aggregate=None,
     return S_sal
 
 
-def interp_harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
-    '''Compute the energy at harmonics of time-frequency representation.
+def interp_harmonics(x, freqs, h_range, kind="linear", fill_value=0, axis=0):
+    """Compute the energy at harmonics of time-frequency representation.
 
     Given a frequency-based energy representation such as a spectrogram
     or tempogram, this function computes the energy at the chosen harmonics
@@ -202,7 +211,7 @@ def interp_harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
     ...     ax.flat[i].set(title='h={:.3g}'.format(h_range[i]))
     ...     ax.flat[i].label_outer()
     >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
-    '''
+    """
 
     # X_out will be the same shape as X, plus a leading
     # axis that has length = len(h_range)
@@ -212,24 +221,25 @@ def interp_harmonics(x, freqs, h_range, kind='linear', fill_value=0, axis=0):
     x_out = np.zeros(out_shape, dtype=x.dtype)
 
     if freqs.ndim == 1 and len(freqs) == x.shape[axis]:
-        harmonics_1d(x_out, x, freqs, h_range,
-                     kind=kind, fill_value=fill_value,
-                     axis=axis)
+        harmonics_1d(
+            x_out, x, freqs, h_range, kind=kind, fill_value=fill_value, axis=axis
+        )
 
     elif freqs.ndim == 2 and freqs.shape == x.shape:
-        harmonics_2d(x_out, x, freqs, h_range,
-                     kind=kind, fill_value=fill_value,
-                     axis=axis)
+        harmonics_2d(
+            x_out, x, freqs, h_range, kind=kind, fill_value=fill_value, axis=axis
+        )
     else:
-        raise ParameterError('freqs.shape={} does not match '
-                             'input shape={}'.format(freqs.shape, x.shape))
+        raise ParameterError(
+            "freqs.shape={} does not match "
+            "input shape={}".format(freqs.shape, x.shape)
+        )
 
     return x_out
 
 
-def harmonics_1d(harmonic_out, x, freqs, h_range, kind='linear',
-                 fill_value=0, axis=0):
-    '''Populate a harmonic tensor from a time-frequency representation.
+def harmonics_1d(harmonic_out, x, freqs, h_range, kind="linear", fill_value=0, axis=0):
+    """Populate a harmonic tensor from a time-frequency representation.
 
     Parameters
     ----------
@@ -305,15 +315,18 @@ def harmonics_1d(harmonic_out, x, freqs, h_range, kind='linear',
     ...                              sr=sr, y_axis='log', x_axis='time', ax=ax.flat[i])
     ...     ax.flat[i].set(title='h={:.3g}'.format(h_range[i]))
     ...     ax.flat[i].label_outer()
-    '''
+    """
 
     # Note: this only works for fixed-grid, 1d interpolation
-    f_interp = scipy.interpolate.interp1d(freqs, x,
-                                          kind=kind,
-                                          axis=axis,
-                                          copy=False,
-                                          bounds_error=False,
-                                          fill_value=fill_value)
+    f_interp = scipy.interpolate.interp1d(
+        freqs,
+        x,
+        kind=kind,
+        axis=axis,
+        copy=False,
+        bounds_error=False,
+        fill_value=fill_value,
+    )
 
     idx_out = [slice(None)] * harmonic_out.ndim
 
@@ -333,9 +346,8 @@ def harmonics_1d(harmonic_out, x, freqs, h_range, kind='linear',
             harmonic_out[tuple(idx_out)] = f_interp(harmonic * frequency)
 
 
-def harmonics_2d(harmonic_out, x, freqs, h_range, kind='linear', fill_value=0,
-                 axis=0):
-    '''Populate a harmonic tensor from a time-frequency representation with
+def harmonics_2d(harmonic_out, x, freqs, h_range, kind="linear", fill_value=0, axis=0):
+    """Populate a harmonic tensor from a time-frequency representation with
     time-varying frequencies.
 
     Parameters
@@ -368,7 +380,7 @@ def harmonics_2d(harmonic_out, x, freqs, h_range, kind='linear', fill_value=0,
     --------
     harmonics
     harmonics_1d
-    '''
+    """
     idx_in = [slice(None)] * x.ndim
     idx_freq = [slice(None)] * x.ndim
     idx_out = [slice(None)] * harmonic_out.ndim
@@ -382,6 +394,12 @@ def harmonics_2d(harmonic_out, x, freqs, h_range, kind='linear', fill_value=0,
         idx_freq[ni_axis] = i
         idx_out[1 + ni_axis] = idx_in[ni_axis]
 
-        harmonics_1d(harmonic_out[tuple(idx_out)], x[tuple(idx_in)], freqs[tuple(idx_freq)],
-                     h_range, kind=kind, fill_value=fill_value,
-                     axis=axis)
+        harmonics_1d(
+            harmonic_out[tuple(idx_out)],
+            x[tuple(idx_in)],
+            freqs[tuple(idx_freq)],
+            h_range,
+            kind=kind,
+            fill_value=fill_value,
+            axis=axis,
+        )

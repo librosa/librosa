@@ -23,7 +23,19 @@ import pytest
 from test_core import srand
 
 
-def __test_cqt_size(y, sr, hop_length, fmin, n_bins, bins_per_octave, tuning, filter_scale, norm, sparsity, res_type):
+def __test_cqt_size(
+    y,
+    sr,
+    hop_length,
+    fmin,
+    n_bins,
+    bins_per_octave,
+    tuning,
+    filter_scale,
+    norm,
+    sparsity,
+    res_type,
+):
 
     cqt_output = np.abs(
         librosa.cqt(
@@ -59,7 +71,13 @@ def make_signal(sr, duration, fmin="C1", fmax="C8"):
     else:
         fmax = librosa.note_to_hz(fmax) / sr
 
-    return np.sin(np.cumsum(2 * np.pi * np.logspace(np.log10(fmin), np.log10(fmax), num=int(duration * sr))))
+    return np.sin(
+        np.cumsum(
+            2
+            * np.pi
+            * np.logspace(np.log10(fmin), np.log10(fmax), num=int(duration * sr))
+        )
+    )
 
 
 @pytest.fixture(scope="module")
@@ -78,7 +96,9 @@ def y_cqt(sr_cqt):
 def test_cqt_bad_hop(y_cqt, sr_cqt, hop_length, bpo):
     # incorrect hop lengths for a 6-octave analysis
     # num_octaves = 6, 2**(6-1) = 32 > 15
-    librosa.cqt(y=y_cqt, sr=sr_cqt, hop_length=hop_length, n_bins=bpo * 6, bins_per_octave=bpo)
+    librosa.cqt(
+        y=y_cqt, sr=sr_cqt, hop_length=hop_length, n_bins=bpo * 6, bins_per_octave=bpo
+    )
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -97,7 +117,19 @@ def test_cqt_exceed_passband(y_cqt, sr_cqt, bpo):
 @pytest.mark.parametrize("res_type", [None, "polyphase"])
 @pytest.mark.parametrize("sparsity", [0.01])
 @pytest.mark.parametrize("hop_length", [256, 512])
-def test_cqt(y_cqt, sr_cqt, hop_length, fmin, n_bins, bins_per_octave, tuning, filter_scale, norm, res_type, sparsity):
+def test_cqt(
+    y_cqt,
+    sr_cqt,
+    hop_length,
+    fmin,
+    n_bins,
+    bins_per_octave,
+    tuning,
+    filter_scale,
+    norm,
+    res_type,
+    sparsity,
+):
 
     C = librosa.cqt(
         y=y_cqt,
@@ -130,8 +162,20 @@ def test_cqt(y_cqt, sr_cqt, hop_length, fmin, n_bins, bins_per_octave, tuning, f
 @pytest.mark.parametrize("res_type", ["polyphase"])
 @pytest.mark.parametrize("sparsity", [0.01])
 @pytest.mark.parametrize("hop_length", [512])
-def test_vqt(y_cqt, sr_cqt, hop_length, fmin, n_bins, gamma,
-             bins_per_octave, tuning, filter_scale, norm, res_type, sparsity):
+def test_vqt(
+    y_cqt,
+    sr_cqt,
+    hop_length,
+    fmin,
+    n_bins,
+    gamma,
+    bins_per_octave,
+    tuning,
+    filter_scale,
+    norm,
+    res_type,
+    sparsity,
+):
 
     C = librosa.vqt(
         y=y_cqt,
@@ -171,7 +215,17 @@ def y_hybrid():
 @pytest.mark.parametrize("norm", [1, 2])
 @pytest.mark.parametrize("res_type", [None, "polyphase"])
 def test_hybrid_cqt(
-    y_hybrid, sr, hop_length, fmin, n_bins, bins_per_octave, tuning, resolution, norm, sparsity, res_type
+    y_hybrid,
+    sr,
+    hop_length,
+    fmin,
+    n_bins,
+    bins_per_octave,
+    tuning,
+    resolution,
+    norm,
+    sparsity,
+    res_type,
 ):
     # This test verifies that hybrid and full cqt agree down to 1e-4
     # on 99% of bins which are nonzero (> 1e-8) in either representation.
@@ -218,12 +272,16 @@ def test_hybrid_cqt(
 
     idx = idx1 | idx2
 
-    assert np.percentile(np.abs(C1[idx] - C2[idx]), perc) < thresh * max(C1.max(), C2.max())
+    assert np.percentile(np.abs(C1[idx] - C2[idx]), perc) < thresh * max(
+        C1.max(), C2.max()
+    )
 
 
 @pytest.mark.parametrize("note_min", [12, 18, 24, 30, 36])
 @pytest.mark.parametrize("sr", [22050])
-@pytest.mark.parametrize("y", [np.sin(2 * np.pi * librosa.midi_to_hz(60) * np.arange(2 * 22050) / 22050.0)])
+@pytest.mark.parametrize(
+    "y", [np.sin(2 * np.pi * librosa.midi_to_hz(60) * np.arange(2 * 22050) / 22050.0)]
+)
 def test_cqt_position(y, sr, note_min):
 
     C = np.abs(librosa.cqt(y, sr=sr, fmin=librosa.midi_to_hz(note_min))) ** 2
@@ -296,7 +354,9 @@ def test_hybrid_cqt_impulse(y_impulse, sr_impulse, hop_impulse):
     # Test to resolve issue #341
     # Updated in #417 to use integrated energy instead of pointwise max
 
-    hcqt = librosa.hybrid_cqt(y=y_impulse, sr=sr_impulse, hop_length=hop_impulse, tuning=0)
+    hcqt = librosa.hybrid_cqt(
+        y=y_impulse, sr=sr_impulse, hop_length=hop_impulse, tuning=0
+    )
 
     response = np.mean(np.abs(hcqt) ** 2, axis=1)
 
@@ -321,7 +381,9 @@ def y_white(sr_white):
 @pytest.mark.parametrize("n_bins", [24, 36])
 def test_cqt_white_noise(y_white, sr_white, fmin, n_bins, scale):
 
-    C = np.abs(librosa.cqt(y=y_white, sr=sr_white, fmin=fmin, n_bins=n_bins, scale=scale))
+    C = np.abs(
+        librosa.cqt(y=y_white, sr=sr_white, fmin=fmin, n_bins=n_bins, scale=scale)
+    )
 
     if not scale:
         lengths = librosa.filters.constant_q_lengths(sr_white, fmin, n_bins=n_bins)
@@ -337,7 +399,9 @@ def test_cqt_white_noise(y_white, sr_white, fmin, n_bins, scale):
 @pytest.mark.parametrize("fmin", list(librosa.note_to_hz(["C1", "C2"])))
 @pytest.mark.parametrize("n_bins", [72, 84])
 def test_hybrid_cqt_white_noise(y_white, sr_white, fmin, n_bins, scale):
-    C = librosa.hybrid_cqt(y=y_white, sr=sr_white, fmin=fmin, n_bins=n_bins, scale=scale)
+    C = librosa.hybrid_cqt(
+        y=y_white, sr=sr_white, fmin=fmin, n_bins=n_bins, scale=scale
+    )
 
     if not scale:
         lengths = librosa.filters.constant_q_lengths(sr_white, fmin, n_bins=n_bins)
@@ -369,7 +433,12 @@ def test_icqt(y_icqt, sr_icqt, scale, hop_length, over_sample, length, res_type,
     n_bins = 7 * bins_per_octave
 
     C = librosa.cqt(
-        y_icqt, sr=sr_icqt, n_bins=n_bins, bins_per_octave=bins_per_octave, scale=scale, hop_length=hop_length
+        y_icqt,
+        sr=sr_icqt,
+        n_bins=n_bins,
+        bins_per_octave=bins_per_octave,
+        scale=scale,
+        hop_length=hop_length,
     )
 
     if length:
@@ -522,7 +591,7 @@ def test_griffinlim_cqt_momentum_warn():
         librosa.griffinlim_cqt(x, momentum=2)
 
 
-@pytest.mark.parametrize('dtype', [np.complex64, np.complex128])
+@pytest.mark.parametrize("dtype", [np.complex64, np.complex128])
 def test_cqt_precision(y_cqt, sr_cqt, dtype):
     C = librosa.cqt(y=y_cqt, sr=sr_cqt, dtype=dtype)
     assert np.dtype(C.dtype) == np.dtype(dtype)

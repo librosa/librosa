@@ -24,7 +24,7 @@ from . import segment
 from . import util
 from .util.exceptions import ParameterError
 
-__all__ = ['decompose', 'hpss', 'nn_filter']
+__all__ = ["decompose", "hpss", "nn_filter"]
 
 
 def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kwargs):
@@ -146,10 +146,9 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
 
     if transformer is None:
         if fit is False:
-            raise ParameterError('fit must be True if transformer is None')
+            raise ParameterError("fit must be True if transformer is None")
 
-        transformer = sklearn.decomposition.NMF(n_components=n_components,
-                                                **kwargs)
+        transformer = sklearn.decomposition.NMF(n_components=n_components, **kwargs)
 
     if n_components is None:
         n_components = S.shape[0]
@@ -328,25 +327,26 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
 
     # margin minimum is 1.0
     if margin_harm < 1 or margin_perc < 1:
-        raise ParameterError("Margins must be >= 1.0. "
-                             "A typical range is between 1 and 10.")
+        raise ParameterError(
+            "Margins must be >= 1.0. " "A typical range is between 1 and 10."
+        )
 
     # Compute median filters. Pre-allocation here preserves memory layout.
     harm = np.empty_like(S)
-    harm[:] = median_filter(S, size=(1, win_harm), mode='reflect')
+    harm[:] = median_filter(S, size=(1, win_harm), mode="reflect")
 
     perc = np.empty_like(S)
-    perc[:] = median_filter(S, size=(win_perc, 1), mode='reflect')
+    perc[:] = median_filter(S, size=(win_perc, 1), mode="reflect")
 
-    split_zeros = (margin_harm == 1 and margin_perc == 1)
+    split_zeros = margin_harm == 1 and margin_perc == 1
 
-    mask_harm = util.softmask(harm, perc * margin_harm,
-                              power=power,
-                              split_zeros=split_zeros)
+    mask_harm = util.softmask(
+        harm, perc * margin_harm, power=power, split_zeros=split_zeros
+    )
 
-    mask_perc = util.softmask(perc, harm * margin_perc,
-                              power=power,
-                              split_zeros=split_zeros)
+    mask_perc = util.softmask(
+        perc, harm * margin_perc, power=power, split_zeros=split_zeros
+    )
 
     if mask:
         return mask_harm, mask_perc
@@ -356,7 +356,7 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
 
 @cache(level=30)
 def nn_filter(S, rec=None, aggregate=None, axis=-1, **kwargs):
-    '''Filtering by nearest-neighbors.
+    """Filtering by nearest-neighbors.
 
     Each data point (e.g, spectrogram column) is replaced
     by aggregating its nearest neighbors in feature space.
@@ -469,29 +469,31 @@ def nn_filter(S, rec=None, aggregate=None, axis=-1, **kwargs):
     >>> fig.colorbar(imgc, ax=ax[:3])
     >>> fig.colorbar(imgr1, ax=[ax[3]])
     >>> fig.colorbar(imgr2, ax=[ax[4]])
-    '''
+    """
 
     if aggregate is None:
         aggregate = np.mean
 
     if rec is None:
         kwargs = dict(kwargs)
-        kwargs['sparse'] = True
+        kwargs["sparse"] = True
         rec = segment.recurrence_matrix(S, axis=axis, **kwargs)
     elif not scipy.sparse.issparse(rec):
         rec = scipy.sparse.csc_matrix(rec)
 
     if rec.shape[0] != S.shape[axis] or rec.shape[0] != rec.shape[1]:
-        raise ParameterError('Invalid self-similarity matrix shape '
-                             'rec.shape={} for S.shape={}'.format(rec.shape,
-                                                                  S.shape))
+        raise ParameterError(
+            "Invalid self-similarity matrix shape "
+            "rec.shape={} for S.shape={}".format(rec.shape, S.shape)
+        )
 
-    return __nn_filter_helper(rec.data, rec.indices, rec.indptr,
-                              S.swapaxes(0, axis), aggregate).swapaxes(0, axis)
+    return __nn_filter_helper(
+        rec.data, rec.indices, rec.indptr, S.swapaxes(0, axis), aggregate
+    ).swapaxes(0, axis)
 
 
 def __nn_filter_helper(R_data, R_indices, R_ptr, S, aggregate):
-    '''Nearest-neighbor filter helper function.
+    """Nearest-neighbor filter helper function.
 
     This is an internal function, not for use outside of the decompose module.
 
@@ -514,13 +516,13 @@ def __nn_filter_helper(R_data, R_indices, R_ptr, S, aggregate):
     -------
     S_out : np.ndarray like S
         The filtered data array
-    '''
+    """
     s_out = np.empty_like(S)
 
-    for i in range(len(R_ptr)-1):
+    for i in range(len(R_ptr) - 1):
 
         # Get the non-zeros out of the recurrence matrix
-        targets = R_indices[R_ptr[i]:R_ptr[i+1]]
+        targets = R_indices[R_ptr[i] : R_ptr[i + 1]]
 
         if not len(targets):
             s_out[i] = S[i]
@@ -529,7 +531,7 @@ def __nn_filter_helper(R_data, R_indices, R_ptr, S, aggregate):
         neighbors = np.take(S, targets, axis=0)
 
         if aggregate is np.average:
-            weights = R_data[R_ptr[i]:R_ptr[i+1]]
+            weights = R_data[R_ptr[i] : R_ptr[i + 1]]
             s_out[i] = aggregate(neighbors, axis=0, weights=weights)
         else:
             s_out[i] = aggregate(neighbors, axis=0)
