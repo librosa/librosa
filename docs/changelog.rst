@@ -16,7 +16,7 @@ New Features
         - `librosa.note_to_svara_c`, `librosa.note_to_svara_h`
         - `librosa.list_mela`, `librosa.list_thaat`
         - and `librosa.display.specshow` support.
-    - `#1064`_ `librosa.yin` and `librosa.pyin` for fundamental frequency
+    - `#1063`_ `librosa.yin` and `librosa.pyin` for fundamental frequency
       estimation. *Benjamin van Niekirk*
     - `#1018`_ Variable-Q transform `librosa.vqt`. *Brian McFee, Frank Cwitkowitz*
     - `#1059`_ `libsamplerate` support in `librosa.resample`. *Brian McFee*
