@@ -1113,7 +1113,7 @@ def __decorate_axis(axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None):
         axis.set_major_locator(SymmetricalLogLocator(axis.get_transform()))
         axis.set_label_text("Hz")
 
-    elif ax_type in ["linear", "hz"]:
+    elif ax_type in ["linear", "hz", "fft"]:
         axis.set_major_formatter(ScalarFormatter())
         axis.set_label_text("Hz")
 
