@@ -218,18 +218,11 @@ def stft(
 
     # Pad the time series so that frames are centered
     if center:
-        if n_fft > y.shape[-1]:
-            warnings.warn(
-                "n_fft={} is too small for input signal of length={}".format(
-                    n_fft, y.shape[-1]
-                )
-            )
-
         y = np.pad(y, int(n_fft // 2), mode=pad_mode)
 
     elif n_fft > y.shape[-1]:
         raise ParameterError(
-            "n_fft={} is too small for input signal of length={}".format(
+            "n_fft={} is too large for input signal of length={}".format(
                 n_fft, y.shape[-1]
             )
         )
