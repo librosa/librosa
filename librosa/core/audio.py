@@ -156,7 +156,7 @@ def load(
             # Load the target number of frames, and transpose to match librosa form
             y = sf_desc.read(frames=frame_duration, dtype=dtype, always_2d=False).T
 
-    except Exception as exc:
+    except (RuntimeError, ValueError, TypeError) as exc:
         # If soundfile failed, try audioread instead
         if isinstance(path, (str, pathlib.PurePath)):
             warnings.warn("PySoundFile failed. Trying audioread instead.")
@@ -677,7 +677,7 @@ def get_duration(
     if filename is not None:
         try:
             return sf.info(filename).duration
-        except Exception:
+        except (RuntimeError, ValueError, TypeError):
             with audioread.audio_open(filename) as fdesc:
                 return fdesc.duration
 
@@ -733,7 +733,7 @@ def get_samplerate(path):
     """
     try:
         return sf.info(path).samplerate
-    except Exception:
+    except (RuntimeError, ValueError, TypeError):
         with audioread.audio_open(path) as fdesc:
             return fdesc.samplerate
 
