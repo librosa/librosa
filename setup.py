@@ -1,4 +1,7 @@
+#Setuptools is a collection of enhancements to the Python distutils that allow developers to more easily build and distribute Python packages, especially ones that have dependencies on other packages.
 from setuptools import setup, find_packages
+
+# The sys module provides information about constants, functions and methods of the Python interpreter.
 import sys
 
 from importlib.machinery import SourceFileLoader
@@ -6,6 +9,7 @@ from importlib.machinery import SourceFileLoader
 version = SourceFileLoader('librosa.version',
                            'librosa/version.py').load_module()
 
+#here r function is used to read the file named as README.md
 with open('README.md', 'r') as fdesc:
     long_description = fdesc.read()
 
