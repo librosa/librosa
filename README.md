@@ -1,6 +1,6 @@
 librosa
 =======
-A python package for music and audio analysis.  
+A python package for music and audio analytics.  
 
 [![PyPI](https://img.shields.io/pypi/v/librosa.svg)](https://pypi.python.org/pypi/librosa)
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/librosa/badges/version.svg)](https://anaconda.org/conda-forge/librosa)
