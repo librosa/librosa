@@ -1,0 +1,6 @@
+n=int(input("Enter the terms till where you want to print:-"))
+a,b=0,1
+print(a,end=" ")
+while b<n:
+    print(b,end=" ")
+    a,b=b,a+b
