@@ -112,6 +112,11 @@ def list_examples():
 
     A brief description is provided in the second column.
 
+    Returns
+    -------
+    examples : List[str]
+        List of paths to the audio example files included with librosa
+
     See Also
     --------
     util.example
@@ -119,8 +124,10 @@ def list_examples():
     """
     print("AVAILABLE EXAMPLES")
     print("-" * 68)
-    for key in sorted(__TRACKMAP.keys()):
+    examples = sorted(__TRACKMAP.keys())
+    for key in examples:
         print("{:10}\t{}".format(key, __TRACKMAP[key]["desc"]))
+    return examples
 
 
 def example_info(key):
