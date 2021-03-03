@@ -213,7 +213,7 @@ class NoteFormatter(Formatter):
 
         cents = vmax <= 2 * max(1, vmin)
 
-        return core.hz_to_note(int(x), octave=self.octave, cents=cents, key=self.key)
+        return core.hz_to_note(x, octave=self.octave, cents=cents, key=self.key)
 
 
 class SvaraFormatter(Formatter):
@@ -1061,7 +1061,7 @@ def __decorate_axis(axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None):
         axis.set_major_locator(LogLocator(base=2.0, subs=(C_offset,)))
         axis.set_minor_formatter(NoteFormatter(key=key, major=False))
         axis.set_minor_locator(
-            LogLocator(base=2.0, subs=2.0 ** (np.arange(1, 12) / 12.0))
+            LogLocator(base=2.0, subs=C_offset * 2.0 ** (np.arange(1, 12) / 12.0))
         )
         axis.set_label_text("Note")
 
@@ -1085,7 +1085,7 @@ def __decorate_axis(axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None):
         axis.set_major_locator(LogLocator(base=2.0))
         axis.set_minor_formatter(LogHzFormatter(major=False))
         axis.set_minor_locator(
-            LogLocator(base=2.0, subs=2.0 ** (np.arange(1, 12) / 12.0))
+            LogLocator(base=2.0, subs=C_offset * 2.0 ** (np.arange(1, 12) / 12.0))
         )
         axis.set_label_text("Hz")
 
