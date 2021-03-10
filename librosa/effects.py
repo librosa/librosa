@@ -666,9 +666,9 @@ def preemphasis(y, coef=0.97, zi=None, return_zf=False):
 def deemphasis(y, coef=0.95, zi=None):
     """De-emphasize an audio signal with the inverse operation of preemphasis():
 
-    If y~ = preemphasis(y, coef=coef, zi=zi)
-        y[i] -> y~[i] + coef * y[i-1]
-        y = deemphasis(y~, coef=coef, zi=zi)
+    If y = preemphasis(x, coef=coef, zi=zi), the deemphasis is:
+        x[i] -> y[i] + coef * x[i-1]
+        x = deemphasis(y, coef=coef, zi=zi)
 
 
     Parameters
@@ -690,12 +690,11 @@ def deemphasis(y, coef=0.95, zi=None):
 
     zi : number
         Initial filter state. If inverting a previous preemphasis(), the same value should be used.
-         When making successive calls to non-overlapping
 
         By default ``zi`` is initialized as
         ``((2 - coef) * y[0] - y[1]) / (3 - coef)``. This
         value corresponds to the transformation of the default initialization of ``zi`` in ``preemphasis()``,
-        ``2*y[0] - y[1]``.
+        ``2*x[0] - x[1]``.
 
     Returns
     -------
@@ -704,13 +703,17 @@ def deemphasis(y, coef=0.95, zi=None):
 
     Examples
     --------
-    Apply a standard pre-emphasis filter and invert it with deemphasis
+    Apply a standard pre-emphasis filter and invert it with de-emphasis
 
     >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> y_filt = librosa.effects.preemphasis(y)
     >>> y_deemph = librosa.effects.deemphasis(y_filt)
     >>> np.allclose(y, y_deemph)
     True
+
+    See Also
+    --------
+    preemphasis
     """
     b = np.asarray([1.0, -coef], dtype=y.dtype)
     a = np.asarray([1.0], dtype=y.dtype)
