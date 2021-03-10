@@ -286,3 +286,20 @@ def test_preemphasis_continue(dtype):
     assert np.allclose(y_all, np.concatenate([y1, y2]))
     assert np.allclose(zf2, zf_all)
     assert x.dtype == y_all.dtype
+
+@pytest.mark.parametrize("coef", [0.5, 0.99])
+@pytest.mark.parametrize("zi", [None, 0, [0]])
+@pytest.mark.parametrize("return_zf", [False, True])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_deemphasis(coef, zi, return_zf, dtype):
+    x = np.arange(10, dtype=dtype)
+
+    y = librosa.effects.preemphasis(x, coef=coef, zi=zi, return_zf=return_zf)
+
+    if return_zf:
+        y, zf = y
+
+    y_deemph = librosa.effects.deemphasis(y, coef=coef, zi=zi)
+
+    assert np.allclose(x, y_deemph)
+    assert x.dtype == y_deemph.dtype
