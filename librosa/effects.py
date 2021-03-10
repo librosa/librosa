@@ -645,6 +645,9 @@ def preemphasis(y, coef=0.97, zi=None, return_zf=False):
     >>> np.allclose(y_filt, np.concatenate([y_filt_1, y_filt_2]))
     True
 
+    See Also
+    --------
+    deemphasis
     """
     b = np.asarray([1.0, -coef], dtype=y.dtype)
     a = np.asarray([1.0], dtype=y.dtype)
@@ -667,7 +670,7 @@ def deemphasis(y, coef=0.95, zi=None):
     """De-emphasize an audio signal with the inverse operation of preemphasis():
 
     If y = preemphasis(x, coef=coef, zi=zi), the deemphasis is:
-        x[i] -> y[i] + coef * x[i-1]
+        x[i] = y[i] + coef * x[i-1]
         x = deemphasis(y, coef=coef, zi=zi)
 
 
@@ -699,7 +702,7 @@ def deemphasis(y, coef=0.95, zi=None):
     Returns
     -------
     y_out : np.ndarray
-        pre-emphasized signal
+        de-emphasized signal
 
     Examples
     --------
@@ -719,8 +722,6 @@ def deemphasis(y, coef=0.95, zi=None):
     a = np.asarray([1.0], dtype=y.dtype)
 
     if zi is None:
-        if coef == 3.0:
-            raise NotImplementedError("Unable to do deemphasis if coefficient is 3.")
         zi = ((2 - coef) * y[0] - y[1]) / (3 - coef)
     y[0] -= zi
 
