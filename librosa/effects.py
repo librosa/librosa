@@ -662,6 +662,7 @@ def preemphasis(y, coef=0.97, zi=None, return_zf=False):
 
     return y_out
 
+
 def deemphasis(y, coef=0.95, zi=None):
     """De-emphasize an audio signal with the inverse operation of preemphasis():
 
@@ -691,7 +692,8 @@ def deemphasis(y, coef=0.95, zi=None):
         Initial filter state. If inverting a previous preemphasis(), the same value should be used.
          When making successive calls to non-overlapping
 
-        By default ``zi`` is initialized as ``((2 - coef) * y[0] - y[1]) / (3 - coef)``. This
+        By default ``zi`` is initialized as
+        ``((2 - coef) * y[0] - y[1]) / (3 - coef)``. This
         value corresponds to the transformation of the default initialization of ``zi`` in ``preemphasis()``,
         ``2*y[0] - y[1]``.
 
