@@ -30,6 +30,7 @@ Miscellaneous
     trim
     split
     preemphasis
+    deemphasis
 """
 
 import numpy as np
@@ -644,6 +645,9 @@ def preemphasis(y, coef=0.97, zi=None, return_zf=False):
     >>> np.allclose(y_filt, np.concatenate([y_filt_1, y_filt_2]))
     True
 
+    See Also
+    --------
+    deemphasis
     """
     b = np.asarray([1.0, -coef], dtype=y.dtype)
     a = np.asarray([1.0], dtype=y.dtype)
@@ -659,4 +663,67 @@ def preemphasis(y, coef=0.97, zi=None, return_zf=False):
     if return_zf:
         return y_out, z_f
 
+    return y_out
+
+
+def deemphasis(y, coef=0.95, zi=None):
+    """De-emphasize an audio signal with the inverse operation of preemphasis():
+
+    If y = preemphasis(x, coef=coef, zi=zi), the deemphasis is:
+        x[i] = y[i] + coef * x[i-1]
+        x = deemphasis(y, coef=coef, zi=zi)
+
+
+    Parameters
+    ----------
+    y : np.ndarray
+        Audio signal
+
+    coef : positive number
+        Pre-emphasis coefficient.  Typical values of ``coef`` are between 0 and 1.
+
+        At the limit ``coef=0``, the signal is unchanged.
+
+        At ``coef=1``, the result is the first-order difference of the signal.
+
+        The default (0.97) matches the pre-emphasis filter used in the HTK
+        implementation of MFCCs [#]_.
+
+        .. [#] http://htk.eng.cam.ac.uk/
+
+    zi : number
+        Initial filter state. If inverting a previous preemphasis(), the same value should be used.
+
+        By default ``zi`` is initialized as
+        ``((2 - coef) * y[0] - y[1]) / (3 - coef)``. This
+        value corresponds to the transformation of the default initialization of ``zi`` in ``preemphasis()``,
+        ``2*x[0] - x[1]``.
+
+    Returns
+    -------
+    y_out : np.ndarray
+        de-emphasized signal
+
+    Examples
+    --------
+    Apply a standard pre-emphasis filter and invert it with de-emphasis
+
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y_filt = librosa.effects.preemphasis(y)
+    >>> y_deemph = librosa.effects.deemphasis(y_filt)
+    >>> np.allclose(y, y_deemph)
+    True
+
+    See Also
+    --------
+    preemphasis
+    """
+    b = np.asarray([1.0, -coef], dtype=y.dtype)
+    a = np.asarray([1.0], dtype=y.dtype)
+
+    if zi is None:
+        zi = ((2 - coef) * y[0] - y[1]) / (3 - coef)
+    y[0] -= zi
+
+    y_out = scipy.signal.lfilter(a, b, y)
     return y_out
