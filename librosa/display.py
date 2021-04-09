@@ -1121,13 +1121,13 @@ def __coord_fft_hz(n, sr=22050, **_kwargs):
     return basis
 
 
-def __coord_mel_hz(n, fmin=0, fmax=11025.0, **_kwargs):
+def __coord_mel_hz(n, fmin=0, fmax=None, sr=22050, **_kwargs):
     """Get the frequencies for Mel bins"""
 
     if fmin is None:
         fmin = 0
     if fmax is None:
-        fmax = 11025.0
+        fmax = 0.5 * sr
 
     basis = core.mel_frequencies(n, fmin=fmin, fmax=fmax)
     basis[1:] -= 0.5 * np.diff(basis)
