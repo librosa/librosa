@@ -37,7 +37,7 @@ if [ ! -d "$src" ]; then
 
         source activate $ENV_NAME
 
-        conda install -c conda-forge ffmpeg pysoundfile coveralls
+        conda install -c conda-forge ffmpeg libsndfile pysoundfile coveralls
 
         source deactivate
     popd
