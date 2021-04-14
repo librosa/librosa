@@ -11,7 +11,7 @@ conda_create ()
     conda update -q conda
     conda config --add channels pypi
     conda info -a
-    deps='pip numpy scipy coverage scikit-learn!=0.19.0 matplotlib numba libsndfile'
+    deps='pip numpy scipy coverage scikit-learn!=0.19.0 matplotlib numba'
 
     conda create -q -n $ENV_NAME "python=$TRAVIS_PYTHON_VERSION" $deps
     conda update --all
@@ -37,7 +37,7 @@ if [ ! -d "$src" ]; then
 
         source activate $ENV_NAME
 
-        conda install -c conda-forge ffmpeg pysoundfile coveralls
+        conda install -c conda-forge ffmpeg libsndfile pysoundfile coveralls
 
         source deactivate
     popd
