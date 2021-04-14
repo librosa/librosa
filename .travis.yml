@@ -30,6 +30,7 @@ addons:
     apt:
         packages:
         - libsamplerate0
+        - libsndfile1
 
     homebrew:
         packages:
