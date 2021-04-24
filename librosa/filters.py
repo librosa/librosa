@@ -386,7 +386,7 @@ def chroma(
         )
 
     if base_c:
-        wts = np.roll(wts, -3, axis=0)
+        wts = np.roll(wts, -3*(n_chroma//12), axis=0)
 
     # remove aliasing columns, copy to ensure row-contiguity
     return np.ascontiguousarray(wts[:, : int(1 + n_fft / 2)], dtype=dtype)
