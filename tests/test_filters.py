@@ -195,6 +195,21 @@ def test_chromafb(infile):
     assert np.allclose(wts, DATA["wts"])
 
 
+# Testing two tones, 261.63 Hz and 440 Hz
+@pytest.mark.parametrize("freq", [261.63, 440])
+def test_chroma_issue1295(freq):
+
+    tone_1 = librosa.tone(frequency=freq, sr=22050, duration=1)
+    chroma_1 = librosa.feature.chroma_stft(y=tone_1, sr=22050, n_chroma=120, base_c = True)
+
+    actual_argmax = np.unravel_index(chroma_1.argmax(), chroma_1.shape)
+    
+    if freq == 261.63:
+        assert actual_argmax == (5, 43)
+    elif freq == 440:
+        assert actual_argmax == (86, 43)
+
+
 @pytest.mark.parametrize("n", [16, 16.0, 16.25, 16.75])
 @pytest.mark.parametrize(
     "window_name",
