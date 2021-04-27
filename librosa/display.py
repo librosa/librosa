@@ -647,7 +647,7 @@ def specshow(
     Sa=None,
     mela=None,
     thaat=None,
-    auto_scale=True,
+    auto_aspect=True,
     ax=None,
     **kwargs,
 ):
@@ -768,12 +768,11 @@ def specshow(
     thaat : str, optional
         If using `chroma_h` display mode, specify the parent thaat.
 
-    auto_scale : bool
-        Certain plots are automatically scaled for squared axes if `True` (default).
+    auto_aspect : bool
+        Axes will have 'equal' aspect if the horizontal and vertical dimensions 
+        cover the same extent and their types match.
 
-        These plots include covariance, self-similarity, self-distance etc.
-
-        To override, set it to `False`.
+        To override, set to `False`.
 
     ax : matplotlib.axes.Axes or None
         Axes to plot on instead of the default `plt.gca()`.
@@ -868,7 +867,7 @@ def specshow(
     __decorate_axis(axes.yaxis, y_axis, key=key, Sa=Sa, mela=mela, thaat=thaat)
 
     # If the plot is a self-similarity/covariance etc. plot, square it
-    if __same_axes(x_axis, y_axis, axes.get_xlim(), axes.get_ylim()) and auto_scale:
+    if __same_axes(x_axis, y_axis, axes.get_xlim(), axes.get_ylim()) and auto_aspect:
         axes.set_aspect('equal')
     return out
 
