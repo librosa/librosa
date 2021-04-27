@@ -647,6 +647,7 @@ def specshow(
     Sa=None,
     mela=None,
     thaat=None,
+    auto_scale=True,
     ax=None,
     **kwargs,
 ):
@@ -767,6 +768,13 @@ def specshow(
     thaat : str, optional
         If using `chroma_h` display mode, specify the parent thaat.
 
+    auto_scale : bool
+        Certain plots are automatically scaled for squared axes if `True` (default).
+
+        These plots include covariance, self-similarity, self-distance etc.
+
+        To override, set it to `False`.
+
     ax : matplotlib.axes.Axes or None
         Axes to plot on instead of the default `plt.gca()`.
 
@@ -859,6 +867,9 @@ def specshow(
     __decorate_axis(axes.xaxis, x_axis, key=key, Sa=Sa, mela=mela, thaat=thaat)
     __decorate_axis(axes.yaxis, y_axis, key=key, Sa=Sa, mela=mela, thaat=thaat)
 
+    # If the plot is a self-similarity/covariance etc. plot, square it
+    if __same_axes(x_axis, y_axis, axes.get_xlim(), axes.get_ylim()) and auto_scale:
+        axes.set_aspect('equal')
     return out
 
 
@@ -1194,3 +1205,9 @@ def __coord_n(n, **_kwargs):
 def __coord_time(n, sr=22050, hop_length=512, **_kwargs):
     """Get time coordinates from frames"""
     return core.frames_to_time(np.arange(n + 1), sr=sr, hop_length=hop_length)
+
+def __same_axes(x_axis, y_axis, xlim, ylim):
+    """Check if two axes are the same, used to determine squared plots"""
+    axes_same_and_not_none = (x_axis == y_axis) and (x_axis is not None)
+    axes_same_lim = xlim == ylim
+    return axes_same_and_not_none and axes_same_lim
