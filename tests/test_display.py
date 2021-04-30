@@ -720,3 +720,12 @@ def test_display_cqt_svara(C, sr):
     ax4.label_outer()
 
     return fig
+
+
+@pytest.mark.parametrize("x_axis,y_axis,xlim,ylim,out",
+                         [(None, None, (0.0, 1.0), (0.0, 1.0), False),
+                          ("time", "linear", (0.0, 1.0), (0.0, 1.0), False),
+                          ("time", "time", (0.0, 1.0), (0.0, 2.0), False),
+                          ("chroma", "chroma", (0.0, 1.0), (0.0, 1.0), True)])
+def test_same_axes(x_axis, y_axis, xlim, ylim, out):
+    assert librosa.display.__same_axes(x_axis, y_axis, xlim, ylim) == out
