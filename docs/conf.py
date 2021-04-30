@@ -161,7 +161,7 @@ sphinx_gallery_conf = {
         "pooch": "https://www.fatiando.org/pooch/latest/",
     },
     "reset_modules": (reset_mpl,),
-    'capture_repr': ('_repr_html_'),
+    'capture_repr': ('_repr_html_',),
 }
 
 # Generate plots for example sections
