@@ -39,16 +39,16 @@ jobs:
                 ;;
               esac
 
-        - name: Cache conda
-          uses: actions/cache@v2
-          env:
-            # Increase this value to reset cache if etc/example-environment.yml has not changed
-            CACHE_NUMBER: 0
-          with:
-            path: ~/conda_pkgs_dir
-            key:
-              ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
-              hashFiles('etc/example-environment.yml') }}
+        #- name: Cache conda
+        # uses: actions/cache@v2
+        # env:
+        #   # Increase this value to reset cache if etc/example-environment.yml has not changed
+        #   CACHE_NUMBER: 0
+        # with:
+        #   path: ~/conda_pkgs_dir
+        #   key:
+        #     ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
+        #     hashFiles('etc/example-environment.yml') }}
 
         - name: Install Conda environment
           uses: conda-incubator/setup-miniconda@v2
@@ -57,7 +57,6 @@ jobs:
             python-version: ${{ matrix.python-version }}
             activate-environment: anaconda-client-env
             channel-priority: strict
-            environment-file: etc/example-environment-caching.yml
             use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
 
         - name: Conda info
