@@ -25,7 +25,7 @@ jobs:
 
         steps:
         - uses: actions/checkout@v2
-        - name: Set up Python ${{ matrix.python-version }}
+
         - name: Install OS dependencies
           run: |
               case "${{ runner.os }}" in
