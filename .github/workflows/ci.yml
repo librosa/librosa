@@ -23,6 +23,9 @@ jobs:
                     - os: macos-latest
                       python-version: 3.8
 
+                    - os: windows-latest
+                      python-version: 3.8
+
         steps:
         - uses: actions/checkout@v2
 
@@ -54,25 +57,21 @@ jobs:
           with:
             auto-update-conda: true
             python-version: ${{ matrix.python-version }}
-            activate-environment: anaconda-client-env
             channel-priority: strict
             use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
 
-        - name: Install basic conda dependencies
-          run: conda install pip numpy scipy coverage scikit-learn!=0.19.0 matplotlib numba
-
-        - name: Install conda-forge dependencies
-          run: conda install -c conda-forge ffmpeg libsndfile pysoundfile coveralls
+        - name: Install conda dependencies
+          run: |
+            conda install pip numpy scipy coverage scikit-learn!=0.19.0 matplotlib numba
+            conda install -c conda-forge ffmpeg libsndfile pysoundfile coveralls
 
         - name: Conda info
-          run: conda info -a
-
-        - name: Conda list
-          run: conda list
-
+          run: |
+            conda info -a
+            conda list
 
         - name: Install librosa
-          run: python -m pip install --pre -e .[tests]
+          run: python -m pip install --upgrade-strategy only-if-needed -e .[tests]
 
         - name: Run pytest
           run: pytest
