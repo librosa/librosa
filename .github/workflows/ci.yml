@@ -59,6 +59,7 @@ jobs:
             python-version: ${{ matrix.python-version }}
             add-pip-as-python-dependency: true
             auto-activate-base: false
+            activate-environment: test
             channel-priority: strict
             use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
 
