@@ -57,6 +57,8 @@ jobs:
           with:
             auto-update-conda: true
             python-version: ${{ matrix.python-version }}
+            add-pip-as-python-dependency: true
+            auto-activate-base: false
             channel-priority: strict
             use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
 
