@@ -26,7 +26,6 @@ jobs:
         steps:
         - uses: actions/checkout@v2
         - name: Set up Python ${{ matrix.python-version }}
-          uses: actions/setup-python@v2
         - name: Install OS dependencies
           run: |
               case "${{ runner.os }}" in
@@ -59,12 +58,16 @@ jobs:
             channel-priority: strict
             use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
 
+        - name: Install basic conda dependencies
+          run: conda install pip numpy scipy coverage scikit-learn!=0.19.0 matplotlib numba
+
+        - name: Install conda-forge dependencies
+          run: conda install -c conda-forge ffmpeg libsndfile pysoundfile coveralls
+
         - name: Conda info
-          shell: bash -l {0}
           run: conda info -a
 
         - name: Conda list
-          shell: bash -l {0}
           run: conda list
 
 
