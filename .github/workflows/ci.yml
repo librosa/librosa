@@ -89,9 +89,11 @@ jobs:
           shell: bash -l {0}
           run: pytest
 
-        - name: Coveralls Finished
-          #uses: coverallsapp/github-action@master
-          uses:  AndreMiras/coveralls-python-action@develop
-          runs-on: ubuntu-latest
-          with:
-            github-token: ${{ secrets.github_token }}
+    coveralls_finish:
+        needs: test
+        runs-on: ubuntu-latest
+        steps:
+            name: Coveralls Finished
+            uses:  AndreMiras/coveralls-python-action@develop
+            with:
+                github-token: ${{ secrets.github_token }}
