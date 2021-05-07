@@ -1,3 +1,6 @@
+[run]
+relative_files = True
+
 [report]
 omit =
     */python?.?/*
