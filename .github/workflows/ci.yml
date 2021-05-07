@@ -92,5 +92,6 @@ jobs:
         - name: Coveralls Finished
           #uses: coverallsapp/github-action@master
           uses:  AndreMiras/coveralls-python-action@develop
+          runs-on: ubuntu-latest
           with:
             github-token: ${{ secrets.github_token }}
