@@ -93,7 +93,7 @@ jobs:
         needs: test
         runs-on: ubuntu-latest
         steps:
-            name: Coveralls Finished
-            uses:  AndreMiras/coveralls-python-action@develop
+          - name: Coveralls Finished
+            uses: AndreMiras/coveralls-python-action@develop
             with:
                 github-token: ${{ secrets.github_token }}
