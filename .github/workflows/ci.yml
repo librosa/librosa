@@ -90,6 +90,7 @@ jobs:
           run: pytest
 
         - name: Coveralls Finished
-          uses: coverallsapp/github-action@master
+          #uses: coverallsapp/github-action@master
+          uses:  AndreMiras/coveralls-python-action@develop
           with:
             github-token: ${{ secrets.github_token }}
