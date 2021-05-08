@@ -7,9 +7,8 @@ A python package for music and audio analysis.
 [![License](https://img.shields.io/pypi/l/librosa.svg)](https://github.com/librosa/librosa/blob/main/LICENSE.md)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.591533.svg)](https://doi.org/10.5281/zenodo.591533)
 
-[![Build Status](https://travis-ci.com/librosa/librosa.svg?branch=main)](https://travis-ci.com/librosa/librosa)
-[![Build status](https://ci.appveyor.com/api/projects/status/63lxuac60tojq2vm/branch/main?svg=true)](https://ci.appveyor.com/project/librosa/librosa/branch/main)
-[![Coverage Status](https://coveralls.io/repos/librosa/librosa/badge.svg?branch=main)](https://coveralls.io/r/librosa/librosa?branch=main)
+[![CI](https://github.com/librosa/librosa/actions/workflows/ci.yml/badge.svg)](https://github.com/librosa/librosa/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/librosa/librosa/branch/main/graph/badge.svg?token=ULWnUHaIJC)](https://codecov.io/gh/librosa/librosa)
 
 
 Documentation
