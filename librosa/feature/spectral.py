@@ -1769,7 +1769,7 @@ def mfcc(
     lifter : number >= 0
         If ``lifter>0``, apply *liftering* (cepstral filtering) to the MFCCs::
 
-            M[n, :] <- M[n, :] * (1 + sin(pi * (n + 1) / lifter)) * lifter / 2
+            M[n, :] <- M[n, :] * (1 + sin(pi * (n + 1) / lifter) * lifter / 2)
 
         Setting ``lifter >= 2 * n_mfcc`` emphasizes the higher-order coefficients.
         As ``lifter`` increases, the coefficient weighting becomes approximately linear.
