@@ -54,6 +54,7 @@ docs/auto_examples/
 # Testing and checkpoints
 .ipynb_checkpoints
 .coverage.*
+coverage.xml
 
 #IDE
 .idea/
