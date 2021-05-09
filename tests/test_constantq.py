@@ -120,7 +120,7 @@ def test_cqt_exceed_passband(y_cqt, sr_cqt, bpo):
 @pytest.mark.parametrize("tuning", [None, 0, 0.25])
 @pytest.mark.parametrize("filter_scale", [1])
 @pytest.mark.parametrize("norm", [1])
-@pytest.mark.parametrize("res_type", [None])
+@pytest.mark.parametrize("res_type", ['polyphase'])
 @pytest.mark.parametrize("hop_length", [512])
 @pytest.mark.parametrize("sparsity", [0.01])
 def test_cqt(
@@ -162,6 +162,42 @@ def test_cqt(
 
     # check for peaks if 110 is within range
     if 110 <= fmin * 2**(n_bins / bins_per_octave):
+        peaks = np.argmax(np.abs(C), axis=0)
+
+        # This is our most common peak index in the CQT spectrum
+        # we use the mode here over frames to sidestep transient effects
+        # at the beginning and end of the CQT
+        common_peak = scipy.stats.mode(peaks)[0][0]
+
+        # Convert peak index to frequency
+        peak_frequency = fmin * 2**(common_peak / bins_per_octave)
+
+        # Check that it matches 110, which is an analysis frequency
+        assert np.isclose(peak_frequency, 110)
+
+
+@pytest.mark.parametrize("fmin", [librosa.note_to_hz("C1")])
+@pytest.mark.parametrize("bins_per_octave", [12, 24])
+def test_cqt_early_downsample(y_cqt_110, sr_cqt, fmin, bins_per_octave):
+    C = librosa.cqt(
+        y=y_cqt_110,
+        sr=sr_cqt,
+        fmin=fmin,
+        bins_per_octave=bins_per_octave,
+        res_type=None,
+    )
+
+    # type is complex
+    assert np.iscomplexobj(C)
+
+    # number of bins is correct
+    assert C.shape[0] == 84
+
+    if fmin is None:
+        fmin = librosa.note_to_hz('C1')
+
+    # check for peaks if 110 is within range
+    if 110 <= fmin * 2**(84 / bins_per_octave):
         peaks = np.argmax(np.abs(C), axis=0)
 
         # This is our most common peak index in the CQT spectrum
@@ -602,7 +638,7 @@ def test_griffinlim_cqt(
         bins_per_octave=bins_per_octave,
         scale=scale,
         pad_mode=pad_mode,
-        n_iter=3,
+        n_iter=2,
         momentum=momentum,
         random_state=random_state,
         length=length,
@@ -633,11 +669,11 @@ def test_griffinlim_cqt(
     assert np.all(np.isfinite(y_rec))
 
 
-@pytest.mark.parametrize('momentum', [0, 0.95, 0.99])
+@pytest.mark.parametrize('momentum', [0, 0.95])
 def test_griffinlim_cqt_momentum(y_chirp, momentum):
 
     C = librosa.cqt(y=y_chirp, sr=22050, res_type='polyphase')
-    y_rec = librosa.griffinlim_cqt(np.abs(C), sr=22050,
+    y_rec = librosa.griffinlim_cqt(np.abs(C), sr=22050, n_iter=2,
             momentum=momentum, res_type='polyphase')
 
     assert np.all(np.isfinite(y_rec))
@@ -647,7 +683,7 @@ def test_griffinlim_cqt_momentum(y_chirp, momentum):
 def test_griffinlim_cqt_rng(y_chirp, random_state):
 
     C = librosa.cqt(y=y_chirp, sr=22050, res_type='polyphase')
-    y_rec = librosa.griffinlim_cqt(np.abs(C), sr=22050,
+    y_rec = librosa.griffinlim_cqt(np.abs(C), sr=22050, n_iter=2,
             random_state=random_state, res_type='polyphase')
 
     assert np.all(np.isfinite(y_rec))
@@ -656,7 +692,7 @@ def test_griffinlim_cqt_rng(y_chirp, random_state):
 @pytest.mark.parametrize('init', [None, "random"])
 def test_griffinlim_cqt_init(y_chirp, init):
     C = librosa.cqt(y=y_chirp, sr=22050, res_type='polyphase')
-    y_rec = librosa.griffinlim_cqt(np.abs(C), sr=22050,
+    y_rec = librosa.griffinlim_cqt(np.abs(C), sr=22050, n_iter=2,
             init=init, res_type='polyphase')
 
     assert np.all(np.isfinite(y_rec))
