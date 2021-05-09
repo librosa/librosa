@@ -93,7 +93,7 @@ def mel_to_audio(
     M,
     sr=22050,
     n_fft=2048,
-    hop_length=512,
+    hop_length=None,
     win_length=None,
     window="hann",
     center=True,
