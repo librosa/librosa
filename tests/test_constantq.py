@@ -271,11 +271,8 @@ def y_hybrid():
 @pytest.mark.parametrize("n_bins", [1, 12, 24, 48, 72, 74, 76])
 @pytest.mark.parametrize("bins_per_octave", [12, 24])
 @pytest.mark.parametrize("tuning", [None, 0, 0.25])
-#@pytest.mark.parametrize("resolution", [1, 2])
 @pytest.mark.parametrize("resolution", [1])
-#@pytest.mark.parametrize("norm", [1, 2])
 @pytest.mark.parametrize("norm", [1])
-#@pytest.mark.parametrize("res_type", [None, "polyphase"])
 @pytest.mark.parametrize("res_type", ["polyphase"])
 def test_hybrid_cqt(
     y_hybrid,
@@ -552,13 +549,10 @@ def y_chirp():
 @pytest.mark.parametrize("res_type", ["polyphase"])
 @pytest.mark.parametrize("pad_mode", ["reflect"])
 @pytest.mark.parametrize("scale", [False, True])
-#@pytest.mark.parametrize("momentum", [0, 0.99])
 @pytest.mark.parametrize("momentum", [0.99])
-#@pytest.mark.parametrize("random_state", [None, 0, np.random.RandomState()])
 @pytest.mark.parametrize("random_state", [0])
 @pytest.mark.parametrize("fmin", [40.0])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-#@pytest.mark.parametrize("init", [None, "random"])
 @pytest.mark.parametrize("init", [None])
 def test_griffinlim_cqt(
     y_chirp,
@@ -637,6 +631,36 @@ def test_griffinlim_cqt(
 
     # Check that the data is okay
     assert np.all(np.isfinite(y_rec))
+
+
+@pytest.mark.parametrize('momentum', [0, 0.95, 0.99])
+def test_griffinlim_cqt_momentum(y_chirp, momentum):
+
+    C = librosa.cqt(y=y_chirp, sr=22050, res_type='polyphase')
+    y_rec = librosa.griffinlim_cqt(np.abs(C), sr=22050,
+            momentum=momentum, res_type='polyphase')
+
+    assert np.all(np.isfinite(y_rec))
+
+
+@pytest.mark.parametrize('random_state', [None, 0, np.random.RandomState()])
+def test_griffinlim_cqt_rng(y_chirp, random_state):
+
+    C = librosa.cqt(y=y_chirp, sr=22050, res_type='polyphase')
+    y_rec = librosa.griffinlim_cqt(np.abs(C), sr=22050,
+            random_state=random_state, res_type='polyphase')
+
+    assert np.all(np.isfinite(y_rec))
+
+
+@pytest.mark.parametrize('init', [None, "random"])
+def test_griffinlim_cqt_init(y_chirp, init):
+    C = librosa.cqt(y=y_chirp, sr=22050, res_type='polyphase')
+    y_rec = librosa.griffinlim_cqt(np.abs(C), sr=22050,
+            init=init, res_type='polyphase')
+
+    assert np.all(np.isfinite(y_rec))
+
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
