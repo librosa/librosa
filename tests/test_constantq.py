@@ -120,7 +120,7 @@ def test_cqt_exceed_passband(y_cqt, sr_cqt, bpo):
 @pytest.mark.parametrize("tuning", [None, 0, 0.25])
 @pytest.mark.parametrize("filter_scale", [1])
 @pytest.mark.parametrize("norm", [1])
-@pytest.mark.parametrize("res_type", ["polyphase"])
+@pytest.mark.parametrize("res_type", [None])
 @pytest.mark.parametrize("hop_length", [512])
 @pytest.mark.parametrize("sparsity", [0.01])
 def test_cqt(
