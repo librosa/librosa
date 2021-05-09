@@ -17,6 +17,7 @@ except KeyError:
 
 import librosa
 import numpy as np
+import scipy.stats
 
 import pytest
 
@@ -90,6 +91,11 @@ def y_cqt(sr_cqt):
     return make_signal(sr_cqt, 2.0)
 
 
+@pytest.fixture(scope="module")
+def y_cqt_110(sr_cqt):
+    return librosa.tone(110.0, sr_cqt, duration=0.75)
+
+
 @pytest.mark.xfail(raises=librosa.ParameterError)
 @pytest.mark.parametrize("hop_length", [-1, 0, 16, 63, 65])
 @pytest.mark.parametrize("bpo", [12, 24])
@@ -112,13 +118,13 @@ def test_cqt_exceed_passband(y_cqt, sr_cqt, bpo):
 @pytest.mark.parametrize("n_bins", [1, 12, 24, 76])
 @pytest.mark.parametrize("bins_per_octave", [12, 24])
 @pytest.mark.parametrize("tuning", [None, 0, 0.25])
-@pytest.mark.parametrize("filter_scale", [1, 2])
-@pytest.mark.parametrize("norm", [1, 2])
-@pytest.mark.parametrize("res_type", [None, "polyphase"])
+@pytest.mark.parametrize("filter_scale", [1])
+@pytest.mark.parametrize("norm", [1])
+@pytest.mark.parametrize("res_type", ["polyphase"])
+@pytest.mark.parametrize("hop_length", [512])
 @pytest.mark.parametrize("sparsity", [0.01])
-@pytest.mark.parametrize("hop_length", [256, 512])
 def test_cqt(
-    y_cqt,
+    y_cqt_110,
     sr_cqt,
     hop_length,
     fmin,
@@ -132,7 +138,7 @@ def test_cqt(
 ):
 
     C = librosa.cqt(
-        y=y_cqt,
+        y=y_cqt_110,
         sr=sr_cqt,
         hop_length=hop_length,
         fmin=fmin,
@@ -151,6 +157,80 @@ def test_cqt(
     # number of bins is correct
     assert C.shape[0] == n_bins
 
+    if fmin is None:
+        fmin = librosa.note_to_hz("C1")
+
+    # check for peaks if 110 is within range
+    if 110 <= fmin * 2 ** (n_bins / bins_per_octave):
+        peaks = np.argmax(np.abs(C), axis=0)
+
+        # This is our most common peak index in the CQT spectrum
+        # we use the mode here over frames to sidestep transient effects
+        # at the beginning and end of the CQT
+        common_peak = scipy.stats.mode(peaks)[0][0]
+
+        # Convert peak index to frequency
+        peak_frequency = fmin * 2 ** (common_peak / bins_per_octave)
+
+        # Check that it matches 110, which is an analysis frequency
+        assert np.isclose(peak_frequency, 110)
+
+
+@pytest.mark.parametrize("fmin", [librosa.note_to_hz("C1")])
+@pytest.mark.parametrize("bins_per_octave", [12])
+@pytest.mark.parametrize("n_bins", [88])
+def test_cqt_early_downsample(y_cqt_110, sr_cqt, n_bins, fmin, bins_per_octave):
+    C = librosa.cqt(
+        y=y_cqt_110,
+        sr=sr_cqt,
+        fmin=fmin,
+        n_bins=n_bins,
+        bins_per_octave=bins_per_octave,
+        res_type=None,
+    )
+
+    # type is complex
+    assert np.iscomplexobj(C)
+
+    # number of bins is correct
+    assert C.shape[0] == n_bins
+
+    if fmin is None:
+        fmin = librosa.note_to_hz("C1")
+
+    # check for peaks if 110 is within range
+    if 110 <= fmin * 2 ** (n_bins / bins_per_octave):
+        peaks = np.argmax(np.abs(C), axis=0)
+
+        # This is our most common peak index in the CQT spectrum
+        # we use the mode here over frames to sidestep transient effects
+        # at the beginning and end of the CQT
+        common_peak = scipy.stats.mode(peaks)[0][0]
+
+        # Convert peak index to frequency
+        peak_frequency = fmin * 2 ** (common_peak / bins_per_octave)
+
+        # Check that it matches 110, which is an analysis frequency
+        assert np.isclose(peak_frequency, 110)
+
+
+@pytest.mark.parametrize("hop_length", [256, 512])
+def test_cqt_frame_rate(y_cqt_110, sr_cqt, hop_length):
+
+    C = librosa.cqt(y=y_cqt_110, sr=sr_cqt, hop_length=hop_length, res_type="polyphase")
+
+    # At sr=11025, hop of 256 gives 17 frames for default
+    # analysis
+    # hop of 512 gives 33 frames
+
+    if hop_length == 256:
+        assert C.shape[1] == 33
+    elif hop_length == 512:
+        assert C.shape[1] == 17
+    else:
+        # Unsupported test case
+        assert False
+
 
 @pytest.mark.parametrize("fmin", [None, librosa.note_to_hz("C2")])
 @pytest.mark.parametrize("n_bins", [12, 24])
@@ -163,7 +243,7 @@ def test_cqt(
 @pytest.mark.parametrize("sparsity", [0.01])
 @pytest.mark.parametrize("hop_length", [512])
 def test_vqt(
-    y_cqt,
+    y_cqt_110,
     sr_cqt,
     hop_length,
     fmin,
@@ -178,7 +258,7 @@ def test_vqt(
 ):
 
     C = librosa.vqt(
-        y=y_cqt,
+        y=y_cqt_110,
         sr=sr_cqt,
         hop_length=hop_length,
         fmin=fmin,
@@ -198,6 +278,23 @@ def test_vqt(
     # number of bins is correct
     assert C.shape[0] == n_bins
 
+    if fmin is None:
+        fmin = librosa.note_to_hz("C1")
+
+    # check for peaks if 110 is within range
+    if 110 <= fmin * 2 ** (n_bins / bins_per_octave):
+        peaks = np.argmax(np.abs(C), axis=0)
+
+        # This is our most common peak index in the CQT spectrum
+        # we use the mode here over frames to sidestep transient effects
+        # at the beginning and end of the CQT
+        common_peak = scipy.stats.mode(peaks)[0][0]
+
+        # Convert peak index to frequency
+        peak_frequency = fmin * 2 ** (common_peak / bins_per_octave)
+
+        # Check that it matches 110, which is an analysis frequency
+
 
 @pytest.fixture(scope="module")
 def y_hybrid():
@@ -211,9 +308,9 @@ def y_hybrid():
 @pytest.mark.parametrize("n_bins", [1, 12, 24, 48, 72, 74, 76])
 @pytest.mark.parametrize("bins_per_octave", [12, 24])
 @pytest.mark.parametrize("tuning", [None, 0, 0.25])
-@pytest.mark.parametrize("resolution", [1, 2])
-@pytest.mark.parametrize("norm", [1, 2])
-@pytest.mark.parametrize("res_type", [None, "polyphase"])
+@pytest.mark.parametrize("resolution", [1])
+@pytest.mark.parametrize("norm", [1])
+@pytest.mark.parametrize("res_type", ["polyphase"])
 def test_hybrid_cqt(
     y_hybrid,
     sr,
@@ -489,11 +586,11 @@ def y_chirp():
 @pytest.mark.parametrize("res_type", ["polyphase"])
 @pytest.mark.parametrize("pad_mode", ["reflect"])
 @pytest.mark.parametrize("scale", [False, True])
-@pytest.mark.parametrize("momentum", [0, 0.99])
-@pytest.mark.parametrize("random_state", [None, 0, np.random.RandomState()])
+@pytest.mark.parametrize("momentum", [0.99])
+@pytest.mark.parametrize("random_state", [0])
 @pytest.mark.parametrize("fmin", [40.0])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-@pytest.mark.parametrize("init", [None, "random"])
+@pytest.mark.parametrize("init", [None])
 def test_griffinlim_cqt(
     y_chirp,
     hop_length,
@@ -542,7 +639,7 @@ def test_griffinlim_cqt(
         bins_per_octave=bins_per_octave,
         scale=scale,
         pad_mode=pad_mode,
-        n_iter=3,
+        n_iter=2,
         momentum=momentum,
         random_state=random_state,
         length=length,
@@ -573,6 +670,38 @@ def test_griffinlim_cqt(
     assert np.all(np.isfinite(y_rec))
 
 
+@pytest.mark.parametrize("momentum", [0, 0.95])
+def test_griffinlim_cqt_momentum(y_chirp, momentum):
+
+    C = librosa.cqt(y=y_chirp, sr=22050, res_type="polyphase")
+    y_rec = librosa.griffinlim_cqt(
+        np.abs(C), sr=22050, n_iter=2, momentum=momentum, res_type="polyphase"
+    )
+
+    assert np.all(np.isfinite(y_rec))
+
+
+@pytest.mark.parametrize("random_state", [None, 0, np.random.RandomState()])
+def test_griffinlim_cqt_rng(y_chirp, random_state):
+
+    C = librosa.cqt(y=y_chirp, sr=22050, res_type="polyphase")
+    y_rec = librosa.griffinlim_cqt(
+        np.abs(C), sr=22050, n_iter=2, random_state=random_state, res_type="polyphase"
+    )
+
+    assert np.all(np.isfinite(y_rec))
+
+
+@pytest.mark.parametrize("init", [None, "random"])
+def test_griffinlim_cqt_init(y_chirp, init):
+    C = librosa.cqt(y=y_chirp, sr=22050, res_type="polyphase")
+    y_rec = librosa.griffinlim_cqt(
+        np.abs(C), sr=22050, n_iter=2, init=init, res_type="polyphase"
+    )
+
+    assert np.all(np.isfinite(y_rec))
+
+
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_griffinlim_cqt_badinit():
     x = np.zeros((33, 3))
@@ -580,7 +709,7 @@ def test_griffinlim_cqt_badinit():
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
-def test_griffinlim_cqt_momentum():
+def test_griffinlim_cqt_bad_momentum():
     x = np.zeros((33, 3))
     librosa.griffinlim_cqt(x, momentum=-1)
 
