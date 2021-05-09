@@ -177,12 +177,14 @@ def test_cqt(
 
 
 @pytest.mark.parametrize("fmin", [librosa.note_to_hz("C1")])
-@pytest.mark.parametrize("bins_per_octave", [12, 24])
-def test_cqt_early_downsample(y_cqt_110, sr_cqt, fmin, bins_per_octave):
+@pytest.mark.parametrize("bins_per_octave", [12])
+@pytest.mark.parametrize("n_bins", [88])
+def test_cqt_early_downsample(y_cqt_110, sr_cqt, n_bins, fmin, bins_per_octave):
     C = librosa.cqt(
         y=y_cqt_110,
         sr=sr_cqt,
         fmin=fmin,
+        n_bins=n_bins,
         bins_per_octave=bins_per_octave,
         res_type=None,
     )
@@ -191,13 +193,13 @@ def test_cqt_early_downsample(y_cqt_110, sr_cqt, fmin, bins_per_octave):
     assert np.iscomplexobj(C)
 
     # number of bins is correct
-    assert C.shape[0] == 84
+    assert C.shape[0] == n_bins
 
     if fmin is None:
         fmin = librosa.note_to_hz("C1")
 
     # check for peaks if 110 is within range
-    if 110 <= fmin * 2 ** (84 / bins_per_octave):
+    if 110 <= fmin * 2 ** (n_bins / bins_per_octave):
         peaks = np.argmax(np.abs(C), axis=0)
 
         # This is our most common peak index in the CQT spectrum
