@@ -42,6 +42,9 @@ from matplotlib.axes import Axes
 from matplotlib.ticker import Formatter, ScalarFormatter
 from matplotlib.ticker import LogLocator, FixedLocator, MaxNLocator
 from matplotlib.ticker import SymmetricalLogLocator
+import matplotlib
+from packaging.version import parse as version_parse
+
 
 from . import core
 from . import util
@@ -946,15 +949,27 @@ def __scale_axes(axes, ax_type, which):
 
     kwargs = dict()
     if which == "x":
-        thresh = "linthreshx"
-        base = "basex"
-        scale = "linscalex"
+        if version_parse(matplotlib.__version__) < version_parse('3.3.0'):
+            thresh = "linthreshx"
+            base = "basex"
+            scale = "linscalex"
+        else:
+            thresh = "linthresh"
+            base = "base"
+            scale = "linscale"
+
         scaler = axes.set_xscale
         limit = axes.set_xlim
     else:
-        thresh = "linthreshy"
-        base = "basey"
-        scale = "linscaley"
+        if version_parse(matplotlib.__version__) < version_parse('3.3.0'):
+            thresh = "linthreshy"
+            base = "basey"
+            scale = "linscaley"
+        else:
+            thresh = "linthresh"
+            base = "base"
+            scale = "linscale"
+
         scaler = axes.set_yscale
         limit = axes.set_ylim
 
