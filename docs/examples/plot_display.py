@@ -271,6 +271,9 @@ img = librosa.display.specshow(ccov, y_axis='chroma', x_axis='chroma',
 ax.set(title='Chroma covariance')
 fig.colorbar(img, ax=ax)
 
+# %%
+# Certain plots (e.g. covariance, self-similarity) are automatically
+# squared by `specshow`. To override that, pass `auto_scale=False`.
 
 # %%
 # Color maps

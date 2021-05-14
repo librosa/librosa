@@ -93,7 +93,7 @@ def mel_to_audio(
     M,
     sr=22050,
     n_fft=2048,
-    hop_length=512,
+    hop_length=None,
     win_length=None,
     window="hann",
     center=True,
@@ -218,7 +218,7 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm="ortho", ref=1.0, lifter=0):
     lifter : number >= 0
         If ``lifter>0``, apply inverse liftering (inverse cepstral filtering)::
 
-            M[n, :] <- M[n, :] / (1 + sin(pi * (n + 1) / lifter)) * lifter / 2
+            M[n, :] <- M[n, :] / (1 + sin(pi * (n + 1) / lifter) * lifter / 2)
 
     Returns
     -------

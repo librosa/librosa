@@ -333,7 +333,7 @@ def stream(
     ------
     y : np.ndarray
         An audio buffer of (at most)
-        ``block_length * (hop_length-1) + frame_length`` samples.
+        ``(block_length-1) * hop_length + frame_length`` samples.
 
     See Also
     --------

@@ -42,6 +42,9 @@ from matplotlib.axes import Axes
 from matplotlib.ticker import Formatter, ScalarFormatter
 from matplotlib.ticker import LogLocator, FixedLocator, MaxNLocator
 from matplotlib.ticker import SymmetricalLogLocator
+import matplotlib
+from packaging.version import parse as version_parse
+
 
 from . import core
 from . import util
@@ -213,7 +216,7 @@ class NoteFormatter(Formatter):
 
         cents = vmax <= 2 * max(1, vmin)
 
-        return core.hz_to_note(int(x), octave=self.octave, cents=cents, key=self.key)
+        return core.hz_to_note(x, octave=self.octave, cents=cents, key=self.key)
 
 
 class SvaraFormatter(Formatter):
@@ -647,6 +650,7 @@ def specshow(
     Sa=None,
     mela=None,
     thaat=None,
+    auto_aspect=True,
     ax=None,
     **kwargs,
 ):
@@ -767,6 +771,12 @@ def specshow(
     thaat : str, optional
         If using `chroma_h` display mode, specify the parent thaat.
 
+    auto_aspect : bool
+        Axes will have 'equal' aspect if the horizontal and vertical dimensions 
+        cover the same extent and their types match.
+
+        To override, set to `False`.
+
     ax : matplotlib.axes.Axes or None
         Axes to plot on instead of the default `plt.gca()`.
 
@@ -859,6 +869,9 @@ def specshow(
     __decorate_axis(axes.xaxis, x_axis, key=key, Sa=Sa, mela=mela, thaat=thaat)
     __decorate_axis(axes.yaxis, y_axis, key=key, Sa=Sa, mela=mela, thaat=thaat)
 
+    # If the plot is a self-similarity/covariance etc. plot, square it
+    if __same_axes(x_axis, y_axis, axes.get_xlim(), axes.get_ylim()) and auto_aspect:
+        axes.set_aspect('equal')
     return out
 
 
@@ -936,15 +949,27 @@ def __scale_axes(axes, ax_type, which):
 
     kwargs = dict()
     if which == "x":
-        thresh = "linthreshx"
-        base = "basex"
-        scale = "linscalex"
+        if version_parse(matplotlib.__version__) < version_parse('3.3.0'):
+            thresh = "linthreshx"
+            base = "basex"
+            scale = "linscalex"
+        else:
+            thresh = "linthresh"
+            base = "base"
+            scale = "linscale"
+
         scaler = axes.set_xscale
         limit = axes.set_xlim
     else:
-        thresh = "linthreshy"
-        base = "basey"
-        scale = "linscaley"
+        if version_parse(matplotlib.__version__) < version_parse('3.3.0'):
+            thresh = "linthreshy"
+            base = "basey"
+            scale = "linscaley"
+        else:
+            thresh = "linthresh"
+            base = "base"
+            scale = "linscale"
+
         scaler = axes.set_yscale
         limit = axes.set_ylim
 
@@ -1061,7 +1086,7 @@ def __decorate_axis(axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None):
         axis.set_major_locator(LogLocator(base=2.0, subs=(C_offset,)))
         axis.set_minor_formatter(NoteFormatter(key=key, major=False))
         axis.set_minor_locator(
-            LogLocator(base=2.0, subs=2.0 ** (np.arange(1, 12) / 12.0))
+            LogLocator(base=2.0, subs=C_offset * 2.0 ** (np.arange(1, 12) / 12.0))
         )
         axis.set_label_text("Note")
 
@@ -1085,7 +1110,7 @@ def __decorate_axis(axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None):
         axis.set_major_locator(LogLocator(base=2.0))
         axis.set_minor_formatter(LogHzFormatter(major=False))
         axis.set_minor_locator(
-            LogLocator(base=2.0, subs=2.0 ** (np.arange(1, 12) / 12.0))
+            LogLocator(base=2.0, subs=C_offset * 2.0 ** (np.arange(1, 12) / 12.0))
         )
         axis.set_label_text("Hz")
 
@@ -1121,13 +1146,13 @@ def __coord_fft_hz(n, sr=22050, **_kwargs):
     return basis
 
 
-def __coord_mel_hz(n, fmin=0, fmax=11025.0, **_kwargs):
+def __coord_mel_hz(n, fmin=0, fmax=None, sr=22050, **_kwargs):
     """Get the frequencies for Mel bins"""
 
     if fmin is None:
         fmin = 0
     if fmax is None:
-        fmax = 11025.0
+        fmax = 0.5 * sr
 
     basis = core.mel_frequencies(n, fmin=fmin, fmax=fmax)
     basis[1:] -= 0.5 * np.diff(basis)
@@ -1194,3 +1219,9 @@ def __coord_n(n, **_kwargs):
 def __coord_time(n, sr=22050, hop_length=512, **_kwargs):
     """Get time coordinates from frames"""
     return core.frames_to_time(np.arange(n + 1), sr=sr, hop_length=hop_length)
+
+def __same_axes(x_axis, y_axis, xlim, ylim):
+    """Check if two axes are the same, used to determine squared plots"""
+    axes_same_and_not_none = (x_axis == y_axis) and (x_axis is not None)
+    axes_same_lim = xlim == ylim
+    return axes_same_and_not_none and axes_same_lim

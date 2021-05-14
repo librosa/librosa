@@ -114,8 +114,8 @@ The resulting HTML files will be placed in _build/html/ and are viewable
 in a web browser. See the README file in the doc/ directory for more information.
 
 For building the documentation, you will need 
-[sphinx](http://sphinx.pocoo.org/),
-[matplotlib](http://matplotlib.sourceforge.net/), and [numpydoc](https://pypi.python.org/pypi/numpydoc).
+[sphinx](https://www.sphinx-doc.org/),
+[matplotlib](https://matplotlib.org/stable/index.html), and [numpydoc](https://pypi.python.org/pypi/numpydoc).
 
 Note
 ----
