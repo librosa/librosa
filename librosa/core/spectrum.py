@@ -229,7 +229,7 @@ def stft(
 
     elif n_fft > y.shape[-1]:
         raise ParameterError(
-            "n_fft={} is too small for input signal of length={}".format(
+            "n_fft={} is too large for input signal of length={}".format(
                 n_fft, y.shape[-1]
             )
         )
