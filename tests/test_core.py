@@ -269,6 +269,12 @@ def test_stft_toolong_left():
     librosa.stft(y, n_fft=2048, center=False)
 
 
+def test_stft_toolong_center():
+    y = np.zeros((128,))
+    with pytest.warns(UserWarning):
+        librosa.stft(y, n_fft=2048, center=True)
+
+
 def test_stft_winsizes():
     # Test for issue #1095
     x = np.zeros(1000000)
