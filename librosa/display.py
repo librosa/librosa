@@ -1352,13 +1352,21 @@ def waveshow(
 
     More specifically, when the plot spans a time interval of less than `max_points /
     sr` (by default, 1/2 second), the samples-based view is used, and otherwise a
-    downsampled amplitude envelope is used. 
+    downsampled amplitude envelope is used.
     This is done to limit the complexity of the visual elements to guarantee an
     efficient, visually interpretable plot.
 
     When using interactive rendering (e.g., in a Jupyter notebook or IPython
     console), the plot will automatically update as the view-port is changed, either
     through widget controls or programmatic updates.
+
+    .. note:: When visualizing stereo waveforms, the amplitude envelope will be generated
+        so that the upper limits derive from the left channel, and the lower limits derive
+        from the right channel, which can produce a vertically asymmetric plot.
+
+        When zoomed in to the sample view, only the first channel will be shown.
+        If you want to visualize both channels at the sample level, it is recommended to
+        plot each signal independently.
 
 
     Parameters
@@ -1445,24 +1453,35 @@ def waveshow(
     >>> y, sr = librosa.load(librosa.ex('choice'), duration=10)
     >>> fig, ax = plt.subplots(nrows=3, sharex=True)
     >>> librosa.display.waveshow(y, sr=sr, ax=ax[0])
-    >>> ax[0].set(title='Envelope view')
+    >>> ax[0].set(title='Envelope view, mono')
     >>> ax[0].label_outer()
 
     Or a stereo waveform
 
     >>> y, sr = librosa.load(librosa.ex('choice', hq=True), mono=False, duration=10)
     >>> librosa.display.waveshow(y, sr=sr, ax=ax[1])
-    >>> ax[1].set(title='Stereo')
+    >>> ax[1].set(title='Envelope view, stereo')
     >>> ax[1].label_outer()
 
     Or harmonic and percussive components with transparency
 
     >>> y, sr = librosa.load(librosa.ex('choice'), duration=10)
     >>> y_harm, y_perc = librosa.effects.hpss(y)
-    >>> librosa.display.waveshow(y_harm, sr=sr, alpha=0.55, ax=ax[2], label='Harmonic')
+    >>> librosa.display.waveshow(y_harm, sr=sr, alpha=0.5, ax=ax[2], label='Harmonic')
     >>> librosa.display.waveshow(y_perc, sr=sr, color='r', alpha=0.5, ax=ax[2], label='Percussive')
     >>> ax[2].set(title='Multiple waveforms')
     >>> ax[2].legend()
+
+    Zooming in on a plot to show raw sample values
+
+    >>> fig, (ax, ax2) = plt.subplots(nrows=2, sharex=True)
+    >>> ax.set(xlim=[1.0, 1.1], title='Sample view')
+    >>> librosa.display.waveshow(y, sr=sr, ax=ax)
+    >>> librosa.display.waveshow(y_harm, sr=sr, alpha=0.5, ax=ax2, label='Harmonic')
+    >>> librosa.display.waveshow(y_perc, sr=sr, alpha=0.5, ax=ax2, label='Percussive')
+    >>> ax.label_outer()
+    >>> ax2.legend()
+
     """
     util.valid_audio(y, mono=False)
 
@@ -1512,6 +1531,9 @@ def waveshow(
     )
 
     axes.callbacks.connect("xlim_changed", adaptor.update)
+
+    # Force an initial update to ensure the state is consistent
+    adaptor.update(axes)
 
     # Construct tickers and locators
     __decorate_axis(axes.xaxis, x_axis)
