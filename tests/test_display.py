@@ -557,10 +557,8 @@ def test_waveshow_mono_zoom(y, sr):
 
     fig, ax = plt.subplots(nrows=1)
     out = librosa.display.waveshow(y, sr=sr, ax=ax, max_points=sr//2)
-    # Zoom into 1/8 of a second
-    ax.set(xlim=[0.5, 0.625])
-    # Simulate an interactive zoom callback
-    out.update(ax)
+    # Zoom into 1/8 of a second, make sure it's out of the initial viewport
+    ax.set(xlim=[1, 1.125])
     return fig
 
 
