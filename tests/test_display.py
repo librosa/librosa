@@ -810,3 +810,32 @@ def test_display_cqt_svara(C, sr):
                           ("chroma", "chroma", (0.0, 1.0), (0.0, 1.0), True)])
 def test_same_axes(x_axis, y_axis, xlim, ylim, out):
     assert librosa.display.__same_axes(x_axis, y_axis, xlim, ylim) == out
+
+
+def test_auto_aspect():
+
+    fig, ax = plt.subplots(nrows=4)
+
+    # Ensure auto aspect by default
+    for axi in ax:
+        axi.set(aspect='auto')
+
+    X = np.zeros((12, 12))
+
+    # Different axes should retain auto scaling
+    librosa.display.specshow(X, x_axis='chroma', y_axis='time', ax=ax[0])
+    assert ax[0].get_aspect() == 'auto'
+
+    # Same axes and auto_aspect=True should force equal scaling
+    librosa.display.specshow(X, x_axis='chroma', y_axis='chroma', ax=ax[1])
+    assert ax[1].get_aspect() == 1.0
+
+    # Same axes and auto_aspect=False should retain auto scaling
+    librosa.display.specshow(X, x_axis='chroma', y_axis='chroma',
+                             auto_aspect=False, ax=ax[2])
+    assert ax[2].get_aspect() == 'auto'
+
+    # Different extents with auto_aspect=True should retain auto scaling
+    librosa.display.specshow(X[:2, :], x_axis='chroma', y_axis='chroma',
+                             auto_aspect=True, ax=ax[3])
+    assert ax[3].get_aspect() == 'auto'
