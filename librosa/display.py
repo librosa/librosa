@@ -503,7 +503,7 @@ class AdaptiveWaveplot:
                 # we want to cover a window of self.max_samples centered on the current viewport
                 midpoint_time = (lims.x1 + lims.x0) / 2
                 idx_start = np.searchsorted(
-                    self.times, midpoint_time - self.max_samples / self.sr
+                    self.times, midpoint_time - 0.5 * self.max_samples / self.sr
                 )
                 self.steps.set_data(
                     self.times[idx_start : idx_start + self.max_samples],
@@ -1490,7 +1490,15 @@ def waveshow(
     y_bottom, y_top = -y_env[-1], y_env[0]
 
     times = offset + core.times_like(y, sr=sr, hop_length=1)
-    (steps,) = axes.step(times, y[0], marker=marker, where=where, **kwargs)
+
+    # Only plot up to max_points worth of data here
+    (steps,) = axes.step(
+        times[:max_points],
+        y[0, : max_points],
+        marker=marker,
+        where=where,
+        **kwargs)
+
     envelope = axes.fill_between(
         times[: len(y_top) * hop_length : hop_length],
         y_bottom,
@@ -1504,11 +1512,6 @@ def waveshow(
     )
 
     axes.callbacks.connect("xlim_changed", adaptor.update)
-
-    # Force an update. This isn't strictly necessary
-    # in interactive mode, but it does ensure that non-interactive
-    # plots are generated correctly
-    adaptor.update(axes)
 
     # Construct tickers and locators
     __decorate_axis(axes.xaxis, x_axis)
