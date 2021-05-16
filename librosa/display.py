@@ -1331,10 +1331,6 @@ def __same_axes(x_axis, y_axis, xlim, ylim):
     return axes_same_and_not_none and axes_same_lim
 
 
-from librosa import util, core
-from librosa.display import __envelope, __check_axes, __decorate_axis
-
-
 def waveshow(
     y,
     sr=22050,
@@ -1487,6 +1483,11 @@ def waveshow(
     )
 
     axes.callbacks.connect("xlim_changed", adaptor.update)
+
+    # Force an update. This isn't strictly necessary
+    # in interactive mode, but it does ensure that non-interactive
+    # plots are generated correctly
+    adaptor.update(axes)
 
     # Construct tickers and locators
     __decorate_axis(axes.xaxis, x_axis)
