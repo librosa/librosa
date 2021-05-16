@@ -1343,9 +1343,23 @@ def waveshow(
     ax=None,
     **kwargs,
 ):
-    """Visualize a waveform by its sample values or amplitude envelope.
+    """Visualize a waveform in the time domain.
 
-    TODO
+    This function constructs a plot which adaptively switches between a raw
+    samples-based view of the signal (`matplotlib.pyplot.step`) and an
+    amplitude-envelope view of the signal (`matplotlib.pyplot.fill_between`)
+    depending on the time extent of the plot's viewport.
+
+    More specifically, when the plot spans a time interval of less than `max_points /
+    sr` (by default, 1/2 second), the samples-based view is used, and otherwise a
+    downsampled amplitude envelope is used. 
+    This is done to limit the complexity of the visual elements to guarantee an
+    efficient, visually interpretable plot.
+
+    When using interactive rendering (e.g., in a Jupyter notebook or IPython
+    console), the plot will automatically update as the view-port is changed, either
+    through widget controls or programmatic updates.
+
 
     Parameters
     ----------
@@ -1355,11 +1369,14 @@ def waveshow(
     sr : number > 0 [scalar]
         sampling rate of ``y``
 
-    max_points : postive number or None
-        Maximum number of time-points to plot: if ``max_points`` exceeds
-        the duration of ``y``, then ``y`` is downsampled.
+    max_points : postive integer
+        Maximum number of samples to draw.  When the plot covers a time extent
+        smaller than `max_points / sr` (default: 1/2 second), samples are drawn.
 
-        If `None`, no downsampling is performed.
+        If drawing raw samples would exceed `max_points`, then a downsampled
+        amplitude envelope extracted from non-overlapping windows of `y` is
+        visualized instead.  The parameters of the amplitude envelope are defined so
+        that the resulting plot cannot produce more than `max_points` frames.
 
     x_axis : str or None
         Display of the x-axis ticks and tick markers. Accepted values are:
@@ -1402,7 +1419,11 @@ def waveshow(
         Note that the label
 
     kwargs
-        Additional keyword arguments to `matplotlib.pyplot.fill_between`
+        Additional keyword arguments to `matplotlib.pyplot.fill_between` and
+        `matplotlib.pyplot.step`.
+
+        Note that only those arguments which are common to both functions will be
+        supported.
 
     Returns
     -------
