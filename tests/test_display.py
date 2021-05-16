@@ -550,7 +550,7 @@ def test_waveshow_mono(y, sr):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["waveshow_mono"], extensions=["png"], tolerance=6
+    baseline_images=["waveshow_mono_zoom"], extensions=["png"], tolerance=6
 )
 @pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
 def test_waveshow_mono_zoom(y, sr):
@@ -559,6 +559,20 @@ def test_waveshow_mono_zoom(y, sr):
     out = librosa.display.waveshow(y, sr=sr, ax=ax, max_points=sr//2)
     # Zoom into 1/8 of a second, make sure it's out of the initial viewport
     ax.set(xlim=[1, 1.125])
+    return fig
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["waveshow_mono_zoom_out"], extensions=["png"], tolerance=6
+)
+@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+def test_waveshow_mono_zoom_out(y, sr):
+
+    fig, ax = plt.subplots(nrows=1)
+    out = librosa.display.waveshow(y, sr=sr, ax=ax, max_points=sr//2)
+    # Zoom into 1/8 of a second, make sure it's out of the initial viewport
+    ax.set(xlim=[1, 1.125])
+    # Zoom back out to get an envelope view again
+    ax.set(xlim=[0, 1])
     return fig
 
 
