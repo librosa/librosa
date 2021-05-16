@@ -1375,7 +1375,7 @@ def waveshow(
         audio time series (mono or stereo)
 
     sr : number > 0 [scalar]
-        sampling rate of ``y``
+        sampling rate of ``y`` (samples per second)
 
     max_points : postive integer
         Maximum number of samples to draw.  When the plot covers a time extent
@@ -1414,6 +1414,8 @@ def waveshow(
     marker : string
         Marker symbol to use for sample values. (default: no markers)
 
+        See also: `matplotlib.markers`.
+
     where : string, {'pre', 'mid', 'post'}
         This setting determines how both waveform and envelope plots interpolate
         between observations.
@@ -1443,6 +1445,7 @@ def waveshow(
     AdaptiveWaveplot
     matplotlib.pyplot.step
     matplotlib.pyplot.fill_between
+    matplotlib.markers
 
 
     Examples
@@ -1475,11 +1478,12 @@ def waveshow(
     Zooming in on a plot to show raw sample values
 
     >>> fig, (ax, ax2) = plt.subplots(nrows=2, sharex=True)
-    >>> ax.set(xlim=[1.0, 1.1], title='Sample view')
-    >>> librosa.display.waveshow(y, sr=sr, ax=ax)
+    >>> ax.set(xlim=[6.0, 6.01], title='Sample view', ylim=[-0.2, 0.2])
+    >>> librosa.display.waveshow(y, sr=sr, ax=ax, marker='.', label='Full signal')
     >>> librosa.display.waveshow(y_harm, sr=sr, alpha=0.5, ax=ax2, label='Harmonic')
     >>> librosa.display.waveshow(y_perc, sr=sr, alpha=0.5, ax=ax2, label='Percussive')
     >>> ax.label_outer()
+    >>> ax.legend()
     >>> ax2.legend()
 
     """
