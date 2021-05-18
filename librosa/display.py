@@ -162,15 +162,21 @@ class TimeFormatter(Formatter):
             s = "{:.3g}".format(value * 1000)
         else:
             if vmax - vmin > 3600:
+                # Hours viz
                 s = "{:d}:{:02d}:{:02d}".format(
                     int(value / 3600.0),
                     int(np.mod(value / 60.0, 60)),
                     int(np.mod(value, 60)),
                 )
             elif vmax - vmin > 60:
+                # Minutes viz
                 s = "{:d}:{:02d}".format(int(value / 60.0), int(np.mod(value, 60)))
-            else:
+            elif vmax - vmin >= 1:
+                # Seconds viz
                 s = "{:.2g}".format(value)
+            else:
+                # Milliseconds viz
+                s = "{:.3f}".format(value)
 
         return "{:s}{:s}".format(sign, s)
 
