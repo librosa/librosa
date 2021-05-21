@@ -72,6 +72,9 @@ def load(
         If the codec is supported by `soundfile`, then `path` can also be
         an open file descriptor (int).
 
+        If the codec is not supported by `soundfile` (for example, mp3),
+        then `path` must be a file path.
+
     sr   : number > 0 [scalar]
         target sampling rate
 
