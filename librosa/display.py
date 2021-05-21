@@ -10,7 +10,7 @@ Data visualization
     :toctree: generated/
 
     specshow
-    waveplot
+    waveshow
 
 Axis formatting
 ---------------
@@ -31,6 +31,14 @@ Miscellaneous
     :toctree: generated/
 
     cmap
+    AdaptiveWaveplot
+
+Deprecated
+----------
+.. autosummary::
+    :toctree: generated/
+
+    waveplot
 
 """
 
@@ -52,6 +60,7 @@ from .util.exceptions import ParameterError
 
 __all__ = [
     "specshow",
+    "waveshow",
     "waveplot",
     "cmap",
     "TimeFormatter",
@@ -59,6 +68,7 @@ __all__ = [
     "LogHzFormatter",
     "ChromaFormatter",
     "TonnetzFormatter",
+    "AdaptiveWaveplot",
 ]
 
 
@@ -152,15 +162,21 @@ class TimeFormatter(Formatter):
             s = "{:.3g}".format(value * 1000)
         else:
             if vmax - vmin > 3600:
+                # Hours viz
                 s = "{:d}:{:02d}:{:02d}".format(
                     int(value / 3600.0),
                     int(np.mod(value / 60.0, 60)),
                     int(np.mod(value, 60)),
                 )
             elif vmax - vmin > 60:
+                # Minutes viz
                 s = "{:d}:{:02d}".format(int(value / 60.0), int(np.mod(value, 60)))
-            else:
+            elif vmax - vmin >= 1:
+                # Seconds viz
                 s = "{:.2g}".format(value)
+            else:
+                # Milliseconds viz
+                s = "{:.3f}".format(value)
 
         return "{:s}{:s}".format(sign, s)
 
@@ -420,6 +436,93 @@ class TonnetzFormatter(Formatter):
         return [r"5$_x$", r"5$_y$", r"m3$_x$", r"m3$_y$", r"M3$_x$", r"M3$_y$"][int(x)]
 
 
+class AdaptiveWaveplot:
+    """A helper class for managing adaptive wave visualizations.
+
+    This object is used to dynamically switch between sample-based and envelope-based
+    visualizations of waveforms.
+    When the display is zoomed in such that no more than `max_samples` would be
+    visible, the sample-based display is used.
+    When displaying the raw samples would require more than `max_samples`, an
+    envelope-based plot is used instead.
+
+    You should never need to instantiate this object directly, as it is constructed
+    automatically by `waveshow`.
+
+    Parameters
+    ----------
+    times : np.ndarray
+        An array containing the time index (in seconds) for each sample.
+
+    y : np.ndarray
+        An array containing the (monophonic) wave samples.
+
+    steps : matplotlib.lines.Lines2D
+        The matplotlib artist used for the sample-based visualization.
+        This is constructed by `matplotlib.pyplot.step`.
+
+    envelope : matplotlib.collections.PolyCollection
+        The matplotlib artist used for the envelope-based visualization.
+        This is constructed by `matplotlib.pyplot.fill_between`.
+
+    sr : number > 0
+        The sampling rate of the audio
+
+    max_samples : int > 0
+        The maximum number of samples to use for sample-based display.
+
+    See Also
+    --------
+    waveshow
+    """
+
+    def __init__(self, times, y, steps, envelope, sr=22050, max_samples=11025):
+        self.times = times
+        self.samples = y
+        self.steps = steps
+        self.envelope = envelope
+        self.sr = sr
+        self.max_samples = max_samples
+
+    def update(self, ax):
+        """Update the matplotlib display according to the current viewport limits.
+
+        This is a callback function, and should not be used directly.
+
+        Parameters
+        ----------
+        ax : matplotlib axes object
+            The axes object to update
+        """
+        lims = ax.viewLim
+
+        # Does our width cover fewer than max_samples?
+        # If so, then use the sample-based plot
+        if lims.width * self.sr <= self.max_samples:
+            self.envelope.set_visible(False)
+            self.steps.set_visible(True)
+
+            # Now check that our viewport
+            xdata = self.steps.get_xdata()
+            if lims.x0 <= xdata[0] or lims.x1 >= xdata[-1]:
+                # Viewport expands beyond current data in steps; update
+                # we want to cover a window of self.max_samples centered on the current viewport
+                midpoint_time = (lims.x1 + lims.x0) / 2
+                idx_start = np.searchsorted(
+                    self.times, midpoint_time - 0.5 * self.max_samples / self.sr
+                )
+                self.steps.set_data(
+                    self.times[idx_start : idx_start + self.max_samples],
+                    self.samples[idx_start : idx_start + self.max_samples],
+                )
+        else:
+            # Otherwise, use the envelope plot
+            self.envelope.set_visible(True)
+            self.steps.set_visible(False)
+
+        ax.figure.canvas.draw_idle()
+
+
 def cmap(data, robust=True, cmap_seq="magma", cmap_bool="gray_r", cmap_div="coolwarm"):
     """Get a default colormap from the given data.
 
@@ -487,6 +590,7 @@ def __envelope(x, hop):
     return x_frame.max(axis=1)
 
 
+@util.decorators.deprecated("0.8.1", "0.9.0")
 def waveplot(
     y,
     sr=22050,
@@ -507,6 +611,10 @@ def waveplot(
 
     Long signals (``duration >= max_points``) are down-sampled to at
     most ``max_sr`` before plotting.
+
+    .. warning::
+        This function is deprecated in librosa 0.8.1 and will be removed
+        in 0.9.0.  Its functionality is replaced and extended by `waveshow`.
 
     Parameters
     ----------
@@ -560,6 +668,7 @@ def waveplot(
 
     See also
     --------
+    waveshow
     librosa.resample
     matplotlib.pyplot.fill_between
 
@@ -871,7 +980,7 @@ def specshow(
 
     # If the plot is a self-similarity/covariance etc. plot, square it
     if __same_axes(x_axis, y_axis, axes.get_xlim(), axes.get_ylim()) and auto_aspect:
-        axes.set_aspect('equal')
+        axes.set_aspect("equal")
     return out
 
 
@@ -949,7 +1058,7 @@ def __scale_axes(axes, ax_type, which):
 
     kwargs = dict()
     if which == "x":
-        if version_parse(matplotlib.__version__) < version_parse('3.3.0'):
+        if version_parse(matplotlib.__version__) < version_parse("3.3.0"):
             thresh = "linthreshx"
             base = "basex"
             scale = "linscalex"
@@ -961,7 +1070,7 @@ def __scale_axes(axes, ax_type, which):
         scaler = axes.set_xscale
         limit = axes.set_xlim
     else:
-        if version_parse(matplotlib.__version__) < version_parse('3.3.0'):
+        if version_parse(matplotlib.__version__) < version_parse("3.3.0"):
             thresh = "linthreshy"
             base = "basey"
             scale = "linscaley"
@@ -1220,8 +1329,223 @@ def __coord_time(n, sr=22050, hop_length=512, **_kwargs):
     """Get time coordinates from frames"""
     return core.frames_to_time(np.arange(n + 1), sr=sr, hop_length=hop_length)
 
+
 def __same_axes(x_axis, y_axis, xlim, ylim):
     """Check if two axes are the same, used to determine squared plots"""
     axes_same_and_not_none = (x_axis == y_axis) and (x_axis is not None)
     axes_same_lim = xlim == ylim
     return axes_same_and_not_none and axes_same_lim
+
+
+def waveshow(
+    y,
+    sr=22050,
+    max_points=11025,
+    x_axis="time",
+    offset=0.0,
+    marker="",
+    where="post",
+    label=None,
+    ax=None,
+    **kwargs,
+):
+    """Visualize a waveform in the time domain.
+
+    This function constructs a plot which adaptively switches between a raw
+    samples-based view of the signal (`matplotlib.pyplot.step`) and an
+    amplitude-envelope view of the signal (`matplotlib.pyplot.fill_between`)
+    depending on the time extent of the plot's viewport.
+
+    More specifically, when the plot spans a time interval of less than `max_points /
+    sr` (by default, 1/2 second), the samples-based view is used, and otherwise a
+    downsampled amplitude envelope is used.
+    This is done to limit the complexity of the visual elements to guarantee an
+    efficient, visually interpretable plot.
+
+    When using interactive rendering (e.g., in a Jupyter notebook or IPython
+    console), the plot will automatically update as the view-port is changed, either
+    through widget controls or programmatic updates.
+
+    .. note:: When visualizing stereo waveforms, the amplitude envelope will be generated
+        so that the upper limits derive from the left channel, and the lower limits derive
+        from the right channel, which can produce a vertically asymmetric plot.
+
+        When zoomed in to the sample view, only the first channel will be shown.
+        If you want to visualize both channels at the sample level, it is recommended to
+        plot each signal independently.
+
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(n,) or (2,n)]
+        audio time series (mono or stereo)
+
+    sr : number > 0 [scalar]
+        sampling rate of ``y`` (samples per second)
+
+    max_points : postive integer
+        Maximum number of samples to draw.  When the plot covers a time extent
+        smaller than `max_points / sr` (default: 1/2 second), samples are drawn.
+
+        If drawing raw samples would exceed `max_points`, then a downsampled
+        amplitude envelope extracted from non-overlapping windows of `y` is
+        visualized instead.  The parameters of the amplitude envelope are defined so
+        that the resulting plot cannot produce more than `max_points` frames.
+
+    x_axis : str or None
+        Display of the x-axis ticks and tick markers. Accepted values are:
+
+        - 'time' : markers are shown as milliseconds, seconds, minutes, or hours.
+                    Values are plotted in units of seconds.
+
+        - 's' : markers are shown as seconds.
+
+        - 'ms' : markers are shown as milliseconds.
+
+        - 'lag' : like time, but past the halfway point counts as negative values.
+
+        - 'lag_s' : same as lag, but in seconds.
+
+        - 'lag_ms' : same as lag, but in milliseconds.
+
+        - `None`, 'none', or 'off': ticks and tick markers are hidden.
+
+
+    ax : matplotlib.axes.Axes or None
+        Axes to plot on instead of the default `plt.gca()`.
+
+    offset : float
+        Horizontal offset (in seconds) to start the waveform plot
+
+    marker : string
+        Marker symbol to use for sample values. (default: no markers)
+
+        See also: `matplotlib.markers`.
+
+    where : string, {'pre', 'mid', 'post'}
+        This setting determines how both waveform and envelope plots interpolate
+        between observations.
+
+        See `matplotlib.pyplot.step` for details.
+
+        Default: 'post'
+
+    label : string [optional]
+        The label string applied to this plot.
+        Note that the label
+
+    kwargs
+        Additional keyword arguments to `matplotlib.pyplot.fill_between` and
+        `matplotlib.pyplot.step`.
+
+        Note that only those arguments which are common to both functions will be
+        supported.
+
+    Returns
+    -------
+    librosa.display.AdaptiveWaveplot
+        An object of type `librosa.display.AdaptiveWaveplot`
+
+    See also
+    --------
+    AdaptiveWaveplot
+    matplotlib.pyplot.step
+    matplotlib.pyplot.fill_between
+    matplotlib.markers
+
+
+    Examples
+    --------
+    Plot a monophonic waveform with an envelope view
+
+    >>> import matplotlib.pyplot as plt
+    >>> y, sr = librosa.load(librosa.ex('choice'), duration=10)
+    >>> fig, ax = plt.subplots(nrows=3, sharex=True)
+    >>> librosa.display.waveshow(y, sr=sr, ax=ax[0])
+    >>> ax[0].set(title='Envelope view, mono')
+    >>> ax[0].label_outer()
+
+    Or a stereo waveform
+
+    >>> y, sr = librosa.load(librosa.ex('choice', hq=True), mono=False, duration=10)
+    >>> librosa.display.waveshow(y, sr=sr, ax=ax[1])
+    >>> ax[1].set(title='Envelope view, stereo')
+    >>> ax[1].label_outer()
+
+    Or harmonic and percussive components with transparency
+
+    >>> y, sr = librosa.load(librosa.ex('choice'), duration=10)
+    >>> y_harm, y_perc = librosa.effects.hpss(y)
+    >>> librosa.display.waveshow(y_harm, sr=sr, alpha=0.5, ax=ax[2], label='Harmonic')
+    >>> librosa.display.waveshow(y_perc, sr=sr, color='r', alpha=0.5, ax=ax[2], label='Percussive')
+    >>> ax[2].set(title='Multiple waveforms')
+    >>> ax[2].legend()
+
+    Zooming in on a plot to show raw sample values
+
+    >>> fig, (ax, ax2) = plt.subplots(nrows=2, sharex=True)
+    >>> ax.set(xlim=[6.0, 6.01], title='Sample view', ylim=[-0.2, 0.2])
+    >>> librosa.display.waveshow(y, sr=sr, ax=ax, marker='.', label='Full signal')
+    >>> librosa.display.waveshow(y_harm, sr=sr, alpha=0.5, ax=ax2, label='Harmonic')
+    >>> librosa.display.waveshow(y_perc, sr=sr, alpha=0.5, ax=ax2, label='Percussive')
+    >>> ax.label_outer()
+    >>> ax.legend()
+    >>> ax2.legend()
+
+    """
+    util.valid_audio(y, mono=False)
+
+    # Pad an extra channel dimension, if necessary
+    if y.ndim == 1:
+        y = y[np.newaxis, :]
+
+    if max_points <= 0:
+        raise ParameterError(
+            "max_points={} must be strictly positive".format(max_points)
+        )
+
+    # Create the adaptive drawing object
+    axes = __check_axes(ax)
+
+    if "color" not in kwargs:
+        kwargs.setdefault("color", next(axes._get_lines.prop_cycler)["color"])
+
+    # Reduce by envelope calculation
+    # this choice of hop ensures that the envelope has at most max_points values
+    hop_length = max(1, y.shape[-1] // max_points)
+    y_env = __envelope(y, hop_length)
+
+    # Split the envelope into top and bottom
+    y_bottom, y_top = -y_env[-1], y_env[0]
+
+    times = offset + core.times_like(y, sr=sr, hop_length=1)
+
+    # Only plot up to max_points worth of data here
+    (steps,) = axes.step(
+        times[:max_points],
+        y[0, : max_points],
+        marker=marker,
+        where=where,
+        **kwargs)
+
+    envelope = axes.fill_between(
+        times[: len(y_top) * hop_length : hop_length],
+        y_bottom,
+        y_top,
+        step=where,
+        label=label,
+        **kwargs,
+    )
+    adaptor = AdaptiveWaveplot(
+        times, y[0], steps, envelope, sr=sr, max_samples=max_points
+    )
+
+    axes.callbacks.connect("xlim_changed", adaptor.update)
+
+    # Force an initial update to ensure the state is consistent
+    adaptor.update(axes)
+
+    # Construct tickers and locators
+    __decorate_axis(axes.xaxis, x_axis)
+
+    return adaptor

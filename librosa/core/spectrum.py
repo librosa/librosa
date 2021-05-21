@@ -2345,13 +2345,13 @@ def griffinlim(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
-    >>> librosa.display.waveplot(y, sr=sr, color='b', ax=ax[0])
+    >>> librosa.display.waveshow(y, sr=sr, color='b', ax=ax[0])
     >>> ax[0].set(title='Original', xlabel=None)
     >>> ax[0].label_outer()
-    >>> librosa.display.waveplot(y_inv, sr=sr, color='g', ax=ax[1])
+    >>> librosa.display.waveshow(y_inv, sr=sr, color='g', ax=ax[1])
     >>> ax[1].set(title='Griffin-Lim reconstruction', xlabel=None)
     >>> ax[1].label_outer()
-    >>> librosa.display.waveplot(y_istft, sr=sr, color='r', ax=ax[2])
+    >>> librosa.display.waveshow(y_istft, sr=sr, color='r', ax=ax[2])
     >>> ax[2].set_title('Magnitude-only istft reconstruction')
     """
 
