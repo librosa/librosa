@@ -44,7 +44,7 @@ setup(
         'decorator >= 3.0.0',
         'resampy >= 0.2.2',
         'numba >= 0.43.0',
-        'soundfile >= 0.9.0',
+        'soundfile >= 0.10.2',
         'pooch >= 1.0',
         'packaging >= 20.0'
     ],
