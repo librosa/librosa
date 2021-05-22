@@ -791,6 +791,8 @@ def specshow(
         - 'linear', 'fft', 'hz' : frequency range is determined by
           the FFT window and sampling rate.
         - 'log' : the spectrum is displayed on a log scale.
+        - 'fft_note': the spectrum is displayed on a log scale with pitches marked.
+        - 'fft_svara': the spectrum is displayed on a log scale with svara marked.
         - 'mel' : frequencies are determined by the mel scale.
         - 'cqt_hz' : frequencies are determined by the CQT scale.
         - 'cqt_note' : pitches are determined by the CQT scale.
@@ -1102,12 +1104,6 @@ def __scale_axes(axes, ax_type, which):
         kwargs[thresh] = 1000.0
         kwargs[base] = 2
 
-    elif ax_type == "log":
-        mode = "symlog"
-        kwargs[base] = 2
-        kwargs[thresh] = core.note_to_hz("C2")
-        kwargs[scale] = 0.5
-
     elif ax_type in ["cqt", "cqt_hz", "cqt_note", "cqt_svara"]:
         mode = "log"
         kwargs[base] = 2
@@ -1258,9 +1254,16 @@ def __decorate_axis(axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None):
     elif ax_type == "fft_svara":
         axis.set_major_formatter(SvaraFormatter(Sa=Sa, mela=mela))
         # Find the offset of Sa relative to 2**k Hz
-        sa_offset = 2.0 ** (np.log2(Sa) - np.floor(np.log2(Sa)))
+        log_Sa = np.log2(Sa)
+        sa_offset = 2.0 ** (log_Sa - np.floor(log_Sa))
 
-        axis.set_major_locator(LogLocator(base=2.0, subs=(sa_offset,)))
+        axis.set_major_locator(
+            SymmetricalLogLocator(
+                axis.get_transform(),
+                base=2.0,
+                subs=[sa_offset]
+            )
+        )
         axis.set_minor_formatter(SvaraFormatter(Sa=Sa, mela=mela, major=False))
         axis.set_minor_locator(
             LogLocator(base=2.0, subs=sa_offset * 2.0 ** (np.arange(1, 12) / 12.0))
