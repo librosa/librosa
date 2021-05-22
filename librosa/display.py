@@ -760,6 +760,7 @@ def specshow(
     mela=None,
     thaat=None,
     auto_aspect=True,
+    htk=False,
     ax=None,
     **kwargs,
 ):
@@ -881,10 +882,20 @@ def specshow(
         If using `chroma_h` display mode, specify the parent thaat.
 
     auto_aspect : bool
-        Axes will have 'equal' aspect if the horizontal and vertical dimensions 
+        Axes will have 'equal' aspect if the horizontal and vertical dimensions
         cover the same extent and their types match.
 
         To override, set to `False`.
+
+    htk : bool
+        If plotting on a mel frequency axis, specify which version of the mel
+        scale to use.
+
+            - `False`: use Slaney formula (default)
+            - `True`: use HTK formula
+
+        See `core.mel_frequencies` for more information.
+
 
     ax : matplotlib.axes.Axes or None
         Axes to plot on instead of the default `plt.gca()`.
@@ -957,6 +968,7 @@ def specshow(
         bins_per_octave=bins_per_octave,
         hop_length=hop_length,
         key=key,
+        htk=htk,
     )
 
     # Get the x and y coordinates
@@ -1255,7 +1267,7 @@ def __coord_fft_hz(n, sr=22050, **_kwargs):
     return basis
 
 
-def __coord_mel_hz(n, fmin=0, fmax=None, sr=22050, **_kwargs):
+def __coord_mel_hz(n, fmin=0, fmax=None, sr=22050, htk=False, **_kwargs):
     """Get the frequencies for Mel bins"""
 
     if fmin is None:
@@ -1263,7 +1275,7 @@ def __coord_mel_hz(n, fmin=0, fmax=None, sr=22050, **_kwargs):
     if fmax is None:
         fmax = 0.5 * sr
 
-    basis = core.mel_frequencies(n, fmin=fmin, fmax=fmax)
+    basis = core.mel_frequencies(n, fmin=fmin, fmax=fmax, htk=htk)
     basis[1:] -= 0.5 * np.diff(basis)
     basis = np.append(np.maximum(0, basis), [fmax])
     return basis
