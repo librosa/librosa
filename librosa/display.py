@@ -39,7 +39,7 @@ import warnings
 import numpy as np
 from matplotlib.cm import get_cmap
 from matplotlib.axes import Axes
-from matplotlib.ticker import AutoLocator, Formatter, MultipleLocator, ScalarFormatter
+from matplotlib.ticker import Formatter, ScalarFormatter
 from matplotlib.ticker import LogLocator, FixedLocator, MaxNLocator
 from matplotlib.ticker import SymmetricalLogLocator
 
@@ -966,7 +966,7 @@ def __scale_axes(axes, ax_type, which):
         mode = "log"
         kwargs[base] = 2
 
-    elif ax_type == "fft_note":
+    elif ax_type in ["log", "fft_note", "fft_svara"]:
         mode = "symlog"
         kwargs[base] = 2
         kwargs[thresh] = core.note_to_hz("C2")
