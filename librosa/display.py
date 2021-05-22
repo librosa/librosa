@@ -1022,6 +1022,8 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
     coord_map = {
         "linear": __coord_fft_hz,
         "fft": __coord_fft_hz,
+        "fft_note": __coord_fft_hz,
+        "fft_svara": __coord_fft_hz,
         "hz": __coord_fft_hz,
         "log": __coord_fft_hz,
         "mel": __coord_mel_hz,
@@ -1109,6 +1111,12 @@ def __scale_axes(axes, ax_type, which):
     elif ax_type in ["cqt", "cqt_hz", "cqt_note", "cqt_svara"]:
         mode = "log"
         kwargs[base] = 2
+
+    elif ax_type in ["log", "fft_note", "fft_svara"]:
+        mode = "symlog"
+        kwargs[base] = 2
+        kwargs[thresh] = core.note_to_hz("C2")
+        kwargs[scale] = 0.5
 
     elif ax_type in ["tempo", "fourier_tempo"]:
         mode = "log"
@@ -1235,12 +1243,36 @@ def __decorate_axis(axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None):
         )
         axis.set_label_text("Hz")
 
+    elif ax_type == "fft_note":
+        axis.set_major_formatter(NoteFormatter(key=key))
+        # Where is C1 relative to 2**k hz?
+        log_C1 = np.log2(core.note_to_hz("C1"))
+        C_offset = 2.0 ** (log_C1 - np.floor(log_C1))
+        axis.set_major_locator(SymmetricalLogLocator(axis.get_transform()))
+        axis.set_minor_formatter(NoteFormatter(key=key, major=False))
+        axis.set_minor_locator(
+            LogLocator(base=2.0, subs=2.0 ** (np.arange(1, 12) / 12.0))
+        )
+        axis.set_label_text("Note")
+
+    elif ax_type == "fft_svara":
+        axis.set_major_formatter(SvaraFormatter(Sa=Sa, mela=mela))
+        # Find the offset of Sa relative to 2**k Hz
+        sa_offset = 2.0 ** (np.log2(Sa) - np.floor(np.log2(Sa)))
+
+        axis.set_major_locator(LogLocator(base=2.0, subs=(sa_offset,)))
+        axis.set_minor_formatter(SvaraFormatter(Sa=Sa, mela=mela, major=False))
+        axis.set_minor_locator(
+            LogLocator(base=2.0, subs=sa_offset * 2.0 ** (np.arange(1, 12) / 12.0))
+        )
+        axis.set_label_text("Svara")
+
     elif ax_type in ["mel", "log"]:
         axis.set_major_formatter(ScalarFormatter())
         axis.set_major_locator(SymmetricalLogLocator(axis.get_transform()))
         axis.set_label_text("Hz")
 
-    elif ax_type in ["linear", "hz"]:
+    elif ax_type in ["linear", "hz", "fft"]:
         axis.set_major_formatter(ScalarFormatter())
         axis.set_label_text("Hz")
 
