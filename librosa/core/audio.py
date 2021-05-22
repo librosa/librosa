@@ -496,6 +496,8 @@ def resample(
                 - ``res_type='sinc_best'``, ``'sinc_medium'``, or ``'sinc_fastest'``: for high-, medium-,
                   and low-quality sinc interpolation
 
+            To use `soxr`, set ``res_type='soxr_hq'`` or ``res_type='soxr_vhq'`` (fast)
+
         .. note::
             When using ``res_type='polyphase'``, only integer sampling rates are
             supported.
@@ -529,6 +531,7 @@ def resample(
     scipy.signal.resample
     resampy
     samplerate.converters.resample
+    soxr
 
     Notes
     -----
@@ -580,6 +583,11 @@ def resample(
 
         # We have to transpose here to match libsamplerate
         y_hat = samplerate.resample(y.T, ratio, converter_type=res_type).T
+    elif res_type.startswith('soxr'):
+        import soxr
+
+        # We have to transpose here to match soxr
+        y_hat = soxr.resample(y.T, orig_sr, target_sr, quality=res_type).T
     else:
         y_hat = resampy.resample(y, orig_sr, target_sr, filter=res_type, axis=-1)
 
