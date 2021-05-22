@@ -144,6 +144,15 @@ def test_cqt_note(C):
     librosa.display.specshow(C, y_axis="cqt_note")
     return plt.gcf()
 
+@pytest.mark.mpl_image_compare(
+    baseline_images=["fft_note"], extensions=["png"], tolerance=6
+)
+@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+def test_fft_note(S_abs):
+    plt.figure()
+    librosa.display.specshow(S_abs, y_axis="fft_note")
+    return plt.gcf()
+
 
 @pytest.mark.mpl_image_compare(
     baseline_images=["cqt_hz"], extensions=["png"], tolerance=6
@@ -300,10 +309,10 @@ def test_xaxis_none_yaxis_linear(S_abs, S_signed, S_bin):
     librosa.display.specshow(S_abs, y_axis="linear")
 
     plt.subplot(3, 1, 2)
-    librosa.display.specshow(S_signed, y_axis="linear")
+    librosa.display.specshow(S_signed, y_axis="fft")
 
     plt.subplot(3, 1, 3)
-    librosa.display.specshow(S_bin, y_axis="linear")
+    librosa.display.specshow(S_bin, y_axis="hz")
     return plt.gcf()
 
 
@@ -351,10 +360,10 @@ def test_xaxis_linear_yaxis_none(S_abs, S_signed, S_bin):
     librosa.display.specshow(S_abs.T, x_axis="linear")
 
     plt.subplot(3, 1, 2)
-    librosa.display.specshow(S_signed.T, x_axis="linear")
+    librosa.display.specshow(S_signed.T, x_axis="fft")
 
     plt.subplot(3, 1, 3)
-    librosa.display.specshow(S_bin.T, x_axis="linear")
+    librosa.display.specshow(S_bin.T, x_axis="hz")
     return plt.gcf()
 
 
@@ -792,6 +801,32 @@ def test_display_cqt_svara(C, sr):
     librosa.display.specshow(Camp, y_axis="cqt_svara", Sa=261, ax=ax3)
     librosa.display.specshow(Camp, y_axis="cqt_svara", Sa=261, mela=1, ax=ax4)
     librosa.display.specshow(Camp, y_axis="cqt_svara", Sa=261, mela=1, ax=ax5)
+
+    ax3.set_ylim([440, 880])
+    ax5.set_ylim([440, 880])
+    ax1.label_outer()
+    ax2.label_outer()
+    ax3.label_outer()
+    ax4.label_outer()
+
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["fft_svara"], extensions=["png"], tolerance=6
+)
+@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+def test_display_fft_svara(S_abs, sr):
+
+    fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(
+        nrows=5, sharex=True, figsize=(10, 10)
+    )
+
+    librosa.display.specshow(S_abs, y_axis="fft_svara", Sa=261, ax=ax1)
+    librosa.display.specshow(S_abs, y_axis="fft_svara", Sa=440, ax=ax2)
+    librosa.display.specshow(S_abs, y_axis="fft_svara", Sa=261, ax=ax3)
+    librosa.display.specshow(S_abs, y_axis="fft_svara", Sa=261, mela=1, ax=ax4)
+    librosa.display.specshow(S_abs, y_axis="fft_svara", Sa=261, mela=1, ax=ax5)
 
     ax3.set_ylim([440, 880])
     ax5.set_ylim([440, 880])
