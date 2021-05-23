@@ -125,6 +125,8 @@ def resample_mono(resample_audio):
         "sinc_fastest",
         "sinc_medium",
         "zero_order_hold",
+        "soxr_hq",
+        "soxr_vhq",
     ],
 )
 @pytest.mark.parametrize("fix", [False, True])
@@ -165,6 +167,8 @@ def test_resample_mono(resample_mono, sr_out, res_type, fix):
         "sinc_fastest",
         "sinc_medium",
         "zero_order_hold",
+        "soxr_hq",
+        "soxr_vhq",
     ],
 )
 @pytest.mark.parametrize("fix", [False, True])
@@ -202,6 +206,8 @@ def test_resample_stereo(resample_audio, sr_out, res_type, fix):
         "sinc_best",
         "sinc_fastest",
         "sinc_medium",
+        "soxr_hq",
+        "soxr_vhq",
     ],
 )
 @pytest.mark.parametrize("sr_out", [11025, 22050, 44100])

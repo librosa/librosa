@@ -62,7 +62,8 @@ setup(
                   'pytest-cov',
                   'pytest',
                   'contextlib2',
-                  'samplerate'],
+                  'samplerate',
+                  'soxr'],
         'display': ['matplotlib >= 1.5'],
     }
 )
