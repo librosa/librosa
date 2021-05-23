@@ -115,3 +115,11 @@ librosa.display.specshow(librosa.amplitude_to_db(S_foreground[:, idx], ref=np.ma
                          y_axis='log', x_axis='time', sr=sr, ax=ax[2])
 ax[2].set(title='Foreground')
 fig.colorbar(img, ax=ax)
+
+
+###########################################
+# Recover the foreground audio from the masked spectrogram.
+# To do this, we'll need to re-introduce the phase information
+# that we had previously set aside.
+
+y_foreground = librosa.istft(S_foreground * phase)

@@ -39,11 +39,11 @@ x_1, fs = librosa.load('audio/sir_duke_slow.ogg')
 x_2, fs = librosa.load('audio/sir_duke_fast.ogg')
 
 fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
-librosa.display.waveplot(x_1, sr=fs, ax=ax[0])
+librosa.display.waveshow(x_1, sr=fs, ax=ax[0])
 ax[0].set(title='Slower Version $X_1$')
 ax[0].label_outer()
 
-librosa.display.waveplot(x_2, sr=fs, ax=ax[1])
+librosa.display.waveshow(x_2, sr=fs, ax=ax[1])
 ax[1].set(title='Faster Version $X_2$')
 
 #########################
@@ -97,11 +97,11 @@ from matplotlib.patches import ConnectionPatch
 fig, (ax1, ax2) = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(8, 4))
 
 # Plot x_2
-librosa.display.waveplot(x_2, sr=fs, ax=ax2)
+librosa.display.waveshow(x_2, sr=fs, ax=ax2)
 ax2.set(title='Faster Version $X_2$')
 
 # Plot x_1
-librosa.display.waveplot(x_1, sr=fs, ax=ax1)
+librosa.display.waveshow(x_1, sr=fs, ax=ax1)
 ax1.set(title='Slower Version $X_1$')
 ax1.label_outer()
 

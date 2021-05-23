@@ -11,7 +11,7 @@ can do to help generate beautiful visualizations of spectro-temporal data.
 
 # Code source: Brian McFee
 # License: ISC
-# sphinx_gallery_thumbnail_number = 15
+# sphinx_gallery_thumbnail_number = 6
 
 # %%
 # All of librosa's plotting functions rely on matplotlib.

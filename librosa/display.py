@@ -819,7 +819,7 @@ def specshow(
 
         Time types:
 
-        - 'time' : markers are shown as milliseconds, seconds, minutes, or hours.  
+        - 'time' : markers are shown as milliseconds, seconds, minutes, or hours.
                 Values are plotted in units of seconds.
         - 's' : markers are shown as seconds.
         - 'ms' : markers are shown as milliseconds.
