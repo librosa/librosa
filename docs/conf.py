@@ -102,6 +102,7 @@ matplotlib.rcParams['figure.constrained_layout.use'] = librosa.__version__ >= '0
 """
 )
 plot_include_source = True
+plot_html_show_source_link = False
 plot_formats = [("png", 100), ("pdf", 100)]
 plot_html_show_formats = False
 
