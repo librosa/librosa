@@ -755,7 +755,8 @@ def vqt(
     described by [#]_.
 
     .. [#] Schörkhuber, Christian, Anssi Klapuri, Nicki Holighaus, and Monika Dörfler.
-        "A Matlab toolbox for efficient perfect reconstruction time-frequency transforms with log-frequency resolution."
+        "A Matlab toolbox for efficient perfect reconstruction time-frequency
+        transforms with log-frequency resolution."
         In Audio Engineering Society Conference: 53rd International Conference: Semantic Audio.
         Audio Engineering Society, 2014.
 
@@ -1213,7 +1214,7 @@ def griffinlim_cqt(
     algorithm.
 
     Given the magnitude of a constant-Q spectrogram (``C``), the algorithm randomly initializes
-    phase estimates, and then alternates forward- and inverse-CQT operations. [#]_ 
+    phase estimates, and then alternates forward- and inverse-CQT operations. [#]_
 
     This implementation is based on the (fast) Griffin-Lim method for Short-time Fourier Transforms, [#]_
     but adapted for use with constant-Q spectrograms.

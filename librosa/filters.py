@@ -122,7 +122,7 @@ def mel(
 ):
     """Create a Mel filter-bank.
 
-    This produces a linear transformation matrix to project 
+    This produces a linear transformation matrix to project
     FFT bins onto Mel-frequency bins.
 
     Parameters
@@ -386,7 +386,7 @@ def chroma(
         )
 
     if base_c:
-        wts = np.roll(wts, -3*(n_chroma//12), axis=0)
+        wts = np.roll(wts, -3 * (n_chroma // 12), axis=0)
 
     # remove aliasing columns, copy to ensure row-contiguity
     return np.ascontiguousarray(wts[:, : int(1 + n_fft / 2)], dtype=dtype)
@@ -1060,9 +1060,9 @@ def mr_frequencies(tuning):
     center_freqs = midi_to_hz(np.arange(24 + tuning, 109 + tuning))
 
     sample_rates = np.asarray(
-        len(np.arange(0, 36)) * [882,]
-        + len(np.arange(36, 70)) * [4410,]
-        + len(np.arange(70, 85)) * [22050,]
+        len(np.arange(0, 36)) * [882, ]
+        + len(np.arange(36, 70)) * [4410, ]
+        + len(np.arange(70, 85)) * [22050, ]
     )
 
     return center_freqs, sample_rates

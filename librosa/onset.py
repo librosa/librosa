@@ -108,7 +108,7 @@ def onset_detect(
     Get onset times from a signal
 
     >>> y, sr = librosa.load(librosa.ex('trumpet'))
-    >>> librosa.onset.onset_detect(y=y, sr=sr, units='time')      
+    >>> librosa.onset.onset_detect(y=y, sr=sr, units='time')
     array([0.07 , 0.232, 0.395, 0.604, 0.743, 0.929, 1.045, 1.115,
            1.416, 1.672, 1.881, 2.043, 2.206, 2.368, 2.554, 3.019])
 

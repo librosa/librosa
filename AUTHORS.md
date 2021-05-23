@@ -66,6 +66,17 @@ Contributors
 * Benjamin van Niekirk <https://github.com/bshall>
 * Kaushik Sripathi Hatti <https://github.com/hskaushik>
 * Kaustuv Kanti Ganguli <https://github.com/kaustuvkanti>
+* Dan Mazur <https://github.com/QEDan>
+* Joon Lim <https://github.com/joonlim9>
+* Pavel Campr <https://github.com/pcampr>
+* Tim Gates <https://github.com/timgates42>
+* Abduttayyeb Mazhar <https://github.com/Abduttayyeb>
+* Cash TingHin Lo <https://github.com/cashlo>
+* Xinlu Zhuang <https://github.com/zhuangzi926>
+* Connor Guerrero <https://github.com/c-jg>
+* N. Dorukhan Sergin <https://github.com/dorukhansergin>
+* Paul Biberstein <https://github.com/P-bibs>
+
 
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.

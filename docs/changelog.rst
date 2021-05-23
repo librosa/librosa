@@ -5,6 +5,69 @@ Changelog
 v0.8
 ====
 
+v0.8.1
+------
+2021-05-??
+
+New Features
+    - `#1293`_ `librosa.effects.deemphasis`, inverse operation of `librosa.effects.preemphasis`. *Dan Mazur*
+    - `#1207`_  `librosa.display.waveshow`, adaptively visualize waveforms by amplitude envelope when zoomed out, or raw sample values when zoomed in. *Brian McFee*
+
+
+Bug fixes
+    - `#1290`_ `librosa.display.specshow` fixed a bug in format and tick locations for CQT plots. *Brian McFee*
+    - `#1240`_ `librosa.display.specshow` now correctly infers `fmax` for mel frequency axes. *Brian McFee, Bea Steers*
+    - `#1311`_ `librosa.filters.chroma` fixed an error in how chromagrams were generated when `n_chroma!=12` and `base_c=True`. *Joon Lim*
+    - `#1322`_ `librosa.feature.inverse.mel_to_audio` now infers `hop_length` by default in a way that is consistent with the rest of the package. *Dan Ellis*
+
+Documentation
+    - `#1211`_ fixed a broken link in the changelog. *Pavel Campr*
+    - `#1218`_ corrected an exception/warning message in `librosa.stft` when the frame length exceeds the input length. *Frank Zalkow*
+    - `#1237`_ fixed spelling errors in `librosa.yin` and `librosa.pyin` documentation. *Tim Gates*
+    - `#1284`_ fixed broken links in `CONTRIBUTING.md` document. *Abduttayyeb Mazhar*
+    - `#1287`_ expanded instructions for installing ffmpeg on Windows. *Cash TingHin Lo*
+    - `#1298`_ fixed a dimension calculation error in `librosa.stream` documentation.  *Xinlu Zhuang*
+    - `#1321`_ fixed a mismatched parenthesis in `librosa.feature.mfcc` documentation. *Connor Guerrero*
+    - `#1333`_ expanded documentation describing unsupported codecs in `librosa.load`. *Brian McFee*
+
+
+Other changes
+    - `#1312`_ `librosa.display.specshow` can now automatically sets the aspect ratio of
+      a plot if the axes are of the same type and shape. *N. Dorukhan Sergin*
+    - `#1323`_, `#1317_`, `#1308`_ simplified testing framework and migrated to GitHub Actions.  *Brian McFee*
+    - `#1324`_ `librosa.display.specshow` is now future-proofed for matplotlib 3.5.  *Brian McFee*
+    - `#1334`_ `librosa.display.specshow` now supports HTK-style Mel scaling. *Brian McFee*
+    - `#1335`_, `#1336`_ `librosa.display.specshow` now supports pitch notation
+      (Western, Hindustani, and Carnatic) for STFT matrices. *Paul Biberstein, Brian McFee*
+    - `#1333`_ minimum version of `soundfile` has been updated to 0.10.2. *Brian McFee*
+
+Deprecations to be removed in 0.9
+    - `librosa.display.waveplot` is now deprecated in favor of `librosa.display.waveshow`.
+
+.. _#1293: https://github.com/librosa/librosa/issues/1293
+.. _#1207: https://github.com/librosa/librosa/issues/1207
+.. _#1290: https://github.com/librosa/librosa/issues/1290
+.. _#1240: https://github.com/librosa/librosa/issues/1240
+.. _#1311: https://github.com/librosa/librosa/issues/1311
+.. _#1322: https://github.com/librosa/librosa/issues/1322
+.. _#1211: https://github.com/librosa/librosa/issues/1211
+.. _#1218: https://github.com/librosa/librosa/issues/1218
+.. _#1237: https://github.com/librosa/librosa/issues/1237
+.. _#1284: https://github.com/librosa/librosa/issues/1284
+.. _#1287: https://github.com/librosa/librosa/issues/1287
+.. _#1298: https://github.com/librosa/librosa/issues/1298
+.. _#1321: https://github.com/librosa/librosa/issues/1321
+.. _#1333: https://github.com/librosa/librosa/issues/1333
+
+.. _#1312: https://github.com/librosa/librosa/issues/1312
+.. _#1323: https://github.com/librosa/librosa/issues/1323
+.. _#1317: https://github.com/librosa/librosa/issues/1317
+.. _#1308: https://github.com/librosa/librosa/issues/1308
+.. _#1324: https://github.com/librosa/librosa/issues/1324
+.. _#1334: https://github.com/librosa/librosa/issues/1334
+.. _#1335: https://github.com/librosa/librosa/issues/1335
+.. _#1336: https://github.com/librosa/librosa/issues/1336
+
 v0.8.0
 ------
 2020-07-22
