@@ -66,7 +66,7 @@ def cross_similarity(
 ):
     """Compute cross-similarity from one data sequence to a reference sequence.
 
-    The output is a matrix ``xsim``, where ``xsim[i, j]`` is non-zero 
+    The output is a matrix ``xsim``, where ``xsim[i, j]`` is non-zero
     if ``data_ref[:, i]`` is a k-nearest neighbor of ``data[:, j]``.
 
 

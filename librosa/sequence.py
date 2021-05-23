@@ -1471,7 +1471,7 @@ def transition_loop(n_states, prob):
     prob : float in [0, 1] or iterable, length=n_states
         If a scalar, this is the probability of a self-transition.
 
-        If a vector of length ``n_states``, ``p[i]`` is the probability of self-transition in state ``i`` 
+        If a vector of length ``n_states``, ``p[i]`` is the probability of self-transition in state ``i``
 
     Returns
     -------
