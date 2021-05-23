@@ -14,7 +14,9 @@ except KeyError:
 
 from packaging import version
 
-import matplotlib
+import pytest
+
+matplotlib = pytest.importorskip("matplotlib", minversion="3.4")
 
 matplotlib.use("Agg")
 matplotlib.rcParams.update(matplotlib.rcParamsDefault)
@@ -29,7 +31,6 @@ import librosa
 import librosa.display
 import numpy as np
 
-import pytest
 
 
 # Workaround for old freetype builds with our image fixtures
