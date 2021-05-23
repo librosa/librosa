@@ -151,9 +151,9 @@ sphinx_gallery_conf = {
     "reference_url": {
         "sphinx_gallery": None,
         "librosa": None,
-        "numpy": "http://numpy.org/doc/stable/",
-        "np": "http://numpy.org/doc/stable/",
-        "scipy": "http://docs.scipy.org/doc/scipy/reference",
+        "numpy": "https://numpy.org/doc/stable/",
+        "np": "https://numpy.org/doc/stable/",
+        "scipy": "https://docs.scipy.org/doc/scipy/reference/",
         "matplotlib": "https://matplotlib.org/",
         "sklearn": "https://scikit-learn.org/stable/",
         "resampy": "https://resampy.readthedocs.io/en/latest/",
