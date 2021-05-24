@@ -702,7 +702,7 @@ def waveplot(
 
     util.valid_audio(y, mono=False)
 
-    if not (isinstance(max_sr, int) and max_sr > 0):
+    if not (isinstance(max_sr, (int, np.integer)) and max_sr > 0):
         raise ParameterError("max_sr must be a non-negative integer")
 
     target_sr = sr

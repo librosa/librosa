@@ -1443,7 +1443,7 @@ def transition_uniform(n_states):
            [0.333, 0.333, 0.333]])
     """
 
-    if not isinstance(n_states, int) or n_states <= 0:
+    if not isinstance(n_states, (int, np.integer)) or n_states <= 0:
         raise ParameterError("n_states={} must be a positive integer")
 
     transition = np.empty((n_states, n_states), dtype=np.float)
@@ -1491,7 +1491,7 @@ def transition_loop(n_states, prob):
            [0.375, 0.375, 0.25 ]])
     """
 
-    if not isinstance(n_states, int) or n_states <= 1:
+    if not isinstance(n_states, (int, np.integer)) or n_states <= 1:
         raise ParameterError("n_states={} must be a positive integer > 1")
 
     transition = np.empty((n_states, n_states), dtype=np.float)
@@ -1558,7 +1558,7 @@ def transition_cycle(n_states, prob):
            [0.1, 0. , 0. , 0.9]])
     """
 
-    if not isinstance(n_states, int) or n_states <= 1:
+    if not isinstance(n_states, (int, np.integer)) or n_states <= 1:
         raise ParameterError("n_states={} must be a positive integer > 1")
 
     transition = np.zeros((n_states, n_states), dtype=np.float)
@@ -1661,7 +1661,7 @@ def transition_local(n_states, width, window="triangle", wrap=False):
            [0.   , 0.   , 0.   , 0.   , 1.   ]])
     """
 
-    if not isinstance(n_states, int) or n_states <= 1:
+    if not isinstance(n_states, (int, np.integer)) or n_states <= 1:
         raise ParameterError("n_states={} must be a positive integer > 1")
 
     width = np.asarray(width, dtype=int)

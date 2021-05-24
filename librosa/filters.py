@@ -631,7 +631,7 @@ def constant_q_lengths(
     if filter_scale <= 0:
         raise ParameterError("filter_scale must be positive")
 
-    if n_bins <= 0 or not isinstance(n_bins, int):
+    if n_bins <= 0 or not isinstance(n_bins, (int, np.integer)):
         raise ParameterError("n_bins must be a positive integer")
 
     # Q should be capitalized here, so we suppress the name warning

@@ -509,7 +509,7 @@ def spectral_contrast(
             "freq.shape mismatch: expected " "({:d},)".format(S.shape[0])
         )
 
-    if n_bands < 1 or not isinstance(n_bands, int):
+    if n_bands < 1 or not isinstance(n_bands, (int, np.integer)):
         raise ParameterError("n_bands must be a positive integer")
 
     if not 0.0 < quantile < 1.0:
@@ -1580,7 +1580,7 @@ def chroma_cens(
 
     if not (
         (win_len_smooth is None)
-        or (isinstance(win_len_smooth, int) and win_len_smooth > 0)
+        or (isinstance(win_len_smooth, (int, np.integer)) and win_len_smooth > 0)
     ):
         raise ParameterError(
             "win_len_smooth={} must be a positive integer or None".format(
