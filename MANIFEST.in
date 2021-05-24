@@ -1,3 +1,5 @@
 include AUTHORS.md
 include CONTRIBUTING.md
 include LICENSE.md
+include CODE_OF_CONDUCT.md
+include librosa/util/example_data/*
