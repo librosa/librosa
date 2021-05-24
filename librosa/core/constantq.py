@@ -755,7 +755,8 @@ def vqt(
     described by [#]_.
 
     .. [#] Schörkhuber, Christian, Anssi Klapuri, Nicki Holighaus, and Monika Dörfler.
-        "A Matlab toolbox for efficient perfect reconstruction time-frequency transforms with log-frequency resolution."
+        "A Matlab toolbox for efficient perfect reconstruction time-frequency
+        transforms with log-frequency resolution."
         In Audio Engineering Society Conference: 53rd International Conference: Semantic Audio.
         Audio Engineering Society, 2014.
 
@@ -1213,7 +1214,7 @@ def griffinlim_cqt(
     algorithm.
 
     Given the magnitude of a constant-Q spectrogram (``C``), the algorithm randomly initializes
-    phase estimates, and then alternates forward- and inverse-CQT operations. [#]_ 
+    phase estimates, and then alternates forward- and inverse-CQT operations. [#]_
 
     This implementation is based on the (fast) Griffin-Lim method for Short-time Fourier Transforms, [#]_
     but adapted for use with constant-Q spectrograms.
@@ -1355,13 +1356,13 @@ def griffinlim_cqt(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
-    >>> librosa.display.waveplot(y, sr=sr, color='b', ax=ax[0])
+    >>> librosa.display.waveshow(y, sr=sr, color='b', ax=ax[0])
     >>> ax[0].set(title='Original', xlabel=None)
     >>> ax[0].label_outer()
-    >>> librosa.display.waveplot(y_inv, sr=sr, color='g', ax=ax[1])
+    >>> librosa.display.waveshow(y_inv, sr=sr, color='g', ax=ax[1])
     >>> ax[1].set(title='Griffin-Lim reconstruction', xlabel=None)
     >>> ax[1].label_outer()
-    >>> librosa.display.waveplot(y_icqt, sr=sr, color='r', ax=ax[2])
+    >>> librosa.display.waveshow(y_icqt, sr=sr, color='r', ax=ax[2])
     >>> ax[2].set(title='Magnitude-only icqt reconstruction')
     """
     if fmin is None:

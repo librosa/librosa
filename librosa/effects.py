@@ -277,7 +277,7 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type="kaiser_best", **kw
         how many steps per octave
 
     res_type : string
-        Resample type. Possible options: 
+        Resample type. Possible options:
             'kaiser_best', 'kaiser_fast', and 'scipy', 'polyphase', 'fft'.
 
         By default, 'kaiser_best' is used.

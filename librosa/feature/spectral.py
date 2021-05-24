@@ -1130,8 +1130,7 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True, **kwar
     Returns
     -------
     zcr : np.ndarray [shape=(1, t)]
-        ``zcr[0, i]`` is the fraction of zero crossings in the
-        ``i``\ th frame
+        ``zcr[0, i]`` is the fraction of zero crossings in frame ``i``
 
     See Also
     --------

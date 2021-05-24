@@ -72,6 +72,9 @@ def load(
         If the codec is supported by `soundfile`, then `path` can also be
         an open file descriptor (int).
 
+        On the contrary, if the codec is not supported by `soundfile`
+        (for example, MP3), then `path` must be a file path (string or `pathlib.Path`).
+
     sr   : number > 0 [scalar]
         target sampling rate
 
@@ -1188,7 +1191,7 @@ def clicks(
     >>> S = librosa.feature.melspectrogram(y=y, sr=sr)
     >>> librosa.display.specshow(librosa.power_to_db(S, ref=np.max),
     ...                          x_axis='time', y_axis='mel', ax=ax[0])
-    >>> librosa.display.waveplot(y_beat_times, sr=sr, label='Beat clicks',
+    >>> librosa.display.waveshow(y_beat_times, sr=sr, label='Beat clicks',
     ...                          ax=ax[1])
     >>> ax[1].legend()
     >>> ax[0].label_outer()

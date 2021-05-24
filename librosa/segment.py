@@ -66,7 +66,7 @@ def cross_similarity(
 ):
     """Compute cross-similarity from one data sequence to a reference sequence.
 
-    The output is a matrix ``xsim``, where ``xsim[i, j]`` is non-zero 
+    The output is a matrix ``xsim``, where ``xsim[i, j]`` is non-zero
     if ``data_ref[:, i]`` is a k-nearest neighbor of ``data[:, j]``.
 
 
@@ -157,10 +157,10 @@ def cross_similarity(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(ncols=2, sharex=True, sharey=True)
-    >>> imgsim = librosa.display.specshow(xsim, x_axis='s', y_axis='time',
+    >>> imgsim = librosa.display.specshow(xsim, x_axis='s', y_axis='s',
     ...                          hop_length=hop_length, ax=ax[0])
     >>> ax[0].set(title='Binary recurrence (symmetric)')
-    >>> imgaff = librosa.display.specshow(xsim_aff, x_axis='s', y_axis='time',
+    >>> imgaff = librosa.display.specshow(xsim_aff, x_axis='s', y_axis='s',
     ...                          cmap='magma_r', hop_length=hop_length, ax=ax[1])
     >>> ax[1].set(title='Affinity recurrence')
     >>> ax[1].label_outer()
@@ -396,10 +396,10 @@ def recurrence_matrix(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(ncols=2, sharex=True, sharey=True)
-    >>> imgsim = librosa.display.specshow(R, x_axis='s', y_axis='time',
+    >>> imgsim = librosa.display.specshow(R, x_axis='s', y_axis='s',
     ...                          hop_length=hop_length, ax=ax[0])
     >>> ax[0].set(title='Binary recurrence (symmetric)')
-    >>> imgaff = librosa.display.specshow(R_aff, x_axis='s', y_axis='time',
+    >>> imgaff = librosa.display.specshow(R_aff, x_axis='s', y_axis='s',
     ...                          hop_length=hop_length, cmap='magma_r', ax=ax[1])
     >>> ax[1].set(title='Affinity recurrence')
     >>> ax[1].label_outer()
@@ -753,16 +753,16 @@ def timelag_filter(function, pad=True, index=0):
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, ncols=2, sharex=True, sharey=True)
-    >>> librosa.display.specshow(rec, y_axis='time', x_axis='s', ax=ax[0, 0])
+    >>> librosa.display.specshow(rec, y_axis='s', x_axis='s', ax=ax[0, 0])
     >>> ax[0, 0].set(title='Raw recurrence matrix')
     >>> ax[0, 0].label_outer()
-    >>> librosa.display.specshow(rec_filtered, y_axis='time', x_axis='s', ax=ax[0, 1])
+    >>> librosa.display.specshow(rec_filtered, y_axis='s', x_axis='s', ax=ax[0, 1])
     >>> ax[0, 1].set(title='Filtered recurrence matrix')
     >>> ax[0, 1].label_outer()
-    >>> librosa.display.specshow(rec_aff, x_axis='s', y_axis='time',
+    >>> librosa.display.specshow(rec_aff, x_axis='s', y_axis='s',
     ...                          cmap='magma_r', ax=ax[1, 0])
     >>> ax[1, 0].set(title='Raw affinity matrix')
-    >>> librosa.display.specshow(rec_aff_fil, x_axis='s', y_axis='time',
+    >>> librosa.display.specshow(rec_aff_fil, x_axis='s', y_axis='s',
     ...                          cmap='magma_r', ax=ax[1, 1])
     >>> ax[1, 1].set(title='Filtered affinity matrix')
     >>> ax[1, 1].label_outer()
@@ -1069,10 +1069,10 @@ def path_enhance(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(ncols=2, sharex=True, sharey=True)
-    >>> img = librosa.display.specshow(rec, x_axis='s', y_axis='time',
+    >>> img = librosa.display.specshow(rec, x_axis='s', y_axis='s',
     ...                          hop_length=hop_length, ax=ax[0])
     >>> ax[0].set(title='Unfiltered recurrence')
-    >>> imgpe = librosa.display.specshow(rec_smooth, x_axis='s', y_axis='time',
+    >>> imgpe = librosa.display.specshow(rec_smooth, x_axis='s', y_axis='s',
     ...                          hop_length=hop_length, ax=ax[1])
     >>> ax[1].set(title='Multi-angle enhanced recurrence')
     >>> ax[1].label_outer()

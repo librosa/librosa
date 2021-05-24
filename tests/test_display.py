@@ -14,7 +14,9 @@ except KeyError:
 
 from packaging import version
 
-import matplotlib
+import pytest
+
+matplotlib = pytest.importorskip("matplotlib", minversion="3.4")
 
 matplotlib.use("Agg")
 matplotlib.rcParams.update(matplotlib.rcParamsDefault)
@@ -29,7 +31,6 @@ import librosa
 import librosa.display
 import numpy as np
 
-import pytest
 
 
 # Workaround for old freetype builds with our image fixtures
@@ -142,6 +143,15 @@ def test_abs_input(S_abs):
 def test_cqt_note(C):
     plt.figure()
     librosa.display.specshow(C, y_axis="cqt_note")
+    return plt.gcf()
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["fft_note"], extensions=["png"], tolerance=6
+)
+@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+def test_fft_note(S_abs):
+    plt.figure()
+    librosa.display.specshow(S_abs, y_axis="fft_note")
     return plt.gcf()
 
 
@@ -300,10 +310,10 @@ def test_xaxis_none_yaxis_linear(S_abs, S_signed, S_bin):
     librosa.display.specshow(S_abs, y_axis="linear")
 
     plt.subplot(3, 1, 2)
-    librosa.display.specshow(S_signed, y_axis="linear")
+    librosa.display.specshow(S_signed, y_axis="fft")
 
     plt.subplot(3, 1, 3)
-    librosa.display.specshow(S_bin, y_axis="linear")
+    librosa.display.specshow(S_bin, y_axis="hz")
     return plt.gcf()
 
 
@@ -351,10 +361,10 @@ def test_xaxis_linear_yaxis_none(S_abs, S_signed, S_bin):
     librosa.display.specshow(S_abs.T, x_axis="linear")
 
     plt.subplot(3, 1, 2)
-    librosa.display.specshow(S_signed.T, x_axis="linear")
+    librosa.display.specshow(S_signed.T, x_axis="fft")
 
     plt.subplot(3, 1, 3)
-    librosa.display.specshow(S_bin.T, x_axis="linear")
+    librosa.display.specshow(S_bin.T, x_axis="hz")
     return plt.gcf()
 
 
@@ -539,6 +549,44 @@ def test_waveplot_mono(y, sr):
 
 
 @pytest.mark.mpl_image_compare(
+    baseline_images=["waveshow_mono"], extensions=["png"], tolerance=6
+)
+@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+def test_waveshow_mono(y, sr):
+
+    fig, ax = plt.subplots(nrows=1)
+    librosa.display.waveshow(y, sr=sr, ax=ax)
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["waveshow_mono_zoom"], extensions=["png"], tolerance=6
+)
+@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+def test_waveshow_mono_zoom(y, sr):
+
+    fig, ax = plt.subplots(nrows=1)
+    out = librosa.display.waveshow(y, sr=sr, ax=ax, max_points=sr//2)
+    # Zoom into 1/8 of a second, make sure it's out of the initial viewport
+    ax.set(xlim=[1, 1.125])
+    return fig
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["waveshow_mono_zoom_out"], extensions=["png"], tolerance=6
+)
+@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+def test_waveshow_mono_zoom_out(y, sr):
+
+    fig, ax = plt.subplots(nrows=1)
+    out = librosa.display.waveshow(y, sr=sr, ax=ax, max_points=sr//2)
+    # Zoom into 1/8 of a second, make sure it's out of the initial viewport
+    ax.set(xlim=[1, 1.125])
+    # Zoom back out to get an envelope view again
+    ax.set(xlim=[0, 1])
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
     baseline_images=["waveplot_ext_axes"], extensions=["png"], tolerance=6
 )
 @pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
@@ -550,6 +598,21 @@ def test_waveplot_ext_axes(y):
     # implicitly ax_right
     librosa.display.waveplot(y, color="blue")
     librosa.display.waveplot(y, color="red", ax=ax_left)
+    return plt.gcf()
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["waveshow_ext_axes"], extensions=["png"], tolerance=6
+)
+@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+def test_waveshow_ext_axes(y):
+    plt.figure()
+    ax_left = plt.subplot(1, 2, 1)
+    ax_right = plt.subplot(1, 2, 2)
+
+    # implicitly ax_right
+    librosa.display.waveshow(y, color="blue")
+    librosa.display.waveshow(y, color="red", ax=ax_left)
     return plt.gcf()
 
 
@@ -566,8 +629,29 @@ def test_waveplot_stereo(y, sr):
     return plt.gcf()
 
 
+@pytest.mark.mpl_image_compare(
+    baseline_images=["waveshow_stereo"], extensions=["png"], tolerance=6
+)
+@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+def test_waveshow_stereo(y, sr):
+
+    ys = librosa.util.stack([y, 2 * y])
+
+    plt.figure()
+    librosa.display.waveshow(ys, sr=sr)
+    return plt.gcf()
+
+
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_unknown_wavaxis(y, sr):
+
+    plt.figure()
+    librosa.display.waveshow(y, sr=sr, x_axis="something not in the axis map")
+    return plt.gcf()
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_waveshow_unknown_wavaxis(y, sr):
 
     plt.figure()
     librosa.display.waveplot(y, sr=sr, x_axis="something not in the axis map")
@@ -579,6 +663,13 @@ def test_waveplot_bad_maxsr(y, sr):
 
     plt.figure()
     librosa.display.waveplot(y, sr=sr, max_sr=0)
+    return plt.gcf()
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_waveshow_bad_maxpoints(y, sr):
+    plt.figure()
+    librosa.display.waveshow(y, sr=sr, max_points=0)
     return plt.gcf()
 
 
@@ -722,6 +813,32 @@ def test_display_cqt_svara(C, sr):
     return fig
 
 
+@pytest.mark.mpl_image_compare(
+    baseline_images=["fft_svara"], extensions=["png"], tolerance=6
+)
+@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+def test_display_fft_svara(S_abs, sr):
+
+    fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(
+        nrows=5, sharex=True, figsize=(10, 10)
+    )
+
+    librosa.display.specshow(S_abs, y_axis="fft_svara", Sa=261, ax=ax1)
+    librosa.display.specshow(S_abs, y_axis="fft_svara", Sa=440, ax=ax2)
+    librosa.display.specshow(S_abs, y_axis="fft_svara", Sa=261, ax=ax3)
+    librosa.display.specshow(S_abs, y_axis="fft_svara", Sa=261, mela=1, ax=ax4)
+    librosa.display.specshow(S_abs, y_axis="fft_svara", Sa=261, mela=1, ax=ax5)
+
+    ax3.set_ylim([440, 880])
+    ax5.set_ylim([440, 880])
+    ax1.label_outer()
+    ax2.label_outer()
+    ax3.label_outer()
+    ax4.label_outer()
+
+    return fig
+
+
 @pytest.mark.parametrize("x_axis,y_axis,xlim,ylim,out",
                          [(None, None, (0.0, 1.0), (0.0, 1.0), False),
                           ("time", "linear", (0.0, 1.0), (0.0, 1.0), False),
@@ -729,3 +846,32 @@ def test_display_cqt_svara(C, sr):
                           ("chroma", "chroma", (0.0, 1.0), (0.0, 1.0), True)])
 def test_same_axes(x_axis, y_axis, xlim, ylim, out):
     assert librosa.display.__same_axes(x_axis, y_axis, xlim, ylim) == out
+
+
+def test_auto_aspect():
+
+    fig, ax = plt.subplots(nrows=4)
+
+    # Ensure auto aspect by default
+    for axi in ax:
+        axi.set(aspect='auto')
+
+    X = np.zeros((12, 12))
+
+    # Different axes should retain auto scaling
+    librosa.display.specshow(X, x_axis='chroma', y_axis='time', ax=ax[0])
+    assert ax[0].get_aspect() == 'auto'
+
+    # Same axes and auto_aspect=True should force equal scaling
+    librosa.display.specshow(X, x_axis='chroma', y_axis='chroma', ax=ax[1])
+    assert ax[1].get_aspect() == 1.0
+
+    # Same axes and auto_aspect=False should retain auto scaling
+    librosa.display.specshow(X, x_axis='chroma', y_axis='chroma',
+                             auto_aspect=False, ax=ax[2])
+    assert ax[2].get_aspect() == 'auto'
+
+    # Different extents with auto_aspect=True should retain auto scaling
+    librosa.display.specshow(X[:2, :], x_axis='chroma', y_axis='chroma',
+                             auto_aspect=True, ax=ax[3])
+    assert ax[3].get_aspect() == 'auto'
