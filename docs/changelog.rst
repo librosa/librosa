@@ -40,6 +40,8 @@ Other changes
     - `#1335`_, `#1336`_ `librosa.display.specshow` now supports pitch notation
       (Western, Hindustani, and Carnatic) for STFT matrices. *Paul Biberstein, Brian McFee*
     - `#1333`_ minimum version of `soundfile` has been updated to 0.10.2. *Brian McFee*
+    - `#1340`_ several functions now support `np.integer`-valued parameters as well as integer-valued parameters. *Brian McFee*
+    - `#1207`_ `librosa.display` time-formatted axes now have enhanced precision at short time scales. *Brian McFee*
 
 Deprecations to be removed in 0.9
     - `librosa.display.waveplot` is now deprecated in favor of `librosa.display.waveshow`.
@@ -67,6 +69,7 @@ Deprecations to be removed in 0.9
 .. _#1334: https://github.com/librosa/librosa/issues/1334
 .. _#1335: https://github.com/librosa/librosa/issues/1335
 .. _#1336: https://github.com/librosa/librosa/issues/1336
+.. _#1340: https://github.com/librosa/librosa/issues/1340
 
 v0.8.0
 ------
