@@ -212,7 +212,6 @@ def test_resample_stereo(resample_audio, sr_out, res_type, fix):
         "sinc_best",
         "sinc_fastest",
         "sinc_medium",
-        "soxr_qq",
         "soxr_lq",
         "soxr_mq",
         "soxr_hq",
