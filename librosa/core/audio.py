@@ -488,7 +488,7 @@ def resample(
         'kaiser_fast'
             `resampy` faster method
         'fft' or 'scipy'
-            `scipy.signal.resample` Fourier method. (fast)
+            `scipy.signal.resample` Fourier method.
         'polyphase'
             `scipy.signal.resample_poly` polyphase filtering. (fast)
         'linear'
@@ -497,7 +497,7 @@ def resample(
             `samplerate` repeat the last value between samples. (very fast)
         'sinc_best', 'sinc_medium' or 'sinc_fastest'
             `samplerate` high-, medium-, and low-quality sinc interpolation.
-        'soxr_vhq', 'soxr_hq', soxr_mq' or 'soxr_lq'
+        'soxr_vhq', 'soxr_hq', 'soxr_mq' or 'soxr_lq'
             `soxr` Very high-, High-, Medium-, Low-quality FFT-based bandlimited interpolation.
             ``'soxr_hq'`` is default setting of `soxr` (fast)
         'soxr_qq'
