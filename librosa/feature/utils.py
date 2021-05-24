@@ -107,7 +107,7 @@ def delta(data, width=9, order=1, axis=-1, mode="interp", **kwargs):
     if width < 3 or np.mod(width, 2) != 1:
         raise ParameterError("width must be an odd integer >= 3")
 
-    if order <= 0 or not isinstance(order, int):
+    if order <= 0 or not isinstance(order, (int, np.integer)):
         raise ParameterError("order must be a positive integer")
 
     kwargs.pop("deriv", None)

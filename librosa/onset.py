@@ -547,10 +547,10 @@ def onset_strength_multi(
     if aggregate is None:
         aggregate = np.mean
 
-    if lag < 1 or not isinstance(lag, int):
+    if lag < 1 or not isinstance(lag, (int, np.integer)):
         raise ParameterError("lag must be a positive integer")
 
-    if max_size < 1 or not isinstance(max_size, int):
+    if max_size < 1 or not isinstance(max_size, (int, np.integer)):
         raise ParameterError("max_size must be a positive integer")
 
     # First, compute mel spectrogram

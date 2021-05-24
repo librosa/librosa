@@ -2153,7 +2153,7 @@ def pcen(
             "time_constant={} must be strictly positive".format(time_constant)
         )
 
-    if max_size < 1 or not isinstance(max_size, int):
+    if max_size < 1 or not isinstance(max_size, (int, np.integer)):
         raise ParameterError("max_size={} must be a positive integer".format(max_size))
 
     if b is None:

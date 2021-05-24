@@ -877,7 +877,7 @@ def lpc(y, order):
     >>> ax.set_title('LP Model Forward Prediction')
 
     """
-    if not isinstance(order, int) or order < 1:
+    if not isinstance(order, (int, np.integer)) or order < 1:
         raise ParameterError("order must be an integer > 0")
 
     util.valid_audio(y, mono=True)
