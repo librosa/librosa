@@ -60,7 +60,7 @@ def __test_cqt_size(
 
 
 def make_signal(sr, duration, fmin="C1", fmax="C8"):
-    """ Generates a linear sine sweep """
+    """Generates a linear sine sweep"""
 
     if fmin is None:
         fmin = 0.01

@@ -287,6 +287,7 @@ def test_preemphasis_continue(dtype):
     assert np.allclose(zf2, zf_all)
     assert x.dtype == y_all.dtype
 
+
 @pytest.mark.parametrize("coef", [0.5, 0.99])
 @pytest.mark.parametrize("zi", [None, 0, [0]])
 @pytest.mark.parametrize("return_zf", [False, True])
