@@ -7,7 +7,7 @@ v0.8
 
 v0.8.1
 ------
-2021-05-??
+2021-05-26
 
 New Features
     - `#1293`_ `librosa.effects.deemphasis`, inverse operation of `librosa.effects.preemphasis`. *Dan Mazur*

@@ -200,10 +200,12 @@ def test_chromafb(infile):
 def test_chroma_issue1295(freq):
 
     tone_1 = librosa.tone(frequency=freq, sr=22050, duration=1)
-    chroma_1 = librosa.feature.chroma_stft(y=tone_1, sr=22050, n_chroma=120, base_c = True)
+    chroma_1 = librosa.feature.chroma_stft(
+        y=tone_1, sr=22050, n_chroma=120, base_c=True
+    )
 
     actual_argmax = np.unravel_index(chroma_1.argmax(), chroma_1.shape)
-    
+
     if freq == 261.63:
         assert actual_argmax == (5, 43)
     elif freq == 440:
