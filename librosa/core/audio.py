@@ -499,13 +499,16 @@ def resample(
             `samplerate` high-, medium-, and low-quality sinc interpolation.
         'soxr_vhq', 'soxr_hq', 'soxr_mq' or 'soxr_lq'
             `soxr` Very high-, High-, Medium-, Low-quality FFT-based bandlimited interpolation.
-            ``'soxr_hq'`` is default setting of `soxr` (fast)
+            ``'soxr_hq'`` is the default setting of `soxr` (fast)
         'soxr_qq'
             `soxr` Quick cubic interpolation (very fast)
 
         .. note::
             `samplerate` and `soxr` are not installed with `librosa`.
-            To use `samplerate` or `soxr`, they should be installed manually.
+            To use `samplerate` or `soxr`, they should be installed manually::
+
+                $ pip install samplerate
+                $ pip install soxr
 
         .. note::
             When using ``res_type='polyphase'``, only integer sampling rates are
@@ -540,7 +543,7 @@ def resample(
     scipy.signal.resample
     resampy
     samplerate.converters.resample
-    soxr
+    soxr.resample
 
     Notes
     -----
