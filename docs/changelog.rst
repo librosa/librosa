@@ -12,6 +12,7 @@ v0.8.1
 New Features
     - `#1293`_ `librosa.effects.deemphasis`, inverse operation of `librosa.effects.preemphasis`. *Dan Mazur*
     - `#1207`_  `librosa.display.waveshow`, adaptively visualize waveforms by amplitude envelope when zoomed out, or raw sample values when zoomed in. *Brian McFee*
+    - `#1338`_ `librosa.resample` now optionally supports `soxr`. *dofuuz*
 
 
 Bug fixes
@@ -73,6 +74,7 @@ Deprecations to be removed in 0.9
 .. _#1336: https://github.com/librosa/librosa/issues/1336
 .. _#1340: https://github.com/librosa/librosa/issues/1340
 .. _#1341: https://github.com/librosa/librosa/issues/1341
+.. _#1338: https://github.com/librosa/librosa/issues/1338
 
 v0.8.0
 ------
