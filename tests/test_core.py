@@ -1603,9 +1603,18 @@ def test_iirt_peaks():
     hop_length = 50
     center_freqs = librosa.midi_to_hz(np.arange(40, 95))
     sample_rates = np.asarray(
-        len(np.arange(40, 46)) * [1000,]
-        + len(np.arange(46, 80)) * [1750,]
-        + len(np.arange(80, 95)) * [4000,]
+        len(np.arange(40, 46))
+        * [
+            1000,
+        ]
+        + len(np.arange(46, 80))
+        * [
+            1750,
+        ]
+        + len(np.arange(80, 95))
+        * [
+            4000,
+        ]
     )
 
     X = librosa.iirt(

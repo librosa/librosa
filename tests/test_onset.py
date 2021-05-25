@@ -192,11 +192,12 @@ def test_onset_detect_real(ysr, oenv, hop, bt, normalize):
 
     y, sr = ysr
     onsets = librosa.onset.onset_detect(
-        y=y, sr=sr,
+        y=y,
+        sr=sr,
         onset_envelope=oenv,
         hop_length=hop,
         backtrack=bt,
-        normalize=normalize
+        normalize=normalize,
     )
     if bt:
         assert np.all(onsets >= 0)

@@ -32,10 +32,9 @@ import librosa.display
 import numpy as np
 
 
-
 # Workaround for old freetype builds with our image fixtures
 FT_VERSION = version.parse(matplotlib.ft2font.__freetype_version__)
-OLD_FT = not (FT_VERSION >= version.parse('2.10'))
+OLD_FT = not (FT_VERSION >= version.parse("2.10"))
 
 
 @pytest.fixture
@@ -121,7 +120,7 @@ def test_unknown_time_unit(y):
 @pytest.mark.mpl_image_compare(
     baseline_images=["complex"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_complex_input(S):
     plt.figure()
     librosa.display.specshow(S)
@@ -129,7 +128,7 @@ def test_complex_input(S):
 
 
 @pytest.mark.mpl_image_compare(baseline_images=["abs"], extensions=["png"], tolerance=6)
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_abs_input(S_abs):
     plt.figure()
     librosa.display.specshow(S_abs)
@@ -139,16 +138,17 @@ def test_abs_input(S_abs):
 @pytest.mark.mpl_image_compare(
     baseline_images=["cqt_note"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_cqt_note(C):
     plt.figure()
     librosa.display.specshow(C, y_axis="cqt_note")
     return plt.gcf()
 
+
 @pytest.mark.mpl_image_compare(
     baseline_images=["fft_note"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_fft_note(S_abs):
     plt.figure()
     librosa.display.specshow(S_abs, y_axis="fft_note")
@@ -158,7 +158,7 @@ def test_fft_note(S_abs):
 @pytest.mark.mpl_image_compare(
     baseline_images=["cqt_hz"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_cqt_hz(C):
     plt.figure()
     librosa.display.specshow(C, y_axis="cqt_hz")
@@ -168,7 +168,7 @@ def test_cqt_hz(C):
 @pytest.mark.mpl_image_compare(
     baseline_images=["tempo"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_tempo(y, sr):
     T = librosa.feature.tempogram(y=y, sr=sr)
 
@@ -180,7 +180,7 @@ def test_tempo(y, sr):
 @pytest.mark.mpl_image_compare(
     baseline_images=["fourier_tempo"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_fourier_tempo(y, sr):
     T = librosa.feature.fourier_tempogram(y=y, sr=sr)
 
@@ -192,7 +192,7 @@ def test_fourier_tempo(y, sr):
 @pytest.mark.mpl_image_compare(
     baseline_images=["tonnetz"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_tonnetz(C):
     plt.figure()
     chroma = librosa.feature.chroma_cqt(C=C)
@@ -204,7 +204,7 @@ def test_tonnetz(C):
 @pytest.mark.mpl_image_compare(
     baseline_images=["chroma"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_chroma(S_abs, sr):
     plt.figure()
     plt.subplot(3, 1, 1)
@@ -224,7 +224,7 @@ def test_chroma(S_abs, sr):
 @pytest.mark.mpl_image_compare(
     baseline_images=["chroma_svara"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_chroma_svara(C, sr):
 
     chroma = librosa.feature.chroma_cqt(C=C, sr=sr, threshold=0.9)
@@ -253,7 +253,7 @@ def test_chroma_svara(C, sr):
 @pytest.mark.mpl_image_compare(
     baseline_images=["double_chroma"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_double_chroma(S_abs, sr):
     plt.figure()
 
@@ -266,7 +266,7 @@ def test_double_chroma(S_abs, sr):
 @pytest.mark.mpl_image_compare(
     baseline_images=["x_mel"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_x_mel(S_abs):
     plt.figure()
 
@@ -278,7 +278,7 @@ def test_x_mel(S_abs):
 @pytest.mark.mpl_image_compare(
     baseline_images=["y_mel"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_y_mel(S_abs):
     plt.figure()
 
@@ -290,7 +290,7 @@ def test_y_mel(S_abs):
 @pytest.mark.mpl_image_compare(
     baseline_images=["y_mel_bounded"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_y_mel_bounded(S_abs):
     plt.figure()
 
@@ -303,7 +303,7 @@ def test_y_mel_bounded(S_abs):
 @pytest.mark.mpl_image_compare(
     baseline_images=["x_none_y_linear"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_xaxis_none_yaxis_linear(S_abs, S_signed, S_bin):
     plt.figure()
     plt.subplot(3, 1, 1)
@@ -320,7 +320,7 @@ def test_xaxis_none_yaxis_linear(S_abs, S_signed, S_bin):
 @pytest.mark.mpl_image_compare(
     baseline_images=["specshow_ext_axes"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_specshow_ext_axes(S_abs):
     plt.figure()
     ax_left = plt.subplot(1, 2, 1)
@@ -335,7 +335,7 @@ def test_specshow_ext_axes(S_abs):
 @pytest.mark.mpl_image_compare(
     baseline_images=["x_none_y_log"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_xaxis_none_yaxis_log(S_abs, S_signed, S_bin):
     plt.figure()
 
@@ -353,7 +353,7 @@ def test_xaxis_none_yaxis_log(S_abs, S_signed, S_bin):
 @pytest.mark.mpl_image_compare(
     baseline_images=["x_linear_y_none"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_xaxis_linear_yaxis_none(S_abs, S_signed, S_bin):
     plt.figure()
 
@@ -371,7 +371,7 @@ def test_xaxis_linear_yaxis_none(S_abs, S_signed, S_bin):
 @pytest.mark.mpl_image_compare(
     baseline_images=["x_log_y_none"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_xaxis_log_yaxis_none(S_abs, S_signed, S_bin):
 
     plt.figure()
@@ -390,7 +390,7 @@ def test_xaxis_log_yaxis_none(S_abs, S_signed, S_bin):
 @pytest.mark.mpl_image_compare(
     baseline_images=["x_time_y_none"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_xaxis_time_yaxis_none(S_abs):
 
     plt.figure()
@@ -401,7 +401,7 @@ def test_xaxis_time_yaxis_none(S_abs):
 @pytest.mark.mpl_image_compare(
     baseline_images=["x_none_y_time"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_xaxis_none_yaxis_time(S_abs):
 
     plt.figure()
@@ -412,7 +412,7 @@ def test_xaxis_none_yaxis_time(S_abs):
 @pytest.mark.mpl_image_compare(
     baseline_images=["x_frames_y_none"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_xaxis_frames_yaxis_none(S_abs):
 
     plt.figure()
@@ -423,7 +423,7 @@ def test_xaxis_frames_yaxis_none(S_abs):
 @pytest.mark.mpl_image_compare(
     baseline_images=["x_none_y_frames"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_xaxis_none_yaxis_frames(S_abs):
 
     plt.figure()
@@ -434,7 +434,7 @@ def test_xaxis_none_yaxis_frames(S_abs):
 @pytest.mark.mpl_image_compare(
     baseline_images=["x_lag_y_none"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_xaxis_lag_yaxis_none(S_abs):
 
     plt.figure()
@@ -445,7 +445,7 @@ def test_xaxis_lag_yaxis_none(S_abs):
 @pytest.mark.mpl_image_compare(
     baseline_images=["x_none_y_lag"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_xaxis_time_yaxis_lag(S_abs):
 
     plt.figure()
@@ -456,7 +456,7 @@ def test_xaxis_time_yaxis_lag(S_abs):
 @pytest.mark.mpl_image_compare(
     baseline_images=["time_scales_auto"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_time_scales_auto(S_abs, sr):
 
     # sr = 22050, hop_length = 512, S.shape[1] = 198
@@ -485,7 +485,7 @@ def test_time_scales_auto(S_abs, sr):
 @pytest.mark.mpl_image_compare(
     baseline_images=["time_unit"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_time_unit(S_abs, sr):
 
     # sr = 22050, hop_length = 512, S.shape[1] = 198
@@ -510,7 +510,7 @@ def test_time_unit(S_abs, sr):
 @pytest.mark.mpl_image_compare(
     baseline_images=["time_unit_lag"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_time_unit_lag(S_abs, sr):
 
     plt.figure(figsize=(9, 10))
@@ -533,7 +533,7 @@ def test_time_unit_lag(S_abs, sr):
 @pytest.mark.mpl_image_compare(
     baseline_images=["waveplot_mono"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_waveplot_mono(y, sr):
 
     plt.figure()
@@ -551,7 +551,7 @@ def test_waveplot_mono(y, sr):
 @pytest.mark.mpl_image_compare(
     baseline_images=["waveshow_mono"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_waveshow_mono(y, sr):
 
     fig, ax = plt.subplots(nrows=1)
@@ -562,23 +562,24 @@ def test_waveshow_mono(y, sr):
 @pytest.mark.mpl_image_compare(
     baseline_images=["waveshow_mono_zoom"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_waveshow_mono_zoom(y, sr):
 
     fig, ax = plt.subplots(nrows=1)
-    out = librosa.display.waveshow(y, sr=sr, ax=ax, max_points=sr//2)
+    out = librosa.display.waveshow(y, sr=sr, ax=ax, max_points=sr // 2)
     # Zoom into 1/8 of a second, make sure it's out of the initial viewport
     ax.set(xlim=[1, 1.125])
     return fig
 
+
 @pytest.mark.mpl_image_compare(
     baseline_images=["waveshow_mono_zoom_out"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_waveshow_mono_zoom_out(y, sr):
 
     fig, ax = plt.subplots(nrows=1)
-    out = librosa.display.waveshow(y, sr=sr, ax=ax, max_points=sr//2)
+    out = librosa.display.waveshow(y, sr=sr, ax=ax, max_points=sr // 2)
     # Zoom into 1/8 of a second, make sure it's out of the initial viewport
     ax.set(xlim=[1, 1.125])
     # Zoom back out to get an envelope view again
@@ -589,7 +590,7 @@ def test_waveshow_mono_zoom_out(y, sr):
 @pytest.mark.mpl_image_compare(
     baseline_images=["waveplot_ext_axes"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_waveplot_ext_axes(y):
     plt.figure()
     ax_left = plt.subplot(1, 2, 1)
@@ -604,7 +605,7 @@ def test_waveplot_ext_axes(y):
 @pytest.mark.mpl_image_compare(
     baseline_images=["waveshow_ext_axes"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_waveshow_ext_axes(y):
     plt.figure()
     ax_left = plt.subplot(1, 2, 1)
@@ -619,7 +620,7 @@ def test_waveshow_ext_axes(y):
 @pytest.mark.mpl_image_compare(
     baseline_images=["waveplot_stereo"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_waveplot_stereo(y, sr):
 
     ys = librosa.util.stack([y, 2 * y])
@@ -632,7 +633,7 @@ def test_waveplot_stereo(y, sr):
 @pytest.mark.mpl_image_compare(
     baseline_images=["waveshow_stereo"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_waveshow_stereo(y, sr):
 
     ys = librosa.util.stack([y, 2 * y])
@@ -717,7 +718,7 @@ def test_cmap_robust(data):
 @pytest.mark.mpl_image_compare(
     baseline_images=["coords"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_coords(Csync, beat_t):
 
     plt.figure()
@@ -735,7 +736,7 @@ def test_bad_coords(S_abs):
 @pytest.mark.mpl_image_compare(
     baseline_images=["sharex_specshow_ms"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_sharex_specshow_ms(S_abs, y, sr):
 
     # Correct time range ~= 4.6 s or 4600ms
@@ -753,7 +754,7 @@ def test_sharex_specshow_ms(S_abs, y, sr):
 @pytest.mark.mpl_image_compare(
     baseline_images=["sharex_waveplot_ms"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_sharex_waveplot_ms(y, sr, S_abs):
 
     # Correct time range ~= 4.6 s or 4600ms
@@ -789,7 +790,7 @@ def test_axis_bound_warning(format_str):
 @pytest.mark.mpl_image_compare(
     baseline_images=["cqt_svara"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_display_cqt_svara(C, sr):
 
     Camp = librosa.amplitude_to_db(C, ref=np.max)
@@ -816,7 +817,7 @@ def test_display_cqt_svara(C, sr):
 @pytest.mark.mpl_image_compare(
     baseline_images=["fft_svara"], extensions=["png"], tolerance=6
 )
-@pytest.mark.xfail(OLD_FT, reason=f'freetype version < {FT_VERSION}', strict=False)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_display_fft_svara(S_abs, sr):
 
     fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(
@@ -839,11 +840,15 @@ def test_display_fft_svara(S_abs, sr):
     return fig
 
 
-@pytest.mark.parametrize("x_axis,y_axis,xlim,ylim,out",
-                         [(None, None, (0.0, 1.0), (0.0, 1.0), False),
-                          ("time", "linear", (0.0, 1.0), (0.0, 1.0), False),
-                          ("time", "time", (0.0, 1.0), (0.0, 2.0), False),
-                          ("chroma", "chroma", (0.0, 1.0), (0.0, 1.0), True)])
+@pytest.mark.parametrize(
+    "x_axis,y_axis,xlim,ylim,out",
+    [
+        (None, None, (0.0, 1.0), (0.0, 1.0), False),
+        ("time", "linear", (0.0, 1.0), (0.0, 1.0), False),
+        ("time", "time", (0.0, 1.0), (0.0, 2.0), False),
+        ("chroma", "chroma", (0.0, 1.0), (0.0, 1.0), True),
+    ],
+)
 def test_same_axes(x_axis, y_axis, xlim, ylim, out):
     assert librosa.display.__same_axes(x_axis, y_axis, xlim, ylim) == out
 
@@ -854,24 +859,26 @@ def test_auto_aspect():
 
     # Ensure auto aspect by default
     for axi in ax:
-        axi.set(aspect='auto')
+        axi.set(aspect="auto")
 
     X = np.zeros((12, 12))
 
     # Different axes should retain auto scaling
-    librosa.display.specshow(X, x_axis='chroma', y_axis='time', ax=ax[0])
-    assert ax[0].get_aspect() == 'auto'
+    librosa.display.specshow(X, x_axis="chroma", y_axis="time", ax=ax[0])
+    assert ax[0].get_aspect() == "auto"
 
     # Same axes and auto_aspect=True should force equal scaling
-    librosa.display.specshow(X, x_axis='chroma', y_axis='chroma', ax=ax[1])
+    librosa.display.specshow(X, x_axis="chroma", y_axis="chroma", ax=ax[1])
     assert ax[1].get_aspect() == 1.0
 
     # Same axes and auto_aspect=False should retain auto scaling
-    librosa.display.specshow(X, x_axis='chroma', y_axis='chroma',
-                             auto_aspect=False, ax=ax[2])
-    assert ax[2].get_aspect() == 'auto'
+    librosa.display.specshow(
+        X, x_axis="chroma", y_axis="chroma", auto_aspect=False, ax=ax[2]
+    )
+    assert ax[2].get_aspect() == "auto"
 
     # Different extents with auto_aspect=True should retain auto scaling
-    librosa.display.specshow(X[:2, :], x_axis='chroma', y_axis='chroma',
-                             auto_aspect=True, ax=ax[3])
-    assert ax[3].get_aspect() == 'auto'
+    librosa.display.specshow(
+        X[:2, :], x_axis="chroma", y_axis="chroma", auto_aspect=True, ax=ax[3]
+    )
+    assert ax[3].get_aspect() == "auto"

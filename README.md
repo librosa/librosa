@@ -15,6 +15,9 @@ Documentation
 -------------
 See https://librosa.org/doc/ for a complete reference manual and introductory tutorials.
 
+The [advanced example gallery](https://librosa.org/doc/latest/advanced.html) should give you a quick sense of the kinds
+of things that librosa can do.
+
 Installation
 ------------
 
