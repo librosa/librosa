@@ -76,7 +76,7 @@ Contributors
 * Connor Guerrero <https://github.com/c-jg>
 * N. Dorukhan Sergin <https://github.com/dorukhansergin>
 * Paul Biberstein <https://github.com/P-bibs>
-
+* Myungchul Keum <https://github.com/dofuuz>
 
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
