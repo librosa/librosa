@@ -160,6 +160,7 @@ sphinx_gallery_conf = {
         "pyrubberband": "https://pyrubberband.readthedocs.io/en/stable/",
         "samplerate": "https://python-samplerate.readthedocs.io/en/latest/",
         "pooch": "https://www.fatiando.org/pooch/latest/",
+        "soxr": "https://python-soxr.readthedocs.io/en/latest/",
     },
     "reset_modules": (reset_mpl,),
     'capture_repr': ('_repr_html_',),
@@ -180,6 +181,7 @@ intersphinx_mapping = {
     "soundfile": ("https://pysoundfile.readthedocs.io/en/latest", None),
     "samplerate": ("https://python-samplerate.readthedocs.io/en/latest/", None),
     "pyrubberband": ("https://pyrubberband.readthedocs.io/en/stable/", None),
+    "soxr": ("https://python-soxr.readthedocs.io/en/latest/", None),
 }
 
 

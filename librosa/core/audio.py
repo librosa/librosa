@@ -481,23 +481,34 @@ def resample(
         target sampling rate
 
     res_type : str
-        resample type (see note)
+        resample type
+
+        'kaiser_best' (default)
+            `resampy` high-quality mode
+        'kaiser_fast'
+            `resampy` faster method
+        'fft' or 'scipy'
+            `scipy.signal.resample` Fourier method.
+        'polyphase'
+            `scipy.signal.resample_poly` polyphase filtering. (fast)
+        'linear'
+            `samplerate` linear interpolation. (very fast)
+        'zero_order_hold'
+            `samplerate` repeat the last value between samples. (very fast)
+        'sinc_best', 'sinc_medium' or 'sinc_fastest'
+            `samplerate` high-, medium-, and low-quality sinc interpolation.
+        'soxr_vhq', 'soxr_hq', 'soxr_mq' or 'soxr_lq'
+            `soxr` Very high-, High-, Medium-, Low-quality FFT-based bandlimited interpolation.
+            ``'soxr_hq'`` is the default setting of `soxr` (fast)
+        'soxr_qq'
+            `soxr` Quick cubic interpolation (very fast)
 
         .. note::
-            By default, this uses `resampy`'s high-quality mode ('kaiser_best').
+            `samplerate` and `soxr` are not installed with `librosa`.
+            To use `samplerate` or `soxr`, they should be installed manually::
 
-            To use a faster method, set ``res_type='kaiser_fast'``.
-
-            To use `scipy.signal.resample`, set ``res_type='fft'`` or ``res_type='scipy'``. (slow)
-
-            To use `scipy.signal.resample_poly`, set ``res_type='polyphase'``. (fast)
-
-            To use `samplerate.converters.resample`, set any of the following:
-
-                - ``res_type='linear'``: linear interpolation (fast)
-                - ``res_type='zero_order_hold'``: repeat the last value between samples (very fast)
-                - ``res_type='sinc_best'``, ``'sinc_medium'``, or ``'sinc_fastest'``: for high-, medium-,
-                  and low-quality sinc interpolation
+                $ pip install samplerate
+                $ pip install soxr
 
         .. note::
             When using ``res_type='polyphase'``, only integer sampling rates are
@@ -532,6 +543,7 @@ def resample(
     scipy.signal.resample
     resampy
     samplerate.converters.resample
+    soxr.resample
 
     Notes
     -----
@@ -583,6 +595,11 @@ def resample(
 
         # We have to transpose here to match libsamplerate
         y_hat = samplerate.resample(y.T, ratio, converter_type=res_type).T
+    elif res_type.startswith('soxr'):
+        import soxr
+
+        # We have to transpose here to match soxr
+        y_hat = soxr.resample(y.T, orig_sr, target_sr, quality=res_type).T
     else:
         y_hat = resampy.resample(y, orig_sr, target_sr, filter=res_type, axis=-1)
 
