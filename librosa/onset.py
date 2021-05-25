@@ -33,6 +33,7 @@ def onset_detect(
     backtrack=False,
     energy=None,
     units="frames",
+    normalize=True,
     **kwargs,
 ):
     """Locate note onset events by picking peaks in an onset strength envelope.
@@ -70,6 +71,13 @@ def onset_detect(
     energy : np.ndarray [shape=(m,)] (optional)
         An energy function to use for backtracking detected onset events.
         If none is provided, then ``onset_envelope`` is used.
+
+    normalize : bool
+        If ``True`` (default), normalize the onset envelope to have minimum of 0 and
+        maximum of 1 prior to detection.  This is helpful for standardizing the
+        parameters of `librosa.util.peak_pick`.
+
+        Otherwise, the onset envelope is left unnormalized.
 
     kwargs : additional keyword arguments
         Additional parameters for peak picking.
@@ -141,32 +149,34 @@ def onset_detect(
 
     # Shift onset envelope up to be non-negative
     # (a common normalization step to make the threshold more consistent)
-    onset_envelope -= onset_envelope.min()
+    if normalize:
+        # Normalize onset strength function to [0, 1] range
+        onset_envelope = onset_envelope - onset_envelope.min()
+        # Max-scale with safe division
+        onset_envelope /= np.max(onset_envelope) + util.tiny(onset_envelope)
 
     # Do we have any onsets to grab?
-    if not onset_envelope.any():
-        return np.array([], dtype=np.int)
+    if not onset_envelope.any() or not np.all(np.isfinite(onset_envelope)):
+        onsets = np.array([], dtype=np.int)
 
-    # Normalize onset strength function to [0, 1] range
-    onset_envelope /= onset_envelope.max()
+    else:
+        # These parameter settings found by large-scale search
+        kwargs.setdefault("pre_max", 0.03 * sr // hop_length)  # 30ms
+        kwargs.setdefault("post_max", 0.00 * sr // hop_length + 1)  # 0ms
+        kwargs.setdefault("pre_avg", 0.10 * sr // hop_length)  # 100ms
+        kwargs.setdefault("post_avg", 0.10 * sr // hop_length + 1)  # 100ms
+        kwargs.setdefault("wait", 0.03 * sr // hop_length)  # 30ms
+        kwargs.setdefault("delta", 0.07)
 
-    # These parameter settings found by large-scale search
-    kwargs.setdefault("pre_max", 0.03 * sr // hop_length)  # 30ms
-    kwargs.setdefault("post_max", 0.00 * sr // hop_length + 1)  # 0ms
-    kwargs.setdefault("pre_avg", 0.10 * sr // hop_length)  # 100ms
-    kwargs.setdefault("post_avg", 0.10 * sr // hop_length + 1)  # 100ms
-    kwargs.setdefault("wait", 0.03 * sr // hop_length)  # 30ms
-    kwargs.setdefault("delta", 0.07)
+        # Peak pick the onset envelope
+        onsets = util.peak_pick(onset_envelope, **kwargs)
 
-    # Peak pick the onset envelope
-    onsets = util.peak_pick(onset_envelope, **kwargs)
+        # Optionally backtrack the events
+        if backtrack:
+            if energy is None:
+                energy = onset_envelope
 
-    # Optionally backtrack the events
-    if backtrack:
-        if energy is None:
-            energy = onset_envelope
-
-        onsets = onset_backtrack(onsets, energy)
+            onsets = onset_backtrack(onsets, energy)
 
     if units == "frames":
         pass

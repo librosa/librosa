@@ -187,11 +187,16 @@ def oenv(ysr, hop, request):
 
 
 @pytest.mark.parametrize("bt", [False, True])
-def test_onset_detect_real(ysr, oenv, hop, bt):
+@pytest.mark.parametrize("normalize", [False, True])
+def test_onset_detect_real(ysr, oenv, hop, bt, normalize):
 
     y, sr = ysr
     onsets = librosa.onset.onset_detect(
-        y=y, sr=sr, onset_envelope=oenv, hop_length=hop, backtrack=bt
+        y=y, sr=sr,
+        onset_envelope=oenv,
+        hop_length=hop,
+        backtrack=bt,
+        normalize=normalize
     )
     if bt:
         assert np.all(onsets >= 0)
@@ -309,3 +314,16 @@ def test_onset_strength_multi_ref():
     # since the reference is zero everywhere, S - ref = S
     # past the setup phase (first frame)
     assert np.allclose(onsets[:, 1:], S[:, 1:])
+
+
+def test_onset_detect_inplace_normalize():
+
+    # This test will fail if the in-place normalization modifies
+    # the input onset envelope
+    oenv_in = np.ones(50)
+    oenv_in[10] = 2
+    oenv_orig = oenv_in.copy()
+
+    librosa.onset.onset_detect(onset_envelope=oenv_in, normalize=True)
+
+    assert np.allclose(oenv_in, oenv_orig) and oenv_in is not oenv_orig
