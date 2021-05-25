@@ -277,10 +277,7 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type="kaiser_best", **kw
         how many steps per octave
 
     res_type : string
-        Resample type. Possible options:
-            'kaiser_best', 'kaiser_fast', and 'scipy', 'polyphase', 'fft'.
-
-        By default, 'kaiser_best' is used.
+        Resample type. By default, 'kaiser_best' is used.
 
         See `librosa.resample` for more information.
 
@@ -670,9 +667,9 @@ def deemphasis(y, coef=0.95, zi=None):
     """De-emphasize an audio signal with the inverse operation of preemphasis():
 
     If y = preemphasis(x, coef=coef, zi=zi), the deemphasis is:
-        x[i] = y[i] + coef * x[i-1]
-        x = deemphasis(y, coef=coef, zi=zi)
 
+    >>> x[i] = y[i] + coef * x[i-1]
+    >>> x = deemphasis(y, coef=coef, zi=zi)
 
     Parameters
     ----------

@@ -796,7 +796,7 @@ def specshow(
         - 'mel' : frequencies are determined by the mel scale.
         - 'cqt_hz' : frequencies are determined by the CQT scale.
         - 'cqt_note' : pitches are determined by the CQT scale.
-        - `cqt_svara` : like `cqt_note` but using Hindustani or Carnatic svara
+        - 'cqt_svara' : like `cqt_note` but using Hindustani or Carnatic svara
 
         All frequency types are plotted in units of Hz.
 
@@ -1403,8 +1403,8 @@ def waveshow(
     amplitude-envelope view of the signal (`matplotlib.pyplot.fill_between`)
     depending on the time extent of the plot's viewport.
 
-    More specifically, when the plot spans a time interval of less than `max_points /
-    sr` (by default, 1/2 second), the samples-based view is used, and otherwise a
+    More specifically, when the plot spans a time interval of less than ``max_points /
+    sr`` (by default, 1/2 second), the samples-based view is used, and otherwise a
     downsampled amplitude envelope is used.
     This is done to limit the complexity of the visual elements to guarantee an
     efficient, visually interpretable plot.
@@ -1432,7 +1432,7 @@ def waveshow(
 
     max_points : postive integer
         Maximum number of samples to draw.  When the plot covers a time extent
-        smaller than `max_points / sr` (default: 1/2 second), samples are drawn.
+        smaller than ``max_points / sr`` (default: 1/2 second), samples are drawn.
 
         If drawing raw samples would exceed `max_points`, then a downsampled
         amplitude envelope extracted from non-overlapping windows of `y` is
@@ -1534,7 +1534,7 @@ def waveshow(
     >>> ax.set(xlim=[6.0, 6.01], title='Sample view', ylim=[-0.2, 0.2])
     >>> librosa.display.waveshow(y, sr=sr, ax=ax, marker='.', label='Full signal')
     >>> librosa.display.waveshow(y_harm, sr=sr, alpha=0.5, ax=ax2, label='Harmonic')
-    >>> librosa.display.waveshow(y_perc, sr=sr, alpha=0.5, ax=ax2, label='Percussive')
+    >>> librosa.display.waveshow(y_perc, sr=sr, color='r', alpha=0.5, ax=ax2, label='Percussive')
     >>> ax.label_outer()
     >>> ax.legend()
     >>> ax2.legend()
