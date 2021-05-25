@@ -12,6 +12,7 @@ v0.8.1
 New Features
     - `#1293`_ `librosa.effects.deemphasis`, inverse operation of `librosa.effects.preemphasis`. *Dan Mazur*
     - `#1207`_  `librosa.display.waveshow`, adaptively visualize waveforms by amplitude envelope when zoomed out, or raw sample values when zoomed in. *Brian McFee*
+    - `#1338`_ `librosa.resample` now optionally supports `soxr`. *Myungchul Keum*
 
 
 Bug fixes
@@ -19,6 +20,7 @@ Bug fixes
     - `#1240`_ `librosa.display.specshow` now correctly infers `fmax` for mel frequency axes. *Brian McFee, Bea Steers*
     - `#1311`_ `librosa.filters.chroma` fixed an error in how chromagrams were generated when `n_chroma!=12` and `base_c=True`. *Joon Lim*
     - `#1322`_ `librosa.feature.inverse.mel_to_audio` now infers `hop_length` by default in a way that is consistent with the rest of the package. *Dan Ellis*
+    - `#1341`_ `librosa.onset.onset_detect` no longer modifies user-provided onset envelopes. *Brian McFee*
 
 Documentation
     - `#1211`_ fixed a broken link in the changelog. *Pavel Campr*
@@ -40,6 +42,9 @@ Other changes
     - `#1335`_, `#1336`_ `librosa.display.specshow` now supports pitch notation
       (Western, Hindustani, and Carnatic) for STFT matrices. *Paul Biberstein, Brian McFee*
     - `#1333`_ minimum version of `soundfile` has been updated to 0.10.2. *Brian McFee*
+    - `#1340`_ several functions now support `np.integer`-valued parameters as well as integer-valued parameters. *Brian McFee*
+    - `#1207`_ `librosa.display` time-formatted axes now have enhanced precision at short time scales. *Brian McFee*
+    - `#1341`_ `librosa.onset.onset_detect` can now optionally disable normalization of the onset envelope. *Brian McFee*
 
 Deprecations to be removed in 0.9
     - `librosa.display.waveplot` is now deprecated in favor of `librosa.display.waveshow`.
@@ -67,6 +72,9 @@ Deprecations to be removed in 0.9
 .. _#1334: https://github.com/librosa/librosa/issues/1334
 .. _#1335: https://github.com/librosa/librosa/issues/1335
 .. _#1336: https://github.com/librosa/librosa/issues/1336
+.. _#1340: https://github.com/librosa/librosa/issues/1340
+.. _#1341: https://github.com/librosa/librosa/issues/1341
+.. _#1338: https://github.com/librosa/librosa/issues/1338
 
 v0.8.0
 ------
