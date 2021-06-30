@@ -924,7 +924,7 @@ def _multirate_fb(
         Samplerate for each filter (used for multirate filterbank).
 
     Q : float
-        Q factor (influences the filter bandwith).
+        Q factor (influences the filter bandwidth).
 
     passband_ripple : float
         The maximum loss in the passband (dB)

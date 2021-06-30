@@ -8,5 +8,5 @@ jobs:
       - uses: actions/setup-python@v2
       - run: pip install bandit codespell flake8
       - run: bandit --recursive --skip B101,B110 .
-      - run: codespell --ignore-words-list="ba,trough,ue" --skip="*demo.ipynb" || true  # Until #1348 is fixed
-      - run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+      - run: codespell --ignore-words-list="ba,trough,ue" --skip="*demo.ipynb"
+      - run: flake8 librosa --count --select=E9,F63,F7,F82 --show-source --statistics

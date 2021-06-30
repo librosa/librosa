@@ -1148,7 +1148,7 @@ Other changes
    -  changed default `librosa.decompose.hpss` window to 31
    -  disabled onset de-trending by default in `librosa.onset.onset_strength`
    -  added complex-value warning to `librosa.display.specshow`
-   -  broke compatibilty with `ifgram.m`; `librosa.ifgram` now matches `stft`
+   -  broke compatibility with `ifgram.m`; `librosa.ifgram` now matches `stft`
    -  changed default beat tracker settings
    -  migrated `hpss` into `librosa.decompose`
    -  changed default `librosa.decompose.hpss` power parameter to `2.0`

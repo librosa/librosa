@@ -66,7 +66,7 @@ S_filter = librosa.decompose.nn_filter(S_full,
                                        width=int(librosa.time_to_frames(2, sr=sr)))
 
 # The output of the filter shouldn't be greater than the input
-# if we assume signals are additive.  Taking the pointwise minimium
+# if we assume signals are additive.  Taking the pointwise minimum
 # with the input spectrum forces this.
 S_filter = np.minimum(S_full, S_filter)
 
