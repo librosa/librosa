@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Music notation utilties"""
+"""Music notation utilities"""
 
 import re
 import numpy as np
@@ -124,7 +124,7 @@ def thaat_to_degrees(thaat):
     Returns
     -------
     indices : np.ndarray
-        A list of the seven svara indicies (starting from 0=Sa)
+        A list of the seven svara indices (starting from 0=Sa)
         contained in the specified thaat
 
     See Also
@@ -155,7 +155,7 @@ def mela_to_degrees(mela):
     Returns
     -------
     degrees : np.ndarray
-        A list of the seven svara indicies (starting from 0=Sa)
+        A list of the seven svara indices (starting from 0=Sa)
         contained in the specified raga
 
     See Also
