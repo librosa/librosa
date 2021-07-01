@@ -723,7 +723,7 @@ def normalize(S, norm=np.inf, axis=0, threshold=None, fill=None):
 
     norm : {np.inf, -np.inf, 0, float > 0, None}
         - `np.inf`  : maximum absolute value
-        - `-np.inf` : mininum absolute value
+        - `-np.inf` : minimum absolute value
         - `0`    : number of non-zeros (the support)
         - float  : corresponding l_p norm
             See `scipy.linalg.norm` for details.

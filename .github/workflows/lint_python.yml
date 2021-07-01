@@ -1,0 +1,12 @@
+name: lint_python
+on: [pull_request, push]
+jobs:
+  lint_python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - run: pip install bandit codespell flake8
+      - run: bandit --recursive --skip B101,B110 .
+      - run: codespell --ignore-words-list="ba,trough,ue" --skip="*demo.ipynb"
+      - run: flake8 librosa --count --select=E9,F63,F7,F82 --show-source --statistics
