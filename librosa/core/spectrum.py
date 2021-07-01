@@ -1288,7 +1288,7 @@ def iirt(
     (pitch filterbank):
 
         * 85 filters with MIDI pitches [24, 108] as ``center_freqs``.
-        * each filter having a bandwith of one semitone.
+        * each filter having a bandwidth of one semitone.
 
     .. [#] Müller, Meinard.
            "Information Retrieval for Music and Motion."

@@ -624,7 +624,7 @@ def waveplot(
     sr : number > 0 [scalar]
         sampling rate of ``y``
 
-    max_points : postive number or None
+    max_points : positive number or None
         Maximum number of time-points to plot: if ``max_points`` exceeds
         the duration of ``y``, then ``y`` is downsampled.
 
@@ -1430,7 +1430,7 @@ def waveshow(
     sr : number > 0 [scalar]
         sampling rate of ``y`` (samples per second)
 
-    max_points : postive integer
+    max_points : positive integer
         Maximum number of samples to draw.  When the plot covers a time extent
         smaller than ``max_points / sr`` (default: 1/2 second), samples are drawn.
 
