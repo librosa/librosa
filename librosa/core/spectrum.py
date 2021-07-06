@@ -211,10 +211,12 @@ def stft(
     fft_window = util.pad_center(fft_window, n_fft)
 
     # Reshape so that the window can be broadcast
-    fft_window = fft_window.reshape((-1, 1))
+    shape = [1 for _ in range(y.ndim + 1)]
+    shape[-2] = -1
+    fft_window = fft_window.reshape(shape)
 
     # Check audio is valid
-    util.valid_audio(y)
+    util.valid_audio(y, mono=False)
 
     # Pad the time series so that frames are centered
     if center:
@@ -225,7 +227,9 @@ def stft(
                 )
             )
 
-        y = np.pad(y, int(n_fft // 2), mode=pad_mode)
+        padding = [(0, 0) for _ in range(y.ndim)]
+        padding[-1] = (int(n_fft//2), int(n_fft//2))
+        y = np.pad(y, padding, mode=pad_mode)
 
     elif n_fft > y.shape[-1]:
         raise ParameterError(
@@ -237,26 +241,24 @@ def stft(
     # Window the time series.
     y_frames = util.frame(y, frame_length=n_fft, hop_length=hop_length)
 
+    fft = get_fftlib()
+
     if dtype is None:
         dtype = util.dtype_r2c(y.dtype)
 
     # Pre-allocate the STFT matrix
-    stft_matrix = np.empty(
-        (int(1 + n_fft // 2), y_frames.shape[1]), dtype=dtype, order="F"
-    )
+    shape = list(y_frames.shape)
+    shape[-2] = 1 + n_fft // 2
+    stft_matrix = np.empty(shape, dtype=dtype, order="F")
 
-    fft = get_fftlib()
-
-    # how many columns can we fit within MAX_MEM_BLOCK?
-    n_columns = util.MAX_MEM_BLOCK // (stft_matrix.shape[0] * stft_matrix.itemsize)
+    n_columns = util.MAX_MEM_BLOCK // (np.prod(stft_matrix.shape[:-1]) * stft_matrix.itemsize)
     n_columns = max(n_columns, 1)
 
-    for bl_s in range(0, stft_matrix.shape[1], n_columns):
-        bl_t = min(bl_s + n_columns, stft_matrix.shape[1])
+    for bl_s in range(0, stft_matrix.shape[-1], n_columns):
+        bl_t = min(bl_s + n_columns, stft_matrix.shape[-1])
 
-        stft_matrix[:, bl_s:bl_t] = fft.rfft(
-            fft_window * y_frames[:, bl_s:bl_t], axis=0
-        )
+        stft_matrix[..., bl_s:bl_t] = fft.rfft(fft_window *
+                                               y_frames[..., bl_s:bl_t], axis=-2)
     return stft_matrix
 
 
