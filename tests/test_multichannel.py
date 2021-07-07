@@ -40,6 +40,32 @@ def test_stft_multi(y_multi):
     D0 = librosa.stft(y[0])
     D1 = librosa.stft(y[1])
 
+    # Check each channel
     assert np.allclose(D[0], D0)
     assert np.allclose(D[1], D1)
+
+    # Check that they're not both the same
     assert not np.allclose(D0, D1)
+
+
+def test_istft_multi(y_multi):
+
+    # Verify that a stereo ISTFT matches on each channel
+    y, sr = y_multi
+
+    # Assume the forward transform works properly in stereo
+    D = librosa.stft(y)
+
+    # Invert per channel
+    y0m = librosa.istft(D[0])
+    y1m = librosa.istft(D[1])
+
+    # Invert both channels at once
+    ys = librosa.istft(D)
+
+    # Check each channel
+    assert np.allclose(y0m, ys[0])
+    assert np.allclose(y1m, ys[1])
+
+    # Check that they're not both the same
+    assert not np.allclose(ys[0], ys[1])
