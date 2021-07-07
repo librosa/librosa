@@ -2379,7 +2379,7 @@ def griffinlim(
         )
 
     # Infer n_fft from the spectrogram shape
-    n_fft = 2 * (S.shape[0] - 1)
+    n_fft = 2 * (S.shape[-2] - 1)
 
     # using complex64 will keep the result to minimal necessary precision
     angles = np.empty(S.shape, dtype=np.complex64)

@@ -69,3 +69,16 @@ def test_istft_multi(y_multi):
 
     # Check that they're not both the same
     assert not np.allclose(ys[0], ys[1])
+
+
+def test_griffinlim_multi(y_multi):
+    y, sr = y_multi
+
+    # Compute the stft
+    D = librosa.stft(y)
+
+    # Run a couple of iterations of griffin-lim
+    yout = librosa.griffinlim(np.abs(D), n_iter=2, length=y.shape[-1])
+
+    # Check the lengths
+    assert np.allclose(y.shape, yout.shape)
