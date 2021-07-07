@@ -205,6 +205,9 @@ def stft(
     if hop_length is None:
         hop_length = int(win_length // 4)
 
+    # Check audio is valid
+    util.valid_audio(y, mono=False)
+
     fft_window = get_window(window, win_length, fftbins=True)
 
     # Pad the window out to n_fft size
@@ -214,9 +217,6 @@ def stft(
     shape = [1 for _ in range(y.ndim + 1)]
     shape[-2] = -1
     fft_window = fft_window.reshape(shape)
-
-    # Check audio is valid
-    util.valid_audio(y, mono=False)
 
     # Pad the time series so that frames are centered
     if center:
