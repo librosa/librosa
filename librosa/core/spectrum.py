@@ -357,7 +357,7 @@ def istft(
     8.940697e-08
     """
 
-    n_fft = 2 * (stft_matrix.shape[0] - 1)
+    n_fft = 2 * (stft_matrix.shape[-2] - 1)
 
     # By default, use the entire frame
     if win_length is None:
@@ -369,8 +369,11 @@ def istft(
 
     ifft_window = get_window(window, win_length, fftbins=True)
 
-    # Pad out to match n_fft, and add a broadcasting axis
-    ifft_window = util.pad_center(ifft_window, n_fft)[:, np.newaxis]
+    # Pad out to match n_fft, and add broadcasting axes
+    ifft_window = util.pad_center(ifft_window, n_fft)
+    shape = [1 for _ in range(stft_matrix.ndim)]
+    shape[-2] = -1
+    ifft_window = ifft_window.reshape(shape)
 
     # For efficiency, trim STFT frames according to signal length if available
     if length:
@@ -378,18 +381,19 @@ def istft(
             padded_length = length + int(n_fft)
         else:
             padded_length = length
-        n_frames = min(stft_matrix.shape[1], int(np.ceil(padded_length / hop_length)))
+        n_frames = min(stft_matrix.shape[-1], int(np.ceil(padded_length / hop_length)))
     else:
-        n_frames = stft_matrix.shape[1]
-
-    expected_signal_len = n_fft + hop_length * (n_frames - 1)
+        n_frames = stft_matrix.shape[-1]
 
     if dtype is None:
         dtype = util.dtype_c2r(stft_matrix.dtype)
 
-    y = np.zeros(expected_signal_len, dtype=dtype)
+    shape = list(stft_matrix.shape[:-2])
+    expected_signal_len = n_fft + hop_length * (n_frames - 1)
+    shape.append(expected_signal_len)
+    y = np.zeros(shape, dtype=dtype, order="F")
 
-    n_columns = util.MAX_MEM_BLOCK // (stft_matrix.shape[0] * stft_matrix.itemsize)
+    n_columns = util.MAX_MEM_BLOCK // (np.prod(stft_matrix.shape[:-1]) * stft_matrix.itemsize)
     n_columns = max(n_columns, 1)
 
     fft = get_fftlib()
@@ -399,10 +403,10 @@ def istft(
         bl_t = min(bl_s + n_columns, n_frames)
 
         # invert the block and apply the window function
-        ytmp = ifft_window * fft.irfft(stft_matrix[:, bl_s:bl_t], axis=0)
+        ytmp = ifft_window * fft.irfft(stft_matrix[..., bl_s:bl_t], axis=-2)
 
         # Overlap-add the istft block starting at the i'th frame
-        __overlap_add(y[frame * hop_length :], ytmp, hop_length)
+        __overlap_add(y[..., frame * hop_length :], ytmp, hop_length)
 
         frame += bl_t - bl_s
 
@@ -417,13 +421,13 @@ def istft(
     )
 
     approx_nonzero_indices = ifft_window_sum > util.tiny(ifft_window_sum)
-    y[approx_nonzero_indices] /= ifft_window_sum[approx_nonzero_indices]
+    y[..., approx_nonzero_indices] /= ifft_window_sum[approx_nonzero_indices]
 
     if length is None:
         # If we don't need to control length, just do the usual center trimming
         # to eliminate padded data
         if center:
-            y = y[int(n_fft // 2) : -int(n_fft // 2)]
+            y = y[..., int(n_fft // 2) : -int(n_fft // 2)]
     else:
         if center:
             # If we're centering, crop off the first n_fft//2 samples
@@ -435,7 +439,7 @@ def istft(
             # If we're not centering, start at 0 and trim/pad as necessary
             start = 0
 
-        y = util.fix_length(y[start:], length)
+        y = util.fix_length(y[..., start:], length)
 
     return y
 
@@ -447,10 +451,10 @@ def __overlap_add(y, ytmp, hop_length):
     # ytmp is the windowed inverse-stft frames
     # hop_length is the hop-length of the STFT analysis
 
-    n_fft = ytmp.shape[0]
-    for frame in range(ytmp.shape[1]):
+    n_fft = ytmp.shape[-2]
+    for frame in range(ytmp.shape[-1]):
         sample = frame * hop_length
-        y[sample : (sample + n_fft)] += ytmp[:, frame]
+        y[..., sample : (sample + n_fft)] += ytmp[..., frame]
 
 
 def __reassign_frequencies(
