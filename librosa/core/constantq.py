@@ -511,6 +511,7 @@ def pseudo_cqt(
     )
 
     # Project onto the pseudo-cqt basis
+    # TODO: CQT filter response here
     C = fft_basis.dot(D)
 
     if scale:
@@ -525,6 +526,7 @@ def pseudo_cqt(
             filter_scale=filter_scale,
         )
 
+        # TODO: reshape lengths to match dimension properly
         C *= np.sqrt(lengths[:, np.newaxis] / n_fft)
 
     return C
@@ -899,7 +901,7 @@ def vqt(
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
     n_filters = min(bins_per_octave, n_bins)
 
-    len_orig = len(y)
+    len_orig = y.shape[-1]
 
     # Relative difference in frequency between any two consecutive bands
     alpha = 2.0 ** (1.0 / bins_per_octave) - 1
@@ -996,7 +998,7 @@ def vqt(
     for i in range(n_octaves):
         # Resample (except first time)
         if i > 0:
-            if len(my_y) < 2:
+            if my_y.shape[-1] < 2:
                 raise ParameterError(
                     "Input signal length={} is too short for "
                     "{:d}-octave CQT/VQT".format(len_orig, n_octaves)
@@ -1039,7 +1041,11 @@ def vqt(
             filter_scale=filter_scale,
             gamma=gamma,
         )
-        V /= np.sqrt(lengths[:, np.newaxis])
+        # reshape lengths to match V shape
+        shape = [1 for _ in V.shape]
+        shape[-2] = len(lengths)
+        lengths = lengths.reshape(shape)
+        V /= np.sqrt(lengths)
 
     return V
 
@@ -1096,19 +1102,23 @@ def __trim_stack(cqt_resp, n_bins, dtype):
     """Helper function to trim and stack a collection of CQT responses"""
 
     max_col = min(c_i.shape[-1] for c_i in cqt_resp)
-    cqt_out = np.empty((n_bins, max_col), dtype=dtype, order="F")
+    # Grab any leading dimensions
+    shape = list(cqt_resp[0].shape)
+    shape[-2] = n_bins
+    shape[-1] = max_col
+    cqt_out = np.empty(shape, dtype=dtype, order="F")
 
     # Copy per-octave data into output array
     end = n_bins
     for c_i in cqt_resp:
         # By default, take the whole octave
-        n_oct = c_i.shape[0]
+        n_oct = c_i.shape[-2]
         # If the whole octave is more than we can fit,
         # take the highest bins from c_i
         if end < n_oct:
-            cqt_out[:end] = c_i[-end:, :max_col]
+            cqt_out[..., :end, :] = c_i[..., -end:, :max_col]
         else:
-            cqt_out[end - n_oct : end] = c_i[:, :max_col]
+            cqt_out[..., end - n_oct : end, :] = c_i[..., :max_col]
 
         end -= n_oct
 
@@ -1123,8 +1133,19 @@ def __cqt_response(y, n_fft, hop_length, fft_basis, mode, dtype=None):
         y, n_fft=n_fft, hop_length=hop_length, window="ones", pad_mode=mode, dtype=dtype
     )
 
-    # And filter response energy
-    return fft_basis.dot(D)
+    # Reshape D to Dr
+    Dr = D.reshape((-1, D.shape[-2], D.shape[-1]))
+    output_flat = np.empty((Dr.shape[0], fft_basis.shape[0], Dr.shape[-1]), dtype=D.dtype)
+
+    # iterate over channels
+    #   project fft_basis.dot(Dr[i])
+    for i in range(Dr.shape[0]):
+        output_flat[i] = fft_basis.dot(Dr[i])
+
+    # reshape Dr to match D's leading dimensions again
+    shape = list(D.shape)
+    shape[-2] = fft_basis.shape[0]
+    return output_flat.reshape(shape)
 
 
 def __early_downsample_count(nyquist, filter_cutoff, hop_length, n_octaves):
@@ -1154,7 +1175,7 @@ def __early_downsample(
 
         hop_length //= downsample_factor
 
-        if len(y) < downsample_factor:
+        if y.shape[-1] < downsample_factor:
             raise ParameterError(
                 "Input signal length={:d} is too short for "
                 "{:d}-octave CQT".format(len(y), n_octaves)
