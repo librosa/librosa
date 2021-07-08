@@ -648,7 +648,7 @@ def icqt(
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
 
     # Get the top octave of frequencies
-    n_bins = len(C)
+    n_bins = C.shape[-2]
 
     freqs = cqt_frequencies(n_bins, fmin, bins_per_octave=bins_per_octave)[
         -bins_per_octave:
@@ -677,7 +677,7 @@ def icqt(
 
     if length is not None:
         n_frames = int(np.ceil((length + max(lengths)) / hop_length))
-        C = C[:, :n_frames]
+        C = C[..., :n_frames]
 
     # The basis gets renormalized by the effective window length above;
     # This step undoes that
@@ -689,6 +689,10 @@ def icqt(
     # How many octaves do we have?
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
 
+    # This shape array will be used for broadcasting the basis scale
+    # we'll have to adapt this per octave within the loop
+    shape = [1 for _ in C.shape]
+
     y = None
     for octave in range(n_octaves - 1, -1, -1):
         slice_ = slice(
@@ -696,21 +700,23 @@ def icqt(
         )
 
         # Slice this octave
-        C_oct = C[slice_]
-        inv_oct = inv_basis[:, -C_oct.shape[0] :]
+        C_oct = C[..., slice_, :]
+        inv_oct = inv_basis[:, -C_oct.shape[-2] :]
 
         oct_hop = hop_length // 2 ** octave
 
         # Apply energy corrections
         if scale:
-            C_scale = np.sqrt(lengths[-C_oct.shape[0] :, np.newaxis]) / n_fft
+            C_scale = np.sqrt(lengths[-C_oct.shape[-2] :]) / n_fft
         else:
             C_scale = (
-                lengths[-C_oct.shape[0] :, np.newaxis] * np.sqrt(2 ** octave) / n_fft
+                lengths[-C_oct.shape[-2] :] * np.sqrt(2 ** octave) / n_fft
             )
+        shape[-2] = len(C_scale)
+        C_scale = C_scale.reshape(shape)
 
         # Inverse-project the basis for each octave
-        D_oct = inv_oct.dot(C_oct / C_scale)
+        D_oct = np.einsum('fc,...ct->...ft', inv_oct, C_oct / C_scale, optimize=True)
 
         # Inverse-STFT that response
         y_oct = istft(D_oct, window="ones", hop_length=oct_hop, dtype=dtype)
@@ -723,7 +729,7 @@ def icqt(
             # Scipy-resampling is fast here, since it's a power-of-two relation
             y = audio.resample(y, 1, 2, scale=True, res_type=res_type, fix=False)
 
-            y[: len(y_oct)] += y_oct
+            y[..., : y_oct.shape[-1]] += y_oct
 
     if length:
         y = util.fix_length(y, length)

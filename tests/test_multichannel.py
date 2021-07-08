@@ -122,3 +122,26 @@ def test_hybrid_cqt_multi(y_multi, scale, res_type):
     # Verify that they're not all the same
     assert not np.allclose(Call[0], Call[1])
 
+
+@pytest.mark.parametrize('scale', [False, True])
+@pytest.mark.parametrize('length', [None, 22050])
+def test_icqt_multi(y_multi, scale, length):
+
+    y, sr = y_multi
+
+    # Assuming the forward transform is well-behaved
+    C = librosa.cqt(y=y, sr=sr, scale=scale)
+
+    yboth = librosa.icqt(C, sr=sr, scale=scale, length=length)
+    y0 = librosa.icqt(C[0], sr=sr, scale=scale, length=length)
+    y1 = librosa.icqt(C[1], sr=sr, scale=scale, length=length)
+
+    if length is not None:
+        assert yboth.shape[-1] == length
+
+    # Check each channel
+    assert np.allclose(yboth[0], y0)
+    assert np.allclose(yboth[1], y1)
+
+    # Check that they're not the same
+    assert not np.allclose(yboth[0], yboth[1])
