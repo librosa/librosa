@@ -1452,7 +1452,7 @@ def griffinlim_cqt(
             inverse,
             sr=sr,
             bins_per_octave=bins_per_octave,
-            n_bins=C.shape[0],
+            n_bins=C.shape[-2],
             hop_length=hop_length,
             fmin=fmin,
             tuning=tuning,

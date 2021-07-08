@@ -145,3 +145,16 @@ def test_icqt_multi(y_multi, scale, length):
 
     # Check that they're not the same
     assert not np.allclose(yboth[0], yboth[1])
+
+
+def test_griffinlim_cqt_multi(y_multi):
+    y, sr = y_multi
+
+    # Compute the stft
+    C = librosa.cqt(y, sr=sr)
+
+    # Run a couple of iterations of griffin-lim
+    yout = librosa.griffinlim_cqt(np.abs(C), n_iter=2, length=y.shape[-1])
+
+    # Check the lengths
+    assert np.allclose(y.shape, yout.shape)
