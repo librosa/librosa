@@ -505,14 +505,9 @@ def pseudo_cqt(
 
     fft_basis = np.abs(fft_basis)
 
-    # Compute the magnitude STFT with Hann window
-    D = np.abs(
-        stft(y, n_fft=n_fft, hop_length=hop_length, pad_mode=pad_mode, dtype=dtype)
-    )
-
-    # Project onto the pseudo-cqt basis
-    # TODO: CQT filter response here
-    C = fft_basis.dot(D)
+    # Compute the magnitude-only CQT response
+    C = __cqt_response(y, n_fft, hop_length, fft_basis, pad_mode, window='hann',
+                       dtype=dtype, phase=False)
 
     if scale:
         C /= np.sqrt(n_fft)
@@ -526,8 +521,12 @@ def pseudo_cqt(
             filter_scale=filter_scale,
         )
 
-        # TODO: reshape lengths to match dimension properly
-        C *= np.sqrt(lengths[:, np.newaxis] / n_fft)
+        # reshape lengths to match dimension properly
+        shape = [1 for _ in C.shape]
+        shape[-2] = len(lengths)
+        lengths = lengths.reshape(shape)
+
+        C *= np.sqrt(lengths / n_fft)
 
     return C
 
@@ -1125,13 +1124,16 @@ def __trim_stack(cqt_resp, n_bins, dtype):
     return cqt_out
 
 
-def __cqt_response(y, n_fft, hop_length, fft_basis, mode, dtype=None):
+def __cqt_response(y, n_fft, hop_length, fft_basis, mode, window="ones", phase=True, dtype=None):
     """Compute the filter response with a target STFT hop."""
 
     # Compute the STFT matrix
     D = stft(
-        y, n_fft=n_fft, hop_length=hop_length, window="ones", pad_mode=mode, dtype=dtype
+        y, n_fft=n_fft, hop_length=hop_length, window=window, pad_mode=mode, dtype=dtype
     )
+
+    if not phase:
+        D = np.abs(D)
 
     # Reshape D to Dr
     Dr = D.reshape((-1, D.shape[-2], D.shape[-1]))
