@@ -614,7 +614,9 @@ def __reassign_frequencies(
     correction = -np.imag(S_dh / S_h)
 
     freqs = convert.fft_frequencies(sr=sr, n_fft=n_fft)
-    freqs = freqs[:, np.newaxis] + correction * (0.5 * sr / np.pi)
+    shape = [1 for _ in correction.shape]
+    shape[-2] = len(freqs)
+    freqs = freqs.reshape(shape) + correction * (0.5 * sr / np.pi)
 
     return freqs, S_h
 
@@ -792,10 +794,12 @@ def __reassign_times(
         pad_length = n_fft
 
     times = convert.frames_to_time(
-        np.arange(S_h.shape[1]), sr=sr, hop_length=hop_length, n_fft=pad_length
+        np.arange(S_h.shape[-1]), sr=sr, hop_length=hop_length, n_fft=pad_length
     )
 
-    times = times[np.newaxis, :] + correction / sr
+    shape = [1 for _ in correction.shape]
+    shape[-1] = len(times)
+    times = times.reshape(shape) + correction / sr
 
     return times, S_h
 
@@ -1058,7 +1062,7 @@ def reassigned_spectrogram(
         bin_freqs = convert.fft_frequencies(sr=sr, n_fft=n_fft)
 
         frame_times = convert.frames_to_time(
-            frames=np.arange(S.shape[1]), sr=sr, hop_length=hop_length, n_fft=pad_length
+            frames=np.arange(S.shape[-1]), sr=sr, hop_length=hop_length, n_fft=pad_length
         )
 
     # find bins below the power threshold
@@ -1094,7 +1098,7 @@ def reassigned_spectrogram(
             times = np.where(np.isnan(times), frame_times[np.newaxis, :], times)
 
         if clip:
-            np.clip(times, 0, len(y) / float(sr), out=times)
+            np.clip(times, 0, y.shape[-1] / float(sr), out=times)
 
     else:
         times = np.broadcast_to(frame_times[np.newaxis, :], S.shape)
