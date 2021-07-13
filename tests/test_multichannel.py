@@ -158,3 +158,18 @@ def test_griffinlim_cqt_multi(y_multi):
 
     # Check the lengths
     assert np.allclose(y.shape, yout.shape)
+
+
+@pytest.mark.parametrize('rate', [0.5, 2])
+def test_phase_vocoder(y_multi, rate):
+    y, sr = y_multi
+    D = librosa.stft(y)
+
+    D0 = librosa.phase_vocoder(D[0], rate)
+    D1 = librosa.phase_vocoder(D[1], rate)
+    D2 = librosa.phase_vocoder(D, rate)
+
+    assert np.allclose(D2[0], D0)
+    assert np.allclose(D2[1], D1)
+    assert not np.allclose(D2[0], D2[1])
+
