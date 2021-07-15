@@ -161,7 +161,12 @@ def spectral_centroid(
     >>> ax.legend(loc='upper right')
     >>> ax.set(title='log Power spectrogram')
     """
-
+    
+    #input is time domain:y or spectrogam:s
+    #
+    
+    
+    
     S, n_fft = _spectrogram(
         y=y,
         S=S,
@@ -172,6 +177,10 @@ def spectral_centroid(
         center=center,
         pad_mode=pad_mode,
     )
+    
+    #(S (channels,freq,frames,intensity) for multichannel
+    
+    
 
     if not np.isrealobj(S):
         raise ParameterError(
@@ -187,10 +196,15 @@ def spectral_centroid(
         freq = fft_frequencies(sr=sr, n_fft=n_fft)
 
     if freq.ndim == 1:
-        freq = freq.reshape((-1, 1))
+        #reshape for broadcasting
+        shape = [1 for _ in range(S.ndim)]
+        shape[-2] = -1
+        freq = freq.reshape(shape)
+        
+        #freq = (1025,1) S(2,1025,128,
 
     # Column-normalize S
-    return np.sum(freq * util.normalize(S, norm=1, axis=0), axis=0, keepdims=True)
+    return np.sum(freq * util.normalize(S, norm=1, axis=-2), axis=-2, keepdims=True)
 
 
 def spectral_bandwidth(
@@ -343,6 +357,7 @@ def spectral_bandwidth(
             "Spectral bandwidth is only defined " "with non-negative energies"
         )
 
+    #centroid or center?
     if centroid is None:
         centroid = spectral_centroid(
             y=y, sr=sr, S=S, n_fft=n_fft, hop_length=hop_length, freq=freq
@@ -351,17 +366,19 @@ def spectral_bandwidth(
     # Compute the center frequencies of each bin
     if freq is None:
         freq = fft_frequencies(sr=sr, n_fft=n_fft)
+        
 
-    if freq.ndim == 1:
-        deviation = np.abs(np.subtract.outer(freq, centroid[0]))
+    if freq.ndim == 1: 
+        deviation = np.abs(np.subtract.outer( centroid[...,0,:],freq).swapaxes(-2,-1))
     else:
-        deviation = np.abs(freq - centroid[0])
+        deviation = np.abs(freq - centroid[...,0,:])
+        
 
     # Column-normalize S
     if norm:
-        S = util.normalize(S, norm=1, axis=0)
+        S = util.normalize(S, norm=1, axis=-2)
 
-    return np.sum(S * deviation ** p, axis=0, keepdims=True) ** (1.0 / p)
+    return np.sum(S * deviation ** p, axis=-2, keepdims=True) ** (1.0 / p)
 
 
 def spectral_contrast(
