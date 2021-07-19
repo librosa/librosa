@@ -722,7 +722,10 @@ def spectral_rolloff(
 
     # Make sure that frequency can be broadcast
     if freq.ndim == 1:
-        freq = freq.reshape((-1, 1))
+        # reshape for broadcasting
+        shape = [1 for _ in range(S.ndim)]
+        shape[-2] = -1
+        freq = freq.reshape(shape)
 
     total_energy = np.cumsum(S, axis=0)
 
@@ -858,8 +861,8 @@ def spectral_flatness(
         )
 
     S_thresh = np.maximum(amin, S ** power)
-    gmean = np.exp(np.mean(np.log(S_thresh), axis=0, keepdims=True))
-    amean = np.mean(S_thresh, axis=0, keepdims=True)
+    gmean = np.exp(np.mean(np.log(S_thresh), axis=-2, keepdims=True))
+    amean = np.mean(S_thresh, axis=-2, keepdims=True)
     return gmean / amean
 
 
@@ -944,7 +947,7 @@ def rms(
         x = util.frame(y, frame_length=frame_length, hop_length=hop_length)
 
         # Calculate power
-        power = np.mean(np.abs(x) ** 2, axis=0, keepdims=True)
+        power = np.mean(np.abs(x) ** 2, axis=-2, keepdims=True)
     elif S is not None:
         # Check the frame length
         if S.shape[0] != frame_length // 2 + 1:
@@ -965,7 +968,7 @@ def rms(
             x[-1] *= 0.5
 
         # Calculate power
-        power = 2 * np.sum(x, axis=0, keepdims=True) / frame_length ** 2
+        power = 2 * np.sum(x, axis=-2, keepdims=True) / frame_length ** 2
     else:
         raise ParameterError("Either `y` or `S` must be input.")
 
@@ -1169,12 +1172,12 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True, **kwar
 
     y_framed = util.frame(y, frame_length, hop_length)
 
-    kwargs["axis"] = 0
+    kwargs["axis"] = -2
     kwargs.setdefault("pad", False)
 
     crossings = zero_crossings(y_framed, **kwargs)
 
-    return np.mean(crossings, axis=0, keepdims=True)
+    return np.mean(crossings, axis=-2, keepdims=True)
 
 
 # -- Chroma --#
