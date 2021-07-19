@@ -21,7 +21,6 @@ import pytest
 import warnings
 from unittest import mock
 
-
 @pytest.fixture(scope="module", params=["test1_44100.wav"])
 def y_multi(request):
     infile = request.param
@@ -158,3 +157,26 @@ def test_griffinlim_cqt_multi(y_multi):
 
     # Check the lengths
     assert np.allclose(y.shape, yout.shape)
+
+@pytest.mark.parametrize(
+    "freq",
+    [
+        None
+    ],
+)
+def test_spectral_centroid_multi(freq,y_multi):
+    y, sr = y_multi
+
+    S = np.abs(librosa.stft(y))
+
+    # Assuming single-channel CQT is well behaved
+    C0 = librosa.feature.spectral_centroid(sr=sr,freq=freq,S=S[0])
+    C1 = librosa.feature.spectral_centroid(sr=sr,freq=freq,S=S[1])
+    Call = librosa.feature.spectral_centroid(sr=sr,freq=freq,S=S)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])

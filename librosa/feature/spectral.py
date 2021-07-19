@@ -180,7 +180,6 @@ def spectral_centroid(
     
     #(S (channels,freq,frames,intensity) for multichannel
     
-    
 
     if not np.isrealobj(S):
         raise ParameterError(
@@ -200,8 +199,7 @@ def spectral_centroid(
         shape = [1 for _ in range(S.ndim)]
         shape[-2] = -1
         freq = freq.reshape(shape)
-        
-        #freq = (1025,1) S(2,1025,128,
+
 
     # Column-normalize S
     return np.sum(freq * util.normalize(S, norm=1, axis=-2), axis=-2, keepdims=True)
