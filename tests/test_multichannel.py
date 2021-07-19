@@ -163,10 +163,9 @@ def test_griffinlim_cqt_multi(y_multi):
     # Check the lengths
     assert np.allclose(y.shape, yout.shape)
 
-def test_spectral_centroid_multi(y_multi):
-    y, sr = y_multi
+def test_spectral_centroid_multi(s_multi):
 
-    S = np.abs(librosa.stft(y))
+    S, sr= s_multi
 
     freq = None
 
