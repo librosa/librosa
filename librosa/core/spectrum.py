@@ -614,7 +614,9 @@ def __reassign_frequencies(
     correction = -np.imag(S_dh / S_h)
 
     freqs = convert.fft_frequencies(sr=sr, n_fft=n_fft)
-    freqs = freqs[:, np.newaxis] + correction * (0.5 * sr / np.pi)
+    shape = [1 for _ in correction.shape]
+    shape[-2] = len(freqs)
+    freqs = freqs.reshape(shape) + correction * (0.5 * sr / np.pi)
 
     return freqs, S_h
 
@@ -792,10 +794,12 @@ def __reassign_times(
         pad_length = n_fft
 
     times = convert.frames_to_time(
-        np.arange(S_h.shape[1]), sr=sr, hop_length=hop_length, n_fft=pad_length
+        np.arange(S_h.shape[-1]), sr=sr, hop_length=hop_length, n_fft=pad_length
     )
 
-    times = times[np.newaxis, :] + correction / sr
+    shape = [1 for _ in correction.shape]
+    shape[-1] = len(times)
+    times = times.reshape(shape) + correction / sr
 
     return times, S_h
 
@@ -1058,7 +1062,7 @@ def reassigned_spectrogram(
         bin_freqs = convert.fft_frequencies(sr=sr, n_fft=n_fft)
 
         frame_times = convert.frames_to_time(
-            frames=np.arange(S.shape[1]), sr=sr, hop_length=hop_length, n_fft=pad_length
+            frames=np.arange(S.shape[-1]), sr=sr, hop_length=hop_length, n_fft=pad_length
         )
 
     # find bins below the power threshold
@@ -1094,7 +1098,7 @@ def reassigned_spectrogram(
             times = np.where(np.isnan(times), frame_times[np.newaxis, :], times)
 
         if clip:
-            np.clip(times, 0, len(y) / float(sr), out=times)
+            np.clip(times, 0, y.shape[-1] / float(sr), out=times)
 
     else:
         times = np.broadcast_to(frame_times[np.newaxis, :], S.shape)
@@ -1221,38 +1225,43 @@ def phase_vocoder(D, rate, hop_length=None):
     pyrubberband
     """
 
-    n_fft = 2 * (D.shape[0] - 1)
+    n_fft = 2 * (D.shape[-2] - 1)
 
     if hop_length is None:
         hop_length = int(n_fft // 4)
 
-    time_steps = np.arange(0, D.shape[1], rate, dtype=np.float)
+    time_steps = np.arange(0, D.shape[-1], rate, dtype=np.float)
 
     # Create an empty output array
-    d_stretch = np.zeros((D.shape[0], len(time_steps)), D.dtype, order="F")
+    # d_stretch = np.zeros((D.shape[0], len(time_steps)), D.dtype, order="F")
+    shape = list(D.shape)
+    shape[-1] = len(time_steps)
+    d_stretch = np.zeros_like(D, shape=shape)
 
     # Expected phase advance in each bin
-    phi_advance = np.linspace(0, np.pi * hop_length, D.shape[0])
+    phi_advance = np.linspace(0, np.pi * hop_length, D.shape[-2])
 
     # Phase accumulator; initialize to the first sample
-    phase_acc = np.angle(D[:, 0])
+    phase_acc = np.angle(D[..., 0])
 
     # Pad 0 columns to simplify boundary logic
-    D = np.pad(D, [(0, 0), (0, 2)], mode="constant")
+    padding = [(0,0) for _ in D.shape]
+    padding[-1] = (0, 2)
+    D = np.pad(D, padding, mode="constant")
 
     for (t, step) in enumerate(time_steps):
 
-        columns = D[:, int(step) : int(step + 2)]
+        columns = D[..., int(step) : int(step + 2)]
 
         # Weighting for linear magnitude interpolation
         alpha = np.mod(step, 1.0)
-        mag = (1.0 - alpha) * np.abs(columns[:, 0]) + alpha * np.abs(columns[:, 1])
+        mag = (1.0 - alpha) * np.abs(columns[..., 0]) + alpha * np.abs(columns[..., 1])
 
         # Store to output array
-        d_stretch[:, t] = mag * np.exp(1.0j * phase_acc)
+        d_stretch[..., t] = mag * np.exp(1.0j * phase_acc)
 
         # Compute phase advance
-        dphase = np.angle(columns[:, 1]) - np.angle(columns[:, 0]) - phi_advance
+        dphase = np.angle(columns[..., 1]) - np.angle(columns[..., 0]) - phi_advance
 
         # Wrap to -pi:pi range
         dphase = dphase - 2.0 * np.pi * np.round(dphase / (2.0 * np.pi))
