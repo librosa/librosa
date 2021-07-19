@@ -27,6 +27,11 @@ def y_multi(request):
     return librosa.load(os.path.join("tests", "data", infile),
                         sr=None, mono=False)
 
+@pytest.fixture
+def s_multi(y_multi):
+    y, sr = y_multi
+    return np.abs(librosa.stft(y)), sr
+
 
 def test_stft_multi(y_multi):
 
@@ -158,16 +163,12 @@ def test_griffinlim_cqt_multi(y_multi):
     # Check the lengths
     assert np.allclose(y.shape, yout.shape)
 
-@pytest.mark.parametrize(
-    "freq",
-    [
-        None
-    ],
-)
-def test_spectral_centroid_multi(freq,y_multi):
+def test_spectral_centroid_multi(y_multi):
     y, sr = y_multi
 
     S = np.abs(librosa.stft(y))
+
+    freq = None
 
     # Assuming single-channel CQT is well behaved
     C0 = librosa.feature.spectral_centroid(sr=sr,freq=freq,S=S[0])
@@ -180,3 +181,23 @@ def test_spectral_centroid_multi(freq,y_multi):
 
     # Verify that they're not all the same
     assert not np.allclose(Call[0], Call[1])
+
+def test_spectral_centroid_multi_variable(s_multi):
+
+    S, sr = s_multi
+
+    freq = np.random.randn(*S.shape)
+
+    #compare each channel
+    C0 = librosa.feature.spectral_centroid(sr=sr,freq=freq[0],S=S[0])
+    C1 = librosa.feature.spectral_centroid(sr=sr,freq=freq[1],S=S[1])
+    Call = librosa.feature.spectral_centroid(sr=sr,freq=freq,S=S)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+
+
