@@ -541,7 +541,11 @@ def spectral_contrast(
             "Frequency band exceeds Nyquist. " "Reduce either fmin or n_bands."
         )
 
-    valley = np.zeros((n_bands + 1, S.shape[-1]))
+    #shape of valleys and peaks based on spectrogram
+    shape = list(S.shape)
+    shape[-2] = n_bands + 1
+
+    valley = np.zeros(shape) #valley = np.zeros((n_bands + 1, S.shape[-1]))
     peak = np.zeros_like(valley)
 
     for k, (f_low, f_high) in enumerate(zip(octa[:-1], octa[1:])):
@@ -555,10 +559,10 @@ def spectral_contrast(
         if k == n_bands:
             current_band[idx[-1] + 1 :] = True
 
-        sub_band = S[current_band]
+        sub_band = S[...,current_band,:]
 
         if k < n_bands:
-            sub_band = sub_band[:-1]
+            sub_band = sub_band[...,:-1,:]
 
         # Always take at least one bin from each side
         idx = np.rint(quantile * np.sum(current_band))
@@ -566,8 +570,8 @@ def spectral_contrast(
 
         sortedr = np.sort(sub_band, axis=-2)
 
-        valley[k] = np.mean(sortedr[:idx], axis=-2)
-        peak[k] = np.mean(sortedr[-idx:], axis=-2)
+        valley[...,k,:] = np.mean(sortedr[...,:idx,:], axis=-2)
+        peak[...,k,:] = np.mean(sortedr[...,-idx:,:], axis=-2)
 
     if linear:
         return peak - valley
@@ -1113,7 +1117,7 @@ def poly_features(
         # Else, fit each frame independently and stack the results
         coefficients = np.concatenate(
             [[np.polyfit(freq[:, i], S[:, i], order)] for i in range(S.shape[1])],
-            axis=0,
+            axis=-2,
         ).T
 
     return coefficients
