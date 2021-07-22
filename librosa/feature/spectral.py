@@ -948,12 +948,12 @@ def rms(
         power = np.mean(np.abs(x) ** 2, axis=-2, keepdims=True)
     elif S is not None:
         # Check the frame length
-        if S.shape[0] != frame_length // 2 + 1:
+        if S.shape[-2] != frame_length // 2 + 1:
             raise ParameterError(
-                "Since S.shape[0] is {}, "
+                "Since S.shape[-2] is {}, "
                 "frame_length is expected to be {} or {}; "
                 "found {}".format(
-                    S.shape[0], S.shape[0] * 2 - 2, S.shape[0] * 2 - 1, frame_length
+                    S.shape[-2], S.shape[-2] * 2 - 2, S.shape[-2] * 2 - 1, frame_length
                 )
             )
 
