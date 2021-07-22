@@ -965,9 +965,9 @@ def rms(
         x = np.abs(S) ** 2
 
         # Adjust the DC and sr/2 component
-        x[0] *= 0.5
+        x[...,0,:] *= 0.5
         if frame_length % 2 == 0:
-            x[-1] *= 0.5
+            x[...,-1,:] *= 0.5
 
         # Calculate power
         power = 2 * np.sum(x, axis=-2, keepdims=True) / frame_length ** 2
