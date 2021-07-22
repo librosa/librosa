@@ -519,9 +519,9 @@ def spectral_contrast(
 
     freq = np.atleast_1d(freq)
 
-    if freq.ndim != 1 or len(freq) != S.shape[0]:
+    if freq.ndim != 1 or len(freq) != S.shape[-2]:
         raise ParameterError(
-            "freq.shape mismatch: expected " "({:d},)".format(S.shape[0])
+            "freq.shape mismatch: expected " "({:d},)".format(S.shape[-2])
         )
 
     if n_bands < 1 or not isinstance(n_bands, (int, np.integer)):
@@ -541,7 +541,7 @@ def spectral_contrast(
             "Frequency band exceeds Nyquist. " "Reduce either fmin or n_bands."
         )
 
-    valley = np.zeros((n_bands + 1, S.shape[1]))
+    valley = np.zeros((n_bands + 1, S.shape[-1]))
     peak = np.zeros_like(valley)
 
     for k, (f_low, f_high) in enumerate(zip(octa[:-1], octa[1:])):
@@ -564,10 +564,10 @@ def spectral_contrast(
         idx = np.rint(quantile * np.sum(current_band))
         idx = int(np.maximum(idx, 1))
 
-        sortedr = np.sort(sub_band, axis=0)
+        sortedr = np.sort(sub_band, axis=-2)
 
-        valley[k] = np.mean(sortedr[:idx], axis=0)
-        peak[k] = np.mean(sortedr[-idx:], axis=0)
+        valley[k] = np.mean(sortedr[:idx], axis=-2)
+        peak[k] = np.mean(sortedr[-idx:], axis=-2)
 
     if linear:
         return peak - valley
@@ -725,13 +725,13 @@ def spectral_rolloff(
         shape[-2] = -1
         freq = freq.reshape(shape)
 
-    total_energy = np.cumsum(S, axis=0)
+    total_energy = np.cumsum(S, axis=-2)
 
     threshold = roll_percent * total_energy[-1]
 
     ind = np.where(total_energy < threshold, np.nan, 1)
 
-    return np.nanmin(ind * freq, axis=0, keepdims=True)
+    return np.nanmin(ind * freq, axis=-2, keepdims=True)
 
 
 def spectral_flatness(
@@ -1170,7 +1170,7 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True, **kwar
 
     y_framed = util.frame(y, frame_length, hop_length)
 
-    kwargs["axis"] = -2
+    kwargs["axis"] = -1
     kwargs.setdefault("pad", False)
 
     crossings = zero_crossings(y_framed, **kwargs)
