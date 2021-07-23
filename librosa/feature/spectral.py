@@ -1167,6 +1167,7 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True, **kwar
 
     """
 
+    #check if audio is valid
     util.valid_audio(y)
 
     if center:
@@ -1174,7 +1175,7 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True, **kwar
 
     y_framed = util.frame(y, frame_length, hop_length)
 
-    kwargs["axis"] = -1
+    kwargs["axis"] = -2
     kwargs.setdefault("pad", False)
 
     crossings = zero_crossings(y_framed, **kwargs)
