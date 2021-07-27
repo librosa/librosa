@@ -345,7 +345,7 @@ def onset_strength(
         **kwargs,
     )
 
-    return odf_all[0]
+    return np.squeeze(odf_all)
 
 
 def onset_backtrack(events, energy):
@@ -580,7 +580,7 @@ def onset_strength_multi(
         if max_size == 1:
             ref = S
         else:
-            ref = scipy.ndimage.maximum_filter1d(S, max_size, axis=0)
+            ref = scipy.ndimage.maximum_filter1d(S, max_size, axis=-2)
     elif ref.shape != S.shape:
         raise ParameterError(
             "Reference spectrum shape {} must match input spectrum {}".format(
@@ -589,7 +589,7 @@ def onset_strength_multi(
         )
 
     # Compute difference to the reference, spaced by lag
-    onset_env = S[:, lag:] - ref[:, :-lag]
+    onset_env = S[..., lag:] - ref[..., :-lag]
 
     # Discard negatives (decreasing amplitude)
     onset_env = np.maximum(0.0, onset_env)
@@ -602,7 +602,7 @@ def onset_strength_multi(
         pad = False
 
     if aggregate:
-        onset_env = util.sync(onset_env, channels, aggregate=aggregate, pad=pad, axis=0)
+        onset_env = util.sync(onset_env, channels, aggregate=aggregate, pad=pad, axis=-2)
 
     # compensate for lag
     pad_width = lag
@@ -610,7 +610,12 @@ def onset_strength_multi(
         # Counter-act framing effects. Shift the onsets by n_fft / hop_length
         pad_width += n_fft // (2 * hop_length)
 
-    onset_env = np.pad(onset_env, ([0, 0], [int(pad_width), 0]), mode="constant")
+    onset_env_ndims = onset_env.ndim
+    onset_env = np.pad(onset_env, 
+                    [[0,0] if i != (onset_env_ndims-1) else [int(pad_width),0] 
+                        for i in range(onset_env_ndims)], 
+                    mode="constant"
+                )
 
     # remove the DC component
     if detrend:
@@ -618,6 +623,6 @@ def onset_strength_multi(
 
     # Trim to match the input duration
     if center:
-        onset_env = onset_env[:, : S.shape[1]]
+        onset_env = onset_env[..., : S.shape[-1]]
 
     return onset_env

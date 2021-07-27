@@ -48,6 +48,25 @@ def test_stft_multi(y_multi):
     assert not np.allclose(D0, D1)
 
 
+def test_onset_strength(y_multi):
+
+    # Verify that a stereo spectral flux onset strength envelope matches on
+    # each channel individually
+    y, sr = y_multi
+
+    D = librosa.onset.onset_strength(y)
+
+    D0 = librosa.onset.onset_strength(y[0])
+    D1 = librosa.onset.onset_strength(y[1])
+
+    # Check each channel
+    assert np.allclose(D[0], D0, atol=1e-1, rtol=1e-1) # test in dB units
+    assert np.allclose(D[1], D1, atol=1e-1, rtol=1e-1) # test in dB units
+
+    # Check that they're not both the same
+    assert not np.allclose(D0, D1, atol=1e-1, rtol=1e-1) # test in dB units
+
+
 def test_istft_multi(y_multi):
 
     # Verify that a stereo ISTFT matches on each channel

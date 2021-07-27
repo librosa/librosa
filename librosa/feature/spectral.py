@@ -2007,4 +2007,4 @@ def melspectrogram(
     # Build a Mel filter
     mel_basis = filters.mel(sr, n_fft, **kwargs)
 
-    return np.dot(mel_basis, S)
+    return np.einsum("...ft,mf->...mt", S, mel_basis)
