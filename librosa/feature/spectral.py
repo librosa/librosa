@@ -364,12 +364,14 @@ def spectral_bandwidth(
     # Compute the center frequencies of each bin
     if freq is None:
         freq = fft_frequencies(sr=sr, n_fft=n_fft)
-        
 
-    if freq.ndim == 1: 
+    # TODO: shape test freq
+
+
+    if freq.ndim == 1:
         deviation = np.abs(np.subtract.outer( centroid[...,0,:],freq).swapaxes(-2,-1))
     else:
-        deviation = np.abs(freq - centroid[...,0,:])
+        deviation = np.abs(freq - centroid)
         
 
     # Column-normalize S
