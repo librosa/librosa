@@ -157,7 +157,7 @@ def onset_detect(
 
     # Do we have any onsets to grab?
     if not onset_envelope.any() or not np.all(np.isfinite(onset_envelope)):
-        onsets = np.array([], dtype=np.int)
+        onsets = np.array([], dtype=int)
 
     else:
         # These parameter settings found by large-scale search
