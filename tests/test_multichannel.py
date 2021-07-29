@@ -250,6 +250,42 @@ def test_spectral_contrast_multi(s_multi):
     # Verify that they're not all the same
     assert not np.allclose(Call[0], Call[1])
 
+def test_spectral_rolloff_multi(s_multi):
+    S, sr = s_multi
+
+    freq = None
+
+    # compare each channel
+    C0 = librosa.feature.spectral_rolloff(sr=sr, freq=freq, S=S[0])
+    C1 = librosa.feature.spectral_rolloff(sr=sr, freq=freq, S=S[1])
+    Call = librosa.feature.spectral_rolloff(sr=sr, freq=freq, S=S)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+
+def test_spectral_rolloff_multi_variable(s_multi):
+    S, sr = s_multi
+
+    freq = np.random.randn(*S.shape)
+
+    # compare each channel
+    C0 = librosa.feature.spectral_rolloff(sr=sr, freq=freq[0], S=S[0])
+    C1 = librosa.feature.spectral_rolloff(sr=sr, freq=freq[1], S=S[1])
+    Call = librosa.feature.spectral_rolloff(sr=sr, freq=freq, S=S)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+
+
+
 
 
 @pytest.mark.parametrize('rate', [0.5, 2])

@@ -731,9 +731,16 @@ def spectral_rolloff(
         shape[-2] = -1
         freq = freq.reshape(shape)
 
-    total_energy = np.cumsum(S, axis=-2)
 
-    threshold = roll_percent * total_energy[-1]
+    total_energy = np.cumsum(S, axis=-2)
+    #(channels,freq,frames)
+
+
+    threshold = roll_percent * total_energy[...,-1,:]
+
+    # reshape threshold for broadcasting
+    threshold = np.expand_dims(threshold,axis=-2)
+
 
     ind = np.where(total_energy < threshold, np.nan, 1)
 
