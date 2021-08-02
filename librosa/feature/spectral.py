@@ -1177,10 +1177,12 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True, **kwar
     """
 
     #check if audio is valid
-    util.valid_audio(y)
+    util.valid_audio(y,mono=False)
 
     if center:
-        y = np.pad(y, int(frame_length // 2), mode="edge")
+        padding = [(0, 0) for _ in range(y.ndim)]
+        padding[-1] = (int(frame_length // 2), int(frame_length // 2))
+        y = np.pad(y, padding, mode="edge")
 
     y_framed = util.frame(y, frame_length, hop_length)
 
@@ -2039,4 +2041,5 @@ def melspectrogram(
     # Build a Mel filter
     mel_basis = filters.mel(sr, n_fft, **kwargs)
 
-    return np.dot(mel_basis, S)
+    return np.einsum("...ft,mf->...mt", S, mel_basis,optimize=True)
+    # return np.dot(mel_basis, S)

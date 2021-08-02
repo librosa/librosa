@@ -284,6 +284,66 @@ def test_spectral_rolloff_multi_variable(s_multi):
     # Verify that they're not all the same
     assert not np.allclose(Call[0], Call[1])
 
+def test_spectral_flatness_multi(s_multi):
+    S, sr = s_multi
+
+    # compare each channel
+    C0 = librosa.feature.spectral_flatness(S=S[0])
+    C1 = librosa.feature.spectral_flatness(S=S[1])
+    Call = librosa.feature.spectral_flatness(S=S)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0],atol=1e-5)
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+
+def test_rms_multi(s_multi):
+    S, sr = s_multi
+
+    # compare each channel
+    C0 = librosa.feature.rms(S=S[0])
+    C1 = librosa.feature.rms(S=S[1])
+    Call = librosa.feature.rms(S=S)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+
+def test_zcr_multi(y_multi):
+    y, sr = y_multi
+
+    # compare each channel
+    C0 = librosa.feature.zero_crossing_rate(y=y[0])
+    C1 = librosa.feature.zero_crossing_rate(y=y[1])
+    Call = librosa.feature.zero_crossing_rate(y=y)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+
+def test_melspectrogram_multi(s_multi):
+    S, sr = s_multi
+
+    # compare each channel
+    C0 = librosa.feature.melspectrogram(S=S[0])
+    C1 = librosa.feature.melspectrogram(S=S[1])
+    Call = librosa.feature.melspectrogram(S=S)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+
 @pytest.mark.parametrize('rate', [0.5, 2])
 def test_phase_vocoder(y_multi, rate):
     y, sr = y_multi
