@@ -29,6 +29,39 @@ def y_multi(request):
                         sr=None, mono=False)
 
 
+@pytest.mark.parametrize("aggregate", [None, np.mean, np.sum])
+@pytest.mark.parametrize(
+    "ndim,axis", [(1, 0), (1, -1), (2, 0), (2, 1), (2, -1), (3, 0), (3, 2), (3, -1), (4, 0), (4, 3), (4, -1)]
+)
+def test_sync_multi(aggregate, ndim, axis):
+    data = np.ones([6] * ndim, dtype=np.float)
+
+    # Make some slices that don't fill the entire dimension
+    slices = [slice(1, 3), slice(3, 4)]
+    dsync = librosa.util.sync(data, slices, aggregate=aggregate, axis=axis)
+
+    # Check the axis shapes
+    assert dsync.shape[axis] == len(slices)
+
+    s_test = list(dsync.shape)
+    del s_test[axis]
+    s_orig = list(data.shape)
+    del s_orig[axis]
+    assert s_test == s_orig
+
+    # The first slice will sum to 2 and have mean 1
+    idx = [slice(None)] * ndim
+    idx[axis] = 0
+    if aggregate is np.sum:
+        assert np.allclose(dsync[idx], 2)
+    else:
+        assert np.allclose(dsync[idx], 1)
+
+    # The second slice will sum to 1 and have mean 1
+    idx[axis] = 1
+    assert np.allclose(dsync[idx], 1)
+
+
 def test_stft_multi(y_multi):
 
     # Verify that a stereo STFT matches on
