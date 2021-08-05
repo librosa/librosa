@@ -707,23 +707,19 @@ def get_duration(
                 "At least one of (y, sr), S, or filename must be provided"
             )
 
-        n_frames = S.shape[1]
+        n_frames = S.shape[-1]
         n_samples = n_fft + hop_length * (n_frames - 1)
 
         # If centered, we lose half a window from each end of S
         if center:
-            n_samples = n_samples - 2 * int(n_fft / 2)
+            n_samples = n_samples - 2 * int(n_fft // 2)
 
     else:
-        # Ensure Fortran contiguity.
-        y = np.asfortranarray(y)
-
         # Validate the audio buffer.  Stereo is okay here.
+        # FIXME: do we even need to validate?
         util.valid_audio(y, mono=False)
-        if y.ndim == 1:
-            n_samples = len(y)
-        else:
-            n_samples = y.shape[-1]
+
+        n_samples = y.shape[-1]
 
     return float(n_samples) / sr
 
