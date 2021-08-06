@@ -329,6 +329,54 @@ def test_zcr_multi(y_multi):
     # Verify that they're not all the same
     assert not np.allclose(Call[0], Call[1])
 
+def test_chroma_stft_multi(s_multi):
+    S, sr = s_multi
+
+    # compare each channel
+    C0 = librosa.feature.chroma_stft(S=S[0],tuning=0)
+    C1 = librosa.feature.chroma_stft(S=S[1],tuning=0)
+    Call = librosa.feature.chroma_stft(S=S,tuning=0)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+
+def test_mfcc_multi(s_multi):
+    S, sr = s_multi
+
+    # compare each channel
+    C0 = librosa.feature.mfcc(S=librosa.core.amplitude_to_db(S=S[0],top_db=None))
+    C1 = librosa.feature.mfcc(S=librosa.core.amplitude_to_db(S=S[1],top_db=None))
+    Call = librosa.feature.mfcc(S=librosa.core.amplitude_to_db(S=S,top_db=None))
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+
+def test_mfcc_multi_time(y_multi):
+    y, sr = y_multi
+
+    # compare each channel
+    C0 = librosa.feature.mfcc(y=y[0])
+    C1 = librosa.feature.mfcc(y=y[1])
+    Call = librosa.feature.mfcc(y=y)
+
+    print("<===============================>")
+    print(np.max(np.abs(C0-Call[0])))
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+
 def test_melspectrogram_multi(s_multi):
     S, sr = s_multi
 
@@ -336,6 +384,21 @@ def test_melspectrogram_multi(s_multi):
     C0 = librosa.feature.melspectrogram(S=S[0])
     C1 = librosa.feature.melspectrogram(S=S[1])
     Call = librosa.feature.melspectrogram(S=S)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+
+def test_melspectrogram_multi_time(y_multi):
+    y, sr = y_multi
+
+    # compare each channel
+    C0 = librosa.feature.melspectrogram(y=y[0])
+    C1 = librosa.feature.melspectrogram(y=y[1])
+    Call = librosa.feature.melspectrogram(y=y)
 
     # Check each channel
     assert np.allclose(C0, Call[0])

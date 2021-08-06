@@ -1347,10 +1347,11 @@ def chroma_stft(
     chromafb = filters.chroma(sr, n_fft, tuning=tuning, n_chroma=n_chroma, **kwargs)
 
     # Compute raw chroma
-    raw_chroma = np.dot(chromafb, S)
+    raw_chroma = np.einsum("cf,...ft->...ct", chromafb, S,optimize=True)
+    # raw_chroma = np.dot(chromafb, S)
 
     # Compute normalization factor for each frame
-    return util.normalize(raw_chroma, norm=norm, axis=0)
+    return util.normalize(raw_chroma, norm=norm, axis=-2)
 
 
 def chroma_cqt(
@@ -1882,17 +1883,22 @@ def mfcc(
     """
 
     if S is None:
+        #multichannel behavior may be different due to relative noise floor differences between channels
         S = power_to_db(melspectrogram(y=y, sr=sr, **kwargs))
 
-    M = scipy.fftpack.dct(S, axis=0, type=dct_type, norm=norm)[:n_mfcc]
+    M = scipy.fftpack.dct(S, axis=-2, type=dct_type, norm=norm)[...,:n_mfcc,:]
 
     if lifter > 0:
+        #shpae lifter for broadcasting
+        LI = np.sin(np.pi * np.arange(1, 1 + n_mfcc, dtype=M.dtype) / lifter)
+        shape = [1 for _ in range(S.ndim)]
+        shape[-2] = -1
+        LI = LI.reshape(shape)
+
         M *= (
             1
             + (lifter / 2)
-            * np.sin(np.pi * np.arange(1, 1 + n_mfcc, dtype=M.dtype) / lifter)[
-                :, np.newaxis
-            ]
+            * LI
         )
         return M
     elif lifter == 0:
@@ -2042,4 +2048,3 @@ def melspectrogram(
     mel_basis = filters.mel(sr, n_fft, **kwargs)
 
     return np.einsum("...ft,mf->...mt", S, mel_basis,optimize=True)
-    # return np.dot(mel_basis, S)
