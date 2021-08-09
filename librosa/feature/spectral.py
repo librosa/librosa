@@ -1477,20 +1477,21 @@ def chroma_cqt(
 
     # Map to chroma
     cq_to_chr = filters.cq_to_chroma(
-        C.shape[0],
+        C.shape[-2],
         bins_per_octave=bins_per_octave,
         n_chroma=n_chroma,
         fmin=fmin,
         window=window,
     )
-    chroma = cq_to_chr.dot(C)
+
+    chroma = np.einsum("cf,...ft->...ct", cq_to_chr, C, optimize=True)
 
     if threshold is not None:
         chroma[chroma < threshold] = 0.0
 
     # Normalize
     if norm is not None:
-        chroma = util.normalize(chroma, norm=norm, axis=0)
+        chroma = util.normalize(chroma, norm=norm, axis=-2)
 
     return chroma
 
