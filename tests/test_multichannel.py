@@ -367,9 +367,6 @@ def test_mfcc_multi_time(y_multi):
     C1 = librosa.feature.mfcc(y=y[1])
     Call = librosa.feature.mfcc(y=y)
 
-    print("<===============================>")
-    print(np.max(np.abs(C0-Call[0])))
-
     # Check each channel
     assert np.allclose(C0, Call[0])
     assert np.allclose(C1, Call[1])
