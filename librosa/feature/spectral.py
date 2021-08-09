@@ -1348,7 +1348,6 @@ def chroma_stft(
 
     # Compute raw chroma
     raw_chroma = np.einsum("cf,...ft->...ct", chromafb, S,optimize=True)
-    # raw_chroma = np.dot(chromafb, S)
 
     # Compute normalization factor for each frame
     return util.normalize(raw_chroma, norm=norm, axis=-2)
