@@ -1639,7 +1639,7 @@ def chroma_cens(
     )
 
     # L1-Normalization
-    chroma = util.normalize(chroma, norm=1, axis=0)
+    chroma = util.normalize(chroma, norm=1, axis=-2)
 
     # Quantize amplitudes
     QUANT_STEPS = [0.4, 0.2, 0.1, 0.05]
@@ -1656,12 +1656,21 @@ def chroma_cens(
         win /= np.sum(win)
         win = np.atleast_2d(win)
 
-        cens = scipy.signal.convolve2d(chroma_quant, win, mode="same", boundary="fill")
+        cens = np.zeros_like(chroma_quant)
+
+        #2d convolution with multiple channels
+        if len(chroma_quant.shape) > 2:
+
+            #convolve every channel
+            for channel in range(chroma_quant.shape[-3]):
+                cens[channel] = scipy.signal.convolve2d(chroma_quant[channel], win, mode="same", boundary="fill")
+        else:
+            cens = scipy.signal.convolve2d(chroma_quant, win, mode="same", boundary="fill")
     else:
         cens = chroma_quant
 
     # L2-Normalization
-    return util.normalize(cens, norm=norm, axis=0)
+    return util.normalize(cens, norm=norm, axis=-2)
 
 
 def tonnetz(y=None, sr=22050, chroma=None, **kwargs):
