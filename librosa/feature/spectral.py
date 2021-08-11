@@ -1776,7 +1776,7 @@ def tonnetz(y=None, sr=22050, chroma=None, **kwargs):
     phi = R[:, np.newaxis] * np.cos(np.pi * V)
 
     # Do the transform to tonnetz
-    return np.einsum("pc,...ci->...pi", phi, chroma, optimize=True)
+    return np.einsum("pc,...ci->...pi", phi, util.normalize(chroma,norm=1,axis=-2), optimize=True)
 
 
 # -- Mel spectrogram and MFCCs -- #
