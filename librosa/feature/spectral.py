@@ -1762,7 +1762,7 @@ def tonnetz(y=None, sr=22050, chroma=None, **kwargs):
         chroma = chroma_cqt(y=y, sr=sr, **kwargs)
 
     # Generate Transformation matrix
-    dim_map = np.linspace(0, 12, num=chroma.shape[0], endpoint=False)
+    dim_map = np.linspace(0, 12, num=chroma.shape[-2], endpoint=False)
 
     scale = np.asarray([7.0 / 6, 7.0 / 6, 3.0 / 2, 3.0 / 2, 2.0 / 3, 2.0 / 3])
 
@@ -1776,7 +1776,7 @@ def tonnetz(y=None, sr=22050, chroma=None, **kwargs):
     phi = R[:, np.newaxis] * np.cos(np.pi * V)
 
     # Do the transform to tonnetz
-    return phi.dot(util.normalize(chroma, norm=1, axis=0))
+    return np.einsum("pc,...ci->...pi", phi, chroma, optimize=True)
 
 
 # -- Mel spectrogram and MFCCs -- #

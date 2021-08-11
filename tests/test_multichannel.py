@@ -374,6 +374,21 @@ def test_chroma_cens_multi(y_multi):
     # Verify that they're not all the same
     assert not np.allclose(Call[0], Call[1])
 
+def test_tonnetz_multi(y_multi):
+    y, sr = y_multi
+
+    # compare each channel
+    C0 = librosa.feature.tonnetz(y=y[0],tuning=0)
+    C1 = librosa.feature.tonnetz(y=y[1],tuning=0)
+    Call = librosa.feature.tonnetz(y=y,tuning=0)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+
 def test_mfcc_multi(s_multi):
     S, sr = s_multi
 
