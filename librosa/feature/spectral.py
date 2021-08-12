@@ -161,12 +161,10 @@ def spectral_centroid(
     >>> ax.legend(loc='upper right')
     >>> ax.set(title='log Power spectrogram')
     """
-    
-    #input is time domain:y or spectrogam:s
+
+    # input is time domain:y or spectrogam:s
     #
-    
-    
-    
+
     S, n_fft = _spectrogram(
         y=y,
         S=S,
@@ -177,9 +175,8 @@ def spectral_centroid(
         center=center,
         pad_mode=pad_mode,
     )
-    
-    #(S (channels,freq,frames,intensity) for multichannel
-    
+
+    # (S (channels,freq,frames,intensity) for multichannel
 
     if not np.isrealobj(S):
         raise ParameterError(
@@ -195,11 +192,10 @@ def spectral_centroid(
         freq = fft_frequencies(sr=sr, n_fft=n_fft)
 
     if freq.ndim == 1:
-        #reshape for broadcasting
+        # reshape for broadcasting
         shape = [1 for _ in range(S.ndim)]
         shape[-2] = -1
         freq = freq.reshape(shape)
-
 
     # Column-normalize S
     return np.sum(freq * util.normalize(S, norm=1, axis=-2), axis=-2, keepdims=True)
@@ -355,7 +351,7 @@ def spectral_bandwidth(
             "Spectral bandwidth is only defined " "with non-negative energies"
         )
 
-    #centroid or center?
+    # centroid or center?
     if centroid is None:
         centroid = spectral_centroid(
             y=y, sr=sr, S=S, n_fft=n_fft, hop_length=hop_length, freq=freq
@@ -367,12 +363,12 @@ def spectral_bandwidth(
 
     # TODO: shape test freq
 
-
     if freq.ndim == 1:
-        deviation = np.abs(np.subtract.outer( centroid[...,0,:],freq).swapaxes(-2,-1))
+        deviation = np.abs(
+            np.subtract.outer(centroid[..., 0, :], freq).swapaxes(-2, -1)
+        )
     else:
         deviation = np.abs(freq - centroid)
-        
 
     # Column-normalize S
     if norm:
@@ -543,11 +539,11 @@ def spectral_contrast(
             "Frequency band exceeds Nyquist. " "Reduce either fmin or n_bands."
         )
 
-    #shape of valleys and peaks based on spectrogram
+    # shape of valleys and peaks based on spectrogram
     shape = list(S.shape)
     shape[-2] = n_bands + 1
 
-    valley = np.zeros(shape) #valley = np.zeros((n_bands + 1, S.shape[-1]))
+    valley = np.zeros(shape)  # valley = np.zeros((n_bands + 1, S.shape[-1]))
     peak = np.zeros_like(valley)
 
     for k, (f_low, f_high) in enumerate(zip(octa[:-1], octa[1:])):
@@ -561,10 +557,10 @@ def spectral_contrast(
         if k == n_bands:
             current_band[idx[-1] + 1 :] = True
 
-        sub_band = S[...,current_band,:]
+        sub_band = S[..., current_band, :]
 
         if k < n_bands:
-            sub_band = sub_band[...,:-1,:]
+            sub_band = sub_band[..., :-1, :]
 
         # Always take at least one bin from each side
         idx = np.rint(quantile * np.sum(current_band))
@@ -572,8 +568,8 @@ def spectral_contrast(
 
         sortedr = np.sort(sub_band, axis=-2)
 
-        valley[...,k,:] = np.mean(sortedr[...,:idx,:], axis=-2)
-        peak[...,k,:] = np.mean(sortedr[...,-idx:,:], axis=-2)
+        valley[..., k, :] = np.mean(sortedr[..., :idx, :], axis=-2)
+        peak[..., k, :] = np.mean(sortedr[..., -idx:, :], axis=-2)
 
     if linear:
         return peak - valley
@@ -731,16 +727,13 @@ def spectral_rolloff(
         shape[-2] = -1
         freq = freq.reshape(shape)
 
-
     total_energy = np.cumsum(S, axis=-2)
-    #(channels,freq,frames)
+    # (channels,freq,frames)
 
-
-    threshold = roll_percent * total_energy[...,-1,:]
+    threshold = roll_percent * total_energy[..., -1, :]
 
     # reshape threshold for broadcasting
-    threshold = np.expand_dims(threshold,axis=-2)
-
+    threshold = np.expand_dims(threshold, axis=-2)
 
     ind = np.where(total_energy < threshold, np.nan, 1)
 
@@ -974,9 +967,9 @@ def rms(
         x = np.abs(S) ** 2
 
         # Adjust the DC and sr/2 component
-        x[...,0,:] *= 0.5
+        x[..., 0, :] *= 0.5
         if frame_length % 2 == 0:
-            x[...,-1,:] *= 0.5
+            x[..., -1, :] *= 0.5
 
         # Calculate power
         power = 2 * np.sum(x, axis=-2, keepdims=True) / frame_length ** 2
@@ -1176,8 +1169,8 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True, **kwar
 
     """
 
-    #check if audio is valid
-    util.valid_audio(y,mono=False)
+    # check if audio is valid
+    util.valid_audio(y, mono=False)
 
     if center:
         padding = [(0, 0) for _ in range(y.ndim)]
@@ -1347,7 +1340,7 @@ def chroma_stft(
     chromafb = filters.chroma(sr, n_fft, tuning=tuning, n_chroma=n_chroma, **kwargs)
 
     # Compute raw chroma
-    raw_chroma = np.einsum("cf,...ft->...ct", chromafb, S,optimize=True)
+    raw_chroma = np.einsum("cf,...ft->...ct", chromafb, S, optimize=True)
 
     # Compute normalization factor for each frame
     return util.normalize(raw_chroma, norm=norm, axis=-2)
@@ -1655,7 +1648,7 @@ def chroma_cens(
         win = filters.get_window(smoothing_window, win_len_smooth + 2, fftbins=False)
         win /= np.sum(win)
 
-        #reshape for broadcasting
+        # reshape for broadcasting
         shape = [1 for _ in range(chroma_quant.ndim)]
         shape[-1] = -1
         win = win.reshape(shape)
@@ -1771,7 +1764,9 @@ def tonnetz(y=None, sr=22050, chroma=None, **kwargs):
     phi = R[:, np.newaxis] * np.cos(np.pi * V)
 
     # Do the transform to tonnetz
-    return np.einsum("pc,...ci->...pi", phi, util.normalize(chroma,norm=1,axis=-2), optimize=True)
+    return np.einsum(
+        "pc,...ci->...pi", phi, util.normalize(chroma, norm=1, axis=-2), optimize=True
+    )
 
 
 # -- Mel spectrogram and MFCCs -- #
@@ -1887,23 +1882,19 @@ def mfcc(
     """
 
     if S is None:
-        #multichannel behavior may be different due to relative noise floor differences between channels
+        # multichannel behavior may be different due to relative noise floor differences between channels
         S = power_to_db(melspectrogram(y=y, sr=sr, **kwargs))
 
-    M = scipy.fftpack.dct(S, axis=-2, type=dct_type, norm=norm)[...,:n_mfcc,:]
+    M = scipy.fftpack.dct(S, axis=-2, type=dct_type, norm=norm)[..., :n_mfcc, :]
 
     if lifter > 0:
-        #shape lifter for broadcasting
+        # shape lifter for broadcasting
         LI = np.sin(np.pi * np.arange(1, 1 + n_mfcc, dtype=M.dtype) / lifter)
         shape = [1 for _ in range(S.ndim)]
         shape[-2] = -1
         LI = LI.reshape(shape)
 
-        M *= (
-            1
-            + (lifter / 2)
-            * LI
-        )
+        M *= 1 + (lifter / 2) * LI
         return M
     elif lifter == 0:
         return M
@@ -2051,4 +2042,4 @@ def melspectrogram(
     # Build a Mel filter
     mel_basis = filters.mel(sr, n_fft, **kwargs)
 
-    return np.einsum("...ft,mf->...mt", S, mel_basis,optimize=True)
+    return np.einsum("...ft,mf->...mt", S, mel_basis, optimize=True)
