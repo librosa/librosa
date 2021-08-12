@@ -1654,18 +1654,13 @@ def chroma_cens(
         # Apply temporal smoothing
         win = filters.get_window(smoothing_window, win_len_smooth + 2, fftbins=False)
         win /= np.sum(win)
-        win = np.atleast_2d(win)
 
-        cens = np.zeros_like(chroma_quant)
+        #reshape for broadcasting
+        shape = [1 for _ in range(chroma_quant.ndim)]
+        shape[-1] = -1
+        win = win.reshape(shape)
 
-        #2d convolution with multiple channels
-        if len(chroma_quant.shape) > 2:
-
-            #convolve every channel
-            for channel in range(chroma_quant.shape[-3]):
-                cens[channel] = scipy.signal.convolve2d(chroma_quant[channel], win, mode="same", boundary="fill")
-        else:
-            cens = scipy.signal.convolve2d(chroma_quant, win, mode="same", boundary="fill")
+        cens = scipy.ndimage.convolve(chroma_quant, win, mode="constant")
     else:
         cens = chroma_quant
 
