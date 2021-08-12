@@ -25,8 +25,13 @@ from unittest import mock
 @pytest.fixture(scope="module", params=["test1_44100.wav"])
 def y_multi(request):
     infile = request.param
-    return librosa.load(os.path.join("tests", "data", infile),
-                        sr=None, mono=False)
+    return librosa.load(os.path.join("tests", "data", infile), sr=None, mono=False)
+
+
+@pytest.fixture
+def s_multi(y_multi):
+    y, sr = y_multi
+    return np.abs(librosa.stft(y)), sr
 
 
 def test_stft_multi(y_multi):
@@ -84,9 +89,8 @@ def test_griffinlim_multi(y_multi):
     assert np.allclose(y.shape, yout.shape)
 
 
-
-@pytest.mark.parametrize('scale', [False, True])
-@pytest.mark.parametrize('res_type', [None, 'polyphase'])
+@pytest.mark.parametrize("scale", [False, True])
+@pytest.mark.parametrize("res_type", [None, "polyphase"])
 def test_cqt_multi(y_multi, scale, res_type):
 
     y, sr = y_multi
@@ -104,8 +108,8 @@ def test_cqt_multi(y_multi, scale, res_type):
     assert not np.allclose(Call[0], Call[1])
 
 
-@pytest.mark.parametrize('scale', [False, True])
-@pytest.mark.parametrize('res_type', [None, 'polyphase'])
+@pytest.mark.parametrize("scale", [False, True])
+@pytest.mark.parametrize("res_type", [None, "polyphase"])
 def test_hybrid_cqt_multi(y_multi, scale, res_type):
 
     y, sr = y_multi
@@ -123,8 +127,8 @@ def test_hybrid_cqt_multi(y_multi, scale, res_type):
     assert not np.allclose(Call[0], Call[1])
 
 
-@pytest.mark.parametrize('scale', [False, True])
-@pytest.mark.parametrize('length', [None, 22050])
+@pytest.mark.parametrize("scale", [False, True])
+@pytest.mark.parametrize("length", [None, 22050])
 def test_icqt_multi(y_multi, scale, length):
 
     y, sr = y_multi
@@ -160,7 +164,312 @@ def test_griffinlim_cqt_multi(y_multi):
     assert np.allclose(y.shape, yout.shape)
 
 
-@pytest.mark.parametrize('rate', [0.5, 2])
+def test_spectral_centroid_multi(s_multi):
+
+    S, sr = s_multi
+
+    freq = None
+
+    # Assuming single-channel CQT is well behaved
+    C0 = librosa.feature.spectral_centroid(sr=sr, freq=freq, S=S[0])
+    C1 = librosa.feature.spectral_centroid(sr=sr, freq=freq, S=S[1])
+    Call = librosa.feature.spectral_centroid(sr=sr, freq=freq, S=S)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+
+
+def test_spectral_centroid_multi_variable(s_multi):
+
+    S, sr = s_multi
+
+    freq = np.random.randn(*S.shape)
+
+    # compare each channel
+    C0 = librosa.feature.spectral_centroid(sr=sr, freq=freq[0], S=S[0])
+    C1 = librosa.feature.spectral_centroid(sr=sr, freq=freq[1], S=S[1])
+    Call = librosa.feature.spectral_centroid(sr=sr, freq=freq, S=S)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+
+
+def test_spectral_bandwidth_multi(s_multi):
+    S, sr = s_multi
+
+    freq = None
+
+    # compare each channel
+    C0 = librosa.feature.spectral_bandwidth(sr=sr, freq=freq, S=S[0])
+    C1 = librosa.feature.spectral_bandwidth(sr=sr, freq=freq, S=S[1])
+    Call = librosa.feature.spectral_bandwidth(sr=sr, freq=freq, S=S)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+
+
+def test_spectral_bandwidth_multi_variable(s_multi):
+    S, sr = s_multi
+
+    freq = np.random.randn(*S.shape)
+
+    # compare each channel
+    C0 = librosa.feature.spectral_bandwidth(sr=sr, freq=freq[0], S=S[0])
+    C1 = librosa.feature.spectral_bandwidth(sr=sr, freq=freq[1], S=S[1])
+    Call = librosa.feature.spectral_bandwidth(sr=sr, freq=freq, S=S)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+
+
+def test_spectral_contrast_multi(s_multi):
+    S, sr = s_multi
+
+    freq = None
+
+    # compare each channel
+    C0 = librosa.feature.spectral_contrast(sr=sr, freq=freq, S=S[0])
+    C1 = librosa.feature.spectral_contrast(sr=sr, freq=freq, S=S[1])
+    Call = librosa.feature.spectral_contrast(sr=sr, freq=freq, S=S)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+
+
+def test_spectral_rolloff_multi(s_multi):
+    S, sr = s_multi
+
+    freq = None
+
+    # compare each channel
+    C0 = librosa.feature.spectral_rolloff(sr=sr, freq=freq, S=S[0])
+    C1 = librosa.feature.spectral_rolloff(sr=sr, freq=freq, S=S[1])
+    Call = librosa.feature.spectral_rolloff(sr=sr, freq=freq, S=S)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+
+
+def test_spectral_rolloff_multi_variable(s_multi):
+    S, sr = s_multi
+
+    freq = np.random.randn(*S.shape)
+
+    # compare each channel
+    C0 = librosa.feature.spectral_rolloff(sr=sr, freq=freq[0], S=S[0])
+    C1 = librosa.feature.spectral_rolloff(sr=sr, freq=freq[1], S=S[1])
+    Call = librosa.feature.spectral_rolloff(sr=sr, freq=freq, S=S)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+
+
+def test_spectral_flatness_multi(s_multi):
+    S, sr = s_multi
+
+    # compare each channel
+    C0 = librosa.feature.spectral_flatness(S=S[0])
+    C1 = librosa.feature.spectral_flatness(S=S[1])
+    Call = librosa.feature.spectral_flatness(S=S)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0], atol=1e-5)
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+
+
+def test_rms_multi(s_multi):
+    S, sr = s_multi
+
+    # compare each channel
+    C0 = librosa.feature.rms(S=S[0])
+    C1 = librosa.feature.rms(S=S[1])
+    Call = librosa.feature.rms(S=S)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+
+
+def test_zcr_multi(y_multi):
+    y, sr = y_multi
+
+    # compare each channel
+    C0 = librosa.feature.zero_crossing_rate(y=y[0])
+    C1 = librosa.feature.zero_crossing_rate(y=y[1])
+    Call = librosa.feature.zero_crossing_rate(y=y)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+
+
+def test_chroma_stft_multi(s_multi):
+    S, sr = s_multi
+
+    # compare each channel
+    C0 = librosa.feature.chroma_stft(S=S[0], tuning=0)
+    C1 = librosa.feature.chroma_stft(S=S[1], tuning=0)
+    Call = librosa.feature.chroma_stft(S=S, tuning=0)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+
+
+def test_chroma_cqt_multi(y_multi):
+    y, sr = y_multi
+
+    # compare each channel
+    C0 = librosa.feature.chroma_cqt(y=y[0], tuning=0)
+    C1 = librosa.feature.chroma_cqt(y=y[1], tuning=0)
+    Call = librosa.feature.chroma_cqt(y=y, tuning=0)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+
+
+def test_chroma_cens_multi(y_multi):
+    y, sr = y_multi
+
+    # compare each channel
+    C0 = librosa.feature.chroma_cens(y=y[0], tuning=0)
+    C1 = librosa.feature.chroma_cens(y=y[1], tuning=0)
+    Call = librosa.feature.chroma_cens(y=y, tuning=0)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+
+
+def test_tonnetz_multi(y_multi):
+    y, sr = y_multi
+
+    # compare each channel
+    C0 = librosa.feature.tonnetz(y=y[0], tuning=0)
+    C1 = librosa.feature.tonnetz(y=y[1], tuning=0)
+    Call = librosa.feature.tonnetz(y=y, tuning=0)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+
+
+def test_mfcc_multi(s_multi):
+    S, sr = s_multi
+
+    # compare each channel
+    C0 = librosa.feature.mfcc(S=librosa.core.amplitude_to_db(S=S[0], top_db=None))
+    C1 = librosa.feature.mfcc(S=librosa.core.amplitude_to_db(S=S[1], top_db=None))
+    Call = librosa.feature.mfcc(S=librosa.core.amplitude_to_db(S=S, top_db=None))
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+
+
+@pytest.mark.skip(reason="power_to_db leaks information across channels")
+def test_mfcc_multi_time(y_multi):
+    y, sr = y_multi
+
+    # compare each channel
+    C0 = librosa.feature.mfcc(y=y[0])
+    C1 = librosa.feature.mfcc(y=y[1])
+    Call = librosa.feature.mfcc(y=y)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+
+
+def test_melspectrogram_multi(s_multi):
+    S, sr = s_multi
+
+    # compare each channel
+    C0 = librosa.feature.melspectrogram(S=S[0])
+    C1 = librosa.feature.melspectrogram(S=S[1])
+    Call = librosa.feature.melspectrogram(S=S)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+
+
+def test_melspectrogram_multi_time(y_multi):
+    y, sr = y_multi
+
+    # compare each channel
+    C0 = librosa.feature.melspectrogram(y=y[0])
+    C1 = librosa.feature.melspectrogram(y=y[1])
+    Call = librosa.feature.melspectrogram(y=y)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+
+
+@pytest.mark.parametrize("rate", [0.5, 2])
 def test_phase_vocoder(y_multi, rate):
     y, sr = y_multi
     D = librosa.stft(y)
@@ -173,3 +482,19 @@ def test_phase_vocoder(y_multi, rate):
     assert np.allclose(D2[1], D1)
     assert not np.allclose(D2[0], D2[1])
 
+
+@pytest.mark.parametrize("delay", [1, -1])
+def test_stack_memory_multi(delay):
+    data = np.random.randn(2, 5, 200)
+
+    # compare each channel
+    C0 = librosa.feature.stack_memory(data[0], delay=delay)
+    C1 = librosa.feature.stack_memory(data[1], delay=delay)
+    Call = librosa.feature.stack_memory(data, delay=delay)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])

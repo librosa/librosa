@@ -2519,7 +2519,7 @@ def _spectrogram(
 
     if S is not None:
         # Infer n_fft from spectrogram shape
-        n_fft = 2 * (S.shape[0] - 1)
+        n_fft = 2 * (S.shape[-2] - 1)
     else:
         # Otherwise, compute a magnitude spectrogram from input
         S = (
