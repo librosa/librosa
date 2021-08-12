@@ -463,3 +463,19 @@ def test_phase_vocoder(y_multi, rate):
     assert np.allclose(D2[0], D0)
     assert np.allclose(D2[1], D1)
     assert not np.allclose(D2[0], D2[1])
+
+@pytest.mark.parametrize('delay', [1, -1])
+def test_stack_memory_multi(delay):
+    data = np.random.randn(2,5,200)
+
+    # compare each channel
+    C0 = librosa.feature.stack_memory(data[0], delay=delay)
+    C1 = librosa.feature.stack_memory(data[1], delay=delay)
+    Call = librosa.feature.stack_memory(data, delay=delay)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
