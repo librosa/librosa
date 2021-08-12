@@ -404,7 +404,7 @@ def test_mfcc_multi(s_multi):
     # Verify that they're not all the same
     assert not np.allclose(Call[0], Call[1])
 
-
+@pytest.mark.skip(reason='power_to_db leaks information across channels')
 def test_mfcc_multi_time(y_multi):
     y, sr = y_multi
 
