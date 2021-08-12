@@ -123,11 +123,6 @@ def test_stack_memory_fail(data, n_steps, delay):
     librosa.feature.stack_memory(data, n_steps=n_steps, delay=delay)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
-def test_stack_memory_ndim_toobig():
-    librosa.feature.stack_memory(np.zeros((2, 2, 2)), n_steps=3, delay=1)
-
-
 @pytest.mark.parametrize("data", [np.zeros((2, 0))])
 @pytest.mark.xfail(raises=librosa.ParameterError)
 @pytest.mark.parametrize("delay", [-2, -1, 1, 2])
