@@ -1898,7 +1898,7 @@ def mfcc(
     M = scipy.fftpack.dct(S, axis=-2, type=dct_type, norm=norm)[...,:n_mfcc,:]
 
     if lifter > 0:
-        #shpae lifter for broadcasting
+        #shape lifter for broadcasting
         LI = np.sin(np.pi * np.arange(1, 1 + n_mfcc, dtype=M.dtype) / lifter)
         shape = [1 for _ in range(S.ndim)]
         shape[-2] = -1
