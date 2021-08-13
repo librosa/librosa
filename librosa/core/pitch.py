@@ -316,17 +316,19 @@ def piptrack(
     # Do the parabolic interpolation everywhere,
     # then figure out where the peaks are
     # then restrict to the feasible range (fmin:fmax)
-    avg = 0.5 * (S[2:] - S[:-2])
+    avg = 0.5 * (S[..., 2:, :] - S[..., :-2, :])
 
-    shift = 2 * S[1:-1] - S[2:] - S[:-2]
+    shift = 2 * S[..., 1:-1, :] - S[..., 2:, :] - S[..., :-2, :]
 
     # Suppress divide-by-zeros.
     # Points where shift == 0 will never be selected by localmax anyway
     shift = avg / (shift + (np.abs(shift) < util.tiny(shift)))
 
     # Pad back up to the same shape as S
-    avg = np.pad(avg, ([1, 1], [0, 0]), mode="constant")
-    shift = np.pad(shift, ([1, 1], [0, 0]), mode="constant")
+    padding = [(0, 0) for _ in S.shape]
+    padding[-2] = (1, 1)
+    avg = np.pad(avg, padding, mode="constant")
+    shift = np.pad(shift, padding, mode="constant")
 
     dskew = 0.5 * avg * shift
 
@@ -335,7 +337,10 @@ def piptrack(
     mags = np.zeros_like(S)
 
     # Clip to the viable frequency range
-    freq_mask = ((fmin <= fft_freqs) & (fft_freqs < fmax)).reshape((-1, 1))
+    freq_mask = ((fmin <= fft_freqs) & (fft_freqs < fmax))
+    shape = [1 for _ in S.shape]
+    shape[-2] = -1
+    freq_mask = freq_mask.reshape(shape)
 
     # Compute the column-wise local max of S after thresholding
     # Find the argmax coordinates
@@ -343,18 +348,17 @@ def piptrack(
         ref = np.max
 
     if callable(ref):
-        ref_value = threshold * ref(S, axis=0)
+        ref_value = threshold * ref(S, axis=-2)
+        # Reinsert the frequency axis here, in case the callable doesn't
+        # support keepdims=True
+        ref_value = np.expand_dims(ref_value, -2)
     else:
         ref_value = np.abs(ref)
 
-    idx = np.argwhere(freq_mask & util.localmax(S * (S > ref_value)))
-
     # Store pitch and magnitude
-    pitches[idx[:, 0], idx[:, 1]] = (
-        (idx[:, 0] + shift[idx[:, 0], idx[:, 1]]) * float(sr) / n_fft
-    )
-
-    mags[idx[:, 0], idx[:, 1]] = S[idx[:, 0], idx[:, 1]] + dskew[idx[:, 0], idx[:, 1]]
+    idx = np.nonzero(freq_mask & util.localmax(S * (S > ref_value), axis=-2))
+    pitches[idx] = (idx[-2] + shift[idx]) * float(sr) / n_fft
+    mags[idx] = S[idx] + dskew[idx]
 
     return pitches, mags
 

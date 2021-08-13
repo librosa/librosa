@@ -672,3 +672,18 @@ def test_yin_multi(y_multi):
 
     assert not np.allclose(P0, P1)
 
+
+@pytest.mark.parametrize('ref', [None, 1.0])
+def test_piptrack_multi(s_multi, ref):
+    S, sr = s_multi
+
+    pall, mall = librosa.piptrack(S=S, sr=sr, ref=ref)
+    p0, m0 = librosa.piptrack(S=S[0], sr=sr, ref=ref)
+    p1, m1 = librosa.piptrack(S=S[1], sr=sr, ref=ref)
+
+    assert np.allclose(pall[0], p0)
+    assert np.allclose(pall[1], p1)
+    assert np.allclose(mall[0], m0)
+    assert np.allclose(mall[1], m1)
+    assert not np.allclose(p0, p1)
+    assert not np.allclose(m0, m1)
