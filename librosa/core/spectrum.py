@@ -1394,7 +1394,9 @@ def iirt(
 
     # Pad the time series so that frames are centered
     if center:
-        y = np.pad(y, int(win_length // 2), mode=pad_mode)
+        padding = [(0, 0) for _ in y.shape]
+        padding[-1] = (win_length//2, win_length//2)
+        y = np.pad(y, padding, mode=pad_mode)
 
     # get the semitone filterbank
     filterbank_ct, sample_rates = semitone_filterbank(
@@ -1410,7 +1412,7 @@ def iirt(
         y_resampled.append(resample(y, sr, cur_sr))
 
     # Compute the number of frames that will fit. The end may get truncated.
-    n_frames = int(1 + (len(y) - win_length) // hop_length)
+    n_frames = int(1 + (y.shape[-1] - win_length) // hop_length)
 
     bands_power = []
 
@@ -1421,11 +1423,13 @@ def iirt(
 
         if flayout == "ba":
             cur_filter_output = scipy.signal.filtfilt(
-                cur_filter[0], cur_filter[1], y_resampled[cur_sr_idx]
+                cur_filter[0], cur_filter[1], y_resampled[cur_sr_idx],
+                axis=-1
             )
         elif flayout == "sos":
             cur_filter_output = scipy.signal.sosfiltfilt(
-                cur_filter, y_resampled[cur_sr_idx]
+                cur_filter, y_resampled[cur_sr_idx],
+                axis=-1
             )
 
         factor = sr / cur_sr
@@ -1435,7 +1439,7 @@ def iirt(
         # hop_length_STMSP is used here as a floating-point number.
         # The discretization happens at the end to avoid accumulated rounding errors.
         start_idx = np.arange(
-            0, len(cur_filter_output) - win_length_STMSP_round, hop_length_STMSP
+            0, cur_filter_output.shape[-1] - win_length_STMSP_round, hop_length_STMSP
         )
         if len(start_idx) < n_frames:
             min_length = (
@@ -1443,19 +1447,19 @@ def iirt(
             )
             cur_filter_output = util.fix_length(cur_filter_output, min_length)
             start_idx = np.arange(
-                0, len(cur_filter_output) - win_length_STMSP_round, hop_length_STMSP
+                0, cur_filter_output.shape[-1] - win_length_STMSP_round, hop_length_STMSP
             )
-
         start_idx = np.round(start_idx).astype(int)[:n_frames]
         idx = (
             np.tile(np.arange(win_length_STMSP_round), (len(start_idx), 1))
             + start_idx[:, np.newaxis]
         )
 
-        cur_band_power = factor * np.sum(cur_filter_output[idx] ** 2, axis=-1)
+        cur_band_power = factor * np.sum(cur_filter_output[..., idx] ** 2, axis=-1)
         bands_power.append(cur_band_power)
 
-    return np.asfortranarray(bands_power)
+    return np.stack(bands_power, axis=y.ndim-1)
+#    return np.asfortranarray(bands_power)
 
 
 @cache(level=30)

@@ -592,3 +592,16 @@ def test_salience_multi_dynamic(tfr_multi, filter_peaks):
     assert np.allclose(sal_all[1], sal_1)
     assert not np.allclose(sal_0, sal_1)
 
+
+@pytest.mark.parametrize('center', [False, True])
+def test_iirt_multi(y_multi, center):
+    y, sr = y_multi
+    Call = librosa.iirt(y=y, sr=sr, center=center)
+    C0 = librosa.iirt(y=y[0], sr=sr, center=center)
+    C1 = librosa.iirt(y=y[1], sr=sr, center=center)
+
+    assert np.allclose(Call[0], C0)
+    assert np.allclose(Call[1], C1)
+
+    assert not np.allclose(C0, C1)
+
