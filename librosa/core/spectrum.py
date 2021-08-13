@@ -1386,7 +1386,7 @@ def iirt(
         raise ParameterError("Unsupported flayout={}".format(flayout))
 
     # check audio input
-    util.valid_audio(y)
+    util.valid_audio(y, mono=False)
 
     # Set the default hop, if it's not already specified
     if hop_length is None:

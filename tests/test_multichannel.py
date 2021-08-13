@@ -308,6 +308,38 @@ def test_spectral_flatness_multi(s_multi):
     assert not np.allclose(Call[0], Call[1])
 
 
+def test_poly_multi_static(s_multi):
+    mags, sr = s_multi
+
+    Pall = librosa.feature.poly_features(S=mags, order=5)
+
+    # Compute per channel
+    P0 = librosa.feature.poly_features(S=mags[0], order=5)
+    P1 = librosa.feature.poly_features(S=mags[1], order=5)
+
+    # Check results
+    assert np.allclose(Pall[0], P0)
+    assert np.allclose(Pall[1], P1)
+    assert not np.allclose(P0, P1)
+
+
+def test_poly_multi_varying(y_multi):
+    y, sr = y_multi
+
+    # Get some time-varying frequencies
+    times, freqs, mags = librosa.reassigned_spectrogram(y, fill_nan=True)
+    Pall = librosa.feature.poly_features(S=mags, freq=freqs, order=5)
+
+    # Compute per channel
+    P0 = librosa.feature.poly_features(S=mags[0], freq=freqs[0], order=5)
+    P1 = librosa.feature.poly_features(S=mags[1], freq=freqs[1], order=5)
+
+    # Check results
+    assert np.allclose(Pall[0], P0)
+    assert np.allclose(Pall[1], P1)
+    assert not np.allclose(P0, P1)
+
+
 def test_rms_multi(s_multi):
     S, sr = s_multi
 
