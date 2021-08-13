@@ -19,6 +19,11 @@ import librosa
 
 __EXAMPLE_FILE = os.path.join("tests", "data", "test1_22050.wav")
 
+@pytest.fixture(scope="module", params=["test1_44100.wav"])
+def y_multi(request):
+    infile = request.param
+    return librosa.load(os.path.join("tests", "data", infile), sr=None, mono=False)
+
 
 @pytest.fixture(scope="module", params=[22050, 44100])
 def ysr(request):
@@ -48,6 +53,21 @@ def test_time_stretch(ysr, rate, ctx):
 
         # We don't have to be too precise here, since this goes through an STFT
         assert np.allclose(orig_duration, rate * new_duration, rtol=1e-2, atol=1e-3)
+
+def test_time_stretch_multi(y_multi):
+    y, sr = y_multi
+
+    # compare each channel
+    C0 = librosa.effects.time_stretch(y[0],1)
+    C1 = librosa.effects.time_stretch(y[1],1)
+    Call = librosa.effects.time_stretch(y,1)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
 
 
 @pytest.mark.parametrize("n_steps", [-1.5, 1.5, 5])
