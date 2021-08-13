@@ -563,3 +563,32 @@ def test_interp_harmonics_multi_vary(tfr_multi):
     assert np.allclose(Hall[1], H1)
 
     assert not np.allclose(H0, H1)
+
+
+@pytest.mark.parametrize('filter_peaks', [False, True])
+def test_salience_multi_static(s_multi, filter_peaks):
+    S, sr = s_multi
+
+    freqs = librosa.fft_frequencies(sr=sr)
+
+    sal_all = librosa.salience(S, freqs, [0.5, 1, 2, 3], kind='slinear', filter_peaks=filter_peaks, fill_value=0)
+    sal_0 = librosa.salience(S[0], freqs, [0.5, 1, 2, 3], kind='slinear', filter_peaks=filter_peaks, fill_value=0)
+    sal_1 = librosa.salience(S[1], freqs, [0.5, 1, 2, 3], kind='slinear', filter_peaks=filter_peaks, fill_value=0)
+
+    assert np.allclose(sal_all[0], sal_0)
+    assert np.allclose(sal_all[1], sal_1)
+    assert not np.allclose(sal_0, sal_1)
+
+
+@pytest.mark.parametrize('filter_peaks', [False, True])
+def test_salience_multi_dynamic(tfr_multi, filter_peaks):
+    times, freqs, S = tfr_multi
+
+    sal_all = librosa.salience(S, freqs, [0.5, 1, 2, 3], kind='slinear', filter_peaks=filter_peaks, fill_value=0)
+    sal_0 = librosa.salience(S[0], freqs[0], [0.5, 1, 2, 3], kind='slinear', filter_peaks=filter_peaks, fill_value=0)
+    sal_1 = librosa.salience(S[1], freqs[1], [0.5, 1, 2, 3], kind='slinear', filter_peaks=filter_peaks, fill_value=0)
+
+    assert np.allclose(sal_all[0], sal_0)
+    assert np.allclose(sal_all[1], sal_1)
+    assert not np.allclose(sal_0, sal_1)
+

@@ -19,7 +19,7 @@ def salience(
     filter_peaks=True,
     fill_value=np.nan,
     kind="linear",
-    axis=0,
+    axis=-2,
 ):
     """Harmonic salience function.
 
@@ -109,15 +109,15 @@ def salience(
     S_harm = interp_harmonics(S, freqs, h_range, kind=kind, axis=axis)
 
     if aggregate is np.average:
-        S_sal = aggregate(S_harm, axis=0, weights=weights)
+        S_sal = aggregate(S_harm, axis=axis-1, weights=weights)
     else:
-        S_sal = aggregate(S_harm, axis=0)
+        S_sal = aggregate(S_harm, axis=axis-1)
 
     if filter_peaks:
-        S_peaks = scipy.signal.argrelmax(S, axis=0)
+        S_peaks = scipy.signal.argrelmax(S, axis=axis)
         S_out = np.empty(S.shape)
         S_out.fill(fill_value)
-        S_out[S_peaks[0], S_peaks[1]] = S_sal[S_peaks[0], S_peaks[1]]
+        S_out[S_peaks] = S_sal[S_peaks]
 
         S_sal = S_out
 
