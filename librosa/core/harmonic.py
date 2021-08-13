@@ -250,8 +250,18 @@ def interp_harmonics(x, freqs, h_range, kind="linear", fill_value=0, axis=-2):
         # Rotate the vectorizing axis to the tail so that we get parallelism over frames
         # Afterward, we're swapping (-1, axis-1) instead of (-1,axis)
         # because a new dimension has been inserted
-        return xfunc(freqs.swapaxes(axis, -1), x.swapaxes(axis, -1)).swapaxes(
-            -1, axis - 1
+        return (
+            xfunc(freqs.swapaxes(axis, -1), x.swapaxes(axis, -1))
+            .swapaxes(
+                # Return the original target axis to its place
+                -2,
+                axis,
+            )
+            .swapaxes(
+                # Put the new harmonic axis directly in front of the target axis
+                -1,
+                axis - 1,
+            )
         )
     else:
         raise ParameterError(
