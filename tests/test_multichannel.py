@@ -687,3 +687,17 @@ def test_piptrack_multi(s_multi, ref):
     assert np.allclose(mall[1], m1)
     assert not np.allclose(p0, p1)
     assert not np.allclose(m0, m1)
+
+
+def test_click_multi():
+
+    click = np.ones((3, 100))
+
+    yout = librosa.clicks(times=[0, 1, 2], sr=1000, click=click)
+
+    print(yout.shape)
+    assert yout.shape[0] == click.shape[0]
+
+    assert np.allclose(yout[..., :100], click)
+    assert np.allclose(yout[..., 1000:1100], click)
+    assert np.allclose(yout[..., 2000:2100], click)

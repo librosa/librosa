@@ -1239,7 +1239,7 @@ def clicks(
 
     if click is not None:
         # Check that we have a well-formed audio buffer
-        util.valid_audio(click, mono=True)
+        util.valid_audio(click, mono=False)
 
     else:
         # Create default click signal
@@ -1257,7 +1257,7 @@ def clicks(
 
     # Set default length
     if length is None:
-        length = positions.max() + click.shape[0]
+        length = positions.max() + click.shape[-1]
     else:
         if length < 1:
             raise ParameterError("length must be a positive integer")
@@ -1266,18 +1266,20 @@ def clicks(
         positions = positions[positions < length]
 
     # Pre-allocate click signal
-    click_signal = np.zeros(length, dtype=np.float32)
+    shape = list(click.shape)
+    shape[-1] = length
+    click_signal = np.zeros(shape, dtype=np.float32)
 
     # Place clicks
     for start in positions:
         # Compute the end-point of this click
-        end = start + click.shape[0]
+        end = start + click.shape[-1]
 
         if end >= length:
-            click_signal[start:] += click[: length - start]
+            click_signal[..., start:] += click[..., : length - start]
         else:
             # Normally, just add a click here
-            click_signal[start:end] += click
+            click_signal[..., start:end] += click
 
     return click_signal
 

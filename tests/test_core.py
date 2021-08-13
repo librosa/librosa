@@ -1303,7 +1303,6 @@ def test_clicks(
     "times,click_freq,click_duration,click,length",
     [
         (None, 1000, 0.1, None, None),
-        ([0, 2, 4, 8], 1000, 0.1, np.ones((2, 10)), None),
         ([0, 2, 4, 8], 1000, 0.1, None, 0),
         ([0, 2, 4, 8], 0, 0.1, None, None),
         ([0, 2, 4, 8], 1000, 0, None, None),
