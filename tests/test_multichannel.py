@@ -535,3 +535,31 @@ def test_stack_memory_multi(delay):
 
     # Verify that they're not all the same
     assert not np.allclose(Call[0], Call[1])
+
+
+def test_interp_harmonics_multi_static(s_multi):
+    S, sr = s_multi
+
+    freqs = librosa.fft_frequencies(sr=sr)
+    Hall = librosa.interp_harmonics(S, freqs, [0.5, 1, 2])
+    H0 = librosa.interp_harmonics(S[0], freqs, [0.5, 1, 2])
+    H1 = librosa.interp_harmonics(S[1], freqs, [0.5, 1, 2])
+
+    assert np.allclose(Hall[0], H0)
+    assert np.allclose(Hall[1], H1)
+
+    assert not np.allclose(H0, H1)
+
+
+def test_interp_harmonics_multi_vary(tfr_multi):
+    times, freqs, mags = tfr_multi
+
+    # Force slinear mode here to deal with non-unique frequencies
+    Hall = librosa.interp_harmonics(mags, freqs, [0.5, 1, 2], kind='slinear')
+    H0 = librosa.interp_harmonics(mags[0], freqs[0], [0.5, 1, 2], kind='slinear')
+    H1 = librosa.interp_harmonics(mags[1], freqs[1], [0.5, 1, 2], kind='slinear')
+
+    assert np.allclose(Hall[0], H0)
+    assert np.allclose(Hall[1], H1)
+
+    assert not np.allclose(H0, H1)

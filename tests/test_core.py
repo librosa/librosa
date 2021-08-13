@@ -1479,7 +1479,7 @@ def test_harmonics_1d():
 
     h = [0.25, 0.5, 1, 2, 4]
 
-    yh = librosa.interp_harmonics(y, x, h)
+    yh = librosa.interp_harmonics(y, x, h, axis=0)
 
     assert yh.shape[1:] == y.shape
     assert yh.shape[0] == len(h)
@@ -1542,7 +1542,7 @@ def test_harmonics_2d_varying():
     y = np.tile(y, (5, 1)).T
     h = [0.25, 0.5, 1, 2, 4]
 
-    yh = librosa.interp_harmonics(y, x, h, axis=0)
+    yh = librosa.interp_harmonics(y, x, h, axis=-2)
 
     assert yh.shape[1:] == y.shape
     assert yh.shape[0] == len(h)

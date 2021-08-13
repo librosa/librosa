@@ -124,7 +124,7 @@ def salience(
     return S_sal
 
 
-def interp_harmonics(x, freqs, h_range, kind="linear", fill_value=0, axis=0):
+def interp_harmonics(x, freqs, h_range, kind="linear", fill_value=0, axis=-2):
     """Compute the energy at harmonics of time-frequency representation.
 
     Given a frequency-based energy representation such as a spectrogram
@@ -213,193 +213,48 @@ def interp_harmonics(x, freqs, h_range, kind="linear", fill_value=0, axis=0):
     >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
     """
 
-    # X_out will be the same shape as X, plus a leading
-    # axis that has length = len(h_range)
-    out_shape = [len(h_range)]
-    out_shape.extend(x.shape)
-
-    x_out = np.zeros(out_shape, dtype=x.dtype)
-
     if freqs.ndim == 1 and len(freqs) == x.shape[axis]:
-        harmonics_1d(
-            x_out, x, freqs, h_range, kind=kind, fill_value=fill_value, axis=axis
+        # Build the 1-D interpolator.
+        # All frames have a common domain, so we only need one interpolator here.
+        f_interp = scipy.interpolate.interp1d(
+            freqs,
+            x,
+            axis=axis,
+            bounds_error=False,
+            copy=False,
+            kind=kind,
+            fill_value=fill_value,
         )
 
-    elif freqs.ndim == 2 and freqs.shape == x.shape:
-        harmonics_2d(
-            x_out, x, freqs, h_range, kind=kind, fill_value=fill_value, axis=axis
+        # Set the interpolation points
+        f_out = np.multiply.outer(h_range, freqs)
+
+        # Interpolate
+        return f_interp(f_out)
+
+    elif freqs.shape == x.shape:
+        # If we have time-varying frequencies, then it must match exactly the shape of the input
+
+        # We'll define a frame-wise interpolator helper function that we will vectorize over
+        # the entire input array
+        def _f_interp(_a, _b):
+            interp = scipy.interpolate.interp1d(
+                _a, _b, bounds_error=False, copy=False, kind=kind, fill_value=fill_value
+            )
+
+            return interp(np.multiply.outer(_a, h_range))
+
+        # Signature is expanding frequency into a new dimension
+        xfunc = np.vectorize(_f_interp, signature="(f),(f)->(f,h)")
+
+        # Rotate the vectorizing axis to the tail so that we get parallelism over frames
+        # Afterward, we're swapping (-1, axis-1) instead of (-1,axis)
+        # because a new dimension has been inserted
+        return xfunc(freqs.swapaxes(axis, -1), x.swapaxes(axis, -1)).swapaxes(
+            -1, axis - 1
         )
     else:
         raise ParameterError(
             "freqs.shape={} does not match "
             "input shape={}".format(freqs.shape, x.shape)
-        )
-
-    return x_out
-
-
-def harmonics_1d(harmonic_out, x, freqs, h_range, kind="linear", fill_value=0, axis=0):
-    """Populate a harmonic tensor from a time-frequency representation.
-
-    Parameters
-    ----------
-    harmonic_out : np.ndarray, shape=(len(h_range), X.shape)
-        The output array to store harmonics
-
-    X : np.ndarray
-        The input energy
-
-    freqs : np.ndarray, shape=(x.shape[axis])
-        The frequency values corresponding to x's elements along the
-        chosen axis.
-
-    h_range : list-like, non-negative
-        Harmonics to compute.  The first harmonic (1) corresponds to ``x``
-        itself.
-        Values less than one (e.g., 1/2) correspond to sub-harmonics.
-
-    kind : str
-        Interpolation type.  See `scipy.interpolate.interp1d`.
-
-    fill_value : float
-        The value to fill when extrapolating beyond the observed
-        frequency range.
-
-    axis : int
-        The axis along which to compute harmonics
-
-    See Also
-    --------
-    harmonics
-    scipy.interpolate.interp1d
-
-
-    Examples
-    --------
-    Estimate the harmonics of a time-averaged tempogram
-
-    >>> y, sr = librosa.load(librosa.ex('choice'))
-    >>> # Compute the time-varying tempogram and average over time
-    >>> tempi = np.mean(librosa.feature.tempogram(y=y, sr=sr), axis=1)
-    >>> # We'll measure the first five harmonics
-    >>> h_range = [1, 2, 3, 4, 5]
-    >>> f_tempo = librosa.tempo_frequencies(len(tempi), sr=sr)
-    >>> # Build the harmonic tensor
-    >>> t_harmonics = librosa.interp_harmonics(tempi, f_tempo, h_range)
-    >>> print(t_harmonics.shape)
-    (5, 384)
-
-    >>> # And plot the results
-    >>> import matplotlib.pyplot as plt
-    >>> fig, ax = plt.subplots()
-    >>> librosa.display.specshow(t_harmonics, x_axis='tempo', sr=sr, ax=ax)
-    >>> ax.set(yticks=0.5 + np.arange(len(h_range)),
-    ...        yticklabels=['{:.3g}'.format(_) for _ in h_range],
-    ...        ylabel='Harmonic')
-    ...        xlabel='Tempo (BPM)')
-
-    We can also compute frequency harmonics for spectrograms.
-    To calculate subharmonic energy, use values < 1.
-
-    >>> h_range = [1./3, 1./2, 1, 2, 3, 4]
-    >>> S = np.abs(librosa.stft(y))
-    >>> fft_freqs = librosa.fft_frequencies(sr=sr)
-    >>> S_harm = librosa.interp_harmonics(S, fft_freqs, h_range, axis=0)
-    >>> print(S_harm.shape)
-    (6, 1025, 646)
-
-    >>> fig, ax = plt.subplots(nrows=3, ncols=2, sharex=True, sharey=True)
-    >>> for i, _sh in enumerate(S_harm):
-    ...     librosa.display.specshow(librosa.amplitude_to_db(_sh,
-    ...                                                      ref=S.max()),
-    ...                              sr=sr, y_axis='log', x_axis='time', ax=ax.flat[i])
-    ...     ax.flat[i].set(title='h={:.3g}'.format(h_range[i]))
-    ...     ax.flat[i].label_outer()
-    """
-
-    # Note: this only works for fixed-grid, 1d interpolation
-    f_interp = scipy.interpolate.interp1d(
-        freqs,
-        x,
-        kind=kind,
-        axis=axis,
-        copy=False,
-        bounds_error=False,
-        fill_value=fill_value,
-    )
-
-    idx_out = [slice(None)] * harmonic_out.ndim
-
-    # Compute the output index of the interpolated values
-    interp_axis = 1 + (axis % x.ndim)
-
-    # Iterate over the harmonics range
-    for h_index, harmonic in enumerate(h_range):
-        idx_out[0] = h_index
-
-        # Iterate over frequencies
-        for f_index, frequency in enumerate(freqs):
-            # Offset the output axis by 1 to account for the harmonic index
-            idx_out[interp_axis] = f_index
-
-            # Estimate the harmonic energy at this frequency across time
-            harmonic_out[tuple(idx_out)] = f_interp(harmonic * frequency)
-
-
-def harmonics_2d(harmonic_out, x, freqs, h_range, kind="linear", fill_value=0, axis=0):
-    """Populate a harmonic tensor from a time-frequency representation with
-    time-varying frequencies.
-
-    Parameters
-    ----------
-    harmonic_out : np.ndarray
-        The output array to store harmonics
-
-    x : np.ndarray
-        The input energy
-
-    freqs : np.ndarray, shape=x.shape
-        The frequency values corresponding to each element of ``x``
-
-    h_range : list-like, non-negative
-        Harmonics to compute.  The first harmonic (1) corresponds to ``x``
-        itself.  Values less than one (e.g., 1/2) correspond to
-        sub-harmonics.
-
-    kind : str
-        Interpolation type.  See `scipy.interpolate.interp1d`.
-
-    fill_value : float
-        The value to fill when extrapolating beyond the observed
-        frequency range.
-
-    axis : int
-        The axis along which to compute harmonics
-
-    See Also
-    --------
-    harmonics
-    harmonics_1d
-    """
-    idx_in = [slice(None)] * x.ndim
-    idx_freq = [slice(None)] * x.ndim
-    idx_out = [slice(None)] * harmonic_out.ndim
-
-    # This is the non-interpolation axis
-    ni_axis = (1 + axis) % x.ndim
-
-    # For each value in the non-interpolated axis, compute its harmonics
-    for i in range(x.shape[ni_axis]):
-        idx_in[ni_axis] = slice(i, i + 1)
-        idx_freq[ni_axis] = i
-        idx_out[1 + ni_axis] = idx_in[ni_axis]
-
-        harmonics_1d(
-            harmonic_out[tuple(idx_out)],
-            x[tuple(idx_in)],
-            freqs[tuple(idx_freq)],
-            h_range,
-            kind=kind,
-            fill_value=fill_value,
-            axis=axis,
         )
