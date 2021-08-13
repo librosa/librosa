@@ -28,10 +28,16 @@ def y_multi(request):
     return librosa.load(os.path.join("tests", "data", infile), sr=None, mono=False)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def s_multi(y_multi):
     y, sr = y_multi
     return np.abs(librosa.stft(y)), sr
+
+
+@pytest.fixture(scope="module")
+def tfr_multi(y_multi):
+    y, sr = y_multi
+    return librosa.reassigned_spectrogram(y, fill_nan=True)
 
 
 def test_stft_multi(y_multi):
@@ -323,11 +329,10 @@ def test_poly_multi_static(s_multi):
     assert not np.allclose(P0, P1)
 
 
-def test_poly_multi_varying(y_multi):
-    y, sr = y_multi
-
+def test_poly_multi_varying(tfr_multi):
+    
     # Get some time-varying frequencies
-    times, freqs, mags = librosa.reassigned_spectrogram(y, fill_nan=True)
+    times, freqs, mags = tfr_multi
     Pall = librosa.feature.poly_features(S=mags, freq=freqs, order=5)
 
     # Compute per channel
@@ -429,8 +434,8 @@ def test_tonnetz_multi(y_multi):
     Call = librosa.feature.tonnetz(y=y, tuning=0)
 
     # Check each channel
-    assert np.allclose(C0, Call[0])
-    assert np.allclose(C1, Call[1])
+    assert np.allclose(C0, Call[0], atol=1e-7)
+    assert np.allclose(C1, Call[1], atol=1e-7)
 
     # Verify that they're not all the same
     assert not np.allclose(Call[0], Call[1])
