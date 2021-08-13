@@ -1414,9 +1414,19 @@ def iirt(
     # Compute the number of frames that will fit. The end may get truncated.
     n_frames = int(1 + (y.shape[-1] - win_length) // hop_length)
 
-    bands_power = []
+    # Pre-allocate the output array
+    shape = list(y.shape)
+    # Time dimension reduces to n_frames
+    shape[-1] = n_frames
+    # Insert a new axis at position -2 for filter response
+    shape.insert(-1, len(filterbank_ct))
 
-    for cur_sr, cur_filter in zip(sample_rates, filterbank_ct):
+    bands_power = np.empty_like(y, shape=shape)
+
+    slices = [slice(None) for _ in bands_power.shape]
+    for i, (cur_sr, cur_filter) in enumerate(zip(sample_rates, filterbank_ct)):
+
+        slices[-2] = i
 
         # filter the signal
         cur_sr_idx = np.flatnonzero(y_srs == cur_sr)[0]
@@ -1450,16 +1460,13 @@ def iirt(
                 0, cur_filter_output.shape[-1] - win_length_STMSP_round, hop_length_STMSP
             )
         start_idx = np.round(start_idx).astype(int)[:n_frames]
-        idx = (
-            np.tile(np.arange(win_length_STMSP_round), (len(start_idx), 1))
-            + start_idx[:, np.newaxis]
-        )
+
+        idx = np.add.outer(start_idx, np.arange(win_length_STMSP_round))
 
         cur_band_power = factor * np.sum(cur_filter_output[..., idx] ** 2, axis=-1)
-        bands_power.append(cur_band_power)
+        bands_power[tuple(slices)] = cur_band_power
 
-    return np.stack(bands_power, axis=y.ndim-1)
-#    return np.asfortranarray(bands_power)
+    return bands_power
 
 
 @cache(level=30)
