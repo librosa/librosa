@@ -595,7 +595,7 @@ def resample(
 
         # We have to transpose here to match libsamplerate
         y_hat = samplerate.resample(y.T, ratio, converter_type=res_type).T
-    elif res_type.startswith('soxr'):
+    elif res_type.startswith("soxr"):
         import soxr
 
         # We have to transpose here to match soxr
@@ -825,7 +825,7 @@ def autocorrelate(y, max_size=None, axis=-1):
     return autocorr
 
 
-def lpc(y, order):
+def lpc(y, order, axis=-1):
     """Linear Prediction Coefficients via Burg's method
 
     This function applies Burg's method to estimate coefficients of a linear
@@ -850,6 +850,9 @@ def lpc(y, order):
 
     order : int > 0
         Order of the linear filter
+
+    axis : int
+        Axis along which to compute the coefficients
 
     Returns
     -------
@@ -893,13 +896,35 @@ def lpc(y, order):
     if not isinstance(order, (int, np.integer)) or order < 1:
         raise ParameterError("order must be an integer > 0")
 
-    util.valid_audio(y, mono=True)
+    util.valid_audio(y, mono=False)
 
-    return __lpc(y, order)
+    # Move the lpc axis around front, because numba is silly
+    y = y.swapaxes(axis, 0)
+
+    dtype = y.dtype.type
+
+    shape = list(y.shape)
+    shape[0] = order + 1
+
+    ar_coeffs = np.zeros(tuple(shape), dtype=dtype)
+    ar_coeffs[0] = dtype(1)
+
+    ar_coeffs_prev = ar_coeffs.copy()
+
+    shape[0] = 1
+    reflect_coeff = np.zeros(shape, dtype=dtype)
+    den = reflect_coeff.copy()
+
+    epsilon = util.tiny(den)
+
+    # Call the helper, and swap the results back to the target axis position
+    return __lpc(
+        y, order, ar_coeffs, ar_coeffs_prev, reflect_coeff, den, epsilon
+    ).swapaxes(0, axis)
 
 
-@jit(nopython=True)
-def __lpc(y, order):
+@jit(nopython=True, cache=True)
+def __lpc(y, order, ar_coeffs, ar_coeffs_prev, reflect_coeff, den, epsilon):
     # This implementation follows the description of Burg's algorithm given in
     # section III of Marple's paper referenced in the docstring.
     #
@@ -910,12 +935,6 @@ def __lpc(y, order):
     # those for the new one. These two arrays hold ar_coeffs for order M and
     # order M-1.  (Corresponding to a_{M,k} and a_{M-1,k} in eqn 5)
 
-    dtype = y.dtype.type
-    ar_coeffs = np.zeros(order + 1, dtype=dtype)
-    ar_coeffs[0] = dtype(1)
-    ar_coeffs_prev = np.zeros(order + 1, dtype=dtype)
-    ar_coeffs_prev[0] = dtype(1)
-
     # These two arrays hold the forward and backward prediction error. They
     # correspond to f_{M-1,k} and b_{M-1,k} in eqns 10, 11, 13 and 14 of
     # Marple. First they are used to compute the reflection coefficient at
@@ -925,18 +944,19 @@ def __lpc(y, order):
     bwd_pred_error = y[:-1]
 
     # DEN_{M} from eqn 16 of Marple.
-    den = np.dot(fwd_pred_error, fwd_pred_error) + np.dot(
-        bwd_pred_error, bwd_pred_error
-    )
+    den[0] = np.sum(fwd_pred_error ** 2 + bwd_pred_error ** 2, axis=0)
 
     for i in range(order):
-        if den <= 0:
-            raise FloatingPointError("numerical error, input ill-conditioned?")
+        # can be removed if we keep the epsilon bias
+        # if np.any(den <= 0):
+        #    raise FloatingPointError("numerical error, input ill-conditioned?")
 
         # Eqn 15 of Marple, with fwd_pred_error and bwd_pred_error
         # corresponding to f_{M-1,k+1} and b{M-1,k} and the result as a_{M,M}
-        # reflect_coeff = dtype(-2) * np.dot(bwd_pred_error, fwd_pred_error) / dtype(den)
-        reflect_coeff = dtype(-2) * np.dot(bwd_pred_error, fwd_pred_error) / dtype(den)
+
+        reflect_coeff[0] = np.sum(bwd_pred_error * fwd_pred_error, axis=0)
+        reflect_coeff[0] *= -2
+        reflect_coeff[0] /= den[0] + epsilon
 
         # Now we use the reflection coefficient and the AR coefficients from
         # the last model order to compute all of the AR coefficients for the
@@ -948,9 +968,13 @@ def __lpc(y, order):
         # Note 3: The first element of ar_coeffs* is always 1, which copies in
         # the reflection coefficient at the end of the new AR coefficient array
         # after the preceding coefficients
+
         ar_coeffs_prev, ar_coeffs = ar_coeffs, ar_coeffs_prev
         for j in range(1, i + 2):
-            ar_coeffs[j] = ar_coeffs_prev[j] + reflect_coeff * ar_coeffs_prev[i - j + 1]
+            # reflection multiply should be broadcast
+            ar_coeffs[j] = (
+                ar_coeffs_prev[j] + reflect_coeff[0] * ar_coeffs_prev[i - j + 1]
+            )
 
         # Update the forward and backward prediction errors corresponding to
         # eqns 13 and 14.  We start with f_{M-1,k+1} and b_{M-1,k} and use them
@@ -970,8 +994,8 @@ def __lpc(y, order):
         # den <- DEN_{M}                   (lhs)
         #
 
-        q = dtype(1) - reflect_coeff ** 2
-        den = q * den - bwd_pred_error[-1] ** 2 - fwd_pred_error[0] ** 2
+        q = 1.0 - reflect_coeff[0] ** 2
+        den[0] = q * den[0] - bwd_pred_error[-1] ** 2 - fwd_pred_error[0] ** 2
 
         # Shift up forward error.
         #

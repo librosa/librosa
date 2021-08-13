@@ -1463,8 +1463,7 @@ def iirt(
 
         idx = np.add.outer(start_idx, np.arange(win_length_STMSP_round))
 
-        cur_band_power = factor * np.sum(cur_filter_output[..., idx] ** 2, axis=-1)
-        bands_power[tuple(slices)] = cur_band_power
+        bands_power[tuple(slices)] = factor * np.sum(cur_filter_output[..., idx] ** 2, axis=-1)
 
     return bands_power
 

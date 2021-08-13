@@ -330,7 +330,7 @@ def test_poly_multi_static(s_multi):
 
 
 def test_poly_multi_varying(tfr_multi):
-    
+
     # Get some time-varying frequencies
     times, freqs, mags = tfr_multi
     Pall = librosa.feature.poly_features(S=mags, freq=freqs, order=5)
@@ -555,9 +555,9 @@ def test_interp_harmonics_multi_vary(tfr_multi):
     times, freqs, mags = tfr_multi
 
     # Force slinear mode here to deal with non-unique frequencies
-    Hall = librosa.interp_harmonics(mags, freqs, [0.5, 1, 2], kind='slinear')
-    H0 = librosa.interp_harmonics(mags[0], freqs[0], [0.5, 1, 2], kind='slinear')
-    H1 = librosa.interp_harmonics(mags[1], freqs[1], [0.5, 1, 2], kind='slinear')
+    Hall = librosa.interp_harmonics(mags, freqs, [0.5, 1, 2], kind="slinear")
+    H0 = librosa.interp_harmonics(mags[0], freqs[0], [0.5, 1, 2], kind="slinear")
+    H1 = librosa.interp_harmonics(mags[1], freqs[1], [0.5, 1, 2], kind="slinear")
 
     assert np.allclose(Hall[0], H0)
     assert np.allclose(Hall[1], H1)
@@ -565,35 +565,77 @@ def test_interp_harmonics_multi_vary(tfr_multi):
     assert not np.allclose(H0, H1)
 
 
-@pytest.mark.parametrize('filter_peaks', [False, True])
+@pytest.mark.parametrize("filter_peaks", [False, True])
 def test_salience_multi_static(s_multi, filter_peaks):
     S, sr = s_multi
 
     freqs = librosa.fft_frequencies(sr=sr)
 
-    sal_all = librosa.salience(S, freqs, [0.5, 1, 2, 3], kind='slinear', filter_peaks=filter_peaks, fill_value=0)
-    sal_0 = librosa.salience(S[0], freqs, [0.5, 1, 2, 3], kind='slinear', filter_peaks=filter_peaks, fill_value=0)
-    sal_1 = librosa.salience(S[1], freqs, [0.5, 1, 2, 3], kind='slinear', filter_peaks=filter_peaks, fill_value=0)
+    sal_all = librosa.salience(
+        S,
+        freqs,
+        [0.5, 1, 2, 3],
+        kind="slinear",
+        filter_peaks=filter_peaks,
+        fill_value=0,
+    )
+    sal_0 = librosa.salience(
+        S[0],
+        freqs,
+        [0.5, 1, 2, 3],
+        kind="slinear",
+        filter_peaks=filter_peaks,
+        fill_value=0,
+    )
+    sal_1 = librosa.salience(
+        S[1],
+        freqs,
+        [0.5, 1, 2, 3],
+        kind="slinear",
+        filter_peaks=filter_peaks,
+        fill_value=0,
+    )
 
     assert np.allclose(sal_all[0], sal_0)
     assert np.allclose(sal_all[1], sal_1)
     assert not np.allclose(sal_0, sal_1)
 
 
-@pytest.mark.parametrize('filter_peaks', [False, True])
+@pytest.mark.parametrize("filter_peaks", [False, True])
 def test_salience_multi_dynamic(tfr_multi, filter_peaks):
     times, freqs, S = tfr_multi
 
-    sal_all = librosa.salience(S, freqs, [0.5, 1, 2, 3], kind='slinear', filter_peaks=filter_peaks, fill_value=0)
-    sal_0 = librosa.salience(S[0], freqs[0], [0.5, 1, 2, 3], kind='slinear', filter_peaks=filter_peaks, fill_value=0)
-    sal_1 = librosa.salience(S[1], freqs[1], [0.5, 1, 2, 3], kind='slinear', filter_peaks=filter_peaks, fill_value=0)
+    sal_all = librosa.salience(
+        S,
+        freqs,
+        [0.5, 1, 2, 3],
+        kind="slinear",
+        filter_peaks=filter_peaks,
+        fill_value=0,
+    )
+    sal_0 = librosa.salience(
+        S[0],
+        freqs[0],
+        [0.5, 1, 2, 3],
+        kind="slinear",
+        filter_peaks=filter_peaks,
+        fill_value=0,
+    )
+    sal_1 = librosa.salience(
+        S[1],
+        freqs[1],
+        [0.5, 1, 2, 3],
+        kind="slinear",
+        filter_peaks=filter_peaks,
+        fill_value=0,
+    )
 
     assert np.allclose(sal_all[0], sal_0)
     assert np.allclose(sal_all[1], sal_1)
     assert not np.allclose(sal_0, sal_1)
 
 
-@pytest.mark.parametrize('center', [False, True])
+@pytest.mark.parametrize("center", [False, True])
 def test_iirt_multi(y_multi, center):
     y, sr = y_multi
     Call = librosa.iirt(y=y, sr=sr, center=center)
@@ -605,3 +647,14 @@ def test_iirt_multi(y_multi, center):
 
     assert not np.allclose(C0, C1)
 
+
+def test_lpc_multi(y_multi):
+    y, sr = y_multi
+
+    Lall = librosa.lpc(y, 6)
+    L0 = librosa.lpc(y[0], 6)
+    L1 = librosa.lpc(y[1], 6)
+
+    assert np.allclose(Lall[0], L0)
+    assert np.allclose(Lall[1], L1)
+    assert not np.allclose(L0, L1)
