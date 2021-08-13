@@ -658,3 +658,17 @@ def test_lpc_multi(y_multi):
     assert np.allclose(Lall[0], L0)
     assert np.allclose(Lall[1], L1)
     assert not np.allclose(L0, L1)
+
+
+def test_yin_multi(y_multi):
+    y, sr = y_multi
+
+    Pall = librosa.yin(y, 30, 300)
+    P0 = librosa.yin(y[0], 30, 300)
+    P1 = librosa.yin(y[1], 30, 300)
+
+    assert np.allclose(Pall[0], P0)
+    assert np.allclose(Pall[1], P1)
+
+    assert not np.allclose(P0, P1)
+
