@@ -149,7 +149,7 @@ def harmonic(y, **kwargs):
     stft_harm = decompose.hpss(stft, **kwargs)[0]
 
     # Invert the STFTs
-    y_harm = util.fix_length(core.istft(stft_harm, dtype=y.dtype), len(y))
+    y_harm = util.fix_length(core.istft(stft_harm, dtype=y.dtype), y.shape[-1])
 
     return y_harm
 
@@ -194,7 +194,7 @@ def percussive(y, **kwargs):
     stft_perc = decompose.hpss(stft, **kwargs)[1]
 
     # Invert the STFT
-    y_perc = util.fix_length(core.istft(stft_perc, dtype=y.dtype), len(y))
+    y_perc = util.fix_length(core.istft(stft_perc, dtype=y.dtype), y.shape[-1])
 
     return y_perc
 
