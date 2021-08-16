@@ -324,7 +324,7 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type="kaiser_best", **kw
     )
 
     # Crop to the same dimension as the input
-    return util.fix_length(y_shift, len(y))
+    return util.fix_length(y_shift, y.shape[-1])
 
 
 def remix(y, intervals, align_zeros=True):
