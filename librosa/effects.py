@@ -103,8 +103,8 @@ def hpss(y, **kwargs):
     stft_harm, stft_perc = decompose.hpss(stft, **kwargs)
 
     # Invert the STFTs.  Adjust length to match the input.
-    y_harm = util.fix_length(core.istft(stft_harm, dtype=y.dtype), len(y))
-    y_perc = util.fix_length(core.istft(stft_perc, dtype=y.dtype), len(y))
+    y_harm = util.fix_length(core.istft(stft_harm, dtype=y.dtype), y.shape[-1])
+    y_perc = util.fix_length(core.istft(stft_perc, dtype=y.dtype), y.shape[-1])
 
     return y_harm, y_perc
 

@@ -151,6 +151,24 @@ def test_hpss(ysr):
 
     assert np.percentile(rms_orig, 0.01) > np.percentile(rms_res, 0.99)
 
+def test_hpss_multi(y_multi):
+    y, sr = y_multi
+
+    # compare each channel
+    CH0, CP0 = librosa.effects.hpss(y[0])
+    CH1, CP1 = librosa.effects.hpss(y[1])
+    CHall,CPall = librosa.effects.hpss(y)
+
+    # Check each channel
+    assert np.allclose(CH0, CHall[0])
+    assert np.allclose(CP0, CPall[0])
+    assert np.allclose(CH1, CHall[1])
+    assert np.allclose(CP1, CPall[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(CHall[0], CHall[1])
+    assert not np.allclose(CPall[0], CPall[1])
+
 
 def test_percussive(ysr):
 
