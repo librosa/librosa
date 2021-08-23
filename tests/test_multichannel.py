@@ -28,10 +28,17 @@ def y_multi(request):
     return librosa.load(os.path.join("tests", "data", infile), sr=None, mono=False)
 
 
-@pytest.fixture
+
+@pytest.fixture(scope="module")
 def s_multi(y_multi):
     y, sr = y_multi
     return np.abs(librosa.stft(y)), sr
+
+
+@pytest.fixture(scope="module")
+def tfr_multi(y_multi):
+    y, sr = y_multi
+    return librosa.reassigned_spectrogram(y, fill_nan=True)
 
 
 def test_stft_multi(y_multi):
@@ -308,6 +315,37 @@ def test_spectral_flatness_multi(s_multi):
     assert not np.allclose(Call[0], Call[1])
 
 
+def test_poly_multi_static(s_multi):
+    mags, sr = s_multi
+
+    Pall = librosa.feature.poly_features(S=mags, order=5)
+
+    # Compute per channel
+    P0 = librosa.feature.poly_features(S=mags[0], order=5)
+    P1 = librosa.feature.poly_features(S=mags[1], order=5)
+
+    # Check results
+    assert np.allclose(Pall[0], P0)
+    assert np.allclose(Pall[1], P1)
+    assert not np.allclose(P0, P1)
+
+
+def test_poly_multi_varying(tfr_multi):
+
+    # Get some time-varying frequencies
+    times, freqs, mags = tfr_multi
+    Pall = librosa.feature.poly_features(S=mags, freq=freqs, order=5)
+
+    # Compute per channel
+    P0 = librosa.feature.poly_features(S=mags[0], freq=freqs[0], order=5)
+    P1 = librosa.feature.poly_features(S=mags[1], freq=freqs[1], order=5)
+
+    # Check results
+    assert np.allclose(Pall[0], P0)
+    assert np.allclose(Pall[1], P1)
+    assert not np.allclose(P0, P1)
+
+
 def test_rms_multi(s_multi):
     S, sr = s_multi
 
@@ -397,8 +435,8 @@ def test_tonnetz_multi(y_multi):
     Call = librosa.feature.tonnetz(y=y, tuning=0)
 
     # Check each channel
-    assert np.allclose(C0, Call[0])
-    assert np.allclose(C1, Call[1])
+    assert np.allclose(C0, Call[0], atol=1e-7)
+    assert np.allclose(C1, Call[1], atol=1e-7)
 
     # Verify that they're not all the same
     assert not np.allclose(Call[0], Call[1])
@@ -498,3 +536,169 @@ def test_stack_memory_multi(delay):
 
     # Verify that they're not all the same
     assert not np.allclose(Call[0], Call[1])
+
+
+def test_interp_harmonics_multi_static(s_multi):
+    S, sr = s_multi
+
+    freqs = librosa.fft_frequencies(sr=sr)
+    Hall = librosa.interp_harmonics(S, freqs, [0.5, 1, 2])
+    H0 = librosa.interp_harmonics(S[0], freqs, [0.5, 1, 2])
+    H1 = librosa.interp_harmonics(S[1], freqs, [0.5, 1, 2])
+
+    assert np.allclose(Hall[0], H0)
+    assert np.allclose(Hall[1], H1)
+
+    assert not np.allclose(H0, H1)
+
+
+def test_interp_harmonics_multi_vary(tfr_multi):
+    times, freqs, mags = tfr_multi
+
+    # Force slinear mode here to deal with non-unique frequencies
+    Hall = librosa.interp_harmonics(mags, freqs, [0.5, 1, 2], kind="slinear")
+    H0 = librosa.interp_harmonics(mags[0], freqs[0], [0.5, 1, 2], kind="slinear")
+    H1 = librosa.interp_harmonics(mags[1], freqs[1], [0.5, 1, 2], kind="slinear")
+
+    assert np.allclose(Hall[0], H0)
+    assert np.allclose(Hall[1], H1)
+
+    assert not np.allclose(H0, H1)
+
+
+@pytest.mark.parametrize("filter_peaks", [False, True])
+def test_salience_multi_static(s_multi, filter_peaks):
+    S, sr = s_multi
+
+    freqs = librosa.fft_frequencies(sr=sr)
+
+    sal_all = librosa.salience(
+        S,
+        freqs,
+        [0.5, 1, 2, 3],
+        kind="slinear",
+        filter_peaks=filter_peaks,
+        fill_value=0,
+    )
+    sal_0 = librosa.salience(
+        S[0],
+        freqs,
+        [0.5, 1, 2, 3],
+        kind="slinear",
+        filter_peaks=filter_peaks,
+        fill_value=0,
+    )
+    sal_1 = librosa.salience(
+        S[1],
+        freqs,
+        [0.5, 1, 2, 3],
+        kind="slinear",
+        filter_peaks=filter_peaks,
+        fill_value=0,
+    )
+
+    assert np.allclose(sal_all[0], sal_0)
+    assert np.allclose(sal_all[1], sal_1)
+    assert not np.allclose(sal_0, sal_1)
+
+
+@pytest.mark.parametrize("filter_peaks", [False, True])
+def test_salience_multi_dynamic(tfr_multi, filter_peaks):
+    times, freqs, S = tfr_multi
+
+    sal_all = librosa.salience(
+        S,
+        freqs,
+        [0.5, 1, 2, 3],
+        kind="slinear",
+        filter_peaks=filter_peaks,
+        fill_value=0,
+    )
+    sal_0 = librosa.salience(
+        S[0],
+        freqs[0],
+        [0.5, 1, 2, 3],
+        kind="slinear",
+        filter_peaks=filter_peaks,
+        fill_value=0,
+    )
+    sal_1 = librosa.salience(
+        S[1],
+        freqs[1],
+        [0.5, 1, 2, 3],
+        kind="slinear",
+        filter_peaks=filter_peaks,
+        fill_value=0,
+    )
+
+    assert np.allclose(sal_all[0], sal_0)
+    assert np.allclose(sal_all[1], sal_1)
+    assert not np.allclose(sal_0, sal_1)
+
+
+@pytest.mark.parametrize("center", [False, True])
+def test_iirt_multi(y_multi, center):
+    y, sr = y_multi
+    Call = librosa.iirt(y=y, sr=sr, center=center)
+    C0 = librosa.iirt(y=y[0], sr=sr, center=center)
+    C1 = librosa.iirt(y=y[1], sr=sr, center=center)
+
+    assert np.allclose(Call[0], C0)
+    assert np.allclose(Call[1], C1)
+
+    assert not np.allclose(C0, C1)
+
+
+def test_lpc_multi(y_multi):
+    y, sr = y_multi
+
+    Lall = librosa.lpc(y, 6)
+    L0 = librosa.lpc(y[0], 6)
+    L1 = librosa.lpc(y[1], 6)
+
+    assert np.allclose(Lall[0], L0)
+    assert np.allclose(Lall[1], L1)
+    assert not np.allclose(L0, L1)
+
+
+def test_yin_multi(y_multi):
+    y, sr = y_multi
+
+    Pall = librosa.yin(y, 30, 300)
+    P0 = librosa.yin(y[0], 30, 300)
+    P1 = librosa.yin(y[1], 30, 300)
+
+    assert np.allclose(Pall[0], P0)
+    assert np.allclose(Pall[1], P1)
+
+    assert not np.allclose(P0, P1)
+
+
+@pytest.mark.parametrize('ref', [None, 1.0])
+def test_piptrack_multi(s_multi, ref):
+    S, sr = s_multi
+
+    pall, mall = librosa.piptrack(S=S, sr=sr, ref=ref)
+    p0, m0 = librosa.piptrack(S=S[0], sr=sr, ref=ref)
+    p1, m1 = librosa.piptrack(S=S[1], sr=sr, ref=ref)
+
+    assert np.allclose(pall[0], p0)
+    assert np.allclose(pall[1], p1)
+    assert np.allclose(mall[0], m0)
+    assert np.allclose(mall[1], m1)
+    assert not np.allclose(p0, p1)
+    assert not np.allclose(m0, m1)
+
+
+def test_click_multi():
+
+    click = np.ones((3, 100))
+
+    yout = librosa.clicks(times=[0, 1, 2], sr=1000, click=click)
+
+    print(yout.shape)
+    assert yout.shape[0] == click.shape[0]
+
+    assert np.allclose(yout[..., :100], click)
+    assert np.allclose(yout[..., 1000:1100], click)
+    assert np.allclose(yout[..., 2000:2100], click)

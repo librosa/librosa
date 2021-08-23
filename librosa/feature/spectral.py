@@ -1112,18 +1112,28 @@ def poly_features(
     if freq is None:
         freq = fft_frequencies(sr=sr, n_fft=n_fft)
 
-    # If frequencies are constant over frames, then we only need to fit once
     if freq.ndim == 1:
-        coefficients = np.polyfit(freq, S, order)
+        # If frequencies are constant over frames, then we only need to fit once
+        fitter = np.vectorize(lambda y: np.polyfit(freq, y, order), signature='(f,t)->(d,t)')
+        coefficients = fitter(S)
     else:
-        # Else, fit each frame independently and stack the results
-        coefficients = np.concatenate(
-            [[np.polyfit(freq[:, i], S[:, i], order)] for i in range(S.shape[1])],
-            axis=-2,
-        ).T
+
+        # Otherwise, we have variable frequencies, and need to fit independently
+        fitter = np.vectorize(lambda x, y: np.polyfit(x, y, order), signature='(f),(f)->(d)')
+
+        # We have to do some axis swapping to preserve layout
+        # otherwise, the new dimension gets put at the end instead of the penultimate position
+        coefficients = fitter(freq.swapaxes(-2, -1), S.swapaxes(-2, -1)).swapaxes(-2, -1)
 
     return coefficients
 
+
+  
+  
+  
+  
+  
+  
 
 def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True, **kwargs):
     """Compute the zero-crossing rate of an audio time series.
