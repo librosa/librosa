@@ -469,7 +469,6 @@ def test_melspectrogram_multi_time(y_multi):
     assert not np.allclose(Call[0], Call[1])
 
 
-
 @pytest.mark.parametrize("rate", [0.5, 2])
 def test_phase_vocoder(y_multi, rate):
     y, sr = y_multi
