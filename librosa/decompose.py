@@ -331,12 +331,19 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
             "Margins must be >= 1.0. " "A typical range is between 1 and 10."
         )
 
+    # shape for kernels
+    harm_shape = [1 for _ in S.shape]
+    harm_shape[-1] = win_harm
+
+    perc_shape = [1 for _ in S.shape]
+    perc_shape[-2] = win_perc
+
     # Compute median filters. Pre-allocation here preserves memory layout.
     harm = np.empty_like(S)
-    harm[:] = median_filter(S, size=(1, win_harm), mode="reflect")
+    harm[:] = median_filter(S, size=harm_shape, mode="reflect")
 
     perc = np.empty_like(S)
-    perc[:] = median_filter(S, size=(win_perc, 1), mode="reflect")
+    perc[:] = median_filter(S, size=perc_shape, mode="reflect")
 
     split_zeros = margin_harm == 1 and margin_perc == 1
 
