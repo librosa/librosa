@@ -104,7 +104,7 @@ def hpss(y, **kwargs):
 
     # Invert the STFTs.  Adjust length to match the input.
     y_harm = util.fix_length(core.istft(stft_harm, dtype=y.dtype), y.shape[-1])
-    y_perc = util.fix_length(core.istft(stft_perc, dtype=y.dtype), y.shape[-1]
+    y_perc = util.fix_length(core.istft(stft_perc, dtype=y.dtype), y.shape[-1])
 
     return y_harm, y_perc
 
@@ -651,7 +651,7 @@ def preemphasis(y, coef=0.97, zi=None, return_zf=False):
 
     if zi is None:
         # Initialize the filter to implement linear extrapolation
-        zi = 2 * y[..., 0] - y[..., 1]
+        zi = 2 * y[..., 0:1] - y[..., 1:2]
 
     zi = np.atleast_1d(zi)
 

@@ -58,9 +58,9 @@ def test_time_stretch_multi(y_multi):
     y, sr = y_multi
 
     # compare each channel
-    C0 = librosa.effects.time_stretch(y[0],1)
-    C1 = librosa.effects.time_stretch(y[1],1)
-    Call = librosa.effects.time_stretch(y,1)
+    C0 = librosa.effects.time_stretch(y[0],1.1)
+    C1 = librosa.effects.time_stretch(y[1],1.1)
+    Call = librosa.effects.time_stretch(y,1.1)
 
     # Check each channel
     assert np.allclose(C0, Call[0])
@@ -98,9 +98,9 @@ def test_pitch_shift_multi(y_multi):
     y, sr = y_multi
 
     # compare each channel
-    C0 = librosa.effects.time_stretch(y[0], 1)
-    C1 = librosa.effects.time_stretch(y[1], 1)
-    Call = librosa.effects.time_stretch(y, 1)
+    C0 = librosa.effects.pitch_shift(y[0], sr, 1)
+    C1 = librosa.effects.pitch_shift(y[1], sr, 1)
+    Call = librosa.effects.pitch_shift(y, sr, 1)
 
     # Check each channel
     assert np.allclose(C0, Call[0])
@@ -339,6 +339,24 @@ def test_preemphasis_continue(dtype):
     assert np.allclose(y_all, np.concatenate([y1, y2]))
     assert np.allclose(zf2, zf_all)
     assert x.dtype == y_all.dtype
+
+def test_preemphasis_multi(y_multi):
+    y, sr = y_multi
+
+    # compare each channel
+    C0,zf0 = librosa.effects.preemphasis(y[0],return_zf=True)
+    C1,zf1 = librosa.effects.preemphasis(y[1],return_zf=True)
+    Call,zf = librosa.effects.preemphasis(y,return_zf=True)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+    assert np.allclose(zf0, zf[0])
+    assert np.allclose(zf1, zf[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+    assert not np.allclose(zf[0],zf[1])
 
 
 @pytest.mark.parametrize("coef", [0.5, 0.99])
