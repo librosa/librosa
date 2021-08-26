@@ -103,8 +103,8 @@ def hpss(y, **kwargs):
     stft_harm, stft_perc = decompose.hpss(stft, **kwargs)
 
     # Invert the STFTs.  Adjust length to match the input.
-    y_harm = util.fix_length(core.istft(stft_harm, dtype=y.dtype), len(y))
-    y_perc = util.fix_length(core.istft(stft_perc, dtype=y.dtype), len(y))
+    y_harm = util.fix_length(core.istft(stft_harm, dtype=y.dtype), y.shape[-1])
+    y_perc = util.fix_length(core.istft(stft_perc, dtype=y.dtype), y.shape[-1]
 
     return y_harm, y_perc
 
@@ -149,7 +149,7 @@ def harmonic(y, **kwargs):
     stft_harm = decompose.hpss(stft, **kwargs)[0]
 
     # Invert the STFTs
-    y_harm = util.fix_length(core.istft(stft_harm, dtype=y.dtype), len(y))
+    y_harm = util.fix_length(core.istft(stft_harm, dtype=y.dtype), y.shape[-1])
 
     return y_harm
 
@@ -194,7 +194,7 @@ def percussive(y, **kwargs):
     stft_perc = decompose.hpss(stft, **kwargs)[1]
 
     # Invert the STFT
-    y_perc = util.fix_length(core.istft(stft_perc, dtype=y.dtype), len(y))
+    y_perc = util.fix_length(core.istft(stft_perc, dtype=y.dtype), y.shape[-1])
 
     return y_perc
 
@@ -249,7 +249,7 @@ def time_stretch(y, rate, **kwargs):
     stft_stretch = core.phase_vocoder(stft, rate)
 
     # Predict the length of y_stretch
-    len_stretch = int(round(len(y) / rate))
+    len_stretch = int(round(y.shape[-1] / rate))
 
     # Invert the STFT
     y_stretch = core.istft(stft_stretch, dtype=y.dtype, length=len_stretch, **kwargs)
@@ -324,7 +324,7 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type="kaiser_best", **kw
     )
 
     # Crop to the same dimension as the input
-    return util.fix_length(y_shift, len(y))
+    return util.fix_length(y_shift, y.shape[-1])
 
 
 def remix(y, intervals, align_zeros=True):

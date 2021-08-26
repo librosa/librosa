@@ -19,6 +19,11 @@ import librosa
 
 __EXAMPLE_FILE = os.path.join("tests", "data", "test1_22050.wav")
 
+@pytest.fixture(scope="module", params=["test1_44100.wav"])
+def y_multi(request):
+    infile = request.param
+    return librosa.load(os.path.join("tests", "data", infile), sr=None, mono=False)
+
 
 @pytest.fixture(scope="module", params=[22050, 44100])
 def ysr(request):
@@ -49,6 +54,21 @@ def test_time_stretch(ysr, rate, ctx):
         # We don't have to be too precise here, since this goes through an STFT
         assert np.allclose(orig_duration, rate * new_duration, rtol=1e-2, atol=1e-3)
 
+def test_time_stretch_multi(y_multi):
+    y, sr = y_multi
+
+    # compare each channel
+    C0 = librosa.effects.time_stretch(y[0],1)
+    C1 = librosa.effects.time_stretch(y[1],1)
+    Call = librosa.effects.time_stretch(y,1)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
+
 
 @pytest.mark.parametrize("n_steps", [-1.5, 1.5, 5])
 @pytest.mark.parametrize(
@@ -73,6 +93,21 @@ def test_pitch_shift(ysr, n_steps, bins_per_octave, ctx):
 
         # We don't have to be too precise here, since this goes through an STFT
         assert orig_duration == new_duration
+
+def test_pitch_shift_multi(y_multi):
+    y, sr = y_multi
+
+    # compare each channel
+    C0 = librosa.effects.time_stretch(y[0], 1)
+    C1 = librosa.effects.time_stretch(y[1], 1)
+    Call = librosa.effects.time_stretch(y, 1)
+
+    # Check each channel
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(Call[0], Call[1])
 
 
 @pytest.mark.parametrize("align_zeros", [False, True])
@@ -115,6 +150,24 @@ def test_hpss(ysr):
     rms_res = librosa.feature.rms(y=y_residual)
 
     assert np.percentile(rms_orig, 0.01) > np.percentile(rms_res, 0.99)
+
+def test_hpss_multi(y_multi):
+    y, sr = y_multi
+
+    # compare each channel
+    CH0, CP0 = librosa.effects.hpss(y[0])
+    CH1, CP1 = librosa.effects.hpss(y[1])
+    CHall,CPall = librosa.effects.hpss(y)
+
+    # Check each channel
+    assert np.allclose(CH0, CHall[0])
+    assert np.allclose(CP0, CPall[0])
+    assert np.allclose(CH1, CHall[1])
+    assert np.allclose(CP1, CPall[1])
+
+    # Verify that they're not all the same
+    assert not np.allclose(CHall[0], CHall[1])
+    assert not np.allclose(CPall[0], CPall[1])
 
 
 def test_percussive(ysr):
