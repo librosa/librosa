@@ -159,6 +159,52 @@ def test_fourier_tempogram(y_multi):
     assert not np.allclose(t0, t1, atol=1e-5, rtol=1e-5)
 
 
+def test_tempo_multi(y_multi):
+
+    sr = 22050
+    tempi = [78, 128]
+
+    y = np.zeros((2, 20*sr))
+
+    delay = [librosa.time_to_samples(60 / tempo, sr=sr).item() for tempo in tempi]
+    y[0,::delay[0]] = 1
+    y[1,::delay[1]] = 1
+
+    t = librosa.beat.tempo(
+        y=y,
+        sr=sr,
+        hop_length=512,
+        ac_size=4,
+        aggregate=np.mean,
+        prior=None
+    )
+
+    t0 = librosa.beat.tempo(
+        y=y[0],
+        sr=sr,
+        hop_length=512,
+        ac_size=4,
+        aggregate=np.mean,
+        prior=None
+    )
+
+    t1 = librosa.beat.tempo(
+        y=y[1],
+        sr=sr,
+        hop_length=512,
+        ac_size=4,
+        aggregate=np.mean,
+        prior=None
+    )
+
+    # Check each channel
+    assert np.allclose(t[0], t0)
+    assert np.allclose(t[1], t1)
+
+    # Check that they're not both the same
+    assert not np.allclose(t0, t1)
+    print(t,t0,t1)
+
 def test_istft_multi(y_multi):
 
     # Verify that a stereo ISTFT matches on each channel

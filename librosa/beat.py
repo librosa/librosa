@@ -356,10 +356,10 @@ def tempo(
 
     # Eventually, we want this to work for time-varying tempo
     if aggregate is not None:
-        tg = aggregate(tg, axis=1, keepdims=True)
+        tg = aggregate(tg, axis=-1, keepdims=True)
 
     # Get the BPM values for each bin, skipping the 0-lag bin
-    bpms = core.tempo_frequencies(tg.shape[0], hop_length=hop_length, sr=sr)
+    bpms = core.tempo_frequencies(tg.shape[-2], hop_length=hop_length, sr=sr)
 
     # Weight the autocorrelation by a log-normal distribution
     if prior is None:
@@ -374,7 +374,7 @@ def tempo(
 
     # Get the maximum, weighted by the prior
     # Using log1p here for numerical stability
-    best_period = np.argmax(np.log1p(1e6 * tg) + logprior[:, np.newaxis], axis=0)
+    best_period = np.argmax(np.log1p(1e6 * tg) + logprior[:, np.newaxis], axis=-2)
 
     return bpms[best_period]
 
