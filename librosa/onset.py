@@ -345,7 +345,7 @@ def onset_strength(
         **kwargs,
     )
 
-    return np.squeeze(odf_all)
+    return odf_all[..., 0, :]
 
 
 def onset_backtrack(events, energy):
@@ -611,11 +611,9 @@ def onset_strength_multi(
         pad_width += n_fft // (2 * hop_length)
 
     onset_env_ndims = onset_env.ndim
-    onset_env = np.pad(onset_env, 
-                    [[0,0] if i != (onset_env_ndims-1) else [int(pad_width),0] 
-                        for i in range(onset_env_ndims)], 
-                    mode="constant"
-                )
+    padding = [(0,0) for _ in onset_env.shape]
+    padding[-1] = (int(pad_width), 0)
+    onset_env = np.pad(onset_env, padding, mode='constant')
 
     # remove the DC component
     if detrend:
