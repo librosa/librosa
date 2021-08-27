@@ -220,12 +220,6 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
     if n_steps < 1:
         raise ParameterError("n_steps must be a positive integer")
 
-    if data.ndim > 2:
-        raise ParameterError(
-            "Input must be at most 2-dimensional. "
-            "Given data.shape={}".format(data.shape)
-        )
-
     if delay == 0:
         raise ParameterError("delay must be a non-zero integer")
 
@@ -242,18 +236,20 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
     if kwargs["mode"] == "constant":
         kwargs.setdefault("constant_values", [0])
 
+    padding = [(0, 0) for _ in range(data.ndim)]
+
     # Pad the end with zeros, which will roll to the front below
     if delay > 0:
-        padding = (int((n_steps - 1) * delay), 0)
+        padding[-1] = (int((n_steps - 1) * delay), 0)
     else:
-        padding = (0, int((n_steps - 1) * -delay))
+        padding[-1] = (0, int((n_steps - 1) * -delay))
 
-    data = np.pad(data, [(0, 0), padding], **kwargs)
+    data = np.pad(data, padding, **kwargs)
 
     # Construct the shape of the target array
     shape = list(data.shape)
-    shape[0] = shape[0] * n_steps
-    shape[1] = t
+    shape[-2] = shape[-2] * n_steps
+    shape[-1] = t
     shape = tuple(shape)
 
     # Construct the output array to match layout and dtype of input
@@ -285,21 +281,21 @@ def __stack(history, data, n_steps, delay):
         Output is stored directly in the history array
     """
     # Dimension of each copy of the data
-    d = data.shape[0]
+    d = data.shape[-2]
 
     # Total number of time-steps to output
-    t = history.shape[1]
+    t = history.shape[-1]
 
     if delay > 0:
         for step in range(n_steps):
             q = n_steps - 1 - step
             # nth block is original shifted left by n*delay steps
-            history[step * d : (step + 1) * d] = data[:, q * delay : q * delay + t]
+            history[...,step * d : (step + 1) * d,:] = data[..., q * delay : q * delay + t]
     else:
         # Handle the last block separately to avoid -t:0 empty slices
-        history[-d:, :] = data[:, -t:]
+        history[...,-d:, :] = data[..., -t:]
 
         for step in range(n_steps - 1):
             # nth block is original shifted right by n*delay steps
             q = n_steps - 1 - step
-            history[step * d : (step + 1) * d] = data[:, -t + q * delay : q * delay]
+            history[...,step * d : (step + 1) * d,:] = data[..., -t + q * delay : q * delay]

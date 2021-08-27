@@ -316,17 +316,19 @@ def piptrack(
     # Do the parabolic interpolation everywhere,
     # then figure out where the peaks are
     # then restrict to the feasible range (fmin:fmax)
-    avg = 0.5 * (S[2:] - S[:-2])
+    avg = 0.5 * (S[..., 2:, :] - S[..., :-2, :])
 
-    shift = 2 * S[1:-1] - S[2:] - S[:-2]
+    shift = 2 * S[..., 1:-1, :] - S[..., 2:, :] - S[..., :-2, :]
 
     # Suppress divide-by-zeros.
     # Points where shift == 0 will never be selected by localmax anyway
     shift = avg / (shift + (np.abs(shift) < util.tiny(shift)))
 
     # Pad back up to the same shape as S
-    avg = np.pad(avg, ([1, 1], [0, 0]), mode="constant")
-    shift = np.pad(shift, ([1, 1], [0, 0]), mode="constant")
+    padding = [(0, 0) for _ in S.shape]
+    padding[-2] = (1, 1)
+    avg = np.pad(avg, padding, mode="constant")
+    shift = np.pad(shift, padding, mode="constant")
 
     dskew = 0.5 * avg * shift
 
@@ -335,7 +337,10 @@ def piptrack(
     mags = np.zeros_like(S)
 
     # Clip to the viable frequency range
-    freq_mask = ((fmin <= fft_freqs) & (fft_freqs < fmax)).reshape((-1, 1))
+    freq_mask = ((fmin <= fft_freqs) & (fft_freqs < fmax))
+    shape = [1 for _ in S.shape]
+    shape[-2] = -1
+    freq_mask = freq_mask.reshape(shape)
 
     # Compute the column-wise local max of S after thresholding
     # Find the argmax coordinates
@@ -343,18 +348,17 @@ def piptrack(
         ref = np.max
 
     if callable(ref):
-        ref_value = threshold * ref(S, axis=0)
+        ref_value = threshold * ref(S, axis=-2)
+        # Reinsert the frequency axis here, in case the callable doesn't
+        # support keepdims=True
+        ref_value = np.expand_dims(ref_value, -2)
     else:
         ref_value = np.abs(ref)
 
-    idx = np.argwhere(freq_mask & util.localmax(S * (S > ref_value)))
-
     # Store pitch and magnitude
-    pitches[idx[:, 0], idx[:, 1]] = (
-        (idx[:, 0] + shift[idx[:, 0], idx[:, 1]]) * float(sr) / n_fft
-    )
-
-    mags[idx[:, 0], idx[:, 1]] = S[idx[:, 0], idx[:, 1]] + dskew[idx[:, 0], idx[:, 1]]
+    idx = np.nonzero(freq_mask & util.localmax(S * (S > ref_value), axis=-2))
+    pitches[idx] = (idx[-2] + shift[idx]) * float(sr) / n_fft
+    mags[idx] = S[idx] + dskew[idx]
 
     return pitches, mags
 
@@ -391,24 +395,31 @@ def _cumulative_mean_normalized_difference(
         Cumulative mean normalized difference function for each frame.
     """
     # Autocorrelation.
-    a = np.fft.rfft(y_frames, frame_length, axis=0)
-    b = np.fft.rfft(y_frames[win_length::-1, :], frame_length, axis=0)
-    acf_frames = np.fft.irfft(a * b, frame_length, axis=0)[win_length:]
+    a = np.fft.rfft(y_frames, frame_length, axis=-2)
+    b = np.fft.rfft(y_frames[..., win_length::-1, :], frame_length, axis=-2)
+    acf_frames = np.fft.irfft(a * b, frame_length, axis=-2)[..., win_length:, :]
     acf_frames[np.abs(acf_frames) < 1e-6] = 0
 
     # Energy terms.
-    energy_frames = np.cumsum(y_frames ** 2, axis=0)
-    energy_frames = energy_frames[win_length:, :] - energy_frames[:-win_length, :]
+    energy_frames = np.cumsum(y_frames ** 2, axis=-2)
+    energy_frames = (
+        energy_frames[..., win_length:, :] - energy_frames[..., :-win_length, :]
+    )
     energy_frames[np.abs(energy_frames) < 1e-6] = 0
 
     # Difference function.
-    yin_frames = energy_frames[0, :] + energy_frames - 2 * acf_frames
+    yin_frames = energy_frames[..., :1, :] + energy_frames - 2 * acf_frames
 
     # Cumulative mean normalized difference function.
-    yin_numerator = yin_frames[min_period : max_period + 1, :]
-    tau_range = np.arange(1, max_period + 1)[:, None]
-    cumulative_mean = np.cumsum(yin_frames[1 : max_period + 1, :], axis=0) / tau_range
-    yin_denominator = cumulative_mean[min_period - 1 : max_period, :]
+    yin_numerator = yin_frames[..., min_period : max_period + 1, :]
+    # broadcast this shape to have leading ones
+    tau_shape = [1 for _ in yin_frames.shape]
+    tau_shape[-2] = -1
+    tau_range = np.arange(1, max_period + 1).reshape(tau_shape)
+    cumulative_mean = (
+        np.cumsum(yin_frames[..., 1 : max_period + 1, :], axis=-2) / tau_range
+    )
+    yin_denominator = cumulative_mean[..., min_period - 1 : max_period, :]
     yin_frames = yin_numerator / (yin_denominator + util.tiny(yin_denominator))
     return yin_frames
 
@@ -426,10 +437,15 @@ def _parabolic_interpolation(y_frames):
     parabolic_shifts : np.ndarray [shape=(frame_length, n_frames)]
         position of the parabola optima
     """
+
     parabolic_shifts = np.zeros_like(y_frames)
-    parabola_a = (y_frames[:-2, :] + y_frames[2:, :] - 2 * y_frames[1:-1, :]) / 2
-    parabola_b = (y_frames[2:, :] - y_frames[:-2, :]) / 2
-    parabolic_shifts[1:-1, :] = -parabola_b / (2 * parabola_a + util.tiny(parabola_a))
+    parabola_a = (
+        y_frames[..., :-2, :] + y_frames[..., 2:, :] - 2 * y_frames[..., 1:-1, :]
+    ) / 2
+    parabola_b = (y_frames[..., 2:, :] - y_frames[..., :-2, :]) / 2
+    parabolic_shifts[..., 1:-1, :] = -parabola_b / (
+        2 * parabola_a + util.tiny(parabola_a)
+    )
     parabolic_shifts[np.abs(parabolic_shifts) > 1] = 0
     return parabolic_shifts
 
@@ -547,11 +563,13 @@ def yin(
         hop_length = frame_length // 4
 
     # Check that audio is valid.
-    util.valid_audio(y, mono=True)
+    util.valid_audio(y, mono=False)
 
     # Pad the time series so that frames are centered
     if center:
-        y = np.pad(y, frame_length // 2, mode=pad_mode)
+        padding = [(0, 0) for _ in y.shape]
+        padding[-1] = (frame_length // 2, frame_length // 2)
+        y = np.pad(y, padding, mode=pad_mode)
 
     # Frame audio.
     y_frames = util.frame(y, frame_length=frame_length, hop_length=hop_length)
@@ -569,8 +587,8 @@ def yin(
     parabolic_shifts = _parabolic_interpolation(yin_frames)
 
     # Find local minima.
-    is_trough = util.localmin(yin_frames, axis=0)
-    is_trough[0, :] = yin_frames[0, :] < yin_frames[1, :]
+    is_trough = util.localmin(yin_frames, axis=-2)
+    is_trough[..., 0, :] = yin_frames[..., 0, :] < yin_frames[..., 1, :]
 
     # Find minima below peak threshold.
     is_threshold_trough = np.logical_and(is_trough, yin_frames < trough_threshold)
@@ -579,17 +597,25 @@ def yin(
     # "The solution we propose is to set an absolute threshold and choose the
     # smallest value of tau that gives a minimum of d' deeper than
     # this threshold. If none is found, the global minimum is chosen instead."
-    global_min = np.argmin(yin_frames, axis=0)
-    yin_period = np.argmax(is_threshold_trough, axis=0)
-    no_trough_below_threshold = np.all(~is_threshold_trough, axis=0)
+    target_shape = list(yin_frames.shape)
+    target_shape[-2] = 1
+
+    global_min = np.argmin(yin_frames, axis=-2)
+    yin_period = np.argmax(is_threshold_trough, axis=-2)
+
+    global_min = global_min.reshape(target_shape)
+    yin_period = yin_period.reshape(target_shape)
+
+    no_trough_below_threshold = np.all(~is_threshold_trough, axis=-2, keepdims=True)
     yin_period[no_trough_below_threshold] = global_min[no_trough_below_threshold]
 
     # Refine peak by parabolic interpolation.
+
     yin_period = (
         min_period
         + yin_period
-        + parabolic_shifts[yin_period, range(yin_frames.shape[1])]
-    )
+        + np.take_along_axis(parabolic_shifts, yin_period, axis=-2)
+    )[..., 0, :]
 
     # Convert period to fundamental frequency.
     f0 = sr / yin_period
