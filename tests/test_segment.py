@@ -465,3 +465,15 @@ def test_path_enhance(
 def test_path_enhance_badratio(R_input):
     # We can't have min_ratio > max_ratio
     librosa.segment.path_enhance(R_input, n=5, min_ratio=3, max_ratio=2)
+
+
+def test_path_enhance_multi():
+    R = np.random.randn(2, 100, 100)
+
+    Rs0 = librosa.segment.path_enhance(R[0], n=5)
+    Rs1 = librosa.segment.path_enhance(R[1], n=5)
+    Rs = librosa.segment.path_enhance(R, n=5)
+
+    assert np.allclose(Rs0, Rs[0])
+    assert np.allclose(Rs1, Rs[1])
+    assert not np.allclose(Rs0, Rs1)

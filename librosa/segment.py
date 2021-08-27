@@ -1093,6 +1093,11 @@ def path_enhance(
     ):
         kernel = diagonal_filter(window, n, slope=ratio, zero_mean=zero_mean)
 
+        # Expand leading dimensions to match R
+        # This way, if R has shape, eg, [2, 3, n, n]
+        # the expanded kernel will have shape [1, 1, m, m]
+        kernel = np.expand_dims(kernel, axis=list(np.arange(R.ndim - kernel.ndim)))
+
         if R_smooth is None:
             R_smooth = scipy.ndimage.convolve(R, kernel, **kwargs)
         else:
