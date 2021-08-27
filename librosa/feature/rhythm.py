@@ -150,40 +150,24 @@ def tempogram(
         # Force row-contiguity to avoid framing errors below
         onset_envelope = np.ascontiguousarray(onset_envelope)
 
-    if onset_envelope.ndim > 1:
-        # If we have multi-band input, iterate over rows
-        return np.asarray(
-            [
-                tempogram(
-                    onset_envelope=oe_subband,
-                    hop_length=hop_length,
-                    win_length=win_length,
-                    center=center,
-                    window=window,
-                    norm=norm,
-                )
-                for oe_subband in onset_envelope
-            ]
-        )
-
     # Center the autocorrelation windows
-    n = len(onset_envelope)
+    n = onset_envelope.shape[-1]
 
     if center:
-        onset_envelope = np.pad(
-            onset_envelope, int(win_length // 2), mode="linear_ramp", end_values=[0, 0]
-        )
+        padding = [(0,0) for _ in onset_envelope.shape]
+        padding[-1] = (int(win_length // 2), )*2
+        onset_envelope = np.pad(onset_envelope, padding, mode="linear_ramp", end_values=[0, 0])
 
     # Carve onset envelope into frames
     odf_frame = util.frame(onset_envelope, frame_length=win_length, hop_length=1)
 
     # Truncate to the length of the original signal
     if center:
-        odf_frame = odf_frame[:, :n]
+        odf_frame = odf_frame[..., :n]
 
     # Window, autocorrelate, and normalize
     return util.normalize(
-        autocorrelate(odf_frame * ac_window[:, np.newaxis], axis=0), norm=norm, axis=0
+        autocorrelate(odf_frame * ac_window[:, np.newaxis], axis=-2), norm=norm, axis=-2
     )
 
 

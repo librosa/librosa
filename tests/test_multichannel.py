@@ -106,11 +106,57 @@ def test_onset_strength(y_multi):
     D1 = librosa.onset.onset_strength(S=S[1])
 
     # Check each channel
-    assert np.allclose(D[0], D0) # test in dB units
-    assert np.allclose(D[1], D1) # test in dB units
+    assert np.allclose(D[0], D0)
+    assert np.allclose(D[1], D1)
 
     # Check that they're not both the same
-    assert not np.allclose(D0, D1) # test in dB units
+    assert not np.allclose(D0, D1)
+
+
+def test_tempogram(y_multi):
+
+    # Verify that a stereo tempogram matches on
+    # each channel individually
+    y, sr = y_multi
+    S = librosa.stft(y)
+
+    D = librosa.onset.onset_strength(S=S)
+    t = librosa.feature.tempogram(y=y, sr=sr, onset_envelope=D, hop_length=512)
+
+    D0 = librosa.onset.onset_strength(S=S[0])
+    D1 = librosa.onset.onset_strength(S=S[1])
+    t0 = librosa.feature.tempogram(y=y[0], sr=sr, onset_envelope=D0, hop_length=512)
+    t1 = librosa.feature.tempogram(y=y[1], sr=sr, onset_envelope=D1, hop_length=512)
+
+    # Check each channel
+    assert np.allclose(t[0], t0)
+    assert np.allclose(t[1], t1)
+
+    # Check that they're not both the same
+    assert not np.allclose(t0, t1)
+
+
+def test_fourier_tempogram(y_multi):
+
+    # Verify that a stereo fourier tempogram matches on
+    # each channel individually
+    y, sr = y_multi
+    S = librosa.stft(y)
+
+    D = librosa.onset.onset_strength(S=S)
+    t = librosa.feature.fourier_tempogram(sr=sr, onset_envelope=np.abs(D))
+
+    D0 = librosa.onset.onset_strength(S=S[0])
+    D1 = librosa.onset.onset_strength(S=S[1])
+    t0 = librosa.feature.fourier_tempogram(sr=sr, onset_envelope=np.abs(D0))
+    t1 = librosa.feature.fourier_tempogram(sr=sr, onset_envelope=np.abs(D1))
+
+    # Check each channel
+    assert np.allclose(t[0], t0, atol=1e-5, rtol=1e-5)
+    assert np.allclose(t[1], t1, atol=1e-5, rtol=1e-5)
+
+    # Check that they're not both the same
+    assert not np.allclose(t0, t1, atol=1e-5, rtol=1e-5)
 
 
 def test_istft_multi(y_multi):
