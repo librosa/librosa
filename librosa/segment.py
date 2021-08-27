@@ -170,8 +170,8 @@ def cross_similarity(
     data_ref = np.atleast_2d(data_ref)
     data = np.atleast_2d(data)
 
-    if data_ref.shape[0] != data.shape[0]:
-        raise ParameterError("data_ref and data must have the same first dimension")
+    if not np.allclose(data_ref.shape[:-1], data.shape[:-1]):
+        raise ParameterError("data_ref.shape={} and data.shape={} do not match on leading dimension(s)".format(data_ref.shape, data.shape))
 
     # swap data axes so the feature axis is last
     data_ref = np.swapaxes(data_ref, -1, 0)

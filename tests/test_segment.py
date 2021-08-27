@@ -120,6 +120,21 @@ def test_cross_similarity_fail_mismatch():
     librosa.segment.cross_similarity(D1, D2)
 
 
+def test_cross_similarity_multi():
+    srand()
+    X1 = np.random.randn(2, 10, 100)
+    X2 = np.random.randn(2, 10, 50)
+
+    R = librosa.segment.cross_similarity(X1, X2, mode='affinity')
+    # This should give the same output as if we stacked out the leading channel
+
+    X1f = np.concatenate([X1[0], X1[1]], axis=0)
+    X2f = np.concatenate([X2[0], X2[1]], axis=0)
+    Rf = librosa.segment.cross_similarity(X1f, X2f, mode='affinity')
+
+    assert np.allclose(R, Rf)
+
+
 @pytest.mark.parametrize("n", [20, 250])
 @pytest.mark.parametrize("k", [None, 5])
 @pytest.mark.parametrize("sym", [False, True])
@@ -236,6 +251,19 @@ def test_recurrence_affinity(metric, bandwidth, self):
         assert np.allclose(-logvals, distance[i, j] * np.nanmax(ratio))
     else:
         assert np.allclose(-logvals, distance[i, j] * bandwidth)
+
+
+def test_recurrence_multi():
+    srand()
+    X = np.random.randn(2, 10, 100)
+
+    R = librosa.segment.recurrence_matrix(X, mode='affinity')
+    # This should give the same output as if we stacked out the leading channel
+
+    Xf = np.concatenate([X[0], X[1]], axis=0)
+    Rf = librosa.segment.recurrence_matrix(Xf, mode='affinity')
+
+    assert np.allclose(R, Rf)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -468,6 +496,8 @@ def test_path_enhance_badratio(R_input):
 
 
 def test_path_enhance_multi():
+    srand()
+
     R = np.random.randn(2, 100, 100)
 
     Rs0 = librosa.segment.path_enhance(R[0], n=5)
