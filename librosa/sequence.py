@@ -223,8 +223,17 @@ def dtw(
         X = np.atleast_2d(X)
         Y = np.atleast_2d(Y)
 
+        # Perform some shape-squashing here
+        # Put the time axes around front
+        X = np.swapaxes(X, -1, 0)
+        Y = np.swapaxes(Y, -1, 0)
+
+        # Flatten the remaining dimensions
+        X = X.reshape((X.shape[0], -1))
+        Y = Y.reshape((Y.shape[0], -1))
+
         try:
-            C = cdist(X.T, Y.T, metric=metric)
+            C = cdist(X, Y, metric=metric)
         except ValueError as exc:
             raise ParameterError(
                 "scipy.spatial.distance.cdist returned an error.\n"
@@ -235,7 +244,7 @@ def dtw(
 
         # for subsequence matching:
         # if N > M, Y can be a subsequence of X
-        if subseq and (X.shape[1] > Y.shape[1]):
+        if subseq and (X.shape[0] > Y.shape[0]):
             C = C.T
             c_is_transposed = True
 
@@ -247,7 +256,7 @@ def dtw(
         C.shape[0] > C.shape[1]
     ):
         raise ParameterError(
-            "For diagonal matching: Y.shape[1] >= X.shape[1] "
+            "For diagonal matching: Y.shape[-1] >= X.shape[-11] "
             "(C.shape[1] >= C.shape[0])"
         )
 
@@ -319,7 +328,7 @@ def dtw(
 
         # since we transposed in the beginning, we have to adjust the index pairs back
         if subseq and (
-            (X is not None and Y is not None and X.shape[1] > Y.shape[1])
+            (X is not None and Y is not None and X.shape[0] > Y.shape[0])
             or c_is_transposed
             or C.shape[0] > C.shape[1]
         ):

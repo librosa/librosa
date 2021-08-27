@@ -308,3 +308,21 @@ def test_dtw_nan_fail():
 def test_dtw_negative_steps(steps):
     C = np.ones((10, 10))
     librosa.sequence.dtw(C=C, step_sizes_sigma=steps)
+
+
+def test_dtw_multi():
+
+    srand()
+    X = np.random.randn(2, 5, 10)
+    Y = np.random.randn(2, 5, 20)
+
+    D, wp, steps = librosa.sequence.dtw(X=X, Y=Y, backtrack=True, return_steps=True)
+
+    # Should give identical results to calling with concatenated inputs
+    Xf = np.concatenate([X[0], X[1]], axis=0)
+    Yf = np.concatenate([Y[0], Y[1]], axis=0)
+    Df, wpf, stepsf = librosa.sequence.dtw(X=Xf, Y=Yf, backtrack=True, return_steps=True)
+
+    assert np.allclose(D, Df)
+    assert np.allclose(wp, wpf)
+    assert np.allclose(steps, stepsf)
