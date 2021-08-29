@@ -245,7 +245,6 @@ def stft(
 
     if dtype is None:
         dtype = util.dtype_r2c(y.dtype)
-        print(dtype)
 
     # Pre-allocate the STFT matrix
     shape = list(y_frames.shape)

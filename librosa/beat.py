@@ -371,12 +371,14 @@ def tempo(
     if max_tempo is not None:
         max_idx = np.argmax(bpms < max_tempo)
         logprior[:max_idx] = -np.inf
+    # explicit axis expansion
+    logprior = np.expand_dims(logprior, axis=(-1, *range(tg.ndim-2)))
 
     # Get the maximum, weighted by the prior
     # Using log1p here for numerical stability
-    best_period = np.argmax(np.log1p(1e6 * tg) + logprior[:, np.newaxis], axis=-2)
+    best_period = np.argmax(np.log1p(1e6 * tg) + logprior, axis=-2)
 
-    return bpms[best_period]
+    return np.take(bpms, best_period)
 
 
 def plp(

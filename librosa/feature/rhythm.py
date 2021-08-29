@@ -139,6 +139,7 @@ def tempogram(
         raise ParameterError("win_length must be a positive integer")
 
     ac_window = get_window(window, win_length, fftbins=True)
+    ac_window = ac_window.reshape((-1,1)) # explicit broadcast
 
     if onset_envelope is None:
         if y is None:
@@ -167,7 +168,7 @@ def tempogram(
 
     # Window, autocorrelate, and normalize
     return util.normalize(
-        autocorrelate(odf_frame * ac_window[:, np.newaxis], axis=-2), norm=norm, axis=-2
+        autocorrelate(odf_frame * ac_window, axis=-2), norm=norm, axis=-2
     )
 
 
