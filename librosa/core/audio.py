@@ -719,7 +719,8 @@ def get_duration(
         y = np.asfortranarray(y)
 
         # Validate the audio buffer.  Stereo is okay here.
-        util.valid_audio(y, mono=False)
+        #Audio validation is revoked to enable int16 and other dtypes.
+        #util.valid_audio(y, mono=False)
         if y.ndim == 1:
             n_samples = len(y)
         else:
