@@ -715,10 +715,6 @@ def get_duration(
             n_samples = n_samples - 2 * int(n_fft // 2)
 
     else:
-        # Validate the audio buffer.  Stereo is okay here.
-        # FIXME: do we even need to validate?
-        util.valid_audio(y, mono=False)
-
         n_samples = y.shape[-1]
 
     return float(n_samples) / sr
