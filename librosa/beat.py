@@ -372,7 +372,9 @@ def tempo(
         max_idx = np.argmax(bpms < max_tempo)
         logprior[:max_idx] = -np.inf
     # explicit axis expansion
-    logprior = np.expand_dims(logprior, axis=(-1, *range(tg.ndim-2)))
+    shape = [1 for _ in tg.shape]
+    shape[-2] = len(logprior)
+    logprior = logprior.reshape(shape)
 
     # Get the maximum, weighted by the prior
     # Using log1p here for numerical stability
