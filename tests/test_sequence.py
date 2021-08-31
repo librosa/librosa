@@ -41,6 +41,48 @@ def test_viterbi_example():
     assert np.array_equal(path, path2)
 
 
+def test_viterbi_multichannel():
+    # Example from https://en.wikipedia.org/wiki/Viterbi_algorithm#Example
+
+    # States: 0 = healthy, 1 = fever
+    p_init = np.asarray([0.6, 0.4])
+
+    # state 0 = hi, state 1 = low
+    transition = np.asarray([[0.7, 0.3], [0.4, 0.6]])
+
+    # emission likelihoods
+    emit_p = [
+        dict(normal=0.5, cold=0.4, dizzy=0.1),
+        dict(normal=0.1, cold=0.3, dizzy=0.6),
+    ]
+
+    obs = ["normal", "cold", "dizzy"]
+
+    prob = np.asarray([np.asarray([ep[o] for o in obs]) for ep in emit_p])
+
+    # Make a 3-channel stack
+    prob_mc = np.stack([prob, 1-prob, prob[:, ::-1]])
+    path, logp = librosa.sequence.viterbi(prob_mc, transition, p_init, return_logp=True)
+
+    # Check the second execution path
+    path2 = librosa.sequence.viterbi(prob_mc, transition, p_init, return_logp=False)
+    assert np.array_equal(path, path2)
+
+    # Check each individual path
+    path0, logp0 = librosa.sequence.viterbi(prob_mc[0], transition, p_init, return_logp=True)
+    assert np.allclose(path0, path[0])
+    assert np.allclose(logp0, logp[0])
+
+    path1, logp1 = librosa.sequence.viterbi(prob_mc[1], transition, p_init, return_logp=True)
+    assert np.allclose(path1, path[1])
+    assert np.allclose(logp1, logp[1])
+
+    path2, logp2 = librosa.sequence.viterbi(prob_mc[2], transition, p_init, return_logp=True)
+    assert np.allclose(path2, path[2])
+    assert np.allclose(logp2, logp[2])
+
+
+
 def test_viterbi_init():
     # Example from https://en.wikipedia.org/wiki/Viterbi_algorithm#Example
 
@@ -147,6 +189,54 @@ def test_viterbi_discriminative_example():
         prob_d, transition, p_state=p_state_marginal, p_init=p_init, return_logp=False
     )
     assert np.array_equal(path, path2)
+
+
+def test_viterbi_discriminative_multi():
+    # A pre-baked example with coin tosses
+
+    transition = np.asarray([[0.75, 0.25], [0.25, 0.75]])
+
+    # Joint XY model
+    p_joint = np.asarray([[0.25, 0.25], [0.1, 0.4]])
+
+    # marginals
+    p_obs_marginal = p_joint.sum(axis=0)
+    p_state_marginal = p_joint.sum(axis=1)
+
+    p_init = p_state_marginal
+
+    # Make the Y|X distribution
+    p_state_given_obs = (p_joint / p_obs_marginal).T
+
+    # Let's make a test observation sequence
+    seq = np.asarray([1, 1, 0, 1, 1, 1, 0, 0])
+
+    # Then our conditional probability table can be constructed directly as
+    prob_d = np.asarray([p_state_given_obs[i] for i in seq]).T
+
+    # Make a three-channel stack
+    prob_mc = np.stack([prob_d, 1-prob_d, prob_d[:, ::-1]])
+    path, logp = librosa.sequence.viterbi_discriminative(
+        prob_mc, transition, p_state=p_state_marginal, p_init=p_init, return_logp=True
+    )
+
+    # Check the second code path
+    path2 = librosa.sequence.viterbi_discriminative(
+        prob_mc, transition, p_state=p_state_marginal, p_init=p_init, return_logp=False
+    )
+    assert np.array_equal(path, path2)
+
+    path0, logp0 = librosa.sequence.viterbi_discriminative(prob_mc[0], transition, p_state=p_state_marginal, p_init=p_init, return_logp=True)
+    assert np.allclose(path0, path[0])
+    assert np.allclose(logp0, logp[0])
+
+    path1, logp1 = librosa.sequence.viterbi_discriminative(prob_mc[1], transition, p_state=p_state_marginal, p_init=p_init, return_logp=True)
+    assert np.allclose(path1, path[1])
+    assert np.allclose(logp1, logp[1])
+
+    path2, logp2 = librosa.sequence.viterbi_discriminative(prob_mc[2], transition, p_state=p_state_marginal, p_init=p_init, return_logp=True)
+    assert np.allclose(path2, path[2])
+    assert np.allclose(logp2, logp[2])
 
 
 def test_viterbi_discriminative_example_init():
@@ -288,6 +378,38 @@ def test_viterbi_binary_example():
     )
     assert np.allclose(logp[0], logp_d)
     assert np.array_equal(path[0], path_d)
+
+
+def test_viterbi_binary_multi():
+
+    # 0 stays 0,
+    # 1 is uninformative
+    transition = np.asarray([[0.9, 0.1], [0.5, 0.5]])
+
+    # Initial state distribution
+    p_init = np.asarray([0.25, 0.75])
+
+    p_binary = np.asarray([[0.25, 0.5, 0.75, 0.1, 0.1, 0.8, 0.9]])
+
+    # Make a three-channel stack
+    p_mc = np.stack([p_binary, 1-p_binary, p_binary[::-1]])
+
+    path, logp = librosa.sequence.viterbi_binary(
+        p_mc, transition, p_state=p_init[1:], p_init=p_init[1:], return_logp=True
+    )
+    path2 = librosa.sequence.viterbi_binary(
+        p_mc, transition, p_state=p_init[1:], p_init=p_init[1:],
+    )
+
+    # Verify that both branches agree on path
+    assert np.array_equal(path, path2)
+
+    # Check each channel independently
+    for i in range(len(p_mc)):
+        pi, logpi = librosa.sequence.viterbi_binary(p_mc[i], transition, p_state=p_init[1:], p_init=p_init[1:], return_logp=True)
+        assert np.array_equal(path[i], pi)
+        assert np.array_equal(path[i].shape, pi.shape)
+        assert np.allclose(logpi, logp[i])
 
 
 def test_viterbi_binary_example_init():

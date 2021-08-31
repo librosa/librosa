@@ -1427,8 +1427,6 @@ def viterbi_binary(prob, transition, p_state=None, p_init=None, return_logp=Fals
             "Invalid initial state distributions: p_init={}".format(p_init)
         )
 
-    # Can we vectorize this over each binary state? O_o
-
     shape_prefix = list(prob.shape[:-2])
     states = np.empty(shape_prefix + [n_states, n_steps], dtype=np.uint16)
     logp = np.empty(shape_prefix + [n_states])
