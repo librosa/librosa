@@ -73,10 +73,14 @@ def cross_similarity(
     Parameters
     ----------
     data : np.ndarray [shape=(d, n)]
-        A feature matrix for the comparison sequence
+        A feature matrix for the comparison sequence.
+        If the data has more than two dimensions (e.g., for multi-channel inputs),
+        the leading dimensions are flattened prior to comparison.
 
     data_ref : np.ndarray [shape=(d, n_ref)]
         A feature matrix for the reference sequence
+        If the data has more than two dimensions (e.g., for multi-channel inputs),
+        the leading dimensions are flattened prior to comparison.
 
     k : int > 0 [scalar] or None
         the number of nearest-neighbors for each sample
@@ -170,8 +174,8 @@ def cross_similarity(
     data_ref = np.atleast_2d(data_ref)
     data = np.atleast_2d(data)
 
-    if data_ref.shape[0] != data.shape[0]:
-        raise ParameterError("data_ref and data must have the same first dimension")
+    if not np.allclose(data_ref.shape[:-1], data.shape[:-1]):
+        raise ParameterError("data_ref.shape={} and data.shape={} do not match on leading dimension(s)".format(data_ref.shape, data.shape))
 
     # swap data axes so the feature axis is last
     data_ref = np.swapaxes(data_ref, -1, 0)
@@ -271,8 +275,8 @@ def recurrence_matrix(
 ):
     """Compute a recurrence matrix from a data matrix.
 
-    ``rec[i, j]`` is non-zero if ``data[:, i]`` is a k-nearest neighbor
-    of ``data[:, j]`` and ``|i - j| >= width``
+    ``rec[i, j]`` is non-zero if ``data[..., i]`` is a k-nearest neighbor
+    of ``data[..., j]`` and ``|i - j| >= width``
 
     The specific value of ``rec[i, j]`` can have several forms, governed
     by the ``mode`` parameter below:
@@ -290,8 +294,10 @@ def recurrence_matrix(
 
     Parameters
     ----------
-    data : np.ndarray
-        A feature matrix
+    data : np.ndarray [shape=(d, n)]
+        A feature matrix.
+        If the data has more than two dimensions (e.g., for multi-channel inputs),
+        the leading dimensions are flattened prior to comparison.
 
     k : int > 0 [scalar] or None
         the number of nearest-neighbors for each sample
@@ -300,7 +306,7 @@ def recurrence_matrix(
         or ``k = 2`` if ``t <= 2 * width + 1``
 
     width : int >= 1 [scalar]
-        only link neighbors ``(data[:, i], data[:, j])``
+        only link neighbors ``(data[..., i], data[..., j])``
         if ``|i - j| >= width``
 
         ``width`` cannot exceed the length of the data.
@@ -1006,6 +1012,9 @@ def path_enhance(
         The self- or cross-similarity matrix to be smoothed.
         Note: sparse inputs are not supported.
 
+        If the recurrence matrix is multi-dimensional, e.g. `shape=(c, n, n)`,
+        then enhancement is conducted independently for each leading channel.
+
     n : int > 0
         The length of the smoothing filter
 
@@ -1092,6 +1101,11 @@ def path_enhance(
         np.log2(min_ratio), np.log2(max_ratio), num=n_filters, base=2
     ):
         kernel = diagonal_filter(window, n, slope=ratio, zero_mean=zero_mean)
+
+        # Expand leading dimensions to match R
+        # This way, if R has shape, eg, [2, 3, n, n]
+        # the expanded kernel will have shape [1, 1, m, m]
+        kernel = np.expand_dims(kernel, axis=list(np.arange(R.ndim - kernel.ndim)))
 
         if R_smooth is None:
             R_smooth = scipy.ndimage.convolve(R, kernel, **kwargs)
