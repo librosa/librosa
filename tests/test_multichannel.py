@@ -21,6 +21,8 @@ import pytest
 import warnings
 from unittest import mock
 
+from contextlib2 import nullcontext as dnr
+
 
 @pytest.fixture(scope="module", params=["test1_44100.wav"])
 def y_multi(request):
@@ -201,7 +203,64 @@ def test_tempo_multi(y_multi):
 
     # Check that they're not both the same
     assert not np.allclose(t0, t1)
-    print(t,t0,t1)
+
+
+@pytest.mark.parametrize("hop_length", [256, 512])
+@pytest.mark.parametrize("win_length", [192, 384])
+@pytest.mark.parametrize("use_onset", [False, True])
+@pytest.mark.parametrize(
+    "tempo_min,tempo_max,ctx",
+    [
+        (30, 300, dnr()),
+        (60, None, dnr()),
+    ],
+)
+@pytest.mark.parametrize(
+    "prior", [None, scipy.stats.lognorm(s=1, loc=np.log(120), scale=120)]
+)
+def test_plp_multi(s_multi, hop_length, win_length, tempo_min, tempo_max, use_onset, prior, ctx):
+
+    S, sr = s_multi
+    D = librosa.onset.onset_strength(S=S, sr=sr, hop_length=hop_length)
+    D0 = librosa.onset.onset_strength(S=S[0], sr=sr, hop_length=hop_length)
+    D1 = librosa.onset.onset_strength(S=S[1], sr=sr, hop_length=hop_length)
+
+    with ctx:
+        pulse = librosa.beat.plp(
+            sr=sr,
+            onset_envelope=D,
+            hop_length=hop_length,
+            win_length=win_length,
+            tempo_min=tempo_min,
+            tempo_max=tempo_max,
+            prior=prior,
+        )
+        pulse0 = librosa.beat.plp(
+            sr=sr,
+            onset_envelope=D0,
+            hop_length=hop_length,
+            win_length=win_length,
+            tempo_min=tempo_min,
+            tempo_max=tempo_max,
+            prior=prior,
+        )
+        pulse1 = librosa.beat.plp(
+            sr=sr,
+            onset_envelope=D1,
+            hop_length=hop_length,
+            win_length=win_length,
+            tempo_min=tempo_min,
+            tempo_max=tempo_max,
+            prior=prior,
+        )
+
+        # Check each channel
+        assert np.allclose(pulse[0], pulse0, atol=1e-6, rtol=1e-6)
+        assert np.allclose(pulse[1], pulse1, atol=1e-6, rtol=1e-6)
+
+        # Check that they're not both the same
+        assert not np.allclose(pulse0, pulse1, atol=1e-6, rtol=1e-6)
+
 
 def test_istft_multi(y_multi):
 
