@@ -35,7 +35,7 @@ Transition matrices
 import numpy as np
 from scipy.spatial.distance import cdist
 from numba import jit
-from .util import pad_center, fill_off_diagonal
+from .util import pad_center, fill_off_diagonal, tiny
 from .util.exceptions import ParameterError
 from .filters import get_window
 
@@ -890,7 +890,7 @@ def __rqa_backtrack(score, pointers):
 
 
 @jit(nopython=True, cache=True)
-def _viterbi(log_prob, log_trans, log_p_init, state, value, ptr):  # pragma: no cover
+def _viterbi(log_prob, log_trans, log_p_init):  # pragma: no cover
     """Core Viterbi algorithm.
 
     This is intended for internal use only.
@@ -908,21 +908,16 @@ def _viterbi(log_prob, log_trans, log_p_init, state, value, ptr):  # pragma: no 
     log_p_init : np.ndarray [shape=(m,)]
         log of the initial state distribution
 
-    state : np.ndarray [shape=(T,), dtype=int]
-        Pre-allocated state index array
-
-    value : np.ndarray [shape=(T, m)] float
-        Pre-allocated value array
-
-    ptr : np.ndarray [shape=(T, m), dtype=int]
-        Pre-allocated pointer array
-
     Returns
     -------
     None
         All computations are performed in-place on ``state, value, ptr``.
     """
     n_steps, n_states = log_prob.shape
+
+    state = np.zeros(n_steps, dtype=np.uint16)
+    value = np.zeros((n_steps, n_states), dtype=np.float64)
+    ptr = np.zeros((n_steps, n_states), dtype=np.uint16)
 
     # factor in initial state distribution
     value[0] = log_prob[0] + log_p_init
@@ -952,7 +947,10 @@ def _viterbi(log_prob, log_trans, log_p_init, state, value, ptr):  # pragma: no 
 
     for t in range(n_steps - 2, -1, -1):
         state[t] = ptr[t + 1, state[t + 1]]
-    # Done.
+
+    logp = value[-1:, state[-1]]
+
+    return state, logp
 
 
 def viterbi(prob, transition, p_init=None, return_logp=False):
@@ -1034,7 +1032,7 @@ def viterbi(prob, transition, p_init=None, return_logp=False):
     -4.19173690823075 [0 0 1]
     """
 
-    n_states, n_steps = prob.shape
+    n_states, n_steps = prob.shape[-2:]
 
     if transition.shape != (n_states, n_states):
         raise ParameterError(
@@ -1051,14 +1049,8 @@ def viterbi(prob, transition, p_init=None, return_logp=False):
     if np.any(prob < 0) or np.any(prob > 1):
         raise ParameterError("Invalid probability values: must be between 0 and 1.")
 
-    states = np.zeros(n_steps, dtype=int)
-    values = np.zeros((n_steps, n_states), dtype=float)
-    ptr = np.zeros((n_steps, n_states), dtype=int)
-
     # Compute log-likelihoods while avoiding log-underflow
-    epsilon = np.finfo(prob.dtype).tiny
-    log_trans = np.log(transition + epsilon)
-    log_prob = np.log(prob.T + epsilon)
+    epsilon = tiny(prob)
 
     if p_init is None:
         p_init = np.empty(n_states)
@@ -1072,12 +1064,31 @@ def viterbi(prob, transition, p_init=None, return_logp=False):
             "Invalid initial state distribution: " "p_init={}".format(p_init)
         )
 
+    log_trans = np.log(transition + epsilon)
+    log_prob = np.log(prob + epsilon)
     log_p_init = np.log(p_init + epsilon)
 
-    _viterbi(log_prob, log_trans, log_p_init, states, values, ptr)
+    def _helper(lp):
+        # Transpose input
+        _state, logp = _viterbi(lp.T, log_trans, log_p_init)
+        # Transpose outputs for return
+        return _state.T, logp
+
+    if log_prob.ndim == 2:
+        states, logp = _helper(log_prob)
+    else:
+        # Vectorize the helper
+        __viterbi = np.vectorize(
+            _helper, otypes=[np.uint16, np.float64], signature="(s,t)->(t),(1)"
+        )
+
+        states, logp = __viterbi(log_prob)
+
+        # Flatten out the trailing dimension introduced by vectorization
+        logp = logp[..., 0]
 
     if return_logp:
-        return states, values[-1, states[-1]]
+        return states, logp
 
     return states
 
@@ -1198,7 +1209,7 @@ def viterbi_discriminative(
     >>> ax.legend()
     """
 
-    n_states, n_steps = prob.shape
+    n_states, n_steps = prob.shape[-2:]
 
     if transition.shape != (n_states, n_states):
         raise ParameterError(
@@ -1212,18 +1223,14 @@ def viterbi_discriminative(
             "and sum to 1 on each row."
         )
 
-    if np.any(prob < 0) or not np.allclose(prob.sum(axis=0), 1):
+    if np.any(prob < 0) or not np.allclose(prob.sum(axis=-2), 1):
         raise ParameterError(
             "Invalid probability values: each column must "
             "sum to 1 and be non-negative"
         )
 
-    states = np.zeros(n_steps, dtype=int)
-    values = np.zeros((n_steps, n_states), dtype=float)
-    ptr = np.zeros((n_steps, n_states), dtype=int)
-
     # Compute log-likelihoods while avoiding log-underflow
-    epsilon = np.finfo(prob.dtype).tiny
+    epsilon = tiny(prob)
 
     # Compute marginal log probabilities while avoiding underflow
     if p_state is None:
@@ -1239,18 +1246,6 @@ def viterbi_discriminative(
             "Invalid marginal state distribution: " "p_state={}".format(p_state)
         )
 
-    log_trans = np.log(transition + epsilon)
-    log_marginal = np.log(p_state + epsilon)
-
-    # By Bayes' rule, P[X | Y] * P[Y] = P[Y | X] * P[X]
-    # P[X] is constant for the sake of maximum likelihood inference
-    # and P[Y] is given by the marginal distribution p_state.
-    #
-    # So we have P[X | y] \propto P[Y | x] / P[Y]
-    # if X = observation and Y = states, this can be done in log space as
-    # log P[X | y] \propto \log P[Y | x] - \log P[Y]
-    log_prob = np.log(prob.T + epsilon) - log_marginal
-
     if p_init is None:
         p_init = np.empty(n_states)
         p_init.fill(1.0 / n_states)
@@ -1263,12 +1258,45 @@ def viterbi_discriminative(
             "Invalid initial state distribution: " "p_init={}".format(p_init)
         )
 
+    # By Bayes' rule, P[X | Y] * P[Y] = P[Y | X] * P[X]
+    # P[X] is constant for the sake of maximum likelihood inference
+    # and P[Y] is given by the marginal distribution p_state.
+    #
+    # So we have P[X | y] \propto P[Y | x] / P[Y]
+    # if X = observation and Y = states, this can be done in log space as
+    # log P[X | y] \propto \log P[Y | x] - \log P[Y]
     log_p_init = np.log(p_init + epsilon)
+    log_trans = np.log(transition + epsilon)
+    log_marginal = np.log(p_state + epsilon)
 
-    _viterbi(log_prob, log_trans, log_p_init, states, values, ptr)
+    # reshape to broadcast against prob
+    target_shape = [1 for _ in prob.shape]
+    target_shape[-2] = -1
+    log_marginal = log_marginal.reshape(target_shape)
+
+    log_prob = np.log(prob + epsilon) - log_marginal
+
+    def _helper(lp):
+        # Transpose input
+        _state, logp = _viterbi(lp.T, log_trans, log_p_init)
+        # Transpose outputs for return
+        return _state.T, logp
+
+    if log_prob.ndim == 2:
+        states, logp = _helper(log_prob)
+    else:
+        # Vectorize the helper
+        __viterbi = np.vectorize(
+            _helper, otypes=[np.uint16, np.float64], signature="(s,t)->(t),(1)"
+        )
+
+        states, logp = __viterbi(log_prob)
+
+    # Flatten out the trailing dimension
+    logp = logp[..., 0]
 
     if return_logp:
-        return states, values[-1, states[-1]]
+        return states, logp
 
     return states
 
@@ -1358,7 +1386,7 @@ def viterbi_binary(prob, transition, p_state=None, p_init=None, return_logp=Fals
 
     prob = np.atleast_2d(prob)
 
-    n_states, n_steps = prob.shape
+    n_states, n_steps = prob.shape[-2:]
 
     if transition.shape == (2, 2):
         transition = np.tile(transition, (n_states, 1, 1))
@@ -1399,16 +1427,19 @@ def viterbi_binary(prob, transition, p_state=None, p_init=None, return_logp=Fals
             "Invalid initial state distributions: p_init={}".format(p_init)
         )
 
-    states = np.empty((n_states, n_steps), dtype=int)
-    logp = np.empty(n_states)
+    # Can we vectorize this over each binary state? O_o
 
-    prob_binary = np.empty((2, n_steps))
+    shape_prefix = list(prob.shape[:-2])
+    states = np.empty(shape_prefix + [n_states, n_steps], dtype=np.uint16)
+    logp = np.empty(shape_prefix + [n_states])
+
+    prob_binary = np.empty(shape_prefix + [2, n_steps])
     p_state_binary = np.empty(2)
     p_init_binary = np.empty(2)
 
     for state in range(n_states):
-        prob_binary[0] = 1 - prob[state]
-        prob_binary[1] = prob[state]
+        prob_binary[..., 0, :] = 1 - prob[..., state, :]
+        prob_binary[..., 1, :] = prob[..., state, :]
 
         p_state_binary[0] = 1 - p_state[state]
         p_state_binary[1] = p_state[state]
@@ -1416,7 +1447,7 @@ def viterbi_binary(prob, transition, p_state=None, p_init=None, return_logp=Fals
         p_init_binary[0] = 1 - p_init[state]
         p_init_binary[1] = p_init[state]
 
-        states[state, :], logp[state] = viterbi_discriminative(
+        states[..., state, :], logp[..., state] = viterbi_discriminative(
             prob_binary,
             transition[state],
             p_state=p_state_binary,
