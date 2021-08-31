@@ -785,11 +785,13 @@ def pyin(
         hop_length = frame_length // 4
 
     # Check that audio is valid.
-    util.valid_audio(y, mono=True)
+    # util.valid_audio(y, mono=False)
 
     # Pad the time series so that frames are centered
     if center:
-        y = np.pad(y, frame_length // 2, mode=pad_mode)
+        padding = [(0, 0) for _ in y.shape]
+        padding[-1] = (frame_length // 2, frame_length // 2)
+        y = np.pad(y, padding, mode=pad_mode)
 
     # Frame audio.
     y_frames = util.frame(y, frame_length=frame_length, hop_length=hop_length)
@@ -814,10 +816,55 @@ def pyin(
     beta_cdf = scipy.stats.beta.cdf(thresholds, beta_parameters[0], beta_parameters[1])
     beta_probs = np.diff(beta_cdf)
 
+    n_bins_per_semitone = int(np.ceil(1.0 / resolution))
+    n_pitch_bins = int(np.floor(12 * n_bins_per_semitone * np.log2(fmax / fmin))) + 1
+
+    def _helper(a, b):
+        return __pyin_helper(a, b, sr, thresholds, boltzmann_parameter,
+                             beta_probs, no_trough_prob, min_period,
+                             fmin, n_pitch_bins, n_bins_per_semitone)
+
+    helper = np.vectorize(_helper, signature='(f,t),(k,t)->(1,d,t),(j,t)')
+    observation_probs, voiced_prob = helper(yin_frames, parabolic_shifts)
+
+    # Construct transition matrix.
+    max_semitones_per_frame = round(max_transition_rate * 12 * hop_length / sr)
+    transition_width = max_semitones_per_frame * n_bins_per_semitone + 1
+    # Construct the within voicing transition probabilities
+    transition = sequence.transition_local(
+        n_pitch_bins, transition_width, window="triangle", wrap=False
+    )
+
+    # Include across voicing transition probabilities
+    t_switch = sequence.transition_loop(2, 1-switch_prob)
+    transition = np.kron(t_switch, transition)
+
+    p_init = np.zeros(2 * n_pitch_bins)
+    p_init[n_pitch_bins:] = 1 / n_pitch_bins
+
+    states = sequence.viterbi(observation_probs, transition, p_init=p_init)
+
+    # Find f0 corresponding to each decoded pitch bin.
+    freqs = fmin * 2 ** (np.arange(n_pitch_bins) / (12 * n_bins_per_semitone))
+    f0 = freqs[states % n_pitch_bins]
+    voiced_flag = states < n_pitch_bins
+
+    if fill_na is not None:
+        f0[~voiced_flag] = fill_na
+
+    return f0[..., 0, :], voiced_flag[..., 0, :], voiced_prob[..., 0, :]
+
+
+def __pyin_helper(yin_frames, parabolic_shifts, sr, thresholds,
+                  boltzmann_parameter, beta_probs, no_trough_prob, min_period,
+                  fmin, n_pitch_bins, n_bins_per_semitone):
+
     yin_probs = np.zeros_like(yin_frames)
+
     for i, yin_frame in enumerate(yin_frames.T):
         # 2. For each frame find the troughs.
-        is_trough = util.localmin(yin_frame, axis=0)
+        is_trough = util.localmin(yin_frame)
+
         is_trough[0] = yin_frame[0] < yin_frame[1]
         (trough_index,) = np.nonzero(is_trough)
 
@@ -825,21 +872,26 @@ def pyin(
             continue
 
         # 3. Find the troughs below each threshold.
+        # these are the local minima of the frame, could get them directly without the trough index
         trough_heights = yin_frame[trough_index]
-        trough_thresholds = trough_heights[:, None] < thresholds[None, 1:]
+        trough_thresholds = np.less.outer(trough_heights, thresholds[1:])
 
         # 4. Define the prior over the troughs.
         # Smaller periods are weighted more.
         trough_positions = np.cumsum(trough_thresholds, axis=0) - 1
         n_troughs = np.count_nonzero(trough_thresholds, axis=0)
+
         trough_prior = scipy.stats.boltzmann.pmf(
             trough_positions, boltzmann_parameter, n_troughs
         )
+
         trough_prior[~trough_thresholds] = 0
 
         # 5. For each threshold add probability to global minimum if no trough is below threshold,
         # else add probability to each trough below threshold biased by prior.
-        probs = np.sum(trough_prior * beta_probs, axis=1)
+
+        probs = trough_prior.dot(beta_probs)
+
         global_min = np.argmin(trough_heights)
         n_thresholds_below_min = np.count_nonzero(~trough_thresholds[global_min, :])
         probs[global_min] += no_trough_prob * np.sum(
@@ -855,24 +907,6 @@ def pyin(
     period_candidates = period_candidates + parabolic_shifts[yin_period, frame_index]
     f0_candidates = sr / period_candidates
 
-    n_bins_per_semitone = int(np.ceil(1.0 / resolution))
-    n_pitch_bins = int(np.floor(12 * n_bins_per_semitone * np.log2(fmax / fmin))) + 1
-
-    # Construct transition matrix.
-    max_semitones_per_frame = round(max_transition_rate * 12 * hop_length / sr)
-    transition_width = max_semitones_per_frame * n_bins_per_semitone + 1
-    # Construct the within voicing transition probabilities
-    transition = sequence.transition_local(
-        n_pitch_bins, transition_width, window="triangle", wrap=False
-    )
-    # Include across voicing transition probabilities
-    transition = np.block(
-        [
-            [(1 - switch_prob) * transition, switch_prob * transition],
-            [switch_prob * transition, (1 - switch_prob) * transition],
-        ]
-    )
-
     # Find pitch bin corresponding to each f0 candidate.
     bin_index = 12 * n_bins_per_semitone * np.log2(f0_candidates / fmin)
     bin_index = np.clip(np.round(bin_index), 0, n_pitch_bins).astype(int)
@@ -880,19 +914,10 @@ def pyin(
     # Observation probabilities.
     observation_probs = np.zeros((2 * n_pitch_bins, yin_frames.shape[1]))
     observation_probs[bin_index, frame_index] = yin_probs[yin_period, frame_index]
-    voiced_prob = np.clip(np.sum(observation_probs[:n_pitch_bins, :], axis=0), 0, 1)
-    observation_probs[n_pitch_bins:, :] = (1 - voiced_prob[None, :]) / n_pitch_bins
 
-    p_init = np.zeros(2 * n_pitch_bins)
-    p_init[n_pitch_bins:] = 1 / n_pitch_bins
+    voiced_prob = np.clip(np.sum(observation_probs[:n_pitch_bins, :],
+                                 axis=0, keepdims=True),
+                          0, 1)
+    observation_probs[n_pitch_bins:, :] = (1 - voiced_prob) / n_pitch_bins
 
-    # Viterbi decoding.
-    states = sequence.viterbi(observation_probs, transition, p_init=p_init)
-
-    # Find f0 corresponding to each decoded pitch bin.
-    freqs = fmin * 2 ** (np.arange(n_pitch_bins) / (12 * n_bins_per_semitone))
-    f0 = freqs[states % n_pitch_bins]
-    voiced_flag = states < n_pitch_bins
-    if fill_na is not None:
-        f0[~voiced_flag] = fill_na
-    return f0, voiced_flag, voiced_prob
+    return observation_probs[np.newaxis], voiced_prob

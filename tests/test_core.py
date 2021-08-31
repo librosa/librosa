@@ -1006,8 +1006,31 @@ def test_yin_fail(fmin, fmax, win_length, frame_length):
 @pytest.mark.parametrize("freq", [110, 220, 440, 880])
 def test_pyin_tone(freq):
     y = librosa.tone(freq, duration=1.0)
-    f0, _, _ = librosa.pyin(y, fmin=110, fmax=880, center=False)
-    assert np.allclose(np.log2(f0), np.log2(freq), rtol=0, atol=1e-2)
+    f0, _, _ = librosa.pyin(y, fmin=110, fmax=1000, center=False)
+    # Skip the first frame, since the voicing prior does not allow it
+    assert np.allclose(np.log2(f0[1:]), np.log2(freq), rtol=0, atol=1e-2)
+
+
+def test_pyin_multi():
+    y = np.stack([librosa.tone(440, duration=1.0), librosa.tone(560, duration=1.0)])
+    
+    # Taper the signal
+    h = librosa.filters.get_window('triangle', y.shape[-1])
+
+    # Filter it
+    y = y * h[np.newaxis,:]
+
+    # Disable nans so we can use allclose checks
+    fall, vall, vpall = librosa.pyin(y, fmin=100, fmax=1000, center=False, fill_na=-1)
+    f0, v0, vp0 = librosa.pyin(y[0], fmin=100, fmax=1000, center=False, fill_na=-1)
+    f1, v1, vp1 = librosa.pyin(y[1], fmin=100, fmax=1000, center=False, fill_na=-1)
+
+    assert np.allclose(fall[0], f0)
+    assert np.allclose(fall[1], f1)
+    assert np.allclose(vall[0], v0)
+    assert np.allclose(vall[1], v1)
+    assert np.allclose(vpall[0], vp0)
+    assert np.allclose(vpall[1], vp1)
 
 
 def test_pyin_chirp():
