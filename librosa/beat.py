@@ -356,10 +356,10 @@ def tempo(
 
     # Eventually, we want this to work for time-varying tempo
     if aggregate is not None:
-        tg = aggregate(tg, axis=1, keepdims=True)
+        tg = aggregate(tg, axis=-1, keepdims=True)
 
     # Get the BPM values for each bin, skipping the 0-lag bin
-    bpms = core.tempo_frequencies(tg.shape[0], hop_length=hop_length, sr=sr)
+    bpms = core.tempo_frequencies(tg.shape[-2], hop_length=hop_length, sr=sr)
 
     # Weight the autocorrelation by a log-normal distribution
     if prior is None:
@@ -371,12 +371,16 @@ def tempo(
     if max_tempo is not None:
         max_idx = np.argmax(bpms < max_tempo)
         logprior[:max_idx] = -np.inf
+    # explicit axis expansion
+    shape = [1 for _ in tg.shape]
+    shape[-2] = len(logprior)
+    logprior = logprior.reshape(shape)
 
     # Get the maximum, weighted by the prior
     # Using log1p here for numerical stability
-    best_period = np.argmax(np.log1p(1e6 * tg) + logprior[:, np.newaxis], axis=0)
+    best_period = np.argmax(np.log1p(1e6 * tg) + logprior, axis=-2)
 
-    return bpms[best_period]
+    return np.take(bpms, best_period)
 
 
 def plp(
@@ -539,29 +543,34 @@ def plp(
     )
 
     if tempo_min is not None:
-        ftgram[tempo_frequencies < tempo_min] = 0
+        ftgram[..., tempo_frequencies < tempo_min, :] = 0
     if tempo_max is not None:
-        ftgram[tempo_frequencies > tempo_max] = 0
+        ftgram[..., tempo_frequencies > tempo_max, :] = 0
+
+    # reshape lengths to match dimension properly
+    shape = [1 for _ in ftgram.shape]
+    shape[-2] = len(tempo_frequencies)
+    tempo_frequencies = tempo_frequencies.reshape(shape)
 
     # Step 3: Discard everything below the peak
     ftmag = np.log1p(1e6 * np.abs(ftgram))
     if prior is not None:
-        ftmag += prior.logpdf(tempo_frequencies)[:, np.newaxis]
+        ftmag += prior.logpdf(tempo_frequencies)
 
-    peak_values = ftmag.max(axis=0, keepdims=True)
+    peak_values = ftmag.max(axis=-2, keepdims=True)
     ftgram[ftmag < peak_values] = 0
 
     # Normalize to keep only phase information
-    ftgram /= util.tiny(ftgram) ** 0.5 + np.abs(ftgram.max(axis=0, keepdims=True))
+    ftgram /= util.tiny(ftgram) ** 0.5 + np.abs(ftgram.max(axis=-2, keepdims=True))
 
     # Step 5: invert the Fourier tempogram to get the pulse
-    pulse = core.istft(ftgram, hop_length=1, length=len(onset_envelope))
+    pulse = core.istft(ftgram, hop_length=1, length=onset_envelope.shape[-1])
 
     # Step 6: retain only the positive part of the pulse cycle
-    np.clip(pulse, 0, None, pulse)
+    pulse = np.clip(pulse, 0, None, pulse)
 
     # Return the normalized pulse
-    return util.normalize(pulse)
+    return util.normalize(pulse, axis=-1)
 
 
 def __beat_tracker(onset_envelope, bpm, fft_res, tightness, trim):

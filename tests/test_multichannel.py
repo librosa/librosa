@@ -21,6 +21,8 @@ import pytest
 import warnings
 from unittest import mock
 
+from contextlib2 import nullcontext as dnr
+
 
 @pytest.fixture(scope="module", params=["test1_44100.wav"])
 def y_multi(request):
@@ -40,6 +42,39 @@ def tfr_multi(y_multi):
     return librosa.reassigned_spectrogram(y, fill_nan=True)
 
 
+@pytest.mark.parametrize("aggregate", [None, np.mean, np.sum])
+@pytest.mark.parametrize(
+    "ndim,axis", [(1, 0), (1, -1), (2, 0), (2, 1), (2, -1), (3, 0), (3, 2), (3, -1), (4, 0), (4, 3), (4, -1)]
+)
+def test_sync_multi(aggregate, ndim, axis):
+    data = np.ones([6] * ndim, dtype=np.float)
+
+    # Make some slices that don't fill the entire dimension
+    slices = [slice(1, 3), slice(3, 4)]
+    dsync = librosa.util.sync(data, slices, aggregate=aggregate, axis=axis)
+
+    # Check the axis shapes
+    assert dsync.shape[axis] == len(slices)
+
+    s_test = list(dsync.shape)
+    del s_test[axis]
+    s_orig = list(data.shape)
+    del s_orig[axis]
+    assert s_test == s_orig
+
+    # The first slice will sum to 2 and have mean 1
+    idx = [slice(None)] * ndim
+    idx[axis] = 0
+    if aggregate is np.sum:
+        assert np.allclose(dsync[idx], 2)
+    else:
+        assert np.allclose(dsync[idx], 1)
+
+    # The second slice will sum to 1 and have mean 1
+    idx[axis] = 1
+    assert np.allclose(dsync[idx], 1)
+
+
 def test_stft_multi(y_multi):
 
     # Verify that a stereo STFT matches on
@@ -57,6 +92,172 @@ def test_stft_multi(y_multi):
 
     # Check that they're not both the same
     assert not np.allclose(D0, D1)
+
+
+def test_onset_strength(y_multi):
+
+    # Verify that a stereo spectral flux onset strength envelope matches on
+    # each channel individually
+    y, sr = y_multi
+
+    S = librosa.stft(y)
+
+    D = librosa.onset.onset_strength(S=S)
+
+    D0 = librosa.onset.onset_strength(S=S[0])
+    D1 = librosa.onset.onset_strength(S=S[1])
+
+    # Check each channel
+    assert np.allclose(D[0], D0)
+    assert np.allclose(D[1], D1)
+
+    # Check that they're not both the same
+    assert not np.allclose(D0, D1)
+
+
+def test_tempogram(s_multi):
+
+    # Verify that a stereo tempogram matches on
+    # each channel individually
+    S, sr = s_multi
+
+    D = librosa.onset.onset_strength(S=S)
+    t = librosa.feature.tempogram(y=None, sr=sr, onset_envelope=D, hop_length=512)
+
+    D0 = librosa.onset.onset_strength(S=S[0])
+    D1 = librosa.onset.onset_strength(S=S[1])
+    t0 = librosa.feature.tempogram(y=None, sr=sr, onset_envelope=D0, hop_length=512)
+    t1 = librosa.feature.tempogram(y=None, sr=sr, onset_envelope=D1, hop_length=512)
+
+    # Check each channel
+    assert np.allclose(t[0], t0)
+    assert np.allclose(t[1], t1)
+
+    # Check that they're not both the same
+    assert not np.allclose(t0, t1)
+
+
+def test_fourier_tempogram(s_multi):
+
+    # Verify that a stereo fourier tempogram matches on
+    # each channel individually
+    S, sr = s_multi
+
+    D = librosa.onset.onset_strength(S=S)
+    t = librosa.feature.fourier_tempogram(sr=sr, onset_envelope=D)
+
+    D0 = librosa.onset.onset_strength(S=S[0])
+    D1 = librosa.onset.onset_strength(S=S[1])
+    t0 = librosa.feature.fourier_tempogram(sr=sr, onset_envelope=D0)
+    t1 = librosa.feature.fourier_tempogram(sr=sr, onset_envelope=D1)
+
+    # Check each channel
+    assert np.allclose(t[0], t0, atol=1e-6, rtol=1e-6)
+    assert np.allclose(t[1], t1, atol=1e-6, rtol=1e-6)
+
+    # Check that they're not both the same
+    assert not np.allclose(t0, t1, atol=1e-6, rtol=1e-6)
+
+
+def test_tempo_multi(y_multi):
+
+    sr = 22050
+    tempi = [78, 128]
+
+    y = np.zeros((2, 20*sr))
+
+    delay = [librosa.time_to_samples(60 / tempo, sr=sr).item() for tempo in tempi]
+    y[0,::delay[0]] = 1
+    y[1,::delay[1]] = 1
+
+    t = librosa.beat.tempo(
+        y=y,
+        sr=sr,
+        hop_length=512,
+        ac_size=4,
+        aggregate=np.mean,
+        prior=None
+    )
+
+    t0 = librosa.beat.tempo(
+        y=y[0],
+        sr=sr,
+        hop_length=512,
+        ac_size=4,
+        aggregate=np.mean,
+        prior=None
+    )
+
+    t1 = librosa.beat.tempo(
+        y=y[1],
+        sr=sr,
+        hop_length=512,
+        ac_size=4,
+        aggregate=np.mean,
+        prior=None
+    )
+
+    # Check each channel
+    assert np.allclose(t[0], t0)
+    assert np.allclose(t[1], t1)
+
+    # Check that they're not both the same
+    assert not np.allclose(t0, t1)
+
+
+@pytest.mark.parametrize("hop_length", [512])
+@pytest.mark.parametrize("win_length", [384])
+@pytest.mark.parametrize(
+    "tempo_min,tempo_max",
+    [
+        (30, 300),
+        (60, None),
+    ],
+)
+@pytest.mark.parametrize(
+    "prior", [None, scipy.stats.lognorm(s=1, loc=np.log(120), scale=120)]
+)
+def test_plp_multi(s_multi, hop_length, win_length, tempo_min, tempo_max, prior):
+
+    S, sr = s_multi
+    D = librosa.onset.onset_strength(S=S, sr=sr, hop_length=hop_length)
+    D0 = librosa.onset.onset_strength(S=S[0], sr=sr, hop_length=hop_length)
+    D1 = librosa.onset.onset_strength(S=S[1], sr=sr, hop_length=hop_length)
+
+    pulse = librosa.beat.plp(
+        sr=sr,
+        onset_envelope=D,
+        hop_length=hop_length,
+        win_length=win_length,
+        tempo_min=tempo_min,
+        tempo_max=tempo_max,
+        prior=prior,
+    )
+    pulse0 = librosa.beat.plp(
+        sr=sr,
+        onset_envelope=D0,
+        hop_length=hop_length,
+        win_length=win_length,
+        tempo_min=tempo_min,
+        tempo_max=tempo_max,
+        prior=prior,
+    )
+    pulse1 = librosa.beat.plp(
+        sr=sr,
+        onset_envelope=D1,
+        hop_length=hop_length,
+        win_length=win_length,
+        tempo_min=tempo_min,
+        tempo_max=tempo_max,
+        prior=prior,
+    )
+
+    # Check each channel
+    assert np.allclose(pulse[0], pulse0, atol=1e-6, rtol=1e-6)
+    assert np.allclose(pulse[1], pulse1, atol=1e-6, rtol=1e-6)
+
+    # Check that they're not both the same
+    assert not np.allclose(pulse0, pulse1, atol=1e-6, rtol=1e-6)
 
 
 def test_istft_multi(y_multi):
