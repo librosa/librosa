@@ -175,6 +175,32 @@ def test_nn_filter_mean_rec_sparse():
     assert np.allclose(X_filtered, (X.dot(rec)))
 
 
+@pytest.fixture(scope="module")
+def s_multi():
+    y, sr = librosa.load(os.path.join("tests", "data", "test1_44100.wav"), 
+                         sr=None, mono=False)
+    return np.abs(librosa.stft(y))
+
+@pytest.mark.parametrize('useR,sparse', [(False, False), (True, False), (True, True)])
+def test_nn_filter_multi(s_multi, useR, sparse):
+
+    R = librosa.segment.recurrence_matrix(s_multi, mode='affinity', sparse=sparse)
+    if useR:
+        R_multi = R
+    else:
+        R_multi = None
+
+    s_filt = librosa.decompose.nn_filter(s_multi, rec=R_multi, mode='affinity',
+        sparse=sparse)
+    # Always use the same recurrence matrix for comparison
+    s_filt0 = librosa.decompose.nn_filter(s_multi[0], rec=R)
+    s_filt1 = librosa.decompose.nn_filter(s_multi[1], rec=R)
+
+    assert np.allclose(s_filt[0], s_filt0)
+    assert np.allclose(s_filt[1], s_filt1)
+    assert not np.allclose(s_filt0, s_filt1)
+
+
 def test_nn_filter_avg():
 
     srand()
