@@ -229,8 +229,9 @@ def dtw(
         Y = np.swapaxes(Y, -1, 0)
 
         # Flatten the remaining dimensions
-        X = X.reshape((X.shape[0], -1))
-        Y = Y.reshape((Y.shape[0], -1))
+        # Use F-ordering to preserve columns
+        X = X.reshape((X.shape[0], -1), order="F")
+        Y = Y.reshape((Y.shape[0], -1), order="F")
 
         try:
             C = cdist(X, Y, metric=metric)

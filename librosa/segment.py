@@ -180,11 +180,12 @@ def cross_similarity(
     # swap data axes so the feature axis is last
     data_ref = np.swapaxes(data_ref, -1, 0)
     n_ref = data_ref.shape[0]
-    data_ref = data_ref.reshape((n_ref, -1))
+    # Use F-ordering for reshape to preserve leading axis
+    data_ref = data_ref.reshape((n_ref, -1), order="F")
 
     data = np.swapaxes(data, -1, 0)
     n = data.shape[0]
-    data = data.reshape((n, -1))
+    data = data.reshape((n, -1), order="F")
 
     if mode not in ["connectivity", "distance", "affinity"]:
         raise ParameterError(
@@ -418,7 +419,8 @@ def recurrence_matrix(
     # Swap observations to the first dimension and flatten the rest
     data = np.swapaxes(data, axis, 0)
     t = data.shape[0]
-    data = data.reshape((t, -1))
+    # Use F-ordering here to preserve leading axis layout
+    data = data.reshape((t, -1), order="F")
 
     if width < 1 or width > t:
         raise ParameterError(
@@ -944,7 +946,7 @@ def agglomerative(data, k, clusterer=None, axis=-1):
 
     # Flatten the features
     n = data.shape[0]
-    data = data.reshape((n, -1))
+    data = data.reshape((n, -1), order="F")
 
     if clusterer is None:
         # Connect the temporal connectivity graph
