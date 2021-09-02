@@ -60,6 +60,28 @@ def test_decompose_fit():
     assert np.allclose(W, W2)
 
 
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_decompose_multi_sort():
+    librosa.decompose.decompose(np.zeros((3,3,3)), sort=True)
+
+
+def test_decompose_multi():
+    srand()
+    X = np.random.random((2, 20, 100))
+
+    # Fit with multichannel data
+    components, activations = librosa.decompose.decompose(X, n_components=20, random_state=0)
+
+    # Reshape the data
+    Xflat = np.vstack([X[0], X[1]])
+    c_flat, a_flat = librosa.decompose.decompose(Xflat, n_components=20, random_state=0)
+
+    assert np.allclose(c_flat[:X.shape[1]], components[0])
+    assert np.allclose(c_flat[X.shape[1]:], components[1])
+    assert np.allclose(activations, a_flat)
+
+
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_decompose_fit_false():
 

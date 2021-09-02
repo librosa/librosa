@@ -71,6 +71,10 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
         .. note:: If used with ``transformer``, sorting is applied to copies
             of the decomposition parameters, and not to ``transformer``
             internal parameters.
+            
+        .. warning:: If the input array has more than two dimensions
+            (e.g., if it's a multi-channel spectrogram), then axis sorting
+            is not supported and an exception is raised.
 
     fit : bool
         If `True`, components are estimated from the input ``S``.
@@ -144,21 +148,34 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
     >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
     """
 
+    # Do a swapaxes and unroll
+    orig_shape = list(S.shape)
+
+    if S.ndim > 2 and sort:
+        raise ParameterError('Parameter sort=True is unsupported for input with more than two dimensions')
+
+    # Transpose S and unroll feature dimensions
+    # Use order='F' here to preserve the temporal ordering
+    S = S.T.reshape((S.shape[-1], -1), order='F')
+
+    if n_components is None:
+        n_components = S.shape[-1]
+
     if transformer is None:
         if fit is False:
             raise ParameterError("fit must be True if transformer is None")
 
         transformer = sklearn.decomposition.NMF(n_components=n_components, **kwargs)
 
-    if n_components is None:
-        n_components = S.shape[0]
-
     if fit:
-        activations = transformer.fit_transform(S.T).T
+        activations = transformer.fit_transform(S).T
     else:
-        activations = transformer.transform(S.T).T
+        activations = transformer.transform(S).T
 
-    components = transformer.components_.T
+    components = transformer.components_
+    component_shape = orig_shape[:-1] + [-1]
+    # use order='F' here to preserve component ordering
+    components = components.reshape(component_shape[::-1], order='F').T
 
     if sort:
         components, idx = util.axis_sort(components, index=True)
