@@ -154,7 +154,7 @@ def tempogram(
     n = onset_envelope.shape[-1]
 
     if center:
-        padding = [(0,0) for _ in onset_envelope.shape]
+        padding = [(0, 0) for _ in onset_envelope.shape]
         padding[-1] = (int(win_length // 2), )*2
         onset_envelope = np.pad(onset_envelope, padding, mode="linear_ramp", end_values=[0, 0])
 
@@ -166,9 +166,7 @@ def tempogram(
         odf_frame = odf_frame[..., :n]
 
     # explicit broadcast of ac_window
-    shape = [1 for _ in odf_frame.shape]
-    shape[-2] = len(ac_window)
-    ac_window = ac_window.reshape(shape)
+    ac_window = util.expand_to(ac_window, ndim=odf_frame.ndim, axes=-2)
 
     # Window, autocorrelate, and normalize
     return util.normalize(

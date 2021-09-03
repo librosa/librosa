@@ -372,9 +372,7 @@ def tempo(
         max_idx = np.argmax(bpms < max_tempo)
         logprior[:max_idx] = -np.inf
     # explicit axis expansion
-    shape = [1 for _ in tg.shape]
-    shape[-2] = len(logprior)
-    logprior = logprior.reshape(shape)
+    logprior = util.expand_to(logprior, ndim=tg.ndim, axes=-2)
 
     # Get the maximum, weighted by the prior
     # Using log1p here for numerical stability
@@ -548,9 +546,7 @@ def plp(
         ftgram[..., tempo_frequencies > tempo_max, :] = 0
 
     # reshape lengths to match dimension properly
-    shape = [1 for _ in ftgram.shape]
-    shape[-2] = len(tempo_frequencies)
-    tempo_frequencies = tempo_frequencies.reshape(shape)
+    tempo_frequencies = util.expand_to(tempo_frequencies, ndim=ftgram.ndim, axes=-2)
 
     # Step 3: Discard everything below the peak
     ftmag = np.log1p(1e6 * np.abs(ftgram))

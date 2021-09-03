@@ -193,9 +193,7 @@ def spectral_centroid(
 
     if freq.ndim == 1:
         # reshape for broadcasting
-        shape = [1 for _ in range(S.ndim)]
-        shape[-2] = -1
-        freq = freq.reshape(shape)
+        freq = util.expand_to(freq, S.ndim, axes=-2)
 
     # Column-normalize S
     return np.sum(freq * util.normalize(S, norm=1, axis=-2), axis=-2, keepdims=True)
@@ -723,9 +721,7 @@ def spectral_rolloff(
     # Make sure that frequency can be broadcast
     if freq.ndim == 1:
         # reshape for broadcasting
-        shape = [1 for _ in range(S.ndim)]
-        shape[-2] = -1
-        freq = freq.reshape(shape)
+        freq = util.expand_to(freq, ndim=S.ndim, axes=-2)
 
     total_energy = np.cumsum(S, axis=-2)
     # (channels,freq,frames)
@@ -1651,9 +1647,7 @@ def chroma_cens(
         win /= np.sum(win)
 
         # reshape for broadcasting
-        shape = [1 for _ in range(chroma_quant.ndim)]
-        shape[-1] = -1
-        win = win.reshape(shape)
+        win = util.expand_to(win, ndim=chroma_quant.ndim, axes=-1)
 
         cens = scipy.ndimage.convolve(chroma_quant, win, mode="constant")
     else:
@@ -1892,9 +1886,7 @@ def mfcc(
     if lifter > 0:
         # shape lifter for broadcasting
         LI = np.sin(np.pi * np.arange(1, 1 + n_mfcc, dtype=M.dtype) / lifter)
-        shape = [1 for _ in range(S.ndim)]
-        shape[-2] = -1
-        LI = LI.reshape(shape)
+        LI = util.expand_to(LI, S.ndim, axes=-2)
 
         M *= 1 + (lifter / 2) * LI
         return M

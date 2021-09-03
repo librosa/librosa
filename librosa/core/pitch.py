@@ -338,9 +338,7 @@ def piptrack(
 
     # Clip to the viable frequency range
     freq_mask = ((fmin <= fft_freqs) & (fft_freqs < fmax))
-    shape = [1 for _ in S.shape]
-    shape[-2] = -1
-    freq_mask = freq_mask.reshape(shape)
+    freq_mask = util.expand_to(freq_mask, ndim=S.ndim, axes=-2)
 
     # Compute the column-wise local max of S after thresholding
     # Find the argmax coordinates
@@ -413,9 +411,12 @@ def _cumulative_mean_normalized_difference(
     # Cumulative mean normalized difference function.
     yin_numerator = yin_frames[..., min_period : max_period + 1, :]
     # broadcast this shape to have leading ones
-    tau_shape = [1 for _ in yin_frames.shape]
-    tau_shape[-2] = -1
-    tau_range = np.arange(1, max_period + 1).reshape(tau_shape)
+    tau_range = util.expand_to(
+        np.arange(1, max_period + 1),
+        ndim=yin_frames.ndim,
+        axes=-2
+    )
+
     cumulative_mean = (
         np.cumsum(yin_frames[..., 1 : max_period + 1, :], axis=-2) / tau_range
     )

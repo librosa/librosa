@@ -522,9 +522,7 @@ def pseudo_cqt(
         )
 
         # reshape lengths to match dimension properly
-        shape = [1 for _ in C.shape]
-        shape[-2] = len(lengths)
-        lengths = lengths.reshape(shape)
+        lengths = util.expand_to(lengths, ndim=C.ndim, axes=-2)
 
         C *= np.sqrt(lengths / n_fft)
 
@@ -1047,9 +1045,7 @@ def vqt(
             gamma=gamma,
         )
         # reshape lengths to match V shape
-        shape = [1 for _ in V.shape]
-        shape[-2] = len(lengths)
-        lengths = lengths.reshape(shape)
+        lengths = util.expand_to(lengths, ndim=V.ndim, axes=-2)
         V /= np.sqrt(lengths)
 
     return V

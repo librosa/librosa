@@ -35,7 +35,7 @@ Transition matrices
 import numpy as np
 from scipy.spatial.distance import cdist
 from numba import jit
-from .util import pad_center, fill_off_diagonal, tiny
+from .util import pad_center, fill_off_diagonal, tiny, expand_to
 from .util.exceptions import ParameterError
 from .filters import get_window
 
@@ -1271,9 +1271,7 @@ def viterbi_discriminative(
     log_marginal = np.log(p_state + epsilon)
 
     # reshape to broadcast against prob
-    target_shape = [1 for _ in prob.shape]
-    target_shape[-2] = -1
-    log_marginal = log_marginal.reshape(target_shape)
+    log_marginal = expand_to(log_marginal, prob.ndim, axes=-2)
 
     log_prob = np.log(prob + epsilon) - log_marginal
 

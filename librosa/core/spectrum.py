@@ -214,9 +214,7 @@ def stft(
     fft_window = util.pad_center(fft_window, n_fft)
 
     # Reshape so that the window can be broadcast
-    shape = [1 for _ in range(y.ndim + 1)]
-    shape[-2] = -1
-    fft_window = fft_window.reshape(shape)
+    fft_window = util.expand_to(fft_window, ndim=1+y.ndim, axes=-2)
 
     # Pad the time series so that frames are centered
     if center:
@@ -371,9 +369,7 @@ def istft(
 
     # Pad out to match n_fft, and add broadcasting axes
     ifft_window = util.pad_center(ifft_window, n_fft)
-    shape = [1 for _ in range(stft_matrix.ndim)]
-    shape[-2] = -1
-    ifft_window = ifft_window.reshape(shape)
+    ifft_window = util.expand_to(ifft_window, ndim=stft_matrix.ndim, axes=-2)
 
     # For efficiency, trim STFT frames according to signal length if available
     if length:
@@ -614,9 +610,7 @@ def __reassign_frequencies(
     correction = -np.imag(S_dh / S_h)
 
     freqs = convert.fft_frequencies(sr=sr, n_fft=n_fft)
-    shape = [1 for _ in correction.shape]
-    shape[-2] = len(freqs)
-    freqs = freqs.reshape(shape) + correction * (0.5 * sr / np.pi)
+    freqs = util.expand_to(freqs, ndim=correction.ndim, axes=-2) + correction * (0.5 * sr / np.pi)
 
     return freqs, S_h
 
@@ -797,9 +791,7 @@ def __reassign_times(
         np.arange(S_h.shape[-1]), sr=sr, hop_length=hop_length, n_fft=pad_length
     )
 
-    shape = [1 for _ in correction.shape]
-    shape[-1] = len(times)
-    times = times.reshape(shape) + correction / sr
+    times = util.expand_to(times, ndim=correction.ndim, axes=-1) + correction / sr
 
     return times, S_h
 
