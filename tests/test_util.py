@@ -1270,3 +1270,55 @@ def test_dtype_c2r(dtype, target):
 
     # better to do a bidirectional subtype test than strict equality here
     assert np.issubdtype(inf_type, target) and np.issubdtype(target, inf_type)
+
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_expand_to_badshape():
+    x = np.arange(3)
+    librosa.util.expand_to(x, ndim=2, axes=[0, 1])
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_expand_to_badndim():
+    x = np.zeros((3,3))
+    librosa.util.expand_to(x, ndim=1, axes=[0, 1])
+
+
+@pytest.mark.parametrize('axes', [0, 1, -1, [0], [1], [-1]])
+@pytest.mark.parametrize('ndim', [2, 3, 4])
+def test_expand_to_1d(axes, ndim):
+    x = np.arange(5)
+    xout = librosa.util.expand_to(x, ndim=ndim, axes=axes)
+
+    assert xout.ndim == ndim
+    assert xout.size == x.size
+    assert np.allclose(x, xout.squeeze())
+
+    if not hasattr(axes, '__iter__'):
+        axes = [axes]
+
+    # Verify that remaining dimensions match
+    assert np.array_equal(x.shape, xout.squeeze().shape)
+
+    # Verify that we have 1s on expanded dims
+    for i, ax in enumerate(axes):
+        assert xout.shape[ax] == x.shape[i]
+
+
+@pytest.mark.parametrize('axes', [[0,1], [0, 2], [1, 2]])
+@pytest.mark.parametrize('ndim', [3, 4])
+def test_expand_to_2d(axes, ndim):
+    x = np.multiply.outer(np.arange(4), np.arange(6))
+    xout = librosa.util.expand_to(x, ndim=ndim, axes=axes)
+
+    assert xout.ndim == ndim
+    assert xout.size == x.size
+    assert np.allclose(x, xout.squeeze())
+
+    # Verify that remaining dimensions match
+    assert np.array_equal(x.shape, xout.squeeze().shape)
+
+    # Verify that we have 1s on expanded dims
+    for i, ax in enumerate(axes):
+        assert xout.shape[ax] == x.shape[i]

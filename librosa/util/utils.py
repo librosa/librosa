@@ -20,6 +20,7 @@ __all__ = [
     "MAX_MEM_BLOCK",
     "frame",
     "pad_center",
+    "expand_to",
     "fix_length",
     "valid_audio",
     "valid_int",
@@ -449,6 +450,74 @@ def pad_center(data, size, axis=-1, **kwargs):
         )
 
     return np.pad(data, lengths, **kwargs)
+
+
+def expand_to(x, ndim, axes):
+    """Expand the dimensions of an input array with
+
+    Parameters
+    ----------
+    x : np.ndarray
+        The input array
+
+    ndim : int
+        The number of dimensions to expand to.  Must be at least ``x.ndim``
+
+    axes : int or slice
+        The target axis or axes to preserve from x.
+        All other axes will have length 1.
+
+    Returns
+    -------
+    x_exp : np.ndarray
+        The expanded version of ``x``, satisfying the following:
+            ``x_exp[axes] == x``
+            ``x_exp.ndim == ndim``
+
+    See Also
+    --------
+    np.expand_dims
+
+    Examples
+    --------
+    Expand a 1d array into an (n, 1) shape
+
+    >>> x = np.arange(3)
+    >>> librosa.util.expand_to(x, ndim=2, axes=0)
+    array([[0],
+       [1],
+       [2]])
+
+    Expand a 1d array into a (1, n) shape
+
+    >>> librosa.util.expand_to(x, ndim=2, axes=1)
+    array([[0, 1, 2]])
+
+    Expand a 2d array into (1, n, m, 1) shape
+
+    >>> x = np.vander(np.arange(3))
+    >>> librosa.util.expand_to(x, ndim=4, axes=[1,2]).shape
+    (1, 3, 3, 1)
+    """
+
+    # Force axes into a tuple
+
+    try:
+        axes = tuple(axes)
+    except TypeError:
+        axes = tuple([axes])
+
+    if len(axes) != x.ndim:
+        raise ParameterError('Shape mismatch between axes={} and input x.shape={}'.format(axes, x.shape))
+
+    if ndim < x.ndim:
+        raise ParameterError('Cannot expand x.shape={} to fewer dimensions ndim={}'.format(x.shape, ndim))
+
+    shape = [1] * ndim
+    for i, axi in enumerate(axes):
+        shape[axi] = x.shape[i]
+
+    return x.reshape(shape)
 
 
 def fix_length(data, size, axis=-1, **kwargs):
