@@ -390,23 +390,14 @@ def remix(y, intervals, align_zeros=True):
         # Force end-of-signal onto zeros
         zeros = np.append(zeros, [len(y_mono)])
 
-    clip = [slice(None)] * y.ndim
-
     for interval in intervals:
 
         if align_zeros:
             interval = zeros[util.match_events(interval, zeros)]
 
-        clip[-1] = slice(interval[0], interval[1])
+        y_out.append(y[..., interval[0]:interval[1]])
 
-        y_out.append(y[tuple(clip)])
-
-    y_out = np.asfortranarray(np.concatenate(y_out, axis=-1))
-
-    # Validate the output audio buffer
-    util.valid_audio(y_out, mono=False)
-
-    return y_out
+    return np.concatenate(y_out, axis=-1)
 
 
 def _signal_to_frame_nonsilent(
