@@ -410,7 +410,7 @@ def remix(y, intervals, align_zeros=True):
 
 
 def _signal_to_frame_nonsilent(
-    y, frame_length=2048, hop_length=512, top_db=60, ref=np.max
+    y, frame_length=2048, hop_length=512, top_db=60, ref=np.max, aggregate=np.max
 ):
     """Frame-wise non-silent indicator for audio input.
 
@@ -418,7 +418,7 @@ def _signal_to_frame_nonsilent(
 
     Parameters
     ----------
-    y : np.ndarray, shape=(n,) or (2,n)
+    y : np.ndarray
         Audio signal, mono or stereo
 
     frame_length : int > 0
@@ -434,21 +434,29 @@ def _signal_to_frame_nonsilent(
     ref : callable or float
         The reference power
 
+    aggregate : callable [default: np.max]
+        Function to aggregate dB measurements across channels (if y.ndim > 1)
+
     Returns
     -------
     non_silent : np.ndarray, shape=(m,), dtype=bool
         Indicator of non-silent frames
     """
-    # Convert to mono
-    y_mono = core.to_mono(y)
 
     # Compute the MSE for the signal
-    mse = feature.rms(y=y_mono, frame_length=frame_length, hop_length=hop_length) ** 2
+    mse = feature.rms(y=y, frame_length=frame_length, hop_length=hop_length)
 
-    return core.power_to_db(mse.squeeze(), ref=ref, top_db=None) > -top_db
+    # Convert to decibels and slice out the mse channel
+    db = core.amplitude_to_db(mse[..., 0, :], ref=ref, top_db=None)
+
+    # Aggregate everything but the time dimension
+    if db.ndim > 1:
+        db = aggregate(db, axis=range(db.nbim-1))
+
+    return db > -top_db
 
 
-def trim(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
+def trim(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512, aggregate=np.max):
     """Trim leading and trailing silence from an audio signal.
 
     Parameters
@@ -469,6 +477,9 @@ def trim(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
 
     hop_length : int > 0
         The number of samples between analysis frames
+
+    aggregate : callable [default: np.max]
+        Function to aggregate across channels (if y.ndim > 1)
 
     Returns
     -------
@@ -493,7 +504,7 @@ def trim(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
     """
 
     non_silent = _signal_to_frame_nonsilent(
-        y, frame_length=frame_length, hop_length=hop_length, ref=ref, top_db=top_db
+        y, frame_length=frame_length, hop_length=hop_length, ref=ref, top_db=top_db, aggregate=aggregate
     )
 
     nonzero = np.flatnonzero(non_silent)
@@ -514,7 +525,7 @@ def trim(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
     return y[tuple(full_index)], np.asarray([start, end])
 
 
-def split(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
+def split(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512, aggregate=np.max):
     """Split an audio signal into non-silent intervals.
 
     Parameters
@@ -536,6 +547,9 @@ def split(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
     hop_length : int > 0
         The number of samples between analysis frames
 
+    aggregate callable [default: np.max]
+        Function to aggregate across channels (if y.ndim > 1)
+
     Returns
     -------
     intervals : np.ndarray, shape=(m, 2)
@@ -545,7 +559,7 @@ def split(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
     """
 
     non_silent = _signal_to_frame_nonsilent(
-        y, frame_length=frame_length, hop_length=hop_length, ref=ref, top_db=top_db
+        y, frame_length=frame_length, hop_length=hop_length, ref=ref, top_db=top_db, aggregate=aggregate
     )
 
     # Interval slicing, adapted from
