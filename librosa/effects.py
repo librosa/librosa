@@ -103,7 +103,7 @@ def hpss(y, **kwargs):
     stft_harm, stft_perc = decompose.hpss(stft, **kwargs)
 
     # Invert the STFTs.  Adjust length to match the input.
-    y_harm = core.istft(stft_harm, dtype=y.dtype,length=y.shape[-1])
+    y_harm = core.istft(stft_harm, dtype=y.dtype, length=y.shape[-1])
     y_perc = core.istft(stft_perc, dtype=y.dtype, length=y.shape[-1])
 
     return y_harm, y_perc
@@ -149,7 +149,7 @@ def harmonic(y, **kwargs):
     stft_harm = decompose.hpss(stft, **kwargs)[0]
 
     # Invert the STFTs
-    y_harm = core.istft(stft_harm, dtype=y.dtype,length=y.shape[-1])
+    y_harm = core.istft(stft_harm, dtype=y.dtype, length=y.shape[-1])
 
     return y_harm
 
@@ -663,7 +663,7 @@ def preemphasis(y, coef=0.97, zi=None, return_zf=False):
     return y_out
 
 
-def deemphasis(y, coef=0.95, zi=None):
+def deemphasis(y, coef=0.97, zi=None, return_zf=False):
     """De-emphasize an audio signal with the inverse operation of preemphasis():
 
     If y = preemphasis(x, coef=coef, zi=zi), the deemphasis is:
@@ -696,10 +696,18 @@ def deemphasis(y, coef=0.95, zi=None):
         value corresponds to the transformation of the default initialization of ``zi`` in ``preemphasis()``,
         ``2*x[0] - x[1]``.
 
+    return_zf : boolean
+        If ``True``, return the final filter state.
+        If ``False``, only return the pre-emphasized signal.
+
+
     Returns
     -------
     y_out : np.ndarray
         de-emphasized signal
+
+    zf : number
+        if ``return_zf=True``, the final filter state is also returned
 
     Examples
     --------
@@ -715,12 +723,27 @@ def deemphasis(y, coef=0.95, zi=None):
     --------
     preemphasis
     """
-    b = np.asarray([1.0, -coef], dtype=y.dtype)
-    a = np.asarray([1.0], dtype=y.dtype)
+
+    b = np.array([1.0, -coef], dtype=y.dtype)
+    a = np.array([1.0], dtype=y.dtype)
 
     if zi is None:
-        zi = ((2 - coef) * y[0] - y[1]) / (3 - coef)
-    y[0] -= zi
+        # initialize with all zeros
+        zi = np.zeros(list(y.shape[:-1]) + [1], dtype=y.dtype)
+        y_out, zf = scipy.signal.lfilter(a, b, y, zi=zi)
 
-    y_out = scipy.signal.lfilter(a, b, y)
-    return y_out
+        # factor in the linear extrapolation
+        y_out -= (
+            ((2 - coef) * y[..., 0:1] - y[..., 1:2])
+            / (3 - coef)
+            * (coef ** np.arange(y.shape[-1]))
+        )
+
+    else:
+        zi = np.atleast_1d(zi)
+        y_out, zf = scipy.signal.lfilter(a, b, y, zi=zi.astype(y.dtype))
+
+    if return_zf:
+        return y_out, zf
+    else:
+        return y_out
