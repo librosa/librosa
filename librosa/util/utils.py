@@ -258,8 +258,7 @@ def valid_audio(y, mono=True):
             - ``type(y)`` is not ``np.ndarray``
             - ``y.dtype`` is not floating-point
             - ``mono == True`` and ``y.ndim`` is not 1
-            - ``mono == False`` and ``y.ndim`` is not 1 or 2
-            - ``mono == False`` and ``y.ndim == 2`` but ``y.shape[0] == 1``
+            - ``y.ndim == 0`` (scalar input) 
             - ``np.isfinite(y).all()`` is False
 
     Notes
@@ -290,21 +289,13 @@ def valid_audio(y, mono=True):
     if not np.issubdtype(y.dtype, np.floating):
         raise ParameterError("Audio data must be floating-point")
 
+    if y.ndim == 0:
+        raise ParameterError('Audio data must be at least one-dimensional, given y.shape={}'.format(y.shape))
+
     if mono and y.ndim != 1:
         raise ParameterError(
             "Invalid shape for monophonic audio: "
             "ndim={:d}, shape={}".format(y.ndim, y.shape)
-        )
-
-    elif y.ndim > 2 or y.ndim == 0:
-        raise ParameterError(
-            "Audio data must have shape (samples,) or (channels, samples). "
-            "Received shape={}".format(y.shape)
-        )
-
-    elif y.ndim == 2 and y.shape[0] < 2:
-        raise ParameterError(
-            "Mono data must have shape (samples,). " "Received shape={}".format(y.shape)
         )
 
     if not np.isfinite(y).all():
