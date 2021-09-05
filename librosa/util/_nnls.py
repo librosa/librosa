@@ -25,13 +25,13 @@ def _nnls_obj(x, shape, A, B):
     x = x.reshape(shape)
 
     # Compute the difference matrix
-    diff = np.dot(A, x) - B
+    diff = np.einsum('mf,...ft->...mt',A,x, optimize=True) - B
 
     # Compute the objective value
-    value = 0.5 * np.sum(diff ** 2)
+    value = 0.5 * np.sum(diff ** 2, axis=(-1,-2))
 
     # And the gradient
-    grad = np.dot(A.T, diff)
+    grad = np.einsum('fm,...mt->...ft',A.T,diff, optimize=True)
 
     # Flatten the gradient
     return value, grad.flatten()
@@ -63,11 +63,11 @@ def _nnls_lbfgs_block(A, B, x_init=None, **kwargs):
     # If we don't have an initial point, start at the projected
     # least squares solution
     if x_init is None:
-        x_init = np.linalg.lstsq(A, B, rcond=None)[0]
+        x_init = np.einsum('fm,...mt->...ft', np.linalg.pinv(A), B, optimize=True)
         np.clip(x_init, 0, None, out=x_init)
 
     # Adapt the hessian approximation to the dimension of the problem
-    kwargs.setdefault("m", A.shape[1])
+    kwargs.setdefault("m", A.shape[-1])
 
     # Construct non-negative bounds
     bounds = [(0, None)] * x_init.size
@@ -150,13 +150,13 @@ def nnls(A, B, **kwargs):
     if B.shape[-1] <= n_columns:
         return _nnls_lbfgs_block(A, B, **kwargs).astype(A.dtype)
 
-    x = np.linalg.lstsq(A, B, rcond=None)[0].astype(A.dtype)
+    x = np.einsum('fm,...mt->...ft', np.linalg.pinv(A), B, optimize=True)
     np.clip(x, 0, None, out=x)
     x_init = x
 
     for bl_s in range(0, x.shape[-1], n_columns):
         bl_t = min(bl_s + n_columns, B.shape[-1])
-        x[:, bl_s:bl_t] = _nnls_lbfgs_block(
-            A, B[:, bl_s:bl_t], x_init=x_init[:, bl_s:bl_t], **kwargs
+        x[..., bl_s:bl_t] = _nnls_lbfgs_block(
+            A, B[..., bl_s:bl_t], x_init=x_init[..., bl_s:bl_t], **kwargs
         )
     return x

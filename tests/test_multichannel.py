@@ -20,6 +20,7 @@ import scipy.io
 import pytest
 import warnings
 from unittest import mock
+from test_core import srand
 
 from contextlib2 import nullcontext as dnr
 
@@ -902,3 +903,30 @@ def test_click_multi():
     assert np.allclose(yout[..., :100], click)
     assert np.allclose(yout[..., 1000:1100], click)
     assert np.allclose(yout[..., 2000:2100], click)
+
+
+def test_nnls_multi(s_multi):
+
+    # Verify that a stereo melspectrogram can be reconstructed
+    # for each channel individually
+    S, sr = s_multi
+
+    # multichannel
+    M = librosa.feature.melspectrogram(S=S, sr=sr, power=1)
+    mel_basis = librosa.filters.mel(sr, n_fft=S.shape[-2], n_mels = M.shape[-2])
+    S_recover = librosa.util.nnls(mel_basis, M)
+
+    # channel 0
+    M0 = librosa.feature.melspectrogram(S=S[0], sr=sr, power=1)
+    S0_recover = librosa.util.nnls(mel_basis, M0)
+
+    # chanel 1
+    M1 = librosa.feature.melspectrogram(S=S[1], sr=sr, power=1)
+    S1_recover = librosa.util.nnls(mel_basis, M1)
+
+    # Check each channel
+    assert np.allclose(S_recover[0], S0_recover, atol = 0.5, rtol = 0.5)
+    assert np.allclose(S_recover[1], S1_recover, atol = 0.5, rtol = 0.5)
+
+    # Check that they're not both the same
+    assert not np.allclose(S0_recover, S1_recover, atol = 0.5, rtol = 0.5)
