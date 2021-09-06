@@ -20,7 +20,6 @@ import scipy.io
 import pytest
 import warnings
 from unittest import mock
-from test_core import srand
 
 from contextlib2 import nullcontext as dnr
 
@@ -912,21 +911,34 @@ def test_nnls_multi(s_multi):
     S, sr = s_multi
 
     # multichannel
-    M = librosa.feature.melspectrogram(S=S, sr=sr, power=1)
-    mel_basis = librosa.filters.mel(sr, n_fft=S.shape[-2], n_mels = M.shape[-2])
+    mel_basis = librosa.filters.mel(sr, n_fft=2*S.shape[-2]-1, n_mels = 32)
+    M = np.einsum('...ft,mf->...mt', S, mel_basis)
     S_recover = librosa.util.nnls(mel_basis, M)
 
     # channel 0
-    M0 = librosa.feature.melspectrogram(S=S[0], sr=sr, power=1)
+    M0 = np.einsum('...ft,mf->...mt', S[0], mel_basis)
     S0_recover = librosa.util.nnls(mel_basis, M0)
 
-    # chanel 1
-    M1 = librosa.feature.melspectrogram(S=S[1], sr=sr, power=1)
+    # channel 1
+    M1 = np.einsum('...ft,mf->...mt', S[1], mel_basis)
     S1_recover = librosa.util.nnls(mel_basis, M1)
 
     # Check each channel
-    assert np.allclose(S_recover[0], S0_recover, atol = 0.5, rtol = 0.5)
-    assert np.allclose(S_recover[1], S1_recover, atol = 0.5, rtol = 0.5)
+    assert np.allclose(S_recover[0], S0_recover)
+    assert np.allclose(S_recover[1], S1_recover)
 
     # Check that they're not both the same
-    assert not np.allclose(S0_recover, S1_recover, atol = 0.5, rtol = 0.5)
+    assert not np.allclose(S0_recover, S1_recover)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_nnls_badBndim(s_multi):
+
+    # Verify that a target matrix with ndim > 3 raises a ParameterError
+    S, sr = s_multi
+
+    # multichannel
+    mel_basis = librosa.filters.mel(sr, n_fft=2*S.shape[-2]-1, n_mels = 32)
+    M = np.einsum('...ft,mf->...mt', S, mel_basis)
+    S_recover = librosa.util.nnls(mel_basis, M[np.newaxis])
+
