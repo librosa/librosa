@@ -904,14 +904,15 @@ def test_click_multi():
     assert np.allclose(yout[..., 2000:2100], click)
 
 
-def test_nnls_multi(s_multi):
+def test_nnls_multi(y_multi):
 
     # Verify that a stereo melspectrogram can be reconstructed
     # for each channel individually
-    S, sr = s_multi
+    y, sr = y_multi
+    S = np.abs(librosa.stft(y, n_fft=256))
 
-    # multichannel
-    mel_basis = librosa.filters.mel(sr, n_fft=2*S.shape[-2]-1, n_mels = 32)
+    # multichannel  
+    mel_basis = librosa.filters.mel(sr, n_fft=2*S.shape[-2]-1)
     M = np.einsum('...ft,mf->...mt', S, mel_basis)
     S_recover = librosa.util.nnls(mel_basis, M)
 
@@ -929,16 +930,3 @@ def test_nnls_multi(s_multi):
 
     # Check that they're not both the same
     assert not np.allclose(S0_recover, S1_recover)
-
-
-@pytest.mark.xfail(raises=librosa.ParameterError)
-def test_nnls_badBndim(s_multi):
-
-    # Verify that a target matrix with ndim > 3 raises a ParameterError
-    S, sr = s_multi
-
-    # multichannel
-    mel_basis = librosa.filters.mel(sr, n_fft=2*S.shape[-2]-1, n_mels = 32)
-    M = np.einsum('...ft,mf->...mt', S, mel_basis)
-    S_recover = librosa.util.nnls(mel_basis, M[np.newaxis])
-

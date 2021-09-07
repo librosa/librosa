@@ -12,7 +12,6 @@
 import numpy as np
 import scipy.optimize
 from .utils import MAX_MEM_BLOCK
-from .exceptions import ParameterError
 
 
 __all__ = ["nnls"]
@@ -32,7 +31,7 @@ def _nnls_obj(x, shape, A, B):
     value = 0.5 * np.sum(diff ** 2)
 
     # And the gradient
-    grad = np.einsum('fm,...mt->...ft',A.T,diff, optimize=True)
+    grad = np.einsum('mf,...mt->...ft',A,diff, optimize=True)
 
     # Flatten the gradient
     return value, grad.flatten()
@@ -68,7 +67,7 @@ def _nnls_lbfgs_block(A, B, x_init=None, **kwargs):
         np.clip(x_init, 0, None, out=x_init)
 
     # Adapt the hessian approximation to the dimension of the problem
-    kwargs.setdefault("m", A.shape[-1])
+    kwargs.setdefault("m", A.shape[1])
 
     # Construct non-negative bounds
     bounds = [(0, None)] * x_init.size
@@ -80,23 +79,6 @@ def _nnls_lbfgs_block(A, B, x_init=None, **kwargs):
     )
     # reshape the solution
     return x.reshape(shape)
-
-
-def _process_in_blocks(A, B, n_columns, **kwargs):
-    # Process in blocks:
-    if B.shape[-1] <= n_columns:
-        return _nnls_lbfgs_block(A, B, **kwargs).astype(A.dtype)
-    
-    x = np.einsum('fm,...mt->...ft', np.linalg.pinv(A), B, optimize=True)
-    np.clip(x, 0, None, out=x)
-    x_init = x
-    
-    for bl_s in range(0, x.shape[-1], n_columns):
-        bl_t = min(bl_s + n_columns, B.shape[-1])
-        x[..., bl_s:bl_t] = _nnls_lbfgs_block(
-            A, B[..., bl_s:bl_t], x_init=x_init[..., bl_s:bl_t], **kwargs
-        )
-    return x
 
 
 def nnls(A, B, **kwargs):
@@ -164,13 +146,18 @@ def nnls(A, B, **kwargs):
     n_columns = MAX_MEM_BLOCK // (A.shape[-1] * A.itemsize)
     n_columns = max(n_columns, 1)
 
-    # if single channel
-    if B.ndim == 2:
-        x = _process_in_blocks(A,B,n_columns,**kwargs)    
-    elif B.ndim == 3:
-        x = []
-        for iB in B:
-            x.append(_process_in_blocks(A,iB,n_columns,**kwargs))
-    else:
-        raise ParameterError("Target matrix B should have ndim <= 3 but has B.ndim: {:d}".format(B.ndim))
-    return np.array(x)
+    # Process in blocks:
+    if B.shape[-1] <= n_columns:
+        return _nnls_lbfgs_block(A, B, **kwargs).astype(A.dtype)
+    
+    x = np.einsum('fm,...mt->...ft', np.linalg.pinv(A), B, optimize=True)
+    np.clip(x, 0, None, out=x)
+    x_init = x
+    
+    for bl_s in range(0, x.shape[-1], n_columns):
+        bl_t = min(bl_s + n_columns, B.shape[-1])
+        x[..., bl_s:bl_t] = _nnls_lbfgs_block(
+            A, B[..., bl_s:bl_t], x_init=x_init[..., bl_s:bl_t], **kwargs
+        )
+
+    return x
