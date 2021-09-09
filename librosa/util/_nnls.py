@@ -143,7 +143,7 @@ def nnls(A, B, **kwargs):
     if B.ndim == 1:
         return scipy.optimize.nnls(A, B)[0]
 
-    n_columns = MAX_MEM_BLOCK // (A.shape[-1] * A.itemsize)
+    n_columns = MAX_MEM_BLOCK // (np.prod(B.shape[:-1]) * A.itemsize)
     n_columns = max(n_columns, 1)
 
     # Process in blocks:
