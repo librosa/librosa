@@ -961,7 +961,7 @@ def test_mel_to_stft_multi(power,  n_fft):
 @pytest.mark.parametrize("n_mfcc", [13, 20])
 @pytest.mark.parametrize("n_mels", [64, 128])
 @pytest.mark.parametrize("dct_type", [2, 3])
-def test_mfcc_to_mel(s_multi, n_mfcc, n_mels, dct_type):
+def test_mfcc_to_mel_multi(s_multi, n_mfcc, n_mels, dct_type):
 
     S, sr = s_multi
 
