@@ -1092,7 +1092,7 @@ def test_nnls_matrix(dtype_A, dtype_B, x_size):
     x_rec = librosa.util.nnls(A, B)
 
     assert np.all(x_rec >= 0)
-    assert np.sqrt(np.mean((B - A.dot(x_rec)) ** 2)) <= 1e-5
+    assert np.sqrt(np.mean((B - A.dot(x_rec)) ** 2)) <= 2e-4
 
 
 @pytest.mark.parametrize("dtype_A", [np.float32, np.float64])
@@ -1113,7 +1113,7 @@ def test_nnls_multiblock(dtype_A, dtype_B, x_size):
     x_rec = librosa.util.nnls(A, B)
 
     assert np.all(x_rec >= 0)
-    assert np.sqrt(np.mean((B - A.dot(x_rec)) ** 2)) <= 1e-4
+    assert np.sqrt(np.mean((B - A.dot(x_rec)) ** 2)) <= 2e-4
 
 
 @pytest.fixture
