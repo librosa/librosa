@@ -226,13 +226,13 @@ def tempo(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)] or None
-        audio time series
+    y : np.ndarray [shape=(..., n)] or None
+        audio time series, can be one or more channels
 
     sr : number > 0 [scalar]
         sampling rate of the time series
 
-    onset_envelope    : np.ndarray [shape=(n,)]
+    onset_envelope    : np.ndarray [shape=(..., n)]
         pre-computed onset strength envelope
 
     hop_length : int > 0 [scalar]
@@ -261,8 +261,9 @@ def tempo(
 
     Returns
     -------
-    tempo : np.ndarray [scalar]
-        estimated tempo (beats per minute)
+    tempo : np.ndarray
+        estimated tempo (beats per minute).
+        If input is multi-channel, one tempo estimate per channel is provided.
 
     See Also
     --------
@@ -411,13 +412,13 @@ def plp(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)] or None
-        audio time series
+    y : np.ndarray [shape=(..., n)] or None
+        audio time series, can be one or more channels
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
 
-    onset_envelope : np.ndarray [shape=(n,)] or None
+    onset_envelope : np.ndarray [shape=(..., n)] or None
         (optional) pre-computed onset strength envelope
 
     hop_length : int > 0 [scalar]
@@ -440,9 +441,11 @@ def plp(
 
     Returns
     -------
-    pulse : np.ndarray, shape=[(n,)]
+    pulse : np.ndarray, shape=[(..., n)]
         The estimated pulse curve.  Maxima correspond to rhythmically salient
         points of time.
+
+        If input is multi-channel, one pulse curve per channel is computed.
 
     See Also
     --------
