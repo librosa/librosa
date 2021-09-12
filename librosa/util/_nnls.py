@@ -149,7 +149,7 @@ def nnls(A, B, **kwargs):
     # Process in blocks:
     if B.shape[-1] <= n_columns:
         return _nnls_lbfgs_block(A, B, **kwargs).astype(A.dtype)
-    
+
     x = np.einsum('fm,...mt->...ft', np.linalg.pinv(A), B, optimize=True)
     np.clip(x, 0, None, out=x)
     x_init = x
@@ -159,5 +159,4 @@ def nnls(A, B, **kwargs):
         x[..., bl_s:bl_t] = _nnls_lbfgs_block(
             A, B[..., bl_s:bl_t], x_init=x_init[..., bl_s:bl_t], **kwargs
         )
-
     return x

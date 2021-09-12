@@ -910,7 +910,7 @@ def test_nnls_multi(s_multi):
     # Verify that a stereo melspectrogram can be reconstructed
     # for each channel individually
     S, sr = s_multi
-    S = S[...,:int(S.shape[-1]/2)]
+    S = S[...,:int(S.shape[-1]/8)]
 
     # multichannel  
     mel_basis = librosa.filters.mel(sr, n_fft=2*S.shape[-2]-1)
