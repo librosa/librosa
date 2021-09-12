@@ -258,7 +258,7 @@ def valid_audio(y, mono=True):
             - ``type(y)`` is not ``np.ndarray``
             - ``y.dtype`` is not floating-point
             - ``mono == True`` and ``y.ndim`` is not 1
-            - ``y.ndim == 0`` (scalar input) 
+            - ``y.ndim == 0`` (scalar input)
             - ``np.isfinite(y).all()`` is False
 
     Notes
@@ -290,7 +290,11 @@ def valid_audio(y, mono=True):
         raise ParameterError("Audio data must be floating-point")
 
     if y.ndim == 0:
-        raise ParameterError('Audio data must be at least one-dimensional, given y.shape={}'.format(y.shape))
+        raise ParameterError(
+            "Audio data must be at least one-dimensional, given y.shape={}".format(
+                y.shape
+            )
+        )
 
     if mono and y.ndim != 1:
         raise ParameterError(
@@ -499,10 +503,14 @@ def expand_to(x, ndim, axes):
         axes = tuple([axes])
 
     if len(axes) != x.ndim:
-        raise ParameterError('Shape mismatch between axes={} and input x.shape={}'.format(axes, x.shape))
+        raise ParameterError(
+            "Shape mismatch between axes={} and input x.shape={}".format(axes, x.shape)
+        )
 
     if ndim < x.ndim:
-        raise ParameterError('Cannot expand x.shape={} to fewer dimensions ndim={}'.format(x.shape, ndim))
+        raise ParameterError(
+            "Cannot expand x.shape={} to fewer dimensions ndim={}".format(x.shape, ndim)
+        )
 
     shape = [1] * ndim
     for i, axi in enumerate(axes):
@@ -779,7 +787,7 @@ def normalize(S, norm=np.inf, axis=0, threshold=None, fill=None):
     Parameters
     ----------
     S : np.ndarray
-        The matrix to normalize
+        The array to normalize
 
     norm : {np.inf, -np.inf, 0, float > 0, None}
         - `np.inf`  : maximum absolute value
