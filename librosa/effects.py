@@ -63,8 +63,8 @@ def hpss(y, **kwargs):
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        audio time series
+    y : np.ndarray [shape=(..., n)]
+        audio time series, may consist of one or more channels
 
     kwargs : additional keyword arguments.
         See `librosa.decompose.hpss` for details.
@@ -72,10 +72,10 @@ def hpss(y, **kwargs):
 
     Returns
     -------
-    y_harmonic : np.ndarray [shape=(n,)]
+    y_harmonic : np.ndarray [shape=(..., n)]
         audio time series of the harmonic elements
 
-    y_percussive : np.ndarray [shape=(n,)]
+    y_percussive : np.ndarray [shape=(..., n)]
         audio time series of the percussive elements
 
     See Also
@@ -114,15 +114,15 @@ def harmonic(y, **kwargs):
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        audio time series
+    y : np.ndarray [shape=(..., n)]
+        audio time series, may consist of one or more channels
 
     kwargs : additional keyword arguments.
         See `librosa.decompose.hpss` for details.
 
     Returns
     -------
-    y_harmonic : np.ndarray [shape=(n,)]
+    y_harmonic : np.ndarray [shape=(..., n)]
         audio time series of just the harmonic portion
 
     See Also
@@ -159,15 +159,15 @@ def percussive(y, **kwargs):
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        audio time series
+    y : np.ndarray [shape=(..., n)]
+        audio time series, may consist of one or more channels
 
     kwargs : additional keyword arguments.
         See `librosa.decompose.hpss` for details.
 
     Returns
     -------
-    y_percussive : np.ndarray [shape=(n,)]
+    y_percussive : np.ndarray [shape=(..., n)]
         audio time series of just the percussive portion
 
     See Also
@@ -205,8 +205,8 @@ def time_stretch(y, rate, **kwargs):
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        audio time series
+    y : np.ndarray [shape=(..., n)]
+        audio time series, may consist of one or more channels
 
     rate : float > 0 [scalar]
         Stretch factor.  If ``rate > 1``, then the signal is sped up.
@@ -217,7 +217,7 @@ def time_stretch(y, rate, **kwargs):
 
     Returns
     -------
-    y_stretch : np.ndarray [shape=(round(n/rate),)]
+    y_stretch : np.ndarray [shape=(..., round(n/rate))]
         audio time series stretched by the specified rate
 
     See Also
@@ -264,8 +264,8 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type="kaiser_best", **kw
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        audio time series
+    y : np.ndarray [shape=(..., n)]
+        audio time series, may consist of one or more channels
 
     sr : number > 0 [scalar]
         audio sampling rate of ``y``
@@ -286,7 +286,7 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type="kaiser_best", **kw
 
     Returns
     -------
-    y_shift : np.ndarray [shape=(n,)]
+    y_shift : np.ndarray [shape=(..., n)]
         The pitch-shifted audio time-series
 
 
@@ -333,8 +333,8 @@ def remix(y, intervals, align_zeros=True):
 
     Parameters
     ----------
-    y : np.ndarray [shape=(t,) or (2, t)]
-        Audio time series
+    y : np.ndarray [shape=(..., t)]
+        Audio time series, may consist of one or more channels
 
     intervals : iterable of tuples (start, end)
         An iterable (list-like or generator) where the ``i``th item
@@ -349,7 +349,7 @@ def remix(y, intervals, align_zeros=True):
 
     Returns
     -------
-    y_remix : np.ndarray [shape=(d,) or (2, d)]
+    y_remix : np.ndarray [shape=(..., d)]
         ``y`` remixed in the order specified by ``intervals``
 
 
@@ -452,8 +452,8 @@ def trim(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512, aggregate=
 
     Parameters
     ----------
-    y : np.ndarray, shape=(n,) or (2,n)
-        Audio signal, can be mono or stereo
+    y : np.ndarray, shape=(..., n)
+        Audio signal, may consist of one or more channels
 
     top_db : number > 0
         The threshold (in decibels) below reference to consider as
@@ -474,7 +474,7 @@ def trim(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512, aggregate=
 
     Returns
     -------
-    y_trimmed : np.ndarray, shape=(m,) or (2, m)
+    y_trimmed : np.ndarray, shape=(..., m)
         The trimmed signal
 
     index : np.ndarray, shape=(2,)
@@ -521,8 +521,8 @@ def split(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512, aggregate
 
     Parameters
     ----------
-    y : np.ndarray, shape=(n,) or (2, n)
-        An audio signal
+    y : np.ndarray, shape=(..., n)
+        An audio signal, may consist of one or more channels
 
     top_db : number > 0
         The threshold (in decibels) below reference to consider as
@@ -587,8 +587,8 @@ def preemphasis(y, coef=0.97, zi=None, return_zf=False):
 
     Parameters
     ----------
-    y : np.ndarray
-        Audio signal
+    y : np.ndarray [shape=(..., n)]
+        Audio signal, may consist of one or more channels
 
     coef : positive number
         Pre-emphasis coefficient.  Typical values of ``coef`` are between 0 and 1.
@@ -678,8 +678,8 @@ def deemphasis(y, coef=0.97, zi=None, return_zf=False):
 
     Parameters
     ----------
-    y : np.ndarray
-        Audio signal
+    y : np.ndarray [shape=(..., n)]
+        Audio signal, may consist of one or more channels
 
     coef : positive number
         Pre-emphasis coefficient.  Typical values of ``coef`` are between 0 and 1.
