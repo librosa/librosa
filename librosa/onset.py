@@ -603,7 +603,9 @@ def onset_strength_multi(
         pad = False
 
     if aggregate:
-        onset_env = util.sync(onset_env, channels, aggregate=aggregate, pad=pad, axis=-2)
+        onset_env = util.sync(
+            onset_env, channels, aggregate=aggregate, pad=pad, axis=-2
+        )
 
     # compensate for lag
     pad_width = lag
@@ -612,9 +614,9 @@ def onset_strength_multi(
         pad_width += n_fft // (2 * hop_length)
 
     onset_env_ndims = onset_env.ndim
-    padding = [(0,0) for _ in onset_env.shape]
+    padding = [(0, 0) for _ in onset_env.shape]
     padding[-1] = (int(pad_width), 0)
-    onset_env = np.pad(onset_env, padding, mode='constant')
+    onset_env = np.pad(onset_env, padding, mode="constant")
 
     # remove the DC component
     if detrend:

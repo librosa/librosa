@@ -395,7 +395,7 @@ def remix(y, intervals, align_zeros=True):
         if align_zeros:
             interval = zeros[util.match_events(interval, zeros)]
 
-        y_out.append(y[..., interval[0]:interval[1]])
+        y_out.append(y[..., interval[0] : interval[1]])
 
     return np.concatenate(y_out, axis=-1)
 
@@ -442,7 +442,7 @@ def _signal_to_frame_nonsilent(
 
     # Aggregate everything but the time dimension
     if db.ndim > 1:
-        db = aggregate(db, axis=range(db.nbim-1))
+        db = aggregate(db, axis=range(db.nbim - 1))
 
     return db > -top_db
 
@@ -495,7 +495,12 @@ def trim(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512, aggregate=
     """
 
     non_silent = _signal_to_frame_nonsilent(
-        y, frame_length=frame_length, hop_length=hop_length, ref=ref, top_db=top_db, aggregate=aggregate
+        y,
+        frame_length=frame_length,
+        hop_length=hop_length,
+        ref=ref,
+        top_db=top_db,
+        aggregate=aggregate,
     )
 
     nonzero = np.flatnonzero(non_silent)
@@ -516,7 +521,9 @@ def trim(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512, aggregate=
     return y[tuple(full_index)], np.asarray([start, end])
 
 
-def split(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512, aggregate=np.max):
+def split(
+    y, top_db=60, ref=np.max, frame_length=2048, hop_length=512, aggregate=np.max
+):
     """Split an audio signal into non-silent intervals.
 
     Parameters
@@ -550,7 +557,12 @@ def split(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512, aggregate
     """
 
     non_silent = _signal_to_frame_nonsilent(
-        y, frame_length=frame_length, hop_length=hop_length, ref=ref, top_db=top_db, aggregate=aggregate
+        y,
+        frame_length=frame_length,
+        hop_length=hop_length,
+        ref=ref,
+        top_db=top_db,
+        aggregate=aggregate,
     )
 
     # Interval slicing, adapted from

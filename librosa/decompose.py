@@ -74,7 +74,7 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
         .. note:: If used with ``transformer``, sorting is applied to copies
             of the decomposition parameters, and not to ``transformer``
             internal parameters.
-            
+
         .. warning:: If the input array has more than two dimensions
             (e.g., if it's a multi-channel spectrogram), then axis sorting
             is not supported and an exception is raised.
@@ -155,11 +155,13 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
     orig_shape = list(S.shape)
 
     if S.ndim > 2 and sort:
-        raise ParameterError('Parameter sort=True is unsupported for input with more than two dimensions')
+        raise ParameterError(
+            "Parameter sort=True is unsupported for input with more than two dimensions"
+        )
 
     # Transpose S and unroll feature dimensions
     # Use order='F' here to preserve the temporal ordering
-    S = S.T.reshape((S.shape[-1], -1), order='F')
+    S = S.T.reshape((S.shape[-1], -1), order="F")
 
     if n_components is None:
         n_components = S.shape[-1]
@@ -178,7 +180,7 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
     components = transformer.components_
     component_shape = orig_shape[:-1] + [-1]
     # use order='F' here to preserve component ordering
-    components = components.reshape(component_shape[::-1], order='F').T
+    components = components.reshape(component_shape[::-1], order="F").T
 
     if sort:
         components, idx = util.axis_sort(components, index=True)
