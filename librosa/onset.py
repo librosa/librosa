@@ -47,7 +47,7 @@ def onset_detect(
     Parameters
     ----------
     y          : np.ndarray [shape=(n,)]
-        audio time series
+        audio time series, must be monophonic
 
     sr         : number > 0 [scalar]
         sampling rate of ``y``
@@ -222,13 +222,13 @@ def onset_strength(
 
     Parameters
     ----------
-    y        : np.ndarray [shape=(n,)]
-        audio time-series
+    y        : np.ndarray [shape=(..., n)]
+        audio time-series, may contain one or more channels
 
     sr       : number > 0 [scalar]
         sampling rate of ``y``
 
-    S        : np.ndarray [shape=(d, m)]
+    S        : np.ndarray [shape=(..., d, m)]
         pre-computed (log-power) spectrogram
 
     lag      : int > 0
@@ -238,7 +238,7 @@ def onset_strength(
         size (in frequency bins) of the local max filter.
         set to `1` to disable filtering.
 
-    ref : None or np.ndarray [shape=(d, m)]
+    ref : None or np.ndarray [shape=(..., d, m)]
         An optional pre-computed reference spectrum, of the same shape as ``S``.
         If not provided, it will be computed from ``S``.
         If provided, it will override any local max filtering governed by ``max_size``.
@@ -267,8 +267,9 @@ def onset_strength(
 
     Returns
     -------
-    onset_envelope   : np.ndarray [shape=(m,)]
-        vector containing the onset strength envelope
+    onset_envelope   : np.ndarray [shape=(..., m,)]
+        vector containing the onset strength envelope.
+        If the input contains multiple channels, then onset envelope is computed for each channel.
 
 
     Raises
@@ -450,13 +451,13 @@ def onset_strength_multi(
 
     Parameters
     ----------
-    y        : np.ndarray [shape=(n,)]
-        audio time-series
+    y        : np.ndarray [shape=(..., n,)]
+        audio time-series, may consist of one or more channels
 
     sr       : number > 0 [scalar]
         sampling rate of ``y``
 
-    S        : np.ndarray [shape=(d, m)]
+    S        : np.ndarray [shape=(..., d, m)]
         pre-computed (log-power) spectrogram
 
     n_fft : int > 0 [scalar]
@@ -509,7 +510,7 @@ def onset_strength_multi(
 
     Returns
     -------
-    onset_envelope   : np.ndarray [shape=(n_channels, m)]
+    onset_envelope   : np.ndarray [shape=(..., n_channels, m)]
         array containing the onset strength envelope for each specified channel
 
 
