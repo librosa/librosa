@@ -67,17 +67,17 @@ def cross_similarity(
     """Compute cross-similarity from one data sequence to a reference sequence.
 
     The output is a matrix ``xsim``, where ``xsim[i, j]`` is non-zero
-    if ``data_ref[:, i]`` is a k-nearest neighbor of ``data[:, j]``.
+    if ``data_ref[..., i]`` is a k-nearest neighbor of ``data[..., j]``.
 
 
     Parameters
     ----------
-    data : np.ndarray [shape=(d, n)]
+    data : np.ndarray [shape=(..., d, n)]
         A feature matrix for the comparison sequence.
         If the data has more than two dimensions (e.g., for multi-channel inputs),
         the leading dimensions are flattened prior to comparison.
 
-    data_ref : np.ndarray [shape=(d, n_ref)]
+    data_ref : np.ndarray [shape=(..., d, n_ref)]
         A feature matrix for the reference sequence
         If the data has more than two dimensions (e.g., for multi-channel inputs),
         the leading dimensions are flattened prior to comparison.
@@ -295,7 +295,7 @@ def recurrence_matrix(
 
     Parameters
     ----------
-    data : np.ndarray [shape=(d, n)]
+    data : np.ndarray [shape=(..., d, n)]
         A feature matrix.
         If the data has more than two dimensions (e.g., for multi-channel inputs),
         the leading dimensions are flattened prior to comparison.
