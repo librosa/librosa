@@ -11,7 +11,7 @@ from ..core.spectrum import griffinlim
 from ..core.spectrum import db_to_power
 from ..util.utils import tiny
 from .. import filters
-from ..util import nnls
+from ..util import nnls, expand_to
 
 
 __all__ = ["mel_to_stft", "mel_to_audio", "mfcc_to_mel", "mfcc_to_audio"]
@@ -239,9 +239,7 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm="ortho", ref=1.0, lifter=0):
     if lifter > 0:
         n_mfcc = mfcc.shape[-2]
         idx = np.arange(1, 1 + n_mfcc, dtype=mfcc.dtype)
-        shape = [1 for _ in mfcc.shape]
-        shape[-2] = len(idx)
-        idx = idx.reshape(shape)
+        idx = expand_to(idx, ndim=mfcc.ndim, axes=-2)
         lifter_sine = 1 + lifter * 0.5 * np.sin(np.pi * idx / lifter)
 
         # raise a UserWarning if lifter array includes critical values
