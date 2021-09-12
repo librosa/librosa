@@ -910,11 +910,12 @@ def test_nnls_multi(s_multi):
     # Verify that a stereo melspectrogram can be reconstructed
     # for each channel individually
     S, sr = s_multi
-    S = S[...,:int(S.shape[-1]/8)]
+    S = S[...,:int(S.shape[-1]/2)]
 
     # multichannel  
-    mel_basis = librosa.filters.mel(sr, n_fft=2*S.shape[-2]-1)
+    mel_basis = librosa.filters.mel(sr, n_fft=2*S.shape[-2]-1, n_mels=256)
     M = np.einsum('...ft,mf->...mt', S, mel_basis)
+    print(M.shape, mel_basis.shape)
     S_recover = librosa.util.nnls(mel_basis, M)
 
     # channel 0
