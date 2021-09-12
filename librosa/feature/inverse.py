@@ -80,7 +80,7 @@ def mel_to_stft(M, sr=22050, n_fft=2048, power=2.0, **kwargs):
     """
 
     # Construct a mel basis with dtype matching the input data
-    mel_basis = filters.mel(sr, n_fft, n_mels=M.shape[0], dtype=M.dtype, **kwargs)
+    mel_basis = filters.mel(sr, n_fft, n_mels=M.shape[-2], dtype=M.dtype, **kwargs)
 
     # Find the non-negative least squares solution, and apply
     # the inverse exponent.
@@ -237,9 +237,12 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm="ortho", ref=1.0, lifter=0):
     scipy.fftpack.dct
     """
     if lifter > 0:
-        n_mfcc = mfcc.shape[0]
+        n_mfcc = mfcc.shape[-2]
         idx = np.arange(1, 1 + n_mfcc, dtype=mfcc.dtype)
-        lifter_sine = 1 + lifter * 0.5 * np.sin(np.pi * idx / lifter)[:, np.newaxis]
+        shape = [1 for _ in mfcc.shape]
+        shape[-2] = len(idx)
+        idx = idx.reshape(shape)
+        lifter_sine = 1 + lifter * 0.5 * np.sin(np.pi * idx / lifter)
 
         # raise a UserWarning if lifter array includes critical values
         if np.any(np.abs(lifter_sine) < np.finfo(lifter_sine.dtype).eps):
@@ -254,7 +257,7 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm="ortho", ref=1.0, lifter=0):
     elif lifter != 0:
         raise ParameterError("MFCC to mel lifter must be a non-negative number.")
 
-    logmel = scipy.fftpack.idct(mfcc, axis=0, type=dct_type, norm=norm, n=n_mels)
+    logmel = scipy.fftpack.idct(mfcc, axis=-2, type=dct_type, norm=norm, n=n_mels)
     return db_to_power(logmel, ref=ref)
 
 

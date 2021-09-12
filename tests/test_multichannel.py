@@ -22,6 +22,7 @@ import warnings
 from unittest import mock
 
 from contextlib2 import nullcontext as dnr
+from test_core import srand
 
 
 @pytest.fixture(scope="module", params=["test1_44100.wav"])
@@ -902,3 +903,92 @@ def test_click_multi():
     assert np.allclose(yout[..., :100], click)
     assert np.allclose(yout[..., 1000:1100], click)
     assert np.allclose(yout[..., 2000:2100], click)
+
+
+def test_nnls_multi(s_multi):
+
+    # Verify that a stereo melspectrogram can be reconstructed
+    # for each channel individually
+    S, sr = s_multi
+    S = S[...,:int(S.shape[-1]/2)]
+
+    # multichannel  
+    mel_basis = librosa.filters.mel(sr, n_fft=2*S.shape[-2]-1, n_mels=256)
+    M = np.einsum('...ft,mf->...mt', S, mel_basis)
+    print(M.shape, mel_basis.shape)
+    S_recover = librosa.util.nnls(mel_basis, M)
+
+    # channel 0
+    M0 = np.einsum('...ft,mf->...mt', S[0], mel_basis)
+    S0_recover = librosa.util.nnls(mel_basis, M0)
+
+    # channel 1
+    M1 = np.einsum('...ft,mf->...mt', S[1], mel_basis)
+    S1_recover = librosa.util.nnls(mel_basis, M1)
+
+    # Check each channel
+    assert np.allclose(S_recover[0], S0_recover, atol=1e-5, rtol=1e-5), np.max(np.abs(S_recover[0]-S0_recover))
+    assert np.allclose(S_recover[1], S1_recover, atol=1e-5, rtol=1e-5), np.max(np.abs(S_recover[1]-S1_recover))
+
+    # Check that they're not both the same
+    assert not np.allclose(S0_recover, S1_recover)
+
+
+# -- feature inversion tests
+@pytest.mark.parametrize("power", [1, 2])
+@pytest.mark.parametrize("n_fft", [1024, 2048])
+def test_mel_to_stft_multi(power,  n_fft):
+    srand()
+
+    # Make a random mel spectrum, 4 frames
+    mel_basis = librosa.filters.mel(22050, n_fft, n_mels=128)
+
+    stft_orig = np.random.randn(2, n_fft // 2 + 1, 4) ** power
+
+    mels = np.einsum('...ft,mf->...mt', stft_orig, mel_basis)
+    stft = librosa.feature.inverse.mel_to_stft(mels, power=power, n_fft=n_fft)
+    mels0 = np.einsum('...ft,mf->...mt', stft_orig[0], mel_basis)
+    stft0 = librosa.feature.inverse.mel_to_stft(mels0, power=power, n_fft=n_fft)
+    mels1 = np.einsum('...ft,mf->...mt', stft_orig[1], mel_basis)
+    stft1 = librosa.feature.inverse.mel_to_stft(mels1, power=power, n_fft=n_fft)
+
+    # Check each channel
+    assert np.allclose(stft[0], stft0)
+    assert np.allclose(stft[1], stft1)
+
+    # Check that they're not both the same
+    assert not np.allclose(stft0, stft1)
+
+
+@pytest.mark.parametrize("n_mfcc", [13, 20])
+@pytest.mark.parametrize("n_mels", [64, 128])
+@pytest.mark.parametrize("dct_type", [2, 3])
+def test_mfcc_to_mel_multi(s_multi, n_mfcc, n_mels, dct_type):
+
+    S, sr = s_multi
+
+    # compare each channel
+    mfcc0 = librosa.feature.mfcc(S=librosa.core.amplitude_to_db(S=S[0], top_db=None))
+    mfcc1 = librosa.feature.mfcc(S=librosa.core.amplitude_to_db(S=S[1], top_db=None))
+    mfcc = librosa.feature.mfcc(S=librosa.core.amplitude_to_db(S=S, top_db=None))
+
+    melspec = librosa.feature.melspectrogram(S, sr=sr, n_mels=n_mels)
+    melspec0 = librosa.feature.melspectrogram(S[0], sr=sr, n_mels=n_mels)
+    melspec1 = librosa.feature.melspectrogram(S[1], sr=sr, n_mels=n_mels)
+
+    mel_recover = librosa.feature.inverse.mfcc_to_mel(
+        mfcc, n_mels=n_mels, dct_type=dct_type
+    )
+    mel_recover0 = librosa.feature.inverse.mfcc_to_mel(
+        mfcc0, n_mels=n_mels, dct_type=dct_type
+    )
+    mel_recover1 = librosa.feature.inverse.mfcc_to_mel(
+        mfcc1, n_mels=n_mels, dct_type=dct_type
+    )
+
+    # Check each channel
+    assert np.allclose(mel_recover[0], mel_recover0)
+    assert np.allclose(mel_recover[1], mel_recover1)
+
+    # Check that they're not both the same
+    assert not np.allclose(mel_recover0, mel_recover1)
