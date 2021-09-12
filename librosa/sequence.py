@@ -1334,7 +1334,7 @@ def viterbi_binary(prob, transition, p_state=None, p_init=None, return_logp=Fals
 
         If ``prob`` is 1-dimensional, it is expanded to shape ``(1, n_steps)``.
 
-        If ``prob`` contains multiple input channels, then each channel is decoded indpendently.
+        If ``prob`` contains multiple input channels, then each channel is decoded independently.
 
     transition : np.ndarray [shape=(2, 2) or (n_states, 2, 2)], non-negative
         If 2-dimensional, the same transition matrix is applied to each sub-problem.
