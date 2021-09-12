@@ -46,7 +46,7 @@ def delta(data, width=9, order=1, axis=-1, mode="interp", **kwargs):
 
     Returns
     -------
-    delta_data   : np.ndarray [shape=(d, t)]
+    delta_data   : np.ndarray [shape=(..., t)]
         delta matrix of ``data`` at specified order
 
     Notes
@@ -124,10 +124,10 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
 
     Each column ``data[:, i]`` is mapped to::
 
-        data[:, i] ->  [data[:, i],
-                        data[:, i - delay],
-                        ...
-                        data[:, i - (n_steps-1)*delay]]
+        data[..., i] ->  [data[..., i],
+                          data[..., i - delay],
+                          ...
+                          data[..., i - (n_steps-1)*delay]]
 
     For columns ``i < (n_steps - 1) * delay``, the data will be padded.
     By default, the data is padded with zeros, but this behavior can be
@@ -137,7 +137,7 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
 
     Parameters
     ----------
-    data : np.ndarray [shape=(d, t)]
+    data : np.ndarray [shape=(..., d, t)]
         Input data matrix.  If ``data`` is a vector (``data.ndim == 1``),
         it will be interpreted as a row matrix and reshaped to ``(1, t)``.
 
@@ -156,7 +156,7 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
 
     Returns
     -------
-    data_history : np.ndarray [shape=(m * d, t)]
+    data_history : np.ndarray [shape=(..., m * d, t)]
         data augmented with lagged copies of itself,
         where ``m == n_steps - 1``.
 
@@ -290,12 +290,16 @@ def __stack(history, data, n_steps, delay):
         for step in range(n_steps):
             q = n_steps - 1 - step
             # nth block is original shifted left by n*delay steps
-            history[...,step * d : (step + 1) * d,:] = data[..., q * delay : q * delay + t]
+            history[..., step * d : (step + 1) * d, :] = data[
+                ..., q * delay : q * delay + t
+            ]
     else:
         # Handle the last block separately to avoid -t:0 empty slices
-        history[...,-d:, :] = data[..., -t:]
+        history[..., -d:, :] = data[..., -t:]
 
         for step in range(n_steps - 1):
             # nth block is original shifted right by n*delay steps
             q = n_steps - 1 - step
-            history[...,step * d : (step + 1) * d,:] = data[..., -t + q * delay : q * delay]
+            history[..., step * d : (step + 1) * d, :] = data[
+                ..., -t + q * delay : q * delay
+            ]

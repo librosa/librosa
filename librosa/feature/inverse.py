@@ -22,7 +22,7 @@ def mel_to_stft(M, sr=22050, n_fft=2048, power=2.0, **kwargs):
 
     Parameters
     ----------
-    M : np.ndarray [shape=(n_mels, n), non-negative]
+    M : np.ndarray [shape=(..., n_mels, n), non-negative]
         The spectrogram as produced by `feature.melspectrogram`
 
     sr : number > 0 [scalar]
@@ -41,7 +41,7 @@ def mel_to_stft(M, sr=22050, n_fft=2048, power=2.0, **kwargs):
 
     Returns
     -------
-    S : np.ndarray [shape=(n_fft, t), non-negative]
+    S : np.ndarray [shape=(..., n_fft, t), non-negative]
         An approximate linear magnitude spectrogram
 
 
@@ -113,7 +113,7 @@ def mel_to_audio(
 
     Parameters
     ----------
-    M : np.ndarray [shape=(n_mels, n), non-negative]
+    M : np.ndarray [shape=(..., n_mels, n), non-negative]
         The spectrogram as produced by `feature.melspectrogram`
 
     sr : number > 0 [scalar]
@@ -158,7 +158,7 @@ def mel_to_audio(
 
     Returns
     -------
-    y : np.ndarray [shape(n,)]
+    y : np.ndarray [shape(..., n,)]
         time-domain signal reconstructed from ``M``
 
     See Also
@@ -196,7 +196,7 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm="ortho", ref=1.0, lifter=0):
 
     Parameters
     ----------
-    mfcc : np.ndarray [shape=(n_mfcc, n)]
+    mfcc : np.ndarray [shape=(..., n_mfcc, n)]
         The Mel-frequency cepstral coefficients
 
     n_mels : int > 0
@@ -222,7 +222,7 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm="ortho", ref=1.0, lifter=0):
 
     Returns
     -------
-    M : np.ndarray [shape=(n_mels, n)]
+    M : np.ndarray [shape=(..., n_mels, n)]
         An approximate Mel power spectrum recovered from ``mfcc``
 
     Warns
@@ -272,7 +272,7 @@ def mfcc_to_audio(
 
     Parameters
     ----------
-    mfcc : np.ndarray [shape=(n_mfcc, n)]
+    mfcc : np.ndarray [shape=(..., n_mfcc, n)]
         The Mel-frequency cepstral coefficients
 
     n_mels : int > 0
@@ -301,7 +301,7 @@ def mfcc_to_audio(
 
     Returns
     -------
-    y : np.ndarray [shape=(n)]
+    y : np.ndarray [shape=(..., n)]
         A time-domain signal reconstructed from `mfcc`
 
     See Also

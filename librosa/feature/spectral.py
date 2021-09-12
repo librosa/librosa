@@ -68,13 +68,13 @@ def spectral_centroid(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)] or None
-        audio time series
+    y : np.ndarray [shape=(..., n,)] or None
+        audio time series, may consist of one or more channels
 
     sr : number > 0 [scalar]
         audio sampling rate of ``y``
 
-    S : np.ndarray [shape=(d, t)] or None
+    S : np.ndarray [shape=(..., d, t)] or None
         (optional) spectrogram magnitude
 
     n_fft : int > 0 [scalar]
@@ -118,7 +118,7 @@ def spectral_centroid(
 
     Returns
     -------
-    centroid : np.ndarray [shape=(1, t)]
+    centroid : np.ndarray [shape=(..., 1, t)]
         centroid frequencies
 
     See Also
@@ -226,13 +226,13 @@ def spectral_bandwidth(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)] or None
-        audio time series
+    y : np.ndarray [shape=(..., n)] or None
+        audio time series, may consist of one or more channels
 
     sr : number > 0 [scalar]
         audio sampling rate of ``y``
 
-    S : np.ndarray [shape=(d, t)] or None
+    S : np.ndarray [shape=(..., d, t)] or None
         (optional) spectrogram magnitude
 
     n_fft : int > 0 [scalar]
@@ -265,7 +265,7 @@ def spectral_bandwidth(
         If ``center=True``, the padding mode to use at the edges of the signal.
         By default, STFT uses reflection padding.
 
-    freq : None or np.ndarray [shape=(d,) or shape=(d, t)]
+    freq : None or np.ndarray [shape=(d,) or shape=(..., d, t)]
         Center frequencies for spectrogram bins.
 
         If `None`, then FFT bin center frequencies are used.
@@ -273,7 +273,7 @@ def spectral_bandwidth(
         or a matrix of center frequencies as constructed by
         `librosa.reassigned_spectrogram`
 
-    centroid : None or np.ndarray [shape=(1, t)]
+    centroid : None or np.ndarray [shape=(..., 1, t)]
         pre-computed centroid frequencies
 
     norm : bool
@@ -285,7 +285,7 @@ def spectral_bandwidth(
 
     Returns
     -------
-    bandwidth : np.ndarray [shape=(1, t)]
+    bandwidth : np.ndarray [shape=(..., 1, t)]
         frequency bandwidth for each frame
 
 
@@ -409,13 +409,13 @@ def spectral_contrast(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)] or None
-        audio time series
+    y : np.ndarray [shape=(..., n)] or None
+        audio time series, may consist of one or more channels
 
     sr : number  > 0 [scalar]
         audio sampling rate of ``y``
 
-    S : np.ndarray [shape=(d, t)] or None
+    S : np.ndarray [shape=(..., d, t)] or None
         (optional) spectrogram magnitude
 
     n_fft : int > 0 [scalar]
@@ -474,7 +474,7 @@ def spectral_contrast(
 
     Returns
     -------
-    contrast : np.ndarray [shape=(n_bands + 1, t)]
+    contrast : np.ndarray [shape=(..., n_bands + 1, t)]
         each row of spectral contrast values corresponds to a given
         octave-based frequency
 
@@ -598,8 +598,8 @@ def spectral_rolloff(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)] or None
-        audio time series
+    y : np.ndarray [shape=(..., n)] or None
+        audio time series, may consist of one or more channels
 
     sr : number > 0 [scalar]
         audio sampling rate of ``y``
@@ -637,7 +637,7 @@ def spectral_rolloff(
         If ``center=True``, the padding mode to use at the edges of the signal.
         By default, STFT uses reflection padding.
 
-    freq : None or np.ndarray [shape=(d,) or shape=(d, t)]
+    freq : None or np.ndarray [shape=(d,) or shape=(..., d, t)]
         Center frequencies for spectrogram bins.
         If `None`, then FFT bin center frequencies are used.
         Otherwise, it can be a single array of ``d`` center frequencies,
@@ -649,7 +649,7 @@ def spectral_rolloff(
 
     Returns
     -------
-    rolloff : np.ndarray [shape=(1, t)]
+    rolloff : np.ndarray [shape=(..., 1, t)]
         roll-off frequency for each frame
 
 
@@ -762,10 +762,10 @@ def spectral_flatness(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)] or None
-        audio time series
+    y : np.ndarray [shape=(..., n)] or None
+        audio time series, may consist of one or more channels
 
-    S : np.ndarray [shape=(d, t)] or None
+    S : np.ndarray [shape=(..., d, t)] or None
         (optional) pre-computed spectrogram magnitude
 
     n_fft : int > 0 [scalar]
@@ -808,7 +808,7 @@ def spectral_flatness(
 
     Returns
     -------
-    flatness : np.ndarray [shape=(1, t)]
+    flatness : np.ndarray [shape=(..., 1, t)]
         spectral flatness for each frame.
         The returned value is in [0, 1] and often converted to dB scale.
 
@@ -880,10 +880,11 @@ def rms(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)] or None
+    y : np.ndarray [shape=(..., n)] or None
         (optional) audio time series. Required if ``S`` is not input.
+        May consist of one or more channels.
 
-    S : np.ndarray [shape=(d, t)] or None
+    S : np.ndarray [shape=(..., d, t)] or None
         (optional) spectrogram magnitude. Required if ``y`` is not input.
 
     frame_length : int > 0 [scalar]
@@ -904,7 +905,7 @@ def rms(
 
     Returns
     -------
-    rms : np.ndarray [shape=(1, t)]
+    rms : np.ndarray [shape=(..., 1, t)]
         RMS value for each frame
 
 
@@ -993,13 +994,13 @@ def poly_features(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)] or None
-        audio time series
+    y : np.ndarray [shape=(..., n)] or None
+        audio time series, may consist of one or more channels
 
     sr : number > 0 [scalar]
         audio sampling rate of ``y``
 
-    S : np.ndarray [shape=(d, t)] or None
+    S : np.ndarray [shape=(..., d, t)] or None
         (optional) spectrogram magnitude
 
     n_fft : int > 0 [scalar]
@@ -1035,7 +1036,7 @@ def poly_features(
     order : int > 0
         order of the polynomial to fit
 
-    freq : None or np.ndarray [shape=(d,) or shape=(d, t)]
+    freq : None or np.ndarray [shape=(d,) or shape=(..., d, t)]
         Center frequencies for spectrogram bins.
         If `None`, then FFT bin center frequencies are used.
         Otherwise, it can be a single array of ``d`` center frequencies,
@@ -1044,14 +1045,14 @@ def poly_features(
 
     Returns
     -------
-    coefficients : np.ndarray [shape=(order+1, t)]
+    coefficients : np.ndarray [shape=(..., order+1, t)]
         polynomial coefficients for each frame.
 
-        ``coeffecients[0]`` corresponds to the highest degree (``order``),
+        ``coeffecients[..., 0, :]`` corresponds to the highest degree (``order``),
 
-        ``coefficients[1]`` corresponds to the next highest degree (``order-1``),
+        ``coefficients[..., 1, :]`` corresponds to the next highest degree (``order-1``),
 
-        down to the constant term ``coefficients[order]``.
+        down to the constant term ``coefficients[..., order, :]``.
 
     Examples
     --------
@@ -1110,15 +1111,21 @@ def poly_features(
 
     if freq.ndim == 1:
         # If frequencies are constant over frames, then we only need to fit once
-        fitter = np.vectorize(lambda y: np.polyfit(freq, y, order), signature='(f,t)->(d,t)')
+        fitter = np.vectorize(
+            lambda y: np.polyfit(freq, y, order), signature="(f,t)->(d,t)"
+        )
         coefficients = fitter(S)
     else:
         # Otherwise, we have variable frequencies, and need to fit independently
-        fitter = np.vectorize(lambda x, y: np.polyfit(x, y, order), signature='(f),(f)->(d)')
+        fitter = np.vectorize(
+            lambda x, y: np.polyfit(x, y, order), signature="(f),(f)->(d)"
+        )
 
         # We have to do some axis swapping to preserve layout
         # otherwise, the new dimension gets put at the end instead of the penultimate position
-        coefficients = fitter(freq.swapaxes(-2, -1), S.swapaxes(-2, -1)).swapaxes(-2, -1)
+        coefficients = fitter(freq.swapaxes(-2, -1), S.swapaxes(-2, -1)).swapaxes(
+            -2, -1
+        )
 
     return coefficients
 
@@ -1128,8 +1135,8 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True, **kwar
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        Audio time series
+    y : np.ndarray [shape=(..., n)]
+        Audio time series, may consist of one or more channels
 
     frame_length : int > 0
         Length of the frame over which to compute zero crossing rates
@@ -1151,8 +1158,8 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True, **kwar
 
     Returns
     -------
-    zcr : np.ndarray [shape=(1, t)]
-        ``zcr[0, i]`` is the fraction of zero crossings in frame ``i``
+    zcr : np.ndarray [shape=(..., 1, t)]
+        ``zcr[..., 0, i]`` is the fraction of zero crossings in frame ``i``
 
     See Also
     --------
@@ -1211,13 +1218,13 @@ def chroma_stft(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)] or None
-        audio time series
+    y : np.ndarray [shape=(..., n)] or None
+        audio time series, may consist of one or more channels
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
 
-    S : np.ndarray [shape=(d, t)] or None
+    S : np.ndarray [shape=(..., d, t)] or None
         power spectrogram
 
     norm : float or None
@@ -1269,7 +1276,7 @@ def chroma_stft(
 
     Returns
     -------
-    chromagram : np.ndarray [shape=(n_chroma, t)]
+    chromagram : np.ndarray [shape=(..., n_chroma, t)]
         Normalized energy for each chroma bin at each frame.
 
     See Also
@@ -1363,13 +1370,13 @@ def chroma_cqt(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        audio time series
+    y : np.ndarray [shape=(..., n,)]
+        audio time series, may consist of one or more channels
 
     sr : number > 0
         sampling rate of ``y``
 
-    C : np.ndarray [shape=(d, t)] [Optional]
+    C : np.ndarray [shape=(..., d, t)] [Optional]
         a pre-computed constant-Q spectrogram
 
     hop_length : int > 0
@@ -1412,7 +1419,7 @@ def chroma_cqt(
 
     Returns
     -------
-    chromagram : np.ndarray [shape=(n_chroma, t)]
+    chromagram : np.ndarray [shape=(..., n_chroma, t)]
         The output chromagram
 
     See Also
@@ -1522,8 +1529,8 @@ def chroma_cens(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        audio time series
+    y : np.ndarray [shape=(..., n,)]
+        audio time series, may consist of one or more channels
 
     sr : number > 0
         sampling rate of ``y``
@@ -1571,7 +1578,7 @@ def chroma_cens(
 
     Returns
     -------
-    cens : np.ndarray [shape=(n_chroma, t)]
+    cens : np.ndarray [shape=(..., n_chroma, t)]
         The output cens-chromagram
 
     See Also
@@ -1671,8 +1678,8 @@ def tonnetz(y=None, sr=22050, chroma=None, **kwargs):
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)] or None
-        Audio time series.
+    y : np.ndarray [shape=(..., n,)] or None
+        Audio time series, may consist of one or more channels
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
@@ -1688,7 +1695,7 @@ def tonnetz(y=None, sr=22050, chroma=None, **kwargs):
 
     Returns
     -------
-    tonnetz : np.ndarray [shape(6, t)]
+    tonnetz : np.ndarray [shape(..., 6, t)]
         Tonal centroid features for each frame.
 
         Tonnetz dimensions:
@@ -1771,15 +1778,20 @@ def mfcc(
 ):
     """Mel-frequency cepstral coefficients (MFCCs)
 
+    .. warning:: If multi-channel audio input ``y`` is provided, the MFCC
+        calculation will depend on the peak loudness (in decibels) across
+        all channels.  The result may differ from independent MFCC calculation
+        of each channel.
+
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)] or None
-        audio time series
+    y : np.ndarray [shape=(..., n,)] or None
+        audio time series, may consist of one or more channels.
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
 
-    S : np.ndarray [shape=(d, t)] or None
+    S : np.ndarray [shape=(..., d, t)] or None
         log-power Mel spectrogram
 
     n_mfcc: int > 0 [scalar]
@@ -1809,7 +1821,7 @@ def mfcc(
 
     Returns
     -------
-    M : np.ndarray [shape=(n_mfcc, t)]
+    M : np.ndarray [shape=(..., n_mfcc, t)]
         MFCC sequence
 
     See Also
@@ -1924,13 +1936,13 @@ def melspectrogram(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)] or None
-        audio time-series
+    y : np.ndarray [shape=(..., n)] or None
+        audio time-series, may consist of one or more channels
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
 
-    S : np.ndarray [shape=(d, t)]
+    S : np.ndarray [shape=(..., d, t)]
         spectrogram
 
     n_fft : int > 0 [scalar]
@@ -1976,7 +1988,7 @@ def melspectrogram(
 
     Returns
     -------
-    S : np.ndarray [shape=(n_mels, t)]
+    S : np.ndarray [shape=(..., n_mels, t)]
         Mel spectrogram
 
     See Also

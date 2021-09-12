@@ -34,13 +34,13 @@ def tempogram(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)] or None
-        Audio time series.
+    y : np.ndarray [shape=(..., n)] or None
+        Audio time series.  May consist of one or more channels.
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
 
-    onset_envelope : np.ndarray [shape=(n,) or (m, n)] or None
+    onset_envelope : np.ndarray [shape=(..., n) or (..., m, n)] or None
         Optional pre-computed onset strength envelope as provided by
         `librosa.onset.onset_strength`.
 
@@ -66,7 +66,7 @@ def tempogram(
 
     Returns
     -------
-    tempogram : np.ndarray [shape=(win_length, n) or (m, win_length, n)]
+    tempogram : np.ndarray [shape=(..., win_length, n)]
         Localized autocorrelation of the onset strength envelope.
 
         If given multi-band input (``onset_envelope.shape==(m,n)``) then
@@ -155,8 +155,10 @@ def tempogram(
 
     if center:
         padding = [(0, 0) for _ in onset_envelope.shape]
-        padding[-1] = (int(win_length // 2), )*2
-        onset_envelope = np.pad(onset_envelope, padding, mode="linear_ramp", end_values=[0, 0])
+        padding[-1] = (int(win_length // 2),) * 2
+        onset_envelope = np.pad(
+            onset_envelope, padding, mode="linear_ramp", end_values=[0, 0]
+        )
 
     # Carve onset envelope into frames
     odf_frame = util.frame(onset_envelope, frame_length=win_length, hop_length=1)
@@ -192,15 +194,16 @@ def fourier_tempogram(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)] or None
-        Audio time series.
+    y : np.ndarray [shape=(..., n)] or None
+        Audio time series.  May consist of one or more channels.
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
 
-    onset_envelope : np.ndarray [shape=(n,)] or None
+    onset_envelope : np.ndarray [shape=(..., n)] or None
         Optional pre-computed onset strength envelope as provided by
         ``librosa.onset.onset_strength``.
+        May consist of one or more channels.
 
     hop_length : int > 0
         number of audio samples between successive onset measurements
@@ -218,7 +221,7 @@ def fourier_tempogram(
 
     Returns
     -------
-    tempogram : np.ndarray [shape=(win_length // 2 + 1, n)]
+    tempogram : np.ndarray [shape=(..., win_length // 2 + 1, n)]
         Complex short-time Fourier transform of the onset envelope.
 
     Raises
