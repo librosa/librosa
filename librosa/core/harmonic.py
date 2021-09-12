@@ -25,7 +25,7 @@ def salience(
 
     Parameters
     ----------
-    S : np.ndarray [shape=(d, n)]
+    S : np.ndarray [shape=(..., d, n)]
         input time frequency magnitude representation (e.g. STFT or CQT magnitudes).
         Must be real-valued and non-negative.
 
@@ -68,9 +68,9 @@ def salience(
 
     Returns
     -------
-    S_sal : np.ndarray, shape=(len(h_range), [x.shape])
+    S_sal : np.ndarray
         ``S_sal`` will have the same shape as ``S``, and measure
-        the overal harmonic energy at each frequency.
+        the overall harmonic energy at each frequency.
 
     See Also
     --------
@@ -109,9 +109,9 @@ def salience(
     S_harm = interp_harmonics(S, freqs, h_range, kind=kind, axis=axis)
 
     if aggregate is np.average:
-        S_sal = aggregate(S_harm, axis=axis-1, weights=weights)
+        S_sal = aggregate(S_harm, axis=axis - 1, weights=weights)
     else:
-        S_sal = aggregate(S_harm, axis=axis-1)
+        S_sal = aggregate(S_harm, axis=axis - 1)
 
     if filter_peaks:
         S_peaks = scipy.signal.argrelmax(S, axis=axis)
@@ -159,9 +159,11 @@ def interp_harmonics(x, freqs, h_range, kind="linear", fill_value=0, axis=-2):
 
     Returns
     -------
-    x_harm : np.ndarray, shape=(len(h_range), [x.shape])
+    x_harm : np.ndarray
         ``x_harm[i]`` will have the same shape as ``x``, and measure
         the energy at the ``h_range[i]`` harmonic of each frequency.
+        A new dimension indexing harmonics will be inserted immediately
+        before ``axis``.
 
     See Also
     --------

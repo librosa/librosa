@@ -24,13 +24,13 @@ def estimate_tuning(
 
     Parameters
     ----------
-    y: np.ndarray [shape=(n,)] or None
-        audio signal
+    y: np.ndarray [shape=(..., n)] or None
+        audio signal, may consist of one or more channels.
 
     sr : number > 0 [scalar]
         audio sampling rate of ``y``
 
-    S: np.ndarray [shape=(d, t)] or None
+    S: np.ndarray [shape=(..., d, t)] or None
         magnitude or power spectrogram
 
     n_fft : int > 0 [scalar] or None
@@ -49,7 +49,10 @@ def estimate_tuning(
     Returns
     -------
     tuning: float in `[-0.5, 0.5)`
-        estimated tuning deviation (fractions of a bin)
+        estimated tuning deviation (fractions of a bin).
+
+        Note that if multichannel input is provided, a single tuning estimate is provided spanning all
+        channels.
 
     See Also
     --------
@@ -193,13 +196,13 @@ def piptrack(
 
     Parameters
     ----------
-    y: np.ndarray [shape=(n,)] or None
-        audio signal
+    y: np.ndarray [shape=(..., n)] or None
+        audio signal, may consist of one or more channels.
 
     sr : number > 0 [scalar]
         audio sampling rate of ``y``
 
-    S: np.ndarray [shape=(d, t)] or None
+    S: np.ndarray [shape=(..., d, t)] or None
         magnitude or power spectrogram
 
     n_fft : int > 0 [scalar] or None
@@ -253,13 +256,13 @@ def piptrack(
 
     Returns
     -------
-    pitches, magnitudes : np.ndarray [shape=(d, t)]
+    pitches, magnitudes : np.ndarray [shape=(..., d, t)]
         Where ``d`` is the subset of FFT bins within ``fmin`` and ``fmax``.
 
-        ``pitches[f, t]`` contains instantaneous frequency at bin
+        ``pitches[..., f, t]`` contains instantaneous frequency at bin
         ``f``, time ``t``
 
-        ``magnitudes[f, t]`` contains the corresponding magnitudes.
+        ``magnitudes[..., f, t]`` contains the corresponding magnitudes.
 
         Both ``pitches`` and ``magnitudes`` take value 0 at bins
         of non-maximal magnitude.
@@ -337,7 +340,7 @@ def piptrack(
     mags = np.zeros_like(S)
 
     # Clip to the viable frequency range
-    freq_mask = ((fmin <= fft_freqs) & (fft_freqs < fmax))
+    freq_mask = (fmin <= fft_freqs) & (fft_freqs < fmax)
     freq_mask = util.expand_to(freq_mask, ndim=S.ndim, axes=-2)
 
     # Compute the column-wise local max of S after thresholding
@@ -412,9 +415,7 @@ def _cumulative_mean_normalized_difference(
     yin_numerator = yin_frames[..., min_period : max_period + 1, :]
     # broadcast this shape to have leading ones
     tau_range = util.expand_to(
-        np.arange(1, max_period + 1),
-        ndim=yin_frames.ndim,
-        axes=-2
+        np.arange(1, max_period + 1), ndim=yin_frames.ndim, axes=-2
     )
 
     cumulative_mean = (
@@ -478,8 +479,8 @@ def yin(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        audio time series.
+    y : np.ndarray [shape=(..., n)]
+        audio time series, may consist of one or more channels.
 
     fmin: number > 0 [scalar]
         minimum frequency in Hertz.
@@ -527,8 +528,10 @@ def yin(
 
     Returns
     -------
-    f0: np.ndarray [shape=(n_frames,)]
+    f0: np.ndarray [shape=(..., n_frames)]
         time series of fundamental frequencies in Hertz.
+
+        If multi-channel input is provided, f0 curves are estimated separately for each channel.
 
     See Also
     --------
@@ -659,8 +662,8 @@ def pyin(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        audio time series.
+    y : np.ndarray [shape=(..., n)]
+        audio time series, may consist of one or more channels
 
     fmin: number > 0 [scalar]
         minimum frequency in Hertz.
@@ -732,14 +735,16 @@ def pyin(
 
     Returns
     -------
-    f0: np.ndarray [shape=(n_frames,)]
+    f0: np.ndarray [shape=(..., n_frames)]
         time series of fundamental frequencies in Hertz.
 
-    voiced_flag: np.ndarray [shape=(n_frames,)]
+    voiced_flag: np.ndarray [shape=(..., n_frames)]
         time series containing boolean flags indicating whether a frame is voiced or not.
 
-    voiced_prob: np.ndarray [shape=(n_frames,)]
+    voiced_prob: np.ndarray [shape=(..., n_frames)]
         time series containing the probability that a frame is voiced.
+
+    .. note:: If multi-channel input is provided, f0 and voicing are estimated separately for each channel.
 
     See Also
     --------
@@ -751,7 +756,9 @@ def pyin(
     Computing a fundamental frequency (F0) curve from an audio input
 
     >>> y, sr = librosa.load(librosa.ex('trumpet'))
-    >>> f0, voiced_flag, voiced_probs = librosa.pyin(y, fmin=librosa.note_to_hz('C2'), fmax=librosa.note_to_hz('C7'))
+    >>> f0, voiced_flag, voiced_probs = librosa.pyin(y,
+    ...                                              fmin=librosa.note_to_hz('C2'),
+    ...                                              fmax=librosa.note_to_hz('C7'))
     >>> times = librosa.times_like(f0)
 
 
@@ -821,11 +828,21 @@ def pyin(
     n_pitch_bins = int(np.floor(12 * n_bins_per_semitone * np.log2(fmax / fmin))) + 1
 
     def _helper(a, b):
-        return __pyin_helper(a, b, sr, thresholds, boltzmann_parameter,
-                             beta_probs, no_trough_prob, min_period,
-                             fmin, n_pitch_bins, n_bins_per_semitone)
+        return __pyin_helper(
+            a,
+            b,
+            sr,
+            thresholds,
+            boltzmann_parameter,
+            beta_probs,
+            no_trough_prob,
+            min_period,
+            fmin,
+            n_pitch_bins,
+            n_bins_per_semitone,
+        )
 
-    helper = np.vectorize(_helper, signature='(f,t),(k,t)->(1,d,t),(j,t)')
+    helper = np.vectorize(_helper, signature="(f,t),(k,t)->(1,d,t),(j,t)")
     observation_probs, voiced_prob = helper(yin_frames, parabolic_shifts)
 
     # Construct transition matrix.
@@ -837,7 +854,7 @@ def pyin(
     )
 
     # Include across voicing transition probabilities
-    t_switch = sequence.transition_loop(2, 1-switch_prob)
+    t_switch = sequence.transition_loop(2, 1 - switch_prob)
     transition = np.kron(t_switch, transition)
 
     p_init = np.zeros(2 * n_pitch_bins)
@@ -856,9 +873,19 @@ def pyin(
     return f0[..., 0, :], voiced_flag[..., 0, :], voiced_prob[..., 0, :]
 
 
-def __pyin_helper(yin_frames, parabolic_shifts, sr, thresholds,
-                  boltzmann_parameter, beta_probs, no_trough_prob, min_period,
-                  fmin, n_pitch_bins, n_bins_per_semitone):
+def __pyin_helper(
+    yin_frames,
+    parabolic_shifts,
+    sr,
+    thresholds,
+    boltzmann_parameter,
+    beta_probs,
+    no_trough_prob,
+    min_period,
+    fmin,
+    n_pitch_bins,
+    n_bins_per_semitone,
+):
 
     yin_probs = np.zeros_like(yin_frames)
 
@@ -916,9 +943,9 @@ def __pyin_helper(yin_frames, parabolic_shifts, sr, thresholds,
     observation_probs = np.zeros((2 * n_pitch_bins, yin_frames.shape[1]))
     observation_probs[bin_index, frame_index] = yin_probs[yin_period, frame_index]
 
-    voiced_prob = np.clip(np.sum(observation_probs[:n_pitch_bins, :],
-                                 axis=0, keepdims=True),
-                          0, 1)
+    voiced_prob = np.clip(
+        np.sum(observation_probs[:n_pitch_bins, :], axis=0, keepdims=True), 0, 1
+    )
     observation_probs[n_pitch_bins:, :] = (1 - voiced_prob) / n_pitch_bins
 
     return observation_probs[np.newaxis], voiced_prob

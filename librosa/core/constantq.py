@@ -51,8 +51,8 @@ def cqt(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        audio time series
+    y : np.ndarray [shape=(..., n)]
+        audio time series, may consist of one or more channels
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
@@ -124,7 +124,7 @@ def cqt(
 
     Returns
     -------
-    CQT : np.ndarray [shape=(n_bins, t)]
+    CQT : np.ndarray [shape=(..., n_bins, t)]
         Constant-Q value each frequency at each time.
 
     Raises
@@ -228,8 +228,8 @@ def hybrid_cqt(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        audio time series
+    y : np.ndarray [shape=(..., n)]
+        audio time series, may consist of one or more channels
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
@@ -282,7 +282,7 @@ def hybrid_cqt(
 
     Returns
     -------
-    CQT : np.ndarray [shape=(n_bins, t), dtype=np.float]
+    CQT : np.ndarray [shape=(..., n_bins, t), dtype=np.float]
         Constant-Q energy for each frequency at each time.
 
     Raises
@@ -410,8 +410,8 @@ def pseudo_cqt(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        audio time series
+    y : np.ndarray [shape=(..., n)]
+        audio time series, may consist of one or more channels
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
@@ -460,7 +460,7 @@ def pseudo_cqt(
 
     Returns
     -------
-    CQT : np.ndarray [shape=(n_bins, t), dtype=np.float]
+    CQT : np.ndarray [shape=(..., n_bins, t), dtype=np.float]
         Pseudo Constant-Q energy for each frequency at each time.
 
     Raises
@@ -506,8 +506,16 @@ def pseudo_cqt(
     fft_basis = np.abs(fft_basis)
 
     # Compute the magnitude-only CQT response
-    C = __cqt_response(y, n_fft, hop_length, fft_basis, pad_mode, window='hann',
-                       dtype=dtype, phase=False)
+    C = __cqt_response(
+        y,
+        n_fft,
+        hop_length,
+        fft_basis,
+        pad_mode,
+        window="hann",
+        dtype=dtype,
+        phase=False,
+    )
 
     if scale:
         C /= np.sqrt(n_fft)
@@ -554,7 +562,7 @@ def icqt(
 
     Parameters
     ----------
-    C : np.ndarray, [shape=(n_bins, n_frames)]
+    C : np.ndarray, [shape=(..., n_bins, n_frames)]
         Constant-Q representation as produced by `cqt`
 
     hop_length : int > 0 [scalar]
@@ -609,7 +617,7 @@ def icqt(
 
     Returns
     -------
-    y : np.ndarray, [shape=(n_samples), dtype=np.float]
+    y : np.ndarray, [shape=(..., n_samples), dtype=np.float]
         Audio time-series reconstructed from the CQT representation.
 
     See Also
@@ -707,14 +715,12 @@ def icqt(
         if scale:
             C_scale = np.sqrt(lengths[-C_oct.shape[-2] :]) / n_fft
         else:
-            C_scale = (
-                lengths[-C_oct.shape[-2] :] * np.sqrt(2 ** octave) / n_fft
-            )
+            C_scale = lengths[-C_oct.shape[-2] :] * np.sqrt(2 ** octave) / n_fft
         shape[-2] = len(C_scale)
         C_scale = C_scale.reshape(shape)
 
         # Inverse-project the basis for each octave
-        D_oct = np.einsum('fc,...ct->...ft', inv_oct, C_oct / C_scale, optimize=True)
+        D_oct = np.einsum("fc,...ct->...ft", inv_oct, C_oct / C_scale, optimize=True)
 
         # Inverse-STFT that response
         y_oct = istft(D_oct, window="ones", hop_length=oct_hop, dtype=dtype)
@@ -767,8 +773,8 @@ def vqt(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        audio time series
+    y : np.ndarray [shape=(..., n)]
+        audio time series, may consist of one or more channels
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
@@ -862,7 +868,7 @@ def vqt(
 
     Returns
     -------
-    VQT : np.ndarray [shape=(n_bins, t), dtype=np.complex or np.float]
+    VQT : np.ndarray [shape=(..., n_bins, t), dtype=np.complex or np.float]
         Variable-Q value each frequency at each time.
 
     Raises
@@ -1126,7 +1132,9 @@ def __trim_stack(cqt_resp, n_bins, dtype):
     return cqt_out
 
 
-def __cqt_response(y, n_fft, hop_length, fft_basis, mode, window="ones", phase=True, dtype=None):
+def __cqt_response(
+    y, n_fft, hop_length, fft_basis, mode, window="ones", phase=True, dtype=None
+):
     """Compute the filter response with a target STFT hop."""
 
     # Compute the STFT matrix
@@ -1139,7 +1147,9 @@ def __cqt_response(y, n_fft, hop_length, fft_basis, mode, window="ones", phase=T
 
     # Reshape D to Dr
     Dr = D.reshape((-1, D.shape[-2], D.shape[-1]))
-    output_flat = np.empty((Dr.shape[0], fft_basis.shape[0], Dr.shape[-1]), dtype=D.dtype)
+    output_flat = np.empty(
+        (Dr.shape[0], fft_basis.shape[0], Dr.shape[-1]), dtype=D.dtype
+    )
 
     # iterate over channels
     #   project fft_basis.dot(Dr[i])
@@ -1255,7 +1265,7 @@ def griffinlim_cqt(
 
     Parameters
     ----------
-    C : np.ndarray [shape=(n_bins, n_frames)]
+    C : np.ndarray [shape=(..., n_bins, n_frames)]
         The constant-Q magnitude spectrogram
 
     n_iter : int > 0
@@ -1353,7 +1363,7 @@ def griffinlim_cqt(
 
     Returns
     -------
-    y : np.ndarray [shape=(n,)]
+    y : np.ndarray [shape=(..., n)]
         time-domain signal reconstructed from ``C``
 
 

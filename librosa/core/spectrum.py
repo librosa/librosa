@@ -57,10 +57,10 @@ def stft(
 
     This function returns a complex-valued matrix D such that
 
-    - ``np.abs(D[f, t])`` is the magnitude of frequency bin ``f``
+    - ``np.abs(D[..., f, t])`` is the magnitude of frequency bin ``f``
       at frame ``t``, and
 
-    - ``np.angle(D[f, t])`` is the phase of frequency bin ``f``
+    - ``np.angle(D[..., f, t])`` is the phase of frequency bin ``f``
       at frame ``t``.
 
     The integers ``t`` and ``f`` can be converted to physical units by means
@@ -69,8 +69,8 @@ def stft(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)], real-valued
-        input signal
+    y : np.ndarray [shape=(..., n)], real-valued
+        input signal, may consist of one or more channels
 
     n_fft : int > 0 [scalar]
         length of the windowed signal after padding with zeros.
@@ -146,7 +146,7 @@ def stft(
 
     Returns
     -------
-    D : np.ndarray [shape=(1 + n_fft/2, n_frames), dtype=dtype]
+    D : np.ndarray [shape=(..., 1 + n_fft/2, n_frames), dtype=dtype]
         Complex-valued matrix of short-term Fourier transform
         coefficients.
 
@@ -214,7 +214,7 @@ def stft(
     fft_window = util.pad_center(fft_window, n_fft)
 
     # Reshape so that the window can be broadcast
-    fft_window = util.expand_to(fft_window, ndim=1+y.ndim, axes=-2)
+    fft_window = util.expand_to(fft_window, ndim=1 + y.ndim, axes=-2)
 
     # Pad the time series so that frames are centered
     if center:
@@ -226,7 +226,7 @@ def stft(
             )
 
         padding = [(0, 0) for _ in range(y.ndim)]
-        padding[-1] = (int(n_fft//2), int(n_fft//2))
+        padding[-1] = (int(n_fft // 2), int(n_fft // 2))
         y = np.pad(y, padding, mode=pad_mode)
 
     elif n_fft > y.shape[-1]:
@@ -249,14 +249,17 @@ def stft(
     shape[-2] = 1 + n_fft // 2
     stft_matrix = np.empty(shape, dtype=dtype, order="F")
 
-    n_columns = util.MAX_MEM_BLOCK // (np.prod(stft_matrix.shape[:-1]) * stft_matrix.itemsize)
+    n_columns = util.MAX_MEM_BLOCK // (
+        np.prod(stft_matrix.shape[:-1]) * stft_matrix.itemsize
+    )
     n_columns = max(n_columns, 1)
 
     for bl_s in range(0, stft_matrix.shape[-1], n_columns):
         bl_t = min(bl_s + n_columns, stft_matrix.shape[-1])
 
-        stft_matrix[..., bl_s:bl_t] = fft.rfft(fft_window *
-                                               y_frames[..., bl_s:bl_t], axis=-2)
+        stft_matrix[..., bl_s:bl_t] = fft.rfft(
+            fft_window * y_frames[..., bl_s:bl_t], axis=-2
+        )
     return stft_matrix
 
 
@@ -287,7 +290,7 @@ def istft(
 
     Parameters
     ----------
-    stft_matrix : np.ndarray [shape=(1 + n_fft/2, t)]
+    stft_matrix : np.ndarray [shape=(..., 1 + n_fft/2, t)]
         STFT matrix from ``stft``
 
     hop_length : int > 0 [scalar]
@@ -323,8 +326,10 @@ def istft(
 
     Returns
     -------
-    y : np.ndarray [shape=(n,)]
-        time domain signal reconstructed from ``stft_matrix``
+    y : np.ndarray [shape=(..., n)]
+        time domain signal reconstructed from ``stft_matrix``.
+        If ``stft_matrix`` contains more than two axes
+        (e.g., from a stereo input signal), then ``y`` will match shape on the leading dimensions.
 
     See Also
     --------
@@ -389,7 +394,9 @@ def istft(
     shape.append(expected_signal_len)
     y = np.zeros(shape, dtype=dtype, order="F")
 
-    n_columns = util.MAX_MEM_BLOCK // (np.prod(stft_matrix.shape[:-1]) * stft_matrix.itemsize)
+    n_columns = util.MAX_MEM_BLOCK // (
+        np.prod(stft_matrix.shape[:-1]) * stft_matrix.itemsize
+    )
     n_columns = max(n_columns, 1)
 
     fft = get_fftlib()
@@ -486,13 +493,13 @@ def __reassign_frequencies(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)], real-valued
-        audio time series
+    y : np.ndarray [shape=(..., n,)], real-valued
+        audio time series, may consist of one or more channels
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
 
-    S : np.ndarray [shape=(d, t)] or None
+    S : np.ndarray [shape=(..., d, t)] or None
         (optional) complex STFT calculated using the other arguments provided
         to `__reassign_frequencies`
 
@@ -532,11 +539,11 @@ def __reassign_frequencies(
 
     Returns
     -------
-    freqs : np.ndarray [shape=(1 + n_fft/2, t), dtype=real]
+    freqs : np.ndarray [shape=(..., 1 + n_fft/2, t), dtype=real]
         Instantaneous frequencies:
         ``freqs[f, t]`` is the frequency for bin ``f``, frame ``t``.
 
-    S : np.ndarray [shape=(1 + n_fft/2, t), dtype=complex]
+    S : np.ndarray [shape=(..., 1 + n_fft/2, t), dtype=complex]
         Short-time Fourier transform
 
     Warns
@@ -610,7 +617,9 @@ def __reassign_frequencies(
     correction = -np.imag(S_dh / S_h)
 
     freqs = convert.fft_frequencies(sr=sr, n_fft=n_fft)
-    freqs = util.expand_to(freqs, ndim=correction.ndim, axes=-2) + correction * (0.5 * sr / np.pi)
+    freqs = util.expand_to(freqs, ndim=correction.ndim, axes=-2) + correction * (
+        0.5 * sr / np.pi
+    )
 
     return freqs, S_h
 
@@ -648,13 +657,13 @@ def __reassign_times(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)], real-valued
-        audio time series
+    y : np.ndarray [shape=(..., n,)], real-valued
+        audio time series, may consist of one or more channels
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
 
-    S : np.ndarray [shape=(d, t)] or None
+    S : np.ndarray [shape=(..., d, t)] or None
         (optional) complex STFT calculated using the other arguments provided
         to `__reassign_times`
 
@@ -694,11 +703,11 @@ def __reassign_times(
 
     Returns
     -------
-    times : np.ndarray [shape=(1 + n_fft/2, t), dtype=real]
+    times : np.ndarray [shape=(..., 1 + n_fft/2, t), dtype=real]
         Reassigned times:
         ``times[f, t]`` is the time for bin ``f``, frame ``t``.
 
-    S : np.ndarray [shape=(1 + n_fft/2, t), dtype=complex]
+    S : np.ndarray [shape=(..., 1 + n_fft/2, t), dtype=complex]
         Short-time Fourier transform
 
     Warns
@@ -849,13 +858,13 @@ def reassigned_spectrogram(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)], real-valued
-        audio time series
+    y : np.ndarray [shape=(..., n)], real-valued
+        audio time series, may consist of one or more channels
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
 
-    S : np.ndarray [shape=(d, t)] or None
+    S : np.ndarray [shape=(..., d, t)] or None
         (optional) complex STFT calculated using the other arguments provided
         to ``reassigned_spectrogram``
 
@@ -929,19 +938,19 @@ def reassigned_spectrogram(
 
     Returns
     -------
-    freqs, times, mags : np.ndarray [shape=(1 + n_fft/2, t), dtype=real]
+    freqs, times, mags : np.ndarray [shape=(..., 1 + n_fft/2, t), dtype=real]
         Instantaneous frequencies:
-            ``freqs[f, t]`` is the frequency for bin ``f``, frame ``t``.
+            ``freqs[..., f, t]`` is the frequency for bin ``f``, frame ``t``.
             If ``reassign_frequencies=False``, this will instead be a read-only array
             of the same shape containing the bin center frequencies for all frames.
 
         Reassigned times:
-            ``times[f, t]`` is the time for bin ``f``, frame ``t``.
+            ``times[..., f, t]`` is the time for bin ``f``, frame ``t``.
             If ``reassign_times=False``, this will instead be a read-only array of
             the same shape containing the frame times for all bins.
 
         Magnitudes from short-time Fourier transform:
-            ``mags[f, t]`` is the magnitude for bin ``f``, frame ``t``.
+            ``mags[..., f, t]`` is the magnitude for bin ``f``, frame ``t``.
 
     Warns
     --------
@@ -1054,7 +1063,10 @@ def reassigned_spectrogram(
         bin_freqs = convert.fft_frequencies(sr=sr, n_fft=n_fft)
 
         frame_times = convert.frames_to_time(
-            frames=np.arange(S.shape[-1]), sr=sr, hop_length=hop_length, n_fft=pad_length
+            frames=np.arange(S.shape[-1]),
+            sr=sr,
+            hop_length=hop_length,
+            n_fft=pad_length,
         )
 
     # find bins below the power threshold
@@ -1105,8 +1117,9 @@ def magphase(D, power=1):
 
     Parameters
     ----------
-    D : np.ndarray [shape=(d, t), dtype=complex]
+    D : np.ndarray [shape=(..., d, t), dtype=complex]
         complex-valued spectrogram
+
     power : float > 0
         Exponent for the magnitude spectrogram,
         e.g., 1 for energy, 2 for power, etc.
@@ -1114,9 +1127,10 @@ def magphase(D, power=1):
 
     Returns
     -------
-    D_mag : np.ndarray [shape=(d, t), dtype=real]
+    D_mag : np.ndarray [shape=(..., d, t), dtype=real]
         magnitude of ``D``, raised to ``power``
-    D_phase : np.ndarray [shape=(d, t), dtype=complex]
+
+    D_phase : np.ndarray [shape=(..., d, t), dtype=complex]
         ``exp(1.j * phi)`` where ``phi`` is the phase of ``D``
 
 
@@ -1196,7 +1210,7 @@ def phase_vocoder(D, rate, hop_length=None):
 
     Parameters
     ----------
-    D : np.ndarray [shape=(d, t), dtype=complex]
+    D : np.ndarray [shape=(..., d, t), dtype=complex]
         STFT matrix
 
     rate :  float > 0 [scalar]
@@ -1209,7 +1223,7 @@ def phase_vocoder(D, rate, hop_length=None):
 
     Returns
     -------
-    D_stretched : np.ndarray [shape=(d, t / rate), dtype=complex]
+    D_stretched : np.ndarray [shape=(..., d, t / rate), dtype=complex]
         time-stretched STFT
 
     See Also
@@ -1237,7 +1251,7 @@ def phase_vocoder(D, rate, hop_length=None):
     phase_acc = np.angle(D[..., 0])
 
     # Pad 0 columns to simplify boundary logic
-    padding = [(0,0) for _ in D.shape]
+    padding = [(0, 0) for _ in D.shape]
     padding[-1] = (0, 2)
     D = np.pad(D, padding, mode="constant")
 
@@ -1304,8 +1318,8 @@ def iirt(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        audio time series
+    y : np.ndarray [shape=(..., n)]
+        audio time series, may consist of one or more channels
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
@@ -1319,8 +1333,8 @@ def iirt(
 
     center : boolean
         - If ``True``, the signal ``y`` is padded so that frame
-          ``D[:, t]`` is centered at ``y[t * hop_length]``.
-        - If ``False``, then `D[:, t]`` begins at ``y[t * hop_length]``
+          ``D[..., :, t]`` is centered at ``y[t * hop_length]``.
+        - If ``False``, then `D[..., :, t]`` begins at ``y[t * hop_length]``
 
     tuning : float [scalar]
         Tuning deviation from A440 in fractions of a bin.
@@ -1341,7 +1355,7 @@ def iirt(
 
     Returns
     -------
-    bands_power : np.ndarray [shape=(n, t), dtype=dtype]
+    bands_power : np.ndarray [shape=(..., n, t), dtype=dtype]
         Short-time mean-square power for the input signal.
 
     Raises
@@ -1387,7 +1401,7 @@ def iirt(
     # Pad the time series so that frames are centered
     if center:
         padding = [(0, 0) for _ in y.shape]
-        padding[-1] = (win_length//2, win_length//2)
+        padding[-1] = (win_length // 2, win_length // 2)
         y = np.pad(y, padding, mode=pad_mode)
 
     # get the semitone filterbank
@@ -1425,13 +1439,11 @@ def iirt(
 
         if flayout == "ba":
             cur_filter_output = scipy.signal.filtfilt(
-                cur_filter[0], cur_filter[1], y_resampled[cur_sr_idx],
-                axis=-1
+                cur_filter[0], cur_filter[1], y_resampled[cur_sr_idx], axis=-1
             )
         elif flayout == "sos":
             cur_filter_output = scipy.signal.sosfiltfilt(
-                cur_filter, y_resampled[cur_sr_idx],
-                axis=-1
+                cur_filter, y_resampled[cur_sr_idx], axis=-1
             )
 
         factor = sr / cur_sr
@@ -1449,13 +1461,17 @@ def iirt(
             )
             cur_filter_output = util.fix_length(cur_filter_output, min_length)
             start_idx = np.arange(
-                0, cur_filter_output.shape[-1] - win_length_STMSP_round, hop_length_STMSP
+                0,
+                cur_filter_output.shape[-1] - win_length_STMSP_round,
+                hop_length_STMSP,
             )
         start_idx = np.round(start_idx).astype(int)[:n_frames]
 
         idx = np.add.outer(start_idx, np.arange(win_length_STMSP_round))
 
-        bands_power[tuple(slices)] = factor * np.sum(cur_filter_output[..., idx] ** 2, axis=-1)
+        bands_power[tuple(slices)] = factor * np.sum(
+            cur_filter_output[..., idx] ** 2, axis=-1
+        )
 
     return bands_power
 
@@ -1706,11 +1722,11 @@ def db_to_amplitude(S_db, ref=1.0):
 def perceptual_weighting(S, frequencies, kind="A", **kwargs):
     """Perceptual weighting of a power spectrogram::
 
-        S_p[f] = frequency_weighting(f, 'A') + 10*log(S[f] / ref)
+        S_p[..., f, :] = frequency_weighting(f, 'A') + 10*log(S[..., f, :] / ref)
 
     Parameters
     ----------
-    S : np.ndarray [shape=(d, t)]
+    S : np.ndarray [shape=(..., d, t)]
         Power spectrogram
 
     frequencies : np.ndarray [shape=(d,)]
@@ -1725,7 +1741,7 @@ def perceptual_weighting(S, frequencies, kind="A", **kwargs):
 
     Returns
     -------
-    S_p : np.ndarray [shape=(d, t)]
+    S_p : np.ndarray [shape=(..., d, t)]
         perceptually weighted version of ``S``
 
     See Also
@@ -2278,7 +2294,7 @@ def griffinlim(
 
     Parameters
     ----------
-    S : np.ndarray [shape=(n_fft / 2 + 1, t), non-negative]
+    S : np.ndarray [shape=(..., n_fft / 2 + 1, t), non-negative]
         An array of short-time Fourier transform magnitudes as produced by
         `stft`.
 
@@ -2336,7 +2352,7 @@ def griffinlim(
 
     Returns
     -------
-    y : np.ndarray [shape=(n,)]
+    y : np.ndarray [shape=(..., n)]
         time-domain signal reconstructed from ``S``
 
     See Also
@@ -2467,7 +2483,7 @@ def _spectrogram(
 
     Parameters
     ----------
-    y : None or np.ndarray [ndim=1]
+    y : None or np.ndarray
         If provided, an audio time series
 
     S : None or np.ndarray

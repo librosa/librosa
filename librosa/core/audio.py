@@ -108,8 +108,8 @@ def load(
 
     Returns
     -------
-    y    : np.ndarray [shape=(n,) or (2, n)]
-        audio time series
+    y    : np.ndarray [shape=(n,) or (..., n)]
+        audio time series, may consist of one or more channels
 
     sr   : number > 0 [scalar]
         sampling rate of ``y``
@@ -425,7 +425,7 @@ def to_mono(y):
 
     Parameters
     ----------
-    y : np.ndarray [shape=(2,n) or shape=(n,)]
+    y : np.ndarray [shape=(k,n) or shape=(n,)]
         audio time series, either stereo or mono
 
     Returns
@@ -471,8 +471,8 @@ def resample(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,) or shape=(2, n)]
-        audio time series.  Can be mono or stereo.
+    y : np.ndarray [shape=(..., n)]
+        audio time series.  May consist of one or more channels.
 
     orig_sr : number > 0 [scalar]
         original sampling rate of ``y``
@@ -528,7 +528,7 @@ def resample(
 
     Returns
     -------
-    y_hat : np.ndarray [shape=(n * target_sr / orig_sr,)]
+    y_hat : np.ndarray [shape=(..., n * target_sr / orig_sr)]
         ``y`` resampled from ``orig_sr`` to ``target_sr``
 
     Raises
@@ -642,13 +642,13 @@ def get_duration(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,), (2, n)] or None
-        audio time series
+    y : np.ndarray [shape=(..., n)] or None
+        audio time series, may consist of one or more channels
 
     sr : number > 0 [scalar]
         audio sampling rate of ``y``
 
-    S : np.ndarray [shape=(d, t)] or None
+    S : np.ndarray [shape=(..., d, t)] or None
         STFT matrix, or any STFT-derived matrix (e.g., chromagram
         or mel spectrogram).
         Durations calculated from spectrogram inputs are only accurate
@@ -841,8 +841,8 @@ def lpc(y, order, axis=-1):
 
     Parameters
     ----------
-    y : np.ndarray
-        Time series to fit
+    y : np.ndarray [shape=(..., n)]
+        Time series to fit, may consist of one or more channels.
 
     order : int > 0
         Order of the linear filter
@@ -852,8 +852,9 @@ def lpc(y, order, axis=-1):
 
     Returns
     -------
-    a : np.ndarray of length ``order + 1``
-        LP prediction error coefficients, i.e. filter denominator polynomial
+    a : np.ndarray [shape=(..., order + 1)]
+        LP prediction error coefficients, i.e. filter denominator polynomial.
+        Note that the length along the specified ``axis`` will be ``order+1``.
 
     Raises
     ------
@@ -1172,7 +1173,8 @@ def clicks(
         duration (in seconds) of the default click signal.  Default is 100ms.
 
     click : np.ndarray or None
-        optional click signal sample to use instead of the default click.
+        (optional) click signal sample to use instead of the default click.
+        May consist of one or more channels.
 
     length : int > 0
         desired number of samples in the output signal
@@ -1181,7 +1183,8 @@ def clicks(
     Returns
     -------
     click_signal : np.ndarray
-        Synthesized click signal
+        Synthesized click signal.
+        This will be monophonic by default, or match the number of channels to a provided ``click`` signal.
 
 
     Raises
