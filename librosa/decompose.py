@@ -39,8 +39,11 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
 
     Parameters
     ----------
-    S : np.ndarray [shape=(n_features, n_samples), dtype=float]
+    S : np.ndarray [shape=(...., n_features, n_samples), dtype=float]
         The input feature matrix (e.g., magnitude spectrogram)
+
+        If the input has multiple channels (leading dimensions), they will be automatically
+        flattened prior to decomposition.
 
     n_components : int > 0 [scalar] or None
         number of desired components
@@ -88,7 +91,7 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
 
     Returns
     -------
-    components: np.ndarray [shape=(n_features, n_components)]
+    components: np.ndarray [shape=(..., n_features, n_components)]
         matrix of components (basis elements).
 
     activations: np.ndarray [shape=(n_components, n_samples)]
@@ -209,8 +212,9 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
 
     Parameters
     ----------
-    S : np.ndarray [shape=(d, n)]
+    S : np.ndarray [shape=(..., d, n)]
         input spectrogram. May be real (magnitude) or complex.
+        May consist of one or more channels.
 
     kernel_size : int or tuple (kernel_harmonic, kernel_percussive)
         kernel size(s) for the median filters.
@@ -244,10 +248,10 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
 
     Returns
     -------
-    harmonic : np.ndarray [shape=(d, n)]
+    harmonic : np.ndarray [shape=(..., d, n)]
         harmonic component (or mask)
 
-    percussive : np.ndarray [shape=(d, n)]
+    percussive : np.ndarray [shape=(..., d, n)]
         percussive component (or mask)
 
 
@@ -405,7 +409,7 @@ def nn_filter(S, rec=None, aggregate=None, axis=-1, **kwargs):
     Parameters
     ----------
     S : np.ndarray
-        The input data (spectrogram) to filter
+        The input data (spectrogram) to filter, may consist of one or more channels
 
     rec : (optional) scipy.sparse.spmatrix or np.ndarray
         Optionally, a pre-computed nearest-neighbor matrix
@@ -431,7 +435,7 @@ def nn_filter(S, rec=None, aggregate=None, axis=-1, **kwargs):
     Returns
     -------
     S_filtered : np.ndarray
-        The filtered data
+        The filtered data, of shape equivalent to the input ``S``.
 
     Raises
     ------
