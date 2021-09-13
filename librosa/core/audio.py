@@ -425,8 +425,8 @@ def to_mono(y):
 
     Parameters
     ----------
-    y : np.ndarray [shape=(k,n) or shape=(n,)]
-        audio time series, either stereo or mono
+    y : np.ndarray [shape=(..., n)]
+        audio time series, may consist of one or more channels
 
     Returns
     -------
