@@ -447,14 +447,12 @@ def to_mono(y):
     (117601,)
 
     """
-    # Ensure Fortran contiguity.
-    y = np.asfortranarray(y)
 
     # Validate the buffer.  Stereo is ok here.
     util.valid_audio(y, mono=False)
 
     if y.ndim > 1:
-        y = np.mean(y, axis=0)
+        y = np.mean(y, axis=tuple(range(y.ndim-1)))
 
     return y
 

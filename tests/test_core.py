@@ -870,6 +870,16 @@ def test_to_mono(y):
         assert np.allclose(y, y_mono)
 
 
+@pytest.mark.parametrize(
+    "y", [np.ones((2, 10)), np.ones((2, 3, 10)), np.ones((2,3,4,10))]
+)
+def test_to_mono_multi(y):
+    y_mono = librosa.to_mono(y)
+
+    assert y_mono.ndim == 1
+    assert len(y_mono) == y.shape[-1]
+
+
 @pytest.mark.parametrize("data", [np.random.randn(32)])
 @pytest.mark.parametrize("threshold", [None, 0, 1e-10])
 @pytest.mark.parametrize("ref_magnitude", [None, 0.1, np.max])
