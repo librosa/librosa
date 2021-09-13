@@ -236,6 +236,7 @@ def valid_audio(y, mono=True):
 
     If ``mono=False``, then ``y`` may be either monophonic, or have shape
     ``(2, N)`` (stereo) or ``(K, N)`` for ``K>=2`` for general multi-channel.
+    Higher order arrangements are also allowed, e.g., ``(K1, K2, K3, N)``.
 
 
     Parameters
