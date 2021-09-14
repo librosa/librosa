@@ -883,7 +883,7 @@ def subsegment(data, frames, n_segments=4, axis=-1):
             )
         )
 
-    return np.ascontiguousarray(boundaries)
+    return np.array(boundaries)
 
 
 def agglomerative(data, k, clusterer=None, axis=-1):

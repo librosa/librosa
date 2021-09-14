@@ -392,7 +392,7 @@ def istft(
     shape = list(stft_matrix.shape[:-2])
     expected_signal_len = n_fft + hop_length * (n_frames - 1)
     shape.append(expected_signal_len)
-    y = np.zeros(shape, dtype=dtype, order="F")
+    y = np.zeros(shape, dtype=dtype)
 
     n_columns = util.MAX_MEM_BLOCK // (
         np.prod(stft_matrix.shape[:-1]) * stft_matrix.itemsize
@@ -1239,7 +1239,6 @@ def phase_vocoder(D, rate, hop_length=None):
     time_steps = np.arange(0, D.shape[-1], rate, dtype=np.float)
 
     # Create an empty output array
-    # d_stretch = np.zeros((D.shape[0], len(time_steps)), D.dtype, order="F")
     shape = list(D.shape)
     shape[-1] = len(time_steps)
     d_stretch = np.zeros_like(D, shape=shape)

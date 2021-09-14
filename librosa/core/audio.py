@@ -607,7 +607,7 @@ def resample(
     if scale:
         y_hat /= np.sqrt(ratio)
 
-    return np.asfortranarray(y_hat, dtype=y.dtype)
+    return y_hat.astype(y.dtype)
 
 
 def get_duration(
