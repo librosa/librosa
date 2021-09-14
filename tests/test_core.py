@@ -193,10 +193,6 @@ def test_resample_stereo(resample_audio, sr_out, res_type, fix):
     if sr_out == sr_in:
         assert np.allclose(y, y2)
 
-    # Check buffer contiguity
-    assert y2.flags["C_CONTIGUOUS"] == y.flags["C_CONTIGUOUS"]
-    assert y2.flags["F_CONTIGUOUS"] == y.flags["F_CONTIGUOUS"]
-
     # Check that we're within one sample of target_length = y.shape[-1] * sr_out // sr_in
     target_length = y.shape[-1] * sr_out // sr_in
     assert np.abs(y2.shape[-1] - target_length) <= 1
