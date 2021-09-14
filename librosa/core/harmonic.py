@@ -180,8 +180,8 @@ def interp_harmonics(x, freqs, h_range, kind="linear", fill_value=0, axis=-2):
     >>> # We'll measure the first five harmonics
     >>> h_range = [1, 2, 3, 4, 5]
     >>> f_tempo = librosa.tempo_frequencies(len(tempi), sr=sr)
-    >>> # Build the harmonic tensor
-    >>> t_harmonics = librosa.interp_harmonics(tempi, f_tempo, h_range)
+    >>> # Build the harmonic tensor; we only have one axis here (tempo)
+    >>> t_harmonics = librosa.interp_harmonics(tempi, f_tempo, h_range, axis=0)
     >>> print(t_harmonics.shape)
     (5, 384)
 
