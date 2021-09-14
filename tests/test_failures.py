@@ -94,19 +94,6 @@ def test_frame_hop():
     librosa.util.frame(y, frame_length=10, hop_length=0)
 
 
-def test_frame_discontiguous():
-    """frame: discontiguous input"""
-    y = np.zeros((128, 2)).T
-    with pytest.warns(UserWarning):
-        librosa.util.frame(y[0], frame_length=64, hop_length=64)
-
-
-def test_frame_contiguous():
-    """frame: discontiguous input"""
-    y = np.zeros((2, 128))
-    librosa.util.frame(y[0], frame_length=64, hop_length=64)
-
-
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_frame_size():
     # frame: len(y) == 128, frame_length==256, hop_length=128

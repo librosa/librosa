@@ -86,9 +86,34 @@ def test_frame_0stride():
     assert np.allclose(xf, xfpad2)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
-def test_frame_badtype():
-    librosa.util.frame([1, 2, 3, 4], frame_length=2, hop_length=1)
+@pytest.mark.parametrize('frame_length', [5, 10])
+@pytest.mark.parametrize('hop_length', [1, 2])
+@pytest.mark.parametrize('ndim', [2, 3, 4, 5])
+def test_frame_highdim(frame_length, hop_length, ndim):
+    srand()
+
+    x = np.random.randn(*([20] * ndim))
+    xf = librosa.util.frame(x, frame_length, hop_length)
+    for i in range(x.shape[0]):
+        xf0 = librosa.util.frame(x[i], frame_length, hop_length)
+
+        assert np.allclose(xf[i], xf0)
+
+
+@pytest.mark.parametrize('in_shape,axis,out_shape', [
+    ( (20, 20, 20, 20), 0, (6, 10, 20, 20, 20)),
+    ( (20, 20, 20, 20), 1, (20, 6, 10, 20, 20)),
+    ( (20, 20, 20, 20), 2, (20, 20, 6, 10, 20)),
+    ( (20, 20, 20, 20), 3, (20, 20, 20, 6, 10)),
+    ( (20, 20, 20, 20), -1, (20, 20, 20, 10, 6)),
+    ( (20, 20, 20, 20), -2, (20, 20, 10, 6, 20)),
+    ( (20, 20, 20, 20), -3, (20, 10, 6, 20, 20)),
+    ( (20, 20, 20, 20), -4, (10, 6, 20, 20, 20)),
+    ])
+def test_frame_targetaxis(in_shape, axis, out_shape):
+    x = np.empty(in_shape)
+    xf = librosa.util.frame(x, frame_length=10, hop_length=2, axis=axis)
+    assert xf.shape == out_shape
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -101,38 +126,6 @@ def test_frame_too_short(x, axis):
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_frame_bad_hop():
     librosa.util.frame(np.arange(16), frame_length=4, hop_length=0)
-
-
-@pytest.mark.xfail(raises=librosa.ParameterError)
-@pytest.mark.parametrize("axis", [1, 2])
-def test_frame_bad_axis(axis):
-    librosa.util.frame(np.zeros((3, 3, 3)), frame_length=2, hop_length=1, axis=axis)
-
-
-@pytest.mark.parametrize(
-    "x_bad, axis",
-    [(np.zeros((4, 10), order="C"), -1), (np.zeros((4, 10), order="F"), 0)],
-)
-def test_frame_bad_contiguity(x_bad, axis):
-    # Populate fixture with random data
-    x_bad += np.random.randn(*x_bad.shape)
-
-    # And make a contiguous copy of it
-    if axis == 0:
-        x_good = np.ascontiguousarray(x_bad)
-    else:
-        x_good = np.asfortranarray(x_bad)
-
-    # Verify that the aligned data is good
-    assert np.allclose(x_bad, x_good)
-
-    # The test here checks two things:
-    #   1) that output is identical if we provide properly contiguous input
-    #   2) that a warning is issued if the input is not properly contiguous
-    x_good_f = librosa.util.frame(x_good, frame_length=2, hop_length=1, axis=axis)
-    with pytest.warns(UserWarning):
-        x_bad_f = librosa.util.frame(x_bad, frame_length=2, hop_length=1, axis=axis)
-        assert np.allclose(x_good_f, x_bad_f)
 
 
 @pytest.mark.parametrize("y", [np.ones((16,)), np.ones((16, 16))])

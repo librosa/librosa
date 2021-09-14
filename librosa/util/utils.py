@@ -8,7 +8,7 @@ import scipy.sparse
 
 import numpy as np
 import numba
-from numpy.lib.stride_tricks import as_strided
+from numpy.lib.stride_tricks import as_strided, sliding_window_view
 
 from .._cache import cache
 from .exceptions import ParameterError
@@ -46,7 +46,7 @@ __all__ = [
 ]
 
 
-def frame(x, frame_length, hop_length, axis=-1):
+def frame(x, frame_length, hop_length, axis=-1, writeable=False, subok=False):
     """Slice a data array into (overlapping) frames.
 
     This implementation uses low-level stride manipulation to avoid
@@ -78,8 +78,8 @@ def frame(x, frame_length, hop_length, axis=-1):
 
     This generalizes to higher dimensional inputs, as shown in the examples below.
     In general, the framing operation increments by 1 the number of dimensions,
-    adding a new "frame axis" either to the end of the array (``axis=-1``)
-    or the beginning of the array (``axis=0``).
+    adding a new "frame axis" either before the framing axis (if ``axis < 0``)
+    or after the framing axis (if ``axis >= 0``).
 
 
     Parameters
@@ -93,18 +93,21 @@ def frame(x, frame_length, hop_length, axis=-1):
     hop_length : int > 0 [scalar]
         Number of steps to advance between frames
 
-    axis : 0 or -1
+    axis : int
         The axis along which to frame.
 
-        If ``axis=-1`` (the default), then ``x`` is framed along its last dimension.
-        ``x`` must be "F-contiguous" in this case.
+    writeable : bool
+        If ``True``, then the framed view of ``x`` is read-only.
+        If ``False``, then the framed view is read-write.  Note that writing to the framed view
+        will also write to the input array ``x`` in this case.
 
-        If ``axis=0``, then ``x`` is framed along its first dimension.
-        ``x`` must be "C-contiguous" in this case.
+    subok : bool
+        If True, sub-classes will be passed-through, otherwise the returned array will be
+        forced to be a base-class array (default).
 
     Returns
     -------
-    x_frames : np.ndarray [shape=(..., frame_length, N_FRAMES) or (N_FRAMES, frame_length, ...)]
+    x_frames : np.ndarray [shape=(..., frame_length, N_FRAMES, ...)]
         A framed view of ``x``, for example with ``axis=-1`` (framing on the last dimension)::
 
             x_frames[..., j] == x[..., j * hop_length : j * hop_length + frame_length]
@@ -116,20 +119,13 @@ def frame(x, frame_length, hop_length, axis=-1):
     Raises
     ------
     ParameterError
-        If ``x`` is not an `np.ndarray`.
-
         If ``x.shape[axis] < frame_length``, there is not enough data to fill one frame.
 
         If ``hop_length < 1``, frames cannot advance.
 
-        If ``axis`` is not 0 or -1.  Framing is only supported along the first or last axis.
-
-
     See Also
     --------
-    numpy.asfortranarray : Convert data to F-contiguous representation
-    numpy.ascontiguousarray : Convert data to C-contiguous representation
-    numpy.ndarray.flags : information about the memory layout of a numpy `ndarray`.
+    numpy.lib.stride_tricks.as_strided
 
     Examples
     --------
@@ -181,10 +177,10 @@ def frame(x, frame_length, hop_length, axis=-1):
     True
     """
 
-    if not isinstance(x, np.ndarray):
-        raise ParameterError(
-            "Input must be of type numpy.ndarray, " "given type(x)={}".format(type(x))
-        )
+    # This implementation is derived from numpy.lib.stride_tricks.sliding_window_view (1.20.0)
+    # https://numpy.org/doc/stable/reference/generated/numpy.lib.stride_tricks.sliding_window_view.html
+
+    x = np.array(x, copy=False, subok=subok)
 
     if x.shape[axis] < frame_length:
         raise ParameterError(
@@ -195,36 +191,29 @@ def frame(x, frame_length, hop_length, axis=-1):
     if hop_length < 1:
         raise ParameterError("Invalid hop_length: {:d}".format(hop_length))
 
-    if axis == -1 and not x.flags["F_CONTIGUOUS"]:
-        warnings.warn(
-            "librosa.util.frame called with axis={} "
-            "on a non-contiguous input. This will result in a copy.".format(axis)
-        )
-        x = np.asfortranarray(x)
-    elif axis == 0 and not x.flags["C_CONTIGUOUS"]:
-        warnings.warn(
-            "librosa.util.frame called with axis={} "
-            "on a non-contiguous input. This will result in a copy.".format(axis)
-        )
-        x = np.ascontiguousarray(x)
+    # put our new within-frame axis at the end for now
+    out_strides = x.strides + tuple([x.strides[axis]])
 
-    n_frames = 1 + (x.shape[axis] - frame_length) // hop_length
-    strides = np.asarray(x.strides)
+    # Reduce the shape on the framing axis
+    x_shape_trimmed = list(x.shape)
+    x_shape_trimmed[axis] -= frame_length - 1
 
-    new_stride = np.prod(strides[strides > 0] // x.itemsize) * x.itemsize
+    out_shape = tuple(x_shape_trimmed) + tuple([frame_length])
+    xw = as_strided(
+        x, strides=out_strides, shape=out_shape, subok=subok, writeable=writeable
+    )
 
-    if axis == -1:
-        shape = list(x.shape)[:-1] + [frame_length, n_frames]
-        strides = list(strides) + [hop_length * new_stride]
-
-    elif axis == 0:
-        shape = [n_frames, frame_length] + list(x.shape)[1:]
-        strides = [hop_length * new_stride] + list(strides)
-
+    if axis < 0:
+        target_axis = axis - 1
     else:
-        raise ParameterError("Frame axis={} must be either 0 or -1".format(axis))
+        target_axis = axis + 1
 
-    return as_strided(x, shape=shape, strides=strides)
+    xw = np.moveaxis(xw, -1, target_axis)
+
+    # Downsample along the target axis
+    slices = [slice(None)] * xw.ndim
+    slices[axis] = slice(0, None, hop_length)
+    return xw[tuple(slices)]
 
 
 @cache(level=20)

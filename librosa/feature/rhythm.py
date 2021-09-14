@@ -146,10 +146,6 @@ def tempogram(
 
         onset_envelope = onset_strength(y=y, sr=sr, hop_length=hop_length)
 
-    else:
-        # Force row-contiguity to avoid framing errors below
-        onset_envelope = np.ascontiguousarray(onset_envelope)
-
     # Center the autocorrelation windows
     n = onset_envelope.shape[-1]
 
@@ -277,10 +273,6 @@ def fourier_tempogram(
             raise ParameterError("Either y or onset_envelope must be provided")
 
         onset_envelope = onset_strength(y=y, sr=sr, hop_length=hop_length)
-
-    else:
-        # Force row-contiguity to avoid framing errors below
-        onset_envelope = np.ascontiguousarray(onset_envelope)
 
     # Generate the short-time Fourier transform
     return stft(

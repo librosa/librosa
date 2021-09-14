@@ -613,7 +613,6 @@ def onset_strength_multi(
         # Counter-act framing effects. Shift the onsets by n_fft / hop_length
         pad_width += n_fft // (2 * hop_length)
 
-    onset_env_ndims = onset_env.ndim
     padding = [(0, 0) for _ in onset_env.shape]
     padding[-1] = (int(pad_width), 0)
     onset_env = np.pad(onset_env, padding, mode="constant")
