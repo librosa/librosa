@@ -2,13 +2,12 @@
 # -*- coding: utf-8 -*-
 """Utility functions"""
 
-import warnings
 import scipy.ndimage
 import scipy.sparse
 
 import numpy as np
 import numba
-from numpy.lib.stride_tricks import as_strided, sliding_window_view
+from numpy.lib.stride_tricks import as_strided
 
 from .._cache import cache
 from .exceptions import ParameterError
@@ -52,10 +51,6 @@ def frame(x, frame_length, hop_length, axis=-1, writeable=False, subok=False):
     This implementation uses low-level stride manipulation to avoid
     making a copy of the data.  The resulting frame representation
     is a new view of the same input data.
-
-    However, if the input data is not contiguous in memory, a warning
-    will be issued and the output will be a full copy, rather than
-    a view of the input data.
 
     For example, a one-dimensional input ``x = [0, 1, 2, 3, 4, 5, 6]``
     can be framed with frame length 3 and hop length 2 in two ways.
