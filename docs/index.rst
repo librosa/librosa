@@ -56,6 +56,7 @@ If you want to cite librosa in a scholarly work, there are two ways to do it.
     :caption: Advanced topics
     :maxdepth: 2
 
+    multichannel
     filters
     cache
     ioformats
