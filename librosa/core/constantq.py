@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Constant-Q transforms"""
-from __future__ import division
-
 import warnings
 import numpy as np
 from numba import jit
