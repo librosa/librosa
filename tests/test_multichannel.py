@@ -1006,7 +1006,7 @@ def test_trim_multichannel(y_multi):
     yt1, ival1 = librosa.effects.trim(y[1])
 
     # Trim uses max aggregation across channels by default
-    # So the multichannel trimming window will be the 
+    # So the multichannel trimming window will be the
     # intersection of the individual intervals
     assert ival[0] == max(ival0[0], ival1[0])
     assert ival[1] == min(ival0[1], ival1[1])

@@ -896,13 +896,13 @@ def lpc(y, order, axis=-1):
     # Move the lpc axis around front, because numba is silly
     y = y.swapaxes(axis, 0)
 
-    dtype = y.dtype.type
+    dtype = y.dtype
 
     shape = list(y.shape)
     shape[0] = order + 1
 
     ar_coeffs = np.zeros(tuple(shape), dtype=dtype)
-    ar_coeffs[0] = dtype(1)
+    ar_coeffs[0] = 1
 
     ar_coeffs_prev = ar_coeffs.copy()
 
