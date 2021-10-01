@@ -1420,6 +1420,8 @@ def griffinlim_cqt(
 
     # using complex64 will keep the result to minimal necessary precision
     angles = np.empty(C.shape, dtype=np.complex64)
+    eps = util.tiny(angles)
+
     if init == "random":
         # randomly initialize the phase
         angles[:] = np.exp(2j * np.pi * rng.rand(*C.shape))
@@ -1467,7 +1469,7 @@ def griffinlim_cqt(
 
         # Update our phase estimates
         angles[:] = rebuilt - (momentum / (1 + momentum)) * tprev
-        angles[:] /= np.abs(angles) + 1e-16
+        angles[:] /= np.abs(angles) + eps
 
     # Return the final phase estimates
     return icqt(
