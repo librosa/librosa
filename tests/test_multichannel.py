@@ -992,3 +992,21 @@ def test_mfcc_to_mel_multi(s_multi, n_mfcc, n_mels, dct_type):
 
     # Check that they're not both the same
     assert not np.allclose(mel_recover0, mel_recover1)
+
+
+
+def test_trim_multichannel(y_multi):
+    y, sr = y_multi
+
+    # Make one channel much quieter than the other
+    y = y * np.array([[1e-6, 1e6]]).T
+    yt, ival = librosa.effects.trim(y)
+
+    yt0, ival0 = librosa.effects.trim(y[0])
+    yt1, ival1 = librosa.effects.trim(y[1])
+
+    # Trim uses max aggregation across channels by default
+    # So the multichannel trimming window will be the 
+    # intersection of the individual intervals
+    assert ival[0] == max(ival0[0], ival1[0])
+    assert ival[1] == min(ival0[1], ival1[1])
