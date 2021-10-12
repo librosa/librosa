@@ -125,14 +125,6 @@ def cqt(
     CQT : np.ndarray [shape=(..., n_bins, t)]
         Constant-Q value each frequency at each time.
 
-    Raises
-    ------
-    ParameterError
-        If ``hop_length`` is not an integer multiple of
-        ``2**(n_bins / bins_per_octave)``
-
-        Or if ``y`` is too short to support the frequency range of the CQT.
-
     See Also
     --------
     vqt
@@ -282,14 +274,6 @@ def hybrid_cqt(
     -------
     CQT : np.ndarray [shape=(..., n_bins, t), dtype=np.float]
         Constant-Q energy for each frequency at each time.
-
-    Raises
-    ------
-    ParameterError
-        If ``hop_length`` is not an integer multiple of
-        ``2**(n_bins / bins_per_octave)``
-
-        Or if ``y`` is too short to support the frequency range of the CQT.
 
     See Also
     --------
@@ -460,14 +444,6 @@ def pseudo_cqt(
     -------
     CQT : np.ndarray [shape=(..., n_bins, t), dtype=np.float]
         Pseudo Constant-Q energy for each frequency at each time.
-
-    Raises
-    ------
-    ParameterError
-        If ``hop_length`` is not an integer multiple of
-        ``2**(n_bins / bins_per_octave)``
-
-        Or if ``y`` is too short to support the frequency range of the CQT.
 
     Notes
     -----
@@ -869,14 +845,6 @@ def vqt(
     VQT : np.ndarray [shape=(..., n_bins, t), dtype=np.complex or np.float]
         Variable-Q value each frequency at each time.
 
-    Raises
-    ------
-    ParameterError
-        If ``hop_length`` is not an integer multiple of
-        ``2**(n_bins / bins_per_octave)``
-
-        Or if ``y`` is too short to support the frequency range of the VQT.
-
     See Also
     --------
     cqt
@@ -907,8 +875,6 @@ def vqt(
     # How many octaves are we dealing with?
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
     n_filters = min(bins_per_octave, n_bins)
-
-    len_orig = y.shape[-1]
 
     # Relative difference in frequency between any two consecutive bands
     alpha = 2.0 ** (1.0 / bins_per_octave) - 1
@@ -984,38 +950,12 @@ def vqt(
         fmax_t /= 2
         n_octaves -= 1
 
-        filter_cutoff = fmax_t * (1 + 0.5 * filters.window_bandwidth(window) / Q)
-
         res_type = "kaiser_fast"
 
-    # Make sure our hop is long enough to support the bottom octave
-    num_twos = __num_two_factors(hop_length)
-    if num_twos < n_octaves - 1:
-        raise ParameterError(
-            "hop_length must be a positive integer "
-            "multiple of 2^{0:d} for {1:d}-octave CQT/VQT".format(
-                n_octaves - 1, n_octaves
-            )
-        )
-
-    # Now do the recursive bit
+    # Iterate down the octaves
     my_y, my_sr, my_hop = y, sr, hop_length
 
-    # Iterate down the octaves
     for i in range(n_octaves):
-        # Resample (except first time)
-        if i > 0:
-            if my_y.shape[-1] < 2:
-                raise ParameterError(
-                    "Input signal length={} is too short for "
-                    "{:d}-octave CQT/VQT".format(len_orig, n_octaves)
-                )
-
-            my_y = audio.resample(my_y, 2, 1, res_type=res_type, scale=True)
-
-            my_sr /= 2.0
-            my_hop //= 2
-
         fft_basis, n_fft, _ = __cqt_filter_fft(
             my_sr,
             fmin_t * 2.0 ** -i,
@@ -1028,6 +968,7 @@ def vqt(
             gamma=gamma,
             dtype=dtype,
         )
+
         # Re-scale the filters to compensate for downsampling
         fft_basis[:] *= np.sqrt(2 ** i)
 
@@ -1035,6 +976,11 @@ def vqt(
         vqt_resp.append(
             __cqt_response(my_y, n_fft, my_hop, fft_basis, pad_mode, dtype=dtype)
         )
+
+        if my_hop % 2 == 0:
+            my_hop //= 2
+            my_sr /= 2.0
+            my_y = audio.resample(my_y, 2, 1, res_type=res_type, scale=True)
 
     V = __trim_stack(vqt_resp, n_bins, dtype)
 
@@ -1048,6 +994,7 @@ def vqt(
             filter_scale=filter_scale,
             gamma=gamma,
         )
+
         # reshape lengths to match V shape
         lengths = util.expand_to(lengths, ndim=V.ndim, axes=-2)
         V /= np.sqrt(lengths)
