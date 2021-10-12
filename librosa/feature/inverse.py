@@ -11,7 +11,7 @@ from ..core.spectrum import griffinlim
 from ..core.spectrum import db_to_power
 from ..util.utils import tiny
 from .. import filters
-from ..util import nnls
+from ..util import nnls, expand_to
 
 
 __all__ = ["mel_to_stft", "mel_to_audio", "mfcc_to_mel", "mfcc_to_audio"]
@@ -22,7 +22,7 @@ def mel_to_stft(M, sr=22050, n_fft=2048, power=2.0, **kwargs):
 
     Parameters
     ----------
-    M : np.ndarray [shape=(n_mels, n), non-negative]
+    M : np.ndarray [shape=(..., n_mels, n), non-negative]
         The spectrogram as produced by `feature.melspectrogram`
 
     sr : number > 0 [scalar]
@@ -41,7 +41,7 @@ def mel_to_stft(M, sr=22050, n_fft=2048, power=2.0, **kwargs):
 
     Returns
     -------
-    S : np.ndarray [shape=(n_fft, t), non-negative]
+    S : np.ndarray [shape=(..., n_fft, t), non-negative]
         An approximate linear magnitude spectrogram
 
 
@@ -80,7 +80,7 @@ def mel_to_stft(M, sr=22050, n_fft=2048, power=2.0, **kwargs):
     """
 
     # Construct a mel basis with dtype matching the input data
-    mel_basis = filters.mel(sr, n_fft, n_mels=M.shape[0], dtype=M.dtype, **kwargs)
+    mel_basis = filters.mel(sr, n_fft, n_mels=M.shape[-2], dtype=M.dtype, **kwargs)
 
     # Find the non-negative least squares solution, and apply
     # the inverse exponent.
@@ -113,7 +113,7 @@ def mel_to_audio(
 
     Parameters
     ----------
-    M : np.ndarray [shape=(n_mels, n), non-negative]
+    M : np.ndarray [shape=(..., n_mels, n), non-negative]
         The spectrogram as produced by `feature.melspectrogram`
 
     sr : number > 0 [scalar]
@@ -158,7 +158,7 @@ def mel_to_audio(
 
     Returns
     -------
-    y : np.ndarray [shape(n,)]
+    y : np.ndarray [shape(..., n,)]
         time-domain signal reconstructed from ``M``
 
     See Also
@@ -196,7 +196,7 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm="ortho", ref=1.0, lifter=0):
 
     Parameters
     ----------
-    mfcc : np.ndarray [shape=(n_mfcc, n)]
+    mfcc : np.ndarray [shape=(..., n_mfcc, n)]
         The Mel-frequency cepstral coefficients
 
     n_mels : int > 0
@@ -222,7 +222,7 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm="ortho", ref=1.0, lifter=0):
 
     Returns
     -------
-    M : np.ndarray [shape=(n_mels, n)]
+    M : np.ndarray [shape=(..., n_mels, n)]
         An approximate Mel power spectrum recovered from ``mfcc``
 
     Warns
@@ -237,9 +237,10 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm="ortho", ref=1.0, lifter=0):
     scipy.fftpack.dct
     """
     if lifter > 0:
-        n_mfcc = mfcc.shape[0]
+        n_mfcc = mfcc.shape[-2]
         idx = np.arange(1, 1 + n_mfcc, dtype=mfcc.dtype)
-        lifter_sine = 1 + lifter * 0.5 * np.sin(np.pi * idx / lifter)[:, np.newaxis]
+        idx = expand_to(idx, ndim=mfcc.ndim, axes=-2)
+        lifter_sine = 1 + lifter * 0.5 * np.sin(np.pi * idx / lifter)
 
         # raise a UserWarning if lifter array includes critical values
         if np.any(np.abs(lifter_sine) < np.finfo(lifter_sine.dtype).eps):
@@ -254,7 +255,7 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm="ortho", ref=1.0, lifter=0):
     elif lifter != 0:
         raise ParameterError("MFCC to mel lifter must be a non-negative number.")
 
-    logmel = scipy.fftpack.idct(mfcc, axis=0, type=dct_type, norm=norm, n=n_mels)
+    logmel = scipy.fftpack.idct(mfcc, axis=-2, type=dct_type, norm=norm, n=n_mels)
     return db_to_power(logmel, ref=ref)
 
 
@@ -271,7 +272,7 @@ def mfcc_to_audio(
 
     Parameters
     ----------
-    mfcc : np.ndarray [shape=(n_mfcc, n)]
+    mfcc : np.ndarray [shape=(..., n_mfcc, n)]
         The Mel-frequency cepstral coefficients
 
     n_mels : int > 0
@@ -300,7 +301,7 @@ def mfcc_to_audio(
 
     Returns
     -------
-    y : np.ndarray [shape=(n)]
+    y : np.ndarray [shape=(..., n)]
         A time-domain signal reconstructed from `mfcc`
 
     See Also

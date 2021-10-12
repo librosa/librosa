@@ -59,9 +59,7 @@ def __match_interval_overlaps(query, intervals_to, candidates):  # pragma: no co
 
 @numba.jit(nopython=True, cache=True)
 def __match_intervals(intervals_from, intervals_to, strict=True):  # pragma: no cover
-    """Numba-accelerated interval matching algorithm.
-
-    """
+    """Numba-accelerated interval matching algorithm."""
     # sort index of the interval starts
     start_index = np.argsort(intervals_to[:, 0])
 

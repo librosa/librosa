@@ -108,8 +108,8 @@ def load(
 
     Returns
     -------
-    y    : np.ndarray [shape=(n,) or (2, n)]
-        audio time series
+    y    : np.ndarray [shape=(n,) or (..., n)]
+        audio time series. Multi-channel is supported.
 
     sr   : number > 0 [scalar]
         sampling rate of ``y``
@@ -425,8 +425,8 @@ def to_mono(y):
 
     Parameters
     ----------
-    y : np.ndarray [shape=(2,n) or shape=(n,)]
-        audio time series, either stereo or mono
+    y : np.ndarray [shape=(..., n)]
+        audio time series. Multi-channel is supported.
 
     Returns
     -------
@@ -447,14 +447,12 @@ def to_mono(y):
     (117601,)
 
     """
-    # Ensure Fortran contiguity.
-    y = np.asfortranarray(y)
 
     # Validate the buffer.  Stereo is ok here.
     util.valid_audio(y, mono=False)
 
     if y.ndim > 1:
-        y = np.mean(y, axis=0)
+        y = np.mean(y, axis=tuple(range(y.ndim-1)))
 
     return y
 
@@ -471,8 +469,8 @@ def resample(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,) or shape=(2, n)]
-        audio time series.  Can be mono or stereo.
+    y : np.ndarray [shape=(..., n)]
+        audio time series.  Multi-channel is supported.
 
     orig_sr : number > 0 [scalar]
         original sampling rate of ``y``
@@ -528,7 +526,7 @@ def resample(
 
     Returns
     -------
-    y_hat : np.ndarray [shape=(n * target_sr / orig_sr,)]
+    y_hat : np.ndarray [shape=(..., n * target_sr / orig_sr)]
         ``y`` resampled from ``orig_sr`` to ``target_sr``
 
     Raises
@@ -595,7 +593,7 @@ def resample(
 
         # We have to transpose here to match libsamplerate
         y_hat = samplerate.resample(y.T, ratio, converter_type=res_type).T
-    elif res_type.startswith('soxr'):
+    elif res_type.startswith("soxr"):
         import soxr
 
         # We have to transpose here to match soxr
@@ -609,7 +607,7 @@ def resample(
     if scale:
         y_hat /= np.sqrt(ratio)
 
-    return np.asfortranarray(y_hat, dtype=y.dtype)
+    return y_hat.astype(y.dtype)
 
 
 def get_duration(
@@ -642,13 +640,13 @@ def get_duration(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,), (2, n)] or None
-        audio time series
+    y : np.ndarray [shape=(..., n)] or None
+        audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         audio sampling rate of ``y``
 
-    S : np.ndarray [shape=(d, t)] or None
+    S : np.ndarray [shape=(..., d, t)] or None
         STFT matrix, or any STFT-derived matrix (e.g., chromagram
         or mel spectrogram).
         Durations calculated from spectrogram inputs are only accurate
@@ -707,24 +705,15 @@ def get_duration(
                 "At least one of (y, sr), S, or filename must be provided"
             )
 
-        n_frames = S.shape[1]
+        n_frames = S.shape[-1]
         n_samples = n_fft + hop_length * (n_frames - 1)
 
         # If centered, we lose half a window from each end of S
         if center:
-            n_samples = n_samples - 2 * int(n_fft / 2)
+            n_samples = n_samples - 2 * int(n_fft // 2)
 
     else:
-        # Ensure Fortran contiguity.
-        y = np.asfortranarray(y)
-
-        # Validate the audio buffer.  Stereo is okay here.
-        #Audio validation is revoked to enable int16 and other dtypes.
-        #util.valid_audio(y, mono=False)
-        if y.ndim == 1:
-            n_samples = len(y)
-        else:
-            n_samples = y.shape[-1]
+        n_samples = y.shape[-1]
 
     return float(n_samples) / sr
 
@@ -830,7 +819,7 @@ def autocorrelate(y, max_size=None, axis=-1):
     return autocorr
 
 
-def lpc(y, order):
+def lpc(y, order, axis=-1):
     """Linear Prediction Coefficients via Burg's method
 
     This function applies Burg's method to estimate coefficients of a linear
@@ -850,16 +839,20 @@ def lpc(y, order):
 
     Parameters
     ----------
-    y : np.ndarray
-        Time series to fit
+    y : np.ndarray [shape=(..., n)]
+        Time series to fit. Multi-channel is supported..
 
     order : int > 0
         Order of the linear filter
 
+    axis : int
+        Axis along which to compute the coefficients
+
     Returns
     -------
-    a : np.ndarray of length ``order + 1``
-        LP prediction error coefficients, i.e. filter denominator polynomial
+    a : np.ndarray [shape=(..., order + 1)]
+        LP prediction error coefficients, i.e. filter denominator polynomial.
+        Note that the length along the specified ``axis`` will be ``order+1``.
 
     Raises
     ------
@@ -898,13 +891,35 @@ def lpc(y, order):
     if not isinstance(order, (int, np.integer)) or order < 1:
         raise ParameterError("order must be an integer > 0")
 
-    util.valid_audio(y, mono=True)
+    util.valid_audio(y, mono=False)
 
-    return __lpc(y, order)
+    # Move the lpc axis around front, because numba is silly
+    y = y.swapaxes(axis, 0)
+
+    dtype = y.dtype
+
+    shape = list(y.shape)
+    shape[0] = order + 1
+
+    ar_coeffs = np.zeros(tuple(shape), dtype=dtype)
+    ar_coeffs[0] = 1
+
+    ar_coeffs_prev = ar_coeffs.copy()
+
+    shape[0] = 1
+    reflect_coeff = np.zeros(shape, dtype=dtype)
+    den = reflect_coeff.copy()
+
+    epsilon = util.tiny(den)
+
+    # Call the helper, and swap the results back to the target axis position
+    return __lpc(
+        y, order, ar_coeffs, ar_coeffs_prev, reflect_coeff, den, epsilon
+    ).swapaxes(0, axis)
 
 
-@jit(nopython=True)
-def __lpc(y, order):
+@jit(nopython=True, cache=True)
+def __lpc(y, order, ar_coeffs, ar_coeffs_prev, reflect_coeff, den, epsilon):
     # This implementation follows the description of Burg's algorithm given in
     # section III of Marple's paper referenced in the docstring.
     #
@@ -915,12 +930,6 @@ def __lpc(y, order):
     # those for the new one. These two arrays hold ar_coeffs for order M and
     # order M-1.  (Corresponding to a_{M,k} and a_{M-1,k} in eqn 5)
 
-    dtype = y.dtype.type
-    ar_coeffs = np.zeros(order + 1, dtype=dtype)
-    ar_coeffs[0] = dtype(1)
-    ar_coeffs_prev = np.zeros(order + 1, dtype=dtype)
-    ar_coeffs_prev[0] = dtype(1)
-
     # These two arrays hold the forward and backward prediction error. They
     # correspond to f_{M-1,k} and b_{M-1,k} in eqns 10, 11, 13 and 14 of
     # Marple. First they are used to compute the reflection coefficient at
@@ -930,18 +939,19 @@ def __lpc(y, order):
     bwd_pred_error = y[:-1]
 
     # DEN_{M} from eqn 16 of Marple.
-    den = np.dot(fwd_pred_error, fwd_pred_error) + np.dot(
-        bwd_pred_error, bwd_pred_error
-    )
+    den[0] = np.sum(fwd_pred_error ** 2 + bwd_pred_error ** 2, axis=0)
 
     for i in range(order):
-        if den <= 0:
-            raise FloatingPointError("numerical error, input ill-conditioned?")
+        # can be removed if we keep the epsilon bias
+        # if np.any(den <= 0):
+        #    raise FloatingPointError("numerical error, input ill-conditioned?")
 
         # Eqn 15 of Marple, with fwd_pred_error and bwd_pred_error
         # corresponding to f_{M-1,k+1} and b{M-1,k} and the result as a_{M,M}
-        # reflect_coeff = dtype(-2) * np.dot(bwd_pred_error, fwd_pred_error) / dtype(den)
-        reflect_coeff = dtype(-2) * np.dot(bwd_pred_error, fwd_pred_error) / dtype(den)
+
+        reflect_coeff[0] = np.sum(bwd_pred_error * fwd_pred_error, axis=0)
+        reflect_coeff[0] *= -2
+        reflect_coeff[0] /= den[0] + epsilon
 
         # Now we use the reflection coefficient and the AR coefficients from
         # the last model order to compute all of the AR coefficients for the
@@ -953,9 +963,13 @@ def __lpc(y, order):
         # Note 3: The first element of ar_coeffs* is always 1, which copies in
         # the reflection coefficient at the end of the new AR coefficient array
         # after the preceding coefficients
+
         ar_coeffs_prev, ar_coeffs = ar_coeffs, ar_coeffs_prev
         for j in range(1, i + 2):
-            ar_coeffs[j] = ar_coeffs_prev[j] + reflect_coeff * ar_coeffs_prev[i - j + 1]
+            # reflection multiply should be broadcast
+            ar_coeffs[j] = (
+                ar_coeffs_prev[j] + reflect_coeff[0] * ar_coeffs_prev[i - j + 1]
+            )
 
         # Update the forward and backward prediction errors corresponding to
         # eqns 13 and 14.  We start with f_{M-1,k+1} and b_{M-1,k} and use them
@@ -975,8 +989,8 @@ def __lpc(y, order):
         # den <- DEN_{M}                   (lhs)
         #
 
-        q = dtype(1) - reflect_coeff ** 2
-        den = q * den - bwd_pred_error[-1] ** 2 - fwd_pred_error[0] ** 2
+        q = 1.0 - reflect_coeff[0] ** 2
+        den[0] = q * den[0] - bwd_pred_error[-1] ** 2 - fwd_pred_error[0] ** 2
 
         # Shift up forward error.
         #
@@ -1157,7 +1171,8 @@ def clicks(
         duration (in seconds) of the default click signal.  Default is 100ms.
 
     click : np.ndarray or None
-        optional click signal sample to use instead of the default click.
+        (optional) click signal sample to use instead of the default click.
+        Multi-channel is supported.
 
     length : int > 0
         desired number of samples in the output signal
@@ -1166,7 +1181,8 @@ def clicks(
     Returns
     -------
     click_signal : np.ndarray
-        Synthesized click signal
+        Synthesized click signal.
+        This will be monophonic by default, or match the number of channels to a provided ``click`` signal.
 
 
     Raises
@@ -1220,7 +1236,7 @@ def clicks(
 
     if click is not None:
         # Check that we have a well-formed audio buffer
-        util.valid_audio(click, mono=True)
+        util.valid_audio(click, mono=False)
 
     else:
         # Create default click signal
@@ -1238,7 +1254,7 @@ def clicks(
 
     # Set default length
     if length is None:
-        length = positions.max() + click.shape[0]
+        length = positions.max() + click.shape[-1]
     else:
         if length < 1:
             raise ParameterError("length must be a positive integer")
@@ -1247,18 +1263,20 @@ def clicks(
         positions = positions[positions < length]
 
     # Pre-allocate click signal
-    click_signal = np.zeros(length, dtype=np.float32)
+    shape = list(click.shape)
+    shape[-1] = length
+    click_signal = np.zeros(shape, dtype=np.float32)
 
     # Place clicks
     for start in positions:
         # Compute the end-point of this click
-        end = start + click.shape[0]
+        end = start + click.shape[-1]
 
         if end >= length:
-            click_signal[start:] += click[: length - start]
+            click_signal[..., start:] += click[..., : length - start]
         else:
             # Normally, just add a click here
-            click_signal[start:end] += click
+            click_signal[..., start:end] += click
 
     return click_signal
 
