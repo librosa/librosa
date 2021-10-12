@@ -34,13 +34,13 @@ def tempogram(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)] or None
-        Audio time series.
+    y : np.ndarray [shape=(..., n)] or None
+        Audio time series.  Multi-channel is supported.
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
 
-    onset_envelope : np.ndarray [shape=(n,) or (m, n)] or None
+    onset_envelope : np.ndarray [shape=(..., n) or (..., m, n)] or None
         Optional pre-computed onset strength envelope as provided by
         `librosa.onset.onset_strength`.
 
@@ -66,7 +66,7 @@ def tempogram(
 
     Returns
     -------
-    tempogram : np.ndarray [shape=(win_length, n) or (m, win_length, n)]
+    tempogram : np.ndarray [shape=(..., win_length, n)]
         Localized autocorrelation of the onset strength envelope.
 
         If given multi-band input (``onset_envelope.shape==(m,n)``) then
@@ -146,32 +146,14 @@ def tempogram(
 
         onset_envelope = onset_strength(y=y, sr=sr, hop_length=hop_length)
 
-    else:
-        # Force row-contiguity to avoid framing errors below
-        onset_envelope = np.ascontiguousarray(onset_envelope)
-
-    if onset_envelope.ndim > 1:
-        # If we have multi-band input, iterate over rows
-        return np.asarray(
-            [
-                tempogram(
-                    onset_envelope=oe_subband,
-                    hop_length=hop_length,
-                    win_length=win_length,
-                    center=center,
-                    window=window,
-                    norm=norm,
-                )
-                for oe_subband in onset_envelope
-            ]
-        )
-
     # Center the autocorrelation windows
-    n = len(onset_envelope)
+    n = onset_envelope.shape[-1]
 
     if center:
+        padding = [(0, 0) for _ in onset_envelope.shape]
+        padding[-1] = (int(win_length // 2),) * 2
         onset_envelope = np.pad(
-            onset_envelope, int(win_length // 2), mode="linear_ramp", end_values=[0, 0]
+            onset_envelope, padding, mode="linear_ramp", end_values=[0, 0]
         )
 
     # Carve onset envelope into frames
@@ -179,11 +161,14 @@ def tempogram(
 
     # Truncate to the length of the original signal
     if center:
-        odf_frame = odf_frame[:, :n]
+        odf_frame = odf_frame[..., :n]
+
+    # explicit broadcast of ac_window
+    ac_window = util.expand_to(ac_window, ndim=odf_frame.ndim, axes=-2)
 
     # Window, autocorrelate, and normalize
     return util.normalize(
-        autocorrelate(odf_frame * ac_window[:, np.newaxis], axis=0), norm=norm, axis=0
+        autocorrelate(odf_frame * ac_window, axis=-2), norm=norm, axis=-2
     )
 
 
@@ -205,15 +190,16 @@ def fourier_tempogram(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)] or None
-        Audio time series.
+    y : np.ndarray [shape=(..., n)] or None
+        Audio time series.  Multi-channel is supported.
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
 
-    onset_envelope : np.ndarray [shape=(n,)] or None
+    onset_envelope : np.ndarray [shape=(..., n)] or None
         Optional pre-computed onset strength envelope as provided by
         ``librosa.onset.onset_strength``.
+        Multi-channel is supported.
 
     hop_length : int > 0
         number of audio samples between successive onset measurements
@@ -231,7 +217,7 @@ def fourier_tempogram(
 
     Returns
     -------
-    tempogram : np.ndarray [shape=(win_length // 2 + 1, n)]
+    tempogram : np.ndarray [shape=(..., win_length // 2 + 1, n)]
         Complex short-time Fourier transform of the onset envelope.
 
     Raises
@@ -287,10 +273,6 @@ def fourier_tempogram(
             raise ParameterError("Either y or onset_envelope must be provided")
 
         onset_envelope = onset_strength(y=y, sr=sr, hop_length=hop_length)
-
-    else:
-        # Force row-contiguity to avoid framing errors below
-        onset_envelope = np.ascontiguousarray(onset_envelope)
 
     # Generate the short-time Fourier transform
     return stft(

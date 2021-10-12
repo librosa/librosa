@@ -68,13 +68,13 @@ def spectral_centroid(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)] or None
-        audio time series
+    y : np.ndarray [shape=(..., n,)] or None
+        audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         audio sampling rate of ``y``
 
-    S : np.ndarray [shape=(d, t)] or None
+    S : np.ndarray [shape=(..., d, t)] or None
         (optional) spectrogram magnitude
 
     n_fft : int > 0 [scalar]
@@ -118,7 +118,7 @@ def spectral_centroid(
 
     Returns
     -------
-    centroid : np.ndarray [shape=(1, t)]
+    centroid : np.ndarray [shape=(..., 1, t)]
         centroid frequencies
 
     See Also
@@ -162,6 +162,9 @@ def spectral_centroid(
     >>> ax.set(title='log Power spectrogram')
     """
 
+    # input is time domain:y or spectrogam:s
+    #
+
     S, n_fft = _spectrogram(
         y=y,
         S=S,
@@ -187,10 +190,11 @@ def spectral_centroid(
         freq = fft_frequencies(sr=sr, n_fft=n_fft)
 
     if freq.ndim == 1:
-        freq = freq.reshape((-1, 1))
+        # reshape for broadcasting
+        freq = util.expand_to(freq, S.ndim, axes=-2)
 
     # Column-normalize S
-    return np.sum(freq * util.normalize(S, norm=1, axis=0), axis=0, keepdims=True)
+    return np.sum(freq * util.normalize(S, norm=1, axis=-2), axis=-2, keepdims=True)
 
 
 def spectral_bandwidth(
@@ -220,13 +224,13 @@ def spectral_bandwidth(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)] or None
-        audio time series
+    y : np.ndarray [shape=(..., n)] or None
+        audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         audio sampling rate of ``y``
 
-    S : np.ndarray [shape=(d, t)] or None
+    S : np.ndarray [shape=(..., d, t)] or None
         (optional) spectrogram magnitude
 
     n_fft : int > 0 [scalar]
@@ -259,7 +263,7 @@ def spectral_bandwidth(
         If ``center=True``, the padding mode to use at the edges of the signal.
         By default, STFT uses reflection padding.
 
-    freq : None or np.ndarray [shape=(d,) or shape=(d, t)]
+    freq : None or np.ndarray [shape=(d,) or shape=(..., d, t)]
         Center frequencies for spectrogram bins.
 
         If `None`, then FFT bin center frequencies are used.
@@ -267,7 +271,7 @@ def spectral_bandwidth(
         or a matrix of center frequencies as constructed by
         `librosa.reassigned_spectrogram`
 
-    centroid : None or np.ndarray [shape=(1, t)]
+    centroid : None or np.ndarray [shape=(..., 1, t)]
         pre-computed centroid frequencies
 
     norm : bool
@@ -279,7 +283,7 @@ def spectral_bandwidth(
 
     Returns
     -------
-    bandwidth : np.ndarray [shape=(1, t)]
+    bandwidth : np.ndarray [shape=(..., 1, t)]
         frequency bandwidth for each frame
 
 
@@ -343,6 +347,7 @@ def spectral_bandwidth(
             "Spectral bandwidth is only defined " "with non-negative energies"
         )
 
+    # centroid or center?
     if centroid is None:
         centroid = spectral_centroid(
             y=y, sr=sr, S=S, n_fft=n_fft, hop_length=hop_length, freq=freq
@@ -353,15 +358,17 @@ def spectral_bandwidth(
         freq = fft_frequencies(sr=sr, n_fft=n_fft)
 
     if freq.ndim == 1:
-        deviation = np.abs(np.subtract.outer(freq, centroid[0]))
+        deviation = np.abs(
+            np.subtract.outer(centroid[..., 0, :], freq).swapaxes(-2, -1)
+        )
     else:
-        deviation = np.abs(freq - centroid[0])
+        deviation = np.abs(freq - centroid)
 
     # Column-normalize S
     if norm:
-        S = util.normalize(S, norm=1, axis=0)
+        S = util.normalize(S, norm=1, axis=-2)
 
-    return np.sum(S * deviation ** p, axis=0, keepdims=True) ** (1.0 / p)
+    return np.sum(S * deviation ** p, axis=-2, keepdims=True) ** (1.0 / p)
 
 
 def spectral_contrast(
@@ -398,13 +405,13 @@ def spectral_contrast(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)] or None
-        audio time series
+    y : np.ndarray [shape=(..., n)] or None
+        audio time series. Multi-channel is supported.
 
     sr : number  > 0 [scalar]
         audio sampling rate of ``y``
 
-    S : np.ndarray [shape=(d, t)] or None
+    S : np.ndarray [shape=(..., d, t)] or None
         (optional) spectrogram magnitude
 
     n_fft : int > 0 [scalar]
@@ -463,7 +470,7 @@ def spectral_contrast(
 
     Returns
     -------
-    contrast : np.ndarray [shape=(n_bands + 1, t)]
+    contrast : np.ndarray [shape=(..., n_bands + 1, t)]
         each row of spectral contrast values corresponds to a given
         octave-based frequency
 
@@ -504,9 +511,9 @@ def spectral_contrast(
 
     freq = np.atleast_1d(freq)
 
-    if freq.ndim != 1 or len(freq) != S.shape[0]:
+    if freq.ndim != 1 or len(freq) != S.shape[-2]:
         raise ParameterError(
-            "freq.shape mismatch: expected " "({:d},)".format(S.shape[0])
+            "freq.shape mismatch: expected " "({:d},)".format(S.shape[-2])
         )
 
     if n_bands < 1 or not isinstance(n_bands, (int, np.integer)):
@@ -526,7 +533,11 @@ def spectral_contrast(
             "Frequency band exceeds Nyquist. " "Reduce either fmin or n_bands."
         )
 
-    valley = np.zeros((n_bands + 1, S.shape[1]))
+    # shape of valleys and peaks based on spectrogram
+    shape = list(S.shape)
+    shape[-2] = n_bands + 1
+
+    valley = np.zeros(shape)
     peak = np.zeros_like(valley)
 
     for k, (f_low, f_high) in enumerate(zip(octa[:-1], octa[1:])):
@@ -540,19 +551,19 @@ def spectral_contrast(
         if k == n_bands:
             current_band[idx[-1] + 1 :] = True
 
-        sub_band = S[current_band]
+        sub_band = S[..., current_band, :]
 
         if k < n_bands:
-            sub_band = sub_band[:-1]
+            sub_band = sub_band[..., :-1, :]
 
         # Always take at least one bin from each side
         idx = np.rint(quantile * np.sum(current_band))
         idx = int(np.maximum(idx, 1))
 
-        sortedr = np.sort(sub_band, axis=0)
+        sortedr = np.sort(sub_band, axis=-2)
 
-        valley[k] = np.mean(sortedr[:idx], axis=0)
-        peak[k] = np.mean(sortedr[-idx:], axis=0)
+        valley[..., k, :] = np.mean(sortedr[..., :idx, :], axis=-2)
+        peak[..., k, :] = np.mean(sortedr[..., -idx:, :], axis=-2)
 
     if linear:
         return peak - valley
@@ -583,8 +594,8 @@ def spectral_rolloff(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)] or None
-        audio time series
+    y : np.ndarray [shape=(..., n)] or None
+        audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         audio sampling rate of ``y``
@@ -622,7 +633,7 @@ def spectral_rolloff(
         If ``center=True``, the padding mode to use at the edges of the signal.
         By default, STFT uses reflection padding.
 
-    freq : None or np.ndarray [shape=(d,) or shape=(d, t)]
+    freq : None or np.ndarray [shape=(d,) or shape=(..., d, t)]
         Center frequencies for spectrogram bins.
         If `None`, then FFT bin center frequencies are used.
         Otherwise, it can be a single array of ``d`` center frequencies,
@@ -634,7 +645,7 @@ def spectral_rolloff(
 
     Returns
     -------
-    rolloff : np.ndarray [shape=(1, t)]
+    rolloff : np.ndarray [shape=(..., 1, t)]
         roll-off frequency for each frame
 
 
@@ -705,15 +716,20 @@ def spectral_rolloff(
 
     # Make sure that frequency can be broadcast
     if freq.ndim == 1:
-        freq = freq.reshape((-1, 1))
+        # reshape for broadcasting
+        freq = util.expand_to(freq, ndim=S.ndim, axes=-2)
 
-    total_energy = np.cumsum(S, axis=0)
+    total_energy = np.cumsum(S, axis=-2)
+    # (channels,freq,frames)
 
-    threshold = roll_percent * total_energy[-1]
+    threshold = roll_percent * total_energy[..., -1, :]
+
+    # reshape threshold for broadcasting
+    threshold = np.expand_dims(threshold, axis=-2)
 
     ind = np.where(total_energy < threshold, np.nan, 1)
 
-    return np.nanmin(ind * freq, axis=0, keepdims=True)
+    return np.nanmin(ind * freq, axis=-2, keepdims=True)
 
 
 def spectral_flatness(
@@ -742,10 +758,10 @@ def spectral_flatness(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)] or None
-        audio time series
+    y : np.ndarray [shape=(..., n)] or None
+        audio time series. Multi-channel is supported.
 
-    S : np.ndarray [shape=(d, t)] or None
+    S : np.ndarray [shape=(..., d, t)] or None
         (optional) pre-computed spectrogram magnitude
 
     n_fft : int > 0 [scalar]
@@ -788,7 +804,7 @@ def spectral_flatness(
 
     Returns
     -------
-    flatness : np.ndarray [shape=(1, t)]
+    flatness : np.ndarray [shape=(..., 1, t)]
         spectral flatness for each frame.
         The returned value is in [0, 1] and often converted to dB scale.
 
@@ -841,8 +857,8 @@ def spectral_flatness(
         )
 
     S_thresh = np.maximum(amin, S ** power)
-    gmean = np.exp(np.mean(np.log(S_thresh), axis=0, keepdims=True))
-    amean = np.mean(S_thresh, axis=0, keepdims=True)
+    gmean = np.exp(np.mean(np.log(S_thresh), axis=-2, keepdims=True))
+    amean = np.mean(S_thresh, axis=-2, keepdims=True)
     return gmean / amean
 
 
@@ -860,10 +876,11 @@ def rms(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)] or None
+    y : np.ndarray [shape=(..., n)] or None
         (optional) audio time series. Required if ``S`` is not input.
+        Multi-channel is supported.
 
-    S : np.ndarray [shape=(d, t)] or None
+    S : np.ndarray [shape=(..., d, t)] or None
         (optional) spectrogram magnitude. Required if ``y`` is not input.
 
     frame_length : int > 0 [scalar]
@@ -884,7 +901,7 @@ def rms(
 
     Returns
     -------
-    rms : np.ndarray [shape=(1, t)]
+    rms : np.ndarray [shape=(..., 1, t)]
         RMS value for each frame
 
 
@@ -920,22 +937,23 @@ def rms(
 
     """
     if y is not None:
-        y = to_mono(y)
         if center:
-            y = np.pad(y, int(frame_length // 2), mode=pad_mode)
+            padding = [(0, 0) for _ in range(y.ndim)]
+            padding[-1] = (int(frame_length // 2), int(frame_length // 2))
+            y = np.pad(y, padding, mode=pad_mode)
 
         x = util.frame(y, frame_length=frame_length, hop_length=hop_length)
 
         # Calculate power
-        power = np.mean(np.abs(x) ** 2, axis=0, keepdims=True)
+        power = np.mean(np.abs(x) ** 2, axis=-2, keepdims=True)
     elif S is not None:
         # Check the frame length
-        if S.shape[0] != frame_length // 2 + 1:
+        if S.shape[-2] != frame_length // 2 + 1:
             raise ParameterError(
-                "Since S.shape[0] is {}, "
+                "Since S.shape[-2] is {}, "
                 "frame_length is expected to be {} or {}; "
                 "found {}".format(
-                    S.shape[0], S.shape[0] * 2 - 2, S.shape[0] * 2 - 1, frame_length
+                    S.shape[-2], S.shape[-2] * 2 - 2, S.shape[-2] * 2 - 1, frame_length
                 )
             )
 
@@ -943,12 +961,12 @@ def rms(
         x = np.abs(S) ** 2
 
         # Adjust the DC and sr/2 component
-        x[0] *= 0.5
+        x[..., 0, :] *= 0.5
         if frame_length % 2 == 0:
-            x[-1] *= 0.5
+            x[..., -1, :] *= 0.5
 
         # Calculate power
-        power = 2 * np.sum(x, axis=0, keepdims=True) / frame_length ** 2
+        power = 2 * np.sum(x, axis=-2, keepdims=True) / frame_length ** 2
     else:
         raise ParameterError("Either `y` or `S` must be input.")
 
@@ -973,13 +991,13 @@ def poly_features(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)] or None
-        audio time series
+    y : np.ndarray [shape=(..., n)] or None
+        audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         audio sampling rate of ``y``
 
-    S : np.ndarray [shape=(d, t)] or None
+    S : np.ndarray [shape=(..., d, t)] or None
         (optional) spectrogram magnitude
 
     n_fft : int > 0 [scalar]
@@ -1015,7 +1033,7 @@ def poly_features(
     order : int > 0
         order of the polynomial to fit
 
-    freq : None or np.ndarray [shape=(d,) or shape=(d, t)]
+    freq : None or np.ndarray [shape=(d,) or shape=(..., d, t)]
         Center frequencies for spectrogram bins.
         If `None`, then FFT bin center frequencies are used.
         Otherwise, it can be a single array of ``d`` center frequencies,
@@ -1024,14 +1042,14 @@ def poly_features(
 
     Returns
     -------
-    coefficients : np.ndarray [shape=(order+1, t)]
+    coefficients : np.ndarray [shape=(..., order+1, t)]
         polynomial coefficients for each frame.
 
-        ``coeffecients[0]`` corresponds to the highest degree (``order``),
+        ``coeffecients[..., 0, :]`` corresponds to the highest degree (``order``),
 
-        ``coefficients[1]`` corresponds to the next highest degree (``order-1``),
+        ``coefficients[..., 1, :]`` corresponds to the next highest degree (``order-1``),
 
-        down to the constant term ``coefficients[order]``.
+        down to the constant term ``coefficients[..., order, :]``.
 
     Examples
     --------
@@ -1088,15 +1106,23 @@ def poly_features(
     if freq is None:
         freq = fft_frequencies(sr=sr, n_fft=n_fft)
 
-    # If frequencies are constant over frames, then we only need to fit once
     if freq.ndim == 1:
-        coefficients = np.polyfit(freq, S, order)
+        # If frequencies are constant over frames, then we only need to fit once
+        fitter = np.vectorize(
+            lambda y: np.polyfit(freq, y, order), signature="(f,t)->(d,t)"
+        )
+        coefficients = fitter(S)
     else:
-        # Else, fit each frame independently and stack the results
-        coefficients = np.concatenate(
-            [[np.polyfit(freq[:, i], S[:, i], order)] for i in range(S.shape[1])],
-            axis=0,
-        ).T
+        # Otherwise, we have variable frequencies, and need to fit independently
+        fitter = np.vectorize(
+            lambda x, y: np.polyfit(x, y, order), signature="(f),(f)->(d)"
+        )
+
+        # We have to do some axis swapping to preserve layout
+        # otherwise, the new dimension gets put at the end instead of the penultimate position
+        coefficients = fitter(freq.swapaxes(-2, -1), S.swapaxes(-2, -1)).swapaxes(
+            -2, -1
+        )
 
     return coefficients
 
@@ -1106,8 +1132,8 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True, **kwar
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        Audio time series
+    y : np.ndarray [shape=(..., n)]
+        Audio time series. Multi-channel is supported.
 
     frame_length : int > 0
         Length of the frame over which to compute zero crossing rates
@@ -1129,8 +1155,8 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True, **kwar
 
     Returns
     -------
-    zcr : np.ndarray [shape=(1, t)]
-        ``zcr[0, i]`` is the fraction of zero crossings in frame ``i``
+    zcr : np.ndarray [shape=(..., 1, t)]
+        ``zcr[..., 0, i]`` is the fraction of zero crossings in frame ``i``
 
     See Also
     --------
@@ -1145,19 +1171,22 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True, **kwar
 
     """
 
-    util.valid_audio(y)
+    # check if audio is valid
+    util.valid_audio(y, mono=False)
 
     if center:
-        y = np.pad(y, int(frame_length // 2), mode="edge")
+        padding = [(0, 0) for _ in range(y.ndim)]
+        padding[-1] = (int(frame_length // 2), int(frame_length // 2))
+        y = np.pad(y, padding, mode="edge")
 
     y_framed = util.frame(y, frame_length, hop_length)
 
-    kwargs["axis"] = 0
+    kwargs["axis"] = -2
     kwargs.setdefault("pad", False)
 
     crossings = zero_crossings(y_framed, **kwargs)
 
-    return np.mean(crossings, axis=0, keepdims=True)
+    return np.mean(crossings, axis=-2, keepdims=True)
 
 
 # -- Chroma --#
@@ -1186,13 +1215,13 @@ def chroma_stft(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)] or None
-        audio time series
+    y : np.ndarray [shape=(..., n)] or None
+        audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
 
-    S : np.ndarray [shape=(d, t)] or None
+    S : np.ndarray [shape=(..., d, t)] or None
         power spectrogram
 
     norm : float or None
@@ -1244,7 +1273,7 @@ def chroma_stft(
 
     Returns
     -------
-    chromagram : np.ndarray [shape=(n_chroma, t)]
+    chromagram : np.ndarray [shape=(..., n_chroma, t)]
         Normalized energy for each chroma bin at each frame.
 
     See Also
@@ -1313,10 +1342,10 @@ def chroma_stft(
     chromafb = filters.chroma(sr, n_fft, tuning=tuning, n_chroma=n_chroma, **kwargs)
 
     # Compute raw chroma
-    raw_chroma = np.dot(chromafb, S)
+    raw_chroma = np.einsum("cf,...ft->...ct", chromafb, S, optimize=True)
 
     # Compute normalization factor for each frame
-    return util.normalize(raw_chroma, norm=norm, axis=0)
+    return util.normalize(raw_chroma, norm=norm, axis=-2)
 
 
 def chroma_cqt(
@@ -1338,13 +1367,13 @@ def chroma_cqt(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        audio time series
+    y : np.ndarray [shape=(..., n,)]
+        audio time series. Multi-channel is supported.
 
     sr : number > 0
         sampling rate of ``y``
 
-    C : np.ndarray [shape=(d, t)] [Optional]
+    C : np.ndarray [shape=(..., d, t)] [Optional]
         a pre-computed constant-Q spectrogram
 
     hop_length : int > 0
@@ -1387,7 +1416,7 @@ def chroma_cqt(
 
     Returns
     -------
-    chromagram : np.ndarray [shape=(n_chroma, t)]
+    chromagram : np.ndarray [shape=(..., n_chroma, t)]
         The output chromagram
 
     See Also
@@ -1443,20 +1472,21 @@ def chroma_cqt(
 
     # Map to chroma
     cq_to_chr = filters.cq_to_chroma(
-        C.shape[0],
+        C.shape[-2],
         bins_per_octave=bins_per_octave,
         n_chroma=n_chroma,
         fmin=fmin,
         window=window,
     )
-    chroma = cq_to_chr.dot(C)
+
+    chroma = np.einsum("cf,...ft->...ct", cq_to_chr, C, optimize=True)
 
     if threshold is not None:
         chroma[chroma < threshold] = 0.0
 
     # Normalize
     if norm is not None:
-        chroma = util.normalize(chroma, norm=norm, axis=0)
+        chroma = util.normalize(chroma, norm=norm, axis=-2)
 
     return chroma
 
@@ -1496,8 +1526,8 @@ def chroma_cens(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        audio time series
+    y : np.ndarray [shape=(..., n,)]
+        audio time series. Multi-channel is supported.
 
     sr : number > 0
         sampling rate of ``y``
@@ -1545,7 +1575,7 @@ def chroma_cens(
 
     Returns
     -------
-    cens : np.ndarray [shape=(n_chroma, t)]
+    cens : np.ndarray [shape=(..., n_chroma, t)]
         The output cens-chromagram
 
     See Also
@@ -1604,7 +1634,7 @@ def chroma_cens(
     )
 
     # L1-Normalization
-    chroma = util.normalize(chroma, norm=1, axis=0)
+    chroma = util.normalize(chroma, norm=1, axis=-2)
 
     # Quantize amplitudes
     QUANT_STEPS = [0.4, 0.2, 0.1, 0.05]
@@ -1619,14 +1649,16 @@ def chroma_cens(
         # Apply temporal smoothing
         win = filters.get_window(smoothing_window, win_len_smooth + 2, fftbins=False)
         win /= np.sum(win)
-        win = np.atleast_2d(win)
 
-        cens = scipy.signal.convolve2d(chroma_quant, win, mode="same", boundary="fill")
+        # reshape for broadcasting
+        win = util.expand_to(win, ndim=chroma_quant.ndim, axes=-1)
+
+        cens = scipy.ndimage.convolve(chroma_quant, win, mode="constant")
     else:
         cens = chroma_quant
 
     # L2-Normalization
-    return util.normalize(cens, norm=norm, axis=0)
+    return util.normalize(cens, norm=norm, axis=-2)
 
 
 def tonnetz(y=None, sr=22050, chroma=None, **kwargs):
@@ -1643,8 +1675,8 @@ def tonnetz(y=None, sr=22050, chroma=None, **kwargs):
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)] or None
-        Audio time series.
+    y : np.ndarray [shape=(..., n,)] or None
+        Audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
@@ -1660,7 +1692,7 @@ def tonnetz(y=None, sr=22050, chroma=None, **kwargs):
 
     Returns
     -------
-    tonnetz : np.ndarray [shape(6, t)]
+    tonnetz : np.ndarray [shape(..., 6, t)]
         Tonal centroid features for each frame.
 
         Tonnetz dimensions:
@@ -1718,7 +1750,7 @@ def tonnetz(y=None, sr=22050, chroma=None, **kwargs):
         chroma = chroma_cqt(y=y, sr=sr, **kwargs)
 
     # Generate Transformation matrix
-    dim_map = np.linspace(0, 12, num=chroma.shape[0], endpoint=False)
+    dim_map = np.linspace(0, 12, num=chroma.shape[-2], endpoint=False)
 
     scale = np.asarray([7.0 / 6, 7.0 / 6, 3.0 / 2, 3.0 / 2, 2.0 / 3, 2.0 / 3])
 
@@ -1732,7 +1764,9 @@ def tonnetz(y=None, sr=22050, chroma=None, **kwargs):
     phi = R[:, np.newaxis] * np.cos(np.pi * V)
 
     # Do the transform to tonnetz
-    return phi.dot(util.normalize(chroma, norm=1, axis=0))
+    return np.einsum(
+        "pc,...ci->...pi", phi, util.normalize(chroma, norm=1, axis=-2), optimize=True
+    )
 
 
 # -- Mel spectrogram and MFCCs -- #
@@ -1741,15 +1775,20 @@ def mfcc(
 ):
     """Mel-frequency cepstral coefficients (MFCCs)
 
+    .. warning:: If multi-channel audio input ``y`` is provided, the MFCC
+        calculation will depend on the peak loudness (in decibels) across
+        all channels.  The result may differ from independent MFCC calculation
+        of each channel.
+
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)] or None
-        audio time series
+    y : np.ndarray [shape=(..., n,)] or None
+        audio time series. Multi-channel is supported..
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
 
-    S : np.ndarray [shape=(d, t)] or None
+    S : np.ndarray [shape=(..., d, t)] or None
         log-power Mel spectrogram
 
     n_mfcc: int > 0 [scalar]
@@ -1779,7 +1818,7 @@ def mfcc(
 
     Returns
     -------
-    M : np.ndarray [shape=(n_mfcc, t)]
+    M : np.ndarray [shape=(..., n_mfcc, t)]
         MFCC sequence
 
     See Also
@@ -1848,18 +1887,17 @@ def mfcc(
     """
 
     if S is None:
+        # multichannel behavior may be different due to relative noise floor differences between channels
         S = power_to_db(melspectrogram(y=y, sr=sr, **kwargs))
 
-    M = scipy.fftpack.dct(S, axis=0, type=dct_type, norm=norm)[:n_mfcc]
+    M = scipy.fftpack.dct(S, axis=-2, type=dct_type, norm=norm)[..., :n_mfcc, :]
 
     if lifter > 0:
-        M *= (
-            1
-            + (lifter / 2)
-            * np.sin(np.pi * np.arange(1, 1 + n_mfcc, dtype=M.dtype) / lifter)[
-                :, np.newaxis
-            ]
-        )
+        # shape lifter for broadcasting
+        LI = np.sin(np.pi * np.arange(1, 1 + n_mfcc, dtype=M.dtype) / lifter)
+        LI = util.expand_to(LI, S.ndim, axes=-2)
+
+        M *= 1 + (lifter / 2) * LI
         return M
     elif lifter == 0:
         return M
@@ -1895,13 +1933,13 @@ def melspectrogram(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)] or None
-        audio time-series
+    y : np.ndarray [shape=(..., n)] or None
+        audio time-series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
 
-    S : np.ndarray [shape=(d, t)]
+    S : np.ndarray [shape=(..., d, t)]
         spectrogram
 
     n_fft : int > 0 [scalar]
@@ -1947,7 +1985,7 @@ def melspectrogram(
 
     Returns
     -------
-    S : np.ndarray [shape=(n_mels, t)]
+    S : np.ndarray [shape=(..., n_mels, t)]
         Mel spectrogram
 
     See Also
@@ -2007,4 +2045,4 @@ def melspectrogram(
     # Build a Mel filter
     mel_basis = filters.mel(sr, n_fft, **kwargs)
 
-    return np.dot(mel_basis, S)
+    return np.einsum("...ft,mf->...mt", S, mel_basis, optimize=True)

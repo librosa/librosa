@@ -11,6 +11,7 @@ Array operations
 
     frame
     pad_center
+    expand_to
     fix_length
     fix_frames
     index_to_slice
