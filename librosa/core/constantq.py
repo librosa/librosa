@@ -620,7 +620,6 @@ def icqt(
     >>> y_hat = librosa.icqt(C=C, sr=sr, hop_length=hop_length,
     ...                 bins_per_octave=bins_per_octave)
     """
-
     if fmin is None:
         fmin = note_to_hz("C1")
 
@@ -630,85 +629,84 @@ def icqt(
     # Get the top octave of frequencies
     n_bins = C.shape[-2]
 
-    freqs = cqt_frequencies(n_bins, fmin, bins_per_octave=bins_per_octave)[
-        -bins_per_octave:
-    ]
-
-    n_filters = min(n_bins, bins_per_octave)
-
-    fft_basis, n_fft, lengths = __cqt_filter_fft(
-        sr,
-        np.min(freqs),
-        n_filters,
-        bins_per_octave,
-        filter_scale,
-        norm,
-        sparsity=sparsity,
-        window=window,
-    )
-
-    if hop_length > min(lengths):
-        warnings.warn(
-            "hop_length={} exceeds minimum CQT filter length={:.3f}.\n"
-            "This will probably cause unpleasant acoustic artifacts. "
-            "Consider decreasing your hop length or increasing the "
-            "frequency resolution of your CQT.".format(hop_length, min(lengths))
-        )
-
+    # truncate the cqt to max frames if helpful
     if length is not None:
+        lengths = filters.constant_q_lengths(sr=sr, fmin=fmin,
+                                             n_bins=n_bins, bins_per_octave=bins_per_octave,
+                                             window=window, filter_scale=filter_scale)
         n_frames = int(np.ceil((length + max(lengths)) / hop_length))
         C = C[..., :n_frames]
-
-    # The basis gets renormalized by the effective window length above;
-    # This step undoes that
-    fft_basis = fft_basis.todense() * n_fft / lengths[:, np.newaxis]
-
-    # This step conjugate-transposes the filter
-    inv_basis = fft_basis.H
 
     # How many octaves do we have?
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
 
     # This shape array will be used for broadcasting the basis scale
     # we'll have to adapt this per octave within the loop
-    shape = [1 for _ in C.shape]
-
     y = None
-    for octave in range(n_octaves - 1, -1, -1):
-        slice_ = slice(
-            -(octave + 1) * bins_per_octave - 1, -(octave) * bins_per_octave - 1
+
+    # Assume the top octave is at the full rate
+    srs = [sr]
+    hops = [hop_length]
+
+    for i in range(n_octaves-1):
+        if hops[0] % 2 == 0:
+            # We can downsample:
+            srs.insert(0, srs[0] * 0.5)
+            hops.insert(0, hops[0] // 2)
+        else:
+            # We're out of downsamplings, carry forward
+            srs.insert(0, srs[0])
+            hops.insert(0, hops[0])
+
+    for i, (my_sr, my_hop) in enumerate(zip(srs, hops)):
+
+        # How many filters are in this octave?
+        n_filters = min(bins_per_octave, n_bins - bins_per_octave * i)
+
+        # Slice out the current octave
+        sl = slice(bins_per_octave*i, bins_per_octave*i + n_filters)
+        C_oct = C[..., sl, :]
+
+        fft_basis, n_fft, lengths = __cqt_filter_fft(
+            my_sr,
+            fmin * 2.0**i,
+            n_filters,
+            bins_per_octave,
+            filter_scale,
+            norm,
+            sparsity,
+            window=window,
+            dtype=dtype,
         )
 
-        # Slice this octave
-        C_oct = C[..., slice_, :]
-        inv_oct = inv_basis[:, -C_oct.shape[-2] :]
+        # Re-scale the filters to compensate for downsampling
+        fft_basis /= np.sqrt(2**(n_octaves - i))
 
-        oct_hop = hop_length // 2 ** octave
+        inv_basis = fft_basis.H.todense()
 
-        # Apply energy corrections
         if scale:
-            C_scale = np.sqrt(lengths[-C_oct.shape[-2] :]) / n_fft
+            # This scaling is wrong when gamma != 0
+            C_scale = np.sqrt(lengths) * (n_fft / lengths)**2
         else:
-            C_scale = lengths[-C_oct.shape[-2] :] * np.sqrt(2 ** octave) / n_fft
-        shape[-2] = len(C_scale)
-        C_scale = C_scale.reshape(shape)
+            C_scale = (n_fft / lengths)**2
 
         # Inverse-project the basis for each octave
-        D_oct = np.einsum("fc,...ct->...ft", inv_oct, C_oct / C_scale, optimize=True)
+        D_oct = np.einsum(
+            "fc,c,...ct->...ft",
+            inv_basis,
+            C_scale,
+            C_oct,
+            optimize=True
+        )
 
-        # Inverse-STFT that response
-        y_oct = istft(D_oct, window="ones", hop_length=oct_hop, dtype=dtype)
+        y_oct = istft(D_oct, window="ones", hop_length=my_hop, dtype=dtype)
 
-        # Up-sample that octave
+        y_oct = audio.resample(y_oct, 1, sr // my_sr, res_type=res_type, scale=not scale, fix=False)
+
         if y is None:
             y = y_oct
         else:
-            # Up-sample the previous buffer and add in the new one
-            # Scipy-resampling is fast here, since it's a power-of-two relation
-            y = audio.resample(y, 1, 2, scale=True, res_type=res_type, fix=False)
-
-            y[..., : y_oct.shape[-1]] += y_oct
-
+            y[..., :y_oct.shape[-1]] += y_oct
     if length:
         y = util.fix_length(y, length)
 
