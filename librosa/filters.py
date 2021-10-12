@@ -1060,9 +1060,18 @@ def mr_frequencies(tuning):
     center_freqs = midi_to_hz(np.arange(24 + tuning, 109 + tuning))
 
     sample_rates = np.asarray(
-        len(np.arange(0, 36)) * [882, ]
-        + len(np.arange(36, 70)) * [4410, ]
-        + len(np.arange(70, 85)) * [22050, ]
+        len(np.arange(0, 36))
+        * [
+            882,
+        ]
+        + len(np.arange(36, 70))
+        * [
+            4410,
+        ]
+        + len(np.arange(70, 85))
+        * [
+            22050,
+        ]
     )
 
     return center_freqs, sample_rates

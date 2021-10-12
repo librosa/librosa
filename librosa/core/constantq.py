@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Constant-Q transforms"""
-from __future__ import division
-
 import warnings
 import numpy as np
 from numba import jit
@@ -51,8 +49,8 @@ def cqt(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        audio time series
+    y : np.ndarray [shape=(..., n)]
+        audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
@@ -124,7 +122,7 @@ def cqt(
 
     Returns
     -------
-    CQT : np.ndarray [shape=(n_bins, t)]
+    CQT : np.ndarray [shape=(..., n_bins, t)]
         Constant-Q value each frequency at each time.
 
     Raises
@@ -228,8 +226,8 @@ def hybrid_cqt(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        audio time series
+    y : np.ndarray [shape=(..., n)]
+        audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
@@ -282,7 +280,7 @@ def hybrid_cqt(
 
     Returns
     -------
-    CQT : np.ndarray [shape=(n_bins, t), dtype=np.float]
+    CQT : np.ndarray [shape=(..., n_bins, t), dtype=np.float]
         Constant-Q energy for each frequency at each time.
 
     Raises
@@ -410,8 +408,8 @@ def pseudo_cqt(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        audio time series
+    y : np.ndarray [shape=(..., n)]
+        audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
@@ -460,7 +458,7 @@ def pseudo_cqt(
 
     Returns
     -------
-    CQT : np.ndarray [shape=(n_bins, t), dtype=np.float]
+    CQT : np.ndarray [shape=(..., n_bins, t), dtype=np.float]
         Pseudo Constant-Q energy for each frequency at each time.
 
     Raises
@@ -505,13 +503,17 @@ def pseudo_cqt(
 
     fft_basis = np.abs(fft_basis)
 
-    # Compute the magnitude STFT with Hann window
-    D = np.abs(
-        stft(y, n_fft=n_fft, hop_length=hop_length, pad_mode=pad_mode, dtype=dtype)
+    # Compute the magnitude-only CQT response
+    C = __cqt_response(
+        y,
+        n_fft,
+        hop_length,
+        fft_basis,
+        pad_mode,
+        window="hann",
+        dtype=dtype,
+        phase=False,
     )
-
-    # Project onto the pseudo-cqt basis
-    C = fft_basis.dot(D)
 
     if scale:
         C /= np.sqrt(n_fft)
@@ -525,7 +527,10 @@ def pseudo_cqt(
             filter_scale=filter_scale,
         )
 
-        C *= np.sqrt(lengths[:, np.newaxis] / n_fft)
+        # reshape lengths to match dimension properly
+        lengths = util.expand_to(lengths, ndim=C.ndim, axes=-2)
+
+        C *= np.sqrt(lengths / n_fft)
 
     return C
 
@@ -555,7 +560,7 @@ def icqt(
 
     Parameters
     ----------
-    C : np.ndarray, [shape=(n_bins, n_frames)]
+    C : np.ndarray, [shape=(..., n_bins, n_frames)]
         Constant-Q representation as produced by `cqt`
 
     hop_length : int > 0 [scalar]
@@ -610,7 +615,7 @@ def icqt(
 
     Returns
     -------
-    y : np.ndarray, [shape=(n_samples), dtype=np.float]
+    y : np.ndarray, [shape=(..., n_samples), dtype=np.float]
         Audio time-series reconstructed from the CQT representation.
 
     See Also
@@ -647,7 +652,7 @@ def icqt(
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
 
     # Get the top octave of frequencies
-    n_bins = len(C)
+    n_bins = C.shape[-2]
 
     freqs = cqt_frequencies(n_bins, fmin, bins_per_octave=bins_per_octave)[
         -bins_per_octave:
@@ -676,7 +681,7 @@ def icqt(
 
     if length is not None:
         n_frames = int(np.ceil((length + max(lengths)) / hop_length))
-        C = C[:, :n_frames]
+        C = C[..., :n_frames]
 
     # The basis gets renormalized by the effective window length above;
     # This step undoes that
@@ -688,6 +693,10 @@ def icqt(
     # How many octaves do we have?
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
 
+    # This shape array will be used for broadcasting the basis scale
+    # we'll have to adapt this per octave within the loop
+    shape = [1 for _ in C.shape]
+
     y = None
     for octave in range(n_octaves - 1, -1, -1):
         slice_ = slice(
@@ -695,21 +704,21 @@ def icqt(
         )
 
         # Slice this octave
-        C_oct = C[slice_]
-        inv_oct = inv_basis[:, -C_oct.shape[0] :]
+        C_oct = C[..., slice_, :]
+        inv_oct = inv_basis[:, -C_oct.shape[-2] :]
 
         oct_hop = hop_length // 2 ** octave
 
         # Apply energy corrections
         if scale:
-            C_scale = np.sqrt(lengths[-C_oct.shape[0] :, np.newaxis]) / n_fft
+            C_scale = np.sqrt(lengths[-C_oct.shape[-2] :]) / n_fft
         else:
-            C_scale = (
-                lengths[-C_oct.shape[0] :, np.newaxis] * np.sqrt(2 ** octave) / n_fft
-            )
+            C_scale = lengths[-C_oct.shape[-2] :] * np.sqrt(2 ** octave) / n_fft
+        shape[-2] = len(C_scale)
+        C_scale = C_scale.reshape(shape)
 
         # Inverse-project the basis for each octave
-        D_oct = inv_oct.dot(C_oct / C_scale)
+        D_oct = np.einsum("fc,...ct->...ft", inv_oct, C_oct / C_scale, optimize=True)
 
         # Inverse-STFT that response
         y_oct = istft(D_oct, window="ones", hop_length=oct_hop, dtype=dtype)
@@ -722,7 +731,7 @@ def icqt(
             # Scipy-resampling is fast here, since it's a power-of-two relation
             y = audio.resample(y, 1, 2, scale=True, res_type=res_type, fix=False)
 
-            y[: len(y_oct)] += y_oct
+            y[..., : y_oct.shape[-1]] += y_oct
 
     if length:
         y = util.fix_length(y, length)
@@ -762,8 +771,8 @@ def vqt(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        audio time series
+    y : np.ndarray [shape=(..., n)]
+        audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
@@ -857,7 +866,7 @@ def vqt(
 
     Returns
     -------
-    VQT : np.ndarray [shape=(n_bins, t), dtype=np.complex or np.float]
+    VQT : np.ndarray [shape=(..., n_bins, t), dtype=np.complex or np.float]
         Variable-Q value each frequency at each time.
 
     Raises
@@ -899,7 +908,7 @@ def vqt(
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
     n_filters = min(bins_per_octave, n_bins)
 
-    len_orig = len(y)
+    len_orig = y.shape[-1]
 
     # Relative difference in frequency between any two consecutive bands
     alpha = 2.0 ** (1.0 / bins_per_octave) - 1
@@ -996,7 +1005,7 @@ def vqt(
     for i in range(n_octaves):
         # Resample (except first time)
         if i > 0:
-            if len(my_y) < 2:
+            if my_y.shape[-1] < 2:
                 raise ParameterError(
                     "Input signal length={} is too short for "
                     "{:d}-octave CQT/VQT".format(len_orig, n_octaves)
@@ -1039,7 +1048,9 @@ def vqt(
             filter_scale=filter_scale,
             gamma=gamma,
         )
-        V /= np.sqrt(lengths[:, np.newaxis])
+        # reshape lengths to match V shape
+        lengths = util.expand_to(lengths, ndim=V.ndim, axes=-2)
+        V /= np.sqrt(lengths)
 
     return V
 
@@ -1096,35 +1107,57 @@ def __trim_stack(cqt_resp, n_bins, dtype):
     """Helper function to trim and stack a collection of CQT responses"""
 
     max_col = min(c_i.shape[-1] for c_i in cqt_resp)
-    cqt_out = np.empty((n_bins, max_col), dtype=dtype, order="F")
+    # Grab any leading dimensions
+    shape = list(cqt_resp[0].shape)
+    shape[-2] = n_bins
+    shape[-1] = max_col
+    cqt_out = np.empty(shape, dtype=dtype, order="F")
 
     # Copy per-octave data into output array
     end = n_bins
     for c_i in cqt_resp:
         # By default, take the whole octave
-        n_oct = c_i.shape[0]
+        n_oct = c_i.shape[-2]
         # If the whole octave is more than we can fit,
         # take the highest bins from c_i
         if end < n_oct:
-            cqt_out[:end] = c_i[-end:, :max_col]
+            cqt_out[..., :end, :] = c_i[..., -end:, :max_col]
         else:
-            cqt_out[end - n_oct : end] = c_i[:, :max_col]
+            cqt_out[..., end - n_oct : end, :] = c_i[..., :max_col]
 
         end -= n_oct
 
     return cqt_out
 
 
-def __cqt_response(y, n_fft, hop_length, fft_basis, mode, dtype=None):
+def __cqt_response(
+    y, n_fft, hop_length, fft_basis, mode, window="ones", phase=True, dtype=None
+):
     """Compute the filter response with a target STFT hop."""
 
     # Compute the STFT matrix
     D = stft(
-        y, n_fft=n_fft, hop_length=hop_length, window="ones", pad_mode=mode, dtype=dtype
+        y, n_fft=n_fft, hop_length=hop_length, window=window, pad_mode=mode, dtype=dtype
     )
 
-    # And filter response energy
-    return fft_basis.dot(D)
+    if not phase:
+        D = np.abs(D)
+
+    # Reshape D to Dr
+    Dr = D.reshape((-1, D.shape[-2], D.shape[-1]))
+    output_flat = np.empty(
+        (Dr.shape[0], fft_basis.shape[0], Dr.shape[-1]), dtype=D.dtype
+    )
+
+    # iterate over channels
+    #   project fft_basis.dot(Dr[i])
+    for i in range(Dr.shape[0]):
+        output_flat[i] = fft_basis.dot(Dr[i])
+
+    # reshape Dr to match D's leading dimensions again
+    shape = list(D.shape)
+    shape[-2] = fft_basis.shape[0]
+    return output_flat.reshape(shape)
 
 
 def __early_downsample_count(nyquist, filter_cutoff, hop_length, n_octaves):
@@ -1154,7 +1187,7 @@ def __early_downsample(
 
         hop_length //= downsample_factor
 
-        if len(y) < downsample_factor:
+        if y.shape[-1] < downsample_factor:
             raise ParameterError(
                 "Input signal length={:d} is too short for "
                 "{:d}-octave CQT".format(len(y), n_octaves)
@@ -1230,7 +1263,7 @@ def griffinlim_cqt(
 
     Parameters
     ----------
-    C : np.ndarray [shape=(n_bins, n_frames)]
+    C : np.ndarray [shape=(..., n_bins, n_frames)]
         The constant-Q magnitude spectrogram
 
     n_iter : int > 0
@@ -1328,7 +1361,7 @@ def griffinlim_cqt(
 
     Returns
     -------
-    y : np.ndarray [shape=(n,)]
+    y : np.ndarray [shape=(..., n)]
         time-domain signal reconstructed from ``C``
 
 
@@ -1387,6 +1420,8 @@ def griffinlim_cqt(
 
     # using complex64 will keep the result to minimal necessary precision
     angles = np.empty(C.shape, dtype=np.complex64)
+    eps = util.tiny(angles)
+
     if init == "random":
         # randomly initialize the phase
         angles[:] = np.exp(2j * np.pi * rng.rand(*C.shape))
@@ -1423,7 +1458,7 @@ def griffinlim_cqt(
             inverse,
             sr=sr,
             bins_per_octave=bins_per_octave,
-            n_bins=C.shape[0],
+            n_bins=C.shape[-2],
             hop_length=hop_length,
             fmin=fmin,
             tuning=tuning,
@@ -1434,7 +1469,7 @@ def griffinlim_cqt(
 
         # Update our phase estimates
         angles[:] = rebuilt - (momentum / (1 + momentum)) * tprev
-        angles[:] /= np.abs(angles) + 1e-16
+        angles[:] /= np.abs(angles) + eps
 
     # Return the final phase estimates
     return icqt(

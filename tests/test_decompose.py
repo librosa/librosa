@@ -60,6 +60,28 @@ def test_decompose_fit():
     assert np.allclose(W, W2)
 
 
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_decompose_multi_sort():
+    librosa.decompose.decompose(np.zeros((3,3,3)), sort=True)
+
+
+def test_decompose_multi():
+    srand()
+    X = np.random.random((2, 20, 100))
+
+    # Fit with multichannel data
+    components, activations = librosa.decompose.decompose(X, n_components=20, random_state=0)
+
+    # Reshape the data
+    Xflat = np.vstack([X[0], X[1]])
+    c_flat, a_flat = librosa.decompose.decompose(Xflat, n_components=20, random_state=0)
+
+    assert np.allclose(c_flat[:X.shape[1]], components[0])
+    assert np.allclose(c_flat[X.shape[1]:], components[1])
+    assert np.allclose(activations, a_flat)
+
+
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_decompose_fit_false():
 
@@ -173,6 +195,32 @@ def test_nn_filter_mean_rec_sparse():
     # Normalize the recurrence matrix
     rec = librosa.util.normalize(rec.toarray().astype(np.float), axis=0, norm=1)
     assert np.allclose(X_filtered, (X.dot(rec)))
+
+
+@pytest.fixture(scope="module")
+def s_multi():
+    y, sr = librosa.load(os.path.join("tests", "data", "test1_44100.wav"), 
+                         sr=None, mono=False)
+    return np.abs(librosa.stft(y))
+
+@pytest.mark.parametrize('useR,sparse', [(False, False), (True, False), (True, True)])
+def test_nn_filter_multi(s_multi, useR, sparse):
+
+    R = librosa.segment.recurrence_matrix(s_multi, mode='affinity', sparse=sparse)
+    if useR:
+        R_multi = R
+    else:
+        R_multi = None
+
+    s_filt = librosa.decompose.nn_filter(s_multi, rec=R_multi, mode='affinity',
+        sparse=sparse)
+    # Always use the same recurrence matrix for comparison
+    s_filt0 = librosa.decompose.nn_filter(s_multi[0], rec=R)
+    s_filt1 = librosa.decompose.nn_filter(s_multi[1], rec=R)
+
+    assert np.allclose(s_filt[0], s_filt0)
+    assert np.allclose(s_filt[1], s_filt1)
+    assert not np.allclose(s_filt0, s_filt1)
 
 
 def test_nn_filter_avg():

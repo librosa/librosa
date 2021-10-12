@@ -1258,11 +1258,7 @@ def __decorate_axis(axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None):
         sa_offset = 2.0 ** (log_Sa - np.floor(log_Sa))
 
         axis.set_major_locator(
-            SymmetricalLogLocator(
-                axis.get_transform(),
-                base=2.0,
-                subs=[sa_offset]
-            )
+            SymmetricalLogLocator(axis.get_transform(), base=2.0, subs=[sa_offset])
         )
         axis.set_minor_formatter(SvaraFormatter(Sa=Sa, mela=mela, major=False))
         axis.set_minor_locator(
@@ -1569,11 +1565,8 @@ def waveshow(
 
     # Only plot up to max_points worth of data here
     (steps,) = axes.step(
-        times[:max_points],
-        y[0, : max_points],
-        marker=marker,
-        where=where,
-        **kwargs)
+        times[:max_points], y[0, :max_points], marker=marker, where=where, **kwargs
+    )
 
     envelope = axes.fill_between(
         times[: len(y_top) * hop_length : hop_length],

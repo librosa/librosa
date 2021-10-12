@@ -39,8 +39,16 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
 
     Parameters
     ----------
-    S : np.ndarray [shape=(n_features, n_samples), dtype=float]
+    S : np.ndarray [shape=(..., n_features, n_samples), dtype=float]
         The input feature matrix (e.g., magnitude spectrogram)
+
+        If the input has multiple channels (leading dimensions), they will be automatically
+        flattened prior to decomposition.
+
+        If the input is multi-channel, channels and features are automatically flattened into
+        a single axis before the decomposition.
+        For example, a stereo input `S` with shape `(2, n_features, n_samples)` is
+        automatically reshaped to `(2 * n_features, n_samples)`.
 
     n_components : int > 0 [scalar] or None
         number of desired components
@@ -72,6 +80,10 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
             of the decomposition parameters, and not to ``transformer``
             internal parameters.
 
+        .. warning:: If the input array has more than two dimensions
+            (e.g., if it's a multi-channel spectrogram), then axis sorting
+            is not supported and a `ParameterError` exception is raised.
+
     fit : bool
         If `True`, components are estimated from the input ``S``.
 
@@ -84,7 +96,7 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
 
     Returns
     -------
-    components: np.ndarray [shape=(n_features, n_components)]
+    components: np.ndarray [shape=(..., n_features, n_components)]
         matrix of components (basis elements).
 
     activations: np.ndarray [shape=(n_components, n_samples)]
@@ -95,6 +107,8 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
     ------
     ParameterError
         if ``fit`` is False and no ``transformer`` object is provided.
+
+        if the input array is multi-channel and ``sort=True`` is specified.
 
 
     See Also
@@ -144,21 +158,36 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
     >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
     """
 
+    # Do a swapaxes and unroll
+    orig_shape = list(S.shape)
+
+    if S.ndim > 2 and sort:
+        raise ParameterError(
+            "Parameter sort=True is unsupported for input with more than two dimensions"
+        )
+
+    # Transpose S and unroll feature dimensions
+    # Use order='F' here to preserve the temporal ordering
+    S = S.T.reshape((S.shape[-1], -1), order="F")
+
+    if n_components is None:
+        n_components = S.shape[-1]
+
     if transformer is None:
         if fit is False:
             raise ParameterError("fit must be True if transformer is None")
 
         transformer = sklearn.decomposition.NMF(n_components=n_components, **kwargs)
 
-    if n_components is None:
-        n_components = S.shape[0]
-
     if fit:
-        activations = transformer.fit_transform(S.T).T
+        activations = transformer.fit_transform(S).T
     else:
-        activations = transformer.transform(S.T).T
+        activations = transformer.transform(S).T
 
-    components = transformer.components_.T
+    components = transformer.components_
+    component_shape = orig_shape[:-1] + [-1]
+    # use order='F' here to preserve component ordering
+    components = components.reshape(component_shape[::-1], order="F").T
 
     if sort:
         components, idx = util.axis_sort(components, index=True)
@@ -192,8 +221,9 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
 
     Parameters
     ----------
-    S : np.ndarray [shape=(d, n)]
+    S : np.ndarray [shape=(..., d, n)]
         input spectrogram. May be real (magnitude) or complex.
+        Multi-channel is supported.
 
     kernel_size : int or tuple (kernel_harmonic, kernel_percussive)
         kernel size(s) for the median filters.
@@ -227,10 +257,10 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
 
     Returns
     -------
-    harmonic : np.ndarray [shape=(d, n)]
+    harmonic : np.ndarray [shape=(..., d, n)]
         harmonic component (or mask)
 
-    percussive : np.ndarray [shape=(d, n)]
+    percussive : np.ndarray [shape=(..., d, n)]
         percussive component (or mask)
 
 
@@ -331,12 +361,19 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
             "Margins must be >= 1.0. " "A typical range is between 1 and 10."
         )
 
+    # shape for kernels
+    harm_shape = [1 for _ in S.shape]
+    harm_shape[-1] = win_harm
+
+    perc_shape = [1 for _ in S.shape]
+    perc_shape[-2] = win_perc
+
     # Compute median filters. Pre-allocation here preserves memory layout.
     harm = np.empty_like(S)
-    harm[:] = median_filter(S, size=(1, win_harm), mode="reflect")
+    harm[:] = median_filter(S, size=harm_shape, mode="reflect")
 
     perc = np.empty_like(S)
-    perc[:] = median_filter(S, size=(win_perc, 1), mode="reflect")
+    perc[:] = median_filter(S, size=perc_shape, mode="reflect")
 
     split_zeros = margin_harm == 1 and margin_perc == 1
 
@@ -381,7 +418,7 @@ def nn_filter(S, rec=None, aggregate=None, axis=-1, **kwargs):
     Parameters
     ----------
     S : np.ndarray
-        The input data (spectrogram) to filter
+        The input data (spectrogram) to filter. Multi-channel is supported.
 
     rec : (optional) scipy.sparse.spmatrix or np.ndarray
         Optionally, a pre-computed nearest-neighbor matrix
@@ -407,7 +444,7 @@ def nn_filter(S, rec=None, aggregate=None, axis=-1, **kwargs):
     Returns
     -------
     S_filtered : np.ndarray
-        The filtered data
+        The filtered data, with shape equivalent to the input ``S``.
 
     Raises
     ------

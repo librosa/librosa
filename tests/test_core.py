@@ -193,10 +193,6 @@ def test_resample_stereo(resample_audio, sr_out, res_type, fix):
     if sr_out == sr_in:
         assert np.allclose(y, y2)
 
-    # Check buffer contiguity
-    assert y2.flags["C_CONTIGUOUS"] == y.flags["C_CONTIGUOUS"]
-    assert y2.flags["F_CONTIGUOUS"] == y.flags["F_CONTIGUOUS"]
-
     # Check that we're within one sample of target_length = y.shape[-1] * sr_out // sr_in
     target_length = y.shape[-1] * sr_out // sr_in
     assert np.abs(y2.shape[-1] - target_length) <= 1
@@ -870,6 +866,16 @@ def test_to_mono(y):
         assert np.allclose(y, y_mono)
 
 
+@pytest.mark.parametrize(
+    "y", [np.ones((2, 10)), np.ones((2, 3, 10)), np.ones((2,3,4,10))]
+)
+def test_to_mono_multi(y):
+    y_mono = librosa.to_mono(y)
+
+    assert y_mono.ndim == 1
+    assert len(y_mono) == y.shape[-1]
+
+
 @pytest.mark.parametrize("data", [np.random.randn(32)])
 @pytest.mark.parametrize("threshold", [None, 0, 1e-10])
 @pytest.mark.parametrize("ref_magnitude", [None, 0.1, np.max])
@@ -1006,8 +1012,53 @@ def test_yin_fail(fmin, fmax, win_length, frame_length):
 @pytest.mark.parametrize("freq", [110, 220, 440, 880])
 def test_pyin_tone(freq):
     y = librosa.tone(freq, duration=1.0)
-    f0, _, _ = librosa.pyin(y, fmin=110, fmax=880, center=False)
-    assert np.allclose(np.log2(f0), np.log2(freq), rtol=0, atol=1e-2)
+    f0, _, _ = librosa.pyin(y, fmin=110, fmax=1000, center=False)
+    # Skip the first frame, since the voicing prior does not allow it
+    assert np.allclose(np.log2(f0[1:]), np.log2(freq), rtol=0, atol=1e-2)
+
+
+def test_pyin_multi():
+    y = np.stack([librosa.tone(440, duration=1.0), librosa.tone(560, duration=1.0)])
+
+    # Taper the signal
+    h = librosa.filters.get_window('triangle', y.shape[-1])
+
+    # Filter it
+    y = y * h[np.newaxis,:]
+
+    # Disable nans so we can use allclose checks
+    fall, vall, vpall = librosa.pyin(y, fmin=100, fmax=1000, center=False, fill_na=-1)
+    f0, v0, vp0 = librosa.pyin(y[0], fmin=100, fmax=1000, center=False, fill_na=-1)
+    f1, v1, vp1 = librosa.pyin(y[1], fmin=100, fmax=1000, center=False, fill_na=-1)
+
+    assert np.allclose(fall[0], f0)
+    assert np.allclose(fall[1], f1)
+    assert np.allclose(vall[0], v0)
+    assert np.allclose(vall[1], v1)
+    assert np.allclose(vpall[0], vp0)
+    assert np.allclose(vpall[1], vp1)
+
+
+def test_pyin_multi_center():
+    y = np.stack([librosa.tone(440, duration=1.0), librosa.tone(560, duration=1.0)])
+
+    # Taper the signal
+    h = librosa.filters.get_window('triangle', y.shape[-1])
+
+    # Filter it
+    y = y * h[np.newaxis,:]
+
+    # Disable nans so we can use allclose checks
+    fleft, vleft, vpleft = librosa.pyin(y, fmin=100, fmax=1000, center=False, fill_na=-1)
+    fc, vc, vpc = librosa.pyin(y, fmin=100, fmax=1000, center=True, fill_na=-1)
+
+    # Centering will pad by half a frame on either side
+    # hop length is one quarter frame
+    # ==> match on 2:-2
+
+    assert np.allclose(fleft, fc[..., 2:-2])
+    assert np.allclose(vleft, vc[..., 2:-2])
+    assert np.allclose(vpleft, vpc[..., 2:-2])
 
 
 def test_pyin_chirp():
@@ -1303,7 +1354,6 @@ def test_clicks(
     "times,click_freq,click_duration,click,length",
     [
         (None, 1000, 0.1, None, None),
-        ([0, 2, 4, 8], 1000, 0.1, np.ones((2, 10)), None),
         ([0, 2, 4, 8], 1000, 0.1, None, 0),
         ([0, 2, 4, 8], 0, 0.1, None, None),
         ([0, 2, 4, 8], 1000, 0, None, None),
@@ -1479,7 +1529,7 @@ def test_harmonics_1d():
 
     h = [0.25, 0.5, 1, 2, 4]
 
-    yh = librosa.interp_harmonics(y, x, h)
+    yh = librosa.interp_harmonics(y, x, h, axis=0)
 
     assert yh.shape[1:] == y.shape
     assert yh.shape[0] == len(h)
@@ -1542,7 +1592,7 @@ def test_harmonics_2d_varying():
     y = np.tile(y, (5, 1)).T
     h = [0.25, 0.5, 1, 2, 4]
 
-    yh = librosa.interp_harmonics(y, x, h, axis=0)
+    yh = librosa.interp_harmonics(y, x, h, axis=-2)
 
     assert yh.shape[1:] == y.shape
     assert yh.shape[0] == len(h)

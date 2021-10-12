@@ -67,16 +67,24 @@ def cross_similarity(
     """Compute cross-similarity from one data sequence to a reference sequence.
 
     The output is a matrix ``xsim``, where ``xsim[i, j]`` is non-zero
-    if ``data_ref[:, i]`` is a k-nearest neighbor of ``data[:, j]``.
+    if ``data_ref[..., i]`` is a k-nearest neighbor of ``data[..., j]``.
 
 
     Parameters
     ----------
-    data : np.ndarray [shape=(d, n)]
-        A feature matrix for the comparison sequence
+    data : np.ndarray [shape=(..., d, n)]
+        A feature matrix for the comparison sequence.
+        If the data has more than two dimensions (e.g., for multi-channel inputs),
+        the leading dimensions are flattened prior to comparison.
+        For example, a stereo input with shape `(2, d, n)` is
+        automatically reshaped to `(2 * d, n)`.
 
-    data_ref : np.ndarray [shape=(d, n_ref)]
+    data_ref : np.ndarray [shape=(..., d, n_ref)]
         A feature matrix for the reference sequence
+        If the data has more than two dimensions (e.g., for multi-channel inputs),
+        the leading dimensions are flattened prior to comparison.
+        For example, a stereo input with shape `(2, d, n_ref)` is
+        automatically reshaped to `(2 * d, n_ref)`.
 
     k : int > 0 [scalar] or None
         the number of nearest-neighbors for each sample
@@ -170,17 +178,22 @@ def cross_similarity(
     data_ref = np.atleast_2d(data_ref)
     data = np.atleast_2d(data)
 
-    if data_ref.shape[0] != data.shape[0]:
-        raise ParameterError("data_ref and data must have the same first dimension")
+    if not np.allclose(data_ref.shape[:-1], data.shape[:-1]):
+        raise ParameterError(
+            "data_ref.shape={} and data.shape={} do not match on leading dimension(s)".format(
+                data_ref.shape, data.shape
+            )
+        )
 
     # swap data axes so the feature axis is last
     data_ref = np.swapaxes(data_ref, -1, 0)
     n_ref = data_ref.shape[0]
-    data_ref = data_ref.reshape((n_ref, -1))
+    # Use F-ordering for reshape to preserve leading axis
+    data_ref = data_ref.reshape((n_ref, -1), order="F")
 
     data = np.swapaxes(data, -1, 0)
     n = data.shape[0]
-    data = data.reshape((n, -1))
+    data = data.reshape((n, -1), order="F")
 
     if mode not in ["connectivity", "distance", "affinity"]:
         raise ParameterError(
@@ -271,8 +284,8 @@ def recurrence_matrix(
 ):
     """Compute a recurrence matrix from a data matrix.
 
-    ``rec[i, j]`` is non-zero if ``data[:, i]`` is a k-nearest neighbor
-    of ``data[:, j]`` and ``|i - j| >= width``
+    ``rec[i, j]`` is non-zero if ``data[..., i]`` is a k-nearest neighbor
+    of ``data[..., j]`` and ``|i - j| >= width``
 
     The specific value of ``rec[i, j]`` can have several forms, governed
     by the ``mode`` parameter below:
@@ -290,8 +303,12 @@ def recurrence_matrix(
 
     Parameters
     ----------
-    data : np.ndarray
-        A feature matrix
+    data : np.ndarray [shape=(..., d, n)]
+        A feature matrix.
+        If the data has more than two dimensions (e.g., for multi-channel inputs),
+        the leading dimensions are flattened prior to comparison.
+        For example, a stereo input with shape `(2, d, n)` is
+        automatically reshaped to `(2 * d, n)`.
 
     k : int > 0 [scalar] or None
         the number of nearest-neighbors for each sample
@@ -300,7 +317,7 @@ def recurrence_matrix(
         or ``k = 2`` if ``t <= 2 * width + 1``
 
     width : int >= 1 [scalar]
-        only link neighbors ``(data[:, i], data[:, j])``
+        only link neighbors ``(data[..., i], data[..., j])``
         if ``|i - j| >= width``
 
         ``width`` cannot exceed the length of the data.
@@ -412,7 +429,8 @@ def recurrence_matrix(
     # Swap observations to the first dimension and flatten the rest
     data = np.swapaxes(data, axis, 0)
     t = data.shape[0]
-    data = data.reshape((t, -1))
+    # Use F-ordering here to preserve leading axis layout
+    data = data.reshape((t, -1), order="F")
 
     if width < 1 or width > t:
         raise ParameterError(
@@ -871,7 +889,7 @@ def subsegment(data, frames, n_segments=4, axis=-1):
             )
         )
 
-    return np.ascontiguousarray(boundaries)
+    return np.array(boundaries)
 
 
 def agglomerative(data, k, clusterer=None, axis=-1):
@@ -938,7 +956,7 @@ def agglomerative(data, k, clusterer=None, axis=-1):
 
     # Flatten the features
     n = data.shape[0]
-    data = data.reshape((n, -1))
+    data = data.reshape((n, -1), order="F")
 
     if clusterer is None:
         # Connect the temporal connectivity graph
@@ -1005,6 +1023,9 @@ def path_enhance(
     R : np.ndarray
         The self- or cross-similarity matrix to be smoothed.
         Note: sparse inputs are not supported.
+
+        If the recurrence matrix is multi-dimensional, e.g. `shape=(c, n, n)`,
+        then enhancement is conducted independently for each leading channel.
 
     n : int > 0
         The length of the smoothing filter
@@ -1092,6 +1113,11 @@ def path_enhance(
         np.log2(min_ratio), np.log2(max_ratio), num=n_filters, base=2
     ):
         kernel = diagonal_filter(window, n, slope=ratio, zero_mean=zero_mean)
+
+        # Expand leading dimensions to match R
+        # This way, if R has shape, eg, [2, 3, n, n]
+        # the expanded kernel will have shape [1, 1, m, m]
+        kernel = np.expand_dims(kernel, axis=list(np.arange(R.ndim - kernel.ndim)))
 
         if R_smooth is None:
             R_smooth = scipy.ndimage.convolve(R, kernel, **kwargs)

@@ -226,13 +226,13 @@ def tempo(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)] or None
-        audio time series
+    y : np.ndarray [shape=(..., n)] or None
+        audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         sampling rate of the time series
 
-    onset_envelope    : np.ndarray [shape=(n,)]
+    onset_envelope    : np.ndarray [shape=(..., n)]
         pre-computed onset strength envelope
 
     hop_length : int > 0 [scalar]
@@ -261,8 +261,9 @@ def tempo(
 
     Returns
     -------
-    tempo : np.ndarray [scalar]
-        estimated tempo (beats per minute)
+    tempo : np.ndarray
+        estimated tempo (beats per minute).
+        If input is multi-channel, one tempo estimate per channel is provided.
 
     See Also
     --------
@@ -356,10 +357,10 @@ def tempo(
 
     # Eventually, we want this to work for time-varying tempo
     if aggregate is not None:
-        tg = aggregate(tg, axis=1, keepdims=True)
+        tg = aggregate(tg, axis=-1, keepdims=True)
 
     # Get the BPM values for each bin, skipping the 0-lag bin
-    bpms = core.tempo_frequencies(tg.shape[0], hop_length=hop_length, sr=sr)
+    bpms = core.tempo_frequencies(tg.shape[-2], hop_length=hop_length, sr=sr)
 
     # Weight the autocorrelation by a log-normal distribution
     if prior is None:
@@ -371,12 +372,14 @@ def tempo(
     if max_tempo is not None:
         max_idx = np.argmax(bpms < max_tempo)
         logprior[:max_idx] = -np.inf
+    # explicit axis expansion
+    logprior = util.expand_to(logprior, ndim=tg.ndim, axes=-2)
 
     # Get the maximum, weighted by the prior
     # Using log1p here for numerical stability
-    best_period = np.argmax(np.log1p(1e6 * tg) + logprior[:, np.newaxis], axis=0)
+    best_period = np.argmax(np.log1p(1e6 * tg) + logprior, axis=-2)
 
-    return bpms[best_period]
+    return np.take(bpms, best_period)
 
 
 def plp(
@@ -409,13 +412,13 @@ def plp(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)] or None
-        audio time series
+    y : np.ndarray [shape=(..., n)] or None
+        audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
 
-    onset_envelope : np.ndarray [shape=(n,)] or None
+    onset_envelope : np.ndarray [shape=(..., n)] or None
         (optional) pre-computed onset strength envelope
 
     hop_length : int > 0 [scalar]
@@ -438,9 +441,11 @@ def plp(
 
     Returns
     -------
-    pulse : np.ndarray, shape=[(n,)]
+    pulse : np.ndarray, shape=[(..., n)]
         The estimated pulse curve.  Maxima correspond to rhythmically salient
         points of time.
+
+        If input is multi-channel, one pulse curve per channel is computed.
 
     See Also
     --------
@@ -539,29 +544,32 @@ def plp(
     )
 
     if tempo_min is not None:
-        ftgram[tempo_frequencies < tempo_min] = 0
+        ftgram[..., tempo_frequencies < tempo_min, :] = 0
     if tempo_max is not None:
-        ftgram[tempo_frequencies > tempo_max] = 0
+        ftgram[..., tempo_frequencies > tempo_max, :] = 0
+
+    # reshape lengths to match dimension properly
+    tempo_frequencies = util.expand_to(tempo_frequencies, ndim=ftgram.ndim, axes=-2)
 
     # Step 3: Discard everything below the peak
     ftmag = np.log1p(1e6 * np.abs(ftgram))
     if prior is not None:
-        ftmag += prior.logpdf(tempo_frequencies)[:, np.newaxis]
+        ftmag += prior.logpdf(tempo_frequencies)
 
-    peak_values = ftmag.max(axis=0, keepdims=True)
+    peak_values = ftmag.max(axis=-2, keepdims=True)
     ftgram[ftmag < peak_values] = 0
 
     # Normalize to keep only phase information
-    ftgram /= util.tiny(ftgram) ** 0.5 + np.abs(ftgram.max(axis=0, keepdims=True))
+    ftgram /= util.tiny(ftgram) ** 0.5 + np.abs(ftgram.max(axis=-2, keepdims=True))
 
     # Step 5: invert the Fourier tempogram to get the pulse
-    pulse = core.istft(ftgram, hop_length=1, length=len(onset_envelope))
+    pulse = core.istft(ftgram, hop_length=1, length=onset_envelope.shape[-1])
 
     # Step 6: retain only the positive part of the pulse cycle
-    np.clip(pulse, 0, None, pulse)
+    pulse = np.clip(pulse, 0, None, pulse)
 
     # Return the normalized pulse
-    return util.normalize(pulse)
+    return util.normalize(pulse, axis=-1)
 
 
 def __beat_tracker(onset_envelope, bpm, fft_res, tightness, trim):

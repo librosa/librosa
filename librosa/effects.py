@@ -63,8 +63,8 @@ def hpss(y, **kwargs):
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        audio time series
+    y : np.ndarray [shape=(..., n)]
+        audio time series. Multi-channel is supported.
 
     kwargs : additional keyword arguments.
         See `librosa.decompose.hpss` for details.
@@ -72,10 +72,10 @@ def hpss(y, **kwargs):
 
     Returns
     -------
-    y_harmonic : np.ndarray [shape=(n,)]
+    y_harmonic : np.ndarray [shape=(..., n)]
         audio time series of the harmonic elements
 
-    y_percussive : np.ndarray [shape=(n,)]
+    y_percussive : np.ndarray [shape=(..., n)]
         audio time series of the percussive elements
 
     See Also
@@ -103,8 +103,8 @@ def hpss(y, **kwargs):
     stft_harm, stft_perc = decompose.hpss(stft, **kwargs)
 
     # Invert the STFTs.  Adjust length to match the input.
-    y_harm = util.fix_length(core.istft(stft_harm, dtype=y.dtype), len(y))
-    y_perc = util.fix_length(core.istft(stft_perc, dtype=y.dtype), len(y))
+    y_harm = core.istft(stft_harm, dtype=y.dtype, length=y.shape[-1])
+    y_perc = core.istft(stft_perc, dtype=y.dtype, length=y.shape[-1])
 
     return y_harm, y_perc
 
@@ -114,15 +114,15 @@ def harmonic(y, **kwargs):
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        audio time series
+    y : np.ndarray [shape=(..., n)]
+        audio time series. Multi-channel is supported.
 
     kwargs : additional keyword arguments.
         See `librosa.decompose.hpss` for details.
 
     Returns
     -------
-    y_harmonic : np.ndarray [shape=(n,)]
+    y_harmonic : np.ndarray [shape=(..., n)]
         audio time series of just the harmonic portion
 
     See Also
@@ -149,7 +149,7 @@ def harmonic(y, **kwargs):
     stft_harm = decompose.hpss(stft, **kwargs)[0]
 
     # Invert the STFTs
-    y_harm = util.fix_length(core.istft(stft_harm, dtype=y.dtype), len(y))
+    y_harm = core.istft(stft_harm, dtype=y.dtype, length=y.shape[-1])
 
     return y_harm
 
@@ -159,15 +159,15 @@ def percussive(y, **kwargs):
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        audio time series
+    y : np.ndarray [shape=(..., n)]
+        audio time series. Multi-channel is supported.
 
     kwargs : additional keyword arguments.
         See `librosa.decompose.hpss` for details.
 
     Returns
     -------
-    y_percussive : np.ndarray [shape=(n,)]
+    y_percussive : np.ndarray [shape=(..., n)]
         audio time series of just the percussive portion
 
     See Also
@@ -194,7 +194,7 @@ def percussive(y, **kwargs):
     stft_perc = decompose.hpss(stft, **kwargs)[1]
 
     # Invert the STFT
-    y_perc = util.fix_length(core.istft(stft_perc, dtype=y.dtype), len(y))
+    y_perc = core.istft(stft_perc, dtype=y.dtype, length=y.shape[-1])
 
     return y_perc
 
@@ -205,8 +205,8 @@ def time_stretch(y, rate, **kwargs):
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        audio time series
+    y : np.ndarray [shape=(..., n)]
+        audio time series. Multi-channel is supported.
 
     rate : float > 0 [scalar]
         Stretch factor.  If ``rate > 1``, then the signal is sped up.
@@ -217,7 +217,7 @@ def time_stretch(y, rate, **kwargs):
 
     Returns
     -------
-    y_stretch : np.ndarray [shape=(round(n/rate),)]
+    y_stretch : np.ndarray [shape=(..., round(n/rate))]
         audio time series stretched by the specified rate
 
     See Also
@@ -249,7 +249,7 @@ def time_stretch(y, rate, **kwargs):
     stft_stretch = core.phase_vocoder(stft, rate)
 
     # Predict the length of y_stretch
-    len_stretch = int(round(len(y) / rate))
+    len_stretch = int(round(y.shape[-1] / rate))
 
     # Invert the STFT
     y_stretch = core.istft(stft_stretch, dtype=y.dtype, length=len_stretch, **kwargs)
@@ -264,8 +264,8 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type="kaiser_best", **kw
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        audio time series
+    y : np.ndarray [shape=(..., n)]
+        audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         audio sampling rate of ``y``
@@ -286,7 +286,7 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type="kaiser_best", **kw
 
     Returns
     -------
-    y_shift : np.ndarray [shape=(n,)]
+    y_shift : np.ndarray [shape=(..., n)]
         The pitch-shifted audio time-series
 
 
@@ -324,7 +324,7 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type="kaiser_best", **kw
     )
 
     # Crop to the same dimension as the input
-    return util.fix_length(y_shift, len(y))
+    return util.fix_length(y_shift, y.shape[-1])
 
 
 def remix(y, intervals, align_zeros=True):
@@ -333,8 +333,8 @@ def remix(y, intervals, align_zeros=True):
 
     Parameters
     ----------
-    y : np.ndarray [shape=(t,) or (2, t)]
-        Audio time series
+    y : np.ndarray [shape=(..., t)]
+        Audio time series. Multi-channel is supported.
 
     intervals : iterable of tuples (start, end)
         An iterable (list-like or generator) where the ``i``th item
@@ -349,7 +349,7 @@ def remix(y, intervals, align_zeros=True):
 
     Returns
     -------
-    y_remix : np.ndarray [shape=(d,) or (2, d)]
+    y_remix : np.ndarray [shape=(..., d)]
         ``y`` remixed in the order specified by ``intervals``
 
 
@@ -390,27 +390,18 @@ def remix(y, intervals, align_zeros=True):
         # Force end-of-signal onto zeros
         zeros = np.append(zeros, [len(y_mono)])
 
-    clip = [slice(None)] * y.ndim
-
     for interval in intervals:
 
         if align_zeros:
             interval = zeros[util.match_events(interval, zeros)]
 
-        clip[-1] = slice(interval[0], interval[1])
+        y_out.append(y[..., interval[0] : interval[1]])
 
-        y_out.append(y[tuple(clip)])
-
-    y_out = np.asfortranarray(np.concatenate(y_out, axis=-1))
-
-    # Validate the output audio buffer
-    util.valid_audio(y_out, mono=False)
-
-    return y_out
+    return np.concatenate(y_out, axis=-1)
 
 
 def _signal_to_frame_nonsilent(
-    y, frame_length=2048, hop_length=512, top_db=60, ref=np.max
+    y, frame_length=2048, hop_length=512, top_db=60, ref=np.max, aggregate=np.max
 ):
     """Frame-wise non-silent indicator for audio input.
 
@@ -418,7 +409,7 @@ def _signal_to_frame_nonsilent(
 
     Parameters
     ----------
-    y : np.ndarray, shape=(n,) or (2,n)
+    y : np.ndarray
         Audio signal, mono or stereo
 
     frame_length : int > 0
@@ -434,27 +425,37 @@ def _signal_to_frame_nonsilent(
     ref : callable or float
         The reference power
 
+    aggregate : callable [default: np.max]
+        Function to aggregate dB measurements across channels (if y.ndim > 1)
+
+        Note: for multiple leading axes, this is performed using ``np.apply_over_axes``.
+
     Returns
     -------
     non_silent : np.ndarray, shape=(m,), dtype=bool
         Indicator of non-silent frames
     """
-    # Convert to mono
-    y_mono = core.to_mono(y)
 
     # Compute the MSE for the signal
-    mse = feature.rms(y=y_mono, frame_length=frame_length, hop_length=hop_length) ** 2
+    mse = feature.rms(y=y, frame_length=frame_length, hop_length=hop_length)
 
-    return core.power_to_db(mse.squeeze(), ref=ref, top_db=None) > -top_db
+    # Convert to decibels and slice out the mse channel
+    db = core.amplitude_to_db(mse[..., 0, :], ref=ref, top_db=None)
+
+    # Aggregate everything but the time dimension
+    if db.ndim > 1:
+        db = np.apply_over_axes(aggregate, db, range(db.ndim - 1))
+
+    return db > -top_db
 
 
-def trim(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
+def trim(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512, aggregate=np.max):
     """Trim leading and trailing silence from an audio signal.
 
     Parameters
     ----------
-    y : np.ndarray, shape=(n,) or (2,n)
-        Audio signal, can be mono or stereo
+    y : np.ndarray, shape=(..., n)
+        Audio signal. Multi-channel is supported.
 
     top_db : number > 0
         The threshold (in decibels) below reference to consider as
@@ -470,9 +471,12 @@ def trim(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
     hop_length : int > 0
         The number of samples between analysis frames
 
+    aggregate : callable [default: np.max]
+        Function to aggregate across channels (if y.ndim > 1)
+
     Returns
     -------
-    y_trimmed : np.ndarray, shape=(m,) or (2, m)
+    y_trimmed : np.ndarray, shape=(..., m)
         The trimmed signal
 
     index : np.ndarray, shape=(2,)
@@ -493,7 +497,12 @@ def trim(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
     """
 
     non_silent = _signal_to_frame_nonsilent(
-        y, frame_length=frame_length, hop_length=hop_length, ref=ref, top_db=top_db
+        y,
+        frame_length=frame_length,
+        hop_length=hop_length,
+        ref=ref,
+        top_db=top_db,
+        aggregate=aggregate,
     )
 
     nonzero = np.flatnonzero(non_silent)
@@ -514,13 +523,15 @@ def trim(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
     return y[tuple(full_index)], np.asarray([start, end])
 
 
-def split(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
+def split(
+    y, top_db=60, ref=np.max, frame_length=2048, hop_length=512, aggregate=np.max
+):
     """Split an audio signal into non-silent intervals.
 
     Parameters
     ----------
-    y : np.ndarray, shape=(n,) or (2, n)
-        An audio signal
+    y : np.ndarray, shape=(..., n)
+        An audio signal. Multi-channel is supported.
 
     top_db : number > 0
         The threshold (in decibels) below reference to consider as
@@ -536,6 +547,9 @@ def split(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
     hop_length : int > 0
         The number of samples between analysis frames
 
+    aggregate callable [default: np.max]
+        Function to aggregate across channels (if y.ndim > 1)
+
     Returns
     -------
     intervals : np.ndarray, shape=(m, 2)
@@ -545,7 +559,12 @@ def split(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512):
     """
 
     non_silent = _signal_to_frame_nonsilent(
-        y, frame_length=frame_length, hop_length=hop_length, ref=ref, top_db=top_db
+        y,
+        frame_length=frame_length,
+        hop_length=hop_length,
+        ref=ref,
+        top_db=top_db,
+        aggregate=aggregate,
     )
 
     # Interval slicing, adapted from
@@ -582,8 +601,8 @@ def preemphasis(y, coef=0.97, zi=None, return_zf=False):
 
     Parameters
     ----------
-    y : np.ndarray
-        Audio signal
+    y : np.ndarray [shape=(..., n)]
+        Audio signal. Multi-channel is supported.
 
     coef : positive number
         Pre-emphasis coefficient.  Typical values of ``coef`` are between 0 and 1.
@@ -651,7 +670,7 @@ def preemphasis(y, coef=0.97, zi=None, return_zf=False):
 
     if zi is None:
         # Initialize the filter to implement linear extrapolation
-        zi = 2 * y[..., 0] - y[..., 1]
+        zi = 2 * y[..., 0:1] - y[..., 1:2]
 
     zi = np.atleast_1d(zi)
 
@@ -663,7 +682,7 @@ def preemphasis(y, coef=0.97, zi=None, return_zf=False):
     return y_out
 
 
-def deemphasis(y, coef=0.95, zi=None):
+def deemphasis(y, coef=0.97, zi=None, return_zf=False):
     """De-emphasize an audio signal with the inverse operation of preemphasis():
 
     If y = preemphasis(x, coef=coef, zi=zi), the deemphasis is:
@@ -673,8 +692,8 @@ def deemphasis(y, coef=0.95, zi=None):
 
     Parameters
     ----------
-    y : np.ndarray
-        Audio signal
+    y : np.ndarray [shape=(..., n)]
+        Audio signal. Multi-channel is supported.
 
     coef : positive number
         Pre-emphasis coefficient.  Typical values of ``coef`` are between 0 and 1.
@@ -696,10 +715,18 @@ def deemphasis(y, coef=0.95, zi=None):
         value corresponds to the transformation of the default initialization of ``zi`` in ``preemphasis()``,
         ``2*x[0] - x[1]``.
 
+    return_zf : boolean
+        If ``True``, return the final filter state.
+        If ``False``, only return the pre-emphasized signal.
+
+
     Returns
     -------
     y_out : np.ndarray
         de-emphasized signal
+
+    zf : number
+        if ``return_zf=True``, the final filter state is also returned
 
     Examples
     --------
@@ -715,12 +742,27 @@ def deemphasis(y, coef=0.95, zi=None):
     --------
     preemphasis
     """
-    b = np.asarray([1.0, -coef], dtype=y.dtype)
-    a = np.asarray([1.0], dtype=y.dtype)
+
+    b = np.array([1.0, -coef], dtype=y.dtype)
+    a = np.array([1.0], dtype=y.dtype)
 
     if zi is None:
-        zi = ((2 - coef) * y[0] - y[1]) / (3 - coef)
-    y[0] -= zi
+        # initialize with all zeros
+        zi = np.zeros(list(y.shape[:-1]) + [1], dtype=y.dtype)
+        y_out, zf = scipy.signal.lfilter(a, b, y, zi=zi)
 
-    y_out = scipy.signal.lfilter(a, b, y)
-    return y_out
+        # factor in the linear extrapolation
+        y_out -= (
+            ((2 - coef) * y[..., 0:1] - y[..., 1:2])
+            / (3 - coef)
+            * (coef ** np.arange(y.shape[-1]))
+        )
+
+    else:
+        zi = np.atleast_1d(zi)
+        y_out, zf = scipy.signal.lfilter(a, b, y, zi=zi.astype(y.dtype))
+
+    if return_zf:
+        return y_out, zf
+    else:
+        return y_out

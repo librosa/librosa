@@ -24,13 +24,13 @@ def estimate_tuning(
 
     Parameters
     ----------
-    y: np.ndarray [shape=(n,)] or None
-        audio signal
+    y: np.ndarray [shape=(..., n)] or None
+        audio signal. Multi-channel is supported..
 
     sr : number > 0 [scalar]
         audio sampling rate of ``y``
 
-    S: np.ndarray [shape=(d, t)] or None
+    S: np.ndarray [shape=(..., d, t)] or None
         magnitude or power spectrogram
 
     n_fft : int > 0 [scalar] or None
@@ -49,7 +49,10 @@ def estimate_tuning(
     Returns
     -------
     tuning: float in `[-0.5, 0.5)`
-        estimated tuning deviation (fractions of a bin)
+        estimated tuning deviation (fractions of a bin).
+
+        Note that if multichannel input is provided, a single tuning estimate is provided spanning all
+        channels.
 
     See Also
     --------
@@ -193,13 +196,13 @@ def piptrack(
 
     Parameters
     ----------
-    y: np.ndarray [shape=(n,)] or None
-        audio signal
+    y: np.ndarray [shape=(..., n)] or None
+        audio signal. Multi-channel is supported..
 
     sr : number > 0 [scalar]
         audio sampling rate of ``y``
 
-    S: np.ndarray [shape=(d, t)] or None
+    S: np.ndarray [shape=(..., d, t)] or None
         magnitude or power spectrogram
 
     n_fft : int > 0 [scalar] or None
@@ -253,13 +256,13 @@ def piptrack(
 
     Returns
     -------
-    pitches, magnitudes : np.ndarray [shape=(d, t)]
+    pitches, magnitudes : np.ndarray [shape=(..., d, t)]
         Where ``d`` is the subset of FFT bins within ``fmin`` and ``fmax``.
 
-        ``pitches[f, t]`` contains instantaneous frequency at bin
+        ``pitches[..., f, t]`` contains instantaneous frequency at bin
         ``f``, time ``t``
 
-        ``magnitudes[f, t]`` contains the corresponding magnitudes.
+        ``magnitudes[..., f, t]`` contains the corresponding magnitudes.
 
         Both ``pitches`` and ``magnitudes`` take value 0 at bins
         of non-maximal magnitude.
@@ -316,17 +319,19 @@ def piptrack(
     # Do the parabolic interpolation everywhere,
     # then figure out where the peaks are
     # then restrict to the feasible range (fmin:fmax)
-    avg = 0.5 * (S[2:] - S[:-2])
+    avg = 0.5 * (S[..., 2:, :] - S[..., :-2, :])
 
-    shift = 2 * S[1:-1] - S[2:] - S[:-2]
+    shift = 2 * S[..., 1:-1, :] - S[..., 2:, :] - S[..., :-2, :]
 
     # Suppress divide-by-zeros.
     # Points where shift == 0 will never be selected by localmax anyway
     shift = avg / (shift + (np.abs(shift) < util.tiny(shift)))
 
     # Pad back up to the same shape as S
-    avg = np.pad(avg, ([1, 1], [0, 0]), mode="constant")
-    shift = np.pad(shift, ([1, 1], [0, 0]), mode="constant")
+    padding = [(0, 0) for _ in S.shape]
+    padding[-2] = (1, 1)
+    avg = np.pad(avg, padding, mode="constant")
+    shift = np.pad(shift, padding, mode="constant")
 
     dskew = 0.5 * avg * shift
 
@@ -335,7 +340,8 @@ def piptrack(
     mags = np.zeros_like(S)
 
     # Clip to the viable frequency range
-    freq_mask = ((fmin <= fft_freqs) & (fft_freqs < fmax)).reshape((-1, 1))
+    freq_mask = (fmin <= fft_freqs) & (fft_freqs < fmax)
+    freq_mask = util.expand_to(freq_mask, ndim=S.ndim, axes=-2)
 
     # Compute the column-wise local max of S after thresholding
     # Find the argmax coordinates
@@ -343,18 +349,17 @@ def piptrack(
         ref = np.max
 
     if callable(ref):
-        ref_value = threshold * ref(S, axis=0)
+        ref_value = threshold * ref(S, axis=-2)
+        # Reinsert the frequency axis here, in case the callable doesn't
+        # support keepdims=True
+        ref_value = np.expand_dims(ref_value, -2)
     else:
         ref_value = np.abs(ref)
 
-    idx = np.argwhere(freq_mask & util.localmax(S * (S > ref_value)))
-
     # Store pitch and magnitude
-    pitches[idx[:, 0], idx[:, 1]] = (
-        (idx[:, 0] + shift[idx[:, 0], idx[:, 1]]) * float(sr) / n_fft
-    )
-
-    mags[idx[:, 0], idx[:, 1]] = S[idx[:, 0], idx[:, 1]] + dskew[idx[:, 0], idx[:, 1]]
+    idx = np.nonzero(freq_mask & util.localmax(S * (S > ref_value), axis=-2))
+    pitches[idx] = (idx[-2] + shift[idx]) * float(sr) / n_fft
+    mags[idx] = S[idx] + dskew[idx]
 
     return pitches, mags
 
@@ -391,24 +396,32 @@ def _cumulative_mean_normalized_difference(
         Cumulative mean normalized difference function for each frame.
     """
     # Autocorrelation.
-    a = np.fft.rfft(y_frames, frame_length, axis=0)
-    b = np.fft.rfft(y_frames[win_length::-1, :], frame_length, axis=0)
-    acf_frames = np.fft.irfft(a * b, frame_length, axis=0)[win_length:]
+    a = np.fft.rfft(y_frames, frame_length, axis=-2)
+    b = np.fft.rfft(y_frames[..., win_length::-1, :], frame_length, axis=-2)
+    acf_frames = np.fft.irfft(a * b, frame_length, axis=-2)[..., win_length:, :]
     acf_frames[np.abs(acf_frames) < 1e-6] = 0
 
     # Energy terms.
-    energy_frames = np.cumsum(y_frames ** 2, axis=0)
-    energy_frames = energy_frames[win_length:, :] - energy_frames[:-win_length, :]
+    energy_frames = np.cumsum(y_frames ** 2, axis=-2)
+    energy_frames = (
+        energy_frames[..., win_length:, :] - energy_frames[..., :-win_length, :]
+    )
     energy_frames[np.abs(energy_frames) < 1e-6] = 0
 
     # Difference function.
-    yin_frames = energy_frames[0, :] + energy_frames - 2 * acf_frames
+    yin_frames = energy_frames[..., :1, :] + energy_frames - 2 * acf_frames
 
     # Cumulative mean normalized difference function.
-    yin_numerator = yin_frames[min_period : max_period + 1, :]
-    tau_range = np.arange(1, max_period + 1)[:, None]
-    cumulative_mean = np.cumsum(yin_frames[1 : max_period + 1, :], axis=0) / tau_range
-    yin_denominator = cumulative_mean[min_period - 1 : max_period, :]
+    yin_numerator = yin_frames[..., min_period : max_period + 1, :]
+    # broadcast this shape to have leading ones
+    tau_range = util.expand_to(
+        np.arange(1, max_period + 1), ndim=yin_frames.ndim, axes=-2
+    )
+
+    cumulative_mean = (
+        np.cumsum(yin_frames[..., 1 : max_period + 1, :], axis=-2) / tau_range
+    )
+    yin_denominator = cumulative_mean[..., min_period - 1 : max_period, :]
     yin_frames = yin_numerator / (yin_denominator + util.tiny(yin_denominator))
     return yin_frames
 
@@ -426,10 +439,15 @@ def _parabolic_interpolation(y_frames):
     parabolic_shifts : np.ndarray [shape=(frame_length, n_frames)]
         position of the parabola optima
     """
+
     parabolic_shifts = np.zeros_like(y_frames)
-    parabola_a = (y_frames[:-2, :] + y_frames[2:, :] - 2 * y_frames[1:-1, :]) / 2
-    parabola_b = (y_frames[2:, :] - y_frames[:-2, :]) / 2
-    parabolic_shifts[1:-1, :] = -parabola_b / (2 * parabola_a + util.tiny(parabola_a))
+    parabola_a = (
+        y_frames[..., :-2, :] + y_frames[..., 2:, :] - 2 * y_frames[..., 1:-1, :]
+    ) / 2
+    parabola_b = (y_frames[..., 2:, :] - y_frames[..., :-2, :]) / 2
+    parabolic_shifts[..., 1:-1, :] = -parabola_b / (
+        2 * parabola_a + util.tiny(parabola_a)
+    )
     parabolic_shifts[np.abs(parabolic_shifts) > 1] = 0
     return parabolic_shifts
 
@@ -461,8 +479,8 @@ def yin(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        audio time series.
+    y : np.ndarray [shape=(..., n)]
+        audio time series. Multi-channel is supported..
 
     fmin: number > 0 [scalar]
         minimum frequency in Hertz.
@@ -510,8 +528,10 @@ def yin(
 
     Returns
     -------
-    f0: np.ndarray [shape=(n_frames,)]
+    f0: np.ndarray [shape=(..., n_frames)]
         time series of fundamental frequencies in Hertz.
+
+        If multi-channel input is provided, f0 curves are estimated separately for each channel.
 
     See Also
     --------
@@ -547,11 +567,13 @@ def yin(
         hop_length = frame_length // 4
 
     # Check that audio is valid.
-    util.valid_audio(y, mono=True)
+    util.valid_audio(y, mono=False)
 
     # Pad the time series so that frames are centered
     if center:
-        y = np.pad(y, frame_length // 2, mode=pad_mode)
+        padding = [(0, 0) for _ in y.shape]
+        padding[-1] = (frame_length // 2, frame_length // 2)
+        y = np.pad(y, padding, mode=pad_mode)
 
     # Frame audio.
     y_frames = util.frame(y, frame_length=frame_length, hop_length=hop_length)
@@ -569,8 +591,8 @@ def yin(
     parabolic_shifts = _parabolic_interpolation(yin_frames)
 
     # Find local minima.
-    is_trough = util.localmin(yin_frames, axis=0)
-    is_trough[0, :] = yin_frames[0, :] < yin_frames[1, :]
+    is_trough = util.localmin(yin_frames, axis=-2)
+    is_trough[..., 0, :] = yin_frames[..., 0, :] < yin_frames[..., 1, :]
 
     # Find minima below peak threshold.
     is_threshold_trough = np.logical_and(is_trough, yin_frames < trough_threshold)
@@ -579,17 +601,25 @@ def yin(
     # "The solution we propose is to set an absolute threshold and choose the
     # smallest value of tau that gives a minimum of d' deeper than
     # this threshold. If none is found, the global minimum is chosen instead."
-    global_min = np.argmin(yin_frames, axis=0)
-    yin_period = np.argmax(is_threshold_trough, axis=0)
-    no_trough_below_threshold = np.all(~is_threshold_trough, axis=0)
+    target_shape = list(yin_frames.shape)
+    target_shape[-2] = 1
+
+    global_min = np.argmin(yin_frames, axis=-2)
+    yin_period = np.argmax(is_threshold_trough, axis=-2)
+
+    global_min = global_min.reshape(target_shape)
+    yin_period = yin_period.reshape(target_shape)
+
+    no_trough_below_threshold = np.all(~is_threshold_trough, axis=-2, keepdims=True)
     yin_period[no_trough_below_threshold] = global_min[no_trough_below_threshold]
 
     # Refine peak by parabolic interpolation.
+
     yin_period = (
         min_period
         + yin_period
-        + parabolic_shifts[yin_period, range(yin_frames.shape[1])]
-    )
+        + np.take_along_axis(parabolic_shifts, yin_period, axis=-2)
+    )[..., 0, :]
 
     # Convert period to fundamental frequency.
     f0 = sr / yin_period
@@ -632,8 +662,8 @@ def pyin(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        audio time series.
+    y : np.ndarray [shape=(..., n)]
+        audio time series. Multi-channel is supported.
 
     fmin: number > 0 [scalar]
         minimum frequency in Hertz.
@@ -705,14 +735,16 @@ def pyin(
 
     Returns
     -------
-    f0: np.ndarray [shape=(n_frames,)]
+    f0: np.ndarray [shape=(..., n_frames)]
         time series of fundamental frequencies in Hertz.
 
-    voiced_flag: np.ndarray [shape=(n_frames,)]
+    voiced_flag: np.ndarray [shape=(..., n_frames)]
         time series containing boolean flags indicating whether a frame is voiced or not.
 
-    voiced_prob: np.ndarray [shape=(n_frames,)]
+    voiced_prob: np.ndarray [shape=(..., n_frames)]
         time series containing the probability that a frame is voiced.
+
+    .. note:: If multi-channel input is provided, f0 and voicing are estimated separately for each channel.
 
     See Also
     --------
@@ -724,7 +756,9 @@ def pyin(
     Computing a fundamental frequency (F0) curve from an audio input
 
     >>> y, sr = librosa.load(librosa.ex('trumpet'))
-    >>> f0, voiced_flag, voiced_probs = librosa.pyin(y, fmin=librosa.note_to_hz('C2'), fmax=librosa.note_to_hz('C7'))
+    >>> f0, voiced_flag, voiced_probs = librosa.pyin(y,
+    ...                                              fmin=librosa.note_to_hz('C2'),
+    ...                                              fmax=librosa.note_to_hz('C7'))
     >>> times = librosa.times_like(f0)
 
 
@@ -759,11 +793,13 @@ def pyin(
         hop_length = frame_length // 4
 
     # Check that audio is valid.
-    util.valid_audio(y, mono=True)
+    util.valid_audio(y, mono=False)
 
     # Pad the time series so that frames are centered
     if center:
-        y = np.pad(y, frame_length // 2, mode=pad_mode)
+        padding = [(0, 0) for _ in y.shape]
+        padding[-1] = (frame_length // 2, frame_length // 2)
+        y = np.pad(y, padding, mode=pad_mode)
 
     # Frame audio.
     y_frames = util.frame(y, frame_length=frame_length, hop_length=hop_length)
@@ -788,10 +824,75 @@ def pyin(
     beta_cdf = scipy.stats.beta.cdf(thresholds, beta_parameters[0], beta_parameters[1])
     beta_probs = np.diff(beta_cdf)
 
+    n_bins_per_semitone = int(np.ceil(1.0 / resolution))
+    n_pitch_bins = int(np.floor(12 * n_bins_per_semitone * np.log2(fmax / fmin))) + 1
+
+    def _helper(a, b):
+        return __pyin_helper(
+            a,
+            b,
+            sr,
+            thresholds,
+            boltzmann_parameter,
+            beta_probs,
+            no_trough_prob,
+            min_period,
+            fmin,
+            n_pitch_bins,
+            n_bins_per_semitone,
+        )
+
+    helper = np.vectorize(_helper, signature="(f,t),(k,t)->(1,d,t),(j,t)")
+    observation_probs, voiced_prob = helper(yin_frames, parabolic_shifts)
+
+    # Construct transition matrix.
+    max_semitones_per_frame = round(max_transition_rate * 12 * hop_length / sr)
+    transition_width = max_semitones_per_frame * n_bins_per_semitone + 1
+    # Construct the within voicing transition probabilities
+    transition = sequence.transition_local(
+        n_pitch_bins, transition_width, window="triangle", wrap=False
+    )
+
+    # Include across voicing transition probabilities
+    t_switch = sequence.transition_loop(2, 1 - switch_prob)
+    transition = np.kron(t_switch, transition)
+
+    p_init = np.zeros(2 * n_pitch_bins)
+    p_init[n_pitch_bins:] = 1 / n_pitch_bins
+
+    states = sequence.viterbi(observation_probs, transition, p_init=p_init)
+
+    # Find f0 corresponding to each decoded pitch bin.
+    freqs = fmin * 2 ** (np.arange(n_pitch_bins) / (12 * n_bins_per_semitone))
+    f0 = freqs[states % n_pitch_bins]
+    voiced_flag = states < n_pitch_bins
+
+    if fill_na is not None:
+        f0[~voiced_flag] = fill_na
+
+    return f0[..., 0, :], voiced_flag[..., 0, :], voiced_prob[..., 0, :]
+
+
+def __pyin_helper(
+    yin_frames,
+    parabolic_shifts,
+    sr,
+    thresholds,
+    boltzmann_parameter,
+    beta_probs,
+    no_trough_prob,
+    min_period,
+    fmin,
+    n_pitch_bins,
+    n_bins_per_semitone,
+):
+
     yin_probs = np.zeros_like(yin_frames)
+
     for i, yin_frame in enumerate(yin_frames.T):
         # 2. For each frame find the troughs.
-        is_trough = util.localmin(yin_frame, axis=0)
+        is_trough = util.localmin(yin_frame)
+
         is_trough[0] = yin_frame[0] < yin_frame[1]
         (trough_index,) = np.nonzero(is_trough)
 
@@ -799,21 +900,26 @@ def pyin(
             continue
 
         # 3. Find the troughs below each threshold.
+        # these are the local minima of the frame, could get them directly without the trough index
         trough_heights = yin_frame[trough_index]
-        trough_thresholds = trough_heights[:, None] < thresholds[None, 1:]
+        trough_thresholds = np.less.outer(trough_heights, thresholds[1:])
 
         # 4. Define the prior over the troughs.
         # Smaller periods are weighted more.
         trough_positions = np.cumsum(trough_thresholds, axis=0) - 1
         n_troughs = np.count_nonzero(trough_thresholds, axis=0)
+
         trough_prior = scipy.stats.boltzmann.pmf(
             trough_positions, boltzmann_parameter, n_troughs
         )
+
         trough_prior[~trough_thresholds] = 0
 
         # 5. For each threshold add probability to global minimum if no trough is below threshold,
         # else add probability to each trough below threshold biased by prior.
-        probs = np.sum(trough_prior * beta_probs, axis=1)
+
+        probs = trough_prior.dot(beta_probs)
+
         global_min = np.argmin(trough_heights)
         n_thresholds_below_min = np.count_nonzero(~trough_thresholds[global_min, :])
         probs[global_min] += no_trough_prob * np.sum(
@@ -829,24 +935,6 @@ def pyin(
     period_candidates = period_candidates + parabolic_shifts[yin_period, frame_index]
     f0_candidates = sr / period_candidates
 
-    n_bins_per_semitone = int(np.ceil(1.0 / resolution))
-    n_pitch_bins = int(np.floor(12 * n_bins_per_semitone * np.log2(fmax / fmin))) + 1
-
-    # Construct transition matrix.
-    max_semitones_per_frame = round(max_transition_rate * 12 * hop_length / sr)
-    transition_width = max_semitones_per_frame * n_bins_per_semitone + 1
-    # Construct the within voicing transition probabilities
-    transition = sequence.transition_local(
-        n_pitch_bins, transition_width, window="triangle", wrap=False
-    )
-    # Include across voicing transition probabilities
-    transition = np.block(
-        [
-            [(1 - switch_prob) * transition, switch_prob * transition],
-            [switch_prob * transition, (1 - switch_prob) * transition],
-        ]
-    )
-
     # Find pitch bin corresponding to each f0 candidate.
     bin_index = 12 * n_bins_per_semitone * np.log2(f0_candidates / fmin)
     bin_index = np.clip(np.round(bin_index), 0, n_pitch_bins).astype(int)
@@ -854,19 +942,10 @@ def pyin(
     # Observation probabilities.
     observation_probs = np.zeros((2 * n_pitch_bins, yin_frames.shape[1]))
     observation_probs[bin_index, frame_index] = yin_probs[yin_period, frame_index]
-    voiced_prob = np.clip(np.sum(observation_probs[:n_pitch_bins, :], axis=0), 0, 1)
-    observation_probs[n_pitch_bins:, :] = (1 - voiced_prob[None, :]) / n_pitch_bins
 
-    p_init = np.zeros(2 * n_pitch_bins)
-    p_init[n_pitch_bins:] = 1 / n_pitch_bins
+    voiced_prob = np.clip(
+        np.sum(observation_probs[:n_pitch_bins, :], axis=0, keepdims=True), 0, 1
+    )
+    observation_probs[n_pitch_bins:, :] = (1 - voiced_prob) / n_pitch_bins
 
-    # Viterbi decoding.
-    states = sequence.viterbi(observation_probs, transition, p_init=p_init)
-
-    # Find f0 corresponding to each decoded pitch bin.
-    freqs = fmin * 2 ** (np.arange(n_pitch_bins) / (12 * n_bins_per_semitone))
-    f0 = freqs[states % n_pitch_bins]
-    voiced_flag = states < n_pitch_bins
-    if fill_na is not None:
-        f0[~voiced_flag] = fill_na
-    return f0, voiced_flag, voiced_prob
+    return observation_probs[np.newaxis], voiced_prob
