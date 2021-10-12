@@ -76,11 +76,15 @@ def cross_similarity(
         A feature matrix for the comparison sequence.
         If the data has more than two dimensions (e.g., for multi-channel inputs),
         the leading dimensions are flattened prior to comparison.
+        For example, a stereo input with shape `(2, d, n)` is
+        automatically reshaped to `(2 * d, n)`.
 
     data_ref : np.ndarray [shape=(..., d, n_ref)]
         A feature matrix for the reference sequence
         If the data has more than two dimensions (e.g., for multi-channel inputs),
         the leading dimensions are flattened prior to comparison.
+        For example, a stereo input with shape `(2, d, n_ref)` is
+        automatically reshaped to `(2 * d, n_ref)`.
 
     k : int > 0 [scalar] or None
         the number of nearest-neighbors for each sample
@@ -303,6 +307,8 @@ def recurrence_matrix(
         A feature matrix.
         If the data has more than two dimensions (e.g., for multi-channel inputs),
         the leading dimensions are flattened prior to comparison.
+        For example, a stereo input with shape `(2, d, n)` is
+        automatically reshaped to `(2 * d, n)`.
 
     k : int > 0 [scalar] or None
         the number of nearest-neighbors for each sample
