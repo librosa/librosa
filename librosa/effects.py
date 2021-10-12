@@ -64,7 +64,7 @@ def hpss(y, **kwargs):
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)]
-        audio time series, may consist of one or more channels
+        audio time series. Multi-channel is supported.
 
     kwargs : additional keyword arguments.
         See `librosa.decompose.hpss` for details.
@@ -115,7 +115,7 @@ def harmonic(y, **kwargs):
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)]
-        audio time series, may consist of one or more channels
+        audio time series. Multi-channel is supported.
 
     kwargs : additional keyword arguments.
         See `librosa.decompose.hpss` for details.
@@ -160,7 +160,7 @@ def percussive(y, **kwargs):
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)]
-        audio time series, may consist of one or more channels
+        audio time series. Multi-channel is supported.
 
     kwargs : additional keyword arguments.
         See `librosa.decompose.hpss` for details.
@@ -206,7 +206,7 @@ def time_stretch(y, rate, **kwargs):
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)]
-        audio time series, may consist of one or more channels
+        audio time series. Multi-channel is supported.
 
     rate : float > 0 [scalar]
         Stretch factor.  If ``rate > 1``, then the signal is sped up.
@@ -265,7 +265,7 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type="kaiser_best", **kw
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)]
-        audio time series, may consist of one or more channels
+        audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         audio sampling rate of ``y``
@@ -334,7 +334,7 @@ def remix(y, intervals, align_zeros=True):
     Parameters
     ----------
     y : np.ndarray [shape=(..., t)]
-        Audio time series, may consist of one or more channels
+        Audio time series. Multi-channel is supported.
 
     intervals : iterable of tuples (start, end)
         An iterable (list-like or generator) where the ``i``th item
@@ -455,7 +455,7 @@ def trim(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512, aggregate=
     Parameters
     ----------
     y : np.ndarray, shape=(..., n)
-        Audio signal, may consist of one or more channels
+        Audio signal. Multi-channel is supported.
 
     top_db : number > 0
         The threshold (in decibels) below reference to consider as
@@ -531,7 +531,7 @@ def split(
     Parameters
     ----------
     y : np.ndarray, shape=(..., n)
-        An audio signal, may consist of one or more channels
+        An audio signal. Multi-channel is supported.
 
     top_db : number > 0
         The threshold (in decibels) below reference to consider as
@@ -602,7 +602,7 @@ def preemphasis(y, coef=0.97, zi=None, return_zf=False):
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)]
-        Audio signal, may consist of one or more channels
+        Audio signal. Multi-channel is supported.
 
     coef : positive number
         Pre-emphasis coefficient.  Typical values of ``coef`` are between 0 and 1.
@@ -693,7 +693,7 @@ def deemphasis(y, coef=0.97, zi=None, return_zf=False):
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)]
-        Audio signal, may consist of one or more channels
+        Audio signal. Multi-channel is supported.
 
     coef : positive number
         Pre-emphasis coefficient.  Typical values of ``coef`` are between 0 and 1.

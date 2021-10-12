@@ -109,7 +109,7 @@ def load(
     Returns
     -------
     y    : np.ndarray [shape=(n,) or (..., n)]
-        audio time series, may consist of one or more channels
+        audio time series. Multi-channel is supported.
 
     sr   : number > 0 [scalar]
         sampling rate of ``y``
@@ -426,7 +426,7 @@ def to_mono(y):
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)]
-        audio time series, may consist of one or more channels
+        audio time series. Multi-channel is supported.
 
     Returns
     -------
@@ -470,7 +470,7 @@ def resample(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)]
-        audio time series.  May consist of one or more channels.
+        audio time series.  Multi-channel is supported.
 
     orig_sr : number > 0 [scalar]
         original sampling rate of ``y``
@@ -641,7 +641,7 @@ def get_duration(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)] or None
-        audio time series, may consist of one or more channels
+        audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         audio sampling rate of ``y``
@@ -840,7 +840,7 @@ def lpc(y, order, axis=-1):
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)]
-        Time series to fit, may consist of one or more channels.
+        Time series to fit. Multi-channel is supported..
 
     order : int > 0
         Order of the linear filter
@@ -1172,7 +1172,7 @@ def clicks(
 
     click : np.ndarray or None
         (optional) click signal sample to use instead of the default click.
-        May consist of one or more channels.
+        Multi-channel is supported.
 
     length : int > 0
         desired number of samples in the output signal

@@ -69,7 +69,7 @@ def spectral_centroid(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n,)] or None
-        audio time series, may consist of one or more channels
+        audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         audio sampling rate of ``y``
@@ -225,7 +225,7 @@ def spectral_bandwidth(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)] or None
-        audio time series, may consist of one or more channels
+        audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         audio sampling rate of ``y``
@@ -406,7 +406,7 @@ def spectral_contrast(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)] or None
-        audio time series, may consist of one or more channels
+        audio time series. Multi-channel is supported.
 
     sr : number  > 0 [scalar]
         audio sampling rate of ``y``
@@ -595,7 +595,7 @@ def spectral_rolloff(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)] or None
-        audio time series, may consist of one or more channels
+        audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         audio sampling rate of ``y``
@@ -759,7 +759,7 @@ def spectral_flatness(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)] or None
-        audio time series, may consist of one or more channels
+        audio time series. Multi-channel is supported.
 
     S : np.ndarray [shape=(..., d, t)] or None
         (optional) pre-computed spectrogram magnitude
@@ -878,7 +878,7 @@ def rms(
     ----------
     y : np.ndarray [shape=(..., n)] or None
         (optional) audio time series. Required if ``S`` is not input.
-        May consist of one or more channels.
+        Multi-channel is supported.
 
     S : np.ndarray [shape=(..., d, t)] or None
         (optional) spectrogram magnitude. Required if ``y`` is not input.
@@ -992,7 +992,7 @@ def poly_features(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)] or None
-        audio time series, may consist of one or more channels
+        audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         audio sampling rate of ``y``
@@ -1133,7 +1133,7 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True, **kwar
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)]
-        Audio time series, may consist of one or more channels
+        Audio time series. Multi-channel is supported.
 
     frame_length : int > 0
         Length of the frame over which to compute zero crossing rates
@@ -1216,7 +1216,7 @@ def chroma_stft(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)] or None
-        audio time series, may consist of one or more channels
+        audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
@@ -1368,7 +1368,7 @@ def chroma_cqt(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n,)]
-        audio time series, may consist of one or more channels
+        audio time series. Multi-channel is supported.
 
     sr : number > 0
         sampling rate of ``y``
@@ -1527,7 +1527,7 @@ def chroma_cens(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n,)]
-        audio time series, may consist of one or more channels
+        audio time series. Multi-channel is supported.
 
     sr : number > 0
         sampling rate of ``y``
@@ -1676,7 +1676,7 @@ def tonnetz(y=None, sr=22050, chroma=None, **kwargs):
     Parameters
     ----------
     y : np.ndarray [shape=(..., n,)] or None
-        Audio time series, may consist of one or more channels
+        Audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
@@ -1783,7 +1783,7 @@ def mfcc(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n,)] or None
-        audio time series, may consist of one or more channels.
+        audio time series. Multi-channel is supported..
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
@@ -1934,7 +1934,7 @@ def melspectrogram(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)] or None
-        audio time-series, may consist of one or more channels
+        audio time-series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         sampling rate of ``y``

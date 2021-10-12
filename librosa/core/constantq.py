@@ -50,7 +50,7 @@ def cqt(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)]
-        audio time series, may consist of one or more channels
+        audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
@@ -227,7 +227,7 @@ def hybrid_cqt(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)]
-        audio time series, may consist of one or more channels
+        audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
@@ -409,7 +409,7 @@ def pseudo_cqt(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)]
-        audio time series, may consist of one or more channels
+        audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
@@ -772,7 +772,7 @@ def vqt(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)]
-        audio time series, may consist of one or more channels
+        audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         sampling rate of ``y``

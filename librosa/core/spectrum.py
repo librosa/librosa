@@ -70,7 +70,7 @@ def stft(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)], real-valued
-        input signal, may consist of one or more channels
+        input signal. Multi-channel is supported.
 
     n_fft : int > 0 [scalar]
         length of the windowed signal after padding with zeros.
@@ -494,7 +494,7 @@ def __reassign_frequencies(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n,)], real-valued
-        audio time series, may consist of one or more channels
+        audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
@@ -658,7 +658,7 @@ def __reassign_times(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n,)], real-valued
-        audio time series, may consist of one or more channels
+        audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
@@ -859,7 +859,7 @@ def reassigned_spectrogram(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)], real-valued
-        audio time series, may consist of one or more channels
+        audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
@@ -1318,7 +1318,7 @@ def iirt(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)]
-        audio time series, may consist of one or more channels
+        audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         sampling rate of ``y``

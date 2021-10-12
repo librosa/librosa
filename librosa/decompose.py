@@ -223,7 +223,7 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
     ----------
     S : np.ndarray [shape=(..., d, n)]
         input spectrogram. May be real (magnitude) or complex.
-        May consist of one or more channels.
+        Multi-channel is supported.
 
     kernel_size : int or tuple (kernel_harmonic, kernel_percussive)
         kernel size(s) for the median filters.
@@ -418,7 +418,7 @@ def nn_filter(S, rec=None, aggregate=None, axis=-1, **kwargs):
     Parameters
     ----------
     S : np.ndarray
-        The input data (spectrogram) to filter, may consist of one or more channels
+        The input data (spectrogram) to filter. Multi-channel is supported.
 
     rec : (optional) scipy.sparse.spmatrix or np.ndarray
         Optionally, a pre-computed nearest-neighbor matrix

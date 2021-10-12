@@ -25,7 +25,7 @@ def estimate_tuning(
     Parameters
     ----------
     y: np.ndarray [shape=(..., n)] or None
-        audio signal, may consist of one or more channels.
+        audio signal. Multi-channel is supported..
 
     sr : number > 0 [scalar]
         audio sampling rate of ``y``
@@ -197,7 +197,7 @@ def piptrack(
     Parameters
     ----------
     y: np.ndarray [shape=(..., n)] or None
-        audio signal, may consist of one or more channels.
+        audio signal. Multi-channel is supported..
 
     sr : number > 0 [scalar]
         audio sampling rate of ``y``
@@ -480,7 +480,7 @@ def yin(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)]
-        audio time series, may consist of one or more channels.
+        audio time series. Multi-channel is supported..
 
     fmin: number > 0 [scalar]
         minimum frequency in Hertz.
@@ -663,7 +663,7 @@ def pyin(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)]
-        audio time series, may consist of one or more channels
+        audio time series. Multi-channel is supported.
 
     fmin: number > 0 [scalar]
         minimum frequency in Hertz.

@@ -35,7 +35,7 @@ def tempogram(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)] or None
-        Audio time series.  May consist of one or more channels.
+        Audio time series.  Multi-channel is supported.
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
@@ -191,7 +191,7 @@ def fourier_tempogram(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)] or None
-        Audio time series.  May consist of one or more channels.
+        Audio time series.  Multi-channel is supported.
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
@@ -199,7 +199,7 @@ def fourier_tempogram(
     onset_envelope : np.ndarray [shape=(..., n)] or None
         Optional pre-computed onset strength envelope as provided by
         ``librosa.onset.onset_strength``.
-        May consist of one or more channels.
+        Multi-channel is supported.
 
     hop_length : int > 0
         number of audio samples between successive onset measurements

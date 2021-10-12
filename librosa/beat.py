@@ -227,7 +227,7 @@ def tempo(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)] or None
-        audio time series, can be one or more channels
+        audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         sampling rate of the time series
@@ -413,7 +413,7 @@ def plp(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)] or None
-        audio time series, can be one or more channels
+        audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
