@@ -176,8 +176,6 @@ def spectral_centroid(
         pad_mode=pad_mode,
     )
 
-    # (S (channels,freq,frames,intensity) for multichannel
-
     if not np.isrealobj(S):
         raise ParameterError(
             "Spectral centroid is only defined " "with real-valued input"
@@ -359,8 +357,6 @@ def spectral_bandwidth(
     if freq is None:
         freq = fft_frequencies(sr=sr, n_fft=n_fft)
 
-    # TODO: shape test freq
-
     if freq.ndim == 1:
         deviation = np.abs(
             np.subtract.outer(centroid[..., 0, :], freq).swapaxes(-2, -1)
@@ -541,7 +537,7 @@ def spectral_contrast(
     shape = list(S.shape)
     shape[-2] = n_bands + 1
 
-    valley = np.zeros(shape)  # valley = np.zeros((n_bands + 1, S.shape[-1]))
+    valley = np.zeros(shape)
     peak = np.zeros_like(valley)
 
     for k, (f_low, f_high) in enumerate(zip(octa[:-1], octa[1:])):
