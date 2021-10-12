@@ -3,17 +3,15 @@ Multi-channel
 
 This section provides an overview of how multi-channel signals are handled in
 *librosa*.
-The extremely short summary is that most functions will seamlessly support
-multi-channel inputs with no modification necessary.
-
+The one-sentence summary is that most of the functions which only supported single-channel 
+inputs up to librosa 0.8 now support multi-channel audio with no modification necessary.
 
 Dimensions
 ----------
 Before discussing multi-channel, it is worth reviewing how single-channel (monaural)
 signals are processed.
 Librosa processes all signals and derived data as `numpy.ndarray` (N-dimensional array) objects.
-When librosa loads a signal, it will by default mix all channels to produce a mono
-signal.
+By default, when librosa loads a multichannel signal, it averages all channels to produce a mono mixture.
 The resulting object is a 1-dimensional array of shape ``(N_samples,)`` which
 represents the time-series of sample values.
 Subsequent processing typically produces higher-dimensional transformations of the
@@ -23,8 +21,8 @@ Note that the second (trailing) dimension corresponds to the number of frames in
 signal, which is proportional to length; the first dimension corresponds to the
 number of frequencies (or more generally, features) measured at each frame.
 
-When working with multi-channel signals, the monaural down-mixing step can be skipped
-by specifying ``mono=False``, as in the following:
+When working with multi-channel signals, we may choose to skip the default down-mixing
+step by specifying ``mono=False`` in the call to ``librosa.load``, as in the following:
 
 .. code-block:: python
 
@@ -38,12 +36,12 @@ by specifying ``mono=False``, as in the following:
     y_stereo, sr = librosa.load(filename, mono=False)
 
 
-The resulting object will now have two dimensions instead of one, with ``y_stereo.shape ==
+The resulting object now has two dimensions instead of one, with ``y_stereo.shape ==
 (N_channels, N_samples)``.
 This way, we can access the first channel as ``y_stereo[0]``, the second channel as
 ``y_stereo[1]``, and so on if there are more than two channels.
 
-The general pattern used throughout librosa is as follows:
+Librosa represents data according to the following general pattern:
 
     - trailing dimensions correspond to time (samples, frames, etc)
     - leading dimensions may correspond to channels
@@ -67,8 +65,8 @@ This is accomplished in exactly the same way as if the signal was mono, that is:
     D_stereo = librosa.stft(y_stereo)
 
 
-The resulting STFT will have shape ``D_stereo.shape == (N_channels, N_frequencies, N_frames)``.
-We will then have ``D_stereo[0]`` corresponds to the STFT of the first channel ``y_stereo[0]``, and ``D_stereo[1]`` is the STFT of the second channel ``y_stereo[1]``, and so on.
+The shape of the resulting STFT is ``D_stereo.shape == (N_channels, N_frequencies, N_frames)``.
+The slice ``D_stereo[0]`` then corresponds to the STFT of the first channel ``y_stereo[0]``, and ``D_stereo[1]`` is the STFT of the second channel ``y_stereo[1]``, and so on.
 
 As a more advanced example, we can construct a multi-channel, harmonic spectrogram
 using `librosa.interp_harmonics`:
@@ -178,9 +176,9 @@ channel is only used when zoomed out to envelope mode.
 Advanced uses and caveats
 -------------------------
 
-Multi-channel support is relatively flexible in librosa, and in particular, you are
-not limited to only a single channels dimension (though that is the most common
-case).
+Multi-channel support is relatively flexible in librosa.
+In particular, you may organize channels over two dimensions or more, although a 
+single channel dimension is the most common use case.
 For example, if you want to simultaneously process a collection of stereo recordings
 of equal length, you may collect the signals into an array of shape ``y.shape =
 (N_tracks, N_channels, N_samples)``.
