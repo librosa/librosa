@@ -937,9 +937,10 @@ def rms(
 
     """
     if y is not None:
-        y = to_mono(y)
         if center:
-            y = np.pad(y, int(frame_length // 2), mode=pad_mode)
+            padding = [(0, 0) for _ in range(y.ndim)]
+            padding[-1] = (int(frame_length // 2), int(frame_length // 2))
+            y = np.pad(y, padding, mode=pad_mode)
 
         x = util.frame(y, frame_length=frame_length, hop_length=hop_length)
 

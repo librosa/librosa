@@ -555,6 +555,8 @@ def test_rms_multi(s_multi):
     C1 = librosa.feature.rms(S=S[1])
     Call = librosa.feature.rms(S=S)
 
+    assert Call.ndim == 3
+
     # Check each channel
     assert np.allclose(C0, Call[0])
     assert np.allclose(C1, Call[1])
