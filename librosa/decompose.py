@@ -39,11 +39,16 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
 
     Parameters
     ----------
-    S : np.ndarray [shape=(...., n_features, n_samples), dtype=float]
+    S : np.ndarray [shape=(..., n_features, n_samples), dtype=float]
         The input feature matrix (e.g., magnitude spectrogram)
 
         If the input has multiple channels (leading dimensions), they will be automatically
         flattened prior to decomposition.
+
+        If the input is multi-channel, channels and features are automatically flattened into
+        a single axis before the decomposition.
+        For example, a stereo input `S` with shape `(2, n_features, n_samples)` is
+        automatically reshaped to `(2 * n_features, n_samples)`.
 
     n_components : int > 0 [scalar] or None
         number of desired components
@@ -77,7 +82,7 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
 
         .. warning:: If the input array has more than two dimensions
             (e.g., if it's a multi-channel spectrogram), then axis sorting
-            is not supported and an exception is raised.
+            is not supported and a `ParameterError` exception is raised.
 
     fit : bool
         If `True`, components are estimated from the input ``S``.
@@ -102,6 +107,8 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
     ------
     ParameterError
         if ``fit`` is False and no ``transformer`` object is provided.
+
+        if the input array is multi-channel and ``sort=True`` is specified.
 
 
     See Also
@@ -437,7 +444,7 @@ def nn_filter(S, rec=None, aggregate=None, axis=-1, **kwargs):
     Returns
     -------
     S_filtered : np.ndarray
-        The filtered data, of shape equivalent to the input ``S``.
+        The filtered data, with shape equivalent to the input ``S``.
 
     Raises
     ------
