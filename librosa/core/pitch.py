@@ -185,7 +185,7 @@ def piptrack(
     win_length=None,
     window="hann",
     center=True,
-    pad_mode="reflect",
+    pad_mode="constant",
     ref=None,
 ):
     """Pitch tracking on thresholded parabolically-interpolated STFT.
@@ -246,7 +246,9 @@ def piptrack(
 
     pad_mode : string
         If ``center=True``, the padding mode to use at the edges of the signal.
-        By default, STFT uses reflection padding.
+        By default, STFT uses zero-padding.
+
+        See also: `np.pad`.
 
     ref : scalar or callable [default=np.max]
         If scalar, the reference value against which ``S`` is compared for determining
@@ -462,7 +464,7 @@ def yin(
     hop_length=None,
     trough_threshold=0.1,
     center=True,
-    pad_mode="reflect",
+    pad_mode="constant",
 ):
     """Fundamental frequency (F0) estimation using the YIN algorithm.
 
@@ -520,9 +522,8 @@ def yin(
 
     pad_mode : string or function
         If ``center=True``, this argument is passed to ``np.pad`` for padding
-        the edges of the signal ``y``. By default (``pad_mode="reflect"``),
-        ``y`` is padded on both sides with its own reflection, mirrored around
-        its first and last sample respectively.
+        the edges of the signal ``y``. By default (``pad_mode="constant"``),
+        ``y`` is padded on both sides with zeros.
         If ``center=False``,  this argument is ignored.
         .. see also:: `np.pad`
 
@@ -643,7 +644,7 @@ def pyin(
     no_trough_prob=0.01,
     fill_na=np.nan,
     center=True,
-    pad_mode="reflect",
+    pad_mode="constant",
 ):
     """Fundamental frequency (F0) estimation using probabilistic YIN (pYIN).
 
@@ -727,9 +728,8 @@ def pyin(
 
     pad_mode : string or function
         If ``center=True``, this argument is passed to ``np.pad`` for padding
-        the edges of the signal ``y``. By default (``pad_mode="reflect"``),
-        ``y`` is padded on both sides with its own reflection, mirrored around
-        its first and last sample respectively.
+        the edges of the signal ``y``. By default (``pad_mode="constant"``),
+        ``y`` is padded on both sides with zeros.
         If ``center=False``,  this argument is ignored.
         .. see also:: `np.pad`
 

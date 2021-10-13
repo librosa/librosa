@@ -47,7 +47,7 @@ def spectral_centroid(
     win_length=None,
     window="hann",
     center=True,
-    pad_mode="reflect",
+    pad_mode="constant",
 ):
     """Compute the spectral centroid.
 
@@ -113,7 +113,7 @@ def spectral_centroid(
 
     pad_mode : string
         If ``center=True``, the padding mode to use at the edges of the signal.
-        By default, STFT uses reflection padding.
+        By default, STFT uses zero padding.
 
 
     Returns
@@ -206,7 +206,7 @@ def spectral_bandwidth(
     win_length=None,
     window="hann",
     center=True,
-    pad_mode="reflect",
+    pad_mode="constant",
     freq=None,
     centroid=None,
     norm=True,
@@ -261,7 +261,7 @@ def spectral_bandwidth(
 
     pad_mode : string
         If ``center=True``, the padding mode to use at the edges of the signal.
-        By default, STFT uses reflection padding.
+        By default, STFT uses zero padding.
 
     freq : None or np.ndarray [shape=(d,) or shape=(..., d, t)]
         Center frequencies for spectrogram bins.
@@ -380,7 +380,7 @@ def spectral_contrast(
     win_length=None,
     window="hann",
     center=True,
-    pad_mode="reflect",
+    pad_mode="constant",
     freq=None,
     fmin=200.0,
     n_bands=6,
@@ -442,7 +442,7 @@ def spectral_contrast(
 
     pad_mode : string
         If ``center=True``, the padding mode to use at the edges of the signal.
-        By default, STFT uses reflection padding.
+        By default, STFT uses zero padding.
 
     freq : None or np.ndarray [shape=(d,)]
         Center frequencies for spectrogram bins.
@@ -580,7 +580,7 @@ def spectral_rolloff(
     win_length=None,
     window="hann",
     center=True,
-    pad_mode="reflect",
+    pad_mode="constant",
     freq=None,
     roll_percent=0.85,
 ):
@@ -631,7 +631,7 @@ def spectral_rolloff(
 
     pad_mode : string
         If ``center=True``, the padding mode to use at the edges of the signal.
-        By default, STFT uses reflection padding.
+        By default, STFT uses zero padding.
 
     freq : None or np.ndarray [shape=(d,) or shape=(..., d, t)]
         Center frequencies for spectrogram bins.
@@ -740,7 +740,7 @@ def spectral_flatness(
     win_length=None,
     window="hann",
     center=True,
-    pad_mode="reflect",
+    pad_mode="constant",
     amin=1e-10,
     power=2.0,
 ):
@@ -792,7 +792,7 @@ def spectral_flatness(
 
     pad_mode : string
         If ``center=True``, the padding mode to use at the edges of the signal.
-        By default, STFT uses reflection padding.
+        By default, STFT uses zero padding.
 
     amin : float > 0 [scalar]
         minimum threshold for ``S`` (=added noise floor for numerical stability)
@@ -863,7 +863,7 @@ def spectral_flatness(
 
 
 def rms(
-    y=None, S=None, frame_length=2048, hop_length=512, center=True, pad_mode="reflect"
+    y=None, S=None, frame_length=2048, hop_length=512, center=True, pad_mode="constant"
 ):
     """Compute root-mean-square (RMS) value for each frame, either from the
     audio samples ``y`` or from a spectrogram ``S``.
@@ -982,7 +982,7 @@ def poly_features(
     win_length=None,
     window="hann",
     center=True,
-    pad_mode="reflect",
+    pad_mode="constant",
     order=1,
     freq=None,
 ):
@@ -1028,7 +1028,7 @@ def poly_features(
 
     pad_mode : string
         If ``center=True``, the padding mode to use at the edges of the signal.
-        By default, STFT uses reflection padding.
+        By default, STFT uses zero padding.
 
     order : int > 0
         order of the polynomial to fit
@@ -1144,7 +1144,7 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True, **kwar
     center : bool
         If `True`, frames are centered by padding the edges of ``y``.
         This is similar to the padding in `librosa.stft`,
-        but uses edge-value copies instead of reflection.
+        but uses edge-value copies instead of zero-padding.
 
     kwargs : additional keyword arguments
         See `librosa.zero_crossings`
@@ -1200,7 +1200,7 @@ def chroma_stft(
     win_length=None,
     window="hann",
     center=True,
-    pad_mode="reflect",
+    pad_mode="constant",
     tuning=None,
     n_chroma=12,
     **kwargs,
@@ -1258,7 +1258,7 @@ def chroma_stft(
 
     pad_mode : string
         If ``center=True``, the padding mode to use at the edges of the signal.
-        By default, STFT uses reflection padding.
+        By default, STFT uses zero padding.
 
     tuning : float [scalar] or None.
         Deviation from A440 tuning in fractional chroma bins.
@@ -1916,7 +1916,7 @@ def melspectrogram(
     win_length=None,
     window="hann",
     center=True,
-    pad_mode="reflect",
+    pad_mode="constant",
     power=2.0,
     **kwargs,
 ):
@@ -1972,7 +1972,7 @@ def melspectrogram(
     pad_mode : string
         If ``center=True``, the padding mode to use at the edges of the signal.
 
-        By default, STFT uses reflection padding.
+        By default, STFT uses zero padding.
 
     power : float > 0 [scalar]
         Exponent for the magnitude melspectrogram.
