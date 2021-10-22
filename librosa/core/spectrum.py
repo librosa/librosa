@@ -47,7 +47,7 @@ def stft(
     window="hann",
     center=True,
     dtype=None,
-    pad_mode="reflect",
+    pad_mode="constant",
 ):
     """Short-time Fourier transform (STFT).
 
@@ -136,9 +136,8 @@ def stft(
 
     pad_mode : string or function
         If ``center=True``, this argument is passed to `np.pad` for padding
-        the edges of the signal ``y``. By default (``pad_mode="reflect"``),
-        ``y`` is padded on both sides with its own reflection, mirrored around
-        its first and last sample respectively.
+        the edges of the signal ``y``. By default (``pad_mode="constant"``),
+        ``y`` is padded on both sides with zeros.
         If ``center=False``,  this argument is ignored.
 
         .. see also:: `numpy.pad`
@@ -470,7 +469,7 @@ def __reassign_frequencies(
     window="hann",
     center=True,
     dtype=None,
-    pad_mode="reflect",
+    pad_mode="constant",
 ):
     """Instantaneous frequencies based on a spectrogram representation.
 
@@ -535,7 +534,7 @@ def __reassign_frequencies(
 
     pad_mode : string
         If ``center=True``, the padding mode to use at the edges of the signal.
-        By default, STFT uses reflection padding.
+        By default, STFT uses zero padding.
 
     Returns
     -------
@@ -634,7 +633,7 @@ def __reassign_times(
     window="hann",
     center=True,
     dtype=None,
-    pad_mode="reflect",
+    pad_mode="constant",
 ):
     """Time reassignments based on a spectrogram representation.
 
@@ -699,7 +698,7 @@ def __reassign_times(
 
     pad_mode : string
         If ``center=True``, the padding mode to use at the edges of the signal.
-        By default, STFT uses reflection padding.
+        By default, STFT uses zero padding.
 
     Returns
     -------
@@ -820,7 +819,7 @@ def reassigned_spectrogram(
     fill_nan=False,
     clip=True,
     dtype=None,
-    pad_mode="reflect",
+    pad_mode="constant",
 ):
     r"""Time-frequency reassigned spectrogram.
 
@@ -934,7 +933,7 @@ def reassigned_spectrogram(
 
     pad_mode : string
         If ``center=True``, the padding mode to use at the edges of the signal.
-        By default, STFT uses reflection padding.
+        By default, STFT uses zero padding.
 
     Returns
     -------
@@ -970,9 +969,7 @@ def reassigned_spectrogram(
     the left or center of each frame, so padding the signal does not affect the
     meaning of the reassigned times. However, reassignment assumes that the
     energy in each FFT bin is associated with exactly one signal component and
-    impulse event. The default ``center=True`` with reflection padding can thus
-    invalidate the reassigned estimates in the half-reflected frames at the
-    beginning and end of the signal.
+    impulse event.
 
     If ``reassign_times`` is ``False``, the frame times that are returned will be
     aligned to the left or center of the frame, depending on the value of
@@ -1285,7 +1282,7 @@ def iirt(
     hop_length=None,
     center=True,
     tuning=0.0,
-    pad_mode="reflect",
+    pad_mode="constant",
     flayout="sos",
     **kwargs,
 ):
@@ -1340,7 +1337,7 @@ def iirt(
 
     pad_mode : string
         If ``center=True``, the padding mode to use at the edges of the signal.
-        By default, this function uses reflection padding.
+        By default, this function uses zero padding.
 
     flayout : string
         - If `sos` (default), a series of second-order filters is used for filtering with `scipy.signal.sosfiltfilt`.
@@ -2264,7 +2261,7 @@ def griffinlim(
     center=True,
     dtype=None,
     length=None,
-    pad_mode="reflect",
+    pad_mode="constant",
     momentum=0.99,
     init="random",
     random_state=None,
@@ -2323,7 +2320,7 @@ def griffinlim(
 
     pad_mode : string
         If ``center=True``, the padding mode to use at the edges of the signal.
-        By default, STFT uses reflection padding.
+        By default, STFT uses zero padding.
 
     momentum : number >= 0
         The momentum parameter for fast Griffin-Lim.
@@ -2474,7 +2471,7 @@ def _spectrogram(
     win_length=None,
     window="hann",
     center=True,
-    pad_mode="reflect",
+    pad_mode="constant",
 ):
     """Helper function to retrieve a magnitude spectrogram.
 
@@ -2522,7 +2519,7 @@ def _spectrogram(
 
     pad_mode : string
         If ``center=True``, the padding mode to use at the edges of the signal.
-        By default, STFT uses reflection padding.
+        By default, STFT uses zero padding.
 
 
     Returns

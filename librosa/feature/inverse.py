@@ -97,7 +97,7 @@ def mel_to_audio(
     win_length=None,
     window="hann",
     center=True,
-    pad_mode="reflect",
+    pad_mode="constant",
     power=2.0,
     n_iter=32,
     length=None,
@@ -137,7 +137,7 @@ def mel_to_audio(
 
     pad_mode : string
         If ``center=True``, the padding mode to use at the edges of the signal.
-        By default, STFT uses reflection padding.
+        By default, STFT uses zero padding.
 
     power : float > 0 [scalar]
         Exponent for the magnitude melspectrogram

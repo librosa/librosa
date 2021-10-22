@@ -207,9 +207,9 @@ def test_chroma_issue1295(freq):
     actual_argmax = np.unravel_index(chroma_1.argmax(), chroma_1.shape)
 
     if freq == 261.63:
-        assert actual_argmax == (5, 43)
+        assert actual_argmax == (118, 0)
     elif freq == 440:
-        assert actual_argmax == (86, 43)
+        assert actual_argmax == (90, 0)
 
 
 @pytest.mark.parametrize("n", [16, 16.0, 16.25, 16.75])
