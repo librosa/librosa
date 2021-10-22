@@ -34,7 +34,7 @@ def cqt(
     sparsity=0.01,
     window="hann",
     scale=True,
-    pad_mode="reflect",
+    pad_mode="constant",
     res_type=None,
     dtype=None,
 ):
@@ -214,7 +214,7 @@ def hybrid_cqt(
     sparsity=0.01,
     window="hann",
     scale=True,
-    pad_mode="reflect",
+    pad_mode="constant",
     res_type=None,
     dtype=None,
 ):
@@ -395,7 +395,7 @@ def pseudo_cqt(
     sparsity=0.01,
     window="hann",
     scale=True,
-    pad_mode="reflect",
+    pad_mode="constant",
     dtype=None,
 ):
     """Compute the pseudo constant-Q transform of an audio signal.
@@ -754,7 +754,7 @@ def vqt(
     sparsity=0.01,
     window="hann",
     scale=True,
-    pad_mode="reflect",
+    pad_mode="constant",
     res_type=None,
     dtype=None,
 ):
@@ -1235,7 +1235,7 @@ def griffinlim_cqt(
     sparsity=0.01,
     window="hann",
     scale=True,
-    pad_mode="reflect",
+    pad_mode="constant",
     res_type="kaiser_fast",
     dtype=None,
     length=None,
