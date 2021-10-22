@@ -232,6 +232,10 @@ def test_cqt_frame_rate(y_cqt_110, sr_cqt, hop_length):
         assert False
 
 
+def test_cqt_odd_hop(y_cqt_110, sr_cqt):
+    C = librosa.cqt(y=y_cqt_110, sr=sr_cqt, hop_length=1001, res_type="polyphase")
+
+
 @pytest.mark.parametrize("fmin", [None, librosa.note_to_hz("C2")])
 @pytest.mark.parametrize("n_bins", [12, 24])
 @pytest.mark.parametrize("gamma", [None, 0, 2.5])
