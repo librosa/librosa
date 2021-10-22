@@ -236,6 +236,11 @@ def test_cqt_odd_hop(y_cqt_110, sr_cqt):
     C = librosa.cqt(y=y_cqt_110, sr=sr_cqt, hop_length=1001, res_type="polyphase")
 
 
+def test_icqt_odd_hop(y_cqt_110, sr_cqt):
+    C = librosa.cqt(y=y_cqt_110, sr=sr_cqt, hop_length=1001, res_type="polyphase")
+    yi = librosa.icqt(C, sr=sr_cqt, hop_length=1001, res_type="polyphase", length=len(y_cqt_110))
+
+
 @pytest.mark.parametrize("fmin", [None, librosa.note_to_hz("C2")])
 @pytest.mark.parametrize("n_bins", [12, 24])
 @pytest.mark.parametrize("gamma", [None, 0, 2.5])
