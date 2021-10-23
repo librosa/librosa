@@ -2265,6 +2265,7 @@ def griffinlim(
     n_iter=32,
     hop_length=None,
     win_length=None,
+    n_fft=None,
     window="hann",
     center=True,
     dtype=None,
@@ -2298,7 +2299,7 @@ def griffinlim(
 
     Parameters
     ----------
-    S : np.ndarray [shape=(..., n_fft / 2 + 1, t), non-negative]
+    S : np.ndarray [shape=(..., n_fft // 2 + 1, t), non-negative]
         An array of short-time Fourier transform magnitudes as produced by
         `stft`.
 
@@ -2310,6 +2311,11 @@ def griffinlim(
 
     win_length : None or int > 0
         The window length of the STFT.  By default, it will equal ``n_fft``
+
+    n_fft : None or int > 0
+        The number of samples per frame.
+        By default, this will be inferred from the shape of ``S`` as an even number.
+        However, if an odd frame length was used, you can explicitly set ``n_fft``.
 
     window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
         A window specification as supported by `stft` or `istft`
@@ -2410,7 +2416,8 @@ def griffinlim(
         )
 
     # Infer n_fft from the spectrogram shape
-    n_fft = 2 * (S.shape[-2] - 1)
+    if n_fft is None:
+        n_fft = 2 * (S.shape[-2] - 1)
 
     # using complex64 will keep the result to minimal necessary precision
     angles = np.empty(S.shape, dtype=np.complex64)
@@ -2437,6 +2444,7 @@ def griffinlim(
             S * angles,
             hop_length=hop_length,
             win_length=win_length,
+            n_fft=n_fft,
             window=window,
             center=center,
             dtype=dtype,
@@ -2463,6 +2471,7 @@ def griffinlim(
         S * angles,
         hop_length=hop_length,
         win_length=win_length,
+        n_fft=n_fft,
         window=window,
         center=center,
         dtype=dtype,

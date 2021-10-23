@@ -1951,6 +1951,7 @@ def y_chirp():
 
 @pytest.mark.parametrize("hop_length", [None, 1024])
 @pytest.mark.parametrize("win_length", [None, 1024])
+@pytest.mark.parametrize("n_fft", [2048, 2049])
 @pytest.mark.parametrize("window", ["hann", "rect"])
 @pytest.mark.parametrize("center", [False, True])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
@@ -1963,6 +1964,7 @@ def test_griffinlim(
     y_chirp,
     hop_length,
     win_length,
+    n_fft,
     window,
     center,
     dtype,
@@ -1982,6 +1984,7 @@ def test_griffinlim(
         y_chirp,
         hop_length=hop_length,
         win_length=win_length,
+        n_fft=n_fft,
         window=window,
         center=center,
         dtype=dtype,
@@ -1994,6 +1997,7 @@ def test_griffinlim(
         S,
         hop_length=hop_length,
         win_length=win_length,
+        n_fft=n_fft,
         window=window,
         center=center,
         dtype=dtype,
