@@ -678,7 +678,7 @@ def y_chirp_istft(request):
     return (librosa.chirp(32, 8192, sr=sr, duration=2.0), sr)
 
 
-@pytest.mark.parametrize("n_fft", [1024, 2048, 4096])
+@pytest.mark.parametrize("n_fft", [1024, 1025, 2048, 4096])
 @pytest.mark.parametrize("window", ["hann", "blackmanharris"])
 @pytest.mark.parametrize("hop_length", [128, 256, 512])
 def test_istft_reconstruction(y_chirp_istft, n_fft, hop_length, window):
@@ -686,7 +686,7 @@ def test_istft_reconstruction(y_chirp_istft, n_fft, hop_length, window):
     x, sr = y_chirp_istft
     S = librosa.core.stft(x, n_fft=n_fft, hop_length=hop_length, window=window)
     x_reconstructed = librosa.core.istft(
-        S, hop_length=hop_length, window=window, length=len(x)
+        S, hop_length=hop_length, window=window, n_fft=n_fft, length=len(x)
     )
 
     # NaN/Inf/-Inf should not happen
