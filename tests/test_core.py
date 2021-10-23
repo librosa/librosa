@@ -1152,7 +1152,7 @@ def test_estimate_tuning_null(y, sr, resolution, bins_per_octave):
     assert np.allclose(tuning_est, 0)
 
 
-@pytest.mark.parametrize("n_fft", [1024, 2048])
+@pytest.mark.parametrize("n_fft", [1024, 755, 2048, 2049])
 @pytest.mark.parametrize("hop_length", [None, 512])
 @pytest.mark.parametrize("power", [1, 2])
 def test__spectrogram(y_22050, n_fft, hop_length, power):
@@ -1185,12 +1185,15 @@ def test__spectrogram(y_22050, n_fft, hop_length, power):
     # And only the spectrogram with no shape parameters
     S_, n_fft_ = librosa.core.spectrum._spectrogram(S=S, power=power)
     assert np.allclose(S, S_)
-    assert np.allclose(n_fft, n_fft_)
+    if n_fft % 2 == 0:
+        # Inference will be wrong if the frame length was odd
+        assert np.allclose(n_fft, n_fft_)
 
     # And only the spectrogram but with incorrect n_fft
     S_, n_fft_ = librosa.core.spectrum._spectrogram(S=S, n_fft=2 * n_fft, power=power)
     assert np.allclose(S, S_)
-    assert np.allclose(n_fft, n_fft_)
+    
+    assert np.allclose(2 * (S.shape[-2] - 1), n_fft_)
 
 
 @pytest.mark.parametrize(
