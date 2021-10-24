@@ -1181,7 +1181,7 @@ def magphase(D, power=1):
     return mag, phase
 
 
-def phase_vocoder(D, rate, hop_length=None):
+def phase_vocoder(D, rate, hop_length=None, n_fft=None):
     """Phase vocoder.  Given an STFT matrix D, speed up by a factor of ``rate``
 
     Based on the implementation provided by [#]_.
@@ -1226,6 +1226,12 @@ def phase_vocoder(D, rate, hop_length=None):
 
         If None, defaults to ``n_fft//4 = (D.shape[0]-1)//2``
 
+    n_fft : int > 0 or None
+        The number of samples per frame in D.
+        By default (None), this will be inferred from the shape of D.
+        However, if D was constructed using an odd-length window, the correct
+        frame length can be specified here.
+
     Returns
     -------
     D_stretched : np.ndarray [shape=(..., d, t / rate), dtype=complex]
@@ -1236,7 +1242,8 @@ def phase_vocoder(D, rate, hop_length=None):
     pyrubberband
     """
 
-    n_fft = 2 * (D.shape[-2] - 1)
+    if n_fft is None:
+        n_fft = 2 * (D.shape[-2] - 1)
 
     if hop_length is None:
         hop_length = int(n_fft // 4)
