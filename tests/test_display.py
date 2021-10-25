@@ -877,13 +877,13 @@ def test_display_fourier_tempo_odd():
     sr = N1
     S = np.tile(np.arange(1 + N1//2), (20, 1)).T
     # Use the default inference
-    librosa.display.specshow(S, x_axis='time', y_axis='fourier_tempo', sr=sr, ax=ax1)
+    librosa.display.specshow(S, y_axis='fourier_tempo', sr=sr, ax=ax1)
 
     # Force it to match exactly
-    librosa.display.specshow(S, x_axis='time', y_axis='fourier_tempo', sr=sr, n_fft=N1, ax=ax2)
+    librosa.display.specshow(S, y_axis='fourier_tempo', sr=sr, win_length=N1, ax=ax2)
 
     # Override with an odd number
-    librosa.display.specshow(S, x_axis='time', y_axis='fourier_tempo', sr=sr, n_fft=N2, ax=ax3)
+    librosa.display.specshow(S, y_axis='fourier_tempo', sr=sr, win_length=N2, ax=ax3)
 
     ax1.label_outer()
     ax2.label_outer()

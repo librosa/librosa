@@ -125,8 +125,7 @@ fig.colorbar(img, ax=ax, format="%+2.f dB")
 # %%
 # Note that only the parameters which are strictly necessary are supported by
 # `specshow`.  For example, without the `hop_length`, we wouldn't know how to
-# translate frame indices to time indices.  However, `n_fft` is *not* needed,
-# because it can be inferred from the shape of the input spectrogram.
+# translate frame indices to time indices.
 #
 # A full list of the supported parameters is provided in the
 # `librosa.display.specshow` documentation.
