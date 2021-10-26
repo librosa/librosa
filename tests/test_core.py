@@ -678,7 +678,7 @@ def y_chirp_istft(request):
     return (librosa.chirp(32, 8192, sr=sr, duration=2.0), sr)
 
 
-@pytest.mark.parametrize("n_fft", [1024, 2048, 4096])
+@pytest.mark.parametrize("n_fft", [1024, 1025, 2048, 4096])
 @pytest.mark.parametrize("window", ["hann", "blackmanharris"])
 @pytest.mark.parametrize("hop_length", [128, 256, 512])
 def test_istft_reconstruction(y_chirp_istft, n_fft, hop_length, window):
@@ -686,7 +686,7 @@ def test_istft_reconstruction(y_chirp_istft, n_fft, hop_length, window):
     x, sr = y_chirp_istft
     S = librosa.core.stft(x, n_fft=n_fft, hop_length=hop_length, window=window)
     x_reconstructed = librosa.core.istft(
-        S, hop_length=hop_length, window=window, length=len(x)
+        S, hop_length=hop_length, window=window, n_fft=n_fft, length=len(x)
     )
 
     # NaN/Inf/-Inf should not happen
@@ -1152,7 +1152,7 @@ def test_estimate_tuning_null(y, sr, resolution, bins_per_octave):
     assert np.allclose(tuning_est, 0)
 
 
-@pytest.mark.parametrize("n_fft", [1024, 2048])
+@pytest.mark.parametrize("n_fft", [1024, 755, 2048, 2049])
 @pytest.mark.parametrize("hop_length", [None, 512])
 @pytest.mark.parametrize("power", [1, 2])
 def test__spectrogram(y_22050, n_fft, hop_length, power):
@@ -1185,12 +1185,15 @@ def test__spectrogram(y_22050, n_fft, hop_length, power):
     # And only the spectrogram with no shape parameters
     S_, n_fft_ = librosa.core.spectrum._spectrogram(S=S, power=power)
     assert np.allclose(S, S_)
-    assert np.allclose(n_fft, n_fft_)
+    if n_fft % 2 == 0:
+        # Inference will be wrong if the frame length was odd
+        assert np.allclose(n_fft, n_fft_)
 
     # And only the spectrogram but with incorrect n_fft
     S_, n_fft_ = librosa.core.spectrum._spectrogram(S=S, n_fft=2 * n_fft, power=power)
     assert np.allclose(S, S_)
-    assert np.allclose(n_fft, n_fft_)
+    
+    assert np.allclose(2 * (S.shape[-2] - 1), n_fft_)
 
 
 @pytest.mark.parametrize(
@@ -1951,6 +1954,7 @@ def y_chirp():
 
 @pytest.mark.parametrize("hop_length", [None, 1024])
 @pytest.mark.parametrize("win_length", [None, 1024])
+@pytest.mark.parametrize("n_fft", [2048, 2049])
 @pytest.mark.parametrize("window", ["hann", "rect"])
 @pytest.mark.parametrize("center", [False, True])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
@@ -1963,6 +1967,7 @@ def test_griffinlim(
     y_chirp,
     hop_length,
     win_length,
+    n_fft,
     window,
     center,
     dtype,
@@ -1982,6 +1987,7 @@ def test_griffinlim(
         y_chirp,
         hop_length=hop_length,
         win_length=win_length,
+        n_fft=n_fft,
         window=window,
         center=center,
         dtype=dtype,
@@ -1994,6 +2000,7 @@ def test_griffinlim(
         S,
         hop_length=hop_length,
         win_length=win_length,
+        n_fft=n_fft,
         window=window,
         center=center,
         dtype=dtype,

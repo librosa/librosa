@@ -840,6 +840,58 @@ def test_display_fft_svara(S_abs, sr):
     return fig
 
 
+@pytest.mark.mpl_image_compare(
+        baseline_images=["nfft_odd"], extensions=["png"], tolerance=6
+)
+def test_display_fft_odd():
+
+    fig, (ax1, ax2, ax3) = plt.subplots(nrows=3, sharex=True, figsize=(10, 10))
+    N1 = 8
+    N2 = N1 + 1
+    sr = N1
+    S = np.tile(np.arange(1 + N1//2), (20, 1)).T
+    # Use the default inference
+    librosa.display.specshow(S, x_axis='time', y_axis='fft', sr=sr, ax=ax1)
+
+    # Force it to match exactly
+    librosa.display.specshow(S, x_axis='time', y_axis='fft', sr=sr, n_fft=N1, ax=ax2)
+
+    # Override with an odd number
+    librosa.display.specshow(S, x_axis='time', y_axis='fft', sr=sr, n_fft=N2, ax=ax3)
+
+    ax1.label_outer()
+    ax2.label_outer()
+    ax3.label_outer()
+
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+        baseline_images=["nfft_odd_ftempo"], extensions=["png"], tolerance=6
+)
+def test_display_fourier_tempo_odd():
+
+    fig, (ax1, ax2, ax3) = plt.subplots(nrows=3, sharex=True, figsize=(10, 10))
+    N1 = 8
+    N2 = N1 + 1
+    sr = N1
+    S = np.tile(np.arange(1 + N1//2), (20, 1)).T
+    # Use the default inference
+    librosa.display.specshow(S, y_axis='fourier_tempo', sr=sr, ax=ax1)
+
+    # Force it to match exactly
+    librosa.display.specshow(S, y_axis='fourier_tempo', sr=sr, win_length=N1, ax=ax2)
+
+    # Override with an odd number
+    librosa.display.specshow(S, y_axis='fourier_tempo', sr=sr, win_length=N2, ax=ax3)
+
+    ax1.label_outer()
+    ax2.label_outer()
+    ax3.label_outer()
+
+    return fig
+
+
 @pytest.mark.parametrize(
     "x_axis,y_axis,xlim,ylim,out",
     [
