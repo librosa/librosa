@@ -176,6 +176,7 @@ def mel_to_audio(
         n_iter=n_iter,
         hop_length=hop_length,
         win_length=win_length,
+        n_fft=n_fft,
         window=window,
         center=center,
         dtype=dtype,

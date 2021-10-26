@@ -267,6 +267,7 @@ def istft(
     stft_matrix,
     hop_length=None,
     win_length=None,
+    n_fft=None,
     window="hann",
     center=True,
     dtype=None,
@@ -289,7 +290,7 @@ def istft(
 
     Parameters
     ----------
-    stft_matrix : np.ndarray [shape=(..., 1 + n_fft/2, t)]
+    stft_matrix : np.ndarray [shape=(..., 1 + n_fft//2, t)]
         STFT matrix from ``stft``
 
     hop_length : int > 0 [scalar]
@@ -302,6 +303,12 @@ def istft(
         according to the ``window`` function (see below).
 
         If unspecified, defaults to ``n_fft``.
+
+    n_fft : int > 0 or None
+        The number of samples per frame in the input spectrogram.
+        By default, this will be inferred from the shape of ``stft_matrix``.
+        However, if an odd frame length was used, you can specify the correct
+        length by setting ``n_fft``.
 
     window : string, tuple, number, function, np.ndarray [shape=(n_fft,)]
         - a window specification (string, tuple, or number);
@@ -359,7 +366,8 @@ def istft(
     8.940697e-08
     """
 
-    n_fft = 2 * (stft_matrix.shape[-2] - 1)
+    if n_fft is None:
+        n_fft = 2 * (stft_matrix.shape[-2] - 1)
 
     # By default, use the entire frame
     if win_length is None:
@@ -405,7 +413,7 @@ def istft(
         bl_t = min(bl_s + n_columns, n_frames)
 
         # invert the block and apply the window function
-        ytmp = ifft_window * fft.irfft(stft_matrix[..., bl_s:bl_t], axis=-2)
+        ytmp = ifft_window * fft.irfft(stft_matrix[..., bl_s:bl_t], n=n_fft, axis=-2)
 
         # Overlap-add the istft block starting at the i'th frame
         __overlap_add(y[..., frame * hop_length :], ytmp, hop_length)
@@ -1173,7 +1181,7 @@ def magphase(D, power=1):
     return mag, phase
 
 
-def phase_vocoder(D, rate, hop_length=None):
+def phase_vocoder(D, rate, hop_length=None, n_fft=None):
     """Phase vocoder.  Given an STFT matrix D, speed up by a factor of ``rate``
 
     Based on the implementation provided by [#]_.
@@ -1218,6 +1226,12 @@ def phase_vocoder(D, rate, hop_length=None):
 
         If None, defaults to ``n_fft//4 = (D.shape[0]-1)//2``
 
+    n_fft : int > 0 or None
+        The number of samples per frame in D.
+        By default (None), this will be inferred from the shape of D.
+        However, if D was constructed using an odd-length window, the correct
+        frame length can be specified here.
+
     Returns
     -------
     D_stretched : np.ndarray [shape=(..., d, t / rate), dtype=complex]
@@ -1228,7 +1242,8 @@ def phase_vocoder(D, rate, hop_length=None):
     pyrubberband
     """
 
-    n_fft = 2 * (D.shape[-2] - 1)
+    if n_fft is None:
+        n_fft = 2 * (D.shape[-2] - 1)
 
     if hop_length is None:
         hop_length = int(n_fft // 4)
@@ -2257,6 +2272,7 @@ def griffinlim(
     n_iter=32,
     hop_length=None,
     win_length=None,
+    n_fft=None,
     window="hann",
     center=True,
     dtype=None,
@@ -2290,7 +2306,7 @@ def griffinlim(
 
     Parameters
     ----------
-    S : np.ndarray [shape=(..., n_fft / 2 + 1, t), non-negative]
+    S : np.ndarray [shape=(..., n_fft // 2 + 1, t), non-negative]
         An array of short-time Fourier transform magnitudes as produced by
         `stft`.
 
@@ -2302,6 +2318,11 @@ def griffinlim(
 
     win_length : None or int > 0
         The window length of the STFT.  By default, it will equal ``n_fft``
+
+    n_fft : None or int > 0
+        The number of samples per frame.
+        By default, this will be inferred from the shape of ``S`` as an even number.
+        However, if an odd frame length was used, you can explicitly set ``n_fft``.
 
     window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
         A window specification as supported by `stft` or `istft`
@@ -2402,7 +2423,8 @@ def griffinlim(
         )
 
     # Infer n_fft from the spectrogram shape
-    n_fft = 2 * (S.shape[-2] - 1)
+    if n_fft is None:
+        n_fft = 2 * (S.shape[-2] - 1)
 
     # using complex64 will keep the result to minimal necessary precision
     angles = np.empty(S.shape, dtype=np.complex64)
@@ -2429,6 +2451,7 @@ def griffinlim(
             S * angles,
             hop_length=hop_length,
             win_length=win_length,
+            n_fft=n_fft,
             window=window,
             center=center,
             dtype=dtype,
@@ -2455,6 +2478,7 @@ def griffinlim(
         S * angles,
         hop_length=hop_length,
         win_length=win_length,
+        n_fft=n_fft,
         window=window,
         center=center,
         dtype=dtype,
@@ -2534,8 +2558,9 @@ def _spectrogram(
     """
 
     if S is not None:
-        # Infer n_fft from spectrogram shape
-        n_fft = 2 * (S.shape[-2] - 1)
+        # Infer n_fft from spectrogram shape, but only if it mismatches
+        if n_fft // 2 + 1 != S.shape[-2]:
+            n_fft = 2 * (S.shape[-2] - 1)
     else:
         # Otherwise, compute a magnitude spectrogram from input
         S = (

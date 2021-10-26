@@ -246,7 +246,9 @@ def time_stretch(y, rate, **kwargs):
     stft = core.stft(y, **kwargs)
 
     # Stretch by phase vocoding
-    stft_stretch = core.phase_vocoder(stft, rate)
+    stft_stretch = core.phase_vocoder(stft, rate,
+                                      hop_length=kwargs.get('hop_length', None),
+                                      n_fft=kwargs.get('n_fft', None))
 
     # Predict the length of y_stretch
     len_stretch = int(round(y.shape[-1] / rate))
