@@ -751,6 +751,8 @@ def specshow(
     y_axis=None,
     sr=22050,
     hop_length=512,
+    n_fft=None,
+    win_length=None,
     fmin=None,
     fmax=None,
     tuning=0.0,
@@ -778,6 +780,19 @@ def specshow(
 
     hop_length : int > 0 [scalar]
         Hop length, also used to determine time scale in x-axis
+
+    n_fft : int > 0 or None
+        Number of samples per frame in STFT/spectrogram displays.
+        By default, this will be inferred from the shape of ``data``
+        as ``2 * (d - 1)``.
+        If ``data`` was generated using an odd frame length, the correct
+        value can be specified here.
+
+    win_length : int > 0 or None
+        The number of samples per window.
+        By default, this will be inferred to match ``n_fft``.
+        This is primarily useful for specifying odd window lengths in
+        Fourier tempogram displays.
 
     x_axis, y_axis : None or str
         Range for the x- and y-axes.
@@ -969,6 +984,8 @@ def specshow(
         tuning=tuning,
         bins_per_octave=bins_per_octave,
         hop_length=hop_length,
+        n_fft=n_fft,
+        win_length=win_length,
         key=key,
         htk=htk,
     )
@@ -1286,9 +1303,10 @@ def __decorate_axis(axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None):
         raise ParameterError("Unsupported axis type: {}".format(ax_type))
 
 
-def __coord_fft_hz(n, sr=22050, **_kwargs):
+def __coord_fft_hz(n, sr=22050, n_fft=None, **_kwargs):
     """Get the frequencies for FFT bins"""
-    n_fft = 2 * (n - 1)
+    if n_fft is None:
+        n_fft = 2 * (n - 1)
     # The following code centers the FFT bins at their frequencies
     # and clips to the non-negative frequency range [0, nyquist]
     basis = core.fft_frequencies(sr=sr, n_fft=n_fft)
@@ -1348,14 +1366,14 @@ def __coord_tempo(n, sr=22050, hop_length=512, **_kwargs):
     return basis * (edges + 0.5) / edges
 
 
-def __coord_fourier_tempo(n, sr=22050, hop_length=512, **_kwargs):
+def __coord_fourier_tempo(n, sr=22050, hop_length=512, win_length=None, **_kwargs):
     """Fourier tempogram coordinates"""
-
-    n_fft = 2 * (n - 1)
+    if win_length is None:
+        win_length = 2 * (n - 1)
     # The following code centers the FFT bins at their frequencies
     # and clips to the non-negative frequency range [0, nyquist]
     basis = core.fourier_tempo_frequencies(
-        sr=sr, hop_length=hop_length, win_length=n_fft
+        sr=sr, hop_length=hop_length, win_length=win_length
     )
     fmax = basis[-1]
     basis -= 0.5 * (basis[1] - basis[0])

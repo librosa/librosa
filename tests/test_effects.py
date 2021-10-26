@@ -42,11 +42,12 @@ def ysr(request):
         (0, pytest.raises(librosa.ParameterError)),
     ],
 )
-def test_time_stretch(ysr, rate, ctx):
+@pytest.mark.parametrize("n_fft", [2048, 2049])
+def test_time_stretch(ysr, rate, ctx, n_fft):
 
     with ctx:
         y, sr = ysr
-        ys = librosa.effects.time_stretch(y, rate)
+        ys = librosa.effects.time_stretch(y, rate, n_fft=n_fft)
 
         orig_duration = librosa.get_duration(y, sr=sr)
         new_duration = librosa.get_duration(ys, sr=sr)
@@ -80,12 +81,13 @@ def test_time_stretch_multi(y_multi):
         (0, pytest.raises(librosa.ParameterError)),
     ],
 )
-def test_pitch_shift(ysr, n_steps, bins_per_octave, ctx):
+@pytest.mark.parametrize("n_fft", [2048, 2049])
+def test_pitch_shift(ysr, n_steps, bins_per_octave, ctx, n_fft):
 
     with ctx:
         y, sr = ysr
         ys = librosa.effects.pitch_shift(
-            y, sr, n_steps, bins_per_octave=bins_per_octave
+            y, sr, n_steps, bins_per_octave=bins_per_octave, n_fft=n_fft
         )
 
         orig_duration = librosa.get_duration(y, sr=sr)
