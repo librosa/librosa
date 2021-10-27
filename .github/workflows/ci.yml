@@ -29,6 +29,9 @@ jobs:
                     - os: ubuntu-latest
                       python-version: 3.9
 
+                    - os: ubuntu-latest
+                      python-version: 3.10
+
                     - os: macos-latest
                       python-version: 3.9
 
@@ -44,7 +47,7 @@ jobs:
             case "${{ runner.os }}" in
             Linux)
               sudo apt-get update -yy
-              sudo apt-get install -yy  libsamplerate0 libsndfile1
+              sudo apt-get install -yy  libsamplerate0
               ;; 
             macOS)
               brew install libsamplerate
