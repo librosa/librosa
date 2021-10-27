@@ -5,12 +5,12 @@ channels:
 dependencies:
   # required
   - pip
-  - audioread==2.0.0
+  - audioread==2.1.5
   - numpy==1.15.0
   - scipy==1.0.0
-  - scikit-learn==0.14.0
+  - scikit-learn==0.19.1
   - joblib==0.14.0
-  - decorator==3.0.0
+  - decorator==4.0.10
   - resampy==0.2.2
   - numba==0.43.0
   - pysoundfile==0.10.2
