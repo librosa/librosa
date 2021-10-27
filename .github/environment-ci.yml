@@ -25,5 +25,6 @@ dependencies:
     - soxr
     - coverage
     - ffmpeg
+    - pip
     - pip:
         - soxr
