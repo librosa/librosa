@@ -69,14 +69,11 @@ jobs:
             CACHE_NUMBER: 1
           with:
             path: ~/conda_pkgs_dir
-            #key: ${{ runner.os }}-${{ matrix.python-version }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('.github/environment-ci.yml') }}
             key: ${{ runner.os }}-${{ matrix.python-version }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles( matrix.envfile ) }}
 
         - name: Install Conda environment
           uses: conda-incubator/setup-miniconda@v2
           with:
-            mamba-version: "*"
-            use-mamba: true
             auto-update-conda: true
             python-version: ${{ matrix.python-version }}
             add-pip-as-python-dependency: true
