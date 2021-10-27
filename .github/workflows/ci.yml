@@ -16,7 +16,6 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                envfile: ".github/environment-ci.yml"
                 include:
                     - os: ubuntu-18.04
                       python-version: "3.6"
@@ -25,21 +24,27 @@ jobs:
 
                     - os: ubuntu-latest
                       python-version: "3.6"
+                      envfile: ".github/environment-ci.yml"
 
                     - os: ubuntu-latest
                       python-version: "3.7"
+                      envfile: ".github/environment-ci.yml"
 
                     - os: ubuntu-latest
                       python-version: "3.8"
+                      envfile: ".github/environment-ci.yml"
 
                     - os: ubuntu-latest
                       python-version: "3.9"
+                      envfile: ".github/environment-ci.yml"
 
                     - os: macos-latest
                       python-version: "3.9"
+                      envfile: ".github/environment-ci.yml"
 
                     - os: windows-latest
                       python-version: "3.9"
+                      envfile: ".github/environment-ci.yml"
 
         steps:
         - uses: actions/checkout@v2
@@ -64,7 +69,8 @@ jobs:
             CACHE_NUMBER: 1
           with:
             path: ~/conda_pkgs_dir
-            key: ${{ runner.os }}-${{ matrix.python-version }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('.github/environment-ci.yml') }}
+            #key: ${{ runner.os }}-${{ matrix.python-version }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('.github/environment-ci.yml') }}
+            key: ${{ runner.os }}-${{ matrix.python-version }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles( matrix.envfile ) }}
 
         - name: Install Conda environment
           uses: conda-incubator/setup-miniconda@v2
