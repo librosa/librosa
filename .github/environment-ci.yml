@@ -4,6 +4,7 @@ channels:
     - defaults
 dependencies:
     # required
+    - pip
     - audioread>=2.0.0
     - numpy>=1.15.0
     - scipy>=1.0.0
@@ -15,7 +16,8 @@ dependencies:
     - pysoundfile>=0.10.2
     - pooch>=1.0
     - packaging>=20.0
-    # testing-required
+
+    # optional, but required for testing
     - matplotlib>=3.0
     - pytest-mpl
     - pytest-cov
@@ -24,7 +26,6 @@ dependencies:
     - soxr
     - coverage
     - ffmpeg
-    - pip
     - pip:
-        - soxr
+        - soxr>=0.2
         - samplerate
