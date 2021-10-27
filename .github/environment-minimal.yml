@@ -6,8 +6,8 @@ dependencies:
   # required
   - pip
   - audioread==2.1.5
-  - numpy==1.15.0
-  - scipy==1.0.0
+  - numpy==1.18.0
+  - scipy==1.2.0
   - scikit-learn==0.19.1
   - joblib==0.14.0
   - decorator==4.0.10
