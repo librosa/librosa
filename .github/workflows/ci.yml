@@ -20,30 +20,37 @@ jobs:
                     - os: ubuntu-18.04
                       python-version: "3.6"
                       envfile: ".github/environment-minimal.yml"
+                      channel-priority: "flexible"
                       name: "Minimal dependencies"
 
                     - os: ubuntu-latest
                       python-version: "3.6"
+                      channel-priority: "strict"
                       envfile: ".github/environment-ci.yml"
 
                     - os: ubuntu-latest
                       python-version: "3.7"
+                      channel-priority: "strict"
                       envfile: ".github/environment-ci.yml"
 
                     - os: ubuntu-latest
                       python-version: "3.8"
+                      channel-priority: "strict"
                       envfile: ".github/environment-ci.yml"
 
                     - os: ubuntu-latest
                       python-version: "3.9"
+                      channel-priority: "strict"
                       envfile: ".github/environment-ci.yml"
 
                     - os: macos-latest
                       python-version: "3.9"
+                      channel-priority: "strict"
                       envfile: ".github/environment-ci.yml"
 
                     - os: windows-latest
                       python-version: "3.9"
+                      channel-priority: "strict"
                       envfile: ".github/environment-ci.yml"
 
         steps:
@@ -79,7 +86,7 @@ jobs:
             add-pip-as-python-dependency: true
             auto-activate-base: false
             activate-environment: test
-            channel-priority: strict
+            channel-priority: ${{ matrix.channel-priority }}
             environment-file: ${{ matrix.envfile }}
             use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
 
