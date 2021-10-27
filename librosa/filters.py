@@ -755,7 +755,7 @@ def cq_to_chroma(
     cq_to_ch = np.roll(cq_to_ch, -int(n_merge // 2), axis=1)
 
     # How many octaves are we repeating?
-    n_octaves = np.ceil(np.float(n_input) / bins_per_octave)
+    n_octaves = np.ceil(float(n_input) / bins_per_octave)
 
     # Repeat and trim
     cq_to_ch = np.tile(cq_to_ch, int(n_octaves))[:, :n_input]

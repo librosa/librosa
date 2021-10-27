@@ -840,7 +840,7 @@ def vqt(
 
     Returns
     -------
-    VQT : np.ndarray [shape=(..., n_bins, t), dtype=np.complex or np.float]
+    VQT : np.ndarray [shape=(..., n_bins, t), dtype=np.complex]
         Variable-Q value each frequency at each time.
 
     See Also
@@ -1012,7 +1012,7 @@ def __cqt_filter_fft(
     hop_length=None,
     window="hann",
     gamma=0.0,
-    dtype=np.complex,
+    dtype=np.complex64,
 ):
     """Generate the frequency domain constant-Q filter basis."""
 

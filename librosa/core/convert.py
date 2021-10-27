@@ -1258,7 +1258,7 @@ def tempo_frequencies(n_bins, hop_length=512, sr=22050):
                6.764,     6.747])
     """
 
-    bin_frequencies = np.zeros(int(n_bins), dtype=np.float)
+    bin_frequencies = np.zeros(int(n_bins), dtype=np.float64)
 
     bin_frequencies[0] = np.inf
     bin_frequencies[1:] = 60.0 * sr / (hop_length * np.arange(1.0, n_bins))
