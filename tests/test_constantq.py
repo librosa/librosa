@@ -97,7 +97,7 @@ def y_cqt_110(sr_cqt):
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
-@pytest.mark.parametrize("hop_length", [-1, 0, 16, 63, 65])
+@pytest.mark.parametrize("hop_length", [-1, 0])
 @pytest.mark.parametrize("bpo", [12, 24])
 def test_cqt_bad_hop(y_cqt, sr_cqt, hop_length, bpo):
     # incorrect hop lengths for a 6-octave analysis
@@ -121,7 +121,7 @@ def test_cqt_exceed_passband(y_cqt, sr_cqt, bpo):
 @pytest.mark.parametrize("filter_scale", [1])
 @pytest.mark.parametrize("norm", [1])
 @pytest.mark.parametrize("res_type", ["polyphase"])
-@pytest.mark.parametrize("hop_length", [512])
+@pytest.mark.parametrize("hop_length", [512, 2000])
 @pytest.mark.parametrize("sparsity", [0.01])
 def test_cqt(
     y_cqt_110,
@@ -232,6 +232,15 @@ def test_cqt_frame_rate(y_cqt_110, sr_cqt, hop_length):
         assert False
 
 
+def test_cqt_odd_hop(y_cqt_110, sr_cqt):
+    C = librosa.cqt(y=y_cqt_110, sr=sr_cqt, hop_length=1001, res_type="polyphase")
+
+
+def test_icqt_odd_hop(y_cqt_110, sr_cqt):
+    C = librosa.cqt(y=y_cqt_110, sr=sr_cqt, hop_length=1001, res_type="polyphase")
+    yi = librosa.icqt(C, sr=sr_cqt, hop_length=1001, res_type="polyphase", length=len(y_cqt_110))
+
+
 @pytest.mark.parametrize("fmin", [None, librosa.note_to_hz("C2")])
 @pytest.mark.parametrize("n_bins", [12, 24])
 @pytest.mark.parametrize("gamma", [None, 0, 2.5])
@@ -302,7 +311,7 @@ def y_hybrid():
 
 
 @pytest.mark.parametrize("sr", [11025])
-@pytest.mark.parametrize("hop_length", [512])
+@pytest.mark.parametrize("hop_length", [512, 2000])
 @pytest.mark.parametrize("sparsity", [0.01])
 @pytest.mark.parametrize("fmin", [None, librosa.note_to_hz("C2")])
 @pytest.mark.parametrize("n_bins", [1, 12, 24, 48, 72, 74, 76])
@@ -406,13 +415,6 @@ def test_cqt_fail_short_early():
     # sampling rate is sufficiently above the top octave to trigger early downsampling
     y = np.zeros(16)
     librosa.cqt(y, sr=44100, n_bins=36)
-
-
-@pytest.mark.xfail(raises=librosa.ParameterError)
-def test_cqt_fail_short_late():
-
-    y = np.zeros(16)
-    librosa.cqt(y, sr=22050)
 
 
 @pytest.fixture(scope="module", params=[11025, 16384, 22050, 32000, 44100])
