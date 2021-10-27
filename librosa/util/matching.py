@@ -296,7 +296,7 @@ def match_events(events_from, events_to, left=True, right=True):
         )
 
     # array of matched items
-    output = np.empty_like(events_from, dtype=np.int)
+    output = np.empty_like(events_from, dtype=np.int32)
 
     return __match_events_helper(output, events_from, events_to, left, right)
 
