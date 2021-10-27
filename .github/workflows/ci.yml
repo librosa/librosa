@@ -71,12 +71,13 @@ jobs:
             auto-activate-base: false
             activate-environment: test
             channel-priority: strict
+            environment-file: .github/environment-ci.yml
             use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
 
-        - name: Install conda dependencies
-          shell: bash -l {0}
-          run: |
-            conda install -c conda-forge pip numpy scipy coverage scikit-learn!=0.19.0 matplotlib numba ffmpeg libsndfile pysoundfile coveralls
+            #- name: Install conda dependencies
+            #shell: bash -l {0}
+            #run: |
+            #conda install -c conda-forge pip numpy scipy coverage scikit-learn!=0.19.0 matplotlib numba ffmpeg libsndfile pysoundfile coveralls
 
         - name: Conda info
           shell: bash -l {0}
