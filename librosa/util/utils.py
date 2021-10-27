@@ -11,6 +11,7 @@ from numpy.lib.stride_tricks import as_strided
 
 from .._cache import cache
 from .exceptions import ParameterError
+from .deprecation import Deprecated
 
 # Constrain STFT block sizes to 256 KB
 MAX_MEM_BLOCK = 2 ** 8 * 2 ** 10
@@ -212,16 +213,18 @@ def frame(x, frame_length, hop_length, axis=-1, writeable=False, subok=False):
 
 
 @cache(level=20)
-def valid_audio(y, mono=True):
+def valid_audio(y, mono=Deprecated()):
     """Determine whether a variable contains valid audio data.
 
-    If ``mono=True``, then ``y`` is only considered valid if it has shape
-    ``(N,)`` (number of samples).
+    The following conditions must be satisfied:
 
-    If ``mono=False``, then ``y`` may be either monophonic, or have shape
-    ``(2, N)`` (stereo) or ``(K, N)`` for ``K>=2`` for general multi-channel.
-    Higher order arrangements are also allowed, e.g., ``(K1, K2, K3, N)``.
+    - ``type(y)`` is ``np.ndarray``
+    - ``y.dtype`` is floating-point
+    - ``y.ndim != 0`` (must have at least one dimension)
+    - ``np.isfinite(y).all()`` samples must be all finite values
 
+    If ``mono`` is specified, then we additionally require
+    - ``y.ndim == 1``
 
     Parameters
     ----------
@@ -231,6 +234,9 @@ def valid_audio(y, mono=True):
     mono : bool
       Whether or not to require monophonic audio
 
+      .. warning:: The ``mono`` parameter is deprecated in version 0.9 and will be
+        removed in 0.10.
+
     Returns
     -------
     valid : bool
@@ -239,12 +245,7 @@ def valid_audio(y, mono=True):
     Raises
     ------
     ParameterError
-        In any of these cases:
-            - ``type(y)`` is not ``np.ndarray``
-            - ``y.dtype`` is not floating-point
-            - ``mono == True`` and ``y.ndim`` is not 1
-            - ``y.ndim == 0`` (scalar input)
-            - ``np.isfinite(y).all()`` is False
+        In any of the conditions specified above fails
 
     Notes
     -----
@@ -280,6 +281,9 @@ def valid_audio(y, mono=True):
                 y.shape
             )
         )
+
+    if isinstance(mono, Deprecated):
+        mono = False
 
     if mono and y.ndim != 1:
         raise ParameterError(
