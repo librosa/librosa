@@ -169,9 +169,9 @@ def dtw(
     ...           title='Matching cost function')
     """
     # Default Parameters
-    default_steps = np.array([[1, 1], [0, 1], [1, 0]], dtype=np.int)
-    default_weights_add = np.zeros(3, dtype=np.float)
-    default_weights_mul = np.ones(3, dtype=np.float)
+    default_steps = np.array([[1, 1], [0, 1], [1, 0]], dtype=np.uint32)
+    default_weights_add = np.zeros(3, dtype=np.float64)
+    default_weights_mul = np.ones(3, dtype=np.float64)
 
     if step_sizes_sigma is None:
         # Use the default steps
@@ -186,10 +186,10 @@ def dtw(
     else:
         # If we have custom steps but no weights, construct them here
         if weights_add is None:
-            weights_add = np.zeros(len(step_sizes_sigma), dtype=np.float)
+            weights_add = np.zeros(len(step_sizes_sigma), dtype=np.float64)
 
         if weights_mul is None:
-            weights_mul = np.ones(len(step_sizes_sigma), dtype=np.float)
+            weights_mul = np.ones(len(step_sizes_sigma), dtype=np.float64)
 
         # Make the default step weights infinite so that they are never
         # preferred over custom steps
@@ -289,7 +289,7 @@ def dtw(
 
     # initialize step matrix with -1
     # will be filled in calc_accu_cost() with indices from step_sizes_sigma
-    steps = np.zeros(D.shape, dtype=np.int)
+    steps = np.zeros(D.shape, dtype=np.int32)
 
     # these steps correspond to left- (first row) and up-(first column) moves
     steps[0, :] = 1
@@ -532,7 +532,7 @@ def dtw_backtracking(steps, step_sizes_sigma=None, subseq=False, start=None):
         )
 
     # Default Parameters
-    default_steps = np.array([[1, 1], [0, 1], [1, 0]], dtype=np.int)
+    default_steps = np.array([[1, 1], [0, 1], [1, 0]], dtype=np.uint32)
 
     if step_sizes_sigma is None:
         # Use the default steps
@@ -1492,7 +1492,7 @@ def transition_uniform(n_states):
     if not isinstance(n_states, (int, np.integer)) or n_states <= 0:
         raise ParameterError("n_states={} must be a positive integer")
 
-    transition = np.empty((n_states, n_states), dtype=np.float)
+    transition = np.empty((n_states, n_states), dtype=np.float64)
     transition.fill(1.0 / n_states)
     return transition
 
@@ -1540,10 +1540,10 @@ def transition_loop(n_states, prob):
     if not isinstance(n_states, (int, np.integer)) or n_states <= 1:
         raise ParameterError("n_states={} must be a positive integer > 1")
 
-    transition = np.empty((n_states, n_states), dtype=np.float)
+    transition = np.empty((n_states, n_states), dtype=np.float64)
 
     # if it's a float, make it a vector
-    prob = np.asarray(prob, dtype=np.float)
+    prob = np.asarray(prob, dtype=np.float64)
 
     if prob.ndim == 0:
         prob = np.tile(prob, n_states)
@@ -1607,10 +1607,10 @@ def transition_cycle(n_states, prob):
     if not isinstance(n_states, (int, np.integer)) or n_states <= 1:
         raise ParameterError("n_states={} must be a positive integer > 1")
 
-    transition = np.zeros((n_states, n_states), dtype=np.float)
+    transition = np.zeros((n_states, n_states), dtype=np.float64)
 
     # if it's a float, make it a vector
-    prob = np.asarray(prob, dtype=np.float)
+    prob = np.asarray(prob, dtype=np.float64)
 
     if prob.ndim == 0:
         prob = np.tile(prob, n_states)
@@ -1722,7 +1722,7 @@ def transition_local(n_states, width, window="triangle", wrap=False):
     if np.any(width < 1):
         raise ParameterError("width={} must be at least 1")
 
-    transition = np.zeros((n_states, n_states), dtype=np.float)
+    transition = np.zeros((n_states, n_states), dtype=np.float64)
 
     # Fill in the widths.  This is inefficient, but simple
     for i, width_i in enumerate(width):

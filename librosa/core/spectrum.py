@@ -1248,7 +1248,7 @@ def phase_vocoder(D, rate, hop_length=None, n_fft=None):
     if hop_length is None:
         hop_length = int(n_fft // 4)
 
-    time_steps = np.arange(0, D.shape[-1], rate, dtype=np.float)
+    time_steps = np.arange(0, D.shape[-1], rate, dtype=np.float64)
 
     # Create an empty output array
     shape = list(D.shape)
@@ -2548,7 +2548,7 @@ def _spectrogram(
 
     Returns
     -------
-    S_out : np.ndarray [dtype=np.float32]
+    S_out : np.ndarray [dtype=np.float]
         - If ``S`` is provided as input, then ``S_out == S``
         - Else, ``S_out = |stft(y, ...)|**power``
 

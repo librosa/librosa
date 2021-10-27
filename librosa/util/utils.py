@@ -923,7 +923,7 @@ def normalize(S, norm=np.inf, axis=0, threshold=None, fill=None):
         raise ParameterError("Input must be finite")
 
     # All norms only depend on magnitude, let's do that first
-    mag = np.abs(S).astype(np.float)
+    mag = np.abs(S).astype(float)
 
     # For max/min norms, filling with 1 works
     fill_norm = 1
@@ -2153,7 +2153,7 @@ def dtype_r2c(d, default=np.complex64):
     mapping = {
         np.dtype(np.float32): np.complex64,
         np.dtype(np.float64): np.complex128,
-        np.dtype(np.float): np.complex,
+        np.dtype(np.float): np.dtype(np.complex).type,
     }
 
     # If we're given a complex type already, return it
@@ -2214,7 +2214,7 @@ def dtype_c2r(d, default=np.float32):
     mapping = {
         np.dtype(np.complex64): np.float32,
         np.dtype(np.complex128): np.float64,
-        np.dtype(np.complex): np.float,
+        np.dtype(complex): np.dtype(np.float).type,
     }
 
     # If we're given a real type already, return it
