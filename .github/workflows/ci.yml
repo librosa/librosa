@@ -18,25 +18,25 @@ jobs:
             matrix:
                 include:
                     - os: ubuntu-18.04
-                      python-version: 3.6
+                      python-version: "3.6"
 
                     - os: ubuntu-18.04
-                      python-version: 3.7
+                      python-version: "3.7"
 
                     - os: ubuntu-latest
-                      python-version: 3.8
+                      python-version: "3.8"
 
                     - os: ubuntu-latest
-                      python-version: 3.9
+                      python-version: "3.9"
 
                     - os: ubuntu-latest
                       python-version: "3.10"
 
                     - os: macos-latest
-                      python-version: 3.9
+                      python-version: "3.9"
 
                     - os: windows-latest
-                      python-version: 3.9
+                      python-version: "3.9"
 
         steps:
         - uses: actions/checkout@v2
@@ -58,15 +58,15 @@ jobs:
           uses: actions/cache@v2
           env:
             # Increase this value to reset cache if etc/example-environment.yml has not changed
-            CACHE_NUMBER: 0
+            CACHE_NUMBER: 1
           with:
             path: ~/conda_pkgs_dir
-            key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('.github/environment-ci.yml') }}
+            key: ${{ runner.os }}-${{ matrix.python-version }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('.github/environment-ci.yml') }}
 
         - name: Install Conda environment
           uses: conda-incubator/setup-miniconda@v2
           with:
-            auto-update-conda: false
+            auto-update-conda: true
             python-version: ${{ matrix.python-version }}
             add-pip-as-python-dependency: true
             auto-activate-base: false
