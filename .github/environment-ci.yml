@@ -23,9 +23,8 @@ dependencies:
   - pytest-cov
   - pytest
   - contextlib2
-  - soxr
   - coverage
   - ffmpeg
   - pip:
-    # - soxr
+    - soxr
     - samplerate
