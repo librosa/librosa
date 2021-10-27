@@ -1,31 +1,31 @@
 name: test
 channels:
-    - conda-forge
-    - defaults
+  - conda-forge
+  - defaults
 dependencies:
-    # required
-    - pip
-    - audioread>=2.0.0
-    - numpy>=1.15.0
-    - scipy>=1.0.0
-    - scikit-learn>=0.14.0,!=0.19.0
-    - joblib>=0.14.0
-    - decorator>=3.0.0
-    - resampy>=0.2.2
-    - numba>=0.43.0
-    - pysoundfile>=0.10.2
-    - pooch>=1.0
-    - packaging>=20.0
+  # required
+  - pip
+  - audioread>=2.0.0
+  - numpy>=1.15.0
+  - scipy>=1.0.0
+  - scikit-learn>=0.14.0,!=0.19.0
+  - joblib>=0.14.0
+  - decorator>=3.0.0
+  - resampy>=0.2.2
+  - numba>=0.43.0
+  - pysoundfile>=0.10.2
+  - pooch>=1.0
+  - packaging>=20.0
 
-    # optional, but required for testing
-    - matplotlib>=3.0
-    - pytest-mpl
-    - pytest-cov
-    - pytest
-    - contextlib2
+  # optional, but required for testing
+  - matplotlib>=3.0
+  - pytest-mpl
+  - pytest-cov
+  - pytest
+  - contextlib2
+  - soxr
+  - coverage
+  - ffmpeg
+  - pip:
     - soxr
-    - coverage
-    - ffmpeg
-    - pip:
-        - soxr>=0.2
-        - samplerate
+    - samplerate
