@@ -16,7 +16,13 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
+                envfile: [".github/environment-ci.yml"]
                 include:
+                    - os: ubuntu-18.04
+                      python-version: "3.6"
+                      envfile: ".github/environment-minimal.yml"
+                      name: "Minimal dependencies"
+
                     - os: ubuntu-18.04
                       python-version: "3.6"
 
@@ -72,7 +78,7 @@ jobs:
             auto-activate-base: false
             activate-environment: test
             channel-priority: strict
-            environment-file: .github/environment-ci.yml
+            environment-file: ${{ matrix.envfile }}
             use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
 
         - name: Conda info
