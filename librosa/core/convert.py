@@ -1344,7 +1344,7 @@ def A_weighting(frequencies, min_db=-80.0):  # pylint: disable=invalid-name
     """
     f_sq = np.asanyarray(frequencies) ** 2.0
 
-    const = np.array([12194.22, 20.598997, 107.65265, 737.86223]) ** 2.0
+    const = np.array([12194.217, 20.598997, 107.65265, 737.86223]) ** 2.0
     weights = 2.0 + 20.0 * (
         np.log10(const[0])
         + 2 * np.log10(f_sq)
@@ -1400,7 +1400,7 @@ def B_weighting(frequencies, min_db=-80.0):  # pylint: disable=invalid-name
     """
     f_sq = np.asanyarray(frequencies) ** 2.0
 
-    const = np.array([12194.22, 20.598997, 158.48932]) ** 2.0
+    const = np.array([12194.217, 20.598997, 158.48932]) ** 2.0
     weights = 0.17 + 20.0 * (
         np.log10(const[0])
         + 1.5 * np.log10(f_sq)
@@ -1454,7 +1454,7 @@ def C_weighting(frequencies, min_db=-80.0):  # pylint: disable=invalid-name
     """
     f_sq = np.asanyarray(frequencies) ** 2.0
 
-    const = np.array([12194.22, 20.598997]) ** 2.0
+    const = np.array([12194.217, 20.598997]) ** 2.0
     weights = 0.062 + 20.0 * (
         np.log10(const[0])
         + np.log10(f_sq)
