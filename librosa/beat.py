@@ -318,7 +318,7 @@ def tempo(
     >>> # Plot on a BPM axis.  We skip the first (0-lag) bin.
     >>> fig, ax = plt.subplots()
     >>> ax.semilogx(freqs[1:], librosa.util.normalize(ac)[1:],
-    ...              label='Onset autocorrelation', basex=2)
+    ...              label='Onset autocorrelation', base=2)
     >>> ax.axvline(tempo, 0, 1, alpha=0.75, linestyle='--', color='r',
     ...             label='Tempo (default prior): {:.2f} BPM'.format(tempo))
     >>> ax.axvline(utempo, 0, 1, alpha=0.75, linestyle=':', color='g',
