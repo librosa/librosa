@@ -123,9 +123,9 @@ def tempogram(
     >>> ax[2].legend(frameon=True)
     >>> freqs = librosa.tempo_frequencies(tempogram.shape[0], hop_length=hop_length, sr=sr)
     >>> ax[3].semilogx(freqs[1:], np.mean(tempogram[1:], axis=1),
-    ...              label='Mean local autocorrelation', basex=2)
+    ...              label='Mean local autocorrelation', base=2)
     >>> ax[3].semilogx(freqs[1:], ac_global[1:], '--', alpha=0.75,
-    ...              label='Global autocorrelation', basex=2)
+    ...              label='Global autocorrelation', base=2)
     >>> ax[3].axvline(tempo, color='black', linestyle='--', alpha=.8,
     ...             label='Estimated tempo={:g}'.format(tempo))
     >>> ax[3].legend(frameon=True)
