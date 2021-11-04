@@ -1299,6 +1299,7 @@ def iirt(
     tuning=0.0,
     pad_mode="constant",
     flayout="sos",
+    res_type="kaiser_best",
     **kwargs,
 ):
     r"""Time-frequency representation using IIR filters
@@ -1359,6 +1360,9 @@ def iirt(
           Minimizes numerical precision errors for high-order filters, but is slower.
         - If `ba`, the standard difference equation is used for filtering with `scipy.signal.filtfilt`.
           Can be unstable for high-order filters.
+
+    res_type : string
+        The resampling mode.  See `librosa.resample` for details.
 
     kwargs : additional keyword arguments
         Additional arguments for `librosa.filters.semitone_filterbank`
@@ -1426,7 +1430,7 @@ def iirt(
     y_srs = np.unique(sample_rates)
 
     for cur_sr in y_srs:
-        y_resampled.append(resample(y, sr, cur_sr))
+        y_resampled.append(resample(y, sr, cur_sr, res_type=res_type))
 
     # Compute the number of frames that will fit. The end may get truncated.
     n_frames = int(1 + (y.shape[-1] - win_length) // hop_length)
