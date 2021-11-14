@@ -12,7 +12,7 @@ from .. import filters
 from ..util.exceptions import ParameterError
 
 from ..core.convert import fft_frequencies
-from ..core.audio import zero_crossings, to_mono
+from ..core.audio import zero_crossings
 from ..core.spectrum import power_to_db, _spectrogram
 from ..core.constantq import cqt, hybrid_cqt
 from ..core.pitch import estimate_tuning
