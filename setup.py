@@ -1,6 +1,5 @@
-import sys
 from importlib.machinery import SourceFileLoader
-from setuptools import setup, find_packages
+from setuptools import setup
 
 
 version = SourceFileLoader('librosa.version',
