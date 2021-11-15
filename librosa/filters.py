@@ -623,7 +623,7 @@ def constant_q_lengths(
     """
 
     if fmin <= 0:
-        raise ParameterError("fmin must be positive")
+        raise ParameterError("fmin must be strictly positive")
 
     if bins_per_octave <= 0:
         raise ParameterError("bins_per_octave must be positive")
@@ -645,7 +645,7 @@ def constant_q_lengths(
     Q = float(filter_scale) / alpha
 
     if max(freq * (1 + 0.5 * window_bandwidth(window) / Q)) > sr / 2.0:
-        raise ParameterError("Filter pass-band lies beyond Nyquist")
+        raise ParameterError(f"Maximum filter frequency={freq:.3g} exceeds Nyquist={sr/2}")
 
     # Convert frequencies to filter lengths
     lengths = Q * sr / (freq + gamma / alpha)
