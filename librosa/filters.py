@@ -645,7 +645,7 @@ def constant_q_lengths(
     Q = float(filter_scale) / alpha
 
     if max(freq * (1 + 0.5 * window_bandwidth(window) / Q)) > sr / 2.0:
-        raise ParameterError(f"Maximum filter frequency={freq:.3g} exceeds Nyquist={sr/2}")
+        raise ParameterError(f"Maximum filter frequency={max(freq):.2f} would exceed Nyquist={sr/2}")
 
     # Convert frequencies to filter lengths
     lengths = Q * sr / (freq + gamma / alpha)
