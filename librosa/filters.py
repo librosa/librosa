@@ -634,15 +634,17 @@ def constant_q_lengths(
     if n_bins <= 0 or not isinstance(n_bins, (int, np.integer)):
         raise ParameterError("n_bins must be a positive integer")
 
-    # Q should be capitalized here, so we suppress the name warning
-    # pylint: disable=invalid-name
-    alpha = 2.0 ** (1.0 / bins_per_octave) - 1.0
-    Q = float(filter_scale) / alpha
-
     # Compute the frequencies
     freq = fmin * (2.0 ** (np.arange(n_bins, dtype=float) / bins_per_octave))
 
-    if freq[-1] * (1 + 0.5 * window_bandwidth(window) / Q) > sr / 2.0:
+    # Q should be capitalized here, so we suppress the name warning
+    # pylint: disable=invalid-name
+    #
+    # Filters have ~1bin bandwidth centered at the current frequency
+    alpha = 2.0 ** (0.5 / bins_per_octave) - 2.0**(-0.5 / bins_per_octave)
+    Q = float(filter_scale) / alpha
+
+    if max(freq * (1 + 0.5 * window_bandwidth(window) / Q)) > sr / 2.0:
         raise ParameterError("Filter pass-band lies beyond Nyquist")
 
     # Convert frequencies to filter lengths
