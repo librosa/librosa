@@ -875,7 +875,7 @@ def vqt(
     n_filters = min(bins_per_octave, n_bins)
 
     # Relative difference in frequency between any two consecutive bands
-    alpha = 2.0 ** (1.0 / bins_per_octave) - 1
+    alpha = 2.0 ** (0.5 / bins_per_octave) - 2.0**(-0.5 / bins_per_octave)
 
     if fmin is None:
         # C1 by default
@@ -894,12 +894,11 @@ def vqt(
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
 
     # First thing, get the freqs of the top octave
-    freqs = cqt_frequencies(n_bins, fmin, bins_per_octave=bins_per_octave)[
-        -bins_per_octave:
-    ]
+    freqs = cqt_frequencies(n_bins, fmin, bins_per_octave=bins_per_octave)
+    freqs_top = freqs[-bins_per_octave:]
 
-    fmin_t = np.min(freqs)
-    fmax_t = np.max(freqs)
+    fmin_t = np.min(freqs_top)
+    fmax_t = np.max(freqs_top)
 
     # Determine required resampling quality
     Q = float(filter_scale) / alpha
