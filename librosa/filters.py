@@ -11,7 +11,7 @@ Filter bank construction
 
     mel
     chroma
-    constant_q
+    wavelet
     semitone_filterbank
 
 Window functions
@@ -27,11 +27,20 @@ Miscellaneous
 .. autosummary::
     :toctree: generated/
 
-    constant_q_lengths
+    wavelet_lengths
     cq_to_chroma
     mr_frequencies
     window_sumsquare
     diagonal_filter
+
+Deprecated
+----------
+.. autosummary::
+    :toctree: generated/
+
+    constant_q
+    constant_q_lengths
+
 """
 import warnings
 
@@ -45,6 +54,7 @@ from numba import jit
 from ._cache import cache
 from . import util
 from .util.exceptions import ParameterError
+from .util.decorators import deprecated
 
 from .core.convert import note_to_hz, hz_to_midi, midi_to_hz, hz_to_octs
 from .core.convert import fft_frequencies, mel_frequencies
@@ -61,6 +71,8 @@ __all__ = [
     "semitone_filterbank",
     "window_sumsquare",
     "diagonal_filter",
+    "wavelet",
+    "wavelet_lengths",
 ]
 
 # Dictionary of window function bandwidths
@@ -420,6 +432,7 @@ def __float_window(window_spec):
 
 
 @cache(level=10)
+@deprecated("0.9.0", "1.0")
 def constant_q(
     sr,
     fmin=None,
@@ -501,6 +514,7 @@ def constant_q(
 
     See Also
     --------
+    wavelet
     constant_q_lengths
     librosa.cqt
     librosa.vqt
@@ -582,6 +596,7 @@ def constant_q(
 
 
 @cache(level=10)
+@deprecated("0.9.0", "1.0")
 def constant_q_lengths(
     sr, fmin, n_bins=84, bins_per_octave=12, window="hann", filter_scale=1, gamma=0
 ):
@@ -618,8 +633,7 @@ def constant_q_lengths(
 
     See Also
     --------
-    constant_q
-    librosa.cqt
+    wavelet_lengths
     """
 
     if fmin <= 0:
@@ -641,16 +655,295 @@ def constant_q_lengths(
     # pylint: disable=invalid-name
     #
     # Filters have ~1bin bandwidth centered at the current frequency
-    alpha = 2.0 ** (0.5 / bins_per_octave) - 2.0**(-0.5 / bins_per_octave)
+    alpha = 2.0 ** (0.5 / bins_per_octave) - 2.0 ** (-0.5 / bins_per_octave)
     Q = float(filter_scale) / alpha
 
     if max(freq * (1 + 0.5 * window_bandwidth(window) / Q)) > sr / 2.0:
-        raise ParameterError(f"Maximum filter frequency={max(freq):.2f} would exceed Nyquist={sr/2}")
+        raise ParameterError(
+            f"Maximum filter frequency={max(freq):.2f} would exceed Nyquist={sr/2}"
+        )
 
     # Convert frequencies to filter lengths
     lengths = Q * sr / (freq + gamma / alpha)
 
     return lengths
+
+
+@cache(level=10)
+def wavelet_lengths(freqs, sr=22050, window="hann", filter_scale=1, gamma=0,
+        alpha=None):
+    """Return length of each filter in a wavelet basis.
+
+    Parameters
+    ----------
+    freqs : np.ndarray (positive)
+        Center frequencies of the filters (in Hz).
+        Must be in ascending order.
+
+    sr : number > 0 [scalar]
+        Audio sampling rate
+
+    window : str or callable
+        Window function to use on filters
+
+    filter_scale : float > 0 [scalar]
+        Resolution of filter windows. Larger values use longer windows.
+
+    gamma : number >= 0 [scalar, optional]
+        Bandwidth offset for determining filter lengths, as used in
+        Variable-Q transforms.
+
+        Bandwidth for the k'th filter is determined by::
+
+            B[k] = alpha[k] * freqs[k] + gamma
+
+        where ``alpha[k]`` is difference between the geometric means of
+        ``(freqs[k], freqs[k+1])`` and ``(freqs[k], freqs[k-1])``.
+
+        If ``gamma=None`` is specified, then ``gamma`` is computed such
+        that each filter has bandwidth proportional to the equivalent
+        rectangular bandwidth (ERB) at frequency ``freqs[k]``::
+
+            gamma[k] = 24.7 * alpha[k] / 0.108
+
+        as derived by [#]_.
+
+        .. [#] Glasberg, Brian R., and Brian CJ Moore.
+            "Derivation of auditory filter shapes from notched-noise data."
+            Hearing research 47.1-2 (1990): 103-138.
+
+    alpha : number > 0 [optional]
+        If only one frequency is provided (``len(freqs)==1``), then filter bandwidth
+        cannot be computed.  In that case, the ``alpha`` parameter described above
+        can be explicitly specified here.
+
+        If two or more frequencies are provided, this parameter is ignored.
+
+    Returns
+    -------
+    lengths : np.ndarray
+        The length of each filter.
+
+    f_cutoff : float
+        The lowest frequency at which all filters' main lobes have decayed by
+        at least 3dB.
+
+    Notes
+    -----
+    This function caches at level 10.
+
+    Raises
+    ------
+    ParameterError
+        - If ``filter_scale`` is not strictly positive
+
+        - If ``gamma`` is a negative number
+
+        - If any frequencies are <= 0
+
+        - If the frequency array is not sorted in ascending order
+    """
+    if filter_scale <= 0:
+        raise ParameterError(f"filter_scale={filter_scale} must be positive")
+
+    if gamma is not None and gamma < 0:
+        raise ParameterError(f"gamma={gamma} must be non-negative")
+
+    if np.any(freqs <= 0):
+        raise ParameterError("frequencies must be strictly positive")
+
+    if np.any(freqs[:-1] > freqs[1:]):
+        raise ParameterError(
+            f"Frequency array={freqs} must be in strictly ascending order"
+        )
+
+    # Filters have ~1bin bandwidth centered at the current frequency
+    #
+    # For each frequency, we compute alpha by the separation between
+    # the geometric mean of the frequency with its neighbors:
+    #
+    # sqrt(freqs[k+1] * freqs[k]) - sqrt(freqs[k] * freqs[k-1])
+    #
+    # At the boundaries, k=0 and -1, we geometrically reflect
+    if len(freqs) > 1:
+        alpha = np.empty(len(freqs))
+        # If we have at least two frequencies, we can infer bandwidth
+        freq_roots = freqs ** 0.5
+        alpha[1:-1] = (freq_roots[2:] - freq_roots[:-2]) / freq_roots[1:-1]
+
+        freq_low = freqs[0] / freq_roots[1]
+        alpha[0] = (freq_roots[1] - freq_low) / freq_roots[0]
+
+        freq_high = freqs[-1] / freq_roots[-2]
+        alpha[-1] = (freq_high - freq_roots[-2]) / freq_roots[-1]
+    elif alpha is None:
+        raise ParameterError('Cannot construct a wavelet basis for a single frequency if alpha is not provided')
+
+    if gamma is None:
+        gamma = alpha * 24.7 / 0.108
+
+    # Q should be capitalized here, so we suppress the name warning
+    # pylint: disable=invalid-name
+    Q = float(filter_scale) / alpha
+
+    # How far up does our highest frequency reach?
+    f_cutoff = max(freqs * (1 + 0.5 * window_bandwidth(window) / Q) + 0.5 * gamma)
+
+    # Convert frequencies to filter lengths
+    lengths = Q * sr / (freqs + gamma / alpha)
+
+    return lengths, f_cutoff
+
+
+@cache(level=10)
+def wavelet(
+    freqs,
+    sr=22050,
+    window="hann",
+    filter_scale=1,
+    pad_fft=True,
+    norm=1,
+    dtype=np.complex64,
+    gamma=0,
+    alpha=None,
+    **kwargs,
+):
+    """Construct a wavelet basis using windowed complex sinusoids.
+
+    This function constructs a wavelet filterbank at a specified set of center
+    frequencies.
+
+    Parameters
+    ----------
+
+    freqs : np.ndarray (positive)
+        Center frequencies of the filters (in Hz).
+        Must be in ascending order.
+
+    sr : number > 0 [scalar]
+        Audio sampling rate
+
+    window : string, tuple, number, or function
+        Windowing function to apply to filters.
+
+    filter_scale : float > 0 [scalar]
+        Scale of filter windows.
+        Small values (<1) use shorter windows for higher temporal resolution.
+
+    pad_fft : boolean
+        Center-pad all filters up to the nearest integral power of 2.
+
+        By default, padding is done with zeros, but this can be overridden
+        by setting the ``mode=`` field in *kwargs*.
+
+    norm : {inf, -inf, 0, float > 0}
+        Type of norm to use for basis function normalization.
+        See librosa.util.normalize
+
+    gamma : number >= 0
+        Bandwidth offset for variable-Q transforms.
+
+    dtype : np.dtype
+        The data type of the output basis.
+        By default, uses 64-bit (single precision) complex floating point.
+
+    alpha : number > 0 [optional]
+        If only one frequency is provided (``len(freqs)==1``), then filter bandwidth
+        cannot be computed.  In that case, the ``alpha`` parameter described above
+        can be explicitly specified here.
+
+        If two or more frequencies are provided, this parameter is ignored.
+
+    kwargs : additional keyword arguments
+        Arguments to `np.pad()` when ``pad==True``.
+
+    Returns
+    -------
+    filters : np.ndarray, ``len(filters) == n_bins``
+        ``filters[i]`` is ``i``\ th time-domain CQT basis filter
+
+    lengths : np.ndarray, ``len(lengths) == n_bins``
+        The (fractional) length of each filter
+
+    Notes
+    -----
+    This function caches at level 10.
+
+    See Also
+    --------
+    wavelet_lengths
+    librosa.cqt
+    librosa.vqt
+    librosa.util.normalize
+
+
+    Examples
+    --------
+    Create a constant-Q basis
+
+    >>> freqs = librosa.cqt_frequencies(sr=22050)
+    >>> basis, lengths = librosa.filters.wavelet(freqs, sr=22050)
+
+    Plot one octave of filters in time and frequency
+
+    >>> import matplotlib.pyplot as plt
+    >>> basis, lengths = librosa.filters.wavelet(freqs, sr=22050)
+    >>> fig, ax = plt.subplots(nrows=2, figsize=(10, 6))
+    >>> notes = librosa.midi_to_note(np.arange(24, 24 + len(basis)))
+    >>> for i, (f, n) in enumerate(zip(basis, notes[:12])):
+    ...     f_scale = librosa.util.normalize(f) / 2
+    ...     ax[0].plot(i + f_scale.real)
+    ...     ax[0].plot(i + f_scale.imag, linestyle=':')
+    >>> ax[0].set(yticks=np.arange(len(notes[:12])), yticklabels=notes[:12],
+    ...           ylabel='CQ filters',
+    ...           title='CQ filters (one octave, time domain)',
+    ...           xlabel='Time (samples at 22050 Hz)')
+    >>> ax[0].legend(['Real', 'Imaginary'])
+    >>> F = np.abs(np.fft.fftn(basis, axes=[-1]))
+    >>> # Keep only the positive frequencies
+    >>> F = F[:, :(1 + F.shape[1] // 2)]
+    >>> librosa.display.specshow(F, x_axis='linear', y_axis='cqt_note', ax=ax[1])
+    >>> ax[1].set(ylabel='CQ filters', title='CQ filter magnitudes (frequency domain)')
+    """
+
+    # Pass-through parameters to get the filter lengths
+    lengths, _ = wavelet_lengths(
+        freqs,
+        sr=sr,
+        window=window,
+        filter_scale=filter_scale,
+        gamma=gamma,
+        alpha=alpha,
+    )
+
+    # Build the filters
+    filters = []
+    for ilen, freq in zip(lengths, freqs):
+        # Build the filter: note, length will be ceil(ilen)
+        sig = np.exp(
+            np.arange(-ilen // 2, ilen // 2, dtype=float) * 1j * 2 * np.pi * freq / sr
+        )
+
+        # Apply the windowing function
+        sig *= __float_window(window)(len(sig))
+
+        # Normalize
+        sig = util.normalize(sig, norm=norm)
+
+        filters.append(sig)
+
+    # Pad and stack
+    max_len = max(lengths)
+    if pad_fft:
+        max_len = int(2.0 ** (np.ceil(np.log2(max_len))))
+    else:
+        max_len = int(np.ceil(max_len))
+
+    filters = np.asarray(
+        [util.pad_center(filt, max_len, **kwargs) for filt in filters], dtype=dtype
+    )
+
+    return filters, lengths
 
 
 @cache(level=10)

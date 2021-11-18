@@ -298,15 +298,25 @@ def hybrid_cqt(
 
     # Get all CQT frequencies
     freqs = cqt_frequencies(n_bins, fmin, bins_per_octave=bins_per_octave)
+    
+    # Compute an alpha parameter, just in case we need it
+    alpha = __bpo_to_alpha(bins_per_octave)
 
     # Compute the length of each constant-Q basis function
-    lengths = filters.constant_q_lengths(
-        sr,
-        fmin,
-        n_bins=n_bins,
-        bins_per_octave=bins_per_octave,
-        filter_scale=filter_scale,
-        window=window,
+    #lengths = filters.constant_q_lengths(
+    #    sr,
+    #    fmin,
+    #    n_bins=n_bins,
+    #    bins_per_octave=bins_per_octave,
+    #    filter_scale=filter_scale,
+    #    window=window,
+    #)
+    lengths, _ = filters.wavelet_lengths(
+            freqs,
+            sr=sr,
+            filter_scale=filter_scale,
+            window=window,
+            alpha=alpha
     )
 
     # Determine which filters to use with Pseudo CQT
@@ -494,15 +504,27 @@ def pseudo_cqt(
     if scale:
         C /= np.sqrt(n_fft)
     else:
-        lengths = filters.constant_q_lengths(
-            sr,
-            fmin,
-            n_bins=n_bins,
-            bins_per_octave=bins_per_octave,
+        freqs = cqt_frequencies(
+                    fmin=fmin,
+                    n_bins=n_bins,
+                    bins_per_octave=bins_per_octave
+        )
+        alpha = __bpo_to_alpha(bins_per_octave)
+        #lengths = filters.constant_q_lengths(
+        #    sr,
+        #    fmin,
+        #    n_bins=n_bins,
+        #    bins_per_octave=bins_per_octave,
+        #    window=window,
+        #    filter_scale=filter_scale,
+        #)
+        lengths, _ = filters.wavelet_lengths(
+            freqs,
+            sr=sr,
             window=window,
             filter_scale=filter_scale,
+            alpha=alpha
         )
-
         # reshape lengths to match dimension properly
         lengths = util.expand_to(lengths, ndim=C.ndim, axes=-2)
 
@@ -631,9 +653,22 @@ def icqt(
 
     # truncate the cqt to max frames if helpful
     if length is not None:
-        lengths = filters.constant_q_lengths(sr=sr, fmin=fmin,
-                                             n_bins=n_bins, bins_per_octave=bins_per_octave,
-                                             window=window, filter_scale=filter_scale)
+        freqs = cqt_frequencies(
+            fmin=fmin,
+            n_bins=n_bins,
+            bins_per_octave=bins_per_octave
+        )
+        alpha = __bpo_to_alpha(bins_per_octave)
+        #lengths = filters.constant_q_lengths(sr=sr, fmin=fmin,
+        #                                     n_bins=n_bins, bins_per_octave=bins_per_octave,
+        #                                     window=window, filter_scale=filter_scale)
+        lengths, _ = filters.wavelet_lengths(
+            freqs,
+            sr=sr,
+            window=window,
+            filter_scale=filter_scale,
+            alpha=alpha
+        )
         n_frames = int(np.ceil((length + max(lengths)) / hop_length))
         C = C[..., :n_frames]
 
@@ -874,18 +909,12 @@ def vqt(
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
     n_filters = min(bins_per_octave, n_bins)
 
-    # Relative difference in frequency between any two consecutive bands
-    alpha = 2.0 ** (0.5 / bins_per_octave) - 2.0**(-0.5 / bins_per_octave)
-
     if fmin is None:
         # C1 by default
         fmin = note_to_hz("C1")
 
     if tuning is None:
         tuning = estimate_tuning(y=y, sr=sr, bins_per_octave=bins_per_octave)
-
-    if gamma is None:
-        gamma = 24.7 * alpha / 0.108
 
     if dtype is None:
         dtype = util.dtype_r2c(y.dtype)
@@ -899,13 +928,16 @@ def vqt(
 
     fmin_t = np.min(freqs_top)
     fmax_t = np.max(freqs_top)
+    alpha = __bpo_to_alpha(bins_per_octave)
+
+    lengths, filter_cutoff = filters.wavelet_lengths(freqs, sr=sr, window=window,
+            filter_scale=filter_scale, gamma=gamma, alpha=alpha)
 
     # Determine required resampling quality
-    Q = float(filter_scale) / alpha
-    filter_cutoff = (
-        fmax_t * (1 + 0.5 * filters.window_bandwidth(window) / Q) + 0.5 * gamma
-    )
     nyquist = sr / 2.0
+
+    if filter_cutoff > nyquist:
+        raise ParameterError(f"Wavelet basis with max frequency={fmax_t} would exceed the Nyquist frequency={nyquist}. Try reducing the number of frequency bins.")
 
     auto_resample = False
     if not res_type:
@@ -982,14 +1014,24 @@ def vqt(
     V = __trim_stack(vqt_resp, n_bins, dtype)
 
     if scale:
-        lengths = filters.constant_q_lengths(
-            sr,
-            fmin,
-            n_bins=n_bins,
-            bins_per_octave=bins_per_octave,
+        #lengths = filters.constant_q_lengths(
+        #    sr,
+        #    fmin,
+        #    n_bins=n_bins,
+        #    bins_per_octave=bins_per_octave,
+        #    window=window,
+        #    filter_scale=filter_scale,
+        #    gamma=gamma,
+        #)
+        freqs = cqt_frequencies(fmin=fmin, n_bins=n_bins, bins_per_octave=bins_per_octave)
+        alpha = __bpo_to_alpha(bins_per_octave)
+        lengths, _ = filters.wavelet_lengths(
+            freqs,
+            sr=sr,
             window=window,
             filter_scale=filter_scale,
             gamma=gamma,
+            alpha=alpha
         )
 
         # reshape lengths to match V shape
@@ -1015,17 +1057,21 @@ def __cqt_filter_fft(
 ):
     """Generate the frequency domain constant-Q filter basis."""
 
-    basis, lengths = filters.constant_q(
-        sr,
-        fmin=fmin,
-        n_bins=n_bins,
-        bins_per_octave=bins_per_octave,
-        filter_scale=filter_scale,
-        norm=norm,
-        pad_fft=True,
-        window=window,
-        gamma=gamma,
-    )
+    #basis, lengths = filters.constant_q(
+    #    sr,
+    #    fmin=fmin,
+    #    n_bins=n_bins,
+    #    bins_per_octave=bins_per_octave,
+    #    filter_scale=filter_scale,
+    #    norm=norm,
+    #    pad_fft=True,
+    #    window=window,
+    #    gamma=gamma,
+    #)
+    freqs = cqt_frequencies(fmin=fmin, n_bins=n_bins, bins_per_octave=bins_per_octave)
+    alpha = __bpo_to_alpha(bins_per_octave)
+    basis, lengths = filters.wavelet(freqs, sr=sr, filter_scale=filter_scale,
+            norm=norm, pad_fft=True, window=window, gamma=gamma, alpha=alpha)
 
     # Filters are padded up to the nearest integral power of 2
     n_fft = basis.shape[1]
@@ -1429,3 +1475,19 @@ def griffinlim_cqt(
         res_type=res_type,
         dtype=dtype,
     )
+
+
+def __bpo_to_alpha(bins_per_octave):
+    """Compute the alpha coefficient for a given number of bins per octave
+
+    Parameters
+    ----------
+    bins_per_octave : int
+
+    Returns
+    -------
+    alpha : number > 0
+    """
+
+    return 2.0 ** (0.5 / bins_per_octave) - 2.0 ** (-0.5 / bins_per_octave)
+    
