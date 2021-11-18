@@ -670,8 +670,9 @@ def constant_q_lengths(
 
 
 @cache(level=10)
-def wavelet_lengths(freqs, sr=22050, window="hann", filter_scale=1, gamma=0,
-        alpha=None):
+def wavelet_lengths(
+    freqs, sr=22050, window="hann", filter_scale=1, gamma=0, alpha=None
+):
     """Return length of each filter in a wavelet basis.
 
     Parameters
@@ -777,7 +778,9 @@ def wavelet_lengths(freqs, sr=22050, window="hann", filter_scale=1, gamma=0,
         freq_high = freqs[-1] / freq_roots[-2]
         alpha[-1] = (freq_high - freq_roots[-2]) / freq_roots[-1]
     elif alpha is None:
-        raise ParameterError('Cannot construct a wavelet basis for a single frequency if alpha is not provided')
+        raise ParameterError(
+            "Cannot construct a wavelet basis for a single frequency if alpha is not provided"
+        )
 
     if gamma is None:
         gamma = alpha * 24.7 / 0.108
