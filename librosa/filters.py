@@ -744,6 +744,7 @@ def wavelet_lengths(
 
         - If the frequency array is not sorted in ascending order
     """
+    freqs = np.asarray(freqs)
     if filter_scale <= 0:
         raise ParameterError(f"filter_scale={filter_scale} must be positive")
 
