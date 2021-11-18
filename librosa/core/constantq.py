@@ -884,7 +884,7 @@ def vqt(
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
 
     # First thing, get the freqs of the top octave
-    freqs = cqt_frequencies(n_bins, fmin, bins_per_octave=bins_per_octave)
+    freqs = cqt_frequencies(n_bins=n_bins, fmin=fmin, bins_per_octave=bins_per_octave)
     freqs_top = freqs[-bins_per_octave:]
 
     fmin_t = np.min(freqs_top)
@@ -978,10 +978,8 @@ def vqt(
     V = __trim_stack(vqt_resp, n_bins, dtype)
 
     if scale:
-        freqs = cqt_frequencies(
-            fmin=fmin, n_bins=n_bins, bins_per_octave=bins_per_octave
-        )
-        alpha = __bpo_to_alpha(bins_per_octave)
+        # Recompute lengths here because early downsampling may have changed
+        # our sampling rate
         lengths, _ = filters.wavelet_lengths(
             freqs,
             sr=sr,
