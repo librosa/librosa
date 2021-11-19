@@ -768,7 +768,7 @@ def wavelet_lengths(
     if np.any(freqs <= 0):
         raise ParameterError("frequencies must be strictly positive")
 
-    if np.any(freqs[:-1] > freqs[1:]):
+    if len(freqs) > 1 and np.any(freqs[:-1] > freqs[1:]):
         raise ParameterError(
             f"Frequency array={freqs} must be in strictly ascending order"
         )

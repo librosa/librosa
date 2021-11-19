@@ -341,7 +341,7 @@ def test_wavelet_lengths_badfreqsorder():
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_wavelet_lengths_noalpha():
-    librosa.filters.wavelet_lengths(2**np.arange(3)[::-1])
+    librosa.filters.wavelet_lengths(freqs=[64], alpha=None)
 
 
 
