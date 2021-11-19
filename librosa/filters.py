@@ -710,7 +710,7 @@ def wavelet_lengths(
         Furthermore, if ``gamma=0`` (default), ``alpha`` is such that even-``k`` and
         odd-``k`` filters are interleaved::
 
-            freqs[k-1] + B[k-1] = freqs[k+1] - B[k-1]
+            freqs[k-1] + B[k-1] = freqs[k+1] - B[k+1]
 
         If ``gamma=None`` is specified, then ``gamma`` is computed such
         that each filter has bandwidth proportional to the equivalent
