@@ -655,7 +655,7 @@ def constant_q_lengths(
     # pylint: disable=invalid-name
     #
     # Balance filter bandwidths
-    alpha = (2.0**(2/bins_per_octave) - 1) / (2.0**(2/bins_per_octave) + 1)
+    alpha = (2.0 ** (2 / bins_per_octave) - 1) / (2.0 ** (2 / bins_per_octave) + 1)
     Q = float(filter_scale) / alpha
 
     if max(freq * (1 + 0.5 * window_bandwidth(window) / Q)) > sr / 2.0:
@@ -698,8 +698,19 @@ def wavelet_lengths(
 
             B[k] = alpha[k] * freqs[k] + gamma
 
-        where ``alpha[k]`` is difference between the geometric means of
-        ``(freqs[k], freqs[k+1])`` and ``(freqs[k], freqs[k-1])``.
+        ``alpha[k]`` is twice the relative difference between ``freqs[k+1]`` and ``freqs[k-1]``::
+
+            alpha[k] = (freqs[k+1]-freqs[k-1]) / (freqs[k+1]+freqs[k-1])
+
+        If ``freqs`` follows a geometric progression (as in CQT and VQT), the vector
+        ``alpha`` is constant and such that::
+
+            (1 + alpha) * freqs[k-1] = (1 - alpha) * freqs[k+1]
+
+        Furthermore, if ``gamma=0`` (default), ``alpha`` is such that even-``k`` and
+        odd-``k`` filters are interleaved::
+
+            freqs[k-1] + B[k-1] = freqs[k+1] - B[k-1]
 
         If ``gamma=None`` is specified, then ``gamma`` is computed such
         that each filter has bandwidth proportional to the equivalent
@@ -767,11 +778,11 @@ def wavelet_lengths(
         # Approximate the local octave resolution
         bpo = np.empty(len(freqs))
         logf = np.log2(freqs)
-        bpo[0] = 1/(logf[1] - logf[0])
-        bpo[-1] = 1/(logf[-1] - logf[-2])
-        bpo[1:-1] = 2/(logf[2:] - logf[:-2])
+        bpo[0] = 1 / (logf[1] - logf[0])
+        bpo[-1] = 1 / (logf[-1] - logf[-2])
+        bpo[1:-1] = 2 / (logf[2:] - logf[:-2])
 
-        alpha = (2.0**(2/bpo) - 1) / (2.0**(2/bpo) + 1)
+        alpha = (2.0 ** (2 / bpo) - 1) / (2.0 ** (2 / bpo) + 1)
     elif alpha is None:
         raise ParameterError(
             "Cannot construct a wavelet basis for a single frequency if alpha is not provided"
