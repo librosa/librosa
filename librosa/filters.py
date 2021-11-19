@@ -762,16 +762,14 @@ def wavelet_lengths(
             f"Frequency array={freqs} must be in strictly ascending order"
         )
 
-    # We need at least 4 frequencies to infer alpha
-    if len(freqs) > 4:
+    # We need at least 2 frequencies to infer alpha
+    if len(freqs) > 1:
         # Approximate the local octave resolution
         bpo = np.empty(len(freqs))
         logf = np.log2(freqs)
-        bpo[0] = 2/(logf[2] - logf[0])
-        bpo[1] = 2/(logf[3] - logf[1])
-        bpo[-1] = 2/(logf[-1] - logf[-3])
-        bpo[-2] = 2/(logf[-2] - logf[-4])
-        bpo[2:-2] = 4/(logf[4:] - logf[:-4])
+        bpo[0] = 1/(logf[1] - logf[0])
+        bpo[-1] = 1/(logf[-1] - logf[-2])
+        bpo[1:-1] = 2/(logf[2:] - logf[:-2])
 
         alpha = (2.0**(2/bpo) - 1) / (2.0**(2/bpo) + 1)
     elif alpha is None:
