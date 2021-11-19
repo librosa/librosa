@@ -1441,4 +1441,5 @@ def __bpo_to_alpha(bins_per_octave):
     alpha : number > 0
     """
 
-    return 2.0 ** (0.5 / bins_per_octave) - 2.0 ** (-0.5 / bins_per_octave)
+    r = 2**(1/bins_per_octave)
+    return (r**2 - 1) / (r**2 + 1)

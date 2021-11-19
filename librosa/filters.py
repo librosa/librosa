@@ -654,8 +654,8 @@ def constant_q_lengths(
     # Q should be capitalized here, so we suppress the name warning
     # pylint: disable=invalid-name
     #
-    # Filters have ~1bin bandwidth centered at the current frequency
-    alpha = 2.0 ** (0.5 / bins_per_octave) - 2.0 ** (-0.5 / bins_per_octave)
+    # Balance filter bandwidths
+    alpha = (2.0**(2/bins_per_octave) - 1) / (2.0**(2/bins_per_octave) + 1)
     Q = float(filter_scale) / alpha
 
     if max(freq * (1 + 0.5 * window_bandwidth(window) / Q)) > sr / 2.0:
@@ -729,6 +729,9 @@ def wavelet_lengths(
         The lowest frequency at which all filters' main lobes have decayed by
         at least 3dB.
 
+        This second output serves in cqt and vqt to ensure that all wavelet
+        bands remain below the Nyquist frequency.
+
     Notes
     -----
     This function caches at level 10.
@@ -759,25 +762,18 @@ def wavelet_lengths(
             f"Frequency array={freqs} must be in strictly ascending order"
         )
 
-    # Filters have ~1bin bandwidth centered at the current frequency
-    #
-    # For each frequency, we compute alpha by the separation between
-    # the geometric mean of the frequency with its neighbors:
-    #
-    # sqrt(freqs[k+1] * freqs[k]) - sqrt(freqs[k] * freqs[k-1])
-    #
-    # At the boundaries, k=0 and -1, we geometrically reflect
-    if len(freqs) > 1:
-        alpha = np.empty(len(freqs))
-        # If we have at least two frequencies, we can infer bandwidth
-        freq_roots = freqs ** 0.5
-        alpha[1:-1] = (freq_roots[2:] - freq_roots[:-2]) / freq_roots[1:-1]
+    # We need at least 4 frequencies to infer alpha
+    if len(freqs) > 4:
+        # Approximate the local octave resolution
+        bpo = np.empty(len(freqs))
+        logf = np.log2(freqs)
+        bpo[0] = 2/(logf[2] - logf[0])
+        bpo[1] = 2/(logf[3] - logf[1])
+        bpo[-1] = 2/(logf[-1] - logf[-3])
+        bpo[-2] = 2/(logf[-2] - logf[-4])
+        bpo[2:-2] = 4/(logf[4:] - logf[:-4])
 
-        freq_low = freqs[0] / freq_roots[1]
-        alpha[0] = (freq_roots[1] - freq_low) / freq_roots[0]
-
-        freq_high = freqs[-1] / freq_roots[-2]
-        alpha[-1] = (freq_high - freq_roots[-2]) / freq_roots[-1]
+        alpha = (2.0**(2/bpo) - 1) / (2.0**(2/bpo) + 1)
     elif alpha is None:
         raise ParameterError(
             "Cannot construct a wavelet basis for a single frequency if alpha is not provided"
