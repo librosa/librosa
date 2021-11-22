@@ -462,17 +462,26 @@ def pseudo_cqt(
     # Apply tuning correction
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
 
-    fft_basis, n_fft, _ = __cqt_filter_fft(
+    freqs = cqt_frequencies(
+        fmin=fmin, n_bins=n_bins, bins_per_octave=bins_per_octave
+    )
+
+    alpha = __bpo_to_alpha(bins_per_octave)
+
+    lengths, _ = filters.wavelet_lengths(
+        freqs, sr=sr, window=window, filter_scale=filter_scale, alpha=alpha
+    )
+
+    fft_basis, n_fft, _ = __vqt_filter_fft(
         sr,
-        fmin,
-        n_bins,
-        bins_per_octave,
+        freqs,
         filter_scale,
         norm,
         sparsity,
         hop_length=hop_length,
         window=window,
         dtype=dtype,
+        alpha=alpha
     )
 
     fft_basis = np.abs(fft_basis)
@@ -492,13 +501,6 @@ def pseudo_cqt(
     if scale:
         C /= np.sqrt(n_fft)
     else:
-        freqs = cqt_frequencies(
-            fmin=fmin, n_bins=n_bins, bins_per_octave=bins_per_octave
-        )
-        alpha = __bpo_to_alpha(bins_per_octave)
-        lengths, _ = filters.wavelet_lengths(
-            freqs, sr=sr, window=window, filter_scale=filter_scale, alpha=alpha
-        )
         # reshape lengths to match dimension properly
         lengths = util.expand_to(lengths, ndim=C.ndim, axes=-2)
 
@@ -1007,54 +1009,6 @@ def vqt(
 
 
 @cache(level=10)
-def __cqt_filter_fft(
-    sr,
-    fmin,
-    n_bins,
-    bins_per_octave,
-    filter_scale,
-    norm,
-    sparsity,
-    hop_length=None,
-    window="hann",
-    gamma=0.0,
-    dtype=np.complex64,
-):
-    """Generate the frequency domain constant-Q filter basis."""
-
-    freqs = cqt_frequencies(fmin=fmin, n_bins=n_bins, bins_per_octave=bins_per_octave)
-    alpha = __bpo_to_alpha(bins_per_octave)
-    basis, lengths = filters.wavelet(
-        freqs,
-        sr=sr,
-        filter_scale=filter_scale,
-        norm=norm,
-        pad_fft=True,
-        window=window,
-        gamma=gamma,
-        alpha=alpha,
-    )
-
-    # Filters are padded up to the nearest integral power of 2
-    n_fft = basis.shape[1]
-
-    if hop_length is not None and n_fft < 2.0 ** (1 + np.ceil(np.log2(hop_length))):
-
-        n_fft = int(2.0 ** (1 + np.ceil(np.log2(hop_length))))
-
-    # re-normalize bases with respect to the FFT window length
-    basis *= lengths[:, np.newaxis] / float(n_fft)
-
-    # FFT and retain only the non-negative frequencies
-    fft = get_fftlib()
-    fft_basis = fft.fft(basis, n=n_fft, axis=1)[:, : (n_fft // 2) + 1]
-
-    # sparsify the basis
-    fft_basis = util.sparsify_rows(fft_basis, quantile=sparsity, dtype=dtype)
-
-    return fft_basis, n_fft, lengths
-
-
 def __vqt_filter_fft(
     sr,
     freqs,
