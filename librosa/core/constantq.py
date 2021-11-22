@@ -626,14 +626,14 @@ def icqt(
     n_bins = C.shape[-2]
 
     # truncate the cqt to max frames if helpful
+    freqs = cqt_frequencies(
+        fmin=fmin, n_bins=n_bins, bins_per_octave=bins_per_octave
+    )
+    alpha = __bpo_to_alpha(bins_per_octave)
+    lengths, _ = filters.wavelet_lengths(
+        freqs, sr=sr, window=window, filter_scale=filter_scale, alpha=alpha
+    )
     if length is not None:
-        freqs = cqt_frequencies(
-            fmin=fmin, n_bins=n_bins, bins_per_octave=bins_per_octave
-        )
-        alpha = __bpo_to_alpha(bins_per_octave)
-        lengths, _ = filters.wavelet_lengths(
-            freqs, sr=sr, window=window, filter_scale=filter_scale, alpha=alpha
-        )
         n_frames = int(np.ceil((length + max(lengths)) / hop_length))
         C = C[..., :n_frames]
 
@@ -666,17 +666,17 @@ def icqt(
         # Slice out the current octave
         sl = slice(bins_per_octave * i, bins_per_octave * i + n_filters)
         C_oct = C[..., sl, :]
+        freq_oct = freqs[sl]
 
-        fft_basis, n_fft, lengths = __cqt_filter_fft(
+        fft_basis, n_fft, lengths = __vqt_filter_fft(
             my_sr,
-            fmin * 2.0 ** i,
-            n_filters,
-            bins_per_octave,
+            freq_oct,
             filter_scale,
             norm,
             sparsity,
             window=window,
             dtype=dtype,
+            alpha=alpha,
         )
 
         # Re-scale the filters to compensate for downsampling
@@ -885,6 +885,7 @@ def vqt(
 
     # First thing, get the freqs of the top octave
     freqs = cqt_frequencies(n_bins=n_bins, fmin=fmin, bins_per_octave=bins_per_octave)
+    
     freqs_top = freqs[-bins_per_octave:]
 
     fmin_t = np.min(freqs_top)
@@ -918,20 +919,22 @@ def vqt(
     vqt_resp = []
 
     # Skip this block for now
+    oct_start = 0
     if auto_resample and res_type != "kaiser_fast":
 
         # Do the top octave before resampling to allow for fast resampling
-        fft_basis, n_fft, _ = __cqt_filter_fft(
+        freqs_top = freqs[-n_filters:]
+
+        fft_basis, n_fft, _ = __vqt_filter_fft(
             sr,
-            fmin_t,
-            n_filters,
-            bins_per_octave,
+            freqs_top,
             filter_scale,
             norm,
             sparsity,
             window=window,
             gamma=gamma,
             dtype=dtype,
+            alpha=alpha,
         )
 
         # Compute the VQT filter response and append it to the stack
@@ -939,31 +942,38 @@ def vqt(
             __cqt_response(y, n_fft, hop_length, fft_basis, pad_mode, dtype=dtype)
         )
 
-        fmin_t /= 2
-        fmax_t /= 2
-        n_octaves -= 1
+        oct_start = 1
 
         res_type = "kaiser_fast"
 
     # Iterate down the octaves
     my_y, my_sr, my_hop = y, sr, hop_length
 
-    for i in range(n_octaves):
-        fft_basis, n_fft, _ = __cqt_filter_fft(
+    for i in range(oct_start, n_octaves):
+
+        # Slice out the current octave of filters
+        if i == 0:
+            sl = slice(-n_filters, None)
+        else:
+            sl = slice(-n_filters*(i+1), -n_filters*i)
+
+        # This may be incorrect with early downsampling
+        freqs_oct = freqs[sl]
+
+        fft_basis, n_fft, _ = __vqt_filter_fft(
             my_sr,
-            fmin_t * 2.0 ** -i,
-            n_filters,
-            bins_per_octave,
+            freqs_oct,
             filter_scale,
             norm,
             sparsity,
             window=window,
             gamma=gamma,
             dtype=dtype,
+            alpha=alpha
         )
 
         # Re-scale the filters to compensate for downsampling
-        fft_basis[:] *= np.sqrt(2 ** i)
+        fft_basis[:] *= np.sqrt(2 ** (i-oct_start))
 
         # Compute the vqt filter response and append to the stack
         vqt_resp.append(
@@ -1030,6 +1040,50 @@ def __cqt_filter_fft(
 
     if hop_length is not None and n_fft < 2.0 ** (1 + np.ceil(np.log2(hop_length))):
 
+        n_fft = int(2.0 ** (1 + np.ceil(np.log2(hop_length))))
+
+    # re-normalize bases with respect to the FFT window length
+    basis *= lengths[:, np.newaxis] / float(n_fft)
+
+    # FFT and retain only the non-negative frequencies
+    fft = get_fftlib()
+    fft_basis = fft.fft(basis, n=n_fft, axis=1)[:, : (n_fft // 2) + 1]
+
+    # sparsify the basis
+    fft_basis = util.sparsify_rows(fft_basis, quantile=sparsity, dtype=dtype)
+
+    return fft_basis, n_fft, lengths
+
+
+def __vqt_filter_fft(
+    sr,
+    freqs,
+    filter_scale,
+    norm,
+    sparsity,
+    hop_length=None,
+    window="hann",
+    gamma=0.0,
+    dtype=np.complex64,
+    alpha=None,
+):
+    """Generate the frequency domain variable-Q filter basis."""
+
+    basis, lengths = filters.wavelet(
+        freqs,
+        sr=sr,
+        filter_scale=filter_scale,
+        norm=norm,
+        pad_fft=True,
+        window=window,
+        gamma=gamma,
+        alpha=alpha,
+    )
+
+    # Filters are padded up to the nearest integral power of 2
+    n_fft = basis.shape[1]
+
+    if hop_length is not None and n_fft < 2.0 ** (1 + np.ceil(np.log2(hop_length))):
         n_fft = int(2.0 ** (1 + np.ceil(np.log2(hop_length))))
 
     # re-normalize bases with respect to the FFT window length
