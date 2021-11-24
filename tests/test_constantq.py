@@ -726,3 +726,9 @@ def test_griffinlim_cqt_momentum_warn():
 def test_cqt_precision(y_cqt, sr_cqt, dtype):
     C = librosa.cqt(y=y_cqt, sr=sr_cqt, dtype=dtype)
     assert np.dtype(C.dtype) == np.dtype(dtype)
+
+
+@pytest.mark.parametrize("n_bins_missing", range(-11, 11))
+def test_cqt_partial_octave(y_cqt, sr_cqt, n_bins_missing):
+    # Test what happens when n_bins is +- 1 bin from complete octaves
+    librosa.cqt(y=y_cqt, sr=sr_cqt, n_bins=72-n_bins_missing, bins_per_octave=12)
