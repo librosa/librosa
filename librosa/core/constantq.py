@@ -462,9 +462,7 @@ def pseudo_cqt(
     # Apply tuning correction
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
 
-    freqs = cqt_frequencies(
-        fmin=fmin, n_bins=n_bins, bins_per_octave=bins_per_octave
-    )
+    freqs = cqt_frequencies(fmin=fmin, n_bins=n_bins, bins_per_octave=bins_per_octave)
 
     alpha = __bpo_to_alpha(bins_per_octave)
 
@@ -481,7 +479,7 @@ def pseudo_cqt(
         hop_length=hop_length,
         window=window,
         dtype=dtype,
-        alpha=alpha
+        alpha=alpha,
     )
 
     fft_basis = np.abs(fft_basis)
@@ -630,9 +628,7 @@ def icqt(
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
 
     # truncate the cqt to max frames if helpful
-    freqs = cqt_frequencies(
-        fmin=fmin, n_bins=n_bins, bins_per_octave=bins_per_octave
-    )
+    freqs = cqt_frequencies(fmin=fmin, n_bins=n_bins, bins_per_octave=bins_per_octave)
     alpha = __bpo_to_alpha(bins_per_octave)
 
     lengths, f_cutoff = filters.wavelet_lengths(
@@ -686,18 +682,27 @@ def icqt(
         # Transpose the basis
         inv_basis = fft_basis.H.todense()
 
-       # Compute each filter's frequency-domain power
-        freq_power = 1/np.sum(np.abs(np.asarray(inv_basis))**2, axis=0)
-        
+        # Compute each filter's frequency-domain power
+        freq_power = 1 / np.sum(np.abs(np.asarray(inv_basis)) ** 2, axis=0)
+
         # Compensate for length normalization in the forward transform
-        freq_power *= n_fft / lengths[sl] 
+        freq_power *= n_fft / lengths[sl]
 
         # Inverse-project the basis for each octave
         if scale:
             # scale=True ==> re-scale by sqrt(lengths)
-            D_oct = np.einsum("fc,c,c,...ct->...ft", inv_basis, C_scale[sl], freq_power, C[..., sl, :], optimize=True)
+            D_oct = np.einsum(
+                "fc,c,c,...ct->...ft",
+                inv_basis,
+                C_scale[sl],
+                freq_power,
+                C[..., sl, :],
+                optimize=True,
+            )
         else:
-            D_oct = np.einsum("fc,c,...ct->...ft", inv_basis, freq_power, C[..., sl, :], optimize=True)
+            D_oct = np.einsum(
+                "fc,c,...ct->...ft", inv_basis, freq_power, C[..., sl, :], optimize=True
+            )
 
         y_oct = istft(D_oct, window="ones", hop_length=my_hop, dtype=dtype)
 
@@ -891,7 +896,7 @@ def vqt(
 
     # First thing, get the freqs of the top octave
     freqs = cqt_frequencies(n_bins=n_bins, fmin=fmin, bins_per_octave=bins_per_octave)
-    
+
     freqs_top = freqs[-bins_per_octave:]
 
     fmin_t = np.min(freqs_top)
@@ -961,7 +966,7 @@ def vqt(
         if i == 0:
             sl = slice(-n_filters, None)
         else:
-            sl = slice(-n_filters*(i+1), -n_filters*i)
+            sl = slice(-n_filters * (i + 1), -n_filters * i)
 
         # This may be incorrect with early downsampling
         freqs_oct = freqs[sl]
@@ -975,11 +980,11 @@ def vqt(
             window=window,
             gamma=gamma,
             dtype=dtype,
-            alpha=alpha
+            alpha=alpha,
         )
 
         # Re-scale the filters to compensate for downsampling
-        fft_basis[:] *= np.sqrt(2 ** (i-oct_start))
+        fft_basis[:] *= sr / my_sr
 
         # Compute the vqt filter response and append to the stack
         vqt_resp.append(
