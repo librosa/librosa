@@ -899,7 +899,6 @@ def vqt(
 
     freqs_top = freqs[-bins_per_octave:]
 
-    fmin_t = np.min(freqs_top)
     fmax_t = np.max(freqs_top)
     alpha = __bpo_to_alpha(bins_per_octave)
 
@@ -1409,6 +1408,9 @@ def griffinlim_cqt(
             window=window,
             length=length,
             res_type=res_type,
+            norm=norm,
+            scale=scale,
+            sparsity=sparsity,
             dtype=dtype,
         )
 
@@ -1423,6 +1425,10 @@ def griffinlim_cqt(
             tuning=tuning,
             filter_scale=filter_scale,
             window=window,
+            norm=norm,
+            scale=scale,
+            sparsity=sparsity,
+            pad_mode=pad_mode,
             res_type=res_type,
         )
 
@@ -1442,6 +1448,9 @@ def griffinlim_cqt(
         window=window,
         length=length,
         res_type=res_type,
+        norm=norm,
+        scale=scale,
+        sparsity=sparsity,
         dtype=dtype,
     )
 
