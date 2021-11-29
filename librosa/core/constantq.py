@@ -984,7 +984,7 @@ def vqt(
         )
 
         # Re-scale the filters to compensate for downsampling
-        fft_basis[:] *= sr / my_sr
+        fft_basis[:] *= np.sqrt(sr / my_sr)
 
         # Compute the vqt filter response and append to the stack
         vqt_resp.append(
