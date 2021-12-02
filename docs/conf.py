@@ -161,6 +161,8 @@ sphinx_gallery_conf = {
         "samplerate": "https://python-samplerate.readthedocs.io/en/latest/",
         "pooch": "https://www.fatiando.org/pooch/latest/",
         "soxr": "https://python-soxr.readthedocs.io/en/latest/",
+        "mir_eval": "https://craffel.github.io/mir_eval/",
+        "IPython": "https://ipython.readthedocs.io/en/stable/",
     },
     "reset_modules": (reset_mpl,),
     'capture_repr': ('_repr_html_',),
