@@ -462,9 +462,7 @@ def pseudo_cqt(
     # Apply tuning correction
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
 
-    freqs = cqt_frequencies(
-        fmin=fmin, n_bins=n_bins, bins_per_octave=bins_per_octave
-    )
+    freqs = cqt_frequencies(fmin=fmin, n_bins=n_bins, bins_per_octave=bins_per_octave)
 
     alpha = __bpo_to_alpha(bins_per_octave)
 
@@ -481,7 +479,7 @@ def pseudo_cqt(
         hop_length=hop_length,
         window=window,
         dtype=dtype,
-        alpha=alpha
+        alpha=alpha,
     )
 
     fft_basis = np.abs(fft_basis)
@@ -627,20 +625,22 @@ def icqt(
     # Get the top octave of frequencies
     n_bins = C.shape[-2]
 
+    n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
+
     # truncate the cqt to max frames if helpful
-    freqs = cqt_frequencies(
-        fmin=fmin, n_bins=n_bins, bins_per_octave=bins_per_octave
-    )
+    freqs = cqt_frequencies(fmin=fmin, n_bins=n_bins, bins_per_octave=bins_per_octave)
     alpha = __bpo_to_alpha(bins_per_octave)
-    lengths, _ = filters.wavelet_lengths(
+
+    lengths, f_cutoff = filters.wavelet_lengths(
         freqs, sr=sr, window=window, filter_scale=filter_scale, alpha=alpha
     )
+
+    # Trim the CQT to only what's necessary for reconstruction
     if length is not None:
         n_frames = int(np.ceil((length + max(lengths)) / hop_length))
         C = C[..., :n_frames]
 
-    # How many octaves do we have?
-    n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
+    C_scale = np.sqrt(lengths)
 
     # This shape array will be used for broadcasting the basis scale
     # we'll have to adapt this per octave within the loop
@@ -667,12 +667,10 @@ def icqt(
 
         # Slice out the current octave
         sl = slice(bins_per_octave * i, bins_per_octave * i + n_filters)
-        C_oct = C[..., sl, :]
-        freq_oct = freqs[sl]
 
-        fft_basis, n_fft, lengths = __vqt_filter_fft(
+        fft_basis, n_fft, _ = __vqt_filter_fft(
             my_sr,
-            freq_oct,
+            freqs[sl],
             filter_scale,
             norm,
             sparsity,
@@ -681,24 +679,35 @@ def icqt(
             alpha=alpha,
         )
 
-        # Re-scale the filters to compensate for downsampling
-        fft_basis /= np.sqrt(2 ** (n_octaves - i))
-
+        # Transpose the basis
         inv_basis = fft_basis.H.todense()
 
-        if scale:
-            # This scaling is wrong when gamma != 0
-            C_scale = np.sqrt(lengths) * (n_fft / lengths) ** 2
-        else:
-            C_scale = (n_fft / lengths) ** 2
+        # Compute each filter's frequency-domain power
+        freq_power = 1 / np.sum(np.abs(np.asarray(inv_basis)) ** 2, axis=0)
+
+        # Compensate for length normalization in the forward transform
+        freq_power *= n_fft / lengths[sl]
 
         # Inverse-project the basis for each octave
-        D_oct = np.einsum("fc,c,...ct->...ft", inv_basis, C_scale, C_oct, optimize=True)
+        if scale:
+            # scale=True ==> re-scale by sqrt(lengths)
+            D_oct = np.einsum(
+                "fc,c,c,...ct->...ft",
+                inv_basis,
+                C_scale[sl],
+                freq_power,
+                C[..., sl, :],
+                optimize=True,
+            )
+        else:
+            D_oct = np.einsum(
+                "fc,c,...ct->...ft", inv_basis, freq_power, C[..., sl, :], optimize=True
+            )
 
         y_oct = istft(D_oct, window="ones", hop_length=my_hop, dtype=dtype)
 
         y_oct = audio.resample(
-            y_oct, 1, sr // my_sr, res_type=res_type, scale=not scale, fix=False
+            y_oct, 1, sr // my_sr, res_type=res_type, scale=False, fix=False
         )
 
         if y is None:
@@ -887,10 +896,9 @@ def vqt(
 
     # First thing, get the freqs of the top octave
     freqs = cqt_frequencies(n_bins=n_bins, fmin=fmin, bins_per_octave=bins_per_octave)
-    
+
     freqs_top = freqs[-bins_per_octave:]
 
-    fmin_t = np.min(freqs_top)
     fmax_t = np.max(freqs_top)
     alpha = __bpo_to_alpha(bins_per_octave)
 
@@ -957,7 +965,7 @@ def vqt(
         if i == 0:
             sl = slice(-n_filters, None)
         else:
-            sl = slice(-n_filters*(i+1), -n_filters*i)
+            sl = slice(-n_filters * (i + 1), -n_filters * i)
 
         # This may be incorrect with early downsampling
         freqs_oct = freqs[sl]
@@ -971,11 +979,11 @@ def vqt(
             window=window,
             gamma=gamma,
             dtype=dtype,
-            alpha=alpha
+            alpha=alpha,
         )
 
         # Re-scale the filters to compensate for downsampling
-        fft_basis[:] *= np.sqrt(2 ** (i-oct_start))
+        fft_basis[:] *= np.sqrt(sr / my_sr)
 
         # Compute the vqt filter response and append to the stack
         vqt_resp.append(
@@ -1400,6 +1408,9 @@ def griffinlim_cqt(
             window=window,
             length=length,
             res_type=res_type,
+            norm=norm,
+            scale=scale,
+            sparsity=sparsity,
             dtype=dtype,
         )
 
@@ -1414,6 +1425,10 @@ def griffinlim_cqt(
             tuning=tuning,
             filter_scale=filter_scale,
             window=window,
+            norm=norm,
+            scale=scale,
+            sparsity=sparsity,
+            pad_mode=pad_mode,
             res_type=res_type,
         )
 
@@ -1433,6 +1448,9 @@ def griffinlim_cqt(
         window=window,
         length=length,
         res_type=res_type,
+        norm=norm,
+        scale=scale,
+        sparsity=sparsity,
         dtype=dtype,
     )
 
