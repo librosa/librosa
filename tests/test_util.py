@@ -1315,3 +1315,25 @@ def test_expand_to_2d(axes, ndim):
     # Verify that we have 1s on expanded dims
     for i, ax in enumerate(axes):
         assert xout.shape[ax] == x.shape[i]
+
+
+def test_count_unique():
+
+    x = np.vander(np.arange(5))
+
+    x0 = librosa.util.count_unique(x, axis=0)
+    x1 = librosa.util.count_unique(x, axis=1)
+
+    assert np.allclose(x0, [5, 5, 5, 5, 1])
+    assert np.allclose(x1, [2, 1, 5, 5, 5])
+
+
+def test_is_unique():
+
+    x = np.vander(np.arange(5))
+
+    x0 = librosa.util.is_unique(x, axis=0)
+    x1 = librosa.util.is_unique(x, axis=1)
+
+    assert np.allclose(x0, [True, True, True, True, False])
+    assert np.allclose(x1, [False, False, True, True, True])
