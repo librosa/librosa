@@ -2,10 +2,13 @@
 # -*- coding: utf-8 -*-
 """Harmonic calculations for frequency representations"""
 
+import warnings
+
 import numpy as np
 import scipy.interpolate
 import scipy.signal
 from ..util.exceptions import ParameterError
+from ..util import is_unique
 
 __all__ = ["salience", "interp_harmonics"]
 
@@ -218,6 +221,11 @@ def interp_harmonics(x, freqs, h_range, kind="linear", fill_value=0, axis=-2):
     if freqs.ndim == 1 and len(freqs) == x.shape[axis]:
         # Build the 1-D interpolator.
         # All frames have a common domain, so we only need one interpolator here.
+
+        # First, verify that the input frequencies are unique
+        if not is_unique(freqs, axis=0):
+            warnings.warn("Frequencies are not unique. This may produce incorrect harmonic interpolations.")
+
         f_interp = scipy.interpolate.interp1d(
             freqs,
             x,
@@ -235,6 +243,9 @@ def interp_harmonics(x, freqs, h_range, kind="linear", fill_value=0, axis=-2):
         return f_interp(f_out)
 
     elif freqs.shape == x.shape:
+        if not np.all(is_unique(freqs, axis=axis)):
+            warnings.warn("Frequencies are not unique. This may produce incorrect harmonic interpolations.")
+
         # If we have time-varying frequencies, then it must match exactly the shape of the input
 
         # We'll define a frame-wise interpolator helper function that we will vectorize over

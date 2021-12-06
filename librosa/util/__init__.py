@@ -47,6 +47,8 @@ Miscellaneous
     cyclic_gradient
     dtype_c2r
     dtype_r2c
+    count_unique
+    is_unique
 
 
 Input validation

@@ -1573,6 +1573,16 @@ def test_harmonics_2d():
             assert np.allclose(vals, yh[i, : len(vals)])
 
 
+def test_harmonics_1d_nonunique():
+    x = np.arange(-8, 8)**2
+    y = np.linspace(-8, 8, num=len(x), endpoint=False) ** 2
+
+    h = [0.25, 0.5, 1, 2, 4]
+
+    with pytest.warns(UserWarning):
+        yh = librosa.interp_harmonics(y, x, h, axis=0)
+
+
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_harmonics_badshape_1d():
     freqs = np.zeros(100)
@@ -1610,6 +1620,18 @@ def test_harmonics_2d_varying():
             step = h[i]
             vals = y[::step]
             assert np.allclose(vals, yh[i, : len(vals)])
+
+
+def test_harmonics_2d_varying_nonunique():
+
+    x = np.arange(-8, 8) ** 2
+    y = np.linspace(-8, 8, num=len(x), endpoint=False) ** 2
+    x = np.tile(x, (5, 1)).T
+    y = np.tile(y, (5, 1)).T
+    h = [0.25, 0.5, 1, 2, 4]
+
+    with pytest.warns(UserWarning):
+        yh = librosa.interp_harmonics(y, x, h, axis=-2)
 
 
 def test_show_versions():

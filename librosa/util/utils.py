@@ -43,6 +43,8 @@ __all__ = [
     "cyclic_gradient",
     "dtype_r2c",
     "dtype_c2r",
+    "count_unique",
+    "is_unique"
 ]
 
 
@@ -2225,3 +2227,113 @@ def dtype_c2r(d, default=np.float32):
     # Otherwise, try to map the dtype.
     # If no match is found, return the default.
     return np.dtype(mapping.get(np.dtype(d), default))
+
+
+@numba.jit(nopython=True, cache=True)
+def __count_unique(x):
+    '''Counts the number of unique values in an array.
+
+    This function is a helper for `count_unique` and is not
+    to be called directly.
+    '''
+    uniques = np.unique(x)
+    return uniques.shape[0]
+
+
+def count_unique(data, axis=-1):
+    '''Count the number of unique values in a multi-dimensional array
+    along a given axis.
+
+    Parameters
+    ----------
+    data : np.ndarray
+        The input array
+
+    axis : int
+        The target axis to count
+
+    Returns
+    -------
+    n_uniques
+        The number of unique values.
+        This array will have one fewer dimension than the input.
+
+    See Also
+    --------
+    is_unique
+
+    Examples
+    --------
+
+    >>> x = np.vander(np.arange(5))
+    >>> x
+    array([[  0,   0,   0,   0,   1],
+       [  1,   1,   1,   1,   1],
+       [ 16,   8,   4,   2,   1],
+       [ 81,  27,   9,   3,   1],
+       [256,  64,  16,   4,   1]])
+    >>> # Count unique values along rows (within columns)
+    >>> librosa.util.count_unique(x, axis=0)
+    array([5, 5, 5, 5, 1])
+    >>> # Count unique values along columns (within rows)
+    >>> librosa.util.count_unique(x, axis=-1)
+    array([2, 1, 5, 5, 5])
+    '''
+    return np.apply_along_axis(__count_unique, axis, data)
+
+
+@numba.jit(nopython=True, cache=True)
+def __is_unique(x):
+    '''Determines if the input array has all unique values.
+
+    This function is a helper for `is_unique` and is not
+    to be called directly.
+    '''
+
+    uniques = np.unique(x)
+    return uniques.shape[0] == x.size
+
+
+def is_unique(data, axis=-1):
+    '''Determine if the input array consists of all unique values
+    along a given axis.
+
+    Parameters
+    ----------
+    data : np.ndarray
+        The input array
+
+    axis : int
+        The target axis
+
+    Returns
+    -------
+    is_unique
+        Array of booleans indicating whether the data is unique along the chosen
+        axis.
+        This array will have one fewer dimension than the input.
+
+    See Also
+    --------
+    count_unique
+
+    Examples
+    --------
+
+    >>> x = np.vander(np.arange(5))
+    >>> x
+    array([[  0,   0,   0,   0,   1],
+       [  1,   1,   1,   1,   1],
+       [ 16,   8,   4,   2,   1],
+       [ 81,  27,   9,   3,   1],
+       [256,  64,  16,   4,   1]])
+    >>> # Check uniqueness along rows
+    >>> librosa.util.is_unique(x, axis=0)
+    array([ True,  True,  True,  True, False])
+    >>> # Check uniqueness along columns
+    >>> librosa.util.is_unique(x, axis=-1)
+    array([False, False,  True,  True,  True])
+
+    '''
+
+    return np.apply_along_axis(__is_unique, axis, data)
