@@ -934,3 +934,64 @@ def test_auto_aspect():
         X[:2, :], x_axis="chroma", y_axis="chroma", auto_aspect=True, ax=ax[3]
     )
     assert ax[3].get_aspect() == "auto"
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["specshow_unicode_true"], extensions=["png"], tolerance=6
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_specshow_unicode_true(C, sr):
+
+    chroma = librosa.feature.chroma_cqt(C=C, sr=sr, threshold=0.9)
+
+    fig, ax = plt.subplots(nrows=5, sharex=True, figsize=(10, 10))
+
+    # Hindustani, no thaat
+    librosa.display.specshow(chroma, y_axis="chroma_h", Sa=5, ax=ax[0], unicode=True)
+
+    # Hindustani, kafi thaat
+    librosa.display.specshow(chroma, y_axis="chroma_h", Sa=5, ax=ax[1], thaat="kafi", unicode=True)
+
+    # Carnatic, mela 22
+    librosa.display.specshow(chroma, y_axis="chroma_c", Sa=5, ax=ax[2], mela=22, unicode=True)
+
+    # Carnatic, mela 1
+    librosa.display.specshow(chroma, y_axis="chroma_c", Sa=7, ax=ax[3], mela=1, unicode=True)
+
+    # Pitches
+    librosa.display.specshow(chroma, y_axis="chroma", ax=ax[4], key="Eb:maj", unicode=True)
+
+    for axi in ax:
+        axi.label_outer()
+
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["specshow_unicode_false"], extensions=["png"], tolerance=6
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_specshow_unicode_false(C, sr):
+
+    chroma = librosa.feature.chroma_cqt(C=C, sr=sr, threshold=0.9)
+
+    fig, ax = plt.subplots(nrows=5, sharex=True, figsize=(10, 10))
+
+    # Hindustani, no thaat
+    librosa.display.specshow(chroma, y_axis="chroma_h", Sa=5, ax=ax[0], unicode=False)
+
+    # Hindustani, kafi thaat
+    librosa.display.specshow(chroma, y_axis="chroma_h", Sa=5, ax=ax[1], thaat="kafi", unicode=False)
+
+    # Carnatic, mela 22
+    librosa.display.specshow(chroma, y_axis="chroma_c", Sa=5, ax=ax[2], mela=22, unicode=False)
+
+    # Carnatic, mela 1
+    librosa.display.specshow(chroma, y_axis="chroma_c", Sa=7, ax=ax[3], mela=1, unicode=False)
+
+    librosa.display.specshow(chroma, y_axis="chroma", ax=ax[4], key="Eb:maj", unicode=False)
+
+    for axi in ax:
+        axi.label_outer()
+
+    return fig
