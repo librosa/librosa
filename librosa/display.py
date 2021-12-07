@@ -196,6 +196,14 @@ class NoteFormatter(Formatter):
 
         If ``False``, ticks are only labeled if the span is less than 2 octaves
 
+    key : str
+        Key for determining pitch spelling.
+
+    unicode : bool
+        If ``True``, use unicode symbols for accidentals.
+
+        If ``False``, use ASCII symbols for accidentals.
+
     See also
     --------
     LogHzFormatter
@@ -213,11 +221,12 @@ class NoteFormatter(Formatter):
     >>> ax[1].set(ylabel='Note')
     """
 
-    def __init__(self, octave=True, major=True, key="C:maj"):
+    def __init__(self, octave=True, major=True, key="C:maj", unicode=True):
 
         self.octave = octave
         self.major = major
         self.key = key
+        self.unicode = unicode
 
     def __call__(self, x, pos=None):
 
@@ -232,7 +241,7 @@ class NoteFormatter(Formatter):
 
         cents = vmax <= 2 * max(1, vmin)
 
-        return core.hz_to_note(x, octave=self.octave, cents=cents, key=self.key)
+        return core.hz_to_note(x, octave=self.octave, cents=cents, key=self.key, unicode=self.unicode)
 
 
 class SvaraFormatter(Formatter):
@@ -258,6 +267,11 @@ class SvaraFormatter(Formatter):
 
         To use Hindustani svara, set ``mela=None``
 
+    unicode : bool
+        If ``True``, use unicode symbols for accidentals.
+
+        If ``False``, use ASCII symbols for accidentals.
+
     See also
     --------
     NoteFormatter
@@ -278,7 +292,7 @@ class SvaraFormatter(Formatter):
     >>> ax[1].set(ylabel='Note')
     """
 
-    def __init__(self, Sa, octave=True, major=True, abbr=False, mela=None):
+    def __init__(self, Sa, octave=True, major=True, abbr=False, mela=None, unicode=True):
 
         if Sa is None:
             raise ParameterError(
@@ -290,6 +304,7 @@ class SvaraFormatter(Formatter):
         self.major = major
         self.abbr = abbr
         self.mela = mela
+        self.unicode = unicode
 
     def __call__(self, x, pos=None):
 
@@ -303,10 +318,10 @@ class SvaraFormatter(Formatter):
             return ""
 
         if self.mela is None:
-            return core.hz_to_svara_h(x, self.Sa, octave=self.octave, abbr=self.abbr)
+            return core.hz_to_svara_h(x, self.Sa, octave=self.octave, abbr=self.abbr, unicode=self.unicode)
         else:
             return core.hz_to_svara_c(
-                x, self.Sa, self.mela, octave=self.octave, abbr=self.abbr
+                x, self.Sa, self.mela, octave=self.octave, abbr=self.abbr, unicode=self.unicode
             )
 
 
@@ -372,12 +387,13 @@ class ChromaFormatter(Formatter):
     >>> ax.set(ylabel='Pitch class')
     """
 
-    def __init__(self, key="C:maj"):
+    def __init__(self, key="C:maj", unicode=True):
         self.key = key
+        self.unicode = unicode
 
     def __call__(self, x, pos=None):
         """Format for chroma positions"""
-        return core.midi_to_note(int(x), octave=False, cents=False, key=self.key)
+        return core.midi_to_note(int(x), octave=False, cents=False, key=self.key, unicode=self.unicode)
 
 
 class ChromaSvaraFormatter(Formatter):
@@ -395,22 +411,23 @@ class ChromaSvaraFormatter(Formatter):
 
     """
 
-    def __init__(self, Sa=None, mela=None, abbr=True):
+    def __init__(self, Sa=None, mela=None, abbr=True, unicode=True):
         if Sa is None:
             Sa = 0
         self.Sa = Sa
         self.mela = mela
         self.abbr = abbr
+        self.unicode = unicode
 
     def __call__(self, x, pos=None):
         """Format for chroma positions"""
         if self.mela is not None:
             return core.midi_to_svara_c(
-                int(x), Sa=self.Sa, mela=self.mela, octave=False, abbr=self.abbr
+                int(x), Sa=self.Sa, mela=self.mela, octave=False, abbr=self.abbr, unicode=self.unicode
             )
         else:
             return core.midi_to_svara_h(
-                int(x), Sa=self.Sa, octave=False, abbr=self.abbr
+                int(x), Sa=self.Sa, octave=False, abbr=self.abbr, unicode=self.unicode
             )
 
 
@@ -763,6 +780,7 @@ def specshow(
     thaat=None,
     auto_aspect=True,
     htk=False,
+    unicode=True,
     ax=None,
     **kwargs,
 ):
@@ -913,6 +931,12 @@ def specshow(
 
         See `core.mel_frequencies` for more information.
 
+    unicode : bool
+        If using note or svara decorations, setting `unicode=True`
+        will use unicode glyphs for accidentals and octave encoding.
+
+        Setting `unicode=False` will use ASCII glyphs.  This can be helpful
+        if your font does not support musical notation symbols.
 
     ax : matplotlib.axes.Axes or None
         Axes to plot on instead of the default `plt.gca()`.
@@ -988,6 +1012,7 @@ def specshow(
         win_length=win_length,
         key=key,
         htk=htk,
+        unicode=unicode
     )
 
     # Get the x and y coordinates
@@ -1006,8 +1031,8 @@ def specshow(
     __scale_axes(axes, y_axis, "y")
 
     # Construct tickers and locators
-    __decorate_axis(axes.xaxis, x_axis, key=key, Sa=Sa, mela=mela, thaat=thaat)
-    __decorate_axis(axes.yaxis, y_axis, key=key, Sa=Sa, mela=mela, thaat=thaat)
+    __decorate_axis(axes.xaxis, x_axis, key=key, Sa=Sa, mela=mela, thaat=thaat, unicode=unicode)
+    __decorate_axis(axes.yaxis, y_axis, key=key, Sa=Sa, mela=mela, thaat=thaat, unicode=unicode)
 
     # If the plot is a self-similarity/covariance etc. plot, square it
     if __same_axes(x_axis, y_axis, axes.get_xlim(), axes.get_ylim()) and auto_aspect:
@@ -1141,7 +1166,7 @@ def __scale_axes(axes, ax_type, which):
     scaler(mode, **kwargs)
 
 
-def __decorate_axis(axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None):
+def __decorate_axis(axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None, unicode=True):
     """Configure axis tickers, locators, and labels"""
 
     if ax_type == "tonnetz":
@@ -1150,7 +1175,7 @@ def __decorate_axis(axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None):
         axis.set_label_text("Tonnetz")
 
     elif ax_type == "chroma":
-        axis.set_major_formatter(ChromaFormatter(key=key))
+        axis.set_major_formatter(ChromaFormatter(key=key, unicode=unicode))
         degrees = core.key_to_degrees(key)
         axis.set_major_locator(
             FixedLocator(0.5 + np.add.outer(12 * np.arange(10), degrees).ravel())
@@ -1160,7 +1185,7 @@ def __decorate_axis(axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None):
     elif ax_type == "chroma_h":
         if Sa is None:
             Sa = 0
-        axis.set_major_formatter(ChromaSvaraFormatter(Sa=Sa))
+        axis.set_major_formatter(ChromaSvaraFormatter(Sa=Sa, unicode=unicode))
         if thaat is None:
             # If no thaat is given, show all svara
             degrees = np.arange(12)
@@ -1176,7 +1201,7 @@ def __decorate_axis(axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None):
     elif ax_type == "chroma_c":
         if Sa is None:
             Sa = 0
-        axis.set_major_formatter(ChromaSvaraFormatter(Sa=Sa, mela=mela))
+        axis.set_major_formatter(ChromaSvaraFormatter(Sa=Sa, mela=mela, unicode=unicode))
         degrees = core.mela_to_degrees(mela)
         # Rotate degrees relative to Sa
         degrees = np.mod(degrees + Sa, 12)
@@ -1221,24 +1246,24 @@ def __decorate_axis(axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None):
         axis.set_label_text("Lag (ms)")
 
     elif ax_type == "cqt_note":
-        axis.set_major_formatter(NoteFormatter(key=key))
+        axis.set_major_formatter(NoteFormatter(key=key, unicode=unicode))
         # Where is C1 relative to 2**k hz?
         log_C1 = np.log2(core.note_to_hz("C1"))
         C_offset = 2.0 ** (log_C1 - np.floor(log_C1))
         axis.set_major_locator(LogLocator(base=2.0, subs=(C_offset,)))
-        axis.set_minor_formatter(NoteFormatter(key=key, major=False))
+        axis.set_minor_formatter(NoteFormatter(key=key, major=False, unicode=unicode))
         axis.set_minor_locator(
             LogLocator(base=2.0, subs=C_offset * 2.0 ** (np.arange(1, 12) / 12.0))
         )
         axis.set_label_text("Note")
 
     elif ax_type == "cqt_svara":
-        axis.set_major_formatter(SvaraFormatter(Sa=Sa, mela=mela))
+        axis.set_major_formatter(SvaraFormatter(Sa=Sa, mela=mela, unicode=unicode))
         # Find the offset of Sa relative to 2**k Hz
         sa_offset = 2.0 ** (np.log2(Sa) - np.floor(np.log2(Sa)))
 
         axis.set_major_locator(LogLocator(base=2.0, subs=(sa_offset,)))
-        axis.set_minor_formatter(SvaraFormatter(Sa=Sa, mela=mela, major=False))
+        axis.set_minor_formatter(SvaraFormatter(Sa=Sa, mela=mela, major=False, unicode=unicode))
         axis.set_minor_locator(
             LogLocator(base=2.0, subs=sa_offset * 2.0 ** (np.arange(1, 12) / 12.0))
         )
@@ -1257,19 +1282,19 @@ def __decorate_axis(axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None):
         axis.set_label_text("Hz")
 
     elif ax_type == "fft_note":
-        axis.set_major_formatter(NoteFormatter(key=key))
+        axis.set_major_formatter(NoteFormatter(key=key, unicode=unicode))
         # Where is C1 relative to 2**k hz?
         log_C1 = np.log2(core.note_to_hz("C1"))
         C_offset = 2.0 ** (log_C1 - np.floor(log_C1))
         axis.set_major_locator(SymmetricalLogLocator(axis.get_transform()))
-        axis.set_minor_formatter(NoteFormatter(key=key, major=False))
+        axis.set_minor_formatter(NoteFormatter(key=key, major=False, unicode=unicode))
         axis.set_minor_locator(
             LogLocator(base=2.0, subs=2.0 ** (np.arange(1, 12) / 12.0))
         )
         axis.set_label_text("Note")
 
     elif ax_type == "fft_svara":
-        axis.set_major_formatter(SvaraFormatter(Sa=Sa, mela=mela))
+        axis.set_major_formatter(SvaraFormatter(Sa=Sa, mela=mela, unicode=unicode))
         # Find the offset of Sa relative to 2**k Hz
         log_Sa = np.log2(Sa)
         sa_offset = 2.0 ** (log_Sa - np.floor(log_Sa))
@@ -1277,7 +1302,7 @@ def __decorate_axis(axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None):
         axis.set_major_locator(
             SymmetricalLogLocator(axis.get_transform(), base=2.0, subs=[sa_offset])
         )
-        axis.set_minor_formatter(SvaraFormatter(Sa=Sa, mela=mela, major=False))
+        axis.set_minor_formatter(SvaraFormatter(Sa=Sa, mela=mela, major=False, unicode=unicode))
         axis.set_minor_locator(
             LogLocator(base=2.0, subs=sa_offset * 2.0 ** (np.arange(1, 12) / 12.0))
         )
