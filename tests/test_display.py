@@ -21,6 +21,7 @@ matplotlib = pytest.importorskip("matplotlib", minversion="3.4")
 matplotlib.use("Agg")
 matplotlib.rcParams.update(matplotlib.rcParamsDefault)
 
+
 import matplotlib.style
 
 matplotlib.style.use("seaborn-ticks")
@@ -30,7 +31,6 @@ import matplotlib.pyplot as plt
 import librosa
 import librosa.display
 import numpy as np
-
 
 # Workaround for old freetype builds with our image fixtures
 FT_VERSION = version.parse(matplotlib.ft2font.__freetype_version__)
@@ -92,7 +92,7 @@ def tempo(rhythm):
 
 @pytest.fixture
 def beats(rhythm, C):
-    return librosa.util.fix_frames(rhythm[1], x_max=C.shape[1])
+    return librosa.util.fix_frames(rhythm[1])
 
 
 @pytest.fixture
