@@ -188,9 +188,12 @@ librosa.display.specshow(X,
                          y_coords=beat_times, ax=ax[0])
 ax[0].set(title='Structure components')
 
-img = librosa.display.specshow(np.atleast_2d(seg_ids).T, cmap=colors,
-                         y_axis='time', y_coords=beat_times, ax=ax[2])
-ax[2].set(title='Estimated segments')
+img = librosa.display.specshow(np.atleast_2d(seg_ids).T, cmap=colors, 
+                         y_axis='time',
+                         x_coords=[0, 1], y_coords=list(beat_times) + [beat_times[-1]], 
+                         ax=ax[2])
+ax[2].set(title='Estimated labels')
+
 ax[2].label_outer()
 fig.colorbar(img, ax=[ax[2]], ticks=range(k))
 
