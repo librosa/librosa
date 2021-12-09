@@ -374,7 +374,7 @@ tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
 # beats contains the frame indices of each detected beat
 # for synchronization and visualization, we'll need to expand this
 # to cover the limits of the data.  This can be done as follows:
-beats = librosa.util.fix_frames(beats, x_min=0, x_max=chroma.shape[1])
+beats = librosa.util.fix_frames(beats, x_min=0)
 
 # Now beat-synchronize the chroma features
 chroma_sync = librosa.util.sync(chroma, beats, aggregate=np.median)

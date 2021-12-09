@@ -947,7 +947,7 @@ def specshow(
         By default, the following options are set:
 
             - ``rasterized=True``
-            - ``shading='flat'``
+            - ``shading='auto'``
             - ``edgecolors='None'``
 
     Returns

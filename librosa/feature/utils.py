@@ -200,7 +200,7 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
     >>> y, sr = librosa.load(librosa.ex('choice'))
     >>> chroma = librosa.feature.chroma_stft(y=y, sr=sr)
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, hop_length=512)
-    >>> beats = librosa.util.fix_frames(beats, x_min=0, x_max=chroma.shape[1])
+    >>> beats = librosa.util.fix_frames(beats, x_min=0)
     >>> chroma_sync = librosa.util.sync(chroma, beats)
     >>> chroma_lag = librosa.feature.stack_memory(chroma_sync, n_steps=3,
     ...                                           mode='edge')
