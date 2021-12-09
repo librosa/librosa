@@ -197,7 +197,7 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
 
     Stack time-lagged beat-synchronous chroma edge padding
 
-    >>> y, sr = librosa.load(librosa.ex('choice'))
+    >>> y, sr = librosa.load(librosa.ex('choice'), duration=10)
     >>> chroma = librosa.feature.chroma_stft(y=y, sr=sr)
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, hop_length=512)
     >>> beats = librosa.util.fix_frames(beats, x_min=0)
@@ -212,9 +212,12 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
     >>> beat_times = librosa.frames_to_time(beats, sr=sr, hop_length=512)
     >>> librosa.display.specshow(chroma_lag, y_axis='chroma', x_axis='time',
     ...                          x_coords=beat_times, ax=ax)
-    >>> ax.set(yticks=[0, 12, 24], yticklabels=['Lag=0', 'Lag=1', 'Lag=2'],
-    ...           title='Time-lagged chroma')
-    >>> ax.hlines([0, 12, 24], beat_times.min(), beat_times.max(), color='w')
+    >>> ax.text(1.0, 1/6, "Lag=0", transform=ax.transAxes, rotation=-90, ha="left", va="center")
+    >>> ax.text(1.0, 3/6, "Lag=1", transform=ax.transAxes, rotation=-90, ha="left", va="center")
+    >>> ax.text(1.0, 5/6, "Lag=2", transform=ax.transAxes, rotation=-90, ha="left", va="center")
+    >>> ax.axline((0, 1/3), (1, 1/3), transform=ax.transAxes, color='w', alpha=0.75, linestyle='--')
+    >>> ax.axline((0, 2/3), (1, 2/3), transform=ax.transAxes, color='w', alpha=0.75, linestyle='--')
+    >>> ax.set(title='Time-lagged chroma', ylabel="")
     """
 
     if n_steps < 1:
