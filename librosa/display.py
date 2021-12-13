@@ -870,7 +870,7 @@ def specshow(
             tempograms are calculated in the Frequency domain
             using `feature.fourier_tempogram`.
 
-    x_coords, y_coords : np.ndarray [shape=data.shape[0 or 1]+1]
+    x_coords, y_coords : np.ndarray [shape=data.shape[0 or 1]]
 
         Optional positioning coordinates of the input data.
         These can be use to explicitly set the location of each
@@ -947,7 +947,7 @@ def specshow(
         By default, the following options are set:
 
             - ``rasterized=True``
-            - ``shading='flat'``
+            - ``shading='auto'``
             - ``edgecolors='None'``
 
     Returns
@@ -998,7 +998,7 @@ def specshow(
     kwargs.setdefault("cmap", cmap(data))
     kwargs.setdefault("rasterized", True)
     kwargs.setdefault("edgecolors", "None")
-    kwargs.setdefault("shading", "flat")
+    kwargs.setdefault("shading", "auto")
 
     all_params = dict(
         kwargs=kwargs,
@@ -1021,10 +1021,8 @@ def specshow(
 
     axes = __check_axes(ax)
     out = axes.pcolormesh(x_coords, y_coords, data, **kwargs)
-    __set_current_image(ax, out)
 
-    axes.set_xlim(x_coords.min(), x_coords.max())
-    axes.set_ylim(y_coords.min(), y_coords.max())
+    __set_current_image(ax, out)
 
     # Set up axis scaling
     __scale_axes(axes, x_axis, "x")
@@ -1037,6 +1035,7 @@ def specshow(
     # If the plot is a self-similarity/covariance etc. plot, square it
     if __same_axes(x_axis, y_axis, axes.get_xlim(), axes.get_ylim()) and auto_aspect:
         axes.set_aspect("equal")
+
     return out
 
 
@@ -1057,9 +1056,9 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
     """Compute axis coordinates"""
 
     if coords is not None:
-        if len(coords) < n:
+        if len(coords) not in (n, n+1):
             raise ParameterError(
-                "Coordinate shape mismatch: " "{}<{}".format(len(coords), n)
+                f"Coordinate shape mismatch: {len(coords)}!={n} or {n}+1"
             )
         return coords
 
@@ -1171,14 +1170,14 @@ def __decorate_axis(axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None, 
 
     if ax_type == "tonnetz":
         axis.set_major_formatter(TonnetzFormatter())
-        axis.set_major_locator(FixedLocator(0.5 + np.arange(6)))
+        axis.set_major_locator(FixedLocator(np.arange(6)))
         axis.set_label_text("Tonnetz")
 
     elif ax_type == "chroma":
         axis.set_major_formatter(ChromaFormatter(key=key, unicode=unicode))
         degrees = core.key_to_degrees(key)
         axis.set_major_locator(
-            FixedLocator(0.5 + np.add.outer(12 * np.arange(10), degrees).ravel())
+            FixedLocator(np.add.outer(12 * np.arange(10), degrees).ravel())
         )
         axis.set_label_text("Pitch class")
 
@@ -1194,7 +1193,7 @@ def __decorate_axis(axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None, 
         # Rotate degrees relative to Sa
         degrees = np.mod(degrees + Sa, 12)
         axis.set_major_locator(
-            FixedLocator(0.5 + np.add.outer(12 * np.arange(10), degrees).ravel())
+            FixedLocator(np.add.outer(12 * np.arange(10), degrees).ravel())
         )
         axis.set_label_text("Svara")
 
@@ -1206,7 +1205,7 @@ def __decorate_axis(axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None, 
         # Rotate degrees relative to Sa
         degrees = np.mod(degrees + Sa, 12)
         axis.set_major_locator(
-            FixedLocator(0.5 + np.add.outer(12 * np.arange(10), degrees).ravel())
+            FixedLocator(np.add.outer(12 * np.arange(10), degrees).ravel())
         )
         axis.set_label_text("Svara")
 
@@ -1335,9 +1334,6 @@ def __coord_fft_hz(n, sr=22050, n_fft=None, **_kwargs):
     # The following code centers the FFT bins at their frequencies
     # and clips to the non-negative frequency range [0, nyquist]
     basis = core.fft_frequencies(sr=sr, n_fft=n_fft)
-    fmax = basis[-1]
-    basis -= 0.5 * (basis[1] - basis[0])
-    basis = np.append(np.maximum(0, basis), [fmax])
     return basis
 
 
@@ -1350,8 +1346,6 @@ def __coord_mel_hz(n, fmin=0, fmax=None, sr=22050, htk=False, **_kwargs):
         fmax = 0.5 * sr
 
     basis = core.mel_frequencies(n, fmin=fmin, fmax=fmax, htk=htk)
-    basis[1:] -= 0.5 * np.diff(basis)
-    basis = np.append(np.maximum(0, basis), [fmax])
     return basis
 
 
@@ -1365,8 +1359,8 @@ def __coord_cqt_hz(n, fmin=None, bins_per_octave=12, sr=22050, **_kwargs):
 
     # we drop by half a bin so that CQT bins are centered vertically
     freqs = core.cqt_frequencies(
-        n + 1,
-        fmin=fmin / 2.0 ** (0.5 / bins_per_octave),
+        n,
+        fmin=fmin,
         bins_per_octave=bins_per_octave,
     )
 
@@ -1381,14 +1375,13 @@ def __coord_cqt_hz(n, fmin=None, bins_per_octave=12, sr=22050, **_kwargs):
 
 def __coord_chroma(n, bins_per_octave=12, **_kwargs):
     """Get chroma bin numbers"""
-    return np.linspace(0, (12.0 * n) / bins_per_octave, num=n + 1, endpoint=True)
+    return np.linspace(0, (12.0 * n) / bins_per_octave, num=n, endpoint=False)
 
 
 def __coord_tempo(n, sr=22050, hop_length=512, **_kwargs):
     """Tempo coordinates"""
-    basis = core.tempo_frequencies(n + 2, sr=sr, hop_length=hop_length)[1:]
-    edges = np.arange(1, n + 2)
-    return basis * (edges + 0.5) / edges
+    basis = core.tempo_frequencies(n + 1, sr=sr, hop_length=hop_length)[1:]
+    return basis
 
 
 def __coord_fourier_tempo(n, sr=22050, hop_length=512, win_length=None, **_kwargs):
@@ -1400,20 +1393,17 @@ def __coord_fourier_tempo(n, sr=22050, hop_length=512, win_length=None, **_kwarg
     basis = core.fourier_tempo_frequencies(
         sr=sr, hop_length=hop_length, win_length=win_length
     )
-    fmax = basis[-1]
-    basis -= 0.5 * (basis[1] - basis[0])
-    basis = np.append(np.maximum(0, basis), [fmax])
     return basis
 
 
 def __coord_n(n, **_kwargs):
     """Get bare positions"""
-    return np.arange(n + 1)
+    return np.arange(n)
 
 
 def __coord_time(n, sr=22050, hop_length=512, **_kwargs):
     """Get time coordinates from frames"""
-    return core.frames_to_time(np.arange(n + 1), sr=sr, hop_length=hop_length)
+    return core.frames_to_time(np.arange(n), sr=sr, hop_length=hop_length)
 
 
 def __same_axes(x_axis, y_axis, xlim, ylim):
