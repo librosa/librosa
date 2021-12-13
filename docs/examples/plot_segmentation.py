@@ -60,8 +60,7 @@ Csync = librosa.util.sync(C, beats, aggregate=np.median)
 # For plotting purposes, we'll need the timing of the beats
 # we fix_frames to include non-beat frames 0 and C.shape[1] (final frame)
 beat_times = librosa.frames_to_time(librosa.util.fix_frames(beats,
-                                                            x_min=0,
-                                                            x_max=C.shape[1]),
+                                                            x_min=0),
                                     sr=sr)
 
 fig, ax = plt.subplots()
@@ -189,9 +188,12 @@ librosa.display.specshow(X,
                          y_coords=beat_times, ax=ax[0])
 ax[0].set(title='Structure components')
 
-img = librosa.display.specshow(np.atleast_2d(seg_ids).T, cmap=colors,
-                         y_axis='time', y_coords=beat_times, ax=ax[2])
-ax[2].set(title='Estimated segments')
+img = librosa.display.specshow(np.atleast_2d(seg_ids).T, cmap=colors, 
+                         y_axis='time',
+                         x_coords=[0, 1], y_coords=list(beat_times) + [beat_times[-1]], 
+                         ax=ax[2])
+ax[2].set(title='Estimated labels')
+
 ax[2].label_outer()
 fig.colorbar(img, ax=[ax[2]], ticks=range(k))
 
