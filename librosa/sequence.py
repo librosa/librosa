@@ -1208,11 +1208,11 @@ def viterbi_discriminative(
     >>> fig, ax = plt.subplots()
     >>> librosa.display.specshow(probs, x_axis='time', cmap='gray', ax=ax)
     >>> times = librosa.times_like(chords_vit)
-    >>> ax.scatter(times, chords_ind + 0.75, color='lime', alpha=0.5, marker='+',
+    >>> ax.scatter(times, chords_ind + 0.25, color='lime', alpha=0.5, marker='+',
     ...            s=15, label='Independent')
-    >>> ax.scatter(times, chords_vit + 0.25, color='deeppink', alpha=0.5, marker='o',
+    >>> ax.scatter(times, chords_vit - 0.25, color='deeppink', alpha=0.5, marker='o',
     ...            s=15, label='Viterbi')
-    >>> ax.set(yticks=0.5 + np.unique(chords_vit),
+    >>> ax.set(yticks=np.unique(chords_vit),
     ...        yticklabels=[labels[i] for i in np.unique(chords_vit)])
     >>> ax.legend()
     """

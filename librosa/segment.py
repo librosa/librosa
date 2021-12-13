@@ -940,10 +940,14 @@ def agglomerative(data, k, clusterer=None, axis=-1):
     Plot the segmentation over the chromagram
 
     >>> import matplotlib.pyplot as plt
+    >>> import matplotlib.transforms as mpt
     >>> fig, ax = plt.subplots()
+    >>> trans = mpt.blended_transform_factory(
+    ...             ax.transData, ax.transAxes)
     >>> librosa.display.specshow(chroma, y_axis='chroma', x_axis='time', ax=ax)
-    >>> ax.vlines(bound_times, 0, chroma.shape[0], color='linen', linestyle='--',
-    ...           linewidth=2, alpha=0.9, label='Segment boundaries')
+    >>> ax.vlines(bound_times, 0, 1, color='linen', linestyle='--',
+    ...           linewidth=2, alpha=0.9, label='Segment boundaries',
+    ...           transform=trans)
     >>> ax.legend()
     >>> ax.set(title='Power spectrogram')
     """
