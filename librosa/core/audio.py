@@ -61,7 +61,7 @@ def load(
 
     Parameters
     ----------
-    path : string, int, pathlib.Path or file-like object
+    path : string, int, pathlib.Path, soundfile.SoundFile or file-like object
         path to the input file.
 
         Any codec supported by `soundfile` or `audioread` will work.
@@ -70,7 +70,7 @@ def load(
         file interface (e.g. `pathlib.Path`) are supported as `path`.
 
         If the codec is supported by `soundfile`, then `path` can also be
-        an open file descriptor (int).
+        an open file descriptor (int) or an existing `soundfile.SoundFile` object.
 
         On the contrary, if the codec is not supported by `soundfile`
         (for example, MP3), then `path` must be a file path (string or `pathlib.Path`).
@@ -146,7 +146,15 @@ def load(
     """
 
     try:
-        with sf.SoundFile(path) as sf_desc:
+        if isinstance(path, sf.SoundFile):
+            # If the user passed an existing soundfile object,
+            # we can use it directly
+            context = path
+        else:
+            # Otherwise, create the soundfile object
+            context = sf.SoundFile(path)
+
+        with context as sf_desc:
             sr_native = sf_desc.samplerate
             if offset:
                 # Seek to the start of the target read

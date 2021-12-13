@@ -13,6 +13,7 @@ try:
 except:
     pass
 
+import soundfile
 import librosa
 import glob
 import numpy as np
@@ -51,6 +52,21 @@ def test_load(infile):
     assert sr == DATA["sr"]
 
     assert np.allclose(y, DATA["y"])
+
+
+def test_load_soundfile():
+
+    fname = os.path.join("tests", "data", "test1_44100.wav")
+    # Load from filename
+    y, sr = librosa.load(fname, sr=None, mono=False)
+
+    # Load from soundfile object
+
+    sfo = soundfile.SoundFile(fname)
+    y2, sr2 = librosa.load(sfo, sr=None, mono=False)
+
+    assert np.allclose(y, y2)
+    assert np.isclose(sr, sr2)
 
 
 @pytest.mark.parametrize("res_type", ["kaiser_fast", "kaiser_best", "scipy"])
