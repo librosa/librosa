@@ -731,10 +731,11 @@ def get_samplerate(path):
 
     Parameters
     ----------
-    path : string, int, or file-like
+    path : string, int, soundfile.SoundFile, or file-like
         The path to the file to be loaded
         As in ``load``, this can also be an integer or open file-handle
         that can be processed by `soundfile`.
+        An existing `soundfile.SoundFile` object can also be supplied.
 
     Returns
     -------
@@ -750,6 +751,9 @@ def get_samplerate(path):
     22050
     """
     try:
+        if isinstance(path, sf.SoundFile):
+            return path.samplerate
+
         return sf.info(path).samplerate
     except RuntimeError:
         with audioread.audio_open(path) as fdesc:

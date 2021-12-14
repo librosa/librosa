@@ -2085,6 +2085,17 @@ def test_get_samplerate(ext):
     assert sr == 22050
 
 
+def test_get_samplerate_soundfile():
+
+    path = os.path.join("tests", "data", os.path.extsep.join(["test1_22050", "wav"]))
+
+    sfo = soundfile.SoundFile(path)
+
+    sr2 = librosa.get_samplerate(sfo)
+
+    assert sr2 == 22050
+
+
 @pytest.fixture(params=["as_file", "as_string"])
 def path(request):
 
