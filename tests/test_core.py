@@ -2096,7 +2096,7 @@ def test_get_samplerate_soundfile():
     assert sr2 == 22050
 
 
-@pytest.fixture(params=["as_file", "as_string"])
+@pytest.fixture(params=["as_file", "as_string", "as_sfo"])
 def path(request):
 
     # test data is stereo, int 16
@@ -2106,6 +2106,9 @@ def path(request):
         yield path
     elif request.param == "as_file":
         with open(path, "rb") as f:
+            yield f
+    elif request.param == "as_sfo":
+        with soundfile.SoundFile(path) as f:
             yield f
 
 

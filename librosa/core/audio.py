@@ -298,10 +298,12 @@ def stream(
 
     Parameters
     ----------
-    path : string, int, or file-like object
+    path : string, int, sf.SoundFile, or file-like object
         path to the input file to stream.
 
         Any codec supported by `soundfile` is permitted here.
+
+        An existing `soundfile.SoundFile` object may also be provided.
 
     block_length : int > 0
         The number of frames to include in each block.
@@ -391,12 +393,13 @@ def stream(
     if not (np.issubdtype(type(hop_length), np.integer) and hop_length > 0):
         raise ParameterError("hop_length={} must be a positive integer")
 
-    # Get the sample rate from the file info
-    sr = sf.info(path).samplerate
+    if isinstance(path, sf.SoundFile):
+        sfo = path
+    else:
+        sfo = sf.SoundFile(path)
 
-    # If the input is a file handle, rewind its read position after `sf.info`
-    if hasattr(path, "seek"):
-        path.seek(0)
+    # Get the sample rate from the file info
+    sr = sfo.samplerate
 
     # Construct the stream
     if offset:
@@ -409,15 +412,16 @@ def stream(
     else:
         frames = -1
 
-    blocks = sf.blocks(
-        path,
+    # Seek the soundfile object to the starting frame
+    sfo.seek(start)
+
+    blocks = sfo.blocks(
         blocksize=frame_length + (block_length - 1) * hop_length,
         overlap=frame_length - hop_length,
-        fill_value=fill_value,
-        start=start,
         frames=frames,
         dtype=dtype,
         always_2d=False,
+        fill_value=fill_value,
     )
 
     for block in blocks:
