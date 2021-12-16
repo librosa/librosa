@@ -54,7 +54,6 @@ from .util.exceptions import ParameterError
 __all__ = [
     "specshow",
     "waveshow",
-    "waveplot",
     "cmap",
     "TimeFormatter",
     "NoteFormatter",
