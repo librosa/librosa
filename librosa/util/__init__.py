@@ -72,15 +72,6 @@ File operations
     list_examples
     find_files
 
-
-Deprecated
-----------
-
-.. autosummary::
-    :toctree: generated/
-
-    example_audio_file
-
 """
 
 from .utils import *  # pylint: disable=wildcard-import

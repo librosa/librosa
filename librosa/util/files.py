@@ -11,11 +11,9 @@ from pkg_resources import resource_filename
 import pooch
 
 from .exceptions import ParameterError
-from .decorators import deprecated
 
 
 __all__ = [
-    "example_audio_file",
     "find_files",
     "example",
     "ex",
@@ -158,40 +156,6 @@ def example_info(key):
         print("-" * 68)
         for line in fdesc:
             print(line)
-
-
-@deprecated("0.8", "0.9")
-def example_audio_file():
-    """Get the path to an included audio example file.
-
-    .. warning:: This function is deprecated in 0.8, and will be removed in 0.9.
-                 Instead, use `librosa.util.example`.
-
-    .. raw:: html
-
-       <div xmlns:cc="http://creativecommons.org/ns#"
-          xmlns:dct="http://purl.org/dc/terms/"
-             about="http://freemusicarchive.org/music/Kevin_MacLeod/Jazz_Sampler/Vibe_Ace_1278">
-            <span property="dct:title">Vibe Ace</span>
-            (<a rel="cc:attributionURL" property="cc:attributionName"
-                href="http://freemusicarchive.org/music/Kevin_MacLeod/">Kevin MacLeod</a>)
-            / <a rel="license" href="http://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>
-       </div>
-
-
-    Examples
-    --------
-    >>> # Load the waveform from the example track
-    >>> y, sr = librosa.load(librosa.util.example_audio_file())
-
-    Returns
-    -------
-    filename : str
-        Path to the audio example file included with librosa
-    """
-
-    # hq=True recovers our original example file
-    return example("vibeace", hq=True)
 
 
 def find_files(
