@@ -24,11 +24,6 @@ jobs:
                       name: "Minimal dependencies"
 
                     - os: ubuntu-latest
-                      python-version: "3.6"
-                      channel-priority: "strict"
-                      envfile: ".github/environment-ci.yml"
-
-                    - os: ubuntu-latest
                       python-version: "3.7"
                       channel-priority: "strict"
                       envfile: ".github/environment-ci.yml"
