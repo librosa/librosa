@@ -860,6 +860,7 @@ def specshow(
     x_coords = __mesh_coords(x_axis, x_coords, data.shape[1], **all_params)
 
     axes = __check_axes(ax)
+
     out = axes.pcolormesh(x_coords, y_coords, data, **kwargs)
 
     __set_current_image(ax, out)
