@@ -525,24 +525,6 @@ def test_time_unit_lag(S_abs, sr):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["waveplot_mono"], extensions=["png"], tolerance=6, style=STYLE
-)
-@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-def test_waveplot_mono(y, sr):
-
-    plt.figure()
-    plt.subplot(3, 1, 1)
-    librosa.display.waveplot(y, sr=sr, max_points=None, x_axis="off")
-
-    plt.subplot(3, 1, 2)
-    librosa.display.waveplot(y, sr=sr, x_axis="off")
-
-    plt.subplot(3, 1, 3)
-    librosa.display.waveplot(y, sr=sr, x_axis="time")
-    return plt.gcf()
-
-
-@pytest.mark.mpl_image_compare(
     baseline_images=["waveshow_mono"], extensions=["png"], tolerance=6, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
@@ -582,21 +564,6 @@ def test_waveshow_mono_zoom_out(y, sr):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["waveplot_ext_axes"], extensions=["png"], tolerance=6, style=STYLE
-)
-@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-def test_waveplot_ext_axes(y):
-    plt.figure()
-    ax_left = plt.subplot(1, 2, 1)
-    ax_right = plt.subplot(1, 2, 2)
-
-    # implicitly ax_right
-    librosa.display.waveplot(y, color="blue")
-    librosa.display.waveplot(y, color="red", ax=ax_left)
-    return plt.gcf()
-
-
-@pytest.mark.mpl_image_compare(
     baseline_images=["waveshow_ext_axes"], extensions=["png"], tolerance=6, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
@@ -608,19 +575,6 @@ def test_waveshow_ext_axes(y):
     # implicitly ax_right
     librosa.display.waveshow(y, color="blue")
     librosa.display.waveshow(y, color="red", ax=ax_left)
-    return plt.gcf()
-
-
-@pytest.mark.mpl_image_compare(
-    baseline_images=["waveplot_stereo"], extensions=["png"], tolerance=6, style=STYLE
-)
-@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-def test_waveplot_stereo(y, sr):
-
-    ys = librosa.util.stack([y, 2 * y])
-
-    plt.figure()
-    librosa.display.waveplot(ys, sr=sr)
     return plt.gcf()
 
 
@@ -649,15 +603,7 @@ def test_unknown_wavaxis(y, sr):
 def test_waveshow_unknown_wavaxis(y, sr):
 
     plt.figure()
-    librosa.display.waveplot(y, sr=sr, x_axis="something not in the axis map")
-    return plt.gcf()
-
-
-@pytest.mark.xfail(raises=librosa.ParameterError)
-def test_waveplot_bad_maxsr(y, sr):
-
-    plt.figure()
-    librosa.display.waveplot(y, sr=sr, max_sr=0)
+    librosa.display.waveshow(y, sr=sr, x_axis="something not in the axis map")
     return plt.gcf()
 
 
@@ -665,13 +611,6 @@ def test_waveplot_bad_maxsr(y, sr):
 def test_waveshow_bad_maxpoints(y, sr):
     plt.figure()
     librosa.display.waveshow(y, sr=sr, max_points=0)
-    return plt.gcf()
-
-
-@pytest.mark.xfail(raises=librosa.ParameterError)
-def test_waveplot_bad_maxpoints(y, sr):
-    plt.figure()
-    librosa.display.waveplot(y, sr=sr, max_points=0)
     return plt.gcf()
 
 
@@ -740,7 +679,7 @@ def test_sharex_specshow_ms(S_abs, y, sr):
     librosa.display.specshow(librosa.amplitude_to_db(S_abs, ref=np.max), x_axis="time")
     plt.xlabel("")  # hide the x label here, which is not propagated automatically
     plt.subplot(2, 1, 2, sharex=ax)
-    librosa.display.waveplot(y, sr, x_axis="ms")
+    librosa.display.waveshow(y, sr, x_axis="ms")
     plt.xlabel("")  # hide the x label here, which is not propagated automatically
     return plt.gcf()
 
@@ -755,7 +694,7 @@ def test_sharex_waveplot_ms(y, sr, S_abs):
     # Due to shared x_axis, both plots are plotted in 'ms'.
     plt.figure(figsize=(8, 8))
     ax = plt.subplot(2, 1, 1)
-    librosa.display.waveplot(y, sr)
+    librosa.display.waveshow(y, sr)
     plt.xlabel("")  # hide the x label here, which is not propagated automatically
     plt.subplot(2, 1, 2, sharex=ax)
     librosa.display.specshow(librosa.amplitude_to_db(S_abs, ref=np.max), x_axis="ms")
