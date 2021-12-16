@@ -25,6 +25,7 @@ dependencies:
   - contextlib2
   - coverage
   - ffmpeg
+  - tomli<2.0
   - pip:
     - soxr
     - samplerate
