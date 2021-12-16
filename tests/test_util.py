@@ -22,12 +22,6 @@ from test_core import srand
 np.set_printoptions(precision=3)
 
 
-# TODO: remove at 0.9
-def test_example_audio_file():
-
-    assert os.path.exists(librosa.util.example_audio_file())
-
-
 @pytest.mark.parametrize("frame_length", [4, 8])
 @pytest.mark.parametrize("hop_length", [2, 4])
 @pytest.mark.parametrize("y", [np.random.randn(32)])
