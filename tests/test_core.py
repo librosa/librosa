@@ -13,6 +13,7 @@ try:
 except:
     pass
 
+import soundfile
 import librosa
 import glob
 import numpy as np
@@ -51,6 +52,21 @@ def test_load(infile):
     assert sr == DATA["sr"]
 
     assert np.allclose(y, DATA["y"])
+
+
+def test_load_soundfile():
+
+    fname = os.path.join("tests", "data", "test1_44100.wav")
+    # Load from filename
+    y, sr = librosa.load(fname, sr=None, mono=False)
+
+    # Load from soundfile object
+
+    sfo = soundfile.SoundFile(fname)
+    y2, sr2 = librosa.load(sfo, sr=None, mono=False)
+
+    assert np.allclose(y, y2)
+    assert np.isclose(sr, sr2)
 
 
 @pytest.mark.parametrize("res_type", ["kaiser_fast", "kaiser_best", "scipy"])
@@ -2069,7 +2085,18 @@ def test_get_samplerate(ext):
     assert sr == 22050
 
 
-@pytest.fixture(params=["as_file", "as_string"])
+def test_get_samplerate_soundfile():
+
+    path = os.path.join("tests", "data", os.path.extsep.join(["test1_22050", "wav"]))
+
+    sfo = soundfile.SoundFile(path)
+
+    sr2 = librosa.get_samplerate(sfo)
+
+    assert sr2 == 22050
+
+
+@pytest.fixture(params=["as_file", "as_string", "as_sfo"])
 def path(request):
 
     # test data is stereo, int 16
@@ -2079,6 +2106,9 @@ def path(request):
         yield path
     elif request.param == "as_file":
         with open(path, "rb") as f:
+            yield f
+    elif request.param == "as_sfo":
+        with soundfile.SoundFile(path) as f:
             yield f
 
 

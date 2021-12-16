@@ -61,7 +61,7 @@ def load(
 
     Parameters
     ----------
-    path : string, int, pathlib.Path or file-like object
+    path : string, int, pathlib.Path, soundfile.SoundFile or file-like object
         path to the input file.
 
         Any codec supported by `soundfile` or `audioread` will work.
@@ -70,7 +70,7 @@ def load(
         file interface (e.g. `pathlib.Path`) are supported as `path`.
 
         If the codec is supported by `soundfile`, then `path` can also be
-        an open file descriptor (int).
+        an open file descriptor (int) or an existing `soundfile.SoundFile` object.
 
         On the contrary, if the codec is not supported by `soundfile`
         (for example, MP3), then `path` must be a file path (string or `pathlib.Path`).
@@ -146,7 +146,15 @@ def load(
     """
 
     try:
-        with sf.SoundFile(path) as sf_desc:
+        if isinstance(path, sf.SoundFile):
+            # If the user passed an existing soundfile object,
+            # we can use it directly
+            context = path
+        else:
+            # Otherwise, create the soundfile object
+            context = sf.SoundFile(path)
+
+        with context as sf_desc:
             sr_native = sf_desc.samplerate
             if offset:
                 # Seek to the start of the target read
@@ -290,10 +298,12 @@ def stream(
 
     Parameters
     ----------
-    path : string, int, or file-like object
+    path : string, int, sf.SoundFile, or file-like object
         path to the input file to stream.
 
         Any codec supported by `soundfile` is permitted here.
+
+        An existing `soundfile.SoundFile` object may also be provided.
 
     block_length : int > 0
         The number of frames to include in each block.
@@ -383,12 +393,13 @@ def stream(
     if not (np.issubdtype(type(hop_length), np.integer) and hop_length > 0):
         raise ParameterError("hop_length={} must be a positive integer")
 
-    # Get the sample rate from the file info
-    sr = sf.info(path).samplerate
+    if isinstance(path, sf.SoundFile):
+        sfo = path
+    else:
+        sfo = sf.SoundFile(path)
 
-    # If the input is a file handle, rewind its read position after `sf.info`
-    if hasattr(path, "seek"):
-        path.seek(0)
+    # Get the sample rate from the file info
+    sr = sfo.samplerate
 
     # Construct the stream
     if offset:
@@ -401,15 +412,16 @@ def stream(
     else:
         frames = -1
 
-    blocks = sf.blocks(
-        path,
+    # Seek the soundfile object to the starting frame
+    sfo.seek(start)
+
+    blocks = sfo.blocks(
         blocksize=frame_length + (block_length - 1) * hop_length,
         overlap=frame_length - hop_length,
-        fill_value=fill_value,
-        start=start,
         frames=frames,
         dtype=dtype,
         always_2d=False,
+        fill_value=fill_value,
     )
 
     for block in blocks:
@@ -723,10 +735,11 @@ def get_samplerate(path):
 
     Parameters
     ----------
-    path : string, int, or file-like
+    path : string, int, soundfile.SoundFile, or file-like
         The path to the file to be loaded
         As in ``load``, this can also be an integer or open file-handle
         that can be processed by `soundfile`.
+        An existing `soundfile.SoundFile` object can also be supplied.
 
     Returns
     -------
@@ -742,6 +755,9 @@ def get_samplerate(path):
     22050
     """
     try:
+        if isinstance(path, sf.SoundFile):
+            return path.samplerate
+
         return sf.info(path).samplerate
     except RuntimeError:
         with audioread.audio_open(path) as fdesc:
