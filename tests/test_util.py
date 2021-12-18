@@ -1204,7 +1204,9 @@ def test_stack_consistent(x, axis):
         assert xs.flags["C_CONTIGUOUS"]
 
 
-@pytest.mark.parametrize("key", ["trumpet", "brahms", "nutcracker", "choice"])
+@pytest.mark.parametrize("key", ["trumpet", "brahms", "nutcracker",
+    "choice", "humpback", "libri1", "libri2", "libri3", "pistachio",
+    "robin", "sweetwaltz", "fishin", "vibeace"])
 @pytest.mark.parametrize("hq", [False, True])
 def test_example(key, hq):
 
@@ -1217,7 +1219,9 @@ def test_example_fail():
     librosa.example("no such track")
 
 
-@pytest.mark.parametrize("key", ["trumpet", "brahms", "nutcracker", "choice", "fishin"])
+@pytest.mark.parametrize("key", ["trumpet", "brahms", "nutcracker",
+    "choice", "humpback", "libri1", "libri2", "libri3", "pistachio",
+    "robin", "sweetwaltz", "fishin", "vibeace"])
 def test_example_info(key):
 
     librosa.util.example_info(key)
