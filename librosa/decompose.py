@@ -120,13 +120,13 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
     --------
     Decompose a magnitude spectrogram into 32 components with NMF
 
-    >>> y, sr = librosa.load(librosa.ex('choice'), duration=5)
+    >>> y, sr = librosa.load(librosa.ex('sweetwaltz'), duration=10)
     >>> S = np.abs(librosa.stft(y))
-    >>> comps, acts = librosa.decompose.decompose(S, n_components=8)
+    >>> comps, acts = librosa.decompose.decompose(S, n_components=32)
 
     Sort components by ascending peak frequency
 
-    >>> comps, acts = librosa.decompose.decompose(S, n_components=16,
+    >>> comps, acts = librosa.decompose.decompose(S, n_components=32,
     ...                                           sort=True)
 
 

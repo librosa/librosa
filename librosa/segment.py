@@ -137,11 +137,11 @@ def cross_similarity(
 
     Examples
     --------
-    Find nearest neighbors in MFCC space between two sequences
+    Find nearest neighbors in CQT space between two sequences
 
     >>> hop_length = 1024
-    >>> y_ref, sr = librosa.load(librosa.ex('nutcracker'))
-    >>> y_comp, sr = librosa.load(librosa.ex('nutcracker'), offset=10)
+    >>> y_ref, sr = librosa.load(librosa.ex('pistachio'))
+    >>> y_comp, sr = librosa.load(librosa.ex('pistachio'), offset=10)
     >>> chroma_ref = librosa.feature.chroma_cqt(y=y_ref, sr=sr, hop_length=hop_length)
     >>> chroma_comp = librosa.feature.chroma_cqt(y=y_comp, sr=sr, hop_length=hop_length)
     >>> # Use time-delay embedding to get a cleaner recurrence matrix
@@ -379,7 +379,7 @@ def recurrence_matrix(
 
     Examples
     --------
-    Find nearest neighbors in MFCC space
+    Find nearest neighbors in CQT space
 
     >>> y, sr = librosa.load(librosa.ex('nutcracker'))
     >>> hop_length = 1024
