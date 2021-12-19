@@ -142,7 +142,7 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
     ...                                                  ref=np.max),
     ...                          y_axis='log', ax=ax[0])
     >>> ax[0].set(title='Components')
-    >>> librosa.display.specshow(acts, x_axis='time', ax=ax[1])
+    >>> librosa.display.specshow(acts, x_axis='time', ax=ax[1], cmap='gray_r')
     >>> ax[1].set(ylabel='Components', title='Activations')
 
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
