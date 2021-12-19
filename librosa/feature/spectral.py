@@ -1867,10 +1867,16 @@ def mfcc(
     Visualize the MFCC series
 
     >>> import matplotlib.pyplot as plt
-    >>> fig, ax = plt.subplots()
-    >>> img = librosa.display.specshow(mfccs, x_axis='time', ax=ax)
-    >>> fig.colorbar(img, ax=ax)
-    >>> ax.set(title='MFCC')
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True)
+    >>> img = librosa.display.specshow(librosa.power_to_db(S, ref=np.max), 
+    ...                                x_axis='time', y_axis='mel', fmax=8000,
+    ...                                ax=ax[0])
+    >>> fig.colorbar(img, ax=[ax[0]])
+    >>> ax[0].set(title='Mel spectrogram')
+    >>> ax[0].label_outer()
+    >>> img = librosa.display.specshow(mfccs, x_axis='time', ax=ax[1])
+    >>> fig.colorbar(img, ax=[ax[1]])
+    >>> ax[1].set(title='MFCC')
 
     Compare different DCT bases
 
