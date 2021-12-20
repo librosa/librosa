@@ -120,7 +120,7 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
     --------
     Decompose a magnitude spectrogram into 16 components with NMF
 
-    >>> y, sr = librosa.load(librosa.ex('sweetwaltz'), duration=5)
+    >>> y, sr = librosa.load(librosa.ex('pistachio'), duration=5)
     >>> S = np.abs(librosa.stft(y))
     >>> comps, acts = librosa.decompose.decompose(S, n_components=16)
 
@@ -160,6 +160,7 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
     >>> ax['D'].set(title='Reconstructed spectrogram')
     >>> ax['D'].sharex(ax['A'])
     >>> ax['D'].sharey(ax['A'])
+    >>> ax['D'].label_outer()
     >>> fig.colorbar(img, ax=list(ax.values()), format="%+2.f dB")
     """
 

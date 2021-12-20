@@ -1318,10 +1318,13 @@ def chroma_stft(
            [0.743, 0.937, ..., 0.684, 0.815]], dtype=float32)
 
     >>> import matplotlib.pyplot as plt
-    >>> fig, ax = plt.subplots()
-    >>> img = librosa.display.specshow(chroma, y_axis='chroma', x_axis='time', ax=ax)
-    >>> fig.colorbar(img, ax=ax)
-    >>> ax.set(title='Chromagram')
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True)
+    >>> img = librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    ...                                y_axis='log', x_axis='time', ax=ax[0])
+    >>> fig.colorbar(img, ax=[ax[0]])
+    >>> ax[0].label_outer()
+    >>> img = librosa.display.specshow(chroma, y_axis='chroma', x_axis='time', ax=ax[1])
+    >>> fig.colorbar(img, ax=[ax[1]])
     """
 
     S, n_fft = _spectrogram(
