@@ -999,7 +999,7 @@ def reassigned_spectrogram(
     ...     1e-6 * np.random.randn(2*sr)
     >>> freqs, times, mags = librosa.reassigned_spectrogram(y=y, sr=sr,
     ...                                                     n_fft=n_fft)
-    >>> mags_db = librosa.power_to_db(mags, ref=np.max)
+    >>> mags_db = librosa.amplitude_to_db(mags, ref=np.max)
 
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
     >>> img = librosa.display.specshow(mags_db, x_axis="s", y_axis="linear", sr=sr,
