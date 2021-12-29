@@ -44,13 +44,20 @@ The following table describes in more detail what the recordings are, and how th
 are mainly used in the documentation.
 `Key` indicates the descriptor used to identify the track when calling `librosa.example()`.
 
-==========  =========================================== ============================================================================
-Key         Full name                                   Description
-==========  =========================================== ============================================================================
-brahms      Brahms - Hungarian Dance #5                 A short performance of this piece, with soft note onsets and variable tempo.
-choice      Admiral Bob - Choice                        A short drum and bass loop, good for demonstrating decomposition methods.
-fishin      Karissa Hobbs - Let's Go Fishin'            A folk/pop song with verse/chorus/verse structure and vocals.
-nutcracker  Tchaikovsky - Dance of the Sugar Plum Fairy Orchestral piece included to demonstrate tempo and harmony features.
-trumpet     Mihai Sorohan - Trumpet loop                Monophonic trumpet recording, good for demonstrating pitch features.
-vibeace     Kevin Macleod - Vibe Ace                    A vibraphone, piano, and bass combo. Previously the only included example.
-==========  =========================================== ============================================================================
+==========  ============================================ ============================================================================
+Key         Full name                                    Description
+==========  ============================================ ============================================================================
+brahms      Brahms - Hungarian Dance #5                  A short performance of this piece, with soft note onsets and variable tempo.
+choice      Admiral Bob - Choice                         A short drum and bass loop, good for demonstrating decomposition methods.
+fishin      Karissa Hobbs - Let's Go Fishin'             A folk/pop song with verse/chorus/verse structure and vocals.
+humpback    Humpback whale song                          Glacier Bay 60-second clip of humpback whale song.
+libri1      Ashiel Mystery, A Detective Story, Ch. 2     LibriSpeech example, book narration by Garth Comira.
+libri2      The Age of Chivalry, Ch. 18: Perceval        LibriSpeech example, book narration by Anders Lankford.
+libri3      Sense and Sensibility, Ch. 18                LibriSpeech example, book narration by Heather Barnett.
+nutcracker  Tchaikovsky - Dance of the Sugar Plum Fairy  Orchestral piece included to demonstrate tempo and harmony features.
+pistachio   The Piano Lady - Pistachio Ice Cream Ragtime Solo piano ragtime piece.
+robin       Bird Whistling, Robin                        A single chirping call of an English robin bird.
+sweetwaltz  Setuniman - Sweet Waltz                      3/4 time piece with synthetisized xylophone, flute, and organ.
+trumpet     Mihai Sorohan - Trumpet loop                 Monophonic trumpet recording, good for demonstrating pitch features.
+vibeace     Kevin Macleod - Vibe Ace                     A vibraphone, piano, and bass combo. Previously the only included example.
+==========  ============================================ ============================================================================

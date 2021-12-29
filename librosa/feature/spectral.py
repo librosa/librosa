@@ -1318,10 +1318,13 @@ def chroma_stft(
            [0.743, 0.937, ..., 0.684, 0.815]], dtype=float32)
 
     >>> import matplotlib.pyplot as plt
-    >>> fig, ax = plt.subplots()
-    >>> img = librosa.display.specshow(chroma, y_axis='chroma', x_axis='time', ax=ax)
-    >>> fig.colorbar(img, ax=ax)
-    >>> ax.set(title='Chromagram')
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True)
+    >>> img = librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    ...                                y_axis='log', x_axis='time', ax=ax[0])
+    >>> fig.colorbar(img, ax=[ax[0]])
+    >>> ax[0].label_outer()
+    >>> img = librosa.display.specshow(chroma, y_axis='chroma', x_axis='time', ax=ax[1])
+    >>> fig.colorbar(img, ax=[ax[1]])
     """
 
     S, n_fft = _spectrogram(
@@ -1831,23 +1834,22 @@ def mfcc(
     --------
     Generate mfccs from a time series
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.load(librosa.ex('libri1'))
     >>> librosa.feature.mfcc(y=y, sr=sr)
-    array([[-249.124, -236.652, ..., -619.714, -619.714],
-           [  73.787,   51.215, ...,    0.   ,    0.   ],
+    array([[-565.919, -564.288, ..., -426.484, -434.668],
+           [  10.305,   12.509, ...,   88.43 ,   90.12 ],
            ...,
-           [ -10.144,   -9.091, ...,    0.   ,    0.   ],
-           [ -13.994,  -21.184, ...,    0.   ,    0.   ]],
-          dtype=float32)
+           [   2.807,    2.068, ...,   -6.725,   -5.159],
+           [   2.822,    2.244, ...,   -6.198,   -6.177]], dtype=float32)
 
     Using a different hop length and HTK-style Mel frequencies
 
     >>> librosa.feature.mfcc(y=y, sr=sr, hop_length=1024, htk=True)
-    array([[-274.064, -296.403, ..., -643.958, -643.958],
-           [  63.888,    0.907, ...,    0.   ,    0.   ],
+    array([[-5.471e+02, -5.464e+02, ..., -4.446e+02, -4.200e+02],
+           [ 1.361e+01,  1.402e+01, ...,  9.764e+01,  9.869e+01],
            ...,
-           [  13.069,   36.896, ...,    0.   ,    0.   ],
-           [  -2.986,  -13.714, ...,    0.   ,    0.   ]],
+           [ 4.097e-01, -2.029e+00, ..., -1.051e+01, -1.130e+01],
+           [-1.119e-01, -1.688e+00, ..., -3.442e+00, -4.687e+00]],
           dtype=float32)
 
     Use a pre-computed log-power Mel spectrogram
@@ -1855,12 +1857,11 @@ def mfcc(
     >>> S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128,
     ...                                    fmax=8000)
     >>> librosa.feature.mfcc(S=librosa.power_to_db(S))
-    array([[-222.66 , -209.08 , ..., -627.181, -627.181],
-           [  32.214,    2.315, ...,    0.   ,    0.   ],
+    array([[-559.974, -558.449, ..., -411.96 , -420.458],
+           [  11.018,   13.046, ...,   76.972,   80.888],
            ...,
-           [   0.872,   -4.195, ...,    0.   ,    0.   ],
-           [  29.123,   33.193, ...,    0.   ,    0.   ]],
-          dtype=float32)
+           [   2.713,    2.379, ...,    1.464,   -2.835],
+           [   2.712,    2.619, ...,    2.209,    0.648]], dtype=float32)
 
     Get more components
 
@@ -1869,10 +1870,16 @@ def mfcc(
     Visualize the MFCC series
 
     >>> import matplotlib.pyplot as plt
-    >>> fig, ax = plt.subplots()
-    >>> img = librosa.display.specshow(mfccs, x_axis='time', ax=ax)
-    >>> fig.colorbar(img, ax=ax)
-    >>> ax.set(title='MFCC')
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True)
+    >>> img = librosa.display.specshow(librosa.power_to_db(S, ref=np.max), 
+    ...                                x_axis='time', y_axis='mel', fmax=8000,
+    ...                                ax=ax[0])
+    >>> fig.colorbar(img, ax=[ax[0]])
+    >>> ax[0].set(title='Mel spectrogram')
+    >>> ax[0].label_outer()
+    >>> img = librosa.display.specshow(mfccs, x_axis='time', ax=ax[1])
+    >>> fig.colorbar(img, ax=[ax[1]])
+    >>> ax[1].set(title='MFCC')
 
     Compare different DCT bases
 

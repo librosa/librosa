@@ -18,6 +18,8 @@ and its margin-based extension due to `Dreidger, Mueller and Disch, 2014
 import numpy as np
 import matplotlib.pyplot as plt
 
+from IPython.display import Audio
+
 import librosa
 import librosa.display
 
@@ -25,6 +27,7 @@ import librosa.display
 # Load an example clip with harmonics and percussives
 y, sr = librosa.load(librosa.ex('fishin'), duration=5, offset=10)
 
+Audio(data=y, rate=sr)
 
 ###############################################
 # Compute the short-time Fourier transform of y
@@ -60,6 +63,20 @@ librosa.display.specshow(librosa.amplitude_to_db(np.abs(D_percussive), ref=rp),
 ax[2].set(title='Percussive spectrogram')
 fig.colorbar(img, ax=ax)
 
+#########################################################################
+# We can also invert the separated spectrograms to play back the audio.
+# First the harmonic signal:
+
+y_harmonic = librosa.istft(D_harmonic, length=len(y))
+Audio(data=y_harmonic, rate=sr)
+
+#################################
+# And next the percussive signal:
+
+y_percussive = librosa.istft(D_percussive, length=len(y))
+Audio(data=y_percussive, rate=sr)
+
+
 #################################################################################
 # The default HPSS above assigns energy to each time-frequency bin according to
 # whether a horizontal (harmonic) or vertical (percussive) filter responds higher
@@ -67,7 +84,8 @@ fig.colorbar(img, ax=ax)
 #
 # This assumes that all energy belongs to either a harmonic or percussive source,
 # but does not handle "noise" well.  Noise energy ends up getting spread between
-# D_harmonic and D_percussive.
+# D_harmonic and D_percussive.  Unfortunately, this often also includes vocals
+# and other sounds that are not purely harmonic or percussive.
 #
 # If we instead require that the horizontal filter responds more than the vertical
 # filter *by at least some margin*, and vice versa, then noise can be removed
@@ -122,3 +140,20 @@ for i in range(5):
     ax[i, 0].set(ylabel='margin={:d}'.format(2**i))
     ax[i, 0].label_outer()
     ax[i, 1].label_outer()
+
+
+################################################################################
+# In the plots above, it looks like margins of 4 or greater are sufficient to
+# produce strictly harmonic and percussive components.
+#
+# We can invert and play those components back just as before.
+# Again, starting with the harmonic component:
+
+y_harmonic4 = librosa.istft(D_harmonic4, length=len(y))
+Audio(data=y_harmonic4, rate=sr)
+
+##############################################################
+# And the percussive component:
+
+y_percussive4 = librosa.istft(D_percussive4, length=len(y))
+Audio(data=y_percussive4, rate=sr)
