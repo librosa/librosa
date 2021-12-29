@@ -24,6 +24,8 @@ This is based on the "REPET-SIM" method of `Rafii and Pardo, 2012
 # Standard imports
 import numpy as np
 import matplotlib.pyplot as plt
+from IPython.display import Audio
+
 import librosa
 
 import librosa.display
@@ -36,6 +38,8 @@ y, sr = librosa.load(librosa.ex('fishin'), duration=120)
 # And compute the spectrogram magnitude and phase
 S_full, phase = librosa.magphase(librosa.stft(y))
 
+# Play back a 5-second excerpt with vocals
+Audio(data=y[10*sr:15*sr], rate=sr)
 
 #######################################
 # Plot a 5-second slice of the spectrum
@@ -123,3 +127,5 @@ fig.colorbar(img, ax=ax)
 # that we had previously set aside.
 
 y_foreground = librosa.istft(S_foreground * phase)
+# Play back a 5-second excerpt with vocals
+Audio(data=y_foreground[10*sr:15*sr], rate=sr)

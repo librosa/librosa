@@ -148,6 +148,7 @@ sphinx_gallery_conf = {
     "examples_dirs": "examples/",
     "gallery_dirs": "auto_examples",
     "backreferences_dir": None,
+    "matplotlib_animations": True,
     "reference_url": {
         "sphinx_gallery": None,
         "librosa": None,

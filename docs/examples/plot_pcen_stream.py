@@ -26,19 +26,18 @@ import librosa.display as display
 
 ######################################################################
 # First, we'll start with an audio file that we want to stream
-# We'll use an example track at 44.1 KHz
-filename = librosa.ex('brahms', hq=True)
+filename = librosa.ex('humpback')
 
 #####################################################################
-# Next, we'll set up the block reader to work on short segments of 
+# Next, we'll set up the block reader to work on short segments of
 # audio at a time.
 
-# We'll generate 16 frames at a time, each frame having 4096 samples
-# and 50% overlap.
+# We'll generate 64 frames at a time, each frame having 2048 samples
+# and 75% overlap.
 #
 
-n_fft = 4096
-hop_length = n_fft // 2
+n_fft = 2048
+hop_length = 512
 
 # fill_value pads out the last frame with zeros so that we have a
 # full frame at the end of the signal, even if the signal doesn't
@@ -50,9 +49,9 @@ stream = librosa.stream(filename, block_length=16,
                         hop_length=hop_length,
                         mono=True,
                         fill_value=0)
-#####################################################################
-# For this example, we'll compute PCEN on each block, average over
-# frequency, and store the results in a list.
+#######################################################################
+# For this example, we'll compute PCEN on each block, find the maximum
+# response over frequency, and store the results in a list.
 
 # Make an array to store the frequency-averaged PCEN values
 pcen_blocks = []
@@ -71,17 +70,17 @@ for y_block in stream:
     P, zi = librosa.pcen(np.abs(D), sr=sr, hop_length=hop_length,
                          zi=zi, return_zf=True)
 
-    # Compute the average PCEN over frequency, and append it to our list
-    pcen_blocks.extend(np.mean(P, axis=0))
+    # Compute the max PCEN over frequency, and append it to our list
+    pcen_blocks.extend(np.max(P, axis=0))
 
 # Cast to a numpy array for use downstream
 pcen_blocks = np.asarray(pcen_blocks)
 
 #####################################################################
-# For the sake of comparison, let's see how it would look had we 
+# For the sake of comparison, let's see how it would look had we
 # run PCEN on the entire spectrum without block-wise processing
 
-y, sr = librosa.load(filename, sr=44100)
+y, sr = librosa.load(filename, sr=sr)
 
 # Keep the same parameters as before
 D = librosa.stft(y, n_fft=n_fft, hop_length=hop_length, center=False)
@@ -91,7 +90,7 @@ D = librosa.stft(y, n_fft=n_fft, hop_length=hop_length, center=False)
 # we're doing everything in one go.
 P = librosa.pcen(np.abs(D), sr=sr, hop_length=hop_length)
 
-pcen_full = np.mean(P, axis=0)
+pcen_full = np.max(P, axis=0)
 
 #####################################################################
 # Plot the PCEN spectrum and the resulting magnitudes

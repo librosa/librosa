@@ -118,11 +118,11 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
 
     Examples
     --------
-    Decompose a magnitude spectrogram into 32 components with NMF
+    Decompose a magnitude spectrogram into 16 components with NMF
 
-    >>> y, sr = librosa.load(librosa.ex('choice'), duration=5)
+    >>> y, sr = librosa.load(librosa.ex('pistachio'), duration=5)
     >>> S = np.abs(librosa.stft(y))
-    >>> comps, acts = librosa.decompose.decompose(S, n_components=8)
+    >>> comps, acts = librosa.decompose.decompose(S, n_components=16)
 
     Sort components by ascending peak frequency
 
@@ -137,25 +137,31 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
     >>> scomps, sacts = librosa.decompose.decompose(S, transformer=T, sort=True)
 
     >>> import matplotlib.pyplot as plt
-    >>> fig, ax = plt.subplots(nrows=1, ncols=2)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(comps,
-    ...                                                  ref=np.max),
-    ...                          y_axis='log', ax=ax[0])
-    >>> ax[0].set(title='Components')
-    >>> librosa.display.specshow(acts, x_axis='time', ax=ax[1])
-    >>> ax[1].set(ylabel='Components', title='Activations')
-
-    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+    >>> layout = [list(".AAAA"), list("BCCCC"), list(".DDDD")]
+    >>> fig, ax = plt.subplot_mosaic(layout, constrained_layout=True)
     >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
-    ...                          y_axis='log', x_axis='time', ax=ax[0])
-    >>> ax[0].set(title='Input spectrogram')
-    >>> ax[0].label_outer()
+    ...                          y_axis='log', x_axis='time', ax=ax['A'])
+    >>> ax['A'].set(title='Input spectrogram')
+    >>> ax['A'].label_outer()
+    >>> librosa.display.specshow(librosa.amplitude_to_db(comps,
+    >>>                                                  ref=np.max),
+    >>>                          y_axis='log', ax=ax['B'])
+    >>> ax['B'].set(title='Components')
+    >>> ax['B'].label_outer()
+    >>> ax['B'].sharey(ax['A'])
+    >>> librosa.display.specshow(acts, x_axis='time', ax=ax['C'], cmap='gray_r')
+    >>> ax['C'].set(ylabel='Components', title='Activations')
+    >>> ax['C'].sharex(ax['A'])
+    >>> ax['C'].label_outer()
     >>> S_approx = comps.dot(acts)
     >>> img = librosa.display.specshow(librosa.amplitude_to_db(S_approx,
-    ...                                                  ref=np.max),
-    ...                          y_axis='log', x_axis='time', ax=ax[1])
-    >>> ax[1].set(title='Reconstructed spectrogram')
-    >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
+    >>>                                                        ref=np.max),
+    >>>                                y_axis='log', x_axis='time', ax=ax['D'])
+    >>> ax['D'].set(title='Reconstructed spectrogram')
+    >>> ax['D'].sharex(ax['A'])
+    >>> ax['D'].sharey(ax['A'])
+    >>> ax['D'].label_outer()
+    >>> fig.colorbar(img, ax=list(ax.values()), format="%+2.f dB")
     """
 
     # Do a swapaxes and unroll
