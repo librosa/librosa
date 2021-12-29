@@ -890,7 +890,7 @@ def wavelet(
     --------
     Create a constant-Q basis
 
-    >>> freqs = librosa.cqt_frequencies(sr=22050)
+    >>> freqs = librosa.cqt_frequencies(n_bins=84, fmin=librosa.note_to_hz('C1'))
     >>> basis, lengths = librosa.filters.wavelet(freqs, sr=22050)
 
     Plot one octave of filters in time and frequency

@@ -886,14 +886,14 @@ def lpc(y, order, axis=-1):
     --------
     Compute LP coefficients of y at order 16 on entire series
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.load(librosa.ex('libri1'))
     >>> librosa.lpc(y, 16)
 
     Compute LP coefficients, and plot LP estimate of original series
 
     >>> import matplotlib.pyplot as plt
     >>> import scipy
-    >>> y, sr = librosa.load(librosa.ex('trumpet'), duration=0.020)
+    >>> y, sr = librosa.load(librosa.ex('libri1'), duration=0.020)
     >>> a = librosa.lpc(y, 2)
     >>> b = np.hstack([[0], -1 * a[1:]])
     >>> y_hat = scipy.signal.lfilter(b, [1], y)

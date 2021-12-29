@@ -61,25 +61,24 @@ def delta(data, width=9, order=1, axis=-1, mode="interp", **kwargs):
     --------
     Compute MFCC deltas, delta-deltas
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.load(librosa.ex('libri1'), duration=5)
     >>> mfcc = librosa.feature.mfcc(y=y, sr=sr)
     >>> mfcc_delta = librosa.feature.delta(mfcc)
     >>> mfcc_delta
-    array([[-1.610e+01, -1.610e+01, ...,  3.980e-14,  3.980e-14],
-           [ 2.067e+00,  2.067e+00, ...,  0.000e+00,  0.000e+00],
+    array([[-5.713e+02, -5.697e+02, ..., -1.522e+02, -1.224e+02],
+           [ 1.104e+01,  1.330e+01, ...,  2.089e+02,  1.698e+02],
            ...,
-           [ 2.073e+00,  2.073e+00, ...,  0.000e+00,  0.000e+00],
-           [-2.241e+00, -2.241e+00, ...,  0.000e+00,  0.000e+00]],
+           [ 2.829e+00,  1.933e+00, ..., -3.149e+00,  2.294e-01],
+           [ 2.890e+00,  2.187e+00, ...,  6.959e+00, -1.039e+00]],
           dtype=float32)
 
     >>> mfcc_delta2 = librosa.feature.delta(mfcc, order=2)
     >>> mfcc_delta2
-    array([[1.088e+01, 1.088e+01, ..., 3.146e-14, 3.146e-14],
-           [8.505e+00, 8.505e+00, ..., 0.000e+00, 0.000e+00],
+    array([[-1.195, -1.195, ..., -4.328, -4.328],
+           [-1.566, -1.566, ..., -9.949, -9.949],
            ...,
-           [1.059e+00, 1.059e+00, ..., 0.000e+00, 0.000e+00],
-           [3.197e+00, 3.197e+00, ..., 0.000e+00, 0.000e+00]],
-          dtype=float32)
+           [ 0.707,  0.707, ...,  2.287,  2.287],
+           [ 0.655,  0.655, ..., -1.719, -1.719]], dtype=float32)
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
@@ -197,8 +196,8 @@ def stack_memory(data, n_steps=2, delay=1, **kwargs):
 
     Stack time-lagged beat-synchronous chroma edge padding
 
-    >>> y, sr = librosa.load(librosa.ex('choice'), duration=10)
-    >>> chroma = librosa.feature.chroma_stft(y=y, sr=sr)
+    >>> y, sr = librosa.load(librosa.ex('sweetwaltz'), duration=10)
+    >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, hop_length=512)
     >>> beats = librosa.util.fix_frames(beats, x_min=0)
     >>> chroma_sync = librosa.util.sync(chroma, beats)

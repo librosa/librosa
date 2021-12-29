@@ -177,7 +177,7 @@ def interp_harmonics(x, freqs, h_range, kind="linear", fill_value=0, axis=-2):
     --------
     Estimate the harmonics of a time-averaged tempogram
 
-    >>> y, sr = librosa.load(librosa.ex('choice'))
+    >>> y, sr = librosa.load(librosa.ex('sweetwaltz'))
     >>> # Compute the time-varying tempogram and average over time
     >>> tempi = np.mean(librosa.feature.tempogram(y=y, sr=sr), axis=1)
     >>> # We'll measure the first five harmonics
@@ -192,7 +192,7 @@ def interp_harmonics(x, freqs, h_range, kind="linear", fill_value=0, axis=-2):
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
     >>> librosa.display.specshow(t_harmonics, x_axis='tempo', sr=sr, ax=ax)
-    >>> ax.set(yticks=0.5 + np.arange(len(h_range)),
+    >>> ax.set(yticks=np.arange(len(h_range)),
     ...        yticklabels=['{:.3g}'.format(_) for _ in h_range],
     ...        ylabel='Harmonic', xlabel='Tempo (BPM)')
 
