@@ -399,7 +399,7 @@ def _cumulative_mean_normalized_difference(
     """
     # Autocorrelation.
     a = np.fft.rfft(y_frames, frame_length, axis=-2)
-    b = np.fft.rfft(y_frames[..., win_length::-1, :], frame_length, axis=-2)
+    b = np.fft.rfft(y_frames[..., win_length:0:-1, :], frame_length, axis=-2)
     acf_frames = np.fft.irfft(a * b, frame_length, axis=-2)[..., win_length:, :]
     acf_frames[np.abs(acf_frames) < 1e-6] = 0
 
