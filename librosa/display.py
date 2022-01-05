@@ -310,10 +310,10 @@ class SvaraFormatter(Formatter):
             return ""
 
         if self.mela is None:
-            return core.hz_to_svara_h(x, self.Sa, octave=self.octave, abbr=self.abbr, unicode=self.unicode)
+            return core.hz_to_svara_h(x, Sa=self.Sa, octave=self.octave, abbr=self.abbr, unicode=self.unicode)
         else:
             return core.hz_to_svara_c(
-                x, self.Sa, self.mela, octave=self.octave, abbr=self.abbr, unicode=self.unicode
+                x, Sa=self.Sa, mela=self.mela, octave=self.octave, abbr=self.abbr, unicode=self.unicode
             )
 
 

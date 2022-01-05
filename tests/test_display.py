@@ -91,7 +91,7 @@ def beats(rhythm, C):
 
 @pytest.fixture
 def beat_t(beats, sr):
-    return librosa.frames_to_time(beats, sr)
+    return librosa.frames_to_time(beats, sr=sr)
 
 
 @pytest.fixture
