@@ -49,8 +49,8 @@ def test_time_stretch(ysr, rate, ctx, n_fft):
         y, sr = ysr
         ys = librosa.effects.time_stretch(y, rate, n_fft=n_fft)
 
-        orig_duration = librosa.get_duration(y, sr=sr)
-        new_duration = librosa.get_duration(ys, sr=sr)
+        orig_duration = librosa.get_duration(y=y, sr=sr)
+        new_duration = librosa.get_duration(y=ys, sr=sr)
 
         # We don't have to be too precise here, since this goes through an STFT
         assert np.allclose(orig_duration, rate * new_duration, rtol=1e-2, atol=1e-3)
@@ -90,8 +90,8 @@ def test_pitch_shift(ysr, n_steps, bins_per_octave, ctx, n_fft):
             y, sr, n_steps, bins_per_octave=bins_per_octave, n_fft=n_fft
         )
 
-        orig_duration = librosa.get_duration(y, sr=sr)
-        new_duration = librosa.get_duration(ys, sr=sr)
+        orig_duration = librosa.get_duration(y=y, sr=sr)
+        new_duration = librosa.get_duration(y=ys, sr=sr)
 
         # We don't have to be too precise here, since this goes through an STFT
         assert orig_duration == new_duration
@@ -236,7 +236,7 @@ def test_trim(y_trim, top_db, ref, trim_duration):
     assert np.all(logamp_all[stop:] <= -top_db)
 
     # Verify duration
-    duration = librosa.get_duration(yt)
+    duration = librosa.get_duration(y=yt)
     assert np.allclose(duration, trim_duration, atol=1e-1), duration
 
 
