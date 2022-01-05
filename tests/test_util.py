@@ -72,9 +72,9 @@ def test_frame_0stride():
 
     xpad2 = np.atleast_2d(x)
 
-    xf = librosa.util.frame(x, 3, 1)
-    xfpad = librosa.util.frame(xpad, 3, 1)
-    xfpad2 = librosa.util.frame(xpad2, 3, 1)
+    xf = librosa.util.frame(x, frame_length=3, hop_length=1)
+    xfpad = librosa.util.frame(xpad, frame_length=3, hop_length=1)
+    xfpad2 = librosa.util.frame(xpad2, frame_length=3, hop_length=1)
 
     assert np.allclose(xf, xfpad)
     assert np.allclose(xf, xfpad2)
@@ -87,9 +87,9 @@ def test_frame_highdim(frame_length, hop_length, ndim):
     srand()
 
     x = np.random.randn(*([20] * ndim))
-    xf = librosa.util.frame(x, frame_length, hop_length)
+    xf = librosa.util.frame(x, frame_length=frame_length, hop_length=hop_length)
     for i in range(x.shape[0]):
-        xf0 = librosa.util.frame(x[i], frame_length, hop_length)
+        xf0 = librosa.util.frame(x[i], frame_length=frame_length, hop_length=hop_length)
 
         assert np.allclose(xf[i], xf0)
 
@@ -191,7 +191,7 @@ def test_fix_frames(frames, x_min, x_max, pad):
 @pytest.mark.parametrize("x_max", [None, 0, 20])
 @pytest.mark.parametrize("pad", [False, True])
 def test_fix_frames_fail_negative(frames, x_min, x_max, pad):
-    librosa.util.fix_frames(frames, x_min, x_max, pad)
+    librosa.util.fix_frames(frames, x_min=x_min, x_max=x_max, pad=pad)
 
 
 @pytest.mark.parametrize("norm", [np.inf, -np.inf, 0, 0.5, 1.0, 2.0, None])
@@ -499,7 +499,7 @@ def test_localmin(ndim, axis):
 @pytest.mark.parametrize("wait", [0, 1, 10])
 @pytest.mark.parametrize("delta", [0.05, 100.0])
 def test_peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
-    peaks = librosa.util.peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait)
+    peaks = librosa.util.peak_pick(x, pre_max=pre_max, post_max=post_max, pre_avg=pre_avg, post_avg=post_avg, delta=delta, wait=wait)
 
     for i in peaks:
         # Test 1: is it a peak in this window?
@@ -540,13 +540,13 @@ def test_peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     ],
 )
 def test_peak_pick_fail(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
-    librosa.util.peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait)
+    librosa.util.peak_pick(x, pre_max=pre_max, post_max=post_max, pre_avg=pre_avg, post_avg=post_avg, delta=delta, wait=wait)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_peak_pick_shape_fail():
     # Can't pick peaks on 2d inputs
-    librosa.util.peak_pick(np.eye(2), 1, 1, 1, 1, 0.5, 1)
+    librosa.util.peak_pick(np.eye(2), pre_max=1, post_max=1, pre_avg=1, post_avg=1, delta=0.5, wait=1)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -680,7 +680,7 @@ def test_find_files_case_sensitive(ext):
 @pytest.mark.parametrize("cast", [None, np.floor, np.ceil])
 def test_valid_int(x_in, cast):
 
-    z = librosa.util.valid_int(x_in, cast)
+    z = librosa.util.valid_int(x_in, cast=cast)
 
     assert isinstance(z, int)
     if cast is None:
@@ -694,7 +694,7 @@ def test_valid_int(x_in, cast):
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_valid_int_fail(x, cast):
     # Test with a non-callable cast operator
-    librosa.util.valid_int(x, cast)
+    librosa.util.valid_int(x, cast=cast)
 
 
 @pytest.mark.parametrize(
@@ -935,7 +935,7 @@ def test_softmask(power, split_zeros):
     X[3, :] = 0
     X_ref[3, :] = 0
 
-    M = librosa.util.softmask(X, X_ref, power=power, split_zeros=split_zeros)
+    M = librosa.util.softmask(X, X_ref=X_ref, power=power, split_zeros=split_zeros)
 
     assert np.all(0 <= M) and np.all(M <= 1)
 
@@ -949,8 +949,8 @@ def test_softmask_int():
     X = 2 * np.ones((3, 3), dtype=np.int32)
     X_ref = np.vander(np.arange(3))
 
-    M1 = librosa.util.softmask(X, X_ref, power=1)
-    M2 = librosa.util.softmask(X_ref, X, power=1)
+    M1 = librosa.util.softmask(X, X_ref=X_ref, power=1)
+    M2 = librosa.util.softmask(X_ref, X_ref=X, power=1)
 
     assert np.allclose(M1 + M2, 1)
 
@@ -967,7 +967,7 @@ def test_softmask_int():
 )
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_softmask_fail(x, x_ref, power, split_zeros):
-    librosa.util.softmask(x, x_ref, power=power, split_zeros=split_zeros)
+    librosa.util.softmask(x, X_ref=x_ref, power=power, split_zeros=split_zeros)
 
 
 @pytest.mark.parametrize(
@@ -990,7 +990,7 @@ def test_tiny(x, value):
 def test_util_fill_off_diagonal_8_8():
     # Case 1: Square matrix (N=M)
     mut_x = np.ones((8, 8))
-    librosa.util.fill_off_diagonal(mut_x, 0.25)
+    librosa.util.fill_off_diagonal(mut_x, radius=0.25)
 
     gt_x = np.array(
         [
@@ -1012,7 +1012,7 @@ def test_util_fill_off_diagonal_8_8():
 def test_util_fill_off_diagonal_8_12():
     # Case 2a: N!=M
     mut_x = np.ones((8, 12))
-    librosa.util.fill_off_diagonal(mut_x, 0.25)
+    librosa.util.fill_off_diagonal(mut_x, radius=0.25)
 
     gt_x = np.array(
         [
@@ -1031,7 +1031,7 @@ def test_util_fill_off_diagonal_8_12():
 
     # Case 2b: (N!=M).T
     mut_x = np.ones((8, 12)).T
-    librosa.util.fill_off_diagonal(mut_x, 0.25)
+    librosa.util.fill_off_diagonal(mut_x, radius=0.25)
 
     assert np.array_equal(mut_x, gt_x.T)
 
