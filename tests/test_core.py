@@ -366,7 +366,7 @@ def test___reassign_times(sr, n_fft):
     y[[263, 2633]] = 1
 
     # frames with no energy will have all NaN time reassignments
-    expected_frames = librosa.util.frame(y, n_fft, hop_length=n_fft)
+    expected_frames = librosa.util.frame(y, frame_length=n_fft, hop_length=n_fft)
     expected = np.full((n_fft // 2 + 1, expected_frames.shape[1]), np.nan)
 
     # find the impulses again; needed if the signal is truncated by framing
@@ -2183,7 +2183,7 @@ def test_stream(
         # frame this for easy checking
         y_b_mono = librosa.to_mono(y_block)
         if len(y_b_mono) >= frame_length:
-            y_b_frame = librosa.util.frame(y_b_mono, frame_length, hop_length)
+            y_b_frame = librosa.util.frame(y_b_mono, frame_length=frame_length, hop_length=hop_length)
             y_frame_stream.append(y_b_frame)
 
     # Concatenate the framed blocks together
@@ -2200,7 +2200,7 @@ def test_stream(
         path, sr=None, dtype=dtype, mono=True, offset=offset, duration=duration
     )
     # First, check the rate
-    y_frame = librosa.util.frame(y_full, frame_length, hop_length)
+    y_frame = librosa.util.frame(y_full, frame_length=frame_length, hop_length=hop_length)
 
     # Raw audio will not be padded
     n = y_frame.shape[1]
