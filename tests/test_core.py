@@ -586,7 +586,7 @@ def test_reassigned_spectrogram_parameters():
 def test_salience_basecase():
     (y, sr) = librosa.load(os.path.join("tests", "data", "test1_22050.wav"))
     S = np.abs(librosa.stft(y))
-    freqs = librosa.core.fft_frequencies(sr)
+    freqs = librosa.core.fft_frequencies(sr=sr)
     harms = [1]
     weights = [1.0]
     S_sal = librosa.core.salience(
@@ -598,7 +598,7 @@ def test_salience_basecase():
 def test_salience_basecase2():
     (y, sr) = librosa.load(os.path.join("tests", "data", "test1_22050.wav"))
     S = np.abs(librosa.stft(y))
-    freqs = librosa.core.fft_frequencies(sr)
+    freqs = librosa.core.fft_frequencies(sr=sr)
     harms = [1, 0.5, 2.0]
     weights = [1.0, 0.0, 0.0]
     S_sal = librosa.core.salience(
@@ -691,7 +691,7 @@ def test_magphase(y_22050):
 @pytest.fixture(scope="module", params=[22050, 44100])
 def y_chirp_istft(request):
     sr = request.param
-    return (librosa.chirp(32, 8192, sr=sr, duration=2.0), sr)
+    return (librosa.chirp(fmin=32, fmax=8192, sr=sr, duration=2.0), sr)
 
 
 @pytest.mark.parametrize("n_fft", [1024, 1025, 2048, 4096])
@@ -849,7 +849,7 @@ def test_lpc_regress(infile):
         true_coeffs = test_data["true_coeffs"][i]
         est_coeffs = test_data["est_coeffs"][i]
 
-        test_coeffs = librosa.lpc(signal, order)
+        test_coeffs = librosa.lpc(signal, order=order)
         assert np.allclose(test_coeffs, est_coeffs)
 
 
@@ -863,7 +863,7 @@ def test_lpc_simple(dtype):
     for i in range(n):
         noise = np.random.randn(1000).astype(dtype)
         filtered = scipy.signal.lfilter(dtype([1]), truth_a, noise)
-        est_a[i, :] = librosa.lpc(filtered, 5)
+        est_a[i, :] = librosa.lpc(filtered, order=5)
     assert dtype == est_a.dtype
     assert np.allclose(truth_a, np.mean(est_a, axis=0), rtol=0, atol=1e-3)
 
@@ -1002,7 +1002,7 @@ def test_yin_tone(freq):
 
 
 def test_yin_chirp():
-    y = librosa.chirp(220, 640, duration=1.0)
+    y = librosa.chirp(fmin=220, fmax=640, duration=1.0)
     f0 = librosa.yin(y, fmin=110, fmax=880, center=False)
     target_f0 = np.load(os.path.join("tests", "data", "pitch-yin.npy"))
     assert np.allclose(np.log2(f0), np.log2(target_f0), rtol=0, atol=1e-2)
@@ -1078,7 +1078,7 @@ def test_pyin_multi_center():
 
 
 def test_pyin_chirp():
-    y = librosa.chirp(220, 640, duration=1.0)
+    y = librosa.chirp(fmin=220, fmax=640, duration=1.0)
     y = np.pad(y, (22050,))
     f0, voiced_flag, _ = librosa.pyin(y, fmin=110, fmax=880, center=False)
     target_f0 = np.load(os.path.join("tests", "data", "pitch-pyin.npy"))
@@ -1986,7 +1986,7 @@ def test_reset_fftlib():
 @pytest.fixture
 def y_chirp():
     sr = 22050
-    y = librosa.chirp(55, 55 * 2 ** 7, length=sr // 8, sr=sr)
+    y = librosa.chirp(fmin=55, fmax=55 * 2 ** 7, length=sr // 8, sr=sr)
     return y
 
 

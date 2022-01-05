@@ -45,6 +45,7 @@ BW_FASTEST = resampy.filters.get_filter("kaiser_fast")[2]
 # 'path' are unchanged across calls.
 def load(
     path,
+    *,
     sr=22050,
     mono=True,
     offset=0.0,
@@ -245,6 +246,7 @@ def __audioread_load(path, offset, duration, dtype):
 
 def stream(
     path,
+    *,
     block_length,
     frame_length,
     hop_length,
@@ -471,7 +473,7 @@ def to_mono(y):
 
 @cache(level=20)
 def resample(
-    y, orig_sr, target_sr, res_type="kaiser_best", fix=True, scale=False, **kwargs
+    y, orig_sr, target_sr, *, res_type="kaiser_best", fix=True, scale=False, **kwargs
 ):
     """Resample a time series from orig_sr to target_sr
 
@@ -623,7 +625,7 @@ def resample(
 
 
 def get_duration(
-    y=None, sr=22050, S=None, n_fft=2048, hop_length=512, center=True, filename=None
+    *, y=None, sr=22050, S=None, n_fft=2048, hop_length=512, center=True, filename=None
 ):
     """Compute the duration (in seconds) of an audio time series,
     feature matrix, or filename.
@@ -765,7 +767,7 @@ def get_samplerate(path):
 
 
 @cache(level=20)
-def autocorrelate(y, max_size=None, axis=-1):
+def autocorrelate(y, *, max_size=None, axis=-1):
     """Bounded-lag auto-correlation
 
     Parameters
@@ -835,7 +837,7 @@ def autocorrelate(y, max_size=None, axis=-1):
     return autocorr
 
 
-def lpc(y, order, axis=-1):
+def lpc(y, *, order, axis=-1):
     """Linear Prediction Coefficients via Burg's method
 
     This function applies Burg's method to estimate coefficients of a linear
@@ -1023,7 +1025,7 @@ def __lpc(y, order, ar_coeffs, ar_coeffs_prev, reflect_coeff, den, epsilon):
 
 @cache(level=20)
 def zero_crossings(
-    y, threshold=1e-10, ref_magnitude=None, pad=True, zero_pos=True, axis=-1
+    y, *, threshold=1e-10, ref_magnitude=None, pad=True, zero_pos=True, axis=-1
 ):
     """Find the zero-crossings of a signal ``y``: indices ``i`` such that
     ``sign(y[i]) != sign(y[j])``.
@@ -1152,6 +1154,7 @@ def zero_crossings(
 
 
 def clicks(
+    *, 
     times=None,
     frames=None,
     sr=22050,
@@ -1297,7 +1300,7 @@ def clicks(
     return click_signal
 
 
-def tone(frequency, sr=22050, length=None, duration=None, phi=None):
+def tone(frequency, *, sr=22050, length=None, duration=None, phi=None):
     """Construct a pure tone (cosine) signal at a given frequency.
 
     Parameters
@@ -1369,7 +1372,7 @@ def tone(frequency, sr=22050, length=None, duration=None, phi=None):
     return np.cos(2 * np.pi * frequency * np.arange(length) / sr + phi)
 
 
-def chirp(fmin, fmax, sr=22050, length=None, duration=None, linear=False, phi=None):
+def chirp(*, fmin, fmax, sr=22050, length=None, duration=None, linear=False, phi=None):
     """Construct a "chirp" or "sine-sweep" signal.
 
     The chirp sweeps from frequency ``fmin`` to ``fmax`` (in Hz).
@@ -1478,7 +1481,7 @@ def chirp(fmin, fmax, sr=22050, length=None, duration=None, linear=False, phi=No
     )
 
 
-def mu_compress(x, mu=255, quantize=True):
+def mu_compress(x, *, mu=255, quantize=True):
     """mu-law compression
 
     Given an input signal ``-1 <= x <= 1``, the mu-law compression
@@ -1573,7 +1576,7 @@ def mu_compress(x, mu=255, quantize=True):
     return x_comp
 
 
-def mu_expand(x, mu=255.0, quantize=True):
+def mu_expand(x, *, mu=255.0, quantize=True):
     """mu-law expansion
 
     This function is the inverse of ``mu_compress``. Given a mu-law compressed
