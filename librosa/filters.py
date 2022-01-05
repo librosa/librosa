@@ -432,7 +432,7 @@ def __float_window(window_spec):
 
 
 @cache(level=10)
-@deprecated("0.9.0", "1.0")
+@deprecated(version="0.9.0", version_removed="1.0")
 def constant_q(
     sr,
     fmin=None,
@@ -596,7 +596,7 @@ def constant_q(
 
 
 @cache(level=10)
-@deprecated("0.9.0", "1.0")
+@deprecated(version="0.9.0", version_removed="1.0")
 def constant_q_lengths(
     sr, fmin, n_bins=84, bins_per_octave=12, window="hann", filter_scale=1, gamma=0
 ):

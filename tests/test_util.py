@@ -732,7 +732,7 @@ def test_valid_intervals_fail(intval):
 
 
 def test_warning_deprecated():
-    @librosa.util.decorators.deprecated("old_version", "new_version")
+    @librosa.util.decorators.deprecated(version="old_version", version_removed="new_version")
     def __dummy():
         return True
 
@@ -753,7 +753,7 @@ def test_warning_deprecated():
 
 
 def test_warning_moved():
-    @librosa.util.decorators.moved("from", "old_version", "new_version")
+    @librosa.util.decorators.moved(moved_from="from", version="old_version", version_removed="new_version")
     def __dummy():
         return True
 

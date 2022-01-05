@@ -9,7 +9,7 @@ from decorator import decorator
 __all__ = ["moved", "deprecated"]
 
 
-def moved(moved_from, version, version_removed):
+def moved(*, moved_from, version, version_removed):
     """This is a decorator which can be used to mark functions
     as moved/renamed.
 
@@ -35,7 +35,7 @@ def moved(moved_from, version, version_removed):
     return decorator(__wrapper)
 
 
-def deprecated(version, version_removed):
+def deprecated(*, version, version_removed):
     """This is a decorator which can be used to mark functions
     as deprecated.
 
