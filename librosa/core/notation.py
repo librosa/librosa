@@ -244,7 +244,7 @@ def mela_to_degrees(mela):
 
 
 @cache(level=10)
-def mela_to_svara(mela, abbr=True, unicode=True):
+def mela_to_svara(mela, *, abbr=True, unicode=True):
     """Spell the Carnatic svara names for a given melakarta raga
 
     This function exists to resolve enharmonic equivalences between
@@ -455,7 +455,7 @@ def list_thaat():
 
 
 @cache(level=10)
-def key_to_notes(key, unicode=True):
+def key_to_notes(key, *, unicode=True):
     """Lists all 12 note names in the chromatic scale, as spelled according to
     a given key (major or minor).
 
