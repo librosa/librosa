@@ -775,14 +775,11 @@ def test_warning_moved():
 
 def test_warning_rename_kw_pass():
 
-    warnings.resetwarnings()
-    warnings.simplefilter("always")
-
     ov = librosa.util.Deprecated()
     nv = 23
 
     with warnings.catch_warnings(record=True) as out:
-        v = librosa.util.rename_kw("old", ov, "new", nv, "0", "1")
+        v = librosa.util.rename_kw(old_name="old", old_value=ov, new_name="new", new_value=nv, version_deprecated="0", version_removed="1")
 
         assert v == nv
 
@@ -792,14 +789,11 @@ def test_warning_rename_kw_pass():
 
 def test_warning_rename_kw_fail():
 
-    warnings.resetwarnings()
-    warnings.simplefilter("always")
-
     ov = 27
     nv = 23
 
     with warnings.catch_warnings(record=True) as out:
-        v = librosa.util.rename_kw("old", ov, "new", nv, "0", "1")
+        v = librosa.util.rename_kw(old_name="old", old_value=ov, new_name="new", new_value=nv, version_deprecated="0", version_removed="1")
 
         assert v == ov
 
