@@ -15,6 +15,7 @@ __all__ = ["salience", "interp_harmonics"]
 
 def salience(
     S,
+    *,
     freqs,
     h_range,
     weights=None,
@@ -109,7 +110,7 @@ def salience(
     else:
         weights = np.array(weights, dtype=float)
 
-    S_harm = interp_harmonics(S, freqs, h_range, kind=kind, axis=axis)
+    S_harm = interp_harmonics(S, freqs=freqs, h_range=h_range, kind=kind, axis=axis)
 
     if aggregate is np.average:
         S_sal = aggregate(S_harm, axis=axis - 1, weights=weights)
@@ -127,7 +128,7 @@ def salience(
     return S_sal
 
 
-def interp_harmonics(x, freqs, h_range, kind="linear", fill_value=0, axis=-2):
+def interp_harmonics(x, *, freqs, h_range, kind="linear", fill_value=0, axis=-2):
     """Compute the energy at harmonics of time-frequency representation.
 
     Given a frequency-based energy representation such as a spectrogram
