@@ -50,7 +50,7 @@ def load(infile):
 )
 def test_hz_to_mel(infile):
     DATA = load(infile)
-    z = librosa.hz_to_mel(DATA["f"], DATA["htk"])
+    z = librosa.hz_to_mel(DATA["f"], htk=DATA["htk"])
 
     assert np.allclose(z, DATA["result"])
 
@@ -61,11 +61,11 @@ def test_hz_to_mel(infile):
 def test_mel_to_hz(infile):
 
     DATA = load(infile)
-    z = librosa.mel_to_hz(DATA["f"], DATA["htk"])
+    z = librosa.mel_to_hz(DATA["f"], htk=DATA["htk"])
     assert np.allclose(z, DATA["result"])
 
     # Test for scalar conversion too
-    z0 = librosa.mel_to_hz(DATA["f"][0], DATA["htk"])
+    z0 = librosa.mel_to_hz(DATA["f"][0], htk=DATA["htk"])
     assert np.allclose(z0, DATA["result"][0])
 
 
