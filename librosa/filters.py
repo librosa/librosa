@@ -123,6 +123,7 @@ WINDOW_BANDWIDTHS = {
 
 @cache(level=10)
 def mel(
+    *, 
     sr,
     n_fft,
     n_mels=128,
@@ -259,6 +260,7 @@ def mel(
 
 @cache(level=10)
 def chroma(
+    *, 
     sr,
     n_fft,
     n_chroma=12,
@@ -434,6 +436,7 @@ def __float_window(window_spec):
 @cache(level=10)
 @deprecated(version="0.9.0", version_removed="1.0")
 def constant_q(
+    *, 
     sr,
     fmin=None,
     n_bins=84,
@@ -554,8 +557,8 @@ def constant_q(
 
     # Pass-through parameters to get the filter lengths
     lengths = constant_q_lengths(
-        sr,
-        fmin,
+        sr=sr,
+        fmin=fmin,
         n_bins=n_bins,
         bins_per_octave=bins_per_octave,
         window=window,
@@ -598,7 +601,7 @@ def constant_q(
 @cache(level=10)
 @deprecated(version="0.9.0", version_removed="1.0")
 def constant_q_lengths(
-    sr, fmin, n_bins=84, bins_per_octave=12, window="hann", filter_scale=1, gamma=0
+    *, sr, fmin, n_bins=84, bins_per_octave=12, window="hann", filter_scale=1, gamma=0
 ):
     r"""Return length of each filter in a constant-Q basis.
 
@@ -671,7 +674,7 @@ def constant_q_lengths(
 
 @cache(level=10)
 def wavelet_lengths(
-    freqs, sr=22050, window="hann", filter_scale=1, gamma=0, alpha=None
+    *, freqs, sr=22050, window="hann", filter_scale=1, gamma=0, alpha=None
 ):
     """Return length of each filter in a wavelet basis.
 
@@ -806,6 +809,7 @@ def wavelet_lengths(
 
 @cache(level=10)
 def wavelet(
+    *, 
     freqs,
     sr=22050,
     window="hann",
@@ -917,7 +921,7 @@ def wavelet(
 
     # Pass-through parameters to get the filter lengths
     lengths, _ = wavelet_lengths(
-        freqs,
+        freqs=freqs,
         sr=sr,
         window=window,
         filter_scale=filter_scale,
@@ -958,6 +962,7 @@ def wavelet(
 @cache(level=10)
 def cq_to_chroma(
     n_input,
+    *,
     bins_per_octave=12,
     n_chroma=12,
     fmin=None,
@@ -1133,7 +1138,7 @@ def window_bandwidth(window, n=1000):
 
 
 @cache(level=10)
-def get_window(window, Nx, fftbins=True):
+def get_window(window, Nx, *, fftbins=True):
     """Compute a window function.
 
     This is a wrapper for `scipy.signal.get_window` that additionally
@@ -1382,7 +1387,7 @@ def mr_frequencies(tuning):
 
 
 def semitone_filterbank(
-    center_freqs=None, tuning=0.0, sample_rates=None, flayout="ba", **kwargs
+    *, center_freqs=None, tuning=0.0, sample_rates=None, flayout="ba", **kwargs
 ):
     r"""Construct a multi-rate bank of infinite-impulse response (IIR)
     band-pass filters at user-defined center frequencies and sample rates.
@@ -1478,6 +1483,7 @@ def __window_ss_fill(x, win_sq, n_frames, hop_length):  # pragma: no cover
 
 
 def window_sumsquare(
+    *, 
     window,
     n_frames,
     hop_length=512,
@@ -1553,7 +1559,7 @@ def window_sumsquare(
 
 
 @cache(level=10)
-def diagonal_filter(window, n, slope=1.0, angle=None, zero_mean=False):
+def diagonal_filter(window, n, *, slope=1.0, angle=None, zero_mean=False):
     """Build a two-dimensional diagonal filter.
 
     This is primarily used for smoothing recurrence or self-similarity matrices.

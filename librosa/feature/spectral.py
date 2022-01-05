@@ -1343,7 +1343,7 @@ def chroma_stft(
         tuning = estimate_tuning(S=S, sr=sr, bins_per_octave=n_chroma)
 
     # Get the filter bank
-    chromafb = filters.chroma(sr, n_fft, tuning=tuning, n_chroma=n_chroma, **kwargs)
+    chromafb = filters.chroma(sr=sr, n_fft=n_fft, tuning=tuning, n_chroma=n_chroma, **kwargs)
 
     # Compute raw chroma
     raw_chroma = np.einsum("cf,...ft->...ct", chromafb, S, optimize=True)

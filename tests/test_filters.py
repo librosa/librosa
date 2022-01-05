@@ -87,8 +87,8 @@ def test_melfb(infile):
     DATA = load(infile)
 
     wts = librosa.filters.mel(
-        DATA["sr"][0, 0],
-        DATA["nfft"][0, 0],
+        sr=DATA["sr"][0, 0],
+        n_fft=DATA["nfft"][0, 0],
         n_mels=DATA["nfilts"][0, 0],
         fmin=DATA["fmin"][0, 0],
         fmax=DATA["fmax"][0, 0],
@@ -114,8 +114,8 @@ def test_melfbnorm(infile):
     else:
         norm = DATA["norm"][0, 0]
     wts = librosa.filters.mel(
-        DATA["sr"][0, 0],
-        DATA["nfft"][0, 0],
+        sr=DATA["sr"][0, 0],
+        n_fft=DATA["nfft"][0, 0],
         n_mels=DATA["nfilts"][0, 0],
         fmin=DATA["fmin"][0, 0],
         fmax=DATA["fmax"][0, 0],
@@ -132,7 +132,7 @@ def test_melfbnorm(infile):
 @pytest.mark.parametrize("norm", [1, 2, np.inf])
 def test_mel_norm(norm):
 
-    M = librosa.filters.mel(22050, 2048, norm=norm)
+    M = librosa.filters.mel(sr=22050, n_fft=2048, norm=norm)
     if norm == 1:
         assert np.allclose(np.sum(np.abs(M), axis=1), 1)
     elif norm == 2:
@@ -143,7 +143,7 @@ def test_mel_norm(norm):
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_mel_badnorm():
-    librosa.filters.mel(22050, 2048, norm="garbage")
+    librosa.filters.mel(sr=22050, n_fft=2048, norm="garbage")
 
 
 def test_mel_gap():
@@ -157,7 +157,7 @@ def test_mel_gap():
     htk = True
 
     with pytest.warns(UserWarning, match="Empty filters"):
-        librosa.filters.mel(sr, n_fft, n_mels=n_mels, fmin=fmin, fmax=fmax, htk=htk)
+        librosa.filters.mel(sr=sr, n_fft=n_fft, n_mels=n_mels, fmin=fmin, fmax=fmax, htk=htk)
 
 
 @pytest.mark.parametrize(
@@ -177,9 +177,9 @@ def test_chromafb(infile):
     tuning = DATA["nchroma"][0, 0] * (np.log2(A440) - np.log2(440.0))
 
     wts = librosa.filters.chroma(
-        DATA["sr"][0, 0],
-        DATA["nfft"][0, 0],
-        DATA["nchroma"][0, 0],
+        sr=DATA["sr"][0, 0],
+        n_fft=DATA["nfft"][0, 0],
+        n_chroma=DATA["nchroma"][0, 0],
         tuning=tuning,
         ctroct=DATA["ctroct"][0, 0],
         octwidth=octwidth,
@@ -257,7 +257,7 @@ def test__window(n, window_name):
 def test_constant_q(sr, fmin, n_bins, bins_per_octave, filter_scale, pad_fft, norm):
 
     F, lengths = librosa.filters.constant_q(
-        sr,
+        sr=sr,
         fmin=fmin,
         n_bins=n_bins,
         bins_per_octave=bins_per_octave,
@@ -295,7 +295,7 @@ def test_wavelet(sr, fmin, n_bins, bins_per_octave, filter_scale, pad_fft, norm,
     freqs = librosa.cqt_frequencies(fmin=fmin, n_bins=n_bins, bins_per_octave=bins_per_octave)
 
     F, lengths = librosa.filters.wavelet(
-        freqs,
+        freqs=freqs,
         sr=sr,
         filter_scale=filter_scale,
         pad_fft=pad_fft,
@@ -321,22 +321,22 @@ def test_wavelet(sr, fmin, n_bins, bins_per_octave, filter_scale, pad_fft, norm,
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_wavelet_lengths_badscale():
-    librosa.filters.wavelet_lengths(2**np.arange(3), filter_scale=-1)
+    librosa.filters.wavelet_lengths(freqs=2**np.arange(3), filter_scale=-1)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_wavelet_lengths_badgamma():
-    librosa.filters.wavelet_lengths(2**np.arange(3), gamma=-1)
+    librosa.filters.wavelet_lengths(freqs=2**np.arange(3), gamma=-1)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_wavelet_lengths_badfreqs():
-    librosa.filters.wavelet_lengths(2**np.arange(3) -20)
+    librosa.filters.wavelet_lengths(freqs=2**np.arange(3) -20)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_wavelet_lengths_badfreqsorder():
-    librosa.filters.wavelet_lengths(2**np.arange(3)[::-1])
+    librosa.filters.wavelet_lengths(freqs=2**np.arange(3)[::-1])
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -359,7 +359,7 @@ def test_wavelet_lengths_noalpha():
 )
 def test_constant_q_badparams(sr, fmin, n_bins, bins_per_octave, filter_scale, norm):
     librosa.filters.constant_q(
-        sr,
+        sr=sr,
         fmin=fmin,
         n_bins=n_bins,
         bins_per_octave=bins_per_octave,
