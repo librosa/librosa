@@ -297,7 +297,7 @@ def hybrid_cqt(
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
 
     # Get all CQT frequencies
-    freqs = cqt_frequencies(n_bins, fmin, bins_per_octave=bins_per_octave)
+    freqs = cqt_frequencies(n_bins, fmin=fmin, bins_per_octave=bins_per_octave)
 
     # Compute an alpha parameter, just in case we need it
     alpha = __bpo_to_alpha(bins_per_octave)

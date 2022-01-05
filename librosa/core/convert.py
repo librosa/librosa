@@ -52,7 +52,7 @@ __all__ = [
 ]
 
 
-def frames_to_samples(frames, hop_length=512, n_fft=None):
+def frames_to_samples(frames, *, hop_length=512, n_fft=None):
     """Converts frame indices to audio sample indices.
 
     Parameters
@@ -94,7 +94,7 @@ def frames_to_samples(frames, hop_length=512, n_fft=None):
     return (np.asanyarray(frames) * hop_length + offset).astype(int)
 
 
-def samples_to_frames(samples, hop_length=512, n_fft=None):
+def samples_to_frames(samples, *, hop_length=512, n_fft=None):
     """Converts sample indices into STFT frames.
 
     Examples
@@ -145,7 +145,7 @@ def samples_to_frames(samples, hop_length=512, n_fft=None):
     return np.floor((samples - offset) // hop_length).astype(int)
 
 
-def frames_to_time(frames, sr=22050, hop_length=512, n_fft=None):
+def frames_to_time(frames, *, sr=22050, hop_length=512, n_fft=None):
     """Converts frame counts to time (seconds).
 
     Parameters
@@ -188,7 +188,7 @@ def frames_to_time(frames, sr=22050, hop_length=512, n_fft=None):
     return samples_to_time(samples, sr=sr)
 
 
-def time_to_frames(times, sr=22050, hop_length=512, n_fft=None):
+def time_to_frames(times, *, sr=22050, hop_length=512, n_fft=None):
     """Converts time stamps into STFT frames.
 
     Parameters
@@ -236,7 +236,7 @@ def time_to_frames(times, sr=22050, hop_length=512, n_fft=None):
     return samples_to_frames(samples, hop_length=hop_length, n_fft=n_fft)
 
 
-def time_to_samples(times, sr=22050):
+def time_to_samples(times, *, sr=22050):
     """Convert timestamps (in seconds) to sample indices.
 
     Parameters
@@ -268,7 +268,7 @@ def time_to_samples(times, sr=22050):
     return (np.asanyarray(times) * sr).astype(int)
 
 
-def samples_to_time(samples, sr=22050):
+def samples_to_time(samples, *, sr=22050):
     """Convert sample indices to time (in seconds).
 
     Parameters
@@ -306,7 +306,7 @@ def samples_to_time(samples, sr=22050):
     return np.asanyarray(samples) / float(sr)
 
 
-def blocks_to_frames(blocks, block_length):
+def blocks_to_frames(blocks, *, block_length):
     """Convert block indices to frame indices
 
     Parameters
@@ -343,7 +343,7 @@ def blocks_to_frames(blocks, block_length):
     return block_length * np.asanyarray(blocks)
 
 
-def blocks_to_samples(blocks, block_length, hop_length):
+def blocks_to_samples(blocks, *, block_length, hop_length):
     """Convert block indices to sample indices
 
     Parameters
@@ -384,11 +384,11 @@ def blocks_to_samples(blocks, block_length, hop_length):
     ...                                          hop_length=512)
 
     """
-    frames = blocks_to_frames(blocks, block_length)
+    frames = blocks_to_frames(blocks, block_length=block_length)
     return frames_to_samples(frames, hop_length=hop_length)
 
 
-def blocks_to_time(blocks, block_length, hop_length, sr):
+def blocks_to_time(blocks, *, block_length, hop_length, sr):
     """Convert block indices to time (in seconds)
 
     Parameters
@@ -432,7 +432,7 @@ def blocks_to_time(blocks, block_length, hop_length, sr):
     ...                                     hop_length=512, sr=sr)
 
     """
-    samples = blocks_to_samples(blocks, block_length, hop_length)
+    samples = blocks_to_samples(blocks, block_length=block_length, hop_length=hop_length)
     return samples_to_time(samples, sr=sr)
 
 
@@ -473,7 +473,7 @@ def note_to_hz(note, **kwargs):
     return midi_to_hz(note_to_midi(note, **kwargs))
 
 
-def note_to_midi(note, round_midi=True):
+def note_to_midi(note, *, round_midi=True):
     """Convert one or more spelled notes to MIDI number(s).
 
     Notes may be spelled out with optional accidentals or octave numbers.
@@ -582,7 +582,7 @@ def note_to_midi(note, round_midi=True):
     return note_value
 
 
-def midi_to_note(midi, octave=True, cents=False, key="C:maj", unicode=True):
+def midi_to_note(midi, *, octave=True, cents=False, key="C:maj", unicode=True):
     """Convert one or more MIDI numbers to note strings.
 
     MIDI numbers will be rounded to the nearest integer.
@@ -790,7 +790,7 @@ def hz_to_note(frequencies, **kwargs):
     return midi_to_note(hz_to_midi(frequencies), **kwargs)
 
 
-def hz_to_mel(frequencies, htk=False):
+def hz_to_mel(frequencies, *, htk=False):
     """Convert Hz to Mels
 
     Examples
@@ -845,7 +845,7 @@ def hz_to_mel(frequencies, htk=False):
     return mels
 
 
-def mel_to_hz(mels, htk=False):
+def mel_to_hz(mels, *, htk=False):
     """Convert mel bin numbers to frequencies
 
     Examples
@@ -899,7 +899,7 @@ def mel_to_hz(mels, htk=False):
     return freqs
 
 
-def hz_to_octs(frequencies, tuning=0.0, bins_per_octave=12):
+def hz_to_octs(frequencies, *, tuning=0.0, bins_per_octave=12):
     """Convert frequencies (Hz) to (fractional) octave numbers.
 
     Examples
@@ -935,7 +935,7 @@ def hz_to_octs(frequencies, tuning=0.0, bins_per_octave=12):
     return np.log2(np.asanyarray(frequencies) / (float(A440) / 16))
 
 
-def octs_to_hz(octs, tuning=0.0, bins_per_octave=12):
+def octs_to_hz(octs, *, tuning=0.0, bins_per_octave=12):
     """Convert octaves numbers to frequencies.
 
     Octaves are counted relative to A.
@@ -972,7 +972,7 @@ def octs_to_hz(octs, tuning=0.0, bins_per_octave=12):
     return (float(A440) / 16) * (2.0 ** np.asanyarray(octs))
 
 
-def A4_to_tuning(A4, bins_per_octave=12):
+def A4_to_tuning(A4, *, bins_per_octave=12):
     """Convert a reference pitch frequency (e.g., ``A4=435``) to a tuning
     estimation, in fractions of a bin per octave.
 
@@ -1022,7 +1022,7 @@ def A4_to_tuning(A4, bins_per_octave=12):
     return bins_per_octave * (np.log2(np.asanyarray(A4)) - np.log2(440.0))
 
 
-def tuning_to_A4(tuning, bins_per_octave=12):
+def tuning_to_A4(tuning, *, bins_per_octave=12):
     """Convert a tuning deviation (from 0) in fractions of a bin per
     octave (e.g., ``tuning=-0.1``) to a reference pitch frequency
     relative to A440.
@@ -1073,7 +1073,7 @@ def tuning_to_A4(tuning, bins_per_octave=12):
     return 440.0 * 2.0 ** (np.asanyarray(tuning) / bins_per_octave)
 
 
-def fft_frequencies(sr=22050, n_fft=2048):
+def fft_frequencies(*, sr=22050, n_fft=2048):
     """Alternative implementation of `np.fft.fftfreq`
 
     Parameters
@@ -1102,7 +1102,7 @@ def fft_frequencies(sr=22050, n_fft=2048):
     return np.fft.rfftfreq(n=n_fft, d=1.0/sr)
 
 
-def cqt_frequencies(n_bins, fmin, bins_per_octave=12, tuning=0.0):
+def cqt_frequencies(n_bins, *, fmin, bins_per_octave=12, tuning=0.0):
     """Compute the center frequencies of Constant-Q bins.
 
     Examples
@@ -1140,7 +1140,7 @@ def cqt_frequencies(n_bins, fmin, bins_per_octave=12, tuning=0.0):
     return correction * fmin * frequencies
 
 
-def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False):
+def mel_frequencies(n_mels=128, *, fmin=0.0, fmax=11025.0, htk=False):
     """Compute an array of acoustic frequencies tuned to the mel scale.
 
     The mel scale is a quasi-logarithmic function of acoustic frequency
@@ -1227,7 +1227,7 @@ def mel_frequencies(n_mels=128, fmin=0.0, fmax=11025.0, htk=False):
     return mel_to_hz(mels, htk=htk)
 
 
-def tempo_frequencies(n_bins, hop_length=512, sr=22050):
+def tempo_frequencies(n_bins, *, hop_length=512, sr=22050):
     """Compute the frequencies (in beats per minute) corresponding
     to an onset auto-correlation or tempogram matrix.
 
@@ -1266,7 +1266,7 @@ def tempo_frequencies(n_bins, hop_length=512, sr=22050):
     return bin_frequencies
 
 
-def fourier_tempo_frequencies(sr=22050, win_length=384, hop_length=512):
+def fourier_tempo_frequencies(*, sr=22050, win_length=384, hop_length=512):
     """Compute the frequencies (in beats per minute) corresponding
     to a Fourier tempogram matrix.
 
@@ -1301,7 +1301,7 @@ def fourier_tempo_frequencies(sr=22050, win_length=384, hop_length=512):
 
 
 # A-weighting should be capitalized: suppress the naming warning
-def A_weighting(frequencies, min_db=-80.0):  # pylint: disable=invalid-name
+def A_weighting(frequencies, *, min_db=-80.0):  # pylint: disable=invalid-name
     """Compute the A-weighting of a set of frequencies.
 
     Parameters
@@ -1357,7 +1357,7 @@ def A_weighting(frequencies, min_db=-80.0):  # pylint: disable=invalid-name
     return weights if min_db is None else np.maximum(min_db, weights)
 
 
-def B_weighting(frequencies, min_db=-80.0):  # pylint: disable=invalid-name
+def B_weighting(frequencies, *, min_db=-80.0):  # pylint: disable=invalid-name
     """Compute the B-weighting of a set of frequencies.
 
     Parameters
@@ -1412,7 +1412,7 @@ def B_weighting(frequencies, min_db=-80.0):  # pylint: disable=invalid-name
     return weights if min_db is None else np.maximum(min_db, weights)
 
 
-def C_weighting(frequencies, min_db=-80.0):  # pylint: disable=invalid-name
+def C_weighting(frequencies, *, min_db=-80.0):  # pylint: disable=invalid-name
     """Compute the C-weighting of a set of frequencies.
 
     Parameters
@@ -1465,7 +1465,7 @@ def C_weighting(frequencies, min_db=-80.0):  # pylint: disable=invalid-name
     return weights if min_db is None else np.maximum(min_db, weights)
 
 
-def D_weighting(frequencies, min_db=-80.0):  # pylint: disable=invalid-name
+def D_weighting(frequencies, *, min_db=-80.0):  # pylint: disable=invalid-name
     """Compute the D-weighting of a set of frequencies.
 
     Parameters
@@ -1523,7 +1523,7 @@ def D_weighting(frequencies, min_db=-80.0):  # pylint: disable=invalid-name
     return weights if min_db is None else np.maximum(min_db, weights)
 
 
-def Z_weighting(frequencies, min_db=None):  # pylint: disable=invalid-name
+def Z_weighting(frequencies, *, min_db=None):  # pylint: disable=invalid-name
     weights = np.zeros(len(frequencies))
     return weights if min_db is None else np.maximum(min_db, weights)
 
@@ -1538,7 +1538,7 @@ WEIGHTING_FUNCTIONS = {
 }
 
 
-def frequency_weighting(frequencies, kind="A", **kw):
+def frequency_weighting(frequencies, *, kind="A", **kw):
     """Compute the weighting of a set of frequencies.
 
     Parameters
@@ -1586,7 +1586,7 @@ def frequency_weighting(frequencies, kind="A", **kw):
     return WEIGHTING_FUNCTIONS[kind](frequencies, **kw)
 
 
-def multi_frequency_weighting(frequencies, kinds="ZAC", **kw):
+def multi_frequency_weighting(frequencies, *, kinds="ZAC", **kw):
     """Compute multiple weightings of a set of frequencies.
 
     Parameters
@@ -1631,10 +1631,10 @@ def multi_frequency_weighting(frequencies, kinds="ZAC", **kw):
     ...        title='Weightings of CQT frequencies')
     >>> ax.legend()
     """
-    return np.stack([frequency_weighting(frequencies, k, **kw) for k in kinds], axis=0)
+    return np.stack([frequency_weighting(frequencies, kind=k, **kw) for k in kinds], axis=0)
 
 
-def times_like(X, sr=22050, hop_length=512, n_fft=None, axis=-1):
+def times_like(X, *, sr=22050, hop_length=512, n_fft=None, axis=-1):
     """Return an array of time values to match the time axis from a feature matrix.
 
     Parameters
@@ -1689,7 +1689,7 @@ def times_like(X, sr=22050, hop_length=512, n_fft=None, axis=-1):
     return samples_to_time(samples, sr=sr)
 
 
-def samples_like(X, hop_length=512, n_fft=None, axis=-1):
+def samples_like(X, *, hop_length=512, n_fft=None, axis=-1):
     """Return an array of sample indices to match the time axis from a feature matrix.
 
     Parameters
@@ -1743,7 +1743,7 @@ def samples_like(X, hop_length=512, n_fft=None, axis=-1):
     return frames_to_samples(frames, hop_length=hop_length, n_fft=n_fft)
 
 
-def midi_to_svara_h(midi, Sa, abbr=True, octave=True, unicode=True):
+def midi_to_svara_h(midi, *, Sa, abbr=True, octave=True, unicode=True):
     """Convert MIDI numbers to Hindustani svara
 
     Parameters
@@ -1825,7 +1825,7 @@ def midi_to_svara_h(midi, Sa, abbr=True, octave=True, unicode=True):
 
     if not np.isscalar(midi):
         return [
-            midi_to_svara_h(m, Sa, abbr=abbr, octave=octave, unicode=unicode)
+            midi_to_svara_h(m, Sa=Sa, abbr=abbr, octave=octave, unicode=unicode)
             for m in midi
         ]
 
@@ -1851,7 +1851,7 @@ def midi_to_svara_h(midi, Sa, abbr=True, octave=True, unicode=True):
     return svara
 
 
-def hz_to_svara_h(frequencies, Sa, abbr=True, octave=True, unicode=True):
+def hz_to_svara_h(frequencies, *, Sa, abbr=True, octave=True, unicode=True):
     """Convert frequencies (in Hz) to Hindustani svara
 
     Note that this conversion assumes 12-tone equal temperament.
@@ -1909,11 +1909,11 @@ def hz_to_svara_h(frequencies, Sa, abbr=True, octave=True, unicode=True):
 
     midis = hz_to_midi(frequencies)
     return midi_to_svara_h(
-        midis, hz_to_midi(Sa), abbr=abbr, octave=octave, unicode=unicode
+        midis, Sa=hz_to_midi(Sa), abbr=abbr, octave=octave, unicode=unicode
     )
 
 
-def note_to_svara_h(notes, Sa, abbr=True, octave=True, unicode=True):
+def note_to_svara_h(notes, *, Sa, abbr=True, octave=True, unicode=True):
     """Convert western notes to Hindustani svara
 
     Note that this conversion assumes 12-tone equal temperament.
@@ -1968,11 +1968,11 @@ def note_to_svara_h(notes, Sa, abbr=True, octave=True, unicode=True):
     midis = note_to_midi(notes, round_midi=False)
 
     return midi_to_svara_h(
-        midis, note_to_midi(Sa), abbr=abbr, octave=octave, unicode=unicode
+        midis, Sa=note_to_midi(Sa), abbr=abbr, octave=octave, unicode=unicode
     )
 
 
-def midi_to_svara_c(midi, Sa, mela, abbr=True, octave=True, unicode=True):
+def midi_to_svara_c(midi, *, Sa, mela, abbr=True, octave=True, unicode=True):
     """Convert MIDI numbers to Carnatic svara within a given melakarta raga
 
     Parameters
@@ -2019,7 +2019,7 @@ def midi_to_svara_c(midi, Sa, mela, abbr=True, octave=True, unicode=True):
     """
     if not np.isscalar(midi):
         return [
-            midi_to_svara_c(m, Sa, mela, abbr=abbr, octave=octave, unicode=unicode)
+            midi_to_svara_c(m, Sa=Sa, mela=mela, abbr=abbr, octave=octave, unicode=unicode)
             for m in midi
         ]
 
@@ -2044,7 +2044,7 @@ def midi_to_svara_c(midi, Sa, mela, abbr=True, octave=True, unicode=True):
     return svara
 
 
-def hz_to_svara_c(frequencies, Sa, mela, abbr=True, octave=True, unicode=True):
+def hz_to_svara_c(frequencies, *, Sa, mela, abbr=True, octave=True, unicode=True):
     """Convert frequencies (in Hz) to Carnatic svara
 
     Note that this conversion assumes 12-tone equal temperament.
@@ -2106,11 +2106,11 @@ def hz_to_svara_c(frequencies, Sa, mela, abbr=True, octave=True, unicode=True):
 
     midis = hz_to_midi(frequencies)
     return midi_to_svara_c(
-        midis, hz_to_midi(Sa), mela, abbr=abbr, octave=octave, unicode=unicode
+        midis, Sa=hz_to_midi(Sa), mela=mela, abbr=abbr, octave=octave, unicode=unicode
     )
 
 
-def note_to_svara_c(notes, Sa, mela, abbr=True, octave=True, unicode=True):
+def note_to_svara_c(notes, *, Sa, mela, abbr=True, octave=True, unicode=True):
     """Convert western notes to Carnatic svara
 
     Note that this conversion assumes 12-tone equal temperament.
@@ -2168,5 +2168,5 @@ def note_to_svara_c(notes, Sa, mela, abbr=True, octave=True, unicode=True):
     midis = note_to_midi(notes, round_midi=False)
 
     return midi_to_svara_c(
-        midis, note_to_midi(Sa), mela, abbr=abbr, octave=octave, unicode=unicode
+        midis, Sa=note_to_midi(Sa), mela=mela, abbr=abbr, octave=octave, unicode=unicode
     )
