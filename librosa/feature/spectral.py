@@ -2051,6 +2051,6 @@ def melspectrogram(
     )
 
     # Build a Mel filter
-    mel_basis = filters.mel(sr, n_fft, **kwargs)
+    mel_basis = filters.mel(sr=sr, n_fft=n_fft, **kwargs)
 
     return np.einsum("...ft,mf->...mt", S, mel_basis, optimize=True)

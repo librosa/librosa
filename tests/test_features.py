@@ -815,7 +815,7 @@ def test_mel_to_stft(power, dtype, n_fft):
     srand()
 
     # Make a random mel spectrum, 4 frames
-    mel_basis = librosa.filters.mel(22050, n_fft, n_mels=128, dtype=dtype)
+    mel_basis = librosa.filters.mel(sr=22050, n_fft=n_fft, n_mels=128, dtype=dtype)
 
     stft_orig = np.random.randn(n_fft // 2 + 1, 4) ** power
     mels = mel_basis.dot(stft_orig.astype(dtype))

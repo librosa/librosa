@@ -422,8 +422,8 @@ def istft(
 
     # Normalize by sum of squared window
     ifft_window_sum = window_sumsquare(
-        window,
-        n_frames,
+        window=window,
+        n_frames=n_frames,
         win_length=win_length,
         n_fft=n_fft,
         hop_length=hop_length,

@@ -915,7 +915,7 @@ def test_nnls_multi(s_multi):
     S = S[...,:int(S.shape[-1]/2)]
 
     # multichannel  
-    mel_basis = librosa.filters.mel(sr, n_fft=2*S.shape[-2]-1, n_mels=256)
+    mel_basis = librosa.filters.mel(sr=sr, n_fft=2*S.shape[-2]-1, n_mels=256)
     M = np.einsum('...ft,mf->...mt', S, mel_basis)
     print(M.shape, mel_basis.shape)
     S_recover = librosa.util.nnls(mel_basis, M)
@@ -943,7 +943,7 @@ def test_mel_to_stft_multi(power,  n_fft):
     srand()
 
     # Make a random mel spectrum, 4 frames
-    mel_basis = librosa.filters.mel(22050, n_fft, n_mels=128)
+    mel_basis = librosa.filters.mel(sr=22050, n_fft=n_fft, n_mels=128)
 
     stft_orig = np.random.randn(2, n_fft // 2 + 1, 4) ** power
 

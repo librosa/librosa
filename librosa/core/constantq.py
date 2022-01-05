@@ -304,7 +304,7 @@ def hybrid_cqt(
 
     # Compute the length of each constant-Q basis function
     lengths, _ = filters.wavelet_lengths(
-        freqs, sr=sr, filter_scale=filter_scale, window=window, alpha=alpha
+        freqs=freqs, sr=sr, filter_scale=filter_scale, window=window, alpha=alpha
     )
 
     # Determine which filters to use with Pseudo CQT
@@ -467,7 +467,7 @@ def pseudo_cqt(
     alpha = __bpo_to_alpha(bins_per_octave)
 
     lengths, _ = filters.wavelet_lengths(
-        freqs, sr=sr, window=window, filter_scale=filter_scale, alpha=alpha
+        freqs=freqs, sr=sr, window=window, filter_scale=filter_scale, alpha=alpha
     )
 
     fft_basis, n_fft, _ = __vqt_filter_fft(
@@ -632,7 +632,7 @@ def icqt(
     alpha = __bpo_to_alpha(bins_per_octave)
 
     lengths, f_cutoff = filters.wavelet_lengths(
-        freqs, sr=sr, window=window, filter_scale=filter_scale, alpha=alpha
+        freqs=freqs, sr=sr, window=window, filter_scale=filter_scale, alpha=alpha
     )
 
     # Trim the CQT to only what's necessary for reconstruction
@@ -903,7 +903,7 @@ def vqt(
     alpha = __bpo_to_alpha(bins_per_octave)
 
     lengths, filter_cutoff = filters.wavelet_lengths(
-        freqs, sr=sr, window=window, filter_scale=filter_scale, gamma=gamma, alpha=alpha
+        freqs=freqs, sr=sr, window=window, filter_scale=filter_scale, gamma=gamma, alpha=alpha
     )
 
     # Determine required resampling quality
@@ -1001,7 +1001,7 @@ def vqt(
         # Recompute lengths here because early downsampling may have changed
         # our sampling rate
         lengths, _ = filters.wavelet_lengths(
-            freqs,
+            freqs=freqs,
             sr=sr,
             window=window,
             filter_scale=filter_scale,
@@ -1032,7 +1032,7 @@ def __vqt_filter_fft(
     """Generate the frequency domain variable-Q filter basis."""
 
     basis, lengths = filters.wavelet(
-        freqs,
+        freqs=freqs,
         sr=sr,
         filter_scale=filter_scale,
         norm=norm,
