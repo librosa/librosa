@@ -1583,7 +1583,7 @@ def sync(data, idx, *, aggregate=None, pad=True, axis=-1):
     return data_agg
 
 
-def softmask(X, *, X_ref, power=1, split_zeros=False):
+def softmask(X, X_ref, *, power=1, split_zeros=False):
     """Robustly compute a soft-mask operation.
 
         ``M = X**power / (X**power + X_ref**power)``

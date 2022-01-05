@@ -276,7 +276,7 @@ def dtw(
         if not C_local:
             # If C was provided as input, make a copy here
             C = np.copy(C)
-        fill_off_diagonal(C, band_rad, value=np.inf)
+        fill_off_diagonal(C, radius=band_rad, value=np.inf)
 
     # initialize whole matrix with infinity values
     D = np.ones(C.shape + np.array([max_0, max_1])) * np.inf
@@ -1278,7 +1278,7 @@ def viterbi_discriminative(
     log_marginal = np.log(p_state + epsilon)
 
     # reshape to broadcast against prob
-    log_marginal = expand_to(log_marginal, prob.ndim, axes=-2)
+    log_marginal = expand_to(log_marginal, ndim=prob.ndim, axes=-2)
 
     log_prob = np.log(prob + epsilon) - log_marginal
 

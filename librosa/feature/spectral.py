@@ -191,7 +191,7 @@ def spectral_centroid(
 
     if freq.ndim == 1:
         # reshape for broadcasting
-        freq = util.expand_to(freq, S.ndim, axes=-2)
+        freq = util.expand_to(freq, ndim=S.ndim, axes=-2)
 
     # Column-normalize S
     return np.sum(freq * util.normalize(S, norm=1, axis=-2), axis=-2, keepdims=True)
@@ -1180,7 +1180,7 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True, **kwar
         padding[-1] = (int(frame_length // 2), int(frame_length // 2))
         y = np.pad(y, padding, mode="edge")
 
-    y_framed = util.frame(y, frame_length, hop_length)
+    y_framed = util.frame(y, frame_length=frame_length, hop_length=hop_length)
 
     kwargs["axis"] = -2
     kwargs.setdefault("pad", False)
@@ -1903,7 +1903,7 @@ def mfcc(
     if lifter > 0:
         # shape lifter for broadcasting
         LI = np.sin(np.pi * np.arange(1, 1 + n_mfcc, dtype=M.dtype) / lifter)
-        LI = util.expand_to(LI, S.ndim, axes=-2)
+        LI = util.expand_to(LI, ndim=S.ndim, axes=-2)
 
         M *= 1 + (lifter / 2) * LI
         return M

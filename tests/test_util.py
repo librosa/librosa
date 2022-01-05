@@ -935,7 +935,7 @@ def test_softmask(power, split_zeros):
     X[3, :] = 0
     X_ref[3, :] = 0
 
-    M = librosa.util.softmask(X, X_ref=X_ref, power=power, split_zeros=split_zeros)
+    M = librosa.util.softmask(X, X_ref, power=power, split_zeros=split_zeros)
 
     assert np.all(0 <= M) and np.all(M <= 1)
 
@@ -949,8 +949,8 @@ def test_softmask_int():
     X = 2 * np.ones((3, 3), dtype=np.int32)
     X_ref = np.vander(np.arange(3))
 
-    M1 = librosa.util.softmask(X, X_ref=X_ref, power=1)
-    M2 = librosa.util.softmask(X_ref, X_ref=X, power=1)
+    M1 = librosa.util.softmask(X, X_ref, power=1)
+    M2 = librosa.util.softmask(X_ref, X, power=1)
 
     assert np.allclose(M1 + M2, 1)
 
@@ -967,7 +967,7 @@ def test_softmask_int():
 )
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_softmask_fail(x, x_ref, power, split_zeros):
-    librosa.util.softmask(x, X_ref=x_ref, power=power, split_zeros=split_zeros)
+    librosa.util.softmask(x, x_ref, power=power, split_zeros=split_zeros)
 
 
 @pytest.mark.parametrize(
