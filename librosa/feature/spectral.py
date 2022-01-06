@@ -38,6 +38,7 @@ __all__ = [
 
 # -- Spectral features -- #
 def spectral_centroid(
+    *,
     y=None,
     sr=22050,
     S=None,
@@ -198,6 +199,7 @@ def spectral_centroid(
 
 
 def spectral_bandwidth(
+    *,
     y=None,
     sr=22050,
     S=None,
@@ -373,6 +375,7 @@ def spectral_bandwidth(
 
 
 def spectral_contrast(
+    *,
     y=None,
     sr=22050,
     S=None,
@@ -573,6 +576,7 @@ def spectral_contrast(
 
 
 def spectral_rolloff(
+    *,
     y=None,
     sr=22050,
     S=None,
@@ -734,6 +738,7 @@ def spectral_rolloff(
 
 
 def spectral_flatness(
+    *,
     y=None,
     S=None,
     n_fft=2048,
@@ -864,7 +869,7 @@ def spectral_flatness(
 
 
 def rms(
-    y=None, S=None, frame_length=2048, hop_length=512, center=True, pad_mode="constant"
+    *, y=None, S=None, frame_length=2048, hop_length=512, center=True, pad_mode="constant"
 ):
     """Compute root-mean-square (RMS) value for each frame, either from the
     audio samples ``y`` or from a spectrogram ``S``.
@@ -975,6 +980,7 @@ def rms(
 
 
 def poly_features(
+    *,
     y=None,
     sr=22050,
     S=None,
@@ -1128,7 +1134,7 @@ def poly_features(
     return coefficients
 
 
-def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True, **kwargs):
+def zero_crossing_rate(y, *, frame_length=2048, hop_length=512, center=True, **kwargs):
     """Compute the zero-crossing rate of an audio time series.
 
     Parameters
@@ -1192,6 +1198,7 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True, **kwar
 
 # -- Chroma --#
 def chroma_stft(
+    *,
     y=None,
     sr=22050,
     S=None,
@@ -1353,6 +1360,7 @@ def chroma_stft(
 
 
 def chroma_cqt(
+    *,
     y=None,
     sr=22050,
     C=None,
@@ -1496,6 +1504,7 @@ def chroma_cqt(
 
 
 def chroma_cens(
+    *,
     y=None,
     sr=22050,
     C=None,
@@ -1665,7 +1674,7 @@ def chroma_cens(
     return util.normalize(cens, norm=norm, axis=-2)
 
 
-def tonnetz(y=None, sr=22050, chroma=None, **kwargs):
+def tonnetz(*, y=None, sr=22050, chroma=None, **kwargs):
     """Computes the tonal centroid features (tonnetz)
 
     This representation uses the method of [#]_ to project chroma features
@@ -1775,7 +1784,7 @@ def tonnetz(y=None, sr=22050, chroma=None, **kwargs):
 
 # -- Mel spectrogram and MFCCs -- #
 def mfcc(
-    y=None, sr=22050, S=None, n_mfcc=20, dct_type=2, norm="ortho", lifter=0, **kwargs
+    *, y=None, sr=22050, S=None, n_mfcc=20, dct_type=2, norm="ortho", lifter=0, **kwargs
 ):
     """Mel-frequency cepstral coefficients (MFCCs)
 
@@ -1916,6 +1925,7 @@ def mfcc(
 
 
 def melspectrogram(
+    *,
     y=None,
     sr=22050,
     S=None,
