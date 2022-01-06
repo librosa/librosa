@@ -873,10 +873,10 @@ def wavelet(
     Returns
     -------
     filters : np.ndarray, ``len(filters) == n_bins``
-        ``filters[i]`` is ``i``\ th time-domain CQT basis filter
+        each ``filters[i]`` is a (complex) time-domain filter
 
     lengths : np.ndarray, ``len(lengths) == n_bins``
-        The (fractional) length of each filter
+        The (fractional) length of each filter in samples
 
     Notes
     -----

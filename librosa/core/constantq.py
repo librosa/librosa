@@ -921,7 +921,8 @@ def vqt(
 
     if filter_cutoff > nyquist:
         raise ParameterError(
-            f"Wavelet basis with max frequency={fmax_t} would exceed the Nyquist frequency={nyquist}. Try reducing the number of frequency bins."
+            f"Wavelet basis with max frequency={fmax_t} would exceed the Nyquist frequency={nyquist}. "
+            "Try reducing the number of frequency bins."
         )
 
     auto_resample = False
