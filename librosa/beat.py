@@ -280,7 +280,7 @@ def tempo(
     --------
     >>> # Estimate a static tempo
     >>> y, sr = librosa.load(librosa.ex('nutcracker'), duration=30)
-    >>> onset_env = librosa.onset.onset_strength(y, sr=sr)
+    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr)
     >>> tempo = librosa.beat.tempo(onset_envelope=onset_env, sr=sr)
     >>> tempo
     array([143.555])
@@ -314,7 +314,7 @@ def tempo(
     >>> utempo = utempo.item()
     >>> # Compute 2-second windowed autocorrelation
     >>> hop_length = 512
-    >>> ac = librosa.autocorrelate(onset_env, 2 * sr // hop_length)
+    >>> ac = librosa.autocorrelate(onset_env, max_size=2 * sr // hop_length)
     >>> freqs = librosa.tempo_frequencies(len(ac), sr=sr,
     ...                                   hop_length=hop_length)
     >>> # Plot on a BPM axis.  We skip the first (0-lag) bin.
