@@ -41,6 +41,7 @@ __all__ = [
 @cache(level=20)
 def stft(
     y,
+    *,
     n_fft=2048,
     hop_length=None,
     win_length=None,
@@ -265,6 +266,7 @@ def stft(
 @cache(level=30)
 def istft(
     stft_matrix,
+    *,
     hop_length=None,
     win_length=None,
     n_fft=None,
@@ -814,6 +816,7 @@ def __reassign_times(
 
 def reassigned_spectrogram(
     y,
+    *,
     sr=22050,
     S=None,
     n_fft=2048,
@@ -1115,7 +1118,7 @@ def reassigned_spectrogram(
     return freqs, times, mags
 
 
-def magphase(D, power=1):
+def magphase(D, *, power=1):
     """Separate a complex-valued spectrogram D into its magnitude (S)
     and phase (P) components, so that ``D = S * P``.
 
@@ -1181,7 +1184,7 @@ def magphase(D, power=1):
     return mag, phase
 
 
-def phase_vocoder(D, rate, hop_length=None, n_fft=None):
+def phase_vocoder(D, *, rate, hop_length=None, n_fft=None):
     """Phase vocoder.  Given an STFT matrix D, speed up by a factor of ``rate``
 
     Based on the implementation provided by [#]_.
@@ -1292,6 +1295,7 @@ def phase_vocoder(D, rate, hop_length=None, n_fft=None):
 @cache(level=20)
 def iirt(
     y,
+    *,
     sr=22050,
     win_length=2048,
     hop_length=None,
@@ -1492,7 +1496,7 @@ def iirt(
 
 
 @cache(level=30)
-def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
+def power_to_db(S, *, ref=1.0, amin=1e-10, top_db=80.0):
     """Convert a power spectrogram (amplitude squared) to decibel (dB) units
 
     This computes the scaling ``10 * log10(S / ref)`` in a numerically
@@ -1616,7 +1620,7 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
 
 
 @cache(level=30)
-def db_to_power(S_db, ref=1.0):
+def db_to_power(S_db, *, ref=1.0):
     """Convert a dB-scale spectrogram to a power spectrogram.
 
     This effectively inverts ``power_to_db``::
@@ -1644,7 +1648,7 @@ def db_to_power(S_db, ref=1.0):
 
 
 @cache(level=30)
-def amplitude_to_db(S, ref=1.0, amin=1e-5, top_db=80.0):
+def amplitude_to_db(S, *, ref=1.0, amin=1e-5, top_db=80.0):
     """Convert an amplitude spectrogram to dB-scaled spectrogram.
 
     This is equivalent to ``power_to_db(S**2)``, but is provided for convenience.
@@ -1706,7 +1710,7 @@ def amplitude_to_db(S, ref=1.0, amin=1e-5, top_db=80.0):
 
 
 @cache(level=30)
-def db_to_amplitude(S_db, ref=1.0):
+def db_to_amplitude(S_db, *, ref=1.0):
     """Convert a dB-scaled spectrogram to an amplitude spectrogram.
 
     This effectively inverts `amplitude_to_db`::
@@ -1734,7 +1738,7 @@ def db_to_amplitude(S_db, ref=1.0):
 
 
 @cache(level=30)
-def perceptual_weighting(S, frequencies, kind="A", **kwargs):
+def perceptual_weighting(S, frequencies, *, kind="A", **kwargs):
     """Perceptual weighting of a power spectrogram::
 
         S_p[..., f, :] = frequency_weighting(f, 'A') + 10*log(S[..., f, :] / ref)
@@ -1809,7 +1813,7 @@ def perceptual_weighting(S, frequencies, kind="A", **kwargs):
 
 
 @cache(level=30)
-def fmt(y, t_min=0.5, n_fmt=None, kind="cubic", beta=0.5, over_sample=1, axis=-1):
+def fmt(y, *, t_min=0.5, n_fmt=None, kind="cubic", beta=0.5, over_sample=1, axis=-1):
     """The fast Mellin transform (FMT)
 
     The Mellin of a signal `y` is performed by interpolating `y` on an exponential time
@@ -2003,6 +2007,7 @@ def fmt(y, t_min=0.5, n_fmt=None, kind="cubic", beta=0.5, over_sample=1, axis=-1
 @cache(level=30)
 def pcen(
     S,
+    *,
     sr=22050,
     hop_length=512,
     gain=0.98,
@@ -2273,6 +2278,7 @@ def pcen(
 
 def griffinlim(
     S,
+    *,
     n_iter=32,
     hop_length=None,
     win_length=None,
@@ -2491,6 +2497,7 @@ def griffinlim(
 
 
 def _spectrogram(
+    *,
     y=None,
     S=None,
     n_fft=2048,
