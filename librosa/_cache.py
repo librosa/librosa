@@ -5,7 +5,7 @@
 import os
 from joblib import Memory
 from makefun import wraps
-            
+
 
 class CacheManager(object):
     """The librosa cache manager class wraps joblib.Memory

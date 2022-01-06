@@ -83,7 +83,7 @@ def frames_to_samples(frames, *, hop_length=512, n_fft=None):
     Examples
     --------
     >>> y, sr = librosa.load(librosa.ex('choice'))
-    >>> tempo, beats = librosa.beat.beat_track(y, sr=sr)
+    >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
     >>> beat_samples = librosa.frames_to_samples(beats)
     """
 
@@ -179,7 +179,7 @@ def frames_to_time(frames, *, sr=22050, hop_length=512, n_fft=None):
     Examples
     --------
     >>> y, sr = librosa.load(librosa.ex('choice'))
-    >>> tempo, beats = librosa.beat.beat_track(y, sr=sr)
+    >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
     >>> beat_times = librosa.frames_to_time(beats, sr=sr)
     """
 
@@ -1290,7 +1290,7 @@ def fourier_tempo_frequencies(*, sr=22050, win_length=384, hop_length=512):
     --------
     Get the tempo frequencies corresponding to a 384-bin (8-second) tempogram
 
-    >>> librosa.fourier_tempo_frequencies(384)
+    >>> librosa.fourier_tempo_frequencies(win_length=384)
     array([ 0.   ,  0.117,  0.234, ..., 22.266, 22.383, 22.5  ])
 
     """
@@ -1334,7 +1334,7 @@ def A_weighting(frequencies, *, min_db=-80.0):  # pylint: disable=invalid-name
     Get the A-weighting for CQT frequencies
 
     >>> import matplotlib.pyplot as plt
-    >>> freqs = librosa.cqt_frequencies(108, librosa.note_to_hz('C1'))
+    >>> freqs = librosa.cqt_frequencies(n_bins=108, fmin=librosa.note_to_hz('C1'))
     >>> weights = librosa.A_weighting(freqs)
     >>> fig, ax = plt.subplots()
     >>> ax.plot(freqs, weights)
@@ -1390,7 +1390,7 @@ def B_weighting(frequencies, *, min_db=-80.0):  # pylint: disable=invalid-name
     Get the B-weighting for CQT frequencies
 
     >>> import matplotlib.pyplot as plt
-    >>> freqs = librosa.cqt_frequencies(108, librosa.note_to_hz('C1'))
+    >>> freqs = librosa.cqt_frequencies(n_bins=108, fmin=librosa.note_to_hz('C1'))
     >>> weights = librosa.B_weighting(freqs)
     >>> fig, ax = plt.subplots()
     >>> ax.plot(freqs, weights)
@@ -1445,7 +1445,7 @@ def C_weighting(frequencies, *, min_db=-80.0):  # pylint: disable=invalid-name
     Get the C-weighting for CQT frequencies
 
     >>> import matplotlib.pyplot as plt
-    >>> freqs = librosa.cqt_frequencies(108, librosa.note_to_hz('C1'))
+    >>> freqs = librosa.cqt_frequencies(n_bins=108, fmin=librosa.note_to_hz('C1'))
     >>> weights = librosa.C_weighting(freqs)
     >>> fig, ax = plt.subplots()
     >>> ax.plot(freqs, weights)
@@ -1498,7 +1498,7 @@ def D_weighting(frequencies, *, min_db=-80.0):  # pylint: disable=invalid-name
     Get the D-weighting for CQT frequencies
 
     >>> import matplotlib.pyplot as plt
-    >>> freqs = librosa.cqt_frequencies(108, librosa.note_to_hz('C1'))
+    >>> freqs = librosa.cqt_frequencies(n_bins=108, fmin=librosa.note_to_hz('C1'))
     >>> weights = librosa.D_weighting(freqs)
     >>> fig, ax = plt.subplots()
     >>> ax.plot(freqs, weights)
@@ -1574,8 +1574,8 @@ def frequency_weighting(frequencies, *, kind="A", **kw):
     Get the A-weighting for CQT frequencies
 
     >>> import matplotlib.pyplot as plt
-    >>> freqs = librosa.cqt_frequencies(108, librosa.note_to_hz('C1'))
-    >>> weights = librosa.frequency_weighting(freqs, 'A')
+    >>> freqs = librosa.cqt_frequencies(n_bins=108, fmin=librosa.note_to_hz('C1'))
+    >>> weights = librosa.frequency_weighting(freqs, kind='A')
     >>> fig, ax = plt.subplots()
     >>> ax.plot(freqs, weights)
     >>> ax.set(xlabel='Frequency (Hz)', ylabel='Weighting (log10)',
@@ -1621,9 +1621,9 @@ def multi_frequency_weighting(frequencies, *, kinds="ZAC", **kw):
     Get the A, B, C, D, and Z weightings for CQT frequencies
 
     >>> import matplotlib.pyplot as plt
-    >>> freqs = librosa.cqt_frequencies(108, librosa.note_to_hz('C1'))
+    >>> freqs = librosa.cqt_frequencies(n_bins=108, fmin=librosa.note_to_hz('C1'))
     >>> weightings = 'ABCDZ'
-    >>> weights = librosa.multi_frequency_weighting(freqs, weightings)
+    >>> weights = librosa.multi_frequency_weighting(freqs, kinds=weightings)
     >>> fig, ax = plt.subplots()
     >>> for label, w in zip(weightings, weights):
     ...     ax.plot(freqs, w, label=label)
@@ -1902,7 +1902,7 @@ def hz_to_svara_h(frequencies, *, Sa, abbr=True, octave=True, unicode=True):
 
     Convert one octave worth of frequencies with full names:
 
-    >>> freqs = librosa.cqt_frequencies(12, fmin=261)
+    >>> freqs = librosa.cqt_frequencies(n_bins=12, fmin=261)
     >>> librosa.hz_to_svara_h(freqs, Sa=freqs[0], abbr=False)
     ['Sa', 're', 'Re', 'ga', 'Ga', 'ma', 'Ma', 'Pa', 'dha', 'Dha', 'ni', 'Ni']
     """
@@ -2099,7 +2099,7 @@ def hz_to_svara_c(frequencies, *, Sa, mela, abbr=True, octave=True, unicode=True
 
     Convert one octave worth of frequencies using melakarta #36:
 
-    >>> freqs = librosa.cqt_frequencies(12, fmin=261)
+    >>> freqs = librosa.cqt_frequencies(n_bins=12, fmin=261)
     >>> librosa.hz_to_svara_c(freqs, Sa=freqs[0], mela=36)
     ['S', 'R₁', 'R₂', 'R₃', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'D₂', 'D₃', 'N₃']
     """

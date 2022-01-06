@@ -84,10 +84,10 @@ def salience(
     --------
     >>> y, sr = librosa.load(librosa.ex('trumpet'), duration=3)
     >>> S = np.abs(librosa.stft(y))
-    >>> freqs = librosa.fft_frequencies(sr)
+    >>> freqs = librosa.fft_frequencies(sr=sr)
     >>> harms = [1, 2, 3, 4]
     >>> weights = [1.0, 0.5, 0.33, 0.25]
-    >>> S_sal = librosa.salience(S, freqs, harms, weights, fill_value=0)
+    >>> S_sal = librosa.salience(S, freqs=freqs, h_range=harms, weights=weights, fill_value=0)
     >>> print(S_sal.shape)
     (1025, 115)
     >>> import matplotlib.pyplot as plt
@@ -185,7 +185,7 @@ def interp_harmonics(x, *, freqs, h_range, kind="linear", fill_value=0, axis=-2)
     >>> h_range = [1, 2, 3, 4, 5]
     >>> f_tempo = librosa.tempo_frequencies(len(tempi), sr=sr)
     >>> # Build the harmonic tensor; we only have one axis here (tempo)
-    >>> t_harmonics = librosa.interp_harmonics(tempi, f_tempo, h_range, axis=0)
+    >>> t_harmonics = librosa.interp_harmonics(tempi, freqs=f_tempo, h_range=h_range, axis=0)
     >>> print(t_harmonics.shape)
     (5, 384)
 
@@ -204,7 +204,7 @@ def interp_harmonics(x, *, freqs, h_range, kind="linear", fill_value=0, axis=-2)
     >>> h_range = [1./3, 1./2, 1, 2, 3, 4]
     >>> S = np.abs(librosa.stft(y))
     >>> fft_freqs = librosa.fft_frequencies(sr=sr)
-    >>> S_harm = librosa.interp_harmonics(S, fft_freqs, h_range, axis=0)
+    >>> S_harm = librosa.interp_harmonics(S, freqs=fft_freqs, h_range=h_range, axis=0)
     >>> print(S_harm.shape)
     (6, 1025, 646)
 

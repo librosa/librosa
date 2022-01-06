@@ -381,7 +381,7 @@ def stream(
     ...                         frame_length=2048,
     ...                         hop_length=2048)
     >>> for y_block in stream:
-    ...     m_block = librosa.feature.melspectrogram(y_block, sr=sr,
+    ...     m_block = librosa.feature.melspectrogram(y=y_block, sr=sr,
     ...                                              n_fft=2048,
     ...                                              hop_length=2048,
     ...                                              center=False)
@@ -806,7 +806,7 @@ def autocorrelate(y, *, max_size=None, axis=-1):
 
     >>> import matplotlib.pyplot as plt
     >>> odf = librosa.onset.onset_strength(y=y, sr=sr, hop_length=512)
-    >>> ac = librosa.autocorrelate(odf, max_size=4* sr / 512)
+    >>> ac = librosa.autocorrelate(odf, max_size=4 * sr // 512)
     >>> fig, ax = plt.subplots()
     >>> ax.plot(ac)
     >>> ax.set(title='Auto-correlation', xlabel='Lag (frames)')
@@ -889,14 +889,14 @@ def lpc(y, *, order, axis=-1):
     Compute LP coefficients of y at order 16 on entire series
 
     >>> y, sr = librosa.load(librosa.ex('libri1'))
-    >>> librosa.lpc(y, 16)
+    >>> librosa.lpc(y, order=16)
 
     Compute LP coefficients, and plot LP estimate of original series
 
     >>> import matplotlib.pyplot as plt
     >>> import scipy
     >>> y, sr = librosa.load(librosa.ex('libri1'), duration=0.020)
-    >>> a = librosa.lpc(y, 2)
+    >>> a = librosa.lpc(y, order=2)
     >>> b = np.hstack([[0], -1 * a[1:]])
     >>> y_hat = scipy.signal.lfilter(b, [1], y)
     >>> fig, ax = plt.subplots()
@@ -1431,15 +1431,15 @@ def chirp(*, fmin, fmax, sr=22050, length=None, duration=None, linear=False, phi
     --------
     Generate a exponential chirp from A2 to A8
 
-    >>> exponential_chirp = librosa.chirp(110, 110*64, duration=1)
+    >>> exponential_chirp = librosa.chirp(fmin=110, fmax=110*64, duration=1)
 
     Or generate the same signal using ``length``
 
-    >>> exponential_chirp = librosa.chirp(110, 110*64, sr=22050, length=22050)
+    >>> exponential_chirp = librosa.chirp(fmin=110, fmax=110*64, sr=22050, length=22050)
 
     Or generate a linear chirp instead
 
-    >>> linear_chirp = librosa.chirp(110, 110*64, duration=1, linear=True)
+    >>> linear_chirp = librosa.chirp(fmin=110, fmax=110*64, duration=1, linear=True)
 
     Display spectrogram for both exponential and linear chirps.
 

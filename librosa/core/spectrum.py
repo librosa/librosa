@@ -998,7 +998,7 @@ def reassigned_spectrogram(
     ...                           click_freq=1200.0, length=8000) +\
     ...     1e-3 * librosa.clicks(times=[1.5], sr=sr, click_duration=0.5,
     ...                           click_freq=400.0, length=8000) +\
-    ...     1e-3 * librosa.chirp(200, 1600, sr=sr, duration=2.0) +\
+    ...     1e-3 * librosa.chirp(fmin=200, fmax=1600, sr=sr, duration=2.0) +\
     ...     1e-6 * np.random.randn(2*sr)
     >>> freqs, times, mags = librosa.reassigned_spectrogram(y=y, sr=sr,
     ...                                                     n_fft=n_fft)
@@ -1207,13 +1207,13 @@ def phase_vocoder(D, *, rate, hop_length=None, n_fft=None):
     >>> # Play at double speed
     >>> y, sr   = librosa.load(librosa.ex('trumpet'))
     >>> D       = librosa.stft(y, n_fft=2048, hop_length=512)
-    >>> D_fast  = librosa.phase_vocoder(D, 2.0, hop_length=512)
+    >>> D_fast  = librosa.phase_vocoder(D, rate=2.0, hop_length=512)
     >>> y_fast  = librosa.istft(D_fast, hop_length=512)
 
     >>> # Or play at 1/3 speed
     >>> y, sr   = librosa.load(librosa.ex('trumpet'))
     >>> D       = librosa.stft(y, n_fft=2048, hop_length=512)
-    >>> D_slow  = librosa.phase_vocoder(D, 1./3, hop_length=512)
+    >>> D_slow  = librosa.phase_vocoder(D, rate=1./3, hop_length=512)
     >>> y_slow  = librosa.istft(D_slow, hop_length=512)
 
     Parameters
@@ -2165,7 +2165,7 @@ def pcen(
     >>> # We recommend scaling y to the range [-2**31, 2**31[ before applying
     >>> # PCEN's default parameters. Furthermore, we use power=1 to get a
     >>> # magnitude spectrum instead of a power spectrum.
-    >>> S = librosa.feature.melspectrogram(y, sr=sr, power=1)
+    >>> S = librosa.feature.melspectrogram(y=y, sr=sr, power=1)
     >>> log_S = librosa.amplitude_to_db(S, ref=np.max)
     >>> pcen_S = librosa.pcen(S * (2**31))
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)

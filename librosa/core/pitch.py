@@ -132,13 +132,13 @@ def pitch_tuning(frequencies, *, resolution=0.01, bins_per_octave=12):
     Examples
     --------
     >>> # Generate notes at +25 cents
-    >>> freqs = librosa.cqt_frequencies(24, 55, tuning=0.25)
+    >>> freqs = librosa.cqt_frequencies(n_bins=24, fmin=55, tuning=0.25)
     >>> librosa.pitch_tuning(freqs)
     0.25
 
     >>> # Track frequencies from a real spectrogram
     >>> y, sr = librosa.load(librosa.ex('trumpet'))
-    >>> freqs, times, mags = librosa.reassigned_spectrogram(y, sr,
+    >>> freqs, times, mags = librosa.reassigned_spectrogram(y, sr=sr,
     ...                                                     fill_nan=True)
     >>> # Select out pitches with high energy
     >>> freqs = freqs[mags > np.median(mags)]
@@ -545,8 +545,8 @@ def yin(
     --------
     Computing a fundamental frequency (F0) curve from an audio input
 
-    >>> y = librosa.chirp(440, 880, duration=5.0)
-    >>> librosa.yin(y, 440, 880)
+    >>> y = librosa.chirp(fmin=440, fmax=880, duration=5.0)
+    >>> librosa.yin(y, fmin=440, fmax=880)
     array([442.66354675, 441.95299983, 441.58010963, ...,
         871.161732  , 873.99001454, 877.04297681])
     """
